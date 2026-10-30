@@ -5,11 +5,11 @@ Five steps produce a simulation. Everything else in this help is refinement.
 <figcaption>The simulator. Patient and graph settings on the left, the plot in the middle, the dose table on the right.</figcaption>
 </figure>
 
-When the app opens it asks which drugs to display, with a box for each drug, grouped by category: hypnotics and sedatives, opioids, oral analgesics, neuromuscular blockade, inhaled anesthetics, antibiotics, corticosteroids, antidepressants, stimulants, local anesthetics, antiemetics, antiseizure drugs, antipsychotics, antidiabetic drugs and others. The illicit-drug research models are never offered here. Propofol, fentanyl, remifentanil and rocuronium start ticked; untick them to start with something else. **Start** puts each ticked drug in the dose table with a dose of 0 at time 0, ready to edit. Any drug can be added to the dose table later.
+When the app opens it asks which drugs to display. The drugs are grouped by category: hypnotics and sedatives, opioids, oral analgesics, neuromuscular blockade, inhaled anesthetics, antibiotics, corticosteroids, antidepressants, stimulants, local anesthetics, antiemetics, antiseizure drugs, antipsychotics, antidiabetic drugs, anticoagulants, antihypertensives, vasoactive and resuscitation drugs, and others. Each category starts collapsed, showing only its name and how many drugs it holds; click it to open its list and tick the drugs you want. A category with drugs ticked says how many, even when collapsed again. Nothing is ticked to begin with. The illicit-drug research models are never offered here. **Start** puts each ticked drug in the dose table with a dose of 0 at time 0, ready to edit; with nothing ticked, the dose table starts empty. Any drug can be added to the dose table later.
 
 <figure class="help-figure help-figure-medium">
-<img src="stanpumpr-assets/help/quick-start-welcome.png" alt="The opening dialog: the statement of what stanpumpR is, a Take the tour button, and the drugs to display as checkboxes in fourteen groups, with propofol, fentanyl, remifentanil and rocuronium ticked and a Start button at the bottom">
-<figcaption>The opening dialog, as on a first visit: the statement of what stanpumpR is, then the drugs to display, grouped by category.</figcaption>
+<img src="stanpumpr-assets/help/quick-start-welcome.png" alt="The opening dialog: the statement of what stanpumpR is, a Take the tour button, and the drug categories as eighteen collapsed sections, each with the number of drugs it holds, and a Start button at the bottom">
+<figcaption>The opening dialog, as on a first visit: the statement of what stanpumpR is, then the drug categories, each collapsed until clicked.</figcaption>
 </figure>
 
 On a first visit, and once a week after that, the dialog also states what stanpumpR is and is not, and **Take the tour** starts with your ticked drugs and brings you to this page.
@@ -38,7 +38,7 @@ The **Doses** table is in the panel to the right of the plot (the arrow at its t
 
 - A mass unit (`mg`, `mcg/kg`) makes the row a **bolus**.
 - A rate unit (`mcg/kg/min`, `mg/hr`) makes the row an **infusion** that runs until the next row for that drug changes it. To stop an infusion, add a row at the stop time with a dose of 0.
-- A unit with a route (`mg PO`, `mg IM`, `mg RA`) gives the dose by that route, and one ending in `qd`, `bid`, `tid` or `qid` (`mg PO bid`) repeats it on that schedule to the end of the plot.
+- A unit with a route (`mg PO`, `mg IM`, `mg RA`) gives the dose by that route, and one ending in `qd`, `bid`, `tid`, `qid` or `q4h` (`mg PO bid`) repeats it on that schedule to the end of the plot.
 
 Right-click a row to insert or remove rows. See [The dose table](help:dose-table).
 
@@ -48,7 +48,7 @@ Press **Apply Changes**. Edits to the dose table do not recalculate until you do
 
 ## 4. Read the plot
 
-Each drug gets its own panel. The solid line is the **effect-site** concentration, the one that matters clinically; the plasma line is hidden by default and can be turned on under **Graph Options**. The shaded band is the drug's usual therapeutic range, from the drug library.
+Each drug gets its own panel. The solid line is the **effect-site** concentration, the one that matters clinically; the plasma line is hidden by default and can be turned on under **Graph Options**. A drug without an effect-site model (no time to peak effect or ke0) has no effect site, and its solid line is the plasma (or, for a few drugs, whole-blood or serum) concentration; for some drugs the time to peak effect is a clinical estimate rather than a measurement, and each drug's page says which. The shaded band is the drug's usual therapeutic range, from the drug library; what it means (a measured serum range, a response concentration, a target) differs by drug, and each drug's page says.
 
 <figure class="help-figure">
 <img src="stanpumpr-assets/help/quick-start-plot.png" alt="The propofol panel: a dashed plasma line spiking after the bolus, a solid effect-site line held inside the shaded band by the infusion, and a thin black time-until-threshold line read against minute labels on the right">
@@ -56,7 +56,7 @@ Each drug gets its own panel. The solid line is the **effect-site** concentratio
 </figure>
 
 - **Hover** for the exact concentration at any time.
-- **Click** to add a dose at that time (applied immediately).
+- **Click** to add a dose at that time (applied immediately). While an infusion, a TCI, a schedule or an inhaled agent is running, the dialog also offers **Stop**, which ends it at that time; while a scheduled dose (`mg PO bid`, `mg IM qid`, `mg SC qwk`) is running, **Skip next dose**.
 - **Add new drug** (the button at the lower left of the plot) to add a drug that is not yet plotted, without going to the dose table.
 - **Double-click** a drug's curve to edit or delete its doses.
 
@@ -64,14 +64,14 @@ See [Reading the plot](help:reading-the-plot).
 
 ## 5. Refine
 
-The **Time** panel sets the time units and how far the simulation runs (*Max time*, whose choices follow the units). **Graph Options** sets line styles, normalization, a log axis, the *Time until threshold* lines, and the *Minto / Schnider* switch that draws those propofol and remifentanil models beside the library's own.
+The **Time** panel sets the time units, how far the simulation runs (the *Max time* slider) and where the axis starts (the *Min time* slider, for a close look late in a long plot). **Graph Options** sets line styles, normalization, a log axis, the *Time until threshold* lines, and the *Minto / Schnider* switch that draws those propofol and remifentanil models beside the library's own.
 
 <figure class="help-figure help-figure-narrow">
 <img src="stanpumpr-assets/help/quick-start-graph-options.png" alt="The Graph Options panel: Show typical, Normalize to, plasma and effect-site line styles, Y axis height, Time until threshold, the opioid-MAC interaction checkbox and the Minto / Schnider switch">
 <figcaption>The Graph Options panel.</figcaption>
 </figure>
 
-- **Additional Plots** adds the MEAC panel for comparing opioids, the propofol-opioid interaction panel, and the clinical events timeline.
+- **Additional plots**, under Graph Options, adds the MEAC panel for comparing opioids, the propofol-opioid interaction panel, and the clinical events timeline.
 - **Suggest Dosing** (in the *Dose table* panel of the left sidebar) works backwards from a target effect-site concentration.
 - The URL in your browser's address bar encodes the whole simulation; copy it to share or save your work. See [Sharing a simulation by URL](help:sharing).
 

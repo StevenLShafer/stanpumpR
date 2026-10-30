@@ -62,7 +62,7 @@ series; a PBPK prediction; a review.
 
 The registry is authoritative; this table was generated from it on 2026-10-19 (factors on the
 elimination clearance or CL/F, the volume(s) the drug's `applied` text names, oral
-bioavailability, and the renal-function estimate; phenytoin's are on Km and Vmax).
+bioavailability, and the renal-function estimate; phenytoin's are on Km and Vmax). Oxycodone's 1.462 was removed on 2026-10-28: Kokki 2012's measured clearance in labour, put on the model's hydrochloride dose basis (2026-10-29), is 0.87 of this model's non-pregnant value, not above it.
 
 | Drug | CL | V | F | GFR term | First source | Confidence |
 |---|---|---|---|---|---|---|
@@ -71,7 +71,6 @@ bioavailability, and the renal-function estimate; phenytoin's are on Km and Vmax
 | morphine | 1.700 |  |  |  | Gerdin 1990 | high |
 | methadone | 1.714 |  |  |  | Bogen 2012 | high |
 | midazolam | 1.280 |  |  |  | Hebert 2008 | moderate |
-| oxycodone | 1.462 |  |  |  | Kokki 2012 | moderate |
 | buprenorphine | 1.830 |  |  |  | Bastian 2017 | moderate |
 | acetaminophen | 1.400 | 1.14 |  |  | Allegaert 2015 | moderate |
 | ketorolac | 1.500 | 1.50 |  |  | Kulo 2012 | moderate |
@@ -112,8 +111,9 @@ bioavailability, and the renal-function estimate; phenytoin's are on Km and Vmax
 | hydrochlorothiazide |  |  |  | 1.5 | Ansari 2016 | low |
 | procainamide |  |  |  | 1.5 | Ansari 2016 | low |
 | digoxin |  |  |  | 1.5 | Hebert 2008 | moderate |
-| digoxinIV | 1.350 |  |  |  | Hebert 2008 | low |
+| digoxinIV | 1.420 |  |  |  | Hebert 2008 | low |
 | metoprolol | 1.500 | 1.50 | 0.5 |  | Ryu 2016 | moderate |
+| vasopressin | 5.075 |  |  |  | Davison 1993 | moderate |
 
 Not adjusted: 16 `unquantified`, 19 `unchanged`, 87 `unknown` (mostly drugs contraindicated or
 rarely used in pregnancy: the DOACs and vitamin K antagonists, the GLP-1, SGLT2 and DPP-4
@@ -206,25 +206,22 @@ paywalled. The first list matters most, since each would check a factor the libr
 15. Pennell PB, Karanam A, Meador KJ, et al. Antiseizure Medication Concentrations During Pregnancy: Results From the MONEAD Study. JAMA Neurol 2022;79:370-379 (PMC8845026) [PMID 35157004](https://pubmed.ncbi.nlm.nih.gov/35157004/) · [doi:10.1001/jamaneurol.2021.5487](https://doi.org/10.1001/jamaneurol.2021.5487)  
    *Drugs:* carbamazepine, lacosamide, zonisamide, levetiracetam. *Why:* PMC full text returned empty through the tool; need trimester-by-trimester dose-normalized concentrations (Table 2 / eTables) for every ASM, because the abstract gives only the 'up to' (maximal) decrease without saying which trimester; also the carbamazepine figure in the abstract is internally inconsistent (11.56 -> 7.97 is a 31% fall, not the stated 17.3%).
 
-16. Petrenaite V, Ohman I, Thi Nguyen Larsen P, et al. Pregnancy-induced changes in the pharmacokinetics of oxcarbazepine/MHD (Epilepsia/Epilepsy Res 2018, as named in the task brief) (no PMID found; cited from another paper)  
-   *Drugs:* eslicarbazepine. *Why:* Named in the brief from memory; not located this session. A prospective study of MHD (with enantiomers) during pregnancy would firm up the surrogate factor.
-
-17. Polepally AR, et al. Ann Clin Transl Neurol 2014;1:99-106 (PMC4038031) [PMID 24883336](https://pubmed.ncbi.nlm.nih.gov/24883336/) · [doi:10.1002/acn3.29](https://doi.org/10.1002/acn3.29)  
+16. Polepally AR, et al. Ann Clin Transl Neurol 2014;1:99-106 (PMC4038031) [PMID 24883336](https://pubmed.ncbi.nlm.nih.gov/24883336/) · [doi:10.1002/acn3.29](https://doi.org/10.1002/acn3.29)  
    *Drugs:* lamotrigine. *Why:* Open access (PMC4038031) but only the abstract was read here; its model equations would give the gestational-week slope (0.118 L/h/week) form for a time-varying option.
 
-18. Popovic J, Grujic Z, Sabo A. J Clin Pharm Ther 2007;32:595-602 [PMID 18021337](https://pubmed.ncbi.nlm.nih.gov/18021337/) · [doi:10.1111/j.1365-2710.2007.00864.x](https://doi.org/10.1111/j.1365-2710.2007.00864.x)  
+17. Popovic J, Grujic Z, Sabo A. J Clin Pharm Ther 2007;32:595-602 [PMID 18021337](https://pubmed.ncbi.nlm.nih.gov/18021337/) · [doi:10.1111/j.1365-2710.2007.00864.x](https://doi.org/10.1111/j.1365-2710.2007.00864.x)  
    *Drugs:* gentamicin. *Why:* Primary table of gentamicin (and ceftriaxone, cefazolin) CL, V, k in caesarean vs non-pregnant women; only a secondary summary was read.
 
-19. Reimers A, et al. Epilepsy Res 2018;144:25-29 [PMID 29751353](https://pubmed.ncbi.nlm.nih.gov/29751353/) · [doi:10.1016/j.eplepsyres.2018.05.002](https://doi.org/10.1016/j.eplepsyres.2018.05.002)  
+18. Reimers A, et al. Epilepsy Res 2018;144:25-29 [PMID 29751353](https://pubmed.ncbi.nlm.nih.gov/29751353/) · [doi:10.1016/j.eplepsyres.2018.05.002](https://doi.org/10.1016/j.eplepsyres.2018.05.002)  
    *Drugs:* zonisamide. *Why:* Mean (not nadir) C/D by trimester; the abstract gives only the minimum.
 
-20. Tomson T, Lindbom U, Ekqvist B, Sundqvist A. Disposition of carbamazepine and phenytoin in pregnancy. Epilepsia 1994;35:131-135 [PMID 8112235](https://pubmed.ncbi.nlm.nih.gov/8112235/) · [doi:10.1111/j.1528-1157.1994.tb02922.x](https://doi.org/10.1111/j.1528-1157.1994.tb02922.x)  
+19. Tomson T, Lindbom U, Ekqvist B, Sundqvist A. Disposition of carbamazepine and phenytoin in pregnancy. Epilepsia 1994;35:131-135 [PMID 8112235](https://pubmed.ncbi.nlm.nih.gov/8112235/) · [doi:10.1111/j.1528-1157.1994.tb02922.x](https://doi.org/10.1111/j.1528-1157.1994.tb02922.x)  
    *Drugs:* phenytoin, carbamazepine. *Why:* phenytoin: Gives the total and unbound phenytoin clearances per trimester; the abstract gives direction only. Would confirm the Vmax factor (unbound clearance rise) directly. carbamazepine: Trimester values of total and unbound carbamazepine clearance (abstract says 'slightly decreased' only).
 
-21. Voinescu PE, Park S, Chen LQ, et al. Antiepileptic drug clearances during pregnancy and clinical implications for women with epilepsy. Neurology 2018;91:e1228-e1236 (PMC6161546) [PMID 30185446](https://pubmed.ncbi.nlm.nih.gov/30185446/) · [doi:10.1212/WNL.0000000000006240](https://doi.org/10.1212/WNL.0000000000006240)  
+20. Voinescu PE, Park S, Chen LQ, et al. Antiepileptic drug clearances during pregnancy and clinical implications for women with epilepsy. Neurology 2018;91:e1228-e1236 (PMC6161546) [PMID 30185446](https://pubmed.ncbi.nlm.nih.gov/30185446/) · [doi:10.1212/WNL.0000000000006240](https://doi.org/10.1212/WNL.0000000000006240)  
    *Drugs:* phenytoin, valproate, topiramate. *Why:* PMC full text returned empty through the tool; its tables give trimester clearance ratios for phenytoin (n=7) and valproate (n=5), which are not in the abstract, and the third-trimester (not just maximal) ratios for levetiracetam and topiramate.
 
-22. Yerby MS, Friel PN, McCormick K. Antiepileptic drug disposition during pregnancy. Neurology 1992;42(4 Suppl 5):12-16 [PMID 1574166](https://pubmed.ncbi.nlm.nih.gov/1574166/)  
+21. Yerby MS, Friel PN, McCormick K. Antiepileptic drug disposition during pregnancy. Neurology 1992;42(4 Suppl 5):12-16 [PMID 1574166](https://pubmed.ncbi.nlm.nih.gov/1574166/)  
    *Drugs:* valproate. *Why:* Total and free valproate concentrations per trimester with doses; would replace the derived 1.6 with a measured total-clearance ratio.
 
 ### Papers that could turn a recorded finding into an applied factor, or confirm that none is needed
@@ -333,7 +330,10 @@ paywalled. The first list matters most, since each would check a factor the libr
    betamethasone/dexamethasone pattern (clearance and volume both rise, half-life unchanged).
  - **Hebert MF et al.** *Clin Pharmacol Ther* 2008;84:248-253 (PMID 18288078): the CYP3A/P-gp probe
    study. Midazolam total CL/F 2.1 times (unbound 1.72), half-life unchanged; digoxin total renal
-   clearance 1.30 times, half-life unchanged. Confirms midazolam's x1.28 (IV) and digoxin's GFR terms.
+   clearance 181 vs 115 mL/min, 1.57 times (unbound 1.49; the 163 vs 125 mL/min once recorded here as
+   renal digoxin clearance are the creatinine clearances, 1.30 times; corrected 2026-10-24 after an
+   adversarial review and confirmed against Table 2 of the paper 2026-10-27), half-life unchanged. Confirms midazolam's x1.28 (IV) and digoxin's GFR terms;
+   digoxinIV's factor became 1.42.
  - **Allegaert K et al.** *Am J Obstet Gynecol* 2009;200:170.e1-7 (PMID 19006783): cefazolin popPK in
    82 pregnancies, CL 7.44 L/h (about twice healthy young adults), almost exclusively renal, no
    gestational-age trend; supports the renal (GFR) mechanism for cefazolin.

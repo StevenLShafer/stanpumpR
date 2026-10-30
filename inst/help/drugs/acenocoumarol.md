@@ -20,12 +20,12 @@ The concentration is not plotted. It drives an **indirect-response model** of th
 
 ### Why the INR, not a concentration
 
-The INR is a delayed, non-linear turnover endpoint, so it is computed from the S-acenocoumarol curve after the engine has run rather than as an effect site. There is no MEAC, no band and no "time until threshold": the INR falls after acenocoumarol is stopped at the pace of clotting-factor turnover, which the effect-site recovery calculation does not describe.
+The INR is a delayed, non-linear turnover endpoint, so it is computed from the S-acenocoumarol curve after the engine has run rather than as an effect site. There is no MEAC and no "time until threshold": the INR falls after acenocoumarol is stopped at the pace of clotting-factor turnover, which the effect-site recovery calculation does not describe. The shaded band is the INR target, 2.0 to 3.0 with 2.5 typical, the CHEST guideline's target for every vitamin K antagonist (Holbrook and colleagues, *Chest* 2012;141(2 Suppl):e152S-e184S, https://doi.org/10.1378/chest.11-2295); its own product information has not been read; it is a reference for reading the curve, not a dose recommendation.
 
 ### Covariates
 
 - **CYP2C9**: a **\*3** allele carrier (any of \*1/\*3, \*2/\*3, \*3/\*3) has clearance × 0.7, so a \*3 carrier reaches a higher INR. \*1/\*2 and \*2/\*2 were not predictors in the source and behave as the wild type.
-- **VKORC1**: the Patient Profile's −1639G>A field drives the C50 through its linkage with the source's 1173C>T genotype. **AA** is the sensitive reference (base C50, higher INR); **GG** or **GA** raises the C50 × 2.29 (less sensitive, lower INR).
+- **VKORC1**: the Patient Profile's −1639G>A field drives the C50 through its linkage with the source's 1173C>T genotype. **AA** is the sensitive reference (base C50, higher INR) and the field's default, so that an unentered genotype shows the larger INR rise; **GG** or **GA** raises the C50 × 2.29 (less sensitive, lower INR). See [VKORC1 and ancestry](help:patient-profile) for the reasoning and for the genotype to expect in a patient who has not been genotyped.
 - **Body weight** scales central volume — the model's own covariate, used in both positions of the [fat-free-mass switch](help:models/fat-free-mass).
 
 ### Where to be careful

@@ -26,7 +26,7 @@ it also sets the weight the creatinine-clearance estimate uses.}
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-Ericsson et al. (1999), two compartments in healthy men, with the volumes
-and intercompartmental clearance derived from the reported clearance,
-steady-state volume and both half-lives; see the header.
+Ericsson et al. (1999), two compartments in healthy men: the published
+fitted clearance and central volume, with the unprinted k12 and k21 chosen
+to reproduce the paper's derived quantities; see the header.
 }

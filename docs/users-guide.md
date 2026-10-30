@@ -20,8 +20,10 @@ entered, and real patients vary substantially around those predictions.
 
 ## The 60-second tour
 
-1. Open the app. Tick the drugs you want to display (propofol, fentanyl,
-   remifentanil and rocuronium are ticked to begin with) and press **Start**.
+1. Open the app. Open a drug category (anesthesia drugs are under
+   *Hypnotics and sedatives*, *Opioids* and *Neuromuscular blockade*), tick
+   the drugs you want to display, and press **Start**. Nothing is ticked to
+   begin with.
    A default patient and a dose table holding a zero dose of each are waiting.
 2. In the **Doses** table, edit a row, or type another drug name — the cell
    autocompletes from the drug library.
@@ -46,6 +48,11 @@ they change the predictions.
 | Sex | male / female | |
 | Adjust weight to fat-free mass | checkbox | On by default. See below. |
 | Baseline serum osmolality | mOsm/kg | Before mannitol; 280 by default. Read only by mannitol, which is plotted as the serum osmolality it produces. See [docs/mannitol.md](mannitol.md). |
+| Opioid tolerance | none / mild / somewhat / highly tolerant | Multiplies the MEAC, shaded band and time-until-threshold level of every opioid with a MEAC (including a metabolite formed from codeine or tramadol) by 1, 1.5, 2 or 3 (`OPIOID_TOLERANCE_FACTORS`, applied in `recalculatePK()`); an opioid without a MEAC is unchanged. |
+
+Only age, weight, height, sex and the fat-free-mass box are always shown; every
+other field appears only while a drug that reads it is in the dose table
+(`relevantFields()` in `R/patient-fields.R`).
 
 **Adjust weight to fat-free mass.** Most of the drug models were reported for a
 typical 70 kg adult and, if they scaled at all, scaled with total body weight.
@@ -178,18 +185,21 @@ and you can edit it (see *Drug Library*).
 |---|---|
 | Show typical | The shaded band, above |
 | Normalize to | Rescale every curve to its own peak plasma or peak effect-site value, so drugs on wildly different scales can be compared in shape |
-| Max time | How far the simulation runs. The choices follow the Time units: 1–24 hours (minutes, hours), 2–365 days, 4–52 weeks |
+| Max time | How far the simulation runs: a slider in the Time units, up to 24 hours (minutes, hours), 365 days or 52 weeks |
+| Min time | Where the time axis starts: a slider, 0 unless moved, for a close look at a window late in a long plot. Everything is still simulated from 0 |
 | Plasma line / Effect site line | Line style, including none |
 | Y axis height | Plot height in pixels |
 | Time until threshold | Draws, for each drug, how long until it falls to its recovery threshold (`endCe` in the library). Only available when normalization is off |
 | Log Y axis | Log-scale the concentration axis. Unavailable when Time until threshold, Events, or Interaction are showing, because those panels do not have a meaningful log form |
-| Minto / Schnider | Also run the Schnider (1998) propofol and Minto (1997) remifentanil models, the models most TCI pumps use, beside the library's Eleveld models: a second line in each drug's panel, and under TCI a second pump in the rate panel. Time until threshold stays on the Eleveld model. Enabled only while propofol or remifentanil is in the dose table |
+| Minto / Schnider | Also run the Schnider (1998) propofol and Minto (1997) remifentanil models, the models most TCI pumps use, beside the library's Eleveld models: a second line in each drug's panel, and under TCI a second pump in the rate panel. Time until threshold stays on the Eleveld model. Shown only while propofol or remifentanil is in the dose table |
 
 ---
 
-## Additional Plots
+## Additional plots
 
-Checkboxes that add panels beneath the concentration plot.
+Checkboxes at the foot of Graph Options that add panels beneath the
+concentration plot. MEAC is offered only while an opioid is in the dose table,
+Interaction only while propofol and an opioid are.
 
 ### MEAC
 
@@ -387,7 +397,7 @@ what the literature offers.
 | Oliceridine | Dahan A et al., *Anesthesiology* 2020;133(3):559–568. [PMID 32788558](https://pubmed.ncbi.nlm.nih.gov/32788558/) |
 | Remimazolam | Eleveld DJ et al., *Br J Anaesth* 2025;135(1):206–217. [PMID 40312166](https://pubmed.ncbi.nlm.nih.gov/40312166/) |
 | Sugammadex | Kleijn HJ et al., *Br J Clin Pharmacol* 2011;72:415–433. [DOI 10.1111/j.1365-2125.2011.04000.x](https://doi.org/10.1111/j.1365-2125.2011.04000.x) (total sugammadex; rocuronium binding not modelled) |
-| Neostigmine | Calvey TN et al., *Br J Clin Pharmacol* 1979;7:149–155. [DOI 10.1111/j.1365-2125.1979.tb00915.x](https://doi.org/10.1111/j.1365-2125.1979.tb00915.x) — **patient 1 of six individual fits; no population model exists**. Time to peak effect from Heier T et al., *Anesthesiology* 2002;97:90–95 |
+| Neostigmine | Heier T et al., *Anesthesiology* 2002;97:90–95. [DOI 10.1097/00000542-200207000-00013](https://doi.org/10.1097/00000542-200207000-00013) — three-compartment population model (Table 3) and time to peak effect. Calvey 1979's patient 1 until October 2026 |
 | Glycopyrrolate | Bartels C et al., *Br J Clin Pharmacol* 2013;76:868–879. [DOI 10.1111/bcp.12118](https://doi.org/10.1111/bcp.12118) (active cation; bromide-labelled dose) |
 | Cefazolin | Komatsu T et al., *Antimicrob Agents Chemother* 2024;68:e00267-24. [DOI 10.1128/aac.00267-24](https://doi.org/10.1128/aac.00267-24) (**unbound** cefazolin) |
 | Clindamycin | Bouazza N et al., *Br J Clin Pharmacol* 2012;74:971–977. [DOI 10.1111/j.1365-2125.2012.04292.x](https://doi.org/10.1111/j.1365-2125.2012.04292.x) (final table; IV and oral) |
@@ -647,12 +657,12 @@ Consequences worth knowing when comparing the two side by side:
 Above the dose table:
 
 - **Time units** — minutes, hours, days or weeks. A number typed as a time is
-  in this unit, the time axis is labelled in it, and it sets the **Max time**
-  choices. Changing it rewrites every time in the dose table in the new unit
+  in this unit, the time axis is labelled in it, and it sets the range and
+  step of the **Max time** and **Min time** sliders. Changing it rewrites every time in the dose table in the new unit
   (90 minutes becomes 1.5 hours), so the doses stay where they were; it also
   applies any unapplied edits.
 - **Time Display**
-  - **Elapsed time** — everything counted from zero.
+  - **Elapsed time** (the default) — everything counted from zero.
   - **Actual time** (minutes and hours only) — enter a **Procedure start** as
     `HH:MM`; a time with a colon is then a clock time, and a number is counted
     from the procedure start. Switching to elapsed time converts the clock
@@ -663,7 +673,7 @@ works in minutes.
 
 Target-controlled infusions and inhaled agents are simulated only on plots of
 7 days or less; Suggest Dosing is offered in minutes and hours. A dose beyond
-the unit's longest Max time (24 hours, 365 days, 52 weeks) brings a
+the end of the Max time slider (24 hours, 365 days, 52 weeks) brings a
 notification rather than a longer plot.
 
 ---

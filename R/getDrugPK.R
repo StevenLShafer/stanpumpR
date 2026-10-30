@@ -17,6 +17,8 @@
 #'   passed only to models that name it (phenytoin).
 #' @param vkorc1 VKORC1 -1639G>A genotype, one of \code{VKORC1_VALUES};
 #'   passed only to models that name it (warfarin).
+#' @param cyp4f2 CYP4F2 rs2108622 genotype, one of \code{CYP4F2_VALUES};
+#'   passed only to models that name it (warfarin).
 #' @param cyp2b6 CYP2B6 metaboliser phenotype, one of \code{CYP2B6_VALUES};
 #'   passed only to models that name it (methadone).
 #' @param resolveMetabolite should a drug that names an active metabolite have
@@ -39,6 +41,10 @@
 #'   apply the changes of late pregnancy measured for that drug
 #'   (inst/extdata/pregnancyRegistry.csv); every other model ignores it.
 #'   TRUE requires \code{sex = "female"}.
+#' @param gestationalAge gestational age at birth in weeks, or NULL (the
+#'   default) for a term birth.  Passed only to the neonatal models that
+#'   declare it (dobutamineNeonatal), whose clearance matures with
+#'   postmenstrual age (\code{postmenstrualAge()}).
 #' @param model internal: a model's output to use in place of calling the
 #'   drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
 #'   drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.
@@ -79,7 +85,9 @@ getDrugPK <- function(
   # Appended after the pre-existing arguments so a positional call that passed
   # cyp2b6 or pregnant keeps its binding (getDrugPK() is exported).
   vkorc1 = VKORC1_DEFAULT,
-  model = NULL
+  model = NULL,
+  cyp4f2 = CYP4F2_DEFAULT,
+  gestationalAge = NULL
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
@@ -104,6 +112,10 @@ getDrugPK <- function(
     stop("Invalid vkorc1: ", paste(vkorc1, collapse = ", "),
          ". Must be one of: ", paste(VKORC1_VALUES, collapse = ", "))
   }
+  if (length(cyp4f2) != 1 || !cyp4f2 %in% CYP4F2_VALUES) {
+    stop("Invalid cyp4f2: ", paste(cyp4f2, collapse = ", "),
+         ". Must be one of: ", paste(CYP4F2_VALUES, collapse = ", "))
+  }
   if (length(cyp2b6) != 1 || !cyp2b6 %in% CYP2B6_VALUES) {
     stop("Invalid cyp2b6: ", paste(cyp2b6, collapse = ", "),
          ". Must be one of: ", paste(CYP2B6_VALUES, collapse = ", "))
@@ -125,6 +137,18 @@ getDrugPK <- function(
     stop("Invalid creatinine: ", paste(creatinine, collapse = ", "),
          ". Must be a number between ", MIN_CREATININE, " and ",
          MAX_CREATININE, " mg/dL, or NULL for the assumed normal value")
+  }
+  # The gestational age at birth is optional in the same way: blank (NA) is
+  # NULL, a term birth; NaN is rejected.
+  if (!is.null(gestationalAge) && length(gestationalAge) == 1 &&
+      is.na(gestationalAge) &&
+      !(is.numeric(gestationalAge) && is.nan(gestationalAge)))
+    gestationalAge <- NULL
+  if (!is.null(gestationalAge) &&
+      !is_valid_number(gestationalAge, MIN_GESTATIONAL_AGE, MAX_GESTATIONAL_AGE)) {
+    stop("Invalid gestationalAge: ", paste(gestationalAge, collapse = ", "),
+         ". Must be a number of weeks between ", MIN_GESTATIONAL_AGE, " and ",
+         MAX_GESTATIONAL_AGE, ", or NULL for a term birth")
   }
 
   # Every model takes the four patient covariates.  A pharmacogenetic
@@ -161,6 +185,9 @@ getDrugPK <- function(
       "vkorc1" %in% names(formals(get(drug, mode = "function"))))
     covariates$vkorc1 <- vkorc1
   if (exists(drug, mode = "function") &&
+      "cyp4f2" %in% names(formals(get(drug, mode = "function"))))
+    covariates$cyp4f2 <- cyp4f2
+  if (exists(drug, mode = "function") &&
       "cyp2b6" %in% names(formals(get(drug, mode = "function"))))
     covariates$cyp2b6 <- cyp2b6
   # Likewise the fat-free-mass switch: every drug model in the library
@@ -176,6 +203,10 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "creatinine" %in% names(formals(get(drug, mode = "function"))))
     covariates["creatinine"] <- list(creatinine)
+  # And the gestational age at birth, which only the neonatal models read.
+  if (exists(drug, mode = "function") &&
+      "gestationalAge" %in% names(formals(get(drug, mode = "function"))))
+    covariates["gestationalAge"] <- list(gestationalAge)
   # And the pregnancy flag, which only the models with a measured change in
   # pregnancy read (R/pregnancy.R, inst/extdata/pregnancyRegistry.csv).
   if (exists(drug, mode = "function") &&
@@ -274,6 +305,8 @@ getDrugPK <- function(
     cl1 <- X$PK[[event]]$cl1
     cl2 <- X$PK[[event]]$cl2
     cl3 <- X$PK[[event]]$cl3
+    checkDispositionFinite(drug, event,
+                           list(v1 = v1, v2 = v2, v3 = v3, cl1 = cl1, cl2 = cl2, cl3 = cl3))
 
     # Note on Oral, IM, and IN route PK #
     # Oral is (for now) state 4 for plasma and state 5 for effect site #
@@ -1095,7 +1128,8 @@ getDrugPK <- function(
       creatinine = creatinine,
       pregnant = pregnant,
       adjustToFFM = adjustToFFM,
-      resolveMetabolite = FALSE
+      resolveMetabolite = FALSE,
+      gestationalAge = gestationalAge
     )
     metaboliteSet <- metabolitePK$PK[[PK_EVENT_DEFAULT]]
 
@@ -1109,8 +1143,16 @@ getDrugPK <- function(
 
     firstPass <- X$metabolite$firstPassFraction
     if (is.null(firstPass)) firstPass <- 0
+    # The molar mass ratio has no safe default: a link that omits it would
+    # silently hand over the parent's mass unchanged.  Every link states it,
+    # 1 included where the source's amounts are already on the metabolite's
+    # scale (opioid potency audit, 2026-10-27).
     mwRatio <- X$metabolite$mwRatio
-    if (is.null(mwRatio)) mwRatio <- 1
+    if (!is.numeric(mwRatio) || length(mwRatio) != 1 || !is.finite(mwRatio) ||
+        mwRatio <= 0)
+      stop(drug, ": metabolite '", metaboliteName, "' needs mwRatio, the ",
+           "metabolite's molar mass over the parent's (1 if the source's ",
+           "amounts are already on the metabolite's scale)")
 
     for (event in events)
     {
@@ -1223,6 +1265,12 @@ getDrugPK <- function(
   out$inr <- if (is.null(model) || !is.null(model$inr))
     validateINR(X$inr, drug, drugDefaults$Concentration.Units, X$parallelSystems)
     else NULL
+  # The activated clotting time (heparin on bypass, R/act.R): a direct Emax
+  # link on the anti-factor Xa activity, turned into the plotted ACT after the
+  # engine has run.  Validated like the INR block, with the same model skip.
+  out$act <- if (is.null(model) || !is.null(model$act))
+    validateACT(X$act, drug, drugDefaults$Concentration.Units)
+    else NULL
   # A pulsed extended-release formulation (Adderall XR): the fractions and
   # delays simCpCe() splits each of its doses into; see R/oral-pulses.R.
   out$oralPulses <- validateOralPulses(X$oralPulses, drug)
@@ -1246,6 +1294,10 @@ getDrugPK <- function(
   # covariates simCpCe() needs to rebuild the PK for each dose size
   # (doseSizePK()).
   out$scDoseBioavailability <- validateDoseBioavailability(X$scDoseBioavailability, drug)
+  # A drug whose clearance an antiseizure interaction can change keeps its
+  # covariates too, so that applyAntiseizureInteractions() can rebuild its PK
+  # sets segment by segment (asmSegmentPK(), R/antiseizureInteractions.R).
+  if (drug %in% asmInteractionVictims()) out$covariates <- covariates
   if (isTRUE(X$doseDependent))
   {
     if (!"dose" %in% names(formals(get(drug, mode = "function"))))
@@ -1260,6 +1312,60 @@ getDrugPK <- function(
   # anything that reads or rewrites the oral dose rows itself, because a
   # zero-order release leaves no row flagged PO for those paths to act on.
   out$oralZeroOrder <- zeroOrder
+
+  # Transit-chain absorption, with an optional active metabolite formed behind
+  # a second chain (enalapril, Faisal 2019).  A chain of N identical
+  # compartments has one eigenvalue repeated N times, which no closed-form
+  # coefficient in this library can carry, so simCpCe() dispatches such a drug
+  # to the exact matrix-exponential engine; see R/advanceTransitChain.R.
+  #
+  # The metabolite is declared INSIDE the block rather than as X$metabolite,
+  # and that is the point rather than a shortcut: the standard resolution above
+  # convolves the parent's exponential coefficients through the metabolite's
+  # disposition, and a defective system has no such coefficients.  The engine
+  # advances both moieties together instead, so it needs the metabolite's own
+  # parameters rather than a set of amplitudes.
+  if (!is.null(X$transitChain))
+  {
+    if (!is.null(X$metabolite) || !is.null(X$oralFormulations) ||
+        !is.null(X$oralSaturation) || !is.null(X$sublingualSaturation) ||
+        !is.null(X$parallelSystems) || !is.null(X$michaelisMenten) ||
+        !is.null(X$osmotic) || !is.null(X$molar) || !is.null(X$oralPulses) ||
+        !is.null(X$oralZeroOrder) || !is.null(X$dosePhase) ||
+        isTRUE(X$doseDependent) || !is.null(X$inr))
+      stop("Invalid transitChain for ", drug, ": not available with an ",
+           "X$metabolite block, several oral formulations, saturable oral or ",
+           "sublingual absorption, parallel systems, Michaelis-Menten ",
+           "elimination, an osmotic or molar dose basis, pulsed or zero-order ",
+           "oral release, a dose-phase split, dose-dependent parameters or ",
+           "an INR.")
+    tc <- validateTransitChain(X$transitChain, out$PK[[PK_EVENT_DEFAULT]], drug)
+    if (!is.null(tc$metabolite))
+    {
+      formed <- tc$metabolite
+      # A parent and its metabolite need not report in the same units, and the
+      # amounts the engine carries are the parent's; see
+      # metaboliteUnitScale() in R/metaboliteCoefficients.R for why its
+      # absence would be wrong by a thousandfold.
+      tc$metabolite$unitScale <- metaboliteUnitScale(
+        drugDefaults$Concentration.Units,
+        getDrugDefaults(formed$name)$Concentration.Units
+      )
+      out$metaboliteName <- formed$name
+      # What simCpCe() reads to lift the metabolite into a series of its own,
+      # and R/compartments.R to label its peripheral panel.  The engine
+      # returns both moieties' concentrations itself, so no coefficients ride
+      # along, and there is no effect site to carry.
+      for (event in names(out$PK))
+        out$PK[[event]]$metabolite <- list(
+          name = formed$name,
+          ke0  = 0,
+          k21  = if (isTRUE(formed$k21 > 0)) formed$k21 else 0,
+          k31  = 0
+        )
+    }
+    out$transitChain <- tc
+  }
 
   # Dose-time phase split (dabigatran after hip replacement): doses given before
   # dosePhase$at minutes use the default PK set, doses at or after it the set
@@ -1478,6 +1584,13 @@ oralFormulationSet <- function(pkSet, absorption, drug, formulation)
 #' @param coef coefficients of the plasma curve
 #' @param lambda its eigenvalues, same length
 #' @param ke0 effect site rate constant, per minute
+#' The search is held to 20 time constants of the slowest rate involved
+#' (and to \code{upper}): a curve with no slow phase, such as a fast
+#' one-compartment drug in an infant, is exactly zero long before 4000
+#' minutes, and a golden-section search whose first probes all read zero
+#' wanders into that flat tail instead of finding the early peak.  The peak
+#' always comes well inside that window.
+#'
 #' @param upper longest time to search, in minutes
 #' @returns the time of the maximum, in minutes
 #' @keywords internal
@@ -1488,6 +1601,7 @@ effectSitePeakTime <- function(coef, lambda, ke0, upper = 4000)
   lambda <- lambda[use]
   ke0 <- separateEigenvalues(ke0, lambda)   # no division by zero
   e <- coef * ke0 / (ke0 - lambda)
+  upper <- min(upper, 20 / min(c(lambda, ke0)))
   stats::optimize(
     function(t) sum(e * exp(-lambda * t)) - sum(e) * exp(-ke0 * t),
     c(0, upper), maximum = TRUE
@@ -1673,4 +1787,37 @@ molarWeightOfDoses <- function(molar, units, drug = "")
          paste(names(mw), collapse = ", "), ": ",
          paste(unique(as.character(units)[missing]), collapse = ", "))
   unname(mw[product])
+}
+
+#' Stop on a disposition the engines cannot use
+#'
+#' Every rate constant is a clearance over a volume, so a volume of zero
+#' divides by zero, and an infinite or NaN covariate term (a negative power of
+#' an age of 0, say) would otherwise run on into the eigenvalue solver and the
+#' plot as NaN.  stanpumpR cannot anticipate every patient it is given, so the
+#' guard sits here, once, for every model: volumes must be finite and
+#' positive, clearances finite and not negative (a missing compartment is
+#' v = 1, cl = 0).  It names the drug, the parameter and its value.
+#'
+#' @param drug the drug name
+#' @param event the PK event
+#' @param pk a named list of v1, v2, v3, cl1, cl2, cl3
+#' @return invisibly NULL; stops if any value is unusable
+#' @keywords internal
+checkDispositionFinite <- function(drug, event, pk)
+{
+  for (name in names(pk)) {
+    value <- pk[[name]]
+    isVolume <- startsWith(name, "v")
+    ok <- is.numeric(value) && length(value) == 1 && is.finite(value) &&
+      (if (isVolume) value > 0 else value >= 0)
+    if (!ok)
+      stop("Unusable pharmacokinetic parameter for ", drug,
+           if (!identical(event, PK_EVENT_DEFAULT)) paste0(" (", event, ")"), ": ",
+           name, " = ", paste(format(value), collapse = ", "),
+           if (isVolume) " (a volume must be finite and positive)"
+           else " (a clearance must be finite and not negative)",
+           call. = FALSE)
+  }
+  invisible(NULL)
 }

@@ -2,33 +2,38 @@ Opioids differ in potency by four orders of magnitude: a typical analgesic conce
 
 ## MEAC
 
-The **minimum effective analgesic concentration** is the plasma (here, effect-site) concentration at which a typical patient reports adequate analgesia for moderate postoperative pain. It was characterised in the 1980s by Austin, Stapleton and Mather for pethidine and by Gourlay and others for fentanyl, morphine and other opioids, using patient-controlled analgesia to find the concentration each patient titrated to. It is a population-typical value; individual MEACs vary several-fold, and MEAC for a given patient depends on the stimulus.
+The **minimum effective analgesic concentration** (MEAC) is, in the studies that defined it, the concentration at which a patient in moderate postoperative pain has just been titrated to adequate relief. Austin, Stapleton and Mather characterised it for pethidine in 1980, and Gourlay and others studied fentanyl, morphine and other opioids with patient-controlled analgesia. Those studies measured two different things, which are easily confused:
 
-stanpumpR holds one MEAC per opioid in the drug library:
+- the **minimum effective concentration** (MEC), sampled when pain returns, often immediately before a patient-controlled demand; and
+- the **MEAC** proper, sampled after titration has restored analgesia, which is higher.
 
-| Opioid | MEAC | Units |
-|---|---|---|
-| remifentanil | 1 | ng/mL |
-| fentanyl | 0.6 | ng/mL |
-| alfentanil | 39 | ng/mL |
-| sufentanil | 0.056 | ng/mL |
-| morphine | 0.008 | mcg/mL (8 ng/mL) |
-| pethidine | 0.25 | mcg/mL |
-| hydromorphone | 1.5 | ng/mL |
-| methadone | 0.06 | mcg/mL |
-| oxycodone | 12 | ng/mL |
-| oliceridine | 27.9 | ng/mL |
-| hydrocodone | 12 | ng/mL |
-| oxymorphone | 0.8 | ng/mL |
-| desmetramadol | 84 | ng/mL |
+Gourlay's 0.63 ng/mL for fentanyl, for example, is an MEC; Bae and colleagues measured both after abdominal surgery and found a median MEC of 0.72 ng/mL and a MEAC of 0.99. Either is a population-typical value: individual values vary several-fold, and depend on the stimulus.
 
-The drug pages carry the current values and their provenance. Several (oxycodone, oliceridine) are compromises between discordant sources, and several (hydrocodone, oxymorphone, desmetramadol) are provisional or await verification; the drug pages say so. The prodrugs codeine and tramadol have no MEAC of their own: their analgesia is counted on the morphine and desmetramadol rows. Buprenorphine, a high-affinity partial agonist that does not add to full agonists, has none and is not on the panel.
+stanpumpR holds one value per opioid in the drug library, in the column named MEAC. It is the **divisor** the MEAC panel uses, and its provenance differs from row to row: a few are measured values, most are the library's own working values, and some are derived from dose-potency ratios, which are not concentration ratios. The table says which is which.
+
+| Opioid | MEAC | Units | Basis |
+|---|---|---|---|
+| remifentanil | 1 | ng/mL | Library value; the unit of the interaction panel |
+| fentanyl | 0.6 | ng/mL | Library value, near Gourlay 1988's MEC (0.63 ng/mL, blood, before a PCA demand) |
+| alfentanil | 39 | ng/mL | Library value |
+| sufentanil | 0.056 | ng/mL | Library value |
+| morphine | 0.008 | mcg/mL (8 ng/mL) | Library value; Dahlström 1982 measured an MEC of 16 ± 9 ng/mL (plasma) |
+| pethidine | 0.46 | mcg/mL | Measured: Austin 1980's MEAC (blood, intramuscular dosing) |
+| hydromorphone | 1.5 | ng/mL | Library value |
+| methadone | 0.06 | mcg/mL | Gourlay's postoperative value, as quoted by Inturrisi |
+| oxycodone | 12 | ng/mL | Library value, set for consistency with morphine; Kokki 2012 measured an MEC of 21 and a MEAC of 45 to 50 ng/mL in adults, and Olkkola 1994 a fitted concentration of 12 ng/mL at the return of pain in children |
+| oliceridine | 27.9 | ng/mL | Measured in healthy volunteers: Dahan 2020's effect-site potency for a 50% rise in cold-pressor tolerance |
+| hydrocodone | 12 | ng/mL | Provisional: set equal to oxycodone's, from equianalgesic oral doses |
+| oxymorphone | 0.8 | ng/mL | Provisional: a tenth of morphine's, from an intramuscular dose-potency ratio |
+| desmetramadol | 84 | ng/mL | Working value: Grond 1999's mean total M1 before PCA demands, during racemic tramadol |
+
+The drug pages give each value's source and caveats in full. The prodrugs codeine and tramadol have no MEAC of their own: their μ-opioid effect is counted on the morphine and desmetramadol rows, and tramadol's monoaminergic analgesia is not counted anywhere. Buprenorphine, a high-affinity partial agonist that does not add to full agonists, has none and is not on the panel. Nor are the opt-in illicit opioids (diamorphine and carfentanil), which are plotted as plasma concentrations only, or naloxone, an antagonist: giving it does not lower the total.
 
 ## The panel
 
-With *Additional Plots → MEAC* ticked, each opioid's effect-site concentration is plotted as a percentage of its MEAC, and a **total opioid** line adds them: a patient at 60 per cent of a fentanyl MEAC and 60 per cent of a morphine MEAC is taken to be at 120 per cent, as if the two were a single opioid. This assumes the opioids act additively at the same receptor, which is a reasonable first approximation for μ agonists.
+With *Graph Options → Additional plots → MEAC* ticked, each opioid's effect-site concentration is plotted as a percentage of its MEAC, and a **total opioid** line adds them: a patient at 60 per cent of a fentanyl MEAC and 60 per cent of a morphine MEAC is taken to be at 120 per cent, as if the two were a single opioid. This assumes the opioids act additively at the same receptor, which is a reasonable first approximation for μ agonists, and that equal multiples of each row's divisor are equally effective, which the mixed provenance of the divisors above does not guarantee. Read the total as an exploratory comparison, not a validated measure of analgesia.
 
-The same sum, as a fraction rather than a percentage, is the opioid "U" that drives the [propofol-opioid interaction](help:models/interaction) (through remifentanil equivalents) and the [opioid reduction of MAC](help:models/opioid-mac).
+The same sum, as a fraction rather than a percentage, is the opioid "U" that drives the [propofol-opioid interaction](help:models/interaction) (through remifentanil equivalents) and the [opioid reduction of MAC](help:models/opioid-mac). Both were fitted with remifentanil (or, for the MAC reduction, from the published reductions of individual opioids); carrying every other opioid into them through its divisor is stanpumpR's extension, so for any opioid but remifentanil those panels are exploratory too.
 
 ## % MEAC on each opioid's own panel
 
@@ -36,7 +41,7 @@ The same sum, as a fraction rather than a percentage, is the opioid "U" that dri
 
 ## The shaded band and the threshold
 
-For the opioids from remifentanil to methadone in the table, the drug library's typical range is expressed in MEACs: 0.8 to 2 MEAC, with 1.2 MEAC as the typical value; the later opioids take their bands from their own sources. The default recovery threshold for *Time until threshold* is 1 MEAC (oxycodone's, 10 ng/mL, and oliceridine's, 27.4 ng/mL, sit a little below theirs): the moment analgesia is expected to become inadequate (or, for a ventilated patient, the moment spontaneous ventilation is expected to resume, which is near the same concentration).
+For the opioids from remifentanil to methadone in the table, the drug library's typical range is expressed in MEACs: 0.8 to 2 MEAC, with 1.2 MEAC as the typical value; the later opioids take their bands from their own sources. The default recovery threshold for *Time until threshold* is 1 MEAC (oxycodone's, 10 ng/mL, a chosen working value, and oliceridine's, 27.4 ng/mL, its respiratory potency, sit a little below theirs). The line is the time until the modelled effect-site concentration falls to that number, roughly when analgesia would be expected to become inadequate. Clinical experience puts the return of spontaneous ventilation in an apnoeic patient near the same concentration, but that is a rule of thumb: the program has no model of ventilation, and for some opioids, methadone among them, respiratory depression outlasts analgesia.
 
 ## What to look for
 
@@ -47,3 +52,5 @@ For the opioids from remifentanil to methadone in the table, the drug library's 
 Austin KL, Stapleton JV, Mather LE. Relationship between blood meperidine concentrations and analgesic response: a preliminary report. *Anesthesiology* 1980;53:460-466.
 
 Gourlay GK, Kowalski SR, Plummer JL, Cousins MJ, Armstrong PJ. Fentanyl blood concentration-analgesic response relationship in the treatment of postoperative pain. *Anesth Analg* 1988;67:329-337.
+
+Bae J, Kwon M, Lee YH, Lee EK, Choi BM, Noh GJ. An allometric pharmacokinetic model and minimum effective analgesic concentration of fentanyl in patients undergoing major abdominal surgery. *Br J Anaesth* 2020;125:976-985.

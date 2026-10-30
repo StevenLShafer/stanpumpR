@@ -33,7 +33,8 @@ it also sets the weight the creatinine-clearance estimate uses.}
 \item{cyp2d6}{CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}.}
 
 \item{pregnant}{is the patient pregnant?  \code{TRUE} multiplies the
-clearance by 1.5 and the oral bioavailability by 0.5, except in a CYP2D6
+clearance, the volumes and Q by 1.5 and the oral bioavailability by 0.5,
+except in a CYP2D6
 poor metaboliser (Ryu 2015; see the file's header).}
 }
 \value{

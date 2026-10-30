@@ -38,20 +38,24 @@
 #   kp = k23 + k24 = 2.89 /h), is APPROXIMATED by one first-order depot with a
 #   lag:
 #   first-order path (31% of the dose): one depot matching the mean and
-#     variance of the delay, mean = Lag0 + 1/ka + 1/kp, var = 1/ka^2 + 1/kp^2,
-#     1/ka' = sqrt(var), lag' = mean - 1/ka': ka' 0.05299 /h, lag' 3.153 h.
+#     variance of the delay, mean = 1/ka + 1/kp, var = 1/ka^2 + 1/kp^2,
+#     1/ka' = sqrt(var), lag' = mean - 1/ka': ka' 0.05299 /h, lag' 0.343 h.
+#     Lag0 does not delay this path: it belongs to the zero-order input
+#     only (see below).
 #   zero-order path (69%): ASA's half-life is 14 min, so its plasma curve
 #     follows the shape of the input, and the moment-matched depot (ka' 1.75
 #     /h, lag' 3.37 h) put the ASA peak 35% too high.  Instead ka' and lag'
 #     were fitted by least squares (R, optim; Claude Code, 2026-10-10) to the
 #     ASA curve of Koh's exact structure (zero-order input into the
 #     pre-systemic compartment, solved numerically, 100 mg tablet, 0-24 h,
-#     at the median weight): ka' 1.032 /h, lag' 3.269 h.
+#     at the median weight): ka' 1.036 /h, lag' 3.271 h.  (Refitted
+#     2026-10-28 when Lag0 was taken off the first-order path; with it on
+#     both paths the same script returns the earlier 1.032 /h and 3.269 h.)
 #   Against the exact structure, 100 mg tablet at the median weight: ASA
 #   peak 0.48 against 0.49 mg/L, but at 3.8 h against 4.4 h (the exact curve
-#   is a plateau, the approximation a spike); salicylate peak 4.04 against
-#   4.65 mg/L (13% low) at 5.2 h against 5.1 h; both AUCs identical (see
-#   test-drugs-aspirin.R).  No single depot gets both peaks: the
+#   is a plateau, the approximation a spike); salicylate peak 4.15
+#   against 4.77 mg/L (13% low) at 5.1 h against 5.0 h; both AUCs
+#   identical (see test-drugs-aspirin.R).  No single depot gets both peaks: the
 #   moment-matched one gave salicylate within 2% and ASA 35% high, and a
 #   joint fit to both curves settles on this one.  ASA, the antiplatelet
 #   species, was preferred; salicylate at 4 mg/L is far below analgesic
@@ -64,9 +68,10 @@
 # table, was not available):
 # - Wmed, the median weight the weight terms are normalised to, is taken as
 #   68.35 kg (from a literature summary, not checked against Table S1).
-# - Whether Lag0 delays the first-order path as well as the zero-order one.
-#   It is applied to both here, as enteric coating would; Figure 1 lists it
-#   with Tk0 and fr without saying.
+#
+# Lag0 delays the ZERO-ORDER input only (Koh's Methods tie it to the
+# zero-order fraction; Steven L. Shafer, 2026-10-28).  Until then it was
+# applied to both paths, which delayed the first-order share by 2.81 h too.
 #
 # WHERE TO BE CAREFUL
 # ===================
@@ -103,8 +108,8 @@ SALICYLATE_MW     <- 138.12       # g/mol, salicylic acid
 ASPIRIN_K23 <- 2.32               # /h, pre-systemic -> ASA
 ASPIRIN_K24 <- 0.57               # /h, pre-systemic -> SA
 
-ASPIRIN_KA_ZERO  <- 1.032        # /h, zero-order path as one depot (fitted, see header)
-ASPIRIN_LAG_ZERO <- 3.269        # h
+ASPIRIN_KA_ZERO  <- 1.036        # /h, zero-order path as one depot (fitted, see header)
+ASPIRIN_LAG_ZERO <- 3.271        # h
 
 # One first-order depot with a lag matching the mean and variance of a delay.
 # Returns ka (/h) and lag (h).
@@ -128,9 +133,11 @@ aspirin <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   # Absorption: two paths, each followed by the pre-systemic compartment
   kp   <- ASPIRIN_K23 + ASPIRIN_K24
-  lag0 <- 2.81; fr <- 0.69; ka1 <- 0.053               # tablet
+  fr <- 0.69; ka1 <- 0.053                             # tablet
+  # The zero-order path's depot carries Lag0 (2.81 h) inside its fitted lag;
+  # the first-order path has no Lag0 (see the header).
   zero  <- c(ka = ASPIRIN_KA_ZERO, lag = ASPIRIN_LAG_ZERO)
-  first <- aspirinDepot(lag0 + 1 / ka1 + 1 / kp, 1 / ka1^2 + 1 / kp^2)
+  first <- aspirinDepot(1 / ka1 + 1 / kp, 1 / ka1^2 + 1 / kp^2)
   toASA <- ASPIRIN_K23 / kp
 
   default <- list(

@@ -7,6 +7,51 @@ A new drug touches **four** files, including a help page. None of the engine cod
 > Every model must handle body size the stanpumpR way — see
 > [weight-adjustment.md](weight-adjustment.md) and step 1 below. This is a requirement, not an option.
 
+> Every model must also carry its **therapeutic reference range** as the band, wherever one is
+> established for the analyte it plots, and its help page must say where the range came from —
+> or, when there is none, why. See *The therapeutic range* in step 2. This too is a requirement.
+
+> **Step zero: look for the drug before you start, in the open PRs' CHANGED FILES.** Several
+> Claude sessions run at once on different threads, and they collide. Before ANY edit for the
+> drug — the model, the CSV row, the test, the help page, the pregnancy or therapeutic-range
+> row, a registry row — check master's recent commits and every open pull request:
+>
+> ```bash
+> name=<name>
+> git fetch origin master -q || { echo "PREFLIGHT FAILED: cannot fetch master"; exit 1; }
+> git log --oneline -i -G "$name" origin/master -15                 # merged recently
+> prs=$(gh pr list --state open --json number --jq '.[].number') ||
+>   { echo "PREFLIGHT FAILED: cannot list open PRs"; exit 1; }
+> for n in $prs; do                                                 # in flight
+>   d=$(gh pr diff "$n") || { echo "PR $n: COULD NOT READ -- check by hand"; continue; }
+>   printf '%s' "$d" | grep -qi "$name" && echo "PR $n mentions $name"
+> done
+> ```
+>
+> Every step fails LOUDLY on purpose. `gh pr diff` writing nothing because it errored looks
+> exactly like a PR that does not mention the drug, and a `gh pr list` that fails gives an
+> empty loop that looks exactly like "no open PRs" — so an unchecked PR would read as a clean
+> result. A safety check that passes silently when it could not run is worse than no check,
+> because it manufactures confidence. Chain the fetch too: a stale `origin/master` searched
+> successfully is the same trap.
+>
+> Search the **diff content**, and search master as well as the open PRs. Titles and branch
+> names are no good: a branch may be called anything, and the PR that added ephedrine was
+> `claude/magical-faraday-0ol951`. Changed *paths* are not enough either — of the 18 files
+> that PR touched, only four had "ephedrine" in the path, while `drugDefaults_global.csv`,
+> `therapeuticRanges.csv`, `pregnancyRegistry.csv` and the vasoactive registry each carried a
+> row for it under a name that matches nothing. A drug that is only a row in shared files is
+> invisible to a path search. And master matters as much as the open PRs: the ephedrine drug
+> was *merged* while the PR removing it was open.
+>
+> Use `-G`, not the `-S` pickaxe: `-S` reports only commits that change the NUMBER of
+> occurrences, so a commit that edits an existing row leaves no trace in it. On this repository
+> `-G 'ephedrine'` returns 12 commits and `-S` returns 7, and the five it misses include two
+> that corrected an existing ephedrine line — exactly the "someone is working on this right
+> now" signal the check exists to catch. Twice in October 2026 two sessions did the same work in parallel and one PR
+> had to be closed as superseded; once, two sessions added and removed the same drug on the
+> same day. See the concurrency rules in `AGENTS.md`.
+
 > Prerequisite: read the [architecture map](architecture.md) first if you haven't. You only
 > need to understand the *drug library* pattern, not the closed-form solver.
 
@@ -531,7 +576,7 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
   TCI API's drug list, which `docs/tci-api.md` publishes, `TCI_DRUGS` in `test-tci-api.R`
   pins and [FauxTCI](https://github.com/StevenLShafer/FauxTCI) is built against: adding
   them means updating that roster and the API documentation, and it is a change to a
-  published contract rather than a local one. A `qd`/`bid`/`tid`/`qid`/`qwk` suffix opts
+  published contract rather than a local one. A `qd`/`bid`/`tid`/`qid`/`q4h`/`qwk` suffix opts
   into `scheduled.R`'s repeats, an `SC` suffix into the tissue depot, and a unit naming a
   salt or product into `doseProduct()`. Offer only what the drug's evidence supports: an
   investigational or research model usually wants a bare mass unit and nothing else.
@@ -576,6 +621,52 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
   represent (anything pulmonary) must be recorded and refused rather than aliased to `IN`.
   These models are plasma only: `tPeak` 0, `MEAC` 0 and no band, as the sources support no
   effect site. See `inst/help/models/illicit-drugs.md`.
+
+### The therapeutic range (required where one exists)
+
+The band is how a user compares a curve with the concentrations that work, so **a drug model is
+not finished until its band is either set or its absence is explained**. Before writing the
+row, look for a therapeutic reference range, in this order:
+
+1. **A consensus guideline for the drug's class**: for psychiatric and antiseizure drugs,
+   Table 5 of the AGNP-TDM consensus guideline's update 2026 (Hart 2026, *Pharmacopsychiatry*
+   59:166-295, doi 10.1055/a-2860-7861; open access, 160 drugs, each with its sampling time,
+   laboratory alert level and level of recommendation; it supersedes the update 2017, Hiemke
+   2018, and builds on the AGNP task force's drug-by-drug systematic reviews); for an
+   antiseizure drug it omits, the ILAE position paper (Patsalos 2008, *Epilepsia*
+   49:1239-1276) and its 2018 update (Patsalos 2018, *Ther Drug Monit* 40:526-548), with
+   national harmonizations such as Reimers 2018 (*Drug Des Devel Ther* 12:271-280);
+   for antibiotics the MIC (`antibioticMicTable()`, above); for anaesthetics and analgesics
+   the effect-site concentrations of the clinical literature.
+2. **The product monograph**: the FDA label (Drugs@FDA, DailyMed) and the EMA SmPC. Older
+   drugs often state a range (phenytoin, carbamazepine, valproate, ethosuximide, digoxin);
+   most newer ones say none is established, which is itself worth recording.
+3. **Exposure-response analyses** of the source or the regulatory review, as for gabapentin.
+
+Then check that the range describes **what the row plots**: the same analyte (a parent, not a
+parent plus metabolite; total or unbound), the same matrix (serum, plasma, whole blood) and the
+same use (a chronic trough window does not describe intravenous loading). Draw it only when it
+does. A range for a parent plus a metabolite is drawn on the row carrying most of the sum only
+when that share is stable (bupropion on hydroxybupropion); otherwise neither row carries it.
+Set `Typical` inside the band (its midpoint unless the source names a target), and say on the
+help page that it is not a target.
+
+Every drug with a `Category`, and every metabolite of one, has a row in
+`inst/extdata/therapeuticRanges.csv` (`R/therapeuticRanges.R`; `THERAPEUTIC_RANGE_CATEGORIES`
+in `R/constants.R` is every category): the analyte, matrix,
+sampling time, limits in the plotted units (`mg/L` for a `mcg` drug, `ng/mL` for `ng`,
+`IU/mL`, `INR`, `s` for an ACT, and so on), the
+laboratory alert level and level of recommendation where the guideline gives them, the
+source and DOI, **how far the source was read** (`verification`: full text, label, abstract,
+or a secondary quotation — never a number from memory), the range it replaced, what the FDA or
+EMA product information says, and a `band_status` from `THERAPEUTIC_RANGE_STATUSES`: `drawn`,
+`drawn_on_metabolite`, `sum_not_drawn`, `pending_verification`, `not_applicable`,
+`band_differs` (the guideline's range is for another use or analyte, and the band is the
+library's own for what the row plots, which the notes name), `library_band` (no range is
+established, and the band is the library's own: an effect-site target, an MBC band, what
+ordinary doses reach, which the notes name) or `none_established`.
+`test-therapeutic-ranges.R` fails until every such drug has a row and the
+band columns agree with it, and the drug's help page prints the row.
 
 Example row (remifentanil):
 
@@ -631,7 +722,10 @@ The in-app help (the **Help** tab) generates a page for every drug in the CSV: i
 at six reference patients, its citation, its units and typical range, all computed from the
 files above so they cannot drift. What it cannot generate is the narrative — the population
 the model was fitted in, which covariates it uses and how, where it is extrapolated, who did
-the work. That goes in `inst/help/drugs/<name>.md`, starting at `###` headings (it is appended
+the work, and **where the band comes from**: the range, its source with a DOI, the analyte and
+sampling time it applies to, and the range it replaced if it was revised — or, when no band is
+drawn, why not (no range established, a range for a parent plus metabolite, a range for a
+different use). That goes in `inst/help/drugs/<name>.md`, starting at `###` headings (it is appended
 under an "About this model" heading). `tests/testthat/test-help-drugs.R` fails if the file is
 missing. See `inst/help/README.md` for the Markdown conventions and `inst/help/drugs/fentanyl.md`
 for a short example.

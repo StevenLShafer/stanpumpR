@@ -44,9 +44,22 @@
 # fat-free mass with the switch on; with it off they are the published values
 # for everyone (legacyVolume = 1).
 #
-# NO EFFECT SITE, NO BAND
-# =======================
-# The source measured no effect.  Plasma only.
+# EFFECT SITE: tPeak 5 MINUTES, FOR HEART RATE; NO BAND
+# =====================================================
+# Lammers measured no effect.  Ritchie RH, Morgan DJ, Horowitz JD, J Pharm
+# Sci 1998;87:177-182 (doi 10.1021/js9702776, read in full) gave 4 mg
+# intravenously to 12 patients with ischaemic heart disease at cardiac
+# catheterisation and fitted an effect compartment to MYOCARDIAL metoprolol
+# content (uptake 1.85 /min, efflux 0.061 /min), not plasma, so its ke0 is
+# not carried over; but on its own model the reduction in heart rate (ke0
+# 1.30 /min) peaks 3.3 minutes after the bolus, with a wide 95% interval
+# (ke0 -0.06 to 2.66 /min), and the paced PR interval and LV dP/dt max (ke0
+# 0.30 and 0.29 /min) about 7.3 minutes after it; the companion papers
+# observed the peak effects 5-10 minutes after the bolus.  The label
+# (Lopressor) puts maximal beta blockade about 20 minutes after a 10-minute
+# infusion in volunteers.  On Steven L. Shafer's decision (2026-10-20) the
+# tPeak is 5 minutes, the start of the observed 5-10 minutes, rather than
+# the 3.3 minutes of the heart-rate fit.
 #
 # PREGNANCY
 # =========
@@ -82,7 +95,12 @@
 # clearance and volume rose together.  So the volumes and the distribution
 # clearance take the clearance's factor as well
 # (METOPROLOL_PREGNANCY_V_FACTOR = 1.5), which leaves every rate constant,
-# and so the half-lives, unchanged, as Hogstedt measured.  With the Patient
+# and so the half-lives, unchanged, as Hogstedt measured.  That joint scaling
+# is an ASSUMPTION chosen to keep the half-lives: Hogstedt reports one
+# volume and two half-lives, which do not identify V1, V2 and Q separately,
+# and the clearance/bioavailability split is itself derived from Ryu's CL/F
+# through a well-stirred liver, not measured as such (though Hogstedt's F and
+# systemic clearance agree with it).  With the Patient
 # Profile's Pregnant field on, CL1, V1, V2 and Q take 1.5 and the oral
 # bioavailability 0.5; ka is unchanged.  They
 # are NOT applied to a CYP2D6 poor metaboliser, since pregnancy cannot induce
@@ -116,6 +134,7 @@ METOPROLOL_Q  <- 74.5      # L/h
 METOPROLOL_V2 <- 97.6      # L
 METOPROLOL_KA <- 1.19      # /h
 METOPROLOL_F  <- 0.45
+METOPROLOL_TPEAK <- 5     # min, heart rate (Ritchie 1998's observed 5-10 min)
 # Fixed from one poor and one ultrarapid metaboliser
 METOPROLOL_CYP2D6_CL <- c(poor = 0.44, intermediate = 1, normal = 1,
                           ultrarapid = 2.01)
@@ -182,8 +201,9 @@ metoprolol <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "2017;56:1231-1244.  Two compartments in 12 healthy men (20 mg IV, 100 mg ",
     "PO): CL 65.8 L/h, V1 187 L, Q 74.5 L/h, V2 97.6 L, ka 1.19 /h, F 0.45; ",
     "CYP2D6 poor metaboliser CL x 0.44 and F x 2.28, ultrarapid CL x 2.01 and ",
-    "F x 0.43 (one subject each); CYP2D6 ", cyp2d6, ". ",
-    "https://doi.org/10.1007/s40262-017-0515-7"
+    "F x 0.43 (one subject each); CYP2D6 ", cyp2d6, ".  Time to peak ",
+    "heart-rate effect 5 min (Ritchie RH et al., J Pharm Sci ",
+    "1998;87:177-182: peak effects 5-10 min). https://doi.org/10.1007/s40262-017-0515-7"
   )
   if (pregnancyApplied) {
     reference <- paste0(reference, "; ", pregnancyReference(
@@ -195,7 +215,7 @@ metoprolol <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   list(
     PK = PK,
-    tPeak = 0,
+    tPeak = METOPROLOL_TPEAK,
     MEAC = 0,
     typical = 0,
     upperTypical = 0,

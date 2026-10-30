@@ -562,5 +562,7 @@ HELP_GENERATED_BLOCKS <- list(
   "parkinsons-products-table" = helpParkinsonsProductsMarkdown,
   "parkinsons-registry-table" = helpParkinsonsRegistryMarkdown,
   "parkinsons-to-obtain" = helpParkinsonsToObtainMarkdown,
-  "antibiotic-mbc-table" = helpAntibioticMbcBandMarkdown
+  "antibiotic-mbc-table" = helpAntibioticMbcBandMarkdown,
+  "antiseizure-interaction-table" = helpAntiseizureInteractionTableMarkdown,
+  "antiseizure-interaction-sources" = helpAntiseizureInteractionSourcesMarkdown
 )

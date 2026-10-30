@@ -11,8 +11,7 @@ oxycodone(
   sex,
   cyp2d6 = CYP2D6_DEFAULT,
   adjustToFFM = TRUE,
-  creatinine = NULL,
-  pregnant = FALSE
+  creatinine = NULL
 )
 }
 \arguments{
@@ -32,9 +31,6 @@ scales oxymorphone formation only}
 
 \item{creatinine}{serum creatinine in mg/dL, or NULL for an assumed normal
 value for age and sex}
-
-\item{pregnant}{is the patient pregnant?  \code{TRUE} multiplies the
-elimination clearance by 3.8/2.6 (Ansari 2016; see the file's header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects, naming

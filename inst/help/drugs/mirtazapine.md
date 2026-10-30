@@ -34,7 +34,7 @@ Only the plasma concentration is plotted. The antidepressant response follows th
 
 ### Typical concentrations
 
-The shaded band, 30 to 80 ng/mL, with 50 as the typical value, is the AGNP consensus therapeutic reference range (Hiemke and colleagues, *Pharmacopsychiatry* 2018;51:9-62).
+The shaded band, 30 to 80 ng/mL, with 50 as the typical value, is the AGNP consensus therapeutic reference range, 12 hours after a dose (Hiemke and colleagues, *Pharmacopsychiatry* 2018;51:9-62; unchanged in the 2026 update, Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5, with a laboratory alert level of 160 ng/mL).
 
 ### Not used
 

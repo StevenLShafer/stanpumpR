@@ -6,7 +6,7 @@ Read this section before using the curve.
 
 This model therefore runs on **sufentanil's disposition**, on the judgement of **Shafer** that carfentanil's pharmacokinetics are likely identical to sufentanil's. The two are close congeners from the same 4-substituted phenylpiperidine series and share the physicochemistry that sets volumes and clearance in this class: high lipophilicity, high protein binding, high hepatic extraction. That is an informed assumption by a pharmacokineticist, recorded as one. It is **not a fitted carfentanil model** and must not be cited as one.
 
-The parameters are not copied into this drug — the function calls sufentanil's and returns its vector, so the two are identical by construction and any future correction to sufentanil carries across. The underlying numbers are Gepts and colleagues (*Anesthesiology* 1995;83:1194-1204), a 70 kg adult: V1 14.3 L, V2 63.4 L, V3 261.6 L, clearance 0.922 L/min.
+The parameters are not copied into this drug — the function calls sufentanil's and returns its vector, so the two are identical by construction and any future correction to sufentanil carries across. The underlying numbers are Gepts and colleagues (*Anesthesiology* 1995;83:1194-1204), a 70 kg adult: V1 14.3 L, V2 63.1 L, V3 261.6 L, clearance 0.92 L/min.
 
 ### What the assumption covers, and what it does not
 

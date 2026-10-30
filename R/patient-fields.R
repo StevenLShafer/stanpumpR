@@ -2,7 +2,8 @@
 # the serum creatinine reach.
 #
 # getDrugPK() passes a covariate only to the models that name it in their
-# signature (`cyp2d6`, `cyp2c19`, `cyp2c9`, `cyp2b6`, `creatinine`), so the
+# signature (`cyp2d6`, `cyp2c19`, `cyp2c9`, `cyp2b6`, `creatinine`,
+# `gestationalAge`), so the
 # signatures are the one authoritative list of what a field affects.  The
 # tooltips read them, as the Cautions page's test does, so a new model that
 # names a covariate joins its tooltip by itself, and a tooltip can never
@@ -16,7 +17,9 @@ PATIENT_FIELD_LABELS <- c(
   cyp2c9     = "CYP 2C9",
   cyp2b6     = "CYP 2B6",
   vkorc1     = "VKORC1",
-  creatinine = "Serum creatinine"
+  cyp4f2     = "CYP4F2",
+  creatinine = "Serum creatinine",
+  gestationalAge = "Gestational age at birth"
 )
 
 # A qualification printed after a drug's name in its tooltip, where a model
@@ -77,6 +80,25 @@ patientFieldReadersSentence <- function(arg, drugDefaults = getDrugDefaultsGloba
 #' @inheritParams patientFieldReaders
 #' @return a single string for `bslib::tooltip()`.
 #' @noRd
+#' The grey hint shown in an empty Serum creatinine box
+#'
+#' The field is optional, and an empty box says nothing about what empty
+#' MEANS: each renal model substitutes the normal creatinine for the patient's
+#' age and sex (`assumedCreatinine()`, R/renalFunction.R).  The placeholder
+#' shows that value, so the assumption is visible without hovering for the tip,
+#' which states the same thing in words.  It is only a hint: it disappears as
+#' soon as anything is typed, and an empty field still reaches the models as
+#' NULL.
+#'
+#' @param age age in years
+#' @param sex `"male"` or `"female"`
+#' @return the placeholder string, e.g. `"0.9 assumed"`
+#' @keywords internal
+creatininePlaceholder <- function(age, sex) {
+  sprintf("%s assumed",
+          format(round(assumedCreatinine(age, sex), 2), nsmall = 1, trim = TRUE))
+}
+
 patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
   arg <- match.arg(arg, names(PATIENT_FIELD_LABELS))
   readers <- patientFieldReadersSentence(arg, drugDefaults)
@@ -107,15 +129,33 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
       "values."
     ),
     vkorc1 = paste(
-      "VKORC1 -1639G>A genotype (GG is the wild-type reference).",
+      "VKORC1 -1639G>A genotype (GG is the wild-type reference, AA the",
+      "sensitive one).",
       "It sets sensitivity to the vitamin-K antagonists: the A allele lowers",
       "the C50, so the INR rises on less drug. Read by the library warfarin",
       "(Xue) model, the Hamberg companion model (with CYP2C9 and age), and",
-      "fluindione and acenocoumarol."
+      "fluindione and acenocoumarol.",
+      "AA, the most sensitive genotype, is assumed until a genotype is",
+      "entered, so that the curve errs toward the larger INR. It is also the",
+      "commonest genotype in the Asian patients of the source cohort, which",
+      "excluded South Indians, while GG is commonest in Black patients and",
+      "GA in White ones. These are group frequencies, not findings about a",
+      "patient; the Patient Profile help page gives them with their source."
+    ),
+    cyp4f2 = paste(
+      "CYP4F2 rs2108622 (1297C>T) genotype. A C allele lowers the warfarin",
+      "C50, so the INR rises on less drug; T/T needs the most warfarin.",
+      "CC, the most sensitive genotype, is assumed until a genotype is",
+      "entered, so that the curve errs toward the larger INR."
     ),
     creatinine = paste(
       "The patient's serum creatinine, from which the renally cleared",
       "drugs estimate renal function."
+    ),
+    gestationalAge = paste(
+      "The gestational age at birth, in weeks. With the age it gives the",
+      "postmenstrual age, on which the clearance of the neonatal models",
+      "that read it matures."
     )
   )
   trail <- if (arg == "creatinine") sprintf(
@@ -125,6 +165,79 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
       "child. Renal impairment is then not represented."
     ),
     SCR_ASSUMED_MALE, SCR_ASSUMED_FEMALE
+  ) else if (arg == "gestationalAge") sprintf(
+    "Leave blank for a term birth (%s weeks): a premature infant's clearance is then overstated.",
+    GESTATIONAL_AGE_TERM
   ) else NULL
   paste(c(lead, readers, trail), collapse = " ")
+}
+
+# The Patient Profile fields and Graph Options controls shown only while a drug
+# they apply to is in the dose table (Steven L. Shafer, 2026-10-28: as the
+# library grew, the panels filled with fields that do nothing for the drugs
+# plotted).  Each name is the control's `relevantField()` id without its
+# "field_" prefix, except the two Additional plots choices, which the server
+# hides inside their checkbox group.
+RELEVANT_FIELDS <- unname(c(
+  "pregnant", "opioidTolerance", names(PATIENT_FIELD_LABELS), "osmolality",
+  "showMEAC", "opioidMacInteraction",
+  vapply(COMPANION_MODEL_GROUPS, `[[`, character(1), "input"),
+  ASM_INTERACTIONS_INPUT,
+  "plotMEAC", "plotInteraction"
+))
+
+# The drugs whose model reads each covariate: the model signatures, read once
+# per drug table, since a session asks on every change of the dose table.
+patientFieldReaderCache <- new.env(parent = emptyenv())
+patientFieldReaderSets <- function(drugDefaults = getDrugDefaultsGlobal()) {
+  key <- paste(drugDefaults$Drug, collapse = ",")
+  if (!identical(patientFieldReaderCache$key, key)) {
+    args <- c(names(PATIENT_FIELD_LABELS), "pregnant")
+    patientFieldReaderCache$sets <- stats::setNames(
+      lapply(args, patientFieldReaders, drugDefaults = drugDefaults), args)
+    patientFieldReaderCache$key <- key
+  }
+  patientFieldReaderCache$sets
+}
+
+#' Which of the optional controls apply to the drugs in the dose table
+#'
+#' A covariate field is relevant when a drug in the table names it in its
+#' model's signature (as getDrugPK() passes it), the baseline osmolality when
+#' an osmotic agent is, and the opioid controls (Opioid tolerance, % MEAC, the
+#' MEAC plot) when an opioid is: a drug of the Opioids category or with a
+#' MEAC.  The opioid-MAC interaction needs an inhaled agent as well, and the
+#' Interaction plot propofol.  A companion model's box is relevant when a
+#' drug of its group is dosed, and the antiseizure interactions box when the
+#' table holds an interaction the model applies.
+#'
+#' @param drugs the drug names in the dose table (blanks are ignored).
+#' @param drugDefaults the session's drug table.
+#' @return a logical vector named by `RELEVANT_FIELDS`.
+#' @noRd
+relevantFields <- function(drugs, drugDefaults = getDrugDefaultsGlobal()) {
+  drugs <- unique(drugs[!is.na(drugs) & nzchar(drugs)])
+  rows <- drugDefaults[drugDefaults$Drug %in% drugs, , drop = FALSE]
+  readers <- patientFieldReaderSets(drugDefaults)
+  reads <- function(arg) any(drugs %in% readers[[arg]])
+  opioid <- any(rows$Category %in% "Opioids" |
+                (!is.na(rows$MEAC) & rows$MEAC > 0))
+  # a potent agent, not a carrier gas: only an agent has a MAC to interact with
+  gas <- any(drugs %in% potentAgents())
+  out <- c(
+    pregnant        = reads("pregnant"),
+    opioidTolerance = opioid,
+    vapply(names(PATIENT_FIELD_LABELS), reads, logical(1)),
+    osmolality      = any(rows$Concentration.Units %in% "mOsm"),
+    showMEAC        = opioid,
+    opioidMacInteraction = opioid && gas,
+    vapply(names(COMPANION_MODEL_GROUPS), function(group)
+      any(drugs %in% companionGroupDrugs(group)), logical(1)) |>
+      stats::setNames(vapply(COMPANION_MODEL_GROUPS, `[[`, character(1), "input")),
+    stats::setNames(nrow(activeAntiseizureInteractions(drugs)) > 0,
+                    ASM_INTERACTIONS_INPUT),
+    plotMEAC        = opioid,
+    plotInteraction = opioid && "propofol" %in% drugs
+  )
+  out[RELEVANT_FIELDS]
 }

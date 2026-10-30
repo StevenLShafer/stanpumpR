@@ -70,7 +70,7 @@ test_that("with the switch on, weight and Cockcroft-Gault use the pharmacokineti
 })
 
 test_that("pregnancy: creatinine clearance x 1.5 in the renal term, only with a blank creatinine", {
-  # Hebert 2008: renal clearance x 1.49 in the third trimester.  A woman of 30
+  # The library's GFR rule (Hebert 2008: total renal x 1.57).  A woman of 30
   # years, 70 kg, 165 cm, fat-free-mass scaling on, creatinine blank.
   on  <- getDrugPK("digoxin", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
   off <- getDrugPK("digoxin", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)

@@ -84,6 +84,16 @@ CYP2B6_VALUES  <- c(CYP2B6_POOR, CYP2B6_INTERMEDIATE, CYP2B6_NORMAL,
                     CYP2B6_RAPID, CYP2B6_ULTRARAPID)
 CYP2B6_DEFAULT <- CYP2B6_NORMAL
 
+# OPIOID TOLERANCE, the Patient Profile's Opioid tolerance field: each
+# opioid's MEAC is multiplied by the factor (Steven L. Shafer, 2026-10-28), so
+# the % MEAC panel and overlay, the MEAC sum, the propofol-opioid interaction
+# and the opioid-MAC interaction all see a tolerant patient's opioid as less
+# effective, and so are its shaded band and its time-until-threshold value
+# (recalculatePK(); an opioid without a MEAC is left alone).
+OPIOID_TOLERANCE_FACTORS <- c(none = 1, mild = 1.5, somewhat = 2, high = 3)
+OPIOID_TOLERANCE_VALUES  <- names(OPIOID_TOLERANCE_FACTORS)
+OPIOID_TOLERANCE_DEFAULT <- "none"
+
 # CYP2C9 DIPLOTYPE, read by the models that name it: meloxicam, whose genotype
 # effect on clearance is estimated per allele (Aoyama 2017), and phenytoin,
 # which maps the diplotype to a maximal-elimination-rate multiplier through the
@@ -94,13 +104,62 @@ CYP2B6_DEFAULT <- CYP2B6_NORMAL
 CYP2C9_VALUES  <- c("*1/*1", "*1/*2", "*1/*3", "*2/*2", "*2/*3", "*3/*3")
 CYP2C9_DEFAULT <- "*1/*1"
 
-# VKORC1 -1639G>A GENOTYPE, read by the models that name it: warfarin, where
-# the A allele lowers the S-warfarin C50 (the Xue 2017 library model) and sets
-# the EC50 of the Hamberg 2007 companion model (R/alternativeModels.R).  Three
-# genotypes; GG (two wild-type alleles, the least sensitive) is the reference.
-# Its own Patient Profile field, kept apart from the CYP phenotypes.
+# VKORC1 -1639G>A GENOTYPE (rs9923231), read by the models that name it: the
+# library warfarin model, where AA lowers the S-warfarin C50 x0.725 against GA
+# or GG (Xue 2017); the Hamberg 2007 companion, where the genotype sets the
+# EC50 outright (GG 4.61, GA 3.02, AA 2.20 mg/L; R/alternativeModels.R); and
+# fluindione and acenocoumarol, where AA is the source's sensitive reference
+# and a G allele RAISES the C50, x1.30 and x2.29 (R/drugs_fluindione.R).  Three
+# genotypes.  Its own Patient Profile field, kept apart from the CYP phenotypes.
+#
+# The default is AA, which is the most sensitive genotype in all four models,
+# by Steven L. Shafer's decision (2026-10-28): the rule CYP4F2_DEFAULT already
+# follows, that an unentered genotype should predict the LARGER INR rise, so a
+# dose chosen from the curve errs toward underdosing.  An underdose at the
+# start of therapy is corrected by raising the dose; an overdose risks
+# bleeding, the vitamin-K antagonists' primary toxicity, and may need reversal
+# with vitamin K.  Warfarin is uniquely dangerous, which makes the conservative
+# choice doubly justified here.  (This differs from CYP2C9_DEFAULT, where one
+# field is shared with phenytoin and meloxicam and the default is the most
+# likely genotype, *1/*1.  VKORC1 is read by vitamin-K antagonists only.)
+#
+# ANCESTRY.  The -1639A allele frequency differs greatly between populations,
+# from a tenth of alleles to nine tenths in the cohort below, so the genotype
+# is worth setting from the patient's ancestry when it has not been measured
+# (the measured genotype is always better than either).  In the International
+# Warfarin Pharmacogenetics Consortium cohort of 4886 chronic warfarin users
+# (Limdi NA, Wadelius M, Cavallari L et al., Blood 2010;115:3827-3834, Table 3,
+# doi 10.1182/blood-2009-12-255992) the A allele frequency was 91.0% in 641
+# Asian, 37.8% in 681 White and 10.1% in 368 Black patients (the paper's own
+# group labels).  The Asian group EXCLUDES South Indians: its 91 Indian
+# subjects had substantially different VKORC1 allele frequencies and were left
+# out of every analysis, so the Asian figure does not describe them and the
+# cohort gives none for a South Indian or other South Asian patient.  Within
+# each group the paper found the haplotype distribution consistent across
+# geographically separated populations.  Under Hardy-Weinberg those give an
+# AA/GA/GG distribution of about 83/16/1% in Asian, 14/47/39% in White and
+# 1/18/81% in Black patients.  So the AA default is also the commonest
+# genotype in that Asian group -- Xue 2017's own 264 Chinese patients were
+# 82.6% AA, 17.0% GA and 0.4% GG, within a point of that expectation -- while
+# the most likely single genotype is GG in a Black patient and GA in a White
+# one.  These are group frequencies -- population context for an unmeasured
+# genotype, never a finding about a patient.
 VKORC1_VALUES  <- c("GG", "GA", "AA")
-VKORC1_DEFAULT <- "GG"
+VKORC1_DEFAULT <- "AA"
+
+# CYP4F2 rs2108622 (1297C>T, V433M) GENOTYPE, read only by the library warfarin
+# (Xue 2017), where a C allele (CC or CT) lowers the S-warfarin C50 x0.770
+# against TT: the T allele's enzyme oxidises less vitamin K1, so a T/T patient
+# needs more warfarin.  Its own Patient Profile field.
+# The default is CC, the most sensitive genotype, by Steven L. Shafer's
+# decision (2026-10-27): when the genotype is not entered, the model should
+# predict the LARGER INR rise, so that a dose chosen from the curve errs toward
+# underdosing.  An underdose at the start of therapy is corrected by raising
+# the dose; an overdose risks bleeding, warfarin's primary toxicity, and may
+# need reversal with vitamin K.  (Xue's Table S6 offers x0.783 for an unknown
+# CYP4F2, nearly the same C50; CC gives x0.770.)
+CYP4F2_VALUES  <- c("CC", "CT", "TT")
+CYP4F2_DEFAULT <- "CC"
 
 # Baseline serum osmolality, mOsm/kg, before any osmotic agent is given.  Read
 # only by models that declare an `osmolality` argument (mannitol), which add
@@ -121,6 +180,15 @@ MAX_OSMOLALITY <- 400
 MIN_CREATININE <- 0.2
 MAX_CREATININE <- 15
 
+# Gestational age at birth, weeks, for the neonatal models whose clearance
+# matures with postmenstrual age (dobutamineNeonatal).  Optional: when it is
+# not entered (NULL, or NA from an empty field) the birth is taken as at term,
+# GESTATIONAL_AGE_TERM.  Postmenstrual age is this plus the postnatal age
+# (postmenstrualAge()).  Read only by models that name `gestationalAge`.
+GESTATIONAL_AGE_TERM <- 40
+MIN_GESTATIONAL_AGE <- 22
+MAX_GESTATIONAL_AGE <- 44
+
 MIN_AGE <- 0
 MAX_AGE <- 90
 # The youngest age the adult-fitted covariate terms see.  Several models carry
@@ -128,7 +196,12 @@ MAX_AGE <- 90
 # of 0 (a legal entry) and steep in infancy, where none of them was fitted; a
 # child below this age receives the term's value at this age, as buprenorphine
 # already does (BUPRENORPHINE_MIN_AGE).  Read by apixaban, rivaroxaban,
-# fondaparinux and paroxetine, and by egfrMDRD() in R/renalFunction.R.
+# fondaparinux, paroxetine and citalopram, and by egfrMDRD() in
+# R/renalFunction.R.
+# The rule (AGENTS.md): every age term floors here unless the PK study
+# explicitly permits a lower floor, which is then the youngest age the source
+# studied; valproate's, fitted from 0.1 years, is the example
+# (VALPROATE_MIN_AGE).
 ADULT_AGE_TERM_FLOOR <- 18
 MIN_WEIGHT <- 0.1
 MAX_WEIGHT <- 500
@@ -282,6 +355,15 @@ calciumUnits <- as.vector(outer(calciumBaseUnits, CALCIUM_SALTS, paste))
 # Shafer.)
 iuUnits <- c("IU", "IU/kg", "IU/hr", "IU/kg/hr")
 
+# Intravenous doses in units (U) of a potency-defined peptide: vasopressin
+# (R/drugs_vasopressin.R), labelled and given in units, a bolus or a rate per
+# minute or hour.  The same unit as the insulins (insulinUnits), so the same
+# rules hold: the drug's Concentration.Units is "mcU", simCpCe() turns U into
+# mU, and refuses a mass unit for it and a U unit for any other drug.  No
+# route word: they are intravenous.  (Claude Code, 2026-10-22, at the request
+# of Steven L. Shafer.)
+ivPotencyUnits <- c("U", "U/min", "U/hr", "U/kg/min", "U/kg/hr")
+
 # Subcutaneous activity units (ROUTE_SC) for a drug plotted as anti-Xa
 # activity (enoxaparin, "IU SC"); the mass units are scUnits, above.  They
 # start with "IU" so simCpCe()'s international-unit check reads them, and
@@ -300,7 +382,8 @@ ghbUnits <- paste(c("g PO", "mg PO"), GHB_SALT)
 
 allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, enteralRateUnits, poFormulationUnits,
               slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits,
-              iuUnits, scUnits, iuScUnits, ghbUnits, insulinUnits, insulinRateUnits)
+              iuUnits, scUnits, iuScUnits, ghbUnits, insulinUnits, insulinRateUnits,
+              ivPotencyUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.
@@ -318,20 +401,41 @@ TCI_MAX_RATE <- Inf            # pump ceiling in base mass units per minute
 
 # Scheduled (repeating) doses (scheduled.R).  A bolus, PO, SL, IM or IN unit with
 # one of these suffixes, e.g. "mg PO bid", gives the dose at the entered time
-# and then again every interval (minutes) until the end of the plot.
-SCHEDULE_INTERVALS <- c(qd = 24 * 60, bid = 12 * 60, tid = 8 * 60, qid = 6 * 60)
+# and then again every interval (minutes) until the end of the plot.  Every
+# drug that offers qid also offers q4h (drugDefaults_global.csv).
+SCHEDULE_INTERVALS <- c(qd = 24 * 60, bid = 12 * 60, tid = 8 * 60, qid = 6 * 60,
+                        q4h = 4 * 60)
+# Separate morning ("qam") and evening ("qpm") once-daily slots, oral and
+# sublingual only, offered only on the antiseizure drugs.  Unlike the whole-day
+# frequencies above, a qam and a qpm schedule DO NOT replace each other, so a
+# split regimen with a different morning and evening dose can be entered (the
+# antiseizure drugs are sedating and affect memory, so the morning dose is
+# often smaller than the evening one).  See scheduled.R for the rules.
+SLOT_SCHEDULE_INTERVALS <- c(qam = 24 * 60, qpm = 24 * 60)
 # Once weekly ("qwk"), offered only on the subcutaneous units: semaglutide,
 # dulaglutide and tirzepatide are injected once a week.  Kept out of
 # SCHEDULE_INTERVALS, the daily frequencies every other scheduled drug offers;
 # scheduled.R reads ALL_SCHEDULE_INTERVALS.
 WEEKLY_SCHEDULE_INTERVAL <- c(qwk = 7 * 24 * 60)
-ALL_SCHEDULE_INTERVALS <- c(SCHEDULE_INTERVALS, WEEKLY_SCHEDULE_INTERVAL)
+ALL_SCHEDULE_INTERVALS <- c(SCHEDULE_INTERVALS, SLOT_SCHEDULE_INTERVALS,
+                            WEEKLY_SCHEDULE_INTERVAL)
+# A scheduled repeat this close (minutes) to the row that ends its schedule
+# is replaced by that row (scheduled.R): the 0.001-minute snap of a time
+# written in hours or days (TIME_SNAP_DIGITS).
+SCHEDULE_TIME_TOLERANCE <- 1e-3
 scheduledUnits <- c(
   as.vector(t(outer(
     c(bolusUnits, poUnits, poFormulationUnits, slUnits, imUnits, inUnits),
     names(SCHEDULE_INTERVALS), paste
   ))),
-  as.vector(t(outer(c(scUnits, insulinUnits), names(ALL_SCHEDULE_INTERVALS), paste)))
+  # qam/qpm: the oral and sublingual forms only (the antiseizure drugs).
+  as.vector(t(outer(
+    c(poUnits, poFormulationUnits, slUnits),
+    names(SLOT_SCHEDULE_INTERVALS), paste
+  ))),
+  # The subcutaneous units take the daily frequencies and qwk, not qam/qpm.
+  as.vector(t(outer(c(scUnits, insulinUnits),
+                    names(c(SCHEDULE_INTERVALS, WEEKLY_SCHEDULE_INTERVAL)), paste)))
 )
 
 # Units for the inhaled gases (Class "gas" in drugDefaults_global.csv): carrier
@@ -374,12 +478,33 @@ VASOACTIVE_DRUG_CATEGORY <- "Vasoactive and resuscitation"
 # complications (inst/help/models/parkinsons.md): every candidate catalogued in
 # inst/extdata/parkinsonsRegistry.csv, implemented or not.
 PARKINSONS_DRUG_CATEGORY <- "Parkinson disease"
+# The categories whose every drug, and every metabolite of one, must have a
+# row in inst/extdata/therapeuticRanges.csv (R/therapeuticRanges.R): the
+# range the band draws, or why there is none.  Every category since
+# 2026-10-27.  Checked by test-therapeutic-ranges.R.
+THERAPEUTIC_RANGE_CATEGORIES <- DRUG_CATEGORIES
+# What a therapeutic-range row may say about the band (R/therapeuticRanges.R).
+THERAPEUTIC_RANGE_STATUSES <- c(
+  "drawn",                # the band is this range, on this drug's row
+  "drawn_on_metabolite",  # the range is drawn on band_drug's row instead
+  "sum_not_drawn",        # the range is for a parent plus a metabolite whose
+                          # shares vary, so it cannot be drawn on either row
+  "pending_verification", # a candidate range not yet read in a primary source
+  "not_applicable",       # a range exists, but not for the use this model plots
+  "band_differs",         # the range is for another use or analyte, and the
+                          # band is the library's own for what the row plots
+  "library_band",         # no range is established for what the row plots;
+                          # the band is the library's own (an effect-site
+                          # target, an MBC band, what ordinary doses reach)
+  "none_established"      # no range has been established
+)
 # The category of the opt-in research models of drugs of abuse
 # (R/illicit-drugs.R).  Hidden unless the user turns on input$showIllicitDrugs,
 # and never offered in the startup menu.
 ILLICIT_DRUG_CATEGORY <- "Illicit drugs"
-# Ticked when the menu opens: the four drugs the app opened with before it
-# had a menu.
+# The four drugs the app opened with before it had a menu.  The menu opens
+# with nothing ticked; ticking these gives doseTableInit, the dose table the
+# tests start from (test-startup-drugs.R holds them equal).
 STARTUP_DRUGS_DEFAULT <- c("propofol", "fentanyl", "remifentanil", "rocuronium")
 # A chosen drug starts with one zero-dose row in its Default.Units, except
 # these, which start with a bolus row and an infusion row, as they always have.
@@ -406,6 +531,9 @@ TIME_UNIT_DEFAULT <- "minutes"
 # start, so it is offered for these units only; days and weeks are elapsed.
 CLOCK_TIME_UNITS <- c("minutes", "hours")
 TIME_MODES <- c("clock", "relative")
+# The Time Display the app opens with: elapsed time, counted from zero.  Actual
+# (clock) time is a choice in the Time panel for minutes and hours.
+TIME_MODE_DEFAULT <- "relative"
 # A time converted to another unit is rounded to TIME_SNAP_DIGITS decimal
 # places of a minute (0.001 min) and written with TIME_STRING_DIGITS
 # significant digits.  Ten digits make every conversion, and any chain of them,
@@ -454,6 +582,21 @@ MAX_TIME_LABEL_UNITS <- c(minutes = "hour", hours = "hour", days = "day", weeks 
 # inside it but not in the current unit's list is a moment when the browser has
 # not yet caught up with a change of unit.
 MAX_TIME_VALUES <- sort(unique(unlist(lapply(MAX_TIMES, `[[`, "times"))))
+# The Max time and Min time sliders (timeSliderRange() in R/utils-time.R):
+# minutes from 0 to the unit's longest Max time, in these steps.  The values
+# stay in minutes whatever the unit, as input$maximum always has; app.js shows
+# them in the unit.
+TIME_SLIDER_STEPS <- c(minutes = 5, hours = 15, days = MINS_PER_DAY, weeks = MINS_PER_WEEK)
+# Tick spacings (minutes) for a plot that is not one of the MAX_TIMES lengths
+# from 0, such as a window from 15 to 16 weeks: the smallest that leaves at
+# most AXIS_MAX_TICK_INTERVALS intervals across the window (axisTimeStep()).
+AXIS_TICK_STEPS <- list(
+  minutes = c(1, 2, 5, 10, 15, 20, 30, 60, 120, 180, 240, 360),
+  hours   = MINS_PER_HOUR * c(0.25, 0.5, 1, 2, 3, 4, 6),
+  days    = MINS_PER_DAY * c(0.25, 0.5, 1, 2, 7, 14, 30, 60),
+  weeks   = MINS_PER_WEEK * c(0.25, 0.5, 1, 2, 4, 8)
+)
+AXIS_MAX_TICK_INTERVALS <- 8
 # How close (minutes) the last dose or event may come to the end of the plot
 # before the plot is lengthened to show what follows it.  30 minutes is the
 # original rule, kept so that the minute and hour plots are unchanged.

@@ -16,8 +16,8 @@ test_that("the model's unit-bolus response is the published triexponential", {
   # and the central volume is the dose over the zero-time intercept
   expect_equal_rounded(DOSE / sum(COEF) * 1000, set$v1)
   expect_identical(PK$Concentration.Units, "ng")
-  expect_equal(PK$tPeak, 0)
-  expect_equal(set$ke0, 0)
+  expect_equal(PK$tPeak, 5)
+  expect_gt(set$ke0, 0)
 })
 
 test_that("a bolus reproduces the curve at every time", {
@@ -69,4 +69,13 @@ test_that("propranolol is a vasoactive and resuscitation drug with no band", {
   row <- dd[dd$Drug == "propranolol", ]
   expect_identical(row$Category, VASOACTIVE_DRUG_CATEGORY)
   expect_equal(row$MEAC, 0)
+})
+
+test_that("the effect site peaks 5 min after a bolus (heart rate, clinical)", {
+  PK <- getDrugPK("propranolol", 70, 170, 60, "male")
+  expect_equal(PK$tPeak, 5)
+  pk <- PK$PK$default
+  coef <- c(pk$p_coef_bolus_l1, pk$p_coef_bolus_l2, pk$p_coef_bolus_l3)
+  lambda <- c(pk$lambda_1, pk$lambda_2, pk$lambda_3)
+  expect_equal(effectSitePeakTime(coef, lambda, pk$ke0), 5, tolerance = 1e-4)
 })

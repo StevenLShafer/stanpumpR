@@ -12,7 +12,7 @@ Weight, linear, on every parameter, and Cockcroft-Gault creatinine clearance on 
 
 ### The band
 
-The shaded band is the paper's therapeutic range, 0.5 to 2.0 mcg/L of serum. Current practice in heart failure aims for the lower half of it.
+The shaded band is the paper's therapeutic range, 0.5 to 2.0 mcg/L of serum, the historical laboratory range the Lanoxin label also gives. It is a range for a serum sample taken before a dose or at least six hours after one, and it is not a treatment target for every indication: current practice in heart failure aims for the lower half of it.
 
 ### Where to be careful
 

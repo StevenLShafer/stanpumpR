@@ -1,5 +1,5 @@
 # Buprenorphine: Bjornsson 2023 disposition, one first-order sublingual input
-# fitted to the published two-pathway one, intranasal from Eriksen 1989, ke0
+# fitted to the published two-pathway one (intranasal withdrawn 2026-10-27), ke0
 # from Yassen 2006 carried as a tPeak.  See the header of R/drugs_buprenorphine.R.  Pins were
 # worked out from the published numbers by hand (Python), not from the code
 # under test.  (Claude Code, 2026-10-10, at the request of Steven L. Shafer.)
@@ -21,16 +21,16 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
         ka_SL = 0.0171905401,
         bioavailability_SL = 0.422692,
         tlag_SL = 17.587178,
-        ka_IN = 0.0227053660,
-        bioavailability_IN = 0.482,
-        tlag_IN = 0
+        ka_IM = 0.140710,
+        bioavailability_IM = 0.947096,
+        tlag_IM = 0
       )
     ),
     tPeak = 61.2,
     MEAC = 0,
-    typical = 2.2,
-    upperTypical = 3,
-    lowerTypical = 1.25,
+    typical = 0.4,
+    upperTypical = 1,
+    lowerTypical = 0.2,
     sublingualSaturation = list(Imax = 0.816527, ID50 = 3.42670),
     reference = actual$reference
   )
@@ -102,11 +102,14 @@ test_that("the CSV row matches the model's band and offers no MEAC", {
   expect_equal(row$Lower, out$lowerTypical)
   expect_equal(row$Upper, out$upperTypical)
   expect_equal(row$Typical, out$typical)
-  expect_equal(row$endCe, BUPRENORPHINE_WITHDRAWAL)
+  # The library's analgesic band, not Hart 2026's range for opioid use
+  # disorder (see the header)
+  expect_equal(c(row$Lower, row$Upper, row$Typical), c(0.2, 1, 0.4))
+  expect_equal(row$endCe, BUPRENORPHINE_ANALGESIA_END)
   expect_equal(row$Category, "Opioids")
   routes <- unique(doseRoute(row$Units[[1]]))
-  expect_setequal(routes, c(ROUTE_IV, ROUTE_SL, ROUTE_IN))
-  # 70% receptor occupancy by Nasser 2014's Emax model is the typical value
+  expect_setequal(routes, c(ROUTE_IV, ROUTE_SL, ROUTE_IM))
+  # 70% receptor occupancy by Nasser 2014's Emax model is 2.2 ng/mL
   expect_equal(round(91.4 * 2.2 / (0.67 + 2.2), 1), 70.1)
 })
 
@@ -147,12 +150,15 @@ test_that("the time until threshold is blank during the sublingual lag only", {
   expect_false(anyNA(rec$Y[rec$Time > 18]))
 })
 
-test_that("0.3 mg intranasal peaks at Eriksen's 30.6 minutes", {
-  r <- simBup("mg IN", 0.3, 240)
-  cp <- r[r$Site == "Plasma", ]
-  i <- which.max(cp$Y)
-  expect_true(abs(cp$Time[i] - 30.6) < 2)
-  expect_equal(cp$Y[i], 0.4471, tolerance = 0.005)
+test_that("the intranasal route is withdrawn", {
+  # Eriksen 1989 measured a 1.77 ng/mL peak after 0.3 mg; the route this
+  # disposition gave peaked at 0.447, and F would have had to be 1.91 to
+  # close it.  Withdrawn 2026-10-27 (docs/opioid-review-2026-10-27.md).
+  dd <- getDrugDefaultsGlobal()
+  units <- dd$Units[[which(dd$Drug == "buprenorphine")]]
+  expect_false(any(grepl(" IN\\b", units)))
+  expect_null(buprenorphine(70, 170, 40, "male")$PK$default$ka_IN)
+  expect_equal(round(0.482 * 1.77 / 0.4471, 2), 1.91)
 })
 
 test_that("the effect site peaks 61.2 minutes after an intravenous bolus", {
@@ -214,8 +220,7 @@ test_that("pregnancy: elimination clearance x 1.83, absorption unchanged (Zhu 20
   a <- on$PK$default
   b <- off$PK$default
   expect_equal(a$cl1 / b$cl1, BUPRENORPHINE_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
-  for (p in c("v1", "v2", "v3", "cl2", "cl3", "ka_SL", "bioavailability_SL", "tlag_SL",
-              "ka_IN", "bioavailability_IN", "tlag_IN")) {
+  for (p in c("v1", "v2", "v3", "cl2", "cl3", "ka_SL", "bioavailability_SL", "tlag_SL")) {
     expect_identical(a[[p]], b[[p]], info = p)
   }
   expect_identical(on$sublingualSaturation, off$sublingualSaturation)
@@ -227,4 +232,59 @@ test_that("pregnancy: elimination clearance x 1.83, absorption unchanged (Zhu 20
   expect_match(on$reference, "Zhu Y", fixed = TRUE)
   expect_match(on$reference, "pregnancy:", fixed = TRUE)
   expect_no_match(off$reference, "Zhu Y")
+})
+
+test_that("the band reproduces its derivation from McQuay 1980's demand analgesia", {
+  # 0.3 mg IV at induction and 0.3 mg 3 h later, IV in group V and IM in group
+  # M; analgesia ended a median 480 min after the second dose, pooled over both
+  # groups, which did not differ significantly.  The study's average patient:
+  # 65 y, 66 kg.
+  for (second in c("mg", "mg IM")) {
+    d <- data.frame(Drug = "buprenorphine", Time = c(0, 180), Dose = 0.3,
+                    Units = c("mg", second))
+    w <- simulateDrugsWithCovariates(d, noEvents, 66, 170, 65, "male", 900,
+                                     FALSE)$buprenorphine$wide
+    ce <- w[["Effect Site"]]
+    # The lower edge and threshold: the effect site when demands resumed
+    expect_equal(round(approx(w$Time, ce, 180 + 480)$y, 2),
+                 BUPRENORPHINE_ANALGESIA_END, info = second)
+    # The upper edge: the peak after the second dose
+    expect_equal(round(max(ce[w$Time > 180]), 1), 1, info = second)
+  }
+})
+
+test_that("the intramuscular route reproduces Bullingham 1980's IM/IV plasma ratios", {
+  # Phase II of Bullingham 1980, Table II: 0.3 mg IM or IV to the same
+  # patients (62 y, 66.5 kg on average); the group means' ratio at each time.
+  plasma <- function(units) {
+    d <- data.frame(Drug = "buprenorphine", Time = 0, Dose = 0.3, Units = units)
+    w <- simulateDrugsWithCovariates(d, noEvents, 66.5, 170, 62.1, "male", 200,
+                                     FALSE)$buprenorphine$wide
+    approx(w$Time, w[["Plasma"]], c(2, 10, 60, 180))$y
+  }
+  ratio <- plasma("mg IM") / plasma("mg")
+  measured <- c(3.56 / 14.62, 3.31 / 3.15, 0.79 / 0.77, 0.36 / 0.38)
+  expect_equal(round(ratio, 2), c(0.25, 0.94, 1.03, 0.99))
+  # within 12% of every measured ratio; the largest miss is at 10 min, where
+  # a single first-order input still rises too slowly (see the header)
+  expect_true(all(abs(log(ratio / measured)) < 0.12))
+  expect_equal(BUPRENORPHINE_F_IM, 0.947096)
+  expect_equal(BUPRENORPHINE_KA_IM, 0.140710)
+})
+
+test_that("the absolute gap to Bullingham 1980 is the disposition's, by both routes", {
+  # The ratio removes a difference of scale, not of shape (see the header):
+  # this model is below Bullingham's arterial means by both routes, most at
+  # 2 min (central volume 64 L here, about 14 L from their early samples).
+  # Pinned so the gap is visible, not to claim agreement.
+  plasma <- function(units) {
+    d <- data.frame(Drug = "buprenorphine", Time = 0, Dose = 0.3, Units = units)
+    w <- simulateDrugsWithCovariates(d, noEvents, 66.5, 170, 62.1, "male", 200,
+                                     FALSE)$buprenorphine$wide
+    approx(w$Time, w[["Plasma"]], c(2, 10, 60, 180))$y
+  }
+  iv <- plasma("mg") / c(14.62, 3.15, 0.77, 0.38)
+  im <- plasma("mg IM") / c(3.56, 3.31, 0.79, 0.36)
+  expect_equal(round(iv, 2), c(0.28, 0.76, 0.84, 0.78))
+  expect_equal(round(im, 2), c(0.29, 0.68, 0.84, 0.81))
 })

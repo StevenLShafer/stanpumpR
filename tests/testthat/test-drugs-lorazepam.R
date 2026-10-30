@@ -42,9 +42,9 @@ test_that("the reference patient: micro-constants from Nielsen-Kudsk's means", {
       )),
       tPeak = 26.3,
       MEAC = 0,
-      typical = 51,
-      upperTypical = 104,
-      lowerTypical = 34,
+      typical = 104,
+      upperTypical = 152,
+      lowerTypical = 51,
       reference = actual$reference
     )
     expect_equal_rounded(actual, expected)
@@ -121,8 +121,8 @@ test_that("the CSV row agrees with the drug function and Barr's C50s", {
   expect_equal(row$Lower, x$lowerTypical)
   expect_equal(row$Upper, x$upperTypical)
   expect_equal(row$Typical, x$typical)
-  # Barr 2001: C50 for Ramsay >= 2, 3, 4 = 34, 51, 104 ng/mL
-  expect_equal(c(row$Lower, row$Typical, row$Upper), c(34, 51, 104))
+  # Barr 2001: C50 for Ramsay >= 3, 4, 5 = 51, 104, 152 ng/mL (moderate sedation)
+  expect_equal(c(row$Lower, row$Typical, row$Upper), c(51, 104, 152))
   expect_equal(row$endCe, 51)
   expect_equal(row$MEAC, 0)
   expect_equal(row$Concentration.Units, "ng")

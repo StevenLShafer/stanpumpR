@@ -22,6 +22,8 @@ app_ui <- function() {
       timeUnit0 <- legacyTimeUnit(shiny::restoreInput("maximum", 60))
     }
     maximum0 <- snapMaximum(shiny::restoreInput("maximum", 60), timeUnit0)
+    minimum0 <- snapMinimum(shiny::restoreInput("minimum", 0), maximum0, timeUnit0)
+    slider0 <- timeSliderRange(timeUnit0)
 
     bslib::page_navbar(
       id = "mainNav",
@@ -112,7 +114,7 @@ app_ui <- function() {
 
                 # Most models scale to the patient's fat-free mass rather than to
                 # total body weight; see docs/weight-adjustment.md.
-                bslib::tooltip(
+                fieldHelp(
                   checkboxInput(
                     inputId = "adjustToFFM",
                     label = "Adjust weight to fat-free mass",
@@ -156,12 +158,12 @@ app_ui <- function() {
                 # years, whatever unit the age is entered in; the server
                 # applies the same rule (pregnancyPossible()), so a control
                 # hidden by a change of age or sex leaves the flag off.
-                conditionalPanel(
+                relevantField("pregnant", conditionalPanel(
                   condition = sprintf(
                     "input.age && input.ageUnit && input.sex == 'female' && (input.age * input.ageUnit) >= %s && (input.age * input.ageUnit) < %s",
                     PREGNANCY_MIN_AGE, PREGNANCY_MAX_AGE
                   ),
-                  bslib::tooltip(
+                  fieldHelp(
                     shinyWidgets::radioGroupButtons(
                       inputId = "pregnant",
                       label = "Pregnant",
@@ -184,7 +186,32 @@ app_ui <- function() {
                     ),
                     placement = "right"
                   )
-                ),
+                )),
+
+                # Each opioid's MEAC times 1, 1.5, 2 or 3
+                # (OPIOID_TOLERANCE_FACTORS; recalculatePK()).
+                relevantField("opioidTolerance", fieldHelp(
+                  selectInput(
+                    inputId = "opioidTolerance",
+                    label = "Opioid tolerance",
+                    c("None"            = "none",
+                      "Mild"            = "mild",
+                      "Somewhat"        = "somewhat",
+                      "Highly tolerant" = "high"),
+                    selected = OPIOID_TOLERANCE_DEFAULT
+                  ),
+                  paste(
+                    "Multiplies each opioid's MEAC by 1 (none), 1.5 (mild),",
+                    "2 (somewhat) or 3 (highly tolerant), so the % MEAC panel",
+                    "and overlay, the propofol-opioid interaction and the",
+                    "opioid-MAC interaction treat the opioid as less effective.",
+                    "For an opioid with a MEAC, its shaded band and its time",
+                    "until threshold rise by the same factor; one without a",
+                    "MEAC (codeine, tramadol, buprenorphine) is unchanged, its",
+                    "active metabolite is scaled."
+                  ),
+                  placement = "right"
+                )),
 
                 # The four pharmacogenetic fields and the serum creatinine
                 # each carry a hover tip naming the drugs that read them,
@@ -194,7 +221,7 @@ app_ui <- function() {
                 # Four categories, not three, and named the way the
                 # genotyping laboratories report them.  Codeine is the first
                 # drug whose kinetics read this, so it is no longer disabled.
-                bslib::tooltip(
+                relevantField("cyp2d6", fieldHelp(
                   selectInput(
                     inputId = "cyp2d6",
                     label = "CYP 2D6",
@@ -206,11 +233,11 @@ app_ui <- function() {
                   ),
                   patientFieldTooltip("cyp2d6"),
                   placement = "right"
-                ),
+                )),
 
                 # Read by escitalopram and citalopram, whose published
                 # clearances differ by CYP2C19 phenotype.  The five CPIC terms.
-                bslib::tooltip(
+                relevantField("cyp2c19", fieldHelp(
                   selectInput(
                     inputId = "cyp2c19",
                     label = "CYP 2C19",
@@ -223,12 +250,12 @@ app_ui <- function() {
                   ),
                   patientFieldTooltip("cyp2c19"),
                   placement = "right"
-                ),
+                )),
 
                 # Read by phenytoin, whose maximal elimination rate depends on
                 # CYP2C9 diplotype, read by meloxicam and phenytoin (see
                 # CYP2C9_VALUES in R/constants.R).  *1/*1 is the reference.
-                bslib::tooltip(
+                relevantField("cyp2c9", fieldHelp(
                   selectInput(
                     inputId = "cyp2c9",
                     label = "CYP 2C9",
@@ -237,12 +264,12 @@ app_ui <- function() {
                   ),
                   patientFieldTooltip("cyp2c9"),
                   placement = "right"
-                ),
+                )),
 
                 # Read by methadone, whose non-renal clearance of each
                 # enantiomer depends on CYP2B6 (R/drugs_methadone.R).  The five
                 # CPIC categories; "normal" (*1/*1) is the reference.
-                bslib::tooltip(
+                relevantField("cyp2b6", fieldHelp(
                   selectInput(
                     inputId = "cyp2b6",
                     label = "CYP 2B6",
@@ -255,12 +282,14 @@ app_ui <- function() {
                   ),
                   patientFieldTooltip("cyp2b6"),
                   placement = "right"
-                ),
+                )),
 
-                # Read by warfarin: the -1639G>A genotype sets the sensitivity
-                # (the S-warfarin C50 / EC50).  GG is the wild-type reference
-                # (see VKORC1_VALUES in R/constants.R).
-                bslib::tooltip(
+                # Read by the vitamin-K antagonists: the -1639G>A genotype sets
+                # the sensitivity (the S-warfarin C50 / EC50).  GG is the
+                # wild-type reference, but the field DEFAULTS to AA, the most
+                # sensitive genotype (see VKORC1_DEFAULT in R/constants.R for
+                # why, and for the ancestry distribution).
+                relevantField("vkorc1", fieldHelp(
                   selectInput(
                     inputId = "vkorc1",
                     label = "VKORC1",
@@ -269,11 +298,25 @@ app_ui <- function() {
                   ),
                   patientFieldTooltip("vkorc1"),
                   placement = "right"
-                ),
+                )),
+
+                # Read by the library warfarin: a C allele of rs2108622 lowers
+                # the S-warfarin C50.  CC, the most sensitive genotype, is the
+                # default (see CYP4F2_DEFAULT in R/constants.R for why).
+                relevantField("cyp4f2", fieldHelp(
+                  selectInput(
+                    inputId = "cyp4f2",
+                    label = "CYP4F2",
+                    CYP4F2_VALUES,
+                    selected = CYP4F2_DEFAULT
+                  ),
+                  patientFieldTooltip("cyp4f2"),
+                  placement = "right"
+                )),
 
                 # Read only by the osmotic agents (mannitol), which plot the
                 # serum osmolality they produce on top of this baseline.
-                bslib::tooltip(
+                relevantField("osmolality", fieldHelp(
                   numericInput(
                     inputId = "osmolality",
                     label = "Baseline serum osmolality (mOsm/kg)",
@@ -288,14 +331,14 @@ app_ui <- function() {
                     "osmolality: this baseline plus the rise mannitol causes."
                   ),
                   placement = "right"
-                ),
+                )),
 
                 # Read only by the models that name `creatinine` in their
                 # signature (the hover tip and the help's Cautions page list
                 # them, and tests keep both complete).  Blank means an assumed
                 # normal creatinine for the patient's age and sex; see
                 # R/renalFunction.R.
-                bslib::tooltip(
+                relevantField("creatinine", fieldHelp(
                   numericInput(
                     inputId = "creatinine",
                     label = "Serum creatinine (mg/dL)",
@@ -306,7 +349,24 @@ app_ui <- function() {
                   ),
                   patientFieldTooltip("creatinine"),
                   placement = "right"
-                )
+                )),
+
+                # Read only by the neonatal models that name `gestationalAge`
+                # (dobutamineNeonatal), whose clearance matures with
+                # postmenstrual age, the gestational age at birth plus the
+                # postnatal age.  Blank means a term birth (40 weeks).
+                relevantField("gestationalAge", fieldHelp(
+                  numericInput(
+                    inputId = "gestationalAge",
+                    label = "Gestational age at birth (weeks)",
+                    value = NA,
+                    min = MIN_GESTATIONAL_AGE,
+                    max = MAX_GESTATIONAL_AGE,
+                    step = 0.5
+                  ),
+                  patientFieldTooltip("gestationalAge"),
+                  placement = "right"
+                ))
               ),
 
               bslib::accordion_panel(
@@ -336,7 +396,7 @@ app_ui <- function() {
                   # by all of them, read at the right-hand edge where the time
                   # until threshold's labels go; ticking either unticks the
                   # other (R/meacOverlay.R).
-                  bslib::tooltip(
+                  relevantField("showMEAC", fieldHelp(
                     checkboxInput(
                       "showMEAC",
                       "% MEAC on opioid panels",
@@ -351,11 +411,11 @@ app_ui <- function() {
                       "analgesia. Cannot be shown with Time until threshold."
                     ),
                     placement = "right"
-                  ),
+                  )),
                   # V2 and V3 (an inhaled agent's muscle and fat groups) and
                   # the depot of an absorbed dose, each a panel of its own
                   # directly under the drug's (R/compartments.R).
-                  bslib::tooltip(
+                  fieldHelp(
                     checkboxInput(
                       "showCompartments",
                       "Peripheral compartments",
@@ -382,17 +442,17 @@ app_ui <- function() {
                 ),
                 # Opioids lower MAC.  When ticked, the MAC series is reported in
                 # multiples of the opioid-reduced MAC; see R/opioidMacInteraction.R.
-                checkboxInput(
+                relevantField("opioidMacInteraction", checkboxInput(
                   inputId = "opioidMacInteraction",
                   label = "Include opioid - MAC interaction",
                   value = FALSE
-                ),
+                )),
                 # The Schnider propofol and Minto remifentanil models, the
                 # models in most TCI pumps, run beside the library's Eleveld
                 # models and drawn as a second line in the same panels
                 # (R/alternativeModels.R).  The server enables the box while
                 # propofol or remifentanil is in the dose table.
-                bslib::tooltip(
+                relevantField("mintoSchnider", fieldHelp(
                   checkboxInput(
                     inputId = "mintoSchnider",
                     label = ALTERNATIVE_MODELS_LABEL,
@@ -410,12 +470,12 @@ app_ui <- function() {
                     "is in the dose table."
                   ),
                   placement = "right"
-                ),
+                )),
                 # The Hamberg (2007) warfarin genotype model runs beside the
                 # library's (Xue) model as a second INR line in warfarin's
                 # panel (R/alternativeModels.R).  The server enables the box
                 # while warfarin is in the dose table.
-                bslib::tooltip(
+                relevantField("hamberg", fieldHelp(
                   checkboxInput(
                     inputId = "hamberg",
                     label = COMPANION_MODEL_GROUPS$hamberg$label,
@@ -431,15 +491,42 @@ app_ui <- function() {
                     "Available when warfarin is in the dose table."
                   ),
                   placement = "right"
-                ),
-              ),
-
-              bslib::accordion_panel(
-                "Additional Plots",
-                icon = icon("chart-line"),
+                )),
+                # The pharmacokinetic interactions among the antiseizure drugs
+                # (R/antiseizureInteractions.R): induction, inhibition and
+                # carbamazepine's autoinduction.  The server enables the box
+                # while the dose table holds an interacting pair, or
+                # carbamazepine.
+                relevantField(ASM_INTERACTIONS_INPUT, fieldHelp(
+                  checkboxInput(
+                    inputId = ASM_INTERACTIONS_INPUT,
+                    label = "Include antiseizure drug interactions",
+                    # Checked by default (Steven L. Shafer, 2026-10-28): the box
+                    # starts disabled and has no effect until the dose table
+                    # holds an interacting pair, at which point the server
+                    # enables it and the interactions apply without the user
+                    # having to find and tick this option.
+                    value = TRUE
+                  ) |>
+                    shinyjs::disabled(),
+                  paste(
+                    "Apply the pharmacokinetic interactions among the",
+                    "antiseizure drugs: enzyme induction by carbamazepine,",
+                    "phenytoin and phenobarbital (which builds and fades over",
+                    "about two weeks), inhibition by valproate, carbamazepine's",
+                    "induction of its own metabolism, and valproate's",
+                    "displacement of phenytoin. Each drug changed is drawn",
+                    "beside its own curve without interactions. Available when",
+                    "the dose table holds an interacting pair, or carbamazepine."
+                  ),
+                  placement = "right"
+                )),
+                # Formerly a panel of its own (moved here 2026-10-28).  The
+                # server hides the MEAC choice unless an opioid is dosed and
+                # the Interaction choice unless propofol and an opioid are.
                 checkboxGroupInput(
                   inputId = "addedPlots",
-                  label = NULL,
+                  label = "Additional plots",
                   choices = c(PLOT_ID_MEAC, PLOT_ID_INTERACTION, PLOT_ID_EVENTS)
                 )
               ),
@@ -467,20 +554,33 @@ app_ui <- function() {
                   selected = timeUnit0,
                   options = list(dropdownParent = "body")
                 ),
-                # How far the simulation runs: durations in minutes, labelled
-                # in the Time units; the server swaps the list when the unit
-                # changes (syncMaxTimeChoices()).
-                selectizeInput(
+                # The window plotted: how far the simulation runs (Max time)
+                # and where the axis starts (Min time).  Both hold minutes,
+                # shown in the Time units by app.js; the server resets their
+                # range and step when the unit changes (syncTimeSliders()).
+                sliderInput(
                   inputId = "maximum",
                   label = "Max time",
-                  choices = maxTimeChoices(timeUnit0),
-                  selected = maxTimeValue(maximum0),
-                  options = list(dropdownParent = "body")
+                  min = slider0$step,
+                  max = slider0$max,
+                  value = maximum0,
+                  step = slider0$step,
+                  ticks = FALSE
+                ),
+                sliderInput(
+                  inputId = "minimum",
+                  label = "Min time",
+                  min = slider0$min,
+                  max = slider0$max,
+                  value = minimum0,
+                  step = slider0$step,
+                  ticks = FALSE
                 ),
                 selectizeInput(
                   "timeMode",
                   "Time Display",
                   timeModeChoices(timeUnit0),
+                  selected = TIME_MODE_DEFAULT,
                   options = list(dropdownParent = "body")
                 ),
                 conditionalPanel(
@@ -500,7 +600,7 @@ app_ui <- function() {
                 # Opt-in for the drug-of-abuse research models (off by
                 # default); when on, they are offered in the dose table and
                 # the Add a dose dialog, with their names shown in red.
-                bslib::tooltip(
+                fieldHelp(
                   checkboxInput(
                     "showIllicitDrugs",
                     "Show illicit drugs",
@@ -553,6 +653,7 @@ app_ui <- function() {
             padding = 0,
             sidebar = bslib::sidebar(
               position = "right",
+              # The column widths createHOT() sets are fitted to it
               width = 450,
               open = "desktop",
               class = "dose-sidebar",

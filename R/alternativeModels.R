@@ -124,6 +124,9 @@ companionGroupDrugs <- function(group) {
 #' The help page a companion entry's "About this model" link opens
 #' @noRd
 companionHelpPage <- function(entry) {
+  # A companion that carries its own page (the antiseizure interactions'
+  # "no interactions" line, R/antiseizureInteractions.R)
+  if (!is.null(entry$helpPage)) return(entry$helpPage)
   group <- companionModelGroup(entry$companionOf)
   if (is.na(group)) ALTERNATIVE_MODELS_HELP_PAGE else COMPANION_MODEL_GROUPS[[group]]$helpPage
 }
@@ -145,6 +148,10 @@ alternativeModelName <- function(drug) {
 #' own drug.
 #' @noRd
 alternativeModelParent <- function(name) {
+  # The antiseizure interactions' "<drug> (no interactions)" line
+  # (R/antiseizureInteractions.R)
+  name <- sub(paste0(" \\(", ASM_INTERACTIONS_REFERENCE_LABEL, "\\)( TCI)?$"),
+              "\\1", name)
   for (d in ALTERNATIVE_MODEL_DRUGS) {
     companion <- alternativeModelName(d)
     name[name == companion] <- d

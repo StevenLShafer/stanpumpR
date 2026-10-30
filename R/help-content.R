@@ -99,6 +99,7 @@ helpStaticPages <- function() {
     "models/pk-events",         "Events that change the kinetics", "models",
     "models/meac",              "MEAC: comparing opioids",         "models",
     "models/interaction",       "Propofol-opioid interaction",     "models",
+    "models/antiseizure-interactions", "Antiseizure drug interactions", "models",
     "models/recovery",          "Time until threshold",            "models",
     "models/normalization",     "Normalization",                   "models",
     "models/suggest-algorithm", "How Suggest Dosing searches",     "models",

@@ -416,21 +416,27 @@ test_that("exactly the plasma-only drugs have no effect site", {
     # Anticoagulants (2026-10-17): plasma activity or concentration, or the
     # INR; no effect site (R/drugs_heparin.R and the others).
     "heparin", "bivalirudin", "apixaban", "rivaroxaban",
-    "edoxaban", "dabigatran", "dabigatranHip", "argatroban", "enoxaparin", "fondaparinux",
+    "edoxaban", "dabigatran", "dabigatranHip", "apixabanVTE", "heparinCPB", "argatroban", "enoxaparin", "fondaparinux",
     "warfarin", "fluindione", "acenocoumarol",
     # The antihypertensives joined on 2026-10-17: concentration only, no
     # published equilibration constant, and no blood pressure is plotted for
     # any drug in the library (docs/antihypertensives.md).
     "clevidipine", "fenoldopamPediatric", "carvedilol",
     "azilsartan", "chlorthalidone", "hydrochlorothiazide",
+    # The renin-angiotensin drugs (2026-10-20): none of their sources fitted
+    # any pharmacodynamic model, and valsartan's fitted one is a blood
+    # pressure, which nothing in this library plots
+    "lisinopril", "olmesartan", "valsartan", "benazepril",
+    "enalapril", "enalaprilat", "fosinopril",
     # vasoactive and resuscitation drugs (2026-10-18): plasma only
-    "epinephrine", "magnesiumSulfate", "labetalol", "diltiazem", "nitroglycerin",
-    "norepinephrine", "procainamide", "esmolol", "dopamine",
-    "propranolol", "digoxin", "verapamil", "phenylephrine",
-    "milrinonePediatric", "metoprolol", "nicardipine",
+    "magnesiumSulfate", "labetalol", "nitroglycerin",
+    "procainamide", "dopamine",
+    "digoxin",
+    "milrinonePediatric",
     "digoxinIVPediatric",
-    # Parkinson disease drugs (2026-10-19): plasma only; levodopa and its
-    # intestinal gel alone have an effect site (inst/help/models/parkinsons.md)
+    "methyleneBlue",
+    # Parkinson disease drugs (2026-10-19): plasma only; levodopa (all four
+    # models) and apomorphine have an effect site (inst/help/models/parkinsons.md)
     "pramipexole", "pramipexoleER", "safinamide", "opicapone",
     "istradefylline", "amantadineER", "pimavanserin", "tolcapone"
   ))

@@ -1,10 +1,10 @@
-The third sidebar panel adds panels beneath the concentration plot. Each is a checkbox.
+The **Additional plots** choices, at the foot of the Graph Options panel, add panels beneath the concentration plot. Each is a checkbox. MEAC is offered only while an opioid is in the dose table, and Interaction only while propofol and an opioid are; Events is always offered.
 
 ## MEAC
 
 Plots each opioid's effect-site concentration as a percentage of its **minimum effective analgesic concentration**, and the sum over all opioids present. Several opioids can then be compared on one axis of clinical effect rather than of mass: 100 per cent is the concentration at which a typical patient has adequate analgesia, whichever opioid supplies it.
 
-The MEAC values are in the drug library and on each drug's page. Drugs with a MEAC of zero do not appear on this panel: the non-opioids, and the opioids the library gives no MEAC (buprenorphine, codeine, tramadol and diamorphine). See [MEAC: comparing opioids](help:models/meac).
+The MEAC values are in the drug library and on each drug's page. Drugs with a MEAC of zero do not appear on this panel: the non-opioids, and the opioids the library gives no MEAC (buprenorphine, codeine, tramadol, diamorphine and carfentanil). See [MEAC: comparing opioids](help:models/meac).
 
 ## Interaction
 

@@ -216,6 +216,13 @@ apiPatient <- function(patient) {
   if (!is.null(creatinine)) {
     creatinine <- apiNumber(creatinine, "patient.creatinine", MIN_CREATININE, MAX_CREATININE)
   }
+  # Read only by the neonatal models (dobutamineNeonatal); omitted is a term
+  # birth.
+  gestationalAge <- get("gestationalAge")
+  if (!is.null(gestationalAge)) {
+    gestationalAge <- apiNumber(gestationalAge, "patient.gestationalAge",
+                                MIN_GESTATIONAL_AGE, MAX_GESTATIONAL_AGE)
+  }
   sex <- apiChoice(tolower(apiScalar(get("sex"), "patient.sex")), "patient.sex", SEX_VALUES)
   # Read only by the models with a measured change in pregnancy (R/pregnancy.R);
   # getDrugPK() would refuse it for a man, but the request is told why first.
@@ -233,10 +240,16 @@ apiPatient <- function(patient) {
     osmolality  = apiNumber(get("osmolality", OSMOLALITY_DEFAULT), "patient.osmolality",
                             MIN_OSMOLALITY, MAX_OSMOLALITY),
     creatinine  = creatinine,
+    gestationalAge = gestationalAge,
     cyp2d6      = apiChoice(get("cyp2d6", CYP2D6_DEFAULT), "patient.cyp2d6", CYP2D6_VALUES),
     cyp2c19     = apiChoice(get("cyp2c19", CYP2C19_DEFAULT), "patient.cyp2c19", CYP2C19_VALUES),
     cyp2c9      = apiChoice(get("cyp2c9", CYP2C9_DEFAULT), "patient.cyp2c9", CYP2C9_VALUES),
-    cyp2b6      = apiChoice(get("cyp2b6", CYP2B6_DEFAULT), "patient.cyp2b6", CYP2B6_VALUES)
+    cyp2b6      = apiChoice(get("cyp2b6", CYP2B6_DEFAULT), "patient.cyp2b6", CYP2B6_VALUES),
+    # The vitamin-K antagonists' two genotypes.  Both default to the most
+    # sensitive genotype rather than the commonest, so a client that knows the
+    # genotype must be able to say so: see VKORC1_DEFAULT in R/constants.R.
+    vkorc1      = apiChoice(get("vkorc1", VKORC1_DEFAULT), "patient.vkorc1", VKORC1_VALUES),
+    cyp4f2      = apiChoice(get("cyp4f2", CYP4F2_DEFAULT), "patient.cyp4f2", CYP4F2_VALUES)
   )
 }
 
@@ -424,9 +437,10 @@ apiSimulate <- function(request) {
         DT, ET, patient$weight, patient$height, patient$age, patient$sex,
         maximum, recovery,
         cyp2d6 = patient$cyp2d6, cyp2c19 = patient$cyp2c19, cyp2c9 = patient$cyp2c9,
-        cyp2b6 = patient$cyp2b6,
+        cyp2b6 = patient$cyp2b6, vkorc1 = patient$vkorc1, cyp4f2 = patient$cyp4f2,
         adjustToFFM = patient$adjustToFFM, osmolality = patient$osmolality,
-        creatinine = patient$creatinine, pregnant = patient$pregnant)),
+        creatinine = patient$creatinine, pregnant = patient$pregnant,
+        gestationalAge = patient$gestationalAge)),
       error = function(e) {
         if (inherits(e, "stanpumpr_api_error")) stop(e)
         apiError("The simulation failed: ", conditionMessage(e), status = 422L)
@@ -492,8 +506,9 @@ apiSimulate <- function(request) {
       adjustToFFM = patient$adjustToFFM,
       osmolality  = patient$osmolality,
       creatinine  = if (is.null(patient$creatinine)) NA_real_ else patient$creatinine,
+      gestationalAge = if (is.null(patient$gestationalAge)) NA_real_ else patient$gestationalAge,
       cyp2d6 = patient$cyp2d6, cyp2c19 = patient$cyp2c19, cyp2c9 = patient$cyp2c9,
-      cyp2b6 = patient$cyp2b6
+      cyp2b6 = patient$cyp2b6, vkorc1 = patient$vkorc1, cyp4f2 = patient$cyp4f2
     ),
     drugs      = drugs,
     doses      = doses,

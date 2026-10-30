@@ -72,10 +72,14 @@
 #
 # THRESHOLDS
 # ==========
-# No effect site, no MEAC, no band and no time until threshold: the plotted INR
-# is a turnover endpoint.  This is a research and teaching model; a simulated INR
+# No effect site, no MEAC and no time until threshold: the plotted INR is a
+# turnover endpoint.  This is a research and teaching model; a simulated INR
 # is not a dose recommendation, a bleeding risk or a procedure-safe time; see
 # inst/help/drugs/fluindione.md.
+# The band is the INR target, 2.0 to 3.0 with 2.5 typical (Holbrook 2012's
+# target for every vitamin K antagonist; inst/extdata/therapeuticRanges.csv), drawn on
+# Steven L. Shafer's decision of 2026-10-27 as a reference, not a dosing
+# instruction.
 #
 # (Claude Code, 2026-10-18, at the request of Steven L. Shafer.)
 # -----------------------------------------------------------------------------
@@ -104,7 +108,7 @@
 #'   clearance (the app passes this field).
 #' @param vkorc1 VKORC1 -1639G>A genotype, one of \code{VKORC1_VALUES};
 #'   \code{"GG"} or \code{"GA"} raises the C50 (less sensitive), \code{"AA"} is
-#'   the sensitive reference (the app passes this field)
+#'   the sensitive reference and the default (the app passes this field)
 #' @returns a list in the shape \code{getDrugPK()} expects, with an indirect
 #'   \code{inr} block
 #' @export
@@ -145,9 +149,9 @@ fluindione <- function(weight, height, age, sex, adjustToFFM = TRUE,
                kin = 0.0385 / 60, kout = 0.0391 / 60),
     tPeak = 0,
     MEAC = 0,
-    typical = 0,
-    upperTypical = 0,
-    lowerTypical = 0,
+    typical = 2.5,      # INR target band (header)
+    upperTypical = 3,
+    lowerTypical = 2,
     reference = paste0(
       "Verstuyft C et al., Clin Pharmacokinet 2012;51(1):41-53 (apparent ",
       "two-compartment PK and an indirect-response INR model with CYP2C9 and ",

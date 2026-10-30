@@ -22,8 +22,8 @@ test_that("the decomposition gives the published rates, clearance and central vo
   # Well conditioned: k12 is a quarter of the sum of the rates
   expect_gt(k12 / (l1 + l2), 0.25)
   expect_identical(PK$Concentration.Units, "mcg")
-  expect_equal(PK$tPeak, 0)
-  expect_equal(set$ke0, 0)
+  expect_equal(PK$tPeak, 2)
+  expect_gt(set$ke0, 0)
 })
 
 test_that("V-beta, which the model does not use, checks it", {
@@ -60,4 +60,13 @@ test_that("esmolol is a vasoactive and resuscitation drug with no band", {
   expect_identical(row$Category, VASOACTIVE_DRUG_CATEGORY)
   expect_equal(row$MEAC, 0)
   expect_equal(row$Lower, 0)
+})
+
+test_that("the effect site peaks 2 min after a bolus (heart rate, Krumpl 2017)", {
+  PK <- getDrugPK("esmolol", 70, 170, 60, "male")
+  expect_equal(PK$tPeak, 2)
+  pk <- PK$PK$default
+  coef <- c(pk$p_coef_bolus_l1, pk$p_coef_bolus_l2, pk$p_coef_bolus_l3)
+  lambda <- c(pk$lambda_1, pk$lambda_2, pk$lambda_3)
+  expect_equal(effectSitePeakTime(coef, lambda, pk$ke0), 2, tolerance = 1e-4)
 })

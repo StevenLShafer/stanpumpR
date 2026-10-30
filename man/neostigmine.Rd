@@ -2,7 +2,7 @@
 % Please edit documentation in R/drugs_neostigmine.R
 \name{neostigmine}
 \alias{neostigmine}
-\title{Neostigmine pharmacokinetics (single historical fit)}
+\title{Neostigmine pharmacokinetics (Heier 2002)}
 \usage{
 neostigmine(weight, height, age, sex, adjustToFFM = TRUE)
 }
@@ -16,13 +16,12 @@ neostigmine(weight, height, age, sex, adjustToFFM = TRUE)
 \item{sex}{sex as a string}
 
 \item{adjustToFFM}{scale volumes to the patient's fat-free mass and
-clearances to that ratio to the 0.75 power; when \code{FALSE}, scale every
-volume and clearance linearly with total body weight, as the per-kilogram
-source does.}
+clearances to that ratio to the 0.75 power; when \code{FALSE}, use
+Heier's published values, which are not weight-related, for everyone.}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-Neostigmine pharmacokinetics (single historical fit)
+Neostigmine pharmacokinetics (Heier 2002)
 }

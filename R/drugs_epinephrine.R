@@ -73,10 +73,18 @@
 # reliable; how fast the concentration gets there after a rate change is
 # fixed by V/CL, a half-life of 2.6 minutes here, and is only approximately
 # known.  A bolus (the 1 mg of cardiac arrest) is far outside the infusion
-# data the model was fitted to.  There is no effect site and no band: the
-# study fitted no concentration-effect relation, and the pressure a given
-# concentration produces in septic shock varies enormously, which is the
-# paper's own starting point.
+# data the model was fitted to.  There is no band: the study fitted no
+# concentration-effect relation, and the pressure a given concentration
+# produces in septic shock varies enormously, which is the paper's own
+# starting point.
+#
+# EFFECT SITE: tPeak 60 SECONDS, CLINICAL
+# =======================================
+# No study measured the time to peak effect after an intravenous bolus with
+# a fine enough grid; the references give a clinical 1-2 minutes.  The tPeak
+# is 1 minute, Steven L. Shafer's clinical observation of the immediate
+# tachycardia after a bolus (2026-10-20), as atropine's 90 seconds is a
+# clinical time to peak heart rate.
 # -----------------------------------------------------------------------------
 
 # Abboud 2009, Table 3
@@ -87,6 +95,7 @@ EPINEPHRINE_V        <- 7.9     # L
 EPINEPHRINE_R0       <- 43.5    # nmol/h, endogenous input (not plotted)
 EPINEPHRINE_SAPS_REF <- 50      # the reference score, used for every patient
 EPINEPHRINE_MW       <- 183.2   # g/mol, the base
+EPINEPHRINE_TPEAK    <- 1       # min, clinical: the immediate tachycardia
 
 #' Epinephrine (Abboud 2009)
 #'
@@ -121,13 +130,14 @@ epinephrine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "One-compartment model in 38 adults with septic shock, epinephrine ",
     "0.026-1.7 mcg/kg/min: CL 127 L/h x (BW/70)^0.60 x (SAPS II/50)^-0.67, ",
     "V 7.9 L.  SAPS II is held at the reference 50.  Exogenous epinephrine ",
-    "is plotted; the endogenous baseline (about 0.06 ng/mL) is not. ",
+    "is plotted; the endogenous baseline (about 0.06 ng/mL) is not.  Time ",
+    "to peak effect 1 min, the clinical time to the tachycardia of a bolus. ",
     "https://doi.org/10.1186/cc7972"
   )
 
   list(
     PK = PK,
-    tPeak = 0,
+    tPeak = EPINEPHRINE_TPEAK,
     MEAC = 0,
     typical = 0,
     upperTypical = 0,

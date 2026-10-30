@@ -16,6 +16,8 @@ Because the effect site adds one more first-order process, the effect-site conce
 
 The plasma concentration is what a blood sample measures; the effect-site concentration is what the patient responds to. Clinical correlates, the concentration for loss of consciousness, for adequate analgesia, for return of neuromuscular function, are effect-site concentrations. This is why stanpumpR draws the effect site solid and hides the plasma by default, and why the shaded therapeutic band and the recovery thresholds apply to the effect site.
 
+Two cautions. The effect site is only as good as its time to peak effect: for the anaesthetic drugs it was fitted to a measured effect, usually the EEG, but for some others (several vasoactive drugs among them) it is carried from another study or is a clinical estimate, and a solved ke0 says nothing about whether a pressure, a heart rate or a rhythm follows it; each drug's page gives the source. And a band that is a laboratory range (digoxin, the antiseizure, antidepressant and antipsychotic drugs) was measured in sampled serum at a stated time, usually a trough or six or more hours after a dose, so it is read against the curve at that time, not at an early peak.
+
 ## Time to peak effect, and how ke0 is found
 
 ke0 cannot be measured directly. It is estimated from the time course of a measured effect, usually the processed EEG, during a bolus or a rapid infusion. A model-independent way to report the result is the **time to peak effect** after a bolus, tPeak: the moment at which the rising effect-site concentration meets the falling plasma concentration.
@@ -32,7 +34,7 @@ Minto, Schnider, Gregg, Henthorn and Shafer showed in 2003 (*Anesthesiology* 99:
 | morphine | 93.8 | |
 | methadone | 10 | Kharasch 2004 peak miosis 10-15 min, within Inturrisi 1987's range |
 | hydromorphone | 19.6 | |
-| oxycodone | 12.35 | Lalovic 2006 (pupil) t½ke0 11 min |
+| oxycodone | 12.36 | Lalovic 2006 (pupil) t½ke0 11 min |
 | oliceridine | 4.4 | Dahan 2020: analgesia too fast to measure, taken as t½ke0 1 min |
 | buprenorphine | 61.2 | Yassen 2006 ke0, carried as tPeak |
 | naloxone | 3.58 | Yassen 2007 ke0, carried as tPeak |
@@ -41,7 +43,8 @@ Minto, Schnider, Gregg, Henthorn and Shafer showed in 2003 (*Anesthesiology* 99:
 | cisatracurium | 12.3 (young), 12.9 (elderly) | Sorooshian 1996 ke0, with its own kinetics |
 | midazolam | 3 | Bührer 1990 |
 | etomidate | 1.9 (solved from Arden 1986's t½ke0 of 1.6 min) | Arden 1986 |
-| ketamine, dexmedetomidine, oxytocin | 3, 10, 5 | described in the code as guesses or clinical observation |
+| dexmedetomidine (adult) | 14.9 | Colin 2017 MOAA/S ke0, carried as tPeak on Hannivoort 2015's kinetics |
+| ketamine, dexmedetomidine (infant), oxytocin | 3, 2, 5 | described in the code as guesses or clinical observation |
 
 The drug pages carry the current values; this table is illustrative. Where the code says a tPeak is a guess, the drug page says so too.
 

@@ -16,4 +16,4 @@ With **Pregnant** ticked, the apparent clearance is multiplied by 1.6; the volum
 
 ### Band
 
-3 to 26 mg/L, the eslicarbazepine-specific range (Patsalos and colleagues, 2018).
+3 to 35 mg/L at trough, the range of the AGNP consensus guidelines' 2026 update (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5, https://doi.org/10.1055/a-2860-7861; laboratory alert level 40 mg/L), based on an expert guideline (Jacob and colleagues, 2016) and oxcarbazepine's well-studied range for its active metabolite. Norway's national ranges use a narrower, eslicarbazepine-specific 3 to 26 mg/L (12 to 100 µmol/L; Svendsen and colleagues, *Epilepsy Res* 2017;129:125-131, adopted by Reimers and colleagues, *Drug Des Devel Ther* 2018;12:271-280, https://doi.org/10.2147/DDDT.S154388), on the ground that eslicarbazepine is about 80% of oxcarbazepine's racemic metabolite.

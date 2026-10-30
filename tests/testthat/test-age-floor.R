@@ -21,12 +21,19 @@ test_that("the age terms are flat below 18 with the switch off", {
                fondaparinux(70, 170, 18, "male", adjustToFFM = FALSE)$PK$default$cl1)
   expect_equal(paroxetine(70, 170, 0, "male", adjustToFFM = FALSE)$PK$default$cl1,
                paroxetine(70, 170, 18, "male", adjustToFFM = FALSE)$PK$default$cl1)
+  expect_equal(citalopram(70, 170, 0, "male", adjustToFFM = FALSE)$PK$default$cl1,
+               citalopram(70, 170, 18, "male", adjustToFFM = FALSE)$PK$default$cl1)
+  expect_lt(citalopram(70, 170, 19, "male", adjustToFFM = FALSE)$PK$default$cl1,
+            citalopram(70, 170, 18, "male", adjustToFFM = FALSE)$PK$default$cl1)
   expect_lt(rivaroxaban(70, 170, 19, "male", adjustToFFM = FALSE)$PK$default$v1,
             rivaroxaban(70, 170, 18, "male", adjustToFFM = FALSE)$PK$default$v1)
 })
 
 test_that("a newborn can be simulated on every model that carries such a term", {
-  for (drug in c("apixaban", "rivaroxaban", "fondaparinux", "enoxaparin", "paroxetine")) {
+  # valproate's age term is floored at its youngest patient, 0.1 years, not
+  # 18: its source studied children (R/drugs_valproate.R)
+  for (drug in c("apixaban", "rivaroxaban", "fondaparinux", "enoxaparin", "paroxetine",
+                 "valproate", "citalopram")) {
     pk <- getDrugPK(drug, 3.5, 50, 0, "male")
     # A missing compartment (v = 1, cl = 0) gives a zero eigenvalue by design;
     # none may be infinite or NaN, and the fastest must be positive.

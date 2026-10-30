@@ -4,13 +4,13 @@ remifentanil,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/kg/min,Plasma target,E
 fentanyl,ng,mcg,mcg/kg/hr,mcg,"mcg,mcg/kg,mcg/kg/hr,Plasma target,Effect site target",#0491E2,0.48,1.2,0.72,0.6,0.6,IV,Opioids
 alfentanil,ng,mcg,mcg/kg/hr,mcg,"mcg,mcg/kg,mcg/kg/hr,Plasma target,Effect site target",#0491E2,31.2,78,46.8,39,39,IV,Opioids
 sufentanil,ng,mcg,mcg/kg/hr,mcg,"mcg,mcg/kg,mcg/kg/hr,Plasma target,Effect site target",#0491E2,0.0448,0.112,0.0672,0.056,0.056,IV,Opioids
-morphine,mcg,mg,mg/hr,mg,"mg,mg/hr,mg PO tablet,mg PO liquid,mg/kg PO liquid,mg qd,mg bid,mg tid,mg qid,mg PO tablet qd,mg PO tablet bid,mg PO tablet tid,mg PO tablet qid,mg PO liquid qd,mg PO liquid bid,mg PO liquid tid,mg PO liquid qid,mg/kg PO liquid qd,mg/kg PO liquid bid,mg/kg PO liquid tid,mg/kg PO liquid qid",#032FED,0.0064,0.016,0.0096,0.008,0.008,IV,Opioids
-pethidine,mcg,mg,mg/hr,mg,"mg,mg/hr,mg qd,mg bid,mg tid,mg qid",#5155FF,0.2,0.5,0.3,0.25,0.25,IV,Opioids
-hydromorphone,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg PO liquid,mg/kg PO liquid,mg IM,mg IN,Plasma target,Effect site target,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO liquid qd,mg PO liquid bid,mg PO liquid tid,mg PO liquid qid,mg/kg PO liquid qd,mg/kg PO liquid bid,mg/kg PO liquid tid,mg/kg PO liquid qid,mg IM qd,mg IM bid,mg IM tid,mg IM qid,mg IN qd,mg IN bid,mg IN tid,mg IN qid",#032FED,1.2,3,1.8,1.5,1.5,IV,Opioids
-methadone,mcg,mg,mg/hr,mg,"mg,mg/hr,mg PO,mg PO liquid,mg/kg PO liquid,mg qd,mg bid,mg tid,mg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO liquid qd,mg PO liquid bid,mg PO liquid tid,mg PO liquid qid,mg/kg PO liquid qd,mg/kg PO liquid bid,mg/kg PO liquid tid,mg/kg PO liquid qid",#71C5E8,0.048,0.12,0.072,0.06,0.06,IV,Opioids
+morphine,mcg,mg,mg/hr,mg,"mg,mg/hr,mg PO tablet,mg PO liquid,mg/kg PO liquid,mg qd,mg bid,mg tid,mg qid,mg q4h,mg PO tablet qd,mg PO tablet bid,mg PO tablet tid,mg PO tablet qid,mg PO tablet q4h,mg PO liquid qd,mg PO liquid bid,mg PO liquid tid,mg PO liquid qid,mg PO liquid q4h,mg/kg PO liquid qd,mg/kg PO liquid bid,mg/kg PO liquid tid,mg/kg PO liquid qid,mg/kg PO liquid q4h",#032FED,0.0064,0.016,0.0096,0.008,0.008,IV,Opioids
+pethidine,mcg,mg,mg/hr,mg,"mg,mg/hr,mg qd,mg bid,mg tid,mg qid,mg q4h",#5155FF,0.368,0.92,0.552,0.46,0.46,IV,Opioids
+hydromorphone,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg PO liquid,mg/kg PO liquid,mg IM,mg IN,Plasma target,Effect site target,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg PO liquid qd,mg PO liquid bid,mg PO liquid tid,mg PO liquid qid,mg PO liquid q4h,mg/kg PO liquid qd,mg/kg PO liquid bid,mg/kg PO liquid tid,mg/kg PO liquid qid,mg/kg PO liquid q4h,mg IM qd,mg IM bid,mg IM tid,mg IM qid,mg IM q4h,mg IN qd,mg IN bid,mg IN tid,mg IN qid,mg IN q4h",#032FED,1.2,3,1.8,1.5,1.5,IV,Opioids
+methadone,mcg,mg,mg/hr,mg,"mg,mg/hr,mg PO,mg PO liquid,mg/kg PO liquid,mg qd,mg bid,mg tid,mg qid,mg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg PO liquid qd,mg PO liquid bid,mg PO liquid tid,mg PO liquid qid,mg PO liquid q4h,mg/kg PO liquid qd,mg/kg PO liquid bid,mg/kg PO liquid tid,mg/kg PO liquid qid,mg/kg PO liquid q4h",#71C5E8,0.048,0.12,0.072,0.06,0.06,IV,Opioids
 ketamine,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,Plasma target,Effect site target",#FFCC00,0.1,0.16,0.12,0,0.1,IV,Hypnotics and sedatives
 dexmedetomidine,ng,mcg,mcg/kg/hr,mcg/kg/hr,"mcg,mcg/kg,mcg/hr,mcg/kg/hr",#791AEE,0.4,0.8,0.6,0,0.4,IV,Hypnotics and sedatives
-midazolam,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#E36C0A,0.04,0.12,0.1,0,0.04,IV,Hypnotics and sedatives
+midazolam,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#E36C0A,0.101,0.304,0.208,0,0.101,IV,Hypnotics and sedatives
 etomidate,mcg,mg,mg/kg/min,mg,"mg,mg/kg/min,Plasma target,Effect site target",#FFCC00,0.4,0.8,0.5,0,0.4,IV,Hypnotics and sedatives
 lidocaine,mcg,mg,mg/hr,mg,"mg,mg/hr,mg RA,mg/kg RA,mg/hr RA,Plasma target,Effect site target",#B7AE7F,0.5,1.5,1,0,0.5,IV,Local anesthetics
 bupivacaine,mcg,mg,,mg RA,"mg,mg RA,mg/kg RA,mg/hr RA",#6A5ACD,0,0,0,0,0,IV,Local anesthetics
@@ -21,80 +21,80 @@ vecuronium,ng,mg,mcg/kg/min,mg,"mg,mg/kg,mcg/kg/min",#8B4513,110,155,135,0,110,I
 cisatracurium,ng,mg,mcg/kg/min,mg,"mg,mg/kg,mcg/kg/min",#556B2F,130,200,165,0,130,IV,Neuromuscular blockade
 naloxone,ng,mcg,mcg/min,mcg,"mcg,mcg/kg,mg,mg/kg,mcg/min,mcg/kg/min,mg/min,mg/kg/min,mg IN",#404040,1,10,3,0,1,IV,Other
 oxytocin,ng,mcg,mcg/min,mcg,"mcg,mg,mg/kg,mcg/min",#008F7D,0.05,0.2,0.1,0,0.05,IV,Other
-oxycodone,ng,mg,mg/hr,mg PO,"mg,mg/hr,Plasma target,Effect site target,mg PO,mg PO liquid,mg/kg PO liquid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO liquid qd,mg PO liquid bid,mg PO liquid tid,mg PO liquid qid,mg/kg PO liquid qd,mg/kg PO liquid bid,mg/kg PO liquid tid,mg/kg PO liquid qid",#032FED,10,20,14,12,10,IV,Opioids
+oxycodone,ng,mg,mg/hr,mg PO,"mg,mg/hr,Plasma target,Effect site target,mg PO,mg PO liquid,mg/kg PO liquid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg PO liquid qd,mg PO liquid bid,mg PO liquid tid,mg PO liquid qid,mg PO liquid q4h,mg/kg PO liquid qd,mg/kg PO liquid bid,mg/kg PO liquid tid,mg/kg PO liquid qid,mg/kg PO liquid q4h",#032FED,10,20,14,12,10,IV,Opioids
 oliceridine,ng,mg,mcg/kg/min,mg,"mg,mcg/kg/min",#FF00CC,18.296,37.504,27.4,27.9,27.4,IV,Opioids
 remimazolam,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#E36C0A,0.3,0.6,0.45,0,0.2,IV,Hypnotics and sedatives
-diazepam,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg PO,mg IM,mg qd,mg bid,mg tid,mg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#B5651D,150,600,300,0,150,IV,Hypnotics and sedatives
-lorazepam,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg PO,mg IM,mg qd,mg bid,mg tid,mg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#F28C28,34,104,51,0,51,IV,Hypnotics and sedatives
-alprazolam,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#C55A11,20,40,30,0,0,IV,Hypnotics and sedatives
-clonazepam,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#9C4A1A,20,70,40,0,0,IV,Hypnotics and sedatives
+diazepam,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg PO,mg IM,mg qd,mg bid,mg tid,mg qid,mg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h",#B5651D,606,1824,1248,0,606,IV,Hypnotics and sedatives
+lorazepam,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg PO,mg IM,mg qd,mg bid,mg tid,mg qid,mg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h",#F28C28,51,152,104,0,51,IV,Hypnotics and sedatives
+alprazolam,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h",#C55A11,5,44,25,0,0,IV,Hypnotics and sedatives
+clonazepam,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h",#9C4A1A,15,80,40,0,0,IV,Hypnotics and sedatives
 zolpidem,ng,,,mg PO,"mg PO,mg PO qd",#6A1B9A,80,200,120,0,50,IV,Hypnotics and sedatives
-temazepam,ng,,,mg PO,"mg PO,mg PO qd",#7F3F00,250,600,400,0,250,IV,Hypnotics and sedatives
-codeine,ng,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#4A6FE3,50,150,100,0,0,IV,Opioids
-hydrocodone,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#2C5FB8,10,30,20,12,12,IV,Opioids
-oxymorphone,ng,mg,mg/hr,mg PO,"mg,mg/hr,mg PO,mg qd,mg bid,mg tid,mg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#B5468C,1,4,2,0.8,0.8,IV,Opioids
-buprenorphine,ng,mg,mcg/hr,mg,"mg,mcg,mcg/kg,mcg/hr,mcg/kg/hr,mg SL,mcg SL,mg IN,mcg IN,mg qd,mg bid,mg tid,mg qid,mg SL qd,mg SL bid,mg SL tid,mg SL qid",#5D4037,1.25,3,2.2,0,1.25,IV,Opioids
-tramadol,ng,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#7E57C2,100,600,300,0,0,IV,Opioids
+temazepam,ng,,,mg PO,"mg PO,mg PO qd",#7F3F00,200,750,475,0,250,IV,Hypnotics and sedatives
+codeine,ng,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h",#4A6FE3,50,150,100,0,0,IV,Opioids
+hydrocodone,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h",#2C5FB8,10,30,20,12,12,IV,Opioids
+oxymorphone,ng,mg,mg/hr,mg PO,"mg,mg/hr,mg PO,mg qd,mg bid,mg tid,mg qid,mg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h",#B5468C,1,4,2,0.8,0.8,IV,Opioids
+buprenorphine,ng,mg,mcg/hr,mg,"mg,mcg,mcg/kg,mcg/hr,mcg/kg/hr,mg SL,mcg SL,mg IM,mg qd,mg bid,mg tid,mg qid,mg q4h,mg SL qd,mg SL bid,mg SL tid,mg SL qid,mg SL q4h",#5D4037,0.2,1,0.4,0,0.2,IV,Opioids
+tramadol,ng,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h",#7E57C2,100,600,300,0,0,IV,Opioids
 desmetramadol,ng,,,,,#26A69A,20,80,40,84,84,IV,
-gabapentin,mcg,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#880E4F,4.1,9.4,6,0,0,IV,Oral analgesics
-pregabalin,mcg,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#AD1457,1.3,5.4,2.7,0,0,IV,Oral analgesics
-acetaminophen,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#795548,3,15,7,0,5,IV,Oral analgesics
-ibuprofen,mcg,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#D84315,5,35,17,0,6.3,IV,Oral analgesics
-diclofenac,mcg,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#5E35B1,0,0,0,0,0,IV,Oral analgesics
+gabapentin,mcg,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h",#880E4F,2,20,11,0,0,IV,Oral analgesics
+pregabalin,mcg,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h",#AD1457,1.5,8,4.75,0,0,IV,Oral analgesics
+acetaminophen,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#795548,3,15,7,0,5,IV,Oral analgesics
+ibuprofen,mcg,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#D84315,5,35,17,0,6.3,IV,Oral analgesics
+diclofenac,mcg,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#5E35B1,0,0,0,0,0,IV,Oral analgesics
 diclofenacEC,mcg,,,mg PO,"mg PO,mg PO bid,mg PO tid",#7B1FA2,0,0,0,0,0,IV,Oral analgesics
 meloxicam,mcg,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg/kg PO,mg qd,mg/kg qd,mg PO qd,mg PO bid,mg/kg PO qd,mg/kg PO bid",#00838F,0,0,0,0,0,IV,Oral analgesics
-ketorolac,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#558B2F,0,0,0,0,0.37,IV,Oral analgesics
-naproxen,mcg,,,mg PO,"mg PO,mg/kg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#0277BD,0,0,0,0,29,IV,Oral analgesics
+ketorolac,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#558B2F,0,0,0,0,0.37,IV,Oral analgesics
+naproxen,mcg,,,mg PO,"mg PO,mg/kg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#0277BD,0,0,0,0,29,IV,Oral analgesics
 celecoxib,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#AD7A00,0,0,0,0,242,IV,Oral analgesics
 aspirin,mcg,,,mg PO,"mg PO,mg PO qd",#8D6E63,0,0,0,0,0,IV,Other
 salicylate,mcg,,,,,#3949AB,0,0,0,0,0,IV,
-cefazolin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid",#2E8B57,0.5,2,1,0,2,IV,Antibiotics
-clindamycin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#3CB371,3.1,9.9,3.1,0,5.2,IV,Antibiotics
-cefalexin,mcg,,,mg PO,"mg PO,mg/kg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#66CDAA,2.4,4.7,4.7,0,4.7,IV,Antibiotics
-ceftriaxone,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid",#20B2AA,7.8,30,30,0,15,IV,Antibiotics
-vancomycin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid",#008B8B,2.9,11,11,0,1.4,IV,Antibiotics
-metronidazole,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#5F9EA0,1,4.2,4.2,0,4.2,IV,Antibiotics
-gentamicin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid",#6B8E23,0.5,2,2,0,2,IV,Antibiotics
-hydrocortisone,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#D2691E,0.2,1,0.5,0,0,IV,Corticosteroids
-methylprednisolone,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#CD853F,0.2,1.5,0.5,0,0,IV,Corticosteroids
-dexamethasone,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg IM,mg/kg IM,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg IM qd,mg IM bid,mg IM tid,mg IM qid,mg/kg IM qd,mg/kg IM bid,mg/kg IM tid,mg/kg IM qid",#B8860B,20,100,50,0,0,IV,Corticosteroids
-prednisolone,ng,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#DAA520,10,100,40,0,0,IV,Corticosteroids
-prednisone,ng,,,mg PO,"mg PO,mg/kg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#C9A227,10,80,30,0,0,IV,Corticosteroids
+cefazolin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h",#2E8B57,0.5,2,1,0,2,IV,Antibiotics
+clindamycin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#3CB371,3.1,9.9,3.1,0,5.2,IV,Antibiotics
+cefalexin,mcg,,,mg PO,"mg PO,mg/kg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#66CDAA,2.4,4.7,4.7,0,4.7,IV,Antibiotics
+ceftriaxone,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h",#20B2AA,7.8,30,30,0,15,IV,Antibiotics
+vancomycin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h",#008B8B,2.9,11,11,0,1.4,IV,Antibiotics
+metronidazole,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#5F9EA0,1,4.2,4.2,0,4.2,IV,Antibiotics
+gentamicin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h",#6B8E23,0.5,2,2,0,2,IV,Antibiotics
+hydrocortisone,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#D2691E,0.2,1,0.5,0,0,IV,Corticosteroids
+methylprednisolone,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#CD853F,0.2,1.5,0.5,0,0,IV,Corticosteroids
+dexamethasone,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg IM,mg/kg IM,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h,mg IM qd,mg IM bid,mg IM tid,mg IM qid,mg IM q4h,mg/kg IM qd,mg/kg IM bid,mg/kg IM tid,mg/kg IM qid,mg/kg IM q4h",#B8860B,20,100,50,0,0,IV,Corticosteroids
+prednisolone,ng,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#DAA520,10,100,40,0,0,IV,Corticosteroids
+prednisone,ng,,,mg PO,"mg PO,mg/kg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#C9A227,10,80,30,0,0,IV,Corticosteroids
 sugammadex,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#7B68EE,5,30,10,0,0,IV,Neuromuscular blockade
-neostigmine,ng,mg,mg/hr,mg,"mg,mcg,mg/kg,mcg/kg,mg/hr",#9370DB,30,300,100,0,30,IV,Neuromuscular blockade
+neostigmine,ng,mg,mg/hr,mg,"mg,mcg,mg/kg,mcg/kg,mg/hr",#9370DB,100,250,175,0,30,IV,Neuromuscular blockade
 glycopyrrolate,ng,mg,mg/hr,mg,"mg,mcg,mg/kg,mcg/kg,mg/hr",#8A2BE2,1,10,3,0,0,IV,Neuromuscular blockade
 mannitol,mOsm,,g/hr,g/hr,"g/hr,g/kg/hr",#00A3AD,300,320,310,0,0,IV,Other
 calcium,mmol,g chloride,mg/min chloride,g chloride,"g chloride,mg chloride,mg/kg chloride,mg/min chloride,mg/hr chloride,mg/kg/hr chloride,g/hr chloride,g gluconate,mg gluconate,mg/kg gluconate,mg/min gluconate,mg/hr gluconate,mg/kg/hr gluconate,g/hr gluconate",#C77C2B,0,0,0,0,0,IV,Other
 amiodarone,mcg,,,mg/day PO,"mg/day PO",#B22222,1,2.5,1.5,0,1,IV,Other
 desethylamiodarone,mcg,,,,,#E9967A,0,0,0,0,0,IV,
 amiodaroneIV,mcg,mg,mg/min,mg,"mg,mg/kg,mg/min,mg/hr",#C2185B,0,0,0,0,0,IV,Other
-escitalopram,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#00838F,15,80,40,0,0,IV,Antidepressants
+escitalopram,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#00838F,20,40,30,0,0,IV,Antidepressants
 citalopram,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#26C6DA,50,110,80,0,0,IV,Antidepressants
-sertraline,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#558B2F,10,150,50,0,0,IV,Antidepressants
-paroxetine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#9E9D24,20,65,40,0,0,IV,Antidepressants
-duloxetine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#EF6C00,30,120,60,0,0,IV,Antidepressants
+sertraline,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#558B2F,10,50,30,0,0,IV,Antidepressants
+paroxetine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#9E9D24,30,80,40,0,0,IV,Antidepressants
+duloxetine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#EF6C00,20,120,60,0,0,IV,Antidepressants
 mirtazapine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#6D4C41,30,80,50,0,0,IV,Antidepressants
 bupropion,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#283593,0,0,0,0,0,IV,Antidepressants
 hydroxybupropion,ng,,,,,#9575CD,850,1500,1200,0,0,IV,
 fluoxetine,ng,,,mg PO,"mg PO,mg PO qd",#00695C,0,0,0,0,0,IV,Antidepressants
 norfluoxetine,ng,,,,,#4DB6AC,0,0,0,0,0,IV,
 venlafaxine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#3949AB,0,0,0,0,0,IV,Antidepressants
-desvenlafaxine,ng,,,,,#90A4AE,0,0,0,0,0,IV,
-methylphenidate,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO XR,mg PO XR qd",#4527A0,0,0,0,0,0,IV,Stimulants
+desvenlafaxine,ng,,,,,#90A4AE,85,380,230,0,0,IV,
+methylphenidate,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg PO XR,mg PO XR qd",#4527A0,0,0,0,0,0,IV,Stimulants
 methylphenidatePediatric,ng,,,mg PO,"mg PO,mg/kg PO,mg PO bid,mg PO tid,mg/kg PO bid,mg/kg PO tid",#7B1FA2,0,0,0,0,0,IV,Stimulants
-lisdexamfetamine,ng,,,mg PO,"mg PO,mg PO qd",#BF360C,0,0,0,0,0,IV,Stimulants
-mixedAmphetamineSalts,ng,,,mg PO XR,"mg PO,mg PO bid,mg PO XR,mg PO XR qd",#827717,0,0,0,0,0,IV,Stimulants
-ondansetron,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid",#00838F,5,40,20,0,0,IV,Antiemetics
+lisdexamfetamine,ng,,,mg PO,"mg PO,mg PO qd",#BF360C,44,160,100,0,0,IV,Stimulants
+mixedAmphetamineSalts,ng,,,mg PO XR,"mg PO,mg PO bid,mg PO XR,mg PO XR qd",#827717,23,45,34,0,0,IV,Stimulants
+ondansetron,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h",#00838F,5,40,20,0,0,IV,Antiemetics
 aprepitant,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr",#8D6E2F,116,1500,500,0,0,IV,Antiemetics
 fosaprepitant,ng,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#6D4C41,116,1500,500,0,0,IV,Antiemetics
-quetiapine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#4E342E,0,0,0,0,0,IV,Antipsychotics
+quetiapine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#4E342E,100,500,300,0,0,IV,Antipsychotics
 risperidone,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#00ACC1,0,0,0,0,0,IV,Antipsychotics
 hydroxyrisperidone,ng,,,,,#80DEEA,0,0,0,0,0,IV,
-aripiprazole,ng,,,mg PO,"mg PO,mg PO qd",#512DA8,0,0,0,0,0,IV,Antipsychotics
+aripiprazole,ng,,,mg PO,"mg PO,mg PO qd",#512DA8,120,270,195,0,0,IV,Antipsychotics
 dehydroaripiprazole,ng,,,,,#B39DDB,0,0,0,0,0,IV,
-olanzapine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#1B5E20,0,0,0,0,0,IV,Antipsychotics
-haloperidol,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#9C27B0,0,0,0,0,0,IV,Antipsychotics
-haloperidolIV,ng,mg,mg/hr,mg,"mg,mg/hr,mg qd,mg bid,mg tid,mg qid",#F48FB1,0,0,0,0,0,IV,Antipsychotics
+olanzapine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#1B5E20,20,40,30,0,0,IV,Antipsychotics
+haloperidol,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#9C27B0,1,5,3,0,0,IV,Antipsychotics
+haloperidolIV,ng,mg,mg/hr,mg,"mg,mg/hr,mg qd,mg bid,mg tid,mg qid,mg q4h",#F48FB1,0,0,0,0,0,IV,Antipsychotics
 droperidol,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#F57F17,0,0,0,0,0,IV,Antipsychotics
 droperidolIM,ng,,,mg IM,"mg IM",#FFB74D,0,0,0,0,0,IV,Antipsychotics
 air,%,L/min,L/min,L/min,"L/min",#9E9E9E,0,0,0,0,0,gas,
@@ -104,20 +104,20 @@ sevoflurane,%,%,%,%,"%",#F9A825,0,0,0,0,0.21,gas,Inhaled anesthetics
 isoflurane,%,%,%,%,"%",#8E24AA,0,0,0,0,0.11,gas,Inhaled anesthetics
 desflurane,%,%,%,%,"%",#00897B,0,0,0,0,0.6,gas,Inhaled anesthetics
 ventilation,L/min,L/min,L/min,L/min,"L/min",#546E7A,0,0,0,0,0,gas,
-phenytoin,mcg,mg,mg/min,mg PO ER,"mg,mg/kg,mg/min,mg PO ER,mg PO liquid,mg PO tablet,mg PO ER qd,mg PO ER bid,mg PO ER tid,mg PO liquid bid,mg PO liquid tid,mg PO tablet bid,mg PO tablet tid,mg PE,mg/kg PE,mg PE/min,mg PE IM,mg/kg PE IM",#2E7D32,10,20,15,0,0,IV,Antiseizure
-carbamazepine,mcg,,,mg PO bid,"mg PO,mg PO ER,mg PO bid,mg PO tid,mg PO ER qd,mg PO ER bid",#00695C,4,12,8,0,0,IV,Antiseizure
-valproate,mcg,mg,mg/hr,mg PO DR bid,"mg,mg/hr,mg PO DR,mg PO liquid,mg PO ER,mg PO DR bid,mg PO DR tid,mg PO liquid bid,mg PO liquid tid,mg PO ER qd,mg PO ER bid",#5D4037,50,100,75,0,0,IV,Antiseizure
-phenobarbital,mcg,mg,mg/hr,mg PO qd,"mg,mg/kg,mg/hr,mg PO,mg PO qd,mg PO bid",#455A64,10,40,20,0,0,IV,Antiseizure
-pentobarbital,mcg,mg,mg/kg/hr,mg/kg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#6D4C41,20,40,30,0,0,IV,Antiseizure
-ethosuximide,mcg,,,mg PO bid,"mg PO,mg PO liquid,mg PO bid,mg PO tid,mg PO liquid bid,mg PO liquid tid",#827717,40,100,70,0,0,IV,Antiseizure
-topiramate,mcg,,,mg PO bid,"mg PO,mg PO bid,mg PO tid",#AD1457,5,20,10,0,0,IV,Antiseizure
-lacosamide,mcg,mg,mg/hr,mg PO bid,"mg,mg/hr,mg PO,mg PO bid,mg PO tid",#1565C0,10,20,15,0,0,IV,Antiseizure
-lamotrigine,mcg,,,mg PO bid,"mg PO,mg PO qd,mg PO bid",#C62828,3,15,8,0,0,IV,Antiseizure
-zonisamide,mcg,,,mg PO qd,"mg PO,mg PO liquid,mg PO qd,mg PO bid",#4527A0,10,40,20,0,0,IV,Antiseizure
-tiagabine,ng,,,mg PO tid,"mg PO,mg PO bid,mg PO tid,mg PO qid",#00838F,20,200,50,0,0,IV,Antiseizure
-levetiracetam,mcg,mg,mg/hr,mg PO bid,"mg,mg/hr,mg PO,mg PO bid",#2E7D32,12,46,30,0,0,IV,Antiseizure
-eslicarbazepine,mcg,,,mg PO qd,"mg PO,mg PO qd",#D84315,3,26,15,0,0,IV,Antiseizure
-cenobamate,mcg,,,mg PO qd,"mg PO,mg PO qd",#00796B,5,35,15,0,0,IV,Antiseizure
+phenytoin,mcg,mg,mg/min,mg PO ER,"mg,mg/kg,mg/min,mg PO ER,mg PO liquid,mg PO tablet,mg PO ER qd,mg PO ER bid,mg PO ER tid,mg PO ER qam,mg PO ER qpm,mg PO liquid bid,mg PO liquid tid,mg PO tablet bid,mg PO tablet tid,mg PE,mg/kg PE,mg PE/min,mg PE IM,mg/kg PE IM",#2E7D32,10,20,15,0,0,IV,Antiseizure
+carbamazepine,mcg,,,mg PO bid,"mg PO,mg PO ER,mg PO bid,mg PO tid,mg PO qam,mg PO qpm,mg PO ER qd,mg PO ER bid",#00695C,4,12,8,0,0,IV,Antiseizure
+valproate,mcg,mg,mg/hr,mg PO DR bid,"mg,mg/hr,mg PO DR,mg PO liquid,mg PO ER,mg PO DR bid,mg PO DR tid,mg PO DR qam,mg PO DR qpm,mg PO liquid bid,mg PO liquid tid,mg PO ER qd,mg PO ER bid",#5D4037,50,100,75,0,0,IV,Antiseizure
+phenobarbital,mcg,mg,mg/hr,mg PO qd,"mg,mg/kg,mg/hr,mg PO,mg PO qd,mg PO bid",#455A64,10,30,20,0,0,IV,Antiseizure
+pentobarbital,mcg,mg,mg/kg/hr,mg/kg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#6D4C41,4,21,12.5,0,0,IV,Antiseizure
+ethosuximide,mcg,,,mg PO bid,"mg PO,mg PO liquid,mg PO bid,mg PO tid,mg PO qam,mg PO qpm,mg PO liquid bid,mg PO liquid tid",#827717,40,100,70,0,0,IV,Antiseizure
+topiramate,mcg,,,mg PO bid,"mg PO,mg PO bid,mg PO tid,mg PO qam,mg PO qpm",#AD1457,5,20,10,0,0,IV,Antiseizure
+lacosamide,mcg,mg,mg/hr,mg PO bid,"mg,mg/hr,mg PO,mg PO bid,mg PO tid,mg PO qam,mg PO qpm",#1565C0,1,12,6,0,0,IV,Antiseizure
+lamotrigine,mcg,,,mg PO bid,"mg PO,mg PO qd,mg PO bid,mg PO qam,mg PO qpm",#C62828,3,15,8,0,0,IV,Antiseizure
+zonisamide,mcg,,,mg PO qd,"mg PO,mg PO liquid,mg PO qd,mg PO bid,mg PO qam,mg PO qpm",#4527A0,10,40,20,0,0,IV,Antiseizure
+tiagabine,ng,,,mg PO tid,"mg PO,mg PO bid,mg PO tid,mg PO qid,mg PO q4h",#00838F,20,200,50,0,0,IV,Antiseizure
+levetiracetam,mcg,mg,mg/hr,mg PO bid,"mg,mg/hr,mg PO,mg PO bid,mg PO qam,mg PO qpm",#2E7D32,6,46,30,0,0,IV,Antiseizure
+eslicarbazepine,mcg,,,mg PO qd,"mg PO,mg PO qd",#D84315,3,35,15,0,0,IV,Antiseizure
+cenobamate,mcg,,,mg PO qd,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qam,mg PO qpm",#00796B,10,25,18,0,0,IV,Antiseizure
 diamorphine,ng,,,mg IN,"mg IN,mcg IN,mg IM,mcg IM",#8B0000,0,0,0,0,0,IV,Illicit drugs
 carfentanil,ng,mcg,,mcg,"mcg,mcg/kg",#3E2723,0,0,0,0,0,IV,Illicit drugs
 semaglutide,ng,,,mg SC qwk,"mg SC,mg SC qwk",#2E7D5B,0,0,0,0,0,IV,Antidiabetic
@@ -149,36 +149,45 @@ vildagliptin,ng,,,mg PO bid,"mg PO,mg PO qd,mg PO bid",#7D6B2E,0,0,0,0,0,IV,Anti
 semaglutideOral,ng,,,mg PO qd,"mg PO,mg PO qd",#3F8F5F,0,0,0,0,0,IV,Antidiabetic
 cetagliptin,ng,,,mg PO qd,"mg PO,mg PO qd",#6A7F2A,0,0,0,0,0,IV,Antidiabetic
 heparin,IU,IU,IU/hr,IU,"IU,IU/kg,IU/hr,IU/kg/hr",#B71C1C,0,0,0,0,0,IV,Anticoagulants
+heparinCPB,ACT,IU,IU/hr,IU,"IU,IU/kg,IU/hr,IU/kg/hr",#455A64,480,600,480,0,0,IV,Anticoagulants
 bivalirudin,mcg,mg,mg/kg/hr,mg/kg,"mg,mg/kg,mg/hr,mg/kg/hr,mg/min,mg/kg/min",#AD1457,0,0,0,0,0,IV,Anticoagulants
 argatroban,ng,mcg/kg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min,mcg/hr,mcg/kg/hr",#E65100,0,0,0,0,0,IV,Anticoagulants
 enoxaparin,IU,IU SC,,IU SC,"IU SC,IU/kg SC",#00695C,0,0,0,0,0,IV,Anticoagulants
 fondaparinux,mcg,mg SC,,mg SC,"mg SC,mg/kg SC",#5D4037,0,0,0,0,0,IV,Anticoagulants
 apixaban,ng,,,mg PO,"mg PO,mg PO bid",#1565C0,0,0,0,0,0,IV,Anticoagulants
+apixabanVTE,ng,,,mg PO,"mg PO,mg PO bid",#0288D1,0,0,0,0,0,IV,Anticoagulants
 rivaroxaban,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#6A1B9A,0,0,0,0,0,IV,Anticoagulants
 edoxaban,ng,,,mg PO qd,"mg PO,mg PO qd",#00838F,0,0,0,0,0,IV,Anticoagulants
 dabigatran,ng,,,mg PO bid,"mg PO,mg PO bid",#558B2F,0,0,0,0,0,IV,Anticoagulants
 dabigatranHip,ng,,,mg PO bid,"mg PO,mg PO bid,mg PO qd",#7CB342,0,0,0,0,0,IV,Anticoagulants
-warfarin,INR,,,mg PO qd,"mg PO,mg PO qd",#283593,0,0,0,0,0,IV,Anticoagulants
-fluindione,INR,,,mg PO qd,"mg PO,mg PO qd",#6A1B9A,0,0,0,0,0,IV,Anticoagulants
-acenocoumarol,INR,,,mg PO qd,"mg PO,mg PO qd",#AD1457,0,0,0,0,0,IV,Anticoagulants
+warfarin,INR,,,mg PO qd,"mg PO,mg PO qd",#283593,2,3,2.5,0,0,IV,Anticoagulants
+fluindione,INR,,,mg PO qd,"mg PO,mg PO qd",#6A1B9A,2,3,2.5,0,0,IV,Anticoagulants
+acenocoumarol,INR,,,mg PO qd,"mg PO,mg PO qd",#AD1457,2,3,2.5,0,0,IV,Anticoagulants
 cocaine,ng,,,mg IN,"mg IN,mcg IN",#A52A2A,0,0,0,0,0,IV,Illicit drugs
 methamphetamine,ng,,,mg IN,"mg IN,mcg IN",#CD5C5C,0,0,0,0,0,IV,Illicit drugs
 LSD,ng,,,mcg PO,mcg PO,#4A148C,0,0,0,0,0,IV,Illicit drugs
 psilocybin,ng,,,mg PO,mg PO,#673AB7,0,0,0,0,0,IV,Illicit drugs
 MDMA,ng,,,mg PO,mg PO,#004D40,0,0,0,0,0,IV,Illicit drugs
 clevidipine,ng,mg,mg/hr,mg/hr,"mg,mcg/kg/min,mg/hr",#B71C1C,0,0,0,0,0,IV,Antihypertensives
-fenoldopamPediatric,ng,,mcg/kg/min,mcg/kg/min,"mcg/kg/min",#311B92,15.7,23.5,19.6,0,0,IV,Antihypertensives
+fenoldopamPediatric,ng,,mcg/kg/min,mcg/kg/min,"mcg/kg/min",#311B92,3.9,15.7,15.7,0,0,IV,Antihypertensives
 carvedilol,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#01579B,0,0,0,0,0,IV,Antihypertensives
 azilsartan,ng,,,mg PO,"mg PO,mg PO qd",#E65100,0,0,0,0,0,IV,Antihypertensives
+benazepril,ng,,,mg PO,"mg PO,mg PO qd",#00838F,0,0,0,0,0,IV,Antihypertensives
+enalapril,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#0D47A1,0,0,0,0,0,IV,Antihypertensives
+enalaprilat,ng,,,,,#64B5F6,0,0,0,0,0,IV,
+fosinopril,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#263238,0,0,0,0,0,IV,Antihypertensives
 chlorthalidone,ng,,,mg PO,"mg PO,mg PO qd",#33691E,0,0,0,0,0,IV,Antihypertensives
+lisinopril,ng,,,mg PO,"mg PO,mg PO qd",#00695C,0,0,0,0,0,IV,Antihypertensives
+olmesartan,ng,,,mg PO,"mg PO,mg PO qd",#AD1457,0,0,0,0,0,IV,Antihypertensives
+valsartan,ng,,,mg PO,"mg PO,mg PO qd",#827717,0,0,0,0,0,IV,Antihypertensives
 hydrochlorothiazide,ng,,,mg PO,"mg PO,mg PO qd",#3E2723,0,0,0,0,0,IV,Antihypertensives
 epinephrine,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#C62828,0,0,0,0,0,IV,Vasoactive and resuscitation
 magnesiumSulfate,mmol,g,g/hr,g,"g,mg,mg/kg,g/hr,mg/min,mg/kg/hr",#00838F,0,0,0,0,0,IV,Vasoactive and resuscitation
 labetalol,ng,mg,mg/min,mg,"mg,mg/kg,mg/min,mg/hr",#6A1B9A,0,0,0,0,0,IV,Vasoactive and resuscitation
 diltiazem,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#2E7D32,0,0,0,0,0,IV,Vasoactive and resuscitation
-nitroglycerin,ng,mcg,mcg/min,mcg/min,"mcg,mcg/min,mcg/kg/min",#F9A825,0,0,0,0,0,IV,Vasoactive and resuscitation
+nitroglycerin,ng,,mcg/min,mcg/min,"mcg/min,mcg/kg/min",#F9A825,0,0,0,0,0,IV,Vasoactive and resuscitation
 norepinephrine,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#AD1457,0,0,0,0,0,IV,Vasoactive and resuscitation
-procainamide,mcg,mg,mg/min,mg/min,"mg,mg/kg,mg/min,mg/kg/hr",#4E342E,0,0,0,0,0,IV,Vasoactive and resuscitation
+procainamide,mcg,mg,mg/min,mg/min,"mg,mg/kg,mg/min,mg/kg/hr",#4E342E,3,10,6.5,0,0,IV,Vasoactive and resuscitation
 esmolol,mcg,mg,mcg/kg/min,mcg/kg/min,"mg,mcg/kg,mcg/kg/min",#283593,0,0,0,0,0,IV,Vasoactive and resuscitation
 dopamine,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg/kg/min,mcg/min",#EF6C00,0,0,0,0,0,IV,Vasoactive and resuscitation
 atropine,ng,mg,mg/hr,mg,"mg,mcg/kg",#558B2F,0,0,0,0,0,IV,Vasoactive and resuscitation
@@ -192,6 +201,10 @@ milrinone,ng,mcg/kg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#0277B
 milrinonePediatric,ng,mcg/kg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#4FC3F7,100,300,167,0,0,IV,Vasoactive and resuscitation
 metoprolol,ng,mg,mg/min,mg,"mg,mg/min,mg PO,mg PO bid",#1565C0,0,0,0,0,0,IV,Vasoactive and resuscitation
 nicardipine,ng,mg,mg/hr,mg/hr,"mg,mg/hr,mcg/kg/min",#00838F,0,0,0,0,0,IV,Vasoactive and resuscitation
+vasopressin,mcU,U,U/min,U/min,"U,U/min,U/hr,U/kg/min,U/kg/hr",#4A148C,0,0,0,0,0,IV,Vasoactive and resuscitation
+hydralazine,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#2E7D32,0,0,0,0,0,IV,Vasoactive and resuscitation
+methyleneBlue,ng,mg/kg,mg/kg/hr,mg/kg,"mg/kg,mg,mg/kg/hr,mg/hr",#1976D2,0,0,0,0,0,IV,Vasoactive and resuscitation
+dobutamineNeonatal,ng,,mcg/kg/min,mcg/kg/min,"mcg/kg/min,mcg/min",#D81B60,0,0,0,0,0,IV,Vasoactive and resuscitation
 GHB,mcg,,,g PO oxybate,"g PO oxybate,mg PO oxybate",#006064,0,0,0,0,0,IV,Illicit drugs
 apomorphine,ng,,,mg SC,"mg SC",#C62828,3.9,15.2,10.7,0,10.7,IV,Parkinson disease
 pramipexole,ng,,,mg PO tid,"mg PO,mg PO tid",#6A1B9A,0,0,0,0,0,IV,Parkinson disease

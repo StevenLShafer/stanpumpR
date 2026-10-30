@@ -162,8 +162,21 @@ nearly equal large numbers. Formal identifiability is not enough; a
 decomposition has to be numerically stable. Clevidipine's is (a 5%
 perturbation of any input moves V1 by at most 4%, V2 by 10%, Q by 13%);
 esmolol's is not. Status: `requires_parameter_fit`, with the arithmetic
-recorded. For an anaesthesia audience this is the most valuable record still
-missing, so it is the first one to settle from the full text.
+recorded.
+
+**Settled, 2026-10-19, and not from this source.** The drug an anaesthesiologist
+titrates most often is now in the library as `esmolol`, under *Vasoactive and
+resuscitation* rather than here, from de Bruijn 1987 (*Anesthesiology*
+66:323-326): whole-blood esmolol in nineteen anaesthetised cardiac surgical
+patients, two compartments fitted by NONLIN with the means printed in Tables 3
+and 4, and the beta-phase volume as an independent check. So the conclusion of
+this section stands -- Sum 1983's abstract cannot be decomposed -- and the
+lesson generalises past it: **when a record is blocked by conditioning rather
+than by access, the answer may be a different study rather than the full text of
+this one.** A second source with four independent numbers beats a first source
+with three, however much better the first source's population looks. Sum 1983's
+record stays `requires_parameter_fit` because the arithmetic in it is worth
+keeping; nothing is waiting on it.
 
 **3.4 The Ericsson response coefficients could not be found anywhere, and
 conflict with their neighbours.** The specification gives Emax 45.4% and EC50
@@ -314,7 +327,7 @@ category:
 
 | Drug | Matrix | Source | What it needed |
 |---|---|---|---|
-| `clevidipine` | whole blood | Ericsson 1999 (BJCP) | V1, V2 and Q derived from four reported quantities (section 4); externally validated in section 11 |
+| `clevidipine` | whole blood | Ericsson 1999 (BJCP) | V1, V2 and Q derived from four reported quantities (section 4); externally validated in section 11; since 2026-10-27, Table 1's fitted V1 (section 17) |
 | `fenoldopamPediatric` | plasma | Hammer 2008 | nothing; named for its population |
 | `carvedilol` | plasma | Hwang 2023 | the zero-order oral release mode of section 8 |
 | `azilsartan` | plasma | Tsai 2016 | the full text, and a dose basis the paper never states (section 10.2) |
@@ -406,11 +419,10 @@ blood-pressure endpoint exists for it to optimise against.
    never a new engine.** Section 12. The one case that genuinely needed a new
    engine was Michaelis-Menten elimination, and it needed one because it is
    not superposable — which is the test to apply next time.
-3. **Settle esmolol.** It is the antihypertensive an anaesthesiologist
-   titrates most often. Its obstacle is conditioning rather than access -- the
-   abstract alone formally closes the system, as section 4 records -- so what
-   the full text is wanted for is the individual-level data, which would allow
-   a decomposition per subject instead of one from rounded summary half-lives.
+3. ~~**Settle esmolol.**~~ **Done**, 2026-10-19, and by the move section 3.3
+   now records: not from Sum 1983's full text but from de Bruijn 1987, a
+   different study with four independent numbers instead of three. It is in
+   the library as `esmolol`, filed under *Vasoactive and resuscitation*.
 4. **Leave the blood-pressure layer until a record earns it.** The nearest
    candidates are not the famous drugs but the ones whose chain is almost
    complete in a single source.
@@ -637,7 +649,7 @@ injection route is the nearer of its two to being portable.
   1.1%. That makes the remaining gap sharper, not smaller. The derivation is
   now validated while its four INPUTS are still abstract-only, which leaves
   clevidipine the one live curve in this library whose own parameters have
-  never been read in a full text. The other two gains stand: the five PK
+  never been read in a full text. (Read on 2026-10-27: section 17.) The other two gains stand: the five PK
   numbers rise from `primary_abstract` to `primary_full_text`, and the Emax
   and EC50 of the MAP-over-HR resistance proxy become available.
 - **Bailey 2002** (PMID 11981147, Anesthesiology 2002;96:1086-94, doi
@@ -1288,7 +1300,1060 @@ approved ingredients as 13.1 enumerates them, and it is **not** a comparison
 against an intended formulary or a dated utilisation list. Enumerating what exists and knowing what is used are
 different questions, and the second one is the clinician's.
 
-And the number that matters has not moved. Of 127 records, 10 are executable,
+And the number that matters has not moved. Of the 127 records as at section 13, 10 were executable,
 `bp_simulation_enabled` is `FALSE` on every one, and **no drug in stanpumpR
 plots a blood pressure.** All twenty-one new rows are a statement about what
 the published evidence does not contain.
+
+## 14. The renin-angiotensin drugs, and where each one actually stops (2026-10-20)
+
+Eight drugs were requested: the three best-known angiotensin receptor blockers
+(losartan, valsartan, olmesartan) and five ACE inhibitors (benazepril,
+captopril, enalapril/enalaprilat, fosinopril, lisinopril). They did not come out
+in two groups, implemented and not. They came out in **six distinct states**,
+and the distinctions are the useful part of this section, because each one is a
+different reason and so calls for a different next action.
+
+| Drug | State | What stops it, or what did not |
+|---|---|---|
+| **lisinopril** | Implemented | Thomson 1989, full text. The library's first flip-flop model |
+| **olmesartan** | Implemented | Yoshihara 2005, full text. Dose basis resolved from the paper's own words |
+| **valsartan** | Implemented | Heo 2016, full text and supplement. Zero-order release, no renal term |
+| **enalapril** | Implemented, 2026-10-20 | Faisal 2019. Needed an **engine**, not more evidence: repeated eigenvalues (14.3, built in 16) |
+| **losartan** | **Refuted**, not merely underdetermined | Lo 1995, full text read; it prints one area where two are needed (§15) |
+| **captopril** | **Not pursued** — wrong structure | Out of clinical use, by the maintainer's decision; and saturable enzyme binding makes a linear fit the wrong structure, not an approximation |
+| **fosinopril** | ✅ Implemented, 2026-10-29 | Hui 1991, full text. Six printed numbers, closed **linearly**; the not-pursued verdict was wrong twice over (§18) |
+| **benazepril** | ✅ Implemented, 2026-10-20 | Kaiser 1989, full text. Derived; plotted as benazeprilat (§15) |
+
+### 14.1 Three implementations, three different lessons
+
+**Olmesartan's dose basis was derived from a sentence, not assumed.** Olmesartan
+medoxomil is a prodrug 20% heavier than the olmesartan that is plotted, so a
+model fitted to olmesartan concentrations could have been given its doses on
+either basis and the wrong guess is a flat 20% error in every curve. The paper
+settles it in its Model Evaluation section — the data were *"normalised to a
+dose of olmesartan medoxomil 20mg"* — so the apparent parameters already carry
+the ratio and a dose is entered as prescribed. **The general rule this is a case
+of: for any prodrug, the dose basis is a thing to find in the text, never a
+thing to infer from the analyte.** Azilsartan was the harder version of the same
+question (section 10) and had to be settled by arithmetic on the paper's own
+simulated exposures, because its text never said.
+
+**Olmesartan also parameterises in a way that has to be reproduced rather than
+improved.** The source fits apparent clearance together with the four rate
+constants, so the central volume is not a parameter at all — it is clearance
+over the elimination rate constant — and every covariate sits on clearance. The
+consequence is that each patient's eigenvalues are identical and the entire
+covariate model is a single multiplier on concentration: nothing about the
+shape moves with age, weight, sex, renal function or disease. It would have been
+easy to "fix" this by putting the covariates on clearance alone and holding the
+volume at its typical value. That would be a different model from the published
+one. The drug header, the help page and the test all state the property
+explicitly, and the test pins that the eigenvalues are patient-independent.
+
+**Valsartan's absorption shape is a finding, and so is its missing renal term.**
+Heo 2016 fitted first-order absorption too and it lost by 162 objective-function
+units, so the zero-order release mode built for
+carvedilol (section 8) is used — **its second confirmation, and the second time
+a source has rejected first-order absorption outright rather than merely
+preferring something else.** The consequence is pinned rather than smoothed
+over: a constant-rate input into a linear system peaks when the input stops, so
+the predicted peak is at exactly 4.39 h against the label's 2 to 4 h, and the
+authors themselves report that the model underpredicts the median peak. The
+curve describes exposure well and the peak bluntly, and the help page says so.
+
+The absent renal term matters more. Age, serum creatinine, smoking and drinking
+were all screened and rejected; body weight was the only survivor. So the
+signature deliberately does not name `creatinine`, and the test asserts that a
+creatinine of 4 mg/dL changes nothing. **For a drug whose patients' kidneys are
+often the reason they are taking it, a silence like that should be explicit
+rather than merely true**: the population was 48 healthy young adults with a
+mean creatinine of 0.81 mg/dL, so the model is not saying renal function is
+irrelevant, it is saying this study cannot speak to it.
+
+### 14.2 Losartan: the one study that identifies the system, and why its abstract is not enough
+
+A PubMed screen returned 52 hits for losartan population pharmacokinetics and
+122 for losartan with EXP3174, and **not one is a population model with a
+printed parameter table.** For the most prescribed drug in its class that is a
+surprising result, and it is worth recording as a result rather than as a failed
+search: losartan's literature is overwhelmingly CYP2C9 phenotyping, drug
+interactions and ethnic comparisons, which measure metabolic ratios rather than
+fit disposition.
+
+What the screen did find is better than a population model. Lo 1995 (*Clin
+Pharmacol Ther* 58:641-9) gave 18 healthy men **intravenous losartan,
+intravenous EXP3174, and oral losartan**. Separate intravenous arms for both
+moieties make both their clearances and volumes absolute rather than apparent,
+and the 14% conversion fraction it reports closes the parent-to-metabolite link
+that no oral-only study can close at all. That design is exactly what a
+two-moiety model needs, and it is why this is the one source to obtain rather
+than one candidate among many.
+
+Its abstract is still not enough, and the reason is the familiar one. Losartan's
+reported clearance over its reported volume gives a half-life of 0.64 h against
+the reported 2.1 h; EXP3174's gives 2.46 h against the reported 6.3 h. Neither
+moiety is one-compartment on these numbers, so the quoted volumes belong to a
+multi-compartment fit, and the abstract supplies three numbers per moiety where
+two compartments need four — **the same arithmetic that rules out esmolol's
+abstract (section 4)** — and that was wrongly thought to rule out fosinopril's
+sources too, until section 18 applied it to the right paper. The full text's
+compartmental tables would settle it, and would also answer a question the
+abstract raises: whether the oral conversion fraction differs from the
+intravenous one, which first-pass metabolism to EXP3174 would imply.
+
+### 14.3 Enalapril: the first case where the obstacle is an engine, and why discretising will not do
+
+> **Superseded in part by section 16.** The engine described here was built on
+> 2026-10-20 and the drug is implemented. The full text, fetched afterwards,
+> also corrected this section on three points: the citation below is wrong
+> (the paper is *Front Pediatr* 2019;7:281), and the transit parameterisation
+> and the formulation covariate are **not** ambiguous — the text resolves
+> both. Read 16.1 to 16.3 before relying on anything in this subsection
+> except its argument about the eigenvalues, which stands.
+
+Faisal 2019 (*Front Pharmacol* 10:973) is complete, verified and not
+implemented, which no other record in this registry has been. It fitted serum
+**and urine** for both moieties simultaneously in 24 healthy adults, which makes
+the system identifiable: bioavailability is a separately estimated parameter
+(0.606, against the literature's 60%), so the volumes and clearances are
+absolute, not apparent. The structure is enalapril in one compartment behind
+**eight Erlang transit compartments**, its elimination splitting into a renal
+and a metabolic path, feeding enalaprilat in two compartments behind **two more
+transit compartments** that delay the metabolite's formation.
+
+The obstacle is specific. **A chain of N identical transit compartments has one
+eigenvalue repeated N times**, and every closed-form coefficient in this library
+divides by a difference of two rate constants — which is why
+`separateEigenvalues()` exists, nudging ties apart by a relative 1e-8. For N = 8
+the partial-fraction coefficients would scale as 1/nudge⁷. That is not merely
+inelegant: it is precisely the catastrophic cancellation of nearly equal large
+numbers that section 3.3 **rejected esmolol's decomposition for**, so the
+library's own standard forbids the nudge here.
+
+Section 6's lesson still holds and points the right way. The system is linear
+throughout, so it is superposable, so by that test it does **not** need a
+numerical solver — what it needs is exact closed-form handling of a repeated
+eigenvalue, and a **matrix-exponential advance** over the 13-state system is
+that. `tests/testthat/test-compartments.R` already carries a dependency-free
+scaling-and-squaring `expmTaylor()`, which shows one costs no new package.
+
+It is worth being clear why the cheaper route is closed, because the cheap route
+has won every previous time. The parent's input shape could have been
+discretised into lagged fractional doses exactly as hydrochlorothiazide's
+Weibull was (section 12). Convolution commutes, so that would be exact in the
+limit. But the metabolite's own 2-transit delay means **the parent and the
+metabolite need different input kernels from one dose table**, and the
+architecture gives them the same one. So: *an input shape the engine lacks has
+always been a rewrite of the dose rows — until the shape differs between a
+parent and its metabolite.* That is the new boundary, and it is a sharper
+version of the old rule rather than a contradiction of it.
+
+**The paper's transit parameterisation is internally inconsistent, and it turns
+out not to matter.** It quotes MTT = (N+1)/KTR, which assumes every step shares
+one rate, while also defining KA as the separate rate out of the last transit.
+Four readings were integrated by Runge-Kutta and **all four reproduce the
+paper's own reported observations**: parent peak at 0.82 to 0.95 h against its
+"almost 1 h", metabolite peak at 3.26 to 3.68 h against its "around 3 to 4 h",
+with peak concentrations varying under 5%. That is the exact opposite of the
+Yang 2022 valsartan case, where no reading worked at all, and the contrast is
+the point: **an ambiguous parameterisation is a blocker only when the readings
+disagree with the paper's own figures.** Testing them costs an afternoon and
+turns a blocker into a documented rounding decision.
+
+### 14.4 Two drugs not pursued, and why that is still a record
+
+> **Half of this section was wrong, and section 18 replaces the fosinopril half.**
+> Fosinopril is in clinical use and its disposition *is* identifiable; both of
+> the reasons recorded below failed. The text is kept because the shape of the
+> mistake is worth more than the conclusion was.
+
+Captopril and fosinopril are out of clinical use, which is the maintainer's call
+and the sufficient reason. But an unpursued drug that looks merely unexamined
+invites someone to examine it again, so both rows now carry the evidential
+reason beside the clinical one.
+
+Captopril was the worst candidate in its class regardless: 58 unscreened
+candidate sources, and saturable binding to converting enzyme strong enough that
+a linear fit is the wrong *structure* rather than an approximation of the right
+one. Fosinopril failed the section 4 identifiability check on the very papers
+obtained for it — Gehr 1993 reports clearance, steady-state volume, mean
+residence time and a terminal half-life, but **mean residence time is
+steady-state volume over clearance**, so those are three independent numbers and
+not four. Two compartments need four. It is the third drug in this document to
+fail on that one identity.
+
+### 14.5 Benazepril: the parent closes and the metabolite does not
+
+A screen of the 25 benazepril/benazeprilat pharmacokinetic hits shows that the
+Ciba-Geigy series — Kaiser, Waldmeier, Sioufi, 1989 to 1994 — *is* the primary
+literature for this drug; everything else is a special-population comparison, an
+interaction study or a review. **Kaiser 1989** (*Biopharm Drug Dispos*
+10:365-76) is the one to obtain: 62 healthy men on a single 10 mg dose, plus
+steady state in 15 more.
+
+The abstracts are enough to do the identifiability check, and the answer splits
+the two moieties:
+
+**The parent closes.** One compartment for benazepril is determined by Sun
+1994's printed AUC(0-4 h) of 140 ng·h/mL and the reported 0.6 h half-life —
+CL/F about 71 L/h, V/F about 62 L — and `ka` near 2.7 /h follows from the
+0.55 h time to peak against an elimination rate constant of 1.155 /h.
+
+**The metabolite does not.** AUC = f<sub>m</sub> × dose ÷ CL is one equation in
+two unknowns, and the 17% urinary recovery does **not** pin the formation
+fraction: Waldmeier 1991's ¹⁴C mass balance shows a third of the radioactivity
+leaving as glucuronides of both moieties, and the class review reports biliary
+elimination for benazeprilat specifically. So the urinary fraction is a lower
+bound on formation, not a measurement of it.
+
+**And there is a structural caution that matters more than the arithmetic.**
+Benazeprilat's elimination is biphasic with a 22.3 h terminal phase that carries
+only a *minor amount* of the total — which is the signature of saturable binding
+to converting enzyme, the same phenomenon the enalaprilat record already flags,
+and **exactly the reason captopril was dropped** (§14.4). A two-compartment
+linear fit to that tail would be the wrong *structure* rather than an
+approximation of the right one. Kaiser 1989's fitted parameters over 62 subjects
+would say whether the published fit avoids that or inherits it, and that is the
+question to ask of the full text — not merely "what are the numbers".
+
+### 14.6 Where the numbers stand
+
+Of the 135 records as at section 14, 13 were executable, `bp_simulation_enabled` is `FALSE` on every
+one, and **no drug in stanpumpR plots a blood pressure.** Valsartan's source
+fitted one — an effect compartment with a maximum inhibition of 0.164, plus an
+interaction term with amlodipine — and it is now a **gated** record of its own,
+`valsartan__…__resting_sbp_and_dbp__heo2016`, which is *not* one of the four
+evaluable relations and should not be read as one: only the Imax was
+transcribed, so the relation cannot be evaluated against a concentration at
+all. Two things about it are worth knowing before anyone extracts the rest. The
+authors **fixed** that 0.164 as amlodipine's Imax as well, "assuming that the
+amlodipine and valsartan monotherapy show similar efficacy" — an assumption,
+not a measurement. And the monotherapy arm of the fit is a *naively pooled*
+analysis of mean blood pressures read from two other papers, because this study
+gave both drugs together and has no valsartan-alone arm, so the valsartan
+response is identified from other people's published means rather than from
+these subjects.
+
+## 15. One missing print: why benazepril closes and losartan does not (2026-10-20)
+
+Steven supplied the two full texts §14 asked for — Lo 1995 for losartan and
+Kaiser 1989 for benazepril. Both turn out to be **entirely non-compartmental**:
+trapezoidal areas, terminal rate constants by log-linear regression, no
+compartmental model fitted anywhere in either paper. By §4's arithmetic both
+should therefore have failed, because two compartments need four independent
+numbers and a non-compartmental paper normally prints three — a clearance, a
+volume and a terminal half-life.
+
+One of them closed and the other was refuted, and the difference is simply
+**how many of the four numbers each paper prints.**
+
+There is no cleverer rule here than the one §4 and `AGENTS.md` have carried all
+along, and this section's job is to count against it rather than improve it:
+
+> A two-compartment model has four parameters, so it takes **four independent
+> numbers**. Both exponents supply two of them, and two more must come from
+> somewhere.
+
+| Record | The four | Verdict |
+|---|---|---|
+| **clevidipine** (§11) | CL, V<sub>ss</sub>, α, β | closed |
+| **benazeprilat** (Kaiser) | α, β, AUC(0–∞), AUC(0–24 h) | closed |
+| **losartan** (Lo) | CL, V<sub>ss</sub>, β — and nothing else | **one short** |
+
+So Kaiser prints both exponents and two areas to close on, while Lo prints a
+clearance, a volume and a *single* exponent. Losartan is one number short, and
+the missing one is specifically the **distribution exponent** α, or an
+intercept that would give it. That is §4's standing sentence exactly: *CL + Vss
++ both half-lives closes the system, CL + Vss + the terminal half-life alone
+does not.*
+
+**Two earlier drafts of this section tried to state that more crisply and got
+it wrong both times**, which is worth leaving on the record because the error
+was the same each time — compressing a count into a slogan. The first said a
+partial area was necessary, which clevidipine refutes. The second said both
+exponents "plus any fourth number" closes it, which miscounts: CL with
+V<sub>ss</sub> is *two* numbers, not one, and so is a total area with a partial
+one. The same draft said losartan "reports only the terminal exponent, so there
+is nothing for a clearance or an area to combine with" — but Lo reports CL and
+V<sub>ss</sub> perfectly well, and losartan's deficit is one number rather than
+all three. The lesson is not about identifiability at all: **a rule that is
+already correct does not need restating, and restating it is where the mistakes
+came from.**
+
+It is still cheap to check a paper before requesting it, just with the plain
+count: *does it print both exponents, and two more independent numbers?*
+
+### 15.1 Benazeprilat, derived and checked
+
+From Kaiser's four numbers — t½α 2.7 h, t½β 22.3 h, AUC(0–24 h) 2649 and
+AUC(0–∞) 3185 (pmol/g)·h — the tail area is 536, so C(24 h) = β × 536 =
+16.66 pmol/g, which gives the β intercept and then the whole vector. All three
+rate constants come out positive (k10 0.17666, k12 0.06598, k21 0.04517 /h).
+
+**Two checks the derivation was not given.** Its implied apparent clearance
+equals dose over area exactly. And its implied renal fraction is 20.0%, which
+is the paper's own separate sentence that "about 20 per cent of the dose were
+excreted as benazeprilat". A third: the effective input rate needed to put the
+peak at the measured 1.5 h is 1.433 /h, within 24% of benazepril's own
+elimination rate constant of 1.155 /h — the quantity that should rate-limit
+formation, and not an input to the fit.
+
+**Conditioning**, by §3.3's test. A 10% perturbation of the tail area moves V1
+by 4.5%, V2 by 9% and Q by 13.5% — almost exactly clevidipine's sensitivity
+(4%, 10%, 13% at 5%). The *structure* is as stable; the *input* is noisier,
+because the tail is a difference of two measured areas whose standard errors
+give it about ±25%, so V1 carries ±13%, V2 ±22% and Q ±37%. The apparent
+clearance is untouched by the split, so **the area under the plotted curve is
+firm and its distribution shape is the soft part** — which is the useful way to
+state the limit of a derived vector.
+
+**What it does not determine, and why that is fine.** The formation fraction
+cannot be recovered, and the 16.8% urinary recovery does *not* supply it: that
+figure is arithmetically CL<sub>r</sub> × AUC/dose and so already implied by the
+clearance and the area (it reproduces to 16.6%). This was the trap flagged in
+§14.5 from the abstract, and the full text confirms it. It does not matter for
+the curve: an apparent parameterisation gives the correct concentration because
+the same f<sub>m</sub> divides volume and dose, exactly as F does for an ordinary
+oral drug, and all three rate constants are f<sub>m</sub>-free.
+
+**The one acknowledged shortfall.** The model underpredicts Kaiser's reported
+peak by 20% while reproducing AUC(0–∞) exactly and AUC(0–24 h) to 0.7%. The
+probable cause is the statistic rather than the model: that Cmax is a *mean of
+individual peaks* over 60 subjects whose times to peak ranged from 1 to 6
+hours, and averaging peaks that occur at different times always exceeds the peak
+of the averaged curve. It cannot be verified from the printed data, so it is
+stated and pinned in the test at the value it actually has rather than hidden
+behind a loose tolerance.
+
+**External check.** Sun 1994 measured the same 10 mg dose at Cmax 257 ng/mL and
+AUC(0–24 h) 1410 ng·h/mL against Kaiser's 195 and 1050 — ratios of 1.32 and
+1.34, *the same factor on both*. Two independent studies therefore agree on the
+shape of this curve and disagree on its height by a third. Recorded, not
+reconciled: rescaling a primary fit by another study's number is fitting to a
+result rather than to data.
+
+### 15.2 Losartan: refuted rather than underdetermined
+
+Lo's design is everything a two-moiety model needs — intravenous losartan,
+intravenous EXP3174 *and* oral losartan in the same 18 men, so both moieties
+have absolute parameters and the 14.3% systemic conversion closes the
+parent-to-metabolite link no oral-only study can. It still cannot be built, and
+the finding is stronger than "not identified".
+
+**One compartment is refuted.** CL over V<sub>ss</sub> gives a half-life 3.5×,
+3.3× and 2.5× shorter than the reported terminal values for the three records;
+equivalently V<sub>z</sub>/V<sub>ss</sub> is 3.49, 3.32 and 2.48. There is a real
+deep compartment.
+
+**Two compartments are refuted too, against the paper's own oral data.** With
+CL, V<sub>ss</sub> and β fixed at Lo's values, the admissible models form a
+one-parameter family in V1. Sweeping it from 6 to 27.5 L — each member with the
+Q that reproduces the measured β and the k<sub>a</sub> that reproduces the
+measured oral t<sub>max</sub> of 1.0 h — predicts an oral Cmax of **29 to 147
+ng/mL against the measured 296**. The best member is 2× low and most are 4 to
+10× low. The mechanism is clear: β of 0.385 /h with a V<sub>ss</sub> of only
+28.4 L forces α between 1.4 and 8.4 /h, and a distribution phase that fast
+cannot hold a one-hour peak up.
+
+Two further warnings against patching it. The paper's **two studies disagree
+1.6-fold on V<sub>ss</sub>** (28.4 against 46.6 L) and **1.8-fold on the terminal
+half-life** (1.8 against 3.2 h) — precisely the two numbers a two-compartment
+fit leans on hardest. And per-subject oral bioavailability ranges from 12.1% to
+66.6%.
+
+What would unblock losartan is now narrow and specific, which is the useful
+outcome: **a published compartmental fit for losartan or EXP3174 giving either a
+distribution half-life or the exponential intercepts.** Everything else — both
+clearances, both volumes, the conversion fraction, bioavailability and its
+presystemic/systemic split — is pinned absolutely by this paper.
+
+### 15.3 A word the parameter audit needed
+
+`estimate_status` gained **`observed`**, for a measured summary statistic that
+is not an estimate of any model parameter: a Cmax, a median t<sub>max</sub>, a
+urinary recovery. Kaiser's table is the first case where such numbers are what
+*check* a derived vector rather than what feeds it, and calling them `fitted`
+would have hidden exactly the fact that makes them worth having — that the
+derivation was never given them. The same reason `execution_status` needed
+`complete_not_implemented` (§11).
+
+### 15.4 Where the numbers stand
+
+Of 135 records, **14** are executable and 160 parameters are audited: **91
+checked against a primary full text**, 25 against an abstract, 8 derived here,
+and 36 still carrying the handoff specification's numbers unverified.
+`bp_simulation_enabled` is `FALSE` on every record, and **no drug in stanpumpR
+plots a blood pressure.**
+
+An earlier draft of this line said "124 verified against a primary full text".
+That was wrong: 124 is the registry's count of *not-unverified*, which pools
+three different provenances. It is the second time in this document's history
+that a printed total was quoted without checking its composition — §13.2's "69
+rows with the label open" was the first, and only 66 were. The builder now
+prints the breakdown instead of one total, because the fix for that mistake is
+not more care in reading, it is output that cannot be misread.
+
+
+## 16. Enalapril: the engine, and what the full text undid (2026-10-20)
+
+Section 14.3 recorded enalapril as this registry's one record blocked by an
+**engine** rather than by evidence. The engine is now built, the drug is in,
+and the full text — fetched from PubMed Central after §14 was written — undid
+three of the things §14.3 said. They are set out below rather than quietly
+corrected, because two of them are the same mistake and it is a mistake worth
+naming.
+
+### 16.1 The citation was wrong
+
+§14.3 and the registry cited **Front Pharmacol 2019;10:973**, doi
+`10.3389/fphar.2019.00973`. There is no such paper. The source is
+
+> Faisal M, Cawello W, Burckhardt BB, de Hoon J, Laer S. Simultaneous
+> semi-mechanistic population pharmacokinetic modeling analysis of enalapril
+> and enalaprilat serum and urine concentrations from child appropriate
+> orodispersible minitablets. **Front Pediatr 2019;7:281.**
+> doi `10.3389/fped.2019.00281`, PMID 31338356, PMC6629781.
+
+Every *number* §14.3 recorded from Table 1 was right, and all twelve verified
+against the full text. Only the identifier was wrong, which is the more
+dangerous failure of the two: a wrong value gets caught by a reproduction
+check, and a wrong identifier gets caught by nobody until someone tries to
+read the paper. AGENTS.md already forbids inventing a source identifier. The
+lesson this adds is narrower and sharper: **a record read from a PDF or a
+screen should have its identifier resolved against the index, not transcribed
+from memory of the header.** A `convert_article_ids` call takes a second.
+
+### 16.2 "Internally inconsistent" was reading less than the text says
+
+§14.3 said the paper's transit parameterisation "is internally inconsistent",
+quoting `MTT1 = (N+1)/KTR` against a separately defined `KA`, and reported that
+four readings all worked so the choice was a documented rounding decision.
+
+The paper is explicit, and had been all along:
+
+> "the rate transfer through these transits was calculated using the
+> expression MTT1 = N+1/KTR … **The rate constant of absorption (KA) was the
+> transfer rate of the drug from the last transit into enalapril central
+> compartment.**"
+
+with the Results adding "**Eight transits (transits = 8)** were added for
+reference and pooled data analysis". That fixes the structure completely: eight
+chain compartments, the first seven emptying at KTR = 9/0.558 = 16.13 /h and
+the eighth at KA = 6.010 /h. Both printed parameters are used exactly as
+defined, and the thirteen-state count §14.3 gave was right.
+
+What survives is a much smaller thing. The formula presumes *nine* steps at one
+rate; the structure has seven at KTR and one at KA. So the model's true mean
+input time is 7/KTR + 1/KA = **0.600 h** against the printed MTT1 of 0.558 h.
+That is an inconsistency in a derived summary, not in any parameter, and
+nothing is free to choose. The three other readings were integrated anyway and
+all four do reproduce the paper's reported peaks — parent 0.82 to 0.95 h
+against its "almost 1 h", metabolite 3.20 to 3.32 h against its "around 3 to
+4 h". The reading the text states is **not** the closest of the four to the
+reported parent peak, and that is worth stating rather than glossing: reading 1
+(nine compartments, a depot emptying at KA) is nearer at 0.95 h against the
+implemented reading's 0.88 h. It means agreement with a reported summary was
+never what chose the reading — the text was. An earlier draft of this section
+claimed the implemented reading was also the closest, which the drug's own test
+disproves, since that test asserts reading 1 has the latest peak. So the
+conclusion §14.3 reached was right and its reason
+was wrong: the readings agreeing made the ambiguity harmless, but there was no
+ambiguity to be harmless about.
+
+### 16.3 The formulation covariate was not ambiguous either
+
+§14.3 recorded `THETA(X) = 0.730` as having an "ambiguous" target, reasoning
+that it should be the formulation effect on MTT1 but that read that way it
+moves absorption 9 minutes earlier where the text says about 5.
+
+Both numbers are in the paper, from **different analyses**. By Equation 7 the
+factor multiplies MTT1 when `FORM = 1`, the orodispersible mini-tablet, and
+that is the pooled covariate model's 9 minutes; the 5 minutes is the Wilcoxon
+comparison of the two formulations fitted *separately*. Neither is in doubt and
+neither applies here, because the reference tablet is `FORM = 0`, so the factor
+is 1 and the printed MTT1 already is the reference formulation's.
+
+**Two of the three errors above are one error**: a quantity was called
+ambiguous when the text resolved it, by a reading that stopped at the parameter
+table. The identifiability discipline of §4 is about what a source *contains*;
+this is about what it *says*, and §4's habit of counting printed numbers does
+not substitute for reading the prose that defines them. §14.2's rule still
+holds — an ambiguous parameterisation is a blocker only when the readings
+disagree with the paper's own figures — but it should be reached for second,
+after checking whether the paper simply answers the question.
+
+### 16.4 The engine, and why it is exact rather than numerical
+
+The obstacle §14.3 identified was real and is the reason this took an engine.
+A chain of N identical compartments has one eigenvalue repeated N times; every
+closed-form coefficient in this library divides by a difference of two rate
+constants; `separateEigenvalues()` nudges accidental ties apart by a relative
+1e-8, and for a structural tie eight deep the partial-fraction coefficients
+would scale as 1/nudge⁷ — the catastrophic cancellation §3.3 rejected esmolol's
+decomposition for. The library's own standard forbids the nudge here.
+
+The system is linear throughout, so §6's test says it needs no numerical
+solver. What it needs is exact handling of a repeated eigenvalue, which is a
+**matrix exponential**: the Jordan structure is never formed, and the
+t^k·exp(−kt) terms the repeated eigenvalue produces fall out of the series by
+themselves. `R/advanceTransitChain.R` is therefore **exact in the same sense
+the closed-form engines are** — to rounding, not to a step size — and unlike
+`advanceMichaelisMenten()` it is not an approximation of anything. That
+distinction matters for the library's self-description: it now has two
+non-closed-form engines and only one of them trades accuracy for generality.
+
+Two implementation points worth keeping. First, the propagator depends on the
+step length alone: augmenting the matrix with a state held at 1 that feeds the
+central compartment at unit rate makes one exponential yield both the
+homogeneous propagator and the rate response, and because the system is linear
+in the rate that response is *scaled* rather than recomputed. Second, that is
+what makes it cheap — `simulationTimeGrid()` fills every gap with the same
+geometric offsets, so a few dozen distinct step lengths serve thousands of
+points, and memoising on the step length turns the whole simulation into a few
+dozen exponentials of a 14×14 matrix. A five-dose, three-day simulation runs in
+about 0.01 s.
+
+Discretising the parent's input as hydrochlorothiazide's Weibull was (§12) is
+closed off, and §14.3's statement of why stands: convolution commutes, so it
+would be exact in the limit for the parent, but the metabolite's own two-transit
+delay means the two moieties would need **different input kernels from one dose
+table**, which the architecture does not allow. An input shape the engine lacks
+has always been a rewrite of the dose rows — until the shape differs between a
+parent and its metabolite.
+
+### 16.5 What this record is worth, beyond enalapril
+
+Almost every oral antihypertensive in this library is **apparent**: its volumes
+and clearances are divided by a bioavailability nobody measured. This one is
+not. Both moieties are cleared renally with no further metabolism, so fitting
+urine with serum closes the mass balance and the bioavailability becomes a
+parameter in its own right — estimated at 0.606 against the literature's
+long-reported 60%, a number the fit was not given. It is the registry's only
+oral record with absolute disposition parameters, and the design that achieved
+that (separate measurement of both moieties in both matrices) is the one worth
+remembering when judging a future candidate.
+
+The gap it cannot close is the one that matters clinically. The source tested
+age, weight, height, sex and total body water and retained **weight on the
+parent's central volume alone**, normalised to the study's mean of 69.76 kg.
+Nothing on any clearance, nothing on the metabolite. So there is no renal term
+although *both* moieties are cleared renally and by nothing else — the sharpest
+form of that gap anywhere in this document, since here the absent covariate is
+the same quantity the model's own identifiability argument rests on. Its
+population was 24 healthy young adults. Enalapril is dose-reduced in renal
+impairment in practice and nothing in these curves shows it, which both help
+pages say twice.
+
+### 16.6 An external check that settles what the source could not
+
+§16.5 says the record's value is its absolute parameters. Its other value is
+that it turned out to be checkable.
+
+Arafat 2005 (*J Clin Pharm Ther* 30:319-28, PMID 15985045) gave two brands of
+10 mg enalapril maleate to healthy volunteers and measured **both moieties with
+specific enzyme immunoassays** rather than the ACE-inhibition assay most earlier
+work used. Nothing of it was an input to Faisal's fit. Its metabolite peaks were
+54.8 and 57.2 ng/mL; the implemented model gives **55.9**, between the two and
+within 3% of each. That is a joint check on the conversion fraction and the
+metabolite's volume, which no internal consistency test could provide.
+
+**It also settles the dose basis, which Faisal's text cannot.** The paper never
+says whether F1 = 0.606 absorbs the maleate-to-base mass fraction of 0.764, and
+§16's position was that it does not matter because the model is used on the
+basis it was fitted on. That position is sound but incomplete — it makes the
+curve right *relative to the paper* without telling you which basis is
+physically correct. Arafat answers it: a factor of 1.308 in either direction
+puts the prediction outside the measured range, so entering the dose as the
+labelled strength is right and not merely self-consistent. **This is the
+general lesson: a basis ambiguity a source leaves open is often decidable from
+a study that never entered the fit, and that is exactly the check the illicit-drug
+rule in AGENTS.md demands for the same reason** — it is what catches a basis
+error.
+
+The two studies **disagree about the terminal phase**: Arafat's metabolite area
+was 267 and 256 ng·h/mL against the model's 495, a factor of 1.9. The
+disagreement belongs to Arafat, who report as a finding of their own that
+enalaprilat concentrations at 12 to 24 hours ran "lower than those reported in
+the literature". Recorded, not reconciled, on §14.5's rule for Sun 1994 against
+benazepril: rescaling a primary fit to another study's number is fitting to a
+result.
+
+The **parent** is not comparable, and the authors say why — their enalapril
+peaks are "about 10 times those published in the literature". A 4-fold
+disagreement against a value its own authors flag as 10-fold high is an assay
+dispute, not a model error. **Worth stating as a rule in its own right: a
+validation source's own caveats about its assay are part of the comparison, and
+a study can be a usable check on one analyte and no check at all on another.**
+
+This makes enalapril the registry's **second** record with
+`external_validation_status` other than `none`, after clevidipine (§11), and
+the first validated against measurements rather than against a second
+derivation.
+
+### 16.7 Where the numbers stand
+
+Of 135 records, **15** are executable and 176 parameters are audited: **107
+checked against a primary full text**, 25 against an abstract, 8 derived here,
+and 36 still carrying the handoff specification's numbers unverified.
+`bp_simulation_enabled` is `FALSE` on every record, and **no drug in stanpumpR
+plots a blood pressure.**
+
+## 17. Clevidipine's own full text, and its fitted V1 (2026-10-27)
+
+Section 11.1 kept Ericsson's *Br J Clin Pharmacol* 1999 paper (PMID
+10336577) at the top of the reading list, its full text unread. An
+adversarial review by ChatGPT on 2026-10-27 said that its Table 1 prints a
+fitted V1 of 0.36 L/kg and that its Results give the MAP/HR Emax and EC50 the
+handoff carried. Because 0.36 L/kg is also exactly the companion EJCP study's
+V1, the claim was first recorded as a possible conflation of the two papers.
+Dr. Shafer then supplied the publisher's PDF, and the review was right on
+both counts.
+
+The Methods say CL, V1, k12 and k21 were "obtained directly from the fitting
+function" (P-PHARMA) and that every other parameter was "calculated from the
+estimated population mean values". Table 1:
+
+| Fitted | Derived by the authors |
+|---|---|
+| CL 0.121 L/min/kg | Vss 0.56 L/kg |
+| V1 0.36 L/kg | half-lives 1.8 and 9.5 min |
+| k12, k21 (not printed) | C1 95.9%, C2 4.1%, AUC share of the initial phase 81.6% |
+
+So section 4's premise, that the record reports four quantities from which
+the vector must be derived, was an artefact of having only the abstract. The
+model now uses the fitted CL and V1. The two rate constants are not printed,
+so they are chosen by least squares, with CL and V1 held, to reproduce the six
+derived quantities in units of half their last printed digit: k12 0.04645 and
+k21 0.08629 /min, so V2 0.1938 L/kg and Q 0.01672 L/min/kg. That reproduces
+Vss 0.554, half-lives 1.75 and 9.45 min, C1 95.98% and an AUC share of
+81.56%, each within about 1.5 units of its last digit. Table 1's rounded
+numbers are not exactly consistent: freed, the best fit puts V1 at 0.366,
+outside 0.36's rounding. The old derived vector (V1 0.3689) reproduced Vss
+and both half-lives exactly but missed the printed V1 by 2.5% and the AUC
+share by 0.12 points. The change to the fitted V1 was Dr. Shafer's decision.
+
+Section 11's validation is unaffected: it tested the derivation *method*
+against the EJCP study's measurements, and it still passes. The implemented
+V1 now simply equals the EJCP measurement.
+
+The Results also give the resistance-proxy model as "the maximum reduction
+in MAP/HR (Emax) was 45.4%" with an EC50 of 12.1 nmol/L: a simple Emax, no
+effect compartment, fitted to the pooled percentage falls in MAP/HR during
+the last ten minutes of infusion, with a sigmoidal model not favoured. Both
+numbers are now `primary_full_text` in the parameter audit, and the record's
+`pd_evidence` is `primary_fitted_full`. They are still not evaluated by
+`antihypertensiveEndpoint()`: mean arterial pressure fell only about 10% at
+the highest rate because the heart rate rose to compensate, so a resistance
+surrogate in healthy men with intact reflexes says nothing about a pressure
+in the patients clevidipine is given to.
+
+The lesson is section 14's again, from the other side: **an abstract that does
+not print a parameter is not a paper that does not print it.** The derivation
+was sound and validated, and it was still the wrong thing to implement once
+the fitted value was in hand.
+
+## 18. Fosinopril: a verdict that was wrong twice, and a linear solve (2026-10-29)
+
+Fosinopril sat in the registry as **not pursued**, on two stated reasons. Steven
+L. Shafer reversed it on 2026-10-29 and settled the design. Both reasons had
+failed, and they failed in different ways, which is why this section exists.
+
+The first was clinical: *"fosinopril is no longer in clinical use."* It is — as
+a generic ACE inhibitor. Nothing more to say about that one except that a
+clinical premise is as much a claim as a numerical one, and section 14.4 had
+recorded it as "the maintainer's call and the sufficient reason" without it ever
+being checked.
+
+The second is the interesting one, because the arithmetic in it was *correct*.
+
+### 18.1 The right check, applied to the wrong paper
+
+The registry row said the identifiability check of section 4 "was applied before
+they were read" — an admission, in its own text, of what had gone wrong. The
+reasoning given was about **Gehr 1993**: a clearance, a steady-state volume, a
+mean residence time and a terminal half-life, where the residence time is the
+volume over the clearance, so three independent numbers and not the four two
+compartments need. That is right about Gehr. It was then carried to **Hui 1991**,
+which nobody had opened.
+
+Hui is a different kind of paper. Its Table IV prints **six** numbers per group —
+initial volume of distribution, clearance, steady-state volume, and three
+half-lives — which is exactly the six a three-compartment model has.
+
+> **A section 4 verdict is about one source's printed numbers, not about a drug.**
+> Applying it to a paper nobody has read, or carrying one paper's verdict to
+> another, is not applying it at all. This is the same mistake section 16 records
+> from the other direction, where enalapril's parameterisation was called
+> "ambiguous" on a parameter table whose own prose resolved it; and section 17's,
+> where an abstract that omitted clevidipine's V1 was taken for a paper that
+> omitted it. Three sections, one failure mode: **a judgment about a document,
+> formed without the document.**
+
+### 18.2 The solve is linear, which is why six numbers are enough
+
+Six numbers for six parameters is necessary and not sufficient — the system
+could still be nonlinear and ill-posed. It is not, and Hui's own Methods are
+what make it tractable, because they define the two derived quantities:
+
+> Area under the curve was calculated as A/α + B/β + C/γ, and the initial volume
+> of distribution (V_init) as Dose/(A + B + C).
+
+Fix the exponents from the half-lives and the three intercepts satisfy **three
+linear equations**: their sum is dose over the initial volume, their first moment
+is the area (dose over clearance), and their second moment is the mean residence
+time times the area — and the residence time is the steady-state volume over the
+clearance. One `solve()`, no search, no starting values. The intercepts then go
+through `threeCompartmentFromTriexponential()`, the helper propranolol already
+used.
+
+At the normal-renal-function group (3.1 L, 26.5 mL/min, 10.2 L, 0.2/2.1/12.4 h)
+and the 7500 mcg dose:
+
+| | |
+|---|---|
+| A, B, C | 1299.8, 1055.6, 63.9 ng/mL — all positive |
+| V₁, V₂, V₃ | 3.10, 2.43, 4.67 L |
+| CL, Q₂, Q₃ | 26.5, 71.7, 5.47 mL/min |
+
+every micro rate constant positive.
+
+### 18.3 Conditioning: 729 corners, 729 admissible models
+
+Section 3.3 rejected esmolol's decomposition for conditioning rather than
+identifiability, so this one was put through the same test — and it is the
+strongest result the test has produced. The solve was repeated at **all 3⁶ = 729
+corners** of Hui's printed ± SEM box, including a distribution half-life at 0.1
+and 0.3 h where its standard error is half the estimate itself. **Every one of
+the 729 gives a physically admissible mammillary model.** None is refused.
+
+| | Span over the box |
+|---|---|
+| V₁ 2.70–3.50 L | 1.30× |
+| CL 23.5–29.5 mL/min | 1.26× |
+| V₂ 1.04–4.18 L | 4.03× |
+| Q₂ 29.0–193.6 mL/min | 6.66× |
+| V₃ 2.78–6.57 L | 2.36× |
+| Q₃ 2.74–10.45 mL/min | 3.81× |
+
+V₁ and CL move only as much as their own standard errors, because they are
+*inputs*; the derived distribution parameters are soft, Q₂ worst because it is
+driven almost entirely by that distribution half-life. V₂ + V₃ is pinned, being
+the steady-state volume minus V₁. So the **area** and the first minutes are firm
+and the split of the middle phase is not — and for a drug absorbed over three
+hours, almost nothing a user looks at depends on that split.
+
+### 18.4 The covariate must plateau, and the label says the opposite
+
+Hui's four groups, creatinine clearance in mL/min/1.73 m² against total
+clearance in mL/min: **98.8 → 26.5, 59.6 → 14.6, 31.8 → 13.7, 16.3 → 18.2.**
+
+Clearance falls 42% from normal to impaired, which Hui's own analysis of
+variance calls significant at p < 0.001 — and is then **flat**, with no
+relationship to creatinine clearance within 11 to 72 (r = 0.23) and the *severe*
+group the highest of the three. Figure 4 gives the mechanism: hepatic clearance
+is 63%, 79% and 85% of body clearance in the three impaired groups, so as
+filtration falls the hepatobiliary route carries more of a smaller total. Shafer
+was explicit that a proportional renal term is therefore wrong.
+
+The implemented covariate is a two-plateau ramp on Cockcroft-Gault indexed to
+1.73 m², every number in it read from a source: **26.5 mL/min at a creatinine
+clearance of 80 and above** — the US label's own boundary for normal renal
+function — falling to **15.5 mL/min at 59.6 and below**, the unweighted mean of
+the three impaired group means at the mild group's own creatinine clearance,
+linear across the interval between, which neither source measures. The mean is
+unweighted because Table IV prints no per-cell subject count.
+
+**And the label contradicts the paper it rests on.** It says that over a
+creatinine clearance of 10 to 80 "the clearance of fosinoprilat does not differ
+appreciably from normal, because of the large contribution of hepatobiliary
+elimination", and that only below 10 is total clearance about half of normal.
+The two reconcile only if that sentence means flatness *across* 10 to 80 rather
+than equality *with* normal — which the label's own arithmetic supports, since it
+puts healthy body clearance at 26 to 39 mL/min and half of that is about 15.5,
+and which is also the only reading on which the label's two sentences agree with
+each other. That reading is an inference, and neither document states it.
+
+**Settled by Steven L. Shafer on 2026-10-29: keep Hui's halving**, which is what
+the model does. The conflict stays on the record rather than being written out of
+it, because two rules it illustrates are worth having.
+
+The narrow one: **where a label's prose and the study it rests on disagree, the
+study's numbers are what a simulation can be built on, and the prose is what the
+user has to be warned about.** A label sentence is a regulatory summary across
+studies, written to guide dosing, so "does not differ appreciably" is a clinical
+judgment; Hui's 42% at p < 0.001 is a measurement.
+
+The general one, which Shafer stated the same day and which is now a rule in
+`AGENTS.md`: **a label is frozen at approval, so a finding published after its
+date outranks it.** Labels are written on the best science of their day, and
+afterwards the science advances and the label does not — not because anyone
+thinks it still right, but because asking the FDA to change a label exposes a
+company to fresh scrutiny of matters it believed settled. There is a standing
+disincentive to revise.
+
+Fosinopril shows the sharp edge of that, and it is the reason to state it here
+rather than only in the abstract. The archived label reads **"Revised:
+10/2021"** — thirty years after Hui — and its renal-impairment paragraph is
+still the 1991-era summary of Hui itself. **A revision date is not a review
+date.** The date on the front of a label tells you when some part of it changed,
+not which parts were revisited, so it must never be read as evidence that a
+particular paragraph reflects current science. Note which way the chronology
+runs here: Hui *precedes* the label and underlies it, so what settles this case
+is the narrow rule rather than the general one. The general rule is why the
+label's other statements — dialysis, hepatic impairment, the paediatric
+equivalence — are *recorded* rather than treated as authority, and why a
+post-1991 fosinopril study **that addressed the same question** would outrank
+any of them, if one is ever found. The qualifier matters: the rule is about a
+label's standing as current science, not a comparison of dates, so a later paper
+that does not speak to the claim does not displace it.
+
+So the help page says plainly that a reader comparing this curve with the label
+should expect the label to predict no change down to a creatinine clearance of
+10, and this curve to follow the measurements instead.
+
+### 18.5 What holding the structure fixed buys
+
+Table IV's initial volumes (3.1 to 4.2 L) and steady-state volumes (8.8 to
+13.0 L) show no trend worth modelling, so the volumes and both intercompartmental
+clearances are held at the normal group's and **only the elimination clearance
+carries the covariate**.
+
+That is not merely parsimony; it is testable, because the model is then never
+told the impaired half-lives. At the impaired plateau it **predicts a terminal
+half-life of 14.7 h** against Hui's measured 14.0, 14.1 and 16.9 (mean 15.0) —
+within 2% — and a second phase of 2.9 h against his 3.1, 3.9, 3.1.
+
+Hui's own statistics separate the two, and the weaker one should not be sold as
+the stronger. He found the distribution and elimination (β) half-lives
+*significantly* lower in normal renal function, so the second-phase match
+reproduces an established difference, on the phase carrying 68% of the area. He
+did **not** report the terminal half-life as significantly different — Table IV
+marks it with no significance symbol and the text's list of what differed omits
+it — so 14.7 against 15.0 is a match to a trend. **A prediction is only as good
+as the effect it predicts is real**, which is a question for the source's
+statistics and not for the arithmetic.
+
+This is worth generalising. The alternative implementation — re-deriving the
+whole vector at the impaired clearance from the same V_init, V_ss and half-lives
+— is the more obvious one, and it is wrong: it holds the half-lives fixed *by
+construction* and moves the distribution parameters instead, which is the
+opposite of what Table IV shows. The first draft did exactly that, and the test
+written for the header's claim is what caught it. **A header that states a
+consequence the code does not produce is a test waiting to be written.**
+
+### 18.6 Absorption: the correction, and two ways to get a bioavailability wrong
+
+Hui gave the oral dose only to his *impaired* patients, so the absorption of a
+patient with normal renal function comes from **Singhvi 1988** (*Br J Clin
+Pharmacol* 25:9-15, PMID 2967089): nine healthy men, 20 to 34, in a three-way
+crossover of intravenous fosinoprilat 7.5 mg and two oral 10 mg doses of
+fosinopril sodium, capsule and solution. Oral absorption 32% and 36%;
+**bioavailability of fosinoprilat 25% and 29%**.
+
+`ka` 0.2987 /h puts the peak at 2.95 h, the midpoint of the 2.8 to 3.1 h the
+Murdoch review quotes for a 10 mg dose, corroborated by the label's
+dose-independent "approximately 3 hours". Bioavailability is the capsule's
+**0.29, read** - the capsule because the product is a tablet and because Hui
+dosed one too. On Hui's clearance that gives a peak of 131 ng/mL and a 24-hour
+area of 1257 ng·h/mL.
+
+**The first draft derived 0.26 instead, and it was wrong twice over.** An
+external review (CodeRabbit, on PR #621) raised the first error; running it down
+exposed the second, which is the one worth carrying forward. The draft set F by
+making the model reproduce two figures the review quotes for Singhvi's oral
+dose, a peak of 99 to 140 mcg/L and a 24-hour area of 1035 to 1132 mcg/L·h.
+
+**1. Those are total radioactivity, not fosinoprilat**, although the review
+labels them "plasma fosinoprilat". Only about 75% of plasma radioactivity after
+an oral dose is the diacid; the rest is an inactive beta-glucuronide (15 to 20%)
+and a monohydroxy analogue (about 5%). Singhvi's own abstract settles it
+arithmetically, and this is checkable without his tables: 0.75 × 1035-1132 =
+776-849 ng·h/mL falls inside the **762-884** his own bioavailability (25 to 29%)
+and his own clearance (39 mL/min) imply for the diacid over the same 0-24 h
+window. Three numbers from one abstract triangulate it. (`F × dose / CL` gives
+801-929 for the *total* area, of which his clearance leaves 95.1% inside 24 h.
+A first version of this paragraph wrote 737-855, truncating with **Hui's** 92%
+share: a faster clearance leaves less area beyond 24 h, so **the truncation
+factor belongs to the patient being described.**) **A secondary source can relabel an analyte**, and for
+a radiolabel study that is the error to expect, because the paper reports both
+quantities and a reviewer has to pick one.
+
+**2. Even with the right analyte, deriving F that way is a category error** -
+and this is the general lesson. **Bioavailability is clearance-independent by
+construction.** Singhvi's is a within-subject crossover, F =
+(AUC_po/D_po)/(AUC_iv/D_iv), so the subject's clearance cancels out of it.
+Forcing a model to reproduce *one* study's oral exposure while it runs on
+*another's* clearance therefore counts the difference between the populations
+twice: Singhvi's oral area is small because he cleared the drug 1.47-fold
+faster, and charging that to a smaller F makes every patient's curve wrong by
+that factor. **The quantity to read is F; the quantity to let the model compute
+is the exposure.** The same trap waits for any drug whose disposition and
+absorption come from different studies, which in this library is most oral
+drugs with an intravenous source.
+
+Note what this does to the "coincidence of two offsetting discrepancies" the
+previous version of this section was rather pleased with. The coincidence was an
+artifact of the error, not an insight: 0.72 × 0.34 ≈ 0.25 only because the
+clearance ratio had been applied twice, once by mistake and once by arithmetic.
+**A coincidence that needs an error to exist is a symptom, not a curiosity** -
+and a reason to re-derive rather than to admire it.
+
+**Hui's own crossover is the corroboration, and it runs a little lower.** He
+gives 22.5, 22.0 and 27.9% in the three impaired groups, against the same
+patients' own intravenous doses with the same assay as the disposition. Those sit
+below the healthy capsule's 29% - the mild group by 2.4 of its own standard
+errors - and he reports no relationship between bioavailability and renal
+function. So the fair reading is that impairment leaves the **extent** of
+absorption broadly alone, which is what Shafer's design rests on and what the
+gut hydrolysis predicts, while impaired patients may run somewhat below the
+value used.
+
+The **rate** is not modelled either, and the reason is better than the one this
+section first gave. It said Hui's impaired patients absorbed more slowly, citing
+a peak at 4.0 to 4.2 h. Shafer asked the obvious question - *slower clearance
+also delays the peak; what is the evidence, and slower than what?* - and the
+answer is that there is none.
+
+**A later peak is not a slower input.** Hold ka at the healthy value, lower only
+the clearance to the impaired plateau, and the model *predicts* a peak at 3.7 to
+3.9 h against the observed 4.0, 4.0 and 4.2 - essentially the whole shift, from
+clearance alone. The residual would need ka at 85 to 92% of healthy, inside the
+scatter of 4.0 +/- 0.0 to 4.2 +/- 0.5 h in groups of four to six. And the
+comparator was *Singhvi's* healthy volunteers: Hui's normal group had no oral
+dose, so the comparison was cross-study across a 1.47-fold clearance difference.
+
+**The quantity that would be evidence contradicts his own tmax.** Mean
+absorption time is MRT_po - MRT_iv within each group, hence clearance-independent
+- for a first-order input MAT = 1/ka exactly. His 7.1, 11.1 and 12.3 h imply
+peaks at 5.7 to 7.6 h; he observed 4.0 to 4.2. The paper's two absorption
+descriptors disagree by nearly two-fold.
+
+**And MAT is the weaker of them, for a reason worth stating as a rule.** Shafer,
+on seeing this: *"a difference between two numbers is a fraught measurement. The
+variance of the difference is the sum of the variances of the individual numbers,
+so the difference between two means can be easily dwarfed by the variance."*
+
+| | mild | moderate | severe |
+|---|---|---|---|
+| MRT after the oral dose | 18.2 ± 2.3 | 22.7 ± 3.5 | 26.2 ± 6.8 |
+| MRT after the intravenous dose | 11.1 ± 2.0 | 11.6 ± 0.8 | 13.8 ± 2.7 |
+| MAT, as printed | 7.1 ± 1.3 | 11.1 ± 3.0 | 12.3 ± 4.4 |
+| SEM if the two were independent | 3.05 | 3.59 | 7.32 |
+
+Two things fall out. **Hui did it correctly**: his printed standard errors are
+*smaller* than the independent sum, which is the signature of pairing - the same
+patients in both arms, implied correlations 0.83, 0.70 and 0.93 - so he computed
+MAT per subject and his numbers are honest. Comparing a printed SEM of a
+difference against `sqrt(se1^2 + se2^2)` is the diagnostic for which case you
+have, and it is worth running on any difference a paper prints as a result.
+
+**But even so, the trend his text claims is not in his numbers.** "Mean
+absorption times were longer in patients with moderate or severe impairment"
+tests out at t = 1.22 (mild to moderate), 0.23 (moderate to severe) and 1.13
+(mild to severe). None reaches 1.3 standard errors. And the model's own MAT is
+not a measurement to test against: 1/ka = 3.35 h, where ka was set to a
+time-to-peak *midpoint* quoted in a review, so it carries no standard error at
+all.
+
+So there is **no supported absorption-rate finding in this paper**: not from
+tmax, not from MAT against healthy, and not from MAT across impairment. The same
+caution applies elsewhere in this document with the opposite sign - benazepril's
+entire two-compartment derivation rests on `AUC(0-inf) - AUC(0-24h)`, whose two
+areas come from n = 45 and n = 60 and so are *not* paired, which is exactly why
+§15 calls its 25% uncertainty a floor rather than a bound.
+
+**The general point is worth keeping**, because it will recur for every oral
+drug whose renal covariate is on clearance: **tmax is a property of the whole
+system, not of the input.** Before attributing a shifted peak to absorption,
+hold the input fixed and move only what the covariate moves - the model will
+tell you how much of the shift it already explains.
+
+### 18.7 Only clearance is real, and this is what that looks like
+
+Hui's "normal renal function" group were hypertensive patients averaging 61
+years, and their 26.5 mL/min sits at the **bottom** of the label's healthy range
+of 26 to 39. Singhvi's nine young men were at the **top**: his abstract reports
+clearance 39 mL/min, renal clearance 17, Vss 10 L and protein binding about 95%.
+
+So the two sources differ **1.47-fold on the clearance and agree on the volume**
+- the reverse of the pattern `AGENTS.md` predicts, and a reminder that it is a
+tendency and not a law. That factor is the whole of the difference between them,
+and now that F is read rather than fitted it propagates where it should instead
+of hiding inside F: the model predicts an oral AUC(0-inf) of 1368 ng·h/mL
+against the 929 that Singhvi's own F and clearance give for his capsule, a ratio
+of exactly 39/26.5.
+
+Neither is wrong. Both clearances are inside the range the label itself quotes
+for healthy subjects, and the model is deliberately the older patient, because
+an oral antihypertensive is prescribed to people more like Hui's hypertensive
+61-year-olds than like Singhvi's volunteers.
+
+**But 1.47 is the ratio of the AREAS, not of the curve** - and the first version
+of this section said a user should expect the whole curve 1.5-fold high, in the
+sentence that *replaced* the tmax error of §18.6. That is worth recording as a
+pair, because it is the same mistake twice in one revision: treating a clearance
+ratio as though it scaled a concentration-time curve. Run the model at Singhvi's
+39 mL/min instead of Hui's 26.5:
+
+| | ratio, Hui to Singhvi |
+|---|---|
+| AUC(0-inf) | x1.47 |
+| AUC(0-24 h) | x1.42 |
+| Cmax | x1.21 |
+| tmax | 2.95 h -> 2.43 h |
+
+The peak arrives before much drug has been eliminated, so it feels the clearance
+far less than the area does, and the peak *time* moves as well. **A clearance
+ratio is not a curve ratio**, which is "tmax is a property of the whole system"
+seen from the other side. Expect about 1.5-fold on an area and about 1.2-fold on
+a peak.
+
+(The earlier draft of this section also claimed the oral curve was "about right"
+because a derived F absorbed the difference; that was the category error of
+§18.6, and the difference is real.)
+
+### 18.9 Three judgement calls, named and approved
+
+Placed last because they are the ones a future reader should be able to
+reopen. None is forced by the sources, each moves the curve, and each was put
+to Steven L. Shafer explicitly; he accepted all three on 2026-10-29.
+
+| Choice | The alternative, and what it would cost |
+|---|---|
+| **F = 0.29**, Singhvi's capsule | His solution's 0.25, or Hui's impaired mean of 24.1% - both read; the solution lowers the whole curve 14% |
+| **Ramp anchored at CrCl 80**, the label's boundary for normal renal function | Hui's normal-group mean of 98.8, which would put a 50-year-old man at an indexed 92.9 - on the ramp, 6% below the published parameters |
+| **A 70-year-old with a blank creatinine sits ~16% below normal**, from Cockcroft-Gault's age term alone | Nothing, except not carrying the age term - but the label reports no pharmacokinetic difference in men 65 to 74, so this is the consequence most likely to surprise a user |
+
+The third is not a modelling choice so much as a consequence worth stating: a
+blank Serum creatinine means the assumed normal creatinine **for the patient's
+age**, not an assumed normal clearance, and on this drug's plateau-and-ramp that
+difference is visible. The help page says so in those words.
+
+### 18.8 One drug, and why not the enalapril pattern
+
+Fosinopril is an ester prodrug and fosinoprilat is the active diacid, so the
+arrangement could have been enalapril's — parent and metabolite as two drugs.
+It is not, on Shafer's decision:
+
+> Fosinoprilat itself does not exist as a drug, other than for research (e.g.,
+> Hui). … The model should assume that it instantly converts to fosinoprilat in
+> the stomach, and is then absorbed. There is no reason that impaired patients
+> would have impaired absorption, and since the ester hydrolysis occurs in the
+> gut prior to absorption, that would not be affected.
+
+So one drug, dosed orally as prescribed, with the conversion taken as complete
+before absorption — which the label supports (rapid hydrolysis by esterases in
+the gastrointestinal mucosa, absorption in the proximal small intestine, under 1%
+of plasma radioactivity intact prodrug). The library carries `enalaprilat` only
+because Faisal 2019 fitted both moieties from one dataset and the metabolite has
+its own measurable disposition; fosinoprilat has no such role to play.
+
+The dose basis is **read, not computed**: Hui's Methods state the intravenous
+dose as 7.5 mg of fosinoprilat "equimolar to 10 mg fosinopril sodium", so 0.75 mg
+per mg. Preferred to molar arithmetic because the disposition was fitted to that
+dose and the paper's bioavailability percentages are quoted against the 10 mg
+fosinopril dose, so one factor keeps the whole chain on one basis — and because
+the label prints a molecular weight for the salt (585.65) but none for the diacid,
+so there would be nothing here to check the arithmetic against. The two agree to
+under 1% anyway.

@@ -62,5 +62,32 @@ test_that("verapamil is a vasoactive and resuscitation drug with no band", {
   expect_identical(row$Category, VASOACTIVE_DRUG_CATEGORY)
   expect_equal(row$MEAC, 0)
   PK <- getDrugPK("verapamil", 81, 175, 60, "male")
-  expect_equal(PK$tPeak, 0)
+  expect_equal(PK$tPeak, 4)
+})
+
+test_that("the effect site peaks 4 min after a bolus (the label's 3-5 min)", {
+  PK <- getDrugPK("verapamil", 70, 170, 60, "male")
+  expect_equal(PK$tPeak, 4)
+  pk <- PK$PK$default
+  coef <- c(pk$p_coef_bolus_l1, pk$p_coef_bolus_l2, pk$p_coef_bolus_l3)
+  lambda <- c(pk$lambda_1, pk$lambda_2, pk$lambda_3)
+  expect_equal(effectSitePeakTime(coef, lambda, pk$ke0), 4, tolerance = 1e-4)
+})
+
+test_that("a bolus and an infusion simulate to the eigen-solution of the model", {
+  # End to end through simulateDrugsWithCovariates() (adversarial review,
+  # 2026-10-27: this file checked the parameters but never ran the curve).
+  # 10 mg at 0 with 6 mg/hr for an hour; ng/mL = mg/L x 1000.
+  set <- getDrugPK("verapamil", 81, 175, 60, "male", adjustToFFM = FALSE)$PK$default
+  wide <- simulateDrugsWithCovariates(
+    data.frame(Drug = "verapamil", Time = c(0, 0, 60), Dose = c(10, 6, 0),
+               Units = c("mg", "mg/hr", "mg/hr")),
+    data.frame(Time = double(), Event = character()),
+    81, 175, 60, "male", 600, FALSE, adjustToFFM = FALSE)$verapamil$wide
+  # Every point of the simulated time line after the dose
+  times <- wide$Time[wide$Time > 0]
+  got <- wide$Plasma[wide$Time > 0]
+  expect_gt(length(times), 20)
+  ref <- 1000 * mammillaryReference(set, times, bolus = 10, rate = 6 / 60, tStop = 60)
+  expect_lt(max(abs(got / ref - 1)), 1e-6)
 })

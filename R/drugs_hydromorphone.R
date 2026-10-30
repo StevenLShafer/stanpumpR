@@ -111,8 +111,20 @@ hydromorphone <- function(weight, height, age, sex, adjustToFFM = TRUE)
   # intranasal against 2 mg intravenous, absolute bioavailability 52.4% and
   # 57.5%, median time to peak 20 and 25 min.  Davis 2004 found 46.9% and a
   # 15 min peak in allergic rhinitis, and quotes 57% for healthy volunteers.
-  # ka below reproduces a 20 min peak; with bioavailability 0.55 a 2 mg dose
-  # then peaks at 2.93 ng/mL, against the 3.02 to 3.56 ng/mL Davis measured.
+  # ka below reproduces a 20 min peak.
+  #
+  # Bioavailability 0.37, matched to exposure, as the oral F is: changed from
+  # 0.55 (Coda's absolute value) by decision of Steven L. Shafer, 2026-10-28.
+  # Coda's volunteers cleared hydromorphone at about 1.94 L/min (2000 mcg /
+  # IV AUC 17.2 ng.h/mL), much faster than Drover's 1.30 L/min used here, so
+  # their absolute F with this clearance overstated intranasal exposure about
+  # 1.5-fold (model AUC 14.1 against Coda's 9.58 ng.h/mL after 2 mg).  What
+  # carries between studies is the apparent clearance: 2000 mcg / 9.582
+  # ng.h/mL = 3.48 L/min after 2 mg, so F = 1.2992 / 3.48 = 0.373.  The cost
+  # is the peak: 2 mg now peaks near 2.0 ng/mL, against means of individual
+  # peaks of 3.5 (Coda) and 3.0 to 3.6 ng/mL (Davis), which always exceed the
+  # peak of a mean curve; Drover's disposition cannot match both the AUC and
+  # the peak, and exposure was chosen.
   #
   # INTRAMUSCULAR HAS NO DIRECT CITATION and needs one.  No human
   # intramuscular hydromorphone pharmacokinetic study reporting time to peak
@@ -126,7 +138,7 @@ hydromorphone <- function(weight, height, age, sex, adjustToFFM = TRUE)
   ka_IM              <- 0.0128241366   # 1/min; plasma peak at 30 min
   bioavailability_IM <- 1.0
   ka_IN              <- 0.0149015907   # 1/min; plasma peak at 20 min
-  bioavailability_IN <- 0.55
+  bioavailability_IN <- 0.37           # exposure-matched to Coda 2003 (above)
 
   default <- list(
     v1 = v1,

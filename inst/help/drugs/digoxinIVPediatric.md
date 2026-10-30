@@ -4,7 +4,7 @@ el-Desoky and colleagues (*Am J Ther* 2005;12:320-327) studied forty Egyptian ch
 
 ### What is plotted
 
-Serum digoxin in ng/mL, with the 0.5-2 ng/mL range shaded. Serum creatinine is the child's own, held to the studied 0.2-1.3 mg/dL; a blank field means an assumed normal value for age. No effect site is drawn: no time to peak effect was measured in children.
+Serum digoxin in ng/mL, with the 0.5-2 ng/mL range shaded. That is the historical adult laboratory range, carried over: it applies to a serum sample taken before a dose or at least six hours after one, not to the peak just after an intravenous dose, and no children's target range was measured in this study. Serum creatinine is the child's own, held to the studied 0.2-1.3 mg/dL; a blank field means an assumed normal value for age. No effect site is drawn: no time to peak effect was measured in children.
 
 ### Where to be careful
 

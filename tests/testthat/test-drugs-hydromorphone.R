@@ -25,7 +25,7 @@ test_that("returns the published parameters with total-body-weight scaling", {
         bioavailability_IM = 1.0,
         tlag_IM = 0,
         ka_IN = 0.0149015907,
-        bioavailability_IN = 0.55,
+        bioavailability_IN = 0.37,
         tlag_IN = 0
       )
     ),
@@ -45,13 +45,17 @@ test_that("returns the published parameters with total-body-weight scaling", {
 # min, so intranasal hydromorphone peaked at 226 min in a model of a route
 # chosen because it works quickly.
 
-test_that("the intranasal route reproduces the measured peak and exposure", {
-  # Coda 2003: 24 healthy volunteers, absolute bioavailability 52.4% and
-  # 57.5%, median time to peak 20 and 25 min.
+test_that("the intranasal route reproduces the measured peak time and exposure", {
+  # Coda 2003: 24 healthy volunteers, median time to peak 20 and 25 min.
+  # Bioavailability matched to exposure (decision of Steven L. Shafer,
+  # 2026-10-28): Coda's apparent clearance after 2 mg, 2000 mcg / 9.582
+  # ng.h/mL = 3.48 L/min, with Drover's 1.2992 L/min gives F = 0.373.
   x <- hydromorphone(70, 171, 50, "male")$PK$default
   expect_equal(x$tlag_IN, 0)
-  expect_gte(x$bioavailability_IN, 0.52)
-  expect_lte(x$bioavailability_IN, 0.58)
+  expect_equal(x$bioavailability_IN, 0.37)
+  ref <- hydromorphone(70, 171, 50, "male", adjustToFFM = FALSE)$PK$default
+  cl <- ref$cl1 / ref$bioavailability_IN   # Drover's 1.2992 L/min over F
+  expect_equal(cl, 2000 / 9.582 / 60, tolerance = 0.01)
 
   o <- simulateDrugsWithCovariates(
     data.frame(Drug = "hydromorphone", Time = 0, Dose = 2, Units = "mg IN"),
@@ -59,9 +63,10 @@ test_that("the intranasal route reproduces the measured peak and exposure", {
     70, 171, 50, "male", 720, FALSE)
   w <- o$hydromorphone$wide
   expect_equal(w$Time[which.max(w$Plasma)], 20, tolerance = 1.5)
-  # Davis 2004 measured 3.02 to 3.56 ng/mL after 2 mg
-  expect_gt(max(w$Plasma), 2.7)
-  expect_lt(max(w$Plasma), 3.7)
+  # 0.37 / 0.55 of the former 2.93 ng/mL: below the means of individual
+  # peaks (Coda 3.5, Davis 3.0-3.6), the price of matching exposure
+  expect_gt(max(w$Plasma), 1.85)
+  expect_lt(max(w$Plasma), 2.05)
 })
 
 
@@ -86,7 +91,8 @@ test_that("time until threshold counts down from the first minutes on every rout
   # bioavailability of 0.225 (Lohela 2021, since 2026-10-10) 2 or 4 mg oral
   # never brings the effect site up to the 1.5 ng/mL threshold, so there is
   # no time to count down.
-  doses <- c("mg" = 2, "mg IM" = 2, "mg IN" = 2, "mg PO" = 8)
+  # 3 mg intranasal: at F 0.37 (since 2026-10-28) 2 mg stays below it.
+  doses <- c("mg" = 2, "mg IM" = 2, "mg IN" = 3, "mg PO" = 8)
   for (units in names(doses)) {
     o <- simulateDrugsWithCovariates(
       data.frame(Drug = "hydromorphone", Time = 0, Dose = doses[[units]], Units = units),
@@ -161,9 +167,12 @@ test_that("hydrocodone's formed hydromorphone does not use hydromorphone's oral 
   # hydromorphone's own oral bioavailability (0.6 -> 0.225, 2026-10-10) must
   # leave it unchanged.  Pinned before that change: 10 mg oral hydrocodone,
   # 70 kg reference man, peak formed hydromorphone 0.07444011 (ng/mL scale).
+  # Re-pinned 2026-10-28 to 0.07465074 when Melhem's creatinine-clearance and
+  # body-surface-area covariates were applied to hydrocodone's disposition
+  # (its Vc/F and CL/F moved; formation clearance was held).
   PK <- getDrugPK("hydrocodone", 70, 170, 40, "male")
   sim <- simCpCe(
     data.frame(Drug = "hydrocodone", Time = 0, Dose = 10, Units = "mg PO"),
     data.frame(Time = numeric(0), Event = character(0)), PK, 720, FALSE)
-  expect_equal(max(sim$metaboliteSeries$Cp), 0.07444011, tolerance = 1e-6)
+  expect_equal(max(sim$metaboliteSeries$Cp), 0.07465074, tolerance = 1e-6)
 })

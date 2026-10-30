@@ -72,14 +72,19 @@ test_that("an infusion reaches the steady state its clearance implies", {
 })
 
 test_that("the shaded band is the effective dose range's steady state", {
-  # The paper concluded 0.8 to 1.2 mcg/kg/min controlled pressure, with no
-  # further benefit above 1.2.  The band is those rates divided by the
-  # fitted clearance, and the help page says so.
+  # The paper's Conclusion: effective from 0.2 to 0.8 mcg/kg/min, maximum
+  # effect at 0.8, which is also the label's paediatric maximum.  The band is
+  # those rates divided by the fitted clearance, and the help page says so.
+  # (Its abstract's 0.8 to 1.2 put the band's top at 150% of the labelled
+  # maximum; adversarial review, 2026-10-27.)
   dd <- getDrugDefaultsGlobal()
   row <- dd[dd$Drug == "fenoldopamPediatric", ]
-  expect_equal_rounded(round(0.8 / (CLH / 60), 1), row$Lower)
-  expect_equal_rounded(round(1.2 / (CLH / 60), 1), row$Upper)
-  expect_equal_rounded(round(1.0 / (CLH / 60), 1), row$Typical)
+  expect_equal_rounded(round(0.2 / (CLH / 60), 1), row$Lower)
+  expect_equal_rounded(round(0.8 / (CLH / 60), 1), row$Upper)
+  expect_equal_rounded(round(0.8 / (CLH / 60), 1), row$Typical)
+  pk <- fenoldopamPediatric(16, 100, 4, "male")
+  expect_equal(c(pk$lowerTypical, pk$upperTypical, pk$typical),
+               c(row$Lower, row$Upper, row$Typical))
   expect_identical(row$Category, "Antihypertensives")
 })
 

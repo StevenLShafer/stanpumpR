@@ -6,7 +6,7 @@ The dashed plasma line peaks 46 minutes after each dose. The flat start is the a
 
 The solid line is the effect site, and it peaks 4.7 hours after each dose, at 2.2 and 4.4 mcg/mL. That delay comes from the cold pressor test in volunteers (van Esdonk and colleagues, 2018), in which the tolerance of pain followed the plasma concentration with a half-time of about 1.8 hours. One hour after the 300 mg dose the plasma is near its peak, 7.0 mcg/mL, but the effect site has reached only a third of its own peak; two hours after, about 70 per cent. On this model, a dose given an hour before incision is still far from its peak effect when surgery starts.
 
-The shaded band, 1.3 to 5.4 mcg/mL, is the average concentration at steady state in adults taking 150 to 600 mg a day. A single dose of 300 mg peaks above it.
+The shaded band, 1.5 to 8 mcg/mL, is the therapeutic reference range for epilepsy of the AGNP consensus guidelines' 2026 update, 10 hours after a dose. A single dose of 300 mg peaks near its top, at about 7.1 mcg/mL.
 
 ## Try next
 

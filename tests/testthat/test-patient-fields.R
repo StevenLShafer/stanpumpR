@@ -3,7 +3,8 @@
 # covariate only to the models that name it in their signature, so the
 # signatures are what the tips must agree with.
 
-patientFieldArgs <- c("cyp2d6", "cyp2c19", "cyp2c9", "cyp2b6", "creatinine")
+patientFieldArgs <- c("cyp2d6", "cyp2c19", "cyp2c9", "cyp2b6", "creatinine",
+                      "gestationalAge")
 
 test_that("the readers of each field are exactly the models that name it", {
   dd <- getDrugDefaultsGlobal()
@@ -73,15 +74,22 @@ test_that("the creatinine tooltip quotes the assumed adult values from R/renalFu
   expect_match(tip, "Leave blank", fixed = TRUE)
   expect_match(tip, "Renal impairment is then not represented", fixed = TRUE)
   # The pharmacogenetic tips say nothing about a blank field
-  for (arg in setdiff(patientFieldArgs, "creatinine"))
+  for (arg in setdiff(patientFieldArgs, c("creatinine", "gestationalAge")))
     expect_false(grepl("Leave blank", patientFieldTooltip(arg), fixed = TRUE))
+})
+
+test_that("the gestational-age tooltip says a blank field is a term birth", {
+  tip <- patientFieldTooltip("gestationalAge")
+  expect_match(tip, "dobutamineNeonatal", fixed = TRUE)
+  expect_match(tip, sprintf("Leave blank for a term birth (%s weeks)", GESTATIONAL_AGE_TERM),
+               fixed = TRUE)
 })
 
 test_that("an unknown field is refused", {
   expect_error(patientFieldTooltip("weight"))
 })
 
-test_that("the Patient Profile carries the five hover tips", {
+test_that("the Patient Profile carries the six hover tips", {
   skip_if_not_installed("bslib")
   # app_ui() uses numericInput(updateOn = ), which needs shiny 1.10
   skip_if_not_installed("shiny", "1.10.0")
@@ -94,4 +102,25 @@ test_that("the Patient Profile carries the five hover tips", {
     expect_true(grepl(htmltools::htmlEscape(tip), html, fixed = TRUE),
                 info = paste("the", arg, "tooltip is not in the UI"))
   }
+})
+
+
+test_that("the Serum creatinine placeholder shows the value a blank field assumes", {
+  # The field is hidden until a dosed drug reads it, and then shows an empty
+  # box; the placeholder is what says that empty means an assumed normal for
+  # the patient's age and sex (Shafer, 2026-10-29: it looked as though there
+  # were no default at all).
+  expect_identical(creatininePlaceholder(50, "male"),
+                   paste(SCR_ASSUMED_MALE, "assumed"))
+  expect_identical(creatininePlaceholder(50, "female"),
+                   paste(SCR_ASSUMED_FEMALE, "assumed"))
+  # a child's assumed creatinine is its own, and is rounded for display: the
+  # raw value has seven decimals
+  expect_identical(creatininePlaceholder(5, "female"), "0.36 assumed")
+  expect_identical(creatininePlaceholder(1, "male"), "0.24 assumed")
+  expect_match(creatininePlaceholder(12, "male"), "^0[.]6[0-9] assumed$")
+  # it is the value the models actually use
+  for (a in c(1, 5, 12, 50)) for (s in c("male", "female"))
+    expect_equal(as.numeric(sub(" assumed$", "", creatininePlaceholder(a, s))),
+                 round(assumedCreatinine(a, s), 2), info = paste(a, s))
 })

@@ -19,9 +19,9 @@ test_that("returns the published parameters with total-body-weight scaling", {
     ),
     tPeak = 3.0,
     MEAC = 0,
-    typical = 0.1,
-    upperTypical = 0.12,
-    lowerTypical = 0.04,
+    typical = 0.208,
+    upperTypical = 0.304,
+    lowerTypical = 0.101,
     reference = paste0(
       "Zomorodi K et al., Anesthesiology 1998;89(6):1418-1429, Table 3: ",
       "kinetics fitted to the data of Buhrer M et al., Clin Pharmacol Ther ",

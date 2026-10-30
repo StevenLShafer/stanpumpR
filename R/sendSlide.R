@@ -169,13 +169,16 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       "Adjust weight to fat-free mass",
       "Baseline serum osmolality (mOsm/kg)",
       "Serum creatinine (mg/dL)",
+      "Gestational age at birth (weeks)",
       "CYP2D6",
       "CYP2C19",
       "CYP2C9",
       "CYP2B6",
       "VKORC1",
+      "CYP4F2",
       "Minto / Schnider models shown",
-      "Hamberg model shown"
+      "Hamberg model shown",
+      "Antiseizure drug interactions applied"
     ),
     Value = c(
       values$age / values$ageUnit,
@@ -189,6 +192,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       if (isTRUE(values$adjustToFFM)) "yes" else "no",
       if (is.null(values$osmolality)) OSMOLALITY_DEFAULT else values$osmolality,
       if (is.null(values$creatinine)) "not entered (assumed normal)" else values$creatinine,
+      if (is.null(values$gestationalAge)) "not entered (term assumed)" else values$gestationalAge,
       # The phenotypes and the companion models change what was simulated,
       # so the sheet records them.  (Claude Code, 2026-10-17, from an
       # external review.)
@@ -197,15 +201,17 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       if (is.null(values$cyp2c9)) CYP2C9_DEFAULT else values$cyp2c9,
       if (is.null(values$cyp2b6)) CYP2B6_DEFAULT else values$cyp2b6,
       if (is.null(values$vkorc1)) VKORC1_DEFAULT else values$vkorc1,
+      if (is.null(values$cyp4f2)) CYP4F2_DEFAULT else values$cyp4f2,
       if (isTRUE(values$mintoSchnider)) "yes" else "no",
-      if (isTRUE(values$hamberg)) "yes" else "no"
+      if (isTRUE(values$hamberg)) "yes" else "no",
+      if (isTRUE(values$antiseizureInteractions)) "yes" else "no"
     ))
   covariates <- rbind(covariates, plotTimeSettings(values$maximum, timeUnit))
   outputComments("Writing covariates")
   openxlsx::addWorksheet(wb, "Covariates")
   openxlsx::writeData(wb, sheet = 1, covariates)
 
-  # The TCI infusion rows and the repeats of scheduled (qd/bid/tid/qid) doses
+  # The TCI infusion rows and the repeats of scheduled (qd/bid/tid/qid/q4h) doses
   # live outside the dose table in the app so that the table stays usable;
   # they are merged in for the export (tci.R, scheduled.R).
   outputComments("Writing dose table")

@@ -166,7 +166,19 @@
 # distribution pulls up) and 6% below those on an inducer; the 24% gap
 # for valproate or cannabidiol is an inhibition the model has no term for.
 #
-# BAND: 5-35 mg/L, typical 15.  The sponsor's analysis of steady-state
+# BAND: 10-25 mg/L, typical 18 (its midpoint): the therapeutic reference
+# range newly introduced by the AGNP update 2026 (Hart et al.,
+# Pharmacopsychiatry 2026;59:166-295, Table 5; trough 24 h after a dose;
+# laboratory alert level 50 mg/L; level of recommendation 4), the mean
+# +/- SD in 36 patients seizure-free at a median 200 mg/day.  It replaces
+# the 5-35 mg/L responder range below, which this file drew until the
+# consensus table was read (docs/therapeutic-ranges.md: the class
+# consensus guideline comes first).  The model's troughs at 100 and
+# 400 mg/day (6.8, 27.4) fall outside the narrower range, and the trials'
+# seizure-free patients on 100 mg/day (central 90% 5.1-9.7) lie wholly
+# below it: the consensus range describes the usual 200 mg/day.
+#
+# The sponsor's analysis of steady-state
 # troughs in the maintenance phase of the two controlled trials (C013 and
 # C017; Greene and Kamin, AAN 2021 abstract 1377, read in full): 95% of the
 # patients with a 50% or greater seizure reduction, or seizure freedom, lay
@@ -192,7 +204,7 @@
 # 2025).  The Oslo laboratory uses 15-130 umol/L, which is 4.0-34.8 mg/L
 # (the paper prints "10-40 mg/L", which does not match its own umol/L), on
 # the strength of the Kork series, and 85% of its measurements fell inside
-# it.  Typical 15: the phase 3 mean at 200 mg/day, the usual target dose.
+# it.
 #
 # EFFECT SITE: none, deliberately.  The one study that timed an effect
 # (photoparoxysmal EEG response, 6 evaluable patients, single doses of
@@ -263,7 +275,7 @@ cenobamate <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   list(
     PK = PK, tPeak = 0, MEAC = 0,
-    typical = 15, upperTypical = 35, lowerTypical = 5,
+    typical = 18, upperTypical = 25, lowerTypical = 10,
     reference = paste0(
       "Vashi V et al., Epilepsy Res 2023;195:107185, Supplemental Table 2: two ",
       "compartments, apparent oral, lag 0.24 h, CL/F 0.533 L/h, V1/F 42.4 L, ",

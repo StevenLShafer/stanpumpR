@@ -28,13 +28,18 @@
 # COVARIATES HERE
 # ===============
 # PMA is 40 + 52 x age in years (a term birth, the source's imputation when
-# gestational age was missing).  Renal function is the bedside Schwartz
-# estimate from the child's own creatinine (patientCreatinine()) below 18,
-# as the source computed it; from 18, where that equation was never meant
-# to apply, it is CKD-EPI 2009 (also per 1.73 m2) from an adult-equivalent
-# creatinine, as dapagliflozin does.  A blank creatinine field means an
-# assumed normal creatinine for age and sex.  CrCl was studied from 13 to
-# 261 mL/min/1.73 m2 and is held to that range.
+# gestational age was missing); this model does not read the Patient
+# Profile's gestational age at birth (added for dobutamineNeonatal), so a
+# premature infant's maturation is overstated.  Renal function is the bedside Schwartz estimate from
+# the patient's own creatinine (patientCreatinine()) at EVERY age, the
+# definition the covariate was fitted on.  Until 2026-10-24 it switched to
+# CKD-EPI 2009 at 18, which made clearance jump 24% on the 18th birthday (a
+# 70 kg, 175 cm man, creatinine 1 mg/dL: 72.3 to 109.4 mL/min/1.73 m2), a
+# step no patient has; an adversarial review found it.  Past 18 the model is
+# an extrapolation either way, and the adult model is milrinone (Bailey
+# 1994).  A blank creatinine field means an assumed normal creatinine for age
+# and sex.  CrCl was studied from 13 to 261 mL/min/1.73 m2 and is held to
+# that range, a choice of this implementation, not a physiological bound.
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
@@ -73,9 +78,7 @@ milrinonePediatric <- function(weight, height, age, sex, adjustToFFM = TRUE,
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
 
-  crcl <- if (age < 18)
-    egfrBedsideSchwartz(height, patientCreatinine(creatinine, age, sex)) else
-    egfrCKDEPI2009(age, sex, adultEquivalentCreatinine(creatinine, age, sex))
+  crcl <- egfrBedsideSchwartz(height, patientCreatinine(creatinine, age, sex))
   crcl <- min(max(crcl, MILRINONE_PED_CRCL_RANGE[1]), MILRINONE_PED_CRCL_RANGE[2])
 
   pma <- 40 + 52 * age
@@ -103,7 +106,7 @@ milrinonePediatric <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "Hornik CP et al., J Clin Pharmacol 2019;59:1606-1619.  One compartment in ",
     "74 patients aged 0-18 years: CL 15.9 L/h x (WT/70)^0.75 x maturation ",
     "(TM50 67.7 weeks PMA, Hill 1.12) x (CrCl/117)^0.522, V 32.2 L x WT/70; ",
-    "CrCl by bedside Schwartz (CKD-EPI from 18) from ", creatinineNote, ". ",
+    "CrCl by bedside Schwartz, as fitted, from ", creatinineNote, ". ",
     "https://doi.org/10.1002/jcph.1499"
   )
 

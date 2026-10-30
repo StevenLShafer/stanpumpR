@@ -1,6 +1,6 @@
 ## What to look for
 
-One hundred milligrams of tramadol by mouth. As with codeine, the tramadol line (dashed) is plasma only: this model gives tramadol no effect site, because it represents only the opioid effect of the [desmetramadol](help:drugs/desmetramadol) formed from it. The desmetramadol row appears although none was given, rises to a few tens of ng/mL, and peaks around 90 minutes; its effect site peaks later still, near two and a half hours, which is where tramadol's analgesia is observed.
+One hundred milligrams of tramadol hydrochloride by mouth. As with codeine, the tramadol line (dashed) is plasma only: this model gives tramadol no effect site, because it represents only the opioid effect of the [desmetramadol](help:drugs/desmetramadol) formed from it. The desmetramadol row appears although none was given, rises to a few tens of ng/mL, and peaks around 90 minutes; its effect site peaks later still, near two and a half hours, which is where tramadol's analgesia is observed.
 
 ## Try next
 

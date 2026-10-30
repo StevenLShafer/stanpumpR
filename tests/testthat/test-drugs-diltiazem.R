@@ -31,8 +31,17 @@ test_that("the decomposition gives the published rates, clearance and central vo
   expect_equal_rounded(84.6, round(set$v2, 1))
   expect_equal(set$cl3, 0)
   expect_identical(PK$Concentration.Units, "ng")
-  expect_equal(PK$tPeak, 0)
-  expect_equal(set$ke0, 0)
+})
+
+test_that("a 2-minute infusion peaks at the effect site 4.3 min after its start (Salerno 1989)", {
+  PK <- getDrugPK("diltiazem", 70, 170, 60, "male")
+  expect_equal(PK$tPeak, 3.1)
+  wide <- simulateDrugsWithCovariates(
+    data.frame(Drug = "diltiazem", Time = c(0, 2), Dose = c(0.25 * 70 / 2 * 60, 0),
+               Units = "mg/hr"),
+    data.frame(Time = double(), Event = character()),
+    70, 170, 60, "male", 20, FALSE)$diltiazem$wide
+  expect_lt(abs(wide$Time[which.max(wide$`Effect Site`)] - 4.3), 0.25)
 })
 
 test_that("the printed steady-state volume, which the model does not use, checks it", {

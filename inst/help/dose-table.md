@@ -31,7 +31,7 @@ A regimen written in days goes in most easily with the Time units set to days. D
 | `mg/hr RA` | **perineural infusion** into the tissue depot, from that time | bupivacaine, ropivacaine, lidocaine |
 | `mg PE` and its rate and IM forms | **fosphenytoin**, in phenytoin sodium equivalents | `mg PE`, `mg PE/min`, `mg PE IM` (phenytoin) |
 | `Plasma target`, `Effect site target` | **target-controlled infusion**: the dose is the target concentration | see [Target-controlled infusion](help:tci) |
-| a bolus, oral, sublingual, intramuscular or intranasal dose followed by `qd`, `bid`, `tid` or `qid` | **scheduled dose**, repeated | `mg bid`, `mg PO tid` |
+| a bolus, oral, sublingual, intramuscular or intranasal dose followed by `qd`, `bid`, `tid`, `qid` or `q4h`; an oral or sublingual antiseizure dose followed by `qam` or `qpm` | **scheduled dose**, repeated | `mg bid`, `mg PO tid`, `mg PO qpm` |
 | `L/min` | fresh gas flow or ventilation setting | inhaled agents |
 | `%` | vaporizer setting | inhaled agents |
 
@@ -57,13 +57,25 @@ For drugs given on a schedule (the analgesic opioids, the oral analgesics and be
 | `bid` | twice a day | 12 hours |
 | `tid` | three times a day | 8 hours |
 | `qid` | four times a day | 6 hours |
+| `q4h` | every 4 hours (offered wherever `qid` is) | 4 hours |
+| `qam` / `qpm` | a separate morning / evening daily slot (oral and sublingual, antiseizure drugs) that does not replace the other | 24 hours each |
 | `qwk` | once a week (subcutaneous units only: semaglutide, dulaglutide, tirzepatide) | 7 days |
 
 The first dose is given at the time in the row, and the same dose is then repeated at that interval until the end of the X axis, so lengthening the axis extends the schedule. The repeats are not added to the dose table, which would fill with rows, but they are merged back in when a slide is emailed, so the exported dose table lists the full dose sequence.
 
-- To **stop** a schedule, enter a scheduled dose of **0** for the same drug and route at the stop time, at any frequency. `0 mg PO bid` stops an oral schedule of that drug; an intravenous schedule carries on. An ordinary dose of 0 does not stop it.
-- To **change** the dose or the frequency, enter a new scheduled row for the same route: it replaces the running schedule from its own time.
-- Ordinary doses can be given alongside a schedule; they add.
+- To **stop** a schedule, enter a scheduled dose of **0** for the same drug and route at the stop time, at any frequency. `0 mg PO bid` stops an oral schedule of that drug; an intravenous schedule carries on.
+- To **change** the dose or the frequency, enter a new whole-day scheduled row (`qd`/`bid`/`tid`/`qid`/`q4h`) for the same route: it replaces the running schedule from its own time.
+- **Oral and sublingual schedules** (the two routes count as one): a later whole-day scheduled dose is a regimen change that ends every running oral schedule, the `qam`/`qpm` slots included; an ordinary `0 mg PO` or `0 mg SL` stops every oral schedule; and an ordinary dose **above 0** is an extra one-off — a catch-up or breakthrough dose — that leaves the schedule running. (An oral rate unit such as `mg/day PO` is not a dose.)
+- **`qam` and `qpm`** (oral and sublingual, the antiseizure drugs) are two independent daily slots that do **not** replace each other, so a split regimen with a different morning and evening dose — for example cenobamate `200 mg PO qpm` with `50 mg PO qam`, the morning dose smaller because these drugs are sedating — is entered as two rows. A later `qam` replaces only the running `qam`, a later `qpm` only the running `qpm`.
+- On the other routes (intravenous, intramuscular, intranasal, subcutaneous) an ordinary dose given alongside a schedule adds to it, and an ordinary dose of 0 does not stop it; only a scheduled 0 for that route stops it.
+
+### Skip next dose
+
+A patient who misses a tablet, or vomits it, wants to know whether to wait for the next dose or take two. So does a patient who misses an injection, a spray or a scheduled intravenous dose (`mg bid`). Click a drug's curve, or double-click it, while it has a schedule (`qd`, `bid`, `tid`, `qid`, `q4h` or `qwk`) running on any route: the dialog then offers **Skip next dose**, naming the time of the first scheduled dose at or after the time clicked. It writes the skip into the dose table by the rules above, where it can be seen and changed: a scheduled 0 in the schedule's own unit at the skipped time, such as `0 mg PO qam`, `0 mg PO bid` or `0 mg IM qid`, which stops just that one schedule, and the scheduled row again one interval later, which restarts it, unless the schedule would have ended before then. To compare the patient's options, change that restart row, for instance to a double dose taken now and the schedule resumed at its usual time. An infusion or a TCI target has no next dose to skip: it is delivered continuously, so the button is never offered for one; to end it, use **Stop**.
+
+### Stop
+
+An infusion, a target-controlled infusion, a schedule and an inhaled agent's vaporizer or flow setting all run until a row in the dose table ends them. Click a drug's curve, or double-click it, at a time when any of them is running for that drug, and the dialog offers **Stop**, naming the drug and the time clicked. It adds the row the rules already read as a stop, at that time, with a dose of 0: a rate of 0 in the infusion's units, a target of 0 for a TCI, a scheduled dose of 0 in the schedule's own units (which stops it on every route), or a setting of 0 for an inhaled agent. Everything running for the drug is stopped together, and the rows can be seen and changed in the dose table like any other. A single bolus or oral dose is not ongoing, so a drug given only those offers no Stop.
 
 ## Applying changes
 

@@ -53,7 +53,7 @@ registry <- rbind(
   reg("apix_cirincione_2018_nvaf", "factor Xa inhibitor",
       "oral, nonvalvular atrial fibrillation", "apixaban plasma (ng/mL)", "none plotted",
       "PO", "research_ready", "apixaban",
-      "Indication/race/comedication/clock-time fixed to the NVAF morning-dose patient; renal term and F(dose) equation confirmed against the published supplement (no CrCl cap, fixed exponent 1).",
+      "Indication/race/comedication/clock-time fixed to the NVAF morning-dose patient; renal term and F(dose) equation confirmed against the published supplement and control streams (CrCl held at 150 mL/min above it, as every control stream does; fixed exponent 1).",
       "https://doi.org/10.1002/psp4.12347"),
   reg("riva_willmann_2018", "factor Xa inhibitor",
       "oral, pooled indications (AF here)", "rivaroxaban plasma (ng/mL)", "none plotted",
@@ -63,7 +63,7 @@ registry <- rbind(
   reg("warf_xue_2017_cardiac", "vitamin K antagonist",
       "oral, cardiac surgery", "S/R-warfarin (mg/L) -> INR", "INR (theory-based 1/PCA)",
       "PO", "research_ready", "warfarin",
-      "Eq.2 multiplicative C50_app is the form that reproduces the paper's worked example (the erratum, BCP 2017;83:1602, was not itself read); FFM reference 56.1 vs 56.6 kg resolved to the formula-consistent 56.1; R antagonism study-specific.",
+      "Eq.2 multiplicative C50_app is the form the erratum (BCP 2017;83:1602, PMID 28597521) gives, the R term nested in the S term rather than alone in the denominator, with the NM-TRAN code confirmed as corrected; read from the PubMed/PMC records and a published summary, not the typeset page, and it reproduces the paper's worked example; FFM reference 56.1 vs 56.6 kg resolved to the formula-consistent 56.1; R antagonism study-specific.",
       "https://doi.org/10.1111/bcp.13157"),
   reg("warf_hamberg_2007", "vitamin K antagonist",
       "oral", "S/R-warfarin (mg/L) -> INR", "INR (two-chain transit compartments)",
@@ -108,9 +108,9 @@ registry <- rbind(
 
   # --- Provisional (published, but a material gap) ---------------------------
   reg("ufh_delavenne_2017_cpb", "unfractionated heparin",
-      "IV, cardiopulmonary bypass", "anti-Xa activity -> ACT", "Hemochron Jr ACT",
-      "IV", "pending", NA,
-      "Numeric PK and Emax/EC50 table not available from a verified publisher source; never combine with Jia anti-IIa.",
+      "IV, cardiopulmonary bypass", "anti-Xa activity -> ACT (plotted, seconds)", "Hemochron Jr ACT",
+      "IV", "research_ready", "heparinCPB",
+      "Table 2 read from the full text; two-compartment anti-Xa PK with a direct Emax link to the ACT (ACT0 116 s, Emax 720 s, C50 3.49 IU/mL), body weight on Vc and CL, no other covariate. A SECOND heparin model, never combined with the Jia anti-IIa model. Small (50 patients), bypass-specific; the ACT is device-dependent and not a validated clinical target.",
       "https://doi.org/10.1093/bja/aex044"),
   reg("enox_barras_2009", "low molecular weight heparin",
       "SC, bleeding/bruising PD", "enoxaparin-induced bleeding/bruising", "PD (not plotted)",
@@ -123,9 +123,9 @@ registry <- rbind(
       "Label CL (0.204 L/h/kg) differs from the healthy-volunteer fit; no full V/Q/PD vector for PCI patients.",
       "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=72c5413f-882a-4784-9be6-312c0a0a2a97"),
   reg("apix_byon_2017_vte", "factor Xa inhibitor",
-      "oral, VTE", "apixaban plasma -> anti-Xa (IU/mL)", "Rotachrom on STA-Compact",
-      "PO", "provisional", NA,
-      "A separate VTE fit and assay map (0.0159 IU/mL per ng/mL); not the NVAF PK vector, and the assay slope is one reagent only.",
+      "oral, VTE treatment", "apixaban plasma (ng/mL)", "none plotted",
+      "PO", "research_ready", "apixabanVTE",
+      "Final Table 4 read from the full text; a separate VTE-treatment fit from the NVAF model. Race/comedication/clock-time fixed to the non-Asian morning-dose patient; Cockcroft-Gault renal term with a 150 mL/min cap; the >10 mg dose-dependent F (parameters not printed) is not applied, so doses >10 mg over-predict; the anti-Xa map (0.0159 IU/mL per ng/mL, one reagent) is documentation only.",
       "https://doi.org/10.1002/psp4.12184"),
   reg("dabi_troconiz_2007_hip", "direct thrombin inhibitor",
       "oral, post-hip-replacement surgery", "total active dabigatran (ng/mL)", "none plotted",
@@ -177,8 +177,10 @@ par <- function(drug, parameter, value, units, provenance, population, source_ur
              population, source_url, stringsAsFactors = FALSE)
 
 JIA  <- "41 enrolled (32 completed) cardiac-bypass patients, Jia 2015"
+DEL17 <- "50 cardiac-bypass patients, Delavenne 2017 (reference 70 kg)"
 ZH   <- "36 young healthy Chinese volunteers, Zhang 2012"
 CIR  <- "4385 subjects (phase I-III), Cirincione 2018 NVAF reference"
+BYON <- "970 subjects (phase I-III VTE), Byon 2017 reference 60 y, 85 kg, 100 mL/min"
 WIL  <- "4918 patients, 7 trials, Willmann 2018 (population medians: 81 kg, 93 mL/min, 61 y)"
 XUE  <- "264 cardiac-surgery patients, Xue 2017"
 NIE  <- "4130 individuals (13 phase 1 + Hokusai-VTE), Niebecker 2015"
@@ -196,12 +198,20 @@ parameters <- rbind(
   par("heparin", "Q", 0.171, "L/h", "estimated", JIA, "https://doi.org/10.1186/s12967-015-0404-5"),
   par("heparin", "Vp", 8.01, "L", "estimated", JIA, "https://doi.org/10.1186/s12967-015-0404-5"),
 
+  par("heparinCPB", "CL", 0.841, "L/h (x (WT/70)^0.767)", "estimated", DEL17, "https://doi.org/10.1093/bja/aex044"),
+  par("heparinCPB", "Vc", 3.1, "L (x WT/70)", "estimated", DEL17, "https://doi.org/10.1093/bja/aex044"),
+  par("heparinCPB", "Q", 4.67, "L/h", "estimated", DEL17, "https://doi.org/10.1093/bja/aex044"),
+  par("heparinCPB", "Vp", 2.23, "L", "estimated", DEL17, "https://doi.org/10.1093/bja/aex044"),
+  par("heparinCPB", "ACT0", 116, "s (baseline clotting time)", "estimated", DEL17, "https://doi.org/10.1093/bja/aex044"),
+  par("heparinCPB", "Emax", 720, "s (maximal ACT prolongation)", "estimated", DEL17, "https://doi.org/10.1093/bja/aex044"),
+  par("heparinCPB", "C50", 3.49, "IU/mL (anti-Xa for half of Emax)", "estimated", DEL17, "https://doi.org/10.1093/bja/aex044"),
+
   par("bivalirudin", "CL", 0.323, "L/h/kg", "estimated", ZH, "https://doi.org/10.1038/aps.2012.37"),
   par("bivalirudin", "V1", 0.086, "L/kg", "estimated", ZH, "https://doi.org/10.1038/aps.2012.37"),
   par("bivalirudin", "Q", 0.0957, "L/h/kg", "estimated", ZH, "https://doi.org/10.1038/aps.2012.37"),
   par("bivalirudin", "V2", 0.0554, "L/kg", "estimated", ZH, "https://doi.org/10.1038/aps.2012.37"),
 
-  par("apixaban", "CL_R/F", 1.57, "L/h (x CrCl/80)", "estimated", CIR, "https://doi.org/10.1002/psp4.12347"),
+  par("apixaban", "CL_R/F", 1.57, "L/h (x min(CrCl,150)/80)", "estimated", CIR, "https://doi.org/10.1002/psp4.12347"),
   par("apixaban", "CL_NR/F", 2.02, "L/h (x (age/65)^-0.429, x0.784 female)", "estimated", CIR, "https://doi.org/10.1002/psp4.12347"),
   par("apixaban", "NVAF factor on CL", 0.861, "fraction", "estimated", CIR, "https://doi.org/10.1002/psp4.12347"),
   par("apixaban", "Vc/F", 30.0, "L (x (WT/70)^0.790, x0.960 NVAF)", "estimated", CIR, "https://doi.org/10.1002/psp4.12347"),
@@ -209,6 +219,14 @@ parameters <- rbind(
   par("apixaban", "Vp/F", 27.0, "L", "estimated", CIR, "https://doi.org/10.1002/psp4.12347"),
   par("apixaban", "ka", 0.473, "1/h", "estimated", CIR, "https://doi.org/10.1002/psp4.12347"),
   par("apixaban", "F(dose) I50, gamma", "0.420, 0.857", "logit I50 -0.322", "estimated", CIR, "https://doi.org/10.1002/psp4.12347"),
+
+  par("apixabanVTE", "CL_R/F", 1.83, "L/h (x min(CrCl,150)/100)", "estimated", BYON, "https://doi.org/10.1002/psp4.12184"),
+  par("apixabanVTE", "CL_NR/F", 2.52, "L/h (x (age/60)^-0.267, x0.777 female)", "estimated", BYON, "https://doi.org/10.1002/psp4.12184"),
+  par("apixabanVTE", "Vc/F", 32.1, "L (x (WT/85)^0.523)", "estimated", BYON, "https://doi.org/10.1002/psp4.12184"),
+  par("apixabanVTE", "Q/F", 1.62, "L/h", "estimated", BYON, "https://doi.org/10.1002/psp4.12184"),
+  par("apixabanVTE", "Vp/F", 19.8, "L", "estimated", BYON, "https://doi.org/10.1002/psp4.12184"),
+  par("apixabanVTE", "ka", 0.440, "1/h (morning; 0.239 evening)", "estimated", BYON, "https://doi.org/10.1002/psp4.12184"),
+  par("apixabanVTE", "anti-Xa slope", 0.0159, "IU/mL per ng/mL (documented, not plotted)", "estimated", BYON, "https://doi.org/10.1002/psp4.12184"),
 
   par("rivaroxaban", "CL/F", 6.58, "L/h (x (CrCl/93)^0.406 x (WT/81)^-0.278 x0.849 AF)", "estimated", WIL, "https://doi.org/10.1002/psp4.12288"),
   par("rivaroxaban", "V/F", 62.5, "L (x (WT/81)^0.216 x (age/61)^-0.189 x0.889 female)", "estimated", WIL, "https://doi.org/10.1002/psp4.12288"),

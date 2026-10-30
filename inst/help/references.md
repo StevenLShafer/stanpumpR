@@ -80,6 +80,8 @@ Hu C, Horstman DJ, Shafer SL. Variability of target-controlled infusion is less 
 
 Ashraf MW, Poikola S, Neuvonen M, et al. Population pharmacokinetic quantification of CYP2D6 activity in codeine metabolism in ambulatory surgical patients for model-informed precision dosing. *Clin Pharmacokinet* 2024;63:1547-1560.
 
+Allegaert K, Holford N, Anderson BJ, et al. Tramadol and O-desmethyl tramadol clearance maturation and disposition in humans: a pooled pharmacokinetic study. *Clin Pharmacokinet* 2015;54:167-178.
+
 Holford S, Allegaert K, Anderson BJ, et al. Parent-metabolite pharmacokinetic models for tramadol. *J Pharmacol Clin Toxicol* 2014;2(1):1023.
 
 Stamer UM, Musshoff F, Kobilay M, Madea B, Hoeft A, Stuber F. Concentrations of tramadol and O-desmethyltramadol enantiomers in different CYP2D6 genotypes. *Clin Pharmacol Ther* 2007;82:41-47.

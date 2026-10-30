@@ -27,15 +27,29 @@
 # Q/F 0.910 L/h, Vp/F 151 L.  Note the exchange clearance really is 0.910 and
 # not 91.0; the review prints the decimal.
 #
-# These carry no weight or body-surface scaling.  The source fitted creatinine
-# clearance on CL and body surface area on Vc (Eqs 11-12):
+# COVARIATES (applied from 2026-10-28, at Steven L. Shafer's request)
+# ==========
+# The source's two covariates (Eqs 11-12), and no others:
 #
 #     CL/F = 64.4 L/h x (CLCR / 91.48 mL/min/1.73 m2)^0.223
 #     Vc/F = 714 L    x (BSA / 1.87 m2)^0.486
 #
-# Neither is applied, so the model is weight-independent, which is unusual
-# for this package.  Both exponents are small, and the authors judged that
-# neither warrants a dose adjustment.
+# CLCR is the Cockcroft-Gault creatinine clearance (Melhem's reference 13)
+# indexed to body surface area, x 1.73 / BSA, as the unit says; BSA is Gehan
+# and George's (reference 12; bsaGehanGeorge()).  Q/F and Vp/F carry none.
+# The creatinine is the Patient Profile's, on the adult scale
+# (adultEquivalentCreatinine()), or with the field blank an assumed normal
+# one, so renal impairment is represented only when it is entered.  Severe
+# impairment (CLCR 15 against 100) raises exposure by about half, the 53% the
+# paper reports.  As for the other models that carry their own size terms
+# (docs/adding-a-drug.md), both covariates see the pharmacokinetic weight with
+# the fat-free-mass switch on (size$pkWeight) and total body weight with it
+# off, and the size-free Vp/F and Q/F are scaled by the library's
+# fat-free-mass factors with the switch on and fixed at the published values
+# with it off.  Melhem's subjects were adults, so a
+# child's values are extrapolation.  The 70 kg, 170 cm, 35-year-old reference
+# man (BSA 1.83 m2, CLCR 107 mL/min/1.73 m2 at the assumed creatinine of
+# 0.9 mg/dL) gets Vc/F 707 L and CL/F 66.7 L/h.
 #
 # The two eigenvalues are 0.0916 and 0.00594 per hour, half-times 7.6 h and
 # 117 h.  The slow one carries only 1.6% of the area, so the model is nearly
@@ -120,12 +134,14 @@
 # -----------------------------------------------------------------------------
 # TO BE SUPPLIED
 # -----------------------------------------------------------------------------
-# No human concentration-effect vector for hydrocodone was found.  Until these
-# two numbers are set, hydrocodone is plotted as plasma only and contributes
-# nothing to the opioid MEAC total, with whatever effect it has appearing on
-# the hydromorphone row.
+# No human concentration-effect vector for hydrocodone was found.  Both
+# numbers below were set provisionally (tPeak 2026-10-06, MEAC 2026-10-12),
+# so hydrocodone now has an effect site and contributes to the opioid MEAC
+# total alongside the hydromorphone it forms.  Before they were set, it was
+# plotted as plasma only.
 #
-# That UNDERSTATES hydrocodone.  Unlike codeine it is not a pure prodrug:
+# Whether that is the right share is open.  Unlike codeine it is not a pure
+# prodrug:
 # Otton 1993 found poor metabolisers still reported opioid effects, so some of
 # the effect is the parent's.  Boswell 2013 found postoperative pain relief
 # tracking hydromorphone rather than hydrocodone concentrations, which points
@@ -173,18 +189,21 @@ HYDROCODONE_TPEAK <- 90  # minutes after an ORAL dose; provisional, see above
 # ---------------------------------------------------------------------------
 # Set to oxycodone's 12 ng/mL by decision of Steven L. Shafer, 2026-10-12, in
 # the opioid MEAC and tPeak audit, as a working value pending a
-# hydrocodone-specific one.  By mouth hydrocodone and oxycodone are about
-# equipotent milligram for milligram (Kapil 2015 cites both at about twice
-# oral morphine), and their apparent clearances are similar, so equianalgesic
-# doses reach similar concentrations: 30 mg of hydrocodone and 20 mg of
-# oxycodone by mouth both peak near 37 ng/mL here.  The value first set
+# hydrocodone-specific one.  The comparison is between EQUIANALGESIC doses,
+# not equal milligrams: 30 mg of hydrocodone and 20 mg of oxycodone by mouth
+# (the CDC's oral morphine milligram equivalent factors are 1 and 1.5, which
+# the CDC says are not dose-conversion factors) both peak near 37 ng/mL here,
+# so equianalgesic doses reach similar concentrations and a shared MEAC is
+# consistent.  Until 2026-10-27 this note called the two "about equipotent
+# milligram for milligram", which the 30:20 comparison itself contradicts
+# (opioid potency audit, docs/opioid-review-2026-10-27.md).  The value first set
 # (2026-10-06) was morphine's 8 ng/mL, which left 30 mg by mouth above MEAC
 # for about 20 hours at 4.6 MEAC, against 8 hours at 3.1 MEAC for 20 mg of
 # oxycodone: the clearest outlier in the audit.
 #
 # What would validate or replace it:
 #   - A human concentration-effect study for hydrocodone.  None was found;
-#     this remains the gap that keeps HYDROCODONE_TPEAK at zero.
+#     HYDROCODONE_TPEAK is provisional for the same reason.
 #   - Equipotency with oxycodone is the assumption being made, and it is an
 #     assumption about ORAL analgesic equivalence carried over to a plasma
 #     concentration, which is not the same thing.
@@ -192,9 +211,6 @@ HYDROCODONE_TPEAK <- 90  # minutes after an ORAL dose; provisional, see above
 #     package already plots that contribution on the hydromorphone row.  A
 #     parent MEAC fitted in the presence of that metabolite would double count
 #     unless the two are partitioned together.
-#
-# This value does nothing until HYDROCODONE_TPEAK is also set: with no effect
-# site there is no effect-site concentration to compare against it.
 HYDROCODONE_MEAC  <- 12  # ng/mL; provisional, equal to oxycodone's, see above
 # -----------------------------------------------------------------------------
 
@@ -215,21 +231,23 @@ HYDROCODONE_CYP2D6_WEIGHT <- c(
 #' bioavailability), which predicts oral concentrations correctly and
 #' intravenous ones incorrectly.
 #'
-#' @param weight weight in kg (used only to scale metabolite formation, since
-#'   the apparent disposition carries no weight term)
-#' @param height height in cm (fat-free mass only)
-#' @param age age in years (fat-free mass only)
-#' @param sex sex as a string (fat-free mass only)
+#' @param weight weight in kg (body surface area, Cockcroft-Gault and
+#'   metabolite formation)
+#' @param height height in cm (body surface area and fat-free mass)
+#' @param age age in years (Cockcroft-Gault and fat-free mass)
+#' @param sex sex as a string (Cockcroft-Gault and fat-free mass)
 #' @param cyp2d6 CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}
-#' @param adjustToFFM scale volumes to the patient's fat-free mass and
-#'   clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
-#'   published fixed parameters unscaled.
+#' @param adjustToFFM when \code{TRUE}, the covariates see the pharmacokinetic
+#'   weight (70 kg x the patient's fat-free mass over the reference man's);
+#'   when \code{FALSE}, total body weight.
+#' @param creatinine serum creatinine, mg/dL, or \code{NULL} for an assumed
+#'   normal value (see \code{R/renalFunction.R})
 #'
 #' @returns a list in the shape \code{getDrugPK()} expects, naming
 #'   hydromorphone as the formed active species
 #' @export
 hydrocodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
-                        adjustToFFM = TRUE)
+                        adjustToFFM = TRUE, creatinine = NULL)
 {
   if (length(cyp2d6) != 1 || !cyp2d6 %in% CYP2D6_VALUES) {
     stop("Invalid cyp2d6: ", paste(cyp2d6, collapse = ", "),
@@ -237,16 +255,22 @@ hydrocodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   }
   activity <- unname(HYDROCODONE_CYP2D6_WEIGHT[[cyp2d6]])
 
-  # --- Apparent disposition, Melhem 2013 (see header: no weight scaling) ---
-  # adjustToFFM does NOT touch the disposition: it is apparent (divided by an
-  # unmeasured bioavailability) and deliberately carries no size term.  It is
-  # used only below, to keep the formation constant in step with the
-  # hydromorphone model it feeds.
-  v1  <- 714                 # L,   Vc/F
-  v2  <- 151                 # L,   Vp/F
-  v3  <- 1                   # unused third compartment
-  cl1 <- 64.4  / 60          # L/min, CL/F
-  cl2 <- 0.910 / 60          # L/min, Q/F
+  # --- Apparent disposition, Melhem 2013, with its covariates (header) ---
+  # Its own covariates in both switch positions, at the pharmacokinetic weight
+  # with the switch on and total body weight with it off.  Vp/F and Q/F, which
+  # have none, take the fat-free-mass factors with the switch on and are fixed
+  # with it off (legacy factors 1).
+  dispo <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                         legacyVolume = 1, legacyClearance = 1)
+  pkW  <- if (isTRUE(adjustToFFM)) dispo$pkWeight else weight
+  bsa  <- bsaGehanGeorge(pkW, height)
+  scr  <- adultEquivalentCreatinine(creatinine, age, sex)
+  clcr <- creatinineClearanceCG(pkW, age, sex, scr) * 1.73 / bsa  # mL/min/1.73 m2
+  v1  <- 714 * (bsa / 1.87)^0.486                  # L,   Vc/F (Eq 12)
+  v2  <- 151 * dispo$volume                        # L,   Vp/F
+  v3  <- 1                                         # unused third compartment
+  cl1 <- 64.4 / 60 * (clcr / 91.48)^0.223          # L/min, CL/F (Eq 11)
+  cl2 <- 0.910 / 60 * dispo$clearance              # L/min, Q/F
   cl3 <- 0
 
   # --- Absorption: plasma peak at 1.3 h ---
@@ -263,13 +287,19 @@ hydrocodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   # clearance scaling: linear in weight when hydromorphone scaled on total
   # weight, the fat-free-mass clearance factor when it scales on fat-free
   # mass (docs/weight-adjustment.md).  Either way the measured ratio is kept.
+  # The formation clearance, kFormation x Vc/F, is what sets the ratio, so
+  # kFormation is divided by Vc/F's covariate factor (714 / v1): a larger
+  # central volume does not form more hydromorphone.
   KFORMATION_PER_KG <- 3.18574e-07     # 1/min per kg, normal metaboliser
+  # Hydromorphone's own factors: linear in weight with the switch off.
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
-  kFormation <- KFORMATION_PER_KG * 70 * size$clearance * activity
+  kFormation <- KFORMATION_PER_KG * 70 * size$clearance * activity * 714 / v1
 
   reference <- paste0(
     "Melhem MR et al., Clin Pharmacokinet 2013;52:907-917. ",
-    "https://pubmed.ncbi.nlm.nih.gov/23719682/ (apparent oral disposition); ",
+    "https://pubmed.ncbi.nlm.nih.gov/23719682/ (apparent oral disposition, ",
+    "with its creatinine-clearance and body-surface-area covariates; ",
+    "creatinine assumed normal unless entered); ",
     "Kapil RP et al., Clin Ther 2015;37:2286-2296. ",
     "https://pubmed.ncbi.nlm.nih.gov/26350273/ (hydromorphone formation); ",
     "Otton SV et al., Clin Pharmacol Ther 1993;54:463-472. ",

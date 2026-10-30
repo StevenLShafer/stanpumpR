@@ -2,13 +2,13 @@
 # See R/renalFunction.R.
 
 renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex",
-                "gabapentin", "pregabalin", "oxycodone", "meloxicam",
+                "gabapentin", "pregabalin", "oxycodone", "hydrocodone", "meloxicam",
                 "lacosamide", "levetiracetam", "metformin", "ertugliflozin", "empagliflozin",
                 "exenatide", "dapagliflozin", "canagliflozin", "lixisenatide",
                 # Anticoagulants with a renal clearance term (R/drugs_apixaban.R,
                 # R/drugs_rivaroxaban.R, R/drugs_edoxaban.R, R/drugs_dabigatran.R,
                 # R/drugs_enoxaparin.R and R/drugs_fondaparinux.R, which use MDRD)
-                "apixaban", "rivaroxaban", "edoxaban", "dabigatran",
+                "apixaban", "apixabanVTE", "rivaroxaban", "edoxaban", "dabigatran",
                 # dabigatranHip (Trocóniz 2007): Cockcroft-Gault CrCl and serum
                 # creatinine both act on the day-2-to-10 phase (R/drugs_dabigatranHip.R)
                 "dabigatranHip",
@@ -21,11 +21,28 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 # Serum creatinine itself, not an estimate of its clearance,
                 # is magnesium's covariate (R/drugs_magnesiumSulfate.R, Du 2019)
                 "magnesiumSulfate",
+                # The renin-angiotensin drugs whose sources put a power of the
+                # serum creatinine CONCENTRATION, in umol/L, on clearance:
+                # lisinopril (Thomson 1989, ^-0.887 over 70) and olmesartan
+                # (Yoshihara 2005, ^-0.344 over 80, its strongest covariate).
+                # Valsartan is deliberately NOT here: Heo 2016 screened serum
+                # creatinine and rejected it, so its signature does not name
+                # the covariate and this test asserts that it ignores it.
+                "lisinopril", "olmesartan",
+                # Fosinopril (Hui 1991) is the odd one of the three: its
+                # covariate is Cockcroft-Gault indexed to 1.73 m^2, the unit
+                # Hui reports, and it is a two-plateau RAMP rather than a
+                # power -- clearance halves from normal renal function to
+                # impaired and is then flat, because the hepatobiliary route
+                # takes 63 to 85% of a shrinking total.  So unlike every other
+                # renal model here, a large change in creatinine can leave its
+                # clearance untouched (docs/antihypertensives.md section 18).
+                "fosinopril",
                 # Grasela and Sheiner's Equation 7 (R/drugs_procainamide.R)
                 "procainamide",
                 # Cockcroft-Gault on clearance (R/drugs_digoxin.R, Yukawa 2001)
                 "digoxin",
-                # Bedside Schwartz, CKD-EPI from 18, on clearance
+                # Bedside Schwartz at every age, on clearance
                 # (R/drugs_milrinonePediatric.R, Hornik 2019)
                 "milrinonePediatric",
                 # Cheng 1997's regressions on Cockcroft-Gault (R/drugs_digoxinIV.R)

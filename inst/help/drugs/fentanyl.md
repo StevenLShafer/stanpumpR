@@ -14,7 +14,7 @@ The time to peak effect is 3.6 minutes, from Shafer and Varvel (*Anesthesiology*
 
 ### MEAC and typical concentrations
 
-MEAC is 0.6 ng/mL (Gourlay and colleagues reported a mean of 0.63 ng/mL in postoperative patients). The shaded band is 0.8 to 2 MEAC, 0.48 to 1.2 ng/mL. Concentrations of 2 to 5 ng/mL are typical during surgery with an inhaled agent; respiratory depression becomes clinically important above about 2 ng/mL in a patient who is not stimulated.
+MEAC is 0.6 ng/mL, the library's value. It sits near the 0.63 ± 0.25 ng/mL of Gourlay and colleagues (*Anesth Analg* 1988;67:329-337), but that was a **minimum effective concentration** (MEC): blood sampled from postoperative patients immediately before each patient-controlled demand, when pain had returned, not the concentration at which titration restored analgesia. Bae and colleagues (*Br J Anaesth* 2020;125:976-985) measured both after open abdominal surgery: a median MEC of 0.72 ng/mL and a median MEAC of 0.99 ng/mL. The MEAC panel divides by 0.6 whichever is meant, so read its percentages as relative to a concentration at which pain typically returns. The shaded band is 0.8 to 2 MEAC, 0.48 to 1.2 ng/mL. Concentrations of 2 to 5 ng/mL are typical during surgery with an inhaled agent; respiratory depression becomes clinically important above about 2 ng/mL in a patient who is not stimulated.
 
 ### Where to be careful
 

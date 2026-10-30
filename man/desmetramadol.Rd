@@ -11,7 +11,8 @@ desmetramadol(weight, height, age, sex, adjustToFFM = TRUE)
 
 \item{height}{height in cm (fat-free mass only)}
 
-\item{age}{age in years (fat-free mass only)}
+\item{age}{age in years: the maturation of the clearance, and fat-free
+mass}
 
 \item{sex}{sex as a string (fat-free mass only)}
 

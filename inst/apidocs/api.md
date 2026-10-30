@@ -95,8 +95,9 @@ The response (JSON):
   "patient": {
     "weight": 70, "weightUnit": "kg", "height": 170, "heightUnit": "cm",
     "age": 50, "ageUnit": "years", "sex": "male", "pregnant": false, "adjustToFFM": true,
-    "osmolality": 280, "creatinine": null,
-    "cyp2d6": "normal", "cyp2c19": "normal", "cyp2c9": "*1/*1", "cyp2b6": "normal"
+    "osmolality": 280, "creatinine": null, "gestationalAge": null,
+    "cyp2d6": "normal", "cyp2c19": "normal", "cyp2c9": "*1/*1", "cyp2b6": "normal",
+    "vkorc1": "AA", "cyp4f2": "CC"
   },
   "drugs": [
     {
@@ -179,11 +180,14 @@ A request is a JSON object. Field names ignore case and any `_`, space or
     "ageUnit": "years",      // "years" (default) | "months"
     "adjustToFFM": true,     // scale each model to fat-free mass (default) rather than total weight
     "creatinine": null,      // serum creatinine, mg/dL; omit or null for the normal value for age and sex
+    "gestationalAge": null,  // gestational age at birth, weeks; omit or null for a term birth (neonatal models)
     "osmolality": 280,       // baseline serum osmolality, mOsm/kg (read only by mannitol)
     "cyp2d6": "normal",      // poor | intermediate | normal | ultrarapid
     "cyp2c19": "normal",     // poor | intermediate | normal | rapid | ultrarapid
     "cyp2c9": "*1/*1",       // *1/*1 | *1/*2 | *1/*3 | *2/*2 | *2/*3 | *3/*3
-    "cyp2b6": "normal"       // poor | intermediate | normal | rapid | ultrarapid
+    "cyp2b6": "normal",      // poor | intermediate | normal | rapid | ultrarapid
+    "vkorc1": "AA",          // GG | GA | AA
+    "cyp4f2": "CC"           // CC | CT | TT
   },
 
   "duration": 6,             // required: length of the simulation, in timeUnit
@@ -225,8 +229,11 @@ A request is a JSON object. Field names ignore case and any `_`, space or
 | `sex` | yes | `male`, `female` |
 | `pregnant` | no | `false` (default) or `true`, which needs `sex` `female`. Only the drugs with a late-pregnancy model read it. |
 | `creatinine` | no | 0.2–15 mg/dL. If it is omitted, each renally cleared model assumes the normal value for the patient's age and sex. |
+| `gestationalAge` | no | 22–44 weeks, the gestational age at birth. If it is omitted, the birth is taken as at term (40 weeks). Only the neonatal models (`dobutamineNeonatal`) read it, with the age, as the postmenstrual age. |
 | `osmolality` | no | 200–400 mOsm/kg. The default is 280. |
 | `cyp2d6`, `cyp2c19`, `cyp2c9`, `cyp2b6` | no | The values listed above. The default is the normal phenotype (`*1/*1` for CYP2C9). Only the models that use a phenotype read it. |
+| `vkorc1` | no | The VKORC1 -1639G>A genotype, read by the three vitamin-K antagonists: `warfarin`, `fluindione` and `acenocoumarol`. Unlike the phenotypes above, the default is chosen for sensitivity rather than for frequency: `AA` is the genotype that gives the **largest** INR rise, so that an unentered genotype errs toward underdosing. Pass the patient's own genotype when it is known. |
+| `cyp4f2` | no | The CYP4F2 rs2108622 genotype, read by `warfarin` alone. Its default, `CC`, is that model's most sensitive genotype, by the same rule as `vkorc1`. |
 | `adjustToFFM` | no | `true` (default) or `false` |
 
 ### The dose table
@@ -244,7 +251,7 @@ be an object of equal-length columns:
   - **Extravascular doses** carry their route: oral (`mg PO`), sublingual
     (`mg SL`), intramuscular (`mg IM`), intranasal (`mcg IN`) and regional
     anesthesia (`mg RA`).
-- **Scheduled doses.** A unit ending in `qd`, `bid`, `tid` or `qid`
+- **Scheduled doses.** A unit ending in `qd`, `bid`, `tid`, `qid` or `q4h`
   (`mg PO bid`) repeats the dose until the end of the simulation. A scheduled
   dose of 0 stops the sequence.
 - **Target-controlled infusion.** The units `Plasma target` and

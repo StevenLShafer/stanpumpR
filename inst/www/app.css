@@ -76,6 +76,25 @@ always was. */
   overflow-y: auto;
 }
 
+/* The dose table fits the Doses sidebar at 14 px, with the column widths
+createHOT() sets.  A unit too long for its column wraps after its route,
+"mg/kg PO" over "liquid q4h" (unitWrapText() in hot_funs.js), in the cell as
+in the dropdown list, whose Handsontable stylesheet would otherwise cut it
+short with an ellipsis. */
+#doseTableHTML .handsontable {
+  font-size: 14px;
+}
+#doseTableHTML .htAutocompleteArrow {
+  width: 12px;
+}
+#doseTableHTML .handsontable.listbox td {
+  white-space: pre-line;
+  text-overflow: clip;
+}
+#doseTableHTML .handsontable.listbox .wtHolder {
+  overflow-x: hidden;
+}
+
 /* The dose table's sidebar (bslib::sidebar at the right of the plot): the
 grid fills the height left under the title and scrolls inside itself, so the
 Apply, Undo and Redo buttons under it stay in view. */
@@ -477,7 +496,9 @@ a.investigator-link:hover {
   color: #4a5764;
 }
 
-/* the startup drug menu (R/startup-drugs.R): categories flow into columns */
+/* the startup drug menu (R/startup-drugs.R): one collapsed section per
+   category, in a grid; an open one spans the grid and its drugs flow into
+   columns */
 .startup-welcome {
   border-left: 3px solid #2c3e50;
   background: #f4f6f8;
@@ -486,17 +507,77 @@ a.investigator-link:hover {
   border-radius: 4px;
 }
 .startup-drug-groups {
-  column-width: 13rem;
-  column-gap: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.4rem 1rem;
+  align-items: start;
 }
 .startup-drug-group {
-  break-inside: avoid;
-  margin-bottom: 0.75rem;
+  border: 1px solid #d5dbe1;
+  border-radius: 4px;
 }
-.startup-drug-group .control-label {
+.startup-drug-group[open] {
+  grid-column: 1 / -1;
+}
+.startup-drug-group > summary {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  list-style: none;
   font-weight: 600;
   color: #2c3e50;
 }
+.startup-drug-group > summary::before {
+  content: "\25B8";
+  font-size: 0.8em;
+}
+.startup-drug-group[open] > summary::before {
+  content: "\25BE";
+}
+.startup-drug-group > summary::-webkit-details-marker {
+  display: none;
+}
+.startup-drug-count {
+  font-weight: 400;
+  color: #6c7a89;
+  font-size: 0.85em;
+}
+.startup-drug-ticked {
+  margin-left: auto;
+  font-weight: 400;
+  font-size: 0.85em;
+  color: #18794e;
+}
 .startup-drug-group .shiny-input-container {
-  margin-bottom: 0;
+  margin: 0;
+  padding: 0.2rem 0.8rem 0.5rem;
+  width: auto;
+}
+.startup-drug-group .shiny-options-group {
+  column-width: 11rem;
+  column-gap: 1.5rem;
+}
+.startup-drug-group .checkbox {
+  break-inside: avoid;
+  margin-top: 0;
+}
+
+/* The question-mark icon that carries a sidebar control's explanation
+   (fieldHelp() in R/utils-shiny-ui.R). */
+.field-help {
+  margin-left: 0.35em;
+  color: var(--bs-secondary-color, #6c757d);
+  cursor: help;
+  font-size: 0.9em;
+}
+.field-help:hover {
+  color: var(--bs-primary, #0d6efd);
+}
+bslib-tooltip:has(> .field-help) {
+  display: inline;
+}
+.checkbox:has(> bslib-tooltip > .field-help) > label {
+  display: inline-block;
 }

@@ -17,9 +17,9 @@
 # cannot be selected as an adult default.  Weight-adjusted clearance in these
 # children was about 1.8 times the adult value the same paper quotes
 # (3.06 against 1.66 L/h/kg), and the effective infusion rate was
-# correspondingly higher -- 0.8 to 1.2 mcg/kg/min against the adult label's
-# 0.05 to 0.3 -- so an adult simulated on this model would be given too much
-# clearance.  The adult record (Frederickson 1988) is NOT implemented: it
+# correspondingly higher -- up to 0.8 mcg/kg/min (0.8 to 1.2 in the abstract)
+# against the adult label's 0.05 to 0.3 -- so an adult simulated on this
+# model would be given too much clearance.  The adult record (Frederickson 1988) is NOT implemented: it
 # reports a half-life of 9.8 min with a clearance of 30.3 mL/min/kg and a
 # volume of 582 mL/kg, and those three are mutually inconsistent in one
 # compartment (they imply 13.3 min), so the volume is a multi-compartment
@@ -121,14 +121,20 @@ fenoldopamPediatric <- function(weight, height, age, sex, adjustToFFM = TRUE)
   tPeak <- 0    # no equilibration rate constant published; plasma only
   MEAC  <- 0
 
-  # The band is the steady-state plasma concentration of the infusion rates
-  # the paper concluded were effective in these children, 0.8 to 1.2
-  # mcg/kg/min with 1.0 typical: rate / clearance, so 0.8 / 0.051 = 15.7 and
-  # 1.2 / 0.051 = 23.5 ng/mL.  It is derived from this paper's own dosing
-  # conclusion, not a measured therapeutic range.
-  typical      <- round(1.0 / cl1PerKg, 1)
-  upperTypical <- round(1.2 / cl1PerKg, 1)
-  lowerTypical <- round(0.8 / cl1PerKg, 1)
+  # The band is the steady-state plasma concentration of the effective range
+  # of infusion rates, 0.2 to 0.8 mcg/kg/min, with 0.8 typical: rate /
+  # clearance, so 0.2 / 0.051 = 3.9 and 0.8 / 0.051 = 15.7 ng/mL.  0.2 was the
+  # lowest rate that lowered pressure in the blinded phase and 0.8 the rate of
+  # maximum effect; the paper's Conclusion gives 0.2 to 0.8 as the effective
+  # range, and the label's paediatric dosing tops out at 0.8.  (The paper's
+  # abstract instead says 0.8 to 1.2, from the open-label titration, and the
+  # band was 15.7 to 23.5 on that reading until 2026-10-27, when an
+  # adversarial review pointed out that its top was 150% of the labelled
+  # maximum; changed on Dr. Shafer's decision.)  Derived from dosing
+  # conclusions, not a measured therapeutic range.
+  typical      <- round(0.8 / cl1PerKg, 1)
+  upperTypical <- round(0.8 / cl1PerKg, 1)
+  lowerTypical <- round(0.2 / cl1PerKg, 1)
 
   reference <- paste0(
     "Hammer GB et al., BMC Anesthesiol 2008;8:6. ",

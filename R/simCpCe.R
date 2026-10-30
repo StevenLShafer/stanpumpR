@@ -39,6 +39,9 @@ finishDrugSeries <- function(wide, PK, maximum, plotRecovery)
   # baseline (1 / PCA0 for the turnover model, the fitted baseline for the
   # transit model).
   if (!is.null(PK$inr)) plasmaRise <- plasmaRise - inrBaseline(PK$inr)
+  # Likewise the ACT (heparin on bypass, R/act.R), which starts at its baseline
+  # clotting time ACT0 before any heparin.
+  if (!is.null(PK$act)) plasmaRise <- plasmaRise - actBaseline(PK$act)
   maxRise <- max(plasmaRise)
   results$CpNormCp <- if (maxRise > 0) plasmaRise          / maxRise * 100 else 0
   results$CeNormCp <- if (maxCp > 0) results$"Effect Site" / maxCp * 100 else 0
@@ -46,7 +49,7 @@ finishDrugSeries <- function(wide, PK, maximum, plotRecovery)
   results$CeNormCe <- if (maxCe > 0) results$"Effect Site" / maxCe * 100 else 0
 
   # Calculate equispaced output
-  xout <- seq(from = 0, to = maximum, length.out = RESOLUTION)
+  xout <- equispaceTimes(maximum)
   equiSpaceCe <- if (ceAllNA) {
     # Zero, not NA.  A prodrug has no effect of its own and its MEAC is zero,
     # and both the hover readout and the total-opioid MEAC sum read equiSpace.
@@ -230,7 +233,7 @@ superposeEngineResults <- function(parts, plotRecovery, emerge)
 #'   \code{metaboliteRecoveryStates}; \code{foldMetabolites()} adds that
 #'   contribution, and its recovery, to the metabolite drug's own row.
 #'   \code{tci} holds the TCI schedule, if any, and \code{scheduled} the
-#'   repeats of any qd/bid/tid/qid dose (Drug, Time, Dose, Units), or NULL.
+#'   repeats of any qd/bid/tid/qid/q4h dose (Drug, Time, Dose, Units), or NULL.
 #'   \code{compartments} holds the concentrations in the peripheral volumes
 #'   (\code{V2}, \code{V3}) and the amount still in the absorption depots
 #'   (\code{Depot}), by \code{Time}, for the compartments the drug has, or
@@ -260,7 +263,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     late[is.na(late)] <- FALSE
     if (any(late)) dose <- dose[!late, , drop = FALSE]
 
-    # Scheduled doses (qd, bid, tid, qid): expand each into its repeats out to
+    # Scheduled doses (qd, bid, tid, qid, q4h): expand each into its repeats out to
     # the end of the plot, while the dose is still in the user's units.  The
     # repeats are also returned on their own, for export; see scheduled.R.
     expanded <- expandScheduledDoses(dose, maximum)
@@ -314,7 +317,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         mcg_Conv <- mg_Conv * 1000
         ng_Conv  <- mg_Conv * 1000000
       },
-      mcU = {                  # Insulin: amounts in mU, Cp in mU/L = mcU/mL
+      mcU = {                  # Insulin, vasopressin: amounts in mU, Cp in mU/L = mcU/mL
         # Dosed in units (U) of the preparation, never by mass; the U rows are
         # converted below.
         if (any(grepl("^(g|mg|mcg|ng)( |/|$)", dose$Units)))
@@ -329,6 +332,14 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         mcg_Conv <- NA_real_
         ng_Conv  <- NA_real_
       },
+      ACT = {                  # Heparin anti-Xa (IU/mL) driving the ACT (R/act.R)
+        # The anti-factor Xa activity is simulated exactly as for an "IU" drug
+        # (amounts in IU, divided by 1000 below to give IU/mL); actEngineResults()
+        # then turns the activity into the activated clotting time.
+        mg_Conv  <- NA_real_
+        mcg_Conv <- NA_real_
+        ng_Conv  <- NA_real_
+      },
       INR = {                  # Warfarin: R and S in mg/L, plotted as INR
         # The enantiomer concentrations are simulated in mg/L (= mcg/mL), as
         # for any drug in mcg/mL, and turned into the INR after the engines
@@ -339,7 +350,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       },
       stop("Unsupported Concentration.Units: ", PK$Concentration.Units)
     )
-    # Insulin units: U to mU, so that dividing by litres gives mU/L, which is
+    # Units (insulin, vasopressin): U to mU, so that dividing by litres gives mU/L, which is
     # mcU/mL.  A U dose of a drug reported by mass would have no conversion.
     use <- grep("^U( |/|$)", dose$Units)
     if (length(use) > 0)
@@ -352,7 +363,9 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # Checked before the mass conversions, which would turn a mass unit on an
     # activity drug into NA silently.
     iuDose <- grepl("^IU( |/|$)", dose$Units)
-    if (identical(PK$Concentration.Units, "IU")) {
+    if (PK$Concentration.Units %in% c("IU", "ACT")) {
+      # An ACT drug (heparin on bypass) is dosed in IU like any activity drug;
+      # its anti-Xa activity is simulated the same way before actEngineResults().
       if (!all(iuDose))
         stop(PK$drug, " is dosed in international units (IU), not ",
              paste(unique(dose$Units[!iuDose]), collapse = ", "), ".")
@@ -519,15 +532,20 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     {
       # The controller inverts one system; it cannot target a sum of them, nor
       # an INR drug (whose plotted curve is not a concentration).
-      if (!is.null(PK$parallelSystems) || !is.null(PK$inr))
+      if (!is.null(PK$parallelSystems) || !is.null(PK$inr) || !is.null(PK$act))
         stop("Target-controlled infusion is not available for a drug ",
-             "simulated as several parallel systems or as an INR.")
+             "simulated as several parallel systems or as an INR or ACT.")
       schedule <- tciSchedule(dose, PK, maximum)
       dose <- schedule$dose
       tci <- tciDisplay(schedule, PK)
     }
 
     events <- events[,c(1,2)]
+    # An antiseizure interaction (R/antiseizureInteractions.R) gives the drug
+    # one PK set per segment of its clearance multiplier, and the event table
+    # that switches between them, in place of any clinical event: no drug an
+    # interaction can change has a clinical-event PK set of its own.
+    if (!is.null(PK$interactionEvents)) events <- PK$interactionEvents
 
     pkSets <- PK$PK
     pkEvents <- PK$pkEvents
@@ -634,6 +652,19 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       }
       if (length(parts) == 0) parts <- list(runEngines(dose, pkSets))
       results <- superposeEngineResults(parts, plotRecovery, emerge)
+    } else if (!is.null(PK$transitChain))
+    {
+      # Transit-chain absorption (enalapril): the whole dose table at once,
+      # exactly, by matrix exponential, because a chain of N identical
+      # compartments has an eigenvalue repeated N times and the closed-form
+      # coefficients all divide by differences of rate constants.  The engine
+      # advances the parent and its active metabolite together and returns
+      # both, so this dispatch comes before runEngines(), whose metabolite
+      # route convolves exponential amplitudes a defective system does not
+      # have.  No clinical-event PK switching, no parallel systems or extra
+      # oral formulations (getDrugPK() refuses them).
+      # See R/advanceTransitChain.R.
+      results <- advanceTransitChain(dose, PK, maximum, plotRecovery, emerge)
     } else if (!is.null(PK$michaelisMenten))
     {
       # Saturable elimination (phenytoin): the whole dose table at once, by
@@ -677,6 +708,13 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
           parts[[length(parts) + 1]] <- runEngines(
             shareOf(dose, sys$doseFraction, sys$routes), sys$PK)
       results <- inrEngineResults(parts, PK$inr)
+    } else if (!is.null(PK$act))
+    {
+      # An ACT drug (heparin on bypass, R/act.R): the anti-factor Xa activity is
+      # simulated by the ordinary intravenous engine and then turned, point by
+      # point, into the activated clotting time it produces.
+      base <- runEngines(shareOf(dose, PK$doseFraction), pkSets)
+      results <- actEngineResults(base, PK$act)
     } else if (!is.null(PK$parallelSystems))
     {
       parts <- list(runEngines(shareOf(dose, PK$doseFraction, PK$routes), pkSets))

@@ -62,7 +62,11 @@ helpScenarioDefaultOptions <- function() {
     mintoSchnider = FALSE,
     # Run the Hamberg warfarin genotype model beside the library's (Xue);
     # needs warfarin dosed
-    hamberg = FALSE
+    hamberg = FALSE,
+    # Apply the pharmacokinetic interactions among the antiseizure drugs
+    # (R/antiseizureInteractions.R); needs an interacting pair, or
+    # carbamazepine, dosed
+    antiseizureInteractions = FALSE
   )
 }
 
@@ -77,6 +81,8 @@ helpScenarioDefaultOptions <- function() {
 #' @param creatinine serum creatinine in mg/dL, or NULL for a blank field (the
 #'   renal models then assume a normal value for the patient's age and sex)
 #' @param osmolality baseline serum osmolality in mOsm/kg (mannitol)
+#' @param gestationalAge gestational age at birth in weeks, or NULL for a
+#'   blank field (the neonatal models then assume a term birth)
 #' @param pregnant is the patient pregnant?  Only for a woman of child-bearing
 #'   age (pregnancyPossible()); read by the models R/pregnancy.R lists
 #' @param doses data frame with Drug, Time (minutes), Dose, Units
@@ -88,9 +94,10 @@ helpScenario <- function(id, title, group, summary,
                          cyp2d6 = CYP2D6_DEFAULT, adjustToFFM = TRUE,
                          doses, events = NULL, cyp2c19 = CYP2C19_DEFAULT,
                          cyp2c9 = CYP2C9_DEFAULT, vkorc1 = VKORC1_DEFAULT,
-                         cyp2b6 = CYP2B6_DEFAULT,
+                         cyp4f2 = CYP4F2_DEFAULT, cyp2b6 = CYP2B6_DEFAULT,
                          creatinine = NULL,
-                         osmolality = OSMOLALITY_DEFAULT, pregnant = FALSE, ...) {
+                         osmolality = OSMOLALITY_DEFAULT, pregnant = FALSE,
+                         gestationalAge = NULL, ...) {
   options <- utils::modifyList(helpScenarioDefaultOptions(), list(...))
   doses <- data.frame(
     Drug = as.character(doses$Drug),
@@ -111,9 +118,9 @@ helpScenario <- function(id, title, group, summary,
     # and osmolality of the previous patient surviving a load).
     patient = list(age = age, weight = weight, height = height, sex = sex,
                    cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
-                   vkorc1 = vkorc1, cyp2b6 = cyp2b6, adjustToFFM = adjustToFFM,
-                   creatinine = creatinine, osmolality = osmolality,
-                   pregnant = pregnant),
+                   vkorc1 = vkorc1, cyp4f2 = cyp4f2, cyp2b6 = cyp2b6,
+                   adjustToFFM = adjustToFFM, creatinine = creatinine, osmolality = osmolality,
+                   pregnant = pregnant, gestationalAge = gestationalAge),
     doses = doses, events = events, options = options
   )
 }
@@ -242,7 +249,10 @@ helpScenarioDefinitions <- function() {
       "Amiodarone IV: the label's 24-hour loading infusion",
       "Intravenous basics",
       "A rapid load, a slow load and a maintenance rate: why the concentration dips when the rate is halved.",
-      age = 60, weight = 70, height = 170, sex = SEX_MALE,
+      # The switch off, so that the published per-kilogram model applies and
+      # the numbers on the page are Korth-Bradley's; with it on the model is
+      # re-anchored to the cohort's 78 kg patient (R/drugs_amiodaroneIV.R).
+      age = 60, weight = 70, height = 170, sex = SEX_MALE, adjustToFFM = FALSE,
       doses = helpDoses(
         c("amiodaroneIV",   0,  15, "mg/min"),
         c("amiodaroneIV",  10,   1, "mg/min"),
@@ -533,6 +543,76 @@ helpScenarioDefinitions <- function() {
       ),
       maximum = 60, addedPlots = PLOT_ID_MEAC, opioidMacInteraction = TRUE
     ),
+    # The pharmacokinetic interactions among the antiseizure drugs
+    # (R/antiseizureInteractions.R), each with the Graph Options box ticked so
+    # that the changed drug is drawn beside its own curve without the
+    # interaction.  Plasma only: these drugs have no effect site.
+    # (Claude Code, 2026-10-24, at the request of Steven L. Shafer.)
+    helpScenario(
+      "valproate-lamotrigine-inhibition",
+      "Antiseizure interactions: valproate doubles lamotrigine",
+      "Interactions",
+      "Valproate added on day 21 to lamotrigine 100 mg twice daily: glucuronidation is inhibited at once, and lamotrigine climbs over the next two weeks to about twice its level, which is why lamotrigine is started at half the dose beside valproate.",
+      doses = helpDoses(
+        c("lamotrigine", 0, 100, "mg PO bid"),
+        c("valproate", 21 * MINS_PER_DAY, 500, "mg PO DR bid")
+      ),
+      timeUnits = "days", maximum = 56 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank",
+      antiseizureInteractions = TRUE
+    ),
+    helpScenario(
+      "carbamazepine-lamotrigine-deinduction",
+      "Antiseizure interactions: stopping carbamazepine raises lamotrigine",
+      "Interactions",
+      "Lamotrigine with carbamazepine, which induces lamotrigine's glucuronidation; carbamazepine is stopped on day 28 and lamotrigine rises over the next two weeks as the induced enzymes turn over (half-life 3.6 days).",
+      doses = helpDoses(
+        c("lamotrigine",   0, 200, "mg PO bid"),
+        c("carbamazepine", 0, 400, "mg PO bid"),
+        c("carbamazepine", 28 * MINS_PER_DAY, 0, "mg PO bid")
+      ),
+      timeUnits = "days", maximum = 56 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank",
+      antiseizureInteractions = TRUE
+    ),
+    helpScenario(
+      "carbamazepine-autoinduction",
+      "Carbamazepine induces its own metabolism",
+      "Interactions",
+      "Carbamazepine 400 mg twice daily from the first dose: the level rises toward the uninduced steady state, then falls over the next two weeks as carbamazepine doubles its own clearance.",
+      doses = helpDoses(
+        c("carbamazepine", 0, 400, "mg PO bid")
+      ),
+      timeUnits = "days", maximum = 28 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank",
+      antiseizureInteractions = TRUE
+    ),
+    helpScenario(
+      "phenytoin-valproate-displacement",
+      "Antiseizure interactions: phenytoin and valproate change each other",
+      "Interactions",
+      "Valproate added on day 21 to phenytoin 300 mg a day: valproate displaces phenytoin from albumin, so TOTAL phenytoin falls while the unbound, active phenytoin does not, and phenytoin induces valproate's clearance, so valproate runs below its range.",
+      doses = helpDoses(
+        c("phenytoin", 0, 300, "mg PO ER qd"),
+        c("valproate", 21 * MINS_PER_DAY, 500, "mg PO DR bid")
+      ),
+      timeUnits = "days", maximum = 56 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank",
+      antiseizureInteractions = TRUE
+    ),
+    helpScenario(
+      "carbamazepine-phenytoin-induction",
+      "Antiseizure interactions: phenytoin lowers carbamazepine",
+      "Interactions",
+      "Phenytoin added on day 21 to carbamazepine 400 mg twice daily: carbamazepine's clearance, already doubled by its own induction, rises by another 42% (Graves 1998) over about two weeks.",
+      doses = helpDoses(
+        c("carbamazepine", 0, 400, "mg PO bid"),
+        c("phenytoin", 21 * MINS_PER_DAY, 300, "mg PO ER qd")
+      ),
+      timeUnits = "days", maximum = 56 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank",
+      antiseizureInteractions = TRUE
+    ),
 
     # --- Special populations -------------------------------------------------
     helpScenario(
@@ -744,7 +824,7 @@ helpScenarioDefinitions <- function() {
         # tissue ("mg RA"); the narrative switches it back.
         c("lidocaine", 0, 400, "mg")
       ),
-      # A log axis keeps the first-minute plasma (65 mcg/mL) from flattening
+      # A log axis keeps the first-minute plasma (57 mcg/mL) from flattening
       # the effect site, which carries the point.
       maximum = 60, plasmaLinetype = "dashed", effectsiteLinetype = "solid",
       logY = TRUE
@@ -862,6 +942,25 @@ helpScenarioDefinitions <- function() {
       timeUnits = "days", maximum = 91 * MINS_PER_DAY,
       plasmaLinetype = "solid", effectsiteLinetype = "blank"
     ),
+    # Cenobamate split morning/evening, the use the qam/qpm slots were built for:
+    # the antiseizure drugs are sedating, so the morning dose is kept small and
+    # the larger dose given at night.  50 mg qam and 200 mg qpm are two
+    # independent daily slots entered as two rows (a plain qd/bid would replace
+    # them both).  Cenobamate is plasma only (the plasma line carries the curve)
+    # and its ~60 h half-life takes two weeks to reach steady state.
+    # (Claude Code, 2026-10-28, at the request of Steven L. Shafer.)
+    helpScenario(
+      "cenobamate-split-dosing",
+      "Cenobamate: a smaller morning dose and a larger evening dose",
+      "Long-term therapy",
+      "A split cenobamate regimen entered with the qam and qpm slots: 50 mg every morning and 200 mg every evening, the morning dose kept small because these drugs are sedating and can affect memory while awake. The two slots are independent, so they are two rows; a plain qd/bid would have replaced them both. The long half-life means the daily rhythm rides on a level that climbs for about two weeks.",
+      doses = helpDoses(
+        c("cenobamate",   0,  50, "mg PO qam"),
+        c("cenobamate", 720, 200, "mg PO qpm")
+      ),
+      timeUnits = "days", maximum = 28 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
+    ),
     # Warfarin's INR drawn by the library's Xue model and the Hamberg genotype
     # model together, on a CYP2C9- and VKORC1-sensitive elderly patient, to show
     # why a fixed 5 mg/day start overshoots and how the genotype fields move the
@@ -958,6 +1057,7 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (!p$cyp2c19 %in% CYP2C19_VALUES) say("invalid cyp2c19: ", p$cyp2c19)
   if (!p$cyp2c9 %in% CYP2C9_VALUES) say("invalid cyp2c9: ", p$cyp2c9)
   if (!p$vkorc1 %in% VKORC1_VALUES) say("invalid vkorc1: ", p$vkorc1)
+  if (!p$cyp4f2 %in% CYP4F2_VALUES) say("invalid cyp4f2: ", p$cyp4f2)
   if (!p$cyp2b6 %in% CYP2B6_VALUES) say("invalid cyp2b6: ", p$cyp2b6)
   if (!is.logical(p$adjustToFFM) || length(p$adjustToFFM) != 1) say("adjustToFFM is not a single logical")
   if (!is.logical(p$pregnant) || length(p$pregnant) != 1 || is.na(p$pregnant)) {
@@ -969,6 +1069,9 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
     say("creatinine out of range: ", p$creatinine)
   }
   if (!is_valid_number(p$osmolality, MIN_OSMOLALITY, MAX_OSMOLALITY)) say("osmolality out of range: ", p$osmolality)
+  if (!is.null(p$gestationalAge) &&
+      !is_valid_number(p$gestationalAge, MIN_GESTATIONAL_AGE, MAX_GESTATIONAL_AGE))
+    say("gestational age out of range: ", p$gestationalAge)
 
   o <- s$options
   if (!identical(validTimeUnit(o$timeUnits), o$timeUnits)) say("invalid timeUnits: ", o$timeUnits)
@@ -989,7 +1092,7 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (o$logY && (o$showThreshold || o$showMEAC || any(c(PLOT_ID_EVENTS, PLOT_ID_INTERACTION) %in% o$addedPlots))) {
     say("logY is unavailable with the threshold, % MEAC, events or interaction panels")
   }
-  for (name in c("showThreshold", "showMEAC", "showCompartments", "logY", "opioidMacInteraction", "mintoSchnider", "hamberg")) {
+  for (name in c("showThreshold", "showMEAC", "showCompartments", "logY", "opioidMacInteraction", "mintoSchnider", "hamberg", "antiseizureInteractions")) {
     if (!is.logical(o[[name]]) || length(o[[name]]) != 1) say(name, " is not a single logical")
   }
 
@@ -1022,6 +1125,9 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
       opioids <- drugDefaults$Drug[!is.na(drugDefaults$MEAC) & drugDefaults$MEAC > 0]
       if (!"propofol" %in% d$Drug || !any(d$Drug %in% opioids)) say("the interaction panel needs propofol and an opioid")
     }
+    if (isTRUE(o$antiseizureInteractions) &&
+        nrow(activeAntiseizureInteractions(unique(d$Drug))) == 0)
+      say("antiseizureInteractions needs an interacting pair of antiseizure drugs, or carbamazepine")
     # Each companion box is enabled only while a drug in its group is dosed
     for (group in names(COMPANION_MODEL_GROUPS)) {
       if (!isTRUE(o[[group]])) next
@@ -1091,7 +1197,7 @@ helpScenarioEventTable <- function(s) {
 #' restore does.
 #'
 #' With `timeApi` (app_server()'s), the time unit, elapsed time and Max time
-#' are set through it, and the dose table is written together with the format
+#' are set through it, and Min time is put back to 0, and the dose table is written together with the format
 #' its times are in, so that the app has nothing to convert when the browser
 #' reports the new settings.  The order does not matter: it all reaches the
 #' browser in one message.
@@ -1121,6 +1227,7 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   updateSelectInput(session, "cyp2c19", selected = p$cyp2c19)
   updateSelectInput(session, "cyp2c9", selected = p$cyp2c9)
   updateSelectInput(session, "vkorc1", selected = p$vkorc1)
+  updateSelectInput(session, "cyp4f2", selected = p$cyp4f2)
   updateSelectInput(session, "cyp2b6", selected = p$cyp2b6)
   updateCheckboxInput(session, "adjustToFFM", value = p$adjustToFFM)
   # A blank field is the state the renal models read as "assume a normal
@@ -1132,9 +1239,17 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
     updateNumericInput(session, "creatinine", value = p$creatinine)
   }
   updateNumericInput(session, "osmolality", value = p$osmolality)
+  # Blank, a term birth, unless the scenario names a gestational age: sent
+  # explicitly, as the creatinine is, so a previous patient's does not survive
+  if (is.null(p$gestationalAge)) {
+    session$sendInputMessage("gestationalAge", list(value = ""))
+  } else {
+    updateNumericInput(session, "gestationalAge", value = p$gestationalAge)
+  }
 
   if (is.null(timeApi)) {
-    updateSelectInput(session, "maximum", selected = maxTimeValue(o$maximum))
+    updateSliderInput(session, "maximum", value = o$maximum)
+    updateSliderInput(session, "minimum", value = 0)
   }
   updateSelectInput(session, "typical", selected = o$typical)
   updateSelectInput(session, "normalization", selected = o$normalization)
@@ -1148,6 +1263,7 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   updateCheckboxInput(session, "opioidMacInteraction", value = o$opioidMacInteraction)
   updateCheckboxInput(session, "mintoSchnider", value = o$mintoSchnider)
   updateCheckboxInput(session, "hamberg", value = o$hamberg)
+  updateCheckboxInput(session, ASM_INTERACTIONS_INPUT, value = o$antiseizureInteractions)
 
   eventTable(helpScenarioEventTable(s))
   if (is.null(timeApi)) {
@@ -1199,6 +1315,7 @@ helpScenarioPageHTML <- function(id) {
     `CYP 2C9` = tools::toTitleCase(p$cyp2c9),
     `CYP 2B6` = tools::toTitleCase(p$cyp2b6),
     VKORC1 = p$vkorc1,
+    CYP4F2 = p$cyp4f2,
     `Adjust weight to fat-free mass` = if (isTRUE(p$adjustToFFM)) "on" else "off",
     `Serum creatinine` = if (is.null(p$creatinine)) "blank (normal for age and sex assumed)" else sprintf("%s mg/dL", helpFormatNumber(p$creatinine)),
     `Baseline osmolality` = sprintf("%s mOsm/kg", helpFormatNumber(p$osmolality)),
@@ -1206,6 +1323,9 @@ helpScenarioPageHTML <- function(id) {
   )
   # Shown only when set: "Pregnant: no" beside a man's age would be noise.
   if (isTRUE(p$pregnant)) patient$Pregnant <- "yes"
+  # Likewise a gestational age, only when the scenario names one
+  if (!is.null(p$gestationalAge))
+    patient$`Gestational age at birth` <- sprintf("%s weeks", helpFormatNumber(p$gestationalAge))
   # Times as the dose table will show them: in the scenario's time unit, in
   # full (helpFormatNumber()'s three significant figures would print 30240
   # minutes as 30,200)
@@ -1234,7 +1354,8 @@ helpScenarioPageHTML <- function(id) {
     "Log Y axis" = if (o$logY) "on" else "off",
     "Opioid - MAC interaction" = if (o$opioidMacInteraction) "on" else "off",
     "Minto / Schnider" = if (o$mintoSchnider) "on" else "off",
-    "Hamberg" = if (o$hamberg) "on" else "off"
+    "Hamberg" = if (o$hamberg) "on" else "off",
+    "Antiseizure drug interactions" = if (o$antiseizureInteractions) "on" else "off"
   )
   optionsTable <- data.frame(Option = names(optionRows), Setting = unname(optionRows),
                              stringsAsFactors = FALSE)

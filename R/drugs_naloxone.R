@@ -52,7 +52,8 @@
 #     Dowling (F_IM 0.36) did not find.  (Until 2026-10 this note called the
 #     exposure the Narcan label's and the derivation "the FDA review's own
 #     route to F"; the review has no intravenous arm and no absolute F, and
-#     no NARCAN prescribing information is in the reference archive.)
+#     the 2015 NARCAN prescribing information, archived since, prints the
+#     same 46.7% and 43.9% relative to 0.4 mg IM in its Table 1.)
 #   - ka = 1.064 /h, no lag: one exponential whose mean input time equals
 #     that of the whole published mixture (0.94 h), the moment-matching the
 #     specification uses for its own inverse-Gaussian initialisers.  Laffont's

@@ -33,12 +33,21 @@ test_that("renal function is clamped to the studied 13-261 mL/min/1.73 m2", {
   expect_equal_rounded(hornikCL(13, 144, 261.3) / 60, hi$cl1)
 })
 
-test_that("from 18 the renal estimate is CKD-EPI 2009", {
-  scr <- adultEquivalentCreatinine(1.0, 40, "male")
-  crcl <- egfrCKDEPI2009(40, "male", scr)
+test_that("the renal estimate is bedside Schwartz at every age, with no step at 18", {
+  # Hornik fitted the covariate on bedside Schwartz; switching equations at 18
+  # made clearance jump 24% on the birthday (adversarial review, 2026-10-24)
+  crcl <- 0.413 * 175 / 1.0
   set <- milrinonePediatric(70, 175, 40, "male", adjustToFFM = FALSE,
                             creatinine = 1.0)$PK$default
   expect_equal_rounded(hornikCL(70, 40 + 52 * 40, crcl) / 60, set$cl1)
+  for (switch in c(FALSE, TRUE)) {
+    before <- milrinonePediatric(70, 175, 17.999, "male", adjustToFFM = switch,
+                                 creatinine = 1.0)$PK$default
+    after  <- milrinonePediatric(70, 175, 18.001, "male", adjustToFFM = switch,
+                                 creatinine = 1.0)$PK$default
+    expect_lt(abs(after$cl1 / before$cl1 - 1), 0.005)
+    expect_lt(abs(after$v1 / before$v1 - 1), 0.005)
+  }
 })
 
 test_that("a blank creatinine is an assumed normal one, and getDrugPK passes it", {
@@ -66,4 +75,27 @@ test_that("it is plasma only, with the 100-300 ng/mL target range", {
   dd <- getDrugDefaultsGlobal()
   row <- dd[dd$Drug == "milrinonePediatric", ]
   expect_equal(c(row$Lower, row$Upper), c(100, 300))
+})
+
+test_that("a loading dose and an infusion simulate to the one-compartment solution", {
+  # End to end through simulateDrugsWithCovariates() (adversarial review,
+  # 2026-10-27).  Hornik's simulated regimen, 50 mcg/kg then 0.5 mcg/kg/min,
+  # in a 2-year-old of 13 kg; ng/mL = mcg/L.
+  set <- getDrugPK("milrinonePediatric", 13, 88, 2, "male", adjustToFFM = FALSE,
+                   creatinine = 0.3)$PK$default
+  wide <- simulateDrugsWithCovariates(
+    data.frame(Drug = "milrinonePediatric", Time = c(0, 0),
+               Dose = c(50, 0.5), Units = c("mcg/kg", "mcg/kg/min")),
+    data.frame(Time = double(), Event = character()),
+    13, 88, 2, "male", 720, FALSE, creatinine = 0.3,
+    adjustToFFM = FALSE)$milrinonePediatric$wide
+  # Every point of the simulated time line after the dose
+  times <- wide$Time[wide$Time > 0]
+  got <- wide$Plasma[wide$Time > 0]
+  expect_gt(length(times), 20)
+  k <- set$cl1 / set$v1
+  ref <- 50 * 13 / set$v1 * exp(-k * times) +
+    0.5 * 13 / set$cl1 * (1 - exp(-k * times))
+  expect_lt(max(abs(got / ref - 1)), 1e-6)
+  expect_equal(ref, mammillaryReference(set, times, 50 * 13, 0.5 * 13))
 })

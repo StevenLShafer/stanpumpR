@@ -21,9 +21,18 @@ test_that("the reference adult has Table 3's parameters", {
   expect_equal_rounded(VP, set$v2)
   expect_equal(set$cl3, 0)
   expect_identical(PK$Concentration.Units, "ng")
-  expect_equal(PK$tPeak, 0)
-  expect_equal(set$ke0, 0)
   expect_equal(PK$MEAC, 0)
+})
+
+test_that("the effect site peaks 74 s after a bolus (Joachim 2024)", {
+  PK <- getDrugPK("norepinephrine", 70, 175, 35, "male")
+  expect_equal(PK$tPeak, 74 / 60)
+  expect_gt(PK$PK$default$ke0, 0)
+  wide <- simulateDrugsWithCovariates(
+    data.frame(Drug = "norepinephrine", Time = 0, Dose = 10, Units = "mcg"),
+    data.frame(Time = double(), Event = character()),
+    70, 175, 35, "male", 15, FALSE)$norepinephrine$wide
+  expect_lt(abs(wide$Time[which.max(wide$`Effect Site`)] - 74 / 60), 0.2)
 })
 
 test_that("the covariate coefficients are per 100, as the text's own numbers require", {

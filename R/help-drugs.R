@@ -209,6 +209,8 @@ helpConcentrationUnits <- function(units) {
          # Heparin is measured by its activity, warfarin by the INR.
          "IU" = "IU/mL (activity)",
          "INR" = "INR (international normalized ratio)",
+         # Heparin on bypass is plotted as the activated clotting time (R/act.R).
+         "ACT" = "ACT (s, activated clotting time)",
          as.character(units))
 }
 
@@ -428,7 +430,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
               if (ROUTE_IM %in% route) "intramuscular", if (ROUTE_IN %in% route) "intranasal",
               if (ROUTE_SC %in% route) "subcutaneous",
               if (ROUTE_RA %in% route) "by tissue injection (regional anesthesia)")
-  intravenous <- any(units %in% c(bolusUnits, infusionUnits, calciumUnits, iuUnits))
+  intravenous <- any(units %in% c(bolusUnits, infusionUnits, calciumUnits, iuUnits, ivPotencyUnits))
   tci <- any(units %in% tciUnits)
   given <- if (length(units) == 0) {
     paste0("Not dosed directly: appears only as the active metabolite of ",
@@ -492,6 +494,13 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     ),
     stringsAsFactors = FALSE
   )
+  # The therapeutic reference range and its source (R/therapeuticRanges.R),
+  # for the drugs the registry covers
+  range <- therapeuticRange(drug)
+  if (!is.null(range))
+    glance <- rbind(glance, data.frame(Property = esc("Therapeutic reference range"),
+                                       Value = esc(therapeuticRangeSummary(range)),
+                                       stringsAsFactors = FALSE))
   glanceHTML <- helpRawTableHTML(glance)
 
   # --- Model source ----------------------------------------------------------
@@ -1064,7 +1073,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     ev <- setdiff(ev, PK_EVENT_DEFAULT)
     eventsHTML <- paste0(
       helpH2("Events that change the kinetics"),
-      sprintf("<p>For %s, the parameters change when these clinical events are entered (Additional Plots \u2192 Events): <strong>%s</strong>. See %s.</p>",
+      sprintf("<p>For %s, the parameters change when these clinical events are entered (Graph Options \u2192 Additional plots \u2192 Events): <strong>%s</strong>. See %s.</p>",
               paste(unique(withEvents$Patient), collapse = " and "),
               htmltools::htmlEscape(paste(ev, collapse = ", ")),
               helpPageLink("models/pk-events"))
@@ -1312,7 +1321,7 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
     conc <- helpConcentrationUnits(row$Concentration.Units)
     units <- helpDrugUnits(row)
     given <- if (length(units) == 0) "metabolite only"
-      else if (any(units %in% c(bolusUnits, infusionUnits, calciumUnits, iuUnits))) {
+      else if (any(units %in% c(bolusUnits, infusionUnits, calciumUnits, iuUnits, ivPotencyUnits))) {
         route <- doseRoute(units)
         paste(c("IV", if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "SL",
                 if (ROUTE_IM %in% route) "IM",

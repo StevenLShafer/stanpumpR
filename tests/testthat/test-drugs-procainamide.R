@@ -93,12 +93,19 @@ test_that("weight is linear, or the pharmacokinetic weight", {
   expect_equal_rounded(VD * w / BASE, on$v1)
 })
 
-test_that("procainamide is a vasoactive and resuscitation drug with no band", {
+test_that("procainamide is a vasoactive and resuscitation drug whose band is the label's", {
   dd <- getDrugDefaultsGlobal()
   row <- dd[dd$Drug == "procainamide", ]
   expect_identical(row$Category, VASOACTIVE_DRUG_CATEGORY)
   expect_equal(row$MEAC, 0)
-  expect_equal(row$Lower, 0)
+  # 3 to 10 mg/L, typical 6.5 (the Hospira injection label)
+  expect_equal(c(row$Lower, row$Typical, row$Upper), c(3, 6.5, 10))
+  X <- procainamide(70, 170, 30, "male")
+  expect_equal(c(X$lowerTypical, X$typical, X$upperTypical), c(3, 6.5, 10))
+  # The label's check: 50 mcg/kg/min of the hydrochloride gives about 6.5
+  # mg/L at a renal half-life of 3 h; this model, 7.4 at its own 3.8 h
+  css <- 0.050 * 70 / X$PK$default$cl1
+  expect_equal(round(css, 1), 7.4)
 })
 
 test_that("pregnancy: renal clearance x 1.5, only with a blank creatinine", {

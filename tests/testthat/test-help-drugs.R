@@ -40,6 +40,9 @@ plasmaOnly <- c(
   "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
   "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
   "amiodarone", "desethylamiodarone", "amiodaroneIV",
+  # Antihypertensives: no drug in the library plots a blood pressure
+  "lisinopril", "olmesartan", "valsartan", "benazepril",
+  "enalapril", "enalaprilat", "fosinopril",
   # The antidepressants: response lags weeks, no ke0 exists
   "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
   "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine", "venlafaxine", "desvenlafaxine",
@@ -86,7 +89,7 @@ plasmaOnly <- c(
   "semaglutideOral", "cetagliptin",
   # Anticoagulants (2026-10-17): plasma activity or concentration, or the INR;
   # no effect site, MEAC or recovery (R/drugs_heparin.R and the others).
-  "heparin", "bivalirudin", "apixaban", "rivaroxaban", "warfarin",
+  "heparin", "heparinCPB", "bivalirudin", "apixaban", "apixabanVTE", "rivaroxaban", "warfarin",
   "edoxaban", "dabigatran", "dabigatranHip", "argatroban", "enoxaparin", "fondaparinux",
   "fluindione", "acenocoumarol",
   # The antihypertensives (2026-10-17): concentration only.  Neither source
@@ -95,13 +98,14 @@ plasmaOnly <- c(
   "clevidipine", "fenoldopamPediatric", "carvedilol",
     "azilsartan", "chlorthalidone", "hydrochlorothiazide",
     # vasoactive and resuscitation drugs (2026-10-18): plasma only
-    "epinephrine", "magnesiumSulfate", "labetalol", "diltiazem", "nitroglycerin",
-    "norepinephrine", "procainamide", "esmolol", "dopamine",
-    "propranolol", "digoxin", "verapamil", "phenylephrine",
-    "milrinonePediatric", "metoprolol", "nicardipine",
+    "magnesiumSulfate", "labetalol", "nitroglycerin",
+    "procainamide", "dopamine",
+    "digoxin",
+    "milrinonePediatric",
     "digoxinIVPediatric",
-    # Parkinson disease drugs (2026-10-19): plasma only; levodopa and its
-    # intestinal gel alone have an effect site (inst/help/models/parkinsons.md)
+    "methyleneBlue",
+    # Parkinson disease drugs (2026-10-19): plasma only; levodopa (all four
+    # models) and apomorphine have an effect site (inst/help/models/parkinsons.md)
     "pramipexole", "pramipexoleER", "safinamide", "opicapone",
     "istradefylline", "amantadineER", "pimavanserin", "tolcapone"
 )
@@ -153,7 +157,10 @@ test_that("a supplied ke0 is explained by the parent only for a drug never dosed
 test_that("the fat-free-mass switch is reported from the code", {
   expect_true(helpDrugRespondsToFFM("morphine"))
   expect_false(helpDrugRespondsToFFM("propofol"))
-  expect_false(helpDrugRespondsToFFM("hydrocodone"))
+  # Hydrocodone's own covariates (Melhem's BSA and creatinine clearance) see
+  # the pharmacokinetic weight with the switch on, so it now responds.
+  expect_true(helpDrugRespondsToFFM("hydrocodone"))
+  expect_false(helpDrugRespondsToFFM("oxytocin"))
   html <- helpDrugPageHTML("morphine")
   expect_match(html, "Adjust weight to fat-free mass", fixed = TRUE)
   expect_match(html, 'data-help-page="models/fat-free-mass"', fixed = TRUE)

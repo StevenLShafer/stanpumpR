@@ -92,14 +92,29 @@
 # switch on (size$pkWeight) and at total body weight with it off, which
 # reproduces the published equations exactly.
 #
-# NO EFFECT SITE, NO BAND
-# =======================
-# Plasma only; the pressure response in the same volunteers was reported
-# separately (de Keijzer IN et al. Eur J Anaesthesiol 2026;43:506-516, doi
+# EFFECT SITE: tPeak 74 SECONDS (Joachim 2024); NO BAND
+# =====================================================
+# Joachim J, Cartailler J, Vallee F, et al.  Design of a pharmacokinetic/
+# pharmacodynamic model for administration of low dose peripheral
+# norepinephrine during general anaesthesia.  Br J Clin Pharmacol
+# 2024;90:2861-2869 (doi 10.1111/bcp.16180), read in full: in 29 adults
+# under propofol-remifentanil anaesthesia given 10 mcg boluses of dilute
+# norepinephrine (5 mcg/mL) through a peripheral line, the median time to
+# peak effect was 74 s (IQR 53-94) for mean arterial pressure (+24%), 74 s for
+# heart rate and 61 s for cardiac output.  ke0 is solved from 74 s on this
+# plasma model.  Joachim's own model carries that delay differently, as a
+# 25 s lag and a depot for the transit from the peripheral line feeding a
+# direct Emax on plasma (EC50 15.7 nmol/L, gamma 1.46); here a bolus enters
+# the central compartment, so the effect site absorbs transit and biophase
+# together, as every tPeak in the library does.  Joachim's PK is not used: its
+# depot takes a nonlinear power (beta 1.21) of the amount, and its V1 is
+# 0.49 L.  The pressure response in Li's volunteers was reported separately
+# (de Keijzer IN et al. Eur J Anaesthesiol 2026;43:506-516, doi
 # 10.1097/EJA.0000000000002312: MAP linear in DOSE, 103 mmHg per mcg/kg/min
-# awake, 222 under propofol/remifentanil; dose-response fitted better than
-# concentration-response) and is not modelled here.
+# awake, 222 under propofol/remifentanil); no pressure is plotted.
 # -----------------------------------------------------------------------------
+
+NOREPINEPHRINE_TPEAK <- 74 / 60   # min, Joachim 2024 (median, MAP)
 
 # Li 2024, Table 3
 NOREPINEPHRINE_CL      <- 2.1      # L/min at 70 kg, age 35, awake
@@ -149,12 +164,13 @@ norepinephrine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "x (BW/70)^0.75 x exp(-0.00344 (age - 35)), Vc 2.4 L, Q 0.6 L/min, ",
     "Vp 3.6 L.  Awake (propofol lowers CL 11.8% at 3.53 mcg/mL); exogenous ",
     "norepinephrine plotted above the endogenous baseline (about 0.24 ng/mL). ",
-    "https://doi.org/10.1007/s40262-024-01430-y"
+    "Time to peak effect 74 s (MAP), Joachim J et al., Br J Clin Pharmacol ",
+    "2024;90:2861-2869. https://doi.org/10.1007/s40262-024-01430-y"
   )
 
   list(
     PK = PK,
-    tPeak = 0,
+    tPeak = NOREPINEPHRINE_TPEAK,
     MEAC = 0,
     typical = 0,
     upperTypical = 0,

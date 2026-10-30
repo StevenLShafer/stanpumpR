@@ -135,6 +135,34 @@ test_that("recovery is returned on request", {
 })
 
 
+test_that("the warfarin-sensitivity genotypes are selectable and echoed back", {
+  # VKORC1 and CYP4F2 default to the most sensitive genotype rather than the
+  # commonest (VKORC1_DEFAULT in R/constants.R), so a client that knows the
+  # genotype must be able to send it and to see which one was used.
+  warf <- data.frame(Drug = "warfarin", Time = 0, Dose = 5, Units = "mg PO")
+  d <- apiSimulate(apiRequest(doses = warf, duration = 2880))
+  expect_equal(d$patient$vkorc1, VKORC1_DEFAULT)
+  expect_equal(d$patient$cyp4f2, CYP4F2_DEFAULT)
+
+  ref <- apiSimulate(apiRequest(
+    doses = warf, duration = 2880,
+    patient = list(weight = 70, height = 170, age = 50, sex = "male",
+                   vkorc1 = "GG", cyp4f2 = "TT")))
+  expect_equal(ref$patient$vkorc1, "GG")
+  expect_equal(ref$patient$cyp4f2, "TT")
+  # the genotypes reach the model: the source's reference patient is less
+  # sensitive, so the INR rises less on the same dose
+  expect_lt(max(ref$timeseries$Plasma), max(d$timeseries$Plasma))
+
+  expectApiError(apiSimulate(apiRequest(patient = list(weight = 70, height = 170, age = 50,
+                                                       sex = "male", vkorc1 = "AG"))),
+                 "patient.vkorc1 must be one of")
+  expectApiError(apiSimulate(apiRequest(patient = list(weight = 70, height = 170, age = 50,
+                                                       sex = "male", cyp4f2 = "CG"))),
+                 "patient.cyp4f2 must be one of")
+})
+
+
 test_that("invalid requests are refused with a message naming the problem", {
   expectApiError(apiSimulate(apiRequest(duration = NULL)), "`duration` is required")
   expectApiError(apiSimulate(apiRequest(duration = 53, timeUnit = "weeks")), "at most 52.14 weeks \\(365 days\\)")
@@ -332,4 +360,23 @@ test_that("patient.pregnant reaches the models that read it and is echoed back",
   fent <- data.frame(Drug = "fentanyl", Time = 0, Dose = 100, Units = "mcg")
   expect_equal(apiSimulate(apiRequest(patient = c(patient, pregnant = TRUE), doses = fent))$timeseries,
                apiSimulate(apiRequest(patient = patient, doses = fent))$timeseries)
+})
+
+
+test_that("patient.gestationalAge reaches the neonatal models, and a blank is a term birth", {
+  neonate <- function(...) apiRequest(
+    patient = c(list(weight = 1.618, height = 42, age = 0, sex = "male",
+                     adjustToFFM = FALSE), list(...)),
+    duration = 120,
+    doses = data.frame(Drug = "dobutamineNeonatal", Time = 0, Dose = 10,
+                       Units = "mcg/kg/min"),
+    output = list(times = 120))
+  preterm <- apiSimulate(neonate(gestationalAge = 30.4))
+  term    <- apiSimulate(neonate())
+  expect_equal(preterm$patient$gestationalAge, 30.4)
+  expect_true(is.na(term$patient$gestationalAge))
+  # The 30-week infant clears less, so its plateau is higher
+  expect_gt(preterm$timeseries$Plasma, term$timeseries$Plasma)
+  expect_equal(round(preterm$timeseries$Plasma, 0), 64)
+  expectApiError(apiSimulate(neonate(gestationalAge = 50)), "gestationalAge")
 })

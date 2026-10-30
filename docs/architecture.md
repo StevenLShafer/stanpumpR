@@ -36,7 +36,7 @@ is covered in [The dose table lifecycle](#the-dose-table-lifecycle), and the tim
 [Time units](#time-units).
 
 **Events** are not a permanently visible table — they're edited by clicking on the Events plot
-(which only appears when "Events" is chosen in the "Additional Plots" section). Events are stored
+(which only appears when "Events" is chosen in the "Additional plots" choices under Graph Options). Events are stored
 in a single reactive called `eventTable()`. Unlike the dose table, there's no draft/undo/redo
 layer for events.
 
@@ -142,8 +142,16 @@ and display only (`R/utils-time.R`, the "Time units" block of `app_server()`).
   conversion observer does not run for restored inputs.
 - The grid is stamped with its format (`createHOT(..., timeFormat)`); an edit from a grid drawn
   before a switch is converted on arrival.
-- Max time choices are per unit (`MAX_TIMES` in `constants.R`); the plot is lengthened past the
-  last dose only up to the unit's longest choice. TCI rows and inhaled agents are simulated only
+- Max time and Min time are sliders whose values are minutes in every unit (`input$maximum`,
+  `input$minimum`); `app.js` shows them in the unit. Their range and step are per unit
+  (`timeSliderRange()`: 0 to the unit's longest `MAX_TIMES` length, in `TIME_SLIDER_STEPS`), and
+  `syncTimeSliders()` resets them on a change of unit, snapping the values (`snapMaximum()`,
+  `snapMinimum()`); `plotInfo()` waits (`sliderPending()`) until the browser reports the snapped
+  values. The plot is lengthened past the last dose only up to the end of the slider. The axis
+  runs from `plotMinimum()` to `plotMaximum()`, ticked by `axisTimeStep()` (a `MAX_TIMES` length
+  from 0 keeps its own ticks). Everything is simulated from 0; `processdoseTable(plotMinimum =)`
+  refines the time lines inside the window (`withGridWindow()`), and `simulationPlot(xMinimum =)`
+  draws each series from the window's start (`seriesFromMinimum()`) so the panels scale to it. TCI rows and inhaled agents are simulated only
   on plots of `ACUTE_MAX_PLOT_MINUTES` (a week) or less (`timeUnitViolation()`).
 
 ## The computational core
@@ -198,7 +206,9 @@ fill starts at `maximum / GRID_FINE_POINTS` after each knot and no step is longe
 `maximum / GRID_UNIFORM_POINTS`, so a washout on a 52-week plot is drawn as a curve, not a
 straight chord, and the cost is bounded by the number of doses rather than growing with the
 plot (`R/constants.R` records how the two counts were chosen). `doseLines()` lays the doses
-on the line. The line depends only on `maximum` in minutes. A drug timed on its plasma looks
+on the line. The line depends only on `maximum` in minutes, and on the start of the window drawn
+(Min time): inside `withGridWindow()` the window gets the fill a plot of its own length would,
+so a window from 15 to 16 weeks is drawn as finely as a one-week plot. A drug timed on its plasma looks
 for its threshold a week ahead, or as far as the plot runs if that is longer
 (`recoveryHorizonPlasma()`).
 
@@ -345,7 +355,7 @@ All files are flat in `R/`.
   `Suggests` dependency guarded by `requireNamespace()`, and the router shares nothing with
   `run_app()`. `inst/api/entrypoint.R` (for `rsconnect::deployAPI()`) and the hand-written
   `inst/api/openapi.json` go with it.
-- `scheduled.R` — scheduled doses: expands a `qd` / `bid` / `tid` / `qid` dose row into its
+- `scheduled.R` — scheduled doses: expands a `qd` / `bid` / `tid` / `qid` / `q4h` dose row into its
   repeats out to the end of the plot (`expandScheduledDoses()`, called first in `simCpCe()`), and
   `exportDoseTable()`, which merges the TCI rows and the repeats into the exported dose table.
 - `alternativeModels.R` — the Minto / Schnider switch: Schnider's propofol and Minto's
@@ -417,8 +427,8 @@ All files are flat in `R/`.
   does not host Plumber): `run_tci_api()` or `rsconnect::deployAPI()` serve it. The normative
   reference is `docs/tci-api.md`.
 - **Scheduled doses** (`scheduled.R`) — a bolus, PO, SL, IM or IN unit with a frequency suffix
-  (`mg PO bid`) gives the dose at the entered time and then every 24 / 12 / 8 / 6 h (qd / bid /
-  tid / qid) until the end of the X axis. A scheduled dose of 0 for the same route stops the
+  (`mg PO bid`) gives the dose at the entered time and then every 24 / 12 / 8 / 6 / 4 h (qd /
+  bid / tid / qid / q4h) until the end of the X axis. A scheduled dose of 0 for the same route stops the
   sequence; a later non-zero one replaces it. Like the TCI rows, the repeats never enter the dose
   table: `simCpCe()` returns them as `$scheduled` and `sendSlide()` merges them into the export.
   The frequencies are offered per drug in `drugDefaults_global.csv`.

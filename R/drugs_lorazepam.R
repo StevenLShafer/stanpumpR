@@ -98,8 +98,11 @@
 # From Barr 2001, whose predicted steady-state plasma C50s for a Ramsay score
 # of at least 2, 3, 4, 5 and 6 were 34, 51, 104, 152 and 188 ng/mL, in
 # postoperative ICU patients receiving fentanyl or epidural morphine.  The band
-# runs from 34 (P(Ramsay >= 2) = 0.5) to 104 (P(Ramsay >= 4) = 0.5), typical
-# 51 (Ramsay >= 3, the lower edge of the moderate sedation Barr targeted).
+# is moderate sedation (Ramsay 3 or 4, as Barr defined it), the end point the
+# library draws for the sedatives (Steven L. Shafer, 2026-10-27): from 51
+# (P(Ramsay >= 3) = 0.5) to 152 (P(Ramsay >= 5) = 0.5), the concentrations at
+# which the median patient scores 3 or 4; typical 104 (P(Ramsay >= 4) = 0.5).
+# It was 34-104, typical 51 (Ramsay >= 2 to >= 4).
 # The time-until-threshold level (endCe in the CSV) is also 51: the
 # concentration below which a typical patient is more likely than not to
 # emerge from light sedation, the end point of Barr's emergence times.  For
@@ -200,10 +203,11 @@ lorazepam <- function(weight, height, age, sex, adjustToFFM = TRUE)
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
-  # Band, ng/mL: Barr 2001 C50s for Ramsay >= 2, >= 3 and >= 4.
-  typical      <- 51
-  upperTypical <- 104
-  lowerTypical <- 34
+  # Band, ng/mL: moderate sedation, Barr 2001 C50s for Ramsay >= 3, >= 4
+  # and >= 5.
+  typical      <- 104
+  upperTypical <- 152
+  lowerTypical <- 51
 
   reference <- paste0(
     "Nielsen-Kudsk F et al., Acta Pharmacol Toxicol 1983;52:121-127 ",

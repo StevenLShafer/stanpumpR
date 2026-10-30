@@ -323,3 +323,41 @@ inputWithInlineLabel <- function(tag) {
   )
   htmltools::attachDependencies(tag, dep)
 }
+
+# A bslib tooltip shown only while the pointer is over its control.  The
+# default trigger is "hover focus", so ticking a box focused it and pinned
+# the tip until something else was clicked (Steven L. Shafer, 2026-10-28:
+# it should go as soon as the cursor moves away).
+hoverTooltip <- function(trigger, ..., placement = "auto") {
+  bslib::tooltip(trigger, ..., placement = placement,
+                 options = list(trigger = "hover"))
+}
+
+# A sidebar control with its explanation on a small question-mark icon
+# beside its label, shown while the pointer is over the icon (Steven L.
+# Shafer, 2026-10-28), so a tip appears only when asked for and never while
+# the pointer merely crosses the control or the control is used.  The icon
+# goes after a checkbox's label (inside it, a click on the icon would tick
+# the box) and inside any other control's label.
+fieldHelp <- function(control, ..., placement = "right") {
+  help <- hoverTooltip(
+    tags$span(class = "field-help", `aria-label` = "More information",
+              icon("circle-question")),
+    ..., placement = placement
+  )
+  tq <- htmltools::tagQuery(control)
+  checkbox <- tq$find(".checkbox > label")
+  if (checkbox$length() > 0)
+    return(checkbox$after(help)$allTags())
+  label <- tq$resetSelected()$find(".control-label")
+  if (label$length() == 0)
+    stop("fieldHelp(): the control has no label to carry the icon")
+  label$filter(function(x, i) i == 1)$append(help)$allTags()
+}
+
+# A Patient Profile field or Graph Options control that the server shows only
+# while a drug it applies to is in the dose table (relevantFields() in
+# R/patient-fields.R); its id is "field_<name>".
+relevantField <- function(name, ...) {
+  div(id = paste0("field_", name), class = "relevant-field", ...)
+}

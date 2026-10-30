@@ -23,15 +23,15 @@ test_that("returns the published parameters at the reference patient", {
     )),
     tPeak = 0,
     MEAC = 0,
-    typical = 40,
-    upperTypical = 80,
-    lowerTypical = 15,
+    typical = 30,
+    upperTypical = 40,
+    lowerTypical = 20,
     reference = actual$reference
   )
   expect_equal_rounded(actual, expected)
   expect_match(actual$reference, "Liu", fixed = TRUE)
   expect_match(actual$reference, "10.3389/fphar.2022.964758", fixed = TRUE)
-  expect_match(actual$reference, "Hiemke", fixed = TRUE)
+  expect_match(actual$reference, "Eichentopf", fixed = TRUE)
 })
 
 test_that("the switch off ignores weight, height, age and sex", {
@@ -42,10 +42,24 @@ test_that("the switch off ignores weight, height, age and sex", {
   expect_equal_rounded(a$cl1, 16.3 / 60)
 })
 
+# Re-anchoring (R/drugs_escitalopram.R): Liu's typical patient, 61 kg, 165 cm,
+# 45 y, 59 men to 47 women, has a fat-free mass of (59 x 49.087345 + 47 x
+# 40.196655) / 106 (Al-Sallami, by hand), against the reference man's
+# 54.475206.  With the switch on, V/F x that ratio and CL/F x its 0.75 power.
+liuAnchor <- 54.475206 / ((59 * 49.087345 + 47 * 40.196655) / 106)   # 1.2066
+
+test_that("re-anchors Liu's values to the reference man with the switch on", {
+  ref <- escitalopram(70, 170, 35, "male")$PK$default
+  expect_equal_rounded(ref$v1, 815 * liuAnchor)
+  expect_equal_rounded(ref$cl1, 16.3 / 60 * liuAnchor^0.75)
+  expect_equal(liuAnchor, 1.2066, tolerance = 1e-4)
+})
+
 test_that("scales to fat-free mass for a 120 kg man", {
-  # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126
+  # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126,
+  # after re-anchoring
   actual <- escitalopram(120, 170, 50, "male")
-  expected <- list(v1 = 1063.49896, cl1 = 0.331681256)
+  expected <- list(v1 = 1063.49896 * liuAnchor, cl1 = 0.331681256 * liuAnchor^0.75)
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
   # placeholders unscaled
   expect_equal(actual$PK$default$v2, 1)
@@ -82,7 +96,7 @@ test_that("escitalopram is offered orally only, because the parameters are appar
   expect_true(all(doseRoute(units) == ROUTE_PO))
   expect_false(any(grepl("min|hr", units)))
   expect_equal(escitalopram(70, 171, 50, "male")$PK$default$bioavailability_PO, 1)
-  # The band mirrors the CSV (AGNP 2018); no MEAC, no threshold
+  # The band mirrors the CSV (Eichentopf 2022); no MEAC, no threshold
   X <- escitalopram(70, 171, 50, "male")
   expect_equal(c(row$Lower, row$Upper, row$Typical, row$MEAC),
                c(X$lowerTypical, X$upperTypical, X$typical, X$MEAC))

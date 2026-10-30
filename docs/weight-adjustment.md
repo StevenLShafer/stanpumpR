@@ -23,7 +23,8 @@ model added to the library must follow.
   per-kilogram dose for him is unchanged too.
 - The switch is the checkbox **Adjust weight to fat-free mass** in the Patient
   Profile panel. It is on by default. Turning it off restores the scaling each
-  model used before, exactly.
+  model used before, exactly, except for the few models that have themselves
+  changed since (see [What the switch does](#what-the-switch-does)).
 - Doses typed in per-kilogram units (mg/kg, mcg/kg/min, ...) are **always**
   converted using total body weight, because that is what the clinician
   actually gives. The switch changes only the pharmacokinetics.
@@ -103,6 +104,97 @@ underdose at the very patient the label was written for. Dividing by the
 reference fat-free mass instead of by 70 kg keeps him at 70 mg and scales
 everyone else from there.
 
+### Why the reference is a man
+
+The reference patient is an **anchor, not a claim** about which patient is
+typical. Its only job is to make the factors exactly 1 for somebody, so that
+each model's published parameters are reproduced somewhere and a label's
+per-kilogram dose is left alone somewhere. A man was chosen because the
+"70 kg adult" of the pharmacokinetic literature and of per-kilogram label
+dosing is conventionally male. Nothing in the arithmetic requires it.
+
+One consequence is that a woman is scaled down by construction. At the
+reference weight, height and age — 70 kg, 170 cm, 35 years — a woman's
+Al-Sallami fat-free mass is 44.9 kg against the man's 54.5 kg, so
+`pkSizeFactors()` multiplies her volumes by 0.824 and her clearances by 0.865.
+(The worked-examples table below uses age 50, where those factors are 0.820 and
+0.862.) Sex therefore enters every scaled model, including models whose own
+authors tested a sex term and rejected it.
+
+Those two numbers are the **generic** factors, and a model with its own weight
+covariate does not necessarily use them: as
+[Models with their own weight or renal covariates](#which-models-are-scaled)
+explains, such a model evaluates its published terms at the **pharmacokinetic
+weight** instead. Alprazolam is one of them — DeVane's per-kilogram clearance
+and volume are both linear in `pkWeight`, so that woman's clearance ratio is
+**0.824**, the fat-free-mass ratio itself, not 0.865. Do not carry 0.865 into a
+model's own covariate.
+
+Whether that is right was put to the test in October 2026 by Greenblatt and
+colleagues' 1993 concentration-response study of alprazolam in panic disorder
+(`papers/digests/PMID_8357297.md`), which measured a steady-state slope of
+**11.8 ng/mL per mg/day** in 237 patients of whom two thirds were women at a
+mean 69.1 kg. `R/drugs_alprazolam.R` predicts **11.90** for its reference man
+and **14.46** for a woman at 70 kg, 170 cm and 37 years — so the measurement
+agrees with the model's prediction for the wrong sex, and the FFM-driven sex
+difference looks too large for this drug. The natural fix would be to normalise
+each patient's fat-free mass to a **same-sex** reference, which would keep the
+obesity correction while removing the across-sex rescaling.
+
+**Steven L. Shafer decided on 2026-10-30 to keep the single male reference.**
+The reasons, in order of weight:
+
+1. **A same-sex reference would give two patients with the same fat-free mass
+   different pharmacokinetics**, which is the one thing this scaling exists to
+   prevent. A woman of 99.2 kg at 170 cm and 35 years has a fat-free mass of
+   54.5 kg — the reference man's, exactly. Today they share a volume factor of
+   1.000. Against a female reference she would get 1.214, so 21 percent larger
+   volumes than a man with the same lean tissue. The mechanism the scaling rests
+   on is that lean tissue clears drug; it does not know the patient's sex.
+2. **It would not remove a sex assertion, it would substitute a different
+   one.** Against a female reference the 70 kg, 170 cm woman's factors become
+   exactly 1.000, so she receives the published parameters unchanged and clears
+   drug at the same rate as a man of her weight and height despite 9.6 kg less
+   lean tissue. That is a claim of parity at the reference size, and it
+   contradicts the premise of fat-free-mass scaling in exactly the comparison
+   where the premise is doing the most work. Neither option is neutral: for
+   alprazolam the three available positions disagree in direction as well as
+   size, DeVane's own fitted sex term putting a woman at 7.5 ng/mL per mg/day,
+   parity at 11.9 and the current scaling at 14.5.
+3. **The evidence does not reach.** One study, on one drug, bears on this, and
+   it does not cite the library or report the heights that fat-free mass is
+   computed from; its sampling times were uncontrolled, compliance was
+   unverified and some concentrations were 0 ng/mL. Changing the reference
+   changes every scaled model in the table below for every female patient. The
+   argument for turning the switch off entirely is weaker still, at least for
+   this drug: Abernethy and colleagues (1984) found alprazolam's apparent oral
+   clearance was **not** higher in obese patients — lower, though not
+   significantly, at 66.4 against 88.0 mL/min — and concluded that its dose
+   should be adjusted for ideal rather than total body weight. Those data
+   therefore **argue against** scaling its clearance on total weight; because
+   the difference was not significant they cannot *exclude* a modest change,
+   and the stronger claim is the authors' dosing conclusion rather than a result
+   of the measurement (`papers/digests/PMID_6143633.md`).
+
+What is not resolved is the tension itself, and the honest statement of it is
+that for alprazolam the default appears to over-predict a largely female
+cohort's exposure-response slope by about 19 percent, where the switch off
+would over-predict it by about 3 percent. **Both figures are a sensitivity
+scenario, not a cohort prediction**: Greenblatt reports only a mean weight and
+that two thirds were women, with no heights, no sex-specific weights and no
+per-patient data, so fat-free mass — which needs height — cannot be computed
+for this cohort at all. The two percentages come from assuming heights of
+163 cm for the women and 178 cm for the men at age 37 and sweeping the
+male-female weight gap from 0 to 20 kg about the reported 69.1 kg mean. The
+conclusion is insensitive to that gap and is **not** insensitive to the assumed
+heights, which only the authors could supply.
+
+Either the slope is biased low by the study's own limitations, or fat-free-mass
+scaling asserts a sex difference larger than this drug's data support. Settling
+that needs a study that reports heights. The decision above is about which
+default is more defensible across the whole library, not a finding that 14.46
+is right.
+
 ### The scaling
 
 For a patient with fat-free mass FFM:
@@ -123,7 +215,7 @@ scaled everything linearly with weight.
 
 | Scaled to fat-free mass | Not scaled (own covariates) |
 |---|---|
-| alfentanil, dexmedetomidine, etomidate, fentanyl, hydromorphone, ketamine, lidocaine, mannitol, calcium (Ansari 2025, parturients; the published values taken as the reference adult's), midazolam, morphine (Lötsch 2002, absolute values; its slow intercompartmental clearance keeps the paper's own covariate, the fourth power of body surface area bounded to 1.5 to 2.2 m², in both switch positions, and the other parameters inherit the scaling), oliceridine, oxycodone, pethidine, remimazolam, rocuronium, vecuronium, cisatracurium, sufentanil, codeine, hydrocodone (formation only), oxymorphone, tramadol, desmetramadol; the antibiotics cefazolin, clindamycin, cefalexin, ceftriaxone, vancomycin, metronidazole, gentamicin; the steroids hydrocortisone, methylprednisolone, dexamethasone, prednisolone, prednisone; sugammadex, neostigmine, glycopyrrolate; amiodarone, desethylamiodarone, amiodaroneIV; the oral analgesics gabapentin and pregabalin, on their own covariates, and naproxen; and the sedatives diazepam, lorazepam, clonazepam, zolpidem and temazepam, and alprazolam on its own weight covariate; the antidepressants escitalopram, sertraline, paroxetine, duloxetine, mirtazapine (with its source's BMI step on clearance), bupropion, hydroxybupropion, fluoxetine, norfluoxetine, venlafaxine and desvenlafaxine, and citalopram on its own weight covariate for S-citalopram clearance; methadone (Henthorn 2025) on its own weight covariate on V3, its other parameters unscaled because the source tested weight on them and rejected it | **propofol** (Eleveld) and **remifentanil** (Eleveld, Kim) already contain the Al-Sallami or Janmahasatian fat-free mass as a covariate and are used as published. **oxytocin** was fitted in parturients, a population the reference male does not describe, and the formula has not been validated in pregnancy. **naloxone** (Dowling 2008) has its own lean-body-weight covariate on clearance. Dowling used the Janmahasatian lean body weight; stanpumpR uses the Al-Sallami fat-free mass, which is the same in adult men, the population Dowling studied, and 1 to 3 percent higher in adult women. Its other parameters inherit the scaling. **acetaminophen** (Morse 2022) has its own normal-fat-mass covariate on clearance (fat-free mass plus 0.816 of fat mass); its volumes and intercompartmental clearance inherit the scaling. **ibuprofen** (Morse 2022) has its own normal-fat-mass covariates on clearance (0.863 of fat mass) and on both volumes (0.718); its intercompartmental clearance inherits the scaling. |
+| alfentanil, dexmedetomidine, etomidate, fentanyl, hydromorphone, ketamine, lidocaine, mannitol, calcium (Ansari 2025, parturients; the published values taken as the reference adult's), midazolam, morphine (Lötsch 2002, absolute values; its slow intercompartmental clearance keeps the paper's own covariate, the fourth power of body surface area bounded to 1.5 to 2.2 m², in both switch positions, and the other parameters inherit the scaling), oliceridine, oxycodone, pethidine, remimazolam, rocuronium, vecuronium, cisatracurium, sufentanil, codeine, hydrocodone (its source's body-surface-area and creatinine-clearance covariates at the pharmacokinetic weight, Vp/F and Q/F scaled; formation follows hydromorphone), oxymorphone, tramadol, desmetramadol; the antibiotics cefazolin, clindamycin, cefalexin, ceftriaxone, vancomycin, metronidazole, gentamicin; the steroids hydrocortisone, methylprednisolone, dexamethasone, prednisolone, prednisone; sugammadex, neostigmine, glycopyrrolate; amiodarone, desethylamiodarone, amiodaroneIV; the oral analgesics gabapentin and pregabalin, on their own covariates, and naproxen; and the sedatives diazepam, lorazepam, clonazepam, zolpidem and temazepam, and alprazolam on its own weight covariate; the antidepressants escitalopram, sertraline, paroxetine, duloxetine, mirtazapine (with its source's BMI step on clearance), bupropion, hydroxybupropion, fluoxetine, norfluoxetine, venlafaxine and desvenlafaxine, and citalopram on its own weight covariate for S-citalopram clearance; methadone (Henthorn 2025) on its own weight covariate on V3, its other parameters unscaled because the source tested weight on them and rejected it | **propofol** (Eleveld) and **remifentanil** (Eleveld, Kim) already contain the Al-Sallami or Janmahasatian fat-free mass as a covariate and are used as published. **oxytocin** was fitted in parturients, a population the reference male does not describe, and the formula has not been validated in pregnancy. **naloxone** (Dowling 2008) has its own lean-body-weight covariate on clearance. Dowling used the Janmahasatian lean body weight; stanpumpR uses the Al-Sallami fat-free mass, which is the same in adult men, the population Dowling studied, and 1 to 3 percent higher in adult women. Its other parameters inherit the scaling. **acetaminophen** (Morse 2022) has its own normal-fat-mass covariate on clearance (fat-free mass plus 0.816 of fat mass); its volumes and intercompartmental clearance inherit the scaling. **ibuprofen** (Morse 2022) has its own normal-fat-mass covariates on clearance (0.863 of fat mass) and on both volumes (0.718); its intercompartmental clearance inherits the scaling. |
 
 **Models with their own weight or renal covariates.** Several antibiotic and
 reversal-agent models write a body-weight term into some parameters
@@ -146,17 +238,19 @@ what it did before and what it does now.
 ### What the switch does
 
 The checkbox **Adjust weight to fat-free mass** in the Patient Profile panel is
-on by default. With it off, every model reverts to exactly the scaling it used
-before fat-free mass was introduced:
+on by default. With it off, each model uses its published scaling, which for
+every model whose parameters have not changed since is exactly the scaling it
+used before fat-free mass was introduced (the exceptions are listed below the
+table):
 
 | Model type | Behaviour with the switch off |
 |---|---|
-| Fixed published parameters (alfentanil, sufentanil, midazolam, vecuronium, cisatracurium, oliceridine, oxycodone, mannitol, calcium, adult dexmedetomidine, ceftriaxone, methylprednisolone, dexamethasone, prednisolone, prednisone, glycopyrrolate, amiodarone, desethylamiodarone, zolpidem, clonazepam, diazepam, escitalopram, sertraline, paroxetine, duloxetine, mirtazapine, bupropion, hydroxybupropion, fluoxetine, norfluoxetine, venlafaxine, desvenlafaxine) | no scaling at all |
-| V1 per kilogram with fixed rate constants (ketamine, etomidate, hydromorphone, pethidine, lidocaine, rocuronium, neostigmine, amiodaroneIV, lorazepam, temazepam) | volumes and clearances both × weight / 70 |
+| Fixed published parameters (alfentanil, sufentanil, midazolam, neostigmine, vecuronium, cisatracurium, oliceridine, oxycodone, mannitol, calcium, adult dexmedetomidine, ceftriaxone, methylprednisolone, dexamethasone, prednisolone, prednisone, glycopyrrolate, amiodarone, desethylamiodarone, zolpidem, clonazepam, diazepam, escitalopram, sertraline, paroxetine, duloxetine, mirtazapine, bupropion, hydroxybupropion, fluoxetine, norfluoxetine, venlafaxine, desvenlafaxine) | no scaling at all |
+| V1 per kilogram with fixed rate constants (ketamine, etomidate, hydromorphone, pethidine, lidocaine, rocuronium, amiodaroneIV, lorazepam, temazepam) | volumes and clearances both × weight / 70 |
 | Morphine (Lötsch 2002, Model A) | the published absolute values; Q3 = 19.5 L/h × (BSA / 1.83)<sup>4</sup>, the paper's own covariate, at the body surface area bounded to 1.5 to 2.2 m², in both switch positions |
 | Allometric on total weight (fentanyl, remimazolam, infant dexmedetomidine, cefalexin, hydrocortisone, clindamycin with its published 0.497 exponent, naproxen about its source's median child) | volumes × weight / 70, clearances × (weight / 70)<sup>0.75</sup> (or the published exponent) |
 | Metronidazole (da Silva Neto 2021) | volume 0.556 L/kg × the patient's adjusted body weight on Devine ideal weight (total body weight under 18 years, or where the ideal weight is not positive), clearance × (weight / 70)<sup>0.75</sup> on total weight, as published |
-| Own weight or renal covariates (vancomycin, gentamicin, sugammadex, cefazolin, naloxone, gabapentin, pregabalin, acetaminophen, ibuprofen, alprazolam, methadone, citalopram) | the published equations on total body weight; size-free parameters fixed |
+| Own weight or renal covariates (vancomycin, gentamicin, sugammadex, cefazolin, naloxone, gabapentin, pregabalin, acetaminophen, ibuprofen, alprazolam, methadone, citalopram, hydrocodone) | the published equations on total body weight; size-free parameters fixed |
 
 Propofol, remifentanil, oxytocin and tiagabine (Ingwersen 2000, whose clearance and volume are powers of height, its own size covariate) do not respond to the switch. Nor does meloxicam's intravenous (ANJESO) system, which keeps its own published weight covariate on total weight in both positions; its oral system does respond.
 
@@ -164,7 +258,20 @@ The switch exists for three reasons: to show, live, how far per-kilogram dosing
 departs from fat-free-mass dosing in an obese or female patient; to regenerate
 simulations and figures made before the change; and to reproduce a source
 study exactly where it scaled on total weight. Simulation links saved before
-the switch existed restore with it off, so their output is unchanged.
+the switch existed restore with it off, so their output is unchanged, except
+for a drug whose model has itself changed since the link was saved: the switch
+selects the current model's switch-off behaviour, which is neither the old
+model nor, always, the old scaling. Known cases, all from October 2026:
+hydrocodone, whose source's covariates were added and apply in both switch
+positions; lidocaine, moved from Schnider 1996's interim to its final
+parameter set (#610); neostigmine, moved from Calvey 1979's single patient to
+Heier 2002's population model, whose published values are fixed, so with the
+switch off it no longer scales with weight / 70; ketamine, refitted to Domino
+1984's concentrations (#602); sufentanil, whose volumes and clearances became
+Gepts 1995's printed values (under 0.5%); adult dexmedetomidine, whose time to
+peak effect became 14.9 min; and intranasal hydromorphone, whose
+bioavailability became 0.37 (#611). A simulation of any of these saved before
+the change does not reproduce with the switch off.
 
 ### Per-kilogram doses
 
@@ -229,6 +336,11 @@ For a drug labelled 1 mg/kg, the 120 kg man's bolus is 91 mg, not 120 mg.
   decline, is the better-supported part of the scaling.
 - **Extreme covariates.** The Janmahasatian equations were developed between 41
   and 216 kg and BMI 17 to 70. Outside that range they are extrapolated.
+- **Sex.** Because the reference patient is a man, sex enters every scaled
+  model, including models whose own authors tested a sex term and rejected it.
+  That is deliberate and the alternatives are worse, but for at least one drug
+  the resulting sex difference looks too large against the only data that bear
+  on it. See [Why the reference is a man](#why-the-reference-is-a-man).
 
 ---
 
@@ -271,3 +383,20 @@ both switch positions. See `docs/adding-a-drug.md` for the procedure.
 - Holford NHG, Anderson BJ. Allometric size: the scientific theory and extension
   to normal fat mass. *Eur J Pharm Sci* 2017;109S:S59-64.
   [PMID 28552478](https://pubmed.ncbi.nlm.nih.gov/28552478/)
+- Greenblatt DJ, Harmatz JS, Shader RI. Plasma alprazolam concentrations:
+  relation to efficacy and side effects in the treatment of panic disorder.
+  *Arch Gen Psychiatry* 1993;50:715-22.
+  [PMID 8357297](https://pubmed.ncbi.nlm.nih.gov/8357297/) — the study behind
+  [Why the reference is a man](#why-the-reference-is-a-man); digested in
+  `papers/digests/PMID_8357297.md`.
+- Abernethy DR, Greenblatt DJ, Divoll M, Smith RB, Shader RI. The influence of
+  obesity on the pharmacokinetics of oral alprazolam and triazolam.
+  *Clin Pharmacokinet* 1984;9:177-83.
+  [PMID 6143633](https://pubmed.ncbi.nlm.nih.gov/6143633/) — in 12 obese
+  patients pair-matched with 12 controls, alprazolam's apparent oral clearance
+  was **lower, though not significantly** (66 against 88 mL/min), and the
+  authors conclude that dosage should be "adjusted for ideal rather than total
+  bodyweight". Its apparent volume, however, was much **larger** (114 against
+  73 L), which lean-mass scaling under-predicts — the limitation noted above
+  for lipophilic drugs' peripheral volumes. The clearance half is what bears on
+  the reference question.

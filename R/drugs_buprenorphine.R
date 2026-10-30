@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------
 # Buprenorphine: Bjornsson 2023 three-compartment disposition (absolute scale),
-# first-order sublingual and intranasal routes, ke0 from Yassen 2006
+# first-order sublingual and intramuscular routes, ke0 from Yassen 2006
 # -----------------------------------------------------------------------------
 # Units: time in minutes, volumes in litres, clearances in L/min,
 # concentrations in ng/mL, total plasma buprenorphine (norbuprenorphine is not
@@ -86,22 +86,58 @@
 # lie outside the fitted range and remain an extrapolation.  As for
 # gabapentin, two rows entered at the same time are scaled separately.
 #
-# INTRANASAL: RESEARCH ROUTE
-# ==========================
-# Eriksen 1989, nine volunteers, 0.3 mg by nasal spray against 0.3 mg
-# intravenously: bioavailability 48.2% (s.e.m. 8.4%), mean time to peak
-# 30.6 min.  ka is set so the plasma peak falls at 30.6 min on this
-# disposition.  The predicted peak after 0.3 mg is 0.45 ng/mL against the
-# 1.77 ng/mL Eriksen reported by radioimmunoassay; that gap belongs to the
-# early volume of distribution (and the assay), not to the absorption
-# constant, and is unresolved.  No intranasal product is approved.
+# INTRANASAL: WITHDRAWN 2026-10-27
+# =================================
+# Until 2026-10-27 an intranasal research route followed Eriksen 1989: nine
+# volunteers, 0.3 mg by nasal spray against 0.3 mg intravenously,
+# bioavailability 48.2% (s.e.m. 8.4%), mean time to peak 30.6 min, carried as
+# F 0.482 and a ka (0.0227 /min) that put the plasma peak at 30.6 min on this
+# disposition.  The predicted peak after 0.3 mg was 0.447 ng/mL against the
+# 1.77 ng/mL Eriksen reported (by radioimmunoassay; a mean of individual
+# maxima).  No bioavailability closes that: it would need F = 0.482 x 1.77 /
+# 0.447 = 1.91.  The gap lies in the disposition or the assay, not the
+# absorption, intranasal data were never part of Bjornsson's fit, and no
+# intranasal product is approved, so the route was withdrawn by decision of
+# Steven L. Shafer on the 2026-10-27 opioid potency audit
+# (docs/opioid-review-2026-10-27.md).  Restoring it needs a fit of a full
+# intranasal concentration-time profile, not a ka chosen to hit a tmax.
 #
-# INTRAMUSCULAR AND SWALLOWED ORAL ARE NOT OFFERED
-# ================================================
-# No human intramuscular study reporting bioavailability and time to peak was
-# found that could be used, and no swallowed product exists (oral
-# bioavailability is low, with heavy first-pass formation of
-# norbuprenorphine).  Neither is borrowed from another route.
+# INTRAMUSCULAR: BULLINGHAM 1980
+# ==============================
+# Bullingham, McQuay, Moore and Bennett (Clin Pharmacol Ther 1980;28:667-672,
+# full text read) measured arterial plasma for 3 h after a second 0.3 mg,
+# given to McQuay 1980's patients 3 h after the first, intravenously (n = 10)
+# or into the vastus lateralis (n = 11), with the first dose's tail
+# subtracted.  Intramuscular levels peaked at 2-5 min and matched the
+# intravenous ones from 10 min; seven of eleven patients had over 90%
+# availability, four 40-60%.  One first-order input on this disposition was
+# fitted to the IM/IV ratio of the paper's Table II group means at 2, 10, 60
+# and 180 min.  The ratio removes a difference of SCALE between their
+# patients' disposition and this one, not one of shape:
+#
+#     ka_IM = 0.1407 /min (absorption half-life 4.9 min), F_IM = 0.947, no lag
+#
+# Model ratios 0.25, 0.94, 1.03 and 0.99 against the measured 0.24, 1.05, 1.03
+# and 0.95; the fit is the same at 40 or 65 y.  This input peaks in plasma at
+# 10 min where the patients peaked at 2-5 min: a single first-order input on
+# a disposition with a 7-min fast phase cannot rise faster without
+# overshooting the later ratios.  In absolute terms this model, at their IM
+# group's 62 y and 66.5 kg, is below their arterial means by both routes:
+# IV 4.1 against 14.6 ng/mL at 2 min (this disposition's central volume is
+# 64 L; theirs, back-extrapolated from early arterial samples, about 14 L),
+# 2.4 against 3.2 at 10, 0.64 against 0.77 at 60 and 0.30 against 0.38 at
+# 180; IM 1.0 against 3.6, 2.3 against 3.3, 0.66 against 0.79 and 0.29
+# against 0.36.  So the IM route carries the intravenous disposition's
+# agreement with these patients, no better and no worse; the ratios are what
+# was fitted.  Added 2026-10-28, when Steven L. Shafer
+# asked that McQuay 1980's intramuscular second dose be simulated as given
+# (see MEAC AND THE BAND).
+#
+# SWALLOWED ORAL IS NOT OFFERED
+# =============================
+# No swallowed product exists (oral bioavailability is low, with heavy
+# first-pass formation of norbuprenorphine), and it is not borrowed from
+# another route.
 #
 # DEPOTS, PATCHES AND IMPLANTS ARE NOT OFFERED
 # ============================================
@@ -135,15 +171,57 @@
 #
 # MEAC AND THE BAND
 # =================
-# No minimum effective analgesic concentration is established for
-# buprenorphine, and as a high-affinity partial agonist it does not add to
-# full agonists the way the MEAC total assumes, so MEAC is 0 and it is not on
-# the MEAC panel.  The band is the opioid-use-disorder range: 1.25 ng/mL for
-# withdrawal suppression (also the time-until-threshold level), 2.2 ng/mL for
-# 70% mu-receptor occupancy by Nasser 2014's Emax model
-# (91.4 x C / (0.67 + C)), and 3 ng/mL, the upper end of the 2-3 ng/mL quoted
-# for blockade of opioid reinforcement.  These are plasma targets from
-# maintenance treatment; they are not analgesic targets.
+# As a high-affinity partial agonist buprenorphine does not add to full
+# agonists the way the MEAC total assumes, so MEAC is 0 and it is not on the
+# MEAC panel.  The band (0.2-1 ng/mL, typical 0.4) and the time-until-
+# threshold level (0.2 ng/mL) are the library's own, from simulating the
+# analgesic regimens of the Oxford postoperative studies with this model at
+# the effect site, by decision of Steven L. Shafer, 2026-10-27:
+#   McQuay 1980 (Br J Anaesth 52:1013, full text read): 20 patients after hip
+#   replacement (45-75 y, under 80 kg; mean about 65 y and 66 kg) given 0.3 mg
+#   IV at induction and 0.3 mg IV or IM 3 h later, then diamorphine on demand
+#   from 6 h.  Analgesia lasted a median 480 min after the second dose (time
+#   to the fifth demand; the second to fourth gave similar medians), pooled
+#   over both groups, which did not differ significantly (the groups' own
+#   medians are not given).  This model at 65 y, 66 kg,
+#   170 cm, male: effect site 0.20 ng/mL at that time in both groups (0.201
+#   after an IV second dose, 0.198 after an IM one, through the IM route
+#   above; plasma 0.15), peak 1.0 ng/mL after the second dose (1.02 IV at
+#   41 min, 0.96 IM at 50 min).  So the pharmacokinetics are consistent
+#   with the routes' nonsignificant difference in duration; the IM input was
+#   fitted to Bullingham's ratios, not to McQuay, so this is a consistency
+#   check the band was not built to pass, not a validation of 0.2.  The IM dose is simulated as given, and the reference
+#   patient stays male since sex rarely matters, by decision of Steven L.
+#   Shafer, 2026-10-28.  The lower
+#   edge and the threshold are that estimate: a minimum effective
+#   concentration by the demand-analgesia method, but simulated for one
+#   reference patient at the group's median time, not measured at any
+#   patient's demand, and each earlier demand had already delivered 0.25 mg
+#   of diamorphine.  It is illustrative, not a validated threshold.
+#   The upper edge is that peak; it is also about the top of 0.3 mg IV every
+#   6 h at steady state (0.46-1.08), and the group's sublingual patients had
+#   excellent analgesia at plasma levels that never exceeded 1 ng/mL (McQuay
+#   1980, unpublished observations).  The typical value is the steady-state
+#   peak of 0.4 mg sublingual every 8 h (0.17-0.42; Bullingham 1981's dose,
+#   about 9 h of analgesia, abstract) and of a 20 mcg/h patch delivered as an
+#   infusion (0.39; Reidenberg 2001's measured patch peaks, quoted by Johnson
+#   2005, were 0.18, 0.19 and 0.47 ng/mL at 5, 10 and 20 mcg/h).
+# The band is read on the effect site: the Oxford group found the effect far
+# outlasts the plasma level: McQuay 1980 found no correlation between peak
+# plasma concentration and duration of analgesia, and Bullingham 1980 (Clin
+# Pharmacol Ther 28:667) no direct relationship between plasma level and
+# effect (both full text read), and Adriaensen 1985 found
+# no correlation between level and analgesia in chronic pain (quoted by
+# Johnson 2005, J Pain Symptom Manage 29:297, full text read).  Yassen's slow
+# equilibration (time to peak 61 min) carries much of that lag.  The band
+# replaced Hart 2026's range for opioid use disorder (AGNP consensus
+# guidelines, update 2026, Pharmacopsychiatry 59:166-295, Table 5, doi
+# 10.1055/a-2860-7861: 0.5-2.5 ng/mL, 24 h after a dose, alert level 4
+# ng/mL), which is for substitution treatment, not analgesia, the use that
+# keeps methadone's and morphine's ranges off their panels; it is recorded in
+# therapeuticRanges.csv (band_differs).  That range had replaced 1.25-3 ng/mL
+# (withdrawal suppression to blockade of opioid reinforcement), and the
+# threshold was 1.25 ng/mL, withdrawal suppression.
 #
 # AGE
 # ===
@@ -179,7 +257,7 @@
 # Patient Profile's Pregnant field on, CL1 is multiplied by
 # BUPRENORPHINE_PREGNANCY_CL_FACTOR = 218 / 119 = 1.83 (the second half of
 # pregnancy, the library's reference state of late pregnancy); the volumes,
-# the distribution clearances and the sublingual and intranasal absorption
+# the distribution clearances and the sublingual absorption
 # (ka, F and its dose dependence, lag) are unchanged, so an intravenous dose
 # is changed exactly as a sublingual one.  The plotted concentration is total
 # plasma buprenorphine; norbuprenorphine, whose formation rises with the
@@ -196,13 +274,21 @@
 # Yassen A et al., Anesthesiology 2006;104:1232-1242.
 #   https://doi.org/10.1097/00000542-200606000-00019
 # Eriksen J et al., J Pharm Pharmacol 1989;41:803-805.
-#   https://doi.org/10.1111/j.2042-7158.1989.tb06374.x
+#   https://doi.org/10.1111/j.2042-7158.1989.tb06374.x (the withdrawn
+#   intranasal route)
 # Nasser AF et al., Clin Pharmacokinet 2014;53:813-824.
 #   https://doi.org/10.1007/s40262-014-0155-0
 # Kuhlman JJ et al., J Anal Toxicol 1996;20:369-378.
 #   https://doi.org/10.1093/jat/20.6.369
 # Escher M et al., Clin Ther 2007;29:1620-1631.
 #   https://doi.org/10.1016/j.clinthera.2007.08.007
+# McQuay HJ, Bullingham RES, Paterson GMC, Moore RA.  Br J Anaesth
+#   1980;52:1013-1019.  https://doi.org/10.1093/bja/52.10.1013 (the band)
+# Bullingham RES, McQuay HJ, Moore A, Bennett MR.  Clin Pharmacol Ther
+#   1980;28:667-672.  https://doi.org/10.1038/clpt.1980.219 (the band; the
+#   intramuscular route)
+# Johnson RE, Fudala PJ, Payne R.  J Pain Symptom Manage 2005;29:297-326.
+#   https://doi.org/10.1016/j.jpainsymman.2004.07.005 (the band)
 # Bastian JR, Chen H, Zhang H et al.  Am J Obstet Gynecol 2017;216:64.e1-
 #   64.e7.  https://doi.org/10.1016/j.ajog.2016.09.095 (pregnancy)
 # Zhu Y, Bastian JR, Caritis SN et al.  J Addict Med 2025;19:129-134.
@@ -223,9 +309,11 @@ BUPRENORPHINE_F_SL      <- 0.422692       # small-dose limit
 BUPRENORPHINE_SL_SATURATION <- list(Imax = 0.816527, ID50 = 3.42670)  # ID50 mg
 BUPRENORPHINE_KA_SL     <- 0.0171905401   # /min; fitted with the lag, see the header
 BUPRENORPHINE_TLAG_SL   <- 17.587178      # min; fitted with ka, see the header
-BUPRENORPHINE_F_IN      <- 0.482          # Eriksen 1989
-BUPRENORPHINE_KA_IN     <- 0.0227053660   # /min; plasma peak at 30.6 min
-BUPRENORPHINE_WITHDRAWAL <- 1.25          # ng/mL; band floor and endCe
+# Intramuscular input fitted to Bullingham 1980's IM/IV ratios; see the header.
+BUPRENORPHINE_KA_IM     <- 0.140710       # /min
+BUPRENORPHINE_F_IM      <- 0.947096
+# Effect site at the median end of analgesia in McQuay 1980; see the header.
+BUPRENORPHINE_ANALGESIA_END <- 0.2       # ng/mL; endCe and lower band edge
 BUPRENORPHINE_MIN_AGE   <- 18             # years; youngest age the CL term sees
 # Elimination clearance in pregnancy relative to Bjornsson's value: Zhu 2025,
 # dose-normalised AUC 218 after delivery against 119 in the second half of
@@ -283,9 +371,10 @@ buprenorphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
     ka_SL = BUPRENORPHINE_KA_SL,
     bioavailability_SL = BUPRENORPHINE_F_SL,
     tlag_SL = BUPRENORPHINE_TLAG_SL,
-    ka_IN = BUPRENORPHINE_KA_IN,
-    bioavailability_IN = BUPRENORPHINE_F_IN,
-    tlag_IN = 0
+    ka_IM = BUPRENORPHINE_KA_IM,
+    bioavailability_IM = BUPRENORPHINE_F_IM,
+    # Zero: the measured rise is carried by ka_IM.
+    tlag_IM = 0
   )
 
   events <- c(PK_EVENT_DEFAULT)
@@ -294,11 +383,14 @@ buprenorphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
   reference <- paste0(
     "Bjornsson M et al., Clin Pharmacokinet 2023;62:1427-1443 (intravenous ",
     "three-compartment disposition, healthy-volunteer Vc; sublingual reduced ",
-    "to one first-order input with dose-dependent F, 0.14 at 16 mg); ",
-    "intranasal from Eriksen J et al., J Pharm Pharmacol 1989;41:803-805; ",
+    "to one first-order input with dose-dependent F, 0.14 at 16 mg), ",
+    "https://doi.org/10.1007/s40262-023-01288-6; ",
     "effect site from Yassen A et al., Anesthesiology 2006;104:1232-1242 ",
-    "(ke0 carried as a 61.2 min time to peak). ",
-    "https://doi.org/10.1007/s40262-023-01288-6"
+    "(ke0 carried as a 61.2 min time to peak); intramuscular input fitted to ",
+    "Bullingham RES et al., Clin Pharmacol Ther 1980;28:667-672; band ",
+    "simulated from the ",
+    "postoperative demand analgesia of McQuay HJ et al., Br J Anaesth ",
+    "1980;52:1013-1019."
   )
   if (isTRUE(pregnant)) {
     reference <- paste0(reference, "; ", pregnancyReference(
@@ -315,9 +407,10 @@ buprenorphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
       # Yassen's ke0 as a time to peak; getDrugPK() solves ke0.  See the header.
       tPeak = BUPRENORPHINE_TPEAK,
       MEAC = 0,
-      typical = 2.2,
-      upperTypical = 3,
-      lowerTypical = BUPRENORPHINE_WITHDRAWAL,
+      # Band: simulated analgesic exposure (McQuay 1980); see the header.
+      typical = 0.4,
+      upperTypical = 1,
+      lowerTypical = BUPRENORPHINE_ANALGESIA_END,
       # Each sublingual dose is scaled by its own fraction absorbed; see the header.
       sublingualSaturation = BUPRENORPHINE_SL_SATURATION,
       reference = reference

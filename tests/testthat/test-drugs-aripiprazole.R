@@ -14,7 +14,7 @@ test_that("a normal metaboliser receives the published values", {
         ka_PO = 1.06 / 60, bioavailability_PO = 1, tlag_PO = 0
       )),
       tPeak = 0, ke0 = 0.725 / 60, MEAC = 0,
-      typical = 0, upperTypical = 0, lowerTypical = 0,
+      typical = 195, upperTypical = 270, lowerTypical = 120,
       reference = actual$reference,
       metabolite = list(
         name = "dehydroaripiprazole", kFormation = 3.15 / 60 / 192,
