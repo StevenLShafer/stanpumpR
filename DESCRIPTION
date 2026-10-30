@@ -50,6 +50,7 @@ Imports:
     utils
 Suggests:
     devtools,
+    httr2,
     knitr,
     plumber,
     remotes,
