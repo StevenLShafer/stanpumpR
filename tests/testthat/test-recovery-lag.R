@@ -113,7 +113,11 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     "dabigatranHip",
                     # acenocoumarol's 0.269 h lag (Verstuyft 2012); the INR
                     # is plotted, so no effect-site recovery (2026-10-18)
-                    "acenocoumarol"))
+                    "acenocoumarol",
+                    # Parkinson disease drugs (2026-10-19): pramipexole's IR
+                    # lag of 0.221 h and pimavanserin's 0.0707 day, both
+                    # from the FDA reviews; plasma only
+                    "pramipexole", "pimavanserin"))
 })
 
 

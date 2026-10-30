@@ -206,3 +206,16 @@ hydralazine,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#2E7D32,0,0,0,0,0,IV,Vasoactive and 
 methyleneBlue,ng,mg/kg,mg/kg/hr,mg/kg,"mg/kg,mg,mg/kg/hr,mg/hr",#1976D2,0,0,0,0,0,IV,Vasoactive and resuscitation
 dobutamineNeonatal,ng,,mcg/kg/min,mcg/kg/min,"mcg/kg/min,mcg/min",#D81B60,0,0,0,0,0,IV,Vasoactive and resuscitation
 GHB,mcg,,,g PO oxybate,"g PO oxybate,mg PO oxybate",#006064,0,0,0,0,0,IV,Illicit drugs
+apomorphine,ng,,,mg SC,"mg SC",#C62828,3.9,15.2,10.7,0,10.7,IV,Parkinson disease
+pramipexole,ng,,,mg PO tid,"mg PO,mg PO tid",#6A1B9A,0,0,0,0,0,IV,Parkinson disease
+pramipexoleER,ng,,,mg PO ER qd,"mg PO ER,mg PO ER qd",#8E24AA,0,0,0,0,0,IV,Parkinson disease
+safinamide,ng,,,mg PO qd,"mg PO,mg PO qd",#4527A0,0,0,0,0,0,IV,Parkinson disease
+istradefylline,ng,,,mg PO qd,"mg PO,mg PO qd",#5E35B1,0,0,0,0,0,IV,Parkinson disease
+pimavanserin,ng,,,mg PO qd,"mg PO,mg PO qd",#7E57C2,0,0,0,0,0,IV,Parkinson disease
+levodopa,mcg,,,mg PO,"mg PO,mg PO tid,mg PO qid,mg PO q4h",#311B92,1,3.5,2.25,0,0.81,IV,Parkinson disease
+levodopaIntestinalGel,mcg,,,mg/hr PO,"mg PO,mg/hr PO",#512DA8,1,3.5,2.25,0,0.81,IV,Parkinson disease
+levodopaSimon,mcg,,,mg PO,"mg PO,mg PO tid,mg PO qid,mg PO q4h",#673AB7,1,3.5,2.25,0,1.41,IV,Parkinson disease
+levodopaEntacaponeIntestinalGel,mcg,,,mg/hr PO,"mg PO,mg/hr PO",#7E57C2,1,3.5,2.25,0,0.81,IV,Parkinson disease
+opicapone,ng,,,mg PO qd,"mg PO,mg PO qd",#283593,0,0,0,0,0,IV,Parkinson disease
+tolcapone,mcg,,,mg PO,"mg PO,mg PO tid",#00897B,0,0,0,0,0,IV,Parkinson disease
+amantadineER,ng,,,mg PO qd,"mg PO,mg PO qd",#3949AB,600,1700,1150,0,0,IV,Parkinson disease
