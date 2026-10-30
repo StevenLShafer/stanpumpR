@@ -7,23 +7,29 @@ noEvents <- data.frame(Time = numeric(0), Event = character(0))
 trapz <- function(x, y) sum(diff(x) * (utils::head(y, -1) + utils::tail(y, -1)) / 2)
 
 test_that("the pooled disposition is on the hydrochloride dose basis", {
-  # Poyhia 1991 Table 1: weight (kg), the tabulated free-base dose (mg), CL
-  # (L/min) and Vss (L/kg).  Each patient was given 0.07 mg/kg of the
-  # hydrochloride, so each CL and Vss is scaled by 0.07 x weight / dose.
+  # All three intravenous studies computed CL and Vss on oxycodone base (see
+  # DOSE BASIS in the drug file), and each goes onto the hydrochloride by the
+  # ratio of molar masses.
+  base <- 315.37; hydrochloride <- 351.83; trihydrate <- 405.87
+  toHCl <- hydrochloride / base
+  # Poyhia 1991 Table 1: weight (kg), the tabulated dose (mg), CL (L/min) and
+  # Vss (L/kg).  The tabulated dose is the base in the Oxanest (the
+  # hydrochloride trihydrate) drawn up in round volumes.
   w   <- c(75, 78, 90, 80, 76, 61, 62, 61, 57)
   d   <- c(4.1, 4.3, 4.7, 4.3, 4.1, 3.1, 3.1, 3.1, 3.1)
   cl  <- c(0.59, 1.33, 1.22, 0.66, 0.38, 0.82, 0.92, 0.64, 0.45)
   vss <- c(2.12, 2.44, 2.83, 2.40, 3.65, 2.74, 2.84, 2.56, 1.83)
-  # The table's doses are the paper's 0.05 mg/kg free base, not the 0.07 given
-  expect_equal(mean(d / w), 0.053, tolerance = 0.01)
-  f <- 0.07 * w / d
-  poyhiaCL  <- 1000 * mean(cl * f) / mean(w)      # mL/min/kg
-  poyhiaVss <- mean(vss * f)
-  expect_equal(poyhiaCL, 14.5, tolerance = 0.005)
-  expect_equal(poyhiaVss, 3.46, tolerance = 0.005)
-  # Kirvela 1996 control medians, x 0.07 / 0.05; Liukas 2011 unchanged
-  pooledCL  <- (9 * poyhiaCL  + 10 * 16.7 * 1.4 + 11 * 11.9) / 30
-  pooledVss <- (9 * poyhiaVss + 10 * 2.39 * 1.4 + 11 * 3.7) / 30
+  drawnUp <- c(5.25, 5.5, 6.0, 5.5, 5.25, 4.0, 4.0, 4.0, 4.0)
+  expect_equal(round(drawnUp * base / trihydrate, 1), d)
+  # The papers' "0.05 mg/kg free base" is 0.07 mg/kg of the trihydrate, rounded
+  expect_equal(round(0.07 * base / trihydrate, 2), 0.05)
+  poyhiaCL  <- 1000 * mean(cl) / mean(w) * toHCl      # mL/min/kg
+  poyhiaVss <- mean(vss) * toHCl
+  expect_equal(poyhiaCL, 12.2, tolerance = 0.005)
+  expect_equal(poyhiaVss, 2.90, tolerance = 0.005)
+  # Kirvela 1996 control medians and Liukas 2011's youngest group, likewise
+  pooledCL  <- (9 * poyhiaCL  + 10 * 1000 * 1.10 / 66 * toHCl + 11 * 11.9 * toHCl) / 30
+  pooledVss <- (9 * poyhiaVss + 10 * 2.39 * toHCl + 11 * 3.7 * toHCl) / 30
   p <- oxycodone(70, 170, 30, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(1000 * p$cl1 / 70, pooledCL, tolerance = 0.005)
   expect_equal((p$v1 + p$v2) / 70, pooledVss, tolerance = 0.005)
@@ -31,27 +37,44 @@ test_that("the pooled disposition is on the hydrochloride dose basis", {
   expect_equal(p$bioavailability_PO, pooledCL / 19.7, tolerance = 0.005)
 })
 
+test_that("Liukas 2011 divided by the base, not the 5 mg of hydrochloride", {
+  # Table II (CL, mL/min/kg; AUC, ug.min/mL, mean and SD) and Table I
+  # (weight, mean and SD).  A mean CL/kg cannot be less than dose /
+  # mean(AUC x weight), so the dose divided by is at most mean CL/kg x
+  # (mean AUC x mean weight + SD(AUC) x SD(weight)).
+  cl <- c(11.9, 8.6, 8.6, 7.9)
+  auc <- c(5.0, 6.4, 6.9, 9.0); aucSD <- c(1.3, 1.2, 1.7, 2.2)
+  w <- c(81, 83, 82, 68); wSD <- c(14, 9, 13, 8)
+  maxDose <- cl * (auc * w + aucSD * wSD) / 1000      # mg
+  expect_equal(round(maxDose[2], 2), 4.66)
+  # To second order, the mean CL/kg expected on the 4.48 mg of base is the
+  # reported one within 3%; on 5 mg it is more than 10% high in every group.
+  expected <- function(dose) 1000 * dose / (auc * w) * (1 + (aucSD / auc)^2) * (1 + (wSD / w)^2)
+  expect_true(all(abs(expected(5 * 315.37 / 351.83) / cl - 1) < 0.03))
+  expect_true(all(expected(5) / cl > 1.10))
+})
+
 test_that("returns the pooled per-kilogram parameters with weight scaling", {
   # Switch off: per-kilogram values linear in total weight.  70 kg, 30 y, so
   # the age factor is 1; a blank creatinine at 30 y gives CKD-EPI eGFR above
   # 100, so the renal factor is 1.
   actual <- oxycodone(70, 170, 30, "male", adjustToFFM = FALSE)
-  vss <- 3.51 * 70
+  vss <- 3.27 * 70
   expected <- list(
     PK = list(
       default = list(
         v1 = 0.131 * vss,
         v2 = (1 - 0.131) * vss,
         v3 = 1,
-        cl1 = 0.0165 * 70,
-        cl2 = 2.33 * 0.0165 * 70,
+        cl1 = 0.0147 * 70,
+        cl2 = 2.33 * 0.0147 * 70,
         cl3 = 0,
         ka_PO = 0.01,
-        bioavailability_PO = 0.84,
+        bioavailability_PO = 0.75,
         tlag_PO = 0
       )
     ),
-    tPeak = 12.09,
+    tPeak = 12.36,
     MEAC = 12,
     typical = 14.4,
     upperTypical = 24,
@@ -72,11 +95,11 @@ test_that("scales to fat-free mass for a 120 kg man", {
   # 120 kg, 170 cm male.  FFM ratio 1.3049067 (Al-Sallami), so volumes
   # x 1.3049067 and the reference clearance x 1.3049067^0.75 = 1.2209126.
   actual <- oxycodone(120, 170, 30, "male")$PK$default
-  vss <- 3.51 * 70 * 1.3049067
+  vss <- 3.27 * 70 * 1.3049067
   expect_equal(actual$v1, 0.131 * vss, tolerance = 1e-5)
   expect_equal(actual$v2, (1 - 0.131) * vss, tolerance = 1e-5)
-  expect_equal(actual$cl1, 0.0165 * 70 * 1.2209126, tolerance = 1e-5)
-  expect_equal(actual$cl2, 2.33 * 0.0165 * 70 * 1.2209126, tolerance = 1e-5)
+  expect_equal(actual$cl1, 0.0147 * 70 * 1.2209126, tolerance = 1e-5)
+  expect_equal(actual$cl2, 2.33 * 0.0147 * 70 * 1.2209126, tolerance = 1e-5)
 })
 
 test_that("clearance falls with age above 30 years (Liukas 2011)", {
@@ -106,13 +129,14 @@ test_that("renal failure reduces clearance by a quarter (Kirvela 1996)", {
   expect_equal(esrd$v1 + esrd$v2, ref$v1 + ref$v2)
 })
 
-test_that("follows Liukas's age effect, above Liukas's own level", {
+test_that("follows Liukas's age effect, within 8% of Liukas's own level", {
   # Table I and II of Liukas 2011, mean weight, height, age; three groups
-  # mostly men, the oldest mostly women.  Observed mL/min/kg.  Liukas's
-  # clearances are on the hydrochloride as given; the pooled level is 39%
-  # above its young group's once Poyhia and Kirvela are put on that basis
-  # (see DOSE BASIS in the drug file), so the model runs 15-35% above every
-  # group, and the age effect, relative to the youngest group, is within 15%.
+  # mostly men, the oldest mostly women.  Observed mL/min/kg, computed on the
+  # base and put on the hydrochloride (see DOSE BASIS in the drug file).  The
+  # pooled level is 11% above Liukas's young group's, so the model runs within
+  # 8% of every group, and the age effect, relative to the youngest group, is
+  # within 15%.
+  toHCl <- 351.83 / 315.37
   groups <- list(
     list(w = 81, h = 177, a = 27.1, s = "male",   cl = 11.9),
     list(w = 83, h = 169, a = 66.3, s = "male",   cl = 8.6),
@@ -121,16 +145,16 @@ test_that("follows Liukas's age effect, above Liukas's own level", {
   )
   ratio <- vapply(groups, function(g) {
     p <- oxycodone(g$w, g$h, g$a, g$s)$PK$default
-    1000 * p$cl1 / g$w / g$cl
+    1000 * p$cl1 / g$w / (g$cl * toHCl)
   }, numeric(1))
-  expect_equal(ratio, c(1.308, 1.353, 1.250, 1.152), tolerance = 0.002)
+  expect_equal(ratio, c(1.044, 1.080, 0.999, 0.920), tolerance = 0.002)
   expect_equal(ratio / ratio[1], rep(1, 4), tolerance = 0.15)
 })
 
-test_that("the terminal half-life is 3.3 h in the reference adult", {
+test_that("the terminal half-life is 3.4 h in the reference adult", {
   p <- getDrugPK("oxycodone", 70, 170, 30, "male",
                  getDrugDefaults("oxycodone"))$PK$default
-  expect_equal(log(2) / p$lambda_2 / 60, 3.28, tolerance = 0.01)
+  expect_equal(log(2) / p$lambda_2 / 60, 3.43, tolerance = 0.01)
   # And ke0 is Lalovic's t1/2 ke0 of 11 min
   expect_equal(p$ke0, log(2) / 11, tolerance = 0.001)
 })
@@ -192,11 +216,17 @@ test_that("the Pregnant field changes nothing: Kokki 2012 against this model (R/
   # does not name `pregnant`, so getDrugPK() never passes it.
   expect_false("pregnant" %in% names(formals(oxycodone)))
   # Kokki 2012's labouring women, median 82 kg, 161 cm, 29 y: CL 0.92 L/min,
-  # Vss 95 + 100 L.  This model's non-pregnant values for that woman:
+  # Vss 95 + 100 L, on the Oxanest (trihydrate) dose (Steven L. Shafer,
+  # 2026-10-29), so on this model's hydrochloride basis:
+  toHCl <- 351.83 / 405.87
+  expect_equal(round(0.92 * toHCl, 2), 0.80)
+  expect_equal(round(195 * toHCl), 169)
+  # This model's non-pregnant values for that woman:
   pk <- oxycodone(82, 161, 29, "female")$PK$default
-  expect_equal(round(pk$cl1, 2), 1.03)
-  expect_equal(round(0.92 / pk$cl1, 2), 0.89)
-  expect_equal(round(195 / (pk$v1 + pk$v2), 2), 0.92)
+  expect_equal(round(pk$cl1, 2), 0.92)
+  expect_equal(round(pk$v1 + pk$v2), 197)
+  expect_equal(round(0.92 * toHCl / pk$cl1, 2), 0.87)
+  expect_equal(round(195 * toHCl / (pk$v1 + pk$v2), 2), 0.86)
 })
 
 test_that("intravenous infusion and target-controlled infusion are offered (issue #131)", {
