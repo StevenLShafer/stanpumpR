@@ -194,7 +194,7 @@ alternativeModelColor <- function(color, amount = 0.45) {
 #'
 #' `adjustToFFM` is accepted for the uniform signature and ignored: the model
 #' carries its own lean-body-mass covariate, James's, kept deliberately (see
-#' above).  The same arithmetic is written out, and then overwritten, at the top of R/drugs_propofol.R.
+#' above).
 #'
 #' `pregnant` applies the same factor as the library's propofol model:
 #' clearance x PROPOFOL_PREGNANCY_CL_FACTOR (Gin 1990 and 1991; see

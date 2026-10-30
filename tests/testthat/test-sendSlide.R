@@ -169,7 +169,7 @@ test_that("the deck has the whole plot on the first slide and then one slide per
   email <- generateEmail(
     values, "a@b.c", built$plot$plotObject, built$plot$allResults, built$plot$plotResults,
     height = built$plot$plotHeight, width = 800, slide = 3,
-    drugs = built$drugs, drugDefaults = getDrugDefaultsGlobal(FALSE)
+    drugs = built$drugs
   )
   expect_true(file.exists(email$pptxfileName))
   expect_true(file.exists(email$pngfileName))

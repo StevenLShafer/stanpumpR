@@ -9,7 +9,6 @@ sendSlide <- function(
   width,
   slide,
   drugs,
-  drugDefaults,
   email_username,
   email_password
 )
@@ -27,7 +26,7 @@ sendSlide <- function(
       stop("Email password missing")
     }
 
-    emailData <- generateEmail(values, recipient, plotObject, allResults, plotResults, height, width, slide, drugs, drugDefaults)
+    emailData <- generateEmail(values, recipient, plotObject, allResults, plotResults, height, width, slide, drugs)
 
     outputComments("Sending email")
 
@@ -58,7 +57,7 @@ sendSlide <- function(
   })
 }
 
-generateEmail <- function(values, recipient, plotObject, allResults, plotResults, height, width, slide, drugs, drugDefaults) {
+generateEmail <- function(values, recipient, plotObject, allResults, plotResults, height, width, slide, drugs) {
   title <- paste("stanpumpR simulation on", format(Sys.time()))
   DT <- values$DT
   url <- values$url
