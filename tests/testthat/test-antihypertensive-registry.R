@@ -26,7 +26,7 @@ VALIDATION <- c("none", "in_population", "external_population")
 IMPLEMENTED_ANTIHYPERTENSIVES <- c(
   "clevidipine", "fenoldopamPediatric", "carvedilol", "azilsartan",
   "chlorthalidone", "hydrochlorothiazide", "lisinopril", "olmesartan",
-  "valsartan", "benazepril", "enalapril")
+  "valsartan", "benazepril", "enalapril", "fosinopril")
 # "observed" is a measured summary statistic -- a Cmax, a median tmax, a
 # urinary recovery -- rather than an estimate of a model parameter.  Added
 # 2026-10-20 for Kaiser 1989, where such numbers CHECK a derived vector
@@ -69,21 +69,31 @@ test_that("exactly two records are externally validated, and which two", {
   # count and a set rather than being loosened, which is why each new claim
   # has had to come here and say so.
   #
-  # The two are different KINDS of external validation, and the distinction
-  # is worth keeping: clevidipine's check is against a second paper's own
-  # DERIVATION of quantities the implemented record must derive, while
-  # enalapril's is against MEASUREMENTS -- Arafat 2005's metabolite peaks of
-  # 54.8 and 57.2 ng/mL, which the model reproduces at 55.7, and which settle
-  # a dose-basis ambiguity its own source leaves open.
+  # The three are different KINDS of external check, and the distinctions are
+  # worth keeping: clevidipine's is against a second paper's own DERIVATION of
+  # quantities the implemented record must derive; enalapril's is against
+  # MEASUREMENTS -- Arafat 2005's metabolite peaks of 54.8 and 57.2 ng/mL,
+  # which the model reproduces at 55.7, and which settle a dose-basis
+  # ambiguity its own source leaves open; and fosinopril's (2026-10-29) is the
+  # first that DISAGREES -- Singhvi 1988's healthy volunteers, through the
+  # Murdoch review, exposed 40% below the model for the same intravenous dose,
+  # the SAME factor on the 5-minute concentration and on the area, so the two
+  # studies agree on the shape and differ on the clearance.  A status of
+  # external_population records that an outside population was compared, not
+  # that it agreed: section 18.7 of docs/antihypertensives.md states the
+  # disagreement rather than reconciling it, as the benazepril/Sun 1994 and
+  # enalaprilat/Arafat area comparisons also do.
   validated <- registry[registry$external_validation_status != "none", ]
-  expect_equal(nrow(validated), 2)
+  expect_equal(nrow(validated), 3)
   expect_setequal(validated$model_id,
                   c("clevidipine__emulsion__iv__healthy_men__concentration__ericsson1999",
-                    "enalapril__ir_tablet__oral__healthy_adults__concentration_and_urine__faisal2019"))
+                    "enalapril__ir_tablet__oral__healthy_adults__concentration_and_urine__faisal2019",
+                    "fosinopril__ir_tablet__oral__renal_impairment__concentration__hui1991"))
   expect_true(all(validated$external_validation_status == "external_population"))
-  # Both are records the library actually plots: an external check is only
+  # All three are records the library actually plots: an external check is only
   # worth the name against a curve someone sees.
-  expect_setequal(validated$stanpumpr_drug, c("clevidipine", "enalapril"))
+  expect_setequal(validated$stanpumpr_drug,
+                  c("clevidipine", "enalapril", "fosinopril"))
   # The validating study is its own record, read in full and NOT implemented:
   # the library plots one clevidipine curve, the 25-subject population one.
   ext <- registry[registry$model_id ==
@@ -417,6 +427,7 @@ test_that("an uncertainty keeps the type its source names, or says it was not re
                   c("not_reported",
                     "standard error",
                     "approximate standard error",
+                    "standard error of the mean between subjects",
                     "standard error of the mean, %",
                     "relative standard error, %",
                     "standard deviation between subjects"))
@@ -624,5 +635,28 @@ test_that("the antihypertensives help page names every drug in the category", {
              "Thirteen", "Fourteen", "Fifteen")
   expect_true(grepl(paste(words[length(drugs) - 5],
                           "antihypertensives are in the drug library"),
+                    page, fixed = TRUE))
+  # The page states the same count THREE more times, and counting only the
+  # first sentence is what let the others drift: on 2026-10-29 fosinopril made
+  # line 3 say twelve while two other sentences still said nine and eleven
+  # (CodeRabbit on PR #621 caught two of the three; the external-check
+  # sentence had been stale since enalapril).  So count all of them.
+  # Indexed by the number itself rather than by an offset, so a count that
+  # falls below six (the externally checked records) cannot index backwards.
+  Word <- c("One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight",
+            "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen")
+  word <- tolower(Word)
+  expect_true(grepl(paste(word[length(drugs)], "implemented models"),
+                    page, fixed = TRUE))
+  # Every drug but the two the page counts as already present when it was
+  # written has "joined this page since", in a sentence that says so twice.
+  joined <- length(drugs) - 2
+  expect_true(grepl(paste0(Word[joined], " drugs have joined this page"),
+                    page, fixed = TRUE))
+  expect_true(grepl(paste("All", word[joined], "now plot a concentration"),
+                    page, fixed = TRUE))
+  # And the count of externally checked records, from the registry itself
+  checked <- sum(registry$external_validation_status != "none")
+  expect_true(grepl(paste(Word[checked], "records have since acquired"),
                     page, fixed = TRUE))
 })

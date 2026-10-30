@@ -1322,7 +1322,7 @@ different reason and so calls for a different next action.
 | **enalapril** | Implemented, 2026-10-20 | Faisal 2019. Needed an **engine**, not more evidence: repeated eigenvalues (14.3, built in 16) |
 | **losartan** | **Refuted**, not merely underdetermined | Lo 1995, full text read; it prints one area where two are needed (§15) |
 | **captopril** | **Not pursued** — wrong structure | Out of clinical use, by the maintainer's decision; and saturable enzyme binding makes a linear fit the wrong structure, not an approximation |
-| **fosinopril** | **Not pursued** — not identifiable | Out of clinical use, by the maintainer's decision; and its sources give three independent numbers where two compartments need four |
+| **fosinopril** | ✅ Implemented, 2026-10-29 | Hui 1991, full text. Six printed numbers, closed **linearly**; the not-pursued verdict was wrong twice over (§18) |
 | **benazepril** | ✅ Implemented, 2026-10-20 | Kaiser 1989, full text. Derived; plotted as benazeprilat (§15) |
 
 ### 14.1 Three implementations, three different lessons
@@ -1396,7 +1396,8 @@ the reported 2.1 h; EXP3174's gives 2.46 h against the reported 6.3 h. Neither
 moiety is one-compartment on these numbers, so the quoted volumes belong to a
 multi-compartment fit, and the abstract supplies three numbers per moiety where
 two compartments need four — **the same arithmetic that rules out esmolol's
-abstract (section 4) and fosinopril's (section 14.4).** The full text's
+abstract (section 4)** — and that was wrongly thought to rule out fosinopril's
+sources too, until section 18 applied it to the right paper. The full text's
 compartmental tables would settle it, and would also answer a question the
 abstract raises: whether the oral conversion fraction differs from the
 intravenous one, which first-pass metabolism to EXP3174 would imply.
@@ -1461,6 +1462,11 @@ disagree with the paper's own figures.** Testing them costs an afternoon and
 turns a blocker into a documented rounding decision.
 
 ### 14.4 Two drugs not pursued, and why that is still a record
+
+> **Half of this section was wrong, and section 18 replaces the fosinopril half.**
+> Fosinopril is in clinical use and its disposition *is* identifiable; both of
+> the reasons recorded below failed. The text is kept because the shape of the
+> mistake is worth more than the conclusion was.
 
 Captopril and fosinopril are out of clinical use, which is the maintainer's call
 and the sufficient reason. But an unpursued drug that looks merely unexamined
@@ -1947,3 +1953,407 @@ not print a parameter is not a paper that does not print it.** The derivation
 was sound and validated, and it was still the wrong thing to implement once
 the fitted value was in hand.
 
+## 18. Fosinopril: a verdict that was wrong twice, and a linear solve (2026-10-29)
+
+Fosinopril sat in the registry as **not pursued**, on two stated reasons. Steven
+L. Shafer reversed it on 2026-10-29 and settled the design. Both reasons had
+failed, and they failed in different ways, which is why this section exists.
+
+The first was clinical: *"fosinopril is no longer in clinical use."* It is — as
+a generic ACE inhibitor. Nothing more to say about that one except that a
+clinical premise is as much a claim as a numerical one, and section 14.4 had
+recorded it as "the maintainer's call and the sufficient reason" without it ever
+being checked.
+
+The second is the interesting one, because the arithmetic in it was *correct*.
+
+### 18.1 The right check, applied to the wrong paper
+
+The registry row said the identifiability check of section 4 "was applied before
+they were read" — an admission, in its own text, of what had gone wrong. The
+reasoning given was about **Gehr 1993**: a clearance, a steady-state volume, a
+mean residence time and a terminal half-life, where the residence time is the
+volume over the clearance, so three independent numbers and not the four two
+compartments need. That is right about Gehr. It was then carried to **Hui 1991**,
+which nobody had opened.
+
+Hui is a different kind of paper. Its Table IV prints **six** numbers per group —
+initial volume of distribution, clearance, steady-state volume, and three
+half-lives — which is exactly the six a three-compartment model has.
+
+> **A section 4 verdict is about one source's printed numbers, not about a drug.**
+> Applying it to a paper nobody has read, or carrying one paper's verdict to
+> another, is not applying it at all. This is the same mistake section 16 records
+> from the other direction, where enalapril's parameterisation was called
+> "ambiguous" on a parameter table whose own prose resolved it; and section 17's,
+> where an abstract that omitted clevidipine's V1 was taken for a paper that
+> omitted it. Three sections, one failure mode: **a judgment about a document,
+> formed without the document.**
+
+### 18.2 The solve is linear, which is why six numbers are enough
+
+Six numbers for six parameters is necessary and not sufficient — the system
+could still be nonlinear and ill-posed. It is not, and Hui's own Methods are
+what make it tractable, because they define the two derived quantities:
+
+> Area under the curve was calculated as A/α + B/β + C/γ, and the initial volume
+> of distribution (V_init) as Dose/(A + B + C).
+
+Fix the exponents from the half-lives and the three intercepts satisfy **three
+linear equations**: their sum is dose over the initial volume, their first moment
+is the area (dose over clearance), and their second moment is the mean residence
+time times the area — and the residence time is the steady-state volume over the
+clearance. One `solve()`, no search, no starting values. The intercepts then go
+through `threeCompartmentFromTriexponential()`, the helper propranolol already
+used.
+
+At the normal-renal-function group (3.1 L, 26.5 mL/min, 10.2 L, 0.2/2.1/12.4 h)
+and the 7500 mcg dose:
+
+| | |
+|---|---|
+| A, B, C | 1299.8, 1055.6, 63.9 ng/mL — all positive |
+| V₁, V₂, V₃ | 3.10, 2.43, 4.67 L |
+| CL, Q₂, Q₃ | 26.5, 71.7, 5.47 mL/min |
+
+every micro rate constant positive.
+
+### 18.3 Conditioning: 729 corners, 729 admissible models
+
+Section 3.3 rejected esmolol's decomposition for conditioning rather than
+identifiability, so this one was put through the same test — and it is the
+strongest result the test has produced. The solve was repeated at **all 3⁶ = 729
+corners** of Hui's printed ± SEM box, including a distribution half-life at 0.1
+and 0.3 h where its standard error is half the estimate itself. **Every one of
+the 729 gives a physically admissible mammillary model.** None is refused.
+
+| | Span over the box |
+|---|---|
+| V₁ 2.70–3.50 L | 1.30× |
+| CL 23.5–29.5 mL/min | 1.26× |
+| V₂ 1.04–4.18 L | 4.03× |
+| Q₂ 29.0–193.6 mL/min | 6.66× |
+| V₃ 2.78–6.57 L | 2.36× |
+| Q₃ 2.74–10.45 mL/min | 3.81× |
+
+V₁ and CL move only as much as their own standard errors, because they are
+*inputs*; the derived distribution parameters are soft, Q₂ worst because it is
+driven almost entirely by that distribution half-life. V₂ + V₃ is pinned, being
+the steady-state volume minus V₁. So the **area** and the first minutes are firm
+and the split of the middle phase is not — and for a drug absorbed over three
+hours, almost nothing a user looks at depends on that split.
+
+### 18.4 The covariate must plateau, and the label says the opposite
+
+Hui's four groups, creatinine clearance in mL/min/1.73 m² against total
+clearance in mL/min: **98.8 → 26.5, 59.6 → 14.6, 31.8 → 13.7, 16.3 → 18.2.**
+
+Clearance falls 42% from normal to impaired, which Hui's own analysis of
+variance calls significant at p < 0.001 — and is then **flat**, with no
+relationship to creatinine clearance within 11 to 72 (r = 0.23) and the *severe*
+group the highest of the three. Figure 4 gives the mechanism: hepatic clearance
+is 63%, 79% and 85% of body clearance in the three impaired groups, so as
+filtration falls the hepatobiliary route carries more of a smaller total. Shafer
+was explicit that a proportional renal term is therefore wrong.
+
+The implemented covariate is a two-plateau ramp on Cockcroft-Gault indexed to
+1.73 m², every number in it read from a source: **26.5 mL/min at a creatinine
+clearance of 80 and above** — the US label's own boundary for normal renal
+function — falling to **15.5 mL/min at 59.6 and below**, the unweighted mean of
+the three impaired group means at the mild group's own creatinine clearance,
+linear across the interval between, which neither source measures. The mean is
+unweighted because Table IV prints no per-cell subject count.
+
+**And the label contradicts the paper it rests on.** It says that over a
+creatinine clearance of 10 to 80 "the clearance of fosinoprilat does not differ
+appreciably from normal, because of the large contribution of hepatobiliary
+elimination", and that only below 10 is total clearance about half of normal.
+The two reconcile only if that sentence means flatness *across* 10 to 80 rather
+than equality *with* normal — which the label's own arithmetic supports, since it
+puts healthy body clearance at 26 to 39 mL/min and half of that is about 15.5,
+and which is also the only reading on which the label's two sentences agree with
+each other. That reading is an inference, and neither document states it.
+
+**Settled by Steven L. Shafer on 2026-10-29: keep Hui's halving**, which is what
+the model does. The conflict stays on the record rather than being written out of
+it, because two rules it illustrates are worth having.
+
+The narrow one: **where a label's prose and the study it rests on disagree, the
+study's numbers are what a simulation can be built on, and the prose is what the
+user has to be warned about.** A label sentence is a regulatory summary across
+studies, written to guide dosing, so "does not differ appreciably" is a clinical
+judgment; Hui's 42% at p < 0.001 is a measurement.
+
+The general one, which Shafer stated the same day and which is now a rule in
+`AGENTS.md`: **a label is frozen at approval, so a finding published after its
+date outranks it.** Labels are written on the best science of their day, and
+afterwards the science advances and the label does not — not because anyone
+thinks it still right, but because asking the FDA to change a label exposes a
+company to fresh scrutiny of matters it believed settled. There is a standing
+disincentive to revise.
+
+Fosinopril shows the sharp edge of that, and it is the reason to state it here
+rather than only in the abstract. The archived label reads **"Revised:
+10/2021"** — thirty years after Hui — and its renal-impairment paragraph is
+still the 1991-era summary of Hui itself. **A revision date is not a review
+date.** The date on the front of a label tells you when some part of it changed,
+not which parts were revisited, so it must never be read as evidence that a
+particular paragraph reflects current science. Note which way the chronology
+runs here: Hui *precedes* the label and underlies it, so what settles this case
+is the narrow rule rather than the general one. The general rule is why the
+label's other statements — dialysis, hepatic impairment, the paediatric
+equivalence — are *recorded* rather than treated as authority, and why a
+post-1991 fosinopril study **that addressed the same question** would outrank
+any of them, if one is ever found. The qualifier matters: the rule is about a
+label's standing as current science, not a comparison of dates, so a later paper
+that does not speak to the claim does not displace it.
+
+So the help page says plainly that a reader comparing this curve with the label
+should expect the label to predict no change down to a creatinine clearance of
+10, and this curve to follow the measurements instead.
+
+### 18.5 What holding the structure fixed buys
+
+Table IV's initial volumes (3.1 to 4.2 L) and steady-state volumes (8.8 to
+13.0 L) show no trend worth modelling, so the volumes and both intercompartmental
+clearances are held at the normal group's and **only the elimination clearance
+carries the covariate**.
+
+That is not merely parsimony; it is testable, because the model is then never
+told the impaired half-lives. At the impaired plateau it **predicts a terminal
+half-life of 14.7 h** against Hui's measured 14.0, 14.1 and 16.9 (mean 15.0) —
+within 2% — and a second phase of 2.9 h against his 3.1, 3.9, 3.1.
+
+Hui's own statistics separate the two, and the weaker one should not be sold as
+the stronger. He found the distribution and elimination (β) half-lives
+*significantly* lower in normal renal function, so the second-phase match
+reproduces an established difference, on the phase carrying 68% of the area. He
+did **not** report the terminal half-life as significantly different — Table IV
+marks it with no significance symbol and the text's list of what differed omits
+it — so 14.7 against 15.0 is a match to a trend. **A prediction is only as good
+as the effect it predicts is real**, which is a question for the source's
+statistics and not for the arithmetic.
+
+This is worth generalising. The alternative implementation — re-deriving the
+whole vector at the impaired clearance from the same V_init, V_ss and half-lives
+— is the more obvious one, and it is wrong: it holds the half-lives fixed *by
+construction* and moves the distribution parameters instead, which is the
+opposite of what Table IV shows. The first draft did exactly that, and the test
+written for the header's claim is what caught it. **A header that states a
+consequence the code does not produce is a test waiting to be written.**
+
+### 18.6 Absorption: the correction, and two ways to get a bioavailability wrong
+
+Hui gave the oral dose only to his *impaired* patients, so the absorption of a
+patient with normal renal function comes from **Singhvi 1988** (*Br J Clin
+Pharmacol* 25:9-15, PMID 2967089): nine healthy men, 20 to 34, in a three-way
+crossover of intravenous fosinoprilat 7.5 mg and two oral 10 mg doses of
+fosinopril sodium, capsule and solution. Oral absorption 32% and 36%;
+**bioavailability of fosinoprilat 25% and 29%**.
+
+`ka` 0.2987 /h puts the peak at 2.95 h, the midpoint of the 2.8 to 3.1 h the
+Murdoch review quotes for a 10 mg dose, corroborated by the label's
+dose-independent "approximately 3 hours". Bioavailability is the capsule's
+**0.29, read** - the capsule because the product is a tablet and because Hui
+dosed one too. On Hui's clearance that gives a peak of 131 ng/mL and a 24-hour
+area of 1257 ng·h/mL.
+
+**The first draft derived 0.26 instead, and it was wrong twice over.** An
+external review (CodeRabbit, on PR #621) raised the first error; running it down
+exposed the second, which is the one worth carrying forward. The draft set F by
+making the model reproduce two figures the review quotes for Singhvi's oral
+dose, a peak of 99 to 140 mcg/L and a 24-hour area of 1035 to 1132 mcg/L·h.
+
+**1. Those are total radioactivity, not fosinoprilat**, although the review
+labels them "plasma fosinoprilat". Only about 75% of plasma radioactivity after
+an oral dose is the diacid; the rest is an inactive beta-glucuronide (15 to 20%)
+and a monohydroxy analogue (about 5%). Singhvi's own abstract settles it
+arithmetically, and this is checkable without his tables: 0.75 × 1035-1132 =
+776-849 ng·h/mL falls inside the **762-884** his own bioavailability (25 to 29%)
+and his own clearance (39 mL/min) imply for the diacid over the same 0-24 h
+window. Three numbers from one abstract triangulate it. (`F × dose / CL` gives
+801-929 for the *total* area, of which his clearance leaves 95.1% inside 24 h.
+A first version of this paragraph wrote 737-855, truncating with **Hui's** 92%
+share: a faster clearance leaves less area beyond 24 h, so **the truncation
+factor belongs to the patient being described.**) **A secondary source can relabel an analyte**, and for
+a radiolabel study that is the error to expect, because the paper reports both
+quantities and a reviewer has to pick one.
+
+**2. Even with the right analyte, deriving F that way is a category error** -
+and this is the general lesson. **Bioavailability is clearance-independent by
+construction.** Singhvi's is a within-subject crossover, F =
+(AUC_po/D_po)/(AUC_iv/D_iv), so the subject's clearance cancels out of it.
+Forcing a model to reproduce *one* study's oral exposure while it runs on
+*another's* clearance therefore counts the difference between the populations
+twice: Singhvi's oral area is small because he cleared the drug 1.47-fold
+faster, and charging that to a smaller F makes every patient's curve wrong by
+that factor. **The quantity to read is F; the quantity to let the model compute
+is the exposure.** The same trap waits for any drug whose disposition and
+absorption come from different studies, which in this library is most oral
+drugs with an intravenous source.
+
+Note what this does to the "coincidence of two offsetting discrepancies" the
+previous version of this section was rather pleased with. The coincidence was an
+artifact of the error, not an insight: 0.72 × 0.34 ≈ 0.25 only because the
+clearance ratio had been applied twice, once by mistake and once by arithmetic.
+**A coincidence that needs an error to exist is a symptom, not a curiosity** -
+and a reason to re-derive rather than to admire it.
+
+**Hui's own crossover is the corroboration, and it runs a little lower.** He
+gives 22.5, 22.0 and 27.9% in the three impaired groups, against the same
+patients' own intravenous doses with the same assay as the disposition. Those sit
+below the healthy capsule's 29% - the mild group by 2.4 of its own standard
+errors - and he reports no relationship between bioavailability and renal
+function. So the fair reading is that impairment leaves the **extent** of
+absorption broadly alone, which is what Shafer's design rests on and what the
+gut hydrolysis predicts, while impaired patients may run somewhat below the
+value used.
+
+The **rate** is not modelled either, and the reason is better than the one this
+section first gave. It said Hui's impaired patients absorbed more slowly, citing
+a peak at 4.0 to 4.2 h. Shafer asked the obvious question - *slower clearance
+also delays the peak; what is the evidence, and slower than what?* - and the
+answer is that there is none.
+
+**A later peak is not a slower input.** Hold ka at the healthy value, lower only
+the clearance to the impaired plateau, and the model *predicts* a peak at 3.7 to
+3.9 h against the observed 4.0, 4.0 and 4.2 - essentially the whole shift, from
+clearance alone. The residual would need ka at 85 to 92% of healthy, inside the
+scatter of 4.0 +/- 0.0 to 4.2 +/- 0.5 h in groups of four to six. And the
+comparator was *Singhvi's* healthy volunteers: Hui's normal group had no oral
+dose, so the comparison was cross-study across a 1.47-fold clearance difference.
+
+**The quantity that would be evidence contradicts his own tmax.** Mean
+absorption time is MRT_po - MRT_iv within each group, hence clearance-independent
+- for a first-order input MAT = 1/ka exactly. His 7.1, 11.1 and 12.3 h imply
+peaks at 5.7 to 7.6 h; he observed 4.0 to 4.2. The paper's two absorption
+descriptors disagree by nearly two-fold.
+
+**And MAT is the weaker of them, for a reason worth stating as a rule.** Shafer,
+on seeing this: *"a difference between two numbers is a fraught measurement. The
+variance of the difference is the sum of the variances of the individual numbers,
+so the difference between two means can be easily dwarfed by the variance."*
+
+| | mild | moderate | severe |
+|---|---|---|---|
+| MRT after the oral dose | 18.2 ± 2.3 | 22.7 ± 3.5 | 26.2 ± 6.8 |
+| MRT after the intravenous dose | 11.1 ± 2.0 | 11.6 ± 0.8 | 13.8 ± 2.7 |
+| MAT, as printed | 7.1 ± 1.3 | 11.1 ± 3.0 | 12.3 ± 4.4 |
+| SEM if the two were independent | 3.05 | 3.59 | 7.32 |
+
+Two things fall out. **Hui did it correctly**: his printed standard errors are
+*smaller* than the independent sum, which is the signature of pairing - the same
+patients in both arms, implied correlations 0.83, 0.70 and 0.93 - so he computed
+MAT per subject and his numbers are honest. Comparing a printed SEM of a
+difference against `sqrt(se1^2 + se2^2)` is the diagnostic for which case you
+have, and it is worth running on any difference a paper prints as a result.
+
+**But even so, the trend his text claims is not in his numbers.** "Mean
+absorption times were longer in patients with moderate or severe impairment"
+tests out at t = 1.22 (mild to moderate), 0.23 (moderate to severe) and 1.13
+(mild to severe). None reaches 1.3 standard errors. And the model's own MAT is
+not a measurement to test against: 1/ka = 3.35 h, where ka was set to a
+time-to-peak *midpoint* quoted in a review, so it carries no standard error at
+all.
+
+So there is **no supported absorption-rate finding in this paper**: not from
+tmax, not from MAT against healthy, and not from MAT across impairment. The same
+caution applies elsewhere in this document with the opposite sign - benazepril's
+entire two-compartment derivation rests on `AUC(0-inf) - AUC(0-24h)`, whose two
+areas come from n = 45 and n = 60 and so are *not* paired, which is exactly why
+§15 calls its 25% uncertainty a floor rather than a bound.
+
+**The general point is worth keeping**, because it will recur for every oral
+drug whose renal covariate is on clearance: **tmax is a property of the whole
+system, not of the input.** Before attributing a shifted peak to absorption,
+hold the input fixed and move only what the covariate moves - the model will
+tell you how much of the shift it already explains.
+
+### 18.7 Only clearance is real, and this is what that looks like
+
+Hui's "normal renal function" group were hypertensive patients averaging 61
+years, and their 26.5 mL/min sits at the **bottom** of the label's healthy range
+of 26 to 39. Singhvi's nine young men were at the **top**: his abstract reports
+clearance 39 mL/min, renal clearance 17, Vss 10 L and protein binding about 95%.
+
+So the two sources differ **1.47-fold on the clearance and agree on the volume**
+- the reverse of the pattern `AGENTS.md` predicts, and a reminder that it is a
+tendency and not a law. That factor is the whole of the difference between them,
+and now that F is read rather than fitted it propagates where it should instead
+of hiding inside F: the model predicts an oral AUC(0-inf) of 1368 ng·h/mL
+against the 929 that Singhvi's own F and clearance give for his capsule, a ratio
+of exactly 39/26.5.
+
+Neither is wrong. Both clearances are inside the range the label itself quotes
+for healthy subjects, and the model is deliberately the older patient, because
+an oral antihypertensive is prescribed to people more like Hui's hypertensive
+61-year-olds than like Singhvi's volunteers.
+
+**But 1.47 is the ratio of the AREAS, not of the curve** - and the first version
+of this section said a user should expect the whole curve 1.5-fold high, in the
+sentence that *replaced* the tmax error of §18.6. That is worth recording as a
+pair, because it is the same mistake twice in one revision: treating a clearance
+ratio as though it scaled a concentration-time curve. Run the model at Singhvi's
+39 mL/min instead of Hui's 26.5:
+
+| | ratio, Hui to Singhvi |
+|---|---|
+| AUC(0-inf) | x1.47 |
+| AUC(0-24 h) | x1.42 |
+| Cmax | x1.21 |
+| tmax | 2.95 h -> 2.43 h |
+
+The peak arrives before much drug has been eliminated, so it feels the clearance
+far less than the area does, and the peak *time* moves as well. **A clearance
+ratio is not a curve ratio**, which is "tmax is a property of the whole system"
+seen from the other side. Expect about 1.5-fold on an area and about 1.2-fold on
+a peak.
+
+(The earlier draft of this section also claimed the oral curve was "about right"
+because a derived F absorbed the difference; that was the category error of
+§18.6, and the difference is real.)
+
+### 18.9 Three judgement calls, named and approved
+
+Placed last because they are the ones a future reader should be able to
+reopen. None is forced by the sources, each moves the curve, and each was put
+to Steven L. Shafer explicitly; he accepted all three on 2026-10-29.
+
+| Choice | The alternative, and what it would cost |
+|---|---|
+| **F = 0.29**, Singhvi's capsule | His solution's 0.25, or Hui's impaired mean of 24.1% - both read; the solution lowers the whole curve 14% |
+| **Ramp anchored at CrCl 80**, the label's boundary for normal renal function | Hui's normal-group mean of 98.8, which would put a 50-year-old man at an indexed 92.9 - on the ramp, 6% below the published parameters |
+| **A 70-year-old with a blank creatinine sits ~16% below normal**, from Cockcroft-Gault's age term alone | Nothing, except not carrying the age term - but the label reports no pharmacokinetic difference in men 65 to 74, so this is the consequence most likely to surprise a user |
+
+The third is not a modelling choice so much as a consequence worth stating: a
+blank Serum creatinine means the assumed normal creatinine **for the patient's
+age**, not an assumed normal clearance, and on this drug's plateau-and-ramp that
+difference is visible. The help page says so in those words.
+
+### 18.8 One drug, and why not the enalapril pattern
+
+Fosinopril is an ester prodrug and fosinoprilat is the active diacid, so the
+arrangement could have been enalapril's — parent and metabolite as two drugs.
+It is not, on Shafer's decision:
+
+> Fosinoprilat itself does not exist as a drug, other than for research (e.g.,
+> Hui). … The model should assume that it instantly converts to fosinoprilat in
+> the stomach, and is then absorbed. There is no reason that impaired patients
+> would have impaired absorption, and since the ester hydrolysis occurs in the
+> gut prior to absorption, that would not be affected.
+
+So one drug, dosed orally as prescribed, with the conversion taken as complete
+before absorption — which the label supports (rapid hydrolysis by esterases in
+the gastrointestinal mucosa, absorption in the proximal small intestine, under 1%
+of plasma radioactivity intact prodrug). The library carries `enalaprilat` only
+because Faisal 2019 fitted both moieties from one dataset and the metabolite has
+its own measurable disposition; fosinoprilat has no such role to play.
+
+The dose basis is **read, not computed**: Hui's Methods state the intravenous
+dose as 7.5 mg of fosinoprilat "equimolar to 10 mg fosinopril sodium", so 0.75 mg
+per mg. Preferred to molar arithmetic because the disposition was fitted to that
+dose and the paper's bioavailability percentages are quoted against the 10 mg
+fosinopril dose, so one factor keeps the whole chain on one basis — and because
+the label prints a molecular weight for the salt (585.65) but none for the diacid,
+so there would be nothing here to check the arithmetic against. The two agree to
+under 1% anyway.

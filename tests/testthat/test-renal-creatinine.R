@@ -29,6 +29,15 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 # creatinine and rejected it, so its signature does not name
                 # the covariate and this test asserts that it ignores it.
                 "lisinopril", "olmesartan",
+                # Fosinopril (Hui 1991) is the odd one of the three: its
+                # covariate is Cockcroft-Gault indexed to 1.73 m^2, the unit
+                # Hui reports, and it is a two-plateau RAMP rather than a
+                # power -- clearance halves from normal renal function to
+                # impaired and is then flat, because the hepatobiliary route
+                # takes 63 to 85% of a shrinking total.  So unlike every other
+                # renal model here, a large change in creatinine can leave its
+                # clearance untouched (docs/antihypertensives.md section 18).
+                "fosinopril",
                 # Grasela and Sheiner's Equation 7 (R/drugs_procainamide.R)
                 "procainamide",
                 # Cockcroft-Gault on clearance (R/drugs_digoxin.R, Yukawa 2001)

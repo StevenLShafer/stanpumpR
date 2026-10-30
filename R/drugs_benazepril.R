@@ -28,7 +28,10 @@
 #
 # Two compartments need four numbers and a non-compartmental paper usually
 # prints three (a clearance, a volume and a terminal half-life), which is why
-# esmolol, fosinopril and losartan all fail the section 4 identifiability test.
+# esmolol and losartan both fail the section 4 identifiability test.  (Fosinopril
+# was listed here too until 2026-10-29, wrongly: the check had been applied to
+# Gehr 1993 and carried to Hui 1991, which nobody had opened.  Hui prints six
+# numbers and closes linearly, and the drug is implemented.)
 # Benazeprilat escapes it because Kaiser's Table 2 prints FOUR:
 #
 #     t1/2,alpha  2.7 h          AUC(0-24h)  2649 (pmol/g).h

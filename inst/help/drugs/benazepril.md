@@ -8,7 +8,7 @@ Parameters come from Kaiser, Ackermann, Brechbühler and Dieterle (*Biopharm Dru
 
 Kaiser analysed the data "by model independent methods" — trapezoidal areas, half-lives by regression — and fitted **no compartmental model at all**. The vector above is therefore *derived*, as [clevidipine's](help:drugs/clevidipine) is.
 
-Normally that would be impossible. Two compartments need four independent numbers, and a non-compartmental paper usually prints three: a clearance, a volume and a terminal half-life. That is exactly why [esmolol, fosinopril and losartan](help:models/antihypertensives) could not be built from their sources. Benazeprilat escapes because Kaiser's Table 2 prints **four**:
+Normally that would be impossible. Two compartments need four independent numbers, and a non-compartmental paper usually prints three: a clearance, a volume and a terminal half-life. That is exactly why [esmolol and losartan](help:models/antihypertensives) could not be built from their sources. Benazeprilat escapes because Kaiser's Table 2 prints **four**:
 
 | | |
 |---|---|
