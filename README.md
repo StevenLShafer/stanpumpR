@@ -22,6 +22,8 @@ It is hoped that stanpumpR will encourage device manufacturers to develop the ne
 
 stanpumpR is a collaborative research project. Individuals interested in adding drugs, pharmacokinetic data sets, or new algorithms to stanpumpR are encourage to contact Dr. Shafer. It is hoped that eventually each drug in the stanpumpR library will be maintained by an investigator, who will assume responsibility for keeping the pharmacokinetics as up-to-date as possible. See [`docs/adding-a-drug.md`](docs/adding-a-drug.md) for the technical steps.
 
+Since October 2026 the library also has an agentic AI step to keep its pharmacokinetics state of the art. A scheduled Claude Code routine, running in the cloud, searches PubMed every week for new pharmacokinetic studies of every drug in the library, screens them, and emails the maintainer the promising ones with its own assessment of what each would add. The maintainer decides what to incorporate; the routine changes no code. See [`docs/literature-watch.md`](docs/literature-watch.md).
+
 Near-term future developments in stanpumpR will include
 
 1. More oral models. stanpumpR simulates PO, SL, IM, IN and regional (RA) delivery by first-order absorption; the oral opioids in the library (morphine, hydromorphone, methadone, oxycodone, oxymorphone, codeine, hydrocodone, tramadol) each rest on one published fit, and better-characterised absorption models are welcome.
@@ -37,6 +39,9 @@ Near-term future developments in stanpumpR will include
 - [`docs/adding-a-drug.md`](docs/adding-a-drug.md) — the touch points for contributing a
   new drug, including its help page.
 - [`docs/users-guide.md`](docs/users-guide.md) — a draft user's guide written from the code.
+- [`docs/literature-watch.md`](docs/literature-watch.md) — the weekly AI literature watch that
+  searches PubMed for new pharmacokinetic studies of the library's drugs and emails the
+  maintainer the promising ones.
 - [stanpumpr.io/api](https://stanpumpr.io/api) — the Simulation API: send a dose table,
   covariates and a duration (over HTTP from any language, or from R) and get the concentrations
   back as JSON, CSV, Excel or XML. The page is rendered from

@@ -55,6 +55,14 @@ A new drug touches **four** files, including a help page. None of the engine cod
 > Prerequisite: read the [architecture map](architecture.md) first if you haven't. You only
 > need to understand the *drug library* pattern, not the closed-form solver.
 
+## Where candidates come from
+
+Papers reach the library two ways: a contributor brings one, or the weekly
+[literature watch](literature-watch.md) finds it. The watch is a scheduled Claude Code
+routine that searches PubMed for new pharmacokinetic studies of every drug already in the
+CSV and emails the maintainer the promising ones with an assessment. Either way the work
+below is the same, and it starts from the full paper, never from an abstract.
+
 ## 1. The model — `R/drugs_<name>.R`
 
 Create a file named after the drug (lowercase, matching the CSV `Drug` value). Export one
