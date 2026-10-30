@@ -1,6 +1,6 @@
 ## What to look for
 
-Lamotrigine 200 mg twice daily and carbamazepine 400 mg twice daily together from the start, with carbamazepine stopped on day 28. Tick **Include antiseizure drug interactions**.
+Lamotrigine 200 mg twice daily and carbamazepine 400 mg twice daily together from the start, with carbamazepine stopped on day 28. **Include antiseizure drug interactions** is ticked under Graph Options (the scenario ticks it).
 
 While carbamazepine is on board, lamotrigine sits near 4.6 mg/L with the interaction, against about 7.2 mg/L on the lighter *no interactions* line: carbamazepine induces the UGT enzyme that clears lamotrigine, so lamotrigine runs about a third lower. When carbamazepine is stopped on day 28 its own level falls away within a few days, but lamotrigine does not jump back at once. It climbs over the next ten to fourteen days, because the extra enzyme carbamazepine built has to be degraded, and that has a half-life of about 3.6 days. By day 42 lamotrigine has rejoined its uninduced line near 7 mg/L.
 
