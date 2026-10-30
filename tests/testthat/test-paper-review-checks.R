@@ -51,9 +51,13 @@ test_that("CL, Vss and both half-lives close two compartments; wide SEs make it 
   expect_equal(closed$v1, expected$v1 * 70, tolerance = 1e-12)
   expect_equal(closed$cl2, expected$cl2 * 70, tolerance = 1e-12)
   expect_true(closed$perKg)
-  # The closed model reproduces the half-lives it was built from.
+  # The closed model reproduces the half-lives it was built from.  (Checked
+  # by row: an all() over an empty table passed while the two-compartment
+  # model could not be built at all, which the first live review found.)
   t <- well$consistency
-  expect_true(all(t$status[t$quantity %in% c("t_half_1", "t_half_2", "Vss", "CL")] == "matches"))
+  expect_false(is.null(t))
+  for (q in c("t_half_1", "t_half_2", "Vss", "CL"))
+    expect_equal(t$status[t$quantity == q], "matches", info = q)
 })
 
 test_that("CL, Vss and the terminal half-life alone are underdetermined (the hydralazine case)", {

@@ -357,11 +357,16 @@ paperReviewServer <- function(input, output, session)
     pk <- s$sim$pk$PK$default
     lambda <- c(pk$lambda_1, pk$lambda_2, pk$lambda_3)
     lambda <- lambda[lambda > 0]
-    data.frame(
-      Quantity = c("V1 (L)", "V2 (L)", "V3 (L)", "CL (L/min)", "Q2 (L/min)", "Q3 (L/min)",
+    # Only the compartments the model has: an absent one carries a
+    # placeholder volume with no clearance into it.
+    has <- c(TRUE, isTRUE(pk$cl2 > 0), isTRUE(pk$cl3 > 0))
+    t <- data.frame(
+      Quantity = c(c("V1 (L)", "V2 (L)", "V3 (L)")[has], "CL (L/min)",
+                   c("Q2 (L/min)", "Q3 (L/min)")[has[2:3]],
                    paste0("Half-life ", seq_along(lambda), " (min)"), "ke0 (1/min)"),
-      Value = signif(c(pk$v1, pk$v2, pk$v3, pk$cl1, pk$cl2, pk$cl3, log(2) / lambda,
-                       if (isTRUE(pk$ke0 > 0)) pk$ke0 else NA), 4))
+      Value = signif(c(c(pk$v1, pk$v2, pk$v3)[has], pk$cl1, c(pk$cl2, pk$cl3)[has[2:3]],
+                       log(2) / lambda, if (isTRUE(pk$ke0 > 0)) pk$ke0 else NA), 4))
+    t[!is.na(t$Value), ]
   }, caption = "The model for this patient")
 }
 

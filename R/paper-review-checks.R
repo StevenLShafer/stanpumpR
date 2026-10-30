@@ -331,8 +331,9 @@ paperReviewIdentifiability <- function(extraction)
     ka <- param("ka"); F <- param("F"); lag <- param("tlag")
     apparent <- identical(extraction$structure$apparent_oral, "yes")
     if (is.na(ka$value))
-      add("error", "No absorption rate constant is printed",
-          "The extravascular route cannot be simulated.", structureLoc)
+      add("concern", "No absorption rate constant is printed",
+          "The extravascular route cannot be simulated; the disposition model still can.",
+          structureLoc)
     if (is.na(F$value) && !apparent)
       add("concern", "No bioavailability is printed and the parameters are not marked apparent",
           "The simulator takes F = 1, which is right only if the volumes and clearances are CL/F and V/F.",
@@ -423,15 +424,18 @@ paperReviewConsistency <- function(extraction, drug, reference)
   run <- tryCatch(paperReviewQuietly(function()
     getDrugPK(drug$defaults$Drug, reference$weight, reference$height, reference$age,
               reference$sex, drug$defaults, model = drug$model)),
-    error = function(e) NULL)
-  if (is.null(run))
+    error = function(e) e)
+  # The reason goes to the report, which only the user sees.
+  if (inherits(run, "error"))
     return(list(table = NULL, findings = list(paperReviewFinding(section, "error",
-      "stanpumpR could not build the model from the printed parameters"))))
+      "stanpumpR could not build the model from the printed parameters",
+      conditionMessage(run)))))
   pk <- run$PK$default
   n <- paperReviewNum(extraction$structure$compartments)
   lambda <- c(pk$lambda_1, pk$lambda_2, pk$lambda_3)[seq_len(n)]
   coef <- c(pk$p_coef_bolus_l1, pk$p_coef_bolus_l2, pk$p_coef_bolus_l3)[seq_len(n)]
-  vss <- pk$v1 + pk$v2 + pk$v3
+  # The placeholder volume of an absent compartment is not part of Vss.
+  vss <- pk$v1 + (if (n >= 2) pk$v2 else 0) + (if (n >= 3) pk$v3 else 0)
   ke0 <- if (isTRUE(pk$ke0 > 0)) pk$ke0 else NA_real_
   tPeak <- if (is.finite(ke0)) effectSitePeakTime(coef, lambda, ke0) else NA_real_
 
@@ -838,9 +842,9 @@ paperReviewFigureChecks <- function(extraction, drug, reference)
     }
     maximum <- max(c(points$time, doses$doses$Time), na.rm = TRUE) * 1.05 + 1
     sim <- tryCatch(paperReviewSimulate(drug, reference, doses$doses, maximum),
-                    error = function(e) NULL)
-    if (is.null(sim)) {
-      add("error", paste(id, "could not be simulated"), "", f$location)
+                    error = function(e) e)
+    if (inherits(sim, "error")) {
+      add("error", paste(id, "could not be simulated"), conditionMessage(sim), f$location)
       next
     }
     points$predicted <- stats::approx(sim$curve$Time, sim$curve$Cp, points$time, rule = 2)$y

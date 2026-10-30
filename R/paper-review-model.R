@@ -17,6 +17,12 @@
 # reference: the population's central values, or these.
 PAPER_REVIEW_DEFAULT_PATIENT <- list(weight = 70, height = 170, age = 40, sex = "male")
 
+# An absent compartment, as the library writes one (R/drugs_esmolol.R,
+# R/drugs_hydralazine.R): a placeholder volume with no clearance into it.
+# getDrugPK() refuses a zero volume.  The first live review (a
+# two-compartment paper) found that this module had written zeros.
+PAPER_REVIEW_ABSENT_VOLUME <- 1
+
 # stanpumpR's Concentration.Units (amount per mL) for each printed unit, and
 # the factor that turns the printed number into that unit.
 PAPER_REVIEW_CONCENTRATION_MAP <- list(
@@ -275,22 +281,27 @@ paperReviewDisposition <- function(extraction, patient, closed = NULL)
     w <- patient$weight / reference$weight
     pk <- function(x, role, perKg) x * m(role) * if (perKg) w else 1
     perKg <- isTRUE(closed$perKg)
-    return(list(v1 = pk(closed$v1, "V1", perKg), v2 = pk(closed$v2 %or% 0, "V2", perKg),
-                v3 = pk(closed$v3 %or% 0, "V3", perKg),
+    out <- list(v1 = pk(closed$v1, "V1", perKg),
+                v2 = if (is.null(closed$v2)) PAPER_REVIEW_ABSENT_VOLUME else pk(closed$v2, "V2", perKg),
+                v3 = if (is.null(closed$v3)) PAPER_REVIEW_ABSENT_VOLUME else pk(closed$v3, "V3", perKg),
                 cl1 = pk(closed$cl1, "CL", perKg), cl2 = pk(closed$cl2 %or% 0, "Q2", perKg),
-                cl3 = pk(closed$cl3 %or% 0, "Q3", perKg), problems = problems))
+                cl3 = pk(closed$cl3 %or% 0, "Q3", perKg))
+    out$problems <- problems
+    return(out)
   }
   v1 <- val("V1")
   if (!is.na(val("CL")) || is.na(val("k10"))) {
     out <- list(v1 = v1, cl1 = val("CL"),
-                v2 = if (n >= 2) val("V2") else 0, cl2 = if (n >= 2) val("Q2") else 0,
-                v3 = if (n >= 3) val("V3") else 0, cl3 = if (n >= 3) val("Q3") else 0)
+                v2 = if (n >= 2) val("V2") else PAPER_REVIEW_ABSENT_VOLUME,
+                cl2 = if (n >= 2) val("Q2") else 0,
+                v3 = if (n >= 3) val("V3") else PAPER_REVIEW_ABSENT_VOLUME,
+                cl3 = if (n >= 3) val("Q3") else 0)
   } else {
     k12 <- if (n >= 2) val("k12") else 0; k21 <- if (n >= 2) val("k21") else 1
     k13 <- if (n >= 3) val("k13") else 0; k31 <- if (n >= 3) val("k31") else 1
     out <- list(v1 = v1, cl1 = val("k10") * v1,
-                v2 = if (n >= 2) k12 * v1 / k21 else 0, cl2 = k12 * v1,
-                v3 = if (n >= 3) k13 * v1 / k31 else 0, cl3 = k13 * v1)
+                v2 = if (n >= 2) k12 * v1 / k21 else PAPER_REVIEW_ABSENT_VOLUME, cl2 = k12 * v1,
+                v3 = if (n >= 3) k13 * v1 / k31 else PAPER_REVIEW_ABSENT_VOLUME, cl3 = k13 * v1)
   }
   out$problems <- unique(problems)
   out

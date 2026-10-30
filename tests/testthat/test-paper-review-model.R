@@ -55,6 +55,34 @@ test_that("the in-memory drug simulates exactly the analytical triexponential", 
   expect_equal(sim$curve$Time[which.max(sim$curve$Ce)], 3, tolerance = 0.05)
 })
 
+test_that("one- and two-compartment models build and simulate (an absent compartment is not a zero volume)", {
+  # The first live review, of a two-compartment paper, failed here:
+  # getDrugPK() refuses v3 = 0, and the library writes an absent compartment
+  # as a placeholder volume with no clearance into it.
+  two <- jsonlite::fromJSON(test_path("fixtures", "paper-review-well-conditioned.json"),
+                            simplifyVector = FALSE)
+  review <- paperReviewRun(two)
+  expect_true(review$drug$ok)
+  set <- review$drug$model$PK$default
+  expect_equal(set$v3, PAPER_REVIEW_ABSENT_VOLUME)
+  expect_equal(set$cl3, 0)
+  ref <- review$reference
+  sim <- paperReviewSimulate(review$drug, ref,
+                             data.frame(Time = c(0, 3), Dose = c(1, 0), Units = c("mg/kg/min", "mg/kg/min")), 120)
+  expect_gt(max(sim$curve$Cp), 0)
+  expect_false(any(vapply(review$findings, function(f) grepl("could not", f$title), logical(1))))
+
+  one <- paperReviewExample()
+  one$structure$compartments <- 1
+  one$parameters <- Filter(function(p) p$role %in% c("CL", "V1"), one$parameters)
+  one$derived_quantities <- list(list(quantity = "t_half_terminal", value = log(2) * 8 / 1.2,
+    value_text = format(log(2) * 8 / 1.2, digits = 6), units = "min", statistic = "typical_value",
+    uncertainty = list(type = "not_reported"), location = "Table 3"))
+  r1 <- paperReviewRun(one)
+  expect_equal(r1$consistency$status, "matches")
+  expect_equal(r1$drug$model$PK$default$v2, PAPER_REVIEW_ABSENT_VOLUME)
+})
+
 test_that("the drug never takes a library drug's name, and getDrugPK still refuses unknown drugs", {
   ex <- paperReviewExample()
   ex$drug$name <- "propofol"
