@@ -249,10 +249,16 @@ be an object of equal-length columns:
   - An **infusion** is a rate (`mcg/kg/min`, `mg/hr`). It runs until the next
     rate for the same drug. Send a rate of 0 to stop it.
   - **Extravascular doses** carry their route: oral (`mg PO`), sublingual
-    (`mg SL`), intramuscular (`mg IM`), intranasal (`mcg IN`) and regional
-    anesthesia (`mg RA`).
+    (`mg SL`), intramuscular (`mg IM`), intranasal (`mcg IN`), subcutaneous
+    (`mg SC`, `IU SC`, `U SC`, and the insulin pump rate `U/hr SC`) and
+    regional anesthesia (`mg RA`).
+  - **Activity and salt units.** The heparins are dosed in IU and the insulins
+    and vasopressin in units (`U`); calcium's units name the salt
+    (`g chloride`, `mg/min gluconate`).
 - **Scheduled doses.** A unit ending in `qd`, `bid`, `tid`, `qid` or `q4h`
-  (`mg PO bid`) repeats the dose until the end of the simulation. A scheduled
+  (`mg PO bid`) repeats the dose until the end of the simulation; the oral
+  antiseizure drugs also take `qam` and `qpm` (independent morning and evening
+  slots), and the subcutaneous units `qwk` (weekly, `mg SC qwk`). A scheduled
   dose of 0 stops the sequence.
 - **Target-controlled infusion.** The units `Plasma target` and
   `Effect site target` ask for a target-controlled infusion (Shafer & Gregg,

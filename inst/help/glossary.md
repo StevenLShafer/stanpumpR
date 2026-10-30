@@ -22,9 +22,9 @@
 
 **CYP2C19.** A liver enzyme with common genetic variants that clears escitalopram and the S enantiomer of citalopram. The field in the Patient Profile changes those two drugs' clearance across the poor, intermediate, normal, rapid and ultrarapid phenotypes. See [Antidepressant models and their limits](help:models/antidepressants).
 
-**CYP2C9.** A liver enzyme with common genetic variants (the \*2 and \*3 alleles) that clears meloxicam and phenytoin. The field in the Patient Profile takes the diplotype, \*1/\*1 by default, and changes meloxicam's clearance and phenytoin's maximal elimination rate.
+**CYP2C9.** A liver enzyme with common genetic variants (the \*2 and \*3 alleles) that clears meloxicam, phenytoin and the vitamin-K antagonists. The field in the Patient Profile takes the diplotype, \*1/\*1 by default, and changes meloxicam's clearance, phenytoin's maximal elimination rate, and the clearance of warfarin, fluindione and acenocoumarol.
 
-**CYP2D6.** A liver enzyme with common genetic variants that forms the active metabolites of codeine, tramadol, hydrocodone and oxycodone, and clears aripiprazole, haloperidol and risperidone. The field in the Patient Profile scales that formation, and those clearances, across the poor, intermediate, normal and ultrarapid phenotypes. See [Active metabolites](help:models/metabolites).
+**CYP2D6.** A liver enzyme with common genetic variants that forms the active metabolites of codeine, tramadol, hydrocodone and oxycodone, and clears aripiprazole, haloperidol, risperidone and metoprolol. The field in the Patient Profile scales that formation, and those clearances, across the poor, intermediate, normal and ultrarapid phenotypes. See [Active metabolites](help:models/metabolites).
 
 **Dead space.** The part of each breath that does not reach the alveoli; 30 per cent of minute ventilation in the gas model.
 
@@ -80,7 +80,7 @@
 
 **Response surface.** A model of the combined effect of two drugs as a function of both concentrations. See [Propofol-opioid interaction](help:models/interaction).
 
-**Scheduled dose.** A dose whose unit ends in `qd`, `bid`, `tid`, `qid` or `q4h`, repeated every 24, 12, 8, 6 or 4 hours to the end of the plot. See [The dose table](help:dose-table).
+**Scheduled dose.** A dose whose unit ends in `qd`, `bid`, `tid`, `qid` or `q4h`, repeated every 24, 12, 8, 6 or 4 hours to the end of the plot; `qam` and `qpm` (the oral antiseizure drugs) are independent morning and evening slots, and `qwk` (subcutaneous) repeats weekly. See [The dose table](help:dose-table).
 
 **Second gas effect.** The faster rise of a second inhaled agent in the presence of nitrous oxide, because nitrous oxide's bulk uptake concentrates it.
 

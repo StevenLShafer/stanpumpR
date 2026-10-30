@@ -2,7 +2,7 @@ The dose table is the main way you talk to the program. It sits in a panel to th
 
 ## Columns
 
-**Drug.** Autocompletes from the drug library and accepts only names in it. Type a few letters and choose. Removing the drug name removes the row. The illicit-drug research models (diamorphine, cocaine, methamphetamine, LSD, psilocybin and MDMA) are offered only while **Show illicit drugs**, in the *Dose table* panel of the left sidebar, is ticked, and their names are shown in red.
+**Drug.** Autocompletes from the drug library and accepts only names in it. Type a few letters and choose. Removing the drug name removes the row. The illicit-drug research models (diamorphine, carfentanil, cocaine, methamphetamine, LSD, psilocybin, MDMA and GHB) are offered only while **Show illicit drugs**, in the *Dose table* panel of the left sidebar, is ticked, and their names are shown in red.
 
 **Time.** When it happens, in the **Time units** chosen in the *Time* panel of the left sidebar (the dose table's header says which: *Doses (times in hours)*). The field is forgiving:
 
@@ -26,7 +26,7 @@ A regimen written in days goes in most easily with the Time units set to days. D
 |---|---|---|
 | mass, or mass per kg | **bolus** at that time | `mg`, `mcg/kg` |
 | mass per minute or hour, with or without per kg | **infusion** from that time | `mcg/kg/min`, `mg/hr` |
-| mass with `PO`, `SL`, `IM`, `IN` or `RA` (regional anesthesia), the oral ones sometimes naming a form (`tablet`, `liquid`, `ER`, `DR`, `XR`) | **extravascular dose** at that time; see [absorption](help:models/absorption) | `mg PO`, `mg IN`, `mg RA`, `mg PO liquid` |
+| mass with `PO`, `SL`, `IM`, `IN`, `SC` (subcutaneous; also `IU SC` and `U SC`) or `RA` (regional anesthesia), the oral ones sometimes naming a form (`tablet`, `liquid`, `ER`, `DR`, `XR`) | **extravascular dose** at that time; see [absorption](help:models/absorption) | `mg PO`, `mg IN`, `mg RA`, `mg PO liquid` |
 | mass per day with `PO` | **oral rate**: the daily dose spread evenly over each day, from that time | `mg/day PO` (amiodarone) |
 | `mg/hr RA` | **perineural infusion** into the tissue depot, from that time | bupivacaine, ropivacaine, lidocaine |
 | `mg PE` and its rate and IM forms | **fosphenytoin**, in phenytoin sodium equivalents | `mg PE`, `mg PE/min`, `mg PE IM` (phenytoin) |
@@ -49,7 +49,7 @@ Per-kilogram units use the weight in the Patient Profile at the time of simulati
 
 ## Scheduled doses
 
-For drugs given on a schedule (the analgesic opioids, the oral analgesics and benzodiazepines, the antibiotics, the steroids, the antidepressants, antipsychotics, stimulants, antiseizure and antidiabetic drugs and ondansetron), their bolus, oral, sublingual, intramuscular, intranasal and subcutaneous units also come with the frequencies the drug is usually given at, from:
+For drugs given on a schedule (the analgesic opioids, the oral analgesics and benzodiazepines, the antibiotics, the steroids, the antidepressants, antipsychotics, stimulants, antiseizure, antidiabetic, anticoagulant and antihypertensive drugs, metoprolol and ondansetron; each drug's units say which), their bolus, oral, sublingual, intramuscular, intranasal and subcutaneous units also come with the frequencies the drug is usually given at, from:
 
 | Suffix | Meaning | Interval |
 |---|---|---|

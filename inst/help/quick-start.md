@@ -22,10 +22,10 @@ Open **Patient Profile** in the left sidebar. Enter age, weight, height and sex.
 
 <figure class="help-figure help-figure-narrow">
 <img src="stanpumpr-assets/help/quick-start-patient.png" alt="The Patient Profile panel: age with yr/mo buttons, weight with kg/lb and the ticked Adjust weight to fat-free mass box, height with in/cm, sex, CYP 2D6 and CYP 2C19 set to Normal, CYP 2C9 set to *1/*1, baseline serum osmolality of 280 mOsm/kg, and an empty Serum creatinine field">
-<figcaption>The Patient Profile panel for a 40-year-old man. Serum creatinine is left blank, so a normal value is assumed. Pregnant, disabled, appears only for women of child-bearing age.</figcaption>
+<figcaption>The Patient Profile panel for a 40-year-old man. Serum creatinine is left blank, so a normal value is assumed. The genotype, osmolality and creatinine fields are now shown only while a drug that reads them is in the dose table, and Pregnant only for a woman of 12 to 59.</figcaption>
 </figure>
 
-*Adjust weight to fat-free mass* is on by default. *CYP 2D6* sets the metaboliser phenotype for the drugs with active metabolites and some antipsychotics; *CYP 2C19* and *CYP 2C9* are read by the few drugs whose models depend on them. *Baseline serum osmolality* is read only by mannitol. *Serum creatinine* is optional and used by the renally cleared drugs; left blank, a normal value is assumed. *Pregnant*, for women of child-bearing age, is visible but disabled. See [Patient profile](help:patient-profile).
+*Adjust weight to fat-free mass* is on by default. The fields below are shown only while a drug that reads them is in the dose table. *CYP 2D6* sets the metaboliser phenotype for the drugs with active metabolites, some antipsychotics and metoprolol; *CYP 2C19*, *CYP 2C9*, *CYP 2B6*, *VKORC1* and *CYP4F2* are read by the few drugs whose models depend on them. *Baseline serum osmolality* is read only by mannitol. *Serum creatinine* is optional and used by the drugs with a renal covariate; left blank, a normal value is assumed. *Pregnant*, shown for a woman of 12 to 59, applies the documented changes of late pregnancy to the drugs whose models have them. See [Patient profile](help:patient-profile).
 
 ## 2. Enter the doses
 
@@ -38,7 +38,7 @@ The **Doses** table is in the panel to the right of the plot (the arrow at its t
 
 - A mass unit (`mg`, `mcg/kg`) makes the row a **bolus**.
 - A rate unit (`mcg/kg/min`, `mg/hr`) makes the row an **infusion** that runs until the next row for that drug changes it. To stop an infusion, add a row at the stop time with a dose of 0.
-- A unit with a route (`mg PO`, `mg IM`, `mg RA`) gives the dose by that route, and one ending in `qd`, `bid`, `tid`, `qid` or `q4h` (`mg PO bid`) repeats it on that schedule to the end of the plot.
+- A unit with a route (`mg PO`, `mg IM`, `mg RA`) gives the dose by that route, and one ending in `qd`, `bid`, `tid`, `qid` or `q4h` (`mg PO bid`), or `qam`/`qpm` (the oral antiseizure drugs) or `qwk` (subcutaneous), repeats it on that schedule to the end of the plot.
 
 Right-click a row to insert or remove rows. See [The dose table](help:dose-table).
 

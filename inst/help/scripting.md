@@ -48,7 +48,7 @@ head(results[results$Site %in% c("Plasma", "Effect Site"), ])
 
 `PK$PK$default` holds the volumes, clearances, rate constants, eigenvalues and ke0; `PK$tPeak` and `PK$reference` the time to peak effect and the citation.
 
-`getDrugPK()` also takes the covariates of the Patient Profile, each passed only to the models that use it: `creatinine` (serum creatinine in mg/dL; the default, `NULL`, is an assumed normal value for the patient's age and sex), `cyp2d6` (`"poor"`, `"intermediate"`, `"normal"`, the default, or `"ultrarapid"`), `cyp2c19` (the same, with `"rapid"`) and `cyp2c9` (a genotype from `"*1/*1"`, the default, to `"*3/*3"`), `osmolality` (mannitol's baseline) and `adjustToFFM` (`TRUE` scales the models to fat-free mass; see [Scaling to fat-free mass](help:models/fat-free-mass)). `simulateDrugsWithCovariates()` takes the same arguments.
+`getDrugPK()` also takes the covariates of the Patient Profile, each passed only to the models that use it: `creatinine` (serum creatinine in mg/dL; the default, `NULL`, is an assumed normal value for the patient's age and sex), `cyp2d6` (`"poor"`, `"intermediate"`, `"normal"`, the default, or `"ultrarapid"`), `cyp2c19` (the same, with `"rapid"`) and `cyp2c9` (a genotype from `"*1/*1"`, the default, to `"*3/*3"`), `cyp2b6` (methadone's phenotype), `vkorc1` and `cyp4f2` (the vitamin-K antagonists' genotypes), `pregnant` (`TRUE` for late pregnancy), `gestationalAge` (weeks at birth; `NULL` is term), `osmolality` (mannitol's baseline) and `adjustToFFM` (`TRUE` scales the models to fat-free mass; see [Scaling to fat-free mass](help:models/fat-free-mass)). `simulateDrugsWithCovariates()` takes the same arguments, plus `antiseizureInteractions`.
 
 `PK$endCe` is the drug's recovery threshold from the library, the value the [Drug Thresholds](help:drug-library) dialog edits in the app. With `plotRecovery = TRUE`, `simCpCe()` reports at each time how long the effect site would take to fall to it if all delivery stopped there: the `Recovery` column of `out$equiSpace`, and `out$max$Recovery`. Set `PK$endCe` before calling `simCpCe()` to time a different concentration; zero means no threshold, and the times are then all zero.
 
@@ -90,7 +90,7 @@ Two vignettes walk through these calls with plots: `vignette("stanpumpR-single-P
 
 ## Units
 
-Doses are converted using the drug's concentration units from the library: a drug plotted in mcg/mL has its doses converted to mg, one plotted in ng/mL to mcg, and mannitol, plotted as serum osmolality, to mOsm. Times are minutes. Weight is kilograms, height centimetres, age years.
+Doses are converted using the drug's concentration units from the library: a drug plotted in mcg/mL has its doses converted to mg, one plotted in ng/mL to mcg, one in pg/mL to ng, insulin and vasopressin units to milliunits, and mannitol, plotted as serum osmolality, to mOsm; an activity (IU/mL) is dosed in IU, and calcium and magnesium sulfate through their molecular weights to mmol. Times are minutes. Weight is kilograms, height centimetres, age years.
 
 ## The simulation window
 

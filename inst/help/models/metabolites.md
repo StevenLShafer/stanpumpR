@@ -1,4 +1,4 @@
-Several opioids, and a number of other drugs (amiodarone, aspirin, prednisone, three antidepressants and two antipsychotics), act partly or wholly through a metabolite the body forms from them. stanpumpR models this with a **metabolite link**: a drug's model may name another drug as its active metabolite, and then a dose of the parent produces a second curve for the metabolite, on the metabolite's own row.
+Several opioids, and a number of other drugs (amiodarone, aspirin, prednisone, three antidepressants, two antipsychotics and enalapril), act partly or wholly through a metabolite the body forms from them. stanpumpR models this with a **metabolite link**: a drug's model may name another drug as its active metabolite, and then a dose of the parent produces a second curve for the metabolite, on the metabolite's own row.
 
 ## Which drugs form which
 
@@ -15,6 +15,7 @@ Several opioids, and a number of other drugs (amiodarone, aspirin, prednisone, t
 | [aspirin](help:drugs/aspirin) | [salicylate](help:drugs/salicylate) | Not a prodrug: both are active, and neither has an effect site. All of aspirin's elimination forms salicylate, and 19.7% of each oral dose reaches the circulation already as salicylate (first pass). Oral only, the low-dose enteric-coated tablet. Not CYP2D6-dependent. |
 | [prednisone](help:drugs/prednisone) | [prednisolone](help:drugs/prednisolone) | A prodrug: prednisone has no effect site, and prednisolone is also a drug in its own right. The two interconvert; the one-way link is calibrated so that both exposures are exact and the shapes approximate. Oral only. Not CYP2D6-dependent. |
 | [risperidone](help:drugs/risperidone) | [hydroxyrisperidone](help:drugs/hydroxyrisperidone) | Not a prodrug: both are active, and neither has an effect site. Apparent oral parameters: all of risperidone's apparent clearance forms the metabolite, whose parameters are scaled by the unknown fraction formed, so hydroxyrisperidone cannot be dosed. Oral only. CYP2D6-dependent. |
+| [enalapril](help:drugs/enalapril) | [enalaprilat](help:drugs/enalaprilat) | A prodrug for its effect: enalaprilat is the ACE inhibitor, and neither has an effect site. Both moieties are absorbed or formed through chains of transit compartments, so the pair runs on its own exact engine (a matrix exponential of the whole system, `R/advanceTransitChain.R`), not through the convolution described below. |
 | [aripiprazole](help:drugs/aripiprazole) | [dehydroaripiprazole](help:drugs/dehydroaripiprazole) | Aripiprazole has an effect site (D2 receptor occupancy); the metabolite has none. Apparent oral parameters scaled as for risperidone, so dehydroaripiprazole cannot be dosed. Oral only. CYP2D6-dependent. |
 
 ## How it is computed

@@ -1,6 +1,6 @@
 ## Research models of drugs of abuse
 
-A few drugs in the library are **research models of drugs of abuse**. They are hidden until you turn on **Show illicit drugs** above the dose table, which is off by default and remembered between sessions, and when shown their names appear in red. A fresh session never opens with one, and they are never offered in the startup menu.
+A few drugs in the library are **research models of drugs of abuse**. They are hidden until you turn on **Show illicit drugs** in the *Dose table* panel of the left sidebar, which is off by default and remembered between sessions, and when shown their names appear in red. A fresh session never opens with one, and they are never offered in the startup menu.
 
 Every one of them plots a *modelled plasma concentration* for research and teaching. None of them is dosing advice, a safety threshold, an impairment or intoxication prediction, or a prediction for an individual. The published studies behind them used pharmaceutical material of known content in small groups of volunteers. Purity, adulterants, delivery losses, tolerance, interactions and disease routinely matter more, in the real world, than anything a concentration curve shows.
 
@@ -28,6 +28,7 @@ and a **parameter status**: *published fit*, *measured summary*, *derived approx
 | Drug | Analyte plotted | Routes offered | Routes recorded but not offered |
 |---|---|---|---|
 | [diamorphine](help:drugs/diamorphine) | parent diamorphine | intramuscular, intranasal | intravenous, smoked, oral |
+| [carfentanil](help:drugs/carfentanil) | parent carfentanil | intravenous | intranasal, smoked |
 | [cocaine](help:drugs/cocaine) | parent cocaine | intranasal | intravenous, oral, smoked |
 | [methamphetamine](help:drugs/methamphetamine) | parent d-methamphetamine | intranasal | intravenous, oral, smoked |
 | [LSD](help:drugs/LSD) | parent LSD | oral | intravenous |
@@ -37,7 +38,7 @@ and a **parameter status**: *published fit*, *measured summary*, *derived approx
 
 ### The pharmacokinetics, side by side
 
-These seven models differ from one another more than the rest of the library does: one compartment or two, linear elimination or saturable, a parent or a metabolite plotted, apparent parameters or absolute. The table below is built from the models themselves, at the reference adult (40 years, 70 kg, 170 cm, male) with *Adjust weight to fat-free mass* as the app ships it, so it cannot drift from the code. Each drug's own page gives the same parameters at six reference patients, with the source and its limits.
+These eight models differ from one another more than the rest of the library does: one compartment or two, linear elimination or saturable, a parent or a metabolite plotted, apparent parameters or absolute. The table below is built from the models themselves, at the reference adult (40 years, 70 kg, 170 cm, male) with *Adjust weight to fat-free mass* as the app ships it, so it cannot drift from the code. Each drug's own page gives the same parameters at six reference patients, with the source and its limits.
 
 <!-- generated: illicit-pk-table -->
 

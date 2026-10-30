@@ -8,15 +8,19 @@
 
 ## Concentrations
 
-Each drug is plotted in the concentration units given in the drug library: **mcg/mL** (micrograms per millilitre, equal to mg/L) or **ng/mL** (nanograms per millilitre, equal to mcg/L); exenatide, whose concentrations are a thousand times lower, is in **pg/mL** (picograms per millilitre, equal to ng/L). The inhaled agents are in **per cent of one atmosphere**, and MAC equivalents are dimensionless. Mannitol is plotted as the serum osmolality it produces, in **mOsm/kg**. The insulins, dosed in units, are plotted in **mcU/mL** (microunits per millilitre, equal to mU/L; about 6 pmol/L of human insulin). Each drug's page gives its unit; broadly:
+Each drug is plotted in the concentration units given in the drug library: **mcg/mL** (micrograms per millilitre, equal to mg/L) or **ng/mL** (nanograms per millilitre, equal to mcg/L); exenatide and lixisenatide, whose concentrations are a thousand times lower, are in **pg/mL** (picograms per millilitre, equal to ng/L). The inhaled agents are in **per cent of one atmosphere**, and MAC equivalents are dimensionless. Mannitol is plotted as the serum osmolality it produces, in **mOsm/kg**; calcium and magnesium sulfate as the rise in serum concentration, in **mmol/L**; the heparins as an activity, in **IU/mL**, or (heparin on bypass) as the activated clotting time in seconds; and warfarin, fluindione and acenocoumarol as the **INR**. The insulins and vasopressin, dosed in units, are plotted in **mcU/mL** (microunits per millilitre, equal to mU/L; about 6 pmol/L of human insulin). Each drug's page gives its unit; broadly:
 
 | Drugs | Plotted in |
 |---|---|
 | propofol, ketamine, midazolam, etomidate, remimazolam, morphine, pethidine, methadone, rocuronium, sugammadex, the local anesthetics, the antibiotics, hydrocortisone, methylprednisolone, amiodarone, and the oral analgesics and antiseizure drugs other than celecoxib and tiagabine | mcg/mL |
 | remifentanil, fentanyl, alfentanil, sufentanil, hydromorphone, oxycodone, codeine, hydrocodone, oxymorphone, buprenorphine, tramadol, oliceridine, dexmedetomidine, the benzodiazepines other than midazolam and remimazolam, zolpidem, neostigmine, glycopyrrolate, vecuronium, cisatracurium, naloxone, oxytocin, dexamethasone, prednisolone, prednisone, and the antidepressants, antipsychotics, stimulants and antiemetics; semaglutide, tirzepatide, liraglutide, empagliflozin, ertugliflozin, glyburide, linagliptin and vildagliptin | ng/mL |
 | metformin | mcg/mL |
-| exenatide | pg/mL |
-| the insulins | mcU/mL |
+| exenatide, lixisenatide | pg/mL |
+| the insulins, vasopressin | mcU/mL |
+| heparin, enoxaparin | IU/mL |
+| calcium, magnesium sulfate | mmol/L |
+| warfarin, fluindione, acenocoumarol | INR |
+| heparin on bypass (heparinCPB) | ACT, seconds |
 
 Internally, doses of a drug plotted in mcg/mL are converted to milligrams, doses of one plotted in ng/mL to micrograms, doses of one plotted in pg/mL to nanograms, and insulin units to milliunits before simulation; volumes are in litres, so concentration comes out in the plotted unit.
 
@@ -54,7 +58,7 @@ Some conversions that come up:
 
 ## Time
 
-The calculation works in minutes. Times are entered and displayed in the **Time units** chosen in the Time panel (minutes, hours, days or weeks), and the dose table also accepts `HH:MM`. Max time runs from an hour to a year (365 days, or 52 weeks), with choices that follow the unit. Infusion rates stay per minute or per hour whatever the time unit. See [Time display](help:time-display).
+The calculation works in minutes. Times are entered and displayed in the **Time units** chosen in the Time panel (minutes, hours, days or weeks), and the dose table also accepts `HH:MM`. Max time runs from five minutes to a year (365 days, or 52 weeks), with choices that follow the unit. Infusion rates stay per minute or per hour whatever the time unit. See [Time display](help:time-display).
 
 ## Rate constants and half-lives
 
