@@ -142,6 +142,52 @@ be another seam.
   for the minutes the extraction takes, which a local prototype tolerates and a
   shared deployment does not (Shiny `ExtendedTask` with `mirai` or `future`).
 
+## Setting up the API key
+
+For Shafer to do; no session handles the key itself.
+`paperReviewApiKey()` looks in this order: a key held in the session (the
+bring-your-own-key seam, unused today), then the `ANTHROPIC_API_KEY`
+environment variable, then `anthropic_api_key` in `config.yml`.
+
+**1. Create a key for this app only.**
+1. Sign in to the Anthropic Console with the account IntegrityAnalysis bills
+   to.
+2. Optional but worth it: create a workspace for this app (for example
+   "stanpumpR Paper Review"), so its usage is reported separately and can
+   carry its own spend limit.
+3. Under API keys, create a key in that workspace named, for example,
+   `stanpumpR-paper-review`. The Console shows it once: copy it straight into
+   step 2 or 3, and nowhere else (not into an email, a chat, or a file in a
+   repository).
+4. In the same account's settings, check that the organisation has not opted
+   in to sharing data for training and is not in the Development Partner
+   Program: Shafer's rule, "Claude is not allowed to learn from my models",
+   depends on it (`docs/paper-review-privacy.md` section 1a).
+
+**2. Use it locally.** Put it in your user-level R environment file, not in
+the project (this repository does not git-ignore a project `.Renviron`):
+1. In R, `file.edit("~/.Renviron")`.
+2. Add the line `ANTHROPIC_API_KEY=<the key>` and save.
+3. Restart R. Check it is set without printing it:
+   `nzchar(Sys.getenv("ANTHROPIC_API_KEY"))` should be `TRUE`.
+4. Run the app as in "Run it locally" above. (Alternatively put
+   `anthropic_api_key: "<the key>"` in the worktree's `config.yml`, which is
+   git-ignored.)
+
+**3. Use it on shinyapps.io.** shinyapps.io has no environment variables, so
+the key goes into the deployed `config.yml`:
+- *From GitHub Actions* (the way stanpumpR itself deploys): add a repository
+  secret, for example `PAPER_REVIEW_ANTHROPIC_API_KEY`, under Settings →
+  Secrets and variables → Actions. The paper-review deploy workflow (not yet
+  written) writes it into the `config.yml` it deploys as `anthropic_api_key`,
+  exactly as `shiny-deploy-production.yaml` writes `email_password`.
+- *By hand from your machine*: deploy with `config.yml` (git-ignored, holding
+  `anthropic_api_key`) in `appFiles`.
+
+Either way the key then sits in the app's bundle on Posit's servers, as the
+email password already does. Revoking it in the Console stops it everywhere;
+make a new key and redeploy to rotate it.
+
 ## Open decisions
 
 Questions only Shafer can answer, written here as they are asked
@@ -153,9 +199,15 @@ account at shinyapps.io. That provides sufficient bandwidth for the
 foreseeable future. I'll look into the privacy issues further. Claude is not
 allowed to learn from my models. Claude is allowed to see coarse metadata."
 
-1. `[decision]` **An API key.** A deployed app cannot run on a Claude Code
-   subscription allowance; it needs an Anthropic Console account and an API
-   key billed per token. Do you have one to use for this? (Asked 2026-10-30.)
+1. `[decided]` **An API key: yes.** Shafer, 2026-10-30, relayed by the parent
+   session: "Yes. It is used by IntegrityAnalysis. Not sure where it is." He
+   has an Anthropic Console account, the one his IntegrityAnalysis app
+   already bills to. The recommendation is a **separate key for this app**,
+   named for it, so that its spend can be seen and it can be revoked on its
+   own; the steps are in "Setting up the API key" below. No session looks for
+   the IntegrityAnalysis key or reads it from that app's files or
+   environment. Until the new key exists, development uses the fixtures and
+   "Try the example" only.
    At list price a review costs roughly the manuscript's tokens at $4 per
    million in and the extraction and thinking at $20 per million out: a
    20-page paper is perhaps 40-80 thousand input tokens and 10-30 thousand
@@ -177,10 +229,12 @@ allowed to learn from my models. Claude is allowed to see coarse metadata."
      instances. The app needs none: uploads, plots and downloads use
      temporary files that are deleted at once (the upload deletion is
      tested), and everything else is in session memory.
-   - The API key reaches the app as an environment variable set at deploy
-     time (`ANTHROPIC_API_KEY`), never in the bundle's code or in git. How it
-     is delivered to shinyapps.io is to be settled at the first deploy and
-     written here.
+   - The API key never goes in the code or in git. shinyapps.io has no
+     environment-variable setting (rsconnect's `envVars` is "currently
+     supported by Connect only"), so on the server the key arrives in the
+     deployed `config.yml` as `anthropic_api_key`, the way the existing
+     deploy already passes the email password; locally it comes from
+     `ANTHROPIC_API_KEY`. See "Setting up the API key" below.
    - The host keeps the app's stdout and stderr as its logs; the app writes
      nothing about a paper to either (tested).
    - One R process serves several sessions on shinyapps.io, so the
