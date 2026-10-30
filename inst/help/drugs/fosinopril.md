@@ -111,7 +111,7 @@ An absorption rate of **0.2987 per hour** puts the model's peak at 2.95 hours, t
 
 An earlier version of this model *derived* a bioavailability of 0.26, by making the curve reproduce two figures quoted for Singhvi's oral dose. That was wrong in two ways, and both are worth knowing if you ever check this page against the literature.
 
-**The two figures are total radioactivity, not fosinoprilat.** A peak of 99 to 140 mcg/L and a 24-hour area of 1035 to 1132 mcg/L·h are quoted in the Murdoch review as "plasma fosinoprilat", but only about **75%** of the plasma radioactivity after an oral dose is the active diacid — the rest is an inactive β-glucuronide (15 to 20%) and a monohydroxy analogue (about 5%). Singhvi's own numbers settle it arithmetically: 75% of that area is 776 to 849 ng·h/mL, which is just what his own bioavailability (25 to 29%) and his own clearance (39 mL/min) imply for the diacid, 737 to 855. For a radiolabel study this is the mislabelling to expect, because the paper reports both quantities.
+**The two figures are total radioactivity, not fosinoprilat.** A peak of 99 to 140 mcg/L and a 24-hour area of 1035 to 1132 mcg/L·h are quoted in the Murdoch review as "plasma fosinoprilat", but only about **75%** of the plasma radioactivity after an oral dose is the active diacid — the rest is an inactive β-glucuronide (15 to 20%) and a monohydroxy analogue (about 5%). Singhvi's own numbers settle it arithmetically: 75% of that area is 776 to 849 ng·h/mL, which falls inside the **762 to 884** that his own bioavailability (25 to 29%) and his own clearance (39 mL/min) imply for the diacid over the same 24 hours. (His bioavailability and clearance give 801 to 929 for the *total* area, of which his clearance leaves 95.1% inside 24 hours — an earlier version of this page truncated with Hui's 92% share instead, which belongs to a slower patient.) For a radiolabel study this is the mislabelling to expect, because the paper reports both quantities.
 
 **And bioavailability cannot be fitted that way at all.** It is clearance-independent by construction: Singhvi's is a within-subject crossover, so his subjects' clearance cancels out of it. Making the model reproduce *his* oral exposure while it runs on *Hui's* clearance therefore counts the difference between the two populations twice — his area is small because he cleared the drug quickly, and charging that to a smaller bioavailability would make every other patient's curve wrong. The quantity to read is the bioavailability; the quantity to let the model compute is the exposure.
 
@@ -123,7 +123,18 @@ Hui's "normal renal function" group were hypertensive patients averaging 61 year
 
 So the two sources differ **1.47-fold** on the one parameter that measures a physiological process, and agree on the volume. That factor is the whole of the difference between them, and it shows up where it should: this model predicts an oral area of 1368 ng·h/mL against the 929 that Singhvi's own bioavailability and clearance give for his capsule.
 
-Neither is wrong — both clearances are inside the range the label itself quotes for healthy subjects — and the model is deliberately the older patient, because an oral antihypertensive is prescribed to people more like Hui's hypertensive 61-year-olds than like Singhvi's volunteers. **Expect this curve to sit about 1.5-fold above a published healthy-volunteer concentration**, and do not read that as an error in either study.
+Neither is wrong — both clearances are inside the range the label itself quotes for healthy subjects — and the model is deliberately the older patient, because an oral antihypertensive is prescribed to people more like Hui's hypertensive 61-year-olds than like Singhvi's volunteers.
+
+But **1.47 is the ratio of the areas, not of the curve**, and an earlier version of this page said the whole curve would sit 1.5-fold high. A clearance change does not scale a concentration-time curve. Running this model at Singhvi's clearance instead of Hui's gives:
+
+| | ratio, Hui to Singhvi |
+|---|---|
+| AUC(0–∞) | ×1.47 |
+| AUC(0–24 h) | ×1.42 |
+| Peak concentration | ×1.21 |
+| Time to peak | 2.95 h → 2.43 h |
+
+The peak is reached before much drug has been eliminated, so it feels the clearance far less than the area does. **Expect about 1.5-fold on an area and about 1.2-fold on a peak**, and do not read either as an error in either study.
 
 The terminal half-life needs no such caveat. The model's 12.4 hours matches the label's "approximately 12 hours" in healthy subjects and its effective 11.5 hours for accumulation in hypertensive patients.
 

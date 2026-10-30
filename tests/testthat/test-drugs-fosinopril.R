@@ -331,6 +331,30 @@ test_that("the oral curve is Singhvi's F on Hui's clearance, 1.47-fold his", {
   expect_equal_rounded(929.5, singhvi, tolerance = 1e-3)
   expect_equal_rounded(CL_SINGHVI / CL_OBS, aucInf / singhvi, tolerance = 1e-6)
   expect_equal_rounded(1.4717, aucInf / singhvi, tolerance = 1e-4)
+
+  # A CLEARANCE RATIO IS NOT A CURVE RATIO.  The clearance scales the AREA
+  # exactly and the PEAK much less, because the peak arrives before much drug
+  # has been eliminated -- and it moves the peak time too.  Both documents said
+  # "expect the whole curve 1.5-fold high" until 2026-10-29; this pins what is
+  # actually true so the claim cannot drift back.
+  sing <- function(f) {                       # the same model at Singhvi's CL
+    k10 <- CL_SINGHVI/1000/hui$v1; k12 <- hui$cl2/hui$v1; k21 <- hui$cl2/hui$v2
+    k13 <- hui$cl3/hui$v1; k31 <- hui$cl3/hui$v3
+    a2 <- k10+k12+k21+k13+k31
+    a1 <- k10*k21+k10*k31+k21*k31+k12*k31+k13*k21
+    l <- sort(-Re(polyroot(c(k10*k21*k31, a1, a2, 1))), decreasing = TRUE)
+    cu2 <- vapply(seq_along(l), function(i) {
+      o <- l[-i]; (k21-l[i])*(k31-l[i])/(hui$v1*prod(o-l[i]))
+    }, numeric(1))
+    cp2 <- function(t) dose*ka*sum(cu2*(exp(-l*t)-exp(-ka*t))/(ka-l))
+    tm2 <- optimize(function(t) -cp2(t), c(1, 4000))$minimum
+    f(tm2, cp2)
+  }
+  tmaxS <- sing(function(tm, f) tm/60)
+  cmaxS <- sing(function(tm, f) f(tm))
+  expect_equal_rounded(2.43, tmaxS, tolerance = 5e-3)        # against Hui's 2.95
+  expect_equal_rounded(1.21, cp(tmax*60)/cmaxS, tolerance = 5e-3)   # peak ratio
+  expect_lt(cp(tmax*60)/cmaxS, aucInf/singhvi)               # peak feels it less
 })
 
 test_that("the bioavailability used is the capsule's, read, and Hui's is lower", {

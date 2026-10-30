@@ -2169,9 +2169,13 @@ labels them "plasma fosinoprilat". Only about 75% of plasma radioactivity after
 an oral dose is the diacid; the rest is an inactive beta-glucuronide (15 to 20%)
 and a monohydroxy analogue (about 5%). Singhvi's own abstract settles it
 arithmetically, and this is checkable without his tables: 0.75 × 1035-1132 =
-776-849 ng·h/mL, which is exactly the diacid area his own bioavailability (25 to
-29%) and his own clearance (39 mL/min) imply, 737-855. Three numbers from one
-abstract triangulate it. **A secondary source can relabel an analyte**, and for
+776-849 ng·h/mL falls inside the **762-884** his own bioavailability (25 to 29%)
+and his own clearance (39 mL/min) imply for the diacid over the same 0-24 h
+window. Three numbers from one abstract triangulate it. (`F × dose / CL` gives
+801-929 for the *total* area, of which his clearance leaves 95.1% inside 24 h.
+A first version of this paragraph wrote 737-855, truncating with **Hui's** 92%
+share: a faster clearance leaves less area beyond 24 h, so **the truncation
+factor belongs to the patient being described.**) **A secondary source can relabel an analyte**, and for
 a radiolabel study that is the error to expect, because the paper reports both
 quantities and a reviewer has to pick one.
 
@@ -2283,12 +2287,31 @@ of exactly 39/26.5.
 Neither is wrong. Both clearances are inside the range the label itself quotes
 for healthy subjects, and the model is deliberately the older patient, because
 an oral antihypertensive is prescribed to people more like Hui's hypertensive
-61-year-olds than like Singhvi's volunteers. A user comparing this curve with a
-published healthy-volunteer concentration should expect it to sit about 1.5-fold
-high, and should not read that as an error in either study. The earlier draft of
-this section claimed the oral curve was "about right" because a derived F
-absorbed the difference; that was the category error of §18.6, and the
-difference is real.
+61-year-olds than like Singhvi's volunteers.
+
+**But 1.47 is the ratio of the AREAS, not of the curve** - and the first version
+of this section said a user should expect the whole curve 1.5-fold high, in the
+sentence that *replaced* the tmax error of §18.6. That is worth recording as a
+pair, because it is the same mistake twice in one revision: treating a clearance
+ratio as though it scaled a concentration-time curve. Run the model at Singhvi's
+39 mL/min instead of Hui's 26.5:
+
+| | ratio, Hui to Singhvi |
+|---|---|
+| AUC(0-inf) | x1.47 |
+| AUC(0-24 h) | x1.42 |
+| Cmax | x1.21 |
+| tmax | 2.95 h -> 2.43 h |
+
+The peak arrives before much drug has been eliminated, so it feels the clearance
+far less than the area does, and the peak *time* moves as well. **A clearance
+ratio is not a curve ratio**, which is "tmax is a property of the whole system"
+seen from the other side. Expect about 1.5-fold on an area and about 1.2-fold on
+a peak.
+
+(The earlier draft of this section also claimed the oral curve was "about right"
+because a derived F absorbed the difference; that was the category error of
+§18.6, and the difference is real.)
 
 ### 18.8 One drug, and why not the enalapril pattern
 

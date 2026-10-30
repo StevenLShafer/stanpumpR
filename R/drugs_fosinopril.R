@@ -262,10 +262,14 @@
 #      Singhvi's own abstract settles it arithmetically: only about 75% of the
 #      plasma radioactivity after an oral dose is fosinoprilat (the rest is the
 #      inactive beta-glucuronide, 15 to 20%, and the monohydroxy analogue, about
-#      5%), and 0.75 x 1035-1132 = 776-849 ng.h/mL is exactly the fosinoprilat
-#      area that Singhvi's OWN bioavailability (25 to 29%) and his OWN clearance
-#      (39 mL/min) imply, 737-855.  Three numbers from one abstract triangulate
-#      it.  A SECONDARY SOURCE CAN RELABEL AN ANALYTE, and for a radiolabel
+#      5%), and 0.75 x 1035-1132 = 776-849 ng.h/mL falls inside the 762 to 884
+#      that Singhvi's OWN bioavailability (25 to 29%) and his OWN clearance
+#      (39 mL/min) imply for the diacid over the same 0 to 24 h window.  Three
+#      numbers from one abstract triangulate it.  (F x dose / CL gives 801 to
+#      929 for the TOTAL area; at his clearance 95.1% of it lies within 24 h.
+#      An earlier draft wrote 737-855, truncating with HUI's 92% share -- a
+#      faster clearance leaves less area beyond 24 h, so THE TRUNCATION FACTOR
+#      BELONGS TO THE PATIENT BEING DESCRIBED.)  A SECONDARY SOURCE CAN RELABEL AN ANALYTE, and for a radiolabel
 #      study that is the error to expect, because the paper reports both.
 #   2. Even with the right analyte, DERIVING F THAT WAY IS A CATEGORY ERROR.
 #      Bioavailability is clearance-INDEPENDENT by construction: Singhvi's is a
@@ -305,12 +309,25 @@
 # patient, because an oral antihypertensive is prescribed to people more like
 # Hui's hypertensive 61-year-olds than like Singhvi's volunteers.
 #
-# A user comparing this curve with a published healthy-volunteer concentration
-# should therefore expect it to sit about 1.5-fold high, and should NOT read
-# that as an error in either study.  The earlier draft of this header claimed
-# the oral curve was "about right" because a derived F absorbed the difference;
-# that was the category error described above, and the difference is real and
-# now visible rather than hidden inside F.
+# BUT 1.47 IS THE AREA'S RATIO, NOT THE CURVE'S, and the first version of this
+# paragraph got that wrong -- in the very sentence that replaced the tmax error
+# above, which is instructive about how easily the mistake repeats.  A clearance
+# change does not scale a concentration-time curve.  Run this model at Singhvi's
+# 39 mL/min instead of Hui's 26.5 and
+#
+#     AUC(0-inf) x1.47    AUC(0-24h) x1.42    Cmax x1.21    tmax 2.95 -> 2.43 h
+#
+# because the peak is reached before much has been eliminated, so it feels the
+# clearance far less than the area does.  A user comparing this curve with a
+# published healthy-volunteer figure should therefore expect about 1.5-fold on
+# an AREA and about 1.2-fold on a PEAK, and should not read either as an error
+# in either study.  A CLEARANCE RATIO IS NOT A CURVE RATIO -- the same lesson as
+# "tmax is a property of the whole system", from the other side.
+#
+# (The earlier draft of this header claimed the oral curve was "about right"
+# because a derived F absorbed the difference; that was the category error
+# described above, and the difference is real and now visible rather than
+# hidden inside F.)
 #
 # The terminal half-life, 12.4 h, needs no such caveat: the label gives
 # approximately 12 h in healthy subjects and an effective 11.5 h for
