@@ -28,6 +28,20 @@ test_that("the error names the drug, and the event when it is not the default", 
                "for mannitol (CPB): v1 = 0", fixed = TRUE)
 })
 
+test_that("getDrugPK() itself applies the check to a model's output", {
+  # Through the caller, so that removing the call from getDrugPK() fails here
+  model <- fentanyl(70, 170, 40, "male")
+  expect_no_error(getDrugPK("fentanyl", 70, 170, 40, "male", model = model))
+  broken <- model
+  broken$PK$default$v2 <- 0
+  expect_error(getDrugPK("fentanyl", 70, 170, 40, "male", model = broken),
+               "for fentanyl: v2 = 0 (a volume must be finite and positive)", fixed = TRUE)
+  broken <- model
+  broken$PK$default$cl1 <- NaN
+  expect_error(getDrugPK("fentanyl", 70, 170, 40, "male", model = broken),
+               "for fentanyl: cl1 = NaN", fixed = TRUE)
+})
+
 test_that("every drug gives a usable disposition at the extremes of a legal patient", {
   # Newborns, a 0.5 kg infant, a 90-year-old, 250 kg, a light old woman; both
   # sexes; both switch positions.  Vancomycin's Thomson clearance is
