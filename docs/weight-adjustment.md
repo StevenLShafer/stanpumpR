@@ -115,11 +115,20 @@ dosing is conventionally male. Nothing in the arithmetic requires it.
 
 One consequence is that a woman is scaled down by construction. At the
 reference weight, height and age — 70 kg, 170 cm, 35 years — a woman's
-Al-Sallami fat-free mass is 44.9 kg against the man's 54.5 kg, so her volumes
-are multiplied by 0.824 and her clearances by 0.865. (The worked-examples table
-below uses age 50, where the same factors are 0.820 and 0.862.) Sex therefore
-enters every scaled model, including models whose own authors tested a sex term
-and rejected it.
+Al-Sallami fat-free mass is 44.9 kg against the man's 54.5 kg, so
+`pkSizeFactors()` multiplies her volumes by 0.824 and her clearances by 0.865.
+(The worked-examples table below uses age 50, where those factors are 0.820 and
+0.862.) Sex therefore enters every scaled model, including models whose own
+authors tested a sex term and rejected it.
+
+Those two numbers are the **generic** factors, and a model with its own weight
+covariate does not necessarily use them: as
+[Models with their own weight or renal covariates](#which-models-are-scaled)
+explains, such a model evaluates its published terms at the **pharmacokinetic
+weight** instead. Alprazolam is one of them — DeVane's per-kilogram clearance
+and volume are both linear in `pkWeight`, so that woman's clearance ratio is
+**0.824**, the fat-free-mass ratio itself, not 0.865. Do not carry 0.865 into a
+model's own covariate.
 
 Whether that is right was put to the test in October 2026 by Greenblatt and
 colleagues' 1993 concentration-response study of alprazolam in panic disorder
@@ -160,18 +169,31 @@ The reasons, in order of weight:
    argument for turning the switch off entirely is weaker still, at least for
    this drug: Abernethy and colleagues (1984) found alprazolam's apparent oral
    clearance was **not** higher in obese patients — lower, though not
-   significantly, at 66 against 88 mL/min — and concluded that its dose should
-   be adjusted for ideal rather than total body weight. A total-weight model is
-   the one position those data exclude.
+   significantly, at 66.4 against 88.0 mL/min — and concluded that its dose
+   should be adjusted for ideal rather than total body weight. Those data
+   therefore **argue against** scaling its clearance on total weight; because
+   the difference was not significant they cannot *exclude* a modest change,
+   and the stronger claim is the authors' dosing conclusion rather than a result
+   of the measurement (`papers/digests/PMID_6143633.md`).
 
 What is not resolved is the tension itself, and the honest statement of it is
-that for alprazolam the default over-predicts a largely female cohort's
-exposure-response slope by about 19 percent, where the switch off would
-over-predict it by about 3 percent. Either the slope is biased low by the
-study's own limitations, or fat-free-mass scaling asserts a sex difference
-larger than this drug's data support. Settling that needs a study that reports
-heights. The decision above is about which default is more defensible across
-the whole library, not a finding that 14.46 is right.
+that for alprazolam the default appears to over-predict a largely female
+cohort's exposure-response slope by about 19 percent, where the switch off
+would over-predict it by about 3 percent. **Both figures are a sensitivity
+scenario, not a cohort prediction**: Greenblatt reports only a mean weight and
+that two thirds were women, with no heights, no sex-specific weights and no
+per-patient data, so fat-free mass — which needs height — cannot be computed
+for this cohort at all. The two percentages come from assuming heights of
+163 cm for the women and 178 cm for the men at age 37 and sweeping the
+male-female weight gap from 0 to 20 kg about the reported 69.1 kg mean. The
+conclusion is insensitive to that gap and is **not** insensitive to the assumed
+heights, which only the authors could supply.
+
+Either the slope is biased low by the study's own limitations, or fat-free-mass
+scaling asserts a sex difference larger than this drug's data support. Settling
+that needs a study that reports heights. The decision above is about which
+default is more defensible across the whole library, not a finding that 14.46
+is right.
 
 ### The scaling
 
