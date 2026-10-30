@@ -41,3 +41,14 @@ test_that("the band is the AGNP update 2026 range (Hart 2026, Table 5)", {
   expect_equal(unlist(dd[dd$Drug == "amantadineER", c("Lower", "Upper", "Typical")]),
                c(Lower = 600, Upper = 1700, Typical = 1150))
 })
+
+test_that("switch on, at a 55 kg, 160 cm, 50-year-old woman: the library's size factors", {
+  p <- amantadineER(55, 160, 50, "female", TRUE, creatinine = 0.8)$PK$default
+  size <- pkSizeFactors(55, 160, 50, "female", TRUE)
+  b <- AMANTADINE_BASE_PER_HCL
+  k <- AMANTADINE_ER_K * egfrMDRD(50, "female", 0.8) / AMANTADINE_ER_EGFR_REF
+  expect_equal(p$v1, AMANTADINE_ER_VC * size$volume * b)
+  expect_equal(p$cl1, k * AMANTADINE_ER_VC * size$clearance * b / 60)
+  expect_equal_rounded(237.7309, p$v1)
+  expect_equal_rounded(0.1580343, p$cl1)
+})

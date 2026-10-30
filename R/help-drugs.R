@@ -817,6 +817,9 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     # An oral release into the gut rides on the tissue depot (R/subcutaneous.R):
     # its depot is the oral one, shown once, as oral.
     if (isTRUE(pkRef$zeroOrderPO)) routes$RA <- routes$RAslow <- NULL
+    # So does an enteral infusion's (R/transit.R): its tissue depot is the gut
+    # absorption of the oral route, not a regional route of its own.
+    if (isTRUE(pkRef$enteralInfusion)) routes$RA <- routes$RAslow <- NULL
     # One transit compartment (R/transit.R): the engines carry it as a second
     # depot with a negative share, which is internal; the table shows the one
     # route as the model declared it, and an enteral infusion's tissue depot
@@ -825,7 +828,6 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     if (!is.null(transit)) {
       secondPO <- slowRA <- FALSE
       routes$PO2 <- routes$RAslow <- NULL
-      if (isTRUE(pkRef$enteralInfusion)) routes$RA <- NULL
       if (identical(transit$route, ROUTE_PO)) routes$PO <- "Oral (PO), through one transit compartment" else
         routes$RA <- paste0(tissue, ", through one transit compartment")
       d[[paste0("ka_", if (identical(transit$route, ROUTE_PO)) "PO" else "RA")]] <- transit$ka

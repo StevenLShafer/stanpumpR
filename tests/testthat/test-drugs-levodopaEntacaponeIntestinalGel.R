@@ -43,3 +43,9 @@ test_that("a dose is absorbed within minutes", {
   expect_equal(row$endCe, 0.81)
   expect_true("mg/hr PO" %in% row$Units[[1]])
 })
+
+test_that("the help page shows the gel's absorption as oral, not as a tissue route", {
+  h <- as.character(helpDrugPageHTML("levodopaEntacaponeIntestinalGel"))
+  expect_match(h, "<td>Oral (PO)</td>", fixed = TRUE)
+  expect_no_match(h, "Regional anesthesia (RA)", fixed = TRUE)
+})

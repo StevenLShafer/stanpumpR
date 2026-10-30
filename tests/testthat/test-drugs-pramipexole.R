@@ -39,3 +39,11 @@ test_that("IR 0.25 mg tid at steady state: Jenner 2009's exposure", {
   expect_equal(pdTerminalHalfLife("pramipexole", 75, 175, 60, "male", adjustToFFM = FALSE,
                                   creatinine = scrForCrCl(130)), 10.0, tolerance = 0.01)
 })
+
+test_that("switch on, at a 55 kg, 160 cm, 50-year-old woman", {
+  p <- pramipexole(55, 160, 50, "female", TRUE, creatinine = 0.8)$PK$default
+  expect_equal_rounded(34.39425, p$v1)
+  expect_equal_rounded(167.1025, p$v2)
+  expect_equal_rounded(0.3963172, p$cl1)
+  expect_equal_rounded(2.042836, p$cl2)
+})

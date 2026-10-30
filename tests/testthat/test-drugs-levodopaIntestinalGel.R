@@ -31,3 +31,11 @@ test_that("the gel is absorbed faster than tablets", {
                                       Units = "mg PO"), maximum = 240, age = 64))
   expect_lt(gel[["t"]], tab[["t"]] / 2)
 })
+
+test_that("switch on, at a 55 kg, 160 cm, 50-year-old woman", {
+  p <- levodopaIntestinalGel(55, 160, 50, "female", TRUE)$PK$default
+  expect_equal_rounded(39.49591, p$v1)
+  expect_equal_rounded(49.21798, p$v2)
+  expect_equal_rounded(0.307856, p$cl1)
+  expect_equal_rounded(0.08441213, p$cl2)
+})

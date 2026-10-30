@@ -329,7 +329,7 @@ helpScenarioDefinitions <- function() {
       "levodopa-wearing-off",
       "Levodopa: the effect lags the plasma, and wears off",
       "Parkinson disease",
-      "One 200 mg carbidopa-levodopa tablet in advanced Parkinson's disease: the plasma peaks at 84 minutes, the motor effect site 36 minutes later, and the effect stays above its half-maximal concentration for about three and a half hours.",
+      "One 200 mg carbidopa-levodopa tablet in advanced Parkinson's disease: the plasma peaks at 81 minutes, the motor effect site 39 minutes later, and the effect site stays above its half-maximal concentration for about 3 hours 20 minutes.",
       age = 68, weight = 75, height = 175,
       doses = helpDoses(
         c("levodopa", 0, 200, "mg PO")

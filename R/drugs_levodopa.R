@@ -72,8 +72,9 @@
 # ========================
 # endCe in drugDefaults_global.csv is Mao's UPDRS EC50, 0.81 mcg/mL: with
 # "time until threshold" on, the plot shows how long until the motor effect
-# site falls below the concentration that gives half the maximal improvement,
-# the model's estimate of when the dose wears off.
+# site falls below the concentration that gives half the maximal improvement.
+# That is a modelled half-maximal UPDRS III response, not a measured ON/OFF
+# boundary; it is the model's nearest estimate of when the dose wears off.
 #
 # THE BAND: 1.0 to 3.5 mcg/mL, 0.5 to 1 h after a dose, the reference range of
 # the AGNP consensus guideline's update 2026 (Hart 2026, Pharmacopsychiatry
