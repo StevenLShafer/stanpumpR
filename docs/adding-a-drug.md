@@ -3,8 +3,10 @@
 stanpumpR is designed so that adding a drug is a small, self-contained change — the goal is to
 let outside investigators contribute and maintain the pharmacokinetics for individual drugs.
 A new drug touches **six** files: the model, its row in the defaults CSV, its test, its help page, its
-pregnancy registry row and its therapeutic-range row (the suite fails without the last five). None of
-the engine code needs to change.
+pregnancy registry row and its therapeutic-range row. For every drug in the CSV, the tests fail
+without its help page (`test-help-drugs.R`), its pregnancy row (`test-pregnancy.R`) and its
+therapeutic-range row (`test-therapeutic-ranges.R`); nothing detects a missing test file, so that
+one is on you. None of the engine code needs to change.
 
 > Every model must handle body size the stanpumpR way — see
 > [weight-adjustment.md](weight-adjustment.md) and step 1 below. This is a requirement, not an option.
@@ -283,7 +285,7 @@ citalopram). The drug's help page tabulates its clearance by phenotype automatic
 So do `cyp2b6 = CYP2B6_DEFAULT` (`CYP2B6_VALUES`, the same five CPIC terms; read by methadone,
 whose help page gets a generated clearance-by-phenotype table) and `cyp2c9 = CYP2C9_DEFAULT`
 (`CYP2C9_VALUES`, the six common diplotypes rather than phenotypes; read by phenytoin,
-meloxicam, warfarin, fluindione and acenocoumarol). A phenotype a source did not estimate is given the reference group's parameters
+meloxicam, warfarin, fluindione and acenocoumarol). A phenotype or diplotype a source did not estimate is given the reference group's parameters
 and the drug file says so: never interpolate silently.
 
 **Optional — an osmotic agent.** A drug reported as the serum osmolality it produces, rather

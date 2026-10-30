@@ -2,7 +2,7 @@
 
 stanpumpR is a Shiny web app that turns a table of drug doses plus a patient's covariates into
 predicted **plasma** and **effect-site** concentration curves — using **closed-form**
-pharmacokinetic solutions rather than a numeric ODE solver, with one exception described under
+pharmacokinetic solutions rather than a numeric ODE solver, with two exceptions described under
 *The computational core*. It is packaged as a standard R
 package with a golem-style `ui / server / run` split; the entry point is
 `app.R → stanpumpR::run_app()`.
@@ -160,9 +160,11 @@ and display only (`R/utils-time.R`, the "Time units" block of `app_server()`).
 Almost every drug is a mammillary 3-compartment model with an effect-site link; disposition is
 solved analytically once per patient, then evaluated at every time point as a sum of
 exponentials. A transit-chain absorption (enalapril) is still exact, by matrix exponential
-(`advanceTransitChain.R`), as are the inhaled agents (`advanceClosedFormGas.R`, a coupled matrix
-exponential). One engine steps numerically: `advanceMichaelisMenten.R`, fourth-order Runge-Kutta
-for saturable elimination (phenytoin, GHB, exenatide, cetagliptin, linagliptin, vildagliptin).
+(`advanceTransitChain.R`). Two engines step: `advanceMichaelisMenten.R`, fourth-order Runge-Kutta
+for saturable elimination (phenytoin, GHB, exenatide, cetagliptin, linagliptin, vildagliptin), and
+the inhaled agents' `advanceClosedFormGas.R`, a matrix exponential in short steps with the uptake
+that couples the gases held at its value at the start of each step, so a small error remains that
+shrinks with the step.
 `advanceGasManBaseline.R`, GasMan's own stepping scheme restated in R, is a validation reference
 the tests call, not an engine the app runs.
 
