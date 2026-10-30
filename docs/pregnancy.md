@@ -62,7 +62,7 @@ series; a PBPK prediction; a review.
 
 The registry is authoritative; this table was generated from it on 2026-10-19 (factors on the
 elimination clearance or CL/F, the volume(s) the drug's `applied` text names, oral
-bioavailability, and the renal-function estimate; phenytoin's are on Km and Vmax). Oxycodone's 1.462 was removed on 2026-10-28: Kokki 2012's measured clearance in labour equals this model's non-pregnant value.
+bioavailability, and the renal-function estimate; phenytoin's are on Km and Vmax). Oxycodone's 1.462 was removed on 2026-10-28: Kokki 2012's measured clearance in labour, put on the model's hydrochloride dose basis (2026-10-29), is 0.87 of this model's non-pregnant value, not above it.
 
 | Drug | CL | V | F | GFR term | First source | Confidence |
 |---|---|---|---|---|---|---|

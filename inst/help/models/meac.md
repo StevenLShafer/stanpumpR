@@ -21,7 +21,7 @@ stanpumpR holds one value per opioid in the drug library, in the column named ME
 | pethidine | 0.46 | mcg/mL | Measured: Austin 1980's MEAC (blood, intramuscular dosing) |
 | hydromorphone | 1.5 | ng/mL | Library value |
 | methadone | 0.06 | mcg/mL | Gourlay's postoperative value, as quoted by Inturrisi |
-| oxycodone | 12 | ng/mL | Library value, set for consistency with morphine; Kokki 2012 measured an MEC of 21 and a MEAC of 45 to 50 ng/mL |
+| oxycodone | 12 | ng/mL | Library value, set for consistency with morphine; Kokki 2012 measured an MEC of 21 and a MEAC of 45 to 50 ng/mL in adults, and Olkkola 1994 a fitted concentration of 12 ng/mL at the return of pain in children |
 | oliceridine | 27.9 | ng/mL | Measured in healthy volunteers: Dahan 2020's effect-site potency for a 50% rise in cold-pressor tolerance |
 | hydrocodone | 12 | ng/mL | Provisional: set equal to oxycodone's, from equianalgesic oral doses |
 | oxymorphone | 0.8 | ng/mL | Provisional: a tenth of morphine's, from an intramuscular dose-potency ratio |

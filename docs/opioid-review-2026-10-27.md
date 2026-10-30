@@ -44,6 +44,19 @@ Intravenous concentrations fall by about a fifth. Oral exposure barely moves, be
 
 By the clearance-first rule the three studies now disagree more than before: Liukas 11.9, Pöyhiä 14.5, Kirvelä 23.4 mL/min/kg. The model runs 15 to 35% above Liukas's four age groups, and its age effect relative to the youngest group is within 15%; `test-drugs-oxycodone.R` pins both, and recomputes the pool from Pöyhiä's table.
 
+### Second follow-up (2026-10-29): all three studies are on the base
+
+The rescaling above was wrong in direction for two studies and missing for the third. The author ruled that Oxanest, the product Pöyhiä, Kirvelä and Kokki 2012 gave, is the hydrochloride trihydrate (Kokki: 1 mg corresponds to 0.78 mg of oxycodone), and, after the evidence below, that all three intravenous studies computed clearance on the base.
+
+- **Pöyhiä.** 0.07 mg/kg of the trihydrate holds 0.0544 mg/kg of base, the papers' "0.05". Table 1's dose column is the base in the trihydrate drawn up in round volumes (4.0, 5.25, 5.5 and 6.0 mg × 0.777 give its 3.1, 4.1, 4.3 and 4.7 mg), printed beside CL. That CL was computed on it is inferred; the paper says only "standard methods".
+- **Kirvelä.** Same group, product and wording, no dose column: by analogy with Pöyhiä.
+- **Liukas.** The paper says only "5 mg" (OxyNorm, the anhydrous hydrochloride), but Table II rules it out: a mean CL/kg cannot be less than dose ÷ mean(AUC × weight), so the 60–70 year group (8.6 mL/min/kg, AUC 6.4 ± 1.2 µg·min/mL, 83 ± 9 kg) was divided by at most 4.66 mg, whatever the correlation of AUC with weight. To second order, the expected mean CL/kg on the 4.48 mg of base is 12.2, 8.8, 8.6 and 7.9 in the four groups, against the reported 11.9, 8.6, 8.6 and 7.9; on 5 mg it is 13.6, 9.9, 9.6 and 8.8.
+- **Lalovic.** The same test puts its CL/F on the 15 mg as labelled (expected 1.44 L/min, reported 1.44; 1.29 on the base), so F stays tied to it.
+
+The dose is entered as the anhydrous hydrochloride, so each study's CL and Vss is multiplied by 351.83/315.37 = 1.1156: Pöyhiä 12.2 mL/min/kg and 2.90 L/kg, Kirvelä 18.6 and 2.67, Liukas 13.3 and 4.13. The pool is the published one × 1.1156: CL 14.7 mL/min/kg (was 16.5) and Vss 3.27 L/kg (was 3.51). The 1.33 and 1.4 of 2026-10-27 had put Pöyhiä and Kirvelä on the trihydrate's milligrams read as hydrochloride.
+
+Intravenous concentrations rise about 12% (AUC +12.1%, the effect-site peak after 10 mg 82.5 → 90.9 ng/mL). F becomes 0.75, inside the 60–80% Lalovic quotes, so oral exposure does not move (AUC after 15 mg 10.48 → 10.49 µg·min/mL; ka 0.01 kept, re-solving to 0.00999 with a mean peak of 30.0 ng/mL). tPeak for the 11-minute ke0 is 12.36 min, the terminal half-life 3.4 h. Pöyhiä and Liukas now agree within 9%, and the model is within 8% of each of Liukas's age groups. The consistency-with-morphine MEAC range becomes 10 to 13 ng/mL; MEAC stays 12. Kokki 2012's labour clearance, taken on the trihydrate dose by the author's ruling, is 0.80 L/min on this basis, 0.87 of the model's 0.92 for her size; it stays recorded, not applied.
+
 ## Tests
 
 `test-drugs-pethidine.R` pins the new MEAC and band against the CSV. `test-drugs-buprenorphine.R` checks that the intranasal route is gone and pins the 1.91 arithmetic. `test-drugs-tramadol.R` pins the hydrochloride basis: 976 ng/mL after 100 mg IV, and 8.3171 mg of M1 from a 10% conversion of 100 mg. `test-advance-metabolite.R` checks that a link without `mwRatio` is refused.
