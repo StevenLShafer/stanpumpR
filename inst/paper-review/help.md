@@ -49,7 +49,13 @@ without sending anything anywhere.
 - Those are removed when you press **Discard the paper now**, or when you
   close the page or your session ends, whichever is first.
 - The app keeps no log of manuscripts or of what was extracted, and adds
-  nothing to stanpumpR's paper archive or drug library.
+  nothing to stanpumpR's paper archive or drug library. At most it may count
+  reviews and record their token use, timing and success or failure; never
+  their content.
+- Your manuscript and the model extracted from it may not be used to train
+  any AI model. That is the operator's requirement. On Anthropic's side it
+  rests on Anthropic's commercial terms, which bar training on API content
+  unless the customer opts in; the operator does not.
 - If you download the report, that copy is yours, on your computer.
 
 ### What the app cannot promise
@@ -63,7 +69,8 @@ without sending anything anywhere.
 - **The server's memory is released, not erased.** After a discard the
   manuscript can no longer be reached by the app, but the memory it occupied
   is reused by the computer in time rather than overwritten at once.
-- **The hosting provider** runs the machine the app runs on.
+- **The hosting provider**, shinyapps.io (Posit), runs the machine the app
+  runs on, under its own terms.
 
 ### Before you upload a manuscript under review
 

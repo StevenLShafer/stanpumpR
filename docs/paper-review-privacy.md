@@ -17,7 +17,7 @@
 | The person who uploads the manuscript | Data subject where the manuscript contains personal data (authors' names, and any patient data the manuscript reports); usually also a reviewer bound by a journal's confidentiality rules | The manuscript |
 | The operator of the Single Paper Review app (today: Steven L. Shafer, running it locally on his own Anthropic account) | Controller | The manuscript and its extraction, in the app's memory, for the session only |
 | Anthropic, PBC | Processor, under the Data Processing Addendum incorporated into its Commercial Terms | The request (manuscript included) and the response, under Anthropic's retention policy (section 4) |
-| The host of the app (not yet chosen: see Open decisions) | Processor or sub-processor of the operator | The app's process memory and logs |
+| The host of the app: shinyapps.io (Posit), on the operator's professional account (decided 2026-10-30) | Processor or sub-processor of the operator, under Posit's own terms, which are not yet reviewed here | The app's process memory, its temporary files until they are deleted, and its logs |
 
 Anthropic's Data Processing Addendum states that "Customer is the controller
 and Anthropic is Customer's processor", and that it is "incorporated into and
@@ -27,6 +27,52 @@ effective 24 February 2025). The Commercial Terms say that data submitted
 "will be processed in accordance with the Anthropic Data Processing Addendum"
 ([Commercial Terms of Service](https://www.anthropic.com/legal/commercial-terms),
 effective 17 June 2025). Nothing has to be signed separately for this to apply.
+
+## 1a. Requirements on the deployment (Shafer, 2026-10-30)
+
+Steven L. Shafer, as operator: "Claude is not allowed to learn from my
+models. Claude is allowed to see coarse metadata."
+
+- **No training.** The content of an uploaded manuscript, its supplement, and
+  the model extracted from them must not be used to train any model. On
+  Anthropic's side this rests on Anthropic's terms, not on anything the app
+  does. The Commercial Terms say "Anthropic may not train models on Customer
+  Content from Services"
+  ([Commercial Terms of Service](https://www.anthropic.com/legal/commercial-terms),
+  effective 17 June 2025). The privacy center lists the exceptions: explicit
+  feedback or bug reports, the customer choosing to allow it, or joining the
+  Development Partner Program
+  ([Is my data used for training?](https://privacy.claude.com/en/articles/7996868-is-my-data-used-for-training),
+  dated 18 August 2026;
+  [Does Anthropic act as a data processor or controller?](https://privacy.claude.com/en/articles/9267385-does-anthropic-act-as-a-data-processor-or-controller)).
+  So the requirement holds only while the deployment stays outside every
+  exception. The app sends no feedback and no bug reports. The organisation
+  that owns the API key must not opt in to training or join the Development
+  Partner Program; those are account settings for the operator to keep, not
+  guarantees this document can give. A request the server-side refusal
+  fallback re-runs on another model is the same API call under the same
+  account and terms.
+- **Coarse metadata, defined.** The only information about a review that may
+  ever be recorded, or seen outside the user's own session, is coarse
+  metadata, defined here as exactly:
+  - that a review request was made (a count), and when;
+  - its token usage (input and output token counts, as the API reports them);
+  - its timing (how long the request took);
+  - its outcome class: success, or the error code the app assigns
+    (`http_429`, `refusal`, `max_tokens`, ...), never the error's text.
+
+  Never content: not the manuscript or any part of it, its file name or size,
+  its title, authors or journal, the drug's name, any parameter value,
+  covariate, regimen or figure point, the extraction, the review's findings,
+  or the API key. Today the app records none of this, not even the coarse
+  metadata: the token usage is held in the session's memory and discarded
+  with it. If logging is ever added, it is limited to this list. **This
+  definition is for Shafer to confirm or narrow.**
+
+  The rule governs what is recorded and reused. Anthropic necessarily
+  processes the whole of each request to answer it, and its automated safety
+  systems and, on a flag, its staff may examine it (section 4). The app cannot
+  prevent that; the operator accepts it by sending the request.
 
 ## 2. What the app does with a manuscript, step by step
 
@@ -67,7 +113,7 @@ These are statements about this code. Each names the function that does it.
    which the HTTP library is told to redact, and is never printed.
 7. **Plots and downloads.** A plot is drawn to a temporary PNG file that is
    read and deleted at once, as Shiny's own plot output does. If downloads are
-   enabled (Open decision 4), the report is written to a temporary file that
+   enabled (Open decision 5), the report is written to a temporary file that
    Shiny marks as owned and deletes after sending it to the browser. Once
    downloaded, the report is on the user's own computer, outside the app.
 8. **No digest, no archive.** Nothing from an uploaded manuscript is added to
@@ -83,8 +129,10 @@ These are statements about this code. Each names the function that does it.
   memory in time; they are not cryptographically erased. A memory dump of the
   running server process taken before reuse could contain them.
 - **The host.** The hosting provider controls the machine, its swap space,
-  its backups and its network. On a shared host (shinyapps.io is one), process
-  memory and swap are under the provider's control (Open decision 3).
+  its backups and its network. The app will run on shinyapps.io, a shared
+  host, where process memory, swap, temporary files until they are deleted,
+  and the logs of stdout and stderr are under Posit's control and terms (not
+  yet reviewed here).
 - **The user's browser.** The report is drawn in the user's browser, which
   may cache the page. A downloaded report is the user's.
 - **A crash.** If the R process is killed, the session's end handler does not
@@ -133,7 +181,8 @@ Every quotation below must be checked against the live page before use.
   The privacy center adds the exceptions of explicit feedback and of opting in
   ([Is my data used for training?](https://privacy.claude.com/en/articles/7996868-is-my-data-used-for-training),
   dated 18 August 2026), and of the Development Partner Program. The app sends
-  no feedback and the operator's organisation must not join that programme.
+  no feedback and the operator's organisation must not join that programme;
+  section 1a makes this a requirement of the deployment.
 - **Who at Anthropic sees it.** "Access occurs only for safety review or
   incident response", and "Model serving, safety classifiers, and
   abuse-detection pipelines process your content as part of normal operation"

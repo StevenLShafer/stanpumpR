@@ -146,7 +146,12 @@ be another seam.
 
 Questions only Shafer can answer, written here as they are asked
 (`AGENTS.md`, session coordination, rule 2). Each is `[decision]` until
-answered.
+answered, then `[decided]` with his words.
+
+Shafer, 2026-10-30, relayed by the parent session: "I have a "professional"
+account at shinyapps.io. That provides sufficient bandwidth for the
+foreseeable future. I'll look into the privacy issues further. Claude is not
+allowed to learn from my models. Claude is allowed to see coarse metadata."
 
 1. `[decision]` **An API key.** A deployed app cannot run on a Claude Code
    subscription allowance; it needs an Anthropic Console account and an API
@@ -156,20 +161,43 @@ answered.
    20-page paper is perhaps 40-80 thousand input tokens and 10-30 thousand
    output, so on the order of $0.50-$1 a review. Not measured; to be measured
    on the first real paper.
-2. `[decision]` **Zero data retention.** Request ZDR from Anthropic for the
-   organisation the key belongs to, given peer-review use? Without it,
-   Anthropic keeps inputs and outputs for up to 30 days (longer if flagged).
-   ZDR covers inline PDFs on the Messages API, which is all this app uses.
-   (Asked 2026-10-30.)
-3. `[decision]` **Hosting.** Where will it run, and is shinyapps.io
-   acceptable for confidential manuscripts? On a shared host the provider
-   controls memory, swap and logs. Related: `inference_geo` (`"us"` keeps
-   inference in the United States at 1.1x the price; there is no EU option).
-   (Asked 2026-10-30.)
-4. `[decision]` **Downloadable report.** May the user download the review
+2. `[decision]` **Zero data retention, and privacy generally.** Request ZDR
+   from Anthropic for the organisation the key belongs to, given peer-review
+   use? Without it, Anthropic keeps inputs and outputs for up to 30 days
+   (longer if flagged). ZDR covers inline PDFs on the Messages API, which is
+   all this app uses. Also open under this heading: `inference_geo` (`"us"`
+   keeps inference in the United States at 1.1x the price; there is no EU
+   option). (Asked 2026-10-30. Still open: Shafer is looking into the privacy
+   issues himself, so `docs/paper-review-privacy.md` stays a draft, kept
+   accurate rather than final.)
+3. `[decided]` **Hosting: shinyapps.io, on Shafer's professional account**
+   (2026-10-30, quoted above), whose bandwidth he judges sufficient for the
+   foreseeable future. What that means for the design:
+   - No reliance on persistent disk, which shinyapps.io does not keep across
+     instances. The app needs none: uploads, plots and downloads use
+     temporary files that are deleted at once (the upload deletion is
+     tested), and everything else is in session memory.
+   - The API key reaches the app as an environment variable set at deploy
+     time (`ANTHROPIC_API_KEY`), never in the bundle's code or in git. How it
+     is delivered to shinyapps.io is to be settled at the first deploy and
+     written here.
+   - The host keeps the app's stdout and stderr as its logs; the app writes
+     nothing about a paper to either (tested).
+   - One R process serves several sessions on shinyapps.io, so the
+     minutes-long API call must move off the main thread (Deferred, above)
+     before real use there.
+4. `[decided]` **Training: "Claude is not allowed to learn from my models.
+   Claude is allowed to see coarse metadata."** (2026-10-30, quoted above.)
+   Recorded as a requirement on the deployment in
+   `docs/paper-review-privacy.md` section 1a: the paper's content and the
+   extracted model must not be used for training, and "coarse metadata" is
+   defined there as request counts, token usage, timing and error class,
+   never content, file names, drug names or parameter values. That
+   definition is for Shafer to confirm or narrow.
+5. `[decision]` **Downloadable report.** May the user download the review
    report (it then leaves the app, on the user's own machine)? The prototype
    offers an HTML download, switched by `paper_review_download` in
    `config.yml` (on by default for local evaluation); nothing is kept
    server-side either way. (Asked 2026-10-30.)
-5. `[decision]` **A real paper to test against.** Which open-access PK paper
+6. `[decision]` **A real paper to test against.** Which open-access PK paper
    should the first live run use? (Asked 2026-10-30.)
