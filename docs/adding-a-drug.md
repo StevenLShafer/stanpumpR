@@ -612,7 +612,8 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
   `Opioids`, `Oral analgesics`, `Neuromuscular blockade`, `Inhaled anesthetics`, `Antibiotics`,
   `Corticosteroids`, `Antidepressants`, `Stimulants`, `Local anesthetics`, `Antiemetics`,
   `Antiseizure`, `Antipsychotics`, `Antidiabetic`, `Anticoagulants`, `Antihypertensives`,
-  `Vasoactive and resuscitation`, `Other`, `Illicit drugs`; the constant is the authority). Left blank, the drug is not offered there; only a metabolite with no units of its
+  `Vasoactive and resuscitation`, `Parkinson disease`, `Other`, `Illicit drugs`; the constant is the
+  authority). Left blank, the drug is not offered there; only a metabolite with no units of its
   own, and the carrier gases and ventilation, are blank. A new category goes into
   `DRUG_CATEGORIES`, and its checkbox id (`startupDrugs_<n>`) into `bookmarksToExclude` in
   `R/app_globals.R`. `test-startup-drugs.R` fails until both are done.

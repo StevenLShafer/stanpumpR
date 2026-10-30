@@ -73,7 +73,7 @@ full account, with worked examples, is in
 use it to estimate renal function; left blank, they assume a normal creatinine for
 the patient's age and sex (in a child, the median for age; see
 `R/renalFunction.R` for how the adult equations read a child's creatinine). **Pregnant** (shown for a woman of 12 to 59 years)
-applies the pharmacokinetic changes of late pregnancy to the 48 drugs whose model applies a documented adjustment
+applies the pharmacokinetic changes of late pregnancy to the drugs whose model applies a documented adjustment
 (a measured ratio, or the 50% rise in filtration for a renal term), each from its own source (`inst/extdata/pregnancyRegistry.csv`; `docs/pregnancy.md`). A drug whose change is known only
 in direction is recorded, not applied, and does not respond; the help's Pregnancy page lists every drug and why.
 
@@ -707,7 +707,7 @@ output. Off by default in production.
   ranges — the very young, the very old, the very large, the critically ill —
   produces numbers, but the numbers deserve less confidence than the plot's
   crispness suggests.
-- **Fields only some drugs read.** Pregnancy changes the 48 drugs whose model applies a documented adjustment and no other,
+- **Fields only some drugs read.** Pregnancy changes only the drugs whose model applies a documented adjustment,
   and the help's Pregnancy page says which drugs the review it follows describes
   without a figure. A blank serum creatinine means an assumed normal one, not a
   measured one.
