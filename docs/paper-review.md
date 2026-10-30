@@ -110,7 +110,7 @@ manuscript. It draws a one-page PDF of the fictional exampleol paper and
 checks that Claude's extraction reaches the review intact, catching the
 misprinted half-life. First run, 2026-10-30: passed, 1.3 minutes, 9,743
 input and 9,095 output tokens (about $0.22 at list price). A real paper is
-sent only after Shafer has chosen it (Open decision 6).
+sent only when Shafer supplies it (Open decision 6).
 
 The first two live attempts were refused, which is why the schema is sent
 in the instructions rather than as a structured output
@@ -295,5 +295,12 @@ allowed to learn from my models. Claude is allowed to see coarse metadata."
    offers an HTML download, switched by `paper_review_download` in
    `config.yml` (on by default for local evaluation); nothing is kept
    server-side either way. (Asked 2026-10-30.)
-6. `[decision]` **A real paper to test against.** Which open-access PK paper
-   should the first live run use? (Asked 2026-10-30.)
+6. `[decided]` **Test papers: Shafer supplies them.** "No problem. I've got
+   lots of papers for testing." (2026-10-30, relayed by the parent session.)
+   For each live test the session asks him for a paper in its own session,
+   and he uploads it or points at a file. **None is taken from
+   `C:\dev\stanpumpRPapers`**: the archive stays off-limits for this work,
+   even though it holds many papers. Each test paper is then treated like
+   any upload: read into memory, its bytes dropped once the extraction
+   returns, nothing written to disk, logged, digested or committed, and the
+   extraction and review discarded when the test ends.
