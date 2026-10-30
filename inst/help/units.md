@@ -33,6 +33,7 @@ Internally, doses of a drug plotted in mcg/mL are converted to milligrams, doses
 | Oral | g PO, mg PO, mcg PO; and each per kg | An oral dose at that time |
 | Oral form | mg PO tablet, liquid, ER, DR or XR; and per kg | An oral dose of that product, with its own absorption where the drug's forms differ; see [absorption](help:models/absorption) |
 | Oral rate | mg/day PO | A daily oral dose spread evenly over each day, from that time until the drug's next rate row (amiodarone; see [its page](help:drugs/amiodarone)) |
+| Enteral infusion | mg/hr PO | A rate into the gut, absorbed first-order, from that time until the drug's next mg/hr PO row (the levodopa intestinal gels) |
 | Sublingual | mg SL, mcg SL; and each per kg | A dose under the tongue at that time (buprenorphine) |
 | Intramuscular | the same with IM | |
 | Intranasal | the same with IN | |
