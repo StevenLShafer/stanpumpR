@@ -104,6 +104,75 @@ underdose at the very patient the label was written for. Dividing by the
 reference fat-free mass instead of by 70 kg keeps him at 70 mg and scales
 everyone else from there.
 
+### Why the reference is a man
+
+The reference patient is an **anchor, not a claim** about which patient is
+typical. Its only job is to make the factors exactly 1 for somebody, so that
+each model's published parameters are reproduced somewhere and a label's
+per-kilogram dose is left alone somewhere. A man was chosen because the
+"70 kg adult" of the pharmacokinetic literature and of per-kilogram label
+dosing is conventionally male. Nothing in the arithmetic requires it.
+
+One consequence is that a woman is scaled down by construction. At the
+reference weight, height and age — 70 kg, 170 cm, 35 years — a woman's
+Al-Sallami fat-free mass is 44.9 kg against the man's 54.5 kg, so her volumes
+are multiplied by 0.824 and her clearances by 0.865. (The worked-examples table
+below uses age 50, where the same factors are 0.820 and 0.862.) Sex therefore
+enters every scaled model, including models whose own authors tested a sex term
+and rejected it.
+
+Whether that is right was put to the test in October 2026 by Greenblatt and
+colleagues' 1993 concentration-response study of alprazolam in panic disorder
+(`papers/digests/PMID_8357297.md`), which measured a steady-state slope of
+**11.8 ng/mL per mg/day** in 237 patients of whom two thirds were women at a
+mean 69.1 kg. `R/drugs_alprazolam.R` predicts **11.90** for its reference man
+and **14.46** for a woman at 70 kg, 170 cm and 37 years — so the measurement
+agrees with the model's prediction for the wrong sex, and the FFM-driven sex
+difference looks too large for this drug. The natural fix would be to normalise
+each patient's fat-free mass to a **same-sex** reference, which would keep the
+obesity correction while removing the across-sex rescaling.
+
+**Steven L. Shafer decided on 2026-10-30 to keep the single male reference.**
+The reasons, in order of weight:
+
+1. **A same-sex reference would give two patients with the same fat-free mass
+   different pharmacokinetics**, which is the one thing this scaling exists to
+   prevent. A woman of 99.2 kg at 170 cm and 35 years has a fat-free mass of
+   54.5 kg — the reference man's, exactly. Today they share a volume factor of
+   1.000. Against a female reference she would get 1.214, so 21 percent larger
+   volumes than a man with the same lean tissue. The mechanism the scaling rests
+   on is that lean tissue clears drug; it does not know the patient's sex.
+2. **It would not remove a sex assertion, it would substitute a different
+   one.** Against a female reference the 70 kg, 170 cm woman's factors become
+   exactly 1.000, so she receives the published parameters unchanged and clears
+   drug at the same rate as a man of her weight and height despite 9.6 kg less
+   lean tissue. That is a claim of parity at the reference size, and it
+   contradicts the premise of fat-free-mass scaling in exactly the comparison
+   where the premise is doing the most work. Neither option is neutral: for
+   alprazolam the three available positions disagree in direction as well as
+   size, DeVane's own fitted sex term putting a woman at 7.5 ng/mL per mg/day,
+   parity at 11.9 and the current scaling at 14.5.
+3. **The evidence does not reach.** One study, on one drug, bears on this, and
+   it does not cite the library or report the heights that fat-free mass is
+   computed from; its sampling times were uncontrolled, compliance was
+   unverified and some concentrations were 0 ng/mL. Changing the reference
+   changes every scaled model in the table below for every female patient. The
+   argument for turning the switch off entirely is weaker still, at least for
+   this drug: Abernethy and colleagues (1984) found alprazolam's apparent oral
+   clearance was **not** higher in obese patients — lower, though not
+   significantly, at 66 against 88 mL/min — and concluded that its dose should
+   be adjusted for ideal rather than total body weight. A total-weight model is
+   the one position those data exclude.
+
+What is not resolved is the tension itself, and the honest statement of it is
+that for alprazolam the default over-predicts a largely female cohort's
+exposure-response slope by about 19 percent, where the switch off would
+over-predict it by about 3 percent. Either the slope is biased low by the
+study's own limitations, or fat-free-mass scaling asserts a sex difference
+larger than this drug's data support. Settling that needs a study that reports
+heights. The decision above is about which default is more defensible across
+the whole library, not a finding that 14.46 is right.
+
 ### The scaling
 
 For a patient with fat-free mass FFM:
@@ -245,6 +314,11 @@ For a drug labelled 1 mg/kg, the 120 kg man's bolus is 91 mg, not 120 mg.
   decline, is the better-supported part of the scaling.
 - **Extreme covariates.** The Janmahasatian equations were developed between 41
   and 216 kg and BMI 17 to 70. Outside that range they are extrapolated.
+- **Sex.** Because the reference patient is a man, sex enters every scaled
+  model, including models whose own authors tested a sex term and rejected it.
+  That is deliberate and the alternatives are worse, but for at least one drug
+  the resulting sex difference looks too large against the only data that bear
+  on it. See [Why the reference is a man](#why-the-reference-is-a-man).
 
 ---
 
@@ -287,3 +361,20 @@ both switch positions. See `docs/adding-a-drug.md` for the procedure.
 - Holford NHG, Anderson BJ. Allometric size: the scientific theory and extension
   to normal fat mass. *Eur J Pharm Sci* 2017;109S:S59-64.
   [PMID 28552478](https://pubmed.ncbi.nlm.nih.gov/28552478/)
+- Greenblatt DJ, Harmatz JS, Shader RI. Plasma alprazolam concentrations:
+  relation to efficacy and side effects in the treatment of panic disorder.
+  *Arch Gen Psychiatry* 1993;50:715-22.
+  [PMID 8357297](https://pubmed.ncbi.nlm.nih.gov/8357297/) — the study behind
+  [Why the reference is a man](#why-the-reference-is-a-man); digested in
+  `papers/digests/PMID_8357297.md`.
+- Abernethy DR, Greenblatt DJ, Divoll M, Smith RB, Shader RI. The influence of
+  obesity on the pharmacokinetics of oral alprazolam and triazolam.
+  *Clin Pharmacokinet* 1984;9:177-83.
+  [PMID 6143633](https://pubmed.ncbi.nlm.nih.gov/6143633/) — in 12 obese
+  patients pair-matched with 12 controls, alprazolam's apparent oral clearance
+  was **lower, though not significantly** (66 against 88 mL/min), and the
+  authors conclude that dosage should be "adjusted for ideal rather than total
+  bodyweight". Its apparent volume, however, was much **larger** (114 against
+  73 L), which lean-mass scaling under-predicts — the limitation noted above
+  for lipophilic drugs' peripheral volumes. The clearance half is what bears on
+  the reference question.
