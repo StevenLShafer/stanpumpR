@@ -1,7 +1,7 @@
 # Paper digests
 
 One Markdown **evidence card** per paper, product label or regulatory document that stanpumpR's
-models are built from — 1,125 of them. Each card records what its source actually says
+models are built from — over 1,100 of them, and growing. Each card records what its source actually says
 (design, population, parameters with the table and page they came from, caveats) and then
 verifies the repository against it, location by location.
 

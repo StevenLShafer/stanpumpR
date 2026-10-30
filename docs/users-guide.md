@@ -1,7 +1,8 @@
 # stanpumpR — User's Guide
 
-**Draft.** Written from the code, 2026-09-05. Sections marked *(branch only)*
-describe work on `inhaled-gas-engine` that is not yet merged to `master`.
+**Draft.** Written from the code, 2026-09-05, and corrected in places on 2026-10-30. The in-app
+Help tab is the maintained reference: where the two differ, the Help tab is right, and its drug
+index lists every model (this guide's lists stop at the library of September 2026).
 
 ---
 
@@ -68,16 +69,13 @@ predicts, or to reproduce a simulation made before this option existed. The
 full account, with worked examples, is in
 [docs/weight-adjustment.md](weight-adjustment.md).
 
-**Serum creatinine** (mg/dL) is optional. The renally cleared drugs (mannitol, vancomycin, gentamicin, cefazolin, sugammadex, gabapentin and pregabalin)
+**Serum creatinine** (mg/dL) is optional. The drugs with a renal covariate (the field's hover tip lists them)
 use it to estimate renal function; left blank, they assume a normal creatinine for
 the patient's age and sex (in a child, the median for age; see
 `R/renalFunction.R` for how the adult equations read a child's creatinine). **Pregnant** (shown for a woman of 12 to 59 years)
-applies the pharmacokinetic changes of late pregnancy from the review of Ansari, Carvalho, Shafer and Flood
-(*Anesth Analg* 2016;122:786-804) to eight drugs. Five take the figure the review gives: morphine (clearance
-× 1.7), remifentanil (× 2, on the Minto companion too), oxycodone (× 3.8/2.6), methadone (× 24/14), dexamethasone
-(× 2). Cefazolin, gentamicin and vancomycin, for which the review gives no figure, take its 50% rise in glomerular
-filtration (the renal function their clearance terms read × 1.5). No other drug
-responds to it, including those the review describes without a figure; the help's Pregnancy page lists them all.
+applies the pharmacokinetic changes of late pregnancy to the drugs whose model applies a documented adjustment
+(a measured ratio, or the 50% rise in filtration for a renal term), each from its own source (`inst/extdata/pregnancyRegistry.csv`; `docs/pregnancy.md`). A drug whose change is known only
+in direction is recorded, not applied, and does not respond; the help's Pregnancy page lists every drug and why.
 
 ---
 
@@ -105,7 +103,7 @@ drug at the stop time with a dose of zero.
 
 ### Entering times
 
-Times are in the **Time units** chosen above the dose table (see *Time
+Times are in the **Time units** chosen in the Time panel of the left sidebar (see *Time
 display*), and the field is forgiving:
 
 - `12` — twelve of the unit: twelve minutes, or twelve days
@@ -185,8 +183,6 @@ and you can edit it (see *Drug Library*).
 |---|---|
 | Show typical | The shaded band, above |
 | Normalize to | Rescale every curve to its own peak plasma or peak effect-site value, so drugs on wildly different scales can be compared in shape |
-| Max time | How far the simulation runs: a slider in the Time units, up to 24 hours (minutes, hours), 365 days or 52 weeks |
-| Min time | Where the time axis starts: a slider, 0 unless moved, for a close look at a window late in a long plot. Everything is still simulated from 0 |
 | Plasma line / Effect site line | Line style, including none |
 | Y axis height | Plot height in pixels |
 | Time until threshold | Draws, for each drug, how long until it falls to its recovery threshold (`endCe` in the library). Only available when normalization is off |
@@ -229,7 +225,7 @@ rate: you set the concentration you want in the plasma or at the site of drug
 effect, and the pump's pharmacokinetic model computes the infusion needed to
 reach it quickly and then hold it. stanpumpR simulates such a pump for
 propofol, remifentanil, alfentanil, sufentanil, fentanyl, lidocaine,
-hydromorphone, etomidate and ketamine.
+hydromorphone, oxycodone, etomidate and ketamine.
 
 Enter a row for the drug with units `Plasma target` or `Effect site target`.
 The dose is the target concentration, in the drug's concentration units per
@@ -338,8 +334,8 @@ models and their concentrations do not add.
 Three things to know about the antibiotics and steroids:
 
 - **Enter the creatinine.** Several of these models (cefazolin, vancomycin,
-  gentamicin, sugammadex), mannitol, gabapentin and pregabalin carry a
-  creatinine-clearance or eGFR
+  gentamicin, sugammadex), and many others in the library (the field's hover tip
+  lists them), carry a creatinine-clearance or eGFR
   covariate, computed from the **Serum creatinine** field. Left blank, it is an
   assumed normal creatinine (0.9 mg/dL in men, 0.8 in women, and the normal for
   age in children): the decline of
@@ -448,8 +444,8 @@ dexmedetomidine switches to the infant model at age ≤ 1 year, for example — 
 the reference that applies depends on the patient you entered.
 
 **The effect-site rate constant often comes from a different source than the
-disposition model.** Where the two differ, that is noted in
-`docs/drug-reference.html`, which also carries each drug's modelled time to peak
+disposition model.** Where the two differ, that is noted on the drug's help page
+(the drug's own generated help page), which also carries each drug's modelled time to peak
 effect and its covariate scaling.
 
 ### Inhaled agents
@@ -462,9 +458,9 @@ factor of about 55; it is not used in any calculation.
 
 ---
 
-## Inhaled anaesthetics *(branch only)*
+## Inhaled anaesthetics
 
-Not on `master` yet. On `inhaled-gas-engine`, seven further entries appear in the
+Seven further entries appear in the
 drug list and behave like any other row in the dose table:
 
 | Entry | Units | Meaning |
@@ -654,7 +650,9 @@ Consequences worth knowing when comparing the two side by side:
 
 ## Time display
 
-Above the dose table:
+In the Time panel of the left sidebar, which also holds **Max time** (how far the simulation
+runs: a slider in the Time units, up to 24 hours for minutes and hours, 365 days or 52 weeks)
+and **Min time** (where the time axis starts; everything is still simulated from 0):
 
 - **Time units** — minutes, hours, days or weeks. A number typed as a time is
   in this unit, the time axis is labelled in it, and it sets the range and
@@ -692,7 +690,7 @@ copy made from `config.yml.sample` will not send mail until you do.
 
 ## Debug mode
 
-Add `&debug=1` to the URL. A panel appears beneath the plot with a log and a
+Add `?debug=1` to the URL (`&debug=1` if it already has a query). A panel appears beneath the plot with a log and a
 performance profiler, and a **Debug level** selector for normal or verbose
 output. Off by default in production.
 
@@ -709,7 +707,7 @@ output. Off by default in production.
   ranges — the very young, the very old, the very large, the critically ill —
   produces numbers, but the numbers deserve less confidence than the plot's
   crispness suggests.
-- **Fields only some drugs read.** Pregnancy changes eight drugs and no other,
+- **Fields only some drugs read.** Pregnancy changes only the drugs whose model applies a documented adjustment,
   and the help's Pregnancy page says which drugs the review it follows describes
   without a figure. A blank serum creatinine means an assumed normal one, not a
   measured one.

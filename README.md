@@ -24,10 +24,10 @@ stanpumpR is a collaborative research project. Individuals interested in adding 
 
 Near-term future developments in stanpumpR will include
 
-1. More oral models. stanpumpR simulates PO, SL, IM, IN and regional (RA) delivery by first-order absorption; the oral opioids in the library (morphine, hydromorphone, methadone, oxycodone, oxymorphone, codeine, hydrocodone, tramadol) each rest on one published fit, and better-characterised absorption models are welcome.
+1. More oral models. stanpumpR simulates PO, SL, IM, IN, SC and regional (RA) delivery by first-order absorption (with zero-order, pulsed and transit-chain oral inputs where a drug needs them); the oral opioids in the library (morphine, hydromorphone, methadone, oxycodone, oxymorphone, codeine, hydrocodone, tramadol) each rest on one published fit, and better-characterised absorption models are welcome.
 2. Improved models of pediatric pharmacokinetics
 3. Improved models of drug interaction
-4. PK changes with pregnancy beyond the eight drugs that now read the Patient Profile's Pregnant field (`R/pregnancy.R`, from Ansari, Carvalho, Shafer and Flood, *Anesth Analg* 2016;122:786-804), and with renal function beyond the drugs that read the serum creatinine. (Each field reaches only the models that name it, the CYP2D6, CYP2C19, CYP2C9 and CYP2B6 phenotypes included; the help's [Cautions](inst/help/cautions.md) page lists which.)
+4. PK changes with pregnancy beyond the drugs that now read the Patient Profile's Pregnant field (about fifty; the help's Pregnancy page lists them) (`R/pregnancy.R`, `inst/extdata/pregnancyRegistry.csv`), and with renal function beyond the drugs that read the serum creatinine. (Each field reaches only the models that name it, the CYP2D6, CYP2C19, CYP2C9 and CYP2B6 phenotypes included; the help's [Cautions](inst/help/cautions.md) page lists which.)
 5. Expanding the in-app help (the **Help** tab): more teaching scenarios, and screenshots.
 
 ### Documentation
@@ -56,7 +56,7 @@ Near-term future developments in stanpumpR will include
 
 ### Setting up locally
 
-1. Check the required R version by looking at the third line of the file [`renv.lock`](renv.lock)
+1. Check the required R version by looking at the `R` `Version` field near the top of the file [`renv.lock`](renv.lock)
 2. Download and install the required R version
 3. Clone/download this repository to your local machine
 4. Open the `stanpumpR.Rproj` file in RStudio
@@ -67,7 +67,7 @@ Near-term future developments in stanpumpR will include
     devtools::load_all(".")
     run_app()
     ```
-8. Debug mode shows a detailed log and a performance profiler. By default, debug mode is off in production. You can turn it on by adding `&debug=1` to the URL.
+8. Debug mode shows a detailed log and a performance profiler. By default, debug mode is off in production. You can turn it on by adding `?debug=1` to the URL (`&debug=1` if it already has a query).
 
 #### Running tests
 
@@ -114,7 +114,7 @@ To simulate a dose table from a script, call `apiSimulate()`, or start the HTTP 
 
 ### Environments
 
-When code is merged into the default branch, it will automatically be deployed to production. Pull Requests are automatically deployed to a test environment for testing.
+When code is merged into the default branch, it is deployed to production automatically once the R-CMD-check workflow has passed on it. Pull Requests carrying the `DEPLOY` label are deployed to a test environment for testing; the label is added automatically to a pull request from this repository, and by a maintainer to one from a fork.
 
 ### Dependency management (renv)
 
