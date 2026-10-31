@@ -14,10 +14,12 @@ Both the volume and the clearance scale with weight. The motor effect site is th
 
 Enter the morning dose and any extra doses as **mg PO** and the continuous rate as **mg/hr PO**, all as levodopa.
 
-The lower clearance means a continuous rate gives 1.58 times the steady-state levodopa it would on Duodopa. The authors therefore conclude that the continuous rate should be about **35% lower** when switching from levodopa-carbidopa gel. In the original study the rate was 20% lower, and levodopa concentrations climbed through the day. At steady state:
+The lower clearance means a continuous rate gives 1.58 times (1/0.635) the steady-state levodopa it would on Duodopa in Senek's own model, against the study's levodopa-carbidopa gel arm. The authors therefore conclude that the continuous rate should be about **35% lower** when switching from levodopa-carbidopa gel. In the original study the rate was 20% lower, and levodopa concentrations climbed through the day. At steady state:
 
 - 60 mg/h of Lecigon gives 3.4 mcg/mL;
 - 39 mg/h, 35% less, gives 2.2 mcg/mL, the steady state of 60 mg/h of Duodopa in Senek's model.
+
+The library's own [levodopa intestinal gel](help:drugs/levodopaIntestinalGel) is a different model of Duodopa (Othman and Dutta 2014: clearance 24.8 L/h, bioavailability 0.97), so beside it the ratio is smaller, about 1.44: at 60 mg/h it plateaus at 2.35 mcg/mL against Lecigon's 3.4. Comparing the two drugs on one plot therefore understates the difference Senek measured within the same patients.
 
 ### Genotype
 
