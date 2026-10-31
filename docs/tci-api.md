@@ -328,10 +328,13 @@ new command is acknowledged. The result is the state at
   **end** of the interval, so over a long interval the plasma above target
   meanwhile pushes Ce over. One plan then pump off touches the target exactly
   at every interval (that is the grid), but the closed loop at 30 and 60 s
-  overshoots the target by 1–3% for the fast drugs before it settles
-  (propofol at 60 s: +1.6% with a 1.5 s latency asking every interval, +2.7%
-  with no latency asking at `nextRequestAt`; remifentanil and etomidate
-  alike; the slow opioids, ketamine and lidocaine stay within 1%), against
+  overshoots the target by 1–3% for propofol, remifentanil and alfentanil,
+  and by up to 4.2% for etomidate, before it settles (propofol at 60 s: +1.6%
+  with a 1.5 s latency asking every interval, +2.7% with no latency asking at
+  `nextRequestAt`; remifentanil +2.4% at 60 s and alfentanil +2.0% at 30 s;
+  etomidate +1.4% at 30 s and +4.2% at 60 s, its 1.9 min peak being the slowest
+  of the fast drugs against a 60 s interval; fentanyl, sufentanil,
+  hydromorphone, oxycodone, ketamine and lidocaine stay within 1%), against
   ≤ 0.2% at 1–10 s. This is the Shafer–Gregg algorithm at an interval it was
   not designed for, not the search grid, and it is why `INTERVAL_LONG` warns
   above `tPeak/3`; STANPUMP's 10 s is the recommended interval. §8.2 test 5
@@ -681,7 +684,7 @@ Applying a response:
 | `tests/testthat/test-tci-api.R` | Core tests, no HTTP (§8.2). |
 | `tests/testthat/test-tci-api-http.R` | Router tests (§8.3), `skip_if_not_installed("plumber")`, entirely in-process with `pr$call()` on a hand-built Rook request environment (`REQUEST_METHOD`, `PATH_INFO`, `QUERY_STRING`, `HTTP_CONTENT_TYPE`, `rook.input` with `read`, `read_lines`, `rewind`, `SERVER_NAME`, `HTTP_HOST`); the helper `rookRequest(method, path, body = NULL, query = "")` lives in `tests/testthat/helpers.R`. No subprocess, no network. |
 | `docs/tci-api.md` | This document. |
-| `inst/help/tci-api.md` | The in-app help page ("The TCI API", section "The project", registered right after "scripting" in `helpStaticPages()`): what the API is, the request and response in brief, the safety contract, how to run it. It links `help:tci` and `help:scripting` and is linked from both. |
+| `inst/help/tci-api.md` | The in-app help page ("The TCI API", section "The project", registered after "scripting" and "simulation-api" in `helpStaticPages()`): what the API is, the request and response in brief, the safety contract, how to run it. It links `help:tci` and `help:scripting` and is linked from both. |
 | `inst/help/repository.md`, `inst/help/in-development.md`, `docs/architecture.md`, `AGENTS.md` | File-map entries, the "Recently landed" bullet, the "App features" bullet and component-catalog lines, and the AGENTS.md paragraph naming the tests. AGENTS.md's "Adding an R package" rule records that a package used only by an optional entry point (plumber for the TCI API) goes in `Suggests`, is guarded with `requireNamespace()`, and is not snapshotted into renv.lock. |
 
 ### 8.2 Tests (core, `test-tci-api.R`)
@@ -711,9 +714,10 @@ Applying a response:
    for propofol). For every TCI drug the closed loop from zero reaches the
    target with `max Ce ≤ 1.002 × CT` at `interval ∈ {1, 5, 10}` s; at 30 and
    60 s it reaches the target within the hand-off's excursion
-   (`max Ce ≤ 1.03 × CT`, §5.3), and the measured propofol figure at 60 s
-   (+1.56% with a 1.5 s latency) is pinned so that a change in either
-   direction is noticed.
+   (`max Ce ≤ 1.03 × CT`, or 1.045 for etomidate at 60 s, §5.3), and the
+   measured figures at 60 s, propofol's +1.56% (asking every interval) and
+   etomidate's +4.2%, are pinned so that a change in either direction is
+   noticed.
 6. **Cap and resolution.** `maxRate` 1200 and 300 mL/hr of 1% propofol:
    loading spreads over several intervals, peak Ce ≤ 1.002 × CT, each
    capped interval has `"maxRate"` in `limitedBy`; `rateResolution` 0.1

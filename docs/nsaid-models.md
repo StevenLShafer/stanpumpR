@@ -1,6 +1,6 @@
 # NSAID population models
 
-Which NSAID models are in the drug library, how the ones without a usable published model were handled, and why one is still missing. The criterion was a
+Which NSAID models are in the drug library, and how the ones without a usable published model were handled. The criterion was a
 reproducible mixed-effects model with at least two **systemic parent-drug** compartments; a gut,
 presystemic, metabolite or CSF compartment does not count. Drafted by Claude Code,
 2026-10-10, at the request of Steven L. Shafer, from a literature summary he supplied; the
@@ -16,8 +16,6 @@ meloxicam and ketorolac parameter tables were checked against the full papers.
 | Aspirin | Koh 2025, one-compartment aspirin, two-compartment salicylate | Added (low dose, enteric-coated tablet): salicylate as a metabolite; each absorption path with the pre-systemic step approximated by one lagged depot |
 | Celecoxib | Two-compartment fit to the FDA mean curve (NDA 211759); weight from Krishnaswami 2012; ke0 from Hannam 2023 | Added: **not a population model**, a fit to mean data |
 | Naproxen | Välitalo 2012, apparent oral, 2 compartments, fitted in children; analgesic EC50 from Björnsson 2011 | Added (2026-10-11): re-centred allometrically on the source's median child for adults; no effect site, the EC50 (29 mg/L total) as the threshold |
-
-## Not added, and what would change that
 
 ## Added without a reproducible two-compartment population model
 
@@ -69,8 +67,8 @@ drug's time-until-threshold level.
 
 None of the models fitted a CYP2D6 phenotype, so none of them takes `cyp2d6`; a multiplier of
 one means no modelled effect, not proof of none. Meloxicam keeps the CYP2C9 covariate Aoyama
-estimated, as a `cyp2c9` argument of `meloxicam()` (the app has no CYP2C9 input and simulates
-\*1/\*1).
+estimated, as a `cyp2c9` argument of `meloxicam()`, which the Patient Profile's **CYP 2C9** field
+reaches (default \*1/\*1).
 
 ## Ibuprofen formulations
 

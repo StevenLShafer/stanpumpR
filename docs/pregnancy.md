@@ -19,7 +19,7 @@ them of every future model, and list the literature to obtain from the Stanford 
 
 The library's first pregnancy adjustments (2026-10-13) followed one review, Ansari, Carvalho,
 Shafer and Flood, *Anesth Analg* 2016;122:786-804, and changed eight drugs. On 2026-10-19 the
-literature was searched again for each of the 182 drugs a user can dose (every row of
+literature was searched again for each of the 182 drugs a user could then dose (195 by 2026-10-30) (every row of
 `drugDefaults_global.csv` with a Category, including the four inhaled anesthetics), in nine
 classes, through PubMed (abstracts) and PubMed Central (full text). Each number in a
 registry `finding` was read in that session from the text named in `evidence_read`
@@ -62,7 +62,7 @@ series; a PBPK prediction; a review.
 
 The registry is authoritative; this table was generated from it on 2026-10-19 (factors on the
 elimination clearance or CL/F, the volume(s) the drug's `applied` text names, oral
-bioavailability, and the renal-function estimate; phenytoin's are on Km and Vmax). Oxycodone's 1.462 was removed on 2026-10-28: Kokki 2012's measured clearance in labour, put on the model's hydrochloride dose basis (2026-10-29), is 0.87 of this model's non-pregnant value, not above it.
+bioavailability, and the renal-function estimate; phenytoin's are on Km and Vmax). Oxycodone's 1.462 was removed on 2026-10-28: Kokki 2012's measured clearance in labour, put on the model's hydrochloride dose basis (2026-10-29), is 0.87 of this model's non-pregnant value, not above it. Two rows were changed after that date and are shown as the registry now has them: acetaminophen's clearance factor rose from 1.4 to 1.5 (the header of `R/drugs_acetaminophen.R` gives the arithmetic), and ketorolac's flat 1.5 became Kulo 2017's enantiomer-specific factors.
 
 | Drug | CL | V | F | GFR term | First source | Confidence |
 |---|---|---|---|---|---|---|
@@ -72,8 +72,8 @@ bioavailability, and the renal-function estimate; phenytoin's are on Km and Vmax
 | methadone | 1.714 |  |  |  | Bogen 2012 | high |
 | midazolam | 1.280 |  |  |  | Hebert 2008 | moderate |
 | buprenorphine | 1.830 |  |  |  | Bastian 2017 | moderate |
-| acetaminophen | 1.400 | 1.14 |  |  | Allegaert 2015 | moderate |
-| ketorolac | 1.500 | 1.50 |  |  | Kulo 2012 | moderate |
+| acetaminophen | 1.500 | 1.14 |  |  | Allegaert 2015 | moderate |
+| ketorolac | 1.680 (S; R 2.00) | 1.20 (S; R 1.33) |  |  | Kulo 2012 | moderate |
 | cefazolin |  |  |  | 1.5 | Philipson 1987 | moderate |
 | cefalexin | 1.500 |  |  |  | Philipson 1987 | low |
 | vancomycin |  |  |  | 1.5 | Goyal 2022 | moderate |
@@ -115,10 +115,12 @@ bioavailability, and the renal-function estimate; phenytoin's are on Km and Vmax
 | metoprolol | 1.500 | 1.50 | 0.5 |  | Ryu 2016 | moderate |
 | vasopressin | 5.075 |  |  |  | Davison 1993 | moderate |
 
-Not adjusted: 16 `unquantified`, 19 `unchanged`, 87 `unknown` (mostly drugs contraindicated or
+Not adjusted (counts as at 2026-10-30; the registry is authoritative): 18 `unquantified`, 19
+`unchanged`, 91 `unknown` (mostly drugs contraindicated or
 rarely used in pregnancy: the DOACs and vitamin K antagonists, the GLP-1, SGLT2 and DPP-4
-drugs, the illicit-drug models, most vasoactive infusions), 3 `source_pregnant` and 9
-`not_applicable` (pediatric models, azilsartan, and the inhaled anesthetics).
+drugs, the illicit-drug models, most vasoactive infusions), 3 `source_pregnant` and 16
+`not_applicable` (pediatric models, the inhaled anesthetics, and the ARBs and ACE inhibitors,
+which are contraindicated in pregnancy).
 
 ## Changes to existing behaviour
 
@@ -134,7 +136,7 @@ drugs, the illicit-drug models, most vasoactive infusions), 3 `source_pregnant` 
 - **Metoprolol** now also scales both volumes and Q by 1.5, so its half-lives are unchanged, as Hogstedt
   1985 measured; the bioavailability factor 0.5 is now measured, not derived.
 - **Acetaminophen**, "unchanged" in Ansari 2016 (Rayburn 1986, six women, oral), now has
-  clearance × 1.4 from the larger intravenous studies at delivery (Beleyn 2014, Kulo 2012-2013,
+  clearance × 1.4 (since raised to × 1.5) from the larger intravenous studies at delivery (Beleyn 2014, Kulo 2012-2013,
   Allegaert 2015) and Miners 1986.
 - **The filtration rise** on cefazolin, gentamicin and vancomycin is now skipped when a creatinine
   is entered (above).
@@ -189,7 +191,7 @@ paywalled. The first list matters most, since each would check a factor the libr
    *Drugs:* dexamethasone. *Why:* PMC13337934 exists but was not retrieved; gives one-compartment CL and V for dexamethasone in parturient women at birth that could replace the volume inference.
 
 10. Kulo A et al. Bosn J Basic Med Sci 2017;17:54-60 [PMID 27968707](https://pubmed.ncbi.nlm.nih.gov/27968707/) · [doi:10.17305/bjbms.2016.1515](https://doi.org/10.17305/bjbms.2016.1515)  
-   *Drugs:* ketorolac. *Why:* Open-access PMC5341779 but tool returned no body text: S- and R-ketorolac CL and Vss at delivery vs postpartum/controls, to give separate factors for the S and R systems.
+   *Drugs:* ketorolac. *Why:* Open-access PMC5341779 but tool returned no body text: S- and R-ketorolac CL and Vss at delivery vs postpartum/controls, to give separate factors for the S and R systems. (Since read: the model's S and R factors are from its table; `R/drugs_ketorolac.R`.)
 
 11. Li Y, et al. Br J Clin Pharmacol 2023;89:1152-1161 [PMID 36260320](https://pubmed.ncbi.nlm.nih.gov/36260320/) · [doi:10.1111/bcp.15572](https://doi.org/10.1111/bcp.15572)  
    *Drugs:* levetiracetam. *Why:* A popPK model fitted only in pregnant women with a trimester covariate on CL/F; Table of final estimates needed for a trimester-specific factor (abstract gives only CL/F 3.82 L/h).
@@ -281,7 +283,7 @@ paywalled. The first list matters most, since each would check a factor the libr
   (derived from oral data) to 1.28, from the women awaiting caesarean section against the
   gynaecological women, each against the model at its own age and weight; labour is lower (0.91).
 - **Miners JO et al.** *Br J Clin Pharmacol* 1986;22:359-362 (PMID 3768250): oral paracetamol CL/F
-  1.58 times and V/F 1.14 times in the third trimester, supporting acetaminophen's × 1.4 and × 1.14.
+  1.58 times and V/F 1.14 times in the third trimester, supporting acetaminophen's × 1.5 (× 1.4 when this note was written) and × 1.14.
 - **Hogstedt S et al.** *Clin Pharmacol Ther* 1985;37:688-692 (PMID 4006368): metoprolol IV and oral in
   the same 5 women: bioavailability 0.21 vs 0.42 (the model's × 0.5, now measured), systemic
   clearance 1.38 vs 0.65 L/min, identical half-lives; volumes and Q now × 1.5 with the clearance.
@@ -352,13 +354,13 @@ paywalled. The first list matters most, since each would check a factor the libr
    Vdss/F and half-life did not differ across trimesters and were in the nonpregnant range; metronidazole
    stays `unchanged`.
  - **Kulo A et al.** *Int J Obstet Anesth* 2012;21:334-338 (PMID 22901775): IV ketorolac at caesarean,
-   absolute CL 3.92 vs 1.82 L/h against controls (BSA 2.11 vs 1.07 L/h/m2); confirms ketorolac's x1.5.
+   absolute CL 3.92 vs 1.82 L/h against controls (BSA 2.11 vs 1.07 L/h/m2); confirms the racemic x1.5, since replaced by Kulo 2017's S and R factors.
  - **Kulo A et al.** *Br J Clin Pharmacol* 2013;75:850-860 (PMID 22845052): paracetamol total CL 21.1 vs
    11.7 L/h delivery-vs-postpartum (disproportional glucuronidation); the volume increase could not be
    estimated reliably. Supports acetaminophen's direction; the applied factor stays below the paired ratio.
  - **Kulo A et al.** *Eur Rev Med Pharmacol Sci* 2014;18:599-604 (PMID 24668698): IV paracetamol CL +80%
    at delivery (11.7 vs 6.4 L/h/m2), distribution volume 56 vs 46 L but 0.69 vs 0.74 L/kg (unchanged per
-   kg); supports acetaminophen's x1.4 clearance and modest x1.14 volume.
+   kg); supports acetaminophen's x1.5 (x1.4 when this note was written) clearance and modest x1.14 volume.
  - **Matsumura H et al.** *Hypertens Pregnancy* 2014;33:93-101 (PMID 24131296): nicardipine apparent
    clearance (dose/Css) 678 vs 756 mL/h/kg delivery-vs-postpartum, overlapping healthy adults; a crude
    estimate in preeclampsia, so nicardipine stays `unknown`.
