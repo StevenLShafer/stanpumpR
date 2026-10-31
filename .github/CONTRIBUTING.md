@@ -13,7 +13,9 @@ fix to the documentation or the help pages, a pull request on its own is fine.
 ## Adding a drug
 
 Follow [`docs/adding-a-drug.md`](../docs/adding-a-drug.md). A drug a user can dose
-needs six things:
+(one with a `Category` in `inst/extdata/drugDefaults_global.csv`) needs six things;
+an entry without one, such as a metabolite or the carrier gases, needs fewer, as that
+guide says:
 
 1. the model, `R/drugs_<name>.R`;
 2. its row in `inst/extdata/drugDefaults_global.csv`;
