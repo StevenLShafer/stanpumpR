@@ -45,8 +45,6 @@ stanpumpR is an R package that contains a Shiny application. The source is at [g
 
 **Package.** `stanpumpR-package.R` and `zzz.R` hold the package-level declarations.
 
-**Experimental.** `ig_absorption.R` is a drafted inverse-Gaussian absorption model, tracked but not wired in.
-
 ## Configuration
 
 `config.yml` (copied from `config.yml.sample`) sets the title, the email credentials for the slide feature, and the debug level. Settings not given fall back to defaults in `constants.R`.
