@@ -283,7 +283,7 @@ paywalled. The first list matters most, since each would check a factor the libr
   (derived from oral data) to 1.28, from the women awaiting caesarean section against the
   gynaecological women, each against the model at its own age and weight; labour is lower (0.91).
 - **Miners JO et al.** *Br J Clin Pharmacol* 1986;22:359-362 (PMID 3768250): oral paracetamol CL/F
-  1.58 times and V/F 1.14 times in the third trimester, supporting acetaminophen's × 1.5 (then × 1.4) and × 1.14.
+  1.58 times and V/F 1.14 times in the third trimester, supporting acetaminophen's × 1.5 (× 1.4 when this note was written) and × 1.14.
 - **Hogstedt S et al.** *Clin Pharmacol Ther* 1985;37:688-692 (PMID 4006368): metoprolol IV and oral in
   the same 5 women: bioavailability 0.21 vs 0.42 (the model's × 0.5, now measured), systemic
   clearance 1.38 vs 0.65 L/min, identical half-lives; volumes and Q now × 1.5 with the clearance.
@@ -360,7 +360,7 @@ paywalled. The first list matters most, since each would check a factor the libr
    estimated reliably. Supports acetaminophen's direction; the applied factor stays below the paired ratio.
  - **Kulo A et al.** *Eur Rev Med Pharmacol Sci* 2014;18:599-604 (PMID 24668698): IV paracetamol CL +80%
    at delivery (11.7 vs 6.4 L/h/m2), distribution volume 56 vs 46 L but 0.69 vs 0.74 L/kg (unchanged per
-   kg); supports acetaminophen's x1.5 (then x1.4) clearance and modest x1.14 volume.
+   kg); supports acetaminophen's x1.5 (x1.4 when this note was written) clearance and modest x1.14 volume.
  - **Matsumura H et al.** *Hypertens Pregnancy* 2014;33:93-101 (PMID 24131296): nicardipine apparent
    clearance (dose/Css) 678 vs 756 mL/h/kg delivery-vs-postpartum, overlapping healthy adults; a crude
    estimate in preeclampsia, so nicardipine stays `unknown`.

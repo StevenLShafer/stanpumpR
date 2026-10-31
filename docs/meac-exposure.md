@@ -136,7 +136,7 @@ when the anchor had been ≈ 43 at an assumed 0.33) against the CDC 2022 table:
 | Drug, route | MEAC-derived | CDC 2022 | Comment |
 |---|---|---|---|
 | oxycodone PO | 2.2 | 1.5 | About 1.5× CDC's (2.0 against the old anchor and oxycodone parameters) |
-| hydromorphone PO | 3.9 (was 9.1) | 5 | Disagreed ~2× at the old oral bioavailability of 0.6; recalibrated to 0.225. 3.9 with morphine's measured 0.29 (3.5 against the old assumed 0.33), within the published 3.75 to 5 (§4.2.1) |
+| hydromorphone PO | 3.9 (was 9.1) | 5 | Disagreed ~2× at the old oral bioavailability of 0.6; recalibrated to 0.225. 3.9 with morphine's model-calibrated 0.29 (3.5 against the old assumed 0.33), within the published 3.75 to 5 (§4.2.1) |
 | oxymorphone PO | 2.1 | 3 | MEAC is provisional (a tenth of morphine's) |
 | methadone PO | ≈ 3.7 | 4.7 | Within the published range |
 | fentanyl TD (mcg/h) | ≈ 2.2 | 2.4 | Ignores the patch's absorption kinetics |
@@ -245,7 +245,7 @@ clearance. 0.225 also agrees with the DILAUDID label (about 24%) and Drover's
 0.19. With it, the existing absorption rate (0.01 /min) turned out to be the
 best fit to Lohela's mean oral curve (Figure 1A), within about 15% at every
 sample, so it is unchanged. Precondition 1 is met: oral morphine is now in the
-model (F 0.29, Atrux-Tallau 2022), and with both measured F values the implied
+model (F 0.29, Atrux-Tallau 2022), and with both model-calibrated F values (effective exposure parameters set from observed AUCs on each model's clearance, not measured bioavailabilities) the implied
 oral factor is 5.33 × 0.95 × 0.225 / 0.29 = **3.9**, between the older APS 4 and
 the 3.75 of some tables, a little under CDC 2022's 5. Precondition 3 is
 pinned by a test: hydrocodone's formed hydromorphone is unchanged. The MEAC is
