@@ -66,8 +66,9 @@ test_that("every function the orientation documents name exists", {
     for (name in calls)
       expect_true(name %in% defined || inImports(name),
                   info = sprintf("%s names %s(), which nothing defines", doc, name))
-    qualified <- unique(sub("\\(\\)$", "",
-                            code[grepl("^[A-Za-z][A-Za-z0-9.]*::[A-Za-z.][A-Za-z0-9._]*\\(\\)$", code)]))
+    # any qualified call, with or without arguments (renv::install("pkg"))
+    qualified <- unique(sub("\\(.*$", "",
+                            code[grepl("^[A-Za-z][A-Za-z0-9.]*::[A-Za-z.][A-Za-z0-9._]*\\(", code)]))
     for (name in qualified) {
       # an optional package (rsconnect, plumber) may not be installed; its
       # exports cannot be checked then, which is no evidence of a stale name
