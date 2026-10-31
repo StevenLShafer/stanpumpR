@@ -390,7 +390,6 @@ test_that("the comparison scenarios are registered, valid and switch the models 
 })
 
 test_that("loading a scenario sends the Minto / Schnider setting", {
-  skip_if_not(exists("MockShinySession", asNamespace("shiny")), "MockShinySession not available")
   session <- shiny::MockShinySession$new()
   sent <- list()
   session$sendInputMessage <- function(inputId, message) sent[[inputId]] <<- message

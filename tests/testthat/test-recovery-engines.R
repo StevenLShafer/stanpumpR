@@ -112,7 +112,7 @@ test_that("time-varying PK: the effect site is timed, not the plasma", {
   # Dexmedetomidine in an infant (age <= 1) switches PK on cardiopulmonary bypass, which
   # routes it through advanceClosedForm1().
   PK <- pkFor("dexmedetomidine", weight = 7, height = 65, age = 0.5)
-  skip_if(length(PK$pkEvents) < 2, "dexmedetomidine has no PK events for this patient")
+  expect_gte(length(PK$pkEvents), 2)
   ET <- data.frame(Time = 30, Event = "CPB Start")
   DT <- data.frame(Drug = "dexmedetomidine", Time = c(0, 0), Dose = c(1, 0.7),
                    Units = c("mcg/kg", "mcg/kg/hr"))

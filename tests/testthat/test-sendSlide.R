@@ -142,7 +142,6 @@ test_that("panelPlots() draws each panel of the plot alone, in the plot's order"
 })
 
 test_that("the deck has the whole plot on the first slide and then one slide per panel", {
-  skip_if_not_installed("officer")
   doseTable <- data.frame(
     Drug = c("propofol", "fentanyl", "rocuronium"),
     Time = c(0, 0, 0),

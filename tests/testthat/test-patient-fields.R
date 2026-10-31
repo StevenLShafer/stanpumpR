@@ -90,7 +90,6 @@ test_that("an unknown field is refused", {
 })
 
 test_that("the Patient Profile carries the six hover tips", {
-  skip_if_not_installed("bslib")
   # app_ui() uses numericInput(updateOn = ), which needs shiny 1.10
   skip_if_not_installed("shiny", "1.10.0")
   oldConfig <- .sprglobals$config

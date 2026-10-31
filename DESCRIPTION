@@ -56,14 +56,13 @@ Suggests:
     rmarkdown,
     rsconnect,
     testthat (>= 3.1.7), 
+    withr,
     xml2,
     yaml
 Depends:
     R (>= 4.1)
 Encoding: UTF-8
-LazyData: true
 Config/testthat/edition: 3
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr
 Config/roxygen2/version: 8.1.0
-RoxygenNote: 7.3.1
