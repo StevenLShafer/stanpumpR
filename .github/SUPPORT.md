@@ -1,35 +1,24 @@
 # Getting help with stanpumpR
 
-Thanks for using stanpumpR. Before filing an issue, there are a few places
-to explore and pieces to put together to make the process as smooth as possible.
+stanpumpR is a research and teaching tool. Its curves are what published models
+predict for a typical patient; it is not clinical decision support.
 
-Start by making a minimal **repr**oducible **ex**ample using the
-[reprex](https://reprex.tidyverse.org/) package. If you haven't heard of or used
-reprex before, you're in for a treat! Seriously, reprex will make all of your
-R-question-asking endeavors easier (which is a pretty insane ROI for the five to
-ten minutes it'll take you to learn what it's all about). For additional reprex
-pointers, check out the [Get help!](https://www.tidyverse.org/help/) section of
-the tidyverse site.
+- **How to use the app, or what a model assumes:** start with the **Help** tab in the
+  app. Every drug has its own page giving the source of its model, its parameters at
+  reference patients, and its limits.
+- **A question about a model or its source:** contact Steven Shafer
+  (steven.shafer@stanford.edu).
+- **Something that looks wrong:** [open an
+  issue](https://github.com/StevenLShafer/stanpumpR/issues/new). First [search the
+  existing issues](https://github.com/StevenLShafer/stanpumpR/issues?q=is%3Aissue),
+  open and closed, in case it has been reported or fixed.
 
-Armed with your reprex, the next step is to figure out [where to ask](https://www.tidyverse.org/help/#where-to-ask).
+## What makes a report useful
 
-  * If it's a question: start with [community.rstudio.com](https://community.rstudio.com/),
-    and/or StackOverflow. There are more people there to answer questions.
-  * If it's a bug: you're in the right place, file an issue.
-  * If you're not sure: let the community help you figure it out! If your
-    problem _is_ a bug or a feature request, you can easily return here and
-    report it.
+The address bar of the app *is* the simulation: it encodes the patient, the doses, the
+events and the graph options. Copy it and paste it into the issue, and we can see
+exactly what you saw. Then say what you expected and what appeared instead.
 
-Before opening a new issue, be sure to [search issues and pull requests](https://github.com/tidyverse/stanpumpR/issues) to make sure the
-bug hasn't been reported and/or already fixed in the development version. By
-default, the search will be pre-populated with `is:issue is:open`. You can
-[edit the qualifiers](https://help.github.com/articles/searching-issues-and-pull-requests/)
-(e.g. `is:pr`, `is:closed`) as needed. For example, you'd simply
-remove `is:open` to search _all_ issues in the repo, open or closed.
-
-
-If you _are_ in the right place, and need to file an issue, please review the
-["File issues"](https://www.tidyverse.org/contribute/#issues) paragraph from
-the tidyverse contributing guidelines.
-
-Thanks for your help!
+A GitHub issue is public. The link carries only what was entered in the app (the patient's
+covariates, such as age, weight and sex, and the doses), but do not add anything that
+identifies a patient.
