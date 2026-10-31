@@ -101,6 +101,15 @@ OPIOID_TOLERANCE_DEFAULT <- "none"
 # Odani 1997 measured the *1/*3 effect).  The six common *1/*2/*3 diplotypes;
 # *1/*1 (two normal-function alleles) is the reference.  Kept apart from CYP2D6
 # and CYP2C19, and from any drug interaction: each is its own field.
+#
+# The default is *1/*1, the most common diplotype (77% of controls and 67% of
+# an anticoagulation clinic in Moridani et al., Clin Biochem 2006;39:606-612),
+# by Steven L. Shafer's decision (2026-10-31).  The vitamin-K antagonists
+# (warfarin, fluindione, acenocoumarol) read this field too, and for them
+# *1/*1 predicts the SMALLEST INR rise, the opposite of the most-sensitive rule
+# VKORC1_DEFAULT and CYP4F2_DEFAULT follow; the help page (patient-profile.md,
+# "The CYP2C9 default") says a warfarin patient should be genotyped, that the
+# choice of rule is a subjective judgement, and invites clinicians' feedback.
 CYP2C9_VALUES  <- c("*1/*1", "*1/*2", "*1/*3", "*2/*2", "*2/*3", "*3/*3")
 CYP2C9_DEFAULT <- "*1/*1"
 
