@@ -1679,7 +1679,7 @@ registry <- rbind(
       trimester = "third", comparator = NA,
       design = "review", n = 0L, confidence = "low",
       evidence_read = "memory",
-      source = "Savaysa (edoxaban) US prescribing information section 8.1; Lixiana (edoxaban) EU SmPC (EMA) section 4.3",
+      source = "Lixiana (edoxaban) EU SmPC (EMA) section 4.3; Savaysa (edoxaban) US prescribing information section 8.1",
       source_url = "https://www.ema.europa.eu/en/documents/product-information/lixiana-epar-product-information_en.pdf",
       to_obtain = "",
       notes = "Edoxaban is ~50% renally cleared; a GFR rise would raise CL/F, but no data and the drug is avoided in pregnancy, so no adjustment."),
