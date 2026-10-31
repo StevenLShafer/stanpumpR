@@ -50,8 +50,9 @@
 # (2026-10-31).  The cap is well beyond the source population and changes
 # nothing below it.
 #
-# [decision] Steven L. Shafer, 2026-10-31: 200 kg was chosen as the cap, over
-# refusing such a patient with a message; to be confirmed.
+# Decision (Steven L. Shafer, 2026-10-31): 200 kg, confirmed, over refusing
+# such a patient with a message, and over a higher cap: 300 kg leaves the Vc
+# term at 0.20, 350 kg at 0.025, and anything from 357 kg makes it negative.
 #
 # Doses are sugammadex equivalents, as the Bridion label states them.
 #
