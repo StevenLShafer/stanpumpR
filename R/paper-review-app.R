@@ -89,6 +89,7 @@ paperReviewUI <- function()
     # Not fillable: a filled layout shrinks the plot and the dose table.
     fillable = FALSE,
     theme = bslib::bs_theme(version = 5),
+    header = shinyjs::useShinyjs(),
     bslib::nav_panel("Review", value = "review",
       bslib::layout_sidebar(fillable = FALSE,
         sidebar = bslib::sidebar(width = 320,
@@ -137,7 +138,15 @@ paperReviewServer <- function(input, output, session)
   status <- shiny::reactiveVal("No paper loaded.")
   doseTable <- shiny::reactiveVal(data.frame(Time = 0, Dose = 0, Units = "mg", stringsAsFactors = FALSE))
   bump <- function() version(version() + 1)
+  # Is a manuscript in memory?  Drives the Review button, which stays
+  # disabled until there is one and the box is ticked: the first real test
+  # pressed it unticked and got only a line of status text.
+  hasPdf <- shiny::reactiveVal(FALSE)
   session$onSessionEnded(function() paperReviewDiscard(store))
+  # A dropped connection (a hidden pane, a sleeping laptop) may rejoin the
+  # same session rather than leave an upload with nowhere to go.
+  session$allowReconnect(TRUE)
+  shiny::observe(shinyjs::toggleState("review", condition = hasPdf() && isTRUE(input$consent)))
 
   receive <- function(file, slot, label) {
     if (is.null(file)) return()
@@ -147,6 +156,7 @@ paperReviewServer <- function(input, output, session)
       return()
     }
     assign(slot, bytes, envir = store)
+    if (slot == "pdf") hasPdf(TRUE)
     status(paste0(label, " received (", format(round(length(bytes) / 1024^2, 1), nsmall = 1),
                   " MB), held in this session's memory only."))
   }
@@ -185,6 +195,7 @@ paperReviewServer <- function(input, output, session)
     rm(key)
     # The manuscript is not needed again: drop it whatever the outcome.
     suppressWarnings(rm(list = intersect(c("pdf", "supplement"), ls(store)), envir = store))
+    hasPdf(FALSE)
     if (inherits(result, "paper_review_error")) {
       status(paste(conditionMessage(result), "The manuscript has been discarded; upload it again to retry."))
       return()
@@ -202,6 +213,7 @@ paperReviewServer <- function(input, output, session)
 
   shiny::observeEvent(input$discard, {
     paperReviewDiscard(store)
+    hasPdf(FALSE)
     bump()
     status("Discarded. Nothing about the paper remains in this session.")
   })
