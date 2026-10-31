@@ -1327,14 +1327,17 @@ getDrugPK <- function(
   # parameters rather than a set of amplitudes.
   if (!is.null(X$transitChain))
   {
+    # A dose-dependent oral bioavailability is allowed: simCpCe() scales each
+    # oral dose before it dispatches, so the chain sees an ordinary dose
+    # (opicapone, PR #548).
     if (!is.null(X$metabolite) || !is.null(X$oralFormulations) ||
-        !is.null(X$oralSaturation) || !is.null(X$sublingualSaturation) ||
+        !is.null(X$sublingualSaturation) ||
         !is.null(X$parallelSystems) || !is.null(X$michaelisMenten) ||
         !is.null(X$osmotic) || !is.null(X$molar) || !is.null(X$oralPulses) ||
         !is.null(X$oralZeroOrder) || !is.null(X$dosePhase) ||
         isTRUE(X$doseDependent) || !is.null(X$inr))
       stop("Invalid transitChain for ", drug, ": not available with an ",
-           "X$metabolite block, several oral formulations, saturable oral or ",
+           "X$metabolite block, several oral formulations, saturable ",
            "sublingual absorption, parallel systems, Michaelis-Menten ",
            "elimination, an osmotic or molar dose basis, pulsed or zero-order ",
            "oral release, a dose-phase split, dose-dependent parameters or ",
