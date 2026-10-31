@@ -8,14 +8,16 @@ The first panel in the left sidebar. These covariates are passed to every drug's
 | Weight | kg or lb | 0.1 to 500 kg | |
 | Height | in or cm | 10 to 200 cm | |
 | Sex | male or female | | |
-| CYP 2D6 | phenotype | | Scales the active metabolites of codeine, tramadol, hydrocodone and oxycodone, and the clearance of aripiprazole, haloperidol and risperidone. |
+| CYP 2D6 | phenotype | | Scales the active metabolites of codeine, tramadol, hydrocodone and oxycodone, the clearance of aripiprazole, haloperidol and risperidone, and metoprolol's clearance and oral bioavailability. |
 | CYP 2C19 | phenotype | | Changes the clearance of escitalopram and citalopram. |
-| CYP 2C9 | diplotype | | Changes the clearance of meloxicam and the maximal elimination rate of phenytoin. |
+| CYP 2C9 | diplotype | | Changes the clearance of meloxicam, the maximal elimination rate of phenytoin, and the vitamin-K antagonists warfarin, fluindione and acenocoumarol. |
 | CYP 2B6 | phenotype | | Changes the clearance of methadone. |
 | VKORC1 | genotype (-1639G>A) | AA by default | Sets the sensitivity of warfarin, fluindione and acenocoumarol: the A allele lowers the C50, so the INR rises on less drug. AA, the most sensitive genotype, is assumed until a genotype is entered, so that the curve errs toward the larger INR; see **VKORC1 and ancestry** below. |
 | CYP4F2 | genotype (rs2108622) | CC by default | Sets warfarin's sensitivity: a C allele lowers the C50. CC, the most sensitive genotype, is assumed until a genotype is entered, so that the curve errs toward the larger INR. |
 | Adjust weight to fat-free mass | checkbox | | On by default; scales most models to fat-free mass. |
-| Serum creatinine | mg/dL | 0.2 to 15, or blank | Optional. Used by canagliflozin, cefazolin, dapagliflozin, empagliflozin, ertugliflozin, exenatide, gabapentin, gentamicin, lacosamide, levetiracetam, lixisenatide, mannitol, intravenous meloxicam, metformin, oxycodone, pregabalin, sugammadex and vancomycin. Blank means an assumed normal creatinine for the patient's age and sex: 0.9 in men and 0.8 in women, and in a child the normal for age (about 0.25 in infancy, 0.35 at five, 0.5 at ten). See [Renal function](help:models/covariates). |
+| Serum creatinine | mg/dL | 0.2 to 15, or blank | Optional. Used by the drugs with a renal covariate; the field's hover tip and [Cautions](help:cautions) list them. Blank means an assumed normal creatinine for the patient's age and sex: 0.9 in men and 0.8 in women, and in a child the normal for age (about 0.25 in infancy, 0.35 at five, 0.5 at ten). See [Renal function](help:models/covariates). |
+| Pregnant | Yes / No | women of 12 to 59 | Applies the documented changes of late pregnancy to the drugs whose models have them; see [Pregnancy](help:models/pregnancy). |
+| Gestational age at birth | weeks | 22 to 44, or blank | Blank means a term birth (40 weeks). Read only by dobutamineNeonatal, which adds the postnatal age to it. |
 | Baseline serum osmolality | mOsm/kg | 200 to 400 | The patient's starting value, 280 by default. Read only by [mannitol](help:drugs/mannitol), which is plotted as the serum osmolality it produces on top of this value. |
 | Opioid tolerance | none, mild, somewhat, highly tolerant | none by default | Multiplies every opioid's MEAC by 1, 1.5, 2 or 3, so the % MEAC panel and overlay, the propofol-opioid interaction and the opioid-MAC interaction treat the opioid as less effective. The opioid's shaded band and its time-until-threshold level rise by the same factor. An opioid without a MEAC (codeine, tramadol, buprenorphine) is unchanged, but the active metabolite it forms is not: the morphine from codeine and the desmetramadol from tramadol are scaled like any opioid with a MEAC, and so is their contribution to the % MEAC and both interactions. See [MEAC: comparing opioids](help:models/meac). |
 
@@ -27,7 +29,7 @@ Changing a covariate re-simulates every drug at once; there is no Apply step for
 
 Holding the mouse over the question mark beside a genotype field or the Serum creatinine field shows a tip naming the drugs that read it; every other drug ignores the field. The tips are built from the models themselves, so a drug added later that reads a field appears in its tip.
 
-**Adjust weight to fat-free mass** scales most of the models to the patient's fat-free mass rather than total body weight; it is on by default. **CYP 2D6**, with the phenotypes the genotyping laboratories report (poor, intermediate, normal, ultrarapid), scales the formation of the active metabolites, and the clearance of three antipsychotics. **CYP 2C19** (poor, intermediate, normal, rapid, ultrarapid) changes the clearance of escitalopram and citalopram. **CYP 2C9**, entered as the diplotype of the common \*1, \*2 and \*3 alleles (\*1/\*1 by default), changes the clearance of [meloxicam](help:drugs/meloxicam) and the maximal elimination rate of [phenytoin](help:drugs/phenytoin). **CYP 2B6** (the same five phenotypes as CYP 2C19) changes the clearance of [methadone](help:drugs/methadone); [the methadone genotype scenario](scenario:methadone-cyp2b6) is a worked example. See [Antidepressant models and their limits](help:models/antidepressants), [Scaling to fat-free mass](help:models/fat-free-mass) and [Active metabolites](help:models/metabolites).
+**Adjust weight to fat-free mass** scales most of the models to the patient's fat-free mass rather than total body weight; it is on by default. **CYP 2D6**, with the phenotypes the genotyping laboratories report (poor, intermediate, normal, ultrarapid), scales the formation of the active metabolites, the clearance of three antipsychotics, and metoprolol's clearance and bioavailability. **CYP 2C19** (poor, intermediate, normal, rapid, ultrarapid) changes the clearance of escitalopram and citalopram. **CYP 2C9**, entered as the diplotype of the common \*1, \*2 and \*3 alleles (\*1/\*1 by default), changes the clearance of [meloxicam](help:drugs/meloxicam), the maximal elimination rate of [phenytoin](help:drugs/phenytoin), and the vitamin-K antagonists [warfarin](help:drugs/warfarin), [fluindione](help:drugs/fluindione) and [acenocoumarol](help:drugs/acenocoumarol). **CYP 2B6** (the same five phenotypes as CYP 2C19) changes the clearance of [methadone](help:drugs/methadone); [the methadone genotype scenario](scenario:methadone-cyp2b6) is a worked example. See [Antidepressant models and their limits](help:models/antidepressants), [Scaling to fat-free mass](help:models/fat-free-mass) and [Active metabolites](help:models/metabolites).
 
 ## VKORC1 and ancestry
 
@@ -50,7 +52,7 @@ Internally every model receives age in years, weight in kilograms, height in cen
 A few models switch between parameter sets on a covariate:
 
 - **Dexmedetomidine** uses an infant model (with cardiopulmonary-bypass events) at age ≤ 1 year and an adult model above it.
-- **Remifentanil** uses one model at BMI below 30 and another at BMI of 30 and above.
+- **Remifentanil** uses Eleveld's model, and Kim's in an adult (18 or over) with a BMI of 30 or more, unless one of Kim's volumes or clearances comes out zero or negative for the patient, when it stays on Eleveld's.
 - **Oxytocin** switches to a rat model if the weight is 1 kg or less; this is a research setting, not a clinical one.
 
 ## Age 90 and above
