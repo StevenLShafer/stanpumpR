@@ -129,6 +129,7 @@ PAPER_REVIEW_DERIVED_KIND <- c(
   k10 = "rate", k12 = "rate", k21 = "rate", k13 = "rate", k31 = "rate",
   V1 = "volume", Vss = "volume", Varea = "volume", CL = "clearance", MRT = "time",
   MAT = "time", F = "fraction",
+  decrement_25 = "time", decrement_50 = "time", decrement_75 = "time", decrement_80 = "time",
   AUC_inf = "auc", AUC_0_t = "auc", Cmax = "concentration", tmax = "time",
   tPeak = "time", ke0 = "rate")
 
@@ -454,6 +455,8 @@ paperReviewConsistency <- function(extraction, drug, reference)
       k10 = pk$k10, k12 = pk$k12, k21 = pk$k21, k13 = pk$k13, k31 = pk$k31,
       V1 = pk$v1, Vss = vss, Varea = pk$cl1 / lambda[n], CL = pk$cl1, MRT = vss / pk$cl1,
       ke0 = ke0, tPeak = tPeak,
+      decrement_25 = , decrement_50 = , decrement_75 = , decrement_80 =
+        paperReviewDecrementTime(coef, lambda, as.numeric(sub("^decrement_", "", q)) / 100),
       NA_real_)
   }
 
@@ -564,6 +567,28 @@ paperReviewConsistency <- function(extraction, drug, reference)
   list(table = table, findings = findings)
 }
 
+#' Time for the plasma concentration to fall by a fraction after a
+#' steady-state input stops
+#'
+#' At steady state each mode holds c_i / lambda_i of the concentration, so
+#' after the input stops C(t) / Css = sum (c_i / lambda_i) exp(-lambda_i t) /
+#' sum (c_i / lambda_i), which falls monotonically; the root is found with
+#' uniroot().  (A test paper's printed decrement times did not follow from
+#' its own parameters; Claude noticed, and this makes it a computed check.)
+#'
+#' @param coef,lambda the unit-bolus coefficients and eigenvalues
+#' @param fall the fraction fallen, e.g. 0.5
+#' @returns minutes
+#' @keywords internal
+paperReviewDecrementTime <- function(coef, lambda, fall)
+{
+  w <- coef / lambda
+  remaining <- function(t) sum(w * exp(-lambda * t)) / sum(w) - (1 - fall)
+  hi <- 1
+  while (remaining(hi) > 0 && hi < 1e9) hi <- hi * 4
+  stats::uniroot(remaining, c(0, hi), tol = 1e-10)$root
+}
+
 # The amount of a regimen's single intravenous dose, in the model's amount
 # units (so that coef * amount is a concentration in its units), with a note;
 # NA when there is none.  A single infusion shorter than a tenth of the
@@ -608,6 +633,8 @@ paperReviewRegimenRoutable <- function(regimen, drug)
   routes <- unique(vapply(regimen$doses %or% list(), function(d) d$route %or% "other", character(1)))
   extravascular <- setdiff(routes, c("iv_bolus", "iv_infusion"))
   if (length(extravascular) == 0) return(list(ok = TRUE, why = ""))
+  if (all(extravascular %in% names(PAPER_REVIEW_ROUTE_SUFFIX)) && !paperReviewNeedsAbsorption(regimen))
+    return(list(ok = TRUE, why = ""))
   if (!all(extravascular %in% names(PAPER_REVIEW_ROUTE_SUFFIX)))
     return(list(ok = FALSE, why = paste0("The ", paste(gsub("_", " ", extravascular), collapse = ", "),
                                          " route is not one the simulator offers.")))
@@ -677,10 +704,11 @@ paperReviewRegimenAmount <- function(doses, drug, reference)
   for (r in seq_len(nrow(doses))) {
     u <- doses$Units[r]
     a <- doses$Dose[r] * mg(u) * if (grepl("/kg", u)) reference$weight else 1
-    if (grepl("/min|/hr", u)) {
+    if (grepl("/min|/hr|/day", u)) {
       nextTime <- doses$Time[doses$Units == u & doses$Time > doses$Time[r]]
       if (length(nextTime) == 0) next
-      a <- a * (min(nextTime) - doses$Time[r]) / if (grepl("/hr", u)) 60 else 1
+      a <- a * (min(nextTime) - doses$Time[r]) /
+        (if (grepl("/hr", u)) 60 else if (grepl("/day", u)) 1440 else 1)
     } else if (grepl(" (PO|IM|IN|SL|SC)$", u)) {
       field <- sub("^.* ", "", u)
       F <- pk[[paste0("bioavailability_", field)]]
@@ -712,8 +740,16 @@ paperReviewCovariateChecks <- function(extraction)
   pop <- extraction$population %or% list()
   grid <- expand.grid(PAPER_REVIEW_SWEEP, stringsAsFactors = FALSE)
 
+  # The reference patient matters only to a covariate the review evaluates.
+  evaluated <- unique(vapply(extraction$covariate_effects %or% list(), function(e) e$covariate %or% "", ""))
+  needs <- c(weight = any(evaluated %in% c("weight", "bmi", "lean_body_mass", "fat_free_mass")),
+             height = any(evaluated %in% c("height", "bmi", "lean_body_mass", "fat_free_mass")),
+             age = any(evaluated %in% c("age", "fat_free_mass")))
+  perKgPrinted <- any(vapply(extraction$parameters %or% list(), function(p)
+    isTRUE(paperReviewUnit(p$units %or% "other")$perKg), logical(1)))
+  needs[["weight"]] <- needs[["weight"]] || perKgPrinted
   for (field in c("weight", "height", "age"))
-    if (grepl("default", reference$source[[field]]))
+    if (needs[[field]] && grepl("default", reference$source[[field]]))
       add("info", paste0("No reference or typical ", field, " is printed"),
           paste0("Typical values are evaluated at the stanpumpR default ", field, " (",
                  reference[[field]], ")."), pop$location)

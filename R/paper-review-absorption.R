@@ -3,8 +3,8 @@
 # A paper often fits no absorption model and still prints enough to simulate
 # its oral (or IM, SC, IN, SL) doses: a bioavailability, a mean absorption
 # time, an oral MRT beside the intravenous one, a tmax, or a figure of the
-# oral curve.  The first real paper reviewed (Singhvi 1988, fosinopril)
-# printed F, MAT and tmax for two formulations and no ka, and Shafer asked
+# oral curve.  A test paper that printed F, MAT and tmax for two oral
+# formulations of a prodrug, and no ka, is why; and Shafer asked
 # that such routes be simulated too, and that parameters be derived from the
 # displayed curves where possible.  So, for each extravascular regimen:
 #
@@ -94,6 +94,7 @@ paperReviewExtravascularDoses <- function(regimen, reference, concUnits)
   rows <- list()
   for (d in regimen$doses %or% list()) {
     if (!(d$route %or% "other") %in% names(PAPER_REVIEW_ROUTE_SUFFIX)) next
+    if (paperReviewIsRateDose(d)) next
     mg <- c(g = 1000, mg = 1, mcg = 1e-3, ng = 1e-6)[d$mass_unit %or% "other"]
     minutes <- paperReviewMinutes(d$time_units %or% "min")
     if (is.na(mg) || is.na(minutes)) next
@@ -312,6 +313,14 @@ paperReviewAbsorption <- function(extraction, regimen, route, drug, reference)
     fit <- tryCatch(paperReviewFitAbsorption(pts, doses, modes, if (is.finite(F)) F * fraction else NA, tlag),
                     error = function(e) NULL)
     figs <- paste(unique(vapply(series, function(s) s$figure, "")), collapse = ", ")
+    # Absorption slower than the terminal elimination is not a credible fit
+    # of a first-order input: it is what a misread dosing pattern produces
+    # (daily doses read as single doses gave a ka of about 1e-4 /h).
+    if (!is.null(fit) && is.finite(fit$ka) && fit$ka < min(modes$lambda)) {
+      crossCheck <- paste0("A fit to ", figs, "'s digitised points gave ka ", prFmt(fit$ka * 60),
+                           " /h, slower than the terminal elimination, and was not used.")
+      fit <- NULL
+    }
     if (!is.null(fit) && is.finite(fit$ka)) {
       if (!is.finite(ka)) {
         ka <- fit$ka
@@ -353,13 +362,19 @@ paperReviewAbsorptions <- function(extraction, drug, reference)
 {
   out <- list()
   for (r in extraction$regimens %or% list()) {
+    # A constant input needs no absorption (paperReviewNeedsAbsorption()).
+    if (!paperReviewNeedsAbsorption(r) || is.null(r$id)) next
     routes <- vapply(r$doses %or% list(), function(d) d$route %or% "other", "")
     ev <- intersect(routes, names(PAPER_REVIEW_ROUTE_SUFFIX))
-    if (length(ev) == 0 || is.null(r$id)) next
     out[[r$id]] <- paperReviewAbsorption(extraction, r, ev[[1]], drug, reference)
   }
   route <- paperReviewExtravascularRoute(extraction)
-  if (length(out) == 0 && !is.na(route))
+  # Route-level parameters alone only when no regimen doses that route at all
+  # (a paper dosing it only as a constant input needs no absorption).
+  dosed <- any(vapply(extraction$regimens %or% list(), function(r)
+    any(vapply(r$doses %or% list(), function(d) (d$route %or% "") %in% names(PAPER_REVIEW_ROUTE_SUFFIX),
+               logical(1))), logical(1)))
+  if (length(out) == 0 && !is.na(route) && !dosed)
     out[["route"]] <- paperReviewAbsorption(extraction, NULL, route, drug, reference)
   out
 }

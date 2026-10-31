@@ -58,6 +58,7 @@ PAPER_REVIEW_DERIVED <- c(
   "coefficient_1", "coefficient_2", "coefficient_3",
   "k10", "k12", "k21", "k13", "k31",
   "V1", "Vss", "Varea", "CL", "MRT", "MAT", "F",
+  "decrement_25", "decrement_50", "decrement_75", "decrement_80",
   "AUC_inf", "AUC_0_t", "Cmax", "tmax", "tPeak", "ke0", "other")
 
 # Units a derived quantity may carry: the parameter units, the concentration
@@ -99,7 +100,8 @@ PAPER_REVIEW_NUMERIC_FIELDS <- c(
   "year", "molecular_weight", "value", "lower", "upper", "central", "min", "max",
   "n", "n_female", "n_male", "coefficient", "reference_value", "duration",
   "error_lower", "error_upper", "group1_value", "group1_se", "group2_value",
-  "group2_se", "difference", "difference_se", "p_value", "analyte_fraction")
+  "group2_se", "difference", "difference_se", "p_value", "analyte_fraction",
+  "interval")
 # Optional strings: NULL when empty.
 PAPER_REVIEW_OPTIONAL_STRINGS <- c("title", "first_author", "journal", "doi",
                                    "pd_model", "regimen_id")
@@ -285,15 +287,24 @@ paperReviewSchema <- function()
           "what the paper states or prints; empty when the dose is the analyte."))),
         mass_unit    = schemaEnum(c("g", "mg", "mcg", "ng", "other")),
         per_kg       = schemaEnum(c("yes", "no")),
-        per_time     = schemaEnum(c("none", "per_min", "per_h"), "Rate units for an infusion."),
-        duration     = schemaNullable(schemaNumber("Infusion duration.")),
+        per_time     = schemaEnum(c("none", "per_min", "per_h", "per_day"),
+                                  paste("Rate units for a continuous input: an infusion, or a daily oral",
+                                        "dose the paper models as a constant input (mg per day).")),
+        duration     = schemaNullable(schemaNumber(paste(
+          "How long this row lasts: an infusion's or a constant input's duration, or how",
+          "long a repeated dose goes on. Empty when it continues to the end."))),
+        interval     = schemaNullable(schemaNumber(paste(
+          "For a discrete dose repeated at a fixed interval (one tablet every 24 h): the",
+          "interval, in time_units. Empty for a single dose or a constant input."))),
         time_units   = schemaEnum(PAPER_REVIEW_TIME_UNITS, "Units of time and duration.")
       ))),
       location = schemaLocation()
     ))),
     derived_quantities = schemaArray(schemaObject(list(
       quantity    = schemaChoice(PAPER_REVIEW_DERIVED,
-                               "t_half_1 and lambda_1 are the fastest; coefficient_i pairs with lambda_i."),
+                               paste("t_half_1 and lambda_1 are the fastest; coefficient_i pairs with lambda_i;",
+                                     "decrement_50 is the time for the concentration to fall 50% after a",
+                                     "steady-state input stops (the context-sensitive half-time at steady state).")),
       value       = schemaNullable(schemaNumber()),
       value_text  = schemaString("Exactly as printed."),
       units       = schemaChoice(PAPER_REVIEW_DERIVED_UNITS),
@@ -397,6 +408,9 @@ paperReviewSystemPrompt <- function()
     "  absorption half-life, the mean absorption time (MAT), F, tlag, and that",
     "  regimen's Cmax, tmax, MRT and AUC, each tied to its regimen_id. Record a",
     "  prodrug or salt dose's molar relation to the analyte as analyte_fraction.",
+    "- A daily dose the paper models as a constant input is one row with per_time",
+    "  per_day and its duration; a tablet taken repeatedly is one row with its",
+    "  interval and duration. Never write a daily dose as a single dose.",
     "- Describe every dosing regimen as dose rows: an infusion is one row with",
     "  its rate, start time and duration.",
     "- reported_differences: any comparison of two groups' means that the paper",

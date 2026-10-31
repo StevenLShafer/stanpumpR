@@ -121,8 +121,8 @@ checked on return instead (`paperReviewValidate()`).
 
 ### Extravascular routes, and parameters from the curves
 
-Asked for by Shafer on 2026-10-30, after the first real paper (Singhvi 1988,
-fosinopril) printed F, the mean absorption time and tmax for two oral
+Asked for by Shafer on 2026-10-30, after the first real test paper printed
+F, the mean absorption time and tmax for two oral
 formulations of a prodrug, but no ka: "Other routes should be captured and
 simulated as well", and "the app should consider deriving parameters from
 displayed curves when possible". `R/paper-review-absorption.R`:
@@ -140,8 +140,8 @@ displayed curves when possible". `R/paper-review-absorption.R`:
     "bioavailability is read, never fitted to another study's exposure");
     else 1 for apparent parameters; else fitted with ka to the points.
   - **The dose basis** is `analyte_fraction` on the dose, taken only from the
-    paper's own statement (fosinopril: 10 mg of the prodrug sodium salt is
-    equimolar to 7.5 mg of the diacid, so 0.75). It rides on the
+    paper's own statement (a prodrug salt dose stated to be equimolar to so
+    much of the analyte). It rides on the
     bioavailability, so a dose is entered as the paper doses it.
 - **No double counting.** A printed quantity an absorption was derived from
   (the AUC behind F, the tmax or MRT behind ka) is marked "used to build the

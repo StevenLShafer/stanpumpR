@@ -222,7 +222,7 @@ test_that("a regimen whose absorption cannot be derived is not compared, and is 
 })
 
 test_that("ka comes from the mean absorption time, F from the paper's AUCs, and the dose basis from its statement", {
-  # The fosinopril pattern: no ka, but F (or the AUCs), MAT and an equimolar
+  # A test paper's pattern: no ka, but F (or the AUCs), MAT and an equimolar
   # prodrug dose.  100 mg of which 0.8 is the analyte, true F 0.5, ka 1/50 min.
   ex <- paperReviewExample()
   ex$structure$routes <- list("iv_bolus", "iv_infusion", "oral")
@@ -398,6 +398,87 @@ test_that("a model the print does not close is closed from a digitised intraveno
   expect_true(review$drug$ok)
 })
 
+# A test paper dosed daily and modelled each day's dose as a constant 24-h
+# input.  The schema had no way to say so; each daily dose became a single
+# dose, and the absorption fit to the paper's own simulation figures drove
+# ka to about 1e-4 /h.  (Fictional numbers below.)
+apparentOneCompartment <- function() {
+  x <- paperReviewExample()
+  x$drug$concentration_units <- "mg/L"
+  x$structure$compartments <- 1
+  x$structure$routes <- list("oral")
+  x$structure$apparent_oral <- "yes"
+  x$structure$effect_site <- "none"
+  x$covariate_effects <- list()
+  p <- function(role, value, units)
+    list(name_in_paper = role, role = role, value = value, value_text = as.character(value),
+         units = units, uncertainty = list(type = "not_reported"), status = "estimated", location = "T2")
+  x$parameters <- list(p("CL", 10, "L/h"), p("V1", 100, "L"))
+  x$derived_quantities <- list()
+  x$figures <- list()
+  x$regimens <- list(list(id = "D1", description = "240 mg/day as a constant input for 30 days",
+    doses = list(list(route = "oral", time = 0, amount = 240, mass_unit = "mg", per_kg = "no",
+                      per_time = "per_day", duration = 30, time_units = "day")),
+    location = "Methods"))
+  x
+}
+
+test_that("a daily dose modelled as a constant input becomes an oral rate, with no absorption needed", {
+  x <- apparentOneCompartment()
+  d <- paperReviewRegimenDoses(x$regimens[[1]])$doses
+  expect_equal(d$Units, c("mg/day PO", "mg/day PO"))
+  expect_equal(d$Time, c(0, 30 * 1440))
+  expect_equal(d$Dose, c(240, 0))
+  review <- paperReviewRun(x)
+  expect_length(review$absorptions, 0)
+  expect_true(paperReviewRegimenRoutable(x$regimens[[1]], review$drug)$ok)
+  expect_true("mg/day PO" %in% review$drug$units)
+  # Css = rate / CL = (240 / 24 mg/h) / (10 L/h) = 1 mg/L, reached well
+  # within 30 days (half-life 6.9 h).
+  sim <- paperReviewSimulate(review$drug, review$reference, d, 30 * 1440)
+  expect_equal(stats::approx(sim$curve$Time, sim$curve$Cp, 20 * 1440)$y, 1, tolerance = 1e-4)
+})
+
+test_that("a tablet repeated at an interval becomes one dose per interval", {
+  r <- list(doses = list(list(route = "oral", time = 0, amount = 200, mass_unit = "mg", per_kg = "no",
+                              per_time = "none", duration = 3, interval = 1, time_units = "day")))
+  d <- paperReviewRegimenDoses(r)$doses
+  expect_equal(d$Time, c(0, 1440, 2880))
+  expect_equal(d$Units, rep("mg PO", 3))
+  expect_true(paperReviewNeedsAbsorption(r))
+})
+
+test_that("a fitted ka slower than the terminal elimination is refused", {
+  ex <- paperReviewExample()
+  ex$structure$routes <- list("iv_bolus", "oral")
+  ex$regimens[[3]] <- oralRegimen()
+  # Points that keep rising for a week after one dose: what daily dosing
+  # read as a single dose looks like.
+  times <- c(1, 2, 4, 7) * 1440
+  ex$figures[[3]] <- list(figure_id = "Figure 9", caption = "rising", regimen_id = "R3",
+    y_quantity = "concentration", y_units = "ng/mL", time_units = "min", log_y = "no",
+    data_kind = "mean", error_bars = "none",
+    series = list(list(label = "Oral", points = lapply(seq_along(times), function(i)
+      list(time = times[i], value = 10 * i)))),
+    digitization_note = "made up", location = "Figure 9")
+  a <- paperReviewRun(ex)$absorptions$R3
+  expect_false(a$ok)
+  expect_match(a$crossCheck, "slower than the terminal elimination, and was not used")
+})
+
+test_that("the reference patient's defaults are noted only when a covariate needs them", {
+  x <- apparentOneCompartment()
+  titles <- vapply(paperReviewCovariateChecks(x), `[[`, "", "title")
+  expect_false(any(grepl("No reference or typical", titles)))
+  x$covariate_effects <- list(list(parameter_role = "CL", covariate = "weight", form = "power",
+    coefficient = 0.75, reference_value = NULL, covariate_units = "kg",
+    equation_as_printed = "(WT/?)^0.75", location = "Eq 1"))
+  x$population$weight_kg <- list(central = NULL, central_kind = "unstated", min = NULL, max = NULL)
+  titles <- vapply(paperReviewCovariateChecks(x), `[[`, "", "title")
+  expect_true(any(grepl("No reference or typical weight", titles)))
+  expect_false(any(grepl("No reference or typical height", titles)))
+})
+
 test_that("printed rounding is read from the printed digits", {
   expect_equal(paperReviewRounding("1.30"), 0.005)
   expect_equal(paperReviewRounding("148"), 0.5)
@@ -414,4 +495,32 @@ test_that("every finding has a section, a severity and says whether it was compu
   }
   claude <- findingsOf(review, "Claude's reading")
   expect_true(length(claude) > 0 && all(!vapply(claude, `[[`, TRUE, "computed")))
+})
+
+test_that("decrement times after a steady-state input are recomputed and checked", {
+  # A fictional two-compartment model with an independent eigen() solution,
+  # checked against a dense grid rather than a pinned number.
+  CL <- 200; V1 <- 1000; V2 <- 10000; Q <- 500                 # L/day
+  k10 <- CL / V1; k12 <- Q / V1; k21 <- Q / V2
+  l <- sort(-eigen(matrix(c(-(k10 + k12), k21, k12, -k21), 2, byrow = TRUE))$values, decreasing = TRUE)
+  A <- c((k21 - l[1]) / (l[2] - l[1]), (k21 - l[2]) / (l[1] - l[2])) / V1
+  t50 <- paperReviewDecrementTime(A, l, 0.5)                   # days, in these units
+  w <- A / l
+  expect_equal(sum(w * exp(-l * t50)) / sum(w), 0.5, tolerance = 1e-9)
+  grid <- seq(0, 400, by = 1e-3)
+  remaining <- colSums(w * exp(-outer(l, grid))) / sum(w)
+  for (fall in c(0.25, 0.5, 0.75))
+    expect_lt(abs(paperReviewDecrementTime(A, l, fall) - grid[which.min(abs(remaining - (1 - fall)))]),
+              1e-3)                                             # the grid's step
+
+  # Through the review: a printed 50% decrement on the example is checked.
+  ex <- paperReviewExample()
+  modes <- paperReviewDispositionModes(paperReviewRun(ex)$drug, paperReviewReferencePatient(ex))
+  t50 <- paperReviewDecrementTime(modes$coef, modes$lambda, 0.5)
+  ex$derived_quantities <- c(ex$derived_quantities, list(list(
+    quantity = "decrement_50", value = signif(t50, 3), value_text = format(signif(t50, 3)),
+    units = "min", regimen_id = NULL, statistic = "typical_value",
+    uncertainty = list(type = "not_reported"), location = "Figure 6")))
+  t <- paperReviewRun(ex)$consistency
+  expect_equal(t$status[t$quantity == "decrement_50"], "matches")
 })

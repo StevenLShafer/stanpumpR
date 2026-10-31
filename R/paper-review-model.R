@@ -23,6 +23,24 @@ PAPER_REVIEW_DEFAULT_PATIENT <- list(weight = 70, height = 170, age = 40, sex = 
 # two-compartment paper) found that this module had written zeros.
 PAPER_REVIEW_ABSENT_VOLUME <- 1
 
+# The most discrete doses one regimen row expands into (two years of daily
+# tablets is 730).
+PAPER_REVIEW_MAX_REPEATS <- 2000
+
+#' Is this dose row a constant input rather than a discrete dose?
+#'
+#' An infusion; a row with a rate (per minute, hour or day); or an amount
+#' given over a duration that is not a repeated dose.
+#' @keywords internal
+paperReviewIsRateDose <- function(d)
+{
+  perTime <- d$per_time %or% "none"
+  if (perTime != "none") return(TRUE)
+  if (identical(d$route, "iv_infusion")) return(TRUE)
+  if (identical(d$route, "iv_bolus")) return(FALSE)
+  is.finite(paperReviewNum(d$duration)) && !is.finite(paperReviewNum(d$interval))
+}
+
 # stanpumpR's Concentration.Units (amount per mL) for each printed unit, and
 # the factor that turns the printed number into that unit.
 PAPER_REVIEW_CONCENTRATION_MAP <- list(
@@ -375,6 +393,15 @@ paperReviewDrug <- function(extraction, patient, closed = NULL, absorption = NUL
     suffix <- PAPER_REVIEW_ROUTE_SUFFIX[[route]]
     units <- c(units, paste(c("mg", "mcg", "mg/kg", "mcg/kg"), suffix))
   }
+  # A paper that doses as a constant extravascular input (daily oral doses
+  # modelled as continuous) gets those rate units too.
+  rateRoutes <- unique(unlist(lapply(extraction$regimens %or% list(), function(r)
+    vapply(r$doses %or% list(), function(d)
+      if ((d$route %or% "other") %in% names(PAPER_REVIEW_ROUTE_SUFFIX) && paperReviewIsRateDose(d))
+        d$route else NA_character_, ""))))
+  for (rr in rateRoutes[!is.na(rateRoutes)])
+    units <- c(units, paste0(c("mg/day", "mg/hr"), " ", PAPER_REVIEW_ROUTE_SUFFIX[[rr]]))
+  units <- unique(units)
   defaults <- data.frame(
     Drug = paperReviewDrugName(extraction), Concentration.Units = concUnits,
     Bolus.Units = units[1], Infusion.Units = "mg/hr", Default.Units = units[1],
@@ -385,6 +412,15 @@ paperReviewDrug <- function(extraction, patient, closed = NULL, absorption = NUL
        absorption = absorption, absorptions = absorptions, closed = closed,
        ok = ok, problems = unique(problems))
 }
+
+#' Does a regimen have a discrete extravascular dose, which needs an
+#' absorption?  A constant oral input does not: it enters the apparent
+#' disposition directly.
+#' @keywords internal
+paperReviewNeedsAbsorption <- function(regimen)
+  any(vapply(regimen$doses %or% list(), function(d)
+    (d$route %or% "other") %in% names(PAPER_REVIEW_ROUTE_SUFFIX) && !paperReviewIsRateDose(d),
+    logical(1)))
 
 #' The drug as built for one regimen's absorption
 #'
@@ -399,8 +435,7 @@ paperReviewDrug <- function(extraction, patient, closed = NULL, absorption = NUL
 #' @keywords internal
 paperReviewDrugFor <- function(drug, extraction, regimen, patient)
 {
-  routes <- vapply(regimen$doses %or% list(), function(d) d$route %or% "other", "")
-  if (!any(routes %in% names(PAPER_REVIEW_ROUTE_SUFFIX))) return(drug)
+  if (!paperReviewNeedsAbsorption(regimen)) return(drug)
   a <- drug$absorptions[[regimen$id %or% ""]] %or% drug$absorptions[["route"]]
   if (is.null(a) || !isTRUE(a$ok)) return(NULL)
   if (identical(drug$absorption, a)) return(drug)
@@ -478,6 +513,9 @@ paperReviewRegimenDoses <- function(regimen)
 {
   rows <- list()
   problems <- character(0)
+  add <- function(time, dose, unit)
+    rows[[length(rows) + 1]] <<- data.frame(Time = time, Dose = dose, Units = unit,
+                                            stringsAsFactors = FALSE)
   for (d in regimen$doses %or% list())
   {
     minutes <- paperReviewMinutes(d$time_units %or% "min")
@@ -489,30 +527,45 @@ paperReviewRegimenDoses <- function(regimen)
     perKg <- if (identical(d$per_kg, "yes")) "/kg" else ""
     t0 <- d$time * minutes
     route <- d$route %or% "other"
-    if (identical(route, "iv_infusion") || !identical(d$per_time %or% "none", "none")) {
-      rateUnit <- switch(d$per_time %or% "none", per_min = "/min", per_h = "/hr", "/min")
-      duration <- paperReviewNum(d$duration) * minutes
+    extravascular <- route %in% names(PAPER_REVIEW_ROUTE_SUFFIX)
+    if (!extravascular && !route %in% c("iv_bolus", "iv_infusion")) {
+      problems <- c(problems, "A dose's route is not one the simulator offers.")
+      next
+    }
+    suffix <- if (extravascular) paste0(" ", PAPER_REVIEW_ROUTE_SUFFIX[[route]]) else ""
+    duration <- paperReviewNum(d$duration) * minutes
+    interval <- paperReviewNum(d$interval) * minutes
+    perTime <- d$per_time %or% "none"
+    if (paperReviewIsRateDose(d)) {
+      # A constant input: an infusion, or a daily oral dose the paper models as
+      # one.  A rate on an extravascular route is a
+      # constant input on the apparent parameters ("mg/day PO", R/routes.R).
+      rateUnit <- switch(perTime, per_min = "/min", per_h = "/hr", per_day = "/day", "/min")
       amount <- d$amount
-      if (identical(d$per_time %or% "none", "none")) {
+      if (perTime == "none") {
         # A total amount given over a duration: as a rate per minute.
-        if (is.na(duration) || duration <= 0) {
+        if (!is.finite(duration) || duration <= 0) {
           problems <- c(problems, "An infusion has no duration.")
           next
         }
         amount <- d$amount / duration
       }
-      unit <- paste0(mass, perKg, rateUnit)
-      rows[[length(rows) + 1]] <- data.frame(Time = t0, Dose = amount, Units = unit)
-      if (is.finite(duration) && duration > 0)
-        rows[[length(rows) + 1]] <- data.frame(Time = t0 + duration, Dose = 0, Units = unit)
-    } else if (identical(route, "iv_bolus")) {
-      rows[[length(rows) + 1]] <- data.frame(Time = t0, Dose = d$amount, Units = paste0(mass, perKg))
-    } else if (route %in% names(PAPER_REVIEW_ROUTE_SUFFIX)) {
-      rows[[length(rows) + 1]] <- data.frame(
-        Time = t0, Dose = d$amount,
-        Units = paste0(mass, perKg, " ", PAPER_REVIEW_ROUTE_SUFFIX[[route]]))
+      unit <- paste0(mass, perKg, rateUnit, suffix)
+      add(t0, amount, unit)
+      if (is.finite(duration) && duration > 0) add(t0 + duration, 0, unit)
     } else {
-      problems <- c(problems, "A dose's route is not one the simulator offers.")
+      unit <- paste0(mass, perKg, suffix)
+      times <- t0
+      if (is.finite(interval) && interval > 0) {
+        # A dose repeated at an interval, for its duration (or once if none).
+        n <- if (is.finite(duration) && duration > 0) ceiling(duration / interval - 1e-9) else 1
+        if (n > PAPER_REVIEW_MAX_REPEATS) {
+          problems <- c(problems, paste("A repeated dose was cut to", PAPER_REVIEW_MAX_REPEATS, "doses."))
+          n <- PAPER_REVIEW_MAX_REPEATS
+        }
+        times <- t0 + interval * (seq_len(n) - 1)
+      }
+      for (t in times) add(t, d$amount, unit)
     }
   }
   doses <- if (length(rows)) do.call(rbind, rows) else
