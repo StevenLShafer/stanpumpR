@@ -85,8 +85,10 @@ that peaks at a BMI of 43 in men and 36 in women and then falls, giving
 nonsense for heavy patients (Bouillon & Shafer, Anesthesiology 1998). Aoyama's
 meloxicam model takes the Al-Sallami fat-free mass in its place, with its
 published centring value. The Schnider propofol and Minto remifentanil
-companions (`R/alternativeModels.R`) keep James deliberately, to show what the
-pumps compute and why they fail in the obese.
+companions (`R/alternativeModels.R`), istradefylline and tolcapone, whose
+sources used James, read it held at its peak (`lbmJamesCapped()`,
+`R/lbmJames.R`; Shafer's decision of 2026-10-31), so that past the peak a
+heavier patient is never credited with less lean tissue.
 
 ## How stanpumpR applies it
 
