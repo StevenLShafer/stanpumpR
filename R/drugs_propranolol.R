@@ -80,8 +80,8 @@
 # EFFECT SITE: tPeak 5 MINUTES, FOR HEART RATE (CLINICAL)
 # =======================================================
 # Set at 5 minutes on Steven L. Shafer's instruction (2026-10-20), and kept
-# as his clinical choice (2026-10-28) once the full text of Achong MR,
-# Piafsky KM, Ogilvie RI, Clin Pharmacol Ther 1976;19:148-152 (doi
+# as his clinical choice (2026-10-28) once the full text of
+# Achong MR, Piafsky KM, Ogilvie RI, Clin Pharmacol Ther 1976;19:148-152 (doi
 # 10.1002/cpt1976192148) was read.  It gave 10 mg over 10 minutes (10 mL at
 # 1 mL/min) to six healthy men and applied the beta-stimulus 5 min, 90 min, 4,
 # 9 and 24 h after the END of the infusion.  The reduction in exercise
