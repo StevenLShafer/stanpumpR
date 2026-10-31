@@ -5,19 +5,27 @@
 # (R/metaboliteCoefficients.R) records, for every parent, how that agreement is
 # kept; these tests hold the models to it.
 
+# Models are looked up in the package namespace explicitly: an installed
+# package exports only some of them, and exists() handed to vapply() searches
+# from the caller's frame, which under R CMD check found only the exported
+# ones and so silently skipped amiodarone and bupropion.
+modelNamespace <- asNamespace("stanpumpR")
+
 declaredMetabolite <- function(drug) {
-  x <- get(drug, mode = "function")(weight = 70, height = 170, age = 35,
-                                     sex = "male")
+  x <- get(drug, envir = modelNamespace, mode = "function")(
+    weight = 70, height = 170, age = 35, sex = "male")
   m <- x$metabolite$name
   if (is.null(m)) m <- x$transitChain$metabolite$name
   m
 }
 
+# A model that errors fails the test rather than being skipped: a parent
+# dropped silently is the gap this file exists to close.
 parentsInLibrary <- function() {
   drugs <- getDrugDefaultsGlobal(FALSE)$Drug
-  drugs <- drugs[vapply(drugs, exists, logical(1), mode = "function")]
-  met <- lapply(drugs, function(d) tryCatch(declaredMetabolite(d),
-                                            error = function(e) NULL))
+  drugs <- drugs[vapply(drugs, function(d)
+    exists(d, envir = modelNamespace, mode = "function"), logical(1))]
+  met <- lapply(drugs, declaredMetabolite)
   names(met) <- drugs
   unlist(met[!vapply(met, is.null, logical(1))])
 }
@@ -33,13 +41,14 @@ test_that("every parent the models declare has one row, naming its metabolite", 
 
 test_that("every metabolite is a model in the library", {
   for (m in METABOLITE_FORMATION_BASIS$metabolite)
-    expect_true(exists(m, mode = "function"), info = m)
+    expect_true(exists(m, envir = modelNamespace, mode = "function"), info = m)
 })
 
 test_that("a 'reads' or 'shared' parent really calls what it names", {
   basis <- METABOLITE_FORMATION_BASIS[METABOLITE_FORMATION_BASIS$basis != "joint", ]
   for (i in seq_len(nrow(basis))) {
-    body <- paste(deparse(get(basis$parent[i], mode = "function")), collapse = "\n")
+    body <- paste(deparse(get(basis$parent[i], envir = modelNamespace,
+                              mode = "function")), collapse = "\n")
     expect_true(grepl(paste0(basis$uses[i], "("), body, fixed = TRUE),
                 info = paste(basis$parent[i], "does not call", basis$uses[i]))
   }
