@@ -70,16 +70,6 @@ patientFieldReadersSentence <- function(arg, drugDefaults = getDrugDefaultsGloba
   sprintf("Read by %s; no other drug is affected.", patientFieldList(named))
 }
 
-#' The hover tip of a Patient Profile field
-#'
-#' One short paragraph: what the field is, then the drugs that read it
-#' (`patientFieldReadersSentence()`), then for the serum creatinine what a
-#' blank field means, with the assumed adult values quoted from
-#' `R/renalFunction.R` so the tip can never disagree with the code.
-#'
-#' @inheritParams patientFieldReaders
-#' @return a single string for `bslib::tooltip()`.
-#' @noRd
 #' The grey hint shown in an empty Serum creatinine box
 #'
 #' The field is optional, and an empty box says nothing about what empty
@@ -99,6 +89,16 @@ creatininePlaceholder <- function(age, sex) {
           format(round(assumedCreatinine(age, sex), 2), nsmall = 1, trim = TRUE))
 }
 
+#' The hover tip of a Patient Profile field
+#'
+#' One short paragraph: what the field is, then the drugs that read it
+#' (`patientFieldReadersSentence()`), then for the serum creatinine what a
+#' blank field means, with the assumed adult values quoted from
+#' `R/renalFunction.R` so the tip can never disagree with the code.
+#'
+#' @inheritParams patientFieldReaders
+#' @return a single string for `bslib::tooltip()`.
+#' @noRd
 patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
   arg <- match.arg(arg, names(PATIENT_FIELD_LABELS))
   readers <- patientFieldReadersSentence(arg, drugDefaults)

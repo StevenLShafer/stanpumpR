@@ -588,6 +588,8 @@ chordBound <- function(ya, yb, beta)
 
 
 #' chordBound() for one interval, without the vector overhead
+#' @param ya,yb the two endpoint values of one interval, each a single number
+#'   (the function branches on `ya > yb`, so vectors are an error)
 #' @inheritParams chordBound
 #' @keywords internal
 chordBoundScalar <- function(ya, yb, beta)
