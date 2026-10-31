@@ -175,8 +175,10 @@
 # if any, smaller than the bound's slack there -- about delta^2 1e-18 of the
 # threshold).  The same two tolerances as R/recoveryCalc.R.
 #
-# Cost.  The grid's step makes delta times it TRANSIT_RECOVERY_GRID_BETA (0.1),
-# so the bound's slack between grid points is about beta^2 / 8 of the output,
+# Cost.  The grid's step aims at delta times it equal to TRANSIT_RECOVERY_GRID_BETA
+# (0.1); rounding the step count up makes the actual beta = delta * dt at most
+# that, and only the TRANSIT_RECOVERY_MAX_STEPS cap can make it larger.  The
+# bound's slack between grid points is then about beta^2 / 8 of the output,
 # and the screen leaves each row one or two open intervals at its last
 # crossing.  Rows whose crossing is clean -- at every split the right half
 # either starts above the threshold or is cleared -- are bisected together,
@@ -546,13 +548,18 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
 
 #' Steps of the uniform screening grid, at most
 #'
-#' The grid's step is set so that `delta` times it is
-#' `TRANSIT_RECOVERY_GRID_BETA`, but never finer than the horizon over this
-#' many steps; a coarser grid costs more refinement, never accuracy.
+#' The grid has `ceiling(horizon * delta / TRANSIT_RECOVERY_GRID_BETA)` steps
+#' (at least one), so `delta` times its step is at most
+#' `TRANSIT_RECOVERY_GRID_BETA`, but never more than this many steps: when the
+#' cap binds, `delta` times the step exceeds `TRANSIT_RECOVERY_GRID_BETA`, and
+#' the coarser grid costs more refinement, never accuracy.
 #' @keywords internal
 TRANSIT_RECOVERY_MAX_STEPS <- 20000L
 
-#' The screening grid's step, as a multiple of the fastest rate's time constant
+#' The target screening-grid step, as a multiple of the fastest rate's time constant
+#'
+#' A ceiling on the step count makes the actual `delta * dt` at most this;
+#' only the `TRANSIT_RECOVERY_MAX_STEPS` cap can make it larger.
 #' @keywords internal
 TRANSIT_RECOVERY_GRID_BETA <- 0.1
 

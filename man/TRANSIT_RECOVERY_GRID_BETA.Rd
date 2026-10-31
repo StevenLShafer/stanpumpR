@@ -3,7 +3,7 @@
 \docType{data}
 \name{TRANSIT_RECOVERY_GRID_BETA}
 \alias{TRANSIT_RECOVERY_GRID_BETA}
-\title{The screening grid's step, as a multiple of the fastest rate's time constant}
+\title{The target screening-grid step, as a multiple of the fastest rate's time constant}
 \format{
 An object of class \code{numeric} of length 1.
 }
@@ -11,6 +11,7 @@ An object of class \code{numeric} of length 1.
 TRANSIT_RECOVERY_GRID_BETA
 }
 \description{
-The screening grid's step, as a multiple of the fastest rate's time constant
+A ceiling on the step count makes the actual \code{delta * dt} at most this;
+only the \code{TRANSIT_RECOVERY_MAX_STEPS} cap can make it larger.
 }
 \keyword{internal}
