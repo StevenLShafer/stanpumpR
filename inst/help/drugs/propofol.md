@@ -7,7 +7,7 @@ Propofol uses the **Eleveld general-purpose model** (Eleveld DJ, Colin P, Absalo
 All four covariates are used.
 
 - **Weight** scales V1 by a sigmoid (half-maximal at 33.6 kg), V2 linearly, and the clearances allometrically to the 0.75 power.
-- **Age** reduces V2 and the elimination clearance exponentially in adults, matures the elimination clearance in infants as a sigmoid in post-menstrual age (half-maximal at about 42 weeks), and matures the slow intercompartmental clearance separately. This model does not read the **Gestational age at birth** field, so post-menstrual age is taken as 40 weeks plus the age entered.
+- **Age** reduces V2 and the elimination clearance exponentially in adults, matures the elimination clearance in infants as a sigmoid in post-menstrual age (half-maximal at about 42 weeks), and matures the slow intercompartmental clearance separately. This model does not read the **Gestational age at birth** field, so post-menstrual age is taken as 40 weeks plus 52 weeks for each year of age entered.
 - **Sex** gives women a higher reference clearance (2.10 against 1.79 L/min at 70 kg and 35 years).
 - **Height**, with weight, enters through the Al-Sallami fat-free mass, which scales V3.
 
