@@ -20,11 +20,11 @@
 
 **Cp.** Plasma concentration.
 
-**CYP2C19.** A liver enzyme with common genetic variants that clears escitalopram and the S enantiomer of citalopram. The field in the Patient Profile changes those two drugs' clearance across the poor, intermediate, normal, rapid and ultrarapid phenotypes. See [Antidepressant models and their limits](help:models/antidepressants).
+**CYP2C19.** A liver enzyme with common genetic variants. The field in the Patient Profile changes the clearance of the drugs it clears across the poor, intermediate, normal, rapid and ultrarapid phenotypes; [Cautions](help:cautions) lists them. See [Antidepressant models and their limits](help:models/antidepressants).
 
-**CYP2C9.** A liver enzyme with common genetic variants (the \*2 and \*3 alleles) that clears meloxicam, phenytoin and the vitamin-K antagonists. The field in the Patient Profile takes the diplotype, \*1/\*1 by default, and changes meloxicam's clearance, phenytoin's maximal elimination rate, and the clearance of warfarin, fluindione and acenocoumarol.
+**CYP2C9.** A liver enzyme with common genetic variants (the \*2 and \*3 alleles). The field in the Patient Profile takes the diplotype, \*1/\*1 by default, and changes the clearance (for phenytoin, the maximal elimination rate) of the drugs it clears, the vitamin-K antagonists among them; [Cautions](help:cautions) lists them.
 
-**CYP2D6.** A liver enzyme with common genetic variants that forms the active metabolites of codeine, tramadol, hydrocodone and oxycodone, and clears aripiprazole, haloperidol, risperidone and metoprolol. The field in the Patient Profile scales that formation, and those clearances, across the poor, intermediate, normal and ultrarapid phenotypes. See [Active metabolites](help:models/metabolites).
+**CYP2D6.** A liver enzyme with common genetic variants that forms the active metabolites of several opioids and clears other drugs. The field in the Patient Profile scales that formation, and those clearances, across the poor, intermediate, normal and ultrarapid phenotypes; [Cautions](help:cautions) lists the drugs. See [Active metabolites](help:models/metabolites).
 
 **Dead space.** The part of each breath that does not reach the alveoli; 30 per cent of minute ventilation in the gas model.
 

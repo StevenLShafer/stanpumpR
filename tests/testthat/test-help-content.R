@@ -355,11 +355,10 @@ test_that("the absorption page lists every oral, intramuscular and intranasal un
 # list, or the user is told the field has no effect when it does (an audit of
 # 2026-10-12 found three renal drugs and three CYP2D6 drugs missing).
 test_that("the cautions page names every model that reads a patient field", {
-  text <- tolower(helpPlainText(helpMarkdownToHTML(
+  text <- tolower(helpPlainText(helpMarkdownToHTML(helpExpandGenerated(
     paste(readLines(system.file("help", "cautions.md", package = "stanpumpR"), warn = FALSE),
-          collapse = "\n"))))
-  for (arg in c("creatinine", "osmolality", "cyp2d6", "cyp2c19", "cyp2c9", "cyp2b6",
-                "pregnant", "gestationalAge")) {
+          collapse = "\n")))))
+  for (arg in names(HELP_FIELD_READER_ROWS)) {
     readers <- Filter(function(drug) helpDrugDeclares(drug, arg), getDrugDefaultsGlobal()$Drug)
     expect_gt(length(readers), 0, label = arg)
     for (drug in readers) {
@@ -369,5 +368,45 @@ test_that("the cautions page names every model that reads a patient field", {
                     grepl(tolower(helpDrugTitle(drug)), text, fixed = TRUE),
                   info = paste(drug, "reads", arg, "but the cautions page does not say so"))
     }
+  }
+})
+
+# The table is generated from the model signatures; this holds it to them
+# row by row, so a field added to the Patient Profile without a row, or a row
+# whose count disagrees with its readers, fails here.
+test_that("the field-readers table has one row per field, counted from the models", {
+  page <- paste(readLines(system.file("help", "cautions.md", package = "stanpumpR"),
+                          warn = FALSE), collapse = "\n")
+  expect_match(page, "<!-- generated: field-readers-table -->", fixed = TRUE)
+  table <- helpFieldReadersTableMarkdown()
+  lines <- strsplit(table, "\n", fixed = TRUE)[[1]][-(1:2)]
+  expect_length(lines, length(HELP_FIELD_READER_ROWS))
+  for (i in seq_along(HELP_FIELD_READER_ROWS)) {
+    arg <- names(HELP_FIELD_READER_ROWS)[i]
+    cells <- trimws(strsplit(lines[i], "|", fixed = TRUE)[[1]])[-1]
+    expect_equal(cells[1], HELP_FIELD_READER_ROWS[[arg]])
+    readers <- patientFieldReaders(arg)
+    expect_equal(as.integer(cells[2]), length(readers), info = arg)
+    for (drug in readers)
+      expect_match(cells[3], sprintf("(help:drugs/%s)", drug), fixed = TRUE,
+                   info = paste(arg, drug))
+  }
+})
+
+# The genotype paragraphs of the covariates page explain each enzyme's
+# effect drug by drug, so unlike the patient profile and the glossary they
+# still name the readers; this keeps them complete.
+test_that("the covariates page's genotype paragraphs name every reader", {
+  lines <- readLines(system.file("help", "models", "covariates.md", package = "stanpumpR"),
+                     warn = FALSE)
+  leads <- c(cyp2d6 = "**CYP2D6 phenotype**", cyp2c19 = "**CYP2C19 phenotype**",
+             cyp2c9 = "**CYP2C9 diplotype**", cyp2b6 = "**CYP2B6 phenotype**")
+  for (field in names(leads)) {
+    paragraph <- tolower(lines[startsWith(lines, leads[[field]])])
+    expect_length(paragraph, 1)
+    for (drug in patientFieldReaders(field))
+      expect_true(grepl(tolower(drug), paragraph, fixed = TRUE) ||
+                    grepl(tolower(helpDrugTitle(drug)), paragraph, fixed = TRUE),
+                  info = paste(drug, "reads", field, "but covariates.md does not say so"))
   }
 })

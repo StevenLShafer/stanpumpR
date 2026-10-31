@@ -551,6 +551,49 @@ helpAntibioticMbcBandMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()
           "|---|---|---|---|", rows), collapse = "\n")
 }
 
+# The Patient Profile fields whose readers the help's "field-readers-table"
+# lists, in the order the Cautions page discusses them, with the label the
+# table shows (Pregnant and the baseline osmolality are not in
+# PATIENT_FIELD_LABELS, which names the fields that carry a reader tooltip).
+HELP_FIELD_READER_ROWS <- c(
+  pregnant       = "Pregnant",
+  creatinine     = "Serum creatinine",
+  gestationalAge = "Gestational age at birth",
+  osmolality     = "Baseline serum osmolality",
+  cyp2d6         = "CYP 2D6",
+  cyp2c19        = "CYP 2C19",
+  cyp2c9         = "CYP 2C9",
+  cyp2b6         = "CYP 2B6",
+  vkorc1         = "VKORC1",
+  cyp4f2         = "CYP4F2"
+)
+
+#' The help's table of which drugs read each Patient Profile field
+#'
+#' One row per field in `HELP_FIELD_READER_ROWS`, the readers taken from the
+#' model signatures (`patientFieldReaders()`), so the table cannot drift from
+#' the code as models gain or lose a covariate.  Each drug links to its help
+#' page; a note from `PATIENT_FIELD_READER_NOTES` follows it in parentheses.
+#' The generated block `field-readers-table`.
+#'
+#' @param drugDefaults the drug table (`getDrugDefaultsGlobal()`).
+#' @return a Markdown table.
+#' @noRd
+helpFieldReadersTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
+  rows <- vapply(names(HELP_FIELD_READER_ROWS), function(arg) {
+    readers <- patientFieldReaders(arg, drugDefaults)
+    notes <- PATIENT_FIELD_READER_NOTES[[arg]]
+    named <- vapply(readers, function(drug) {
+      link <- sprintf("[%s](help:drugs/%s)", drug, drug)
+      if (drug %in% names(notes)) sprintf("%s (%s)", link, notes[[drug]]) else link
+    }, character(1), USE.NAMES = FALSE)
+    sprintf("| %s | %d | %s |", HELP_FIELD_READER_ROWS[[arg]], length(readers),
+            if (length(named)) paste(named, collapse = ", ") else "none")
+  }, character(1))
+  paste(c("| Field | Drugs | Read by |", "|---|---|---|", rows), collapse = "\n")
+}
+
+
 HELP_GENERATED_BLOCKS <- list(
   "route-table" = helpRouteTableMarkdown,
   "minto-schnider-table" = helpAlternativeModelTableMarkdown,
@@ -564,5 +607,6 @@ HELP_GENERATED_BLOCKS <- list(
   "parkinsons-to-obtain" = helpParkinsonsToObtainMarkdown,
   "antibiotic-mbc-table" = helpAntibioticMbcBandMarkdown,
   "antiseizure-interaction-table" = helpAntiseizureInteractionTableMarkdown,
-  "antiseizure-interaction-sources" = helpAntiseizureInteractionSourcesMarkdown
+  "antiseizure-interaction-sources" = helpAntiseizureInteractionSourcesMarkdown,
+  "field-readers-table" = helpFieldReadersTableMarkdown
 )
