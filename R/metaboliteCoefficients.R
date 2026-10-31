@@ -354,24 +354,6 @@ metaboliteAfterBolus <- function(coefs, dose, times)
 }
 
 
-#' Metabolite concentration at arbitrary times after a single oral parent dose
-#'
-#' The oral counterpart of \code{metaboliteAfterBolus()}, carrying both the
-#' systemic and the first-pass route.  Times are measured from the dose, after
-#' any absorption lag has been applied by the caller.
-#'
-#' @param coefs output of \code{metaboliteCoefficients()}
-#' @param dose oral parent dose, in the parent's base mass units
-#' @param times times in minutes
-#' @returns numeric vector of metabolite concentrations
-#' @export
-metaboliteAfterOral <- function(coefs, dose, times)
-{
-  vapply(times, function(t)
-    dose * sum(coefs$PO * exp(-coefs$lambda * t)), numeric(1))
-}
-
-
 #' Internal dose unit of a drug, in milligrams
 #'
 #' simCpCe() converts every dose into an internal mass unit implied by the

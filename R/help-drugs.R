@@ -1031,7 +1031,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   }
 
   # --- Shaded band: free drug at the MBC -------------------------------------
-  mbcHTML <- helpAntibioticMbcHTML(drug, row, concUnits)
+  mbcHTML <- helpAntibioticMbcHTML(drug, concUnits)
 
   # --- Parallel systems ------------------------------------------------------
   # A drug plotted as the sum of independent systems (ketorolac: S and R
@@ -1445,11 +1445,10 @@ helpReferencesHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
 #' (R/antibioticMbc.R), so the page and the band cannot drift apart.
 #'
 #' @param drug a drug name
-#' @param row the drug's row of the drug defaults
 #' @param concUnits the plotted concentration unit, for display
 #' @returns HTML, or "" for a drug with no MBC rows
 #' @noRd
-helpAntibioticMbcHTML <- function(drug, row, concUnits) {
+helpAntibioticMbcHTML <- function(drug, concUnits) {
   band <- antibioticMbcBand(drug)
   if (is.null(band)) return("")
   esc <- htmltools::htmlEscape

@@ -1509,7 +1509,6 @@ app_server <- function(input, output, session) {
           width = input$plotWidth,
           slide = as.numeric(input$sendSlide),
           drugs = drugs(),
-          drugDefaults = drugDefaults(),
           email_username = config$email_username,
           email_password = config$email_password
         ) |> profileCode("sendSlide()")
@@ -2010,8 +2009,7 @@ app_server <- function(input, output, session) {
     format <- doseTableFormat()
     skipNextScheduledDose(
       doseTable(), target$drug, target$time, plotMaximum(), format,
-      referenceFor(format),
-      units = unlist(drugDefaults()$Units[drugDefaults()$Drug == target$drug])
+      referenceFor(format)
     )
   }
 

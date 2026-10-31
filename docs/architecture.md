@@ -350,8 +350,6 @@ All files are flat in `R/`.
   thresholds, the James lean body mass the Schnider and Minto companions use (the library's own
   body-size scaling is `pkSizeFactors.R`).
 - `simulateDrugsWithCovariates.R` — exported multi-drug convenience API (no Shiny).
-- `ig_absorption.R` — *experimental, tracked, not yet integrated.* Closed-form Inverse Gaussian
-  absorption model; not exported or wired in (see its provenance header).
 
 **Output — plot, dosing advisor & export**
 - `simulationPlot.R` — assembles the composite `ggplot2` figure and its data tables.
