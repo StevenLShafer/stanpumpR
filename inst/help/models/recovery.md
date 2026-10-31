@@ -8,7 +8,7 @@ Each drug's threshold (`endCe` in the drug library) is the concentration at whic
 
 - **A drug with an effect site** is timed on its effect-site concentration, because that is where the effect is.
 - **A drug with no effect site** is timed on its plasma concentration: among them the antibiotics, the corticosteroids, sugammadex, glycopyrrolate, mannitol, gabapentin, amiodarone, desethylamiodarone and amiodaroneIV, the prodrugs codeine and tramadol, and most of the oral analgesics, antidepressants, antipsychotics and antiseizure drugs ([The effect site and ke0](help:models/effect-site)). Of these, only the antibiotics, amiodarone, zolpidem, temazepam, ketorolac and naproxen have a threshold by default.
-- **Phenytoin** and the other drugs with saturable elimination (GHB, exenatide, cetagliptin, linagliptin, vildagliptin) have no time until threshold at all: their elimination is simulated numerically, and the time would need a fresh nonlinear simulation from every point. Enalapril, on the exact transit-chain engine, has none either: that engine leaves no exponential amplitudes to solve it from.
+- **Phenytoin** and the other drugs on the nonlinear Michaelis-Menten engine (GHB, exenatide, cetagliptin, linagliptin, vildagliptin) have no time until threshold at all: the whole model is simulated numerically, and the time would need a fresh nonlinear simulation from every point. Enalapril, on the exact transit-chain engine, has none either: that engine leaves no exponential amplitudes to solve it from.
 
 ## The antibiotics: free drug at the MIC
 

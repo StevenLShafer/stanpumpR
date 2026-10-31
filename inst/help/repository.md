@@ -7,7 +7,7 @@ stanpumpR is an R package that contains a Shiny application. The source is at [g
 | `app.R` | One line, `stanpumpR::run_app()`: the deployment entry point |
 | `DESCRIPTION`, `NAMESPACE` | Package metadata and exports |
 | `R/` | All the code, in flat files (below) |
-| `inst/extdata/` | The drug library (`drugDefaults_global.csv`), the event list (`eventDefaults.csv`), the registries and their parameter tables (pregnancy, therapeutic ranges, illicit routes, antiseizure drugs and their interactions, antidiabetic, anticoagulant, antihypertensive and vasoactive drugs) and the PowerPoint template |
+| `inst/extdata/` | The drug library (`drugDefaults_global.csv`), the event list (`eventDefaults.csv`), the pregnancy, therapeutic-range and illicit-route registries, the registries and parameter tables of the antiseizure (with their interactions), antidiabetic, anticoagulant, antihypertensive, vasoactive and Parkinson disease drugs (Parkinson's also a product table), and the PowerPoint template |
 | `inst/help/` | The hand-written pages of this help, as Markdown |
 | `inst/plumber/` | The simulation API's `plumber` file (`plumber.R`), which `run_api()` serves |
 | `inst/api/` | The TCI API's deployment entry point (`entrypoint.R`, for Posit Connect) and its OpenAPI document (`openapi.json`) |

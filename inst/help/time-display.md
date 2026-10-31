@@ -61,4 +61,4 @@ Min time is always at least one step below Max time. Dragging Max time down to i
 
 - **Target-controlled infusions and inhaled agents** are simulated only on plots of 7 days or less. With a TCI target row or an inhaled agent in the table and a longer plot, the plot area says so instead of drawing, until you remove those rows or choose a Max time of 7 days or less.
 - **Suggest Dosing** is offered when the time unit is minutes or hours.
-- A drug that acts over weeks to months (amiodarone, and the weekly or daily peptides semaglutide, oral semaglutide, dulaglutide and tirzepatide), added to a plot shorter than a week, brings a notification offering to show 365 days.
+- A drug that acts over weeks to months (amiodarone, and the weekly or daily peptides semaglutide, oral semaglutide, dulaglutide and tirzepatide), in the dose table of a plot shorter than a week, brings a notification offering to show 365 days.

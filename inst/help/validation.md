@@ -6,7 +6,7 @@ The repository has a test file for every drug (a metabolite or prodrug is tested
 
 - **Drug tests** pin each model's parameters at reference patients to the values first computed from the paper, so that a later edit cannot silently change a model. A drug that switches models on a covariate is pinned on both sides of the switch.
 - **Engine tests** check the closed-form advance against known results: a single compartment against its analytic solution, a bolus followed by an infusion against the sum of the two, state carried across an event boundary against a simulation that never had the boundary, oral absorption against the limit of fast absorption.
-- **Michaelis-Menten tests** check the numerical engine of the saturable drugs (phenytoin, GHB, exenatide and the gliptins) against the closed-form engine when elimination is effectively linear, against the analytical solution after a bolus, against the steady state of a constant infusion, and by mass balance.
+- **Michaelis-Menten tests** check the numerical engine of the nonlinear drugs (phenytoin, GHB, exenatide and the gliptins) against the closed-form engine when elimination is effectively linear, against the analytical solution after a bolus, against the steady state of a constant infusion, and by mass balance.
 - **Effect-site tests** check that the ke0 solved from a time to peak effect does produce a peak at that time.
 - **Time-until-threshold tests** check the recovery calculation against stopping the drug in the simulation itself and reading off when it crosses the threshold.
 - **TCI tests** check that every TCI drug reaches an effect-site target without overshoot and holds it, and that a closed loop of calls to [the TCI API](help:tci-api) reproduces the app's TCI schedule rate for rate.
