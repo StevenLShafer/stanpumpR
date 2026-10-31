@@ -12,7 +12,7 @@ One consequence is worth knowing before reading the curve. **The peak is at the 
 
 ### Body weight is the only covariate, and the authors looked for others
 
-The paper screened age, serum creatinine, smoking and drinking status by stepwise covariate modelling and reports that apart from body weight, none was significant. Size is theory-based allometry at a 70 kg standard — weight to the power 0.75 on the clearances, weight itself on the volumes — which is also this library's own scaling, so the published model is reproduced exactly. The release duration is not scaled: the paper's size equations name clearance and volume only.
+The paper screened age, serum creatinine, smoking and drinking status by stepwise covariate modelling and reports that apart from body weight, none was significant. Size is theory-based allometry at a 70 kg standard — weight to the power 0.75 on the clearances, weight itself on the volumes — which is also the scaling this library uses with *Adjust weight to fat-free mass* off, so with the switch off the published model is reproduced exactly; with it on, the fat-free-mass factors replace the weight terms. The release duration is not scaled: the paper's size equations name clearance and volume only.
 
 **There is therefore no renal term here**, and that is worth saying plainly for a drug given to patients whose kidneys are often the reason they are taking it. The population was 48 healthy young adults with a mean age of 29 and a mean serum creatinine of 0.81 mg/dL. It contains no information about renal impairment at all, so a creatinine entered in the [Patient Profile](help:patient-profile) does not reach this drug — not because renal function is thought irrelevant, but because this source cannot say anything about it.
 
@@ -31,5 +31,3 @@ The source *did* fit a blood-pressure model for valsartan — an effect compartm
 ### Where to be careful
 
 This is a **single-dose study in healthy young volunteers**, so nothing in it constrains the accumulation on chronic daily dosing, and the between-subject variability on the central volume was large (0.519 on the scale the paper reports, the square root of the variance, against 0.373 for clearance).
-
-Valsartan is also a **pregnancy contraindication**, not merely an unstudied drug: the angiotensin receptor blockers carry a boxed warning for fetal toxicity. The registry records that there are no pregnancy pharmacokinetic studies and none should be expected.

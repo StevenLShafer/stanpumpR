@@ -24,7 +24,3 @@ The shaded band, 10 to 50 ng/mL with 30 as the typical value (its midpoint, not 
 ### Other models
 
 Zhang and colleagues (*Heliyon* 2024;10:e25231) fitted trough concentrations from 140 hospitalised Chinese patients aged 11 to 79, with apparent clearance falling with age; its apparent half-life, about 7 hours, is inconsistent with sertraline's known half-life and reflects what trough data can identify rather than a difference in the patients. Models of the effect of CYP2C19 and CYP2D6 genotype (Castillo 2024), of pregnancy (Monfort 2024) and González de la Cruz (2026) are not combined with this one.
-
-### Pregnancy
-
-With **Pregnant** ticked, the elimination clearance is multiplied by 0.60: sertraline is the one drug in the library whose clearance **falls** in pregnancy. Westin and colleagues (*PLoS One* 2017;12:e0181082) followed 37 sertraline pregnancies through routine drug monitoring and found the dose-adjusted serum concentration 68% higher in the third trimester than the same women's own baseline (95% CI 37 to 106%), and 1/1.68 is 0.60; a meta-analysis of 18 patients (Schoretsanitis 2020) gives a smaller rise, 38%, and Freeman and colleagues (2008) found wide differences between women. The volumes, the absorption and the dose-dependent bioavailability are unchanged. Clinically the change mainly argues against reducing the dose reflexively. See [Pregnancy](help:models/pregnancy).

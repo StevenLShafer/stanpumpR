@@ -17,7 +17,3 @@ None. An antibiotic's effect is its exposure relative to the MIC, and there is n
 ### Where to be careful
 
 Enter the **Serum creatinine** for a patient with impaired renal function: left blank, a raised creatinine is simulated as if it were normal, and the curve declines too fast. Albumin, which sets the binding capacity, plays no part in the unbound curve. The model was fitted in surgical prophylaxis with 15-minute infusions; it has not been validated for prolonged treatment courses.
-
-### Pregnancy
-
-With **Pregnant** ticked and the **Serum creatinine** left blank, the creatinine clearance the renal term reads is multiplied by 1.5, the rise in glomerular filtration the review the library follows (Ansari, Carvalho, Shafer and Flood, *Anesth Analg* 2016;122:786-804) gives for pregnancy, so the unbound clearance rises by 1.5 to the power 0.586, or 1.27. The review reports cefazolin cleared faster in pregnancy by increased renal excretion, with a larger volume of distribution, and recommends 2 g with a 3- to 6-hour interval; it prints no factor for cefazolin itself. The larger volume is not applied, so the simulated peak in a parturient is too high. A blank field means a normal creatinine for a woman who is not pregnant, which cannot show the rise; a pregnant woman's own measured creatinine is already low, and the renal estimate made from it already carries the rise, so with a creatinine entered nothing is multiplied. See [Pregnancy](help:models/pregnancy).

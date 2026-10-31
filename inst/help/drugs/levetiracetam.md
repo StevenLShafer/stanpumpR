@@ -6,10 +6,6 @@ No single retrievable model carries both intravenous disposition and an explicit
 
 Oral (`mg PO`, with schedules) and intravenous (`mg`, `mg/hr`): bioavailability is complete and the injection is interchangeable mg for mg. Renal function comes from the entered creatinine (a child's on the adult scale) or an assumed normal one. The half-life is 7.5 hours (ln 2 × 42 L / 3.9 L/h; the label says 7 ± 1). Levetiracetam accumulates in renal impairment, which the renal split captures, but haemodialysis is not represented. Ramael 2006 measured a clearance of 3.8 L/h after 1,500 mg intravenously; the model gives 3.9. A one-compartment model has no distribution phase, so it understates the peak at the end of a fast intravenous infusion (Ramael's 50.5 mcg/mL after 1,500 mg over 15 minutes, against the model's 35). Keppra XR is not offered.
 
-### Pregnancy
-
-With **Pregnant** ticked, the total clearance is multiplied by 1.6, directly and not through the renal split; the volume and absorption are unchanged. Clearance rises early in pregnancy and stays raised to term. Third-trimester concentrations relative to baseline imply 1.45-fold (Duan 2026), 1.58 (MONEAD), 1.61 (Lopez-Fraile 2009), 2.0 (Westin and colleagues, *Seizure* 2008;17:192-198) and 2.5 (Tomson and colleagues, *Epilepsia* 2007;48:1111-1116); 1.6 is weighted toward the two large prospective cohorts. The 50 per cent rise in filtration, carried through the renal split, would give only 1.33-fold. Clearance returns to baseline within weeks of delivery. See [Pregnancy](help:models/pregnancy).
-
 ### Band
 
 6 to 46 mg/L, 12 hours after a dose (the AGNP consensus guidelines' 2026 update, Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5, https://doi.org/10.1055/a-2860-7861; laboratory alert level 50 mg/L), which lowers the ILAE's lower limit of 12 mg/L (Patsalos and colleagues, 2008). A relation between concentration and effect has not been established; the range comes from a pharmacokinetic study at about 2,000 mg a day.

@@ -172,5 +172,3 @@ Protein binding is reported as 97.4 to 98.1% (Hui), 95% (Singhvi) or "approximat
 ### Effect site, band and blood pressure
 
 None of the three. There is no published equilibration constant, so the drug is plasma only; there is no established therapeutic plasma range for fosinoprilat, which is dosed to blood pressure and is not listed in Hart 2026's Table 5, so **no band is drawn**; and [no antihypertensive in this library plots a blood pressure](help:models/antihypertensives).
-
-Fosinopril is also a **pregnancy contraindication** rather than merely an unstudied drug — the ACE inhibitors carry a boxed warning for fetal toxicity, and fosinoprilat crosses the placenta in animals — so no pregnancy pharmacokinetic study exists and none should be expected.
