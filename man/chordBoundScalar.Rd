@@ -7,7 +7,8 @@
 chordBoundScalar(ya, yb, beta)
 }
 \arguments{
-\item{ya, yb}{the output at the two ends (vectors or matrices alike)}
+\item{ya, yb}{the two endpoint values of one interval, each a single number
+(the function branches on \code{ya > yb}, so vectors are an error)}
 
 \item{beta}{delta times the width}
 }

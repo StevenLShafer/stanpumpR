@@ -68,9 +68,14 @@ test_that("every function the orientation documents name exists", {
                   info = sprintf("%s names %s(), which nothing defines", doc, name))
     qualified <- unique(sub("\\(\\)$", "",
                             code[grepl("^[A-Za-z][A-Za-z0-9.]*::[A-Za-z.][A-Za-z0-9._]*\\(\\)$", code)]))
-    for (name in qualified)
+    for (name in qualified) {
+      # an optional package (rsconnect, plumber) may not be installed; its
+      # exports cannot be checked then, which is no evidence of a stale name
+      pkg <- strsplit(name, "::", fixed = TRUE)[[1]][1]
+      if (!requireNamespace(pkg, quietly = TRUE)) next
       expect_true(exportedBy(name),
                   info = sprintf("%s names %s(), which its package does not export", doc, name))
+    }
   }
 })
 
