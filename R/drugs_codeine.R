@@ -54,14 +54,21 @@
 # ------------------------------------------------------------
 # Ashraf 2024 is the best phenotype evidence, but its formation estimates were
 # fitted alongside a morphine clearance of 357.5 L/h.  stanpumpR's morphine is
-# Lotsch Model A, whose clearance is 75.3 L/h.  For a formed metabolite only
-# the RATIO of formation to clearance is identifiable, so pairing Ashraf's
-# fraction with Lotsch's clearance unchanged would overpredict morphine by
-# 357.5/75.3, a factor of 4.75.
+# its own model, R/drugs_morphine.R (Lotsch Model A, 74.0 L/h at the reference
+# patient).  For a formed metabolite only the RATIO of formation to clearance
+# is identifiable, so pairing Ashraf's fraction with the library's clearance
+# unchanged would overpredict morphine by 357.5/74.0, a factor of 4.83.
 #
 # The fraction is therefore rescaled by that ratio:
 #
-#     f_normal = (0.16/1.16) * 75.3/357.5 = 0.02905
+#     f_normal = (0.16/1.16) * CL_morphine/357.5 = 0.02855 at 74.0 L/h
+#
+# CL_morphine is READ from the library's morphine model at the reference
+# patient (libraryReferenceClearance("morphine")), not retyped, so a revision
+# of the morphine model carries into codeine's formation by construction.  It
+# was retyped as 75.3 L/h until 2026-10-31, when morphine's clearance had
+# already moved to 74.0 and codeine's morphine sat 1.8% high (AGENTS.md,
+# "Parents and their metabolites").
 #
 # where 0.16/1.16 is Ashraf's activity-score expression at a score of 2, taking
 # the supplement's sign convention over the main text's.  The rescaled value
@@ -95,12 +102,12 @@
 # ============================================
 # For 60 mg of oral codeine in a 70 kg normal metaboliser the model gives a
 # codeine peak of 131 ng/mL at 60 min and a morphine peak of 1.4 ng/mL near
-# 110 min.  Shah 1990 observed 88 ng/mL and 2.7 ng/mL after 60 mg of codeine
+# 100 min.  Shah 1990 observed 88 ng/mL and 2.7 ng/mL after 60 mg of codeine
 # phosphate, about 45 mg of base.
 #
 # The morphine:codeine AUC ratio depends on the interval, because morphine
 # is formed late and cleared more slowly than codeine: the model gives 0.014
-# over the first six hours and 0.019 by mass (0.020 molar) over 48 hours.
+# over the first six hours and 0.018 by mass (0.019 molar) over 48 hours.
 #   - Shah 1990 sampled only to six hours: 0.027 over 0-6 h, from the eight
 #     of ten subjects with detectable morphine.  On the same interval the
 #     model runs about half of that.
@@ -165,6 +172,11 @@ CODEINE_CYP2D6_WEIGHT <- c(
   ultrarapid   = 1.5518464238542
 )
 
+# The morphine clearance (L/h) Ashraf 2024 fitted its formation estimates
+# alongside; codeine's formation is rescaled from it to the library's own
+# morphine clearance (see the header).
+CODEINE_ASHRAF_MORPHINE_CL <- 357.5
+
 #' Codeine pharmacokinetics
 #'
 #' @param weight weight in kg
@@ -209,7 +221,9 @@ codeine <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   # codeine clearance, so the spread across phenotypes is about 4%, consistent
   # with Yue 1991 and Chen 1991 finding no significant difference in total
   # codeine clearance between extensive and poor metabolisers.
-  FORMATION_FRACTION_NORMAL <- (0.16 / 1.16) * 75.3 / 357.5   # = 0.0290523
+  # Rescaled from Ashraf's morphine clearance to the library's (see the header).
+  FORMATION_FRACTION_NORMAL <- (0.16 / 1.16) *
+    libraryReferenceClearance("morphine") / CODEINE_ASHRAF_MORPHINE_CL   # 0.02855
   clFormation <- clTotal * FORMATION_FRACTION_NORMAL * activity
   clOther     <- clTotal * (1 - FORMATION_FRACTION_NORMAL)
   cl1         <- clOther + clFormation

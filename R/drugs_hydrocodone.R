@@ -290,10 +290,17 @@ hydrocodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   # The formation clearance, kFormation x Vc/F, is what sets the ratio, so
   # kFormation is divided by Vc/F's covariate factor (714 / v1): a larger
   # central volume does not form more hydromorphone.
-  KFORMATION_PER_KG <- 3.18574e-07     # 1/min per kg, normal metaboliser
-  # Hydromorphone's own factors: linear in weight with the switch off.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
-  kFormation <- KFORMATION_PER_KG * 70 * size$clearance * activity * 714 / v1
+  # So kFormation = ratio x CL_hydromorphone / (Vc/F x mwRatio), with
+  # hydromorphone's clearance READ from the library's hydromorphone model for
+  # this patient rather than retyped: a revision of that model carries into
+  # hydrocodone's formation by construction (AGENTS.md, "Parents and their
+  # metabolites").  Until 2026-10-31 this was the constant 3.18574e-07 /min
+  # per kg x 70 x the clearance size factor x 714 / v1, which is the same
+  # number to seven figures while hydromorphone's CL is 1.2992 L/min.
+  KAPIL_RATIO <- 3.8 / 325.3           # hydromorphone : hydrocodone AUC
+  clHydromorphone <- hydromorphone(weight, height, age, sex,
+                                   adjustToFFM = adjustToFFM)$PK$default$cl1
+  kFormation <- KAPIL_RATIO * clHydromorphone / (v1 * 285.34 / 299.36) * activity
 
   reference <- paste0(
     "Melhem MR et al., Clin Pharmacokinet 2013;52:907-917. ",

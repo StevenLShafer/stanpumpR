@@ -388,3 +388,75 @@ metaboliteUnitScale <- function(parentUnits, metaboliteUnits)
 {
   internalDoseScale(parentUnits) / internalDoseScale(metaboliteUnits)
 }
+
+
+#' The library's own clearance of a drug at the reference patient, in L/h
+#'
+#' A parent whose formation of an active metabolite was calibrated against a
+#' metabolite clearance must use the clearance of the library's model of that
+#' metabolite, because only the ratio of formation to metabolite clearance is
+#' identifiable from concentration data; the metabolite curve is drawn with
+#' the library's model (getDrugPK() resolves it by name), so a calibration
+#' against any other clearance is off by the ratio of the two.  A parent reads
+#' the number here rather than retyping it, so that a revision of the
+#' metabolite's model carries into the parent by construction (AGENTS.md,
+#' "Parents and their metabolites").
+#'
+#' The reference patient is the 70 kg, 170 cm, 35-year-old man of
+#' docs/weight-adjustment.md, with the fat-free-mass switch on, the default
+#' covariates and no pregnancy: the patient whose parameters are the model's
+#' published reference values.
+#'
+#' @param drug the name of a drug model in the library
+#' @returns its elimination clearance CL1 at the reference patient, L/h
+#' @keywords internal
+libraryReferenceClearance <- function(drug)
+{
+  if (!exists(drug, mode = "function"))
+    stop("No drug model named '", drug, "' in the library.")
+  model <- get(drug, mode = "function")
+  x <- model(weight = FFM_REFERENCE_WEIGHT, height = FFM_REFERENCE_HEIGHT,
+             age = FFM_REFERENCE_AGE, sex = FFM_REFERENCE_SEX,
+             adjustToFFM = TRUE)
+  x$PK[[PK_EVENT_DEFAULT]]$cl1 * 60
+}
+
+
+# PARENTS AND THEIR METABOLITES: how each parent's formation of an active
+# metabolite relates to the library's model of that metabolite (AGENTS.md,
+# "Parents and their metabolites").  The metabolite curve is always drawn with
+# the library's own metabolite model (getDrugPK() resolves it by name), and
+# only the ratio of formation to metabolite clearance is identifiable from
+# concentration data, so a parent must never carry a retyped copy of a
+# metabolite parameter.  Each parent is one of:
+#   reads  - the parent reads the metabolite's clearance from the library's
+#            model (libraryReferenceClearance(), or by calling the model), so
+#            a revision of the metabolite's model carries into it by
+#            construction.  `uses` names what it calls.
+#   shared - parent and metabolite read one shared definition (`uses`).
+#   joint  - parent formation and metabolite disposition were fitted together
+#            in one source, and the metabolite's library model IS that
+#            source's metabolite model.  Replacing the metabolite's model with
+#            another source's breaks the pair: the parent's formation has to be
+#            refitted or rescaled with it, in the same pull request.
+# test-metabolite-consistency.R holds every parent the models declare to one
+# row here, and checks a `reads` or `shared` row's parent really calls `uses`.
+METABOLITE_FORMATION_BASIS <- data.frame(
+  parent = c("codeine", "hydrocodone", "oxycodone",
+             "enalapril", "prednisone",
+             "amiodarone", "aripiprazole", "aspirin", "bupropion",
+             "fluoxetine", "risperidone", "tramadol", "venlafaxine"),
+  metabolite = c("morphine", "hydromorphone", "oxymorphone",
+                 "enalaprilat", "prednisolone",
+                 "desethylamiodarone", "dehydroaripiprazole", "salicylate",
+                 "hydroxybupropion", "norfluoxetine", "hydroxyrisperidone",
+                 "desmetramadol", "desvenlafaxine"),
+  basis = c("reads", "reads", "reads",
+            "shared", "shared",
+            rep("joint", 8)),
+  uses = c("libraryReferenceClearance", "hydromorphone",
+           "libraryReferenceClearance",
+           "enalaprilatSet", "prednisolonePairSystem",
+           rep(NA_character_, 8)),
+  stringsAsFactors = FALSE
+)
