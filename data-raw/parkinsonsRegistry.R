@@ -327,7 +327,7 @@ registry <- rbind(
   reg("levodopa__intestinal_gel__othman2014", "levodopa", "levodopa_carbidopa_intestinal_gel",
       "45 patients with advanced Parkinson's disease on intestinal gel", "levodopa", "implemented",
       "levodopaIntestinalGel", "full_text",
-      "None for the curve.  Transit rate 9.2/h and bioavailability 0.97 relative to tablets; the gel's doses and its continuous enteral rate run through the transit compartment exactly (R/transit.R).",
+      "None for the curve.  Transit rate 9.2/h and bioavailability 0.97 relative to tablets; the gel's doses and its continuous enteral rate run through the transit compartment exactly (R/advanceTransitChain.R).",
       NA,
       "Othman AA, Dutta S. Br J Clin Pharmacol 2014;78:94-105 (as above), and FDA CDER Clinical Pharmacology Review, NDA 203952 (Duopa), 2015.",
       fda("nda/2015/203952Orig1s000ClinPharmR.pdf")),

@@ -1,8 +1,11 @@
-# One transit compartment before a depot, and an enteral infusion through it
-# (R/transit.R).  The closed-form engines carry the transit chain as two
-# parallel depots, the second with a negative share; these tests measure the
-# result against an independent numerical solution of the chain itself.
-# Drafted by Claude Code, 2026-10-19.
+# One transit compartment before a depot, and an enteral infusion through it:
+# levodopa, its intestinal gel and opicapone, which declare a transit chain of
+# two compartments (R/advanceTransitChain.R, exact by matrix exponential), and
+# Lecigon, whose enteral infusion rides on the tissue depot (R/enteral.R).
+# These tests measure the drugs' curves against an independent numerical
+# solution of the chain itself.  Drafted by Claude Code, 2026-10-19; moved
+# from R/transit.R's two-depot limit (good to 1e-5) to the exact engine
+# 2026-10-31, so the tolerances are now the Runge-Kutta solution's own.
 
 # The levodopa model (Othman 2014) with its effect site (Mao 2013), solved by
 # fourth-order Runge-Kutta at a 0.01 min step: dosing compartment, transit
@@ -34,22 +37,14 @@ transitODE <- function(times, ktr, F, doses = list(), rates = list(),
   list(cp = cp, ce = ce)
 }
 
-test_that("the two depots are the transit chain's limit: shares sum to one", {
-  ch <- transitChainDepots(0.04, c(0.01, 0.002))
-  expect_equal(ch$w1 + ch$w2, 1, tolerance = 1e-12)
-  expect_equal(ch$k2 / 0.04 - 1, TRANSIT_RATE_SEPARATION, tolerance = 1e-6)
-  expect_lt(ch$w2, 0)
-  expect_gt(ch$w1, 1)
-})
-
 test_that("an oral dose through the transit compartment matches the numerical chain", {
   res <- pdSimulate(data.frame(Drug = "levodopa", Time = 0, Dose = 200, Units = "mg PO"),
                     maximum = 480, age = 64)
   p <- pdSite(res); e <- pdSite(res, "Effect Site")
   t <- p$Time[p$Time > 0]
   ode <- transitODE(t, 2.4 / 60, 1, doses = list(c(0, 200)))
-  expect_lt(max(abs(p$Y[p$Time > 0] - ode$cp)) / max(ode$cp), 1e-5)
-  expect_lt(max(abs(e$Y[e$Time > 0] - ode$ce)) / max(ode$ce), 1e-5)
+  expect_lt(max(abs(p$Y[p$Time > 0] - ode$cp)) / max(ode$cp), 1e-8)
+  expect_lt(max(abs(e$Y[e$Time > 0] - ode$ce)) / max(ode$ce), 1e-8)
 })
 
 test_that("an enteral infusion and a dose through the chain match the numerical chain", {
@@ -59,13 +54,13 @@ test_that("an enteral infusion and a dose through the chain match the numerical 
   p <- pdSite(pdSimulate(dt, maximum = 480, age = 64))
   t <- p$Time[p$Time > 0]
   ode <- transitODE(t, 9.2 / 60, 0.97, rates = list(c(0, 15, 800 / 60), c(15, 1e9, 1)))
-  expect_lt(max(abs(p$Y[p$Time > 0] - ode$cp)) / max(ode$cp), 1e-5)
+  expect_lt(max(abs(p$Y[p$Time > 0] - ode$cp)) / max(ode$cp), 1e-8)
   # and a dose of the gel through the tube
   p <- pdSite(pdSimulate(data.frame(Drug = "levodopaIntestinalGel", Time = 0, Dose = 100,
                                     Units = "mg PO"), maximum = 360, age = 64))
   t <- p$Time[p$Time > 0]
   ode <- transitODE(t, 9.2 / 60, 0.97, doses = list(c(0, 100)))
-  expect_lt(max(abs(p$Y[p$Time > 0] - ode$cp)) / max(ode$cp), 1e-5)
+  expect_lt(max(abs(p$Y[p$Time > 0] - ode$cp)) / max(ode$cp), 1e-8)
 })
 
 test_that("the transit chain delays the peak as two steps do, not one", {
@@ -84,19 +79,33 @@ test_that("the time until threshold runs on a transit drug", {
   expect_true(any(is.finite(rec$Y) & rec$Y > 0))
 })
 
-test_that("transit and enteral declarations are validated", {
+test_that("the transit drugs run on the chain engine, Lecigon on the tissue depot", {
+  for (d in c("levodopa", "levodopaIntestinalGel", "opicapone"))
+  {
+    pk <- getDrugPK(d, 70, 170, 60, "male")
+    expect_identical(pk$transitChain$n, 2L, info = d)
+    expect_equal(pk$transitChain$ktr, pk$PK$default$ka_PO, tolerance = 1e-6, info = d)
+    # the oral absorption stays oral: nothing is moved onto the tissue depot
+    expect_false(isTRUE(pk$PK$default$ka_RA > 0), info = d)
+  }
+  lecig <- getDrugPK("levodopaEntacaponeIntestinalGel", 70, 170, 60, "male")
+  expect_null(lecig$transitChain)
+  expect_true(lecig$PK$default$ka_RA > 0)
+})
+
+test_that("enteral declarations are validated", {
   base <- list(v1 = 10, v2 = 1, v3 = 1, cl1 = 1, cl2 = 0, cl3 = 0)
   m <- function(set, ...) c(list(PK = list(default = set), tPeak = 0, MEAC = 0,
                                  typical = 0, upperTypical = 0, lowerTypical = 0,
                                  reference = "test"), list(...))
-  expect_error(validateTransit(m(c(base, transit_PO = TRUE)), "x"), "needs ka_PO")
-  expect_error(validateTransit(m(c(base, ka_PO = 0.01, ka_PO2 = 0.02, transit_PO = TRUE)), "x"),
-               "second oral depot")
-  expect_error(validateTransit(m(c(base, ka_PO = 0.01, transit_PO = TRUE),
-                                 metabolite = list(name = "morphine")), "x"), "not available")
   expect_error(validateEnteralInfusion(TRUE, m(base), "x"), "absorbed from the gut")
   expect_error(validateEnteralInfusion(TRUE, m(c(base, ka_PO = 0.01, ka_RA = 0.01)), "x"),
                "no tissue route")
+  expect_error(validateEnteralInfusion(TRUE, m(c(base, ka_PO = 0.01, ka_PO2 = 0.02)), "x"),
+               "second oral depot")
+  expect_error(validateEnteralInfusion(TRUE, m(c(base, ka_PO = 0.01),
+                                               oralSaturation = list(form = "power")), "x"),
+               "dose-dependent")
   expect_false(validateEnteralInfusion(NULL, m(base), "x"))
 })
 
@@ -124,9 +133,8 @@ test_that("a zero-order oral share into the circulation is exact", {
 })
 
 test_that("the depot panel shows what is left in the dosing and transit compartments together", {
-  # The two parallel depots, one with a negative share, sum to the chain's
-  # contents, F D exp(-k t) (1 + k t), which Graph Options -> Peripheral
-  # compartments draws as the depot.
+  # The chain's contents, F D exp(-k t) (1 + k t), which Graph Options ->
+  # Peripheral compartments draws as the depot.
   noE <- data.frame(Time = numeric(0), Event = character(0), Fill = character(0))
   r <- simulateDrugsWithCovariates(data.frame(Drug = "levodopa", Time = 0, Dose = 200,
                                               Units = "mg PO"),
@@ -134,6 +142,6 @@ test_that("the depot panel shows what is left in the dosing and transit compartm
                                    adjustToFFM = FALSE, plotRecovery = FALSE)
   cmp <- r$levodopa$compartments
   k <- LEVODOPA_KTR_ORAL / 60
-  expect_equal(cmp$Depot, 200 * exp(-k * cmp$Time) * (1 + k * cmp$Time), tolerance = 1e-5)
+  expect_equal(cmp$Depot, 200 * exp(-k * cmp$Time) * (1 + k * cmp$Time), tolerance = 1e-9)
   expect_true("V2" %in% names(cmp))
 })

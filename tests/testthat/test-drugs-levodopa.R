@@ -8,7 +8,9 @@ test_that("Table 2 at 70 kg, switch off", {
   expect_equal(p$cl2 * 60, 6.8)
   expect_equal(p$v2, 72.9)
   expect_equal(p$ka_PO * 60, 2.4)
-  expect_true(p$transit_PO)
+  # the transit compartment empties at the depot's rate (a chain of two)
+  expect_equal(levodopa(70, 170, 64, "male", FALSE)$transitChain,
+               list(n = 2L, ktr = 2.4 / 60, kMetabolic = 0))
   expect_equal(levodopa(70, 170, 64, "male", FALSE)$ke0 * 60, 1.80)
 })
 

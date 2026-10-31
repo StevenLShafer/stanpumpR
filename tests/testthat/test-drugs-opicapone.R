@@ -7,7 +7,7 @@ test_that("Table 9 for the micronised capsule at bedtime, without levodopa", {
   expect_equal(p$cl1 * 60, 37.6)
   expect_equal(p$v1, 49.7)
   expect_equal(p$ka_PO * 60, 1.24 * (1 + 0.245) * (1 - 0.595))
-  expect_true(p$transit_PO)
+  expect_equal(m$transitChain, list(n = 2L, ktr = p$ka_PO, kMetabolic = 0))
   expect_equal(opicapone(71, 175, 35, "female", FALSE)$PK$default$cl1 * 60, 37.6 * (1 - 0.138))
 })
 

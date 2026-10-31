@@ -271,9 +271,9 @@ poRateUnits <- c("mg/day PO")
 # the jejunum through a PEG-J tube, absorbed from the gut as an oral dose is,
 # so through the drug's oral absorption (its transit compartment included)
 # rather than straight into the central compartment as "mg/day PO" is.
-# Offered only by a drug that declares enteralInfusion (R/transit.R), whose
-# gut absorption the engines carry on the tissue depot; simCpCe() refuses it
-# for any other drug.  (Claude Code, 2026-10-19, at the request of Steven L.
+# Offered only by a drug that declares enteralInfusion (R/enteral.R), whose
+# gut absorption carries it (into the head of a transit chain, or on the
+# tissue depot); simCpCe() refuses it for any other drug.  (Claude Code, 2026-10-19, at the request of Steven L.
 # Shafer.)
 enteralRateUnits <- c("mg/hr PO")
 
