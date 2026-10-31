@@ -12,7 +12,9 @@
 createHOT <- function(doseTable, drugDefaults, timeFormat = NULL, drugChoices = NULL)
 {
   if (is.null(drugChoices)) drugChoices <- drugDefaults$Drug
-  rownames(doseTable) <- 1:nrow(doseTable)
+  # Handsontable cannot show a table with no rows (and 1:0 is c(1, 0)).
+  if (nrow(doseTable) == 0) doseTable <- blankDoseTableRow(doseTable)
+  rownames(doseTable) <- seq_len(nrow(doseTable))
   HOT <- rhandsontable::rhandsontable(
     doseTable,
     `overflow-y` = 'scroll',
@@ -92,7 +94,7 @@ createHOT <- function(doseTable, drugDefaults, timeFormat = NULL, drugChoices = 
   HOT$x$contextMenu$items <- HOT$x$contextMenu$items[grepl("row", names(HOT$x$contextMenu$items))]
 
   # Set units on a per drug basis
-  for (i in 1:nrow(doseTable))
+  for (i in seq_len(nrow(doseTable)))
   {
     cell <- list(row = i - 1, col = 3)
     if (!is.na(doseTable$Drug[i]) && doseTable$Drug[i] != "")

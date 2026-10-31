@@ -187,6 +187,22 @@ expandScheduledDoses <- function(dose, maximum) {
   list(dose = out, scheduled = scheduled)
 }
 
+# How many repeats the scheduled rows of a whole dose table (Time in minutes)
+# expand to over a plot ending at `maximum`, counted without building them, so
+# the app can refuse a schedule beyond MAX_SCHEDULED_DOSES before simulating it.
+scheduledDoseCount <- function(DT, maximum) {
+  if (is.null(DT) || nrow(DT) == 0 || !any(isScheduledUnit(DT$Units))) return(0L)
+  total <- 0L
+  for (drug in unique(DT$Drug[isScheduledUnit(DT$Units)])) {
+    sequences <- scheduledSequences(DT[DT$Drug == drug, , drop = FALSE])$sequences
+    for (i in seq_len(nrow(sequences))) {
+      total <- total + length(sequenceRepeats(sequences$start[i], sequences$stop[i],
+                                              sequences$interval[i], maximum))
+    }
+  }
+  total
+}
+
 # The dose table as exported: the rows the user typed, then every drug's TCI
 # infusion rows and repeated scheduled doses, so that the full dose sequence
 # appears.  Time is in minutes.  With a `timeUnit` other than minutes (the

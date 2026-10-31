@@ -80,18 +80,32 @@ app_server <- function(input, output, session) {
     sep = ""
   )
 
+  # The plot; NULL while there is nothing to draw; or the error that stopped the
+  # simulation or the plot.  Shiny's own "nothing to show yet" (req()) is
+  # swallowed, as it always was, but any other error -- a model parameter that
+  # is not usable at an extreme weight, a dose table the validation refuses, a
+  # plot too tall to draw -- is handed to renderPlot() below, which says so in
+  # the plot area.  Until 2026-10-31 every error was swallowed and the plot
+  # simply went blank, with nothing to say why.
   main_plot <- reactive({
     outputComments("In main_plot", level = DEBUG_LEVEL_VERBOSE)
     tryCatch({
       if (is.null(doseTableClean()) || is.null(drugs()) || is.null(plotObjectReactive())) {
-        # nothingtoPlot
+        NULL
       } else {
         plotObjectReactive()
       }
     }, error = function(err) {
-      NULL
+      if (inherits(err, "shiny.silent.error")) NULL else err
     })
   })
+
+  # The message for the plot area when main_plot() is an error, else NULL
+  plotFailure <- function(plot) {
+    if (!inherits(plot, "error")) return(NULL)
+    outputComments("No plot:", conditionMessage(plot))
+    paste0(PLOT_FAILURE_PREFIX, conditionMessage(plot))
+  }
 
   # renderPlot() asks for the height before it draws, so an error in the
   # simulation surfaced here, as red text in the plot area, although main_plot()
@@ -106,20 +120,33 @@ app_server <- function(input, output, session) {
     req(height)
   }
 
+  # What the plot area says instead of a plot, or NULL: the time-units rule, an
+  # unreadable patient field or procedure start, or the error that stopped the
+  # simulation.  In that order, since the earlier ones explain the later.
+  plotMessage <- reactive({
+    violation <- timeUnitViolation()
+    if (!is.null(violation)) return(violation)
+    schedule <- scheduleProblem()
+    if (!is.null(schedule)) return(schedule)
+    problem <- patientEntryProblem()
+    if (!is.null(problem)) return(problem)
+    start <- referenceTimeProblem()
+    if (!is.null(start)) return(start)
+    plotFailure(main_plot())
+  })
+
   output$PlotSimulation <- renderPlot({
     outputComments("In output$PlotSimulation", level = DEBUG_LEVEL_VERBOSE)
     # Said here, in the plot area, because main_plot() swallows errors and the
     # plot would otherwise just stay as it was.
-    violation <- timeUnitViolation()
-    validate(need(is.null(violation), violation))
-    problem <- patientEntryProblem()
-    validate(need(is.null(problem), problem))
+    message <- plotMessage()
+    validate(need(is.null(message), message))
     req(main_plot(), cancelOutput = TRUE)
     main_plot()
   }, height = function() {
-    # renderPlot() measures before it draws, and with a violation there is no
+    # renderPlot() measures before it draws, and with a message there is no
     # plot to measure: a fixed height lets the message above through.
-    if (!is.null(timeUnitViolation()) || !is.null(patientEntryProblem())) 150 else plotHeightOrNothing()
+    if (!is.null(plotMessage())) 150 else plotHeightOrNothing()
   })
 
   # Make drugs and events local to session
@@ -500,7 +527,7 @@ app_server <- function(input, output, session) {
       # at the reference age), keyed by drug, so a changed drug list does not
       # misalign it.
       state$values$macThreshold <- macThreshold()
-      state$values$endCe <- stats::setNames(drugDefaults()$endCe, drugDefaults()$Drug)
+      state$values$endCe <- changedThresholds(drugDefaults())
       setBookmarkExclude(bookmarksToExclude)
     }, name = "onBookmark()")
   })
@@ -508,6 +535,14 @@ app_server <- function(input, output, session) {
   # This gets called after bookmarking is completed
   onBookmarked(function(url) {
     profileCode({
+      # A bookmark longer than the server accepts cannot be reopened, so the
+      # address bar is left at the plain app address rather than at a link
+      # that fails, and the user is told (bookmarkForAddressBar()).
+      link <- bookmarkForAddressBar(url)
+      url <- link$url
+      if (!is.null(link$problem)) {
+        showNotification(link$problem, id = "bookmarkTooLong", type = "warning", duration = 10)
+      }
       # The address bar keeps ?debug= across reloads; url(), which is
       # emailed with a slide, does not carry it.
       updateQueryString(withDebugQuery(url, isolate(session$userData$debug()), config$debug))
@@ -698,9 +733,17 @@ app_server <- function(input, output, session) {
       # Because of a bug in hot_to_r(), we can't use it directly. We need to manually change
       # the row names for it to work
       nrows <- length(data$data)
-      data$params$rRowHeaders <- as.character(seq.int(nrows))
       # The format of the grid the edit was made in (createHOT() stamps it).
       stamp <- parseTimeFormat(data$params$timeFormat)
+      if (nrows == 0) {
+        # Every row removed through the context menu.  An empty table has no
+        # last row to test below and cannot be drawn (createHOT()), and an
+        # error here ends the session, so it becomes one blank row.
+        doseTableRefresh(doseTableRefresh() + 1)
+        doseTableHistory()$do(blankDoseTableRow(doseTableDraft()))
+        return()
+      }
+      data$params$rRowHeaders <- as.character(seq.int(nrows))
       data <- rhandsontable::hot_to_r(data) |> profileCode("hot_to_r() in input$doseTableHTML observer")
 
       # An edit made in a grid drawn before a change of time unit or display
@@ -718,7 +761,7 @@ app_server <- function(input, output, session) {
       # make sure that table has changed before updating doseTable reactive
       if ( !identicalTable(doseTableDraft(), data) ) {
         # add empty row at the bottom if needed
-        if (nzchar(utils::tail(data, 1)$Drug)) {
+        if (nrow(data) == 0 || nzchar(utils::tail(data, 1)$Drug)) {
           data[nrow(data) + 1, ] <- ""
         }
 
@@ -962,6 +1005,18 @@ app_server <- function(input, output, session) {
     )
   })
 
+  # A Procedure start that cannot be read while times are clock times.
+  # reqReference() waits for a readable one, so without this the plot would
+  # simply stay blank, with "99:99" left in the box.  Blank is not a problem:
+  # the box is empty until the browser's clock arrives.
+  referenceTimeProblem <- reactive({
+    if (!isClockFormat(selectorFormat())) return(NULL)
+    reference <- input$referenceTime
+    if (is.null(reference) || !nzchar(trimws(reference)) || isValidReferenceTime(reference)) return(NULL)
+    paste0("The Procedure start \"", reference, "\" is not a clock time. ",
+           "Enter it as HH:MM, such as 08:30.")
+  })
+
   testCovariates <- reactive({
     profileCode({
       outputComments("In testCovariates", level = DEBUG_LEVEL_VERBOSE)
@@ -1038,7 +1093,7 @@ app_server <- function(input, output, session) {
       outputComments("In drugs", level = DEBUG_LEVEL_VERBOSE)
       # Nothing is simulated while the time-units rule is broken: the plot
       # area says why (output$PlotSimulation).
-      req(testCovariates(), doseTableClean(), is.null(timeUnitViolation()))
+      req(testCovariates(), doseTableClean(), is.null(timeUnitViolation()), is.null(scheduleProblem()))
 
       newDrugs <- recalculatePK(
         NULL,
@@ -1268,6 +1323,24 @@ app_server <- function(input, output, session) {
     )
   })
 
+  # The repeats a scheduled dose expands to are each simulated, so a frequent
+  # schedule over a long plot is refused before it is simulated; see
+  # MAX_SCHEDULED_DOSES.  Said in the plot area (plotMessage()), like the rule
+  # above, and drugs() waits while it stands.
+  scheduleProblem <- reactive({
+    DT <- tryCatch(doseTableClean(), error = function(e) NULL)
+    if (is.null(DT)) return(NULL)
+    maximum <- tryCatch(plotMaximum(), error = function(e) NULL)
+    if (is.null(maximum)) return(NULL)
+    n <- scheduledDoseCount(DT, maximum)
+    if (n <= MAX_SCHEDULED_DOSES) return(NULL)
+    paste0(
+      "The scheduled doses repeat ", format(n, big.mark = ","), " times over this plot, more than the ",
+      format(MAX_SCHEDULED_DOSES, big.mark = ","), " the app can simulate. Shorten the Max time, ",
+      "choose a less frequent schedule, or simulate fewer scheduled drugs."
+    )
+  })
+
   observe({
     violation <- timeUnitViolation()
     if (is.null(violation)) {
@@ -1319,8 +1392,11 @@ app_server <- function(input, output, session) {
   })
 
 
+  # Off under normalization, where the box is hidden (app_ui()) but keeps its
+  # value: the time until threshold is not drawn then, and computing it for
+  # every drug of a long plot is the costliest step of the simulation.
   plotRecovery <- reactive({
-    input$showThreshold
+    isTRUE(input$showThreshold) && identical(input$normalization, NORMALIZE_NONE)
   })
 
   # The % MEAC overlay (R/meacOverlay.R) and the time until threshold share
@@ -1411,7 +1487,10 @@ app_server <- function(input, output, session) {
         typical = typical,
         logY = logY,
         yAxisHeight = input$yaxisHeight,
-        width = input$plotWidth
+        width = input$plotWidth,
+        # renderPlot() draws at the screen's pixel ratio, which is what the
+        # graphics device's limit is measured against (maxPlotDevicePixels())
+        pixelRatio = if (is.null(session$clientData$pixelratio)) 1 else session$clientData$pixelratio
       )
     }, name = "simulationPlotRetval() reactive")
   })
@@ -2771,9 +2850,16 @@ app_server <- function(input, output, session) {
   # Evaluate target concentration
   observeEvent(input$drugEditsOK, {
     profileCode({
-      removeModal()
       current      <- drugDefaults()
       newDrugDefaults <- rhandsontable::hot_to_r(input$editDrugsHTML)
+      # An entry the plot or the dose table cannot use is refused, and the
+      # dialog stays open to be corrected (drugLibraryProblems()).
+      problems <- drugLibraryProblems(newDrugDefaults, current)
+      if (length(problems) > 0) {
+        showNotification(paste(problems, collapse = " "), type = "error", duration = 10)
+        return()
+      }
+      removeModal()
       newDrugDefaults$Drug                 <- as.character(newDrugDefaults$Drug)
       newDrugDefaults$Concentration.Units  <- as.character(newDrugDefaults$Concentration.Units)
       newDrugDefaults$Bolus.Units          <- as.character(newDrugDefaults$Bolus.Units)

@@ -25,3 +25,23 @@ lbmJames <- function (weight, height, sex)
     lbm = 1.10 * weight - 128 * (weight/height)^2
   return(lbm)
 }
+
+# The James lean body mass held at its peak past the peak: for the library's
+# own models whose source used James as a covariate (istradefylline,
+# tolcapone), which raise it to a power.  Past twice the peak BMI the
+# parabola is negative, and (LBM/55.6)^0.106 is then NaN: a 249 kg, 170 cm
+# man (BMI 86, within the Patient Profile's range) got no curve and no message
+# (2026-10-31).  Holding the mass at the most the formula gives for the height
+# keeps it positive and non-decreasing in weight; it is a guard, not a claim
+# about the source, which fitted no such patient.
+#
+# [decision] Steven L. Shafer, 2026-10-31: a floor at the James peak was
+# chosen over refusing the patient (as the TCI pumps do for Minto and
+# Schnider) or substituting Al-Sallami; to be confirmed.
+lbmJamesCapped <- function (weight, height, sex)
+{
+  a <- if (sex == SEX_FEMALE) 1.07 else 1.10
+  b <- if (sex == SEX_FEMALE) 148 else 128
+  peakWeight <- a * height^2 / (2 * b)
+  lbmJames(min(weight, peakWeight), height, sex)
+}

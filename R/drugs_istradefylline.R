@@ -40,7 +40,10 @@
 # James equation (lbmJames(), R/lbmJames.R), the usual NONMEM covariate of the
 # period, gives 55.3 kg for a 70 kg, 170 cm man, close to the reference 55.6;
 # Janmahasatian's gives 54.5.  James is used.  Clearance barely depends on it
-# (exponent 0.106); Q does (1.23).
+# (exponent 0.106); Q does (1.23).  James is a parabola in weight and is
+# negative past a BMI of 86 (men) or 72 (women), where these powers are NaN
+# and the patient got no curve; it is therefore held at its peak past the
+# peak (lbmJamesCapped(), R/lbmJames.R, which records the decision).
 #
 # WHAT IS HELD FIXED
 # ==================
@@ -107,7 +110,7 @@ istradefylline <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   w <- if (isTRUE(adjustToFFM))
     pkSizeFactors(weight, height, age, sex, TRUE)$pkWeight else weight
-  lbm <- lbmJames(w, height, sex)
+  lbm <- lbmJamesCapped(w, height, sex)
   cl <- ISTRADEFYLLINE_CL * (lbm / ISTRADEFYLLINE_LBM_REF)^ISTRADEFYLLINE_CL_LBM *
     (max(age, ADULT_AGE_TERM_FLOOR) / ISTRADEFYLLINE_AGE_REF)^ISTRADEFYLLINE_CL_AGE
   q  <- ISTRADEFYLLINE_Q * (lbm / ISTRADEFYLLINE_LBM_REF)^ISTRADEFYLLINE_Q_LBM

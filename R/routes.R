@@ -154,7 +154,10 @@ oralSaturationFraction <- function(doseMg, saturation)
   switch(oralSaturationForm(saturation),
     saturable = 1 - saturation$Imax * doseMg / (saturation$ID50 + doseMg),
     rising    = doseMg / (saturation$D50 + doseMg),
-    power     = (doseMg / saturation$Dref)^saturation$exponent,
+    # A negative exponent is infinite at a dose of 0 (opicapone's -0.225), and
+    # 0 x Inf is NaN, which stopped the simulation of a scheduled dose of 0;
+    # nothing is absorbed either way, so the fraction is 1 there.
+    power     = ifelse(doseMg > 0, (doseMg / saturation$Dref)^saturation$exponent, 1),
     reduction = 1 - saturation$I50 *
       (pmin(pmax(doseMg - saturation$D0, 0), saturation$D50 - saturation$D0) /
          (saturation$D50 - saturation$D0))^saturation$exponent,

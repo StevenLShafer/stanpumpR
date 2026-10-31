@@ -245,6 +245,37 @@ MAX_DRUGNAME_LENGTH <- 128L
 MAX_TIME_STRING_LENGTH <- 32L
 MAX_UNIT_STRING_LENGTH <- 32L
 
+# The most doses the scheduled rows of a dose table may expand to over the
+# plot (scheduledDoseCount()).  Each repeat is simulated and puts a point on
+# the time line: eight q4h drugs over 52 weeks were 17,472 doses and about
+# 245,000 points per drug, and with the time until threshold and the
+# peripheral compartments on the session needed more memory than a
+# shinyapps.io worker has, and disconnected (2026-10-31).  Three such drugs
+# (6,552 doses) drew; six were intermittent.
+MAX_SCHEDULED_DOSES <- 8000L
+
+# The tallest image the graphics device draws, in device pixels: ragg, which
+# renderPlot() uses when it is installed (it is deployed), stops at 50,000 a
+# side (its ragg.max_dim), and cairo's png() at 32,767.  renderPlot() asks for
+# the plot's height (yAxisHeight * panels + 50, simulationPlot()) times the
+# browser's pixel ratio, so on a retina screen 54 drugs with their peripheral
+# compartments at 350 px (115 panels, 40,300 px) and 96 drugs with them at
+# 200 px (176 panels, 35,250 px) exceeded the device, as a generic error in
+# the plot's place, while 96 drugs without them (19,250 px) drew (2026-10-31).
+# simulationPlot() refuses such a plot with a message instead
+# (maxPlotDevicePixels()).
+MAX_PLOT_DEVICE_PIXELS_RAGG <- 50000L
+MAX_PLOT_DEVICE_PIXELS_CAIRO <- 32767L
+
+# The longest bookmark the address bar is given.  shinyapps.io's server
+# refuses a longer request line with 414 when the link is reopened: a
+# 7,218-character bookmark reopened, an 18,340-character one did not
+# (2026-10-31).
+MAX_BOOKMARK_URL_CHARS <- 8000L
+
+# How the plot area introduces the error that stopped the simulation
+PLOT_FAILURE_PREFIX <- "The simulation could not be drawn. "
+
 # Be sure there are more items below then potential facets on the simulation plot
 #                     1     2     3     4     5     6     7     8     9    10    11    12    13    14   15
 bolusUnits <- c("g","mg","mcg", "ng","g/kg","mg/kg","mcg/kg","ng/kg")

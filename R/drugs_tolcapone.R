@@ -114,7 +114,7 @@ tolcapone <- function(weight, height, age, sex, adjustToFFM = TRUE)
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
                         legacyVolume = 1, legacyClearance = 1)
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
-  lbw <- lbmJames(w, height, sex)
+  lbw <- lbmJamesCapped(w, height, sex)   # held at its peak past it, R/lbmJames.R
 
   default <- list(
     v1  = TOLCAPONE_VC * (lbw / TOLCAPONE_LBW_REF)^TOLCAPONE_VC_LBW,

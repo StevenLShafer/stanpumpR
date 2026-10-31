@@ -210,6 +210,21 @@ thresholdTableToDefaults <- function(edited, drugDefaults, age,
 #' @param macThreshold a single threshold for the MAC series, or NULL
 #' @returns a list with the updated \code{drugDefaults} and \code{macThreshold}
 #' @export
+# The thresholds a bookmark carries: those edited away from the library's
+# defaults, keyed by drug, or NULL when none has been.  The whole column, one
+# entry per drug, was half of every bookmark's length (3,700 characters before
+# encoding) and helped the longest past the server's limit
+# (MAX_BOOKMARK_URL_CHARS); restoreThresholds() reads a subset, and an old
+# bookmark's full column, alike.
+changedThresholds <- function(drugDefaults, defaults = getDrugDefaultsGlobal())
+{
+  value <- suppressWarnings(as.numeric(drugDefaults$endCe))
+  default <- suppressWarnings(as.numeric(defaults$endCe[match(drugDefaults$Drug, defaults$Drug)]))
+  changed <- !is.na(value) & (is.na(default) | abs(value - default) > 1e-9)
+  if (!any(changed)) return(NULL)
+  stats::setNames(value[changed], drugDefaults$Drug[changed])
+}
+
 restoreThresholds <- function(drugDefaults, endCe = NULL, macThreshold = NULL)
 {
   usable <- function(x) suppressWarnings(as.numeric(x))

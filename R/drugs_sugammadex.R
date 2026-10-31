@@ -43,6 +43,16 @@
 # switch is on, and with total body weight when it is off.  Both the
 # 74.5 kg centring and the 70 kg normalisation are kept where printed.
 #
+# GUARD: the two linear weight terms are evaluated at no more than
+# SUGAMMADEX_WEIGHT_CAP.  Vc's term, 1 - 0.00354 (W - 74.5), reaches zero at
+# 357 kg, and a 360 kg man with the fat-free-mass switch off (within the
+# Patient Profile's range) got a negative volume, no curve and no message
+# (2026-10-31).  The cap is well beyond the source population and changes
+# nothing below it.
+#
+# [decision] Steven L. Shafer, 2026-10-31: 200 kg was chosen as the cap, over
+# refusing such a patient with a message; to be confirmed.
+#
 # Doses are sugammadex equivalents, as the Bridion label states them.
 #
 # PREGNANCY
@@ -94,6 +104,8 @@
 #'   header); the peripheral-volume term keeps the unadjusted value.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
+SUGAMMADEX_WEIGHT_CAP <- 200   # kg; see GUARD in the header
+
 sugammadex <- function(weight, height, age, sex, adjustToFFM = TRUE,
                        creatinine = NULL, pregnant = FALSE)
 {
@@ -102,6 +114,7 @@ sugammadex <- function(weight, height, age, sex, adjustToFFM = TRUE,
   # weight with it off.
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
   W  <- 70 * size$volume
+  Wl <- min(W, SUGAMMADEX_WEIGHT_CAP)          # the linear terms; GUARD above
   CR <- creatinineClearanceCG(W, age, sex,     # mL/min
                               adultEquivalentCreatinine(creatinine, age, sex))
   rS <- 1
@@ -110,8 +123,8 @@ sugammadex <- function(weight, height, age, sex, adjustToFFM = TRUE,
   gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)
   crCL <- CR * gfrPregnancy
 
-  cl1 <- 5.58 * (1 + 0.00378 * (W - 74.5)) * (2 * crCL / (crCL + 119))^1.29 / 60
-  v1  <- 4.42 * (1 - 0.00354 * (W - 74.5)) * rS * (W / 70)
+  cl1 <- 5.58 * (1 + 0.00378 * (Wl - 74.5)) * (2 * crCL / (crCL + 119))^1.29 / 60
+  v1  <- 4.42 * (1 - 0.00354 * (Wl - 74.5)) * rS * (W / 70)
   cl2 <- 12.36 * (W / 70)^0.75 / 60
   v2  <- 6.35 * exp(-0.00305 * (CR - 119)) * (W / 70)
   v3  <- 1                                     # no third compartment
