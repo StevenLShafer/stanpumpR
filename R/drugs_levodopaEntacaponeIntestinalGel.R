@@ -61,7 +61,7 @@
 #
 # DOSING: as for levodopaIntestinalGel, the morning dose and extra doses are
 # "mg PO" and the continuous rate "mg/hr PO", both levodopa into the jejunum
-# (the drug declares enteralInfusion; R/transit.R).  Absorption at 50/h is
+# (the drug declares enteralInfusion; R/enteral.R).  Absorption at 50/h is
 # all but immediate (half-time 50 s).
 #
 # BODY SIZE (docs/weight-adjustment.md): the model's own allometric weight

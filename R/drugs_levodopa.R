@@ -42,8 +42,10 @@
 # typical peaks after a 200 mg dose, 75 min (tablets) and 45 min (gel), are
 # produced only by two (one step gives 48 min for tablets), and Senek 2020
 # describes the model as "one transit compartment between the depot and
-# central compartment".  Two steps are drawn, exactly, by transit_PO
-# (R/transit.R); the tests pin the 75 minutes.
+# central compartment".  Two steps are drawn, exactly, as a transit chain of
+# two compartments both emptied at KTR (transitChain, n = 2, ktr = ka_PO), by
+# the matrix-exponential engine (R/advanceTransitChain.R); the tests pin the
+# 75 minutes.
 #
 # THE EFFECT SITE: MAO 2013
 # =========================
@@ -165,8 +167,7 @@ levodopa <- function(weight, height, age, sex, adjustToFFM = TRUE)
   default <- c(levodopaDisposition(weight, height, age, sex, adjustToFFM), list(
     ka_PO = LEVODOPA_KTR_ORAL / 60,
     bioavailability_PO = 1,          # apparent parameters; tablets the reference
-    tlag_PO = 0,
-    transit_PO = TRUE
+    tlag_PO = 0
   ))
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
@@ -174,6 +175,8 @@ levodopa <- function(weight, height, age, sex, adjustToFFM = TRUE)
   list(
     PK = PK, ke0 = LEVODOPA_KE0 / 60, MEAC = 0,
     typical = 2.25, upperTypical = 3.5, lowerTypical = 1.0,
+    # the dosing compartment and one transit compartment, both emptied at Ktr
+    transitChain = list(n = 2L, ktr = LEVODOPA_KTR_ORAL / 60, kMetabolic = 0),
     reference = paste0(
       "Othman & Dutta, Br J Clin Pharmacol 2014;78:94-105 (advanced Parkinson's ",
       "disease, carbidopa 4:1): two compartments, CL/F 24.8 L/h, Vc/F 58.5 L x ",

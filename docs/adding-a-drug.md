@@ -234,13 +234,13 @@ oral formulations, or a `tPeak` measured after an oral dose.
 
 **Optional — one transit compartment.** A source whose dose passes through one transit
 compartment before the central compartment, both emptied at the same rate (NONMEM's "depot
-and one transit compartment", levodopa and opicapone), sets `transit_PO = TRUE` beside
-`ka_PO` (or `transit_RA = TRUE` beside `ka_RA`/`ka_SC`). `getDrugPK()` carries the two equal
-steps exactly as two parallel depots, the second with a negative share, so the PK set may not
-declare its own second depot (`R/transit.R`; `R/drugs_levodopa.R`). A drug infused into the gut
-(levodopa intestinal gel) adds `enteralInfusion = TRUE` and offers `mg/hr PO`
-(`enteralRateUnits`): its gut absorption is carried on the tissue depot and the rate runs
-through it (`R/drugs_levodopaIntestinalGel.R`).
+and one transit compartment", levodopa and opicapone), declares a transit chain of two,
+`transitChain = list(n = 2L, ktr = <ka_PO>, kMetabolic = 0)` beside `ka_PO`, which the
+matrix-exponential engine solves exactly (`R/advanceTransitChain.R`; `R/drugs_levodopa.R`).
+A drug infused into the gut adds `enteralInfusion = TRUE` and offers `mg/hr PO`
+(`enteralRateUnits`, `R/enteral.R`): with a transit chain the rate enters the head of the
+chain (`R/drugs_levodopaIntestinalGel.R`); without one its gut absorption is carried on the
+tissue depot and the rate runs through it (`R/drugs_levodopaEntacaponeIntestinalGel.R`).
 
 **Optional — a zero-order share of an oral dose.** `zeroOrderPO = list(duration, into =
 "central", fraction)` gives that fraction of each oral dose into the circulation at a constant

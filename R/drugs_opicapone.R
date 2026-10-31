@@ -50,10 +50,10 @@
 # "1 transit absorption compartment" with "KA ... the transit absorption rate
 # constant" is read as levodopa's (R/drugs_levodopa.R): the dose passes from
 # its depot through one transit compartment into the central compartment,
-# both at KA (transit_PO, R/transit.R).  The review does not draw the
-# structure.  With it the peak after a bedtime 50 mg capsule falls at 2.9 h,
-# 400 ng/mL (label tmax 2 h, 1-4, in the morning; LeWitt 2023's patients
-# dosed at night, Cmax 459 +/- 252 ng/mL).
+# both at KA (transitChain, n = 2, R/advanceTransitChain.R).  The review does
+# not draw the structure.  With it the peak after a bedtime 50 mg capsule
+# falls at 2.9 h, 400 ng/mL (label tmax 2 h, 1-4, in the morning; LeWitt
+# 2023's patients dosed at night, Cmax 459 +/- 252 ng/mL).
 #
 # BODY SIZE (docs/weight-adjustment.md): no size covariate was retained, so
 # the 71 kg (median) parameters are scaled by the library's fat-free-mass
@@ -124,8 +124,7 @@ opicapone <- function(weight, height, age, sex, adjustToFFM = TRUE)
     cl1 = cl * size$clearance / 60, cl2 = 0, cl3 = 0,
     ka_PO = ka / 60,
     bioavailability_PO = opicaponeF1(50),   # relative; scaled per dose below
-    tlag_PO = 0,
-    transit_PO = TRUE
+    tlag_PO = 0
   )
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
@@ -133,6 +132,8 @@ opicapone <- function(weight, height, age, sex, adjustToFFM = TRUE)
   list(
     PK = PK, tPeak = 0, MEAC = 0,
     typical = 0, upperTypical = 0, lowerTypical = 0,
+    # the dosing compartment and one transit compartment, both emptied at KA
+    transitChain = list(n = 2L, ktr = ka / 60, kMetabolic = 0),
     # F1 through the two marketed strengths: exactly Table 9's at 25 and 50 mg
     oralSaturation = list(form = ORAL_SATURATION_POWER, Dref = 50,
                           exponent = log(opicaponeF1(25) / opicaponeF1(50)) / log(0.5)),

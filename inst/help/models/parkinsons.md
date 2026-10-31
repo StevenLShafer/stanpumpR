@@ -47,7 +47,7 @@ One row per drug and candidate source model, from `inst/extdata/parkinsonsRegist
 
 ## Two pieces of the engine built for this group
 
-Levodopa's tablets and gel, and opicapone's capsules, are absorbed through **one transit compartment**: the dose passes through two equal first-order steps before it reaches the circulation, which makes the absorption start slowly and peak later than a single step would. The engine carries it exactly, as two parallel depots whose difference is the transit chain. The intestinal gel is a continuous **enteral infusion** into the jejunum (`mg/hr PO`), absorbed through that same chain. See [absorption](help:models/absorption).
+Levodopa's tablets and gel, and opicapone's capsules, are absorbed through **one transit compartment**: the dose passes through two equal first-order steps before it reaches the circulation, which makes the absorption start slowly and peak later than a single step would. It is a chain of two compartments, solved exactly by the same matrix-exponential engine as enalapril's eight. The intestinal gel is a continuous **enteral infusion** into the jejunum (`mg/hr PO`), which enters the head of that same chain; Lecigon, which has no transit compartment, takes its enteral rate into its single absorption depot. See [absorption](help:models/absorption).
 
 ## The papers that would unblock the rest
 
