@@ -274,9 +274,10 @@ into the fat-free-mass multipliers that most drug models apply to their volumes 
 (`ffmAlSallami()` is the Al-Sallami 2015 fat-free mass; see `docs/weight-adjustment.md`);
 it is also the lean-body-mass covariate of Aoyama's meloxicam model, in place of the James
 equation it was published with. `lbmJames()` computes the James lean body mass, a parabola in
-weight that falls past a BMI of 43 (men) or 36 (women), kept deliberately for the Schnider and
-Minto companions so that they fail at the extremes of weight as the pumps do (scenario
-`james-lean-body-mass`); `renalFunction.R` supplies
+weight that falls past a BMI of 43 (men) or 36 (women); the models that read it (the Schnider
+and Minto companions, istradefylline, tolcapone) take `lbmJamesCapped()`, which holds it at the
+peak so the fall never reaches a parameter (scenario `james-lean-body-mass`, which draws the
+parabola); `renalFunction.R` supplies
 Cockcroft-Gault creatinine clearance and de-indexed CKD-EPI eGFR for the renally cleared
 models (every model that names `creatinine`; the Serum creatinine field's hover tip lists them), at the patient's serum creatinine or an
 assumed normal one for age and sex when none is entered, with a child's creatinine put on the
@@ -347,8 +348,9 @@ All files are flat in `R/`.
   the event-driven solver. The `ke0` fit itself
   (`ke0FromTPeakBolus()`, `ke0FromTPeak()`) lives inside `getDrugPK.R`.
 - `modelInteraction.R`, `recoveryCalc.R`, `lbmJames.R` — interaction surface, recovery
-  thresholds, the James lean body mass the Schnider and Minto companions use (the library's own
-  body-size scaling is `pkSizeFactors.R`).
+  thresholds, the James lean body mass (and `lbmJamesCapped()`, held at its peak) the Schnider and
+  Minto companions, istradefylline and tolcapone use (the library's own body-size scaling is
+  `pkSizeFactors.R`).
 - `simulateDrugsWithCovariates.R` — exported multi-drug convenience API (no Shiny).
 
 **Output — plot, dosing advisor & export**
@@ -427,8 +429,9 @@ All files are flat in `R/`.
   is not a second opioid); the hover reports both models and a click goes to the parent. Minto's
   ke0 is the paper's function of age, so `getDrugPK()` accepts a model with `ke0` and no `tPeak`
   and solves the time to peak effect from it. A model whose covariate terms give a non-positive
-  volume or clearance for the patient (a James lean body mass far enough below zero to take
-  Minto's V1 negative, about -16 kg at age 40; a small child on Schnider) is not built, and the app says so (`alternativeModelProblems()`). Help:
+  volume or clearance for the patient (a small child on Schnider, whose clearance intercepts go
+  negative; the James lean body mass is held at its peak, so it no longer takes Minto's V1
+  negative in the obese) is not built, and the app says so (`alternativeModelProblems()`). Help:
   `inst/help/models/minto-schnider.md`, with a generated parameter table; scenarios
   `eleveld-vs-minto-schnider`, `tci-eleveld-vs-minto-schnider` and `james-lean-body-mass`; tests `test-minto-schnider.R`.
 - **The TCI API** (`tci-api.R`, `tci-api-server.R`, `inst/api/`) — a stateless HTTP API under

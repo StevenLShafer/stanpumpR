@@ -170,10 +170,10 @@ test_that("a model whose terms give a non-positive parameter is reported, not si
   expect_null(alternativeModelEntry("propofol", 7, 65, 0.5, "male", rowOf("propofol")))
   expect_false(is.null(alternativeModelEntry("remifentanil", 7, 65, 0.5, "male", rowOf("remifentanil"))))
   expect_gt(propofolSchnider(20, 110, 5, "male")$PK[[1]]$cl1, 0)
-  # James's lean body mass at 500 kg: Minto's volumes go negative too
-  problems <- alternativeModelProblems(c("propofol", "remifentanil"), 500, 200, 40, "male")
-  expect_match(problems, "Minto's remifentanil model is not defined", all = FALSE)
-  expect_match(problems, "V1, V2 and CL1", all = FALSE)
+  # James's lean body mass at 500 kg would be -250 kg and Minto's volumes
+  # negative; held at its peak (lbmJamesCapped()) both models stay defined
+  expect_length(alternativeModelProblems(c("propofol", "remifentanil"), 500, 200, 40, "male"), 0)
+  expect_gt(remifentanilMinto(500, 200, 40, "male")$PK[[1]]$v1, 0)
   # Drugs without an alternative model are ignored
   expect_length(alternativeModelProblems("fentanyl", 7, 65, 0.5, "male"), 0)
   # ... and the pipeline skips the undefined model silently
@@ -182,31 +182,34 @@ test_that("a model whose terms give a non-positive parameter is reported, not si
   expect_true("remifentanil (Minto)" %in% names(drugs))
 })
 
-test_that("the James lean body mass is kept, and fails the obese patient as the pumps do", {
+test_that("the James lean body mass is held at its peak, so the companions stay defined in the obese", {
   # A 160 cm, 40-year-old woman: James's lean body mass peaks at 92.5 kg
-  # (BMI 36) and then falls, so past it Schnider's clearance climbs steeply
-  # and Minto's volumes shrink
+  # (BMI 36).  Below the peak the companions use it as published; past it
+  # they hold it there (lbmJamesCapped(), Shafer's decision of 2026-10-31),
+  # so Minto's volumes stop shrinking and Schnider's clearance rises only
+  # with the weight term, not with a falling lean body mass as well.
   cl1 <- function(w) propofolSchnider(w, 160, 40, "female")$PK[[1]]$cl1
   v1 <- function(w) remifentanilMinto(w, 160, 40, "female")$PK[[1]]$v1
-  expect_equal_rounded(c(cl1(60), cl1(92.5), cl1(150)), c(1.729211, 2.794325, 6.716170))
-  expect_equal_rounded(c(v1(60), v1(92.5), v1(150)), c(4.263900, 4.704661, 3.330375))
-  expect_lt(v1(150), v1(92.5))
-  # At 200 kg (BMI 78) James's lean body mass is negative and so is Minto's V1
+  expect_equal_rounded(c(cl1(60), cl1(92.5), cl1(150)), c(1.729211, 2.794325, 5.416324))
+  expect_equal_rounded(c(v1(60), v1(92.5), v1(150)), c(4.263900, 4.704661, 4.704661))
+  expect_equal(v1(200), v1(92.5), tolerance = 1e-6)
+  # Raw James would make Schnider's clearance 6.72 at 150 kg
+  expect_lt(cl1(150), 1.89 + 0.0456 * (150 - 77) - 0.0681 * (lbmJames(150, 160, "female") - 59) + 0.0264 * (160 - 177))
+  # At 200 kg (BMI 78) James's lean body mass is negative; held at the peak,
+  # both models are still defined and drawn
   expect_lt(lbmJames(200, 160, "female"), 0)
-  problems <- alternativeModelProblems(c("propofol", "remifentanil"), 200, 160, 40, "female")
-  expect_length(problems, 1)
-  expect_match(problems, "Minto's remifentanil model is not defined")
-  # The scenario james-lean-body-mass: at 150 kg the Schnider pump gives far
-  # more propofol over the hour than the Eleveld pump, and the Minto pump less
-  # remifentanil than the library's (Kim's, at this BMI)
+  expect_length(alternativeModelProblems(c("propofol", "remifentanil"), 200, 160, 40, "female"), 0)
+  # The scenario james-lean-body-mass: at 150 kg the Schnider pump still gives
+  # far more propofol over the hour than the Eleveld pump (its weight term),
+  # and the Minto pump less remifentanil than the library's (Kim's, at this BMI)
   d <- simulate(dosesTCI, age = 40, weight = 150, height = 160, sex = "female")
   totalOf <- function(n) {
     tci <- d[[n]]$tci
     r <- tci$rates[!tci$rates$Bolus & tci$rates$Time < 60, ]
     sum(tci$boluses$Amount) + sum(r$Rate * diff(c(r$Time, 60))) * 150
   }
-  expect_gt(totalOf("propofol (Schnider)"), 1.7 * totalOf("propofol"))
-  expect_lt(totalOf("remifentanil (Minto)"), 0.7 * totalOf("remifentanil"))
+  expect_gt(totalOf("propofol (Schnider)"), 1.4 * totalOf("propofol"))
+  expect_lt(totalOf("remifentanil (Minto)"), 0.8 * totalOf("remifentanil"))
 })
 
 # --- The pipeline -------------------------------------------------------------
