@@ -12,7 +12,7 @@ Some models have no covariates at all: the same dose in milligrams gives the sam
 
 ## Which drugs each field reaches
 
-The Patient Profile fields beyond age, weight, height and sex reach only the models that name them, and a field left blank or at its default silently gives the typical value, so it is worth knowing which drugs each one affects. The table is built from the models themselves, so it lists exactly the drugs that read each field; for every other drug the field has no effect.
+The Patient Profile fields beyond age, weight, height and sex reach only the models that name them, and a field left blank or at its default silently applies that field's own assumption (a normal creatinine for the patient's age and sex, a term birth, the most common CYP genotype, or for VKORC1 and CYP4F2 the most sensitive one), so it is worth knowing which drugs each one affects. The table is built from the models themselves, so it lists exactly the drugs that read each field; for every other drug the field has no effect.
 
 <!-- generated: field-readers-table -->
 

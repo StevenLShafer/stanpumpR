@@ -380,6 +380,10 @@ test_that("the field-readers table has one row per field, counted from the model
   expect_match(page, "<!-- generated: field-readers-table -->", fixed = TRUE)
   table <- helpFieldReadersTableMarkdown()
   lines <- strsplit(table, "\n", fixed = TRUE)[[1]][-(1:2)]
+  # the table's fields are the tooltip's plus the two read without a tip,
+  # so a field added to the Patient Profile cannot be left out of the table
+  expect_setequal(names(HELP_FIELD_READER_ROWS),
+                  c(names(PATIENT_FIELD_LABELS), "pregnant", "osmolality"))
   expect_length(lines, length(HELP_FIELD_READER_ROWS))
   for (i in seq_along(HELP_FIELD_READER_ROWS)) {
     arg <- names(HELP_FIELD_READER_ROWS)[i]
