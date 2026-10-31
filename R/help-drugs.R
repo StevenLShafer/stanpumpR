@@ -817,26 +817,17 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     # An oral release into the gut rides on the tissue depot (R/subcutaneous.R):
     # its depot is the oral one, shown once, as oral.
     if (isTRUE(pkRef$zeroOrderPO)) routes$RA <- routes$RAslow <- NULL
-    # So does an enteral infusion's (R/transit.R): its tissue depot is the gut
-    # absorption of the oral route, not a regional route of its own.
+    # So does an enteral infusion's without a transit chain (R/enteral.R): its
+    # tissue depot is the gut absorption of the oral route, not a regional
+    # route of its own.
     if (isTRUE(pkRef$enteralInfusion)) routes$RA <- routes$RAslow <- NULL
-    # One transit compartment (R/transit.R): the engines carry it as a second
-    # depot with a negative share, which is internal; the table shows the one
-    # route as the model declared it, and an enteral infusion's tissue depot
-    # as the oral route it is.
-    transit <- d$transit
-    if (!is.null(transit)) {
-      secondPO <- slowRA <- FALSE
-      routes$PO2 <- routes$RAslow <- NULL
-      if (identical(transit$route, ROUTE_PO)) routes$PO <- "Oral (PO), through one transit compartment" else
-        routes$RA <- paste0(tissue, ", through one transit compartment")
-      d[[paste0("ka_", if (identical(transit$route, ROUTE_PO)) "PO" else "RA")]] <- transit$ka
-      d[[paste0("bioavailability_", if (identical(transit$route, ROUTE_PO)) "PO" else "RA")]] <- transit$bioavailability
-      d[[paste0("tlag_", if (identical(transit$route, ROUTE_PO)) "PO" else "RA")]] <- transit$tlag
-      if (isTRUE(pkRef$enteralInfusion)) {
-        d$ka_PO <- transit$ka; d$bioavailability_PO <- transit$bioavailability; d$tlag_PO <- transit$tlag
-      }
-    }
+    # One transit compartment before the depot, both emptied at ka_PO (a
+    # transit chain of two, R/advanceTransitChain.R: levodopa, its gel,
+    # opicapone): one oral row, named for the structure.
+    tc <- pkRef$transitChain
+    transit <- !is.null(tc) && isTRUE(tc$n == 2) && isTRUE(d$ka_PO > 0) &&
+      isTRUE(abs(tc$ktr / d$ka_PO - 1) < 1e-6)
+    if (transit) routes$PO <- "Oral (PO), through one transit compartment"
     rows <- lapply(names(routes), function(r) {
       ka <- d[[paste0("ka_", r)]]
       if (is.null(ka) || is.na(ka) || ka <= 0) return(NULL)
@@ -916,13 +907,13 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
         if (length(formRows)) paste0("A unit naming an oral form listed in the table uses that form's ",
                                      "absorption; plain mg PO, and any other form offered, use the default. ") else "",
         pulseNote,
-        if (!is.null(transit)) paste0(
+        if (transit) paste0(
           "Each dose passes from its depot through one transit compartment into the central compartment, ",
           "both emptied at the rate constant shown (two equal first-order steps), so the absorption ",
-          "half-time shown is that of each step. ",
-          if (isTRUE(pkRef$enteralInfusion)) paste0(
-            "The doses (mg PO) and the continuous rate (mg/hr PO) are pumped into the jejunum through ",
-            "a tube and absorbed from it this way. ") else "") else "",
+          "half-time shown is that of each step. ") else "",
+        if (isTRUE(pkRef$enteralInfusion)) paste0(
+          "The doses (mg PO) and the continuous rate (mg/hr PO) are pumped into the jejunum through ",
+          "a tube and absorbed from it this way. ") else "",
         if (secondPO) paste0("Each oral dose is absorbed through two depots in parallel, each with ",
                              "its own lag; the bioavailability of each is its share of the dose. ") else "",
         if (slowRA) paste0("Each ", if (identical(pkRef$tissueRoute, ROUTE_SC)) "SC" else "RA",

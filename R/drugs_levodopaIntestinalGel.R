@@ -24,9 +24,11 @@
 # and extra doses as needed.  The doses are "mg PO" and the continuous rate
 # "mg/hr PO" (enteralRateUnits, R/constants.R), both into the gut, both
 # absorbed through the transit compartment: the drug declares
-# enteralInfusion, and the engines carry its absorption on the tissue depot,
-# exactly (R/transit.R).  A morning dose over 15 minutes is entered as a rate
-# for those 15 minutes, or as a single "mg PO" dose.
+# enteralInfusion and a transit chain of two compartments, and the
+# matrix-exponential engine takes the doses and the rate into the head of the
+# chain, exactly (R/enteral.R, R/advanceTransitChain.R).  A morning dose over
+# 15 minutes is entered as a rate for those 15 minutes, or as a single
+# "mg PO" dose.
 #
 # CHECKS: the paper's typical peak after a 200 mg morning dose is at 45
 # minutes; the engine's, for 200 mg given over 15 minutes, is at 39 minutes
@@ -62,8 +64,7 @@ levodopaIntestinalGel <- function(weight, height, age, sex, adjustToFFM = TRUE)
   default <- c(levodopaDisposition(weight, height, age, sex, adjustToFFM), list(
     ka_PO = LEVODOPA_KTR_GEL / 60,
     bioavailability_PO = LEVODOPA_FREL_GEL,   # relative to tablets
-    tlag_PO = 0,
-    transit_PO = TRUE
+    tlag_PO = 0
   ))
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
@@ -71,6 +72,7 @@ levodopaIntestinalGel <- function(weight, height, age, sex, adjustToFFM = TRUE)
   list(
     PK = PK, ke0 = LEVODOPA_KE0 / 60, MEAC = 0,
     typical = 2.25, upperTypical = 3.5, lowerTypical = 1.0,
+    transitChain = list(n = 2L, ktr = LEVODOPA_KTR_GEL / 60, kMetabolic = 0),
     enteralInfusion = TRUE,
     reference = paste0(
       "Othman & Dutta, Br J Clin Pharmacol 2014;78:94-105: the levodopa ",
