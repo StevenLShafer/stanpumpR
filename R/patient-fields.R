@@ -75,7 +75,9 @@ patientFieldReadersSentence <- function(arg, drugDefaults = getDrugDefaultsGloba
 #' The field is optional, and an empty box says nothing about what empty
 #' MEANS: each renal model substitutes the normal creatinine for the patient's
 #' age and sex (`assumedCreatinine()`, R/renalFunction.R).  The placeholder
-#' shows that value, so the assumption is visible without hovering for the tip,
+#' shows that value, the assumed one for age and sex before any model's own
+#' conversion (adultEquivalentCreatinine() for an equation fitted in adults),
+#' so the assumption is visible without hovering for the tip,
 #' which states the same thing in words.  It is only a hint: it disappears as
 #' soon as anything is typed, and an empty field still reaches the models as
 #' NULL.

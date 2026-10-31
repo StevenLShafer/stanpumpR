@@ -27,6 +27,9 @@ metabolite's model carries into the parent by construction (AGENTS.md,
 The reference patient is the 70 kg, 170 cm, 35-year-old man of
 docs/weight-adjustment.md, with the fat-free-mass switch on, the default
 covariates and no pregnancy: the patient whose parameters are the model's
-published reference values.
+published reference values.  That holds for a model fitted in adults; for
+one fitted in another population (dobutamineNeonatal(), a neonatal model)
+the value is the model extrapolated to that man, not a published value, so
+a parent should read only an adult metabolite model this way.
 }
 \keyword{internal}
