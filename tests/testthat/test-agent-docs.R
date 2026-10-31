@@ -34,7 +34,10 @@ agentDocDefinitions <- function(root) {
              list.files(file.path(root, "inst", "www"), "\\.js$", full.names = TRUE))
   unique(unlist(lapply(files, function(f) {
     lines <- readLines(f, warn = FALSE, encoding = "UTF-8")
-    c(regmatches(lines, regexpr("[A-Za-z.][A-Za-z0-9._]*(?=\\s*(<-|=[^=]))", lines,
+    # a plain binding only: not a member (state$values$x <-) or the tail of
+    # a longer name
+    c(regmatches(lines, regexpr("(?<![$@A-Za-z0-9._])[A-Za-z.][A-Za-z0-9._]*(?=\\s*(<-|=[^=]))",
+                                lines,
                                 perl = TRUE)),
       sub("function\\s+", "",
           regmatches(lines, regexpr("function\\s+[A-Za-z_][A-Za-z0-9_]*", lines,
@@ -50,6 +53,12 @@ test_that("every function the orientation documents name exists", {
     any(vapply(imports, function(pkg)
       requireNamespace(pkg, quietly = TRUE) && exists(name, envir = asNamespace(pkg)),
       logical(1)))
+  # pkg::fn() must be an export of the package it names
+  exportedBy <- function(qualified) {
+    parts <- strsplit(qualified, "::", fixed = TRUE)[[1]]
+    requireNamespace(parts[1], quietly = TRUE) &&
+      parts[2] %in% getNamespaceExports(parts[1])
+  }
   for (doc in AGENT_DOCS) {
     code <- agentDocCode(root, doc)
     calls <- unique(sub("\\(\\)$", "",
@@ -57,6 +66,16 @@ test_that("every function the orientation documents name exists", {
     for (name in calls)
       expect_true(name %in% defined || inImports(name),
                   info = sprintf("%s names %s(), which nothing defines", doc, name))
+    qualified <- unique(sub("\\(\\)$", "",
+                            code[grepl("^[A-Za-z][A-Za-z0-9.]*::[A-Za-z.][A-Za-z0-9._]*\\(\\)$", code)]))
+    for (name in qualified) {
+      # an optional package (rsconnect, plumber) may not be installed; its
+      # exports cannot be checked then, which is no evidence of a stale name
+      pkg <- strsplit(name, "::", fixed = TRUE)[[1]][1]
+      if (!requireNamespace(pkg, quietly = TRUE)) next
+      expect_true(exportedBy(name),
+                  info = sprintf("%s names %s(), which its package does not export", doc, name))
+    }
   }
 })
 
@@ -70,5 +89,11 @@ test_that("every repository path the orientation documents name exists", {
     for (path in paths)
       expect_true(file.exists(file.path(root, path)),
                   info = sprintf("%s names %s, which does not exist", doc, path))
+    # a bare file name (`simCpCe.R`, `app.R`, `helpers.R`) is one of the
+    # package's files at the root, in R/ or among the test helpers
+    bare <- unique(sub("#.*$", "", code[grepl("^[A-Za-z0-9_.-]+\\.R(#.*)?$", code)]))
+    for (file in bare)
+      expect_true(any(file.exists(file.path(root, c(".", "R", "tests/testthat"), file))),
+                  info = sprintf("%s names %s, which is no file of the package", doc, file))
   }
 })
