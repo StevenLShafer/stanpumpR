@@ -165,6 +165,10 @@ test_that("every scenario runs through the simulation engine", {
                                          cyp2c9 = p$cyp2c9, cyp2b6 = p$cyp2b6,
                                          adjustToFFM = p$adjustToFFM,
                                          pregnant = p$pregnant,
+                                         vkorc1 = p$vkorc1, cyp4f2 = p$cyp4f2,
+                                         creatinine = p$creatinine,
+                                         osmolality = p$osmolality,
+                                         gestationalAge = p$gestationalAge,
                                          antiseizureInteractions = s$options$antiseizureInteractions)
       # every dosed drug has a row; a drug that forms an active metabolite adds
       # the metabolite's row too

@@ -1,8 +1,8 @@
 ## What to look for
 
-Carbamazepine 400 mg twice daily from the first dose, nothing else. Tick **Include antiseizure drug interactions**; the lighter *carbamazepine (no interactions)* line is the library's ordinary model, which is the *induced*, maintenance state.
+Carbamazepine 400 mg twice daily from the first dose, nothing else. **Include antiseizure drug interactions** is ticked under Graph Options (the scenario ticks it); the lighter *carbamazepine (no interactions)* line is the library's ordinary model, which is the *induced*, maintenance state.
 
-With the interaction on, carbamazepine climbs fast over the first few days, overshooting to about 9.5 mg/L around day 4, then settles back to about 7.5 mg/L over the following two weeks. The overshoot and fall are autoinduction: carbamazepine induces the CYP3A4 that clears it, roughly doubling its own clearance, so the level that a naive liver would reach is about twice the eventual steady state. The library's plain model starts already induced and climbs straight to 7.5 without the hump.
+With the interaction on, carbamazepine climbs fast over the first few days, overshooting to about 9.5 mg/L around day 4, then settles back to about 7.5 mg/L over the following two weeks. The overshoot and fall are autoinduction: carbamazepine induces the CYP3A4 that clears it, roughly doubling its own clearance, so the level that a naive liver would reach is about twice the eventual steady state. The library's plain model starts already induced and climbs straight to about 7.4 without the hump.
 
 This is why a single dose of carbamazepine, or the first few days of therapy, behaves so differently from maintenance: the half-life falls from 35–65 hours when naive to about 15 hours once induced.
 
