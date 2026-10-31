@@ -83,8 +83,12 @@ test_that("a revision of the metabolite's clearance carries into a 'reads' paren
   expect_equal(hydrocodone(70, 170, 35, "male")$metabolite$kFormation,
                2 * base, tolerance = 1e-9)
 
-  base <- oxycodone(70, 170, 35, "male")$metabolite$firstPassFraction
+  # oxycodone reads oxymorphone twice: the first pass at the reference
+  # patient and the systemic formation at this one
+  base <- oxycodone(70, 170, 35, "male")$metabolite
   local_mocked_bindings(oxymorphone = double_cl1(oxymorphone))
-  expect_equal(oxycodone(70, 170, 35, "male")$metabolite$firstPassFraction,
-               2 * base, tolerance = 1e-9)
+  doubled <- oxycodone(70, 170, 35, "male")$metabolite
+  expect_equal(doubled$firstPassFraction, 2 * base$firstPassFraction,
+               tolerance = 1e-9)
+  expect_equal(doubled$kFormation, 2 * base$kFormation, tolerance = 1e-9)
 })
