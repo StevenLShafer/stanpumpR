@@ -13,9 +13,18 @@ sendSlide <- function(
   email_password
 )
 {
+  # Everything the email attaches -- the deck, its preview and a workbook of
+  # the patient's covariates, doses and results -- is written to a private
+  # directory of this send's own and removed whether or not the send
+  # succeeds.  Until 2026-10-31 the files went to a shared Slides/ folder in
+  # the working directory, named by the session's click count and the second,
+  # and were removed only after a successful send.
+  dir <- tempfile("stanpumpR-slide-")
+  dir.create(dir, mode = "0700")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
   tryCatch({
     prevEcho <- options("ECHO_OUTPUT_COMMENTS" = TRUE)
-    on.exit(options("ECHO_OUTPUT_COMMENTS" = prevEcho[[1]]))
+    on.exit(options("ECHO_OUTPUT_COMMENTS" = prevEcho[[1]]), add = TRUE)
 
     outputComments("Sending email to", recipient)
 
@@ -26,7 +35,7 @@ sendSlide <- function(
       stop("Email password missing")
     }
 
-    emailData <- generateEmail(values, recipient, plotObject, allResults, plotResults, height, width, slide, drugs)
+    emailData <- generateEmail(values, recipient, plotObject, allResults, plotResults, height, width, slide, drugs, dir)
 
     outputComments("Sending email")
 
@@ -47,24 +56,26 @@ sendSlide <- function(
     )
     smtp(msg, verbose = FALSE)
 
-    unlink(emailData$pptxfileName)
-    unlink(emailData$pngfileName)
-    unlink(emailData$xlsxfileName)
     outputComments("Leaving sendMail()")
     return(TRUE)
   }, error = function(e) {
-    return(e$message)
+    # The detail -- an SMTP diagnostic, a path -- goes to the server's log;
+    # the browser is told only that it failed (EMAIL_FAILURE_MESSAGE).
+    base::message("stanpumpR Email Slide failed: ", conditionMessage(e))
+    outputComments("Email Slide failed:", conditionMessage(e))
+    EMAIL_FAILURE_MESSAGE
   })
 }
 
-generateEmail <- function(values, recipient, plotObject, allResults, plotResults, height, width, slide, drugs) {
+# dir: the private directory the files are written to (sendSlide() makes and
+# removes it)
+generateEmail <- function(values, recipient, plotObject, allResults, plotResults, height, width, slide, drugs, dir) {
   title <- paste("stanpumpR simulation on", format(Sys.time()))
   DT <- values$DT
   url <- values$url
 
   outputComments("In function sendSlide()")
 
-  if (!file.exists("Slides")) dir.create("Slides")
   TIMESTAMP <- format(Sys.time(), format = "%y%m%d-%H%M%S")
   DATE <- format(Sys.Date(), "%m/%d/%y")
   outputComments("reading Template.pptx")
@@ -94,16 +105,16 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
     PPTX <- officer::ph_with(PPTX, i + 1, location = officer::ph_location_type ("sldNum"))
     PPTX <- officer::ph_with(PPTX, "From StanpumpR", location = officer::ph_location_type ("ftr"))
   }
-  pptxfileName <- paste0("Slides/From stanpumpR.", slide, ".", TIMESTAMP, ".pptx")
+  pptxfileName <- file.path(dir, paste0("From stanpumpR.", slide, ".", TIMESTAMP, ".pptx"))
 
   outputComments("Saving PPTX")
   print(PPTX, target = pptxfileName)
 
-  xlsxfileName <- paste0("Slides/From stanpumpR.", slide, ".", TIMESTAMP, ".xlsx")
+  xlsxfileName <- file.path(dir, paste0("From stanpumpR.", slide, ".", TIMESTAMP, ".xlsx"))
 
   outputComments("Creating PNG file")
 
-  pngfileName <- paste0("Slides/Preview.", slide, ".", TIMESTAMP, ".png")
+  pngfileName <- file.path(dir, paste0("Preview.", slide, ".", TIMESTAMP, ".png"))
   ggplot2::ggsave(
     plotObject +
       ggplot2::theme(

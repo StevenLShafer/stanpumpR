@@ -232,6 +232,12 @@ RESOLUTION <- 100
 # Max number of emails a single session can send out, to limit abuse
 EMAIL_SESSION_LIMIT <- 25
 
+# What the browser is told when Email Slide fails; the exception itself (an
+# SMTP diagnostic, a path) goes to the server's log (sendSlide()).
+EMAIL_FAILURE_MESSAGE <- paste0(
+  "The slide could not be sent. The server's log has the details; ",
+  "please try again later, or tell the app's maintainer.")
+
 MAX_DOSE_ROWS <- 500L
 MAX_EVENT_ROWS <- 100L
 MAX_TARGET_ROWS <- 20L
