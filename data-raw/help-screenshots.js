@@ -54,9 +54,11 @@ async function openPanel(page, value) {
   const browser = await chromium.launch();
 
   // The opening dialog, as on a first visit (a fresh browser has no record
-  // of the weekly welcome).
+  // of the weekly welcome), in a window tall enough for the whole dialog:
+  // a shorter one scrolls it and cuts off the Start button.
   {
-    const page = await browser.newPage({ viewport: VIEWPORT, deviceScaleFactor: 2 });
+    const page = await browser.newPage({ viewport: { width: VIEWPORT.width, height: 1150 },
+                                          deviceScaleFactor: 2 });
     await page.goto(`${BASE}/`);
     const modal = page.locator('.modal-content');
     await modal.waitFor({ timeout: 60000 });
