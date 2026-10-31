@@ -19,6 +19,7 @@ The address bar of the app *is* the simulation: it encodes the patient, the dose
 events and the graph options. Copy it and paste it into the issue, and we can see
 exactly what you saw. Then say what you expected and what appeared instead.
 
-A GitHub issue is public. The link carries only what was entered in the app (the patient's
-covariates, such as age, weight and sex, and the doses), but do not add anything that
-identifies a patient.
+A GitHub issue is public, and the link carries every value entered in the Patient Profile
+(age, weight, height, sex, the genotypes and the rest) as well as the doses. **If the
+simulation is of a real patient, change those values to made-up ones that still show the
+problem before you copy the link**, and do not add anything else about the patient.
