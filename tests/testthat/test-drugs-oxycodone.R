@@ -84,7 +84,7 @@ test_that("returns the pooled per-kilogram parameters with weight scaling", {
       name = "oxymorphone",
       # 1% of oxymorphone's 2.0 L/min over the molecular weight ratio, out of v1
       kFormation = 0.01 * 2.0 / (301.34 / 315.36) / (0.131 * vss),
-      firstPassFraction = 0.0357,
+      firstPassFraction = 0.0235 * 2.0 / ((301.34 / 315.36) * 1.379),  # 0.03567
       mwRatio = 301.34 / 315.36
     )
   )

@@ -365,6 +365,14 @@ metabolite = list(
 metabolite drug's own row after every drug has been simulated, creating that row if the
 metabolite was never given directly. See `R/drugs_codeine.R` for a worked example.
 
+The parent must agree with the library's model of its metabolite (AGENTS.md, *Parents and their
+metabolites must agree*). The metabolite curve is drawn with that model, and only the ratio of
+formation to metabolite clearance is identifiable, so a formation fraction calibrated against a
+metabolite clearance must use the library's: read it with `libraryReferenceClearance("<metabolite>")`
+or by calling the model, never retype it. Add the pair to `METABOLITE_FORMATION_BASIS` in
+`R/metaboliteCoefficients.R` as `reads`, `shared` or `joint`; `test-metabolite-consistency.R` fails
+until you do. Revising a metabolite's model means checking every parent listed against it there.
+
 Four things to know before using it:
 
 - `kFormation` is **not** a share of the parent's elimination. The parent's published
