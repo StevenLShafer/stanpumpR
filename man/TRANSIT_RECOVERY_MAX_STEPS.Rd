@@ -11,8 +11,10 @@ An object of class \code{integer} of length 1.
 TRANSIT_RECOVERY_MAX_STEPS
 }
 \description{
-The grid's step is set so that \code{delta} times it is
-\code{TRANSIT_RECOVERY_GRID_BETA}, but never finer than the horizon over this
-many steps; a coarser grid costs more refinement, never accuracy.
+The grid has \code{ceiling(horizon * delta / TRANSIT_RECOVERY_GRID_BETA)} steps
+(at least one), so \code{delta} times its step is at most
+\code{TRANSIT_RECOVERY_GRID_BETA}, but never more than this many steps: when the
+cap binds, \code{delta} times the step exceeds \code{TRANSIT_RECOVERY_GRID_BETA}, and
+the coarser grid costs more refinement, never accuracy.
 }
 \keyword{internal}
