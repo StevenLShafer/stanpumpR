@@ -47,12 +47,16 @@ lastSent <- function(sent, id) {
 }
 
 # The browser's echo: report every input the server has updated since
-# `since`, as the browser does
+# `since`, as the browser does.  session$elapse(): the Max/Min time sliders
+# feeding plotInfo() are debounced (app_server.R, 2026-11-01, so a drag does
+# not stampede the simulate-and-plot chain), so a mocked session must let
+# simulated time pass before plotInfo() reflects the new value.
 echo <- function(session, sent, since = 0) {
   new <- sent$inputs[seq_along(sent$inputs) > since]
   values <- list()
   for (m in new) if (!is.null(m$message$value)) values[[m$id]] <- m$message$value
   if (length(values)) do.call(session$setInputs, values)
+  session$elapse(500)
 }
 
 # The notifications shown or removed with this id (a removal's message is
@@ -285,6 +289,7 @@ test_that("TCI rows and inhaled agents are not simulated beyond a week", {
     session$setInputs(timeUnits = "days")
     echo(session, sent)
     session$setInputs(maximum = maxTimeValue(14 * MINS_PER_DAY))
+    session$elapse(500)
     expect_match(timeUnitViolation(), "propofol effect site target")
     expect_match(timeUnitViolation(), "7 days or less")
     expect_error(drugs(), class = "shiny.silent.error")
@@ -292,6 +297,7 @@ test_that("TCI rows and inhaled agents are not simulated beyond a week", {
     expect_error(output$PlotSimulation, "7 days or less")
     # back to two days: allowed, and the TCI schedule is simulated
     session$setInputs(maximum = maxTimeValue(2 * MINS_PER_DAY))
+    session$elapse(500)
     expect_null(timeUnitViolation())
     expect_equal(notified(sent, "timeUnitRule")$type, "remove")
     expect_false(is.null(drugs()[["propofol"]]$tci))
@@ -314,6 +320,7 @@ test_that("removing the rows the week rule names clears it, for an agent from th
     session$setInputs(timeUnits = "days")
     echo(session, sent)
     session$setInputs(maximum = maxTimeValue(14 * MINS_PER_DAY))
+    session$elapse(500)
     violation <- timeUnitViolation()
     for (drug in c("oxygen", "sevoflurane", "ventilation")) expect_match(violation, drug)
     expect_no_match(violation, "cefazolin")

@@ -267,6 +267,21 @@ app_server <- function(input, output, session) {
     sliderPending(FALSE)
   })
 
+  # While a slider is dragged, the browser reports a new input$maximum (or
+  # input$minimum) every ~250ms, each one invalidating plotInfo() and so the
+  # whole simulate-and-plot chain below it.  On a heavy dose table (many
+  # scheduled drugs near MAX_SCHEDULED_DOSES) a drag that passes through
+  # several still-simulatable intermediate lengths before settling can queue
+  # enough full resimulations, on this single-threaded R process, to exceed
+  # the browser's or the host's idle timeout and disconnect the session --
+  # reproduced intermittently dragging Max time down on a guarded q4h plot
+  # (production audit, 2026-11-01).  Debounced here, at the one point the
+  # heavy chain reads them, so only the settled value triggers real work;
+  # syncTimeSliders()'s own settling check above reads the raw inputs and is
+  # unaffected.
+  maximumDebounced <- debounce(reactive(input$maximum), 400)
+  minimumDebounced <- debounce(reactive(input$minimum), 400)
+
   # Give the Max time and Min time sliders the unit's range and step
   # (timeSliderRange()), with their values snapped to it.  Without `maximum`
   # or `minimum` the current value is kept, snapped.  The values are minutes
@@ -1205,7 +1220,7 @@ app_server <- function(input, output, session) {
       # wait for the browser and the conversion to catch up.
       req(identical(doseTableFormat(), selectorFormat()))
 
-      requestedMaximum <- suppressWarnings(as.numeric(input$maximum))
+      requestedMaximum <- suppressWarnings(as.numeric(maximumDebounced()))
       # Not checked against a list of lengths any more, the slider being
       # continuous, but still bounded: from the shortest step to the longest
       # length any unit offers
@@ -1221,7 +1236,7 @@ app_server <- function(input, output, session) {
       # 0; only the window drawn, and the resolution inside it
       # (simulationTimeGrid()), move.  A Min time at or past Max time is a
       # moment before the observers above pull them apart.
-      plotMinimum <- suppressWarnings(as.numeric(input$minimum))
+      plotMinimum <- suppressWarnings(as.numeric(minimumDebounced()))
       if (!is_valid_number(plotMinimum, 0)) plotMinimum <- 0
       req(plotMinimum < requestedMaximum)
       # The server has just set the sliders (a change of unit, a scenario, a

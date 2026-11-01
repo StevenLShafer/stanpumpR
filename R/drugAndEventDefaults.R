@@ -21,6 +21,11 @@ isValidColor <- function(x) {
 # read reached the plot as a generic error in its place, and a Units entry the
 # dose table does not accept (validateDoseTableInput()) was offered in the
 # table and then refused as unknown units, with a blank plot (2026-10-31).
+# Lower/Upper/Typical/MEAC had no check at all: a non-numeric entry (e.g.
+# "bogus") was silently coerced to NA by the as.numeric() in the
+# input$drugEditsOK observer, with no message, erasing the stored threshold
+# (production audit, 2026-11-01) -- the same failure the separate Drug
+# Thresholds dialog already guards against (thresholdTableToDefaults()).
 drugLibraryProblems <- function(edited, current) {
   problems <- character(0)
   at <- match(edited$Drug, current$Drug)
@@ -53,6 +58,21 @@ drugLibraryProblems <- function(edited, current) {
   if (length(emptied)) {
     problems <- c(problems, paste0(
       "Units must list at least one unit, with none left blank (", paste(emptied, collapse = ", "), ")."))
+  }
+  badNumbers <- character(0)
+  for (col in c("Lower", "Upper", "Typical", "MEAC")) {
+    valueChr <- trimws(as.character(edited[[col]]))
+    blank <- is.na(edited[[col]]) | !nzchar(valueChr)
+    parsed <- suppressWarnings(as.numeric(valueChr))
+    bad <- !is.na(at) & !blank & (is.na(parsed) | !is.finite(parsed) | parsed < 0)
+    if (any(bad)) {
+      badNumbers <- c(badNumbers, sprintf("%s %s: \"%s\"", edited$Drug[bad], col, valueChr[bad]))
+    }
+  }
+  if (length(badNumbers)) {
+    problems <- c(problems, paste0(
+      "Lower, Upper, Typical and MEAC must be left blank or a number of 0 or more (",
+      paste(badNumbers, collapse = ", "), ")."))
   }
   problems
 }
