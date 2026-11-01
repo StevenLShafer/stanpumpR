@@ -17,6 +17,10 @@ stanpumpR uses no numerical ODE solver, with one exception. Every other drug is 
 - [Target-controlled infusion](help:tci): the *Plasma target* and *Effect site target* units run a simulated TCI pump, computing the infusion exactly from the same closed-form coefficients.
 - [Scaling to fat-free mass](help:models/fat-free-mass): most models are scaled to the patient's fat-free mass by default, a switch away from the published total-weight scaling.
 
+## Why compute at all
+
+- [Why tables of PK parameters must be simulated](help:models/why-simulate): the Duzitol example of 1992, in which a model whose half-lives are all four times longer recovers four times faster. A table of parameters cannot be read by eye; that is why stanpumpR exists.
+
 ## Beyond concentrations
 
 - [MEAC](help:models/meac) puts opioids on a common axis of analgesic effect.

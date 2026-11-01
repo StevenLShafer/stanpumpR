@@ -80,6 +80,7 @@ helpStaticPages <- function() {
 
     "models/overview",          "How stanpumpR computes",          "models",
     "models/three-compartment", "The three-compartment model",     "models",
+    "models/why-simulate",      "Why tables of PK parameters must be simulated", "models",
     "models/compartments",      "Peripheral compartments and the depot", "models",
     "models/effect-site",       "The effect site and ke0",         "models",
     "models/covariates",        "Covariates and body size",        "models",

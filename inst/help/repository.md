@@ -41,7 +41,7 @@ stanpumpR is an R package that contains a Shiny application. The source is at [g
 
 **The Simulation API.** `api.R` is [the Simulation API](help:simulation-api): `apiSimulate()` validates a request and runs it, `apiFormatResult()` serialises the result as JSON, CSV, Excel or XML (`apiWriteResult()` writes it to a file), and `run_api()` serves `inst/plumber/plumber.R`. `api-docs.R` renders its documentation, `inst/apidocs/api.md`, as the page the app serves at [stanpumpr.io/api](https://stanpumpr.io/api). `plumber`, which both web services use, is an optional dependency.
 
-**The help.** `help-content.R` (page registry, Markdown rendering, search), `help-generated.R` (blocks of hand-written pages built from the code), `help-drugs.R` (the generated drug pages), `help-scenarios.R` (the teaching scenarios and their loader), `help-ui.R` and `help-server.R`.
+**The help.** `help-content.R` (page registry, Markdown rendering, search), `help-generated.R` (blocks of hand-written pages built from the code), `duzitol.R` (the fictional drug of Shafer and Stanski's 1992 editorial, built from its table and simulated for [Why tables of PK parameters must be simulated](help:models/why-simulate); never a drug in the library), `help-drugs.R` (the generated drug pages), `help-scenarios.R` (the teaching scenarios and their loader), `help-ui.R` and `help-server.R`.
 
 **Experimental.** `ig_absorption.R` is a closed-form inverse-Gaussian absorption kernel: validated, dependency-free, and not wired into the engine, no drug having declared it yet.
 
