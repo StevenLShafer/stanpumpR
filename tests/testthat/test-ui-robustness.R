@@ -108,6 +108,9 @@ test_that("the Drug Library refuses a colour ggplot cannot read and units the do
   edited$Color[i] <- "#123456"
   edited$Units[[i]] <- c("mg", "mcg/kg/min")
   expect_length(drugLibraryProblems(edited, dd), 0)
+  # a list typed with spaces after the commas is offered without them, so the
+  # unit the dropdown offers is the unit the dose table accepts
+  expect_equal(unlist(drugUnitsExpand("mg, mcg/kg/min ,mg PO")), c("mg", "mcg/kg/min", "mg PO"))
   expect_true(isValidColor("steelblue"))
   expect_false(isValidColor(""))
   expect_false(isValidColor(NA_character_))

@@ -1,7 +1,9 @@
 # Split each drug's comma-separated Units into a vector, grouped by route (IV,
 # then PO, IM, IN, RA) so the units dropdowns list each route's units together.
 drugUnitsExpand <- function(units) {
-  lapply(strsplit(units, ","), groupUnitsByRoute)
+  # trimws: a Drug Library edit typed as "mg, mcg/kg/min" must offer
+  # "mcg/kg/min", not " mcg/kg/min", which the dose table would then refuse
+  lapply(strsplit(units, ","), function(tokens) groupUnitsByRoute(trimws(tokens)))
 }
 drugUnitsSimplify <- function(units) {
   unlist(lapply(units, paste, collapse = ","))

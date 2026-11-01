@@ -96,6 +96,8 @@
 #   filtration)
 # -----------------------------------------------------------------------------
 
+SUGAMMADEX_WEIGHT_CAP <- 200   # kg; see GUARD in the header
+
 #' Sugammadex pharmacokinetics (total)
 #'
 #' @inheritParams cefazolin
@@ -105,8 +107,6 @@
 #'   header); the peripheral-volume term keeps the unadjusted value.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-SUGAMMADEX_WEIGHT_CAP <- 200   # kg; see GUARD in the header
-
 sugammadex <- function(weight, height, age, sex, adjustToFFM = TRUE,
                        creatinine = NULL, pregnant = FALSE)
 {
