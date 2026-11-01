@@ -277,8 +277,8 @@
 #      that Singhvi's OWN bioavailability (25 to 29%) and his OWN clearance
 #      (39 mL/min) imply for the diacid over the same 0 to 24 h window.  (F x
 #      dose / CL gives 801 to 929 for the TOTAL area -- his Table 1 prints the
-#      diacid's as 788 and 920 -- and at his clearance 95.1% of it lies within
-#      24 h.  An earlier draft wrote 737-855, truncating with HUI's 92% share --
+#      diacid's as 788 and 920 -- and this model's oral curve, run at his
+#      clearance, puts 95.1% of it within 24 h.  An earlier draft wrote 737-855, truncating with HUI's 92% share --
 #      a faster clearance leaves less area beyond 24 h, so THE TRUNCATION
 #      FACTOR BELONGS TO THE PATIENT BEING DESCRIBED.)  A SECONDARY SOURCE CAN
 #      RELABEL AN ANALYTE, and for a radiolabel study that is the error to

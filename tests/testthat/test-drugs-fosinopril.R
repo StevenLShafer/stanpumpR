@@ -294,9 +294,9 @@ test_that("the quoted oral area is total radioactivity, not fosinoprilat", {
   expect_equal_rounded(c(801.3, 929.5), implied, tolerance = 1e-3)
   expect_true(all(abs(implied / DIACID_AUCINF - 1) < 0.02))
   # the quoted area scaled to the diacid brackets what his own numbers imply
-  # over 0 to 24 h, truncated at HIS clearance, which leaves 95.1% of the area
-  # inside 24 h (Hui's slower clearance leaves 92%, the share an earlier draft
-  # used)
+  # over 0 to 24 h, truncated with this model's oral curve run at HIS
+  # clearance, which leaves 95.1% of the area inside 24 h (at Hui's slower
+  # clearance it leaves 92%, the share an earlier draft used)
   diacid <- FOSINOPRILAT_SHARE * TOTAL_RADIO_AUC24
   expect_equal_rounded(c(776.25, 849.0), diacid, tolerance = 1e-4)
   expect_lt(abs(mean(diacid) / mean(0.951 * implied) - 1), 0.03)

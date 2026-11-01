@@ -2199,7 +2199,8 @@ arithmetically: 0.75 × 1035-1132 = 776-849 ng·h/mL falls inside the
 **762-884** his own bioavailability (25 to 29%) and his own clearance
 (39 mL/min) imply for the diacid over the same 0-24 h window. (`F × dose / CL`
 gives 801-929 for the *total* area - Table 1 prints the diacid's as 788 and
-920 - of which his clearance leaves 95.1% inside 24 h.
+920 - of which this model's oral curve, run at his clearance, leaves 95.1% inside
+24 h.
 A first version of this paragraph wrote 737-855, truncating with **Hui's** 92%
 share: a faster clearance leaves less area beyond 24 h, so **the truncation
 factor belongs to the patient being described.**) **A secondary source can relabel an analyte**, and for
