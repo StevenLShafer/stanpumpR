@@ -28,8 +28,13 @@
 # settle it is the full oral Cp/Ce and occupancy time course against Kim
 # 2012's own sampling schedule, which has not been done.  Until adjudicated,
 # treat the early-time (and post-dose-change) effect-site curve as lagging
-# more than Kim 2012's own model implies, with the steady-state value
-# unaffected (Ce = Cp there regardless of ke0).
+# more than Kim 2012's own model implies.  With once-daily oral dosing, Ce
+# and Cp both fluctuate across each dosing interval at periodic steady
+# state and are not equal at any one moment; only their interval averages
+# are equal, regardless of ke0 -- so the ke0-transfer issue mainly affects
+# the minutes around a dose or dose change, not the interval-averaged
+# exposure (which can still differ between the two PK structures for other
+# reasons, since their apparent clearances differ).
 #
 # V/F: the brief gives 193 L from Table 3; the abstract says 192 L.  The
 # abstract is the text that could be read, so 192 L is used.
