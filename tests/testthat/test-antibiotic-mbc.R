@@ -68,9 +68,10 @@ test_that("the shipped bands are the ones researched on 2026-10-19", {
   # A pin, so a change to the table is a deliberate change to the bands.
   # Free mg/L, then the plotted band.
   pins <- list(
-    # cefazolin's upper edge moved from 2 to 8 on 2026-11-01: Shafer chose
-    # MBC90 = MIC90 x 4 for Enterobacterales from Jones 1977's Table 5
-    cefazolin     = list(free = c(0.5, 1, 8),     plotted = c(0.5, 1, 8)),
+    # cefazolin moved from 0.5 / 1 / 2 on 2026-11-01: Shafer chose
+    # MBC90 = MIC90 x 4 for the Enterobacterales and for MSSA, from Jones
+    # 1977's Table 5 (and Pelletier 1988's Table 1 for cephalothin)
+    cefazolin     = list(free = c(0.5, 4, 8),     plotted = c(0.5, 4, 8)),
     cefalexin     = list(free = c(2, 4, 4),       plotted = c(2.4, 4.7, 4.7)),
     ceftriaxone   = list(free = c(0.5, 2, 2),     plotted = c(7.8, 30, 30)),
     clindamycin   = list(free = c(0.25, 0.25, 1.6), plotted = c(3.1, 3.1, 9.9)),
