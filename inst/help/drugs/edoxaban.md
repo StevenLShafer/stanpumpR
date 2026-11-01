@@ -16,7 +16,7 @@ The model is fixed to the phase 3, non-dose-reduced Hokusai-VTE patient, non-Asi
 
 ### Covariates
 
-Allometrically scaled body weight acts on all disposition parameters, with the paper's own fixed exponents: the apparent clearance and the peripheral volume scale as (weight / 70) to the 0.75 power, and the central volume and the inter-compartmental clearance to the first power. Weight is evaluated at the pharmacokinetic weight under the [fat-free-mass switch](help:models/fat-free-mass), and also enters the clearance through the Cockcroft–Gault creatinine clearance.
+Allometrically scaled body weight acts on all disposition parameters, with the paper's own fixed exponents: the volumes and the inter-compartmental clearance scale as in the Table 3 footnote (peripheral volume to the 0.75 power, central volume and inter-compartmental clearance to the first power). The paper's own equations put the weight term on the non-renal clearance alone; the library instead applies it to the whole apparent clearance (non-renal plus renal), a deliberate departure Steven L. Shafer made on 2026-10-27 because a renal clearance that ignores body size seemed implausible — it raises the typical patient's modeled clearance by about 6% over the paper's own equations. Weight is evaluated at the pharmacokinetic weight under the [fat-free-mass switch](help:models/fat-free-mass), and also enters the clearance through the Cockcroft–Gault creatinine clearance.
 
 ### Provenance note
 

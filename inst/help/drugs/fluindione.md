@@ -4,7 +4,7 @@ This is a research and teaching model. The plotted INR is **not** validated clin
 
 ### The model
 
-Fluindione is an **indane-dione vitamin-K antagonist**, the most prescribed oral anticoagulant in France. It is modelled by Verstuyft and colleagues (*Clin Pharmacokinet* 2012;51(1):41-53), who studied a single 20 mg dose in 24 healthy White subjects and fitted a combined pharmacokinetic–pharmacodynamic model in Monolix.
+Fluindione is an **indane-dione vitamin-K antagonist**, the most prescribed oral anticoagulant in France. It is modelled by Verstuyft and colleagues (*Clin Pharmacokinet* 2012;51(1):41-53), who gave 24 healthy White subjects two 20 mg doses 24 hours apart, sampling after the second, and fitted a combined pharmacokinetic–pharmacodynamic model in Monolix.
 
 The disposition is **apparent** (/F) two-compartment with first-order oral input and no lag:
 
@@ -31,7 +31,7 @@ The INR is a delayed, non-linear turnover endpoint, so it is computed from the f
 
 ### Where to be careful
 
-The model was fitted to a single dose in healthy volunteers; the steady-state INR shown here comes from repeated dosing of that single-dose model, not from a maintenance-therapy fit. Fluindione's low clearance lets it accumulate, so its simulated steady-state INR is close to the paper's Table IV values, but the model is not a dosing algorithm and does not represent vitamin K, drug interactions, or the between-patient variability that makes vitamin-K-antagonist dosing individual.
+The model was fitted to two doses 24 hours apart in healthy volunteers; the steady-state INR shown here comes from repeated dosing of that model, not from a maintenance-therapy fit. Fluindione's low clearance lets it accumulate, so its simulated steady-state INR is close to the paper's Table IV values, but the model is not a dosing algorithm and does not represent vitamin K, drug interactions, or the between-patient variability that makes vitamin-K-antagonist dosing individual.
 
 ### Further reading
 

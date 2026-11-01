@@ -4,7 +4,7 @@ From Bamgboye and colleagues (*J Clin Pharmacol* 2026), who gave 20 adults a sta
 
 ### Route
 
-Oral (`mg PO`, with schedules). Absolute oral bioavailability is complete (109 per cent against intravenous, Clark 2013; about 100 per cent, Ahmed 2015), so the apparent and true parameters are the same and bioavailability is 1 — the label's figure of 80 per cent is contradicted by both intravenous studies. No absorption rate was estimated; the 1-hour median time to peak sets a label-anchored 2.0/h, recorded as a calibration. The extended-release capsules have no published input model and are not offered, nor is the investigational intravenous product.
+Oral (`mg PO`, with schedules). Absolute oral bioavailability is complete (109 per cent against intravenous, Clark 2013; about 100 per cent, Ahmed 2015), so the apparent and true parameters are the same and bioavailability is 1 — the label's figure of 80 per cent is contradicted by both intravenous studies. Ahmed 2015 does estimate an oral absorption rate (ka 2.38/h), but under its own, different two-compartment disposition, not the three-compartment one used here; the 1-hour median time to peak instead sets a calibrated 2.0/h (close to Ahmed's value) under this disposition, recorded as a calibration rather than an estimate carried over from Ahmed's model. The extended-release capsules have no published input model and are not offered, nor is the investigational intravenous product.
 
 ### What is not modelled
 

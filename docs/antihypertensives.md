@@ -1753,10 +1753,19 @@ The paper is explicit, and had been all along:
 > compartment.**"
 
 with the Results adding "**Eight transits (transits = 8)** were added for
-reference and pooled data analysis". That fixes the structure completely: eight
-chain compartments, the first seven emptying at KTR = 9/0.558 = 16.13 /h and
-the eighth at KA = 6.010 /h. Both printed parameters are used exactly as
-defined, and the thirteen-state count §14.3 gave was right.
+reference and pooled data analysis". That fixes what KA does — the transfer
+rate out of the last transit — and that both printed parameters are used
+exactly as defined, so the thirteen-state count §14.3 gave was right. It does
+**not** fix, on its own, whether those eight transits are all there is between
+the dose and KA: Figure 1 (PDF p5) draws a separate Dose box ahead of
+Transit 1 … Transit 8 without labelling the rate from Dose into Transit 1, so
+a reading in which that box is itself a ninth stage emptying at KTR — the
+usual Erlang convention implied by an (N+1)/KTR mean-transit-time formula —
+is equally consistent with the prose quoted above. The repo's own full-text
+digest records this as an open discrepancy rather than something the text
+settles. What the text and the figure together give is two plausible readings
+of one under-labelled transfer, not a single fixed structure; §16.3 below
+explains why that is harmless here.
 
 What survives is a much smaller thing. The formula presumes *nine* steps at one
 rate; the structure has seven at KTR and one at KA. So the model's true mean
@@ -1771,10 +1780,14 @@ reported parent peak, and that is worth stating rather than glossing: reading 1
 implemented reading's 0.88 h. It means agreement with a reported summary was
 never what chose the reading — the text was. An earlier draft of this section
 claimed the implemented reading was also the closest, which the drug's own test
-disproves, since that test asserts reading 1 has the latest peak. So the
-conclusion §14.3 reached was right and its reason
-was wrong: the readings agreeing made the ambiguity harmless, but there was no
-ambiguity to be harmless about.
+disproves, since that test asserts reading 1 has the latest peak. As the
+correction above says, what the Results quoted fix is what KA does, not
+whether the unlabelled Dose box is itself a ninth transit stage, which stays a
+genuine, open reading of one under-specified figure rather than something the
+text settles. §14.3's conclusion survives anyway, for the reason it originally
+gave: because the four plausible readings agree with each other and with the
+paper's reported peaks to within 6%, the ambiguity is harmless regardless of
+which reading is correct.
 
 ### 16.3 The formulation covariate was not ambiguous either
 

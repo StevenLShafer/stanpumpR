@@ -16,4 +16,4 @@ None; only the plasma concentration is plotted. *Time until threshold* is theref
 
 ### Where to be careful
 
-Six healthy men is a small, homogeneous anchor. Critically ill patients have a separately fitted model with larger volumes, and their coefficients have not been mixed into this one.
+Six healthy men is a small, homogeneous anchor. Critically ill patients have a separately fitted model (Heffernan and colleagues, 2022); its own volume estimate did not differ appreciably from this healthy-volunteer one, unlike some earlier ICU studies it cites (and its unbound-central volume is not directly comparable with this model's total-based one in any case) — but its clearance, both renal and non-renal, is altered, and its coefficients have not been mixed into this model.
