@@ -162,7 +162,10 @@ paperReviewDerivedOne <- function(extraction, quantity, weight)
   d <- paperReviewDerived(extraction, quantity, weight)
   if (length(d) == 0) return(list(value = NA_real_, location = NA_character_, entry = NULL))
   kind <- PAPER_REVIEW_DERIVED_KIND[[quantity]]
-  ok <- !is.na(d[[1]]$kind) && identical(d[[1]]$kind, kind)
+  # A coefficient may be a fraction of their sum (a percent), which the
+  # caller tells apart by its units.
+  ok <- !is.na(d[[1]]$kind) && (identical(d[[1]]$kind, kind) ||
+    (kind == "coefficient" && identical(d[[1]]$kind, "fraction")))
   list(value = if (ok) d[[1]]$internal else NA_real_, location = d[[1]]$location,
        entry = d[[1]], perKg = isTRUE(paperReviewUnit(d[[1]]$units %or% "other")$perKg))
 }
@@ -325,6 +328,8 @@ paperReviewIdentifiability <- function(extraction)
     coefs <- lapply(seq_len(n), function(i) paperReviewDerivedOne(extraction, paste0("coefficient_", i), w))
     lambdas <- lapply(seq_len(n), function(i) paperReviewDerivedOne(extraction, paste0("lambda_", i), w))
     perL <- all(vapply(coefs, function(x) identical(x$entry$units, "1/L"), logical(1)))
+    fractional <- all(vapply(coefs, function(x)
+      identical(paperReviewUnit(x$entry$units %or% "other")$kind, "fraction"), logical(1)))
     attempt <- NULL
     if (n == 1) {
       if (!is.na(CL$value) && haveHl) {
@@ -357,6 +362,23 @@ paperReviewIdentifiability <- function(extraction)
         inputs = inputs,
         solve = function(x) {
           A <- unname(unlist(x[paste0("A", seq_len(n))])); l <- unname(unlist(x[paste0("l", seq_len(n))]))
+          if (n == 2) twoCompartmentFromBiexponential(A, l)
+          else threeCompartmentFromTriexponential(A, l)
+        })
+    } else if (n >= 2 && fractional && !is.na(V1$value) && haveHl &&
+               all(vapply(coefs[-n], function(x) !is.na(x$value), logical(1)))) {
+      # Fractional coefficients sum to 1, so only n - 1 of them are free; V1
+      # supplies the scale (the coefficients per unit dose sum to 1 / V1).
+      inputs <- c(list(V1 = V1), stats::setNames(coefs[-n], paste0("f", seq_len(n - 1))),
+                  stats::setNames(hl, paste0("t", seq_len(n))))
+      attempt <- list(
+        name = "V1, the fractional coefficients and the half-lives",
+        inputs = inputs,
+        solve = function(x) {
+          f <- unname(unlist(x[paste0("f", seq_len(n - 1))]))
+          f <- c(f, 1 - sum(f))
+          if (any(f <= 0)) stop("fractions do not leave a positive last coefficient")
+          A <- f / x$V1; l <- log(2) / unname(unlist(x[paste0("t", seq_len(n))]))
           if (n == 2) twoCompartmentFromBiexponential(A, l)
           else threeCompartmentFromTriexponential(A, l)
         })
@@ -562,7 +584,10 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
       t_half_terminal = log(2) / l[n],
       lambda_1 = , lambda_2 = , lambda_3 = if (isTRUE(i <= n)) l[i] else NA_real_,
       coefficient_1 = , coefficient_2 = , coefficient_3 =
-        if (isTRUE(i <= n) && identical(dq$units, "1/L")) c0[i] else NA_real_,
+        if (!isTRUE(i <= n)) NA_real_
+        else if (identical(dq$units, "1/L")) c0[i]
+        else if (identical(paperReviewUnit(dq$units %or% "other")$kind, "fraction")) c0[i] / sum(c0)
+        else NA_real_,
       k10 = set$k10, k12 = set$k12, k21 = set$k21, k13 = set$k13, k31 = set$k31,
       V1 = set$v1, Vss = v, Varea = set$cl1 / l[n], CL = set$cl1,
       MRT = if (is.null(dq$regimen_id)) v / set$cl1 else NA_real_,
@@ -601,6 +626,11 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
       if (i > n) next
       if (identical(dq$units, "1/L")) {
         model <- coef[i]; conv$kind <- "coefficient"
+      } else if (identical(conv$kind, "fraction")) {
+        # A fractional coefficient, A(i) / sum(A): the weight of each exponent
+        # in the fall after a bolus, often printed as a percent.
+        model <- coef[i] / sum(coef); conv$kind <- "coefficient"
+        note <- "A fraction of the sum of the coefficients."
       } else if (identical(conv$kind, "concentration")) {
         bolus <- paperReviewBolusAmount(extraction, dq$regimen_id, concUnits, reference,
                                         log(2) / lambda[1])

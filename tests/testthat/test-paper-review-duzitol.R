@@ -204,3 +204,48 @@ test_that("the simulator offers each model and simulates the one chosen", {
   for (g in names(duzitolTable)) expect_true(grepl(g, page, fixed = TRUE))
   expect_true(grepl("The paper as a whole", page, fixed = TRUE))
 })
+
+# Table 2: each exponent's share of the fall after a bolus, A(i) / sum(A),
+# printed as a percent.
+duzitolFractions <- list(
+  "Duzitol, normal subjects" = c("75", "20", "5"),
+  "Duzitol, hepatic failure" = c("97.5", "2", "0.5"),
+  "Propofol, normal subjects" = c("94.6", "4.9", "0.57"))
+
+duzitolWithFractions <- function(x = duzitolExtraction()) {
+  for (g in names(duzitolFractions))
+    for (i in 1:3)
+      x$derived_quantities[[length(x$derived_quantities) + 1]] <- list(
+        quantity = paste0("coefficient_", i), group = g,
+        value = as.numeric(duzitolFractions[[g]][i]), value_text = duzitolFractions[[g]][i],
+        units = "percent", statistic = "typical_value",
+        uncertainty = list(type = "not_reported"), location = "Table 2, p. 329")
+  x
+}
+
+test_that("fractional coefficients printed as a percent are compared with A(i) / sum(A)", {
+  review <- paperReviewRun(duzitolWithFractions())
+  for (g in names(duzitolFractions)) {
+    t <- review$models[[g]]$consistency
+    rows <- t[grepl("^coefficient_", t$quantity), ]
+    expect_equal(nrow(rows), 3)
+    expect_true(all(rows$status %in% c("matches", "matches within rounding")),
+                info = paste(g, paste(rows$status, collapse = ", ")))
+  }
+  # Shafer's spreadsheet: the normal subjects' fractions are 0.751, 0.199, 0.050.
+  t <- review$models[[1]]$consistency
+  expect_equal(as.numeric(t$model[t$quantity == "coefficient_1"]), 75.1, tolerance = 1e-3)
+})
+
+test_that("V1, the fractional coefficients and the half-lives close the model", {
+  x <- duzitolWithFractions()
+  # Drop CL and Vss, which the half-life route would otherwise use first.
+  x$parameters <- Filter(function(p) p$role != "CL", x$parameters)
+  x$derived_quantities <- Filter(function(d) d$quantity != "Vss", x$derived_quantities)
+  review <- paperReviewRun(x)
+  m <- review$models[["Duzitol, normal subjects"]]
+  expect_equal(m$identifiability$route, "V1, the fractional coefficients and the half-lives")
+  expect_true(m$drug$ok)
+  # The printed percents carry two figures, so CL comes back near 0.68 L/min.
+  expect_equal(m$identifiability$closed$cl1, 0.68, tolerance = 0.05)
+})

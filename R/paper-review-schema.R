@@ -315,7 +315,9 @@ paperReviewSchema <- function()
     ))),
     derived_quantities = schemaArray(schemaObject(list(
       quantity    = schemaChoice(PAPER_REVIEW_DERIVED,
-                               paste("t_half_1 and lambda_1 are the fastest; coefficient_i pairs with lambda_i;",
+                               paste("t_half_1 and lambda_1 are the fastest; coefficient_i pairs with lambda_i,",
+                                     "and is per unit dose (1/L), a concentration after a stated dose, or a",
+                                     "fraction of the sum of the coefficients (units percent or fraction);",
                                      "decrement_50 is the time for the concentration to fall 50% after a",
                                      "steady-state input stops (the context-sensitive half-time at steady state).")),
       group       = schemaGroup(),
