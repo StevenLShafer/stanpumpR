@@ -127,46 +127,44 @@
 #
 # PREGNANCY
 # =========
-# Sertraline is the one antidepressant whose dose-adjusted serum
-# concentration RISES in pregnancy.  Westin 2017 followed 37 sertraline
-# pregnancies (34 women) through routine therapeutic drug monitoring, each
-# against the same woman's own baseline outside pregnancy: sertraline was 68%
-# higher in the middle of the third trimester (95% CI +37% to +106%,
-# p < 0.001; a mixed-model prediction at week 34, from retrospective samples
-# taken 8 to 30 h after the dose), and N-desmethylsertraline 120% higher,
-# which sits awkwardly with CYP2C19 inhibition (that should slow the
-# demethylation).  The Schoretsanitis 2020 meta-analysis (18 patients) gives a
-# mean of individual ratios of 1.38, but it is not independent of Westin
-# (Westin is a co-author and supplied raw data from the largest cohort), and
-# its inverse-variance mean difference is null (fixed effect -0.05
-# (ng/mL)/(mg/day), CI -0.17 to 0.06, p 0.34).  Heinonen 2021 (PMID 33751155)
-# instead found dose-adjusted sertraline LOWER during pregnancy than at its
-# own 1-month-postpartum reference: the paired alteration ratios, pregnant
-# over postpartum, have medians 0.88, 0.69 (third trimester, range 0.17-1.23,
-# 8 women) and 0.85 at delivery, and the unpaired group medians of
-# concentration/dose are 0.19 in the third trimester against 0.25 postpartum.
-# Its p = 0.345 tests the second-trimester-to-postpartum change, not the
-# third trimester.  Heinonen's own authors read the fall as increased
-# metabolism in pregnancy.  Freeman 2008 (six to nine women) found large
-# differences between women, no significant mean change, and the lowest AUC
-# and Cmax in the third trimester in 5 of 6.  Monfort 2024 sampled from labour
-# to 6 weeks postpartum and tested the sampling moment on CL/F without
-# retaining it, so it gives no pregnant-against-nonpregnant comparison.  The
-# sources therefore disagree in direction, and whether to keep the factor or
-# record the change as unquantified is open (D11 adjudication, 2026-11-01;
-# papers/digests/PMID_28708853.md).  Westin's explanation is inhibition of
-# CYP2C19 in pregnancy.  With the Patient
-# Profile's Pregnant field on, the elimination clearance CL1 is multiplied by
-# SERTRALINE_PREGNANCY_CL_FACTOR = 0.60 (1 / 1.68 = 0.595, rounded as the
-# registry gives it): the clearance FALLS, unlike every other drug the flag
-# changes.  The volumes, the distribution clearance and the absorption (ka,
-# lag and the dose-dependent F(D)) are unchanged.  Alhadab's parameters are
-# absolute and the plotted concentration is total plasma sertraline, which
-# is what Westin measured.  Late pregnancy (the third trimester) is the state
-# described.  Clinically the change matters mainly as a caution against
-# reducing the dose reflexively.  Monfort 2024's perinatal model (above) is
-# not mixed in.  (Claude Code, 2026-10-19, at the request of Steven L.
-# Shafer; see R/pregnancy.R and inst/extdata/pregnancyRegistry.csv.)
+# Not adjusted: the pregnancy registry records sertraline as `unquantified`
+# (Steven L. Shafer's decision, 2026-11-01), because the studies do not
+# agree on the direction of the change.  Westin
+# 2017 (PMID 28708853; retrospective Norwegian TDM, 37 pregnancies in 34
+# women, 56 samples in pregnancy against 52 from the same women before
+# pregnancy or more than 12 weeks after it, a log-linear mixed model in
+# gestational week) estimates dose-adjusted sertraline 68% above that
+# baseline at week 34 (95% CI +37% to +106%, p < 0.001; Table 2), with
+# N-desmethylsertraline +120% and the parent/metabolite ratio -20% (Table 3,
+# 24 pregnancies).  The prospective studies point the other way or nowhere.
+# Heinonen 2021 (PMID 33751155; 8 women of a randomised trial with a
+# 1-month-postpartum reference): third-trimester (weeks 26-36) alteration
+# ratio, pregnant over postpartum, median 0.69 (range 0.17-1.23; Table 3),
+# second trimester 0.88, delivery 0.85; its p = 0.345 tests the rise of the
+# group medians from the second trimester to postpartum (0.15 to 0.25), not
+# the third trimester, and the median dose rose from 50 to 75 mg over the
+# study.  Freeman 2008 (PMID 19011433; abstract only: 6 women with second-
+# and third-trimester 24-h profiles, 3 postpartum): no significant mean
+# change, the lowest AUC and Cmax in the third trimester in 5 of 6.  Monfort
+# 2024 (PMID 39030897; 38 women sampled from labour to 4-6 weeks postpartum)
+# tested the sampling moment on CL/F and did not retain it; it has no sample
+# before term.  The Schoretsanitis 2020 meta-analysis (PMID 32238008) is not
+# independent of Westin 2017 (Westin is an author and supplied the raw data
+# of the largest cohort): its 1.38 is a mean of individual ratios (18 women,
+# three cohorts, ratios 0.34-3.04), and its inverse-variance mean difference
+# is null (fixed effect -0.05 (ng/mL)/(mg/day), 95% CI -0.17 to 0.06;
+# random effects -0.01, CI -0.19 to 0.17).  Westin and Heinonen pooled on
+# the log of the third-trimester-to-non-pregnant dose-adjusted concentration
+# ratio (Westin 1.68, Heinonen 0.69; Heinonen's standard error from its
+# range) are heterogeneous (Q 11.1, p 0.001, I-squared 91%), random-effects
+# ratio 1.11 (95% CI 0.46 to 2.64).  The mechanism does not decide it: pregnancy inhibits CYP2C19 and
+# induces CYP3A4 and CYP2B6, all of which clear sertraline, and a CYP2C19
+# inhibition, which slows the N-demethylation, is hard to reconcile with the
+# metabolite rising more than the parent, as Westin found.  Until 2026-11-01
+# the flag multiplied CL1 by 1/1.68 = 0.60 on Westin alone.  Clinically:
+# monitor, and do not reduce the dose reflexively (Westin's own advice).
+# (Claude Code, 2026-11-01, at the request of Steven L. Shafer; see
+# R/pregnancy.R and inst/extdata/pregnancyRegistry.csv.)
 #
 # References
 # ----------
@@ -187,15 +185,12 @@
 #   https://doi.org/10.1007/s00228-021-03122-z (pregnancy)
 # Freeman MP et al.  J Clin Psychopharmacol 2008;28:646-653.
 #   https://doi.org/10.1097/JCP.0b013e31818d2048 (pregnancy)
+# Monfort A et al.  Br J Clin Pharmacol 2024;90:2849-2860.
+#   https://doi.org/10.1111/bcp.16177 (pregnancy)
 # -----------------------------------------------------------------------------
 
 SERTRALINE_KA   <- 0.4087317 / 60   # 1/min, first-order fit to ka(t) (reduction 2)
 SERTRALINE_TLAG <- 1.4324891 * 60   # min
-
-# Elimination clearance in pregnancy relative to Alhadab's value: Westin 2017,
-# sertraline 68% HIGHER in the third trimester, 1 / 1.68 = 0.60 (see the
-# header).  Less than 1: the clearance falls.
-SERTRALINE_PREGNANCY_CL_FACTOR <- 0.60
 
 #' Sertraline pharmacokinetics (oral)
 #'
@@ -209,13 +204,9 @@ SERTRALINE_PREGNANCY_CL_FACTOR <- 0.60
 #' @param adjustToFFM \code{TRUE} (the default) scales the volumes and
 #'   clearances to the patient's fat-free mass; \code{FALSE} uses the
 #'   published values for everyone.
-#' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the
-#'   elimination clearance by 0.60, a fall (Westin 2017; see the file's
-#'   header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-sertraline <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                       pregnant = FALSE)
+sertraline <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Size scaling (see the header): fixed published values for the reference man
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
@@ -223,9 +214,7 @@ sertraline <- function(weight, height, age, sex, adjustToFFM = TRUE,
   v1  <- 1200 * size$volume
   v2  <- 1350 * size$volume            # multiple-dose value (reduction 1)
   v3  <- 1                             # two compartments
-  # Pregnancy (see the header): elimination clearance only, which falls.
-  clPregnancy <- if (isTRUE(pregnant)) SERTRALINE_PREGNANCY_CL_FACTOR else 1
-  cl1 <- 59.7 / 60 * size$clearance * clPregnancy   # L/min
+  cl1 <- 59.7 / 60 * size$clearance   # L/min
   cl2 <- 161  / 60 * size$clearance
   cl3 <- 0
 
@@ -257,12 +246,6 @@ sertraline <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "a lag, single-dose bioavailability D/(15.5 + D) applied to each dose; ",
     "oral only. https://doi.org/10.1208/s12248-020-00455-y"
   )
-  if (isTRUE(pregnant)) {
-    reference <- paste0(reference, "; ", pregnancyReference(
-      paste0("clearance x ", SERTRALINE_PREGNANCY_CL_FACTOR, " (a fall)"),
-      paste0("Westin AA et al., PLoS One 2017;12:e0181082. ",
-             "https://doi.org/10.1371/journal.pone.0181082")))
-  }
 
   return(
     list(
