@@ -478,33 +478,11 @@ paperReviewServer <- function(input, output, session)
   })
 
   output$simParameters <- shiny::renderTable({
-    s <- simulation()
-    pk <- s$sim$pk$PK$default
-    lambda <- c(pk$lambda_1, pk$lambda_2, pk$lambda_3)
-    coef <- c(pk$p_coef_bolus_l1, pk$p_coef_bolus_l2, pk$p_coef_bolus_l3)[lambda > 0]
-    lambda <- lambda[lambda > 0]
-    # Each exponent's share of the fall after a bolus, A(i) / sum(A).
-    fraction <- 100 * coef / sum(coef)
-    # Only the compartments the model has: an absent one carries a
-    # placeholder volume with no clearance into it.
-    has <- c(TRUE, isTRUE(pk$cl2 > 0), isTRUE(pk$cl3 > 0))
-    # Each half-life in a unit that reads (17.3 hours, not 1040 minutes).
-    halfLife <- log(2) / lambda
-    hlUnit <- lapply(halfLife, function(h)
-      if (h < 120) list(f = 1, u = "min") else if (h < 2 * 1440) list(f = 60, u = "h")
-      else list(f = 1440, u = "day"))
-    t <- data.frame(
-      Quantity = c(c("V1", "V2", "V3")[has], "CL", c("Q2", "Q3")[has[2:3]],
-                   paste0("Half-life ", seq_along(lambda)),
-                   paste0("Fractional coefficient ", seq_along(lambda)), "ke0"),
-      Value = format(signif(c(c(pk$v1, pk$v2, pk$v3)[has], pk$cl1, c(pk$cl2, pk$cl3)[has[2:3]],
-                              halfLife / vapply(hlUnit, `[[`, 0, "f"), fraction,
-                              if (isTRUE(pk$ke0 > 0)) pk$ke0 else NA), 4), drop0trailing = TRUE, trim = TRUE),
-      Units = c(rep("L", sum(has)), "L/min", rep("L/min", sum(has[2:3])),
-                vapply(hlUnit, `[[`, "", "u"), rep("%", length(lambda)), "1/min"),
-      stringsAsFactors = FALSE)
-    t[t$Value != "NA", ]
-  }, caption = "The model for this patient")
+    # Every parameter the model implies for this patient, as Convert.xls
+    # lists them: the covariates act on the volumes and clearances, and the
+    # rest follows.
+    paperReviewPKTable(simulation()$sim$pk$PK$default, tableUnit())
+  }, caption = "Every parameter of the model, for this patient")
 }
 
 # A setting of the review app's configuration.

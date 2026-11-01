@@ -280,3 +280,31 @@ test_that("a short decrement curve read by eye is judged against the reading's p
   # Without a stated precision, 2% of the largest value read is far tighter.
   expect_false(identical(figure("Read by eye.")$severity, "ok"))
 })
+
+test_that("V1, the half-lives, k21 and k31 close the model (Convert.xls tab 5)", {
+  x <- duzitolExtraction()
+  x$parameters <- Filter(function(p) p$role != "CL", x$parameters)
+  x$derived_quantities <- Filter(function(d) d$quantity != "Vss", x$derived_quantities)
+  g <- "Duzitol, normal subjects"
+  rate <- function(role, text)
+    list(name_in_paper = role, group = g, role = role, value = as.numeric(text), value_text = text,
+         units = "1/min", uncertainty = list(type = "not_reported"), status = "estimated",
+         location = "Spreadsheet")
+  x$parameters <- c(x$parameters, list(rate("k21", "0.217689586"), rate("k31", "0.017097925")))
+  m <- paperReviewRun(x)$models[[g]]
+  expect_equal(m$identifiability$route, "V1, the half-lives, k21 and k31")
+  expect_equal(m$identifiability$closed$cl1, 0.68, tolerance = 1e-6)
+  expect_equal(sum(unlist(m$identifiability$closed[c("v1", "v2", "v3")])), 66, tolerance = 1e-6)
+})
+
+test_that("the review lists every parameter of each model, at the reference patient", {
+  review <- paperReviewRun(duzitolExtraction())
+  t <- review$models[["Duzitol, normal subjects"]]$pkTable
+  value <- function(p) as.numeric(t$Value[t$Parameter == p])
+  # Shafer's spreadsheet for the normal subjects.
+  expect_equal(value("k21"), 0.2177, tolerance = 1e-4)
+  expect_equal(value("k13"), 0.1046, tolerance = 1e-3)
+  expect_equal(value("A1 / sum(A)"), 75.1, tolerance = 1e-3)
+  expect_equal(value("Vdss"), 66)
+  expect_true(grepl("Every parameter of the model", paperReviewReportPage(review)))
+})

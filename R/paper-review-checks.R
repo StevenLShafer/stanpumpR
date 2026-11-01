@@ -353,6 +353,15 @@ paperReviewIdentifiability <- function(extraction)
       attempt <- list(name = "CL, V1, Vss and the three half-lives",
                       inputs = list(CL = CL, V1 = V1, Vss = Vss, t1 = hl[[1]], t2 = hl[[2]], t3 = hl[[3]]),
                       solve = function(x) threeCompartmentFromHalfLives(x$CL, x$V1, x$Vss, x$t1, x$t2, x$t3))
+    } else if (n >= 2 && haveHl && have(c("V1", "k21", if (n == 3) "k31"))) {
+      # Convert.xls tab 5: V1, the exponents and the return rate constants.
+      inputs <- c(list(V1 = param("V1"), k21 = param("k21")), if (n == 3) list(k31 = param("k31")),
+                  stats::setNames(hl, paste0("t", seq_len(n))))
+      attempt <- list(
+        name = if (n == 2) "V1, the half-lives and k21" else "V1, the half-lives, k21 and k31",
+        inputs = inputs,
+        solve = function(x) compartmentsFromExponentsAndRates(
+          x$V1, log(2) / unname(unlist(x[paste0("t", seq_len(n))])), x$k21, x$k31))
     } else if (perL && all(vapply(lambdas, function(x) !is.na(x$value), logical(1)))) {
       inputs <- c(stats::setNames(coefs, paste0("A", seq_len(n))),
                   stats::setNames(lambdas, paste0("l", seq_len(n))))
@@ -738,7 +747,7 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
     findings <- list(paperReviewFinding(section, "info",
       "The paper prints no derived quantities to check against the model"))
   }
-  list(table = table, findings = findings)
+  list(table = table, findings = findings, pkTable = paperReviewPKTable(pk))
 }
 
 #' Check a figure of decrement time against infusion duration
@@ -1535,6 +1544,7 @@ paperReviewRunOne <- function(extraction, paperLevel = TRUE)
                 if (paperLevel) paperReviewClaudeNotes(extraction))
   list(extraction = extraction, reference = reference, identifiability = ident,
        drug = drug, absorptions = absorptions, consistency = consistency$table,
+       pkTable = consistency$pkTable,
        figures = figures$figures, findings = findings)
 }
 

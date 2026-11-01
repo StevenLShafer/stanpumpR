@@ -238,6 +238,44 @@ k21 = λ1λ2 / k10 and k12 = λ1 + λ2 − k10 − k21, and Vss then over-determ
 the model rather than being needed, which is why two compartments close
 from CL, V1 and both half-lives (`twoCompartmentFromCentralVolume()`).
 
+### Every parameter of the model (Convert.xls)
+
+Shafer's Convert.xls (last updated 12/02) closes a one-, two- or
+three-compartment model from five sets of inputs, one tab each, and lists
+every other parameter. The review closes a model by the same five routes:
+
+| Tab | Inputs | Review route |
+|---|---|---|
+| 1 | volumes and clearances | printed |
+| 2 | V1 and the micro rate constants | printed |
+| 3 | V1, Vdss, CL and the half-lives | `threeCompartmentFromHalfLives()`, `twoCompartmentFromCentralVolume()` |
+| 4 | coefficients and exponents | `threeCompartmentFromTriexponential()`, `twoCompartmentFromBiexponential()` |
+| 5 | V1, the exponents, k21 and k31 | `compartmentsFromExponentsAndRates()` (`R/paper-review-parameters.R`) |
+
+It also closes a model from V1, the fractional coefficients A(i)/ΣA(i)
+(often printed as percents, which sum to 1 and so give n − 1 inputs) and
+the half-lives. The consistency table compares a printed percent coefficient
+with the model's own A(i)/ΣA(i). `test-paper-review-parameters.R` pins every
+tab's own example to the digits the spreadsheet computes.
+
+Once the model is complete, `paperReviewPKTable()` lists what each tab
+lists: V1..Vn and Vdss, the clearances, the micro rate constants, the
+exponents and half-lives, the coefficients of the unit disposition function
+(per litre), the fractional coefficients (%), and ke0, its half-life and the
+time to peak effect where there is an effect site. The report prints it for
+each model at the reference patient. The simulator prints it for the patient
+entered, in the selected time unit: the covariates act on the volumes and
+clearances (Shafer's preference, and how the papers apply them), and
+everything else follows from those.
+
+A decrement-time figure read by eye is judged against the reading's
+precision as well as by relative error. A curve read to ±3 min is off by
+about 3 min wherever it is read, so a short decrement time can carry a large
+relative error that says nothing about the model. The Duzitol editorial's
+30% curve, 2.5 to 12.5 min, came out −31% that way. The precision is Claude's
+`reading_precision`, else a ± in its digitisation note, else 2% of the
+largest value read.
+
 ### What the in-memory simulator does not do (yet)
 
 It is linear, with first-order absorption: no Michaelis-Menten elimination, zero-order or

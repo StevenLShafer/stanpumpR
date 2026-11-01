@@ -252,6 +252,9 @@ paperReviewSectionTags <- function(rv, sections, findings, plots)
     htmltools::tagList(htmltools::h3(s),
       if (s == "Internal consistency") paperReviewTable(rv$consistency),
       lapply(fs, paperReviewFindingTag),
+      if (s == "Identifiability" && !is.null(rv$pkTable)) htmltools::tagList(
+        htmltools::h4("Every parameter of the model, at the reference patient"),
+        paperReviewTable(rv$pkTable)),
       if (s == "Figures" && plots) lapply(rv$figures, function(f)
         paperReviewPlotImg(paperReviewFigurePlot(f, rv$drug$defaults$Concentration.Units))))
   })
