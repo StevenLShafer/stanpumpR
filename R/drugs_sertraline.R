@@ -145,7 +145,13 @@
 # the third trimester, and the median dose rose from 50 to 75 mg over the
 # study.  Freeman 2008 (PMID 19011433; abstract only: 6 women with second-
 # and third-trimester 24-h profiles, 3 postpartum): no significant mean
-# change, the lowest AUC and Cmax in the third trimester in 5 of 6.  Monfort
+# change, the lowest AUC and Cmax in the third trimester in 5 of 6.  Stika
+# 2022 (PMID 36094046, read in full; prospective, 47 women, 24-h troughs
+# across pregnancy and twice postpartum) found the C/D ratio 22% LOWER
+# near term than at 8+ weeks postpartum -- a clearance rise, like the
+# other prospective studies and against Westin -- with the poor and
+# intermediate CYP2C19 subgroup 51% lower (a subgroup, not a population
+# factor).  Monfort
 # 2024 (PMID 39030897; 38 women sampled from labour to 4-6 weeks postpartum)
 # tested the sampling moment on CL/F and did not retain it; it has no sample
 # before term.  The Schoretsanitis 2020 meta-analysis (PMID 32238008) is not
@@ -187,6 +193,8 @@
 #   https://doi.org/10.1097/JCP.0b013e31818d2048 (pregnancy)
 # Monfort A et al.  Br J Clin Pharmacol 2024;90:2849-2860.
 #   https://doi.org/10.1111/bcp.16177 (pregnancy)
+# Stika CS et al.  Clin Pharmacol Ther 2022;112:1280-1290.
+#   https://doi.org/10.1002/cpt.2746 (pregnancy)
 # -----------------------------------------------------------------------------
 
 SERTRALINE_KA   <- 0.4087317 / 60   # 1/min, first-order fit to ka(t) (reduction 2)

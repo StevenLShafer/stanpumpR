@@ -41,7 +41,7 @@ series; a PBPK prediction; a review.
   is recorded as `unquantified` and not applied (lorazepam, risperidone, haloperidol, aspirin,
   fentanyl, codeine, tramadol, rocuronium, cisatracurium, heparin). So is a change whose
   direction the sources dispute: sertraline, applied as CL x 0.60 from Westin 2017 until
-  2026-11-01, against which Heinonen 2021, Freeman 2008 and the inverse-variance meta-analysis of
+  2026-11-01, against which Heinonen 2021, Freeman 2008, Stika 2022 and the inverse-variance meta-analysis of
   Schoretsanitis 2020 point the other way or nowhere (`R/drugs_sertraline.R`).
 - **Filtration.** A drug cleared mostly unchanged by filtration whose model reads renal function
   takes the 50% rise in GFR on that renal term (cefazolin, gentamicin, vancomycin, sugammadex,
