@@ -59,10 +59,12 @@ sendSlide <- function(
     outputComments("Leaving sendMail()")
     return(TRUE)
   }, error = function(e) {
-    # The detail -- an SMTP diagnostic, a path -- goes to the server's log;
-    # the browser is told only that it failed (EMAIL_FAILURE_MESSAGE).
+    # The detail -- an SMTP diagnostic, a path -- goes to the server's log
+    # only; the browser is told that it failed (EMAIL_FAILURE_MESSAGE), and
+    # the session's debug log, which ?debug=1 shows in the browser, is told no
+    # more than that.
     base::message("stanpumpR Email Slide failed: ", conditionMessage(e))
-    outputComments("Email Slide failed:", conditionMessage(e))
+    outputComments("Email Slide failed; the detail is in the server log")
     EMAIL_FAILURE_MESSAGE
   })
 }

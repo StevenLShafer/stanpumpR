@@ -472,12 +472,14 @@ apiSimulate <- function(request) {
              " a response may hold; use a coarser output.interval or fewer output.times.")
   }
 
-  warnings <- c(
+  # as.character(): with nothing unknown every call returns NULL and c() of
+  # them is NULL, which jsonlite writes as {} where the documented shape is []
+  warnings <- as.character(c(
     apiUnknownFields(request, API_REQUEST_FIELDS, "the request"),
     apiUnknownFields(apiField(request, "patient"), API_PATIENT_FIELDS, "`patient`"),
     apiUnknownFields(output, API_OUTPUT_FIELDS, "`output`"),
     apiUnknownFields(opts, API_OPTIONS_FIELDS, "`options`")
-  )
+  ))
   late <- unique(DT$Drug[DT$Time >= maximum])
   if (length(late) > 0) {
     warnings <- c(warnings, paste0(

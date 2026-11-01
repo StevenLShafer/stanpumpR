@@ -38,9 +38,16 @@ test_that("Email Slide writes to a private directory that is removed on success 
   # SMTP refuses: the files still go, and the browser is told only that it failed
   local_mocked_bindings(server = function(...) function(msg, verbose = FALSE) stop("535 Authentication failed for /secret/path"),
                         .package = "emayili")
+  # The detail goes to the server's log (message()); neither the return value
+  # nor the session's debug log (outputComments(), which ?debug=1 shows in
+  # the browser) carries it
+  logged <- character(0)
+  local_mocked_bindings(outputComments = function(...) logged <<- c(logged, paste(...)))
   expect_message(r <- sendStub(), "Email Slide failed: 535 Authentication failed")
   expect_equal(r, EMAIL_FAILURE_MESSAGE)
   expect_no_match(r, "535")
+  expect_true(any(grepl("Email Slide failed; the detail is in the server log", logged, fixed = TRUE)))
+  expect_false(any(grepl("535|/secret/path", logged)))
   expect_length(made, 2)
   expect_false(dir.exists(made[2]))
 
@@ -83,6 +90,11 @@ test_that("unknown fields are reported in the warnings, not defaulted in silence
   expect_match(r$warnings, "Unknown field in the request ignored: `extra`.", fixed = TRUE, all = FALSE)
   clean <- apiSimulate(apiReq(output = list(interval = 10)))
   expect_false(any(grepl("Unknown field", clean$warnings)))
+  # With nothing to say, warnings is an empty character vector and serialises
+  # as the documented [] (c() of the NULLs apiUnknownFields() returns would be
+  # NULL, which jsonlite writes as {})
+  expect_identical(clean$warnings, character(0))
+  expect_match(apiFormatResult(clean, "json")$body, "\"warnings\":[]", fixed = TRUE)
   expect_null(apiUnknownFields(list(weight = 1, WEIGHT_UNIT = "kg"), API_PATIENT_FIELDS, "x"))
 })
 
