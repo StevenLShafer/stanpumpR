@@ -156,8 +156,11 @@ oralSaturationFraction <- function(doseMg, saturation)
     rising    = doseMg / (saturation$D50 + doseMg),
     # A negative exponent is infinite at a dose of 0 (opicapone's -0.225), and
     # 0 x Inf is NaN, which stopped the simulation of a scheduled dose of 0;
-    # nothing is absorbed either way, so the fraction is 1 there.
-    power     = ifelse(doseMg > 0, (doseMg / saturation$Dref)^saturation$exponent, 1),
+    # nothing is absorbed either way, so the fraction is 1 there.  A positive
+    # exponent (paroxetine's 0.363) keeps the formula, which is 0 at a dose
+    # of 0.
+    power     = ifelse(doseMg > 0 | saturation$exponent > 0,
+                       (doseMg / saturation$Dref)^saturation$exponent, 1),
     reduction = 1 - saturation$I50 *
       (pmin(pmax(doseMg - saturation$D0, 0), saturation$D50 - saturation$D0) /
          (saturation$D50 - saturation$D0))^saturation$exponent,

@@ -86,6 +86,7 @@ The response (JSON):
   "meta": {
     "apiVersion": "1",
     "stanpumpRVersion": "0.0.1.9002",
+    "build": "f0fe568de3e4074020e138bcef7a86225c8213bd",
     "generated": "2026-10-12T22:44:35Z",
     "timeUnit": "minutes",
     "duration": 10,
@@ -143,7 +144,7 @@ df = pd.read_csv(io.StringIO(r.text))   # columns: Drug, Time, Plasma, EffectSit
 |---|---|---|
 | `POST` | `/simulate` | A simulation (see [The request](#the-request) and [The response](#the-response)). Query parameters: `format` (`json`, `csv`, `xlsx`, `xml`) and `layout` (`long`, `wide`). |
 | `GET` | `/drugs` | The drugs the API can simulate. For each drug: its category, its concentration units and the dose units it accepts. `?format=csv` returns CSV. `?allowIllicitDrugs=true` adds the opt-in illicit-drug research models. |
-| `GET` | `/health` | `{"status": "ok", "apiVersion": "1", "stanpumpRVersion": "..."}` |
+| `GET` | `/health` | `{"status": "ok", "apiVersion": "1", "stanpumpRVersion": "...", "build": "<commit>"}` (`build` is `null` when the installation did not record its commit) |
 | `GET` | `/__docs__/` | Interactive (Swagger) documentation for the running server. |
 
 ### Choosing the response format
@@ -163,8 +164,13 @@ in the body.
 
 ## The request
 
-A request is a JSON object. Field names ignore case and any `_`, space or
-`.`, so `weightUnit`, `weight_unit` and `WeightUnit` are the same field.
+A request is a JSON object, sent as `application/json` (another declared
+media type is refused with 415). Field names ignore case and any `_`, space or
+`.`, so `weightUnit`, `weight_unit` and `WeightUnit` are the same field. A
+field given more than once, in any of those spellings, is refused (400), so
+the service can never pick one of two values. A field the service does not
+know is ignored and named in the response's `warnings`, so a misspelt
+covariate is not defaulted in silence.
 
 ```jsonc
 {
@@ -274,10 +280,16 @@ be an object of equal-length columns:
 | Item | Limit |
 |---|---|
 | Dose rows | 500 |
+| Repeats the scheduled doses expand to over `duration` | 8,000 (a `q4h` row over a year is 2,190) |
 | Events | 100 |
 | Duration | more than 0, up to 365 days |
-| Rows per drug in the time series | 20,000 |
-| Request body | 1 MB, when the server is started with `run_api()` |
+| Rows per drug in the time series | 20,000, on a requested grid and on the native one |
+| Rows in the whole time series, every drug and metabolite | 500,000 |
+| Request body | 1 MB, however the service is started |
+
+A request over a limit is refused before it is simulated where the limit can
+be known in advance (400); the native grid and the rows a metabolite adds are
+known only afterwards, and a result over the limit is then refused with 422.
 
 Inhaled anesthetics are not available through the API yet.
 
@@ -290,7 +302,7 @@ in kg, height in cm and age in years, whatever units the request used.
 
 | Part | Contents |
 |---|---|
-| `meta` | `apiVersion`, `stanpumpRVersion`, `generated` (UTC time stamp), `timeUnit` (`"minutes"`), `duration` (minutes), `grid` (`"requested"` or `"native"`) |
+| `meta` | `apiVersion`, `stanpumpRVersion`, `build` (the commit the service was built from, or `null`), `generated` (UTC time stamp), `timeUnit` (`"minutes"`), `duration` (minutes), `grid` (`"requested"` or `"native"`) |
 | `patient` | The covariates as simulated, after unit conversion and defaults |
 | `drugs` | One row per drug, described below |
 | `doses` | The full dose sequence simulated, described below |
@@ -387,7 +399,8 @@ format was requested.
 | Status | Meaning |
 |---|---|
 | 400 | The request is invalid. The message names the field and, for a table, the row. For example: ``"`doses` row 3: 'mg PO' is not a unit of propofol. Its units are: mg, mg/kg, ..."`` |
-| 422 | The request is valid, but a drug model could not simulate it. |
+| 415 | The body was declared as something other than `application/json`. |
+| 422 | The request is valid, but a drug model could not simulate it, or the result is larger than the service returns (see Limits). |
 | 500 | Unexpected server error. Details are written to the server log, not sent to the client. |
 
 ---

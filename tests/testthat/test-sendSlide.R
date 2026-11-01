@@ -158,18 +158,23 @@ test_that("the deck has the whole plot on the first slide and then one slide per
     timeUnit = "minutes", maximum = 60
   )
 
-  # generateEmail() writes into Slides/ under the working directory
+  # generateEmail() writes into the directory it is given (sendSlide() makes
+  # a private one per send and removes it)
   dir <- tempfile("slides-")
   dir.create(dir)
-  oldwd <- setwd(dir)
-  on.exit({ setwd(oldwd); unlink(dir, recursive = TRUE) }, add = TRUE)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
   local_mocked_bindings(outputComments = function(...) {})
 
   email <- generateEmail(
     values, "a@b.c", built$plot$plotObject, built$plot$allResults, built$plot$plotResults,
     height = built$plot$plotHeight, width = 800, slide = 3,
-    drugs = built$drugs
+    drugs = built$drugs, dir = dir
   )
+  # normalizePath(): on Windows tempfile() writes backslashes and dirname()
+  # forward slashes, so the strings differ for one directory
+  expect_equal(normalizePath(unique(dirname(c(email$pptxfileName, email$pngfileName, email$xlsxfileName))), winslash = "/"),
+               normalizePath(dir, winslash = "/"))
+  expect_false(dir.exists("Slides"))
   expect_true(file.exists(email$pptxfileName))
   expect_true(file.exists(email$pngfileName))
   expect_true(file.exists(email$xlsxfileName))

@@ -50,8 +50,21 @@ API_CONTENT_TYPES <- c(
 )
 API_LAYOUTS <- c("long", "wide")
 # The most rows one drug's series may have.  A request for a 1-minute grid
-# over a year would otherwise ask for half a million rows per drug.
+# over a year would otherwise ask for half a million rows per drug.  Applied
+# to a requested grid before simulating and to the native grid after it.
 API_MAX_POINTS <- 20000L
+# The most rows a whole response may hold, every drug and metabolite
+# together: the per-drug limit alone let 200 drugs ask for four million.
+API_MAX_ROWS <- 500000L
+# The fields each object of a request may carry; another is reported in the
+# response's warnings, since a misspelt covariate would otherwise be defaulted
+# in silence (apiUnknownFields()).
+API_REQUEST_FIELDS <- c("patient", "doses", "events", "duration", "timeUnit", "options", "output")
+API_PATIENT_FIELDS <- c("weight", "height", "age", "sex", "weightUnit", "heightUnit", "ageUnit",
+                        "creatinine", "gestationalAge", "pregnant", "adjustToFFM", "osmolality",
+                        "cyp2d6", "cyp2c19", "cyp2c9", "cyp2b6", "vkorc1", "cyp4f2")
+API_OUTPUT_FIELDS  <- c("times", "interval", "recovery", "format", "layout")
+API_OPTIONS_FIELDS <- c("allowIllicitDrugs")
 # Default grid steps (minutes): the smallest that keeps a series to
 # API_DEFAULT_POINTS rows or fewer: 0.1 minute up to 100 minutes, 1 minute up
 # to 1000 minutes, an hour for 6 weeks.
@@ -80,8 +93,26 @@ apiField <- function(x, name, default = NULL) {
   key <- function(s) gsub("[_ .]", "", tolower(s))
   hit <- which(key(names(x)) == key(name))
   if (length(hit) == 0) return(default)
-  value <- x[[hit[1]]]
+  # Two spellings of one field ("weight" and "Weight", "weightUnit" and
+  # "weight_unit"), or one key twice, could carry two values, and the first
+  # silently won: refused, so the client and the service cannot disagree.
+  if (length(hit) > 1) {
+    apiError("`", name, "` is given more than once (",
+             paste0("`", names(x)[hit], "`", collapse = ", "), "); give it once.")
+  }
+  value <- x[[hit]]
   if (is.null(value)) default else value
+}
+
+# The names in `x` that are none of `known` (matched as apiField() matches
+# them), as a sentence for the response's warnings, or NULL
+apiUnknownFields <- function(x, known, where) {
+  if (!is.list(x) || is.data.frame(x) || is.null(names(x))) return(NULL)
+  key <- function(s) gsub("[_ .]", "", tolower(s))
+  unknown <- names(x)[nzchar(names(x)) & !key(names(x)) %in% key(known)]
+  if (length(unknown) == 0) return(NULL)
+  paste0("Unknown field", if (length(unknown) > 1) "s" else "", " in ", where, " ignored: ",
+         paste0("`", unknown, "`", collapse = ", "), ".")
 }
 
 apiScalar <- function(x, what) {
@@ -172,7 +203,8 @@ apiTable <- function(x, what, columns, required = columns) {
 # A time (a number in `unit`, or "H:MM" elapsed) to minutes
 apiTimes <- function(x, unit, what) {
   minutes <- displayTimeToMinutes(as.character(x), REFERENCE_TIME_NONE, unit)
-  bad <- which(is.na(minutes) | minutes < 0)
+  # is.finite: a few hundred digits read as Inf, which is not NA
+  bad <- which(!is.finite(minutes) | minutes < 0)
   if (length(bad) > 0) {
     apiError(what, " row ", bad[1], ": time '", x[bad[1]], "' is not a non-negative number of ",
              unit, " (or elapsed H:MM).")
@@ -423,7 +455,31 @@ apiSimulate <- function(request) {
   recovery <- apiFlag(apiField(output, "recovery", FALSE), "output.recovery")
   times <- apiOutputTimes(output, unit, maximum)
 
-  warnings <- character(0)
+  # The work and the response are bounded before anything is simulated: the
+  # repeats a schedule expands to (the 500-row limit is on entered rows; see
+  # MAX_SCHEDULED_DOSES), and the rows a requested grid asks for over every
+  # drug.  The native grid and the metabolites are checked after.
+  repeats <- scheduledDoseCount(DT, maximum)
+  if (repeats > MAX_SCHEDULED_DOSES) {
+    apiError("The scheduled doses repeat ", format(repeats, big.mark = ","), " times over `duration`, ",
+             "more than the ", format(MAX_SCHEDULED_DOSES, big.mark = ","), " the service simulates; ",
+             "shorten `duration` or choose less frequent schedules.")
+  }
+  nDrugs <- length(unique(DT$Drug))
+  if (!is.null(times) && nDrugs * length(times) > API_MAX_ROWS) {
+    apiError("`output` asks for ", format(nDrugs * length(times), big.mark = ","), " rows (", nDrugs,
+             " drugs x ", length(times), " times), more than the ", format(API_MAX_ROWS, big.mark = ","),
+             " a response may hold; use a coarser output.interval or fewer output.times.")
+  }
+
+  # as.character(): with nothing unknown every call returns NULL and c() of
+  # them is NULL, which jsonlite writes as {} where the documented shape is []
+  warnings <- as.character(c(
+    apiUnknownFields(request, API_REQUEST_FIELDS, "the request"),
+    apiUnknownFields(apiField(request, "patient"), API_PATIENT_FIELDS, "`patient`"),
+    apiUnknownFields(output, API_OUTPUT_FIELDS, "`output`"),
+    apiUnknownFields(opts, API_OPTIONS_FIELDS, "`options`")
+  ))
   late <- unique(DT$Drug[DT$Time >= maximum])
   if (length(late) > 0) {
     warnings <- c(warnings, paste0(
@@ -450,6 +506,20 @@ apiSimulate <- function(request) {
       invokeRestart("muffleWarning")
     })
   sim <- Filter(function(d) !is.null(d$wide) && nrow(d$wide) > 0, sim)
+
+  # The response's size, now that the native time lines and the metabolites
+  # are known.  422: the request was valid, the result is too large to return.
+  rows <- vapply(sim, function(d) if (is.null(times)) nrow(d$wide) else length(times), integer(1))
+  if (is.null(times) && any(rows > API_MAX_POINTS)) {
+    apiError("The native time line of ", paste(names(rows)[rows > API_MAX_POINTS], collapse = ", "),
+             " has more than ", format(API_MAX_POINTS, big.mark = ","), " rows; give output.interval ",
+             "or output.times instead of \"native\".", status = 422L)
+  }
+  if (sum(rows) > API_MAX_ROWS) {
+    apiError("The response would have ", format(sum(rows), big.mark = ","), " rows over ", length(rows),
+             " drugs, more than the ", format(API_MAX_ROWS, big.mark = ","), " it may hold; use a coarser ",
+             "output.interval or simulate fewer drugs.", status = 422L)
+  }
 
   series <- lapply(names(sim), function(drug) {
     s <- apiSeries(sim[[drug]]$wide, times, recovery)
@@ -491,6 +561,10 @@ apiSimulate <- function(request) {
     meta = list(
       apiVersion       = API_VERSION,
       stanpumpRVersion = as.character(utils::packageVersion("stanpumpR")),
+      # The commit the service was built from (stanpumpRBuild()), so an
+      # estimate can be traced to the exact model code; null when it is not
+      # recorded (a source install).
+      build            = stanpumpRBuild()$commit,
       generated        = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
       timeUnit         = "minutes",
       duration         = maximum,
@@ -632,8 +706,12 @@ apiFormatResult <- function(result, format = "json", layout = "long") {
   format <- apiChoice(tolower(format), "format", API_FORMATS)
   layout <- apiChoice(tolower(layout), "layout", API_LAYOUTS)
   series <- if (layout == "wide") apiWideSeries(result) else result$timeseries
+  # auto_unbox would write a single warning as a string; the spec promises an
+  # array, which I() keeps for one warning as for none
+  json <- result
+  json$warnings <- I(result$warnings)
   body <- switch(format,
-    json = as.character(jsonlite::toJSON(result, dataframe = "rows", auto_unbox = TRUE,
+    json = as.character(jsonlite::toJSON(json, dataframe = "rows", auto_unbox = TRUE,
                                          na = "null", null = "null", digits = I(10),
                                          pretty = FALSE)),
     csv  = apiCsv(series),

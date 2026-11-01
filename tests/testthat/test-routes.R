@@ -152,6 +152,9 @@ test_that("the rising and power forms give the fractions they declare", {
   power <- list(form = "power", exponent = 0.363, Dref = 25)
   expect_equal(oralSaturationFraction(c(12.5, 25, 50), power),
                c(0.5^0.363, 1, 2^0.363))
+  # A dose of 0 keeps the formula under a positive exponent (0); only a
+  # negative one, infinite there, is given 1 (test-ui-robustness.R)
+  expect_equal(oralSaturationFraction(c(0, 25), power), c(0, 1))
   # The saturable form is the default, with or without the field
   expect_equal(oralSaturationFraction(300, list(form = "saturable", Imax = 0.906, ID50 = 571)),
                oralSaturationFraction(300, list(Imax = 0.906, ID50 = 571)))
