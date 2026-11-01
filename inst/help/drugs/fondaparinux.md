@@ -12,4 +12,4 @@ Clearance rises with body weight (exponent 0.534) and creatinine clearance (expo
 
 ### The patient this represents
 
-The fit is in patients **after major orthopaedic surgery** on the 2.5 mg prophylactic dose; clearance falls with age and renal impairment (about 15% lower in moderate and 43% in severe renal impairment). The treatment dose, or a non-surgical population, is outside the data. The concentration is plotted as the model's output, with no therapeutic band and no time-until-threshold.
+The fit is in patients **after major orthopaedic surgery** on the 2.5 mg prophylactic dose; clearance falls with age and separately with renal impairment (about 25% lower with a creatinine clearance of 30–60 mL/min, 43% lower below 30 mL/min) and with low body weight (about 15% lower under 50 kg). The treatment dose, or a non-surgical population, is outside the data. The concentration is plotted as the model's output, with no therapeutic band and no time-until-threshold.

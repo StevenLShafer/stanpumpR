@@ -133,9 +133,15 @@
 # against the same woman's own baseline outside pregnancy: sertraline was 68%
 # higher in the middle of the third trimester (95% CI +37% to +106%,
 # p < 0.001), and N-desmethylsertraline 120% higher.  The Schoretsanitis 2020
-# meta-analysis (18 patients) gives a combined ratio of 1.38, and Heinonen
-# 2021 the same direction; Freeman 2008 (six to nine women) found large
-# differences between women and no significant mean change.  The mechanism
+# meta-analysis (18 patients) gives a combined ratio of 1.38.  Heinonen 2021
+# (PMID 33751155) instead found dose-adjusted sertraline LOWER during
+# pregnancy than at its own 1-month-postpartum reference -- third-trimester
+# median concentration/dose 0.19 against 0.25 postpartum, a nonsignificant 24%
+# fall (p = 0.345; its alteration-ratio medians, pregnant over postpartum, are
+# all below 1: 0.88, 0.69, 0.85), the opposite direction from Westin's rise,
+# which Heinonen's own authors read as increased metabolism in pregnancy.
+# Freeman 2008 (six to nine women) found large differences between women and
+# no significant mean change.  The mechanism
 # is probably inhibition of CYP2C19 in pregnancy.  With the Patient
 # Profile's Pregnant field on, the elimination clearance CL1 is multiplied by
 # SERTRALINE_PREGNANCY_CL_FACTOR = 0.60 (1 / 1.68 = 0.595, rounded as the

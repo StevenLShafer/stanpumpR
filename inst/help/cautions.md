@@ -61,4 +61,4 @@ The scenarios use ordinary doses chosen to make a pharmacokinetic point visible.
 
 ## Privacy
 
-stanpumpR does not collect protected health information. An age of 90 or above is treated as protected health information and is entered as 90. The emailed slide carries only what you put in it; the comment box asks you to confirm that your comment contains none.
+Running a simulation does not require a patient's name or record identifier: the inputs are covariates, doses and events, not identifiers. An age of 90 or above is treated as protected health information and is entered as 90. That is a limit on what the simulation itself needs, not a guarantee about every path data can take: a bookmark URL encodes the full patient and dose-table state, and the app's access logs, the Email Slide feature (see its own Privacy note) and the Simulation API can all carry whatever covariates, doses, comments or identifiers a user puts into them. Keeping any of that out of a URL, an email, a log or an API request is the responsibility of whoever enters it and whoever operates that deployment, not a property the software enforces.

@@ -26,7 +26,7 @@ Yang and colleagues (*Clin Pharmacol Drug Dev* 2022;11:1181) fitted valsartan in
 
 ### Effect site and blood pressure
 
-The source *did* fit a blood-pressure model for valsartan — an effect compartment with a maximum inhibition of 0.164 — together with an interaction term for the combination with amlodipine. [This library still does not plot a blood pressure](help:models/antihypertensives), for reasons that are about the class rather than about this paper. The relation is recorded in the antihypertensive registry as an endpoint record, where it can be evaluated against a concentration you supply and returns a *change* rather than an absolute pressure. No band is drawn here: there is no established therapeutic plasma range for valsartan.
+The source *did* fit a blood-pressure model for valsartan — an effect compartment with a maximum inhibition of 0.164 (the paper's own Table 2 prints an RSE of 102% on that estimate) — together with an interaction term for the combination with amlodipine. [This library still does not plot a blood pressure](help:models/antihypertensives), for reasons that are about the class rather than about this paper. The relation is recorded in the antihypertensive registry as an endpoint record, but it is **not evaluable**: only the Imax was transcribed, and the equilibration rate constant, the baselines and the interaction coefficients — all printed in the paper — were not, so the relation cannot be run against a concentration you supply. No band is drawn here: there is no established therapeutic plasma range for valsartan.
 
 ### Where to be careful
 

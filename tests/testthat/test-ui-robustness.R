@@ -128,6 +128,52 @@ test_that("the Drug Library refuses a colour ggplot cannot read and units the do
   expect_true(isValidColor("steelblue"))
   expect_false(isValidColor(""))
   expect_false(isValidColor(NA_character_))
+  # a non-numeric Lower/Upper/Typical/MEAC entry is refused, not silently
+  # erased to NA (production audit, 2026-11-01)
+  edited <- dd
+  edited$Lower[i] <- "bogus"
+  problems <- drugLibraryProblems(edited, dd)
+  expect_length(problems, 1)
+  expect_match(problems, "propofol Lower: \"bogus\"")
+  # a negative number is refused too
+  edited <- dd
+  edited$MEAC[i] <- -1
+  expect_match(drugLibraryProblems(edited, dd), "propofol MEAC: \"-1\"", all = FALSE)
+  # clearing a threshold to blank is a legitimate "no band" state, not refused
+  edited <- dd
+  edited$Upper[i] <- NA
+  expect_length(drugLibraryProblems(edited, dd), 0)
+  # a valid numeric edit passes
+  edited <- dd
+  edited$Typical[i] <- 3.1
+  expect_length(drugLibraryProblems(edited, dd), 0)
+})
+
+test_that("a Drug Library threshold typed as text reaches the check through hot_to_r()", {
+  # hot_to_r() converts each column to the class the grid was given, so a
+  # numeric threshold column would hand back NA for "bogus", the same as a
+  # cleared cell; drugLibraryGridData() gives the grid those columns as text.
+  dd <- getDrugDefaultsGlobal()
+  shown <- drugLibraryGridData(dd)
+  hot <- rhandsontable::rhandsontable(shown)
+  # what the browser sends back: each row an array, null for a blank cell
+  rows <- lapply(seq_len(nrow(shown)), function(r) {
+    lapply(unname(as.list(shown[r, ])), function(v) if (is.na(v)) NULL else v)
+  })
+  browser <- function(rows) list(data = rows, changes = list(event = "afterChange"), params = hot$x)
+  i <- which(shown$Drug == "propofol")
+  lower <- match("Lower", names(shown))
+  untouched <- rhandsontable::hot_to_r(browser(rows))
+  expect_length(drugLibraryProblems(untouched, dd), 0)
+  expect_equal(as.numeric(untouched$Lower), dd$Lower)
+  expect_equal(as.numeric(untouched$MEAC), dd$MEAC)
+  rows[[i]][[lower]] <- "bogus"
+  edited <- rhandsontable::hot_to_r(browser(rows))
+  expect_identical(edited$Lower[i], "bogus")
+  expect_match(drugLibraryProblems(edited, dd), "propofol Lower: \"bogus\"")
+  # a cleared cell is still a legitimate "no band", not an error
+  rows[[i]][lower] <- list(NULL)
+  expect_length(drugLibraryProblems(rhandsontable::hot_to_r(browser(rows)), dd), 0)
 })
 
 test_that("the James lean body mass is held at its peak past the peak", {

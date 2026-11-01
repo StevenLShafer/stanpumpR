@@ -295,8 +295,13 @@ paywalled. The first list matters most, since each would check a factor the libr
 - **Palahniuk RJ, Shnider SM, Eger EI.** *Anesthesiology* 1974;41:82-83 (PMID 4857789): MAC 25-40%
   lower in pregnant ewes near term (isoflurane 1.01 vs 1.58%); recorded on the gas pages, not applied.
 - **Dailey PA et al.** *Anesthesiology* 1984;60:569-574 (PMID 6145374): vecuronium clearance 6.4
-  mL/kg/min at term caesarean, against 5.7-6.2 from this library's model for a nonpregnant woman:
-  vecuronium moved from `unquantified` to `unchanged`.
+  mL/kg/min at term caesarean (n = 5 of 11 dosed), against 5.7-6.2 from this library's model for a
+  nonpregnant woman: vecuronium moved from `unquantified` to `unchanged`. The authors' own
+  comparison is with a historical nonpregnant group from their earlier study (Cronnelly 1983): CL
+  5.2 vs 6.4 mL/kg/min, half-life 71 vs 36 min, which they read as clearance being GREATER at
+  caesarean (blood loss, loss of the fetus/placenta, progesterone induction). `unchanged` here
+  rests on the comparison with this library's own model, not on the authors' own conclusion, which
+  this entry now records alongside it.
 - **Luxford AM, Kellaway GS.** *Eur J Clin Pharmacol* 1983;25:117-121 (PMID 6617713): digoxin renal
   clearance 1.21 times and creatinine clearance 1.39 times in the third trimester, the two rising
   together (no change in tubular handling); confirms digoxin's GFR-term adjustment.
@@ -318,9 +323,10 @@ paywalled. The first list matters most, since each would check a factor the libr
   Tham's CL/F is not size-scaled, so the absolute ratio is nearer 1.35; 1.25 is a measured lower bound.
 - **Papini O et al.** *J Pharm Biomed Anal* 2005;40:397-403 (PMID 16143486): lorazepam CL/F 2.6
   mL/min/kg, V/F 178.8 L at term, no control group: stays `unquantified`, now from the full text.
-- **Charles B et al.** *Ther Drug Monit* 2006;28:67-72 (PMID 16418696): metformin CL/F 28 L/h/70 kg in
-  late pregnancy, judged unchanged against historical nonpregnant data; kept as the dissent, not
-  followed over Liao's direct comparison. Metformin stays x1.27.
+- **Charles B et al.** *Ther Drug Monit* 2006;28:67-72 (PMID 16418696): metformin systemic CL 28
+  L/h/70 kg in late pregnancy (F fixed at 0.5, so apparent oral CL/F is about 56 L/h/70 kg, not 28),
+  judged unchanged against historical nonpregnant data; kept as the dissent, not followed over
+  Liao's direct comparison. Metformin stays x1.27.
 - **Bartels P et al.** *BJOG* 2007;114:230-233 (PMID 17166219): nicardipine maternal levels in
   pre-eclampsia too sparse and non-steady-state to yield a clearance; stays `unknown`.
  - **Popović J, Grujić Z, Sabo A.** *J Clin Pharm Ther* 2007;32:595-602 (PMID 18021337): the primary

@@ -2,7 +2,7 @@
 
 The Simulation API lets another program run a stanpumpR simulation without using this app. It is a web service: a program sends it a dose table, the patient's covariates and how long to simulate, and gets back the predicted plasma and effect-site concentrations of every drug, as JSON, CSV, Excel or XML. The numbers are the ones this app plots, from the same models.
 
-It is meant for programs written by other people: an electronic health record, a research pipeline, a teaching tool, a spreadsheet. A request contains no patient identifier, only weight, height, age, sex and any optional laboratory or pharmacogenetic covariates, and the server keeps nothing between requests.
+It is meant for programs written by other people: an electronic health record, a research pipeline, a teaching tool, a spreadsheet. A request does not need a patient identifier: the documented fields are weight, height, age, sex and any optional laboratory or pharmacogenetic covariates, and the server keeps nothing between requests. That is not a guarantee that a request contains no identifier — the API does not reject an extra, undocumented field a caller chooses to send (it is reported back as an unknown-field warning, not refused) — so an integrator who wires the API into a system that passes along a record number is responsible for not doing so, and for securing its own transport and logs.
 
 ## The documentation
 

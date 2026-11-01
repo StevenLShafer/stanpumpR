@@ -424,13 +424,16 @@ simulationPlot <- function(
       newplotTable$Wrap <- PLOT_NAME_INTERACTION
       plotTable <- rbind(plotTable, newplotTable)
 
-      # Add in propofol data
-      if (min(x$pNRprop) < 1)
+      # Add in propofol data.  Exact name, not x$pNRprop: that reads as a
+      # partial match on $, which silently resolves to pNRpropofol today but
+      # would resolve ambiguously (or warn) if modelInteraction() ever grew a
+      # second field with that prefix.
+      if (min(x$pNRpropofol) < 1)
       {
         resultsInteractionPropofol <- data.frame(
           Drug = "propofol",
           Time = Time,
-          Y = x$pNRprop,
+          Y = x$pNRpropofol,
           Site = "Effect Site",
           Wrap = PLOT_NAME_INTERACTION,
           Label = ""

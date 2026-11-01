@@ -260,10 +260,25 @@ app_server <- function(input, output, session) {
   # that unit.
   sliderUnit <- isolate(timeUnit())
   modeChoicesUnit <- isolate(timeUnit())
+  # While a slider is dragged, the browser reports a new input$maximum (or
+  # input$minimum) every ~250ms, and each one used to invalidate plotInfo()
+  # and the whole simulate-and-plot chain below it.  On a heavy dose table
+  # (many scheduled drugs near MAX_SCHEDULED_DOSES) a drag through several
+  # still-simulatable lengths could queue enough full resimulations, on this
+  # single-threaded R process, to disconnect the session -- reproduced
+  # intermittently dragging Max time down on a guarded q4h plot (production
+  # audit, 2026-11-01).  plotInfo() reads these debounced values, so only the
+  # value a slider settles on triggers real work.
+  maximumDebounced <- debounce(reactive(input$maximum), 400)
+  minimumDebounced <- debounce(reactive(input$minimum), 400)
+
   # TRUE from when syncTimeSliders() sends the sliders new values until the
-  # browser reports them
+  # browser reports them and the debounced values above have caught up: were
+  # it cleared on the raw echo, plotInfo() would simulate a scenario or
+  # bookmark once with the previous Max time before the debounce delivered
+  # the new one.
   sliderPending <- reactiveVal(FALSE)
-  observeEvent(list(input$maximum, input$minimum), ignoreInit = TRUE, {
+  observeEvent(list(maximumDebounced(), minimumDebounced()), ignoreInit = TRUE, {
     sliderPending(FALSE)
   })
 
@@ -1205,7 +1220,7 @@ app_server <- function(input, output, session) {
       # wait for the browser and the conversion to catch up.
       req(identical(doseTableFormat(), selectorFormat()))
 
-      requestedMaximum <- suppressWarnings(as.numeric(input$maximum))
+      requestedMaximum <- suppressWarnings(as.numeric(maximumDebounced()))
       # Not checked against a list of lengths any more, the slider being
       # continuous, but still bounded: from the shortest step to the longest
       # length any unit offers
@@ -1221,7 +1236,7 @@ app_server <- function(input, output, session) {
       # 0; only the window drawn, and the resolution inside it
       # (simulationTimeGrid()), move.  A Min time at or past Max time is a
       # moment before the observers above pull them apart.
-      plotMinimum <- suppressWarnings(as.numeric(input$minimum))
+      plotMinimum <- suppressWarnings(as.numeric(minimumDebounced()))
       if (!is_valid_number(plotMinimum, 0)) plotMinimum <- 0
       req(plotMinimum < requestedMaximum)
       # The server has just set the sliders (a change of unit, a scenario, a
@@ -2776,11 +2791,7 @@ app_server <- function(input, output, session) {
   output$editDrugsHTML <- rhandsontable::renderRHandsontable({
     profileCode({
       editDrugsTrigger$depend()
-      x <- drugDefaults()
-      x$Units <- drugUnitsSimplify(x$Units)
-      # endCe is managed via the Drug Thresholds modal.  Category only groups
-      # the startup menu, which has closed by now.
-      x <- x[, !names(x) %in% c("endCe", "Category")]
+      x <- drugLibraryGridData(drugDefaults())
       drugsHOT <- rhandsontable::rhandsontable(
         x,
         overflow = 'visible',

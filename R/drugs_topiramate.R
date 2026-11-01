@@ -27,11 +27,14 @@
 # ==========
 # Absolute oral bioavailability is complete: 109 +/- 11% against intravenous
 # (Clark 2013), about 100% (Ahmed 2015).  bioavailability_PO = 1.  The handoff's
-# F of 80% is contradicted by both.  No source estimated an absorption rate;
-# the median time to peak after an oral dose is 1 h (Ahmed 2015, 1-2 h in the
-# label).  ka 2.0 /h puts the plasma peak at 1.2 h in the reference patient.
-# That value is a LITERATURE-ANCHORED calibration, not an estimate, and is
-# recorded so in the registry's parameter audit.
+# F of 80% is contradicted by both.  Ahmed 2015 does estimate an absorption
+# rate (ka 2.38 /h, RSE 17%), but under its own two-compartment disposition
+# (Vc 59.3 L), not this three-compartment one, so it is not carried over
+# unchanged.  The median time to peak after an oral dose is 1 h (Ahmed 2015,
+# 1-2 h in the label); ka 2.0 /h (close to Ahmed's 2.38 /h) puts the plasma
+# peak at 1.2 h in the reference patient under THIS disposition.  That value
+# is a LITERATURE-ANCHORED calibration, not an estimate transplanted from
+# Ahmed's model, and is recorded so in the registry's parameter audit.
 #
 # CHECKS (70 kg)
 # ==============

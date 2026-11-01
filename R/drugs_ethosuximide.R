@@ -24,12 +24,18 @@
 # 1. Size.  The linear weight term cannot be extrapolated (a 20 kg child would
 #    have a negative volume), so it is replaced by the library's fat-free-mass
 #    scaling of every volume and clearance; with the switch off, the
-#    published 67 kg values are used for everyone (legacyVolume = 1).  The
-#    paediatric model that matters for absence epilepsy (Mizuno 2023, the CAE
-#    trial, 211 children) was not retrievable; children are extrapolated.
-# 2. Capsules.  The US capsule has no published absorption rate; it is given
-#    the syrup's ka.  Capsule and syrup are both labelled as immediate
-#    release; the peak of a capsule may be later than plotted.
+#    published 67 kg values are used for everyone (legacyVolume = 1).  There
+#    is a published paediatric model for absence epilepsy (Mizuno 2023, the
+#    CAE trial, 211 children, one compartment, CL/F 0.82 L/h/70 kg^0.75, V/F
+#    72 L/70 kg); it is not used here (a drug addition of its own), and
+#    children are extrapolated from the adult model above.
+# 2. Capsules.  Diezi's own ka is for the syrup only; the US capsule is given
+#    the syrup's ka here.  Mizuno 2023 fixes a capsule ka of 1.22 /h (syrup
+#    2.52 /h) in its own, separate one-compartment paediatric model (citing
+#    Buchanan 1969, not confirmed independently here), about half the syrup
+#    rate; that ratio has not been carried into this adult model.  Capsule and
+#    syrup are both labelled as immediate release; the peak of a capsule may
+#    be later than plotted.
 #
 # CHECKS
 # ======
@@ -40,10 +46,14 @@
 # Children's half-life is about 30 h (Buchanan 1976): the fat-free-mass
 # scaling gives about 37 h at 20 kg.
 #
-# PHARMACODYNAMICS NOT PLOTTED.  Mizuno 2023 (CAE trial) related AUC to
-# seizure freedom (AUC 1027 and 1489 mcg.h/mL for 50% and 75% probability),
-# but the full logistic equation is not retrievable; no seizure probability is
-# drawn.
+# PHARMACODYNAMICS NOT PLOTTED.  Mizuno 2023 (CAE trial) related AUC over the
+# 12-hour dosing interval to seizure freedom (AUC12h 1027 and 1489 mcg.h/mL
+# for 50% and 75% probability).  The logistic equation's own coefficients are
+# not printed, but the two published quantiles fix a Hill-form curve
+# (P = AUC^n / (AUC^n + 1027^n), n = ln3/ln(1489/1027) = 2.96, which
+# reproduces the paper's printed 95%-probability AUC of 2776 mcg.h/mL to
+# within 3 mcg.h/mL); that curve has not been implemented, so no seizure
+# probability is drawn.
 #
 # BAND: 40-100 mcg/mL (ILAE, Patsalos 2008), typical 70.
 #

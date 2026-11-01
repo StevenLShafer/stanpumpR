@@ -189,9 +189,10 @@ in the registry. Findings that bear on the assumptions below:
   (assumption 3): fu 9.6%→15.6%, total CL +30% but **free intrinsic CL −18%**
   (Cl_i 348→286), so free phenytoin rises. Single-dose IV, non-saturating.
 - **Jiao 2004** (PMID 15153086) — Table 5: VPA reduces CBZ-epoxide CL ×0.693
-  (0.615–0.771). Table 4: VPA (>18 mg/kg) on parent CBZ ×1.44, an **increase**
-  (contradicts Graves's null); PHT ×1.26, PB ×1.23 (differ from Graves's US
-  values). Epoxide not plotted, so still `recorded`.
+  (0.615–0.771). Table 4: on parent CBZ, PHT ×1.44 (close to Graves's applied
+  1.42, not a population difference), PB ×1.26 (differs from Graves's applied
+  1.17), and VPA (>18 mg/kg) ×1.23, an **increase** (contradicts Graves's
+  null). Epoxide not plotted, so still `recorded`.
 
 **Samara 1998** (PMID 9701378, tiagabine) was also read in full on 2026-10-24:
 central CL/F 21.4 L/h induced vs 12.8 noninduced (+67%, CV 28%), and inducers

@@ -4,12 +4,37 @@
 # Provenance
 # ----------
 # Drafted by Claude Code, 2026-10-09, at the request of Steven L. Shafer, from
-# the antipsychotic implementation brief.  Only the abstracts of Kim 2008 and
-# Kim 2012 could be read.  Checked there: one compartment each, ka 1.06 /h
-# fixed, plasma, 80 patients on 10 to 30 mg/day, intermediate metabolisers'
-# CL/F about 60% of normal, and Kim 2012's EC50 of 8.63 ng/mL.  NOT checked:
-# the genotype-class clearances, the metabolite's CLm/fm and Vm/fm, the
-# formation convention, and Kim 2012's ke0 of 0.725 /h and Emax of 100%.
+# the antipsychotic implementation brief, with only the abstract of Kim 2008
+# available.  Checked there: one compartment, ka 1.06 /h fixed, plasma, 80
+# patients on 10 to 30 mg/day, intermediate metabolisers' CL/F about 60% of
+# normal.  NOT checked: the genotype-class clearances, the metabolite's
+# CLm/fm and Vm/fm, and the formation convention.
+#
+# Kim 2012's full text was read (2026-10-12, PMID 22186667 digest) and
+# confirms ke0 0.725 /h, EC50 8.63 ng/mL and Emax 100%, all **matching** this
+# file.  The same read surfaced an OPEN, UNRESOLVED issue that needs
+# pharmacometric adjudication before any number here changes: Kim 2012 fitted
+# that ke0 jointly with its OWN two-compartment PK (CL/F 5.8 L/h, V1/F 130 L,
+# Q/F 37.1 L/h, V2/F 274 L, ka 0.293 /h), not the one-compartment Kim 2008 set
+# this file actually runs it on (CL/F 3.15 L/h, V/F 192 L, ka 1.06 /h fixed).
+# inst/help/models/effect-site.md's own warning -- that transplanting a ke0
+# onto a different disposition model changes its time course -- applies here:
+# a bolus-equivalent calculation gives a Ce tPeak of about 2.19 h in Kim
+# 2012's own two-compartment model against about 5.3 h for this file's pair
+# of ke0 and one-compartment PK (matching that 2.19 h would need an ke0 of
+# about 2.26 /h instead of 0.725 /h).  That bolus-equivalent number is not
+# itself a validation of the oral time course or a clinical effect size, and
+# is not a basis for changing ke0 on its own; the comparison that would
+# settle it is the full oral Cp/Ce and occupancy time course against Kim
+# 2012's own sampling schedule, which has not been done.  Until adjudicated,
+# treat the early-time (and post-dose-change) effect-site curve as lagging
+# more than Kim 2012's own model implies.  With once-daily oral dosing, Ce
+# and Cp both fluctuate across each dosing interval at periodic steady
+# state and are not equal at any one moment; only their interval averages
+# are equal, regardless of ke0 -- so the ke0-transfer issue mainly affects
+# the minutes around a dose or dose change, not the interval-averaged
+# exposure (which can still differ between the two PK structures for other
+# reasons, since their apparent clearances differ).
 #
 # V/F: the brief gives 193 L from Table 3; the abstract says 192 L.  The
 # abstract is the text that could be read, so 192 L is used.

@@ -285,11 +285,13 @@ remifentanilMinto <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
 #' Hamberg's warfarin genotype model (Hamberg 2007), beside the library's Xue
 #'
-#' Hamberg A-K, Wadelius M, Lindh JD, Dahl M-L, Padrini R, Deloukas P, Rane A,
-#' Jonsson EN.  A pharmacometric model describing the relationship between
-#' warfarin dose and INR response with respect to variations in CYP2C9, VKORC1,
-#' and age.  Clin Pharmacol Ther 2007;81:529-538.  150 patients (Tables 2-4,
-#' Figure 2, Appendix equations 8-10), read from the full text on 2026-10-17.
+#' Hamberg A-K, Dahl M-L, Barban M, Scordo MG, Wadelius M, Pengo V, Padrini R,
+#' Jonsson EN.  A PK-PD model for predicting the impact of age, CYP2C9, and
+#' VKORC1 genotype on individualization of warfarin therapy.  Clin Pharmacol
+#' Ther 2007;81:529-538.  150 patients pooled for the PK fit (Study I n = 57
+#' plus Study II n = 93); the PD fit uses Study I's 57 patients only, the only
+#' ones with VKORC1 genotype and induction-phase sampling (Tables 2-4, Figure
+#' 2, Appendix equations 8-10), read from the full text on 2026-10-17.
 #'
 #' A companion of warfarin that draws a second INR line beside the library's
 #' Xue 2017 model (R/drugs_warfarin.R, R/inr.R).  S- and R-warfarin are fitted

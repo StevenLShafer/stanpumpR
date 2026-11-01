@@ -26,15 +26,17 @@ P(no response) = Prop^6.9 / (Prop^6.9 + (6.68 × intensity)^6.9)
 
 where U is the remifentanil-equivalent opioid effect-site concentration in ng/mL and Prop is the propofol effect-site concentration in mcg/mL. The panel plots the probability of **response**, 1 minus this, so that a low line is a well-anesthetised patient.
 
+Bouillon's volunteers held each target for 15 minutes before sampling, to let plasma and effect site equilibrate, and the surface was fitted to those steady, equilibrated concentrations; `ke0` was not estimated from this study. stanpumpR applies the surface continuously to the modelled, time-varying effect-site concentration, including the rising and falling transients right after a bolus or a rate change. That is an extrapolation beyond the fitted (quasi-steady-state) setting: close to steady state the two should agree, since Cp and Ce converge, but a value drawn during a fast transient has not been validated against the paper's own conditions.
+
 ## Other opioids
 
 The surface was fitted with remifentanil. Other opioids are converted to remifentanil equivalents through their MEAC: each opioid's effect-site concentration is divided by its own MEAC and multiplied by remifentanil's (1 ng/mL), and the results are summed. In terms of the [MEAC panel](help:models/meac), U is its *total opioid* line divided by 100: 150% MEAC of fentanyl is U = 1.5 ng/mL. This assumes that equal multiples of MEAC are equi-effective in reducing stimulus intensity, which is the same additivity assumption as the MEAC panel. The paper studied remifentanil only, so the conversion of other opioids is stanpumpR's extension, not part of the published model.
 
-## The three curves
+## The curves plotted
 
-- **With both drugs**: the probability of response given the propofol and opioid actually present.
-- **Propofol alone**: the probability if the opioid were absent, for comparison. The gap between the two curves is the opioid's contribution.
-- **Opioid alone**: always 1. The model requires some propofol; an opioid alone does not abolish the response to laryngoscopy in it.
+- **With both drugs**: the probability of response given the propofol and opioid actually present. Always drawn.
+- **Propofol alone**: the probability if the opioid were absent, for comparison, drawn whenever it drops below 1. The gap between the two curves is the opioid's contribution.
+- **Opioid alone**: the model gives this a constant 1 — an opioid alone never abolishes the response to laryngoscopy in it — so the panel never has anything to draw for it and no opioid-alone line appears.
 
 ## What to look for
 

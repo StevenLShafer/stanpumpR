@@ -143,27 +143,39 @@ remove row). Column editing is deliberately disabled.
 
 ### Plasma and effect site
 
-Each drug can be drawn as two lines:
+Each drug can be drawn as up to two lines:
 
-- **Plasma** concentration — what an arterial sample would contain.
+- **Plasma** concentration — generic shorthand for whatever specimen and
+  analyte the drug's source model was fitted to (it can be arterial or venous
+  blood, serum, total or free drug, or for a few drugs a *change* from
+  baseline rather than a concentration at all — see the drug's own Help page).
 - **Effect site** concentration — the concentration at the site of drug action,
-  which lags plasma. This is usually what you care about clinically, and it is
-  why the effect-site line is drawn solid by default while the plasma line is
-  hidden.
+  which lags plasma, for a drug whose model has one. Not every drug has an
+  effect site (a drug with no validated human equilibration rate, such as
+  amiodarone, plots plasma/serum only). Where it exists, this is usually what
+  you care about clinically, and it is why the effect-site line is drawn solid
+  by default while the plasma line is hidden.
 
 Both are configurable under **Graph Options → Plasma line / Effect site line**,
 including turning either off.
 
 ### The shaded band
 
-**Graph Options → Show typical** controls a shaded band behind each drug:
+**Graph Options → Show typical** controls a shaded reference band behind each drug:
 
-- **Range** — the usual therapeutic range for that drug, from the `Lower` and
+- **Range** — the band for that drug, from the `Lower` and
   `Upper` values in the drug library.
 - **Mid** — a narrow band at the typical concentration, ±5%.
 - **&lt;none&gt;** — no band.
 
-The band is a rough orientation, not a target. It comes from the drug library
+The band is a rough orientation, not a target, and its basis varies by drug:
+most drugs carry a published therapeutic reference range (stated with its
+analyte, matrix and sampling time on the drug's own page), but some carry a
+different kind of reference instead — an effect-site target, an MEAC
+multiple, an antibiotic's expected MBC band, or, where no validated window
+exists, an illustrative band built from simulated doses rather than a
+clinical treatment range. Check the drug's Help page before treating the
+band as a validated therapeutic window. It comes from the drug library
 and you can edit it (see *Drug Library*).
 
 ### Interacting with the plot
@@ -241,7 +253,7 @@ takes over:
   the plasma at the target holds the effect site there too, so that is what
   the controller does. The method is Shafer and Gregg, *J Pharmacokinet
   Biopharm* 1992;20:147, as implemented in the original STANPUMP.
-- **The bolus is a rapid infusion** over the pump's 10-second update interval.
+- **The bolus is a rapid infusion** over the pump's update interval (10 seconds at the start of a target, lengthening while a plasma hold is steady; see below).
   On the rate panel it is written as a number rather than drawn, since its
   rate would flatten the rest of the panel to zero.
 - **Changing the target.** A higher target gives another, smaller loading dose.
@@ -256,9 +268,13 @@ takes over:
 
 A **TCI rate panel** appears directly below the drug's own concentration panel for each drug under
 TCI, in mg/kg/min or mcg/kg/min. Hover over it for the rate at any moment. The
-rate changes every 10 seconds, so these rows are kept out of the dose table,
-where they would make it unusable; they are merged back in when a slide is
-emailed, so the Excel dose table lists the pump's complete programme.
+controller re-decides the rate every 10 seconds right after a target changes
+or a bolus is given, then lengthens that interval, up to a bounded maximum,
+once an effect-site target has settled into a steady plasma-hold rate,
+resetting back to 10 seconds on the next target or bolus change. Either way
+there are too many rows to keep in the dose table, where they would make it
+unusable; they are merged back in when a slide is emailed, so the Excel dose
+table lists the pump's complete programme.
 
 Two things the simulated pump does not model. It does not know about oral,
 intramuscular or intranasal doses of the same drug, which it treats, like a
@@ -370,7 +386,7 @@ what the literature offers.
 | Drug | Model source |
 |---|---|
 | Propofol | Eleveld DJ et al., *Br J Anaesth* 2018;120(5):942–959. [PMID 29661412](https://pubmed.ncbi.nlm.nih.gov/29661412/). With *Minto / Schnider* ticked, also Schnider TW et al., *Anesthesiology* 1998;88(5):1170–1182. [PMID 9605675](https://pubmed.ncbi.nlm.nih.gov/9605675/) |
-| Remifentanil | BMI below 30: Eleveld DJ et al., *Anesthesiology* 2017;126(6):1005–1018. [PMID 28509794](https://pubmed.ncbi.nlm.nih.gov/28509794/); BMI 30 and above: Kim TK et al., *Anesthesiology* 2017;126(6):1019–1032. [PMID 28509796](https://pubmed.ncbi.nlm.nih.gov/28509796/). With *Minto / Schnider* ticked, also Minto CF et al., *Anesthesiology* 1997;86:10–23. [PMID 9009935](https://pubmed.ncbi.nlm.nih.gov/9009935/) |
+| Remifentanil | Eleveld DJ et al., *Anesthesiology* 2017;126(6):1005–1018. [PMID 28509794](https://pubmed.ncbi.nlm.nih.gov/28509794/), **except** adults (age 18+) at BMI 30 and above, who get Kim TK et al., *Anesthesiology* 2017;126(6):1019–1032. [PMID 28509796](https://pubmed.ncbi.nlm.nih.gov/28509796/) instead — Kim was fitted only in adults, so a child stays on Eleveld regardless of BMI, and a patient for whom Kim's equations give a non-positive volume or clearance also falls back to Eleveld. With *Minto / Schnider* ticked, also Minto CF et al., *Anesthesiology* 1997;86:10–23. [PMID 9009935](https://pubmed.ncbi.nlm.nih.gov/9009935/) |
 | Fentanyl | A pooled parameter set from five studies, whose values none of them prints: McClain and Hug 1980, Scott and Stanski 1987 ([PMID 3100765](https://pubmed.ncbi.nlm.nih.gov/3100765/)), Hudson 1986, Varvel 1989 and Shafer 1990 ([PMID 2248388](https://pubmed.ncbi.nlm.nih.gov/2248388/)). |
 | Alfentanil | Scott JC, Stanski DR. *J Pharmacol Exp Ther* 1987;240(1):159–166. [PMID 3100765](https://pubmed.ncbi.nlm.nih.gov/3100765/) |
 | Sufentanil | Gepts E et al., *Anesthesiology* 1995;83(6):1194–1204. [PMID 8533912](https://pubmed.ncbi.nlm.nih.gov/8533912/) |

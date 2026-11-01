@@ -54,10 +54,19 @@
 # ==================================================
 # Serum creatinine falls in pregnancy because filtration rises.  A model that
 # reads the Patient Profile's creatinine through Cockcroft-Gault or eGFR
-# therefore already sees the rise when a pregnant woman's measured creatinine
-# is entered, and multiplying again would count it twice.  The rise is
-# applied only when the creatinine is left blank, the case in which the model
-# assumes a normal NONPREGNANT creatinine: pregnancyGfrFactor().
+# therefore moves toward the rise, in direction, when a pregnant woman's
+# measured creatinine is entered (a lower creatinine reads as higher
+# filtration in any of these equations), so PREGNANCY_GFR_FACTOR is not
+# applied on top of it -- multiplying again would count the direction twice.
+# That is not the same claim as the equation being VALIDATED for maternal
+# GFR: Cockcroft-Gault, CKD-EPI and MDRD were all fitted in nonpregnant
+# adults, and plugging a pregnant woman's creatinine into one is an
+# extrapolation, not a measurement of her actual filtration.  It is simply
+# the better extrapolation available when her creatinine is known, against
+# the alternative of assuming she has a nonpregnant woman's typical value.
+# The rise is applied as PREGNANCY_GFR_FACTOR only when the creatinine is
+# left blank, the case in which the model assumes a normal NONPREGNANT
+# creatinine: pregnancyGfrFactor().
 #
 # NOT MODELLED
 # ============
@@ -185,7 +194,10 @@ pregnancyCoveredDrugs <- function(drugDefaults = getDrugDefaultsGlobal()) {
 #' PREGNANCY_GFR_FACTOR when the patient is pregnant and the serum creatinine
 #' is left blank, so that the model's assumed creatinine is the normal one for
 #' a woman who is NOT pregnant; 1 otherwise.  A measured creatinine already
-#' carries the rise in filtration, since creatinine falls as filtration rises.
+#' moves the renal-function estimate in the direction of the rise, since
+#' creatinine falls as filtration rises, so the factor is not layered on top
+#' of it -- but an adult renal equation run on that creatinine is still an
+#' extrapolation to pregnancy, not a validated maternal GFR.
 #'
 #' @param pregnant the pregnancy flag
 #' @param creatinine the serum creatinine as the model received it (NULL when
