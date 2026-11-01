@@ -15,6 +15,23 @@ isValidColor <- function(x) {
   !inherits(try(grDevices::col2rgb(x), silent = TRUE), "try-error")
 }
 
+DRUG_LIBRARY_NUMERIC_COLUMNS <- c("Lower", "Upper", "Typical", "MEAC")
+
+# The table the Drug Library dialog shows.  endCe is managed via the Drug
+# Thresholds dialog; Category only groups the startup menu.  The threshold
+# columns go to the grid as TEXT: rhandsontable::hot_to_r() converts each
+# column back to the class it was given (its colClasses() runs as.numeric()
+# over a numeric one), so a typed "bogus" would come back as NA, the same as
+# a cleared cell, and drugLibraryProblems() could not tell them apart.  The
+# input$drugEditsOK observer converts them to numbers after validation.
+drugLibraryGridData <- function(drugDefaults) {
+  x <- drugDefaults
+  x$Units <- drugUnitsSimplify(x$Units)
+  x <- x[, !names(x) %in% c("endCe", "Category")]
+  for (col in DRUG_LIBRARY_NUMERIC_COLUMNS) x[[col]] <- as.character(x[[col]])
+  x
+}
+
 # What is wrong with an edited drug library (the Drug Library dialog), as
 # sentences, or character(0).  Only entries that changed are judged, since a
 # metabolite-only row has no colour or units of its own.  A Color ggplot cannot
@@ -22,10 +39,9 @@ isValidColor <- function(x) {
 # dose table does not accept (validateDoseTableInput()) was offered in the
 # table and then refused as unknown units, with a blank plot (2026-10-31).
 # Lower/Upper/Typical/MEAC had no check at all: a non-numeric entry (e.g.
-# "bogus") was silently coerced to NA by the as.numeric() in the
-# input$drugEditsOK observer, with no message, erasing the stored threshold
-# (production audit, 2026-11-01) -- the same failure the separate Drug
-# Thresholds dialog already guards against (thresholdTableToDefaults()).
+# "bogus") became NA with no message, erasing the stored threshold
+# (production audit, 2026-11-01).  The check below needs the text as typed,
+# which is why drugLibraryGridData() hands those columns to the grid as text.
 drugLibraryProblems <- function(edited, current) {
   problems <- character(0)
   at <- match(edited$Drug, current$Drug)
@@ -60,7 +76,7 @@ drugLibraryProblems <- function(edited, current) {
       "Units must list at least one unit, with none left blank (", paste(emptied, collapse = ", "), ")."))
   }
   badNumbers <- character(0)
-  for (col in c("Lower", "Upper", "Typical", "MEAC")) {
+  for (col in DRUG_LIBRARY_NUMERIC_COLUMNS) {
     valueChr <- trimws(as.character(edited[[col]]))
     blank <- is.na(edited[[col]]) | !nzchar(valueChr)
     parsed <- suppressWarnings(as.numeric(valueChr))

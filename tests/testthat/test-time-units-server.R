@@ -47,16 +47,15 @@ lastSent <- function(sent, id) {
 }
 
 # The browser's echo: report every input the server has updated since
-# `since`, as the browser does.  session$elapse(): the Max/Min time sliders
-# feeding plotInfo() are debounced (app_server.R, 2026-11-01, so a drag does
-# not stampede the simulate-and-plot chain), so a mocked session must let
-# simulated time pass before plotInfo() reflects the new value.
-echo <- function(session, sent, since = 0) {
+# `since`, as the browser does.  The Max and Min time sliders reach plotInfo()
+# debounced (400 ms), so the echo then lets that time pass unless `elapse` is
+# FALSE.
+echo <- function(session, sent, since = 0, elapse = TRUE) {
   new <- sent$inputs[seq_along(sent$inputs) > since]
   values <- list()
   for (m in new) if (!is.null(m$message$value)) values[[m$id]] <- m$message$value
   if (length(values)) do.call(session$setInputs, values)
-  session$elapse(500)
+  if (elapse) session$elapse(500)
 }
 
 # The notifications shown or removed with this id (a removal's message is
@@ -176,7 +175,11 @@ test_that("clock times become elapsed times; days and weeks force elapsed", {
     expect_equal(as.numeric(lastSent(sent, "maximum")$step), MINS_PER_DAY)
     expect_error(plotInfo(), class = "shiny.silent.error")
     n <- length(sent$inputs)
-    echo(session, sent)
+    # The browser has reported the new Max time, but the debounced value has
+    # not caught up: still waiting, rather than a simulation with the old one
+    echo(session, sent, elapse = FALSE)
+    expect_error(plotInfo(), class = "shiny.silent.error")
+    session$elapse(500)
     expect_equal(doseTable()$Time[1:2], c("0.0625", "0.08333333333"))  # the echo converts nothing
     expect_equal(plotInfo()$plotMaximum, MINS_PER_DAY)
     expect_equal(plotInfo()$steps, MINS_PER_DAY / 4)
@@ -272,6 +275,10 @@ test_that("a scenario in days loads without conversion, once the browser catches
     expect_error(plotInfo(), class = "shiny.silent.error")
     session$setInputs(timeMode = "relative", maximum = maxTimeValue(28 * MINS_PER_DAY))
     expect_equal(doseTable()$Time[1:2], c("0", "21"))   # nothing converted
+    # the Max time has arrived but not yet through its debounce: still
+    # waiting, not a first simulation with the previous Max time
+    expect_error(plotInfo(), class = "shiny.silent.error")
+    session$elapse(500)
     expect_equal(plotInfo()$plotMaximum, 28 * MINS_PER_DAY)
     expect_equal(sort(doseTableClean()$Time), c(0, 30240))
   })
