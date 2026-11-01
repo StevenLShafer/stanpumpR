@@ -88,6 +88,7 @@ helpStaticPages <- function() {
     "models/minto-schnider",    "The Minto and Schnider models",   "models",
     "models/hamberg",            "The Hamberg warfarin genotype model", "models",
     "models/absorption",        "Oral, intramuscular, intranasal, subcutaneous and regional anesthesia doses", "models",
+    "models/inverse-gaussian",  "Inverse Gaussian absorption",     "models",
     "models/metabolites",       "Active metabolites",              "models",
     "models/antidepressants",   "Antidepressant models and their limits", "models",
     "models/antidiabetics",     "Antidiabetic models and their limits", "models",

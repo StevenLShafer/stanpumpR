@@ -602,8 +602,117 @@ helpFieldReadersTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()
 }
 
 
+#' Inverse Gaussian absorption: three input shapes and what they produce
+#'
+#' Two stacked panels for inst/help/models/inverse-gaussian.md, drawn from
+#' igDensity() and igAbsorptionConc() themselves rather than from stored
+#' numbers: the top panel is the absorption density at three shape parameters,
+#' the bottom the plasma curve each produces through one disposition.  The
+#' mean is fixed at 1, so the time axis is in multiples of the mean absorption
+#' time and a reader scales it to their own drug by multiplying.
+#'
+#' The three lambdas straddle the engine's branch: with this disposition the
+#' fast exponent puts lambda 1 and 4 on the complex branch and lambda 16 on
+#' the real one, so the figure exercises both every time the page renders.
+#'
+#' The block is one HTML block with no blank line, so commonmark passes it
+#' through whole.
+#'
+#' @param drugDefaults unused; every block takes it
+#' @returns the figure, as one HTML string
+#' @noRd
+helpIGAbsorptionFigure <- function(drugDefaults = NULL) {
+  mu      <- 1                      # the mean is 1: time is in multiples of it
+  lambdas <- c(1, 4, 16)
+  cols    <- c("#2c3e50", "#c0392b", "#0072b2")
+  # One illustrative disposition in the same time unit: a fast distribution
+  # phase and a slow terminal one, per unit of mean absorption time.
+  A <- c(0.6, 0.4); k <- c(2.5, 0.15)
+
+  ts   <- seq(0.02, 4, by = 0.02)
+  dens <- lapply(lambdas, function(l) igDensity(ts, mu, l))
+  conc <- lapply(lambdas, function(l) igAbsorptionConc(ts, A, k, mu, l))
+
+  W <- 640; H <- 456; left <- 52; right <- 14
+  xr <- c(0, 4); yrA <- c(0, 1.8); yrB <- c(0, 0.6)
+  topA <- 34; botA <- 198; topB <- 268; botB <- 408
+  f  <- function(v) sprintf("%.1f", v)
+  sx <- function(x) left + (x - xr[1]) / diff(xr) * (W - left - right)
+  sA <- function(y) botA - (y - yrA[1]) / diff(yrA) * (botA - topA)
+  sB <- function(y) botB - (y - yrB[1]) / diff(yrB) * (botB - topB)
+  pA <- function(x, y) paste0("M", paste(f(sx(x)), f(sA(y)), sep = ",", collapse = " L"))
+  pB <- function(x, y) paste0("M", paste(f(sx(x)), f(sB(y)), sep = ",", collapse = " L"))
+
+  xTicks <- 0:4; yTicksA <- c(0, 0.5, 1, 1.5); yTicksB <- c(0, 0.2, 0.4, 0.6)
+  frame <- function(sy, yTicks, bot) c(
+    sprintf('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="#e3e8ec"/>',
+            f(sx(xr[1])), f(sy(yTicks)), f(sx(xr[2])), f(sy(yTicks))),
+    sprintf('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="#4a5764"/>',
+            f(sx(xr[1])), f(sy(yTicks[1])), f(sx(xr[2])), f(sy(yTicks[1]))),
+    sprintf('<text x="%s" y="%s" text-anchor="end" dominant-baseline="middle">%s</text>',
+            f(sx(xr[1]) - 6), f(sy(yTicks)), helpFormatNumber(yTicks)),
+    sprintf('<text x="%s" y="%s" text-anchor="middle">%d</text>',
+            f(sx(xTicks)), f(bot + 16), as.integer(xTicks)))
+
+  curves <- c(
+    unlist(Map(function(y, col) sprintf(
+      '<path d="%s" fill="none" stroke="%s" stroke-width="2.5"/>', pA(ts, y), col),
+      dens, cols)),
+    unlist(Map(function(y, col) sprintf(
+      '<path d="%s" fill="none" stroke="%s" stroke-width="2.5"/>', pB(ts, y), col),
+      conc, cols)))
+
+  legend <- sprintf(paste0(
+    '<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="%s" stroke-width="2.5"/>',
+    '<text x="%s" y="%s" dominant-baseline="middle" fill="%s">',
+    'shape %d &#8212; CV %s</text>'),
+    f(sx(2.55)), topA + c(6, 24, 42), f(sx(2.55) + 24), topA + c(6, 24, 42), cols,
+    f(sx(2.55) + 30), topA + c(6, 24, 42), cols,
+    as.integer(lambdas), helpFormatNumber(sqrt(mu / lambdas)))
+
+  titles <- c(
+    sprintf('<text x="%s" y="%s" font-weight="600">%s</text>',
+            f(left), f(topA - 14),
+            "The absorption density, mean fixed at 1"),
+    sprintf('<text x="%s" y="%s" font-weight="600">%s</text>',
+            f(left), f(topB - 14),
+            "The plasma curve each one produces, through one disposition"),
+    sprintf('<text x="%s" y="%s" text-anchor="middle">%s</text>',
+            f((sx(xr[1]) + sx(xr[2])) / 2), f(H - 10),
+            "Time, in multiples of the mean absorption time"),
+    sprintf('<text transform="translate(13,%s) rotate(-90)" text-anchor="middle">Fraction per unit time</text>',
+            f((sA(yrA[1]) + sA(yrA[2])) / 2)),
+    sprintf('<text transform="translate(13,%s) rotate(-90)" text-anchor="middle">Concentration</text>',
+            f((sB(yrB[1]) + sB(yrB[2])) / 2)))
+
+  label <- paste(
+    "Three inverse Gaussian absorption densities with a mean of 1 and shape",
+    "parameters 1, 4 and 16, and the plasma concentration each produces",
+    "through one two-exponential disposition. The smaller the shape",
+    "parameter, the more spread out and right-skewed the absorption; all",
+    "three plasma curves decay onto the same terminal line.")
+  svg <- c(
+    sprintf(paste0('<svg viewBox="0 0 %d %d" role="img" aria-label="%s" font-size="12" ',
+                   'font-family="inherit" style="width:100%%;max-width:640px;height:auto">'),
+            W, H, label),
+    frame(sA, yTicksA, botA), frame(sB, yTicksB, botB),
+    curves, legend, titles, "</svg>")
+  paste(c(
+    '<figure class="help-figure">',
+    svg,
+    paste("<figcaption>Inverse Gaussian absorption with the mean set to 1, at",
+          "three shape parameters: the input shape above, and below the plasma",
+          "curve each produces through the same disposition. Drawn by stanpumpR",
+          "from the same functions an inverse Gaussian model would call.",
+          "</figcaption>"),
+    "</figure>"
+  ), collapse = "\n")
+}
+
+
 HELP_GENERATED_BLOCKS <- list(
   "route-table" = helpRouteTableMarkdown,
+  "ig-absorption-figure" = helpIGAbsorptionFigure,
   "minto-schnider-table" = helpAlternativeModelTableMarkdown,
   "pregnancy-table" = helpPregnancyTableMarkdown,
   "illicit-pk-table" = helpIllicitPKTableMarkdown,
