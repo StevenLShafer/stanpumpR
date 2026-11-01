@@ -121,6 +121,7 @@ paperReviewFigureSeries <- function(extraction, concUnits)
   out <- list()
   for (f in extraction$figures %or% list()) {
     if (!identical(f$y_quantity, "concentration")) next
+    if (identical(f$one_regimen, "no")) next
     factor <- paperReviewConcentrationFactor(f$y_units %or% "other", concUnits,
                                              extraction$drug$molecular_weight)
     minutes <- paperReviewMinutes(f$time_units %or% "min")

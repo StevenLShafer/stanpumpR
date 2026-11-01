@@ -961,6 +961,15 @@ paperReviewFigureChecks <- function(extraction, drug, reference)
       next
     }
     if (!drug$ok) { add("info", paste(id, "not compared"), "There is no complete model.", f$location); next }
+    # Points from individually dosed subjects cannot be one simulation (a
+    # test paper's cloud of study observations was scored against a typical
+    # regimen, +40%).
+    if (identical(f$one_regimen, "no")) {
+      add("info", paste(id, "not compared"),
+          "Its points come from subjects dosed individually, so no single regimen reproduces them.",
+          f$location)
+      next
+    }
     factor <- paperReviewConcentrationFactor(f$y_units %or% "other", concUnits, extraction$drug$molecular_weight)
     minutes <- paperReviewMinutes(f$time_units %or% "min")
     if (!is.finite(factor) || is.na(minutes)) {

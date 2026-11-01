@@ -573,3 +573,15 @@ test_that("time axes switch to hours, days or weeks as the plot lengthens", {
   expect_equal(paperReviewTimeAxis(30 * 1440)$label, "days")
   expect_equal(paperReviewTimeAxis(730 * 1440)$label, "weeks")
 })
+
+test_that("a figure of individually dosed subjects is not compared with one regimen", {
+  ex <- paperReviewExample()
+  ex$figures[[1]]$one_regimen <- "no"
+  review <- paperReviewRun(ex)
+  f <- Filter(function(x) identical(x$section, "Figures") && grepl("Figure 2", x$title), review$findings)
+  expect_length(f, 1)
+  expect_equal(f[[1]]$severity, "info")
+  expect_match(f[[1]]$detail, "dosed individually")
+  expect_length(Filter(function(s) s$figure == "Figure 2",
+                       paperReviewFigureSeries(ex, "ng")), 0)
+})

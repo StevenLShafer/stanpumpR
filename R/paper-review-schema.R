@@ -322,6 +322,10 @@ paperReviewSchema <- function()
       time_units  = schemaEnum(PAPER_REVIEW_TIME_UNITS),
       log_y       = schemaEnum(c("yes", "no")),
       data_kind   = schemaEnum(c("individual", "mean", "median", "model_prediction", "other")),
+      one_regimen = schemaEnum(c("yes", "no"), paste(
+        "Do each series' points all come from the one regimen it names? 'no' when the",
+        "subjects were dosed individually (a cloud of study observations), so no single",
+        "simulation can reproduce them.")),
       error_bars  = schemaEnum(c("none", "SD", "SE", "CI95", "range", "percentile", "unstated")),
       series = schemaArray(schemaObject(list(
         label  = schemaString(),
