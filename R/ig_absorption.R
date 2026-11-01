@@ -231,6 +231,26 @@ faddeevaW <- function(z) {
 }
 
 
+#' The Inverse Gaussian absorption density itself
+#'
+#' The input shape igAbsorptionConc() convolves, which is worth having beside
+#' it so the file can describe its own input: the help page's figure draws
+#' this and the concentration it produces from the same two parameters.
+#' Integrates to 1 over t > 0, with mean mu and CV^2 = mu / lambda.
+#'
+#' @param t       numeric vector of times
+#' @param mu      mean absorption time
+#' @param lambda  IG shape parameter
+#' @return numeric vector, the density, zero at t <= 0
+#' @noRd
+igDensity <- function(t, mu, lambda) {
+  stopifnot(mu > 0, lambda > 0)
+  ifelse(t <= 0, 0,
+         sqrt(lambda / (2 * pi * t^3)) *
+           exp(-lambda * (t - mu)^2 / (2 * mu^2 * t)))
+}
+
+
 #' Plasma concentration with Inverse Gaussian absorption
 #'
 #' Exact closed form, to rounding: the system is linear and nothing here is

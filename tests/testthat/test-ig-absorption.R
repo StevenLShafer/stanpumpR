@@ -99,6 +99,80 @@ worstRelErr <- function(closed, ref, floor = 1e-10) {
 }
 
 
+# Integrate f over (0, upper) with breaks at the density's own landmarks.
+# Both parts matter and a first draft of these tests got both wrong.  A plain
+# integrate() over the whole range STEPS OVER THE PEAK when the density is
+# narrow -- it returned 0.0, not a small error, for mu 1 at lambda 240 -- and
+# a fixed upper limit of a few hundred means TRUNCATES the tail: the IG at
+# mu 60, lambda 0.5 has a CV of 11, and 400 means still leaves 1.2e-4 of the
+# mass uncounted.  So the limit comes from the tail's own time constant,
+# 2 mu^2 / lambda, not from a multiple of the mean.
+igIntegrate <- function(f, mu, lambda, upper = mu * 50 + 60 * (2 * mu^2 / lambda)) {
+  mode <- mu * (sqrt(1 + 9 * mu^2 / (4 * lambda^2)) - 3 * mu / (2 * lambda))
+  br <- unique(sort(c(mode * c(0.05, 0.3, 1, 3, 10), mu * c(0.3, 1, 3, 10, 100))))
+  br <- c(0, br[br > 0 & br < upper], upper)
+  sum(vapply(seq_len(length(br) - 1), function(j)
+    integrate(f, br[j], br[j + 1], rel.tol = 1e-12, subdivisions = 4000L)$value,
+    numeric(1)))
+}
+
+# The IG distribution function in closed form: two POSITIVE pnorm terms, so it
+# has no cancellation and is exact to full relative precision.
+igCdfRef <- function(t, mu, lambda) {
+  l1 <- pnorm(sqrt(lambda / t) * (t / mu - 1), log.p = TRUE)
+  l2 <- 2 * lambda / mu + pnorm(-sqrt(lambda / t) * (t / mu + 1), log.p = TRUE)
+  m <- pmax(l1, l2)
+  exp(m) * (exp(l1 - m) + exp(l2 - m))
+}
+
+
+test_that("igDensity is a density, with the mean and variance it claims", {
+  for (mu in c(0.5, 1, 60)) {
+    for (lambda in c(0.5, 4, 240)) {
+      m0 <- igIntegrate(function(s) igDensity(s, mu, lambda), mu, lambda)
+      m1 <- igIntegrate(function(s) s * igDensity(s, mu, lambda), mu, lambda)
+      m2 <- igIntegrate(function(s) s^2 * igDensity(s, mu, lambda), mu, lambda)
+      expect_lt(abs(m0 - 1), 1e-10)                      # it integrates to 1
+      expect_lt(abs(m1 - mu) / mu, 1e-10)                # mean mu
+      expect_lt(abs((m2 - m1^2) - mu^3 / lambda) /       # variance mu^3/lambda
+                  (mu^3 / lambda), 1e-9)
+    }
+  }
+  expect_equal(igDensity(c(-1, 0), 1, 4), c(0, 0))
+  expect_error(igDensity(1, 0, 4))
+  expect_error(igDensity(1, 1, -4))
+})
+
+
+test_that("igDensity integrates to the closed-form IG distribution function", {
+  # Stronger than the moments: it pins the whole shape, not three numbers of
+  # it, and against a form with no quadrature and no cancellation in it.
+  for (mu in c(0.5, 1, 60)) {
+    for (lambda in c(0.5, 4, 240)) {
+      for (q in c(0.2, 0.5, 1, 2, 5)) {
+        t <- mu * q
+        expect_lt(abs(igIntegrate(function(s) igDensity(s, mu, lambda),
+                                  mu, lambda, upper = t) -
+                        igCdfRef(t, mu, lambda)), 1e-12)
+      }
+      expect_lt(abs(igCdfRef(mu * 1e9, mu, lambda) - 1), 1e-12)
+    }
+  }
+})
+
+
+test_that("igDensity is the density igAbsorptionConc convolves", {
+  # With no elimination the concentration is the density's own CDF, which ties
+  # the two functions together: if either drifted from the other this fails.
+  mu <- 1; lambda <- 4
+  for (tt in c(0.25, 0.5, 1, 2, 5)) {
+    cdf <- integrate(function(s) igDensity(s, mu, lambda), 0, tt,
+                     rel.tol = 1e-12, subdivisions = 1000L)$value
+    expect_lt(abs(igAbsorptionConc(tt, 1, 0, mu, lambda) - cdf), 1e-10)
+  }
+})
+
+
 test_that("the vendored Faddeeva function matches the exact identities", {
   # w(0) = 1 exactly.
   expect_lt(Mod(faddeevaW(complex(real = 0, imaginary = 0)) - 1), 1e-15)
