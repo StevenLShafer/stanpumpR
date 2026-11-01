@@ -170,7 +170,10 @@ test_that("the deck has the whole plot on the first slide and then one slide per
     height = built$plot$plotHeight, width = 800, slide = 3,
     drugs = built$drugs, dir = dir
   )
-  expect_equal(unique(dirname(c(email$pptxfileName, email$pngfileName, email$xlsxfileName))), dir)
+  # normalizePath(): on Windows tempfile() writes backslashes and dirname()
+  # forward slashes, so the strings differ for one directory
+  expect_equal(normalizePath(unique(dirname(c(email$pptxfileName, email$pngfileName, email$xlsxfileName))), winslash = "/"),
+               normalizePath(dir, winslash = "/"))
   expect_false(dir.exists("Slides"))
   expect_true(file.exists(email$pptxfileName))
   expect_true(file.exists(email$pngfileName))
