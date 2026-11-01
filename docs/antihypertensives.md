@@ -2167,9 +2167,14 @@ crossover of intravenous fosinoprilat 7.5 mg and two oral 10 mg doses of
 fosinopril sodium, capsule and solution. Oral absorption 32% and 36%;
 **bioavailability of fosinoprilat 25% and 29%**.
 
-`ka` 0.2987 /h puts the peak at 2.95 h, the midpoint of the 2.8 to 3.1 h the
-Murdoch review quotes for a 10 mg dose, corroborated by the label's
-dose-independent "approximately 3 hours". Bioavailability is the capsule's
+`ka` 0.2987 /h puts the peak at 2.95 h, the midpoint of fosinoprilat's own
+times to peak in Singhvi's Table 1 (PDF p5), 2.8 ± 0.3 h after the solution and
+3.1 ± 0.2 h after the capsule (mean ± SEM of nine; total radioactivity peaked at
+2.7 and 3.0 h), corroborated by the label's dose-independent "approximately 3
+hours". The model first took the range from the Murdoch review (*Drugs*
+1992;43:123-140, section 2.1), whose one citation for it names Duchin 1991b with
+Singhvi because the same sentence carries Duchin's 2.4-4.2 h over 10-640 mg; the
+10 mg figures are Singhvi's. Bioavailability is the capsule's
 **0.29, read** - the capsule because the product is a tablet and because Hui
 dosed one too. On Hui's clearance that gives a peak of 131 ng/mL and a 24-hour
 area of 1257 ng·h/mL.
@@ -2180,20 +2185,27 @@ exposed the second, which is the one worth carrying forward. The draft set F by
 making the model reproduce two figures the review quotes for Singhvi's oral
 dose, a peak of 99 to 140 mcg/L and a 24-hour area of 1035 to 1132 mcg/L·h.
 
-**1. Those are total radioactivity, not fosinoprilat**, although the review
-labels them "plasma fosinoprilat". Only about 75% of plasma radioactivity after
-an oral dose is the diacid; the rest is an inactive beta-glucuronide (15 to 20%)
-and a monohydroxy analogue (about 5%). Singhvi's own abstract settles it
-arithmetically, and this is checkable without his tables: 0.75 × 1035-1132 =
-776-849 ng·h/mL falls inside the **762-884** his own bioavailability (25 to 29%)
-and his own clearance (39 mL/min) imply for the diacid over the same 0-24 h
-window. Three numbers from one abstract triangulate it. (`F × dose / CL` gives
-801-929 for the *total* area, of which his clearance leaves 95.1% inside 24 h.
+**1. Those are not fosinoprilat**, although the review labels them "plasma
+fosinoprilat". Singhvi's Table 1 (PDF p5) reports every oral figure for both
+analytes, and it shows the **area is total radioactivity** (1035 ± 93 after the
+solution, 1132 ± 68 after the capsule) and the **peak range spans the two**:
+99 is fosinoprilat after the solution and 140 total radioactivity after the
+capsule (fosinoprilat 99 and 112, total radioactivity 126 and 140 ng/mL). The
+review's time to peak and bioavailability, by contrast, are the diacid's. Only
+about 75% of plasma radioactivity after an oral dose is the diacid; the rest is
+an inactive beta-glucuronide (15 to 20%) and a monohydroxy analogue (about 5%).
+Before the table was read, Singhvi's abstract had settled the area's analyte
+arithmetically: 0.75 × 1035-1132 = 776-849 ng·h/mL falls inside the
+**762-884** his own bioavailability (25 to 29%) and his own clearance
+(39 mL/min) imply for the diacid over the same 0-24 h window. (`F × dose / CL`
+gives 801-929 for the *total* area - Table 1 prints the diacid's as 788 and
+920 - of which his clearance leaves 95.1% inside 24 h.
 A first version of this paragraph wrote 737-855, truncating with **Hui's** 92%
 share: a faster clearance leaves less area beyond 24 h, so **the truncation
 factor belongs to the patient being described.**) **A secondary source can relabel an analyte**, and for
 a radiolabel study that is the error to expect, because the paper reports both
-quantities and a reviewer has to pick one.
+quantities and a reviewer has to pick one - or, as here, takes the low end of a
+range from one and the high end from the other.
 
 **2. Even with the right analyte, deriving F that way is a category error** -
 and this is the general lesson. **Bioavailability is clearance-independent by

@@ -6,9 +6,9 @@
 # Drafted by Claude Code, 2026-10-29, at the request of Steven L. Shafer, who
 # settled the design that day.  Sources: Hui KK, Duchin KL, Kripalani KJ,
 # Chan D, Kramer PK, Yanagawa N, Clin Pharmacol Ther 1991;49:457-467 (PMID
-# 1826651, read in full) for the disposition, and Murdoch D, McTavish D,
-# Drugs 1992;43:123-140 section 2.1 for the absorption, which quotes Singhvi
-# et al. 1988 in healthy volunteers.  Tests:
+# 1826651, read in full) for the disposition, and Singhvi et al., Br J Clin
+# Pharmacol 1988;25:9-15 (PMID 2967089, read in full) in healthy volunteers
+# for the absorption.  Tests:
 # tests/testthat/test-drugs-fosinopril.R.
 #
 # ONE DRUG, NOT TWO, AND WHY IT IS NOT THE ENALAPRIL PATTERN
@@ -238,12 +238,16 @@
 # extent.  No lag was fitted anywhere and none is used.
 #
 # ka = 0.2987 /h puts the model's peak at 2.95 h, the midpoint of the 2.8 to
-# 3.1 h for a 10 mg dose.  That figure is not in Singhvi's abstract and is
-# taken from Murdoch D, McTavish D, Drugs 1992;43:123-40 section 2.1, which
-# quotes his tables; the label's dose-independent "approximately 3 hours" is the
-# independent corroboration, and the rate is robust to the analyte question
-# below because the diacid is 75% of the radioactivity and the two peak
-# together.
+# 3.1 h for a 10 mg dose.  Those are fosinoprilat's own times to peak in
+# Singhvi's Table 1 (PDF p5, printed 13; the SQ 27,519 row): 2.8 +/- 0.3 h
+# after the solution and 3.1 +/- 0.2 h after the capsule, mean +/- SEM of nine,
+# where total radioactivity peaked at 2.7 and 3.0 h.  They are not in his
+# abstract, and this model first took them from Murdoch D, McTavish D, Drugs
+# 1992;43:123-40 section 2.1, which quotes the same range in a sentence whose one
+# citation names Duchin 1991b with Singhvi, because that sentence also carries
+# Duchin's 2.4 to 4.2 h over 10 to 640 mg; the 10 mg figures are Singhvi's.
+# The label's dose-independent "approximately 3 hours" is the independent
+# corroboration.
 #
 # F = 0.29, the CAPSULE's bioavailability, READ.  The capsule rather than the
 # solution because the marketed product is a tablet, a solid dosage form, and
@@ -257,20 +261,28 @@
 # quoted in Murdoch's review for a 10 mg dose, Cmax 99 to 140 mcg/L and
 # AUC(0-24h) 1035 to 1132 mcg/L.h.
 #
-#   1. THOSE TWO ARE TOTAL RADIOACTIVITY, not fosinoprilat, although the review
-#      labels them as "plasma fosinoprilat".  An external review raised it and
-#      Singhvi's own abstract settles it arithmetically: only about 75% of the
+#   1. THEY ARE NOT FOSINOPRILAT, although the review labels them "plasma
+#      fosinoprilat".  Singhvi's Table 1 (PDF p5) reports every oral figure
+#      for both analytes, and it shows the AREA is TOTAL RADIOACTIVITY (1035
+#      +/- 93 after the solution, 1132 +/- 68 after the capsule) and the PEAK
+#      RANGE SPANS THE TWO: 99 is fosinoprilat after the solution and 140 total
+#      radioactivity after the capsule (fosinoprilat 99 and 112, total
+#      radioactivity 126 and 140 ng/mL).  The review's time to peak and
+#      bioavailability, by contrast, are the diacid's.  An external review
+#      raised the area's analyte before the table was read, and Singhvi's
+#      abstract had already settled it arithmetically: only about 75% of the
 #      plasma radioactivity after an oral dose is fosinoprilat (the rest is the
 #      inactive beta-glucuronide, 15 to 20%, and the monohydroxy analogue, about
 #      5%), and 0.75 x 1035-1132 = 776-849 ng.h/mL falls inside the 762 to 884
 #      that Singhvi's OWN bioavailability (25 to 29%) and his OWN clearance
-#      (39 mL/min) imply for the diacid over the same 0 to 24 h window.  Three
-#      numbers from one abstract triangulate it.  (F x dose / CL gives 801 to
-#      929 for the TOTAL area; at his clearance 95.1% of it lies within 24 h.
-#      An earlier draft wrote 737-855, truncating with HUI's 92% share -- a
-#      faster clearance leaves less area beyond 24 h, so THE TRUNCATION FACTOR
-#      BELONGS TO THE PATIENT BEING DESCRIBED.)  A SECONDARY SOURCE CAN RELABEL AN ANALYTE, and for a radiolabel
-#      study that is the error to expect, because the paper reports both.
+#      (39 mL/min) imply for the diacid over the same 0 to 24 h window.  (F x
+#      dose / CL gives 801 to 929 for the TOTAL area -- his Table 1 prints the
+#      diacid's as 788 and 920 -- and at his clearance 95.1% of it lies within
+#      24 h.  An earlier draft wrote 737-855, truncating with HUI's 92% share --
+#      a faster clearance leaves less area beyond 24 h, so THE TRUNCATION
+#      FACTOR BELONGS TO THE PATIENT BEING DESCRIBED.)  A SECONDARY SOURCE CAN
+#      RELABEL AN ANALYTE, and for a radiolabel study that is the error to
+#      expect, because the paper reports both -- here within a single range.
 #   2. Even with the right analyte, DERIVING F THAT WAY IS A CATEGORY ERROR.
 #      Bioavailability is clearance-INDEPENDENT by construction: Singhvi's is a
 #      within-subject crossover, F = (AUC_po/D_po)/(AUC_iv/D_iv), and the
@@ -336,7 +348,8 @@
 # AN INDEPENDENT CHECK ON THE VOLUME
 # ==================================
 # Singhvi's abstract gives a steady-state volume of 10 L after the same 7.5 mg
-# intravenous dose (Murdoch quotes it as 9.8 to 10.6).  Hui's 10.2 L -- the
+# intravenous dose, 9.8 +/- 0.7 L in his Table 2 (Murdoch quotes "9.8 to
+# 10.6", an upper figure Singhvi does not print).  Hui's 10.2 L -- the
 # number this model's Vss reproduces exactly, being an input -- is the same.
 # A different laboratory and population agree on the volume while disagreeing
 # 1.47-fold on the clearance, which is the reverse of the pattern AGENTS.md
@@ -538,7 +551,7 @@ fosinoprilatDisposition <- function(cl, vInit = FOSINOPRIL_V_INIT,
 #'
 #' Three compartments from Hui 1991's Table IV in patients with normal renal
 #' function, with a two-plateau clearance covariate on creatinine clearance and
-#' an absorption taken from Singhvi 1988 through the Murdoch & McTavish review.
+#' an absorption taken from Singhvi 1988.
 #' The plotted moiety is fosinoprilat, the active diacid; a dose is entered as
 #' prescribed, in milligrams of fosinopril sodium, and converted to its molar
 #' equivalent of fosinoprilat inside the bioavailability.  See the header of
@@ -632,17 +645,19 @@ fosinopril <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "fosinopril sodium in healthy subjects. Br J Clin Pharmacol 1988;25:9-15 ",
     "(PMID 2967089), nine healthy men in a three-way crossover of intravenous ",
     "fosinoprilat 7.5 mg and oral fosinopril sodium 10 mg as a capsule and as ",
-    "a solution: ka 0.2987 /h puts the peak at 2.95 h, the midpoint of the 2.8 ",
-    "to 3.1 h that Murdoch D, McTavish D, Drugs 1992;43:123-40 section 2.1 ",
-    "quotes for that dose, and the bioavailability is its CAPSULE ",
+    "a solution: ka 0.2987 /h puts the peak at 2.95 h, the midpoint of ",
+    "fosinoprilat's times to peak in its Table 1, 2.8 h after the solution and ",
+    "3.1 h after the capsule, and the bioavailability is its CAPSULE ",
     "value of 0.29 READ (the solution's is 0.25), the capsule because the ",
     "product is a tablet and because Hui dosed one too. Bioavailability is ",
     "clearance-independent in a within-subject crossover, so it is read rather ",
     "than fitted: an earlier draft derived 0.26 by making the model reproduce ",
     "Singhvi's own oral exposure on Hui's clearance, which double-counts the ",
     "1.47-fold difference between the two populations' clearances, and did so ",
-    "against two numbers that are TOTAL RADIOACTIVITY rather than fosinoprilat ",
-    "(only about 75% of plasma radioactivity after an oral dose is the diacid). ",
+    "against two numbers that a review (Murdoch D, McTavish D, Drugs ",
+    "1992;43:123-40) quotes as fosinoprilat: Singhvi's Table 1 shows the area ",
+    "is TOTAL RADIOACTIVITY and the peak range spans both analytes (only about ",
+    "75% of plasma radioactivity after an oral dose is the diacid). ",
     "Hui's own impaired patients gave 22.5, 22.0 and 27.9%, somewhat below the ",
     "healthy capsule value but with no relationship to renal function, which ",
     "is the evidence that impairment leaves the extent of absorption broadly ",
