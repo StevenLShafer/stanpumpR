@@ -41,8 +41,8 @@ without sending anything anywhere.
 - The file you upload is read into the memory of your browser session on the
   server, and the temporary file the web server made is deleted at once. It
   is never written anywhere else, and its name is not kept.
-- It is sent to Anthropic only when you tick the confirmation box and press
-  **Review the paper**, once, over an encrypted connection, as part of a
+- Nothing can be uploaded until you tick the confirmation box. The paper is
+  sent to Anthropic only when you then press **Review the paper**, once, over an encrypted connection, as part of a
   single request. The app does not use Anthropic's file storage.
 - As soon as Claude's answer returns, the manuscript itself is removed from
   the app. What remains is the extracted model and the review.

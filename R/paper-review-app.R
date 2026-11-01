@@ -91,6 +91,10 @@ paperReviewUI <- function()
     theme = bslib::bs_theme(version = 5),
     header = htmltools::tagList(
       shinyjs::useShinyjs(),
+      # A disabled upload field looks disabled (shinyjs disables the input,
+      # which leaves its Browse button looking live).
+      htmltools::tags$style(htmltools::HTML(
+        ".form-group:has(input[type=file]:disabled) { opacity: 0.45; pointer-events: none; }")),
       # Shown while Claude reads the paper.  A plain banner, shown and hidden
       # at once: Shiny's progress notification fades out with a jQuery
       # animation, which stalled in the desktop app's browser pane and left
@@ -103,11 +107,14 @@ paperReviewUI <- function()
     bslib::nav_panel("Review", value = "review",
       bslib::layout_sidebar(fillable = FALSE,
         sidebar = bslib::sidebar(width = 320,
+          # The confirmation comes first; until it is ticked the upload and
+          # Review controls are greyed out (Shafer: unticked, the old order
+          # let a paper be chosen and then refused, which confused).
+          shiny::checkboxInput("consent", paste(
+            "I may share this paper with Anthropic, as the Privacy tab describes,",
+            "to have it reviewed."), FALSE),
           shiny::fileInput("manuscript", "Manuscript (PDF)", accept = ".pdf"),
           shiny::fileInput("supplement", "Supplement (PDF, optional)", accept = ".pdf"),
-          shiny::checkboxInput("consent", paste(
-            "I may share this manuscript with Anthropic, as the Privacy tab describes,",
-            "to have it reviewed."), FALSE),
           shiny::actionButton("review", "Review the paper", class = "btn-primary"),
           shiny::hr(),
           shiny::actionButton("example", "Try the example (nothing is sent)"),
@@ -146,7 +153,7 @@ paperReviewServer <- function(input, output, session)
 {
   store <- paperReviewStore()
   version <- shiny::reactiveVal(0)
-  status <- shiny::reactiveVal("No paper loaded.")
+  status <- shiny::reactiveVal("Tick the box to upload a paper, or try the example.")
   doseTable <- shiny::reactiveVal(data.frame(Time = 0, Dose = 0, Units = "mg", stringsAsFactors = FALSE))
   # The time unit the dose table, Max time and the plot show.  The dose table
   # is held in minutes; only what is shown is converted.  Held apart from the
@@ -172,7 +179,14 @@ paperReviewServer <- function(input, output, session)
   # A dropped connection (a hidden pane, a sleeping laptop) may rejoin the
   # same session rather than leave an upload with nowhere to go.
   session$allowReconnect(TRUE)
-  shiny::observe(shinyjs::toggleState("review", condition = hasPdf() && isTRUE(input$consent)))
+  shiny::observe({
+    consent <- isTRUE(input$consent)
+    shinyjs::toggleState("manuscript", condition = consent)
+    shinyjs::toggleState("supplement", condition = consent)
+    shinyjs::toggleState("review", condition = hasPdf() && consent)
+    # Discard is live only when there is something to discard.
+    shinyjs::toggleState("discard", condition = hasPdf() || !is.null(review()))
+  })
 
   receive <- function(file, slot, label) {
     if (is.null(file)) return()
