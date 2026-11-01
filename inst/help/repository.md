@@ -43,6 +43,8 @@ stanpumpR is an R package that contains a Shiny application. The source is at [g
 
 **The help.** `help-content.R` (page registry, Markdown rendering, search), `help-generated.R` (blocks of hand-written pages built from the code), `help-drugs.R` (the generated drug pages), `help-scenarios.R` (the teaching scenarios and their loader), `help-ui.R` and `help-server.R`.
 
+**Experimental.** `ig_absorption.R` is a closed-form inverse-Gaussian absorption kernel: validated, dependency-free, and not wired into the engine, no drug having declared it yet.
+
 **Package.** `stanpumpR-package.R` and `zzz.R` hold the package-level declarations.
 
 ## Configuration

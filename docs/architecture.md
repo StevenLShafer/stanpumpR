@@ -355,6 +355,12 @@ All files are flat in `R/`.
   Minto companions, istradefylline and tolcapone use (the library's own body-size scaling is
   `pkSizeFactors.R`).
 - `simulateDrugsWithCovariates.R` — exported multi-drug convenience API (no Shiny).
+- `ig_absorption.R` — *validated, not yet wired in.* Closed-form Inverse Gaussian absorption:
+  the convolution of an IG input density with the disposition exponentials, in closed form.
+  Exact to 1.6e-14 against two independent references (`test-ig-absorption.R`), and base R
+  only — the Faddeeva function its complex branch needs is vendored in, so there is no
+  dependency. No drug declares it yet, and no existing drug may be converted to it silently;
+  its header carries both open questions.
 
 **Output — plot, dosing advisor & export**
 - `simulationPlot.R` — assembles the composite `ggplot2` figure and its data tables.

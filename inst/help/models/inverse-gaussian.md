@@ -1,0 +1,27 @@
+Every oral model in stanpumpR absorbs drug from a depot that empties at a constant rate, sometimes after a lag. That shape is convenient rather than plausible. A lagged depot absorbs **nothing at all** until the lag ends and then, an instant later, absorbs at its maximum rate; a zero-order release does the same thing in reverse at the end. A tablet dissolving in the stomach does neither. The rate rises from zero, reaches a maximum, and falls away, and it does so smoothly.
+
+The **inverse Gaussian** density is that shape, and it is the first-passage-time distribution of Brownian motion with drift — the time a particle drifting down a tube with some randomness takes to reach the far end, which is very nearly a mechanistic story about gastric emptying and intestinal transit. It has two parameters, the same number as a lag plus a rate constant, and no discontinuity anywhere. ([Inverse Gaussian distribution on Wikipedia](https://en.wikipedia.org/wiki/Inverse_Gaussian_distribution).)
+
+## The two parameters, and why the figure uses a mean of 1
+
+The parameters are a **mean** absorption time and a **shape**. They are easy to read together because the coefficient of variation of the absorption time is the square root of the mean divided by the shape: a larger shape parameter means a tighter, more symmetric absorption, and a smaller one a broader, more right-skewed absorption with a long tail.
+
+The figure below fixes the mean at 1. Nothing is lost by this: the inverse Gaussian scales, so a mean of 1 is the shape library, and a reader multiplies the time axis by their own drug's mean absorption time to get their own curve. A drug absorbed over about two hours has the same three shapes stretched across two hours.
+
+<!-- generated: ig-absorption-figure -->
+
+The top panel is the input. The bottom panel is what stanpumpR computes from it: the plasma concentration, through one two-exponential disposition held the same for all three. Two things are worth noticing. The shape of the input survives into the **rise and the peak** — the broadest absorption reaches a peak barely two-thirds as high, and reaches it sooner. It does not survive into the **terminal slope**, where all three curves fall onto the same line, because that slope belongs to the disposition and not to the absorption.
+
+## How it is computed
+
+It is a closed form, not a differential equation solver. Convolving an inverse Gaussian density with a sum of exponentials has an exact solution in terms of the complementary error function, so a concentration costs about the same as an ordinary first-order depot and is exact to rounding — around 1.6 parts in 10<sup>14</sup> against independent references.
+
+One wrinkle is worth recording because it explains an otherwise puzzling piece of the code. The closed form divides the problem at the point where a disposition exponent equals the shape parameter over twice the squared mean. Below that the arithmetic is ordinary; above it a square root turns imaginary and the solution runs through the **Faddeeva function** of a complex argument. That is not an exotic edge case: the fast distribution exponents of a typical three-compartment model are usually above the threshold, so most real drugs use the complex branch for at least one exponent. stanpumpR carries its own implementation of the Faddeeva function in base R, so this costs no dependency.
+
+## What it is used for today
+
+**No drug in the library uses it yet**, and that is deliberate rather than an oversight. Every model in stanpumpR was fitted by its authors with a particular input shape, nearly always first order, and the parameters they published are inseparable from that choice. Substituting a different input shape into a published fit does not improve the model; it produces a curve its authors never fitted and never checked. Where the library has had to stand in for an input shape its engine could not express — hydrochlorothiazide's published absorption, or MDMA's — it has discretised the *published* shape and measured the cost, which is the subject of [absorption](help:models/absorption).
+
+Hydrochlorothiazide is the worked example of why the distinction matters, and it is a cautionary one. Its published absorption looks like a natural candidate for an inverse Gaussian: the two shapes have almost the same spread and skew, agreeing to two per cent in the third moment. An inverse Gaussian fitted to its plasma curve nevertheless misses by several times the accuracy standard the library holds that drug to, and the whole of the error is in the first ninety minutes. The reason is that the published model is not an input *density* at all but a depot whose rate constant climbs over time, so it is still barely absorbing while an inverse Gaussian of the same mean is already well under way. Matching the moments of a shape is not the same as matching the shape.
+
+So the function is here for the model that has not been written yet. A pharmacometrician fitting a new oral drug, or adapting a published model whose authors used an inverse Gaussian input — they are not rare in the literature — can have the shape exactly, without a lag, without a discontinuity, and without a numerical solver. If that describes a model you want in stanpumpR, the machinery is waiting for it.
