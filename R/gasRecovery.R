@@ -197,25 +197,14 @@ thresholdTableToDefaults <- function(edited, drugDefaults, age,
 }
 
 
-#' Thresholds from a restored bookmark
-#'
-#' A bookmark saves the stored \code{endCe} of every drug, named by drug, and
-#' the MAC threshold.  Both are optional: bookmarks made before thresholds were
-#' saved, and any entry that is not a usable number, leave the drug's current
-#' value in place and the MAC threshold at its default.  Drugs named in the
-#' bookmark but absent from the defaults are ignored.
-#'
-#' @param drugDefaults the drug defaults table to update
-#' @param endCe named numeric vector of stored thresholds, or NULL
-#' @param macThreshold a single threshold for the MAC series, or NULL
-#' @returns a list with the updated \code{drugDefaults} and \code{macThreshold}
-#' @export
 # The thresholds a bookmark carries: those edited away from the library's
 # defaults, keyed by drug, or NULL when none has been.  The whole column, one
 # entry per drug, was half of every bookmark's length (3,700 characters before
 # encoding) and helped the longest past the server's limit
 # (MAX_BOOKMARK_URL_CHARS); restoreThresholds() reads a subset, and an old
-# bookmark's full column, alike.
+# bookmark's full column, alike.  A drug left at its default therefore follows
+# the library's default when the bookmark is reopened, where the full column
+# froze it at the value of the day.
 changedThresholds <- function(drugDefaults, defaults = getDrugDefaultsGlobal())
 {
   value <- suppressWarnings(as.numeric(drugDefaults$endCe))
@@ -225,6 +214,21 @@ changedThresholds <- function(drugDefaults, defaults = getDrugDefaultsGlobal())
   stats::setNames(value[changed], drugDefaults$Drug[changed])
 }
 
+#' Thresholds from a restored bookmark
+#'
+#' A bookmark saves the thresholds edited away from the library's defaults
+#' (\code{changedThresholds()}; before 2026-10-31 the stored \code{endCe} of
+#' every drug), named by drug, and the MAC threshold.  Both are optional:
+#' bookmarks made before thresholds were saved, and any entry that is not a
+#' usable number, leave the drug's current value in place and the MAC
+#' threshold at its default.  Drugs named in the bookmark but absent from the
+#' defaults are ignored.
+#'
+#' @param drugDefaults the drug defaults table to update
+#' @param endCe named numeric vector of stored thresholds, or NULL
+#' @param macThreshold a single threshold for the MAC series, or NULL
+#' @returns a list with the updated \code{drugDefaults} and \code{macThreshold}
+#' @export
 restoreThresholds <- function(drugDefaults, endCe = NULL, macThreshold = NULL)
 {
   usable <- function(x) suppressWarnings(as.numeric(x))

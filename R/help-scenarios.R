@@ -759,7 +759,7 @@ helpScenarioDefinitions <- function() {
       "james-lean-body-mass",
       "Obesity: the James lean body mass in the Schnider and Minto models",
       "Special populations",
-      "The same effect-site targets in a 150 kg woman on the Eleveld models and on the pumps' Schnider and Minto models, whose James lean body mass is a parabola that falls with weight past a BMI of 36; stanpumpR holds it at the peak.",
+      "The same effect-site targets in a 150 kg woman on the library's models (Eleveld's propofol, Kim's remifentanil at this BMI) and on the pumps' Schnider and Minto models, whose James lean body mass is a parabola that falls with weight past a BMI of 36; stanpumpR holds it at the peak.",
       age = 40, weight = 150, height = 160, sex = SEX_FEMALE,
       doses = helpDoses(
         c("propofol", 0, 3, "Effect site target"),

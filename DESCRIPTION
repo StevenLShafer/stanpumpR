@@ -52,6 +52,7 @@ Suggests:
     devtools,
     knitr,
     plumber,
+    ragg,
     remotes,
     rmarkdown,
     rsconnect,
