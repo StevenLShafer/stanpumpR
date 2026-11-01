@@ -403,3 +403,45 @@ test_that("each curve of a figure is read against the figure's axes, and steep c
   p <- paperReviewReadingPrecision(c(curve(0.1, ten), list(y_axis_max = 120)), axis = "y")
   expect_equal(p$value, 2.4)
 })
+
+test_that("a 'matches within rounding' is counted as compared, and a decrement time is read at steady state", {
+  review <- paperReviewRun(duzitolExtraction())
+  for (g in names(duzitolTable)) {
+    f <- Filter(function(z) identical(z$group, g) && grepl("printed derived quantities", z$title),
+                review$findings)[[1]]
+    expect_match(f$title, "^5 of 5 ")
+    expect_equal(f$severity, "ok")
+    expect_false(grepl("could not be compared", f$detail))
+  }
+  note <- function(g) { t <- review$models[[g]]$consistency; t$note[t$quantity == "decrement_50"] }
+  expect_match(note("Duzitol, normal subjects"), "At steady state")
+  # Hepatic failure is 8.2 min after 10 h of TCI against 9.9 at steady state.
+  expect_match(note("Duzitol, hepatic failure"), "within 5% of it after 20 h", fixed = TRUE)
+})
+
+test_that("each model's curve of one figure is judged by the figure's precision, not by its median error", {
+  set <- function(g) { m <- do.call(threeCompartmentFromHalfLives, as.list(unname(duzitolTable[[g]])))
+    list(v1 = m$v1, v2 = m$v2, v3 = m$v3, cl1 = m$cl1, cl2 = m$cl2, cl3 = m$cl3) }
+  read <- function(g, durations, offset)
+    lapply(durations, function(T) list(time = T, value = paperReviewTCIDecrementTime(set(g), 0.5, T) + offset))
+  series <- function(g, label, points) list(label = label, group = g, analyte = "parent", points = points)
+  x <- duzitolExtraction()
+  x$figures <- list(list(figure_id = "Fig 1", caption = "50% decrement times", regimen_id = NULL,
+    y_quantity = "decrement_time", decrement_percent = 50, decrement_site = "plasma",
+    y_units = "other", time_units = "min", log_y = "no", data_kind = "model_prediction",
+    one_regimen = "yes", error_bars = "none",
+    series = list(series("Duzitol, normal subjects", "solid", read("Duzitol, normal subjects", c(60, 240, 600), 0.3)),
+                  series("Duzitol, hepatic failure", "dashed", read("Duzitol, hepatic failure", c(30, 240, 600), 2.5)),
+                  # Propofol read 2 min high: a median error under 20%.
+                  series("Propofol, normal subjects", "dotted", read("Propofol, normal subjects", c(240, 360, 600), 2))),
+    digitization_note = "Read by eye from a linear axis (0\u201350 min).", location = "Fig 1, p. 328"))
+  review <- paperReviewRun(x)
+  f <- function(g) Filter(function(z) identical(z$group, g) && grepl("^Fig 1", z$title), review$findings)[[1]]
+  expect_lt(review$models[["Propofol, normal subjects"]]$figures[[1]]$mdape, 0.2)
+  expect_equal(f("Duzitol, normal subjects")$severity, "ok")
+  expect_equal(f("Propofol, normal subjects")$severity, "concern")
+  expect_equal(f("Duzitol, hepatic failure")$severity, "concern")
+  # One precision for the whole figure: 2% of the 0-50 min axis.
+  for (g in names(duzitolTable))
+    expect_match(f(g)$detail, "+/-1 min in the decrement time (2% of the axis, 0 to 50", fixed = TRUE)
+})

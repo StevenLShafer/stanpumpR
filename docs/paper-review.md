@@ -184,7 +184,14 @@ he built the models with.
   times, 41, 10 and 20 min, lie inside the 39.1-43.6, 9.6-10.8 and
   17.3-26.8 min that Table 1's rounding allows, though propofol's centre is
   21.8. The conditioning check likewise uses the printed rounding when a
-  paper prints no standard error, rather than an arbitrary 5%.
+  paper prints no standard error, rather than an arbitrary 5%. A "matches
+  within rounding" counts as compared (it once did not, which printed
+  "8 of 6 compared").
+- **A printed decrement time with no duration is a steady-state one**, the
+  limit after an infusion of unlimited length, and the table says so with
+  how long a TCI infusion takes to come within 5% of it
+  (`paperReviewSteadyStateNote()`). The limit can be far off: hepatic
+  failure's 9.9 min is 8.2 min after 10 h and is approached only after 20 h.
 - **Decrement times assume TCI** (Shafer: "calculating decrement times
   requires an assumption of TCI administration, maintaining a steady
   concentration in the plasma ... or the effect site"). For a plasma
@@ -274,11 +281,18 @@ about 3 min wherever it is read, so a short decrement time can carry a large
 relative error that says nothing about the model. The Duzitol editorial's
 30% curve, 2.5 to 12.5 min, came out −31% that way. The precision is Claude's
 `reading_precision`, else a ± in its digitisation note, else 2% of the
-printed axis (`y_axis_max`), else 2% of the largest value read anywhere on
-the figure. A figure Claude extracts as one entry per curve ("Figure 3
-(10%)", "(20%)"...) shares its axes, so it shares the precision. Measured on
+printed axis (`y_axis_max`, else an axis range such as "(0–50 min)" in the
+digitisation note), else 2% of the largest value read anywhere on the
+figure. A figure Claude extracts as one entry per curve ("Figure 3 (10%)",
+"(20%)"...) shares its axes, so it shares the precision, and so do the
+curves of the paper's other models (Figure 1 plots three: each model's part
+of the extraction keeps the whole figure as `paperFigures`). Measured on
 one curve alone, the 10% curve, near zero on a 0–120 min axis, got ±0.04 min
-and failed. A point also agrees when the model's curve reaches its value
+and failed, and Figure 1's three curves got ±0.82, ±0.2 and ±0.38 min. Once
+the precision is known it decides the verdict (median distance within one
+precision: ok; within three: concern), not the median relative error: a
+median error of 19% passed the propofol curve, every point of which lay 1–3
+min above the model. A point also agrees when the model's curve reaches its value
 within the precision of the duration read (`x_axis_max`, else 2% of the
 longest duration read). That is what a steep curve needs: the 80% and 90%
 curves leave the axis almost at once, so a slight misreading of the

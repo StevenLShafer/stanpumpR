@@ -679,6 +679,8 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
                        "; the model's is the typical subject's curve, which need not equal it.")
     } else {
       model <- recomputed(dq)
+      if (grepl("^decrement_", q) && is.finite(model))
+        note <- paperReviewSteadyStateNote(pk, as.numeric(sub("^decrement_", "", q)) / 100, model)
     }
     kindOk <- identical(conv$kind, expected)
     printedInternal <- if (kindOk) conv$value else NA_real_
@@ -732,7 +734,7 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
   }
   table <- if (length(rows)) do.call(rbind, rows) else NULL
   if (!is.null(table)) {
-    compared <- table$status %in% c("matches", "close", "differs", "disagrees")
+    compared <- table$status %in% c("matches", "close", "matches within rounding", "differs", "disagrees")
     nMatch <- sum(table$status %in% c("matches", "close", "matches within rounding"))
     findings <- c(list(paperReviewFinding(section,
       if (nMatch == sum(compared)) "ok" else "info",
@@ -748,6 +750,40 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
       "The paper prints no derived quantities to check against the model"))
   }
   list(table = table, findings = findings, pkTable = paperReviewPKTable(pk))
+}
+
+#' How long an infusion takes to reach a steady-state decrement time
+#'
+#' A printed decrement time with no duration is the steady-state one, the
+#' limit of the curve after an infusion of unlimited length.  The limit can
+#' be far off: the Duzitol editorial's hepatic-failure model has a 50%
+#' decrement time of 9.9 min at steady state but 8.2 min after 10 h of TCI,
+#' and comes within 5% of the limit only after about a day.
+#'
+#' @param set a PK set
+#' @param fall the fraction the concentration falls (0.5 for 50%)
+#' @param steady the steady-state decrement time (min)
+#' @returns a sentence for the consistency table's note
+#' @keywords internal
+paperReviewSteadyStateNote <- function(set, fall, steady)
+{
+  dec <- function(T) paperReviewTCIDecrementTime(set, fall, T)
+  gap <- function(logT) dec(exp(logT)) - 0.95 * steady
+  T95 <- tryCatch(if (gap(log(1e6)) > 0 && gap(log(0.01)) < 0)
+    exp(stats::uniroot(gap, log(c(0.01, 1e6)), tol = 1e-6)$root) else NA_real_,
+    error = function(e) NA_real_)
+  paste0("At steady state, after an infusion of unlimited length.",
+         if (is.finite(T95)) paste0(" With the plasma concentration held constant (TCI), the model comes ",
+                                    "within 5% of it after ", paperReviewDuration(T95), ".") else "")
+}
+
+#' A duration in minutes, written in the unit that reads naturally
+#' @keywords internal
+paperReviewDuration <- function(minutes)
+{
+  if (minutes < 120) paste(prFmt(minutes, 2), "min")
+  else if (minutes < 2 * 1440) paste(prFmt(minutes / 60, 2), "h")
+  else paste(prFmt(minutes / 1440, 2), "days")
 }
 
 #' Check a figure of decrement time against infusion duration
@@ -818,10 +854,14 @@ paperReviewDecrementFigure <- function(f, drug, reference, family = list(f))
     }, numeric(1))
   distance <- pmin(difference / max(tolY, 1e-12), xDifference / max(tolX, 1e-12))
   within <- sum(distance <= 1.0001)
+  # Once the precision of the reading is known it decides: a median error of
+  # 19% passed the Duzitol editorial's propofol curve, every point of which
+  # lay 1-3 min above the model on a 0-50 min axis.
   severity <- if (!is.finite(mdape)) "info"
-    else if (mdape <= 0.2 || stats::median(distance) <= 1) "ok"
-    else if (mdape <= 0.5 || stats::median(distance) <= 2) "concern"
-    else "error"
+    else if (tolY > 0) {
+      if (stats::median(distance) <= 1) "ok" else if (stats::median(distance) <= 3) "concern" else "error"
+    }
+    else if (mdape <= 0.2) "ok" else if (mdape <= 0.5) "concern" else "error"
   grid <- seq(max(points$time, na.rm = TRUE) / 200, max(points$time, na.rm = TRUE) * 1.02,
               length.out = if (identical(site, "effect_site")) 30 else 200)
   finding <- paperReviewFinding("Figures", severity,
@@ -857,12 +897,15 @@ paperReviewDecrementFigure <- function(f, drug, reference, family = list(f))
 #'
 #' Claude may extract one figure as several entries, one per curve
 #' ("Figure 3 (10%)", "Figure 3 (20%)", ...): they share the figure's axes,
-#' so they share the precision of a reading.
+#' so they share the precision of a reading.  So do the curves of the
+#' paper's other models (the Duzitol editorial's Figure 1 plots three), which
+#' one model's part of the extraction keeps as paperFigures.
 #' @keywords internal
 paperReviewFigureFamily <- function(f, extraction)
 {
   base <- function(x) trimws(sub("\\s*\\(.*$", "", x$figure_id %or% ""))
-  family <- Filter(function(g) identical(base(g), base(f)), extraction$figures %or% list())
+  family <- Filter(function(g) identical(base(g), base(f)),
+                   extraction$paperFigures %or% extraction$figures %or% list())
   if (length(family) == 0) list(f) else family
 }
 
@@ -898,6 +941,19 @@ paperReviewReadingPrecision <- function(f, family = list(f), axis = c("y", "x"))
   printed <- paperReviewNum(if (axis == "y") f$y_axis_max else f$x_axis_max)
   if (is.finite(printed) && printed > 0)
     return(list(value = 0.02 * printed, basis = "2% of the axis"))
+  if (axis == "y") {
+    # The axis Claude names in its note ("read by eye from a linear axis
+    # (0-50 min)"), unless it is the duration's.
+    tops <- unlist(lapply(family, function(g) {
+      note <- g$digitization_note %or% ""
+      m <- regmatches(note, regexpr("(?<![xX][ -])axis\\s*\\(\\s*0\\s*(-|–|to)\\s*[0-9.]+", note, perl = TRUE))
+      if (length(m)) suppressWarnings(as.numeric(sub("^.*(-|–|to)\\s*", "", m))) else NA_real_
+    }))
+    tops <- tops[is.finite(tops) & tops > 0]
+    if (length(tops))
+      return(list(value = 0.02 * max(tops),
+                  basis = paste0("2% of the axis, 0 to ", prFmt(max(tops)), " in Claude's digitisation note")))
+  }
   values <- unlist(lapply(family, function(g) lapply(g$series %or% list(), function(s)
     vapply(s$points %or% list(), function(p) paperReviewNum(if (axis == "y") p$value else p$time), numeric(1)))))
   top <- suppressWarnings(max(values[is.finite(values)]))
@@ -1682,6 +1738,9 @@ paperReviewGroupExtraction <- function(extraction, group)
   x$derived_quantities <- mine(x$derived_quantities)
   x$covariate_effects <- mine(x$covariate_effects)
   x$regimens <- mine(x$regimens)
+  # Every model's curves of a figure share its axes, so the precision of a
+  # reading is the figure's, whichever model's curve was read.
+  x$paperFigures <- extraction$figures
   x$figures <- Filter(function(f) length(f$series) > 0,
                       lapply(x$figures %or% list(), function(f) { f$series <- mine(f$series); f }))
   x$drug$name <- group
