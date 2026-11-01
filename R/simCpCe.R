@@ -282,16 +282,21 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # inside the apparent scale.  See R/oral-zero-order.R.
     dose <- expandOralZeroOrder(dose, PK$oralZeroOrder, maximum)
 
-    # Convert all doses to base units
+    # Convert all doses to base units.  mg_Conv/mcg_Conv/ng_Conv are the
+    # factors that turn a dose given in that mass unit into the internal
+    # amount unit implied by Concentration.Units (amounts in the base unit,
+    # volumes in L, so mass/volume stays dimensionally consistent with the
+    # plotted concentration unit, e.g. mcg/mL = mg/L): each dose is divided
+    # by its matching factor below.
     switch(
       PK$Concentration.Units,  # Units (per ml)
-      mcg = {                  # 1 mcg/ml = 1000 mg/L
+      mcg = {                  # 1 mcg/ml = 1 mg/L
         mg_Conv  <- 1          # 1 mcg/ml = 1 mg / L
         mcg_Conv <- 1000       # 1 mcg/ml = 1,000 mcg / L
         ng_Conv  <- 1000000    # 1 mcg/ml = 1,000 mcg / L = 1,000,000 ng / L
       },
-      ng = {                   # 1 ng/ml = 1000 mcg/L
-        mg_Conv  <- .001       # 1 ng/ml = 0.001 mcg/ml = 0.001 mg/L80
+      ng = {                   # 1 ng/ml = 1 mcg/L
+        mg_Conv  <- .001       # 1 ng/ml = 0.001 mcg/ml = 0.001 mg/L
         mcg_Conv <- 1        # Native unit
         ng_Conv  <- 1000
       },

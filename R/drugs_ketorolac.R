@@ -53,6 +53,19 @@
 # single first-order rate reproduces both (a 23 min absorption half-life gives
 # the 0.9 h peak but only 0.61 mg/L), so the source's rate is kept as given.
 #
+# OPEN ISSUE (adjudication needed, not yet resolved): Mroszczak's own NONLIN
+# fit estimated that 3.8 min absorption half-life TOGETHER WITH a 0.2 h
+# (12 min) absorption lag (text p35; "lag time 0.2 h gave the best fit").
+# This model takes the rate alone and sets tlag_PO = 0, which moves the
+# modelled peak about 12 min earlier than the source's own fit -- on top of
+# the gap to Jung's observed 0.9 h mean Tmax noted above.  Restoring the
+# 0.2 h lag has NOT been checked against observed Cmax/AUC/time-course for
+# this enantiomer-specific disposition (the source fit was to the racemate as
+# a single two-compartment model, not S and R separately), so it is not
+# simply added here; a pharmacometric comparison of candidate
+# lag/rate/bioavailability combinations against Jung's and Mroszczak's own
+# observed data is needed before changing tlag_PO.
+#
 # EFFECT SITE
 # ===========
 # None: tPeak = 0, and the plotted concentration is plasma.  No band is

@@ -17,7 +17,7 @@ The curve is **total ketorolac (S + R)** as free acid. No single compartment mod
 
 ### Routes
 
-**mg** is intravenous. **mg PO** is **provisional**: it uses the intravenous disposition with complete bioavailability and the 3.8-minute absorption half-time reported by Mroszczak and colleagues (*Pharmacotherapy* 1990;10:33S-39S), treated as first-order. Neither was fitted with this model. The result peaks early and high: 10 mg by mouth peaks at about 1.0 mcg/mL at 12 minutes, while Jung and colleagues' crossover (*Eur J Clin Pharmacol* 1988;35:423-425) found a mean peak of about 0.8 mcg/mL at a mean of 0.9 hours. Food delays absorption further.
+**mg** is intravenous. **mg PO** is **provisional**: it uses the intravenous disposition with complete bioavailability and the 3.8-minute absorption half-time reported by Mroszczak and colleagues (*Pharmacotherapy* 1990;10:33S-39S), treated as first-order with no lag. Neither was fitted with this model. The result peaks early and high: 10 mg by mouth peaks at about 1.0 mcg/mL at 12 minutes, while Jung and colleagues' crossover (*Eur J Clin Pharmacol* 1988;35:423-425) found a mean peak of about 0.8 mcg/mL at a mean of 0.9 hours. Food delays absorption further. Mroszczak's own fit of that 3.8-minute absorption half-time was made together with a 12-minute (0.2 hour) absorption lag, which this model omits — an open, unresolved gap: restoring the lag would move the modelled peak later, but has not been checked against observed peak concentration, exposure and time course for this enantiomer-specific disposition, so it awaits that comparison rather than being added here.
 
 ### Threshold
 

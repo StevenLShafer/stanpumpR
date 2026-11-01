@@ -3,14 +3,25 @@
 # ----------
 # Drafted by Claude Code (Claude Opus 5), 2026-09-02, at the request of
 # Steven L. Shafer.  Implements the GasMan(R)-style inhaled-gas model described
-# in R/gasProperties.R.  GasMan is closed source; this is written from the
-# published model structure, not from its code.
+# in R/gasProperties.R.  GasMan the shipped PRODUCT is closed source, and
+# nothing here comes from its binary or UI; some specific defaults (cardiac
+# output and ventilation scaling, R/gasProperties.R) are instead read from the
+# GasDoc.cpp/gasman_api SOURCE FILES GasMan's authors released under GPL-3.0
+# at github.com/rasman/gasmanonline, as noted where each is used. The rest of
+# the structure here follows the peer-reviewed literature, not any GasMan
+# source.
 #
 # STATUS: run and verified on R 4.6.1 by tests/testthat/test-gas-engine.R --
 # the closed-form advance agrees with an independent RK4 integration of the same
 # ODEs, single-compartment analytic limits are reproduced, and steady states
-# match hand calculation.  NOT YET validated against GasMan 4.2 output; that
-# requires the fixture grid (see the TODO(fixture) markers in gasProperties.R).
+# match hand calculation. Also run against GasMan's own C++ (built from the
+# released gasmanonline/gasman_api source, commit d3a2dd3) on five scenarios:
+# worst difference 2.9% of peak against GasMan C++ and well under 1% against
+# the analytic limit (`inst/validation/VALIDATION.md`, "Run against GasMan
+# itself"), for both the semi-closed and ideal circuits. Still untested: the
+# open and closed circuits, liquid injection, flush, agents other than
+# sevoflurane/isoflurane/desflurane/nitrous oxide, and the web/desktop editions
+# (only the API build was run).
 # -----------------------------------------------------------------------------
 #
 # THE EQUATIONS
