@@ -98,7 +98,35 @@ PAPER_REVIEW_ROLE_KIND <- c(
 
 # Minutes per time unit.
 paperReviewMinutes <- function(units)
-  switch(units, s = 1 / 60, min = 1, h = 60, day = 1440, NA_real_)
+  switch(units, s = 1 / 60, min = 1, h = 60, day = 1440, week = 10080, NA_real_)
+
+# The simulator's time units, and their names.
+PAPER_REVIEW_SIM_TIME_UNITS <- c(minutes = "min", hours = "h", days = "day", weeks = "week")
+
+#' The time unit the paper uses for a regimen
+#'
+#' The unit of a figure showing the regimen, since that is how the paper
+#' presents its time course; else the unit of the regimen's doses; else
+#' minutes.  Seconds become minutes.
+#'
+#' @param extraction the extraction
+#' @param regimen a regimen, or NULL
+#' @returns one of PAPER_REVIEW_SIM_TIME_UNITS
+#' @keywords internal
+paperReviewRegimenTimeUnit <- function(extraction, regimen)
+{
+  pick <- function(u) if (is.null(u) || !u %in% PAPER_REVIEW_SIM_TIME_UNITS) NULL else u
+  if (!is.null(regimen$id)) {
+    for (f in extraction$figures %or% list()) {
+      shows <- identical(f$regimen_id, regimen$id) ||
+        any(vapply(f$series %or% list(), function(s) identical(s$regimen_id, regimen$id), logical(1)))
+      if (shows && !is.null(u <- pick(f$time_units))) return(u)
+    }
+  }
+  for (d in regimen$doses %or% list())
+    if (!is.null(u <- pick(d$time_units))) return(u)
+  "min"
+}
 
 #' A printed concentration in the model's units
 #'

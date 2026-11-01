@@ -35,7 +35,7 @@ PAPER_REVIEW_CONCENTRATION_UNITS <- c(
   "pg/mL", "ng/L", "ng/mL", "mcg/L", "mcg/mL", "mg/L",
   "nmol/L", "mcmol/L", "other")
 
-PAPER_REVIEW_TIME_UNITS <- c("s", "min", "h", "day")
+PAPER_REVIEW_TIME_UNITS <- c("s", "min", "h", "day", "week")
 
 PAPER_REVIEW_ROUTES <- c("iv_bolus", "iv_infusion", "oral", "im", "sc",
                          "intranasal", "sublingual", "other")

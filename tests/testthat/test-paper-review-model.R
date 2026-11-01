@@ -148,3 +148,36 @@ test_that("an effect site from ke0 is carried as ke0", {
                   drug$defaults, model = drug$model)
   expect_equal(pk$tPeak, 3, tolerance = 1e-4)
 })
+
+test_that("the simulator's time unit follows the paper's for each regimen", {
+  ex <- paperReviewExample()
+  # Its regimens and figures are in minutes.
+  expect_equal(paperReviewRegimenTimeUnit(ex, ex$regimens[[1]]), "min")
+  # A figure showing the regimen sets the unit before its doses do.
+  ex$regimens[[2]]$doses[[1]]$time_units <- "day"
+  ex$figures[[2]]$time_units <- "week"
+  expect_equal(paperReviewRegimenTimeUnit(ex, ex$regimens[[2]]), "week")
+  ex$figures[[2]]$regimen_id <- "other"
+  expect_equal(paperReviewRegimenTimeUnit(ex, ex$regimens[[2]]), "day")
+  expect_equal(paperReviewRegimenTimeUnit(ex, NULL), "min")
+  # Weeks are a unit the extraction can now carry.
+  expect_equal(paperReviewMinutes("week"), 7 * 1440)
+  r <- list(doses = list(list(route = "oral", time = 1, amount = 400, mass_unit = "mg", per_kg = "no",
+                              per_time = "per_day", duration = 2, interval = NULL, time_units = "week")))
+  d <- paperReviewRegimenDoses(r)$doses
+  expect_equal(d$Time, c(1, 3) * 7 * 1440)
+})
+
+test_that("the dose table converts when the unit changes, and runs in minutes underneath", {
+  testthat::local_mocked_bindings(paperReviewApiKey = function(...) NULL)
+  shiny::testServer(paperReviewServer, {
+    session$setInputs(example = 1)
+    expect_equal(tableUnit(), "min")
+    session$setInputs(regimen = "R2", loadRegimen = 1)
+    expect_equal(doseTable()$Time, c(0, 60))
+    session$setInputs(timeUnit = "h")
+    expect_equal(tableUnit(), "h")
+    expect_equal(doseTable()$Time, c(0, 60))          # still minutes underneath
+    expect_equal(dosesNow()$Time, c(0, 60))
+  })
+})

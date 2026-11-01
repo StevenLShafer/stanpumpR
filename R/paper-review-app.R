@@ -125,7 +125,8 @@ paperReviewUI <- function()
           shiny::numericInput("height", "Height (cm)", 170, min = MIN_HEIGHT, max = MAX_HEIGHT),
           shiny::numericInput("age", "Age (years)", 40, min = MIN_AGE, max = MAX_AGE),
           shiny::selectInput("sex", "Sex", SEX_VALUES),
-          shiny::numericInput("maximum", "Max time (minutes)", 240, min = 10, max = 60 * 24 * 28),
+          shiny::selectInput("timeUnit", "Time units", PAPER_REVIEW_SIM_TIME_UNITS, "min"),
+          shiny::numericInput("maximum", "Max time", 240, min = 0),
           shiny::selectInput("regimen", "Paper's regimen", character(0)),
           shiny::actionButton("loadRegimen", "Load regimen into the dose table"),
           shiny::selectInput("overlay", "Overlay a figure's points", character(0)),
@@ -133,7 +134,7 @@ paperReviewUI <- function()
         ),
         shiny::uiOutput("simulatorNote"),
         shiny::plotOutput("simPlot", height = "460px"),
-        shiny::h5("Dose table (time in minutes)"),
+        shiny::h5("Dose table"),
         rhandsontable::rHandsontableOutput("doses"),
         shiny::tableOutput("simParameters")
       )),
@@ -147,6 +148,21 @@ paperReviewServer <- function(input, output, session)
   version <- shiny::reactiveVal(0)
   status <- shiny::reactiveVal("No paper loaded.")
   doseTable <- shiny::reactiveVal(data.frame(Time = 0, Dose = 0, Units = "mg", stringsAsFactors = FALSE))
+  # The time unit the dose table, Max time and the plot show.  The dose table
+  # is held in minutes; only what is shown is converted.  Held apart from the
+  # selector so that a change of unit converts the table rather than rereading
+  # its old numbers in the new unit.
+  tableUnit <- shiny::reactiveVal("min")
+  unitMinutes <- function(u = tableUnit()) paperReviewMinutes(u)
+  unitName <- function(u = tableUnit()) names(PAPER_REVIEW_SIM_TIME_UNITS)[PAPER_REVIEW_SIM_TIME_UNITS == u]
+  # Show the table, Max time and the plot in unit u, Max time being
+  # `maximumMinutes`.
+  setUnit <- function(u, maximumMinutes) {
+    tableUnit(u)
+    shiny::updateSelectInput(session, "timeUnit", selected = u)
+    shiny::updateNumericInput(session, "maximum", label = paste0("Max time (", unitName(u), ")"),
+                              value = signif(maximumMinutes / paperReviewMinutes(u), 4))
+  }
   bump <- function() version(version() + 1)
   # Is a manuscript in memory?  Drives the Review button, which stays
   # disabled until there is one and the box is ticked: the first real test
@@ -283,7 +299,18 @@ paperReviewServer <- function(input, output, session)
     units <- r$drug$units
     doseTable(data.frame(Time = 0, Dose = 0, Units = if (length(units)) units[1] else "mg",
                          stringsAsFactors = FALSE))
+    first <- if (length(regs)) regs[[1]] else NULL
+    setUnit(paperReviewRegimenTimeUnit(r$extraction, first), 240)
   }, ignoreInit = FALSE)
+
+  # The user picked another unit: convert what is shown.
+  shiny::observeEvent(input$timeUnit, {
+    if (identical(input$timeUnit, tableUnit())) return()
+    current <- dosesNow()
+    maximumMinutes <- (input$maximum %or% 240) * unitMinutes()
+    doseTable(current)
+    setUnit(input$timeUnit, maximumMinutes)
+  }, ignoreInit = TRUE)
 
   shiny::observeEvent(input$loadRegimen, {
     r <- review(); if (is.null(r)) return()
@@ -292,7 +319,8 @@ paperReviewServer <- function(input, output, session)
     d <- paperReviewRegimenDoses(regimen)$doses
     if (nrow(d) == 0) return()
     doseTable(d)
-    shiny::updateNumericInput(session, "maximum", value = max(240, ceiling(max(d$Time) * 2)))
+    # In the unit the paper uses for this regimen.
+    setUnit(paperReviewRegimenTimeUnit(r$extraction, regimen), max(240, ceiling(max(d$Time) * 2)))
   })
 
   output$doses <- rhandsontable::renderRHandsontable({
@@ -300,19 +328,25 @@ paperReviewServer <- function(input, output, session)
     units <- if (is.null(r)) "mg" else r$drug$units
     d <- doseTable()
     d$Units <- as.character(d$Units)
+    d$Time <- signif(d$Time / unitMinutes(), 6)
     blank <- data.frame(Time = rep(NA_real_, 4), Dose = rep(NA_real_, 4), Units = rep(NA_character_, 4))
     rhandsontable::hot_col(
       rhandsontable::rhandsontable(rbind(d, blank), rowHeaders = NULL, stretchH = "all",
-                                   width = 520, height = 230),
+                                   width = 520, height = 230,
+                                   colHeaders = c(paste0("Time (", unitName(), ")"), "Dose", "Units")),
       "Units", type = "dropdown", source = units)
   })
 
   dosesNow <- shiny::reactive({
-    d <- if (!is.null(input$doses)) rhandsontable::hot_to_r(input$doses) else doseTable()
+    # Minutes, whatever the table shows.
+    shown <- !is.null(input$doses)
+    d <- if (shown) rhandsontable::hot_to_r(input$doses) else doseTable()
+    names(d)[1:3] <- c("Time", "Dose", "Units")
     d <- d[is.finite(suppressWarnings(as.numeric(d$Time))) &
              is.finite(suppressWarnings(as.numeric(d$Dose))) & !is.na(d$Units) & nzchar(d$Units), ,
            drop = FALSE]
-    d$Time <- as.numeric(d$Time); d$Dose <- as.numeric(d$Dose)
+    d$Time <- as.numeric(d$Time) * if (shown) unitMinutes() else 1
+    d$Dose <- as.numeric(d$Dose)
     d[order(d$Time), , drop = FALSE]
   })
 
@@ -331,7 +365,7 @@ paperReviewServer <- function(input, output, session)
     drug <- paperReviewDrug(r$extraction, p, r$identifiability$closed,
                             absorption = simAbsorption(), absorptions = r$absorptions)
     shiny::validate(shiny::need(drug$ok, paste(drug$problems, collapse = " ")))
-    maximum <- max(input$maximum %or% 240, max(d$Time) + 1)
+    maximum <- max((input$maximum %or% 240) * unitMinutes(), max(d$Time) + 1)
     # Run on far enough to cover an overlaid figure's points.
     fig <- Filter(function(f) identical(f$id, input$overlay), r$figures)
     if (length(fig)) maximum <- max(maximum, max(fig[[1]]$points$time, na.rm = TRUE) * 1.05)
@@ -381,7 +415,7 @@ paperReviewServer <- function(input, output, session)
                   if (any(is.finite(curve$Ce)) && any(curve$Ce > 0))
                     data.frame(Time = curve$Time, Concentration = curve$Ce, Site = "Effect site"))
     if (isTRUE(input$logY)) long <- long[long$Concentration > 0, ]
-    axis <- paperReviewTimeAxis(max(long$Time))
+    axis <- list(minutes = unitMinutes(), label = unitName())
     long$Time <- long$Time / axis$minutes
     # stanpumpR's convention: plasma solid, effect site dashed.
     p <- ggplot2::ggplot(long, ggplot2::aes(Time, Concentration, linetype = Site)) +
@@ -413,14 +447,22 @@ paperReviewServer <- function(input, output, session)
     # Only the compartments the model has: an absent one carries a
     # placeholder volume with no clearance into it.
     has <- c(TRUE, isTRUE(pk$cl2 > 0), isTRUE(pk$cl3 > 0))
+    # Each half-life in a unit that reads (17.3 hours, not 1040 minutes).
+    halfLife <- log(2) / lambda
+    hlUnit <- lapply(halfLife, function(h)
+      if (h < 120) list(f = 1, u = "min") else if (h < 2 * 1440) list(f = 60, u = "h")
+      else list(f = 1440, u = "day"))
     t <- data.frame(
-      Quantity = c(c("V1 (L)", "V2 (L)", "V3 (L)")[has], "CL (L/min)",
-                   c("Q2 (L/min)", "Q3 (L/min)")[has[2:3]],
-                   paste0("Half-life ", seq_along(lambda), " (min)"), "ke0 (1/min)"),
-      Value = signif(c(c(pk$v1, pk$v2, pk$v3)[has], pk$cl1, c(pk$cl2, pk$cl3)[has[2:3]],
-                       log(2) / lambda, if (isTRUE(pk$ke0 > 0)) pk$ke0 else NA), 4))
-    t[!is.na(t$Value), ]
-  }, caption = "The model for this patient", digits = 4)
+      Quantity = c(c("V1", "V2", "V3")[has], "CL", c("Q2", "Q3")[has[2:3]],
+                   paste0("Half-life ", seq_along(lambda)), "ke0"),
+      Value = format(signif(c(c(pk$v1, pk$v2, pk$v3)[has], pk$cl1, c(pk$cl2, pk$cl3)[has[2:3]],
+                              halfLife / vapply(hlUnit, `[[`, 0, "f"),
+                              if (isTRUE(pk$ke0 > 0)) pk$ke0 else NA), 4), drop0trailing = TRUE, trim = TRUE),
+      Units = c(rep("L", sum(has)), "L/min", rep("L/min", sum(has[2:3])),
+                vapply(hlUnit, `[[`, "", "u"), "1/min"),
+      stringsAsFactors = FALSE)
+    t[t$Value != "NA", ]
+  }, caption = "The model for this patient")
 }
 
 # A setting of the review app's configuration.
