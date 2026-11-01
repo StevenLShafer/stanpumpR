@@ -302,6 +302,20 @@ var PKConvert = (function() {
     exp:   {1: ['v1', 'l1'], 2: ['v1', 'l1', 'l2', 'k21'], 3: ['v1', 'l1', 'l2', 'l3', 'k21', 'k31']}
   };
 
+  // A field's text as a number: null when blank, NaN when unreadable.  A
+  // comma is read only as a thousands separator (1,110); any other comma (0,5
+  // with a decimal comma) is refused rather than read ten times too large.
+  function parseNumber(text) {
+    var s = String(text).trim();
+    if (s === '') return null;
+    if (s.indexOf(',') >= 0) {
+      if (!/^[+-]?\d{1,3}(,\d{3})+(\.\d*)?([eE][+-]?\d+)?$/.test(s)) return NaN;
+      s = s.replace(/,/g, '');
+    }
+    var x = Number(s);
+    return isFinite(x) ? x : NaN;
+  }
+
   function fmt(x, digits) {
     if (typeof x !== 'number' || !isFinite(x)) return String(x);
     return String(parseFloat(x.toPrecision(digits || 6)));
@@ -313,7 +327,7 @@ var PKConvert = (function() {
     fromHalfLives: fromHalfLives, fromCoefficients: fromCoefficients,
     fromExponentsAndRates: fromExponentsAndRates,
     plasma: plasma, effect: effect, peakTime: peakTime,
-    ke0FromPeakTime: ke0FromPeakTime, fmt: fmt, required: REQUIRED
+    ke0FromPeakTime: ke0FromPeakTime, fmt: fmt, parseNumber: parseNumber, required: REQUIRED
   };
 })();
 
@@ -381,12 +395,7 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
     return x;
   }
 
-  function parseEntry(text) {
-    var s = String(text).trim().replace(/,/g, '');
-    if (s === '') return null;
-    var x = Number(s);
-    return isFinite(x) ? x : NaN;
-  }
+  var parseEntry = P.parseNumber;
 
   function state($root) {
     var s = $root.data('pkconv');
@@ -473,7 +482,7 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
     var from = 'from ' + GROUP_TITLES[group];
     if (bad.length) {
       setStatus($root, 'error', 'Not admissible: ' + bad.join(', ') + (bad.length > 1 ? ' must be' : ' must be a') +
-                ' positive number' + (bad.length > 1 ? 's' : '') + '.');
+                ' positive number' + (bad.length > 1 ? 's' : '') + ', with a point as the decimal mark.');
     } else if (missing.length) {
       setStatus($root, 'info', 'Defining the model ' + from + '. Still needed: ' + missing.join(', ') + '.');
     } else if (res.error) {
@@ -521,7 +530,7 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
     });
     if (name && x !== null && !(x > 0)) {
       $box.find('input[data-pk-effect="' + name + '"]').addClass('pkconv-bad');
-      $result.text('Not admissible: the value must be a positive number.').attr('data-kind', 'error');
+      $result.text('Not admissible: the value must be a positive number, with a point as the decimal mark.').attr('data-kind', 'error');
     } else if (name && x !== null && s.model) {
       var t = fromDisplay(x, EFFECT_DIMS[name], s.unit), ke0;
       if (name === 'ke0') ke0 = t;

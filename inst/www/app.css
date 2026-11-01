@@ -612,7 +612,6 @@ bslib-tooltip:has(> .field-help) {
 .pkconv-choice {
   font-size: 0.9rem;
   margin: 0;
-  white-space: nowrap;
 }
 .pkconv-status {
   margin: 0.5rem 0;
@@ -680,8 +679,11 @@ bslib-tooltip:has(> .field-help) {
 }
 .help-body table.pkconv-table th {
   font-weight: 500;
-  white-space: nowrap;
   width: 1%;
+}
+/* The symbols stay on one line; the effect site's long labels wrap */
+.help-body .pkconv-group table.pkconv-table th {
+  white-space: nowrap;
 }
 .pkconv-unit {
   font-size: 0.85rem;
@@ -694,7 +696,7 @@ bslib-tooltip:has(> .field-help) {
 }
 .pkconv input.form-control {
   font-variant-numeric: tabular-nums;
-  min-width: 6rem;
+  min-width: 4.5rem;
 }
 .pkconv .pkconv-entered {
   background: var(--pkconv-entered);
@@ -706,12 +708,15 @@ bslib-tooltip:has(> .field-help) {
   background: var(--pkconv-readonly);
   color: #4a5764;
 }
-.pkconv input.pkconv-derived.pkconv-readonly {
-  background: var(--pkconv-derived);
-}
 .pkconv input.pkconv-bad {
   border-color: #c62828;
   box-shadow: 0 0 0 0.15rem rgba(198, 40, 40, 0.2);
+}
+/* The focused one of several invalid fields stands out */
+.pkconv input.pkconv-bad:focus-visible {
+  outline: 2px solid #8e1b1b;
+  outline-offset: 1px;
+  box-shadow: 0 0 0 0.3rem rgba(198, 40, 40, 0.35);
 }
 .pkconv-plot-options {
   display: flex;
@@ -742,7 +747,8 @@ bslib-tooltip:has(> .field-help) {
 .pkconv-graph .pkconv-tick { fill: #4a5764; }
 .pkconv-graph .pkconv-label { fill: #2c3e50; font-size: 13px; }
 .pkconv-graph .pkconv-cp { stroke: #1f5fa8; stroke-width: 2; fill: none; }
-.pkconv-graph .pkconv-ce { stroke: #c0392b; stroke-width: 2; fill: none; }
+/* Dashed, so the two curves differ without colour */
+.pkconv-graph .pkconv-ce { stroke: #c0392b; stroke-width: 2; fill: none; stroke-dasharray: 7 4; }
 .pkconv-graph .pkconv-peak { stroke: #c0392b; stroke-dasharray: 4 3; }
 .pkconv-graph .pkconv-peak-dot { fill: #c0392b; }
 .pkconv-empty {

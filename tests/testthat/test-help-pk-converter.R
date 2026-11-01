@@ -137,6 +137,15 @@ test_that("an inadmissible definition is refused, naming what failed", {
   expect_match(pkConvertJS("P.fromVolumesClearances(2, [5, 50], [3.5, -1]).error"), "k12")
 })
 
+test_that("a field reads a comma only as a thousands separator", {
+  skipWithoutNode()
+  js <- pkConvertJS(paste0(
+    "['1110', '1,110', '1,110.5', ' 0.5 ', '1e-3', '0,5', '0,05', '1,10', '12,3456', 'abc', '']",
+    ".map(function(s) { var x = P.parseNumber(s); return x === null ? 'blank' : String(x); })"))
+  expect_equal(js, c("1110", "1110", "1110.5", "0.5", "0.001",
+                     "NaN", "NaN", "NaN", "NaN", "NaN", "blank"))
+})
+
 test_that("the effect site agrees with the simulator's own solvers", {
   skipWithoutNode()
   m <- pkConvertJS("P.fromVolumesClearances(3, [10, 100, 1000], [3, 2, 1]).model")

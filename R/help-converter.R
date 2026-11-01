@@ -97,7 +97,8 @@ helpPKConverterHTML <- function(drugDefaults = NULL) {
               name, values[i], if (values[i] == checked) " checked" else "", labels[i])
     }, character(1)), collapse = "")
   }
-  plain <- function(html) gsub("<[^>]+>|&[a-zA-Z]+;", "", html)
+  # Tags only: the entities (&lambda;, &frac12;) are decoded in the attribute
+  plain <- function(html) gsub("<[^>]+>", "", html)
 
   groups <- vapply(PK_CONVERTER_GROUPS, function(g) {
     rows <- vapply(g$fields, function(f) {
