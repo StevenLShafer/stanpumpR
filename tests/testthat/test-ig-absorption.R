@@ -92,9 +92,13 @@ igRefScaled <- function(t, A, k, mu, lambda) {
 
 # Worst relative error, counting only the points where the reference is above
 # `floor` of the peak.  The tails are not interesting and are not asserted:
-# see the Accuracy note in R/ig_absorption.R for why.
+# see the Accuracy note in R/ig_absorption.R for why.  The cutoff is taken
+# from the REFERENCE's peak, never from the result under test: keyed to
+# max(closed), a badly wrong result would move the threshold and the test
+# would quietly check fewer points exactly when the code was worse.
+# (CodeRabbit, PR #657.)
 worstRelErr <- function(closed, ref, floor = 1e-10) {
-  keep <- ref > max(closed) * floor
+  keep <- ref > max(ref) * floor
   max(abs(closed[keep] - ref[keep]) / abs(ref[keep]))
 }
 
@@ -141,6 +145,24 @@ test_that("igDensity is a density, with the mean and variance it claims", {
   expect_equal(igDensity(c(-1, 0), 1, 4), c(0, 0))
   expect_error(igDensity(1, 0, 4))
   expect_error(igDensity(1, 1, -4))
+})
+
+
+test_that("igDensity is silent at non-positive times, and keeps NA", {
+  # The value check above passed even while igDensity() warned, because
+  # ifelse() returned the right values after evaluating sqrt() of a negative
+  # number.  A value test cannot see a warning; this one can.
+  # (CodeRabbit, PR #657.)
+  expect_silent(igDensity(c(-5, -1, 0, 1, 10), 1, 4))
+  expect_silent(igDensity(-1, 60, 240))
+  # And it must hold under the strictest setting, where the warning was an
+  # error.
+  old <- options(warn = 2)
+  on.exit(options(old), add = TRUE)
+  expect_no_error(igDensity(c(-1, 0, 2), 1, 4))
+  # Missing stays missing; non-positive is exactly zero.
+  expect_equal(igDensity(c(-1, 0, NA, 1), 1, 4),
+               c(0, 0, NA, igDensity(1, 1, 4)))
 })
 
 
