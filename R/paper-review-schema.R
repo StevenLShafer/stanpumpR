@@ -106,7 +106,7 @@ PAPER_REVIEW_NUMERIC_FIELDS <- c(
 PAPER_REVIEW_OPTIONAL_STRINGS <- c("title", "first_author", "journal", "doi",
                                    "pd_model", "regimen_id", "group")
 # Optional enums: NULL when "none".
-PAPER_REVIEW_OPTIONAL_ENUMS <- c("route", "decrement_site")
+PAPER_REVIEW_OPTIONAL_ENUMS <- c("route", "decrement_site", "concentration_site")
 
 #' Turn a parsed extraction back into numbers and NULLs
 #'
@@ -342,7 +342,12 @@ paperReviewSchema <- function()
         "For a decrement_time figure: which concentration was held constant (TCI) during",
         "the infusion and timed as it fell: plasma (the context-sensitive half-time) or",
         "the effect site."))),
-      y_units     = schemaEnum(PAPER_REVIEW_CONCENTRATION_UNITS),
+      y_units     = schemaEnum(PAPER_REVIEW_CONCENTRATION_UNITS, "'other' for a figure normalized to its peak."),
+      y_normalization = schemaEnum(c("none", "percent_of_peak", "fraction_of_peak"), paste(
+        "For a concentration figure: plotted as measured ('none'), or divided by the curve's own",
+        "peak (100% at the peak), which makes it independent of the dose.")),
+      concentration_site = schemaNullable(schemaEnum(c("plasma", "effect_site"),
+        "For a concentration figure: which concentration it plots.")),
       time_units  = schemaEnum(PAPER_REVIEW_TIME_UNITS),
       log_y       = schemaEnum(c("yes", "no")),
       data_kind   = schemaEnum(c("individual", "mean", "median", "model_prediction", "other")),
@@ -369,6 +374,8 @@ paperReviewSchema <- function()
       reading_precision = schemaNullable(schemaNumber(paste(
         "How far a digitised value may be off, in the y axis's own units (time_units for a",
         "decrement_time figure): 3 for a curve read to about +/-3 min."))),
+      y_axis_max = schemaNullable(schemaNumber("The top of the printed y axis, in its own units.")),
+      x_axis_max = schemaNullable(schemaNumber("The right end of the printed x axis, in time_units.")),
       location = schemaLocation()
     ))),
     reported_differences = schemaArray(schemaObject(list(

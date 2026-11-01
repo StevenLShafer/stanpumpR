@@ -274,7 +274,7 @@ test_that("a short decrement curve read by eye is judged against the reading's p
   }
   f <- figure("Read by eye, about \u00b13 min.")
   expect_equal(f$severity, "ok")
-  expect_match(f$detail, "4 of 4 points within it")
+  expect_match(f$detail, "4 of 4 points are within")
   expect_match(f$detail, "from Claude's digitisation note")
   expect_equal(figure("Read by eye.", precision = 3)$severity, "ok")
   # Without a stated precision, 2% of the largest value read is far tighter.
@@ -307,4 +307,99 @@ test_that("the review lists every parameter of each model, at the reference pati
   expect_equal(value("A1 / sum(A)"), 75.1, tolerance = 1e-3)
   expect_equal(value("Vdss"), 66)
   expect_true(grepl("Every parameter of the model", paperReviewReportPage(review)))
+})
+
+test_that("a figure normalized to its peak is compared without any dose", {
+  # Figure 2: the plasma concentration after a bolus as a percent of its
+  # peak, which is independent of the dose.
+  m <- threeCompartmentFromHalfLives(0.68, 7.6, 66, 1, 10, 100)
+  k21 <- m$cl2 / m$v2; k31 <- m$cl3 / m$v3
+  l <- sort(cube(m$cl1 / m$v1, m$cl2 / m$v1, m$cl3 / m$v1, k21, k31), decreasing = TRUE)
+  A <- vapply(1:3, function(j) { o <- setdiff(1:3, j)
+    (k21 - l[j]) * (k31 - l[j]) / prod(l[o] - l[j]) / m$v1 }, 0)
+  times <- c(1, 5, 15, 30, 60, 120, 240)
+  y <- vapply(times, function(t) 100 * sum(A * exp(-l * t)) / sum(A), 0)
+  x <- duzitolExtraction()
+  x$figures <- list(list(figure_id = "Fig 2", caption = "Percent of peak after a bolus", regimen_id = NULL,
+    y_quantity = "concentration", y_normalization = "percent_of_peak", concentration_site = "plasma",
+    y_units = "other", time_units = "min", log_y = "yes", data_kind = "model_prediction",
+    one_regimen = "yes", error_bars = "none",
+    series = list(list(label = "Duzitol, normal subjects (solid)", group = "Duzitol, normal subjects",
+                       analyte = "parent",
+                       points = lapply(seq_along(times), function(i)
+                         list(time = times[i], value = signif(y[i], 2))))),
+    digitization_note = "exact to two figures", location = "Fig 2, p. 329"))
+  review <- paperReviewRun(x)
+  f <- Filter(function(z) grepl("Fig 2", z$title), review$findings)
+  expect_length(f, 1)
+  expect_equal(f[[1]]$severity, "ok")
+  # The title names the curve, so three models' checks of one figure are told apart.
+  expect_match(f[[1]]$title, "Fig 2, Duzitol, normal subjects (solid)", fixed = TRUE)
+  expect_match(f[[1]]$detail, "a unit intravenous bolus")
+  fig <- review$models[["Duzitol, normal subjects"]]$figures[[1]]
+  expect_equal(fig$kind, "normalized")
+  expect_lt(fig$mdape, 0.03)
+  expect_true(grepl("Fig 2", paperReviewReportPage(review)))
+})
+
+test_that("an effect-site curve is divided by its own, later and lower, peak", {
+  ex <- paperReviewExample()                     # exampleol: tPeak 3 min
+  review <- paperReviewRun(ex)
+  pk <- getDrugPK(review$drug$defaults$Drug, review$reference$weight, review$reference$height,
+                  review$reference$age, review$reference$sex, review$drug$defaults,
+                  model = review$drug$model)$PK$default
+  l <- c(pk$lambda_1, pk$lambda_2, pk$lambda_3); A <- c(pk$p_coef_bolus_l1, pk$p_coef_bolus_l2, pk$p_coef_bolus_l3)
+  ce <- function(t) sum(A * pk$ke0 / (pk$ke0 - l) * (exp(-l * t) - exp(-pk$ke0 * t)))
+  peak <- ce(3)
+  times <- c(1, 3, 10, 30, 60)
+  ex$figures <- list(list(figure_id = "Fig E", caption = "Effect site, percent of peak", regimen_id = NULL,
+    y_quantity = "concentration", y_normalization = "percent_of_peak", concentration_site = "effect_site",
+    y_units = "other", time_units = "min", log_y = "no", data_kind = "model_prediction",
+    one_regimen = "yes", error_bars = "none",
+    series = list(list(label = "Ce", analyte = "parent",
+                       points = lapply(times, function(t) list(time = t, value = round(100 * ce(t) / peak, 1))))),
+    digitization_note = "exact", location = "Fig E"))
+  f <- Filter(function(z) grepl("Fig E", z$title), paperReviewRun(ex)$findings)
+  expect_equal(f[[1]]$severity, "ok")
+  expect_match(f[[1]]$detail, "effect-site")
+  # Divided by the plasma's peak (the sum of the coefficients) instead, the
+  # effect site would read far lower: that is the error the maximum avoids.
+  expect_lt(peak / sum(A), 0.5)
+})
+
+test_that("each curve of a figure is read against the figure's axes, and steep curves along the duration", {
+  m <- threeCompartmentFromHalfLives(0.68, 7.6, 66, 1, 10, 100)
+  set <- list(v1 = m$v1, v2 = m$v2, v3 = m$v3, cl1 = m$cl1, cl2 = m$cl2, cl3 = m$cl3)
+  dec <- function(fall, T) paperReviewTCIDecrementTime(set, fall, T)
+  curve <- function(fall, points)
+    list(figure_id = paste0("Fig 3 (", 100 * fall, "%)"), caption = "Decrement times", regimen_id = NULL,
+         y_quantity = "decrement_time", decrement_percent = 100 * fall, decrement_site = "plasma",
+         y_units = "other", time_units = "min", log_y = "no", data_kind = "model_prediction",
+         one_regimen = "yes", error_bars = "none",
+         series = list(list(label = paste0(100 * fall, "%"), group = "Duzitol, normal subjects",
+                            analyte = "parent",
+                            points = lapply(points, function(p) list(time = p[1], value = p[2])))),
+         digitization_note = "Read by eye.", location = "Fig 3, p. 330")
+  # The 10% curve, 0.5 to 1.3 min, read 0.7 min high: far off in percent, a
+  # small fraction of an axis that the 50% curve takes to 32 min.
+  ten <- lapply(c(30, 120), function(T) c(T, dec(0.1, T) + 0.7))
+  fifty <- lapply(c(30, 60, 120), function(T) c(T, dec(0.5, T)))
+  # The 80% curve is steep: read 2 min late in duration, it is 4 min out in
+  # decrement time.
+  T80 <- stats::uniroot(function(T) dec(0.8, T) - 60, c(1, 120))$root
+  eighty <- list(c(T80 + 2, 60))
+  expect_gt(abs(dec(0.8, T80 + 2) - 60), 4)
+  x <- duzitolExtraction()
+  x$figures <- list(curve(0.1, ten), curve(0.5, fifty), curve(0.8, eighty))
+  review <- paperReviewRun(x)
+  for (pc in c(10, 50, 80)) {
+    f <- Filter(function(z) grepl(paste0("Fig 3 (", pc, "%)"), z$title, fixed = TRUE), review$findings)
+    expect_equal(f[[1]]$severity, "ok", info = paste(pc, f[[1]]$detail))
+    expect_match(f[[1]]$detail, "largest value read on the figure")
+  }
+  f80 <- Filter(function(z) grepl("Fig 3 (80%)", z$title, fixed = TRUE), review$findings)[[1]]
+  expect_match(f80$detail, "1 of 1 points are within")
+  # A printed axis is used before the values read.
+  p <- paperReviewReadingPrecision(c(curve(0.1, ten), list(y_axis_max = 120)), axis = "y")
+  expect_equal(p$value, 2.4)
 })

@@ -133,6 +133,7 @@ paperReviewFigurePlot <- function(figure, concUnits)
     ggplot2::labs(x = paste0(figure$xLabel %or% "Time", " (", axis$label, ")"),
                   y = if (identical(figure$kind, "decrement"))
                         paste0(figure$yLabel, " (", axis$label, ")")
+                      else if (identical(figure$kind, "normalized")) paste0(figure$yLabel, " (%)")
                       else paste0("Concentration (", concUnits, "/mL)"),
                   title = figure$id, subtitle = paste("Line: stanpumpR, reference patient.",
                                                      "Points: digitised approximately from the paper."),

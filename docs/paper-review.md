@@ -274,7 +274,29 @@ about 3 min wherever it is read, so a short decrement time can carry a large
 relative error that says nothing about the model. The Duzitol editorial's
 30% curve, 2.5 to 12.5 min, came out −31% that way. The precision is Claude's
 `reading_precision`, else a ± in its digitisation note, else 2% of the
-largest value read.
+printed axis (`y_axis_max`), else 2% of the largest value read anywhere on
+the figure. A figure Claude extracts as one entry per curve ("Figure 3
+(10%)", "(20%)"...) shares its axes, so it shares the precision. Measured on
+one curve alone, the 10% curve, near zero on a 0–120 min axis, got ±0.04 min
+and failed. A point also agrees when the model's curve reaches its value
+within the precision of the duration read (`x_axis_max`, else 2% of the
+longest duration read). That is what a steep curve needs: the 80% and 90%
+curves leave the axis almost at once, so a slight misreading of the
+duration is a large one of the decrement time.
+
+A concentration figure normalized to its own peak (`y_normalization`
+`percent_of_peak` or `fraction_of_peak`) does not depend on the dose,
+because compartmental models are linear in dose, and Shafer uses such
+figures for that reason. The model's curve is divided by its own maximum the
+same way. The curve is the figure's regimen when it names one that can be
+simulated, otherwise a unit intravenous bolus, at the plasma or the effect
+site (`concentration_site`). Dividing by the maximum rather than by the sum
+of the coefficients matters at the effect site, whose peak after a bolus is
+later and far lower than the plasma's.
+
+Each figure finding's title names the curves it compares. One figure with
+three models' curves is checked once per model, and "Figure 1: reproduces"
+beside "Figure 1: does not reproduce" read as a contradiction.
 
 ### What the in-memory simulator does not do (yet)
 

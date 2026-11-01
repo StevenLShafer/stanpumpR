@@ -761,7 +761,7 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
 #'
 #' @returns a list: \code{finding}, and \code{figure} for the report's plot
 #' @keywords internal
-paperReviewDecrementFigure <- function(f, drug, reference)
+paperReviewDecrementFigure <- function(f, drug, reference, family = list(f))
 {
   id <- f$figure_id %or% "Figure"
   fall <- paperReviewNum(f$decrement_percent) / 100
@@ -798,18 +798,35 @@ paperReviewDecrementFigure <- function(f, drug, reference)
   # that says nothing about the model: on the Duzitol editorial's 30% curve,
   # 2.5 to 12.5 min, a reading good to +/-3 min was -31% off.  Each point is
   # also judged against the precision of the reading.
-  precision <- paperReviewReadingPrecision(f, points$observed[use])
+  # Where the curve is steep (the 80% and 90% curves leave the axis almost
+  # at once) a small misreading of the duration is a large one of the
+  # decrement time, so a point also agrees when the model reaches its value
+  # within the precision of the duration read.
+  precision <- paperReviewReadingPrecision(f, family, "y")
+  xPrecision <- paperReviewReadingPrecision(f, family, "x")
+  tolY <- precision$value * minutes; tolX <- xPrecision$value * minutes
   difference <- abs(points$observed[use] - points$predicted[use])
   mdad <- stats::median(difference)
-  within <- sum(difference <= precision$value * minutes * 1.0001)
+  xDifference <- if (identical(site, "effect_site")) rep(Inf, sum(use)) else
+    vapply(which(use), function(i) {
+      target <- points$observed[i]
+      top <- 20 * max(points$time, na.rm = TRUE)
+      gap <- function(T) dec(T) - target
+      lo <- max(points$time, na.rm = TRUE) / 1e4
+      if (!(gap(lo) < 0 && gap(top) > 0)) return(Inf)
+      abs(stats::uniroot(gap, c(lo, top), tol = 1e-6)$root - points$time[i])
+    }, numeric(1))
+  distance <- pmin(difference / max(tolY, 1e-12), xDifference / max(tolX, 1e-12))
+  within <- sum(distance <= 1.0001)
   severity <- if (!is.finite(mdape)) "info"
-    else if (mdape <= 0.2 || mdad <= precision$value * minutes) "ok"
-    else if (mdape <= 0.5 || mdad <= 2 * precision$value * minutes) "concern"
+    else if (mdape <= 0.2 || stats::median(distance) <= 1) "ok"
+    else if (mdape <= 0.5 || stats::median(distance) <= 2) "concern"
     else "error"
   grid <- seq(max(points$time, na.rm = TRUE) / 200, max(points$time, na.rm = TRUE) * 1.02,
               length.out = if (identical(site, "effect_site")) 30 else 200)
   finding <- paperReviewFinding("Figures", severity,
-    paste0(id, ": the model ", if (severity == "ok") "reproduces" else "does not closely reproduce",
+    paste0(paperReviewFigureTitle(id, points$series), ": the model ",
+           if (severity == "ok") "reproduces" else "does not closely reproduce",
            " the ", round(100 * fall), "% decrement times"),
     paste0(sum(use), " points compared. Each is the time for the ",
            if (identical(site, "effect_site")) "effect-site" else "plasma",
@@ -819,9 +836,13 @@ paperReviewDecrementFigure <- function(f, drug, reference)
            else "paperReviewTCIDecrementTime()",
            "). Median prediction error ", sprintf("%+.0f%%", 100 * mdpe),
            ", median absolute ", sprintf("%.0f%%", 100 * mdape), "; median difference ",
-           prFmt(mdad / minutes, 2), " ", f$time_units %or% "min", " against a reading precision of +/-",
-           prFmt(precision$value, 2), " ", f$time_units %or% "min", " (", precision$basis, "), ",
-           within, " of ", sum(use), " points within it. The points were digitised ",
+           prFmt(mdad / minutes, 2), " ", f$time_units %or% "min", ". ", within, " of ", sum(use),
+           " points are within the reading's precision: +/-", prFmt(precision$value, 2), " ",
+           f$time_units %or% "min", " in the decrement time (", precision$basis, ")",
+           if (!identical(site, "effect_site")) paste0(", or the model's curve reaches the value within +/-",
+             prFmt(xPrecision$value, 2), " ", f$time_units %or% "min", " of the duration read (",
+             xPrecision$basis, ")") else "",
+           ". The points were digitised ",
            "approximately by Claude (", f$digitization_note %or% "", ")."),
     f$location)
   list(finding = finding,
@@ -832,28 +853,56 @@ paperReviewDecrementFigure <- function(f, drug, reference)
                      points = points, mdpe = mdpe, mdape = mdape))
 }
 
+#' The figures that share a figure's axes
+#'
+#' Claude may extract one figure as several entries, one per curve
+#' ("Figure 3 (10%)", "Figure 3 (20%)", ...): they share the figure's axes,
+#' so they share the precision of a reading.
+#' @keywords internal
+paperReviewFigureFamily <- function(f, extraction)
+{
+  base <- function(x) trimws(sub("\\s*\\(.*$", "", x$figure_id %or% ""))
+  family <- Filter(function(g) identical(base(g), base(f)), extraction$figures %or% list())
+  if (length(family) == 0) list(f) else family
+}
+
 #' How precisely a figure's points were read
 #'
-#' Claude's own estimate where it gives one (reading_precision, or a "+/-"
-#' in its digitisation note), otherwise 2% of the largest value read, about
-#' what a curve read by eye allows.
+#' A curve read by eye is off by about the same amount anywhere on its axis,
+#' so the precision is a fraction of the axis, not of the curve: the
+#' Duzitol editorial's 10% decrement curve, near zero on a 0-120 min axis,
+#' was judged against 2% of its own values (+/-0.04 min) and failed.  In
+#' order: Claude's own estimate (reading_precision, or a "+/-" in its
+#' digitisation note, both for the y axis), else 2% of the printed axis
+#' (y_axis_max, x_axis_max), else 2% of the largest value read anywhere on
+#' the figure.
 #'
 #' @param f the figure
-#' @param observed the values read, in the figure's units
-#' @returns a list: \code{value} (in the figure's y units) and \code{basis}
+#' @param family the figures sharing its axes (paperReviewFigureFamily())
+#' @param axis "y" or "x"
+#' @returns a list: \code{value} (in the figure's units) and \code{basis}
 #' @keywords internal
-paperReviewReadingPrecision <- function(f, observed)
+paperReviewReadingPrecision <- function(f, family = list(f), axis = c("y", "x"))
 {
-  stated <- paperReviewNum(f$reading_precision)
-  if (is.finite(stated) && stated > 0) return(list(value = stated, basis = "Claude's estimate"))
-  note <- f$digitization_note %or% ""
-  m <- regmatches(note, regexpr("(±|\\+/-)\\s*[0-9.]+", note))
-  if (length(m)) {
-    v <- suppressWarnings(as.numeric(sub("^(±|\\+/-)\\s*", "", m)))
-    if (is.finite(v) && v > 0) return(list(value = v, basis = "from Claude's digitisation note"))
+  axis <- match.arg(axis)
+  if (axis == "y") {
+    stated <- paperReviewNum(f$reading_precision)
+    if (is.finite(stated) && stated > 0) return(list(value = stated, basis = "Claude's estimate"))
+    note <- f$digitization_note %or% ""
+    m <- regmatches(note, regexpr("(\u00b1|\\+/-)\\s*[0-9.]+", note))
+    if (length(m)) {
+      v <- suppressWarnings(as.numeric(sub("^(\u00b1|\\+/-)\\s*", "", m)))
+      if (is.finite(v) && v > 0) return(list(value = v, basis = "from Claude's digitisation note"))
+    }
   }
-  top <- suppressWarnings(max(observed, na.rm = TRUE))
-  list(value = if (is.finite(top)) 0.02 * top else 0, basis = "2% of the largest value read")
+  printed <- paperReviewNum(if (axis == "y") f$y_axis_max else f$x_axis_max)
+  if (is.finite(printed) && printed > 0)
+    return(list(value = 0.02 * printed, basis = "2% of the axis"))
+  values <- unlist(lapply(family, function(g) lapply(g$series %or% list(), function(s)
+    vapply(s$points %or% list(), function(p) paperReviewNum(if (axis == "y") p$value else p$time), numeric(1)))))
+  top <- suppressWarnings(max(values[is.finite(values)]))
+  list(value = if (is.finite(top)) 0.02 * top else 0,
+       basis = "2% of the largest value read on the figure")
 }
 
 #' Time for the plasma concentration to fall after TCI holds it constant
@@ -1295,6 +1344,126 @@ paperReviewDifferenceFinding <- function(d, section)
 
 # --- Figures ---------------------------------------------------------------
 
+# A figure's id with the series it compares: one figure of three models'
+# curves is checked once per model, and "Figure 1: reproduces" beside
+# "Figure 1: does not reproduce" read as a contradiction (Shafer, 2026-11-01).
+paperReviewFigureTitle <- function(id, series)
+{
+  labels <- unique(series[nzchar(series)])
+  if (length(labels) == 0) id else paste0(id, ", ", paste(labels, collapse = "; "))
+}
+
+#' Check a figure normalized to its own peak
+#'
+#' Compartmental models are linear in dose, so a curve divided by its own
+#' maximum does not depend on the dose, and a paper can plot one without
+#' printing any doses.  The model's curve is divided by its maximum the same
+#' way: the figure's regimen when it names one that can be simulated,
+#' otherwise a unit intravenous bolus, sum A(i) exp(-lambda(i) t).  Dividing
+#' by the maximum rather than by the sum of the coefficients matters at the
+#' effect site, whose peak after a bolus is later and far lower than the
+#' plasma's (Shafer, 2026-11-01).
+#'
+#' @returns a list: \code{finding}, and \code{figure} for the report's plot
+#' @keywords internal
+paperReviewNormalizedFigure <- function(f, extraction, drug, reference)
+{
+  id <- f$figure_id %or% "Figure"
+  scale <- if (identical(f$y_normalization, "fraction_of_peak")) 1 else 100
+  site <- f$concentration_site %or% "plasma"
+  minutes <- paperReviewMinutes(f$time_units %or% "min")
+  series <- Filter(function(s) (s$analyte %or% "parent") %in% "parent", f$series %or% list())
+  points <- do.call(rbind, lapply(series, function(s) {
+    p <- s$points %or% list()
+    if (length(p) == 0) return(NULL)
+    data.frame(series = s$label %or% "",
+               regimen = s$regimen_id %or% f$regimen_id %or% NA_character_,
+               time = vapply(p, function(x) paperReviewNum(x$time), numeric(1)) * minutes,
+               observed = vapply(p, function(x) paperReviewNum(x$value), numeric(1)) * 100 / scale,
+               lower = NA_real_, upper = NA_real_, stringsAsFactors = FALSE)
+  }))
+  if (is.na(minutes) || is.null(points) || nrow(points) == 0)
+    return(list(finding = paperReviewFinding("Figures", "info", paste(id, "has no digitised points"),
+                                             f$digitization_note %or% "", f$location)))
+  pk <- tryCatch(paperReviewQuietly(function()
+    getDrugPK(drug$defaults$Drug, reference$weight, reference$height, reference$age,
+              reference$sex, drug$defaults, model = drug$model)$PK$default), error = function(e) NULL)
+  if (is.null(pk))
+    return(list(finding = paperReviewFinding("Figures", "info", paste(id, "not compared"),
+      "stanpumpR could not build the model.", f$location)))
+  ke0 <- if (isTRUE(pk$ke0 > 0)) pk$ke0 else NA_real_
+  if (identical(site, "effect_site") && !is.finite(ke0))
+    return(list(finding = paperReviewFinding("Figures", "info", paste(id, "not compared"),
+      "It plots the effect site, and the model has none.", f$location)))
+  maximum <- max(points$time, na.rm = TRUE) * 1.05 + 1
+  grid <- c(0, exp(seq(log(maximum / 2000), log(maximum), length.out = 400)))
+  curves <- list()
+  points$predicted <- NA_real_
+  source <- character(0)
+  for (rid in unique(points$regimen)) {
+    these <- which(points$regimen %in% rid)
+    regimen <- if (is.na(rid)) NULL else paperReviewRegimen(extraction, rid)
+    doses <- if (is.null(regimen)) NULL else paperReviewRegimenDoses(regimen)$doses
+    sim <- NULL
+    if (!is.null(doses) && nrow(doses) > 0 && any(doses$Dose > 0) &&
+        isTRUE(paperReviewRegimenRoutable(regimen, drug)$ok))
+      sim <- tryCatch(paperReviewSimulate(paperReviewDrugFor(drug, extraction, regimen, reference),
+                                          reference, doses, maximum), error = function(e) NULL)
+    if (!is.null(sim)) {
+      y <- if (identical(site, "effect_site")) sim$curve$Ce else sim$curve$Cp
+      time <- sim$curve$Time
+      source <- c(source, paste0("the regimen ", rid))
+    } else {
+      # A unit intravenous bolus at time 0, at the plasma or the effect site.
+      l <- c(pk$lambda_1, pk$lambda_2, pk$lambda_3)
+      A <- c(pk$p_coef_bolus_l1, pk$p_coef_bolus_l2, pk$p_coef_bolus_l3)[l > 0]
+      l <- l[l > 0]
+      time <- grid
+      y <- if (identical(site, "effect_site"))
+        vapply(time, function(t) sum(A * ke0 / (ke0 - l) * (exp(-l * t) - exp(-ke0 * t))), 0)
+      else vapply(time, function(t) sum(A * exp(-l * t)), 0)
+      source <- c(source, "a unit intravenous bolus")
+    }
+    y <- 100 * y / max(y, na.rm = TRUE)
+    points$predicted[these] <- stats::approx(time, y, points$time[these], rule = 2)$y
+    curves[[length(curves) + 1]] <- data.frame(Time = time, Cp = y,
+                                               regimen = if (is.na(rid)) "bolus" else rid,
+                                               stringsAsFactors = FALSE)
+  }
+  use <- is.finite(points$observed) & points$observed > 0 & is.finite(points$predicted) &
+    points$predicted > 0
+  pe <- (points$observed[use] - points$predicted[use]) / points$predicted[use]
+  mdpe <- stats::median(pe); mdape <- stats::median(abs(pe))
+  # On a linear axis a reading by eye is off by about the same number of
+  # percentage points everywhere, as for the decrement curves.
+  linear <- !identical(f$log_y, "yes")
+  precision <- paperReviewReadingPrecision(f, paperReviewFigureFamily(f, extraction), "y")
+  tol <- precision$value * 100 / scale
+  mdad <- stats::median(abs(points$observed[use] - points$predicted[use]))
+  severity <- if (!is.finite(mdape)) "info"
+    else if (mdape <= 0.2 || (linear && mdad <= tol)) "ok"
+    else if (mdape <= 0.5 || (linear && mdad <= 2 * tol)) "concern"
+    else "error"
+  what <- if (identical(site, "effect_site")) "effect-site" else "plasma"
+  finding <- paperReviewFinding("Figures", severity,
+    paste0(paperReviewFigureTitle(id, points$series), ": the model ",
+           if (severity == "ok") "reproduces" else "does not closely reproduce",
+           " the curve normalized to its peak"),
+    paste0(sum(use), " points compared. The figure plots the ", what, " concentration as a ",
+           if (scale == 100) "percent" else "fraction", " of its own peak, which does not depend on ",
+           "the dose; the model's curve (", paste(unique(source), collapse = ", "),
+           ") is divided by its own maximum the same way. Median prediction error ",
+           sprintf("%+.0f%%", 100 * mdpe), ", median absolute ", sprintf("%.0f%%", 100 * mdape),
+           if (linear) paste0("; median difference ", prFmt(mdad, 2), " percentage points against a ",
+                              "reading precision of +/-", prFmt(tol, 2), " (", precision$basis, ")") else "",
+           ". The points were digitised approximately by Claude (", f$digitization_note %or% "", ")."),
+    f$location)
+  list(finding = finding,
+       figure = list(id = id, caption = f$caption %or% "", logY = identical(f$log_y, "yes"),
+                     kind = "normalized", yLabel = paste0("Percent of peak, ", what),
+                     curve = do.call(rbind, curves), points = points, mdpe = mdpe, mdape = mdape))
+}
+
 #' Simulate each figure's regimen and compare with its digitised points
 #'
 #' @param extraction the extraction
@@ -1314,7 +1483,7 @@ paperReviewFigureChecks <- function(extraction, drug, reference)
   {
     id <- f$figure_id %or% "Figure"
     if (identical(f$y_quantity, "decrement_time")) {
-      checked <- paperReviewDecrementFigure(f, drug, reference)
+      checked <- paperReviewDecrementFigure(f, drug, reference, paperReviewFigureFamily(f, extraction))
       findings[[length(findings) + 1]] <- checked$finding
       if (!is.null(checked$figure)) figures[[length(figures) + 1]] <- checked$figure
       next
@@ -1324,6 +1493,12 @@ paperReviewFigureChecks <- function(extraction, drug, reference)
       next
     }
     if (!drug$ok) { add("info", paste(id, "not compared"), "There is no complete model.", f$location); next }
+    if ((f$y_normalization %or% "none") %in% c("percent_of_peak", "fraction_of_peak")) {
+      checked <- paperReviewNormalizedFigure(f, extraction, drug, reference)
+      findings[[length(findings) + 1]] <- checked$finding
+      if (!is.null(checked$figure)) figures[[length(figures) + 1]] <- checked$figure
+      next
+    }
     # Points from individually dosed subjects cannot be one simulation (a
     # test paper's cloud of study observations was scored against a typical
     # regimen, +40%).
@@ -1423,7 +1598,8 @@ paperReviewFigureChecks <- function(extraction, drug, reference)
     mdpe <- stats::median(pe); mdape <- stats::median(abs(pe))
     severity <- if (!is.finite(mdape)) "info" else if (mdape <= 0.2) "ok"
                 else if (mdape <= 0.5) "concern" else "error"
-    add(severity, paste0(id, ": the model ", if (severity == "ok") "reproduces" else "does not closely reproduce",
+    add(severity, paste0(paperReviewFigureTitle(id, points$series), ": the model ",
+                         if (severity == "ok") "reproduces" else "does not closely reproduce",
                          " the digitised points"),
         paste0(sum(use), " points compared. Median prediction error (observed - predicted) / predicted ",
                sprintf("%+.0f%%", 100 * mdpe), ", median absolute ", sprintf("%.0f%%", 100 * mdape),
