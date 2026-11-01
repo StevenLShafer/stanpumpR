@@ -89,7 +89,7 @@
 # a fairly marked fall in the total (citing only Yerby 1992, so it is the
 # same finding, not a second one).
 #
-# MEASURED TOTAL CLEARANCE (read 2026-11-01).  Two paired studies give the
+# MEASURED TOTAL CLEARANCE (read 2026-11-01).  Two longitudinal studies give the
 # total ratio in numbers, and they disagree:
 #   - Voinescu 2018 (Neurology 91:e1228, full text, the table under Figure
 #     3): 5 women, 5 pregnancies, 27 clinical-laboratory levels; apparent
@@ -103,12 +103,15 @@
 #     Norwegian TDM database, 51 pregnancies in 33 women; mean total
 #     concentration/dose 0.48 before pregnancy and 0.29 umol/L/mg in the
 #     third trimester, a total CL/F ratio of 1.66 (absolute, not per kg).
+#     The two are STAGE MEANS, not a paired per-woman ratio: each pregnancy
+#     gave 1-7 levels, and the abstract does not say how many lie behind
+#     each mean.
 #     The abstract calls it a 46% fall; 0.29/0.48 is a 40% fall, which the
 #     abstract does not explain.
 # Koerner 1989 (Ther Drug Monit 11:228-230, PMID 2499082, abstract, 9 women
 # followed monthly) agrees in direction: total fell despite dose increases
-# in four, free did not, free fraction and clearance rose, and clearance
-# adjusted for body weight did not change.
+# in four, free did not, free fraction and plasma clearance rose, and
+# intrinsic clearance adjusted for body weight did not change.
 #
 # The two parts of the derivation below are checked separately by
 # Voinescu: its free-clearance ratio 0.820 agrees with Yerby's 25% rise in
@@ -119,8 +122,9 @@
 # 12:40-46, PMID 2305420), so 2.0 overstates the antepartum free fraction.
 # The factor is retained because the largest data set, Johannessen
 # Landmark's 1.66, lands on it, not because the binding derivation is
-# exact; Voinescu's 1.142 is not adopted (n 5, not significant, per kg, and
-# its absolute equivalent's interval reaches 1.6).
+# exact; Voinescu's 1.142 is not adopted (n 5, not significant, per kg; its
+# upper limit, 1.408 per kg, would reach 1.6 in absolute terms only at an
+# ASSUMED 15% weight gain, the paper printing no weights).
 #
 # With the Patient Profile's Pregnant field on, CL/F (cl1) is multiplied by
 # VALPROATE_PREGNANCY_CL_FACTOR = 1.6, on every route (the oral products and

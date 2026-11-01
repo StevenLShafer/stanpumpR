@@ -27,18 +27,23 @@
 # ==========
 # Absolute oral bioavailability is complete: 109 +/- 11% against intravenous
 # (Clark 2013), about 100% (Ahmed 2015).  bioavailability_PO = 1.  The handoff's
-# F of 80% is contradicted by both.
+# F of 80% is the label's RELATIVE bioavailability of the tablet against an
+# oral solution, not an absolute F, so it does not compete with these.
 #
 # ka is Ahmed 2015's estimate, 2.38 /h (Table 2: RSE 17%, IIV 53%; no
 # significant lag), fitted jointly with a stable-labelled intravenous dose in
 # the same subjects on the same Topamax tablets, so it is identified by the
 # oral upstroke against the intravenous curve.  Ahmed's disposition has two
 # compartments and this one three, but they are one system seen at two
-# resolutions: Ahmed's Vc 59.3 L is Bamgboye's V1 + V2 (48.9 L), which
-# exchange with a half-time of 1.6 min, ten times faster than absorption
-# (half-time 17 min) and over before Ahmed's first sample, as his Discussion
-# says; Ahmed's Vp 12.1 L at Q 1.02 L/h is Bamgboye's V3 9.01 L at Q3 0.6 L/h.
-# So the rate constant carries across.
+# resolutions: Ahmed's Vc 59.3 L corresponds to Bamgboye's V1 + V2 (48.9 L,
+# a fifth smaller, so the correspondence is approximate), which exchange with
+# a half-time of 1.6 min, ten times faster than absorption (half-time 17 min).
+# After the intravenous dose that exchange is over within the 15-min infusion,
+# before the first post-infusion sample about 20 min after the start, as his
+# Discussion says; the oral samples at 5 and 15 min see an input ten times
+# slower than the exchange.  Ahmed's Vp 12.1 L at Q 1.02 L/h corresponds, as
+# loosely, to Bamgboye's V3 9.01 L at Q3 0.6 L/h.  So the rate constant
+# carries across.
 #
 # Until 2026-11-01 ka was 2.0 /h, "calibrated" to a 1 h median time to peak
 # and said to put the peak at 1.2 h.  Under this disposition 2.0 /h peaks at
@@ -83,8 +88,9 @@
 # women, "an average increase by 71.8%".  Westin and colleagues (Epilepsia
 # 2009;50:480-485; 15 pregnancies in 12 women) found the concentration/dose
 # ratio 30% lower in the second trimester (n = 11) and 34% lower in the third
-# (n = 8).  Voinescu 2018 (n = 10) reports a maximal 1.39-fold clearance in
-# the second trimester; MONEAD (Pennell 2022) saw a fall that was not
+# (n = 8).  Voinescu 2018 (8 women, 10 pregnancies; full text) reports
+# clearance per kg 1.39-fold in the second trimester and 1.33-fold (95% CI
+# 1.01-1.76) in the third; MONEAD (Pennell 2022) saw a fall that was not
 # significant.
 #
 # With the Patient Profile's Pregnant field on, the elimination clearance CL

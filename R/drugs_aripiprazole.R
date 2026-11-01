@@ -28,12 +28,21 @@
 # no oral dose produces, and its ke0 (2.26 /h) would erase most of the
 # hysteresis seen at 3 h (+16 occupancy points at 1 h, +3 at 3 h after
 # 10 mg).  The ke0 matters only in the first ~3 h after a dose or dose
-# change; at periodic steady state it moves occupancy by < 0.2 points.  The
-# larger difference is exposure: CL/F 3.15 here against Kim's 5.8 L/h, so
-# this model gives 46/81/93% occupancy 3 h after 2/10/30 mg where Kim's gives
-# 32/71/88% (observed mean maxima 30/72/82%).  That is a difference of
-# population (patients at steady state against young healthy men), not of
-# ke0, and is recorded, not reconciled.
+# change.  At periodic steady state on once-daily dosing, replacing 0.725 by
+# 0.632 or 0.932 moves occupancy by at most 0.4 points at any time in the
+# interval at 2 mg (0.13 at 10 mg, 0.05 at 30 mg), and by the bolus ke0 2.26
+# by at most 1.7 points at 2 mg (1.5 h after the dose; 0.5 at 10 mg).
+#
+# The larger difference is 3 h after a single dose: this model gives
+# 46/81/93% occupancy after 2/10/30 mg where Kim's gives 32/71/88% (observed
+# mean maxima 30/72/82%).  Clearance explains almost none of it (Kim's
+# 5.8 L/h on this model moves the 10 mg value from 81.1 to 80.8%).  It is
+# absorption: ka 1.06 /h, fixed in Kim 2008's sparse steady-state data,
+# against 0.293 /h fitted in Kim 2012's rich single-dose data, so 3 h after
+# a dose this model's plasma concentration is 1.7 times Kim's; with Kim's ka
+# this model gives 69.2% against Kim's 70.5%.  That is a difference between
+# the two sources' absorption models, not of ke0, and is recorded, not
+# reconciled.
 #
 # V/F: the brief gives 193 L from Table 3; the abstract says 192 L.  The
 # abstract is the text that could be read, so 192 L is used.

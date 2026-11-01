@@ -185,7 +185,7 @@ paywalled. The first list matters most, since each would check a factor the libr
    *Drugs:* rocuronium, sugammadex. *Why:* rocuronium: Full two-compartment rocuronium parameter set (V1, V2, Q) and which 'volume of distribution' the abstract reports; would allow a direct comparison with a non-pregnant model. sugammadex: Full parameter set (Vc, Vp, Q), serum creatinine/CrCl of the women and whether 13.9 L is Vc or Vss; needed to confirm the GFR-only adjustment and the volume comparison.
 
 8. Koerner M, Yerby M, Friel P, McCormick K. Valproic acid disposition and protein binding in pregnancy. Ther Drug Monit 1989;11:228-230 [PMID 2499082](https://pubmed.ncbi.nlm.nih.gov/2499082/) · [doi:10.1097/00007691-198905000-00002](https://doi.org/10.1097/00007691-198905000-00002)  
-   *Drugs:* valproate. *Why:* The abstract (read 2026-11-01) gives direction only (9 women: total fell despite dose increases, free did not, weight-adjusted clearance unchanged); the monthly levels, doses and weights would give a measured ratio.
+   *Drugs:* valproate. *Why:* The abstract (read 2026-11-01) gives direction only (9 women: total fell despite dose increases, free did not; free fraction and plasma clearance rose, while intrinsic clearance adjusted for body weight did not change); the monthly levels, doses and weights would give a measured ratio.
 
 9. Krzyzanski W et al. J Pharmacokinet Pharmacodyn 2026 (cohort population analysis, dexamethasone in parturients) [PMID 42406183](https://pubmed.ncbi.nlm.nih.gov/42406183/) · [doi:10.1007/s10928-026-10048-5](https://doi.org/10.1007/s10928-026-10048-5)  
    *Drugs:* dexamethasone. *Why:* PMC13337934 exists but was not retrieved; gives one-compartment CL and V for dexamethasone in parturient women at birth that could replace the volume inference.
@@ -221,7 +221,7 @@ paywalled. The first list matters most, since each would check a factor the libr
    *Drugs:* phenytoin, carbamazepine. *Why:* phenytoin: OBTAINED (full text read 2026-11-01): Table 3 gives free fraction 7.2% to 10.1% (x1.40), plasma clearance x2.17 and unbound clearance x1.25 in the third trimester; recorded in the phenytoin row, factors not changed (`papers/digests/PMID_8112235.md`). carbamazepine: Trimester values of total and unbound carbamazepine clearance (abstract says 'slightly decreased' only).
 
 20. Voinescu PE, Park S, Chen LQ, et al. Antiepileptic drug clearances during pregnancy and clinical implications for women with epilepsy. Neurology 2018;91:e1228-e1236 (PMC6161546) [PMID 30185446](https://pubmed.ncbi.nlm.nih.gov/30185446/) · [doi:10.1212/WNL.0000000000006240](https://doi.org/10.1212/WNL.0000000000006240)  
-   *Drugs:* phenytoin, topiramate. *Why:* OBTAINED for valproate (full text read 2026-11-01, `papers/digests/PMID_30185446.md`): third-trimester total 1.142 (95% CI 0.926-1.408) and free 0.820 (0.46-1.47), per kg, n 5, none significant; recorded in the valproate row, factor not changed. Still open for phenytoin (n=7) and the third-trimester (not just maximal) topiramate and levetiracetam ratios.
+   *Drugs:* phenytoin, topiramate. *Why:* OBTAINED for valproate (full text read 2026-11-01, `papers/digests/PMID_30185446.md`): third-trimester total 1.142 (95% CI 0.926-1.408) and free 0.820 (0.46-1.47), per kg, n 5, none significant; recorded in the valproate row, factor not changed. Also read for the others (the same card): phenytoin (7 women) third-trimester total 0.950 (0.65-1.38) and free 0.828 (0.57-1.20), neither significant, against Tomson 1994's 2.17-fold rise, recorded in the phenytoin row, factors not changed; topiramate 1.334 (1.014-1.756, p 0.04) in the third trimester, recorded in its row; levetiracetam 1.367 (1.15-1.63) in the third trimester. Nothing remains to obtain from it.
 
 21. Yerby MS, Friel PN, McCormick K. Antiepileptic drug disposition during pregnancy. Neurology 1992;42(4 Suppl 5):12-16 [PMID 1574166](https://pubmed.ncbi.nlm.nih.gov/1574166/)  
    *Drugs:* valproate. *Why:* Total and free valproate concentrations per trimester with doses; would replace the derived 1.6 with a measured total-clearance ratio.
@@ -297,7 +297,7 @@ paywalled. The first list matters most, since each would check a factor the libr
 - **Dailey PA et al.** *Anesthesiology* 1984;60:569-574 (PMID 6145374): vecuronium clearance 6.4
   mL/kg/min, Vss 251 mL/kg, half-life 36 min at term caesarean (n = 5 of 11 dosed, 4 h sampling).
   The unadjusted library model sampled on Dailey's schedule and fitted the same way returns 6.8-7.0,
-  235-265 and 30-39 (0.93 times on matched design; 1.06 against its true 5.93-6.16 mL/kg/min), so
+  235-265 and 30-39 (Dailey's measured 6.4 mL/kg/min is 0.93 times the model's value on the matched design and 1.06 times its true clearance, 5.93-6.16), so
   vecuronium is `unchanged` and takes no factor. The authors' 1.23 (6.4 vs 5.2 mL/kg/min, against
   Cronnelly 1983, PMID 6132566: their lab, halothane, 8 h) is untested (t about 2.3, P about 0.05),
   confounded, and would put the model at 8.5 mL/kg/min, outside Dailey's 95% interval (5.3-7.5).
