@@ -1,3 +1,12 @@
+# The tallest image renderPlot()'s graphics device draws, in device pixels:
+# ragg's when Shiny will use ragg (installed, and shiny.useragg not FALSE),
+# else cairo's (MAX_PLOT_DEVICE_PIXELS_RAGG, MAX_PLOT_DEVICE_PIXELS_CAIRO).
+maxPlotDevicePixels <- function() {
+  ragg <- isTRUE(getOption("shiny.useragg", TRUE)) && requireNamespace("ragg", quietly = TRUE)
+  if (ragg) min(MAX_PLOT_DEVICE_PIXELS_RAGG, getOption("ragg.max_dim", MAX_PLOT_DEVICE_PIXELS_RAGG))
+  else MAX_PLOT_DEVICE_PIXELS_CAIRO
+}
+
 # Simulation Plot
 simulationPlot <- function(
   drugs,
@@ -22,7 +31,8 @@ simulationPlot <- function(
   typical = c("Mid"),
   logY = FALSE,
   yAxisHeight = 150,
-  width = 800
+  width = 800,
+  pixelRatio = 1
   )
 {
   # Notes on what happens below
@@ -825,6 +835,21 @@ simulationPlot <- function(
   width <- max(width - 200, 100)
   aspect <- yAxisHeight / width
   height <- yAxisHeight * nFacets + 50
+  # The panel height is bounded (MAX_YAXIS_HEIGHT) but the panels add up, and
+  # a plot too tall for the graphics device failed while being drawn, as a
+  # generic error where the plot should be (maxPlotDevicePixels(), at the
+  # browser's pixel ratio).
+  limit <- maxPlotDevicePixels()
+  if (height * pixelRatio > limit) {
+    stop(sprintf(paste0(
+      "%d panels of %d pixels would make the plot %s pixels tall, more than the %s ",
+      "the graphics device can draw%s. ",
+      "Lower the Y axis height, untick Peripheral compartments, or simulate fewer drugs."),
+      nFacets, as.integer(yAxisHeight), format(height, big.mark = ","),
+      format(floor(limit / pixelRatio), big.mark = ","),
+      if (pixelRatio != 1) sprintf(" on a screen of pixel ratio %s", format(pixelRatio)) else ""),
+      call. = FALSE)
+  }
   plotObject <- plotObject + ggplot2::labs(x = xAxisLabel) +
     ggplot2::theme(aspect.ratio = aspect) +
     ggplot2::theme(legend.text = ggplot2::element_text(size=12)) +
@@ -957,14 +982,10 @@ simulationPlot <- function(
     x <- ggplot2::ggplot_build(plotObject)
     recovery <- allEquispace[,c("Drug","Time","Recovery")]
     recovery$Wrap <- ""
-    recoveryLabels <- data.frame(
-      Drug   = rep("",100),
-      y  = 0,
-      new = 0,
-      x = maximum,
-      Wrap = ""
-    )
-    start <- 1
+    # One row per axis label of every panel with a recovery.  Grown as the
+    # panels are visited: a fixed 100 rows overflowed at about twenty drugs
+    # over threshold, and the plot was lost.
+    recoveryLabelList <- list()
     # Every row of plotTable, in its final order: the TCI rate panels, now
     # sorted in beside their drugs, have no recovery and fall to the else.
     for (i in seq_len(nrow(plotTable)))
@@ -975,10 +996,14 @@ simulationPlot <- function(
 #        labels <- as.numeric(x$layout$panel_params[[i]]$y.labels)
         labels <- as.numeric(stats::na.omit(x$layout$panel_params[[i]]$y$get_labels()))
         nLabels <- length(labels) - 1 # Subtract 1 because 0 is always included
-        end <- start + nLabels
-        recoveryLabels$Drug[start:end] <- as.character(plotTable$Drug[i])
-        recoveryLabels$y[start:end] <- labels
-        recoveryLabels$Wrap[start:end] <- as.character(plotTable$Wrap[i])
+        panelLabels <- data.frame(
+          Drug = as.character(plotTable$Drug[i]),
+          y = labels,
+          new = "",
+          x = maximum,
+          Wrap = as.character(plotTable$Wrap[i]),
+          stringsAsFactors = FALSE
+        )
         # The labels are in minutes, hours, days or weeks, whichever suits
         # this panel's longest time (recoveryAxisUnit()), independently of
         # the x axis.  The top of the scale is rounded up to a multiple of
@@ -993,16 +1018,21 @@ simulationPlot <- function(
 #        recoveryLabels$new[start:end] <- paste(labels /  plotTable$MaxY[i] * plotTable$MaxRecovery[i], "min")
 #        recovery$Recovery[USE] <- recovery$Recovery[USE] / plotTable$MaxRecovery[i] * plotTable$MaxY[i]
 #        plotTable does not have MaxY, and it is not needed in the table, so
-        MaxYi <- recoveryLabels$y[end]
-        recoveryLabels$new[start:end] <- paste(labels /  MaxYi * maxRecoveryShown, recoveryUnit$abbreviation)
+        MaxYi <- labels[length(labels)]
+        panelLabels$new <- paste(labels /  MaxYi * maxRecoveryShown, recoveryUnit$abbreviation)
         recovery$Recovery[USE] <- recovery$Recovery[USE] / plotTable$MaxRecovery[i] * MaxYi
         recovery$Wrap[USE] <- as.character(plotTable$Wrap[i])
-        start <- end + 1
+        recoveryLabelList[[length(recoveryLabelList) + 1]] <- panelLabels
       } else {
         recovery <- recovery[!USE,]
       }
     }
-    recoveryLabels <- recoveryLabels[recoveryLabels$Drug != "",]
+    recoveryLabels <- if (length(recoveryLabelList)) {
+      do.call(rbind, recoveryLabelList)
+    } else {
+      data.frame(Drug = character(0), y = numeric(0), new = character(0),
+                 x = numeric(0), Wrap = character(0), stringsAsFactors = FALSE)
+    }
 
     # `Wrap =`, not `Wrap <-`: the assignment form named the column after the
     # whole expression, and the code below only found it because `$` on a data

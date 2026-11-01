@@ -757,9 +757,9 @@ helpScenarioDefinitions <- function() {
     ),
     helpScenario(
       "james-lean-body-mass",
-      "Obesity: why the Schnider and Minto models fail at the extremes of weight",
+      "Obesity: the James lean body mass in the Schnider and Minto models",
       "Special populations",
-      "The same effect-site targets in a 150 kg woman on the Eleveld models and on the pumps' Schnider and Minto models, whose James lean body mass is a parabola that falls with weight past a BMI of 36.",
+      "The same effect-site targets in a 150 kg woman on the library's models (Eleveld's propofol, Kim's remifentanil at this BMI) and on the pumps' Schnider and Minto models, whose James lean body mass is a parabola that falls with weight past a BMI of 36; stanpumpR holds it at the peak.",
       age = 40, weight = 150, height = 160, sex = SEX_FEMALE,
       doses = helpDoses(
         c("propofol", 0, 3, "Effect site target"),
@@ -1367,7 +1367,9 @@ helpScenarioPageHTML <- function(id) {
     eventsHTML <- helpTableHTML(ev, "Events")
   }
 
-  narrative <- helpMarkdownToHTML(helpReadMarkdown(paste0("scenarios/", id)))
+  # A scenario's narrative may carry a generated block (the James lean body
+  # mass figure in james-lean-body-mass), as the static pages do
+  narrative <- helpMarkdownToHTML(helpExpandGenerated(helpReadMarkdown(paste0("scenarios/", id))))
 
   paste0(
     "<p class='lead'>", htmltools::htmlEscape(s$summary), "</p>",

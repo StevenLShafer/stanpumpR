@@ -329,12 +329,13 @@ helpIllicitAnalyte <- function(drug) {
 
 #' The James lean body mass against the Al-Sallami fat-free mass, as a figure
 #'
-#' An inline SVG line chart for the Open TCI page (inst/help/opentci.md): both
-#' measures of body size for one woman across weight, drawn from lbmJames()
-#' and ffmAlSallami() themselves, with the James peak and zero found from the
-#' function rather than quoted, and the pumps' BMI limit for women shaded.  The
-#' block is one HTML block with no blank line, so commonmark passes it through
-#' whole.
+#' An inline SVG line chart for the Open TCI page (inst/help/opentci.md) and
+#' the obesity scenario: both measures of body size for one woman across
+#' weight, drawn from lbmJames() and ffmAlSallami() themselves, with the James
+#' peak and zero found from the function rather than quoted, the value the
+#' models read past the peak (lbmJamesCapped(), dashed), and the pumps' BMI
+#' limit for women shaded.  The block is one HTML block with no blank line, so
+#' commonmark passes it through whole.
 #'
 #' @param drugDefaults unused; every block takes it
 #' @returns the figure, as one HTML string
@@ -344,6 +345,7 @@ helpJamesLBMFigure <- function(drugDefaults = NULL) {
   bmiLimit <- 35    # the pumps' limit for the Schnider and Minto models in women
   weights <- seq(40, 200, by = 1)
   james <- vapply(weights, lbmJames, numeric(1), height = height, sex = sex)
+  capped <- vapply(weights, lbmJamesCapped, numeric(1), height = height, sex = sex)
   ffm <- vapply(weights, ffmAlSallami, numeric(1), height = height, age = age, sex = sex)
   lbm <- function(w) lbmJames(w, height, sex)
   peak <- stats::optimize(lbm, c(40, 200), maximum = TRUE, tol = 1e-8)$maximum
@@ -387,15 +389,20 @@ helpJamesLBMFigure <- function(drugDefaults = NULL) {
     sprintf('<text x="%s" y="%s" text-anchor="end" fill="#c0392b">Zero at BMI %s</text>',
             f(sx(zero) - 8), f(sy(0) + 16), helpFormatNumber(bmi(zero)))
   )
+  # Past the peak the models read the dashed line, not the parabola
+  beyond <- weights >= peak
   lines <- c(
     sprintf('<path d="%s" fill="none" stroke="#2c3e50" stroke-width="2.5"/>', path(weights, ffm)),
     sprintf('<path d="%s" fill="none" stroke="#c0392b" stroke-width="2.5"/>', path(weights, james)),
-    # The legend sits above both lines, left of the shaded band
-    sprintf(paste0('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="%s" stroke-width="2.5"/>',
+    sprintf('<path d="%s" fill="none" stroke="#c0392b" stroke-width="2.5" stroke-dasharray="7,5"/>',
+            path(weights[beyond], capped[beyond])),
+    # The legend sits above the lines, left of the shaded band
+    sprintf(paste0('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="%s" stroke-width="2.5"%s/>',
                    '<text x="%s" y="%s" dominant-baseline="middle" fill="%s">%s</text>'),
-            f(sx(xr[1]) + 10), c(30, 48), f(sx(xr[1]) + 34), c(30, 48),
-            c("#c0392b", "#2c3e50"), f(sx(xr[1]) + 40), c(30, 48), c("#c0392b", "#2c3e50"),
-            c("James lean body mass", "Al-Sallami fat-free mass"))
+            f(sx(xr[1]) + 10), c(30, 48, 66), f(sx(xr[1]) + 34), c(30, 48, 66),
+            c("#c0392b", "#c0392b", "#2c3e50"), c("", ' stroke-dasharray="7,5"', ""),
+            f(sx(xr[1]) + 40), c(30, 48, 66), c("#c0392b", "#c0392b", "#2c3e50"),
+            c("James lean body mass", "Held at its peak, as the models read it", "Al-Sallami fat-free mass"))
   )
   axes <- c(
     sprintf('<text x="%s" y="%s" text-anchor="middle">Weight (kg)</text>',
@@ -406,8 +413,8 @@ helpJamesLBMFigure <- function(drugDefaults = NULL) {
   label <- sprintf(paste(
     "James lean body mass and Al-Sallami fat-free mass of a %d-year-old woman, %d cm tall,",
     "from 40 to 200 kg. The James value peaks at %s kg at a BMI of %s and is zero at a BMI of %s;",
-    "the fat-free mass rises at every weight."), age, height, helpFormatNumber(lbm(peak)),
-    helpFormatNumber(bmi(peak)), helpFormatNumber(bmi(zero)))
+    "the models hold it at the peak past it; the fat-free mass rises at every weight."),
+    age, height, helpFormatNumber(lbm(peak)), helpFormatNumber(bmi(peak)), helpFormatNumber(bmi(zero)))
   svg <- c(
     sprintf('<svg viewBox="0 0 %d %d" role="img" aria-label="%s" font-size="12" font-family="inherit" style="width:100%%;max-width:640px;height:auto">',
             W, H, label),
@@ -417,8 +424,9 @@ helpJamesLBMFigure <- function(drugDefaults = NULL) {
     svg,
     sprintf(paste(
       "<figcaption>Lean body mass of a %d-year-old woman, %d cm tall, by the James equation",
-      "(used by the Schnider and Minto models) and the Al-Sallami fat-free mass (used by",
-      "Eleveld's). Drawn by stanpumpR from the same functions its models call.</figcaption>"),
+      "(used by the Schnider and Minto models), the value those models read past its peak",
+      "(dashed: held at the peak), and the Al-Sallami fat-free mass (used by Eleveld's).",
+      "Drawn by stanpumpR from the same functions its models call.</figcaption>"),
       age, height),
     "</figure>"
   ), collapse = "\n")

@@ -57,17 +57,24 @@
 # getDrugPK() then solves the time to peak effect from that ke0.
 #
 # Both use the James (1976) lean body mass, as the papers, STANPUMP and the
-# pumps do (lbmJames()), and that is deliberate.  The library's own models
-# use the Al-Sallami fat-free mass; these two are here to show what the pumps
-# compute, and part of what they teach is why the pumps should run the
-# Eleveld models instead.  James's lean body mass is a parabola in weight: it
-# peaks at a BMI of 43 in men and 36 in women and then falls (above about
-# 125 kg in a man of 170 cm, 92 kg in a woman of 160 cm), so the Schnider
-# clearance, which falls with lean body mass, rises steeply in the obese,
-# and far enough out Minto's V1 goes negative; in a small child the
-# Schnider clearance intercepts make CL1 negative.  Where a volume, clearance
-# or ke0 comes out zero or negative the model is not defined for that
-# patient, no companion is built, and the app says so
+# pumps do, HELD AT ITS PEAK past the peak (lbmJamesCapped(), R/lbmJames.R).
+# James's lean body mass is a parabola in weight: it peaks at a BMI of 43 in
+# men and 36 in women and then falls (above about 125 kg in a man of 170 cm,
+# 92 kg in a woman of 160 cm), reaching zero at twice that BMI.  That shape
+# was unforeseen when the models were built (Bouillon & Shafer 1998 drew it),
+# and the pumps answer it by refusing a patient above a BMI of 42 (men) or
+# 35 (women), just short of the peak.  Until 2026-10-31 these companions
+# used the raw equation, so that they failed in the obese as the pumps do;
+# Steven L. Shafer then decided (2026-10-31) that they hold the lean body
+# mass at the most the equation gives for the height instead, which is what
+# a pump computes for the heaviest patient it accepts, continued without the
+# fall.  The weight and height terms are still the models' own, so the
+# Schnider clearance still rises with total weight in the obese, and the
+# comparison with the Eleveld models (which scale to the Al-Sallami fat-free
+# mass) is still the lesson.  In a small child the Schnider clearance
+# intercepts make CL1 negative.  Where a volume, clearance or ke0 comes out
+# zero or negative the model is not defined for that patient, no companion
+# is built, and the app says so
 # (alternativeModelProblems()).  The same limit is why the pumps restrict
 # these models to a BMI below 42 in men and 35 in women.  Scenario
 # `james-lean-body-mass`.
@@ -204,7 +211,7 @@ alternativeModelColor <- function(color, amount = 0.45) {
 propofolSchnider <- function(weight, height, age, sex, adjustToFFM = TRUE,
                              pregnant = FALSE)
 {
-  lbm <- lbmJames(weight, height, sex)
+  lbm <- lbmJamesCapped(weight, height, sex)
   clPregnancy <- if (isTRUE(pregnant)) PROPOFOL_PREGNANCY_CL_FACTOR else 1
   default <- list(
     v1  = 4.27,
@@ -252,7 +259,7 @@ propofolSchnider <- function(weight, height, age, sex, adjustToFFM = TRUE,
 remifentanilMinto <- function(weight, height, age, sex, adjustToFFM = TRUE,
                               pregnant = FALSE)
 {
-  lbm <- lbmJames(weight, height, sex)
+  lbm <- lbmJamesCapped(weight, height, sex)
   clPregnancy <- if (isTRUE(pregnant)) REMIFENTANIL_PREGNANCY_CL_FACTOR else 1
   default <- list(
     v1  = 5.1  - 0.0201  * (age - 40) + 0.072 * (lbm - 55),

@@ -14,7 +14,7 @@ Two target-controlled infusions for a 70 kg, 170 cm, 40-year-old man: an effect-
 - Change *Effect site target* to *Plasma target* for both drugs. Each pump now fills its own central compartment and holds the plasma at the target; the loading doses shrink, and the gap between the two propofol pumps' loading doses, which is a gap in V1, is easier to read.
 - Set the age to 80 and apply. The Minto model's ke0 falls with age, so the Minto pump's loading dose for the same 4 ng/mL target changes, and its effect site takes longer to reach the target; the Eleveld pump's does not change in the same way. Hover on the remifentanil rate panel at the start to read the two loading doses.
 - Raise the propofol target to 5 and see both loading doses grow in proportion.
-- Make the patient a 150 kg, 160 cm woman, or load [the obesity scenario](scenario:james-lean-body-mass), which does. The Schnider pump then gives nearly twice the propofol of the Eleveld pump, because the James lean body mass falls with weight in the obese.
+- Make the patient a 150 kg, 160 cm woman, or load [the obesity scenario](scenario:james-lean-body-mass), which does. The Schnider pump then gives 1,327 mg of propofol over the hour against the Eleveld pump's 917, because Schnider's clearance rises with total weight while its central volume stays 4.27 L; that scenario also shows the parabola of the James lean body mass the two models use, and how stanpumpR holds it at its peak.
 
 ## Background
 

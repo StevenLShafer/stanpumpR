@@ -17,9 +17,11 @@ restoreThresholds(drugDefaults, endCe = NULL, macThreshold = NULL)
 a list with the updated \code{drugDefaults} and \code{macThreshold}
 }
 \description{
-A bookmark saves the stored \code{endCe} of every drug, named by drug, and
-the MAC threshold.  Both are optional: bookmarks made before thresholds were
-saved, and any entry that is not a usable number, leave the drug's current
-value in place and the MAC threshold at its default.  Drugs named in the
-bookmark but absent from the defaults are ignored.
+A bookmark saves the thresholds edited away from the library's defaults
+(\code{changedThresholds()}; before 2026-10-31 the stored \code{endCe} of
+every drug), named by drug, and the MAC threshold.  Both are optional:
+bookmarks made before thresholds were saved, and any entry that is not a
+usable number, leave the drug's current value in place and the MAC
+threshold at its default.  Drugs named in the bookmark but absent from the
+defaults are ignored.
 }

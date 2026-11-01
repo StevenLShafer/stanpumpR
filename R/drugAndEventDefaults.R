@@ -1,10 +1,65 @@
 # Split each drug's comma-separated Units into a vector, grouped by route (IV,
 # then PO, IM, IN, RA) so the units dropdowns list each route's units together.
 drugUnitsExpand <- function(units) {
-  lapply(strsplit(units, ","), groupUnitsByRoute)
+  # trimws: a Drug Library edit typed as "mg, mcg/kg/min" must offer
+  # "mcg/kg/min", not " mcg/kg/min", which the dose table would then refuse
+  lapply(strsplit(units, ","), function(tokens) groupUnitsByRoute(trimws(tokens)))
 }
 drugUnitsSimplify <- function(units) {
   unlist(lapply(units, paste, collapse = ","))
+}
+
+# Can ggplot draw this colour?  A name or "#RRGGBB" col2rgb() reads.
+isValidColor <- function(x) {
+  if (!is.character(x) || length(x) != 1 || is.na(x) || !nzchar(x)) return(FALSE)
+  !inherits(try(grDevices::col2rgb(x), silent = TRUE), "try-error")
+}
+
+# What is wrong with an edited drug library (the Drug Library dialog), as
+# sentences, or character(0).  Only entries that changed are judged, since a
+# metabolite-only row has no colour or units of its own.  A Color ggplot cannot
+# read reached the plot as a generic error in its place, and a Units entry the
+# dose table does not accept (validateDoseTableInput()) was offered in the
+# table and then refused as unknown units, with a blank plot (2026-10-31).
+drugLibraryProblems <- function(edited, current) {
+  problems <- character(0)
+  at <- match(edited$Drug, current$Drug)
+  color <- as.character(edited$Color)
+  colorBefore <- as.character(current$Color)[at]
+  badColor <- !is.na(at) & !identical2(color, colorBefore) & !vapply(color, isValidColor, logical(1))
+  if (any(badColor)) {
+    problems <- c(problems, paste0(
+      "Color must be a colour name or #RRGGBB (",
+      paste(sprintf("%s: \"%s\"", edited$Drug[badColor], color[badColor]), collapse = ", "), ")."))
+  }
+  known <- c(allUnits, gasUnits, tciUnits, scheduledUnits)
+  units <- drugUnitsSimplify(edited$Units)
+  unitsBefore <- drugUnitsSimplify(current$Units)[at]
+  unknown <- character(0)
+  emptied <- character(0)
+  for (i in seq_along(units)) {
+    if (is.na(at[i]) || identical(units[i], unitsBefore[i])) next
+    tokens <- trimws(strsplit(units[i], ",", fixed = TRUE)[[1]])
+    # A changed list with no unit, or an empty entry between commas, would
+    # offer a blank the dose table ignores: refused, as an unknown unit is.
+    if (length(tokens) == 0 || any(!nzchar(tokens))) emptied <- c(emptied, edited$Drug[i])
+    bad <- tokens[nzchar(tokens) & !tokens %in% known]
+    if (length(bad)) unknown <- c(unknown, sprintf("%s: %s", edited$Drug[i], paste0("\"", bad, "\"", collapse = ", ")))
+  }
+  if (length(unknown)) {
+    problems <- c(problems, paste0(
+      "Units must be units the dose table accepts (", paste(unknown, collapse = "; "), ")."))
+  }
+  if (length(emptied)) {
+    problems <- c(problems, paste0(
+      "Units must list at least one unit, with none left blank (", paste(emptied, collapse = ", "), ")."))
+  }
+  problems
+}
+
+# Elementwise identical() for two character vectors, NA equal to NA
+identical2 <- function(x, y) {
+  (is.na(x) & is.na(y)) | (!is.na(x) & !is.na(y) & x == y)
 }
 
 #' Return the stanpumpR drug defaults table

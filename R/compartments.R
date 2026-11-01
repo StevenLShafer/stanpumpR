@@ -224,8 +224,11 @@ liftCompartments <- function(results, PK, dose)
     !is.null(x) && any(x & dose$Dose != 0)
   }, logical(1)))
   units <- depotUnits(PK$Concentration.Units)
+  # na.rm: a transit-chain drug given only a scheduled dose of 0 (which stops
+  # the schedule before it starts) returns a Depot of NA, and `if (NA)` ended
+  # the simulation of a 200-drug table with a blank plot (2026-10-31).
   hasDepot <- "Depot" %in% present && !is.null(units) &&
-    (dosedDepot || any(lifted$Depot > 0))
+    (dosedDepot || any(lifted$Depot > 0, na.rm = TRUE))
 
   out <- data.frame(Time = results$Time)
   if (hasV2 && "C2" %in% present) out$V2 <- lifted$C2
