@@ -24,4 +24,4 @@ Sending mail needs an email account configured on the server. If the panel says 
 
 ## Privacy
 
-stanpumpR does not collect protected health information. The emailed slide contains only what is on the screen and what you type. Please do not enter patient identifiers in the comment.
+Sending the slide does not require a patient's name or record identifier. But it sends more than "what is on the screen": the email body links to a bookmark URL that reconstructs the whole patient and dose-table state, and the attached Excel workbook includes the patient's covariates, the full dose table, the simulated concentrations and the pharmacokinetic parameters used for every drug — all of it, not only what is visible in the current view. That content, and the comment you type, travel through your email provider and the recipient's inbox like any other message. Please do not enter patient identifiers in the comment, and treat the email itself as carrying patient-specific information subject to your own institution's email and privacy policies.

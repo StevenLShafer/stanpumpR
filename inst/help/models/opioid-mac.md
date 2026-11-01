@@ -44,7 +44,7 @@ The model falls short at low opioid levels and for alfentanil and remifentanil, 
 
 ## Interaction with *Time until threshold*
 
-When the MAC time until threshold is computed with this interaction on, the opioid's effect is held at its value at the moment the agents are turned off, although in truth the opioid would wear off too. The MAC time is therefore a little long.
+When the MAC time until threshold is computed with this interaction on, the opioid's effect is held at its value at the moment the agents are turned off, although in truth the opioid effect-site concentration would keep changing. The resulting error has no fixed direction: the MAC time may read too long or too short, depending on whether the opioid's own effect-site concentration is still rising or already falling at that moment.
 
 ## What to look for
 

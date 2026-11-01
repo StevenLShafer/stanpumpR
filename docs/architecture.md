@@ -19,8 +19,11 @@ package with a golem-style `ui / server / run` split; the entry point is
 ## The request → render pipeline
 
 Everything is one reactive dependency chain. Any edit — a covariate, a
-dose cell, a graph option — invalidates one link, and Shiny re-runs only what is downstream.
-The heavy computation is the last two stages.
+graph option, or (once applied) the dose table — invalidates one link, and Shiny re-runs only
+what is downstream. A dose-cell edit itself first updates a working draft; the draft becomes
+the simulated dose table, and so starts invalidating this chain, only once **Apply** commits it
+(see [The dose table lifecycle](#the-dose-table-lifecycle) below). The heavy computation is the
+last two stages.
 
 ### 01 — Inputs
 
@@ -411,7 +414,9 @@ All files are flat in `R/`.
 
 - **Target-controlled infusion** (`tci.R`) — a dose row with units `Plasma target` or
   `Effect site target` runs a simulated TCI pump: a rapid loading infusion sized to reach the
-  target without overshoot, then a plasma hold. The controller re-plans every 10 s, hands off
+  target without overshoot, then a plasma hold. The controller re-plans every 10 s after a
+  target or bolus change, lengthening that interval (up to a bounded maximum) once an
+  effect-site target has settled into a steady plasma-hold rate, hands off
   from effect-site to plasma control within 5% of the target (the effect-site solution is
   ill-conditioned at steady state and would alias), and stops on a target of 0 or a manual
   infusion row. Its rate rows never enter the dose table: `simCpCe()` returns them as `$tci`,

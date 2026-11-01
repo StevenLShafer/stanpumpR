@@ -1,4 +1,4 @@
-stanpumpR predicts drug concentrations. You describe a patient and a dosing regimen, and it plots the plasma and effect-site concentrations those doses would be expected to produce, using pharmacokinetic models from the peer-reviewed literature. It is meant to make pharmacokinetics accessible: for patient care, for teaching, and for research.
+stanpumpR predicts drug concentrations. You describe a patient and a dosing regimen, and it plots the plasma and effect-site concentrations those doses would be expected to produce, using pharmacokinetic models grounded in the peer-reviewed literature, with documented derivations, extrapolations and provisional assumptions where the literature itself leaves a gap (a route, a covariate or a parameter the source study did not measure). It is meant to make pharmacokinetics accessible: for patient care, for teaching, and for research.
 
 **stanpumpR does not control drug delivery and does not measure anything.** Every curve is a model's prediction for a typical patient with the covariates you entered. Real patients vary, sometimes a great deal, around those predictions. Please read [Cautions](help:cautions) once.
 

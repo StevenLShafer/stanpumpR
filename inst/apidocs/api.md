@@ -297,8 +297,11 @@ Inhaled anesthetics are not available through the API yet.
 
 ## The response
 
-Every format carries the same content. All times are in **minutes**, weight is
-in kg, height in cm and age in years, whatever units the request used.
+What each format carries differs — see [Formats](#formats) below: JSON and XML
+carry the whole response described in this section, CSV carries only the time
+series, and xlsx spreads the same parts across its sheets. All times are in
+**minutes**, weight is in kg, height in cm and age in years, whatever units
+the request used.
 
 | Part | Contents |
 |---|---|
@@ -400,8 +403,8 @@ format was requested.
 |---|---|
 | 400 | The request is invalid. The message names the field and, for a table, the row. For example: ``"`doses` row 3: 'mg PO' is not a unit of propofol. Its units are: mg, mg/kg, ..."`` |
 | 415 | The body was declared as something other than `application/json`. |
-| 422 | The request is valid, but a drug model could not simulate it, or the result is larger than the service returns (see Limits). |
-| 500 | Unexpected server error. Details are written to the server log, not sent to the client. |
+| 422 | The request is valid, but a drug model could not simulate it, or the result is larger than the service returns (see Limits). The message includes the model's own error text, which can be specific to the patient or dose (not a generic message). |
+| 500 | A server error the service did not expect and could not attribute to the request. Details are written to the server log, not sent to the client. |
 
 ---
 
