@@ -31,7 +31,7 @@ a list in the shape \code{getDrugPK()} expects
 \description{
 Three compartments from Hui 1991's Table IV in patients with normal renal
 function, with a two-plateau clearance covariate on creatinine clearance and
-an absorption taken from Singhvi 1988 through the Murdoch & McTavish review.
+an absorption taken from Singhvi 1988.
 The plotted moiety is fosinoprilat, the active diacid; a dose is entered as
 prescribed, in milligrams of fosinopril sodium, and converted to its molar
 equivalent of fosinoprilat inside the bioavailability.  See the header of
