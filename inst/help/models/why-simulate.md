@@ -34,7 +34,7 @@ The editorial's Figure 1 plotted the same comparison against the length of the i
 
 ## Why
 
-None of the six numbers in a column is the speed of any one process. The three half-lives are properties of the whole system, the roots of a cubic equation whose coefficients mix every volume and clearance together, and the table says nothing about how much of the concentration each of them governs. That is what decides how fast the plasma concentration falls, and it has to be computed.
+None of the six numbers in a column is the speed of any one process. The three half-lives are properties of the whole system: each is ln 2 divided by a decay rate, and the three decay rates come from the roots of a cubic equation whose coefficients mix every volume and clearance together, and the table says nothing about how much of the concentration each of them governs. That is what decides how fast the plasma concentration falls, and it has to be computed.
 
 The row *Share of the concentration in each exponential* above does that. When a steady-state infusion stops, the plasma concentration is the sum of three exponentials, and the shares are their sizes. In hepatic failure the fastest exponential, with its 4-minute half-life, carries about 57% of the concentration: the concentration can fall by half almost entirely by that one phase, and it does so in 10 minutes. In normal subjects the slowest exponential carries about 65%, so the concentration cannot fall by half until the 100-minute phase has done much of the work, and that takes 41 minutes. Propofol's two fast exponentials carry about 48%, just short of half, so the last two per cent of the fall wait on the slow 198-minute phase, which is why propofol's time, 22 minutes, sits between the other two.
 
@@ -56,7 +56,7 @@ The models reproduce the editorial's 41 and 10 minutes. For propofol they give 2
 
 This is the algebra of the spreadsheet Shafer used to build the editorial's three models from Table 1, written down at his request. It reproduces that spreadsheet to every printed digit, and it is what `threeCompartmentFromHalfLives()` in `R/duzitol.R` computes.
 
-For a mammillary three-compartment model with rate constants k10, k12, k13, k21 and k31, the exponents λ1, λ2, λ3 (each ln 2 divided by a half-life) are the roots of the characteristic polynomial s³ + a2 s² + a1 s + a0, whose coefficients are both symmetric functions of the λs and sums of products of the rate constants:
+For a mammillary three-compartment model with rate constants k10, k12, k13, k21 and k31, the exponents λ1, λ2, λ3 (each ln 2 divided by a half-life) are positive decay rates, and −λ1, −λ2, −λ3 are the roots of the characteristic polynomial s³ + a2 s² + a1 s + a0, whose coefficients are both symmetric functions of the λs and sums of products of the rate constants:
 
 ```
 a2 = λ1 + λ2 + λ3          = k10 + k12 + k13 + k21 + k31
