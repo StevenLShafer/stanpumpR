@@ -11,7 +11,7 @@ test_that("an empty dose table becomes one blank row, and can be drawn", {
   expect_equal(names(row), names(doseTableBlank))
   expect_true(all(unlist(row) == ""))
   hot <- createHOT(doseTableBlank[0, ], getDrugDefaultsGlobal())
-  expect_equal(length(hot$x$data), 1L)
+  expect_equal(hot$x$rDataDim, c(1L, 4L))   # one row, four columns, in the widget's own data
 })
 
 test_that("scheduledDoseCount counts the repeats without building them", {
@@ -90,6 +90,10 @@ test_that("a bookmark carries only the thresholds that were edited", {
   # an old bookmark's full column still restores
   full <- stats::setNames(edited$endCe, edited$Drug)
   expect_equal(restoreThresholds(dd, full)$drugDefaults$endCe, edited$endCe)
+  # an entry that is not a finite number leaves the drug's value and the MAC default alone
+  kept <- restoreThresholds(dd, c(propofol = Inf, fentanyl = NA, morphine = -1), Inf)
+  expect_equal(kept$drugDefaults$endCe, dd$endCe)
+  expect_equal(kept$macThreshold, GAS_MAC_THRESHOLD)
 })
 
 test_that("the Drug Library refuses a colour ggplot cannot read and units the dose table does not accept", {
@@ -111,6 +115,16 @@ test_that("the Drug Library refuses a colour ggplot cannot read and units the do
   # a list typed with spaces after the commas is offered without them, so the
   # unit the dropdown offers is the unit the dose table accepts
   expect_equal(unlist(drugUnitsExpand("mg, mcg/kg/min ,mg PO")), c("mg", "mcg/kg/min", "mg PO"))
+  # an emptied list, or a blank between commas, is refused; a trailing comma is not
+  for (typed in c("", "   ", "mg, ,mcg")) {
+    edited <- dd
+    edited$Units[[i]] <- drugUnitsExpand(typed)[[1]]
+    expect_match(drugLibraryProblems(edited, dd), "at least one unit, with none left blank", all = FALSE,
+                 info = deparse(typed))
+  }
+  edited <- dd
+  edited$Units[[i]] <- drugUnitsExpand("mg,")[[1]]
+  expect_length(drugLibraryProblems(edited, dd), 0)
   expect_true(isValidColor("steelblue"))
   expect_false(isValidColor(""))
   expect_false(isValidColor(NA_character_))
