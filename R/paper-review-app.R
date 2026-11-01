@@ -89,7 +89,17 @@ paperReviewUI <- function()
     # Not fillable: a filled layout shrinks the plot and the dose table.
     fillable = FALSE,
     theme = bslib::bs_theme(version = 5),
-    header = shinyjs::useShinyjs(),
+    header = htmltools::tagList(
+      shinyjs::useShinyjs(),
+      # Shown while Claude reads the paper.  A plain banner, shown and hidden
+      # at once: Shiny's progress notification fades out with a jQuery
+      # animation, which stalled in the desktop app's browser pane and left
+      # the box flashing over the report after the review had finished.
+      shinyjs::hidden(htmltools::div(
+        id = "reviewBusy", class = "alert alert-info", role = "status",
+        style = "position: fixed; top: 64px; left: 50%; transform: translateX(-50%); z-index: 2000; box-shadow: 0 2px 8px rgba(0,0,0,0.2);",
+        htmltools::strong("Claude is reading the paper."),
+        " This takes a few minutes, and the app does not respond until it finishes."))),
     bslib::nav_panel("Review", value = "review",
       bslib::layout_sidebar(fillable = FALSE,
         sidebar = bslib::sidebar(width = 320,
@@ -183,15 +193,16 @@ paperReviewServer <- function(input, output, session)
     if (!isTRUE(input$consent)) return(status("Tick the box to confirm the manuscript may be sent."))
     key <- paperReviewApiKey(if (exists("sessionKey", envir = store)) store$sessionKey else NULL)
     if (is.null(key)) return(status("No Anthropic API key is configured on this server."))
-    status("Reviewing: this takes a few minutes.")
-    result <- shiny::withProgress(message = "Claude is reading the paper", value = 0.2, {
-      tryCatch(
-        paperReviewExtract(store$pdf, if (exists("supplement", envir = store)) store$supplement,
-                           key = key,
-                           inferenceGeo = paperReviewConfig("paper_review_inference_geo")),
-        paper_review_error = function(e) e,
-        error = function(e) paperReviewError("unexpected", "The review failed unexpectedly."))
-    })
+    # Custom messages go to the browser at once, before the call blocks.
+    shinyjs::show("reviewBusy")
+    shinyjs::disable("review")
+    on.exit(shinyjs::hide("reviewBusy"), add = TRUE)
+    result <- tryCatch(
+      paperReviewExtract(store$pdf, if (exists("supplement", envir = store)) store$supplement,
+                         key = key,
+                         inferenceGeo = paperReviewConfig("paper_review_inference_geo")),
+      paper_review_error = function(e) e,
+      error = function(e) paperReviewError("unexpected", "The review failed unexpectedly."))
     rm(key)
     # The manuscript is not needed again: drop it whatever the outcome.
     suppressWarnings(rm(list = intersect(c("pdf", "supplement"), ls(store)), envir = store))

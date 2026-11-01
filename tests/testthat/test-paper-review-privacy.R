@@ -85,3 +85,27 @@ test_that("the app is started with bookmarking disabled", {
   expect_true(is.na(getOption("ECHO_OUTPUT_COMMENTS")))
   expect_equal(app$appOptions$bookmarkStore, "disable")
 })
+
+test_that("pressing Review runs the call, drops the manuscript and reports, with no network", {
+  dir <- file.path(tempdir(), paste0("upload-", paste(sample(letters, 12), collapse = "")))
+  dir.create(dir)
+  path <- file.path(dir, "0.pdf")
+  writeBin(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), path)
+  calls <- 0
+  testthat::local_mocked_bindings(
+    paperReviewApiKey = function(...) "test-key",
+    paperReviewExtract = function(...) {
+      calls <<- calls + 1
+      stop(paperReviewError("http_529", "The API is overloaded (529). Try again shortly."))
+    })
+  shiny::testServer(paperReviewServer, {
+    session$setInputs(manuscript = list(name = "x.pdf", size = 59, type = "application/pdf",
+                                        datapath = path))
+    session$setInputs(consent = TRUE)
+    session$setInputs(review = 1)
+    expect_equal(calls, 1)
+    expect_match(output$status, "overloaded")
+    expect_match(output$status, "The manuscript has been discarded")
+    expect_false(hasPdf())
+  })
+})
