@@ -14,6 +14,10 @@
 # measurement, and bioavailability is read, never fitted to another study's
 # exposure.  (Claude Code, 2026-10-30, at the request of Steven L. Shafer.)
 
+# The most printed inputs whose rounding the consistency check propagates
+# (2^k corners, each a getDrugPK() run).
+PAPER_REVIEW_ROUNDING_MAX_INPUTS <- 7
+
 # Agreement thresholds for a recomputed quantity, as a relative difference.
 PAPER_REVIEW_CLOSE  <- 0.05
 PAPER_REVIEW_FAR    <- 0.20
@@ -83,6 +87,12 @@ paperReviewSE <- function(value, uncertainty, n = NA_real_)
     return(list(se = (hi - lo) / 3.92, basis = "95% CI / 3.92"))
   if (type == "SD" && !is.na(v) && is.finite(n) && n > 1)
     return(list(se = v / sqrt(n), basis = "SD / sqrt(n)"))
+  # No uncertainty printed: the only imprecision the paper does state is its
+  # rounding, so that is the perturbation (an arbitrary +/-5% called the
+  # Duzitol editorial's exact table ill-conditioned); 5% only when even the
+  # printed digits are unknown.
+  r <- paperReviewRounding(uncertainty$valueText %or% "")
+  if (r > 0) return(list(se = r, basis = "no SE printed; the printed rounding (half the last digit)"))
   list(se = abs(value) * PAPER_REVIEW_DEFAULT_PERTURBATION,
        basis = paste0("none printed; assumed +/-", PAPER_REVIEW_DEFAULT_PERTURBATION * 100, "%"))
 }
@@ -158,6 +168,47 @@ paperReviewDerivedOne <- function(extraction, quantity, weight)
 }
 
 # --- Identifiability ----------------------------------------------------------
+
+#' Three-compartment parameters from CL, V1, Vss and the three half-lives
+#'
+#' Steven L. Shafer's spreadsheet algebra (the "(3). V1, Vdss, Cl,
+#' half-lives" sheet he used for the Duzitol editorial, Shafer and Stanski,
+#' Anesthesiology 1992): with k10 = CL/V1 and the three exponents, the
+#' product and pairwise sums of the eigenvalues give k21 and k31 as the roots
+#' of a quadratic, then k13 and k12 from the sum and from Vss.  It reproduces
+#' that spreadsheet to every printed digit for all three of its models
+#' (test-paper-review-duzitol.R).  The derivation, step by step, is in
+#' docs/paper-review.md ("The derivation behind the spreadsheet"):
+#' k21 k31 = l1 l2 l3 / k10 (g0); k12 k31 + k13 k21 = (Vss/V1 - 1) g0 (g1);
+#' k21 + k31 = (sum of pairwise products - g0 - g1) / k10 (f), so k21 and
+#' k31 are the roots of x^2 - f x + g0; k12 + k13 = sum(l) - k10 - k21 - k31
+#' (i); and k13 = (g1 - i k31) / (k21 - k31).
+#'
+#' @param CL,V1,Vss clearance and volumes, in consistent units
+#' @param t1,t2,t3 the three half-lives, fastest first, in the time unit of CL
+#' @returns a list of v1, v2, v3, cl1, cl2, cl3, compartment 2 the faster
+#' @keywords internal
+threeCompartmentFromHalfLives <- function(CL, V1, Vss, t1, t2, t3)
+{
+  l <- log(2) / sort(c(t1, t2, t3))
+  k10 <- CL / V1
+  g0 <- prod(l) / k10
+  g1 <- (Vss - V1) / V1 * g0
+  f <- (l[1] * l[2] + l[1] * l[3] + l[2] * l[3] - g1 - g0) / k10
+  disc <- f^2 - 4 * g0
+  if (!is.finite(disc) || disc <= 0)
+    stop("These numbers have no physically admissible three-compartment model")
+  k21 <- (f + sqrt(disc)) / 2
+  k31 <- (f - sqrt(disc)) / 2
+  h <- (Vss / V1 - 1) * g0
+  i <- sum(l) - k10 - k21 - k31
+  k13 <- (h - i * k31) / (k21 - k31)
+  k12 <- i - k13
+  if (!all(is.finite(c(k12, k13, k21, k31))) || !all(c(k12, k13, k21, k31) > 0))
+    stop("These numbers have no physically admissible three-compartment model")
+  list(v1 = V1, v2 = V1 * k12 / k21, v3 = V1 * k13 / k31,
+       cl1 = CL, cl2 = V1 * k12, cl3 = V1 * k13)
+}
 
 #' Two-compartment parameters from a biexponential disposition function
 #'
@@ -246,9 +297,23 @@ paperReviewIdentifiability <- function(extraction)
   nFree <- 2 * n
 
   verdict <- "underdetermined"; route <- NA_character_; closed <- NULL
+  # How to rebuild the model with each printed input moved to either end of
+  # its rounding (paperReviewConsistency() uses it): k inputs, and a function
+  # of their k signs returning the model's drug at the reference patient.
+  rounding <- NULL
   if (have(vc) || have(micro)) {
     roles <- if (have(vc)) vc else micro
     verdict <- "printed"; route <- paste(roles, collapse = ", ")
+    rounding <- list(n = length(roles), variant = function(signs) {
+      x <- extraction
+      for (j in seq_along(roles)) {
+        k <- which(vapply(x$parameters, function(p) identical(p$role, roles[j]), logical(1)))[1]
+        p <- x$parameters[[k]]
+        p$value <- paperReviewNum(p$value) + signs[j] * paperReviewRounding(p$value_text)
+        x$parameters[[k]] <- p
+      }
+      paperReviewDrug(x, reference)
+    })
     add("ok", paste0("The printed parameters close the ", n, "-compartment disposition"),
         paste0(nFree, " free parameters, ", nFree, " printed: ", route, "."), locs(roles))
   } else {
@@ -279,6 +344,10 @@ paperReviewIdentifiability <- function(extraction)
       attempt <- list(name = "CL, Vss and both half-lives",
                       inputs = list(CL = CL, Vss = Vss, t1 = hl[[1]], t2 = hl[[2]]),
                       solve = function(x) twoCompartmentFromHalfLives(x$CL, x$Vss, x$t1, x$t2))
+    } else if (n == 3 && haveHl && !is.na(CL$value) && !is.na(V1$value) && !is.na(Vss$value)) {
+      attempt <- list(name = "CL, V1, Vss and the three half-lives",
+                      inputs = list(CL = CL, V1 = V1, Vss = Vss, t1 = hl[[1]], t2 = hl[[2]], t3 = hl[[3]]),
+                      solve = function(x) threeCompartmentFromHalfLives(x$CL, x$V1, x$Vss, x$t1, x$t2, x$t3))
     } else if (perL && all(vapply(lambdas, function(x) !is.na(x$value), logical(1)))) {
       inputs <- c(stats::setNames(coefs, paste0("A", seq_len(n))),
                   stats::setNames(lambdas, paste0("l", seq_len(n))))
@@ -330,6 +399,20 @@ paperReviewIdentifiability <- function(extraction)
         conditioning <- paperReviewConditioning(attempt, extraction, reference)
         closed <- base
         closed$perKg <- isTRUE(CL$perKg) || isTRUE(V1$perKg)
+        half <- vapply(attempt$inputs, function(i) {
+          printed <- paperReviewNum(i$entry$value)
+          r <- paperReviewRounding(i$entry$value_text %or% "")
+          if (is.finite(printed) && printed != 0) abs(r * i$value / printed) else 0
+        }, numeric(1))
+        perKg <- closed$perKg
+        rounding <- list(n = length(half), variant = function(signs) {
+          x <- as.list(stats::setNames(x0, names(attempt$inputs)))
+          for (j in seq_along(x)) x[[j]] <- x[[j]] + signs[j] * half[j]
+          c2 <- tryCatch(attempt$solve(x), error = function(e) NULL)
+          if (is.null(c2)) return(NULL)
+          c2$perKg <- perKg
+          paperReviewDrug(extraction, reference, c2)
+        })
         route <- attempt$name
         if (conditioning$illConditioned) {
           verdict <- "ill_conditioned"
@@ -354,7 +437,7 @@ paperReviewIdentifiability <- function(extraction)
         paste0("The simulator plots concentrations only. ", extraction$structure$pd_model %or% ""),
         structureLoc)
 
-  list(verdict = verdict, route = route, closed = closed, findings = findings)
+  list(verdict = verdict, route = route, closed = closed, findings = findings, rounding = rounding)
 }
 
 #' Perturb a derived route across its inputs' printed uncertainty
@@ -372,7 +455,7 @@ paperReviewConditioning <- function(attempt, extraction, reference)
     entry <- i$entry
     printed <- paperReviewNum(entry$value)
     scale <- if (!is.na(printed) && printed != 0) i$value / printed else 1
-    s <- paperReviewSE(printed, entry$uncertainty, n)
+    s <- paperReviewSE(printed, c(entry$uncertainty %or% list(), list(valueText = entry$value_text)), n)
     list(se = abs(s$se * scale), basis = s$basis)
   })
   k <- length(attempt$inputs)
@@ -414,7 +497,7 @@ paperReviewConditioning <- function(attempt, extraction, reference)
 #' @param reference the reference patient
 #' @returns a list: \code{table} (a data frame) and \code{findings}
 #' @keywords internal
-paperReviewConsistency <- function(extraction, drug, reference)
+paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
 {
   section <- "Internal consistency"
   findings <- list()
@@ -444,6 +527,49 @@ paperReviewConsistency <- function(extraction, drug, reference)
   # Derived quantities an absorption was built from (R/paper-review-absorption.R).
   usedKeys <- unlist(lapply(Filter(function(a) isTRUE(a$ok), drug$absorptions %or% list()),
                             function(a) a$used))
+
+  # The model at every corner of its printed inputs' rounding, built only if
+  # a printed value does not already match.  A derived quantity can move far
+  # when the inputs are printed to two figures: the Duzitol editorial's own
+  # steady-state decrement times (41, 10, 20 min) lie inside the ranges its
+  # Table 1 allows (39-44, 9.6-10.8, 17-27) though not all at the centre.
+  corners <- NULL
+  cornerSets <- function() {
+    if (!is.null(corners)) return(corners)
+    corners <<- list()
+    r <- ident$rounding
+    if (is.null(r) || r$n == 0 || r$n > PAPER_REVIEW_ROUNDING_MAX_INPUTS) return(corners)
+    signs <- as.matrix(expand.grid(rep(list(c(-1, 1)), r$n)))
+    for (s in seq_len(nrow(signs))) {
+      d <- tryCatch(r$variant(unname(signs[s, ])), error = function(e) NULL)
+      if (is.null(d) || !isTRUE(d$ok)) next
+      p2 <- tryCatch(paperReviewQuietly(function()
+        getDrugPK(d$defaults$Drug, reference$weight, reference$height, reference$age,
+                  reference$sex, d$defaults, model = d$model)$PK$default), error = function(e) NULL)
+      if (!is.null(p2)) corners[[length(corners) + 1]] <<- p2
+    }
+    corners
+  }
+  # One analytic quantity of a PK set: what recomputed() gives for the centre.
+  analytic <- function(dq, set) {
+    l <- c(set$lambda_1, set$lambda_2, set$lambda_3)[seq_len(n)]
+    c0 <- c(set$p_coef_bolus_l1, set$p_coef_bolus_l2, set$p_coef_bolus_l3)[seq_len(n)]
+    v <- set$v1 + (if (n >= 2) set$v2 else 0) + (if (n >= 3) set$v3 else 0)
+    q <- dq$quantity
+    i <- suppressWarnings(as.integer(sub("^.*_", "", q)))
+    switch(q,
+      t_half_1 = , t_half_2 = , t_half_3 = if (isTRUE(i <= n)) log(2) / l[i] else NA_real_,
+      t_half_terminal = log(2) / l[n],
+      lambda_1 = , lambda_2 = , lambda_3 = if (isTRUE(i <= n)) l[i] else NA_real_,
+      coefficient_1 = , coefficient_2 = , coefficient_3 =
+        if (isTRUE(i <= n) && identical(dq$units, "1/L")) c0[i] else NA_real_,
+      k10 = set$k10, k12 = set$k12, k21 = set$k21, k13 = set$k13, k31 = set$k31,
+      V1 = set$v1, Vss = v, Varea = set$cl1 / l[n], CL = set$cl1,
+      MRT = if (is.null(dq$regimen_id)) v / set$cl1 else NA_real_,
+      decrement_25 = , decrement_50 = , decrement_75 = , decrement_80 =
+        paperReviewDecrementTime(c0, l, as.numeric(sub("^decrement_", "", q)) / 100),
+      NA_real_)
+  }
 
   recomputed <- function(dq) {
     q <- dq$quantity
@@ -523,7 +649,24 @@ paperReviewConsistency <- function(extraction, drug, reference)
     withinRounding <- is.finite(model) && is.finite(printedInternal) &&
       isTRUE(abs(model - printedInternal) <= roundingInternal * 1.0001)
     loose <- q %in% c("Cmax", "tmax") && !identical(dq$statistic, "typical_value")
+    # Not a match at the centre: is it inside what the inputs' rounding allows?
+    withinInputs <- FALSE
+    if (kindOk && is.finite(model) && is.finite(printedInternal) && !incomparable &&
+        !(withinRounding || abs(relative) <= 0.01)) {
+      range <- range(c(model, vapply(cornerSets(), function(set) analytic(dq, set), numeric(1))),
+                     na.rm = TRUE)
+      own <- if (is.finite(roundingInternal)) roundingInternal else 0
+      if (all(is.finite(range)) && diff(range) > 0 &&
+          printedInternal >= range[1] - own && printedInternal <= range[2] + own) {
+        withinInputs <- TRUE
+        f <- if (is.finite(printedValue) && printedValue != 0) printedValue / printedInternal else 1
+        note <- trimws(paste(note, paste0("Within the ", prFmt(range[1] * f, 3), " to ",
+                                          prFmt(range[2] * f, 3), " that the rounding of the printed ",
+                                          "inputs allows.")))
+      }
+    }
     status <- if (incomparable && grepl("derived from it", note)) "used to build the model"
+      else if (withinInputs) "matches within rounding"
       else if (incomparable) "not comparable"
       else if (!kindOk && nzchar(note)) "not recomputed"
       else if (!kindOk) "units not convertible"
@@ -551,10 +694,11 @@ paperReviewConsistency <- function(extraction, drug, reference)
   table <- if (length(rows)) do.call(rbind, rows) else NULL
   if (!is.null(table)) {
     compared <- table$status %in% c("matches", "close", "differs", "disagrees")
-    nMatch <- sum(table$status %in% c("matches", "close"))
+    nMatch <- sum(table$status %in% c("matches", "close", "matches within rounding"))
     findings <- c(list(paperReviewFinding(section,
       if (nMatch == sum(compared)) "ok" else "info",
-      paste0(nMatch, " of ", sum(compared), " printed derived quantities compared agree with the model within 5%"),
+      paste0(nMatch, " of ", sum(compared), " printed derived quantities compared agree with the model ",
+             "(within 5%, or within what the rounding of the printed inputs allows)"),
       paste0("Each was recomputed from the printed parameters through stanpumpR (getDrugPK(), cube(), ",
              "effectSitePeakTime(), simCpCe()).",
              if (any(!compared)) paste0(" ", sum(!compared), " more could not be compared; the table says why.")
@@ -565,6 +709,133 @@ paperReviewConsistency <- function(extraction, drug, reference)
       "The paper prints no derived quantities to check against the model"))
   }
   list(table = table, findings = findings)
+}
+
+#' Check a figure of decrement time against infusion duration
+#'
+#' The context-sensitive decrement time (the time for the concentration to
+#' fall by decrement_percent after a constant infusion of the plotted
+#' duration stops) is computed from the model at every digitised duration
+#' and compared with the plotted value.  The Duzitol editorial's Figure 1 is
+#' such a figure: its whole point is that the curves cannot be read off the
+#' table of half-lives.
+#'
+#' @returns a list: \code{finding}, and \code{figure} for the report's plot
+#' @keywords internal
+paperReviewDecrementFigure <- function(f, drug, reference)
+{
+  id <- f$figure_id %or% "Figure"
+  fall <- paperReviewNum(f$decrement_percent) / 100
+  minutes <- paperReviewMinutes(f$time_units %or% "min")
+  if (!is.finite(fall)) fall <- 0.5
+  modes <- if (isTRUE(drug$ok)) paperReviewDispositionModes(drug, reference) else NULL
+  if (is.null(modes) || is.na(minutes))
+    return(list(finding = paperReviewFinding("Figures", "info", paste(id, "not compared"),
+                                             "There is no complete model, or its time units are unknown.",
+                                             f$location)))
+  points <- do.call(rbind, lapply(f$series %or% list(), function(s) {
+    p <- s$points %or% list()
+    if (length(p) == 0) return(NULL)
+    data.frame(series = s$label %or% "",
+               time = vapply(p, function(x) paperReviewNum(x$time), numeric(1)) * minutes,
+               observed = vapply(p, function(x) paperReviewNum(x$value), numeric(1)) * minutes,
+               lower = NA_real_, upper = NA_real_, stringsAsFactors = FALSE)
+  }))
+  if (is.null(points) || nrow(points) == 0)
+    return(list(finding = paperReviewFinding("Figures", "info", paste(id, "has no digitised points"),
+                                             f$digitization_note %or% "", f$location)))
+  site <- f$decrement_site %or% "plasma"
+  dec <- if (identical(site, "effect_site"))
+    function(T) paperReviewEffectSiteDecrementTime(drug, reference, fall, T)
+  else
+    function(T) paperReviewTCIDecrementTime(drug$model$PK$default, fall, T)
+  points$predicted <- vapply(points$time, function(T) if (T > 0) dec(T) else NA_real_, numeric(1))
+  use <- is.finite(points$observed) & points$observed > 0 & is.finite(points$predicted) &
+    points$predicted > 0
+  pe <- (points$observed[use] - points$predicted[use]) / points$predicted[use]
+  mdpe <- stats::median(pe); mdape <- stats::median(abs(pe))
+  severity <- if (!is.finite(mdape)) "info" else if (mdape <= 0.2) "ok" else if (mdape <= 0.5) "concern" else "error"
+  grid <- seq(max(points$time, na.rm = TRUE) / 200, max(points$time, na.rm = TRUE) * 1.02,
+              length.out = if (identical(site, "effect_site")) 30 else 200)
+  finding <- paperReviewFinding("Figures", severity,
+    paste0(id, ": the model ", if (severity == "ok") "reproduces" else "does not closely reproduce",
+           " the ", round(100 * fall), "% decrement times"),
+    paste0(sum(use), " points compared. Each is the time for the ",
+           if (identical(site, "effect_site")) "effect-site" else "plasma",
+           " concentration to fall ", round(100 * fall), "% after it has been held constant by TCI ",
+           "for the plotted duration, computed from the model (",
+           if (identical(site, "effect_site")) "stanpumpR's effect-site TCI, simCpCe()"
+           else "paperReviewTCIDecrementTime()",
+           "). Median prediction error ", sprintf("%+.0f%%", 100 * mdpe),
+           ", median absolute ", sprintf("%.0f%%", 100 * mdape), ". The points were digitised ",
+           "approximately by Claude (", f$digitization_note %or% "", ")."),
+    f$location)
+  list(finding = finding,
+       figure = list(id = id, caption = f$caption %or% "", logY = FALSE, kind = "decrement",
+                     yLabel = paste0("Time for a ", round(100 * fall), "% fall"),
+                     xLabel = "Infusion duration",
+                     curve = data.frame(Time = grid, Cp = vapply(grid, dec, numeric(1)), regimen = "model"),
+                     points = points, mdpe = mdpe, mdape = mdape))
+}
+
+#' Time for the plasma concentration to fall after TCI holds it constant
+#'
+#' Context-sensitive decrement times assume the concentration was held
+#' constant during the infusion (target-controlled), not that the rate was
+#' (Shafer, 2026-11-01).  With the plasma concentration held at C, each
+#' peripheral compartment's concentration rises as C (1 - exp(-k21 T)) and
+#' C (1 - exp(-k31 T)), since V2 k21 = V1 k12; at the stop the three
+#' amounts decay freely, x(t) = exp(K t) x(T), and the time for the plasma
+#' concentration to fall by `fall` is found with uniroot().  At steady state
+#' (T = Inf) this equals paperReviewDecrementTime().
+#'
+#' @param set a PK set (v1..v3, cl1..cl3; an absent compartment has no
+#'   clearance into it)
+#' @param fall the fraction fallen
+#' @param duration how long the concentration was held, minutes
+#' @returns minutes
+#' @keywords internal
+paperReviewTCIDecrementTime <- function(set, fall, duration)
+{
+  v <- c(set$v1, set$v2, set$v3); cl <- c(set$cl1, set$cl2, set$cl3)
+  k10 <- cl[1] / v[1]; k12 <- cl[2] / v[1]; k13 <- cl[3] / v[1]
+  k21 <- cl[2] / v[2]; k31 <- cl[3] / v[3]
+  K <- matrix(c(-(k10 + k12 + k13), k21, k31,
+                k12, -k21, 0,
+                k13, 0, -k31), 3, byrow = TRUE)
+  x0 <- c(v[1], v[2] * (1 - exp(-k21 * duration)), v[3] * (1 - exp(-k31 * duration)))
+  e <- eigen(K)
+  P <- e$vectors
+  a <- solve(P, x0)
+  plasma <- function(t) Re(sum(P[1, ] * a * exp(e$values * t))) / v[1]
+  hi <- 1
+  while (plasma(hi) > 1 - fall && hi < 1e9) hi <- hi * 4
+  stats::uniroot(function(t) plasma(t) - (1 - fall), c(0, hi), tol = 1e-10)$root
+}
+
+#' Time for the effect-site concentration to fall after TCI holds it constant
+#'
+#' Simulated with stanpumpR's own effect-site TCI (an "Effect site target"
+#' row, R/tci.R) for `duration`, then a target of zero; the fall is read on
+#' the simulated effect-site curve.
+#'
+#' @returns minutes, or NA when the drug has no effect site
+#' @keywords internal
+paperReviewEffectSiteDecrementTime <- function(drug, reference, fall, duration)
+{
+  if (!isTRUE(drug$model$ke0 > 0) && !isTRUE(drug$model$tPeak > 0)) return(NA_real_)
+  doses <- data.frame(Time = c(0, duration), Dose = c(1, 0),
+                      Units = c(TCI_UNIT_EFFECT, TCI_UNIT_EFFECT), stringsAsFactors = FALSE)
+  sim <- tryCatch(paperReviewSimulate(drug, reference, doses, duration * 4 + 600),
+                  error = function(e) NULL)
+  if (is.null(sim)) return(NA_real_)
+  after <- sim$curve[sim$curve$Time >= duration, ]
+  start <- after$Ce[1]
+  below <- which(after$Ce <= start * (1 - fall))
+  if (!length(below)) return(NA_real_)
+  j <- below[1]
+  if (j == 1) return(0)
+  stats::approx(after$Ce[(j - 1):j], after$Time[(j - 1):j], start * (1 - fall))$y - duration
 }
 
 #' Time for the plasma concentration to fall by a fraction after a
@@ -578,11 +849,15 @@ paperReviewConsistency <- function(extraction, drug, reference)
 #'
 #' @param coef,lambda the unit-bolus coefficients and eigenvalues
 #' @param fall the fraction fallen, e.g. 0.5
+#' @param duration the infusion's duration, minutes; Inf for steady state,
+#'   finite for a context-sensitive decrement time
 #' @returns minutes
 #' @keywords internal
-paperReviewDecrementTime <- function(coef, lambda, fall)
+paperReviewDecrementTime <- function(coef, lambda, fall, duration = Inf)
 {
-  w <- coef / lambda
+  # After a constant infusion of `duration`, each mode holds
+  # (c_i / lambda_i)(1 - exp(-lambda_i duration)); Inf is steady state.
+  w <- coef / lambda * (1 - exp(-lambda * duration))
   remaining <- function(t) sum(w * exp(-lambda * t)) / sum(w) - (1 - fall)
   hi <- 1
   while (remaining(hi) > 0 && hi < 1e9) hi <- hi * 4
@@ -872,10 +1147,14 @@ paperReviewAssumptionChecks <- function(extraction)
         "The in-memory simulator absorbs a discrete dose first order, so its early curve will differ from the paper's.",
         s$location)
 
-  # 3. A parameter printed twice with different values.
-  for (role in setdiff(PAPER_REVIEW_ROLES, "other")) {
+  # 3. A parameter printed twice with different values, within one model
+  # (two models' values of one parameter are not a conflict: the Duzitol
+  # editorial's Table 1 has three columns).
+  groupOf <- function(p) p$group %or% ""
+  for (role in setdiff(PAPER_REVIEW_ROLES, "other"))
+  for (g in unique(vapply(extraction$parameters %or% list(), groupOf, ""))) {
     found <- Filter(function(p) identical(p$role, role) && is.finite(paperReviewNum(p$value)) &&
-                      is.null(p$regimen_id), extraction$parameters %or% list())
+                      is.null(p$regimen_id) && identical(groupOf(p), g), extraction$parameters %or% list())
     if (length(found) < 2) next
     values <- vapply(found, function(p) paperReviewNum(p$value) * paperReviewUnit(p$units %or% "other")$factor,
                      numeric(1))
@@ -956,6 +1235,12 @@ paperReviewFigureChecks <- function(extraction, drug, reference)
   for (f in extraction$figures %or% list())
   {
     id <- f$figure_id %or% "Figure"
+    if (identical(f$y_quantity, "decrement_time")) {
+      checked <- paperReviewDecrementFigure(f, drug, reference)
+      findings[[length(findings) + 1]] <- checked$finding
+      if (!is.null(checked$figure)) figures[[length(figures) + 1]] <- checked$figure
+      next
+    }
     if (!identical(f$y_quantity, "concentration")) {
       add("info", paste(id, "is not a concentration figure"), "Not compared.", f$location)
       next
@@ -1098,6 +1383,65 @@ paperReviewClaudeNotes <- function(extraction)
 #' @keywords internal
 paperReviewRun <- function(extraction)
 {
+  groups <- paperReviewGroups(extraction)
+  if (length(groups) <= 1) return(paperReviewRunOne(extraction))
+  # Several models (the Duzitol editorial: one drug in two populations beside
+  # propofol, as columns of one table).  Each model is reviewed on its own
+  # items, the items every model shares included; what is about the paper
+  # (its assumptions, its claims, Claude's notes) is reviewed once.
+  models <- lapply(stats::setNames(groups, groups), function(g)
+    paperReviewRunOne(paperReviewGroupExtraction(extraction, g), paperLevel = FALSE))
+  paperFindings <- c(paperReviewAssumptionChecks(extraction), paperReviewClaudeNotes(extraction))
+  out <- models[[1]]
+  out$extraction <- extraction
+  out$models <- models
+  out$paperFindings <- paperFindings
+  out$findings <- c(unlist(lapply(groups, function(g)
+    lapply(models[[g]]$findings, function(f) { f$group <- g; f })), recursive = FALSE),
+    paperFindings)
+  out
+}
+
+#' The models a paper reports, by the group names its items carry
+#' @returns the names, in the order they first appear; empty for one model
+#' @keywords internal
+paperReviewGroups <- function(extraction)
+{
+  g <- c(vapply(extraction$parameters %or% list(), function(p) p$group %or% "", ""),
+         vapply(extraction$derived_quantities %or% list(), function(p) p$group %or% "", ""),
+         vapply(extraction$regimens %or% list(), function(p) p$group %or% "", ""),
+         unlist(lapply(extraction$figures %or% list(), function(f)
+           vapply(f$series %or% list(), function(s) s$group %or% "", ""))))
+  unique(g[nzchar(g)])
+}
+
+#' One model's part of an extraction
+#'
+#' Its own items and the items every model shares (those with no group);
+#' a figure keeps only that model's series.  The drug is named for the model.
+#' @keywords internal
+paperReviewGroupExtraction <- function(extraction, group)
+{
+  mine <- function(items) Filter(function(i) is.null(i$group) || identical(i$group, group), items %or% list())
+  x <- extraction
+  x$parameters <- mine(x$parameters)
+  x$derived_quantities <- mine(x$derived_quantities)
+  x$covariate_effects <- mine(x$covariate_effects)
+  x$regimens <- mine(x$regimens)
+  x$figures <- Filter(function(f) length(f$series) > 0,
+                      lapply(x$figures %or% list(), function(f) { f$series <- mine(f$series); f }))
+  x$drug$name <- group
+  x
+}
+
+#' Review one model
+#'
+#' @param extraction the extraction (one model's part of it, when there are
+#'   several)
+#' @param paperLevel include the findings about the paper as a whole?
+#' @keywords internal
+paperReviewRunOne <- function(extraction, paperLevel = TRUE)
+{
   reference <- paperReviewReferencePatient(extraction)
   ident <- paperReviewIdentifiability(extraction)
   # Absorption is derived per extravascular regimen against the disposition,
@@ -1109,7 +1453,7 @@ paperReviewRun <- function(extraction)
   drug <- paperReviewDrug(extraction, reference, ident$closed,
                           absorption = if (length(usable)) usable[[1]] else NULL,
                           absorptions = absorptions)
-  consistency <- paperReviewConsistency(extraction, drug, reference)
+  consistency <- paperReviewConsistency(extraction, drug, reference, ident)
   figures <- paperReviewFigureChecks(extraction, drug, reference)
   modelFindings <- lapply(drug$problems, function(p)
     paperReviewFinding("Model", "concern", p))
@@ -1117,8 +1461,9 @@ paperReviewRun <- function(extraction)
                 paperReviewExponentialFindings(extraction, reference, drug),
                 modelFindings, consistency$findings,
                 paperReviewCovariateChecks(extraction),
-                paperReviewAssumptionChecks(extraction),
-                figures$findings, paperReviewClaudeNotes(extraction))
+                if (paperLevel) paperReviewAssumptionChecks(extraction),
+                figures$findings,
+                if (paperLevel) paperReviewClaudeNotes(extraction))
   list(extraction = extraction, reference = reference, identifiability = ident,
        drug = drug, absorptions = absorptions, consistency = consistency$table,
        figures = figures$figures, findings = findings)

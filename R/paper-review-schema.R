@@ -101,12 +101,12 @@ PAPER_REVIEW_NUMERIC_FIELDS <- c(
   "n", "n_female", "n_male", "coefficient", "reference_value", "duration",
   "error_lower", "error_upper", "group1_value", "group1_se", "group2_value",
   "group2_se", "difference", "difference_se", "p_value", "analyte_fraction",
-  "interval")
+  "interval", "decrement_percent")
 # Optional strings: NULL when empty.
 PAPER_REVIEW_OPTIONAL_STRINGS <- c("title", "first_author", "journal", "doi",
-                                   "pd_model", "regimen_id")
+                                   "pd_model", "regimen_id", "group")
 # Optional enums: NULL when "none".
-PAPER_REVIEW_OPTIONAL_ENUMS <- c("route")
+PAPER_REVIEW_OPTIONAL_ENUMS <- c("route", "decrement_site")
 
 #' Turn a parsed extraction back into numbers and NULLs
 #'
@@ -176,6 +176,16 @@ schemaArray <- function(items, description = NULL) {
   out
 }
 
+# The model an item belongs to, when a paper reports several (two drugs, a
+# healthy and a diseased population): one short name per model, the same on
+# every item of it; empty for an item every model shares.
+schemaGroup <- function()
+  schemaNullable(schemaString(paste(
+    "When the paper reports more than one model (several drugs, or one drug in",
+    "several populations), the short name of the model this belongs to, e.g.",
+    "'Duzitol, hepatic failure', spelled the same on every item of that model.",
+    "Empty when the paper has one model or the item belongs to all.")))
+
 schemaLocation <- function()
   schemaString(paste("Where in the manuscript this was read: table, figure,",
                      "equation or section, and page, e.g. 'Table 2, p. 6'."))
@@ -238,6 +248,7 @@ paperReviewSchema <- function()
     )),
     parameters = schemaArray(schemaObject(list(
       name_in_paper = schemaString(),
+      group         = schemaGroup(),
       role          = schemaChoice(PAPER_REVIEW_ROLES,
                                  "Q2/V2 is the faster peripheral compartment when the paper says which; ka/F/tlag take the route field."),
       route         = schemaNullable(schemaEnum(PAPER_REVIEW_ROUTES)),
@@ -252,6 +263,7 @@ paperReviewSchema <- function()
     ))),
     covariate_effects = schemaArray(schemaObject(list(
       parameter_role      = schemaChoice(PAPER_REVIEW_ROLES),
+      group               = schemaGroup(),
       covariate           = schemaChoice(PAPER_REVIEW_COVARIATES),
       form                = schemaEnum(PAPER_REVIEW_COVARIATE_FORMS,
                                        "power: (cov/ref)^coef; linear: 1 + coef (cov - ref); exponential: exp(coef (cov - ref)); category_multiplier: coef multiplies the parameter in the category named by covariate."),
@@ -274,6 +286,7 @@ paperReviewSchema <- function()
     )),
     regimens = schemaArray(schemaObject(list(
       id          = schemaString("A short id, e.g. 'R1', used by figures and derived quantities."),
+      group       = schemaGroup(),
       description = schemaString(),
       doses = schemaArray(schemaObject(list(
         route        = schemaEnum(PAPER_REVIEW_ROUTES),
@@ -305,6 +318,7 @@ paperReviewSchema <- function()
                                paste("t_half_1 and lambda_1 are the fastest; coefficient_i pairs with lambda_i;",
                                      "decrement_50 is the time for the concentration to fall 50% after a",
                                      "steady-state input stops (the context-sensitive half-time at steady state).")),
+      group       = schemaGroup(),
       value       = schemaNullable(schemaNumber()),
       value_text  = schemaString("Exactly as printed."),
       units       = schemaChoice(PAPER_REVIEW_DERIVED_UNITS),
@@ -317,7 +331,15 @@ paperReviewSchema <- function()
       figure_id   = schemaString("As the paper numbers it, e.g. 'Figure 2A'."),
       caption     = schemaString("What the figure shows, in one sentence."),
       regimen_id  = schemaNullable(schemaString()),
-      y_quantity  = schemaEnum(c("concentration", "effect", "other")),
+      y_quantity  = schemaEnum(c("concentration", "effect", "decrement_time", "other"), paste(
+        "decrement_time: the time for the concentration to fall by decrement_percent after",
+        "a constant infusion stops, plotted against the infusion's duration (a",
+        "context-sensitive half-time); both axes are then in time_units.")),
+      decrement_percent = schemaNullable(schemaNumber("For a decrement_time figure: the fall, e.g. 50.")),
+      decrement_site = schemaNullable(schemaEnum(c("plasma", "effect_site"), paste(
+        "For a decrement_time figure: which concentration was held constant (TCI) during",
+        "the infusion and timed as it fell: plasma (the context-sensitive half-time) or",
+        "the effect site."))),
       y_units     = schemaEnum(PAPER_REVIEW_CONCENTRATION_UNITS),
       time_units  = schemaEnum(PAPER_REVIEW_TIME_UNITS),
       log_y       = schemaEnum(c("yes", "no")),
@@ -329,6 +351,7 @@ paperReviewSchema <- function()
       error_bars  = schemaEnum(c("none", "SD", "SE", "CI95", "range", "percentile", "unstated")),
       series = schemaArray(schemaObject(list(
         label  = schemaString(),
+        group  = schemaGroup(),
         analyte = schemaEnum(c("parent", "metabolite", "other"),
                              "Which analyte the series plots: the modelled drug, a metabolite, or anything else."),
         regimen_id = schemaNullable(schemaString(
@@ -419,6 +442,10 @@ paperReviewSystemPrompt <- function()
     "  interval and duration. Never write a daily dose as a single dose.",
     "- Describe every dosing regimen as dose rows: an infusion is one row with",
     "  its rate, start time and duration.",
+    "- When the paper reports more than one model (several drugs, or one drug in",
+    "  several populations, as columns of one table), keep every model: give each a",
+    "  short group name and tag every parameter, derived quantity, regimen and",
+    "  figure series with it. Never merge two models' parameters into one set.",
     "- reported_differences: any comparison of two groups' means that the paper",
     "  presents as a finding, with the standard errors it prints.",
     "- reviewer_notes: anything a careful pharmacokinetic reviewer would raise",

@@ -63,6 +63,7 @@ paperReviewExtractionTables <- function(extraction)
   params <- extraction$parameters %or% list()
   pt <- if (length(params)) data.frame(
     Parameter = vapply(params, function(p) p$name_in_paper %or% "", character(1)),
+    Model = vapply(params, function(p) p$group %or% "", character(1)),
     Role = vapply(params, function(p) p$role %or% "", character(1)),
     Printed = vapply(params, function(p) p$value_text %or% "", character(1)),
     Units = vapply(params, function(p) p$units %or% "", character(1)),
@@ -70,6 +71,7 @@ paperReviewExtractionTables <- function(extraction)
     Status = vapply(params, function(p) p$status %or% "", character(1)),
     Where = vapply(params, function(p) p$location %or% "", character(1)),
     stringsAsFactors = FALSE) else NULL
+  if (!is.null(pt) && !any(nzchar(pt$Model))) pt$Model <- NULL
   covs <- extraction$covariate_effects %or% list()
   ct <- if (length(covs)) data.frame(
     Parameter = vapply(covs, function(e) e$parameter_role %or% "", character(1)),
@@ -117,13 +119,21 @@ paperReviewFigurePlot <- function(figure, concUnits)
   axis <- paperReviewTimeAxis(max(c(curve$Time, figure$points$time), na.rm = TRUE))
   curve$Time <- curve$Time / axis$minutes
   figure$points$time <- figure$points$time / axis$minutes
+  if (identical(figure$kind, "decrement")) {
+    # Both axes are times: the decrement time in the same unit as the duration.
+    curve$Cp <- curve$Cp / axis$minutes
+    figure$points$observed <- figure$points$observed / axis$minutes
+  }
   p <- ggplot2::ggplot() +
     ggplot2::geom_line(data = curve, ggplot2::aes(x = Time, y = Cp, group = regimen),
                        colour = "#1f4e9c", linewidth = 1) +
     ggplot2::geom_point(data = figure$points,
                         ggplot2::aes(x = time, y = observed, shape = series),
                         size = 2.5) +
-    ggplot2::labs(x = paste0("Time (", axis$label, ")"), y = paste0("Concentration (", concUnits, "/mL)"),
+    ggplot2::labs(x = paste0(figure$xLabel %or% "Time", " (", axis$label, ")"),
+                  y = if (identical(figure$kind, "decrement"))
+                        paste0(figure$yLabel, " (", axis$label, ")")
+                      else paste0("Concentration (", concUnits, "/mL)"),
                   title = figure$id, subtitle = paste("Line: stanpumpR, reference patient.",
                                                      "Points: digitised approximately from the paper."),
                   shape = NULL) +
@@ -165,24 +175,21 @@ paperReviewReportTags <- function(review, plots = TRUE)
   findings <- review$findings
   counts <- table(factor(vapply(findings, function(f) f$severity, character(1)),
                          levels = PAPER_REVIEW_SEVERITY_ORDER))
-  ref <- review$reference
-  ident <- review$identifiability
-  verdictText <- c(printed = "The printed parameters close the model.",
-                   derived = paste("The model is closed through", ident$route, "and is stable."),
-                   ill_conditioned = paste("Formally closed through", ident$route, "but ill-conditioned."),
-                   derived_from_curve = paste("The printed numbers do not close the model; it is closed",
-                                              "from", ident$route, "."),
-                   underdetermined = "The paper does not print enough to close the model.")[[ident$verdict]]
-  bySection <- lapply(PAPER_REVIEW_SECTIONS, function(s) {
-    fs <- Filter(function(f) identical(f$section, s), findings)
-    if (length(fs) == 0) return(NULL)
-    fs <- fs[order(match(vapply(fs, function(f) f$severity, character(1)), PAPER_REVIEW_SEVERITY_ORDER))]
-    htmltools::tagList(htmltools::h3(s),
-      if (s == "Internal consistency") paperReviewTable(review$consistency),
-      lapply(fs, paperReviewFindingTag),
-      if (s == "Figures" && plots) lapply(review$figures, function(f)
-        paperReviewPlotImg(paperReviewFigurePlot(f, review$drug$defaults$Concentration.Units))))
-  })
+  models <- review$models
+  body <- if (is.null(models)) {
+    paperReviewModelTags(review, PAPER_REVIEW_SECTIONS, findings, plots)
+  } else {
+    # Several models: each one's own review, then what is about the paper.
+    htmltools::tagList(
+      htmltools::p(paste0("This paper reports ", length(models), " models, each reviewed on its own: ",
+                          paste(names(models), collapse = "; "), ".")),
+      lapply(names(models), function(g) htmltools::tagList(
+        htmltools::h2(g),
+        paperReviewModelTags(models[[g]], PAPER_REVIEW_MODEL_SECTIONS, models[[g]]$findings, plots))),
+      htmltools::h2("The paper as a whole"),
+      paperReviewSectionTags(review, setdiff(PAPER_REVIEW_SECTIONS, PAPER_REVIEW_MODEL_SECTIONS),
+                             review$paperFindings, plots = FALSE))
+  }
   htmltools::div(class = "pr-report", paperReviewCss(),
     htmltools::div(class = "pr-banner",
       htmltools::strong("Draft review, for the reader's judgment. "),
@@ -193,6 +200,34 @@ paperReviewReportTags <- function(review, plots = TRUE)
     htmltools::p(htmltools::strong("Drug: "),
                  paste0(x$drug$name, " (", x$drug$analyte, ", ", x$drug$matrix, ", ",
                         x$drug$concentration_units, ")")),
+    htmltools::p(htmltools::strong("Findings: "),
+                 paste(paste(counts, tolower(PAPER_REVIEW_SEVERITY_LABEL[names(counts)])),
+                       collapse = ", ")),
+    body,
+    htmltools::h3("What Claude extracted"),
+    htmltools::p("Check these against the paper before trusting anything above."),
+    paperReviewExtractionTables(x),
+    if (nzchar(x$extraction_limitations %or% ""))
+      htmltools::p(htmltools::em("Limitations Claude noted: "), x$extraction_limitations))
+}
+
+# The sections that belong to one model; the rest are about the paper.
+PAPER_REVIEW_MODEL_SECTIONS <- c("Identifiability", "Model", "Internal consistency", "Covariates", "Figures")
+
+#' One model's summary lines and sections
+#' @keywords internal
+paperReviewModelTags <- function(rv, sections, findings, plots)
+{
+  x <- rv$extraction
+  ref <- rv$reference
+  ident <- rv$identifiability
+  verdictText <- c(printed = "The printed parameters close the model.",
+                   derived = paste("The model is closed through", ident$route, "and is stable."),
+                   ill_conditioned = paste("Formally closed through", ident$route, "but ill-conditioned."),
+                   derived_from_curve = paste("The printed numbers do not close the model; it is closed",
+                                              "from", ident$route, "."),
+                   underdetermined = "The paper does not print enough to close the model.")[[ident$verdict]]
+  htmltools::tagList(
     htmltools::p(htmltools::strong("Model: "),
                  paste0(x$structure$compartments, " compartment(s), ",
                         gsub("_", " ", x$structure$elimination), " elimination, absorption ",
@@ -203,15 +238,23 @@ paperReviewReportTags <- function(review, plots = TRUE)
                         prFmt(ref$height), " cm (", ref$source[["height"]], "), ",
                         prFmt(ref$age), " years (", ref$source[["age"]], "), ", ref$sex,
                         " (", ref$source[["sex"]], ").")),
-    htmltools::p(htmltools::strong("Findings: "),
-                 paste(paste(counts, tolower(PAPER_REVIEW_SEVERITY_LABEL[names(counts)])),
-                       collapse = ", ")),
-    bySection,
-    htmltools::h3("What Claude extracted"),
-    htmltools::p("Check these against the paper before trusting anything above."),
-    paperReviewExtractionTables(x),
-    if (nzchar(x$extraction_limitations %or% ""))
-      htmltools::p(htmltools::em("Limitations Claude noted: "), x$extraction_limitations))
+    paperReviewSectionTags(rv, sections, findings, plots))
+}
+
+#' Findings by section, with the consistency table and the figures' plots
+#' @keywords internal
+paperReviewSectionTags <- function(rv, sections, findings, plots)
+{
+  lapply(sections, function(s) {
+    fs <- Filter(function(f) identical(f$section, s), findings)
+    if (length(fs) == 0) return(NULL)
+    fs <- fs[order(match(vapply(fs, function(f) f$severity, character(1)), PAPER_REVIEW_SEVERITY_ORDER))]
+    htmltools::tagList(htmltools::h3(s),
+      if (s == "Internal consistency") paperReviewTable(rv$consistency),
+      lapply(fs, paperReviewFindingTag),
+      if (s == "Figures" && plots) lapply(rv$figures, function(f)
+        paperReviewPlotImg(paperReviewFigurePlot(f, rv$drug$defaults$Concentration.Units))))
+  })
 }
 
 #' The report as a self-contained HTML page, for download

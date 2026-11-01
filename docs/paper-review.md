@@ -158,6 +158,86 @@ displayed curves when possible". `R/paper-review-absorption.R`:
   exponentials close it through the same helpers (verdict
   `derived_from_curve`, reported as an approximation).
 
+### Several models in one paper, the tables' rounding, and decrement times
+
+From the Duzitol editorial (Shafer and Stanski, Anesthesiology
+1992;76:327-30), whose Table 1 gives three models side by side (a
+fictional drug in normal subjects and in hepatic failure, and propofol) as
+three half-lives, metabolic clearance, V1 and Vdss. Shafer, 2026-11-01:
+"I think your math was wrong on the Duzitol paper", with the spreadsheets
+he built the models with.
+
+- **Several models.** Every parameter, derived quantity, regimen and
+  figure series carries a `group` (the model it belongs to; empty when the
+  paper has one). `paperReviewRun()` reviews each model on its own items
+  (`paperReviewGroupExtraction()`), and the paper's assumptions, claims and
+  Claude's notes once. A parameter printed with different values is a
+  conflict only within one model. The simulator has a Model selector.
+- **Three compartments from CL, V1, Vss and the three half-lives**
+  (`threeCompartmentFromHalfLives()`), Shafer's spreadsheet algebra,
+  reproduced to every printed digit (derivation below).
+- **The rounding of the printed inputs.** A derived quantity that does not
+  match at the model's centre is recomputed at every corner of the inputs'
+  rounding (each printed input at half a unit of its last digit either way,
+  2^k corners) and reported "matches within rounding" when the printed
+  value lies inside that range. The editorial's steady-state 50% decrement
+  times, 41, 10 and 20 min, lie inside the 39.1-43.6, 9.6-10.8 and
+  17.3-26.8 min that Table 1's rounding allows, though propofol's centre is
+  21.8. The conditioning check likewise uses the printed rounding when a
+  paper prints no standard error, rather than an arbitrary 5%.
+- **Decrement times assume TCI** (Shafer: "calculating decrement times
+  requires an assumption of TCI administration, maintaining a steady
+  concentration in the plasma ... or the effect site"). For a plasma
+  target, `paperReviewTCIDecrementTime()` holds C1 constant, so each
+  peripheral concentration rises as C(1 − e^(−k21·T)), and lets the three
+  amounts decay freely from there; for an effect-site target,
+  `paperReviewEffectSiteDecrementTime()` runs stanpumpR's own effect-site
+  TCI through `simCpCe()`. At steady state both equal the closed form
+  `paperReviewDecrementTime()`. A figure of decrement time against infusion
+  duration (the editorial's Figure 1) is a `decrement_time` figure and is
+  checked point by point.
+
+#### The derivation behind the spreadsheet
+
+Shafer derived this decades ago and asked for it to be written down. For a
+three-compartment mammillary model with micro constants k10, k12, k13, k21,
+k31, the exponents λ1, λ2, λ3 are the roots of the characteristic
+polynomial s³ + a2 s² + a1 s + a0, whose coefficients are the elementary
+symmetric functions of the λs:
+
+    a2 = λ1 + λ2 + λ3          = k10 + k12 + k13 + k21 + k31
+    a1 = λ1λ2 + λ1λ3 + λ2λ3    = k10 k21 + k10 k31 + k21 k31 + k12 k31 + k13 k21
+    a0 = λ1 λ2 λ3              = k10 k21 k31
+
+The table gives k10 = CL/V1, the three λ = ln 2 / t½, and Vss, which in a
+mammillary model is V1 (1 + k12/k21 + k13/k31). Four unknowns remain: k12,
+k13, k21, k31.
+
+1. **From a0**, the product of the return rates:
+   k21 k31 = λ1λ2λ3 / k10 = **g0**.
+2. **From Vss**, Vss/V1 − 1 = k12/k21 + k13/k31 = (k12 k31 + k13 k21) / (k21 k31), so
+   k12 k31 + k13 k21 = (Vss/V1 − 1) g0 = **g1**. (The spreadsheet computes this
+   twice, as g1 and as h; they are the same number.)
+3. **From a1**, which contains both: a1 = k10 (k21 + k31) + k21 k31 + (k12 k31 + k13 k21),
+   so the sum of the return rates is k21 + k31 = (a1 − g0 − g1) / k10 = **f**.
+4. **k21 and k31** therefore have sum f and product g0: they are the two
+   roots of x² − f x + g0 = 0, (f ± √(f² − 4 g0)) / 2, the larger taken as
+   k21 so that compartment 2 is the faster. A real model needs f² > 4 g0.
+5. **From a2**, k12 + k13 = a2 − k10 − k21 − k31 = **i**.
+6. **k12 and k13** solve the linear pair k12 + k13 = i and k12 k31 + k13 k21 = g1:
+   substituting k12 = i − k13 gives **k13 = (g1 − i k31) / (k21 − k31)**, and k12 = i − k13.
+7. **The coefficients** of the unit-bolus plasma response are the residues
+   of its Laplace transform, (s + k21)(s + k31) / (V1 (s + λ1)(s + λ2)(s + λ3)):
+   Cj = (k21 − λj)(k31 − λj) / (V1 ∏m≠j (λm − λj)), the spreadsheet's C_1, C_2, C_3.
+
+The model is admissible when the discriminant is positive and k12, k13,
+k21, k31 all come out positive; otherwise the six printed numbers describe
+no three-compartment model (`threeCompartmentFromHalfLives()` refuses
+them). The two-compartment case is the same argument with one return rate:
+k21 = λ1λ2 / k10 and k12 = λ1 + λ2 − k10 − k21, and Vss then over-determines
+the model rather than being needed, which is why two compartments close
+from CL, V1 and both half-lives (`twoCompartmentFromCentralVolume()`).
+
 ### What the in-memory simulator does not do (yet)
 
 It is linear, with first-order absorption: no Michaelis-Menten elimination, zero-order or

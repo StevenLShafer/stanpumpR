@@ -128,6 +128,8 @@ paperReviewUI <- function()
     bslib::nav_panel("Simulator", value = "simulator",
       bslib::layout_sidebar(fillable = FALSE,
         sidebar = bslib::sidebar(width = 340,
+          shinyjs::hidden(htmltools::div(id = "modelBox",
+            shiny::selectInput("model", "Model", character(0)))),
           shiny::numericInput("weight", "Weight (kg)", 70, min = MIN_WEIGHT, max = MAX_WEIGHT),
           shiny::numericInput("height", "Height (cm)", 170, min = MIN_HEIGHT, max = MAX_HEIGHT),
           shiny::numericInput("age", "Age (years)", 40, min = MIN_AGE, max = MAX_AGE),
@@ -291,8 +293,26 @@ paperReviewServer <- function(input, output, session)
 
   # --- Simulator ---------------------------------------------------------------
 
+  # A paper with several models (a drug in two populations, two drugs) is
+  # simulated one model at a time, chosen here; one model needs no choice.
+  currentReview <- shiny::reactive({
+    r <- review()
+    if (is.null(r) || is.null(r$models)) return(r)
+    m <- input$model
+    if (is.character(m) && length(m) == 1 && m %in% names(r$models)) r$models[[m]] else r$models[[1]]
+  })
   shiny::observeEvent(version(), {
     r <- review()
+    if (!is.null(r) && !is.null(r$models)) {
+      shiny::updateSelectInput(session, "model", choices = names(r$models), selected = names(r$models)[1])
+      shinyjs::show("modelBox")
+    } else {
+      shinyjs::hide("modelBox")
+    }
+  }, ignoreInit = FALSE)
+
+  shiny::observeEvent(list(version(), input$model), {
+    r <- currentReview()
     if (is.null(r)) {
       shiny::updateSelectInput(session, "regimen", choices = character(0))
       shiny::updateSelectInput(session, "overlay", choices = character(0))
@@ -306,9 +326,13 @@ paperReviewServer <- function(input, output, session)
     shiny::updateSelectInput(session, "sex", selected = ref$sex)
     regs <- r$extraction$regimens %or% list()
     ids <- vapply(regs, function(x) x$id %or% "", character(1))
-    labels <- paste0(ids, ": ", vapply(regs, function(x) x$description %or% "", character(1)))
+    # paste0() of zero ids still gives one label, so a paper with no regimen
+    # (the Duzitol editorial) needs its own case.
+    labels <- if (length(ids)) paste0(ids, ": ", vapply(regs, function(x) x$description %or% "", character(1)))
+              else character(0)
     shiny::updateSelectInput(session, "regimen", choices = stats::setNames(ids, labels))
-    figs <- vapply(r$figures, function(f) f$id, character(1))
+    figs <- vapply(Filter(function(f) !identical(f$kind, "decrement"), r$figures),
+                   function(f) f$id, character(1))
     shiny::updateSelectInput(session, "overlay", choices = c("None" = "", figs))
     units <- r$drug$units
     doseTable(data.frame(Time = 0, Dose = 0, Units = if (length(units)) units[1] else "mg",
@@ -327,7 +351,7 @@ paperReviewServer <- function(input, output, session)
   }, ignoreInit = TRUE)
 
   shiny::observeEvent(input$loadRegimen, {
-    r <- review(); if (is.null(r)) return()
+    r <- currentReview(); if (is.null(r)) return()
     regimen <- paperReviewRegimen(r$extraction, input$regimen)
     if (is.null(regimen)) return()
     d <- paperReviewRegimenDoses(regimen)$doses
@@ -338,7 +362,7 @@ paperReviewServer <- function(input, output, session)
   })
 
   output$doses <- rhandsontable::renderRHandsontable({
-    r <- review()
+    r <- currentReview()
     units <- if (is.null(r)) "mg" else r$drug$units
     d <- doseTable()
     d$Units <- as.character(d$Units)
@@ -368,7 +392,7 @@ paperReviewServer <- function(input, output, session)
                                   age = input$age, sex = input$sex))
 
   simulation <- shiny::reactive({
-    r <- review()
+    r <- currentReview()
     shiny::validate(shiny::need(!is.null(r), "Review a paper, or try the example, first."))
     p <- patient()
     shiny::validate(shiny::need(
@@ -392,7 +416,7 @@ paperReviewServer <- function(input, output, session)
   # The absorption extravascular doses take: the selected regimen's when it
   # has one (each formulation its own), else the first regimen that does.
   simAbsorption <- shiny::reactive({
-    r <- review()
+    r <- currentReview()
     if (is.null(r)) return(NULL)
     usable <- Filter(function(a) isTRUE(a$ok), r$absorptions %or% list())
     if (length(usable) == 0) return(NULL)
@@ -401,7 +425,7 @@ paperReviewServer <- function(input, output, session)
   })
 
   output$simulatorNote <- shiny::renderUI({
-    r <- review()
+    r <- currentReview()
     if (is.null(r)) return(NULL)
     a <- simAbsorption()
     absorptionText <- if (is.null(a)) NULL else {
@@ -439,7 +463,7 @@ paperReviewServer <- function(input, output, session)
                     y = paste0("Concentration (", s$drug$defaults$Concentration.Units, "/mL)"),
                     title = s$drug$defaults$Drug) +
       ggplot2::theme_bw(base_size = 14)
-    r <- review()
+    r <- currentReview()
     if (nzchar(input$overlay %or% "")) {
       fig <- Filter(function(f) identical(f$id, input$overlay), r$figures)
       if (length(fig)) {
