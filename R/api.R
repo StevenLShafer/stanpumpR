@@ -706,8 +706,12 @@ apiFormatResult <- function(result, format = "json", layout = "long") {
   format <- apiChoice(tolower(format), "format", API_FORMATS)
   layout <- apiChoice(tolower(layout), "layout", API_LAYOUTS)
   series <- if (layout == "wide") apiWideSeries(result) else result$timeseries
+  # auto_unbox would write a single warning as a string; the spec promises an
+  # array, which I() keeps for one warning as for none
+  json <- result
+  json$warnings <- I(result$warnings)
   body <- switch(format,
-    json = as.character(jsonlite::toJSON(result, dataframe = "rows", auto_unbox = TRUE,
+    json = as.character(jsonlite::toJSON(json, dataframe = "rows", auto_unbox = TRUE,
                                          na = "null", null = "null", digits = I(10),
                                          pretty = FALSE)),
     csv  = apiCsv(series),

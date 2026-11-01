@@ -95,6 +95,11 @@ test_that("unknown fields are reported in the warnings, not defaulted in silence
   # NULL, which jsonlite writes as {})
   expect_identical(clean$warnings, character(0))
   expect_match(apiFormatResult(clean, "json")$body, "\"warnings\":[]", fixed = TRUE)
+  # One warning is still an array, not a bare string (auto_unbox)
+  one <- apiSimulate(apiReq(output = list(interval = 10), extra = 1))
+  expect_length(one$warnings, 1)
+  expect_match(apiFormatResult(one, "json")$body,
+               "\"warnings\":[\"Unknown field in the request ignored: `extra`.\"]", fixed = TRUE)
   expect_null(apiUnknownFields(list(weight = 1, WEIGHT_UNIT = "kg"), API_PATIENT_FIELDS, "x"))
 })
 
