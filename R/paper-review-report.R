@@ -92,6 +92,17 @@ paperReviewExtractionTables <- function(extraction)
     htmltools::h4("Regimens"), paperReviewTable(rt))
 }
 
+#' A readable time unit for a plot running to `maximum` minutes
+#' @returns a list: \code{minutes} per unit, and its \code{label}
+#' @keywords internal
+paperReviewTimeAxis <- function(maximum)
+{
+  if (!is.finite(maximum) || maximum <= 6 * 60) list(minutes = 1, label = "minutes")
+  else if (maximum <= 4 * 1440) list(minutes = 60, label = "hours")
+  else if (maximum <= 120 * 1440) list(minutes = 1440, label = "days")
+  else list(minutes = 7 * 1440, label = "weeks")
+}
+
 #' A figure's digitised points over the model's curve
 #'
 #' @param figure one entry of the review's \code{figures}
@@ -103,13 +114,16 @@ paperReviewFigurePlot <- function(figure, concUnits)
   # Columns, named for R CMD check; the data mask takes precedence.
   Time <- Cp <- time <- observed <- series <- lower <- upper <- regimen <- NULL
   curve <- figure$curve[figure$curve$Cp > 0 | !figure$logY, ]
+  axis <- paperReviewTimeAxis(max(c(curve$Time, figure$points$time), na.rm = TRUE))
+  curve$Time <- curve$Time / axis$minutes
+  figure$points$time <- figure$points$time / axis$minutes
   p <- ggplot2::ggplot() +
     ggplot2::geom_line(data = curve, ggplot2::aes(x = Time, y = Cp, group = regimen),
                        colour = "#1f4e9c", linewidth = 1) +
     ggplot2::geom_point(data = figure$points,
                         ggplot2::aes(x = time, y = observed, shape = series),
                         size = 2.5) +
-    ggplot2::labs(x = "Time (minutes)", y = paste0("Concentration (", concUnits, "/mL)"),
+    ggplot2::labs(x = paste0("Time (", axis$label, ")"), y = paste0("Concentration (", concUnits, "/mL)"),
                   title = figure$id, subtitle = paste("Line: stanpumpR, reference patient.",
                                                      "Points: digitised approximately from the paper."),
                   shape = NULL) +

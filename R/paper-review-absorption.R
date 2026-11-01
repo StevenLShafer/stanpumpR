@@ -128,6 +128,8 @@ paperReviewFigureSeries <- function(extraction, concUnits)
     for (s in f$series %or% list()) {
       p <- s$points %or% list()
       if (length(p) == 0) next
+      # Only the modelled drug's series: a metabolite curve is not this model's.
+      if (!(s$analyte %or% "parent") %in% "parent") next
       pts <- data.frame(
         time = vapply(p, function(x) paperReviewNum(x$time), numeric(1)) * minutes,
         observed = vapply(p, function(x) paperReviewNum(x$value), numeric(1)) * factor)

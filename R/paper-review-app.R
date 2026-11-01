@@ -370,19 +370,25 @@ paperReviewServer <- function(input, output, session)
                   if (any(is.finite(curve$Ce)) && any(curve$Ce > 0))
                     data.frame(Time = curve$Time, Concentration = curve$Ce, Site = "Effect site"))
     if (isTRUE(input$logY)) long <- long[long$Concentration > 0, ]
+    axis <- paperReviewTimeAxis(max(long$Time))
+    long$Time <- long$Time / axis$minutes
     # stanpumpR's convention: plasma solid, effect site dashed.
     p <- ggplot2::ggplot(long, ggplot2::aes(Time, Concentration, linetype = Site)) +
       ggplot2::geom_line(colour = "#1f4e9c", linewidth = 1) +
       ggplot2::scale_linetype_manual(values = c(Plasma = "solid", `Effect site` = "dashed")) +
-      ggplot2::labs(x = "Time (minutes)", linetype = NULL,
+      ggplot2::labs(x = paste0("Time (", axis$label, ")"), linetype = NULL,
                     y = paste0("Concentration (", s$drug$defaults$Concentration.Units, "/mL)"),
                     title = s$drug$defaults$Drug) +
       ggplot2::theme_bw(base_size = 14)
     r <- review()
     if (nzchar(input$overlay %or% "")) {
       fig <- Filter(function(f) identical(f$id, input$overlay), r$figures)
-      if (length(fig)) p <- p + ggplot2::geom_point(data = fig[[1]]$points,
-        ggplot2::aes(time, observed), inherit.aes = FALSE, size = 2.5)
+      if (length(fig)) {
+        pts <- fig[[1]]$points
+        pts$time <- pts$time / axis$minutes
+        p <- p + ggplot2::geom_point(data = pts, ggplot2::aes(time, observed),
+                                     inherit.aes = FALSE, size = 2.5)
+      }
     }
     if (isTRUE(input$logY)) p <- p + ggplot2::scale_y_log10()
     p

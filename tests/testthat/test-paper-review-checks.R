@@ -524,3 +524,52 @@ test_that("decrement times after a steady-state input are recomputed and checked
   t <- paperReviewRun(ex)$consistency
   expect_equal(t$status[t$quantity == "decrement_50"], "matches")
 })
+
+test_that("a metabolite's figure series is set aside, not scored against the parent", {
+  ex <- paperReviewExample()
+  fig <- ex$figures[[1]]
+  fig$series[[2]] <- list(label = "Metabolite", analyte = "metabolite",
+                          points = list(list(time = 60, value = 5), list(time = 120, value = 9)))
+  ex$figures[[1]] <- fig
+  review <- paperReviewRun(ex)
+  f <- Filter(function(x) identical(x$section, "Figures"), review$findings)[[1]]
+  expect_equal(f$severity, "ok")
+  expect_match(f$detail, "^9 points compared")
+  expect_match(f$detail, "Metabolite, which plots another analyte")
+  expect_false("Metabolite" %in% review$figures[[1]]$points$series)
+})
+
+test_that("zero-order input simulated as constant input is not called a mismatch", {
+  x <- apparentOneCompartment()
+  x$structure$absorption <- "zero_order"
+  f <- paperReviewAssumptionChecks(x)
+  z <- Filter(function(y) grepl("zero order", y$title), f)[[1]]
+  expect_equal(z$severity, "info")
+  expect_match(z$detail, "exactly as the paper models it")
+  # A discrete oral dose of a zero-order paper still gets the warning.
+  x$regimens[[2]] <- oralRegimen("D2")
+  z <- Filter(function(y) grepl("zero order", y$title), paperReviewAssumptionChecks(x))[[1]]
+  expect_equal(z$severity, "concern")
+})
+
+test_that("a parameter printed twice with different values is a finding", {
+  x <- apparentOneCompartment()
+  x$parameters[[3]] <- list(name_in_paper = "CL (abstract)", role = "CL", value = 10.5, value_text = "10.5",
+                            units = "L/h", uncertainty = list(type = "not_reported"), status = "estimated",
+                            location = "Abstract")
+  f <- Filter(function(y) grepl("printed with different values", y$title), paperReviewAssumptionChecks(x))
+  expect_length(f, 1)
+  expect_match(f[[1]]$detail, "uses the first, 10")
+  expect_equal(f[[1]]$locations, c("T2", "Abstract"))
+  # The same value printed twice, in other units, is not.
+  x$parameters[[3]]$value <- 10 * 1000 / 60; x$parameters[[3]]$units <- "mL/min"
+  expect_length(Filter(function(y) grepl("printed with different values", y$title),
+                       paperReviewAssumptionChecks(x)), 0)
+})
+
+test_that("time axes switch to hours, days or weeks as the plot lengthens", {
+  expect_equal(paperReviewTimeAxis(240)$label, "minutes")
+  expect_equal(paperReviewTimeAxis(2 * 1440)$label, "hours")
+  expect_equal(paperReviewTimeAxis(30 * 1440)$label, "days")
+  expect_equal(paperReviewTimeAxis(730 * 1440)$label, "weeks")
+})

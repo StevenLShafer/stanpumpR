@@ -325,6 +325,8 @@ paperReviewSchema <- function()
       error_bars  = schemaEnum(c("none", "SD", "SE", "CI95", "range", "percentile", "unstated")),
       series = schemaArray(schemaObject(list(
         label  = schemaString(),
+        analyte = schemaEnum(c("parent", "metabolite", "other"),
+                             "Which analyte the series plots: the modelled drug, a metabolite, or anything else."),
         regimen_id = schemaNullable(schemaString(
           "The regimen this series shows, when a figure shows several; empty to use the figure's.")),
         points = schemaArray(schemaObject(list(

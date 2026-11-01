@@ -861,10 +861,31 @@ paperReviewAssumptionChecks <- function(extraction)
     add("concern", "Elimination is not linear",
         "The in-memory simulator is linear; it uses the printed clearance, which is only the low-concentration limit of saturable elimination.",
         s$location)
-  if ((s$absorption %or% "none") %in% c("zero_order", "transit", "other"))
-    add("concern", paste("Absorption is", gsub("_", " ", s$absorption)),
-        "The in-memory simulator absorbs first order, so its early curve will differ from the paper's.",
+  absorption <- s$absorption %or% "none"
+  discrete <- any(vapply(extraction$regimens %or% list(), paperReviewNeedsAbsorption, logical(1)))
+  if (absorption == "zero_order" && !discrete)
+    add("info", "Absorption is zero order",
+        "Every extravascular dose is a constant input, which the simulator gives exactly as the paper models it.",
+        s$location, computed = FALSE)
+  else if (absorption %in% c("zero_order", "transit", "other"))
+    add("concern", paste("Absorption is", gsub("_", " ", absorption)),
+        "The in-memory simulator absorbs a discrete dose first order, so its early curve will differ from the paper's.",
         s$location)
+
+  # 3. A parameter printed twice with different values.
+  for (role in setdiff(PAPER_REVIEW_ROLES, "other")) {
+    found <- Filter(function(p) identical(p$role, role) && is.finite(paperReviewNum(p$value)) &&
+                      is.null(p$regimen_id), extraction$parameters %or% list())
+    if (length(found) < 2) next
+    values <- vapply(found, function(p) paperReviewNum(p$value) * paperReviewUnit(p$units %or% "other")$factor,
+                     numeric(1))
+    if (!all(is.finite(values)) || diff(range(values)) <= 1e-9 * max(abs(values))) next
+    add("concern", paste(role, "is printed with different values"),
+        paste0(paste(vapply(found, function(p) paste0(p$value_text %or% "", " (", p$location %or% "", ")"), ""),
+                     collapse = "; "),
+               ". The review uses the first, ", found[[1]]$value_text %or% "", "."),
+        vapply(found, function(p) p$location %or% NA_character_, ""))
+  }
 
   for (c in extraction$interpretive_claims %or% list())
   {
@@ -949,9 +970,18 @@ paperReviewFigureChecks <- function(extraction, drug, reference)
     # Each series may show its own regimen (a figure of an intravenous and two
     # oral curves); a series without one takes the figure's.  The first real
     # paper's figure had three regimens and only one slot for them.
+    # A metabolite's series is set aside: the in-memory model is the parent's
+    # (the second test paper's figures paired each parent panel with one of
+    # its metabolite, which were scored against the parent's curve).
+    otherAnalyte <- Filter(function(s) !(s$analyte %or% "parent") %in% "parent", f$series %or% list())
+    analyteNote <- if (length(otherAnalyte))
+      paste0(" Not compared: ", paste(vapply(otherAnalyte, function(s) s$label %or% "a series", ""),
+                                      collapse = ", "), ", which plots another analyte than the one modelled.")
+      else ""
     points <- do.call(rbind, lapply(f$series %or% list(), function(s) {
       p <- s$points %or% list()
       if (length(p) == 0) return(NULL)
+      if (!(s$analyte %or% "parent") %in% "parent") return(NULL)
       data.frame(series = s$label %or% "",
                  regimen = s$regimen_id %or% f$regimen_id %or% NA_character_,
                  time = vapply(p, function(x) paperReviewNum(x$time), numeric(1)) * minutes,
@@ -961,7 +991,9 @@ paperReviewFigureChecks <- function(extraction, drug, reference)
                  stringsAsFactors = FALSE)
     }))
     if (is.null(points) || nrow(points) == 0) {
-      add("info", paste(id, "has no digitised points"), f$digitization_note %or% "", f$location)
+      add("info", paste(id, if (nzchar(analyteNote)) "plots no series of the modelled drug"
+                        else "has no digitised points"),
+          trimws(paste(analyteNote, f$digitization_note %or% "")), f$location)
       next
     }
     points$predicted <- NA_real_
@@ -1007,8 +1039,8 @@ paperReviewFigureChecks <- function(extraction, drug, reference)
       curves[[length(curves) + 1]] <- data.frame(Time = sim$curve$Time, Cp = sim$curve$Cp,
                                                  regimen = rid, stringsAsFactors = FALSE)
     }
-    note <- if (length(setAside))
-      paste0(" Not compared: ", paste(setAside, collapse = "; "), ".") else ""
+    note <- paste0(if (length(setAside))
+      paste0(" Not compared: ", paste(setAside, collapse = "; "), ".") else "", analyteNote)
     if (length(curves) == 0) {
       add("concern", paste(id, "could not be compared"), trimws(note), f$location)
       next
