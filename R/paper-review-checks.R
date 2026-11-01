@@ -784,7 +784,19 @@ paperReviewDecrementFigure <- function(f, drug, reference)
     points$predicted > 0
   pe <- (points$observed[use] - points$predicted[use]) / points$predicted[use]
   mdpe <- stats::median(pe); mdape <- stats::median(abs(pe))
-  severity <- if (!is.finite(mdape)) "info" else if (mdape <= 0.2) "ok" else if (mdape <= 0.5) "concern" else "error"
+  # A curve read by eye is off by about the same number of minutes wherever
+  # it is read, so a short decrement time carries a large relative error
+  # that says nothing about the model: on the Duzitol editorial's 30% curve,
+  # 2.5 to 12.5 min, a reading good to +/-3 min was -31% off.  Each point is
+  # also judged against the precision of the reading.
+  precision <- paperReviewReadingPrecision(f, points$observed[use])
+  difference <- abs(points$observed[use] - points$predicted[use])
+  mdad <- stats::median(difference)
+  within <- sum(difference <= precision$value * minutes * 1.0001)
+  severity <- if (!is.finite(mdape)) "info"
+    else if (mdape <= 0.2 || mdad <= precision$value * minutes) "ok"
+    else if (mdape <= 0.5 || mdad <= 2 * precision$value * minutes) "concern"
+    else "error"
   grid <- seq(max(points$time, na.rm = TRUE) / 200, max(points$time, na.rm = TRUE) * 1.02,
               length.out = if (identical(site, "effect_site")) 30 else 200)
   finding <- paperReviewFinding("Figures", severity,
@@ -797,7 +809,10 @@ paperReviewDecrementFigure <- function(f, drug, reference)
            if (identical(site, "effect_site")) "stanpumpR's effect-site TCI, simCpCe()"
            else "paperReviewTCIDecrementTime()",
            "). Median prediction error ", sprintf("%+.0f%%", 100 * mdpe),
-           ", median absolute ", sprintf("%.0f%%", 100 * mdape), ". The points were digitised ",
+           ", median absolute ", sprintf("%.0f%%", 100 * mdape), "; median difference ",
+           prFmt(mdad / minutes, 2), " ", f$time_units %or% "min", " against a reading precision of +/-",
+           prFmt(precision$value, 2), " ", f$time_units %or% "min", " (", precision$basis, "), ",
+           within, " of ", sum(use), " points within it. The points were digitised ",
            "approximately by Claude (", f$digitization_note %or% "", ")."),
     f$location)
   list(finding = finding,
@@ -806,6 +821,30 @@ paperReviewDecrementFigure <- function(f, drug, reference)
                      xLabel = "Infusion duration",
                      curve = data.frame(Time = grid, Cp = vapply(grid, dec, numeric(1)), regimen = "model"),
                      points = points, mdpe = mdpe, mdape = mdape))
+}
+
+#' How precisely a figure's points were read
+#'
+#' Claude's own estimate where it gives one (reading_precision, or a "+/-"
+#' in its digitisation note), otherwise 2% of the largest value read, about
+#' what a curve read by eye allows.
+#'
+#' @param f the figure
+#' @param observed the values read, in the figure's units
+#' @returns a list: \code{value} (in the figure's y units) and \code{basis}
+#' @keywords internal
+paperReviewReadingPrecision <- function(f, observed)
+{
+  stated <- paperReviewNum(f$reading_precision)
+  if (is.finite(stated) && stated > 0) return(list(value = stated, basis = "Claude's estimate"))
+  note <- f$digitization_note %or% ""
+  m <- regmatches(note, regexpr("(±|\\+/-)\\s*[0-9.]+", note))
+  if (length(m)) {
+    v <- suppressWarnings(as.numeric(sub("^(±|\\+/-)\\s*", "", m)))
+    if (is.finite(v) && v > 0) return(list(value = v, basis = "from Claude's digitisation note"))
+  }
+  top <- suppressWarnings(max(observed, na.rm = TRUE))
+  list(value = if (is.finite(top)) 0.02 * top else 0, basis = "2% of the largest value read")
 }
 
 #' Time for the plasma concentration to fall after TCI holds it constant

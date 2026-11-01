@@ -366,6 +366,9 @@ paperReviewSchema <- function()
         )))
       ))),
       digitization_note = schemaString("How the points were read and how approximate they are."),
+      reading_precision = schemaNullable(schemaNumber(paste(
+        "How far a digitised value may be off, in the y axis's own units (time_units for a",
+        "decrement_time figure): 3 for a curve read to about +/-3 min."))),
       location = schemaLocation()
     ))),
     reported_differences = schemaArray(schemaObject(list(

@@ -249,3 +249,34 @@ test_that("V1, the fractional coefficients and the half-lives close the model", 
   # The printed percents carry two figures, so CL comes back near 0.68 L/min.
   expect_equal(m$identifiability$closed$cl1, 0.68, tolerance = 0.05)
 })
+
+test_that("a short decrement curve read by eye is judged against the reading's precision", {
+  m <- threeCompartmentFromHalfLives(0.68, 7.6, 66, 1, 10, 100)
+  set <- list(v1 = m$v1, v2 = m$v2, v3 = m$v3, cl1 = m$cl1, cl2 = m$cl2, cl3 = m$cl3)
+  durations <- c(30, 60, 120, 240)
+  # The 30% curve runs 4.4 to 12.1 min; read 2 min low, as by eye, it is
+  # about 30% off though every point is inside the +/-3 min of the reading.
+  y <- vapply(durations, function(T) paperReviewTCIDecrementTime(set, 0.3, T), 0) - 2
+  figure <- function(note, precision = NULL) {
+    x <- duzitolExtraction()
+    x$figures <- list(list(figure_id = "Fig 3 (30% curve)", caption = "30% decrement times",
+      regimen_id = NULL, y_quantity = "decrement_time", decrement_percent = 30,
+      decrement_site = "plasma", y_units = "other", time_units = "min", log_y = "no",
+      data_kind = "model_prediction", one_regimen = "yes", error_bars = "none",
+      reading_precision = precision,
+      series = list(list(label = "Duzitol, normal subjects", group = "Duzitol, normal subjects",
+                         analyte = "parent",
+                         points = lapply(seq_along(durations), function(i)
+                           list(time = durations[i], value = round(y[i], 2))))),
+      digitization_note = note, location = "Fig 3, p. 330"))
+    f <- Filter(function(z) grepl("Fig 3", z$title), paperReviewRun(x)$findings)
+    f[[1]]
+  }
+  f <- figure("Read by eye, about \u00b13 min.")
+  expect_equal(f$severity, "ok")
+  expect_match(f$detail, "4 of 4 points within it")
+  expect_match(f$detail, "from Claude's digitisation note")
+  expect_equal(figure("Read by eye.", precision = 3)$severity, "ok")
+  # Without a stated precision, 2% of the largest value read is far tighter.
+  expect_false(identical(figure("Read by eye.")$severity, "ok"))
+})
