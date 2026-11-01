@@ -236,12 +236,12 @@ restoreThresholds <- function(drugDefaults, endCe = NULL, macThreshold = NULL)
   if (length(endCe) > 0 && !is.null(names(endCe))) {
     value <- usable(endCe)
     at <- match(names(endCe), drugDefaults$Drug)
-    ok <- !is.na(at) & !is.na(value) & value >= 0
+    ok <- !is.na(at) & is.finite(value) & value >= 0
     drugDefaults$endCe[at[ok]] <- value[ok]
   }
 
   mac <- usable(macThreshold)
-  macThreshold <- if (length(mac) == 1 && !is.na(mac) && mac >= 0) mac else GAS_MAC_THRESHOLD
+  macThreshold <- if (length(mac) == 1 && is.finite(mac) && mac >= 0) mac else GAS_MAC_THRESHOLD
 
   list(drugDefaults = drugDefaults, macThreshold = macThreshold)
 }

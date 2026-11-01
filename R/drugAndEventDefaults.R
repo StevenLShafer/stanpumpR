@@ -35,15 +35,24 @@ drugLibraryProblems <- function(edited, current) {
   known <- c(allUnits, gasUnits, tciUnits, scheduledUnits)
   units <- drugUnitsSimplify(edited$Units)
   unitsBefore <- drugUnitsSimplify(current$Units)[at]
-  unknown <- vapply(seq_along(units), function(i) {
-    if (is.na(at[i]) || identical(units[i], unitsBefore[i])) return("")
+  unknown <- character(0)
+  emptied <- character(0)
+  for (i in seq_along(units)) {
+    if (is.na(at[i]) || identical(units[i], unitsBefore[i])) next
     tokens <- trimws(strsplit(units[i], ",", fixed = TRUE)[[1]])
-    tokens <- tokens[nzchar(tokens) & !tokens %in% known]
-    if (length(tokens)) sprintf("%s: %s", edited$Drug[i], paste0("\"", tokens, "\"", collapse = ", ")) else ""
-  }, character(1))
-  if (any(nzchar(unknown))) {
+    # A changed list with no unit, or an empty entry between commas, would
+    # offer a blank the dose table ignores: refused, as an unknown unit is.
+    if (length(tokens) == 0 || any(!nzchar(tokens))) emptied <- c(emptied, edited$Drug[i])
+    bad <- tokens[nzchar(tokens) & !tokens %in% known]
+    if (length(bad)) unknown <- c(unknown, sprintf("%s: %s", edited$Drug[i], paste0("\"", bad, "\"", collapse = ", ")))
+  }
+  if (length(unknown)) {
     problems <- c(problems, paste0(
-      "Units must be units the dose table accepts (", paste(unknown[nzchar(unknown)], collapse = "; "), ")."))
+      "Units must be units the dose table accepts (", paste(unknown, collapse = "; "), ")."))
+  }
+  if (length(emptied)) {
+    problems <- c(problems, paste0(
+      "Units must list at least one unit, with none left blank (", paste(emptied, collapse = ", "), ")."))
   }
   problems
 }
