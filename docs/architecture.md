@@ -352,6 +352,11 @@ All files are flat in `R/`.
   Minto companions, istradefylline and tolcapone use (the library's own body-size scaling is
   `pkSizeFactors.R`).
 - `simulateDrugsWithCovariates.R` — exported multi-drug convenience API (no Shiny).
+- `duzitol.R` — help-page only: Table 1 of Shafer and Stanski's 1992 Duzitol editorial,
+  `threeCompartmentFromHalfLives()` (Shafer's spreadsheet algebra: a three-compartment model
+  from CL, V1, Vss and three half-lives) and the decrement time after an infusion that held the
+  plasma constant, drawn by the generated blocks of `inst/help/models/why-simulate.md`. Duzitol
+  is fictional and deliberately not a drug in the library (`test-duzitol.R`).
 - `ig_absorption.R` — *validated, not yet wired in.* Closed-form Inverse Gaussian absorption:
   the convolution of an IG input density with the disposition exponentials, in closed form.
   Exact to 1.6e-14 against two independent references (`test-ig-absorption.R`), and base R

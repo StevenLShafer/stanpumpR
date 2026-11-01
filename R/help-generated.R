@@ -710,7 +710,162 @@ helpIGAbsorptionFigure <- function(drugDefaults = NULL) {
 }
 
 
+#' The three models of the Duzitol editorial, built, as a Markdown table
+#'
+#' For inst/help/models/why-simulate.md: Table 1's six numbers per model, the
+#' three-compartment model threeCompartmentFromHalfLives() builds from them,
+#' and the 50% and 80% decrement times after a steady-state infusion
+#' (R/duzitol.R), beside the 50% times the editorial printed.  One column per
+#' model, so the three can be read across.
+#'
+#' @param drugDefaults unused; every block takes it
+#' @returns a Markdown table
+#' @noRd
+helpDuzitolModelTableMarkdown <- function(drugDefaults = NULL) {
+  ms <- duzitolModels()
+  tab <- DUZITOL_TABLE
+  col <- function(get) vapply(seq_along(ms), function(i) get(ms[[i]], tab[i, ]), character(1))
+  num <- function(x, digits = 3) helpFormatNumber(x, digits)
+  rows <- list(
+    c("**Table 1, as printed**", "", "", ""),
+    c("Half-lives (min)", col(function(m, t) paste(num(t$t1), num(t$t2), num(t$t3), sep = ", "))),
+    c("Metabolic clearance (L/min)", col(function(m, t) num(t$CL))),
+    c("V1 (L)", col(function(m, t) num(t$V1))),
+    c("Vdss (L)", col(function(m, t) num(t$Vss))),
+    c("**The model they imply**", "", "", ""),
+    c("V2, V3 (L)", col(function(m, t) paste(num(m$v2), num(m$v3), sep = ", "))),
+    c("CL2, CL3 (L/min)", col(function(m, t) paste(num(m$cl2), num(m$cl3), sep = ", "))),
+    c("k10 (1/min)", col(function(m, t) num(m$k10))),
+    c("k21, k31 (1/min)", col(function(m, t) paste(num(m$k21), num(m$k31), sep = ", "))),
+    c("**After a steady-state infusion**", "", "", ""),
+    c("Share of the concentration in each exponential, fastest first",
+      col(function(m, t) paste0(round(100 * heldInfusionCoefficients(m, Inf)), "%", collapse = ", "))),
+    c("50% decrement (min)", col(function(m, t) num(heldInfusionDecrementTime(m, Inf)))),
+    c("50% decrement in the editorial (min)", col(function(m, t) num(t$decrement50))),
+    c("80% decrement (min)", col(function(m, t) num(heldInfusionDecrementTime(m, Inf, 0.8))))
+  )
+  paste(c(
+    paste0("| | ", paste(tab$model, collapse = " | "), " |"),
+    "|---|---|---|---|",
+    vapply(rows, function(r) paste0("| ", paste(r, collapse = " | "), " |"), character(1))
+  ), collapse = "\n")
+}
+
+#' The Duzitol editorial's three models, simulated, as a figure
+#'
+#' Two stacked panels for inst/help/models/why-simulate.md, drawn from
+#' R/duzitol.R rather than from stored numbers: above, the context-sensitive
+#' half-time (the 50% decrement time after an infusion that held the plasma
+#' concentration constant) against the length of the infusion, 0 to 600 min,
+#' as the editorial's Figure 1 plots it; below, the plasma concentration
+#' after stopping a steady-state infusion, with the 50% and 20% lines, where
+#' the order of the three models changes.  One HTML block with no blank line,
+#' so commonmark passes it through whole.
+#'
+#' @param drugDefaults unused; every block takes it
+#' @returns the figure, as one HTML string
+#' @noRd
+helpDuzitolFigure <- function(drugDefaults = NULL) {
+  ms   <- duzitolModels()
+  cols <- c("#2c3e50", "#c0392b", "#0072b2")
+  durations <- seq(0, 600, by = 5)
+  csht <- lapply(ms, function(m)
+    vapply(durations, function(d) heldInfusionDecrementTime(m, d), numeric(1)))
+  after <- seq(0, 300, by = 1)
+  fall  <- lapply(ms, function(m) 100 * plasmaAfterHeldInfusion(m, Inf, after))
+
+  W <- 640; H <- 520; left <- 52; right <- 14
+  xrA <- c(0, 600); yrA <- c(0, 50); xrB <- c(0, 300); yrB <- c(0, 100)
+  topA <- 34; botA <- 214; topB <- 292; botB <- 470
+  f   <- function(v) sprintf("%.1f", v)
+  sxA <- function(x) left + (x - xrA[1]) / diff(xrA) * (W - left - right)
+  sxB <- function(x) left + (x - xrB[1]) / diff(xrB) * (W - left - right)
+  sA  <- function(y) botA - (y - yrA[1]) / diff(yrA) * (botA - topA)
+  sB  <- function(y) botB - (y - yrB[1]) / diff(yrB) * (botB - topB)
+  pA  <- function(x, y) paste0("M", paste(f(sxA(x)), f(sA(y)), sep = ",", collapse = " L"))
+  pB  <- function(x, y) paste0("M", paste(f(sxB(x)), f(sB(y)), sep = ",", collapse = " L"))
+
+  frame <- function(sx, xr, xTicks, sy, yTicks, bot) c(
+    sprintf('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="#e3e8ec"/>',
+            f(sx(xr[1])), f(sy(yTicks)), f(sx(xr[2])), f(sy(yTicks))),
+    sprintf('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="#4a5764"/>',
+            f(sx(xr[1])), f(sy(yTicks[1])), f(sx(xr[2])), f(sy(yTicks[1]))),
+    sprintf('<text x="%s" y="%s" text-anchor="end" dominant-baseline="middle">%d</text>',
+            f(sx(xr[1]) - 6), f(sy(yTicks)), as.integer(yTicks)),
+    sprintf('<text x="%s" y="%s" text-anchor="middle">%d</text>',
+            f(sx(xTicks)), f(bot + 16), as.integer(xTicks)))
+
+  # Labels where no curve runs: above the 50% line once every curve is below
+  # it, below the 20% line before any curve reaches it
+  thresholds <- sprintf(paste0(
+    '<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="#7b8a8b" stroke-dasharray="5,4"/>',
+    '<text x="%s" y="%s" fill="#7b8a8b">%s</text>'),
+    f(sxB(xrB[1])), f(sB(c(50, 20))), f(sxB(xrB[2])), f(sB(c(50, 20))),
+    f(sxB(c(60, 4))), f(sB(c(50, 20)) + c(-5, 14)), c("50% decrement", "80% decrement"))
+
+  curves <- c(
+    unlist(Map(function(y, col) sprintf(
+      '<path d="%s" fill="none" stroke="%s" stroke-width="2.5"/>', pA(durations, y), col),
+      csht, cols)),
+    unlist(Map(function(y, col) sprintf(
+      '<path d="%s" fill="none" stroke="%s" stroke-width="2.5"/>', pB(after, y), col),
+      fall, cols)))
+
+  # The legend sits in the gap between the curves on the right
+  legendY <- f(sA(c(35, 30.5, 26)))
+  legend <- sprintf(paste0(
+    '<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="%s" stroke-width="2.5"/>',
+    '<text x="%s" y="%s" dominant-baseline="middle" fill="%s">%s</text>'),
+    f(sxA(330)), legendY, f(sxA(330) + 24), legendY, cols,
+    f(sxA(330) + 30), legendY, cols, names(ms))
+
+  titles <- c(
+    sprintf('<text x="%s" y="%s" font-weight="600">%s</text>', f(left), f(topA - 14),
+            "Context-sensitive half-time: plasma held constant by TCI, then stopped"),
+    sprintf('<text x="%s" y="%s" font-weight="600">%s</text>', f(left), f(topB - 14),
+            "Plasma concentration after stopping a steady-state infusion"),
+    sprintf('<text x="%s" y="%s" text-anchor="middle">%s</text>',
+            f((sxA(xrA[1]) + sxA(xrA[2])) / 2), f(botA + 34),
+            "Duration of the infusion (min)"),
+    sprintf('<text x="%s" y="%s" text-anchor="middle">%s</text>',
+            f((sxB(xrB[1]) + sxB(xrB[2])) / 2), f(H - 10),
+            "Time since the infusion stopped (min)"),
+    sprintf('<text transform="translate(13,%s) rotate(-90)" text-anchor="middle">Half-time (min)</text>',
+            f((sA(yrA[1]) + sA(yrA[2])) / 2)),
+    sprintf('<text transform="translate(13,%s) rotate(-90)" text-anchor="middle">%% of maintained</text>',
+            f((sB(yrB[1]) + sB(yrB[2])) / 2)))
+
+  ss50 <- vapply(ms, heldInfusionDecrementTime, numeric(1), duration = Inf)
+  label <- paste0(
+    "Context-sensitive half-times of the three models of the Duzitol editorial, ",
+    "for infusions of 0 to 600 minutes, and the plasma concentration after ",
+    "stopping a steady-state infusion. After a steady-state infusion the 50% ",
+    "decrement takes ", helpFormatNumber(ss50[1]), " minutes for Duzitol in normal subjects, ",
+    helpFormatNumber(ss50[2]), " in hepatic failure and ", helpFormatNumber(ss50[3]),
+    " for propofol: hepatic failure, whose half-lives are four times longer, is the fastest.")
+  svg <- c(
+    sprintf(paste0('<svg viewBox="0 0 %d %d" role="img" aria-label="%s" font-size="12" ',
+                   'font-family="inherit" style="width:100%%;max-width:640px;height:auto">'),
+            W, H, label),
+    frame(sxA, xrA, seq(0, 600, by = 100), sA, seq(0, 50, by = 10), botA),
+    frame(sxB, xrB, seq(0, 300, by = 50), sB, seq(0, 100, by = 20), botB),
+    thresholds, curves, legend, titles, "</svg>")
+  paste(c(
+    '<figure class="help-figure">',
+    svg,
+    paste("<figcaption>The three models of Table 1 of Shafer and Stanski's 1992 editorial,",
+          "built from the table's six numbers each and simulated. Above, the time for the",
+          "plasma concentration to fall by half after a target-controlled infusion held it",
+          "constant for the time on the axis; below, the fall after a steady-state infusion.",
+          "Drawn by stanpumpR from the same three-compartment algebra the page's appendix",
+          "derives.</figcaption>"),
+    "</figure>"
+  ), collapse = "\n")
+}
+
 HELP_GENERATED_BLOCKS <- list(
+  "duzitol-model-table" = helpDuzitolModelTableMarkdown,
+  "duzitol-figure" = helpDuzitolFigure,
   "route-table" = helpRouteTableMarkdown,
   "ig-absorption-figure" = helpIGAbsorptionFigure,
   "minto-schnider-table" = helpAlternativeModelTableMarkdown,

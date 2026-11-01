@@ -42,7 +42,7 @@ A constant infusion is the integral of the bolus response, so it is also a sum o
 - **β** (tens of minutes) is distribution into slower tissue.
 - **γ** (hours to a day) is elimination once distribution is complete. It is the terminal half-life, and it is a poor guide to how fast a drug wears off after a short infusion, because most of the drug is still redistributing.
 
-Use *Time until threshold* rather than any half-life to see how fast a given drug wears off from a given regimen; see [Time until threshold](help:models/recovery) and the [context-sensitive decrement scenario](scenario:context-sensitive-opioids).
+Use *Time until threshold* rather than any half-life to see how fast a given drug wears off from a given regimen; see [Time until threshold](help:models/recovery) and the [context-sensitive decrement scenario](scenario:context-sensitive-opioids). [Why tables of PK parameters must be simulated](help:models/why-simulate) shows, with the fictional Duzitol, a model whose half-lives are all four times longer recovering four times faster.
 
 ## Limits of the model
 
