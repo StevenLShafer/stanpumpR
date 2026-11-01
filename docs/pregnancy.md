@@ -36,8 +36,8 @@ series; a PBPK prediction; a review.
 - **Applied** only when the change was *measured* in women with useful strength, or derived
   from such a measurement by arithmetic the drug's header gives (a group set against the
   library's own model at its age and weight, for propofol and midazolam; metoprolol's split of CL/F into clearance and
-  first-pass; phenytoin's Km and Vmax and valproate's total CL/F from the rise in free
-  fraction). A direction alone, a handful of women, no comparator, or a PBPK prediction alone
+  first-pass; phenytoin's Km and Vmax from the measured falls in total and unbound concentration, and
+  valproate's total CL/F from the rise in free fraction). A direction alone, a handful of women, no comparator, or a PBPK prediction alone
   is recorded as `unquantified` and not applied (lorazepam, risperidone, haloperidol, aspirin,
   fentanyl, codeine, tramadol, rocuronium, cisatracurium, heparin).
 - **Filtration.** A drug cleared mostly unchanged by filtration whose model reads renal function
@@ -184,8 +184,8 @@ paywalled. The first list matters most, since each would check a factor the libr
 7. Hodge AT et al. Int J Obstet Anesth 2026;66:104874 [PMID 41747364](https://pubmed.ncbi.nlm.nih.gov/41747364/) · [doi:10.1016/j.ijoa.2026.104874](https://doi.org/10.1016/j.ijoa.2026.104874)  
    *Drugs:* rocuronium, sugammadex. *Why:* rocuronium: Full two-compartment rocuronium parameter set (V1, V2, Q) and which 'volume of distribution' the abstract reports; would allow a direct comparison with a non-pregnant model. sugammadex: Full parameter set (Vc, Vp, Q), serum creatinine/CrCl of the women and whether 13.9 L is Vc or Vss; needed to confirm the GFR-only adjustment and the volume comparison.
 
-8. Koerner M, Yerby M, Friel P, McCormick K. Valproic acid disposition and protein binding in pregnancy. Ther Drug Monit 1989;11:228-230 (no PMID found; cited from another paper)  
-   *Drugs:* valproate. *Why:* Cited from memory (not retrieved this session): a direct study of valproate total and unbound disposition across pregnancy; PMID not verified.
+8. Koerner M, Yerby M, Friel P, McCormick K. Valproic acid disposition and protein binding in pregnancy. Ther Drug Monit 1989;11:228-230 [PMID 2499082](https://pubmed.ncbi.nlm.nih.gov/2499082/) · [doi:10.1097/00007691-198905000-00002](https://doi.org/10.1097/00007691-198905000-00002)  
+   *Drugs:* valproate. *Why:* The abstract (read 2026-11-01) gives direction only (9 women: total fell despite dose increases, free did not, weight-adjusted clearance unchanged); the monthly levels, doses and weights would give a measured ratio.
 
 9. Krzyzanski W et al. J Pharmacokinet Pharmacodyn 2026 (cohort population analysis, dexamethasone in parturients) [PMID 42406183](https://pubmed.ncbi.nlm.nih.gov/42406183/) · [doi:10.1007/s10928-026-10048-5](https://doi.org/10.1007/s10928-026-10048-5)  
    *Drugs:* dexamethasone. *Why:* PMC13337934 exists but was not retrieved; gives one-compartment CL and V for dexamethasone in parturient women at birth that could replace the volume inference.
@@ -218,10 +218,10 @@ paywalled. The first list matters most, since each would check a factor the libr
    *Drugs:* zonisamide. *Why:* Mean (not nadir) C/D by trimester; the abstract gives only the minimum.
 
 19. Tomson T, Lindbom U, Ekqvist B, Sundqvist A. Disposition of carbamazepine and phenytoin in pregnancy. Epilepsia 1994;35:131-135 [PMID 8112235](https://pubmed.ncbi.nlm.nih.gov/8112235/) · [doi:10.1111/j.1528-1157.1994.tb02922.x](https://doi.org/10.1111/j.1528-1157.1994.tb02922.x)  
-   *Drugs:* phenytoin, carbamazepine. *Why:* phenytoin: Gives the total and unbound phenytoin clearances per trimester; the abstract gives direction only. Would confirm the Vmax factor (unbound clearance rise) directly. carbamazepine: Trimester values of total and unbound carbamazepine clearance (abstract says 'slightly decreased' only).
+   *Drugs:* phenytoin, carbamazepine. *Why:* phenytoin: OBTAINED (full text read 2026-11-01): Table 3 gives free fraction 7.2% to 10.1% (x1.40), plasma clearance x2.17 and unbound clearance x1.25 in the third trimester; recorded in the phenytoin row, factors not changed (`papers/digests/PMID_8112235.md`). carbamazepine: Trimester values of total and unbound carbamazepine clearance (abstract says 'slightly decreased' only).
 
 20. Voinescu PE, Park S, Chen LQ, et al. Antiepileptic drug clearances during pregnancy and clinical implications for women with epilepsy. Neurology 2018;91:e1228-e1236 (PMC6161546) [PMID 30185446](https://pubmed.ncbi.nlm.nih.gov/30185446/) · [doi:10.1212/WNL.0000000000006240](https://doi.org/10.1212/WNL.0000000000006240)  
-   *Drugs:* phenytoin, valproate, topiramate. *Why:* PMC full text returned empty through the tool; its tables give trimester clearance ratios for phenytoin (n=7) and valproate (n=5), which are not in the abstract, and the third-trimester (not just maximal) ratios for levetiracetam and topiramate.
+   *Drugs:* phenytoin, topiramate. *Why:* OBTAINED for valproate (full text read 2026-11-01, `papers/digests/PMID_30185446.md`): third-trimester total 1.142 (95% CI 0.926-1.408) and free 0.820 (0.46-1.47), per kg, n 5, none significant; recorded in the valproate row, factor not changed. Still open for phenytoin (n=7) and the third-trimester (not just maximal) topiramate and levetiracetam ratios.
 
 21. Yerby MS, Friel PN, McCormick K. Antiepileptic drug disposition during pregnancy. Neurology 1992;42(4 Suppl 5):12-16 [PMID 1574166](https://pubmed.ncbi.nlm.nih.gov/1574166/)  
    *Drugs:* valproate. *Why:* Total and free valproate concentrations per trimester with doses; would replace the derived 1.6 with a measured total-clearance ratio.
@@ -295,13 +295,12 @@ paywalled. The first list matters most, since each would check a factor the libr
 - **Palahniuk RJ, Shnider SM, Eger EI.** *Anesthesiology* 1974;41:82-83 (PMID 4857789): MAC 25-40%
   lower in pregnant ewes near term (isoflurane 1.01 vs 1.58%); recorded on the gas pages, not applied.
 - **Dailey PA et al.** *Anesthesiology* 1984;60:569-574 (PMID 6145374): vecuronium clearance 6.4
-  mL/kg/min at term caesarean (n = 5 of 11 dosed), against 5.7-6.2 from this library's model for a
-  nonpregnant woman: vecuronium moved from `unquantified` to `unchanged`. The authors' own
-  comparison is with a historical nonpregnant group from their earlier study (Cronnelly 1983): CL
-  5.2 vs 6.4 mL/kg/min, half-life 71 vs 36 min, which they read as clearance being GREATER at
-  caesarean (blood loss, loss of the fetus/placenta, progesterone induction). `unchanged` here
-  rests on the comparison with this library's own model, not on the authors' own conclusion, which
-  this entry now records alongside it.
+  mL/kg/min, Vss 251 mL/kg, half-life 36 min at term caesarean (n = 5 of 11 dosed, 4 h sampling).
+  The unadjusted library model sampled on Dailey's schedule and fitted the same way returns 6.8-7.0,
+  235-265 and 30-39 (0.93 times on matched design; 1.06 against its true 5.93-6.16 mL/kg/min), so
+  vecuronium is `unchanged` and takes no factor. The authors' 1.23 (6.4 vs 5.2 mL/kg/min, against
+  Cronnelly 1983, PMID 6132566: their lab, halothane, 8 h) is untested (t about 2.3, P about 0.05),
+  confounded, and would put the model at 8.5 mL/kg/min, outside Dailey's 95% interval (5.3-7.5).
 - **Luxford AM, Kellaway GS.** *Eur J Clin Pharmacol* 1983;25:117-121 (PMID 6617713): digoxin renal
   clearance 1.21 times and creatinine clearance 1.39 times in the third trimester, the two rising
   together (no change in tubular handling); confirms digoxin's GFR-term adjustment.
@@ -311,9 +310,12 @@ paywalled. The first list matters most, since each would check a factor the libr
 - **Rubin PC et al.** *Br J Clin Pharmacol* 1983;15:465-470 (PMID 6849783): intravenous labetalol
   clearance 2.16 (pregnant) vs 2.35 (postpartum) vs 1.96 (controls) L/min, no difference: labetalol
   stays `unchanged` for its IV model.
-- **Tomson T et al.** *Epilepsia* 1994;35:122-130 (PMID 8112234): phenytoin free fraction rose from
-  6.1% to 13.2% in the third trimester (factor 2.15, the Km factor uses 2.10); carbamazepine free
-  concentration essentially unchanged. Confirms both.
+- **Tomson T et al.** *Epilepsia* 1994;35:122-130 (PMID 8112234): third-trimester total phenytoin 39%
+  and free 82% of baseline at an unchanged dose (Table 5 means: 15.9/40.7 and 2.1/2.5), which the
+  Km and Vmax factors are calibrated to. Mean free over mean total is 6.1% and 13.2% (x2.15, derived),
+  but the free fraction the companion paper MEASURED (PMID 8112235, Table 3, all 36 phenytoin cases)
+  rose from 7.2% to 10.1%, x1.40: the 2.10 behind the Km factor is a ratio of group means, not a
+  measured free fraction. Carbamazepine free concentration essentially unchanged.
 - **Gin T, Chan MTV.** *Anesthesiology* 1994;81:829-832 (PMID 7943833): isoflurane MAC 28% lower at
   8-12 weeks (0.775 vs 1.075%) by a tetanic stimulus; recorded on the gas pages, not applied (MAC40
   in the library is defined by incision).

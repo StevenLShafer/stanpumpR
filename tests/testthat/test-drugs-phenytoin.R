@@ -81,6 +81,9 @@ test_that("pregnancy: Km (total) x 0.48 and Vmax x 1.1, on every route", {
   expect_equal(on$michaelisMenten$vmax / off$michaelisMenten$vmax,
                PHENYTOIN_PREGNANCY_VMAX_FACTOR, tolerance = 1e-6)
   expect_equal(PHENYTOIN_PREGNANCY_KM_FACTOR, 0.48)
+  # A calibration to Tomson 1994's group means (total 39%, unbound 82% of
+  # baseline), not the measured free fraction, which rose 1.40-fold
+  expect_equal(PHENYTOIN_PREGNANCY_KM_FACTOR, round(0.39 / 0.82, 2))
   expect_equal(PHENYTOIN_PREGNANCY_VMAX_FACTOR, 1.1)
   # The help tables' low-concentration limit follows the block
   expect_equal(on$PK$default$cl1, on$michaelisMenten$vmax / on$michaelisMenten$km,

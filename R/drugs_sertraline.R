@@ -132,17 +132,30 @@
 # pregnancies (34 women) through routine therapeutic drug monitoring, each
 # against the same woman's own baseline outside pregnancy: sertraline was 68%
 # higher in the middle of the third trimester (95% CI +37% to +106%,
-# p < 0.001), and N-desmethylsertraline 120% higher.  The Schoretsanitis 2020
-# meta-analysis (18 patients) gives a combined ratio of 1.38.  Heinonen 2021
-# (PMID 33751155) instead found dose-adjusted sertraline LOWER during
-# pregnancy than at its own 1-month-postpartum reference -- third-trimester
-# median concentration/dose 0.19 against 0.25 postpartum, a nonsignificant 24%
-# fall (p = 0.345; its alteration-ratio medians, pregnant over postpartum, are
-# all below 1: 0.88, 0.69, 0.85), the opposite direction from Westin's rise,
-# which Heinonen's own authors read as increased metabolism in pregnancy.
-# Freeman 2008 (six to nine women) found large differences between women and
-# no significant mean change.  The mechanism
-# is probably inhibition of CYP2C19 in pregnancy.  With the Patient
+# p < 0.001; a mixed-model prediction at week 34, from retrospective samples
+# taken 8 to 30 h after the dose), and N-desmethylsertraline 120% higher,
+# which sits awkwardly with CYP2C19 inhibition (that should slow the
+# demethylation).  The Schoretsanitis 2020 meta-analysis (18 patients) gives a
+# mean of individual ratios of 1.38, but it is not independent of Westin
+# (Westin is a co-author and supplied raw data from the largest cohort), and
+# its inverse-variance mean difference is null (fixed effect -0.05
+# (ng/mL)/(mg/day), CI -0.17 to 0.06, p 0.34).  Heinonen 2021 (PMID 33751155)
+# instead found dose-adjusted sertraline LOWER during pregnancy than at its
+# own 1-month-postpartum reference: the paired alteration ratios, pregnant
+# over postpartum, have medians 0.88, 0.69 (third trimester, range 0.17-1.23,
+# 8 women) and 0.85 at delivery, and the unpaired group medians of
+# concentration/dose are 0.19 in the third trimester against 0.25 postpartum.
+# Its p = 0.345 tests the second-trimester-to-postpartum change, not the
+# third trimester.  Heinonen's own authors read the fall as increased
+# metabolism in pregnancy.  Freeman 2008 (six to nine women) found large
+# differences between women, no significant mean change, and the lowest AUC
+# and Cmax in the third trimester in 5 of 6.  Monfort 2024 sampled from labour
+# to 6 weeks postpartum and tested the sampling moment on CL/F without
+# retaining it, so it gives no pregnant-against-nonpregnant comparison.  The
+# sources therefore disagree in direction, and whether to keep the factor or
+# record the change as unquantified is open (D11 adjudication, 2026-11-01;
+# papers/digests/PMID_28708853.md).  Westin's explanation is inhibition of
+# CYP2C19 in pregnancy.  With the Patient
 # Profile's Pregnant field on, the elimination clearance CL1 is multiplied by
 # SERTRALINE_PREGNANCY_CL_FACTOR = 0.60 (1 / 1.68 = 0.595, rounded as the
 # registry gives it): the clearance FALLS, unlike every other drug the flag

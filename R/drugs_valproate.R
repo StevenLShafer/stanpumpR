@@ -86,9 +86,41 @@
 # to 20% at term; Yerby and colleagues (Neurology 1992;42(4 Suppl 5):12-16)
 # found the FREE concentration rose by 25% by delivery; Tomson (Ther Drug
 # Monit 2005;27:718-721) states that unbound levels remain unchanged despite
-# a fairly marked fall in the total.  No paired study giving the total CL/F
-# in numbers was retrievable (Voinescu 2018, n = 5, gives them only in its
-# tables).
+# a fairly marked fall in the total (citing only Yerby 1992, so it is the
+# same finding, not a second one).
+#
+# MEASURED TOTAL CLEARANCE (read 2026-11-01).  Two paired studies give the
+# total ratio in numbers, and they disagree:
+#   - Voinescu 2018 (Neurology 91:e1228, full text, the table under Figure
+#     3): 5 women, 5 pregnancies, 27 clinical-laboratory levels; apparent
+#     oral clearance = dose in mg/kg / level, so PER KILOGRAM; mixed model
+#     adjusted for age and hours after the dose.  Third trimester over
+#     baseline: total 1.142 (95% CI 0.926-1.408, p 0.214), free 0.820
+#     (0.46-1.47, p 0.504); none significant.  Expressed per kilogram, so an
+#     absolute ratio is larger by the weight gained (about 1.3 at a 15%
+#     gain, inference: the paper prints no weights).
+#   - Johannessen Landmark 2018 (Epilepsy Res 141:31-37, ABSTRACT only):
+#     Norwegian TDM database, 51 pregnancies in 33 women; mean total
+#     concentration/dose 0.48 before pregnancy and 0.29 umol/L/mg in the
+#     third trimester, a total CL/F ratio of 1.66 (absolute, not per kg).
+#     The abstract calls it a 46% fall; 0.29/0.48 is a 40% fall, which the
+#     abstract does not explain.
+# Koerner 1989 (Ther Drug Monit 11:228-230, PMID 2499082, abstract, 9 women
+# followed monthly) agrees in direction: total fell despite dose increases
+# in four, free did not, free fraction and clearance rose, and clearance
+# adjusted for body weight did not change.
+#
+# The two parts of the derivation below are checked separately by
+# Voinescu: its free-clearance ratio 0.820 agrees with Yerby's 25% rise in
+# the free level (unbound CL/F 0.8), but its implied rise in free fraction,
+# 1.142 / 0.820 = 1.39, is well below Nau and Krauer's 2.0.  Their term
+# pairs were sampled AT DELIVERY, when free fatty acids and oxytocin
+# displace valproate (their own abstract; Bardy 1990, Ther Drug Monit
+# 12:40-46, PMID 2305420), so 2.0 overstates the antepartum free fraction.
+# The factor is retained because the largest data set, Johannessen
+# Landmark's 1.66, lands on it, not because the binding derivation is
+# exact; Voinescu's 1.142 is not adopted (n 5, not significant, per kg, and
+# its absolute equivalent's interval reaches 1.6).
 #
 # With the Patient Profile's Pregnant field on, CL/F (cl1) is multiplied by
 # VALPROATE_PREGNANCY_CL_FACTOR = 1.6, on every route (the oral products and
@@ -98,8 +130,12 @@
 # so total CL/F x 1 / 0.625 = 1.6 (the clearance of unbound drug falls to
 # 0.8).  If Yerby's rise in the free concentration is a dosing artefact
 # (free unchanged, Tomson 2005), the factor would be the fu ratio, 2.0.  The
-# volume and the absorption are unchanged.  Low confidence: the factor is
-# derived from two binding studies, not a measured clearance.
+# volume and the absorption are unchanged.  Low confidence: the measured
+# total ratios run from 1.14 per kg (n 5) to 1.66 (51 pregnancies, abstract
+# only), and the factor sits at the top of that range.  Johannessen
+# Landmark's ratio is not per kilogram while the model's weight term also
+# rises with the weight entered, so at a 15% weight gain the curve's total
+# clearance rises about 7% more than 1.6 (fat-free-mass scaling on).
 #
 # WHAT THIS MEANS FOR THE CURVE: the library plots TOTAL valproate, and the
 # 50-100 mg/L band is a total-concentration band.  In late pregnancy the
@@ -126,11 +162,22 @@
 #   PMID 1574166 (pregnancy)
 # Tomson T.  Ther Drug Monit 2005;27:718-721.
 #   https://doi.org/10.1097/01.ftd.0000179843.63515.8f (pregnancy)
+# Voinescu PE et al.  Neurology 2018;91:e1228-e1236.
+#   https://doi.org/10.1212/WNL.0000000000006240 (pregnancy)
+# Johannessen Landmark C et al.  Epilepsy Res 2018;141:31-37.
+#   https://doi.org/10.1016/j.eplepsyres.2018.02.004 (pregnancy)
+# Koerner M et al.  Ther Drug Monit 1989;11:228-230.
+#   https://doi.org/10.1097/00007691-198905000-00002 (pregnancy)
+# Bardy AH et al.  Ther Drug Monit 1990;12:40-46.
+#   https://doi.org/10.1097/00007691-199001000-00008 (labour)
 # -----------------------------------------------------------------------------
 
 # Total CL/F in late pregnancy relative to the published value: the free
 # concentration x 1.25 (Yerby 1992) over the free fraction x 2.0 (Nau and
-# Krauer 1986) leaves the total at 0.625 of baseline; 1 / 0.625 = 1.6.
+# Krauer 1986) leaves the total at 0.625 of baseline; 1 / 0.625 = 1.6.  The
+# measured third-trimester total ratios are 1.142 per kg (Voinescu 2018,
+# n 5, not significant) and 1.66 (Johannessen Landmark 2018, 51 pregnancies,
+# abstract); see the header.
 VALPROATE_PREGNANCY_CL_FACTOR <- 1.6
 
 # The age term on CL/F, (AGE/15)^-0.0154 (Equation 1), and the youngest age it

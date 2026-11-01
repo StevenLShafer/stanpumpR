@@ -27,20 +27,43 @@
 # ==========
 # Absolute oral bioavailability is complete: 109 +/- 11% against intravenous
 # (Clark 2013), about 100% (Ahmed 2015).  bioavailability_PO = 1.  The handoff's
-# F of 80% is contradicted by both.  Ahmed 2015 does estimate an absorption
-# rate (ka 2.38 /h, RSE 17%), but under its own two-compartment disposition
-# (Vc 59.3 L), not this three-compartment one, so it is not carried over
-# unchanged.  The median time to peak after an oral dose is 1 h (Ahmed 2015,
-# 1-2 h in the label); ka 2.0 /h (close to Ahmed's 2.38 /h) puts the plasma
-# peak at 1.2 h in the reference patient under THIS disposition.  That value
-# is a LITERATURE-ANCHORED calibration, not an estimate transplanted from
-# Ahmed's model, and is recorded so in the registry's parameter audit.
+# F of 80% is contradicted by both.
+#
+# ka is Ahmed 2015's estimate, 2.38 /h (Table 2: RSE 17%, IIV 53%; no
+# significant lag), fitted jointly with a stable-labelled intravenous dose in
+# the same subjects on the same Topamax tablets, so it is identified by the
+# oral upstroke against the intravenous curve.  Ahmed's disposition has two
+# compartments and this one three, but they are one system seen at two
+# resolutions: Ahmed's Vc 59.3 L is Bamgboye's V1 + V2 (48.9 L), which
+# exchange with a half-time of 1.6 min, ten times faster than absorption
+# (half-time 17 min) and over before Ahmed's first sample, as his Discussion
+# says; Ahmed's Vp 12.1 L at Q 1.02 L/h is Bamgboye's V3 9.01 L at Q3 0.6 L/h.
+# So the rate constant carries across.
+#
+# Until 2026-11-01 ka was 2.0 /h, "calibrated" to a 1 h median time to peak
+# and said to put the peak at 1.2 h.  Under this disposition 2.0 /h peaks at
+# 1.81 h (a 1.0 h peak would need about 3.5 /h), so the calibration did not
+# do what it said, and a time to peak is a poor target in any case: the curve
+# stays within 8% of its peak from 1 to 4 h, and the observed medians were
+# read off a 0.5, 1, 2, 4 h grid.  Moving to 2.38 /h shifts the 100 mg peak
+# from 1.81 to 1.54 h and from 1.88 to 1.90 mg/L (+1.0%), leaves the area
+# unchanged, differs by at most 0.15 mg/L (at 11 min) and by under 4% after
+# 1 h, and moves the steady-state peak and trough on 100 mg twice daily by
+# +0.5% and -0.2%.
+#
+# Not modelled: Clark 2013's mean 100 mg oral curve (Figure 2, 0-4 h) is
+# still near zero at 5 min and 0.38 mg/L at 15 min, where this model gives
+# 0.86 and 1.24 mg/L (at the cohort's 78 kg); the first quarter hour looks
+# lagged (a fit of the figure's means alone gives ka 1.9 /h after a 0.23 h
+# lag), but Ahmed found no significant lag in the individual data, so none
+# is added.
 #
 # CHECKS (70 kg)
 # ==============
 # Intravenous CL 1.33 L/h after 100 mg in Clark 2013 (model 1.31); terminal
 # half-life about 30 h (20-30 h cited by Bamgboye; Clark's single-dose 41-42 h
-# is longer); 100 mg orally peaks at about 2.0 mg/L (Lim 2016: about 2 mg/L);
+# is longer); 100 mg orally peaks at 1.90 mg/L at 1.5 h (Lim 2016: about
+# 2 mg/L; Clark 2013: mean time to peak 1.35 h, range 0.25-4 h);
 # 150 mg twice daily averages 9.5 mg/L at steady state (Meador, quoted by Lim:
 # 9.3 mg/L on 300 mg/day).
 #
@@ -123,7 +146,7 @@ topiramate <- function(weight, height, age, sex, adjustToFFM = TRUE,
   default <- list(
     v1  = 9.84 * b, v2 = 39.1 * b, v3 = 9.01 * b,
     cl1 = 1.31 * a / 60 * clPregnancy, cl2 = 197 * a / 60, cl3 = 0.6 * a / 60,
-    ka_PO = 2.0 / 60,            # literature-anchored, see the header
+    ka_PO = 2.38 / 60,           # Ahmed 2015 Table 2, see the header
     bioavailability_PO = 1,
     tlag_PO = 0
   )
@@ -133,8 +156,8 @@ topiramate <- function(weight, height, age, sex, adjustToFFM = TRUE,
   reference <- paste0(
     "Bamgboye et al., J Clin Pharmacol 2026: three compartments from a ",
     "stable-isotope intravenous dose, allometric on weight; oral ",
-    "bioavailability 1 (Clark 2013); ka anchored to the 1 h median peak. ",
-    "https://doi.org/10.1002/jcph.70191"
+    "bioavailability 1 (Clark 2013); ka 2.38 /h from Ahmed 2015's joint ",
+    "intravenous and oral fit. https://doi.org/10.1002/jcph.70191"
   )
   if (isTRUE(pregnant)) {
     reference <- paste0(reference, "; ", pregnancyReference(
