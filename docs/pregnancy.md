@@ -220,10 +220,7 @@ paywalled. The first list matters most, since each would check a factor the libr
 19. Tomson T, Lindbom U, Ekqvist B, Sundqvist A. Disposition of carbamazepine and phenytoin in pregnancy. Epilepsia 1994;35:131-135 [PMID 8112235](https://pubmed.ncbi.nlm.nih.gov/8112235/) · [doi:10.1111/j.1528-1157.1994.tb02922.x](https://doi.org/10.1111/j.1528-1157.1994.tb02922.x)  
    *Drugs:* phenytoin, carbamazepine. *Why:* phenytoin: OBTAINED (full text read 2026-11-01): Table 3 gives free fraction 7.2% to 10.1% (x1.40), plasma clearance x2.17 and unbound clearance x1.25 in the third trimester; recorded in the phenytoin row, factors not changed (`papers/digests/PMID_8112235.md`). carbamazepine: Trimester values of total and unbound carbamazepine clearance (abstract says 'slightly decreased' only).
 
-20. Voinescu PE, Park S, Chen LQ, et al. Antiepileptic drug clearances during pregnancy and clinical implications for women with epilepsy. Neurology 2018;91:e1228-e1236 (PMC6161546) [PMID 30185446](https://pubmed.ncbi.nlm.nih.gov/30185446/) · [doi:10.1212/WNL.0000000000006240](https://doi.org/10.1212/WNL.0000000000006240)  
-   *Drugs:* phenytoin, topiramate. *Why:* OBTAINED for valproate (full text read 2026-11-01, `papers/digests/PMID_30185446.md`): third-trimester total 1.142 (95% CI 0.926-1.408) and free 0.820 (0.46-1.47), per kg, n 5, none significant; recorded in the valproate row, factor not changed. Also read for the others (the same card): phenytoin (7 women) third-trimester total 0.950 (0.65-1.38) and free 0.828 (0.57-1.20), neither significant, against Tomson 1994's 2.17-fold rise, recorded in the phenytoin row, factors not changed; topiramate 1.334 (1.014-1.756, p 0.04) in the third trimester, recorded in its row; levetiracetam 1.367 (1.15-1.63) in the third trimester. Nothing remains to obtain from it.
-
-21. Yerby MS, Friel PN, McCormick K. Antiepileptic drug disposition during pregnancy. Neurology 1992;42(4 Suppl 5):12-16 [PMID 1574166](https://pubmed.ncbi.nlm.nih.gov/1574166/)  
+20. Yerby MS, Friel PN, McCormick K. Antiepileptic drug disposition during pregnancy. Neurology 1992;42(4 Suppl 5):12-16 [PMID 1574166](https://pubmed.ncbi.nlm.nih.gov/1574166/)  
    *Drugs:* valproate. *Why:* Total and free valproate concentrations per trimester with doses; would replace the derived 1.6 with a measured total-clearance ratio.
 
 ### Papers that could turn a recorded finding into an applied factor, or confirm that none is needed
@@ -251,6 +248,14 @@ paywalled. The first list matters most, since each would check a factor the libr
 
 ### Received from the Stanford library
 
+- **Voinescu PE, Park S, Chen LQ, et al.** Antiepileptic drug clearances during pregnancy and clinical
+  implications for women with epilepsy. *Neurology* 2018;91:e1228-e1236 (PMID 30185446,
+  [doi:10.1212/WNL.0000000000006240](https://doi.org/10.1212/WNL.0000000000006240)), full text read
+  2026-11-01 (`papers/digests/PMID_30185446.md`). Third-trimester clearance over baseline, per kg,
+  from the tables under Figures 2 and 3: valproate total 1.142 (95% CI 0.926-1.408) and free 0.820
+  (0.46-1.47), n 5; phenytoin total 0.950 (0.65-1.38) and free 0.828 (0.57-1.20), n 7, against Tomson
+  1994's 2.17-fold rise; none significant. Topiramate 1.334 (1.014-1.756, p 0.04); levetiracetam 1.367
+  (1.15-1.63). Recorded in the valproate, phenytoin and topiramate rows; no factor changed.
 - **Dam M, Christiansen J, Munck O, Mygind KI.** Antiepileptic drugs: metabolism in pregnancy. *Clin
   Pharmacokinet* 1979;4:53-62 (PMID 421411), received and read 2026-10-19. Table III gave the
   per-woman phenobarbital clearances: phenobarbital moved from `unquantified` to `applied`, clearance
