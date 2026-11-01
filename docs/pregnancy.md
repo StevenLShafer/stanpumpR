@@ -39,7 +39,10 @@ series; a PBPK prediction; a review.
   first-pass; phenytoin's Km and Vmax from the measured falls in total and unbound concentration, and
   valproate's total CL/F from the rise in free fraction). A direction alone, a handful of women, no comparator, or a PBPK prediction alone
   is recorded as `unquantified` and not applied (lorazepam, risperidone, haloperidol, aspirin,
-  fentanyl, codeine, tramadol, rocuronium, cisatracurium, heparin).
+  fentanyl, codeine, tramadol, rocuronium, cisatracurium, heparin). So is a change whose
+  direction the sources dispute: sertraline, applied as CL x 0.60 from Westin 2017 until
+  2026-11-01, against which Heinonen 2021, Freeman 2008 and the inverse-variance meta-analysis of
+  Schoretsanitis 2020 point the other way or nowhere (`R/drugs_sertraline.R`).
 - **Filtration.** A drug cleared mostly unchanged by filtration whose model reads renal function
   takes the 50% rise in GFR on that renal term (cefazolin, gentamicin, vancomycin, sugammadex,
   digoxin, fondaparinux, mannitol, hydrochlorothiazide, procainamide), unless drug-specific data
@@ -83,7 +86,6 @@ bioavailability, and the renal-function estimate; phenytoin's are on Km and Vmax
 | glycopyrrolate | 1.900 |  |  |  | Ali-Melkkila 1990 | low |
 | mannitol |  |  |  | 1.5 | Deferm 2021 | low |
 | citalopram | 1.320 |  |  |  | Westin 2017 | moderate |
-| sertraline | 0.600 |  |  |  | Westin 2017 | moderate |
 | paroxetine | 2.000 |  |  |  | Westin 2017 | moderate |
 | quetiapine | 4.200 |  |  |  | Westin 2017 | moderate |
 | aripiprazole | 2.100 |  |  |  | Westin 2017 | moderate |
@@ -200,7 +202,7 @@ paywalled. The first list matters most, since each would check a factor the libr
    *Drugs:* metformin. *Why:* PMC7076518 exists but the tool returned no body: need gestational age at study, the CL/F and V/F means (L/h, L) at 500 mg, and the estimated F, to confirm the 1.27/1.33 ratios and decide whether F should be modelled separately.
 
 13. Monfort A et al. Br J Clin Pharmacol 2024;90(11):2849-2860 (ConcePTION perinatal sertraline popPK, 38 women) [PMID 39030897](https://pubmed.ncbi.nlm.nih.gov/39030897/) · [doi:10.1111/bcp.16177](https://doi.org/10.1111/bcp.16177)  
-   *Drugs:* sertraline. *Why:* Perinatal popPK model; abstract reports CL reduced 42% in CYP2C19 poor metabolizers but gives no explicit gestational-age covariate on CL. Full text/supplement needed to see whether a quantitative pregnancy (not genotype) clearance effect was estimated that could be mapped directly to cl1.
+   *Drugs:* sertraline. *Read in full, with its control stream:* the sampling moment (labour, after delivery, week 1, month 1) was tested on CL/F and not retained; CYP2C19 phenotype was kept (CL/F 42% lower in poor metabolisers). No sample precedes term, so it cannot set pregnancy against a non-pregnant baseline.
 
 14. Murphy HR et al. (Cambridge) closed-loop insulin delivery in type 1 diabetes pregnancy, Diabetes Care ~2011 - the source of the ~30 min gestational delay in aspart time-to-peak cited by Goudie 2015 (no PMID found; cited from another paper)  
    *Drugs:* insulinRegular, insulinRegularU500, insulinNPH, insulinHumanMix70, insulinLispro, insulinLisproMix75, insulinLisproMix50, insulinGlargine. *Why:* Original early-vs-late pregnancy aspart time-to-peak data (citation known only from Goudie's reference to it; PMID not retrieved in this session).
