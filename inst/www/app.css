@@ -577,3 +577,175 @@ bslib-tooltip:has(> .field-help) {
 .checkbox:has(> bslib-tooltip > .field-help) > label {
   display: inline-block;
 }
+
+/* ---- The parameter converter (help page models/pk-converter;
+   R/help-converter.R, inst/www/pk-convert.js).  Entered fields are
+   yellow and derived ones aqua, the colours of Convert.xls. ---- */
+.pkconv {
+  margin: 1rem 0 1.5rem;
+  --pkconv-entered: #fff4b8;
+  --pkconv-derived: #dcf3f5;
+  --pkconv-readonly: #eef1f3;
+}
+.pkconv fieldset {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0.75rem;
+  margin: 0 1.5rem 0.5rem 0;
+}
+.pkconv legend {
+  float: none;
+  width: auto;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0 0.5rem 0 0;
+}
+.pkconv-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.pkconv-actions {
+  margin-bottom: 0.5rem;
+}
+.pkconv-choice {
+  font-size: 0.9rem;
+  margin: 0;
+  white-space: nowrap;
+}
+.pkconv-status {
+  margin: 0.5rem 0;
+  padding: 0.4rem 0.7rem;
+  border-left: 3px solid #2c3e50;
+  background: #f4f6f8;
+  border-radius: 4px;
+  font-size: 0.92rem;
+}
+.pkconv-status[data-kind="ok"] {
+  border-left-color: #2e7d32;
+  background: #f1f8f1;
+}
+.pkconv-status[data-kind="error"],
+.pkconv-effect-result[data-kind="error"] {
+  border-left-color: #c62828;
+  background: #fdf1f1;
+  color: #8e1b1b;
+}
+.pkconv-effect-result[data-kind="error"] {
+  padding: 0.2rem 0.5rem;
+}
+.pkconv-legend {
+  margin-bottom: 0.5rem;
+}
+.pkconv-key {
+  display: inline-block;
+  padding: 0 0.45rem;
+  margin-right: 0.3rem;
+  border: 1px solid #ced4da;
+  border-radius: 3px;
+}
+.pkconv-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0.75rem;
+}
+.pkconv-group,
+.pkconv-effect,
+.pkconv-plot {
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 0.5rem 0.65rem;
+}
+.pkconv-effect,
+.pkconv-plot {
+  margin-top: 0.75rem;
+}
+.pkconv h4 {
+  font-size: 0.98rem;
+  font-weight: 600;
+  margin: 0 0 0.4rem;
+}
+.help-body table.pkconv-table {
+  margin: 0;
+  border-collapse: collapse;
+  width: 100%;
+}
+.help-body table.pkconv-table th,
+.help-body table.pkconv-table td {
+  border: 0;
+  background: none;
+  padding: 0.12rem 0.3rem;
+  vertical-align: middle;
+}
+.help-body table.pkconv-table th {
+  font-weight: 500;
+  white-space: nowrap;
+  width: 1%;
+}
+.pkconv-unit {
+  font-size: 0.85rem;
+  color: #6c757d;
+  white-space: nowrap;
+  width: 1%;
+}
+.pkconv-effect .pkconv-table {
+  max-width: 32rem;
+}
+.pkconv input.form-control {
+  font-variant-numeric: tabular-nums;
+  min-width: 6rem;
+}
+.pkconv .pkconv-entered {
+  background: var(--pkconv-entered);
+}
+.pkconv .pkconv-derived {
+  background: var(--pkconv-derived);
+}
+.pkconv .pkconv-readonly {
+  background: var(--pkconv-readonly);
+  color: #4a5764;
+}
+.pkconv input.pkconv-derived.pkconv-readonly {
+  background: var(--pkconv-derived);
+}
+.pkconv input.pkconv-bad {
+  border-color: #c62828;
+  box-shadow: 0 0 0 0.15rem rgba(198, 40, 40, 0.2);
+}
+.pkconv-plot-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1.25rem;
+}
+.pkconv-until {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+.pkconv-until input.form-control {
+  width: 6rem;
+}
+.pkconv-svg {
+  margin-top: 0.5rem;
+}
+.pkconv-graph {
+  width: 100%;
+  max-width: 760px;
+  height: auto;
+  font-size: 12px;
+}
+.pkconv-graph .pkconv-grid { stroke: #e9ecef; }
+.pkconv-graph .pkconv-axis { stroke: #6c757d; }
+.pkconv-graph .pkconv-tick { fill: #4a5764; }
+.pkconv-graph .pkconv-label { fill: #2c3e50; font-size: 13px; }
+.pkconv-graph .pkconv-cp { stroke: #1f5fa8; stroke-width: 2; fill: none; }
+.pkconv-graph .pkconv-ce { stroke: #c0392b; stroke-width: 2; fill: none; }
+.pkconv-graph .pkconv-peak { stroke: #c0392b; stroke-dasharray: 4 3; }
+.pkconv-graph .pkconv-peak-dot { fill: #c0392b; }
+.pkconv-empty {
+  color: #6c757d;
+  font-style: italic;
+}

@@ -82,6 +82,7 @@ helpStaticPages <- function() {
     "models/three-compartment", "The three-compartment model",     "models",
     "models/compartments",      "Peripheral compartments and the depot", "models",
     "models/effect-site",       "The effect site and ke0",         "models",
+    "models/pk-converter",      "Converting between parameter sets", "models",
     "models/covariates",        "Covariates and body size",        "models",
     "models/fat-free-mass",     "Scaling to fat-free mass",        "models",
     "models/pregnancy",         "Pregnancy",                       "models",
