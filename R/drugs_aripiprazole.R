@@ -10,31 +10,39 @@
 # normal.  NOT checked: the genotype-class clearances, the metabolite's
 # CLm/fm and Vm/fm, and the formation convention.
 #
-# Kim 2012's full text was read (2026-10-12, PMID 22186667 digest) and
-# confirms ke0 0.725 /h, EC50 8.63 ng/mL and Emax 100%, all **matching** this
-# file.  The same read surfaced an OPEN, UNRESOLVED issue that needs
-# pharmacometric adjudication before any number here changes: Kim 2012 fitted
-# that ke0 jointly with its OWN two-compartment PK (CL/F 5.8 L/h, V1/F 130 L,
-# Q/F 37.1 L/h, V2/F 274 L, ka 0.293 /h), not the one-compartment Kim 2008 set
-# this file actually runs it on (CL/F 3.15 L/h, V/F 192 L, ka 1.06 /h fixed).
-# inst/help/models/effect-site.md's own warning -- that transplanting a ke0
-# onto a different disposition model changes its time course -- applies here:
-# a bolus-equivalent calculation gives a Ce tPeak of about 2.19 h in Kim
-# 2012's own two-compartment model against about 5.3 h for this file's pair
-# of ke0 and one-compartment PK (matching that 2.19 h would need an ke0 of
-# about 2.26 /h instead of 0.725 /h).  That bolus-equivalent number is not
-# itself a validation of the oral time course or a clinical effect size, and
-# is not a basis for changing ke0 on its own; the comparison that would
-# settle it is the full oral Cp/Ce and occupancy time course against Kim
-# 2012's own sampling schedule, which has not been done.  Until adjudicated,
-# treat the early-time (and post-dose-change) effect-site curve as lagging
-# more than Kim 2012's own model implies.  With once-daily oral dosing, Ce
-# and Cp both fluctuate across each dosing interval at periodic steady
-# state and are not equal at any one moment; only their interval averages
-# are equal, regardless of ke0 -- so the ke0-transfer issue mainly affects
-# the minutes around a dose or dose change, not the interval-averaged
-# exposure (which can still differ between the two PK structures for other
-# reasons, since their apparent clearances differ).
+# Kim 2012's full text was read (2026-10-12; Table 1 re-read on the PDF
+# 2026-11-01) and confirms ke0 0.725 /h (95% CI 0.542-0.908), EC50 8.63 ng/mL
+# and Emax 100%.  THE KE0 TRANSFER (adjudicated 2026-11-01): Kim fitted ke0
+# with his own two-compartment PK (CL/F 5.8 L/h, V1/F 130 L, Q/F 37.1 L/h,
+# V2/F 274 L, ka 0.293 /h) in 18 healthy men given one oral dose, PET at 3,
+# 45 and 120 h, not with the one-compartment Kim 2008 set this file runs it
+# on (CL/F 3.15 L/h, V/F 192 L, ka 1.06 /h fixed).  Only the 3-h scan
+# precedes equilibrium, so what the data identify is how far Ce trails Cp
+# about 3 h after an ORAL dose.  On this file's PK, ke0 0.725 gives Ce/Cp
+# 0.771 at 3 h against 0.728 in Kim's own model (10 mg); the ke0 matching it
+# exactly is 0.632, a least-squares fit of Ce/Cp over 0-24 h gives 0.657, and
+# matching Kim's oral Ce peak (6.03 h; 6.80 h here, the one-compartment
+# plasma peak being flatter) gives 0.932 -- all inside or at the edge of
+# Kim's interval, so ke0 is carried as published.  The bolus tPeak (2.19 h in
+# Kim's model, 5.35 h here) is NOT carried: it reflects a distribution phase
+# no oral dose produces, and its ke0 (2.26 /h) would erase most of the
+# hysteresis seen at 3 h (+16 occupancy points at 1 h, +3 at 3 h after
+# 10 mg).  The ke0 matters only in the first ~3 h after a dose or dose
+# change.  At periodic steady state on once-daily dosing, replacing 0.725 by
+# 0.632 or 0.932 moves occupancy by at most 0.4 points at any time in the
+# interval at 2 mg (0.13 at 10 mg, 0.05 at 30 mg), and by the bolus ke0 2.26
+# by at most 1.7 points at 2 mg (1.5 h after the dose; 0.5 at 10 mg).
+#
+# The larger difference is 3 h after a single dose: this model gives
+# 46/81/93% occupancy after 2/10/30 mg where Kim's gives 32/71/88% (observed
+# mean maxima 30/72/82%).  Clearance explains almost none of it (Kim's
+# 5.8 L/h on this model moves the 10 mg value from 81.1 to 80.8%).  It is
+# absorption: ka 1.06 /h, fixed in Kim 2008's sparse steady-state data,
+# against 0.293 /h fitted in Kim 2012's rich single-dose data, so 3 h after
+# a dose this model's plasma concentration is 1.7 times Kim's; with Kim's ka
+# this model gives 69.2% against Kim's 70.5%.  That is a difference between
+# the two sources' absorption models, not of ke0, and is recorded, not
+# reconciled.
 #
 # V/F: the brief gives 193 L from Table 3; the abstract says 192 L.  The
 # abstract is the text that could be read, so 192 L is used.

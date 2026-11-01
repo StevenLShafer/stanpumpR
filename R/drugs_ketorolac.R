@@ -41,30 +41,43 @@
 # ORAL ROUTE (PROVISIONAL)
 # ========================
 # Not fitted with this model.  The intravenous disposition is used with one
-# shared first-order oral depot: complete bioavailability, as the
-# intravenous/IM/oral crossover and the oral label report for the racemate,
-# and the 3.8 min absorption half-life of Mroszczak et al. treated as
-# first-order (ka = ln 2 / 3.8 min = 10.9 /h), no lag.  Neither was estimated
-# jointly with the disposition or for each enantiomer separately; treat oral
-# curves as provisional, especially with food (which delays absorption) or
-# renal impairment.  They peak early and high: 10 mg by mouth peaks here at
-# 1.01 mg/L at 12 min in the reference man, against a mean peak of about
-# 0.8 mg/L at a mean of 0.9 h in Jung's crossover.  On this disposition no
-# single first-order rate reproduces both (a 23 min absorption half-life gives
-# the 0.9 h peak but only 0.61 mg/L), so the source's rate is kept as given.
+# first-order oral depot, the same for both enantiomers, carrying Mroszczak
+# et al.'s absorption model as it was fitted: ka 11.0 /h (Table 2; the
+# 3.8 min absorption half-life, KETOROLAC_KA_PO = ln 2 / 3.8 min) TOGETHER
+# WITH its 0.2 h lag (p. 35S: "A lag time for absorption of 0.2 hour provided
+# the best fit"), the two estimated jointly by NONLIN from the mean plasma
+# levels of 12 men given a 10 mg tablet (Syntex data on file; Figure 2).
+# Bioavailability is complete, as read from the crossovers (Jung 1988, tablet,
+# 100 +/- 20%; Mroszczak study 3, oral solution, 100%), not fitted.  Until
+# 2026-11-01 the lag was left out, which put the peak 12 min earlier than the
+# source's own fit.
 #
-# OPEN ISSUE (adjudication needed, not yet resolved): Mroszczak's own NONLIN
-# fit estimated that 3.8 min absorption half-life TOGETHER WITH a 0.2 h
-# (12 min) absorption lag (text p35; "lag time 0.2 h gave the best fit").
-# This model takes the rate alone and sets tlag_PO = 0, which moves the
-# modelled peak about 12 min earlier than the source's own fit -- on top of
-# the gap to Jung's observed 0.9 h mean Tmax noted above.  Restoring the
-# 0.2 h lag has NOT been checked against observed Cmax/AUC/time-course for
-# this enantiomer-specific disposition (the source fit was to the racemate as
-# a single two-compartment model, not S and R separately), so it is not
-# simply added here; a pharmacometric comparison of candidate
-# lag/rate/bioavailability combinations against Jung's and Mroszczak's own
-# observed data is needed before changing tlag_PO.
+# Checked against the source's own data (2026-11-01).  Mroszczak's two-
+# compartment fit (Table 2: V1 7.52 L, alpha 0.531, beta 0.110, k21 0.204 /h,
+# with ka and the lag) reproduces the Figure 2 means (digitised: 0.66, 0.85,
+# 0.68, 0.47, 0.23, 0.10 and 0.016 mg/L at 1/3, 2/3, 1, 2, 4, 8 and 24 h) to
+# 10% when the dose is the 6.78 mg of free acid in 10 mg of tromethamine (and
+# is 1.5 times too high on the salt), so its ka and lag are on the dose basis
+# used here; and its clearance, 2.15 L/h, is within 1.5% of this model's
+# racemic 2.12 L/h (AUC after 10 mg 3.15 against 3.19 mg.h/L).  On this
+# disposition 10 mg by mouth peaks at 1.01 mg/L at 24 min in the reference
+# man (at 12 min without the lag).  A lag moves the curve and leaves its
+# shape, so restoring it brings the 40 and 60 min points from 15% and 14%
+# below the Figure 2 means to 2% and 3% below, and leaves the peak height
+# alone.  What remains is disposition,
+# not absorption: Cloesmeijer's central volumes (4.03 and 4.43 L, about 4.2 L
+# for the racemate, fitted to intravenous doses given over 30 s) are about half
+# Mroszczak's 7.52 L (oral data, first sample at 20 min), so the curve is 47%
+# above the Figure 2 mean at 20 min and 16-17% below it at 2-4 h, and peaks
+# higher than the source model's 0.79 mg/L and the observed mean peaks (0.86,
+# Table 2; 0.81, Jung; 1.14 after a capsule).  None of that is to be put into
+# ka, the lag or F.  Jung's crossover (mean peak 0.81 mg/L at 0.89 h, SD
+# 0.63 h, sampled at 20, 40 and 60 min) has an AUC of 4.81 mg.h/L after the
+# tablet and 4.82 after the intravenous dose, above this model's 3.19 by both
+# routes: a lower clearance in its 15 volunteers, not slower or incomplete
+# absorption.  Treat oral curves as provisional, especially with food, which
+# delays absorption (Tmax 92 against 30 min after a high-fat breakfast, AUC
+# unchanged), or in renal impairment.
 #
 # EFFECT SITE
 # ===========
@@ -150,6 +163,7 @@ KETOROLAC_MW_BASE         <- 255.273   # g/mol, ketorolac free acid
 # Share of each labelled dose reaching each enantiomer as free acid
 KETOROLAC_ENANTIOMER_FRACTION <- 0.5 * KETOROLAC_MW_BASE / KETOROLAC_MW_TROMETHAMINE
 KETOROLAC_KA_PO <- log(2) / 3.8        # 1/min, Mroszczak 1990, provisional
+KETOROLAC_TLAG_PO <- 0.2 * 60          # min, Mroszczak 1990, fitted with ka
 
 # Pregnancy (see the header): enantiomer-specific, Kulo 2017's BSA/weight-
 # normalised delivery-vs-volunteer ratios.  Clearance scales each enantiomer's
@@ -162,9 +176,9 @@ KETOROLAC_PREGNANCY_R_V_FACTOR  <- 1.33   # R Vss/BW 0.12 / 0.09
 #' Ketorolac pharmacokinetics (S + R enantiomers)
 #'
 #' @inheritParams cefazolin
-#' @param pregnant when \code{TRUE}, apply the changes of late pregnancy:
-#'   every clearance and volume of both enantiomers x 1.5 (see the file's
-#'   header)
+#' @param pregnant when \code{TRUE}, apply the changes of late pregnancy
+#'   (Kulo 2017): S-ketorolac clearance x 1.68 and volumes x 1.20,
+#'   R-ketorolac clearance x 2.00 and volumes x 1.33 (see the file's header)
 #' @returns a list in the shape \code{getDrugPK()} expects, with the R
 #'   enantiomer as a parallel system
 #' @export
@@ -186,7 +200,8 @@ ketorolac <- function(weight, height, age, sex, adjustToFFM = TRUE,
     rVF  <- KETOROLAC_PREGNANCY_R_V_FACTOR
   }
 
-  oral <- list(ka_PO = KETOROLAC_KA_PO, bioavailability_PO = 1, tlag_PO = 0)
+  oral <- list(ka_PO = KETOROLAC_KA_PO, bioavailability_PO = 1,
+               tlag_PO = KETOROLAC_TLAG_PO)
 
   # S-ketorolac, three compartments
   default <- c(list(
@@ -214,7 +229,7 @@ ketorolac <- function(weight, height, age, sex, adjustToFFM = TRUE,
   reference <- paste0(
     "Cloesmeijer ME et al., Br J Clin Pharmacol 2021;87:1443-1454 (S and R ",
     "enantiomers fitted separately, summed; doses as ketorolac tromethamine; ",
-    "oral absorption provisional, Mroszczak 1990). ",
+    "oral absorption provisional, Mroszczak 1990, rate and lag). ",
     "https://doi.org/10.1111/bcp.14547"
   )
   if (isTRUE(pregnant)) {

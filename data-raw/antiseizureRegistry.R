@@ -297,7 +297,7 @@ parameters <- rbind(
   par("topiramate", "V2", "39.1", "L at 70 kg", E, "Bamgboye 2026", "https://doi.org/10.1002/jcph.70191"),
   par("topiramate", "Q3", "0.6", "L/h at 70 kg (x ^0.75)", E, "Bamgboye 2026", "https://doi.org/10.1002/jcph.70191"),
   par("topiramate", "V3", "9.01", "L at 70 kg", E, "Bamgboye 2026", "https://doi.org/10.1002/jcph.70191"),
-  par("topiramate", "ka", "2.0", "1/h", CA, "label Tmax 1 h", "https://doi.org/10.1111/epi.12134"),
+  par("topiramate", "ka", "2.38", "1/h", E, "Ahmed 2015 Table 2, 32 healthy adults, joint IV + oral (2-compartment; Vc 59.3 L approximates Bamgboye V1 + V2, 48.9 L)", "https://doi.org/10.1111/bcp.12556"),
   par("topiramate", "F (oral)", "1", "unitless", LD, "Clark 2013 absolute F 109%", "https://doi.org/10.1111/epi.12134"),
 
   par("lacosamide", "CL/F", "1.86", "L/h (x 0.875 women, x (CrCL/119)^0.311)", E, "BMC Pharmacol Toxicol 2026, 180 adults", "https://doi.org/10.1186/s40360-026-01114-2"),

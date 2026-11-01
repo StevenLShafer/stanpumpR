@@ -7,7 +7,8 @@ noEvents <- data.frame(Time = numeric(0), Event = character(0))
 
 test_that("returns the published parameters with the fat-free-mass switch off", {
   actual <- ketorolac(70, 171, 50, "male", adjustToFFM = FALSE)
-  oral <- list(ka_PO = log(2) / 3.8, bioavailability_PO = 1, tlag_PO = 0)
+  # Mroszczak 1990: ka 11 /h (3.8 min half-life) fitted with a 0.2 h lag
+  oral <- list(ka_PO = log(2) / 3.8, bioavailability_PO = 1, tlag_PO = 12)
   expect_equal_rounded(actual$PK$default, c(list(
     v1 = 4.03, v2 = 43.3, v3 = 5.90,
     cl1 = 3.97 / 60, cl2 = 1.86 / 60, cl3 = 19.7 / 60), oral))
@@ -43,8 +44,9 @@ test_that("getDrugPK builds the R system's coefficients", {
 
 # Independent check by fourth-order Runge-Kutta: the S and R systems at the
 # library's reference man, each given doseFraction of the labelled dose, as
-# a bolus or into a first-order oral depot, summed.
-rk4Ketorolac <- function(times, doseIV, dosePO, dt = 0.01)
+# a bolus or into a first-order oral depot that starts after tlag minutes,
+# summed.
+rk4Ketorolac <- function(times, doseIV, dosePO, dt = 0.01, tlag = 0)
 {
   size <- pkSizeFactors(70, 170, 40, "male", TRUE)
   f <- 0.5 * 255.273 / 376.409
@@ -66,9 +68,11 @@ rk4Ketorolac <- function(times, doseIV, dosePO, dt = 0.01)
     }
     s <- c(dosePO * f, doseIV * f, 0, 0); t <- 0
     out <- numeric(length(times))
+    # a lagged oral dose is the unlagged solution shifted by tlag
+    tShift <- pmax(times - tlag, 0)
     for (i in seq_along(times)) {
-      while (t < times[i] - 1e-12) {
-        h <- min(dt, times[i] - t)
+      while (t < tShift[i] - 1e-12) {
+        h <- min(dt, tShift[i] - t)
         k1 <- d(s); k2 <- d(s + h / 2 * k1); k3 <- d(s + h / 2 * k2); k4 <- d(s + h * k3)
         s <- s + h * (k1 + 2 * k2 + 2 * k3 + k4) / 6
         t <- t + h
@@ -90,7 +94,24 @@ test_that("30 mg intravenously and 10 mg by mouth match an independent integrati
   po <- simulateDrugsWithCovariates(
     data.frame(Drug = "ketorolac", Time = 0, Dose = 10, Units = "mg PO"),
     noEvents, 70, 170, 40, "male", 720, TRUE)$ketorolac$wide
-  expect_equal(po$Plasma, rk4Ketorolac(po$Time, 0, 10), tolerance = 1e-5)
+  expect_equal(po$Plasma, rk4Ketorolac(po$Time, 0, 10, tlag = 12), tolerance = 1e-5)
+})
+
+test_that("10 mg by mouth: nothing before the 0.2 h lag, peak 1.01 mg/L at 24 min", {
+  # Mroszczak 1990's ka and lag on Cloesmeijer's disposition (the header of
+  # R/drugs_ketorolac.R): the lag moves the curve 12 min later without
+  # changing its shape, so the peak height is the unlagged 1.01 mg/L.
+  po <- simulateDrugsWithCovariates(
+    data.frame(Drug = "ketorolac", Time = 0, Dose = 10, Units = "mg PO"),
+    noEvents, 70, 170, 35, "male", 720, TRUE)$ketorolac$wide
+  expect_true(all(abs(po$Plasma[po$Time <= 12]) < 1e-12))
+  cp <- approxfun(po$Time, po$Plasma)
+  t <- seq(12, 60, by = 0.05)
+  expect_equal(t[which.max(cp(t))], 24, tolerance = 1 / 24)
+  expect_equal(max(cp(t)), 1.010, tolerance = 1e-3)
+  # at 40 and 60 min, 2-3% below Mroszczak's Figure 2 means (digitised 0.845
+  # and 0.68; 15% and 14% below them without the lag)
+  expect_equal(cp(c(40, 60)), c(0.832, 0.661), tolerance = 2e-3)
 })
 
 test_that("the time until threshold is solved from the summed systems", {

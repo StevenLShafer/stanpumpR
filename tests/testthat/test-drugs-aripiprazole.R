@@ -109,3 +109,27 @@ test_that("pregnancy: parent clearance x 2.1, the metabolite's own clearance unc
   expect_match(on$reference, "pregnancy:", fixed = TRUE)
   expect_no_match(off$reference, "Westin")
 })
+
+test_that("ke0 0.725 /h carries Kim 2012's oral hysteresis onto the one-compartment PK", {
+  # Kim 2012's own model (Table 1): two compartments, ka 0.293 /h, ke0 0.725
+  # /h, solved by eigen-decomposition (hours, mg, L; ng/mL).  Its only PET
+  # scan before equilibrium is at 3 h, so Ce/Cp there is what the data
+  # identify; see the header of R/drugs_aripiprazole.R.
+  kim2012 <- function(t, dose = 10) {
+    k10 <- 5.8 / 130; k12 <- 37.1 / 130; k21 <- 37.1 / 274; ka <- 0.293; ke0 <- 0.725
+    A <- matrix(c(-ka, ka, 0, 0,
+                  0, -(k10 + k12), k12, ke0 / 130 * 1000,
+                  0, k21, -k21, 0,
+                  0, 0, 0, -ke0), 4, 4)
+    e <- eigen(A); c0 <- solve(e$vectors, c(dose, 0, 0, 0))
+    x <- Re(e$vectors %*% (exp(e$values * t) * c0))
+    c(Cp = x[2] / 130 * 1000, Ce = x[4])
+  }
+  k <- kim2012(3)
+  expect_equal_rounded(unname(k["Ce"] / k["Cp"]), 0.7280635)
+  r <- simulateDrugsWithCovariates(
+    data.frame(Drug = "aripiprazole", Time = 0, Dose = 10, Units = "mg PO"),
+    noEvents, 70, 170, 35, "male", 1440, FALSE, adjustToFFM = FALSE)$aripiprazole$wide
+  at3 <- function(y) stats::approx(r$Time, y, 180)$y
+  expect_equal(at3(r$`Effect Site`) / at3(r$Plasma), unname(k["Ce"] / k["Cp"]), tolerance = 0.06)
+})
