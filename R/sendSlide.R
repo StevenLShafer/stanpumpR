@@ -52,7 +52,15 @@ sendSlide <- function(
       host = "smtp.gmail.com",
       port = 587,
       username = email_username,
-      password = email_password
+      password = email_password,
+      # Bounded: R serves every session of a worker on one thread, so a send
+      # that stalls stalls them all.  emayili's defaults are five attempts and
+      # curl's, no limit on the transfer and five minutes to connect; in the
+      # keyboard review of 2026-11-02 a stalled send held the app for more
+      # than five minutes.  See EMAIL_SMTP_* in R/constants.R.
+      max_times = EMAIL_SMTP_ATTEMPTS,
+      connecttimeout = EMAIL_SMTP_CONNECT_TIMEOUT,
+      timeout = EMAIL_SMTP_TIMEOUT
     )
     smtp(msg, verbose = FALSE)
 
