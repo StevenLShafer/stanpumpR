@@ -302,3 +302,12 @@ test_that("one- and two-compartment models have an effect-site curve too", {
   expect_gt(length(two$curve$time), 10)
   expect_true(all(is.finite(two$curve$time)))
 })
+
+test_that("a site that never reaches its target has no decrement curve", {
+  skipWithoutNode()
+  # ke0 0.2 /min: after a one-minute effect-site infusion Ce is still rising
+  js <- pkConvertJS("P.decrementCurves(P.fromVolumesClearances(1, [8], [4]).model, 0.2, 50, 1, 20)")
+  expect_length(js$effect$time, 0)
+  expect_length(js$effect$duration, 0)
+  expect_gt(length(js$plasma$time), 0)
+})

@@ -425,8 +425,11 @@ var PKConvert = (function() {
     sites.forEach(function(site) {
       var tr = tciTrajectory(model, ke0, site, tMax), K = tr.K, st = tr.states;
       var first = 0;
-      while (first < st.length - 1 &&
+      while (first < st.length &&
              Math.abs(sum(site === 'plasma' ? st[first].p : st[first].e) - 1) > TCI_PLASMA_SWITCH) first++;
+      // Not reached within the longest infusion: no curve, rather than a
+      // decrement from a site still on its way up
+      if (first === st.length) { out[site] = {duration: [], time: []}; return; }
       var every = Math.max(1, Math.floor((st.length - first) / (points || 300)));
       var dur = [], time = [];
       for (var i = first; i < st.length; i++) {
@@ -807,10 +810,13 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
       yLabel: 'Time to a ' + P.fmt(pct, 4) + '% decrease (' + s.unit + ')',
       aria: P.fmt(pct, 4) + '% decrement times against the duration of the infusion'
     }));
-    var last = function(sr) { return sr.time[sr.time.length - 1]; };
-    var say = function(t) { return isFinite(t) ? P.fmt(t / f, 3) + ' ' + s.unit : 'beyond the search'; };
-    var text = 'After an infusion of ' + P.fmt(tMax / f, 4) + ' ' + s.unit + ': plasma ' + say(last(c.plasma));
-    if (c.effect) text += ', effect site ' + say(last(c.effect));
+    var say = function(sr) {
+      if (!sr.time.length) return 'not reached within the infusion';
+      var t = sr.time[sr.time.length - 1];
+      return isFinite(t) ? P.fmt(t / f, 3) + ' ' + s.unit : 'beyond the search';
+    };
+    var text = 'After an infusion of ' + P.fmt(tMax / f, 4) + ' ' + s.unit + ': plasma ' + say(c.plasma);
+    if (c.effect) text += ', effect site ' + say(c.effect);
     text += '.';
     if (!c.effect) text += ' Enter ke0 or the time to peak effect above to add the effect site.';
     $note.text(text);
