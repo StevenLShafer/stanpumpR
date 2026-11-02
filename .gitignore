@@ -56,4 +56,8 @@ inst/doc
 
 # GitHub Actions secrets
 .secrets
+
+# Local environment files, which hold tokens and passwords (2026-11-02)
+.Renviron
+.Renviron.*
 tests/testthat/testthat-problems.rds

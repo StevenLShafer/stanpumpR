@@ -8,7 +8,12 @@ on:
 jobs:
   cleanup-pr:
     runs-on: ubuntu-24.04
+    # Runs none of the PR's code, so it serves forks too (one deployed before
+    # forks stopped being deployed).  Its token is the preview's, from the
+    # `preview` environment, like the deploy (see shiny-pr-2-deploy.yaml).
     if: contains(github.event.pull_request.labels.*.name, 'DEPLOY')
+    environment:
+      name: preview
     permissions:
       pull-requests: write
     steps:
@@ -31,7 +36,7 @@ jobs:
         shell: Rscript {0}
       - name: Remove DEPLOY label
         if: always()   # even if previous step fails
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             try {

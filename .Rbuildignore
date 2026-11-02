@@ -13,6 +13,8 @@
 ^Slides$
 ^Original Stanpump$
 ^\.secrets$
+^\.Renviron$
+^\.Renviron\..*$
 ^app\.R$
 ^config\.yml$
 ^config\.yml\.sample$

@@ -1,8 +1,14 @@
-# When a PR is opened, either add a "DEPLOY" label if the PR came from
-# this repo, or if it came from a fork then add a comment telling maintainers
-# that they need to add this label manually to trigger a deployment. This is
-# done for security reasons, so that other people can't trigger PRs that steal
-# GitHub secrets (they would be able to access the shinyapps.io and gmail accounts)
+# When a PR is opened, add a "DEPLOY" label if the PR came from this repo, so
+# that shiny-pr-2-deploy.yaml deploys a preview of it.  A PR from a fork is
+# never deployed (2026-11-02): the preview job runs the PR's code with the
+# preview's shinyapps.io token, and a label once added covered every later push
+# to the fork.  The fork's author is told so, and a maintainer who wants a
+# preview reviews the fork and pushes its branch to this repository.
+#
+# MY_PAT is a personal access token, used because a label added with the
+# workflow's own GITHUB_TOKEN would not trigger another workflow.  It reaches
+# only the labelling step, which runs no PR code; it should be a fine-grained
+# token limited to this repository and to issue and pull-request write.
 
 name: Shiny PR 1 Triage
 
@@ -19,7 +25,7 @@ jobs:
     steps:
       - name: Label internal PR
         if: github.event.pull_request.head.repo.full_name == github.repository
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           github-token: ${{ secrets.MY_PAT }}
           script: |
@@ -31,12 +37,12 @@ jobs:
             });
       - name: Comment on fork PR
         if: github.event.pull_request.head.repo.full_name != github.repository
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: "**Fork detected**\n\nFor security reasons, a maintainer must add the `DEPLOY` label to deploy this PR.\n\n*Remember that any future commits added to the PR will re-deploy the app, so only do this if you trust the author.*"
+              body: "**Fork detected**\n\nFor security reasons a pull request from a fork is not deployed as a preview. A maintainer who wants one can review this branch and push it to the repository."
             });
