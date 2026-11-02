@@ -50,7 +50,7 @@ Imports:
     utils
 Suggests:
     devtools,
-    httr2,
+    httr2 (>= 1.1.0),
     knitr,
     plumber,
     ragg,

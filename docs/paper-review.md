@@ -340,7 +340,8 @@ Everything else is in new files. These are the seams in shared code:
    existing caller passes either no model or a model for a library drug, so
    nothing else changes.
 2. `NAMESPACE`: `export(run_paper_review_app)`, and its `man/` page.
-3. `DESCRIPTION`: `httr2` in `Suggests`, used only by this optional entry
+3. `DESCRIPTION`: `httr2 (>= 1.1.0)` in `Suggests` (the streaming
+   functions `paperReviewExtract()` uses arrived in 1.1.0), used only by this optional entry
    point and guarded with `requireNamespace()` (the rule `AGENTS.md` gives for
    plumber). It is already in the renv library as a dependency of other
    packages, so `renv.lock` is unchanged.
@@ -351,9 +352,15 @@ Everything else is in new files. These are the seams in shared code:
 5. `R/app_server.R`: `paperReviewModuleServer()` beside `helpServer()`, and
    `onBookmark()` excludes every `paperReview-` input from the bookmark, so
    nothing of a reviewed paper (its model names, the patient and doses
-   simulated) reaches the URL. The review's computations run with
+   simulated) reaches the URL; the exclusion is set before every
+   `doBookmark()`, which reads it before calling `onBookmark()`. The review's computations run with
    stanpumpR's comments off (`paperReviewSilently()`), so nothing reaches
    the `?debug=` log either.
+6. `R/app_run.R`: `shiny.maxRequestSize` raised to
+   `PAPER_REVIEW_MAX_UPLOAD_BYTES` (the 20 MB PDF limit plus room for the
+   request's encoding), since Shiny refuses anything over 5 MB before the app
+   sees it. The option is global, so the simulator's own uploads may be as
+   large.
 
 New files: `R/paper-review-{schema,api,model,absorption,checks,report,app}.R`,
 `inst/paper-review/{example-extraction.json,help.md}`,

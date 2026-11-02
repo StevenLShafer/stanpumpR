@@ -495,6 +495,9 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
       conditionMessage(run)))))
   pk <- run$PK$default
   n <- paperReviewNum(extraction$structure$compartments)
+  # As paperReviewDisposition() builds the model: one compartment when the
+  # extraction's count is missing or outside 1-3.
+  if (is.na(n) || !n %in% 1:3) n <- 1
   lambda <- c(pk$lambda_1, pk$lambda_2, pk$lambda_3)[seq_len(n)]
   coef <- c(pk$p_coef_bolus_l1, pk$p_coef_bolus_l2, pk$p_coef_bolus_l3)[seq_len(n)]
   # The placeholder volume of an absent compartment is not part of Vss.
@@ -996,6 +999,9 @@ paperReviewRegimenMRT <- function(regimen, drug, mrtIV)
 {
   routes <- vapply(regimen$doses %or% list(), function(d) d$route %or% "other", character(1))
   if (all(routes %in% c("iv_bolus", "iv_infusion"))) return(mrtIV)
+  # A constant extravascular input enters the apparent disposition directly,
+  # and a drug with no absorption has no route to add one for.
+  if (!paperReviewNeedsAbsorption(regimen) || is.na(drug$route %or% NA)) return(mrtIV)
   field <- if (drug$route == "sc") "SC" else PAPER_REVIEW_ROUTE_SUFFIX[[drug$route]]
   set <- drug$model$PK$default
   mrtIV + 1 / set[[paste0("ka_", field)]] + (set[[paste0("tlag_", field)]] %or% 0)

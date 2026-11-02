@@ -101,7 +101,7 @@ PAPER_REVIEW_NUMERIC_FIELDS <- c(
   "n", "n_female", "n_male", "coefficient", "reference_value", "duration",
   "error_lower", "error_upper", "group1_value", "group1_se", "group2_value",
   "group2_se", "difference", "difference_se", "p_value", "analyte_fraction",
-  "interval", "decrement_percent")
+  "interval", "decrement_percent", "reading_precision", "y_axis_max", "x_axis_max")
 # Optional strings: NULL when empty.
 PAPER_REVIEW_OPTIONAL_STRINGS <- c("title", "first_author", "journal", "doi",
                                    "pd_model", "regimen_id", "group")

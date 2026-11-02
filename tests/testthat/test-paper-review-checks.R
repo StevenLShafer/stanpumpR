@@ -585,3 +585,33 @@ test_that("a figure of individually dosed subjects is not compared with one regi
   expect_length(Filter(function(s) s$figure == "Figure 2",
                        paperReviewFigureSeries(ex, "ng")), 0)
 })
+
+test_that("every nullable number in the schema is parsed back to a number", {
+  # schemaNullable() sends a nullable number as a string; one missing from
+  # PAPER_REVIEW_NUMERIC_FIELDS reached the checks as "3" and was ignored
+  # (reading_precision, y_axis_max and x_axis_max were, CodeRabbit on #673).
+  nullableNumbers <- function(x) {
+    if (!is.list(x)) return(character(0))
+    own <- if (is.list(x$properties))
+      names(Filter(function(p) is.list(p) && grepl("A plain decimal number", p$description %or% ""),
+                   x$properties)) else character(0)
+    unique(c(own, unlist(lapply(x, nullableNumbers), use.names = FALSE)))
+  }
+  found <- nullableNumbers(paperReviewSchema())
+  expect_true(all(c("reading_precision", "y_axis_max", "x_axis_max") %in% found))
+  expect_true(all(found %in% PAPER_REVIEW_NUMERIC_FIELDS), info = paste(setdiff(found, PAPER_REVIEW_NUMERIC_FIELDS)))
+  x <- paperReviewNormalize(list(figures = list(list(reading_precision = "3", y_axis_max = "", x_axis_max = "600"))))
+  expect_identical(x$figures[[1]]$reading_precision, 3)
+  expect_null(x$figures[[1]]$y_axis_max)
+  expect_identical(x$figures[[1]]$x_axis_max, 600)
+})
+
+test_that("a missing compartment count or an unabsorbed regimen does not stop the review", {
+  ex <- paperReviewExample()
+  ex$structure$compartments <- "three"
+  expect_no_error(paperReviewRun(ex))
+  # A daily oral dose given as a constant input needs no absorption.
+  regimen <- list(id = "R9", doses = list(list(route = "po", per_time = "day", duration = 1440)))
+  drug <- list(route = NA_character_)
+  expect_equal(paperReviewRegimenMRT(regimen, drug, 100), 100)
+})

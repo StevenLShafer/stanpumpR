@@ -560,6 +560,7 @@ run_paper_review_app <- function(config_file = "config.yml")
   .sprglobals$config <- config
   # Nothing from stanpumpR's own comment log reaches the console in this app.
   options(ECHO_OUTPUT_COMMENTS = NA)
+  options(shiny.maxRequestSize = PAPER_REVIEW_MAX_UPLOAD_BYTES)
   shiny::shinyApp(paperReviewUI(), function(input, output, session) {
     # A dropped connection (a hidden pane, a sleeping laptop) may rejoin the
     # same session rather than leave an upload with nowhere to go.

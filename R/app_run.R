@@ -36,6 +36,9 @@ run_app <- function(config_file = "config.yml") {
     legend.key = ggplot2::element_blank()
   )
 
+  # Single Paper Review's manuscript upload (5 MB is Shiny's default).
+  options(shiny.maxRequestSize = PAPER_REVIEW_MAX_UPLOAD_BYTES)
+
   shiny::addResourcePath("stanpumpr-assets", system.file("www", package = "stanpumpR"))
   # The Simulation API's documentation, at <app>/api (R/api-docs.R).  A page
   # that fails to render must not stop the app.

@@ -30,6 +30,10 @@ PAPER_REVIEW_KEY_ENV      <- c("STANPUMPR_ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY
 PAPER_REVIEW_FALLBACK_BETA <- "server-side-fallback-2026-07-01"
 # The API's request limit is 32 MB; base64 adds a third.
 PAPER_REVIEW_MAX_PDF_BYTES <- 20 * 1024^2
+# Shiny refuses an upload over shiny.maxRequestSize (5 MB by default) before
+# the app sees it; run_app() and run_paper_review_app() raise it to this, the
+# PDF limit plus room for the request's own encoding.
+PAPER_REVIEW_MAX_UPLOAD_BYTES <- PAPER_REVIEW_MAX_PDF_BYTES + 1024^2
 
 #' The API key for this session
 #'
