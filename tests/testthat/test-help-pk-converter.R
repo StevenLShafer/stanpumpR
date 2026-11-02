@@ -202,3 +202,84 @@ test_that("the effect site agrees with the simulator's own solvers", {
   # ke0 equal to an exponent is the limit, not a division by zero
   expect_equal(js$tie, js$near, tolerance = 1e-6)
 })
+
+# --- Decrement times ---------------------------------------------------------
+
+test_that("the converter's TCI is the simulator's controller, step for step", {
+  skipWithoutNode()
+  # Propofol for one man, entered in the converter as V1 and its rate constants
+  PK <- getDrugPK("propofol", 70, 170, 50, "male", getDrugDefaults("propofol"))
+  k <- PK$PK[[1]]
+  js <- pkConvertJS(sprintf(paste0(
+    "(function() { var m = P.fromMicro(3, %.17g, {k10: %.17g, k12: %.17g, k13: %.17g, k21: %.17g, k31: %.17g}).model;",
+    " var out = {}; ['plasma', 'effect'].forEach(function(site) {",
+    "   var tr = P.tciTrajectory(m, %.17g, site, 30);",
+    "   out[site] = {t: tr.states.map(function(s) { return s.t; }),",
+    "                p: tr.states.map(function(s) { return s.p; }),",
+    "                e: tr.states.map(function(s) { return s.e; })}; });",
+    " return out; })()"),
+    k$v1, k$k10, k$k12, k$k13, k$k21, k$k31, k$ke0))
+  # R/tci.R's tciRate() and tciKinetics(), driven the same way: a target of 1
+  # from zero, the interval lengthening once the plasma is held
+  K <- tciKinetics(PK)
+  for (site in c("plasma", "effect")) {
+    p <- numeric(3); e <- numeric(4); t <- 0; dt <- TCI_INTERVAL
+    dtMax <- max(TCI_INTERVAL, min(10, 30 / 2000))
+    i <- 0
+    while (t < 30 - 1e-9) {
+      step <- min(dt, 30 - t)
+      x <- tciRate(p, e, 1, site, step, K)
+      d3 <- exp(-K$lambda3 * step); d4 <- exp(-K$lambda4 * step)
+      p <- p * d3 + K$pinf * x$rate * (1 - d3)
+      e <- e * d4 + K$einf * x$rate * (1 - d4)
+      t <- t + step; i <- i + 1
+      dt <- if (x$rate > 0 && !x$effectMode && t > K$tPeak) min(dt * 1.1, dtMax) else TCI_INTERVAL
+    }
+    js_site <- js[[site]]
+    expect_equal(length(js_site$t), i, info = site)
+    expect_equal(js_site$p[i, ], p, tolerance = 1e-8, info = site)
+    expect_equal(js_site$e[i, ], e, tolerance = 1e-8, info = site)
+  }
+  # The effect site is held at its target, and the plasma at its own
+  expect_equal(sum(js$effect$e[nrow(js$effect$e), ]), 1, tolerance = 1e-4)
+  expect_equal(sum(js$plasma$p[nrow(js$plasma$p), ]), 1, tolerance = 1e-8)
+})
+
+test_that("decrement times agree with an independent root search", {
+  skipWithoutNode()
+  # One compartment: every plasma decrement time is the half-life's multiple
+  js <- pkConvertJS("P.decrementCurves(P.fromVolumesClearances(1, [8], [4]).model, 0, 50, 60, 10)")
+  expect_null(js$effect)
+  expect_equal(js$plasma$time, rep(log(2) / 0.5, length(js$plasma$time)), tolerance = 1e-9)
+  # Three compartments: the 20, 50 and 80% times from the converter's own
+  # end-of-infusion states, found again by uniroot() in R
+  js <- pkConvertJS(paste0(
+    "(function() { var m = P.fromVolumesClearances(3, [10, 100, 1000], [3, 2, 1]).model;",
+    " var ke0 = P.ke0FromPeakTime(m, 1.6), tr = P.tciTrajectory(m, ke0, 'effect', 120);",
+    " var s = tr.states[tr.states.length - 1];",
+    " return {l: tr.K.lambda4, e: s.e,",
+    "   d: [0.2, 0.5, 0.8].map(function(f) { return P.decrementTime(s.e, tr.K.lambda4, f); })}; })()"))
+  ce <- function(t) sum(js$e * exp(-js$l * t))
+  ref <- vapply(c(0.2, 0.5, 0.8), function(f)
+    uniroot(function(t) ce(t) - (1 - f) * ce(0), c(1e-9, 1e5), tol = 1e-12)$root, numeric(1))
+  expect_equal(js$d, ref, tolerance = 1e-8)
+  # A larger decrease takes longer, and the plasma's 50% time grows with the
+  # length of the infusion (the context-sensitive half-time)
+  expect_true(all(diff(js$d) > 0))
+  c50 <- pkConvertJS("P.decrementCurves(P.fromVolumesClearances(3, [10, 100, 1000], [3, 2, 1]).model, 0, 50, 600, 50).plasma.time")
+  expect_true(all(diff(c50) > 0))
+})
+
+test_that("each decrement curve starts once its site has reached the target", {
+  skipWithoutNode()
+  js <- pkConvertJS(paste0(
+    "(function() { var m = P.fromVolumesClearances(3, [10, 100, 1000], [3, 2, 1]).model;",
+    " return P.decrementCurves(m, P.ke0FromPeakTime(m, 1.6), 50, 600, 400); })()"))
+  # The plasma reaches its target in the first 10-s interval; the effect site
+  # within 5% of it shortly before its 1.6-min peak
+  expect_equal(js$plasma$duration[1], 10 / 60, tolerance = 1e-9)
+  expect_gt(js$effect$duration[1], 1)
+  expect_lt(js$effect$duration[1], 1.6)
+  expect_true(all(is.finite(c(js$plasma$time, js$effect$time))))
+  expect_equal(max(js$plasma$duration), 600)
+})

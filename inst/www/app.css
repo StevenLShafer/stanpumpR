@@ -650,6 +650,7 @@ bslib-tooltip:has(> .field-help) {
   gap: 0.75rem;
 }
 .pkconv-group,
+.pkconv-decrement,
 .pkconv-effect,
 .pkconv-plot {
   border: 1px solid #dee2e6;
@@ -657,6 +658,7 @@ bslib-tooltip:has(> .field-help) {
   padding: 0.5rem 0.65rem;
 }
 .pkconv-summary,
+.pkconv-decrement,
 .pkconv-effect,
 .pkconv-plot {
   margin-top: 0.75rem;
@@ -765,7 +767,8 @@ bslib-tooltip:has(> .field-help) {
 .pkconv-until input.form-control {
   width: 6rem;
 }
-.pkconv-svg {
+.pkconv-svg,
+.pkconv-dec-svg {
   margin-top: 0.5rem;
 }
 .pkconv-graph {
