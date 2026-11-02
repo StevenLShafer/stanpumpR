@@ -43,8 +43,10 @@ apiFail <- function(res, e) {
 # TRUE), or plumber::pr_set_docs() by whoever hosts this file), and when it is
 # on, /simulate says that its body is a JSON object, lists the statuses it
 # returns, and points to the guide served at / (inst/apidocs/api.md), the
-# contract.  A full OpenAPI schema is deferred until the API is deployed
-# (Steven L. Shafer, 2026-11-02).
+# contract.  A full OpenAPI schema will not be written until stanpumpR is
+# hosted on a platform that can serve an API, such as Posit Connect: today's
+# host, shinyapps.io, serves only the Shiny app, so there is no API service
+# for a schema to describe (Steven L. Shafer, 2026-11-02).
 #* @plumber
 function(pr) {
   pr <- plumber::pr_set_error(pr, function(req, res, err) {
