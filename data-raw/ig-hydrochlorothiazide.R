@@ -38,23 +38,29 @@
 #   - fitted to the standard's own two-limit objective (each error divided by
 #     its limit, the worse of the two minimised, as the pulses were fitted),
 #     the best IG reaches 6.6x the standard, where the pulses use 64% of it;
-#     a coarse grid over the plausible means and shapes finds nothing better;
-#   - so 6.6x bounds every trade: at every mean and shape one of the two
-#     errors is at least 6.6x its limit, and an IG held within its peak limit
-#     at all four renal functions misses the curve by at least 3.49%; one
-#     fitted to the curve alone reaches 1.05% with the peak 0.95% out (95x);
+#     nine starts spread over means of 0.6 to 4 h and shapes of 0.8 to 40 all
+#     converge to that same point;
+#   - a search is evidence for a global minimum, not a proof of one, but if
+#     6.6x is the global minimum it bounds every trade between the limits: an
+#     IG held within its peak limit at all four renal functions would miss the
+#     curve by at least 3.49%; one fitted to the curve alone reaches 1.05%
+#     with the peak 0.95% out (95x);
 #   - the error is the UPSTROKE, up to +3.5% of the peak before 1.5 h; from
 #     1.5 h to 48 h it stays within 0.36% of the peak, under the curve limit
-#     (0.56% relative to the local value at its worst), and beyond, once both
-#     inputs are spent, the relative error settles at the ratio of their
-#     moment generating functions at the terminal exponent, 0.06% at most.
-# Three of these were first recorded wrongly: "within 0.5% relative" (read
-# from seven time points), "0.92%, 92x" (one renal function) and "forced to
-# the exact peak, the curve is 2.10%, 4.0x" (one renal function, and an
-# optimiser left to wander along the curve of IGs that all match the peak, so
-# not a minimum of anything; CodeRabbit, #668).  The dense grid and the four
-# renal functions here are what corrected them, which is why this script
-# checks itself.
+#     (0.56% relative to the local value at its worst); and after 48 h, when
+#     less than 1e-17 of either dose is left to absorb, the relative error is
+#     the ratio of the two inputs' moment generating functions at the terminal
+#     exponent, less one, 0.06% at most, which the curves themselves match
+#     from 48 h to 336 h.
+# Four of these were first recorded wrongly: "within 0.5% relative" (read
+# from seven time points), "0.92%, 92x" (one renal function), "forced to the
+# exact peak, the curve is 2.10%, 4.0x" (one renal function, and an optimiser
+# left to wander along the curve of IGs that all match the peak, so not a
+# minimum of anything), and 6.6x as a proven bound on every trade (from four
+# starts clustered in one valley and a grid too coarse to resolve it); the
+# last two and the unchecked tail after 48 h were CodeRabbit's, on #668.  The
+# dense grid, the four renal functions and the spread starts here are what
+# corrected them, which is why this script checks itself.
 # The reason is the shape, not the moments: Van Wart's rate constant is still
 # ramping up from zero while an IG of the same mean is already absorbing.
 # -----------------------------------------------------------------------------
@@ -169,14 +175,16 @@ standardScore <- function(fn) {
     s <- score(fn, r); max(s[["curve"]] / LIM_CURVE, s[["peak"]] / LIM_PEAK)
   }, numeric(1)))
 }
+# Nelder-Mead from each start, on log parameters.  Returns the best, and where
+# every start ended, which is the evidence about whether there is one minimum.
 fitIG <- function(objective, starts) {
-  best <- NULL
-  for (s in starts) {
-    o <- optim(s, objective, method = "Nelder-Mead",
-               control = list(maxit = 3000, reltol = 1e-13))
-    if (is.null(best) || o$value < best$value) best <- o
-  }
-  list(mu = exp(best$par[1]), lambda = exp(best$par[2]), value = best$value)
+  runs <- lapply(starts, function(s)
+    optim(s, objective, method = "Nelder-Mead",
+          control = list(maxit = 3000, reltol = 1e-13)))
+  values <- vapply(runs, `[[`, numeric(1), "value")
+  best <- runs[[which.min(values)]]
+  list(mu = exp(best$par[1]), lambda = exp(best$par[2]), value = best$value,
+       ends = t(vapply(runs, function(o) exp(o$par), numeric(2))), values = values)
 }
 
 
@@ -211,9 +219,13 @@ cat(sprintf("Eight pulses: worst %.3f%% on the curve, %.4f%% at the peak (%.0f%%
 
 # ---- 4. The IG, fitted to the standard's own objective ------------------------
 
-cat("Fitting the inverse Gaussian (the slow part)...\n")
-starts <- list(c(log(m1), log(m1 / cv^2)), c(log(1.62), log(4.27)),
-               c(log(1.7), log(4.6)),     c(log(1.5), log(3.8)))
+# Starts SPREAD over the whole plausible region, not clustered near the
+# moments: four starts that all begin in one valley and all end there say
+# nothing about whether another valley is lower.  (The first version did
+# exactly that.  CodeRabbit, #668.)
+cat("Fitting the inverse Gaussian from nine spread starts (the slow part)...\n")
+starts <- lapply(asplit(expand.grid(mu = c(0.6, 1.6, 4.0), lambda = c(0.8, 4, 40)), 1),
+                 function(s) log(c(s[["mu"]], s[["lambda"]])))
 ig <- fitIG(function(p) {
   if (!all(is.finite(exp(p)))) return(1e9)
   standardScore(function(t, d) cpIG(t, d, exp(p[1]), exp(p[2])))
@@ -229,28 +241,28 @@ cat(sprintf("Best IG (mu %.4f h, lambda %.4f): worst %.3f%% on the curve, %.4f%%
 
 r120 <- REF[[1]]
 
-# 6.6x as a bound.  The fit above minimised the larger of the two scaled
-# errors, so at every (mu, lambda) one of them is at least ig$value, and an IG
-# held within its peak limit at every renal function must carry that much on
-# the curve.  That holds only if the fit found the global minimum, so a coarse
-# grid over the plausible means and shapes is searched for anything better.
-# (An earlier version zeroed the peak at one renal function instead: one
-# equation in two unknowns leaves a curve of solutions, and the optimiser
-# stopped wherever it had wandered.  CodeRabbit, #668.)
-mus  <- seq(1.20, 2.10, length.out = 13)
-lams <- exp(seq(log(1.5), log(12), length.out = 13))
-gridBest <- min(outer(mus, lams, Vectorize(function(m, l)
-  standardScore(function(t, d) cpIG(t, d, m, l)))))
-cat(sprintf("Nothing on a 13 x 13 grid of (mu, lambda) does better: its best is %.1fx\n",
-            gridBest))
-cat(sprintf("So an IG held within its peak limit misses the curve by at least %.2f%%\n",
+# 6.6x as a bound, and how far it is one.  The fit minimised the larger of the
+# two scaled errors, so IF ig$value is the global minimum, then at every
+# (mu, lambda) one of them is at least that, and an IG held within its peak
+# limit at every renal function would carry that much on the curve.  A search
+# cannot prove a global minimum; what it can show is that starts spread across
+# the region all reach the same point, which is evidence of a single valley.
+# (Two earlier versions overclaimed here: one zeroed the peak at one renal
+# function, an equation in two unknowns whose solutions form a curve, so the
+# optimiser stopped wherever it had wandered; the next called 6.6x a bound on
+# every trade on the strength of clustered starts and a grid too coarse to
+# resolve the valley.  Both CodeRabbit, #668.)
+converged <- sum(abs(ig$values - ig$value) <= 0.01 * ig$value)
+cat(sprintf("%d of %d spread starts converge to that same optimum (worst end %.4f)\n",
+            converged, length(ig$values), max(ig$values)))
+cat(sprintf("If it is the global minimum, an IG held within its peak limit misses the curve by at least %.2f%%\n",
             ig$value * LIM_CURVE))
 
 cc <- fitIG(function(p) {
   if (!all(is.finite(exp(p)))) return(1e9)
   max(vapply(REF, function(r) score(function(t, d) cpIG(t, d, exp(p[1]), exp(p[2])), r)[["curve"]],
              numeric(1)))
-}, starts)
+}, list(c(log(ig$mu), log(ig$lambda)), c(log(m1), log(m1 / cv^2))))
 ccPeak <- max(vapply(REF, function(r)
   score(function(t, d) cpIG(t, d, cc$mu, cc$lambda), r)[["peak"]], numeric(1)))
 cat(sprintf("IG fitted to the curve alone: curve %.3f%%, but the peak is out by %.2f%% (%.0fx its limit)\n",
@@ -277,20 +289,36 @@ cat(sprintf("Before 1.5 h the IG runs up to %+.2f%% of the peak high\n", upstrok
 cat(sprintf("From 1.5 h to 48 h its worst error is %.2f%% of the peak (limit %.2f%%), %.2f%% relative to the local value\n",
             latePeak, LIM_CURVE, lateRel))
 
-# Past the grid, once both inputs are spent, each curve is its terminal
-# exponential scaled by its input's moment generating function at that
-# exponent, so the relative error settles at the ratio of the two, less one.
-# The IG's moment generating function is closed form.  This is what lets the
-# claim cover the whole elimination, whose half-life reaches 42 h in severe
-# renal impairment, and not just the 48 h on the grid.  (CodeRabbit, #668.)
+# After 48 h.  By then less than 1e-17 of either dose is left to absorb (the
+# IG's tail is the longer, 8.5e-18; the published depot's is 2.8e-21), so
+# each curve is the sum of its disposition exponentials scaled by its input's
+# moment generating function at each exponent; once the fast one has decayed,
+# the relative error is the ratio of the two MGFs at the terminal exponent,
+# less one.  The IG's MGF is closed form.  That limit says where the error
+# ends up, not that it stays there between 48 h and infinity, so the curves
+# themselves are also compared after 48 h, out to 336 h, which covers the
+# elimination at the 42-h half-life of severe renal impairment.  (The limit
+# alone was claimed for the whole tail at first.  CodeRabbit, #668.)
+# The IG's remainder by quadrature of its own tail, with no absolute tolerance:
+# the textbook 1 - F(t) returns exactly 0 here, F having rounded to 1, which a
+# first draft of this check took for the answer.
+leftAt48 <- max(gutAmount(48),
+                integrate(function(s) igDensity(s, ig$mu, ig$lambda), 48, Inf,
+                          rel.tol = 1e-10, abs.tol = 0)$value)
 mgfIG <- function(k) exp(ig$lambda / ig$mu * (1 - sqrt(1 - 2 * ig$mu^2 * k / ig$lambda)))
 mgfEx <- function(k) integrate(function(s) inputRate(s) * exp(k * s), 1e-12, 200,
                               rel.tol = 1e-12, subdivisions = 4000L)$value
-tailRel <- vapply(REF, function(r) {
-  k <- min(r$d$k); (mgfIG(k) / mgfEx(k) - 1) * 100
-}, numeric(1))
-cat(sprintf("Past that the relative error settles at %s%%, by renal function\n",
-            paste(sprintf("%+.3f", tailRel), collapse = ", ")))
+TAIL <- c(48, 60, 72, 96, 120, 168, 240, 336)
+tail48 <- t(vapply(REF, function(r) {
+  lim <- (mgfIG(min(r$d$k)) / mgfEx(min(r$d$k)) - 1) * 100
+  ex  <- cpExact(TAIL, r$d)
+  rel <- (cpIG(TAIL, r$d, ig$mu, ig$lambda) - ex) / ex * 100
+  c(limit = lim, offLimit = max(abs(rel - lim)), worst = max(abs(rel)))
+}, numeric(3)))
+tailRel <- tail48[, "limit"]
+cat(sprintf("At 48 h at most %.1e of either dose is left to absorb\n", leftAt48))
+cat(sprintf("After 48 h the relative error is %s%% by renal function, the curves matching that limit to %.1e points out to 336 h\n",
+            paste(sprintf("%+.3f", tailRel), collapse = ", "), max(tail48[, "offLimit"])))
 igC <- cpIG(GRID, r120$d, ig$mu, ig$lambda)     # for the figure
 
 
@@ -340,15 +368,17 @@ checks <- c(
   "pulses at 64% of the standard"                = near(standardScore(cpPulses), 0.64, 0.03),
   "pulses 0.341% on the curve"                   = near(max(pulses[, "curve"]), 0.341, 0.02),
   "best IG about 6.6x the standard"              = near(ig$value, 6.6, 0.05),
-  "nothing on the grid beats it"                 = gridBest >= ig$value,
-  "held to its peak limit, curve >= 3.49%"       = near(ig$value * LIM_CURVE, 3.49, 0.05),
+  "every spread start reaches that optimum"      = converged == length(ig$values),
+  "if global, peak-held curve >= 3.49%"          = near(ig$value * LIM_CURVE, 3.49, 0.05),
   "IG fitted to the curve: curve about 1.05%"    = near(cc$value, 1.05, 0.05),
   "IG fitted to the curve: peak about 0.95%"     = near(ccPeak, 0.95, 0.05),
   "upstroke up to about +3.5% of the peak"       = near(upstroke, 3.49, 0.03),
   "1.5-48 h under the curve limit"               = latePeak < LIM_CURVE,
   "1.5-48 h about 0.36% of the peak"             = near(latePeak, 0.36, 0.05),
   "1.5-48 h about 0.56% relative"                = near(lateRel, 0.56, 0.05),
-  "past the grid, 0.06% relative at most"        = all(abs(tailRel) < 0.065)
+  "under 1e-17 of either dose left at 48 h"      = leftAt48 < 1e-17,
+  "after 48 h, 0.06% relative at most"           = all(tail48[, "worst"] < 0.065),
+  "after 48 h, the curves sit on the limit"      = all(tail48[, "offLimit"] < 1e-5)
 )
 if (!all(checks)) {
   stop("No longer reproduces the recorded result:\n  ",

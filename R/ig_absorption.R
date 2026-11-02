@@ -128,22 +128,28 @@
 # Code, 2026-11-01, at Shafer's request).  An IG fitted minimax to the plasma
 # curve, pooled over the paper's four renal functions, reaches 6.6x the
 # documented standard on the binding limit, against the eight pulses' 64% of
-# both -- and 6.6x bounds every trade between the two limits, since at every
-# mean and shape at least one of the two errors is 6.6x its limit or more:
-# held within its peak limit at all four renal functions, an IG misses the
-# curve by at least 3.49%; fitted to the curve alone, it reaches 1.05% (2.0x)
-# with the peak 0.95% out (95x).  The whole deficit is the UPSTROKE, where it
-# runs up to +3.5% of peak high.  From 1.5 h to 48 h -- the peak, its time
-# and the elimination -- its error stays within 0.36% of the peak, under the
-# curve limit (0.56% relative to the local value at its worst), and past that
-# the relative error settles at the ratio of the two inputs' moment generating
-# functions at the terminal exponent, 0.06% at most.  (Three figures here were
-# first recorded wrongly: "within 0.5% relative", read from seven time points,
-# the sparse sample the pulse note above warns against; "0.92%, 92x", from one
-# renal function; and "the peak zeroed, the curve is 2.10%, 4.0x", from one
-# renal function and an optimiser left to wander along the curve of IGs that
-# all match the peak, so not a minimum of anything.  The script below measures
-# each on the dense grid, over all four.)  The reason is not the moments,
+# both; nine starts spread over means of 0.6 to 4 h and shapes of 0.8 to 40
+# all converge to that same IG.  That is evidence that 6.6x is the global
+# minimum, not a proof of it, and IF it is, it bounds every trade between the
+# two limits: an IG held within its peak limit at all four renal functions
+# would miss the curve by at least 3.49%.  Fitted to the curve alone, it
+# reaches 1.05% (2.0x) with the peak 0.95% out (95x).  The whole deficit is
+# the UPSTROKE, where it runs up to +3.5% of peak high.  From 1.5 h to 48 h
+# -- the peak, its time and the early elimination -- its error stays within
+# 0.36% of the peak, under the curve limit (0.56% relative to the local value
+# at its worst).  After 48 h less than 1e-17 of either dose is left to absorb,
+# and the relative error is the ratio of the two inputs' moment generating
+# functions at the terminal exponent, less one, 0.06% at most, which the
+# curves themselves match from 48 h to 336 h.  (Four figures here were first
+# recorded wrongly: "within 0.5% relative", read from seven time points, the
+# sparse sample the pulse note above warns against; "0.92%, 92x", from one
+# renal function; "the peak zeroed, the curve is 2.10%, 4.0x", from one renal
+# function and an optimiser left to wander along the curve of IGs that all
+# match the peak, so not a minimum of anything; and 6.6x as a PROVEN bound on
+# every trade, from four starts clustered in one valley.  The last two, and
+# the tail after 48 h first claimed from its limit alone, were CodeRabbit's on
+# #668.  The script below measures each on the dense grid, over all four renal
+# functions, from spread starts.)  The reason is not the moments,
 # which very nearly agree (the published input has CV 0.629 and skew 1.843,
 # and an IG with that
 # CV is forced to skew 3 CV = 1.886, a 2% mismatch): it is that Van Wart's
