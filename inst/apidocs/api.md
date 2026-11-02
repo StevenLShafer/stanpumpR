@@ -26,11 +26,14 @@ reversal agents, local anesthetics, oral analgesics, antibiotics,
 corticosteroids, antiemetics, antiseizure drugs, antidepressants,
 antipsychotics and stimulants. `GET /drugs` returns the current list.
 
-> **Intended use.** stanpumpR is for teaching and research. It is not a medical
-> device and has not been cleared by any regulatory agency. Its predictions are
-> population-typical values for a patient with the given covariates. They do
-> not account for an individual's variability and do not replace clinical
-> judgement.
+> **Intended use.** stanpumpR is an advisory simulator, intended to make
+> pharmacokinetics accessible to facilitate perioperative patient care,
+> teaching and research. It does not control drug delivery, and it has not been
+> reviewed or cleared by any regulatory agency. Its predictions are
+> population-typical values for a patient with the given covariates: they do
+> not account for an individual's variability, and how they apply to a patient
+> is a matter of clinical judgement by the health care provider. A system that
+> displays them should present them as model predictions, not measurements.
 
 ---
 

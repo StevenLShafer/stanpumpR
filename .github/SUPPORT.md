@@ -1,7 +1,9 @@
 # Getting help with stanpumpR
 
-stanpumpR is a research and teaching tool. Its curves are what published models
-predict for a typical patient; it is not clinical decision support.
+stanpumpR is an advisory tool for perioperative patient care, teaching and
+research. Its curves are what published models predict for a typical patient,
+not measurements, and how they apply to a patient is a matter of clinical
+judgement.
 
 - **How to use the app, or what a model assumes:** start with the **Help** tab in the
   app. Every drug has its own page giving the source of its model, its parameters at
