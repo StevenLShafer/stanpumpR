@@ -8,14 +8,40 @@ drugHasNonZeroDoses <- function(dt, drug) {
   any(suppressWarnings(as.numeric(drugDoses$Dose)) != 0, na.rm = TRUE)
 }
 
-# Coerce all columns to the correct data type and only keep full rows
+# Coerce all columns to the correct data type and only keep full rows.  A
+# missing cell (NA) is an empty one: NA != "" is NA, which kept a row of NAs.
 cleanDoseTable <- function(DT) {
   DT$Drug    <- as.character(DT$Drug)
   DT$Units   <- as.character(DT$Units)
   DT$Dose    <- suppressWarnings(as.numeric(DT$Dose))
   DT$Time    <- as.character(DT$Time)
-  DT <- DT[DT$Drug != "" & !is.na(DT$Dose) & DT$Time != "" & DT$Units != "", ]
+  filled <- function(x) !is.na(x) & x != ""
+  DT <- DT[filled(DT$Drug) & !is.na(DT$Dose) & filled(DT$Time) & filled(DT$Units), ]
   DT
+}
+
+# The text columns of a table read from a grid, with every missing cell ("",
+# NA) made "".  hot_to_r() gives NA for a cell the browser sent as null: a
+# row inserted through a grid's context menu, or a cleared numeric cell.
+# Logical columns (a Delete checkbox) are left to the caller.
+blankMissingCells <- function(table) {
+  for (col in names(table)) {
+    x <- table[[col]]
+    if (is.factor(x)) x <- as.character(x)
+    if (is.character(x)) {
+      x[is.na(x)] <- ""
+      table[[col]] <- x
+    }
+  }
+  table
+}
+
+# A Delete checkbox column as TRUE or FALSE: a pasted entry that is not a
+# boolean reaches R as NA, and !NA kept a row of NAs (adversarial UI review,
+# 2026-11, finding 13).  Treated as not ticked.
+tickedRows <- function(x) {
+  if (is.null(x)) return(logical(0))
+  x %in% TRUE
 }
 
 # Guarantee a usable ventilation setting whenever a gas is in the dose table.
@@ -213,16 +239,33 @@ validateTargetTableInput <- function(targetTable) {
     stop(shiny::safeError("Invalid target table structure."))
   }
   if (nrow(targetTable) > MAX_TARGET_ROWS) stop(shiny::safeError("Target table exceeds the permitted row limit."))
+  # A missing cell (NA, from a row inserted through the context menu or a
+  # cleared numeric cell) is an empty one.  nzchar(NA) is TRUE, so the row
+  # was read as filled and refused as an invalid time.
   time <- as.character(targetTable$Time)
+  time[is.na(time)] <- ""
   targetText <- as.character(targetTable$Target)
+  targetText[is.na(targetText)] <- ""
   target <- suppressWarnings(as.numeric(targetText))
-  present <- nzchar(time) | nzchar(targetText)
-  if (any(nchar(time) > MAX_TIME_STRING_LENGTH, na.rm = TRUE)) stop(shiny::safeError("Target table contains an overlong time."))
-  if (any(nzchar(time) & vapply(time, function(x) !identical(validateTime(x), x), logical(1)), na.rm = TRUE)) {
+  if (any(nchar(time) > MAX_TIME_STRING_LENGTH)) stop(shiny::safeError("Target table contains an overlong time."))
+  if (any(nzchar(time) & vapply(time, function(x) !identical(validateTime(x), x), logical(1)))) {
     stop(shiny::safeError("Target table contains an invalid time."))
   }
-  if (any(present & (!is.finite(target) | target < 0 | target > MAX_DOSE_VALUE), na.rm = TRUE)) {
+  if (any(nzchar(time) & !nzchar(targetText))) {
+    stop(shiny::safeError("Each time in the target table needs a target concentration."))
+  }
+  if (any(nzchar(targetText) & (!is.finite(target) | target < 0 | target > MAX_DOSE_VALUE), na.rm = TRUE)) {
     stop(shiny::safeError("Target concentrations must be finite and within the permitted limit."))
   }
   invisible(TRUE)
+}
+
+# What is wrong with a target table, or NULL.  The Suggest Dosing dialog says
+# it and stays open: raised from the OK observer, validateTargetTableInput()'s
+# error ended the session (adversarial UI review, 2026-11, findings 1 and 2).
+targetTableProblem <- function(targetTable) {
+  tryCatch({
+    validateTargetTableInput(targetTable)
+    NULL
+  }, error = function(e) conditionMessage(e))
 }

@@ -355,7 +355,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
         e_coef_RAslow_ka = purrr::map_dbl(pkSets, "e_coef_RAslow_ka")
       ))
     parameters <- t(parameters)
-    openxlsx::addWorksheet(wb, paste(drug,"PK"))
+    openxlsx::addWorksheet(wb, workbookSheetName(paste(drug, "PK"), names(wb)))
     openxlsx::writeData(wb, sheet = sheet, parameters, rowNames=TRUE)
     sheet <- sheet + 1
   }
@@ -489,4 +489,24 @@ plotTimeText <- function(maximum, timeUnit = "minutes")
     else "",
     "</p><p>&nbsp;</p>"
   )
+}
+
+# A worksheet name Excel accepts: at most 31 characters (openxlsx refuses a
+# longer one, which failed every slide with levodopaEntacaponeIntestinalGel
+# or an antiseizure "(no interactions)" companion in it; adversarial UI
+# review, 2026-11, finding 12), none of the characters Excel forbids, and
+# not one already in `existing` (compared as Excel does, ignoring case).  A
+# name cut short ends in "~" and, if that is taken, a number.
+workbookSheetName <- function(name, existing = character(0)) {
+  limit <- 31L
+  name <- chartr("[]:*?/\\", "_______", name)
+  if (nchar(name) > limit) name <- paste0(substr(name, 1, limit - 1L), "~")
+  taken <- function(x) tolower(x) %in% tolower(existing)
+  if (!taken(name)) return(name)
+  for (i in seq_len(999L)) {
+    suffix <- paste0("~", i)
+    candidate <- paste0(substr(name, 1, limit - nchar(suffix)), suffix)
+    if (!taken(candidate)) return(candidate)
+  }
+  stop("No free worksheet name for ", name)
 }

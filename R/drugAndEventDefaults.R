@@ -75,6 +75,42 @@ drugLibraryProblems <- function(edited, current) {
     problems <- c(problems, paste0(
       "Units must list at least one unit, with none left blank (", paste(emptied, collapse = ", "), ")."))
   }
+  # The four unit dropdowns.  Delete empties a dropdown cell, which no check
+  # caught: a blank Concentration.Units stopped every simulation ("Unsupported
+  # Concentration.Units: "), and Suggest Dosing then ended the session
+  # (adversarial UI review, 2026-11, finding 9).  A changed entry must be
+  # one its dropdown offers, and a default unit one of the drug's own units.
+  # Unchanged entries are left alone: some drugs have no bolus or infusion
+  # unit, and a drug in %, mmol or mOsm has a read-only concentration unit.
+  dropdowns <- list(
+    Concentration.Units = c("mcg", "ng"),
+    Bolus.Units = bolusUnits,
+    Infusion.Units = infusionUnits
+  )
+  # A cell with no unit is NA from the library and "" once emptied in the
+  # grid: the same, so emptying an empty cell changes nothing.
+  unitText <- function(x) { x <- as.character(x); x[is.na(x)] <- ""; x }
+  badUnits <- character(0)
+  for (col in names(dropdowns)) {
+    value <- unitText(edited[[col]])
+    before <- unitText(current[[col]])[at]
+    bad <- !is.na(at) & value != before & !(value %in% dropdowns[[col]])
+    if (any(bad)) badUnits <- c(badUnits, sprintf("%s %s", edited$Drug[bad], col))
+  }
+  default <- unitText(edited$Default.Units)
+  defaultBefore <- unitText(current$Default.Units)[at]
+  for (i in seq_along(default)) {
+    if (is.na(at[i]) || (default[i] == defaultBefore[i] && identical(units[i], unitsBefore[i]))) next
+    offered <- trimws(strsplit(units[i], ",", fixed = TRUE)[[1]])
+    if (!default[i] %in% offered) {
+      badUnits <- c(badUnits, sprintf("%s Default.Units", edited$Drug[i]))
+    }
+  }
+  if (length(badUnits)) {
+    problems <- c(problems, paste0(
+      "Choose each unit from its list, and a Default.Units from the drug's Units (",
+      paste(badUnits, collapse = ", "), ")."))
+  }
   badNumbers <- character(0)
   for (col in DRUG_LIBRARY_NUMERIC_COLUMNS) {
     valueChr <- trimws(as.character(edited[[col]]))
