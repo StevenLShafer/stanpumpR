@@ -137,6 +137,45 @@ test_that("an inadmissible definition is refused, naming what failed", {
   expect_match(pkConvertJS("P.fromVolumesClearances(2, [5, 50], [3.5, -1]).error"), "k12")
 })
 
+test_that("the model table has one layout, whichever panel defined the model", {
+  skipWithoutNode()
+  # The fractional coefficients are outputs only, in the table
+  block <- helpPKConverterHTML()
+  expect_false(grepl("data-pk-field=\"frac", block, fixed = TRUE))
+  expect_match(block, 'class="pkconv-summary-body"', fixed = TRUE)
+  layout <- function(rows) lapply(rows$cells, `[[`, "name")
+  labels <- c("Volumes", "Clearances", "Exponents", "Half-lives", "Coefficients",
+              "Fractional coefficients", "Micro rate constants")
+  three <- c("P.fromVolumesClearances(3, [10, 100, 1000], [3, 2, 1]).model",
+             "P.fromCoefficients(3, [0.0988257683958246, 0.00110949328401814, 0.0000647383201572566], [0.606979569298565, 0.0132758444333374, 0.000744586268097897]).model",
+             "P.fromMicro(3, 10, {k10: 0.3, k12: 0.2, k13: 0.1, k21: 0.02, k31: 0.001}).model")
+  rows <- lapply(three, function(m) pkConvertJS(sprintf("P.summaryRows(%s, 60, 'h')", m)))
+  expect_equal(rows[[1]]$label, labels)
+  expect_equal(layout(rows[[1]]),
+               list(c("V1", "V2", "V3"), c("CL1", "CL2", "CL3"),
+                    c("λ1", "λ2", "λ3"),
+                    c("t½ λ1", "t½ λ2", "t½ λ3"),
+                    c("A1", "A2", "A3"), c("A1/ΣA", "A2/ΣA", "A3/ΣA"),
+                    c("k10", "k12", "k13", "k21", "k31")))
+  for (r in rows[-1]) {
+    expect_equal(layout(r), layout(rows[[1]]))
+    expect_equal(r$cells, rows[[1]]$cells, tolerance = 1e-8)
+  }
+  # In hours: clearances and rates 60 times larger, half-lives 60 times smaller
+  values <- lapply(rows[[1]]$cells, `[[`, "value")
+  expect_equal(values[[2]], c(180, 120, 60))
+  expect_equal(values[[7]], c(18, 12, 6, 1.2, 0.06))
+  expect_equal(values[[4]][3], 930.915879405947 / 60, tolerance = 1e-10)
+  expect_equal(values[[6]], c(98.8257684, 1.109493284, 0.06473832), tolerance = 1e-8)
+  expect_equal(rows[[1]]$units, c("L", "L/h", "1/h", "h", "1/L", "%", "1/h"))
+  # Fewer compartments, the same rows
+  two <- pkConvertJS("P.summaryRows(P.fromVolumesClearances(2, [5, 50], [3.5, 2.5]).model)")
+  expect_equal(two$label, labels)
+  expect_equal(layout(two)[[7]], c("k10", "k12", "k21"))
+  one <- pkConvertJS("P.summaryRows(P.fromVolumesClearances(1, [8], [4]).model)")
+  expect_equal(lengths(layout(one)), rep(1L, 7))
+})
+
 test_that("a field reads a comma only as a thousands separator", {
   skipWithoutNode()
   js <- pkConvertJS(paste0(

@@ -302,6 +302,33 @@ var PKConvert = (function() {
     exp:   {1: ['v1', 'l1'], 2: ['v1', 'l1', 'l2', 'k21'], 3: ['v1', 'l1', 'l2', 'l3', 'k21', 'k31']}
   };
 
+  // The model in one fixed layout, whichever definition gave it (Shafer,
+  // 2026-11-01): volumes, clearances, exponents, half-lives, coefficients,
+  // fractional coefficients, then the micro rate constants.  minutesPerUnit
+  // and unit are the time unit shown; values come back in it.
+  function summaryRows(model, minutesPerUnit, unit) {
+    var f = minutesPerUnit || 1, u = unit || 'min', n = model.n;
+    var idx = [1, 2, 3].slice(0, n);
+    var each = function(prefix, values, scale) {
+      return idx.map(function(i) { return {name: prefix + i, value: values[i - 1] * scale}; });
+    };
+    var micro = RATE_NAMES[n].slice();
+    if (n === 3) micro = ['k10', 'k12', 'k13', 'k21', 'k31'];
+    return [
+      {label: 'Volumes', units: 'L', cells: each('V', model.v, 1)},
+      {label: 'Clearances', units: 'L/' + u, cells: each('CL', model.cl, f)},
+      {label: 'Exponents', units: '1/' + u, cells: each('λ', model.lambda, f)},
+      {label: 'Half-lives', units: u, cells: each('t½ λ', model.halfLife, 1 / f)},
+      {label: 'Coefficients', units: '1/L', cells: each('A', model.A, 1)},
+      {label: 'Fractional coefficients', units: '%', cells: idx.map(function(i) {
+        return {name: 'A' + i + '/ΣA', value: 100 * model.fraction[i - 1]};
+      })},
+      {label: 'Micro rate constants', units: '1/' + u, cells: micro.map(function(k) {
+        return {name: k, value: model[k] * f};
+      })}
+    ];
+  }
+
   // A field's text as a number: null when blank, NaN when unreadable.  A
   // comma is read only as a thousands separator (1,110); any other comma (0,5
   // with a decimal comma) is refused rather than read ten times too large.
@@ -327,7 +354,8 @@ var PKConvert = (function() {
     fromHalfLives: fromHalfLives, fromCoefficients: fromCoefficients,
     fromExponentsAndRates: fromExponentsAndRates,
     plasma: plasma, effect: effect, peakTime: peakTime,
-    ke0FromPeakTime: ke0FromPeakTime, fmt: fmt, parseNumber: parseNumber, required: REQUIRED
+    ke0FromPeakTime: ke0FromPeakTime, fmt: fmt, parseNumber: parseNumber, summaryRows: summaryRows,
+    required: REQUIRED
   };
 })();
 
@@ -372,8 +400,7 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
         return model.halfLife[i];
       case 'coef':
         if (field.charAt(0) === 'a') return model.A[i];
-        if (field.charAt(0) === 'l') return model.lambda[i];
-        return 100 * model.fraction[i];
+        return model.lambda[i];
       case 'exp':
         if (field === 'v1') return model.v1;
         if (field.charAt(0) === 'l') return model.lambda[i];
@@ -423,7 +450,7 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
       $(this).text({rate: '1/' + u, clear: 'L/' + u, time: u}[dim]);
     });
     // Fields a definition derives but never takes (Vdss with fewer than three
-    // compartments, V1 with one, the fractional coefficients) are read-only
+    // compartments, V1 with one) are read-only
     $root.find('.pkconv-group input[data-pk-field]').each(function() {
       var $i = $(this), g = $i.closest('[data-pk-group]').attr('data-pk-group');
       var takes = REQUIRED[g][s.n].indexOf($i.attr('data-pk-field')) >= 0;
@@ -447,6 +474,7 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
     if (!group) {
       $inputs.val('').removeAttr('data-full');
       setStatus($root, 'info', 'Enter a complete set of parameters in any one panel; the others are filled in.');
+      summary($root, s);
       effectSite($root, s);
       return;
     }
@@ -492,7 +520,30 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
       setStatus($root, 'ok', 'The model is defined ' + from +
                 ' (the entered values are yellow); every other value is derived from them.');
     }
+    summary($root, s);
     effectSite($root, s);
+  }
+
+  // The model in one fixed layout, whichever panel defined it
+  function summary($root, s) {
+    var $body = $root.find('.pkconv-summary-body');
+    if (!s.model) {
+      $body.html('<p class="pkconv-empty">The model appears here when it is defined.</p>');
+      return;
+    }
+    var rows = P.summaryRows(s.model, UNIT_MINUTES[s.unit], s.unit);
+    var width = Math.max.apply(null, rows.map(function(r) { return r.cells.length; }));
+    var esc = function(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); };
+    var html = rows.map(function(r) {
+      var cells = r.cells.map(function(c) {
+        return '<td><span class="pkconv-summary-name">' + esc(c.name) + '</span>' + esc(P.fmt(c.value)) + '</td>';
+      });
+      for (var i = r.cells.length; i < width; i++) cells.push('<td></td>');
+      return '<tr><th scope="row">' + esc(r.label) + '</th>' + cells.join('') +
+             '<td class="pkconv-unit">' + esc(r.units) + '</td></tr>';
+    });
+    $body.html('<div class="pkconv-summary-scroll"><table class="pkconv-summary-table"><tbody>' +
+               html.join('') + '</tbody></table></div>');
   }
 
   function solve(group, n, v) {

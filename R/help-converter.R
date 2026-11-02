@@ -48,10 +48,7 @@ PK_CONVERTER_GROUPS <- list(
     c("a3", "A<sub>3</sub>", "coef", "3"),
     c("l1", "&lambda;<sub>1</sub>", "rate", "1,2,3"),
     c("l2", "&lambda;<sub>2</sub>", "rate", "2,3"),
-    c("l3", "&lambda;<sub>3</sub>", "rate", "3"),
-    c("frac1", "A<sub>1</sub> / &Sigma;A", "pct", "1,2,3"),
-    c("frac2", "A<sub>2</sub> / &Sigma;A", "pct", "2,3"),
-    c("frac3", "A<sub>3</sub> / &Sigma;A", "pct", "3"))),
+    c("l3", "&lambda;<sub>3</sub>", "rate", "3"))),
   list(id = "exp", title = "5. V1, the exponents, k21 and k31", fields = list(
     c("v1", "V<sub>1</sub>", "vol", "1,2,3"),
     c("l1", "&lambda;<sub>1</sub>", "rate", "1,2,3"),
@@ -64,7 +61,7 @@ PK_CONVERTER_GROUPS <- list(
 # The unit each dimension is shown in, with time in minutes as the page opens;
 # pk-convert.js rewrites the ones that carry time when the unit changes.
 PK_CONVERTER_UNITS <- c(vol = "L", clear = "L/min", rate = "1/min", time = "min",
-                        coef = "1/L", pct = "%")
+                        coef = "1/L")
 
 #' One field of the converter, as an HTML string
 #'
@@ -148,6 +145,10 @@ helpPKConverterHTML <- function(drugDefaults = NULL) {
            '<span class="pkconv-key pkconv-readonly">derived only</span> ',
            "The decimal mark is a point (0.5); a comma separates thousands (1,110).</div>"),
     paste0('<div class="pkconv-groups">', paste(groups, collapse = ""), "</div>"),
+    # The model in one fixed layout, whichever panel defined it (pk-convert.js)
+    paste0('<section class="pkconv-summary"><h4>The model</h4>',
+           '<div class="pkconv-summary-body"><p class="pkconv-empty">',
+           "The model appears here when it is defined.</p></div></section>"),
     paste0('<section class="pkconv-effect"><h4>The effect site</h4>',
            '<p class="small">Enter k<sub>e0</sub>, its half-life or the time to peak effect after a bolus; ',
            "the others are computed from the model above.</p>",
