@@ -380,3 +380,166 @@ test_that("patient.gestationalAge reaches the neonatal models, and a blank is a 
   expect_equal(round(preterm$timeseries$Plasma, 0), 64)
   expectApiError(apiSimulate(neonate(gestationalAge = 50)), "gestationalAge")
 })
+
+
+# From the external review of 2026-11-01 (ChatGPT; findings S-01 to S-26),
+# each claim re-checked against the code before it was fixed.
+
+test_that("the antiseizure interactions are on by default, as in the app, and reported", {
+  doses <- data.frame(Drug = c("lamotrigine", "valproate"), Time = c(0, 21), Dose = c(100, 500),
+                      Units = c("mg PO bid", "mg PO DR bid"))
+  req <- function(...) apiRequest(duration = 56, timeUnit = "days", doses = doses,
+                                  output = list(times = c(0, 42, 56)), ...)
+  lamotrigine <- function(r) r$timeseries$Plasma[r$timeseries$Drug == "lamotrigine" & r$timeseries$Time == 42 * 1440]
+  on  <- apiSimulate(req())
+  off <- apiSimulate(req(options = list(antiseizureInteractions = FALSE)))
+  expect_true(on$meta$antiseizureInteractions)
+  expect_false(off$meta$antiseizureInteractions)
+  # Valproate inhibits lamotrigine's glucuronidation: about twice the level.
+  expect_gt(lamotrigine(on) / lamotrigine(off), 2)
+  same <- simulateDrugsWithCovariates(transform(doses, Time = Time * 1440),
+                                      data.frame(Time = numeric(0), Event = character(0)),
+                                      70, 170, 50, "male", 56 * 1440, FALSE, antiseizureInteractions = TRUE)
+  expect_equal(lamotrigine(on),
+               stats::approx(same$lamotrigine$wide$Time, same$lamotrigine$wide$Plasma, xout = 42 * 1440)$y,
+               tolerance = 1e-6)
+})
+
+test_that("the peaks do not depend on the output times requested", {
+  long <- function(output = NULL) {
+    apiSimulate(apiRequest(duration = 52, timeUnit = "weeks", output = output))$drugs
+  }
+  short <- apiSimulate(apiRequest(duration = 10, output = list(interval = 5)))$drugs
+  a <- long()
+  b <- long(list(times = c(0, 3.6 / 10080, 1, 52)))
+  # A 52-week line samples the effect-site peak 3.4 minutes after the bolus
+  # as a 10-minute one does; it used to read a quarter of it at 26 minutes.
+  expect_equal(a$PeakEffectSite, short$PeakEffectSite, tolerance = 1e-9)
+  expect_equal(a$TimePeakEffectSite, short$TimePeakEffectSite, tolerance = 1e-9)
+  # An output time at the true peak (3.6 minutes) moves it only by the
+  # spacing of the line there: 0.13%, where it used to move it 3.9-fold.
+  expect_equal(b$PeakEffectSite, a$PeakEffectSite, tolerance = 2e-3)
+  # The app's own time line is unchanged.
+  expect_false(isTRUE(stanpumpR:::.sprglobals$gridResolvePeaks))
+})
+
+test_that("unknown dose columns are refused by default, and event columns warned about", {
+  rows <- jsonlite::fromJSON('[{"Drug":"propofol","Time":0,"Dose":100,"Units":"mcg/kg/min","stopTime":10}]')
+  expectApiError(apiSimulate(apiRequest(doses = rows)),
+                 "Unknown field in `doses` refused: `stopTime`\\..*unknownDoseFields")
+  # Column-object form too; the documented lower-case names are not unknown.
+  cols <- list(drug = "fentanyl", time = 0, dose = 100, units = "mcg", route = "IV")
+  expectApiError(apiSimulate(apiRequest(doses = cols)), "refused: `route`")
+  expect_length(apiSimulate(apiRequest(doses = cols[1:4]))$warnings, 0)
+
+  # "warn" keeps the old behaviour: ignored and named.
+  warn <- list(unknownDoseFields = "warn")
+  r <- apiSimulate(apiRequest(doses = rows, options = warn,
+                              events = data.frame(Time = 1, Event = "Intubation", note = "x")))
+  expect_true("Unknown field in `doses` ignored: `stopTime`." %in% r$warnings)
+  expect_true("Unknown field in `events` ignored: `note`." %in% r$warnings)
+  expectApiError(apiSimulate(apiRequest(options = list(unknownDoseFields = "ignore"))),
+                 "options.unknownDoseFields must be one of 'reject', 'warn'")
+})
+
+test_that("misshapen output, options and table cells are refused, not defaulted", {
+  expectApiError(apiSimulate(apiRequest(output = list(times = list()))), "`output.times` is empty")
+  expectApiError(apiSimulate(apiRequest(output = "bad")), "`output` must be a JSON object")
+  expectApiError(apiSimulate(apiRequest(output = 7)), "`output` must be a JSON object")
+  expectApiError(apiSimulate(apiRequest(options = "bad")), "`options` must be a JSON object")
+  for (field in c("Dose", "Time", "Units")) {
+    row <- list(Drug = "fentanyl", Time = 0, Dose = 100, Units = "mcg")
+    row[[field]] <- list()
+    body <- jsonlite::toJSON(list(row), auto_unbox = TRUE)
+    expectApiError(apiSimulate(apiRequest(doses = jsonlite::fromJSON(body))),
+                   paste0("row 1: `", field, "` must be a single value"))
+  }
+  nested <- jsonlite::fromJSON('[{"Drug":"fentanyl","Time":0,"Dose":{"value":100},"Units":"mcg"}]')
+  expectApiError(apiSimulate(apiRequest(doses = nested)), "`Dose` must be a single value")
+  expectApiError(apiSimulate(apiRequest(patient = list(weight = list(value = 70), height = 170, age = 50,
+                                                       sex = "male"))), "not an object")
+  # The empty object and the absent field are still the defaults.
+  expect_equal(nrow(apiSimulate(apiRequest(output = setNames(list(), character(0))))$timeseries), 601)
+})
+
+test_that("opioid tolerance raises the MEAC and recovery threshold, not the curve", {
+  naive <- apiSimulate(apiRequest(output = list(interval = 10, recovery = TRUE)))
+  high  <- apiSimulate(apiRequest(patient = list(weight = 70, height = 170, age = 50, sex = "male",
+                                                 opioidTolerance = "high"),
+                                  output = list(interval = 10, recovery = TRUE)))
+  expect_equal(high$patient$opioidTolerance, "high")
+  expect_equal(high$drugs$MEAC, 3 * naive$drugs$MEAC)
+  expect_equal(high$drugs$RecoveryThreshold, 3 * naive$drugs$RecoveryThreshold)
+  expect_equal(high$timeseries$Plasma, naive$timeseries$Plasma)
+  expect_true(all(high$timeseries$Recovery <= naive$timeseries$Recovery))
+  expect_length(high$warnings, 0)
+  expectApiError(apiSimulate(apiRequest(patient = list(weight = 70, height = 170, age = 50, sex = "male",
+                                                       opioidTolerance = "extreme"))),
+                 "patient.opioidTolerance must be one of")
+})
+
+test_that("the recovery threshold and the simulated doses are in the response", {
+  r <- apiSimulate(apiRequest(doses = data.frame(Drug = c("fentanyl", "fentanyl", "propofol"),
+                                                 Time = c(0, 90, 0), Dose = c(50, 50, 100),
+                                                 Units = "mcg")[c(1, 2), ]))
+  expect_equal(r$doses$Simulated, c(TRUE, FALSE))
+  p <- apiSimulate(apiRequest(doses = data.frame(Drug = "propofol", Time = 0, Dose = 100, Units = "mg")))
+  expect_true(is.na(p$drugs$MEAC))
+  expect_equal(p$drugs$RecoveryThreshold, getDrugDefaults("propofol")$endCe)
+})
+
+test_that("XML is well formed whatever a field name holds, and JSON ignores the layout", {
+  skip_if_not_installed("xml2")
+  req <- apiRequest(output = list(interval = 10))
+  req[["bad\u0001name"]] <- 1
+  r <- apiSimulate(req)
+  doc <- xml2::read_xml(apiFormatResult(r, "xml")$body)
+  expect_match(xml2::xml_text(xml2::xml_find_first(doc, "//warning")), "badname", fixed = TRUE)
+
+  native <- apiSimulate(apiRequest(output = list(interval = "native")))
+  expect_type(apiFormatResult(native, "json", layout = "wide")$body, "character")
+  expect_type(apiFormatResult(native, "xml", layout = "wide")$body, "character")
+})
+
+test_that("the catalog lists only doseable drugs, with Units always an array", {
+  catalog <- apiDrugCatalog()
+  expect_false(any(c("desmetramadol", "salicylate", "enalaprilat") %in% catalog$Drug))
+  expect_false(any(catalog$Units %in% c("", "NA")))
+  skip_if_not_installed("plumber")
+  api <- plumber::pr(system.file("plumber", "plumber.R", package = "stanpumpR"))
+  res <- api$call(rookRequest("GET", "/drugs"))
+  json <- jsonlite::fromJSON(res$body, simplifyVector = FALSE)
+  units <- lapply(json, function(d) d$Units)
+  expect_true(all(vapply(units, is.list, logical(1))))
+  expect_equal(unlist(units[[which(vapply(json, function(d) d$Drug, "") == "amiodarone")]]), "mg/day PO")
+})
+
+test_that("a format at the root of the body does not choose the format", {
+  skip_if_not_installed("plumber")
+  api <- plumber::pr(system.file("plumber", "plumber.R", package = "stanpumpR"))
+  body <- '{"patient":{"weight":70,"height":170,"age":50,"sex":"male"},"duration":10,
+            "doses":[{"Drug":"fentanyl","Time":0,"Dose":100,"Units":"mcg"}],
+            "format":"xml","layout":"wide","output":{"format":"json","interval":5}}'
+  res <- api$call(rookRequest("POST", "/simulate", body))
+  expect_equal(res$status, 200L)
+  expect_equal(res$headers[["Content-Type"]], "application/json")
+  warnings <- unlist(jsonlite::fromJSON(res$body)$warnings)
+  expect_match(warnings, "`format`", fixed = TRUE, all = FALSE)
+  # The query string still wins.
+  csv <- api$call(rookRequest("POST", "/simulate", body, query = "format=csv"))
+  expect_equal(csv$headers[["Content-Type"]], "text/csv")
+})
+
+test_that("the Swagger page is off by default and, when on, points to the guide", {
+  skip_if_not_installed("plumber")
+  api <- plumber::pr(system.file("plumber", "plumber.R", package = "stanpumpR"))
+  # plumber keeps the setting privately and has no getter; guarded so a
+  # plumber that renames it skips this line rather than failing.
+  info <- api$.__enclos_env__$private$docs_info
+  if (!is.null(info)) expect_false(info$enabled)
+  expect_false(formals(run_api)$docs)
+  op <- api$getApiSpec()$paths[["/simulate"]]$post
+  expect_match(op$description, "guide served at /", fixed = TRUE)
+  expect_equal(names(op$requestBody$content), "application/json")
+  expect_true(all(c("200", "400", "413", "415", "422", "500") %in% names(op$responses)))
+})

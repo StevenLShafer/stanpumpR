@@ -35,14 +35,47 @@ apiFail <- function(res, e) {
 # whose 400 says what is wrong.  (`@parser none` would avoid the first parse,
 # but plumber registers that parser with the regex "*", which is not a valid
 # pattern, and then fails on every request with a content type.)
+#
+# The interactive (Swagger) page at /__docs__/ is generated from this file's
+# annotations, which cannot describe /simulate's JSON body: on its own it
+# shows the endpoint with no request body and only a 200 and a 500, which
+# misleads more than it helps.  So it is off unless asked for (run_api(docs =
+# TRUE), or plumber::pr_set_docs() by whoever hosts this file), and when it is
+# on, /simulate says that its body is a JSON object, lists the statuses it
+# returns, and points to the guide served at / (inst/apidocs/api.md), the
+# contract.  A full OpenAPI schema is deferred until the API is deployed
+# (Steven L. Shafer, 2026-11-02).
 #* @plumber
 function(pr) {
-  plumber::pr_set_error(pr, function(req, res, err) {
+  pr <- plumber::pr_set_error(pr, function(req, res, err) {
     if (identical(req$PATH_INFO, "/simulate")) {
       parsed <- tryCatch(stanpumpR::apiParseRequest(req$postBody), error = function(e) e)
       if (inherits(parsed, "stanpumpr_api_error")) err <- parsed
     }
     apiFail(res, err)
+  })
+  pr <- plumber::pr_set_docs(pr, FALSE)
+  plumber::pr_set_api_spec(pr, function(spec) {
+    guide <- paste("The request body and every response are specified in the guide served at /",
+                   "on this server (and at https://stanpumpr.io/api); this page does not describe them.")
+    op <- spec$paths[["/simulate"]]$post
+    if (!is.null(op)) {
+      op$description <- guide
+      op$requestBody <- list(
+        required = TRUE,
+        description = "The request: patient, doses, duration and the optional fields, as the guide specifies.",
+        content = list("application/json" = list(schema = list(type = "object"))))
+      error <- function(what) list(description = what)
+      op$responses <- list(
+        "200" = list(description = "The simulation, as JSON, CSV, xlsx or XML (see the guide's Formats)."),
+        "400" = error("The request is invalid; the JSON body {\"error\": ...} names the field."),
+        "413" = error("The body is over 1 MB or was sent chunked (plain text, from the HTTP server)."),
+        "415" = error("The body was declared as something other than application/json."),
+        "422" = error("The request is valid but could not be simulated, or the result is too large."),
+        "500" = error("An unexpected server error."))
+      spec$paths[["/simulate"]]$post <- op
+    }
+    spec
   })
 }
 
@@ -85,7 +118,9 @@ function(res, format = "json", allowIllicitDrugs = "false") {
     out <- if (format == "csv") {
       list(body = stanpumpR:::apiCsv(catalog), contentType = "text/csv")
     } else {
-      catalog$Units <- strsplit(catalog$Units, ",", fixed = TRUE)
+      # I(): an array for every drug, a one-unit drug's too, which
+      # auto_unbox would otherwise write as a bare string.
+      catalog$Units <- lapply(strsplit(catalog$Units, ",", fixed = TRUE), I)
       list(body = as.character(jsonlite::toJSON(catalog, dataframe = "rows", auto_unbox = TRUE)),
            contentType = "application/json")
     }
@@ -98,6 +133,14 @@ function(res, format = "json", allowIllicitDrugs = "false") {
 #* @param layout long (default: one row per drug and time) or wide (one row per time); CSV and Excel only; overrides output.layout
 #* @post /simulate
 function(req, res, format = "", layout = "") {
+  # The query string is read from req$argsQuery, not from these arguments:
+  # plumber also binds a body field to an argument of the same name, so a
+  # `format` at the root of the JSON body would otherwise set the format
+  # while the response warned that it had been ignored.  The arguments stay
+  # for the generated (Swagger) documentation.
+  query <- req$argsQuery
+  format <- if (is.null(query$format)) "" else as.character(query$format)[1]
+  layout <- if (is.null(query$layout)) "" else as.character(query$layout)[1]
   tryCatch({
     # The body is JSON (the documentation's requests say so); a body declared
     # as anything else -- a browser form's, say -- is refused before it is

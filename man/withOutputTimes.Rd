@@ -4,13 +4,18 @@
 \alias{withOutputTimes}
 \title{Evaluate code with extra points on every simulation time line}
 \usage{
-withOutputTimes(times, code)
+withOutputTimes(times, code, resolvePeaks = FALSE)
 }
 \arguments{
 \item{times}{times (minutes) every engine should report, in addition to
 its own time line; see \code{withGridOutputTimes()}}
 
 \item{code}{the code to run}
+
+\item{resolvePeaks}{also fill every gap of a line longer than a day from
+the drug's own \code{start}, as a line of a day or less is filled, so
+that a peak soon after a dose is a point of the line (see
+\code{gridFill()})}
 }
 \value{
 the value of \code{code}
