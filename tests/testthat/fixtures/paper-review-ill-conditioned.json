@@ -1,0 +1,134 @@
+{
+  "paper": {
+    "title": "A two-compartment fixture",
+    "first_author": "Fixture",
+    "year": 2026,
+    "journal": null,
+    "doi": null
+  },
+  "drug": {
+    "name": "twocompol",
+    "analyte": "parent",
+    "matrix": "whole blood",
+    "concentration_units": "mcg/mL",
+    "molecular_weight": null,
+    "dose_basis": "base",
+    "dose_basis_note": "",
+    "location": "Methods"
+  },
+  "structure": {
+    "compartments": 2,
+    "elimination": "linear",
+    "absorption": "none",
+    "absorption_lag": "not_applicable",
+    "routes": [
+      "iv_infusion"
+    ],
+    "apparent_oral": "not_applicable",
+    "effect_site": "none",
+    "pd_model": null,
+    "parameterization": "Non-compartmental CL and Vss with two half-lives",
+    "location": "Results"
+  },
+  "parameters": [],
+  "covariate_effects": [],
+  "population": {
+    "n": 10,
+    "description": "Volunteers",
+    "age_years": {
+      "central": null,
+      "central_kind": "unstated",
+      "min": null,
+      "max": null
+    },
+    "weight_kg": {
+      "central": 70,
+      "central_kind": "mean",
+      "min": null,
+      "max": null
+    },
+    "height_cm": {
+      "central": null,
+      "central_kind": "unstated",
+      "min": null,
+      "max": null
+    },
+    "n_female": null,
+    "n_male": null,
+    "other": "",
+    "location": "Table 1"
+  },
+  "regimens": [],
+  "derived_quantities": [
+    {
+      "quantity": "CL",
+      "value": 0.285,
+      "value_text": "0.285",
+      "units": "L/min/kg",
+      "regimen_id": null,
+      "statistic": "mean_of_individuals",
+      "uncertainty": {
+        "type": "SE",
+        "value": 0.06,
+        "lower": null,
+        "upper": null
+      },
+      "location": "Table 2"
+    },
+    {
+      "quantity": "Vss",
+      "value": 1.9,
+      "value_text": "1.9",
+      "units": "L/kg",
+      "regimen_id": null,
+      "statistic": "mean_of_individuals",
+      "uncertainty": {
+        "type": "SE",
+        "value": 0.6,
+        "lower": null,
+        "upper": null
+      },
+      "location": "Table 2"
+    },
+    {
+      "quantity": "t_half_1",
+      "value": 2,
+      "value_text": "2.0",
+      "units": "min",
+      "regimen_id": null,
+      "statistic": "mean_of_individuals",
+      "uncertainty": {
+        "type": "SE",
+        "value": 0.6,
+        "lower": null,
+        "upper": null
+      },
+      "location": "Table 2"
+    },
+    {
+      "quantity": "t_half_2",
+      "value": 9.2,
+      "value_text": "9.2",
+      "units": "min",
+      "regimen_id": null,
+      "statistic": "mean_of_individuals",
+      "uncertainty": {
+        "type": "SE",
+        "value": 3,
+        "lower": null,
+        "upper": null
+      },
+      "location": "Table 2"
+    }
+  ],
+  "figures": [],
+  "reported_differences": [],
+  "bioavailability": {
+    "source": "not_applicable",
+    "note": "",
+    "location": ""
+  },
+  "interpretive_claims": [],
+  "reviewer_notes": [],
+  "extraction_limitations": ""
+}

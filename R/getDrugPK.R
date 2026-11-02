@@ -92,7 +92,9 @@ getDrugPK <- function(
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
-  if (!drug %in% drugList) stop("Unknown drug: ", drug)
+  # A supplied model needs no library row: Single Paper Review builds its
+  # drug in memory (R/paper-review-model.R, docs/paper-review.md).
+  if (is.null(model) && !drug %in% drugList) stop("Unknown drug: ", drug)
   if (length(sex) != 1 || !sex %in% SEX_VALUES) {
     stop("Invalid sex: ", paste(sex, collapse = ", "),
          ". Must be one of: ", paste(SEX_VALUES, collapse = ", "))

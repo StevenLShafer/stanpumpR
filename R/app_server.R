@@ -452,6 +452,10 @@ app_server <- function(input, output, session) {
   # and sets the time settings through timeApi.
   helpApi <- helpServer(input, output, session, doseTable, eventTable, drugDefaults,
                         timeApi = timeApi)
+
+  # Single Paper Review, a tab of its own that shares nothing with the
+  # simulator (R/paper-review-app.R).
+  paperReviewModuleServer()
   helpPage <- helpApi$page
 
   ###########
@@ -551,10 +555,18 @@ app_server <- function(input, output, session) {
 
   url <- reactiveVal("")
 
+  # Nothing of a reviewed paper goes into the URL (its model names, the
+  # patient and doses simulated): Single Paper Review's inputs are all
+  # excluded (paperReviewModuleServer()).  Set before every doBookmark(),
+  # which reads the exclusions before it calls onBookmark().
+  excludeFromBookmark <- function(names)
+    setBookmarkExclude(c(bookmarksToExclude,
+                         grep(paste0("^", PAPER_REVIEW_MODULE_ID, "-"), names, value = TRUE)))
+
   observe({
     profileCode({
       # Trigger this observer every time an input changes
-      reactiveValuesToList(input)
+      excludeFromBookmark(names(reactiveValuesToList(input)))
       session$doBookmark()
     }, name = "doBookmark observer")
   })
@@ -572,7 +584,7 @@ app_server <- function(input, output, session) {
       # misalign it.
       state$values$macThreshold <- macThreshold()
       state$values$endCe <- changedThresholds(drugDefaults())
-      setBookmarkExclude(bookmarksToExclude)
+      excludeFromBookmark(isolate(names(input)))
     }, name = "onBookmark()")
   })
 

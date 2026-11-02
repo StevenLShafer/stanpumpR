@@ -1,0 +1,536 @@
+{
+  "paper": {
+    "title": "Pharmacokinetics of exampleol in adult volunteers (a fictional paper)",
+    "first_author": "Example",
+    "year": 2026,
+    "journal": "Fixture",
+    "doi": null
+  },
+  "drug": {
+    "name": "exampleol",
+    "analyte": "parent",
+    "matrix": "arterial plasma",
+    "concentration_units": "ng/mL",
+    "molecular_weight": 300.4,
+    "dose_basis": "salt",
+    "dose_basis_note": "Doses are exampleol hydrochloride (Methods, p. 3).",
+    "location": "Methods, p. 3"
+  },
+  "structure": {
+    "compartments": 3,
+    "elimination": "linear",
+    "absorption": "none",
+    "absorption_lag": "not_applicable",
+    "routes": [
+      "iv_bolus",
+      "iv_infusion"
+    ],
+    "apparent_oral": "not_applicable",
+    "effect_site": "tpeak",
+    "pd_model": "Effect site from the time to peak EEG effect",
+    "parameterization": "Volumes and clearances",
+    "location": "Results, p. 5"
+  },
+  "parameters": [
+    {
+      "name_in_paper": "V1",
+      "role": "V1",
+      "route": null,
+      "value": 8,
+      "value_text": "8",
+      "units": "L",
+      "uncertainty": {
+        "type": "RSE_percent",
+        "value": 12,
+        "lower": null,
+        "upper": null
+      },
+      "status": "estimated",
+      "location": "Table 2, p. 5"
+    },
+    {
+      "name_in_paper": "V2",
+      "role": "V2",
+      "route": null,
+      "value": 20,
+      "value_text": "20",
+      "units": "L",
+      "uncertainty": {
+        "type": "RSE_percent",
+        "value": 15,
+        "lower": null,
+        "upper": null
+      },
+      "status": "estimated",
+      "location": "Table 2, p. 5"
+    },
+    {
+      "name_in_paper": "V3",
+      "role": "V3",
+      "route": null,
+      "value": 120,
+      "value_text": "120",
+      "units": "L",
+      "uncertainty": {
+        "type": "RSE_percent",
+        "value": 20,
+        "lower": null,
+        "upper": null
+      },
+      "status": "estimated",
+      "location": "Table 2, p. 5"
+    },
+    {
+      "name_in_paper": "CL",
+      "role": "CL",
+      "route": null,
+      "value": 1.2,
+      "value_text": "1.2",
+      "units": "L/min",
+      "uncertainty": {
+        "type": "RSE_percent",
+        "value": 6,
+        "lower": null,
+        "upper": null
+      },
+      "status": "estimated",
+      "location": "Table 2, p. 5"
+    },
+    {
+      "name_in_paper": "Q2",
+      "role": "Q2",
+      "route": null,
+      "value": 2,
+      "value_text": "2",
+      "units": "L/min",
+      "uncertainty": {
+        "type": "RSE_percent",
+        "value": 18,
+        "lower": null,
+        "upper": null
+      },
+      "status": "estimated",
+      "location": "Table 2, p. 5"
+    },
+    {
+      "name_in_paper": "Q3",
+      "role": "Q3",
+      "route": null,
+      "value": 0.6,
+      "value_text": "0.6",
+      "units": "L/min",
+      "uncertainty": {
+        "type": "RSE_percent",
+        "value": 22,
+        "lower": null,
+        "upper": null
+      },
+      "status": "estimated",
+      "location": "Table 2, p. 5"
+    },
+    {
+      "name_in_paper": "tpeak",
+      "role": "tPeak",
+      "route": null,
+      "value": 3,
+      "value_text": "3",
+      "units": "min",
+      "uncertainty": {
+        "type": "RSE_percent",
+        "value": 10,
+        "lower": null,
+        "upper": null
+      },
+      "status": "estimated",
+      "location": "Results, p. 7"
+    }
+  ],
+  "covariate_effects": [
+    {
+      "parameter_role": "CL",
+      "covariate": "weight",
+      "form": "power",
+      "coefficient": 0.75,
+      "reference_value": 70,
+      "covariate_units": "kg",
+      "equation_as_printed": "CL = 1.2 x (WT/70)^0.75",
+      "location": "Equation 2, p. 5"
+    },
+    {
+      "parameter_role": "V1",
+      "covariate": "age",
+      "form": "linear",
+      "coefficient": -0.005,
+      "reference_value": 40,
+      "covariate_units": "years",
+      "equation_as_printed": "V1 = 8 x (1 - 0.005 (AGE - 40))",
+      "location": "Equation 3, p. 5"
+    }
+  ],
+  "population": {
+    "n": 24,
+    "description": "Healthy adult volunteers",
+    "age_years": {
+      "central": 42,
+      "central_kind": "mean",
+      "min": 25,
+      "max": 65
+    },
+    "weight_kg": {
+      "central": 75,
+      "central_kind": "mean",
+      "min": 55,
+      "max": 110
+    },
+    "height_cm": {
+      "central": 174,
+      "central_kind": "mean",
+      "min": 158,
+      "max": 192
+    },
+    "n_female": 12,
+    "n_male": 12,
+    "other": "ASA I, no co-medication",
+    "location": "Table 1, p. 4"
+  },
+  "regimens": [
+    {
+      "id": "R1",
+      "description": "1 mg/kg intravenous bolus",
+      "doses": [
+        {
+          "route": "iv_bolus",
+          "time": 0,
+          "amount": 1,
+          "mass_unit": "mg",
+          "per_kg": "yes",
+          "per_time": "none",
+          "duration": null,
+          "time_units": "min"
+        }
+      ],
+      "location": "Methods, p. 3"
+    },
+    {
+      "id": "R2",
+      "description": "0.1 mg/kg/min for 60 min",
+      "doses": [
+        {
+          "route": "iv_infusion",
+          "time": 0,
+          "amount": 0.1,
+          "mass_unit": "mg",
+          "per_kg": "yes",
+          "per_time": "per_min",
+          "duration": 60,
+          "time_units": "min"
+        }
+      ],
+      "location": "Methods, p. 3"
+    }
+  ],
+  "derived_quantities": [
+    {
+      "quantity": "t_half_1",
+      "value": 1.3,
+      "value_text": "1.3",
+      "units": "min",
+      "regimen_id": null,
+      "statistic": "typical_value",
+      "uncertainty": {
+        "type": "not_reported",
+        "value": null,
+        "lower": null,
+        "upper": null
+      },
+      "location": "Table 3, p. 6"
+    },
+    {
+      "quantity": "t_half_2",
+      "value": 20.8,
+      "value_text": "20.8",
+      "units": "min",
+      "regimen_id": null,
+      "statistic": "typical_value",
+      "uncertainty": {
+        "type": "not_reported",
+        "value": null,
+        "lower": null,
+        "upper": null
+      },
+      "location": "Table 3, p. 6"
+    },
+    {
+      "quantity": "t_half_3",
+      "value": 3.56,
+      "value_text": "3.56",
+      "units": "h",
+      "regimen_id": null,
+      "statistic": "typical_value",
+      "uncertainty": {
+        "type": "not_reported",
+        "value": null,
+        "lower": null,
+        "upper": null
+      },
+      "location": "Table 3, p. 6"
+    },
+    {
+      "quantity": "Vss",
+      "value": 148,
+      "value_text": "148",
+      "units": "L",
+      "regimen_id": null,
+      "statistic": "typical_value",
+      "uncertainty": {
+        "type": "not_reported",
+        "value": null,
+        "lower": null,
+        "upper": null
+      },
+      "location": "Table 3, p. 6"
+    },
+    {
+      "quantity": "ke0",
+      "value": 0.273,
+      "value_text": "0.273",
+      "units": "1/min",
+      "regimen_id": null,
+      "statistic": "typical_value",
+      "uncertainty": {
+        "type": "not_reported",
+        "value": null,
+        "lower": null,
+        "upper": null
+      },
+      "location": "Results, p. 7"
+    },
+    {
+      "quantity": "AUC_inf",
+      "value": 972,
+      "value_text": "972",
+      "units": "ng*h/mL",
+      "regimen_id": "R1",
+      "statistic": "typical_value",
+      "uncertainty": {
+        "type": "not_reported",
+        "value": null,
+        "lower": null,
+        "upper": null
+      },
+      "location": "Table 3, p. 6"
+    },
+    {
+      "quantity": "coefficient_1",
+      "value": 0.1102,
+      "value_text": "0.1102",
+      "units": "1/L",
+      "regimen_id": null,
+      "statistic": "typical_value",
+      "uncertainty": {
+        "type": "not_reported",
+        "value": null,
+        "lower": null,
+        "upper": null
+      },
+      "location": "Table 3, p. 6"
+    },
+    {
+      "quantity": "coefficient_2",
+      "value": 0.01381,
+      "value_text": "0.01381",
+      "units": "1/L",
+      "regimen_id": null,
+      "statistic": "typical_value",
+      "uncertainty": {
+        "type": "not_reported",
+        "value": null,
+        "lower": null,
+        "upper": null
+      },
+      "location": "Table 3, p. 6"
+    },
+    {
+      "quantity": "coefficient_3",
+      "value": 0.0009993,
+      "value_text": "0.0009993",
+      "units": "1/L",
+      "regimen_id": null,
+      "statistic": "typical_value",
+      "uncertainty": {
+        "type": "not_reported",
+        "value": null,
+        "lower": null,
+        "upper": null
+      },
+      "location": "Table 3, p. 6"
+    }
+  ],
+  "figures": [
+    {
+      "figure_id": "Figure 2",
+      "caption": "Mean arterial concentrations after a 1 mg/kg bolus",
+      "regimen_id": "R1",
+      "y_quantity": "concentration",
+      "y_units": "ng/mL",
+      "time_units": "min",
+      "log_y": "yes",
+      "data_kind": "mean",
+      "error_bars": "SD",
+      "series": [
+        {
+          "label": "Mean",
+          "points": [
+            {
+              "time": 2,
+              "value": 3750,
+              "error_lower": 3000,
+              "error_upper": 4510
+            },
+            {
+              "time": 5,
+              "value": 1340,
+              "error_lower": 1070,
+              "error_upper": 1610
+            },
+            {
+              "time": 10,
+              "value": 754,
+              "error_lower": 603,
+              "error_upper": 904
+            },
+            {
+              "time": 20,
+              "value": 453,
+              "error_lower": 362,
+              "error_upper": 544
+            },
+            {
+              "time": 30,
+              "value": 343,
+              "error_lower": 274,
+              "error_upper": 412
+            },
+            {
+              "time": 60,
+              "value": 127,
+              "error_lower": 101,
+              "error_upper": 152
+            },
+            {
+              "time": 120,
+              "value": 53.8,
+              "error_lower": 43,
+              "error_upper": 64.5
+            },
+            {
+              "time": 240,
+              "value": 30.5,
+              "error_lower": 24.4,
+              "error_upper": 36.7
+            },
+            {
+              "time": 360,
+              "value": 22.4,
+              "error_lower": 17.9,
+              "error_upper": 26.9
+            }
+          ]
+        }
+      ],
+      "digitization_note": "Read from a log axis; about 5% precision.",
+      "location": "Figure 2, p. 6"
+    },
+    {
+      "figure_id": "Figure 3",
+      "caption": "Mean concentrations during and after a 60-min infusion",
+      "regimen_id": "R2",
+      "y_quantity": "concentration",
+      "y_units": "ng/mL",
+      "time_units": "min",
+      "log_y": "no",
+      "data_kind": "mean",
+      "error_bars": "none",
+      "series": [
+        {
+          "label": "Mean",
+          "points": [
+            {
+              "time": 10,
+              "value": 2380,
+              "error_lower": null,
+              "error_upper": null
+            },
+            {
+              "time": 30,
+              "value": 3170,
+              "error_lower": null,
+              "error_upper": null
+            },
+            {
+              "time": 60,
+              "value": 4010,
+              "error_lower": null,
+              "error_upper": null
+            },
+            {
+              "time": 90,
+              "value": 872,
+              "error_lower": null,
+              "error_upper": null
+            },
+            {
+              "time": 120,
+              "value": 490,
+              "error_lower": null,
+              "error_upper": null
+            },
+            {
+              "time": 180,
+              "value": 264,
+              "error_lower": null,
+              "error_upper": null
+            }
+          ]
+        }
+      ],
+      "digitization_note": "Read from a linear axis; about 5% precision.",
+      "location": "Figure 3, p. 7"
+    }
+  ],
+  "reported_differences": [
+    {
+      "description": "Clearance, women against men",
+      "group1_value": 1.1,
+      "group1_se": 0.08,
+      "group2_value": 1.3,
+      "group2_se": 0.09,
+      "difference": 0.2,
+      "difference_se": null,
+      "paired": "no",
+      "p_value": 0.04,
+      "location": "Results, p. 6"
+    }
+  ],
+  "bioavailability": {
+    "source": "not_applicable",
+    "note": "",
+    "location": ""
+  },
+  "interpretive_claims": [
+    {
+      "category": "volume_as_anatomy",
+      "claim": "V3 represents the drug's distribution into fat",
+      "location": "Discussion, p. 9"
+    }
+  ],
+  "reviewer_notes": [
+    {
+      "severity": "concern",
+      "topic": "Second half-life",
+      "finding": "The intermediate half-life in Table 3 does not follow from Table 2.",
+      "location": "Table 3, p. 6"
+    }
+  ],
+  "extraction_limitations": "Figure points are read by eye from the plotted symbols."
+}
