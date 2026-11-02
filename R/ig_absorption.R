@@ -245,9 +245,21 @@ faddeevaW <- function(z) {
 #' @noRd
 igDensity <- function(t, mu, lambda) {
   stopifnot(mu > 0, lambda > 0)
-  ifelse(t <= 0, 0,
-         sqrt(lambda / (2 * pi * t^3)) *
-           exp(-lambda * (t - mu)^2 / (2 * mu^2 * t)))
+
+  # Evaluate the density only where t > 0.  ifelse() evaluates its whole
+  # expression first and selects afterwards, so a non-positive time reached
+  # sqrt() of a negative number: the returned values were still right, which
+  # is why the test that checked them did not catch it, but it warned, and
+  # under options(warn = 2) it was an error.  (CodeRabbit, PR #657.)
+  out <- rep(NA_real_, length(t))
+  out[!is.na(t) & t <= 0] <- 0
+  pos <- which(t > 0)
+  if (length(pos)) {
+    tt <- t[pos]
+    out[pos] <- sqrt(lambda / (2 * pi * tt^3)) *
+      exp(-lambda * (tt - mu)^2 / (2 * mu^2 * tt))
+  }
+  out
 }
 
 
