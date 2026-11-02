@@ -64,7 +64,7 @@ test_that("the band follows the rule and the library ships it", {
   }
 })
 
-test_that("the shipped bands are the ones researched on 2026-10-19", {
+test_that("the shipped bands are the ones researched on 2026-10-19 and revised on 2026-11-01", {
   # A pin, so a change to the table is a deliberate change to the bands.
   # Free mg/L, then the plotted band.
   pins <- list(
