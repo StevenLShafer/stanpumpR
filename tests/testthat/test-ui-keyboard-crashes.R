@@ -112,12 +112,14 @@ test_that("Suggest Dosing that fails, or finds doses the table cannot hold, leav
   outcomes <- list(
     # nlm()'s error for a target of 1e-301, reproduced in the browser
     function(...) stop("probable coding error in analytic gradient"),
+    # no target before the end time (issue #270)
+    function(...) NULL,
     # the doses a target of 1e8 suggested, which then stopped every plot and
     # the Email Slide
     function(targetDrug, ...) data.frame(Drug = targetDrug, Time = c(0, 1), Dose = c(2e9, 5e8),
                                          Units = c("mg", "mg/min"))
   )
-  messages <- c("probable coding error", "cannot hold")
+  messages <- c("probable coding error", "found no target", "cannot hold")
   for (i in seq_along(outcomes)) {
     notes <- character(0)
     local_mocked_bindings(suggest = outcomes[[i]])
