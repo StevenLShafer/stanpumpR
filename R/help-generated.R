@@ -725,5 +725,6 @@ HELP_GENERATED_BLOCKS <- list(
   "antibiotic-mbc-table" = helpAntibioticMbcBandMarkdown,
   "antiseizure-interaction-table" = helpAntiseizureInteractionTableMarkdown,
   "antiseizure-interaction-sources" = helpAntiseizureInteractionSourcesMarkdown,
-  "field-readers-table" = helpFieldReadersTableMarkdown
+  "field-readers-table" = helpFieldReadersTableMarkdown,
+  "pk-converter" = helpPKConverterHTML
 )
