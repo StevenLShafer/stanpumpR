@@ -212,3 +212,71 @@ test_that("an empty profiler threshold does not stop the profiled observers", {
 })
 
 .sprglobals$config <- oldConfig
+
+# --- Pasting into the dose grid ------------------------------------------------
+
+# Every pasted unit was dropped for the drug's default, so "morphine 0 10 mg PO
+# tablet" became 10 mg intravenous: the Units dropdown validated it against
+# the row's list before the drug was in place.  Reproduced in Chromium at
+# 7491b43; #675 fixed the created row's lost time and dose, and this the unit
+# and the Enter-twice reset.  The hooks run in Node on a stand-in grid, with
+# the events in the order Chromium gave them.
+test_that("a paste keeps every row's time, dose and unit", {
+  skip_on_cran()
+  skip_if(!nzchar(Sys.which("node")), "node is not installed")
+  js <- normalizePath(system.file("www", "hot_funs.js", package = "stanpumpR"), winslash = "/")
+  dd <- getDrugDefaultsGlobal()
+  defaults <- lapply(c("fentanyl", "morphine"), function(d) list(
+    Drug = d, Units = unlist(dd$Units[dd$Drug == d]), Default.Units = dd$Default.Units[dd$Drug == d]
+  ))
+  script <- tempfile(fileext = ".js")
+  on.exit(unlink(script))
+  writeLines(c(
+    "const vm = require('vm'); const fs = require('fs');",
+    "global.window = {};",
+    sprintf("global.drug_defaults = %s;", jsonlite::toJSON(defaults, auto_unbox = TRUE)),
+    sprintf("vm.runInThisContext(fs.readFileSync(%s, 'utf8'));", jsonlite::toJSON(js, auto_unbox = TRUE)),
+    "function grid(rows) { return { data: rows, meta: {},",
+    "  getSettings() { return { colHeaders: ['Drug', 'Time', 'Dose/Target', 'Units'] }; },",
+    "  getDataAtRow(r) { return this.data[r]; }, getDataAtCell(r, c) { return this.data[r][c]; },",
+    "  setCellMeta(r, c, k, v) { this.meta[r + ':' + c + ':' + k] = v; },",
+    "  setDataAtCell(ch) { ch.forEach(x => { this.data[x[0]][x[1]] = x[2]; }); } }; }",
+    "function paste(hot, startRow, lines) {",
+    "  hookRememberPastedUnits.call(hot, lines, [{ startRow: startRow, startCol: 0 }]);",
+    "  const changes = [];",
+    "  lines.forEach((l, i) => { const r = startRow + i;",
+    "    if (!hot.data[r]) hot.data[r] = [null, null, null, null];",
+    "    [0, 1, 2].forEach(c => { changes.push([r, c, hot.data[r][c], l[c]]); hot.data[r][c] = l[c]; }); });",
+    # the created row's no-op edits as Chromium logged them (#675): Time and
+    # Dose before the paste's own change, Drug and Units after it
+    "  const created = lines.map((l, i) => startRow + i).filter(r => r >= 4);",
+    "  created.forEach(r => [1, 2].forEach(c => hookDoseTableUpdate.call(hot, [[r, c, null, null]], 'edit')));",
+    "  hookDoseTableUpdate.call(hot, changes, 'CopyPaste.paste');",
+    "  created.forEach(r => [0, 3].forEach(c => hookDoseTableUpdate.call(hot, [[r, c, null, null]], 'edit')));",
+    "  return hot.data; }",
+    "const blank = () => [['propofol', '0', '2', 'mg/kg'], ['', '', '', ''], ['', '', '', ''], ['', '', '', '']];",
+    "process.stdout.write(JSON.stringify({",
+    "  created: paste(grid(blank()), 2, [['fentanyl', '5', '50', 'mcg'], ['fentanyl', '10', '50', 'mcg'], ['fentanyl', '15', '2', 'mcg/kg']]),",
+    "  oral: paste(grid(blank()), 1, [['morphine', '0', '10', 'mg PO tablet'], ['morphine', '60', '10', 'mg PO liquid']]),",
+    "  refused: paste(grid(blank()), 1, [['morphine', '0', '10', 'mg PO']]),",
+    "  noUnit: paste(grid(blank()), 1, [['morphine', '0', '10']]),",
+    # Enter pressed twice on a Drug cell re-commits the drug it holds
+    "  enterTwice: (function() { const hot = grid([['morphine', '30', '10', 'mg PO tablet'], ['', '', '', '']]);",
+    "    hookDoseTableUpdate.call(hot, [[0, 0, 'morphine', 'morphine']], 'edit'); return hot.data; })()",
+    "}));"
+  ), script)
+  out <- jsonlite::fromJSON(paste(system2(Sys.which("node"), shQuote(script), stdout = TRUE), collapse = ""),
+                            simplifyVector = FALSE)
+  row <- function(x) unlist(lapply(x, function(v) if (is.null(v)) NA else as.character(v)))
+  expect_equal(row(out$created[[5]]), c("fentanyl", "15", "2", "mcg/kg"))
+  expect_equal(row(out$created[[3]]), c("fentanyl", "5", "50", "mcg"))
+  expect_equal(row(out$oral[[2]]), c("morphine", "0", "10", "mg PO tablet"))
+  expect_equal(row(out$oral[[3]]), c("morphine", "60", "10", "mg PO liquid"))
+  # a unit the drug does not offer is not taken (the grid says so); the row
+  # keeps the drug's default, as a row with no pasted unit does
+  morphineDefault <- dd$Default.Units[dd$Drug == "morphine"]
+  expect_equal(row(out$refused[[2]]), c("morphine", "0", "10", morphineDefault))
+  expect_equal(row(out$noUnit[[2]]), c("morphine", "0", "10", morphineDefault))
+  # was morphine 0 0 with its default unit
+  expect_equal(row(out$enterTwice[[1]]), c("morphine", "30", "10", "mg PO tablet"))
+})

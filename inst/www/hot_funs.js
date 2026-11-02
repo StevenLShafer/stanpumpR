@@ -331,10 +331,20 @@ function hookDoseTableUpdate(changes, source) {
   // after the paste had filled the row, alone and on the Drug column, and
   // the created row's pasted time and dose were reset to 0 and 0
   // (keyboard review, 2026-11-02; test-dose-table-paste.R).
+  //
+  // So is a cell re-entered as it was: pressing Enter twice on a Drug cell
+  // re-commits the same drug, which was read as choosing it and reset the
+  // row's time and dose to 0 (found with #675, fixed here).
   changes = !Array.isArray(changes) ? [] : changes.filter(function(change) {
-    return change && !(isNullish(change[2]) && isNullish(change[3]));
+    return change && !(isNullish(change[2]) && isNullish(change[3])) &&
+      trimEntry(change[2]) !== trimEntry(change[3]);
   });
-  if (changes.length === 0) return;
+  if (changes.length === 0) {
+    // hot.pastedUnits is kept: a paste that creates rows reports these no-op
+    // edits around its own change, and beforePaste starts it afresh
+    hot.rejectedCells = {};
+    return;
+  }
   let rows = uniq(
     changes.map(function(change) { return change[0]; })
   );
@@ -347,6 +357,7 @@ function hookDoseTableUpdate(changes, source) {
   }
 
   let allChanges = [];
+  let refusedUnits = [];
 
   rows.forEach(function(row) {
     let rowdata = hot.getDataAtRow(row);
@@ -397,6 +408,15 @@ function hookDoseTableUpdate(changes, source) {
 
     // A row the grid created holds null, not '', where nothing was written
     unit = trimEntry(unit) !== '' ? unit : validateUnit(unit, drug);
+    // The unit a paste carried for this row (hookRememberPastedUnits())
+    let pastedUnit = (source === 'CopyPaste.paste' && hot.pastedUnits) ? hot.pastedUnits[row] : undefined;
+    if (pastedUnit !== undefined && trimEntry(drug) !== '') {
+      if (Array.isArray(units) && units.indexOf(pastedUnit) !== -1) {
+        unit = pastedUnit;
+      } else {
+        refusedUnits.push({ drug: drug, unit: pastedUnit });
+      }
+    }
     if (writeTime) {
       allChanges.push([row, timeCol, time]);
     }
@@ -406,6 +426,17 @@ function hookDoseTableUpdate(changes, source) {
     allChanges.push([row, unitsCol, unit]);
   });
   hot.rejectedCells = {};
+  hot.pastedUnits = {};
+
+  if (refusedUnits.length > 0 && typeof window !== 'undefined' && window.Shiny &&
+      Shiny.notifications && typeof Shiny.notifications.show === 'function') {
+    let lines = refusedUnits.slice(0, 3).map(function(r) {
+      return '"' + r.unit + '" is not a unit offered for ' + r.drug + '; the row has its default unit.';
+    });
+    if (refusedUnits.length > 3) lines.push('(and ' + (refusedUnits.length - 3) + ' more)');
+    Shiny.notifications.show({ html: lines.map(escapeHtml).join('<br>'), type: 'warning',
+                               duration: 8000, id: 'unitEntryRefused' });
+  }
 
   if (allChanges.length > 0) {
     hot.setDataAtCell(allChanges, 'calculate');
@@ -421,6 +452,30 @@ function getDrugUnits(drug) {
   if (drug_default.length === 0) { return ''; }
 
   return drug_default[0].Units;
+}
+
+// Remember the units a paste carries, by row.  A pasted Units cell is
+// validated against the dropdown list its row had before the paste -- for a
+// blank row, [""] -- so Handsontable drops it, and the row then took its
+// drug's default unit: a pasted "morphine 0 10 mg PO" became 10 mg
+// intravenous without a word (keyboard review of 2026-11-02).
+// hookDoseTableUpdate() applies the remembered unit once the drug is in
+// place, or says why not.
+function hookRememberPastedUnits(data, coords) {
+  let hot = this;
+  hot.pastedUnits = {};
+  let unitsCol = findColByHeader(hot, "Units");
+  if (unitsCol === null || !Array.isArray(data) || !coords || !coords[0]) return;
+  let startRow = coords[0].startRow;
+  let startCol = coords[0].startCol;
+  let j = unitsCol - startCol;
+  if (j < 0) return;
+  data.forEach(function(line, i) {
+    if (Array.isArray(line) && j < line.length) {
+      let unit = trimEntry(line[j]);
+      if (unit !== '') hot.pastedUnits[startRow + i] = unit;
+    }
+  });
 }
 
 function setUnitDropdown(hot, row, column, source) {

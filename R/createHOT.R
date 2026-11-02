@@ -115,6 +115,8 @@ createHOT <- function(doseTable, drugDefaults, timeFormat = NULL, drugChoices = 
   HOT <- addHotHooks(
     HOT, filterKeys = TRUE, sanitize = TRUE,
     afterChange = "hookDoseTableUpdate",
+    # the units a paste carries, applied once the row's drug is in place
+    beforePaste = "hookRememberPastedUnits",
     # pressing Enter in a drug cell; opening a Units list
     afterBeginEditing = c("hookSelectAllDrugText", "hookWrapUnitList"),
     afterSelectionEnd = "hookSelectAllDrugText",   # clicking into a drug cell with mouse
