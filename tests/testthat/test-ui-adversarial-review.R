@@ -224,6 +224,9 @@ test_that("a dose or time beyond the table's limits is refused where it is typed
   expect_equal(validateDose(1e10), "")
   expect_equal(validateTime(strrep("1", MAX_TIME_STRING_LENGTH)), strrep("1", MAX_TIME_STRING_LENGTH))
   expect_equal(validateTime(strrep("1", MAX_TIME_STRING_LENGTH + 1L)), "")
+  # an hour count past 2^53, refused by the grid too
+  expect_equal(validateTime("9007199254740991:00"), "9007199254740991:00")
+  expect_equal(validateTime("99999999999999999999:00"), "")
 
   # The grid's own copy of the limits (inst/www/hot_funs.js)
   js <- readLines(system.file("www", "hot_funs.js", package = "stanpumpR"))

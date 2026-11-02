@@ -129,6 +129,9 @@ validateTime <- function(x)
     # force 80 minutes into 1 hour and 20 minutes
     HH <- HH + floor(MM/60)
     MM <- MM %% 60
+    # Past 2^53 the hour count is not exact, and inst/www/hot_funs.js refuses
+    # it (String() writes "1e+21"): refused here too, so the two agree.
+    if (HH > 2^53 - 1) return("")
     # %.0f rather than %d, which stops on an hour count too large for an
     # integer.  inst/www/hot_funs.js validateTime() must give the same string.
     out <- sprintf("%02.0f:%02.0f", HH, MM)

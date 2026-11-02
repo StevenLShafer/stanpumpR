@@ -1588,8 +1588,10 @@ app_server <- function(input, output, session) {
           error <- "There is no plot to send: enter a dose first."
         }
         if (is.null(error)) {
-          error <- tryCatch(plotFailure(main_plot()),
-                            shiny.silent.error = function(e) "There is no plot to send yet.")
+          # main_plot() is NULL, not an error, when it is still waiting
+          plot <- main_plot()
+          error <- plotFailure(plot)
+          if (is.null(error) && is.null(plot)) error <- "There is no plot to send yet."
         }
       }
       if (!is.null(error)) {

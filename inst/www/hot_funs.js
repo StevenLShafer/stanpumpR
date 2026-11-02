@@ -291,7 +291,8 @@ function validateTime(time) {
     // convert minutes greater than 60 to hours and minutes
     HH = HH + Math.floor(MM / 60);
     MM = MM % 60;
-    // past 2^53 String() writes "1e+21", which R's validateTime() refuses
+    // past 2^53 the hour count is not exact and String() writes "1e+21":
+    // refused, as R's validateTime() refuses it
     if (!Number.isSafeInteger(HH)) return '';
     // at least two digits each; an hour count of 100 or more is kept whole
     // (an elapsed "100:30"), not cut to its last two digits
