@@ -362,7 +362,6 @@ function hookDoseTableUpdate(changes, source) {
   }
 
   let allChanges = [];
-  let refusedUnits = [];
 
   rows.forEach(function(row) {
     let rowdata = hot.getDataAtRow(row);
@@ -413,16 +412,20 @@ function hookDoseTableUpdate(changes, source) {
 
     // A row the grid created holds null, not '', where nothing was written
     unit = trimEntry(unit) !== '' ? unit : validateUnit(unit, drug);
-    // The unit a paste carried for this row (hookRememberPastedUnits())
+    // The unit a paste carried for this row: only one the row's drug offers
+    // is remembered (hookRememberPastedUnits(), which warns of the rest)
     let pastedUnit = (source === 'CopyPaste.paste' && hot.pastedUnits) ? hot.pastedUnits[row] : undefined;
-    if (pastedUnit !== undefined && trimEntry(drug) !== '') {
-      if (Array.isArray(units) && units.indexOf(pastedUnit) !== -1) {
-        unit = pastedUnit;
-      } else {
-        // the default the warning names, whatever unit the row held
-        unit = validateUnit('', drug);
-        refusedUnits.push({ drug: drug, unit: pastedUnit });
-      }
+    if (pastedUnit !== undefined && Array.isArray(units) && units.indexOf(pastedUnit) !== -1) {
+      unit = pastedUnit;
+    }
+    // A unit the row's drug does not offer is never kept.  A paste that
+    // changed the drug and brought no unit ("fentanyl 0 2" over "propofol 0
+    // 2 mg/kg") kept the old drug's unit, and the server checks only that a
+    // unit exists, so fentanyl would have run in mg/kg, a thousandfold
+    // (CodeRabbit on #676).
+    if (trimEntry(drug) !== '' && Array.isArray(units) && units.length > 0 &&
+        units.indexOf(unit) === -1) {
+      unit = validateUnit('', drug);
     }
     if (writeTime) {
       allChanges.push([row, timeCol, time]);
@@ -434,8 +437,6 @@ function hookDoseTableUpdate(changes, source) {
   });
   hot.rejectedCells = {};
   hot.pastedUnits = {};
-
-  notifyRefusedUnits(refusedUnits, 'the row has its default unit.');
 
   if (allChanges.length > 0) {
     hot.setDataAtCell(allChanges, 'calculate');
@@ -464,33 +465,39 @@ function hookRememberPastedUnits(data, coords) {
   let hot = this;
   hot.pastedUnits = {};
   let unitsCol = findColByHeader(hot, "Units");
-  if (unitsCol === null || !Array.isArray(data) || !coords || !coords[0]) return;
+  let drugCol = findColByHeader(hot, "Drug");
+  if (unitsCol === null || !Array.isArray(data) || data.length === 0 || !coords || !coords[0]) return;
   let startRow = coords[0].startRow;
   let startCol = coords[0].startCol;
   let j = unitsCol - startCol;
   if (j < 0) return;
-  data.forEach(function(line, i) {
-    if (Array.isArray(line) && j < line.length) {
-      let unit = trimEntry(line[j]);
-      if (unit !== '') hot.pastedUnits[startRow + i] = unit;
-    }
-  });
-  // A paste that leaves the Drug column out brings no drug change, and
-  // Handsontable drops a unit the row's drug does not offer before any
-  // afterChange: the row keeps its unit, and is told why (CodeRabbit on #676)
-  let drugCol = findColByHeader(hot, "Drug");
-  if (drugCol === null || startCol <= drugCol) return;
+  // The drug each row will hold: the one pasted with it, or, when the paste
+  // leaves the Drug column out, the one it has
+  let k = (drugCol === null) ? -1 : drugCol - startCol;
+  // Handsontable repeats a clipboard shorter than the selection over the
+  // selected rows (CodeRabbit on #676)
+  let endRow = startRow + data.length - 1;
+  if (Number.isInteger(coords[0].endRow)) endRow = Math.max(endRow, coords[0].endRow);
+  // A refused unit is said here, whatever follows: a paste that changes
+  // nothing else reaches no afterChange (CodeRabbit on #676)
   let refused = [];
-  Object.keys(hot.pastedUnits).forEach(function(key) {
-    let row = Number(key);
-    let drug = trimEntry(hot.getDataAtCell(row, drugCol));
-    if (drug === '') return;
+  for (let row = startRow; row <= endRow; row++) {
+    let line = data[(row - startRow) % data.length];
+    if (!Array.isArray(line) || j >= line.length) continue;
+    let unit = trimEntry(line[j]);
+    if (unit === '') continue;
+    let drug = (k >= 0 && k < line.length) ? trimEntry(line[k]) :
+      (drugCol === null ? '' : trimEntry(hot.getDataAtCell(row, drugCol)));
+    if (drug === '') continue;
     let units = getDrugUnits(drug);
-    if (!Array.isArray(units) || units.indexOf(hot.pastedUnits[key]) === -1) {
-      refused.push({ drug: drug, unit: hot.pastedUnits[key] });
+    if (!Array.isArray(units) || units.length === 0) continue;  // a drug the grid will refuse
+    if (units.indexOf(unit) === -1) {
+      refused.push({ drug: drug, unit: unit });
+    } else {
+      hot.pastedUnits[row] = unit;
     }
-  });
-  notifyRefusedUnits(refused, 'the row keeps its unit.');
+  }
+  notifyRefusedUnits(refused, 'it was not used. Check the row\'s unit.');
 }
 
 // Say which pasted units were not taken, and what the rows hold instead
