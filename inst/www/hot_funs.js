@@ -34,6 +34,10 @@ function getTimeMode() {
   return timeMode || 'clock'; // default to clock if not found
 }
 
+function isNullish(value) {
+  return value === null || value === undefined;
+}
+
 function isUserEditSource(source) {
   return source === 'edit' || source === 'CopyPaste.paste' || source === 'Autofill.fill';
 }
@@ -318,7 +322,19 @@ function hookDoseTableUpdate(changes, source) {
   let unitsCol = findColByHeader(hot, "Units");
   if (drugCol === null || timeCol === null) return;
 
-  changes = !Array.isArray(changes) ? [] : changes;
+  // A change from nothing to nothing is no change, and Handsontable does not
+  // apply it; it is dropped here too, so that it can never be read as a drug
+  // being chosen.  When a paste runs past the last row, the row it creates
+  // gets one such change per column from rhandsontable's afterCreateRow
+  // handler, which writes each column's default (null).  The Drug column's
+  // is validated, and Handsontable validates in a setTimeout, so it arrived
+  // after the paste had filled the row, alone and on the Drug column, and
+  // the created row's pasted time and dose were reset to 0 and 0
+  // (keyboard review, 2026-11-02; test-dose-table-paste.R).
+  changes = !Array.isArray(changes) ? [] : changes.filter(function(change) {
+    return change && !(isNullish(change[2]) && isNullish(change[3]));
+  });
+  if (changes.length === 0) return;
   let rows = uniq(
     changes.map(function(change) { return change[0]; })
   );
@@ -364,8 +380,9 @@ function hookDoseTableUpdate(changes, source) {
       writeDose = true;
     }
 
-    // if drug is empty, set everything to empty
-    if (drug === '') {
+    // if drug is empty, set everything to empty (null in a row the grid
+    // created, as when a paste of times and doses runs past the last row)
+    if (trimEntry(drug) === '') {
       time = '';
       dose = '';
       unit = '';
@@ -378,7 +395,8 @@ function hookDoseTableUpdate(changes, source) {
     setUnitDropdown(hot, row, unitsCol, units);
     hot.setCellMeta(row, unitsCol, 'readOnly', false);
 
-    unit = unit !== '' ? unit : validateUnit(unit, drug);
+    // A row the grid created holds null, not '', where nothing was written
+    unit = trimEntry(unit) !== '' ? unit : validateUnit(unit, drug);
     if (writeTime) {
       allChanges.push([row, timeCol, time]);
     }
