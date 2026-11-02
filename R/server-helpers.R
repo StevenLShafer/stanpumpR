@@ -114,3 +114,13 @@ withDebugQuery <- function(url, level, default = DEBUG_LEVEL_OFF) {
   if (sep < 0) return(paste0(url, "?debug=", level))
   paste0(substr(url, 1, sep), "debug=", level, "&", substring(url, sep + 1))
 }
+
+# The debug level as one number from DEBUG_LEVEL_OFF to DEBUG_LEVEL_VERBOSE:
+# from ?debug=, the Debug level menu (a string) or the config.  Anything that
+# is not a number -- "?debug=abc", "?debug=" -- is `default`; a number past
+# either end is that end.
+debugLevel <- function(x, default = DEBUG_LEVEL_OFF) {
+  level <- suppressWarnings(as.numeric(x))
+  if (length(level) != 1 || !is.finite(level)) return(default)
+  min(max(round(level), DEBUG_LEVEL_OFF), DEBUG_LEVEL_VERBOSE)
+}
