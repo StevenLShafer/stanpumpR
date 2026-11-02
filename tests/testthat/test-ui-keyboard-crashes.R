@@ -233,7 +233,8 @@ test_that("a paste keeps every row's time, dose and unit", {
   on.exit(unlink(script))
   writeLines(c(
     "const vm = require('vm'); const fs = require('fs');",
-    "global.window = {};",
+    # the grid's warnings, collected
+    "const notes = []; global.Shiny = { notifications: { show: n => notes.push(n.html) } }; global.window = { Shiny: global.Shiny };",
     sprintf("global.drug_defaults = %s;", jsonlite::toJSON(defaults, auto_unbox = TRUE)),
     sprintf("vm.runInThisContext(fs.readFileSync(%s, 'utf8'));", jsonlite::toJSON(js, auto_unbox = TRUE)),
     "function grid(rows) { return { data: rows, meta: {},",
@@ -262,7 +263,19 @@ test_that("a paste keeps every row's time, dose and unit", {
     "  noUnit: paste(grid(blank()), 1, [['morphine', '0', '10']]),",
     # Enter pressed twice on a Drug cell re-commits the drug it holds
     "  enterTwice: (function() { const hot = grid([['morphine', '30', '10', 'mg PO tablet'], ['', '', '', '']]);",
-    "    hookDoseTableUpdate.call(hot, [[0, 0, 'morphine', 'morphine']], 'edit'); return hot.data; })()",
+    "    hookDoseTableUpdate.call(hot, [[0, 0, 'morphine', 'morphine']], 'edit'); return hot.data; })(),",
+    # a paste over a filled row that changes the drug and repeats its time and
+    # dose (CodeRabbit on #676: the repeated cells dropped out as no-ops, and
+    # the drug change alone reset them to 0)
+    "  drugOverRow: paste(grid([['propofol', '0', '2', 'mg/kg'], ['', '', '', '']]), 0, [['fentanyl', '0', '2', 'mcg/kg']]),",
+    # a refused unit on a row that held another unit gets the default the
+    # warning names
+    "  refusedOverUnit: paste(grid([['fentanyl', '5', '50', 'mcg/kg'], ['', '', '', '']]), 0, [['fentanyl', '10', '50', 'furlongs']]),",
+    # a paste of a Units cell alone: Handsontable drops a unit the drug does
+    # not offer before any afterChange, so the warning is given at the paste
+    "  unitsOnly: (function() { const hot = grid([['fentanyl', '5', '50', 'mcg'], ['', '', '', '']]); notes.length = 0;",
+    "    hookRememberPastedUnits.call(hot, [['furlongs']], [{ startRow: 0, startCol: 3 }]);",
+    "    return { data: hot.data, notes: notes.slice() }; })()",
     "}));"
   ), script)
   out <- jsonlite::fromJSON(paste(system2(Sys.which("node"), shQuote(script), stdout = TRUE), collapse = ""),
@@ -279,4 +292,10 @@ test_that("a paste keeps every row's time, dose and unit", {
   expect_equal(row(out$noUnit[[2]]), c("morphine", "0", "10", morphineDefault))
   # was morphine 0 0 with its default unit
   expect_equal(row(out$enterTwice[[1]]), c("morphine", "30", "10", "mg PO tablet"))
+  expect_equal(row(out$drugOverRow[[1]]), c("fentanyl", "0", "2", "mcg/kg"))
+  expect_equal(row(out$refusedOverUnit[[1]]),
+               c("fentanyl", "10", "50", dd$Default.Units[dd$Drug == "fentanyl"]))
+  expect_equal(row(out$unitsOnly$data[[1]]), c("fentanyl", "5", "50", "mcg"))
+  expect_length(out$unitsOnly$notes, 1)
+  expect_match(out$unitsOnly$notes[[1]], "furlongs.*fentanyl.*keeps its unit")
 })

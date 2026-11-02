@@ -335,9 +335,11 @@ function hookDoseTableUpdate(changes, source) {
   // So is a cell re-entered as it was: pressing Enter twice on a Drug cell
   // re-commits the same drug, which was read as choosing it and reset the
   // row's time and dose to 0 (found with #675, fixed here).
-  changes = !Array.isArray(changes) ? [] : changes.filter(function(change) {
-    return change && !(isNullish(change[2]) && isNullish(change[3])) &&
-      trimEntry(change[2]) !== trimEntry(change[3]);
+  let nonNullChanges = !Array.isArray(changes) ? [] : changes.filter(function(change) {
+    return change && !(isNullish(change[2]) && isNullish(change[3]));
+  });
+  changes = nonNullChanges.filter(function(change) {
+    return trimEntry(change[2]) !== trimEntry(change[3]);
   });
   if (changes.length === 0) {
     // hot.pastedUnits is kept: a paste that creates rows reports these no-op
@@ -351,8 +353,11 @@ function hookDoseTableUpdate(changes, source) {
 
   // check to see if only change is drug
   // If yes, then mark so we know to reset time, dose, and unit
+  // Decided before the equality filter: a paste that changes the drug and
+  // repeats the row's time and dose is not a drug chosen alone, and must keep
+  // them (CodeRabbit on #676).
   let drugchange = false;
-  if (changes.length === 1 && changes[0][1] === drugCol) {
+  if (nonNullChanges.length === 1 && changes.length === 1 && changes[0][1] === drugCol) {
     drugchange = true;
   }
 
@@ -414,6 +419,8 @@ function hookDoseTableUpdate(changes, source) {
       if (Array.isArray(units) && units.indexOf(pastedUnit) !== -1) {
         unit = pastedUnit;
       } else {
+        // the default the warning names, whatever unit the row held
+        unit = validateUnit('', drug);
         refusedUnits.push({ drug: drug, unit: pastedUnit });
       }
     }
@@ -428,15 +435,7 @@ function hookDoseTableUpdate(changes, source) {
   hot.rejectedCells = {};
   hot.pastedUnits = {};
 
-  if (refusedUnits.length > 0 && typeof window !== 'undefined' && window.Shiny &&
-      Shiny.notifications && typeof Shiny.notifications.show === 'function') {
-    let lines = refusedUnits.slice(0, 3).map(function(r) {
-      return '"' + r.unit + '" is not a unit offered for ' + r.drug + '; the row has its default unit.';
-    });
-    if (refusedUnits.length > 3) lines.push('(and ' + (refusedUnits.length - 3) + ' more)');
-    Shiny.notifications.show({ html: lines.map(escapeHtml).join('<br>'), type: 'warning',
-                               duration: 8000, id: 'unitEntryRefused' });
-  }
+  notifyRefusedUnits(refusedUnits, 'the row has its default unit.');
 
   if (allChanges.length > 0) {
     hot.setDataAtCell(allChanges, 'calculate');
@@ -476,6 +475,34 @@ function hookRememberPastedUnits(data, coords) {
       if (unit !== '') hot.pastedUnits[startRow + i] = unit;
     }
   });
+  // A paste that leaves the Drug column out brings no drug change, and
+  // Handsontable drops a unit the row's drug does not offer before any
+  // afterChange: the row keeps its unit, and is told why (CodeRabbit on #676)
+  let drugCol = findColByHeader(hot, "Drug");
+  if (drugCol === null || startCol <= drugCol) return;
+  let refused = [];
+  Object.keys(hot.pastedUnits).forEach(function(key) {
+    let row = Number(key);
+    let drug = trimEntry(hot.getDataAtCell(row, drugCol));
+    if (drug === '') return;
+    let units = getDrugUnits(drug);
+    if (!Array.isArray(units) || units.indexOf(hot.pastedUnits[key]) === -1) {
+      refused.push({ drug: drug, unit: hot.pastedUnits[key] });
+    }
+  });
+  notifyRefusedUnits(refused, 'the row keeps its unit.');
+}
+
+// Say which pasted units were not taken, and what the rows hold instead
+function notifyRefusedUnits(refused, outcome) {
+  if (refused.length === 0 || typeof window === 'undefined' || !window.Shiny ||
+      !Shiny.notifications || typeof Shiny.notifications.show !== 'function') return;
+  let lines = refused.slice(0, 3).map(function(r) {
+    return '"' + r.unit + '" is not a unit offered for ' + r.drug + '; ' + outcome;
+  });
+  if (refused.length > 3) lines.push('(and ' + (refused.length - 3) + ' more)');
+  Shiny.notifications.show({ html: lines.map(escapeHtml).join('<br>'), type: 'warning',
+                             duration: 8000, id: 'unitEntryRefused' });
 }
 
 function setUnitDropdown(hot, row, column, source) {
