@@ -62,11 +62,14 @@ API_MAX_ROWS <- 500000L
 API_REQUEST_FIELDS <- c("patient", "doses", "events", "duration", "timeUnit", "options", "output")
 API_PATIENT_FIELDS <- c("weight", "height", "age", "sex", "weightUnit", "heightUnit", "ageUnit",
                         "creatinine", "gestationalAge", "pregnant", "adjustToFFM", "osmolality",
-                        "cyp2d6", "cyp2c19", "cyp2c9", "cyp2b6", "vkorc1", "cyp4f2")
+                        "cyp2d6", "cyp2c19", "cyp2c9", "cyp2b6", "vkorc1", "cyp4f2",
+                        "opioidTolerance")
 API_OUTPUT_FIELDS  <- c("times", "interval", "recovery", "format", "layout")
-API_OPTIONS_FIELDS <- c("allowIllicitDrugs")
+API_OPTIONS_FIELDS <- c("allowIllicitDrugs", "antiseizureInteractions")
+API_DOSE_FIELDS    <- c("Drug", "Time", "Dose", "Units")
+API_EVENT_FIELDS   <- c("Time", "Event")
 # Default grid steps (minutes): the smallest that keeps a series to
-# API_DEFAULT_POINTS rows or fewer: 0.1 minute up to 100 minutes, 1 minute up
+# API_DEFAULT_POINTS steps (so API_DEFAULT_POINTS + 1 rows) or fewer: 0.1 minute up to 100 minutes, 1 minute up
 # to 1000 minutes, an hour for 6 weeks.
 API_DEFAULT_POINTS <- 1000L
 API_GRID_STEPS <- c(0.1, 0.25, 0.5, 1, 2, 5, 10, 15, 30, 60, 120, 240, 360,
@@ -116,6 +119,9 @@ apiUnknownFields <- function(x, known, where) {
 }
 
 apiScalar <- function(x, what) {
+  # A JSON object where a value belongs ({"value": 70}) is refused rather than
+  # unwrapped, so a misshapen client payload is not read as something else.
+  if (is.list(x) && !is.null(names(x))) apiError(what, " must be a single value, not an object.")
   if (is.list(x)) x <- unlist(x)
   if (length(x) != 1 || is.na(x)) apiError(what, " must be a single value.")
   x
@@ -146,6 +152,25 @@ apiFlag <- function(x, what) {
   if (x %in% c("true", "yes", "1")) return(TRUE)
   if (x %in% c("false", "no", "0")) return(FALSE)
   apiError(what, " must be true or false.")
+}
+
+# Is `x` a JSON object (a named list, or the empty list `{}` or `[]` parses
+# to)?  An array of objects parses to a data frame, which is not one.
+apiObject <- function(x, what) {
+  if (is.null(x)) return(list())
+  if (!is.list(x) || is.data.frame(x) || (length(x) > 0 && is.null(names(x)))) {
+    apiError("`", what, "` must be a JSON object.")
+  }
+  x
+}
+
+# The column names a table was sent with (the union over its rows, for an
+# array of objects whose rows differ), as a named list apiUnknownFields() reads
+apiTableFields <- function(x) {
+  nm <- if (is.data.frame(x) || (is.list(x) && !is.null(names(x)))) names(x)
+        else if (is.list(x)) unique(unlist(lapply(x, names)))
+  if (length(nm) == 0) return(NULL)
+  stats::setNames(vector("list", length(nm)), nm)
 }
 
 #' Parse a simulation request from JSON
@@ -197,6 +222,19 @@ apiTable <- function(x, what, columns, required = columns) {
     apiError(what, " is missing the column(s) ", paste0("'", missing, "'", collapse = ", "), ".")
   }
   out[vapply(out, is.null, logical(1))] <- list(rep(NA, nrow(x)))
+  # Every cell one value: an empty array ("Dose": []) or an object
+  # ("Dose": {"value": 100}) is refused here, row by row, rather than failing
+  # later as a server error or being read as a scalar.
+  for (col in columns) {
+    v <- out[[col]]
+    bad <- if (is.data.frame(v)) 1L
+           else if (is.list(v)) which(!vapply(v, function(cell) is.atomic(cell) && length(cell) == 1,
+                                               logical(1)))
+           else integer(0)
+    if (length(bad) > 0) {
+      apiError(what, " row ", bad[1], ": `", col, "` must be a single value.")
+    }
+  }
   as.data.frame(lapply(out, unlist), stringsAsFactors = FALSE)
 }
 
@@ -281,7 +319,12 @@ apiPatient <- function(patient) {
     # sensitive genotype rather than the commonest, so a client that knows the
     # genotype must be able to say so: see VKORC1_DEFAULT in R/constants.R.
     vkorc1      = apiChoice(get("vkorc1", VKORC1_DEFAULT), "patient.vkorc1", VKORC1_VALUES),
-    cyp4f2      = apiChoice(get("cyp4f2", CYP4F2_DEFAULT), "patient.cyp4f2", CYP4F2_VALUES)
+    cyp4f2      = apiChoice(get("cyp4f2", CYP4F2_DEFAULT), "patient.cyp4f2", CYP4F2_VALUES),
+    # The Patient Profile's Opioid tolerance: it raises each opioid's MEAC,
+    # band and recovery threshold (opioidToleranceDefaults()), not its
+    # concentrations.
+    opioidTolerance = apiChoice(get("opioidTolerance", OPIOID_TOLERANCE_DEFAULT),
+                                "patient.opioidTolerance", OPIOID_TOLERANCE_VALUES)
   )
 }
 
@@ -290,7 +333,7 @@ apiPatient <- function(patient) {
 # makes through its units dropdowns: each drug only takes its own units.
 apiDoses <- function(doses, unit, maximum, allowIllicit,
                      drugDefaults = getDrugDefaultsGlobal()) {
-  DT <- apiTable(doses, "`doses`", c("Drug", "Time", "Dose", "Units"))
+  DT <- apiTable(doses, "`doses`", API_DOSE_FIELDS)
   if (nrow(DT) == 0) apiError("`doses` is empty: give at least one dose.")
   if (nrow(DT) > MAX_DOSE_ROWS) apiError("`doses` has more than ", MAX_DOSE_ROWS, " rows.")
 
@@ -332,7 +375,7 @@ apiDoses <- function(doses, unit, maximum, allowIllicit,
 }
 
 apiEvents <- function(events, unit, eventDefaults = getEventDefaults()) {
-  ET <- apiTable(events, "`events`", c("Time", "Event"))
+  ET <- apiTable(events, "`events`", API_EVENT_FIELDS)
   if (nrow(ET) > MAX_EVENT_ROWS) apiError("`events` has more than ", MAX_EVENT_ROWS, " rows.")
   ET$Event <- as.character(ET$Event)
   unknown <- which(!ET$Event %in% eventDefaults$Event)
@@ -349,6 +392,9 @@ apiEvents <- function(events, unit, eventDefaults = getEventDefaults()) {
 apiOutputTimes <- function(output, unit, maximum) {
   times <- apiField(output, "times")
   if (!is.null(times)) {
+    if (length(unlist(times)) == 0) {
+      apiError("`output.times` is empty: give at least one time, or leave it out for the default grid.")
+    }
     times <- sort(unique(apiTimes(unlist(times), unit, "`output.times`")))
     if (any(times > maximum)) apiError("`output.times` must not be later than `duration`.")
     if (length(times) > API_MAX_POINTS) {
@@ -434,8 +480,8 @@ apiConcentrationUnits <- function(units) {
 #' @export
 apiSimulate <- function(request) {
   if (!is.list(request)) apiError("The request must be a list (a JSON object).")
-  opts    <- apiField(request, "options", list())
-  output  <- apiField(request, "output", list())
+  opts    <- apiObject(apiField(request, "options"), "options")
+  output  <- apiObject(apiField(request, "output"), "output")
   unit <- apiChoice(apiField(request, "timeUnit", TIME_UNIT_DEFAULT), "timeUnit", names(TIME_UNITS))
 
   duration <- apiField(request, "duration")
@@ -452,6 +498,11 @@ apiSimulate <- function(request) {
                  allowIllicit = apiFlag(apiField(opts, "allowIllicitDrugs", FALSE),
                                         "options.allowIllicitDrugs"))
   ET <- apiEvents(apiField(request, "events"), unit)
+  # On by default, as the app's Graph Options box is (Steven L. Shafer,
+  # 2026-10-28), so the API returns what the app plots; it changes only a
+  # dose table with an interacting pair of antiseizure drugs, or carbamazepine.
+  asmInteractions <- apiFlag(apiField(opts, "antiseizureInteractions", TRUE),
+                             "options.antiseizureInteractions")
   recovery <- apiFlag(apiField(output, "recovery", FALSE), "output.recovery")
   times <- apiOutputTimes(output, unit, maximum)
 
@@ -478,7 +529,11 @@ apiSimulate <- function(request) {
     apiUnknownFields(request, API_REQUEST_FIELDS, "the request"),
     apiUnknownFields(apiField(request, "patient"), API_PATIENT_FIELDS, "`patient`"),
     apiUnknownFields(output, API_OUTPUT_FIELDS, "`output`"),
-    apiUnknownFields(opts, API_OPTIONS_FIELDS, "`options`")
+    apiUnknownFields(opts, API_OPTIONS_FIELDS, "`options`"),
+    # A dose-row field the service does not read (a "stopTime", say) would
+    # otherwise vanish while the client believes it took effect.
+    apiUnknownFields(apiTableFields(apiField(request, "doses")), API_DOSE_FIELDS, "`doses`"),
+    apiUnknownFields(apiTableFields(apiField(request, "events")), API_EVENT_FIELDS, "`events`")
   ))
   late <- unique(DT$Drug[DT$Time >= maximum])
   if (length(late) > 0) {
@@ -496,7 +551,12 @@ apiSimulate <- function(request) {
         cyp2b6 = patient$cyp2b6, vkorc1 = patient$vkorc1, cyp4f2 = patient$cyp4f2,
         adjustToFFM = patient$adjustToFFM, osmolality = patient$osmolality,
         creatinine = patient$creatinine, pregnant = patient$pregnant,
-        gestationalAge = patient$gestationalAge)),
+        gestationalAge = patient$gestationalAge,
+        antiseizureInteractions = asmInteractions,
+        opioidTolerance = patient$opioidTolerance),
+        # The peaks below are read off each drug's time line, so it must
+        # sample the peak after a dose however long the simulation is.
+        resolvePeaks = TRUE),
       error = function(e) {
         if (inherits(e, "stanpumpr_api_error")) stop(e)
         apiError("The simulation failed: ", conditionMessage(e), status = 422L)
@@ -548,6 +608,9 @@ apiSimulate <- function(request) {
       TimePeakPlasma     = cp[2],
       PeakEffectSite     = ce[1],
       TimePeakEffectSite = ce[2],
+      # The concentration `Recovery` counts down to (endCe, after any opioid
+      # tolerance), in ConcentrationUnits; null for a drug with none.
+      RecoveryThreshold  = if (isTRUE(d$endCe > 0)) d$endCe else NA_real_,
       stringsAsFactors   = FALSE
     )
   }))
@@ -556,6 +619,9 @@ apiSimulate <- function(request) {
   doses <- exportDoseTable(DT, sim)
   doses <- doses[, c("Drug", "Time", "Dose", "Units")]
   doses$Time <- as.numeric(doses$Time)
+  # A row at or after the end of the simulation is listed (it was sent) but
+  # did not enter it.
+  doses$Simulated <- doses$Time < maximum
 
   list(
     meta = list(
@@ -569,6 +635,7 @@ apiSimulate <- function(request) {
       timeUnit         = "minutes",
       duration         = maximum,
       grid             = if (is.null(times)) "native" else "requested",
+      antiseizureInteractions = asmInteractions,
       reference        = "https://stanpumpr.io"
     ),
     patient    = list(
@@ -582,7 +649,8 @@ apiSimulate <- function(request) {
       creatinine  = if (is.null(patient$creatinine)) NA_real_ else patient$creatinine,
       gestationalAge = if (is.null(patient$gestationalAge)) NA_real_ else patient$gestationalAge,
       cyp2d6 = patient$cyp2d6, cyp2c19 = patient$cyp2c19, cyp2c9 = patient$cyp2c9,
-      cyp2b6 = patient$cyp2b6, vkorc1 = patient$vkorc1, cyp4f2 = patient$cyp4f2
+      cyp2b6 = patient$cyp2b6, vkorc1 = patient$vkorc1, cyp4f2 = patient$cyp4f2,
+      opioidTolerance = patient$opioidTolerance
     ),
     drugs      = drugs,
     doses      = doses,
@@ -618,6 +686,10 @@ apiKeyValue <- function(x) {
 }
 
 apiXmlEscape <- function(x) {
+  # The characters XML 1.0 does not allow at all (C0 controls other than tab,
+  # line feed and carriage return; U+FFFE, U+FFFF), which a request can put
+  # into a warning through a field name, are dropped so the document parses.
+  x <- gsub("(*UTF)[\\x{0}-\\x{8}\\x{B}\\x{C}\\x{E}-\\x{1F}\\x{FFFE}\\x{FFFF}]", "", enc2utf8(x), perl = TRUE)
   x <- gsub("&", "&amp;", x, fixed = TRUE)
   x <- gsub("<", "&lt;", x, fixed = TRUE)
   x <- gsub(">", "&gt;", x, fixed = TRUE)
@@ -705,7 +777,8 @@ apiXlsx <- function(result, series) {
 apiFormatResult <- function(result, format = "json", layout = "long") {
   format <- apiChoice(tolower(format), "format", API_FORMATS)
   layout <- apiChoice(tolower(layout), "layout", API_LAYOUTS)
-  series <- if (layout == "wide") apiWideSeries(result) else result$timeseries
+  # JSON and XML carry the long time series whatever the layout says.
+  series <- if (layout == "wide" && format %in% c("csv", "xlsx")) apiWideSeries(result) else result$timeseries
   # auto_unbox would write a single warning as a string; the spec promises an
   # array, which I() keeps for one warning as for none
   json <- result
@@ -738,13 +811,20 @@ apiWriteResult <- function(result, path, layout = "long") {
 
 #' The drugs the API can simulate
 #'
+#' The drugs a request may dose.  An active metabolite that cannot be dosed
+#' itself (desmetramadol, salicylate) is not listed; it appears in a result
+#' as a row of `drugs` with `Dosed` false.
+#'
 #' @param allowIllicit include the opt-in `Illicit drugs` category
 #' @returns a data frame: Drug, Category, ConcentrationUnits and Units (the
 #'   dose units the drug takes, comma separated)
 #' @export
 apiDrugCatalog <- function(allowIllicit = FALSE) {
   dd <- getDrugDefaultsGlobal()
-  keep <- !isGasDrug(dd$Drug) & (allowIllicit | !isIllicitDrug(dd$Drug, dd))
+  # A metabolite-only entry (desmetramadol, salicylate) has no dose units:
+  # it cannot be dosed and appears in a result only as its parent's metabolite.
+  doseable <- vapply(dd$Units, function(u) any(!is.na(u) & nzchar(u)), logical(1))
+  keep <- doseable & !isGasDrug(dd$Drug) & (allowIllicit | !isIllicitDrug(dd$Drug, dd))
   dd <- dd[keep, ]
   out <- data.frame(
     Drug               = dd$Drug,

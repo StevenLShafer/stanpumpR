@@ -14,5 +14,7 @@ a data frame: Drug, Category, ConcentrationUnits and Units (the
 dose units the drug takes, comma separated)
 }
 \description{
-The drugs the API can simulate
+The drugs a request may dose.  An active metabolite that cannot be dosed
+itself (desmetramadol, salicylate) is not listed; it appears in a result
+as a row of \code{drugs} with \code{Dosed} false.
 }

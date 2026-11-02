@@ -87,6 +87,19 @@ simulationKey <- function(PK, DT, ET, plotMaximum, plotRecovery, plotMinimum = 0
   )
 }
 
+# A drug's defaults row with the Opioid tolerance factor applied
+# (OPIOID_TOLERANCE_FACTORS): for an opioid with a MEAC, the MEAC, the band
+# (multiples of it) and endCe, the time-until-threshold value, rise by the
+# factor; any other row is returned as it is.  Shared by recalculatePK() and
+# simulateDrugsWithCovariates() (and so the Simulation API).
+opioidToleranceDefaults <- function(row, opioidTolerance = OPIOID_TOLERANCE_DEFAULT) {
+  factor <- OPIOID_TOLERANCE_FACTORS[[match.arg(opioidTolerance, OPIOID_TOLERANCE_VALUES)]]
+  if (isTRUE(row$MEAC > 0))
+    for (column in c("MEAC", "Lower", "Typical", "Upper", "endCe"))
+      row[[column]] <- row[[column]] * factor
+  row
+}
+
 recalculatePK <- function(drugs, drugDefaults, doseTable,
                           age, weight, height, sex,
                           cyp2d6 = CYP2D6_DEFAULT,
@@ -113,15 +126,11 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
   # drugDefaults keeps the naive values, which the propofol-opioid
   # interaction uses to convert a % MEAC to remifentanil-equivalents, so
   # tolerance lowers that interaction too.
-  toleranceFactor <- OPIOID_TOLERANCE_FACTORS[[match.arg(opioidTolerance, OPIOID_TOLERANCE_VALUES)]]
   #  for (idx in seq(nrow(drugDefaults))) {
   #    drug <- drugDefaults$Drug[idx]
   resolve <- function(drugs, drug) {
     idx <- which(drugDefaults$Drug==drug)
-    row <- drugDefaults[idx, ]
-    if (isTRUE(row$MEAC > 0))
-      for (column in c("MEAC", "Lower", "Typical", "Upper", "endCe"))
-        row[[column]] <- row[[column]] * toleranceFactor
+    row <- opioidToleranceDefaults(drugDefaults[idx, ], opioidTolerance)
     drugs[[drug]]$Color <- drugDefaults$Color[idx]
     # endCe, the time-until-threshold concentration, comes with the PK:
     # getDrugPK() reads it from this session's drugDefaults row, with any

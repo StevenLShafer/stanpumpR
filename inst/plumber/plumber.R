@@ -85,7 +85,9 @@ function(res, format = "json", allowIllicitDrugs = "false") {
     out <- if (format == "csv") {
       list(body = stanpumpR:::apiCsv(catalog), contentType = "text/csv")
     } else {
-      catalog$Units <- strsplit(catalog$Units, ",", fixed = TRUE)
+      # I(): an array for every drug, a one-unit drug's too, which
+      # auto_unbox would otherwise write as a bare string.
+      catalog$Units <- lapply(strsplit(catalog$Units, ",", fixed = TRUE), I)
       list(body = as.character(jsonlite::toJSON(catalog, dataframe = "rows", auto_unbox = TRUE)),
            contentType = "application/json")
     }
@@ -98,6 +100,14 @@ function(res, format = "json", allowIllicitDrugs = "false") {
 #* @param layout long (default: one row per drug and time) or wide (one row per time); CSV and Excel only; overrides output.layout
 #* @post /simulate
 function(req, res, format = "", layout = "") {
+  # The query string is read from req$argsQuery, not from these arguments:
+  # plumber also binds a body field to an argument of the same name, so a
+  # `format` at the root of the JSON body would otherwise set the format
+  # while the response warned that it had been ignored.  The arguments stay
+  # for the generated (Swagger) documentation.
+  query <- req$argsQuery
+  format <- if (is.null(query$format)) "" else as.character(query$format)[1]
+  layout <- if (is.null(query$layout)) "" else as.character(query$layout)[1]
   tryCatch({
     # The body is JSON (the documentation's requests say so); a body declared
     # as anything else -- a browser form's, say -- is refused before it is

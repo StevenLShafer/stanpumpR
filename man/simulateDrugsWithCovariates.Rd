@@ -24,7 +24,8 @@ simulateDrugsWithCovariates(
   vkorc1 = VKORC1_DEFAULT,
   antiseizureInteractions = FALSE,
   cyp4f2 = CYP4F2_DEFAULT,
-  gestationalAge = NULL
+  gestationalAge = NULL,
+  opioidTolerance = OPIOID_TOLERANCE_DEFAULT
 )
 }
 \arguments{
@@ -90,6 +91,12 @@ Only drugs whose model declares it (warfarin) are affected.}
 \item{gestationalAge}{gestational age at birth in weeks, or NULL for a term
 birth.  Only the neonatal models that declare it (dobutamineNeonatal)
 are affected.}
+
+\item{opioidTolerance}{the Patient Profile's Opioid tolerance, one of
+\code{OPIOID_TOLERANCE_VALUES} ("none", the default).  It multiplies
+each opioid's MEAC, band and time-until-threshold value
+(\code{endCe}) by its factor (\code{OPIOID_TOLERANCE_FACTORS}), as the
+app does; the concentrations are unchanged.}
 }
 \value{
 a list of data frames with the output of the a single drug
