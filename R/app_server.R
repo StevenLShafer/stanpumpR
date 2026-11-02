@@ -632,8 +632,16 @@ app_server <- function(input, output, session) {
         saved <- timeFormat(TIME_UNIT_DEFAULT,
                             if (is.null(state$input$timeMode)) "clock" else state$input$timeMode)
       }
-      # Always there: a link without a dose table returned above
-      DT <- as.data.frame(state$values$DT)
+      # Always there: a link without a dose table returned above.  Read as
+      # untrusted input: a link is text anyone can write (R/bookmark-restore.R).
+      restoredDT <- restoredDoseTable(state$values$DT, drugDefaults())
+      DT <- restoredDT$table
+      restoredET <- restoredEventTable(state$values$ET, getEventDefaults(), eventTableInit)
+      if (restoredDT$changed || restoredET$changed) {
+        showNotification(paste("The link's dose or event table had entries that could not be read.",
+                               "They were left out; check the tables."),
+                         id = "bookmarkUnreadable", type = "warning", duration = 10)
+      }
       target <- selectorFormat()
       restoredMaximum <- suppressWarnings(as.numeric(state$input$maximum))
       restoredMinimum <- suppressWarnings(as.numeric(state$input$minimum))
@@ -657,12 +665,7 @@ app_server <- function(input, output, session) {
       }
       outputComments("doseTable:")
       outputComments(DT)
-      ET <- as.data.frame(state$values$ET)
-      if (ncol(ET) == 0) {
-        ET <- eventTableInit
-      } else {
-        ET <- ET[, c("Time", "Event")]
-      }
+      ET <- restoredET$table
       eventTable(ET)
       outputComments("eventTable:")
       outputComments(ET)
@@ -1595,7 +1598,10 @@ app_server <- function(input, output, session) {
       } else if (nchar(input$emailComments) > MAX_INPUT_TEXT) {
         error <- glue::glue("Comment is too long, please limit to {MAX_INPUT_TEXT} characters.")
       } else if (emailSendCount() >= EMAIL_SESSION_LIMIT) {
-        error <- "This session has reached its email limit. Please reload the page to send more."
+        error <- "This session has reached its email limit."
+      } else if (!is.null(emailRateProblem(input$recipient))) {
+        # Shared by every session of this worker (R/email-limits.R)
+        error <- emailRateProblem(input$recipient)
       } else {
         # There is no plot to send while the simulation cannot run, or with
         # no dose: said, where before the observer stopped in silence (a
@@ -1652,6 +1658,7 @@ app_server <- function(input, output, session) {
         maximum = plotMaximum()
       )
 
+      recordEmailSend(input$recipient)
       shinycssloaders::showPageSpinner(background = "#FFFFFFEE", caption = "Sending email...")
       # The spinner always comes down, and a failure is said, not a
       # disconnection.  sendSlide() catches its own errors; the reactives

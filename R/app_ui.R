@@ -1,5 +1,9 @@
 app_ui <- function() {
-  js_drug_defaults <- paste0("var drug_defaults=", jsonlite::toJSON(getDrugDefaultsGlobal()))
+  # Inline script: every "<" is written as \u003c, the same string to
+  # JavaScript, so no value in the drug table can close the script element
+  # (the external security audit of 2026-11-02).
+  js_drug_defaults <- paste0("var drug_defaults=",
+                             gsub("<", "\\u003c", jsonlite::toJSON(getDrugDefaultsGlobal()), fixed = TRUE))
   config <- .sprglobals$config
 
   stanpumpr_theme <- bslib::bs_theme(
@@ -41,9 +45,16 @@ app_ui <- function() {
             "font-src 'self' data:;",
             "connect-src 'self';",
             "object-src 'none';",
-            "base-uri 'self';"
+            "base-uri 'self';",
+            # No form posts anywhere else (2026-11-02).  frame-ancestors, the
+            # one that would govern framing, is ignored in a meta tag; it needs
+            # an HTTP header, which shinyapps.io does not let an app set.
+            "form-action 'self';"
           )
         ),
+        # A bookmark's address carries the regimen and the patient's
+        # covariates: send it to no other site as the Referer (2026-11-02).
+        tags$meta(name = "referrer", content = "same-origin"),
         shinyjs::useShinyjs(),
         tags$script(src = "stanpumpr-assets/app.js"),
         # The parameter converter on the help page models/pk-converter

@@ -28,7 +28,10 @@
 #'   (an environment) or the `state$values` list passed to `onRestored()`
 #' @noRd
 isBookmarkRestore <- function(values) {
-  !is.null(values) && !is.null(values$DT)
+  # A dose table is a list of columns: a link whose DT is a string or a
+  # number is not a bookmark (it ended the session at startup until
+  # 2026-11-02, R/bookmark-restore.R)
+  !is.null(values) && is.list(values$DT)
 }
 
 #' Does the session open on the startup menu?

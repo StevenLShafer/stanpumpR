@@ -172,9 +172,13 @@ outputComments <- function(
       con <- textConnection("outputString","w",local=TRUE)
       utils::capture.output(print(text, digits = 3), file = con, type="output", split = FALSE)
       close(con)
+      # The table itself goes only to the session's own debug panel, which its
+      # user sees; the server's log, kept by the host, gets its size.  A dose
+      # or event table is a patient's regimen, and ?debug=1 is open to anyone
+      # (the external security audit of 2026-11-02).
       if (echo)
       {
-        for (line in outputString) cat(line, "\n")
+        cat(sprintf("<table: %d rows x %d columns>", nrow(text), ncol(text)), "\n")
       }
       for (line in outputString) commentsLog(paste0(commentsLog(), "\n", line))
     } else {
