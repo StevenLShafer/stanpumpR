@@ -19,7 +19,7 @@
 # =====================================
 # The 70 kg normalisation is a convention of the fit, not evidence that the
 # model describes adults.  Ryder et al. (2026) used this vector to simulate
-# adults, scaling both CL/F and V/F linearly with weight/70, supplemented it
+# adults, scaling CL/F allometrically ((weight/70)^0.75) and V/F linearly with weight/70, supplemented it
 # with oral pharmacokinetic anchors from published adult summary data, and
 # judged it fit for that purpose: precedent for the extrapolation, and a
 # check against adult means, but not a validation in adults.  The children had normal renal function and no renal covariate was

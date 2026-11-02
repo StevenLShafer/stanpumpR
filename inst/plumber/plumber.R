@@ -8,6 +8,11 @@
 #* @apiDescription Pharmacokinetic simulation: POST a dose table, the patient's covariates and the length of the simulation to /simulate, and get back the predicted plasma and effect-site concentrations as JSON, CSV, Excel or XML. The full documentation is at https://stanpumpr.io/api and at / on this server.
 #* @apiVersion 1
 
+# The body limit is set here, where plumber::pr() reads this file, so that a
+# service hosted directly (Posit Connect, Docker) has it as run_api() does.
+# A request is a dose table of at most MAX_DOSE_ROWS rows: 1 MB is ample.
+plumber::options_plumber(maxRequestSize = 1e6)
+
 # Errors in the request are 400 (or the status apiError() gave), with the
 # message as JSON; anything else is a 500 that does not leak internals.
 apiFail <- function(res, e) {
@@ -64,7 +69,8 @@ function() {
 function() {
   list(status = "ok",
        apiVersion = stanpumpR:::API_VERSION,
-       stanpumpRVersion = as.character(utils::packageVersion("stanpumpR")))
+       stanpumpRVersion = as.character(utils::packageVersion("stanpumpR")),
+       build = stanpumpR:::stanpumpRBuild()$commit)
 }
 
 #* The drugs the API can simulate and the dose units each takes
@@ -93,6 +99,15 @@ function(res, format = "json", allowIllicitDrugs = "false") {
 #* @post /simulate
 function(req, res, format = "", layout = "") {
   tryCatch({
+    # The body is JSON (the documentation's requests say so); a body declared
+    # as anything else -- a browser form's, say -- is refused before it is
+    # read.  No declaration at all is still read as JSON.
+    type <- req$HTTP_CONTENT_TYPE
+    if (is.null(type) || !nzchar(type)) type <- req$CONTENT_TYPE
+    if (!is.null(type) && nzchar(type) && !grepl("^\\s*application/json\\s*(;|$)", tolower(type))) {
+      stanpumpR:::apiError("Send the request body as application/json (its Content-Type was '",
+                           type, "').", status = 415L)
+    }
     request <- stanpumpR::apiParseRequest(req$postBody)
     format <- stanpumpR:::apiNegotiateFormat(format, request, req$HTTP_ACCEPT)
     # As for the format, the query parameter wins over the body.

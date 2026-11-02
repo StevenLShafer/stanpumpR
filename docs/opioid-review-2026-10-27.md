@@ -59,4 +59,4 @@ Intravenous concentrations rise about 12% (AUC +12.1%, the effect-site peak afte
 
 ## Tests
 
-`test-drugs-pethidine.R` pins the new MEAC and band against the CSV. `test-drugs-buprenorphine.R` checks that the intranasal route is gone and pins the 1.91 arithmetic. `test-drugs-tramadol.R` pins the hydrochloride basis: 976 ng/mL after 100 mg IV, and 8.3171 mg of M1 from a 10% conversion of 100 mg. `test-advance-metabolite.R` checks that a link without `mwRatio` is refused.
+`test-drugs-pethidine.R` pins the new MEAC and band against the CSV. `test-drugs-buprenorphine.R` checks that the intranasal route is gone and pins the 1.91 arithmetic. `test-drugs-tramadol.R` pins the hydrochloride basis: 976 ng/mL after 100 mg IV (1722 ng/mL since the Allegaert follow-up above), and 8.3171 mg of M1 from a 10% conversion of 100 mg. `test-advance-metabolite.R` checks that a link without `mwRatio` is refused.

@@ -27,4 +27,10 @@ fill starts at \code{max(start, maximum / GRID_FINE_POINTS)} and no step is
 longer than \code{maximum / GRID_UNIFORM_POINTS}.  See the header of
 \code{R/simulationTimeGrid.R}.
 }
+\details{
+Inside \code{withGridWindow()}, with a window starting after 0, the line is
+that one up to the window and, from the window's start to \code{maximum},
+the line a plot as long as the window would have: a window from 15 to 16
+weeks is drawn as finely as a one-week plot.
+}
 \keyword{internal}

@@ -4,11 +4,11 @@ From Diezi and colleagues (*Pharmacol Res Perspect* 2023;11:e01032), a crossover
 
 ### Size and formulation
 
-The source's linear weight term turns a volume negative below about 28 kg, so it cannot be extrapolated; it is replaced by the library's [fat-free-mass scaling](help:models/fat-free-mass), and with the switch off the 67 kg values are used for everyone. The US capsule has no published absorption rate and is given the syrup's, so its peak may be later than plotted. The paediatric absence-epilepsy model (Mizuno 2023) was not retrievable; children are extrapolated.
+The source's linear weight term turns a volume negative below about 28 kg, so it cannot be extrapolated; it is replaced by the library's [fat-free-mass scaling](help:models/fat-free-mass), and with the switch off the 67 kg values are used for everyone. The US capsule is given the syrup's absorption rate, so its peak may be later than plotted; Mizuno 2023 (below) fixes a separate, roughly half-rate capsule value in its own one-compartment paediatric model, not carried into this adult model. A published paediatric absence-epilepsy model exists (Mizuno 2023, 211 children) but is not used here; children are extrapolated from the adult model.
 
 ### What is not plotted
 
-Mizuno and colleagues (*Clin Pharmacol Ther* 2023) related the 24-hour exposure to absence-seizure freedom (half the children free at about 1,027 mcg·h/mL), but the full equation is not available, so no seizure probability is drawn. There is no effect site.
+Mizuno and colleagues (*Clin Pharmacol Ther* 2023) related the AUC over the 12-hour dosing interval to absence-seizure freedom (half the children free at about 1,027 mcg·h/mL), but the full equation is not implemented here, so no seizure probability is drawn. There is no effect site.
 
 ### Band
 

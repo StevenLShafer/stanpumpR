@@ -1,6 +1,6 @@
 ## Warfarin: the Hamberg genotype model beside Xue
 
-Warfarin is plotted by the library's own model, Xue and colleagues' cardiac-surgery model (2017), which turns the S- and R-warfarin concentrations into the INR through a prothrombin-complex turnover (see [warfarin](help:drugs/warfarin)). A **Graph Options** checkbox, **Hamberg**, draws a second INR line beside it: the model of Hamberg and colleagues (*Clin Pharmacol Ther* 2007;81:529-538), the model built to show how **age**, **CYP2C9** and **VKORC1** genotype shape the dose a patient needs. The second line appears whenever warfarin is in the dose table.
+Warfarin is plotted by the library's own model, Xue and colleagues' cardiac-surgery model (2017), which turns the S- and R-warfarin concentrations into the INR through a prothrombin-complex turnover (see [warfarin](help:drugs/warfarin)). A **Graph Options** checkbox, **Hamberg**, draws a second INR line beside it: the model of Hamberg and colleagues (*Clin Pharmacol Ther* 2007;81:529-538), the model built to show how **age**, **CYP2C9** and **VKORC1** genotype shape the dose a patient needs. The box is offered whenever warfarin is in the dose table and is off by default; tick it to draw the second line.
 
 ## Why two models
 

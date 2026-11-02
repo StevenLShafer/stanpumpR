@@ -197,13 +197,32 @@ thresholdTableToDefaults <- function(edited, drugDefaults, age,
 }
 
 
+# The thresholds a bookmark carries: those edited away from the library's
+# defaults, keyed by drug, or NULL when none has been.  The whole column, one
+# entry per drug, was half of every bookmark's length (3,700 characters before
+# encoding) and helped the longest past the server's limit
+# (MAX_BOOKMARK_URL_CHARS); restoreThresholds() reads a subset, and an old
+# bookmark's full column, alike.  A drug left at its default therefore follows
+# the library's default when the bookmark is reopened, where the full column
+# froze it at the value of the day.
+changedThresholds <- function(drugDefaults, defaults = getDrugDefaultsGlobal())
+{
+  value <- suppressWarnings(as.numeric(drugDefaults$endCe))
+  default <- suppressWarnings(as.numeric(defaults$endCe[match(drugDefaults$Drug, defaults$Drug)]))
+  changed <- !is.na(value) & (is.na(default) | abs(value - default) > 1e-9)
+  if (!any(changed)) return(NULL)
+  stats::setNames(value[changed], drugDefaults$Drug[changed])
+}
+
 #' Thresholds from a restored bookmark
 #'
-#' A bookmark saves the stored \code{endCe} of every drug, named by drug, and
-#' the MAC threshold.  Both are optional: bookmarks made before thresholds were
-#' saved, and any entry that is not a usable number, leave the drug's current
-#' value in place and the MAC threshold at its default.  Drugs named in the
-#' bookmark but absent from the defaults are ignored.
+#' A bookmark saves the thresholds edited away from the library's defaults
+#' (\code{changedThresholds()}; before 2026-10-31 the stored \code{endCe} of
+#' every drug), named by drug, and the MAC threshold.  Both are optional:
+#' bookmarks made before thresholds were saved, and any entry that is not a
+#' usable number, leave the drug's current value in place and the MAC
+#' threshold at its default.  Drugs named in the bookmark but absent from the
+#' defaults are ignored.
 #'
 #' @param drugDefaults the drug defaults table to update
 #' @param endCe named numeric vector of stored thresholds, or NULL
@@ -217,12 +236,12 @@ restoreThresholds <- function(drugDefaults, endCe = NULL, macThreshold = NULL)
   if (length(endCe) > 0 && !is.null(names(endCe))) {
     value <- usable(endCe)
     at <- match(names(endCe), drugDefaults$Drug)
-    ok <- !is.na(at) & !is.na(value) & value >= 0
+    ok <- !is.na(at) & is.finite(value) & value >= 0
     drugDefaults$endCe[at[ok]] <- value[ok]
   }
 
   mac <- usable(macThreshold)
-  macThreshold <- if (length(mac) == 1 && !is.na(mac) && mac >= 0) mac else GAS_MAC_THRESHOLD
+  macThreshold <- if (length(mac) == 1 && is.finite(mac) && mac >= 0) mac else GAS_MAC_THRESHOLD
 
   list(drugDefaults = drugDefaults, macThreshold = macThreshold)
 }

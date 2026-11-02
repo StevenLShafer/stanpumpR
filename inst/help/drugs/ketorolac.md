@@ -17,7 +17,7 @@ The curve is **total ketorolac (S + R)** as free acid. No single compartment mod
 
 ### Routes
 
-**mg** is intravenous. **mg PO** is **provisional**: it uses the intravenous disposition with complete bioavailability and the 3.8-minute absorption half-time reported by Mroszczak and colleagues (*Pharmacotherapy* 1990;10:33S-39S), treated as first-order. Neither was fitted with this model. The result peaks early and high: 10 mg by mouth peaks at about 1.0 mcg/mL at 12 minutes, while Jung and colleagues' crossover (*Eur J Clin Pharmacol* 1988;35:423-425) found a mean peak of about 0.8 mcg/mL at a mean of 0.9 hours. Food delays absorption further.
+**mg** is intravenous. **mg PO** is **provisional**: it uses the intravenous disposition with complete bioavailability (read from the crossovers, not fitted) and the absorption model Mroszczak and colleagues fitted to the mean levels of 12 men given a 10 mg tablet (*Pharmacotherapy* 1990;10:33S-39S): a first-order rate of 11 per hour (an absorption half-time of 3.8 minutes) **together with a 12-minute (0.2 hour) lag**, the two estimated jointly. Neither was fitted with this model's disposition. 10 mg by mouth peaks here at about 1.0 mcg/mL at 24 minutes. Against Mroszczak's own mean levels the curve is close at 40 minutes and 1 hour (2-3% low), but 47% high at 20 minutes and about 16% low at 2-4 hours: this model's central volume, fitted to intravenous doses, is about half that of Mroszczak's oral fit, so the peak is higher and sharper than the observed mean peaks (0.86 mcg/mL at 35 minutes in Mroszczak's study; 0.81 mcg/mL at 0.9 hours in Jung and colleagues' crossover, *Eur J Clin Pharmacol* 1988;35:423-425). That is disposition, which a different absorption rate or lag cannot correct. Jung's volunteers also had a higher exposure after both the tablet and the intravenous dose than this model predicts, a difference in clearance rather than in absorption. Food delays absorption further.
 
 ### Threshold
 
@@ -25,8 +25,4 @@ There is no effect site and no shaded band. The *time until threshold* level is 
 
 ### Where to be careful
 
-Ketorolac is cleared by the kidney, and the label limits dosing in renal impairment and the elderly. Renal function is not in the model. Target-controlled infusion is not offered, because the controller inverts a single system. There is no CYP2D6 term, because none was fitted.
-
-### Pregnancy
-
-With **Pregnant** ticked, the clearance, every volume and every distribution clearance of both enantiomers are multiplied by 1.5, so the half-lives are unchanged and a dose gives a curve two-thirds as high. After cesarean delivery, racemic ketorolac's clearance was 1.48 times, and its volume 1.5 times, that of the same cohort's women 4-5 months postpartum, whose clearance matched healthy men's and who are among the source model's adults; in eight women studied twice the clearance ratio was 1.50, and the half-lives did not differ (Kulo, *Int J Obstet Anesth* 2012 and later papers). The S enantiomer rose more than R, but one factor serves both because separate ratios were not available. Ketorolac is highly bound to albumin, which falls in pregnancy, so the unbound concentration may change less than the total plotted. See [Pregnancy](help:models/pregnancy).
+Ketorolac is cleared by the kidney, and the label limits dosing in renal impairment and the elderly. Renal function is not in the model. Ketorolac is highly bound to albumin, which falls in pregnancy, so with **Pregnant** ticked the unbound concentration may change less than the total plotted. Target-controlled infusion is not offered, because the controller inverts a single system. There is no CYP2D6 term, because none was fitted.

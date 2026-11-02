@@ -23,8 +23,15 @@
 # SAME routine.  Where GasMan does something questionable it is reproduced
 # here, with the oddity noted rather than corrected.
 #
-# STATUS: run and verified on R 4.6.1 by tests/testthat/test-gasman-baseline.R.
-# NOT YET compared against GasMan's own CSV export, which is the point of it.
+# STATUS: run and verified on R 4.6.1 by tests/testthat/test-gasman-baseline.R,
+# and run against GasMan's own C++ build (from the released gasmanonline/
+# gasman_api source, commit d3a2dd3) on five scenarios, both the semi-closed
+# and ideal circuits: agreement to the figures GasMan itself prints on every
+# compartment but fat, where GasMan's float32 accumulation shows as roughly
+# 0.06% of peak (`inst/validation/VALIDATION.md`, "Run against GasMan itself").
+# Still untested: the open and closed circuits, liquid injection, flush,
+# agents other than sevoflurane/isoflurane/desflurane/nitrous oxide, and the
+# web/desktop editions (only the API build was run).
 # -----------------------------------------------------------------------------
 #
 # THE ALGORITHM, as GasMan states it

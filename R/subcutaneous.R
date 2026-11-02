@@ -119,7 +119,10 @@ modelTissueRoute <- function(pkSets)
 #' it is absorbed first order (canagliflozin, Hoeben 2016: NONMEM's modelled
 #' duration D1 into the depot, after the lag) declares
 #' `zeroOrderPO = list(duration = <minutes>)`.  The release starts at the
-#' oral lag.  The engines carry it on the tissue depot (see
+#' oral lag.  With `into = "central"` and a `fraction` below 1, that share of
+#' each dose instead enters the circulation at a constant rate over the
+#' duration, from the moment of the dose, beside the first-order depot that
+#' absorbs the rest (amantadine extended-release tablets).  The engines carry it on the tissue depot (see
 #' `oralReleaseToTissueDepot()`), so the drug may have no tissue route of its
 #' own, no second oral depot and no dose-dependent oral bioavailability.
 #'
@@ -134,6 +137,18 @@ validateZeroOrderPO <- function(block, X, drug)
   bad <- function(why) stop("Invalid zeroOrderPO for ", drug, ": ", why)
   if (!is.list(block) || !is_valid_number(block$duration) || block$duration <= 0)
     bad("needs a positive duration in minutes.")
+  # By default the whole dose is released into the gut (canagliflozin).  A
+  # model may instead give a share of each dose into the circulation at a
+  # constant rate beside its first-order depot, as zeroOrderSC does for an
+  # injection: amantadine's extended-release tablet (R/drugs_amantadineER.R).
+  into <- if (is.null(block$into)) "depot" else block$into
+  if (length(into) != 1 || !into %in% ZERO_ORDER_TARGETS)
+    bad(paste0("into must be one of ", paste(ZERO_ORDER_TARGETS, collapse = ", "), "."))
+  fraction <- if (is.null(block$fraction)) 1 else block$fraction
+  if (into == "depot" && fraction != 1)
+    bad("a release into the gut takes the whole dose (fraction 1).")
+  if (into == "central" && !(is_valid_number(fraction, 0, 1) && fraction > 0 && fraction < 1))
+    bad("a share into the circulation needs a fraction between 0 and 1.")
   for (s in X$PK)
   {
     if (!isTRUE(s$ka_PO > 0)) bad("the drug must be absorbed orally (ka_PO).")
@@ -145,6 +160,8 @@ validateZeroOrderPO <- function(block, X, drug)
     bad("a drug cannot also declare zeroOrderSC or oralZeroOrder.")
   if (!is.null(X$oralSaturation) || !is.null(X$oralFormulations))
     bad("not with a dose-dependent oral bioavailability or other oral forms.")
+  block$into <- into
+  block$fraction <- fraction
   block
 }
 

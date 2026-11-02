@@ -42,7 +42,8 @@ the specification defines them.
 
 **A reported half-life is not permission to invent a clearance and a volume.**
 Correct, and section 4 shows how far that principle reaches: in three of the
-four cases examined it is decisive, and in one it is not.
+four cases it first examined it is decisive, and in one it is not (its table
+now has nine records).
 
 ---
 
@@ -84,7 +85,8 @@ asking anyone for the paper.
 Every number is therefore labelled in
 `inst/extdata/antihypertensiveParameters.csv` with how it was checked:
 `primary_full_text`, `primary_abstract`, `derived_here` or
-`handoff_unverified`. Of the 125 catalogued numbers, 89 are verified or
+`handoff_unverified`. Of the 125 catalogued numbers (as at 2026-10-17; the
+current figures are at the head of section 5), 89 are verified or
 derived from verified numbers -- 56 from a primary full text, 25 from a
 primary abstract and 8 derived here -- and 36 are not. When this section was first
 written the counts were 56 of 101 verified; the three papers that have since
@@ -146,7 +148,7 @@ than 80%" -- a quantity the derivation never uses, so it is a genuine
 out-of-sample check. This is also the same identifiability test
 `R/drugs_codeine.R` already applies and *fails*: codeine's distribution
 half-life is not reported, so one compartment was used there. Clevidipine's
-is. Implemented.
+is. Implemented. (Superseded 2026-10-27 by Table 1's fitted V1: section 17.)
 
 **3.3 Esmolol's record is formally determined and still unusable, and the
 specification's reason is the wrong one.** It says clearance plus an apparent
@@ -188,7 +190,8 @@ patients reports roughly 25 nmol/L with about a 50% reduction. One internal
 consistency check does hold -- the paper reports mean pressure fell only about
 10% even at the top dose rate, so a 45% maximum could only be on the ratio,
 not on pressure -- but that argues about the endpoint, not the number.
-Recorded as unverified and used nowhere.
+Recorded as unverified and used nowhere. (Verified against the full text
+2026-10-27: section 17.)
 
 **3.5 The spironolactone compartment labels are wrong in a way that would
 invert the model.** The specification writes the parent's volumes as `V1/F`
@@ -322,6 +325,17 @@ are.
 
 ## 5. What was implemented
 
+*This section records the first pass, as at 2026-10-17. Six more drugs have
+been added since -- `lisinopril`, `olmesartan`, `valsartan`, `benazepril`,
+`enalapril` (with the `enalaprilat` it forms) and `fosinopril` (sections 14 to
+18) -- so on 2026-10-30 there are twelve drugs, and the registry holds 136
+records over 81 drugs (90 catalog and 46 source records; 16
+`ready_for_source_reproduction`, 1 `complete_not_implemented`;
+`external_population` on three: clevidipine, enalapril and fosinopril) and the
+parameter audit 195 numbers (132 checked against a primary full text, 20
+against an abstract, 9 derived here, 34 `handoff_unverified`). The CSVs are
+authoritative.*
+
 **Six drugs, all plotting concentration**, in a new `Antihypertensives`
 category:
 
@@ -340,7 +354,8 @@ there is deliberately no adult `fenoldopam` entry. **None of the six has an
 effect site, a MEAC, or a blood-pressure output.** Tests pin both switch
 positions of the fat-free-mass scaling, the published half-lives, and the
 analytic fixtures the specification asks for: a bolus starting at dose over
-central volume (38.73 ng/mL per mg in the reference man) and an infusion
+central volume (39.68 ng/mL per mg in the reference man since V1 became
+Table 1's fitted 0.36 L/kg on 2026-10-27; 38.73 at the derived V1) and an infusion
 approaching rate over clearance (19.68 ng/mL at 10 mg/h).
 
 Worth noticing about that table: of the four drugs added after the first
@@ -1738,10 +1753,19 @@ The paper is explicit, and had been all along:
 > compartment.**"
 
 with the Results adding "**Eight transits (transits = 8)** were added for
-reference and pooled data analysis". That fixes the structure completely: eight
-chain compartments, the first seven emptying at KTR = 9/0.558 = 16.13 /h and
-the eighth at KA = 6.010 /h. Both printed parameters are used exactly as
-defined, and the thirteen-state count §14.3 gave was right.
+reference and pooled data analysis". That fixes what KA does — the transfer
+rate out of the last transit — and that both printed parameters are used
+exactly as defined, so the thirteen-state count §14.3 gave was right. It does
+**not** fix, on its own, whether those eight transits are all there is between
+the dose and KA: Figure 1 (PDF p5) draws a separate Dose box ahead of
+Transit 1 … Transit 8 without labelling the rate from Dose into Transit 1, so
+a reading in which that box is itself a ninth stage emptying at KTR — the
+usual Erlang convention implied by an (N+1)/KTR mean-transit-time formula —
+is equally consistent with the prose quoted above. The repo's own full-text
+digest records this as an open discrepancy rather than something the text
+settles. What the text and the figure together give is two plausible readings
+of one under-labelled transfer, not a single fixed structure; §16.3 below
+explains why that is harmless here.
 
 What survives is a much smaller thing. The formula presumes *nine* steps at one
 rate; the structure has seven at KTR and one at KA. So the model's true mean
@@ -1756,10 +1780,14 @@ reported parent peak, and that is worth stating rather than glossing: reading 1
 implemented reading's 0.88 h. It means agreement with a reported summary was
 never what chose the reading — the text was. An earlier draft of this section
 claimed the implemented reading was also the closest, which the drug's own test
-disproves, since that test asserts reading 1 has the latest peak. So the
-conclusion §14.3 reached was right and its reason
-was wrong: the readings agreeing made the ambiguity harmless, but there was no
-ambiguity to be harmless about.
+disproves, since that test asserts reading 1 has the latest peak. As the
+correction above says, what the Results quoted fix is what KA does, not
+whether the unlabelled Dose box is itself a ninth transit stage, which stays a
+genuine, open reading of one under-specified figure rather than something the
+text settles. §14.3's conclusion survives anyway, for the reason it originally
+gave: because the four plausible readings agree with each other and with the
+paper's reported peaks to within 6%, the ambiguity is harmless regardless of
+which reading is correct.
 
 ### 16.3 The formulation covariate was not ambiguous either
 
@@ -1778,7 +1806,7 @@ is 1 and the printed MTT1 already is the reference formulation's.
 ambiguous when the text resolved it, by a reading that stopped at the parameter
 table. The identifiability discipline of §4 is about what a source *contains*;
 this is about what it *says*, and §4's habit of counting printed numbers does
-not substitute for reading the prose that defines them. §14.2's rule still
+not substitute for reading the prose that defines them. §14.3's rule still
 holds — an ambiguous parameterisation is a blocker only when the readings
 disagree with the paper's own figures — but it should be reached for second,
 after checking whether the paper simply answers the question.
@@ -1875,7 +1903,7 @@ The two studies **disagree about the terminal phase**: Arafat's metabolite area
 was 267 and 256 ng·h/mL against the model's 495, a factor of 1.9. The
 disagreement belongs to Arafat, who report as a finding of their own that
 enalaprilat concentrations at 12 to 24 hours ran "lower than those reported in
-the literature". Recorded, not reconciled, on §14.5's rule for Sun 1994 against
+the literature". Recorded, not reconciled, on §15.1's rule for Sun 1994 against
 benazepril: rescaling a primary fit to another study's number is fitting to a
 result.
 
@@ -1897,7 +1925,8 @@ Of 135 records, **15** are executable and 176 parameters are audited: **107
 checked against a primary full text**, 25 against an abstract, 8 derived here,
 and 36 still carrying the handoff specification's numbers unverified.
 `bp_simulation_enabled` is `FALSE` on every record, and **no drug in stanpumpR
-plots a blood pressure.**
+plots a blood pressure.** (Fosinopril, section 18, has since added a record;
+the current figures are at the head of section 5.)
 
 ## 17. Clevidipine's own full text, and its fitted V1 (2026-10-27)
 
@@ -2151,9 +2180,14 @@ crossover of intravenous fosinoprilat 7.5 mg and two oral 10 mg doses of
 fosinopril sodium, capsule and solution. Oral absorption 32% and 36%;
 **bioavailability of fosinoprilat 25% and 29%**.
 
-`ka` 0.2987 /h puts the peak at 2.95 h, the midpoint of the 2.8 to 3.1 h the
-Murdoch review quotes for a 10 mg dose, corroborated by the label's
-dose-independent "approximately 3 hours". Bioavailability is the capsule's
+`ka` 0.2987 /h puts the peak at 2.95 h, the midpoint of fosinoprilat's own
+times to peak in Singhvi's Table 1 (PDF p5), 2.8 ± 0.3 h after the solution and
+3.1 ± 0.2 h after the capsule (mean ± SEM of nine; total radioactivity peaked at
+2.7 and 3.0 h), corroborated by the label's dose-independent "approximately 3
+hours". The model first took the range from the Murdoch review (*Drugs*
+1992;43:123-140, section 2.1), whose one citation for it names Duchin 1991b with
+Singhvi because the same sentence carries Duchin's 2.4-4.2 h over 10-640 mg; the
+10 mg figures are Singhvi's. Bioavailability is the capsule's
 **0.29, read** - the capsule because the product is a tablet and because Hui
 dosed one too. On Hui's clearance that gives a peak of 131 ng/mL and a 24-hour
 area of 1257 ng·h/mL.
@@ -2164,20 +2198,28 @@ exposed the second, which is the one worth carrying forward. The draft set F by
 making the model reproduce two figures the review quotes for Singhvi's oral
 dose, a peak of 99 to 140 mcg/L and a 24-hour area of 1035 to 1132 mcg/L·h.
 
-**1. Those are total radioactivity, not fosinoprilat**, although the review
-labels them "plasma fosinoprilat". Only about 75% of plasma radioactivity after
-an oral dose is the diacid; the rest is an inactive beta-glucuronide (15 to 20%)
-and a monohydroxy analogue (about 5%). Singhvi's own abstract settles it
-arithmetically, and this is checkable without his tables: 0.75 × 1035-1132 =
-776-849 ng·h/mL falls inside the **762-884** his own bioavailability (25 to 29%)
-and his own clearance (39 mL/min) imply for the diacid over the same 0-24 h
-window. Three numbers from one abstract triangulate it. (`F × dose / CL` gives
-801-929 for the *total* area, of which his clearance leaves 95.1% inside 24 h.
+**1. Those are not fosinoprilat**, although the review labels them "plasma
+fosinoprilat". Singhvi's Table 1 (PDF p5) reports every oral figure for both
+analytes, and it shows the **area is total radioactivity** (1035 ± 93 after the
+solution, 1132 ± 68 after the capsule) and the **peak range spans the two**:
+99 is fosinoprilat after the solution and 140 total radioactivity after the
+capsule (fosinoprilat 99 and 112, total radioactivity 126 and 140 ng/mL). The
+review's time to peak and bioavailability, by contrast, are the diacid's. Only
+about 75% of plasma radioactivity after an oral dose is the diacid; the rest is
+an inactive beta-glucuronide (15 to 20%) and a monohydroxy analogue (about 5%).
+Before the table was read, Singhvi's abstract had settled the area's analyte
+arithmetically: 0.75 × 1035-1132 = 776-849 ng·h/mL falls inside the
+**762-884** his own bioavailability (25 to 29%) and his own clearance
+(39 mL/min) imply for the diacid over the same 0-24 h window. (`F × dose / CL`
+gives 801-929 for the *total* area - Table 1 prints the diacid's as 788 and
+920 - of which this model's oral curve, run at his clearance, leaves 95.1% inside
+24 h.
 A first version of this paragraph wrote 737-855, truncating with **Hui's** 92%
 share: a faster clearance leaves less area beyond 24 h, so **the truncation
 factor belongs to the patient being described.**) **A secondary source can relabel an analyte**, and for
 a radiolabel study that is the error to expect, because the paper reports both
-quantities and a reviewer has to pick one.
+quantities and a reviewer has to pick one - or, as here, takes the low end of a
+range from one and the high end from the other.
 
 **2. Even with the right analyte, deriving F that way is a category error** -
 and this is the general lesson. **Bioavailability is clearance-independent by
@@ -2261,7 +2303,8 @@ tmax, not from MAT against healthy, and not from MAT across impairment. The same
 caution applies elsewhere in this document with the opposite sign - benazepril's
 entire two-compartment derivation rests on `AUC(0-inf) - AUC(0-24h)`, whose two
 areas come from n = 45 and n = 60 and so are *not* paired, which is exactly why
-§15 calls its 25% uncertainty a floor rather than a bound.
+benazepril's header (`R/drugs_benazepril.R`) calls its 25% uncertainty a floor
+rather than a bound.
 
 **The general point is worth keeping**, because it will recur for every oral
 drug whose renal covariate is on clearance: **tmax is a property of the whole
@@ -2313,23 +2356,6 @@ a peak.
 because a derived F absorbed the difference; that was the category error of
 §18.6, and the difference is real.)
 
-### 18.9 Three judgement calls, named and approved
-
-Placed last because they are the ones a future reader should be able to
-reopen. None is forced by the sources, each moves the curve, and each was put
-to Steven L. Shafer explicitly; he accepted all three on 2026-10-29.
-
-| Choice | The alternative, and what it would cost |
-|---|---|
-| **F = 0.29**, Singhvi's capsule | His solution's 0.25, or Hui's impaired mean of 24.1% - both read; the solution lowers the whole curve 14% |
-| **Ramp anchored at CrCl 80**, the label's boundary for normal renal function | Hui's normal-group mean of 98.8, which would put a 50-year-old man at an indexed 92.9 - on the ramp, 6% below the published parameters |
-| **A 70-year-old with a blank creatinine sits ~16% below normal**, from Cockcroft-Gault's age term alone | Nothing, except not carrying the age term - but the label reports no pharmacokinetic difference in men 65 to 74, so this is the consequence most likely to surprise a user |
-
-The third is not a modelling choice so much as a consequence worth stating: a
-blank Serum creatinine means the assumed normal creatinine **for the patient's
-age**, not an assumed normal clearance, and on this drug's plateau-and-ramp that
-difference is visible. The help page says so in those words.
-
 ### 18.8 One drug, and why not the enalapril pattern
 
 Fosinopril is an ester prodrug and fosinoprilat is the active diacid, so the
@@ -2357,3 +2383,20 @@ fosinopril dose, so one factor keeps the whole chain on one basis — and becaus
 the label prints a molecular weight for the salt (585.65) but none for the diacid,
 so there would be nothing here to check the arithmetic against. The two agree to
 under 1% anyway.
+
+### 18.9 Three judgement calls, named and approved
+
+Placed last because they are the ones a future reader should be able to
+reopen. None is forced by the sources, each moves the curve, and each was put
+to Steven L. Shafer explicitly; he accepted all three on 2026-10-29.
+
+| Choice | The alternative, and what it would cost |
+|---|---|
+| **F = 0.29**, Singhvi's capsule | His solution's 0.25, or Hui's impaired mean of 24.1% - both read; the solution lowers the whole curve 14% |
+| **Ramp anchored at CrCl 80**, the label's boundary for normal renal function | Hui's normal-group mean of 98.8, which would put a 50-year-old man at an indexed 92.9 - on the ramp, 6% below the published parameters |
+| **A 70-year-old with a blank creatinine sits ~16% below normal**, from Cockcroft-Gault's age term alone | Nothing, except not carrying the age term - but the label reports no pharmacokinetic difference in men 65 to 74, so this is the consequence most likely to surprise a user |
+
+The third is not a modelling choice so much as a consequence worth stating: a
+blank Serum creatinine means the assumed normal creatinine **for the patient's
+age**, not an assumed normal clearance, and on this drug's plateau-and-ramp that
+difference is visible. The help page says so in those words.

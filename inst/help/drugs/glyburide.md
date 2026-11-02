@@ -5,7 +5,3 @@ Rambiritch and colleagues' analysis of 24 poorly controlled South African adults
 ### What is not plotted
 
 Concentration only, in ng/mL, of the parent drug. The active hydroxy metabolites, which carry part of the glucose lowering and accumulate in renal failure, are not modelled. See [Antidiabetic models and their limits](help:models/antidiabetics).
-
-### Pregnancy
-
-With **Pregnant** ticked, the apparent clearance is multiplied by 1.9 and both apparent volumes by 1.57; the distribution clearance and the absorption are unchanged. Women with gestational diabetes at 28-38 weeks had an apparent clearance of 18.3 L/h against 9.6 in nonpregnant women with type 2 diabetes, and an apparent volume of 83 against 53 L, with the unbound fraction unchanged, so the rise is in metabolism (Hebert, *Clin Pharmacol Ther* 2009). That study fitted one compartment, so its volume ratio is applied to both of this model's volumes; it is the weaker of the two findings. See [Pregnancy](help:models/pregnancy).

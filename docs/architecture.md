@@ -2,7 +2,8 @@
 
 stanpumpR is a Shiny web app that turns a table of drug doses plus a patient's covariates into
 predicted **plasma** and **effect-site** concentration curves — using **closed-form**
-pharmacokinetic solutions rather than a numeric ODE solver. It is packaged as a standard R
+pharmacokinetic solutions rather than a numeric ODE solver, with two exceptions described under
+*The computational core*. It is packaged as a standard R
 package with a golem-style `ui / server / run` split; the entry point is
 `app.R → stanpumpR::run_app()`.
 
@@ -18,8 +19,11 @@ package with a golem-style `ui / server / run` split; the entry point is
 ## The request → render pipeline
 
 Everything is one reactive dependency chain. Any edit — a covariate, a
-dose cell, a graph option — invalidates one link, and Shiny re-runs only what is downstream.
-The heavy computation is the last two stages.
+graph option, or (once applied) the dose table — invalidates one link, and Shiny re-runs only
+what is downstream. A dose-cell edit itself first updates a working draft; the draft becomes
+the simulated dose table, and so starts invalidating this chain, only once **Apply** commits it
+(see [The dose table lifecycle](#the-dose-table-lifecycle) below). The heavy computation is the
+last two stages.
 
 ### 01 — Inputs
 
@@ -156,9 +160,17 @@ and display only (`R/utils-time.R`, the "Time units" block of `app_server()`).
 
 ## The computational core
 
-stanpumpR never numerically integrates. Each drug is a mammillary 3-compartment model with an
-effect-site link; disposition is solved analytically once per patient, then evaluated at every
-time point as a sum of exponentials.
+Almost every drug is a mammillary 3-compartment model with an effect-site link; disposition is
+solved analytically once per patient, then evaluated at every time point as a sum of
+exponentials. A transit-chain absorption (enalapril) is still exact, by matrix exponential
+(`advanceTransitChain.R`). Two engines step: `advanceMichaelisMenten.R`, fourth-order Runge-Kutta
+for saturable elimination (phenytoin, GHB, exenatide, cetagliptin, linagliptin, vildagliptin), and
+the inhaled agents' `advanceClosedFormGas.R` (reached through `simulateGases()` from `app_server()`, not
+through `simCpCe()`, which never sees a gas row), a matrix exponential in short steps with the uptake
+that couples the gases held at its value at the start of each step, so a small error remains that
+shrinks with the step.
+`advanceGasManBaseline.R`, GasMan's own stepping scheme restated in R, is a validation reference
+the tests call, not an engine the app runs.
 
 ### A — Parameterize the patient (`getDrugPK.R`)
 
@@ -170,13 +182,14 @@ time point as a sum of exponentials.
 3. `cube()` solves the characteristic cubic → eigenvalues `lambda_1, lambda_2, lambda_3`.
 4. `ke0FromTPeakBolus()` (or `ke0FromTPeak()` for an oral `tPeak`) back-solves the effect-site
    rate `ke0` from time-to-peak-effect with `uniroot()`.
-5. Precompute per-route (bolus / infusion / PO / SL / IM / IN) exponential coefficients `p_coef_*`,
+5. Precompute per-route (bolus / infusion / PO / SL / IM / IN / RA, the tissue depot that also
+   carries SC) exponential coefficients `p_coef_*`,
    `e_coef_*`.
 
 ### B — Advance the doses (`simCpCe.R`)
 
 1. Reduce mg/mcg/ng, per-kg, per-hour doses to base units against the drug's concentration unit.
-2. Classify each dose as `Bolus`, infusion, or `PO / SL / IM / IN` (the route comes from the unit's suffix via `doseRoute()`, `R/routes.R`).
+2. Classify each dose as `Bolus`, infusion, or `PO / SL / IM / IN / RA / SC` (the route comes from the unit's suffix via `doseRoute()`, `R/routes.R`; SC runs on the RA tissue depot).
 3. Dispatch to a solver:
    - `advanceClosedForm0.R` — IV, no PK events
    - `advanceClosedForm1.R` — time-varying PK driven by events, including extravascular doses
@@ -184,6 +197,9 @@ time point as a sum of exponentials.
    - `advanceClosedFormPO_IM_IN.R` — extravascular routes (PO, SL, IM, IN, and RA: a local
      anesthetic injected into tissue, absorbed first-order)
    - `advanceClosedFormMetabolite.R` — a drug that forms an active metabolite
+   - `advanceMichaelisMenten.R` — saturable (Michaelis-Menten) elimination, numerically (RK4);
+     dispatched before the oral formulations are split, as it integrates the whole dose table
+   - `advanceTransitChain.R` — an Erlang transit-chain absorption, exactly, by matrix exponential
 4. Sum each dose's contribution over the exponential basis; `convertState.R` carries state
    across event boundaries.
 5. Interpolate to an even grid (`equiSpace`), normalize to peak Cp/Ce, and scale against MEAC.
@@ -197,7 +213,7 @@ are computed on every run. The plot draws them only under **Peripheral compartme
 
 **The time line.** The closed-form engines are exact at any time, so the points they are asked
 about decide only how the curve is drawn and what a run costs. `simulationTimeGrid()`
-(`R/simulationTimeGrid.R`) builds the line for all four engines from their knots — every dose
+(`R/simulationTimeGrid.R`) builds the line for every injected-drug engine from its knots — every dose
 time, the instant `PRE_DOSE_OFFSET` before a dose, the instant a lagged dose was given, any
 event — and fills the gaps between them; no knot is ever moved or dropped, which is what keeps
 `advanceStatesOnto()` exact. Up to a day (`GRID_LEGACY_MAXIMUM`) each gap gets the 41 geometric
@@ -261,11 +277,12 @@ into the fat-free-mass multipliers that most drug models apply to their volumes 
 (`ffmAlSallami()` is the Al-Sallami 2015 fat-free mass; see `docs/weight-adjustment.md`);
 it is also the lean-body-mass covariate of Aoyama's meloxicam model, in place of the James
 equation it was published with. `lbmJames()` computes the James lean body mass, a parabola in
-weight that falls past a BMI of 43 (men) or 36 (women), kept deliberately for the Schnider and
-Minto companions so that they fail at the extremes of weight as the pumps do (scenario
-`james-lean-body-mass`); `renalFunction.R` supplies
+weight that falls past a BMI of 43 (men) or 36 (women); the models that read it (the Schnider
+and Minto companions, istradefylline, tolcapone) take `lbmJamesCapped()`, which holds it at the
+peak so the fall never reaches a parameter (scenario `james-lean-body-mass`, which draws the
+parabola); `renalFunction.R` supplies
 Cockcroft-Gault creatinine clearance and de-indexed CKD-EPI eGFR for the renally cleared
-models (mannitol, the antibiotics, sugammadex, gabapentin, pregabalin), at the patient's serum creatinine or an
+models (every model that names `creatinine`; the Serum creatinine field's hover tip lists them), at the patient's serum creatinine or an
 assumed normal one for age and sex when none is entered, with a child's creatinine put on the
 adult scale for the equations fitted in adults (`adultEquivalentCreatinine()`); `pregnancy.R` holds the
 Patient Profile's Pregnant flag (`checkPregnant()`, `pregnancyPossible()`, `pregnancyGfrFactor()`, and the
@@ -277,8 +294,9 @@ linetypes.
 
 ## Drug library
 
-Adding a drug involves adding one `R/drugs_<name>.R` file and one row in the defaults CSV — the
-pattern the project is explicitly built to let outside investigators contribute to. See
+Adding a drug involves one `R/drugs_<name>.R` file, its rows in the defaults, pregnancy and
+therapeutic-range tables, a test and a help page — the pattern the project is explicitly built to
+let outside investigators contribute to. See
 **[adding-a-drug.md](adding-a-drug.md)** for the full procedure.
 
 ## Component catalog
@@ -316,7 +334,9 @@ All files are flat in `R/`.
 - `simCpCe.R` — single-drug simulation: units → route → solver dispatch.
 - `advanceClosedForm0.R` / `advanceClosedForm1.R` / `advanceClosedFormPO_IM_IN.R` /
   `advanceClosedFormMetabolite.R` — the closed-form solvers (IV, event-varying,
-  extravascular, active metabolite).
+  extravascular, active metabolite); `advanceMichaelisMenten.R` (saturable elimination, RK4),
+  `advanceTransitChain.R` (transit chains, matrix exponential), `advanceClosedFormGas.R` (the
+  inhaled agents) and `advanceGasManBaseline.R` (GasMan's scheme, a test reference only).
 - `metaboliteCoefficients.R` — convolves a parent's curve through a metabolite's disposition;
   also the parent/metabolite unit scaling. `mergeMetabolite.R` — folds each formed
   contribution into the metabolite drug's row once every drug has been simulated.
@@ -331,10 +351,21 @@ All files are flat in `R/`.
   the event-driven solver. The `ke0` fit itself
   (`ke0FromTPeakBolus()`, `ke0FromTPeak()`) lives inside `getDrugPK.R`.
 - `modelInteraction.R`, `recoveryCalc.R`, `lbmJames.R` — interaction surface, recovery
-  thresholds, body-size scaling.
+  thresholds, the James lean body mass (and `lbmJamesCapped()`, held at its peak) the Schnider and
+  Minto companions, istradefylline and tolcapone use (the library's own body-size scaling is
+  `pkSizeFactors.R`).
 - `simulateDrugsWithCovariates.R` — exported multi-drug convenience API (no Shiny).
-- `ig_absorption.R` — *experimental, tracked, not yet integrated.* Closed-form Inverse Gaussian
-  absorption model; not exported or wired in (see its provenance header).
+- `duzitol.R` — help-page only: Table 1 of Shafer and Stanski's 1992 Duzitol editorial,
+  `threeCompartmentFromHalfLives()` (Shafer's spreadsheet algebra: a three-compartment model
+  from CL, V1, Vss and three half-lives) and the decrement time after an infusion that held the
+  plasma constant, drawn by the generated blocks of `inst/help/models/why-simulate.md`. Duzitol
+  is fictional and deliberately not a drug in the library (`test-duzitol.R`).
+- `ig_absorption.R` — *validated, not yet wired in.* Closed-form Inverse Gaussian absorption:
+  the convolution of an IG input density with the disposition exponentials, in closed form.
+  Exact to 1.6e-14 against two independent references (`test-ig-absorption.R`), and base R
+  only — the Faddeeva function its complex branch needs is vendored in, so there is no
+  dependency. No drug declares it yet, and no existing drug may be converted to it silently;
+  its header carries both open questions.
 
 **Output — plot, dosing advisor & export**
 - `simulationPlot.R` — assembles the composite `ggplot2` figure and its data tables.
@@ -355,8 +386,8 @@ All files are flat in `R/`.
   `Suggests` dependency guarded by `requireNamespace()`, and the router shares nothing with
   `run_app()`. `inst/api/entrypoint.R` (for `rsconnect::deployAPI()`) and the hand-written
   `inst/api/openapi.json` go with it.
-- `scheduled.R` — scheduled doses: expands a `qd` / `bid` / `tid` / `qid` / `q4h` dose row into its
-  repeats out to the end of the plot (`expandScheduledDoses()`, called first in `simCpCe()`), and
+- `scheduled.R` — scheduled doses: expands a `qd` / `bid` / `tid` / `qid` / `q4h`, `qam` / `qpm` or
+  `qwk` dose row into its repeats out to the end of the plot (`expandScheduledDoses()`, called first in `simCpCe()`), and
   `exportDoseTable()`, which merges the TCI rows and the repeats into the exported dose table.
 - `alternativeModels.R` — the Minto / Schnider switch: Schnider's propofol and Minto's
   remifentanil models (as STANPUMP ran them), the companion-entry builder `recalculatePK()`
@@ -394,7 +425,9 @@ All files are flat in `R/`.
 
 - **Target-controlled infusion** (`tci.R`) — a dose row with units `Plasma target` or
   `Effect site target` runs a simulated TCI pump: a rapid loading infusion sized to reach the
-  target without overshoot, then a plasma hold. The controller re-plans every 10 s, hands off
+  target without overshoot, then a plasma hold. The controller re-plans every 10 s after a
+  target or bolus change, lengthening that interval (up to a bounded maximum) once an
+  effect-site target has settled into a steady plasma-hold rate, hands off
   from effect-site to plasma control within 5% of the target (the effect-site solution is
   ill-conditioned at steady state and would alias), and stops on a target of 0 or a manual
   infusion row. Its rate rows never enter the dose table: `simCpCe()` returns them as `$tci`,
@@ -412,8 +445,9 @@ All files are flat in `R/`.
   is not a second opioid); the hover reports both models and a click goes to the parent. Minto's
   ke0 is the paper's function of age, so `getDrugPK()` accepts a model with `ke0` and no `tPeak`
   and solves the time to peak effect from it. A model whose covariate terms give a non-positive
-  volume or clearance for the patient (a James lean body mass far enough below zero to take
-  Minto's V1 negative, about -16 kg at age 40; a small child on Schnider) is not built, and the app says so (`alternativeModelProblems()`). Help:
+  volume or clearance for the patient (a small child on Schnider, whose clearance intercepts go
+  negative; the James lean body mass is held at its peak, so it no longer takes Minto's V1
+  negative in the obese) is not built, and the app says so (`alternativeModelProblems()`). Help:
   `inst/help/models/minto-schnider.md`, with a generated parameter table; scenarios
   `eleveld-vs-minto-schnider`, `tci-eleveld-vs-minto-schnider` and `james-lean-body-mass`; tests `test-minto-schnider.R`.
 - **The TCI API** (`tci-api.R`, `tci-api-server.R`, `inst/api/`) — a stateless HTTP API under
@@ -426,10 +460,13 @@ All files are flat in `R/`.
   target, decrement time, syringe empty). It is not deployed with the Shiny app (shinyapps.io
   does not host Plumber): `run_tci_api()` or `rsconnect::deployAPI()` serve it. The normative
   reference is `docs/tci-api.md`.
-- **Scheduled doses** (`scheduled.R`) — a bolus, PO, SL, IM or IN unit with a frequency suffix
+- **Scheduled doses** (`scheduled.R`) — a bolus, PO, SL, IM, IN or SC unit with a frequency suffix
   (`mg PO bid`) gives the dose at the entered time and then every 24 / 12 / 8 / 6 / 4 h (qd /
-  bid / tid / qid / q4h) until the end of the X axis. A scheduled dose of 0 for the same route stops the
-  sequence; a later non-zero one replaces it. Like the TCI rows, the repeats never enter the dose
+  bid / tid / qid / q4h) until the end of the X axis; the oral antiseizure drugs also offer the
+  independent morning and evening slots `qam` / `qpm`, and the SC units a weekly `qwk`. Which row
+  stops or replaces a running schedule depends on the route (the oral and sublingual rules were
+  revised 2026-10-28): AGENTS.md, *Scheduled doses*, states them, and `scheduledSequences()`
+  implements them. Like the TCI rows, the repeats never enter the dose
   table: `simCpCe()` returns them as `$scheduled` and `sendSlide()` merges them into the export.
   The frequencies are offered per drug in `drugDefaults_global.csv`.
 - **Dose-dependent oral absorption** (`oralSaturationFraction()` in `routes.R`) — a drug whose

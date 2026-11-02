@@ -42,7 +42,7 @@ test_that("returns the correct calculations", {
     reference = actual$reference,
     metabolite = list(
       name = "morphine",
-      kFormation = 1.2415524e-04,
+      kFormation = 1.2201179e-04,
       firstPassFraction = 0.0015,
       mwRatio = 285.34 / 299.36
     )
@@ -126,13 +126,18 @@ test_that("an unknown phenotype is refused", {
 })
 
 
-test_that("the formation fraction is Ashraf rescaled to the Lotsch clearance", {
+test_that("the formation fraction is Ashraf rescaled to the library's morphine clearance", {
   # Only the ratio of formation to metabolite clearance is identifiable from a
   # formed metabolite, so Ashraf's fraction has to be rescaled by the ratio of
-  # their morphine clearance to ours.  Left unrescaled it overpredicts morphine
-  # by 357.5/75.3, which is 4.75 fold.
-  expected <- (0.16 / 1.16) * 75.3 / 357.5
-  expect_equal(expected, 0.0290523, tolerance = 1e-5)
+  # their morphine clearance to the library's.  Left unrescaled it overpredicts
+  # morphine by 357.5/74.0, which is 4.83 fold.  The clearance is read from the
+  # morphine model, so this follows a revision of it (AGENTS.md, "Parents and
+  # their metabolites").
+  morphineCL <- morphine(70, 170, 35, "male")$PK$default$cl1 * 60
+  expect_equal(libraryReferenceClearance("morphine"), morphineCL)
+  expect_equal(morphineCL, 74.0, tolerance = 1e-9)
+  expected <- (0.16 / 1.16) * morphineCL / 357.5
+  expect_equal(expected, 0.0285508, tolerance = 1e-5)
 
   x <- codeine(70, 171, 50, "male", adjustToFFM = FALSE)
   p <- x$PK$default
@@ -382,5 +387,5 @@ test_that("scales to fat-free mass for a 120 kg man", {
   x <- codeine(120, 170, 50, "male")
   expect_equal_rounded(x$PK$default$v1,  230.84321)
   expect_equal_rounded(x$PK$default$cl1, 0.92300994)
-  expect_equal_rounded(x$metabolite$kFormation, 0.00011616364)
+  expect_equal_rounded(x$metabolite$kFormation, 0.00011415816)
 })

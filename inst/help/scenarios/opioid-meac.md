@@ -10,7 +10,7 @@ The **total opioid** line adds the three: it shows that for the first few minute
 
 - Remove the fentanyl and morphine and give hydromorphone 0.5 mg every hour for four hours: the pattern of a PCA with a lockout.
 - Give the morphine as 2.5 mg every 10 minutes for 40 minutes instead of 10 mg at once. Because the effect site lags by over an hour, the plot shows why titrating morphine to effect every five minutes overshoots: the effect of the earlier doses has barely begun when the next is given.
-- Change the patient's weight to 100 kg. With *Adjust weight to fat-free mass* on, all three models are scaled to fat-free mass in the same way, and the three peaks fall by about the same amount (13 to 16 per cent). Untick it and the published scalings return: morphine and hydromorphone in proportion to weight, fentanyl allometrically, so the curves move by different amounts (30 per cent against 23).
+- Change the patient's weight to 100 kg. With *Adjust weight to fat-free mass* on, all three models are scaled to fat-free mass in the same way, and the three peaks fall by similar amounts (fentanyl 13, hydromorphone 16 and morphine 20 per cent; morphine's slow intercompartmental clearance also rises with body surface area). Untick it and the published scalings return: hydromorphone in proportion to weight, fentanyl allometrically, and morphine's fixed adult volumes and clearances, which only that body-surface-area term changes, so the curves move by very different amounts (30, 23 and 10 per cent).
 
 ## Background
 

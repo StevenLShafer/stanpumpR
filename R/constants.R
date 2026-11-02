@@ -101,6 +101,15 @@ OPIOID_TOLERANCE_DEFAULT <- "none"
 # Odani 1997 measured the *1/*3 effect).  The six common *1/*2/*3 diplotypes;
 # *1/*1 (two normal-function alleles) is the reference.  Kept apart from CYP2D6
 # and CYP2C19, and from any drug interaction: each is its own field.
+#
+# The default is *1/*1, the most common diplotype (77% of controls and 67% of
+# an anticoagulation clinic in Moridani et al., Clin Biochem 2006;39:606-612),
+# by Steven L. Shafer's decision (2026-10-31).  The vitamin-K antagonists
+# (warfarin, fluindione, acenocoumarol) read this field too, and for them
+# *1/*1 predicts the SMALLEST INR rise, the opposite of the most-sensitive rule
+# VKORC1_DEFAULT and CYP4F2_DEFAULT follow; the help page (patient-profile.md,
+# "The CYP2C9 default") says a warfarin patient should be genotyped, that the
+# choice of rule is a subjective judgement, and invites clinicians' feedback.
 CYP2C9_VALUES  <- c("*1/*1", "*1/*2", "*1/*3", "*2/*2", "*2/*3", "*3/*3")
 CYP2C9_DEFAULT <- "*1/*1"
 
@@ -223,6 +232,12 @@ RESOLUTION <- 100
 # Max number of emails a single session can send out, to limit abuse
 EMAIL_SESSION_LIMIT <- 25
 
+# What the browser is told when Email Slide fails; the exception itself (an
+# SMTP diagnostic, a path) goes to the server's log (sendSlide()).
+EMAIL_FAILURE_MESSAGE <- paste0(
+  "The slide could not be sent. The server's log has the details; ",
+  "please try again later, or tell the app's maintainer.")
+
 MAX_DOSE_ROWS <- 500L
 MAX_EVENT_ROWS <- 100L
 MAX_TARGET_ROWS <- 20L
@@ -235,6 +250,37 @@ MIN_YAXIS_HEIGHT <- 150L
 MAX_DRUGNAME_LENGTH <- 128L
 MAX_TIME_STRING_LENGTH <- 32L
 MAX_UNIT_STRING_LENGTH <- 32L
+
+# The most doses the scheduled rows of a dose table may expand to over the
+# plot (scheduledDoseCount()).  Each repeat is simulated and puts a point on
+# the time line: eight q4h drugs over 52 weeks were 17,472 doses and about
+# 245,000 points per drug, and with the time until threshold and the
+# peripheral compartments on the session needed more memory than a
+# shinyapps.io worker has, and disconnected (2026-10-31).  Three such drugs
+# (6,552 doses) drew; six were intermittent.
+MAX_SCHEDULED_DOSES <- 8000L
+
+# The tallest image the graphics device draws, in device pixels: ragg, which
+# renderPlot() uses when it is installed (it is deployed), stops at 50,000 a
+# side (its ragg.max_dim), and cairo's png() at 32,767.  renderPlot() asks for
+# the plot's height (yAxisHeight * panels + 50, simulationPlot()) times the
+# browser's pixel ratio, so on a retina screen 54 drugs with their peripheral
+# compartments at 350 px (115 panels, 40,300 px) and 96 drugs with them at
+# 200 px (176 panels, 35,250 px) exceeded the device, as a generic error in
+# the plot's place, while 96 drugs without them (19,250 px) drew (2026-10-31).
+# simulationPlot() refuses such a plot with a message instead
+# (maxPlotDevicePixels()).
+MAX_PLOT_DEVICE_PIXELS_RAGG <- 50000L
+MAX_PLOT_DEVICE_PIXELS_CAIRO <- 32767L
+
+# The longest bookmark the address bar is given.  shinyapps.io's server
+# refuses a longer request line with 414 when the link is reopened: a
+# 7,218-character bookmark reopened, an 18,340-character one did not
+# (2026-10-31).
+MAX_BOOKMARK_URL_CHARS <- 8000L
+
+# How the plot area introduces the error that stopped the simulation
+PLOT_FAILURE_PREFIX <- "The simulation could not be drawn. "
 
 # Be sure there are more items below then potential facets on the simulation plot
 #                     1     2     3     4     5     6     7     8     9    10    11    12    13    14   15
@@ -266,6 +312,16 @@ raRateUnits <- c("mg/hr RA")
 # infusionUnits, which lists the intravenous rates.  (Claude Code,
 # 2026-10-07, at the request of Steven L. Shafer.)
 poRateUnits <- c("mg/day PO")
+
+# A continuous enteral infusion: levodopa-carbidopa intestinal gel pumped into
+# the jejunum through a PEG-J tube, absorbed from the gut as an oral dose is,
+# so through the drug's oral absorption (its transit compartment included)
+# rather than straight into the central compartment as "mg/day PO" is.
+# Offered only by a drug that declares enteralInfusion (R/enteral.R), whose
+# gut absorption carries it (into the head of a transit chain, or on the
+# tissue depot); simCpCe() refuses it for any other drug.  (Claude Code, 2026-10-19, at the request of Steven L.
+# Shafer.)
+enteralRateUnits <- c("mg/hr PO")
 
 # Subcutaneous injection (ROUTE_SC): the whole dose into the SC depot.  The
 # peptides are dosed by mass; the insulins in units (U), which are a potency
@@ -370,7 +426,7 @@ iuScUnits <- c("IU SC", "IU/kg SC")
 GHB_SALT <- "oxybate"
 ghbUnits <- paste(c("g PO", "mg PO"), GHB_SALT)
 
-allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, poFormulationUnits,
+allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, enteralRateUnits, poFormulationUnits,
               slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits,
               iuUnits, scUnits, iuScUnits, ghbUnits, insulinUnits, insulinRateUnits,
               ivPotencyUnits)
@@ -456,6 +512,7 @@ DRUG_CATEGORIES <- c(
   "Anticoagulants",
   "Antihypertensives",
   "Vasoactive and resuscitation",
+  "Parkinson disease",
   "Other",
   "Illicit drugs"
 )
@@ -463,6 +520,10 @@ DRUG_CATEGORIES <- c(
 # drugs of intensive care (inst/help/models/vasoactive.md): concentration
 # only, every one catalogued in inst/extdata/vasoactiveRegistry.csv.
 VASOACTIVE_DRUG_CATEGORY <- "Vasoactive and resuscitation"
+# The category of the drugs used to treat Parkinson's disease and its
+# complications (inst/help/models/parkinsons.md): every candidate catalogued in
+# inst/extdata/parkinsonsRegistry.csv, implemented or not.
+PARKINSONS_DRUG_CATEGORY <- "Parkinson disease"
 # The categories whose every drug, and every metabolite of one, must have a
 # row in inst/extdata/therapeuticRanges.csv (R/therapeuticRanges.R): the
 # range the band draws, or why there is none.  Every category since

@@ -57,17 +57,24 @@
 # getDrugPK() then solves the time to peak effect from that ke0.
 #
 # Both use the James (1976) lean body mass, as the papers, STANPUMP and the
-# pumps do (lbmJames()), and that is deliberate.  The library's own models
-# use the Al-Sallami fat-free mass; these two are here to show what the pumps
-# compute, and part of what they teach is why the pumps should run the
-# Eleveld models instead.  James's lean body mass is a parabola in weight: it
-# peaks at a BMI of 43 in men and 36 in women and then falls (above about
-# 125 kg in a man of 170 cm, 92 kg in a woman of 160 cm), so the Schnider
-# clearance, which falls with lean body mass, rises steeply in the obese,
-# and far enough out Minto's V1 goes negative; in a small child the
-# Schnider clearance intercepts make CL1 negative.  Where a volume, clearance
-# or ke0 comes out zero or negative the model is not defined for that
-# patient, no companion is built, and the app says so
+# pumps do, HELD AT ITS PEAK past the peak (lbmJamesCapped(), R/lbmJames.R).
+# James's lean body mass is a parabola in weight: it peaks at a BMI of 43 in
+# men and 36 in women and then falls (above about 125 kg in a man of 170 cm,
+# 92 kg in a woman of 160 cm), reaching zero at twice that BMI.  That shape
+# was unforeseen when the models were built (Bouillon & Shafer 1998 drew it),
+# and the pumps answer it by refusing a patient above a BMI of 42 (men) or
+# 35 (women), just short of the peak.  Until 2026-10-31 these companions
+# used the raw equation, so that they failed in the obese as the pumps do;
+# Steven L. Shafer then decided (2026-10-31) that they hold the lean body
+# mass at the most the equation gives for the height instead, which is what
+# a pump computes for the heaviest patient it accepts, continued without the
+# fall.  The weight and height terms are still the models' own, so the
+# Schnider clearance still rises with total weight in the obese, and the
+# comparison with the Eleveld models (which scale to the Al-Sallami fat-free
+# mass) is still the lesson.  In a small child the Schnider clearance
+# intercepts make CL1 negative.  Where a volume, clearance or ke0 comes out
+# zero or negative the model is not defined for that patient, no companion
+# is built, and the app says so
 # (alternativeModelProblems()).  The same limit is why the pumps restrict
 # these models to a BMI below 42 in men and 35 in women.  Scenario
 # `james-lean-body-mass`.
@@ -194,7 +201,7 @@ alternativeModelColor <- function(color, amount = 0.45) {
 #'
 #' `adjustToFFM` is accepted for the uniform signature and ignored: the model
 #' carries its own lean-body-mass covariate, James's, kept deliberately (see
-#' above).  The same arithmetic is written out, and then overwritten, at the top of R/drugs_propofol.R.
+#' above).
 #'
 #' `pregnant` applies the same factor as the library's propofol model:
 #' clearance x PROPOFOL_PREGNANCY_CL_FACTOR (Gin 1990 and 1991; see
@@ -204,7 +211,7 @@ alternativeModelColor <- function(color, amount = 0.45) {
 propofolSchnider <- function(weight, height, age, sex, adjustToFFM = TRUE,
                              pregnant = FALSE)
 {
-  lbm <- lbmJames(weight, height, sex)
+  lbm <- lbmJamesCapped(weight, height, sex)
   clPregnancy <- if (isTRUE(pregnant)) PROPOFOL_PREGNANCY_CL_FACTOR else 1
   default <- list(
     v1  = 4.27,
@@ -252,7 +259,7 @@ propofolSchnider <- function(weight, height, age, sex, adjustToFFM = TRUE,
 remifentanilMinto <- function(weight, height, age, sex, adjustToFFM = TRUE,
                               pregnant = FALSE)
 {
-  lbm <- lbmJames(weight, height, sex)
+  lbm <- lbmJamesCapped(weight, height, sex)
   clPregnancy <- if (isTRUE(pregnant)) REMIFENTANIL_PREGNANCY_CL_FACTOR else 1
   default <- list(
     v1  = 5.1  - 0.0201  * (age - 40) + 0.072 * (lbm - 55),
@@ -278,11 +285,13 @@ remifentanilMinto <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
 #' Hamberg's warfarin genotype model (Hamberg 2007), beside the library's Xue
 #'
-#' Hamberg A-K, Wadelius M, Lindh JD, Dahl M-L, Padrini R, Deloukas P, Rane A,
-#' Jonsson EN.  A pharmacometric model describing the relationship between
-#' warfarin dose and INR response with respect to variations in CYP2C9, VKORC1,
-#' and age.  Clin Pharmacol Ther 2007;81:529-538.  150 patients (Tables 2-4,
-#' Figure 2, Appendix equations 8-10), read from the full text on 2026-10-17.
+#' Hamberg A-K, Dahl M-L, Barban M, Scordo MG, Wadelius M, Pengo V, Padrini R,
+#' Jonsson EN.  A PK-PD model for predicting the impact of age, CYP2C9, and
+#' VKORC1 genotype on individualization of warfarin therapy.  Clin Pharmacol
+#' Ther 2007;81:529-538.  150 patients pooled for the PK fit (Study I n = 57
+#' plus Study II n = 93); the PD fit uses Study I's 57 patients only, the only
+#' ones with VKORC1 genotype and induction-phase sampling (Tables 2-4, Figure
+#' 2, Appendix equations 8-10), read from the full text on 2026-10-17.
 #'
 #' A companion of warfarin that draws a second INR line beside the library's
 #' Xue 2017 model (R/drugs_warfarin.R, R/inr.R).  S- and R-warfarin are fitted

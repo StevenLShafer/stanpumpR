@@ -153,9 +153,27 @@
 # (intravenous, oral, and fosphenytoin's mg PE and IM routes):
 #
 #   Km x PHENYTOIN_PREGNANCY_KM_FACTOR = 0.48.  Elimination saturates in the
-#     unbound concentration, so Km on the total scale is Km(unbound) / fu.
-#     The unbound fraction rises 0.82 / 0.39 = 2.10-fold, and Km(total) falls
-#     to 1 / 2.10 = 0.476 of its value; 0.48.
+#     unbound concentration, so Km on the total scale is Km(unbound) / fu,
+#     and the unbound steady state, Km(unbound) R / (Vmax - R), does not
+#     depend on fu at all: fu moves only the total, and at a constant dose
+#     total / baseline = (unbound / baseline) / (fu / baseline).  0.48 is a
+#     CONSTRUCTED CALIBRATION to Tomson's two group-mean falls, not a measured
+#     free fraction: 0.39 / 0.82 = 0.476, the 2.10-fold rise in fu that those
+#     two means imply (Table 5 of the first paper gives 6.1% to 13.2%, x2.15,
+#     as mean free over mean total).  The free fraction Tomson MEASURED, each
+#     sample's ultrafiltrate free / total (companion paper, Table 3), rose
+#     only from 7.2 +/- 1.7% to 10.1 +/- 2.4% (x1.40), and Yerby 1990's from
+#     7.7% to 10.1% (x1.31).  They are different statistics of different
+#     cases: the measured fractions are unweighted means over all 36 phenytoin
+#     cases, the 8 whose dose was raised among them; the concentrations come
+#     from the 28 with an unchanged dose, and a ratio of their means weights
+#     each sample by its total (SD 51-74% of the mean).  The same 28 cases'
+#     mean clearances (Table 3: plasma x2.17, unbound x1.25 per kg) imply a
+#     third value, x1.74.  Because free = fu x total in every sample, no
+#     factors reproduce 39%, 82% and x1.40 together: x1.40 with an unbound of
+#     82% gives a total of 59%, and with a total of 39% an unbound of 55%.
+#     The calibration keeps the two concentration falls, which are what a
+#     constant dose was measured to do, and gives up the measured fu.
 #   Vmax x PHENYTOIN_PREGNANCY_VMAX_FACTOR = 1.1, chosen so that the unbound
 #     steady state falls to 82% at a typical operating point.  At the band's
 #     typical 15 mg/L, r = R / Vmax = 15 / (15 + 9.19) = 0.620, and the
@@ -246,10 +264,12 @@ PHENYTOIN_CYP2C9_VMAX <- c(
   "*2/*2" = 0.67, "*2/*3" = 0.5, "*3/*3" = 0.5
 )
 
-# Pregnancy (see the header): Km on the total scale falls with the 2.1-fold
-# rise in the unbound fraction (Tomson 1994: total 39%, unbound 82% of
-# baseline; 0.39 / 0.82 = 0.476), and Vmax rises so that the unbound steady
-# state at 15 mg/L total falls to 82% (0.620 / 0.572 = 1.084).
+# Pregnancy (see the header): a calibration to Tomson 1994's group-mean
+# concentrations, not a measured free fraction.  Km on the total scale is
+# 0.39 / 0.82 = 0.476 of its value (total 39%, unbound 82% of baseline: the
+# 2.1-fold fu rise those means imply, where the measured free fraction rose
+# 1.40-fold), and Vmax rises so that the unbound steady state at 15 mg/L
+# total falls to 82% (0.620 / 0.572 = 1.084).
 PHENYTOIN_PREGNANCY_KM_FACTOR <- 0.48
 PHENYTOIN_PREGNANCY_VMAX_FACTOR <- 1.1
 

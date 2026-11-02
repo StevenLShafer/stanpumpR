@@ -2,7 +2,7 @@
 
 Two rows, one drug: cenobamate **50 mg PO qam** and **200 mg PO qpm**. These are the two independent daily slots the `qam` and `qpm` units provide. The morning dose is deliberately the smaller of the two, because the antiseizure drugs are sedating and can blunt memory while the patient is awake; the larger dose is given at night, when sedation is wanted rather than avoided. This is the one regimen the morning/evening split was built for, so the slots are offered only on the oral antiseizure maintenance drugs.
 
-The plot shows a daily rhythm — a step up each evening, a smaller step each morning — riding on a baseline that climbs for about two weeks before it levels off. Cenobamate's half-life is long (of the order of 50–60 hours), so a single day's doses barely move the running level; it is the accumulation over many days that fills the compartment. The plasma line carries the curve: cenobamate is modelled plasma-only, with no effect site.
+The plot shows a daily rhythm — a step up each evening, a smaller step each morning — riding on a baseline that climbs for about two weeks before it levels off. Cenobamate's half-life is long (about 65 hours in the model; the label gives 50–60), so a single day's doses barely move the running level; it is the accumulation over many days that fills the compartment. The plasma line carries the curve: cenobamate is modelled plasma-only, with no effect site.
 
 ## Try next
 

@@ -1,9 +1,9 @@
 ---
-title: "Multiple drug plasma and effect size concentration calculation with stanpumpR"
+title: "Multiple drug plasma and effect site concentration calculation with stanpumpR"
 output: rmarkdown::html_vignette
 author: Alexander Clarke
 vignette: >
-  %\VignetteIndexEntry{Multiple drug plasma and effect size concentration calculation with stanpumpR}
+  %\VignetteIndexEntry{Multiple drug plasma and effect site concentration calculation with stanpumpR}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -26,7 +26,7 @@ maximum <- 60
 plotRecovery <- FALSE
 ```
 
-Initialize the drug administration events table. Each row represent either a bolus or a change in the infusion rate.
+Initialize the drug administration events table. Each row represents either a bolus or a change in the infusion rate.
 
 ```{r}
 doseTable <- data.frame(

@@ -12,7 +12,7 @@ Size only, entered per kilogram. A per-kilogram model fitted on total body weigh
 
 ### Pharmacodynamics
 
-The study also fitted the activated clotting time as a function of concentration (baseline 134 s, maximum effect +318 s, half-maximal at 2.44 mg/L, with the half-maximal concentration depending on the red-cell count). That relationship is **not** plotted: the clotting time depends on the device and reagent, and the fit is specific to the study. The curve here is plasma concentration only.
+The study also fitted the activated clotting time as a function of concentration (baseline 134 s, maximum (ceiling) ACT 318 s — a rise of at most 184 s above baseline — half-maximal at 2.44 mg/L, with the half-maximal concentration depending on the red-cell count). That relationship is **not** plotted: the clotting time depends on the device and reagent, and the fit is specific to the study. The curve here is plasma concentration only.
 
 ### Where to be careful
 

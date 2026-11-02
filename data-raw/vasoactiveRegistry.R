@@ -576,7 +576,7 @@ registry <- rbind(
   reg("propranolol__healthy__achong1976", "propranolol",
       "6 healthy men, 10 mg IV (with timolol 1 mg)", "propranolol", "none (heart rate and systolic time intervals)",
       "no_suitable_model", NA, "full_text",
-      "Read in full (supplied PDF): 10 mg over 10 min (1 mL/min); the beta-stimulus (4 min of exercise, later an isoproterenol infusion) applied 5 min, 90 min, 4, 9 and 24 h after the END of the infusion.  The reduction in exercise tachycardia was 'maximal 5 min after' because 5 min was the first measurement, with none earlier and none until 90 min, so the paper bounds the peak to within 5-9 min of a 10-min infusion and measures no bolus time to peak; no concentrations.  The propranolol tPeak of 5 min stays as the user's clinical choice (2026-10-28), consistent with it, and with Riva 1980 (its own row).",
+      "Read in full (supplied PDF): 10 mg over 10 min (1 mL/min); the beta-stimulus (4 min of exercise, later an isoproterenol infusion) applied 5 min, 90 min, 4, 9 and 24 h after the END of the infusion.  The reduction in exercise tachycardia was 'maximal 5 min after' because 5 min was the first measurement, with none earlier and none until 90 min, so the paper bounds the onset rather than locating the peak and measures no bolus time to peak; no concentrations.  The propranolol tPeak of 5 min stays as the user's clinical choice (2026-10-28), consistent with it, and with Riva 1980 (its own row).",
       NA,
       "Achong MR, Piafsky KM, Ogilvie RI. Duration of cardiac effects of timolol and propranolol. Clin Pharmacol Ther 1976;19:148-152. PMID 4254.",
       doi("10.1002/cpt1976192148")),

@@ -43,7 +43,10 @@
 # POPULATION
 # ==========
 # Six healthy men.  Critically ill patients have a different, independently
-# fitted model (Heffernan 2022) with larger volumes and altered clearance;
+# fitted model (Heffernan 2022); its own volume did not differ appreciably
+# from healthy volunteers (unlike some earlier ICU studies it cites, and its
+# unbound-central volume is not directly comparable with this total-based
+# one in any case), but its clearance, renal and non-renal, is altered;
 # their coefficients are not mixed into this one.  Renal function is not a
 # covariate: ceftriaxone has substantial biliary elimination and the healthy
 # cohort gave no renal spread to fit.

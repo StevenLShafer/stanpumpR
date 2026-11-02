@@ -19,7 +19,10 @@
 #     Ka = 0.716 /h
 #     CL/F (L/h) = 0.278 x (WT/68)^0.534 x (CLcr/87)^0.532 x (Age/74)^-0.461
 #     V2/F (central, L) = 8.14 x (WT/68)^0.522
-#     Q/F = 0.082 L/h (fixed)     V3/F (peripheral, L) = 15.6
+#     Q/F = 0.082 L/h             V3/F (peripheral, L) = 15.6
+#
+# Q/F was ESTIMATED (95% CI 0.052-0.111); only its between-subject variability
+# was fixed to zero ("0 FIX" in Table 2), not Q/F itself.
 #
 # with the paper's V2/F the central volume and V3/F the peripheral, so here
 # v1 = V2/F and v2 = V3/F.  CLcr is the simplified MDRD estimate (egfrMDRD(),
@@ -33,8 +36,10 @@
 # WHAT THIS REPRESENTS
 # ====================
 # Patients after major orthopaedic surgery on the 2.5 mg prophylactic dose.
-# Clearance falls with age and with renal impairment (the paper: about 15%
-# lower in moderate and 43% in severe renal impairment).  Extrapolation to the
+# Clearance falls with age and with renal impairment (the paper: about 25%
+# lower in moderate [CLcr 30-60 mL/min] and 43% lower in severe [< 30 mL/min]
+# renal impairment) and separately with low body weight (about 15% lower
+# under 50 kg).  Extrapolation to the
 # treatment dose or to a non-surgical population is outside the data.
 # Bioavailability is 1: the apparent parameters already carry the subcutaneous
 # absorbed fraction (fondaparinux is essentially completely absorbed).

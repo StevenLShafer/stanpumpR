@@ -329,12 +329,13 @@ helpIllicitAnalyte <- function(drug) {
 
 #' The James lean body mass against the Al-Sallami fat-free mass, as a figure
 #'
-#' An inline SVG line chart for the Open TCI page (inst/help/opentci.md): both
-#' measures of body size for one woman across weight, drawn from lbmJames()
-#' and ffmAlSallami() themselves, with the James peak and zero found from the
-#' function rather than quoted, and the pumps' BMI limit for women shaded.  The
-#' block is one HTML block with no blank line, so commonmark passes it through
-#' whole.
+#' An inline SVG line chart for the Open TCI page (inst/help/opentci.md) and
+#' the obesity scenario: both measures of body size for one woman across
+#' weight, drawn from lbmJames() and ffmAlSallami() themselves, with the James
+#' peak and zero found from the function rather than quoted, the value the
+#' models read past the peak (lbmJamesCapped(), dashed), and the pumps' BMI
+#' limit for women shaded.  The block is one HTML block with no blank line, so
+#' commonmark passes it through whole.
 #'
 #' @param drugDefaults unused; every block takes it
 #' @returns the figure, as one HTML string
@@ -344,6 +345,7 @@ helpJamesLBMFigure <- function(drugDefaults = NULL) {
   bmiLimit <- 35    # the pumps' limit for the Schnider and Minto models in women
   weights <- seq(40, 200, by = 1)
   james <- vapply(weights, lbmJames, numeric(1), height = height, sex = sex)
+  capped <- vapply(weights, lbmJamesCapped, numeric(1), height = height, sex = sex)
   ffm <- vapply(weights, ffmAlSallami, numeric(1), height = height, age = age, sex = sex)
   lbm <- function(w) lbmJames(w, height, sex)
   peak <- stats::optimize(lbm, c(40, 200), maximum = TRUE, tol = 1e-8)$maximum
@@ -387,15 +389,20 @@ helpJamesLBMFigure <- function(drugDefaults = NULL) {
     sprintf('<text x="%s" y="%s" text-anchor="end" fill="#c0392b">Zero at BMI %s</text>',
             f(sx(zero) - 8), f(sy(0) + 16), helpFormatNumber(bmi(zero)))
   )
+  # Past the peak the models read the dashed line, not the parabola
+  beyond <- weights >= peak
   lines <- c(
     sprintf('<path d="%s" fill="none" stroke="#2c3e50" stroke-width="2.5"/>', path(weights, ffm)),
     sprintf('<path d="%s" fill="none" stroke="#c0392b" stroke-width="2.5"/>', path(weights, james)),
-    # The legend sits above both lines, left of the shaded band
-    sprintf(paste0('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="%s" stroke-width="2.5"/>',
+    sprintf('<path d="%s" fill="none" stroke="#c0392b" stroke-width="2.5" stroke-dasharray="7,5"/>',
+            path(weights[beyond], capped[beyond])),
+    # The legend sits above the lines, left of the shaded band
+    sprintf(paste0('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="%s" stroke-width="2.5"%s/>',
                    '<text x="%s" y="%s" dominant-baseline="middle" fill="%s">%s</text>'),
-            f(sx(xr[1]) + 10), c(30, 48), f(sx(xr[1]) + 34), c(30, 48),
-            c("#c0392b", "#2c3e50"), f(sx(xr[1]) + 40), c(30, 48), c("#c0392b", "#2c3e50"),
-            c("James lean body mass", "Al-Sallami fat-free mass"))
+            f(sx(xr[1]) + 10), c(30, 48, 66), f(sx(xr[1]) + 34), c(30, 48, 66),
+            c("#c0392b", "#c0392b", "#2c3e50"), c("", ' stroke-dasharray="7,5"', ""),
+            f(sx(xr[1]) + 40), c(30, 48, 66), c("#c0392b", "#c0392b", "#2c3e50"),
+            c("James lean body mass", "Held at its peak, as the models read it", "Al-Sallami fat-free mass"))
   )
   axes <- c(
     sprintf('<text x="%s" y="%s" text-anchor="middle">Weight (kg)</text>',
@@ -406,8 +413,8 @@ helpJamesLBMFigure <- function(drugDefaults = NULL) {
   label <- sprintf(paste(
     "James lean body mass and Al-Sallami fat-free mass of a %d-year-old woman, %d cm tall,",
     "from 40 to 200 kg. The James value peaks at %s kg at a BMI of %s and is zero at a BMI of %s;",
-    "the fat-free mass rises at every weight."), age, height, helpFormatNumber(lbm(peak)),
-    helpFormatNumber(bmi(peak)), helpFormatNumber(bmi(zero)))
+    "the models hold it at the peak past it; the fat-free mass rises at every weight."),
+    age, height, helpFormatNumber(lbm(peak)), helpFormatNumber(bmi(peak)), helpFormatNumber(bmi(zero)))
   svg <- c(
     sprintf('<svg viewBox="0 0 %d %d" role="img" aria-label="%s" font-size="12" font-family="inherit" style="width:100%%;max-width:640px;height:auto">',
             W, H, label),
@@ -417,8 +424,9 @@ helpJamesLBMFigure <- function(drugDefaults = NULL) {
     svg,
     sprintf(paste(
       "<figcaption>Lean body mass of a %d-year-old woman, %d cm tall, by the James equation",
-      "(used by the Schnider and Minto models) and the Al-Sallami fat-free mass (used by",
-      "Eleveld's). Drawn by stanpumpR from the same functions its models call.</figcaption>"),
+      "(used by the Schnider and Minto models), the value those models read past its peak",
+      "(dashed: held at the peak), and the Al-Sallami fat-free mass (used by Eleveld's).",
+      "Drawn by stanpumpR from the same functions its models call.</figcaption>"),
       age, height),
     "</figure>"
   ), collapse = "\n")
@@ -426,12 +434,17 @@ helpJamesLBMFigure <- function(drugDefaults = NULL) {
 
 #' The vasoactive registry as a Markdown table
 #'
+#' Like every builder in \code{HELP_GENERATED_BLOCKS}, it is called with the
+#' drug library as its first argument (\code{helpExpandGenerated()}), which it
+#' does not need; the registry comes second.  Taken first, the registry was
+#' the drug library, and the page's tables came out empty.
+#'
 #' One row per drug and candidate source in
 #' \code{inst/extdata/vasoactiveRegistry.csv}: what it is, whether it is in
 #' the library, and what stands in the way if it is not.  Built from the
 #' registry so the help cannot drift from it.
 #' @noRd
-helpVasoactiveRegistryMarkdown <- function(registry = vasoactiveRegistry()) {
+helpVasoactiveRegistryMarkdown <- function(drugDefaults = NULL, registry = vasoactiveRegistry()) {
   status <- c(implemented = "In the library",
               needs_full_text = "Needs the paper",
               complete_not_implemented = "Read; not offered",
@@ -457,7 +470,65 @@ helpVasoactiveRegistryMarkdown <- function(registry = vasoactiveRegistry()) {
 
 #' The papers that would unblock a vasoactive model, as a Markdown list
 #' @noRd
-helpVasoactiveToObtainMarkdown <- function(registry = vasoactiveRegistry()) {
+helpVasoactiveToObtainMarkdown <- function(drugDefaults = NULL, registry = vasoactiveRegistry()) {
+  want <- registry[!is.na(registry$to_obtain) & nzchar(registry$to_obtain), ]
+  want <- want[order(want$readiness != "needs_full_text", tolower(want$drug)), ]
+  paste(sprintf("- **%s**%s: %s", want$drug,
+                ifelse(want$readiness == "implemented",
+                       " (in the library, to confirm)", ""),
+                want$to_obtain), collapse = "\n")
+}
+
+#' The Parkinson's disease product summary as Markdown tables, one per class
+#'
+#' Built from \code{parkinsonsProducts()} so the help cannot drift from it.
+#' @noRd
+helpParkinsonsProductsMarkdown <- function(drugDefaults = NULL, products = parkinsonsProducts()) {
+  cell <- function(x) ifelse(is.na(x), "", gsub("\\|", "/", x))
+  name <- ifelse(is.na(products$stanpumpr_drug), products$product,
+                 sprintf("%s ([model](help:drugs/%s))", products$product,
+                         products$stanpumpr_drug))
+  name <- ifelse(is.na(products$label_url), name,
+                 sprintf("%s, [US label](%s)", name, products$label_url))
+  classes <- unique(products$drug_class)
+  paste(vapply(classes, function(cls) {
+    p <- products$drug_class == cls
+    rows <- sprintf("| %s | %s | %s | %s | %s | %s | %s |",
+                    name[p], cell(products$tmax[p]), cell(products$half_life[p]),
+                    cell(products$peak_effect[p]), cell(products$therapeutic_range[p]),
+                    cell(products$covariates[p]), cell(products$genotype[p]))
+    paste(c(sprintf("#### %s", tools::toTitleCase(cls)), "",
+            "| Product | Time to peak concentration | Half-life | Onset and peak effect | Therapeutic range | Covariates | Genotype |",
+            "|---|---|---|---|---|---|---|", rows), collapse = "\n")
+  }, character(1)), collapse = "\n\n")
+}
+
+#' The Parkinson's disease model registry as a Markdown table
+#' @noRd
+helpParkinsonsRegistryMarkdown <- function(drugDefaults = NULL, registry = parkinsonsRegistry()) {
+  status <- c(implemented = "In the library",
+              complete_not_implemented = "Read; not offered",
+              needs_full_text = "Needs the paper",
+              needs_engine = "Needs an engine feature",
+              no_suitable_model = "No usable model")
+  read <- c(full_text = "full text", abstract = "abstract",
+            label_only = "label", none = "citation only")
+  registry <- registry[order(tolower(registry$drug),
+                             match(registry$readiness, names(status))), ]
+  drugCell <- ifelse(
+    is.na(registry$stanpumpr_drug), registry$drug,
+    sprintf("[%s](help:drugs/%s)", registry$drug, registry$stanpumpr_drug))
+  rows <- sprintf("| %s | %s | %s (%s) | [source](%s) | %s |",
+                  drugCell, status[registry$readiness], registry$population,
+                  read[registry$evidence_read], registry$source_url,
+                  gsub("\\|", "/", registry$blocking_issue))
+  paste(c("| Drug | Status | Population (what was read) | Source | Notes |",
+          "|---|---|---|---|---|", rows), collapse = "\n")
+}
+
+#' The papers that would unblock a Parkinson's disease model, as a list
+#' @noRd
+helpParkinsonsToObtainMarkdown <- function(drugDefaults = NULL, registry = parkinsonsRegistry()) {
   want <- registry[!is.na(registry$to_obtain) & nzchar(registry$to_obtain), ]
   want <- want[order(want$readiness != "needs_full_text", tolower(want$drug)), ]
   paste(sprintf("- **%s**%s: %s", want$drug,
@@ -488,15 +559,327 @@ helpAntibioticMbcBandMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()
           "|---|---|---|---|", rows), collapse = "\n")
 }
 
+# The Patient Profile fields whose readers the help's "field-readers-table"
+# lists, in the order the Cautions page discusses them, with the label the
+# table shows (Pregnant and the baseline osmolality are not in
+# PATIENT_FIELD_LABELS, which names the fields that carry a reader tooltip).
+HELP_FIELD_READER_ROWS <- c(
+  pregnant       = "Pregnant",
+  creatinine     = "Serum creatinine",
+  gestationalAge = "Gestational age at birth",
+  osmolality     = "Baseline serum osmolality",
+  cyp2d6         = "CYP 2D6",
+  cyp2c19        = "CYP 2C19",
+  cyp2c9         = "CYP 2C9",
+  cyp2b6         = "CYP 2B6",
+  vkorc1         = "VKORC1",
+  cyp4f2         = "CYP4F2"
+)
+
+#' The help's table of which drugs read each Patient Profile field
+#'
+#' One row per field in `HELP_FIELD_READER_ROWS`, the readers taken from the
+#' model signatures (`patientFieldReaders()`), so the table cannot drift from
+#' the code as models gain or lose a covariate.  Each drug links to its help
+#' page; a note from `PATIENT_FIELD_READER_NOTES` follows it in parentheses.
+#' The generated block `field-readers-table`.
+#'
+#' @param drugDefaults the drug table (`getDrugDefaultsGlobal()`).
+#' @return a Markdown table.
+#' @noRd
+helpFieldReadersTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
+  rows <- vapply(names(HELP_FIELD_READER_ROWS), function(arg) {
+    readers <- patientFieldReaders(arg, drugDefaults)
+    notes <- PATIENT_FIELD_READER_NOTES[[arg]]
+    named <- vapply(readers, function(drug) {
+      link <- sprintf("[%s](help:drugs/%s)", drug, drug)
+      if (drug %in% names(notes)) sprintf("%s (%s)", link, notes[[drug]]) else link
+    }, character(1), USE.NAMES = FALSE)
+    sprintf("| %s | %d | %s |", HELP_FIELD_READER_ROWS[[arg]], length(readers),
+            if (length(named)) paste(named, collapse = ", ") else "none")
+  }, character(1))
+  paste(c("| Field | Drugs | Read by |", "|---|---|---|", rows), collapse = "\n")
+}
+
+
+#' Inverse Gaussian absorption: three input shapes and what they produce
+#'
+#' Two stacked panels for inst/help/models/inverse-gaussian.md, drawn from
+#' igDensity() and igAbsorptionConc() themselves rather than from stored
+#' numbers: the top panel is the absorption density at three shape parameters,
+#' the bottom the plasma curve each produces through one disposition.  The
+#' mean is fixed at 1, so the time axis is in multiples of the mean absorption
+#' time and a reader scales it to their own drug by multiplying.
+#'
+#' The three lambdas straddle the engine's branch: with this disposition the
+#' fast exponent puts lambda 1 and 4 on the complex branch and lambda 16 on
+#' the real one, so the figure exercises both every time the page renders.
+#'
+#' The block is one HTML block with no blank line, so commonmark passes it
+#' through whole.
+#'
+#' @param drugDefaults unused; every block takes it
+#' @returns the figure, as one HTML string
+#' @noRd
+helpIGAbsorptionFigure <- function(drugDefaults = NULL) {
+  mu      <- 1                      # the mean is 1: time is in multiples of it
+  lambdas <- c(1, 4, 16)
+  cols    <- c("#2c3e50", "#c0392b", "#0072b2")
+  # One illustrative disposition in the same time unit: a fast distribution
+  # phase and a slow terminal one, per unit of mean absorption time.
+  A <- c(0.6, 0.4); k <- c(2.5, 0.15)
+
+  ts   <- seq(0.02, 4, by = 0.02)
+  dens <- lapply(lambdas, function(l) igDensity(ts, mu, l))
+  conc <- lapply(lambdas, function(l) igAbsorptionConc(ts, A, k, mu, l))
+
+  W <- 640; H <- 456; left <- 52; right <- 14
+  xr <- c(0, 4); yrA <- c(0, 1.8); yrB <- c(0, 0.6)
+  topA <- 34; botA <- 198; topB <- 268; botB <- 408
+  f  <- function(v) sprintf("%.1f", v)
+  sx <- function(x) left + (x - xr[1]) / diff(xr) * (W - left - right)
+  sA <- function(y) botA - (y - yrA[1]) / diff(yrA) * (botA - topA)
+  sB <- function(y) botB - (y - yrB[1]) / diff(yrB) * (botB - topB)
+  pA <- function(x, y) paste0("M", paste(f(sx(x)), f(sA(y)), sep = ",", collapse = " L"))
+  pB <- function(x, y) paste0("M", paste(f(sx(x)), f(sB(y)), sep = ",", collapse = " L"))
+
+  xTicks <- 0:4; yTicksA <- c(0, 0.5, 1, 1.5); yTicksB <- c(0, 0.2, 0.4, 0.6)
+  frame <- function(sy, yTicks, bot) c(
+    sprintf('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="#e3e8ec"/>',
+            f(sx(xr[1])), f(sy(yTicks)), f(sx(xr[2])), f(sy(yTicks))),
+    sprintf('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="#4a5764"/>',
+            f(sx(xr[1])), f(sy(yTicks[1])), f(sx(xr[2])), f(sy(yTicks[1]))),
+    sprintf('<text x="%s" y="%s" text-anchor="end" dominant-baseline="middle">%s</text>',
+            f(sx(xr[1]) - 6), f(sy(yTicks)), helpFormatNumber(yTicks)),
+    sprintf('<text x="%s" y="%s" text-anchor="middle">%d</text>',
+            f(sx(xTicks)), f(bot + 16), as.integer(xTicks)))
+
+  curves <- c(
+    unlist(Map(function(y, col) sprintf(
+      '<path d="%s" fill="none" stroke="%s" stroke-width="2.5"/>', pA(ts, y), col),
+      dens, cols)),
+    unlist(Map(function(y, col) sprintf(
+      '<path d="%s" fill="none" stroke="%s" stroke-width="2.5"/>', pB(ts, y), col),
+      conc, cols)))
+
+  legend <- sprintf(paste0(
+    '<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="%s" stroke-width="2.5"/>',
+    '<text x="%s" y="%s" dominant-baseline="middle" fill="%s">',
+    'shape %d &#8212; CV %s</text>'),
+    f(sx(2.55)), topA + c(6, 24, 42), f(sx(2.55) + 24), topA + c(6, 24, 42), cols,
+    f(sx(2.55) + 30), topA + c(6, 24, 42), cols,
+    as.integer(lambdas), helpFormatNumber(sqrt(mu / lambdas)))
+
+  titles <- c(
+    sprintf('<text x="%s" y="%s" font-weight="600">%s</text>',
+            f(left), f(topA - 14),
+            "The absorption density, mean fixed at 1"),
+    sprintf('<text x="%s" y="%s" font-weight="600">%s</text>',
+            f(left), f(topB - 14),
+            "The plasma curve each one produces, through one disposition"),
+    sprintf('<text x="%s" y="%s" text-anchor="middle">%s</text>',
+            f((sx(xr[1]) + sx(xr[2])) / 2), f(H - 10),
+            "Time, in multiples of the mean absorption time"),
+    sprintf('<text transform="translate(13,%s) rotate(-90)" text-anchor="middle">Fraction per unit time</text>',
+            f((sA(yrA[1]) + sA(yrA[2])) / 2)),
+    sprintf('<text transform="translate(13,%s) rotate(-90)" text-anchor="middle">Concentration</text>',
+            f((sB(yrB[1]) + sB(yrB[2])) / 2)))
+
+  label <- paste(
+    "Three inverse Gaussian absorption densities with a mean of 1 and shape",
+    "parameters 1, 4 and 16, and the plasma concentration each produces",
+    "through one two-exponential disposition. The smaller the shape",
+    "parameter, the more spread out and right-skewed the absorption; all",
+    "three plasma curves decay onto the same terminal line.")
+  svg <- c(
+    sprintf(paste0('<svg viewBox="0 0 %d %d" role="img" aria-label="%s" font-size="12" ',
+                   'font-family="inherit" style="width:100%%;max-width:640px;height:auto">'),
+            W, H, label),
+    frame(sA, yTicksA, botA), frame(sB, yTicksB, botB),
+    curves, legend, titles, "</svg>")
+  paste(c(
+    '<figure class="help-figure">',
+    svg,
+    paste("<figcaption>Inverse Gaussian absorption with the mean set to 1, at",
+          "three shape parameters: the input shape above, and below the plasma",
+          "curve each produces through the same disposition. Drawn by stanpumpR",
+          "from the same functions an inverse Gaussian model would call.",
+          "</figcaption>"),
+    "</figure>"
+  ), collapse = "\n")
+}
+
+
+#' The three models of the Duzitol editorial, built, as a Markdown table
+#'
+#' For inst/help/models/why-simulate.md: Table 1's six numbers per model, the
+#' three-compartment model threeCompartmentFromHalfLives() builds from them,
+#' and the 50% and 80% decrement times after a steady-state infusion
+#' (R/duzitol.R), beside the 50% times the editorial printed.  One column per
+#' model, so the three can be read across.
+#'
+#' @param drugDefaults unused; every block takes it
+#' @returns a Markdown table
+#' @noRd
+helpDuzitolModelTableMarkdown <- function(drugDefaults = NULL) {
+  ms <- duzitolModels()
+  tab <- DUZITOL_TABLE
+  col <- function(get) vapply(seq_along(ms), function(i) get(ms[[i]], tab[i, ]), character(1))
+  num <- function(x, digits = 3) helpFormatNumber(x, digits)
+  rows <- list(
+    c("**Table 1, as printed**", "", "", ""),
+    c("Half-lives (min)", col(function(m, t) paste(num(t$t1), num(t$t2), num(t$t3), sep = ", "))),
+    c("Metabolic clearance (L/min)", col(function(m, t) num(t$CL))),
+    c("V1 (L)", col(function(m, t) num(t$V1))),
+    c("Vdss (L)", col(function(m, t) num(t$Vss))),
+    c("**The model they imply**", "", "", ""),
+    c("V2, V3 (L)", col(function(m, t) paste(num(m$v2), num(m$v3), sep = ", "))),
+    c("CL2, CL3 (L/min)", col(function(m, t) paste(num(m$cl2), num(m$cl3), sep = ", "))),
+    c("k10 (1/min)", col(function(m, t) num(m$k10))),
+    c("k21, k31 (1/min)", col(function(m, t) paste(num(m$k21), num(m$k31), sep = ", "))),
+    c("**After a steady-state infusion**", "", "", ""),
+    c("Share of the concentration in each exponential, fastest first",
+      col(function(m, t) paste0(round(100 * heldInfusionCoefficients(m, Inf)), "%", collapse = ", "))),
+    c("50% decrement (min)", col(function(m, t) num(heldInfusionDecrementTime(m, Inf)))),
+    c("50% decrement in the editorial (min)", col(function(m, t) num(t$decrement50))),
+    c("80% decrement (min)", col(function(m, t) num(heldInfusionDecrementTime(m, Inf, 0.8))))
+  )
+  paste(c(
+    paste0("| | ", paste(tab$model, collapse = " | "), " |"),
+    "|---|---|---|---|",
+    vapply(rows, function(r) paste0("| ", paste(r, collapse = " | "), " |"), character(1))
+  ), collapse = "\n")
+}
+
+#' The Duzitol editorial's three models, simulated, as a figure
+#'
+#' Two stacked panels for inst/help/models/why-simulate.md, drawn from
+#' R/duzitol.R rather than from stored numbers: above, the context-sensitive
+#' half-time (the 50% decrement time after an infusion that held the plasma
+#' concentration constant) against the length of the infusion, 0 to 600 min,
+#' as the editorial's Figure 1 plots it; below, the plasma concentration
+#' after stopping a steady-state infusion, with the 50% and 20% lines, where
+#' the order of the three models changes.  One HTML block with no blank line,
+#' so commonmark passes it through whole.
+#'
+#' @param drugDefaults unused; every block takes it
+#' @returns the figure, as one HTML string
+#' @noRd
+helpDuzitolFigure <- function(drugDefaults = NULL) {
+  ms   <- duzitolModels()
+  cols <- c("#2c3e50", "#c0392b", "#0072b2")
+  durations <- seq(0, 600, by = 5)
+  csht <- lapply(ms, function(m)
+    vapply(durations, function(d) heldInfusionDecrementTime(m, d), numeric(1)))
+  after <- seq(0, 300, by = 1)
+  fall  <- lapply(ms, function(m) 100 * plasmaAfterHeldInfusion(m, Inf, after))
+
+  W <- 640; H <- 520; left <- 52; right <- 14
+  xrA <- c(0, 600); yrA <- c(0, 50); xrB <- c(0, 300); yrB <- c(0, 100)
+  topA <- 34; botA <- 214; topB <- 292; botB <- 470
+  f   <- function(v) sprintf("%.1f", v)
+  sxA <- function(x) left + (x - xrA[1]) / diff(xrA) * (W - left - right)
+  sxB <- function(x) left + (x - xrB[1]) / diff(xrB) * (W - left - right)
+  sA  <- function(y) botA - (y - yrA[1]) / diff(yrA) * (botA - topA)
+  sB  <- function(y) botB - (y - yrB[1]) / diff(yrB) * (botB - topB)
+  pA  <- function(x, y) paste0("M", paste(f(sxA(x)), f(sA(y)), sep = ",", collapse = " L"))
+  pB  <- function(x, y) paste0("M", paste(f(sxB(x)), f(sB(y)), sep = ",", collapse = " L"))
+
+  frame <- function(sx, xr, xTicks, sy, yTicks, bot) c(
+    sprintf('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="#e3e8ec"/>',
+            f(sx(xr[1])), f(sy(yTicks)), f(sx(xr[2])), f(sy(yTicks))),
+    sprintf('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="#4a5764"/>',
+            f(sx(xr[1])), f(sy(yTicks[1])), f(sx(xr[2])), f(sy(yTicks[1]))),
+    sprintf('<text x="%s" y="%s" text-anchor="end" dominant-baseline="middle">%d</text>',
+            f(sx(xr[1]) - 6), f(sy(yTicks)), as.integer(yTicks)),
+    sprintf('<text x="%s" y="%s" text-anchor="middle">%d</text>',
+            f(sx(xTicks)), f(bot + 16), as.integer(xTicks)))
+
+  # Labels where no curve runs: above the 50% line once every curve is below
+  # it, below the 20% line before any curve reaches it
+  thresholds <- sprintf(paste0(
+    '<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="#7b8a8b" stroke-dasharray="5,4"/>',
+    '<text x="%s" y="%s" fill="#7b8a8b">%s</text>'),
+    f(sxB(xrB[1])), f(sB(c(50, 20))), f(sxB(xrB[2])), f(sB(c(50, 20))),
+    f(sxB(c(60, 4))), f(sB(c(50, 20)) + c(-5, 14)), c("50% decrement", "80% decrement"))
+
+  curves <- c(
+    unlist(Map(function(y, col) sprintf(
+      '<path d="%s" fill="none" stroke="%s" stroke-width="2.5"/>', pA(durations, y), col),
+      csht, cols)),
+    unlist(Map(function(y, col) sprintf(
+      '<path d="%s" fill="none" stroke="%s" stroke-width="2.5"/>', pB(after, y), col),
+      fall, cols)))
+
+  # The legend sits in the gap between the curves on the right
+  legendY <- f(sA(c(35, 30.5, 26)))
+  legend <- sprintf(paste0(
+    '<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="%s" stroke-width="2.5"/>',
+    '<text x="%s" y="%s" dominant-baseline="middle" fill="%s">%s</text>'),
+    f(sxA(330)), legendY, f(sxA(330) + 24), legendY, cols,
+    f(sxA(330) + 30), legendY, cols, names(ms))
+
+  titles <- c(
+    sprintf('<text x="%s" y="%s" font-weight="600">%s</text>', f(left), f(topA - 14),
+            "Context-sensitive half-time: plasma held constant by TCI, then stopped"),
+    sprintf('<text x="%s" y="%s" font-weight="600">%s</text>', f(left), f(topB - 14),
+            "Plasma concentration after stopping a steady-state infusion"),
+    sprintf('<text x="%s" y="%s" text-anchor="middle">%s</text>',
+            f((sxA(xrA[1]) + sxA(xrA[2])) / 2), f(botA + 34),
+            "Duration of the infusion (min)"),
+    sprintf('<text x="%s" y="%s" text-anchor="middle">%s</text>',
+            f((sxB(xrB[1]) + sxB(xrB[2])) / 2), f(H - 10),
+            "Time since the infusion stopped (min)"),
+    sprintf('<text transform="translate(13,%s) rotate(-90)" text-anchor="middle">Half-time (min)</text>',
+            f((sA(yrA[1]) + sA(yrA[2])) / 2)),
+    sprintf('<text transform="translate(13,%s) rotate(-90)" text-anchor="middle">%% of maintained</text>',
+            f((sB(yrB[1]) + sB(yrB[2])) / 2)))
+
+  ss50 <- vapply(ms, heldInfusionDecrementTime, numeric(1), duration = Inf)
+  label <- paste0(
+    "Context-sensitive half-times of the three models of the Duzitol editorial, ",
+    "for infusions of 0 to 600 minutes, and the plasma concentration after ",
+    "stopping a steady-state infusion. After a steady-state infusion the 50% ",
+    "decrement takes ", helpFormatNumber(ss50[1]), " minutes for Duzitol in normal subjects, ",
+    helpFormatNumber(ss50[2]), " in hepatic failure and ", helpFormatNumber(ss50[3]),
+    " for propofol: hepatic failure, whose half-lives are four times longer, is the fastest.")
+  svg <- c(
+    sprintf(paste0('<svg viewBox="0 0 %d %d" role="img" aria-label="%s" font-size="12" ',
+                   'font-family="inherit" style="width:100%%;max-width:640px;height:auto">'),
+            W, H, label),
+    frame(sxA, xrA, seq(0, 600, by = 100), sA, seq(0, 50, by = 10), botA),
+    frame(sxB, xrB, seq(0, 300, by = 50), sB, seq(0, 100, by = 20), botB),
+    thresholds, curves, legend, titles, "</svg>")
+  paste(c(
+    '<figure class="help-figure">',
+    svg,
+    paste("<figcaption>The three models of Table 1 of Shafer and Stanski's 1992 editorial,",
+          "built from the table's six numbers each and simulated. Above, the time for the",
+          "plasma concentration to fall by half after a target-controlled infusion held it",
+          "constant for the time on the axis; below, the fall after a steady-state infusion.",
+          "Drawn by stanpumpR from the same three-compartment algebra the page's appendix",
+          "derives.</figcaption>"),
+    "</figure>"
+  ), collapse = "\n")
+}
+
 HELP_GENERATED_BLOCKS <- list(
+  "duzitol-model-table" = helpDuzitolModelTableMarkdown,
+  "duzitol-figure" = helpDuzitolFigure,
   "route-table" = helpRouteTableMarkdown,
+  "ig-absorption-figure" = helpIGAbsorptionFigure,
   "minto-schnider-table" = helpAlternativeModelTableMarkdown,
   "pregnancy-table" = helpPregnancyTableMarkdown,
   "illicit-pk-table" = helpIllicitPKTableMarkdown,
   "james-lbm-figure" = helpJamesLBMFigure,
   "vasoactive-registry-table" = helpVasoactiveRegistryMarkdown,
   "vasoactive-to-obtain" = helpVasoactiveToObtainMarkdown,
+  "parkinsons-products-table" = helpParkinsonsProductsMarkdown,
+  "parkinsons-registry-table" = helpParkinsonsRegistryMarkdown,
+  "parkinsons-to-obtain" = helpParkinsonsToObtainMarkdown,
   "antibiotic-mbc-table" = helpAntibioticMbcBandMarkdown,
   "antiseizure-interaction-table" = helpAntiseizureInteractionTableMarkdown,
-  "antiseizure-interaction-sources" = helpAntiseizureInteractionSourcesMarkdown
+  "antiseizure-interaction-sources" = helpAntiseizureInteractionSourcesMarkdown,
+  "field-readers-table" = helpFieldReadersTableMarkdown,
+  "pk-converter" = helpPKConverterHTML
 )

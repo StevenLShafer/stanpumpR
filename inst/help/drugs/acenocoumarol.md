@@ -4,7 +4,7 @@ This is a research and teaching model. The plotted INR is **not** validated clin
 
 ### The model
 
-Acenocoumarol is the **4'-nitro coumarin analogue of warfarin**, a vitamin-K antagonist widely used in Europe. It is modelled by Verstuyft and colleagues (*Clin Pharmacokinet* 2012;51(1):41-53), who studied a single 4 mg dose in 24 healthy White subjects and fitted a combined pharmacokinetic–pharmacodynamic model in Monolix.
+Acenocoumarol is the **4'-nitro coumarin analogue of warfarin**, a vitamin-K antagonist widely used in Europe. It is modelled by Verstuyft and colleagues (*Clin Pharmacokinet* 2012;51(1):41-53), who gave 24 healthy White subjects two 4 mg doses 24 hours apart, sampling after the second, and fitted a combined pharmacokinetic–pharmacodynamic model in Monolix.
 
 Acenocoumarol is given as the racemate, but the INR is driven by the **S-enantiomer** alone (R-acenocoumarol was not a predictor of the response). So only S-acenocoumarol is modelled, taking **half of each racemic dose**. Its **apparent** (/F) disposition is two-compartment with first-order oral input and a lag:
 
@@ -30,7 +30,7 @@ The INR is a delayed, non-linear turnover endpoint, so it is computed from the S
 
 ### Where to be careful
 
-The model was fitted to a single dose in healthy volunteers; the steady-state INR shown here comes from repeated dosing of that single-dose model, not from a maintenance-therapy fit. Acenocoumarol clears quickly, so its daily-dose INR swings through the day and its simulated steady-state peak is more sensitive to the dosing schedule than fluindione's; the paper does not state the maintenance dose or the definition behind its steady-state table, so the simulated value here is within roughly 20–30% of the paper's Table IV INRmax rather than an exact match. The model is not a dosing algorithm and does not represent vitamin K, drug interactions, or the between-patient variability that makes vitamin-K-antagonist dosing individual.
+The model was fitted to two doses 24 hours apart in healthy volunteers; the steady-state INR shown here comes from repeated dosing of that model, not from a maintenance-therapy fit. Acenocoumarol clears quickly, so its daily-dose INR swings through the day and its simulated steady-state peak is more sensitive to the dosing schedule than fluindione's; the paper does not state the maintenance dose or the definition behind its steady-state table, so the simulated value here is within roughly 20–30% of the paper's Table IV INRmax rather than an exact match. The model is not a dosing algorithm and does not represent vitamin K, drug interactions, or the between-patient variability that makes vitamin-K-antagonist dosing individual.
 
 ### Further reading
 

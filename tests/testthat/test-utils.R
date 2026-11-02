@@ -1,12 +1,3 @@
-test_that("%btwn% is inclusive and vectorized", {
-  expect_true(5 %btwn% c(1, 10))
-  expect_true(1 %btwn% c(1, 10))
-  expect_true(10 %btwn% c(1, 10))
-  expect_false(0 %btwn% c(1, 10))
-  expect_false(11 %btwn% c(1, 10))
-  expect_equal(c(0, 5, 11) %btwn% c(1, 10), c(FALSE, TRUE, FALSE))
-})
-
 test_that("isEmailValid accepts well-formed single addresses", {
   expect_true(isEmailValid("a@b.com"))
   expect_true(isEmailValid("steve.shafer@stanford.edu"))

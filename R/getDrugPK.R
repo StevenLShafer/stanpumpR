@@ -38,7 +38,8 @@
 #'   `R/renalFunction.R`.
 #' @param pregnant is the patient pregnant?  TRUE or FALSE (the default).
 #'   Passed only to the models that name it (R/pregnancy.R lists them), which
-#'   apply the changes of late pregnancy measured for that drug
+#'   apply drug-specific, derived, or renal-physiology adjustments for late
+#'   pregnancy as documented in the pregnancy registry
 #'   (inst/extdata/pregnancyRegistry.csv); every other model ignores it.
 #'   TRUE requires \code{sex = "female"}.
 #' @param gestationalAge gestational age at birth in weeks, or NULL (the
@@ -233,9 +234,17 @@ getDrugPK <- function(
   if (!is.null(zeroOrderPO))
   {
     X$PK <- lapply(X$PK, oralReleaseToTissueDepot)
-    X$zeroOrderSC <- list(fraction = 1, duration = zeroOrderPO$duration, into = "depot")
+    X$zeroOrderSC <- list(fraction = zeroOrderPO$fraction, duration = zeroOrderPO$duration,
+                          into = zeroOrderPO$into)
   }
   zeroOrderSC <- validateZeroOrderSC(X$zeroOrderSC, X$PK, drug)
+  # A continuous enteral infusion through the gut's absorption (the levodopa
+  # intestinal gels; R/enteral.R).  A drug absorbed through a transit chain
+  # takes the rate into the head of its chain (R/advanceTransitChain.R); any
+  # other is carried on the tissue depot, like the oral release above.
+  enteralInfusion <- validateEnteralInfusion(X$enteralInfusion, X, drug)
+  if (enteralInfusion && is.null(X$transitChain))
+    X$PK <- lapply(X$PK, oralReleaseToTissueDepot)
 
   # Zero-order oral release (carvedilol, R/oral-zero-order.R): validated and
   # its incompatibilities refused up front, before the absorption checks
@@ -1246,6 +1255,10 @@ getDrugPK <- function(
   # TRUE when that release takes the oral doses (simCpCe() moves them onto
   # the tissue depot); absent otherwise, so every other drug's PK is as it was.
   if (!is.null(zeroOrderPO)) out$zeroOrderPO <- TRUE
+  # TRUE for a drug infused into the gut (R/enteral.R): simCpCe() moves its
+  # oral rows and its enteral rate rows onto the tissue depot, unless it is
+  # absorbed through a transit chain, whose engine takes the rate itself.
+  if (enteralInfusion) out$enteralInfusion <- TRUE
   # Dose covariates, a property of each injection (the Tham insulins,
   # R/insulinTham.R): a bioavailability that scales each SC dose by its own
   # size, and, for a model whose disposition or ka depends on the dose, the
@@ -1285,14 +1298,17 @@ getDrugPK <- function(
   # parameters rather than a set of amplitudes.
   if (!is.null(X$transitChain))
   {
+    # A dose-dependent oral bioavailability is allowed: simCpCe() scales each
+    # oral dose before it dispatches, so the chain sees an ordinary dose
+    # (opicapone, PR #548).
     if (!is.null(X$metabolite) || !is.null(X$oralFormulations) ||
-        !is.null(X$oralSaturation) || !is.null(X$sublingualSaturation) ||
+        !is.null(X$sublingualSaturation) ||
         !is.null(X$parallelSystems) || !is.null(X$michaelisMenten) ||
         !is.null(X$osmotic) || !is.null(X$molar) || !is.null(X$oralPulses) ||
         !is.null(X$oralZeroOrder) || !is.null(X$dosePhase) ||
         isTRUE(X$doseDependent) || !is.null(X$inr))
       stop("Invalid transitChain for ", drug, ": not available with an ",
-           "X$metabolite block, several oral formulations, saturable oral or ",
+           "X$metabolite block, several oral formulations, saturable ",
            "sublingual absorption, parallel systems, Michaelis-Menten ",
            "elimination, an osmotic or molar dose basis, pulsed or zero-order ",
            "oral release, a dose-phase split, dose-dependent parameters or ",

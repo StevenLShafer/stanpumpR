@@ -22,9 +22,9 @@ patient's fat-free mass as described in the
 file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
 
-\item{pregnant}{when \code{TRUE}, apply the changes of late pregnancy:
-every clearance and volume of both enantiomers x 1.5 (see the file's
-header)}
+\item{pregnant}{when \code{TRUE}, apply the changes of late pregnancy
+(Kulo 2017): S-ketorolac clearance x 1.68 and volumes x 1.20,
+R-ketorolac clearance x 2.00 and volumes x 1.33 (see the file's header)}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects, with the R

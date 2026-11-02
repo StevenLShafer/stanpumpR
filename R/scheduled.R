@@ -187,6 +187,22 @@ expandScheduledDoses <- function(dose, maximum) {
   list(dose = out, scheduled = scheduled)
 }
 
+# How many repeats the scheduled rows of a whole dose table (Time in minutes)
+# expand to over a plot ending at `maximum`, counted without building them, so
+# the app can refuse a schedule beyond MAX_SCHEDULED_DOSES before simulating it.
+scheduledDoseCount <- function(DT, maximum) {
+  if (is.null(DT) || nrow(DT) == 0 || !any(isScheduledUnit(DT$Units))) return(0L)
+  total <- 0L
+  for (drug in unique(DT$Drug[isScheduledUnit(DT$Units)])) {
+    sequences <- scheduledSequences(DT[DT$Drug == drug, , drop = FALSE])$sequences
+    for (i in seq_len(nrow(sequences))) {
+      total <- total + length(sequenceRepeats(sequences$start[i], sequences$stop[i],
+                                              sequences$interval[i], maximum))
+    }
+  }
+  total
+}
+
 # The dose table as exported: the rows the user typed, then every drug's TCI
 # infusion rows and repeated scheduled doses, so that the full dose sequence
 # appears.  Time is in minutes.  With a `timeUnit` other than minutes (the
@@ -238,16 +254,14 @@ exportDoseTable <- function(DT, drugs, timeUnit = "minutes") {
 #            offered
 # format, reference: the dose table's time format and the procedure start
 #            (minutesToEntryTime())
-# units:     the units the drug offers (kept for the caller's signature; the
-#            stop is now always written in the schedule's own scheduled unit,
-#            "0 mg PO qam", "0 mg PO bid", "0 mg IM qid", so it stops only the
-#            one schedule's lane)
+# The stop is always written in the schedule's own scheduled unit ("0 mg PO
+# qam", "0 mg PO bid", "0 mg IM qid"), so it stops only that schedule's lane.
 #
 # Returns NULL when there is no such dose, else list(table, time, resumes,
 # dose, units): the new table, the time of the dose skipped, the time the
 # schedule resumes (NA if it does not), and the schedule's dose and unit.
 skipNextScheduledDose <- function(dt, drug, time, maximum, format,
-                             reference = REFERENCE_TIME_NONE, units = NULL) {
+                             reference = REFERENCE_TIME_NONE) {
   rows <- which(as.character(dt$Drug) == drug)
   if (length(rows) == 0) return(NULL)
   d <- data.frame(

@@ -20,7 +20,10 @@
 # A, Fuzellier J-F, Mismetti P, Gergele L.  Pharmacokinetic/pharmacodynamic
 # model for unfractionated heparin dosing during cardiopulmonary bypass.  Br J
 # Anaesth 2017;118:705-712.  Fifty consecutive adults at cardiac surgery with
-# bypass, 300 IU/kg bolus then 5000-IU boluses to keep ACT < 400 s; 361 anti-Xa
+# bypass, 300 IU/kg bolus then 5000-IU boluses to keep ACT > 400 s (the
+# Methods and Discussion; the abstract prints "<400 s", which is the opposite
+# of the paper's stated aim and of what it reports all patients achieved --
+# an apparent abstract typo, not a second value to reconcile); 361 anti-Xa
 # activities and 341 ACT values; MONOLIX, joint PK/PD.  Table 2, read from the
 # full text on 2026-10-20.
 #

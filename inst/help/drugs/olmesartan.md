@@ -50,4 +50,4 @@ Neither is modelled. The source fitted no pharmacodynamic model of any kind, and
 
 The absorption rate constant had by far the largest interindividual variability in the model — a variance of 1.64, against 0.116 for clearance — so the first two hours after a dose are the least reliable part of any individual curve, even though the typical shape is well determined by 7911 observations.
 
-Olmesartan is also a **pregnancy contraindication**, not merely an unstudied drug: the angiotensin receptor blockers carry a boxed warning for fetal toxicity. The registry records that there are no pregnancy pharmacokinetic studies and none should be expected, and the physiological rise in filtration of pregnancy is deliberately not applied to the creatinine term here, because it would draw a faster, healthier-looking curve for a patient who should not be taking the drug.
+The physiological rise in filtration of pregnancy is deliberately not applied to the creatinine term here, because olmesartan is contraindicated in pregnancy and the rise would draw a faster, healthier-looking curve for a patient who should not be taking the drug.

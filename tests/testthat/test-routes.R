@@ -57,8 +57,9 @@ test_that("every unit offered before the oral rate keeps its exact classificatio
   # "mg/day PO" can be a rate; for every other unit the answer must be the
   # one it always was.
   # The rate units that arrived later (the oral daily rate, the continuous
-  # RA infusion, the insulin pump) are rates by design and are left out.
-  later <- c(poRateUnits, raRateUnits, insulinRateUnits)
+  # RA infusion, the insulin pump, the enteral infusion of levodopa gel) are
+  # rates by design and are left out.
+  later <- c(poRateUnits, raRateUnits, insulinRateUnits, enteralRateUnits)
   units <- unique(c(setdiff(allUnits, later), gasUnits, tciUnits, scheduledUnits,
                     unlist(getDrugDefaultsGlobal()$Units)))
   units <- setdiff(units, later)
@@ -151,6 +152,9 @@ test_that("the rising and power forms give the fractions they declare", {
   power <- list(form = "power", exponent = 0.363, Dref = 25)
   expect_equal(oralSaturationFraction(c(12.5, 25, 50), power),
                c(0.5^0.363, 1, 2^0.363))
+  # A dose of 0 keeps the formula under a positive exponent (0); only a
+  # negative one, infinite there, is given 1 (test-ui-robustness.R)
+  expect_equal(oralSaturationFraction(c(0, 25), power), c(0, 1))
   # The saturable form is the default, with or without the field
   expect_equal(oralSaturationFraction(300, list(form = "saturable", Imax = 0.906, ID50 = 571)),
                oralSaturationFraction(300, list(Imax = 0.906, ID50 = 571)))

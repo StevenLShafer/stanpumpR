@@ -23,7 +23,25 @@
 #
 #     CLr/F  = theta_slope1 . CLcr                         if CLcr <= 90
 #     CLr/F  = (theta_slope1 - s2) . 90 + s2 . CLcr        if CLcr > 90
-#     CL/F   = (CLnr/F + CLr/F) . (WT / 70)^0.75           (Eqs 2-5)
+#
+# Equations 2-5 themselves put the allometric weight term on CLnr/F ONLY
+# (CLnr/F = theta1 . (WT/70)^0.75), with CLr/F the CLcr slope term alone (and
+# CLcr already carrying weight through Cockcroft-Gault); this is also what the
+# Results text and Table 3 footnote's per-term listing say. Here instead:
+#
+#     CL/F   = (CLnr/F + CLr/F) . (WT / 70)^0.75
+#
+# which puts the weight term on the WHOLE apparent clearance. This is a
+# DELIBERATE DEPARTURE from Eqs 2-5, not a transcription of them: Steven L.
+# Shafer decided (2026-10-27, papers/digests/PMID_26218447.md) to keep weight
+# on the whole CL/F because a renal clearance that ignores body size is
+# implausible, and because the Table 3 footnote's own shorthand ("CL/F =
+# theta . (WT/70)^0.75") can be read as supporting it even though the
+# equations and Results text do not. At the typical Hokusai patient (80.5 kg,
+# CLcr 99 mL/min) the paper's own equations give CL/F about 36.1 L/h against
+# this repo's 38.3 L/h (+6%), a gap that grows with weight and renal
+# clearance; that comparison is illustrative of the departure, not a
+# validation of either number.
 #
 # with theta_slope1 = 0.202 L/h per mL/min and the second (above-90) slope s2.
 # In phase 1 s2 = theta_slope2 = 0.0321.  The phase 3 patients had a steeper
@@ -46,8 +64,10 @@
 # intercompartmental clearance (Q/F x (1 + 0.646) = 9.73 L/h, the "+64.6%" from
 # the abstract, Table 3 footnote) is used, no P-gp factor is applied (phase 1
 # only: a P-gp inhibitor raised CL/F 17-53% and F 67-181%), and the "study 6"
-# non-renal clearance (18.3 L/h) and ka change (+69%), which belong to one
-# phase 1 renal-impairment study, are not used.  Race is fixed to non-Asian;
+# non-renal clearance (18.3 L/h) and ka change (a 69% DECREASE, ka x (1 -
+# 0.690)), which belong to the dronedarone-interaction study (the only fed
+# study in the pool; the renal-impairment study is study 1), are not used.
+# Race is fixed to non-Asian;
 # Asian patients had a 22.6% higher Vc/F (on the volume, not the clearance, so
 # the same steady-state exposure).  The typical Hokusai patient (80.5 kg, CLcr
 # 99 mL/min) then has CL/F about 38 L/h and a terminal half-life of 9.7 h,

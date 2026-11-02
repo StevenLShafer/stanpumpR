@@ -73,7 +73,8 @@ passed only to models that name it (methadone).}
 
 \item{pregnant}{is the patient pregnant?  TRUE or FALSE (the default).
 Passed only to the models that name it (R/pregnancy.R lists them), which
-apply the changes of late pregnancy measured for that drug
+apply drug-specific, derived, or renal-physiology adjustments for late
+pregnancy as documented in the pregnancy registry
 (inst/extdata/pregnancyRegistry.csv); every other model ignores it.
 TRUE requires \code{sex = "female"}.}
 

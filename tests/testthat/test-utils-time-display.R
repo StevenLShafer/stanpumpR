@@ -9,10 +9,8 @@ local_mocked_bindings(outputComments = function(...) {})
 test_that("the display table's minutes per unit are the usual ones", {
   expect_equal(TIME_UNIT_DISPLAY$unit, c("minutes", "hours", "days", "weeks"))
   expect_equal(TIME_UNIT_DISPLAY$minutes, c(1, 60, 1440, 10080))
-  # ...and agree with the entry side's table, once both halves are present
-  if (exists("TIME_UNITS")) {
-    expect_equal(unname(TIME_UNITS[TIME_UNIT_DISPLAY$unit]), TIME_UNIT_DISPLAY$minutes)
-  }
+  # ...and agree with the entry side's table
+  expect_equal(unname(TIME_UNITS[TIME_UNIT_DISPLAY$unit]), TIME_UNIT_DISPLAY$minutes)
   expect_error(formatElapsed(1, "fortnights"), "Unknown time unit")
   expect_error(axisTimeLabels(0, c("days", "weeks")), "Unknown time unit")
 })

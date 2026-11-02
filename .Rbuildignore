@@ -10,7 +10,6 @@
 ^doc$
 ^Meta$
 ^\.renvignore$
-^\.rscignore$
 ^Slides$
 ^Original Stanpump$
 ^\.secrets$

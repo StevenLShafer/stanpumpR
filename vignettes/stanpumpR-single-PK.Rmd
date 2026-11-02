@@ -1,9 +1,9 @@
 ---
-title: "Single drug plasma and effect size concentration calculation with stanpumpR"
+title: "Single drug plasma and effect site concentration calculation with stanpumpR"
 output: rmarkdown::html_vignette
 author: Alexander Clarke
 vignette: >
-  %\VignetteIndexEntry{Single drug plasma and effect size concentration calculation with stanpumpR}
+  %\VignetteIndexEntry{Single drug plasma and effect site concentration calculation with stanpumpR}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -22,7 +22,7 @@ maximum <- 60
 plotRecovery <- FALSE
 ```
 
-Initialize the drug administration events table. Each row represent either a bolus or a change in the infusion rate.
+Initialize the drug administration events table. Each row represents either a bolus or a change in the infusion rate.
 
 ```{r}
 doseTable <- data.frame(
@@ -39,7 +39,7 @@ Initialize an empty events table. The table is used by the Shiny app interface f
 eventTable <- data.frame( Time = double(), Event = character())
 ```
 
-Load the pharmacokinetic model parameters. The drug defaults table is loaded for the the specific drug, with default parameters for typical concentration levels, MEAC and emergence/return of spontaneous ventilation.
+Load the pharmacokinetic model parameters. The drug defaults table is loaded for the specific drug, with default parameters for typical concentration levels, MEAC and emergence/return of spontaneous ventilation.
 
 ```{r}
 PK <- stanpumpR::getDrugPK(

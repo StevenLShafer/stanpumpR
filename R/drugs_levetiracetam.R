@@ -80,8 +80,10 @@
 #
 # With the Patient Profile's Pregnant field on, the TOTAL clearance (cl1,
 # renal and non-renal together) is multiplied by
-# LEVETIRACETAM_PREGNANCY_CL_FACTOR = 1.6.  The third-trimester ratios are
-# Duan 1 / (1 - 0.310) = 1.45, MONEAD 11.33 / 7.16 = 1.58, Lopez-Fraile 1 /
+# LEVETIRACETAM_PREGNANCY_CL_FACTOR = 1.6.  The ratios are the largest
+# gestational fall each study reports: Duan's third-trimester 1 / (1 - 0.310)
+# = 1.45, MONEAD's second-trimester 11.33 / 7.16 = 1.58 (its third-trimester
+# median is 7.6, a smaller 1.49), Lopez-Fraile's third-trimester 1 /
 # 0.62 = 1.61, Westin 1 / 0.50 = 2.0 and Tomson 1 / 0.40 = 2.5: the two large
 # prospective cohorts give 1.45-1.58, the three small series 1.6-2.5
 # (geometric mean of all five 1.79), and 1.6 is weighted toward the large

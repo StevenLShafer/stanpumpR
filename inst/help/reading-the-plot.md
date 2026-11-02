@@ -2,24 +2,26 @@ Each drug in the dose table gets its own panel, labelled with the drug's name an
 
 ## Plasma and effect site
 
-Each drug can be drawn as two lines:
+Each drug can be drawn as up to two lines:
 
-- **Plasma** concentration: what an arterial sample would contain. Hidden by default.
-- **Effect site** concentration: the concentration at the site of drug action, which lags the plasma. This is usually what you care about clinically, and it is drawn solid by default.
+- **Plasma** concentration: the concentration the drug's PK model treats as plasma. Hidden by default.
+- **Effect site** concentration: the concentration at the site of drug action, which lags the plasma, for a drug whose model has one. This is usually what you care about clinically, and where it exists it is drawn solid by default.
 
 Both are configurable under **Graph Options → Plasma line / Effect site line**, including turning either off. The lag between them, and why the effect site keeps rising after a bolus while the plasma falls, is explained under [The effect site and ke0](help:models/effect-site).
 
 For the inhaled agents the "plasma" line is the alveolar (end-tidal) tension and the "effect site" line is the vessel-rich group (brain) tension.
 
+**What "Plasma" means varies by drug, and some drugs have no effect site at all.** "Plasma" is generic shorthand for whatever specimen and analyte the drug's source model was fitted to: it can be arterial or venous blood, serum rather than plasma, total drug or only the free fraction, or, for a few drugs, not a concentration at all (calcium's line is the *change* in venous serum ionized calcium above the patient's own baseline). A drug without a validated human equilibration rate for its effect — amiodarone is one — has no effect-site line regardless of this setting, and plots only its plasma/serum curve. The individual drug's Help page states its specimen, analyte and whether it has an effect site; this page's "Plasma" and "Effect site" are only the controls' names, not a claim that every drug's lines mean the same thing.
+
 ## The shaded band
 
-**Graph Options → Show typical** controls a shaded band behind each drug:
+**Graph Options → Show typical** controls a shaded reference band behind each drug:
 
-- **Range**: the usual therapeutic range for that drug, from the *Lower* and *Upper* values in the drug library.
+- **Range**: the band for that drug, from the *Lower* and *Upper* values in the drug library.
 - **Mid**: a narrow band at the typical concentration, plus or minus 5 per cent.
 - **none**: no band.
 
-The band is orientation, not a target. It is a published typical range for a typical indication, and it can be edited under [Drug Library](help:drug-library).
+The band is orientation, not a target, and **its evidentiary basis varies by drug**: for most drugs it is a published therapeutic reference range (an analyte, matrix and sampling time stated on the drug's own page), but for some it is a different kind of reference — an anaesthetic's effect-site target, an opioid's MEAC multiple, an antibiotic's expected MBC band, or, where no validated window has been published, an illustrative band built from simulating published doses rather than a clinical treatment range (buprenorphine's band is one such case, stated as not validated on its own Help page). Read the drug's Help page before treating the band as a therapeutic window, and note which line (plasma or effect site) the band is drawn against, since a plasma-sampled reference range is not automatically comparable to an effect-site curve. It can be edited under [Drug Library](help:drug-library).
 
 ## The time-until-threshold line
 

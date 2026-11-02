@@ -282,16 +282,21 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # inside the apparent scale.  See R/oral-zero-order.R.
     dose <- expandOralZeroOrder(dose, PK$oralZeroOrder, maximum)
 
-    # Convert all doses to base units
+    # Convert all doses to base units.  mg_Conv/mcg_Conv/ng_Conv are the
+    # factors that turn a dose given in that mass unit into the internal
+    # amount unit implied by Concentration.Units (amounts in the base unit,
+    # volumes in L, so mass/volume stays dimensionally consistent with the
+    # plotted concentration unit, e.g. mcg/mL = mg/L): each dose is divided
+    # by its matching factor below.
     switch(
       PK$Concentration.Units,  # Units (per ml)
-      mcg = {                  # 1 mcg/ml = 1000 mg/L
+      mcg = {                  # 1 mcg/ml = 1 mg/L
         mg_Conv  <- 1          # 1 mcg/ml = 1 mg / L
         mcg_Conv <- 1000       # 1 mcg/ml = 1,000 mcg / L
         ng_Conv  <- 1000000    # 1 mcg/ml = 1,000 mcg / L = 1,000,000 ng / L
       },
-      ng = {                   # 1 ng/ml = 1000 mcg/L
-        mg_Conv  <- .001       # 1 ng/ml = 0.001 mcg/ml = 0.001 mg/L80
+      ng = {                   # 1 ng/ml = 1 mcg/L
+        mg_Conv  <- .001       # 1 ng/ml = 0.001 mcg/ml = 0.001 mg/L
         mcg_Conv <- 1        # Native unit
         ng_Conv  <- 1000
       },
@@ -426,6 +431,22 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # RA in one table stopped with an error, or, when the lengths happened to
     # divide, had its rows mislabelled.  (Claude Code, 2026-10-10.)
     dose$Bolus <- route == ROUTE_IV & !rate
+    # A drug infused into the gut (the levodopa intestinal gels; R/enteral.R).
+    # Without a transit chain its gut absorption rides on the tissue depot, so
+    # its oral doses are tissue doses and its "mg/hr PO" rows a rate into that
+    # depot, which advanceClosedFormPO_IM_IN() carries exactly; with one, the
+    # rows stay oral and the chain's engine takes the rate into the head of the
+    # chain.  No other drug may take the rate.
+    enteralRate <- dose$Units %in% enteralRateUnits
+    if (any(enteralRate) && !isTRUE(PK$enteralInfusion))
+      stop(PK$drug, " is not given by enteral infusion (",
+           paste(enteralRateUnits, collapse = ", "), ").")
+    if (isTRUE(PK$enteralInfusion) && is.null(PK$transitChain))
+    {
+      dose$RA <- dose$RA | dose$PO
+      dose$RArate <- dose$RArate | enteralRate
+      dose$PO <- FALSE
+    }
     # Saturable oral absorption (gabapentin): each oral dose is scaled by the
     # fraction absorbed at its own size, in mg per administration.  The dose is
     # in the base unit here, and the base unit times mg_Conv is mg for every

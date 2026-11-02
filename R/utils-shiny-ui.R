@@ -278,52 +278,6 @@ lineTypeSelector <- function(inputId, label, selected) {
   htmltools::attachDependencies(tag, dep)
 }
 
-#' Create an input that has its label on its left, and the input takes
-#' the rest of the space
-#'
-#' @param tag A Shiny input tag.
-#' @return The input tag, restyled with an inline label.
-#' @noRd
-inputWithInlineLabel <- function(tag) {
-  css <- "
-    .input-inline-label {
-      display: flex;
-      align-items: center;
-      gap: 1.25rem;
-      margin-bottom: 1rem;
-    }
-    .input-inline-label .form-group {
-      margin-bottom: 0;
-    }
-    .input-inline-label .main-inline-input {
-      flex: 1;
-      min-width: 0;
-    }
-  "
-  dep <- htmltools::htmlDependency(
-    name = "input-inline-label-styles",
-    version = "1.0.0",
-    src = c(href = ""),
-    head = sprintf("<style>%s</style>", css)
-  )
-
-  tq <- htmltools::tagQuery(tag)
-  first_label <- tq$find(".control-label")$selectedTags()[[1]]
-  tag <- tq$find(sprintf("#%s", first_label$attribs$id))$remove()$allTags()
-
-  # For shinyWidgets::radioGroupButtons() we need to remove the extra <br>
-  if (tq$hasClass('shiny-input-radiogroup')) {
-    tag <- tq$find("br")$remove()$allTags()
-  }
-
-  tag <- div(
-    class = "input-inline-label",
-    first_label,
-    div(tag, class = "main-inline-input")
-  )
-  htmltools::attachDependencies(tag, dep)
-}
-
 # A bslib tooltip shown only while the pointer is over its control.  The
 # default trigger is "hover focus", so ticking a box focused it and pinned
 # the tip until something else was clicked (Steven L. Shafer, 2026-10-28:

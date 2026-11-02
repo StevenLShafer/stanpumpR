@@ -2,7 +2,12 @@
 
 stanpumpR is designed so that adding a drug is a small, self-contained change — the goal is to
 let outside investigators contribute and maintain the pharmacokinetics for individual drugs.
-A new drug touches **four** files, including a help page. None of the engine code needs to change.
+A new drug touches **six** files: the model, its row in the defaults CSV, its test, its help page, its
+pregnancy registry row and its therapeutic-range row. For every drug in the CSV, the tests fail
+without its help page (`test-help-drugs.R`); a drug with a `Category` also needs its pregnancy row
+(`test-pregnancy.R`) and its therapeutic-range row (`test-therapeutic-ranges.R`), as does a
+metabolite of one (a therapeutic-range row only), while the carrier gases and ventilation, with no
+`Category`, need neither. Nothing detects a missing test file, so that one is on you. None of the engine code needs to change.
 
 > Every model must handle body size the stanpumpR way — see
 > [weight-adjustment.md](weight-adjustment.md) and step 1 below. This is a requirement, not an option.
@@ -55,6 +60,14 @@ A new drug touches **four** files, including a help page. None of the engine cod
 > Prerequisite: read the [architecture map](architecture.md) first if you haven't. You only
 > need to understand the *drug library* pattern, not the closed-form solver.
 
+## Where candidates come from
+
+Papers reach the library two ways: a contributor brings one, or the weekly
+[literature watch](literature-watch.md) finds it. The watch is a scheduled Claude Code
+routine that searches PubMed for new pharmacokinetic studies of every drug already in the
+CSV and emails the maintainer the promising ones with an assessment. Either way the work
+below is the same, and it starts from the full paper, never from an abstract.
+
 ## 1. The model — `R/drugs_<name>.R`
 
 Create a file named after the drug (lowercase, matching the CSV `Drug` value). Export one
@@ -77,15 +90,15 @@ alfentanil <- function(weight, height, age, sex, adjustToFFM = TRUE)
     cl1 = 0.1988623 * size$clearance, cl2 = 1.433557 * size$clearance, cl3 = 0.2469389 * size$clearance
   )
 
-  events <- c("default")
+  events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
   tPeak <- 1.4         # minutes to peak effect (drives ke0)
   MEAC  <- 39          # minimum effective analgesic/anesthetic concentration
   typical      <- MEAC * 1.2
-  upperTypical <- MEAC * 0.8
-  lowerTypical <- MEAC * 2.0
-  reference    <- "JPET 1987;240:159-166"
+  lowerTypical <- MEAC * 0.8
+  upperTypical <- MEAC * 2.0
+  reference    <- "Scott JC, Stanski DR. J Pharmacol Exp Ther 1987;240(1):159-166. https://pubmed.ncbi.nlm.nih.gov/3100765/"
 
   list(
     PK = PK, tPeak = tPeak, MEAC = MEAC,
@@ -227,6 +240,23 @@ metabolite engine carries both depots, splitting the first-pass fraction between
 proportion to their bioavailabilities (aspirin, `R/drugs_aspirin.R`). Not available with several
 oral formulations, or a `tPeak` measured after an oral dose.
 
+**Optional — one transit compartment.** A source whose dose passes through one transit
+compartment before the central compartment, both emptied at the same rate (NONMEM's "depot
+and one transit compartment", levodopa and opicapone), declares a transit chain of two,
+`transitChain = list(n = 2L, ktr = <ka_PO>, kMetabolic = 0)` beside `ka_PO`, which the
+matrix-exponential engine solves exactly (`R/advanceTransitChain.R`; `R/drugs_levodopa.R`).
+A drug infused into the gut adds `enteralInfusion = TRUE` and offers `mg/hr PO`
+(`enteralRateUnits`, `R/enteral.R`): with a transit chain the rate enters the head of the
+chain (`R/drugs_levodopaIntestinalGel.R`); without one its gut absorption is carried on the
+tissue depot and the rate runs through it (`R/drugs_levodopaEntacaponeIntestinalGel.R`).
+
+**Optional — a zero-order share of an oral dose.** `zeroOrderPO = list(duration, into =
+"central", fraction)` gives that fraction of each oral dose into the circulation at a constant
+rate over the duration, beside the first-order depot that takes the rest (NONMEM's F1 into the
+depot and a modelled duration D2 into the central compartment: extended-release amantadine,
+`R/drugs_amantadineER.R`). Without `into`, the whole dose is released into the gut
+(canagliflozin).
+
 **Optional — parallel systems.** A drug whose plotted concentration is the sum of independent
 linear systems sharing its doses (ketorolac: the S and R enantiomers, fitted separately)
 returns `parallelSystems`, a list of `list(name, doseFraction, PK)` entries whose `PK` has the
@@ -280,8 +310,8 @@ citalopram). The drug's help page tabulates its clearance by phenotype automatic
 
 So do `cyp2b6 = CYP2B6_DEFAULT` (`CYP2B6_VALUES`, the same five CPIC terms; read by methadone,
 whose help page gets a generated clearance-by-phenotype table) and `cyp2c9 = CYP2C9_DEFAULT`
-(`CYP2C9_VALUES`, the six common diplotypes rather than phenotypes; read by phenytoin and
-meloxicam). A phenotype a source did not estimate is given the reference group's parameters
+(`CYP2C9_VALUES`, the six common diplotypes rather than phenotypes; read by phenytoin,
+meloxicam, warfarin, fluindione and acenocoumarol). A phenotype or diplotype a source did not estimate is given the reference group's parameters
 and the drug file says so: never interpolate silently.
 
 **Optional — an osmotic agent.** A drug reported as the serum osmolality it produces, rather
@@ -342,6 +372,14 @@ metabolite = list(
 `advanceClosedFormMetabolite()`; and `foldMetabolites()` adds the formed contribution to the
 metabolite drug's own row after every drug has been simulated, creating that row if the
 metabolite was never given directly. See `R/drugs_codeine.R` for a worked example.
+
+The parent must agree with the library's model of its metabolite (AGENTS.md, *Parents and their
+metabolites must agree*). The metabolite curve is drawn with that model, and only the ratio of
+formation to metabolite clearance is identifiable, so a formation fraction calibrated against a
+metabolite clearance must use the library's: read it with `libraryReferenceClearance("<metabolite>")`
+or by calling the model, never retype it. Add the pair to `METABOLITE_FORMATION_BASIS` in
+`R/metaboliteCoefficients.R` as `reads`, `shared` or `joint`; `test-metabolite-consistency.R` fails
+until you do. Revising a metabolite's model means checking every parent listed against it there.
 
 Four things to know before using it:
 
@@ -550,8 +588,11 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
 ```
 
 - `Drug` — must exactly match the R function name (this CSV is the source of the drug list).
-- `Concentration.Units` — `mcg` or `ng` per mL (sets the internal unit scaling in `simCpCe`),
-  `mOsm` for an osmotic agent, or `mmol` for a drug reported in mmol/L (see above).
+- `Concentration.Units` — `mcg`, `ng` or `pg` per mL (sets the internal unit scaling in `simCpCe`),
+  `mOsm` for an osmotic agent, `mmol` for a drug reported in mmol/L (see above), `IU` for an activity
+  in IU/mL (heparin and enoxaparin; `heparinCPB` is plotted as `ACT`), `mcU` for insulin and vasopressin (mcU/mL), `INR` or `ACT` for a drug
+  plotted as a clotting output (`R/inr.R`, `R/act.R`), and `%` or `L/min` for the inhaled agents and
+  ventilation. AGENTS.md describes each.
 - `Bolus.Units` / `Infusion.Units` / `Default.Units` — units offered in the dose grid.
 - `Units` — quoted comma-separated list of all selectable units, e.g. `"mcg,mcg/kg,mcg/kg/min"`.
   **Some unit strings enrol the drug in machinery elsewhere, so this column reaches
@@ -583,9 +624,12 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
   take a separate simulation path and have no `drugs_*.R` covariate function, so a new drug
   added by this procedure is `IV`.
 - `Category` — the group the drug is listed under in the menu the app opens with: one of
-  `DRUG_CATEGORIES` in `R/constants.R` (`Hypnotics and sedatives`, `Opioids`,
-  `Oral analgesics`, `Neuromuscular blockade`, `Inhaled anesthetics`, `Antibiotics`,
-  `Corticosteroids`, `Antidepressants`, `Stimulants`, `Local anesthetics`, `Antiemetics`, `Antipsychotics`, `Other`, `Illicit drugs`). Left blank, the drug is not offered there; only a metabolite with no units of its
+  `DRUG_CATEGORIES` in `R/constants.R`, whose order is the menu's (`Hypnotics and sedatives`,
+  `Opioids`, `Oral analgesics`, `Neuromuscular blockade`, `Inhaled anesthetics`, `Antibiotics`,
+  `Corticosteroids`, `Antidepressants`, `Stimulants`, `Local anesthetics`, `Antiemetics`,
+  `Antiseizure`, `Antipsychotics`, `Antidiabetic`, `Anticoagulants`, `Antihypertensives`,
+  `Vasoactive and resuscitation`, `Parkinson disease`, `Other`, `Illicit drugs`; the constant is the
+  authority). Left blank, the drug is not offered there; only a metabolite with no units of its
   own, and the carrier gases and ventilation, are blank. A new category goes into
   `DRUG_CATEGORIES`, and its checkbox id (`startupDrugs_<n>`) into `bookmarksToExclude` in
   `R/app_globals.R`. `test-startup-drugs.R` fails until both are done.
@@ -654,14 +698,14 @@ band columns agree with it, and the drug's help page prints the row.
 Example row (remifentanil):
 
 ```
-remifentanil,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/kg/min",#0000C0,0.8,2,1.2,1,1,IV,Opioids
+remifentanil,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/kg/min,Plasma target,Effect site target",#0000C0,0.8,2,1.2,1,1,IV,Opioids
 ```
 
 A prodrug sets `MEAC` to zero and uses the band columns for its own plasma concentration,
 since it has no effect site to band. Codeine's row is the example:
 
 ```
-codeine,ng,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO",#4A6FE3,50,150,100,0,0,IV
+codeine,ng,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h",#4A6FE3,50,150,100,0,0,IV,Opioids
 ```
 
 ## 3. The test — `tests/testthat/test-drugs-<name>.R`
@@ -733,7 +777,7 @@ caught by any filter derived from the diff.
 
 ### What else a new drug touches
 
-Beyond the four files above, a new drug may need registering in places that enumerate the
+Beyond the six files above, a new drug may need registering in places that enumerate the
 library by hand. These are **deliberately** hardcoded — `test-drugs-tramadol.R` says so:
 "because the count has been got wrong by hand more than once" — so adding yours to them is
 the intended maintenance step, not a weakening of the test.

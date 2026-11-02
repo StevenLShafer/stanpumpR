@@ -23,7 +23,3 @@ The shaded band (3 to 15 mcg/mL) covers the effect-site concentrations adult dos
 ### Where to be careful
 
 The source studied healthy adults only, and the model has no maturation term. It therefore overpredicts clearance, and underpredicts concentrations, in neonates and in infants under about a year, whose glucuronidation is still maturing. In older children it is allometric extrapolation. The model says nothing about hepatotoxicity, the toxic metabolite NAPQI, hepatic impairment, fed-state absorption or rectal administration.
-
-### Pregnancy
-
-With **Pregnant** ticked, the clearance is multiplied by 1.4 and both volumes by 1.14; the distribution clearance, the oral absorption and the effect site are unchanged. At cesarean delivery, intravenous paracetamol's clearance was 1.42 times that of nonpregnant women (Beleyn 2014), and a population model of 69 young women found glucuronidation doubled at delivery with sulfation unchanged, which added to Morse's clearance is a factor of 1.35 (Allegaert, *BMC Anesthesiol* 2015); orally in the third trimester the apparent clearance was 58% higher and the half-life 28% shorter (Miners 1986), which puts the volume 1.58 × 0.72 = 1.14 times higher. The clearance factor is the median of the three, rounded. Paired comparisons with the same women soon after delivery give higher ratios, but early-postpartum glucuronidation is itself low, so they overstate the change from a woman who is not pregnant. The intravenous data were taken within hours of surgery. See [Pregnancy](help:models/pregnancy).

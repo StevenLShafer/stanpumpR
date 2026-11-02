@@ -70,22 +70,14 @@ patientFieldReadersSentence <- function(arg, drugDefaults = getDrugDefaultsGloba
   sprintf("Read by %s; no other drug is affected.", patientFieldList(named))
 }
 
-#' The hover tip of a Patient Profile field
-#'
-#' One short paragraph: what the field is, then the drugs that read it
-#' (`patientFieldReadersSentence()`), then for the serum creatinine what a
-#' blank field means, with the assumed adult values quoted from
-#' `R/renalFunction.R` so the tip can never disagree with the code.
-#'
-#' @inheritParams patientFieldReaders
-#' @return a single string for `bslib::tooltip()`.
-#' @noRd
 #' The grey hint shown in an empty Serum creatinine box
 #'
 #' The field is optional, and an empty box says nothing about what empty
 #' MEANS: each renal model substitutes the normal creatinine for the patient's
 #' age and sex (`assumedCreatinine()`, R/renalFunction.R).  The placeholder
-#' shows that value, so the assumption is visible without hovering for the tip,
+#' shows that value, the assumed one for age and sex before any model's own
+#' conversion (adultEquivalentCreatinine() for an equation fitted in adults),
+#' so the assumption is visible without hovering for the tip,
 #' which states the same thing in words.  It is only a hint: it disappears as
 #' soon as anything is typed, and an empty field still reaches the models as
 #' NULL.
@@ -99,6 +91,16 @@ creatininePlaceholder <- function(age, sex) {
           format(round(assumedCreatinine(age, sex), 2), nsmall = 1, trim = TRUE))
 }
 
+#' The hover tip of a Patient Profile field
+#'
+#' One short paragraph: what the field is, then the drugs that read it
+#' (`patientFieldReadersSentence()`), then for the serum creatinine what a
+#' blank field means, with the assumed adult values quoted from
+#' `R/renalFunction.R` so the tip can never disagree with the code.
+#'
+#' @inheritParams patientFieldReaders
+#' @return a single string for `bslib::tooltip()`.
+#' @noRd
 patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
   arg <- match.arg(arg, names(PATIENT_FIELD_LABELS))
   readers <- patientFieldReadersSentence(arg, drugDefaults)

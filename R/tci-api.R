@@ -502,11 +502,6 @@ tciApiToBase <- function(value, units, base, weight, concBase)
   value * tciApiUnitFactor(units, base, weight, concBase)
 }
 
-tciApiFromBase <- function(value, units, base, weight, concBase)
-{
-  value / tciApiUnitFactor(units, base, weight, concBase)
-}
-
 
 # ---------------------------------------------------------------------------
 # The drug

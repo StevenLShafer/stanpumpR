@@ -4,7 +4,7 @@ Sugammadex's parameters are from Kleijn and colleagues (*Br J Clin Pharmacol* 20
 
 ### Covariates
 
-Every parameter carries a weight term and two carry creatinine clearance: clearance rises with weight and falls steeply as creatinine clearance declines, through a saturating term, and the peripheral volume grows as creatinine clearance falls. Creatinine clearance is Cockcroft-Gault at the **Serum creatinine** from the Patient Profile, or at an **assumed normal creatinine** for age and sex when that is left blank (a child's read on the adult scale; see [Renal function](help:models/covariates)), when renal decline with age is represented but **renal impairment is not**. The label does not recommend sugammadex below 30 mL/min. The weight the equations see is the pharmacokinetic weight under the default [fat-free-mass scaling](help:models/fat-free-mass) and total body weight with the switch off. The source's ethnicity term is left at its reference value.
+Every parameter carries a weight term and two carry creatinine clearance: clearance rises with weight and falls steeply as creatinine clearance declines, through a saturating term, and the peripheral volume grows as creatinine clearance falls. Creatinine clearance is Cockcroft-Gault at the **Serum creatinine** from the Patient Profile, or at an **assumed normal creatinine** for age and sex when that is left blank (a child's read on the adult scale; see [Renal function](help:models/covariates)), when renal decline with age is represented but **renal impairment is not**. The label does not recommend sugammadex below 30 mL/min. The weight the equations see is the pharmacokinetic weight under the default [fat-free-mass scaling](help:models/fat-free-mass) and total body weight with the switch off. The source's ethnicity term is left at its reference value. With **Pregnant** ticked and the creatinine blank, the creatinine clearance in the clearance term is raised by 1.5, but because that term levels off the clearance rises by less, about 1.3-fold in a 30-year-old woman.
 
 ### Effect site
 
@@ -17,7 +17,3 @@ This is the main limitation of simulating the two side by side: giving sugammade
 ### Where to be careful
 
 Doses are sugammadex equivalents as the label states them. Nothing here predicts the time to a train-of-four ratio of 0.9, recurarisation, or the dose needed for a given depth of block.
-
-### Pregnancy
-
-With **Pregnant** ticked and the serum creatinine left blank, the creatinine clearance that the clearance term reads is multiplied by 1.5, the rise in glomerular filtration of pregnancy given by the review the library follows (Ansari, Carvalho, Shafer and Flood, *Anesth Analg* 2016;122:786-804); sugammadex is cleared almost entirely by filtration. Because the renal term levels off, the clearance rises by less than 1.5 (by about 1.3 in a 30-year-old woman). The peripheral volume, which falls as creatinine clearance rises in Kleijn's model, keeps the unadjusted value. For a 78 kg woman at term this gives 7.4 L/h, within 8% of the 8.0 L/h Hodge and colleagues (*Int J Obstet Anesth* 2026;66:104874) found in 10 women at caesarean delivery; their larger volume is not applied. A measured creatinine already carries the rise in filtration, so with one entered nothing is multiplied. See [Pregnancy](help:models/pregnancy).

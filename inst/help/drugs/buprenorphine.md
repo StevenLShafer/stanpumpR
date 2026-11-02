@@ -30,7 +30,7 @@ Buprenorphine is no longer offered intranasally. Until October 2026 an **mg IN**
 
 The effect site comes from Yassen and colleagues' model of buprenorphine's antinociceptive effect in healthy volunteers (*Anesthesiology* 2006;104:1232-1242): ke0 0.00447/min, an equilibration half-time of 155 minutes. Their model also had slow receptor binding. They found that equilibration with the biophase, not receptor kinetics, limits the rate of onset and offset, so a single effect compartment can stand in for it.
 
-That ke0 was estimated with Yassen's own disposition, not Björnsson's. So it is carried as the time to peak effect it gives there, 61 minutes after an intravenous bolus, and the ke0 is solved again for Björnsson's disposition (the method of Minto and colleagues, *Anesthesiology* 2003;99:324-333). Put directly on Björnsson's disposition, the same ke0 would delay the peak to about 2¼ hours. Yassen observed peak effect at 70 to 100 minutes; the receptor-binding step accounts for the small extra delay. Escher 2007's maximum at 2 hours is for the RIII reflex and electrical thresholds; cold-pressor tolerance peaked at 30 minutes.
+That ke0 was estimated with Yassen's own disposition, not Björnsson's. So it is carried as the time to peak effect it gives there, 61 minutes after an intravenous bolus, and the ke0 is solved again for Björnsson's disposition (the method of Minto and colleagues, *Anesthesiology* 2003;99:324-333). Put directly on Björnsson's disposition, the same ke0 would delay the peak to about 2¼ hours. With **Pregnant** ticked the time to peak effect is held while the clearance rises, so the effect site equilibrates a little more slowly. Yassen observed peak effect at 70 to 100 minutes; the receptor-binding step accounts for the small extra delay. Escher 2007's maximum at 2 hours is for the RIII reflex and electrical thresholds; cold-pressor tolerance peaked at 30 minutes.
 
 ### Typical concentrations
 
@@ -53,7 +53,3 @@ Swallowed oral doses are not offered: no product exists, and the route is not bo
 ### Where to be careful
 
 This is a research simulation. Its parameters are typical values, and the spread between patients is wide: the central volume alone varies by about 80%. Norbuprenorphine is not modelled. The respiratory "ceiling" seen in volunteer studies does not mean an overdose is safe, especially with benzodiazepines or other sedatives.
-
-### Pregnancy
-
-With **Pregnant** ticked, the elimination clearance is multiplied by 1.83; the volumes, the distribution clearances and the sublingual absorption are unchanged. Caritis's group studied women on maintenance buprenorphine in pregnancy and again after delivery: Bastian and colleagues (*Am J Obstet Gynecol* 2017;216:64.e1-64.e7) found the dose-normalised exposure about 50% lower in pregnancy, with the time to peak unchanged, and Zhu and colleagues (*J Addict Med* 2025;19:129-134; 22 women) found it 119 against 218 in the second half of pregnancy, a ratio of 1.83. The cause is faster metabolism by CYP3A and glucuronidation, not a change in absorption, so the factor is applied to the clearance of the intravenous disposition and every route is changed alike. The time to peak effect is held, so the effect site equilibrates a little more slowly. See [Pregnancy](help:models/pregnancy).

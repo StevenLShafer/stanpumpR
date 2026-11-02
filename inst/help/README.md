@@ -41,6 +41,13 @@ other half is generated from the code at run time (see `R/help-content.R`,
   renders, by the Markdown that block builds (`R/help-generated.R`). The route
   table on `models/absorption.md` is one (`route-table`). Write the prose
   around the marker by hand.
+* A page can carry a calculator that runs in the browser, as
+  `models/pk-converter` does: its markup is a generated block
+  (`R/help-converter.R`) and its script a file in `inst/www/` loaded by
+  `app_ui()` (`pk-convert.js`), which answers the fields through delegated
+  handlers on the document, so it needs no setup when the page is rendered
+  and sends nothing to the server. Shiny binds any text input that has an id
+  or a name, so give the fields neither and add `data-shiny-no-bind-input`.
 * Screenshots live in `inst/www/help/` and are referenced as
   `stanpumpr-assets/help/<file>.png` (the app serves `inst/www` at that path).
   Wrap them in `<figure class="help-figure">` with an `<img>` and an optional

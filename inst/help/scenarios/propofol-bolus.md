@@ -8,7 +8,7 @@ The effect-site peak is a fraction of the plasma peak. That fraction is set by h
 
 ## Try next
 
-- Open **Graph Options** and switch *Normalize to* to *Peak effect site*, then add a fentanyl row (100 mcg at 0) and apply. Fentanyl's effect-site peak comes later (3.7 minutes); morphine's would come at 94.
+- Open **Graph Options** and switch *Normalize to* to *Peak effect site*, then add a fentanyl row (100 mcg at 0) and apply. Fentanyl's effect-site peak comes later (3.6 minutes); morphine's would come at 94.
 - Change the dose to 1 mg/kg and apply. Everything halves; the shape, and the time to peak, do not change. That is what a linear model means.
 - Replace the bolus with an infusion of 150 mcg/kg/min: within the hour the effect site never reaches what the bolus reached in two minutes.
 

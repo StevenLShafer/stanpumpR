@@ -7,7 +7,7 @@ Propofol uses the **Eleveld general-purpose model** (Eleveld DJ, Colin P, Absalo
 All four covariates are used.
 
 - **Weight** scales V1 by a sigmoid (half-maximal at 33.6 kg), V2 linearly, and the clearances allometrically to the 0.75 power.
-- **Age** reduces V2 and the elimination clearance exponentially in adults, matures the elimination clearance in infants as a sigmoid in post-menstrual age (half-maximal at about 42 weeks), and matures the slow intercompartmental clearance separately. The app has no gestational-age input, so post-menstrual age is taken as 40 weeks plus the age entered.
+- **Age** reduces V2 and the elimination clearance exponentially in adults, matures the elimination clearance in infants as a sigmoid in post-menstrual age (half-maximal at about 42 weeks), and matures the slow intercompartmental clearance separately. This model does not read the **Gestational age at birth** field, so post-menstrual age is taken as 40 weeks plus 52 weeks for each year of age entered.
 - **Sex** gives women a higher reference clearance (2.10 against 1.79 L/min at 70 kg and 35 years).
 - **Height**, with weight, enters through the Al-Sallami fat-free mass, which scales V3.
 
@@ -20,10 +20,6 @@ The time to peak effect, 1.6 minutes, is from Schnider and colleagues' 1999 stud
 ### The Schnider model, beside it
 
 The Schnider 1998 pharmacokinetic model (*Anesthesiology* 1998;88:1170-1182), the basis of most commercial propofol TCI pumps, is written out in the drug file but overwritten by Eleveld's before it is returned. It is computed on request: tick **Minto / Schnider** under Graph Options and the Schnider model is run beside this one on the same doses, drawn as a second line in the propofol panel (and, under a target-controlled infusion, as a second pump in the rate panel). The time until threshold stays on the Eleveld model. See [The Minto and Schnider models](help:models/minto-schnider) and [the comparison scenario](scenario:eleveld-vs-minto-schnider).
-
-### Pregnancy
-
-With **Pregnant** ticked, the elimination clearance is multiplied by 1.28, on this model and on the Schnider companion; the volumes are unchanged. Gin and colleagues gave 2 mg/kg to women at caesarean section and compared them with nonpregnant women (*Br J Anaesth* 1990;64:148-153: 2.55 against 1.57 L/min) and with women 2 to 3 days after delivery, who kept the higher clearance (*Br J Anaesth* 1991;67:49-53), so the rise is pregnancy's and not the operation's. This model reproduces their nonpregnant women (1.55 against 1.57 L/min), and the caesarean groups, each set against it at their own age and weight, cleared 1.39 and 1.15 times as fast: 1.28 weighted by group size. See [Pregnancy](help:models/pregnancy).
 
 ### Typical concentrations
 

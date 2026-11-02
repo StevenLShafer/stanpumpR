@@ -52,19 +52,8 @@ propofol <- function(weight, height, age, sex, adjustToFFM = TRUE,
   # adjustToFFM is accepted for a uniform signature but not used: the Eleveld
   # model below carries its own Al-Sallami fat-free-mass covariate.
 
-  # Schnider (1998), as STANPUMP ran it.  Not used: `default` is overwritten
-  # by the Eleveld model below.  Kept for reference; the Schnider model the
-  # app draws is propofolSchnider() in R/alternativeModels.R, behind the
-  # Minto / Schnider box under Graph Options.
-
-  default <- list(
-    v1 = 4.27,
-    v2 = 18.9-0.391*(age-53),
-    v3 = 238,
-    cl1 = 1.89+0.0456*(weight-77)-0.0681*(lbmJames(weight, height, sex)-59)+0.0264*(height-177),
-    cl2 = 1.29-0.024*(age-53),
-    cl3 = 0.836
-  )
+  # Schnider (1998), the model STANPUMP ran, is propofolSchnider() in
+  # R/alternativeModels.R, behind the Minto / Schnider box under Graph Options.
 
   # Eleveld
   # Pharmacokinetic / pharmacodynamic model for propofol for broad application
@@ -262,10 +251,6 @@ propofol <- function(weight, height, age, sex, adjustToFFM = TRUE,
   PK <- sapply(events, function(x) list(get0(x)))
 
   tPeak <- 1.600 # tPeak per Schnider TW et al., Anesthesiology 1999;90(6):1502-1516. https://pubmed.ncbi.nlm.nih.gov/10360845/
-  # typical <- 3
-  # upperTypical <- 4.0
-  # lowerTypical <- 2.5
-  # MEAC <- 0
   reference <- "Eleveld DJ et al., Br J Anaesth 2018;120(5):942-959. https://pubmed.ncbi.nlm.nih.gov/29661412/"
   if (isTRUE(pregnant)) {
     reference <- paste0(reference, "; ", pregnancyReference(

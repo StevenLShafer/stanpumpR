@@ -123,8 +123,8 @@ antipsychoticProfiles <- function() list(
       occupancyFit("Kim 2012", "parent_effect_site", Emax = 100, EC50 = 8.63,
                    ke0 = 0.725 / 60,
                    source = "Kim E 2012, doi:10.1038/jcbfm.2011.180",
-                   verified = FALSE,
-                   note = paste("EC50 checked in the abstract; ke0 and Emax not.",
+                   verified = TRUE,
+                   note = paste("EC50, ke0 and Emax checked against Table 1 (full text).",
                                 "Parent only: do not add dehydroaripiprazole."))
     )
   ),

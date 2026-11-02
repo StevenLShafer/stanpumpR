@@ -10,24 +10,26 @@ stanpumpR is open-source software for pharmacokinetic / pharmacodynamic simulati
 
 stanpumpR is an advisory and teaching tool. It does not control drug delivery, and how its predictions are applied to an individual patient is a matter of clinical judgement. It is provided as is, without warranty of any kind; see the licence.
 
-STANPUMP, a portmanteau of "Stanford" and "Pump", was developed in the Stanski/Shafer laboratory at Stanford University from 1987 through 1997. STANPUMP was one of many programs developed to control the delivery of intravenous anesthetics using pharmacokinetic principles. At that time there was an active exchange of concepts and algorithms among the authors. Significant contributors to this effort were Schüttler and Schwilden at the University of Bonn (CATIA), Ausems and Hug as the University of Leiden (TIAC), Reves and Alvis at the University of Alabama (CACI), Jacobs and Reves at Duke University (CACI II), Coetzee and Pina at Stellenbosch University (STELPUMP), and De Smet and Struys at the University of Ghent (RUGLOOP). This history was recently reviewed by Struys and colleagues: The History of Target-Controlled Infusion. Anesth Analg. 2016;122:56-69.
+STANPUMP, a portmanteau of "Stanford" and "Pump", was developed in the Stanski/Shafer laboratory at Stanford University from 1987 through 1997. STANPUMP was one of many programs developed to control the delivery of intravenous anesthetics using pharmacokinetic principles. At that time there was an active exchange of concepts and algorithms among the authors. Significant contributors to this effort were Schüttler and Schwilden at the University of Bonn (CATIA), Ausems and Hug at the University of Leiden (TIAC), Reves and Alvis at the University of Alabama (CACI), Jacobs and Reves at Duke University (CACI II), Coetzee and Pina at Stellenbosch University (STELPUMP), and De Smet and Struys at the University of Ghent (RUGLOOP). This history was recently reviewed by Struys and colleagues: The History of Target-Controlled Infusion. Anesth Analg. 2016;122:56-69.
 
 STANPUMP was distributed freely: anyone could copy and share its source and executable code, though not sell it. The STANPUMP pharmacokinetic engine was incorporated into many of the commercially available target controlled infusion devices, where it is still used today.
 
-stanpumpR uses very little of the original STANPUMP code. However, conceptually it is identical: an open-source program to make complex pharmacokinetic algorithms available to support patient care, teaching, and research. However, stanpumpR does not control drug administration. It is simply a web-based simulator that uses the Shiny package in R to simulate the expected concentration of intravenous anesthetics from any dosing regimen.
+stanpumpR uses very little of the original STANPUMP code. However, conceptually it is identical: an open-source program to make complex pharmacokinetic algorithms available to support patient care, teaching, and research. However, stanpumpR does not control drug administration. It is simply a web-based simulator that uses the Shiny package in R to simulate the expected concentration of a drug from any dosing regimen; the library now covers not only intravenous anesthetics but oral, subcutaneous, regional and inhaled routes across many other drug classes.
 
 In 2026 stanpumpR gained an engine for the inhaled anesthetics. Its structure and parameters follow GasMan®, the model of inhaled anesthetic uptake and distribution developed by James H. Philip at Brigham and Women's Hospital and Harvard Medical School, which has taught a generation of anesthesiologists how these drugs behave. Richard H. Epstein of the University of Miami validated the stanpumpR engine against GasMan, running the comparison scenarios and tracing each disagreement to its cause; that record is in [`inst/validation/VALIDATION.md`](inst/validation/VALIDATION.md). The places where stanpumpR deliberately departs from GasMan are listed in the [user's guide](docs/users-guide.md).
 
 It is hoped that stanpumpR will encourage device manufacturers to develop the next generation of drug delivery systems and anesthesia information management systems. Companies are welcome to build on stanpumpR under the terms of the MIT License. As a courtesy, Dr. Shafer would be glad to hear from them.
 
-stanpumpR is a collaborative research project. Individuals interested in adding drugs, pharmacokinetic data sets, or new algorithms to stanpumpR are encourage to contact Dr. Shafer. It is hoped that eventually each drug in the stanpumpR library will be maintained by an investigator, who will assume responsibility for keeping the pharmacokinetics as up-to-date as possible. See [`docs/adding-a-drug.md`](docs/adding-a-drug.md) for the technical steps.
+stanpumpR is a collaborative research project. Individuals interested in adding drugs, pharmacokinetic data sets, or new algorithms to stanpumpR are encouraged to contact Dr. Shafer. It is hoped that eventually each drug in the stanpumpR library will be maintained by an investigator, who will assume responsibility for keeping the pharmacokinetics as up-to-date as possible. See [`docs/adding-a-drug.md`](docs/adding-a-drug.md) for the technical steps.
+
+Since October 2026 the library also has an agentic AI step to keep its pharmacokinetics state of the art. A scheduled Claude Code routine, running in the cloud, searches PubMed every week for new pharmacokinetic studies of every drug in the library, screens them, and emails the maintainer the promising ones with its own assessment of what each would add. The maintainer decides what to incorporate; the routine changes no code. See [`docs/literature-watch.md`](docs/literature-watch.md).
 
 Near-term future developments in stanpumpR will include
 
-1. More oral models. stanpumpR simulates PO, SL, IM, IN and regional (RA) delivery by first-order absorption; the oral opioids in the library (morphine, hydromorphone, methadone, oxycodone, oxymorphone, codeine, hydrocodone, tramadol) each rest on one published fit, and better-characterised absorption models are welcome.
+1. More oral models. stanpumpR simulates PO, SL, IM, IN, SC and regional (RA) delivery by first-order absorption (with zero-order, pulsed and transit-chain oral inputs where a drug needs them); the oral opioids in the library (morphine, hydromorphone, methadone, oxycodone, oxymorphone, codeine, hydrocodone, tramadol) each rest on one published fit, and better-characterised absorption models are welcome.
 2. Improved models of pediatric pharmacokinetics
 3. Improved models of drug interaction
-4. PK changes with pregnancy beyond the eight drugs that now read the Patient Profile's Pregnant field (`R/pregnancy.R`, from Ansari, Carvalho, Shafer and Flood, *Anesth Analg* 2016;122:786-804), and with renal function beyond the drugs that read the serum creatinine. (Each field reaches only the models that name it, the CYP2D6, CYP2C19, CYP2C9 and CYP2B6 phenotypes included; the help's [Cautions](inst/help/cautions.md) page lists which.)
+4. PK changes with pregnancy beyond the drugs that now read the Patient Profile's Pregnant field (about fifty; the help's Pregnancy page lists them) (`R/pregnancy.R`, `inst/extdata/pregnancyRegistry.csv`), and with renal function beyond the drugs that read the serum creatinine. (Each field reaches only the models that name it, the CYP2D6, CYP2C19, CYP2C9 and CYP2B6 phenotypes included; the help's [Cautions](inst/help/cautions.md) page lists which.)
 5. Expanding the in-app help (the **Help** tab): more teaching scenarios, and screenshots.
 
 ### Documentation
@@ -37,6 +39,9 @@ Near-term future developments in stanpumpR will include
 - [`docs/adding-a-drug.md`](docs/adding-a-drug.md) — the touch points for contributing a
   new drug, including its help page.
 - [`docs/users-guide.md`](docs/users-guide.md) — a draft user's guide written from the code.
+- [`docs/literature-watch.md`](docs/literature-watch.md) — the weekly AI literature watch that
+  searches PubMed for new pharmacokinetic studies of the library's drugs and emails the
+  maintainer the promising ones.
 - [stanpumpr.io/api](https://stanpumpr.io/api) — the Simulation API: send a dose table,
   covariates and a duration (over HTTP from any language, or from R) and get the concentrations
   back as JSON, CSV, Excel or XML. The page is rendered from
@@ -56,7 +61,7 @@ Near-term future developments in stanpumpR will include
 
 ### Setting up locally
 
-1. Check the required R version by looking at the third line of the file [`renv.lock`](renv.lock)
+1. Check the required R version by looking at the `R` `Version` field near the top of the file [`renv.lock`](renv.lock)
 2. Download and install the required R version
 3. Clone/download this repository to your local machine
 4. Open the `stanpumpR.Rproj` file in RStudio
@@ -67,7 +72,7 @@ Near-term future developments in stanpumpR will include
     devtools::load_all(".")
     run_app()
     ```
-8. Debug mode shows a detailed log and a performance profiler. By default, debug mode is off in production. You can turn it on by adding `&debug=1` to the URL.
+8. Debug mode shows a detailed log and a performance profiler. By default, debug mode is off in production. You can turn it on by adding `?debug=1` to the URL (`&debug=1` if it already has a query).
 
 #### Running tests
 
@@ -114,7 +119,7 @@ To simulate a dose table from a script, call `apiSimulate()`, or start the HTTP 
 
 ### Environments
 
-When code is merged into the default branch, it will automatically be deployed to production. Pull Requests are automatically deployed to a test environment for testing.
+When code is merged into the default branch, it is deployed to production automatically once the R-CMD-check workflow has passed on it. Pull Requests carrying the `DEPLOY` label are deployed to a test environment for testing; the label is added automatically to a pull request from this repository, and by a maintainer to one from a fork.
 
 ### Dependency management (renv)
 

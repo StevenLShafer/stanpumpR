@@ -8,7 +8,7 @@ The parameters are **apparent**: clearance and volume divided by an unmeasured b
 
 ### A pediatric model used in adults
 
-The 70 kg normalisation is a convention of the fit, not evidence that the model describes adults. Ryder and colleagues (*Pharmacotherapy* 2026;46(7):e70179) used this vector to simulate adults, scaling clearance and volume linearly with weight, supplemented it with oral data from published adult studies, and judged it fit for that purpose. That is precedent for the extrapolation and a check against adult averages, but not a validation in adults.
+The 70 kg normalisation is a convention of the fit, not evidence that the model describes adults. Ryder and colleagues (*Pharmacotherapy* 2026;46(7):e70179) used this vector to simulate adults, scaling clearance allometrically (weight to the 0.75 power) and volume linearly with weight, supplemented it with oral data from published adult studies, and judged it fit for that purpose. That is precedent for the extrapolation and a check against adult averages, but not a validation in adults.
 
 ### Covariates
 

@@ -87,8 +87,9 @@
 # The source DID fit a blood-pressure model -- an effect compartment with an
 # Imax of 0.164 -- and this library still does not plot a pressure
 # (docs/antihypertensives.md).  The relation is recorded in the registry as an
-# endpoint record and reachable through antihypertensiveEndpoint(), which
-# returns the change the drug term predicts and never an absolute pressure.
+# endpoint record but is NOT evaluable and NOT one of the relations
+# antihypertensiveEndpointsAvailable() returns: only the Imax was
+# transcribed, so antihypertensiveEndpoint() refuses this model_id.
 # tPeak, MEAC and the band are zero here.
 # -----------------------------------------------------------------------------
 

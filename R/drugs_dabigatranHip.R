@@ -17,7 +17,7 @@
 # IV (final covariate structure), read from the typeset original on 2026-10-19.
 #
 # This is a SECOND, distinct dabigatran model from the library's `dabigatran`
-# (Liesenfeld 2011, the steady-state RRE-LY atrial-fibrillation model).  This
+# (Liesenfeld 2011, the steady-state RE-LY atrial-fibrillation model).  This
 # one is the post-operative hip-replacement model, whose defining feature is a
 # TIME-VARYING disposition: absorption and apparent clearance are lower on the
 # day of surgery and the next day than on days 2 to 10, which the authors
@@ -39,11 +39,12 @@
 #     V2/F (central) = 30.8 L   Q/F = 13.6 L/h   V3/F (peripheral) = 136 L
 #     ALAG1 (oral lag) = 0.4 h
 #
-# At the population-median gastrin of 34.58 pmol/L and creatinine clearance of
-# 76.17 mL/min the typical CL/F is 43.4 × 1.633 = 70.87 L/h (phase 1) and
-# 82.1 × 1.294 = 106.2 L/h (phase 2), the values the abstract quotes.  At the
-# median serum creatinine (0.964 mg/dL) and age (66.97 y) the phase-2 ka is
-# 0.265 × 0.637 × 0.553 = 0.093 /h, the paper's Figure 5 median line.
+# At the study's mean gastrin of 34.58 pmol/L (Table I; gastrin is right-
+# skewed, so this is not a median) and creatinine clearance of 76.17 mL/min
+# the typical CL/F is 43.4 × 1.633 = 70.87 L/h (phase 1) and 82.1 × 1.294 =
+# 106.2 L/h (phase 2), the values the abstract quotes.  At the study's mean
+# serum creatinine (0.964 mg/dL) and age (66.97 y) the phase-2 ka is
+# 0.265 × 0.637 × 0.553 = 0.093 /h, the paper's Figure 5 reference line.
 #
 # WHICH PHASE A DOSE USES  (dose-time semantics; a documented choice)
 # ===================================================================
@@ -70,8 +71,9 @@
 # COVARIATES AND FIELDS
 # =====================
 #   * Serum gastrin (GAST) raises CL/F in both phases.  There is no gastrin
-#     field in the Patient Profile, so it is fixed at the population median
-#     34.58 pmol/L, i.e. the (1 + θ × 1) multipliers above; the app therefore
+#     field in the Patient Profile, so it is fixed at the study's mean
+#     (34.58 pmol/L, Table I; gastrin is right-skewed, so this is not a
+#     median), i.e. the (1 + θ × 1) multipliers above; the app therefore
 #     does not show the gastrin effect, and θ_CL is the (unused) zero-gastrin
 #     intercept, not a typical value.
 #   * Creatinine clearance (Cockcroft-Gault) raises CL/F on days 2 to 10 only;
@@ -79,7 +81,7 @@
 #     Both read the Patient Profile's serum creatinine (`adultEquivalentCreatinine`,
 #     so a child's value is put on the adult scale), which when blank is the
 #     assumed normal for age and sex (`assumedCreatinine()`), referenced to the
-#     median 0.964 mg/dL and CRCL 76.17 mL/min.  The covariates were fitted over
+#     study's mean 0.964 mg/dL and CRCL 76.17 mL/min.  The covariates were fitted over
 #     SCR 0.66-1.81 mg/dL, CRCL 29-161 mL/min and age 35-88 y; beyond that range
 #     the absorption factors are held positive (they would otherwise drive ka
 #     non-positive) and the result is an extrapolation.
@@ -102,7 +104,7 @@
 # -----------------------------------------------------------------------------
 
 DABIGATRAN_HIP_SWITCH   <- 24 * 60   # min after surgery: doses split here
-DABIGATRAN_HIP_GAST     <- 34.58     # pmol/L, median serum gastrin (fixed)
+DABIGATRAN_HIP_GAST     <- 34.58     # pmol/L, study mean serum gastrin (fixed)
 DABIGATRAN_HIP_CRCL_REF <- 76.17     # mL/min, reference creatinine clearance
 DABIGATRAN_HIP_SCR_REF  <- 0.964     # mg/dL, reference serum creatinine
 DABIGATRAN_HIP_AGE_REF  <- 66.97     # years, reference age
@@ -180,7 +182,7 @@ dabigatranHip <- function(weight, height, age, sex, adjustToFFM = TRUE,
       "Trocóniz IF et al., J Clin Pharmacol 2007;47:371-382 (apparent ",
       "two-compartment, time-varying PK of dabigatran after total hip ",
       "replacement; absorption and clearance lower on days 0-1 than days 2-10; ",
-      "gastrin fixed at the median, Cockcroft-Gault creatinine clearance, serum ",
+      "gastrin fixed at the study mean, Cockcroft-Gault creatinine clearance, serum ",
       "creatinine and age on the later absorption; doses as mg dabigatran ",
       "etexilate). https://doi.org/10.1177/0091270006297228"
     )

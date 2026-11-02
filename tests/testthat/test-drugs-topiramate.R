@@ -7,6 +7,23 @@ test_that("reference 70 kg, switch off", {
   expect_equal(a$PK$default$cl3, 0.6 / 60)
   expect_equal(a$PK$default$bioavailability_PO, 1)
 })
+
+test_that("absorption: Ahmed 2015's ka, 2.38 /h, no lag", {
+  # Ahmed 2015 Table 2 (joint intravenous and oral fit); see the ORAL ROUTE
+  # section of R/drugs_topiramate.R.  100 mg at the reference man: the exact
+  # peak is 1.9035 mg/L at 1.54 h; the plotted grid's highest point is below.
+  a <- topiramate(70, 170, 35, "male", adjustToFFM = FALSE)
+  expect_equal(a$PK$default$ka_PO, 2.38 / 60)
+  expect_equal(a$PK$default$tlag_PO, 0)
+  dt <- data.frame(Drug = "topiramate", Time = 0, Dose = 100, Units = "mg PO")
+  ev <- data.frame(Time = numeric(0), Event = character(0), Fill = character(0))
+  s <- simulateDrugsWithCovariates(dt, ev, 70, 170, 35, "male", maximum = 1440,
+                                   plotRecovery = FALSE)$topiramate$results
+  s <- s[s$Site == "Plasma", ]
+  expect_equal_rounded(1.902161796, max(s$Y))
+  expect_equal(utils::tail(s$Time, 1), 1440)
+  expect_equal_rounded(0.9655034566, utils::tail(s$Y, 1))
+})
 test_that("allometric scaling, switch on", {
   a <- topiramate(120, 170, 50, "male", adjustToFFM = TRUE)
   w <- pkSizeFactors(120, 170, 50, "male", TRUE)$pkWeight

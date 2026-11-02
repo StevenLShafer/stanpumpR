@@ -817,6 +817,17 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     # An oral release into the gut rides on the tissue depot (R/subcutaneous.R):
     # its depot is the oral one, shown once, as oral.
     if (isTRUE(pkRef$zeroOrderPO)) routes$RA <- routes$RAslow <- NULL
+    # So does an enteral infusion's without a transit chain (R/enteral.R): its
+    # tissue depot is the gut absorption of the oral route, not a regional
+    # route of its own.
+    if (isTRUE(pkRef$enteralInfusion)) routes$RA <- routes$RAslow <- NULL
+    # One transit compartment before the depot, both emptied at ka_PO (a
+    # transit chain of two, R/advanceTransitChain.R: levodopa, its gel,
+    # opicapone): one oral row, named for the structure.
+    tc <- pkRef$transitChain
+    transit <- !is.null(tc) && isTRUE(tc$n == 2) && isTRUE(d$ka_PO > 0) &&
+      isTRUE(abs(tc$ktr / d$ka_PO - 1) < 1e-6)
+    if (transit) routes$PO <- "Oral (PO), through one transit compartment"
     rows <- lapply(names(routes), function(r) {
       ka <- d[[paste0("ka_", r)]]
       if (is.null(ka) || is.na(ka) || ka <= 0) return(NULL)
@@ -866,7 +877,11 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     }, character(1)), collapse = "") else ""
     # Zero-order subcutaneous input (R/subcutaneous.R)
     zero <- pkRef$zeroOrderSC
-    zeroOrderNote <- if (is.null(zero)) "" else if (isTRUE(pkRef$zeroOrderPO)) sprintf(paste0(
+    zeroOrderNote <- if (is.null(zero)) "" else if (isTRUE(pkRef$zeroOrderPO) && zero$into == "central") sprintf(paste0(
+      "Besides the depot, %s%% of each oral dose enters the circulation directly at a constant ",
+      "rate over %s minutes from the moment it is taken, and the depot absorbs the rest ",
+      "(parallel zero- and first-order absorption). "),
+      helpFormatNumber(100 * zero$fraction), helpFormatNumber(zero$duration)) else if (isTRUE(pkRef$zeroOrderPO)) sprintf(paste0(
       "Each oral dose is released into the gut at a constant rate over %s minutes, starting at ",
       "the lag, and absorbed from it first order (sequential zero- and first-order absorption). "),
       helpFormatNumber(zero$duration)) else if (zero$into == "central") sprintf(paste0(
@@ -892,6 +907,13 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
         if (length(formRows)) paste0("A unit naming an oral form listed in the table uses that form's ",
                                      "absorption; plain mg PO, and any other form offered, use the default. ") else "",
         pulseNote,
+        if (transit) paste0(
+          "Each dose passes from its depot through one transit compartment into the central compartment, ",
+          "both emptied at the rate constant shown (two equal first-order steps), so the absorption ",
+          "half-time shown is that of each step. ") else "",
+        if (isTRUE(pkRef$enteralInfusion)) paste0(
+          "The doses (mg PO) and the continuous rate (mg/hr PO) are pumped into the jejunum through ",
+          "a tube and absorbed from it this way. ") else "",
         if (secondPO) paste0("Each oral dose is absorbed through two depots in parallel, each with ",
                              "its own lag; the bioavailability of each is its share of the dose. ") else "",
         if (slowRA) paste0("Each ", if (identical(pkRef$tissueRoute, ROUTE_SC)) "SC" else "RA",
@@ -1000,7 +1022,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   }
 
   # --- Shaded band: free drug at the MBC -------------------------------------
-  mbcHTML <- helpAntibioticMbcHTML(drug, row, concUnits)
+  mbcHTML <- helpAntibioticMbcHTML(drug, concUnits)
 
   # --- Parallel systems ------------------------------------------------------
   # A drug plotted as the sum of independent systems (ketorolac: S and R
@@ -1414,11 +1436,10 @@ helpReferencesHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
 #' (R/antibioticMbc.R), so the page and the band cannot drift apart.
 #'
 #' @param drug a drug name
-#' @param row the drug's row of the drug defaults
 #' @param concUnits the plotted concentration unit, for display
 #' @returns HTML, or "" for a drug with no MBC rows
 #' @noRd
-helpAntibioticMbcHTML <- function(drug, row, concUnits) {
+helpAntibioticMbcHTML <- function(drug, concUnits) {
   band <- antibioticMbcBand(drug)
   if (is.null(band)) return("")
   esc <- htmltools::htmlEscape

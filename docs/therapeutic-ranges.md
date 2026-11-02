@@ -107,7 +107,7 @@ upper limit, so no alert level is recorded for lisdexamfetamine.
 Both sources were read in full (2026-10-27). The mixture's range is McGough's Table 3: the
 steady-state Cmax of immediate-release Adderall 10 mg once daily, 33.8 ng/mL (SEM 3.7, n = 9) at
 3.3 h, with the SEM turned into an SD (3.7 × 3 = 11.1), so 22.7–44.9; Table 5 describes it as
-51 children, the number enrolled. The model, fitted to McGough, gives 34.0 ng/mL at 3.3 h after
+51 children, the number enrolled. The model, fitted to McGough, gives 33.2 ng/mL at 3.3 h after
 the seventh daily dose (37.8 kg). Lisdexamfetamine's range is Boellner's Table I, the mean ± SD
 of the single-dose peak: 53.2 (9.62), 93.3 (18.2) and 134 (26.1) ng/mL at about 3.5 h. Boellner's
 children are not in the model's data (Tsuda 2020), and it underpredicts them: 45, 75 and 105

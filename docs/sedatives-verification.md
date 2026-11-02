@@ -90,7 +90,8 @@ Kruizinga 2022.
 - Routes: oral and IM absorption from Greenblatt 1982, a five-route crossover.
 - Effect site: ke0 from Greenblatt 2000 (EEG, t½ke0 8.8 min), carried as a
   26.3 min time to peak effect.
-- Band and threshold: Barr 2001's C50s, 34-104 ng/mL; threshold 51 (Ramsay 3).
+- Band and threshold: Barr 2001's C50s, 34-104 ng/mL (since 2026-10-27, 51-152 ng/mL, typical 104,
+  moderate sedation; docs/therapeutic-ranges.md); threshold 51 (Ramsay 3).
 - Validation against the label: 4 mg IV gives 74 ng/mL at 15 min (label about
   70); 2 mg PO peaks at 19.7 (about 20); 4 mg IM peaks at 53 (about 48).
 

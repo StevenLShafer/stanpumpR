@@ -135,7 +135,7 @@ test_that("effectSiteCoefficients agrees with getDrugPK by the oral route too", 
   # being linearly independent -- the same coefficients.
   pk <- getDrugPK("oxycodone", 70, 170, 50, "male",
                   getDrugDefaults("oxycodone"))$PK$default
-  skip_if(is.null(pk$ka_PO) || pk$ka_PO <= 0, "oxycodone has no oral route")
+  expect_gt(pk$ka_PO, 0)
 
   got <- effectSiteCoefficients(
     list(lambda = c(pk$lambda_1, pk$lambda_2, pk$lambda_3, pk$ka_PO),
@@ -301,7 +301,7 @@ test_that("the intravenous engines all carry their states out", {
 
   # advanceClosedForm1: time-varying PK, so a lambda per time point
   PK <- pkFor("dexmedetomidine", weight = 7, height = 65, age = 0.5, sex = "male")
-  skip_if(length(PK$pkEvents) < 2, "dexmedetomidine has no PK events for this patient")
+  expect_gte(length(PK$pkEvents), 2)
   X <- simCpCe(data.frame(Drug = "dexmedetomidine", Time = c(0, 0),
                           Dose = c(1, 0.7), Units = c("mcg/kg", "mcg/kg/hr")),
                data.frame(Time = 30, Event = "CPB Start"), PK, 120, TRUE)

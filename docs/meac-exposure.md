@@ -58,12 +58,12 @@ regimens) rather than population thresholds, for the reasons in §6.
 
 | Piece | Where | Notes |
 |---|---|---|
-| Per-drug MEAC | `inst/extdata/drugDefaults_global.csv`, `MEAC` column; mirrored in each `R/drugs_<name>.R` | Ten opioids; values and provenance in `inst/help/models/meac.md` and the drug pages |
+| Per-drug MEAC | `inst/extdata/drugDefaults_global.csv`, `MEAC` column; mirrored in each `R/drugs_<name>.R` | Twelve opioids and one metabolite (desmetramadol); values and provenance in `inst/help/models/meac.md` and the drug pages |
 | % MEAC per drug | `simCpCe()` writes `equiSpace$MEAC` | Effect-site based |
 | Total opioid U(t) | `totalOpioidMEAC()` in `R/opioidMacInteraction.R` (exported) | Additive sum on a common grid |
-| Metabolite scoring | `R/mergeMetabolite.R`, `foldMetabolites()` | Codeine → morphine, tramadol → desmetramadol, oxycodone → oxymorphone; the parent's own MEAC is 0 where its effect is the metabolite's |
+| Metabolite scoring | `R/mergeMetabolite.R`, `foldMetabolites()` | Codeine → morphine, tramadol → desmetramadol, oxycodone → oxymorphone, hydrocodone → hydromorphone; the parent's own MEAC is 0 where its effect is the metabolite's |
 | Repeated dosing | `R/scheduled.R` (`qd`/`bid`/`tid`/`qid`/`q4h`) | Repeats to the end of the plot |
-| Extravascular routes | `advanceClosedFormPO_IM_IN.R`; `ka_*`, `bioavailability_*`, `tlag_*` in drug functions | PO for oxycodone, hydromorphone, codeine, tramadol, oxymorphone; IM/IN for hydromorphone |
+| Extravascular routes | `advanceClosedFormPO_IM_IN.R`; `ka_*`, `bioavailability_*`, `tlag_*` in drug functions | The drugs' `Units` in `drugDefaults_global.csv` are authoritative; e.g. PO for morphine, methadone, oxycodone, hydromorphone, hydrocodone, codeine, tramadol, oxymorphone; IM/IN for hydromorphone; SL and IM for buprenorphine |
 | Covariates | drug functions, `pkSizeFactors()`, `R/renalFunction.R` | Size scaling is mandatory; renal terms only where the source has them |
 | Shiny-free driver | `simulateDrugsWithCovariates()` | Entry point for the API in §5 |
 | Inverse solver precedent | `R/tci.R` | Closed-form; same "unit response" idea used in §4.3 |
@@ -111,15 +111,17 @@ already in the drug function for the patient being simulated, so the ratio is
 creatinine wherever the model has those covariates.
 
 Values from the current library for a 70 kg, 170 cm, 40-year-old male
-(`adjustToFFM = TRUE`), computed 2026-10-10:
+(`adjustToFFM = TRUE`), computed 2026-10-10; the morphine, oxycodone and methadone rows
+recomputed 2026-10-30 from the current models (oral morphine and oral methadone are now in them,
+and oxycodone's dose basis changed 2026-10-27/29):
 
 | Drug | CL (L/min) | MEAC | 1 MEAC, IV (mg/day) | F_PO in model | 1 MEAC, PO (mg/day) |
 |---|---|---|---|---|---|
-| morphine | 1.23 | 8 ng/mL | 14.2 | *none* | (≈ 43 with an assumed F of 0.33) |
+| morphine | 1.23 | 8 ng/mL | 14.2 | 0.29 (assumed 0.33 until oral morphine was added) | 49.0 (≈ 43 at the assumed 0.33) |
 | hydromorphone | 1.30 | 1.5 ng/mL | 2.8 | 0.225 (was 0.6; §4.2.1) | 12.4 (was 4.7) |
-| oxycodone | 0.62 | 12 ng/mL | 10.8 | 0.5 | 21.5 |
+| oxycodone | 0.97 | 12 ng/mL | 16.8 | 0.75 | 22.5 |
 | oxymorphone | 2.00 | 0.8 ng/mL | 2.3 | 0.1 | 23.0 |
-| methadone | 0.10 | 60 ng/mL | 8.8 | *none* | (≈ 11 with an assumed F of 0.8) |
+| methadone | 0.11 | 60 ng/mL | 9.3 | 0.70 | 13.3 |
 | pethidine | 0.76 | 460 ng/mL (250 until 2026-10-27) | 503 (was 275) | *none* | — |
 | fentanyl | 0.63 | 0.6 ng/mL | 0.55 (23 mcg/h) | — | — |
 | alfentanil | 0.20 | 39 ng/mL | 11.2 | — | — |
@@ -128,15 +130,16 @@ Values from the current library for a 70 kg, 170 cm, 40-year-old male
 | oliceridine | 0.53 | 27.9 ng/mL | 21.2 | — | — |
 
 The implied MME conversion factors (oral morphine mg per mg of drug, taking
-1 MEAC ≈ 43 mg/day oral morphine) against the CDC 2022 table:
+1 MEAC ≈ 49 mg/day oral morphine at the model's F of 0.29; recomputed 2026-10-30,
+when the anchor had been ≈ 43 at an assumed 0.33) against the CDC 2022 table:
 
 | Drug, route | MEAC-derived | CDC 2022 | Comment |
 |---|---|---|---|
-| oxycodone PO | 2.0 | 1.5 | Reasonable agreement |
-| hydromorphone PO | 3.5 (was 9.1) | 5 | Disagreed ~2× at the old oral bioavailability of 0.6; recalibrated to 0.225. 3.5 against this table's assumed morphine F of 0.33; 3.9 with the model's measured 0.29, within the published 3.75 to 5 (§4.2.1) |
-| oxymorphone PO | 1.9 | 3 | MEAC is provisional (a tenth of morphine's) |
-| methadone PO | ≈ 3.9 | 4.7 | Within the published range |
-| fentanyl TD (mcg/h) | ≈ 1.9 | 2.4 | Ignores the patch's absorption kinetics |
+| oxycodone PO | 2.2 | 1.5 | About 1.5× CDC's (2.0 against the old anchor and oxycodone parameters) |
+| hydromorphone PO | 3.9 (was 9.1) | 5 | Disagreed ~2× at the old oral bioavailability of 0.6; recalibrated to 0.225. 3.9 with morphine's model-calibrated 0.29 (3.5 against the old assumed 0.33), within the published 3.75 to 5 (§4.2.1) |
+| oxymorphone PO | 2.1 | 3 | MEAC is provisional (a tenth of morphine's) |
+| methadone PO | ≈ 3.7 | 4.7 | Within the published range |
+| fentanyl TD (mcg/h) | ≈ 2.2 | 2.4 | Ignores the patch's absorption kinetics |
 
 This comparison is useful in itself: **the disagreements point to MEAC values
 or kinetic parameters worth re-examining**. Hydromorphone, the largest, is
@@ -144,12 +147,13 @@ worked through in §4.2.1. It should
 become a pinned test (§7) so a change to any MEAC or clearance shows up as a
 change in its implied ratio.
 
-Note that the reference drug, oral morphine, **has no oral route in
-stanpumpR**, so the "≈ 43 mg/day" anchor uses an assumed bioavailability. Adding
-oral morphine is a prerequisite (§5.3).
+When this table was first computed the reference drug, oral morphine, had no
+oral route in stanpumpR, and the anchor used an assumed bioavailability of 0.33.
+Oral morphine has since been added (F 0.29, Atrux-Tallau 2022; `mg PO tablet`,
+`mg PO liquid`), and the anchor above uses it.
 
-Calibration point: 50 MME/day (the CDC "reassess" threshold) is about 1.2 MEAC
-of continuous exposure and 90 MME/day about 2.1 MEAC, for this reference
+Calibration point: 50 MME/day (the CDC "reassess" threshold) is about 1.0 MEAC
+of continuous exposure and 90 MME/day about 1.8 MEAC, for this reference
 patient. These numbers belong in the help page only as an orientation aid, not
 as thresholds.
 
@@ -241,7 +245,7 @@ clearance. 0.225 also agrees with the DILAUDID label (about 24%) and Drover's
 0.19. With it, the existing absorption rate (0.01 /min) turned out to be the
 best fit to Lohela's mean oral curve (Figure 1A), within about 15% at every
 sample, so it is unchanged. Precondition 1 is met: oral morphine is now in the
-model (F 0.29, Atrux-Tallau 2022), and with both measured F values the implied
+model (F 0.29, Atrux-Tallau 2022), and with both model-calibrated F values (effective exposure parameters set from observed AUCs on each model's clearance, not measured bioavailabilities) the implied
 oral factor is 5.33 × 0.95 × 0.225 / 0.29 = **3.9**, between the older APS 4 and
 the 3.75 of some tables, a little under CDC 2022's 5. Precondition 3 is
 pinned by a test: hydrocodone's formed hydromorphone is unchanged. The MEAC is
@@ -259,8 +263,9 @@ personal exposure is U/m on both regimens, so matching population U matches
 personal U. Rotation needs the *ratio* of MEACs to be right, not their
 absolute values, which is the single strongest argument for the approach.
 
-**Closed form.** Kinetics are linear in dose (no opioid declares an
-`oralSaturation` block), so for a fixed schedule shape U_B(t) = d × u_B(t),
+**Closed form.** Kinetics are linear in dose for the full μ agonists (none
+declares an `oralSaturation` or `sublingualSaturation` block; buprenorphine's
+sublingual route does, and §6 excludes it from U), so for a fixed schedule shape U_B(t) = d × u_B(t),
 where u_B is the response to a unit dose on that schedule. Then:
 
 - **Match mean:** d = Ubar_A / ubar_B
@@ -343,13 +348,13 @@ engine (`docs/architecture.md#time-units`).
 
 | Gap | Why it matters |
 |---|---|
-| **Oral morphine** (`ka_PO`, `bioavailability_PO`) | It is the reference drug of the scale being replaced |
-| **Oral methadone** | The rotation everyone gets wrong; long half-life also tests the steady-state logic |
-| **Morphine-6-glucuronide** | The renal story for morphine; needs the two-stage metabolite cascade the engine lacks (`R/getDrugPK.R`, ~line 567) |
+| ~~**Oral morphine** (`ka_PO`, `bioavailability_PO`)~~ | Done: `mg PO tablet` and `mg PO liquid`, F 0.29 (Atrux-Tallau 2022; §4.2.1) |
+| ~~**Oral methadone**~~ | Done: `mg PO` and `mg PO liquid`, F 0.70 (Kharasch 2004). It was listed because it is the rotation everyone gets wrong; long half-life also tests the steady-state logic |
+| **Morphine-6-glucuronide** | The renal story for morphine; needs the two-stage metabolite cascade the engine lacks (the one-level-only note in `R/getDrugPK.R`) |
 | **Transdermal fentanyl** | A zero-order input with a skin depot; common in chronic use |
 | ~~**Hydromorphone oral bioavailability**~~ | Done 2026-10-10: 0.6 (no source) recalibrated to 0.225 from Lohela 2021's apparent oral clearance (§4.2.1) |
 | **Oxymorphone MEAC** | Marked provisional in the drug file |
-| **Buprenorphine, tapentadol** | Not in the library and do not fit additivity (§6); exclude explicitly rather than guess |
+| **Buprenorphine, tapentadol** | Neither fits additivity (§6). Buprenorphine is in the library with MEAC 0, so it is already excluded from U; tapentadol is not in the library |
 
 ---
 
@@ -357,7 +362,9 @@ engine (`docs/architecture.md#time-units`).
 
 - **Tolerance makes absolute U uninterpretable in chronic patients.** MEACs
   come from opioid-naive postoperative PCA. A tolerant patient's m may be 5 or
-  10. Absolute `Ubar` is therefore a measure of drug on board, not of
+  10. The Patient Profile's **Opioid tolerance** field now multiplies every opioid's
+  MEAC (`OPIOID_TOLERANCE_FACTORS`: 1, 1.5, 2 or 3), but its top factor is below
+  that range. Absolute `Ubar` is therefore a measure of drug on board, not of
   analgesia or risk, across patients. Within one patient it is sound.
 - **m is assumed to be the same for every μ agonist.** Incomplete
   cross-tolerance says it is not; the discount δ is a blunt correction.

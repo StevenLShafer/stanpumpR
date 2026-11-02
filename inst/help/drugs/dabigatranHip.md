@@ -21,7 +21,7 @@ The paper's breakpoint is defined relative to **surgery**, which the simulator h
 
 ### Covariates
 
-- **Serum gastrin** raises apparent clearance in both phases. There is no gastrin field in the [Patient Profile](help:patient-profile), so it is fixed at the population median, and the gastrin effect is not shown; the clearances above are at that median.
+- **Serum gastrin** raises apparent clearance in both phases. There is no gastrin field in the [Patient Profile](help:patient-profile), so it is fixed at the study's mean (gastrin is right-skewed, so the mean is not a median), and the gastrin effect is not shown; the clearances above are at that mean.
 - **Creatinine clearance** (Cockcroft–Gault, from the serum creatinine) raises the day-2-to-10 clearance; **serum creatinine** and **age** both lower the day-2-to-10 absorption rate. The serum creatinine comes from the Patient Profile, or an assumed normal value when blank. These were fitted over serum creatinine 0.66–1.81 mg/dL, creatinine clearance 29–161 mL/min and age 35–88 years; outside that range the model extrapolates and the absorption factors are held positive.
 - **Body size**: the source found no effect of weight, sex, smoking or alcohol, so every apparent parameter is size-free and scales with the library's [fat-free-mass switch](help:models/fat-free-mass); weight also enters through the Cockcroft–Gault creatinine clearance.
 

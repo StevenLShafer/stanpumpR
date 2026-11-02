@@ -7,7 +7,9 @@
 # THE PLOTTED CONCENTRATION IS UNBOUND CEFAZOLIN
 # ==============================================
 # Komatsu et al. jointly fitted total and unbound serum cefazolin from 152
-# adults having prostatectomy or nephrectomy, with 15-minute infusions.  The
+# adults having prostatectomy or nephrectomy; the clinical doses were infused
+# over 10 minutes (Methods), while the paper's own simulations and abstract
+# used a separate, 15-minute infusion assumption.  The
 # disposition in their final model is written on UNBOUND concentration: a
 # linear two-compartment system whose clearance acts on free drug, with total
 # concentration recovered afterwards through a saturable albumin binding
@@ -18,9 +20,16 @@
 # also the concentration that matters pharmacodynamically: the cefazolin
 # target is the fraction of the dosing interval the FREE concentration spends
 # above the organism's MIC (fT > MIC).  Anyone comparing the curve against a
-# measured TOTAL level must apply the binding map themselves; at the
-# concentrations a 2 g dose produces, total is roughly two to four times
-# unbound, and the ratio falls as the level rises because binding saturates.
+# measured TOTAL level must apply the source's binding relationship
+# themselves, not a fixed multiplier: Ct = Cu + Bmax Cu / (Kd + Cu) with
+# Bmax 319 mg/L x (albumin/32)^0.401 and Kd 28.7 mg/L, so the total/unbound
+# ratio is 1 + Bmax/(Kd + Cu), concentration- (and albumin-) dependent, and
+# FALLS as the unbound level rises because the binding term saturates.  Over
+# a 2 g dose this model's own free-drug peak the ratio is near 5, rising to
+# roughly 10 as the level falls toward the trough; Komatsu's reported group
+# medians (unbound about 12% of total near incision, a ratio near 8-9) are
+# evidence of the same relationship at the concentrations they sampled, not
+# individual paired conversions and not a fixed 2-4x as earlier stated here.
 #
 # The source's two-compartment "volumes" (36.6 and 42.2 L) are dose-accounting
 # volumes for free drug, not anatomical spaces; dividing a dose by them gives

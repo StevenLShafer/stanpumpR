@@ -88,6 +88,23 @@ checkNumericCovariates <- function(age, weight, height, errorFx = NULL,
 # @param level the session's debug level (session$userData$debug(): a number
 #   from the URL or config, a string from the debug menu)
 # @param default the configured level (config$debug)
+# The link the address bar is given for a bookmark, with the message to show
+# if it is not the bookmark: a bookmark longer than the server accepts
+# (MAX_BOOKMARK_URL_CHARS) cannot be reopened, so the address bar is left at
+# the plain app address instead of a link that fails with 414.
+bookmarkForAddressBar <- function(url) {
+  if (nchar(url) <= MAX_BOOKMARK_URL_CHARS) return(list(url = url, problem = NULL))
+  list(
+    url = sub("\\?.*$", "", url),
+    problem = paste0(
+      "This session has too many settings to be saved in the address bar (",
+      format(nchar(url), big.mark = ","), " characters; the limit is ",
+      format(MAX_BOOKMARK_URL_CHARS, big.mark = ","),
+      "). Simulate fewer drugs to get a link you can reopen or share."
+    )
+  )
+}
+
 withDebugQuery <- function(url, level, default = DEBUG_LEVEL_OFF) {
   if (is.null(default)) default <- DEBUG_LEVEL_OFF
   # The debug menu sends its level as a string

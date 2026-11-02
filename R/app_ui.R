@@ -46,6 +46,8 @@ app_ui <- function() {
         ),
         shinyjs::useShinyjs(),
         tags$script(src = "stanpumpr-assets/app.js"),
+        # The parameter converter on the help page models/pk-converter
+        tags$script(src = "stanpumpr-assets/pk-convert.js"),
         tags$script(HTML(js_drug_defaults)),
         tags$script(src = "stanpumpr-assets/hot_funs.js"),
         tags$link(href = "stanpumpr-assets/app.css", rel = "stylesheet")

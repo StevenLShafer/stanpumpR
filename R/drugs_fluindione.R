@@ -12,10 +12,10 @@
 # Jaillon P, Becquemont L.  A pharmacokinetic-pharmacodynamic model for
 # predicting the impact of CYP2C9 and VKORC1 polymorphisms on fluindione and
 # acenocoumarol during induction therapy.  Clin Pharmacokinet 2012;51(1):41-53.
-# 24 White healthy subjects, open-label two-period crossover, a single 20 mg
-# dose of fluindione; Monolix.  Tables II (PK/PD parameters) and IV (steady-
-# state INRmax by covariate), and Equation 1 (the indirect response model), read
-# from the full text on 2026-10-18.
+# 24 White healthy subjects, open-label two-period crossover, two 20 mg doses
+# of fluindione 24 hours apart, sampled after the second dose; Monolix.  Tables
+# II (PK/PD parameters) and IV (steady-state INRmax by covariate), and Equation
+# 1 (the indirect response model), read from the full text on 2026-10-18.
 #
 # Fluindione is an indane-dione vitamin-K antagonist, the most prescribed oral
 # anticoagulant in France.  A two-compartment, first-order oral input model with

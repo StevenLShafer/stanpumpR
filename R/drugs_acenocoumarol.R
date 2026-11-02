@@ -12,10 +12,10 @@
 # Jaillon P, Becquemont L.  A pharmacokinetic-pharmacodynamic model for
 # predicting the impact of CYP2C9 and VKORC1 polymorphisms on fluindione and
 # acenocoumarol during induction therapy.  Clin Pharmacokinet 2012;51(1):41-53.
-# 24 White healthy subjects, open-label two-period crossover, a single 4 mg dose
-# of acenocoumarol; Monolix.  Table III (S-acenocoumarol PK/PD) and Table IV
-# (steady-state INRmax), and Equation 1 (the indirect response model), read from
-# the full text on 2026-10-18.
+# 24 White healthy subjects, open-label two-period crossover, two 4 mg doses of
+# acenocoumarol 24 hours apart, sampled after the second dose; Monolix.  Table
+# III (S-acenocoumarol PK/PD) and Table IV (steady-state INRmax), and Equation 1
+# (the indirect response model), read from the full text on 2026-10-18.
 #
 # Acenocoumarol is the 4'-nitro analogue of warfarin, a coumarin vitamin-K
 # antagonist widely used in Europe.  It is given as the racemate, but the INR is

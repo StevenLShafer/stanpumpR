@@ -141,8 +141,8 @@ best.
 
 The prototype scaled an exploratory pediatric model with total body weight,
 fat-free mass supplied separately, and a renal maturation function of
-postmenstrual age (O'Hanlon 2023). stanpumpR does not collect postmenstrual age,
-and every model in the library must follow `docs/weight-adjustment.md`.
+postmenstrual age (O'Hanlon 2023). stanpumpR's **Gestational age at birth** field
+is read only by models that name it; mannitol does not, and every model in the library must follow `docs/weight-adjustment.md`.
 Mannitol therefore uses the library rule. The population means are taken to
 describe the 70 kg reference adult. Volumes scale with fat-free mass relative
 to the 54.5 kg reference, and clearances with that ratio to the 0.75 power. With
@@ -161,7 +161,7 @@ the patient's Cockcroft-Gault creatinine clearance over the reference patient's
 (70 kg, 35 years, male, creatinine 0.9 mg/dL: 113 mL/min):
 
 ```
-CL1 = 0.07 L/min × CrCl / 102
+CL1 = 0.07 L/min × CrCl / 113
 ```
 
 CrCl is computed from the **Serum creatinine** field in the Patient Profile, or
@@ -175,8 +175,8 @@ the distribution clearances are unchanged.
 
 This is an assumption layered on Kaneda, not part of it. As a check, the label
 gives a half-life of up to 36 hours in renal impairment. A 70 kg, 50-year-old man
-with a creatinine of 10 mg/dL gets CL1 = 0.006 L/min here, and a terminal
-half-life of 46 hours, which is the same order. At normal creatinine the model is
+with a creatinine of 10 mg/dL gets CL1 = 0.005 L/min here, and a terminal
+half-life of 52 hours, which is the same order. At normal creatinine the model is
 unchanged for the reference patient. Clearance now falls with age, by about 14%
 at 50 years compared with 35.
 

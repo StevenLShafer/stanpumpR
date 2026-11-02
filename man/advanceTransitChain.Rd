@@ -14,12 +14,15 @@ amount unit}
 
 \item{maximum}{the end of the plot, minutes}
 
-\item{plotRecovery}{unused: this engine reports no time until threshold}
+\item{plotRecovery}{should the time until threshold be computed?  Zeros
+otherwise, as the closed-form engines give}
 
-\item{emerge}{unused, for the same reason}
+\item{emerge}{the threshold: on the effect site, or on the plasma for a
+drug without one}
 }
 \value{
-a data frame of \code{Time}, \code{Cp}, \code{Ce} (NA), \code{Recovery} (NA), \code{C2},
+a data frame of \code{Time}, \code{Cp}, \code{Ce} (NA without a ke0),
+\code{Recovery} (minutes; NA while a dose is inside its lag), \code{C2},
 \code{C3} and \code{Depot}, and, for a drug that forms an active metabolite,
 \code{CpMetabolite}, \code{CeMetabolite} (NA), \code{C2Metabolite} and \code{C3Metabolite},
 as the closed-form engines return

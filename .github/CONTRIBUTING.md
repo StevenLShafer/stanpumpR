@@ -1,48 +1,46 @@
 # Contributing to stanpumpR
 
-This outlines how to propose a change to stanpumpR. For more detailed
-info about contributing to this, and other tidyverse packages, please see the
-[**development contributing guide**](https://rstd.io/tidy-contrib).
+stanpumpR is a collaborative research project: an R package and Shiny app that
+simulates plasma and effect-site concentrations from published pharmacokinetic
+models. Contributions of drugs, data sets and algorithms are welcome.
 
-### Fixing typos
+## Before you start
 
-Small typos or grammatical errors in documentation may be edited directly using
-the GitHub web interface, so long as the changes are made in the _source_ file.
+Contact Steven Shafer (steven.shafer@stanford.edu) before starting a new drug or a
+substantial change, so that two people do not build the same model. For a small
+fix to the documentation or the help pages, a pull request on its own is fine.
 
-*  YES: you edit a roxygen comment in a `.R` file below `R/`.
-*  NO: you edit an `.Rd` file below `man/`.
+## Adding a drug
 
-### Prerequisites
+Follow [`docs/adding-a-drug.md`](../docs/adding-a-drug.md). A drug a user can dose
+(one with a `Category` in `inst/extdata/drugDefaults_global.csv`) needs six things;
+an entry without one, such as a metabolite or the carrier gases, needs fewer, as that
+guide says:
 
-Before you make a substantial pull request, you should always file an issue and
-make sure someone from the team agrees that it’s a problem. If you’ve found a
-bug, create an associated issue and illustrate the bug with a minimal
-[reprex](https://www.tidyverse.org/help/#reprex).
+1. the model, `R/drugs_<name>.R`;
+2. its row in `inst/extdata/drugDefaults_global.csv`;
+3. its test, `tests/testthat/test-drugs-<name>.R`;
+4. its help narrative, `inst/help/drugs/<name>.md`;
+5. its row in the pregnancy registry (`data-raw/pregnancyRegistry.R`);
+6. its row in `inst/extdata/therapeuticRanges.csv`.
 
-### Pull request process
+Every number in a model comes from a primary source that was actually read, with the
+source cited in the model's header and `reference` string. Every model scales to body
+size as [`docs/weight-adjustment.md`](../docs/weight-adjustment.md) describes, and stays
+finite for any legal patient. [`AGENTS.md`](../AGENTS.md) collects the rest of the
+house rules (renal covariates, age floors, pharmacogenetics, therapeutic ranges).
 
-*  We recommend that you create a Git branch for each pull request (PR).
-*  Look at the Travis and AppVeyor build status before and after making changes.
-The `README` should contain badges for any continuous integration services used
-by the package.
-*  New code should follow the tidyverse [style guide](https://style.tidyverse.org).
-You can use the [styler](https://CRAN.R-project.org/package=styler) package to
-apply these styles, but please don't restyle code that has nothing to do with
-your PR.
-*  We use [roxygen2](https://cran.r-project.org/package=roxygen2), with
-[Markdown syntax](https://cran.r-project.org/web/packages/roxygen2/vignettes/markdown.html),
-for documentation.
-*  We use [testthat](https://cran.r-project.org/package=testthat). Contributions
-with test cases included are easier to accept.
-*  For user-facing changes, add a bullet to the top of `NEWS.md` below the
-current development version header describing the changes made followed by your
-GitHub username, and links to relevant issue(s)/PR(s).
+## Pull requests
 
-### Code of Conduct
+- Run the tests before you push: `devtools::test()`. The models, the registries and the
+  help pages are pinned by tests; a change that has none should add one.
+- Edit the source, not generated output: a help page's generated tables come from the
+  code, and `man/` comes from the roxygen comments (`devtools::document()`).
+- Each pull request is checked by R CMD check on Linux, macOS and Windows, deployed to a
+  test copy of the app, and reviewed automatically. Keep a pull request to one subject.
 
-Please note that the stanpumpR project is released with a
-[Contributor Code of Conduct](CODE_OF_CONDUCT.md). By contributing to this
-project you agree to abide by its terms.
+## Code of Conduct
 
-### See tidyverse [development contributing guide](https://rstd.io/tidy-contrib)
-for further details.
+Please note that stanpumpR is released with a [Contributor Code of
+Conduct](CODE_OF_CONDUCT.md). By contributing to this project you agree to abide by
+its terms.

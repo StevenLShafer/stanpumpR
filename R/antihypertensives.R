@@ -17,9 +17,11 @@
 # independent evidence fields, so the difference between "there is a product"
 # and "there is a model" is visible rather than implied.
 #
-# Two records are implemented as drugs in the library, and both plot a
-# CONCENTRATION: clevidipine (R/drugs_clevidipine.R) and fenoldopamPediatric
-# (R/drugs_fenoldopamPediatric.R).  No drug in the library plots a blood
+# Twelve records are implemented as drugs in the library, and every one plots
+# a CONCENTRATION: clevidipine, fenoldopamPediatric, carvedilol, azilsartan,
+# chlorthalidone, hydrochlorothiazide, lisinopril, olmesartan, valsartan,
+# benazepril, enalapril (with the enalaprilat it forms) and fosinopril, each
+# in R/drugs_<name>.R.  No drug in the library plots a blood
 # pressure, and bp_simulation_enabled is FALSE for every record in the
 # registry.
 #

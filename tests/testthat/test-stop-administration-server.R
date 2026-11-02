@@ -72,6 +72,7 @@ test_that("Min time moves the start of the axis and refines the window", {
     expect_equal(plotInfo()$plotMinimum, 0)
     before <- drugs()$fentanyl$results
     session$setInputs(minimum = 180)
+    session$elapse(500)
     expect_equal(plotInfo()$plotMinimum, 180)
     expect_equal(plotInfo()$plotMaximum, 240)
     # ticks for a one-hour window, at their multiples
@@ -81,8 +82,10 @@ test_that("Min time moves the start of the axis and refines the window", {
     # Min time dragged up to Max time: the plot waits for the observer to
     # pull them apart rather than draw an empty window
     session$setInputs(minimum = 240)
+    session$elapse(500)
     expect_error(plotInfo(), class = "shiny.silent.error")
     session$setInputs(maximum = 245)
+    session$elapse(500)
     expect_equal(plotInfo()$plotMinimum, 240)
     expect_equal(plotInfo()$plotMaximum, 245)
   })

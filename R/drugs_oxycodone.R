@@ -498,10 +498,15 @@ oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   MW_RATIO <- 301.34 / 315.36   # oxymorphone over oxycodone, g/mol
   RATIO_IV <- 0.01              # normal metaboliser, intravenous
   # Oral ratio 0.0335: (0.0335 - 0.01) x F x CL_oxymorphone / (mwRatio x CL),
-  # at the reference patient 0.0235 x 2.0 / (0.9555 x 1.379), where 1.379
-  # L/min is Lalovic's CL/F (19.7 mL/min/kg x 70 kg), so this does not move
-  # with the dose basis
-  FIRST_PASS_NORMAL <- 0.0357
+  # at the reference patient 0.0235 x 2.0 / (0.9555 x 1.379) = 0.03567, where
+  # 1.379 L/min is Lalovic's CL/F (19.7 mL/min/kg x 70 kg), so this does not
+  # move with the dose basis.  CL_oxymorphone (2.0 L/min) is READ from the
+  # library's oxymorphone model, not retyped, so a revision of that model
+  # carries into this first pass (AGENTS.md, "Parents and their
+  # metabolites"); until 2026-10-31 it was the rounded constant 0.0357.
+  RATIO_PO <- 0.0335            # normal metaboliser, oral
+  FIRST_PASS_NORMAL <- (RATIO_PO - RATIO_IV) *
+    (libraryReferenceClearance("oxymorphone") / 60) / (MW_RATIO * 1.379)
   clOxymorphone <- oxymorphone(weight, height, age, sex,
                                adjustToFFM = adjustToFFM)$PK$default$cl1
   clFormation <- RATIO_IV * clOxymorphone / MW_RATIO

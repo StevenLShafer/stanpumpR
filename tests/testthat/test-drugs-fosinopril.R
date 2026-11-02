@@ -9,8 +9,7 @@
 #
 # Hui KK, Duchin KL, Kripalani KJ, Chan D, Kramer PK, Yanagawa N,
 # Clin Pharmacol Ther 1991;49:457-467, Tables I, IV and V; absorption from
-# Murdoch D, McTavish D, Drugs 1992;43:123-140 section 2.1, quoting Singhvi
-# et al. 1988.
+# Singhvi et al., Br J Clin Pharmacol 1988;25:9-15, Tables 1 and 2.
 
 # --- Hui Table IV, normal renal function (PDF p7) ---
 IV_DOSE  <- 7500      # mcg fosinoprilat; "equimolar to 10 mg fosinopril sodium"
@@ -32,16 +31,18 @@ T3_GROUPS   <- c(12.4, 14.0, 14.1, 16.9)   # h, terminal half-life
 # reproduce THIS study's exposure while it runs on HUI's clearance would
 # double-count the 1.47-fold difference between the two populations.
 ORAL_DOSE <- 10       # mg fosinopril sodium
-TMAX_RANGE <- c(2.8, 3.1)          # h, for a 10 mg dose
+TMAX_RANGE <- c(2.8, 3.1)          # h, fosinoprilat, solution and capsule (Table 1)
 F_CAPSULE  <- 0.29    # fosinoprilat bioavailability, capsule (solution 0.25)
-CL_SINGHVI <- 39      # mL/min, his abstract
-VSS_SINGHVI <- 10     # L, his abstract (Murdoch quotes 9.8 to 10.6)
-# NOT fosinoprilat: the Cmax 99-140 mcg/L and AUC(0-24h) 1035-1132 mcg/L.h that
-# Murdoch's review labels "plasma fosinoprilat" are TOTAL RADIOACTIVITY, of
-# which only about 75% is the diacid.  The first draft of this model derived
-# F = 0.26 against them; both the analyte and the method were wrong.
+CL_SINGHVI <- 39      # mL/min, his abstract (Table 2: 39.1)
+VSS_SINGHVI <- 10     # L, his abstract (Table 2: 9.8)
+# NOT fosinoprilat: the AUC(0-24h) 1035-1132 mcg/L.h that Murdoch's review
+# labels "plasma fosinoprilat" is TOTAL RADIOACTIVITY in Singhvi's Table 1, of
+# which only about 75% is the diacid (and the review's Cmax 99-140 spans both
+# analytes).  The first draft of this model derived F = 0.26 against them; both
+# the analyte and the method were wrong.
 TOTAL_RADIO_AUC24 <- c(1035, 1132)  # mcg/L.h, total radioactivity
 FOSINOPRILAT_SHARE <- 0.75          # of plasma radioactivity after an oral dose
+DIACID_AUCINF <- c(788, 920)        # ng.h/mL, fosinoprilat, Table 1
 
 # Hui's Methods: 7.5 mg fosinoprilat was equimolar to 10 mg fosinopril sodium
 PRILAT_PER_FOSINOPRIL <- 0.75
@@ -283,19 +284,24 @@ test_that("the serum creatinine field reaches the model, and a blank is assumed 
 })
 
 test_that("the quoted oral area is total radioactivity, not fosinoprilat", {
-  # The arithmetic that settles it, from three numbers in Singhvi's abstract.
-  # His own bioavailability and his own clearance give the fosinoprilat area
-  # directly, and it matches the quoted figure only after the 75% share.
+  # The arithmetic that settled it before the tables were read, from three
+  # numbers in Singhvi's abstract.  His own bioavailability and his own
+  # clearance give the fosinoprilat area directly -- and his Table 1 prints it,
+  # within 2% -- and it matches the quoted figure only after the 75% share.
   dEq <- ORAL_DOSE * 1000 * PRILAT_PER_FOSINOPRIL            # mcg fosinoprilat
   clS <- CL_SINGHVI / 1000 * 60                              # L/h
   implied <- c(0.25, F_CAPSULE) * dEq / clS                  # ng.h/mL, 0-inf
   expect_equal_rounded(c(801.3, 929.5), implied, tolerance = 1e-3)
+  expect_true(all(abs(implied / DIACID_AUCINF - 1) < 0.02))
   # the quoted area scaled to the diacid brackets what his own numbers imply
+  # over 0 to 24 h, truncated with this model's oral curve run at HIS
+  # clearance, which leaves 95.1% of the area inside 24 h (at Hui's slower
+  # clearance it leaves 92%, the share an earlier draft used)
   diacid <- FOSINOPRILAT_SHARE * TOTAL_RADIO_AUC24
   expect_equal_rounded(c(776.25, 849.0), diacid, tolerance = 1e-4)
-  expect_lt(abs(mean(diacid) / mean(0.92 * implied) - 1), 0.03)
+  expect_lt(abs(mean(diacid) / mean(0.951 * implied) - 1), 0.03)
   # whereas taking the quoted figure AS fosinoprilat overstates it by a third
-  expect_gt(mean(TOTAL_RADIO_AUC24) / mean(0.92 * implied), 1.25)
+  expect_gt(mean(TOTAL_RADIO_AUC24) / mean(0.951 * implied), 1.25)
 })
 
 test_that("the oral curve is Singhvi's F on Hui's clearance, 1.47-fold his", {
@@ -311,9 +317,9 @@ test_that("the oral curve is Singhvi's F on Hui's clearance, 1.47-fold his", {
   auc <- function(tt) dose * ka *
     sum(cu * ((1 - exp(-lam * tt)) / lam - (1 - exp(-ka * tt)) / ka) / (ka - lam))
 
-  # The RATE is still set from the reported time to peak, which is robust to
-  # the analyte question: the diacid is 75% of the radioactivity, so the two
-  # peak together, and the label independently says "approximately 3 hours".
+  # The RATE is still set from the reported time to peak, which is
+  # fosinoprilat's own in Singhvi's Table 1, and the label independently says
+  # "approximately 3 hours".
   tmax <- optimize(function(t) -cp(t), c(1, 2000))$minimum / 60
   expect_gt(tmax, TMAX_RANGE[1])
   expect_lt(tmax, TMAX_RANGE[2])

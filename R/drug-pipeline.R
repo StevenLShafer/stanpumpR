@@ -23,50 +23,49 @@
 processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery, cache = NULL,
                               plotMinimum = 0, antiseizureInteractions = FALSE)
 {
-  oldWindow <- .sprglobals$gridMinimum
-  .sprglobals$gridMinimum <- plotMinimum
-  on.exit(.sprglobals$gridMinimum <- oldWindow, add = TRUE)
-
-  for (drug in names(drugs))
-  {
-    # A companion entry (an alternative model of a library drug; see
-    # R/alternativeModels.R) is simulated on its parent's dose rows, and never
-    # with the time until threshold, which stays on the library's own model.
-    parent <- drugs[[drug]]$companionOf
-    source <- if (is.null(parent)) drug else parent
-    recovery <- if (is.null(parent)) plotRecovery else FALSE
-
-    tempDT <- DT[DT$Drug == source,]
-    tempET <- ET[gsub(" ","", ET$Event) %in% drugs[[drug]]$pkEvents,]
-
-    if (nrow(tempDT) == 0) next  # e.g. a metabolite that was not given directly
-
-    key <- simulationKey(drugs[[drug]], tempDT, tempET, plotMaximum, recovery, plotMinimum)
-    sim <- cache[[drug]]$sim
-    if (is.null(sim) || !identical(cache[[drug]]$simKey, key))
+  # Every time line inside is refined across the window drawn (Min time).
+  withGridWindow(plotMinimum, {
+    for (drug in names(drugs))
     {
-      X <- simCpCe(
-        tempDT,
-        tempET,
-        drugs[[drug]],
-        plotMaximum,
-        recovery
-        )
-      sim <- simulationFields(X, tempDT, tempET)
+      # A companion entry (an alternative model of a library drug; see
+      # R/alternativeModels.R) is simulated on its parent's dose rows, and never
+      # with the time until threshold, which stays on the library's own model.
+      parent <- drugs[[drug]]$companionOf
+      source <- if (is.null(parent)) drug else parent
+      recovery <- if (is.null(parent)) plotRecovery else FALSE
+
+      tempDT <- DT[DT$Drug == source,]
+      tempET <- ET[gsub(" ","", ET$Event) %in% drugs[[drug]]$pkEvents,]
+
+      if (nrow(tempDT) == 0) next  # e.g. a metabolite that was not given directly
+
+      key <- simulationKey(drugs[[drug]], tempDT, tempET, plotMaximum, recovery, plotMinimum)
+      sim <- cache[[drug]]$sim
+      if (is.null(sim) || !identical(cache[[drug]]$simKey, key))
+      {
+        X <- simCpCe(
+          tempDT,
+          tempET,
+          drugs[[drug]],
+          plotMaximum,
+          recovery
+          )
+        sim <- simulationFields(X, tempDT, tempET)
+      }
+      for (field in names(sim)) drugs[[drug]][[field]] <- sim[[field]]
+      drugs[[drug]]$sim    <- sim
+      drugs[[drug]]$simKey <- key
     }
-    for (field in names(sim)) drugs[[drug]][[field]] <- sim[[field]]
-    drugs[[drug]]$sim    <- sim
-    drugs[[drug]]$simKey <- key
-  }
 
-  # The pharmacokinetic interactions among the antiseizure drugs (Graph
-  # Options), which re-simulate the drugs they change on top of their own
-  # simulations; see R/antiseizureInteractions.R.
-  if (isTRUE(antiseizureInteractions))
-    drugs <- applyAntiseizureInteractions(drugs, DT, ET, plotMaximum,
-                                          plotRecovery, cache = cache)
+    # The pharmacokinetic interactions among the antiseizure drugs (Graph
+    # Options), which re-simulate the drugs they change on top of their own
+    # simulations; see R/antiseizureInteractions.R.
+    if (isTRUE(antiseizureInteractions))
+      drugs <- applyAntiseizureInteractions(drugs, DT, ET, plotMaximum,
+                                            plotRecovery, cache = cache)
 
-  foldMetabolites(drugs, plotMaximum, plotRecovery)
+    foldMetabolites(drugs, plotMaximum, plotRecovery)
+  })
 }
 
 # Everything a drug's simulation depends on, for processdoseTable() to compare

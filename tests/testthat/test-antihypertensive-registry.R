@@ -62,7 +62,7 @@ test_that("no blood pressure is simulated anywhere", {
   expect_false(any(registry$bp_simulation_enabled))
 })
 
-test_that("exactly two records are externally validated, and which two", {
+test_that("exactly three records are externally validated, and which three", {
   # This assertion read "nothing is externally validated" until Ericsson's
   # second 1999 paper was read, then "exactly one, and it is clevidipine"
   # until enalapril was validated against Arafat 2005.  It stays pinned as a
@@ -73,7 +73,7 @@ test_that("exactly two records are externally validated, and which two", {
   # worth keeping: clevidipine's is against a second paper's own DERIVATION of
   # quantities the implemented record must derive; enalapril's is against
   # MEASUREMENTS -- Arafat 2005's metabolite peaks of 54.8 and 57.2 ng/mL,
-  # which the model reproduces at 55.7, and which settle a dose-basis
+  # which the model reproduces at 55.9, and which settle a dose-basis
   # ambiguity its own source leaves open; and fosinopril's (2026-10-29) is the
   # first that DISAGREES -- Singhvi 1988's healthy volunteers, through the
   # Murdoch review, exposed 40% below the model for the same intravenous dose,

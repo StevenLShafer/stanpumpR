@@ -19,8 +19,8 @@ This is the lesson. One dose tells you almost nothing: after a day the two patie
 ## Try next
 
 - Set **CYP 2B6** to *Intermediate*, the commonest reduced-function group (one normal and one reduced allele, such as `*1/*6`). The day-14 trough is 100 ng/mL, between the other two: the effect is graded by allele count.
-- Change the units to `mg bid` to give the same dose intravenously. Every concentration rises by about a seventh, the reciprocal of the 0.70 oral bioavailability, but the ratio between the two phenotypes stays at 1.39. That is a limit of the model, not a finding: the genotype here scales systemic clearance only, while Kharasch measured a larger genetic effect by mouth than by vein, because an oral dose is also metabolised on its first pass through the liver.
-- Add a `0 mg PO bid` row at day 14 to stop the drug, and set *Max time* to 28 days. Three days after the last dose the poor metaboliser still has 41 ng/mL and the normal metaboliser 22 ng/mL, so the genotype changes how long the drug lingers as well as how high it reaches.
+- Change the units to `mg bid` to give the same dose intravenously. Every concentration rises by about two-fifths (about 1.4 times, the reciprocal of the 0.70 oral bioavailability), but the ratio between the two phenotypes stays at about 1.4. That is a limit of the model, not a finding: the genotype here scales systemic clearance only, while Kharasch measured a larger genetic effect by mouth than by vein, because an oral dose is also metabolised on its first pass through the liver.
+- Add a `0 mg PO bid` row at day 14 to stop the drug, and set *Max time* to 28 days. On day 17, three and a half days after the last dose (the stop row replaces the day-14 dose), the poor metaboliser still has 41 ng/mL and the normal metaboliser 22 ng/mL, so the genotype changes how long the drug lingers as well as how high it reaches.
 - Compare [a single intravenous bolus](scenario:methadone-bolus), which shows the same disposition over a day instead of a fortnight.
 
 ## Background

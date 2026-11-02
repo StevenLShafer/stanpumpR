@@ -4,12 +4,45 @@
 # Provenance
 # ----------
 # Drafted by Claude Code, 2026-10-09, at the request of Steven L. Shafer, from
-# the antipsychotic implementation brief.  Only the abstracts of Kim 2008 and
-# Kim 2012 could be read.  Checked there: one compartment each, ka 1.06 /h
-# fixed, plasma, 80 patients on 10 to 30 mg/day, intermediate metabolisers'
-# CL/F about 60% of normal, and Kim 2012's EC50 of 8.63 ng/mL.  NOT checked:
-# the genotype-class clearances, the metabolite's CLm/fm and Vm/fm, the
-# formation convention, and Kim 2012's ke0 of 0.725 /h and Emax of 100%.
+# the antipsychotic implementation brief, with only the abstract of Kim 2008
+# available.  Checked there: one compartment, ka 1.06 /h fixed, plasma, 80
+# patients on 10 to 30 mg/day, intermediate metabolisers' CL/F about 60% of
+# normal.  NOT checked: the genotype-class clearances, the metabolite's
+# CLm/fm and Vm/fm, and the formation convention.
+#
+# Kim 2012's full text was read (2026-10-12; Table 1 re-read on the PDF
+# 2026-11-01) and confirms ke0 0.725 /h (95% CI 0.542-0.908), EC50 8.63 ng/mL
+# and Emax 100%.  THE KE0 TRANSFER (adjudicated 2026-11-01): Kim fitted ke0
+# with his own two-compartment PK (CL/F 5.8 L/h, V1/F 130 L, Q/F 37.1 L/h,
+# V2/F 274 L, ka 0.293 /h) in 18 healthy men given one oral dose, PET at 3,
+# 45 and 120 h, not with the one-compartment Kim 2008 set this file runs it
+# on (CL/F 3.15 L/h, V/F 192 L, ka 1.06 /h fixed).  Only the 3-h scan
+# precedes equilibrium, so what the data identify is how far Ce trails Cp
+# about 3 h after an ORAL dose.  On this file's PK, ke0 0.725 gives Ce/Cp
+# 0.771 at 3 h against 0.728 in Kim's own model (10 mg); the ke0 matching it
+# exactly is 0.632, a least-squares fit of Ce/Cp over 0-24 h gives 0.657, and
+# matching Kim's oral Ce peak (6.03 h; 6.80 h here, the one-compartment
+# plasma peak being flatter) gives 0.932 -- all inside or at the edge of
+# Kim's interval, so ke0 is carried as published.  The bolus tPeak (2.19 h in
+# Kim's model, 5.35 h here) is NOT carried: it reflects a distribution phase
+# no oral dose produces, and its ke0 (2.26 /h) would erase most of the
+# hysteresis seen at 3 h (+16 occupancy points at 1 h, +3 at 3 h after
+# 10 mg).  The ke0 matters only in the first ~3 h after a dose or dose
+# change.  At periodic steady state on once-daily dosing, replacing 0.725 by
+# 0.632 or 0.932 moves occupancy by at most 0.4 points at any time in the
+# interval at 2 mg (0.13 at 10 mg, 0.05 at 30 mg), and by the bolus ke0 2.26
+# by at most 1.7 points at 2 mg (1.5 h after the dose; 0.5 at 10 mg).
+#
+# The larger difference is 3 h after a single dose: this model gives
+# 46/81/93% occupancy after 2/10/30 mg where Kim's gives 32/71/88% (observed
+# mean maxima 30/72/82%).  Clearance explains almost none of it (Kim's
+# 5.8 L/h on this model moves the 10 mg value from 81.1 to 80.8%).  It is
+# absorption: ka 1.06 /h, fixed in Kim 2008's sparse steady-state data,
+# against 0.293 /h fitted in Kim 2012's rich single-dose data, so 3 h after
+# a dose this model's plasma concentration is 1.7 times Kim's; with Kim's ka
+# this model gives 69.2% against Kim's 70.5%.  That is a difference between
+# the two sources' absorption models, not of ke0, and is recorded, not
+# reconciled.
 #
 # V/F: the brief gives 193 L from Table 3; the abstract says 192 L.  The
 # abstract is the text that could be read, so 192 L is used.
