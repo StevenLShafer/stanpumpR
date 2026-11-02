@@ -129,19 +129,26 @@
 # curve, pooled over the paper's four renal functions, reaches 6.6x the
 # documented standard on the binding limit; however the two limits are traded
 # it stays several-fold outside (curve alone 1.05%, 2.0x its limit, but then
-# the peak is out by 0.92%, 92x its limit; the peak zeroed, the curve is
-# 2.10%, 4.0x), against the eight pulses' 64% of both.  The whole deficit is
-# the UPSTROKE: from 1.5 h on -- the peak, its time, and the entire
-# elimination phase -- the IG is within 0.5% relative, and before that it runs
-# up to +3.5% of peak high.  The reason is not the moments, which very nearly
+# the peak is out by 0.95%, 95x its limit, at the worst renal function; the
+# peak zeroed, the curve is 2.10%, 4.0x), against the eight pulses' 64% of
+# both.  The whole deficit is the UPSTROKE: from 1.5 h on -- the peak, its
+# time, and the entire elimination phase -- the IG's error stays under the
+# curve limit as a share of the peak (0.56% relative to the local value at its
+# worst), and before that it runs up to +3.5% of peak high.  (This note first
+# said "within 0.5% relative" and "0.92%, 92x": the first was read from seven
+# time points, the sparse sample the pulse note above warns against, and the
+# second from one renal function; the script below measures both on the dense
+# grid, over all four.)  The reason is not the moments, which very nearly
 # agree (the published input has CV 0.629 and skew 1.843, and an IG with that
 # CV is forced to skew 3 CV = 1.886, a 2% mismatch): it is that Van Wart's
 # depot is not an input DENSITY at all but a time-varying rate constant,
 # 1 - exp(-(ka t)^gamma), still ramping up from zero while the IG is already
 # absorbing.  A drug whose SOURCE fitted an IG input is the consumer this
 # kernel wants; a drug whose source fitted something else is a refit, and this
-# one does not survive it.  Do not re-derive this -- the working is in the
-# session of 2026-11-01.
+# one does not survive it.  Do not re-derive this: the measurement is
+# data-raw/ig-hydrochlorothiazide.R, which reads the shipped model, rebuilds
+# every number in this paragraph and stops with an error if one no longer
+# reproduces.
 # -----------------------------------------------------------------------------
 
 
