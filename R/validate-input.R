@@ -13,6 +13,13 @@
 #     dialogs that read a time refuse a blank one, and the grid shows the cell
 #     empty, so an entry that could not be read is seen to have failed.
 #
+# "Anything else" includes a dose above MAX_DOSE_VALUE and a time longer than
+# MAX_TIME_STRING_LENGTH characters, the limits validateDoseTableInput()
+# enforces.  Until November 2026 they were let through here and refused only
+# there, which replaced the dose grid with an error message and ended the
+# session from any dialog that read the table (adversarial UI review,
+# finding 7: a dose of 10000000000 in Add a dose).
+#
 # Nothing is guessed at.  Until October 2026 every character that was not a
 # digit, a decimal point or (for a time) a colon was deleted and what was left
 # was read as a number, which turned one number into another without a word:
@@ -124,11 +131,12 @@ validateTime <- function(x)
     MM <- MM %% 60
     # %.0f rather than %d, which stops on an hour count too large for an
     # integer.  inst/www/hot_funs.js validateTime() must give the same string.
-    return(sprintf("%02.0f:%02.0f", HH, MM))
+    out <- sprintf("%02.0f:%02.0f", HH, MM)
+    return(if (nchar(out) > MAX_TIME_STRING_LENGTH) "" else out)
   }
 
   out <- readEntryNumber(x)
-  if (is.na(out)) "" else out
+  if (is.na(out) || nchar(out) > MAX_TIME_STRING_LENGTH) "" else out
 }
 
 # Validate dose: a non-negative number, returned as a character string.  See
@@ -144,5 +152,5 @@ validateDose <- function(x)
   if (x == "") return("0")
 
   out <- readEntryNumber(x)
-  if (is.na(out)) "" else out
+  if (is.na(out) || as.numeric(out) > MAX_DOSE_VALUE) "" else out
 }

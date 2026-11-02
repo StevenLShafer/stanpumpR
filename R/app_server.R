@@ -135,6 +135,28 @@ app_server <- function(input, output, session) {
     plotFailure(main_plot())
   })
 
+  # Why nothing can be simulated, or NULL: what plotMessage() says before it
+  # draws, and the error validating either table would raise.  For the
+  # observers that simulate for themselves (Suggest Dosing, Email Slide),
+  # which ask it before they start: in an observer a req() ends the work in
+  # silence, and an error ends the session (adversarial UI review, 2026-11,
+  # findings 7, 8, 10 and 11).
+  simulationBlocked <- function() {
+    tryCatch({
+      problem <- timeUnitViolation()
+      if (is.null(problem)) problem <- scheduleProblem()
+      if (is.null(problem)) problem <- patientEntryProblem()
+      if (is.null(problem)) problem <- referenceTimeProblem()
+      if (is.null(problem)) {
+        doseTableClean()
+        eventTableClean()
+      }
+      problem
+    },
+    shiny.silent.error = function(e) NULL,
+    error = function(e) conditionMessage(e))
+  }
+
   output$PlotSimulation <- renderPlot({
     outputComments("In output$PlotSimulation", level = DEBUG_LEVEL_VERBOSE)
     # Said here, in the plot area, because main_plot() swallows errors and the
@@ -760,6 +782,12 @@ app_server <- function(input, output, session) {
       }
       data$params$rRowHeaders <- as.character(seq.int(nrows))
       data <- rhandsontable::hot_to_r(data) |> profileCode("hot_to_r() in input$doseTableHTML observer")
+      # A row inserted through the context menu arrives as nulls, which
+      # hot_to_r() makes NA.  Stored as NA, its Drug was matched by every
+      # dt[dt$Drug == drug, ] (a phantom row in Edit doses) and stopped
+      # if (dt$Drug[i] > "") with an error that ended the session
+      # (adversarial UI review, 2026-11, finding 5).  A blank cell is "".
+      data <- blankMissingCells(data)
 
       # An edit made in a grid drawn before a change of time unit or display
       # arrives in the old format: in minutes, say, when the table is now in
@@ -1549,8 +1577,20 @@ app_server <- function(input, output, session) {
         error <- glue::glue("Comment is too long, please limit to {MAX_INPUT_TEXT} characters.")
       } else if (emailSendCount() >= EMAIL_SESSION_LIMIT) {
         error <- "This session has reached its email limit. Please reload the page to send more."
-      } else if (!is.null(timeUnitViolation())) {
-        error <- timeUnitViolation()  # there is no plot to send
+      } else {
+        # There is no plot to send while the simulation cannot run, or with
+        # no dose: said, where before the observer stopped in silence (a
+        # req()), reported the server's generic failure, or ended the session
+        # (validateDoseTableInput(); adversarial UI review, 2026-11,
+        # findings 7 and 11).
+        error <- simulationBlocked()
+        if (is.null(error) && is.null(tryCatch(doseTableClean(), error = function(e) NULL))) {
+          error <- "There is no plot to send: enter a dose first."
+        }
+        if (is.null(error)) {
+          error <- tryCatch(plotFailure(main_plot()),
+                            shiny.silent.error = function(e) "There is no plot to send yet.")
+        }
       }
       if (!is.null(error)) {
         shinyalert::shinyalert("Error",error, type = "error", closeOnClickOutside = TRUE)
@@ -1592,7 +1632,10 @@ app_server <- function(input, output, session) {
       )
 
       shinycssloaders::showPageSpinner(background = "#FFFFFFEE", caption = "Sending email...")
-      emailRetval <-
+      # The spinner always comes down, and a failure is said, not a
+      # disconnection.  sendSlide() catches its own errors; the reactives
+      # read for its arguments do not.
+      emailRetval <- tryCatch(
         sendSlide(
           values = values,
           recipient = input$recipient,
@@ -1605,8 +1648,13 @@ app_server <- function(input, output, session) {
           drugs = drugs(),
           email_username = config$email_username,
           email_password = config$email_password
-        ) |> profileCode("sendSlide()")
-      shinycssloaders::hidePageSpinner()
+        ) |> profileCode("sendSlide()"),
+        error = function(e) {
+          outputComments("sendSlide() arguments failed:", conditionMessage(e))
+          EMAIL_FAILURE_MESSAGE
+        },
+        finally = shinycssloaders::hidePageSpinner()
+      )
 
       if (isTRUE(emailRetval)) {
         emailSendCount(emailSendCount() + 1)
@@ -1834,6 +1882,12 @@ app_server <- function(input, output, session) {
         } else if (x$drug == PLOT_ID_EVENTS)
         {
           showEditEventsModal()
+        } else if (!x$drug %in% doseTable()$Drug) {
+          # A panel with no rows of its own to edit: oxygen, drawn whenever
+          # any gas is given, with only air in the table.  Its edit dialog
+          # had no grid, and Apply ended the session (adversarial UI review,
+          # 2026-11, finding 6).  Offered as a single click is, to add one.
+          showAddDrugModal(x$drug, x$time)
         } else {
           showEditDrugModal(x$drug)
         }
@@ -2058,8 +2112,8 @@ app_server <- function(input, output, session) {
         return()
       }
       if (!nzchar(addDoseAmount)) {
-        showNotification("That dose could not be read: enter it as a number, such as 2.5.",
-                         type = "error")
+        showNotification(paste("That dose could not be read: enter it as a number from 0 to",
+                               "1,000,000,000, such as 2.5."), type = "error")
         return()
       }
       if (!isTRUE(input$addDoseDrug %in% drugDefaults()$Drug)) {
@@ -2255,7 +2309,7 @@ app_server <- function(input, output, session) {
       dt <- doseTable()
       drug <- DrugTimeUnits()$drug
       req(drug)
-      editPriorDosesTable <- dt[dt$Drug == drug, ]
+      editPriorDosesTable <- dt[dt$Drug %in% drug, ]
       req(nrow(editPriorDosesTable) > 0)
       possibleUnits <- drugDefaults() %>%
         dplyr::filter(Drug == drug) %>%
@@ -2304,6 +2358,10 @@ app_server <- function(input, output, session) {
       # the data column stays "Dose", which hot_to_r() names it by
       editPriorDosesTableHOT$x$colHeaders[editPriorDosesTableHOT$x$colHeaders == "Dose"] <-
         doseFieldLabel(drug)
+      # The drug the grid was drawn for, returned with every edit, so that
+      # Apply cannot write one drug's rows as another's from a grid left
+      # over from an earlier dialog (editDosesOK).
+      editPriorDosesTableHOT$x$drug <- drug
 
       editPriorDosesTableHOT
     }, name = "output$editPriorDosesTable")
@@ -2313,7 +2371,15 @@ app_server <- function(input, output, session) {
     input$editDosesOK,
     {
       profileCode({
-        TT <- rhandsontable::hot_to_r(input$editPriorDosesTable)
+        drug <- DrugTimeUnits()$drug
+        # Only a grid drawn for this drug: none is drawn for a drug with no
+        # rows, and the input then still holds the last dialog's grid, which
+        # Apply wrote as this drug's doses or, with none, stopped on NULL
+        # and ended the session (adversarial UI review, 2026-11, finding 6).
+        req(input$editPriorDosesTable)
+        if (!identical(input$editPriorDosesTable$params$drug, drug)) return()
+        TT <- blankMissingCells(rhandsontable::hot_to_r(input$editPriorDosesTable))
+        TT$Delete <- tickedRows(TT$Delete)
         # Every dose kept needs a time and a dose that can be read.  A blank
         # counts as unreadable here: the grid clears an entry it cannot read
         # (inst/www/hot_funs.js), and validateTime() and validateDose() below
@@ -2327,25 +2393,35 @@ app_server <- function(input, output, session) {
         if (any(unreadable(kept$Time, validateDoseTime)) || any(unreadable(kept$Dose, validateDose))) {
           showNotification(paste0("Every dose needs a time, entered as ",
                                   timeEntryUnitText(doseTableFormat()),
-                                  ", and a dose, entered as a number."), type = "error")
+                                  ", and a dose, entered as a number from 0 to 1,000,000,000."),
+                           type = "error")
+          return()
+        }
+        # And a unit the drug offers.  The dropdown takes Delete, which left
+        # the unit blank: the simulation then ignored the drug without a
+        # word, and Suggest Dosing for it ended the session (finding 4).
+        drugUnits <- unlist(drugDefaults()$Units[drugDefaults()$Drug == drug])
+        if (!all(kept$Units %in% drugUnits)) {
+          showNotification(paste0("Every dose needs a unit: ",
+                                  paste(drugUnits, collapse = ", "), "."), type = "error")
           return()
         }
         removeModal()
         outputComments("In ObserveEvent for editDosesOK")
-        TT$Drug <- DrugTimeUnits()$drug
+        TT$Drug <- drug
         outputComments("TT:")
         outputComments(TT)
         outputComments("doseTable:")
         outputComments(doseTable())
-        dt <- doseTable()
+        dt <- blankMissingCells(doseTable())
         dt <- rbind(
           TT[!TT$Delete,c("Drug","Time","Dose","Units")],
-          dt[dt$Drug != DrugTimeUnits()$drug,]
+          dt[!dt$Drug %in% drug, ]
         )
 
-        for (i in 1:nrow(dt))
+        for (i in seq_len(nrow(dt)))
         {
-          if (dt$Drug[i] > "")
+          if (nzchar(dt$Drug[i]))
           {
             dt$Time[i] <- validateTime(dt$Time[i])
             dt$Dose[i] <- validateDose(dt$Dose[i]) # should work for target too
@@ -2547,16 +2623,25 @@ app_server <- function(input, output, session) {
     input$editEventsOK,
     {
       profileCode({
-        ET <- rhandsontable::hot_to_r(input$editEventsTableHTML)
+        req(input$editEventsTableHTML)
+        ET <- blankMissingCells(rhandsontable::hot_to_r(input$editEventsTableHTML))
         format <- doseTableFormat()
         shown <- editEventsShown
         minutes <- editedTimesToMinutes(ET$Time, shown$text, shown$minutes,
                                         format, referenceFor(format))
-        keep <- !ET$Delete
+        keep <- !tickedRows(ET$Delete)
         if (any(is.na(minutes[keep]))) {
           # The dialog stays open to be corrected
           showNotification(paste0("Every event needs a time, entered as ",
                                   timeEntryUnitText(format), "."), type = "error")
+          return()
+        }
+        # And an event from the list.  The dropdown takes Delete, which
+        # stored a blank event: the plot then said "unknown event" and could
+        # not be drawn, with the Events panel, the way back to this dialog,
+        # gone with it (adversarial UI review, 2026-11, finding 8).
+        if (!all(as.character(ET$Event[keep]) %in% eventDefaults()$Event)) {
+          showNotification("Every event needs an event chosen from the list.", type = "error")
           return()
         }
         removeModal()
@@ -2568,7 +2653,7 @@ app_server <- function(input, output, session) {
 
   deleteDrugDoses <- function(drug) {
     dt <- doseTable()
-    dt <- dt[dt$Drug != drug, ]
+    dt <- dt[!dt$Drug %in% drug, ]
     doseTable(dt)
   }
 
@@ -2691,8 +2776,26 @@ app_server <- function(input, output, session) {
           outputComments("No endtime")
           return()
         }
-        targetTable <- rhandsontable::hot_to_r(input$targetTableHTML)
-        validateTargetTableInput(targetTable)
+        # Not before the grid has reported in (a click on OK while it draws)
+        req(input$targetTableHTML)
+        targetTable <- blankMissingCells(rhandsontable::hot_to_r(input$targetTableHTML))
+        # What is wrong with the table is said, and the dialog stays open:
+        # raised here, the error ended the session (adversarial UI review,
+        # 2026-11, findings 1 and 2: a time with no target, an inserted row).
+        problem <- targetTableProblem(targetTable)
+        if (!is.null(problem)) {
+          showNotification(problem, type = "error")
+          return()
+        }
+        # Nothing can be suggested while the simulation cannot run: the plot
+        # area says why.  Found after the spinner, drugs()'s req() ended the
+        # observer silently and left the page behind "Calculating doses..."
+        # for good (finding 10).
+        blocked <- simulationBlocked()
+        if (!is.null(blocked)) {
+          showNotification(paste("Suggest Dosing cannot run:", blocked), type = "error", duration = 10)
+          return()
+        }
 
         # The times are typed in the dose table's format.  suggest() is given
         # them as minutes, and its suggested doses are written back in that
@@ -2717,25 +2820,45 @@ app_server <- function(input, output, session) {
 
         removeModal()
         shinycssloaders::showPageSpinner(background = "#FFFFFFEE", caption = "Calculating doses...")
-        if (!any(doseTable()$Drug==input$targetDrug)) {
+        # A drug the simulation does not yet carry gets a 0 dose so that
+        # drugs() simulates it; suggest() replaces the drug's rows.  Asked of
+        # the rows the simulation reads: a row whose Units were cleared is
+        # ignored by it, and suggest() stopped with "unknown drug" (finding
+        # 4).  In the drug's own bolus unit, not "mg": vasopressin is dosed in
+        # units, and a mass unit stopped simCpCe() (finding 3).
+        if (!input$targetDrug %in% cleanDoseTable(doseTable())$Drug) {
           outputComments("Updating doseTable for new drug")
+          bolusUnit <- drugDefaults()$Bolus.Units[match(input$targetDrug, drugDefaults()$Drug)]
           doseTable(rbind(doseTable(),
-                          data.frame(Drug=input$targetDrug,Time="0",Dose="0",Units="mg")))
+                          data.frame(Drug = input$targetDrug, Time = "0", Dose = "0", Units = bolusUnit)))
           outputComments(doseTable())
         }
 
-        testTable <- suggest(input$targetDrug,
-                             targetTable,
-                             endTime,
-                             drugs(),
-                             drugList,
-                             eventTable(),
-                             REFERENCE_TIME_NONE)
+        # Any error from here is said, and the spinner always comes down: an
+        # error ended the session, and a req() left the spinner up for good.
+        testTable <- tryCatch(
+          suggest(input$targetDrug,
+                  targetTable,
+                  endTime,
+                  drugs(),
+                  drugList,
+                  eventTable(),
+                  REFERENCE_TIME_NONE),
+          shiny.silent.error = function(e) structure(list(), class = "suggestFailed",
+            message = "the simulation cannot run; the plot area says why."),
+          error = function(e) structure(list(), class = "suggestFailed",
+            message = conditionMessage(e)),
+          finally = shinycssloaders::hidePageSpinner()
+        )
+        if (inherits(testTable, "suggestFailed")) {
+          showNotification(paste("Suggest Dosing failed:", attr(testTable, "message")),
+                           type = "error", duration = 10)
+          return()
+        }
 
         if (is.null(testTable)) {
           # No target fell between the start and the end time (issue #270):
           # say so rather than close the dialog with nothing done.
-          shinycssloaders::hidePageSpinner()
           showNotification(SUGGEST_NO_TARGETS_MESSAGE, type = "warning", duration = 10)
           return()
         }
@@ -2748,13 +2871,12 @@ app_server <- function(input, output, session) {
         # as.character(), which writes 1e5 as "1e+05".
         testTable$Time <- minutesToDisplayTime(testTable$Time, format[["unit"]])
         dt <- doseTable()
-        dt <- dt[dt$Drug != input$targetDrug,]
+        dt <- dt[!dt$Drug %in% input$targetDrug, ]
 
         dt <- rbind(
           testTable[,c("Drug","Time","Dose","Units")],
           dt
         )
-        shinycssloaders::hidePageSpinner()
         doseTable(dt)
       }, name = "input$targetOK observer")
     })
@@ -2862,6 +2984,7 @@ app_server <- function(input, output, session) {
   observeEvent(input$drugEditsOK, {
     profileCode({
       current      <- drugDefaults()
+      req(input$editDrugsHTML)
       newDrugDefaults <- rhandsontable::hot_to_r(input$editDrugsHTML)
       # An entry the plot or the dose table cannot use is refused, and the
       # dialog stays open to be corrected (drugLibraryProblems()).
@@ -2937,6 +3060,7 @@ app_server <- function(input, output, session) {
   })
 
   observeEvent(input$thresholdEditsOK, {
+    req(input$editThresholdsTable)
     tt <- rhandsontable::hot_to_r(input$editThresholdsTable)
     updated <- thresholdTableToDefaults(
       tt, drugDefaults(),
@@ -2960,7 +3084,12 @@ app_server <- function(input, output, session) {
     removeModal()
     drugDefaults(updated$drugDefaults)
     macThreshold(updated$macThreshold)
-    updateCheckboxInput(session, "showThreshold", value = input$showThresholdModal)
+    # The dialog offers the box only without normalization; otherwise
+    # input$showThresholdModal is the value left from an earlier dialog, and
+    # is not this one's (adversarial UI review, 2026-11, finding 13).
+    if (identical(input$normalization, NORMALIZE_NONE) && !is.null(input$showThresholdModal)) {
+      updateCheckboxInput(session, "showThreshold", value = input$showThresholdModal)
+    }
   })
 
   outputComments("Reached the end of server()")

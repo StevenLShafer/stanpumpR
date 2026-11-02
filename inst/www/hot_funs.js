@@ -192,6 +192,11 @@ function notifyRefusedEntries(refused, timeCol) {
     if (/^\s*-/.test(r.entry)) {
       return '"' + r.entry + '" was not accepted: a ' + what + ' cannot be negative.';
     }
+    if (readEntryNumber(r.entry) !== null) {
+      return '"' + r.entry + '" was not accepted: ' + (what === 'dose'
+        ? 'a dose cannot be more than 1,000,000,000.'
+        : 'a time cannot be more than ' + MAX_TIME_STRING_LENGTH + ' characters long.');
+    }
     return '"' + r.entry + '" was not accepted: a ' + what + ' must be a number.';
   });
   if (refused.length > 3) lines.push('(and ' + (refused.length - 3) + ' more)');
@@ -257,12 +262,21 @@ function padTwo(n) {
   return n < 10 ? '0' + n : String(n);
 }
 
+// The limits validateDoseTableInput() (R/input-tables.R) enforces on the
+// stored table, MAX_DOSE_VALUE and MAX_TIME_STRING_LENGTH in R/constants.R:
+// an entry beyond them is refused here, as R's validateDose() and
+// validateTime() refuse it, rather than stored and then refused by the
+// server, which replaced the whole grid with an error (adversarial UI review,
+// 2026-11, finding 7).  test-validate-input.R holds them to the R constants.
+var MAX_DOSE_VALUE = 1e9;
+var MAX_TIME_STRING_LENGTH = 32;
+
 // A blank dose is 0, the number, as the grid has always stored it
 function validateDose(dose) {
   var x = trimEntry(dose);
   if (x === '') return 0;
   var n = readEntryNumber(x);
-  return n === null ? '' : n;
+  return (n === null || Number(n) > MAX_DOSE_VALUE) ? '' : n;
 }
 
 function validateTime(time) {
@@ -277,13 +291,18 @@ function validateTime(time) {
     // convert minutes greater than 60 to hours and minutes
     HH = HH + Math.floor(MM / 60);
     MM = MM % 60;
+    // past 2^53 String() writes "1e+21", which R's validateTime() refuses
+    if (!Number.isSafeInteger(HH)) return '';
     // at least two digits each; an hour count of 100 or more is kept whole
     // (an elapsed "100:30"), not cut to its last two digits
-    return padTwo(HH) + ':' + padTwo(MM);
+    var hm = padTwo(HH) + ':' + padTwo(MM);
+    return hm.length > MAX_TIME_STRING_LENGTH ? '' : hm;
   }
 
   var n = readEntryNumber(x);
-  return n === null ? '' : stripLeadingZeros(n);
+  if (n === null) return '';
+  n = stripLeadingZeros(n);
+  return n.length > MAX_TIME_STRING_LENGTH ? '' : n;
 }
 
 // Hook to take care of advanced logic every time a cell is updatd in the main
