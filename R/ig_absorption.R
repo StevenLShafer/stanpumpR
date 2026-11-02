@@ -127,19 +127,25 @@
 # HYDROCHLOROTHIAZIDE HAS NOW BEEN MEASURED, and the answer is no (Claude
 # Code, 2026-11-01, at Shafer's request).  An IG fitted minimax to the plasma
 # curve, pooled over the paper's four renal functions, reaches 6.6x the
-# documented standard on the binding limit; however the two limits are traded
-# it stays several-fold outside (curve alone 1.05%, 2.0x its limit, but then
-# the peak is out by 0.95%, 95x its limit, at the worst renal function; the
-# peak zeroed, the curve is 2.10%, 4.0x), against the eight pulses' 64% of
-# both.  The whole deficit is the UPSTROKE: from 1.5 h on -- the peak, its
-# time, and the entire elimination phase -- the IG's error stays under the
-# curve limit as a share of the peak (0.56% relative to the local value at its
-# worst), and before that it runs up to +3.5% of peak high.  (This note first
-# said "within 0.5% relative" and "0.92%, 92x": the first was read from seven
-# time points, the sparse sample the pulse note above warns against, and the
-# second from one renal function; the script below measures both on the dense
-# grid, over all four.)  The reason is not the moments, which very nearly
-# agree (the published input has CV 0.629 and skew 1.843, and an IG with that
+# documented standard on the binding limit, against the eight pulses' 64% of
+# both -- and 6.6x bounds every trade between the two limits, since at every
+# mean and shape at least one of the two errors is 6.6x its limit or more:
+# held within its peak limit at all four renal functions, an IG misses the
+# curve by at least 3.49%; fitted to the curve alone, it reaches 1.05% (2.0x)
+# with the peak 0.95% out (95x).  The whole deficit is the UPSTROKE, where it
+# runs up to +3.5% of peak high.  From 1.5 h to 48 h -- the peak, its time
+# and the elimination -- its error stays within 0.36% of the peak, under the
+# curve limit (0.56% relative to the local value at its worst), and past that
+# the relative error settles at the ratio of the two inputs' moment generating
+# functions at the terminal exponent, 0.06% at most.  (Three figures here were
+# first recorded wrongly: "within 0.5% relative", read from seven time points,
+# the sparse sample the pulse note above warns against; "0.92%, 92x", from one
+# renal function; and "the peak zeroed, the curve is 2.10%, 4.0x", from one
+# renal function and an optimiser left to wander along the curve of IGs that
+# all match the peak, so not a minimum of anything.  The script below measures
+# each on the dense grid, over all four.)  The reason is not the moments,
+# which very nearly agree (the published input has CV 0.629 and skew 1.843,
+# and an IG with that
 # CV is forced to skew 3 CV = 1.886, a 2% mismatch): it is that Van Wart's
 # depot is not an input DENSITY at all but a time-varying rate constant,
 # 1 - exp(-(ka t)^gamma), still ramping up from zero while the IG is already
