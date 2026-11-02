@@ -114,15 +114,11 @@ test_that("a figure of decrement times against infusion duration is checked agai
   x <- duzitolExtraction()
   m <- threeCompartmentFromHalfLives(0.68, 7.6, 66, 1, 10, 100)
   # The model's own curve at a few durations, as Figure 1 plots it.
-  k12 <- m$cl2 / m$v1; k13 <- m$cl3 / m$v1; k21 <- m$cl2 / m$v2; k31 <- m$cl3 / m$v3
-  l <- sort(cube(m$cl1 / m$v1, k12, k13, k21, k31), decreasing = TRUE)
-  A <- vapply(1:3, function(j) { o <- setdiff(1:3, j)
-    (k21 - l[j]) * (k31 - l[j]) / prod(l[o] - l[j]) / m$v1 }, 0)
   # Figure 1 holds the plasma concentration constant (TCI), then stops.
   durations <- c(30, 120, 240, 480, 600)
   y <- vapply(durations, function(T)
-    paperReviewTCIDecrementTime(list(v1 = m$v1, v2 = m$v2, v3 = m$v3, cl1 = m$cl1, cl2 = m$cl2,
-                                     cl3 = m$cl3), 0.5, T), 0)
+    heldInfusionDecrementTime(list(v1 = m$v1, v2 = m$v2, v3 = m$v3, cl1 = m$cl1, cl2 = m$cl2,
+                                   cl3 = m$cl3), T, 0.5), 0)
   x$figures <- list(list(figure_id = "Fig 1", caption = "50% decrement times", regimen_id = NULL,
     y_quantity = "decrement_time", decrement_percent = 50, decrement_site = "plasma",
     y_units = "other", time_units = "min",
@@ -142,7 +138,7 @@ test_that("a figure of decrement times against infusion duration is checked agai
   expect_equal(fig$kind, "decrement")
   expect_lt(fig$mdape, 0.01)
   # Steady state is the limit of a long infusion: 41.3 min.
-  expect_equal(round(paperReviewDecrementTime(A, l, 0.5), 1), 41.3)
+  expect_equal(round(heldInfusionDecrementTime(m, Inf, 0.5), 1), 41.3)
   # The report renders it with its own axes.
   expect_true(grepl("Fig 1", paperReviewReportPage(review)))
 })
@@ -150,12 +146,12 @@ test_that("a figure of decrement times against infusion duration is checked agai
 test_that("decrement times hold the concentration constant (TCI), and equal steady state in the limit", {
   m <- threeCompartmentFromHalfLives(0.68, 7.6, 66, 1, 10, 100)
   set <- list(v1 = m$v1, v2 = m$v2, v3 = m$v3, cl1 = m$cl1, cl2 = m$cl2, cl3 = m$cl3)
-  expect_equal(paperReviewTCIDecrementTime(set, 0.5, Inf), 41.3, tolerance = 2e-3)
-  expect_equal(paperReviewTCIDecrementTime(set, 0.5, 1e6), paperReviewTCIDecrementTime(set, 0.5, Inf),
+  expect_equal(heldInfusionDecrementTime(set, Inf, 0.5), 41.3, tolerance = 2e-3)
+  expect_equal(heldInfusionDecrementTime(set, 1e6, 0.5), heldInfusionDecrementTime(set, Inf, 0.5),
                tolerance = 1e-8)
   # Held for 120 min, the plasma concentration falls 50% sooner than at
   # steady state: the peripheral compartments are not yet full.
-  t120 <- paperReviewTCIDecrementTime(set, 0.5, 120)
+  t120 <- heldInfusionDecrementTime(set, 120, 0.5)
   expect_lt(t120, 41.3)
   # An independent check: integrate the three compartments numerically,
   # plasma held at 1 for 120 min (amounts filled by Euler steps), then free.
@@ -177,7 +173,7 @@ test_that("an effect-site decrement time runs through stanpumpR's effect-site TC
   t <- paperReviewEffectSiteDecrementTime(review$drug, review$reference, 0.5, 60)
   expect_true(is.finite(t) && t > 0)
   # The effect site lags the plasma, so its fall is slower than the plasma's.
-  expect_gt(t, paperReviewTCIDecrementTime(review$drug$model$PK$default, 0.5, 60))
+  expect_gt(t, heldInfusionDecrementTime(review$drug$model$PK$default, 60, 0.5))
 })
 
 test_that("with no SE printed, conditioning uses the printed rounding", {
@@ -255,7 +251,7 @@ test_that("a short decrement curve read by eye is judged against the reading's p
   durations <- c(30, 60, 120, 240)
   # The 30% curve runs 4.4 to 12.1 min; read 2 min low, as by eye, it is
   # about 30% off though every point is inside the +/-3 min of the reading.
-  y <- vapply(durations, function(T) paperReviewTCIDecrementTime(set, 0.3, T), 0) - 2
+  y <- vapply(durations, function(T) heldInfusionDecrementTime(set, T, 0.3), 0) - 2
   figure <- function(note, precision = NULL) {
     x <- duzitolExtraction()
     x$figures <- list(list(figure_id = "Fig 3 (30% curve)", caption = "30% decrement times",
@@ -369,7 +365,7 @@ test_that("an effect-site curve is divided by its own, later and lower, peak", {
 test_that("each curve of a figure is read against the figure's axes, and steep curves along the duration", {
   m <- threeCompartmentFromHalfLives(0.68, 7.6, 66, 1, 10, 100)
   set <- list(v1 = m$v1, v2 = m$v2, v3 = m$v3, cl1 = m$cl1, cl2 = m$cl2, cl3 = m$cl3)
-  dec <- function(fall, T) paperReviewTCIDecrementTime(set, fall, T)
+  dec <- function(fall, T) heldInfusionDecrementTime(set, T, fall)
   curve <- function(fall, points)
     list(figure_id = paste0("Fig 3 (", 100 * fall, "%)"), caption = "Decrement times", regimen_id = NULL,
          y_quantity = "decrement_time", decrement_percent = 100 * fall, decrement_site = "plasma",
@@ -422,7 +418,7 @@ test_that("each model's curve of one figure is judged by the figure's precision,
   set <- function(g) { m <- do.call(threeCompartmentFromHalfLives, as.list(unname(duzitolTable[[g]])))
     list(v1 = m$v1, v2 = m$v2, v3 = m$v3, cl1 = m$cl1, cl2 = m$cl2, cl3 = m$cl3) }
   read <- function(g, durations, offset)
-    lapply(durations, function(T) list(time = T, value = paperReviewTCIDecrementTime(set(g), 0.5, T) + offset))
+    lapply(durations, function(T) list(time = T, value = heldInfusionDecrementTime(set(g), T, 0.5) + offset))
   series <- function(g, label, points) list(label = label, group = g, analyte = "parent", points = points)
   x <- duzitolExtraction()
   x$figures <- list(list(figure_id = "Fig 1", caption = "50% decrement times", regimen_id = NULL,

@@ -109,3 +109,28 @@ test_that("pressing Review runs the call, drops the manuscript and reports, with
     expect_false(hasPdf())
   })
 })
+
+test_that("Single Paper Review is a tab of stanpumpR, between Simulator and Help", {
+  # app_ui() uses numericInput(updateOn = ), which needs shiny 1.10
+  skip_if_not_installed("shiny", "1.10.0")
+  oldConfig <- .sprglobals$config
+  .sprglobals$config <- DEFAULT_CONFIG
+  on.exit(.sprglobals$config <- oldConfig)
+  html <- as.character(htmltools::renderTags(app_ui()(list()))$html)
+  at <- function(value) regexpr(paste0('data-value="', value, '"'), html, fixed = TRUE)[1]
+  expect_true(at("Simulator") > 0 && at("Single Paper Review") > 0 && at("Help") > 0)
+  expect_true(at("Simulator") < at("Single Paper Review") && at("Single Paper Review") < at("Help"))
+  # Its inputs live in their own namespace, which app_server() keeps out of
+  # the bookmark.
+  expect_true(grepl(paste0('id="', PAPER_REVIEW_MODULE_ID, '-consent"'), html, fixed = TRUE))
+  expect_true(grepl(paste0('id="', PAPER_REVIEW_MODULE_ID, '-manuscript"'), html, fixed = TRUE))
+})
+
+test_that("the tab's server is the review's own, in its namespace", {
+  shiny::testServer(paperReviewModuleServer, args = list(id = PAPER_REVIEW_MODULE_ID), {
+    session$setInputs(example = 1)
+    expect_false(is.null(review()))
+    expect_match(output$status, "Nothing was sent anywhere")
+    expect_equal(session$ns("download"), paste0(PAPER_REVIEW_MODULE_ID, "-download"))
+  })
+})

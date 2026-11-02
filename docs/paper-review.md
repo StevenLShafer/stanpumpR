@@ -2,17 +2,22 @@
 
 A reader or peer reviewer uploads one pharmacokinetic manuscript, Claude reads
 it, stanpumpR checks the model it describes, and the paper's drug can then be
-simulated. This is the scaled-back first version, on branch
-`claude/single-paper-review-app-cbf738`, kept off master at Steven L.
-Shafer's instruction while master moves fast. (Claude Code, 2026-10-30.)
+simulated. This is the scaled-back first version (Claude Code,
+2026-10-30). It is a tab of stanpumpR, **Single Paper Review**, between
+Simulator and Help (Shafer, 2026-11-01), and also runs as an app of its own.
 
 Run it locally:
 
 ```r
 devtools::load_all(".")
 Sys.setenv(ANTHROPIC_API_KEY = "...")    # or anthropic_api_key in config.yml
-shiny::runApp(run_paper_review_app())
+shiny::runApp(run_app())                 # the tab
+shiny::runApp(run_paper_review_app())    # the app on its own
 ```
+
+Without a key the tab says "No Anthropic API key is configured on this
+server" when Review is pressed, and the example still works; a deployment
+without `anthropic_api_key` therefore sends nothing anywhere.
 
 **Try the example** works without a key and sends nothing: it loads
 `inst/paper-review/example-extraction.json`, a fictional paper with a
@@ -195,12 +200,14 @@ he built the models with.
 - **Decrement times assume TCI** (Shafer: "calculating decrement times
   requires an assumption of TCI administration, maintaining a steady
   concentration in the plasma ... or the effect site"). For a plasma
-  target, `paperReviewTCIDecrementTime()` holds C1 constant, so each
-  peripheral concentration rises as C(1 − e^(−k21·T)), and lets the three
-  amounts decay freely from there; for an effect-site target,
-  `paperReviewEffectSiteDecrementTime()` runs stanpumpR's own effect-site
-  TCI through `simCpCe()`. At steady state both equal the closed form
-  `paperReviewDecrementTime()`. A figure of decrement time against infusion
+  target, `heldInfusionDecrementTime()` (`R/held-infusion.R`, the library's
+  one copy, which the Duzitol help page also uses) holds C1 constant, so
+  each peripheral concentration rises as C(1 − e^(−k21·T)), and lets the
+  amounts decay freely from there, with `cube()`'s exponents; it is held to
+  `simCpCe()`'s own plasma-target TCI by `test-held-infusion.R`. For an
+  effect-site target, `paperReviewEffectSiteDecrementTime()` runs
+  stanpumpR's own effect-site TCI through `simCpCe()`. A duration of `Inf`
+  is the steady state. A figure of decrement time against infusion
   duration (the editorial's Figure 1) is a `decrement_time` figure and is
   checked point by point.
 
@@ -337,6 +344,16 @@ Everything else is in new files. These are the seams in shared code:
    point and guarded with `requireNamespace()` (the rule `AGENTS.md` gives for
    plumber). It is already in the renv library as a dependency of other
    packages, so `renv.lock` is unchanged.
+4. `R/app_ui.R`: `paperReviewNavPanel()` between the Simulator panel and
+   `helpNavPanel()`. The review's own three tabs (Review, Simulator, Privacy
+   and help) sit under it, its inputs in the namespace `paperReview`
+   (`PAPER_REVIEW_MODULE_ID`).
+5. `R/app_server.R`: `paperReviewModuleServer()` beside `helpServer()`, and
+   `onBookmark()` excludes every `paperReview-` input from the bookmark, so
+   nothing of a reviewed paper (its model names, the patient and doses
+   simulated) reaches the URL. The review's computations run with
+   stanpumpR's comments off (`paperReviewSilently()`), so nothing reaches
+   the `?debug=` log either.
 
 New files: `R/paper-review-{schema,api,model,absorption,checks,report,app}.R`,
 `inst/paper-review/{example-extraction.json,help.md}`,
@@ -351,11 +368,14 @@ be another seam.
 
 - Linking to the paper archive, and overlaying the uploaded model on library
   drug models and archived papers.
-- Merging into master, and a PR (a PR auto-deploys a test environment).
+- ~~Merging into master~~: done, as a tab of stanpumpR (Shafer, 2026-11-01).
 - Bring-your-own-key (the seam is `paperReviewApiKey(sessionKey)`).
 - Running the API call off the main R thread: today it blocks that R process
   for the minutes the extraction takes, which a local prototype tolerates and a
   shared deployment does not (Shiny `ExtendedTask` with `mirai` or `future`).
+  As a tab of stanpumpR this matters more: a review would stall every other
+  session on that R process, the simulator included. It is harmless while
+  no key is deployed (nothing is sent), and must be done before one is.
 
 ## Setting up the API key
 

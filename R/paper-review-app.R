@@ -1,7 +1,8 @@
 # Single Paper Review: the app.
 #
-# Its own entry point, run_paper_review_app(), so that nothing here touches
-# app_server() or app_ui().  Upload one manuscript (and optionally a
+# A tab of stanpumpR between Simulator and Help (paperReviewNavPanel(),
+# paperReviewModuleServer()), and also an app of its own,
+# run_paper_review_app().  Upload one manuscript (and optionally a
 # supplement), have Claude extract its model, read the review report, then
 # simulate the paper's drug -- and only that drug -- in memory.
 #
@@ -12,7 +13,9 @@
 #     and everything else when the user discards it or the session ends
 #     (paperReviewDiscard(), session$onSessionEnded());
 #   - no bookmarking, no URL state, no debug log, no stanpumpR console
-#     comments (ECHO_OUTPUT_COMMENTS = NA), and errors are shown to the user
+#     comments (ECHO_OUTPUT_COMMENTS = NA; in stanpumpR, its inputs are
+#     excluded from the bookmark and its computations run with comments off,
+#     paperReviewSilently()), and errors are shown to the user
 #     through validate(), which Shiny does not write to the server log;
 #   - nothing is written to disk except the transient files Shiny itself uses
 #     for a plot or a download, which are deleted as they are served.
@@ -25,6 +28,18 @@
 #' rm() and nothing lingers in a reactive graph.
 #' @keywords internal
 paperReviewStore <- function() new.env(parent = emptyenv())
+
+# The namespace of the Single Paper Review tab in stanpumpR.
+PAPER_REVIEW_MODULE_ID <- "paperReview"
+
+# Evaluate with stanpumpR's comments off, so nothing about a paper reaches
+# the console or the ?debug= log of the app it is a tab of.
+paperReviewSilently <- function(expr)
+{
+  old <- options(ECHO_OUTPUT_COMMENTS = NA)
+  on.exit(options(old), add = TRUE)
+  expr
+}
 
 #' Discard everything a session holds about its paper
 #'
@@ -81,75 +96,110 @@ paperReviewHelpHtml <- function()
                                         collapse = "\n")))
 }
 
-paperReviewUI <- function()
+# What both forms of the app put above the tabs: the style that greys a
+# disabled upload field, and the banner shown while Claude reads the paper.
+paperReviewHeader <- function(ns = shiny::NS(NULL))
 {
-  bslib::page_navbar(
-    title = "stanpumpR: Single Paper Review",
-    id = "nav",
-    # Not fillable: a filled layout shrinks the plot and the dose table.
-    fillable = FALSE,
-    theme = bslib::bs_theme(version = 5),
-    header = htmltools::tagList(
-      shinyjs::useShinyjs(),
-      # A disabled upload field looks disabled (shinyjs disables the input,
-      # which leaves its Browse button looking live).
-      htmltools::tags$style(htmltools::HTML(
-        ".form-group:has(input[type=file]:disabled) { opacity: 0.45; pointer-events: none; }")),
-      # Shown while Claude reads the paper.  A plain banner, shown and hidden
-      # at once: Shiny's progress notification fades out with a jQuery
-      # animation, which stalled in the desktop app's browser pane and left
-      # the box flashing over the report after the review had finished.
-      shinyjs::hidden(htmltools::div(
-        id = "reviewBusy", class = "alert alert-info", role = "status",
-        style = "position: fixed; top: 64px; left: 50%; transform: translateX(-50%); z-index: 2000; box-shadow: 0 2px 8px rgba(0,0,0,0.2);",
-        htmltools::strong("Claude is reading the paper."),
-        " This takes a few minutes, and the app does not respond until it finishes."))),
+  htmltools::tagList(
+    # A disabled upload field looks disabled (shinyjs disables the input,
+    # which leaves its Browse button looking live).
+    htmltools::tags$style(htmltools::HTML(
+      ".form-group:has(input[type=file]:disabled) { opacity: 0.45; pointer-events: none; }")),
+    # Shown while Claude reads the paper.  A plain banner, shown and hidden
+    # at once: Shiny's progress notification fades out with a jQuery
+    # animation, which stalled in the desktop app's browser pane and left
+    # the box flashing over the report after the review had finished.
+    shinyjs::hidden(htmltools::div(
+      id = ns("reviewBusy"), class = "alert alert-info", role = "status",
+      style = "position: fixed; top: 64px; left: 50%; transform: translateX(-50%); z-index: 2000; box-shadow: 0 2px 8px rgba(0,0,0,0.2);",
+      htmltools::strong("Claude is reading the paper."),
+      " This takes a few minutes, and the app does not respond until it finishes.")))
+}
+
+# The review's three tabs: Review, Simulator, Privacy and help.
+paperReviewPanels <- function(ns = shiny::NS(NULL))
+{
+  list(
     bslib::nav_panel("Review", value = "review",
       bslib::layout_sidebar(fillable = FALSE,
         sidebar = bslib::sidebar(width = 320,
           # The confirmation comes first; until it is ticked the upload and
           # Review controls are greyed out (Shafer: unticked, the old order
           # let a paper be chosen and then refused, which confused).
-          shiny::checkboxInput("consent", paste(
+          shiny::checkboxInput(ns("consent"), paste(
             "I may share this paper with Anthropic, as the Privacy tab describes,",
             "to have it reviewed."), FALSE),
-          shiny::fileInput("manuscript", "Manuscript (PDF)", accept = ".pdf"),
-          shiny::fileInput("supplement", "Supplement (PDF, optional)", accept = ".pdf"),
-          shiny::actionButton("review", "Review the paper", class = "btn-primary"),
+          shiny::fileInput(ns("manuscript"), "Manuscript (PDF)", accept = ".pdf"),
+          shiny::fileInput(ns("supplement"), "Supplement (PDF, optional)", accept = ".pdf"),
+          shiny::actionButton(ns("review"), "Review the paper", class = "btn-primary"),
           shiny::hr(),
-          shiny::actionButton("example", "Try the example (nothing is sent)"),
+          shiny::actionButton(ns("example"), "Try the example (nothing is sent)"),
           shiny::hr(),
-          shiny::actionButton("discard", "Discard the paper now", class = "btn-danger"),
-          shiny::uiOutput("downloadUI"),
-          shiny::div(style = "margin-top: 12px; font-size: 0.85em;", shiny::textOutput("status"))
+          shiny::actionButton(ns("discard"), "Discard the paper now", class = "btn-danger"),
+          shiny::uiOutput(ns("downloadUI")),
+          shiny::div(style = "margin-top: 12px; font-size: 0.85em;", shiny::textOutput(ns("status")))
         ),
-        shiny::uiOutput("report")
+        shiny::uiOutput(ns("report"))
       )),
     bslib::nav_panel("Simulator", value = "simulator",
       bslib::layout_sidebar(fillable = FALSE,
         sidebar = bslib::sidebar(width = 340,
-          shinyjs::hidden(htmltools::div(id = "modelBox",
-            shiny::selectInput("model", "Model", character(0)))),
-          shiny::numericInput("weight", "Weight (kg)", 70, min = MIN_WEIGHT, max = MAX_WEIGHT),
-          shiny::numericInput("height", "Height (cm)", 170, min = MIN_HEIGHT, max = MAX_HEIGHT),
-          shiny::numericInput("age", "Age (years)", 40, min = MIN_AGE, max = MAX_AGE),
-          shiny::selectInput("sex", "Sex", SEX_VALUES),
-          shiny::selectInput("timeUnit", "Time units", PAPER_REVIEW_SIM_TIME_UNITS, "min"),
-          shiny::numericInput("maximum", "Max time", 240, min = 0),
-          shiny::selectInput("regimen", "Paper's regimen", character(0)),
-          shiny::actionButton("loadRegimen", "Load regimen into the dose table"),
-          shiny::selectInput("overlay", "Overlay a figure's points", character(0)),
-          shiny::checkboxInput("logY", "Log concentration axis", FALSE)
+          shinyjs::hidden(htmltools::div(id = ns("modelBox"),
+            shiny::selectInput(ns("model"), "Model", character(0)))),
+          shiny::numericInput(ns("weight"), "Weight (kg)", 70, min = MIN_WEIGHT, max = MAX_WEIGHT),
+          shiny::numericInput(ns("height"), "Height (cm)", 170, min = MIN_HEIGHT, max = MAX_HEIGHT),
+          shiny::numericInput(ns("age"), "Age (years)", 40, min = MIN_AGE, max = MAX_AGE),
+          shiny::selectInput(ns("sex"), "Sex", SEX_VALUES),
+          shiny::selectInput(ns("timeUnit"), "Time units", PAPER_REVIEW_SIM_TIME_UNITS, "min"),
+          shiny::numericInput(ns("maximum"), "Max time", 240, min = 0),
+          shiny::selectInput(ns("regimen"), "Paper's regimen", character(0)),
+          shiny::actionButton(ns("loadRegimen"), "Load regimen into the dose table"),
+          shiny::selectInput(ns("overlay"), "Overlay a figure's points", character(0)),
+          shiny::checkboxInput(ns("logY"), "Log concentration axis", FALSE)
         ),
-        shiny::uiOutput("simulatorNote"),
-        shiny::plotOutput("simPlot", height = "460px"),
+        shiny::uiOutput(ns("simulatorNote")),
+        shiny::plotOutput(ns("simPlot"), height = "460px"),
         shiny::h5("Dose table"),
-        rhandsontable::rHandsontableOutput("doses"),
-        shiny::tableOutput("simParameters")
+        rhandsontable::rHandsontableOutput(ns("doses")),
+        shiny::tableOutput(ns("simParameters"))
       )),
-    bslib::nav_panel("Privacy and help", value = "help", paperReviewHelpHtml())
-  )
+    bslib::nav_panel("Privacy and help", value = "help", paperReviewHelpHtml()))
 }
+
+# The app on its own (run_paper_review_app()).
+paperReviewUI <- function()
+{
+  do.call(bslib::page_navbar, c(list(
+    title = "stanpumpR: Single Paper Review",
+    id = "nav",
+    # Not fillable: a filled layout shrinks the plot and the dose table.
+    fillable = FALSE,
+    theme = bslib::bs_theme(version = 5),
+    header = htmltools::tagList(shinyjs::useShinyjs(), paperReviewHeader())),
+    paperReviewPanels()))
+}
+
+#' Single Paper Review as a tab of stanpumpR
+#'
+#' The same review, its own three tabs under one entry of stanpumpR's menu,
+#' its inputs in the namespace \code{id} (paperReviewModuleServer()).  Its
+#' inputs are kept out of stanpumpR's bookmarks (app_server()'s onBookmark).
+#' @param id the module's namespace
+#' @keywords internal
+paperReviewNavPanel <- function(id = PAPER_REVIEW_MODULE_ID)
+{
+  ns <- shiny::NS(id)
+  bslib::nav_panel("Single Paper Review", value = "Single Paper Review",
+                   icon = shiny::icon("file-lines"),
+    paperReviewHeader(ns),
+    do.call(bslib::navset_underline, c(list(id = ns("nav")), paperReviewPanels(ns))))
+}
+
+#' The server of the Single Paper Review tab
+#' @param id the module's namespace
+#' @keywords internal
+paperReviewModuleServer <- function(id = PAPER_REVIEW_MODULE_ID)
+  shiny::moduleServer(id, paperReviewServer)
 
 paperReviewServer <- function(input, output, session)
 {
@@ -178,9 +228,6 @@ paperReviewServer <- function(input, output, session)
   # pressed it unticked and got only a line of status text.
   hasPdf <- shiny::reactiveVal(FALSE)
   session$onSessionEnded(function() paperReviewDiscard(store))
-  # A dropped connection (a hidden pane, a sleeping laptop) may rejoin the
-  # same session rather than leave an upload with nowhere to go.
-  session$allowReconnect(TRUE)
   shiny::observe({
     consent <- isTRUE(input$consent)
     shinyjs::toggleState("manuscript", condition = consent)
@@ -273,7 +320,7 @@ paperReviewServer <- function(input, output, session)
                      "checked in stanpumpR for identifiability, internal consistency, its covariates and ",
                      "its figures, and the drug can then be simulated in the Simulator tab."),
         htmltools::p("Read the Privacy and help tab before uploading a confidential manuscript.")))
-    tags <- tryCatch(paperReviewReportTags(r, plots = TRUE), error = function(e) NULL)
+    tags <- tryCatch(paperReviewSilently(paperReviewReportTags(r, plots = TRUE)), error = function(e) NULL)
     shiny::validate(shiny::need(!is.null(tags), "The report could not be rendered."))
     htmltools::tagList(
       if (isTRUE(store$example)) htmltools::div(class = "alert alert-info",
@@ -283,7 +330,7 @@ paperReviewServer <- function(input, output, session)
 
   output$downloadUI <- shiny::renderUI({
     if (is.null(review()) || !isTRUE(paperReviewConfig("paper_review_download", TRUE))) return(NULL)
-    shiny::downloadButton("download", "Download the report (HTML)", style = "margin-top: 12px;")
+    shiny::downloadButton(session$ns("download"), "Download the report (HTML)", style = "margin-top: 12px;")
   })
   # Shiny writes the page to a temporary file it owns and deletes once served.
   output$download <- shiny::downloadHandler(
@@ -400,8 +447,8 @@ paperReviewServer <- function(input, output, session)
         is_valid_number(p$age, MIN_AGE, MAX_AGE), "Enter a weight, height and age in range."))
     d <- dosesNow()
     shiny::validate(shiny::need(nrow(d) > 0 && any(d$Dose > 0), "Enter a dose."))
-    drug <- paperReviewDrug(r$extraction, p, r$identifiability$closed,
-                            absorption = simAbsorption(), absorptions = r$absorptions)
+    drug <- paperReviewSilently(paperReviewDrug(r$extraction, p, r$identifiability$closed,
+                                                absorption = simAbsorption(), absorptions = r$absorptions))
     shiny::validate(shiny::need(drug$ok, paste(drug$problems, collapse = " ")))
     maximum <- max((input$maximum %or% 240) * unitMinutes(), max(d$Time) + 1)
     # Run on far enough to cover an overlaid figure's points.
@@ -513,5 +560,10 @@ run_paper_review_app <- function(config_file = "config.yml")
   .sprglobals$config <- config
   # Nothing from stanpumpR's own comment log reaches the console in this app.
   options(ECHO_OUTPUT_COMMENTS = NA)
-  shiny::shinyApp(paperReviewUI(), paperReviewServer, enableBookmarking = "disable")
+  shiny::shinyApp(paperReviewUI(), function(input, output, session) {
+    # A dropped connection (a hidden pane, a sleeping laptop) may rejoin the
+    # same session rather than leave an upload with nowhere to go.
+    session$allowReconnect(TRUE)
+    paperReviewServer(input, output, session)
+  }, enableBookmarking = "disable")
 }

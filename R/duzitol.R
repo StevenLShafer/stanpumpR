@@ -26,9 +26,9 @@
 #
 # threeCompartmentFromHalfLives() is Shafer's spreadsheet algebra (the "(3).
 # V1, Vdss, Cl, half-lives" sheet he built the editorial's models with),
-# copied from the Single Paper Review branch, where it reproduced those
-# spreadsheets to every printed digit; the derivation is in the help page's
-# appendix.  If that branch is merged, one of the two copies goes.
+# which reproduces those spreadsheets to every printed digit; the derivation
+# is in the help page's appendix.  Single Paper Review uses this copy, and
+# the decline after a held infusion is R/held-infusion.R's, shared with it.
 # -----------------------------------------------------------------------------
 
 #' Table 1 of the Duzitol editorial
@@ -109,68 +109,5 @@ duzitolModels <- function()
   stats::setNames(out, DUZITOL_TABLE$model)
 }
 
-#' The exponentials of the plasma decline after a TCI infusion
-#'
-#' After an infusion that held the plasma concentration at 1 for
-#' \code{duration} minutes from a drug-free start (Hughes, Glass and Jacobs's
-#' context), the peripheral amounts at the stop are
-#' \eqn{V_2 (1 - e^{-k_{21} T})} and \eqn{V_3 (1 - e^{-k_{31} T})}, and from
-#' that state the central amount is the sum of the residues of
-#' \eqn{[a_1 (s + k_{21})(s + k_{31}) + k_{21} a_2 (s + k_{31}) + k_{31} a_3 (s + k_{21})] / \prod (s + \lambda_j)}.
-#' Divided by V1 they are the share of the maintained concentration that
-#' each exponential carries, and they sum to 1.  A \code{duration} of
-#' \code{Inf} is the steady state.
-#'
-#' @param model one element of duzitolModels()
-#' @param duration the length of the infusion, min (Inf for steady state)
-#' @returns three coefficients, matching model$lambda (fastest first)
-#' @noRd
-heldInfusionCoefficients <- function(model, duration)
-{
-  m <- model
-  a1 <- m$v1
-  a2 <- m$v2 * (1 - exp(-m$k21 * duration))
-  a3 <- m$v3 * (1 - exp(-m$k31 * duration))
-  l <- m$lambda
-  vapply(1:3, function(j) {
-    s <- -l[j]
-    (a1 * (s + m$k21) * (s + m$k31) + m$k21 * a2 * (s + m$k31) +
-       m$k31 * a3 * (s + m$k21)) / prod(l[-j] - l[j])
-  }, numeric(1)) / m$v1
-}
-
-#' Plasma concentration after a TCI infusion that held it constant
-#'
-#' @param model one element of duzitolModels()
-#' @param duration the length of the infusion, min (Inf for steady state)
-#' @param t times after the stop, min
-#' @returns the plasma concentration over the maintained concentration
-#' @noRd
-plasmaAfterHeldInfusion <- function(model, duration, t)
-{
-  coef <- heldInfusionCoefficients(model, duration)
-  vapply(t, function(x) sum(coef * exp(-model$lambda * x)), numeric(1))
-}
-
-#' Decrement time after a TCI infusion that held the plasma constant
-#'
-#' The time for the plasma concentration to fall by \code{fraction} after an
-#' infusion that held it constant for \code{duration} minutes: with fraction
-#' 0.5, the context-sensitive half-time.  The search doubles its upper bound
-#' until the concentration is below the target and then finds the root, which
-#' is the first crossing because the concentration falls monotonically after
-#' such an infusion for these models (test-duzitol.R checks it on a dense grid).
-#'
-#' @param model one element of duzitolModels()
-#' @param duration the length of the infusion, min (Inf for steady state)
-#' @param fraction the decrease, 0 to 1
-#' @returns minutes
-#' @noRd
-heldInfusionDecrementTime <- function(model, duration, fraction = 0.5)
-{
-  target <- 1 - fraction
-  g <- function(x) plasmaAfterHeldInfusion(model, duration, x) - target
-  hi <- 1
-  while (g(hi) > 0) hi <- hi * 2
-  stats::uniroot(g, c(0, hi), tol = 1e-10)$root
-}
+# The decline after a held infusion and its decrement times are
+# R/held-infusion.R's, shared with Single Paper Review.

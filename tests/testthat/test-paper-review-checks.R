@@ -504,19 +504,19 @@ test_that("decrement times after a steady-state input are recomputed and checked
   k10 <- CL / V1; k12 <- Q / V1; k21 <- Q / V2
   l <- sort(-eigen(matrix(c(-(k10 + k12), k21, k12, -k21), 2, byrow = TRUE))$values, decreasing = TRUE)
   A <- c((k21 - l[1]) / (l[2] - l[1]), (k21 - l[2]) / (l[1] - l[2])) / V1
-  t50 <- paperReviewDecrementTime(A, l, 0.5)                   # days, in these units
+  set <- list(v1 = V1, v2 = V2, cl1 = CL, cl2 = Q)
+  t50 <- heldInfusionDecrementTime(set, Inf, 0.5)              # days, in these units
   w <- A / l
   expect_equal(sum(w * exp(-l * t50)) / sum(w), 0.5, tolerance = 1e-9)
   grid <- seq(0, 400, by = 1e-3)
   remaining <- colSums(w * exp(-outer(l, grid))) / sum(w)
   for (fall in c(0.25, 0.5, 0.75))
-    expect_lt(abs(paperReviewDecrementTime(A, l, fall) - grid[which.min(abs(remaining - (1 - fall)))]),
+    expect_lt(abs(heldInfusionDecrementTime(set, Inf, fall) - grid[which.min(abs(remaining - (1 - fall)))]),
               1e-3)                                             # the grid's step
 
   # Through the review: a printed 50% decrement on the example is checked.
   ex <- paperReviewExample()
-  modes <- paperReviewDispositionModes(paperReviewRun(ex)$drug, paperReviewReferencePatient(ex))
-  t50 <- paperReviewDecrementTime(modes$coef, modes$lambda, 0.5)
+  t50 <- heldInfusionDecrementTime(paperReviewRun(ex)$drug$model$PK$default, Inf, 0.5)
   ex$derived_quantities <- c(ex$derived_quantities, list(list(
     quantity = "decrement_50", value = signif(t50, 3), value_text = format(signif(t50, 3)),
     units = "min", regimen_id = NULL, statistic = "typical_value",

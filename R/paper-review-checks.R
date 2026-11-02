@@ -172,46 +172,8 @@ paperReviewDerivedOne <- function(extraction, quantity, weight)
 
 # --- Identifiability ----------------------------------------------------------
 
-#' Three-compartment parameters from CL, V1, Vss and the three half-lives
-#'
-#' Steven L. Shafer's spreadsheet algebra (the "(3). V1, Vdss, Cl,
-#' half-lives" sheet he used for the Duzitol editorial, Shafer and Stanski,
-#' Anesthesiology 1992): with k10 = CL/V1 and the three exponents, the
-#' product and pairwise sums of the eigenvalues give k21 and k31 as the roots
-#' of a quadratic, then k13 and k12 from the sum and from Vss.  It reproduces
-#' that spreadsheet to every printed digit for all three of its models
-#' (test-paper-review-duzitol.R).  The derivation, step by step, is in
-#' docs/paper-review.md ("The derivation behind the spreadsheet"):
-#' k21 k31 = l1 l2 l3 / k10 (g0); k12 k31 + k13 k21 = (Vss/V1 - 1) g0 (g1);
-#' k21 + k31 = (sum of pairwise products - g0 - g1) / k10 (f), so k21 and
-#' k31 are the roots of x^2 - f x + g0; k12 + k13 = sum(l) - k10 - k21 - k31
-#' (i); and k13 = (g1 - i k31) / (k21 - k31).
-#'
-#' @param CL,V1,Vss clearance and volumes, in consistent units
-#' @param t1,t2,t3 the three half-lives, fastest first, in the time unit of CL
-#' @returns a list of v1, v2, v3, cl1, cl2, cl3, compartment 2 the faster
-#' @keywords internal
-threeCompartmentFromHalfLives <- function(CL, V1, Vss, t1, t2, t3)
-{
-  l <- log(2) / sort(c(t1, t2, t3))
-  k10 <- CL / V1
-  g0 <- prod(l) / k10
-  g1 <- (Vss - V1) / V1 * g0
-  f <- (l[1] * l[2] + l[1] * l[3] + l[2] * l[3] - g1 - g0) / k10
-  disc <- f^2 - 4 * g0
-  if (!is.finite(disc) || disc <= 0)
-    stop("These numbers have no physically admissible three-compartment model")
-  k21 <- (f + sqrt(disc)) / 2
-  k31 <- (f - sqrt(disc)) / 2
-  h <- (Vss / V1 - 1) * g0
-  i <- sum(l) - k10 - k21 - k31
-  k13 <- (h - i * k31) / (k21 - k31)
-  k12 <- i - k13
-  if (!all(is.finite(c(k12, k13, k21, k31))) || !all(c(k12, k13, k21, k31) > 0))
-    stop("These numbers have no physically admissible three-compartment model")
-  list(v1 = V1, v2 = V1 * k12 / k21, v3 = V1 * k13 / k31,
-       cl1 = CL, cl2 = V1 * k12, cl3 = V1 * k13)
-}
+# threeCompartmentFromHalfLives(), Shafer's spreadsheet algebra, is
+# R/duzitol.R's: the review uses the library's one copy.
 
 #' Two-compartment parameters from a biexponential disposition function
 #'
@@ -585,7 +547,7 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
       V1 = set$v1, Vss = v, Varea = set$cl1 / l[n], CL = set$cl1,
       MRT = if (is.null(dq$regimen_id)) v / set$cl1 else NA_real_,
       decrement_25 = , decrement_50 = , decrement_75 = , decrement_80 =
-        paperReviewDecrementTime(c0, l, as.numeric(sub("^decrement_", "", q)) / 100),
+        heldInfusionDecrementTime(set, Inf, as.numeric(sub("^decrement_", "", q)) / 100),
       NA_real_)
   }
 
@@ -600,7 +562,7 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
       V1 = pk$v1, Vss = vss, Varea = pk$cl1 / lambda[n], CL = pk$cl1, MRT = vss / pk$cl1,
       ke0 = ke0, tPeak = tPeak,
       decrement_25 = , decrement_50 = , decrement_75 = , decrement_80 =
-        paperReviewDecrementTime(coef, lambda, as.numeric(sub("^decrement_", "", q)) / 100),
+        heldInfusionDecrementTime(pk, Inf, as.numeric(sub("^decrement_", "", q)) / 100),
       NA_real_)
   }
 
@@ -751,7 +713,7 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
 #' @keywords internal
 paperReviewSteadyStateNote <- function(set, fall, steady)
 {
-  dec <- function(T) paperReviewTCIDecrementTime(set, fall, T)
+  dec <- function(T) heldInfusionDecrementTime(set, T, fall)
   gap <- function(logT) dec(exp(logT)) - 0.95 * steady
   T95 <- tryCatch(if (gap(log(1e6)) > 0 && gap(log(0.01)) < 0)
     exp(stats::uniroot(gap, log(c(0.01, 1e6)), tol = 1e-6)$root) else NA_real_,
@@ -807,7 +769,7 @@ paperReviewDecrementFigure <- function(f, drug, reference, family = list(f))
   dec <- if (identical(site, "effect_site"))
     function(T) paperReviewEffectSiteDecrementTime(drug, reference, fall, T)
   else
-    function(T) paperReviewTCIDecrementTime(drug$model$PK$default, fall, T)
+    function(T) heldInfusionDecrementTime(drug$model$PK$default, T, fall)
   points$predicted <- vapply(points$time, function(T) if (T > 0) dec(T) else NA_real_, numeric(1))
   use <- is.finite(points$observed) & points$observed > 0 & is.finite(points$predicted) &
     points$predicted > 0
@@ -857,7 +819,7 @@ paperReviewDecrementFigure <- function(f, drug, reference, family = list(f))
            " concentration to fall ", round(100 * fall), "% after it has been held constant by TCI ",
            "for the plotted duration, computed from the model (",
            if (identical(site, "effect_site")) "stanpumpR's effect-site TCI, simCpCe()"
-           else "paperReviewTCIDecrementTime()",
+           else "heldInfusionDecrementTime()",
            "). Median prediction error ", sprintf("%+.0f%%", 100 * mdpe),
            ", median absolute ", sprintf("%.0f%%", 100 * mdape), "; median difference ",
            prFmt(mdad / minutes, 2), " ", f$time_units %or% "min", ". ", within, " of ", sum(use),
@@ -945,41 +907,6 @@ paperReviewReadingPrecision <- function(f, family = list(f), axis = c("y", "x"))
        basis = "2% of the largest value read on the figure")
 }
 
-#' Time for the plasma concentration to fall after TCI holds it constant
-#'
-#' Context-sensitive decrement times assume the concentration was held
-#' constant during the infusion (target-controlled), not that the rate was
-#' (Shafer, 2026-11-01).  With the plasma concentration held at C, each
-#' peripheral compartment's concentration rises as C (1 - exp(-k21 T)) and
-#' C (1 - exp(-k31 T)), since V2 k21 = V1 k12; at the stop the three
-#' amounts decay freely, x(t) = exp(K t) x(T), and the time for the plasma
-#' concentration to fall by `fall` is found with uniroot().  At steady state
-#' (T = Inf) this equals paperReviewDecrementTime().
-#'
-#' @param set a PK set (v1..v3, cl1..cl3; an absent compartment has no
-#'   clearance into it)
-#' @param fall the fraction fallen
-#' @param duration how long the concentration was held, minutes
-#' @returns minutes
-#' @keywords internal
-paperReviewTCIDecrementTime <- function(set, fall, duration)
-{
-  v <- c(set$v1, set$v2, set$v3); cl <- c(set$cl1, set$cl2, set$cl3)
-  k10 <- cl[1] / v[1]; k12 <- cl[2] / v[1]; k13 <- cl[3] / v[1]
-  k21 <- cl[2] / v[2]; k31 <- cl[3] / v[3]
-  K <- matrix(c(-(k10 + k12 + k13), k21, k31,
-                k12, -k21, 0,
-                k13, 0, -k31), 3, byrow = TRUE)
-  x0 <- c(v[1], v[2] * (1 - exp(-k21 * duration)), v[3] * (1 - exp(-k31 * duration)))
-  e <- eigen(K)
-  P <- e$vectors
-  a <- solve(P, x0)
-  plasma <- function(t) Re(sum(P[1, ] * a * exp(e$values * t))) / v[1]
-  hi <- 1
-  while (plasma(hi) > 1 - fall && hi < 1e9) hi <- hi * 4
-  stats::uniroot(function(t) plasma(t) - (1 - fall), c(0, hi), tol = 1e-10)$root
-}
-
 #' Time for the effect-site concentration to fall after TCI holds it constant
 #'
 #' Simulated with stanpumpR's own effect-site TCI (an "Effect site target"
@@ -1003,32 +930,6 @@ paperReviewEffectSiteDecrementTime <- function(drug, reference, fall, duration)
   j <- below[1]
   if (j == 1) return(0)
   stats::approx(after$Ce[(j - 1):j], after$Time[(j - 1):j], start * (1 - fall))$y - duration
-}
-
-#' Time for the plasma concentration to fall by a fraction after a
-#' steady-state input stops
-#'
-#' At steady state each mode holds c_i / lambda_i of the concentration, so
-#' after the input stops C(t) / Css = sum (c_i / lambda_i) exp(-lambda_i t) /
-#' sum (c_i / lambda_i), which falls monotonically; the root is found with
-#' uniroot().  (A test paper's printed decrement times did not follow from
-#' its own parameters; Claude noticed, and this makes it a computed check.)
-#'
-#' @param coef,lambda the unit-bolus coefficients and eigenvalues
-#' @param fall the fraction fallen, e.g. 0.5
-#' @param duration the infusion's duration, minutes; Inf for steady state,
-#'   finite for a context-sensitive decrement time
-#' @returns minutes
-#' @keywords internal
-paperReviewDecrementTime <- function(coef, lambda, fall, duration = Inf)
-{
-  # After a constant infusion of `duration`, each mode holds
-  # (c_i / lambda_i)(1 - exp(-lambda_i duration)); Inf is steady state.
-  w <- coef / lambda * (1 - exp(-lambda * duration))
-  remaining <- function(t) sum(w * exp(-lambda * t)) / sum(w) - (1 - fall)
-  hi <- 1
-  while (remaining(hi) > 0 && hi < 1e9) hi <- hi * 4
-  stats::uniroot(remaining, c(0, hi), tol = 1e-10)$root
 }
 
 # The amount of a regimen's single intravenous dose, in the model's amount
