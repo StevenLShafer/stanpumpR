@@ -153,7 +153,7 @@ df = pd.read_csv(io.StringIO(r.text))   # columns: Drug, Time, Plasma, EffectSit
 | `POST` | `/simulate` | A simulation (see [The request](#the-request) and [The response](#the-response)). Query parameters: `format` (`json`, `csv`, `xlsx`, `xml`) and `layout` (`long`, `wide`). |
 | `GET` | `/drugs` | The drugs a request can dose. For each drug: its category, its concentration units and the dose units it accepts (`Units`, always an array in JSON; comma-separated in CSV). An active metabolite that cannot be dosed itself, such as `desmetramadol`, is not listed; it appears in a result as a `drugs` row with `Dosed` false. `?format=csv` returns CSV. `?allowIllicitDrugs=true` adds the opt-in illicit-drug research models. |
 | `GET` | `/health` | `{"status": "ok", "apiVersion": "1", "stanpumpRVersion": "...", "build": "<commit>"}` (`build` is `null` when the installation did not record its commit) |
-| `GET` | `/__docs__/` | Interactive (Swagger) documentation for the running server. |
+| `GET` | `/__docs__/` | Plumber's interactive (Swagger) page, only when the service was started with `run_api(docs = TRUE)`. It can try the endpoints but does not specify them: this guide is the specification. |
 
 ### Choosing the response format
 

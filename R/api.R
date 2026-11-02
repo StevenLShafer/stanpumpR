@@ -865,16 +865,17 @@ apiNegotiateFormat <- function(query = NULL, request = NULL, accept = NULL) {
 
 #' Run the simulation API as an HTTP service
 #'
-#' Serves `POST /simulate`, `GET /drugs` and `GET /health` (see
-#' <https://stanpumpr.io/api>, also served at `/`), with interactive
-#' documentation at `/__docs__/`.  Needs the
-#' plumber package.
+#' Serves `POST /simulate`, `GET /drugs` and `GET /health`, with the guide
+#' (<https://stanpumpr.io/api>) at `/`.  Needs the plumber package.
 #'
 #' @param host,port where to listen
-#' @param docs serve the interactive (Swagger) documentation
+#' @param docs also serve plumber's interactive (Swagger) page at
+#'   `/__docs__/`.  Off by default: it is generated from annotations that
+#'   cannot describe the request body, so it points to the guide at `/`
+#'   rather than specifying the API.
 #' @returns does not return while the service runs
 #' @export
-run_api <- function(host = "127.0.0.1", port = 8000, docs = TRUE) {
+run_api <- function(host = "127.0.0.1", port = 8000, docs = FALSE) {
   if (!requireNamespace("plumber", quietly = TRUE)) {
     stop("run_api() needs the plumber package: install.packages(\"plumber\")")
   }

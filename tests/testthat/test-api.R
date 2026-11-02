@@ -529,3 +529,17 @@ test_that("a format at the root of the body does not choose the format", {
   csv <- api$call(rookRequest("POST", "/simulate", body, query = "format=csv"))
   expect_equal(csv$headers[["Content-Type"]], "text/csv")
 })
+
+test_that("the Swagger page is off by default and, when on, points to the guide", {
+  skip_if_not_installed("plumber")
+  api <- plumber::pr(system.file("plumber", "plumber.R", package = "stanpumpR"))
+  # plumber keeps the setting privately and has no getter; guarded so a
+  # plumber that renames it skips this line rather than failing.
+  info <- api$.__enclos_env__$private$docs_info
+  if (!is.null(info)) expect_false(info$enabled)
+  expect_false(formals(run_api)$docs)
+  op <- api$getApiSpec()$paths[["/simulate"]]$post
+  expect_match(op$description, "guide served at /", fixed = TRUE)
+  expect_equal(names(op$requestBody$content), "application/json")
+  expect_true(all(c("200", "400", "413", "415", "422", "500") %in% names(op$responses)))
+})

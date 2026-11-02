@@ -35,14 +35,47 @@ apiFail <- function(res, e) {
 # whose 400 says what is wrong.  (`@parser none` would avoid the first parse,
 # but plumber registers that parser with the regex "*", which is not a valid
 # pattern, and then fails on every request with a content type.)
+#
+# The interactive (Swagger) page at /__docs__/ is generated from this file's
+# annotations, which cannot describe /simulate's JSON body: on its own it
+# shows the endpoint with no request body and only a 200 and a 500, which
+# misleads more than it helps.  So it is off unless asked for (run_api(docs =
+# TRUE), or plumber::pr_set_docs() by whoever hosts this file), and when it is
+# on, /simulate says that its body is a JSON object, lists the statuses it
+# returns, and points to the guide served at / (inst/apidocs/api.md), the
+# contract.  A full OpenAPI schema is deferred until the API is deployed
+# (Steven L. Shafer, 2026-11-02).
 #* @plumber
 function(pr) {
-  plumber::pr_set_error(pr, function(req, res, err) {
+  pr <- plumber::pr_set_error(pr, function(req, res, err) {
     if (identical(req$PATH_INFO, "/simulate")) {
       parsed <- tryCatch(stanpumpR::apiParseRequest(req$postBody), error = function(e) e)
       if (inherits(parsed, "stanpumpr_api_error")) err <- parsed
     }
     apiFail(res, err)
+  })
+  pr <- plumber::pr_set_docs(pr, FALSE)
+  plumber::pr_set_api_spec(pr, function(spec) {
+    guide <- paste("The request body and every response are specified in the guide served at /",
+                   "on this server (and at https://stanpumpr.io/api); this page does not describe them.")
+    op <- spec$paths[["/simulate"]]$post
+    if (!is.null(op)) {
+      op$description <- guide
+      op$requestBody <- list(
+        required = TRUE,
+        description = "The request: patient, doses, duration and the optional fields, as the guide specifies.",
+        content = list("application/json" = list(schema = list(type = "object"))))
+      error <- function(what) list(description = what)
+      op$responses <- list(
+        "200" = list(description = "The simulation, as JSON, CSV, xlsx or XML (see the guide's Formats)."),
+        "400" = error("The request is invalid; the JSON body {\"error\": ...} names the field."),
+        "413" = error("The body is over 1 MB or was sent chunked (plain text, from the HTTP server)."),
+        "415" = error("The body was declared as something other than application/json."),
+        "422" = error("The request is valid but could not be simulated, or the result is too large."),
+        "500" = error("An unexpected server error."))
+      spec$paths[["/simulate"]]$post <- op
+    }
+    spec
   })
 }
 
