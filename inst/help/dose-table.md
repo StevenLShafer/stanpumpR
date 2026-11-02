@@ -100,4 +100,4 @@ Entering any gas adds a `ventilation` row if there is none, with a default minut
 
 ## Copy and paste
 
-The table accepts paste from a spreadsheet, one row per line with tab-separated Drug, Time, Dose and Units. Drug names must match the library exactly.
+The table accepts paste from a spreadsheet, one row per line with tab-separated Drug, Time, Dose and Units. Drug names must match the library exactly. Each pasted row keeps its unit when the drug offers it (`mg PO tablet`, not `mg PO`, for morphine: the units are those of the drug's own list); a unit the drug does not offer is refused with a message and not used: the row keeps the unit it had if the drug offers it, and otherwise takes the drug's default, so check the Units column after a paste. A row with no unit keeps its unit on the same terms, and a new row takes the default. A row's unit is always one its drug offers: pasting a new drug over a row never leaves the old drug's unit behind. (Until November 2026 every pasted unit was replaced by the drug's default without a word, so a pasted oral dose became an intravenous one.)
