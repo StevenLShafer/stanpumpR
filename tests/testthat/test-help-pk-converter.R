@@ -283,3 +283,22 @@ test_that("each decrement curve starts once its site has reached the target", {
   expect_true(all(is.finite(c(js$plasma$time, js$effect$time))))
   expect_equal(max(js$plasma$duration), 600)
 })
+
+test_that("one- and two-compartment models have an effect-site curve too", {
+  skipWithoutNode()
+  # One compartment held long at Cp = Ce = 1: after the stop
+  # Ce(t) = (ke0 exp(-k t) - k exp(-ke0 t)) / (ke0 - k), here k = 0.5, ke0 = 0.2
+  one <- pkConvertJS("P.decrementCurves(P.fromVolumesClearances(1, [8], [4]).model, 0.2, 50, 120, 20).effect")
+  ce <- function(t) (0.2 * exp(-0.5 * t) - 0.5 * exp(-0.2 * t)) / (0.2 - 0.5)
+  ref <- uniroot(function(t) ce(t) - 0.5, c(0, 100), tol = 1e-12)$root
+  expect_equal(tail(one$time, 1), ref, tolerance = 1e-6)
+  # Two compartments: the effect site is held at its target and every point is finite
+  two <- pkConvertJS(paste0(
+    "(function() { var m = P.fromVolumesClearances(2, [5, 50], [3.5, 2.5]).model;",
+    " var tr = P.tciTrajectory(m, 0.5, 'effect', 30), s = tr.states[tr.states.length - 1];",
+    " return {ce: s.e.reduce(function(a, b) { return a + b; }, 0),",
+    "   curve: P.decrementCurves(m, 0.5, 50, 60, 20).effect}; })()"))
+  expect_equal(two$ce, 1, tolerance = 1e-4)
+  expect_gt(length(two$curve$time), 10)
+  expect_true(all(is.finite(two$curve$time)))
+})

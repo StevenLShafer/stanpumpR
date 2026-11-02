@@ -347,7 +347,7 @@ var PKConvert = (function() {
       var any = false;
       for (var tau = dt; tau <= dt + K.tPeak + 10 / 60 + 1e-12; tau += 1 / 60) {
         var B = 0, E = 0;
-        for (j = 0; j < 4; j++) {
+        for (j = 0; j < K.lambda4.length; j++) {
           var m = Math.exp(-K.lambda4[j] * tau);
           B += e[j] * m;
           E += K.einf[j] * grow[j] * m;
