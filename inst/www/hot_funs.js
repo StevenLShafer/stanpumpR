@@ -494,6 +494,9 @@ function hookRememberPastedUnits(data, coords) {
     if (units.indexOf(unit) === -1) {
       refused.push({ drug: drug, unit: unit });
     } else {
+      // the dropdown checks the clipboard's own text, so " mg PO tablet "
+      // would be refused there, in silence (CodeRabbit on #676)
+      line[j] = unit;
       hot.pastedUnits[row] = unit;
     }
   }

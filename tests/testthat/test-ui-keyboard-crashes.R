@@ -283,6 +283,12 @@ test_that("a paste keeps every row's time, dose and unit", {
     "  noDrugColumn: paste(grid([['fentanyl', '5', '50', 'mcg/kg'], ['', '', '', '']]), 0, [['10', '50', 'furlongs']], { startCol: 1 }),",
     # a Units cell alone
     "  unitsOnly: paste(grid([['fentanyl', '5', '50', 'mcg'], ['', '', '', '']]), 0, [['furlongs']], { startCol: 3 }),",
+    # an offered unit with spaces round it: the clipboard text the dropdown
+    # checks is the trimmed unit (CodeRabbit on #676)
+    "  padded: (function() { const hot = grid([['morphine', '5', '10', 'mg PO liquid'], ['', '', '', '']]);",
+    "    const lines = [[' mg PO tablet ']]; notes.length = 0;",
+    "    hookRememberPastedUnits.call(hot, lines, [{ startRow: 0, startCol: 3 }]);",
+    "    return { lines: lines, remembered: hot.pastedUnits[0], notes: notes.slice() }; })(),",
     # a refused unit in a row that is otherwise pasted as it was: no change
     # reaches afterChange, and the warning must still be given
     "  unchanged: paste(grid([['fentanyl', '5', '50', 'mcg/kg'], ['', '', '', '']]), 0, [['fentanyl', '5', '50', 'furlongs']]),",
@@ -318,6 +324,9 @@ test_that("a paste keeps every row's time, dose and unit", {
   expect_length(out$noDrugColumn$notes, 1)
   expect_equal(row(out$unitsOnly$data[[1]]), c("fentanyl", "5", "50", "mcg"))
   expect_match(out$unitsOnly$notes[[1]], "furlongs.*fentanyl.*not used")
+  expect_equal(out$padded$lines[[1]][[1]], "mg PO tablet")
+  expect_equal(out$padded$remembered, "mg PO tablet")
+  expect_length(out$padded$notes, 0)
   expect_equal(row(out$unchanged$data[[1]]), c("fentanyl", "5", "50", "mcg/kg"))
   expect_length(out$unchanged$notes, 1)
   for (r in 2:4) {
