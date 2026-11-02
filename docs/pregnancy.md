@@ -254,8 +254,10 @@ paywalled. The first list matters most, since each would check a factor the libr
   pregnancy. *Epilepsy Res* 2018;141:31-37 (PMID 29453075,
   [doi:10.1016/j.eplepsyres.2018.02.004](https://doi.org/10.1016/j.eplepsyres.2018.02.004)), full text read
   2026-11-02. Figure 1b's mean total C/D by stage, different women at each: baseline 0.48 (n 11), third
-  trimester 0.29 (n 19, p < 0.05), post-partum 0.54 (n 16) umol/L/mg, so the third-trimester total CL/F ratio is
-  1.66 against baseline or 1.86 against post-partum (the abstract's "46%" is the post-partum reference).
+  trimester 0.29 (n 19, p < 0.05), post-partum 0.54 (n 16) umol/L/mg, of morning troughs; assuming comparable
+  dosing intervals across stages, the third-trimester total CL/F ratio is about 1.66 against baseline or 1.86
+  against post-partum. The paper calls the 0.48 to 0.29 change a 46% fall from before pregnancy; the arithmetic
+  gives 40%, and 46% matches the post-partum comparison, so the discrepancy is unresolved.
   Valproate's x1.6 stands, slightly conservative, at low confidence: unpaired stage means, total not unbound.
 - **Voinescu PE, Park S, Chen LQ, et al.** Antiepileptic drug clearances during pregnancy and clinical
   implications for women with epilepsy. *Neurology* 2018;91:e1228-e1236 (PMID 30185446,

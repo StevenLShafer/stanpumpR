@@ -104,13 +104,21 @@
 #     Mean total concentration/dose by stage (Figure 1b): baseline 0.48
 #     (n 11), 1st trimester 0.43 (n 14), 2nd 0.38 (n 19), 3rd 0.29 (n 19,
 #     p < 0.05), post-partum 0.54 (n 16) umol/L/mg.  These are STAGE MEANS
-#     of different women, not a paired per-woman ratio.  The third-trimester
-#     total CL/F ratio (absolute, not per kg) is 1.66 against baseline
+#     of different women, not a paired per-woman ratio.  The samples are
+#     morning TROUGHS before the first dose (mostly the retard
+#     formulation), so the reciprocal of a C/D ratio is a CL/F ratio only
+#     if the dosing interval and the trough-to-average relation are alike
+#     across stages; on that assumption the third-trimester total CL/F
+#     ratio (absolute, not per kg) is about 1.66 against baseline
 #     (0.48/0.29, a 40% fall) or 1.86 against post-partum (0.54/0.29, a 46%
-#     fall).  That resolves the abstract's "46%": it is the post-partum
-#     reference, quoted beside the baseline 0.48.  The unbound concentration
-#     rose in the same women (free fraction about 6% to 30%, Figure 2), the
-#     paper's whole point that TDM of total valproate misleads in pregnancy.
+#     fall).  The paper itself (abstract and section 3.2) calls the 0.48 to
+#     0.29 change a 46% fall from before pregnancy; the arithmetic gives
+#     40%, and 46% matches the post-partum comparison instead.  Which the
+#     authors meant is unresolved.  Unbound valproate was measured in only
+#     10% of the pregnancies; in two pregnancies of ONE woman (Figure 2) the
+#     free fraction rose from about 6% to 30% and 15% to 33%, which is the
+#     paper's warning that total valproate misleads in pregnancy, not a
+#     cohort-wide result.
 # Koerner 1989 (Ther Drug Monit 11:228-230, PMID 2499082, abstract, 9 women
 # followed monthly) agrees in direction: total fell despite dose increases
 # in four, free did not, free fraction and plasma clearance rose, and
@@ -125,7 +133,8 @@
 # 12:40-46, PMID 2305420), so 2.0 overstates the antepartum free fraction.
 # The factor is retained because the largest data set, Johannessen
 # Landmark's stage-mean ratios (1.66 against baseline, 1.86 against
-# post-partum), brackets it from above, so 1.6 is slightly conservative;
+# post-partum, both from trough C/D), brackets it from above, so 1.6 is
+# slightly conservative;
 # not because the binding derivation is exact.  Voinescu's 1.142 is not
 # adopted (n 5, not significant, per kg; its upper limit, 1.408 per kg,
 # would reach 1.6 in absolute terms only at an ASSUMED 15% weight gain, the
@@ -189,7 +198,7 @@
 # measured third-trimester total ratios are 1.142 per kg (Voinescu 2018,
 # n 5, not significant) and 1.66 against baseline or 1.86 against
 # post-partum (Johannessen Landmark 2018, 51 pregnancies, full text, ratios
-# of stage means); see the header.
+# of trough stage means); see the header.
 VALPROATE_PREGNANCY_CL_FACTOR <- 1.6
 
 # The age term on CL/F, (AGE/15)^-0.0154 (Equation 1), and the youngest age it
