@@ -353,3 +353,81 @@ test_that("a plot from Min time draws only the window and scales to it", {
   # the whole run is still returned
   expect_equal(min(p$plotResults$Time), 0)
 })
+
+
+# Two layout defects seen on a plot of eighteen sedatives and opioids
+# (2026-11-02): the legend, centred in the right margin of a tall plot, sat on
+# the "<- Threshold" labels the time until threshold writes past each panel's
+# right edge; and the 18 pt strip labels were clipped to the panel height, so
+# "dexmedetomidine" and "remifentanil" lost their ends.
+
+test_that("the legend clears the threshold labels when the time until threshold is drawn", {
+  doseTable <- data.frame(Drug = "propofol", Time = 0, Dose = 100, Units = "mg")
+  defaults <- getDrugDefaultsGlobal(FALSE)
+  events <- data.frame(Time = numeric(0), Event = character(0))
+  local_mocked_bindings(outputComments = function(...) {})
+  drugs <- processdoseTable(doseTable, events,
+    recalculatePK(NULL, defaults, doseTable, 50, 70, 170, "male"), 60, TRUE)
+  plotAt <- function(recovery) simulationPlot(drugs = drugs, events = events,
+    drugDefaults = defaults, eventDefaults = getEventDefaults(),
+    plotRecovery = recovery)$plotObject
+  spacing <- function(p) as.numeric(p$theme$legend.box.spacing)
+  # ggplot's default 11 pt without the labels; past them with
+  expect_equal(spacing(plotAt(FALSE)), 11)
+  expect_equal(spacing(plotAt(TRUE)), 11 + THRESHOLD_LABEL_PT)
+  # and the panels lose none of their height for it: the same width is taken
+  # out of the width the aspect ratio is computed on (800 - 200 - 74.7 px)
+  expect_equal(plotAt(FALSE)$theme$aspect.ratio, 150 / 600)
+  expect_equal(plotAt(TRUE)$theme$aspect.ratio,
+               150 / (600 - THRESHOLD_LABEL_PT))
+})
+
+test_that("strip text shrinks only as far as the longest name needs to fit the panel", {
+  label <- function(drug) paste0(drug, "\n(ng/ml)")
+  # A short name keeps the 18 pt the strips always had, even on the shortest
+  # panel the Y axis height allows (renderPlot() draws at 72 dpi, so the
+  # sizes in points are pixels)
+  expect_equal(stripTextSize(label("propofol"), 150, 150 / 600, 800),
+               STRIP_TEXT_MAX_SIZE)
+  # A long one keeps it where it fits, at 1200 px wide and a Y axis height of
+  # 200, and is made smaller where it does not, enough for its length to fit:
+  # 800 px wide at 150 gives a panel 128 px tall
+  expect_equal(stripTextSize(label("dexmedetomidine"), 200, 200 / 1000, 1200),
+               STRIP_TEXT_MAX_SIZE)
+  size <- stripTextSize(label("dexmedetomidine"), 150, 150 / 600, 800)
+  expect_lt(size, STRIP_TEXT_MAX_SIZE)
+  expect_lte(nchar("dexmedetomidine") * STRIP_CHAR_EM * size, 150 - PANEL_SPACING_PX)
+  # It is the longest line of all the strips that sets the size
+  expect_equal(
+    stripTextSize(c(label("propofol"), label("dexmedetomidine")), 150, 150 / 600, 800),
+    size)
+  # Never below the floor, however narrow
+  expect_equal(stripTextSize(label("dexmedetomidine"), 150, 150 / 100, 300),
+               STRIP_TEXT_MIN_SIZE)
+})
+
+test_that("a name too long for its panel at the smallest strip size is broken onto more lines", {
+  # 800 px wide at a Y axis height of 150: a 128 px panel holds 20 characters
+  # at STRIP_TEXT_MIN_SIZE
+  panelPx <- stripPanelPx(150, 150 / 600, 800)
+  expect_equal(panelPx, 150 - PANEL_SPACING_PX)
+  maxChars <- stripLineChars(panelPx)
+  expect_equal(maxChars, 20)
+  # Broken where a camel-case word starts, packed greedily; the units line and
+  # names that fit are left alone
+  label <- "levodopaEntacaponeIntestinalGel\n(mcg/ml)"
+  wrapped <- wrapStripLabel(c(label, "propofol\n(mcg/ml)", "% MEAC"), maxChars)
+  expect_equal(wrapped, c("levodopaEntacapone\nIntestinalGel\n(mcg/ml)",
+                          "propofol\n(mcg/ml)", "% MEAC"))
+  # and at spaces
+  expect_equal(wrapStripLabel("aaaa bbbb cccc dddd eeee", 10),
+               "aaaa bbbb\ncccc dddd\neeee")
+  # A single word longer than the line keeps its own line, never cut
+  expect_equal(wrapStripLabel("abcdefghijklmnopqrstuvwxyz", 10),
+               "abcdefghijklmnopqrstuvwxyz")
+  # Once broken, every line fits the panel at the size stripTextSize() gives
+  size <- stripTextSize(wrapped, 150, 150 / 600, 800)
+  expect_gte(size, STRIP_TEXT_MIN_SIZE)
+  lines <- unlist(strsplit(wrapped, "\n", fixed = TRUE))
+  expect_lte(max(nchar(lines)) * STRIP_CHAR_EM * size, panelPx)
+})

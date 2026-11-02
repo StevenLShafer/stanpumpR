@@ -832,11 +832,28 @@ simulationPlot <- function(
   # Step A3: labs and themes
 
   nFacets <- length(unique(plotResults$Wrap))
+  # The time until threshold writes "<- Threshold" just past the right edge of
+  # each panel (the panels do not clip), in the margin the legend also uses,
+  # and with many drugs the legend, centred on a tall plot, sat on top of
+  # them.  Push the legend past them (legend.box.spacing, below) and take the
+  # same width out of the width the panels are given, so they keep their
+  # height.  renderPlot() draws at its default 72 dpi (app_server.R sets no
+  # res), where a point is a pixel.
+  thresholdLabelPx <- if (plotRecovery) THRESHOLD_LABEL_PT else 0
+  plotWidth <- width
   # Roughly account for the legend and Y axis labels.  Floored, because a
   # narrow pane would otherwise give a negative aspect ratio, or at exactly 200
   # an infinite one, which ggplot cannot draw.
-  width <- max(width - 200, 100)
+  width <- max(width - 200 - thresholdLabelPx, 100)
   aspect <- yAxisHeight / width
+  # A name too long to fit the panel even at the smallest strip size is
+  # broken onto more lines (wrapStripLabel()), the same in the sizing and in
+  # the strips drawn
+  panelPx <- stripPanelPx(yAxisHeight, aspect, plotWidth - thresholdLabelPx)
+  stripLabel <- function(wrap) wrapStripLabel(compartmentPanelLabel(wrap), stripLineChars(panelPx))
+  stripSize <- stripTextSize(
+    stripLabel(as.character(unique(plotTable$Wrap))),
+    yAxisHeight, aspect, plotWidth - thresholdLabelPx)
   height <- yAxisHeight * nFacets + 50
   # The panel height is bounded (MAX_YAXIS_HEIGHT) but the panels add up, and
   # a plot too tall for the graphics device failed while being drawn, as a
@@ -958,7 +975,7 @@ simulationPlot <- function(
       scales="free_y",
       switch = "y",
       # A compartment panel's strip names only its compartment (R/compartments.R)
-      labeller = ggplot2::labeller(Wrap = compartmentPanelLabel),
+      labeller = ggplot2::labeller(Wrap = stripLabel),
 #      strip.position = "left",
       shrink=FALSE
 #      scales = list(y = scales_y)
@@ -967,11 +984,13 @@ simulationPlot <- function(
     ggplot2::theme(strip.background = ggplot2::element_blank(),
           strip.placement = "outside",
           strip.text.y = ggplot2::element_text(
-            size = 18,
+            size = stripSize,
             angle = 270
           ),
           axis.text.y = ggplot2::element_text(size = 15),
           panel.spacing = grid::unit(2, "lines"),
+          # ggplot's default gap (11 pt), plus room for "<- Threshold"
+          legend.box.spacing = grid::unit(11 + thresholdLabelPx, "pt"),
           legend.background = ggplot2::element_blank(),
           legend.box.background = ggplot2::element_blank(),
           legend.key = ggplot2::element_blank()
@@ -1171,4 +1190,83 @@ seriesFromMinimum <- function(df, minimum, by, y = "Y", step = FALSE)
   out <- do.call(rbind, pieces)
   rownames(out) <- NULL
   out
+}
+
+#' Font size of the panel strips, so that the longest name fits the panel
+#'
+#' The strips on the left name each panel's drug and units in 18 pt, rotated
+#' along the panel, and are clipped to its height: with a long name
+#' ("dexmedetomidine", "remifentanil") on a short panel the ends were cut off.
+#' This returns 18 where the longest line fits and otherwise the size at which
+#' it does, never below STRIP_TEXT_MIN_SIZE.  The panel height is estimated
+#' as simulationPlot() will draw it: its fixed aspect ratio times the width
+#' left for the panels, and no more than the Y axis height less the gap
+#' between panels.
+#'
+#' @param labels the strip labels, lines separated by "\n"
+#' @param yAxisHeight the Y axis height asked for, px
+#' @param aspect the panels' aspect ratio, height over width
+#' @param plotWidth the plot's width, px, less anything already set aside
+#' @returns a font size in points
+#' @noRd
+stripTextSize <- function(labels, yAxisHeight, aspect, plotWidth) {
+  lines <- unlist(strsplit(as.character(labels), "\n", fixed = TRUE))
+  longest <- max(c(nchar(lines), 1L), na.rm = TRUE)
+  panelPx <- stripPanelPx(yAxisHeight, aspect, plotWidth)
+  fitPx <- 0.95 * panelPx / (longest * STRIP_CHAR_EM)
+  # At renderPlot()'s 72 dpi a pixel is a point
+  min(STRIP_TEXT_MAX_SIZE, max(STRIP_TEXT_MIN_SIZE, fitPx))
+}
+
+#' The height of simulationPlot()'s panels, px, as stripTextSize() estimates
+#' it: the fixed aspect ratio times the width left for the panels, and no
+#' more than the Y axis height less the gap between panels
+#' @noRd
+stripPanelPx <- function(yAxisHeight, aspect, plotWidth) {
+  min(yAxisHeight - PANEL_SPACING_PX,
+      aspect * max(plotWidth - PLOT_FURNITURE_PX, 1))
+}
+
+#' The most characters a strip line can hold on a panel panelPx tall at the
+#' smallest strip size, STRIP_TEXT_MIN_SIZE (at least 1)
+#' @noRd
+stripLineChars <- function(panelPx) {
+  max(1L, floor(0.95 * panelPx / (STRIP_TEXT_MIN_SIZE * STRIP_CHAR_EM)))
+}
+
+#' Break the lines of strip labels that are longer than maxChars
+#'
+#' A drug name too long for its panel even at STRIP_TEXT_MIN_SIZE
+#' ("levodopaEntacaponeIntestinalGel", 31 characters, on a 128 px panel that
+#' holds 20) is broken where a word ends: at a space, or between a lower-case
+#' letter and the capital that starts the next word of a camel-case name.
+#' Words are packed greedily onto lines of at most maxChars; a single word
+#' longer than that keeps its own line, never cut.  Lines that fit are left
+#' alone.
+#' @param labels strip labels, lines separated by "\n"
+#' @param maxChars the longest line wanted
+#' @returns the labels, with the long lines broken
+#' @noRd
+wrapStripLabel <- function(labels, maxChars) {
+  wrapLine <- function(line) {
+    if (nchar(line) <= maxChars) return(line)
+    marked <- gsub("([a-z])([A-Z])", "\\1\001\\2", line)
+    marked <- gsub(" ", " \001", marked, fixed = TRUE)
+    words <- strsplit(marked, "\001", fixed = TRUE)[[1]]
+    out <- character(0)
+    current <- ""
+    for (word in words) {
+      if (nzchar(current) && nchar(trimws(paste0(current, word))) > maxChars) {
+        out <- c(out, trimws(current))
+        current <- word
+      } else {
+        current <- paste0(current, word)
+      }
+    }
+    paste(c(out, trimws(current)), collapse = "\n")
+  }
+  vapply(as.character(labels), function(label) {
+    lines <- strsplit(label, "\n", fixed = TRUE)[[1]]
+    paste(vapply(lines, wrapLine, character(1)), collapse = "\n")
+  }, character(1), USE.NAMES = FALSE)
 }
