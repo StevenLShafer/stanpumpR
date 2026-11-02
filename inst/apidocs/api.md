@@ -178,11 +178,13 @@ media type is refused with 415). Field names ignore case and any `_`, space or
 `.`, so `weightUnit`, `weight_unit` and `WeightUnit` are the same field. A
 field given more than once, in any of those spellings, is refused (400), so
 the service can never pick one of two values. A field the service does not
-know, at any level (the request, `patient`, `output`, `options`, and the
-columns of `doses` and `events`), is ignored and named in the response's
-`warnings`, so a misspelt covariate is not defaulted in silence and an
-unsupported column (a `stopTime` on an infusion, say) is not mistaken for one
-that took effect. `patient`, `output` and `options` must be JSON objects, and
+know is ignored and named in the response's `warnings`, at every level (the
+request, `patient`, `output`, `options` and the columns of `events`), so a
+misspelt covariate is not defaulted in silence. The columns of `doses` are
+stricter: one the service does not read (a `stopTime` on an infusion, say) is
+refused (400), because ignoring it would simulate a different regimen from the
+one the client meant. Set `options.unknownDoseFields` to `"warn"` to have such
+a column ignored and named in `warnings` instead. `patient`, `output` and `options` must be JSON objects, and
 every value, including each cell of `doses` and `events`, a single value (not
 an empty array or an object); anything else is refused (400).
 
@@ -236,7 +238,8 @@ an empty array or an object); anything else is refused (400).
 
   "options": {
     "allowIllicitDrugs": false,      // allow the opt-in "Illicit drugs" research models
-    "antiseizureInteractions": true  // apply the interactions among the antiseizure drugs (default true, as in the app)
+    "antiseizureInteractions": true, // apply the interactions among the antiseizure drugs (default true, as in the app)
+    "unknownDoseFields": "reject"    // a dose column the service does not read: "reject" (default, 400) | "warn"
   }
 }
 ```

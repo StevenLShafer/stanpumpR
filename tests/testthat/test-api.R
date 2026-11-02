@@ -423,14 +423,23 @@ test_that("the peaks do not depend on the output times requested", {
   expect_false(isTRUE(stanpumpR:::.sprglobals$gridResolvePeaks))
 })
 
-test_that("unknown dose and event columns are named in the warnings", {
+test_that("unknown dose columns are refused by default, and event columns warned about", {
   rows <- jsonlite::fromJSON('[{"Drug":"propofol","Time":0,"Dose":100,"Units":"mcg/kg/min","stopTime":10}]')
-  r <- apiSimulate(apiRequest(doses = rows, events = data.frame(Time = 1, Event = "Intubation", note = "x")))
+  expectApiError(apiSimulate(apiRequest(doses = rows)),
+                 "Unknown field in `doses` refused: `stopTime`\\..*unknownDoseFields")
+  # Column-object form too; the documented lower-case names are not unknown.
+  cols <- list(drug = "fentanyl", time = 0, dose = 100, units = "mcg", route = "IV")
+  expectApiError(apiSimulate(apiRequest(doses = cols)), "refused: `route`")
+  expect_length(apiSimulate(apiRequest(doses = cols[1:4]))$warnings, 0)
+
+  # "warn" keeps the old behaviour: ignored and named.
+  warn <- list(unknownDoseFields = "warn")
+  r <- apiSimulate(apiRequest(doses = rows, options = warn,
+                              events = data.frame(Time = 1, Event = "Intubation", note = "x")))
   expect_true("Unknown field in `doses` ignored: `stopTime`." %in% r$warnings)
   expect_true("Unknown field in `events` ignored: `note`." %in% r$warnings)
-  # Column-object form, and the documented lower-case names are not unknown.
-  cols <- list(drug = "fentanyl", time = 0, dose = 100, units = "mcg", route = "IV")
-  expect_equal(apiSimulate(apiRequest(doses = cols))$warnings, "Unknown field in `doses` ignored: `route`.")
+  expectApiError(apiSimulate(apiRequest(options = list(unknownDoseFields = "ignore"))),
+                 "options.unknownDoseFields must be one of 'reject', 'warn'")
 })
 
 test_that("misshapen output, options and table cells are refused, not defaulted", {

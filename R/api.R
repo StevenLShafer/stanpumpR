@@ -65,7 +65,10 @@ API_PATIENT_FIELDS <- c("weight", "height", "age", "sex", "weightUnit", "heightU
                         "cyp2d6", "cyp2c19", "cyp2c9", "cyp2b6", "vkorc1", "cyp4f2",
                         "opioidTolerance")
 API_OUTPUT_FIELDS  <- c("times", "interval", "recovery", "format", "layout")
-API_OPTIONS_FIELDS <- c("allowIllicitDrugs", "antiseizureInteractions")
+API_OPTIONS_FIELDS <- c("allowIllicitDrugs", "antiseizureInteractions", "unknownDoseFields")
+# What a dose-row field the service does not read does to the request: refuse
+# it (the default), or ignore it with a warning.
+API_UNKNOWN_DOSE_FIELDS <- c("reject", "warn")
 API_DOSE_FIELDS    <- c("Drug", "Time", "Dose", "Units")
 API_EVENT_FIELDS   <- c("Time", "Event")
 # Default grid steps (minutes): the smallest that keeps a series to
@@ -494,6 +497,19 @@ apiSimulate <- function(request) {
   }
 
   patient <- apiPatient(apiField(request, "patient"))
+  # A dose-row field the service does not read (a "stopTime" on an infusion,
+  # say) would otherwise vanish while the client believes it took effect, and
+  # change the regimen simulated, so by default it is refused (Steven L.
+  # Shafer, 2026-11-02); "warn" ignores it and names it in `warnings`.
+  unknownDoseFields <- apiChoice(apiField(opts, "unknownDoseFields", "reject"),
+                                 "options.unknownDoseFields", API_UNKNOWN_DOSE_FIELDS)
+  unknownDoses <- apiUnknownFields(apiTableFields(apiField(request, "doses")), API_DOSE_FIELDS, "`doses`")
+  if (!is.null(unknownDoses) && unknownDoseFields == "reject") {
+    apiError(sub(" ignored: ", " refused: ", unknownDoses, fixed = TRUE),
+             " The service reads only Drug, Time, Dose and Units (an infusion is stopped by a row ",
+             "with a rate of 0). Remove the field, or set options.unknownDoseFields to \"warn\" ",
+             "to have it ignored.")
+  }
   DT <- apiDoses(apiField(request, "doses"), unit, maximum,
                  allowIllicit = apiFlag(apiField(opts, "allowIllicitDrugs", FALSE),
                                         "options.allowIllicitDrugs"))
@@ -530,9 +546,7 @@ apiSimulate <- function(request) {
     apiUnknownFields(apiField(request, "patient"), API_PATIENT_FIELDS, "`patient`"),
     apiUnknownFields(output, API_OUTPUT_FIELDS, "`output`"),
     apiUnknownFields(opts, API_OPTIONS_FIELDS, "`options`"),
-    # A dose-row field the service does not read (a "stopTime", say) would
-    # otherwise vanish while the client believes it took effect.
-    apiUnknownFields(apiTableFields(apiField(request, "doses")), API_DOSE_FIELDS, "`doses`"),
+    unknownDoses,  # reached only with options.unknownDoseFields "warn"
     apiUnknownFields(apiTableFields(apiField(request, "events")), API_EVENT_FIELDS, "`events`")
   ))
   late <- unique(DT$Drug[DT$Time >= maximum])
