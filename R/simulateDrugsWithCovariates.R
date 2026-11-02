@@ -45,6 +45,11 @@
 #'   every drug on its own.  A changed drug's entry carries
 #'   \code{interaction}, the segments of its multipliers and the rows that
 #'   produced them.
+#' @param opioidTolerance the Patient Profile's Opioid tolerance, one of
+#'   \code{OPIOID_TOLERANCE_VALUES} ("none", the default).  It multiplies
+#'   each opioid's MEAC, band and time-until-threshold value
+#'   (\code{endCe}) by its factor (\code{OPIOID_TOLERANCE_FACTORS}), as the
+#'   app does; the concentrations are unchanged.
 #'
 #' @returns a list of data frames with the output of the a single drug
 #'   simulation.  A drug that forms an active metabolite adds its contribution
@@ -68,7 +73,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                                          vkorc1 = VKORC1_DEFAULT,
                                          antiseizureInteractions = FALSE,
                                          cyp4f2 = CYP4F2_DEFAULT,
-                                         gestationalAge = NULL)
+                                         gestationalAge = NULL,
+                                         opioidTolerance = OPIOID_TOLERANCE_DEFAULT)
 {
   if (length(sex) != 1 || !sex %in% SEX_VALUES) {
     stop("Invalid sex: ", paste(sex, collapse = ", "),
@@ -97,7 +103,7 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
 
   for (drug in drugList)
   {
-    drugDefaults <- getDrugDefaults(drug)
+    drugDefaults <- opioidToleranceDefaults(getDrugDefaults(drug), opioidTolerance)
     PK <- getDrugPK(drug, weight, height, age, sex, drugDefaults, cyp2d6 = cyp2d6,
                     cyp2c19 = cyp2c19, cyp2c9 = cyp2c9, vkorc1 = vkorc1,
                     cyp4f2 = cyp4f2,
@@ -154,7 +160,7 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
     target <- output[[drug]]$metaboliteName
     if (is.null(target) || !nzchar(target)) next
     if (target %in% drugList) next
-    targetDefaults <- getDrugDefaults(target)
+    targetDefaults <- opioidToleranceDefaults(getDrugDefaults(target), opioidTolerance)
     targetPK <- getDrugPK(target, weight, height, age, sex, targetDefaults,
                           cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
                           vkorc1 = vkorc1, cyp4f2 = cyp4f2,

@@ -150,6 +150,15 @@ gridFill <- function(knots, maximum, scale, start, origin = 0)
   K   <- max(0, ceiling(log(h / ((r - 1) * tau0)) / log(r)))
   geo <- tau0 * r^(0:K)
   tauK <- geo[length(geo)]
+  # Inside withOutputTimes(resolvePeaks = TRUE) (the API) the fill after
+  # each knot also starts at `start`, as the legacy fill does, so a peak
+  # within tau0 of a dose is sampled: the API reports peaks read off this
+  # line, and a 52-week fentanyl bolus otherwise reports a quarter of its
+  # effect-site peak (see the header).  The app's lines are unchanged.
+  if (isTRUE(.sprglobals$gridResolvePeaks) && tau0 > start) {
+    early <- start * r^(0:max(0, ceiling(log(tau0 / start) / log(r)) - 1))
+    geo <- c(early[early < tau0], geo)
+  }
 
   gap  <- rep(seq_along(distance), each = length(geo))
   tau  <- rep(geo, times = length(distance))
@@ -236,13 +245,22 @@ withGridOutputTimes <- function(timeLine, maximum)
 #' @param times times (minutes) every engine should report, in addition to
 #'   its own time line; see \code{withGridOutputTimes()}
 #' @param code the code to run
+#' @param resolvePeaks also fill every gap of a line longer than a day from
+#'   the drug's own \code{start}, as a line of a day or less is filled, so
+#'   that a peak soon after a dose is a point of the line (see
+#'   \code{gridFill()})
 #' @returns the value of \code{code}
 #' @keywords internal
-withOutputTimes <- function(times, code)
+withOutputTimes <- function(times, code, resolvePeaks = FALSE)
 {
   old <- .sprglobals$gridOutputTimes
+  oldPeaks <- .sprglobals$gridResolvePeaks
   .sprglobals$gridOutputTimes <- times
-  on.exit(.sprglobals$gridOutputTimes <- old, add = TRUE)
+  .sprglobals$gridResolvePeaks <- resolvePeaks
+  on.exit({
+    .sprglobals$gridOutputTimes <- old
+    .sprglobals$gridResolvePeaks <- oldPeaks
+  }, add = TRUE)
   force(code)
 }
 

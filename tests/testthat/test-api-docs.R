@@ -78,7 +78,7 @@ test_that("the limits the document states are the ones the code enforces", {
   expect_match(md, sprintf("%s–%s mg/dL", MIN_CREATININE, MAX_CREATININE), fixed = TRUE)
   expect_match(md, sprintf("%s–%s mOsm/kg", MIN_OSMOLALITY, MAX_OSMOLALITY), fixed = TRUE)
   expect_match(md, sprintf("The default is %s.", OSMOLALITY_DEFAULT), fixed = TRUE)
-  expect_match(md, sprintf("keeps each drug to %d rows", stanpumpR:::API_DEFAULT_POINTS), fixed = TRUE)
+  expect_match(md, sprintf("keeps each drug to %d steps (%d rows", stanpumpR:::API_DEFAULT_POINTS, stanpumpR:::API_DEFAULT_POINTS + 1L), fixed = TRUE)
   expect_match(md, sprintf('`apiVersion` is `"%s"`', stanpumpR:::API_VERSION), fixed = TRUE)
   # "more than 100 drugs"
   expect_gt(nrow(apiDrugCatalog()), 100)

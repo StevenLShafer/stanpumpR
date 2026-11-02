@@ -4,19 +4,20 @@
 \alias{run_api}
 \title{Run the simulation API as an HTTP service}
 \usage{
-run_api(host = "127.0.0.1", port = 8000, docs = TRUE)
+run_api(host = "127.0.0.1", port = 8000, docs = FALSE)
 }
 \arguments{
 \item{host, port}{where to listen}
 
-\item{docs}{serve the interactive (Swagger) documentation}
+\item{docs}{also serve plumber's interactive (Swagger) page at
+\verb{/__docs__/}.  Off by default: it is generated from annotations that
+cannot describe the request body, so it points to the guide at \code{/}
+rather than specifying the API.}
 }
 \value{
 does not return while the service runs
 }
 \description{
-Serves \code{POST /simulate}, \code{GET /drugs} and \code{GET /health} (see
-\url{https://stanpumpr.io/api}, also served at \code{/}), with interactive
-documentation at \verb{/__docs__/}.  Needs the
-plumber package.
+Serves \code{POST /simulate}, \code{GET /drugs} and \code{GET /health}, with the guide
+(\url{https://stanpumpr.io/api}) at \code{/}.  Needs the plumber package.
 }
