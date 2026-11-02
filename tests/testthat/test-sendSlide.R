@@ -212,3 +212,29 @@ test_that("the deck has the whole plot on the first slide and then one slide per
   # place in the deck
   expect_equal(c(slideNumber(1), slideNumber(2), slideNumber(4)), c("3", "2", "4"))
 })
+
+test_that("the PNG preview fills its image rather than keeping the app's aspect ratio", {
+  doseTable <- data.frame(Drug = "propofol", Time = 0, Dose = 2,
+                          Units = "mg/kg", stringsAsFactors = FALSE)
+  events <- data.frame(Time = numeric(0), Event = character(0))
+  plotObject <- slideTestPlot(doseTable, events)$plot$plotObject
+  expect_false(is.null(plotObject$theme$aspect.ratio))
+  # The ratio is set for renderPlot()'s 72 dpi; the preview is saved at 150
+  preview <- previewPlot(plotObject)
+  expect_null(preview$theme$aspect.ratio)
+  expect_equal(preview$theme$strip.text.y$size, 6)
+  # The plot itself is untouched
+  expect_false(is.null(plotObject$theme$aspect.ratio))
+})
+
+
+test_that("simulationPlot() draws a long name broken onto the lines its strip size was fitted to", {
+  doseTable <- data.frame(Drug = "levodopaEntacaponeIntestinalGel", Time = 0, Dose = 100,
+                          Units = "mg PO", stringsAsFactors = FALSE)
+  plotObject <- slideTestPlot(doseTable, width = 800, yAxisHeight = 150)$plot$plotObject
+  wrap <- panelsOf(plotObject)
+  drawn <- unlist(plotObject$facet$params$labeller(data.frame(Wrap = wrap)))
+  expect_match(drawn, "^levodopaEntacapone\nIntestinalGel\n")
+  # and the strips are sized for those lines, not the 31-character name
+  expect_gt(plotObject$theme$strip.text.y$size, STRIP_TEXT_MIN_SIZE)
+})

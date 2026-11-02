@@ -405,3 +405,29 @@ test_that("strip text shrinks only as far as the longest name needs to fit the p
   expect_equal(stripTextSize(label("dexmedetomidine"), 150, 150 / 100, 300),
                STRIP_TEXT_MIN_SIZE)
 })
+
+test_that("a name too long for its panel at the smallest strip size is broken onto more lines", {
+  # 800 px wide at a Y axis height of 150: a 128 px panel holds 20 characters
+  # at STRIP_TEXT_MIN_SIZE
+  panelPx <- stripPanelPx(150, 150 / 600, 800)
+  expect_equal(panelPx, 150 - PANEL_SPACING_PX)
+  maxChars <- stripLineChars(panelPx)
+  expect_equal(maxChars, 20)
+  # Broken where a camel-case word starts, packed greedily; the units line and
+  # names that fit are left alone
+  label <- "levodopaEntacaponeIntestinalGel\n(mcg/ml)"
+  wrapped <- wrapStripLabel(c(label, "propofol\n(mcg/ml)", "% MEAC"), maxChars)
+  expect_equal(wrapped, c("levodopaEntacapone\nIntestinalGel\n(mcg/ml)",
+                          "propofol\n(mcg/ml)", "% MEAC"))
+  # and at spaces
+  expect_equal(wrapStripLabel("aaaa bbbb cccc dddd eeee", 10),
+               "aaaa bbbb\ncccc dddd\neeee")
+  # A single word longer than the line keeps its own line, never cut
+  expect_equal(wrapStripLabel("abcdefghijklmnopqrstuvwxyz", 10),
+               "abcdefghijklmnopqrstuvwxyz")
+  # Once broken, every line fits the panel at the size stripTextSize() gives
+  size <- stripTextSize(wrapped, 150, 150 / 600, 800)
+  expect_gte(size, STRIP_TEXT_MIN_SIZE)
+  lines <- unlist(strsplit(wrapped, "\n", fixed = TRUE))
+  expect_lte(max(nchar(lines)) * STRIP_CHAR_EM * size, panelPx)
+})

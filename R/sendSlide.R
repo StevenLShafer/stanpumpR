@@ -118,18 +118,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
 
   pngfileName <- file.path(dir, paste0("Preview.", slide, ".", TIMESTAMP, ".png"))
   ggplot2::ggsave(
-    plotObject +
-      ggplot2::theme(
-        strip.text.y = ggplot2::element_text(size = 6, angle = 180),
-        axis.text.y = ggplot2::element_text(size = 6),
-        axis.text.x = ggplot2::element_text(size = 8),
-        axis.title.x = ggplot2::element_text(size = 12),
-        legend.background = ggplot2::element_blank(),
-        legend.box.background = ggplot2::element_blank(),
-        legend.key = ggplot2::element_blank(),
-        legend.text = ggplot2::element_text(size=8),
-        legend.title = ggplot2::element_text(color="darkblue", size=10, face="bold")
-      ),
+    previewPlot(plotObject),
     filename = pngfileName,
     dpi = 150,
     height = height,
@@ -494,4 +483,26 @@ plotTimeText <- function(maximum, timeUnit = "minutes")
     else "",
     "</p><p>&nbsp;</p>"
   )
+}
+
+# The plot as the email's PNG preview draws it: smaller text, and no fixed
+# aspect ratio.  simulationPlot() sets the ratio for renderPlot()'s 72 dpi,
+# setting aside the threshold labels' gap in points as pixels, and the
+# preview is saved at 150 dpi, where the same gap is twice as many pixels:
+# left to fill the image, the panels take whatever the furniture leaves.
+previewPlot <- function(plotObject)
+{
+  plotObject +
+    ggplot2::theme(
+      aspect.ratio = NULL,
+      strip.text.y = ggplot2::element_text(size = 6, angle = 180),
+      axis.text.y = ggplot2::element_text(size = 6),
+      axis.text.x = ggplot2::element_text(size = 8),
+      axis.title.x = ggplot2::element_text(size = 12),
+      legend.background = ggplot2::element_blank(),
+      legend.box.background = ggplot2::element_blank(),
+      legend.key = ggplot2::element_blank(),
+      legend.text = ggplot2::element_text(size=8),
+      legend.title = ggplot2::element_text(color="darkblue", size=10, face="bold")
+    )
 }
