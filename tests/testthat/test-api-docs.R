@@ -117,3 +117,20 @@ test_that("the example response in the document is what the API returns", {
   expect_equal(names(documented$patient), names(actual$patient))
   expect_equal(names(documented$meta), names(actual$meta))
 })
+
+
+test_that("the guide states the project's intended use, as the README does", {
+  # One position across README, DESCRIPTION and the guide (Steven L. Shafer,
+  # 2026-11-02): an advisory simulator for perioperative patient care,
+  # teaching and research, not cleared by a regulator, with no delivery control.
+  md <- gsub("\\s+", " ", gsub("\n> ", " ", apiDocsMarkdown()))
+  expect_match(md, "facilitate perioperative patient care, teaching and research", fixed = TRUE)
+  expect_match(md, "does not control drug delivery", fixed = TRUE)
+  expect_match(md, "not been reviewed or cleared by any regulatory agency", fixed = TRUE)
+  expect_no_match(md, "is for teaching and research", fixed = TRUE)
+  readme <- file.path(testthat::test_path(), "..", "..", "README.md")
+  skip_if_not(file.exists(readme), "README.md is not installed with the package")
+  text <- paste(readLines(readme, warn = FALSE), collapse = " ")
+  expect_match(text, "facilitate perioperative patient care, teaching, and research", fixed = TRUE)
+  expect_match(text, "not been reviewed or cleared by any regulatory agency", fixed = TRUE)
+})
