@@ -495,9 +495,12 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
       conditionMessage(run)))))
   pk <- run$PK$default
   n <- paperReviewNum(extraction$structure$compartments)
-  # As paperReviewDisposition() builds the model: one compartment when the
-  # extraction's count is missing or outside 1-3.
-  if (is.na(n) || !n %in% 1:3) n <- 1
+  # paperReviewDisposition() builds one compartment when the extraction's
+  # count is missing or outside 1-3; that stand-in says nothing about what
+  # the paper prints, so no row is checked against it (the identifiability
+  # section says why).
+  unknownN <- is.na(n) || !n %in% 1:3
+  if (unknownN) n <- 1
   lambda <- c(pk$lambda_1, pk$lambda_2, pk$lambda_3)[seq_len(n)]
   coef <- c(pk$p_coef_bolus_l1, pk$p_coef_bolus_l2, pk$p_coef_bolus_l3)[seq_len(n)]
   # The placeholder volume of an absent compartment is not part of Vss.
@@ -573,6 +576,15 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
   {
     q <- dq$quantity %or% "other"
     if (q %in% c("other", "AUC_0_t", "t_half_absorption")) next
+    if (unknownN) {
+      rows[[length(rows) + 1]] <- data.frame(
+        quantity = q, printed = dq$value_text %or% prFmt(paperReviewNum(dq$value)),
+        units = dq$units %or% "", model = "", relative = "", status = "not comparable",
+        location = dq$location %or% "",
+        note = "The number of compartments is not known; the model is a one-compartment stand-in.",
+        stringsAsFactors = FALSE)
+      next
+    }
     printedValue <- paperReviewNum(dq$value)
     conv <- paperReviewDerivedInternal(dq, w, concUnits, extraction$drug$molecular_weight)
     expected <- PAPER_REVIEW_DERIVED_KIND[[q]]
@@ -616,6 +628,8 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
       } else if (q == "MRT") {
         model <- paperReviewRegimenMRT(regimen, paperReviewDrugFor(drug, extraction, regimen, reference),
                                        vss / pk$cl1)
+        if (!is.finite(model))
+          note <- "The regimen's input time is not known, so neither is its mean residence time."
       } else {
         res <- paperReviewRegimenExposure(extraction, paperReviewDrugFor(drug, extraction, regimen, reference),
                                           reference, dq$regimen_id)
@@ -999,9 +1013,18 @@ paperReviewRegimenMRT <- function(regimen, drug, mrtIV)
 {
   routes <- vapply(regimen$doses %or% list(), function(d) d$route %or% "other", character(1))
   if (all(routes %in% c("iv_bolus", "iv_infusion"))) return(mrtIV)
-  # A constant extravascular input enters the apparent disposition directly,
-  # and a drug with no absorption has no route to add one for.
-  if (!paperReviewNeedsAbsorption(regimen) || is.na(drug$route %or% NA)) return(mrtIV)
+  if (!paperReviewNeedsAbsorption(regimen)) {
+    # A constant extravascular input enters the apparent disposition
+    # directly; the printed MRT includes its mean input time, half its
+    # duration.  Without one input of known duration it is not known.
+    doses <- regimen$doses %or% list()
+    if (length(doses) != 1) return(NA_real_)
+    d <- doses[[1]]
+    duration <- paperReviewNum(d$duration) * paperReviewMinutes(d$time_units %or% "min")
+    return(if (is.finite(duration) && duration > 0) mrtIV + duration / 2 else NA_real_)
+  }
+  # A drug with no absorption has no route to add one for.
+  if (is.na(drug$route %or% NA)) return(NA_real_)
   field <- if (drug$route == "sc") "SC" else PAPER_REVIEW_ROUTE_SUFFIX[[drug$route]]
   set <- drug$model$PK$default
   mrtIV + 1 / set[[paste0("ka_", field)]] + (set[[paste0("tlag_", field)]] %or% 0)

@@ -236,7 +236,44 @@ paperReviewValidate <- function(x)
       if (nzchar(out$extraction_limitations)) " " else "",
       "The reply had no usable ", paste(missing, collapse = ", "),
       "; the review treats them as empty.")
+  # The schema's closed choices are instructions too: a value outside them
+  # (an unknown parameter role) is passed over by the checks without a word,
+  # so each one is named here, which the report prints.
+  stray <- paperReviewStrayChoices(out, schema)
+  if (length(stray))
+    out$extraction_limitations <- paste0(
+      out$extraction_limitations,
+      if (nzchar(out$extraction_limitations)) " " else "",
+      "Some values are not among their field's choices and may be ignored: ",
+      paste(utils::head(stray, 8), collapse = "; "),
+      if (length(stray) > 8) paste0("; and ", length(stray) - 8, " more") else "", ".")
   out
+}
+
+#' The values of an extraction outside their field's closed choices
+#'
+#' @param value part of the extraction
+#' @param spec the schema of that part
+#' @param path where it is, for the message
+#' @returns one entry, the path and the value, per value outside its field's
+#'   enum
+#' @keywords internal
+paperReviewStrayChoices <- function(value, spec, path = "")
+{
+  if (is.null(value) || !is.list(spec)) return(character(0))
+  choices <- if (!is.null(spec$enum)) unlist(spec$enum) else attr(spec, "choices")
+  if (!is.null(choices)) {
+    ok <- !is.character(value) || length(value) != 1 || value %in% choices
+    return(if (ok) character(0) else paste0(path, " (\"", value, "\")"))
+  }
+  if (identical(spec$type, "object") && is.list(value) && is.list(spec$properties))
+    return(unlist(lapply(names(spec$properties), function(name)
+      paperReviewStrayChoices(value[[name]], spec$properties[[name]],
+                              if (nzchar(path)) paste0(path, ".", name) else name)), use.names = FALSE))
+  if (identical(spec$type, "array") && is.list(value) && is.null(names(value)))
+    return(unlist(lapply(seq_along(value), function(i)
+      paperReviewStrayChoices(value[[i]], spec$items, paste0(path, "[", i, "]"))), use.names = FALSE))
+  character(0)
 }
 
 #' Send one manuscript to the Anthropic API and return the extraction

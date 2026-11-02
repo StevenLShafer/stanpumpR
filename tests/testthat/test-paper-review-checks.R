@@ -606,12 +606,35 @@ test_that("every nullable number in the schema is parsed back to a number", {
   expect_identical(x$figures[[1]]$x_axis_max, 600)
 })
 
-test_that("a missing compartment count or an unabsorbed regimen does not stop the review", {
+test_that("a missing compartment count leaves the printed quantities unchecked", {
   ex <- paperReviewExample()
   ex$structure$compartments <- "three"
-  expect_no_error(paperReviewRun(ex))
-  # A daily oral dose given as a constant input needs no absorption.
+  review <- expect_no_error(paperReviewRun(ex))
+  t <- review$consistency
+  expect_gt(nrow(t), 0)
+  expect_true(all(t$status == "not comparable"))
+  titles <- vapply(review$findings, `[[`, "", "title")
+  expect_false(any(grepl("(differs|disagrees) with the model", titles)))
+})
+
+test_that("a constant oral input's MRT includes its mean input time", {
+  # A daily oral dose given as a constant input needs no absorption; the
+  # printed MRT carries half the input's duration.
   regimen <- list(id = "R9", doses = list(list(route = "po", per_time = "day", duration = 1440)))
   drug <- list(route = NA_character_)
-  expect_equal(paperReviewRegimenMRT(regimen, drug, 100), 100)
+  expect_equal(paperReviewRegimenMRT(regimen, drug, 100), 100 + 720)
+  regimen$doses[[1]]$duration <- 1; regimen$doses[[1]]$time_units <- "day"
+  expect_equal(paperReviewRegimenMRT(regimen, drug, 100), 100 + 720)
+  # With no duration the input time, and so the MRT, is unknown.
+  regimen$doses[[1]]$duration <- NULL
+  expect_true(is.na(paperReviewRegimenMRT(regimen, drug, 100)))
+})
+
+test_that("values outside a field's closed choices are named, not passed over in silence", {
+  x <- paperReviewValidate(paperReviewNormalize(paperReviewExample()))
+  expect_false(grepl("not among their field's choices", x$extraction_limitations))
+  ex <- paperReviewExample()
+  ex$parameters[[1]]$role <- "Vmaxx"
+  x <- paperReviewValidate(paperReviewNormalize(ex))
+  expect_match(x$extraction_limitations, 'parameters[1].role ("Vmaxx")', fixed = TRUE)
 })

@@ -159,10 +159,16 @@ schemaEnum <- function(values, description = NULL) {
 # A closed list sent as a string whose description lists the values, not as
 # an enum: long enums repeated across the schema made the API's compiled
 # grammar "too large".  R checks the value against the list itself (an
-# unknown unit is not convertible and is flagged), so nothing is lost.
+# unknown unit is not convertible and is flagged), so nothing is lost.  The
+# values ride along as an attribute, which toJSON() does not send, for
+# paperReviewStrayChoices().
 schemaChoice <- function(values, description = NULL)
-  schemaString(paste(c(description, paste0("Exactly one of: ", paste(values, collapse = ", "), ".")),
-                     collapse = " "))
+{
+  out <- schemaString(paste(c(description, paste0("Exactly one of: ", paste(values, collapse = ", "), ".")),
+                            collapse = " "))
+  attr(out, "choices") <- values
+  out
+}
 schemaObject <- function(properties, description = NULL) {
   out <- list(type = "object", properties = properties,
               required = as.list(names(properties)),
