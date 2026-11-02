@@ -399,7 +399,8 @@ test_that("the dialogs show and read times in the dose table's format", {
     doseTable(withTimes("10", "9", "1.5"))
     DrugTimeUnits(list(drug = "propofol"))
     TT <- data.frame(Delete = FALSE, Time = c("10", "9"), Dose = c("1", "2"), Units = c("mg", "mg"))
-    hot <- rhandsontable::rhandsontable(TT)$x
+    # the drug stamp the real grid carries (output$editPriorDosesTable)
+    hot <- c(rhandsontable::rhandsontable(TT)$x, list(drug = "propofol"))
     session$setInputs(
       editPriorDosesTable = list(
         data = lapply(seq_len(nrow(TT)), function(i) unname(as.list(TT[i, ]))),
@@ -626,7 +627,7 @@ test_that("the add-dose and edit-doses dialogs refuse a time or dose they cannot
         editPriorDosesTable = list(
           data = lapply(seq_len(nrow(TT)), function(i) unname(as.list(TT[i, ]))),
           changes = list(event = "afterChange", source = "edit"),
-          params = rhandsontable::rhandsontable(TT)$x
+          params = c(rhandsontable::rhandsontable(TT)$x, list(drug = "propofol"))
         ),
         editDosesOK = n
       )
@@ -669,9 +670,9 @@ test_that("the dose dialogs refuse a clock time that is no time of day", {
       editPriorDosesTable = list(
         data = list(list(FALSE, "08:00", "1", "mg"), list(FALSE, "25:00", "2", "mg")),
         changes = list(event = "afterChange", source = "edit"),
-        params = rhandsontable::rhandsontable(
+        params = c(rhandsontable::rhandsontable(
           data.frame(Delete = FALSE, Time = c("08:00", "25:00"), Dose = c("1", "2"), Units = "mg")
-        )$x
+        )$x, list(drug = "propofol"))
       ),
       editDosesOK = 1
     )
