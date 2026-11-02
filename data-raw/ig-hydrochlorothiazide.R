@@ -252,9 +252,17 @@ r120 <- REF[[1]]
 # optimiser stopped wherever it had wandered; the next called 6.6x a bound on
 # every trade on the strength of clustered starts and a grid too coarse to
 # resolve the valley.  Both CodeRabbit, #668.)
-converged <- sum(abs(ig$values - ig$value) <= 0.01 * ig$value)
-cat(sprintf("%d of %d spread starts converge to that same optimum (worst end %.4f)\n",
-            converged, length(ig$values), max(ig$values)))
+# "The same optimum" means the same point, not just the same score: two
+# different (mu, lambda) could tie on the objective, so each start must end
+# within 1% of the best on both parameters as well as on the value.
+# (CodeRabbit, #668.)
+best <- c(ig$mu, ig$lambda)
+samePoint <- apply(ig$ends, 1, function(e) all(abs(e - best) <= 0.01 * best))
+converged <- sum(samePoint & abs(ig$values - ig$value) <= 0.01 * ig$value)
+cat(sprintf("%d of %d spread starts converge to that same optimum: mu and lambda within 1%%, the furthest %.2e and %.2e off, the worst value %.4f\n",
+            converged, length(ig$values),
+            max(abs(ig$ends[, 1] - best[1]) / best[1]),
+            max(abs(ig$ends[, 2] - best[2]) / best[2]), max(ig$values)))
 cat(sprintf("If it is the global minimum, an IG held within its peak limit misses the curve by at least %.2f%%\n",
             ig$value * LIM_CURVE))
 
