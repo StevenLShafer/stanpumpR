@@ -832,11 +832,22 @@ simulationPlot <- function(
   # Step A3: labs and themes
 
   nFacets <- length(unique(plotResults$Wrap))
+  # The time until threshold writes "<- Threshold" just past the right edge of
+  # each panel (the panels do not clip), in the margin the legend also uses,
+  # and with many drugs the legend, centred on a tall plot, sat on top of
+  # them.  Push the legend past them (legend.box.spacing, below) and take the
+  # same width out of the width the panels are given, so they keep their
+  # height.
+  thresholdLabelPx <- if (plotRecovery) THRESHOLD_LABEL_PT * 96 / 72 else 0
+  plotWidth <- width
   # Roughly account for the legend and Y axis labels.  Floored, because a
   # narrow pane would otherwise give a negative aspect ratio, or at exactly 200
   # an infinite one, which ggplot cannot draw.
-  width <- max(width - 200, 100)
+  width <- max(width - 200 - thresholdLabelPx, 100)
   aspect <- yAxisHeight / width
+  stripSize <- stripTextSize(
+    compartmentPanelLabel(as.character(unique(plotTable$Wrap))),
+    yAxisHeight, aspect, plotWidth - thresholdLabelPx)
   height <- yAxisHeight * nFacets + 50
   # The panel height is bounded (MAX_YAXIS_HEIGHT) but the panels add up, and
   # a plot too tall for the graphics device failed while being drawn, as a
@@ -967,11 +978,13 @@ simulationPlot <- function(
     ggplot2::theme(strip.background = ggplot2::element_blank(),
           strip.placement = "outside",
           strip.text.y = ggplot2::element_text(
-            size = 18,
+            size = stripSize,
             angle = 270
           ),
           axis.text.y = ggplot2::element_text(size = 15),
           panel.spacing = grid::unit(2, "lines"),
+          # ggplot's default gap (11 pt), plus room for "<- Threshold"
+          legend.box.spacing = grid::unit(11 + thresholdLabelPx * 72 / 96, "pt"),
           legend.background = ggplot2::element_blank(),
           legend.box.background = ggplot2::element_blank(),
           legend.key = ggplot2::element_blank()
@@ -1171,4 +1184,30 @@ seriesFromMinimum <- function(df, minimum, by, y = "Y", step = FALSE)
   out <- do.call(rbind, pieces)
   rownames(out) <- NULL
   out
+}
+
+#' Font size of the panel strips, so that the longest name fits the panel
+#'
+#' The strips on the left name each panel's drug and units in 18 pt, rotated
+#' along the panel, and are clipped to its height: with a long name
+#' ("dexmedetomidine", "remifentanil") on a short panel the ends were cut off.
+#' This returns 18 where the longest line fits and otherwise the size at which
+#' it does, never below STRIP_TEXT_MIN_SIZE.  The panel height is estimated
+#' as simulationPlot() will draw it: its fixed aspect ratio times the width
+#' left for the panels, and no more than the Y axis height less the gap
+#' between panels.
+#'
+#' @param labels the strip labels, lines separated by "\n"
+#' @param yAxisHeight the Y axis height asked for, px
+#' @param aspect the panels' aspect ratio, height over width
+#' @param plotWidth the plot's width, px, less anything already set aside
+#' @returns a font size in points
+#' @noRd
+stripTextSize <- function(labels, yAxisHeight, aspect, plotWidth) {
+  lines <- unlist(strsplit(as.character(labels), "\n", fixed = TRUE))
+  longest <- max(c(nchar(lines), 1L), na.rm = TRUE)
+  panelPx <- min(yAxisHeight - PANEL_SPACING_PX,
+                 aspect * max(plotWidth - PLOT_FURNITURE_PX, 1))
+  fitPx <- 0.95 * panelPx / (longest * STRIP_CHAR_EM)
+  min(STRIP_TEXT_MAX_SIZE, max(STRIP_TEXT_MIN_SIZE, fitPx * 72 / 96))
 }

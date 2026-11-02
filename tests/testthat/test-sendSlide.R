@@ -133,7 +133,9 @@ test_that("panelPlots() draws each panel of the plot alone, in the plot's order"
 
   # The original is untouched: the layers were copied, not edited in place
   expect_equal(panelsOf(plotObject), full)
-  expect_equal(plotObject$theme$aspect.ratio, 0.25)
+  # (drawn with the time until threshold, whose labels' width is set aside:
+  # simulationPlot())
+  expect_equal(plotObject$theme$aspect.ratio, 150 / (600 - THRESHOLD_LABEL_PT * 96 / 72))
   expect_gt(nrow(plotObject$layers[[1]]$data), nrow(panels[[1]]$layers[[1]]$data))
 
   expect_equal(panelTitle(c("propofol\n(mcg/ml)", "% MEAC")), c("propofol", "% MEAC"))

@@ -353,3 +353,50 @@ test_that("a plot from Min time draws only the window and scales to it", {
   # the whole run is still returned
   expect_equal(min(p$plotResults$Time), 0)
 })
+
+
+# Two layout defects seen on a plot of eighteen sedatives and opioids
+# (2026-11-02): the legend, centred in the right margin of a tall plot, sat on
+# the "<- Threshold" labels the time until threshold writes past each panel's
+# right edge; and the 18 pt strip labels were clipped to the panel height, so
+# "dexmedetomidine" and "remifentanil" lost their ends.
+
+test_that("the legend clears the threshold labels when the time until threshold is drawn", {
+  doseTable <- data.frame(Drug = "propofol", Time = 0, Dose = 100, Units = "mg")
+  defaults <- getDrugDefaultsGlobal(FALSE)
+  events <- data.frame(Time = numeric(0), Event = character(0))
+  local_mocked_bindings(outputComments = function(...) {})
+  drugs <- processdoseTable(doseTable, events,
+    recalculatePK(NULL, defaults, doseTable, 50, 70, 170, "male"), 60, TRUE)
+  plotAt <- function(recovery) simulationPlot(drugs = drugs, events = events,
+    drugDefaults = defaults, eventDefaults = getEventDefaults(),
+    plotRecovery = recovery)$plotObject
+  spacing <- function(p) as.numeric(p$theme$legend.box.spacing)
+  # ggplot's default 11 pt without the labels; past them with
+  expect_equal(spacing(plotAt(FALSE)), 11)
+  expect_equal(spacing(plotAt(TRUE)), 11 + THRESHOLD_LABEL_PT)
+  # and the panels lose none of their height for it: the same width is taken
+  # out of the width the aspect ratio is computed on (800 - 200 - 74.7 px)
+  expect_equal(plotAt(FALSE)$theme$aspect.ratio, 150 / 600)
+  expect_equal(plotAt(TRUE)$theme$aspect.ratio,
+               150 / (600 - THRESHOLD_LABEL_PT * 96 / 72))
+})
+
+test_that("strip text shrinks only as far as the longest name needs to fit the panel", {
+  label <- function(drug) paste0(drug, "\n(ng/ml)")
+  # A short name on a roomy panel keeps the 18 pt the strips always had
+  expect_equal(stripTextSize(label("propofol"), 200, 200 / 1000, 1200),
+               STRIP_TEXT_MAX_SIZE)
+  # A long one is made smaller, enough for its length to fit the panel:
+  # 1200 px wide at a Y axis height of 200 gives a panel about 171 px tall
+  size <- stripTextSize(label("dexmedetomidine"), 200, 200 / 1000, 1200)
+  expect_lt(size, STRIP_TEXT_MAX_SIZE)
+  expect_lte(nchar("dexmedetomidine") * STRIP_CHAR_EM * size * 96 / 72, 171)
+  # It is the longest line of all the strips that sets the size
+  expect_equal(
+    stripTextSize(c(label("propofol"), label("dexmedetomidine")), 200, 200 / 1000, 1200),
+    size)
+  # Never below the floor, however narrow
+  expect_equal(stripTextSize(label("dexmedetomidine"), 150, 150 / 100, 300),
+               STRIP_TEXT_MIN_SIZE)
+})
