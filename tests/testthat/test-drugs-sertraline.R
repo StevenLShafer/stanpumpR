@@ -190,26 +190,21 @@ test_that("the CSV row agrees with the drug function", {
   expect_equal(row$Concentration.Units, "ng")
 })
 
-test_that("pregnancy: clearance x 0.60, a fall (Westin 2017)", {
-  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.  The one
-  # drug whose clearance FALLS in pregnancy; nothing else moves.
+test_that("pregnancy: recorded, not applied (the sources disagree in direction)", {
+  # Westin 2017's +68% against Heinonen 2021's alteration ratio 0.69, Freeman
+  # 2008 and Monfort 2024 (see the header): the registry row is unquantified,
+  # so the model does not read the flag and a pregnant woman's PK is a
+  # non-pregnant woman's.  Until 2026-11-01 the flag multiplied CL1 by 0.60.
+  expect_false("pregnant" %in% names(formals(sertraline)))
+  f <- pregnancyFindings()
+  row <- f[f$drug == "sertraline", ]
+  expect_equal(row$group, "unquantified")
+  expect_true(is.na(row$cl_factor))
+  expect_identical(row$applied, "")
   on  <- getDrugPK("sertraline", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
-  off <- getDrugPK("sertraline", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
-  expect_equal(off, getDrugPK("sertraline", 70, 165, 30, SEX_FEMALE))
-  a <- on$PK$default
-  b <- off$PK$default
-  expect_equal(SERTRALINE_PREGNANCY_CL_FACTOR, 0.60)
-  expect_lt(SERTRALINE_PREGNANCY_CL_FACTOR, 1)
-  expect_equal(a$cl1 / b$cl1, SERTRALINE_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
-  for (p in c("v1", "v2", "v3", "cl2", "cl3", "ka_PO", "bioavailability_PO", "tlag_PO")) {
-    expect_identical(a[[p]], b[[p]], info = p)
-  }
-  expect_identical(on$oralSaturation, off$oralSaturation)
-  expect_equal_rounded(0.5078834056, a$cl1)
-  expect_equal_rounded(967.3140638, a$v1)
-  expect_equal_rounded(1088.228322, a$v2)
-  expect_equal_rounded(2.28278136, a$cl2)
-  expect_match(on$reference, "Westin", fixed = TRUE)
-  expect_match(on$reference, "pregnancy:", fixed = TRUE)
-  expect_no_match(off$reference, "Westin")
+  off <- getDrugPK("sertraline", 70, 165, 30, SEX_FEMALE)
+  expect_equal(on$PK, off$PK)
+  expect_no_match(on$reference, "Westin")
+  # The non-pregnant woman's clearance the old pin was 0.60 of
+  expect_equal_rounded(0.5078834056 / 0.60, off$PK$default$cl1)
 })
