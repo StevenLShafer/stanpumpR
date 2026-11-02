@@ -259,10 +259,11 @@ every other parameter. The review closes a model by the same five routes:
 | 4 | coefficients and exponents | `threeCompartmentFromTriexponential()`, `twoCompartmentFromBiexponential()` |
 | 5 | V1, the exponents, k21 and k31 | `compartmentsFromExponentsAndRates()` (`R/paper-review-parameters.R`) |
 
-It also closes a model from V1, the fractional coefficients A(i)/ΣA(i)
-(often printed as percents, which sum to 1 and so give n − 1 inputs) and
-the half-lives. The consistency table compares a printed percent coefficient
-with the model's own A(i)/ΣA(i). `test-paper-review-parameters.R` pins every
+The fractional coefficients A(i)/ΣA(i), often printed as percents, never
+close a model: they are always derived parameters, never primary ones
+(Shafer, 2026-11-01). They sum to 1, so they are redundant, and without V1
+they lose the scale. The consistency table compares a printed percent
+coefficient with the model's own A(i)/ΣA(i). `test-paper-review-parameters.R` pins every
 tab's own example to the digits the spreadsheet computes.
 
 Once the model is complete, `paperReviewPKTable()` lists what each tab

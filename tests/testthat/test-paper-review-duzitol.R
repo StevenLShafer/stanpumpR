@@ -237,17 +237,16 @@ test_that("fractional coefficients printed as a percent are compared with A(i) /
   expect_equal(as.numeric(t$model[t$quantity == "coefficient_1"]), 75.1, tolerance = 1e-3)
 })
 
-test_that("V1, the fractional coefficients and the half-lives close the model", {
+test_that("the fractional coefficients never close the model", {
+  # They are always derived, never primary (Shafer): V1, the percents and the
+  # half-lives leave the model open.
   x <- duzitolWithFractions()
-  # Drop CL and Vss, which the half-life route would otherwise use first.
   x$parameters <- Filter(function(p) p$role != "CL", x$parameters)
   x$derived_quantities <- Filter(function(d) d$quantity != "Vss", x$derived_quantities)
   review <- paperReviewRun(x)
   m <- review$models[["Duzitol, normal subjects"]]
-  expect_equal(m$identifiability$route, "V1, the fractional coefficients and the half-lives")
-  expect_true(m$drug$ok)
-  # The printed percents carry two figures, so CL comes back near 0.68 L/min.
-  expect_equal(m$identifiability$closed$cl1, 0.68, tolerance = 0.05)
+  expect_false(identical(m$identifiability$route, "V1, the fractional coefficients and the half-lives"))
+  expect_false(isTRUE(m$drug$ok))
 })
 
 test_that("a short decrement curve read by eye is judged against the reading's precision", {

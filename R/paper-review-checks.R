@@ -328,8 +328,6 @@ paperReviewIdentifiability <- function(extraction)
     coefs <- lapply(seq_len(n), function(i) paperReviewDerivedOne(extraction, paste0("coefficient_", i), w))
     lambdas <- lapply(seq_len(n), function(i) paperReviewDerivedOne(extraction, paste0("lambda_", i), w))
     perL <- all(vapply(coefs, function(x) identical(x$entry$units, "1/L"), logical(1)))
-    fractional <- all(vapply(coefs, function(x)
-      identical(paperReviewUnit(x$entry$units %or% "other")$kind, "fraction"), logical(1)))
     attempt <- NULL
     if (n == 1) {
       if (!is.na(CL$value) && haveHl) {
@@ -374,24 +372,10 @@ paperReviewIdentifiability <- function(extraction)
           if (n == 2) twoCompartmentFromBiexponential(A, l)
           else threeCompartmentFromTriexponential(A, l)
         })
-    } else if (n >= 2 && fractional && !is.na(V1$value) && haveHl &&
-               all(vapply(coefs[-n], function(x) !is.na(x$value), logical(1)))) {
-      # Fractional coefficients sum to 1, so only n - 1 of them are free; V1
-      # supplies the scale (the coefficients per unit dose sum to 1 / V1).
-      inputs <- c(list(V1 = V1), stats::setNames(coefs[-n], paste0("f", seq_len(n - 1))),
-                  stats::setNames(hl, paste0("t", seq_len(n))))
-      attempt <- list(
-        name = "V1, the fractional coefficients and the half-lives",
-        inputs = inputs,
-        solve = function(x) {
-          f <- unname(unlist(x[paste0("f", seq_len(n - 1))]))
-          f <- c(f, 1 - sum(f))
-          if (any(f <= 0)) stop("fractions do not leave a positive last coefficient")
-          A <- f / x$V1; l <- log(2) / unname(unlist(x[paste0("t", seq_len(n))]))
-          if (n == 2) twoCompartmentFromBiexponential(A, l)
-          else threeCompartmentFromTriexponential(A, l)
-        })
     }
+    # The fractional coefficients, A(i) / sum(A), never close a model: they
+    # are always derived, never primary (Shafer, 2026-11-01), and are only
+    # compared with the model in the consistency table.
 
     if (is.null(attempt)) {
       printed <- c(
