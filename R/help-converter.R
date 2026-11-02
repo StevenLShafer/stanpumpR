@@ -67,9 +67,13 @@ PK_CONVERTER_UNITS <- c(vol = "L", clear = "L/min", rate = "1/min", time = "min"
                         coef = "1/L", pct = "%")
 
 #' One field of the converter, as an HTML string
+#'
+#' The ordinary keyboard, not inputmode="decimal": in a locale whose decimal
+#' mark is a comma the decimal keypad may offer no point, which is the only
+#' decimal mark the page reads.
 #' @noRd
 pkConverterInput <- function(attr, label) {
-  sprintf(paste0('<input type="text" inputmode="decimal" autocomplete="off" spellcheck="false" ',
+  sprintf(paste0('<input type="text" inputmode="text" autocomplete="off" spellcheck="false" ',
                  'class="form-control form-control-sm" %s aria-label="%s" data-shiny-no-bind-input>'),
           attr, label)
 }
@@ -141,7 +145,8 @@ helpPKConverterHTML <- function(drugDefaults = NULL) {
            "Enter a complete set of parameters in any one panel; the others are filled in.</p>"),
     paste0('<div class="pkconv-legend small"><span class="pkconv-key pkconv-entered">entered</span> ',
            '<span class="pkconv-key pkconv-derived">derived</span> ',
-           '<span class="pkconv-key pkconv-readonly">derived only</span></div>'),
+           '<span class="pkconv-key pkconv-readonly">derived only</span> ',
+           "The decimal mark is a point (0.5); a comma separates thousands (1,110).</div>"),
     paste0('<div class="pkconv-groups">', paste(groups, collapse = ""), "</div>"),
     paste0('<section class="pkconv-effect"><h4>The effect site</h4>',
            '<p class="small">Enter k<sub>e0</sub>, its half-life or the time to peak effect after a bolus; ',
