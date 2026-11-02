@@ -837,8 +837,9 @@ simulationPlot <- function(
   # and with many drugs the legend, centred on a tall plot, sat on top of
   # them.  Push the legend past them (legend.box.spacing, below) and take the
   # same width out of the width the panels are given, so they keep their
-  # height.
-  thresholdLabelPx <- if (plotRecovery) THRESHOLD_LABEL_PT * 96 / 72 else 0
+  # height.  renderPlot() draws at its default 72 dpi (app_server.R sets no
+  # res), where a point is a pixel.
+  thresholdLabelPx <- if (plotRecovery) THRESHOLD_LABEL_PT else 0
   plotWidth <- width
   # Roughly account for the legend and Y axis labels.  Floored, because a
   # narrow pane would otherwise give a negative aspect ratio, or at exactly 200
@@ -984,7 +985,7 @@ simulationPlot <- function(
           axis.text.y = ggplot2::element_text(size = 15),
           panel.spacing = grid::unit(2, "lines"),
           # ggplot's default gap (11 pt), plus room for "<- Threshold"
-          legend.box.spacing = grid::unit(11 + thresholdLabelPx * 72 / 96, "pt"),
+          legend.box.spacing = grid::unit(11 + thresholdLabelPx, "pt"),
           legend.background = ggplot2::element_blank(),
           legend.box.background = ggplot2::element_blank(),
           legend.key = ggplot2::element_blank()
@@ -1209,5 +1210,6 @@ stripTextSize <- function(labels, yAxisHeight, aspect, plotWidth) {
   panelPx <- min(yAxisHeight - PANEL_SPACING_PX,
                  aspect * max(plotWidth - PLOT_FURNITURE_PX, 1))
   fitPx <- 0.95 * panelPx / (longest * STRIP_CHAR_EM)
-  min(STRIP_TEXT_MAX_SIZE, max(STRIP_TEXT_MIN_SIZE, fitPx * 72 / 96))
+  # At renderPlot()'s 72 dpi a pixel is a point
+  min(STRIP_TEXT_MAX_SIZE, max(STRIP_TEXT_MIN_SIZE, fitPx))
 }

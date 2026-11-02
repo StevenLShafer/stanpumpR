@@ -120,6 +120,9 @@ test_that("panelPlots() draws each panel of the plot alone, in the plot's order"
       expect_true(all(as.character(layer$data$Wrap) == full[i]))
     }
     expect_null(panels[[i]]$theme$aspect.ratio)
+    # and the strip at its full size, which the combined plot may have shrunk
+    # to fit a short panel (stripTextSize())
+    expect_equal(panels[[i]]$theme$strip.text.y$size, STRIP_TEXT_MAX_SIZE)
     # The panel's y axis is the one it had in the full plot.  ggplot draws a
     # layer whose data is empty but whose aesthetics are constants on the
     # first panel regardless: kept, the white rectangle behind the event
@@ -135,7 +138,7 @@ test_that("panelPlots() draws each panel of the plot alone, in the plot's order"
   expect_equal(panelsOf(plotObject), full)
   # (drawn with the time until threshold, whose labels' width is set aside:
   # simulationPlot())
-  expect_equal(plotObject$theme$aspect.ratio, 150 / (600 - THRESHOLD_LABEL_PT * 96 / 72))
+  expect_equal(plotObject$theme$aspect.ratio, 150 / (600 - THRESHOLD_LABEL_PT))
   expect_gt(nrow(plotObject$layers[[1]]$data), nrow(panels[[1]]$layers[[1]]$data))
 
   expect_equal(panelTitle(c("propofol\n(mcg/ml)", "% MEAC")), c("propofol", "% MEAC"))

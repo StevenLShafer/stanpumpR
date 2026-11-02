@@ -249,7 +249,8 @@ MAX_YAXIS_HEIGHT <- 350L
 MIN_YAXIS_HEIGHT <- 150L
 
 # simulationPlot()'s layout, measured on its own renders (2026-11-02, ragg at
-# 96 dpi, 18 drugs, Y axis height 150 and 200, plot widths 800 and 1200).
+# 72 dpi, renderPlot()'s default and what the app draws at, so a point is a
+# pixel; 18 drugs, Y axis height 150 and 200, plot widths 800 and 1200).
 # "<- Threshold" (geom_text size 3, about 8.5 pt) spans about 51 pt past the
 # panel edge; THRESHOLD_LABEL_PT clears it.
 THRESHOLD_LABEL_PT <- 56
@@ -257,16 +258,17 @@ THRESHOLD_LABEL_PT <- 56
 # longest line needs to fit the panel height (stripTextSize()).
 STRIP_TEXT_MAX_SIZE <- 18
 STRIP_TEXT_MIN_SIZE <- 10
-# Width of one character of the strip font in ems: "remifentanil" is 134 px
-# and "dexmedetomidine" 204 px at 18 pt (24 px), 0.47 and 0.57 em; 0.6 is
-# the safe side.
+# Width of one character of the strip font in ems: "remifentanil" is 100 px
+# and "dexmedetomidine" 152 px at 18 pt, 0.46 and 0.56 em; 0.6 is the safe
+# side.
 STRIP_CHAR_EM <- 0.6
 # What is not panel across the plot's width (Y axis strips and labels on the
-# left, the legend on the right): about 345 px at both widths, where
-# simulationPlot() reserves 200 for it in the aspect ratio.  And the gap
-# between panels (panel.spacing, 2 lines of 11 pt).
-PLOT_FURNITURE_PX <- 345
-PANEL_SPACING_PX <- 29
+# left, the legend on the right), without the threshold labels' gap: 233 to
+# 240 px at both widths and heights, where simulationPlot() reserves 200 for
+# it in the aspect ratio.  And the gap between panels (panel.spacing, 2 lines
+# of 11 pt).
+PLOT_FURNITURE_PX <- 245
+PANEL_SPACING_PX <- 22
 MAX_DRUGNAME_LENGTH <- 128L
 MAX_TIME_STRING_LENGTH <- 32L
 MAX_UNIT_STRING_LENGTH <- 32L

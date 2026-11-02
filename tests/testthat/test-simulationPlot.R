@@ -379,22 +379,27 @@ test_that("the legend clears the threshold labels when the time until threshold 
   # out of the width the aspect ratio is computed on (800 - 200 - 74.7 px)
   expect_equal(plotAt(FALSE)$theme$aspect.ratio, 150 / 600)
   expect_equal(plotAt(TRUE)$theme$aspect.ratio,
-               150 / (600 - THRESHOLD_LABEL_PT * 96 / 72))
+               150 / (600 - THRESHOLD_LABEL_PT))
 })
 
 test_that("strip text shrinks only as far as the longest name needs to fit the panel", {
   label <- function(drug) paste0(drug, "\n(ng/ml)")
-  # A short name on a roomy panel keeps the 18 pt the strips always had
-  expect_equal(stripTextSize(label("propofol"), 200, 200 / 1000, 1200),
+  # A short name keeps the 18 pt the strips always had, even on the shortest
+  # panel the Y axis height allows (renderPlot() draws at 72 dpi, so the
+  # sizes in points are pixels)
+  expect_equal(stripTextSize(label("propofol"), 150, 150 / 600, 800),
                STRIP_TEXT_MAX_SIZE)
-  # A long one is made smaller, enough for its length to fit the panel:
-  # 1200 px wide at a Y axis height of 200 gives a panel about 171 px tall
-  size <- stripTextSize(label("dexmedetomidine"), 200, 200 / 1000, 1200)
+  # A long one keeps it where it fits, at 1200 px wide and a Y axis height of
+  # 200, and is made smaller where it does not, enough for its length to fit:
+  # 800 px wide at 150 gives a panel 128 px tall
+  expect_equal(stripTextSize(label("dexmedetomidine"), 200, 200 / 1000, 1200),
+               STRIP_TEXT_MAX_SIZE)
+  size <- stripTextSize(label("dexmedetomidine"), 150, 150 / 600, 800)
   expect_lt(size, STRIP_TEXT_MAX_SIZE)
-  expect_lte(nchar("dexmedetomidine") * STRIP_CHAR_EM * size * 96 / 72, 171)
+  expect_lte(nchar("dexmedetomidine") * STRIP_CHAR_EM * size, 150 - PANEL_SPACING_PX)
   # It is the longest line of all the strips that sets the size
   expect_equal(
-    stripTextSize(c(label("propofol"), label("dexmedetomidine")), 200, 200 / 1000, 1200),
+    stripTextSize(c(label("propofol"), label("dexmedetomidine")), 150, 150 / 600, 800),
     size)
   # Never below the floor, however narrow
   expect_equal(stripTextSize(label("dexmedetomidine"), 150, 150 / 100, 300),

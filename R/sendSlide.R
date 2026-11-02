@@ -449,7 +449,12 @@ panelPlots <- function(plotObject)
     })
     panel <- plotObject
     panel$layers <- Filter(Negate(is.null), layers)
-    panel + ggplot2::theme(aspect.ratio = NULL)
+    # A panel fills its own slide, so the strip goes back to its full size:
+    # the combined plot shrinks it to fit a short panel (stripTextSize()).
+    panel + ggplot2::theme(
+      aspect.ratio = NULL,
+      strip.text.y = ggplot2::element_text(size = STRIP_TEXT_MAX_SIZE, angle = 270)
+    )
   })
   names(plots) <- panelTitle(wraps)
   plots
