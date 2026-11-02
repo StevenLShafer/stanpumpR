@@ -14,6 +14,13 @@
 # debug log and the Source link's tooltip (stanpumpRBuild()); shinyapps.io
 # installs the package from the manifest, so the DESCRIPTION's RemoteSha is
 # not there to read on the server.
+#
+# Secrets (2026-11-02): the shinyapps.io token and the mail credential this job
+# uses should be secrets of the `production` environment only, not of the
+# repository, so that no other job (in particular the PR preview, which runs a
+# PR's code; see shiny-pr-2-deploy.yaml) can read them.  The environment has no
+# required reviewer, by the maintainer's choice, so a push to master deploys
+# without a second person: an accepted risk, recorded in AGENTS.md (Deploy).
 on:
   workflow_run:
     workflows: [R-CMD-check]
@@ -51,7 +58,7 @@ jobs:
       # run was started on.
       DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ env.DEPLOY_SHA }}
           persist-credentials: false

@@ -1,17 +1,43 @@
 # Deploy a PR to shinyapps.io when a PR is ready to be deployed (either because
 # the label was just added to it or because a new commit was made)
+#
+# SECURITY (2026-11-02; the ChatGPT audit of that day, verified against this
+# file).  The deploy job runs the PR's own code: setup-renv restores in the
+# PR's checkout (reading its .Rprofile and renv/activate.R), installing the
+# package runs its R code, and every later Rscript step starts in that
+# checkout and reads its .Rprofile, with a library the PR could have changed.
+# Nothing inside one job separates the PR from what the job holds, and the
+# deployed preview is itself the PR's code, able to read its own config.yml.
+# So assume a PR can read everything this job holds, and give it nothing
+# worth having:
+#   - Only branches of this repository are deployed, never a fork: a fork's
+#     author is anyone, and the DEPLOY label was approval of one commit that
+#     every later push inherited.  To preview a fork, review it and push the
+#     branch here.
+#   - No mail credential: Email Slide in a preview says "Email is not
+#     configured".
+#   - The shinyapps.io token comes from the `preview` environment.  A
+#     shinyapps.io token is account-wide, so the preview token must belong to
+#     a separate shinyapps.io account that holds no production app (set
+#     SHINY_TOKEN, SHINY_SECRET and the SHINY_ACCOUNT variable in `preview`),
+#     and the production token must live only in the `production`
+#     environment, not in the repository's secrets.  Until that is done the
+#     environment falls back to the repository's secrets, i.e. production's.
+#   - The job's own GITHUB_TOKEN can only read; the comment is posted by a
+#     separate job that runs none of the PR's code.
+#   - A PR that changes only papers/ (the digest pipeline's) is not deployed.
 
 # Workflow borrows from https://github.com/r-lib/actions/tree/v2/examples
 name: Shiny PR 2 Deploy
 
 permissions:
   contents: read
-  pull-requests: write
 
 on:
   pull_request_target:
     types: [labeled, synchronize]
-  workflow_dispatch:
+    paths-ignore:
+      - 'papers/**'
 
 # shinyapps.io allows only one deploy task per application at a time and answers
 # a second with HTTP 409.  GitHub will happily run these in parallel, so two
@@ -21,22 +47,28 @@ on:
 # never killed part-way; a newer run waits, and GitHub keeps only the newest
 # pending run in the group, so the latest commit still wins.
 concurrency:
-  group: shiny-deploy-pr-${{ github.event.pull_request.number || github.ref }}
+  group: shiny-deploy-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: false
 
 jobs:
   deployment-pr:
     if: |
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.action == 'labeled' && github.event.label.name == 'DEPLOY') ||
-      (github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'DEPLOY'))
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      ((github.event.action == 'labeled' && github.event.label.name == 'DEPLOY') ||
+       (github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'DEPLOY')))
     runs-on: ubuntu-24.04
+    environment:
+      name: preview
+    permissions:
+      contents: read
+    outputs:
+      url: ${{ steps.url.outputs.url }}
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       SHINY_APP_NAME: ${{ vars.SHINY_APP_NAME }}_PR_${{ github.event.pull_request.number }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           allow-unsafe-pr-checkout: true
@@ -58,7 +90,7 @@ jobs:
 
       - name: Install stanpumpR from GitHub
         run: |
-          pkg_ref <- paste0("${{ github.event.pull_request.head.repo.full_name }}@", "${{ github.event.pull_request.head.sha }}")
+          pkg_ref <- paste0("${{ github.repository }}@", "${{ github.event.pull_request.head.sha }}")
           remotes::install_github(pkg_ref, upgrade = "never", force = TRUE)
           find.package("stanpumpR") # force a failure if package didn't install so GHA won't continue
         shell: Rscript {0}
@@ -76,8 +108,7 @@ jobs:
             default = list(
               title = paste("PR #${{ github.event.pull_request.number }}:", Sys.getenv("PR_TITLE")),
               long_title = TRUE,
-              email_username = "${{ secrets.SHINY_CONFIG_EMAIL_USERNAME }}",
-              email_password = "${{ secrets.SHINY_CONFIG_EMAIL_PASSWORD }}",
+              # No email_username / email_password: see the note at the top
               debug = 1,
               # The deployed commit, shown by the app (stanpumpRBuild())
               commit = "${{ github.event.pull_request.head.sha }}"
@@ -91,13 +122,33 @@ jobs:
           )
         shell: Rscript {0}
 
+      - name: Preview address
+        id: url
+        run: echo "url=https://${{ vars.SHINY_ACCOUNT }}.shinyapps.io/${SHINY_APP_NAME}/" >> "$GITHUB_OUTPUT"
+
+  # Runs none of the PR's code, so it alone may write to the PR.  The address
+  # comes from a job the PR's code ran in, so it is passed as data (an
+  # environment variable, never interpolated into the script) and checked.
+  comment-pr:
+    needs: deployment-pr
+    runs-on: ubuntu-24.04
+    permissions:
+      pull-requests: write
+    steps:
       - name: Comment PR with deployment URL
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PREVIEW_URL: ${{ needs.deployment-pr.outputs.url }}
         with:
           script: |
+            const url = process.env.PREVIEW_URL || '';
+            if (!/^https:\/\/[A-Za-z0-9-]+\.shinyapps\.io\/[A-Za-z0-9_]+\/$/.test(url)) {
+              core.setFailed(`Unexpected preview address: ${JSON.stringify(url)}`);
+              return;
+            }
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: `**Preview Deployment**\n\nThis PR has been deployed to: https://${{ vars.SHINY_ACCOUNT }}.shinyapps.io/${{ env.SHINY_APP_NAME }}/\n\n_This deployment will be automatically cleaned up when the PR is closed._`
+              body: `**Preview Deployment**\n\nThis PR has been deployed to: ${url}\n\n_This deployment will be automatically cleaned up when the PR is closed._`
             })
