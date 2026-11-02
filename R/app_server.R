@@ -7,16 +7,16 @@
 app_server <- function(input, output, session) {
   config <- .sprglobals$config
 
+  # Always one number, DEBUG_LEVEL_OFF to DEBUG_LEVEL_VERBOSE (debugLevel()):
+  # every outputComments() and profileCode() compares it, and ?debug=abc or
+  # ?debug=, read as NA, made the first of those comparisons an error that
+  # ended the session as it started (keyboard review of 2026-11-02).
   session$userData$debug <- reactiveVal({
     query <- parseQueryString(isolate(session$clientData$url_search))
-    if (!is.null(query[["debug"]])) {
-      as.numeric(query[["debug"]])
-    } else {
-      config$debug
-    }
+    debugLevel(query[["debug"]], debugLevel(config$debug))
   })
   observeEvent(input$debug_level, ignoreInit = TRUE, {
-    session$userData$debug(input$debug_level)
+    session$userData$debug(debugLevel(input$debug_level, isolate(session$userData$debug())))
     # Rewrite the address bar with the new level (withDebugQuery())
     session$doBookmark()
   })
@@ -44,6 +44,12 @@ app_server <- function(input, output, session) {
     if (is.null(threshold)) {
       threshold <- isolate(input$profiler_threshold)
     }
+    # The Debug section's box may be empty (NA) or hold anything typed: 0
+    # then, every call recorded.  An NA here stopped every profiled observer,
+    # the bookmarking one included, so emptying the box ended the session at
+    # the next change (keyboard review of 2026-11-02).
+    threshold <- suppressWarnings(as.numeric(threshold))
+    if (!is_valid_number(threshold)) threshold <- 0
     start_time <- proc.time()[["elapsed"]]
     value <- force(expr)
     end_time <- proc.time()[["elapsed"]]
@@ -62,7 +68,8 @@ app_server <- function(input, output, session) {
       return("No profiling records yet.")
     }
     paste(
-      sprintf("[%s] %s (%d ms)", records$time, records$name, records$ms),
+      # %s: ms is round(, 3), and %d stops on a fraction
+      sprintf("[%s] %s (%s ms)", records$time, records$name, format(records$ms, trim = TRUE)),
       collapse = "\n"
     )
   })
@@ -2122,6 +2129,15 @@ app_server <- function(input, output, session) {
         showNotification("Choose a drug.", type = "error")
         return()
       }
+      # The units list follows the drug a moment later (the addDoseDrug
+      # observer); Enter pressed in between sends no units, or the last
+      # drug's, and dt$Units[idx] <- NULL stopped this observer and the
+      # session (keyboard review of 2026-11-02, reproduced in testServer()).
+      drugUnits <- unlist(drugDefaults()$Units[drugDefaults()$Drug == input$addDoseDrug])
+      if (length(input$addDoseUnits) != 1 || !input$addDoseUnits %in% drugUnits) {
+        showNotification("Choose the units.", type = "error")
+        return()
+      }
       removeModal()
       thisDrug <- which(drugDefaults()$Drug == input$addDoseDrug)
 
@@ -2828,6 +2844,7 @@ app_server <- function(input, output, session) {
         # ignored by it, and suggest() stopped with "unknown drug" (finding
         # 4).  In the drug's own bolus unit, not "mg": vasopressin is dosed in
         # units, and a mass unit stopped simCpCe() (finding 3).
+        before <- doseTable()
         if (!input$targetDrug %in% cleanDoseTable(doseTable())$Drug) {
           outputComments("Updating doseTable for new drug")
           bolusUnit <- drugDefaults()$Bolus.Units[match(input$targetDrug, drugDefaults()$Drug)]
@@ -2853,6 +2870,7 @@ app_server <- function(input, output, session) {
           finally = shinycssloaders::hidePageSpinner()
         )
         if (inherits(testTable, "suggestFailed")) {
+          doseTable(before)
           showNotification(paste("Suggest Dosing failed:", attr(testTable, "message")),
                            type = "error", duration = 10)
           return()
@@ -2879,6 +2897,19 @@ app_server <- function(input, output, session) {
           testTable[,c("Drug","Time","Dose","Units")],
           dt
         )
+        # A regimen the dose table cannot hold is not written.  A target of
+        # 1e8 mcg/mL suggested a dose above MAX_DOSE_VALUE, which replaced the
+        # dose grid and the plot with "Dose must be finite..." -- and writing
+        # the table clears the undo history, so nothing was left to edit or
+        # undo (keyboard review of 2026-11-02).
+        refused <- tryCatch({ validateDoseTableInput(dt, drugDefaults()); NULL },
+                            error = function(e) conditionMessage(e))
+        if (!is.null(refused)) {
+          doseTable(before)
+          showNotification(paste("Suggest Dosing found doses the dose table cannot hold:", refused,
+                                 "Choose lower targets."), type = "error", duration = 10)
+          return()
+        }
         doseTable(dt)
       }, name = "input$targetOK observer")
     })

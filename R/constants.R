@@ -237,6 +237,16 @@ EMAIL_SESSION_LIMIT <- 25
 EMAIL_FAILURE_MESSAGE <- paste0(
   "The slide could not be sent. The server's log has the details; ",
   "please try again later, or tell the app's maintainer.")
+# The Email Slide's SMTP send: attempts, and seconds allowed to connect and
+# for each attempt as a whole (curl's connecttimeout and timeout).  Measured
+# against an address that never answers: emayili's and curl's defaults held
+# the R process 80 s here, and up to 25 minutes (5 x 300 s) where a dropped
+# packet is never refused, with no limit at all on a server that answers and
+# then stalls; these give up within 2 x 15 s on the first and 2 x 60 s on the
+# second.
+EMAIL_SMTP_ATTEMPTS <- 2L
+EMAIL_SMTP_CONNECT_TIMEOUT <- 15L
+EMAIL_SMTP_TIMEOUT <- 60L
 
 MAX_DOSE_ROWS <- 500L
 MAX_EVENT_ROWS <- 100L

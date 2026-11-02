@@ -20,7 +20,13 @@ createHOT <- function(doseTable, drugDefaults, timeFormat = NULL, drugChoices = 
     `overflow-y` = 'scroll',
     rowHeaders = NULL,
     renderAllRows = TRUE,
-    stretchH = "all"
+    stretchH = "all",
+    # The grid cannot grow past what validateDoseTableInput() accepts, less
+    # the blank row the server adds below a filled last row.  A paste of 600
+    # rows (Ctrl+V) made 601, and the grid vanished behind "Dose table exceeds
+    # the permitted row limit" after a server round trip per row (keyboard
+    # review of 2026-11-02); Handsontable now drops what does not fit.
+    maxRows = MAX_DOSE_ROWS - 1L
   ) %>%
     rhandsontable::hot_col(
       col = "Drug",
