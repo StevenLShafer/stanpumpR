@@ -153,11 +153,15 @@ antibioticMbcTable <- function()
 
     # --- Cefalexin -----------------------------------------------------------
     row("cefalexin", "Staphylococcus aureus, methicillin-susceptible (MSSA)", "principal",
-        MIC50 = 2, MIC90 = 4, MBC50 = 2, MBC90 = 4,
-        Basis = "MIC x 1",
-        Note = paste("Other series put the MSSA MIC90 at 8 to 16 mg/L, which would double or quadruple these",
-                     "MBCs. EUCAST infers cefalexin susceptibility in MSSA only for less severe infection or oral",
-                     "follow-on therapy, with care to reach sufficient exposure at the site of infection."),
+        MIC50 = 2, MIC90 = 4, MBC50 = 2, MBC90 = 8,
+        Basis = "MBC50: MIC x 1; MBC90: MIC x 2 (class analogue)",
+        Note = paste("No cefalexin MBC/MIC series could be read, so the ratios are cephradine's, its nearest",
+                     "analogue: 11 of 14 S. aureus at a ratio of 1 and 3 at 2, a median of 1 and a 90th",
+                     "percentile of 2. Shafer chose x 2 for the MBC90 on 2026-11-01 (it was x 1 until then),",
+                     "rather than the 8 or more that cephalothin's own series would give. Other series put the",
+                     "MSSA MIC90 at 8 to 16 mg/L, which would double or quadruple these MBCs. EUCAST infers",
+                     "cefalexin susceptibility in MSSA only for less severe infection or oral follow-on therapy,",
+                     "with care to reach sufficient exposure at the site of infection."),
         Source = c(
           "MIC50 2, MIC90 4 in 48 isolates (Haynes AS et al., Microbiol Spectr 2022;10:e01039-22, CLSI broth",
           "microdilution); four times the MIC of cephalexin '99.9 to 100% bactericidal to S. aureus in 24 h'",
