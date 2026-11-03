@@ -172,6 +172,23 @@ helpPKConverterHTML <- function(drugDefaults = NULL) {
            "</div>",
            '<div class="pkconv-svg"><p class="pkconv-empty">The graph appears when the model is defined.</p></div>',
            "</section>"),
+    # Decrement times against the duration of a TCI infusion (pk-convert.js)
+    paste0('<section class="pkconv-decrement"><h4>Decrement times</h4>',
+           '<p class="small">The time for the concentration to fall by the percentage below once a ',
+           "target-controlled infusion that held it constant is stopped, against how long that ",
+           "infusion ran: the plasma after holding the plasma, the effect site after holding the ",
+           "effect site.</p>",
+           '<div class="pkconv-plot-options">',
+           '<label class="pkconv-until">Decrease ',
+           pkConverterInput('data-pk-dec="pct" value="50"', "Decrease, percent"),
+           " %</label>",
+           '<label class="pkconv-until">Infusions up to ',
+           pkConverterInput('data-pk-dec="until" placeholder="600"', "Longest infusion"),
+           ' <span data-pk-unit="time">min</span></label>',
+           "</div>",
+           '<div class="pkconv-dec-svg"><p class="pkconv-empty">The decrement times appear when the model is defined.</p></div>',
+           '<p class="pkconv-dec-note small"></p>',
+           "</section>"),
     "</div>"
   ), collapse = "\n")
 }

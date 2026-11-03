@@ -292,6 +292,158 @@ var PKConvert = (function() {
     return Math.exp((a + b) / 2);
   }
 
+  // --- Decrement times ------------------------------------------------------
+  //
+  // The time for the plasma or effect-site concentration to fall by a given
+  // percentage after a target-controlled infusion, of a given duration, that
+  // held that concentration constant (Hughes, Glass & Jacobs 1992 for the
+  // plasma, whose 50% curve is the context-sensitive half-time; Shafer &
+  // Varvel 1991 for the effect site; Youngs & Shafer 1994 for any
+  // percentage).  The infusion is the simulator's own controller, Shafer &
+  // Gregg 1992 as R/tci.R implements it: an update every TCI_INTERVAL (10 s),
+  // the effect site reached without overshoot, and the plasma held once the
+  // effect site is within TCI_PLASMA_SWITCH (5%) of the target.  The
+  // controller's states are the amplitudes of the exponentials, as there.
+
+  var TCI_INTERVAL = 10 / 60;
+  var TCI_PLASMA_SWITCH = 0.05;
+
+  // The constants R/tci.R's tciKinetics() takes from getDrugPK(), here from
+  // the model.  ke0 is held off an exponent it equals, as
+  // separateEigenvalues() does, since the coefficients divide by the gap.
+  function tciKinetics(model, ke0) {
+    var l = model.lambda.slice(), A = model.A;
+    var k = ke0 > 0 ? ke0 : 0;
+    l.forEach(function(x) { if (k > 0 && Math.abs(k - x) <= 1e-8 * k) k *= 1 + 1e-8; });
+    var ebolus = A.map(function(a, i) { return k > 0 ? a * k / (k - l[i]) : 0; });
+    var eSum = ebolus.reduce(function(s, x) { return s + x; }, 0);
+    return {
+      lambda3: l, lambda4: l.concat([k]), ke0: k,
+      tPeak: k > 0 ? peakTime(model, k) : 0,
+      pbolus: A.slice(),
+      pinf: A.map(function(a, i) { return a / l[i]; }),
+      ebolus: ebolus.concat([-eSum]),
+      einf: ebolus.map(function(b, i) { return b / l[i]; }).concat([k > 0 ? -eSum / k : 0])
+    };
+  }
+
+  // The rate for the coming interval: tciRate() in R/tci.R
+  function tciRate(p, e, CT, site, dt, K) {
+    var Ce = e.reduce(function(s, x) { return s + x; }, 0);
+    var effectMode = site === 'effect' && K.ke0 > 0 && Math.abs(Ce - CT) >= TCI_PLASMA_SWITCH * CT;
+    var rate, i, j;
+    if (!effectMode) {
+      var Pd = 0, Pu = 0;
+      for (i = 0; i < p.length; i++) {
+        var d = Math.exp(-K.lambda3[i] * dt);
+        Pd += p[i] * d;
+        Pu += K.pinf[i] * (1 - d);
+      }
+      rate = (CT - Pd) / Pu;
+    } else {
+      // From the end of the interval out to dt + tPeak + 10 s, a second apart
+      var grow = K.lambda4.map(function(x) { return Math.exp(x * dt) - 1; });
+      rate = Infinity;
+      var any = false;
+      for (var tau = dt; tau <= dt + K.tPeak + 10 / 60 + 1e-12; tau += 1 / 60) {
+        var B = 0, E = 0;
+        for (j = 0; j < K.lambda4.length; j++) {
+          var m = Math.exp(-K.lambda4[j] * tau);
+          B += e[j] * m;
+          E += K.einf[j] * grow[j] * m;
+        }
+        if (E > 0) { any = true; rate = Math.min(rate, (CT - B) / E); }
+      }
+      if (!any) rate = 0;
+    }
+    return {rate: Math.max(0, rate), effectMode: effectMode};
+  }
+
+  // The states while a target of 1 is held at one site, every update to
+  // tMax.  The interval lengthens as R/tci.R's does once the plasma is being
+  // held, to at most max(10 s, min(10 min, tMax / 2000)).
+  function tciTrajectory(model, ke0, site, tMax) {
+    var K = tciKinetics(model, ke0);
+    var n = model.n, p = new Array(n).fill(0), e = new Array(n + 1).fill(0);
+    var dtMax = Math.max(TCI_INTERVAL, Math.min(10, tMax / 2000));
+    var t = 0, dt = TCI_INTERVAL, out = [];
+    while (t < tMax - 1e-9) {
+      var step = Math.min(dt, tMax - t);
+      var x = tciRate(p, e, 1, site, step, K);
+      for (var i = 0; i < n; i++) {
+        var d3 = Math.exp(-K.lambda3[i] * step);
+        p[i] = p[i] * d3 + K.pinf[i] * x.rate * (1 - d3);
+      }
+      for (var j = 0; j <= n; j++) {
+        var d4 = Math.exp(-K.lambda4[j] * step);
+        e[j] = e[j] * d4 + K.einf[j] * x.rate * (1 - d4);
+      }
+      t += step;
+      out.push({t: t, p: p.slice(), e: e.slice()});
+      dt = x.rate > 0 && !x.effectMode && t > K.tPeak ? Math.min(dt * 1.1, dtMax) : TCI_INTERVAL;
+    }
+    return {K: K, states: out};
+  }
+
+  // The first time a sum of exponentials, amplitudes a and rates l, falls to
+  // (1 - fraction) of its value now.  The decline after an infusion stops
+  // falls through the threshold once (the effect site may first rise), so a
+  // geometric march finds the crossing and bisection refines it.
+  function decrementTime(a, l, fraction) {
+    var c = function(t) {
+      var s = 0;
+      for (var i = 0; i < a.length; i++) s += a[i] * Math.exp(-l[i] * t);
+      return s;
+    };
+    var c0 = c(0), target = (1 - fraction) * c0;
+    if (!(c0 > 0)) return NaN;
+    var fastest = Math.max.apply(null, l.filter(function(x) { return x > 0; }));
+    var lo = 0, hi = 1e-3 / fastest;
+    while (c(hi) > target) {
+      lo = hi;
+      hi *= 1.1;
+      if (hi > 1e8) return Infinity;
+    }
+    for (var k = 0; k < 100 && hi - lo > 1e-12 * hi; k++) {
+      var mid = (lo + hi) / 2;
+      if (c(mid) > target) lo = mid; else hi = mid;
+    }
+    return (lo + hi) / 2;
+  }
+
+  // Decrement times against the duration of the infusion, at about `points`
+  // durations up to tMax, for the plasma and (with a ke0) the effect site.
+  // Each site's curve comes from its own infusion: the plasma held for the
+  // plasma, the effect site held for the effect site.  A curve starts once
+  // its site has reached the target (within the controller's 5%): an
+  // effect-site infusion stopped before then never held the effect site, and
+  // its "decrement" is measured from an effect site still on its way up.
+  function decrementCurves(model, ke0, percent, tMax, points) {
+    var fraction = percent / 100, out = {};
+    var sites = ke0 > 0 ? ['plasma', 'effect'] : ['plasma'];
+    var sum = function(x) { return x.reduce(function(s, v) { return s + v; }, 0); };
+    sites.forEach(function(site) {
+      var tr = tciTrajectory(model, ke0, site, tMax), K = tr.K, st = tr.states;
+      var first = 0;
+      while (first < st.length &&
+             Math.abs(sum(site === 'plasma' ? st[first].p : st[first].e) - 1) > TCI_PLASMA_SWITCH) first++;
+      // Not reached within the longest infusion: no curve, rather than a
+      // decrement from a site still on its way up
+      if (first === st.length) { out[site] = {duration: [], time: []}; return; }
+      var every = Math.max(1, Math.floor((st.length - first) / (points || 300)));
+      var dur = [], time = [];
+      for (var i = first; i < st.length; i++) {
+        if ((i - first) % every !== 0 && i !== st.length - 1) continue;
+        var s = st[i];
+        dur.push(s.t);
+        time.push(site === 'plasma' ? decrementTime(s.p, K.lambda3, fraction)
+                                    : decrementTime(s.e, K.lambda4, fraction));
+      }
+      out[site] = {duration: dur, time: time};
+    });
+    return out;
+  }
+
   // The fields each definition of the page takes, by number of compartments
   // (the field names of R/help-converter.R)
   var REQUIRED = {
@@ -355,6 +507,7 @@ var PKConvert = (function() {
     fromExponentsAndRates: fromExponentsAndRates,
     plasma: plasma, effect: effect, peakTime: peakTime,
     ke0FromPeakTime: ke0FromPeakTime, fmt: fmt, parseNumber: parseNumber, summaryRows: summaryRows,
+    tciTrajectory: tciTrajectory, decrementTime: decrementTime, decrementCurves: decrementCurves,
     required: REQUIRED
   };
 })();
@@ -609,6 +762,7 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
       $result.text('Define the model above first.').attr('data-kind', 'info');
     }
     plot($root, s);
+    decrement($root, s);
   }
 
   // --- The graph ----------------------------------------------------------------
@@ -617,6 +771,101 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
     var raw = range / count, mag = Math.pow(10, Math.floor(Math.log10(raw)));
     var r = raw / mag;
     return mag * (r < 1.5 ? 1 : r < 3 ? 2 : r < 7 ? 5 : 10);
+  }
+
+  // --- Decrement times ------------------------------------------------------------
+
+  // Shafer and Varvel's recovery curves ran to ten hours
+  var DECREMENT_DEFAULT_MAX = 600;
+
+  function decrement($root, s) {
+    var $box = $root.find('.pkconv-decrement');
+    var $svg = $box.find('.pkconv-dec-svg'), $note = $box.find('.pkconv-dec-note').empty();
+    var f = UNIT_MINUTES[s.unit];
+    $box.find('input[data-pk-dec="until"]')
+        .attr('placeholder', P.fmt(DECREMENT_DEFAULT_MAX / f, 4));
+    $box.find('input').removeClass('pkconv-bad');
+    if (!s.model) {
+      $svg.html('<p class="pkconv-empty">The decrement times appear when the model is defined.</p>');
+      return;
+    }
+    var $pct = $box.find('input[data-pk-dec="pct"]'), pct = parseEntry($pct.val());
+    var $until = $box.find('input[data-pk-dec="until"]'), until = parseEntry($until.val());
+    var bad = [];
+    if (pct === null) pct = 50;
+    if (!(pct > 0 && pct < 100)) { bad.push('the decrease must be between 0 and 100%'); $pct.addClass('pkconv-bad'); }
+    if (until !== null && !(until > 0)) { bad.push('the longest infusion must be a positive time'); $until.addClass('pkconv-bad'); }
+    if (bad.length) {
+      $svg.empty();
+      $note.text('Not admissible: ' + bad.join('; ') + '.');
+      return;
+    }
+    var tMax = until ? until * f : DECREMENT_DEFAULT_MAX;
+    var c = P.decrementCurves(s.model, s.ke0, pct, tMax, 400);
+    var series = [{cls: 'pkconv-cp', label: 'Plasma', x: c.plasma.duration, y: c.plasma.time}];
+    if (c.effect) series.push({cls: 'pkconv-ce', label: 'Effect site', x: c.effect.duration, y: c.effect.time});
+    $svg.html(lineChart(series, {
+      xMax: tMax, f: f, unit: s.unit,
+      xLabel: 'Duration of the infusion (' + s.unit + ')',
+      yLabel: 'Time to a ' + P.fmt(pct, 4) + '% decrease (' + s.unit + ')',
+      aria: P.fmt(pct, 4) + '% decrement times against the duration of the infusion'
+    }));
+    var say = function(sr) {
+      if (!sr.time.length) return 'not reached within the infusion';
+      var t = sr.time[sr.time.length - 1];
+      return isFinite(t) ? P.fmt(t / f, 3) + ' ' + s.unit : 'beyond the search';
+    };
+    var text = 'After an infusion of ' + P.fmt(tMax / f, 4) + ' ' + s.unit + ': plasma ' + say(c.plasma);
+    if (c.effect) text += ', effect site ' + say(c.effect);
+    text += '.';
+    if (!c.effect) text += ' Enter ke0 or the time to peak effect above to add the effect site.';
+    $note.text(text);
+  }
+
+  // A line chart of decrement time against duration, both in minutes; the
+  // axes are drawn in the unit shown
+  function lineChart(series, o) {
+    var W = 640, H = 320, L = 64, R = 16, Tp = 14, B = 46, f = o.f;
+    var ys = [];
+    series.forEach(function(sr) { sr.y.forEach(function(y) { if (isFinite(y)) ys.push(y / f); }); });
+    var yMaxRaw = ys.length ? Math.max.apply(null, ys) : 1;
+    var yStep = niceStep(yMaxRaw || 1, 5), yMax = Math.ceil(yMaxRaw * 1.02 / yStep) * yStep || yStep;
+    var X = function(t) { return L + (W - L - R) * t / o.xMax; };
+    var Y = function(v) { return H - B - (H - B - Tp) * v / yMax; };
+    var out = ['<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" class="pkconv-graph" aria-label="' + o.aria + '">'];
+    for (var y = 0; y <= yMax + yStep / 2; y += yStep) {
+      var Yp = Y(y).toFixed(1);
+      out.push('<line class="pkconv-grid" x1="' + L + '" x2="' + (W - R) + '" y1="' + Yp + '" y2="' + Yp + '"/>');
+      out.push('<text class="pkconv-tick" x="' + (L - 6) + '" y="' + Yp + '" text-anchor="end" dy="0.32em">' +
+               P.fmt(y, 3) + '</text>');
+    }
+    var xStep = niceStep(o.xMax / f, 6);
+    for (var x = 0; x <= o.xMax / f + 1e-9 * xStep; x += xStep) {
+      var Xp = X(x * f).toFixed(1);
+      out.push('<line class="pkconv-grid" y1="' + Tp + '" y2="' + (H - B) + '" x1="' + Xp + '" x2="' + Xp + '"/>');
+      out.push('<text class="pkconv-tick" x="' + Xp + '" y="' + (H - B + 16) + '" text-anchor="middle">' +
+               P.fmt(x, 4) + '</text>');
+    }
+    out.push('<line class="pkconv-axis" x1="' + L + '" x2="' + (W - R) + '" y1="' + (H - B) + '" y2="' + (H - B) + '"/>');
+    out.push('<line class="pkconv-axis" x1="' + L + '" x2="' + L + '" y1="' + Tp + '" y2="' + (H - B) + '"/>');
+    out.push('<text class="pkconv-label" x="' + ((L + W - R) / 2) + '" y="' + (H - 8) + '" text-anchor="middle">' +
+             o.xLabel + '</text>');
+    out.push('<text class="pkconv-label" transform="translate(14,' + ((Tp + H - B) / 2) + ') rotate(-90)" ' +
+             'text-anchor="middle">' + o.yLabel + '</text>');
+    series.forEach(function(sr, k) {
+      var d = '';
+      for (var i = 0; i < sr.x.length; i++) {
+        if (!isFinite(sr.y[i])) { d += ''; continue; }
+        d += (d ? 'L' : 'M') + X(sr.x[i]).toFixed(1) + ',' + Y(sr.y[i] / f).toFixed(1);
+      }
+      out.push('<path class="' + sr.cls + '" d="' + d + '"/>');
+      // Bottom right: the curves rise with the duration, so that corner is clear
+      var ly = H - B - 14 - 18 * (series.length - 1 - k), lx = W - R - 110;
+      out.push('<line class="' + sr.cls + '" x1="' + lx + '" x2="' + (lx + 22) + '" y1="' + ly + '" y2="' + ly + '"/>');
+      out.push('<text class="pkconv-tick" x="' + (lx + 28) + '" y="' + ly + '" dy="0.32em">' + sr.label + '</text>');
+    });
+    out.push('</svg>');
+    return out.join('');
   }
 
   // Long enough to see the fall to 2% of the initial plasma concentration and
@@ -776,6 +1025,11 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
     plot($root, state($root));
   });
 
+  $(document).on('input', '.pkconv .pkconv-decrement input', function() {
+    var $root = root(this);
+    decrement($root, state($root));
+  });
+
   $(document).on('change', '.pkconv input[name="pkconv-n"]', function() {
     var $root = root(this), s = state($root);
     s.n = Number(this.value);
@@ -798,8 +1052,10 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
       if (x > 0) s.effectEntered = P.fmt(toDisplay(fromDisplay(x, dim, old), dim, s.unit), 10);
       $root.find('input[data-pk-effect="' + s.effectActive + '"]').val(s.effectEntered);
     }
-    var $until = $root.find('input[data-pk-plot="until"]'), u = parseEntry($until.val());
-    if (u > 0) $until.val(P.fmt(toDisplay(fromDisplay(u, 'time', old), 'time', s.unit), 10));
+    $root.find('input[data-pk-plot="until"], input[data-pk-dec="until"]').each(function() {
+      var u = parseEntry($(this).val());
+      if (u > 0) $(this).val(P.fmt(toDisplay(fromDisplay(u, 'time', old), 'time', s.unit), 10));
+    });
     recompute($root);
   });
 
@@ -820,6 +1076,8 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
       s.effectActive = null;
       s.effectEntered = null;
       $root.find('.pkconv-effect input').val('');
+      $root.find('input[data-pk-dec="pct"]').val('50');
+      $root.find('input[data-pk-dec="until"]').val('');
     }
     recompute($root);
   });
