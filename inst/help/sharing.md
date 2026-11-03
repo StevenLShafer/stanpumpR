@@ -4,6 +4,10 @@ The URL in your browser's address bar is the simulation. Every change you make i
 
 Copy the address bar and paste it into an email, a document, or a teaching handout. Whoever opens it sees the same patient, doses, events, options and thresholds you had; edits to the rest of the Drug Library (concentrations, units, colours, ranges) are not carried, as listed below. The URL is long, because it carries the whole state. A URL that carries doses opens straight onto the simulation, without the startup drug menu. There is a limit: a session with a great many drugs in its dose table can make a URL longer than the server accepts (about 8,000 characters), and such a link would not reopen. The app then says so and leaves the address bar at the plain app address; simulate fewer drugs to get a link again.
 
+A link is plain text that anyone can edit, so the app reads its dose and event tables as it reads what you type: an entry it cannot read (an unknown drug, a unit the drug does not offer, an unreadable time or dose, an unknown event) is left out, and the app says so. Check the tables before relying on a link that did not come from you.
+
+The URL also carries the patient's covariates and regimen. The app does not send it to other sites when you follow a link out of it, but anyone you give the URL to can read it, as can anything that records your browser history.
+
 ## What is included
 
 - Patient covariates and their units

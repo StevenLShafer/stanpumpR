@@ -16,7 +16,7 @@ The body of the email describes the patient and links to the URL that reconstruc
 
 Every time in the workbook is in minutes. When the plot is shown in hours, days or weeks (**Time units**, in the Time panel), each time column is followed by the same times in that unit, for example `Time (days)`, and the Covariates sheet and the email say which unit the plot was in and how long it ran.
 
-A session may send at most 25 emails, to limit abuse.
+A session may send at most 25 emails, to limit abuse. The server as a whole sends at most 30 an hour, and at most 5 an hour to any one address; past either limit it asks you to try again later.
 
 ## When it is not available
 
