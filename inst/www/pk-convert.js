@@ -537,7 +537,7 @@ var PKConvert = (function() {
     var step = niceStep(max, count);
     if (!(step > 0) || !isFinite(step) || !(max / step <= AXIS_MAX_TICKS)) return {step: NaN, ticks: [0, max]};
     var ticks = [];
-    for (var i = 0; i <= AXIS_MAX_TICKS && i * step <= max + 1e-9 * step; i++) ticks.push(i * step);
+    for (var i = 0; i <= AXIS_MAX_TICKS && i * step - max <= 1e-9 * step; i++) ticks.push(i * step);
     return {step: step, ticks: ticks};
   }
 
