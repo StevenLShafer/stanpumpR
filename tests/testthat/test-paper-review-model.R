@@ -181,3 +181,37 @@ test_that("the dose table converts when the unit changes, and runs in minutes un
     expect_equal(dosesNow()$Time, c(0, 60))
   })
 })
+
+# The UI review of 2026-11-04: clearing Max time after loading the example's
+# regimen showed R's "missing value where TRUE/FALSE needed" in the plot, a
+# blank numeric input being NA, which %or% passes through.
+test_that("the simulator's Max time is read, or refused, before it reaches the engine", {
+  expect_equal(paperReviewMaxTimeMinutes(240, 1), 240)
+  expect_equal(paperReviewMaxTimeMinutes(4, 60), 240)
+  for (bad in list(NA, NA_real_, NULL, "", "abc", 0, -1, Inf, NaN, 1e308, c(1, 2))) {
+    expect_true(is.na(paperReviewMaxTimeMinutes(bad, 1)), info = deparse(bad))
+  }
+  expect_true(is.na(paperReviewMaxTimeMinutes(PAPER_REVIEW_MAX_TIME_LIMIT + 1, 1)))
+  expect_equal(paperReviewMaxTimeMinutes(PAPER_REVIEW_MAX_TIME_LIMIT, 1), PAPER_REVIEW_MAX_TIME_LIMIT)
+})
+
+test_that("a blank Max time says what to enter, survives a change of unit, and recovers", {
+  testthat::local_mocked_bindings(paperReviewApiKey = function(...) NULL)
+  shiny::testServer(paperReviewServer, {
+    session$setInputs(weight = 70, height = 170, age = 40, sex = "male", maximum = 240)
+    session$setInputs(example = 1)
+    session$setInputs(regimen = "R2", loadRegimen = 1)
+    expect_type(simulation(), "list")
+    session$setInputs(maximum = NA)
+    expect_error(simulation(), "Enter a Max time greater than 0")
+    session$setInputs(maximum = -5)
+    expect_error(simulation(), "Enter a Max time greater than 0")
+    # Switching units while it is blank neither fails nor carries NA along
+    session$setInputs(maximum = NA)
+    session$setInputs(timeUnit = "h")
+    expect_equal(tableUnit(), "h")
+    session$setInputs(maximum = 4)
+    expect_type(simulation(), "list")
+    expect_equal(max(simulation()$sim$curve$Time), 240)
+  })
+})
