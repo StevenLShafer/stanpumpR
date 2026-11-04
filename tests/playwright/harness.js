@@ -11,6 +11,8 @@
 'use strict';
 
 const { spawn } = require('child_process');
+const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const http = require('http');
 
@@ -35,7 +37,9 @@ function waitForHttp(url, timeoutMs) {
   });
 }
 
-// grid: 'handsontable' or 'native' (R/dose-grid.R, doseGridMode())
+// grid: 'handsontable' or 'native' (R/dose-grid.R, doseGridMode()).  The
+// app's output goes to a log file, not a pipe: a pipe nobody drains while the
+// tests run fills, and R then blocks writing to it.
 async function startApp(grid, port) {
   const rscript = process.env.RSCRIPT || 'Rscript';
   const extra = (process.env.STANPUMPR_RSCRIPT_ARGS || '').split(' ').filter(Boolean);
@@ -44,18 +48,19 @@ async function startApp(grid, port) {
     `options(shiny.testmode = TRUE, stanpumpR.doseGrid = '${grid}')`,
     `shiny::runApp(run_app(), port = ${port}, launch.browser = FALSE)`
   ].join('; ');
-  const child = spawn(rscript, [...extra, '-e', code], { cwd: REPO, stdio: ['ignore', 'pipe', 'pipe'] });
-  let log = '';
-  child.stdout.on('data', d => { log += d; });
-  child.stderr.on('data', d => { log += d; });
+  const logFile = path.join(os.tmpdir(), `stanpumpR-playwright-${grid}-${port}.log`);
+  const fd = fs.openSync(logFile, 'w');
+  const child = spawn(rscript, [...extra, '-e', code], { cwd: REPO, stdio: ['ignore', fd, fd] });
+  fs.closeSync(fd);
+  const log = () => { try { return fs.readFileSync(logFile, 'utf8'); } catch (e) { return ''; } };
   const url = `http://127.0.0.1:${port}/`;
   try {
     await waitForHttp(url, 240000);
   } catch (e) {
     child.kill();
-    throw new Error(e.message + '\n' + log.slice(-3000));
+    throw new Error(e.message + '\n' + log().slice(-3000));
   }
-  return { url, stop: () => child.kill(), log: () => log };
+  return { url, stop: () => child.kill(), log, logFile };
 }
 
 const DEFAULT_DRUGS = ['propofol', 'fentanyl', 'remifentanil', 'rocuronium'];

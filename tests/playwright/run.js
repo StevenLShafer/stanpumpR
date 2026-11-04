@@ -11,7 +11,7 @@
 
 'use strict';
 
-const { spawnSync } = require('child_process');
+const { spawn } = require('child_process');
 const path = require('path');
 const { startApp } = require('./harness');
 
@@ -28,12 +28,19 @@ const { startApp } = require('./harness');
       app = await startApp(grid, 7400 + i);
       url = app.url;
     }
-    const res = spawnSync(process.execPath, ['--test', '--test-concurrency=1', '--test-reporter=spec', file], {
-      stdio: 'inherit',
-      env: Object.assign({}, process.env, { STANPUMPR_URL: url, STANPUMPR_GRID: grid })
+    // spawned, not spawnSync: this process must stay free to run
+    const status = await new Promise(resolve => {
+      const t = spawn(process.execPath, ['--test', '--test-concurrency=1', '--test-reporter=spec', file], {
+        stdio: 'inherit',
+        env: Object.assign({}, process.env, { STANPUMPR_URL: url, STANPUMPR_GRID: grid })
+      });
+      t.on('exit', code => resolve(code));
     });
-    if (app) app.stop();
-    if (res.status !== 0) failed = true;
+    if (app) {
+      if (status !== 0) process.stdout.write(`The app's log: ${app.logFile}\n`);
+      app.stop();
+    }
+    if (status !== 0) failed = true;
   }
   process.exit(failed ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });
