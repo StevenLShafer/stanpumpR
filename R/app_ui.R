@@ -61,6 +61,7 @@ app_ui <- function() {
         tags$script(src = "stanpumpr-assets/pk-convert.js"),
         tags$script(HTML(js_drug_defaults)),
         tags$script(src = "stanpumpr-assets/hot_funs.js"),
+        tags$script(src = "stanpumpr-assets/dose-grid.js"),
         tags$link(href = "stanpumpr-assets/app.css", rel = "stylesheet")
       ),
 
@@ -677,7 +678,8 @@ app_ui <- function() {
                   htmltools::tagAppendAttributes(class = "small text-muted")
               ),
 
-              rhandsontable::rHandsontableOutput("doseTableHTML"),
+              # the prototype grid when chosen (R/dose-grid.R)
+              if (doseGridMode() == "native") doseGridInput("doseGrid") else rhandsontable::rHandsontableOutput("doseTableHTML"),
 
               div(
                 class = "d-grid mt-2",

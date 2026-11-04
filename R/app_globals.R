@@ -36,6 +36,7 @@ bookmarksToExclude <- c(
   "showThresholdModal",
   "editEventsTableHTML",
   "doseTableHTML",
+  "doseGrid",
   "setTarget",
   "targetDrug",
   "targetDrug-selectized",

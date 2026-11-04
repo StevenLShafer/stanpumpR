@@ -790,3 +790,132 @@ bslib-tooltip:has(> .field-help) {
   color: #6c757d;
   font-style: italic;
 }
+
+/* The prototype dose grid (inst/www/dose-grid.js; docs/grid-replacement.md):
+the same four columns at the widths createHOT() gives the old grid, fitted to
+the 450 px Doses sidebar.  Every cell is a form control: the inputs fill their
+cells, and the Units cell shows the unit as text (wrapped after its route,
+unitWrapText()) with a transparent <select> over it, so a click or a key opens
+the browser's own list of the row's units. */
+.stanpumpr-dose-grid {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+}
+.dose-sidebar .stanpumpr-dose-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.dose-grid-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+table.dose-grid {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+table.dose-grid th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f0f0f0;
+  font-weight: normal;
+  text-align: center;
+  border: 1px solid #ccc;
+  padding: 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+table.dose-grid th.dose-grid-col0 { width: 39%; }
+table.dose-grid th.dose-grid-col1 { width: 13%; }
+table.dose-grid th.dose-grid-col2 { width: 22%; }
+table.dose-grid th.dose-grid-col3 { width: 26%; }
+table.dose-grid td {
+  border: 1px solid #ccc;
+  padding: 0;
+  height: 24px;
+  position: relative;
+  background: #fff;
+}
+table.dose-grid td input {
+  width: 100%;
+  height: 100%;
+  min-height: 23px;
+  border: 0;
+  padding: 0 4px;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+}
+table.dose-grid td.dose-grid-col1 input,
+table.dose-grid td.dose-grid-col2 input {
+  text-align: right;
+}
+table.dose-grid td input:focus,
+table.dose-grid td.dose-grid-col3:focus-within {
+  outline: 2px solid #4b89ff;
+  outline-offset: -2px;
+}
+table.dose-grid input.dose-grid-illicit {
+  color: #C00000;
+}
+.dose-grid-unit-text {
+  display: block;
+  padding: 1px 18px 1px 4px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+.dose-grid-unit-text::after {
+  content: "\25BE";
+  position: absolute;
+  right: 4px;
+  top: 2px;
+  color: #999;
+}
+table.dose-grid td.dose-grid-col3 select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  font: inherit;
+}
+table.dose-grid td.dose-grid-col3 select:disabled {
+  cursor: default;
+}
+.dose-grid-list {
+  position: absolute;
+  z-index: 1060;
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #999;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+.dose-grid-list li {
+  padding: 2px 6px;
+  cursor: pointer;
+}
+.dose-grid-list li[aria-selected="true"] {
+  background: #e6efff;
+}
+.dose-grid-menu {
+  position: absolute;
+  z-index: 1060;
+  display: block;
+}
+.dose-grid-status:empty {
+  display: none;
+}
+.dose-grid-unit-text:empty::after {
+  content: none;
+}

@@ -42,6 +42,19 @@ function isUserEditSource(source) {
   return source === 'edit' || source === 'CopyPaste.paste' || source === 'Autofill.fill';
 }
 
+// The tip's text, from the Time units and Time Display controls; shared with
+// the prototype grid (dose-grid.js)
+function timeHeaderTipText() {
+  var unit = $("#timeUnits").val() || "minutes";
+  if (getTimeMode() === "clock") {
+    return "Clock time (hh:mm) of each dose. Switch to elapsed time, or change " +
+           "the unit, with the Time Display and Time units controls under the plot.";
+  }
+  return "Time of each dose, elapsed from the start, in " + unit + ". Change " +
+         "the unit (minutes, hours, days, weeks) or switch to clock time with " +
+         "the Time units and Time Display controls under the plot.";
+}
+
 // A hover tip on the Time column header (afterGetColHeader), so a reader knows
 // what the Time column means -- which unit, and whether it is elapsed or clock
 // time -- and where to change it (Dr. Fan's review, 2026-10-28).  The header
@@ -51,16 +64,7 @@ function hookTimeHeaderTip(col, TH) {
   try {
     var hot = this;
     if (col !== findColByHeader(hot, "Time")) return;
-    var unit = $("#timeUnits").val() || "minutes";
-    var tip;
-    if (getTimeMode() === "clock") {
-      tip = "Clock time (hh:mm) of each dose. Switch to elapsed time, or change " +
-            "the unit, with the Time Display and Time units controls under the plot.";
-    } else {
-      tip = "Time of each dose, elapsed from the start, in " + unit + ". Change " +
-            "the unit (minutes, hours, days, weeks) or switch to clock time with " +
-            "the Time units and Time Display controls under the plot.";
-    }
+    var tip = timeHeaderTipText();
     var span = TH.querySelector(".colHeader");
     if (span) span.setAttribute("title", tip);
     TH.setAttribute("title", tip);

@@ -204,7 +204,8 @@ app_server <- function(input, output, session) {
   emailSendCount <- reactiveVal(0)
 
   # Routine to output doseTableHTML from doseTable
-  output$doseTableHTML <- rhandsontable::renderRHandsontable({
+  # The rhandsontable grid, unless the prototype is drawn instead (below)
+  if (doseGridMode() == "handsontable") output$doseTableHTML <- rhandsontable::renderRHandsontable({
     req(doseTableDraft())
     req(validateDoseTableInput(doseTableDraft()))
     doseTableRefresh()
@@ -700,6 +701,17 @@ app_server <- function(input, output, session) {
 
   doseTableDraft <- reactive(doseTableHistory()$value)
 
+  # What the browser tests (tests/playwright) read back from the server: the
+  # draft, the committed table and its format.  exportTestValues() does
+  # nothing unless the app runs with options(shiny.testmode = TRUE).
+  exportTestValues(
+    doseTableDraft = doseTableDraft(),
+    doseTable = doseTable(),
+    doseTableFormat = timeFormatString(doseTableFormat()),
+    canUndo = doseTableHistory()$can_undo,
+    canRedo = doseTableHistory()$can_redo
+  )
+
   # Open on what a ?scenario= or ?help= link asks for (R/deep-links.R).  Done
   # here rather than at Startup because setDoseTable() writes the history
   # above.  A ?help= link alone leaves the simulator behind the help empty,
@@ -768,6 +780,41 @@ app_server <- function(input, output, session) {
     doseTableHistory()$redo()
   })
 
+  # An edited dose table from the grid, made in the time format `stamp`,
+  # stored as the new draft: what either grid sends goes through here
+  # (R/dose-grid.R).  Returns TRUE if the draft changed.
+  storeGridEdit <- function(data, stamp) {
+    # An edit made in a grid drawn before a change of time unit or display
+    # arrives in the old format: in minutes, say, when the table is now in
+    # days.  Stored as it came, Apply would move every dose 1440-fold, so it
+    # is converted; and the grid is redrawn, in the current format.
+    format <- doseTableFormat()
+    if (!is.null(stamp) && !identical(stamp, format)) {
+      doseTableRefresh(doseTableRefresh() + 1)
+      res <- rebaseDoseTimes(data, stamp, format, input$referenceTime)
+      if (!res$ok) return(FALSE)
+      data <- res$table
+    }
+
+    # make sure that table has changed before updating doseTable reactive
+    if (identicalTable(doseTableDraft(), data)) return(FALSE)
+    # add empty row at the bottom if needed
+    if (nrow(data) == 0 || nzchar(utils::tail(data, 1)$Drug)) {
+      data[nrow(data) + 1, ] <- ""
+    }
+
+    # As soon as a gas is entered, apply the gas rules: oxygen alongside
+    # nitrous oxide, flows rounded to 0.1 L/min, and a ventilation row.
+    withVentilation <- applyGasTableRules(data, gasVentilationWeight())
+    if (!identicalTable(withVentilation, data)) {
+      data <- withVentilation
+      doseTableRefresh(doseTableRefresh() + 1)
+    }
+
+    doseTableHistory()$do(data)
+    TRUE
+  }
+
   observeEvent(input$doseTableHTML, {
     profileCode({
       outputComments("In observeEvent(input$doseTableHTML,...", level = DEBUG_LEVEL_VERBOSE)
@@ -809,39 +856,58 @@ app_server <- function(input, output, session) {
       # dt[dt$Drug == drug, ] (a phantom row in Edit doses) and stopped
       # if (dt$Drug[i] > "") with an error that ended the session
       # (adversarial UI review, 2026-11, finding 5).  A blank cell is "".
-      data <- blankMissingCells(data)
-
-      # An edit made in a grid drawn before a change of time unit or display
-      # arrives in the old format: in minutes, say, when the table is now in
-      # days.  Stored as it came, Apply would move every dose 1440-fold, so it
-      # is converted; and the grid is redrawn, in the current format.
-      format <- doseTableFormat()
-      if (!is.null(stamp) && !identical(stamp, format)) {
-        doseTableRefresh(doseTableRefresh() + 1)
-        res <- rebaseDoseTimes(data, stamp, format, input$referenceTime)
-        if (!res$ok) return()
-        data <- res$table
-      }
-
-      # make sure that table has changed before updating doseTable reactive
-      if ( !identicalTable(doseTableDraft(), data) ) {
-        # add empty row at the bottom if needed
-        if (nrow(data) == 0 || nzchar(utils::tail(data, 1)$Drug)) {
-          data[nrow(data) + 1, ] <- ""
-        }
-
-        # As soon as a gas is entered, apply the gas rules: oxygen alongside
-        # nitrous oxide, flows rounded to 0.1 L/min, and a ventilation row.
-        withVentilation <- applyGasTableRules(data, gasVentilationWeight())
-        if (!identicalTable(withVentilation, data)) {
-          data <- withVentilation
-          doseTableRefresh(doseTableRefresh() + 1)
-        }
-
-        doseTableHistory()$do(data)
-      }
+      storeGridEdit(blankMissingCells(data), stamp)
     }, name = "input$doseTableHTML observer")
   })
+
+  # The prototype grid (R/dose-grid.R, inst/www/dose-grid.js), when it is the
+  # one drawn.  It sends the whole table once per committed edit, with the
+  # number of edits it has sent (seq) and its time format; it is sent the
+  # draft whenever the draft changes, with the seq of the last edit read
+  # (ack), and ignores a draft sent before its latest edit was read.  A
+  # draft that equals what it holds is not redrawn.
+  if (doseGridMode() == "native") {
+    doseGridAck <- 0
+
+    observe({
+      session$sendInputMessage("doseGrid", doseGridDrugsMessage(drugDefaults(), drugChoices()))
+    })
+
+    observe({
+      doseTableRefresh()
+      draft <- doseTableDraft()
+      format <- doseTableFormat()
+      req(draft)
+      # As the rhandsontable grid's renderer did, a draft that fails the
+      # table's own checks is not drawn: the grid says why instead.  (An
+      # error raised here would end the session.)
+      problem <- tryCatch({ validateDoseTableInput(draft); "" }, error = function(e) conditionMessage(e))
+      if (nzchar(problem)) {
+        session$sendInputMessage("doseGrid", list(error = problem))
+        return()
+      }
+      outputComments("Sending the draft to the dose grid", level = DEBUG_LEVEL_VERBOSE)
+      msg <- doseGridRowsMessage(draft, format, doseGridAck)
+      msg$error <- ""
+      session$sendInputMessage("doseGrid", msg)
+    })
+
+    observeEvent(input$doseGrid, {
+      profileCode({
+        value <- doseGridValue(input$doseGrid)
+        if (is.null(value)) return()
+        doseGridAck <<- value$seq
+        if (nrow(value$table) == 0) {
+          doseTableRefresh(doseTableRefresh() + 1)
+          doseTableHistory()$do(blankDoseTableRow(doseTableDraft()))
+          return()
+        }
+        # A draft left unchanged (an edit refused, or one that converts to
+        # the draft already held) is sent again, so the grid shows it.
+        if (!storeGridEdit(value$table, value$format)) doseTableRefresh(doseTableRefresh() + 1)
+      }, name = "input$doseGrid observer")
+    })
+  }
 
   weightUnit <- reactive({
     req(input$weightUnit)
