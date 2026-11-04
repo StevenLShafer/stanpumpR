@@ -215,3 +215,7 @@ test_that("a blank Max time says what to enter, survives a change of unit, and r
     expect_equal(max(simulation()$sim$curve$Time), 240)
   })
 })
+
+test_that("the Max time limit is the main simulator's longest, as the message says", {
+  expect_equal(PAPER_REVIEW_MAX_TIME_LIMIT, 365 * MINS_PER_DAY)
+})

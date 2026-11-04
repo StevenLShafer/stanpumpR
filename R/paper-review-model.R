@@ -104,7 +104,7 @@ paperReviewMinutes <- function(units)
 PAPER_REVIEW_SIM_TIME_UNITS <- c(minutes = "min", hours = "h", days = "day", weeks = "week")
 
 # The simulator's Max time: what it opens at, and the longest it takes (the
-# main simulator's longest, 52 weeks), in minutes.
+# main simulator's longest Max time, 365 days), in minutes.
 PAPER_REVIEW_MAX_TIME_DEFAULT <- 240
 PAPER_REVIEW_MAX_TIME_LIMIT <- max(MAX_TIME_VALUES)
 

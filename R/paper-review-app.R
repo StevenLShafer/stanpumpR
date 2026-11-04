@@ -455,7 +455,7 @@ paperReviewServer <- function(input, output, session)
     shiny::validate(shiny::need(drug$ok, paste(drug$problems, collapse = " ")))
     maximum <- paperReviewMaxTimeMinutes(input$maximum, unitMinutes())
     shiny::validate(shiny::need(!is.na(maximum), sprintf(
-      "Enter a Max time greater than 0 and no longer than %s %s (52 weeks).",
+      "Enter a Max time greater than 0 and no longer than %s %s (365 days).",
       format(signif(PAPER_REVIEW_MAX_TIME_LIMIT / unitMinutes(), 6), big.mark = ",", scientific = FALSE),
       unitName())))
     maximum <- max(maximum, max(d$Time) + 1)
