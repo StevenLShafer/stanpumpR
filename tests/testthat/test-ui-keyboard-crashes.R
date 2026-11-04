@@ -187,6 +187,35 @@ test_that("Suggest Dosing for a drug not in the table keeps the draft and its un
   expect_identical(handed$drug, "propofol")
 })
 
+test_that("Suggest Dosing refuses a patient out of range, for a drug not in the table too", {
+  # drugPK() builds such a drug's PK without drugs()'s testCovariates()
+  # (CodeRabbit on #681): a weight above MAX_WEIGHT is a number, so only the
+  # range check stops it
+  notes <- character(0)
+  local_mocked_bindings(showNotification = function(ui, ...) {
+    notes <<- c(notes, paste(as.character(ui), collapse = " "))
+  })
+  local_mocked_bindings(hot_to_r = function(...) data.frame(Time = c("0", ""), Target = c("3", "")),
+                        .package = "rhandsontable")
+  called <- FALSE
+  local_mocked_bindings(suggest = function(...) { called <<- TRUE; NULL })
+  shiny::testServer(app_server, {
+    do.call(session$setInputs, keyboardAppInputs)
+    dt <- propofolTable()
+    dt$Drug[1] <- "fentanyl"
+    dt$Units[1] <- "mcg"
+    setDoseTable(dt, timeFormat("minutes", "relative"))
+    session$flushReact()
+    before <- doseTable()
+    session$setInputs(weight = MAX_WEIGHT + 100)
+    suggestInputs(session)
+    expect_no_error(session$setInputs(targetOK = 1))
+    expect_false(called)
+    expect_match(notes[length(notes)], "Suggest Dosing cannot run: Weight must be between")
+    expect_identical(doseTable(), before)
+  })
+})
+
 test_that("Suggest Dosing for a drug not in the table writes its regimen", {
   local_mocked_bindings(showNotification = function(...) NULL)
   local_mocked_bindings(hot_to_r = function(...) data.frame(Time = c("0", ""), Target = c("3", "")),

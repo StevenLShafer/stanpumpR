@@ -2839,6 +2839,19 @@ app_server <- function(input, output, session) {
         # observer silently and left the page behind "Calculating doses..."
         # for good (finding 10).
         blocked <- simulationBlocked()
+        # The patient's ranges, which drugs() asks of testCovariates() and a
+        # drug not yet in the table, whose PK is built here by drugPK(),
+        # would otherwise skip (CodeRabbit on #681): a weight above
+        # MAX_WEIGHT is a number, so simulationBlocked() passes it.
+        if (is.null(blocked)) {
+          covariateProblem <- NULL
+          ok <- checkNumericCovariates(age(), weight(), height(),
+                                       function(msg) covariateProblem <<- msg,
+                                       osmolality = osmolality(),
+                                       creatinine = creatinine(),
+                                       gestationalAge = gestationalAge())
+          if (!isTRUE(ok)) blocked <- if (is.null(covariateProblem)) "the Patient Profile is out of range." else covariateProblem
+        }
         if (!is.null(blocked)) {
           showNotification(paste("Suggest Dosing cannot run:", blocked), type = "error", duration = 10)
           return()
