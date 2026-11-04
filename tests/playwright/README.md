@@ -50,13 +50,15 @@ STANPUMPR_URL=http://127.0.0.1:7311/ STANPUMPR_GRID=native node --test --test-co
   observer ends it.
 - A case one grid is known to fail is listed in `KNOWN_GAP` at the top of the
   test file, with the reason. It is reported as a todo, so the run stays
-  green while the suite still states the bar. On rhandsontable, four cases
+  green while the suite still states the bar. On rhandsontable, seven cases
   are known to fail:
   - the first key typed after a commit is lost while the server redraws the
     grid;
   - over a 400 ms link, two doses typed one after another lose a row;
   - a refused drug name leaves its editor stuck open;
-  - the grid's controls have no names a screen reader can read.
+  - the grid's controls have no names a screen reader can read;
+  - Ctrl+Z does nothing (three cases): the redraw after every edit clears
+    Handsontable's own undo history.
 
   The script error that rhandsontable's bundled `numbro` raises on every load
   is a known gap for both grids while any rhandsontable grid is still on the

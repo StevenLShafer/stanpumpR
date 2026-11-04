@@ -38,7 +38,13 @@ const KNOWN_GAP = {
     'two doses typed one after the other over a slow link are both kept':
       'over a 400 ms link the first row is stored as time 5, dose 0 and the second row is lost',
     'after a refused name, Escape gives the cell back':
-      'the editor stays open on the refused text and Escape does not close it; what is typed next is appended'
+      'the editor stays open on the refused text and Escape does not close it; what is typed next is appended',
+    'Ctrl+Z undoes the last edit and Ctrl+Y redoes it, in the grid and on the server':
+      'Ctrl+Z does nothing: the redraw after every edit clears the grid\'s own undo history',
+    'Ctrl+Z steps back one edit at a time':
+      'Ctrl+Z does nothing: the redraw after every edit clears the grid\'s own undo history',
+    'Ctrl+Z right after Enter, over a slow link, still undoes that edit':
+      'Ctrl+Z does nothing: the redraw after every edit clears the grid\'s own undo history'
   },
   native: {
     'the page raises no script errors':
@@ -450,6 +456,87 @@ describe('time units', () => {
     await enter(3, 1, '2');
     await H.waitForDraft(page, d => d[3][1] === '2');
     assert.equal((await H.serverState(page)).format, 'hours/relative');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Ctrl+Z and Ctrl+Y, as in most applications (Shafer, 2026-11-04: "control-Z
+// as an undo of the last operation is useful").  Ctrl or Cmd, whichever the
+// platform uses.
+describe('Ctrl+Z and Ctrl+Y', () => {
+  const undo = () => page.keyboard.press('ControlOrMeta+Z');
+  const redo = () => page.keyboard.press('ControlOrMeta+Y');
+
+  gt('Ctrl+Z undoes the last edit and Ctrl+Y redoes it, in the grid and on the server', async () => {
+    await enter(2, 2, '100');
+    await H.waitForDraft(page, d => d[2][2] === '100');
+    await undo();
+    await H.waitForDraft(page, d => d[2][2] === '0');
+    await H.waitForRows(page, adapter, rows => rows[2][2] === '0');
+    await redo();
+    await H.waitForDraft(page, d => d[2][2] === '100');
+    await H.waitForRows(page, adapter, rows => rows[2][2] === '100');
+    // and Ctrl+Shift+Z is redo too
+    await undo();
+    await H.waitForDraft(page, d => d[2][2] === '0');
+    await page.keyboard.press('ControlOrMeta+Shift+Z');
+    await H.waitForDraft(page, d => d[2][2] === '100');
+  });
+
+  gt('Ctrl+Z steps back one edit at a time', async () => {
+    await enter(FIRST_BLANK, 0, 'morphine');
+    await H.waitForDraft(page, d => d[FIRST_BLANK][0] === 'morphine');
+    await enter(FIRST_BLANK, 1, '30');
+    await H.waitForDraft(page, d => d[FIRST_BLANK][1] === '30');
+    await enter(FIRST_BLANK, 2, '10');
+    await H.waitForDraft(page, d => d[FIRST_BLANK][2] === '10');
+    const info = await H.drugInfo(page, 'morphine');
+    await undo();
+    await H.waitForDraft(page, d => d[FIRST_BLANK][2] === '0' && d[FIRST_BLANK][1] === '30');
+    await undo();
+    await H.waitForDraft(page, d => d[FIRST_BLANK][1] === '0' && d[FIRST_BLANK][0] === 'morphine');
+    assert.deepEqual((await draft())[FIRST_BLANK], ['morphine', '0', '0', info.defaultUnit]);
+    await undo();
+    await H.waitForDraft(page, d => d[FIRST_BLANK][0] === '');
+    await H.waitForRows(page, adapter, rows => rows[FIRST_BLANK][0] === '');
+    assert.ok(!(await H.serverState(page)).canUndo, 'there was nothing left to undo');
+  });
+
+  test('Ctrl+Z while typing in a cell undoes the typing, not the table', async () => {
+    await enter(2, 2, '100');
+    await H.waitForDraft(page, d => d[2][2] === '100');
+    await adapter.typeInto(page, 3, 2, '55');
+    await undo();
+    await page.keyboard.press('Escape');
+    await H.settle(page);
+    const d = await draft();
+    assert.equal(d[2][2], '100', 'Ctrl+Z while typing undid the previous edit');
+    assert.equal(d[3][2], '0');
+  });
+
+  gt('Ctrl+Z right after Enter, over a slow link, still undoes that edit', async () => {
+    await H.slowLink(context, page, 400);
+    await adapter.typeInto(page, 2, 2, '100');
+    await page.keyboard.press('Enter');
+    await undo();
+    await page.waitForTimeout(3000);
+    await H.settle(page, 1500);
+    assert.equal((await draft())[2][2], '0');
+    assert.equal((await rowsShown())[2][2], '0');
+  });
+
+  test('Ctrl+Z after Apply does not reach past it', async () => {
+    await enter(2, 2, '100');
+    await H.waitForDraft(page, d => d[2][2] === '100');
+    await page.waitForFunction(() => !document.getElementById('dosetable_apply').disabled);
+    await page.click('#dosetable_apply');
+    await H.settle(page);
+    await adapter.focusCell(page, 3, 2);
+    await undo();
+    await H.settle(page, 800);
+    const s = await H.serverState(page);
+    assert.equal(s.draft[2][2], '100');
+    assert.equal(s.table[2][2], '100');
   });
 });
 

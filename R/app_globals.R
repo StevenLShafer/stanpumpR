@@ -37,6 +37,7 @@ bookmarksToExclude <- c(
   "editEventsTableHTML",
   "doseTableHTML",
   "doseGrid",
+  "doseGrid_history",
   "setTarget",
   "targetDrug",
   "targetDrug-selectized",

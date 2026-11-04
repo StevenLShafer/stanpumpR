@@ -183,6 +183,34 @@ test_that("an edit the server leaves unchanged is sent back, so the grid shows t
   })
 })
 
+test_that("Ctrl+Z and Ctrl+Y from the grid undo and redo the draft, and a broken request is ignored", {
+  withr::local_options(stanpumpR.doseGrid = "native")
+  shiny::testServer(app_server, {
+    sent <- recordGrid(session)
+    startGrid(session)
+    session$setInputs(doseGrid = gridValue(list(list("propofol", "0", "100", "mg")), seq = 1))
+    expect_equal(doseTableDraft()$Dose[1], "100")
+    session$setInputs(doseGrid_history = list(action = "undo", n = 1))
+    expect_equal(doseTableDraft()$Dose[1], "0")
+    session$setInputs(doseGrid_history = list(action = "redo", n = 2))
+    expect_equal(doseTableDraft()$Dose[1], "100")
+    # nothing to redo, then requests that are not requests at all
+    for (bad in list(list(action = "redo", n = 3), "undo", list(action = list("undo", "redo")), list(n = 4),
+                     list(action = "drop table", n = 5), 42)) {
+      session$setInputs(doseGrid_history = bad)
+      expect_false(session$isClosed())
+      expect_equal(doseTableDraft()$Dose[1], "100")
+    }
+    # undo past the start of the history does nothing
+    session$setInputs(doseGrid_history = list(action = "undo", n = 6))
+    session$setInputs(doseGrid_history = list(action = "undo", n = 7))
+    session$setInputs(doseGrid_history = list(action = "undo", n = 8))
+    expect_false(session$isClosed())
+    expect_equal(doseTableDraft()$Dose[1], "0")
+  })
+  expect_true("doseGrid_history" %in% bookmarksToExclude)
+})
+
 test_that("the grid's code draws nothing as HTML, and binds no cell as a Shiny input", {
   js <- readLines(system.file("www", "dose-grid.js", package = "stanpumpR"))
   code <- js[!grepl("^\\s*//", js)]

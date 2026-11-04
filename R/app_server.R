@@ -892,6 +892,16 @@ app_server <- function(input, output, session) {
       session$sendInputMessage("doseGrid", msg)
     })
 
+    # Ctrl+Z / Ctrl+Y in the grid (dose-grid.js): the Undo and Redo buttons'
+    # work, read safely (an error here would end the session)
+    observeEvent(input$doseGrid_history, {
+      value <- input$doseGrid_history
+      action <- if (is.list(value)) doseGridCell(value$action) else ""
+      history <- doseTableHistory()
+      if (identical(action, "undo") && isTRUE(history$can_undo)) history$undo()
+      if (identical(action, "redo") && isTRUE(history$can_redo)) history$redo()
+    })
+
     observeEvent(input$doseGrid, {
       profileCode({
         value <- doseGridValue(input$doseGrid)

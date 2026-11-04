@@ -22,10 +22,10 @@ The reasons, each measured below:
      is lost.
 2. **Its licence is ours**, and it adds no dependency.
 3. **It is about 9 KB gzipped**, against 100-525 KB for the libraries.
-4. **It is held to the same regression suite**, which it passes: 36 of 37
-   cases, the 37th being a page-level script error from the rhandsontable
-   grid still on the Single Paper Review tab. rhandsontable passes 32 of the
-   37, and the four of its failures that concern the grid are real defects.
+4. **It is held to the same regression suite**, which it passes: 41 of 42
+   cases, the 42nd being a page-level script error from the rhandsontable
+   grid still on the Single Paper Review tab. rhandsontable passes 34 of the
+   42, and the seven of its failures that concern the grid are real defects.
 
 ## Why replace it
 
@@ -60,7 +60,7 @@ The reasons, each measured below:
 
 ## What the suite found
 
-The suite is `tests/playwright/` (README there): 37 cases, driven by
+The suite is `tests/playwright/` (README there): 42 cases, driven by
 keystrokes and the clipboard in headless Chromium, and checked on the screen
 and in the server's draft (`exportTestValues()`, test mode only). The same
 cases run against both grids, through a small adapter per grid.
@@ -80,6 +80,9 @@ cases run against both grids, through a small adapter per grid.
 | Two rows typed one after another over a 400 ms link | **fail: first row time 5 dose 0, second row lost** | pass |
 | After a refused drug name, Escape gives the cell back | **fail: editor stuck open; next text appended** | pass |
 | Every cell has a name a screen reader can read | **fail: one shared, unlabelled textarea** | pass |
+| Ctrl+Z undoes the last edit, one at a time; Ctrl+Y / Ctrl+Shift+Z redo | **fail: Ctrl+Z does nothing** | pass |
+| Ctrl+Z right after Enter over a 400 ms link undoes that edit | **fail: Ctrl+Z does nothing** | pass |
+| Ctrl+Z while typing undoes the typing only; Ctrl+Z after Apply stops at Apply | pass | pass |
 | No script errors on the page | fail (numbro) | fail (numbro, from Paper Review's grid) |
 
 The two typing defects are the important findings. In the first, every
@@ -216,13 +219,26 @@ dialog or scenario writing `doseTable()`, a change of time unit. Even then,
 the text being typed in the focused cell is kept.
 
 **Unchanged:** the draft, Apply and undo/redo lifecycle (`{undomanager}`), and
-the rule that a direct write to `doseTable()` resets the draft. Ctrl+Z and
-Ctrl+Y outside a cell being typed in press Undo and Redo.
+the rule that a direct write to `doseTable()` resets the draft.
+
+**Ctrl+Z** (Cmd+Z on a Mac) undoes the last edit, one committed edit at a time.
+**Ctrl+Y** or **Ctrl+Shift+Z** redoes it. Both go through the same history as
+the Undo and Redo buttons. While a cell is being typed in, the keys belong to
+the cell and undo the typing. The grid sends the request as an input of its
+own (`input$doseGrid_history`) rather than clicking the button. The button is
+enabled only once the server has the edit, so a Ctrl+Z pressed right after
+Enter over a slow link would have been dropped; the request instead goes in
+order, right behind the edit it undoes. As with the button, Ctrl+Z does not
+reach back past Apply, which starts a fresh history.
+
+On rhandsontable, Ctrl+Z does nothing, because the server's redraw after every
+edit clears Handsontable's own undo history.
 
 **Rows:** right-click a row, or press Shift+F10 or the context-menu key, for
 Insert row above, Insert row below and Remove row.
 
-**Not in the prototype, deliberately until decided:**
+**Not in the prototype**, and not needed (Shafer, 2026-11-04: never used with
+the rhandsontable grid):
 - rectangular range selection, and with it copy of several cells, a paste
   repeated over a selection, and Delete over a range;
 - drag-fill;
@@ -277,11 +293,14 @@ These are pending. Record each answer here.
 1. **[decision] Which option.** Recommended: 1, the purpose-built grid. The
    alternative library is Tabulator. Licensed Handsontable is not recommended
    (§2.2(b) and §2.3 of its licence).
-2. **[decision] Spreadsheet features.** Do users select ranges, copy several
-   cells out of the grid, paste one row over a selection of rows, or
-   drag-fill? The prototype does none of these. Each can be added, but each is
-   code to own: about 1-2 days for range selection with copy, clear and
-   repeated paste.
+2. **Spreadsheet features. ANSWERED** (Shafer, 2026-11-04). Range selection,
+   copying several cells, a paste repeated over a selection, drag-fill and
+   column resizing are not needed: he has never used them with the
+   rhandsontable grid. "Control-Z as an undo of the last operation is
+   useful": it is implemented (above) and held by five cases of the suite.
+   Ctrl+Z stops at Apply, as the Undo button does. If it should reach back
+   past an Apply, that is a change to the lifecycle for both grids, and a
+   decision of its own.
 3. **[decision] A refused drug name is now said** ("not a drug in the
    library") and the cell is given back. rhandsontable refused it silently and
    left the editor stuck. Is a notification right?

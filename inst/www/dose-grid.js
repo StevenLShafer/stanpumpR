@@ -107,7 +107,8 @@
     this.table = el('table', { 'class': 'dose-grid', 'aria-describedby': p + '-help' });
     var caption = el('caption', { 'class': 'visually-hidden' }, 'Doses');
     var help = el('p', { id: p + '-help', 'class': 'visually-hidden' },
-      'One dose a row: drug, time, dose and units. Enter moves down a row. ' +
+      'One dose a row: drug, time, dose and units. Enter moves down a row; ' +
+      'Ctrl+Z undoes the last edit and Ctrl+Y redoes it. ' +
       'For row actions (insert, remove), press Shift+F10 or right-click a row.');
     this.table.appendChild(caption);
     var thead = el('thead'), tr = el('tr');
@@ -394,6 +395,13 @@
     return true;
   };
 
+  DoseGrid.prototype.sendHistory = function(action) {
+    this.historyCount = (this.historyCount || 0) + 1;
+    if (window.Shiny && Shiny.setInputValue) {
+      Shiny.setInputValue(this.root.id + '_history', { action: action, n: this.historyCount }, { priority: 'event' });
+    }
+  };
+
   // --- paste ---------------------------------------------------------------------
 
   DoseGrid.prototype.onPaste = function(e) {
@@ -644,12 +652,18 @@
       this.openMenu(r, box.left, box.bottom);
       return;
     }
-    // Undo and Redo are the dose table's, unless a cell is being typed in
+    // Ctrl+Z (Cmd+Z) undoes the last edit, Ctrl+Y or Ctrl+Shift+Z redoes
+    // it, through the dose table's own history (doseTableHistory()), as the
+    // Undo and Redo buttons do.  While a cell is being typed in, the keys
+    // are the cell's own: they undo the typing.  The request is an input of
+    // its own, not a click on the button: the button is enabled only once
+    // the server has the edit, so a Ctrl+Z pressed right after Enter on a
+    // slow link would have been dropped, where the request goes in order
+    // right behind the edit it undoes.
     if ((e.ctrlKey || e.metaKey) && !e.altKey && !edited &&
         (e.key === 'z' || e.key === 'Z' || e.key === 'y' || e.key === 'Y')) {
       var redo = e.key === 'y' || e.key === 'Y' || e.shiftKey;
-      var b = document.getElementById(redo ? 'dosetable_redo' : 'dosetable_undo');
-      if (b && !b.disabled) b.click();
+      this.sendHistory(redo ? 'redo' : 'undo');
       e.preventDefault();
       return;
     }
