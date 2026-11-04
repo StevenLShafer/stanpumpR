@@ -1153,17 +1153,17 @@ app_server <- function(input, output, session) {
   # reactive value: reading it must not make drugs() depend on itself.
   ivSimulationCache <- NULL
 
-  drugs <- reactive({
-    profileCode({
-      outputComments("In drugs", level = DEBUG_LEVEL_VERBOSE)
-      # Nothing is simulated while the time-units rule is broken: the plot
-      # area says why (output$PlotSimulation).
-      req(testCovariates(), doseTableClean(), is.null(timeUnitViolation()), is.null(scheduleProblem()))
-
-      newDrugs <- recalculatePK(
+  # The PK of each drug in a dose table (times in minutes), at the session's
+  # patient and options.  drugs() reads it for the dose table; Suggest Dosing
+  # reads it for a drug the table does not hold yet, which it once wrote into
+  # the table as a placeholder row -- and a write to doseTable() discards the
+  # unapplied edits and the undo history, so a suggestion that then failed
+  # lost them (CodeRabbit on #674, fixed 2026-11-04).
+  drugPK <- function(doseTable) {
+    recalculatePK(
         NULL,
         drugDefaults(),
-        doseTableIV(),
+        doseTable,
         age = age(),
         weight = weight(),
         height = height(),
@@ -1183,7 +1183,17 @@ app_server <- function(input, output, session) {
         opioidTolerance = opioidTolerance(),
         alternativeModels = companionGroupsOn(),
         antiseizureInteractions = antiseizureInteractions()
-      ) |> profileCode("recalculatePK() in drugs()")
+      )
+  }
+
+  drugs <- reactive({
+    profileCode({
+      outputComments("In drugs", level = DEBUG_LEVEL_VERBOSE)
+      # Nothing is simulated while the time-units rule is broken: the plot
+      # area says why (output$PlotSimulation).
+      req(testCovariates(), doseTableClean(), is.null(timeUnitViolation()), is.null(scheduleProblem()))
+
+      newDrugs <- drugPK(doseTableIV()) |> profileCode("recalculatePK() in drugs()")
 
       newDrugs <- processdoseTable(
         doseTableIV(),
@@ -2829,6 +2839,19 @@ app_server <- function(input, output, session) {
         # observer silently and left the page behind "Calculating doses..."
         # for good (finding 10).
         blocked <- simulationBlocked()
+        # The patient's ranges, which drugs() asks of testCovariates() and a
+        # drug not yet in the table, whose PK is built here by drugPK(),
+        # would otherwise skip (CodeRabbit on #681): a weight above
+        # MAX_WEIGHT is a number, so simulationBlocked() passes it.
+        if (is.null(blocked)) {
+          covariateProblem <- NULL
+          ok <- checkNumericCovariates(age(), weight(), height(),
+                                       function(msg) covariateProblem <<- msg,
+                                       osmolality = osmolality(),
+                                       creatinine = creatinine(),
+                                       gestationalAge = gestationalAge())
+          if (!isTRUE(ok)) blocked <- if (is.null(covariateProblem)) "the Patient Profile is out of range." else covariateProblem
+        }
         if (!is.null(blocked)) {
           showNotification(paste("Suggest Dosing cannot run:", blocked), type = "error", duration = 10)
           return()
@@ -2857,19 +2880,23 @@ app_server <- function(input, output, session) {
 
         removeModal()
         shinycssloaders::showPageSpinner(background = "#FFFFFFEE", caption = "Calculating doses...")
-        # A drug the simulation does not yet carry gets a 0 dose so that
-        # drugs() simulates it; suggest() replaces the drug's rows.  Asked of
-        # the rows the simulation reads: a row whose Units were cleared is
-        # ignored by it, and suggest() stopped with "unknown drug" (finding
-        # 4).  In the drug's own bolus unit, not "mg": vasopressin is dosed in
-        # units, and a mass unit stopped simCpCe() (finding 3).
-        before <- doseTable()
-        if (!input$targetDrug %in% cleanDoseTable(doseTable())$Drug) {
-          outputComments("Updating doseTable for new drug")
+        # suggest() reads only the drug's PK set and simulates its own
+        # regimens.  A drug the simulation does not yet carry has its PK built
+        # here, from a 0 dose, rather than written into the dose table as a
+        # placeholder row: that write reset the draft, so a suggestion that
+        # failed lost the user's unapplied edits and the undo history
+        # (drugPK()).  Asked of the rows the simulation reads: a row whose
+        # Units were cleared is ignored by it, and suggest() stopped with
+        # "unknown drug" (finding 4).  In the drug's own bolus unit, not "mg":
+        # vasopressin is dosed in units, and a mass unit stopped simCpCe()
+        # (finding 3).  Nothing is written to doseTable() unless the regimen
+        # is written.
+        inTable <- input$targetDrug %in% cleanDoseTable(doseTable())$Drug
+        suggestDrugs <- function() {
+          if (inTable) return(drugs())
           bolusUnit <- drugDefaults()$Bolus.Units[match(input$targetDrug, drugDefaults()$Drug)]
-          doseTable(rbind(doseTable(),
-                          data.frame(Drug = input$targetDrug, Time = "0", Dose = "0", Units = bolusUnit)))
-          outputComments(doseTable())
+          drugPK(data.frame(Drug = input$targetDrug, Time = 0, Dose = 0, Units = bolusUnit,
+                            stringsAsFactors = FALSE))
         }
 
         # Any error from here is said, and the spinner always comes down: an
@@ -2878,7 +2905,7 @@ app_server <- function(input, output, session) {
           suggest(input$targetDrug,
                   targetTable,
                   endTime,
-                  drugs(),
+                  suggestDrugs(),
                   drugList,
                   eventTable(),
                   REFERENCE_TIME_NONE),
@@ -2889,7 +2916,6 @@ app_server <- function(input, output, session) {
           finally = shinycssloaders::hidePageSpinner()
         )
         if (inherits(testTable, "suggestFailed")) {
-          doseTable(before)
           showNotification(paste("Suggest Dosing failed:", attr(testTable, "message")),
                            type = "error", duration = 10)
           return()
@@ -2897,9 +2923,7 @@ app_server <- function(input, output, session) {
 
         if (is.null(testTable)) {
           # No target fell between the start and the end time (issue #270):
-          # say so rather than close the dialog with nothing done, and take
-          # back the placeholder row added for a drug not yet in the table.
-          doseTable(before)
+          # say so rather than close the dialog with nothing done.
           showNotification(SUGGEST_NO_TARGETS_MESSAGE, type = "warning", duration = 10)
           return()
         }
@@ -2926,7 +2950,6 @@ app_server <- function(input, output, session) {
         refused <- tryCatch({ validateDoseTableInput(dt, drugDefaults()); NULL },
                             error = function(e) conditionMessage(e))
         if (!is.null(refused)) {
-          doseTable(before)
           showNotification(paste("Suggest Dosing found doses the dose table cannot hold:", refused,
                                  "Choose lower targets."), type = "error", duration = 10)
           return()
