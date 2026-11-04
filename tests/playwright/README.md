@@ -25,8 +25,8 @@ node tests/playwright/run.js native          # the prototype only
 `run.js` starts the app for each grid in Shiny's test mode
 (`options(shiny.testmode = TRUE, stanpumpR.doseGrid = "<grid>")`) on ports 7400
 and up, runs `dose-grid.test.js` with `node --test`, and stops the app. A full
-run takes about 4 minutes on the prototype and 8 on rhandsontable, whose
-600-row paste alone takes more than 4.
+run takes about 4 minutes on the prototype and 10 on rhandsontable, whose
+600-row paste alone takes 4 to 6.
 
 To test an app that is already running, set `STANPUMPR_URL` (and
 `STANPUMPR_GRID`, which grid it draws) and run the test file directly:

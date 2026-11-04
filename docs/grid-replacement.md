@@ -22,10 +22,10 @@ The reasons, each measured below:
      is lost.
 2. **Its licence is ours**, and it adds no dependency.
 3. **It is about 9 KB gzipped**, against 100-525 KB for the libraries.
-4. **It is held to the same regression suite**, which it passes: 35 of 36
-   cases, the 36th being a page-level script error from the rhandsontable
-   grid still on the Single Paper Review tab. rhandsontable passes 32, and
-   the four it fails are real defects.
+4. **It is held to the same regression suite**, which it passes: 36 of 37
+   cases, the 37th being a page-level script error from the rhandsontable
+   grid still on the Single Paper Review tab. rhandsontable passes 32 of the
+   37, and the four of its failures that concern the grid are real defects.
 
 ## Why replace it
 
@@ -60,7 +60,7 @@ The reasons, each measured below:
 
 ## What the suite found
 
-The suite is `tests/playwright/` (README there): 36 cases, driven by
+The suite is `tests/playwright/` (README there): 37 cases, driven by
 keystrokes and the clipboard in headless Chromium, and checked on the screen
 and in the server's draft (`exportTestValues()`, test mode only). The same
 cases run against both grids, through a small adapter per grid.
@@ -71,7 +71,7 @@ cases run against both grids, through a small adapter per grid.
 | Units: only the drug's, chosen by keyboard, long units wrap after the route | pass | pass |
 | Time/Dose validated as R's `validateTime()`/`validateDose()` | pass | pass |
 | Paste: whole rows, partial columns, past the last row, refused units said | pass | pass |
-| Paste of 600 rows stops at the row limit | pass, **269 s** | pass, **3.3 s** |
+| Paste of 600 rows stops at the row limit | pass, **269 s and 344 s** (two runs) | pass, **3.3 s and 3.5 s** |
 | Rows inserted, removed, all removed | pass | pass |
 | Time header tip; change of time unit; time-format stamp | pass | pass |
 | Draft / Apply / undo / redo; a gas rule's rows drawn | pass | pass |
@@ -289,5 +289,5 @@ These are pending. Record each answer here.
    preview open on the prototype (for example `STANPUMPR_DOSE_GRID=native` in
    the preview deploy) so it can be tried in a browser?
 5. **[decision] The suite in CI.** A workflow with R and Chromium would run
-   `tests/playwright/run.js` in about 12 minutes. Every PR, only PRs that
+   `tests/playwright/run.js` in about 15 minutes (most of it rhandsontable's 600-row paste). Every PR, only PRs that
    touch the grid, or by hand?
