@@ -537,6 +537,46 @@ helpParkinsonsToObtainMarkdown <- function(drugDefaults = NULL, registry = parki
                 want$to_obtain), collapse = "\n")
 }
 
+#' The chemotherapy model registry as a Markdown table
+#'
+#' Built from \code{chemotherapyRegistry()} so the help cannot drift from it.
+#' @noRd
+helpChemotherapyRegistryMarkdown <- function(drugDefaults = NULL, registry = chemotherapyRegistry()) {
+  status <- c(implemented = "In the library",
+              complete_not_implemented = "Read; not offered",
+              needs_full_text = "Needs the paper",
+              needs_engine = "Needs an engine feature",
+              no_source_identified = "No source found")
+  engine <- c(linear = "linear", linear_metabolite = "linear, with a metabolite",
+              michaelis_menten = "saturable elimination",
+              new_engine = "a mechanism the engine lacks", unknown = "not known")
+  wave <- c(first = 1, second = 2, expansion = 3)
+  registry <- registry[order(wave[registry$wave], tolower(registry$drug),
+                             registry$product, registry$model_id), ]
+  drugCell <- ifelse(
+    is.na(registry$stanpumpr_drug), registry$drug,
+    sprintf("[%s](help:drugs/%s)", registry$drug, registry$stanpumpr_drug))
+  source <- ifelse(is.na(registry$source_url), "",
+                   sprintf("[source](%s)", registry$source_url))
+  cell <- function(x) gsub("\\|", "/", x)
+  rows <- sprintf("| %s | %s | %s | %s | %s | %s | %s |",
+                  drugCell, cell(registry$product), cell(registry$population),
+                  cell(registry$structure), engine[registry$engine],
+                  status[registry$readiness], source)
+  paste(c("| Drug | Product | Population | Structure (from the abstract) | Engine | Status | Source |",
+          "|---|---|---|---|---|---|---|", rows), collapse = "\n")
+}
+
+#' The papers that would unblock a chemotherapy model, as a list, first wave first
+#' @noRd
+helpChemotherapyToObtainMarkdown <- function(drugDefaults = NULL, registry = chemotherapyRegistry()) {
+  want <- registry[!is.na(registry$to_obtain) & nzchar(registry$to_obtain), ]
+  wave <- c(first = 1, second = 2, expansion = 3)
+  want <- want[order(wave[want$wave], tolower(want$drug)), ]
+  want <- want[!duplicated(want$to_obtain), ]
+  paste(sprintf("- **%s**: %s", want$drug, want$to_obtain), collapse = "\n")
+}
+
 #' The antibiotics' MBC bands, one row per antibiotic, as a Markdown table
 #'
 #' From \code{antibioticMbcBand()} (R/antibioticMbc.R) and the band the
@@ -877,6 +917,8 @@ HELP_GENERATED_BLOCKS <- list(
   "parkinsons-products-table" = helpParkinsonsProductsMarkdown,
   "parkinsons-registry-table" = helpParkinsonsRegistryMarkdown,
   "parkinsons-to-obtain" = helpParkinsonsToObtainMarkdown,
+  "chemotherapy-registry-table" = helpChemotherapyRegistryMarkdown,
+  "chemotherapy-to-obtain" = helpChemotherapyToObtainMarkdown,
   "antibiotic-mbc-table" = helpAntibioticMbcBandMarkdown,
   "antiseizure-interaction-table" = helpAntiseizureInteractionTableMarkdown,
   "antiseizure-interaction-sources" = helpAntiseizureInteractionSourcesMarkdown,

@@ -1,0 +1,125 @@
+"source_id","drug","model_id","role","note"
+"C01","carboplatin","carboplatin__adult__ekhart2006","structural_pk",NA
+"C02","carboplatin","carboplatin__ovarian__duffull1997","structural_pk",NA
+"C03","carboplatin","carboplatin__adult__schmitt2009","structural_pk",NA
+"P02","carboplatin","carboplatin__adult__chatelut1995","structural_pk",NA
+"P03","carboplatin","carboplatin__children__peng1995","structural_pk",NA
+"C04","carboplatin","carboplatin__children_neuroblastoma__duong2019","structural_pk",NA
+"P12","methotrexate","methotrexate__adult__ibarra2023","structural_pk",NA
+"P13","methotrexate","methotrexate__mixed__blackman2026","structural_pk",NA
+"C12","methotrexate","methotrexate__pediatric_all__taylor2020","structural_pk",NA
+"C13","methotrexate","methotrexate__pediatric_aya__taylor2023","structural_pk",NA
+"C14","methotrexate","methotrexate__pediatric_all__aumente2006","structural_pk",NA
+"C15","methotrexate","methotrexate__infant_all__beechinor2019","structural_pk",NA
+"P08","fluorouracil","fluorouracil__adult__terret2000","structural_pk",NA
+"P09","fluorouracil","fluorouracil__adult__tan2026","structural_pk",NA
+"P10","fluorouracil","fluorouracil__adult__briki2026","structural_pk",NA
+"P23","busulfan","busulfan__infant_adult__mccune2014","structural_pk",NA
+"C35","busulfan","busulfan__hct__langenhorst2020","structural_pk",NA
+"P17","paclitaxel","paclitaxel__adult__joerger2006","structural_pk",NA
+"P04","cisplatin","cisplatin__adult__urien2004","structural_pk",NA
+"P05","cisplatin","cisplatin__adult__thompson2025","structural_pk",NA
+"N01","cisplatin","cisplatin__children__erdlenbruch2001","structural_pk",NA
+"N01b","cisplatin","cisplatin__children__peng1997","structural_pk",NA
+"N01c","cisplatin","cisplatin__children__evans1982","structural_pk",NA
+"P06","cyclophosphamide","cyclophosphamide__highdose__dejonge2005","structural_pk",NA
+"P07","cyclophosphamide","cyclophosphamide__breast__hassan1999","structural_pk",NA
+"C08","cyclophosphamide","cyclophosphamide__breast__joerger2007","structural_pk",NA
+"C09","cyclophosphamide","cyclophosphamide__neuroblastoma__mccune2009","structural_pk",NA
+"P15","doxorubicin","doxorubicin__adult_child__kontny2013","structural_pk",NA
+"P16","doxorubicin","doxorubicin__nhl__perezblanco2016","structural_pk",NA
+"C08","doxorubicin","doxorubicin__breast__joerger2007","structural_pk",NA
+"C39","doxorubicin","doxorubicin__children__voller2015","structural_pk",NA
+"P18","vincristine","vincristine__children__nijstad2022","structural_pk",NA
+"C31","vincristine","vincristine__lymphoma__igarashi2021","structural_pk",NA
+"P19","irinotecan","irinotecan__adult__klein2002","structural_pk",NA
+"P20","irinotecan","irinotecan__crc__oyagairiarte2019","structural_pk",NA
+"C40","irinotecan","irinotecan__adult__xie2002","structural_pk",NA
+"P21","etoposide","etoposide__adult__nguyen1998","structural_pk",NA
+"C30","etoposide","etoposide__children__urien2011","structural_pk",NA
+"C04","etoposide","etoposide__neuroblastoma__duong2019","structural_pk",NA
+"C22","etoposide","etoposide__aml__kroghmadsen2012","structural_pk",NA
+"P24","docetaxel","docetaxel__adult__bruno1996","structural_pk",NA
+"P25","docetaxel","docetaxel__phase2__bruno1998","structural_pk",NA
+"C05","oxaliplatin","oxaliplatin__crc__delord2003","structural_pk",NA
+"C06","oxaliplatin","oxaliplatin__adult__bastian2003","structural_pk",NA
+"C16","capecitabine","capecitabine__crc__gieschke2003","structural_pk",NA
+"C17","capecitabine","capecitabine__elderly__daherabdi2014","structural_pk",NA
+"C18","gemcitabine","gemcitabine__lung__tham2008","structural_pk",NA
+"C19","gemcitabine","gemcitabine__japanese__sugiyama2010","structural_pk",NA
+"C21","cytarabine","cytarabine__children__periclou1996","structural_pk",NA
+"C22","cytarabine","cytarabine__aml__kroghmadsen2012","structural_pk",NA
+"C20","pemetrexed","pemetrexed__phase2__latz2006","structural_pk",NA
+"C10","ifosfamide","ifosfamide__sarcoma__kerbusch2000","structural_pk",NA
+"C11","ifosfamide","ifosfamide__sclc__kerbusch2001","structural_pk",NA
+"C04","melphalan","melphalan__neuroblastoma__duong2019","structural_pk",NA
+"C33","melphalan","melphalan__myeloma__nath2010","structural_pk",NA
+"C34","fludarabine","fludarabine__hct__langenhorst2019","structural_pk",NA
+"C07","thiotepa","thiotepa__highdose__dejonge2004","structural_pk",NA
+"C29","topotecan","topotecan__adult__mould2002","structural_pk",NA
+"C36","temozolomide","temozolomide__glioma__ostermann2004","structural_pk",NA
+"C38b","mercaptopurine","mercaptopurine__all__hawwa2008","structural_pk",NA
+"N02","thioguanine","thioguanine__civ__kitchen1997","structural_pk",NA
+"N03","thioguanine","thioguanine__all__lowe2001","structural_pk",NA
+"C38a","asparaginase","pegaspargase__all__wurthwein2021","structural_pk",NA
+"C22","daunorubicin","daunorubicin__aml__kroghmadsen2012","structural_pk",NA
+"C23","daunorubicin","daunorubicin__aml__varatharajan2016","structural_pk",NA
+"C24","epirubicin","epirubicin__adult__ralph2004","structural_pk",NA
+"C25","idarubicin","idarubicin__children__reid1990","structural_pk",NA
+"C42","bleomycin","bleomycin__adult__hall1982","structural_pk",NA
+"C43","dacarbazine","dacarbazine__adult__breithaupt1982","structural_pk",NA
+"C37a","bendamustine","bendamustine__nhl__owen2010","structural_pk",NA
+"C41","vinblastine","vinblastine__adult__owellen1977","structural_pk",NA
+"C32","vinorelbine","vinorelbine__adult__variol2002","structural_pk",NA
+"N04","cladribine","cladribine__lymphoid__lindemalm2005","structural_pk",NA
+"N05","cladribine","cladribine__children__kearns1994","structural_pk",NA
+"C37b","cladribine","cladribine__ms__savic2017","structural_pk",NA
+"C27","paclitaxel","paclitaxel_nab__adult__chen2014","structural_pk",NA
+"C26","doxorubicin","doxorubicin_liposomal__hsu2018","structural_pk",NA
+"C28","irinotecan","irinotecan_liposomal__adiwijaya2017","structural_pk",NA
+"P01","carboplatin",NA,"dosing_formula","The Calvert formula: a dose from GFR and a target AUC, not a concentration model."
+"G06","carboplatin",NA,"dosing_guideline",NA
+"G14","carboplatin",NA,"dosing_guideline","Linked to carboplatin, as the handoff asks."
+"L01","carboplatin",NA,"product_label",NA
+"G06","cisplatin",NA,"dosing_guideline",NA
+"L02","cisplatin",NA,"product_label",NA
+"C07","cyclophosphamide","thiotepa__highdose__dejonge2004","interaction_context","The joint model includes cyclophosphamide's induction of thiotepa's elimination."
+"L03","cyclophosphamide",NA,"product_label",NA
+"P06","thiotepa",NA,"interaction_context","A cyclophosphamide model in a regimen containing thiotepa; not a thiotepa model. P07 is not thiotepa evidence at all."
+"P11","fluorouracil",NA,"clinical_outcome_trial","Randomised PK-guided dosing against BSA dosing; not a structural model."
+"G01","fluorouracil",NA,"target_guideline",NA
+"G08","fluorouracil",NA,"pharmacogenetic_guideline","A genotype dose recommendation, not a fitted clearance multiplier."
+"G09","fluorouracil",NA,"pharmacogenetic_guideline",NA
+"R04","fluorouracil",NA,"regulatory_safety",NA
+"R05","fluorouracil",NA,"regulatory_safety",NA
+"L04","fluorouracil",NA,"product_label",NA
+"R04","capecitabine",NA,"regulatory_safety",NA
+"R05","capecitabine",NA,"regulatory_safety",NA
+"G08","capecitabine",NA,"pharmacogenetic_guideline",NA
+"P14","methotrexate",NA,"external_validation","An external evaluation of published HDMTX models in adults with haematological tumours."
+"G03","methotrexate",NA,"management_guideline","Glucarpidase: a rescue threshold, not a therapeutic range."
+"G04","methotrexate",NA,"management_guideline",NA
+"G06","methotrexate",NA,"dosing_guideline",NA
+"L05","methotrexate",NA,"product_label",NA
+"L06","doxorubicin",NA,"product_label",NA
+"G02","paclitaxel",NA,"target_guideline","A regimen-specific time above a concentration, not a band."
+"L07","paclitaxel",NA,"product_label",NA
+"L08","vincristine",NA,"product_label",NA
+"G10","irinotecan",NA,"pharmacogenetic_guideline",NA
+"L09","irinotecan",NA,"product_label",NA
+"P22","etoposide",NA,"binding_exposure_toxicity","Organ function and binding against toxicity; not a structural model."
+"L10","etoposide",NA,"product_label",NA
+"G05","busulfan",NA,"target_guideline",NA
+"L11","busulfan",NA,"product_label",NA
+"L12","paclitaxel","paclitaxel_nab__adult__chen2014","product_label",NA
+"L13","doxorubicin","doxorubicin_liposomal__hsu2018","product_label",NA
+"L14","irinotecan","irinotecan_liposomal__adiwijaya2017","product_label",NA
+"G11","mercaptopurine",NA,"pharmacogenetic_guideline",NA
+"G11","thioguanine",NA,"pharmacogenetic_guideline",NA
+"G12","asparaginase",NA,"management_guideline",NA
+"G13","asparaginase",NA,"management_guideline","Also discusses blinatumomab, which is not part of this project."
+"N06","dacarbazine",NA,"mechanistic_context","In vitro activation by CYP; not a clinical model."
+"G07","global",NA,"dosing_guideline","Obesity: applies to each drug as its own guidance says."
+"R01","global",NA,"regulatory_method",NA
+"R02","global",NA,"regulatory_method",NA
+"R03","global",NA,"regulatory_method",NA
