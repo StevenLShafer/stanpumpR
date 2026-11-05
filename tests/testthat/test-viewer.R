@@ -33,12 +33,21 @@
 
 NO_EVENTS <- data.frame(Time = double(), Event = character())
 
-viewerEntry <- function(doses, maximum, minimum = 0, drug = doses$Drug[1]) {
+# As the app does it: the plot's simulation (processdoseTable(), as drugs()
+# runs it), then the drug's entry from it, re-solved with the plot's own PK
+# only where its points are too far apart (viewerPlotEntry()).
+plotSimulation <- function(doses, maximum, minimum = 0) {
   doses$Drug <- as.character(doses$Drug)
   doses$Units <- as.character(doses$Units)
   D <- recalculatePK(NULL, getDrugDefaultsGlobal(), doses,
                      age = 40, weight = 70, height = 170, sex = "male")
-  viewerSimulate(drug, doses, NO_EVENTS, D, minimum, maximum)
+  processdoseTable(doses, NO_EVENTS, D, maximum, FALSE, plotMinimum = minimum)
+}
+viewerEntry <- function(doses, maximum, minimum = 0, drug = doses$Drug[1]) {
+  doses$Drug <- as.character(doses$Drug)
+  doses$Units <- as.character(doses$Units)
+  plot <- plotSimulation(doses, maximum, minimum)
+  viewerPlotEntry(drug, plot[[drug]], doses, NO_EVENTS, plot, minimum, maximum)
 }
 vr <- function(doses, maximum, minimum = 0) {
   viewerRun(viewerEntry(doses, maximum, minimum), minimum, maximum)
@@ -48,10 +57,10 @@ vr <- function(doses, maximum, minimum = 0) {
 # as CL1 x Cp integrated by the trapezoid, at the end of the run.
 eliminated <- function(r) {
   n <- length(r$t)
-  body <- r$cp[n] * r$pk$v1 + (if (is.null(r$c2)) 0 else r$c2[n] * r$pk$v2) +
-          (if (is.null(r$c3)) 0 else r$c3[n] * r$pk$v3)
+  body <- r$amountScale * (r$cp[n] * r$pk$v1 + (if (is.null(r$c2)) 0 else r$c2[n] * r$pk$v2) +
+          (if (is.null(r$c3)) 0 else r$c3[n] * r$pk$v3))
   c(viewer = r$given[n] - body,
-    integral = r$pk$cl1 * sum((r$cp[-1] + r$cp[-n]) / 2 * diff(r$t) / 60))
+    integral = r$amountScale * r$pk$cl1 * sum((r$cp[-1] + r$cp[-n]) / 2 * diff(r$t) / 60))
 }
 
 TOL <- 1e-3
@@ -156,11 +165,12 @@ test_that("a saturable drug: given is the doses, eliminated never falls", {
 
 test_that("drugs the viewer cannot draw say why", {
   D <- recalculatePK(NULL, getDrugDefaultsGlobal(),
-                     data.frame(Drug = c("ketorolac", "heparin"), Time = 0, Dose = c(30, 5000),
-                                Units = c("mg", "IU")),
+                     data.frame(Drug = c("ketorolac", "fluindione", "mannitol"), Time = 0,
+                                Dose = c(30, 20, 50), Units = c("mg", "mg PO", "g")),
                      age = 40, weight = 70, height = 170, sex = "male")
   expect_match(viewerProblem(D$ketorolac), "separate systems")
-  expect_match(viewerProblem(D$heparin), "mcg/mL, ng/mL or pg/mL")
+  expect_match(viewerProblem(D$fluindione), "INR")
+  expect_match(viewerProblem(D$mannitol), "osmolality")
   expect_match(viewerProblem(NULL), "no simulation")
   expect_null(viewerProblem(recalculatePK(NULL, getDrugDefaultsGlobal(),
     data.frame(Drug = "propofol", Time = 0, Dose = 1, Units = "mg/kg"),
@@ -180,4 +190,65 @@ test_that("a target and a manual infusion at one time: the target wins", {
   expect_true(all(r$target == 3))
   expect_equal(r$rate, a$rate)
   expect_equal(r$given, a$given)
+})
+
+test_that("the plot's own points are used when they are close enough", {
+  doses <- data.frame(Drug = "fentanyl", Time = 0, Dose = 100, Units = "mcg")
+  plot <- plotSimulation(doses, 60)
+  # The plot's time line has gaps of minutes: too coarse, so re-solved.
+  expect_false(viewerGridFine(plot$fentanyl, 0, 60))
+  expect_true(viewerEntry(doses, 60)$viewerResolved)
+  # A plot dense enough is used as it is, nothing re-solved, and the run is
+  # the plot's own numbers.
+  fine <- viewerEntry(doses, 60)
+  fine$viewerResolved <- NULL
+  expect_true(viewerGridFine(fine, 0, 60))
+  e <- viewerPlotEntry("fentanyl", fine, doses, NO_EVENTS, list(fentanyl = fine), 0, 60)
+  expect_false(e$viewerResolved)
+  expect_identical(e$wide, fine$wide)
+})
+
+test_that("an ACT drug is drawn as the anti-Xa activity its ACT comes from", {
+  doses <- data.frame(Drug = "heparinCPB", Time = 0, Dose = 30000, Units = "IU")
+  plot <- plotSimulation(doses, 120)
+  r <- vr(doses, 120)
+  expect_equal(r$units$conc, "IU/mL")
+  expect_equal(r$units$amount, "IU")
+  expect_equal(r$amountScale, 1000)
+  expect_false(is.null(r$c2))
+  # The plot's ACT, put back through its Emax link, is the run's activity.
+  act <- plot$heparinCPB$act
+  w <- plot$heparinCPB$wide
+  w <- w[w$Time > 1 & w$Time < 119, ]
+  x <- w$Plasma - act$act0
+  cp <- act$c50 * x / (act$emax - x)
+  expect_equal(stats::approx(r$t / 60, r$cp, w$Time)$y, cp, tolerance = 1e-3)
+  # The drug given is the dose, in IU, and the body holds what the
+  # concentrations and volumes say.
+  expect_equal(utils::tail(r$given, 1), 30000, tolerance = 1e-9)
+  n <- length(r$t)
+  body <- r$amountScale * (r$cp[n] * r$pk$v1 + r$c2[n] * r$pk$v2)
+  expect_gt(body, 0)
+  expect_lt(body, 30000)
+})
+
+test_that("drugs in IU, U and mmol: the amounts are in IU, U and mmol", {
+  r <- vr(data.frame(Drug = "heparin", Time = 0, Dose = 5000, Units = "IU"), 60)
+  expect_equal(r$units$amount, "IU")
+  expect_equal(utils::tail(r$given, 1), 5000, tolerance = 1e-9)
+  e <- eliminated(r)
+  expect_lt(abs(e[["viewer"]] - e[["integral"]]) / 5000, 1e-3)
+  v <- vr(data.frame(Drug = "vasopressin", Time = 0, Dose = 0.04, Units = "U/min"), 60)
+  expect_equal(v$units$amount, "U")
+  expect_equal(utils::tail(v$given, 1), 0.04 * 60, tolerance = 1e-9)
+  # The vasopressin in the body, in U, is its concentration (mcU/mL = mU/L)
+  # times the volume, over 1000.
+  n <- length(v$t)
+  expect_equal(v$amountScale, 1e-3)
+  expect_lt(v$amountScale * v$cp[n] * v$pk$v1, 0.04 * 60)
+  # Calcium is dosed as a salt: drawn, with the drug given unknown.
+  ca <- vr(data.frame(Drug = "calcium", Time = 0, Dose = 1, Units = "g chloride"), 60)
+  expect_equal(ca$units$conc, "mmol/L")
+  expect_false(ca$inputKnown)
+  expect_null(ca$given)
 })

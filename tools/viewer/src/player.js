@@ -102,6 +102,7 @@ function runProblem(r) {
     }
     if (r.c2 == null && r.c3 != null) return 'c3 is given without c2.';
     if (r.inputKnown != null && typeof r.inputKnown !== 'boolean') return 'inputKnown must be true or false.';
+    if (r.amountScale != null && !(Number.isFinite(r.amountScale) && r.amountScale > 0)) return 'amountScale must be a number above 0.';
     if (r.mode != null) {
         if (!Array.isArray(r.mode) || r.mode.length !== n) return `mode must be an array as long as t (${n}).`;
         const bad = r.mode.findIndex(m => !MODES.includes(m));
@@ -230,13 +231,15 @@ const Player = {
         this.pause();
         this.run = r;
         this.units = microUnits(r.units);
+        // Concentration x volume (L) x scale is the amount in units.amount.
+        this.scale = r.amountScale != null ? r.amountScale : 1;
         this.balance(r);
         const maxCp = Math.max(...r.cp);
         const level = r.typical > 0 ? r.typical : (maxCp > 0 ? maxCp / 2 : 1);
         const mag = Math.floor(Math.log10(level));
         this.ui = {
             showCe: r.ce != null, concScale: 3 / level, units: this.units,
-            drugRgb: hexRgb(runColour(r)), concDecimals: Math.max(0, 2 - mag), conc: 10 / 3 * level
+            drugRgb: hexRgb(runColour(r)), concDecimals: Math.max(0, 2 - mag), conc: 10 / 3 * level * this.scale
         };
         this.n = 1 + (r.c2 != null) + (r.c3 != null);
         View.resetGlass();
@@ -269,7 +272,7 @@ const Player = {
         for (let i = 0; i < n; i++) {
             if (i) inf += r.rate[i - 1] * (r.t[i] - r.t[i - 1]) / 60;
             const given = r.given != null ? r.given[i] : inf + b.reduce((s, x) => s + (x.t <= r.t[i] ? x.amount : 0), 0);
-            const body = r.cp[i] * pk.v1 + (r.c2 != null ? r.c2[i] * pk.v2 : 0) + (r.c3 != null ? r.c3[i] * pk.v3 : 0);
+            const body = this.scale * (r.cp[i] * pk.v1 + (r.c2 != null ? r.c2[i] * pk.v2 : 0) + (r.c3 != null ? r.c3[i] * pk.v3 : 0));
             this.elim[i] = Math.max(0, given - body);
         }
     },
@@ -301,7 +304,8 @@ const Player = {
         // Eliminated, interpolated like the concentrations; administered is
         // then what is in the body plus what is eliminated, so the amounts
         // card always adds up.
-        const A1 = cp * pk.v1, A2 = c2 != null ? c2 * pk.v2 : 0, A3 = c3 != null ? c3 * pk.v3 : 0;
+        const sc = this.scale;
+        const A1 = sc * cp * pk.v1, A2 = c2 != null ? sc * c2 * pk.v2 : 0, A3 = c3 != null ? sc * c3 * pk.v3 : 0;
         const elim = this.elim ? lerp(this.elim) : null;
         const depot = r.depot != null ? Math.max(0, lerp(r.depot)) : null;
         const absorbed = r.absorbed != null ? lerp(r.absorbed) : null;
@@ -316,9 +320,9 @@ const Player = {
             flow: {
                 in: rate,
                 abs: Math.max(0, slope(r.absorbed)),
-                to2: c2 != null ? pk.v2 * slope(r.c2) : 0,
-                to3: c3 != null ? pk.v3 * slope(r.c3) : 0,
-                out: this.elim ? Math.max(0, slope(this.elim)) : pk.cl1 * cp
+                to2: c2 != null ? sc * pk.v2 * slope(r.c2) : 0,
+                to3: c3 != null ? sc * pk.v3 * slope(r.c3) : 0,
+                out: this.elim ? Math.max(0, slope(this.elim)) : sc * pk.cl1 * cp
             }
         };
     },

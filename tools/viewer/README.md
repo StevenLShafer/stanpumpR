@@ -13,7 +13,9 @@ The visualizer shows one drug's run from stanpumpR in 3D:
 
 Double-click a drug's panel on the plot. The **Edit *drug* doses** dialog has a **Minto Visualizer** button after **Delete All Doses**; it is shown only for a drug the visualizer can draw. A click opens the visualizer in a pop-up window at once (a window opened later, when the server answers, would be stopped by popup blockers); if the browser blocks it, the app says so.
 
-The run is a **snapshot of the committed dose table** at the click (press Apply first to see edits), with every covariate the plot uses, and it spans **the plot's x-axis, from Min time to Max time**. The time is shown as a progress bar, as a video player shows it. Drug given before Min time is counted: the vessels start full and the amounts card starts from what was given since time 0.
+The click also closes the dialog, so stanpumpR stays free to use while the visualizer plays: once the run has arrived, the pop-up needs nothing more from the server.
+
+The run is **the plot's own concentrations**, a snapshot of the committed dose table at the click (press Apply first to see edits), and it spans **the plot's x-axis, from Min time to Max time**. No PK is solved while it plays. When it is built, nothing is solved either if the plot's own points are close enough to animate (`viewerGridFine()`: no gap longer than two of the visualizer's steps); a plot's time line is dense only near doses and kinks, with gaps of an hour on an oral run, so the drug is usually re-solved on the visualizer's times, with the plot's own PK (no covariate recomputed; about a second). Everything is in the **concentration domain**: a drug plotted as an ACT (heparinCPB) is drawn as the anti-Xa activity, IU/mL, that its ACT is computed from. The time is shown as a progress bar, as a video player shows it. Drug given before Min time is counted: the vessels start full and the amounts card starts from what was given since time 0.
 
 The controls: **Play**, **Pause**, **Stop** (pause and go back to the start), the progress bar (drag to any time), a **Speed** slider (real time to 1 s = 1 day; a run first plays in at most two minutes), and an **X**, upper left, that closes the window. The mouse turns and zooms the scene; **h** lists the keys.
 
@@ -33,9 +35,9 @@ The controls: **Play**, **Pause**, **Stop** (pause and go back to the start), th
 
 ## Which drugs
 
-Every drug measured in mcg/mL, ng/mL or pg/mL, whatever its model: linear or saturable (Michaelis–Menten), closed form, transit chain or Runge–Kutta. The visualizer computes no pharmacokinetics: it draws stanpumpR's concentrations, and reads every flow from the amounts as they change, so a flow is right for any model.
+Every drug whose plot is a concentration in mcg/mL, ng/mL, pg/mL, IU/mL, mcU/mL or mmol/L (amounts in mg, mcg, ng, IU, U or mmol), and heparinCPB as its anti-Xa activity, whatever its model: linear or saturable (Michaelis–Menten), closed form, transit chain or Runge–Kutta. The visualizer computes no pharmacokinetics: it draws stanpumpR's concentrations, and reads every flow from the amounts as they change, so a flow is right for any model.
 
-Not drawn (`viewerProblem()`): inhaled agents; drugs in IU, mmol, mcU, INR or ACT; and drugs that are the sum of separate systems (ketorolac's S and R enantiomers), which one set of compartments cannot show.
+Not drawn (`viewerProblem()`): inhaled agents; drugs plotted as an INR (fluindione, acenocoumarol: stanpumpR keeps no drug concentration for them), a serum osmolality (mannitol), a percentage or a flow; and drugs that are the sum of separate systems (ketorolac's S and R enantiomers, warfarin), which one set of compartments cannot show. A drug dosed as a salt in mmol (calcium) is drawn with the drug given unknown.
 
 **The drug given, and eliminated.** `given` counts intravenous rates and boluses (scheduled repeats and the TCI pump's schedule included), the apparent-oral rates (`mg/day PO`) that run straight into V1, and the drug absorbed from a depot, read off the fall of stanpumpR's `Depot` column (the bioavailable amount still to be absorbed; stanpumpR puts a point just before and at each arrival, so the rise holds no absorption to speak of: about 0.01% of a dose). Eliminated is then given less the drug in V1 + V2 + V3. A few drugs have an input stanpumpR rewrites beyond the dose rows — a zero-order oral or SC release, an enteral infusion, exenatide's saturable SC input — and a metabolite's input is its formation: for those the run says `inputKnown: false`, the amounts card leaves administered and eliminated blank, and elimination is drawn as CL1 × Cp.
 
@@ -50,7 +52,8 @@ Not drawn (`viewerProblem()`): inhaled agents; drugs in IU, mmol, mcU, INR or AC
 | `format`, `version` | `"stanpumpR-viewer"`, `2` |
 | `drug`, `model`, `category` | Labels; `category` (stanpumpR's) sets the colour. |
 | `typical` | stanpumpR's typical concentration for the drug: the height scale. |
-| `units` | `conc`, `amount`, `rate`: stanpumpR's base units for the drug. |
+| `units` | `conc`, `amount`, `rate`: the concentration and amount units shown. |
+| `amountScale` | Concentration × volume (L) × this is the amount in `units.amount` (1000 for IU, 1/1000 for U; 1 otherwise). |
 | `patient` | `weight`, `height`, `age`, `sex`, for the readout. |
 | `pk` | `v1, v2, v3` (L) and `cl1, cl2, cl3` (L/min): the vessels' sizes (and, without a known input, CL1 for elimination). |
 | `t` | Times, in **seconds**, increasing, from Min time to Max time: 1 s apart, longer on plots over 2 h (at most about 7200 times); the last is Max time. |

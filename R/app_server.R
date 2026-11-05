@@ -2294,10 +2294,12 @@ app_server <- function(input, output, session) {
   # The Minto Visualizer (R/viewerRun.R, inst/www/viewer-launch.js,
   # inst/www/stanpumpR-viewer.html; source tools/viewer): the Edit doses
   # dialog's button opens the popup at once in the browser (a window opened
-  # later, when the server answers, would be stopped by popup blockers); the
-  # server then simulates the drug at the viewer's times, from the plot's Min
-  # time to its Max time, with every covariate the plot used, and sends the
-  # run. The run is a snapshot of the committed dose table at the click.
+  # later, when the server answers, would be stopped by popup blockers) and
+  # closes the dialog, so the app is free while the visualizer plays. The run
+  # is the plot's own: the drug's concentrations from drugs(), from the
+  # plot's Min time to its Max time, re-solved with the plot's PK only where
+  # its points are too far apart to animate (viewerPlotEntry()). A snapshot
+  # of the committed dose table at the click.
   viewerAvailable <- function(drug) {
     isTRUE(tryCatch(is.null(viewerProblem(isolate(drugs())[[drug]])), error = function(e) FALSE))
   }
@@ -2305,6 +2307,7 @@ app_server <- function(input, output, session) {
   observeEvent(input$openViewer, {
     profileCode({
       drug <- skipTarget()$drug
+      removeModal()
       # Told in the app and in the viewer's window, which would otherwise
       # wait for a run that is not coming.
       fail <- function(message) {
@@ -2314,9 +2317,10 @@ app_server <- function(input, output, session) {
       blocked <- simulationBlocked()
       if (!is.null(blocked)) return(fail(blocked))
       run <- tryCatch({
-        DT <- doseTableIV()
-        entry <- viewerSimulate(drug, DT, eventTableClean(), drugPK(DT),
-                                plotMinimum(), plotMaximum(), antiseizureInteractions())
+        plotted <- drugs()
+        plotted <- plotted[!isGasDrug(names(plotted))]
+        entry <- viewerPlotEntry(drug, plotted[[drug]], doseTableIV(), eventTableClean(), plotted,
+                                 plotMinimum(), plotMaximum(), antiseizureInteractions())
         defaults <- drugDefaults()
         viewerRun(entry, plotMinimum(), plotMaximum(),
                   category = defaults$Category[match(drug, defaults$Drug)])
