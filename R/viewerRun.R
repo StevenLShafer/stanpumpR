@@ -265,7 +265,8 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
     !any(enteral) && nrow(d) > 0
 
   # The target and the mode in force: a target row starts TCI (a target of 0
-  # stops it), and a later manual infusion row stops it.
+  # stops it), and a manual infusion row strictly after it stops it; one at
+  # the target's own time does not, the target winning (R/tci.R).
   targets <- d[tci, , drop = FALSE]
   stops <- manual$Time
   modeAt <- character(length(times)); targetAt <- numeric(length(times))
@@ -274,7 +275,7 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
     i <- which(targets$Time <= t + 1e-9)
     if (!length(i)) { modeAt[j] <- "manual"; next }
     last <- targets[max(i), ]
-    if (last$Dose <= 0 || any(stops > last$Time - 1e-9 & stops <= t + 1e-9)) { modeAt[j] <- "manual"; next }
+    if (last$Dose <= 0 || any(stops > last$Time + 1e-9 & stops <= t + 1e-9)) { modeAt[j] <- "manual"; next }
     modeAt[j] <- if (last$Units == TCI_UNIT_EFFECT) "effect" else "plasma"
     targetAt[j] <- last$Dose
   }

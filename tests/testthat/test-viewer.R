@@ -166,3 +166,18 @@ test_that("drugs the viewer cannot draw say why", {
     data.frame(Drug = "propofol", Time = 0, Dose = 1, Units = "mg/kg"),
     age = 40, weight = 70, height = 170, sex = "male")$propofol))
 })
+
+test_that("a target and a manual infusion at one time: the target wins", {
+  # R/tci.R: when both are entered at the same time the target wins, and the
+  # simulator zeroes the manual infusion (test-tci.R). The run must say TCI,
+  # with its target, as its pump rate already does.
+  both <- data.frame(Drug = "propofol", Time = c(0, 0), Dose = c(100, 3),
+                     Units = c("mcg/kg/min", "Effect site target"))
+  alone <- data.frame(Drug = "propofol", Time = 0, Dose = 3, Units = "Effect site target")
+  r <- vr(both, 30)
+  a <- vr(alone, 30)
+  expect_true(all(r$mode == "effect"))
+  expect_true(all(r$target == 3))
+  expect_equal(r$rate, a$rate)
+  expect_equal(r$given, a$given)
+})
