@@ -53,6 +53,15 @@ const KNOWN_GAP = {
       'only the colour says so',
     'a paste cannot grow the table past its row limit, and says so':
       'the rows past the limit are dropped without a word',
+    'a pasted row whose drug is refused changes nothing':
+      'its time, dose and unit are applied to the drug the row held: "notadrug 5 999 mg/kg" over a propofol row ' +
+      'made it propofol 5 999 mg/kg, without a word',
+    'a column of drug names pasted over rows starts each row afresh':
+      'each row keeps its time and dose for the new drug: propofol 10 100 mg became fentanyl 10 100 mcg',
+    'emptying a drug cell and pressing Enter clears the row':
+      'Enter on the emptied cell takes the first drug in the list: the row became acenocoumarol',
+    'undo never brings back a unit the row\'s drug does not offer':
+      'undo after a drug pasted over propofol 0 2 mg/kg restored morphine 0 2 mg/kg, a half-applied paste',
     'a name that is not in the library is refused':
       'intermittently, Enter commits the first match of what the list held a moment earlier: ' +
       '"notadrug" was stored as norepinephrine (and, in the external review, "morphine" as mannitol)'
@@ -622,6 +631,152 @@ describe('Ctrl+Z and Ctrl+Y', () => {
     const s = await H.serverState(page);
     assert.equal(s.draft[2][2], '100');
     assert.equal(s.table[2][2], '100');
+  });
+});
+
+
+// ---------------------------------------------------------------------------
+// From Gemini's review scripts of 2026-11-05, run here against both grids
+describe('the external review of 2026-11-05 (Gemini)', () => {
+  // A click on a cell that already has the focus put the caret where it
+  // landed, so what was typed was added to the value: 5 became 510 or 105
+  test('clicking a cell again and typing replaces its value', async () => {
+    await enter(2, 2, '5');
+    await holds(2, ['fentanyl', '0', '5', 'mcg']);
+    await adapter.focusCell(page, 2, 2);
+    await adapter.focusCell(page, 2, 2);
+    await page.keyboard.type('10');
+    await page.keyboard.press('Enter');
+    await H.settle(page);
+    await holds(2, ['fentanyl', '0', '10', 'mcg']);
+  });
+
+  test('a drug chosen with the arrow keys is the one taken, even when the name typed is a drug', async () => {
+    await adapter.typeInto(page, FIRST_BLANK, 0, 'digoxin');
+    const offered = await adapter.suggestions(page);
+    assert.deepEqual(offered.slice(0, 2), ['digoxin', 'digoxinIV']);
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await H.settle(page);
+    await H.waitForDraft(page, d => d[FIRST_BLANK][0] !== '');
+    assert.equal((await draft())[FIRST_BLANK][0], 'digoxinIV');
+    // and the name typed, without the arrow keys, is the name typed
+    await adapter.typeInto(page, FIRST_BLANK + 1, 0, 'digoxin');
+    await page.keyboard.press('Enter');
+    await H.settle(page);
+    await H.waitForDraft(page, d => d[FIRST_BLANK + 1][0] !== '');
+    assert.equal((await draft())[FIRST_BLANK + 1][0], 'digoxin');
+  });
+
+  gt('a pasted row whose drug is refused changes nothing', async () => {
+    await H.clearNotifications(page);
+    await adapter.focusCell(page, 0, 0);
+    await H.paste(page, 'fentanyl\t0\t50\tmcg\nnotadrug\t5\t999\tmg/kg\nketamine\t10\t20\tmg');
+    await H.settle(page, 600);
+    await holds(0, ['fentanyl', '0', '50', 'mcg']);
+    await holds(1, ['propofol', '0', '0', 'mcg/kg/min']);
+    await holds(2, ['ketamine', '10', '20', 'mg']);
+    const notes = await H.notifications(page);
+    assert.ok(notes.some(n => n.includes('"notadrug" is not a drug')), JSON.stringify(notes));
+  });
+
+  // One drug name pasted alone starts its row as a drug chosen alone does;
+  // so does a column of them
+  test('a drug pasted alone over a row starts it at time 0, dose 0 and its default unit', async () => {
+    await adapter.focusCell(page, 0, 0);
+    await H.paste(page, 'propofol\t0\t2\tmg/kg');
+    await H.settle(page);
+    await holds(0, ['propofol', '0', '2', 'mg/kg']);
+    await adapter.focusCell(page, 0, 0);
+    await H.paste(page, 'ketamine');
+    await H.settle(page);
+    await holds(0, ['ketamine', '0', '0', 'mg']);
+  });
+
+  gt('a column of drug names pasted over rows starts each row afresh', async () => {
+    await adapter.focusCell(page, 0, 0);
+    await H.paste(page, 'propofol\t10\t100\tmg\npropofol\t20\t50\tmcg/kg/min\nfentanyl\t30\t25\tmcg');
+    await H.settle(page);
+    await holds(0, ['propofol', '10', '100', 'mg']);
+    await adapter.focusCell(page, 0, 0);
+    await H.paste(page, 'fentanyl\nremifentanil\nketamine');
+    await H.settle(page, 600);
+    const unit = async d => (await H.drugInfo(page, d)).defaultUnit;
+    await holds(0, ['fentanyl', '0', '0', await unit('fentanyl')]);
+    await holds(1, ['remifentanil', '0', '0', await unit('remifentanil')]);
+    await holds(2, ['ketamine', '0', '0', await unit('ketamine')]);
+  });
+
+  gt('emptying a drug cell and pressing Enter clears the row', async () => {
+    await adapter.editCell(page, 3, 0);
+    await page.keyboard.press('ControlOrMeta+A');
+    await page.keyboard.press('Backspace');
+    await page.keyboard.press('Enter');
+    await H.settle(page);
+    await holds(3, ['', '', '', '']);
+  });
+
+  gt('undo never brings back a unit the row\'s drug does not offer', async () => {
+    await adapter.focusCell(page, 0, 0);
+    await H.paste(page, 'propofol\t0\t2\tmg/kg');
+    await H.settle(page);
+    await holds(0, ['propofol', '0', '2', 'mg/kg']);
+    await adapter.focusCell(page, 0, 0);
+    await H.paste(page, 'morphine');
+    await H.settle(page);
+    await H.waitForDraft(page, d => d[0][0] === 'morphine');
+    await page.click('#dosetable_undo');
+    await H.settle(page, 600);
+    const d = await draft();
+    for (const row of H.filled(d)) {
+      const units = (await H.drugInfo(page, row[0])).units;
+      assert.ok(units.includes(row[3]), `${row[0]} holds ${row[3]}, which it does not offer`);
+    }
+    await holds(0, ['propofol', '0', '2', 'mg/kg']);
+  });
+
+  // A browser sends no paste event to a <select>: Ctrl+V on a Units cell
+  // did nothing.  The cell is reached from the keyboard here; a click opens
+  // its list, as a click on any list does.
+  test('a unit pasted on a Units cell is used, or refused and said', async () => {
+    await adapter.focusCell(page, 2, 2);
+    await page.keyboard.press('Tab');
+    await H.clearNotifications(page);
+    await H.paste(page, 'furlongs');
+    await H.settle(page);
+    await holds(2, ['fentanyl', '0', '0', 'mcg']);
+    const notes = await H.notifications(page);
+    assert.ok(notes.some(n => /"furlongs" is not a unit offered for fentanyl/.test(n)), JSON.stringify(notes));
+    await adapter.focusCell(page, 2, 2);
+    await page.keyboard.press('Tab');
+    await H.paste(page, 'mcg/kg');
+    await H.settle(page);
+    await holds(2, ['fentanyl', '0', '0', 'mcg/kg']);
+  });
+
+  // On a <select> the arrow keys change its value: going down the Units
+  // column changed every row's unit
+  test('ArrowDown on a Units cell moves down a row and changes no unit', async () => {
+    await adapter.focusCell(page, 0, 2);
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await H.settle(page);
+    assert.deepEqual(await adapter.activeCell(page), [2, 3]);
+    await holds(0, ['propofol', '0', '0', 'mg']);
+    await holds(1, ['propofol', '0', '0', 'mcg/kg/min']);
+    await holds(2, ['fentanyl', '0', '0', 'mcg']);
+  });
+
+  test('a paste leaves a blank row below the last dose', async () => {
+    const lines = [];
+    for (let i = 0; i < 50; i++) lines.push(`fentanyl\t${i}\t1\tmcg`);
+    await adapter.focusCell(page, FIRST_BLANK, 0);
+    await H.paste(page, lines.join('\n'));
+    await H.settle(page, 800);
+    await H.waitForDraft(page, d => H.filled(d).length === 56, 60000);
+    const shown = await H.waitForRows(page, adapter, rows => H.filled(rows).length === 56, 60000);
+    assert.deepEqual(shown[shown.length - 1], ['', '', '', '']);
   });
 });
 

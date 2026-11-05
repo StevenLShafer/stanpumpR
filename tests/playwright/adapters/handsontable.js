@@ -47,6 +47,12 @@ module.exports = {
     await page.keyboard.type(text);
   },
 
+  // Open the cell's editor on its text (Enter)
+  async editCell(page, r, c) {
+    await this.focusCell(page, r, c);
+    await page.keyboard.press('Enter');
+  },
+
   async clearCell(page, r, c) {
     await this.focusCell(page, r, c);
     await page.keyboard.press('Delete');

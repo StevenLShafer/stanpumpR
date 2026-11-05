@@ -22,13 +22,14 @@ The reasons, each measured below:
      is lost.
 2. **Its licence is ours**, and it adds no dependency.
 3. **It is about 9 KB gzipped**, against 100-525 KB for the libraries.
-4. **It is held to the same regression suite**, which it passes: 45 of 46
-   cases, the 46th being a page-level script error from the rhandsontable
-   grid still on the Single Paper Review tab. rhandsontable has 13 known
+4. **It is held to the same regression suite**, which it passes: 55 of 56
+   cases, the 56th being a page-level script error from the rhandsontable
+   grid still on the Single Paper Review tab. rhandsontable has 16 known
    failures besides that one, and each is a real defect of the grid in use
-   today (two of them, a typed `1,5` stored as 15 and a drug name committed
-   as another drug, can put a wrong dose or drug into the table without a
-   word).
+   today. Several can put a wrong dose, drug or unit into the table without
+   a word: a typed `1,5` stored as 15, a drug name or an emptied cell
+   committed as another drug, a refused row's dose applied to the row's drug,
+   and an undo back to a unit the drug does not offer.
 
 ## Why replace it
 
@@ -63,7 +64,7 @@ The reasons, each measured below:
 
 ## What the suite found
 
-The suite is `tests/playwright/` (README there): 46 cases, driven by
+The suite is `tests/playwright/` (README there): 56 cases, driven by
 keystrokes and the clipboard in headless Chromium, and checked on the screen
 and in the server's draft (`exportTestValues()`, test mode only). The same
 cases run against both grids, through a small adapter per grid.
@@ -82,6 +83,14 @@ cases run against both grids, through a small adapter per grid.
 | Home and End go to the row's first and last cell | pass | pass |
 | Ctrl+Z with the focus outside the grid undoes the last edit | **fail: Ctrl+Z does nothing** | pass |
 | The grid's own code raises no script error (edits, drug list, row menu) | pass | pass |
+| Clicking a cell again and typing replaces its value | pass | pass (failed before 2026-11-05: appended at the caret) |
+| A drug chosen with the arrow keys is taken, even when the name typed is a drug | pass | pass (failed before: `digoxin` kept over `digoxinIV`) |
+| A pasted row whose drug is refused changes nothing | **fail: its dose goes to the row's drug** | pass |
+| A column of drug names pasted over rows starts each row afresh | **fail: the old doses kept for the new drugs** | pass |
+| Emptying a drug cell and pressing Enter clears the row | **fail: stored as acenocoumarol** | pass |
+| Undo never brings back a unit the drug does not offer | **fail: morphine in mg/kg** | pass |
+| A unit pasted on a Units cell is used, or refused and said; ArrowDown there moves down | pass | pass (failed before: no paste; ArrowDown changed the unit) |
+| A paste leaves a blank row below the last dose | pass | pass (failed before) |
 | Rows inserted, removed, all removed | pass | pass |
 | Time header tip; change of time unit; time-format stamp | pass | pass |
 | Draft / Apply / undo / redo; a gas rule's rows drawn | pass | pass |
@@ -337,6 +346,46 @@ browser where it could be, before anything was changed (AGENTS.md,
 
 On the server side, `test-dose-grid.R` covers each value the review sent from the console.
 
+## The external review of 2026-11-05 (Gemini)
+
+Gemini (Antigravity) sent four Playwright scripts and one results file. The
+scripts cover parts A1, B1-B2, B3 and B4-B5 of the brief; the results file is
+B3, the Time and Dose entries. It sent no written findings. Its B3 data was
+taken before `0d481c7`: a typed `1,5` is still stored as 15 in it, on the
+prototype as well. So the scripts were run again here, unchanged except for
+their paths, against `0d481c7` on both grids. Every result below is from those
+runs, read against R's `validateTime()`/`validateDose()` and checked by hand in
+the browser.
+
+**Prototype defects found, each fixed and now a case of the suite:**
+
+| What the scripts did | What happened | Fix |
+|---|---|---|
+| Clicked a cell that already had the focus, then typed | The text was added at the caret, not replaced: a reset to `0` over `1000` gave `01000`, over `1000000001` gave `10000000001`. The cause of every odd prototype value in Gemini's B3 data. | A cell is "being edited" only once something is typed in it, or after F2 or a double click. Until then any click selects its whole text, and what is typed replaces it, as in a spreadsheet. |
+| Typed `digoxin`, ArrowDown to `digoxinIV`, Enter | **digoxin** was stored: because the text typed was itself a drug, Enter took the text over the drug chosen with the arrow keys. | Enter, Tab and leaving the cell take the option the user moved to. An exact name is listed first. |
+| Pasted `notadrug 5 999 mg/kg` over a propofol row (**both grids**) | The drug was refused, but its time, dose and unit were applied to the propofol row: **propofol 5 999 mg/kg**. | A pasted row whose drug is refused is refused whole, and said so. |
+| Pressed ArrowDown on a Units cell | The unit changed (`mg` to `mg/kg`): on a `<select>` the arrow keys change the value. A keyboard user going down the column changed every row's unit. | ArrowUp and ArrowDown move between rows in every column. The list opens with Alt+Down or Space, or the unit is typed. |
+| Pressed Ctrl+V on a Units cell | Nothing, and nothing said: a browser sends no paste event to a `<select>`. | For that one key the focus moves to a hidden text field, which gets the paste, and comes back. The paste is applied to the cell, or refused and said. |
+| Pasted 50 rows | No blank row was drawn below them, though the draft had one. | Drawn as soon as it is added. |
+| Pasted `ketamine` alone over `propofol 0 2 mg/kg` | Time and dose were reset to 0, but the unit stayed `mg/kg`. | A drug pasted alone takes its default unit, as a drug chosen by typing does. |
+| Home and End in the row menu | Did nothing. | First and last item. |
+
+**Defects of the rhandsontable grid in use today, found by the same scripts:**
+
+- Clearing a drug cell (select all, Backspace, Enter) stores **acenocoumarol**, the first drug in the list.
+- Undo after a drug pasted over `propofol 0 2 mg/kg` restores **morphine 0 2 mg/kg**, a unit morphine does not offer. The history holds the paste half applied.
+- A column of drug names pasted over rows keeps each row's time and dose for the new drug: `propofol 10 100 mg` becomes **fentanyl 10 100 mcg**.
+- The refused-row case above, with no message at all.
+- `notadrug` stored as **norepinephrine** (the stale list, above), reproduced again.
+
+All five are known gaps of the suite on that grid. Each can put a wrong drug, dose or unit into the table, which is why decision 6 below now asks about more than the key filter.
+
+**Not defects:**
+
+- A time of `007` is stored as `7`. `hot_funs.js` strips leading zeros on purpose, and the result is one of R's fixed points.
+- A paste while typing goes in at the caret (`45` becomes `41235`), as in any text field. Handsontable put it in the Time cell.
+- The remaining B1-B5 results agree on both grids: list order and highlight, units in order, long units, Tab, Shift+Tab, Enter, Escape, Ctrl+Z and Ctrl+Y, rows inserted and removed, and every connection kept.
+
 ## Decisions for Steven Shafer
 
 These are pending. Record each answer here.
@@ -361,11 +410,18 @@ These are pending. Record each answer here.
 5. **[decision] The suite in CI.** A workflow with R and Chromium would run
    `tests/playwright/run.js` in about 15 minutes (most of it rhandsontable's
    510-row paste). Every PR, only PRs that touch the grid, or by hand?
-6. **[decision] The key filter in production** (F01, 2026-11-05). The
-   rhandsontable grid in use today stores a typed `1,5` as 15 and `1a0` as 10
-   without a word, because `hookFilterKeys()` in `inst/www/hot_funs.js` drops
-   the keys a number cannot hold. A paste of the same text is refused with a
-   message. The prototype no longer filters keys. Fix the production grid now,
-   in its own small pull request (letting every key through, so that
-   `hookSanitize()` refuses the entry as it refuses a paste), or leave it until
-   the switch?
+6. **[decision] The production grid's data-entry defects** (2026-11-05).
+   The rhandsontable grid in use today:
+   - stores a typed `1,5` as 15 and `1a0` as 10 without a word, because
+     `hookFilterKeys()` in `inst/www/hot_funs.js` drops the keys a number
+     cannot hold (a paste of the same text is refused with a message);
+   - can commit a drug name as another drug (`notadrug` as norepinephrine,
+     a cleared cell as acenocoumarol);
+   - applies a refused pasted row's dose to the drug the row held;
+   - carries a dose over to a drug pasted in its place;
+   - can be undone to a unit the drug does not offer.
+
+   The prototype has none of these. Fix the first, the one-line cause, in its
+   own small pull request now (letting every key through, so that
+   `hookSanitize()` refuses the entry as it refuses a paste), and switch to
+   the prototype for the rest? Or leave all of them until the switch?

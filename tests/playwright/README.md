@@ -50,8 +50,8 @@ STANPUMPR_URL=http://127.0.0.1:7311/ STANPUMPR_GRID=native node --test --test-co
   observer ends it.
 - A case one grid is known to fail is listed in `KNOWN_GAP` at the top of the
   test file, with the reason. It is reported as a todo, so the run stays
-  green while the suite still states the bar. On rhandsontable, twelve cases
-  are known to fail:
+  green while the suite still states the bar. On rhandsontable, sixteen
+  cases are known to fail:
   - the first key typed after a commit is lost while the server redraws the
     grid;
   - over a 400 ms link, two doses typed one after another lose a row;
@@ -64,15 +64,21 @@ STANPUMPR_URL=http://127.0.0.1:7311/ STANPUMPR_GRID=native node --test --test-co
   - the grid's controls have no names a screen reader can read, and an
     illicit drug is shown only by its colour;
   - Ctrl+Z does nothing (four cases): the redraw after every edit clears
-    Handsontable's own undo history.
-- Every case that changes a row checks it twice, on the screen and in the
-  server's draft (`holds()` in the test file).
-- A case with options is written `gt(name, { timeout }, fn)`: `gt()` takes
-  the options before the function, as `test()` does.
+    Handsontable's own undo history;
+  - from Gemini's scripts (2026-11-05):
+    - a cleared drug cell is stored as acenocoumarol;
+    - a refused pasted row's dose is applied to the row's drug;
+    - a column of drug names pasted over rows keeps the old doses for the
+      new drugs;
+    - undo can bring back a unit the drug does not offer.
 
   The script error that rhandsontable's bundled `numbro` raises on every load
   is a known gap for both grids while any rhandsontable grid is still on the
   page (the Single Paper Review tab has one).
+- Every case that changes a row checks it twice, on the screen and in the
+  server's draft (`holds()` in the test file).
+- A case with options is written `gt(name, { timeout }, fn)`: `gt()` takes
+  the options before the function, as `test()` does.
 
 The Node tests in `tests/testthat` (`test-dose-table-paste.R`,
 `test-ui-keyboard-crashes.R`) replay these cases against `hot_funs.js` alone.

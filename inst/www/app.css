@@ -953,3 +953,11 @@ table.dose-grid td.dose-grid-col3 select:disabled {
 .dose-grid-unit-text:empty::after {
   content: none;
 }
+.dose-grid-paste-sink {
+  position: absolute;
+  left: -10000px;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}

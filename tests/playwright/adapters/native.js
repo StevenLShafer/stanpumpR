@@ -34,6 +34,12 @@ module.exports = {
     await page.keyboard.type(text);
   },
 
+  // Edit the cell, the caret at the end of its text (F2)
+  async editCell(page, r, c) {
+    await this.focusCell(page, r, c);
+    await page.keyboard.press('F2');
+  },
+
   async clearCell(page, r, c) {
     await this.focusCell(page, r, c);
     await page.keyboard.press('Delete');

@@ -88,11 +88,17 @@
     root.addEventListener('focusin', function(e) { self.onFocusIn(e); });
     root.addEventListener('focusout', function(e) { self.onFocusOut(e); });
     root.addEventListener('mouseup', function(e) { self.onMouseUp(e); });
+    root.addEventListener('dblclick', function(e) { self.onDoubleClick(e); });
     root.addEventListener('input', function(e) { self.onInput(e); });
     root.addEventListener('change', function(e) { self.onChange(e); });
     root.addEventListener('paste', function(e) { self.onPaste(e); });
     root.addEventListener('contextmenu', function(e) { self.onContextMenu(e); });
     document.addEventListener('keydown', function(e) { self.onDocumentKey(e); });
+    // A browser sends no paste event to a <select>, so Ctrl+V on a Units
+    // cell did nothing and said nothing (the external review of 2026-11-05,
+    // Gemini's script, reproduced).  For that one key the focus moves to a
+    // hidden text field, which the paste reaches, and comes back to the cell.
+    this.pasteSink.addEventListener('paste', function(e) { self.onSinkPaste(e); });
     document.addEventListener('mousedown', function(e) {
       if (!self.menu.contains(e.target)) self.closeMenu();
       if (!self.listbox.contains(e.target) && e.target !== self.listboxFor) self.closeList();
@@ -110,6 +116,7 @@
     var help = el('p', { id: p + '-help', 'class': 'visually-hidden' },
       'One dose a row: drug, time, dose and units. Enter moves down a row; ' +
       'Ctrl+Z undoes the last edit and Ctrl+Y redoes it. ' +
+      'In a Units cell, type the unit, or press Alt+Down or Space for the list. ' +
       'For row actions (insert, remove), press Shift+F10 or right-click a row.');
     this.table.appendChild(caption);
     var thead = el('thead'), tr = el('tr');
@@ -145,6 +152,9 @@
       if (b) self.rowAction(self.menuRow, b.getAttribute('data-action'));
     });
     this.menu.addEventListener('keydown', function(e) { self.onMenuKey(e); });
+    this.pasteSink = el('textarea', { 'class': 'dose-grid-paste-sink', 'aria-hidden': 'true', tabindex: '-1',
+                                      'data-shiny-no-bind-input': '' });
+    this.root.appendChild(this.pasteSink);
     this.root.appendChild(help);
     this.root.appendChild(this.status);
     this.root.appendChild(this.scroller);
@@ -345,7 +355,11 @@
   // --- committing --------------------------------------------------------------
 
   DoseGrid.prototype.send = function() {
+    // the blank row below the last drug, drawn as soon as it is added (a
+    // paste of 50 rows left none on screen while the draft had one)
+    var n = this.rows.length;
     this.ensureTrailingBlank();
+    if (this.rows.length !== n) this.renderAll();
     this.seq += 1;
     this.value = {
       rows: this.rows.map(function(r) { return r.slice(); }),
@@ -357,6 +371,7 @@
 
   // The control's text committed to its cell; true if the model changed
   DoseGrid.prototype.commit = function(r, c) {
+    this.editing = null;
     var ctl = this.control(r, c);
     if (!ctl || !this.rows[r]) return false;
     var row = this.rows[r];
@@ -431,6 +446,35 @@
     this.pasteBlock(at[0], at[1], block);
   };
 
+  // Ctrl+V on a Units cell: the paste arrives at the hidden field
+  DoseGrid.prototype.catchPaste = function(at) {
+    var self = this;
+    this.sinkFor = at;
+    this.pasteSink.value = '';
+    this.pasteSink.focus();
+    // if no paste comes (an empty clipboard), the focus goes back all the same
+    setTimeout(function() { self.releasePaste(); }, 100);
+  };
+
+  DoseGrid.prototype.releasePaste = function() {
+    var at = this.sinkFor;
+    this.sinkFor = null;
+    if (at && document.activeElement === this.pasteSink) {
+      var ctl = this.control(at[0], at[1]);
+      if (ctl) ctl.focus();
+    }
+  };
+
+  DoseGrid.prototype.onSinkPaste = function(e) {
+    var at = this.sinkFor;
+    e.preventDefault();
+    if (!at) return;
+    var text = (e.clipboardData || window.clipboardData).getData('text');
+    this.releasePaste();
+    this.closeList();
+    this.pasteBlock(at[0], at[1], parseTSV(text));
+  };
+
   DoseGrid.prototype.pasteBlock = function(r0, c0, block) {
     var refusedEntries = [], refusedUnits = [], refusedDrugs = [];
     var dropped = 0;
@@ -444,11 +488,17 @@
       for (var j = 0; j < line.length && c0 + j < NCOL; j++) touched[c0 + j] = line[j];
       if (touched.hasOwnProperty(COLS.DRUG)) {
         var d = this.canonicalDrug(touched[COLS.DRUG], row[COLS.DRUG]);
-        if (d === null) refusedDrugs.push(trimEntry(touched[COLS.DRUG]));
-        else if (d !== row[COLS.DRUG]) {
+        // A pasted row whose drug is refused is refused whole: its time, dose
+        // and unit belong to that drug, not to the one the row already holds
+        // ("notadrug 5 999 mg/kg" over a propofol row made it propofol 999
+        // mg/kg; the external review of 2026-11-05, Gemini's script)
+        if (d === null) { refusedDrugs.push(trimEntry(touched[COLS.DRUG])); continue; }
+        if (d !== row[COLS.DRUG]) {
           var drugOnly = Object.keys(touched).length === 1;
           row[COLS.DRUG] = d;
-          if (drugOnly && d !== '') { row[COLS.TIME] = '0'; row[COLS.DOSE] = '0'; }
+          // a drug pasted alone starts its row as a drug chosen alone does:
+          // time 0, dose 0 and the drug's default unit
+          if (drugOnly && d !== '') { row[COLS.TIME] = '0'; row[COLS.DOSE] = '0'; row[COLS.UNITS] = ''; }
         }
       }
       if (isBlank(row[COLS.DRUG])) { this.rows[r] = blankRow(); continue; }
@@ -474,7 +524,7 @@
       this.settleUnit(row, asked);
     }
     if (refusedDrugs.length) {
-      notify(refusedDrugs.map(function(d) { return '"' + d + '" is not a drug in the library; it was not pasted.'; }), 'doseGridDrugRefused');
+      notify(refusedDrugs.map(function(d) { return '"' + d + '" is not a drug in the library; its row was not pasted.'; }), 'doseGridDrugRefused');
     }
     if (refusedEntries.length) notifyRefusedEntries(refusedEntries, COLS.TIME);
     notifyRefusedUnits(refusedUnits, "it was not used. Check the row's unit.");
@@ -540,6 +590,8 @@
     var i = items.indexOf(document.activeElement);
     if (e.key === 'ArrowDown') { items[(i + 1) % items.length].focus(); e.preventDefault(); }
     else if (e.key === 'ArrowUp') { items[(i - 1 + items.length) % items.length].focus(); e.preventDefault(); }
+    else if (e.key === 'Home') { items[0].focus(); e.preventDefault(); }
+    else if (e.key === 'End') { items[items.length - 1].focus(); e.preventDefault(); }
     else if (e.key === 'Escape' || e.key === 'Tab') { e.preventDefault(); this.closeMenu(); }
     e.stopPropagation();
   };
@@ -555,13 +607,29 @@
       var k = n.indexOf(t);
       if (k === 0) starts.push(this.choices[i]); else if (k > 0) within.push(this.choices[i]);
     }
+    // the name typed, if it is one, first
+    var exact = starts.filter(function(n) { return n.toLowerCase() === t; });
+    starts = exact.concat(starts.filter(function(n) { return n.toLowerCase() !== t; }));
     return starts.concat(within).slice(0, 50);
+  };
+
+  // The option Enter, Tab or leaving the cell takes: the one the user moved
+  // to with the arrow keys, or else the first match when what is typed is no
+  // drug.  Typing "digoxin", ArrowDown to "digoxinIV" and Enter stored
+  // digoxin, the text, not the drug chosen (the external review of
+  // 2026-11-05, Gemini's script, reproduced).
+  DoseGrid.prototype.chosenOption = function(t, current) {
+    if (this.listboxFor !== t || this.listbox.hidden || this.active < 0) return null;
+    if (!this.navigated && this.canonicalDrug(t.value, current) !== null) return null;
+    if (!this.navigated && trimEntry(t.value) === '') return null;
+    return this.listbox.children[this.active].textContent;
   };
 
   DoseGrid.prototype.openList = function(input) {
     var names = this.matches(input.value);
     this.listbox.textContent = '';
     this.active = -1;
+    this.navigated = false;
     if (names.length === 0) { this.closeList(); return; }
     var p = this.listbox.id;
     names.forEach(function(n, i) {
@@ -586,6 +654,7 @@
     this.listbox.hidden = true;
     this.listboxFor = null;
     this.active = -1;
+    this.navigated = false;
   };
 
   DoseGrid.prototype.setActive = function(i) {
@@ -613,35 +682,53 @@
     var at = this.cellOf(e.target);
     if (!at) return;
     this.focusedAt = at;
-    this.justFocused = true;
+    this.editing = null;
     if (e.target.tagName === 'INPUT') e.target.select();
   };
 
-  // A click into a cell selects its text, as a tab into it does: what is
-  // typed replaces it
+  // A cell is being edited (`editing`, its "row:col") once something is typed
+  // in it, or after F2 or a double click.  Until then a click selects its
+  // whole text, as a tab into it does, and what is typed replaces it, as in a
+  // spreadsheet.  A click on a cell that already had the focus used to put
+  // the caret where it landed, so a dose of 5 clicked again and typed as 10
+  // became 510 or 105 (the external review of 2026-11-05, Gemini's script,
+  // reproduced).  In a cell being edited a click places the caret.
+  DoseGrid.prototype.cellKey = function(at) { return at[0] + ':' + at[1]; };
+
   DoseGrid.prototype.onMouseUp = function(e) {
-    if (this.justFocused && e.target.tagName === 'INPUT') e.preventDefault();
-    this.justFocused = false;
+    var at = this.cellOf(e.target);
+    if (!at || e.target.tagName !== 'INPUT' || this.editing === this.cellKey(at)) return;
+    e.preventDefault();
+    e.target.select();
+  };
+
+  DoseGrid.prototype.startEditing = function(t, at) {
+    this.editing = this.cellKey(at);
+    var n = t.value.length;
+    t.setSelectionRange(n, n);
+  };
+
+  DoseGrid.prototype.onDoubleClick = function(e) {
+    var at = this.cellOf(e.target);
+    if (at && e.target.tagName === 'INPUT') this.startEditing(e.target, at);
   };
 
   DoseGrid.prototype.onFocusOut = function(e) {
     var at = this.cellOf(e.target);
     if (!at) return;
-    this.justFocused = false;
-    if (e.target.tagName === 'INPUT' && e.target.value !== this.rows[at[0]][at[1]]) {
-      if (at[1] === COLS.DRUG && this.listboxFor === e.target && this.active >= 0 &&
-          trimEntry(e.target.value) !== '' && this.canonicalDrug(e.target.value) === null) {
-        e.target.value = this.listbox.children[this.active].textContent;
-      }
-      this.commit(at[0], at[1]);
+    if (e.target.tagName === 'INPUT') {
+      var picked = at[1] === COLS.DRUG ? this.chosenOption(e.target, this.rows[at[0]][at[1]]) : null;
+      if (picked !== null) e.target.value = picked;
+      if (e.target.value !== this.rows[at[0]][at[1]]) this.commit(at[0], at[1]);
     }
+    this.editing = null;
     if (this.listboxFor === e.target) this.closeList();
   };
 
   DoseGrid.prototype.onInput = function(e) {
     var at = this.cellOf(e.target);
     if (!at) return;
-    this.justFocused = false;
+    this.editing = this.cellKey(at);
     if (at[1] === COLS.DRUG) this.openList(e.target);
   };
 
@@ -656,7 +743,19 @@
     var r = at[0], c = at[1], t = e.target;
     var listOpen = this.listboxFor === t && !this.listbox.hidden;
     var edited = t.tagName === 'INPUT' && t.value !== this.rows[r][c];
+    var editing = t.tagName === 'INPUT' && (edited || this.editing === this.cellKey(at));
 
+    // Ctrl+V (Cmd+V) on a Units cell: see catchPaste()
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.key === 'v' || e.key === 'V') && t.tagName === 'SELECT') {
+      this.catchPaste(at);
+      return;
+    }
+    // F2: edit the cell, the caret at the end of its text
+    if (e.key === 'F2' && t.tagName === 'INPUT') {
+      e.preventDefault();
+      this.startEditing(t, at);
+      return;
+    }
     // Shift+F10 and the context-menu key: the row's actions
     if ((e.key === 'F10' && e.shiftKey) || e.key === 'ContextMenu') {
       e.preventDefault();
@@ -681,6 +780,7 @@
     }
     if (listOpen && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
       this.setActive(this.active + (e.key === 'ArrowDown' ? 1 : -1));
+      this.navigated = true;
       e.preventDefault();
       return;
     }
@@ -688,24 +788,32 @@
     if (e.key === 'Escape') {
       if (listOpen) { this.closeList(); e.preventDefault(); return; }
       if (t.tagName === 'INPUT') { t.value = this.rows[r][c]; t.select(); e.preventDefault(); }
+      this.editing = null;
       return;
     }
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (listOpen && this.active >= 0 && this.canonicalDrug(t.value, this.rows[r][c]) === null) {
-        t.value = this.listbox.children[this.active].textContent;
-      }
+      var chosen = this.chosenOption(t, this.rows[r][c]);
+      if (chosen !== null) t.value = chosen;
       this.closeList();
       if (t.tagName === 'INPUT') this.commit(r, c);
       var next = e.shiftKey ? r - 1 : r + 1;
       if (next >= 0 && next < this.rows.length) this.focusCell(next, c);
       return;
     }
-    if (e.key === 'Tab' && listOpen && this.active >= 0 && this.canonicalDrug(t.value, this.rows[r][c]) === null) {
-      t.value = this.listbox.children[this.active].textContent;
+    if (e.key === 'Tab' && listOpen) {
+      var picked = this.chosenOption(t, this.rows[r][c]);
+      if (picked !== null) t.value = picked;
+      this.closeList();
       return;   // committed as the focus leaves
     }
-    if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && t.tagName === 'INPUT') {
+    // ArrowUp and ArrowDown move between rows in every column.  On a Units
+    // list (a <select>) they would change the unit instead, so a keyboard
+    // user going down the column changed every row's unit (the external
+    // review of 2026-11-05, Gemini's script); the list opens with Alt+Down
+    // or Space, or a unit is typed.
+    if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !e.altKey &&
+        (t.tagName === 'INPUT' || t.tagName === 'SELECT')) {
       var to = r + (e.key === 'ArrowDown' ? 1 : -1);
       if (to >= 0 && to < this.rows.length) { e.preventDefault(); this.focusCell(to, c); }
       return;
@@ -713,7 +821,7 @@
     // Home and End go to the row's first and last cell, as in the old grid,
     // unless the cell is being typed in, when they move the caret; with Ctrl
     // (Cmd), to the first and last row
-    if ((e.key === 'Home' || e.key === 'End') && !e.shiftKey && !e.altKey && !edited) {
+    if ((e.key === 'Home' || e.key === 'End') && !e.shiftKey && !e.altKey && !editing) {
       e.preventDefault();
       var end = e.key === 'End';
       if (e.ctrlKey || e.metaKey) this.focusCell(end ? this.rows.length - 1 : 0, c);
