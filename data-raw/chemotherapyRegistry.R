@@ -109,7 +109,7 @@ ROLES     <- c("structural_pk", "covariate", "external_validation",
 # The PubMed records, as PubMed gives them (title, first author, print year,
 # journal, volume and pages, DOI, PMCID).  The ids are the handoff's, with its
 # "also screen" pair for paediatric cisplatin named N01b and N01c.
-pubmedSources <- utils::read.delim(text = "
+pubmedSources <- utils::read.delim(encoding = "UTF-8", text = "
 P01	2681557	Calvert	1989	J Clin Oncol	7(11):1748-56	10.1200/JCO.1989.7.11.1748		Carboplatin dosage: prospective evaluation of a simple formula based on renal function.
 P02	7752255	Chatelut	1995	J Natl Cancer Inst	87(8):573-80	10.1093/jnci/87.8.573		Prediction of carboplatin clearance from standard morphological and biological patient characteristics.
 P03	8541105	Peng	1995	Eur J Cancer	31A(11):1804-10	10.1016/0959-8049(95)00382-s		Comparison of methods for the estimation of carboplatin pharmacokinetics in paediatric cancer patients.
@@ -206,11 +206,16 @@ pubmedSources[pubmedSources == ""] <- NA
 
 # How far each PubMed document was read here.  Every abstract was screened;
 # the PubMed Central text (without tables or equations) was read for these.
-FULL_TEXT_PARTIAL <- c("P05", "P09", "P10", "P13", "P18", "P23", "C12", "C13", "C15", "C34", "C35", "N04")
+FULL_TEXT_PARTIAL <- c("P05", "P09", "P13", "P18", "P23", "C12", "C13", "C15", "C34", "C35", "N04")
 pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
                              "guideline", "primary_study")
-pubmedSources$review_depth <- ifelse(pubmedSources$source_id %in% FULL_TEXT_PARTIAL,
-                                     "full_text_partial", "abstract_screened")
+# Read in full (every parameter the model uses, from the PubMed Central
+# text; the PDF is still to confirm, as the registry rows say)
+FULL_TEXT_READ <- c("N04", "P10")
+pubmedSources$review_depth <- ifelse(
+  pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
+  ifelse(pubmedSources$source_id %in% FULL_TEXT_PARTIAL,
+         "full_text_partial", "abstract_screened"))
 pubmedSources$url <- paste0("https://pubmed.ncbi.nlm.nih.gov/", pubmedSources$pmid, "/")
 pubmedSources$citation <- sprintf(
   "%s et al. %s %s %s;%s.", pubmedSources$first_author,
@@ -281,18 +286,23 @@ WAVE <- c(first = "first", second = "second", expansion = "expansion")
 
 m <- function(model_id, drug, product, route, population, analyte, structure,
               wave, engine, source_id, note = "",
-              readiness = "needs_full_text") {
+              readiness = "needs_full_text", stanpumpr_drug = NA) {
   s <- if (is.na(source_id)) NULL else src(source_id)
-  base <- if (readiness == "needs_full_text")
-    "The parameters are in the paper's tables, which were not read here." else ""
+  base <- switch(readiness,
+    needs_full_text = "The parameters are in the paper's tables, which were not read here.",
+    implemented = paste("Implemented from the PubMed Central text, every parameter read there;",
+                        "to be confirmed on the PDF."),
+    "")
   data.frame(
     model_id, drug, product, route, population, analyte, structure,
-    wave = WAVE[[wave]], readiness, engine, stanpumpr_drug = NA,
+    wave = WAVE[[wave]], readiness, engine, stanpumpr_drug,
     source_id = if (is.null(s)) NA else source_id,
     evidence_read = if (is.null(s)) "none" else s$review_depth,
     blocking_issue = trimws(paste(base, note)),
     to_obtain = if (is.null(s)) NA else
-      sprintf("%s (PMID %s%s): the full text with its tables and supplement.",
+      sprintf(if (readiness == "implemented")
+                "%s (PMID %s%s): the PDF, to confirm the parameters read from the PubMed Central text."
+              else "%s (PMID %s%s): the full text with its tables and supplement.",
               s$citation, s$pmid,
               ifelse(is.na(s$pmcid), "", paste0(", ", s$pmcid))),
     source_url = if (is.null(s)) NA else s$url,
@@ -370,7 +380,8 @@ registry <- rbind(
     "726 patients from three studies (individual-patient meta-analysis)", "5-FU",
     "two compartments with parallel Michaelis-Menten and linear elimination; BSA on CL, V lower in women and with age",
     "first", "michaelis_menten", "P10",
-    "Parallel linear clearance is the engine's clLinear; a study-stratified residual error does not enter a typical-patient curve."),
+    "Run by advanceMichaelisMenten() with clLinear and one peripheral compartment. Table 3's subscripts are stripped in that text; each row was identified from its units and checked against a percentage the text states. DPD deficiency is not represented.",
+    readiness = "implemented", stanpumpr_drug = "fluorouracil"),
 
   m("busulfan__infant_adult__mccune2014", "busulfan", "busulfan", "IV",
     "1610 HCT recipients, 0.1-66 years (92% under 20)", "busulfan, plasma",
@@ -607,7 +618,9 @@ registry <- rbind(
     "expansion", "linear", "C32"),
   m("cladribine__lymphoid__lindemalm2005", "cladribine", "cladribine", "IV, SC and PO",
     "161 adults with lymphoid malignancies", "cladribine",
-    "three compartments; F 100% SC and 35% oral; no covariates", "expansion", "linear", "N04"),
+    "three compartments; F 100% SC and 35% oral; no covariates", "expansion", "linear", "N04",
+    "Table 3 read with its labels. No renal term (no patient had severe impairment); the oral route is the solution, not the multiple-sclerosis tablet.",
+    readiness = "implemented", stanpumpr_drug = "cladribine"),
   m("cladribine__children__kearns1994", "cladribine", "cladribine", "IV",
     "25 children with acute leukaemia, 5-day infusion", "cladribine, plasma and CSF",
     "two compartments (radioimmunoassay); renal clearance about half", "expansion", "linear", "N05"),
@@ -696,6 +709,6 @@ stopifnot(!anyDuplicated(sources$source_id), !anyDuplicated(registry$model_id),
           all(relations$source_id %in% sources$source_id))
 
 dir <- file.path("inst", "extdata")
-utils::write.csv(sources, file.path(dir, "chemotherapySources.csv"), row.names = FALSE)
-utils::write.csv(registry, file.path(dir, "chemotherapyRegistry.csv"), row.names = FALSE)
-utils::write.csv(relations, file.path(dir, "chemotherapyRelations.csv"), row.names = FALSE)
+utils::write.csv(sources, file.path(dir, "chemotherapySources.csv"), row.names = FALSE, fileEncoding = "UTF-8")
+utils::write.csv(registry, file.path(dir, "chemotherapyRegistry.csv"), row.names = FALSE, fileEncoding = "UTF-8")
+utils::write.csv(relations, file.path(dir, "chemotherapyRelations.csv"), row.names = FALSE, fileEncoding = "UTF-8")

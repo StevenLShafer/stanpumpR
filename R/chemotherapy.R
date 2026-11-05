@@ -32,7 +32,8 @@
 readChemotherapyCsv <- function(file)
   utils::read.csv(
     system.file("extdata", file, package = "stanpumpR"),
-    stringsAsFactors = FALSE, na.strings = "NA", colClasses = "character")
+    stringsAsFactors = FALSE, na.strings = "NA", colClasses = "character",
+    encoding = "UTF-8")
 
 #' The chemotherapy source bibliography
 #'

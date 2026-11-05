@@ -2342,7 +2342,29 @@ registry <- rbind(
       source = "",
       source_url = "",
       to_obtain = "",
-      notes = "GHB is eliminated by saturable metabolism (GHB dehydrogenase, then the Krebs cycle), largely non-renal; a GFR shortcut does not apply and no pregnancy data exist.")
+      notes = "GHB is eliminated by saturable metabolism (GHB dehydrogenase, then the Krebs cycle), largely non-renal; a GFR shortcut does not apply and no pregnancy data exist."),
+  row("cladribine", "Chemotherapy", "unknown",
+      finding = "No human pregnancy pharmacokinetics of cladribine found (PubMed searched 2026-11-05: cladribine with pregnancy, pregnant or postpartum and pharmacokinetic). The pregnancy studies are of its teratogenicity in mice (Wubah 2001, PMID 11514946) and rats (Lau 2002, PMID 12115775), with maternal serum concentrations but no human data; cladribine is contraindicated in pregnancy.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = "third", comparator = NA,
+      design = "none", n = 0L, confidence = "low",
+      evidence_read = "abstract",
+      source = "",
+      source_url = "",
+      to_obtain = "",
+      notes = "About half of cladribine's clearance is renal (Kearns 1994), so the rise in filtration of pregnancy would be expected to raise it; the model has no renal term, so nothing is applied."),
+  row("fluorouracil", "Chemotherapy", "unknown",
+      finding = "No human pregnancy pharmacokinetics of 5-fluorouracil found (PubMed searched 2026-11-05: fluorouracil or 5-FU with pregnancy or pregnant, pharmacokinetic, plasma or clearance). Only animal studies: nonlinear kinetics and placental transfer in the pregnant rat (Boike 1989, PMID 2753424) and transplacental transfer of the FEC regimen in baboons, where 5-FU itself was not reported (Van Calsteren 2010, PMID 20846713).",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = "third", comparator = NA,
+      design = "none", n = 0L, confidence = "low",
+      evidence_read = "abstract",
+      source = "",
+      source_url = "",
+      to_obtain = "",
+      notes = "5-FU is cleared mainly by hepatic DPD, not by filtration, so the rise in filtration of pregnancy is not a basis for a change; nothing is applied.")
 )
 
 stopifnot(

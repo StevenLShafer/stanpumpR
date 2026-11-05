@@ -545,6 +545,7 @@ DRUG_CATEGORIES <- c(
   "Antihypertensives",
   "Vasoactive and resuscitation",
   "Parkinson disease",
+  "Chemotherapy",
   "Other",
   "Illicit drugs"
 )
@@ -556,6 +557,10 @@ VASOACTIVE_DRUG_CATEGORY <- "Vasoactive and resuscitation"
 # complications (inst/help/models/parkinsons.md): every candidate catalogued in
 # inst/extdata/parkinsonsRegistry.csv, implemented or not.
 PARKINSONS_DRUG_CATEGORY <- "Parkinson disease"
+# The category of the cytotoxic chemotherapy drugs (inst/help/models/
+# chemotherapy.md, docs/chemotherapy.md): every candidate model catalogued in
+# inst/extdata/chemotherapyRegistry.csv, implemented or not.
+CHEMOTHERAPY_DRUG_CATEGORY <- "Chemotherapy"
 # The categories whose every drug, and every metabolite of one, must have a
 # row in inst/extdata/therapeuticRanges.csv (R/therapeuticRanges.R): the
 # range the band draws, or why there is none.  Every category since

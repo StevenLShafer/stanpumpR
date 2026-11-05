@@ -1,4 +1,4 @@
-Cytotoxic chemotherapy is new to stanpumpR. This page is the evidence plan: every drug and product considered, the published population models that could describe it, what each would need from the engine, and what stands in the way. It is built from the registry in `inst/extdata/chemotherapyRegistry.csv` and cannot drift from it.
+Cytotoxic chemotherapy is new to stanpumpR. Two drugs are in the library, under **Chemotherapy** in the startup menu: [fluorouracil](help:drugs/fluorouracil) (5-FU, intravenous, Briki 2026: two compartments with saturable and linear elimination) and [cladribine](help:drugs/cladribine) (intravenous, subcutaneous and oral solution, Lindemalm 2005: three compartments). Both are plasma only, and both were implemented from the text of the paper in PubMed Central, to be confirmed against the PDF. The rest of this page is the evidence plan: every drug and product considered, the published population models that could describe it, what each would need from the engine, and what stands in the way. It is built from the registry in `inst/extdata/chemotherapyRegistry.csv` and cannot drift from it.
 
 ## What a chemotherapy curve can and cannot say
 
@@ -18,7 +18,7 @@ The **first wave** is carboplatin, high-dose methotrexate, 5-fluorouracil and bu
 
 ## Where the papers stand
 
-None of these papers is in the library's archive, and the numbers that fix a population model are printed in its tables and equations, which the text available here does not carry. Every candidate therefore needs its full text before it can be implemented. These are the papers to obtain, first wave first:
+None of these papers is in the library's archive. For all but the two implemented, the numbers that fix a population model are printed in its tables and equations, which the text available here does not carry. So every other candidate needs its full text before it can be implemented. These are the papers to obtain, first wave first:
 
 <!-- generated: chemotherapy-to-obtain -->
 

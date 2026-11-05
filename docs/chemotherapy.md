@@ -25,6 +25,8 @@ the primary document. What was built:
 - `R/chemotherapy.R` (readers), `tests/testthat/test-chemotherapy-registry.R`, and the help page
   `inst/help/models/chemotherapy.md`, whose model table and reading list are generated from the
   registry.
+- The category `Chemotherapy` (`CHEMOTHERAPY_DRUG_CATEGORY`) and its first two drugs, the only
+  two whose complete models could be read here (section 6).
 
 The handoff proposed a JSON template extension (its section 9). The repository has no such
 template; its pattern for an evidence-gated drug class is the registry CSVs of the anticoagulants,
@@ -132,3 +134,32 @@ Lane Library.
   need are not Patient Profile fields; such a model either waits for the field or is implemented
   at the source's reference value, saying so, never with serum creatinine standing in for
   cystatin C (the chlorthalidone decision, `docs/antihypertensives.md`).
+
+## 6. The first two drugs
+
+Both were implemented from the PubMed Central text, read in this session, and are marked in the
+registry as to be confirmed against the PDF. That is a departure from the rule that a model's
+numbers are confirmed on the PDF (`AGENTS.md`, *Source papers*), taken because the publisher's
+text is not the scrambled rendering the rule guards against, and recorded here so that the PDF
+check is not forgotten.
+
+- **`fluorouracil`** (`R/drugs_fluorouracil.R`; Briki 2026, P10). Two compartments with
+  parallel Michaelis-Menten and linear elimination, run by `advanceMichaelisMenten()` through
+  its `clLinear` and one peripheral compartment, so no engine change was needed. Table 3 lost
+  its subscripts in that text; each value was identified from its units and the text, and the
+  identification is held by the test to the four percentages the paper states (men's Vmax +18%,
+  80 against 40 years -17%, an 80-year-old woman against a 40-year-old man -30%, BSA 1.5 against
+  2.0 -53%). The size covariates (BSA on the linear clearance, weight on V2) are evaluated at the
+  pharmacokinetic weight with the switch on, as for cefazolin; Vmax is not scaled by fat-free
+  mass, because its sex term already carries lean mass and scaling it again would count sex
+  twice; age is held to the 24-90 years studied. The test checks the engine's plateau during a
+  46-h infusion against an independent solution of R = CL C + Vmax C/(Km + C). Not represented:
+  DPD deficiency, the slow rise of the plateau during an infusion, circadian variation. The AUC
+  target (20-29 mg h/L over 46 h) is recorded, `not_applicable`, and not drawn.
+- **`cladribine`** (`R/drugs_cladribine.R`; Lindemalm 2005, N04). Three compartments, IV,
+  subcutaneous (F 1, ka 2.48/h) and oral solution (F 0.353, ka 1.31/h), no covariates; its
+  half-lives reproduce the text's 0.2, 1.3 and 16 h. No renal term, although about half its
+  clearance is renal, because no patient had severe impairment; the oral route is the solution,
+  not the multiple-sclerosis tablet.
+
+Neither drug has measured pharmacokinetics in pregnancy (registry rows `unknown`).
