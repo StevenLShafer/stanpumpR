@@ -92,6 +92,7 @@
     root.addEventListener('change', function(e) { self.onChange(e); });
     root.addEventListener('paste', function(e) { self.onPaste(e); });
     root.addEventListener('contextmenu', function(e) { self.onContextMenu(e); });
+    document.addEventListener('keydown', function(e) { self.onDocumentKey(e); });
     document.addEventListener('mousedown', function(e) {
       if (!self.menu.contains(e.target)) self.closeMenu();
       if (!self.listbox.contains(e.target) && e.target !== self.listboxFor) self.closeList();
@@ -130,10 +131,12 @@
       e.preventDefault();
       self.pickOption(li.textContent);
     });
-    this.menu = el('ul', { role: 'menu', 'class': 'dose-grid-menu dropdown-menu', hidden: '' });
+    // Not Bootstrap's .dropdown-menu: its global keydown handler, expecting a
+    // dropdown toggle, threw on Escape (the external review of 2026-11-05)
+    this.menu = el('ul', { role: 'menu', 'class': 'dose-grid-menu', hidden: '' });
     [['above', 'Insert row above'], ['below', 'Insert row below'], ['remove', 'Remove row']].forEach(function(m) {
       var li = el('li', { role: 'none' });
-      var b = el('button', { type: 'button', role: 'menuitem', 'class': 'dropdown-item', 'data-action': m[0], tabindex: '-1' }, m[1]);
+      var b = el('button', { type: 'button', role: 'menuitem', 'class': 'dose-grid-menu-item', 'data-action': m[0], tabindex: '-1' }, m[1]);
       li.appendChild(b);
       self.menu.appendChild(li);
     });
@@ -191,7 +194,16 @@
     var drug = cells[COLS.DRUG].firstChild;
     drug.value = row[COLS.DRUG];
     var info = this.drugs[row[COLS.DRUG]];
-    drug.classList.toggle('dose-grid-illicit', !!(info && info.illicit));
+    var illicit = !!(info && info.illicit);
+    drug.classList.toggle('dose-grid-illicit', illicit);
+    // said, not only drawn red (colour is not the only signal)
+    if (illicit) {
+      drug.setAttribute('aria-description', 'illicit drug, a research model');
+      drug.setAttribute('title', 'Illicit drug: a research model (Show illicit drugs)');
+    } else {
+      drug.removeAttribute('aria-description');
+      drug.removeAttribute('title');
+    }
     cells[COLS.TIME].firstChild.value = row[COLS.TIME];
     cells[COLS.DOSE].firstChild.value = row[COLS.DOSE];
     var sel = cells[COLS.UNITS].lastChild;
@@ -698,12 +710,40 @@
       if (to >= 0 && to < this.rows.length) { e.preventDefault(); this.focusCell(to, c); }
       return;
     }
-    // Time and Dose take only what a number or a time can hold; a minus sign
-    // is let through so that "-2" is refused with a message, not typed as 2
-    if ((c === COLS.TIME || c === COLS.DOSE) && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      var ok = (c === COLS.DOSE || getTimeMode() === 'relative') ? /^[0-9.\-]$/.test(e.key) : /^[0-9.:\-]$/.test(e.key);
-      if (!ok) e.preventDefault();
+    // Home and End go to the row's first and last cell, as in the old grid,
+    // unless the cell is being typed in, when they move the caret; with Ctrl
+    // (Cmd), to the first and last row
+    if ((e.key === 'Home' || e.key === 'End') && !e.shiftKey && !e.altKey && !edited) {
+      e.preventDefault();
+      var end = e.key === 'End';
+      if (e.ctrlKey || e.metaKey) this.focusCell(end ? this.rows.length - 1 : 0, c);
+      else this.focusCell(r, end ? COLS.UNITS : COLS.DRUG);
+      return;
     }
+    // No key is filtered out of a Time or Dose cell.  The rhandsontable grid
+    // dropped every key a number cannot hold (hookFilterKeys() in
+    // hot_funs.js), which changed the number without a word: "1,5" became
+    // 15, "1e3" 13, "1a0" 10 and an elapsed "1:30" 130 (the external review
+    // of 2026-11-05, reproduced).  Everything typed is read whole when the
+    // cell is committed, as a paste is, and an entry that cannot be read is
+    // refused with a message (readEntry(), commit()).
+  };
+
+  // Ctrl+Z / Ctrl+Y with the focus outside the grid, on no text field (a
+  // button, the plot, the page): the dose table's undo and redo, not the
+  // browser's.  Left to the browser, Ctrl+Z on the Apply button undid the
+  // typing of the last cell edited, so the grid showed one value and the
+  // draft held another (the external review of 2026-11-05, reproduced).
+  // A text field elsewhere keeps its own undo; a hidden grid does nothing.
+  DoseGrid.prototype.onDocumentKey = function(e) {
+    if (e.defaultPrevented || !(e.ctrlKey || e.metaKey) || e.altKey) return;
+    if (!(e.key === 'z' || e.key === 'Z' || e.key === 'y' || e.key === 'Y')) return;
+    if (this.root.offsetParent === null) return;
+    var t = e.target;
+    if (t && t.closest && t.closest('.stanpumpr-dose-grid')) return;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    e.preventDefault();
+    this.sendHistory(e.key === 'y' || e.key === 'Y' || e.shiftKey ? 'redo' : 'undo');
   };
 
   // --- from the server --------------------------------------------------------------

@@ -96,10 +96,26 @@ doseGridValue <- function(value) {
     Units = vapply(cells, `[`, "", 4),
     stringsAsFactors = FALSE
   )
+  # The number of edits the grid has sent: a count, so never negative.  A
+  # negative one made every draft the server sent back look older than the
+  # grid's latest edit, so the grid kept drawing its old rows while Apply
+  # committed the new ones (the external review of 2026-11-05).
   seq <- suppressWarnings(as.numeric(doseGridCell(value$seq)))
   list(
     table = table,
     format = parseTimeFormat(doseGridCell(value$timeFormat)),
-    seq = if (length(seq) == 1 && is.finite(seq)) seq else 0
+    seq = if (length(seq) == 1 && is.finite(seq) && seq >= 0) seq else 0
   )
+}
+
+# What the grid sent, as the grid would accept it: restoredDoseTable() (the
+# rule a bookmark link is read by) blanks an unknown drug's row, a unit the
+# drug does not offer, a time or dose that cannot be read or is too long, and
+# rows past the limit.  The grid itself never sends such a table; anyone can
+# send their own session one, and until 2026-11-05 it was stored, drawn and
+# applied: fentanyl in mg/kg, a dose over the limit, a 1 MB string (the
+# external review of that day).  A unit is blanked, never swapped for the
+# drug's default, which could be a thousandfold error.
+doseGridAccepted <- function(table, drugDefaults) {
+  restoredDoseTable(table, drugDefaults)
 }

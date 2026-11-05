@@ -156,10 +156,11 @@ test_that("a hostile or broken value from the browser leaves the session alive",
       session$setInputs(doseGrid = bad)
       expect_false(session$isClosed())
     }
-    # a draft that fails the table's own checks is not drawn: the grid is
-    # told why
-    errors <- Filter(function(m) identical(m$id, "doseGrid") && isTRUE(nzchar(m$message$error)), sent$inputs)
-    expect_gt(length(errors), 0)
+    # none of it reached the draft as it came: what the grid would refuse is
+    # blanked first (doseGridAccepted()), so the draft passes the table's own
+    # checks
+    expect_true(isTRUE(validateDoseTableInput(doseTableDraft())))
+    expect_false(any(doseTableDraft()$Units == "furlongs"))
     # every row removed: one blank row, as for the old grid
     session$setInputs(doseGrid = gridValue(list(), seq = 99))
     expect_false(session$isClosed())
@@ -209,6 +210,53 @@ test_that("Ctrl+Z and Ctrl+Y from the grid undo and redo the draft, and a broken
     expect_equal(doseTableDraft()$Dose[1], "0")
   })
   expect_true("doseGrid_history" %in% bookmarksToExclude)
+})
+
+# The values the external review of 2026-11-05 sent from the browser's
+# console, each of which was stored, drawn or applied
+test_that("a cell the grid would not accept is blanked before it is stored, and said", {
+  withr::local_options(stanpumpR.doseGrid = "native")
+  shiny::testServer(app_server, {
+    sent <- recordGrid(session)
+    notes <- character(0)
+    session$sendNotification <- function(type, message) notes <<- c(notes, paste(unlist(message), collapse = " "))
+    startGrid(session)
+    # a unit fentanyl does not offer: blanked, never swapped for its default
+    session$setInputs(doseGrid = gridValue(list(list("fentanyl", "0", "50", "mg/kg")), seq = 20))
+    expect_equal(unlist(doseTableDraft()[1, ], use.names = FALSE), c("fentanyl", "0", "50", ""))
+    expect_true(any(grepl("could not be read", notes)))
+    # a dose over the limit, a 1 MB string, an unknown drug
+    session$setInputs(doseGrid = gridValue(list(
+      list("fentanyl", "0", "1000000001", "mcg"),
+      list("fentanyl", "0", strrep("x", 2^20), "mcg"),
+      list("abc", "1", "2", "mg")
+    ), seq = 21))
+    expect_false(session$isClosed())
+    expect_equal(doseTableDraft()$Dose[1:2], c("", ""))
+    expect_equal(unlist(doseTableDraft()[3, ], use.names = FALSE), c("", "", "", ""))
+    expect_true(isTRUE(validateDoseTableInput(doseTableDraft())))
+    # a table the grid did send is stored as it is, without a word
+    n <- length(notes)
+    session$setInputs(doseGrid = gridValue(list(list("propofol", "0", "100", "mg")), seq = 22))
+    expect_equal(unlist(doseTableDraft()[1, ], use.names = FALSE), c("propofol", "0", "100", "mg"))
+    expect_equal(length(notes), n)
+  })
+})
+
+test_that("a negative or unreadable seq cannot make the grid ignore the draft", {
+  expect_equal(doseGridValue(gridValue(list(list("propofol", "0", "1", "mg")), seq = -1))$seq, 0)
+  expect_equal(doseGridValue(gridValue(list(list("propofol", "0", "1", "mg")), seq = "x"))$seq, 0)
+  withr::local_options(stanpumpR.doseGrid = "native")
+  shiny::testServer(app_server, {
+    sent <- recordGrid(session)
+    startGrid(session)
+    session$setInputs(doseGrid = gridValue(list(list("propofol", "0", "1", "mg")), seq = 5))
+    expect_equal(lastRowsSent(sent)$ack, 5)
+    # the acknowledgement never falls back
+    session$setInputs(doseGrid = gridValue(list(list("propofol", "1", "1", "mg")), seq = -1))
+    expect_equal(lastRowsSent(sent)$ack, 5)
+    expect_equal(as.character(lastRowsSent(sent)$rows[[1]])[2], "1")
+  })
 })
 
 test_that("the grid's code draws nothing as HTML, and binds no cell as a Shiny input", {

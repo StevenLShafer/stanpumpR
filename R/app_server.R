@@ -906,7 +906,16 @@ app_server <- function(input, output, session) {
       profileCode({
         value <- doseGridValue(input$doseGrid)
         if (is.null(value)) return()
-        doseGridAck <<- value$seq
+        # Only ever rises: the draft sent back answers the latest edit read
+        doseGridAck <<- max(doseGridAck, value$seq)
+        accepted <- doseGridAccepted(value$table, drugDefaults())
+        if (accepted$changed) {
+          showNotification(
+            "Part of the dose table could not be read and was left blank. Check the table.",
+            type = "warning", duration = 8
+          )
+        }
+        value$table <- accepted$table
         if (nrow(value$table) == 0) {
           doseTableRefresh(doseTableRefresh() + 1)
           doseTableHistory()$do(blankDoseTableRow(doseTableDraft()))

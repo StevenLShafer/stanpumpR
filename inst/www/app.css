@@ -796,7 +796,11 @@ the same four columns at the widths createHOT() gives the old grid, fitted to
 the 450 px Doses sidebar.  Every cell is a form control: the inputs fill their
 cells, and the Units cell shows the unit as text (wrapped after its route,
 unitWrapText()) with a transparent <select> over it, so a click or a key opens
-the browser's own list of the row's units. */
+the browser's own list of the row's units.  The colours are the theme's
+(Bootstrap's variables, with the light values as fallbacks), so a dark theme
+does not leave light text on white; and under a large browser zoom the table
+keeps a usable width and scrolls sideways rather than crushing its columns
+(the external review of 2026-11-05). */
 .stanpumpr-dose-grid {
   position: relative;
   display: flex;
@@ -810,11 +814,12 @@ the browser's own list of the row's units. */
 .dose-grid-scroll {
   flex: 1 1 auto;
   min-height: 0;
-  overflow-x: hidden;
+  overflow-x: auto;
   overflow-y: auto;
 }
 table.dose-grid {
   width: 100%;
+  min-width: 300px;
   table-layout: fixed;
   border-collapse: collapse;
 }
@@ -822,10 +827,11 @@ table.dose-grid th {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: #f0f0f0;
+  background: var(--bs-tertiary-bg, #f0f0f0);
+  color: var(--bs-body-color, #212529);
   font-weight: normal;
   text-align: center;
-  border: 1px solid #ccc;
+  border: 1px solid var(--bs-border-color, #ccc);
   padding: 0 4px;
   white-space: nowrap;
   overflow: hidden;
@@ -835,11 +841,12 @@ table.dose-grid th.dose-grid-col1 { width: 13%; }
 table.dose-grid th.dose-grid-col2 { width: 22%; }
 table.dose-grid th.dose-grid-col3 { width: 26%; }
 table.dose-grid td {
-  border: 1px solid #ccc;
+  border: 1px solid var(--bs-border-color, #ccc);
   padding: 0;
   height: 24px;
   position: relative;
-  background: #fff;
+  background: var(--bs-body-bg, #fff);
+  color: var(--bs-body-color, #212529);
 }
 table.dose-grid td input {
   width: 100%;
@@ -875,7 +882,7 @@ table.dose-grid input.dose-grid-illicit {
   position: absolute;
   right: 4px;
   top: 2px;
-  color: #999;
+  color: var(--bs-secondary-color, #999);
 }
 table.dose-grid td.dose-grid-col3 select {
   position: absolute;
@@ -897,8 +904,9 @@ table.dose-grid td.dose-grid-col3 select:disabled {
   margin: 0;
   padding: 0;
   list-style: none;
-  background: #fff;
-  border: 1px solid #999;
+  background: var(--bs-body-bg, #fff);
+  color: var(--bs-body-color, #212529);
+  border: 1px solid var(--bs-border-color, #999);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 .dose-grid-list li {
@@ -906,12 +914,38 @@ table.dose-grid td.dose-grid-col3 select:disabled {
   cursor: pointer;
 }
 .dose-grid-list li[aria-selected="true"] {
-  background: #e6efff;
+  background: var(--bs-primary-bg-subtle, #e6efff);
 }
 .dose-grid-menu {
   position: absolute;
   z-index: 1060;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  min-width: 10rem;
+  background: var(--bs-body-bg, #fff);
+  color: var(--bs-body-color, #212529);
+  border: 1px solid var(--bs-border-color, #999);
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+.dose-grid-menu[hidden] {
+  display: none;
+}
+.dose-grid-menu-item {
   display: block;
+  width: 100%;
+  padding: 4px 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+}
+.dose-grid-menu-item:hover,
+.dose-grid-menu-item:focus {
+  background: var(--bs-tertiary-bg, #f0f0f0);
+  outline: none;
 }
 .dose-grid-status:empty {
   display: none;

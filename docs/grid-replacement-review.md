@@ -272,9 +272,10 @@ Then:
 1. Run B5.2 and B5.3 at 400 ms and at 1500 ms of latency.
 2. Make two edits in quick succession in different rows, then two in the same
    cell.
-3. Enter `sevoflurane` in a blank row. The server adds oxygen and ventilation
-   rows, and the grid must draw them. Do it again while typing in another
-   cell: is the text being typed kept?
+3. Enter `sevoflurane` in a blank row. The server adds a ventilation row, and
+   the grid must draw it. Then enter `nitrousOxide`, which brings an oxygen row
+   as well (`applyGasTableRules()`; oxygen comes only with nitrous oxide).
+   Do each again while typing in another cell: is the text being typed kept?
 4. Change Time units from minutes to hours while a cell is half typed, and
    while an edit is in flight on a slow link. A time of 90 minutes must become
    1.5 hours, never 90 hours.

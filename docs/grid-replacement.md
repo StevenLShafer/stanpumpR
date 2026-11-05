@@ -22,10 +22,13 @@ The reasons, each measured below:
      is lost.
 2. **Its licence is ours**, and it adds no dependency.
 3. **It is about 9 KB gzipped**, against 100-525 KB for the libraries.
-4. **It is held to the same regression suite**, which it passes: 41 of 42
-   cases, the 42nd being a page-level script error from the rhandsontable
-   grid still on the Single Paper Review tab. rhandsontable passes 34 of the
-   42, and the seven of its failures that concern the grid are real defects.
+4. **It is held to the same regression suite**, which it passes: 45 of 46
+   cases, the 46th being a page-level script error from the rhandsontable
+   grid still on the Single Paper Review tab. rhandsontable has 13 known
+   failures besides that one, and each is a real defect of the grid in use
+   today (two of them, a typed `1,5` stored as 15 and a drug name committed
+   as another drug, can put a wrong dose or drug into the table without a
+   word).
 
 ## Why replace it
 
@@ -60,7 +63,7 @@ The reasons, each measured below:
 
 ## What the suite found
 
-The suite is `tests/playwright/` (README there): 42 cases, driven by
+The suite is `tests/playwright/` (README there): 46 cases, driven by
 keystrokes and the clipboard in headless Chromium, and checked on the screen
 and in the server's draft (`exportTestValues()`, test mode only). The same
 cases run against both grids, through a small adapter per grid.
@@ -72,6 +75,13 @@ cases run against both grids, through a small adapter per grid.
 | Time/Dose validated as R's `validateTime()`/`validateDose()` | pass | pass |
 | Paste: whole rows, partial columns, past the last row, refused units said | pass | pass |
 | Paste of 600 rows stops at the row limit | pass, **269 s and 344 s** (two runs) | pass, **3.3 s and 3.5 s** |
+| Paste of 510 rows stops at 499 doses, **and says so** | **fail: silent**, 331 s | pass, 0.3 s |
+| A typed `1,5` or `1a0` is refused with a message, not changed | **fail: stored as 15 and 10, without a word** | pass |
+| A name not in the library is refused | **fail, intermittently: `notadrug` stored as norepinephrine** | pass |
+| An illicit drug is said, not only drawn red | **fail** | pass |
+| Home and End go to the row's first and last cell | pass | pass |
+| Ctrl+Z with the focus outside the grid undoes the last edit | **fail: Ctrl+Z does nothing** | pass |
+| The grid's own code raises no script error (edits, drug list, row menu) | pass | pass |
 | Rows inserted, removed, all removed | pass | pass |
 | Time header tip; change of time unit; time-format stamp | pass | pass |
 | Draft / Apply / undo / redo; a gas rule's rows drawn | pass | pass |
@@ -286,6 +296,47 @@ order:
    test inputs (`gridInput()` in the UI tests). Only then does the numbro
    error go.
 
+## The external review of 2026-11-05 (Codex)
+
+Codex reviewed the PR against `docs/grid-replacement-review.md`, on both
+grids, at `4a4ff56`. Its verdict was "suitable with the listed fixes".
+Each finding was checked here against the code, and reproduced in the
+browser where it could be, before anything was changed (AGENTS.md,
+*Adversarial review by another LLM*).
+
+| # | Finding | Checked | What was done |
+|---|---|---|---|
+| F01 | Typed characters a number cannot hold are dropped by the key filter, so `1,5` becomes 15, `1e3` 13, `1a0` 10 and an elapsed `1:30` 130, without a word. **Both grids.** | Reproduced on both. | Prototype: no key filter. An entry is read whole when it is committed and refused with a message. The rhandsontable grid in production has the same defect (`hookFilterKeys()`); see decision 6. |
+| F02 | A negative `seq` from the browser makes the grid ignore every draft the server sends, while Apply commits it. | Confirmed by reading. Needs a hand-made request. | `seq` is a count, so a negative one reads as 0, and the server's acknowledgement only rises. |
+| F03 | The server accepts a unit the drug does not offer (fentanyl in mg/kg) sent from the browser's console. | Confirmed by reading: `validateDoseTableInput()` checks that a unit exists, not that the drug offers it. | Every table from the browser now passes through `restoredDoseTable()`, the rule bookmark links are read by: such a unit is blanked (never swapped for the default), with a message. |
+| F04 | A draft over the dose limit is stored, and Apply commits it. | Confirmed by reading. | The same: the cell is blanked before it is stored. |
+| F05 | Ctrl+Z with the focus outside the grid (on the Apply button) is the browser's own undo, which changes the last-edited cell on screen but not in the draft. | Reproduced. | Ctrl+Z / Ctrl+Y on a button or the page, not in a text field, are the dose table's undo and redo. |
+| F06 | Home and End move the caret, where rhandsontable moved to the row's first and last cell. | Confirmed by reading. | Home and End go to the row's first and last cell unless the cell is being typed in; Ctrl+Home and Ctrl+End to the first and last row. |
+| F07 | Hard-coded light colours under a dark theme; at 200% zoom the columns are crushed with no sideways scroll. | Confirmed by reading. The app has no dark mode today. | The colours are the theme's variables, and the table keeps a 300 px minimum width and scrolls sideways. |
+| F08 | An illicit drug is shown only by its colour. **Both grids.** | Confirmed. | The prototype's Drug cell describes it ("illicit drug, a research model") to a screen reader and in a tooltip. |
+| F09, F10 | The current grid loses keystrokes and is slow at 499 rows. | Already in the suite; confirmed again. | Nothing. These are what the prototype fixes. |
+| F11 | A 1 MB string, or a row naming no drug, sent from the console is stored. | Confirmed by reading. | Blanked by `restoredDoseTable()` (F03). |
+| F12 | Sevoflurane brings no oxygen row. | An error in the brief, not the code: oxygen comes only with nitrous oxide. | The brief is corrected. |
+| F13 | The row menu's Bootstrap `dropdown-menu` class makes Bootstrap's own handler throw on Escape. | Reproduced. | The menu has its own class and style. |
+| F14 | Several suite cases could pass with their behaviour broken. | Confirmed for each case named. | Strengthened (below). |
+
+**Reproduced intermittently, on rhandsontable:** a typed drug name committed as another drug. The review reported `morphine` stored as `mannitol` and `cocaine` as `calcium`. A probe typing `morphine` over a drug at 0, 40 and 80 ms a key stored morphine every time. But a later full run of the suite stored the refused name `notadrug` as **norepinephrine**. When Enter is pressed, Handsontable's autocomplete can still hold the matches for what was typed a moment earlier ("no…", "m…"), and Enter takes its first entry. In the prototype the list is rebuilt on every keystroke, and Enter takes a match only when the text typed is no drug at all. The suite's "a name that is not in the library is refused" now records this as a Handsontable gap.
+
+**Not reproduced:** rhandsontable drawing no rows on a phone. It draws them, but its Units column is cut off at 390 px wide, where the prototype fits all four columns.
+
+**The suite now:**
+
+- checks the screen as well as the draft wherever a case changes a row (`holds()`);
+- requires a typed `1,5` or `1a0` to be refused with a message;
+- compares the unit lists in order, including a drug with one unit;
+- checks the cell's text after Ctrl+Z while typing;
+- asserts the ventilation row a gas brings;
+- requires a message when a paste reaches the row limit;
+- covers Ctrl+Z with the focus outside the grid, Home and End, and the illicit description;
+- separates script errors from the grid itself (none, for either grid) from the page-level rhandsontable error.
+
+On the server side, `test-dose-grid.R` covers each value the review sent from the console.
+
 ## Decisions for Steven Shafer
 
 These are pending. Record each answer here.
@@ -308,5 +359,13 @@ These are pending. Record each answer here.
    preview open on the prototype (for example `STANPUMPR_DOSE_GRID=native` in
    the preview deploy) so it can be tried in a browser?
 5. **[decision] The suite in CI.** A workflow with R and Chromium would run
-   `tests/playwright/run.js` in about 15 minutes (most of it rhandsontable's 600-row paste). Every PR, only PRs that
-   touch the grid, or by hand?
+   `tests/playwright/run.js` in about 15 minutes (most of it rhandsontable's
+   510-row paste). Every PR, only PRs that touch the grid, or by hand?
+6. **[decision] The key filter in production** (F01, 2026-11-05). The
+   rhandsontable grid in use today stores a typed `1,5` as 15 and `1a0` as 10
+   without a word, because `hookFilterKeys()` in `inst/www/hot_funs.js` drops
+   the keys a number cannot hold. A paste of the same text is refused with a
+   message. The prototype no longer filters keys. Fix the production grid now,
+   in its own small pull request (letting every key through, so that
+   `hookSanitize()` refuses the entry as it refuses a paste), or leave it until
+   the switch?

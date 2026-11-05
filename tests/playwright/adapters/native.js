@@ -62,6 +62,20 @@ module.exports = {
     return page.$eval(ctl(r, 0), el => getComputedStyle(el).color);
   },
 
+  // What a screen reader is told of a Drug cell beyond its name
+  async drugDescription(page, r) {
+    return page.$eval(ctl(r, 0), el =>
+      [el.getAttribute('title'), el.getAttribute('aria-description')].filter(Boolean).join(' '));
+  },
+
+  // The text in the focused cell
+  async activeText(page) {
+    return page.evaluate(() => {
+      const a = document.activeElement;
+      return a && a.tagName === 'INPUT' ? a.value : null;
+    });
+  },
+
   async rowMenu(page, r, item) {
     await page.click(ctl(r, 0), { button: 'right' });
     await page.click(`${ROOT} [role=menu] [role=menuitem]:has-text("${item}")`);

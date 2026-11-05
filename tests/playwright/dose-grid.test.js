@@ -44,16 +44,30 @@ const KNOWN_GAP = {
     'Ctrl+Z steps back one edit at a time':
       'Ctrl+Z does nothing: the redraw after every edit clears the grid\'s own undo history',
     'Ctrl+Z right after Enter, over a slow link, still undoes that edit':
-      'Ctrl+Z does nothing: the redraw after every edit clears the grid\'s own undo history'
+      'Ctrl+Z does nothing: the redraw after every edit clears the grid\'s own undo history',
+    'Ctrl+Z with the focus outside the grid undoes the last edit':
+      'Ctrl+Z does nothing: the redraw after every edit clears the grid\'s own undo history',
+    'a character a number cannot hold is refused with a message, not dropped':
+      'hookFilterKeys() drops the key: a typed "1,5" is stored as 15 and "1a0" as 10, without a word',
+    'an illicit drug is said, not only drawn red':
+      'only the colour says so',
+    'a paste cannot grow the table past its row limit, and says so':
+      'the rows past the limit are dropped without a word',
+    'a name that is not in the library is refused':
+      'intermittently, Enter commits the first match of what the list held a moment earlier: ' +
+      '"notadrug" was stored as norepinephrine (and, in the external review, "morphine" as mannitol)'
   },
   native: {
     'the page raises no script errors':
       "the Single Paper Review tab still draws an rhandsontable grid, whose bundled numbro throws on load"
   }
 };
-const gt = (name, fn) => {
+// test(), or test() as a todo when the grid has the gap: gt(name, fn) or
+// gt(name, options, fn)
+const gt = (name, options, fn) => {
+  if (typeof options === 'function') { fn = options; options = {}; }
   const gap = (KNOWN_GAP[GRID] || {})[name];
-  return gap ? test(name, { todo: gap }, fn) : test(name, fn);
+  return test(name, gap ? Object.assign({}, options, { todo: gap }) : options, fn);
 };
 
 // The startup table (doseTableInit): six rows, then blank ones
@@ -82,6 +96,13 @@ const rowsShown = () => adapter.readRows(page);
 const draft = async () => (await H.serverState(page)).draft;
 const drugRows = async () => H.filled(await draft());
 
+// The server's draft and the screen both hold `row` at row r
+async function holds(r, row, timeout) {
+  const same = x => JSON.stringify(x) === JSON.stringify(row);
+  await H.waitForDraft(page, d => same(d[r]), timeout);
+  await H.waitForRows(page, adapter, rows => same(rows[r]), timeout);
+}
+
 async function enter(r, c, text, key = 'Enter') {
   await adapter.typeInto(page, r, c, text);
   await page.keyboard.press(key);
@@ -101,7 +122,7 @@ describe('the Drug column', () => {
     assert.equal(shown[shown.length - 1][0], '');
   });
 
-  test('a name that is not in the library is refused', async () => {
+  gt('a name that is not in the library is refused', async () => {
     const before = await draft();
     await adapter.typeInto(page, FIRST_BLANK, 0, 'notadrug');
     await page.keyboard.press('Enter');
@@ -142,7 +163,8 @@ describe('the Drug column', () => {
     await page.keyboard.press('Enter');
     await page.keyboard.press('Escape');
     await enter(FIRST_BLANK, 0, 'morphine');
-    await H.waitForDraft(page, d => d[FIRST_BLANK][0] === 'morphine', 5000);
+    const info = await H.drugInfo(page, 'morphine');
+    await holds(FIRST_BLANK, ['morphine', '0', '0', info.defaultUnit], 5000);
   });
 
   test('changing a row\'s drug resets its time, dose and unit', async () => {
@@ -151,15 +173,13 @@ describe('the Drug column', () => {
     await H.waitForDraft(page, d => d[2][2] === '50');
     await enter(2, 0, 'morphine');
     const info = await H.drugInfo(page, 'morphine');
-    await H.waitForDraft(page, d => d[2][0] === 'morphine');
-    assert.deepEqual((await draft())[2], ['morphine', '0', '0', info.defaultUnit]);
+    await holds(2, ['morphine', '0', '0', info.defaultUnit]);
   });
 
   test('clearing a drug clears its row', async () => {
     await adapter.clearCell(page, 2, 0);
     await H.settle(page);
-    await H.waitForDraft(page, d => d[2][0] === '');
-    assert.deepEqual((await draft())[2], ['', '', '', '']);
+    await holds(2, ['', '', '', '']);
   });
 
   test('Enter twice on a drug cell does not reset its row', async () => {
@@ -170,19 +190,34 @@ describe('the Drug column', () => {
     await page.keyboard.press('Enter');
     await page.keyboard.press('Enter');
     await H.settle(page);
-    assert.deepEqual((await draft())[2], ['fentanyl', '30', '10', 'mcg']);
+    await holds(2, ['fentanyl', '30', '10', 'mcg']);
+  });
+
+  gt('an illicit drug is said, not only drawn red', async () => {
+    await page.evaluate(() => { const b = document.getElementById('showIllicitDrugs'); b.checked = true; window.jQuery(b).trigger('change'); });
+    await H.settle(page, 800);
+    await enter(FIRST_BLANK, 0, 'cocaine');
+    await H.waitForDraft(page, d => d[FIRST_BLANK][0] === 'cocaine');
+    assert.match(await adapter.drugDescription(page, FIRST_BLANK), /illicit/i);
+    assert.doesNotMatch(await adapter.drugDescription(page, 0), /illicit/i);
   });
 });
 
 // ---------------------------------------------------------------------------
 describe('the Units column', () => {
   test('offers exactly the units of the row\'s drug', async () => {
+    // in the order the library lists them
     const info = await H.drugInfo(page, 'fentanyl');
-    assert.deepEqual((await adapter.unitOptions(page, 2)).slice().sort(), info.units.slice().sort());
+    assert.deepEqual(await adapter.unitOptions(page, 2), info.units);
     await enter(FIRST_BLANK, 0, 'morphine');
     await H.waitForDraft(page, d => d[FIRST_BLANK][0] === 'morphine');
     const morphine = await H.drugInfo(page, 'morphine');
-    assert.deepEqual((await adapter.unitOptions(page, FIRST_BLANK)).slice().sort(), morphine.units.slice().sort());
+    assert.deepEqual(await adapter.unitOptions(page, FIRST_BLANK), morphine.units);
+    // and a drug with one unit
+    await enter(FIRST_BLANK + 1, 0, 'sevoflurane');
+    await H.waitForDraft(page, d => d.some(r => r[0] === 'sevoflurane'));
+    const row = (await draft()).findIndex(r => r[0] === 'sevoflurane');
+    assert.deepEqual(await adapter.unitOptions(page, row), (await H.drugInfo(page, 'sevoflurane')).units);
   });
 
   test('a unit chosen from the keyboard is stored', async () => {
@@ -204,9 +239,23 @@ describe('the Units column', () => {
 
 // ---------------------------------------------------------------------------
 describe('Time and Dose', () => {
-  test('letters cannot be typed into a dose', async () => {
-    await enter(2, 2, '1a0x');
-    await H.waitForDraft(page, d => d[2][2] === '10');
+  // A key filter that drops what a number cannot hold changes the number
+  // without a word: "1,5" became 15 and "1a0" 10 (the external review of
+  // 2026-11-05).  Typed or pasted, an entry is read whole.
+  gt('a character a number cannot hold is refused with a message, not dropped', async () => {
+    await enter(2, 2, '25');
+    await holds(2, ['fentanyl', '0', '25', 'mcg']);
+    for (const entry of ['1,5', '1a0']) {
+      await H.clearNotifications(page);
+      await enter(2, 2, entry);
+      await page.waitForTimeout(300);
+      await holds(2, ['fentanyl', '0', '25', 'mcg']);
+      const notes = await H.notifications(page);
+      assert.ok(notes.some(n => n.includes('"' + entry + '" was not accepted')), entry + ': ' + JSON.stringify(notes));
+    }
+    // and what a number can hold is read as it is pasted: 1e3 is 1000
+    await enter(2, 2, '1e3');
+    await holds(2, ['fentanyl', '0', '1000', 'mcg']);
   });
 
   test('a negative dose is refused, said, and the cell keeps its value', async () => {
@@ -236,7 +285,9 @@ describe('Time and Dose', () => {
     await H.waitForDraft(page, d => d[2][2] === '25');
     await enter(2, 2, '2000000000');
     await page.waitForTimeout(300);
-    assert.equal((await draft())[2][2], '25');
+    await holds(2, ['fentanyl', '0', '25', 'mcg']);
+    const notes = await H.notifications(page);
+    assert.ok(notes.some(n => /cannot be more than 1,000,000,000/.test(n)), JSON.stringify(notes));
   });
 
   test('a time and a dose typed in a row with no drug are not kept', async () => {
@@ -259,7 +310,8 @@ describe('Time and Dose', () => {
     await adapter.focusCell(page, 0, 2);
     await H.paste(page, '1,5');
     await H.settle(page);
-    assert.equal((await draft())[0][2], '0');
+    await holds(0, ['propofol', '0', '0', 'mg']);
+    await holds(2, ['fentanyl', '0', '1000', 'mcg']);
   });
 });
 
@@ -269,10 +321,8 @@ describe('paste', () => {
     await adapter.focusCell(page, FIRST_BLANK, 0);
     await H.paste(page, 'fentanyl\t5\t50\tmcg/kg\nmorphine\t30\t10\tmg PO tablet');
     await H.settle(page);
-    await H.waitForDraft(page, d => d[FIRST_BLANK + 1][0] === 'morphine');
-    const d = await draft();
-    assert.deepEqual(d[FIRST_BLANK], ['fentanyl', '5', '50', 'mcg/kg']);
-    assert.deepEqual(d[FIRST_BLANK + 1], ['morphine', '30', '10', 'mg PO tablet']);
+    await holds(FIRST_BLANK, ['fentanyl', '5', '50', 'mcg/kg']);
+    await holds(FIRST_BLANK + 1, ['morphine', '30', '10', 'mg PO tablet']);
   });
 
   test('a pasted unit the drug does not offer is never used, and is said', async () => {
@@ -281,8 +331,7 @@ describe('paste', () => {
     await H.paste(page, 'morphine\t0\t10\tmg PO');
     await H.settle(page);
     const info = await H.drugInfo(page, 'morphine');
-    await H.waitForDraft(page, d => d[FIRST_BLANK][0] === 'morphine');
-    assert.deepEqual((await draft())[FIRST_BLANK], ['morphine', '0', '10', info.defaultUnit]);
+    await holds(FIRST_BLANK, ['morphine', '0', '10', info.defaultUnit]);
     const notes = await H.notifications(page);
     assert.ok(notes.some(n => /"mg PO" is not a unit offered for morphine/.test(n)), JSON.stringify(notes));
   });
@@ -294,19 +343,17 @@ describe('paste', () => {
     await adapter.focusCell(page, n - 2, 0);
     await H.paste(page, lines.join('\n'));
     await H.settle(page, 800);
-    const rows = H.filled(await draft()).filter(r => r[0] === 'fentanyl' && r[1] !== '0');
-    assert.deepEqual(rows, [['fentanyl', '5', '10', 'mcg'], ['fentanyl', '10', '11', 'mcg'],
-                            ['fentanyl', '15', '12', 'mcg'], ['fentanyl', '20', '13', 'mcg']]);
+    const want = [['fentanyl', '5', '10', 'mcg'], ['fentanyl', '10', '11', 'mcg'],
+                  ['fentanyl', '15', '12', 'mcg'], ['fentanyl', '20', '13', 'mcg']];
+    for (let i = 0; i < want.length; i++) await holds(n - 2 + i, want[i]);
   });
 
   test('times and doses alone paste into the row\'s own drug', async () => {
     await adapter.focusCell(page, 2, 1);
     await H.paste(page, '10\t50\n20\t5');
     await H.settle(page);
-    await H.waitForDraft(page, d => d[2][1] === '10' && d[3][1] === '20');
-    const d = await draft();
-    assert.deepEqual(d[2], ['fentanyl', '10', '50', 'mcg']);
-    assert.deepEqual(d[3], ['remifentanil', '20', '5', 'mcg']);
+    await holds(2, ['fentanyl', '10', '50', 'mcg']);
+    await holds(3, ['remifentanil', '20', '5', 'mcg']);
   });
 
   test('a paste that changes the drug and brings no unit takes the new drug\'s default', async () => {
@@ -314,23 +361,27 @@ describe('paste', () => {
     await adapter.focusCell(page, 0, 0);
     await H.paste(page, 'fentanyl\t0\t2');
     await H.settle(page);
-    await H.waitForDraft(page, d => d[0][0] === 'fentanyl');
-    assert.deepEqual((await draft())[0], ['fentanyl', '0', '2', 'mcg']);
+    await holds(0, ['fentanyl', '0', '2', 'mcg']);
   });
 
-  test('a paste cannot grow the table past its row limit', { timeout: 400000 }, async () => {
+  // The table holds 499 doses (MAX_DOSE_ROWS - 1) and a blank row.  510 rows
+  // pasted under the six of the startup table are 17 too many.
+  gt('a paste cannot grow the table past its row limit, and says so', { timeout: 900000 }, async () => {
     const lines = [];
-    for (let i = 0; i < 600; i++) lines.push(`fentanyl\t${i}\t1\tmcg`);
+    for (let i = 0; i < 510; i++) lines.push(`fentanyl\t${i + 1}\t1\tmcg`);
+    await H.clearNotifications(page);
     await adapter.focusCell(page, FIRST_BLANK, 0);
     const t0 = Date.now();
     await H.paste(page, lines.join('\n'));
-    await H.waitForDraft(page, d => H.filled(d).length > 400, 300000);
+    await H.waitForDraft(page, d => H.filled(d).length >= 499, 800000);
+    process.stdout.write(`# ${GRID}: the 510-row paste reached the server in ${((Date.now() - t0) / 1000).toFixed(1)} s\n`);
     await H.settle(page, 3000);
-    process.stdout.write(`# ${GRID}: the 600-row paste reached the server in ${((Date.now() - t0) / 1000).toFixed(1)} s\n`);
     const d = await draft();
+    assert.equal(H.filled(d).length, 499, `the draft holds ${H.filled(d).length} doses`);
     assert.ok(d.length <= 500, `the draft holds ${d.length} rows`);
-    assert.ok((await rowsShown()).length <= 500);
-    assert.ok(H.filled(d).length > 400, 'the paste was dropped altogether');
+    assert.equal(H.filled(await rowsShown()).length, 499);
+    const notes = await H.notifications(page);
+    assert.ok(notes.some(n => /not added|at most 499/.test(n)), JSON.stringify(notes));
   });
 });
 
@@ -344,7 +395,17 @@ describe('the keyboard', () => {
     await page.keyboard.press('Tab');
     assert.deepEqual(await adapter.activeCell(page), [2, 2]);
     await H.settle(page);
-    await H.waitForDraft(page, d => d[2][1] === '8');
+    await holds(2, ['fentanyl', '8', '0', 'mcg']);
+  });
+
+  test('Home and End go to the first and last cell of the row', async () => {
+    await adapter.focusCell(page, 2, 1);
+    await page.keyboard.press('Home');
+    assert.deepEqual(await adapter.activeCell(page), [2, 0]);
+    await adapter.focusCell(page, 2, 1);
+    await page.keyboard.press('End');
+    assert.deepEqual(await adapter.activeCell(page), [2, 3]);
+    await holds(2, ['fentanyl', '0', '0', 'mcg']);
   });
 
   // At an ordinary typing speed: 80 ms a key, no pause after Tab
@@ -360,8 +421,7 @@ describe('the keyboard', () => {
     await H.waitForDraft(page, d => d[FIRST_BLANK][0] === 'morphine' && d[FIRST_BLANK][2] === '4', 5000);
     assert.deepEqual((await draft())[FIRST_BLANK].slice(0, 3), ['morphine', '15', '4']);
     await adapter.chooseUnit(page, FIRST_BLANK, 'mg PO tablet');
-    await H.waitForDraft(page, d => d[FIRST_BLANK][3] === 'mg PO tablet');
-    assert.deepEqual((await draft())[FIRST_BLANK], ['morphine', '15', '4', 'mg PO tablet']);
+    await holds(FIRST_BLANK, ['morphine', '15', '4', 'mg PO tablet']);
   });
 
   // The server is a few hundred ms away on shinyapps.io
@@ -408,14 +468,17 @@ describe('rows', () => {
     await H.waitForDraft(page, d => d[2][0] === '' && d[3][0] === 'fentanyl');
     const d = await draft();
     assert.ok(d.every(r => r.every(x => typeof x === 'string')), 'a cell is not a string: ' + JSON.stringify(d));
+    await H.waitForRows(page, adapter, rows => rows[2][0] === '' && rows[3][0] === 'fentanyl');
     await enter(2, 0, 'morphine');
-    await H.waitForDraft(page, d => d[2][0] === 'morphine');
+    const info = await H.drugInfo(page, 'morphine');
+    await holds(2, ['morphine', '0', '0', info.defaultUnit]);
   });
 
   test('a row can be removed', async () => {
     await adapter.removeRow(page, 2);
     await H.settle(page);
     await H.waitForDraft(page, d => !d.some(r => r[0] === 'fentanyl'));
+    await H.waitForRows(page, adapter, rows => !rows.some(r => r[0] === 'fentanyl'));
   });
 
   test('removing every row leaves one blank row', async () => {
@@ -428,6 +491,7 @@ describe('rows', () => {
     await H.settle(page, 500);
     const d = await draft();
     assert.ok(d.length >= 1 && H.filled(d).length === 0, JSON.stringify(d));
+    assert.equal(H.filled(await rowsShown()).length, 0);
   });
 });
 
@@ -507,6 +571,9 @@ describe('Ctrl+Z and Ctrl+Y', () => {
     await H.waitForDraft(page, d => d[2][2] === '100');
     await adapter.typeInto(page, 3, 2, '55');
     await undo();
+    // the cell's own typing was undone, whatever is left of it
+    const text = await adapter.activeText(page);
+    assert.notEqual(text, '55', 'Ctrl+Z left the typing as it was');
     await page.keyboard.press('Escape');
     await H.settle(page);
     const d = await draft();
@@ -523,6 +590,24 @@ describe('Ctrl+Z and Ctrl+Y', () => {
     await H.settle(page, 1500);
     assert.equal((await draft())[2][2], '0');
     assert.equal((await rowsShown())[2][2], '0');
+  });
+
+  // On a button or the page, not in a text field: the dose table's undo, as
+  // the Undo button.  Left to the browser, Ctrl+Z undid the typing of the
+  // last cell edited, and the grid showed 0 while the draft held 100 (the
+  // external review of 2026-11-05).
+  gt('Ctrl+Z with the focus outside the grid undoes the last edit', async () => {
+    await enter(2, 2, '100');
+    await holds(2, ['fentanyl', '0', '100', 'mcg']);
+    await page.waitForFunction(() => !document.getElementById('dosetable_apply').disabled);
+    await page.focus('#dosetable_apply');
+    await undo();
+    await H.settle(page, 800);
+    await holds(2, ['fentanyl', '0', '0', 'mcg']);
+    await page.focus('#dosetable_apply');
+    await redo();
+    await H.settle(page, 800);
+    await holds(2, ['fentanyl', '0', '100', 'mcg']);
   });
 
   test('Ctrl+Z after Apply does not reach past it', async () => {
@@ -566,10 +651,13 @@ describe('the draft, Apply and undo', () => {
     assert.ok(await page.isDisabled('#dosetable_apply'));
   });
 
+  // applyGasTableRules(): a volatile agent brings a ventilation row (oxygen
+  // comes only with nitrous oxide)
   test('a rule the server applies is drawn in the grid (a gas brings its ventilation)', async () => {
     await enter(FIRST_BLANK, 0, 'sevoflurane');
     await H.settle(page, 800);
-    await H.waitForDraft(page, d => d.some(r => r[0] === 'sevoflurane') && d.length > 0);
+    await H.waitForDraft(page, d => d.some(r => r[0] === 'sevoflurane') && d.some(r => r[0] === 'ventilation'));
+    await H.waitForRows(page, adapter, rows => rows.some(r => r[0] === 'ventilation'));
     const d = await draft();
     const shown = await rowsShown();
     assert.deepEqual(H.filled(shown), H.filled(d));
@@ -589,6 +677,27 @@ describe('everything is text', () => {
     assert.equal(await page.evaluate(() => window.__xss), undefined);
     assert.equal(await page.locator(`${adapter.root} img, ${adapter.root} b`).count(), 0);
     assert.ok((await draft()).every(r => !/[<>]/.test(r.join(''))));
+  });
+
+  // The grid's own code: an edit, the drug list, the row menu opened and
+  // closed by mouse and by key.  rhandsontable's bundled numbro throws on
+  // every load ('exports is not defined'), from whichever rhandsontable grid
+  // is on the page; that page-level error is the next case's.
+  test('the grid raises no script errors', async () => {
+    await enter(2, 2, '5');
+    await adapter.typeInto(page, FIRST_BLANK, 0, 'morph');
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Escape');
+    await page.click(`${adapter.root} td >> nth=0`, { button: 'right', force: true });
+    await page.waitForTimeout(200);
+    await page.keyboard.press('Escape');
+    await adapter.focusCell(page, 2, 0);
+    await page.keyboard.press('Shift+F10');
+    await page.waitForTimeout(200);
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+    const errors = page.pageErrors.filter(m => !/exports is not defined/.test(m));
+    assert.deepEqual(errors, []);
   });
 
   gt('the page raises no script errors', async () => {

@@ -81,6 +81,20 @@ module.exports = {
     return page.$eval(td(r, 0), el => getComputedStyle(el).color);
   },
 
+  // What a screen reader is told of a Drug cell beyond its name
+  async drugDescription(page, r) {
+    return page.$eval(td(r, 0), el =>
+      [el.getAttribute('title'), el.getAttribute('aria-description'), el.getAttribute('aria-label')].filter(Boolean).join(' '));
+  },
+
+  // The text in the open editor, if a cell is being typed in
+  async activeText(page) {
+    return page.evaluate(() => {
+      const e = window.HTMLWidgets.find('#doseTableHTML').hot.getActiveEditor();
+      return e && e.isOpened() && e.TEXTAREA ? e.TEXTAREA.value : null;
+    });
+  },
+
   async rowMenu(page, r, item) {
     await page.click(td(r, 0), { button: 'right' });
     await page.click(`.htContextMenu td:has-text("${item}")`);
