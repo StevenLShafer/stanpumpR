@@ -1,0 +1,168 @@
+# The Minto Visualizer (3D viewer): the run file's test
+#
+# Author:    Dr Charles Minto
+# Assisted by: Claude.ai (Anthropic)
+# Extended for stanpumpR's pipeline by Claude Code (Anthropic), 2026-11-05.
+#
+# Copyright (c) 2026 Charles Minto and Thomas Schnider
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+# viewerRun() reads the simulation's $wide (Plasma, Effect Site),
+# $compartments (V2, V3, Depot), $tci$rates and $DT by name; if they change
+# it draws a wrong picture rather than failing, so this test fails instead.
+# The drug given is checked against the doses themselves, and the drug
+# eliminated (given less the drug in the body) against an independent
+# integral of CL1 x Cp, for the linear drugs where that is the elimination.
+
+NO_EVENTS <- data.frame(Time = double(), Event = character())
+
+viewerEntry <- function(doses, maximum, minimum = 0, drug = doses$Drug[1]) {
+  doses$Drug <- as.character(doses$Drug)
+  doses$Units <- as.character(doses$Units)
+  D <- recalculatePK(NULL, getDrugDefaultsGlobal(), doses,
+                     age = 40, weight = 70, height = 170, sex = "male")
+  viewerSimulate(drug, doses, NO_EVENTS, D, minimum, maximum)
+}
+vr <- function(doses, maximum, minimum = 0) {
+  viewerRun(viewerEntry(doses, maximum, minimum), minimum, maximum)
+}
+
+# Eliminated as the viewer computes it (given less the drug in the body), and
+# as CL1 x Cp integrated by the trapezoid, at the end of the run.
+eliminated <- function(r) {
+  n <- length(r$t)
+  body <- r$cp[n] * r$pk$v1 + (if (is.null(r$c2)) 0 else r$c2[n] * r$pk$v2) +
+          (if (is.null(r$c3)) 0 else r$c3[n] * r$pk$v3)
+  c(viewer = r$given[n] - body,
+    integral = r$pk$cl1 * sum((r$cp[-1] + r$cp[-n]) / 2 * diff(r$t) / 60))
+}
+
+TOL <- 1e-3
+
+test_that("propofol TCI-E: every series is there and the drug adds up", {
+  doses <- data.frame(Drug = "propofol", Time = c(0, 20, 40), Dose = c(3, 4, 2),
+                      Units = "Effect site target")
+  r <- vr(doses, 60)
+  expect_equal(r$version, 2)
+  expect_false(is.null(r$ce))
+  expect_false(is.null(r$c2))
+  expect_false(is.null(r$c3))
+  expect_true(r$inputKnown)
+  for (k in c("cp", "ce", "c2", "c3", "rate", "target", "mode", "given"))
+    expect_length(r[[k]], length(r$t))
+  expect_equal(r$mode[1], "effect")
+  expect_gt(r$rate[1], 0)
+  # Given is the TCI pump's own schedule, integrated.
+  n <- length(r$t)
+  expect_equal(r$given[n], sum(r$rate[-n] * diff(r$t) / 60), tolerance = 1e-9)
+  e <- eliminated(r)
+  expect_lt(abs(e[["viewer"]] - e[["integral"]]) / r$given[n], TOL)
+})
+
+test_that("a manual infusion takes over from TCI at 7 mg/min", {
+  doses <- data.frame(Drug = "propofol", Time = c(0, 20), Dose = c(3, 6),
+                      Units = c("Effect site target", "mg/kg/hr"))
+  r <- vr(doses, 40)
+  after <- r$t >= 1200
+  expect_true(all(r$mode[after] == "manual"))
+  expect_true(all(abs(r$rate[after] - 7) < 1e-9))
+  e <- eliminated(r)
+  expect_lt(abs(e[["viewer"]] - e[["integral"]]) / utils::tail(r$given, 1), TOL)
+})
+
+test_that("boluses and an infusion add up to the doses", {
+  doses <- data.frame(Drug = "fentanyl", Time = c(0, 0, 30), Dose = c(100, 1, 50),
+                      Units = c("mcg", "mcg/kg/hr", "mcg"))
+  r <- vr(doses, 60)
+  expect_length(r$boluses, 2)
+  expect_equal(utils::tail(r$given, 1), 100 + 70 + 50, tolerance = 1e-9)
+  e <- eliminated(r)
+  expect_lt(abs(e[["viewer"]] - e[["integral"]]) / 220, TOL)
+})
+
+test_that("the run spans the plot's window, Min time to Max time", {
+  doses <- data.frame(Drug = "propofol", Time = c(0, 0), Dose = c(2, 100),
+                      Units = c("mg/kg", "mcg/kg/min"))
+  r <- vr(doses, 780)
+  expect_equal(r$t[1], 0)
+  expect_equal(utils::tail(r$t, 1), 46800)
+  expect_true(all(diff(r$t) > 0))
+  expect_lte(length(r$t), VIEWER_MAX_TIMES + 2)
+
+  # From Min time: the drug given before the window is already counted, and
+  # the bolus at 0 is not shown as an event inside it.
+  w <- vr(doses, 120, minimum = 30)
+  expect_equal(w$t[1], 1800)
+  expect_equal(utils::tail(w$t, 1), 7200)
+  expect_equal(w$given[1], 140 + 7 * 30, tolerance = 1e-9)
+  expect_length(w$boluses, 0)
+  # The same solution as a run from 0, sampled in the window.
+  full <- vr(doses, 120)
+  expect_equal(w$cp, stats::approx(full$t, full$cp, w$t)$y, tolerance = 1e-6)
+})
+
+test_that("an oral dose enters through the depot and adds up", {
+  doses <- data.frame(Drug = "morphine", Time = 0, Dose = 10, Units = "mg PO tablet")
+  r <- vr(doses, 240)
+  P <- getDrugPK("morphine", 70, 170, 40, "male", getDrugDefaults("morphine"))$PK[[1]]
+  n <- length(r$t)
+  expect_false(is.null(r$depot))
+  expect_true(r$inputKnown)
+  # Absorbed plus still in the depot is the bioavailable dose, after the lag.
+  after <- r$t / 60 > P$tlag_PO + 0.1
+  expect_equal(r$absorbed[after] + r$depot[after],
+               rep(10 * P$bioavailability_PO, sum(after)), tolerance = 1e-3)
+  # No intravenous rate, and the given is what was absorbed.
+  expect_true(all(r$rate == 0))
+  expect_equal(r$given, r$absorbed)
+  e <- eliminated(r)
+  expect_lt(abs(e[["viewer"]] - e[["integral"]]) / r$given[n], 5e-3)
+})
+
+test_that("scheduled intravenous doses count every repeat", {
+  doses <- data.frame(Drug = "morphine", Time = 0, Dose = 4, Units = "mg q4h")
+  r <- vr(doses, 600)
+  expect_equal(utils::tail(r$given, 1), 4 * 3, tolerance = 1e-9)   # 0, 240, 480 min
+  expect_length(r$boluses, 3)
+})
+
+test_that("a saturable drug: given is the doses, eliminated never falls", {
+  doses <- data.frame(Drug = "phenytoin", Time = 0, Dose = 1000, Units = "mg")
+  r <- vr(doses, 240)
+  expect_true(r$inputKnown)
+  expect_equal(utils::tail(r$given, 1), 1000, tolerance = 1e-9)
+  body <- r$cp * r$pk$v1 + (if (is.null(r$c2)) 0 else r$c2 * r$pk$v2)
+  elim <- r$given - body
+  expect_gte(min(elim), -1e-6 * 1000)
+  expect_gte(min(diff(elim)), -1e-6 * 1000)
+})
+
+test_that("drugs the viewer cannot draw say why", {
+  D <- recalculatePK(NULL, getDrugDefaultsGlobal(),
+                     data.frame(Drug = c("ketorolac", "heparin"), Time = 0, Dose = c(30, 5000),
+                                Units = c("mg", "IU")),
+                     age = 40, weight = 70, height = 170, sex = "male")
+  expect_match(viewerProblem(D$ketorolac), "separate systems")
+  expect_match(viewerProblem(D$heparin), "mcg/mL, ng/mL or pg/mL")
+  expect_match(viewerProblem(NULL), "no simulation")
+  expect_null(viewerProblem(recalculatePK(NULL, getDrugDefaultsGlobal(),
+    data.frame(Drug = "propofol", Time = 0, Dose = 1, Units = "mg/kg"),
+    age = 40, weight = 70, height = 170, sex = "male")$propofol))
+})

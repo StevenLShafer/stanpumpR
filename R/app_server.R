@@ -2291,6 +2291,49 @@ app_server <- function(input, output, session) {
     }, name = "input$stopAdministrationBtn observer")
   })
 
+  # The Minto Visualizer (R/viewerRun.R, inst/www/viewer-launch.js,
+  # inst/www/stanpumpR-viewer.html; source tools/viewer): the Edit doses
+  # dialog's button opens the popup at once in the browser (a window opened
+  # later, when the server answers, would be stopped by popup blockers); the
+  # server then simulates the drug at the viewer's times, from the plot's Min
+  # time to its Max time, with every covariate the plot used, and sends the
+  # run. The run is a snapshot of the committed dose table at the click.
+  viewerAvailable <- function(drug) {
+    isTRUE(tryCatch(is.null(viewerProblem(isolate(drugs())[[drug]])), error = function(e) FALSE))
+  }
+
+  observeEvent(input$openViewer, {
+    profileCode({
+      drug <- skipTarget()$drug
+      # Told in the app and in the viewer's window, which would otherwise
+      # wait for a run that is not coming.
+      fail <- function(message) {
+        showNotification(paste("Minto Visualizer:", message), type = "error")
+        session$sendCustomMessage("stanpumpR-viewer-error", message)
+      }
+      blocked <- simulationBlocked()
+      if (!is.null(blocked)) return(fail(blocked))
+      run <- tryCatch({
+        DT <- doseTableIV()
+        entry <- viewerSimulate(drug, DT, eventTableClean(), drugPK(DT),
+                                plotMinimum(), plotMaximum(), antiseizureInteractions())
+        defaults <- drugDefaults()
+        viewerRun(entry, plotMinimum(), plotMaximum(),
+                  category = defaults$Category[match(drug, defaults$Drug)])
+      }, error = function(e) {
+        fail(if (inherits(e, "shiny.silent.error")) "the plot is not ready yet; try again." else conditionMessage(e))
+        NULL
+      })
+      if (!is.null(run)) session$sendCustomMessage("stanpumpR-viewer-run", run)
+    }, name = "input$openViewer observer")
+  })
+
+  # The browser blocked the visualizer's window (inst/www/viewer-launch.js).
+  observeEvent(input$viewerBlocked, {
+    showNotification("Minto Visualizer: the browser blocked the window. Allow pop-ups for this site and click again.",
+                     type = "warning", duration = 10)
+  })
+
   showEditDrugModal <- function(drug) {
     skipTarget(list(drug = drug, time = DrugTimeUnits()$time))
     showModal(
@@ -2302,6 +2345,10 @@ app_server <- function(input, output, session) {
         rhandsontable::rHandsontableOutput("editPriorDosesTable"),
         actionButton("editDosesOK", "Apply", class = "btn-primary"),
         actionButton("deleteAllDosesBtn", "Delete All Doses", class = "btn-outline-danger"),
+        # The Minto Visualizer (R/viewerRun.R): only for a drug it can draw.
+        if (viewerAvailable(drug)) actionButton(
+          "openViewer", "Minto Visualizer", icon = icon("cube"), class = "btn-outline-primary"
+        ),
         tags$button(
           type = "button",
           class = "btn float-right",

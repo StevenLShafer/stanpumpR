@@ -1,0 +1,140 @@
+<!doctype html>
+<!--
+  stanpumpR viewer
+
+  Author:    Dr Charles Minto
+  Assisted by: Claude.ai (Anthropic)
+
+  Copyright (c) 2026 Charles Minto and Thomas Schnider
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+
+  The page's template. tools/build.mjs puts the styles, three.js and the
+  viewer's scripts in place of the markers below and writes the whole as
+  one file, stanpumpR-viewer.html, that needs nothing else.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>stanpumpR viewer</title>
+<style>
+/*@@viewer.css@@*/
+</style>
+</head>
+<body>
+<main id="view"></main>
+
+<div id="readout"></div>
+<div id="amounts"></div>
+<div id="perf"></div>
+
+<button id="close" title="Close the visualizer" aria-label="Close the visualizer">&#x2715;</button>
+
+<div id="controls">
+  <button id="play" title="Play (space)">&#x25B6; Play</button>
+  <button id="pause" title="Pause (space)">&#x275A;&#x275A; Pause</button>
+  <button id="stop" title="Stop, and go back to the start">&#x25A0; Stop</button>
+  <span class="clock" id="now">0:00:00</span>
+  <input id="t" class="progress" type="range" min="0" max="1" step="any" value="0" aria-label="Time">
+  <span class="clock" id="end">0:00:00</span>
+  <label class="speedctl" title="Play speed (+ faster, − slower)">Speed
+    <input id="speedSlider" type="range" min="0" max="1" step="1" value="0" aria-label="Play speed"></label>
+  <span class="speed" id="speed"></span>
+  <span class="tip"><kbd>h</kbd> help</span>
+  <button id="open" title="Open a run file (.json)">Open run…</button>
+  <input type="file" id="file" accept=".json,application/json" hidden>
+</div>
+
+<div id="message"><div class="card"></div></div>
+
+<div id="help">
+  <div class="card">
+    <h2 class="logo"><span class="sp">stanpump</span><span class="r">R</span></h2>
+    <div class="about">
+      <p>Each cylinder is a compartment. Its floor area is the volume and the liquid's height is the concentration, so the liquid itself represents the amount of drug.</p>
+      <p>Each arrow is a flow of drug: the arrow's thickness (its cross-section) is the rate. <span class="in">Red</span> flows into V<sub>1</sub>; <span class="out">green</span> flows out of it. The arrow from above is the pump; the arrow from the front left is drug absorbed from a depot (an oral, SC, IM or other extravascular dose).</p>
+      <p>Every flow is read from stanpumpR's own amounts as they change, so it holds for any model, saturable ones included.</p>
+      <p>The <span class="ce">blue ribbon</span> is the effect site, flat because its volume is negligible: its height is Ce.</p>
+      <p><span class="tgt">Gold</span> marks the target.</p>
+    </div>
+    <h3>Keys</h3>
+    <table>
+      <tbody>
+      <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td>eye left / right, round the scene</td></tr>
+      <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>eye up / down</td></tr>
+      <tr><td><kbd>Page Up</kbd> <kbd>Page Down</kbd></td><td>rise / fall</td></tr>
+      <tr><td><kbd>i</kbd> <kbd>o</kbd></td><td>zoom in / out, about V<sub>1</sub></td></tr>
+      <tr><td><kbd>[</kbd> <kbd>]</kbd></td><td>narrower / wider lens</td></tr>
+      <tr><td><kbd>Home</kbd> held</td><td>fly out to the starting view</td></tr>
+      <tr><td><kbd>End</kbd> held</td><td>fly in to a close-up of V<sub>1</sub></td></tr>
+      <tr class="note"><td></td><td>on a Mac laptop: <kbd>fn</kbd>+<kbd>←</kbd> for Home, <kbd>fn</kbd>+<kbd>→</kbd> for End</td></tr>
+      <tr><td>mouse</td><td>drag to rotate, wheel to zoom, right-drag to pan</td></tr>
+      </tbody>
+      <tbody>
+      <tr><td><kbd>space</kbd></td><td>play / pause</td></tr>
+      <tr><td><kbd>+</kbd> <kbd>−</kbd></td><td>faster / slower play (or the Speed slider)</td></tr>
+      </tbody>
+      <tbody>
+      <tr><td><kbd>a</kbd></td><td>the amounts card: administered, in the depot, in the body (V<sub>1</sub>, V<sub>2</sub>, V<sub>3</sub>) and eliminated</td></tr>
+      <tr><td>hover</td><td>a vessel: its concentration and amount; an arrow: its rate, with the total administered or eliminated</td></tr>
+      </tbody>
+      <tbody>
+      <tr><td><kbd>h</kbd></td><td>this list; <kbd>h</kbd> or <kbd>Esc</kbd> closes it</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- three.js 0.170.0 (MIT, see its notice in THIRD-PARTY-NOTICES.txt), as window.THREE and window.THREE_ADDONS -->
+<script>
+/*@@three@@*/
+</script>
+<script>
+/*@@looks.js@@*/
+</script>
+<script>
+/*@@vessels.js@@*/
+</script>
+<script>
+/*@@arrows.js@@*/
+</script>
+<script>
+/*@@ribbon.js@@*/
+</script>
+<script>
+/*@@labels.js@@*/
+</script>
+<script>
+/*@@perf.js@@*/
+</script>
+<script>
+/*@@scene.js@@*/
+</script>
+<script>
+/*@@player.js@@*/
+</script>
+<script>
+  Perf.init(document.getElementById('perf'));
+  View.init(document.getElementById('view'));
+  Keys.init();
+  Player.init();
+</script>
+</body>
+</html>

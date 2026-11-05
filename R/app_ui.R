@@ -61,6 +61,8 @@ app_ui <- function() {
         tags$script(src = "stanpumpr-assets/pk-convert.js"),
         tags$script(HTML(js_drug_defaults)),
         tags$script(src = "stanpumpr-assets/hot_funs.js"),
+        # The Minto Visualizer's popup (the Edit doses dialog's button)
+        tags$script(src = "stanpumpr-assets/viewer-launch.js"),
         tags$link(href = "stanpumpr-assets/app.css", rel = "stylesheet")
       ),
 
