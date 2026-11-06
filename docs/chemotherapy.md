@@ -412,3 +412,12 @@ from Table 2's per-m2 values at the median child, CL also by (1 +
 `doxorubicinolPediatric` (one compartment, fM 0.5 fixed in the source); ng/mL.
 It reproduces the paper's three printed clearances. Mosteller BSA (the
 paper's formula is in its supplement); doses as labelled, no conversion.
+
+## 27. Daunorubicin
+
+`daunorubicin` is Bogason 2011 (N07, added to the sources; PDF supplied
+2026-11-06), the basic model of Table 2: two compartments, CL 115 L/h, Vc 373
+L, Q 252 L/h, Vp 1120 L; ng/mL, doses as labelled. The white-count model (Vc
+412 x [1 + 0.0138 (WBC - 39)]) is not used, the Patient Profile having no
+white count. Krogh-Madsen 2012 (adults with AML) used it as its NONMEM prior
+and stays `complete_not_implemented`.

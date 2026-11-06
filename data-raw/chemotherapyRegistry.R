@@ -199,6 +199,7 @@ N03	11320662	Lowe	2001	Cancer Chemother Pharmacol	47(3):199-205	10.1007/s0028000
 N04	15757511	Lindemalm	2005	BMC Pharmacol	5:4	10.1186/1471-2210-5-4	PMC1079880	Application of population pharmacokinetics to cladribine.
 N05	7906999	Kearns	1994	Cancer Res	54(5):1235-9			Pharmacokinetics of cladribine (2-chlorodeoxyadenosine) in children with acute leukemia.
 N06	10473105	Reid	1999	Clin Cancer Res	5(8):2192-7			Metabolic activation of dacarbazine by human cytochromes P450: the role of CYP1A1, CYP1A2, and CYP2E1.
+N07	21204910	Bogason	2011	Br J Clin Pharmacol	71(4):514-21	10.1111/j.1365-2125.2010.03894.x		Inverse relationship between leukaemic cell burden and plasma concentrations of daunorubicin in patients with acute myeloid leukaemia.
 ", sep = "\t", header = FALSE, quote = "", colClasses = "character",
   col.names = c("source_id", "pmid", "first_author", "year", "journal",
                 "volume_pages", "doi", "pmcid", "title"))
@@ -216,7 +217,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 FULL_TEXT_READ <- c("C01", "P02", "C35", "C03")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
-PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22")
+PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
   ifelse(pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
@@ -480,9 +481,10 @@ registry <- rbind(
     readiness = "implemented", stanpumpr_drug = "doxorubicin"),
   m("doxorubicin__children__voller2015", "doxorubicin", "doxorubicin (conventional)", "IV",
     "94 children 0-18 years", "doxorubicin and doxorubicinol",
-    "linear three compartments and one doxorubicinol compartment; BSA scaling, a power of age on clearance",
+    "three compartments and one doxorubicinol compartment (fM 0.5 fixed); every parameter x (1 + 1.30 (BSA - 0.77)); CL 24.1 L/h/m2 at the median child x (1 + (age/5.32)^0.286)/2",
     "second", "linear_metabolite", "C39",
-    "The only source for children under 3 years."),
+    "PDF read; Eq. 1 confirmed on the page image (2026-11-06). The only source for children under 3 years. Reproduces its three printed clearances (24.1, 12.0, 29.1 L/h/m2). The BSA formula is in the unread supplement (Mosteller used); the dose basis is not stated (doses as labelled).",
+    readiness = "implemented", stanpumpr_drug = "doxorubicinPediatric"),
   m("vincristine__children__nijstad2022", "vincristine", "vincristine (conventional)", "IV",
     "206 patients 0.04-33.9 years (25 under 1 year)", "vincristine",
     "three compartments, one of them saturable (beta-tubulin binding); weight and age on the binding capacity",
@@ -642,6 +644,12 @@ registry <- rbind(
     "expansion", "linear", "C22",
     "PDF read (supplied 2026-11-06), complete but mostly the prior's: every sample after 9 h was below the limit, and the data alone gave Vc 198 and Vp 223 L against the prior's 373 and 1120. The dose basis (hydrochloride or base) is not stated. Not implemented.",
     readiness = "complete_not_implemented"),
+  m("daunorubicin__aml__bogason2011", "daunorubicin", "daunorubicin (conventional)", "IV",
+    "40 adults with AML, 33-83 years", "daunorubicin",
+    "two compartments (basic model): CL 115 L/h, Vc 373 L, Q 252 L/h, Vp 1120 L; WBC model Vc 412 x (1 + 0.0138 (WBC - 39))",
+    "expansion", "linear", "N07",
+    "PDF read (supplied 2026-11-06). The basic model is used (the white count has no field, and its term's RSE is 47%). Krogh-Madsen 2012 used this model as a NONMEM prior. The dose basis is not named; doses as labelled. Daunorubicinol measured but not in the final model.",
+    readiness = "implemented", stanpumpr_drug = "daunorubicin"),
   m("daunorubicin__aml__varatharajan2016", "daunorubicin", "daunorubicin (conventional)", "IV",
     "70 adults with de novo AML", "daunorubicin and daunorubicinol",
     "parent and metabolite (Monolix); pharmacogenetics", "expansion", "linear_metabolite", "C23",

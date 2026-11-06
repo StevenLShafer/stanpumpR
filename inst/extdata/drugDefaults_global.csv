@@ -243,3 +243,4 @@ etoposide,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#7B1FA2,0,0,0,0,0,IV,Chem
 cisplatinBound,ng,,,,,#90A4AE,0,0,0,0,0,IV,
 doxorubicinPediatric,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#B71C1C,0,0,0,0,0,IV,Chemotherapy
 doxorubicinolPediatric,ng,,,,,#E57373,0,0,0,0,0,IV,
+daunorubicin,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#880E4F,0,0,0,0,0,IV,Chemotherapy
