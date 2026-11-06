@@ -216,7 +216,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 FULL_TEXT_READ <- c("C01", "P02", "C35", "C03")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
-PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13")
+PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
   ifelse(pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
@@ -366,8 +366,12 @@ registry <- rbind(
     "High-dose conditioning only. The handoff named the first author Nath; PubMed's is Duong."),
 
   m("methotrexate__adult__ibarra2023", "methotrexate", "methotrexate (high dose)", "IV",
-    "adults with cancer receiving high-dose methotrexate", "methotrexate",
-    "population model with clinically relevant covariates (not in the abstract)", "first", "unknown", "P12"),
+    "243 adults (693 courses), 18-88 years, 0.5-13.4 g/m2 over 3-24 h",
+    "methotrexate",
+    "three mammillary compartments allometric in weight: CL 5.92 L/h x (SCRpop/SCR)^0.694 x (albumin/4)^0.594, V1 14.4 L, Q2 0.571 L/h, V2 3.55 L, Q3 0.0365 L/h, V3 2.09 L",
+    "first", "linear", "P12",
+    "PDF read (supplied 2026-11-06). Table 2 reproduces the paper's half-lives (1.46, 4.93, 39.9 against 1.5, 4.9, 40 h) and Vss (20.0 L). SCRpop is not printed; the Methods' healthy-adult means 0.92 and 0.77 mg/dL are taken. Albumin has no Patient Profile field and is held at 4 g/dL, although 68% of courses were hypoalbuminaemic. [decision, asked 2026-11-06] Add an albumin field to the Patient Profile (read by this model, and by methotrexatePediatric through severe hypoalbuminaemia)?",
+    readiness = "implemented", stanpumpr_drug = "methotrexate"),
   m("methotrexate__mixed__blackman2026", "methotrexate", "methotrexate (high dose)", "IV",
     "patients receiving high-dose methotrexate", "methotrexate",
     "population models developed and validated for dosing decisions", "first", "unknown", "P13"),
@@ -388,7 +392,7 @@ registry <- rbind(
   m("methotrexate__infant_all__beechinor2019", "methotrexate", "methotrexate (high dose)", "IV",
     "71 infants with ALL", "methotrexate",
     "two compartments, allometric weight only; high interoccasion variability", "first", "linear", "C15",
-    "Infants only; do not extend older children's models into infancy."),
+    "Infants only; do not extend older children's models into infancy. Its supplement's two figures (supplied 2026-11-06) show weight-normalised clearance near 0.27 L/h/kg without trend in age (2-15 months) or treatment cycle, and a visual predictive check; Q and the peripheral volume are in the article's own table."),
 
   m("fluorouracil__adult__terret2000", "fluorouracil", "fluorouracil", "IV",
     "adults with cancer", "5-FU", "dose- and time-dependent pharmacokinetics (structure not in the abstract)",

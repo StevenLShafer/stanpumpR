@@ -202,3 +202,13 @@ on the Down syndrome factor (0.83, 0.84). The covariates with no Patient Profile
 syndrome, albumin, pleural effusion, infusion length) are held at the reference. The model
 reproduces the paper's Table 5 end-of-infusion mean for 5 g/m2 over 24 h (85.9 against 84.8
 umol/L); its later means lie above the typical curve, as means of individual predictions should.
+
+## 10. High-dose methotrexate in adults
+
+Ibarra 2023 (`R/drugs_methotrexate.R`), from the PDF Shafer supplied: three compartments
+allometric in weight, creatinine and albumin on clearance. Table 2 reproduces the paper's own
+half-lives (1.5, 4.9, 40 h) and Vss (20 L). Its reference creatinine is not printed as a number;
+the healthy-adult means in the same paragraph of the Methods (0.92 and 0.77 mg/dL) are used.
+Albumin has no Patient Profile field and is held at 4 g/dL although 68% of the courses were
+hypoalbuminaemic; whether to add an albumin field is recorded as a pending decision in the
+registry.
