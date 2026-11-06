@@ -1,0 +1,200 @@
+/* ═══════════════════════════════════════════════════════════════
+   stanpumpR viewer — the page's styles
+
+   Author:    Dr Charles Minto
+   Assisted by: Claude.ai (Anthropic)
+
+   Copyright (c) 2026 Charles Minto and Thomas Schnider
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+
+   Dark, in the scene's own colours: light text on cards over the view.
+   Red and green belong to the arrows, gold to what is pointed at.
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  --ink: #e6edf5; --ink-2: #8a9cb0; --line: rgba(255,255,255,0.13); --card-line: rgba(255,255,255,0.08);
+  --in: #f8857a; --out: #92dd9c;   /* the arrows' pale stripes as they show on screen */
+  --view-ink: #e8eef5; --view-card: rgba(12, 20, 28, 0.72); --view-line: rgba(255,255,255,0.12);
+  --accent: #3b82f6; --target: #ffd166;
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #0e1a24; color: var(--ink); }
+kbd { font: 11px/1 ui-monospace, Consolas, monospace; border: 1px solid var(--line); border-bottom-width: 2px;
+  border-radius: 4px; padding: 1px 4px; background: rgba(255,255,255,0.06); color: var(--ink); }
+
+/* ── the view ────────────────────────────────────────────── */
+#view { position: fixed; inset: 0; overflow: hidden; }
+#view canvas { display: block; }
+.label-layer { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+
+.lbl { margin-top: 4px; color: #f2f6fb; background: rgba(10, 18, 26, 0.62); border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 7px; padding: 3px 8px; font-size: 12.5px; white-space: nowrap; text-align: center;
+  font-variant-numeric: tabular-nums; backdrop-filter: blur(3px); margin-bottom: 4px; }
+.lbl i { font-style: normal; opacity: 0.7; font-size: 11px; }
+.lbl.given.hot { background: rgba(170, 20, 20, 0.8); border-color: rgba(255,120,120,0.6); }
+
+.flow-tip { position: absolute; display: none; z-index: 3; pointer-events: none; white-space: nowrap;
+  background: var(--view-card); color: var(--view-ink); border: 1px solid var(--view-line); border-radius: 10px;
+  padding: 7px 11px 6px; font-variant-numeric: tabular-nums; backdrop-filter: blur(6px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25); }
+.flow-tip .k { font-size: 12.5px; opacity: 0.75; }
+.flow-tip .v { font-size: 12.5px; margin-top: 1px; }
+.flow-tip .v.dotted { display: flex; align-items: center; gap: 6px; }
+.flow-tip .v i { font-style: normal; opacity: 0.7; }
+.flow-tip .a { font-size: 12.5px; opacity: 0.85; margin-top: 1px; }
+.flow-tip .a i { font-style: normal; opacity: 0.7; }
+.flow-tip .a .k { font-size: 12px; }
+.flow-tip .dot { width: 8px; height: 8px; border-radius: 50%; }
+.flow-tip .dot.in { background: var(--in); } .flow-tip .dot.out { background: var(--out); }
+
+/* ── the readout card, bottom left, above the controls ───── */
+#readout { position: fixed; left: 16px; bottom: calc(var(--ctl-h, 28px) + 30px); z-index: 2; max-width: calc(100vw - 32px);
+  background: var(--view-card); color: var(--view-ink); border: 1px solid var(--view-line); border-radius: 10px;
+  padding: 9px 12px 8px; font-size: 13px; line-height: 1.45; font-variant-numeric: tabular-nums;
+  backdrop-filter: blur(6px); }
+#readout:empty { display: none; }   /* no run yet */
+#readout .drug { font-weight: 600; }
+#readout .model { color: var(--ink-2); font-size: 12px; }
+#readout .time { font-size: 20px; font-weight: 600; letter-spacing: 0.5px; margin: 2px 0; }
+#readout .tgt { color: var(--target); }
+#readout .k { color: var(--ink-2); }
+#readout .foot { color: var(--ink-2); font-size: 12px; margin-top: 2px; }
+#readout .scale { color: var(--ink-2); font-size: 11.5px; max-width: 380px; }
+body.flat #readout .scale { display: none; }   /* the 2D view says it under its boxes */
+
+/* ── the amounts, bottom right, above the controls (key a) ─ */
+#amounts { position: fixed; right: 16px; bottom: calc(var(--ctl-h, 28px) + 30px); z-index: 2; display: none;
+  background: var(--view-card); color: var(--view-ink); border: 1px solid var(--view-line); border-radius: 10px;
+  padding: 9px 12px 8px; font-variant-numeric: tabular-nums; backdrop-filter: blur(6px); }
+#amounts.show:not(:empty) { display: block; }
+#amounts .phead { font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+#amounts .phead kbd { background: transparent; color: var(--view-ink); border-color: var(--view-line); }
+table.amounts { border-collapse: collapse; font-size: 12px; }
+table.amounts th { font-weight: 500; opacity: 0.6; font-size: 10.5px; text-align: right; padding: 0 0 4px; }
+table.amounts td { padding: 3px 0; border-top: 1px solid var(--view-line); text-align: right; }
+table.amounts td.k { opacity: 0.75; text-align: left; padding-right: 18px; }
+table.amounts td.k.sub { padding-left: 16px; }
+#amounts .note { max-width: 190px; margin-top: 6px; font-size: 11px; opacity: 0.7; }
+
+/* ── performance, top right (key p, perf.js) ───────────── */
+#perf { position: fixed; top: 14px; right: 16px; width: 300px; z-index: 2; display: none;
+  background: var(--view-card); color: var(--view-ink); border: 1px solid var(--view-line); border-radius: 10px;
+  padding: 9px 12px 8px; font-variant-numeric: tabular-nums; backdrop-filter: blur(6px); }
+#perf.show { display: block; }
+#perf .phead { font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+#perf .phead kbd { background: transparent; color: var(--view-ink); border-color: var(--view-line); }
+table.perf { border-collapse: collapse; width: 100%; font-size: 12px; }
+table.perf td { padding: 2px 0; }
+table.perf td.k { opacity: 0.75; width: 70px; }
+table.perf td:nth-child(3) { opacity: 0.6; text-align: right; }
+
+/* ── the controls, along the bottom ──────────────────────── */
+#controls { position: fixed; left: 16px; right: 16px; bottom: 12px; z-index: 2;
+  display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; color: var(--view-ink); font-size: 13px; }
+#controls button { font: inherit; color: var(--ink); background: rgba(255,255,255,0.08); border: 1px solid var(--line);
+  border-radius: 6px; padding: 4px 12px; cursor: pointer; }
+#controls button:hover { background: rgba(255,255,255,0.16); }
+#controls #play { background: var(--accent); border-color: var(--accent); color: #fff; }
+#controls button.on { outline: 2px solid var(--accent); outline-offset: 1px; }
+#controls .clock { font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* The time as a progress bar, as a video player shows it: the part played
+   filled (--pct, set by the player), the rest a faint track. */
+#controls input.progress { flex: 1; min-width: 80px; height: 6px; margin: 0; cursor: pointer;
+  -webkit-appearance: none; appearance: none; border-radius: 3px; --pct: 0%;
+  background: linear-gradient(to right, var(--accent) 0 var(--pct), rgba(255,255,255,0.22) var(--pct) 100%); }
+#controls input.progress::-webkit-slider-thumb { -webkit-appearance: none; appearance: none;
+  width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 2px solid var(--accent); }
+#controls input.progress::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%;
+  background: #fff; border: 2px solid var(--accent); }
+#controls input.progress::-moz-range-track { background: transparent; }
+#controls .speedctl { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); white-space: nowrap; }
+#controls #speedSlider { width: 110px; flex: none; accent-color: var(--accent); }
+#controls .speed { color: var(--ink-2); white-space: nowrap; min-width: 84px; }
+#controls .tip { color: var(--ink-2); white-space: nowrap; }
+/* A narrow window: the buttons as symbols, the help hint and Open run… left
+   out (h still lists the keys), so the controls take two rows, the view
+   switch on the first. A short one: the readout without its model and
+   patient lines. (ChatGPT, 38e0f3a: at 360 x 260 the switch was off-screen.) */
+@media (max-width: 640px) {
+  #controls .speedctl { font-size: 0; }
+  #controls .btxt, #controls .tip, #controls #open { display: none; }
+  #controls .speedctl #speedSlider { width: 80px; }
+  #controls .speed { min-width: 0; font-size: 12px; }
+}
+/* The 2D view in a window too small for the drawing and the cards together
+   (flat.js): the cards are left out, the drawing's own labels giving the numbers. */
+body.flat.compact #readout, body.flat.compact #amounts { display: none !important; }
+@media (max-height: 520px) {
+  #readout .model, #readout .foot { display: none; }
+  #readout .time { font-size: 15px; }
+  #readout, #amounts { padding: 5px 9px 4px; }
+  table.amounts td { padding: 1px 0; }
+  #amounts .note { display: none; }
+}
+
+/* ── closes the window, upper left ───────────────────────── */
+#close { position: fixed; left: 12px; top: 12px; z-index: 4; width: 32px; height: 32px;
+  font: 600 16px/1 system-ui, sans-serif; color: var(--ink); background: rgba(12, 20, 28, 0.7);
+  border: 1px solid var(--line); border-radius: 50%; cursor: pointer; }
+#close:hover { background: #b3261e; border-color: #b3261e; color: #fff; }
+
+/* ── no run yet, or a run that cannot be read ────────────── */
+#message { position: fixed; inset: 0; z-index: 3; display: none; place-items: center; pointer-events: none; }
+#message.show { display: grid; }
+#message .card { pointer-events: auto; max-width: 460px; background: rgba(12, 20, 28, 0.94); border: 1px solid var(--card-line);
+  border-radius: 12px; padding: 16px 20px; font-size: 13.5px; line-height: 1.5; }
+#message .card.bad { border-color: rgba(248,113,113,0.6); }
+body.over #message .card { border-color: var(--accent); }
+
+/* ── the keys, on h ──────────────────────────────────────── */
+#help { position: fixed; inset: 0; z-index: 4; display: none; place-items: center; background: rgba(0,0,0,0.35); }
+#help.show { display: grid; }
+#help .card { background: rgba(12, 20, 28, 0.94); color: var(--ink); border: 1px solid var(--card-line); border-radius: 12px;
+  padding: 16px 20px; font-size: 13px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); backdrop-filter: blur(6px); }
+#help .card { max-width: min(560px, calc(100vw - 32px)); }
+/* The logo in the floor's colours: the arrows' pale red, a pale tint of the R logo's blue. */
+#help .logo { margin: 0 0 8px; font-size: 26px; font-weight: 800; letter-spacing: 0.2px; }
+#help .logo .sp { color: #f8857a; } #help .logo .r { color: #7fb2ee; }
+#help .about { font-size: 13px; line-height: 1.5; margin-bottom: 12px; }
+#help .about p { margin: 0 0 6px; }
+#help .about .in { color: var(--in); } #help .about .out { color: var(--out); }
+#help .about .ce { color: #6aa5f8; } #help .about .tgt { color: var(--target); }
+#help h3 { margin: 0 0 8px; font-size: 15px; }
+#help td { padding: 3px 10px 3px 0; vertical-align: top; }
+#help td:first-child { white-space: nowrap; }
+#help tr.note td { padding-top: 0; font-size: 12px; opacity: 0.7; }
+#help tbody + tbody tr:first-child td { padding-top: 12px; }
+
+/* ── the 2D view (flat.js) ───────────────────────────────── */
+#flat { position: fixed; inset: 0 0 calc(var(--ctl-h, 28px) + 18px) 0; z-index: 1; background: #0e1a24; display: none; overflow-x: hidden; overflow-y: auto; }
+#flat svg { display: block; font-family: system-ui, "Segoe UI", sans-serif; }
+#flat .tk { fill: #8a9cb0; font-size: 11px; }
+#flat .nm { fill: #e6edf5; font-size: 14px; font-weight: 600; }
+#flat .nm .s { font-size: 10px; }
+#flat .sub { fill: #8a9cb0; font-size: 11.5px; }
+#flat .val { fill: #e6edf5; font-size: 13px; font-variant-numeric: tabular-nums; }
+#flat .val.ce { fill: #8db8ff; }
+#flat .fl { font-size: 12px; font-variant-numeric: tabular-nums; }
+#flat .fl.in { fill: #ff9a90; } #flat .fl.out { fill: #7fe3a6; } #flat .fl.sub { fill: #8a9cb0; }
+
+/* ── the name, upper left, in both views ─────────────────── */
+#brand { position: fixed; left: 54px; top: 17px; z-index: 4; color: var(--ink); font: 600 16px/1.2 system-ui, "Segoe UI", sans-serif;
+  letter-spacing: 0.2px; pointer-events: none; }
+#brand span { color: var(--ink-2); font-weight: 500; font-size: 13px; margin-left: 4px; }
