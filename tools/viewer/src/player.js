@@ -102,6 +102,7 @@ function runProblem(r) {
     }
     if (r.c2 == null && r.c3 != null) return 'c3 is given without c2.';
     if (r.inputKnown != null && typeof r.inputKnown !== 'boolean') return 'inputKnown must be true or false.';
+    if (r.eliminationLinear != null && typeof r.eliminationLinear !== 'boolean') return 'eliminationLinear must be true or false.';
     if (r.amountScale != null && !(Number.isFinite(r.amountScale) && r.amountScale > 0)) return 'amountScale must be a number above 0.';
     if (r.mode != null) {
         if (!Array.isArray(r.mode) || r.mode.length !== n) return `mode must be an array as long as t (${n}).`;
@@ -333,7 +334,10 @@ const Player = {
                 abs: Math.max(0, slope(r.absorbed)),
                 to2: c2 != null ? sc * pk.v2 * slope(r.c2) : 0,
                 to3: c3 != null ? sc * pk.v3 * slope(r.c3) : 0,
-                out: this.elim ? Math.max(0, slope(this.elim)) : sc * pk.cl1 * cp
+                // Without the drug given, elimination is CL1 x Cp only where it
+                // is linear; a saturable drug's is not drawn (ChatGPT, ff7e2f0).
+                out: this.elim ? Math.max(0, slope(this.elim))
+                    : r.eliminationLinear === false ? 0 : sc * pk.cl1 * cp
             }
         };
     },

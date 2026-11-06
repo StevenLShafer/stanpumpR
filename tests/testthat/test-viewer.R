@@ -341,3 +341,31 @@ test_that("a metabolite also formed from a parent in the table is drawn as the p
   # Its input includes what codeine forms, which the dose rows do not show.
   expect_false(r$inputKnown)
 })
+
+# ChatGPT's audit of ff7e2f0 (2026-11-06).
+
+test_that("fosphenytoin (mg PE) is not drawn as phenytoin entering V1", {
+  # The prodrug goes to a conversion compartment (advanceMichaelisMenten()),
+  # so it is neither a bolus nor a pump rate into V1.
+  r <- vr(data.frame(Drug = "phenytoin", Time = 0, Dose = 1000, Units = "mg PE"), 60)
+  expect_length(r$boluses, 0)
+  expect_true(all(r$rate == 0))
+  r <- vr(data.frame(Drug = "phenytoin", Time = 0, Dose = 50, Units = "mg PE/min"), 30)
+  expect_true(all(r$rate == 0))
+  expect_false(r$inputKnown)
+  # Plain phenytoin sodium is still a bolus, after its salt factor.
+  r <- vr(data.frame(Drug = "phenytoin", Time = 0, Dose = 1000, Units = "mg"), 60)
+  expect_length(r$boluses, 1)
+})
+
+test_that("a saturable drug says its elimination is not CL1 x Cp; a linear one that it is", {
+  expect_false(vr(data.frame(Drug = "phenytoin", Time = 0, Dose = 1000, Units = "mg PE"), 60)$eliminationLinear)
+  expect_true(vr(data.frame(Drug = "propofol", Time = 0, Dose = 100, Units = "mg"), 30)$eliminationLinear)
+})
+
+test_that("viewerActActivity() refuses what is not one finite number", {
+  act <- list(act0 = 116, emax = 720, c50 = 3.49)
+  for (x in list("480", NULL, c(480, 500), NA_real_, Inf, -Inf, 116, 836))
+    expect_identical(viewerActActivity(x, act), 0)
+  expect_gt(viewerActActivity(480, act), 0)
+})

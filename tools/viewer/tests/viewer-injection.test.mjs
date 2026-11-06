@@ -233,3 +233,23 @@ test('non-numbers for volumes, clearances or typical are refused', { skip }, asy
   assert.equal(await loadRun(page, bad), false, 'typical = "a lot" accepted');
   assertClean(page);
 });
+
+// ChatGPT's audit of ff7e2f0 (2026-11-06).
+test('a saturable drug with unknown input draws no elimination arrow; a linear one draws CL1 x Cp', { skip }, async t => {
+  const page = await viewerPage(t);
+  const run = structuredClone(RUN);
+  run.version = 2;
+  run.inputKnown = false;
+  run.eliminationLinear = false;
+  assert.equal(await loadRun(page, run), true);
+  const outSat = await page.evaluate(() => Player.stateAt(Player.run.t[600]).flow.out);
+  assert.equal(outSat, 0, 'saturable drug drew an elimination rate');
+  run.eliminationLinear = true;
+  assert.equal(await loadRun(page, run), true);
+  const outLin = await page.evaluate(() => {
+    const st = Player.stateAt(Player.run.t[600]);
+    return [st.flow.out, Player.run.pk.cl1 * st.cp];
+  });
+  assert.ok(Math.abs(outLin[0] - outLin[1]) < 1e-12 && outLin[0] > 0, 'linear drug lost its elimination rate');
+  assertClean(page);
+});

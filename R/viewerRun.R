@@ -168,8 +168,9 @@ cumulativeRate <- function(steps, times)
 # ACT = act0 + emax C / (c50 + C); 0 where the ACT is outside the link's range.
 viewerActActivity <- function(actSeconds, act)
 {
+  if (!is.numeric(actSeconds) || length(actSeconds) != 1 || !is.finite(actSeconds)) return(0)
   x <- actSeconds - act$act0
-  if (!is.numeric(x) || length(x) != 1 || !is.finite(x) || x <= 0 || x >= act$emax) return(0)
+  if (x <= 0 || x >= act$emax) return(0)
   act$c50 * x / (act$emax - x)
 }
 
@@ -331,7 +332,10 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
   # infusion stops it, and gives its loading dose as a short rate). At one
   # time the TCI row wins if it runs the pump (a target entered with an
   # infusion wins), else the manual row.
-  manual <- d[route == ROUTE_IV & rate & !tci, , drop = FALSE]
+  # A prodrug in equivalents (fosphenytoin, mg PE) enters a conversion
+  # compartment, not V1 (advanceMichaelisMenten()): it is no IV input here.
+  pe <- isEquivalentUnit(units)
+  manual <- d[route == ROUTE_IV & rate & !tci & !pe, , drop = FALSE]
   # A Michaelis-Menten drug dosed as a salt (phenytoin sodium) enters its
   # model as the active drug: advanceMichaelisMenten() multiplies IV boluses
   # and rates by saltFactor$IV, and so does the drug given here, or the salt's
@@ -364,7 +368,7 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
   oralSteps <- oralSteps[order(oralSteps$Time), , drop = FALSE]
 
   # IV boluses, in base amount.
-  b <- d[route == ROUTE_IV & !rate & !tci, , drop = FALSE]
+  b <- d[route == ROUTE_IV & !rate & !tci & !pe, , drop = FALSE]
   bAmount <- ivSalt * viewerBaseDose(b$Dose, b$Units, weight, u)
   # A dose in a unit the viewer cannot read (a salt, mmol) leaves the drug
   # given unknown; it is drawn as nothing rather than refused.
@@ -445,5 +449,9 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
     absorbed = if (any(absorbed > 0)) absorbed else NULL,
     given = if (inputKnown) given else NULL,
     inputKnown = inputKnown,
+    # Whether elimination is CL1 x Cp: the viewer's only stand-in for it
+    # when the drug given is unknown. A saturable drug's is not, and its
+    # elimination arrow is then not drawn.
+    eliminationLinear = is.null(entry$michaelisMenten),
     source = "stanpumpR")
 }

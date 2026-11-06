@@ -64,6 +64,7 @@ Not drawn (`viewerProblem()`): inhaled agents; drugs plotted as an INR (fluindio
 | `absorbed` | Cumulative drug that has entered V1 other than intravenously (absorbed from the depot, apparent-oral rates), from time 0, or `null`. |
 | `given` | Cumulative drug that has entered the body, from time 0; `null` when `inputKnown` is false. |
 | `inputKnown` | Whether the drug given can be accounted for. |
+| `eliminationLinear` | Whether elimination is CL1 × Cp. Without a known input, the elimination arrow is drawn as CL1 × Cp only when it is; a saturable drug's is not drawn. |
 | `rate` | The intravenous rate in force from each time to the next, amount/min. |
 | `target`, `mode` | The TCI target in force, and `"effect"`, `"plasma"` or `"manual"`. |
 | `boluses` | IV boluses inside the window: `[{t, amount}]`, seconds and amount. |
