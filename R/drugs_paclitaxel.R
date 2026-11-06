@@ -109,12 +109,11 @@
 # The source does not name its BSA formula; Mosteller's is used, as for the
 # library's other chemotherapy models, at the pharmacokinetic weight with the
 # switch on and at total body weight with it off.  V1, which carries no
-# covariate, scales by the library's volume factor with the switch on and is
-# fixed with it off, as in the library's other chemotherapy models
-# (vincristine, fluorouracilTan); KMEL, a concentration, does not scale.
-# With the switch on, therefore, the reference woman's V1 is below the
-# source's 12.8 L, the library's lean-tissue premise rather than the
-# source's finding that sex does not change V1.
+# covariate, is FIXED at 12.8 L in both switch positions, on Shafer's
+# decision (2026-11-06): the source found that neither sex nor size changes
+# it, and scaling it by the library's volume factor gave the reference woman
+# 10.5 L, against the source's own finding.  KMEL, a concentration, does not
+# scale.
 #
 # PREGNANCY (R/pregnancy.R): van Hasselt 2014 (5 pregnant women) and Janssen
 # 2021 report a higher clearance in pregnancy, read in abstract only; the
@@ -177,7 +176,7 @@ paclitaxel <- function(weight, height, age, sex, adjustToFFM = TRUE)
   km <- p$kmel * mg                                # mg/L
 
   default <- list(
-    v1 = p$v1 * size$volume,
+    v1 = p$v1,                                  # fixed (Shafer, 2026-11-06)
     v2 = v3,                                 # the source's V3, linear
     v3 = 1,                                  # placeholder: see the header
     # The low-concentration limit of the saturable elimination, Vmax / Km,

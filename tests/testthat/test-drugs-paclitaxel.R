@@ -150,7 +150,9 @@ test_that("both switch positions are pinned", {
   expect_equal_rounded(on$PK$default$v1, off$PK$default$v1)
   expect_equal_rounded(off$michaelisMenten$vmax, 0.7600135)
   w <- paclitaxel(70, 170, 35, "female")
-  expect_equal_rounded(w$PK$default$v1, 10.547593)
+  # V1 is fixed at the source's 12.8 L whatever the patient (Shafer, 2026-11-06)
+  expect_equal_rounded(w$PK$default$v1, 12.8)
+  expect_equal_rounded(paclitaxel(120, 160, 70, "female")$PK$default$v1, 12.8)
   expect_equal_rounded(w$michaelisMenten$vmax, 0.5837841)
 })
 
