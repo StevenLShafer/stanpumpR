@@ -1361,6 +1361,37 @@ getDrugPK <- function(
     out$transitChain <- tc
   }
 
+  # A biliary store that fills from the central compartment and empties once,
+  # as a bolus, a fixed time after each course starts (oxaliplatin, Bastian
+  # 2003).  Linear but switched on each course's own clock, so simCpCe()
+  # dispatches such a drug to its own exact engine; see
+  # R/advanceBiliaryStore.R.  Refused beside anything that is a second system,
+  # rewrites the dose rows or switches the kinetics in another way.
+  if (!is.null(X$biliaryStore))
+  {
+    if (!is.null(out$PK[[PK_EVENT_DEFAULT]]$metabolite) ||
+        !is.null(X$metabolite) || !is.null(out$transitChain) ||
+        !is.null(X$oralFormulations) || !is.null(X$parallelSystems) ||
+        !is.null(X$michaelisMenten) || !is.null(X$osmotic) ||
+        !is.null(X$molar) || !is.null(X$oralPulses) ||
+        !is.null(X$oralZeroOrder) || !is.null(X$zeroOrderSC) ||
+        !is.null(X$dosePhase) || !is.null(X$courseSteps) ||
+        isTRUE(X$doseDependent) || !is.null(X$inr) || !is.null(X$act) ||
+        isTRUE(X$enteralInfusion) || length(out$PK) > 1)
+      stop("Invalid biliaryStore for ", drug, ": not available with a ",
+           "metabolite, a transit chain, several oral formulations, parallel ",
+           "systems, Michaelis-Menten elimination, an osmotic or molar dose ",
+           "basis, pulsed or zero-order release, a dose-phase split, course ",
+           "steps, dose-dependent parameters, an INR or ACT, an enteral ",
+           "infusion, or clinical-event PK sets.")
+    d <- out$PK[[PK_EVENT_DEFAULT]]
+    if (any(vapply(c("ka_PO", "ka_IM", "ka_IN", "ka_SL", "ka_RA"), function(f)
+      isTRUE(d[[f]] > 0), logical(1))))
+      stop("Invalid biliaryStore for ", drug, ": the engine takes intravenous ",
+           "doses only, so the model may declare no absorption route.")
+    out$biliaryStore <- validateBiliaryStore(X$biliaryStore, drug)
+  }
+
   # Dose-time phase split (dabigatran after hip replacement): doses given before
   # dosePhase$at minutes use the default PK set, doses at or after it the set
   # named by dosePhase$late.  simCpCe() runs the two as independent linear

@@ -40,6 +40,8 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 "doxorubicinol",
                 # melphalan (Nath 2010): Cockcroft-Gault per 70 kg, a linear renal term
                 "melphalan",
+                # oxaliplatin (Bastian 2003): (SCr/87 umol/L)^-0.57 on clearance
+                "oxaliplatin",
                 # Serum creatinine itself, not an estimate of its clearance,
                 # is magnesium's covariate (R/drugs_magnesiumSulfate.R, Du 2019)
                 "magnesiumSulfate",

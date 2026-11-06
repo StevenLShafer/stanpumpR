@@ -93,7 +93,7 @@ Its two genuine engine points stand and are recorded per model in the registry's
 a cascade of metabolites (irinotecan, capecitabine, cyclophosphamide), enzyme autoinduction
 (cyclophosphamide, ifosfamide, thiotepa), saturable distribution in three compartments
 (nab-paclitaxel, probably solvent paclitaxel), saturable tissue binding (vincristine),
-enterohepatic recirculation (oxaliplatin), carrier release (the liposomal products) and
+enterohepatic recirculation (oxaliplatin; carried since 2026-11-06, section 31), carrier release (the liposomal products) and
 intracellular formation (gemcitabine) each need an engine the library does not have, and none is
 to be approximated without measuring the approximation against the source's equations.
 
@@ -452,19 +452,57 @@ mg capecitabine as the oral fraction, 0.528 mg 5-FU per mg 5'-DFUR as
 mwRatio. FBAL, the chain's third step, needs a cascade engine and is not
 carried. Shafer asked for the additional plots (2026-11-06).
 
-## 31. Oxaliplatin: enterohepatic recirculation (open)
+## 31. Oxaliplatin: enterohepatic recirculation, as published (2026-11-06)
 
-Bastian 2003 (supplied 2026-11-06) fills a gallbladder store from the central
-compartment (k1B 1.78 /h) and empties it at TLAG 2 h into a depot returning at
-Ka 0.23 /h. Shafer's view (2026-11-06) is that biliary filling is continuous.
-A literature review (scratchpad report, 2026-11-06) found: under continuous
-filling, Bastian's k1B and Ka make an ordinary third compartment (V3 193 L,
-Q3 44 L/h), which does NOT reproduce the paper's half-lives (20 h against the
-printed 10.5 h in men) or its curve; the printed half-lives are the
-two-compartment part's alone, so the authors' model stops filling after TLAG.
-A continuous-flow model would have to be refitted. Plusquellec & Houin 1992
-(J Biomed Eng 14:521, PMID 1434577), which Bastian cites for the equations,
-is needed. Not implemented.
+`oxaliplatin` is Bastian 2003 (C06; supplied 2026-11-06, every number read
+on the page images): plasma ultrafilterable platinum, as oxaliplatin, in two
+compartments (CL 14.1 L/h x (BW/71)^1.10 x (SCr/87 umol/L)^-0.57 x 0.60 if
+female, V1 24.9 L x (BW/71)^1.29, Q 34.8 L/h x (BW/71)^1.01, V2 136 L) with a
+gallbladder store filled from V1 at k1B 1.78 /h and emptied as a bolus at
+TLAG 2 h into a gut depot returning at Ka 0.23 /h.
+
+**What happens after TLAG.** Bastian cite Plusquellec & Houin 1992 (J Biomed
+Eng 14:521-526, PMID 1434577) for the equations; it was read on the page
+images, with the same group's application to an infusion (Plusquellec 1992,
+J Pharm Sci 81:1020-1023) and its 1995 sequel (Med Eng Phys 17:172-176). In
+Plusquellec's equations (5)-(10) the transfer into the store is continuous
+(K1 = k10 + k12 + k1B for all t), the emptying times are measured from the
+start of the dose, and after the last emptying the store fills and is never
+emptied: with Bastian's one TLAG it is a sink (terminal half-life 4.4 h,
+AUC(0-inf) about 35% of Dose/CL). Bastian's results contradict that: AUC =
+Dose/CL (their 20.35 mg h/L example and Table 4) and terminal half-lives of
+10.5/14.4 h, which are the two-compartment part's (10.3/15.5 h at the typical
+values). **Shafer decided (2026-11-06) to implement the model as published:
+the store stops filling at TLAG**, TLAG from the start of each course. The
+conflict with the cited equations is recorded in the drug's header and help
+page. Shafer's physiological view, continuous biliary flow (the linear form:
+Colburn 1979, rat phenolphthalein, continuous transfer with a 3.7-h lag), is
+described there too; Bastian's k1B and Ka cannot be carried into it (terminal
+half-lives 20/32 h), so it would need a refit.
+
+**The engine.** `R/advanceBiliaryStore.R`, declared by a `biliaryStore =
+list(k1B, tlag, ka)` block (per minute, minutes) that `getDrugPK()` validates
+and refuses beside a metabolite, a transit chain, Michaelis-Menten
+elimination, extra PK sets and the other dose-rewriting blocks;
+`simCpCe()` dispatches it before the transit chain and refuses TCI for it.
+Each course (a bolus, or an infusion episode from a rate above zero to a zero
+rate) is its own linear system with its own store and switch, advanced
+exactly by matrix exponential (memoised on phase and step length, the
+courses carried as columns of one matrix), and the courses are added, which
+the linearity in dose makes exact. The time until threshold is exact after
+the last switch (`transitChainRecovery()` on the emptied system) and NA
+before it; oxaliplatin has no threshold. Checked against an independent
+fine-step RK4 of the equations (1e-7) and the paper: Cmax 1.383 mcg/mL for
+230 mg over 2 h in the typical man, 1.749 over 4 h (the infusion-length
+artefact), AUC(0-inf) = Dose/CL, Table 4's covariate ratios.
+
+**Concentration basis**: oxaliplatin equivalents (the paper's AUC = mg
+oxaliplatin / CL requires it), doses in mg of oxaliplatin. **Delord 2003**
+(C05, read on the page images) is `complete_not_implemented`: its
+ultrafilterable model prints no intercompartmental clearance, and its
+complete whole-blood model plots red-cell-bound platinum with a haemoglobin
+term that reaches zero clearance at 17.2 g/dL. Pregnancy `unknown`; no band.
+
 ## 32. Paclitaxel and vincristine in children: two extensions of the Michaelis-Menten engine (2026-11-06)
 
 Shafer decided (2026-11-06) to implement two models that no engine carried,

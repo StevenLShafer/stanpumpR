@@ -537,9 +537,11 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     {
       # The controller inverts one system; it cannot target a sum of them, nor
       # an INR drug (whose plotted curve is not a concentration).
-      if (!is.null(PK$parallelSystems) || !is.null(PK$inr) || !is.null(PK$act))
+      if (!is.null(PK$parallelSystems) || !is.null(PK$inr) || !is.null(PK$act) ||
+          !is.null(PK$biliaryStore))
         stop("Target-controlled infusion is not available for a drug ",
-             "simulated as several parallel systems or as an INR or ACT.")
+             "simulated as several parallel systems, as an INR or ACT, or ",
+             "with a biliary store.")
       schedule <- tciSchedule(dose, PK, maximum)
       dose <- schedule$dose
       tci <- tciDisplay(schedule, PK)
@@ -669,6 +671,14 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       }
       if (length(parts) == 0) parts <- list(runEngines(dose, pkSets))
       results <- superposeEngineResults(parts, plotRecovery, emerge)
+    } else if (!is.null(PK$biliaryStore))
+    {
+      # A biliary store that fills, then empties once, on each course's own
+      # clock (oxaliplatin, Bastian 2003): the whole dose table at once,
+      # exactly, by matrix exponential, each course its own system and the
+      # courses added.  No clinical-event PK switching (getDrugPK() refuses
+      # further PK sets).  See R/advanceBiliaryStore.R.
+      results <- advanceBiliaryStore(dose, PK, maximum, plotRecovery, emerge)
     } else if (!is.null(PK$transitChain))
     {
       # Transit-chain absorption (enalapril): the whole dose table at once,

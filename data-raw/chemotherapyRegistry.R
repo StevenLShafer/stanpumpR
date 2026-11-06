@@ -219,7 +219,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 FULL_TEXT_READ <- c("C01", "P02", "C35", "C03")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
-PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18")
+PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18", "C05", "C06")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
   ifelse(pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
@@ -548,12 +548,17 @@ registry <- rbind(
     "640 adults in phase II", "docetaxel",
     "population PK and exposure-toxicity", "expansion", "unknown", "P25"),
   m("oxaliplatin__crc__delord2003", "oxaliplatin", "oxaliplatin", "IV",
-    "40 adults with colorectal cancer (FOLFOX)", "ultrafilterable platinum",
-    "a clearance equation in BSA, age, sex and creatinine; blood platinum in three compartments", "expansion", "unknown", "C05"),
+    "40 adults with colorectal cancer (oxaliplatin, 5-FU, levofolinic acid)", "ultrafilterable platinum; whole-blood platinum",
+    "ultrafiltrate: two compartments, CL = 5.49 BSA + 4.55 BSA (140 - age)(1 - 0.15 female)/SCr L/h, V1 40.8 L, V2 21.0 L, no Q; whole blood: three compartments, CL = 0.28 BSA (1 - 0.058 Hb) L/h, V1 17.9 L, k12 2.97, k21 1.77, k13 0.0747, k31 0.0119 /h",
+    "expansion", "linear", "C05",
+    "PDF read on the page images (2026-11-06). The ultrafilterable model, the analyte that matters, prints CL, V1 and V2 but never the intercompartmental clearance, and no Q makes Table 2 reproduce Fig. 1, so it cannot be run. The whole-blood model is complete but plots red-cell-bound platinum, largely inactive, and its haemoglobin term reaches zero clearance at 17.2 g/dL (inside the normal range); the authors advise against using it for dosing. Bastian 2003 is the library's model.",
+    readiness = "complete_not_implemented"),
   m("oxaliplatin__adult__bastian2003", "oxaliplatin", "oxaliplatin", "IV",
-    "56 adults with metastatic cancer", "platinum",
-    "two compartments with enterohepatic recirculation (gallbladder, lag); weight, creatinine and sex on clearance",
-    "expansion", "new_engine", "C06", "Enterohepatic recirculation is a mechanism the engine lacks."),
+    "56 adults with metastatic cancer", "ultrafilterable platinum, as oxaliplatin",
+    "two compartments, CL 14.1 L/h x (BW/71)^1.10 x (SCr/87 umol/L)^-0.57 x 0.60 if female, V1 24.9 L x (BW/71)^1.29, Q 34.8 L/h x (BW/71)^1.01, V2 136 L; a gallbladder store filled at k1B 1.78 /h until TLAG 2 h after each course starts, emptied as a bolus into a gut depot returning at Ka 0.23 /h",
+    "expansion", "new_engine", "C06",
+    "PDF read on the page images (supplied 2026-11-06). Implemented AS PUBLISHED on Shafer's decision (2026-11-06): the store stops filling at TLAG, the only reading that reproduces the paper's AUC = Dose/CL and its terminal half-lives; Plusquellec & Houin 1992, whose equations it cites, keep the store filling after its last emptying (a sink). A new exact engine, R/advanceBiliaryStore.R. Concentrations taken as oxaliplatin equivalents, which the paper's AUC arithmetic requires.",
+    readiness = "implemented", stanpumpr_drug = "oxaliplatin"),
   m("capecitabine__crc__gieschke2003", "capecitabine", "capecitabine", "PO",
     "481 adults with colorectal cancer", "5'-DFUR, 5-FU, FBAL",
     "a linear chain, molar: dose -> 5'-DFUR (ka 1.09 /h, V1 90.6 L, CL1 75.8 L/h) -> 5-FU (V2 17.8 L fixed, CL2 1190 L/h x (ALP/140)^-0.169) -> FBAL (V3 73.6 L x (BSA/1.8)^0.812 x (CLCR/80)^0.394, CL3 27.5 L/h x (CLCR/80)^0.615)",
