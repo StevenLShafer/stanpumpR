@@ -3,7 +3,7 @@
 #
 # getDrugPK() passes a covariate only to the models that name it in their
 # signature (`cyp2d6`, `cyp2c19`, `cyp2c9`, `cyp2b6`, `creatinine`,
-# `gestationalAge`), so the
+# `gestationalAge`, `albumin`), so the
 # signatures are the one authoritative list of what a field affects.  The
 # tooltips read them, as the Cautions page's test does, so a new model that
 # names a covariate joins its tooltip by itself, and a tooltip can never
@@ -19,7 +19,8 @@ PATIENT_FIELD_LABELS <- c(
   vkorc1     = "VKORC1",
   cyp4f2     = "CYP4F2",
   creatinine = "Serum creatinine",
-  gestationalAge = "Gestational age at birth"
+  gestationalAge = "Gestational age at birth",
+  albumin    = "Serum albumin"
 )
 
 # A qualification printed after a drug's name in its tooltip, where a model
@@ -158,6 +159,11 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
       "The gestational age at birth, in weeks. With the age it gives the",
       "postmenstrual age, on which the clearance of the neonatal models",
       "that read it matures."
+    ),
+    albumin = paste(
+      "The patient's serum albumin, in g/dL. It sets the methotrexate",
+      "clearance of the adult model (lower albumin, lower clearance) and,",
+      "at 2.5 g/dL or less, the faster distribution of the children's model."
     )
   )
   trail <- if (arg == "creatinine") sprintf(
@@ -170,6 +176,10 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
   ) else if (arg == "gestationalAge") sprintf(
     "Leave blank for a term birth (%s weeks): a premature infant's clearance is then overstated.",
     GESTATIONAL_AGE_TERM
+  ) else if (arg == "albumin") paste(
+    "Leave blank to hold each model's reference albumin (4 g/dL in the",
+    "adult model, a normal albumin in the children's); hypoalbuminaemia is",
+    "then not represented."
   ) else NULL
   paste(c(lead, readers, trail), collapse = " ")
 }

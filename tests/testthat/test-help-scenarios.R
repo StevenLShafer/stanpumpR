@@ -169,6 +169,7 @@ test_that("every scenario runs through the simulation engine", {
                                          creatinine = p$creatinine,
                                          osmolality = p$osmolality,
                                          gestationalAge = p$gestationalAge,
+                                         albumin = p$albumin,
                                          antiseizureInteractions = s$options$antiseizureInteractions)
       # every dosed drug has a row; a drug that forms an active metabolite adds
       # the metabolite's row too
@@ -267,9 +268,10 @@ test_that("a scenario names every patient field, with creatinine blank by defaul
     expect_true(setequal(names(s$patient),
                          c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9",
                            "vkorc1", "cyp4f2", "cyp2b6", "adjustToFFM", "creatinine", "osmolality",
-                           "pregnant", "gestationalAge")), info = s$id)
+                           "pregnant", "gestationalAge", "albumin")), info = s$id)
     expect_null(s$patient$creatinine, info = s$id)
     expect_null(s$patient$gestationalAge, info = s$id)
+    expect_null(s$patient$albumin, info = s$id)
     expect_true(is.logical(s$patient$pregnant) && length(s$patient$pregnant) == 1, info = s$id)
     expect_equal(s$patient$osmolality, OSMOLALITY_DEFAULT, info = s$id)
   }
@@ -311,6 +313,8 @@ test_that("loading a scenario resets the creatinine and osmolality fields", {
   expect_equal(as.numeric(session$messages$osmolality$value), OSMOLALITY_DEFAULT)
   # a previous patient's gestational age does not survive either
   expect_identical(session$messages$gestationalAge$value, "")
+  # nor an albumin
+  expect_identical(session$messages$albumin$value, "")
   # and the rest of the profile goes too, the Pregnant control included (off
   # for this patient, so a parturient loaded earlier does not linger)
   expect_true(all(c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9", "vkorc1",
@@ -337,6 +341,15 @@ test_that("loading a scenario resets the creatinine and osmolality fields", {
   session <- recordingSession()
   applyHelpScenario(session, s, doseTable, eventTable)
   expect_equal(as.numeric(session$messages$gestationalAge$value), 29)
+
+  s <- helpScenario("x-w", "T", HELP_SCENARIO_GROUPS[1], "S",
+                    doses = helpDoses(c("methotrexate", 0, 1000, "mg/hr")),
+                    albumin = 2.8)
+  expect_length(helpScenarioCheck(s), 0)
+  expect_length(helpScenarioCheck(utils::modifyList(s, list(patient = list(albumin = 9)))), 1)
+  session <- recordingSession()
+  applyHelpScenario(session, s, doseTable, eventTable)
+  expect_equal(as.numeric(session$messages$albumin$value), 2.8)
 })
 
 test_that("the scenario page shows the creatinine and osmolality the load will set", {

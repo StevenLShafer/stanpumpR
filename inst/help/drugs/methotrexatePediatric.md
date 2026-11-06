@@ -17,7 +17,8 @@ For a typical child (body surface area 1.0 m², creatinine 0.3 mg/dL) given 5 g/
 
 - **Body surface area**, on every parameter in proportion. With [the scaling switch](help:models/fat-free-mass) on it is computed at the pharmacokinetic weight; with it off, at the actual weight.
 - **Serum creatinine**, the patient's own value (not put on an adult scale), from the Patient Profile. Left blank, it is the normal value for the age and sex.
-- **Held at the reference**, because the Patient Profile has no field for them: a long infusion (a short one, 8 hours or less, clears 5% faster), no Down syndrome (clearance 16% lower), normal albumin (severe hypoalbuminaemia speeds both distribution clearances), and **no pleural effusion**. An effusion enlarges the volumes, and the second peripheral volume by 43%.
+- **Serum albumin**, from the Patient Profile. The source's covariate is severe hypoalbuminaemia, an albumin of 2.5 g/dL or less, which speeds both distribution clearances (0.225 L/h ×1.17 and 0.0342 L/h ×1.34). It is all or nothing: any albumin at or below 2.5 g/dL gives the same curve, and above it, or left blank, the albumin is taken as normal.
+- **Held at the reference**, because the Patient Profile has no field for them: a long infusion (a short one, 8 hours or less, clears 5% faster), no Down syndrome (clearance 16% lower), and **no pleural effusion**. An effusion enlarges the volumes, and the second peripheral volume by 43%.
 
 ### Where to be careful
 

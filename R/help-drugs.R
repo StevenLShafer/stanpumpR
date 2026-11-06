@@ -798,6 +798,11 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     "renal function. The tables on this page leave the field blank, so they are at the normal creatinine ",
     "assumed for each reference patient's age and sex; a higher creatinine lowers the renal part of the ",
     "clearance. See ", helpPageLink("patient-profile"), ".</p>") else ""
+  # Likewise the serum albumin, tabulated blank: each model's reference.
+  renalHTML <- paste0(renalHTML, if (helpDrugDeclares(drug, "albumin")) paste0(
+    "<p>This model reads the <strong>Serum albumin</strong> field in the Patient Profile. The tables on ",
+    "this page leave the field blank, so they are at the model's reference albumin. See ",
+    helpPageLink("patient-profile"), ".</p>") else "")
 
   # --- Absorption routes -----------------------------------------------------
   absorptionHTML <- ""

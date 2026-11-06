@@ -132,8 +132,8 @@ Lane Library.
   threshold is not a concentration band (the handoff's section 10.5).
 - **No effect site.** No chemotherapy `ke0` is derived from a half-life.
 - **Genotype guidelines are not clearances** (DPYD, UGT1A1, TPMT/NUDT15).
-- **Cystatin C, albumin, white-cell count, performance status and genotypes** that some models
-  need are not Patient Profile fields; such a model either waits for the field or is implemented
+- **Cystatin C, white-cell count, performance status and genotypes** that some models
+  need are not Patient Profile fields (albumin became one on 2026-11-06, section 16); such a model either waits for the field or is implemented
   at the source's reference value, saying so, never with serum creatinine standing in for
   cystatin C (the chlorthalidone decision, `docs/antihypertensives.md`).
 
@@ -199,7 +199,8 @@ placed on Google Drive and its supplement. Three compartments by BSA over 1.73 m
 patient's own creatinine referenced to 40 uM. Its Table 2 footnote describes Q3 as chained to
 V2, which the stated ADVAN11 TRANS4 and the supplement contradict; equation 3 and Table 2 differ
 on the Down syndrome factor (0.83, 0.84). The covariates with no Patient Profile field (Down
-syndrome, albumin, pleural effusion, infusion length) are held at the reference. The model
+syndrome, pleural effusion, infusion length) are held at the reference; severe
+hypoalbuminaemia reads the Serum albumin field (section 16). The model
 reproduces the paper's Table 5 end-of-infusion mean for 5 g/m2 over 24 h (85.9 against 84.8
 umol/L); its later means lie above the typical curve, as means of individual predictions should.
 
@@ -209,9 +210,8 @@ Ibarra 2023 (`R/drugs_methotrexate.R`), from the PDF Shafer supplied: three comp
 allometric in weight, creatinine and albumin on clearance. Table 2 reproduces the paper's own
 half-lives (1.5, 4.9, 40 h) and Vss (20 L). Its reference creatinine is not printed as a number;
 the healthy-adult means in the same paragraph of the Methods (0.92 and 0.77 mg/dL) are used.
-Albumin has no Patient Profile field and is held at 4 g/dL although 68% of the courses were
-hypoalbuminaemic; whether to add an albumin field is recorded as a pending decision in the
-registry.
+68% of the courses were hypoalbuminaemic, so the albumin term matters; it reads the Serum
+albumin field (section 16).
 
 ## 11. A second 5-FU model
 
@@ -334,3 +334,71 @@ Table I. Doses as labelled, with no salt conversion (the paper is silent).
 Note for the registry: the Xie paper Shafer supplied is J Clin Oncol
 2002;20:3293-3301 (the 13-state model), not the Clin Pharmacol Ther 2002
 paper registered as C40.
+## 21. The Serum albumin field (2026-11-06)
+
+Shafer decided on 2026-11-06 to add a serum albumin field to the Patient Profile and to apply
+it in both methotrexate models. It is wired as the serum creatinine and the gestational age
+are: argument `albumin` in g/dL, passed by `getDrugPK()` only to models that name it in their
+signature, shown only while such a drug is in the dose table (`relevantField("albumin")`),
+with a hover tip naming its readers built from the signatures (`patientFieldTooltip()`), and
+accepted by the Simulation API as `patient.albumin`. The accepted range is `MIN_ALBUMIN` to
+`MAX_ALBUMIN`, 0.5 to 6 g/dL (`R/constants.R`). Blank (NULL) means each model's own
+reference:
+
+- **methotrexate** (Ibarra 2023): clearance × (albumin / 4)^0.594; blank is 4 g/dL. At the
+  cohort's median, 3.3 g/dL, clearance is 11% lower; at 2.5 g/dL, 24% lower. The albumin the
+  power sees is floored at `MIN_ALBUMIN`, so the term stays finite.
+- **methotrexatePediatric** (Taylor 2023): severe hypoalbuminaemia, an albumin of 2.5 g/dL or
+  less, multiplies Q2 by 1.17 and Q3 by 1.34 (Table 2). The covariate is categorical, so it
+  does not grade below the threshold; blank or above 2.5 applies neither factor.
+
+The albumin is held at the entered value through the course, though it was time-varying in
+both sources. Other chemotherapy candidates with an albumin term (the registry's notes say
+which) may now read the field when they are implemented.
+
+Docetaxel (section 17) reads the same field: its albumin term is linear in
+g/L, so the field is multiplied by 10, and a blank field is the study mean.
+
+## 22. Topotecan
+
+`topotecan` is Mould 2002 (C29; PDF supplied 2026-11-06): two compartments,
+CL = (5.77 + 12.8 x RF) x (WT/70)^0.75 x exp(-0.12 (ECOG - 1)) L/h with RF =
+CLCR/70 x 70/WT (Cockcroft-Gault capped at 150), V1 19.3 and V2 45.7 L x
+WT/70, Q 90.4 L/h x (WT/70)^0.75; total topotecan in ng/mL. Shafer decided
+(2026-11-06) to use the printed RF, which the Methods support; Table VI's
+worked clearances and the Discussion's median AUC follow the raw
+Cockcroft-Gault instead, so they are not test pins. ECOG is held at 1. The
+creatinine clearance takes pregnancy's rise in filtration.
+
+## 23. Vinorelbine
+
+`vinorelbine` is Variol 2002 (C32; PDF supplied 2026-11-06): three
+compartments with a lagged first-order oral input, Table 3's values (CL 41.9
+L/h, Vc 22.2 L, fast peripheral 2.46/0.402 /h, deep 1.39/0.0337 /h; F 0.36, ka
+0.481 /h, lag 0.15 h), whole blood in ng/mL. Shafer chose Table 3
+(2026-11-06) over Eq. 1, which gives 53.1 L/h at the mean BSA; so no
+covariate is applied.
+
+## 24. Cisplatin
+
+`cisplatin` is Urien 2004 (P04; PDF supplied 2026-11-06): unbound
+(ultrafilterable) platinum in two compartments, V1 23.4 x (BSA/1.7)^1.60 L
+(Table 4's exponent, Shafer's decision of 2026-11-06; the text's 2.3 is the
+total-platinum model's), CL 35.5 x (BSA/1.7)^0.83 x (CLCr/81)^0.36 L/h, Q
+8.64 L/h, V2 12.0 L. The irreversible binding to plasma proteins is the
+metabolite-only `cisplatinBound`, whose volume is 1/(fm/Vm) and clearance
+(CLm0/Vm)/(fm/Vm), so it obeys the paper's dCm/dt = (fm/Vm) CL C1 - (CLm0/Vm)
+Cm; total platinum is the sum of the two panels. Protein (70 g/L) and the
+dose per m2 (25) are held. Doses mg cisplatin, concentrations ug/L of
+platinum, as fitted.
+
+## 25. Etoposide in adults
+
+`etoposide` is Krogh-Madsen 2012 (C22; PDF supplied 2026-11-06), which
+reports the intercompartmental clearance Nguyen 1998 omits: two compartments,
+CL 0.99 + 0.00996 x CLCR L/h (Cockcroft-Gault), Vc 9.13 L (x 0.721 in women),
+Q 1.14 L/h, Vp 4.75 L; baseline white count held at its median. Table 2's
+renal slope is used although the text (-30%/+24% at 60/160 mL/min) and Fig
+4's AUCs imply about 0.0133. The same paper's cytarabine (complete) and
+daunorubicin (largely its prior's, Bogason 2011) are in the registry,
+`complete_not_implemented`.

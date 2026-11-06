@@ -180,6 +180,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       "Baseline serum osmolality (mOsm/kg)",
       "Serum creatinine (mg/dL)",
       "Gestational age at birth (weeks)",
+      "Serum albumin (g/dL)",
       "CYP2D6",
       "CYP2C19",
       "CYP2C9",
@@ -203,6 +204,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       if (is.null(values$osmolality)) OSMOLALITY_DEFAULT else values$osmolality,
       if (is.null(values$creatinine)) "not entered (assumed normal)" else values$creatinine,
       if (is.null(values$gestationalAge)) "not entered (term assumed)" else values$gestationalAge,
+      if (is.null(values$albumin)) "not entered (each model's reference)" else values$albumin,
       # The phenotypes and the companion models change what was simulated,
       # so the sheet records them.  (Claude Code, 2026-10-17, from an
       # external review.)

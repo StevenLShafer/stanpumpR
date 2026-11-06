@@ -198,6 +198,17 @@ GESTATIONAL_AGE_TERM <- 40
 MIN_GESTATIONAL_AGE <- 22
 MAX_GESTATIONAL_AGE <- 44
 
+# Serum albumin, g/dL, for the models with an albumin covariate (methotrexate,
+# Ibarra 2023; methotrexatePediatric, Taylor 2023; Steven L. Shafer,
+# 2026-11-06).  Optional: when it is not entered (NULL, or NA from an empty
+# field) each model holds its own reference value.  Read only by models that
+# name `albumin`.  The bounds take in any albumin a laboratory reports (the
+# severest hypoalbuminaemia reaches about 1 g/dL, and few labs report above
+# 5.5); the lower bound is also the floor a power of albumin sees, so the
+# term stays finite.
+MIN_ALBUMIN <- 0.5
+MAX_ALBUMIN <- 6
+
 MIN_AGE <- 0
 MAX_AGE <- 90
 # The youngest age the adult-fitted covariate terms see.  Several models carry

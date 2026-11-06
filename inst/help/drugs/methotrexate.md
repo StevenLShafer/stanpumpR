@@ -15,7 +15,7 @@ Plasma methotrexate in mcg/mL (mg/L). The clinical thresholds are in µmol/L: **
 
 - **Weight**, on every parameter. With [the scaling switch](help:models/fat-free-mass) on it is the pharmacokinetic weight; with it off, the actual weight.
 - **Serum creatinine**, from the Patient Profile. The paper's reference is 0.92 mg/dL for men and 0.77 for women, the healthy-adult means its Methods give. Left blank, the library's assumed 0.9 or 0.8 mg/dL is used, which puts clearance 1.5% above (men) or 2.6% below (women) the paper's typical value.
-- **Albumin is held at 4 g/dL**, because the Patient Profile has no albumin field. This matters more here than for most drugs: 68% of the courses in the study were hypoalbuminaemic, and clearance is 11% lower at 3.3 g/dL (the cohort's median) and 24% lower at 2.5 g/dL. For a patient with a low albumin, the curve underestimates exposure.
+- **Serum albumin**, from the Patient Profile, as (albumin / 4 g/dL)^0.594 on clearance. This matters more here than for most drugs: 68% of the courses in the study were hypoalbuminaemic, and clearance is 11% lower at 3.3 g/dL (the cohort's median) and 24% lower at 2.5 g/dL. Left blank, albumin is held at the reference, 4 g/dL, and for a hypoalbuminaemic patient the curve then underestimates exposure, so enter it when it is known.
 
 ### Where to be careful
 

@@ -38,3 +38,9 @@ test_that("docetaxel is a chemotherapy drug, plasma only, with no band", {
   expect_match(PK$reference, "Bruno")
   expect_identical(therapeuticRange("docetaxel")$band_status, "not_applicable")
 })
+
+test_that("getDrugPK passes the Patient Profile's albumin to docetaxel", {
+  a <- getDrugPK("docetaxel", 70, htMean, 56, "female", adjustToFFM = FALSE, albumin = 3.1)
+  b <- docetaxel(70, htMean, 56, "female", adjustToFFM = FALSE, albumin = 3.1)
+  expect_equal(a$PK$default$cl1, b$PK$default$cl1)
+})
