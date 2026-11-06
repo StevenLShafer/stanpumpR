@@ -296,3 +296,11 @@ k13 1.28, k31 0.0787 /h. It reproduces Table II at the mean covariates. AAG
 (1.46 g/L) and HEP12 (0) are held; albumin reads the Patient Profile field
 (g/dL x 10), the mean 40.1 g/L when blank. Pregnancy is `unquantified`
 pending Janssen 2021's full text.
+
+## 18. Cyclophosphamide
+
+`cyclophosphamide` is Joerger 2007 (C08; PDF supplied 2026-11-06): one
+compartment, CL 4.23 L/h (x 1.89 with an enzyme-inducing antiepileptic, held
+at none), V 34.6 L. The prodrug only: 4-hydroxycyclophosphamide was not
+measured, and one first-cycle profile per patient cannot show autoinduction
+(de Jonge 2005 and Hassan 1999, in the registry, model both).

@@ -216,7 +216,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 FULL_TEXT_READ <- c("C01", "P02", "C35", "C03")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
-PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24")
+PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
   ifelse(pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
@@ -456,7 +456,10 @@ registry <- rbind(
     "Enzyme turnover is a state the engine lacks for this drug; the antiseizure induction machinery is a design precedent, not a validated substitute."),
   m("cyclophosphamide__breast__joerger2007", "cyclophosphamide", "cyclophosphamide", "IV",
     "65 women with breast cancer (with doxorubicin)", "cyclophosphamide",
-    "population model joined to a neutropenia model", "second", "unknown", "C08"),
+    "one compartment: CL 4.23 L/h x 1.89^EIAD, V 34.6 L; joined to a neutropenia model",
+    "second", "linear", "C08",
+    "PDF read (supplied 2026-11-06). EIAD (an enzyme-inducing antiepileptic) held at 0. 4-hydroxycyclophosphamide was not measured and autoinduction cannot be identified from one first-cycle profile. The Methods' L/min and the Results' 4.25 L/h are misprints for Table IV's 4.23 L/h.",
+    readiness = "implemented", stanpumpr_drug = "cyclophosphamide"),
   m("cyclophosphamide__neuroblastoma__mccune2009", "cyclophosphamide", "cyclophosphamide", "IV",
     "22 children with neuroblastoma", "cyclophosphamide, 4-hydroxycyclophosphamide, carboxyethylphosphoramide mustard",
     "inducible and non-inducible elimination with metabolites; GFR covariate", "second", "new_engine", "C09"),

@@ -2474,7 +2474,18 @@ registry <- rbind(
       source = "Janssen JM, Van Calsteren K, Dorlo TPC, et al. Clin Pharmacokinet 2021;60:775-784 PMID 33506375; van Hasselt JGC et al. Ann Oncol 2014;25:2059-2065 PMID 24713311",
       source_url = "https://doi.org/10.1007/s40262-020-00961-4",
       to_obtain = "Janssen 2021 (PMID 33506375), for its fitted pregnancy factors on clearance and the volumes",
-      notes = "The direction is consistent (higher clearance, larger volumes); a factor will be applied once Janssen 2021's estimates are read.")
+      notes = "The direction is consistent (higher clearance, larger volumes); a factor will be applied once Janssen 2021's estimates are read."),
+  row("cyclophosphamide", "Chemotherapy", "unquantified",
+      finding = "One case report: Ohshima 2026 (PMID 41559229, abstract) measured cyclophosphamide 24 h after AC in one woman at 16 weeks onward (1.3 and 1.1 ug/mL), comparable to nonpregnant values. No comparative study found (PubMed searched 2026-11-06: cyclophosphamide with pregnancy or pregnant and pharmacokinetic; 30 records, the rest reviews, animal or placental transfer studies, e.g. baboons, PMID 20846713).",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = "second and third", comparator = "literature",
+      design = "case report", n = 1L, confidence = "low",
+      evidence_read = "abstract",
+      source = "Ohshima S, Araki T, Yashima H, et al. Cancer Chemother Pharmacol 2026;96:12 PMID 41559229",
+      source_url = "https://doi.org/10.1007/s00280-026-04864-2",
+      to_obtain = "",
+      notes = "One patient, one sample per cycle; no change applied.")
 )
 
 stopifnot(
