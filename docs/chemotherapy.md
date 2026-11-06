@@ -252,3 +252,29 @@ L/h, CLcr Cockcroft-Gault normalised to 70 kg; V1 = 13.2 x FFM/50 L, Q 30.6
 L/h, V2 15 L. It reproduces CL 28.1 L/h (40% renal), Table 7's half-lives
 and the median AUC. Haematocrit has no field and is held at 34%; the FFM
 reference is 50 kg as printed, though the Methods centre on 53.3.
+
+## 15. MTXPK.org compared (2026-11-06)
+
+MTXPK.org (MtxSim 2.3.1) computes on its server (`POST /api/MtxData`); a
+synthetic patient was sent to it. Whatever the age or indication, it runs
+"Taylor-3C-V3", referenced to Taylor 2020 (C12, *Clin Pharmacol Ther*
+108:635-643), not Taylor 2023: population values CL 11.0, Q2 0.602, Q3 0.111
+L/h, V1 16.5, V2 4.55, V3 13.1 L (per its own scaling), with DuBois BSA by
+default. Its other models (Taylor-2C/2E/2U/3C/3E/3U, "unpublished";
+Kawakatsu-2C; Trevino-2C) can be selected through the API. So neither
+library model is expected to match it, and neither does:
+
+| Case | Quantity | MTXPK.org | methotrexatePediatric (Taylor 2023) | methotrexate (Ibarra 2023) |
+|---|---|---|---|---|
+| girl, 9 y, 30 kg, 130 cm, Scr 0.4; 5 g/m2 (10% over 0.5 h, 90% over 23.5 h) | conc. at 24 h, uM | 68.8 | 85.0 | - |
+| | at 48 h / 72 h, uM | 0.40 / 0.11 | 0.38 / 0.068 | - |
+| | AUC, uM h | 1817 | 2228 | - |
+| | time to 0.1 uM, h | 78.7 | 65.0 | - |
+| man, 60 y, 70 kg, 170 cm, Scr 0.92; 3.5 g/m2 over 4 h | conc. at 24 / 48 / 72 h, uM | 1.18 / 0.15 / 0.082 | 1.96 / 0.18 / 0.051 | 2.95 / 0.22 / 0.086 |
+| | AUC, uM h | 1407 | 1930 | 2351 |
+| | time to 0.1 uM, h | 60.1 | 56.6 | 65.8 |
+
+Each library model reproduces its own paper (the tests); the difference is
+between source models. To agree with MTXPK.org, Taylor 2020 (PubMed Central
+PMC7484917) would be added as a third methotrexate drug and checked against
+the API.
