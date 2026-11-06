@@ -236,3 +236,8 @@ doxorubicin,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#C62828,0,0,0,0,0,IV,Ch
 doxorubicinol,mcg,,,,,#EF9A9A,0,0,0,0,0,IV,
 irinotecan,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#EF6C00,0,0,0,0,0,IV,Chemotherapy
 irinotecanSN38,ng,,,,,#FFB74D,0,0,0,0,0,IV,
+topotecan,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#00838F,0,0,0,0,0,IV,Chemotherapy
+vinorelbine,ng,mg,mg/hr,mg/hr,"mg,mg/hr,mg PO",#6D4C41,0,0,0,0,0,IV,Chemotherapy
+cisplatin,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#455A64,0,0,0,0,0,IV,Chemotherapy
+etoposide,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#7B1FA2,0,0,0,0,0,IV,Chemotherapy
+cisplatinBound,ng,,,,,#90A4AE,0,0,0,0,0,IV,
