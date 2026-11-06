@@ -109,7 +109,7 @@ plasmaOnly <- c(
     "pramipexole", "pramipexoleER", "safinamide", "opicapone",
     "istradefylline", "amantadineER", "pimavanserin", "tolcapone",
     # Chemotherapy (2026-11-05): plasma only (inst/help/models/chemotherapy.md)
-    "cladribine", "fluorouracil", "carboplatin"
+    "cladribine", "fluorouracil", "carboplatin", "busulfan"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

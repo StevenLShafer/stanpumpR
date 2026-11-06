@@ -206,7 +206,7 @@ pubmedSources[pubmedSources == ""] <- NA
 
 # How far each PubMed document was read here.  Every abstract was screened;
 # the PubMed Central text (without tables or equations) was read for these.
-FULL_TEXT_PARTIAL <- c("P05", "P09", "P13", "P18", "P23", "C12", "C13", "C15", "C34", "C35", "N04")
+FULL_TEXT_PARTIAL <- c("P05", "P09", "P13", "P18", "C12", "C13", "C15", "C34", "C35", "N04")
 pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
                              "guideline", "primary_study")
 # Read in full: every parameter the model uses, from the PubMed Central
@@ -214,7 +214,9 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 # itself (PARAMETERS_VERIFIED: Briki 2026 and Lindemalm 2005, supplied by
 # Shafer 2026-11-06)
 FULL_TEXT_READ <- c("C01", "P02", "C35", "C03")
-PARAMETERS_VERIFIED <- c("P10", "N04", "C02")
+# McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
+# supplement supplied, the Methods read in PubMed Central
+PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
   ifelse(pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
@@ -403,9 +405,10 @@ registry <- rbind(
 
   m("busulfan__infant_adult__mccune2014", "busulfan", "busulfan", "IV",
     "1610 HCT recipients, 0.1-66 years (92% under 20)", "busulfan, plasma",
-    "two compartments, first-order elimination; size by normal fat mass (fat fraction 0.509 on clearance, 0.203 on V1); maturation of clearance by postmenstrual age, 50% at 46 weeks; clearance 6.8% lower from 6 to 36 h and 8.1% lower from 36 to 83 h than from 0 to 6 h; V1 and V2 7% higher in women",
+    "two compartments; theory-based allometry on normal fat mass (fat fractions 0.509 CL, 0.203 V); maturation of clearance by postmenstrual age (TM50 45.7 weeks, Hill 2.3); V1 and V2 7% higher in women; clearance x 0.932 from 6 h and x 0.919 from 36 h",
     "first", "linear", "P23",
-    "The PubMed Central text and the supplement (Tables S1, S2, S4-S7 and the figures, supplied 2026-11-06) were read; Table 2 of the article itself was not. Table S7 gives CL 12.4 L/h per 70 kg NFM, fat fractions 0.509 (CL) and 0.203 (V), maturation TM50 46 weeks and Hill 2.3, and the FFM constants (WHSmax 42.92/37.99, WHS50 30.93/35.98 kg/m2); still missing are V1, Q, V2 and the fat fractions of Q and V2, all in the article's Table 2. The within-course fall in clearance is a step on fixed time windows, which PK events could carry. Gestational age was assumed 40 weeks for every infant."),
+    "Table 2 transcribed from the PDF by Shafer (2026-11-06): CL 11.4 L/h per 62 kg NFM, V1 13.9 L and V2 29.9 L per 59 kg NFM, Q 135.2 L/h. The clearance steps run through courseSteps on the event engine. Table S7's worked example does not follow the FFM equation the Methods state (49.7 against 56.1 kg for its 70-kg man); the stated equation is used.",
+    readiness = "implemented", stanpumpr_drug = "busulfan"),
   m("busulfan__hct__langenhorst2020", "busulfan", "busulfan", "IV",
     "HCT recipients 0-73 years", "busulfan",
     "semi-mechanistic glutathione depletion driving a time-varying clearance; age over 40 an effect",

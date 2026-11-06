@@ -552,6 +552,18 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # interaction can change has a clinical-event PK set of its own.
     if (!is.null(PK$interactionEvents)) events <- PK$interactionEvents
 
+    # A clearance that steps at fixed times after the course's first dose
+    # (PK$courseSteps, getDrugPK(); busulfan) is switched by events built from
+    # this drug's own first dose, likewise in place of any clinical event.
+    if (!is.null(PK$courseSteps) && is.null(PK$interactionEvents))
+    {
+      given <- dose$Time[dose$Dose > 0]
+      events <- if (length(given) == 0) events[0, ] else
+        data.frame(Time = min(given) + PK$courseSteps$after,
+                   Event = PK$courseSteps$event, stringsAsFactors = FALSE)
+      PK$pkEvents <- c(PK$pkEvents, PK$courseSteps$event)
+    }
+
     pkSets <- PK$PK
     pkEvents <- PK$pkEvents
 

@@ -2375,7 +2375,18 @@ registry <- rbind(
       source = "Ansari J, Carvalho B, Shafer SL, Flood P. Anesth Analg 2016;122:786-804 (the rise in glomerular filtration of pregnancy); Van Calsteren K et al. Acta Obstet Gynecol Scand 2010;89:1338-1345 PMID 20846067",
       source_url = "https://doi.org/10.1213/ANE.0000000000001143",
       to_obtain = "Van Calsteren 2010 (PMID 20846067), for its two pregnant women's platinum clearances",
-      notes = "The direction Van Calsteren saw agrees with the assumption; its size is unmeasured.")
+      notes = "The direction Van Calsteren saw agrees with the assumption; its size is unmeasured."),
+  row("busulfan", "Chemotherapy", "unknown",
+      finding = "No human pregnancy pharmacokinetics of busulfan found (PubMed searched 2026-11-06: busulfan with pregnancy or pregnant and pharmacokinetic). The hits are a sheep study of maternal busulfan before in utero transplantation (Abe 2012, PMID 22306296), a rat treosulfan study and a 1994 review (Wiebe 1994, PMID 8068213). Busulfan is a conditioning agent before transplantation, not given in pregnancy.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = "third", comparator = NA,
+      design = "none", n = 0L, confidence = "low",
+      evidence_read = "abstract",
+      source = "",
+      source_url = "",
+      to_obtain = "",
+      notes = "Busulfan is cleared by glutathione conjugation, not by filtration, so the rise in filtration of pregnancy is not a basis for a change; nothing is applied.")
 )
 
 stopifnot(

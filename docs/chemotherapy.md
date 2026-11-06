@@ -179,3 +179,15 @@ renal clearance formula but no fitted volumes, only means of individual fits; Sc
 cystatin C and does not print its volumes. Duffull's paper contradicts itself on the
 intercompartmental clearance (equation 5.4 against Table 2), and Shafer chose Table 2's level in
 the equation's form. The erratum the handoff reported for it was not found.
+
+## 8. Busulfan
+
+McCune 2014 (`R/drugs_busulfan.R`), from the article's Table 2 as Shafer transcribed it from the
+PDF (2026-11-06), the Methods in PubMed Central and the supplement he supplied. The clearance falls
+to 0.932 of its first value from 6 h and to 0.919 from 36 h after the course starts; no engine
+carried a step timed from a drug's own first dose, so `getDrugPK()` gained a `courseSteps` block
+(one PK set per step and the minutes after the first dose at which it takes over) and
+`simCpCe()` builds the switching events from the dose table, as it does for the antiseizure
+interactions, on the event engine, which advances the steps exactly. Table S7's worked example
+does not follow the fat-free-mass equation the Methods state (49.7 against 56.1 kg for its man);
+the stated equation is used, and the example's dose still gives its target within 3%.

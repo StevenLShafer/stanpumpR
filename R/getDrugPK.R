@@ -1157,7 +1157,7 @@ getDrugPK <- function(
       # (e.g. "day2"); the split is by dose time, not a user-entered clinical
       # event, so do not expose the phase name as a pkEvent (it would otherwise
       # appear on the help page as an "event" the user can enter).
-      pkEvents = if (is.null(X$dosePhase)) events else PK_EVENT_DEFAULT,
+      pkEvents = if (is.null(X$dosePhase) && is.null(X$courseSteps)) events else PK_EVENT_DEFAULT,
       reference = if (is.null(X$reference)) "Not Available" else X$reference,
       weight = weight,
       height = height,
@@ -1362,6 +1362,31 @@ getDrugPK <- function(
            "parallel systems, Michaelis-Menten elimination, several oral ",
            "formulations, an INR or a zero-order oral release.")
     out$dosePhase <- dp
+  }
+
+  # Clearance that steps at fixed times after the course's first dose
+  # (busulfan, McCune 2014): one PK set per step, named in courseSteps$event,
+  # taking over courseSteps$after minutes after the drug's first dose.
+  # simCpCe() builds the switching events from the dose table, in place of
+  # any clinical event, and the event engine advances the steps exactly.  The
+  # sets are internal, so they are not offered as pkEvents.
+  if (!is.null(X$courseSteps))
+  {
+    cs <- X$courseSteps
+    if (!is.list(cs) || length(cs$after) == 0 ||
+        length(cs$after) != length(cs$event) ||
+        !all(vapply(cs$after, is_valid_number, logical(1))) ||
+        any(cs$after <= 0) || is.unsorted(cs$after, strictly = TRUE) ||
+        !all(cs$event %in% names(out$PK)) || PK_EVENT_DEFAULT %in% cs$event)
+      stop("Invalid courseSteps for ", drug, ": needs increasing positive 'after' ",
+           "times (minutes) and an 'event' naming a further PK set for each.")
+    if (!is.null(out$PK[[PK_EVENT_DEFAULT]]$metabolite) ||
+        !is.null(out$parallelSystems) || !is.null(out$michaelisMenten) ||
+        !is.null(out$dosePhase) || !is.null(out$transitChain) || !is.null(out$inr))
+      stop("Invalid courseSteps for ", drug, ": not available with a metabolite, ",
+           "parallel systems, Michaelis-Menten elimination, a dose phase, a ",
+           "transit chain or an INR.")
+    out$courseSteps <- cs
   }
   return(out)
 }
