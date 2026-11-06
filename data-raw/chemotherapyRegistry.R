@@ -64,8 +64,10 @@
 #   linear_metabolite     linear parent with one linear metabolite: the
 #                         one-level metabolite interface, if its formation
 #                         is identifiable as the library requires
-#   michaelis_menten      saturable elimination with at most one peripheral
-#                         compartment: advanceMichaelisMenten()
+#   michaelis_menten      saturable elimination with at most one linear
+#                         peripheral compartment, and optionally saturable
+#                         distribution to an amount compartment or rapid
+#                         target binding: advanceMichaelisMenten()
 #   new_engine            a mechanism no engine carries: a metabolite
 #                         cascade, enzyme turnover (autoinduction), saturable
 #                         tissue binding or distribution in three
@@ -207,7 +209,7 @@ pubmedSources[pubmedSources == ""] <- NA
 
 # How far each PubMed document was read here.  Every abstract was screened;
 # the PubMed Central text (without tables or equations) was read for these.
-FULL_TEXT_PARTIAL <- c("P05", "P13", "P18", "C12", "C15", "C34", "C35", "N04")
+FULL_TEXT_PARTIAL <- c("P05", "P13", "C12", "C15", "C34", "C35", "N04")
 pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
                              "guideline", "primary_study")
 # Read in full: every parameter the model uses, from the PubMed Central
@@ -217,7 +219,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 FULL_TEXT_READ <- c("C01", "P02", "C35", "C03")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
-PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18")
+PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
   ifelse(pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
@@ -427,10 +429,11 @@ registry <- rbind(
 
   # ---- Second wave ---------------------------------------------------------
   m("paclitaxel__adult__joerger2006", "paclitaxel", "paclitaxel (solvent-based)", "IV",
-    "adults with solid tumours", "paclitaxel",
-    "population model with sex, age, liver function and body size (structure not in the abstract)",
-    "second", "unknown", "P17",
-    "The handoff describes saturable distribution and elimination; if so it needs an engine the library lacks (three compartments, nonlinear). To confirm from the paper. Not transferable to nab-paclitaxel."),
+    "168 adults with solid tumours (82 women), 100-250 mg/m2 over 3 h", "total plasma paclitaxel",
+    "three compartments: saturable elimination (VMEL 37.4 umol/h x 1.2^male x (BSA/1.8)^0.842 x (bilirubin/7)^-0.167 x (age/56)^-0.352, KMEL 0.53 umol/L), saturable transport to a first peripheral compartment held as an amount (VMTR 169 umol/h x 1.2^male x (BSA/1.8)^0.911, KMTR 0.826 umol/L x 2.11^male) returning at first order (K21 1.15 /h x 0.893^male), linear distribution to a second (Q 20.1 L/h x (BSA/1.8)^0.724, V3 252 L x (BSA/1.8)^1.17), V1 12.8 L",
+    "second", "michaelis_menten", "P17",
+    "PDF read on the page images (2026-11-06). Run by advanceMichaelisMenten() with its saturableDistribution block, added for this drug (Shafer's decision, 2026-11-06). The ODEs are not printed; reconstructed from the text, they reproduce the paper's simulations (175 mg/m2 over 3 h at BSA 1.8: woman Cmax 3.83 umol/L, 17.7 h above 0.1 umol/L; man 3.29, 13.0 h; Figs. 3-4). The Results swap the KMEL and KMTR labels (Table 2 and Eq. D are right) and the Methods give Q in L/min (L/h is right). Bilirubin (no Patient Profile field) held at 7 umol/L; BSA formula not stated, Mosteller used; age floored at 18. Not transferable to nab-paclitaxel.",
+    readiness = "implemented", stanpumpr_drug = "paclitaxel"),
   m("cisplatin__adult__urien2004", "cisplatin", "cisplatin", "IV",
     "43 adults with cancer", "unbound (ultrafilterable) and total plasma platinum",
     "unbound platinum in two compartments (V1 23.4 L x (BSA/1.7)^1.60, CL 35.5 L/h x (BSA/1.7)^0.83 x (CLCr/81)^0.36, Q 8.64 L/h, V2 12.0 L) binding irreversibly to proteins, a metabolite with fm/Vm 0.017 /L and CLm0/Vm 0.014 /h",
@@ -488,9 +491,10 @@ registry <- rbind(
     readiness = "implemented", stanpumpr_drug = "doxorubicinPediatric"),
   m("vincristine__children__nijstad2022", "vincristine", "vincristine (conventional)", "IV",
     "206 patients 0.04-33.9 years (25 under 1 year)", "vincristine",
-    "three compartments, one of them saturable (beta-tubulin binding); weight and age on the binding capacity",
-    "second", "new_engine", "P18",
-    "Saturable tissue binding in a third compartment is not targetBinding() or rapidBinding(); compare the equations. Not exclusively paediatric, but not an adult lymphoma model either. Intravenous only: never intrathecal."),
+    "two compartments (CL 30.6 L/h x (WT/70)^0.75, Vc 5.39 L x WT/70, Q 63.2 L/h x (WT/70)^0.75, Vp 400 L x WT/70) with saturable binding to beta-tubulin from the central amount (Bmax 0.525 mg x WT/70 x (age/18)^-0.199, kon 1300 /h fixed, koff 11.5 /h); unbound central concentration observed",
+    "second", "michaelis_menten", "P18",
+    "PDF read on the page images and the supplement's Table S1 (2026-11-06). Run by advanceMichaelisMenten() as rapidBinding (the binding at quasi-equilibrium, kd = Bmax koff/kon/Vc) with the option plotted = \"unbound\", added for this drug (Shafer's decision, 2026-11-06): kon is beyond the Runge-Kutta step's stability, and the reduction is within 1.1% of the full binding ODE at 5 min and 0.8% from 30 min (test-drugs-vincristinePediatric.R). AUC = dose/CL (mass balance). Age floored at 0.04 years, the youngest studied. [decision] kon and koff taken as not allometrically scaled (the Methods say every parameter was; Table II labels only CL, Q, Vc, Vp as 70-kg values). [decision] Doses as labelled (vincristine sulfate), the paper never converting to the base. Not exclusively paediatric, but not an adult lymphoma model either. Intravenous only: never intrathecal.",
+    readiness = "implemented", stanpumpr_drug = "vincristinePediatric"),
   m("vincristine__lymphoma__igarashi2021", "vincristine", "vincristine (conventional)", "IV",
     "30 adults with malignant lymphoma (R-CHOP)", "vincristine",
     "three compartments: CL 31.1 L/h x (BSA/1.60)^1.74 x (age/60)^-0.485, V1 13.2 L, Q2 60.2 L/h, V2 33.9 L (both fixed), Q3 81.1 L/h, V3 544 L",

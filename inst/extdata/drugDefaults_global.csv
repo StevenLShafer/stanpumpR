@@ -251,3 +251,5 @@ gemcitabine,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#2E7D32,0,0,0,0,0,IV,Ch
 capecitabine,mcg,,,mg PO,"mg PO,mg PO bid",#F9A825,0,0,0,0,0,IV,Chemotherapy
 gemcitabineDFDU,mcg,,,,,#81C784,0,0,0,0,0,IV,
 capecitabine5FU,mcg,,,,,#FFD54F,0,0,0,0,0,IV,
+paclitaxel,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#558B2F,0,0,0,0,0,IV,Chemotherapy
+vincristinePediatric,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#0D47A1,0,0,0,0,0,IV,Chemotherapy
