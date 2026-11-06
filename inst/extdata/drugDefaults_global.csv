@@ -232,3 +232,7 @@ melphalan,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#BF360C,0,0,0,0,0,IV,Chem
 vincristine,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#1565C0,0,0,0,0,0,IV,Chemotherapy
 docetaxel,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#4527A0,0,0,0,0,0,IV,Chemotherapy
 cyclophosphamide,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#AD1457,0,0,0,0,0,IV,Chemotherapy
+doxorubicin,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#C62828,0,0,0,0,0,IV,Chemotherapy
+doxorubicinol,mcg,,,,,#EF9A9A,0,0,0,0,0,IV,
+irinotecan,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#EF6C00,0,0,0,0,0,IV,Chemotherapy
+irinotecanSN38,ng,,,,,#FFB74D,0,0,0,0,0,IV,

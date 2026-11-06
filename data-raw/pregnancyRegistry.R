@@ -2485,7 +2485,29 @@ registry <- rbind(
       source = "Ohshima S, Araki T, Yashima H, et al. Cancer Chemother Pharmacol 2026;96:12 PMID 41559229",
       source_url = "https://doi.org/10.1007/s00280-026-04864-2",
       to_obtain = "",
-      notes = "One patient, one sample per cycle; no change applied.")
+      notes = "One patient, one sample per cycle; no change applied."),
+  row("doxorubicin", "Chemotherapy", "unquantified",
+      finding = "Two pooled population analyses compared pregnant with nonpregnant women: van Hasselt 2014 (PMID 24713311, abstract; 16 pregnant, 59 nonpregnant) found volumes up to 1.32-fold larger and no estimable change in clearance; Janssen 2021 (PMID 33506375, abstract; 22 pregnant, INCIP) found larger volumes and a higher clearance, lowering exposure. A case report (Ohshima 2026, PMID 41559229) measured 24-h concentrations 30-60% below nonpregnant reports. The fitted factors are in Janssen 2021's full text, not read.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = "second and third", comparator = "nonpregnant patients",
+      design = "pooled population PK", n = 22L, confidence = "low",
+      evidence_read = "abstract",
+      source = "Janssen JM, Van Calsteren K, Dorlo TPC, et al. Clin Pharmacokinet 2021;60:775-784 PMID 33506375; van Hasselt JGC et al. Ann Oncol 2014;25:2059-2065 PMID 24713311",
+      source_url = "https://doi.org/10.1007/s40262-020-00961-4",
+      to_obtain = "Janssen 2021 (PMID 33506375), for its fitted pregnancy factors on clearance and the volumes",
+      notes = "Lower exposure in pregnancy is consistent across the reports; a factor will be applied once Janssen 2021's estimates are read."),
+  row("irinotecan", "Chemotherapy", "unknown",
+      finding = "No human comparison of irinotecan pharmacokinetics in and out of pregnancy found (PubMed searched 2026-11-06: irinotecan with pregnancy or pregnant and pharmacokinetic). Irinotecan is used in pregnancy only rarely, in case reports without drug levels.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = "", comparator = "",
+      design = "none", n = 0L, confidence = "low",
+      evidence_read = "abstract",
+      source = "",
+      source_url = "",
+      to_obtain = "",
+      notes = "Irinotecan is cleared by carboxylesterase, CYP3A4 and biliary excretion; nothing is applied.")
 )
 
 stopifnot(

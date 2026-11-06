@@ -304,3 +304,33 @@ compartment, CL 4.23 L/h (x 1.89 with an enzyme-inducing antiepileptic, held
 at none), V 34.6 L. The prodrug only: 4-hydroxycyclophosphamide was not
 measured, and one first-cycle profile per patient cannot show autoinduction
 (de Jonge 2005 and Hassan 1999, in the registry, model both).
+
+## 19. Doxorubicin and doxorubicinol
+
+`doxorubicin` is Joerger 2007 (C08): two compartments, CL 47.6 x
+(BSA/1.8)^1.4 x (AST/21)^-0.24 x (age/56)^-0.54 L/h (AST held at 21 U/L), V1
+12.3 L, Q 60.3 L/h, V2 421 L, all of the clearance forming the metabolite-only
+`doxorubicinol` (one compartment, V3/fm 1580 L, CL_DOL/fm 108 x (CLcr/80)^0.54
+L/h, Cockcroft-Gault), fitted jointly (METABOLITE_FORMATION_BASIS `joint`).
+Doses are the hydrochloride as labelled (Table VII's mean AUC supports it),
+so every doxorubicin volume and clearance is divided by 0.937 and the
+metabolite forms at 545.54/579.98 mg per mg dosed. Sampling to 24 h makes the
+terminal half-life (11 h) short. Pérez-Blanco 2016 (adults, samples to 3 h,
+every volume fixed) and Völler 2015 (children) are in the registry; the
+children's model waits.
+
+## 20. Irinotecan and SN-38
+
+`irinotecan` is Klein 2002 (P19; PDF supplied 2026-11-06, Shafer's choice of
+2026-11-06 over Xie 2002, whose 13-state lactone-carboxylate network needs a
+general linear engine): irinotecan in three compartments forming the
+metabolite-only `irinotecanSN38` (two compartments, divided by Fmsn), fitted
+jointly. SN-38G, the third generation, is not carried. The SN-38 mixture
+group is the 466-L one (Table I's 58/42 split appears swapped against Fig 2
+and the validation set's 31/69, and its Fmsn was fixed at 12%). No covariate:
+the paper's are printed as percentages against references that contradict
+Table I. Doses as labelled, with no salt conversion (the paper is silent).
+
+Note for the registry: the Xie paper Shafer supplied is J Clin Oncol
+2002;20:3293-3301 (the 13-state model), not the Clin Pharmacol Ther 2002
+paper registered as C40.

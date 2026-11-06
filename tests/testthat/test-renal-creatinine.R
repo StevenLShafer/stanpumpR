@@ -28,6 +28,8 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 "methotrexate",
                 # pemetrexed (Latz 2006): a linear Cockcroft-Gault term
                 "pemetrexed",
+                # doxorubicinol (Joerger 2007): Cockcroft-Gault on its clearance
+                "doxorubicinol",
                 # melphalan (Nath 2010): Cockcroft-Gault per 70 kg, a linear renal term
                 "melphalan",
                 # Serum creatinine itself, not an estimate of its clearance,

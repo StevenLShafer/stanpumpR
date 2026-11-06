@@ -216,7 +216,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 FULL_TEXT_READ <- c("C01", "P02", "C35", "C03")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
-PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08")
+PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
   ifelse(pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
@@ -472,8 +472,10 @@ registry <- rbind(
     "A metabolite drug (doxorubicinol) would join the library with it; formation must be identifiable as the library's metabolite rule requires."),
   m("doxorubicin__breast__joerger2007", "doxorubicin", "doxorubicin (conventional)", "IV",
     "65 women with breast cancer (with cyclophosphamide)", "doxorubicin and doxorubicinol",
-    "population model with BSA, AST and age on doxorubicin clearance, joined to a neutropenia model",
-    "second", "linear_metabolite", "C08"),
+    "two compartments forming one-compartment doxorubicinol: CL 47.6 L/h x (BSA/1.8)^1.4 x (AST/21)^-0.24 x (age/56)^-0.54, V1 12.3 L, Q 60.3 L/h, V2 421 L; CL_DOL/fm 108 x (CLcr/80)^0.54 L/h, V3/fm 1580 L",
+    "second", "linear_metabolite", "C08",
+    "PDF read (supplied 2026-11-06). AST has no Patient Profile field and is held at 21 U/L. Doses as the hydrochloride (Table VII's mean AUC is reproduced with it, missed by 8% with the base), so the volumes and clearances are divided by 0.937. Sampling stopped at 24 h, so the terminal half-life (11 h) is short of the usual 20-48 h.",
+    readiness = "implemented", stanpumpr_drug = "doxorubicin"),
   m("doxorubicin__children__voller2015", "doxorubicin", "doxorubicin (conventional)", "IV",
     "94 children 0-18 years", "doxorubicin and doxorubicinol",
     "linear three compartments and one doxorubicinol compartment; BSA scaling, a power of age on clearance",
@@ -492,8 +494,10 @@ registry <- rbind(
     readiness = "implemented", stanpumpr_drug = "vincristine"),
   m("irinotecan__adult__klein2002", "irinotecan", "irinotecan (conventional)", "IV",
     "adults with cancer", "irinotecan, SN-38, SN-38 glucuronide",
-    "parent and two metabolites in sequence", "second", "new_engine", "P19",
-    "A cascade (irinotecan to SN-38 to SN-38G); only one metabolite level is carried."),
+    "irinotecan in three compartments (Vc 5.52 L, k10 4.56, k12 57.8, k21 2.58, k13 1.96, k31 0.0812 /h) forming SN-38 (two compartments, Vc/Fmsn 200 or 466 L in a two-group mixture, k10 2.52, k12 2.6, k21 0.0584 /h) forming SN-38G (one compartment)",
+    "second", "linear_metabolite", "P19",
+    "PDF read (supplied 2026-11-06); implemented on Shafer's choice (2026-11-06) as irinotecan forming SN-38, SN-38G not carried (a third generation). Reproduces the printed CL, Vss and half-lives. The 466-L SN-38 group is used: Table I's mixture proportions appear swapped against Fig 2 and the validation set, and that group's Fmsn was fixed (12%). The covariate effects are printed only as percentages that contradict Table I's references and cannot be rebuilt; none is applied.",
+    readiness = "implemented", stanpumpr_drug = "irinotecan"),
   m("irinotecan__crc__oyagairiarte2019", "irinotecan", "irinotecan (conventional)", "IV",
     "adults with metastatic colorectal cancer", "irinotecan and metabolites",
     "parent and metabolites", "second", "new_engine", "P20"),
