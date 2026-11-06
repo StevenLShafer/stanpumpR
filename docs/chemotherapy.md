@@ -66,7 +66,9 @@ names were invented.
 C30) PubMed's date is the e-pub year, one before the print year the handoff gives; the sources
 table uses the print year. N02 (Kitchen 1997) is titled a paediatric study, but its patients were
 4-25 years old (median 18) and mostly had solid tumours. The erratum the handoff reports for C02
-(Duffull 1997) is not linked from the PubMed record; it is to be looked for with the paper. Several
+(Duffull 1997) could not be found: PubMed has no erratum for it, linked or under that journal's
+1997 errata (searched 2026-11-06), and neither the paper's PDF nor Duffull's 1997 review in *Clin
+Pharmacokinet* mentions one. The claim is unconfirmed and is not repeated in the registry. Several
 records have a PMCID the handoff does not list (P04 PMC1884526, P13 PMC13197298, and others); the
 sources table carries PubMed's.
 

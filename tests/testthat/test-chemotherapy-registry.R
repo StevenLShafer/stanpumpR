@@ -143,6 +143,6 @@ test_that("the help page's generated blocks render from the registry", {
   want <- helpChemotherapyToObtainMarkdown()
   expect_match(want, "McCune", fixed = TRUE)
   html <- helpPageHTML("models/chemotherapy")
-  expect_match(html, "Ekhart", fixed = TRUE)
+  expect_match(html, "MTXPK.org", fixed = TRUE)  # a paper still to obtain
   expect_false(grepl("<!-- generated", html, fixed = TRUE))
 })

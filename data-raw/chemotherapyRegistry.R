@@ -213,7 +213,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 # text, the PDF still to confirm (FULL_TEXT_READ); or confirmed on the PDF
 # itself (PARAMETERS_VERIFIED: Briki 2026 and Lindemalm 2005, supplied by
 # Shafer 2026-11-06)
-FULL_TEXT_READ <- c("C01", "P02", "C35")
+FULL_TEXT_READ <- c("C01", "P02", "C35", "C02", "C03")
 PARAMETERS_VERIFIED <- c("P10", "N04")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
@@ -290,10 +290,13 @@ WAVE <- c(first = "first", second = "second", expansion = "expansion")
 
 m <- function(model_id, drug, product, route, population, analyte, structure,
               wave, engine, source_id, note = "",
-              readiness = "needs_full_text", stanpumpr_drug = NA) {
+              readiness = "needs_full_text", stanpumpr_drug = NA,
+              to_obtain = NULL) {
   s <- if (is.na(source_id)) NULL else src(source_id)
   base <- switch(readiness,
-    needs_full_text = "The parameters are in the paper's tables, which were not read here.",
+    needs_full_text = if (!is.null(s) && s$review_depth == "full_text_read")
+      "Read in full, but incomplete." else
+      "The parameters are in the paper's tables, which were not read here.",
     complete_not_implemented = "Read in full: the model is complete.",
     needs_engine = "Read in full.",
     implemented = if (!is.null(s) && s$review_depth == "parameters_verified")
@@ -307,7 +310,8 @@ m <- function(model_id, drug, product, route, population, analyte, structure,
     source_id = if (is.null(s)) NA else source_id,
     evidence_read = if (is.null(s)) "none" else s$review_depth,
     blocking_issue = trimws(paste(base, note)),
-    to_obtain = if (is.null(s) || s$review_depth == "parameters_verified" ||
+    to_obtain = if (!is.null(to_obtain)) to_obtain else
+      if (is.null(s) || s$review_depth == "parameters_verified" ||
                     readiness %in% c("complete_not_implemented", "needs_engine")) NA else
       sprintf(if (readiness == "implemented")
                 "%s (PMID %s%s): the PDF, to confirm the parameters read from the PubMed Central text."
@@ -335,12 +339,15 @@ registry <- rbind(
   m("carboplatin__ovarian__duffull1997", "carboplatin", "carboplatin", "IV",
     "12 women with ovarian cancer", "intact carboplatin in serum (HPLC)",
     "two compartments, for sequential Bayesian dosing", "first", "linear", "C02",
-    "The handoff reports an indexed erratum; the PubMed record did not show one here, so check for it with the paper. Small population."),
+    "PDF read (supplied 2026-11-06). A complete fitted model with a renal term: Cl (L/h) = 0.15 LBW^0.75 + 0.78 ClCr, Vss 0.38 LBW, V1 0.26 LBW, Clic 0.15 LBW^0.75 (LBW by Pesola; ClCr by Cockcroft-Gault with LBW and creatinine floored at 60 uM, in L/h), geometric means Cl 6.8 L/h, Vss 21.6 L, V1 14.8 L, Clic 4.4 L/h. Only 12 women, 49-68 years, ovarian cancer; serum carboplatin by HPLC. The erratum the handoff reported was not found: PubMed has none for it (searched 2026-11-06) and neither PDF mentions one. [decision, asked 2026-11-06] See the Ekhart 2006 row.",
+    readiness = "complete_not_implemented"),
   m("carboplatin__adult__schmitt2009", "carboplatin", "carboplatin", "IV",
     "357 adults, including the underweight and the obese", "carboplatin (analyte to confirm)",
     "a clearance equation in serum creatinine, cystatin C, weight, age and sex; the disposition model is not in the abstract",
     "first", "unknown", "C03",
-    "The Patient Profile has no cystatin C, and serum creatinine is not a substitute for it (the chlorthalidone decision, docs/antihypertensives.md). A clearance equation alone is not a concentration model."),
+    "Table 2: CL (mL/min) = 117.8 (Scr/75)^-0.450 (cysC/1.0)^-0.385 (ABW/65)^0.504 (age/56)^-0.366 x 0.847^sex (Scr in uM, sex 1 for women). The typical Vc, Vp and Q were taken from a rich-sampling database and are not printed (Vc and Vp proportional to BSA), so the paper does not fix a curve. The Patient Profile has no cystatin C, and serum creatinine is not a substitute for it (the chlorthalidone decision, docs/antihypertensives.md).",
+    readiness = "needs_full_text",
+    to_obtain = "Schmitt 2009's references 9 and 11, the rich-sampling studies whose 143 patients fixed its Vc, Vp and Q (Vc and Vp proportional to BSA), for the typical values it does not print; and a cystatin C field, which the Patient Profile does not have."),
   m("carboplatin__adult__chatelut1995", "carboplatin", "carboplatin", "IV",
     "adults with cancer", "carboplatin (analyte to confirm)",
     "a clearance equation in creatinine, weight, age and sex (the Chatelut formula); whether the paper gives volumes was not established",
