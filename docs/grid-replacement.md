@@ -449,9 +449,13 @@ reason, with the two that already were (`notadrug`, the gas rule).
 
 These are pending. Record each answer here.
 
-1. **[decision] Which option.** Recommended: 1, the purpose-built grid. The
-   alternative library is Tabulator. Licensed Handsontable is not recommended
-   (§2.2(b) and §2.3 of its licence).
+1. **Which option. ANSWERED** (Shafer, 2026-11-06): the purpose-built grid,
+   for every grid in the app. "Replace every instance of the HandsOnTable with
+   the new grid", after Gemini's final review. The work follows the migration
+   order above, each grid held to the suite before it moves, and ends by
+   removing rhandsontable. (Recommended: 1. The alternatives were Tabulator and
+   licensed Handsontable, not recommended under §2.2(b) and §2.3 of its
+   licence.)
 2. **Spreadsheet features. ANSWERED** (Shafer, 2026-11-04). Range selection,
    copying several cells, a paste repeated over a selection, drag-fill and
    column resizing are not needed: he has never used them with the
