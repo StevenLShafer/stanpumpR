@@ -18,6 +18,9 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 # fitted no body-size term either, so weight reaches it only
                 # through Cockcroft-Gault.
                 "hydrochlorothiazide",
+                # Carboplatin (Duffull 1997): an adjusted Cockcroft-Gault term
+                # (R/drugs_carboplatin.R)
+                "carboplatin",
                 # Serum creatinine itself, not an estimate of its clearance,
                 # is magnesium's covariate (R/drugs_magnesiumSulfate.R, Du 2019)
                 "magnesiumSulfate",
