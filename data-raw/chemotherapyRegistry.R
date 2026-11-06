@@ -216,7 +216,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 FULL_TEXT_READ <- c("C01", "P02", "C35", "C03")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
-PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20")
+PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
   ifelse(pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
@@ -569,8 +569,10 @@ registry <- rbind(
     "population model, allometric weight only", "expansion", "unknown", "C04"),
   m("melphalan__myeloma__nath2010", "melphalan", "melphalan", "IV",
     "100 adults with myeloma, 36-73 years", "total and unbound melphalan",
-    "two compartments; creatinine clearance, fat-free mass and haematocrit", "expansion", "linear", "C33",
-    "Its own fat-free-mass and renal equations, which must be used, not the library's defaults."),
+    "two compartments, total melphalan: CL 17 x (HCT/34)^0.462 x (FFM/50)^0.75 + 11.1 x CLcr/88 L/h (Cockcroft-Gault per 70 kg), V1 13.2 x FFM/50 L, Q 30.6 L/h, V2 15 L",
+    "expansion", "linear", "C33",
+    "PDF read (supplied 2026-11-06). Its own fat-free-mass (Janmahasatian) and Cockcroft-Gault equations, which the library's ffmAlSallami() (Janmahasatian in adults) and creatinineClearanceCG() at 70 kg reproduce (to 0.05%). Reproduces its CL (28.1 L/h, 40% renal), Table 7's half-lives and median AUC. The FFM reference is 50 kg as printed, though the Methods centre on the median 53.3. Haematocrit has no Patient Profile field and is held at 34%. The unbound model is not used.",
+    readiness = "implemented", stanpumpr_drug = "melphalan"),
   m("fludarabine__hct__langenhorst2019", "fludarabine", "fludarabine", "IV",
     "258 HCT recipients 0.3-74 years", "F-ara-A",
     "three compartments; allometric weight; eGFR on renal clearance", "expansion", "linear", "C34",

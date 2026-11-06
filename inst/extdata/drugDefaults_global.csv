@@ -228,3 +228,4 @@ methotrexate,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#2E7D32,0,0,0,0,0,IV,C
 fluorouracilTan,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#AD1457,0,0,0,0,0,IV,Chemotherapy
 etoposidePediatric,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#6A1B9A,0,0,0,0,0,IV,Chemotherapy
 pemetrexed,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#00695C,0,0,0,0,0,IV,Chemotherapy
+melphalan,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#BF360C,0,0,0,0,0,IV,Chemotherapy

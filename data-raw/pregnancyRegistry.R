@@ -2441,7 +2441,18 @@ registry <- rbind(
       source = "Ansari J, Carvalho B, Shafer SL, Flood P. Anesth Analg 2016;122:786-804 (the rise in glomerular filtration of pregnancy)",
       source_url = "https://doi.org/10.1213/ANE.0000000000001143",
       to_obtain = "",
-      notes = "Pemetrexed is contraindicated in pregnancy for its fetal toxicity; the factor is the physiology, not a measurement.")
+      notes = "Pemetrexed is contraindicated in pregnancy for its fetal toxicity; the factor is the physiology, not a measurement."),
+  row("melphalan", "Chemotherapy", "applied",
+      finding = "No human pregnancy pharmacokinetics of melphalan found (PubMed searched 2026-11-06: melphalan, vincristine or docetaxel with pregnancy or pregnant and pharmacokinetic; no melphalan record). About 40% of melphalan's clearance in the model is renal, so its creatinine-clearance term takes the rise in filtration of pregnancy (applied), an assumption.",
+      applied = "Cockcroft-Gault creatinine clearance x 1.5 when the serum creatinine is left blank (physiological: no melphalan data); the non-renal clearance, volumes and Q unchanged.",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = 1.5,
+      trimester = "third", comparator = NA,
+      design = "physiological", n = NA, confidence = "low",
+      evidence_read = "abstract",
+      source = "Ansari J, Carvalho B, Shafer SL, Flood P. Anesth Analg 2016;122:786-804 (the rise in glomerular filtration of pregnancy)",
+      source_url = "https://doi.org/10.1213/ANE.0000000000001143",
+      to_obtain = "",
+      notes = "High-dose melphalan is a conditioning agent before transplantation, not given in pregnancy; the factor is the physiology, not a measurement.")
 )
 
 stopifnot(

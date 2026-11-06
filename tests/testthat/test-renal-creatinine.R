@@ -28,6 +28,8 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 "methotrexate",
                 # pemetrexed (Latz 2006): a linear Cockcroft-Gault term
                 "pemetrexed",
+                # melphalan (Nath 2010): Cockcroft-Gault per 70 kg, a linear renal term
+                "melphalan",
                 # Serum creatinine itself, not an estimate of its clearance,
                 # is magnesium's covariate (R/drugs_magnesiumSulfate.R, Du 2019)
                 "magnesiumSulfate",

@@ -243,3 +243,12 @@ are unnamed (total weight and Mosteller). The intercept keeps clearance at 43
 mL/min or more whatever the kidneys, untested below about 40 mL/min. The
 patients had no folate or B12 supplementation. Pregnancy: the creatinine
 clearance takes the rise in filtration (applied, physiological).
+
+## 14. Melphalan
+
+`melphalan` is Nath 2010 (C33; PDF supplied 2026-11-06), the total-melphalan
+model of Table 5: CL = 17 x (HCT/34)^0.462 x (FFM/50)^0.75 + 11.1 x CLcr/88
+L/h, CLcr Cockcroft-Gault normalised to 70 kg; V1 = 13.2 x FFM/50 L, Q 30.6
+L/h, V2 15 L. It reproduces CL 28.1 L/h (40% renal), Table 7's half-lives
+and the median AUC. Haematocrit has no field and is held at 34%; the FFM
+reference is 50 kg as printed, though the Methods centre on 53.3.
