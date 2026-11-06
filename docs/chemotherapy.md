@@ -402,3 +402,13 @@ renal slope is used although the text (-30%/+24% at 60/160 mL/min) and Fig
 4's AUCs imply about 0.0133. The same paper's cytarabine (complete) and
 daunorubicin (largely its prior's, Bogason 2011) are in the registry,
 `complete_not_implemented`.
+
+## 26. Doxorubicin in children
+
+`doxorubicinPediatric` is Voller 2015 (C39; Eq. 1 confirmed on the page
+image): three compartments, every parameter scaled by 1 + 1.30 (BSA - 0.77)
+from Table 2's per-m2 values at the median child, CL also by (1 +
+(age/5.32)^0.286)/2, half of it forming the metabolite-only
+`doxorubicinolPediatric` (one compartment, fM 0.5 fixed in the source); ng/mL.
+It reproduces the paper's three printed clearances. Mosteller BSA (the
+paper's formula is in its supplement); doses as labelled, no conversion.

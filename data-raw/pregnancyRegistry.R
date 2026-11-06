@@ -2551,7 +2551,18 @@ registry <- rbind(
       source = "Ansari J, Carvalho B, Shafer SL, Flood P. Anesth Analg 2016;122:786-804 (the rise in glomerular filtration of pregnancy)",
       source_url = "https://doi.org/10.1213/ANE.0000000000001143",
       to_obtain = "",
-      notes = "The factor is the physiology, not a measurement.")
+      notes = "The factor is the physiology, not a measurement."),
+  row("doxorubicinPediatric", "Chemotherapy", "not_applicable",
+      finding = "A children's model (Voller 2015, 0.2-17.7 years). For the adult evidence see the doxorubicin row.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = NA, comparator = NA,
+      design = "review", n = NA, confidence = "high",
+      evidence_read = "none",
+      source = "",
+      source_url = "",
+      to_obtain = "",
+      notes = "")
 )
 
 stopifnot(
