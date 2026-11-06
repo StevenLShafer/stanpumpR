@@ -2,8 +2,7 @@
    (table-grid.js), loaded with them by gridDependency() (R/table-grid.R). */
 
 /* The dose grid (inst/www/dose-grid.js; docs/grid-replacement.md):
-the same four columns at the widths createHOT() gives the old grid, fitted to
-the 450 px Doses sidebar.  Every cell is a form control: the inputs fill their
+the four columns, fitted to the 450 px Doses sidebar.  Every cell is a form control: the inputs fill their
 cells, and the Units cell shows the unit as text (wrapped after its route,
 unitWrapText()) with a transparent <select> over it.  A click selects the cell; the arrow
 at its right (UNIT_ARROW_WIDTH in dose-grid.js), a double click, Alt+Down or

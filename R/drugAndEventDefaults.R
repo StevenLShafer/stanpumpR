@@ -19,10 +19,9 @@ DRUG_LIBRARY_NUMERIC_COLUMNS <- c("Lower", "Upper", "Typical", "MEAC")
 
 # The table the Drug Library dialog shows.  endCe is managed via the Drug
 # Thresholds dialog; Category only groups the startup menu.  The threshold
-# columns go to the grid as TEXT: rhandsontable::hot_to_r() converts each
-# column back to the class it was given (its colClasses() runs as.numeric()
-# over a numeric one), so a typed "bogus" would come back as NA, the same as
-# a cleared cell, and drugLibraryProblems() could not tell them apart.  The
+# columns go to the grid as TEXT, and come back as typed (tableGridRead()):
+# read as numbers, a typed "bogus" would be NA, the same as a cleared cell,
+# and drugLibraryProblems() could not tell them apart.  The
 # input$drugEditsOK observer converts them to numbers after validation.
 drugLibraryGridData <- function(drugDefaults) {
   x <- drugDefaults

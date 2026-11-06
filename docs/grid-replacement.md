@@ -1,9 +1,23 @@
 # Replacing rhandsontable
 
-Status: **proposal and prototype, awaiting Steven Shafer's decision** (2026-11-04).
-Nothing is switched over: the app still draws every grid with rhandsontable.
-The prototype of the main dose grid is behind a switch that is off by default
-(`options(stanpumpR.doseGrid = "native")`).
+Status: **done** (2026-11-06). Steven Shafer chose the purpose-built grid
+for every grid (decision 1, below), and rhandsontable is gone from the app:
+
+- the main dose table is the **dose grid** (`inst/www/dose-grid.js`,
+  `R/dose-grid.R`), with no switch;
+- every dialog's grid is the **table grid** (`inst/www/table-grid.js`,
+  `R/table-grid.R`), drawn from a column specification: Edit doses, Edit
+  events, Suggest Dosing's targets, Drug thresholds, the Drug Library and
+  Single Paper Review's doses;
+- `rhandsontable` and `htmlwidgets` are out of `DESCRIPTION`, rhandsontable is
+  out of `renv.lock`, and `createHOT.R`, `addHotHooks()` and the Handsontable
+  hooks of `hot_funs.js` (now `grid-funs.js`) are deleted. With them go
+  Handsontable 6.2.2, CVE-2021-23446 and the numbro error on every page load.
+
+The sections below are the record of how it was decided: the proposal, the
+measurements, the options, the external reviews and the decisions. Where they
+speak of rhandsontable in the present tense, they describe the app before
+2026-11-06. *The migration* (near the end) says what was done.
 
 ## Recommendation
 
@@ -479,6 +493,49 @@ Not defects: `sufentanil epidural` is refused where rhandsontable truncated it
 to `sufentanil`; a blank Time or Dose over a filled cell is refused by design.
 Gemini's "morphine stored as morphine, never mannitol: fixed" on rhandsontable
 is one run of an intermittent defect, not a fix: nothing in that grid changed.
+
+## The migration (2026-11-06)
+
+Done in one pull request, after Gemini's final review, on Shafer's decision.
+
+**The main dose table.** The dose grid draws it, always; the switch
+(`doseGridMode()`), `createHOT()` and the `input$doseTableHTML` observer are
+gone. Its scripts and styles (`grid-funs.js`, `dose-grid.js`,
+`table-grid.js`, `grids.css`, split from `app.css`) load together with the
+first grid a page draws (`gridDependency()`), so the Single Paper Review app
+on its own has them too.
+
+**The dialogs.** The table grid is the dose grid's sibling, with the same keys
+and rules and without what only the dose table needs (the drug list, the
+server's draft and undo): a dialog's grid is read when its Apply or OK is
+pressed, and Cancel is its undo. `tableGridInput()` draws it from
+`tableColumn()`s (text, time, dose, number, checkbox, select, readonly; a
+select's choices the same for every row or one list a row; read-only rows of
+a column), and `tableGridRead()` reads it back as text and ticks, never an
+error, whatever the browser sends. Each dialog has its column builder:
+
+| Dialog | Columns | Notes |
+|---|---|---|
+| Edit doses | Delete, Time, Dose (or Target), Units | tagged with its drug, which Apply checks (`tableGridTag()`) |
+| Edit events | Delete, Time, Event | |
+| Suggest Dosing | Time, Target | rows inserted and removed from the row menu, up to `MAX_TARGET_ROWS` |
+| Drug thresholds | Drug (read-only), Threshold | |
+| Drug Library | twelve columns | the concentration unit of a drug not in mcg or ng cannot be changed |
+| Single Paper Review | Time, Dose, Units | was numeric, which read `1,000` as 1; now read as R reads it |
+
+So the three dialogs that had rhandsontable's key filter (Edit doses, Edit
+events, Suggest Dosing) no longer store a typed `1,5` as 15: decision 6's
+defect is gone everywhere with them.
+
+**Tests.** The R tests that built rhandsontable widgets now drive the new
+grids' values (`doseGridInputValue()`, `tableGridInputValue()` in
+`tests/testthat/helpers.R`); `test-table-grid.R` holds the table grid's
+drawing and reading; the Node replays of Handsontable's hooks
+(`test-dose-table-paste.R`, part of `test-ui-keyboard-crashes.R`) are
+removed, their cases being the browser suite's on the real grid. The browser
+suite drops the rhandsontable adapter and its known gaps, and gains
+`table-grid.test.js` (Edit doses, Suggest Dosing, Drug thresholds, the Drug
+Library).
 
 ## Decisions for Steven Shafer
 

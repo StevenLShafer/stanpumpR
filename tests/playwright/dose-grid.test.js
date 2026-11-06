@@ -5,9 +5,9 @@
 // (docs/grid-replacement.md).  Run with tests/playwright/run.js (README.md).
 //
 // Most cases come from the bugs the 2026-11 reviews found and fixed one by one
-// (test-ui-keyboard-crashes.R, test-ui-adversarial-review.R,
-// test-dose-table-paste.R replay them in Node against grid-funs.js); here they
-// run in a real browser against the real server.
+// (test-ui-keyboard-crashes.R and test-ui-adversarial-review.R test the
+// server's side); here they run in a real browser against the real server.
+// The dialogs' grids are table-grid.test.js's.
 //
 // A case marked KNOWN_GAP fails on a grid for a reason recorded beside it: it
 // is reported as a todo rather than a failure, so that the suite states the
@@ -20,73 +20,16 @@ const assert = require('node:assert/strict');
 const playwright = require('playwright');
 const H = require('./harness');
 
-const GRID = process.env.STANPUMPR_GRID || 'handsontable';
+const GRID = process.env.STANPUMPR_GRID || 'native';
 const URL = process.env.STANPUMPR_URL;
 if (!URL) throw new Error('STANPUMPR_URL is not set: run the suite through run.js');
 const adapter = require('./adapters/' + GRID);
 
 // The cases a grid is known not to meet, by grid
 const KNOWN_GAP = {
-  handsontable: {
-    'every cell the keyboard reaches has a name a screen reader can read':
-      'Handsontable 6 edits through one shared, unlabelled textarea',
-    'the page raises no script errors':
-      "rhandsontable's bundled numbro languages.min.js throws 'exports is not defined' on load",
-    'a dose can be entered without the mouse':
-      'the server redraws the grid after each commit and the first key typed meanwhile is lost: ' +
-      'morphine, Tab, 15, Tab, 4 is stored as time 5, dose 0 (at 0-300 ms a key, on localhost)',
-    'two doses typed one after the other over a slow link are both kept':
-      'over a 400 ms link the first row is stored as time 5, dose 0 and the second row is lost',
-    'after a refused name, Escape gives the cell back':
-      'the editor stays open on the refused text and Escape does not close it; what is typed next is appended',
-    'Ctrl+Z undoes the last edit and Ctrl+Y redoes it, in the grid and on the server':
-      'Ctrl+Z does nothing: the redraw after every edit clears the grid\'s own undo history',
-    'Ctrl+Z steps back one edit at a time':
-      'Ctrl+Z does nothing: the redraw after every edit clears the grid\'s own undo history',
-    'Ctrl+Z right after Enter, over a slow link, still undoes that edit':
-      'Ctrl+Z does nothing: the redraw after every edit clears the grid\'s own undo history',
-    'Ctrl+Z with the focus outside the grid undoes the last edit':
-      'Ctrl+Z does nothing: the redraw after every edit clears the grid\'s own undo history',
-    'a character a number cannot hold is refused with a message, not dropped':
-      'hookFilterKeys() drops the key: a typed "1,5" is stored as 15 and "1a0" as 10, without a word',
-    'an illicit drug is said, not only drawn red':
-      'only the colour says so',
-    'a paste cannot grow the table past its row limit, and says so':
-      'the rows past the limit are dropped without a word',
-    'a pasted row whose drug is refused changes nothing':
-      'its time, dose and unit are applied to the drug the row held: "notadrug 5 999 mg/kg" over a propofol row ' +
-      'made it propofol 5 999 mg/kg, without a word',
-    'a pasted row with a time or dose that is refused changes nothing, and a new drug starts afresh':
-      'the refused cells keep the old drug\'s values: "fentanyl BADTIME BADOSE mcg" over propofol 10 100 mg ' +
-      'became fentanyl 10 100 mcg, said only as "the cell keeps its previous value"',
-    'a column of drug names pasted over rows starts each row afresh':
-      'each row keeps its time and dose for the new drug: propofol 10 100 mg became fentanyl 10 100 mcg',
-    'emptying a drug cell and pressing Enter clears the row':
-      'Enter on the emptied cell takes the first drug in the list: the row became acenocoumarol',
-    'undo never brings back a unit the row\'s drug does not offer':
-      'undo after a drug pasted over propofol 0 2 mg/kg restored morphine 0 2 mg/kg, a half-applied paste',
-    'a rule the server applies is drawn in the grid (a gas brings its ventilation)':
-      'intermittently, Enter commits the first match of what the list held a moment earlier: ' +
-      '"sevoflurane" was stored as sertraline (once in eleven runs, 2026-11-06), so no ventilation row came',
-    // two differences of keyboard behaviour, not defects: no value changes
-    'Tab on a row menu opened by a right click moves on from the cell clicked':
-      'a difference, not a defect: after a right click on the Dose cell, Tab leaves the menu and stays on Dose',
-    'Shift+Tab on the row menu of the first cell leaves the grid':
-      'a difference, not a defect: Shift+Tab from the first cell wraps to the last cell of the grid',
-    'choosing a drug starts its row at time 0, dose 0 and its default unit':
-      'intermittently, Enter commits the first match of what the list held a moment earlier: ' +
-      '"morphine" was stored as mannitol (2026-11-06)',
-    'offers exactly the units of the row\'s drug':
-      'intermittently, Enter commits the first match of what the list held a moment earlier: ' +
-      '"sevoflurane" was stored as sertraline (2026-11-06)',
-    'a name that is not in the library is refused':
-      'intermittently, Enter commits the first match of what the list held a moment earlier: ' +
-      '"notadrug" was stored as norepinephrine (and, in the external review, "morphine" as mannitol)'
-  },
-  native: {
-    'the page raises no script errors':
-      "the Single Paper Review tab still draws an rhandsontable grid, whose bundled numbro throws on load"
-  }
+  // rhandsontable's gaps went with it (2026-11-06; docs/grid-replacement.md
+  // keeps the list of what it failed)
+  native: {}
 };
 // test(), or test() as a todo when the grid has the gap: gt(name, fn) or
 // gt(name, options, fn)

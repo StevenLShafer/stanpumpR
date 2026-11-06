@@ -15,7 +15,7 @@ doseTableBlank <- doseTableInit[7:12, ]
 rownames(doseTableBlank) <- NULL
 
 # One blank row with `template`'s columns: the least a dose table can hold,
-# since Handsontable cannot draw a grid with no rows.
+# since the dose grid always keeps a row to type in.
 blankDoseTableRow <- function(template) {
   row <- template[0, , drop = FALSE]
   row[1, ] <- ""

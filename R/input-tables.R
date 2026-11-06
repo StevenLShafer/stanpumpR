@@ -21,8 +21,8 @@ cleanDoseTable <- function(DT) {
 }
 
 # The text columns of a table read from a grid, with every missing cell ("",
-# NA) made "".  hot_to_r() gives NA for a cell the browser sent as null: a
-# row inserted through a grid's context menu, or a cleared numeric cell.
+# NA) made "".  A table restored from a bookmark, or written by code, can hold
+# NA where a grid holds "".
 # Logical columns (a Delete checkbox) are left to the caller.
 blankMissingCells <- function(table) {
   for (col in names(table)) {

@@ -692,7 +692,11 @@ app_server <- function(input, output, session) {
     doseTable = doseTable(),
     doseTableFormat = timeFormatString(doseTableFormat()),
     canUndo = doseTableHistory()$can_undo,
-    canRedo = doseTableHistory()$can_redo
+    canRedo = doseTableHistory()$can_redo,
+    # what the dialogs' grids write (tests/playwright/table-grid.test.js)
+    eventTable = eventTable(),
+    endCe = as.list(stats::setNames(drugDefaults()$endCe, drugDefaults()$Drug)),
+    colors = as.list(stats::setNames(drugDefaults()$Color, drugDefaults()$Drug))
   )
 
   # Open on what a ?scenario= or ?help= link asks for (R/deep-links.R).  Done
@@ -818,7 +822,7 @@ app_server <- function(input, output, session) {
       draft <- doseTableDraft()
       format <- doseTableFormat()
       req(draft)
-      # As the rhandsontable grid's renderer did, a draft that fails the
+      # As the old grid's renderer did, a draft that fails the
       # table's own checks is not drawn: the grid says why instead.  (An
       # error raised here would end the session.)
       problem <- tryCatch({ validateDoseTableInput(draft); "" }, error = function(e) conditionMessage(e))

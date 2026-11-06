@@ -593,7 +593,9 @@
       return;
     }
     if (t.tagName === 'SELECT') {
-      if ((e.key === 'ArrowDown' && e.altKey) || e.key === ' ' || e.key === 'F4') { this.pickerFor = t; return; }
+      // a space while a choice is being typed is part of it
+      var searching = this.search && this.search.ctl === t && Date.now() - this.search.time <= SEARCH_MS;
+      if ((e.key === 'ArrowDown' && e.altKey) || (e.key === ' ' && !searching) || e.key === 'F4') { this.pickerFor = t; return; }
       if (this.pickerFor === t) {
         if (e.key === 'Escape' || e.key === 'Enter' || e.key === 'Tab') this.pickerFor = null;
         else return;

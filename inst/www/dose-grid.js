@@ -1,7 +1,7 @@
-// The dose grid (PROTOTYPE, docs/grid-replacement.md): the main dose table
-// as a plain HTML table of form controls with its own Shiny input binding,
-// in place of rhandsontable.  Chosen with options(stanpumpR.doseGrid =
-// "native"); R/dose-grid.R is its server half.
+// The dose grid (docs/grid-replacement.md): the main dose table as a plain
+// HTML table of form controls with its own Shiny input binding, which
+// replaced rhandsontable (2026-11-06).  R/dose-grid.R is its server half;
+// the dialogs' grids are its sibling, table-grid.js.
 //
 // The browser holds the grid and checks every entry as it is committed
 // (validateTime() and validateDose() from grid-funs.js, which the tests hold to
@@ -956,8 +956,10 @@
     }
     if (e.key === 'ArrowDown' && e.altKey && c === COLS.DRUG) { this.openList(t); e.preventDefault(); return; }
     if (t.tagName === 'SELECT') {
+      // a space while a unit is being typed is part of it ("mg PO liquid")
+      var searching = this.search && this.search.ctl === t && Date.now() - this.search.time <= UNIT_SEARCH_MS;
       // the browser's own list, opened: its keys are its own
-      if ((e.key === 'ArrowDown' && e.altKey) || e.key === ' ' || e.key === 'F4') { this.pickerFor = t; return; }
+      if ((e.key === 'ArrowDown' && e.altKey) || (e.key === ' ' && !searching) || e.key === 'F4') { this.pickerFor = t; return; }
       if (this.pickerFor === t) {
         if (e.key === 'Escape' || e.key === 'Enter' || e.key === 'Tab') this.pickerFor = null;
         else return;

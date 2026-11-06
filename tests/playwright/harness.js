@@ -40,15 +40,15 @@ function waitForHttp(url, timeoutMs) {
 // grid: 'handsontable' or 'native' (R/dose-grid.R, doseGridMode()).  The
 // app's output goes to a log file, not a pipe: a pipe nobody drains while the
 // tests run fills, and R then blocks writing to it.
-async function startApp(grid, port) {
+async function startApp(port) {
   const rscript = process.env.RSCRIPT || 'Rscript';
   const extra = (process.env.STANPUMPR_RSCRIPT_ARGS || '').split(' ').filter(Boolean);
   const code = [
     "suppressMessages(pkgload::load_all('.', quiet = TRUE))",
-    `options(shiny.testmode = TRUE, stanpumpR.doseGrid = '${grid}')`,
+    'options(shiny.testmode = TRUE)',
     `shiny::runApp(run_app(), port = ${port}, launch.browser = FALSE)`
   ].join('; ');
-  const logFile = path.join(os.tmpdir(), `stanpumpR-playwright-${grid}-${port}.log`);
+  const logFile = path.join(os.tmpdir(), `stanpumpR-playwright-${port}.log`);
   const fd = fs.openSync(logFile, 'w');
   const child = spawn(rscript, [...extra, '-e', code], { cwd: REPO, stdio: ['ignore', fd, fd] });
   fs.closeSync(fd);
@@ -110,7 +110,11 @@ async function serverState(page) {
     table: rowsOf(json.doseTable),
     format: json.doseTableFormat,
     canUndo: json.canUndo,
-    canRedo: json.canRedo
+    canRedo: json.canRedo,
+    // the events (Time in minutes), and each drug's threshold and colour
+    events: json.eventTable || {},
+    endCe: json.endCe || {},
+    colors: json.colors || {}
   };
 }
 
