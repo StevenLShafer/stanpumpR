@@ -216,7 +216,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 FULL_TEXT_READ <- c("C01", "P02", "C35", "C03")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
-PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33")
+PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
   ifelse(pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
@@ -483,8 +483,10 @@ registry <- rbind(
     "Saturable tissue binding in a third compartment is not targetBinding() or rapidBinding(); compare the equations. Not exclusively paediatric, but not an adult lymphoma model either. Intravenous only: never intrathecal."),
   m("vincristine__lymphoma__igarashi2021", "vincristine", "vincristine (conventional)", "IV",
     "30 adults with malignant lymphoma (R-CHOP)", "vincristine",
-    "population model with BSA and age on clearance (number of compartments to confirm)",
-    "second", "unknown", "C31"),
+    "three compartments: CL 31.1 L/h x (BSA/1.60)^1.74 x (age/60)^-0.485, V1 13.2 L, Q2 60.2 L/h, V2 33.9 L (both fixed), Q3 81.1 L/h, V3 544 L",
+    "second", "linear", "C31",
+    "PDF read (supplied 2026-11-06). Reproduces its 1.7- and 0.8-fold covariate checks and Table 3's exposures. The BSA formula and the dose basis (sulfate or base) are not stated; Mosteller and the dose as labelled are used. V1 is poorly determined (first sample at 10 min).",
+    readiness = "implemented", stanpumpr_drug = "vincristine"),
   m("irinotecan__adult__klein2002", "irinotecan", "irinotecan (conventional)", "IV",
     "adults with cancer", "irinotecan, SN-38, SN-38 glucuronide",
     "parent and two metabolites in sequence", "second", "new_engine", "P19",

@@ -278,3 +278,11 @@ Each library model reproduces its own paper (the tests); the difference is
 between source models. To agree with MTXPK.org, Taylor 2020 (PubMed Central
 PMC7484917) would be added as a third methotrexate drug and checked against
 the API.
+
+## 16. Vincristine
+
+`vincristine` is Igarashi 2021 (C31; PDF supplied 2026-11-06, Table 2 read on
+the page image): three compartments, CL 31.1 x (BSA/1.60)^1.74 x
+(age/60)^-0.485 L/h (age floored at 18), V1 13.2 L, Q2 60.2 L/h and V2 33.9 L
+(fixed in the source), Q3 81.1 L/h, V3 544 L; plotted in ng/mL, dosed in mg
+as labelled. Mosteller BSA (the paper names none).

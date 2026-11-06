@@ -2452,7 +2452,18 @@ registry <- rbind(
       source = "Ansari J, Carvalho B, Shafer SL, Flood P. Anesth Analg 2016;122:786-804 (the rise in glomerular filtration of pregnancy)",
       source_url = "https://doi.org/10.1213/ANE.0000000000001143",
       to_obtain = "",
-      notes = "High-dose melphalan is a conditioning agent before transplantation, not given in pregnancy; the factor is the physiology, not a measurement.")
+      notes = "High-dose melphalan is a conditioning agent before transplantation, not given in pregnancy; the factor is the physiology, not a measurement."),
+  row("vincristine", "Chemotherapy", "unknown",
+      finding = "No human comparison of vincristine pharmacokinetics in and out of pregnancy found (PubMed searched 2026-11-06: melphalan, vincristine or docetaxel with pregnancy or pregnant and pharmacokinetic; the vincristine records are case reports of exposure without drug levels, e.g. PMID 8105555).",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = "", comparator = "",
+      design = "none", n = 0L, confidence = "low",
+      evidence_read = "abstract",
+      source = "",
+      source_url = "",
+      to_obtain = "",
+      notes = "Vincristine is cleared by the liver (CYP3A4/5) and biliary excretion; nothing is applied.")
 )
 
 stopifnot(
