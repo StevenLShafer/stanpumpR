@@ -438,6 +438,7 @@ const Player = {
         document.getElementById('view').style.display = v === '3d' ? 'block' : 'none';
         this.$('viewToggle').textContent = v === '2d' ? '3D view' : '2D view';
         this.$('brandView').textContent = v === '2d' ? '2D' : '3D';
+        document.body.classList.toggle('flat', v === '2d');
         if (v === '3d') View.resize();
         if (this.run) this.seek(this.T);
     },

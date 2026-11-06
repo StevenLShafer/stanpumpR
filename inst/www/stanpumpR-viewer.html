@@ -102,7 +102,7 @@ kbd { font: 11px/1 ui-monospace, Consolas, monospace; border: 1px solid var(--li
 .flow-tip .dot.in { background: var(--in); } .flow-tip .dot.out { background: var(--out); }
 
 /* ── the readout card, bottom left, above the controls ───── */
-#readout { position: fixed; left: 16px; bottom: 58px; z-index: 2; max-width: calc(100vw - 32px);
+#readout { position: fixed; left: 16px; bottom: calc(var(--ctl-h, 28px) + 30px); z-index: 2; max-width: calc(100vw - 32px);
   background: var(--view-card); color: var(--view-ink); border: 1px solid var(--view-line); border-radius: 10px;
   padding: 9px 12px 8px; font-size: 13px; line-height: 1.45; font-variant-numeric: tabular-nums;
   backdrop-filter: blur(6px); }
@@ -115,7 +115,7 @@ kbd { font: 11px/1 ui-monospace, Consolas, monospace; border: 1px solid var(--li
 #readout .foot { color: var(--ink-2); font-size: 12px; margin-top: 2px; }
 
 /* ── the amounts, bottom right, above the controls (key a) ─ */
-#amounts { position: fixed; right: 16px; bottom: 58px; z-index: 2; display: none;
+#amounts { position: fixed; right: 16px; bottom: calc(var(--ctl-h, 28px) + 30px); z-index: 2; display: none;
   background: var(--view-card); color: var(--view-ink); border: 1px solid var(--view-line); border-radius: 10px;
   padding: 9px 12px 8px; font-variant-numeric: tabular-nums; backdrop-filter: blur(6px); }
 #amounts.show:not(:empty) { display: block; }
@@ -142,7 +142,7 @@ table.perf td:nth-child(3) { opacity: 0.6; text-align: right; }
 
 /* ── the controls, along the bottom ──────────────────────── */
 #controls { position: fixed; left: 16px; right: 16px; bottom: 12px; z-index: 2;
-  display: flex; gap: 10px; align-items: center; color: var(--view-ink); font-size: 13px; }
+  display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; color: var(--view-ink); font-size: 13px; }
 #controls button { font: inherit; color: var(--ink); background: rgba(255,255,255,0.08); border: 1px solid var(--line);
   border-radius: 6px; padding: 4px 12px; cursor: pointer; }
 #controls button:hover { background: rgba(255,255,255,0.16); }
@@ -163,6 +163,26 @@ table.perf td:nth-child(3) { opacity: 0.6; text-align: right; }
 #controls #speedSlider { width: 110px; flex: none; accent-color: var(--accent); }
 #controls .speed { color: var(--ink-2); white-space: nowrap; min-width: 84px; }
 #controls .tip { color: var(--ink-2); white-space: nowrap; }
+/* A narrow window: the buttons as symbols, the help hint and Open run… left
+   out (h still lists the keys), so the controls take two rows, the view
+   switch on the first. A short one: the readout without its model and
+   patient lines. (ChatGPT, 38e0f3a: at 360 x 260 the switch was off-screen.) */
+@media (max-width: 640px) {
+  #controls .speedctl { font-size: 0; }
+  #controls .btxt, #controls .tip, #controls #open { display: none; }
+  #controls .speedctl #speedSlider { width: 80px; }
+  #controls .speed { min-width: 0; font-size: 12px; }
+}
+/* The 2D view in a window too small for the drawing and the cards together
+   (flat.js): the cards are left out, the drawing's own labels giving the numbers. */
+body.flat.compact #readout, body.flat.compact #amounts { display: none !important; }
+@media (max-height: 520px) {
+  #readout .model, #readout .foot { display: none; }
+  #readout .time { font-size: 15px; }
+  #readout, #amounts { padding: 5px 9px 4px; }
+  table.amounts td { padding: 1px 0; }
+  #amounts .note { display: none; }
+}
 
 /* ── closes the window, upper left ───────────────────────── */
 #close { position: fixed; left: 12px; top: 12px; z-index: 4; width: 32px; height: 32px;
@@ -198,7 +218,7 @@ body.over #message .card { border-color: var(--accent); }
 #help tbody + tbody tr:first-child td { padding-top: 12px; }
 
 /* ── the 2D view (flat.js) ───────────────────────────────── */
-#flat { position: fixed; inset: 0; z-index: 1; background: #0e1a24; display: none; }
+#flat { position: fixed; inset: 0 0 calc(var(--ctl-h, 28px) + 18px) 0; z-index: 1; background: #0e1a24; display: none; overflow-x: hidden; overflow-y: auto; }
 #flat svg { display: block; font-family: system-ui, "Segoe UI", sans-serif; }
 #flat .tk { fill: #8a9cb0; font-size: 11px; }
 #flat .nm { fill: #e6edf5; font-size: 14px; font-weight: 600; }
@@ -228,16 +248,16 @@ body.over #message .card { border-color: var(--accent); }
 <div id="brand">Minto Visualizer <span id="brandView">2D</span></div>
 
 <div id="controls">
-  <button id="play" title="Play (space)">&#x25B6; Play</button>
-  <button id="pause" title="Pause (space)">&#x275A;&#x275A; Pause</button>
-  <button id="stop" title="Stop, and go back to the start">&#x25A0; Stop</button>
+  <button id="play" title="Play (space)">&#x25B6;<span class="btxt"> Play</span></button>
+  <button id="pause" title="Pause (space)">&#x275A;&#x275A;<span class="btxt"> Pause</span></button>
+  <button id="stop" title="Stop, and go back to the start">&#x25A0;<span class="btxt"> Stop</span></button>
+  <button id="viewToggle" title="Switch between the 2D and 3D views (v)">3D view</button>
   <span class="clock" id="now">0:00:00</span>
   <input id="t" class="progress" type="range" min="0" max="1" step="any" value="0" aria-label="Time">
   <span class="clock" id="end">0:00:00</span>
   <label class="speedctl" title="Play speed (+ faster, − slower)">Speed
     <input id="speedSlider" type="range" min="0" max="1" step="1" value="0" aria-label="Play speed"></label>
   <span class="speed" id="speed"></span>
-  <button id="viewToggle" title="Switch between the 2D and 3D views (v)">3D view</button>
   <span class="tip"><kbd>h</kbd> help</span>
   <button id="open" title="Open a run file (.json)">Open run…</button>
   <input type="file" id="file" accept=".json,application/json" hidden>
@@ -6135,13 +6155,21 @@ const FLAT_COLOURS = { in: '#ff6b5e', out: '#3fd47a', ce: '#3b82f6', target: '#f
 const FLAT_ARROW_MAX = 26;       // px: the thickest arrow, the run's largest flow
 const FLAT_GAP = 96;             // px between boxes, holding the arrows between them
 const FLAT_CE_W = 12;            // px: the effect-site bar
+const FLAT_MIN_W = 3;            // px: the narrowest box, so a tiny volume still shows
 
 const Flat = {
-    el: null, run: null, ui: null, scale: null, last: null,
+    el: null, run: null, ui: null, scale: null, last: null, cardH: 0,
 
     init(container) {
         this.el = container;
         window.addEventListener('resize', () => { if (this.last && this.visible()) this.draw(this.last); });
+        // The controls wrap on a narrow window: the cards sit above them at
+        // whatever height they take (--ctl-h), and the drawing is laid out again.
+        const ctl = document.getElementById('controls');
+        if (ctl && window.ResizeObserver) new ResizeObserver(() => {
+            document.documentElement.style.setProperty('--ctl-h', `${ctl.offsetHeight}px`);
+            if (this.last && this.visible()) this.draw(this.last);
+        }).observe(ctl);
     },
     visible() { return this.el && this.el.style.display !== 'none'; },
 
@@ -6149,19 +6177,29 @@ const Flat = {
     // stateAt: the player's own function, so the flows are the ones it draws.
     setRun(r, ui, stateAt) {
         this.run = r; this.ui = ui; this.last = null;
-        const n = r.t.length, step = Math.max(1, Math.floor(n / 600));
+        const n = r.t.length;
+        // The concentration scale: the highest value of every series at
+        // every sample (interpolation never exceeds the samples), and every
+        // target in force, so no moment's fill is clipped (ChatGPT, 38e0f3a:
+        // a sampled scale missed a one-sample peak).
         let cMax = 0;
+        const top = v => { if (v) for (let i = 0; i < n; i++) if (v[i] > cMax) cMax = v[i]; };
+        top(r.cp); top(r.ce); top(r.c2); top(r.c3);
+        if (r.target) for (let i = 0; i < n; i++)
+            if ((!r.mode || r.mode[i] !== 'manual') && r.target[i] > cMax) cMax = r.target[i];
+        // The flows: each interval's, at its midpoint (a flow is constant
+        // over an interval), and the end.
         const flows = [];
-        const consider = st => {
-            cMax = Math.max(cMax, st.cp, st.ce || 0, st.c2 || 0, st.c3 || 0, st.mode !== 'manual' ? st.target : 0);
-            flows.push(Math.max(Math.abs(st.flow.in), Math.abs(st.flow.abs), Math.abs(st.flow.out),
-                                Math.abs(st.flow.to2), Math.abs(st.flow.to3)));
-        };
-        for (let i = 0; i < n - 1; i += step) consider(stateAt((r.t[i] + r.t[i + 1]) / 2));
+        // (A flow that overflows, at concentrations near Number.MAX_VALUE, is
+        // left out of the scale and drawn at the thickest.)
+        const consider = st => flows.push(Math.max(Math.abs(st.flow.in), Math.abs(st.flow.abs), Math.abs(st.flow.out),
+                                                   Math.abs(st.flow.to2), Math.abs(st.flow.to3)));
+        for (let i = 0; i < n - 1; i++) consider(stateAt((r.t[i] + r.t[i + 1]) / 2));
         consider(stateAt(r.t[n - 1]));
         // The arrow scale: the run's 95th-percentile flow, not its largest, so
         // a loading burst of a few seconds does not make every other arrow a
         // hairline; a flow above it is drawn at the thickest, its label exact.
+        for (let i = flows.length - 1; i >= 0; i--) if (!Number.isFinite(flows[i])) flows.splice(i, 1);
         flows.sort((a, b) => a - b);
         const f95 = flows[Math.floor(0.95 * (flows.length - 1))] || flows[flows.length - 1] || 0;
         this.scale = { top: niceTop(cMax > 0 ? cMax : 1), fMax: f95 > 0 ? f95 : (flows[flows.length - 1] || 1) };
@@ -6172,23 +6210,51 @@ const Flat = {
         if (!this.visible() || !this.run) return;
         const r = this.run, u = this.ui.units, dp = this.ui.concDecimals;
         const W = this.el.clientWidth, H = this.el.clientHeight;
-        // The plot area: room above for the pump, below for elimination and
-        // the cards along the bottom.
-        // (The readout and amounts cards take about the bottom 210 px.)
-        const x0 = 70, x1 = W - 40, yTop = 96, yBase = Math.max(yTop + 120, H - 320);
+        // The vertical layout, from the space the controls and cards leave
+        // (ChatGPT, 38e0f3a: fixed offsets put elimination off a small
+        // window). Above V1: the pump and absorption arrows (TOP); below:
+        // the names, volumes, amounts and the elimination arrow (BOTTOM).
+        const TOP = 96, BOTTOM = 108, MIN_PLOT = 90;
+        const ctl = Math.min(H, (document.getElementById('controls') || { getBoundingClientRect: () => ({ top: H }) })
+                                   .getBoundingClientRect().top) - 8;
+        // The cards' height, measured while they show (kept while they are
+        // left out, below, so the choice does not flip back and forth).
+        if (!document.body.classList.contains('compact')) {
+            const h = id => { const el = document.getElementById(id); return el ? el.offsetHeight : 0; };
+            this.cardH = Math.max(h('readout'), h('amounts'));
+        }
+        // Above the cards if the plot fits there. If not, the 2D view leaves
+        // the cards out: its own labels give every concentration, volume,
+        // amount and flow, and the cards return in a larger window or the 3D
+        // view. In a window too small even then, the drawing keeps its
+        // minimum size and the 2D view scrolls.
+        const compact = this.cardH > 0 && ctl - this.cardH - 22 - BOTTOM - TOP < MIN_PLOT;
+        document.body.classList.toggle('compact', compact);
+        const floor = compact ? ctl : ctl - this.cardH - 22;
+        const Hs = Math.max(H, TOP + MIN_PLOT + BOTTOM + (H - ctl));
+        const yTop = TOP, yBase = Math.max(TOP + MIN_PLOT, floor - BOTTOM);
         const ph = yBase - yTop;
+        // The horizontal layout: the gaps between boxes narrow on a narrow
+        // window; every box at least MIN_W px, the rest of the width shared
+        // in proportion to volume, so the boxes always fit (ChatGPT, 38e0f3a:
+        // a floor on px per litre pushed a vast V3 off-screen).
+        const gap = Math.max(48, Math.min(FLAT_GAP, Math.round(W * 0.09)));
+        const x0 = 70, x1 = W - 40;
         const k = 1 + (st.c2 != null) + (st.c3 != null);
         const v = [r.pk.v1, st.c2 != null ? r.pk.v2 : 0, st.c3 != null ? r.pk.v3 : 0];
-        const gaps = (k - 1) * FLAT_GAP + FLAT_CE_W + 10;
-        const pxPerL = Math.max(0.01, (x1 - x0 - gaps - 20) / (v[0] + v[1] + v[2]));
-        const w1 = Math.max(3, v[0] * pxPerL), w2 = v[1] * pxPerL, w3 = v[2] * pxPerL;
+        const room = Math.max(k * FLAT_MIN_W, x1 - x0 - (k - 1) * gap - FLAT_CE_W - 10 - 20);
+        const [w1, w2, w3] = boxWidths(v, room);
         // Left to right: V2, V1 with the effect site beside it, V3.
-        const bx2 = x0 + 20, bx1 = (st.c2 != null ? bx2 + w2 + FLAT_GAP : x0 + 20), bxe = bx1 + w1 + 6;
-        const bx3 = bxe + FLAT_CE_W + FLAT_GAP - 6;
+        const bx2 = x0 + 20, bx1 = (st.c2 != null ? bx2 + w2 + gap : x0 + 20), bxe = bx1 + w1 + 6;
+        const bx3 = bxe + FLAT_CE_W + gap - 6;
         const yOf = c => yBase - Math.min(1, Math.max(0, c / this.scale.top)) * ph;
-        const thick = f => Math.abs(f) > 0 ? Math.min(FLAT_ARROW_MAX, Math.max(1.5, FLAT_ARROW_MAX * Math.abs(f) / this.scale.fMax)) : 0;
-        const fmt = x => x == null ? '–' : x.toFixed(dp);
-        const amt = x => x.toFixed(x < 10 ? 2 : 1);
+        // Thickness is the rate, in proportion up to the arrow scale (a flow
+        // above it is drawn at the thickest); a small flow is a hairline, its
+        // head and label still showing it (ChatGPT, 38e0f3a: a 1.5 px floor
+        // drew 1 and 2 mg/min alike).
+        const thick = f => Number.isNaN(f) ? 0 : Math.min(FLAT_ARROW_MAX, FLAT_ARROW_MAX * Math.abs(f) / this.scale.fMax);
+        const fmt = x => x == null ? '–' : fixedOrSig(x, dp);
+        const amt = x => fixedOrSig(x, x < 10 ? 2 : 1);
         const e = s => escapeHtml(String(s));
         const out = [];
 
@@ -6207,7 +6273,7 @@ const Flat = {
             out.push(`<rect x="${x}" y="${y}" width="${w}" height="${yBase - y}" fill="${fill}" fill-opacity="0.85"/>`,
                      `<rect x="${x}" y="${yTop}" width="${w}" height="${ph}" fill="none" stroke="${FLAT_COLOURS.box}"/>`,
                      `<text x="${x + w / 2}" y="${yBase + 18}" text-anchor="middle" class="nm">${name}</text>`,
-                     `<text x="${x + w / 2}" y="${yBase + 34}" text-anchor="middle" class="sub">${e(vol < 10 ? vol.toFixed(2) : vol.toFixed(1))} L</text>`,
+                     `<text x="${x + w / 2}" y="${yBase + 34}" text-anchor="middle" class="sub">${e(fixedOrSig(vol, vol < 10 ? 2 : 1))} L</text>`,
                      `<text x="${x + w / 2}" y="${Math.min(y, yBase - 4) - 8}" text-anchor="middle" class="val">${e(fmt(c))}</text>`,
                      `<text x="${x + w / 2}" y="${yBase + 50}" text-anchor="middle" class="sub">${e(amt(A))} ${e(u.amount)}</text>`);
         };
@@ -6236,8 +6302,6 @@ const Flat = {
         const cx1 = bx1 + w1 / 2;
         const label = (x, y, anchor, text, cls) =>
             out.push(`<text x="${x}" y="${y}" text-anchor="${anchor}" class="fl ${cls}">${text}</text>`);
-        // Three significant figures: a small rate (0.0123 mg/min) must not read 0.01 or 0.00.
-        const sig3 = x => x === 0 ? '0' : x >= 100 ? x.toFixed(0) : x.toPrecision(3);
         const rateTxt = f => `${e(sig3(Math.abs(f)))} ${e(u.rate)}`;
         if (st.flow.in > 0 || st.bolus > 0) {
             const tw = st.bolus > 0 ? FLAT_ARROW_MAX : thick(st.flow.in), xi = st.flow.abs > 0 ? cx1 - 9 : cx1;
@@ -6267,7 +6331,15 @@ const Flat = {
         if (st.c2 != null) between(st.flow.to2, bx2 + w2, bx1, true);
         if (st.c3 != null) between(st.flow.to3, bxe + FLAT_CE_W, bx3, false);
 
-        this.el.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${out.join('')}</svg>`;
+        this.el.innerHTML = `<svg width="${W}" height="${Hs}" viewBox="0 0 ${W} ${Hs}" xmlns="http://www.w3.org/2000/svg">${out.join('')}</svg>`;
+        // A scroll bar that came or went changes the width: lay out once more.
+        if (this.el.clientWidth !== W && !this.again) { this.again = true; this.draw(st); this.again = false; return; }
+        // Keep every label inside the window: a label beside a box near an
+        // edge is moved in, never cut off.
+        for (const t of this.el.querySelectorAll('text')) {
+            const b = t.getBBox(), dx = b.x < 2 ? 2 - b.x : b.x + b.width > W - 2 ? W - 2 - b.x - b.width : 0;
+            if (dx) t.setAttribute('x', Number(t.getAttribute('x')) + dx);
+        }
     }
 };
 
@@ -6285,24 +6357,66 @@ function arrowH(out, xa, xb, y, w, colour) {
              `<polygon points="${xb - dir * hl},${y - hw / 2} ${xb - dir * hl},${y + hw / 2} ${xb},${y}" fill="${colour}"/>`);
 }
 
-// The axis top: the next 1, 1.5, 2, 2.5, 3, 4, 5, 6 or 8 x 10^n at or above x.
-function niceTop(x) {
-    const p = Math.pow(10, Math.floor(Math.log10(x)));
-    for (const m of [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (m * p >= x * 1.0001) return m * p;
-    return 10 * p;
+// The boxes' widths: in proportion to volume, sharing room px, none
+// narrower than FLAT_MIN_W (a box held at that width is left out of the
+// proportion, and the rest share what remains). An absent box (volume 0)
+// is 0 wide.
+function boxWidths(v, room) {
+    const fixed = v.map(() => false);
+    let px = 0;
+    for (let pass = 0; pass < v.length; pass++) {
+        const free = v.reduce((s, x, i) => s + (x > 0 && !fixed[i] ? x : 0), 0);
+        const left = room - FLAT_MIN_W * fixed.filter(Boolean).length;
+        px = free > 0 ? Math.max(0, left) / free : 0;
+        let changed = false;
+        v.forEach((x, i) => { if (x > 0 && !fixed[i] && x * px < FLAT_MIN_W) { fixed[i] = true; changed = true; } });
+        if (!changed) break;
+    }
+    return v.map((x, i) => !(x > 0) ? 0 : fixed[i] ? FLAT_MIN_W : x * px);
 }
+
+// Fixed decimals, as the readout shows them, unless a value that is not
+// zero would read as zero: then three significant figures (ChatGPT, 38e0f3a).
+function fixedOrSig(x, dp) {
+    if (!Number.isFinite(x)) return Number.isNaN(x) ? '–' : x > 0 ? '∞' : '−∞';
+    const t = x.toFixed(dp);
+    return x !== 0 && Number(t) === 0 ? sig3(x) : t;
+}
+// Three significant figures: 0.0123, 1.50, 123, 12300 (not 12346), 1.23e-7.
+function sig3(x) {
+    if (x === 0) return '0';
+    if (!Number.isFinite(x)) return Number.isNaN(x) ? '–' : x > 0 ? '∞' : '−∞';
+    const a = Math.abs(x);
+    return a >= 1000 && a < 1e21 ? String(Number(x.toPrecision(3))) : x.toPrecision(3);
+}
+
+// The axis top: the next 1, 1.5, 2, 2.5, 3, 4, 5, 6 or 8 x 10^n at or above x.
+// Always finite and positive: x itself where the round number would not be
+// (x near Number.MAX_VALUE or below the smallest normal number).
+function niceTop(x) {
+    if (!(x > 0) || !Number.isFinite(x)) return 1;
+    const p = Math.pow(10, Math.floor(Math.log10(x)));
+    if (!(p > 0) || !Number.isFinite(p)) return x;
+    for (const m of [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10])
+        if (m >= (x / p) * 1.0001) { const t = m * p; return Number.isFinite(t) && t > 0 ? t : x; }
+    return x;
+}
+// The ticks: 0 and round steps to top, built by count (at most a dozen), so
+// no value of top can make the loop run on.
 function ticks(top) {
     const p = Math.pow(10, Math.floor(Math.log10(top))), m = top / p;
     const step = (m <= 2 ? 0.5 : m <= 5 ? 1 : 2) * p;
+    if (!(step > 0) || !Number.isFinite(step) || !(top / step <= 12)) return [0, top];
     const out = [];
-    for (let x = 0; x <= top * 1.0001; x += step) out.push(x);
+    const last = Math.floor(top / step * 1.0001);       // not top * 1.0001, which overflows near MAX_VALUE
+    for (let i = 0; i <= last; i++) out.push(i * step);
     return out;
 }
+// A tick label: at most three significant figures, never 0 for a tick that
+// is not (1e-120 reads 1e-120, not 0).
 function fmtTick(x) {
     if (x === 0) return '0';
-    const d = Math.max(0, -Math.floor(Math.log10(Math.abs(x))) + 1);
-    const t = x.toFixed(Math.min(d, 6));
-    return t.includes('.') ? t.replace(/0+$/, '').replace(/\.$/, '') : t;
+    return String(Number(x.toPrecision(3)));
 }
 
 </script>
@@ -6747,6 +6861,7 @@ const Player = {
         document.getElementById('view').style.display = v === '3d' ? 'block' : 'none';
         this.$('viewToggle').textContent = v === '2d' ? '3D view' : '2D view';
         this.$('brandView').textContent = v === '2d' ? '2D' : '3D';
+        document.body.classList.toggle('flat', v === '2d');
         if (v === '3d') View.resize();
         if (this.run) this.seek(this.T);
     },

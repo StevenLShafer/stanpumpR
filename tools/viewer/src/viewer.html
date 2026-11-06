@@ -50,16 +50,16 @@
 <div id="brand">Minto Visualizer <span id="brandView">2D</span></div>
 
 <div id="controls">
-  <button id="play" title="Play (space)">&#x25B6; Play</button>
-  <button id="pause" title="Pause (space)">&#x275A;&#x275A; Pause</button>
-  <button id="stop" title="Stop, and go back to the start">&#x25A0; Stop</button>
+  <button id="play" title="Play (space)">&#x25B6;<span class="btxt"> Play</span></button>
+  <button id="pause" title="Pause (space)">&#x275A;&#x275A;<span class="btxt"> Pause</span></button>
+  <button id="stop" title="Stop, and go back to the start">&#x25A0;<span class="btxt"> Stop</span></button>
+  <button id="viewToggle" title="Switch between the 2D and 3D views (v)">3D view</button>
   <span class="clock" id="now">0:00:00</span>
   <input id="t" class="progress" type="range" min="0" max="1" step="any" value="0" aria-label="Time">
   <span class="clock" id="end">0:00:00</span>
   <label class="speedctl" title="Play speed (+ faster, − slower)">Speed
     <input id="speedSlider" type="range" min="0" max="1" step="1" value="0" aria-label="Play speed"></label>
   <span class="speed" id="speed"></span>
-  <button id="viewToggle" title="Switch between the 2D and 3D views (v)">3D view</button>
   <span class="tip"><kbd>h</kbd> help</span>
   <button id="open" title="Open a run file (.json)">Open run…</button>
   <input type="file" id="file" accept=".json,application/json" hidden>
