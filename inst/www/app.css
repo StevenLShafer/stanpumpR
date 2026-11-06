@@ -795,8 +795,9 @@ bslib-tooltip:has(> .field-help) {
 the same four columns at the widths createHOT() gives the old grid, fitted to
 the 450 px Doses sidebar.  Every cell is a form control: the inputs fill their
 cells, and the Units cell shows the unit as text (wrapped after its route,
-unitWrapText()) with a transparent <select> over it, so a click or a key opens
-the browser's own list of the row's units.  The colours are the theme's
+unitWrapText()) with a transparent <select> over it.  A click selects the cell; the arrow
+at its right (UNIT_ARROW_WIDTH in dose-grid.js), a double click, Alt+Down or
+Space opens the browser's own list of the row's units.  The colours are the theme's
 (Bootstrap's variables, with the light values as fallbacks), so a dark theme
 does not leave light text on white; and under a large browser zoom the table
 keeps a usable width and scrolls sideways rather than crushing its columns

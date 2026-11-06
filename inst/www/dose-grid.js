@@ -23,6 +23,9 @@
   var NCOL = 4;
   var gridCount = 0;
 
+  // The width of the arrow at the right of a Units cell (app.css), which
+  // opens its list
+  var UNIT_ARROW_WIDTH = 20;
   function blankRow() { return ['', '', '', '']; }
   function isBlank(x) { return x === null || x === undefined || String(x).trim() === ''; }
   function sameRows(a, b) {
@@ -87,6 +90,7 @@
     root.addEventListener('keydown', function(e) { self.onKeyDown(e); });
     root.addEventListener('focusin', function(e) { self.onFocusIn(e); });
     root.addEventListener('focusout', function(e) { self.onFocusOut(e); });
+    root.addEventListener('mousedown', function(e) { self.onMouseDown(e); });
     root.addEventListener('mouseup', function(e) { self.onMouseUp(e); });
     root.addEventListener('dblclick', function(e) { self.onDoubleClick(e); });
     root.addEventListener('input', function(e) { self.onInput(e); });
@@ -597,7 +601,11 @@
     var tr = e.target.closest && e.target.closest('tr[data-row]');
     if (!tr || !this.tbody.contains(tr)) return;
     e.preventDefault();
-    this.openMenu(parseInt(tr.getAttribute('data-row'), 10), e.clientX, e.clientY);
+    // from the cell clicked, so Tab moves on from it (the external review of
+    // 2026-11-06, T02: a right click always counted from the Drug cell)
+    var td = e.target.closest('td');
+    var c = td && tr.contains(td) ? Math.min(Math.max(td.cellIndex, 0), NCOL - 1) : COLS.DRUG;
+    this.openMenu(parseInt(tr.getAttribute('data-row'), 10), e.clientX, e.clientY, c);
   };
 
   DoseGrid.prototype.onMenuKey = function(e) {
@@ -610,13 +618,16 @@
     else if (e.key === 'Escape') { e.preventDefault(); this.closeMenu(); }
     // Tab closes the menu and moves on from the cell it was opened from, as
     // Tab on that cell would: it took a second Tab (the external review of
-    // 2026-11-06, N03)
+    // 2026-11-06, N03).  From the first or last cell, Tab leaves the grid
+    // from that cell, as it would without the menu (T03: it stayed put)
     else if (e.key === 'Tab') {
-      e.preventDefault();
       var r = this.menuRow, c = this.menuCol || 0;
-      this.closeMenu();
       var k = r * NCOL + c + (e.shiftKey ? -1 : 1);
-      if (k >= 0 && k < this.rows.length * NCOL) this.focusCell(Math.floor(k / NCOL), k % NCOL);
+      this.closeMenu();
+      if (k >= 0 && k < this.rows.length * NCOL) {
+        e.preventDefault();
+        this.focusCell(Math.floor(k / NCOL), k % NCOL);
+      }
     }
     e.stopPropagation();
   };
@@ -719,6 +730,21 @@
   // became 510 or 105 (the external review of 2026-11-05, Gemini's script,
   // reproduced).  In a cell being edited a click places the caret.
   DoseGrid.prototype.cellKey = function(at) { return at[0] + ':' + at[1]; };
+
+  // A click on a Units cell selects the cell, as a click on any cell does.
+  // Its list opens from the arrow at its right, a double click, Alt+Down or
+  // Space, as the old grid's does.  A click used to open the browser's own
+  // list at once, which takes every key, so Ctrl+V on the cell just clicked
+  // was lost without a word and the unit pasted was never used (the external
+  // review of 2026-11-06, T01, reproduced in both Chromium builds).
+  DoseGrid.prototype.onMouseDown = function(e) {
+    var t = e.target;
+    if (e.button !== 0 || t.tagName !== 'SELECT' || t.disabled || !this.cellOf(t)) return;
+    var box = t.getBoundingClientRect();
+    if (e.detail >= 2 || e.clientX >= box.right - UNIT_ARROW_WIDTH) return;
+    e.preventDefault();
+    t.focus();
+  };
 
   DoseGrid.prototype.onMouseUp = function(e) {
     var at = this.cellOf(e.target);

@@ -50,8 +50,8 @@ STANPUMPR_URL=http://127.0.0.1:7311/ STANPUMPR_GRID=native node --test --test-co
   observer ends it.
 - A case one grid is known to fail is listed in `KNOWN_GAP` at the top of the
   test file, with the reason. It is reported as a todo, so the run stays
-  green while the suite still states the bar. On rhandsontable, eighteen
-  cases are known to fail:
+  green while the suite still states the bar. On rhandsontable, twenty
+  cases are known to fail, eighteen of them defects:
   - the first key typed after a commit is lost while the server redraws the
     grid;
   - over a 400 ms link, two doses typed one after another lose a row;
@@ -76,6 +76,10 @@ STANPUMPR_URL=http://127.0.0.1:7311/ STANPUMPR_GRID=native node --test --test-co
     dose are refused keeps the old drug's values under the new drug
     (`fentanyl BADTIME BADOSE mcg` over propofol 10 100 mg is fentanyl 10
     100 mcg).
+
+  - two differences of keyboard behaviour, which change no value: Tab on
+    a row menu opened by a right click stays on the cell clicked, and
+    Shift+Tab from the first cell wraps to the last cell.
 
   One case, a forged message of more rows than the grid holds, is the
   prototype's own input and is skipped on rhandsontable.

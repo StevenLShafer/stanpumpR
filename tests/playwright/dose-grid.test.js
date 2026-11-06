@@ -68,6 +68,11 @@ const KNOWN_GAP = {
     'a rule the server applies is drawn in the grid (a gas brings its ventilation)':
       'intermittently, Enter commits the first match of what the list held a moment earlier: ' +
       '"sevoflurane" was stored as sertraline (once in eleven runs, 2026-11-06), so no ventilation row came',
+    // two differences of keyboard behaviour, not defects: no value changes
+    'Tab on a row menu opened by a right click moves on from the cell clicked':
+      'a difference, not a defect: after a right click on the Dose cell, Tab leaves the menu and stays on Dose',
+    'Shift+Tab on the row menu of the first cell leaves the grid':
+      'a difference, not a defect: Shift+Tab from the first cell wraps to the last cell of the grid',
     'a name that is not in the library is refused':
       'intermittently, Enter commits the first match of what the list held a moment earlier: ' +
       '"notadrug" was stored as norepinephrine (and, in the external review, "morphine" as mannitol)'
@@ -394,6 +399,10 @@ describe('paste', () => {
     await holds(0, ['propofol', '10', '100', 'mg']);
     const notes = await H.notifications(page);
     assert.ok(notes.some(n => n.includes('"BADTIME" was not accepted')), JSON.stringify(notes));
+    // and Apply commits what is shown
+    await page.click('#dosetable_apply');
+    await H.settle(page, 600);
+    assert.deepEqual((await H.serverState(page)).table[0], ['propofol', '10', '100', 'mg']);
     // a new drug pasted with its time alone: its dose is 0, not propofol's
     await adapter.focusCell(page, 0, 0);
     await H.paste(page, 'fentanyl\t5');
@@ -521,6 +530,27 @@ describe('rows', () => {
     await H.settle(page, 200);
     assert.deepEqual(await adapter.activeCell(page), [2, 1]);
     await holds(2, ['fentanyl', '0', '0', 'mcg']);
+  });
+
+  // A right click counted from the Drug cell, whichever cell was clicked
+  // (T02); Shift+Tab from the first cell left the focus where it was (T03)
+  // (the external review of 2026-11-06)
+  gt('Tab on a row menu opened by a right click moves on from the cell clicked', async () => {
+    await adapter.contextClick(page, 2, 2);
+    await H.settle(page, 300);
+    await page.keyboard.press('Tab');
+    await H.settle(page, 200);
+    assert.deepEqual(await adapter.activeCell(page), [2, 3]);
+  });
+
+  gt('Shift+Tab on the row menu of the first cell leaves the grid', async () => {
+    await adapter.focusCell(page, 0, 0);
+    await page.keyboard.press('Shift+F10');
+    await H.settle(page, 300);
+    await page.keyboard.press('Shift+Tab');
+    await H.settle(page, 200);
+    assert.equal(await adapter.activeCell(page), null, 'the focus stayed in the grid');
+    await holds(0, ['propofol', '0', '0', 'mg']);
   });
 
   test('a row can be removed', async () => {
@@ -807,6 +837,21 @@ describe('the external review of 2026-11-05 (Gemini)', () => {
     await holds(2, ['fentanyl', '0', '0', 'mcg/kg']);
   });
 
+  // A click on a Units cell opened the browser's list, which takes every
+  // key, so a Ctrl+V on the cell just clicked was lost without a word (the
+  // external review of 2026-11-06, T01).  Here the cell is reached by the
+  // mouse, and clicked again once it has the focus.
+  test('a unit pasted on a Units cell just clicked is used, the second time too', async () => {
+    await adapter.focusCell(page, 2, 3);
+    await H.paste(page, 'mcg/kg');
+    await H.settle(page);
+    await holds(2, ['fentanyl', '0', '0', 'mcg/kg']);
+    await adapter.focusCell(page, 2, 3);
+    await H.paste(page, 'mcg');
+    await H.settle(page);
+    await holds(2, ['fentanyl', '0', '0', 'mcg']);
+  });
+
   // On a <select> the arrow keys change its value: going down the Units
   // column changed every row's unit
   test('ArrowDown on a Units cell moves down a row and changes no unit', async () => {
@@ -884,6 +929,7 @@ describe('everything is text', () => {
       rows: Array.from({ length: 5000 }, (_, i) => ['fentanyl', String(i), '1', 'mcg'])
     }, { priority: 'event' }));
     await H.waitForDraft(page, d => H.filled(d).length === 499, 60000);
+    await H.waitForRows(page, adapter, rows => H.filled(rows).length === 499, 60000);
     await H.settle(page, 500);
     const notes = await H.notifications(page);
     assert.ok(notes.some(n => /at most 499 doses/.test(n)), JSON.stringify(notes));

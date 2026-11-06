@@ -93,6 +93,8 @@ cases run against both grids, through a small adapter per grid.
 | Emptying a drug cell and pressing Enter clears the row | **fail: stored as acenocoumarol** | pass |
 | Undo never brings back a unit the drug does not offer | **fail: morphine in mg/kg** | pass |
 | A unit pasted on a Units cell is used, or refused and said; ArrowDown there moves down | pass | pass (failed before: no paste; ArrowDown changed the unit) |
+| A unit pasted on a Units cell just clicked with the mouse is used, the second time too | pass | pass (failed before 2026-11-06: lost without a word) |
+| Tab on a row menu opened by a right click moves on from the cell clicked; Shift+Tab from the first cell leaves the grid | differs: stays on the cell; wraps to the last cell | pass (failed before 2026-11-06) |
 | A paste leaves a blank row below the last dose | pass | pass (failed before) |
 | Rows inserted, removed, all removed | pass | pass |
 | Time header tip; change of time unit; time-format stamp | pass | pass |
@@ -207,7 +209,8 @@ rhandsontable is drawn otherwise.
   draws illicit names red.
 - Units is a native `<select>` of the row's drug's units. It is transparent
   over a `<span>` that shows the unit wrapped after its route
-  (`unitWrapText()`), so the browser's own list opens on click or key.
+  (`unitWrapText()`). A click selects the cell; the browser's own list
+  opens from the arrow at its right, a double click, Alt+Down or Space.
 - Every cell is labelled ("Dose/Target, row 3").
 - No cell has an id or a name, and each carries `data-shiny-no-bind-input`.
 - Text goes in with `.value` and `.textContent` only;
@@ -411,6 +414,29 @@ finding was checked against the code before anything changed; all four hold.
 
 Each fix is a case of the suite. It did not run Firefox or WebKit either:
 their downloads are outside its network, as they are outside this session's.
+
+## The external review of 2026-11-06 (ChatGPT, third pass)
+
+ChatGPT reviewed `bff584c` against `f175959`, on both grids, with the suite,
+the focused R tests (2,693 expectations, none failing) and about twenty
+scripts of its own. Its verdict: "suitable with one required fix". It found
+N01-N04 fixed, and the atomic paste, the editing state, malformed messages,
+slow links, bookmarks and hostile text all held. Each new finding was checked
+before anything changed; all three hold.
+
+| | What it found | Checked | Fix |
+|---|---|---|---|
+| T01 | A mouse click on a Units cell, then Ctrl+V: the unit was not used, and nothing was said (10 of 10 times, in full Chromium). | Reproduced here in both Chromium builds, the headless shell included: the suite had reached the cell with Tab, never a click. A click opened the browser's own list, which takes every key, so no keydown reached the grid. A click on a cell that already had the focus did the same. | A click selects a Units cell, as it does any cell. Its list opens from the arrow at its right, a double click, Alt+Down or Space, as the old grid's does. Ctrl+V after any plain click is used, or refused and said. |
+| T02 | A right click on the Dose cell, then Tab: the focus went to Time, not Units. | The right click opened the menu without its cell, so it counted from Drug. | The menu counts from the cell clicked. |
+| T03 | Shift+Tab on the menu of the first cell left the focus there; a second Shift+Tab left the grid. | `onMenuKey()` suppressed the browser's Tab even when there was no cell to move to. | From the first or last cell, Tab leaves the grid, as it would without the menu. |
+| S01 | Handsontable 6.2.2 is still loaded by the other grids. | Documented in the last pass; unchanged by scope. | None. |
+
+It also found two cases weaker than their names: the N02 case did not Apply,
+and the N04 case did not read the screen. Both now do. Each fix is a case of
+the suite, and each new case fails on `bff584c`'s grid code. On rhandsontable
+the unit case passes. The two menu cases fail there as differences of keyboard
+behaviour that change no value: Tab stays on the cell clicked, and Shift+Tab
+from the first cell wraps to the last.
 
 ## Decisions for Steven Shafer
 

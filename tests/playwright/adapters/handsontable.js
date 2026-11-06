@@ -101,6 +101,11 @@ module.exports = {
     });
   },
 
+  // A right click on a cell, which opens the row menu
+  async contextClick(page, r, c) {
+    await page.click(td(r, c), { button: 'right', force: true });
+  },
+
   async rowMenu(page, r, item) {
     await page.click(td(r, 0), { button: 'right' });
     await page.click(`.htContextMenu td:has-text("${item}")`);

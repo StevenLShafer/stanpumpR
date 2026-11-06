@@ -82,6 +82,11 @@ module.exports = {
     });
   },
 
+  // A right click on a cell, which opens the row menu
+  async contextClick(page, r, c) {
+    await page.click(c === 3 ? `${tr(r)} td:nth-child(4)` : ctl(r, c), { button: 'right' });
+  },
+
   async rowMenu(page, r, item) {
     await page.click(ctl(r, 0), { button: 'right' });
     await page.click(`${ROOT} [role=menu] [role=menuitem]:has-text("${item}")`);
