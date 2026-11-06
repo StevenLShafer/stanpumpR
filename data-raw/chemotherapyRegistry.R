@@ -213,7 +213,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 # text, the PDF still to confirm (FULL_TEXT_READ); or confirmed on the PDF
 # itself (PARAMETERS_VERIFIED: Briki 2026 and Lindemalm 2005, supplied by
 # Shafer 2026-11-06)
-FULL_TEXT_READ <- character(0)
+FULL_TEXT_READ <- c("C01", "P02", "C35")
 PARAMETERS_VERIFIED <- c("P10", "N04")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
@@ -294,6 +294,8 @@ m <- function(model_id, drug, product, route, population, analyte, structure,
   s <- if (is.na(source_id)) NULL else src(source_id)
   base <- switch(readiness,
     needs_full_text = "The parameters are in the paper's tables, which were not read here.",
+    complete_not_implemented = "Read in full: the model is complete.",
+    needs_engine = "Read in full.",
     implemented = if (!is.null(s) && s$review_depth == "parameters_verified")
       "Every parameter and equation confirmed on the PDF." else
       paste("Implemented from the PubMed Central text, every parameter read there;",
@@ -305,7 +307,8 @@ m <- function(model_id, drug, product, route, population, analyte, structure,
     source_id = if (is.null(s)) NA else source_id,
     evidence_read = if (is.null(s)) "none" else s$review_depth,
     blocking_issue = trimws(paste(base, note)),
-    to_obtain = if (is.null(s) || s$review_depth == "parameters_verified") NA else
+    to_obtain = if (is.null(s) || s$review_depth == "parameters_verified" ||
+                    readiness %in% c("complete_not_implemented", "needs_engine")) NA else
       sprintf(if (readiness == "implemented")
                 "%s (PMID %s%s): the PDF, to confirm the parameters read from the PubMed Central text."
               else "%s (PMID %s%s): the full text with its tables and supplement.",
@@ -327,7 +330,8 @@ registry <- rbind(
     "178 adults (280 courses), conventional and high dose, mostly normal renal function",
     "ultrafilterable platinum", "linear two compartments; no serum-creatinine estimate of renal function related to clearance",
     "first", "linear", "C01",
-    "Fitted in creatinine clearance above about 50 mL/min, so it says nothing of renal impairment; its finding that creatinine-based estimates do not predict clearance means a renal covariate must not be grafted on."),
+    "PDF read (supplied 2026-11-06), Table 2: two compartments, CL 8.33 L/h, V 16.3 L, k12 0.104 /h, k21 0.171 /h, no covariates (Model 1, the best fit). Concentrations are carboplatin equivalents (dose = AUC x 138.8 mL/min in the Discussion). Fitted in creatinine clearance above about 50 mL/min, so it says nothing of renal impairment; its finding that creatinine-based estimates do not predict clearance means a renal covariate must not be grafted on. [decision, asked 2026-11-06] Which carboplatin model the library offers: this one (fitted, blind to renal function), Chatelut 1995 (renal formula, disposition derived from its means), or both as two drugs.",
+    readiness = "complete_not_implemented"),
   m("carboplatin__ovarian__duffull1997", "carboplatin", "carboplatin", "IV",
     "12 women with ovarian cancer", "intact carboplatin in serum (HPLC)",
     "two compartments, for sequential Bayesian dosing", "first", "linear", "C02",
@@ -341,7 +345,8 @@ registry <- rbind(
     "adults with cancer", "carboplatin (analyte to confirm)",
     "a clearance equation in creatinine, weight, age and sex (the Chatelut formula); whether the paper gives volumes was not established",
     "first", "unknown", "P02",
-    "Do not splice its clearance into another source's volumes."),
+    "PDF read (supplied 2026-11-06). The clearance formula, CL (mL/min) = 0.134 weight + 218 weight (1 - 0.00457 age)(1 - 0.314 sex)/creatinine (uM), sex 1 for women, fitted in 34 patients (creatinine 56-353 uM) and validated prospectively in 36; Table 2 gives only the means of individual two-compartment fits (CL 107 mL/min, distribution half-life 8 min, elimination half-life 3.8 h, Vdss 28 L), which close a two-compartment model by derivation. The creatinine assay is not stated; a 1995 Jaffe creatinine reads higher than today's enzymatic one, which would make the formula overpredict clearance. Do not splice its clearance into another source's volumes. [decision, asked 2026-11-06] See the Ekhart 2006 row.",
+    readiness = "complete_not_implemented"),
   m("carboplatin__children__peng1995", "carboplatin", "carboplatin", "IV",
     "children with cancer", "carboplatin (analyte to confirm)",
     "a comparison of methods of estimating carboplatin pharmacokinetics", "first", "unknown", "P03"),
@@ -393,12 +398,13 @@ registry <- rbind(
     "1610 HCT recipients, 0.1-66 years (92% under 20)", "busulfan, plasma",
     "two compartments, first-order elimination; size by normal fat mass (fat fraction 0.509 on clearance, 0.203 on V1); maturation of clearance by postmenstrual age, 50% at 46 weeks; clearance 6.8% lower from 6 to 36 h and 8.1% lower from 36 to 83 h than from 0 to 6 h; V1 and V2 7% higher in women",
     "first", "linear", "P23",
-    "The PubMed Central text was read but has no tables or equations: V1, Q, V2, the fat fractions for Q and V2, the maturation Hill coefficient and the fat-free-mass equation's form are in them. The abstract gives clearance 12.4 L/h at 62 kg normal fat mass. The within-course fall in clearance is a step on fixed time windows, which PK events could carry. Gestational age was assumed 40 weeks for every infant."),
+    "The PubMed Central text and the supplement (Tables S1, S2, S4-S7 and the figures, supplied 2026-11-06) were read; Table 2 of the article itself was not. Table S7 gives CL 12.4 L/h per 70 kg NFM, fat fractions 0.509 (CL) and 0.203 (V), maturation TM50 46 weeks and Hill 2.3, and the FFM constants (WHSmax 42.92/37.99, WHS50 30.93/35.98 kg/m2); still missing are V1, Q, V2 and the fat fractions of Q and V2, all in the article's Table 2. The within-course fall in clearance is a step on fixed time windows, which PK events could carry. Gestational age was assumed 40 weeks for every infant."),
   m("busulfan__hct__langenhorst2020", "busulfan", "busulfan", "IV",
     "HCT recipients 0-73 years", "busulfan",
     "semi-mechanistic glutathione depletion driving a time-varying clearance; age over 40 an effect",
     "first", "new_engine", "C35",
-    "A depletion state is a mechanism the engine lacks; not to be generalised to every regimen."),
+    "PDF read (supplied 2026-11-06). A depletion state is a mechanism the engine lacks; not to be generalised to every regimen. Its empirical predecessor (a stepwise day-1 versus later clearance) is the source to look at for a PK-event version.",
+    readiness = "needs_engine"),
 
   # ---- Second wave ---------------------------------------------------------
   m("paclitaxel__adult__joerger2006", "paclitaxel", "paclitaxel (solvent-based)", "IV",
