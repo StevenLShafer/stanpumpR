@@ -2386,7 +2386,18 @@ registry <- rbind(
       source = "",
       source_url = "",
       to_obtain = "",
-      notes = "Busulfan is cleared by glutathione conjugation, not by filtration, so the rise in filtration of pregnancy is not a basis for a change; nothing is applied.")
+      notes = "Busulfan is cleared by glutathione conjugation, not by filtration, so the rise in filtration of pregnancy is not a basis for a change; nothing is applied."),
+  row("methotrexatePediatric", "Chemotherapy", "unknown",
+      finding = "No human comparison of methotrexate pharmacokinetics in and out of pregnancy found (PubMed searched 2026-11-06: methotrexate with pregnancy or pregnant and pharmacokinetic, plasma or clearance; methotrexate ectopic pregnancy pharmacokinetics). The human data are early pregnancy only, after low intramuscular doses for ectopic pregnancy or abortion: Creinin 1997 (PMID 9423749, abstract; n = 20, CL 7.89 and 5.55 L/h at 50 and 60 mg/m2, asserted the same as nonpregnant with no comparator named) and Bourget 1991 (PMID 1754988, abstract; n = 12, AUC 15.1 umol h/L after 1 mg/kg IM, half-life about 12 h). Nothing addresses late pregnancy, where methotrexate is contraindicated.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = "first", comparator = "literature (unnamed)",
+      design = "early-pregnancy NCA, no control", n = 20L, confidence = "low",
+      evidence_read = "abstract",
+      source = "Creinin MD, Krohn MA. Am J Obstet Gynecol 1997;177:1444-1449 PMID 9423749",
+      source_url = "https://doi.org/10.1016/s0002-9378(97)70089-9",
+      to_obtain = "Creinin 1997 (PMID 9423749), for the nonpregnant reference values its abstract does not name",
+      notes = "The model is of children and young adults given high-dose infusions; methotrexate is mainly cleared by the kidney, so the rise in filtration of pregnancy would be expected to raise its clearance, but late pregnancy is not a setting for it, and nothing is applied.")
 )
 
 stopifnot(

@@ -191,3 +191,14 @@ carried a step timed from a drug's own first dose, so `getDrugPK()` gained a `co
 interactions, on the event engine, which advances the steps exactly. Table S7's worked example
 does not follow the fat-free-mass equation the Methods state (49.7 against 56.1 kg for its man);
 the stated equation is used, and the example's dose still gives its target within 3%.
+
+## 9. High-dose methotrexate in children and young adults
+
+Taylor 2023 (`R/drugs_methotrexatePediatric.R`, named for its population), from the PDF Shafer
+placed on Google Drive and its supplement. Three compartments by BSA over 1.73 m2 and the
+patient's own creatinine referenced to 40 uM. Its Table 2 footnote describes Q3 as chained to
+V2, which the stated ADVAN11 TRANS4 and the supplement contradict; equation 3 and Table 2 differ
+on the Down syndrome factor (0.83, 0.84). The covariates with no Patient Profile field (Down
+syndrome, albumin, pleural effusion, infusion length) are held at the reference. The model
+reproduces the paper's Table 5 end-of-infusion mean for 5 g/m2 over 24 h (85.9 against 84.8
+umol/L); its later means lie above the typical curve, as means of individual predictions should.

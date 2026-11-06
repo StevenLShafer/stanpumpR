@@ -206,7 +206,7 @@ pubmedSources[pubmedSources == ""] <- NA
 
 # How far each PubMed document was read here.  Every abstract was screened;
 # the PubMed Central text (without tables or equations) was read for these.
-FULL_TEXT_PARTIAL <- c("P05", "P09", "P13", "P18", "C12", "C13", "C15", "C34", "C35", "N04")
+FULL_TEXT_PARTIAL <- c("P05", "P09", "P13", "P18", "C12", "C15", "C34", "C35", "N04")
 pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
                              "guideline", "primary_study")
 # Read in full: every parameter the model uses, from the PubMed Central
@@ -216,7 +216,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 FULL_TEXT_READ <- c("C01", "P02", "C35", "C03")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
-PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23")
+PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
   ifelse(pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
@@ -376,11 +376,12 @@ registry <- rbind(
     "three compartments; demographics and serum creatinine", "first", "linear", "C12",
     "The model behind MTXPK.org. A simulation must not replace measured levels or rescue guidance (G03, G04)."),
   m("methotrexate__pediatric_aya__taylor2023", "methotrexate", "methotrexate (high dose)", "IV",
-    "1668 children, adolescents and young adults", "methotrexate",
-    "the MTXPK.org model with infusion duration, Down syndrome, hypoalbuminaemia and pleural effusion",
+    "1668 children, adolescents and young adults, 0.1-32.3 years, ALL, osteosarcoma and NHL",
+    "methotrexate",
+    "three mammillary compartments (ADVAN11 TRANS4) per 1.73 m2 (Mosteller): CL 8.24 L/h x (creatinine/40 uM)^-0.26, V1 22.1 L, Q2 0.225 L/h, V2 2.19 L, Q3 0.0342 L/h, V3 6.07 L; short infusion CL x 1.05, Down syndrome CL x 0.84, severe hypoalbuminaemia Q2 x 1.17 and Q3 x 1.34, pleural effusion V1 x 1.06 and V2 x 1.43",
     "first", "linear", "C13",
-    "Supplement Tables S1-S2 read (supplied 2026-11-06): base CL indexed to 1.73 m2 with serum creatinine as a power referenced to 40 uM (exponent -0.2 at the base model); treatment site on CL (Atlanta 1.07, Texas 0.89 against Cincinnati, at step 2); final model: short infusion CL x 1.05, severe hypoalbuminaemia (albumin <= 2.5 g/dL) Q2 x 1.17 and Q3 x 1.34, Down syndrome CL x 0.836, pleural effusion V1 x 1.06 and V2 x 1.43. Still missing: the typical CL, V1, Q2, V2, Q3, V3, the final creatinine exponent and site factors (the article's own tables), and the compartment linkage, which the PubMed Central text leaves ambiguous. Down syndrome, albumin and effusion are not Patient Profile fields (they would be held at the reference: none, normal, none); site at the reference.",
-    to_obtain = "Taylor 2023 (Clin Transl Sci 16:2130-2143, PMID 37503924): the article's PDF, for the final model's typical values and equations; and Taylor 2020 (PMID 32558929), its base model."),
+    "PDF read (Shafer placed it on Google Drive, 2026-11-06), with the supplement. Table 2's footnote calls Q3 the clearance between V2 and V3, but the Methods state ADVAN11 (mammillary) and the supplement agrees, so the footnote is a misprint; equation 3 prints Down syndrome 0.83 against Table 2's 0.84. Down syndrome, albumin, effusion and infusion length are not Patient Profile fields and are held at the reference (long infusion: a short one clears 5% faster). Reproduces Table 5's 24-h mean concentration for 5 g/m2 over 24 h (85.9 against 84.8 uM).",
+    readiness = "implemented", stanpumpr_drug = "methotrexatePediatric"),
   m("methotrexate__pediatric_all__aumente2006", "methotrexate", "methotrexate (high dose)", "IV",
     "49 children with ALL, 0.5-17 years", "methotrexate",
     "two compartments; age and weight on clearance and V1", "first", "linear", "C14"),

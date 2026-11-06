@@ -21,6 +21,9 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 # Carboplatin (Duffull 1997): an adjusted Cockcroft-Gault term
                 # (R/drugs_carboplatin.R)
                 "carboplatin",
+                # methotrexatePediatric (Taylor 2023): the patient's own
+                # creatinine, a power referenced to 40 uM
+                "methotrexatePediatric",
                 # Serum creatinine itself, not an estimate of its clearance,
                 # is magnesium's covariate (R/drugs_magnesiumSulfate.R, Du 2019)
                 "magnesiumSulfate",
