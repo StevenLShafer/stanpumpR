@@ -397,3 +397,154 @@ test('2D: in a 360 x 260 window the controls and the view switch show and the dr
   assert.ok(big.low <= big.cards, `the drawing reaches ${big.low}, the cards start at ${big.cards}`);
   assertClean(page);
 });
+
+// ── The 2D view: Gemini's audit of 712e43a ───────────────────────────────
+// The bottom of the drawing against the top of the cards that show.
+const underCards = page => page.evaluate(() => {
+  const cards = ['readout', 'amounts'].map(id => document.getElementById(id))
+    .filter(e => e.offsetHeight > 0).map(e => e.getBoundingClientRect().top);
+  let low = 0;
+  for (const el of document.querySelectorAll('#flat svg rect, #flat svg polygon, #flat svg text'))
+    { const b = el.getBoundingClientRect(); if (b.height > 0) low = Math.max(low, b.bottom); }
+  return { cards: cards.length ? Math.min(...cards) : Infinity, low, compact: document.body.classList.contains('compact') };
+});
+
+test('2D: the first frame after a load is laid out around the cards', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  await new Promise(r => setTimeout(r, 200));
+  assert.equal(await loadRun(page, RUN), true);          // no second seek
+  const big = await underCards(page);
+  assert.ok(big.low <= big.cards, `first frame reaches ${big.low}, the cards start at ${big.cards}`);
+  await page.setViewport({ width: 360, height: 260 });
+  await new Promise(r => setTimeout(r, 200));
+  assert.equal(await loadRun(page, RUN), true);
+  assert.equal((await underCards(page)).compact, true, 'the cards cover a 360 x 260 window on the first frame');
+  assertClean(page);
+});
+
+test('2D: the amounts card (a) and a resize across sizes never leave the cards over the drawing, nor flicker', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 800, height: 600 });
+  assert.equal(await loadRun(page, RUN), true);
+  await page.evaluate(() => Player.seek(1500));
+  await page.keyboard.press('a'); await page.evaluate(() => Player.seek(1500));
+  await page.keyboard.press('a');                        // the card shows again, paused
+  let g = await underCards(page);
+  assert.ok(g.low <= g.cards, `after a, the drawing reaches ${g.low}, the cards ${g.cards}`);
+  for (const [w0, h0, w1, h1] of [[800, 500, 800, 580], [1200, 400, 1200, 800], [800, 580, 800, 500]]) {
+    await page.setViewport({ width: w0, height: h0 }); await new Promise(r => setTimeout(r, 150));
+    await page.evaluate(() => Player.seek(1500));
+    await page.setViewport({ width: w1, height: h1 }); await new Promise(r => setTimeout(r, 150));
+    const a = await underCards(page);
+    assert.ok(a.compact || a.low <= a.cards, `${w0}x${h0} -> ${w1}x${h1}: drawing ${a.low}, cards ${a.cards}`);
+    await page.evaluate(() => Player.seek(1501));
+    const b = await underCards(page);
+    assert.equal(b.compact, a.compact, `${w0}x${h0} -> ${w1}x${h1}: the cards flicker on the next frame`);
+  }
+  assertClean(page);
+});
+
+test('2D: the scale and its ticks, the formatters, and box widths at the extremes', { skip }, async t => {
+  const page = await viewerPage(t);
+  const r = await page.evaluate(() => ({
+    tops: [1, 1.5, 2, 2.5, 4, 10, 100, 9.9995, 2.0000001, 0.3].map(niceTop),
+    over: [9.9995, 2.5, 2, 7, 1.5e-120, Number.MAX_VALUE, 5e-324].map(x => { const n = niceTop(x), k = ticks(n); return [n, k[k.length - 1]]; }),
+    tickMax: fmtTick(Number.MAX_VALUE), fixMax: fixedOrSig(Number.MAX_VALUE, 2), fix21: fixedOrSig(1.234e22, 1),
+    vast: boxWidths([1e308, 1e308, 1e308], 600), cramped: boxWidths([10, 10, 10], 6), none: boxWidths([0, 0, 0], 300),
+  }));
+  assert.deepEqual(r.tops.slice(0, 7), [1, 1.5, 2, 2.5, 4, 10, 100], 'a round value is its own top');
+  assert.equal(r.tops[7], 10);
+  assert.ok(r.tops[8] > 2.0000001 && r.tops[8] <= 2.5);
+  assert.ok(Math.abs(r.tops[9] - 0.3) < 1e-12);
+  for (const [n, last] of r.over) {
+    assert.ok(last <= n * (1 + 1e-9), `a tick ${last} above the top ${n}`);
+    assert.ok(last >= n * 0.79, `no tick near the top ${n} (last ${last})`);
+  }
+  assert.notEqual(r.tickMax, 'Infinity');
+  assert.equal(r.fixMax, '1.80e+308');
+  assert.equal(r.fix21, '1.23e+22');
+  assert.deepEqual(r.vast, [200, 200, 200]);
+  assert.ok(r.cramped.reduce((s, x) => s + x, 0) <= 6 + 1e-9, 'boxes wider than their room: ' + r.cramped);
+  assert.deepEqual(r.none, [0, 0, 0]);
+  assertClean(page);
+});
+
+test('2D: no two labels overlap, the pump and absorption arrows stand apart, and without Ce the V1-V3 arrow starts at V1', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  const r = clone(RUN);
+  r.depot = r.t.map(x => Math.max(0, 500 - 0.5 * x)); r.absorbed = r.t.map(x => Math.min(500, 0.5 * x));
+  r.inputKnown = false; delete r.given;
+  assert.equal(await loadRun(page, r), true);
+  for (const T of [0, 5, 60, 600, 1500, 3600]) {
+    const o = await page.evaluate(T => {
+      Player.seek(T);
+      const bb = [...document.querySelectorAll('#flat svg text')].map(e => ({ s: e.textContent, b: e.getBBox() }));
+      const hits = [];
+      for (let i = 0; i < bb.length; i++) for (let j = i + 1; j < bb.length; j++) {
+        const a = bb[i].b, b = bb[j].b;
+        if (a.x < b.x + b.width - 0.5 && b.x < a.x + a.width - 0.5 && a.y < b.y + b.height - 0.5 && b.y < a.y + a.height - 0.5)
+          hits.push(bb[i].s + ' / ' + bb[j].s);
+      }
+      // The two red arrowheads into V1's top.
+      const heads = [...document.querySelectorAll('#flat svg polygon')].filter(p => p.getAttribute('fill') === '#ff6b5e').map(p => p.getBBox());
+      const apart = heads.length < 2 || heads[0].x + heads[0].width <= heads[1].x + 0.5 || heads[1].x + heads[1].width <= heads[0].x + 0.5;
+      return { hits, apart, heads: heads.length };
+    }, T);
+    assert.deepEqual(o.hits, [], `T = ${T}: labels overlap`);
+    assert.ok(o.apart, `T = ${T}: the pump and absorption arrows overlap`);
+  }
+  const page2 = await viewerPage(t);
+  await page2.setViewport({ width: 1200, height: 800 });
+  const r2 = clone(RUN); r2.ce = null; r2.mode = r2.mode.map(() => 'plasma');
+  assert.equal(await loadRun(page2, r2), true);
+  const gapV1 = await page2.evaluate(() => {
+    Player.seek(1500);
+    const rects = [...document.querySelectorAll('#flat svg rect[fill="none"]')].map(e => e.getBBox()).sort((a, b) => a.x - b.x);
+    const v1 = rects[1];                       // V2, V1, V3 outlines, left to right
+    const arrow = [...document.querySelectorAll('#flat svg rect')].filter(e => e.getAttribute('fill') !== 'none')
+      .map(e => e.getBBox()).filter(b => b.x > v1.x + v1.width - 1 && b.x < rects[2].x).sort((a, b) => a.x - b.x)[0];
+    return arrow.x - (v1.x + v1.width);
+  });
+  assert.ok(gapV1 >= 0 && gapV1 <= 8, `the V1-V3 arrow starts ${gapV1} px from V1`);
+  assertClean(page); assertClean(page2);
+});
+
+// ── Sizes: the largest compartment at most SIZE_RATIO_MAX times the smallest
+// (Shafer, 2026-11-06), in both views; heights stay concentration.
+test('sizes: proportional within 10:1, compressed to exactly 10:1 beyond it, in 2D and 3D', { skip }, async t => {
+  for (const [pk, compressed] of [[{ v1: 5, v2: 10, v3: 20 }, false], [{ v1: 6.28, v2: 23.6, v3: 157 }, true],
+                                  [{ v1: 0.00001, v2: 1, v3: 100000 }, true], [{ v1: 100000, v2: 1, v3: 0.00001 }, true]]) {
+    const page = await viewerPage(t);
+    await page.setViewport({ width: 1200, height: 800 });
+    const r = clone(RUN); Object.assign(r.pk, pk);
+    assert.equal(await loadRun(page, r), true);
+    const g = await page.evaluate(() => {
+      Player.seek(1500);
+      const outl = [...document.querySelectorAll('#flat svg rect[fill="none"]')].filter(e => !e.getAttribute('stroke-dasharray'))
+        .map(e => e.getBBox()).sort((a, b) => a.x - b.x);      // V2, V1, V3
+      const caption = [...document.querySelectorAll('#flat svg text')].some(e => /not to scale/.test(e.textContent));
+      const st = Player.stateAt(1500), top = Flat.scale.top;
+      // Each fill's height is its concentration on the one scale, whatever the widths.
+      const fills = [...document.querySelectorAll('#flat svg rect[fill-opacity]')].map(e => e.getBBox()).sort((a, b) => a.x - b.x);
+      return { w: [outl[1].width, outl[0].width, outl[2].width], ph: outl[0].height, caption,
+               h: [fills[1].height, fills[0].height, fills[2].height], c: [st.cp, st.c2, st.c3], top,
+               r3d: View.geo.r.slice(1) };
+    });
+    const vols = [pk.v1, pk.v2, pk.v3], ratio = Math.max(...g.w) / Math.min(...g.w);
+    assert.ok(ratio <= 10 * (1 + 1e-6), `${JSON.stringify(pk)}: 2D width ratio ${ratio}`);
+    const area = g.r3d.map(x => x * x), aRatio = Math.max(...area) / Math.min(...area);
+    assert.ok(aRatio <= 10 * (1 + 1e-6), `${JSON.stringify(pk)}: 3D floor-area ratio ${aRatio}`);
+    if (compressed) assert.ok(Math.abs(ratio - 10) < 1e-6 && Math.abs(aRatio - 10) < 1e-6, `${JSON.stringify(pk)}: not exactly 10:1`);
+    else for (let i = 1; i < 3; i++) {
+      assert.ok(Math.abs(g.w[i] / g.w[0] - vols[i] / vols[0]) < 1e-9, '2D widths not in proportion within 10:1');
+      assert.ok(Math.abs(area[i] / area[0] - vols[i] / vols[0]) < 1e-9, '3D areas not in proportion within 10:1');
+    }
+    // The order of the sizes is the order of the volumes.
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) if (vols[i] < vols[j]) assert.ok(g.w[i] < g.w[j] && area[i] < area[j]);
+    assert.equal(g.caption, compressed, 'the not-to-scale note');
+    for (let i = 0; i < 3; i++) assert.ok(Math.abs(g.h[i] - g.c[i] / g.top * g.ph) < 1e-6, `fill ${i} is not its concentration`);
+    assertClean(page);
+  }
+});

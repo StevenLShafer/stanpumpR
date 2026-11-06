@@ -76,6 +76,8 @@ kbd { font: 11px/1 ui-monospace, Consolas, monospace; border: 1px solid var(--li
 #readout .tgt { color: var(--target); }
 #readout .k { color: var(--ink-2); }
 #readout .foot { color: var(--ink-2); font-size: 12px; margin-top: 2px; }
+#readout .scale { color: var(--ink-2); font-size: 11.5px; max-width: 380px; }
+body.flat #readout .scale { display: none; }   /* the 2D view says it under its boxes */
 
 /* ── the amounts, bottom right, above the controls (key a) ─ */
 #amounts { position: fixed; right: 16px; bottom: calc(var(--ctl-h, 28px) + 30px); z-index: 2; display: none;

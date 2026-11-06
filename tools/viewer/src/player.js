@@ -258,6 +258,8 @@ const Player = {
             drugRgb: hexRgb(runColour(r)), concDecimals: Math.max(0, 2 - mag), conc: 10 / 3 * level * this.scale
         };
         this.n = 1 + (r.c2 != null) + (r.c3 != null);
+        // Sizes compressed to SIZE_RATIO_MAX (flat.js): the readout says so in 3D.
+        this.ui.notToScale = displayVolumes([r.pk.v1, r.c2 != null ? r.pk.v2 : 0, r.c3 != null ? r.pk.v3 : 0]).a < 1;
         View.resetGlass();
         View.vessels[1].setVisible(true);       // hidden before the first run (empty())
         View.setShape({ n: this.n, vc: r.pk.v1, v2: r.pk.v2, v3: r.pk.v3 });
@@ -352,13 +354,15 @@ const Player = {
         this.T = Math.min(r.t[r.t.length - 1], Math.max(r.t[0], T));
         const st = this.stateAt(this.T);
         View.draw(st, this.ui);
-        Flat.draw(st);
         const slider = this.$('t');
         slider.value = this.T;
         slider.style.setProperty('--pct', `${100 * (this.T - r.t[0]) / (r.t[r.t.length - 1] - r.t[0])}%`);
         this.$('now').textContent = hms(this.T);
         this.readout(st);
         this.amounts(st);
+        // After the cards are filled: the 2D layout measures them (Gemini,
+        // 712e43a: drawn first, the first frame saw empty cards).
+        Flat.draw(st);
     },
 
     // The amounts card, bottom right (key a): administered, then in the
@@ -368,6 +372,7 @@ const Player = {
     toggleAmounts() {
         this.showAmounts = !this.showAmounts;
         this.$('amounts').classList.toggle('show', this.showAmounts);
+        if (Flat.last) Flat.draw(Flat.last);    // the 2D view's room depends on the cards (Gemini, 712e43a)
     },
     amounts(st) {
         const a = x => x == null ? '–' : x.toFixed(1), n = st.n;
@@ -405,6 +410,7 @@ const Player = {
             (st.c3 != null ? ` · <span class="k">C3</span> ${c(st.c3)}` : '') + ` ${u.conc}</div>` +
             `<div><span class="k">Rate</span> ${st.rate.toFixed(2)} ${u.rate}` +
             (st.bolus > 0 ? ` · <span class="k">Bolus</span> ${st.bolus.toFixed(1)} ${u.amount}` : '') + `</div>` +
+            (this.ui.notToScale ? `<div class="scale">Vessels not to scale: the largest is drawn ${SIZE_RATIO_MAX}× the smallest. Heights are concentration.</div>` : '') +
             `<div class="foot">${pat ? escapeHtml(pat) + ' · ' : ''}${escapeHtml(r.source || '')} · <kbd>h</kbd> keys</div>`;
     },
 

@@ -33,6 +33,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 const FLOOR_Y = -(CONNECT_LENGTH + 1.5);   // below the elimination arrow's tip
+const VESSEL_AREA_MIN = 20, VESSEL_AREA_MAX = 200;   // the largest vessel's floor area, scene units^2 (setShape())
 const GLASS_MIN = 6;                       // the beakers' least height, scene units
 const EYE0 = [0, 10, 20];                  // init.cpp 117-119: the starting view's direction
 const ZOOM_GAP = 0.3;                      // i stops this far (scene units) outside V1's glass
@@ -345,7 +346,17 @@ const View = {
     // pk { n, vc, v2, v3 }, in L; n compartments, 1 to 3.
     setShape(pk) {
         this.pk = pk;
-        const r1 = Math.sqrt(pk.vc), r2 = pk.n >= 2 ? Math.sqrt(pk.v2) : 0, r3 = pk.n >= 3 ? Math.sqrt(pk.v3) : 0;
+        // Floor area from the volume, the largest at most SIZE_RATIO_MAX times
+        // the smallest (displayVolumes(), flat.js; Shafer, 2026-11-06); the
+        // liquid's height is the concentration.
+        // The whole scene is also held to a size the camera frames: the
+        // largest vessel's floor area between VESSEL_AREA_MIN and _MAX (its
+        // volume in L, as Charles Minto drew it, within those bounds); the
+        // ratios are kept (a 100000 L V3 was a flat disc filling the view).
+        let dv = displayVolumes([pk.vc, pk.n >= 2 ? pk.v2 : 0, pk.n >= 3 ? pk.v3 : 0]).v;
+        const big = Math.max(...dv), fit = big > 0 ? Math.min(VESSEL_AREA_MAX, Math.max(VESSEL_AREA_MIN, big)) / big : 1;
+        dv = dv.map(x => x * fit);
+        const r1 = Math.sqrt(dv[0]), r2 = Math.sqrt(dv[1]), r3 = Math.sqrt(dv[2]);
         this.geo = {
             n: pk.n, r: [0, r1, r2, r3],
             c: [null, new THREE.Vector3(0, 0, 0),
