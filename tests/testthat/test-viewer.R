@@ -280,3 +280,64 @@ test_that("fosphenytoin (mg PE): the prodrug being converted leaves the drug giv
   expect_false(r$inputKnown)
   expect_null(r$given)
 })
+
+# Gemini's audit of 293e168 (2026-11-06): each case reproduced before the fix.
+
+test_that("heparinCPB's height scale is the anti-Xa activity its typical ACT stands for", {
+  r <- vr(data.frame(Drug = "heparinCPB", Time = 0, Dose = 30000, Units = "IU"), 120)
+  act <- getDrugPK("heparinCPB", 70, 170, 40, "male", getDrugDefaults("heparinCPB"))$act
+  # Not the ACT in seconds (480 before the fix).
+  expect_lt(r$typical, 20)
+  expect_equal(act$act0 + act$emax * r$typical / (act$c50 + r$typical),
+               getDrugDefaults("heparinCPB")$Typical, tolerance = 1e-9)
+})
+
+test_that("a target with a manual infusion and a bolus at one time: the pump is the TCI's", {
+  doses <- data.frame(Drug = "propofol", Time = 0, Dose = c(200, 100, 2),
+                      Units = c("mg", "mcg/kg/min", "Effect site target"))
+  r <- vr(doses, 40)
+  e <- eliminated(r)
+  # The manual 7 mg/min ran for the controller's first, zero-rate step before.
+  expect_lt(abs(e[["viewer"]] - e[["integral"]]) / utils::tail(r$given, 1), 1e-3)
+})
+
+test_that("target rows entered out of time order are read in time order", {
+  doses <- data.frame(Drug = "propofol", Time = c(20, 0), Dose = c(4, 2),
+                      Units = c("Effect site target", "Plasma target"))
+  r <- vr(doses, 40)
+  at30 <- which(r$t == 1800)
+  expect_equal(r$mode[at30], "effect")
+  expect_equal(r$target[at30], 4)
+  expect_equal(r$mode[which(r$t == 600)], "plasma")
+})
+
+test_that("a rate into a tissue depot leaves the drug given unknown", {
+  r <- vr(data.frame(Drug = "ropivacaine", Time = 0, Dose = 20, Units = "mg/hr RA"), 120)
+  expect_false(r$inputKnown)
+})
+
+test_that("GHB's peripheral compartment has the engine's volume, not a placeholder", {
+  units <- getDrugDefaults("GHB")$Units[[1]][1]
+  r <- vr(data.frame(Drug = "GHB", Time = 0, Dose = 2, Units = units), 240)
+  mm <- getDrugPK("GHB", 70, 170, 40, "male", getDrugDefaults("GHB"))$michaelisMenten
+  expect_equal(r$pk$v2, r$pk$v1 * mm$k23 / mm$k32)
+  expect_false(is.null(r$c2))
+})
+
+test_that("a bolus at Max time is not counted: the simulation has not taken it in", {
+  r <- vr(data.frame(Drug = "propofol", Time = c(0, 60), Dose = c(100, 50), Units = "mg"), 60)
+  expect_equal(utils::tail(r$given, 1), 100, tolerance = 1e-9)
+  expect_length(r$boluses, 1)
+})
+
+test_that("a metabolite also formed from a parent in the table is drawn as the plot draws it", {
+  doses <- data.frame(Drug = c("morphine", "codeine"), Time = 0, Dose = c(5, 60),
+                      Units = c("mg", "mg PO tablet"))
+  plot <- plotSimulation(doses, 240)
+  r <- vr(doses, 240)
+  w <- plot$morphine$wide
+  w <- w[w$Time > 1 & w$Time < 239, ]
+  expect_equal(stats::approx(r$t / 60, r$cp, w$Time)$y, w$Plasma, tolerance = 1e-3)
+  # Its input includes what codeine forms, which the dose rows do not show.
+  expect_false(r$inputKnown)
+})

@@ -164,6 +164,24 @@ cumulativeRate <- function(steps, times)
   cum[match(times, knots)]
 }
 
+# The anti-Xa activity (IU/mL) behind an ACT (s): the inverse of R/act.R's
+# ACT = act0 + emax C / (c50 + C); 0 where the ACT is outside the link's range.
+viewerActActivity <- function(actSeconds, act)
+{
+  x <- actSeconds - act$act0
+  if (!is.numeric(x) || length(x) != 1 || !is.finite(x) || x <= 0 || x >= act$emax) return(0)
+  act$c50 * x / (act$emax - x)
+}
+
+# Whether a drug's plotted concentration includes what a parent in the table
+# forms (foldMetabolites(): $wide is $wideOwn plus the formed metabolite).
+viewerFormed <- function(entry)
+{
+  own <- entry$wideOwn$Plasma
+  all <- entry$wide$Plasma
+  !is.null(own) && !is.null(all) && !isTRUE(all.equal(own, all))
+}
+
 # Whether the plot's own points are close enough to animate: no gap inside
 # the window, nor at its edges, longer than VIEWER_GAP_STEPS of the viewer's
 # steps. The plot's time line is dense only near doses and kinks, so a run
@@ -201,7 +219,10 @@ viewerPlotEntry <- function(drug, plotEntry, doseTable, events, drugs, minimum, 
     plotEntry$viewerResolved <- FALSE
     return(plotEntry)
   }
-  entry <- viewerSimulate(drug, doseTable, events, drugs, minimum, maximum, antiseizureInteractions)
+  # A drug that is also formed from a parent in the table (morphine from
+  # codeine) needs that parent simulated too, as the plot does.
+  entry <- viewerSimulate(drug, doseTable, events, drugs, minimum, maximum, antiseizureInteractions,
+                          allDrugs = viewerFormed(plotEntry))
   entry$viewerResolved <- TRUE
   entry
 }
@@ -224,16 +245,20 @@ viewerPlotEntry <- function(drug, plotEntry, doseTable, events, drugs, minimum, 
 #' @return the drug's simulated entry.
 #' @noRd
 viewerSimulate <- function(drug, doseTable, events, drugs, minimum, maximum,
-                           antiseizureInteractions = FALSE)
+                           antiseizureInteractions = FALSE, allDrugs = FALSE)
 {
-  if (!isTRUE(antiseizureInteractions)) {
+  if (!isTRUE(antiseizureInteractions) && !isTRUE(allDrugs)) {
     doseTable <- doseTable[doseTable$Drug == drug, , drop = FALSE]
     drugs <- drugs[names(drugs) == drug]
   }
   if (is.null(drugs[[drug]])) stop("No simulation for ", drug, " in this dose table.")
   if (!is.null(drugs[[drug]]$act)) {
+    act <- drugs[[drug]]$act
     drugs[[drug]]$act <- NULL
     drugs[[drug]]$Concentration.Units <- "IU"
+    # The typical level (the height scale) is an ACT in seconds; the viewer
+    # needs the anti-Xa activity that gives it.
+    drugs[[drug]]$typical <- viewerActActivity(drugs[[drug]]$typical, act)
   }
   times <- viewerTimes(minimum, maximum)
   X <- withOutputTimes(times, processdoseTable(
@@ -259,6 +284,14 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
   minimum <- times[1]
   u <- viewerUnits(entry$Concentration.Units)
   k <- entry$PK[[1]]
+  # A Michaelis-Menten peripheral compartment declared as k23/k32 (GHB) has
+  # V2 = V k23 / k32 and Q = k23 V (advanceMichaelisMenten()), not the PK
+  # set's placeholders.
+  mm <- entry$michaelisMenten
+  if (!is.null(mm$k23) && !is.null(mm$k32)) {
+    k$v2 <- k$v1 * mm$k23 / mm$k32
+    k$cl2 <- mm$k23 * k$v1
+  }
   weight <- entry$weight
 
   # Linear between the simulation's own points; at a time given twice (a
@@ -283,7 +316,10 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
   if (is.null(d)) d <- data.frame(Drug = character(), Time = double(), Dose = double(), Units = character())
   d$Time <- as.numeric(d$Time)
   d <- expandScheduledDoses(d, maximum)$dose
-  d <- d[d$Time <= maximum, , drop = FALSE]
+  # In time order (stably: at one time the later row still wins), and only
+  # doses before Max time, which the simulation's last point has not taken in.
+  d <- d[order(d$Time), , drop = FALSE]
+  d <- d[d$Time < maximum - 1e-9, , drop = FALSE]
   units <- as.character(d$Units)
   route <- doseRoute(units)
   rate <- isRateUnit(units)
@@ -308,8 +344,14 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
   tciRates <- entry$tci$rates
   if (!is.null(tciRates) && nrow(tciRates) > 0) {
     tr <- viewerBaseDose(tciRates$Rate, tciRates$Units, weight, u)
+    # A TCI row ranks above a manual row at one time when it runs the pump,
+    # or when a non-zero target is entered at that time (the target wins,
+    # R/tci.R, even if the controller gives no drug then); a zero row there
+    # is otherwise the stop a manual row makes, so the manual row wins.
+    targetTimes <- d$Time[tci & d$Dose > 0]
+    atTarget <- vapply(tciRates$Time, function(x) any(abs(targetTimes - x) < 1e-9), logical(1))
     steps <- rbind(steps, data.frame(Time = tciRates$Time, Rate = tr,
-                                     rank = ifelse(tr > 0, 2, 0)))
+                                     rank = ifelse(tr > 0 | atTarget, 2, 0)))
   }
   steps <- steps[order(steps$Time, steps$rank), , drop = FALSE]
   rateAt <- rateInForce(steps, times)
@@ -353,6 +395,14 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
   inputKnown <- is.null(entry$oralZeroOrder) && is.null(entry$zeroOrderSC) &&
     !isTRUE(entry$enteralInfusion) && is.null(entry$michaelisMenten$saturableSC) &&
     is.null(entry$molar) && !any(enteral) && nrow(d) > 0 &&
+    # A rate into a tissue depot raises the Depot column while it is
+    # absorbed, so its fall no longer measures the drug absorbed.
+    !any(rate & route %in% TISSUE_ROUTES) &&
+    # Drug bound to its target (linagliptin, vildagliptin) is neither the
+    # concentrations times the volumes nor eliminated.
+    is.null(entry$michaelisMenten$targetBinding) && is.null(entry$michaelisMenten$rapidBinding) &&
+    # A metabolite formed from a parent in the table enters as it is formed.
+    !viewerFormed(entry) &&
     # A prodrug in equivalents (fosphenytoin, mg PE) waits in a conversion
     # compartment that is neither the body nor the Depot column.
     !any(isEquivalentUnit(units)) &&

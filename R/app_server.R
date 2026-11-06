@@ -2307,12 +2307,14 @@ app_server <- function(input, output, session) {
   observeEvent(input$openViewer, {
     profileCode({
       drug <- skipTarget()$drug
+      # The click's token, echoed so the browser can drop an earlier click's answer.
+      token <- as.character(input$openViewer)
       removeModal()
       # Told in the app and in the viewer's window, which would otherwise
       # wait for a run that is not coming.
       fail <- function(message) {
         showNotification(paste("Minto Visualizer:", message), type = "error")
-        session$sendCustomMessage("stanpumpR-viewer-error", message)
+        session$sendCustomMessage("stanpumpR-viewer-error", list(token = token, message = message))
       }
       blocked <- simulationBlocked()
       if (!is.null(blocked)) return(fail(blocked))
@@ -2328,7 +2330,7 @@ app_server <- function(input, output, session) {
         fail(if (inherits(e, "shiny.silent.error")) "the plot is not ready yet; try again." else conditionMessage(e))
         NULL
       })
-      if (!is.null(run)) session$sendCustomMessage("stanpumpR-viewer-run", run)
+      if (!is.null(run)) session$sendCustomMessage("stanpumpR-viewer-run", list(token = token, run = run))
     }, name = "input$openViewer observer")
   })
 

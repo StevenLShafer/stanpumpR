@@ -6175,9 +6175,10 @@ function runProblem(r) {
     }
     const pk = r.pk || {};
     const vols = ['v1'].concat(r.c2 != null ? ['v2'] : [], r.c3 != null ? ['v3'] : []);
-    for (const k of vols) if (!(pk[k] > 0)) return `pk.${k} must be a volume above 0 (L).`;
+    for (const k of vols) if (!(Number.isFinite(pk[k]) && pk[k] > 0)) return `pk.${k} must be a volume above 0 (L).`;
     for (const k of ['cl1'].concat(r.c2 != null ? ['cl2'] : [], r.c3 != null ? ['cl3'] : []))
-        if (!(pk[k] >= 0)) return `pk.${k} must be a clearance of 0 or more (L/min).`;
+        if (!(Number.isFinite(pk[k]) && pk[k] >= 0)) return `pk.${k} must be a clearance of 0 or more (L/min).`;
+    if (r.typical != null && !(Number.isFinite(r.typical) && r.typical >= 0)) return 'typical must be a number of 0 or more.';
     const u = r.units || {};
     for (const k of ['conc', 'amount', 'rate'])
         if (typeof u[k] !== 'string' || !/^[^<>&"']{1,40}$/.test(u[k]))
@@ -6187,7 +6188,7 @@ function runProblem(r) {
     const pt = r.patient || {};
     for (const k of ['weight', 'height', 'age'])
         if (pt[k] != null && !Number.isFinite(pt[k])) return `patient.${k} must be a number.`;
-    if (pt.sex != null && !/^[^<>&"']{0,40}$/.test(pt.sex)) return 'patient.sex must be short plain text.';
+    if (pt.sex != null && (typeof pt.sex !== 'string' || !/^[^<>&"']{0,40}$/.test(pt.sex))) return 'patient.sex must be short plain text.';
     if (r.boluses != null) {
         if (!Array.isArray(r.boluses)) return 'boluses must be an array.';
         for (const [i, b] of r.boluses.entries())
@@ -6251,7 +6252,9 @@ const Player = {
         });
         // A run from the page that opened this one.
         window.addEventListener('message', e => {
-            if (!(e.source === window.opener || e.origin === location.origin)) return;
+            // Only stanpumpR's own page, on this origin, may hand this page a
+            // run: a page elsewhere that opened it is an opener too.
+            if (e.origin !== location.origin) return;
             const d = e.data;
             if (d && d.type === 'stanpumpR-viewer-run') this.load(d.run);
             else if (d && d.type === 'stanpumpR-viewer-error')
@@ -6263,7 +6266,11 @@ const Player = {
         if (window.STANPUMPR_VIEWER_RUN) this.load(window.STANPUMPR_VIEWER_RUN);
         else if (window.opener) this.message('<b>Loading data</b> — this may take 30–45 seconds.');
         else this.message('Waiting for a run from stanpumpR. You can also <b>Open run…</b> or drop a run file (.json) here.');
-        if (window.opener) window.opener.postMessage({ type: 'stanpumpR-viewer-ready' }, '*');
+        // Ready, with the token in this page's address, to this origin only.
+        if (window.opener) {
+            const token = new URLSearchParams(location.search).get('t');
+            try { window.opener.postMessage({ type: 'stanpumpR-viewer-ready', token }, location.origin); } catch (err) { /* opener elsewhere */ }
+        }
     },
 
     // Before any run: the floor and its logo only, from the starting view.
@@ -6300,9 +6307,12 @@ const Player = {
         // Concentration x volume (L) x scale is the amount in units.amount.
         this.scale = r.amountScale != null ? r.amountScale : 1;
         this.balance(r);
-        const maxCp = Math.max(...r.cp);
+        // A loop, not Math.max(...r.cp), which overflows the stack on a long run.
+        let maxCp = 0;
+        for (const x of r.cp) if (x > maxCp) maxCp = x;
         const level = r.typical > 0 ? r.typical : (maxCp > 0 ? maxCp / 2 : 1);
-        const mag = Math.floor(Math.log10(level));
+        // toFixed() takes 0 to 100 digits: a vanishing level would ask for more.
+        const mag = Math.max(-6, Math.floor(Math.log10(level)));
         this.ui = {
             showCe: r.ce != null, concScale: 3 / level, units: this.units,
             drugRgb: hexRgb(runColour(r)), concDecimals: Math.max(0, 2 - mag), conc: 10 / 3 * level * this.scale
@@ -6450,7 +6460,7 @@ const Player = {
             (st.c3 != null ? ` · <span class="k">C3</span> ${c(st.c3)}` : '') + ` ${u.conc}</div>` +
             `<div><span class="k">Rate</span> ${st.rate.toFixed(2)} ${u.rate}` +
             (st.bolus > 0 ? ` · <span class="k">Bolus</span> ${st.bolus.toFixed(1)} ${u.amount}` : '') + `</div>` +
-            `<div class="foot">${pat ? pat + ' · ' : ''}${r.source || ''} · <kbd>h</kbd> keys</div>`;
+            `<div class="foot">${pat ? escapeHtml(pat) + ' · ' : ''}${escapeHtml(r.source || '')} · <kbd>h</kbd> keys</div>`;
     },
 
     setSpeed(v) {

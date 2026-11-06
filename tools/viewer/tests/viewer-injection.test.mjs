@@ -208,3 +208,28 @@ test('unusual but valid runs still load', { skip }, async t => {
   assertNoInjection(p);
   assertClean(page);
 });
+
+// Gemini's audit of 293e168 (2026-11-06).
+test('a run with vanishing concentrations and no typical level loads', { skip }, async t => {
+  const page = await viewerPage(t);
+  const tiny = structuredClone(RUN);
+  tiny.typical = 0;
+  tiny.cp = tiny.cp.map(() => 1e-120);
+  if (tiny.ce) tiny.ce = tiny.ce.map(() => 1e-120);
+  // toFixed() refuses more than 100 digits; the decimals were unbounded.
+  assert.equal(await loadRun(page, tiny), true);
+  assertClean(page);
+});
+
+test('non-numbers for volumes, clearances or typical are refused', { skip }, async t => {
+  const page = await viewerPage(t);
+  for (const [field, value] of [['v1', null], ['v1', '5'], ['cl1', false], ['cl1', []]]) {
+    const bad = structuredClone(RUN);
+    bad.pk[field] = value;
+    assert.equal(await loadRun(page, bad), false, `pk.${field} = ${JSON.stringify(value)} accepted`);
+  }
+  const bad = structuredClone(RUN);
+  bad.typical = 'a lot';
+  assert.equal(await loadRun(page, bad), false, 'typical = "a lot" accepted');
+  assertClean(page);
+});

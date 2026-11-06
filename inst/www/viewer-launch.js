@@ -54,9 +54,13 @@
 
 (function () {
     const URL = 'stanpumpr-assets/stanpumpR-viewer.html';
+    // token: this click's own (Date.now()); it is in the window's address, in
+    //   the window's ready message and in the server's answer, so a ready
+    //   message from a page being replaced, or a run asked for by an earlier
+    //   click, is not taken for this one (Gemini's audit, 2026-11-06).
     // pending: the run, or the server's reason there is none, for the window.
     // building: a run has been asked for and has not arrived.
-    let win = null, ready = false, pending = null, building = false;
+    let win = null, ready = false, pending = null, building = false, token = null;
 
     function send() {
         if (win && !win.closed && ready && pending) {
@@ -69,34 +73,38 @@
         const b = e.target.closest && e.target.closest('#openViewer');
         if (!b || b.disabled) return;
         if (building && win && !win.closed) { win.focus(); return; }
-        ready = false; pending = null;
-        win = window.open(URL + '?t=' + Date.now(), 'stanpumpRViewer', 'width=1200,height=800');
+        if (!(window.Shiny && Shiny.setInputValue)) return;   // not connected yet
+        token = String(Date.now());
+        ready = false; pending = null; building = false;
+        win = window.open(URL + '?t=' + token, 'stanpumpRViewer', 'width=1200,height=800');
         if (!win || win.closed) {
             // The browser blocked the window; the app says so.
             win = null;
-            if (window.Shiny && Shiny.setInputValue)
-                Shiny.setInputValue('viewerBlocked', Date.now(), { priority: 'event' });
+            Shiny.setInputValue('viewerBlocked', Date.now(), { priority: 'event' });
             return;
         }
         win.focus();
         building = true;
-        if (window.Shiny && Shiny.setInputValue)
-            Shiny.setInputValue('openViewer', Date.now(), { priority: 'event' });
+        Shiny.setInputValue('openViewer', token, { priority: 'event' });
     });
 
     window.addEventListener('message', function (e) {
-        if (e.source !== win || !e.data || e.data.type !== 'stanpumpR-viewer-ready') return;
+        if (e.origin !== location.origin || e.source !== win || !e.data ||
+            e.data.type !== 'stanpumpR-viewer-ready' || e.data.token !== token) return;
         ready = true; send();
     });
 
     $(document).on('shiny:connected', function () {
-        Shiny.addCustomMessageHandler('stanpumpR-viewer-run', function (r) {
+        // m: { token, run } or { token, message }; another click's answer is dropped.
+        Shiny.addCustomMessageHandler('stanpumpR-viewer-run', function (m) {
+            if (!m || m.token !== token) return;
             building = false;
-            pending = { type: 'stanpumpR-viewer-run', run: r }; send();
+            pending = { type: 'stanpumpR-viewer-run', run: m.run }; send();
         });
         Shiny.addCustomMessageHandler('stanpumpR-viewer-error', function (m) {
+            if (!m || m.token !== token) return;
             building = false;
-            pending = { type: 'stanpumpR-viewer-error', message: m }; send();
+            pending = { type: 'stanpumpR-viewer-error', message: m.message }; send();
         });
     });
 })();
