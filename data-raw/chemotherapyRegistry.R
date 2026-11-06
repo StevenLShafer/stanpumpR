@@ -206,7 +206,7 @@ pubmedSources[pubmedSources == ""] <- NA
 
 # How far each PubMed document was read here.  Every abstract was screened;
 # the PubMed Central text (without tables or equations) was read for these.
-FULL_TEXT_PARTIAL <- c("P05", "P09", "P13", "P18", "C12", "C15", "C34", "C35", "N04")
+FULL_TEXT_PARTIAL <- c("P05", "P13", "P18", "C12", "C15", "C34", "C35", "N04")
 pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
                              "guideline", "primary_study")
 # Read in full: every parameter the model uses, from the PubMed Central
@@ -216,7 +216,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 FULL_TEXT_READ <- c("C01", "P02", "C35", "C03")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
-PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12")
+PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
   ifelse(pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
@@ -398,10 +398,11 @@ registry <- rbind(
     "adults with cancer", "5-FU", "dose- and time-dependent pharmacokinetics (structure not in the abstract)",
     "first", "unknown", "P08"),
   m("fluorouracil__adult__tan2026", "fluorouracil", "fluorouracil", "IV",
-    "adults from four prospective studies, bolus with 46-h infusion and 46-h infusion alone", "5-FU",
-    "two compartments with Michaelis-Menten elimination; BSA on Vmax with exponent 1.14",
+    "140 Dutch adults from four prospective studies, 46-h infusions with or without a bolus", "5-FU",
+    "two compartments with Michaelis-Menten elimination alone: Vmax 1900 mg/h x (BSA/1.94)^1.14, Km 8.04 mg/L, V1 19.7 L, Q 52.4 L/h, V2 15 L",
     "first", "michaelis_menten", "P09",
-    "advanceMichaelisMenten() carries a central and one peripheral compartment with saturable elimination; compare its equations with the paper's before using it."),
+    "PDF read (supplied 2026-11-06). The library's second 5-FU drug, beside Briki 2026. Reproduces Table 3's median AUCs (20.8, 28.7 and 23.6 against 21, 29 and 24 mg h/L for 2400 mg/m2 over 46 h alone, after 400 and after 200 mg/m2 bolus). BSA formula not stated; Mosteller used. DPYD tested and not retained.",
+    readiness = "implemented", stanpumpr_drug = "fluorouracilTan"),
   m("fluorouracil__adult__briki2026", "fluorouracil", "fluorouracil", "IV",
     "726 patients from three studies (individual-patient meta-analysis)", "5-FU",
     "two compartments with parallel Michaelis-Menten and linear elimination; BSA on CL, V lower in women and with age",

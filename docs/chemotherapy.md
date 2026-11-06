@@ -212,3 +212,10 @@ the healthy-adult means in the same paragraph of the Methods (0.92 and 0.77 mg/d
 Albumin has no Patient Profile field and is held at 4 g/dL although 68% of the courses were
 hypoalbuminaemic; whether to add an albumin field is recorded as a pending decision in the
 registry.
+
+## 11. A second 5-FU model
+
+Tan 2026 (`R/drugs_fluorouracilTan.R`), from the PDF Shafer supplied, offered beside Briki 2026
+as levodopaSimon is beside levodopa: two compartments with saturable elimination alone, BSA on
+Vmax. It reproduces the paper's Table 3 median AUCs to within 2%. For the same patient Briki's
+model gives about 14% less exposure; the help pages of both say so, and neither is preferred.
