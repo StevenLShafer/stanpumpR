@@ -22,9 +22,9 @@ The reasons, each measured below:
      is lost.
 2. **Its licence is ours**, and it adds no dependency.
 3. **It is about 9 KB gzipped**, against 100-525 KB for the libraries.
-4. **It is held to the same regression suite**, which it passes: 55 of 56
-   cases, the 56th being a page-level script error from the rhandsontable
-   grid still on the Single Paper Review tab. rhandsontable has 16 known
+4. **It is held to the same regression suite**, which it passes: 59 of 60
+   cases, the 60th being a page-level script error from the rhandsontable
+   grid still on the Single Paper Review tab. rhandsontable has 18 known
    failures besides that one, and each is a real defect of the grid in use
    today. Several can put a wrong dose, drug or unit into the table without
    a word: a typed `1,5` stored as 15, a drug name or an emptied cell
@@ -64,7 +64,7 @@ The reasons, each measured below:
 
 ## What the suite found
 
-The suite is `tests/playwright/` (README there): 56 cases, driven by
+The suite is `tests/playwright/` (README there): 60 cases, driven by
 keystrokes and the clipboard in headless Chromium, and checked on the screen
 and in the server's draft (`exportTestValues()`, test mode only). The same
 cases run against both grids, through a small adapter per grid.
@@ -79,6 +79,9 @@ cases run against both grids, through a small adapter per grid.
 | Paste of 510 rows stops at 499 doses, **and says so** | **fail: silent**, 331 s | pass, 0.3 s |
 | A typed `1,5` or `1a0` is refused with a message, not changed | **fail: stored as 15 and 10, without a word** | pass |
 | A name not in the library is refused | **fail, intermittently: `notadrug` stored as norepinephrine** | pass |
+| A gas brings its ventilation row, drawn in the grid | **fail, intermittently: `sevoflurane` stored as sertraline** (once in eleven runs) | pass |
+| A pasted row whose time or dose is refused changes nothing; a new drug starts afresh | **fail: `fentanyl BADTIME BADOSE mcg` over propofol 10 100 mg is fentanyl 10 100 mcg** | pass (failed before 2026-11-06) |
+| Ctrl+Y after Ctrl+Z while typing redoes the typing; Tab leaves the row menu to the next cell | pass | pass (failed before 2026-11-06) |
 | An illicit drug is said, not only drawn red | **fail** | pass |
 | Home and End go to the row's first and last cell | pass | pass |
 | Ctrl+Z with the focus outside the grid undoes the last edit | **fail: Ctrl+Z does nothing** | pass |
@@ -93,7 +96,8 @@ cases run against both grids, through a small adapter per grid.
 | A paste leaves a blank row below the last dose | pass | pass (failed before) |
 | Rows inserted, removed, all removed | pass | pass |
 | Time header tip; change of time unit; time-format stamp | pass | pass |
-| Draft / Apply / undo / redo; a gas rule's rows drawn | pass | pass |
+| Draft / Apply / undo / redo | pass | pass |
+| More rows than the table holds, sent by a forged client, are said | (the prototype's own input) | pass (failed before 2026-11-06: silent) |
 | Markup typed or pasted is never run or drawn | pass | pass |
 | Typing `morphine` Tab `15` Tab `4` Tab at 80 ms a key | **fail: stored as time 5, dose 0** | pass |
 | Two rows typed one after another over a 400 ms link | **fail: first row time 5 dose 0, second row lost** | pass |
@@ -438,7 +442,7 @@ These are pending. Record each answer here.
      `hookFilterKeys()` in `inst/www/hot_funs.js` drops the keys a number
      cannot hold (a paste of the same text is refused with a message);
    - can commit a drug name as another drug (`notadrug` as norepinephrine,
-     a cleared cell as acenocoumarol);
+     `sevoflurane` as sertraline, a cleared cell as acenocoumarol);
    - applies a refused pasted row's dose to the drug the row held;
    - carries a dose over to a drug pasted in its place, also when the
      pasted time and dose are refused (`fentanyl BADTIME BADOSE mcg` over

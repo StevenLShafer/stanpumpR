@@ -65,6 +65,9 @@ const KNOWN_GAP = {
       'Enter on the emptied cell takes the first drug in the list: the row became acenocoumarol',
     'undo never brings back a unit the row\'s drug does not offer':
       'undo after a drug pasted over propofol 0 2 mg/kg restored morphine 0 2 mg/kg, a half-applied paste',
+    'a rule the server applies is drawn in the grid (a gas brings its ventilation)':
+      'intermittently, Enter commits the first match of what the list held a moment earlier: ' +
+      '"sevoflurane" was stored as sertraline (once in eleven runs, 2026-11-06), so no ventilation row came',
     'a name that is not in the library is refused':
       'intermittently, Enter commits the first match of what the list held a moment earlier: ' +
       '"notadrug" was stored as norepinephrine (and, in the external review, "morphine" as mannitol)'

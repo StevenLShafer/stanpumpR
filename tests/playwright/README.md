@@ -50,7 +50,7 @@ STANPUMPR_URL=http://127.0.0.1:7311/ STANPUMPR_GRID=native node --test --test-co
   observer ends it.
 - A case one grid is known to fail is listed in `KNOWN_GAP` at the top of the
   test file, with the reason. It is reported as a todo, so the run stays
-  green while the suite still states the bar. On rhandsontable, seventeen
+  green while the suite still states the bar. On rhandsontable, eighteen
   cases are known to fail:
   - the first key typed after a commit is lost while the server redraws the
     grid;
@@ -58,7 +58,8 @@ STANPUMPR_URL=http://127.0.0.1:7311/ STANPUMPR_GRID=native node --test --test-co
   - a typed `1,5` is stored as 15 and `1a0` as 10, without a word: the key
     filter drops the characters a number cannot hold;
   - intermittently, Enter commits the first match the drug list held a
-    moment earlier (`notadrug` stored as norepinephrine);
+    moment earlier (`notadrug` stored as norepinephrine, and `sevoflurane`
+    as sertraline, which fails the gas-rule case as well);
   - a refused drug name leaves its editor stuck open;
   - a paste past the row limit drops the extra rows without a word;
   - the grid's controls have no names a screen reader can read, and an
