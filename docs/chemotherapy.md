@@ -286,3 +286,13 @@ the page image): three compartments, CL 31.1 x (BSA/1.60)^1.74 x
 (age/60)^-0.485 L/h (age floored at 18), V1 13.2 L, Q2 60.2 L/h and V2 33.9 L
 (fixed in the source), Q3 81.1 L/h, V3 544 L; plotted in ng/mL, dosed in mg
 as labelled. Mosteller BSA (the paper names none).
+
+## 17. Docetaxel
+
+`docetaxel` is Bruno 1996 (P24; PDF supplied 2026-11-06, an older scan read
+on the page images): three compartments, CL = BSA x (22.1 - 3.55 AAG - 0.095
+age + 0.225 albumin) x (1 - 0.334 HEP12) L/h, V1 8.31 L, k12 1.07, k21 1.74,
+k13 1.28, k31 0.0787 /h. It reproduces Table II at the mean covariates. AAG
+(1.46 g/L) and HEP12 (0) are held; albumin reads the Patient Profile field
+(g/dL x 10), the mean 40.1 g/L when blank. Pregnancy is `unquantified`
+pending Janssen 2021's full text.

@@ -2463,7 +2463,18 @@ registry <- rbind(
       source = "",
       source_url = "",
       to_obtain = "",
-      notes = "Vincristine is cleared by the liver (CYP3A4/5) and biliary excretion; nothing is applied.")
+      notes = "Vincristine is cleared by the liver (CYP3A4/5) and biliary excretion; nothing is applied."),
+  row("docetaxel", "Chemotherapy", "unquantified",
+      finding = "Two pooled population analyses compared pregnant with nonpregnant women: van Hasselt 2014 (PMID 24713311, abstract; 3 pregnant, 32 nonpregnant) estimated clearance 1.19-fold (RSE 7%) and volumes up to 1.37-fold in pregnancy; Janssen 2021 (PMID 33506375, abstract; 9 pregnant, the INCIP cohort) found larger volumes and a higher clearance, lowering exposure, without dose adjustment being warranted. The numbers of the larger study are in its full text, not read. Yang 2023 (PMID 38140068) and Janssen 2023 (PMID 37351792) are model-based predictions.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = "second and third", comparator = "nonpregnant patients",
+      design = "pooled population PK", n = 9L, confidence = "low",
+      evidence_read = "abstract",
+      source = "Janssen JM, Van Calsteren K, Dorlo TPC, et al. Clin Pharmacokinet 2021;60:775-784 PMID 33506375; van Hasselt JGC et al. Ann Oncol 2014;25:2059-2065 PMID 24713311",
+      source_url = "https://doi.org/10.1007/s40262-020-00961-4",
+      to_obtain = "Janssen 2021 (PMID 33506375), for its fitted pregnancy factors on clearance and the volumes",
+      notes = "The direction is consistent (higher clearance, larger volumes); a factor will be applied once Janssen 2021's estimates are read.")
 )
 
 stopifnot(

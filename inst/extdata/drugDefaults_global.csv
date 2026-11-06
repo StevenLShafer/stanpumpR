@@ -230,3 +230,4 @@ etoposidePediatric,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#6A1B9A,0,0,0,0,
 pemetrexed,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#00695C,0,0,0,0,0,IV,Chemotherapy
 melphalan,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#BF360C,0,0,0,0,0,IV,Chemotherapy
 vincristine,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#1565C0,0,0,0,0,0,IV,Chemotherapy
+docetaxel,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#4527A0,0,0,0,0,0,IV,Chemotherapy

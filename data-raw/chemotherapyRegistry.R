@@ -216,7 +216,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 FULL_TEXT_READ <- c("C01", "P02", "C35", "C03")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
-PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31")
+PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
   ifelse(pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
@@ -519,7 +519,10 @@ registry <- rbind(
   # ---- Expansion -----------------------------------------------------------
   m("docetaxel__adult__bruno1996", "docetaxel", "docetaxel", "IV",
     "547 adults in phase I and II", "docetaxel",
-    "population model; alpha-1 acid glycoprotein, hepatic function, age and BSA on clearance", "expansion", "unknown", "P24"),
+    "three compartments: CL = BSA x (22.1 - 3.55 AAG - 0.095 age + 0.225 albumin) x (1 - 0.334 HEP12) L/h, V1 8.31 L, k12 1.07, k21 1.74, k13 1.28, k31 0.0787 /h",
+    "expansion", "linear", "P24",
+    "PDF read (supplied 2026-11-06; an older scan, every number read on the page images). Reproduces Table II's CL 36.7 L/h, Vss 149 L and three half-lives at the mean covariates. AAG (1.46 g/L) and HEP12 (0) have no Patient Profile field and are held; albumin reads the Patient Profile's field. The BSA formula is not named (Mosteller used).",
+    readiness = "implemented", stanpumpr_drug = "docetaxel"),
   m("docetaxel__phase2__bruno1998", "docetaxel", "docetaxel", "IV",
     "640 adults in phase II", "docetaxel",
     "population PK and exposure-toxicity", "expansion", "unknown", "P25"),
