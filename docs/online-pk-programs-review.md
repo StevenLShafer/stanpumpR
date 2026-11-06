@@ -1,6 +1,6 @@
 # Other pharmacokinetic programs: what stanpumpR can learn from them
 
-Survey of 2026-11-06. It covers three groups: anesthesia TCI simulators, open-source PK engines and their model libraries, and clinical dosing / therapeutic-drug-monitoring (TDM) calculators. For each it records the drugs offered, how the code computes where the code could be read, and what stanpumpR might adopt.
+Survey of 2026-11-06. It covers three groups: anesthesia TCI simulators, open-source PK engines and their model libraries, and clinical dosing / therapeutic-drug-monitoring (TDM) calculators. Section 5 adds a pass through the bio.tools registry. For each it records the drugs offered, how the code computes where the code could be read, and what stanpumpR might adopt.
 
 **How it was done, and what that limits.** The session's network reached GitHub and opentci.org. Almost every other host was refused: eurosiva.org (TivaTrainer), clincalc.com, tdmx.eu, doseme-rx.com, draeger.com, the App Store, simtiva.app and PubMed Central. So:
 
@@ -309,6 +309,39 @@ For each item: what it is, where it comes from, and what it would take.
     - These are the largest gap between stanpumpR and the TDM tools. They need every model's omegas and residual error, which only a few stanpumpR models record today.
     - A Bayesian update from a measured level changes what the program is, and its regulatory position. That is for Shafer to decide.
 
+## 5. The bio.tools registry (added 2026-11-06)
+
+[bio.tools](https://bio.tools) is the ELIXIR registry of life-science software, annotated with the EDAM ontology.
+
+**Method**
+- Queried through its JSON API (`https://bio.tools/api/t/?q=...&format=json`).
+- Search terms: pharmacokinetic(s), PBPK, pharmacometrics, pharmacodynamics, population pharmacokinetic, dosing, dose individualization, the topic Pharmacology, and others.
+- This gave 1,873 unique entries. Filtering names and descriptions for PK terms left 42.
+
+**What the registry covers, and what it misses**
+- Its pharmacokinetics coverage is thin, and mostly drug discovery: ADME and toxicity predictors (SwissADME, Deep-PK, ProTox), DMPK databases (DruMAP, CMNPD), PBPK in MATLAB SimBiology, and PET kinetic modelling (kinfitr).
+- **There is no entry for "propofol", "anesthesia", "target controlled infusion", "TCI", "NONMEM" or "therapeutic drug monitoring".**
+- **stanpumpR is not registered.**
+  - Registering it would be free, and would put it in the registry's EDAM-annotated search.
+  - Topics would include Pharmacology, Pharmacokinetics and Anaesthesiology; the operation would be Simulation.
+  - It would also be the registry's only anesthesia simulator.
+  - That is Shafer's call.
+
+The entries that matter to stanpumpR:
+
+| Tool | What it is | Licence | Relevance |
+|---|---|---|---|
+| **PK-DB** (pk-db.com, Matthias König, Humboldt University Berlin; github.com/matthiaskoenig/pkdb) | A curated database of concentration-time data and PK parameters from clinical studies, each linked to its population (age, sex, weight, health, smoking), its interventions (dose, route, schedule) and its source publication. REST API and a Python client. | Code MIT. **The data are not**: the terms of use require citing PK-DB and every original study; ask that substantial reuse be arranged with König, including co-authorship where it is earned; and require a written licence for any commercial use. | **The most useful entry.** It is a source of digitised, published concentration-time data to test stanpumpR's models against. Not tried: the session's network refused the host. A reuse beyond spot checks should start with a note to König. |
+| **mapbayr** (github.com/FelicienLL/mapbayr; CRAN) | Maximum-a-posteriori Bayesian estimation of individual PK parameters on top of mrgsolve models. | GPL-3 | The established R template if stanpumpR ever adds a Bayesian update (section 4, item 11). Reimplement; do not copy. |
+| **PKconverter** (CRAN 1.5; Shiny at ek-lee.shinyapps.io/PKconverter) | Converts 1-, 2- and 3-compartment parameters among volumes/clearances, rate constants, coefficients/exponents and half-lives. | GPL >= 2 | **An R port of Shafer's own Convert.xls**: its roxygen cites `http://www.nonmemcourse.com/convert.xls`, with the same five ways of defining a model. Could serve as a third reference for `test-help-pk-converter.R`. Its 3-compartment roots call `acos()` without clamping the argument, which `cube()` avoids. |
+| **vancomycin TDM** (pipet.shinyapps.io/vancomycin; github.com/pipetcpt/tdm-vancomycin; *Pharmaceutics* 2019;11:224) | Shiny app for Bayesian vancomycin dosing in Korean adults. A two-compartment model (V1 31.7 L; `TVCL = CLPOP*(CLCR/72)**CLPOP2`; V2 scaled by weight/60). MAP is computed by `optim(method = "L-BFGS-B")` in about 100 lines of `server.R` (lines 380-525). | bio.tools says Unlicense (public domain). The repository has no licence file. | The smallest readable example of a MAP update in R/Shiny, in the same stack as stanpumpR. Lead, not verified: it builds its omega matrix from values named `ETA1SD`/`ETA2SD`, so whether they are SDs or variances should be checked against the paper before anything is borrowed. |
+| **DosOpt** (biit.cs.ut.ee/DosOpt; *Ther Drug Monit* 2018, PMID 29084032) | Bayesian vancomycin dose adjustment for **neonates** (University of Tartu). | Free web app; code not found | A neonatal vancomycin model, which stanpumpR lacks. |
+| **caffsim** (github.com/asancpt/caffsim; CRAN) | Caffeine one-compartment oral model with inter-individual variability (Lee 2015, *Eur J Pediatr*, doi:10.1007/s00431-015-2581-x). CL 0.098 L/h/kg, V 0.72 L/kg, ka 4.27 /h. | GPL-3 | A caffeine source for stanpumpR, which has none. Read Lee 2015 itself. Noted in passing: its steady-state Cmax and Cmin (`R/caffPkparam.R:69-70`) use the intravenous-bolus formula for an oral model. |
+| **ACEInhibPKPD** (github.com/ashleefv/ACEInhibPKPD; JOSS 2017) | MATLAB PK/PD of ACE inhibition (angiotensin II), for teaching. Fitted to **Shionoiri 1992** benazepril and Shionoiri 1988 cilazapril in hypertensive patients with normal and impaired renal function; v2.1 adds lisinopril, delapril and ramipril. | MIT | stanpumpR's benazepril (Kaiser 1989) has no renal term, and Shionoiri 1992 appears nowhere in the repository. That paper measures benazeprilat with normal and impaired renal function, so it is a candidate source for a renal covariate, under the antihypertensive registry's rules (`docs/antihypertensives.md`). |
+| **Open Systems Pharmacology**, **mrgsolve**, **nlmixr2** | Already covered in section 2. | | |
+
+**Not relevant:** the rest of the 42 are deep-learning ADME predictors, chemical and peptide databases, oncology trial-design tools, PET and perfusion imaging kinetics, a PhysiCell PK/PD plug-in, global sensitivity analysis for PBPK (pksensi), and a "quantum-biological digital twin" (PreciseDose).
+
 ## Sources
 
 **Anesthesia simulators and TCI**
@@ -345,3 +378,13 @@ For each item: what it is, where it comes from, and what it would take.
 - https://www.page-meeting.org/Abstracts/tdmx-a-web-application-for-therapeutic-drug-monitoring-enhanced-by-pharmacometrics/
 - https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9008526/ (VancoCalc)
 - https://www.mdcalc.com/calc/10170
+
+**bio.tools**
+- https://bio.tools
+- https://github.com/matthiaskoenig/pkdb
+- https://github.com/FelicienLL/mapbayr
+- https://cran.r-project.org/package=PKconverter
+- https://github.com/pipetcpt/tdm-vancomycin
+- http://www.biit.cs.ut.ee/DosOpt
+- https://github.com/asancpt/caffsim
+- https://github.com/ashleefv/ACEInhibPKPD
