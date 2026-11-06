@@ -590,5 +590,13 @@ library could take from the event table. What they do not: none gives
 oxaliplatin parameters, and Bastian's k1B, TLAG and Ka were fitted to the
 single-emptying structure, so moving them into Okour's structure is a refit,
 not a reparameterisation (section 31's 20- and 32-h half-lives). The Bastian
-model stays as published; a meal-driven biliary engine is a decision for
-Shafer, its first drug one whose source fitted that structure.
+model stays as published.
+
+Decision (Shafer, 2026-11-06): the meal-driven gallbladder engine is NOT built
+now; it is recorded here as the physiological design for a later revision.
+If it is built, it would carry continuous secretion (part straight to the
+gut), a gallbladder emptied at meal times read from the event table (Okour's
+sigmoid switch, or a step), an optional basal fasting release
+(Guiastrennec), and reabsorption from the gut; its first drug should be one
+whose source fitted that structure (mycophenolate, Okour 2018), not
+oxaliplatin, whose published parameters belong to Bastian's single emptying.
