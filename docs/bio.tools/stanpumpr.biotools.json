@@ -1,0 +1,126 @@
+{
+  "name": "stanpumpR",
+  "biotoolsID": "stanpumpr",
+  "description": "Open-source pharmacokinetic/pharmacodynamic simulator, the successor to STANPUMP. From any dosing regimen it predicts and plots plasma and effect-site concentrations for more than 200 drugs in 20 classes: anaesthetics, opioids, sedatives, neuromuscular blockers, inhaled agents, antibiotics, anticoagulants, antiseizure, antidiabetic, antihypertensive, vasoactive, Parkinson disease and psychiatric drugs, and others. It supports intravenous, oral, sublingual, intramuscular, intranasal, subcutaneous, regional and inhaled routes. Every linear model is solved in closed form, with numerical engines for saturable elimination and the inhaled anaesthetics. Covariates include age, weight, height, sex, renal function, pregnancy and CYP genotypes. It simulates target-controlled infusion and recovery times. It runs as a Shiny web application, an R package and an HTTP simulation API, for perioperative care, teaching and research.",
+  "homepage": "https://stanpumpr.io",
+  "toolType": [
+    "Web application",
+    "Library",
+    "Web API"
+  ],
+  "topic": [
+    {
+      "uri": "http://edamontology.org/topic_0202",
+      "term": "Pharmacology"
+    },
+    {
+      "uri": "http://edamontology.org/topic_3375",
+      "term": "Drug metabolism"
+    },
+    {
+      "uri": "http://edamontology.org/topic_3403",
+      "term": "Critical care medicine"
+    },
+    {
+      "uri": "http://edamontology.org/topic_3401",
+      "term": "Pain medicine"
+    },
+    {
+      "uri": "http://edamontology.org/topic_3577",
+      "term": "Personalised medicine"
+    },
+    {
+      "uri": "http://edamontology.org/topic_0208",
+      "term": "Pharmacogenomics"
+    }
+  ],
+  "function": [
+    {
+      "operation": [
+        {
+          "uri": "http://edamontology.org/operation_2426",
+          "term": "Modelling and simulation"
+        },
+        {
+          "uri": "http://edamontology.org/operation_3441",
+          "term": "Plotting"
+        }
+      ],
+      "note": "Simulates plasma and effect-site drug concentrations from a dose table and patient covariates; computes target-controlled infusion schedules and the time until a concentration threshold is crossed."
+    }
+  ],
+  "operatingSystem": [
+    "Linux",
+    "Windows",
+    "Mac"
+  ],
+  "language": [
+    "R",
+    "JavaScript"
+  ],
+  "license": "MIT",
+  "cost": "Free of charge",
+  "accessibility": "Open access",
+  "link": [
+    {
+      "url": "https://github.com/StevenLShafer/stanpumpR",
+      "type": [
+        "Repository"
+      ]
+    },
+    {
+      "url": "https://github.com/StevenLShafer/stanpumpR/issues",
+      "type": [
+        "Issue tracker"
+      ]
+    }
+  ],
+  "download": [
+    {
+      "url": "https://github.com/StevenLShafer/stanpumpR/releases/tag/windows-binary",
+      "type": "Binaries",
+      "note": "Windows binary of the R package"
+    }
+  ],
+  "documentation": [
+    {
+      "url": "https://github.com/StevenLShafer/stanpumpR/blob/master/README.md",
+      "type": [
+        "General"
+      ]
+    },
+    {
+      "url": "https://github.com/StevenLShafer/stanpumpR/blob/master/docs/users-guide.md",
+      "type": [
+        "User manual"
+      ]
+    },
+    {
+      "url": "https://stanpumpr.io/api",
+      "type": [
+        "API documentation"
+      ]
+    }
+  ],
+  "credit": [
+    {
+      "name": "Steven L. Shafer",
+      "email": "steven.shafer@stanford.edu",
+      "orcidid": "https://orcid.org/0000-0002-0289-7793",
+      "typeEntity": "Person",
+      "typeRole": [
+        "Primary contact",
+        "Developer",
+        "Maintainer"
+      ]
+    },
+    {
+      "name": "Dean Attali",
+      "orcidid": "https://orcid.org/0000-0002-5645-3493",
+      "typeEntity": "Person",
+      "typeRole": [
+        "Developer"
+      ]
+    }
+  ]
+}
