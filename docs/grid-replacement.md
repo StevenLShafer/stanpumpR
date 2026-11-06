@@ -469,7 +469,8 @@ These are pending. Record each answer here.
 5. **[decision] The suite in CI.** A workflow with R and Chromium would run
    `tests/playwright/run.js` in about 15 minutes (most of it rhandsontable's
    510-row paste). Every PR, only PRs that touch the grid, or by hand?
-6. **[decision] The production grid's data-entry defects** (2026-11-05).
+6. **The production grid's data-entry defects. ANSWERED** (Shafer,
+   2026-11-06; asked 2026-11-05).
    The rhandsontable grid in use today:
    - stores a typed `1,5` as 15 and `1a0` as 10 without a word, because
      `hookFilterKeys()` in `inst/www/hot_funs.js` drops the keys a number
@@ -484,7 +485,15 @@ These are pending. Record each answer here.
      `propofol 10 100 mg` is fentanyl 10 100 mcg);
    - can be undone to a unit the drug does not offer.
 
-   The prototype has none of these. Fix the first, the one-line cause, in its
-   own small pull request now (letting every key through, so that
-   `hookSanitize()` refuses the entry as it refuses a paste), and switch to
-   the prototype for the rest? Or leave all of them until the switch?
+   The prototype has none of these. The question was whether to fix the
+   first, the one-line cause, in its own small pull request now (letting every
+   key through, so that `hookSanitize()` refuses the entry as it refuses a
+   paste), or to leave all of them until the switch.
+
+   **Answer: no separate fix.** "The migration will follow in hours, not
+   weeks." `hookFilterKeys()` serves only rhandsontable and is deleted with it
+   (step 8 of the migration order), so a fix would be thrown away within the
+   day. The same hook is on in the Edit doses, Events and Suggest Dosing
+   dialogs (`addHotHooks(filterKeys = TRUE)`), so the defect lasts in each
+   until its own step of the migration, not only until the main grid
+   switches.
