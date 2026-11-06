@@ -292,10 +292,13 @@
   };
 
   // A disabled cell (the Units list of a row with no drug) gives way to the
-  // nearest cell to its left that is not
+  // row's Drug cell, where the row is begun: Enter on the last dose's Units
+  // goes there, ready for the next drug.  (Sending it to the Dose cell
+  // instead, for the row menu's Tab, put the next drug typed in the Dose
+  // cell; the menu's Tab passes over disabled cells by itself.)
   DoseGrid.prototype.focusCell = function(r, c) {
     var ctl = this.control(r, c);
-    while (ctl && ctl.disabled && c > 0) ctl = this.control(r, --c);
+    if (ctl && ctl.disabled) ctl = this.control(r, COLS.DRUG);
     if (!ctl) return;
     ctl.focus();
     if (ctl.tagName === 'INPUT') ctl.select();
