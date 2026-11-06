@@ -33,19 +33,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>stanpumpR viewer</title>
+<title>Minto Visualizer</title>
 <style>
 /*@@viewer.css@@*/
 </style>
 </head>
 <body>
 <main id="view"></main>
+<div id="flat"></div>
 
 <div id="readout"></div>
 <div id="amounts"></div>
 <div id="perf"></div>
 
 <button id="close" title="Close the visualizer" aria-label="Close the visualizer">&#x2715;</button>
+<div id="brand">Minto Visualizer <span id="brandView">2D</span></div>
 
 <div id="controls">
   <button id="play" title="Play (space)">&#x25B6; Play</button>
@@ -57,6 +59,7 @@
   <label class="speedctl" title="Play speed (+ faster, − slower)">Speed
     <input id="speedSlider" type="range" min="0" max="1" step="1" value="0" aria-label="Play speed"></label>
   <span class="speed" id="speed"></span>
+  <button id="viewToggle" title="Switch between the 2D and 3D views (v)">3D view</button>
   <span class="tip"><kbd>h</kbd> help</span>
   <button id="open" title="Open a run file (.json)">Open run…</button>
   <input type="file" id="file" accept=".json,application/json" hidden>
@@ -68,6 +71,7 @@
   <div class="card">
     <h2 class="logo"><span class="sp">stanpump</span><span class="r">R</span></h2>
     <div class="about">
+      <p><b>2D view</b> (the first): each box is a compartment. Its width is the volume and its fill height the concentration, on one scale for every box and the whole run, so the filled area is the amount of drug. The thin blue bar beside V<sub>1</sub> is the effect site; each arrow's thickness is the rate. <b>3D view</b> (Charles Minto's): the same quantities in three dimensions.</p>
       <p>Each cylinder is a compartment. Its floor area is the volume and the liquid's height is the concentration, so the liquid itself represents the amount of drug.</p>
       <p>Each arrow is a flow of drug: the arrow's thickness (its cross-section) is the rate. <span class="in">Red</span> flows into V<sub>1</sub>; <span class="out">green</span> flows out of it. The arrow from above is the pump; the arrow from the front left is drug absorbed from a depot (an oral, SC, IM or other extravascular dose).</p>
       <p>Every flow is read from stanpumpR's own amounts as they change, so it holds for any model, saturable ones included.</p>
@@ -89,6 +93,7 @@
       </tbody>
       <tbody>
       <tr><td><kbd>space</kbd></td><td>play / pause</td></tr>
+      <tr><td><kbd>v</kbd></td><td>2D / 3D view (the keys above turn the 3D scene)</td></tr>
       <tr><td><kbd>+</kbd> <kbd>−</kbd></td><td>faster / slower play (or the Speed slider)</td></tr>
       </tbody>
       <tbody>
@@ -128,11 +133,15 @@
 /*@@scene.js@@*/
 </script>
 <script>
+/*@@flat.js@@*/
+</script>
+<script>
 /*@@player.js@@*/
 </script>
 <script>
   Perf.init(document.getElementById('perf'));
   View.init(document.getElementById('view'));
+  Flat.init(document.getElementById('flat'));
   Keys.init();
   Player.init();
 </script>

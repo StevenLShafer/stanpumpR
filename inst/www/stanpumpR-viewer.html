@@ -33,7 +33,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>stanpumpR viewer</title>
+<title>Minto Visualizer</title>
 <style>
 /* ═══════════════════════════════════════════════════════════════
    stanpumpR viewer — the page's styles
@@ -197,16 +197,35 @@ body.over #message .card { border-color: var(--accent); }
 #help tr.note td { padding-top: 0; font-size: 12px; opacity: 0.7; }
 #help tbody + tbody tr:first-child td { padding-top: 12px; }
 
+/* ── the 2D view (flat.js) ───────────────────────────────── */
+#flat { position: fixed; inset: 0; z-index: 1; background: #0e1a24; display: none; }
+#flat svg { display: block; font-family: system-ui, "Segoe UI", sans-serif; }
+#flat .tk { fill: #8a9cb0; font-size: 11px; }
+#flat .nm { fill: #e6edf5; font-size: 14px; font-weight: 600; }
+#flat .nm .s { font-size: 10px; }
+#flat .sub { fill: #8a9cb0; font-size: 11.5px; }
+#flat .val { fill: #e6edf5; font-size: 13px; font-variant-numeric: tabular-nums; }
+#flat .val.ce { fill: #8db8ff; }
+#flat .fl { font-size: 12px; font-variant-numeric: tabular-nums; }
+#flat .fl.in { fill: #ff9a90; } #flat .fl.out { fill: #7fe3a6; } #flat .fl.sub { fill: #8a9cb0; }
+
+/* ── the name, upper left, in both views ─────────────────── */
+#brand { position: fixed; left: 54px; top: 17px; z-index: 4; color: var(--ink); font: 600 16px/1.2 system-ui, "Segoe UI", sans-serif;
+  letter-spacing: 0.2px; pointer-events: none; }
+#brand span { color: var(--ink-2); font-weight: 500; font-size: 13px; margin-left: 4px; }
+
 </style>
 </head>
 <body>
 <main id="view"></main>
+<div id="flat"></div>
 
 <div id="readout"></div>
 <div id="amounts"></div>
 <div id="perf"></div>
 
 <button id="close" title="Close the visualizer" aria-label="Close the visualizer">&#x2715;</button>
+<div id="brand">Minto Visualizer <span id="brandView">2D</span></div>
 
 <div id="controls">
   <button id="play" title="Play (space)">&#x25B6; Play</button>
@@ -218,6 +237,7 @@ body.over #message .card { border-color: var(--accent); }
   <label class="speedctl" title="Play speed (+ faster, − slower)">Speed
     <input id="speedSlider" type="range" min="0" max="1" step="1" value="0" aria-label="Play speed"></label>
   <span class="speed" id="speed"></span>
+  <button id="viewToggle" title="Switch between the 2D and 3D views (v)">3D view</button>
   <span class="tip"><kbd>h</kbd> help</span>
   <button id="open" title="Open a run file (.json)">Open run…</button>
   <input type="file" id="file" accept=".json,application/json" hidden>
@@ -229,6 +249,7 @@ body.over #message .card { border-color: var(--accent); }
   <div class="card">
     <h2 class="logo"><span class="sp">stanpump</span><span class="r">R</span></h2>
     <div class="about">
+      <p><b>2D view</b> (the first): each box is a compartment. Its width is the volume and its fill height the concentration, on one scale for every box and the whole run, so the filled area is the amount of drug. The thin blue bar beside V<sub>1</sub> is the effect site; each arrow's thickness is the rate. <b>3D view</b> (Charles Minto's): the same quantities in three dimensions.</p>
       <p>Each cylinder is a compartment. Its floor area is the volume and the liquid's height is the concentration, so the liquid itself represents the amount of drug.</p>
       <p>Each arrow is a flow of drug: the arrow's thickness (its cross-section) is the rate. <span class="in">Red</span> flows into V<sub>1</sub>; <span class="out">green</span> flows out of it. The arrow from above is the pump; the arrow from the front left is drug absorbed from a depot (an oral, SC, IM or other extravascular dose).</p>
       <p>Every flow is read from stanpumpR's own amounts as they change, so it holds for any model, saturable ones included.</p>
@@ -250,6 +271,7 @@ body.over #message .card { border-color: var(--accent); }
       </tbody>
       <tbody>
       <tr><td><kbd>space</kbd></td><td>play / pause</td></tr>
+      <tr><td><kbd>v</kbd></td><td>2D / 3D view (the keys above turn the 3D scene)</td></tr>
       <tr><td><kbd>+</kbd> <kbd>−</kbd></td><td>faster / slower play (or the Speed slider)</td></tr>
       </tbody>
       <tbody>
@@ -5631,6 +5653,8 @@ const View = {
             const running = this.clockRunning();
             for (const a of Object.values(this.arrows)) a.tick(running ? dt : 0);
             this.vessels[1].tickRipples(dt, this.v1Mlh || 0, running);
+            // Hidden behind the 2D view (flat.js): nothing to draw.
+            if (this.container.style.display === 'none') { requestAnimationFrame(loop); return; }
             this.controls.update();
             Perf.render(this.renderer, () => this.renderer.render(this.scene, this.camera));
             this.labelRenderer.render(this.scene, this.camera);
@@ -6064,6 +6088,226 @@ const View = {
 </script>
 <script>
 // ═══════════════════════════════════════════════════════════════
+//  stanpumpR viewer — the 2D view
+//
+//  Written for stanpumpR by Claude Code (Anthropic), 2026-11-06, at the
+//  request of Steven L. Shafer, beside Charles Minto's 3D view.
+//
+//  Copyright (c) 2026 Charles Minto and Thomas Schnider
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in all
+//  copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//  SOFTWARE.
+//
+//  The same run, the same moment, drawn flat (after Tufte: as little ink as
+//  the quantities need, and no ink that misstates them):
+//    - each compartment is a box whose WIDTH is its volume and whose fill
+//      HEIGHT is its concentration, so the area of the fill is the amount
+//      of drug in it; one concentration scale serves every box, fixed for
+//      the whole run, so a level can be compared across boxes and times;
+//    - V2 to the left of V1, V3 to its right; the effect site a thin bar
+//      beside V1, on the same scale (its volume is negligible);
+//    - every flow an arrow whose thickness is its rate, on one scale fixed
+//      for the run (its 95th-percentile flow is the thickest arrow; a brief
+//      loading burst above it is drawn at that thickness, its label exact):
+//      red into V1, green out of it, as in the 3D view;
+//    - the TCI target a gold line, on V1 (TCI-P) or the effect site (TCI-E).
+//  Nothing here computes pharmacokinetics: draw() is handed the player's
+//  state for the moment (Player.stateAt()).
+// ═══════════════════════════════════════════════════════════════
+
+const FLAT_COLOURS = { in: '#ff6b5e', out: '#3fd47a', ce: '#3b82f6', target: '#ffd166',
+                       axis: '#8a9cb0', ink: '#e6edf5', box: 'rgba(230,237,245,0.55)' };
+const FLAT_ARROW_MAX = 26;       // px: the thickest arrow, the run's largest flow
+const FLAT_GAP = 96;             // px between boxes, holding the arrows between them
+const FLAT_CE_W = 12;            // px: the effect-site bar
+
+const Flat = {
+    el: null, run: null, ui: null, scale: null, last: null,
+
+    init(container) {
+        this.el = container;
+        window.addEventListener('resize', () => { if (this.last && this.visible()) this.draw(this.last); });
+    },
+    visible() { return this.el && this.el.style.display !== 'none'; },
+
+    // A new run: the fixed scales, from every moment of it.
+    // stateAt: the player's own function, so the flows are the ones it draws.
+    setRun(r, ui, stateAt) {
+        this.run = r; this.ui = ui; this.last = null;
+        const n = r.t.length, step = Math.max(1, Math.floor(n / 600));
+        let cMax = 0;
+        const flows = [];
+        const consider = st => {
+            cMax = Math.max(cMax, st.cp, st.ce || 0, st.c2 || 0, st.c3 || 0, st.mode !== 'manual' ? st.target : 0);
+            flows.push(Math.max(Math.abs(st.flow.in), Math.abs(st.flow.abs), Math.abs(st.flow.out),
+                                Math.abs(st.flow.to2), Math.abs(st.flow.to3)));
+        };
+        for (let i = 0; i < n - 1; i += step) consider(stateAt((r.t[i] + r.t[i + 1]) / 2));
+        consider(stateAt(r.t[n - 1]));
+        // The arrow scale: the run's 95th-percentile flow, not its largest, so
+        // a loading burst of a few seconds does not make every other arrow a
+        // hairline; a flow above it is drawn at the thickest, its label exact.
+        flows.sort((a, b) => a - b);
+        const f95 = flows[Math.floor(0.95 * (flows.length - 1))] || flows[flows.length - 1] || 0;
+        this.scale = { top: niceTop(cMax > 0 ? cMax : 1), fMax: f95 > 0 ? f95 : (flows[flows.length - 1] || 1) };
+    },
+
+    draw(st) {
+        this.last = st;
+        if (!this.visible() || !this.run) return;
+        const r = this.run, u = this.ui.units, dp = this.ui.concDecimals;
+        const W = this.el.clientWidth, H = this.el.clientHeight;
+        // The plot area: room above for the pump, below for elimination and
+        // the cards along the bottom.
+        // (The readout and amounts cards take about the bottom 210 px.)
+        const x0 = 70, x1 = W - 40, yTop = 96, yBase = Math.max(yTop + 120, H - 320);
+        const ph = yBase - yTop;
+        const k = 1 + (st.c2 != null) + (st.c3 != null);
+        const v = [r.pk.v1, st.c2 != null ? r.pk.v2 : 0, st.c3 != null ? r.pk.v3 : 0];
+        const gaps = (k - 1) * FLAT_GAP + FLAT_CE_W + 10;
+        const pxPerL = Math.max(0.01, (x1 - x0 - gaps - 20) / (v[0] + v[1] + v[2]));
+        const w1 = Math.max(3, v[0] * pxPerL), w2 = v[1] * pxPerL, w3 = v[2] * pxPerL;
+        // Left to right: V2, V1 with the effect site beside it, V3.
+        const bx2 = x0 + 20, bx1 = (st.c2 != null ? bx2 + w2 + FLAT_GAP : x0 + 20), bxe = bx1 + w1 + 6;
+        const bx3 = bxe + FLAT_CE_W + FLAT_GAP - 6;
+        const yOf = c => yBase - Math.min(1, Math.max(0, c / this.scale.top)) * ph;
+        const thick = f => Math.abs(f) > 0 ? Math.min(FLAT_ARROW_MAX, Math.max(1.5, FLAT_ARROW_MAX * Math.abs(f) / this.scale.fMax)) : 0;
+        const fmt = x => x == null ? '–' : x.toFixed(dp);
+        const amt = x => x.toFixed(x < 10 ? 2 : 1);
+        const e = s => escapeHtml(String(s));
+        const out = [];
+
+        // The concentration axis: a few round ticks, the unit once.
+        for (const tk of ticks(this.scale.top)) {
+            const y = yOf(tk);
+            out.push(`<line x1="${x0 - 6}" y1="${y}" x2="${x0}" y2="${y}" stroke="${FLAT_COLOURS.axis}"/>`,
+                     `<text x="${x0 - 10}" y="${y + 4}" text-anchor="end" class="tk">${e(fmtTick(tk))}</text>`);
+        }
+        out.push(`<line x1="${x0}" y1="${yTop}" x2="${x0}" y2="${yBase}" stroke="${FLAT_COLOURS.axis}"/>`,
+                 `<text x="${x0 - 10}" y="${yTop - 14}" text-anchor="end" class="tk">${e(u.conc)}</text>`);
+
+        const fill = `rgb(${this.ui.drugRgb.map(c => Math.round(c * 255)).join(',')})`;
+        const box = (x, w, c, A, name, vol) => {
+            const y = yOf(c);
+            out.push(`<rect x="${x}" y="${y}" width="${w}" height="${yBase - y}" fill="${fill}" fill-opacity="0.85"/>`,
+                     `<rect x="${x}" y="${yTop}" width="${w}" height="${ph}" fill="none" stroke="${FLAT_COLOURS.box}"/>`,
+                     `<text x="${x + w / 2}" y="${yBase + 18}" text-anchor="middle" class="nm">${name}</text>`,
+                     `<text x="${x + w / 2}" y="${yBase + 34}" text-anchor="middle" class="sub">${e(vol < 10 ? vol.toFixed(2) : vol.toFixed(1))} L</text>`,
+                     `<text x="${x + w / 2}" y="${Math.min(y, yBase - 4) - 8}" text-anchor="middle" class="val">${e(fmt(c))}</text>`,
+                     `<text x="${x + w / 2}" y="${yBase + 50}" text-anchor="middle" class="sub">${e(amt(A))} ${e(u.amount)}</text>`);
+        };
+        box(bx1, w1, st.cp, st.A1, 'V<tspan class="s" dy="3">1</tspan>', v[0]);
+        if (st.c2 != null) box(bx2, w2, st.c2, st.A2, 'V<tspan class="s" dy="3">2</tspan>', v[1]);
+        if (st.c3 != null) box(bx3, w3, st.c3, st.A3, 'V<tspan class="s" dy="3">3</tspan>', v[2]);
+
+        // The effect site, on the same scale.
+        if (this.ui.showCe) {
+            const y = yOf(st.ce);
+            out.push(`<rect x="${bxe}" y="${y}" width="${FLAT_CE_W}" height="${yBase - y}" fill="${FLAT_COLOURS.ce}"/>`,
+                     `<rect x="${bxe}" y="${yTop}" width="${FLAT_CE_W}" height="${ph}" fill="none" stroke="${FLAT_COLOURS.box}" stroke-dasharray="2 3"/>`,
+                     `<text x="${bxe + FLAT_CE_W / 2}" y="${yBase + 18}" text-anchor="middle" class="nm">Ce</text>`,
+                     `<text x="${bxe + FLAT_CE_W + 4}" y="${Math.min(y, yBase - 4) - 8}" class="val ce">${e(fmt(st.ce))}</text>`);
+        }
+
+        // The target.
+        if (st.mode === 'plasma' || st.mode === 'effect') {
+            const y = yOf(st.target), [xa, xb] = st.mode === 'plasma' ? [bx1 - 4, bx1 + w1 + 4] : [bxe - 3, bxe + FLAT_CE_W + 3];
+            out.push(`<line x1="${xa}" y1="${y}" x2="${xb}" y2="${y}" stroke="${FLAT_COLOURS.target}" stroke-width="2.5"/>`);
+        }
+
+        // Arrows: thickness is the rate. Vertical into V1's top (the pump, and
+        // absorption beside it), down out of its floor (elimination);
+        // horizontal between V1 and V2 or V3 (the net flow).
+        const cx1 = bx1 + w1 / 2;
+        const label = (x, y, anchor, text, cls) =>
+            out.push(`<text x="${x}" y="${y}" text-anchor="${anchor}" class="fl ${cls}">${text}</text>`);
+        // Three significant figures: a small rate (0.0123 mg/min) must not read 0.01 or 0.00.
+        const sig3 = x => x === 0 ? '0' : x >= 100 ? x.toFixed(0) : x.toPrecision(3);
+        const rateTxt = f => `${e(sig3(Math.abs(f)))} ${e(u.rate)}`;
+        if (st.flow.in > 0 || st.bolus > 0) {
+            const tw = st.bolus > 0 ? FLAT_ARROW_MAX : thick(st.flow.in), xi = st.flow.abs > 0 ? cx1 - 9 : cx1;
+            arrowV(out, xi, yTop - 58, yTop - 2, tw, FLAT_COLOURS.in);
+            label(xi - tw / 2 - 6, yTop - 40, 'end', st.bolus > 0 ? `Bolus ${e(amt(st.bolus))} ${e(u.amount)}` : `Pump ${rateTxt(st.flow.in)}`, 'in');
+        }
+        if (st.flow.abs > 0) {
+            const tw = thick(st.flow.abs), xa = st.flow.in > 0 || st.bolus > 0 ? cx1 + 9 : cx1;
+            arrowV(out, xa, yTop - 58, yTop - 2, tw, FLAT_COLOURS.in);
+            label(xa + tw / 2 + 6, yTop - 40, 'start', `Absorbed ${rateTxt(st.flow.abs)}`, 'in');
+        }
+        if (st.depot != null)
+            label(cx1 + 16, yTop - 22, 'start', `Depot ${e(amt(st.depot))} ${e(u.amount)}`, 'sub');
+        if (st.flow.out > 0) {
+            const tw = thick(st.flow.out);
+            arrowV(out, cx1, yBase + 60, yBase + 100, tw, FLAT_COLOURS.out);
+            label(cx1 + tw / 2 + 8, yBase + 88, 'start', `Eliminated ${rateTxt(st.flow.out)}`, 'out');
+        }
+        const between = (f, xL, xR, toLeft) => {
+            if (!(Math.abs(f) > 0)) return;
+            // f > 0 is out of V1; toLeft: the peripheral box is on the left.
+            const leaving = f > 0, tw = thick(f), y = yBase - Math.max(14, tw / 2 + 6);
+            const pointsLeft = leaving === toLeft;
+            arrowH(out, pointsLeft ? xR - 6 : xL + 6, pointsLeft ? xL + 6 : xR - 6, y, tw, leaving ? FLAT_COLOURS.out : FLAT_COLOURS.in);
+            label((xL + xR) / 2, y - tw / 2 - 6, 'middle', rateTxt(f), leaving ? 'out' : 'in');
+        };
+        if (st.c2 != null) between(st.flow.to2, bx2 + w2, bx1, true);
+        if (st.c3 != null) between(st.flow.to3, bxe + FLAT_CE_W, bx3, false);
+
+        this.el.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${out.join('')}</svg>`;
+    }
+};
+
+// A vertical arrow from y0 down to y1 (y1 > y0), shaft thickness w.
+function arrowV(out, x, y0, y1, w, colour) {
+    const hl = Math.min(14, (y1 - y0) / 2), hw = Math.max(w * 1.8, 8);
+    out.push(`<rect x="${x - w / 2}" y="${y0}" width="${w}" height="${y1 - y0 - hl}" fill="${colour}"/>`,
+             `<polygon points="${x - hw / 2},${y1 - hl} ${x + hw / 2},${y1 - hl} ${x},${y1}" fill="${colour}"/>`);
+}
+// A horizontal arrow from xa to xb, shaft thickness w, at height y.
+function arrowH(out, xa, xb, y, w, colour) {
+    const dir = xb > xa ? 1 : -1, hl = Math.min(14, Math.abs(xb - xa) / 2), hw = Math.max(w * 1.8, 8);
+    const xs = Math.min(xa, xb - dir * hl), xe = Math.max(xa, xb - dir * hl);
+    out.push(`<rect x="${xs}" y="${y - w / 2}" width="${xe - xs}" height="${w}" fill="${colour}"/>`,
+             `<polygon points="${xb - dir * hl},${y - hw / 2} ${xb - dir * hl},${y + hw / 2} ${xb},${y}" fill="${colour}"/>`);
+}
+
+// The axis top: the next 1, 1.5, 2, 2.5, 3, 4, 5, 6 or 8 x 10^n at or above x.
+function niceTop(x) {
+    const p = Math.pow(10, Math.floor(Math.log10(x)));
+    for (const m of [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (m * p >= x * 1.0001) return m * p;
+    return 10 * p;
+}
+function ticks(top) {
+    const p = Math.pow(10, Math.floor(Math.log10(top))), m = top / p;
+    const step = (m <= 2 ? 0.5 : m <= 5 ? 1 : 2) * p;
+    const out = [];
+    for (let x = 0; x <= top * 1.0001; x += step) out.push(x);
+    return out;
+}
+function fmtTick(x) {
+    if (x === 0) return '0';
+    const d = Math.max(0, -Math.floor(Math.log10(Math.abs(x))) + 1);
+    const t = x.toFixed(Math.min(d, 6));
+    return t.includes('.') ? t.replace(/0+$/, '').replace(/\.$/, '') : t;
+}
+
+</script>
+<script>
+// ═══════════════════════════════════════════════════════════════
 //  stanpumpR viewer — the player
 //
 //  Author:    Dr Charles Minto
@@ -6231,6 +6475,8 @@ function hms(sec) {
 
 const Player = {
     run: null, ui: null, T: 0, playing: false, last: null, speed: PLAYER_SPEED,
+    // The view shown: '2d' (flat.js, the first, Shafer 2026-11-06) or '3d' (the scene).
+    view: '2d',
     $: id => document.getElementById(id),
 
     init() {
@@ -6238,6 +6484,8 @@ const Player = {
         this.$('pause').addEventListener('click', () => this.pause());
         this.$('stop').addEventListener('click', () => this.stop());
         this.$('close').addEventListener('click', () => this.close());
+        this.$('viewToggle').addEventListener('click', () => this.setView(this.view === '2d' ? '3d' : '2d'));
+        this.setView(this.view);
         const sp = this.$('speedSlider');
         sp.max = SPEEDS.length - 1;
         sp.addEventListener('input', () => this.setSpeed(SPEEDS[+sp.value]));
@@ -6322,6 +6570,7 @@ const Player = {
         View.resetGlass();
         View.vessels[1].setVisible(true);       // hidden before the first run (empty())
         View.setShape({ n: this.n, vc: r.pk.v1, v2: r.pk.v2, v3: r.pk.v3 });
+        Flat.setRun(r, this.ui, T => this.stateAt(T));
         const slider = this.$('t');
         slider.min = r.t[0]; slider.max = r.t[r.t.length - 1]; slider.step = 'any';
         this.$('end').textContent = hms(r.t[r.t.length - 1]);
@@ -6412,6 +6661,7 @@ const Player = {
         this.T = Math.min(r.t[r.t.length - 1], Math.max(r.t[0], T));
         const st = this.stateAt(this.T);
         View.draw(st, this.ui);
+        Flat.draw(st);
         const slider = this.$('t');
         slider.value = this.T;
         slider.style.setProperty('--pct', `${100 * (this.T - r.t[0]) / (r.t[r.t.length - 1] - r.t[0])}%`);
@@ -6489,6 +6739,17 @@ const Player = {
         this.playing = false; View.playing = false;
         this.buttons();
     },
+    // Show the 2D view or the 3D scene; the run, the time and the controls
+    // are the same in both.
+    setView(v) {
+        this.view = v;
+        document.getElementById('flat').style.display = v === '2d' ? 'block' : 'none';
+        document.getElementById('view').style.display = v === '3d' ? 'block' : 'none';
+        this.$('viewToggle').textContent = v === '2d' ? '3D view' : '2D view';
+        this.$('brandView').textContent = v === '2d' ? '2D' : '3D';
+        if (v === '3d') View.resize();
+        if (this.run) this.seek(this.T);
+    },
     // Stop: pause and go back to the start.
     stop() {
         this.pause();
@@ -6555,6 +6816,8 @@ const Keys = {
             if (e.key === 'p' || e.key === 'P') { Perf.toggle(); return; }
             // a: the amounts card.
             if (e.key === 'a' || e.key === 'A') { Player.toggleAmounts(); return; }
+            // v: the 2D or the 3D view.
+            if (e.key === 'v' || e.key === 'V') { Player.setView(Player.view === '2d' ? '3d' : '2d'); return; }
             // + and - (= and _ on the same keys, unshifted or shifted): faster or slower play.
             if (e.key === '+' || e.key === '=') { Player.nextSpeed(1); e.preventDefault(); return; }
             if (e.key === '-' || e.key === '_') { Player.nextSpeed(-1); e.preventDefault(); return; }
@@ -6589,6 +6852,7 @@ const Keys = {
 <script>
   Perf.init(document.getElementById('perf'));
   View.init(document.getElementById('view'));
+  Flat.init(document.getElementById('flat'));
   Keys.init();
   Player.init();
 </script>

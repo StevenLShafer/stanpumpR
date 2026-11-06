@@ -166,6 +166,8 @@ function hms(sec) {
 
 const Player = {
     run: null, ui: null, T: 0, playing: false, last: null, speed: PLAYER_SPEED,
+    // The view shown: '2d' (flat.js, the first, Shafer 2026-11-06) or '3d' (the scene).
+    view: '2d',
     $: id => document.getElementById(id),
 
     init() {
@@ -173,6 +175,8 @@ const Player = {
         this.$('pause').addEventListener('click', () => this.pause());
         this.$('stop').addEventListener('click', () => this.stop());
         this.$('close').addEventListener('click', () => this.close());
+        this.$('viewToggle').addEventListener('click', () => this.setView(this.view === '2d' ? '3d' : '2d'));
+        this.setView(this.view);
         const sp = this.$('speedSlider');
         sp.max = SPEEDS.length - 1;
         sp.addEventListener('input', () => this.setSpeed(SPEEDS[+sp.value]));
@@ -257,6 +261,7 @@ const Player = {
         View.resetGlass();
         View.vessels[1].setVisible(true);       // hidden before the first run (empty())
         View.setShape({ n: this.n, vc: r.pk.v1, v2: r.pk.v2, v3: r.pk.v3 });
+        Flat.setRun(r, this.ui, T => this.stateAt(T));
         const slider = this.$('t');
         slider.min = r.t[0]; slider.max = r.t[r.t.length - 1]; slider.step = 'any';
         this.$('end').textContent = hms(r.t[r.t.length - 1]);
@@ -347,6 +352,7 @@ const Player = {
         this.T = Math.min(r.t[r.t.length - 1], Math.max(r.t[0], T));
         const st = this.stateAt(this.T);
         View.draw(st, this.ui);
+        Flat.draw(st);
         const slider = this.$('t');
         slider.value = this.T;
         slider.style.setProperty('--pct', `${100 * (this.T - r.t[0]) / (r.t[r.t.length - 1] - r.t[0])}%`);
@@ -424,6 +430,17 @@ const Player = {
         this.playing = false; View.playing = false;
         this.buttons();
     },
+    // Show the 2D view or the 3D scene; the run, the time and the controls
+    // are the same in both.
+    setView(v) {
+        this.view = v;
+        document.getElementById('flat').style.display = v === '2d' ? 'block' : 'none';
+        document.getElementById('view').style.display = v === '3d' ? 'block' : 'none';
+        this.$('viewToggle').textContent = v === '2d' ? '3D view' : '2D view';
+        this.$('brandView').textContent = v === '2d' ? '2D' : '3D';
+        if (v === '3d') View.resize();
+        if (this.run) this.seek(this.T);
+    },
     // Stop: pause and go back to the start.
     stop() {
         this.pause();
@@ -490,6 +507,8 @@ const Keys = {
             if (e.key === 'p' || e.key === 'P') { Perf.toggle(); return; }
             // a: the amounts card.
             if (e.key === 'a' || e.key === 'A') { Player.toggleAmounts(); return; }
+            // v: the 2D or the 3D view.
+            if (e.key === 'v' || e.key === 'V') { Player.setView(Player.view === '2d' ? '3d' : '2d'); return; }
             // + and - (= and _ on the same keys, unshifted or shifted): faster or slower play.
             if (e.key === '+' || e.key === '=') { Player.nextSpeed(1); e.preventDefault(); return; }
             if (e.key === '-' || e.key === '_') { Player.nextSpeed(-1); e.preventDefault(); return; }

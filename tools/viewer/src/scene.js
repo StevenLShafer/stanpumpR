@@ -193,6 +193,8 @@ const View = {
             const running = this.clockRunning();
             for (const a of Object.values(this.arrows)) a.tick(running ? dt : 0);
             this.vessels[1].tickRipples(dt, this.v1Mlh || 0, running);
+            // Hidden behind the 2D view (flat.js): nothing to draw.
+            if (this.container.style.display === 'none') { requestAnimationFrame(loop); return; }
             this.controls.update();
             Perf.render(this.renderer, () => this.renderer.render(this.scene, this.camera));
             this.labelRenderer.render(this.scene, this.camera);

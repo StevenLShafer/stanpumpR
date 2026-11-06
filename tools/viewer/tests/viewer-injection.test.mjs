@@ -253,3 +253,29 @@ test('a saturable drug with unknown input draws no elimination arrow; a linear o
   assert.ok(Math.abs(outLin[0] - outLin[1]) < 1e-12 && outLin[0] > 0, 'linear drug lost its elimination rate');
   assertClean(page);
 });
+
+// The 2D view (flat.js, 2026-11-06).
+test('the 2D view is the first, draws the run, and switches to 3D and back', { skip }, async t => {
+  const page = await viewerPage(t);
+  assert.equal(await loadRun(page, RUN), true);
+  const first = await page.evaluate(() => ({
+    view: Player.view,
+    rects: document.querySelectorAll('#flat svg rect').length,
+    flatShown: getComputedStyle(document.getElementById('flat')).display,
+  }));
+  assert.equal(first.view, '2d');
+  assert.equal(first.flatShown, 'block');
+  assert.ok(first.rects >= 6, 'too few boxes drawn: ' + first.rects);
+  // V1's fill height is its concentration on the shared scale.
+  const fill = await page.evaluate(() => {
+    Player.seek(1500);
+    const st = Player.stateAt(1500);
+    return { cp: st.cp, top: Flat.scale.top };
+  });
+  assert.ok(fill.cp > 0 && fill.cp <= fill.top, 'Cp above the axis top');
+  await page.click('#viewToggle');
+  assert.equal(await page.evaluate(() => [Player.view, getComputedStyle(document.getElementById('flat')).display].join()), '3d,none');
+  await page.click('#viewToggle');
+  assert.equal(await page.evaluate(() => Player.view), '2d');
+  assertClean(page);
+});
