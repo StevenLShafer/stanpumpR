@@ -242,14 +242,29 @@ tciSchedule <- function(dose, PK, maximum,
         tLastChange <- te; dt <- interval
         changeTimes <- c(changeTimes, te)
       } else {
-        # Target 0: the pump stops and stays off.
-        if (mode == "tci") emit(te, 0, 0)
-        mode <- "manual"; manualRate <- 0; CT <- 0
+        # Target 0: the pump stops and stays off.  "A TCI target zeroes any
+        # manual infusion that is running", and a target of 0 is no exception:
+        # a manual infusion running from an earlier time stops here too.  The
+        # zero row is what stops it in the engine, where a rate row replaces
+        # the rate running before it.  A manual infusion entered at this same
+        # time is kept (only a non-zero target overrides one, above), so it is
+        # the switch from TCI to that manual rate, and the controller's model
+        # keeps running it.  Until 2026-11-06 a target of 0 after a manual
+        # infusion, with no target before it, left the schedule empty and
+        # data.frame() below failed on the length-1 Bolus column, ending the
+        # simulation; and had it not, the engine would have run the manual
+        # infusion on to the end of the plot while the controller's model had
+        # stopped it.  (Claude Code, 2026-11-06, at the request of Steven L.
+        # Shafer.)
+        if (mode == "tci" || manualRate > 0) emit(te, 0, 0)
+        if (nrow(m) == 0) manualRate <- 0
+        mode <- "manual"; CT <- 0
       }
     }
   }
 
-  rates <- data.frame(Time = rTime, Rate = rRate, Dt = rDt, Bolus = FALSE)
+  rates <- data.frame(Time = rTime, Rate = rRate, Dt = rDt,
+                      Bolus = rep(FALSE, length(rTime)))
 
   # The loading dose: the interval(s) after a target increase that deliver
   # far more than the interval that follows.  With the effect site targeted
