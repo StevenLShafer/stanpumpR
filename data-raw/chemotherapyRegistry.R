@@ -216,7 +216,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 FULL_TEXT_READ <- c("C01", "P02", "C35", "C03")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
-PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09")
+PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
   ifelse(pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
@@ -502,9 +502,10 @@ registry <- rbind(
     "Protein and albumin are not Patient Profile fields; unbound concentration needs the paper's binding relation."),
   m("etoposide__children__urien2011", "etoposide", "etoposide", "IV",
     "67 children 14 weeks-16.7 years", "etoposide",
-    "two compartments, allometric weight; no dexamethasone or CYP3A/MDR1 effect",
+    "two compartments allometric in weight (3/4 on clearances, 1 on volumes, at 70 kg): CL 2.05 L/h, Vc 9.3 L, Q 0.68 L/h, Vp 5.7 L; no dexamethasone or CYP3A/MDR1 effect",
     "second", "linear", "C30",
-    "The handoff named the first author You; PubMed's is Urien."),
+    "PDF read (supplied 2026-11-06). The handoff named the first author You; PubMed's is Urien. Three misprints, none affecting the model: the Methods give the clearance exponent as 1/4 where the Abstract, Table 3 and the dosing formula give 3/4; Table 3's covariate column prints CL70 for every parameter; and its footnote's 15-kg check, 0.75 L/h, is 0.646 by its own equation. The Abstract's Vc is 9.21 L, Table 3's 9.3 (used).",
+    readiness = "implemented", stanpumpr_drug = "etoposidePediatric"),
   m("etoposide__neuroblastoma__duong2019", "etoposide", "etoposide", "IV",
     "51 children with high-risk neuroblastoma", "etoposide",
     "population model, allometric weight only", "second", "unknown", "C04"),

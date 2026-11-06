@@ -2419,7 +2419,18 @@ registry <- rbind(
       source = "Creinin MD, Krohn MA. Am J Obstet Gynecol 1997;177:1444-1449 PMID 9423749",
       source_url = "https://doi.org/10.1016/s0002-9378(97)70089-9",
       to_obtain = "Creinin 1997 (PMID 9423749), for the nonpregnant reference values its abstract does not name",
-      notes = "Methotrexate is contraindicated in pregnancy except for ectopic pregnancy and termination; its clearance is renal, so the rise in filtration of pregnancy would be expected to raise it, but no high-dose setting exists in late pregnancy, and nothing is applied.")
+      notes = "Methotrexate is contraindicated in pregnancy except for ectopic pregnancy and termination; its clearance is renal, so the rise in filtration of pregnancy would be expected to raise it, but no high-dose setting exists in late pregnancy, and nothing is applied."),
+  row("etoposidePediatric", "Chemotherapy", "unknown",
+      finding = "No human comparison of etoposide pharmacokinetics in and out of pregnancy found (PubMed searched 2026-11-06: etoposide with pregnancy or pregnant and pharmacokinetic, plasma concentration or clearance; 9 records). The pregnancy-related records are case reports of treatment in the third trimester without drug levels (PMID 34325722, 21769666) and nonpregnant patients with gestational trophoblastic disease (D'Incalci 1985, PMID 2981622; Brindley 1985, PMID 4039984), not pregnant women.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = "", comparator = "",
+      design = "none", n = 0L, confidence = "low",
+      evidence_read = "abstract",
+      source = "",
+      source_url = "",
+      to_obtain = "",
+      notes = "The model is of children; etoposide is about a third renally cleared, but no pregnant measurement exists, and nothing is applied.")
 )
 
 stopifnot(

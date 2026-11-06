@@ -219,3 +219,15 @@ Tan 2026 (`R/drugs_fluorouracilTan.R`), from the PDF Shafer supplied, offered be
 as levodopaSimon is beside levodopa: two compartments with saturable elimination alone, BSA on
 Vmax. It reproduces the paper's Table 3 median AUCs to within 2%. For the same patient Briki's
 model gives about 14% less exposure; the help pages of both say so, and neither is preferred.
+
+## 12. Etoposide in children
+
+`etoposidePediatric` is Urien 2011 (C30; PDF supplied 2026-11-06, Table 3 and
+the allometric equation read on the page images): two compartments, every
+parameter allometric in body weight at 70 kg (3/4 on CL 2.05 L/h and Q 0.68
+L/h, 1 on Vc 9.3 L and Vp 5.7 L). The paper's three misprints (a 1/4
+exponent in the Methods, CL70 printed for every parameter in Table 3's
+covariate column, and a 15-kg check of 0.75 L/h that its own equation puts at
+0.646) do not touch the model; the test pins 0.646. An adult etoposide model
+waits: Nguyen 1998 (P21), read in full, never prints its intercompartmental
+clearance, so only a one-compartment reduction could be built from it.

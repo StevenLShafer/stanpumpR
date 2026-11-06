@@ -226,3 +226,4 @@ busulfan,ng,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#4E342E,0,0,0,0,0,IV,Chemot
 methotrexatePediatric,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#1B5E20,0,0,0,0,0,IV,Chemotherapy
 methotrexate,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#2E7D32,0,0,0,0,0,IV,Chemotherapy
 fluorouracilTan,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#AD1457,0,0,0,0,0,IV,Chemotherapy
+etoposidePediatric,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#6A1B9A,0,0,0,0,0,IV,Chemotherapy

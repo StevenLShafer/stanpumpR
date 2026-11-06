@@ -441,7 +441,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "istradefylline", "amantadineER", "pimavanserin", "tolcapone",
     # Chemotherapy (2026-11-05): plasma only
     "cladribine", "fluorouracil", "carboplatin", "busulfan",
-    "methotrexatePediatric", "methotrexate", "fluorouracilTan"
+    "methotrexatePediatric", "methotrexate", "fluorouracilTan", "etoposidePediatric"
   ))
 })
 
