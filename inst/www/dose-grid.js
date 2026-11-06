@@ -475,6 +475,14 @@
     this.pasteBlock(at[0], at[1], parseTSV(text));
   };
 
+  // A pasted row is taken whole or not at all.  Its drug, time and dose
+  // belong together: a row whose drug is refused, or whose time or dose
+  // cannot be read, leaves the table's row as it was, and is said.  A row
+  // whose drug changes starts afresh, at time 0, dose 0 and the new drug's
+  // default unit, before the cells pasted with it are read: until 2026-11-06
+  // "fentanyl BADTIME BADOSE mcg" over "propofol 10 100 mg" gave fentanyl
+  // 10 100 mcg, propofol's time and dose carried over to fentanyl (the
+  // external review of that day, N02, reproduced on both grids).
   DoseGrid.prototype.pasteBlock = function(r0, c0, block) {
     var refusedEntries = [], refusedUnits = [], refusedDrugs = [];
     var dropped = 0;
@@ -483,25 +491,23 @@
       if (r >= this.maxRows) { dropped = block.length - i; break; }
       while (this.rows.length <= r) this.rows.push(blankRow());
       var line = block[i];
-      var row = this.rows[r];
+      var row = this.rows[r].slice();
       var touched = {};
       for (var j = 0; j < line.length && c0 + j < NCOL; j++) touched[c0 + j] = line[j];
+      var fresh = false;
       if (touched.hasOwnProperty(COLS.DRUG)) {
         var d = this.canonicalDrug(touched[COLS.DRUG], row[COLS.DRUG]);
-        // A pasted row whose drug is refused is refused whole: its time, dose
-        // and unit belong to that drug, not to the one the row already holds
-        // ("notadrug 5 999 mg/kg" over a propofol row made it propofol 999
-        // mg/kg; the external review of 2026-11-05, Gemini's script)
+        // a drug that is refused refuses its row ("notadrug 5 999 mg/kg"
+        // over a propofol row made it propofol 999 mg/kg; the external
+        // review of 2026-11-05, Gemini's script)
         if (d === null) { refusedDrugs.push(trimEntry(touched[COLS.DRUG])); continue; }
         if (d !== row[COLS.DRUG]) {
-          var drugOnly = Object.keys(touched).length === 1;
-          row[COLS.DRUG] = d;
-          // a drug pasted alone starts its row as a drug chosen alone does:
-          // time 0, dose 0 and the drug's default unit
-          if (drugOnly && d !== '') { row[COLS.TIME] = '0'; row[COLS.DOSE] = '0'; row[COLS.UNITS] = ''; }
+          fresh = d !== '';
+          row = fresh ? [d, '0', '0', ''] : blankRow();
         }
       }
       if (isBlank(row[COLS.DRUG])) { this.rows[r] = blankRow(); continue; }
+      var refusedHere = [];
       [COLS.TIME, COLS.DOSE].forEach(function(c) {
         // a cell the paste leaves blank in a row it gives a drug is 0, as a
         // drug chosen alone starts at time 0, dose 0
@@ -509,10 +515,14 @@
           if (isBlank(row[c])) row[c] = '0';
           return;
         }
-        var e = this.readEntry(c, touched[c], row[c], true);
-        if (e.refused !== undefined) { refusedEntries.push({ col: c, entry: e.refused }); row[c] = e.keep; }
+        var e = this.readEntry(c, touched[c], fresh ? '' : row[c], true);
+        if (e.refused !== undefined) refusedHere.push({ col: c, entry: e.refused });
         else row[c] = (e.value === '') ? '0' : e.value;
       }, this);
+      if (refusedHere.length) {
+        Array.prototype.push.apply(refusedEntries, refusedHere);
+        continue;
+      }
       var asked;
       if (touched.hasOwnProperty(COLS.UNITS) && trimEntry(touched[COLS.UNITS]) !== '') {
         asked = trimEntry(touched[COLS.UNITS]);
@@ -522,11 +532,15 @@
         }
       }
       this.settleUnit(row, asked);
+      this.rows[r] = row;
     }
     if (refusedDrugs.length) {
       notify(refusedDrugs.map(function(d) { return '"' + d + '" is not a drug in the library; its row was not pasted.'; }), 'doseGridDrugRefused');
     }
-    if (refusedEntries.length) notifyRefusedEntries(refusedEntries, COLS.TIME);
+    if (refusedEntries.length) {
+      notifyRefusedEntries(refusedEntries, COLS.TIME,
+        'A pasted row with a time or dose that was not accepted was not pasted: its row is as it was.');
+    }
     notifyRefusedUnits(refusedUnits, "it was not used. Check the row's unit.");
     if (dropped > 0) {
       notify([dropped + ' pasted row' + (dropped === 1 ? ' was' : 's were') + ' not added: the table holds at most ' +
@@ -560,8 +574,9 @@
     this.focusCell(r, col);
   };
 
-  DoseGrid.prototype.openMenu = function(r, x, y) {
+  DoseGrid.prototype.openMenu = function(r, x, y, c) {
     this.menuRow = r;
+    this.menuCol = (c === undefined) ? COLS.DRUG : c;
     this.menu.hidden = false;
     var box = this.root.getBoundingClientRect();
     this.menu.style.left = Math.max(0, x - box.left) + 'px';
@@ -574,7 +589,7 @@
     if (this.menu.hidden) return;
     this.menu.hidden = true;
     if (this.menuRow !== null && this.menuRow !== undefined && this.menu.contains(document.activeElement)) {
-      this.focusCell(this.menuRow, 0);
+      this.focusCell(this.menuRow, this.menuCol || 0);
     }
   };
 
@@ -592,7 +607,17 @@
     else if (e.key === 'ArrowUp') { items[(i - 1 + items.length) % items.length].focus(); e.preventDefault(); }
     else if (e.key === 'Home') { items[0].focus(); e.preventDefault(); }
     else if (e.key === 'End') { items[items.length - 1].focus(); e.preventDefault(); }
-    else if (e.key === 'Escape' || e.key === 'Tab') { e.preventDefault(); this.closeMenu(); }
+    else if (e.key === 'Escape') { e.preventDefault(); this.closeMenu(); }
+    // Tab closes the menu and moves on from the cell it was opened from, as
+    // Tab on that cell would: it took a second Tab (the external review of
+    // 2026-11-06, N03)
+    else if (e.key === 'Tab') {
+      e.preventDefault();
+      var r = this.menuRow, c = this.menuCol || 0;
+      this.closeMenu();
+      var k = r * NCOL + c + (e.shiftKey ? -1 : 1);
+      if (k >= 0 && k < this.rows.length * NCOL) this.focusCell(Math.floor(k / NCOL), k % NCOL);
+    }
     e.stopPropagation();
   };
 
@@ -760,18 +785,22 @@
     if ((e.key === 'F10' && e.shiftKey) || e.key === 'ContextMenu') {
       e.preventDefault();
       var box = t.getBoundingClientRect();
-      this.openMenu(r, box.left, box.bottom);
+      this.openMenu(r, box.left, box.bottom, c);
       return;
     }
     // Ctrl+Z (Cmd+Z) undoes the last edit, Ctrl+Y or Ctrl+Shift+Z redoes
     // it, through the dose table's own history (doseTableHistory()), as the
     // Undo and Redo buttons do.  While a cell is being typed in, the keys
-    // are the cell's own: they undo the typing.  The request is an input of
+    // are the cell's own: they undo the typing, and redo it.  That is the
+    // cell's editing, not whether its text differs from the table: once
+    // Ctrl+Z had put the text back, Ctrl+Y went to the table, which had
+    // nothing to redo, and the typing was lost (the external review of
+    // 2026-11-06, N01).  The request is an input of
     // its own, not a click on the button: the button is enabled only once
     // the server has the edit, so a Ctrl+Z pressed right after Enter on a
     // slow link would have been dropped, where the request goes in order
     // right behind the edit it undoes.
-    if ((e.ctrlKey || e.metaKey) && !e.altKey && !edited &&
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && !editing &&
         (e.key === 'z' || e.key === 'Z' || e.key === 'y' || e.key === 'Y')) {
       var redo = e.key === 'y' || e.key === 'Y' || e.shiftKey;
       this.sendHistory(redo ? 'redo' : 'undo');

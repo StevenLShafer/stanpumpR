@@ -189,8 +189,10 @@ function hookSanitize(changes, source) {
   }, 10);
 }
 
-// Say why an entry in the Time or Dose column was not accepted
-function notifyRefusedEntries(refused, timeCol) {
+// Say why an entry in the Time or Dose column was not accepted.  `outcome`,
+// the closing line, says what became of it; by default the cell kept its
+// value.
+function notifyRefusedEntries(refused, timeCol, outcome) {
   let lines = refused.slice(0, 3).map(function(r) {
     let what = (r.col === timeCol) ? 'time' : 'dose';
     if (r.entry === '') {
@@ -208,8 +210,8 @@ function notifyRefusedEntries(refused, timeCol) {
     return '"' + r.entry + '" was not accepted: a ' + what + ' must be a number.';
   });
   if (refused.length > 3) lines.push('(and ' + (refused.length - 3) + ' more)');
-  let html = lines.map(escapeHtml).join('<br>') +
-    '<br>The cell keeps its previous value, if it had one.';
+  let html = lines.map(escapeHtml).join('<br>') + '<br>' +
+    escapeHtml(outcome || 'The cell keeps its previous value, if it had one.');
   if (window.Shiny && Shiny.notifications && typeof Shiny.notifications.show === 'function') {
     Shiny.notifications.show({ html: html, type: 'warning', duration: 8000, id: 'doseEntryRefused' });
   }

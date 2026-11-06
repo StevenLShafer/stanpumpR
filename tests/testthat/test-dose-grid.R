@@ -77,9 +77,13 @@ test_that("what the browser sends is read as a table of strings, whatever it hol
   v <- doseGridValue(gridValue(list(list("propofol", 0, 1e3, "mg"), list(list("a", "b"), list(x = 1), "x"))))
   expect_equal(v$table$Dose[1], "1000")
   expect_equal(unlist(v$table[2, ]), c(Drug = "", Time = "", Dose = "x", Units = ""))
-  # rows past the grid's limit are cut to it
+  # rows past the grid's limit are cut to it, and that is said (the
+  # observer shows a notification when `truncated` is set)
   many <- rep(list(list("fentanyl", "0", "1", "mcg")), MAX_DOSE_ROWS + 50)
-  expect_equal(nrow(doseGridValue(gridValue(many))$table), MAX_DOSE_ROWS - 1L)
+  v <- doseGridValue(gridValue(many))
+  expect_equal(nrow(v$table), MAX_DOSE_ROWS - 1L)
+  expect_true(v$truncated)
+  expect_false(doseGridValue(gridValue(many[seq_len(MAX_DOSE_ROWS - 1L)]))$truncated)
   # not a grid's value at all
   for (bad in list(NULL, "x", 1, list(), list(rows = NULL), list(rows = list(a = function() 1)))) {
     expect_no_error(v <- doseGridValue(bad))

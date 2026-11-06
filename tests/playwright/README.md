@@ -50,7 +50,7 @@ STANPUMPR_URL=http://127.0.0.1:7311/ STANPUMPR_GRID=native node --test --test-co
   observer ends it.
 - A case one grid is known to fail is listed in `KNOWN_GAP` at the top of the
   test file, with the reason. It is reported as a todo, so the run stays
-  green while the suite still states the bar. On rhandsontable, sixteen
+  green while the suite still states the bar. On rhandsontable, seventeen
   cases are known to fail:
   - the first key typed after a commit is lost while the server redraws the
     grid;
@@ -71,6 +71,13 @@ STANPUMPR_URL=http://127.0.0.1:7311/ STANPUMPR_GRID=native node --test --test-co
     - a column of drug names pasted over rows keeps the old doses for the
       new drugs;
     - undo can bring back a unit the drug does not offer.
+  - from ChatGPT's second pass (2026-11-06): a pasted row whose time and
+    dose are refused keeps the old drug's values under the new drug
+    (`fentanyl BADTIME BADOSE mcg` over propofol 10 100 mg is fentanyl 10
+    100 mcg).
+
+  One case, a forged message of more rows than the grid holds, is the
+  prototype's own input and is skipped on rhandsontable.
 
   The script error that rhandsontable's bundled `numbro` raises on every load
   is a known gap for both grids while any rhandsontable grid is still on the

@@ -303,7 +303,9 @@ order:
    `R/createHOT.R`, `R/utils-shiny-server.R`'s `addHotHooks()`, the
    rhandsontable parts of `hot_funs.js` and `app.css`, and the rhandsontable
    test inputs (`gridInput()` in the UI tests). Only then does the numbro
-   error go.
+   error go, and with it Handsontable 6.2.2 and CVE-2021-23446: until this
+   step the app still loads them, for the grids not yet moved, whatever the
+   main grid uses.
 
 ## The external review of 2026-11-05 (Codex)
 
@@ -386,6 +388,26 @@ All five are known gaps of the suite on that grid. Each can put a wrong drug, do
 - A paste while typing goes in at the caret (`45` becomes `41235`), as in any text field. Handsontable put it in the Time cell.
 - The remaining B1-B5 results agree on both grids: list order and highlight, units in order, long units, Tab, Shift+Tab, Enter, Escape, Ctrl+Z and Ctrl+Y, rows inserted and removed, and every connection kept.
 
+## The external review of 2026-11-06 (ChatGPT, second pass)
+
+ChatGPT (Codex) reviewed `f175959` against `4a4ff56`, on both grids, with its
+own scripts beside the suite. Its verdict: the prototype is "suitable with two
+listed fixes", not yet to be made the default. It found every finding of its
+first pass fixed on the prototype (F13 partly: see N03), and no script
+injection, ended session, cross-session effect or hidden invalid dose. Each new
+finding was checked against the code before anything changed; all four hold.
+
+| | What it found | Checked | Fix |
+|---|---|---|---|
+| N01 | Typing `55` in a Dose cell, then Ctrl+Z, then Ctrl+Y, left `0`: the typing could not be redone. | `onKeyDown()` sent Ctrl+Z and Ctrl+Y to the table's history whenever the cell's text equalled the table's. Ctrl+Z puts the text back, so Ctrl+Y went to the table, which had nothing to redo. | The keys belong to the cell while it is being edited (from the first key typed, F2 or a double click, to Enter, Tab, Escape or leaving it), whatever its text. |
+| N02 | `fentanyl BADTIME BADOSE mcg` pasted over `propofol 10 100 mg` gave **fentanyl 10 100 mcg** on both grids: the refused time and dose kept propofol's values under fentanyl, and Apply plotted them. The message said only that "the cell keeps its previous value". | Reproduced from the code on the prototype (`readEntry()` keeps the old value, and only a drug pasted alone reset the row) and by the suite on rhandsontable. | A pasted row is taken whole or not at all: one whose time or dose is refused leaves the row as it was, and the message says the row was not pasted. A row given a new drug starts afresh, at 0, 0 and the drug's default unit, before its pasted cells are read, so `fentanyl 5` over that row is fentanyl 5 0 mcg. A known gap on rhandsontable. |
+| N03 | Tab on the row menu closed it and stayed on the cell; a second Tab moved on. | `onMenuKey()` treated Tab as Escape. | Tab closes the menu and moves to the next cell (Shift+Tab, the previous one) from the cell the menu was opened from. |
+| N04 | A forged message of 5,000 rows was cut to 499 doses without a word. The grid itself never sends more than it holds. | `doseGridValue()` cut the rows before `doseGridAccepted()` could report a change. | `doseGridValue()` returns `truncated`, and the server says the rows past the limit were not added. |
+| S01 | Handsontable 6.2.2, with CVE-2021-23446, is still loaded by the other grids (Single Paper Review and the dialogs). | True. | Recorded, not changed: this pull request replaces only the main grid, and the bundle and its advisory leave the app only at step 8 of the migration order. |
+
+Each fix is a case of the suite. It did not run Firefox or WebKit either:
+their downloads are outside its network, as they are outside this session's.
+
 ## Decisions for Steven Shafer
 
 These are pending. Record each answer here.
@@ -418,7 +440,9 @@ These are pending. Record each answer here.
    - can commit a drug name as another drug (`notadrug` as norepinephrine,
      a cleared cell as acenocoumarol);
    - applies a refused pasted row's dose to the drug the row held;
-   - carries a dose over to a drug pasted in its place;
+   - carries a dose over to a drug pasted in its place, also when the
+     pasted time and dose are refused (`fentanyl BADTIME BADOSE mcg` over
+     `propofol 10 100 mg` is fentanyl 10 100 mcg);
    - can be undone to a unit the drug does not offer.
 
    The prototype has none of these. Fix the first, the one-line cause, in its

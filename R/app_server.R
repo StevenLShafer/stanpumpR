@@ -915,6 +915,13 @@ app_server <- function(input, output, session) {
             type = "warning", duration = 8
           )
         }
+        if (value$truncated) {
+          showNotification(
+            sprintf("The dose table holds at most %d doses; the rows past them were not added.",
+                    MAX_DOSE_ROWS - 1L),
+            type = "warning", duration = 8
+          )
+        }
         value$table <- accepted$table
         if (nrow(value$table) == 0) {
           doseTableRefresh(doseTableRefresh() + 1)

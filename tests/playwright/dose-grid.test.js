@@ -56,6 +56,9 @@ const KNOWN_GAP = {
     'a pasted row whose drug is refused changes nothing':
       'its time, dose and unit are applied to the drug the row held: "notadrug 5 999 mg/kg" over a propofol row ' +
       'made it propofol 5 999 mg/kg, without a word',
+    'a pasted row with a time or dose that is refused changes nothing, and a new drug starts afresh':
+      'the refused cells keep the old drug\'s values: "fentanyl BADTIME BADOSE mcg" over propofol 10 100 mg ' +
+      'became fentanyl 10 100 mcg, said only as "the cell keeps its previous value"',
     'a column of drug names pasted over rows starts each row afresh':
       'each row keeps its time and dose for the new drug: propofol 10 100 mg became fentanyl 10 100 mcg',
     'emptying a drug cell and pressing Enter clears the row':
@@ -373,6 +376,28 @@ describe('paste', () => {
     await holds(0, ['fentanyl', '0', '2', 'mcg']);
   });
 
+  // A pasted row is taken whole or not at all, and a row given a new drug
+  // starts afresh: "fentanyl BADTIME BADOSE mcg" over "propofol 10 100 mg"
+  // gave fentanyl 10 100 mcg (the external review of 2026-11-06, N02)
+  gt('a pasted row with a time or dose that is refused changes nothing, and a new drug starts afresh', async () => {
+    await adapter.focusCell(page, 0, 0);
+    await H.paste(page, 'propofol\t10\t100\tmg');
+    await H.settle(page);
+    await holds(0, ['propofol', '10', '100', 'mg']);
+    await H.clearNotifications(page);
+    await adapter.focusCell(page, 0, 0);
+    await H.paste(page, 'fentanyl\tBADTIME\tBADOSE\tmcg');
+    await H.settle(page, 600);
+    await holds(0, ['propofol', '10', '100', 'mg']);
+    const notes = await H.notifications(page);
+    assert.ok(notes.some(n => n.includes('"BADTIME" was not accepted')), JSON.stringify(notes));
+    // a new drug pasted with its time alone: its dose is 0, not propofol's
+    await adapter.focusCell(page, 0, 0);
+    await H.paste(page, 'fentanyl\t5');
+    await H.settle(page);
+    await holds(0, ['fentanyl', '5', '0', 'mcg']);
+  });
+
   // The table holds 499 doses (MAX_DOSE_ROWS - 1) and a blank row.  510 rows
   // pasted under the six of the startup table are 17 too many.
   gt('a paste cannot grow the table past its row limit, and says so', { timeout: 900000 }, async () => {
@@ -483,6 +508,18 @@ describe('rows', () => {
     await holds(2, ['morphine', '0', '0', info.defaultUnit]);
   });
 
+  // Tab on the row menu closed it and stayed on the cell it was opened from
+  // (the external review of 2026-11-06, N03)
+  test('Tab closes the row menu and moves on to the next cell', async () => {
+    await adapter.focusCell(page, 2, 0);
+    await page.keyboard.press('Shift+F10');
+    await H.settle(page, 300);
+    await page.keyboard.press('Tab');
+    await H.settle(page, 200);
+    assert.deepEqual(await adapter.activeCell(page), [2, 1]);
+    await holds(2, ['fentanyl', '0', '0', 'mcg']);
+  });
+
   test('a row can be removed', async () => {
     await adapter.removeRow(page, 2);
     await H.settle(page);
@@ -588,6 +625,19 @@ describe('Ctrl+Z and Ctrl+Y', () => {
     const d = await draft();
     assert.equal(d[2][2], '100', 'Ctrl+Z while typing undid the previous edit');
     assert.equal(d[3][2], '0');
+  });
+
+  // Once Ctrl+Z had put the cell's text back, Ctrl+Y went to the table's
+  // history, which had nothing to redo (the external review of 2026-11-06, N01)
+  test('Ctrl+Y after Ctrl+Z while typing redoes the typing', async () => {
+    await adapter.typeInto(page, 2, 2, '55');
+    await undo();
+    assert.notEqual(await adapter.activeText(page), '55', 'Ctrl+Z left the typing as it was');
+    await redo();
+    assert.equal(await adapter.activeText(page), '55', 'Ctrl+Y did not bring the typing back');
+    await page.keyboard.press('Enter');
+    await H.settle(page);
+    await holds(2, ['fentanyl', '0', '55', 'mcg']);
   });
 
   gt('Ctrl+Z right after Enter, over a slow link, still undoes that edit', async () => {
@@ -821,6 +871,21 @@ describe('the draft, Apply and undo', () => {
 
 // ---------------------------------------------------------------------------
 describe('everything is text', () => {
+  // The grid never sends more rows than it holds; a forged or broken client
+  // can, and its extra rows were dropped without a word (the external review
+  // of 2026-11-06, N04)
+  test('rows past the limit sent by a forged client are said, not dropped in silence',
+       { skip: GRID !== 'native' && 'the prototype\'s own input' }, async () => {
+    await H.clearNotifications(page);
+    await page.evaluate(() => Shiny.setInputValue('doseGrid', {
+      rows: Array.from({ length: 5000 }, (_, i) => ['fentanyl', String(i), '1', 'mcg'])
+    }, { priority: 'event' }));
+    await H.waitForDraft(page, d => H.filled(d).length === 499, 60000);
+    await H.settle(page, 500);
+    const notes = await H.notifications(page);
+    assert.ok(notes.some(n => /at most 499 doses/.test(n)), JSON.stringify(notes));
+  });
+
   test('markup typed or pasted into a cell is never run or drawn', async () => {
     const hostile = '<img src=x onerror="window.__xss=1">';
     await adapter.typeInto(page, FIRST_BLANK, 0, hostile);

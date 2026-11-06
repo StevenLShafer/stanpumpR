@@ -77,14 +77,18 @@ doseGridCell <- function(x) {
 # input$doseGrid as list(table, format, seq); NULL for anything that is not
 # a grid's value.  Never an error: an error in the observer that reads it
 # would end the session.  More rows than the grid may hold are cut to its
-# limit, as the grid itself does.
+# limit, as the grid itself does, and `truncated` says so: the grid never
+# sends more, so only a forged or broken client does, and until 2026-11-06
+# its extra rows were dropped without a word (the external review of that
+# day, N04).
 doseGridValue <- function(value) {
   if (!is.list(value) || is.null(value$rows)) return(NULL)
   rows <- value$rows
   if (is.matrix(rows)) rows <- lapply(seq_len(nrow(rows)), function(i) rows[i, ])
   if (!is.list(rows) && !is.character(rows)) return(NULL)
   rows <- as.list(rows)
-  if (length(rows) > MAX_DOSE_ROWS - 1L) rows <- rows[seq_len(MAX_DOSE_ROWS - 1L)]
+  truncated <- length(rows) > MAX_DOSE_ROWS - 1L
+  if (truncated) rows <- rows[seq_len(MAX_DOSE_ROWS - 1L)]
   cells <- lapply(rows, function(r) {
     r <- as.list(r)
     vapply(1:4, function(j) if (j <= length(r)) doseGridCell(r[[j]]) else "", character(1))
@@ -104,7 +108,8 @@ doseGridValue <- function(value) {
   list(
     table = table,
     format = parseTimeFormat(doseGridCell(value$timeFormat)),
-    seq = if (length(seq) == 1 && is.finite(seq) && seq >= 0) seq else 0
+    seq = if (length(seq) == 1 && is.finite(seq) && seq >= 0) seq else 0,
+    truncated = truncated
   )
 }
 
