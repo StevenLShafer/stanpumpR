@@ -22,11 +22,11 @@ The reasons, each measured below:
      is lost.
 2. **Its licence is ours**, and it adds no dependency.
 3. **It is about 9 KB gzipped**, against 100-525 KB for the libraries.
-4. **It is held to the same regression suite**, which it passes: 59 of 60
-   cases, the 60th being a page-level script error from the rhandsontable
-   grid still on the Single Paper Review tab. rhandsontable has 18 known
-   failures besides that one, and each is a real defect of the grid in use
-   today. Several can put a wrong dose, drug or unit into the table without
+4. **It is held to the same regression suite**, which it passes: 62 of 63
+   cases, the 63rd being a page-level script error from the rhandsontable
+   grid still on the Single Paper Review tab. rhandsontable has 22 known
+   failures besides that one: 20 real defects of the grid in use today, four
+   of them intermittent, and two differences of keyboard behaviour. Several can put a wrong dose, drug or unit into the table without
    a word: a typed `1,5` stored as 15, a drug name or an emptied cell
    committed as another drug, a refused row's dose applied to the row's drug,
    and an undo back to a unit the drug does not offer.
@@ -64,14 +64,14 @@ The reasons, each measured below:
 
 ## What the suite found
 
-The suite is `tests/playwright/` (README there): 60 cases, driven by
+The suite is `tests/playwright/` (README there): 63 cases, driven by
 keystrokes and the clipboard in headless Chromium, and checked on the screen
 and in the server's draft (`exportTestValues()`, test mode only). The same
 cases run against both grids, through a small adapter per grid.
 
 | Case | rhandsontable | prototype |
 |---|---|---|
-| Drug autocomplete, strict, illicit opt-in, red | pass | pass |
+| Drug autocomplete, strict, illicit opt-in, red | **fail, intermittently: a typed `morphine` stored as mannitol, `sevoflurane` as sertraline** | pass |
 | Units: only the drug's, chosen by keyboard, long units wrap after the route | pass | pass |
 | Time/Dose validated as R's `validateTime()`/`validateDose()` | pass | pass |
 | Paste: whole rows, partial columns, past the last row, refused units said | pass | pass |
@@ -79,7 +79,7 @@ cases run against both grids, through a small adapter per grid.
 | Paste of 510 rows stops at 499 doses, **and says so** | **fail: silent**, 331 s | pass, 0.3 s |
 | A typed `1,5` or `1a0` is refused with a message, not changed | **fail: stored as 15 and 10, without a word** | pass |
 | A name not in the library is refused | **fail, intermittently: `notadrug` stored as norepinephrine** | pass |
-| A gas brings its ventilation row, drawn in the grid | **fail, intermittently: `sevoflurane` stored as sertraline** (once in eleven runs) | pass |
+| A gas brings its ventilation row, drawn in the grid | **fail, intermittently: `sevoflurane` stored as sertraline** | pass |
 | A pasted row whose time or dose is refused changes nothing; a new drug starts afresh | **fail: `fentanyl BADTIME BADOSE mcg` over propofol 10 100 mg is fentanyl 10 100 mcg** | pass (failed before 2026-11-06) |
 | Ctrl+Y after Ctrl+Z while typing redoes the typing; Tab leaves the row menu to the next cell | pass | pass (failed before 2026-11-06) |
 | An illicit drug is said, not only drawn red | **fail** | pass |
@@ -438,6 +438,13 @@ the unit case passes. The two menu cases fail there as differences of keyboard
 behaviour that change no value: Tab stays on the cell clicked, and Shift+Tab
 from the first cell wraps to the last.
 
+The full suite at `00c4f2d`: the prototype passes 62 of 63 (the numbro page
+error the 63rd). On rhandsontable, the stale drug list struck three cases in
+one run: a typed `morphine` was stored as **mannitol** and `sevoflurane` as
+**sertraline**, twice, the first time in this work it hit a case that types
+an ordinary drug name. Both cases are now known gaps on that grid for that
+reason, with the two that already were (`notadrug`, the gas rule).
+
 ## Decisions for Steven Shafer
 
 These are pending. Record each answer here.
@@ -468,7 +475,9 @@ These are pending. Record each answer here.
      `hookFilterKeys()` in `inst/www/hot_funs.js` drops the keys a number
      cannot hold (a paste of the same text is refused with a message);
    - can commit a drug name as another drug (`notadrug` as norepinephrine,
-     `sevoflurane` as sertraline, a cleared cell as acenocoumarol);
+     `sevoflurane` as sertraline, `morphine` as mannitol, a cleared cell as
+     acenocoumarol); the first three are intermittent, and one run of the
+     suite on 2026-11-06 hit three cases;
    - applies a refused pasted row's dose to the drug the row held;
    - carries a dose over to a drug pasted in its place, also when the
      pasted time and dose are refused (`fentanyl BADTIME BADOSE mcg` over

@@ -73,6 +73,12 @@ const KNOWN_GAP = {
       'a difference, not a defect: after a right click on the Dose cell, Tab leaves the menu and stays on Dose',
     'Shift+Tab on the row menu of the first cell leaves the grid':
       'a difference, not a defect: Shift+Tab from the first cell wraps to the last cell of the grid',
+    'choosing a drug starts its row at time 0, dose 0 and its default unit':
+      'intermittently, Enter commits the first match of what the list held a moment earlier: ' +
+      '"morphine" was stored as mannitol (2026-11-06)',
+    'offers exactly the units of the row\'s drug':
+      'intermittently, Enter commits the first match of what the list held a moment earlier: ' +
+      '"sevoflurane" was stored as sertraline (2026-11-06)',
     'a name that is not in the library is refused':
       'intermittently, Enter commits the first match of what the list held a moment earlier: ' +
       '"notadrug" was stored as norepinephrine (and, in the external review, "morphine" as mannitol)'
