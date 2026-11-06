@@ -46,6 +46,9 @@
 #'   default) for a term birth.  Passed only to the neonatal models that
 #'   declare it (dobutamineNeonatal), whose clearance matures with
 #'   postmenstrual age (\code{postmenstrualAge()}).
+#' @param albumin serum albumin in g/dL, or NULL (the default), in which case
+#'   each model holds its own reference value.  Passed only to the models that
+#'   declare it (methotrexate, methotrexatePediatric).
 #' @param model internal: a model's output to use in place of calling the
 #'   drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
 #'   drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.
@@ -88,7 +91,8 @@ getDrugPK <- function(
   vkorc1 = VKORC1_DEFAULT,
   model = NULL,
   cyp4f2 = CYP4F2_DEFAULT,
-  gestationalAge = NULL
+  gestationalAge = NULL,
+  albumin = NULL
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
@@ -153,6 +157,17 @@ getDrugPK <- function(
          ". Must be a number of weeks between ", MIN_GESTATIONAL_AGE, " and ",
          MAX_GESTATIONAL_AGE, ", or NULL for a term birth")
   }
+  # The serum albumin likewise: blank (NA) is NULL, the model's reference;
+  # NaN is rejected.
+  if (!is.null(albumin) && length(albumin) == 1 && is.na(albumin) &&
+      !(is.numeric(albumin) && is.nan(albumin)))
+    albumin <- NULL
+  if (!is.null(albumin) &&
+      !is_valid_number(albumin, MIN_ALBUMIN, MAX_ALBUMIN)) {
+    stop("Invalid albumin: ", paste(albumin, collapse = ", "),
+         ". Must be a number between ", MIN_ALBUMIN, " and ", MAX_ALBUMIN,
+         " g/dL, or NULL for the model's reference value")
+  }
 
   # Every model takes the four patient covariates.  A pharmacogenetic
   # phenotype goes only to models that name it, so that a drug whose kinetics
@@ -210,6 +225,10 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "gestationalAge" %in% names(formals(get(drug, mode = "function"))))
     covariates["gestationalAge"] <- list(gestationalAge)
+  # And the serum albumin, which only the models with an albumin term read.
+  if (exists(drug, mode = "function") &&
+      "albumin" %in% names(formals(get(drug, mode = "function"))))
+    covariates["albumin"] <- list(albumin)
   # And the pregnancy flag, which only the models with a measured change in
   # pregnancy read (R/pregnancy.R, inst/extdata/pregnancyRegistry.csv).
   if (exists(drug, mode = "function") &&
@@ -1099,7 +1118,8 @@ getDrugPK <- function(
       pregnant = pregnant,
       adjustToFFM = adjustToFFM,
       resolveMetabolite = FALSE,
-      gestationalAge = gestationalAge
+      gestationalAge = gestationalAge,
+      albumin = albumin
     )
     metaboliteSet <- metabolitePK$PK[[PK_EVENT_DEFAULT]]
 

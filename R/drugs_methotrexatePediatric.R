@@ -48,16 +48,26 @@
 # Treatment site entered the model during selection (Table S1) but is in
 # neither equation 3 nor Table 2, so the final model has none.
 #
+# SEVERE HYPOALBUMINAEMIA
+# =======================
+# The Patient Profile's Serum albumin field (g/dL; added 2026-11-06 on
+# Steven L. Shafer's decision).  The source's covariate is categorical,
+# severe hypoalbuminaemia, an albumin of 2.5 g/dL or less, so an entered
+# albumin of 2.5 g/dL or less multiplies Q2 by 1.17 and Q3 by 1.34
+# (Table 2), and anything above it, or a blank field (NULL), applies
+# neither: the source's reference is a normal albumin.  The factors do not
+# grade below the threshold; 1.0 and 2.5 g/dL give the same curve.
+#
 # WHAT IS HELD AT THE REFERENCE
 # =============================
-# The Patient Profile has no field for Down syndrome, severe
-# hypoalbuminaemia (albumin 2.5 g/dL or less), a pleural effusion or the
-# infusion's length, so each is held at the source's reference: no Down
-# syndrome, normal albumin, no effusion, a long infusion.  For a short
-# infusion (3-4 h, as in osteosarcoma) the true clearance is 5% higher than
-# the curve's.  These are each a few per cent of courses (Table 1: 0.8%,
-# 2.8%, 0.5%) but matter to those patients: the effusion is a third space
-# that releases methotrexate slowly, and its V2 is 43% larger.
+# The Patient Profile has no field for Down syndrome, a pleural effusion or
+# the infusion's length, so each is held at the source's reference: no Down
+# syndrome, no effusion, a long infusion.  For a short infusion (3-4 h, as
+# in osteosarcoma) the true clearance is 5% higher than the curve's.  These
+# are each a few per cent of courses (Table 1: 0.8% Down syndrome, 0.5%
+# effusion; severe hypoalbuminaemia, now read from the field, 2.8%) but
+# matter to those patients: the effusion is a third space that releases
+# methotrexate slowly, and its V2 is 43% larger.
 #
 # RENAL FUNCTION
 # ==============
@@ -92,7 +102,11 @@ METHOTREXATE_TAYLOR <- list(
   cl = 8.24, v1 = 22.1, q2 = 0.225, v2 = 2.19, q3 = 0.0342, v3 = 6.07,
   scrExponent = -0.26,
   scrReference = 40,     # uM
-  bsaReference = 1.73    # m2
+  bsaReference = 1.73,   # m2
+  # severe hypoalbuminaemia, albumin <= 2.5 g/dL (Table 2)
+  albuminSevere = 2.5,   # g/dL
+  q2Hypoalbuminaemia = 1.17,
+  q3Hypoalbuminaemia = 1.34
 )
 METHOTREXATE_MW <- 454.44   # g/mol: 1 umol/L = 0.45444 mg/L
 
@@ -100,16 +114,19 @@ METHOTREXATE_MW <- 454.44   # g/mol: 1 umol/L = 0.45444 mg/L
 #' (Taylor 2023)
 #'
 #' Three mammillary compartments scaled by body surface area, with the serum
-#' creatinine on clearance; see the header of
+#' creatinine on clearance and severe hypoalbuminaemia (albumin 2.5 g/dL or
+#' less) on the distribution clearances; see the header of
 #' \code{R/drugs_methotrexatePediatric.R}.
 #'
 #' @inheritParams cefazolin
 #' @param creatinine serum creatinine, mg/dL, or NULL for the normal value for
 #'   the age and sex
+#' @param albumin serum albumin, g/dL, or NULL for a normal albumin; 2.5 or
+#'   less applies the severe-hypoalbuminaemia factors on Q2 and Q3
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 methotrexatePediatric <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                                  creatinine = NULL)
+                                  creatinine = NULL, albumin = NULL)
 {
   p <- METHOTREXATE_TAYLOR
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
@@ -117,14 +134,17 @@ methotrexatePediatric <- function(weight, height, age, sex, adjustToFFM = TRUE,
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   bsa <- bsaMosteller(w, height) / p$bsaReference
   scr <- patientCreatinine(creatinine, age, sex) * SCR_UMOL_PER_MG_DL     # uM
+  severe <- isTRUE(albumin <= p$albuminSevere)
+  fQ2 <- if (severe) p$q2Hypoalbuminaemia else 1
+  fQ3 <- if (severe) p$q3Hypoalbuminaemia else 1
 
   default <- list(
     v1  = p$v1 * bsa,
     v2  = p$v2 * bsa,
     v3  = p$v3 * bsa,
     cl1 = p$cl * bsa * (scr / p$scrReference)^p$scrExponent / 60,
-    cl2 = p$q2 * bsa / 60,
-    cl3 = p$q3 * bsa / 60
+    cl2 = p$q2 * bsa * fQ2 / 60,
+    cl3 = p$q3 * bsa * fQ3 / 60
   )
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
@@ -135,8 +155,9 @@ methotrexatePediatric <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "to inform MTXPK.org. Clin Transl Sci 2023;16:2130-2143. 1,668 patients 0.1-32 ",
     "years: three compartments per 1.73 m2 (Mosteller), CL 8.24 L/h x (creatinine/40 ",
     "uM)^-0.26 from the entered creatinine or the normal value for age, V1 22.1 L, ",
-    "Q2 0.225 L/h, V2 2.19 L, Q3 0.0342 L/h, V3 6.07 L; long infusion, no Down ",
-    "syndrome, normal albumin and no pleural effusion assumed. Plasma methotrexate ",
+    "Q2 0.225 L/h, V2 2.19 L, Q3 0.0342 L/h, V3 6.07 L; Q2 x1.17 and Q3 x1.34 for an ",
+    "entered albumin of 2.5 g/dL or less (blank: normal albumin); long infusion, no ",
+    "Down syndrome and no pleural effusion assumed. Plasma methotrexate ",
     "in mg/L (1 umol/L = 0.454 mg/L). https://doi.org/10.1111/cts.13600"
   )
 

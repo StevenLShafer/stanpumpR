@@ -379,6 +379,22 @@ app_ui <- function() {
                   ),
                   patientFieldTooltip("gestationalAge"),
                   placement = "right"
+                )),
+
+                # Read only by the models that name `albumin` (methotrexate,
+                # methotrexatePediatric).  Blank means each model's own
+                # reference albumin.
+                relevantField("albumin", fieldHelp(
+                  numericInput(
+                    inputId = "albumin",
+                    label = "Serum albumin (g/dL)",
+                    value = NA,
+                    min = MIN_ALBUMIN,
+                    max = MAX_ALBUMIN,
+                    step = 0.1
+                  ),
+                  patientFieldTooltip("albumin"),
+                  placement = "right"
                 ))
               ),
 

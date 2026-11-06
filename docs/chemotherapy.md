@@ -132,8 +132,8 @@ Lane Library.
   threshold is not a concentration band (the handoff's section 10.5).
 - **No effect site.** No chemotherapy `ke0` is derived from a half-life.
 - **Genotype guidelines are not clearances** (DPYD, UGT1A1, TPMT/NUDT15).
-- **Cystatin C, albumin, white-cell count, performance status and genotypes** that some models
-  need are not Patient Profile fields; such a model either waits for the field or is implemented
+- **Cystatin C, white-cell count, performance status and genotypes** that some models
+  need are not Patient Profile fields (albumin became one on 2026-11-06, section 16); such a model either waits for the field or is implemented
   at the source's reference value, saying so, never with serum creatinine standing in for
   cystatin C (the chlorthalidone decision, `docs/antihypertensives.md`).
 
@@ -199,7 +199,8 @@ placed on Google Drive and its supplement. Three compartments by BSA over 1.73 m
 patient's own creatinine referenced to 40 uM. Its Table 2 footnote describes Q3 as chained to
 V2, which the stated ADVAN11 TRANS4 and the supplement contradict; equation 3 and Table 2 differ
 on the Down syndrome factor (0.83, 0.84). The covariates with no Patient Profile field (Down
-syndrome, albumin, pleural effusion, infusion length) are held at the reference. The model
+syndrome, pleural effusion, infusion length) are held at the reference; severe
+hypoalbuminaemia reads the Serum albumin field (section 16). The model
 reproduces the paper's Table 5 end-of-infusion mean for 5 g/m2 over 24 h (85.9 against 84.8
 umol/L); its later means lie above the typical curve, as means of individual predictions should.
 
@@ -209,9 +210,8 @@ Ibarra 2023 (`R/drugs_methotrexate.R`), from the PDF Shafer supplied: three comp
 allometric in weight, creatinine and albumin on clearance. Table 2 reproduces the paper's own
 half-lives (1.5, 4.9, 40 h) and Vss (20 L). Its reference creatinine is not printed as a number;
 the healthy-adult means in the same paragraph of the Methods (0.92 and 0.77 mg/dL) are used.
-Albumin has no Patient Profile field and is held at 4 g/dL although 68% of the courses were
-hypoalbuminaemic; whether to add an albumin field is recorded as a pending decision in the
-registry.
+68% of the courses were hypoalbuminaemic, so the albumin term matters; it reads the Serum
+albumin field (section 16).
 
 ## 11. A second 5-FU model
 
@@ -278,3 +278,25 @@ Each library model reproduces its own paper (the tests); the difference is
 between source models. To agree with MTXPK.org, Taylor 2020 (PubMed Central
 PMC7484917) would be added as a third methotrexate drug and checked against
 the API.
+
+## 16. The Serum albumin field (2026-11-06)
+
+Shafer decided on 2026-11-06 to add a serum albumin field to the Patient Profile and to apply
+it in both methotrexate models. It is wired as the serum creatinine and the gestational age
+are: argument `albumin` in g/dL, passed by `getDrugPK()` only to models that name it in their
+signature, shown only while such a drug is in the dose table (`relevantField("albumin")`),
+with a hover tip naming its readers built from the signatures (`patientFieldTooltip()`), and
+accepted by the Simulation API as `patient.albumin`. The accepted range is `MIN_ALBUMIN` to
+`MAX_ALBUMIN`, 0.5 to 6 g/dL (`R/constants.R`). Blank (NULL) means each model's own
+reference:
+
+- **methotrexate** (Ibarra 2023): clearance × (albumin / 4)^0.594; blank is 4 g/dL. At the
+  cohort's median, 3.3 g/dL, clearance is 11% lower; at 2.5 g/dL, 24% lower. The albumin the
+  power sees is floored at `MIN_ALBUMIN`, so the term stays finite.
+- **methotrexatePediatric** (Taylor 2023): severe hypoalbuminaemia, an albumin of 2.5 g/dL or
+  less, multiplies Q2 by 1.17 and Q3 by 1.34 (Table 2). The covariate is categorical, so it
+  does not grade below the threshold; blank or above 2.5 applies neither factor.
+
+The albumin is held at the entered value through the course, though it was time-varying in
+both sources. Other chemotherapy candidates with an albumin term (the registry's notes say
+which) may now read the field when they are implemented.

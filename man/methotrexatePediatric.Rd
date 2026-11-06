@@ -11,7 +11,8 @@ methotrexatePediatric(
   age,
   sex,
   adjustToFFM = TRUE,
-  creatinine = NULL
+  creatinine = NULL,
+  albumin = NULL
 )
 }
 \arguments{
@@ -32,12 +33,16 @@ it also sets the weight the creatinine-clearance estimate uses.}
 
 \item{creatinine}{serum creatinine, mg/dL, or NULL for the normal value for
 the age and sex}
+
+\item{albumin}{serum albumin, g/dL, or NULL for a normal albumin; 2.5 or
+less applies the severe-hypoalbuminaemia factors on Q2 and Q3}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
 Three mammillary compartments scaled by body surface area, with the serum
-creatinine on clearance; see the header of
+creatinine on clearance and severe hypoalbuminaemia (albumin 2.5 g/dL or
+less) on the distribution clearances; see the header of
 \code{R/drugs_methotrexatePediatric.R}.
 }

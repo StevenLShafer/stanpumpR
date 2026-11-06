@@ -83,6 +83,8 @@ helpScenarioDefaultOptions <- function() {
 #' @param osmolality baseline serum osmolality in mOsm/kg (mannitol)
 #' @param gestationalAge gestational age at birth in weeks, or NULL for a
 #'   blank field (the neonatal models then assume a term birth)
+#' @param albumin serum albumin in g/dL, or NULL for a blank field (the
+#'   albumin models then hold their own reference value)
 #' @param pregnant is the patient pregnant?  Only for a woman of child-bearing
 #'   age (pregnancyPossible()); read by the models R/pregnancy.R lists
 #' @param doses data frame with Drug, Time (minutes), Dose, Units
@@ -97,7 +99,7 @@ helpScenario <- function(id, title, group, summary,
                          cyp4f2 = CYP4F2_DEFAULT, cyp2b6 = CYP2B6_DEFAULT,
                          creatinine = NULL,
                          osmolality = OSMOLALITY_DEFAULT, pregnant = FALSE,
-                         gestationalAge = NULL, ...) {
+                         gestationalAge = NULL, albumin = NULL, ...) {
   options <- utils::modifyList(helpScenarioDefaultOptions(), list(...))
   doses <- data.frame(
     Drug = as.character(doses$Drug),
@@ -120,7 +122,8 @@ helpScenario <- function(id, title, group, summary,
                    cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
                    vkorc1 = vkorc1, cyp4f2 = cyp4f2, cyp2b6 = cyp2b6,
                    adjustToFFM = adjustToFFM, creatinine = creatinine, osmolality = osmolality,
-                   pregnant = pregnant, gestationalAge = gestationalAge),
+                   pregnant = pregnant, gestationalAge = gestationalAge,
+                   albumin = albumin),
     doses = doses, events = events, options = options
   )
 }
@@ -1072,6 +1075,9 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (!is.null(p$gestationalAge) &&
       !is_valid_number(p$gestationalAge, MIN_GESTATIONAL_AGE, MAX_GESTATIONAL_AGE))
     say("gestational age out of range: ", p$gestationalAge)
+  if (!is.null(p$albumin) &&
+      !is_valid_number(p$albumin, MIN_ALBUMIN, MAX_ALBUMIN))
+    say("albumin out of range: ", p$albumin)
 
   o <- s$options
   if (!identical(validTimeUnit(o$timeUnits), o$timeUnits)) say("invalid timeUnits: ", o$timeUnits)
@@ -1246,6 +1252,12 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   } else {
     updateNumericInput(session, "gestationalAge", value = p$gestationalAge)
   }
+  # Blank, each model's reference albumin, unless the scenario names one
+  if (is.null(p$albumin)) {
+    session$sendInputMessage("albumin", list(value = ""))
+  } else {
+    updateNumericInput(session, "albumin", value = p$albumin)
+  }
 
   if (is.null(timeApi)) {
     updateSliderInput(session, "maximum", value = o$maximum)
@@ -1326,6 +1338,9 @@ helpScenarioPageHTML <- function(id) {
   # Likewise a gestational age, only when the scenario names one
   if (!is.null(p$gestationalAge))
     patient$`Gestational age at birth` <- sprintf("%s weeks", helpFormatNumber(p$gestationalAge))
+  # And an albumin, only when the scenario names one
+  if (!is.null(p$albumin))
+    patient$`Serum albumin` <- sprintf("%s g/dL", helpFormatNumber(p$albumin))
   # Times as the dose table will show them: in the scenario's time unit, in
   # full (helpFormatNumber()'s three significant figures would print 30240
   # minutes as 30,200)

@@ -4,7 +4,15 @@
 \alias{methotrexate}
 \title{Methotrexate, high-dose intravenous, in adults (Ibarra 2023)}
 \usage{
-methotrexate(weight, height, age, sex, adjustToFFM = TRUE, creatinine = NULL)
+methotrexate(
+  weight,
+  height,
+  age,
+  sex,
+  adjustToFFM = TRUE,
+  creatinine = NULL,
+  albumin = NULL
+)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -24,12 +32,14 @@ it also sets the weight the creatinine-clearance estimate uses.}
 
 \item{creatinine}{serum creatinine, mg/dL, or NULL for an assumed normal
 value}
+
+\item{albumin}{serum albumin, g/dL, or NULL for the reference, 4 g/dL}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-Three compartments allometric in weight, with the serum creatinine (and an
-albumin held at its reference) on clearance; see the header of
+Three compartments allometric in weight, with the serum creatinine and the
+serum albumin on clearance; see the header of
 \code{R/drugs_methotrexate.R}.
 }

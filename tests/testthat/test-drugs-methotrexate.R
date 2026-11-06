@@ -23,6 +23,31 @@ test_that("creatinine enters as (SCRpop/SCR)^0.694, SCRpop by sex", {
   expect_equal(blank, 5.92 * (0.92 / 0.9)^0.694)
 })
 
+test_that("albumin enters clearance as (ALB/4)^0.594; blank is the reference 4 g/dL", {
+  cl <- function(alb = NULL)
+    methotrexate(70, 170, 60, "male", adjustToFFM = FALSE, creatinine = 0.92,
+                 albumin = alb)$PK$default
+  expect_equal(cl()$cl1 * 60, 5.92)
+  expect_equal(cl(4)$cl1, cl()$cl1)
+  # the cohort's median, 3.3 g/dL: about 11% lower
+  expect_equal(cl(3.3)$cl1 * 60, 5.92 * (3.3 / 4)^0.594)
+  expect_equal(round(1 - cl(3.3)$cl1 / cl()$cl1, 2), 0.11)
+  expect_equal(round(1 - cl(2.5)$cl1 / cl()$cl1, 2), 0.24)
+  # only clearance carries it
+  expect_equal(cl(2.5)[c("v1", "v2", "v3", "cl2", "cl3")], cl()[c("v1", "v2", "v3", "cl2", "cl3")])
+  # the power sees at least MIN_ALBUMIN, so it stays finite and positive
+  expect_equal(cl(0.1)$cl1, cl(MIN_ALBUMIN)$cl1)
+  expect_true(is.finite(cl(0)$cl1) && cl(0)$cl1 > 0)
+  # getDrugPK passes the Patient Profile's albumin, and a blank (NA) is NULL
+  viaPK <- function(alb)
+    getDrugPK("methotrexate", 70, 170, 60, "male", adjustToFFM = FALSE,
+              creatinine = 0.92, albumin = alb)$PK$default$cl1
+  expect_equal(viaPK(3.3), cl(3.3)$cl1)
+  expect_equal(viaPK(NA), cl()$cl1)
+  expect_error(viaPK(9), "Invalid albumin")
+  expect_error(viaPK(NaN), "Invalid albumin")
+})
+
 test_that("weight is allometric; the switch takes the pharmacokinetic weight", {
   off <- methotrexate(100, 180, 50, "male", adjustToFFM = FALSE, creatinine = 0.92)$PK$default
   expect_equal_rounded(off$v1, 14.4 * 100 / 70)

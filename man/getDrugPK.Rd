@@ -24,7 +24,8 @@ getDrugPK(
   vkorc1 = VKORC1_DEFAULT,
   model = NULL,
   cyp4f2 = CYP4F2_DEFAULT,
-  gestationalAge = NULL
+  gestationalAge = NULL,
+  albumin = NULL
 )
 }
 \arguments{
@@ -92,6 +93,10 @@ passed only to models that name it (warfarin).}
 default) for a term birth.  Passed only to the neonatal models that
 declare it (dobutamineNeonatal), whose clearance matures with
 postmenstrual age (\code{postmenstrualAge()}).}
+
+\item{albumin}{serum albumin in g/dL, or NULL (the default), in which case
+each model holds its own reference value.  Passed only to the models that
+declare it (methotrexate, methotrexatePediatric).}
 }
 \value{
 a list: the drug's PK sets (\code{PK}, one per PK event), its

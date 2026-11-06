@@ -40,14 +40,23 @@
 # (0.92 mg/dL and 0.77 mg/dL for male and female patients)"; those are taken
 # as SCRpop.  An inference, said so.
 #
+# ALBUMIN
+# =======
+# The Patient Profile's Serum albumin field (g/dL; added 2026-11-06 on
+# Steven L. Shafer's decision) enters as (ALB/4)^0.594, the reference 4 g/dL
+# (the paper writes "mg/dL", a slip).  Left blank (NULL) it is held at the
+# reference, 4 g/dL, factor 1.  This matters: the cohort's median was 3.3
+# g/dL and 68% of courses were hypoalbuminaemic; at 3.3 the clearance is 11%
+# lower, at 2.5 g/dL 24% lower.  The albumin used is floored at MIN_ALBUMIN
+# (0.5 g/dL, the field's lower bound) so the power stays finite and positive;
+# an albumin outside the range the cohort covered is an extrapolation of the
+# power.  The albumin was time-varying in the source; the curve holds
+# the entered value.
+#
 # WHAT IS HELD AT THE REFERENCE
 # =============================
-# Albumin: the Patient Profile has no field, so it is held at the reference,
-# 4 g/dL (the paper writes "mg/dL", a slip).  This matters: the cohort's
-# median was 3.3 g/dL and 68% of courses were hypoalbuminaemic; at 3.3 the
-# clearance is 11% lower, at 2.5 g/dL 24% lower.  The creatinine was
-# time-varying in the source; the curve holds the entered value.
-# Shorter infusions (12% lower clearance), a previous kidney injury (8%) and
+# The creatinine was time-varying in the source; the curve holds the entered
+# value.  Shorter infusions (12% lower clearance), a previous kidney injury (8%) and
 # age were found and left out of the final model by the authors.
 #
 # RENAL FUNCTION
@@ -82,17 +91,18 @@ METHOTREXATE_IBARRA <- list(
 
 #' Methotrexate, high-dose intravenous, in adults (Ibarra 2023)
 #'
-#' Three compartments allometric in weight, with the serum creatinine (and an
-#' albumin held at its reference) on clearance; see the header of
+#' Three compartments allometric in weight, with the serum creatinine and the
+#' serum albumin on clearance; see the header of
 #' \code{R/drugs_methotrexate.R}.
 #'
 #' @inheritParams cefazolin
 #' @param creatinine serum creatinine, mg/dL, or NULL for an assumed normal
 #'   value
+#' @param albumin serum albumin, g/dL, or NULL for the reference, 4 g/dL
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 methotrexate <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                         creatinine = NULL)
+                         creatinine = NULL, albumin = NULL)
 {
   p <- METHOTREXATE_IBARRA
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
@@ -100,6 +110,7 @@ methotrexate <- function(weight, height, age, sex, adjustToFFM = TRUE,
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   scr <- adultEquivalentCreatinine(creatinine, age, sex)
   scrPop <- p$scrPop[[if (sex == SEX_MALE) "male" else "female"]]
+  alb <- if (is.null(albumin) || is.na(albumin)) p$albuminReference else max(albumin, MIN_ALBUMIN)
   fCl <- (w / 70)^0.75
   fV <- w / 70
 
@@ -107,7 +118,8 @@ methotrexate <- function(weight, height, age, sex, adjustToFFM = TRUE,
     v1  = p$v1 * fV,
     v2  = p$v2 * fV,
     v3  = p$v3 * fV,
-    cl1 = p$cl * fCl * (scrPop / scr)^p$betaSCR / 60,   # albumin at reference
+    cl1 = p$cl * fCl * (scrPop / scr)^p$betaSCR *
+      (alb / p$albuminReference)^p$betaALB / 60,
     cl2 = p$q2 * fCl / 60,
     cl3 = p$q3 * fCl / 60
   )
@@ -119,7 +131,7 @@ methotrexate <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "of HDMTX in adults with cancer. Br J Clin Pharmacol 2023;89:660-671. 693 ",
     "courses in 243 adults: three compartments allometric in weight, CL 5.92 L/h x ",
     "(SCRpop/SCR)^0.694 x (albumin/4)^0.594 (SCRpop 0.92/0.77 mg/dL in men/women; ",
-    "creatinine entered or assumed normal; albumin held at 4 g/dL), V1 14.4 L, Q2 ",
+    "creatinine entered or assumed normal; albumin entered or 4 g/dL), V1 14.4 L, Q2 ",
     "0.571 L/h, V2 3.55 L, Q3 0.0365 L/h, V3 2.09 L. Plasma methotrexate in mg/L ",
     "(1 umol/L = 0.454 mg/L). https://doi.org/10.1111/bcp.15506"
   )

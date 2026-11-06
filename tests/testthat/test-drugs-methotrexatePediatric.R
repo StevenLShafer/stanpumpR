@@ -33,6 +33,28 @@ test_that("a blank creatinine is the normal value for age, read as the patient's
                2^-0.26)
 })
 
+test_that("severe hypoalbuminaemia (albumin <= 2.5 g/dL) raises Q2 x1.17 and Q3 x1.34", {
+  m <- function(alb = NULL)
+    methotrexatePediatric(30, 120, 8, "male", adjustToFFM = FALSE, creatinine = 0.3,
+                          albumin = alb)$PK$default
+  ref <- m()
+  # blank and any albumin above 2.5 apply nothing
+  expect_equal(m(4), ref)
+  expect_equal(m(2.6), ref)
+  # at 2.5 and below, both distribution clearances, and nothing else
+  for (alb in c(2.5, 1.5, MIN_ALBUMIN)) {
+    low <- m(alb)
+    expect_equal(low$cl2 / ref$cl2, 1.17, info = alb)
+    expect_equal(low$cl3 / ref$cl3, 1.34, info = alb)
+    expect_equal(low[c("v1", "v2", "v3", "cl1")], ref[c("v1", "v2", "v3", "cl1")], info = alb)
+  }
+  # through getDrugPK, with a blank (NA) read as NULL
+  viaPK <- function(alb)
+    getDrugPK("methotrexatePediatric", 30, 120, 8, "male", adjustToFFM = FALSE,
+              creatinine = 0.3, albumin = alb)$PK$default$cl3
+  expect_equal(viaPK(2.0) / viaPK(NA), 1.34)
+})
+
 test_that("5 g/m2 over 24 h reproduces Table 5's end-of-infusion concentration", {
   # A typical long-infusion child: BSA 1.0 m2 (cohort median 0.96), creatinine
   # 0.3 mg/dL (median).  Table 5, ALL, 5 g/m2 over 24 h: mean 84.8 uM at 24 h.

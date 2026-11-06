@@ -4,7 +4,7 @@
 # signatures are what the tips must agree with.
 
 patientFieldArgs <- c("cyp2d6", "cyp2c19", "cyp2c9", "cyp2b6", "creatinine",
-                      "gestationalAge")
+                      "gestationalAge", "albumin")
 
 test_that("the readers of each field are exactly the models that name it", {
   dd <- getDrugDefaultsGlobal()
@@ -28,6 +28,7 @@ test_that("the known readers are in their lists", {
                   c("meloxicam", "phenytoin", "warfarin",
                     "fluindione", "acenocoumarol"))
   expect_identical(patientFieldReaders("cyp2b6"), "methadone")
+  expect_setequal(patientFieldReaders("albumin"), c("methotrexate", "methotrexatePediatric"))
   expect_true(all(c("cefazolin", "gentamicin", "mannitol", "vancomycin",
                     "sugammadex", "gabapentin", "pregabalin", "oxycodone",
                     "meloxicam", "lacosamide", "levetiracetam",
@@ -74,7 +75,7 @@ test_that("the creatinine tooltip quotes the assumed adult values from R/renalFu
   expect_match(tip, "Leave blank", fixed = TRUE)
   expect_match(tip, "Renal impairment is then not represented", fixed = TRUE)
   # The pharmacogenetic tips say nothing about a blank field
-  for (arg in setdiff(patientFieldArgs, c("creatinine", "gestationalAge")))
+  for (arg in setdiff(patientFieldArgs, c("creatinine", "gestationalAge", "albumin")))
     expect_false(grepl("Leave blank", patientFieldTooltip(arg), fixed = TRUE))
 })
 
@@ -83,6 +84,13 @@ test_that("the gestational-age tooltip says a blank field is a term birth", {
   expect_match(tip, "dobutamineNeonatal", fixed = TRUE)
   expect_match(tip, sprintf("Leave blank for a term birth (%s weeks)", GESTATIONAL_AGE_TERM),
                fixed = TRUE)
+})
+
+test_that("the albumin tooltip says a blank field is each model's reference", {
+  tip <- patientFieldTooltip("albumin")
+  expect_match(tip, "methotrexate and methotrexatePediatric", fixed = TRUE)
+  expect_match(tip, "Leave blank to hold each model's reference albumin", fixed = TRUE)
+  expect_match(tip, "4 g/dL", fixed = TRUE)
 })
 
 test_that("an unknown field is refused", {

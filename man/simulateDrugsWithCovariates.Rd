@@ -25,7 +25,8 @@ simulateDrugsWithCovariates(
   antiseizureInteractions = FALSE,
   cyp4f2 = CYP4F2_DEFAULT,
   gestationalAge = NULL,
-  opioidTolerance = OPIOID_TOLERANCE_DEFAULT
+  opioidTolerance = OPIOID_TOLERANCE_DEFAULT,
+  albumin = NULL
 )
 }
 \arguments{
@@ -97,6 +98,10 @@ are affected.}
 each opioid's MEAC, band and time-until-threshold value
 (\code{endCe}) by its factor (\code{OPIOID_TOLERANCE_FACTORS}), as the
 app does; the concentrations are unchanged.}
+
+\item{albumin}{serum albumin in g/dL, or NULL for each model's reference
+value.  Only the models that declare it (methotrexate,
+methotrexatePediatric) are affected.}
 }
 \value{
 a list of data frames with the output of the a single drug
