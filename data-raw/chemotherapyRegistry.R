@@ -349,7 +349,7 @@ registry <- rbind(
     "first", "unknown", "C03",
     "Table 2: CL (mL/min) = 117.8 (Scr/75)^-0.450 (cysC/1.0)^-0.385 (ABW/65)^0.504 (age/56)^-0.366 x 0.847^sex (Scr in uM, sex 1 for women). The typical Vc, Vp and Q were taken from a rich-sampling database and are not printed (Vc and Vp proportional to BSA), so the paper does not fix a curve. The Patient Profile has no cystatin C, and serum creatinine is not a substitute for it (the chlorthalidone decision, docs/antihypertensives.md).",
     readiness = "needs_full_text",
-    to_obtain = "Chatelut 2000 (Eur J Cancer 36:264-269, PMID 10741287), Schmitt 2009's reference 9: a NONMEM model on a 103-patient database, whose full text may print the typical Vc, Vp and Q Schmitt took from it (reference 11, Leger 2002, PMID 11750839, read in full, uses the same two-compartment model on the same database and prints no volumes); and a cystatin C field, which the Patient Profile does not have."),
+    to_obtain = "Nothing published supplies the typical Vc, Vp and Q: Schmitt 2009's references 9 (Chatelut 2000, Eur J Cancer 36:264-269, PMID 10741287) and 11 (Leger 2002, PMID 11750839), both read in full 2026-11-06, describe the same two-compartment model on the same 103-patient database, volumes proportional to BSA, and print no volume or Q. Only the authors' database would fix the curve; and a cystatin C field, which the Patient Profile does not have."),
   m("carboplatin__adult__chatelut1995", "carboplatin", "carboplatin", "IV",
     "adults with cancer", "carboplatin (analyte to confirm)",
     "a clearance equation in creatinine, weight, age and sex (the Chatelut formula); whether the paper gives volumes was not established",
