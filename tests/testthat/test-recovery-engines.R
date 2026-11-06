@@ -441,7 +441,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "istradefylline", "amantadineER", "pimavanserin", "tolcapone",
     # Chemotherapy (2026-11-05): plasma only
     "cladribine", "fluorouracil", "carboplatin", "busulfan",
-    "methotrexatePediatric", "methotrexate", "fluorouracilTan", "daunorubicin", "doxorubicinPediatric", "doxorubicinolPediatric", "etoposide", "cisplatin", "cisplatinBound", "vinorelbine", "topotecan", "irinotecan", "irinotecanSN38", "doxorubicin", "doxorubicinol", "cyclophosphamide", "docetaxel", "vincristine", "melphalan", "etoposidePediatric", "pemetrexed"
+    "methotrexatePediatric", "methotrexate", "fluorouracilTan", "capecitabine", "capecitabine5FU", "gemcitabine", "gemcitabineDFDU", "etoposideDuong", "melphalanPediatric", "carboplatinPediatric", "daunorubicin", "doxorubicinPediatric", "doxorubicinolPediatric", "etoposide", "cisplatin", "cisplatinBound", "vinorelbine", "topotecan", "irinotecan", "irinotecanSN38", "doxorubicin", "doxorubicinol", "cyclophosphamide", "docetaxel", "vincristine", "melphalan", "etoposidePediatric", "pemetrexed"
   ))
 })
 

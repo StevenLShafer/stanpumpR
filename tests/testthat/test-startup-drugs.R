@@ -11,7 +11,7 @@ test_that("every drug that can be dosed has a category the menu knows", {
   notOffered <- c("desmetramadol", "desethylamiodarone", "hydroxybupropion", "norfluoxetine",
                   "desvenlafaxine", "salicylate", "hydroxyrisperidone", "dehydroaripiprazole",
                   "enalaprilat", "doxorubicinol", "doxorubicinolPediatric",
-                  "irinotecanSN38", "cisplatinBound",
+                  "irinotecanSN38", "cisplatinBound", "gemcitabineDFDU", "capecitabine5FU",
                   "air", "oxygen", "ventilation")
   dosed <- setdiff(dd$Drug, notOffered)
   expect_true(all(lengths(dd$Units[match(dosed, dd$Drug)]) > 0))

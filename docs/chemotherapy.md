@@ -421,3 +421,47 @@ L, Q 252 L/h, Vp 1120 L; ng/mL, doses as labelled. The white-count model (Vc
 412 x [1 + 0.0138 (WBC - 39)]) is not used, the Patient Profile having no
 white count. Krogh-Madsen 2012 (adults with AML) used it as its NONMEM prior
 and stays `complete_not_implemented`.
+
+## 28. Children's carboplatin, melphalan and etoposide (Duong 2019)
+
+`carboplatinPediatric`, `melphalanPediatric` and `etoposideDuong` are Duong
+2019 (C04; PDF supplied 2026-11-06), one shared function (`duongModel()`):
+two compartments each, CL and Q x (WT/WT_STD)^0.75, volumes x WT/WT_STD.
+WT_STD, "the median weight", is not printed; 15.5 kg on Shafer's decision
+(2026-11-06), with which Table 4's carboplatin exposures reproduce (the printed
+median 14.5 puts them 2-7% low). Weight is the only covariate (measured GFR
+was not retained). Carboplatin's Q and VP and etoposide's VP are unidentified.
+
+## 29. Gemcitabine
+
+`gemcitabine` is Tham 2008 with its 2015 erratum (C18): two compartments,
+CLG 305.2 L/h per 70 kg/1.76 m, 73% forming the metabolite-only
+`gemcitabineDFDU` (one compartment); dFdCTP (23%, intracellular) is not
+carried. Size is lean body mass by `ffmAlSallami()`, which is the erratum's
+Janmahasatian equation in adults (Shafer's choice, 2026-11-06), relative to
+the male standard 56.13 kg, exponents 0.75 and 1 (the paper prints neither the
+constants nor the exponents).
+
+## 30. Capecitabine
+
+`capecitabine` is Gieschke 2003 with Blesch 2003 (C16), oral: the curve is
+5'-DFUR (ka 1.09 /h, V 90.6 L, CL 75.8 L/h), forming the metabolite-only
+`capecitabine5FU` (V 17.8 L, CL 1190 L/h, ALP held at 140 U/L). Molar
+throughout (the only reading that reproduces Table 6): 0.685 mg 5'-DFUR per
+mg capecitabine as the oral fraction, 0.528 mg 5-FU per mg 5'-DFUR as
+mwRatio. FBAL, the chain's third step, needs a cascade engine and is not
+carried. Shafer asked for the additional plots (2026-11-06).
+
+## 31. Oxaliplatin: enterohepatic recirculation (open)
+
+Bastian 2003 (supplied 2026-11-06) fills a gallbladder store from the central
+compartment (k1B 1.78 /h) and empties it at TLAG 2 h into a depot returning at
+Ka 0.23 /h. Shafer's view (2026-11-06) is that biliary filling is continuous.
+A literature review (scratchpad report, 2026-11-06) found: under continuous
+filling, Bastian's k1B and Ka make an ordinary third compartment (V3 193 L,
+Q3 44 L/h), which does NOT reproduce the paper's half-lives (20 h against the
+printed 10.5 h in men) or its curve; the printed half-lives are the
+two-compartment part's alone, so the authors' model stops filling after TLAG.
+A continuous-flow model would have to be refitted. Plusquellec & Houin 1992
+(J Biomed Eng 14:521, PMID 1434577), which Bastian cites for the equations,
+is needed. Not implemented.
