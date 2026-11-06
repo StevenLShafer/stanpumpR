@@ -61,3 +61,6 @@ inst/doc
 .Renviron
 .Renviron.*
 tests/testthat/testthat-problems.rds
+
+# The 3D viewer build (tools/viewer/build)
+node_modules/

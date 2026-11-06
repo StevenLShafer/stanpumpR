@@ -62,6 +62,8 @@ app_ui <- function() {
         tags$script(HTML(js_drug_defaults)),
         # grid-funs.js, dose-grid.js and table-grid.js come with the dose
         # grid (gridDependency(), R/table-grid.R)
+        # The Minto Visualizer's popup (the Edit doses dialog's button)
+        tags$script(src = "stanpumpr-assets/viewer-launch.js"),
         tags$link(href = "stanpumpr-assets/app.css", rel = "stylesheet")
       ),
 
