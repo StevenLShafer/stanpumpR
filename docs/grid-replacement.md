@@ -464,9 +464,11 @@ These are pending. Record each answer here.
    Ctrl+Z stops at Apply, as the Undo button does. If it should reach back
    past an Apply, that is a change to the lifecycle for both grids, and a
    decision of its own.
-3. **[decision] A refused drug name is now said** ("not a drug in the
-   library") and the cell is given back. rhandsontable refused it silently and
-   left the editor stuck. Is a notification right?
+3. **A refused drug name is said. ANSWERED** (Shafer, 2026-11-06): yes. The
+   grid says "not a drug in the library" and gives the cell back, where
+   rhandsontable refused it silently and left the editor stuck. Every grid
+   moved to it follows the same rule: a refused entry is said, with what was
+   refused and why.
 4. **[decision] Trying it.** Keep the switch a server option, or let the PR
    preview open on the prototype (for example `STANPUMPR_DOSE_GRID=native` in
    the preview deploy) so it can be tried in a browser?
