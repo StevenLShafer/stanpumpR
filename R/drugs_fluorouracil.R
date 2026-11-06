@@ -9,19 +9,20 @@
 # Drafted by Claude Code, 2026-11-05, at the request of Steven L. Shafer, as a
 # first-wave chemotherapy drug (docs/chemotherapy.md,
 # inst/extdata/chemotherapyRegistry.csv, source P10).  Every number below was
-# read from the full text in PubMed Central (PMC13661680): Table 2, Table 3,
-# its three printed covariate equations and the Results.  In that rendering
-# the table's parameter SUBSCRIPTS are stripped (Vmax, V1 and V2 all read
-# "V"), so which row is which was settled from the units and the text, and
-# every identification below is checked against a percentage the text states
-# (the test repeats each check).  CONFIRM ON THE PDF before relying on it.
+# first read from the full text in PubMed Central (PMC13661680), whose Table 3
+# had lost its parameter subscripts (Vmax, V1 and V2 all read "V"), so each
+# row was identified from its units and checked against a percentage the
+# text states (the test repeats each check).  Shafer supplied the PDF
+# (2026-11-06): its Table 3 (page 7), with subscripts, and its three printed
+# equations confirm every value and every identification, and its Methods
+# confirm BSA by Mosteller's formula.
 #
 # THE SOURCE
 # ==========
 # Briki M, Thoueille P, Joerger M, Chatelut E, Sterle M, Schmitt A, Wagner AD,
 # Buclin T, Carrara S, Guidi M.  Model-based meta-analysis of individual
 # patient data for the characterization of intravenous 5-fluorouracil
-# population pharmacokinetics.  Cancer Chemother Pharmacol 2026;96:(1)
+# population pharmacokinetics.  Cancer Chemother Pharmacol 2026;96:63
 # (doi 10.1007/s00280-026-04885-x).  Individual data from three sources were
 # pooled: Terret 2000 (21 patients, rich sampling), Mueller 2013 (30, rich)
 # and routine monitoring at the Dijon cancer centre (675), 2332
@@ -166,7 +167,7 @@ fluorouracil <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "Briki M, Thoueille P, Joerger M, Chatelut E, et al. Model-based meta-analysis ",
     "of individual patient data for the characterization of intravenous ",
     "5-fluorouracil population pharmacokinetics. Cancer Chemother Pharmacol ",
-    "2026;96(1). 726 adults, bolus and 46-h infusions: two compartments, Vmax 429 ",
+    "2026;96:63. 726 adults, bolus and 46-h infusions: two compartments, Vmax 429 ",
     "mg/h x (1 - 0.289 (age-60)/60) x 1.183 in men, Km 2.34 mg/L, linear CL 52.6 ",
     "L/h x (BSA/1.7)^2.61 (Mosteller), V1 9.21 L, Q 125 L/h, V2 14.6 L x weight/70. ",
     "DPD deficiency not represented. Plasma 5-FU only. ",

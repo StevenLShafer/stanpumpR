@@ -106,7 +106,7 @@ lead from a delegated check, to be confirmed against the PDF before any number i
 | Source | Text available | Complete? |
 |---|---|---|
 | Lindemalm 2005, cladribine (N04) | PMC1079880 | Yes: Table 3 is in the text |
-| Briki 2026, 5-FU (P10) | PMC13661680 | Yes, with the table's subscripts stripped; the parameters are identified by table order and the text's own percentages |
+| Briki 2026, 5-FU (P10) | PMC13661680 | Yes, with the table's subscripts stripped; the parameters are identified by table order and the text's own percentages (since confirmed on the PDF) |
 | Blackman 2026, HDMTX adults (P13) | PMC13197298 | All values printed; the covariate exponents identified only by table position, and the sex term (0.01) hard to square with the text's 25.7-point improvement for sex |
 | Taylor 2020, MTXPK.org (C12) | PMC7484917 | Values printed, the final covariate equation stripped |
 | Langenhorst 2019, fludarabine (C34) | PMC6451721 | Values printed, the clearance equation stripped |
@@ -137,8 +137,11 @@ Lane Library.
 
 ## 6. The first two drugs
 
-Both were implemented from the PubMed Central text, read in this session, and are marked in the
-registry as to be confirmed against the PDF. That is a departure from the rule that a model's
+Both were implemented from the PubMed Central text, read in this session. Shafer supplied
+Briki 2026's PDF on 2026-11-06, and its Table 3 (with subscripts) and printed equations confirm
+every value and identification below; fluorouracil's source is now `parameters_verified`.
+Lindemalm 2005's PDF, supplied the same day, confirms cladribine's Table 3 likewise; both
+sources are `parameters_verified`. That is a departure from the rule that a model's
 numbers are confirmed on the PDF (`AGENTS.md`, *Source papers*), taken because the publisher's
 text is not the scrambled rendering the rule guards against, and recorded here so that the PDF
 check is not forgotten.

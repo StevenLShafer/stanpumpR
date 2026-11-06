@@ -16,4 +16,4 @@ None was significant. Age, weight, height, sex, body surface area, diagnosis, cr
 - **The oral route is the solution.** The oral data are a solution in saline taken after an overnight fast. The multiple-sclerosis tablet (Mavenclad) is a different product with its own model (Savic 2017), which this is not.
 - **Adults only.** Children get the adult model scaled by size, an extrapolation.
 
-The model was implemented from the PubMed Central text of the paper, whose Table 3 prints every parameter with its label; it is to be confirmed against the PDF. See [chemotherapy](help:models/chemotherapy) for the other models considered.
+Every parameter was confirmed against the paper's PDF (its Table 3). See [chemotherapy](help:models/chemotherapy) for the other models considered.

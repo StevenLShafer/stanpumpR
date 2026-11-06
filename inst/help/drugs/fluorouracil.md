@@ -1,6 +1,6 @@
 ### The model
 
-Fluorouracil (5-FU) comes from Briki and colleagues (*Cancer Chemother Pharmacol* 2026;96(1)), a meta-analysis of individual patient data: 2332 plasma concentrations from 726 adults with cancer, 24 to 90 years old, pooled from two published studies with rich sampling (Terret 2000, Mueller 2013) and routine drug monitoring at the Dijon cancer centre. The patients received LV5FU2, FOLFOX, FOLFIRI or FOLFIRINOX: a bolus, a 46-hour infusion, or both. Two compartments describe the disposition, and 5-FU leaves the central compartment by two routes at once: a **saturable** pathway (its maximal rate Vmax 429 mg/h, half-saturated at Km 2.34 mg/L) and a **linear** clearance of 52.6 L/h. The central volume is 9.21 L, the peripheral volume 14.6 L and the intercompartmental clearance 125 L/h.
+Fluorouracil (5-FU) comes from Briki and colleagues (*Cancer Chemother Pharmacol* 2026;96:63), a meta-analysis of individual patient data: 2332 plasma concentrations from 726 adults with cancer, 24 to 90 years old, pooled from two published studies with rich sampling (Terret 2000, Mueller 2013) and routine drug monitoring at the Dijon cancer centre. The patients received LV5FU2, FOLFOX, FOLFIRI or FOLFIRINOX: a bolus, a 46-hour infusion, or both. Two compartments describe the disposition, and 5-FU leaves the central compartment by two routes at once: a **saturable** pathway (its maximal rate Vmax 429 mg/h, half-saturated at Km 2.34 mg/L) and a **linear** clearance of 52.6 L/h. The central volume is 9.21 L, the peripheral volume 14.6 L and the intercompartmental clearance 125 L/h.
 
 Because elimination saturates, doubling a dose more than doubles the concentration. The engine integrates the whole dose table numerically, because saturable elimination is not superposable, so a bolus given during an infusion is cleared more slowly than the same bolus given alone.
 
@@ -26,4 +26,4 @@ The target for colorectal cancer is an **AUC of 20 to 29 mg·h/L over the 46-hou
 - **Adults only.**
 - **Not a monitoring tool.** The curve is a population prediction for the covariates entered. It is not an estimate from a measured level, and it does not replace monitoring or the published dose-adjustment tables.
 
-Table 3 of the paper lost its parameter subscripts in the PubMed Central text from which the model was implemented. Each value was identified from its units and checked against a percentage the paper states, and is to be confirmed against the PDF. See [chemotherapy](help:models/chemotherapy) for the other models considered.
+Every parameter and equation was confirmed against the paper's PDF (its Table 3 and printed equations). See [chemotherapy](help:models/chemotherapy) for the other models considered.

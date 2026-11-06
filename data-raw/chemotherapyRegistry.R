@@ -119,7 +119,7 @@ P06	16306851	de Jonge	2005	Ther Drug Monit	27(6):756-65	10.1097/01.ftd.000017722
 P07	10594468	Hassan	1999	Br J Clin Pharmacol	48(5):669-77	10.1046/j.1365-2125.1999.00090.x	PMC2014348	A mechanism-based pharmacokinetic-enzyme model for cyclophosphamide autoinduction in breast cancer patients.
 P08	11014408	Terret	2000	Clin Pharmacol Ther	68(3):270-9	10.1067/mcp.2000.109352		Dose and time dependencies of 5-fluorouracil pharmacokinetics.
 P09	42168702	Tan	2026	Clin Pharmacokinet	65(7):1027-1042	10.1007/s40262-026-01645-1	PMC13356066	Advancing Precision Dosing of 5-FU: Population PK Model Development, Limited Sampling Strategies, and Fit-for-Use Application.
-P10	42283826	Briki	2026	Cancer Chemother Pharmacol	96(1)	10.1007/s00280-026-04885-x	PMC13661680	Model-based meta-analysis of individual patient data for the characterization of intravenous 5-fluorouracil population pharmacokinetics.
+P10	42283826	Briki	2026	Cancer Chemother Pharmacol	96(1):63	10.1007/s00280-026-04885-x	PMC13661680	Model-based meta-analysis of individual patient data for the characterization of intravenous 5-fluorouracil population pharmacokinetics.
 P11	18445839	Gamelin	2008	J Clin Oncol	26(13):2099-105	10.1200/JCO.2007.13.3934		Individual fluorouracil dose adjustment based on pharmacokinetic follow-up compared with conventional dosage: results of a multicenter randomized trial of patients with metastatic colorectal cancer.
 P12	35998099	Ibarra	2023	Br J Clin Pharmacol	89(2):660-671	10.1111/bcp.15506		Insights from a pharmacometric analysis of HDMTX in adults with cancer: Clinically relevant covariates for application in precision dosing.
 P13	42174327	Blackman	2026	Eur J Clin Pharmacol	82(6)	10.1007/s00228-026-04080-0	PMC13197298	Development and validation of high-dose methotrexate population pharmacokinetic models to inform clinical decisions on dosing.
@@ -209,13 +209,17 @@ pubmedSources[pubmedSources == ""] <- NA
 FULL_TEXT_PARTIAL <- c("P05", "P09", "P13", "P18", "P23", "C12", "C13", "C15", "C34", "C35", "N04")
 pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
                              "guideline", "primary_study")
-# Read in full (every parameter the model uses, from the PubMed Central
-# text; the PDF is still to confirm, as the registry rows say)
-FULL_TEXT_READ <- c("N04", "P10")
+# Read in full: every parameter the model uses, from the PubMed Central
+# text, the PDF still to confirm (FULL_TEXT_READ); or confirmed on the PDF
+# itself (PARAMETERS_VERIFIED: Briki 2026 and Lindemalm 2005, supplied by
+# Shafer 2026-11-06)
+FULL_TEXT_READ <- character(0)
+PARAMETERS_VERIFIED <- c("P10", "N04")
 pubmedSources$review_depth <- ifelse(
-  pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
+  pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
+  ifelse(pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
   ifelse(pubmedSources$source_id %in% FULL_TEXT_PARTIAL,
-         "full_text_partial", "abstract_screened"))
+         "full_text_partial", "abstract_screened")))
 pubmedSources$url <- paste0("https://pubmed.ncbi.nlm.nih.gov/", pubmedSources$pmid, "/")
 pubmedSources$citation <- sprintf(
   "%s et al. %s %s %s;%s.", pubmedSources$first_author,
@@ -290,8 +294,10 @@ m <- function(model_id, drug, product, route, population, analyte, structure,
   s <- if (is.na(source_id)) NULL else src(source_id)
   base <- switch(readiness,
     needs_full_text = "The parameters are in the paper's tables, which were not read here.",
-    implemented = paste("Implemented from the PubMed Central text, every parameter read there;",
-                        "to be confirmed on the PDF."),
+    implemented = if (!is.null(s) && s$review_depth == "parameters_verified")
+      "Every parameter and equation confirmed on the PDF." else
+      paste("Implemented from the PubMed Central text, every parameter read there;",
+            "to be confirmed on the PDF."),
     "")
   data.frame(
     model_id, drug, product, route, population, analyte, structure,
@@ -299,7 +305,7 @@ m <- function(model_id, drug, product, route, population, analyte, structure,
     source_id = if (is.null(s)) NA else source_id,
     evidence_read = if (is.null(s)) "none" else s$review_depth,
     blocking_issue = trimws(paste(base, note)),
-    to_obtain = if (is.null(s)) NA else
+    to_obtain = if (is.null(s) || s$review_depth == "parameters_verified") NA else
       sprintf(if (readiness == "implemented")
                 "%s (PMID %s%s): the PDF, to confirm the parameters read from the PubMed Central text."
               else "%s (PMID %s%s): the full text with its tables and supplement.",
@@ -380,7 +386,7 @@ registry <- rbind(
     "726 patients from three studies (individual-patient meta-analysis)", "5-FU",
     "two compartments with parallel Michaelis-Menten and linear elimination; BSA on CL, V lower in women and with age",
     "first", "michaelis_menten", "P10",
-    "Run by advanceMichaelisMenten() with clLinear and one peripheral compartment. Table 3's subscripts are stripped in that text; each row was identified from its units and checked against a percentage the text states. DPD deficiency is not represented.",
+    "Run by advanceMichaelisMenten() with clLinear and one peripheral compartment. First read in the PubMed Central text, whose Table 3 had lost its subscripts; the PDF's Table 3 and printed equations confirm every identification. DPD deficiency is not represented.",
     readiness = "implemented", stanpumpr_drug = "fluorouracil"),
 
   m("busulfan__infant_adult__mccune2014", "busulfan", "busulfan", "IV",
@@ -619,7 +625,7 @@ registry <- rbind(
   m("cladribine__lymphoid__lindemalm2005", "cladribine", "cladribine", "IV, SC and PO",
     "161 adults with lymphoid malignancies", "cladribine",
     "three compartments; F 100% SC and 35% oral; no covariates", "expansion", "linear", "N04",
-    "Table 3 read with its labels. No renal term (no patient had severe impairment); the oral route is the solution, not the multiple-sclerosis tablet.",
+    "Table 3 confirmed on the PDF. No renal term (no patient had severe impairment); the oral route is the solution, not the multiple-sclerosis tablet.",
     readiness = "implemented", stanpumpr_drug = "cladribine"),
   m("cladribine__children__kearns1994", "cladribine", "cladribine", "IV",
     "25 children with acute leukaemia, 5-day infusion", "cladribine, plasma and CSF",

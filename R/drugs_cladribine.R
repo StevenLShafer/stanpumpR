@@ -8,7 +8,9 @@
 # the first of the chemotherapy drugs (docs/chemotherapy.md,
 # inst/extdata/chemotherapyRegistry.csv, source N04).  Every number below was
 # read from the full text in PubMed Central (PMC1079880): Table 3 and the
-# Results.
+# Results; Shafer supplied the PDF (2026-11-06), whose Table 3 confirms every
+# value (ka in /h) and whose Results confirm F fixed at 1 subcutaneously and
+# no oral lag.
 #
 # THE SOURCE
 # ==========
