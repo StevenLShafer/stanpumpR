@@ -202,6 +202,8 @@ N04	15757511	Lindemalm	2005	BMC Pharmacol	5:4	10.1186/1471-2210-5-4	PMC1079880	A
 N05	7906999	Kearns	1994	Cancer Res	54(5):1235-9			Pharmacokinetics of cladribine (2-chlorodeoxyadenosine) in children with acute leukemia.
 N06	10473105	Reid	1999	Clin Cancer Res	5(8):2192-7			Metabolic activation of dacarbazine by human cytochromes P450: the role of CYP1A1, CYP1A2, and CYP2E1.
 N07	21204910	Bogason	2011	Br J Clin Pharmacol	71(4):514-21	10.1111/j.1365-2125.2010.03894.x		Inverse relationship between leukaemic cell burden and plasma concentrations of daunorubicin in patients with acute myeloid leukaemia.
+N08	25557868	Nikanjam	2015	Cancer Chemother Pharmacol	75(3):495-503	10.1007/s00280-014-2667-6	PMC4344382	Population pharmacokinetic analysis of oxaliplatin in adults and children identifies important covariates for dosing.
+N09	30446786	Deyme	2018	Cancer Chemother Pharmacol	83(1):27-42	10.1007/s00280-018-3722-5		Population pharmacokinetics of FOLFIRINOX: a review of studies and parameters.
 ", sep = "\t", header = FALSE, quote = "", colClasses = "character",
   col.names = c("source_id", "pmid", "first_author", "year", "journal",
                 "volume_pages", "doi", "pmcid", "title"))
@@ -219,7 +221,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 FULL_TEXT_READ <- c("C01", "P02", "C35", "C03")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
-PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18", "C05", "C06")
+PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18", "C05", "C06", "N08", "N09")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
   ifelse(pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
@@ -664,6 +666,12 @@ registry <- rbind(
     "expansion", "linear", "C22",
     "PDF read (supplied 2026-11-06), complete but mostly the prior's: every sample after 9 h was below the limit, and the data alone gave Vc 198 and Vp 223 L against the prior's 373 and 1120. The dose basis (hydrochloride or base) is not stated. Not implemented.",
     readiness = "complete_not_implemented"),
+  m("oxaliplatin__pedsadult__nikanjam2015", "oxaliplatin", "oxaliplatin", "IV",
+    "186 children and adults, 0.6-86 years (three paediatric trials, NCI renal and hepatic impairment)", "ultrafilterable platinum",
+    "three compartments allometric in weight: CL 0.67 x WT^0.75 x (0.6/SCr)^0.67 L/h, Q3 0.22 x WT^0.75, Q2 Q3 + 2.95 x WT^0.75 L/h, V1 0.39 x WT x (age/21)^0.16, V2 6.22 x WT, V3 16.9 x WT L",
+    "expansion", "linear", "N08",
+    "PDF read on the page images (supplied 2026-11-06). The printed CL equation omits theta1 (0.67), a misprint every printed number needs. Doses mg oxaliplatin, concentrations ng/mL platinum, no molar conversion in the fit. At the cohort's medians it reproduces the values Deyme 2019 (N09) tabulates. A second oxaliplatin drug beside Bastian 2003.",
+    readiness = "implemented", stanpumpr_drug = "oxaliplatinNikanjam"),
   m("daunorubicin__aml__bogason2011", "daunorubicin", "daunorubicin (conventional)", "IV",
     "40 adults with AML, 33-83 years", "daunorubicin",
     "two compartments (basic model): CL 115 L/h, Vc 373 L, Q 252 L/h, Vp 1120 L; WBC model Vc 412 x (1 + 0.0138 (WBC - 39))",
@@ -743,6 +751,7 @@ relations <- rbind(
   r(withSource$source_id, withSource$drug, "structural_pk", withSource$model_id),
   r("P01", "carboplatin", "dosing_formula", note = "The Calvert formula: a dose from GFR and a target AUC, not a concentration model."),
   r("G06", "carboplatin", "dosing_guideline"),
+  r("N09", "oxaliplatin", "external_validation", "oxaliplatin__pedsadult__nikanjam2015", "A review of FOLFIRINOX population models, not new data: it tabulates Nikanjam 2015 at the cohort medians, a check of the transcription, which the oxaliplatinNikanjam test reproduces."),
   r("G14", "carboplatin", "dosing_guideline", note = "Linked to carboplatin, as the handoff asks."),
   r("L01", "carboplatin", "product_label"),
   r("G06", "cisplatin", "dosing_guideline"),

@@ -28,6 +28,8 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 "methotrexate",
                 # pemetrexed (Latz 2006): a linear Cockcroft-Gault term
                 "pemetrexed",
+                # oxaliplatinNikanjam (Nikanjam 2015): (0.6/SCr)^0.67 on clearance, the patient's own creatinine
+                "oxaliplatinNikanjam",
                 # cisplatinBound (Urien 2004): Cockcroft-Gault in fm/Vm
                 "cisplatinBound",
                 # etoposide (Krogh-Madsen 2012): a linear Cockcroft-Gault term

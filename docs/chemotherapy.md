@@ -543,3 +543,19 @@ case; the child and adult within 0.5%), 0.1% at 6 and 24 h; the AUC is dose/CL
 to 0.5%. The age term is floored at 0.04 years, the youngest studied. Two
 decisions are recorded in the registry: kon/koff taken as not allometrically
 scaled, and doses as labelled (the sulfate).
+
+## 33. Oxaliplatin in children and adults (Nikanjam 2015) (2026-11-06)
+
+A second oxaliplatin drug, `oxaliplatinNikanjam`, from Nikanjam et al. 2015
+(Cancer Chemother Pharmacol 75:495-503; PDF supplied by Shafer and read on
+the page images; source N08): 186 patients aged 0.6-86 years, three
+compartments allometric in weight with no reference weight, CL 0.67 x
+WT^0.75 x (0.6/SCr)^0.67 L/h (the printed equation omits theta1, a misprint),
+Q3 0.22 x WT^0.75, Q2 Q3 + 2.95 x WT^0.75, V1 0.39 x WT x (age/21)^0.16, V2
+6.22 x WT, V3 16.9 x WT. Doses mg oxaliplatin, ultrafilterable platinum in
+ng/mL with no molar conversion (the fit's own basis). The patient's own
+creatinine (patientCreatinine()), floored at 0.2 mg/dL; age floored at 0.6
+years. At the cohort's medians it reproduces the values the Deyme 2018 review
+(N09) tabulates, and after 130 mg/m2 over 2 h the curve of Figure 1 (1455
+ng/mL at 2 h, 12 at 168 h, 3.8 at 504 h). It has no enterohepatic term;
+Bastian 2003 (section 31) remains `oxaliplatin`.

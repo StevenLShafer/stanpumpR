@@ -63,6 +63,7 @@
 "N03","thioguanine","thioguanine__all__lowe2001","structural_pk",NA
 "C38a","asparaginase","pegaspargase__all__wurthwein2021","structural_pk",NA
 "C22","daunorubicin","daunorubicin__aml__kroghmadsen2012","structural_pk",NA
+"N08","oxaliplatin","oxaliplatin__pedsadult__nikanjam2015","structural_pk",NA
 "N07","daunorubicin","daunorubicin__aml__bogason2011","structural_pk",NA
 "C23","daunorubicin","daunorubicin__aml__varatharajan2016","structural_pk",NA
 "C24","epirubicin","epirubicin__adult__ralph2004","structural_pk",NA
@@ -80,6 +81,7 @@
 "C28","irinotecan","irinotecan_liposomal__adiwijaya2017","structural_pk",NA
 "P01","carboplatin",NA,"dosing_formula","The Calvert formula: a dose from GFR and a target AUC, not a concentration model."
 "G06","carboplatin",NA,"dosing_guideline",NA
+"N09","oxaliplatin","oxaliplatin__pedsadult__nikanjam2015","external_validation","A review of FOLFIRINOX population models, not new data: it tabulates Nikanjam 2015 at the cohort medians, a check of the transcription, which the oxaliplatinNikanjam test reproduces."
 "G14","carboplatin",NA,"dosing_guideline","Linked to carboplatin, as the handoff asks."
 "L01","carboplatin",NA,"product_label",NA
 "G06","cisplatin",NA,"dosing_guideline",NA
