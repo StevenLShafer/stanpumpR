@@ -296,8 +296,14 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
   # time the TCI row wins if it runs the pump (a target entered with an
   # infusion wins), else the manual row.
   manual <- d[route == ROUTE_IV & rate & !tci, , drop = FALSE]
+  # A Michaelis-Menten drug dosed as a salt (phenytoin sodium) enters its
+  # model as the active drug: advanceMichaelisMenten() multiplies IV boluses
+  # and rates by saltFactor$IV, and so does the drug given here, or the salt's
+  # mass would read as drug eliminated at the moment of the dose.
+  ivSalt <- entry$michaelisMenten$saltFactor$IV
+  if (is.null(ivSalt)) ivSalt <- 1
   steps <- data.frame(Time = manual$Time,
-                      Rate = viewerBaseDose(manual$Dose, manual$Units, weight, u),
+                      Rate = ivSalt * viewerBaseDose(manual$Dose, manual$Units, weight, u),
                       rank = rep(1, nrow(manual)))
   tciRates <- entry$tci$rates
   if (!is.null(tciRates) && nrow(tciRates) > 0) {
@@ -317,7 +323,7 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
 
   # IV boluses, in base amount.
   b <- d[route == ROUTE_IV & !rate & !tci, , drop = FALSE]
-  bAmount <- viewerBaseDose(b$Dose, b$Units, weight, u)
+  bAmount <- ivSalt * viewerBaseDose(b$Dose, b$Units, weight, u)
   # A dose in a unit the viewer cannot read (a salt, mmol) leaves the drug
   # given unknown; it is drawn as nothing rather than refused.
   unreadable <- anyNA(c(steps$Rate, oralSteps$Rate, bAmount))
@@ -347,6 +353,9 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
   inputKnown <- is.null(entry$oralZeroOrder) && is.null(entry$zeroOrderSC) &&
     !isTRUE(entry$enteralInfusion) && is.null(entry$michaelisMenten$saturableSC) &&
     is.null(entry$molar) && !any(enteral) && nrow(d) > 0 &&
+    # A prodrug in equivalents (fosphenytoin, mg PE) waits in a conversion
+    # compartment that is neither the body nor the Depot column.
+    !any(isEquivalentUnit(units)) &&
     !unreadable
 
   # The target and the mode in force: a target row starts TCI (a target of 0

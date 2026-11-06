@@ -156,7 +156,10 @@ test_that("a saturable drug: given is the doses, eliminated never falls", {
   doses <- data.frame(Drug = "phenytoin", Time = 0, Dose = 1000, Units = "mg")
   r <- vr(doses, 240)
   expect_true(r$inputKnown)
-  expect_equal(utils::tail(r$given, 1), 1000, tolerance = 1e-9)
+  # 1000 mg of phenytoin sodium enters as the acid (saltFactor$IV).
+  salt <- getDrugPK("phenytoin", 70, 170, 40, "male",
+                    getDrugDefaults("phenytoin"))$michaelisMenten$saltFactor$IV
+  expect_equal(utils::tail(r$given, 1), 1000 * salt, tolerance = 1e-9)
   body <- r$cp * r$pk$v1 + (if (is.null(r$c2)) 0 else r$c2 * r$pk$v2)
   elim <- r$given - body
   expect_gte(min(elim), -1e-6 * 1000)
@@ -251,4 +254,29 @@ test_that("drugs in IU, U and mmol: the amounts are in IU, U and mmol", {
   expect_equal(ca$units$conc, "mmol/L")
   expect_false(ca$inputKnown)
   expect_null(ca$given)
+})
+
+test_that("phenytoin sodium IV: the salt's mass is not counted as eliminated", {
+  # advanceMichaelisMenten() enters an IV dose of the sodium salt as the acid,
+  # x saltFactor$IV; the drug given must be on the same basis.
+  doses <- data.frame(Drug = "phenytoin", Time = 0, Dose = 1000, Units = "mg")
+  r <- vr(doses, 60)
+  salt <- getDrugPK("phenytoin", 70, 170, 40, "male",
+                    getDrugDefaults("phenytoin"))$michaelisMenten$saltFactor$IV
+  expect_lt(salt, 1)
+  expect_true(r$inputKnown)
+  expect_equal(r$given[1], 1000 * salt, tolerance = 1e-9)
+  body0 <- r$amountScale * (r$cp[1] * r$pk$v1 + (if (is.null(r$c2)) 0 else r$c2[1] * r$pk$v2))
+  # At the dose, nothing is eliminated yet.
+  expect_lt(abs(r$given[1] - body0) / r$given[1], 1e-3)
+})
+
+test_that("fosphenytoin (mg PE): the prodrug being converted leaves the drug given unknown", {
+  # A PE dose waits in a conversion compartment that is neither the body nor
+  # the Depot column, so the viewer cannot balance it; it says so instead of
+  # showing the whole dose as eliminated.
+  doses <- data.frame(Drug = "phenytoin", Time = 0, Dose = 1000, Units = "mg PE")
+  r <- vr(doses, 60)
+  expect_false(r$inputKnown)
+  expect_null(r$given)
 })

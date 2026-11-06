@@ -39,6 +39,12 @@
 //  told (viewerBlocked) and says so; a blocker that closes the window
 //  later is not caught.
 //
+//  The button is a plain button, not a Shiny actionButton (2026-11-06, from
+//  the ChatGPT audit): the click opens the window first and only then sets
+//  input$openViewer, so a blocked window leaves the Edit doses dialog open
+//  and the server builds nothing. While a run is being built, further clicks
+//  are ignored (the run is a snapshot; a second would only repeat the work).
+//
 //  Each click brings the window to the front (focus(): a window that is
 //  only reloaded stays wherever it was, behind the app's), and asks for
 //  the viewer at an address of its own (?t=, the click's time), so the
@@ -49,7 +55,8 @@
 (function () {
     const URL = 'stanpumpr-assets/stanpumpR-viewer.html';
     // pending: the run, or the server's reason there is none, for the window.
-    let win = null, ready = false, pending = null;
+    // building: a run has been asked for and has not arrived.
+    let win = null, ready = false, pending = null, building = false;
 
     function send() {
         if (win && !win.closed && ready && pending) {
@@ -61,6 +68,7 @@
     document.addEventListener('click', function (e) {
         const b = e.target.closest && e.target.closest('#openViewer');
         if (!b || b.disabled) return;
+        if (building && win && !win.closed) { win.focus(); return; }
         ready = false; pending = null;
         win = window.open(URL + '?t=' + Date.now(), 'stanpumpRViewer', 'width=1200,height=800');
         if (!win || win.closed) {
@@ -71,6 +79,9 @@
             return;
         }
         win.focus();
+        building = true;
+        if (window.Shiny && Shiny.setInputValue)
+            Shiny.setInputValue('openViewer', Date.now(), { priority: 'event' });
     });
 
     window.addEventListener('message', function (e) {
@@ -80,9 +91,11 @@
 
     $(document).on('shiny:connected', function () {
         Shiny.addCustomMessageHandler('stanpumpR-viewer-run', function (r) {
+            building = false;
             pending = { type: 'stanpumpR-viewer-run', run: r }; send();
         });
         Shiny.addCustomMessageHandler('stanpumpR-viewer-error', function (m) {
+            building = false;
             pending = { type: 'stanpumpR-viewer-error', message: m }; send();
         });
     });

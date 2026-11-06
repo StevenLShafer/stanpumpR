@@ -2350,8 +2350,12 @@ app_server <- function(input, output, session) {
         actionButton("editDosesOK", "Apply", class = "btn-primary"),
         actionButton("deleteAllDosesBtn", "Delete All Doses", class = "btn-outline-danger"),
         # The Minto Visualizer (R/viewerRun.R): only for a drug it can draw.
-        if (viewerAvailable(drug)) actionButton(
-          "openViewer", "Minto Visualizer", icon = icon("cube"), class = "btn-outline-primary"
+        # Not an actionButton: inst/www/viewer-launch.js opens the pop-up and
+        # only then reports input$openViewer, so a blocked pop-up leaves this
+        # dialog open and asks nothing of the server.
+        if (viewerAvailable(drug)) tags$button(
+          id = "openViewer", type = "button", class = "btn btn-default btn-outline-primary",
+          icon("cube"), "Minto Visualizer"
         ),
         tags$button(
           type = "button",

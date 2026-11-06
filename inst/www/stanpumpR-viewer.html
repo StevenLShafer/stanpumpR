@@ -6261,6 +6261,7 @@ const Player = {
         requestAnimationFrame(ts => this.frame(ts));
         this.empty();
         if (window.STANPUMPR_VIEWER_RUN) this.load(window.STANPUMPR_VIEWER_RUN);
+        else if (window.opener) this.message('<b>Loading data</b> — this may take 30–45 seconds.');
         else this.message('Waiting for a run from stanpumpR. You can also <b>Open run…</b> or drop a run file (.json) here.');
         if (window.opener) window.opener.postMessage({ type: 'stanpumpR-viewer-ready' }, '*');
     },
