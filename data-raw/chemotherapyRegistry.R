@@ -216,7 +216,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 FULL_TEXT_READ <- c("C01", "P02", "C35", "C03")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
-PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30")
+PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
   ifelse(pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
@@ -553,8 +553,10 @@ registry <- rbind(
     "population model; baseline white cell count on clearance", "expansion", "unknown", "C22"),
   m("pemetrexed__phase2__latz2006", "pemetrexed", "pemetrexed", "IV",
     "287 adults from ten phase II trials", "pemetrexed",
-    "two compartments; renal function on clearance, BSA on V1", "expansion", "linear", "C20",
-    "Fitted without folate and B12 supplementation: PK may transfer, toxicity does not."),
+    "two compartments: CL 43.0 + 47.2 x CrCL/92.6 mL/min (Cockcroft-Gault), V1 6.13 x BSA^1.32 L, Q 14.5 mL/min, V2 3.38 L",
+    "expansion", "linear", "C20",
+    "PDF read (supplied 2026-11-06). Reproduces its terminal half-life (3.50 h) and Vss (16.3 L at its own V1). Fitted without folate and B12 supplementation: PK may transfer, toxicity does not. Q is 14.5 mL/min in Table 3 and 14.4 in the text; neither the BSA formula nor the Cockcroft-Gault weight is named (Mosteller and total weight used). The linear clearance's 43 mL/min intercept is untested below a CrCL of about 40 mL/min.",
+    readiness = "implemented", stanpumpr_drug = "pemetrexed"),
   m("ifosfamide__sarcoma__kerbusch2000", "ifosfamide", "ifosfamide", "IV",
     "15 adults with soft-tissue sarcoma, 72-h infusion", "ifosfamide",
     "one compartment with enzyme-turnover autoinduction", "expansion", "new_engine", "C10"),

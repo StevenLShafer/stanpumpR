@@ -2430,7 +2430,18 @@ registry <- rbind(
       source = "",
       source_url = "",
       to_obtain = "",
-      notes = "The model is of children; etoposide is about a third renally cleared, but no pregnant measurement exists, and nothing is applied.")
+      notes = "The model is of children; etoposide is about a third renally cleared, but no pregnant measurement exists, and nothing is applied."),
+  row("pemetrexed", "Chemotherapy", "applied",
+      finding = "No human pregnancy pharmacokinetics of pemetrexed found (PubMed searched 2026-11-06: pemetrexed with pregnancy or pregnant and pharmacokinetic, clearance or plasma; one record, a case report giving pemetrexed only after delivery, PMID 41274414). Pemetrexed is cleared mostly unchanged by the kidney (70-90% in 24 h by its label), so the model's creatinine-clearance term takes the rise in filtration of pregnancy (applied), an assumption.",
+      applied = "Cockcroft-Gault creatinine clearance x 1.5 when the serum creatinine is left blank (physiological: no pemetrexed data); the 43 mL/min intercept, the volumes and Q unchanged.",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = 1.5,
+      trimester = "third", comparator = NA,
+      design = "physiological", n = NA, confidence = "low",
+      evidence_read = "abstract",
+      source = "Ansari J, Carvalho B, Shafer SL, Flood P. Anesth Analg 2016;122:786-804 (the rise in glomerular filtration of pregnancy)",
+      source_url = "https://doi.org/10.1213/ANE.0000000000001143",
+      to_obtain = "",
+      notes = "Pemetrexed is contraindicated in pregnancy for its fetal toxicity; the factor is the physiology, not a measurement.")
 )
 
 stopifnot(

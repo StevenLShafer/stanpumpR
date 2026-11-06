@@ -26,6 +26,8 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 "methotrexatePediatric",
                 # methotrexate (Ibarra 2023): (SCRpop/SCR)^0.694
                 "methotrexate",
+                # pemetrexed (Latz 2006): a linear Cockcroft-Gault term
+                "pemetrexed",
                 # Serum creatinine itself, not an estimate of its clearance,
                 # is magnesium's covariate (R/drugs_magnesiumSulfate.R, Du 2019)
                 "magnesiumSulfate",

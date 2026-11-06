@@ -231,3 +231,15 @@ covariate column, and a 15-kg check of 0.75 L/h that its own equation puts at
 0.646) do not touch the model; the test pins 0.646. An adult etoposide model
 waits: Nguyen 1998 (P21), read in full, never prints its intercompartmental
 clearance, so only a one-compartment reduction could be built from it.
+
+## 13. Pemetrexed
+
+`pemetrexed` is Latz 2006 (C20; PDF supplied 2026-11-06, Table 3 read on the
+page images): two compartments, CL = 43.0 + 47.2 x CrCL/92.6 mL/min with
+Cockcroft-Gault in mL/min, V1 = 6.13 x BSA^1.32 L, Q 14.5 mL/min (14.4 in the
+text), V2 3.38 L. It reproduces the paper's terminal half-life (3.50 h) and
+Vss (16.3 L at its own V1). The Cockcroft-Gault weight and the BSA formula
+are unnamed (total weight and Mosteller). The intercept keeps clearance at 43
+mL/min or more whatever the kidneys, untested below about 40 mL/min. The
+patients had no folate or B12 supplementation. Pregnancy: the creatinine
+clearance takes the rise in filtration (applied, physiological).
