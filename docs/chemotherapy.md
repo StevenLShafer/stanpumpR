@@ -168,3 +168,14 @@ check is not forgotten.
   not the multiple-sclerosis tablet.
 
 Neither drug has measured pharmacokinetics in pregnancy (registry rows `unknown`).
+
+## 7. Carboplatin
+
+Shafer supplied Ekhart 2006, Chatelut 1995, Duffull 1997 and Schmitt 2009 (2026-11-06) and, of
+the four, chose Duffull 1997 for the library's `carboplatin` (`R/drugs_carboplatin.R`): the only
+complete fitted model with a renal term, though in only twelve women. Ekhart 2006 is complete
+but has no renal term (fitted in creatinine clearance above 50 mL/min); Chatelut 1995 prints a
+renal clearance formula but no fitted volumes, only means of individual fits; Schmitt 2009 needs
+cystatin C and does not print its volumes. Duffull's paper contradicts itself on the
+intercompartmental clearance (equation 5.4 against Table 2), and Shafer chose Table 2's level in
+the equation's form. The erratum the handoff reported for it was not found.

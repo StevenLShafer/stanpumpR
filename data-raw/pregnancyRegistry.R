@@ -2364,7 +2364,18 @@ registry <- rbind(
       source = "",
       source_url = "",
       to_obtain = "",
-      notes = "5-FU is cleared mainly by hepatic DPD, not by filtration, so the rise in filtration of pregnancy is not a basis for a change; nothing is applied.")
+      notes = "5-FU is cleared mainly by hepatic DPD, not by filtration, so the rise in filtration of pregnancy is not a basis for a change; nothing is applied."),
+  row("carboplatin", "Chemotherapy", "applied",
+      finding = "No usable human pregnancy pharmacokinetics (PubMed searched 2026-11-06: carboplatin with pregnancy or pregnant and pharmacokinetic). Van Calsteren 2010 (PMID 20846067, abstract) compared platinum in 2 pregnant and 2 nonpregnant women and saw a lower AUC and higher clearance and volume in pregnancy, too few to quantify; van Hasselt 2014's pooled analysis (PMID 24713311) did not include carboplatin. The rest are placental transfer studies (ex vivo human placenta, Smith 2014 PMID 24333234 and Al-Saleh 2007 PMID 17701670; baboons, Van Calsteren 2010 PMID 21307819). Carboplatin is cleared mainly by filtration, so the model's creatinine-clearance term takes the rise in filtration of pregnancy (applied), an assumption.",
+      applied = "Adjusted Cockcroft-Gault creatinine clearance x 1.5 when the serum creatinine is left blank (physiological: no carboplatin data); the non-renal term, volumes and Clic unchanged.",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = 1.5,
+      trimester = "third", comparator = NA,
+      design = "physiological", n = NA, confidence = "low",
+      evidence_read = "abstract",
+      source = "Ansari J, Carvalho B, Shafer SL, Flood P. Anesth Analg 2016;122:786-804 (the rise in glomerular filtration of pregnancy); Van Calsteren K et al. Acta Obstet Gynecol Scand 2010;89:1338-1345 PMID 20846067",
+      source_url = "https://doi.org/10.1213/ANE.0000000000001143",
+      to_obtain = "Van Calsteren 2010 (PMID 20846067), for its two pregnant women's platinum clearances",
+      notes = "The direction Van Calsteren saw agrees with the assumption; its size is unmeasured.")
 )
 
 stopifnot(

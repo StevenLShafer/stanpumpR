@@ -221,3 +221,4 @@ tolcapone,mcg,,,mg PO,"mg PO,mg PO tid",#00897B,0,0,0,0,0,IV,Parkinson disease
 amantadineER,ng,,,mg PO qd,"mg PO,mg PO qd",#3949AB,600,1700,1150,0,0,IV,Parkinson disease
 cladribine,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg SC",#880E4F,0,0,0,0,0,IV,Chemotherapy
 fluorouracil,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#D81B60,0,0,0,0,0,IV,Chemotherapy
+carboplatin,mcg,mg,mg/hr,mg/hr,"mg,mg/hr,mg/min",#37474F,0,0,0,0,0,IV,Chemotherapy

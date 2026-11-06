@@ -213,8 +213,8 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 # text, the PDF still to confirm (FULL_TEXT_READ); or confirmed on the PDF
 # itself (PARAMETERS_VERIFIED: Briki 2026 and Lindemalm 2005, supplied by
 # Shafer 2026-11-06)
-FULL_TEXT_READ <- c("C01", "P02", "C35", "C02", "C03")
-PARAMETERS_VERIFIED <- c("P10", "N04")
+FULL_TEXT_READ <- c("C01", "P02", "C35", "C03")
+PARAMETERS_VERIFIED <- c("P10", "N04", "C02")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
   ifelse(pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
@@ -339,8 +339,8 @@ registry <- rbind(
   m("carboplatin__ovarian__duffull1997", "carboplatin", "carboplatin", "IV",
     "12 women with ovarian cancer", "intact carboplatin in serum (HPLC)",
     "two compartments, for sequential Bayesian dosing", "first", "linear", "C02",
-    "PDF read (supplied 2026-11-06). A complete fitted model with a renal term: Cl (L/h) = 0.15 LBW^0.75 + 0.78 ClCr, Vss 0.38 LBW, V1 0.26 LBW, Clic 0.15 LBW^0.75 (LBW by Pesola; ClCr by Cockcroft-Gault with LBW and creatinine floored at 60 uM, in L/h), geometric means Cl 6.8 L/h, Vss 21.6 L, V1 14.8 L, Clic 4.4 L/h. Only 12 women, 49-68 years, ovarian cancer; serum carboplatin by HPLC. The erratum the handoff reported was not found: PubMed has none for it (searched 2026-11-06) and neither PDF mentions one. Shafer chose this model for the library's carboplatin (2026-11-06). [decision, asked 2026-11-06] The paper contradicts itself on Clic: equation 5.4 prints 0.15 LBW^0.75 (2.7-3.4 L/h over the study's LBW 48-64 kg), Table 2 a geometric mean of 4.4 L/h, range 3.9-5.0; the 0.15 repeats equation 5.1's non-renal coefficient. Use Table 2's 4.4 (LBW/56)^0.75, or the printed equation? Clic affects only the distribution phase, not the AUC.",
-    readiness = "complete_not_implemented"),
+    "PDF read (supplied 2026-11-06). A complete fitted model with a renal term: Cl (L/h) = 0.15 LBW^0.75 + 0.78 ClCr, Vss 0.38 LBW, V1 0.26 LBW, Clic 0.15 LBW^0.75 (LBW by Pesola; ClCr by Cockcroft-Gault with LBW and creatinine floored at 60 uM, in L/h), geometric means Cl 6.8 L/h, Vss 21.6 L, V1 14.8 L, Clic 4.4 L/h. Only 12 women, 49-68 years, ovarian cancer; serum carboplatin by HPLC. The erratum the handoff reported was not found: PubMed has none for it (searched 2026-11-06) and neither PDF mentions one. Shafer chose this model for the library's carboplatin (2026-11-06). The paper contradicts itself on Clic: equation 5.4 prints 0.15 LBW^0.75 (2.7-3.4 L/h over the study's LBW 48-64 kg), Table 2 a geometric mean of 4.4 L/h, range 3.9-5.0; the 0.15 repeats equation 5.1's non-renal coefficient. Decided (Shafer, 2026-11-06): Table 2's level in the equation's form, 4.4 (LBW/56)^0.75. Clic affects only the distribution phase, not the AUC.",
+    readiness = "implemented", stanpumpr_drug = "carboplatin"),
   m("carboplatin__adult__schmitt2009", "carboplatin", "carboplatin", "IV",
     "357 adults, including the underweight and the obese", "carboplatin (analyte to confirm)",
     "a clearance equation in serum creatinine, cystatin C, weight, age and sex; the disposition model is not in the abstract",
