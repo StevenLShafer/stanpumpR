@@ -559,3 +559,36 @@ years. At the cohort's medians it reproduces the values the Deyme 2018 review
 (N09) tabulates, and after 130 mg/m2 over 2 h the curve of Figure 1 (1455
 ng/mL at 2 h, 12 at 168 h, 3.8 at 504 h). It has no enterohepatic term;
 Bastian 2003 (section 31) remains `oxaliplatin`.
+
+## 34. Enterohepatic recirculation: the physiological models read (2026-11-06)
+
+Four papers Shafer supplied to guide a continuous-secretion model (section 31):
+
+- Okour 2018 (J Clin Pharmacol 58:628-639; doi 10.1002/jcph.1064),
+  mycophenolic acid in kidney transplant recipients: MPAG secreted
+  CONTINUOUSLY from its compartment (EHC% = kDG/(kDG + k30), 37%), 25% of
+  the secretion draining straight to the gut and 75% into a gallbladder that
+  empties at a mealtime at kGG = 2.77/h for 30 min (75% of its content), the
+  switch two steep sigmoids (slope 20/h) repeated at each meal. One mealtime,
+  estimated at 7.7 h after the dose, fitted as well as two or three.
+- Wajima 2002 (J Pharm Pharmacol 54:929-934): continuous filling of a bile
+  compartment emptied at kB1 x max(0, sin(2 pi (t - u)/x)), a periodic
+  release; the averaged AUC ratio is analytic (AUC rises k1B/ke-fold).
+- Guiastrennec 2018 (CPT Pharmacometrics Syst Pharmacol 7:603-612): total
+  bile acids, gallbladder volume and emptying driven by duodenal fat from a
+  gastric-emptying model, a basal (fasting) emptying rate, and postprandial
+  refilling periods (onset 25.6 min, duration 156 min); a physiological
+  framework, not a drug model.
+- Hofmann 1983 (J Clin Invest 71:1003-1022): cholic acid in nine spaces,
+  linear transfer coefficients, meals triggering discrete gallbladder
+  emptying and intestinal flow.
+
+What they settle: the physiological structure is Okour's (continuous
+secretion, part straight to the gut, the rest stored and released at meals,
+a basal fasting release possible), and it needs MEAL TIMES, which the
+library could take from the event table. What they do not: none gives
+oxaliplatin parameters, and Bastian's k1B, TLAG and Ka were fitted to the
+single-emptying structure, so moving them into Okour's structure is a refit,
+not a reparameterisation (section 31's 20- and 32-h half-lives). The Bastian
+model stays as published; a meal-driven biliary engine is a decision for
+Shafer, its first drug one whose source fitted that structure.
