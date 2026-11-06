@@ -325,7 +325,7 @@ For each item: what it is, where it comes from, and what it would take.
   - Registering it would be free, and would put it in the registry's EDAM-annotated search.
   - Topics would include Pharmacology, Pharmacokinetics and Anaesthesiology; the operation would be Simulation.
   - It would also be the registry's only anesthesia simulator.
-  - That is Shafer's call.
+  - Shafer decided to register it (2026-11-06). The entry is drafted in `docs/bio.tools/`.
 
 The entries that matter to stanpumpR:
 
