@@ -98,6 +98,7 @@ helpStaticPages <- function() {
     "models/antihypertensives", "Antihypertensives: why so few, and no blood pressure", "models",
     "models/vasoactive",        "Vasoactive and resuscitation drugs", "models",
     "models/parkinsons",        "Parkinson disease drugs",         "models",
+    "models/chemotherapy",      "Chemotherapy: the evidence plan",  "models",
     "models/antibiotics",       "Antibiotics: the MIC line and the MBC band", "models",
     "models/pk-events",         "Events that change the kinetics", "models",
     "models/meac",              "MEAC: comparing opioids",         "models",

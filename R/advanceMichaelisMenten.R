@@ -109,6 +109,34 @@
 #     and peripheral states are the free drug, and the plasma concentration
 #     is the free drug, as the paper's output equation has it.
 #
+# rapidBinding may carry plotted = "unbound" (vincristinePediatric,
+# R/drugs_vincristinePediatric.R; Nijstad 2022), for a drug whose bound pool
+# is a tissue store fed from the central amount (vincristine on
+# beta-tubulin) rather than drug bound in the plasma sample: the plasma
+# concentration plotted is then the unbound central concentration, which is
+# what that source observed.  The default, "total", is linagliptin's.  Nijstad
+# fitted the binding as a process (kon 1300 /h, koff 11.5 /h), far too fast for
+# this engine's step (kon is about 22 /min, beyond the Runge-Kutta stability
+# limit of 2.78 / 2 min), so the drug declares its quasi-equilibrium, which is
+# exactly this block: test-drugs-vincristinePediatric.R measures it against a
+# fine-step integration of the full binding ODE.
+#
+# SATURABLE DISTRIBUTION (OPTIONAL)
+# =================================
+# A block saturableDistribution = list(vmax, km, k21) (paclitaxel,
+# R/drugs_paclitaxel.R; Joerger 2006) adds a further compartment, held as an
+# amount with no volume, filled from the central compartment at the saturable
+# rate vmax Cu / (km + Cu) (vmax an amount per minute, km a concentration) and
+# emptied back into it at the first-order rate k21 (/min) times its amount:
+#
+#     dA/dt  <- ... - vmax_T Cu / (km_T + Cu) + k21 As,
+#     dAs/dt  =       vmax_T Cu / (km_T + Cu) - k21 As.
+#
+# It sits beside the linear peripheral compartment of the PK set's cl2 and v2
+# (which carries paclitaxel's own second, linear, peripheral compartment, its
+# V3).  Having no volume it has no concentration, so the compartment panels
+# (R/compartments.R) show only the linear one.
+#
 # An oral dose of a drug whose block carries kaTransit (vildagliptin's two
 # sequential absorption compartments) passes through a transit compartment,
 # emptied at kaTransit, before the default oral depot.
@@ -194,6 +222,16 @@ validateMichaelisMenten <- function(mm, drug)
                         is_valid_number(tb$rmaxPeripheral) && tb$rmaxPeripheral >= 0))
     stop("Invalid michaelisMenten for ", drug, ": targetBinding needs a positive ",
          "kd and k2, and koff, kdeg, rmaxCentral and rmaxPeripheral of zero or more.")
+  if (!is.null(rb) && !is.null(rb$plotted) &&
+      !(is.character(rb$plotted) && length(rb$plotted) == 1L &&
+        rb$plotted %in% c("total", "unbound")))
+    stop("Invalid michaelisMenten for ", drug, ": rapidBinding's plotted must be ",
+         "\"total\" or \"unbound\".")
+  sd <- mm$saturableDistribution
+  if (!is.null(sd) && !(is.list(sd) && positive(sd$vmax) && positive(sd$km) &&
+                        positive(sd$k21)))
+    stop("Invalid michaelisMenten for ", drug, ": saturableDistribution needs a ",
+         "positive vmax (amount per minute), km (concentration) and k21 (/min).")
   if (!is.null(rb) && !is.null(tb))
     stop("Invalid michaelisMenten for ", drug, ": rapidBinding and targetBinding ",
          "are alternatives.")
@@ -268,6 +306,8 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   sc <- mm$saturableSC
   rb <- mm$rapidBinding
   tb <- mm$targetBinding
+  sd <- mm$saturableDistribution
+  plotUnbound <- !is.null(rb) && identical(rb$plotted, "unbound")
   # Unbound concentrations from the amounts: the amount over the volume, or,
   # with rapid binding, the root of the binding equilibrium.
   V2 <- if (is.null(pkSet$v2)) 1 else pkSet$v2
@@ -311,6 +351,7 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   iT <- nOral + 6      # transit compartment before the default oral depot
   iDRC <- nOral + 7    # drug-target complex, central (targetBinding)
   iDRP <- nOral + 8    # drug-target complex, peripheral
+  iSD <- nOral + 9     # saturable distribution compartment (an amount)
   kT <- if (is.null(mm$kaTransit)) 0 else mm$kaTransit
   # A peripheral compartment declared as rate constants on the amounts (GHB,
   # Chen 2020: k23 and k32; see the header) is the same linear distribution
@@ -445,10 +486,16 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
       dx[iC] <- dx[iC] - bindC + tb$koff * x[iDRC]
       dx[iP] <- dx[iP] - bindP + tb$koff * x[iDRP]
     }
+    if (!is.null(sd)) {
+      toS <- sd$vmax * Cu / (sd$km + Cu)
+      fromSD <- sd$k21 * x[iSD]
+      dx[iSD] <- toS - fromSD
+      dx[iC] <- dx[iC] - toS + fromSD
+    }
     dx
   }
 
-  x <- numeric(iDRP)
+  x <- numeric(iSD)
   Cp <- numeric(L)
   # The peripheral concentration (on the same footing as Cp: the amount in the
   # compartment over its volume) and the amount still to be absorbed, in the
@@ -479,7 +526,7 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
     }
     arriving <- which(jumpAt == i)
     for (j in arriving) x[jumps$state[j]] <- x[jumps$state[j]] + jumps$amount[j]
-    Cp[i] <- x[iC] / V
+    Cp[i] <- if (plotUnbound) unboundC(x[iC]) else x[iC] / V
     if (q > 0) C2[i] <- x[iP] / V2
     depot[i] <- sum(x[depotStates])
   }

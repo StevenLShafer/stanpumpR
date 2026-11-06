@@ -18,6 +18,32 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 # fitted no body-size term either, so weight reaches it only
                 # through Cockcroft-Gault.
                 "hydrochlorothiazide",
+                # Carboplatin (Duffull 1997): an adjusted Cockcroft-Gault term
+                # (R/drugs_carboplatin.R)
+                "carboplatin",
+                # methotrexatePediatric (Taylor 2023): the patient's own
+                # creatinine, a power referenced to 40 uM
+                "methotrexatePediatric",
+                # methotrexate (Ibarra 2023): (SCRpop/SCR)^0.694
+                "methotrexate",
+                # pemetrexed (Latz 2006): a linear Cockcroft-Gault term
+                "pemetrexed",
+                # oxaliplatinNikanjam (Nikanjam 2015): (0.6/SCr)^0.67 on clearance, the patient's own creatinine
+                "oxaliplatinNikanjam",
+                # cisplatinBound (Urien 2004): Cockcroft-Gault in fm/Vm
+                "cisplatinBound",
+                # etoposide (Krogh-Madsen 2012): a linear Cockcroft-Gault term
+                "etoposide",
+                # cisplatin (Urien 2004): (CLCr/81)^0.36 on unbound clearance
+                "cisplatin",
+                # topotecan (Mould 2002): Cockcroft-Gault standardised to 70 kg
+                "topotecan",
+                # doxorubicinol (Joerger 2007): Cockcroft-Gault on its clearance
+                "doxorubicinol",
+                # melphalan (Nath 2010): Cockcroft-Gault per 70 kg, a linear renal term
+                "melphalan",
+                # oxaliplatin (Bastian 2003): (SCr/87 umol/L)^-0.57 on clearance
+                "oxaliplatin",
                 # Serum creatinine itself, not an estimate of its clearance,
                 # is magnesium's covariate (R/drugs_magnesiumSulfate.R, Du 2019)
                 "magnesiumSulfate",

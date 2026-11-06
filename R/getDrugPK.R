@@ -46,6 +46,9 @@
 #'   default) for a term birth.  Passed only to the neonatal models that
 #'   declare it (dobutamineNeonatal), whose clearance matures with
 #'   postmenstrual age (\code{postmenstrualAge()}).
+#' @param albumin serum albumin in g/dL, or NULL (the default), in which case
+#'   each model holds its own reference value.  Passed only to the models that
+#'   declare it (methotrexate, methotrexatePediatric).
 #' @param model internal: a model's output to use in place of calling the
 #'   drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
 #'   drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.
@@ -88,7 +91,8 @@ getDrugPK <- function(
   vkorc1 = VKORC1_DEFAULT,
   model = NULL,
   cyp4f2 = CYP4F2_DEFAULT,
-  gestationalAge = NULL
+  gestationalAge = NULL,
+  albumin = NULL
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
@@ -153,6 +157,17 @@ getDrugPK <- function(
          ". Must be a number of weeks between ", MIN_GESTATIONAL_AGE, " and ",
          MAX_GESTATIONAL_AGE, ", or NULL for a term birth")
   }
+  # The serum albumin likewise: blank (NA) is NULL, the model's reference;
+  # NaN is rejected.
+  if (!is.null(albumin) && length(albumin) == 1 && is.na(albumin) &&
+      !(is.numeric(albumin) && is.nan(albumin)))
+    albumin <- NULL
+  if (!is.null(albumin) &&
+      !is_valid_number(albumin, MIN_ALBUMIN, MAX_ALBUMIN)) {
+    stop("Invalid albumin: ", paste(albumin, collapse = ", "),
+         ". Must be a number between ", MIN_ALBUMIN, " and ", MAX_ALBUMIN,
+         " g/dL, or NULL for the model's reference value")
+  }
 
   # Every model takes the four patient covariates.  A pharmacogenetic
   # phenotype goes only to models that name it, so that a drug whose kinetics
@@ -210,6 +225,10 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "gestationalAge" %in% names(formals(get(drug, mode = "function"))))
     covariates["gestationalAge"] <- list(gestationalAge)
+  # And the serum albumin, which only the models with an albumin term read.
+  if (exists(drug, mode = "function") &&
+      "albumin" %in% names(formals(get(drug, mode = "function"))))
+    covariates["albumin"] <- list(albumin)
   # And the pregnancy flag, which only the models with a measured change in
   # pregnancy read (R/pregnancy.R, inst/extdata/pregnancyRegistry.csv).
   if (exists(drug, mode = "function") &&
@@ -1099,7 +1118,8 @@ getDrugPK <- function(
       pregnant = pregnant,
       adjustToFFM = adjustToFFM,
       resolveMetabolite = FALSE,
-      gestationalAge = gestationalAge
+      gestationalAge = gestationalAge,
+      albumin = albumin
     )
     metaboliteSet <- metabolitePK$PK[[PK_EVENT_DEFAULT]]
 
@@ -1157,7 +1177,7 @@ getDrugPK <- function(
       # (e.g. "day2"); the split is by dose time, not a user-entered clinical
       # event, so do not expose the phase name as a pkEvent (it would otherwise
       # appear on the help page as an "event" the user can enter).
-      pkEvents = if (is.null(X$dosePhase)) events else PK_EVENT_DEFAULT,
+      pkEvents = if (is.null(X$dosePhase) && is.null(X$courseSteps)) events else PK_EVENT_DEFAULT,
       reference = if (is.null(X$reference)) "Not Available" else X$reference,
       weight = weight,
       height = height,
@@ -1341,6 +1361,37 @@ getDrugPK <- function(
     out$transitChain <- tc
   }
 
+  # A biliary store that fills from the central compartment and empties once,
+  # as a bolus, a fixed time after each course starts (oxaliplatin, Bastian
+  # 2003).  Linear but switched on each course's own clock, so simCpCe()
+  # dispatches such a drug to its own exact engine; see
+  # R/advanceBiliaryStore.R.  Refused beside anything that is a second system,
+  # rewrites the dose rows or switches the kinetics in another way.
+  if (!is.null(X$biliaryStore))
+  {
+    if (!is.null(out$PK[[PK_EVENT_DEFAULT]]$metabolite) ||
+        !is.null(X$metabolite) || !is.null(out$transitChain) ||
+        !is.null(X$oralFormulations) || !is.null(X$parallelSystems) ||
+        !is.null(X$michaelisMenten) || !is.null(X$osmotic) ||
+        !is.null(X$molar) || !is.null(X$oralPulses) ||
+        !is.null(X$oralZeroOrder) || !is.null(X$zeroOrderSC) ||
+        !is.null(X$dosePhase) || !is.null(X$courseSteps) ||
+        isTRUE(X$doseDependent) || !is.null(X$inr) || !is.null(X$act) ||
+        isTRUE(X$enteralInfusion) || length(out$PK) > 1)
+      stop("Invalid biliaryStore for ", drug, ": not available with a ",
+           "metabolite, a transit chain, several oral formulations, parallel ",
+           "systems, Michaelis-Menten elimination, an osmotic or molar dose ",
+           "basis, pulsed or zero-order release, a dose-phase split, course ",
+           "steps, dose-dependent parameters, an INR or ACT, an enteral ",
+           "infusion, or clinical-event PK sets.")
+    d <- out$PK[[PK_EVENT_DEFAULT]]
+    if (any(vapply(c("ka_PO", "ka_IM", "ka_IN", "ka_SL", "ka_RA"), function(f)
+      isTRUE(d[[f]] > 0), logical(1))))
+      stop("Invalid biliaryStore for ", drug, ": the engine takes intravenous ",
+           "doses only, so the model may declare no absorption route.")
+    out$biliaryStore <- validateBiliaryStore(X$biliaryStore, drug)
+  }
+
   # Dose-time phase split (dabigatran after hip replacement): doses given before
   # dosePhase$at minutes use the default PK set, doses at or after it the set
   # named by dosePhase$late.  simCpCe() runs the two as independent linear
@@ -1362,6 +1413,31 @@ getDrugPK <- function(
            "parallel systems, Michaelis-Menten elimination, several oral ",
            "formulations, an INR or a zero-order oral release.")
     out$dosePhase <- dp
+  }
+
+  # Clearance that steps at fixed times after the course's first dose
+  # (busulfan, McCune 2014): one PK set per step, named in courseSteps$event,
+  # taking over courseSteps$after minutes after the drug's first dose.
+  # simCpCe() builds the switching events from the dose table, in place of
+  # any clinical event, and the event engine advances the steps exactly.  The
+  # sets are internal, so they are not offered as pkEvents.
+  if (!is.null(X$courseSteps))
+  {
+    cs <- X$courseSteps
+    if (!is.list(cs) || length(cs$after) == 0 ||
+        length(cs$after) != length(cs$event) ||
+        !all(vapply(cs$after, is_valid_number, logical(1))) ||
+        any(cs$after <= 0) || is.unsorted(cs$after, strictly = TRUE) ||
+        !all(cs$event %in% names(out$PK)) || PK_EVENT_DEFAULT %in% cs$event)
+      stop("Invalid courseSteps for ", drug, ": needs increasing positive 'after' ",
+           "times (minutes) and an 'event' naming a further PK set for each.")
+    if (!is.null(out$PK[[PK_EVENT_DEFAULT]]$metabolite) ||
+        !is.null(out$parallelSystems) || !is.null(out$michaelisMenten) ||
+        !is.null(out$dosePhase) || !is.null(out$transitChain) || !is.null(out$inr))
+      stop("Invalid courseSteps for ", drug, ": not available with a metabolite, ",
+           "parallel systems, Michaelis-Menten elimination, a dose phase, a ",
+           "transit chain or an INR.")
+    out$courseSteps <- cs
   }
   return(out)
 }

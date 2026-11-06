@@ -283,6 +283,19 @@ helpSaturableTerminalHalfLife <- function(X) {
   } else {
     k12 <- k21 <- 0
   }
+  sd <- mm$saturableDistribution
+  if (!is.null(sd)) {
+    # A saturable distribution compartment (paclitaxel) is, below its Km, a
+    # third compartment entered at Vmax/(Km V1) and left at k21: the slowest
+    # eigenvalue of the three-compartment rate matrix
+    k13 <- sd$vmax / sd$km / v1
+    A <- matrix(c(-(k10 + k12 + k13), k12, k13,
+                  k21, -k21, 0,
+                  sd$k21, 0, -sd$k21), 3, 3)
+    # (an absent linear compartment, k12 = k21 = 0, adds a spurious zero)
+    rates <- -Re(eigen(A, only.values = TRUE)$values)
+    return(log(2) / min(rates[rates > 1e-12]))
+  }
   if (k12 <= 0 || k21 <= 0) return(log(2) / k10)
   # The slower root of the two-compartment characteristic equation
   s <- k10 + k12 + k21
@@ -798,6 +811,11 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     "renal function. The tables on this page leave the field blank, so they are at the normal creatinine ",
     "assumed for each reference patient's age and sex; a higher creatinine lowers the renal part of the ",
     "clearance. See ", helpPageLink("patient-profile"), ".</p>") else ""
+  # Likewise the serum albumin, tabulated blank: each model's reference.
+  renalHTML <- paste0(renalHTML, if (helpDrugDeclares(drug, "albumin")) paste0(
+    "<p>This model reads the <strong>Serum albumin</strong> field in the Patient Profile. The tables on ",
+    "this page leave the field blank, so they are at the model's reference albumin. See ",
+    helpPageLink("patient-profile"), ".</p>") else "")
 
   # --- Absorption routes -----------------------------------------------------
   absorptionHTML <- ""
@@ -1081,7 +1099,21 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   michaelisHTML <- ""
   mmBinding <- !is.null(modelOut$michaelisMenten$rapidBinding) ||
     !is.null(modelOut$michaelisMenten$targetBinding)
-  if (!is.null(modelOut$michaelisMenten) && mmBinding) {
+  if (!is.null(modelOut$michaelisMenten) &&
+      identical(modelOut$michaelisMenten$rapidBinding$plotted, "unbound")) {
+    # Vincristine in children: a tissue pool (beta-tubulin) fed from the
+    # central amount, the unbound plasma concentration plotted
+    michaelisHTML <- paste0(
+      helpH2("Saturable binding"),
+      "<p>This drug binds a tissue target, filled from the central compartment, whose capacity ",
+      "is small: a large dose saturates it, so the unbound concentration plotted is far higher ",
+      "early on than the dose alone would predict, and as the bound drug is released the terminal ",
+      "phase is longer than the linear compartments give. Elimination and distribution act on ",
+      "the unbound drug, so doses do not add independently, and the drug is simulated by ",
+      "numerical integration of the whole dose table at once. The binding is fast and is held at ",
+      "its equilibrium with the unbound drug. The clearance in the table above is that of the ",
+      "unbound drug. See the model description below.</p>")
+  } else if (!is.null(modelOut$michaelisMenten) && mmBinding) {
     michaelisHTML <- paste0(
       helpH2("Saturable binding"),
       "<p>This drug binds its target, dipeptidyl peptidase-4, in the plasma and the tissues, and ",
@@ -1121,6 +1153,12 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
       out
     })
     mmTab <- do.call(rbind, rowsMM[!vapply(rowsMM, is.null, logical(1))])
+    distributionNote <- if (!is.null(mm$saturableDistribution)) paste0(
+      "<p>Distribution saturates too: the drug passes from the central compartment into a further ",
+      "compartment at a rate that approaches a ceiling as the concentration rises, and returns at ",
+      "first order. That compartment has no volume of its own (it is an amount), so it is not in ",
+      "the tables above; the peripheral volume given is the linear compartment's. The terminal ",
+      "half-life below Km includes it.</p>") else ""
     linearNote <- if (isTRUE(mm$clLinear > 0)) paste0(
       "<p>A linear clearance runs in parallel with the saturable one, so the clearance never falls ",
       "below it; the CL1 above is the sum of the two at low concentrations.</p>") else ""
@@ -1166,6 +1204,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
         "central volume AND that peripheral compartment, so it is the half-life the table of ",
         "half-lives above cannot give. At the doses the drug is given it is longer still.</p>",
         linearNote,
+        distributionNote,
         saltNote
       )
     }
