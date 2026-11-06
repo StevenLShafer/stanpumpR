@@ -244,3 +244,5 @@ cisplatinBound,ng,,,,,#90A4AE,0,0,0,0,0,IV,
 doxorubicinPediatric,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#B71C1C,0,0,0,0,0,IV,Chemotherapy
 doxorubicinolPediatric,ng,,,,,#E57373,0,0,0,0,0,IV,
 daunorubicin,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#880E4F,0,0,0,0,0,IV,Chemotherapy
+paclitaxel,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#558B2F,0,0,0,0,0,IV,Chemotherapy
+vincristinePediatric,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#0D47A1,0,0,0,0,0,IV,Chemotherapy

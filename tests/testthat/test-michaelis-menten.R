@@ -328,3 +328,85 @@ test_that("a peripheral compartment needs both rate constants, both positive", {
   expect_silent(
     validateMichaelisMenten(list(vmax = 1, km = 1, k23 = 0.01, k32 = 0.04), "x"))
 })
+
+# -----------------------------------------------------------------------------
+# Saturable distribution to an amount compartment (paclitaxel, Joerger 2006)
+# and the unbound plotted concentration under rapid binding (vincristine in
+# children, Nijstad 2022).  Claude Code, 2026-11-06, at the request of Steven
+# L. Shafer.
+# -----------------------------------------------------------------------------
+
+sdPK <- function(v1 = 12, v2 = 250, cl2 = 0.3, vmax = 0.6, km = 0.5,
+                 sd = list(vmax = 2.4, km = 0.7, k21 = 0.02))
+  list(
+    PK = list(default = list(v1 = v1, v2 = v2, cl2 = cl2)),
+    michaelisMenten = list(vmax = vmax, km = km, saturableDistribution = sd)
+  )
+
+test_that("with both Km far above the concentrations it is the linear three-compartment model", {
+  # Below its Km the saturable transfer is first order at vmax / (km V1),
+  # and the system is linear: x(t) = exp(A t) x(0), from the eigenvectors.
+  V1 <- 12; V2 <- 250; Q <- 0.3; CL <- 0.06; k13 <- 0.15; k31 <- 0.02; big <- 1e7
+  PK <- sdPK(v1 = V1, v2 = V2, cl2 = Q, vmax = CL * big, km = big,
+             sd = list(vmax = k13 * V1 * big, km = big, k21 = k31))
+  out <- advanceMichaelisMenten(mmDose(0, 100, "mg"), PK, 1440)
+  A <- matrix(c(-(CL + Q) / V1 - k13, Q / V1, k13,
+                Q / V2, -Q / V2, 0,
+                k31, 0, -k31), 3, 3)
+  e <- eigen(A)
+  coef <- solve(e$vectors, c(100, 0, 0))
+  exact <- vapply(out$Time, function(t)
+    Re(sum(e$vectors[1, ] * coef * exp(e$values * t))) / V1, numeric(1))
+  # the fastest rate here, 0.18 /min, leaves the 2-min Runge-Kutta step 3e-6 off
+  expect_equal(out$Cp, exact, tolerance = 1e-5)
+  # the linear peripheral compartment is still reported (the amount one has no volume)
+  expect_true(any(out$C2 > 0))
+})
+
+test_that("saturable distribution keeps the mass and equilibrates", {
+  sd <- list(vmax = 2.4, km = 0.7, k21 = 0.02)
+  PK <- sdPK(vmax = 1e-12, km = 1e6, sd = sd)
+  out <- advanceMichaelisMenten(mmDose(0, 100, "mg"), PK, 40000)
+  C <- tail(out$Cp, 1)
+  # at equilibrium the amount compartment holds vmax C / ((km + C) k21)
+  held <- sd$vmax * C / ((sd$km + C) * sd$k21)
+  expect_equal(C * 12 + tail(out$C2, 1) * 250 + held, 100, tolerance = 1e-6)
+  expect_equal(tail(out$C2, 1), C, tolerance = 1e-6)
+  # saturation: a tenfold dose is held proportionally less in the amount compartment
+  small <- advanceMichaelisMenten(mmDose(0, 10, "mg"), PK, 40000)
+  expect_gt(tail(out$Cp, 1), 10 * tail(small$Cp, 1))
+})
+
+test_that("rapid binding can plot the unbound central concentration", {
+  rb <- list(bmaxCentral = 2, amaxPeripheral = 0, kd = 0.1)
+  total <- advanceMichaelisMenten(mmDose(0, 50, "mg"), bindPK(rapid = rb), 1440)
+  unbound <- advanceMichaelisMenten(mmDose(0, 50, "mg"),
+                                    bindPK(rapid = modifyList(rb, list(plotted = "unbound"))),
+                                    1440)
+  # the same simulation, plotted at the binding equilibrium of its total
+  expect_equal(unbound$Cp,
+               vapply(total$Cp, unboundAtEquilibrium, numeric(1), B = 2, kd = 0.1),
+               tolerance = 1e-12)
+  expect_equal(unbound$C2, total$C2)
+  # "total" is the default, as linagliptin has it
+  explicit <- advanceMichaelisMenten(mmDose(0, 50, "mg"),
+                                     bindPK(rapid = modifyList(rb, list(plotted = "total"))),
+                                     1440)
+  expect_identical(explicit$Cp, total$Cp)
+})
+
+test_that("the new blocks are validated", {
+  mm <- sdPK()$michaelisMenten
+  expect_identical(validateMichaelisMenten(mm, "x"), mm)
+  expect_error(validateMichaelisMenten(
+    modifyList(mm, list(saturableDistribution = list(vmax = 1, km = 1, k21 = 0))), "x"),
+    "saturableDistribution")
+  noReturn <- mm
+  noReturn$saturableDistribution <- list(vmax = 1, km = 1)   # (modifyList would merge)
+  expect_error(validateMichaelisMenten(noReturn, "x"), "saturableDistribution")
+  rb <- bindPK()$michaelisMenten
+  expect_error(validateMichaelisMenten(
+    modifyList(rb, list(rapidBinding = list(bmaxCentral = 1, amaxPeripheral = 0, kd = 1,
+                                            plotted = "free"))), "x"),
+    "plotted")
+})

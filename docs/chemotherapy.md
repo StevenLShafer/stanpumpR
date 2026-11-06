@@ -421,3 +421,44 @@ L, Q 252 L/h, Vp 1120 L; ng/mL, doses as labelled. The white-count model (Vc
 412 x [1 + 0.0138 (WBC - 39)]) is not used, the Patient Profile having no
 white count. Krogh-Madsen 2012 (adults with AML) used it as its NONMEM prior
 and stays `complete_not_implemented`.
+
+## 28. Paclitaxel and vincristine in children: two extensions of the Michaelis-Menten engine (2026-11-06)
+
+Shafer decided (2026-11-06) to implement two models that no engine carried,
+by extending `advanceMichaelisMenten()` rather than approximating them. Every
+existing Michaelis-Menten drug's output is unchanged (the new state is zero
+unless a drug declares it).
+
+**`paclitaxel`** is Joerger 2006 (P17; read on the page images): three
+compartments, saturable elimination (VMEL, KMEL), saturable transport to a
+first peripheral compartment that is an amount with no volume (VMTR, KMTR),
+returning at first order (K21), and a linear second peripheral compartment
+(Q, V3); sex on VMEL, VMTR, KMTR and K21, BSA (Mosteller) on VMEL, VMTR, V3
+and Q, age and bilirubin on VMEL. The engine gained a
+`saturableDistribution = list(vmax, km, k21)` block; the linear compartment is
+the PK set's `cl2`/`v2`. The ODEs are not printed; the reconstruction
+reproduces the paper's simulations (175 mg/m2 over 3 h at BSA 1.8: woman Cmax
+3.83 umol/L, 17.7 h above 0.1 umol/L, AUC 13.5 umol h/L; man 3.29, 13.0 h,
+11.4), and the engine agrees with an independent Runge-Kutta integration in
+the test to 0.1%. The Results swap KMEL and KMTR (Table 2 is right) and the
+Methods give Q in L/min (L/h is right). Bilirubin is held at the median, 7
+umol/L, for want of a field; age is floored at 18. Doses in mg are converted
+at 853.9 g/mol; plotted in mcg/mL. Pregnancy: van Hasselt 2014's 1.92-fold
+clearance is recorded, not applied (the source model is linear, this one
+saturable).
+
+**`vincristinePediatric`** is Nijstad 2022 (P18; page images and the
+supplement's Table S1): two compartments allometric in weight and a saturable
+beta-tubulin pool filled from the central amount (kon 1300 /h fixed, koff
+11.5 /h, Bmax 0.525 mg x WT/70 x (age/18)^-0.199), observed as the UNBOUND
+central concentration. kon is beyond the Runge-Kutta stability limit at the
+engine's 2-min step, so the binding is held at quasi-equilibrium: the
+existing `rapidBinding` block, with kd = Bmax koff/kon/Vc and bmaxCentral =
+Bmax/Vc, and a new option `plotted = "unbound"` (linagliptin's default,
+"total", plots bound and unbound). Against the test's own fine-step
+integration of the full three-state ODE (0.012-min steps), the reduction is
+within 1.1% at 5 min and 0.8% from 30 min after a bolus (the infant the worst
+case; the child and adult within 0.5%), 0.1% at 6 and 24 h; the AUC is dose/CL
+to 0.5%. The age term is floored at 0.04 years, the youngest studied. Two
+decisions are recorded in the registry: kon/koff taken as not allometrically
+scaled, and doses as labelled (the sulfate).
