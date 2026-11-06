@@ -308,6 +308,19 @@ var PKConvert = (function() {
   var TCI_INTERVAL = 10 / 60;
   var TCI_PLASMA_SWITCH = 0.05;
 
+  // What one trajectory may cost, for the page runs on the browser's one
+  // thread and an entry it cannot finish freezes the tab (the UI review of
+  // 2026-11-04: ke0 = 1e-300 put the peak 916,252 min out, 55 million search
+  // points for each update).  TCI_MAX_SEARCH bounds the points the
+  // effect-site search visits over the whole infusion, about a second's
+  // work (a ke0 of 1e-3 /min on the spreadsheet's three-compartment example,
+  // a peak at 148 min, needs a fifth of it, and 3e-4, a peak at 5 h, most); TCI_MAX_UPDATES bounds the
+  // updates, which an infusion of years at 10 s would otherwise run to.  A
+  // trajectory that would pass either stops and says so, rather than
+  // approximate: the curves it does give are the controller's, step for step.
+  var TCI_MAX_SEARCH = 2e7;
+  var TCI_MAX_UPDATES = 2e5;
+
   // The constants R/tci.R's tciKinetics() takes from getDrugPK(), here from
   // the model.  ke0 is held off an exponent it equals, as
   // separateEigenvalues() does, since the coefficients divide by the gap.
@@ -328,7 +341,9 @@ var PKConvert = (function() {
   }
 
   // The rate for the coming interval: tciRate() in R/tci.R
-  function tciRate(p, e, CT, site, dt, K) {
+  // budget, when given, counts the search points ({used, limit}); a call
+  // that would pass the limit returns {aborted: true} without searching.
+  function tciRate(p, e, CT, site, dt, K, budget) {
     var Ce = e.reduce(function(s, x) { return s + x; }, 0);
     var effectMode = site === 'effect' && K.ke0 > 0 && Math.abs(Ce - CT) >= TCI_PLASMA_SWITCH * CT;
     var rate, i, j;
@@ -342,6 +357,10 @@ var PKConvert = (function() {
       rate = (CT - Pd) / Pu;
     } else {
       // From the end of the interval out to dt + tPeak + 10 s, a second apart
+      if (budget) {
+        budget.used += Math.floor((K.tPeak + 10 / 60 + 1e-12) * 60) + 1;
+        if (!(budget.used <= budget.limit)) return {rate: 0, effectMode: true, aborted: true};
+      }
       var grow = K.lambda4.map(function(x) { return Math.exp(x * dt) - 1; });
       rate = Infinity;
       var any = false;
@@ -367,9 +386,12 @@ var PKConvert = (function() {
     var n = model.n, p = new Array(n).fill(0), e = new Array(n + 1).fill(0);
     var dtMax = Math.max(TCI_INTERVAL, Math.min(10, tMax / 2000));
     var t = 0, dt = TCI_INTERVAL, out = [];
+    var budget = {used: 0, limit: TCI_MAX_SEARCH};
     while (t < tMax - 1e-9) {
+      if (out.length >= TCI_MAX_UPDATES) return {K: K, states: out, aborted: true};
       var step = Math.min(dt, tMax - t);
-      var x = tciRate(p, e, 1, site, step, K);
+      var x = tciRate(p, e, 1, site, step, K, budget);
+      if (x.aborted) return {K: K, states: out, aborted: true};
       for (var i = 0; i < n; i++) {
         var d3 = Math.exp(-K.lambda3[i] * step);
         p[i] = p[i] * d3 + K.pinf[i] * x.rate * (1 - d3);
@@ -399,6 +421,7 @@ var PKConvert = (function() {
     if (!(c0 > 0)) return NaN;
     var fastest = Math.max.apply(null, l.filter(function(x) { return x > 0; }));
     var lo = 0, hi = 1e-3 / fastest;
+    if (!(hi > 0) || !isFinite(hi)) return NaN;
     while (c(hi) > target) {
       lo = hi;
       hi *= 1.1;
@@ -424,6 +447,7 @@ var PKConvert = (function() {
     var sum = function(x) { return x.reduce(function(s, v) { return s + v; }, 0); };
     sites.forEach(function(site) {
       var tr = tciTrajectory(model, ke0, site, tMax), K = tr.K, st = tr.states;
+      if (tr.aborted) { out[site] = {duration: [], time: [], aborted: true}; return; }
       var first = 0;
       while (first < st.length &&
              Math.abs(sum(site === 'plasma' ? st[first].p : st[first].e) - 1) > TCI_PLASMA_SWITCH) first++;
@@ -495,6 +519,28 @@ var PKConvert = (function() {
     return isFinite(x) ? x : NaN;
   }
 
+  // A round tick step, about range / count apart
+  function niceStep(range, count) {
+    var raw = range / count, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    var r = raw / mag;
+    return mag * (r < 1.5 ? 1 : r < 3 ? 2 : r < 7 ? 5 : 10);
+  }
+
+  // The ticks of an axis from 0 to about max, at a round step.  Never more
+  // than AXIS_MAX_TICKS, and always finite: a range that underflows the step
+  // (1e-323 gave a step of 0, and a loop adding it never ended) or overflows
+  // it gives just its two ends, and a range that is not a positive number
+  // gives 0 alone.  `step` comes back for the caller's own rounding.
+  var AXIS_MAX_TICKS = 50;
+  function axisTicks(max, count) {
+    if (!(max > 0) || !isFinite(max)) return {step: NaN, ticks: [0]};
+    var step = niceStep(max, count);
+    if (!(step > 0) || !isFinite(step) || !(max / step <= AXIS_MAX_TICKS)) return {step: NaN, ticks: [0, max]};
+    var ticks = [];
+    for (var i = 0; i <= AXIS_MAX_TICKS && i * step - max <= 1e-9 * step; i++) ticks.push(i * step);
+    return {step: step, ticks: ticks};
+  }
+
   function fmt(x, digits) {
     if (typeof x !== 'number' || !isFinite(x)) return String(x);
     return String(parseFloat(x.toPrecision(digits || 6)));
@@ -508,7 +554,8 @@ var PKConvert = (function() {
     plasma: plasma, effect: effect, peakTime: peakTime,
     ke0FromPeakTime: ke0FromPeakTime, fmt: fmt, parseNumber: parseNumber, summaryRows: summaryRows,
     tciTrajectory: tciTrajectory, decrementTime: decrementTime, decrementCurves: decrementCurves,
-    required: REQUIRED
+    axisTicks: axisTicks, niceStep: niceStep, required: REQUIRED,
+    limits: {search: TCI_MAX_SEARCH, updates: TCI_MAX_UPDATES, ticks: AXIS_MAX_TICKS}
   };
 })();
 
@@ -767,16 +814,14 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
 
   // --- The graph ----------------------------------------------------------------
 
-  function niceStep(range, count) {
-    var raw = range / count, mag = Math.pow(10, Math.floor(Math.log10(raw)));
-    var r = raw / mag;
-    return mag * (r < 1.5 ? 1 : r < 3 ? 2 : r < 7 ? 5 : 10);
-  }
+  var niceStep = P.niceStep, axisTicks = P.axisTicks;
 
   // --- Decrement times ------------------------------------------------------------
 
   // Shafer and Varvel's recovery curves ran to ten hours
   var DECREMENT_DEFAULT_MAX = 600;
+  // R/tci.R's TCI_INTERVAL, the controller's update, in minutes
+  var TCI_UPDATE_MINUTES = 10 / 60;
 
   function decrement($root, s) {
     var $box = $root.find('.pkconv-decrement');
@@ -795,6 +840,13 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
     if (pct === null) pct = 50;
     if (!(pct > 0 && pct < 100)) { bad.push('the decrease must be between 0 and 100%'); $pct.addClass('pkconv-bad'); }
     if (until !== null && !(until > 0)) { bad.push('the longest infusion must be a positive time'); $until.addClass('pkconv-bad'); }
+    // The controller updates every 10 s, so a shorter infusion has no
+    // decrement curve to draw (1e-323 also underflowed the axis to nothing)
+    else if (until !== null && !(until * f >= TCI_UPDATE_MINUTES)) {
+      bad.push('the longest infusion must be at least ' + P.fmt(TCI_UPDATE_MINUTES / f, 4) + ' ' + s.unit +
+               ', one update of the controller');
+      $until.addClass('pkconv-bad');
+    }
     if (bad.length) {
       $svg.empty();
       $note.text('Not admissible: ' + bad.join('; ') + '.');
@@ -811,6 +863,7 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
       aria: P.fmt(pct, 4) + '% decrement times against the duration of the infusion'
     }));
     var say = function(sr) {
+      if (sr.aborted) return 'not computed (more work than the page allows: see below)';
       if (!sr.time.length) return 'not reached within the infusion';
       var t = sr.time[sr.time.length - 1];
       return isFinite(t) ? P.fmt(t / f, 3) + ' ' + s.unit : 'beyond the search';
@@ -819,6 +872,13 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
     if (c.effect) text += ', effect site ' + say(c.effect);
     text += '.';
     if (!c.effect) text += ' Enter ke0 or the time to peak effect above to add the effect site.';
+    if (c.plasma.aborted || (c.effect && c.effect.aborted)) {
+      text += ' The page computes in your browser and stops an infusion that would take it more than about a second: ' +
+              (c.effect && c.effect.aborted && s.ke0
+                ? 'the effect site peaks ' + P.fmt(P.peakTime(s.model, s.ke0) / f, 3) + ' ' + s.unit +
+                  ' after a bolus, and the controller searches that far ahead at every update. A larger ke0 or a shorter infusion will draw.'
+                : 'shorten the longest infusion.');
+    }
     $note.text(text);
   }
 
@@ -829,23 +889,25 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
     var ys = [];
     series.forEach(function(sr) { sr.y.forEach(function(y) { if (isFinite(y)) ys.push(y / f); }); });
     var yMaxRaw = ys.length ? Math.max.apply(null, ys) : 1;
-    var yStep = niceStep(yMaxRaw || 1, 5), yMax = Math.ceil(yMaxRaw * 1.02 / yStep) * yStep || yStep;
+    if (!(yMaxRaw > 0) || !isFinite(yMaxRaw)) yMaxRaw = 1;
+    var yStep = niceStep(yMaxRaw, 5), yMax = Math.ceil(yMaxRaw * 1.02 / yStep) * yStep;
+    if (!(yMax > 0) || !isFinite(yMax)) yMax = yMaxRaw;
+    var yTicks = axisTicks(yMax, 5).ticks;
     var X = function(t) { return L + (W - L - R) * t / o.xMax; };
     var Y = function(v) { return H - B - (H - B - Tp) * v / yMax; };
     var out = ['<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" class="pkconv-graph" aria-label="' + o.aria + '">'];
-    for (var y = 0; y <= yMax + yStep / 2; y += yStep) {
+    yTicks.forEach(function(y) {
       var Yp = Y(y).toFixed(1);
       out.push('<line class="pkconv-grid" x1="' + L + '" x2="' + (W - R) + '" y1="' + Yp + '" y2="' + Yp + '"/>');
       out.push('<text class="pkconv-tick" x="' + (L - 6) + '" y="' + Yp + '" text-anchor="end" dy="0.32em">' +
                P.fmt(y, 3) + '</text>');
-    }
-    var xStep = niceStep(o.xMax / f, 6);
-    for (var x = 0; x <= o.xMax / f + 1e-9 * xStep; x += xStep) {
+    });
+    axisTicks(o.xMax / f, 6).ticks.forEach(function(x) {
       var Xp = X(x * f).toFixed(1);
       out.push('<line class="pkconv-grid" y1="' + Tp + '" y2="' + (H - B) + '" x1="' + Xp + '" x2="' + Xp + '"/>');
       out.push('<text class="pkconv-tick" x="' + Xp + '" y="' + (H - B + 16) + '" text-anchor="middle">' +
                P.fmt(x, 4) + '</text>');
-    }
+    });
     out.push('<line class="pkconv-axis" x1="' + L + '" x2="' + (W - R) + '" y1="' + (H - B) + '" y2="' + (H - B) + '"/>');
     out.push('<line class="pkconv-axis" x1="' + L + '" x2="' + L + '" y1="' + Tp + '" y2="' + (H - B) + '"/>');
     out.push('<text class="pkconv-label" x="' + ((L + W - R) / 2) + '" y="' + (H - 8) + '" text-anchor="middle">' +
@@ -896,7 +958,7 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
     var norm = $norm.filter(':checked').val() || 'none';
     var logY = $box.find('input[data-pk-plot="log"]').prop('checked');
     var until = parseEntry($box.find('input[data-pk-plot="until"]').val());
-    var T = until > 0 ? until * f : autoHorizon(m, ke0);
+    var T = until > 0 && until * f > 0 && isFinite(until * f) ? until * f : autoHorizon(m, ke0);
 
     var N = 600, ts = [], cp = [], ce = [];
     for (var i = 0; i <= N; i++) {
@@ -912,6 +974,10 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
 
     var W = 640, H = 340, L = 64, R = 16, Tp = 14, B = 46;
     var all = cp.concat(ce).filter(function(y) { return y > 0 && isFinite(y); });
+    if (!all.length) {
+      $svg.html('<p class="pkconv-empty">The concentrations of this model cannot be drawn: none is a positive, finite number.</p>');
+      return;
+    }
     var ymax = Math.max.apply(null, all), ymin, yTicks = [];
     var xs = function(t) { return L + (W - L - R) * t / T; };
     var ys;
@@ -927,14 +993,13 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
       for (var e = bottom; e <= top; e++) yTicks.push(Math.pow(10, e));
       ymax = Math.pow(10, top);
     } else {
-      var step = niceStep(ymax, 5);
-      ymax = Math.ceil(ymax * 1.02 / step) * step;
+      var step = niceStep(ymax, 5), rounded = Math.ceil(ymax * 1.02 / step) * step;
+      if (rounded > 0 && isFinite(rounded)) ymax = rounded;
       ymin = 0;
       ys = function(y) { return H - B - (H - B - Tp) * y / ymax; };
-      for (var y = 0; y <= ymax + step / 2; y += step) yTicks.push(y);
+      yTicks = axisTicks(ymax, 5).ticks;
     }
-    var xStep = niceStep(T / f, 6), xTicks = [];
-    for (var x = 0; x <= T / f + 1e-9 * xStep; x += xStep) xTicks.push(x);
+    var xTicks = axisTicks(T / f, 6).ticks;
 
     function path(vals) {
       var d = '';

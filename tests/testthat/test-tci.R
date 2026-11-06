@@ -204,6 +204,49 @@ test_that("a target of 0 stops the TCI infusion and the drug washes out", {
   expect_lt(at(ce, 60), 1)
 })
 
+# A target of 0 after a manual infusion, with no target before it, once ended
+# the simulation: the controller never ran, the schedule was empty, and
+# data.frame() failed on the length-1 Bolus column beside zero-length ones
+# (found 2026-11-06).  "A TCI target zeroes any manual infusion that is
+# running" (the rules in tci.R), so the target of 0 stops the manual infusion:
+# the table simulates exactly as the same infusion stopped by a manual 0 rate.
+test_that("a target of 0 after a manual infusion stops it", {
+  doses <- tciDose(c(0, 20), c(100, 0), c("mcg/kg/min", TCI_UNIT_EFFECT))
+  X <- simCpCe(doses, noEvents, propofolPK, 40, FALSE)
+  stopped <- simCpCe(tciDose(c(0, 20), c(100, 0), "mcg/kg/min"),
+                     noEvents, propofolPK, 40, FALSE)
+  expect_equal(X$results, stopped$results)
+  expect_equal(X$tci$rates$Time, 20)
+  expect_equal(X$tci$rates$Rate, 0)
+  expect_equal(nrow(X$tci$boluses), 0)
+
+  # Through the app's own path, as the bug report ran it.
+  D <- recalculatePK(NULL, getDrugDefaultsGlobal(FALSE), doses, 40, 70, 170, "male")
+  drugs <- processdoseTable(doses, noEvents, D, 40, FALSE)
+  cp <- series(drugs$propofol, "Plasma")
+  expect_lt(at(cp, 40), at(cp, 19.9) / 2)
+})
+
+test_that("a target of 0 alone simulates no drug", {
+  X <- simCpCe(tciDose(10, 0, TCI_UNIT_EFFECT), noEvents, propofolPK, 40, FALSE)
+  expect_null(X$tci)          # no schedule, so no rate panel
+  expect_true(all(X$results$Y == 0))
+})
+
+test_that("a manual infusion entered with a target of 0 takes over from TCI", {
+  X <- simCpCe(
+    tciDose(c(0, 20, 20), c(3, 0, 50), c(TCI_UNIT_EFFECT, TCI_UNIT_EFFECT, "mcg/kg/min")),
+    noEvents, propofolPK, 60, FALSE
+  )
+  r <- X$tci$rates
+  expect_equal(r$Time[nrow(r)], 20)
+  expect_equal(r$Rate[nrow(r)], 0)
+  # 50 mcg/kg/min runs on: the plasma settles towards its own steady state
+  # rather than washing out.
+  cp <- series(X, "Plasma")
+  expect_gt(at(cp, 60), 1)
+})
+
 test_that("a target zeroes a manual infusion entered at the same time", {
   withManual <- simCpCe(
     tciDose(c(0, 0), c(100, 3), c("mcg/kg/min", TCI_UNIT_EFFECT)),

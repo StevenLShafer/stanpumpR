@@ -138,6 +138,96 @@ test_that("Suggest Dosing that fails, or finds doses the table cannot hold, leav
   }
 })
 
+test_that("Suggest Dosing for a drug not in the table keeps the draft and its undo history", {
+  # The placeholder row it once wrote into doseTable() reset the draft, so a
+  # suggestion that failed lost the unapplied edits and the undo history
+  # (CodeRabbit on #674).
+  notes <- character(0)
+  local_mocked_bindings(showNotification = function(ui, ...) {
+    notes <<- c(notes, paste(as.character(ui), collapse = " "))
+  })
+  handed <- NULL
+  outcomes <- list(
+    function(targetDrug, targetTable, endTime, drugs, ...) {
+      handed <<- drugs[[targetDrug]]
+      stop("probable coding error in analytic gradient")
+    },
+    function(...) NULL,
+    function(targetDrug, ...) data.frame(Drug = targetDrug, Time = c(0, 1), Dose = c(2e9, 5e8),
+                                         Units = c("mg", "mg/min"))
+  )
+  for (i in seq_along(outcomes)) {
+    local_mocked_bindings(suggest = outcomes[[i]])
+    shiny::testServer(app_server, {
+      do.call(session$setInputs, keyboardAppInputs)
+      dt <- propofolTable()
+      dt$Drug[1] <- "fentanyl"
+      dt$Units[1] <- "mcg"
+      setDoseTable(dt, timeFormat("minutes", "relative"))
+      session$flushReact()
+      committed <- doseTable()
+      # an edit not yet applied
+      edited <- committed
+      edited$Dose[1] <- "75"
+      doseTableHistory()$do(edited)
+      session$flushReact()
+      suggestInputs(session)
+      expect_no_error(session$setInputs(targetOK = i))
+      expect_identical(doseTable(), committed)
+      expect_identical(doseTableDraft(), edited)
+      expect_true(doseTableHistory()$can_undo)
+    })
+  }
+  # suggest() was handed the targeted drug's own PK, built without a dose row
+  expect_false(is.null(handed))
+  expect_identical(handed$drug, "propofol")
+})
+
+test_that("Suggest Dosing refuses a patient out of range, for a drug not in the table too", {
+  # drugPK() builds such a drug's PK without drugs()'s testCovariates()
+  # (CodeRabbit on #681): a weight above MAX_WEIGHT is a number, so only the
+  # range check stops it
+  notes <- character(0)
+  local_mocked_bindings(showNotification = function(ui, ...) {
+    notes <<- c(notes, paste(as.character(ui), collapse = " "))
+  })
+  called <- FALSE
+  local_mocked_bindings(suggest = function(...) { called <<- TRUE; NULL })
+  shiny::testServer(app_server, {
+    do.call(session$setInputs, keyboardAppInputs)
+    dt <- propofolTable()
+    dt$Drug[1] <- "fentanyl"
+    dt$Units[1] <- "mcg"
+    setDoseTable(dt, timeFormat("minutes", "relative"))
+    session$flushReact()
+    before <- doseTable()
+    session$setInputs(weight = MAX_WEIGHT + 100)
+    suggestInputs(session)
+    expect_no_error(session$setInputs(targetOK = 1))
+    expect_false(called)
+    expect_match(notes[length(notes)], "Suggest Dosing cannot run: Weight must be between")
+    expect_identical(doseTable(), before)
+  })
+})
+
+test_that("Suggest Dosing for a drug not in the table writes its regimen", {
+  local_mocked_bindings(showNotification = function(...) NULL)
+  shiny::testServer(app_server, {
+    do.call(session$setInputs, keyboardAppInputs)
+    dt <- propofolTable()
+    dt$Drug[1] <- "fentanyl"
+    dt$Units[1] <- "mcg"
+    setDoseTable(dt, timeFormat("minutes", "relative"))
+    session$flushReact()
+    suggestInputs(session)
+    session$setInputs(targetOK = 1)
+    out <- cleanDoseTable(doseTable())
+    expect_true("propofol" %in% out$Drug)
+    expect_true("fentanyl" %in% out$Drug)
+    expect_true(all(out$Dose[out$Drug == "propofol"] >= 0))
+  })
+})
+
 # --- What the grid and the dialogs accept ------------------------------------
 
 test_that("the dose grid cannot be pasted past the row limit", {

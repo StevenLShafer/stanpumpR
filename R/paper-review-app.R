@@ -151,7 +151,7 @@ paperReviewPanels <- function(ns = shiny::NS(NULL))
           shiny::numericInput(ns("age"), "Age (years)", 40, min = MIN_AGE, max = MAX_AGE),
           shiny::selectInput(ns("sex"), "Sex", SEX_VALUES),
           shiny::selectInput(ns("timeUnit"), "Time units", PAPER_REVIEW_SIM_TIME_UNITS, "min"),
-          shiny::numericInput(ns("maximum"), "Max time", 240, min = 0),
+          shiny::numericInput(ns("maximum"), "Max time", PAPER_REVIEW_MAX_TIME_DEFAULT, min = 0),
           shiny::selectInput(ns("regimen"), "Paper's regimen", character(0)),
           shiny::actionButton(ns("loadRegimen"), "Load regimen into the dose table"),
           shiny::selectInput(ns("overlay"), "Overlay a figure's points", character(0)),
@@ -385,14 +385,17 @@ paperReviewServer <- function(input, output, session)
     doseTable(data.frame(Time = 0, Dose = 0, Units = if (length(units)) units[1] else "mg",
                          stringsAsFactors = FALSE))
     first <- if (length(regs)) regs[[1]] else NULL
-    setUnit(paperReviewRegimenTimeUnit(r$extraction, first), 240)
+    setUnit(paperReviewRegimenTimeUnit(r$extraction, first), PAPER_REVIEW_MAX_TIME_DEFAULT)
   }, ignoreInit = FALSE)
 
   # The user picked another unit: convert what is shown.
   shiny::observeEvent(input$timeUnit, {
     if (identical(input$timeUnit, tableUnit())) return()
     current <- dosesNow()
-    maximumMinutes <- (input$maximum %or% 240) * unitMinutes()
+    # A Max time that cannot be used (blank, say) becomes the default rather
+    # than following the table into the new unit as NA.
+    maximumMinutes <- paperReviewMaxTimeMinutes(input$maximum, unitMinutes())
+    if (is.na(maximumMinutes)) maximumMinutes <- PAPER_REVIEW_MAX_TIME_DEFAULT
     doseTable(current)
     setUnit(input$timeUnit, maximumMinutes)
   }, ignoreInit = TRUE)
@@ -405,7 +408,7 @@ paperReviewServer <- function(input, output, session)
     if (nrow(d) == 0) return()
     doseTable(d)
     # In the unit the paper uses for this regimen.
-    setUnit(paperReviewRegimenTimeUnit(r$extraction, regimen), max(240, ceiling(max(d$Time) * 2)))
+    setUnit(paperReviewRegimenTimeUnit(r$extraction, regimen), max(PAPER_REVIEW_MAX_TIME_DEFAULT, ceiling(max(d$Time) * 2)))
   })
 
   # The doses as text, read as R reads them (validateDose()): a numeric
@@ -452,7 +455,12 @@ paperReviewServer <- function(input, output, session)
     drug <- paperReviewSilently(paperReviewDrug(r$extraction, p, r$identifiability$closed,
                                                 absorption = simAbsorption(), absorptions = r$absorptions))
     shiny::validate(shiny::need(drug$ok, paste(drug$problems, collapse = " ")))
-    maximum <- max((input$maximum %or% 240) * unitMinutes(), max(d$Time) + 1)
+    maximum <- paperReviewMaxTimeMinutes(input$maximum, unitMinutes())
+    shiny::validate(shiny::need(!is.na(maximum), sprintf(
+      "Enter a Max time greater than 0 and no longer than %s %s (365 days).",
+      format(signif(PAPER_REVIEW_MAX_TIME_LIMIT / unitMinutes(), 6), big.mark = ",", scientific = FALSE),
+      unitName())))
+    maximum <- max(maximum, max(d$Time) + 1)
     # Run on far enough to cover an overlaid figure's points.
     fig <- Filter(function(f) identical(f$id, input$overlay), r$figures)
     if (length(fig)) maximum <- max(maximum, max(fig[[1]]$points$time, na.rm = TRUE) * 1.05)

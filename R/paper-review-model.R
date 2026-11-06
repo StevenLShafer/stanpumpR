@@ -103,6 +103,32 @@ paperReviewMinutes <- function(units)
 # The simulator's time units, and their names.
 PAPER_REVIEW_SIM_TIME_UNITS <- c(minutes = "min", hours = "h", days = "day", weeks = "week")
 
+# The simulator's Max time: what it opens at, and the longest it takes (the
+# main simulator's longest Max time, 365 days), in minutes.
+PAPER_REVIEW_MAX_TIME_DEFAULT <- 240
+PAPER_REVIEW_MAX_TIME_LIMIT <- max(MAX_TIME_VALUES)
+
+#' The simulator's Max time, in minutes, or NA when it cannot be used
+#'
+#' A blank numeric input is \code{NA}, which \code{\%or\%} passes through (it
+#' supplies its fallback only for \code{NULL}), and which reached
+#' \code{simCpCe()} as \code{max(NA, ...)}: the plot showed R's own "missing
+#' value where TRUE/FALSE needed" (the UI review of 2026-11-04).  So blank,
+#' non-numeric, non-finite, zero, negative or longer than
+#' \code{PAPER_REVIEW_MAX_TIME_LIMIT} are all NA here, for the caller to say so.
+#'
+#' @param value \code{input$maximum}, in the unit shown.
+#' @param minutesPerUnit minutes per unit shown.
+#' @returns minutes, or \code{NA_real_}.
+#' @keywords internal
+paperReviewMaxTimeMinutes <- function(value, minutesPerUnit)
+{
+  if (length(value) != 1 || length(minutesPerUnit) != 1) return(NA_real_)
+  x <- suppressWarnings(as.numeric(value)) * suppressWarnings(as.numeric(minutesPerUnit))
+  if (is.na(x) || !is.finite(x) || x <= 0 || x > PAPER_REVIEW_MAX_TIME_LIMIT) return(NA_real_)
+  x
+}
+
 #' The time unit the paper uses for a regimen
 #'
 #' The unit of a figure showing the regimen, since that is how the paper

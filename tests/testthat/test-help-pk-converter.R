@@ -311,3 +311,60 @@ test_that("a site that never reaches its target has no decrement curve", {
   expect_length(js$effect$duration, 0)
   expect_gt(length(js$plasma$time), 0)
 })
+
+# --- Bounded work (the UI review of 2026-11-04) ----------------------------
+#
+# The page computes on the browser's one thread, so an entry it cannot finish
+# freezes the tab.  Two did, on the spreadsheet's three-compartment example:
+# ke0 = 1e-300 (a peak 916,252 min out, 55 million search points for each
+# update of the controller) and an infusion of 1e-323 min (the axis step
+# underflowed to 0, and the tick loop never advanced).
+
+test_that("the axis ticks are bounded and finite for any range", {
+  skipWithoutNode()
+  js <- pkConvertJS(paste0(
+    "[1e-323, 5e-324, 1e-300, 1e308, 1.7976931348623157e308, Infinity, NaN, 0, -1, 600]",
+    ".map(function(x) { var t = P.axisTicks(x, 6).ticks; ",
+    "  return {n: t.length, finite: t.every(isFinite), last: t[t.length - 1]}; })"))
+  expect_true(all(js$n >= 1 & js$n <= pkConvertJS("P.limits.ticks") + 1))
+  expect_true(all(js$finite))
+  # An ordinary range keeps its round ticks
+  expect_equal(pkConvertJS("P.axisTicks(600, 6).ticks"), seq(0, 600, by = 100))
+  # A range the step underflows gives its two ends
+  expect_equal(js$n[1], 2)
+})
+
+test_that("a ke0 too small to simulate stops the effect site, not the page", {
+  skipWithoutNode()
+  t0 <- Sys.time()
+  js <- pkConvertJS(paste0(
+    "(function() { var m = P.fromVolumesClearances(3, [10, 100, 1000], [3, 2, 1]).model;",
+    "  var c = P.decrementCurves(m, 1e-300, 50, 600, 400), d = P.decrementCurves(m, 1e-4, 50, 600, 400);",
+    "  return {tiny: c.effect, plasma: c.plasma.time.length, slow: d.effect.aborted}; })()"))
+  expect_lt(as.numeric(difftime(Sys.time(), t0, units = "secs")), 15)
+  expect_true(js$tiny$aborted)
+  expect_length(js$tiny$time, 0)
+  expect_true(js$slow)
+  # The plasma curve needs no search, and is drawn as before
+  expect_gt(js$plasma, 100)
+})
+
+test_that("a slow but feasible effect site is still simulated in full", {
+  skipWithoutNode()
+  # ke0 3e-4 /min, a peak 5 h after a bolus: within the work limit
+  js <- pkConvertJS(paste0(
+    "(function() { var m = P.fromVolumesClearances(3, [10, 100, 1000], [3, 2, 1]).model;",
+    "  return P.decrementCurves(m, 3e-4, 50, 600, 400).effect; })()"))
+  expect_null(js$aborted)
+  expect_gt(length(js$time), 100)
+})
+
+test_that("an infusion of years stops at the update limit", {
+  skipWithoutNode()
+  js <- pkConvertJS(paste0(
+    "(function() { var m = P.fromVolumesClearances(3, [10, 100, 1000], [3, 2, 1]).model;",
+    "  var tr = P.tciTrajectory(m, 0.5, 'effect', 1e300);",
+    "  return {aborted: tr.aborted, n: tr.states.length, limit: P.limits.updates}; })()"))
+  expect_true(js$aborted)
+  expect_lte(js$n, js$limit)
+})
