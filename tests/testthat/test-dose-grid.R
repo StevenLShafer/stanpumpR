@@ -1,5 +1,5 @@
-# The prototype dose grid (R/dose-grid.R, inst/www/dose-grid.js;
-# docs/grid-replacement.md): the switch, the server's reading of what the
+# The dose grid (R/dose-grid.R, inst/www/dose-grid.js;
+# docs/grid-replacement.md): the server's reading of what the
 # browser sends (untrusted: anyone can send their own session anything), the
 # observer that stores it, and the browser code's own rules.  The behaviour in
 # the browser is tests/playwright's.  Drafted by Claude Code, 2026-11-04, at
@@ -18,11 +18,7 @@ gridInputs <- list(
 )
 
 # What the grid sends: through the JSON Shiny reads it from
-gridValue <- function(rows, format = "minutes/relative", seq = 1) {
-  json <- jsonlite::toJSON(list(rows = rows, timeFormat = format, seq = seq),
-                           auto_unbox = TRUE, null = "null", na = "null")
-  jsonlite::fromJSON(json, simplifyVector = FALSE)
-}
+gridValue <- doseGridInputValue
 
 lastRowsSent <- function(sent) {
   rows <- Filter(function(m) identical(m$id, "doseGrid") && !is.null(m$message$rows), sent$inputs)
@@ -43,19 +39,6 @@ startGrid <- function(session) {
   session$env$setDoseTable(doseTableInit, timeFormat("minutes", "relative"))
   session$flushReact()
 }
-
-test_that("the switch chooses rhandsontable unless the prototype is asked for", {
-  withr::local_envvar(STANPUMPR_DOSE_GRID = NA)
-  withr::local_options(stanpumpR.doseGrid = NULL)
-  expect_equal(doseGridMode(), "handsontable")
-  withr::local_options(stanpumpR.doseGrid = "native")
-  expect_equal(doseGridMode(), "native")
-  withr::local_options(stanpumpR.doseGrid = "something else")
-  expect_equal(doseGridMode(), "handsontable")
-  withr::local_options(stanpumpR.doseGrid = NULL)
-  withr::local_envvar(STANPUMPR_DOSE_GRID = "native")
-  expect_equal(doseGridMode(), "native")
-})
 
 test_that("the grid's place in the page carries its header and row limit, and no input of its own", {
   html <- as.character(doseGridInput("doseGrid"))
@@ -84,6 +67,15 @@ test_that("what the browser sends is read as a table of strings, whatever it hol
   expect_equal(nrow(v$table), MAX_DOSE_ROWS - 1L)
   expect_true(v$truncated)
   expect_false(doseGridValue(gridValue(many[seq_len(MAX_DOSE_ROWS - 1L)]))$truncated)
+  # 499 doses and the blank row the grid keeps below them are not cut, nor said
+  full <- c(many[seq_len(MAX_DOSE_ROWS - 1L)], list(list("", "", "", "")))
+  v <- doseGridValue(gridValue(full))
+  expect_false(v$truncated)
+  expect_equal(nrow(v$table), MAX_DOSE_ROWS)
+  # 500 doses are: the 500th is cut
+  v <- doseGridValue(gridValue(many[seq_len(MAX_DOSE_ROWS)]))
+  expect_true(v$truncated)
+  expect_equal(sum(nzchar(v$table$Drug)), MAX_DOSE_ROWS - 1L)
   # not a grid's value at all
   for (bad in list(NULL, "x", 1, list(), list(rows = NULL), list(rows = list(a = function() 1)))) {
     expect_no_error(v <- doseGridValue(bad))
@@ -112,7 +104,6 @@ test_that("the grid is told every drug's units, which are illicit, and what to o
 })
 
 test_that("an edit from the grid becomes the draft, and the grid is sent what the server holds", {
-  withr::local_options(stanpumpR.doseGrid = "native")
   shiny::testServer(app_server, {
     sent <- recordGrid(session)
     startGrid(session)
@@ -134,7 +125,6 @@ test_that("an edit from the grid becomes the draft, and the grid is sent what th
 })
 
 test_that("an edit from a grid drawn before a change of time unit is converted", {
-  withr::local_options(stanpumpR.doseGrid = "native")
   shiny::testServer(app_server, {
     sent <- recordGrid(session)
     startGrid(session)
@@ -149,7 +139,6 @@ test_that("an edit from a grid drawn before a change of time unit is converted",
 })
 
 test_that("a hostile or broken value from the browser leaves the session alive", {
-  withr::local_options(stanpumpR.doseGrid = "native")
   shiny::testServer(app_server, {
     sent <- recordGrid(session)
     startGrid(session)
@@ -174,7 +163,6 @@ test_that("a hostile or broken value from the browser leaves the session alive",
 })
 
 test_that("an edit the server leaves unchanged is sent back, so the grid shows the draft", {
-  withr::local_options(stanpumpR.doseGrid = "native")
   shiny::testServer(app_server, {
     sent <- recordGrid(session)
     startGrid(session)
@@ -189,7 +177,6 @@ test_that("an edit the server leaves unchanged is sent back, so the grid shows t
 })
 
 test_that("Ctrl+Z and Ctrl+Y from the grid undo and redo the draft, and a broken request is ignored", {
-  withr::local_options(stanpumpR.doseGrid = "native")
   shiny::testServer(app_server, {
     sent <- recordGrid(session)
     startGrid(session)
@@ -219,7 +206,6 @@ test_that("Ctrl+Z and Ctrl+Y from the grid undo and redo the draft, and a broken
 # The values the external review of 2026-11-05 sent from the browser's
 # console, each of which was stored, drawn or applied
 test_that("a cell the grid would not accept is blanked before it is stored, and said", {
-  withr::local_options(stanpumpR.doseGrid = "native")
   shiny::testServer(app_server, {
     sent <- recordGrid(session)
     notes <- character(0)
@@ -250,7 +236,6 @@ test_that("a cell the grid would not accept is blanked before it is stored, and 
 test_that("a negative or unreadable seq cannot make the grid ignore the draft", {
   expect_equal(doseGridValue(gridValue(list(list("propofol", "0", "1", "mg")), seq = -1))$seq, 0)
   expect_equal(doseGridValue(gridValue(list(list("propofol", "0", "1", "mg")), seq = "x"))$seq, 0)
-  withr::local_options(stanpumpR.doseGrid = "native")
   shiny::testServer(app_server, {
     sent <- recordGrid(session)
     startGrid(session)

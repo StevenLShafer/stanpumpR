@@ -82,6 +82,11 @@ module.exports = {
     });
   },
 
+  // Whether the row menu is showing
+  async menuOpen(page) {
+    return page.$eval(`${ROOT} [role=menu]`, m => !m.hidden);
+  },
+
   // A right click on a cell, which opens the row menu
   async contextClick(page, r, c) {
     await page.click(c === 3 ? `${tr(r)} td:nth-child(4)` : ctl(r, c), { button: 'right' });

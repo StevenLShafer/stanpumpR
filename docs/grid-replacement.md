@@ -445,6 +445,41 @@ one run: a typed `morphine` was stored as **mannitol** and `sevoflurane` as
 an ordinary drug name. Both cases are now known gaps on that grid for that
 reason, with the two that already were (`notadrug`, the gas rule).
 
+## The external review of 2026-11-06 (Gemini, final pass)
+
+Gemini reviewed `6d2c942` against the brief, with written findings this time.
+It re-ran its four scripts on both grids and added a fifth on the newest code.
+It ran the suite (native 62 of 63, the numbro todo the 63rd) and the focused R
+tests (2,162 expectations, none failing). It also ran the native suite in
+Firefox 159 through a shim (61 of 63; the one failure is finding 1), the first
+run outside Chromium in this work. WebKit would not start in its container.
+Its verdict: "almost", with four fixes before the switch and two smaller ones.
+
+Its B3 matrix found the native grid in agreement with R's `validateTime()` and
+`validateDose()` on every single-cell input, typed and pasted. rhandsontable
+changed 23 typed entries without a word (`08:30` stored as 830, `1e3` as 13,
+`10 20` as 1020).
+
+Each finding was checked before anything changed. All seven hold. Two of its
+quotations (`dose-grid.test.js:107-110`, `harness.js:168-170`) do not match
+the files, though what they describe is true.
+
+| | What it found | Checked | Fix |
+|---|---|---|---|
+| 1 | A right click's mouseup selected the cell's text, which in Firefox takes the focus back from the row menu just opened; Escape then went to the cell and left the menu open over the rows. | By the code (`onMouseUp()` had no button check); Firefox cannot be run here. | `onMouseUp()` acts on the left button only, and Escape closes the row menu wherever the focus is. |
+| 2 | Tab on the row menu went back to the row's Drug cell from the Dose cell of a row with no drug, and stayed in the last row instead of leaving the grid. | Reproduced: `[6, 0]` for `[7, 0]`, and `[11, 1]`. `focusCell()` sent a disabled Units cell to Drug. | The menu's Tab passes over disabled cells and, at the grid's edge, leaves from its first or last cell. A disabled cell gives way to the nearest cell on its left, not to Drug. |
+| 3 | A unit typed on a Units cell was the browser's search of the list: `mg` on oxycodone gave **mg PO liquid**, on fentanyl **mcg/kg**, with no message. | Reproduced, both. | The grid searches the list itself: an exact match first, then the first that starts with what was typed. Letters matching no unit are said, and the unit is kept. The choice is committed when the typing pauses, or on Enter, Tab or leaving the cell. |
+| 4 | On a phone, a tap that selected a cell's text sent a contextmenu, which opened the row menu over the row; a tap on a Units cell anywhere but the arrow was suppressed, so its list never opened. A list opened by the arrow or a double click swallows Ctrl+V. | The tap cases reproduced under touch emulation. Ctrl+V in an open list is the browser's: the list is open and visible, and keys go to it. | A touch opens the row menu only by a long press (450 ms), and a tap on a Units cell opens its list. While the browser's list is open, its arrow keys are its own. |
+| 5 | A table of exactly 499 doses was said to be cut ("the rows past them were not added"): the blank row the grid keeps below them was counted as a 500th. | Reproduced. Fixing `doseGridValue()` then showed the same miscount in `restoredDoseTable()`, which then said "part of the dose table could not be read". | Both count doses, not rows: blank rows past the limit are dropped without a word. |
+| 6 | A pasted row of the drug the row already held did not start afresh, so `propofol<Tab><Tab>80` over a propofol row was refused for its blank time, where the same row of fentanyl was taken. | By the code. | A pasted drug always starts its row afresh. |
+| 7 | The suite runs only in Chromium: clipboard permissions and the slow link (CDP) are Chromium's. | True. | `STANPUMPR_BROWSER` chooses the browser; off Chromium the clipboard is opened by preference and the two slow-link cases are skipped. Not run here. |
+| B7.2 | A dose typed and then Apply clicked at once was not applied: Apply was still disabled when the click came, and enabled only once the server had the edit. rhandsontable lost the typed value outright. | Reproduced from a clean table. | The grid enables Apply on the first key typed. The server's Apply observer runs after the grid's (priority -1), so the cell committed as the focus left arrives with the click and is applied. |
+
+Not defects: `sufentanil epidural` is refused where rhandsontable truncated it
+to `sufentanil`; a blank Time or Dose over a filled cell is refused by design.
+Gemini's "morphine stored as morphine, never mannitol: fixed" on rhandsontable
+is one run of an intermittent defect, not a fix: nothing in that grid changed.
+
 ## Decisions for Steven Shafer
 
 These are pending. Record each answer here.

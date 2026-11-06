@@ -41,7 +41,7 @@
 # ("0:80" is "01:20").  Whether it is a clock time or an elapsed time depends
 # on the time display; see R/utils-time.R.
 #
-# inst/www/hot_funs.js has the same two functions for the grid, and the two
+# inst/www/grid-funs.js has the same two functions for the grid, and the two
 # must agree: the server checks that every stored time is one validateTime()
 # leaves unchanged (validateDoseTableInput()).
 # -----------------------------------------------------------------------------
@@ -129,11 +129,11 @@ validateTime <- function(x)
     # force 80 minutes into 1 hour and 20 minutes
     HH <- HH + floor(MM/60)
     MM <- MM %% 60
-    # Past 2^53 the hour count is not exact, and inst/www/hot_funs.js refuses
+    # Past 2^53 the hour count is not exact, and inst/www/grid-funs.js refuses
     # it (String() writes "1e+21"): refused here too, so the two agree.
     if (HH > 2^53 - 1) return("")
     # %.0f rather than %d, which stops on an hour count too large for an
-    # integer.  inst/www/hot_funs.js validateTime() must give the same string.
+    # integer.  inst/www/grid-funs.js validateTime() must give the same string.
     out <- sprintf("%02.0f:%02.0f", HH, MM)
     return(if (nchar(out) > MAX_TIME_STRING_LENGTH) "" else out)
   }

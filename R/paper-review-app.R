@@ -160,7 +160,7 @@ paperReviewPanels <- function(ns = shiny::NS(NULL))
         shiny::uiOutput(ns("simulatorNote")),
         shiny::plotOutput(ns("simPlot"), height = "460px"),
         shiny::h5("Dose table"),
-        rhandsontable::rHandsontableOutput(ns("doses")),
+        shiny::uiOutput(ns("dosesUI")),
         shiny::tableOutput(ns("simParameters"))
       )),
     bslib::nav_panel("Privacy and help", value = "help", paperReviewHelpHtml()))
@@ -408,24 +408,26 @@ paperReviewServer <- function(input, output, session)
     setUnit(paperReviewRegimenTimeUnit(r$extraction, regimen), max(240, ceiling(max(d$Time) * 2)))
   })
 
-  output$doses <- rhandsontable::renderRHandsontable({
+  # The doses as text, read as R reads them (validateDose()): a numeric
+  # column parsed "1,000" as 1 and "1,5" as 1.5, and refused nothing where it
+  # was typed (docs/grid-replacement.md, step 3 of the migration order)
+  output$dosesUI <- shiny::renderUI({
     r <- currentReview()
     units <- if (is.null(r)) "mg" else r$drug$units
     d <- doseTable()
     d$Units <- as.character(d$Units)
     d$Time <- signif(d$Time / unitMinutes(), 6)
     blank <- data.frame(Time = rep(NA_real_, 4), Dose = rep(NA_real_, 4), Units = rep(NA_character_, 4))
-    rhandsontable::hot_col(
-      rhandsontable::rhandsontable(rbind(d, blank), rowHeaders = NULL, stretchH = "all",
-                                   width = 520, height = 230,
-                                   colHeaders = c(paste0("Time (", unitName(), ")"), "Dose", "Units")),
-      "Units", type = "dropdown", source = units)
+    shiny::div(style = "max-width: 520px",
+      tableGridInput(session$ns("doses"), paperReviewDoseColumns(unitName(), units),
+                     rbind(d, blank), rowMenu = TRUE, height = 230))
   })
 
   dosesNow <- shiny::reactive({
     # Minutes, whatever the table shows.
     shown <- !is.null(input$doses)
-    d <- if (shown) rhandsontable::hot_to_r(input$doses) else doseTable()
+    d <- if (shown) tableGridRead(input$doses, paperReviewDoseColumns("", character(0))) else doseTable()
+    if (is.null(d)) d <- doseTable()
     names(d)[1:3] <- c("Time", "Dose", "Units")
     d <- d[is.finite(suppressWarnings(as.numeric(d$Time))) &
              is.finite(suppressWarnings(as.numeric(d$Dose))) & !is.na(d$Units) & nzchar(d$Units), ,

@@ -99,7 +99,7 @@ test_that("Add a dose with no units chosen asks for them", {
 
 suggestInputs <- function(session, end = "10") {
   session$setInputs(targetDrug = "propofol", targetEndTime = end,
-                    targetTableHTML = list(data = list()))
+                    targetTableHTML = tableGridInputValue(list(list("0", "3"), list("", ""))))
 }
 
 test_that("Suggest Dosing that fails, or finds doses the table cannot hold, leaves the table as it was", {
@@ -107,8 +107,6 @@ test_that("Suggest Dosing that fails, or finds doses the table cannot hold, leav
   local_mocked_bindings(showNotification = function(ui, ...) {
     notes <<- c(notes, paste(as.character(ui), collapse = " "))
   })
-  local_mocked_bindings(hot_to_r = function(...) data.frame(Time = c("0", ""), Target = c("3", "")),
-                        .package = "rhandsontable")
   outcomes <- list(
     # nlm()'s error for a target of 1e-301, reproduced in the browser
     function(...) stop("probable coding error in analytic gradient"),
@@ -143,22 +141,22 @@ test_that("Suggest Dosing that fails, or finds doses the table cannot hold, leav
 # --- What the grid and the dialogs accept ------------------------------------
 
 test_that("the dose grid cannot be pasted past the row limit", {
-  hot <- createHOT(doseTableInit, getDrugDefaultsGlobal())
-  expect_equal(hot$x$maxRows, MAX_DOSE_ROWS - 1L)
+  html <- as.character(doseGridInput("doseGrid"))
+  expect_match(html, sprintf('data-max-rows="%d"', MAX_DOSE_ROWS - 1L), fixed = TRUE)
   # the blank row the server adds below a full grid still fits
   full <- data.frame(Drug = rep("propofol", MAX_DOSE_ROWS - 1L), Time = "0", Dose = "1", Units = "mg")
   full[nrow(full) + 1, ] <- ""
   expect_true(validateDoseTableInput(full))
 })
 
-# The grid's own validateDose() and validateTime() (inst/www/hot_funs.js) must
+# The grid's own validateDose() and validateTime() (inst/www/grid-funs.js) must
 # agree with R's: the server refuses a stored time that R's validateTime()
 # would change, and a dose the grid accepted and R refuses is what hid the
 # grid behind an error.
 test_that("the grid's validators agree with R's, limits included", {
   skip_on_cran()
   skip_if(!nzchar(Sys.which("node")), "node is not installed")
-  js <- normalizePath(system.file("www", "hot_funs.js", package = "stanpumpR"), winslash = "/")
+  js <- normalizePath(system.file("www", "grid-funs.js", package = "stanpumpR"), winslash = "/")
   src <- readLines(js)
   jsConstant <- function(name) {
     line <- grep(sprintf("^var %s = ", name), src, value = TRUE)
@@ -213,123 +211,6 @@ test_that("an empty profiler threshold does not stop the profiled observers", {
 
 .sprglobals$config <- oldConfig
 
-# --- Pasting into the dose grid ------------------------------------------------
-
-# Every pasted unit was dropped for the drug's default, so "morphine 0 10 mg PO
-# tablet" became 10 mg intravenous: the Units dropdown validated it against
-# the row's list before the drug was in place.  Reproduced in Chromium at
-# 7491b43; #675 fixed the created row's lost time and dose, and this the unit
-# and the Enter-twice reset.  The hooks run in Node on a stand-in grid, with
-# the events in the order Chromium gave them.
-test_that("a paste keeps every row's time, dose and unit", {
-  skip_on_cran()
-  skip_if(!nzchar(Sys.which("node")), "node is not installed")
-  js <- normalizePath(system.file("www", "hot_funs.js", package = "stanpumpR"), winslash = "/")
-  dd <- getDrugDefaultsGlobal()
-  defaults <- lapply(c("fentanyl", "morphine"), function(d) list(
-    Drug = d, Units = unlist(dd$Units[dd$Drug == d]), Default.Units = dd$Default.Units[dd$Drug == d]
-  ))
-  script <- tempfile(fileext = ".js")
-  on.exit(unlink(script))
-  writeLines(c(
-    "const vm = require('vm'); const fs = require('fs');",
-    # the grid's warnings, collected
-    "const notes = []; global.Shiny = { notifications: { show: n => notes.push(n.html) } }; global.window = { Shiny: global.Shiny };",
-    sprintf("global.drug_defaults = %s;", jsonlite::toJSON(defaults, auto_unbox = TRUE)),
-    sprintf("vm.runInThisContext(fs.readFileSync(%s, 'utf8'));", jsonlite::toJSON(js, auto_unbox = TRUE)),
-    "function grid(rows) { return { data: rows, meta: {},",
-    "  getSettings() { return { colHeaders: ['Drug', 'Time', 'Dose/Target', 'Units'] }; },",
-    "  getDataAtRow(r) { return this.data[r]; }, getDataAtCell(r, c) { return this.data[r][c]; },",
-    "  setCellMeta(r, c, k, v) { this.meta[r + ':' + c + ':' + k] = v; },",
-    "  setDataAtCell(ch) { ch.forEach(x => { this.data[x[0]][x[1]] = x[2]; }); } }; }",
-    # A paste as Handsontable delivers it: beforePaste with the clipboard
-    # and the selection; a clipboard shorter than the selection repeated over
-    # it; the Units cell never among the changes (the dropdown refuses it
-    # against the row's old list); the created row's no-op edits as Chromium
-    # logged them (#675), Time and Dose before the paste's own change, Drug
-    # and Units after it.  Returns the grid and the warnings given.
-    "function paste(hot, startRow, lines, opts) {",
-    "  opts = opts || {}; const startCol = opts.startCol || 0;",
-    "  const endRow = Math.max(startRow + lines.length - 1, opts.endRow === undefined ? -1 : opts.endRow);",
-    "  notes.length = 0;",
-    "  hookRememberPastedUnits.call(hot, lines, [{ startRow: startRow, startCol: startCol, endRow: opts.endRow }]);",
-    "  const changes = [], created = [];",
-    "  for (let r = startRow; r <= endRow; r++) { const l = lines[(r - startRow) % lines.length];",
-    "    if (!hot.data[r]) { hot.data[r] = [null, null, null, null]; created.push(r); }",
-    "    l.forEach((v, i) => { const c = startCol + i; if (c > 2) return;",
-    "      changes.push([r, c, hot.data[r][c], v]); hot.data[r][c] = v; }); }",
-    "  created.forEach(r => [1, 2].forEach(c => hookDoseTableUpdate.call(hot, [[r, c, null, null]], 'edit')));",
-    "  hookDoseTableUpdate.call(hot, changes, 'CopyPaste.paste');",
-    "  created.forEach(r => [0, 3].forEach(c => hookDoseTableUpdate.call(hot, [[r, c, null, null]], 'edit')));",
-    "  return { data: hot.data, notes: notes.slice() }; }",
-    "const blank = () => [['propofol', '0', '2', 'mg/kg'], ['', '', '', ''], ['', '', '', ''], ['', '', '', '']];",
-    "process.stdout.write(JSON.stringify({",
-    "  created: paste(grid(blank()), 2, [['fentanyl', '5', '50', 'mcg'], ['fentanyl', '10', '50', 'mcg'], ['fentanyl', '15', '2', 'mcg/kg']]),",
-    "  oral: paste(grid(blank()), 1, [['morphine', '0', '10', 'mg PO tablet'], ['morphine', '60', '10', 'mg PO liquid']]),",
-    "  refused: paste(grid(blank()), 1, [['morphine', '0', '10', 'mg PO']]),",
-    "  noUnit: paste(grid(blank()), 1, [['morphine', '0', '10']]),",
-    # Enter pressed twice on a Drug cell re-commits the drug it holds
-    "  enterTwice: (function() { const hot = grid([['morphine', '30', '10', 'mg PO tablet'], ['', '', '', '']]);",
-    "    hookDoseTableUpdate.call(hot, [[0, 0, 'morphine', 'morphine']], 'edit'); return hot.data; })(),",
-    # a paste over a filled row that changes the drug and repeats its time and
-    # dose: the repeated cells dropped out as no-ops, and the drug change
-    # alone reset them to 0 (CodeRabbit on #676)
-    "  drugOverRow: paste(grid([['propofol', '0', '2', 'mg/kg'], ['', '', '', '']]), 0, [['fentanyl', '0', '2', 'mcg/kg']]),",
-    # the same with no unit: the old drug's mg/kg must not stay on fentanyl
-    "  drugNoUnit: paste(grid([['propofol', '0', '2', 'mg/kg'], ['', '', '', '']]), 0, [['fentanyl', '0', '2']]),",
-    # a refused unit over a row that held an offered one: not used, and said
-    "  refusedOverUnit: paste(grid([['fentanyl', '5', '50', 'mcg/kg'], ['', '', '', '']]), 0, [['fentanyl', '10', '50', 'furlongs']]),",
-    # Time, Dose and a refused unit, without the Drug column
-    "  noDrugColumn: paste(grid([['fentanyl', '5', '50', 'mcg/kg'], ['', '', '', '']]), 0, [['10', '50', 'furlongs']], { startCol: 1 }),",
-    # a Units cell alone
-    "  unitsOnly: paste(grid([['fentanyl', '5', '50', 'mcg'], ['', '', '', '']]), 0, [['furlongs']], { startCol: 3 }),",
-    # an offered unit with spaces round it: the clipboard text the dropdown
-    # checks is the trimmed unit (CodeRabbit on #676)
-    "  padded: (function() { const hot = grid([['morphine', '5', '10', 'mg PO liquid'], ['', '', '', '']]);",
-    "    const lines = [[' mg PO tablet ']]; notes.length = 0;",
-    "    hookRememberPastedUnits.call(hot, lines, [{ startRow: 0, startCol: 3 }]);",
-    "    return { lines: lines, remembered: hot.pastedUnits[0], notes: notes.slice() }; })(),",
-    # a refused unit in a row that is otherwise pasted as it was: no change
-    # reaches afterChange, and the warning must still be given
-    "  unchanged: paste(grid([['fentanyl', '5', '50', 'mcg/kg'], ['', '', '', '']]), 0, [['fentanyl', '5', '50', 'furlongs']]),",
-    # one row pasted over three selected rows
-    "  repeated: paste(grid(blank()), 1, [['morphine', '0', '10', 'mg PO tablet']], { endRow: 3 })",
-    "}));"
-  ), script)
-  out <- jsonlite::fromJSON(paste(system2(Sys.which("node"), shQuote(script), stdout = TRUE), collapse = ""),
-                            simplifyVector = FALSE)
-  row <- function(x) unlist(lapply(x, function(v) if (is.null(v)) NA else as.character(v)))
-  fentanylDefault <- dd$Default.Units[dd$Drug == "fentanyl"]
-  morphineDefault <- dd$Default.Units[dd$Drug == "morphine"]
-  expect_equal(row(out$created$data[[5]]), c("fentanyl", "15", "2", "mcg/kg"))
-  expect_equal(row(out$created$data[[3]]), c("fentanyl", "5", "50", "mcg"))
-  expect_equal(row(out$oral$data[[2]]), c("morphine", "0", "10", "mg PO tablet"))
-  expect_equal(row(out$oral$data[[3]]), c("morphine", "60", "10", "mg PO liquid"))
-  expect_length(out$oral$notes, 0)
-  # a unit the drug does not offer is not taken, and the grid says so; the
-  # row has the drug's default, as a row with no pasted unit does
-  expect_equal(row(out$refused$data[[2]]), c("morphine", "0", "10", morphineDefault))
-  expect_match(out$refused$notes[[1]], "mg PO.*morphine.*not used")
-  expect_equal(row(out$noUnit$data[[2]]), c("morphine", "0", "10", morphineDefault))
-  expect_length(out$noUnit$notes, 0)
-  # was morphine 0 0 with its default unit
-  expect_equal(row(out$enterTwice[[1]]), c("morphine", "30", "10", "mg PO tablet"))
-  expect_equal(row(out$drugOverRow$data[[1]]), c("fentanyl", "0", "2", "mcg/kg"))
-  # was fentanyl in mg/kg
-  expect_equal(row(out$drugNoUnit$data[[1]]), c("fentanyl", "0", "2", fentanylDefault))
-  # a refused unit leaves the row's own offered unit, and is said
-  expect_equal(row(out$refusedOverUnit$data[[1]]), c("fentanyl", "10", "50", "mcg/kg"))
-  expect_length(out$refusedOverUnit$notes, 1)
-  expect_equal(row(out$noDrugColumn$data[[1]]), c("fentanyl", "10", "50", "mcg/kg"))
-  expect_length(out$noDrugColumn$notes, 1)
-  expect_equal(row(out$unitsOnly$data[[1]]), c("fentanyl", "5", "50", "mcg"))
-  expect_match(out$unitsOnly$notes[[1]], "furlongs.*fentanyl.*not used")
-  expect_equal(out$padded$lines[[1]][[1]], "mg PO tablet")
-  expect_equal(out$padded$remembered, "mg PO tablet")
-  expect_length(out$padded$notes, 0)
-  expect_equal(row(out$unchanged$data[[1]]), c("fentanyl", "5", "50", "mcg/kg"))
-  expect_length(out$unchanged$notes, 1)
-  for (r in 2:4) {
-    expect_equal(row(out$repeated$data[[r]]), c("morphine", "0", "10", "mg PO tablet"), info = r)
-  }
-})
+# Pasting into the dose grid (whole rows keep their time, dose and offered
+# unit; Enter twice on a drug keeps its row) is the browser suite's:
+# tests/playwright/dose-grid.test.js, on the grid itself.

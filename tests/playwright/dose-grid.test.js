@@ -6,7 +6,7 @@
 //
 // Most cases come from the bugs the 2026-11 reviews found and fixed one by one
 // (test-ui-keyboard-crashes.R, test-ui-adversarial-review.R,
-// test-dose-table-paste.R replay them in Node against hot_funs.js); here they
+// test-dose-table-paste.R replay them in Node against grid-funs.js); here they
 // run in a real browser against the real server.
 //
 // A case marked KNOWN_GAP fails on a grid for a reason recorded beside it: it
@@ -17,7 +17,7 @@
 
 const { test, describe, before, after, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
-const { chromium } = require('playwright');
+const playwright = require('playwright');
 const H = require('./harness');
 
 const GRID = process.env.STANPUMPR_GRID || 'handsontable';
@@ -101,12 +101,24 @@ const FIRST_BLANK = 6;
 
 let browser, context, page;
 
-before(async () => { browser = await chromium.launch(); });
+// STANPUMPR_BROWSER: chromium (the default), firefox or webkit.  The
+// clipboard permissions and the slow link (CDP) are Chromium's: elsewhere
+// the clipboard is opened by preference and the slow-link cases are skipped
+// (the external review of 2026-11-06, Gemini's final pass).
+const BROWSER = process.env.STANPUMPR_BROWSER || 'chromium';
+const CDP = BROWSER === 'chromium';
+const SLOW_LINK = { skip: !CDP && 'a slow link is emulated through CDP, which only Chromium has' };
+
+before(async () => {
+  browser = await playwright[BROWSER].launch(BROWSER === 'firefox' ? {
+    firefoxUserPrefs: { 'dom.events.asyncClipboard.readText': true, 'dom.events.testing.asyncClipboard': true }
+  } : {});
+});
 after(async () => { await browser.close(); });
 
 beforeEach(async () => {
   context = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
-  await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: URL });
+  if (CDP) await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: URL });
   page = await H.openSession(context, URL, adapter);
 });
 
@@ -251,6 +263,24 @@ describe('the Units column', () => {
     await H.settle(page);
     await H.waitForDraft(page, d => d[2][3] === 'mcg/kg');
     assert.equal((await rowsShown())[2][3], 'mcg/kg');
+  });
+
+  // The browser's own search of a list takes the next option that starts
+  // with what was typed: "mg" on oxycodone was "mg PO liquid", and on
+  // fentanyl "mcg/kg", without a word (the external review of 2026-11-06,
+  // Gemini's final pass)
+  gt('a unit typed on a Units cell is the unit typed, and one the drug lacks is said', async () => {
+    await enter(FIRST_BLANK, 0, 'oxycodone');
+    await H.waitForDraft(page, d => d[FIRST_BLANK][0] === 'oxycodone');
+    await adapter.chooseUnit(page, FIRST_BLANK, 'mg');
+    await H.settle(page);
+    await holds(FIRST_BLANK, ['oxycodone', '0', '0', 'mg']);
+    await H.clearNotifications(page);
+    await adapter.chooseUnit(page, 2, 'mg');
+    await H.settle(page);
+    await holds(2, ['fentanyl', '0', '0', 'mcg']);
+    const notes = await H.notifications(page);
+    assert.ok(notes.some(n => /"mg" is not a unit offered for fentanyl/.test(n)), JSON.stringify(notes));
   });
 
   test('a long unit wraps only after its route', async () => {
@@ -416,6 +446,33 @@ describe('paste', () => {
     await holds(0, ['fentanyl', '5', '0', 'mcg']);
   });
 
+  // A pasted drug starts its row afresh, whether or not the row held it:
+  // "propofol<Tab><Tab>80" over a propofol row was refused for its blank
+  // time, where the same row of another drug was taken (the external review
+  // of 2026-11-06, Gemini's final pass)
+  gt('a pasted row of the drug the row already holds starts it afresh', async () => {
+    await adapter.focusCell(page, 0, 0);
+    await H.paste(page, 'propofol\t10\t100\tmg/kg');
+    await H.settle(page);
+    await holds(0, ['propofol', '10', '100', 'mg/kg']);
+    await adapter.focusCell(page, 0, 0);
+    await H.paste(page, 'propofol\t\t80\tmg');
+    await H.settle(page);
+    await holds(0, ['propofol', '0', '80', 'mg']);
+  });
+
+  // 499 doses and the blank row below them were cut to 499 rows, and said
+  // to be (the external review of 2026-11-06, Gemini's final pass)
+  test('a table of exactly 499 doses is taken without a warning',
+       { timeout: 120000, skip: GRID !== 'native' && 'rhandsontable takes minutes to paste 499 rows' }, async () => {
+    await H.clearNotifications(page);
+    await adapter.focusCell(page, 0, 0);
+    await H.paste(page, Array.from({ length: 499 }, (_, i) => `propofol\t${i}\t10\tmg`).join('\n'));
+    await H.waitForDraft(page, d => H.filled(d).length === 499, 60000);
+    await H.settle(page, 1000);
+    assert.deepEqual(await H.notifications(page), []);
+  });
+
   // The table holds 499 doses (MAX_DOSE_ROWS - 1) and a blank row.  510 rows
   // pasted under the six of the startup table are 17 too many.
   gt('a paste cannot grow the table past its row limit, and says so', { timeout: 900000 }, async () => {
@@ -477,7 +534,7 @@ describe('the keyboard', () => {
   });
 
   // The server is a few hundred ms away on shinyapps.io
-  gt('two doses typed one after the other over a slow link are both kept', async () => {
+  gt('two doses typed one after the other over a slow link are both kept', SLOW_LINK, async () => {
     await H.slowLink(context, page, 400);
     await adapter.focusCell(page, FIRST_BLANK, 0);
     await page.keyboard.type('morphine', { delay: 80 });
@@ -557,6 +614,31 @@ describe('rows', () => {
     await H.settle(page, 200);
     assert.equal(await adapter.activeCell(page), null, 'the focus stayed in the grid');
     await holds(0, ['propofol', '0', '0', 'mg']);
+  });
+
+  // A right click's mouseup took the focus back from the menu in Firefox,
+  // and Escape on the cell did not close it (the external review of
+  // 2026-11-06, Gemini's final pass)
+  test('Escape closes the row menu opened by a right click', async () => {
+    await adapter.contextClick(page, 2, 0);
+    await H.settle(page, 300);
+    assert.ok(await adapter.menuOpen(page), 'the row menu did not open');
+    await page.keyboard.press('Escape');
+    await H.settle(page, 200);
+    assert.ok(!(await adapter.menuOpen(page)), 'the row menu stayed open');
+    await adapter.focusCell(page, 2, 0);
+    assert.deepEqual(await adapter.activeCell(page), [2, 0]);
+  });
+
+  // From the Dose cell of a row with no drug, whose Units list is disabled,
+  // Tab went back to the row's Drug cell (the external review of 2026-11-06,
+  // Gemini's final pass)
+  gt('Tab on the row menu passes over the empty Units cell of a row with no drug', async () => {
+    await adapter.contextClick(page, FIRST_BLANK, 2);
+    await H.settle(page, 300);
+    await page.keyboard.press('Tab');
+    await H.settle(page, 200);
+    assert.deepEqual(await adapter.activeCell(page), [FIRST_BLANK + 1, 0]);
   });
 
   test('a row can be removed', async () => {
@@ -679,7 +761,7 @@ describe('Ctrl+Z and Ctrl+Y', () => {
     await holds(2, ['fentanyl', '0', '55', 'mcg']);
   });
 
-  gt('Ctrl+Z right after Enter, over a slow link, still undoes that edit', async () => {
+  gt('Ctrl+Z right after Enter, over a slow link, still undoes that edit', SLOW_LINK, async () => {
     await H.slowLink(context, page, 400);
     await adapter.typeInto(page, 2, 2, '100');
     await page.keyboard.press('Enter');
@@ -886,6 +968,17 @@ describe('the external review of 2026-11-05 (Gemini)', () => {
 
 // ---------------------------------------------------------------------------
 describe('the draft, Apply and undo', () => {
+  // Apply was disabled until the server had the edit, so a dose typed and
+  // then Apply clicked at once was not applied, without a word (the
+  // external review of 2026-11-06, Gemini's final pass)
+  gt('a dose typed and then Apply clicked at once is applied', async () => {
+    await adapter.typeInto(page, 2, 2, '350');
+    await page.click('#dosetable_apply', { timeout: 5000 });
+    await H.settle(page, 800);
+    const st = await H.serverState(page);
+    assert.deepEqual(st.table[2], ['fentanyl', '0', '350', 'mcg']);
+  });
+
   test('an edit is a draft until Apply; undo and redo step through it', async () => {
     assert.ok(await page.isDisabled('#dosetable_apply'));
     await enter(2, 2, '100');
@@ -939,6 +1032,31 @@ describe('everything is text', () => {
     await H.settle(page, 500);
     const notes = await H.notifications(page);
     assert.ok(notes.some(n => /at most 499 doses/.test(n)), JSON.stringify(notes));
+  });
+
+  // On a phone, a tap that selected a cell's text made Chromium send a
+  // contextmenu, which opened the row menu over the row; and a tap on a
+  // Units cell anywhere but its arrow was suppressed, so its list never
+  // opened (the external review of 2026-11-06, Gemini's final pass)
+  test('a tap selects a cell without opening the row menu, and a tap on Units opens its list',
+       { skip: GRID !== 'native' && 'the prototype\'s own touch handling' }, async () => {
+    const ctx = await browser.newContext({ viewport: { width: 1600, height: 1000 }, hasTouch: true, isMobile: true });
+    try {
+      const p = await H.openSession(ctx, URL, adapter);
+      await p.tap('#doseGrid tbody tr:nth-child(1) td:nth-child(3) input');
+      await H.settle(p, 700);
+      assert.ok(!(await adapter.menuOpen(p)), 'a tap opened the row menu');
+      await p.evaluate(() => {
+        window.__md = [];
+        window.addEventListener('mousedown', e => window.__md.push(e.defaultPrevented));
+      });
+      await p.tap('#doseGrid tbody tr:nth-child(1) td:nth-child(4)', { position: { x: 10, y: 8 } });
+      await H.settle(p, 300);
+      assert.deepEqual(await p.evaluate(() => window.__md), [false], 'the tap on Units was suppressed');
+      assert.ok(await H.connected(p));
+    } finally {
+      await ctx.close();
+    }
   });
 
   test('markup typed or pasted into a cell is never run or drawn', async () => {

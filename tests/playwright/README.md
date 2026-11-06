@@ -35,6 +35,12 @@ To test an app that is already running, set `STANPUMPR_URL` (and
 STANPUMPR_URL=http://127.0.0.1:7311/ STANPUMPR_GRID=native node --test --test-concurrency=1 tests/playwright/dose-grid.test.js
 ```
 
+`STANPUMPR_BROWSER` chooses the browser: `chromium` (the default), `firefox`
+or `webkit`. Off Chromium the clipboard is opened by preference rather than
+by permission, and the two slow-link cases are skipped (they emulate the
+link through CDP). Firefox and WebKit have not been run here: their
+downloads are outside this environment's network.
+
 `RSCRIPT` names the R binary and `STANPUMPR_RSCRIPT_ARGS` adds arguments
 (`--no-init-file` skips the project's `.Rprofile`, and with it renv).
 
@@ -94,5 +100,5 @@ STANPUMPR_URL=http://127.0.0.1:7311/ STANPUMPR_GRID=native node --test --test-co
   the options before the function, as `test()` does.
 
 The Node tests in `tests/testthat` (`test-dose-table-paste.R`,
-`test-ui-keyboard-crashes.R`) replay these cases against `hot_funs.js` alone.
+`test-ui-keyboard-crashes.R`) replay these cases against `grid-funs.js` alone.
 This suite runs them against the real grid and the real server.

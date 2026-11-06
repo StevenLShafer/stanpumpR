@@ -1,39 +1,31 @@
-# The dose grid: which one draws the main dose table, and the server half of
-# the prototype that may replace rhandsontable there (PROTOTYPE,
-# docs/grid-replacement.md; the browser half is inst/www/dose-grid.js).
+# The dose grid: the main dose table's grid, the server half (the browser
+# half is inst/www/dose-grid.js; docs/grid-replacement.md).
 #
-# rhandsontable 0.3.8 bundles Handsontable 6.2.2, the last MIT-licensed
-# release, frozen with published advisories; and the grid it draws is redrawn
-# by the server after every edit, which lost the first key typed meanwhile
-# (tests/playwright).  The prototype is a plain HTML table of form controls
-# with its own Shiny input binding: the browser checks each entry as it is
-# committed, the server receives the whole table once per committed edit and
-# keeps the draft and its undo history exactly as before, and it sends the
-# draft back only when it differs from what the grid holds.
-#
-# The switch, until Steven Shafer decides: options(stanpumpR.doseGrid =
-# "native"), or the environment variable STANPUMPR_DOSE_GRID; rhandsontable
-# otherwise.  Only the main dose table has a prototype; every other grid is
-# still rhandsontable.
-
-DOSE_GRID_MODES <- c("handsontable", "native")
-
-doseGridMode <- function() {
-  mode <- getOption("stanpumpR.doseGrid", Sys.getenv("STANPUMPR_DOSE_GRID", ""))
-  if (is.character(mode) && length(mode) == 1 && mode %in% DOSE_GRID_MODES) mode else "handsontable"
-}
+# It replaced rhandsontable (Shafer, 2026-11-06).  rhandsontable 0.3.8
+# bundled Handsontable 6.2.2, the last MIT-licensed release, frozen with
+# published advisories; and the grid it drew was redrawn by the server after
+# every edit, which lost the first key typed meanwhile (tests/playwright).
+# This one is a plain HTML table of form controls with its own Shiny input
+# binding: the browser checks each entry as it is committed, the server
+# receives the whole table once per committed edit and keeps the draft and
+# its undo history, and it sends the draft back only when it differs from
+# what the grid holds.  The dialogs' grids are its sibling, the table grid
+# (R/table-grid.R).
 
 # The grid's place in the page.  Everything inside it is drawn by
 # dose-grid.js; the attributes tell it the Dose column's header and how many
 # rows the table may hold (one fewer than MAX_DOSE_ROWS, which leaves room for
 # the blank row below the last drug).
-doseGridInput <- function(inputId) {
-  htmltools::tags$div(
+doseGridInput <- function(inputId, applyButton = NULL) {
+  htmltools::tagList(gridDependency(), htmltools::tags$div(
     id = inputId,
     class = "stanpumpr-dose-grid",
     `data-dose-header` = DOSE_COLUMN_HEADER,
-    `data-max-rows` = MAX_DOSE_ROWS - 1L
-  )
+    `data-max-rows` = MAX_DOSE_ROWS - 1L,
+    # the button that applies the table, enabled by the grid as soon as a
+    # cell is typed in (enableApply() in dose-grid.js)
+    `data-apply` = applyButton
+  ))
 }
 
 # What the grid needs to know of the drugs: every drug's units and default
@@ -87,8 +79,12 @@ doseGridValue <- function(value) {
   if (is.matrix(rows)) rows <- lapply(seq_len(nrow(rows)), function(i) rows[i, ])
   if (!is.list(rows) && !is.character(rows)) return(NULL)
   rows <- as.list(rows)
-  truncated <- length(rows) > MAX_DOSE_ROWS - 1L
-  if (truncated) rows <- rows[seq_len(MAX_DOSE_ROWS - 1L)]
+  # MAX_DOSE_ROWS rows: MAX_DOSE_ROWS - 1 doses and the blank row the grid
+  # keeps below them.  Cutting at MAX_DOSE_ROWS - 1 rows said "the rows past
+  # them were not added" of every table of 499 doses (the external review of
+  # 2026-11-06, Gemini's final pass); the doses past the limit are cut below.
+  truncated <- length(rows) > MAX_DOSE_ROWS
+  if (truncated) rows <- rows[seq_len(MAX_DOSE_ROWS)]
   cells <- lapply(rows, function(r) {
     r <- as.list(r)
     vapply(1:4, function(j) if (j <= length(r)) doseGridCell(r[[j]]) else "", character(1))
@@ -100,6 +96,11 @@ doseGridValue <- function(value) {
     Units = vapply(cells, `[`, "", 4),
     stringsAsFactors = FALSE
   )
+  filled <- which(nzchar(trimws(table$Drug)))
+  if (length(filled) > MAX_DOSE_ROWS - 1L) {
+    table <- table[seq_len(filled[MAX_DOSE_ROWS] - 1L), , drop = FALSE]
+    truncated <- TRUE
+  }
   # The number of edits the grid has sent: a count, so never negative.  A
   # negative one made every draft the server sent back look older than the
   # grid's latest edit, so the grid kept drawing its old rows while Apply

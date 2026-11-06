@@ -1,4 +1,4 @@
-// The suite's view of the rhandsontable grid (createHOT(), inst/www/hot_funs.js).
+// The suite's view of the rhandsontable grid (createHOT(), inst/www/grid-funs.js).
 // Only the DOM lookups differ between grids; every keystroke the tests send is
 // the same.  Rows and columns are 0-based; the columns are Drug, Time,
 // Dose/Target, Units.
@@ -99,6 +99,11 @@ module.exports = {
       const e = window.HTMLWidgets.find('#doseTableHTML').hot.getActiveEditor();
       return e && e.isOpened() && e.TEXTAREA ? e.TEXTAREA.value : null;
     });
+  },
+
+  // Whether the row menu is showing
+  async menuOpen(page) {
+    return page.$$eval('.htContextMenu', ms => ms.some(m => m.offsetParent !== null && getComputedStyle(m).display !== 'none'));
   },
 
   // A right click on a cell, which opens the row menu

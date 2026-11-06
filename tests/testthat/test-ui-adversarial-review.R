@@ -36,33 +36,17 @@ startReview <- function(session, dt) {
   session$flushReact()
 }
 
-# What the browser sends for a grid: its rows, null for an empty cell, and
-# the widget's own parameters, through the JSON Shiny reads them from
-gridInput <- function(widget, rows, event = "afterChange", ind = 0, ct = 1) {
-  json <- jsonlite::toJSON(
-    list(data = rows, changes = list(event = event, ind = ind, ct = ct, source = "edit"),
-         params = widget$x),
-    auto_unbox = TRUE, null = "null", na = "null", force = TRUE
-  )
-  jsonlite::fromJSON(json, simplifyVector = FALSE)
-}
-
+# What the browser sends for a dialog's grid (inst/www/table-grid.js, through
+# the JSON Shiny reads it from): its rows, null for an empty cell, and the tag
+# it was drawn with.  helpers.R: tableGridInputValue().
 targetGrid <- function(...) {
   rows <- list(...)
   rows <- c(rows, rep(list(list("", "")), max(0, 6 - length(rows))))
-  widget <- rhandsontable::rhandsontable(
-    data.frame(Time = rep("", 6), Target = rep("", 6)), rowHeaders = NULL
-  ) |> rhandsontable::hot_col("Target", type = "numeric")
-  gridInput(widget, rows)
+  tableGridInputValue(rows)
 }
 
-editDosesGrid <- function(drug, rows) {
-  widget <- rhandsontable::rhandsontable(
-    data.frame(Delete = FALSE, Time = "0", Dose = "1", Units = "mg"), rowHeaders = NULL
-  ) |> rhandsontable::hot_col("Delete", type = "checkbox")
-  widget$x$drug <- drug   # the stamp output$editPriorDosesTable puts on its grid
-  gridInput(widget, rows)
-}
+# The tag is the drug output$editPriorDosesUI drew the grid for
+editDosesGrid <- function(drug, rows) tableGridInputValue(rows, tag = drug)
 
 recordNotices <- function(session) {
   sent <- new.env()
@@ -174,11 +158,9 @@ test_that("a row inserted in the dose grid is blank, not NA (finding 5)", {
     sent <- recordNotices(session)
     dt <- reviewTable(list("propofol", "0", "100", "mg"))
     startReview(session, dt)
-    widget <- createHOT(dt, getDrugDefaultsGlobal(), timeFormat("minutes", "relative"))
-    session$setInputs(doseTableHTML = gridInput(
-      widget,
-      list(list(NULL, NULL, NULL, NULL), list("propofol", "0", "100", "mg"), list("", "", "", "")),
-      event = "afterCreateRow"
+    # a row with nothing in it (dose-grid.js sends "", a forged message null)
+    session$setInputs(doseGrid = doseGridInputValue(
+      list(list(NULL, NULL, NULL, NULL), list("propofol", "0", "100", "mg"), list("", "", "", ""))
     ))
     session$flushReact()
     expect_false(anyNA(doseTableDraft()))
@@ -228,8 +210,8 @@ test_that("a dose or time beyond the table's limits is refused where it is typed
   expect_equal(validateTime("9007199254740991:00"), "9007199254740991:00")
   expect_equal(validateTime("99999999999999999999:00"), "")
 
-  # The grid's own copy of the limits (inst/www/hot_funs.js)
-  js <- readLines(system.file("www", "hot_funs.js", package = "stanpumpR"))
+  # The grid's own copy of the limits (inst/www/grid-funs.js)
+  js <- readLines(system.file("www", "grid-funs.js", package = "stanpumpR"))
   limit <- function(name) {
     line <- grep(paste0("^var ", name, " = "), js, value = TRUE)
     expect_length(line, 1)
@@ -258,9 +240,7 @@ test_that("Edit events refuses a blank event (finding 8)", {
     eventTable(data.frame(Time = 10, Event = event))
     showEditEventsModal()
     session$flushReact()
-    widget <- rhandsontable::rhandsontable(data.frame(Delete = FALSE, Time = "10", Event = event),
-                                           rowHeaders = NULL)
-    session$setInputs(editEventsTableHTML = gridInput(widget, list(list(FALSE, "10", ""))))
+    session$setInputs(editEventsTableHTML = tableGridInputValue(list(list(FALSE, "10", ""))))
     session$setInputs(editEventsOK = 1)
     expect_false(session$isClosed())
     expect_match(tail(errorsShown(sent), 1), "event chosen from the list")
@@ -355,10 +335,10 @@ test_that("Delete checkboxes and the thresholds' box are read safely (finding 13
     # threshold when this dialog, under normalization, had none
     session$setInputs(normalization = "MEAC", showThresholdModal = TRUE)
     showModalCount <- length(sent$inputs)
-    widget <- rhandsontable::rhandsontable(
-      thresholdTableForDisplay(drugDefaults(), 40, macThreshold()), rowHeaders = NULL
-    )
-    session$setInputs(editThresholdsTable = gridInput(widget, jsonlite::fromJSON(widget$x$data, simplifyVector = FALSE)))
+    shown <- thresholdTableForDisplay(drugDefaults(), 40, macThreshold())
+    session$setInputs(editThresholdsTable = tableGridInputValue(
+      lapply(seq_len(nrow(shown)), function(i) list(shown$Drug[i], format(shown$Threshold[i])))
+    ))
     session$setInputs(thresholdEditsOK = 1)
     ids <- vapply(sent$inputs[seq_along(sent$inputs) > showModalCount], `[[`, character(1), "id")
     expect_false("showThreshold" %in% ids)

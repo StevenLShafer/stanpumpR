@@ -4,7 +4,7 @@
 // "native"); R/dose-grid.R is its server half.
 //
 // The browser holds the grid and checks every entry as it is committed
-// (validateTime() and validateDose() from hot_funs.js, which the tests hold to
+// (validateTime() and validateDose() from grid-funs.js, which the tests hold to
 // R's); the server receives the whole table, once per committed edit, and
 // keeps the draft and its undo history as before.  The server sends the draft
 // back only when it differs from what the grid holds (a gas rule, undo, a
@@ -26,6 +26,11 @@
   // The width of the arrow at the right of a Units cell (app.css), which
   // opens its list
   var UNIT_ARROW_WIDTH = 20;
+  // A touch held this long (ms) is a long press, which opens the row menu
+  var LONG_PRESS_MS = 450;
+  // Letters typed on a Units cell within this many ms of each other are one
+  // search (unitSearch())
+  var UNIT_SEARCH_MS = 1000;
   function blankRow() { return ['', '', '', '']; }
   function isBlank(x) { return x === null || x === undefined || String(x).trim() === ''; }
   function sameRows(a, b) {
@@ -77,6 +82,11 @@
     this.id = ++gridCount;
     this.header = root.getAttribute('data-dose-header') || 'Dose';
     this.maxRows = parseInt(root.getAttribute('data-max-rows'), 10) || 499;
+    // the id of the button that applies the table, enabled on the first key
+    // typed (enableApply())
+    this.applyId = root.getAttribute('data-apply');
+    this.pickerFor = null;
+    this.search = null;
     this.rows = [blankRow()];
     this.format = null;
     this.seq = 0;             // edits sent
@@ -90,6 +100,7 @@
     root.addEventListener('keydown', function(e) { self.onKeyDown(e); });
     root.addEventListener('focusin', function(e) { self.onFocusIn(e); });
     root.addEventListener('focusout', function(e) { self.onFocusOut(e); });
+    root.addEventListener('pointerdown', function(e) { self.lastPointer = { type: e.pointerType, time: Date.now() }; });
     root.addEventListener('mousedown', function(e) { self.onMouseDown(e); });
     root.addEventListener('mouseup', function(e) { self.onMouseUp(e); });
     root.addEventListener('dblclick', function(e) { self.onDoubleClick(e); });
@@ -280,12 +291,19 @@
     return this.root.contains(document.activeElement) ? this.cellOf(document.activeElement) : null;
   };
 
+  // A disabled cell (the Units list of a row with no drug) gives way to the
+  // nearest cell to its left that is not
   DoseGrid.prototype.focusCell = function(r, c) {
     var ctl = this.control(r, c);
+    while (ctl && ctl.disabled && c > 0) ctl = this.control(r, --c);
     if (!ctl) return;
-    if (ctl.disabled) ctl = this.control(r, COLS.DRUG);
     ctl.focus();
     if (ctl.tagName === 'INPUT') ctl.select();
+  };
+
+  // The control of cell k, counting cells row by row
+  DoseGrid.prototype.controlAt = function(k) {
+    return this.control(Math.floor(k / NCOL), k % NCOL);
   };
 
   DoseGrid.prototype.updateTimeTip = function() {
@@ -505,10 +523,13 @@
         // over a propofol row made it propofol 999 mg/kg; the external
         // review of 2026-11-05, Gemini's script)
         if (d === null) { refusedDrugs.push(trimEntry(touched[COLS.DRUG])); continue; }
-        if (d !== row[COLS.DRUG]) {
-          fresh = d !== '';
-          row = fresh ? [d, '0', '0', ''] : blankRow();
-        }
+        // A pasted drug starts its row afresh, the same drug as before or
+        // not: the row pasted is the row wanted.  Only a new drug did, so
+        // "propofol<Tab><Tab>80" over a propofol row was refused for its
+        // blank time where "fentanyl<Tab><Tab>80" was taken with time 0 (the
+        // external review of 2026-11-06, Gemini's final pass).
+        fresh = d !== '';
+        row = fresh ? [d, '0', '0', ''] : blankRow();
       }
       if (isBlank(row[COLS.DRUG])) { this.rows[r] = blankRow(); continue; }
       var refusedHere = [];
@@ -597,9 +618,15 @@
     }
   };
 
+  // A touch opens the row menu only by a long press.  A tap that selected a
+  // cell's text made mobile Chromium send a contextmenu at once, which opened
+  // the menu over the row (the external review of 2026-11-06, Gemini's final
+  // pass).
   DoseGrid.prototype.onContextMenu = function(e) {
     var tr = e.target.closest && e.target.closest('tr[data-row]');
     if (!tr || !this.tbody.contains(tr)) return;
+    var lp = this.lastPointer;
+    if (lp && lp.type === 'touch' && Date.now() - lp.time < LONG_PRESS_MS) { e.preventDefault(); return; }
     e.preventDefault();
     // from the cell clicked, so Tab moves on from it (the external review of
     // 2026-11-06, T02: a right click always counted from the Drug cell)
@@ -620,13 +647,23 @@
     // Tab on that cell would: it took a second Tab (the external review of
     // 2026-11-06, N03).  From the first or last cell, Tab leaves the grid
     // from that cell, as it would without the menu (T03: it stayed put)
+    // A disabled cell is passed over, as Tab passes it over without the menu
+    // (the external review of 2026-11-06, Gemini's final pass: from the Dose
+    // cell of a row with no drug, Tab went back to its Drug cell)
     else if (e.key === 'Tab') {
       var r = this.menuRow, c = this.menuCol || 0;
-      var k = r * NCOL + c + (e.shiftKey ? -1 : 1);
+      var total = this.rows.length * NCOL, step = e.shiftKey ? -1 : 1;
+      var k = r * NCOL + c + step;
+      while (k >= 0 && k < total && this.controlAt(k) && this.controlAt(k).disabled) k += step;
       this.closeMenu();
-      if (k >= 0 && k < this.rows.length * NCOL) {
+      if (k >= 0 && k < total) {
         e.preventDefault();
         this.focusCell(Math.floor(k / NCOL), k % NCOL);
+      } else {
+        // the browser's Tab leaves the grid from its first or last cell
+        var edge = step > 0 ? total - 1 : 0;
+        while (this.controlAt(edge) && this.controlAt(edge).disabled) edge -= step;
+        if (this.controlAt(edge)) this.controlAt(edge).focus();
       }
     }
     e.stopPropagation();
@@ -737,16 +774,30 @@
   // list at once, which takes every key, so Ctrl+V on the cell just clicked
   // was lost without a word and the unit pasted was never used (the external
   // review of 2026-11-06, T01, reproduced in both Chromium builds).
+  // A touch opens the list at once, as a phone's own list is the way to
+  // choose there and a phone has no Ctrl+V to lose (the external review of
+  // 2026-11-06, Gemini's final pass: a tap anywhere but on the arrow did
+  // nothing).
   DoseGrid.prototype.onMouseDown = function(e) {
     var t = e.target;
     if (e.button !== 0 || t.tagName !== 'SELECT' || t.disabled || !this.cellOf(t)) return;
     var box = t.getBoundingClientRect();
-    if (e.detail >= 2 || e.clientX >= box.right - UNIT_ARROW_WIDTH) return;
+    var lp = this.lastPointer;
+    var touch = lp && lp.type !== 'mouse' && Date.now() - lp.time < 1000;
+    if (touch || e.detail >= 2 || e.clientX >= box.right - UNIT_ARROW_WIDTH) {
+      this.pickerFor = t;
+      return;
+    }
     e.preventDefault();
     t.focus();
   };
 
+  // The left button only: a right click's mouseup selected the cell's text,
+  // which in Firefox took the focus back from the row menu it had just
+  // opened, so Escape no longer closed it (the external review of
+  // 2026-11-06, Gemini's final pass)
   DoseGrid.prototype.onMouseUp = function(e) {
+    if (e.button !== 0) return;
     var at = this.cellOf(e.target);
     if (!at || e.target.tagName !== 'INPUT' || this.editing === this.cellKey(at)) return;
     e.preventDefault();
@@ -772,6 +823,10 @@
       if (picked !== null) e.target.value = picked;
       if (e.target.value !== this.rows[at[0]][at[1]]) this.commit(at[0], at[1]);
     }
+    if (e.target.tagName === 'SELECT') {
+      this.pickerFor = null;
+      this.flushUnitSearch();
+    }
     this.editing = null;
     if (this.listboxFor === e.target) this.closeList();
   };
@@ -780,12 +835,72 @@
     var at = this.cellOf(e.target);
     if (!at) return;
     this.editing = this.cellKey(at);
+    this.enableApply();
     if (at[1] === COLS.DRUG) this.openList(e.target);
   };
 
   DoseGrid.prototype.onChange = function(e) {
     var at = this.cellOf(e.target);
-    if (at && at[1] === COLS.UNITS) this.commit(at[0], at[1]);
+    if (at && at[1] === COLS.UNITS) {
+      this.pickerFor = null;
+      this.commit(at[0], at[1]);
+    }
+  };
+
+  // The Apply button (data-apply) is enabled as soon as a cell is typed in.
+  // The server enables it only once it has the edit, which is when the cell
+  // is committed: a dose typed and then Apply clicked at once committed the
+  // dose as the focus left, but the click had found the button still
+  // disabled, so nothing was applied and nothing said (the external review
+  // of 2026-11-06, Gemini's final pass).  The server reads the edit before
+  // the click (its Apply observer runs after the grid's).
+  DoseGrid.prototype.enableApply = function() {
+    var b = this.applyId ? document.getElementById(this.applyId) : null;
+    if (b && b.disabled) { b.disabled = false; b.classList.remove('disabled'); }
+  };
+
+  // A unit typed on a Units cell.  The browser's own search of a list takes
+  // the next option that starts with what was typed, so "mg" on oxycodone
+  // was "mg PO liquid" and on fentanyl "mcg/kg", without a word (the
+  // external review of 2026-11-06, Gemini's final pass, reproduced).  Here
+  // an option equal to what was typed comes first, then the first that starts
+  // with it, in the list's order; letters that match no unit are said, and
+  // the unit is left as it was.  The choice is committed when the typing
+  // pauses, or at once on Enter, Tab or leaving the cell.
+  DoseGrid.prototype.unitSearch = function(t, at, key) {
+    var now = Date.now();
+    if (!this.search || this.search.ctl !== t || now - this.search.time > UNIT_SEARCH_MS) {
+      this.flushUnitSearch();
+      this.search = { ctl: t, at: at, text: '', time: now, said: false };
+    }
+    var s = this.search;
+    s.text += key;
+    s.time = now;
+    var want = s.text.toLowerCase(), opts = Array.prototype.map.call(t.options, function(o) { return o.value; });
+    var pick = null;
+    for (var i = 0; i < opts.length && pick === null; i++) if (opts[i].toLowerCase() === want) pick = opts[i];
+    for (var j = 0; j < opts.length && pick === null; j++) if (opts[j] !== '' && opts[j].toLowerCase().indexOf(want) === 0) pick = opts[j];
+    if (pick === null) {
+      if (!s.said) {
+        s.said = true;
+        notifyRefusedUnits([{ drug: this.rows[at[0]][COLS.DRUG], unit: s.text }], 'the unit was not changed.');
+      }
+    } else {
+      t.value = pick;
+      t.parentNode.firstChild.textContent = unitWrapText(pick);
+    }
+    var self = this;
+    clearTimeout(s.timer);
+    s.timer = setTimeout(function() { self.flushUnitSearch(); }, UNIT_SEARCH_MS);
+  };
+
+  DoseGrid.prototype.flushUnitSearch = function() {
+    var s = this.search;
+    if (!s) return;
+    clearTimeout(s.timer);
+    this.search = null;
+    var at = this.cellOf(s.ctl) || s.at;
+    if (at && this.rows[at[0]] && s.ctl.value !== this.rows[at[0]][at[1]]) this.commit(at[0], at[1]);
   };
 
   DoseGrid.prototype.onKeyDown = function(e) {
@@ -840,7 +955,21 @@
       return;
     }
     if (e.key === 'ArrowDown' && e.altKey && c === COLS.DRUG) { this.openList(t); e.preventDefault(); return; }
+    if (t.tagName === 'SELECT') {
+      // the browser's own list, opened: its keys are its own
+      if ((e.key === 'ArrowDown' && e.altKey) || e.key === ' ' || e.key === 'F4') { this.pickerFor = t; return; }
+      if (this.pickerFor === t) {
+        if (e.key === 'Escape' || e.key === 'Enter' || e.key === 'Tab') this.pickerFor = null;
+        else return;
+      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        this.unitSearch(t, at, e.key);
+        return;
+      }
+    }
     if (e.key === 'Escape') {
+      // the row menu, if open, closes first (it may not have the focus)
+      if (!this.menu.hidden) { this.closeMenu(); e.preventDefault(); return; }
       if (listOpen) { this.closeList(); e.preventDefault(); return; }
       if (t.tagName === 'INPUT') { t.value = this.rows[r][c]; t.select(); e.preventDefault(); }
       this.editing = null;
@@ -852,6 +981,7 @@
       if (chosen !== null) t.value = chosen;
       this.closeList();
       if (t.tagName === 'INPUT') this.commit(r, c);
+      else this.flushUnitSearch();
       var next = e.shiftKey ? r - 1 : r + 1;
       if (next >= 0 && next < this.rows.length) this.focusCell(next, c);
       return;
@@ -885,7 +1015,7 @@
     }
     // No key is filtered out of a Time or Dose cell.  The rhandsontable grid
     // dropped every key a number cannot hold (hookFilterKeys() in
-    // hot_funs.js), which changed the number without a word: "1,5" became
+    // grid-funs.js), which changed the number without a word: "1,5" became
     // 15, "1e3" 13, "1a0" 10 and an elapsed "1:30" 130 (the external review
     // of 2026-11-05, reproduced).  Everything typed is read whole when the
     // cell is committed, as a paste is, and an entry that cannot be read is
@@ -948,8 +1078,9 @@
 
   // --- the Shiny binding ---------------------------------------------------------------
 
-  // for test-dose-grid.R, which runs this file in Node
+  // for test-dose-grid.R, which runs this file in Node, and for table-grid.js
   if (typeof module !== 'undefined' && module.exports) module.exports = { parseTSV: parseTSV };
+  if (typeof window !== 'undefined') window.stanpumprGridKit = { parseTSV: parseTSV };
   if (typeof window === 'undefined' || !window.Shiny) return;
   var binding = new Shiny.InputBinding();
   $.extend(binding, {

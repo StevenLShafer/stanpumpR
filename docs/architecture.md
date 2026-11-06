@@ -30,7 +30,8 @@ last two stages.
 The sidebar groups inputs into a few categories — patient covariates, graph/display
 options, optional extra plot facets, and the email-slide form.
 
-The **dose table** is a `rhandsontable` editable table, with `Apply` / `Undo` / `Redo`
+The **dose table** is the dose grid (`R/dose-grid.R`, `inst/www/dose-grid.js`), a plain HTML
+table of form controls with its own Shiny input binding, with `Apply` / `Undo` / `Redo`
 controls, in a collapsible right-hand `bslib::sidebar` (open on a desktop) that holds nothing else.
 The left sidebar's *Time* panel (its header showing the current settings through `output$timeSummary`)
 holds a *Time units* selector (minutes, hours, days, weeks) and a display toggle for elapsed vs. clock
@@ -92,11 +93,16 @@ double-click edits a drug.
 
 ## The dose table lifecycle
 
-1. As a user types into the dose table, JavaScript hooks on the grid do real-time cleanup —
-   fixing/converting times, dropping a row if its drug is removed, etc.
-2. **`input$doseTableHTML`** fires after that JS-side cleanup completes, on every edit. The
-   observer converts it to an R data frame with `hot_to_r()` and records it via
-   `doseTableHistory()$do()`.
+1. As a user types into the dose table, the grid checks each entry as it is committed
+   (`validateTime()` / `validateDose()` in `inst/www/grid-funs.js`, held to R's): an entry it
+   cannot read is refused with a message, a new drug starts its row at 0, 0 and its default
+   unit, a pasted row is taken whole or not at all.
+2. **`input$doseGrid`** carries the whole table once per committed edit, with the number of
+   edits the grid has sent (`seq`) and the time format it was typed in. The observer reads it
+   with `doseGridValue()`, passes it through `doseGridAccepted()` (the bookmark rule,
+   `restoredDoseTable()`: what the browser sends is untrusted) and records it via
+   `storeGridEdit()` → `doseTableHistory()$do()`. The draft is sent back to the grid, with
+   the `seq` it answers (`ack`), only when it differs from what the grid holds.
 3. **Undo / redo** — the draft and its history live in one `{undomanager}`,
    `doseTableHistory()`. `doseTableDraft()` is a thin reactive over its `$value`.
    `$do()` records an edit (pushing the previous draft onto the undo stack and discarding 
@@ -144,7 +150,7 @@ and display only (`R/utils-time.R`, the "Time units" block of `app_server()`).
   bookmark's selectors are built by `app_ui()` (an old bookmark without a unit opens in days if
   its Max time was over a day), and `onRestored()` converts the saved table to them itself: the
   conversion observer does not run for restored inputs.
-- The grid is stamped with its format (`createHOT(..., timeFormat)`); an edit from a grid drawn
+- The grid sends the format it was typed in with every edit (`input$doseGrid$timeFormat`); an edit from a grid drawn
   before a switch is converted on arrival.
 - Max time and Min time are sliders whose values are minutes in every unit (`input$maximum`,
   `input$minimum`); `app.js` shows them in the unit. Their range and step are per unit
@@ -323,7 +329,10 @@ All files are flat in `R/`.
 - `server-helpers.R` — functions used by the Shiny server that are not generalized.
 - `utils-shiny-ui.R` — generic UI builders.
 - `utils-shiny-server.R` — generic server functions.
-- `createHOT.R` — builds the `rhandsontable` dose grid from the current table + drug colors.
+- `dose-grid.R` — the dose grid's server half: its place in the page, the drugs and draft it is
+  sent, and the reading of what it sends.
+- `table-grid.R` — the dialogs' grid: `tableGridInput()` from a column specification,
+  `tableGridRead()` on Apply/OK, and each dialog's columns.
 - `input-tables.R` — **table-level** validation and cleaning for the dose / event / target grids.
 - `validate-input.R` — **cell-level** guards: `validateDose()`, `validateTime()`. One value in,
   a clean string out, never errors.
@@ -494,8 +503,9 @@ All files are flat in `R/`.
   the startup drug menu; see `inst/help/sharing.md`.
 - **Debug & profiler** (`app_globals.R`, `app_server.R`) — `?debug=1` reveals a live log
   (`outputComments()`) and a per-reactive profiler (`profileCode()`).
-- **Front-end assets** (`inst/www/`) — `app.css`, `app.js`, `hot_funs.js` (Handsontable
-  copy/paste hooks and drug-default injection into the client).
+- **Front-end assets** (`inst/www/`) — `app.css`, `app.js`; the grids: `dose-grid.js`,
+  `table-grid.js`, `grids.css` and `grid-funs.js` (the time and dose readers and messages they
+  share), loaded together by `gridDependency()`.
 - **Help** (`R/help-*.R`, `inst/help/`) — the in-app help: Markdown pages plus pages generated
   from the drug library and the teaching scenarios, with search and one-click scenario loading.
 - **Config** (`config.yml`, `app_run.R`) — environment-specific title and debug flag,
