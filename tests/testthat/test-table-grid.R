@@ -20,6 +20,9 @@ test_that("the grid is drawn from its columns and rows, and carries no input of 
   expect_false(grepl("<input|<select", html))
   spec <- specOf(grid)
   expect_equal(spec$tag, "propofol")
+  # named to a screen reader (fourth review, F06)
+  expect_equal(spec$label, "Table")
+  expect_equal(specOf(tableGridInput("g", list(tableColumn("N")), data.frame(N = "a"), label = "Events"))$label, "Events")
   expect_equal(vapply(spec$columns, `[[`, "", "type"), c("checkbox", "time", "dose", "select"))
   expect_equal(spec$columns[[3]]$label, "Dose or Target")
   expect_equal(unlist(spec$columns[[4]]$options), c("mg", "mg/kg"))
@@ -55,7 +58,12 @@ test_that("what the browser sends is read as text and ticks, whatever it holds",
                c(Time = "", Dose = "", Units = ""))
   expect_equal(nrow(tableGridRead(tableGridInputValue(list()), cols)), 0L)
   many <- rep(list(list(FALSE, "0", "1", "mg")), 30)
-  expect_equal(nrow(tableGridRead(tableGridInputValue(many), cols, maxRows = 20)), 20L)
+  cut <- tableGridRead(tableGridInputValue(many), cols, maxRows = 20)
+  expect_equal(nrow(cut), 20L)
+  # and says so, for the handler to refuse it (ChatGPT's fourth review)
+  expect_true(tableGridTruncated(cut))
+  expect_false(tableGridTruncated(tableGridRead(tableGridInputValue(many), cols, maxRows = 30)))
+  expect_false(tableGridTruncated(NULL))
   # not a grid's value at all: NULL, never an error
   for (bad in list(NULL, "x", 1, list(), list(rows = NULL), list(rows = function() 1))) {
     expect_no_error(v <- tableGridRead(bad, cols))

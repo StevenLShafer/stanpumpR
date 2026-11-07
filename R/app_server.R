@@ -2457,7 +2457,8 @@ app_server <- function(input, output, session) {
       # so that Apply cannot write one drug's rows as another's from a grid
       # left over from an earlier dialog (editDosesOK)
       tableGridInput("editPriorDosesTable", editDosesGridColumns(possibleUnits, doseFieldLabel(drug)),
-                     rows[, c("Delete", "Time", "Dose", "Units")], tag = drug, height = 260)
+                     rows[, c("Delete", "Time", "Dose", "Units")], tag = drug, height = 260,
+                     label = paste(drug, "doses"))
     }, name = "output$editPriorDosesUI")
   })
 
@@ -2474,6 +2475,17 @@ app_server <- function(input, output, session) {
         if (!identical(tableGridTag(input$editPriorDosesTable), drug)) return()
         TT <- tableGridRead(input$editPriorDosesTable, editDosesGridColumns(character(0)))
         req(TT)
+        # No grid sends more rows than it holds, and the drug's rows and
+        # everyone else's must fit the dose table together: stored past
+        # MAX_DOSE_ROWS the table could not be used and the plot was lost,
+        # with the dialog already closed (ChatGPT's fourth review, F02).
+        others <- doseTable()
+        others <- sum(nzchar(as.character(others$Drug)) & !others$Drug %in% drug, na.rm = TRUE)
+        if (tableGridTruncated(TT) || sum(!TT$Delete) + others > MAX_DOSE_ROWS - 1L) {
+          showNotification(sprintf("The dose table holds at most %d doses.", MAX_DOSE_ROWS - 1L),
+                           type = "error")
+          return()
+        }
         # Every dose kept needs a time and a dose that can be read.  A blank
         # counts as unreadable here: the grid clears an entry it cannot read
         # (inst/www/grid-funs.js), and validateTime() and validateDose() below
@@ -2529,6 +2541,8 @@ app_server <- function(input, output, session) {
         format <- doseTableFormat()
         minutes <- displayTimeToMinutes(dt$Time, referenceFor(format), format[["unit"]])
         dt <- dt[order(is.na(minutes), minutes, dt$Drug), ]
+        # The blank rows sort last; past MAX_DOSE_ROWS there is no room for them
+        dt <- dt[seq_len(min(nrow(dt), MAX_DOSE_ROWS)), , drop = FALSE]
 
         outputComments("doseTable after update:")
         outputComments(dt)
@@ -2617,7 +2631,8 @@ app_server <- function(input, output, session) {
       editEventsShown <<- list(text = tempTable$Time, minutes = minutes)
       tempTable$Delete <- FALSE
       eventsGrid <- tableGridInput("editEventsTableHTML", editEventsGridColumns(eventDefaults()$Event),
-                                   tempTable[, c("Delete", "Time", "Event")], height = 260)
+                                   tempTable[, c("Delete", "Time", "Event")],
+                                   maxRows = MAX_EVENT_ROWS, height = 260, label = "Events")
     }
 
     showModal(
@@ -2680,8 +2695,17 @@ app_server <- function(input, output, session) {
     {
       profileCode({
         req(input$editEventsTableHTML)
-        ET <- tableGridRead(input$editEventsTableHTML, editEventsGridColumns(character(0)))
+        ET <- tableGridRead(input$editEventsTableHTML, editEventsGridColumns(character(0)),
+                            maxRows = MAX_EVENT_ROWS)
         req(ET)
+        # The grid holds MAX_EVENT_ROWS events at most: a table cut to fit was
+        # never one the grid sent, and stored whole it replaced the plot with
+        # the row-limit error after the dialog had closed (fourth review, F04).
+        if (tableGridTruncated(ET)) {
+          showNotification(sprintf("The event table holds at most %d events.", MAX_EVENT_ROWS),
+                           type = "error")
+          return()
+        }
         format <- doseTableFormat()
         shown <- editEventsShown
         minutes <- editedTimesToMinutes(ET$Time, shown$text, shown$minutes,
@@ -2737,7 +2761,8 @@ app_server <- function(input, output, session) {
         # Rows can be inserted and removed (Shift+F10, the context-menu key
         # or a right click), up to MAX_TARGET_ROWS
         targetGrid <- tableGridInput("targetTableHTML", targetGridColumns(), targetTable,
-                                     rowMenu = TRUE, maxRows = MAX_TARGET_ROWS, height = 260)
+                                     rowMenu = TRUE, maxRows = MAX_TARGET_ROWS, height = 260,
+                                     label = "Targets")
         showModal(
           modalDialog(
             `data-submit-btn` = "targetOK",
@@ -2969,7 +2994,7 @@ app_server <- function(input, output, session) {
     profileCode({
       editDrugsTrigger$depend()
       x <- drugLibraryGridData(drugDefaults())
-      tableGridInput("editDrugsHTML", drugLibraryGridColumns(x), x, height = 350)
+      tableGridInput("editDrugsHTML", drugLibraryGridColumns(x), x, height = 350, label = "Drug Library")
     }, name = "output$editDrugsUI")
   })
 
@@ -2981,6 +3006,10 @@ app_server <- function(input, output, session) {
       newDrugDefaults <- tableGridRead(input$editDrugsHTML, drugLibraryGridColumns(drugLibraryGridData(current)),
                                        maxRows = nrow(current))
       req(newDrugDefaults)
+      if (tableGridTruncated(newDrugDefaults)) {
+        showNotification("The Drug Library cannot add drugs.", type = "error", duration = 10)
+        return()
+      }
       # An entry the plot or the dose table cannot use is refused, and the
       # dialog stays open to be corrected (drugLibraryProblems()).
       problems <- drugLibraryProblems(newDrugDefaults, current)
@@ -3048,7 +3077,8 @@ app_server <- function(input, output, session) {
       tryCatch(isolate(age()), error = function(e) 40),
       isolate(macThreshold())
     )
-    tableGridInput("editThresholdsTable", thresholdGridColumns(), x, height = 350)
+    tableGridInput("editThresholdsTable", thresholdGridColumns(), x, height = 350,
+                   label = "Drug thresholds")
   })
 
   observeEvent(input$thresholdEditsOK, {
@@ -3065,7 +3095,7 @@ app_server <- function(input, output, session) {
     if (length(updated$invalid) > 0) {
       showNotification(
         paste0(
-          "Threshold not changed: enter a number of 0 or more for ",
+          "Threshold not changed: enter a number from 0 to 1,000,000,000 for ",
           paste(unique(updated$invalid), collapse = ", "),
           ". Enter 0 for no threshold."
         ),

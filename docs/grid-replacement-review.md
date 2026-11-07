@@ -1,5 +1,12 @@
 # Review brief: is the prototype dose grid a suitable replacement for rhandsontable?
 
+> **Historical (2026-11-06).** This is the brief for the first reviews, kept
+> as the record of what they were asked. Its commands no longer run: the
+> `stanpumpR.doseGrid` switch, the Handsontable grid and its adapter were
+> removed when every grid was replaced (Shafer's decision 1,
+> `docs/grid-replacement.md`). To test the grids today, follow
+> `tests/playwright/README.md`.
+
 This is the brief for an external review of pull request #683
 (`StevenLShafer/stanpumpR`, branch `claude/lucid-lovelace-fi2nqh`), written for
 Codex (ChatGPT) and Antigravity (Gemini). Steven Shafer will compare the two

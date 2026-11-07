@@ -537,6 +537,34 @@ suite drops the rhandsontable adapter and its known gaps, and gains
 `table-grid.test.js` (Edit doses, Suggest Dosing, Drug thresholds, the Drug
 Library).
 
+## The external review of the migration (ChatGPT, fourth pass, 2026-11-06)
+
+ChatGPT reviewed the whole-app migration at `295f263`: the 74 browser cases
+passed, every dialog was driven by keys, clicks and pastes, and every grid's
+input was forged with `Shiny.setInputValue()`. No forged value ended a
+session or ran markup. Five let a dialog store what its grid could never
+have sent, because `tableGridRead()` guarantees only shape: each handler
+must also keep its grid's limits. Each was checked against the code before
+it was fixed (`a24f811` onwards).
+
+| | Finding | Verdict | Fix |
+|---|---|---|---|
+| F01 | Single Paper Review simulated a unit the drug does not offer (`g`, or markup read as mg) and a dose past 1,000,000,000 | Confirmed, with one correction: the example drug offers `mcg`, so `1 mcg` changing the plot was right | `dosesNow()` refuses a filled row whose time or dose `validateDose()` refuses or whose unit is not the drug's, and the plot says which row; a row still being filled in is passed over as before |
+| F02 | Edit doses stored a cut 600-row value, 509 rows with the others' | Confirmed | `tableGridRead()` marks a cut table (`tableGridTruncated()`); Apply refuses one, or one whose doses with the other drugs' pass `MAX_DOSE_ROWS - 1`, and the dialog stays open |
+| F03 | The Drug Library took a one-row table, or a renamed drug, as the whole library | Confirmed | `drugLibraryProblems()` first requires the library's drugs, all of them, in order; a cut table is refused too; a refused entry is quoted to 40 characters |
+| F04 | Edit events stored 101 events | Confirmed | read with `maxRows = MAX_EVENT_ROWS` (the grid is drawn so too), and a cut table is refused |
+| F05 | Drug thresholds stored 10,000,000,000 | Confirmed | `thresholdTableToDefaults()` refuses past `MAX_DOSE_VALUE`, the grid's ceiling |
+| F06 | A table grid had no accessible name or instructions | Confirmed | `tableGridInput(label =)` is its caption, each dialog naming it, and a hidden paragraph tells the keys (the row menu's only where there is one) |
+| F07 | The review brief still gave the removed switch's command | Confirmed | marked historical at its head |
+| F08 | The two grids' key handlers are separate | A fair maintainability point, not a defect | Not done here; recorded below |
+
+**Left open (F08).** `dose-grid.js` and `table-grid.js` each implement the
+shared keys (Escape, Enter, Tab, Home/End, the list search, paste routing,
+the row menu). They differ where the grids differ (the dose grid's drug list,
+draft and undo), so a merge is a refactor of its own; until then a change to
+the shared key contract is made in both, and the browser suite's cases run
+on each.
+
 ## Decisions for Steven Shafer
 
 These are pending. Record each answer here.

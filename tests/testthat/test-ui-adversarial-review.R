@@ -345,4 +345,92 @@ test_that("Delete checkboxes and the thresholds' box are read safely (finding 13
   })
 })
 
+# ChatGPT's fourth review of PR #683 (2026-11-06), each reproduced there in a
+# browser with Shiny.setInputValue(): a dialog's Apply stored a table its grid
+# could never have sent.  The grids keep these limits in the browser; the
+# server must keep them too, since every value from the browser is untrusted.
+test_that("Edit doses refuses a table past the dose table's limit (fourth review, F02)", {
+  shiny::testServer(app_server, {
+    sent <- recordNotices(session)
+    startReview(session, reviewTable(list("propofol", "0", "100", "mg"), list("fentanyl", "0", "50", "mcg")))
+    before <- doseTable()
+    DrugTimeUnits(list(drug = "propofol", time = 0, units = c("", "")))
+    many <- function(n) editDosesGrid("propofol", lapply(seq_len(n), function(i) list(FALSE, as.character(i), "1", "mg")))
+    # 600 rows, cut to the 499 the reader takes
+    session$setInputs(editPriorDosesTable = many(600), editDosesOK = 1)
+    expect_false(session$isClosed())
+    expect_identical(doseTable(), before)
+    expect_match(tail(errorsShown(sent), 1), "at most 499 doses")
+    # 499 of propofol's, which with fentanyl's makes 500
+    session$setInputs(editPriorDosesTable = many(MAX_DOSE_ROWS - 1L), editDosesOK = 2)
+    expect_identical(doseTable(), before)
+    # 498 fit, and the table stays within MAX_DOSE_ROWS with its blank row
+    session$setInputs(editPriorDosesTable = many(MAX_DOSE_ROWS - 2L), editDosesOK = 3)
+    expect_equal(sum(doseTable()$Drug == "propofol"), MAX_DOSE_ROWS - 2L)
+    expect_lte(nrow(doseTable()), MAX_DOSE_ROWS)
+    expect_true(validateDoseTableInput(doseTable()))
+  })
+})
+
+test_that("Edit events refuses more than MAX_EVENT_ROWS events (fourth review, F04)", {
+  shiny::testServer(app_server, {
+    sent <- recordNotices(session)
+    startReview(session, reviewTable(list("propofol", "0", "100", "mg")))
+    event <- eventDefaults()$Event[1]
+    eventTable(data.frame(Time = 10, Event = event))
+    showEditEventsModal()
+    session$flushReact()
+    rows <- function(n) tableGridInputValue(lapply(seq_len(n), function(i) list(FALSE, as.character(i), event)))
+    session$setInputs(editEventsTableHTML = rows(MAX_EVENT_ROWS + 1L), editEventsOK = 1)
+    expect_false(session$isClosed())
+    expect_equal(eventTable()$Time, 10)
+    expect_match(tail(errorsShown(sent), 1), "at most 100 events")
+    session$setInputs(editEventsTableHTML = rows(MAX_EVENT_ROWS), editEventsOK = 2)
+    expect_equal(nrow(eventTable()), MAX_EVENT_ROWS)
+  })
+})
+
+test_that("the Drug Library keeps its drugs, all of them, in order (fourth review, F03)", {
+  dd <- getDrugDefaultsGlobal()
+  grid <- drugLibraryGridData(dd)
+  expect_length(drugLibraryProblems(grid, dd), 0)
+  refused <- "cannot add, remove or rename drugs"
+  expect_match(drugLibraryProblems(grid[grid$Drug == "propofol", ], dd), refused)
+  renamed <- grid
+  renamed$Drug[1] <- "<img src=x onerror=alert(1)>"
+  expect_match(drugLibraryProblems(renamed, dd), refused)
+  expect_match(drugLibraryProblems(grid[rev(seq_len(nrow(grid))), ], dd), refused)
+  expect_match(drugLibraryProblems(rbind(grid, grid[1, ]), dd), refused)
+  # a refused entry is quoted back, but not at any length
+  long <- grid
+  long$Color[long$Drug == "propofol"] <- strrep("x", 200000)
+  expect_lt(nchar(paste(drugLibraryProblems(long, dd), collapse = "")), 500)
+
+  shiny::testServer(app_server, {
+    sent <- recordNotices(session)
+    startReview(session, reviewTable(list("propofol", "0", "100", "mg")))
+    before <- drugDefaults()
+    shown <- drugLibraryGridData(before)
+    cells <- function(x) lapply(seq_len(nrow(x)), function(i) lapply(x[i, ], function(v) if (is.na(v)) "" else as.character(v)))
+    session$setInputs(editDrugsHTML = tableGridInputValue(cells(shown[shown$Drug == "propofol", ])), drugEditsOK = 1)
+    expect_identical(drugDefaults(), before)
+    expect_match(tail(errorsShown(sent), 1), refused)
+    # one row too many is cut by the reader, and refused
+    session$setInputs(editDrugsHTML = tableGridInputValue(cells(rbind(shown, shown[1, ]))), drugEditsOK = 2)
+    expect_identical(drugDefaults(), before)
+    expect_match(tail(errorsShown(sent), 1), "cannot add drugs")
+    expect_false(session$isClosed())
+  })
+})
+
+test_that("a threshold past the grid's ceiling is refused (fourth review, F05)", {
+  dd <- getDrugDefaultsGlobal()
+  over <- thresholdTableToDefaults(data.frame(Drug = "propofol", Threshold = "10000000000"), dd, 40)
+  expect_equal(over$invalid, "propofol")
+  expect_identical(over$drugDefaults, dd)
+  at <- thresholdTableToDefaults(data.frame(Drug = "propofol", Threshold = format(MAX_DOSE_VALUE, scientific = FALSE)), dd, 40)
+  expect_length(at$invalid, 0)
+  expect_equal(at$drugDefaults$endCe[at$drugDefaults$Drug == "propofol"], MAX_DOSE_VALUE)
+})
+
 .sprglobals$config <- oldConfig

@@ -101,6 +101,8 @@ describe('Suggest Dosing', () => {
   test('targets are typed, rows inserted from the row menu, and a bad pasted row refused whole', async () => {
     await open('setTarget', 'targetTableHTML');
     assert.equal((await gridRows('targetTableHTML')).length, 6);
+    assert.match(await page.$eval('#targetTableHTML table', t =>
+      document.getElementById(t.getAttribute('aria-describedby')).textContent), /Shift\+F10/);
     await page.click(cell('targetTableHTML', 0, 0));
     await page.keyboard.type('0');
     await page.keyboard.press('Tab');
@@ -128,6 +130,14 @@ describe('Suggest Dosing', () => {
 describe('Drug thresholds', () => {
   test('a drug\'s name cannot be changed, its threshold can, and Apply stores it', async () => {
     await open('editThresholds', 'editThresholdsTable');
+    // named, and its keys told, to a screen reader
+    const named = await page.$eval('#editThresholdsTable table', t => ({
+      caption: t.caption && t.caption.textContent,
+      help: (document.getElementById(t.getAttribute('aria-describedby')) || {}).textContent || ''
+    }));
+    assert.equal(named.caption, 'Drug thresholds');
+    assert.match(named.help, /Escape puts it back/);
+    assert.doesNotMatch(named.help, /Shift\+F10/);
     const r = await rowOf('editThresholdsTable', 'propofol');
     assert.ok(r >= 0);
     await page.click(cell('editThresholdsTable', r, 0));

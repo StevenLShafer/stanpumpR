@@ -64,6 +64,7 @@
     this.ncol = this.cols.length;
     this.tag = spec.tag === undefined ? null : spec.tag;
     this.rowMenu = !!spec.rowMenu;
+    this.label = typeof spec.label === 'string' && spec.label ? spec.label : 'Table';
     this.maxRows = spec.maxRows || 500;
     this.rows = [].concat(spec.rows || []).map(function(r) { return self.normalRow(r); });
     if (this.rows.length === 0 && this.rowMenu) this.rows.push(this.blankRow());
@@ -114,7 +115,14 @@
     var p = 'tablegrid' + this.id;
     this.root.textContent = '';
     var scroll = el('div', { 'class': 'dose-grid-scroll table-grid-scroll' });
-    var table = el('table', { 'class': 'dose-grid table-grid', role: 'grid' });
+    // Named by its caption, and told the keys, as the dose grid is
+    // (ChatGPT's fourth review, F06)
+    var table = el('table', { 'class': 'dose-grid table-grid', role: 'grid', 'aria-describedby': p + '-help' });
+    table.appendChild(el('caption', { 'class': 'visually-hidden' }, this.label));
+    var help = el('p', { id: p + '-help', 'class': 'visually-hidden' },
+      'Enter or Tab keeps an entry and moves on; Escape puts it back; F2 edits at the caret. ' +
+      'In a list cell, type to choose, or press Alt+Down or Space for the list.' +
+      (this.rowMenu ? ' For row actions (insert, remove), press Shift+F10 or right-click a row.' : ''));
     var colgroup = el('colgroup');
     var tr = el('tr');
     this.cols.forEach(function(col, j) {
@@ -133,6 +141,7 @@
     this.tbody = el('tbody');
     table.appendChild(this.tbody);
     scroll.appendChild(table);
+    this.root.appendChild(help);
     this.root.appendChild(scroll);
     if (this.rowMenu) {
       this.menu = el('ul', { role: 'menu', 'class': 'dose-grid-menu', hidden: '' });

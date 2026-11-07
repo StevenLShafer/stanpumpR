@@ -48,9 +48,10 @@ tableColumn <- function(name, label = name,
 # dialog's drug, so that Apply cannot write one drug's rows as another's from
 # a grid left over from an earlier dialog).  `rowMenu`: rows can be inserted
 # and removed (Shift+F10, the context-menu key or a right click), up to
-# `maxRows`.
+# `maxRows`.  `label` names the grid to a screen reader (its caption), which
+# is also told the keys.
 tableGridInput <- function(inputId, columns, data, tag = NULL, rowMenu = FALSE,
-                           maxRows = MAX_DOSE_ROWS - 1L, height = NULL) {
+                           maxRows = MAX_DOSE_ROWS - 1L, height = NULL, label = "Table") {
   rows <- lapply(seq_len(NROW(data)), function(i) {
     lapply(seq_along(columns), function(j) {
       v <- if (j <= NCOL(data)) data[[j]][[i]] else NA
@@ -60,7 +61,8 @@ tableGridInput <- function(inputId, columns, data, tag = NULL, rowMenu = FALSE,
       as.character(v)
     })
   })
-  spec <- list(columns = columns, rows = rows, rowMenu = isTRUE(rowMenu), maxRows = maxRows)
+  spec <- list(columns = columns, rows = rows, rowMenu = isTRUE(rowMenu), maxRows = maxRows,
+               label = label)
   if (!is.null(tag)) spec$tag <- tag
   htmltools::tagList(gridDependency(), htmltools::tags$div(
     id = inputId,
@@ -74,14 +76,17 @@ tableGridInput <- function(inputId, columns, data, tag = NULL, rowMenu = FALSE,
 # logical for a checkbox), or NULL for anything that is not a grid's value.
 # Never an error, whatever the browser sent: an error in the observer that
 # reads it would end the session.  A cell that is not one value is blank (or
-# unticked); rows past `maxRows` are cut.
+# unticked); rows past `maxRows` are cut, and the table returned says so
+# (tableGridTruncated()): a grid never sends more rows than it was drawn to
+# hold, so a handler refuses such a table rather than store the cut one.
 tableGridRead <- function(value, columns, maxRows = MAX_DOSE_ROWS - 1L) {
   if (!is.list(value) || is.null(value$rows)) return(NULL)
   rows <- value$rows
   if (is.matrix(rows)) rows <- lapply(seq_len(nrow(rows)), function(i) rows[i, ])
   if (!is.list(rows) && !is.character(rows)) return(NULL)
   rows <- as.list(rows)
-  if (length(rows) > maxRows) rows <- rows[seq_len(maxRows)]
+  truncated <- length(rows) > maxRows
+  if (truncated) rows <- rows[seq_len(maxRows)]
   out <- lapply(seq_along(columns), function(j) {
     checkbox <- identical(columns[[j]]$type, "checkbox")
     vals <- lapply(rows, function(r) {
@@ -96,8 +101,13 @@ tableGridRead <- function(value, columns, maxRows = MAX_DOSE_ROWS - 1L) {
     if (checkbox) vapply(vals, isTRUE, logical(1)) else vapply(vals, identity, "")
   })
   names(out) <- vapply(columns, `[[`, "", "name")
-  as.data.frame(out, stringsAsFactors = FALSE, optional = TRUE)
+  out <- as.data.frame(out, stringsAsFactors = FALSE, optional = TRUE)
+  if (truncated) attr(out, "truncated") <- TRUE
+  out
 }
+
+# Did tableGridRead() cut the rows the browser sent?
+tableGridTruncated <- function(table) isTRUE(attr(table, "truncated"))
 
 # The tag the grid was drawn with (tableGridInput()), or ""
 tableGridTag <- function(value) {

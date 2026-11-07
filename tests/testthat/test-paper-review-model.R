@@ -219,3 +219,34 @@ test_that("a blank Max time says what to enter, survives a change of unit, and r
 test_that("the Max time limit is the main simulator's longest, as the message says", {
   expect_equal(PAPER_REVIEW_MAX_TIME_LIMIT, 365 * MINS_PER_DAY)
 })
+
+# ChatGPT's fourth review of PR #683 (F01): a unit the paper's drug does not
+# offer, or a dose the grid refuses, sent by a browser that may send
+# anything, was simulated without a word ("g" as grams, anything else as mg).
+test_that("a dose row the grid would not send is said, not simulated", {
+  testthat::local_mocked_bindings(paperReviewApiKey = function(...) NULL)
+  shiny::testServer(paperReviewServer, {
+    session$setInputs(weight = 70, height = 170, age = 40, sex = "male", maximum = 240, example = 1)
+    units <- currentReview()$drug$units
+    expect_true("mg" %in% units)
+    expect_false("g" %in% units)
+    send <- function(...) session$setInputs(doses = tableGridInputValue(list(...)))
+    send(list("0", "1", "mg"))
+    expect_type(simulation(), "list")
+    for (row in list(list("0", "1", "g"), list("0", "1", "<img src=x onerror=alert(1)>"),
+                     list("0", "1000000001", "mg"), list("-1", "1", "mg"), list("1e10", "1", "mg"))) {
+      send(row, list("", "", ""))
+      expect_match(attr(dosesNow(), "problem"), "Row 1 cannot be simulated", info = row[[3]])
+      expect_error(simulation(), "Row 1 cannot be simulated", info = row[[3]])
+    }
+    # a row still being filled in is passed over, as before
+    send(list("0", "1", "mg"), list("10", "", ""))
+    expect_null(attr(dosesNow(), "problem"))
+    expect_type(simulation(), "list")
+    # and a change of unit carries only what could be read
+    send(list("0", "1", "mg"), list("5", "2", "g"))
+    session$setInputs(timeUnit = "h")
+    expect_equal(doseTable()$Units, "mg")
+    expect_null(attr(doseTable(), "problem"))
+  })
+})
