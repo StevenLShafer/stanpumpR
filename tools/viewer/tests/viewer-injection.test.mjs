@@ -691,7 +691,8 @@ test('video: while the card is open the keys wait, Esc closes it, and a resize r
   assert.deepEqual(await page.evaluate(() => [Player.view, Player.speed, Player.playing, Video.shown()]), ['2d', 30, false, true],
                    'a key changed the view, the speed or the play state behind the card');
   await page.setViewport({ width: 800, height: 600 });
-  await new Promise(r => setTimeout(r, 150));
+  await page.waitForFunction(() => /1440 × 1080/.test(document.querySelector('#videoCard .what').textContent), { timeout: 5000 })
+    .catch(() => {});                         // the assertion below says what it read
   assert.match(await page.evaluate(() => document.querySelector('#videoCard .what').textContent), /1440 × 1080/,
                'the card still gives the size before the resize');
   await page.keyboard.press('Escape');
@@ -710,11 +711,15 @@ test('video: a run that arrives while a video is made waits, and is loaded when 
   await page.click('#saveVideo');
   await page.click('#videoCard .go');
   await new Promise(r => setTimeout(r, 300));
-  const r2 = clone(RUN); r2.drug = 'second';
+  const r2 = clone(RUN); r2.drug = 'second'; r2.t = r2.t.map(x => x / 2);   // half the length: a card that is refreshed says so
   const during = await page.evaluate(r => { const ok = Player.load(r); return { ok, drug: Player.run.drug, busy: Video.busy }; }, r2);
   assert.deepEqual(during, { ok: true, drug: 'propofol', busy: true }, 'the run being filmed was replaced');
   await page.click('#videoCard .cancel');
   await page.waitForFunction(() => !Video.busy, { timeout: 30000 });
   assert.equal(await page.evaluate(() => Player.run.drug), 'second', 'the waiting run was not loaded');
+  const card = await page.evaluate(() => ({ what: document.querySelector('#videoCard .what').textContent,
+                                            why: document.querySelector('#videoCard .why').textContent }));
+  assert.equal(card.why, 'Cancelled.', 'the word on why the save ended was lost');
+  assert.match(card.what, /0:00:00 to 0:30:00.*1 min 0 s of video/, 'the card does not describe the run now loaded: ' + card.what);
   assertClean(page);
 });

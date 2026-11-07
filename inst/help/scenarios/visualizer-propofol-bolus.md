@@ -6,7 +6,7 @@ Propofol 140 mg (2 mg/kg) as a bolus at time zero, in a 70 kg, 40-year-old man. 
 
 **The effect site follows, a little late.** The thin blue bar beside V1 is the effect site. It peaks at 8.2 mcg/mL at 1.6 minutes, at the moment the falling plasma comes down to meet it, also at 8.2: until then the effect site's level was below the plasma's and drug flowed in, and from then on it flows out.
 
-**The effect wears off by redistribution, not elimination.** The effect site falls back below 2.5 mcg/mL, the lower edge of the band, at 6 minutes. By then 59 mg (42% of the dose) has been eliminated, and 73 mg (52%) has moved into V2 and V3. The patient wakes because the drug has left V1 for the periphery, not because the body has cleared it.
+**The effect wears off as much by redistribution as by elimination.** The effect site leaves the band, falling below its lower edge of 2.5 mcg/mL, at 6 minutes, and falls below 1 mcg/mL, about where patients wake, at 10.4 minutes. By then 66 mg (47% of the dose) has been eliminated, and 69 mg (49%) has moved into V2 and V3: only 5 mg is left in V1. Elimination alone would have taken far longer to empty V1; it is the periphery's uptake, as large as elimination, that makes the fall so fast.
 
 **The flow between V1 and V2 turns round when their levels cross.** At 4.5 minutes V2 reaches its peak, 2.0 mcg/mL, at the same moment as the plasma falls to 2.0. Watch the arrow between them turn from green (out of V1) to red (into V1): from then on V2 is giving drug back, because its level is now the higher. Drug always flows down the concentration gradient, and the boxes' heights show the gradient directly.
 
