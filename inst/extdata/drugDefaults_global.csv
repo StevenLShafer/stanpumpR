@@ -255,3 +255,4 @@ paclitaxel,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#558B2F,0,0,0,0,0,IV,Chemotherapy
 vincristinePediatric,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#0D47A1,0,0,0,0,0,IV,Chemotherapy
 oxaliplatin,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#9E9D24,0,0,0,0,0,IV,Chemotherapy
 oxaliplatinNikanjam,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#AFB42B,0,0,0,0,0,IV,Chemotherapy
+bendamustine,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#6D4C41,0,0,0,0,0,IV,Chemotherapy

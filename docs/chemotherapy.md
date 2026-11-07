@@ -600,3 +600,16 @@ sigmoid switch, or a step), an optional basal fasting release
 (Guiastrennec), and reabsorption from the gut; its first drug should be one
 whose source fitted that structure (mycophenolate, Okour 2018), not
 oxaliplatin, whose published parameters belong to Bastian's single emptying.
+
+## 35. Bendamustine (Owen 2010) (2026-11-07)
+
+`bendamustine` from Owen 2010 (source C37a; tables read in the PubMed Central
+author manuscript, the PDF still to confirm): three compartments, linear, no
+covariates, CL 31.7 L/h, V1 14.1, V2 0.92, V3 25.2 L, Q1 0.989, Q2 0.159 L/h;
+half-lives 0.29/0.7/110 h and Vss 40.2 L as printed. Doses are entered as the
+hydrochloride (TREANDA label, 394.7 g/mol) and the model runs in base
+(358.26/394.72 = 0.9076, dividing every volume and clearance), on Shafer's
+decision (2026-11-07): only the base basis reproduces the paper's median
+Cmax (6038 against 5839 ng/mL) and cycle-1 AUC (13,750 against 13,635).
+M3 and M4 were fitted alone with lagged zero-order inputs and are not carried.
+The label's 700 mL/min and Vss 25 L are recorded, not used.

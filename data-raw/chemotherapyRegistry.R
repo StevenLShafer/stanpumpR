@@ -218,7 +218,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 # text, the PDF still to confirm (FULL_TEXT_READ); or confirmed on the PDF
 # itself (PARAMETERS_VERIFIED: Briki 2026 and Lindemalm 2005, supplied by
 # Shafer 2026-11-06)
-FULL_TEXT_READ <- c("C01", "P02", "C35", "C03")
+FULL_TEXT_READ <- c("C01", "P02", "C35", "C03", "C37a")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
 PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18", "C05", "C06", "N08", "N09")
@@ -699,8 +699,11 @@ registry <- rbind(
     "dacarbazine biexponential, AIC monoexponential; renal and extrarenal clearance", "expansion", "linear", "C43",
     "AIC is a downstream product, not the active methylating species (MTIC; N06): the parent curve only."),
   m("bendamustine__nhl__owen2010", "bendamustine", "bendamustine", "IV",
-    "adults with indolent non-Hodgkin lymphoma", "bendamustine and metabolites",
-    "triphasic decline; no covariate effects", "expansion", "linear", "C37a"),
+    "78 adults with rituximab-refractory indolent non-Hodgkin lymphoma", "bendamustine (base)",
+    "three compartments, linear, no covariates: CL 31.7 L/h, V1 14.1 L, Q1 0.989 L/h, V2 0.92 L, Q2 0.159 L/h, V3 25.2 L; M3 and M4 fitted alone with lagged zero-order inputs (not carried)",
+    "expansion", "linear", "C37a",
+    "Tables read in the PubMed Central author manuscript (2026-11-07). Doses entered as the hydrochloride (TREANDA label, 394.7 g/mol) and the model run in base (x 358.26/394.72), on Shafer's decision (2026-11-07): the paper's Cmax and AUC reproduce only on the base basis.",
+    readiness = "implemented", stanpumpr_drug = "bendamustine"),
   m("vinblastine__adult__owellen1977", "vinblastine", "vinblastine", "IV",
     "adults (number not in the abstract)", "vinblastine (radioimmunoassay)",
     "classical three compartments; deacetylvinblastine an active metabolite", "expansion", "linear", "C41",
