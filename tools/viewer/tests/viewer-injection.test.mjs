@@ -569,7 +569,8 @@ const canEncode = page => page.evaluate(async () => !!('VideoEncoder' in window 
 
 async function recordVideo(page, view, withPatient) {
   return page.evaluate(async ([view, withPatient]) => {
-    Player.setView(view); Player.setSpeed(SPEEDS[SPEEDS.length - 1]);
+    // 1 s = 20 min: 91 frames, past the second key frame (sample 61).
+    Player.setView(view); Player.setSpeed(1200);
     const plan = Video.plan();
     const blob = await Video.record(plan, withPatient, () => {});
     View.recording = false;
@@ -619,13 +620,20 @@ test('video: each view saves a valid H.264 MP4 of every frame; the patient only 
     assert.equal(buf.readUInt16BE(avc1.body + 24), plan.w); assert.equal(buf.readUInt16BE(avc1.body + 26), plan.h);
     assert.ok(child(buf, avc1, 'avcC', 78), 'no avcC');
     const stsz = child(buf, stbl, 'stsz'), n = buf.readUInt32BE(stsz.body + 8);
+    assert.equal(plan.frames, 91);
     assert.equal(n, plan.frames, view + ': every frame a sample');
     let total = 0; for (let i = 0; i < n; i++) total += buf.readUInt32BE(stsz.body + 12 + 4 * i);
     assert.equal(top[2].size - 8, total, 'mdat holds exactly the samples');
     const stco = child(buf, stbl, 'stco');
     assert.equal(buf.readUInt32BE(stco.body + 8), top[2].start + 8, 'the chunk offset is the first sample');
-    const stss = child(buf, stbl, 'stss');
-    assert.equal(buf.readUInt32BE(stss.body + 8), 1, 'the first sample is a key frame');
+    const stss = child(buf, stbl, 'stss'), nKeys = buf.readUInt32BE(stss.body + 4);
+    const keys = Array.from({ length: nKeys }, (_, i) => buf.readUInt32BE(stss.body + 8 + 4 * i));
+    assert.equal(keys[0], 1, 'the first sample is a key frame');
+    assert.ok(keys.includes(61), view + ': the key frame asked for at 2 s (sample 61) is missing: ' + keys);
+    // One timing entry: every sample 1000 ticks of a 30000-per-second clock.
+    const stts = child(buf, stbl, 'stts'), mdhd = child(buf, mdia, 'mdhd');
+    assert.deepEqual([1, 2, 3].map(i => buf.readUInt32BE(stts.body + 4 * i)), [1, n, 1000]);
+    assert.deepEqual([3, 4].map(i => buf.readUInt32BE(mdhd.body + 4 * i)), [30000, n * 1000]);
     // Each sample is length-prefixed NAL units that fill it exactly.
     let o = top[2].start + 8;
     for (let i = 0; i < n; i++) {
