@@ -15,7 +15,7 @@ doseTableBlank <- doseTableInit[7:12, ]
 rownames(doseTableBlank) <- NULL
 
 # One blank row with `template`'s columns: the least a dose table can hold,
-# since Handsontable cannot draw a grid with no rows.
+# since the dose grid always keeps a row to type in.
 blankDoseTableRow <- function(template) {
   row <- template[0, , drop = FALSE]
   row[1, ] <- ""
@@ -35,7 +35,8 @@ bookmarksToExclude <- c(
   "editThresholdsTable",
   "showThresholdModal",
   "editEventsTableHTML",
-  "doseTableHTML",
+  "doseGrid",
+  "doseGrid_history",
   "setTarget",
   "targetDrug",
   "targetDrug-selectized",
@@ -100,7 +101,6 @@ bookmarksToExclude <- c(
   "dosetable_undo",
   "dosetable_redo",
   "debug_area",
-  "HandsontableCopyPaste",
   "shinyalert",
   # The Help tab (R/help-server.R): which tab and page are open is not part of
   # a simulation

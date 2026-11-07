@@ -48,7 +48,7 @@ agentDocDefinitions <- function(root) {
 test_that("every function the orientation documents name exists", {
   root <- agentDocsRoot()
   defined <- agentDocDefinitions(root)
-  imports <- c("base", "stats", "utils", "shiny", "rhandsontable", "testthat")
+  imports <- c("base", "stats", "utils", "shiny", "testthat")
   inImports <- function(name)
     any(vapply(imports, function(pkg)
       requireNamespace(pkg, quietly = TRUE) && exists(name, envir = asNamespace(pkg)),

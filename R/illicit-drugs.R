@@ -9,7 +9,7 @@
 # input$showIllicitDrugs), which is off by default: when it is off these drugs
 # are not offered anywhere a drug is chosen (the dose-table autocomplete, the
 # Add a dose dialog), and when it is on they are, with their names shown in red
-# in the dose table (createHOT()).  They are never ticked in the startup menu
+# in the dose grid (dose-grid.js, from doseGridDrugsMessage()).  They are never ticked in the startup menu
 # (startupDrugChoices() leaves the category out), so a fresh session never
 # opens with one.
 

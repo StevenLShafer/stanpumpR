@@ -160,7 +160,7 @@ paperReviewPanels <- function(ns = shiny::NS(NULL))
         shiny::uiOutput(ns("simulatorNote")),
         shiny::plotOutput(ns("simPlot"), height = "460px"),
         shiny::h5("Dose table"),
-        rhandsontable::rHandsontableOutput(ns("doses")),
+        shiny::uiOutput(ns("dosesUI")),
         shiny::tableOutput(ns("simParameters"))
       )),
     bslib::nav_panel("Privacy and help", value = "help", paperReviewHelpHtml()))
@@ -392,6 +392,7 @@ paperReviewServer <- function(input, output, session)
   shiny::observeEvent(input$timeUnit, {
     if (identical(input$timeUnit, tableUnit())) return()
     current <- dosesNow()
+    attr(current, "problem") <- NULL
     # A Max time that cannot be used (blank, say) becomes the default rather
     # than following the table into the new unit as NA.
     maximumMinutes <- paperReviewMaxTimeMinutes(input$maximum, unitMinutes())
@@ -411,31 +412,55 @@ paperReviewServer <- function(input, output, session)
     setUnit(paperReviewRegimenTimeUnit(r$extraction, regimen), max(PAPER_REVIEW_MAX_TIME_DEFAULT, ceiling(max(d$Time) * 2)))
   })
 
-  output$doses <- rhandsontable::renderRHandsontable({
+  # The doses as text, read as R reads them (validateDose()): a numeric
+  # column parsed "1,000" as 1 and "1,5" as 1.5, and refused nothing where it
+  # was typed (docs/grid-replacement.md, step 3 of the migration order)
+  output$dosesUI <- shiny::renderUI({
     r <- currentReview()
     units <- if (is.null(r)) "mg" else r$drug$units
     d <- doseTable()
     d$Units <- as.character(d$Units)
     d$Time <- signif(d$Time / unitMinutes(), 6)
     blank <- data.frame(Time = rep(NA_real_, 4), Dose = rep(NA_real_, 4), Units = rep(NA_character_, 4))
-    rhandsontable::hot_col(
-      rhandsontable::rhandsontable(rbind(d, blank), rowHeaders = NULL, stretchH = "all",
-                                   width = 520, height = 230,
-                                   colHeaders = c(paste0("Time (", unitName(), ")"), "Dose", "Units")),
-      "Units", type = "dropdown", source = units)
+    shiny::div(style = "max-width: 520px",
+      tableGridInput(session$ns("doses"), paperReviewDoseColumns(unitName(), units),
+                     rbind(d, blank), rowMenu = TRUE, height = 230, label = "Doses"))
   })
 
   dosesNow <- shiny::reactive({
     # Minutes, whatever the table shows.
     shown <- !is.null(input$doses)
-    d <- if (shown) rhandsontable::hot_to_r(input$doses) else doseTable()
+    d <- if (shown) tableGridRead(input$doses, paperReviewDoseColumns("", character(0))) else doseTable()
+    if (is.null(d)) d <- doseTable()
     names(d)[1:3] <- c("Time", "Dose", "Units")
+    # A row the grid would not have sent, from a browser that may send
+    # anything: a time or dose validateDose() refuses (past MAX_DOSE_VALUE,
+    # say), or a unit the paper's drug does not offer.  Read before, it was
+    # simulated without a word, an unoffered "mcg" or "g" as itself and
+    # anything else as mg (ChatGPT's fourth review, F01).  A row still
+    # being filled in, with a cell blank, is passed over as before.
+    problem <- NULL
+    if (shown) {
+      r <- currentReview()
+      units <- if (is.null(r)) character(0) else as.character(r$drug$units)
+      filled <- nzchar(trimws(d$Time)) & nzchar(trimws(d$Dose)) & !is.na(d$Units) & nzchar(d$Units)
+      readable <- function(x) vapply(x, function(v) nzchar(validateDose(v)), logical(1), USE.NAMES = FALSE)
+      bad <- filled & !(readable(d$Time) & readable(d$Dose) & d$Units %in% units)
+      if (any(bad)) {
+        problem <- sprintf(paste0("Row %s cannot be simulated: enter a time and a dose from 0 to ",
+                                  "1,000,000,000, and a unit from the list (%s)."),
+                           paste(which(bad), collapse = ", "), paste(units, collapse = ", "))
+        d <- d[!bad, , drop = FALSE]
+      }
+    }
     d <- d[is.finite(suppressWarnings(as.numeric(d$Time))) &
              is.finite(suppressWarnings(as.numeric(d$Dose))) & !is.na(d$Units) & nzchar(d$Units), ,
            drop = FALSE]
     d$Time <- as.numeric(d$Time) * if (shown) unitMinutes() else 1
     d$Dose <- as.numeric(d$Dose)
-    d[order(d$Time), , drop = FALSE]
+    d <- d[order(d$Time), , drop = FALSE]
+    attr(d, "problem") <- problem
+    d
   })
 
   patient <- shiny::reactive(list(weight = input$weight, height = input$height,
@@ -449,6 +474,7 @@ paperReviewServer <- function(input, output, session)
       is_valid_number(p$weight, MIN_WEIGHT, MAX_WEIGHT) && is_valid_number(p$height, MIN_HEIGHT, MAX_HEIGHT) &&
         is_valid_number(p$age, MIN_AGE, MAX_AGE), "Enter a weight, height and age in range."))
     d <- dosesNow()
+    shiny::validate(shiny::need(is.null(attr(d, "problem")), attr(d, "problem")))
     shiny::validate(shiny::need(nrow(d) > 0 && any(d$Dose > 0), "Enter a dose."))
     drug <- paperReviewSilently(paperReviewDrug(r$extraction, p, r$identifiability$closed,
                                                 absorption = simAbsorption(), absorptions = r$absorptions))
