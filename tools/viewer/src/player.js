@@ -164,6 +164,55 @@ function hms(sec) {
     return `${h}:${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
 
+// ── the cards in a window too small for them ───────────────────
+// One rule for both views (ChatGPT, 6b52133; Shafer, 2026-11-07: the 2D view
+// left both cards out where one fitted, and the 3D view none, so at 360 x 260
+// the two covered each other and the scene). Graded: both cards (the
+// readout, and Amounts while a shows it) while the picture keeps its room
+// and they do not overlap; else one, the readout unless a has swapped Amounts
+// in for it; else none. The 2D view's room is its drawing's (Flat.fits());
+// the 3D view's is the scene above the cards, which they may cover to at most
+// CARD_SCENE_SHARE of the height above the controls. Decided every frame,
+// the cards' text changing their size, in the task that draws, so nothing is
+// painted while they are measured.
+const CARD_SCENE_SHARE = 0.5;
+const CARD_GAP = 8;             // px between the two cards, side by side
+const Cards = {
+    level: 0,       // 0 both (as a chose), 1 one card, 2 none
+    swap: false,    // at level 1: Amounts shown in the readout's place
+    height: 0,      // the height of the cards shown, px
+    fit(view) {
+        const b = document.body, rd = document.getElementById('readout'), am = document.getElementById('amounts');
+        if (!rd || !am) return;
+        b.classList.remove('compact', 'nocards', 'swap');
+        b.classList.add('measuring');               // both laid out, shown or not
+        const hR = rd.offsetHeight, hA = am.offsetHeight;
+        const rR = rd.getBoundingClientRect(), rA = am.getBoundingClientRect();
+        b.classList.remove('measuring');
+        const room = h => {
+            if (!(h > 0)) return true;
+            if (view === '2d') return Flat.fits(h);
+            const bottom = Math.max(rR.bottom, rA.bottom);
+            return h <= CARD_SCENE_SHARE * bottom;
+        };
+        const both = Player.showAmounts && hA > 0 && hR > 0;
+        const apart = !both || rR.right + CARD_GAP <= rA.left;
+        const fitR = room(hR), fitA = room(hA);
+        let level = 0;
+        if (!(apart && room(Math.max(hR, Player.showAmounts ? hA : 0)))) level = fitR || fitA ? 1 : 2;
+        if (level === 0) this.swap = false;
+        this.level = level;
+        // At level 1: the readout, or Amounts if a chose it (or it alone fits);
+        // a can swap them only where each fits alone.
+        this.canSwap = level === 1 && fitR && fitA;
+        const showA = level === 1 && (this.swap ? fitA : !fitR);
+        b.classList.toggle('compact', level > 0);
+        b.classList.toggle('nocards', level === 2);
+        b.classList.toggle('swap', showA);
+        this.height = level === 2 ? 0 : level === 1 ? (showA ? hA : hR) : Math.max(hR, Player.showAmounts ? hA : 0);
+    }
+};
+
 const Player = {
     run: null, ui: null, T: 0, playing: false, last: null, speed: PLAYER_SPEED,
     // The view shown: '2d' (flat.js, the first, Shafer 2026-11-06) or '3d' (the scene).
@@ -201,6 +250,8 @@ const Player = {
                 this.message(`stanpumpR could not make this run. ${escapeHtml(String(d.message))}`, true);
         });
         this.setSpeed(PLAYER_SPEED);
+        // The 3D view fits its cards to a resized window (the 2D view's draw does).
+        window.addEventListener('resize', () => { if (this.run && this.view === '3d') Cards.fit('3d'); });
         requestAnimationFrame(ts => this.frame(ts));
         this.empty();
         if (window.STANPUMPR_VIEWER_RUN) this.load(window.STANPUMPR_VIEWER_RUN);
@@ -233,6 +284,7 @@ const Player = {
 
     message(html, bad) {
         const m = this.$('message');
+        this.noting = false;
         m.querySelector('.card').innerHTML = html;
         m.querySelector('.card').classList.toggle('bad', !!bad);
         m.classList.toggle('show', !!html);
@@ -376,6 +428,7 @@ const Player = {
         this.$('now').textContent = hms(this.T);
         this.readout(st);
         this.amounts(st);
+        if (this.view === '3d') Cards.fit('3d');
         // After the cards are filled: the 2D layout measures them (Gemini,
         // 712e43a: drawn first, the first frame saw empty cards).
         Flat.draw(st);
@@ -385,10 +438,38 @@ const Player = {
     // body, with V1, V2 and V3 indented under it, then eliminated.
     // "–" where the run has no such compartment.
     showAmounts: true,
+    // While only one card fits, a swaps Amounts in for the readout and back;
+    // while none does, it says so: the key always does something visible
+    // (ChatGPT, 6b52133: at 800 x 600 it seemed to do nothing).
     toggleAmounts() {
+        if (!this.run) return;
+        if (Cards.level === 1) {
+            if (!Cards.canSwap) { this.note('Only one card fits in this window: enlarge it to see the other.'); return; }
+            Cards.swap = !Cards.swap; this.refit(); return;
+        }
+        if (Cards.level === 2) { this.note('No room for the cards in this window: enlarge it to see them.'); return; }
         this.showAmounts = !this.showAmounts;
         this.$('amounts').classList.toggle('show', this.showAmounts);
-        if (Flat.last) Flat.draw(Flat.last);    // the 2D view's room depends on the cards (Gemini, 712e43a)
+        this.refit();
+        // Shown, but no room for both: Amounts is the card shown, if it fits.
+        if (this.showAmounts && Cards.level === 1) {
+            if (Cards.canSwap) { Cards.swap = true; this.refit(); }
+            else this.note('Only one card fits in this window: enlarge it to see the other.');
+        }
+    },
+    // The cards fitted again, and the 2D drawing laid out around them (Gemini, 712e43a).
+    refit() {
+        if (this.view === '2d') { if (Flat.last) Flat.draw(Flat.last); }
+        else Cards.fit('3d');
+    },
+    // A passing note on the message card, unless it is saying something else.
+    note(text) {
+        const m = this.$('message');
+        if (m.classList.contains('show') && !this.noting) return;
+        this.message(escapeHtml(text));
+        this.noting = true;
+        clearTimeout(this.noteTimer);
+        this.noteTimer = setTimeout(() => { if (this.noting) { this.noting = false; this.message(''); } }, 2500);
     },
     amounts(st) {
         const a = x => x == null ? '–' : x.toFixed(1), n = st.n;

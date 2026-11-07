@@ -138,9 +138,13 @@ table.perf td:nth-child(3) { opacity: 0.6; text-align: right; }
   #controls .speedctl #speedSlider { width: 80px; }
   #controls .speed { min-width: 0; font-size: 12px; }
 }
-/* The 2D view in a window too small for the drawing and the cards together
-   (flat.js): the cards are left out, the drawing's own labels giving the numbers. */
-body.flat.compact #readout, body.flat.compact #amounts { display: none !important; }
+/* A window too small for the picture and both cards (Cards.fit(), player.js):
+   one card, the readout unless a has swapped Amounts in (.swap), or none.
+   .measuring lays both out for a moment to measure them, in the same task. */
+body.measuring #readout:not(:empty), body.measuring #amounts:not(:empty) { display: block !important; }
+body.compact:not(.swap) #amounts, body.compact.swap #readout,
+body.nocards #readout, body.nocards #amounts { display: none !important; }
+body.compact.swap:not(.nocards) #amounts:not(:empty) { display: block !important; }
 @media (max-height: 520px) {
   #readout .model, #readout .foot { display: none; }
   #readout .time { font-size: 15px; }
@@ -216,7 +220,17 @@ body.over #message .card { border-color: var(--accent); }
 #videoCard.working .keep { display: block; }
 #videoCard.working .bar, #videoCard.working .done { display: block; }
 #videoCard.working .go, #videoCard.working label { opacity: 0.5; pointer-events: none; }
-#videoCard .buttons { margin-top: 10px; text-align: right; }
+/* A window shorter than the card: the card scrolls, its buttons always in
+   view at its foot (ChatGPT, 6b52133: at 360 x 260 they were below the window). */
+#videoCard .card { max-height: calc(100vh - 16px); overflow-y: auto; box-sizing: border-box; }
+#videoCard .buttons { margin-top: 10px; text-align: right; position: sticky; bottom: -14px;
+  margin-bottom: -14px; padding: 6px 0 14px; background: rgba(12, 20, 28, 0.96); }
+@media (max-height: 420px) {
+  #videoCard .card { padding: 10px 14px; line-height: 1.4; }
+  #videoCard h3 { font-size: 14px; margin-bottom: 4px; }
+  #videoCard p { margin-bottom: 6px; }
+  #videoCard .buttons { bottom: -10px; margin-bottom: -10px; padding-bottom: 10px; }
+}
 #videoCard button { font: inherit; color: var(--ink); background: rgba(255,255,255,0.08); border: 1px solid var(--line);
   border-radius: 6px; padding: 4px 14px; cursor: pointer; }
 #videoCard button.go { background: var(--accent); border-color: var(--accent); color: #fff; }
