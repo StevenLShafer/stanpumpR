@@ -774,3 +774,103 @@ test('video: a resize during a save leaves the card describing the window after 
   assert.match(String(after.msg), /not a JSON object/, 'the refusal was cleared before it could be read');
   assertClean(page);
 });
+
+// ── Performance: Gemini's audit of 6b52133 ───────────────────────────────
+// Counts the 3D view's drawings on window.__renders.
+const countRenders = page => page.evaluate(() => {
+  if (!window.__renderWrapped) {
+    const draw = View.renderer.render.bind(View.renderer);
+    View.renderer.render = (s, c) => { window.__renders++; draw(s, c); };
+    window.__renderWrapped = true;
+  }
+  window.__renders = 0;
+});
+const renders = page => page.evaluate(() => window.__renders);
+const pause = ms => new Promise(r => setTimeout(r, ms));
+
+test('performance card: it measures the 2D view, and the 2D frames\' time never reaches a 3D frame', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, RUN), true);
+  await page.keyboard.press('p');
+  await page.evaluate(() => Player.play());
+  // It said "measuring…" for good in 2D, the scene's loop never ending a frame there.
+  await page.waitForFunction(() => /Frames\s+\d+ \/s/.test(document.getElementById('perf').innerText), { timeout: 10000 });
+  const card = await page.evaluate(() => document.getElementById('perf').innerText);
+  assert.match(card, /2D view/);
+  // The player's time is cleared at the end of each 2D frame, not kept for the first 3D one.
+  await pause(400);
+  assert.ok(await page.evaluate(() => Perf.jsFrame) < 50, 'the 2D frames\' time is still accumulating');
+  await page.evaluate(() => { Player.pause(); Player.setView('3d'); });
+  assert.match(await page.evaluate(() => document.getElementById('perf').innerText), /measuring/, 'the card did not start again on the switch');
+  await page.waitForFunction(() => /M pixels/.test(document.getElementById('perf').innerText), { timeout: 20000 });
+  assertClean(page);
+});
+
+test('3D: a paused, still view is drawn again only when something on it changes', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, RUN), true);
+  await page.evaluate(() => { Player.setView('3d'); Player.seek(1500); });
+  await pause(2000);                                    // drawn, and the ripples settled
+  await countRenders(page);
+  await pause(1200);
+  assert.equal(await renders(page), 0, 'a still, paused view was drawn again');
+  // Each change to what is on screen is drawn.
+  for (const [what, change] of [
+    ['a vessel pointed at', () => View.setHover('c1')],
+    ['the camera turned', () => View.orbit(0.2)],
+    ['the lens changed', () => View.fov(-5)],
+    ['a new time', () => Player.seek(2500)],
+    ['another look', () => View.setLook(View.lookName)],
+  ]) {
+    await countRenders(page);
+    await page.evaluate(change);
+    await page.waitForFunction(() => window.__renders > 0, { timeout: 10000 }).catch(() => {});
+    assert.ok(await renders(page) > 0, what + ' was not drawn');
+  }
+  await countRenders(page);
+  await page.setViewport({ width: 1000, height: 700 });
+  await page.waitForFunction(() => window.__renders > 0, { timeout: 10000 }).catch(() => {});
+  assert.ok(await renders(page) > 0, 'a resize was not drawn');
+  // Playing, it is drawn every frame.
+  await countRenders(page);
+  await page.evaluate(() => Player.play());
+  await page.waitForFunction(() => window.__renders >= 3, { timeout: 20000 }).catch(() => {});
+  assert.ok(await renders(page) >= 3, 'not drawn while playing');
+  await page.evaluate(() => Player.pause());
+  assertClean(page);
+});
+
+test('2D frames leave the hidden 3D scene alone; the switch draws the moment shown; a still surface is reshaped only when it changes', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, RUN), true);
+  const seen = await page.evaluate(() => {
+    let n = 0; const draw = View.draw.bind(View);
+    View.draw = (st, ui) => { n++; draw(st, ui); };
+    for (const T of [100, 900, 1800, 2700]) Player.seek(T);
+    const in2d = n;
+    Player.setView('3d');
+    const st = Player.stateAt(Player.T);
+    return { in2d, on3d: n - in2d, h: View.vessels[1].h, want: st.cp * Player.ui.concScale };
+  });
+  assert.equal(seen.in2d, 0, 'the hidden 3D scene was drawn in 2D');
+  assert.equal(seen.on3d, 1);
+  assert.ok(Math.abs(seen.h - seen.want) < 1e-9, 'V1 does not show the moment shown');
+  await pause(1500);                                    // V1's surface shaped by the scene's frames, ripples settled
+  const surf = await page.evaluate(() => [1, 2, 3].map(k => {
+    const v = View.vessels[k], g = v.surface.geometry;
+    if (!v.group.visible) return null;
+    const pos = Array.from(g.attributes.position.array), nor = Array.from(g.attributes.normal.array);
+    const again = v.shapeSurface();                     // unchanged: left alone
+    v.stillR = null; v.shapeSurface();                  // shaped from scratch
+    return { again, same: pos.every((x, i) => x === g.attributes.position.array[i]) &&
+                          nor.every((x, i) => x === g.attributes.normal.array[i]) };
+  }));
+  for (const [k, s] of surf.entries()) if (s) {
+    assert.equal(s.again, false, `V${k + 1}'s still surface was reshaped`);
+    assert.equal(s.same, true, `V${k + 1}'s kept surface is not the one its state gives`);
+  }
+  assertClean(page);
+});

@@ -95,6 +95,7 @@ const View = {
     pk: null,           // the volumes setShape() was given, for the vessels' cards
     playing: false,     // set by the player: the arrows and ripples move while it runs
     recording: false,   // set while a video is saved (video.js): the loop stands aside
+    dirty: true,        // the scene has changed since it was last drawn (invalidate())
 
     init(container) {
         const T = THREE;
@@ -186,23 +187,46 @@ const View = {
         this.clock = new T.Clock();
         window.addEventListener('resize', () => this.resize());
         this.setLook(this.lookName);
-        // ts: the browser's time for this frame, on the screen's refresh.
+        // A scene that changes outside draw() (a context restored after the
+        // GPU dropped it) is drawn again.
+        r.domElement.addEventListener('webglcontextrestored', () => this.invalidate());
+        // The camera as last drawn, to tell whether it has moved since.
+        const lastEye = new T.Matrix4(), lastLens = new T.Matrix4();
         // ts: the browser's time for this frame, on the screen's refresh.
         const loop = ts => {
             // Saving a video (video.js): step() draws each frame instead.
             if (this.recording) { requestAnimationFrame(loop); return; }
             const t0 = performance.now();
             const dt = this.clock.getDelta();
+            const now = ts != null ? ts : t0;
+            // Hidden behind the 2D view (flat.js): nothing to move or draw,
+            // and the performance card measures the 2D view's frames (Gemini,
+            // 6b52133: it said "measuring…" there for good, and the 2D frames'
+            // time, never cleared, went into the first 3D frame).
+            if (this.container.style.display === 'none') {
+                Perf.frame(now, performance.now() - t0, null);
+                requestAnimationFrame(loop); return;
+            }
             // The arrows' stripes and V1's ripples move only while the clock runs.
             const running = this.clockRunning();
             for (const a of Object.values(this.arrows)) a.tick(running ? dt : 0);
-            this.vessels[1].tickRipples(dt, this.v1Mlh || 0, running);
-            // Hidden behind the 2D view (flat.js): nothing to draw.
-            if (this.container.style.display === 'none') { requestAnimationFrame(loop); return; }
+            const rippled = this.vessels[1].tickRipples(dt, this.v1Mlh || 0, running);
             this.controls.update();
-            Perf.render(this.renderer, () => this.renderer.render(this.scene, this.camera));
-            this.labelRenderer.render(this.scene, this.camera);
-            Perf.frame(ts != null ? ts : t0, performance.now() - t0, this.renderer);
+            // Drawn only when something on screen changes: the clock running,
+            // the ripples settling, the camera moved (dragged, damped, a key,
+            // a flight), or the scene changed (invalidate()). A paused view
+            // otherwise kept the GPU drawing the same picture 60 times a
+            // second (Gemini, 6b52133). Always while the performance card is
+            // shown, so it measures the drawing.
+            this.camera.updateMatrixWorld();
+            const moved = !lastEye.equals(this.camera.matrixWorld) || !lastLens.equals(this.camera.projectionMatrix);
+            if (running || rippled || moved || this.dirty || Perf.shown) {
+                this.dirty = false;
+                lastEye.copy(this.camera.matrixWorld); lastLens.copy(this.camera.projectionMatrix);
+                Perf.render(this.renderer, () => this.renderer.render(this.scene, this.camera));
+                this.labelRenderer.render(this.scene, this.camera);
+            }
+            Perf.frame(now, performance.now() - t0, this.renderer);
             requestAnimationFrame(loop);
         };
         loop();
@@ -288,6 +312,7 @@ const View = {
     },
     // The vessel pointed at with its rim in gold, or the ribbon brighter.
     showLit() {
+        this.invalidate();
         for (let k = 1; k <= 3; k++) this.vessels[k].rimMat.color.set(this.lit === 'c' + k ? '#ffd166' : '#ffffff');
         if (this.look) this.ribbon.mat.emissiveIntensity = this.lit === 'ce' ? 0.8 : 0.25;
     },
@@ -302,6 +327,9 @@ const View = {
         this.labelRenderer.render(this.scene, this.camera);
     },
 
+    // The scene has changed: draw it on the next frame.
+    invalidate() { this.dirty = true; },
+
     // The clock is running while play is on, or for a moment after a step.
     kick() { this.lastStep = performance.now(); },
     clockRunning() {
@@ -315,6 +343,7 @@ const View = {
         for (const m of TARGET_LINE_MATS) m.resolution.set(w, h);   // the targets' lines, in pixels
         this.persp.aspect = w / h;
         this.applyOffset();
+        this.invalidate();          // setSize() cleared the canvas
     },
 
     // Centre the picture a little above the middle of the view, clear of
@@ -378,6 +407,7 @@ const View = {
         };
         this.vessels[2].setVisible(pk.n >= 2);
         this.vessels[3].setVisible(pk.n >= 3);
+        this.invalidate();
     },
 
     // Draw one state. ui: { showCe, concScale,
@@ -385,6 +415,7 @@ const View = {
     // conc is the arrows' scale, in amount per mL: a flow of conc * 2500
     // per hour (ARROW_MLH) draws an arrow of radius ARROW_R.
     draw(st, ui) {
+        this.invalidate();
         const G = this.geo, L = this.look;
         const hs = ui.concScale;
         const h1 = st.cp * hs, h2 = (st.c2 || 0) * hs, h3 = (st.c3 || 0) * hs, he = st.ce * hs;

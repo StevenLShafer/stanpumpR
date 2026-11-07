@@ -253,11 +253,14 @@ const Flat = {
         // A scroll bar that came or went changes the width: lay out once more.
         if (this.el.clientWidth !== W && !this.again) { this.again = true; this.draw(st); this.again = false; return; }
         // Keep every label inside the window: a label beside a box near an
-        // edge is moved in, never cut off.
-        for (const t of this.el.querySelectorAll('text')) {
-            const b = t.getBBox(), dx = b.x < 2 ? 2 - b.x : b.x + b.width > W - 2 ? W - 2 - b.x - b.width : 0;
+        // edge is moved in, never cut off. Every box is read before any label
+        // moves, so the drawing is laid out once (a move between two reads
+        // made the next read lay it out again; Gemini, 6b52133).
+        const texts = [...this.el.querySelectorAll('text')], boxes = texts.map(t => t.getBBox());
+        texts.forEach((t, i) => {
+            const b = boxes[i], dx = b.x < 2 ? 2 - b.x : b.x + b.width > W - 2 ? W - 2 - b.x - b.width : 0;
             if (dx) t.setAttribute('x', Number(t.getAttribute('x')) + dx);
-        }
+        });
     }
 };
 

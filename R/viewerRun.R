@@ -376,7 +376,8 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
   steps$Rate[is.na(steps$Rate)] <- 0
   oralSteps$Rate[is.na(oralSteps$Rate)] <- 0
   bAmount[is.na(bAmount)] <- 0
-  bolusGiven <- vapply(times, function(t) sum(bAmount[b$Time <= t + 1e-9]), numeric(1))
+  # d is in time order, so the boluses up to each time are a prefix of b.
+  bolusGiven <- c(0, cumsum(bAmount))[findInterval(times + 1e-9, b$Time) + 1]
 
   # The depot: the bioavailable drug still to be absorbed. What it loses is
   # what has been absorbed; what it gains is a dose arriving (stanpumpR puts a
@@ -415,17 +416,23 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
   # The target and the mode in force: a target row starts TCI (a target of 0
   # stops it), and a manual infusion row strictly after it stops it; one at
   # the target's own time does not, the target winning (R/tci.R).
+  # By lookup, not a loop over the times reading a data frame row at each
+  # (a quarter of a second at 7200 times; Gemini, 6b52133). d is in time
+  # order, so the target in force is the last target row at or before each
+  # time, and a manual row stops it if one lies after it and at or before
+  # the time.
   targets <- d[tci, , drop = FALSE]
-  stops <- manual$Time
-  modeAt <- character(length(times)); targetAt <- numeric(length(times))
-  for (j in seq_along(times)) {
-    t <- times[j]
-    i <- which(targets$Time <= t + 1e-9)
-    if (!length(i)) { modeAt[j] <- "manual"; next }
-    last <- targets[max(i), ]
-    if (last$Dose <= 0 || any(stops > last$Time + 1e-9 & stops <= t + 1e-9)) { modeAt[j] <- "manual"; next }
-    modeAt[j] <- if (last$Units == TCI_UNIT_EFFECT) "effect" else "plasma"
-    targetAt[j] <- last$Dose
+  stops <- sort(manual$Time)
+  modeAt <- rep("manual", length(times)); targetAt <- numeric(length(times))
+  last <- findInterval(times + 1e-9, targets$Time)
+  has <- last > 0
+  if (any(has)) {
+    tTime <- targets$Time[last[has]]
+    stopped <- findInterval(times[has] + 1e-9, stops) > findInterval(tTime + 1e-9, stops)
+    on <- targets$Dose[last[has]] > 0 & !stopped
+    j <- which(has)[on]
+    modeAt[j] <- ifelse(targets$Units[last[j]] == TCI_UNIT_EFFECT, "effect", "plasma")
+    targetAt[j] <- targets$Dose[last[j]]
   }
 
   # The boluses the run shows (those inside the window), in base amount.

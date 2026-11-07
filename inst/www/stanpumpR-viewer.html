@@ -4859,7 +4859,10 @@ class Vessel {
         this.surface.position.y = h;
         this.surface.scale.set(this.r, 1, this.r);
         this.flat = false;
-        this.shapeSurface();
+        // V1's surface is shaped by tickRipples(), which the scene runs
+        // before every drawing: shaping it here too did it twice a frame
+        // (Gemini, 6b52133).
+        if (this.k !== 1) this.shapeSurface();
         const L = look.liquid;
         const style = (LIQUID_STYLES[L.style] || LIQUID_STYLES.solid)({ drug: drugRgb });
         for (const m of [this.sideMat, this.topMat, this.botMat]) {
@@ -4948,6 +4951,10 @@ class Vessel {
     // The normals come from the slope (dy/dd, d the distance in scene
     // units), in the surface's own unscaled space, where a slope s along
     // the radius tilts the normal by s * r: three.js scales them back.
+    // A still surface (no ripples, no bolus ring) depends only on the radius
+    // and the meniscus, so it is left as it is while they are unchanged:
+    // V2's and V3's were rebuilt and sent to the GPU every frame (Gemini,
+    // 6b52133). Returns whether the surface changed.
     shapeSurface() {
         const g = this.surface.geometry, p = g.attributes.position.array, n = g.attributes.normal.array;
         const cs = g.userData.cos, sn = g.userData.sin, r = this.r;
@@ -4955,6 +4962,10 @@ class Vessel {
         const ripple = this.amp > 1e-4;
         const ringR = this.ring ? this.ring.age * BOLUS_RING_SPEED : 0;
         const ringH = this.ring ? BOLUS_RING_H * Math.exp(-1.5 * this.ring.age) : 0;
+        if (!ripple && !(ringH > 1e-4)) {
+            if (this.stillR === r && this.stillMen === this.men) return false;
+            this.stillR = r; this.stillMen = this.men;
+        } else this.stillR = this.stillMen = null;
         for (let i = 0; i <= SURF_RINGS; i++) {
             const q = i / SURF_RINGS, d = q * r, fade = 1 - q * q, dfade = -2 * q / r;
             const em = this.men * Math.exp(-(1 - q) * r / MENISCUS_W);
@@ -4983,10 +4994,12 @@ class Vessel {
         }
         g.attributes.position.needsUpdate = true;
         g.attributes.normal.needsUpdate = true;
+        return true;
     }
 
     // V1's ripples, each frame. mlh: the pump's rate now, ml/h; running: the
     // clock is moving. Stopped, the ripples settle and the surface stills.
+    // Returns whether the surface changed (the scene is then drawn again).
     tickRipples(dt, mlh, running) {
         const target = running ? RIPPLE_MAX * Math.sqrt(Math.max(0, mlh) / RIPPLE_MLH) : 0;
         const tau = target > this.amp ? RIPPLE_GROW : RIPPLE_FADE;
@@ -4996,8 +5009,9 @@ class Vessel {
             if (this.ring) { this.ring.age += dt; if (this.ring.age * BOLUS_RING_SPEED > this.r + 1) this.ring = null; }
         }
         const moving = this.amp > 1e-4 || this.ring;
-        if (moving) { this.shapeSurface(); this.flat = false; }
-        else if (!this.flat) { this.amp = 0; this.shapeSurface(); this.flat = true; }
+        if (moving) { this.flat = false; return this.shapeSurface(); }
+        if (!this.flat) { this.amp = 0; this.flat = true; return this.shapeSurface(); }
+        return false;
     }
 
     bolusRing() { this.ring = { age: 0 }; }
@@ -5433,7 +5447,12 @@ class SceneLabel {
 //  between the browser's frame times, the screen's refresh); and the
 //  canvas's pixels. Nothing is measured while the card is hidden. It does
 //  not see the browser's own work after ours (placing the HTML labels,
-//  putting the page on the screen).
+//  putting the page on the screen). In the 2D view it measures the same
+//  frames, ours being the 2D drawing (flat.js), which the page lays out
+//  inside our code; there is no GPU time or canvas, the page drawing it.
+//  While it is shown the 3D view is drawn every frame, as it otherwise is
+//  only when something on screen changes (scene.js), so what it measures
+//  is the drawing.
 // ═══════════════════════════════════════════════════════════════
 
 const Perf = {
@@ -5445,6 +5464,11 @@ const Perf = {
         this.el.classList.toggle('show', this.shown);
         this.reset(performance.now());
         this.el.innerHTML = '<div class="phead">Performance <kbd>p</kbd></div><div class="pbody">measuring…</div>';
+    },
+    // The view switched (2D and 3D): measure afresh, the card kept.
+    restart() {
+        this.reset(performance.now());
+        if (this.shown) this.el.innerHTML = '<div class="phead">Performance <kbd>p</kbd></div><div class="pbody">measuring…</div>';
     },
     reset(now) {
         this.t0 = now; this.lastFrame = null; this.frames = 0; this.minGap = Infinity;
@@ -5468,8 +5492,8 @@ const Perf = {
         this.pending.push(q);
     },
     // End of the scene's frame: ts the browser's time for the frame, ms
-    // its JavaScript. The frame times fall on the screen's refreshes, so
-    // the shortest gap between them is one refresh, however late our own
+    // its JavaScript, renderer null in the 2D view. The frame times fall on
+    // the screen's refreshes, so the shortest gap between them is one refresh, however late our own
     // code starts (its clock gave false short gaps after a late frame).
     frame(ts, ms, renderer) {
         if (!this.shown) return;
@@ -5481,7 +5505,7 @@ const Perf = {
         this.js += js; this.jsMax = Math.max(this.jsMax, js);
         // GPU results arrive a frame or two later; a disjoint one (the GPU
         // was interrupted) is dropped.
-        if (this.ext) {
+        if (this.ext && renderer) {
             const gl = this.gl, disjoint = gl.getParameter(this.ext.GPU_DISJOINT_EXT);
             while (this.pending.length && gl.getQueryParameter(this.pending[0], gl.QUERY_RESULT_AVAILABLE)) {
                 const q = this.pending.shift();
@@ -5497,11 +5521,16 @@ const Perf = {
     },
     show(renderer, now) {
         const s = (now - this.t0) / 1000, n = this.frames;
-        const c = renderer.domElement, pr = renderer.getPixelRatio();
         const gap = isFinite(this.minGap) ? this.minGap : null;
         const f1 = x => x.toFixed(1);
-        const gpu = !this.ext ? '<td colspan="2">– (no GPU timer in this browser)</td>'
+        const gpu = !renderer ? '<td colspan="2">– (2D view: drawn by the page)</td>'
+            : !this.ext ? '<td colspan="2">– (no GPU timer in this browser)</td>'
             : this.gpuN ? `<td>${f1(this.gpu / this.gpuN)} ms</td><td>worst ${f1(this.gpuMax)}</td>` : '<td>–</td><td></td>';
+        let canvas = '– (2D view)';
+        if (renderer) {
+            const c = renderer.domElement, pr = renderer.getPixelRatio();
+            canvas = `${c.width} × ${c.height} (${(c.width * c.height / 1e6).toFixed(1)} M pixels, scale ${pr})`;
+        }
         this.el.innerHTML = `
           <div class="phead">Performance <kbd>p</kbd></div>
           <table class="perf">
@@ -5509,7 +5538,7 @@ const Perf = {
             <tr><td class="k">Our code</td><td>${f1(this.js / Math.max(1, n))} ms</td><td>worst ${f1(this.jsMax)}</td></tr>
             <tr><td class="k">GPU</td>${gpu}</tr>
             <tr><td class="k">Frame</td><td>${gap ? f1(gap) + ' ms' : '–'}</td><td>available</td></tr>
-            <tr><td class="k">Canvas</td><td colspan="2">${c.width} × ${c.height} (${(c.width * c.height / 1e6).toFixed(1)} M pixels, scale ${pr})</td></tr>
+            <tr><td class="k">Canvas</td><td colspan="2">${canvas}</td></tr>
           </table>`;
     }
 };
@@ -5613,6 +5642,7 @@ const View = {
     pk: null,           // the volumes setShape() was given, for the vessels' cards
     playing: false,     // set by the player: the arrows and ripples move while it runs
     recording: false,   // set while a video is saved (video.js): the loop stands aside
+    dirty: true,        // the scene has changed since it was last drawn (invalidate())
 
     init(container) {
         const T = THREE;
@@ -5704,23 +5734,46 @@ const View = {
         this.clock = new T.Clock();
         window.addEventListener('resize', () => this.resize());
         this.setLook(this.lookName);
-        // ts: the browser's time for this frame, on the screen's refresh.
+        // A scene that changes outside draw() (a context restored after the
+        // GPU dropped it) is drawn again.
+        r.domElement.addEventListener('webglcontextrestored', () => this.invalidate());
+        // The camera as last drawn, to tell whether it has moved since.
+        const lastEye = new T.Matrix4(), lastLens = new T.Matrix4();
         // ts: the browser's time for this frame, on the screen's refresh.
         const loop = ts => {
             // Saving a video (video.js): step() draws each frame instead.
             if (this.recording) { requestAnimationFrame(loop); return; }
             const t0 = performance.now();
             const dt = this.clock.getDelta();
+            const now = ts != null ? ts : t0;
+            // Hidden behind the 2D view (flat.js): nothing to move or draw,
+            // and the performance card measures the 2D view's frames (Gemini,
+            // 6b52133: it said "measuring…" there for good, and the 2D frames'
+            // time, never cleared, went into the first 3D frame).
+            if (this.container.style.display === 'none') {
+                Perf.frame(now, performance.now() - t0, null);
+                requestAnimationFrame(loop); return;
+            }
             // The arrows' stripes and V1's ripples move only while the clock runs.
             const running = this.clockRunning();
             for (const a of Object.values(this.arrows)) a.tick(running ? dt : 0);
-            this.vessels[1].tickRipples(dt, this.v1Mlh || 0, running);
-            // Hidden behind the 2D view (flat.js): nothing to draw.
-            if (this.container.style.display === 'none') { requestAnimationFrame(loop); return; }
+            const rippled = this.vessels[1].tickRipples(dt, this.v1Mlh || 0, running);
             this.controls.update();
-            Perf.render(this.renderer, () => this.renderer.render(this.scene, this.camera));
-            this.labelRenderer.render(this.scene, this.camera);
-            Perf.frame(ts != null ? ts : t0, performance.now() - t0, this.renderer);
+            // Drawn only when something on screen changes: the clock running,
+            // the ripples settling, the camera moved (dragged, damped, a key,
+            // a flight), or the scene changed (invalidate()). A paused view
+            // otherwise kept the GPU drawing the same picture 60 times a
+            // second (Gemini, 6b52133). Always while the performance card is
+            // shown, so it measures the drawing.
+            this.camera.updateMatrixWorld();
+            const moved = !lastEye.equals(this.camera.matrixWorld) || !lastLens.equals(this.camera.projectionMatrix);
+            if (running || rippled || moved || this.dirty || Perf.shown) {
+                this.dirty = false;
+                lastEye.copy(this.camera.matrixWorld); lastLens.copy(this.camera.projectionMatrix);
+                Perf.render(this.renderer, () => this.renderer.render(this.scene, this.camera));
+                this.labelRenderer.render(this.scene, this.camera);
+            }
+            Perf.frame(now, performance.now() - t0, this.renderer);
             requestAnimationFrame(loop);
         };
         loop();
@@ -5806,6 +5859,7 @@ const View = {
     },
     // The vessel pointed at with its rim in gold, or the ribbon brighter.
     showLit() {
+        this.invalidate();
         for (let k = 1; k <= 3; k++) this.vessels[k].rimMat.color.set(this.lit === 'c' + k ? '#ffd166' : '#ffffff');
         if (this.look) this.ribbon.mat.emissiveIntensity = this.lit === 'ce' ? 0.8 : 0.25;
     },
@@ -5820,6 +5874,9 @@ const View = {
         this.labelRenderer.render(this.scene, this.camera);
     },
 
+    // The scene has changed: draw it on the next frame.
+    invalidate() { this.dirty = true; },
+
     // The clock is running while play is on, or for a moment after a step.
     kick() { this.lastStep = performance.now(); },
     clockRunning() {
@@ -5833,6 +5890,7 @@ const View = {
         for (const m of TARGET_LINE_MATS) m.resolution.set(w, h);   // the targets' lines, in pixels
         this.persp.aspect = w / h;
         this.applyOffset();
+        this.invalidate();          // setSize() cleared the canvas
     },
 
     // Centre the picture a little above the middle of the view, clear of
@@ -5896,6 +5954,7 @@ const View = {
         };
         this.vessels[2].setVisible(pk.n >= 2);
         this.vessels[3].setVisible(pk.n >= 3);
+        this.invalidate();
     },
 
     // Draw one state. ui: { showCe, concScale,
@@ -5903,6 +5962,7 @@ const View = {
     // conc is the arrows' scale, in amount per mL: a flow of conc * 2500
     // per hour (ARROW_MLH) draws an arrow of radius ARROW_R.
     draw(st, ui) {
+        this.invalidate();
         const G = this.geo, L = this.look;
         const hs = ui.concScale;
         const h1 = st.cp * hs, h2 = (st.c2 || 0) * hs, h3 = (st.c3 || 0) * hs, he = st.ce * hs;
@@ -6424,11 +6484,14 @@ const Flat = {
         // A scroll bar that came or went changes the width: lay out once more.
         if (this.el.clientWidth !== W && !this.again) { this.again = true; this.draw(st); this.again = false; return; }
         // Keep every label inside the window: a label beside a box near an
-        // edge is moved in, never cut off.
-        for (const t of this.el.querySelectorAll('text')) {
-            const b = t.getBBox(), dx = b.x < 2 ? 2 - b.x : b.x + b.width > W - 2 ? W - 2 - b.x - b.width : 0;
+        // edge is moved in, never cut off. Every box is read before any label
+        // moves, so the drawing is laid out once (a move between two reads
+        // made the next read lay it out again; Gemini, 6b52133).
+        const texts = [...this.el.querySelectorAll('text')], boxes = texts.map(t => t.getBBox());
+        texts.forEach((t, i) => {
+            const b = boxes[i], dx = b.x < 2 ? 2 - b.x : b.x + b.width > W - 2 ? W - 2 - b.x - b.width : 0;
             if (dx) t.setAttribute('x', Number(t.getAttribute('x')) + dx);
-        }
+        });
     }
 };
 
@@ -6762,6 +6825,7 @@ const Player = {
         View.ribbon.setVisible(false);
         View.bolusLabel.show(false);
         View.resetView();
+        View.invalidate();
     },
 
     readFile(f) {
@@ -6906,7 +6970,10 @@ const Player = {
         const r = this.run; if (!r) return;
         this.T = Math.min(r.t[r.t.length - 1], Math.max(r.t[0], T));
         const st = this.stateAt(this.T);
-        View.draw(st, this.ui);
+        // Only the view shown is drawn (Gemini, 6b52133: the hidden 3D scene
+        // was rebuilt every 2D frame); setView() draws the other on a switch.
+        // Flat.draw() below keeps the state either way, for a resize.
+        if (this.view === '3d') View.draw(st, this.ui);
         const slider = this.$('t');
         slider.value = this.T;
         slider.style.setProperty('--pct', `${100 * (this.T - r.t[0]) / (r.t[r.t.length - 1] - r.t[0])}%`);
@@ -6999,6 +7066,8 @@ const Player = {
         this.$('brandView').textContent = v === '2d' ? '2D' : '3D';
         document.body.classList.toggle('flat', v === '2d');
         if (v === '3d') View.resize();
+        // The performance card starts again: the two views' frames differ.
+        Perf.restart();
         if (this.run) this.seek(this.T);
     },
     // Stop: pause and go back to the start.
@@ -7479,6 +7548,11 @@ function mp4(chunks, description, w, h, fps) {
     const u16 = v => u8([(v >>> 8) & 255, v & 255]);
     const u32 = v => u8([(v >>> 24) & 255, (v >>> 16) & 255, (v >>> 8) & 255, v & 255]);
     const str = s => u8([...s].map(c => c.charCodeAt(0)));
+    // A table of 32-bit numbers, in one array: not one argument per frame,
+    // which a longer video would push past the browser's limit on a call's
+    // arguments (Gemini, 6b52133).
+    const u32s = vs => { const out = new Uint8Array(4 * vs.length), dv = new DataView(out.buffer);
+                         vs.forEach((v, i) => dv.setUint32(4 * i, v)); return out; };
     const cat = parts => { const len = parts.reduce((s, p) => s + p.length, 0), out = new Uint8Array(len);
                            let o = 0; for (const p of parts) { out.set(p, o); o += p.length; } return out; };
     const box = (type, ...parts) => { const body = cat(parts); return cat([u32(8 + body.length), str(type), body]); };
@@ -7500,9 +7574,9 @@ function mp4(chunks, description, w, h, fps) {
     const stsd = full('stsd', 0, 0, u32(1), avc1);
     const stts = full('stts', 0, 0, u32(1), u32(n), u32(DELTA));
     const keys = chunks.map((c, i) => c.key ? i + 1 : 0).filter(Boolean);
-    const stss = full('stss', 0, 0, u32(keys.length), ...keys.map(u32));
+    const stss = full('stss', 0, 0, u32(keys.length), u32s(keys));
     const stsc = full('stsc', 0, 0, u32(1), u32(1), u32(n), u32(1));
-    const stsz = full('stsz', 0, 0, u32(0), u32(n), ...chunks.map(c => u32(c.data.length)));
+    const stsz = full('stsz', 0, 0, u32(0), u32(n), u32s(chunks.map(c => c.data.length)));
     const build = offset => box('moov', mvhd, box('trak', tkhd, box('mdia', mdhd, hdlr,
         box('minf', vmhd, dinf, box('stbl', stsd, stts, stss, stsc, stsz, full('stco', 0, 0, u32(1), u32(offset)))))));
     const moovSize = build(0).length;

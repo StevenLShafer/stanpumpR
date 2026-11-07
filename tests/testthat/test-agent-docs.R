@@ -45,7 +45,15 @@ agentDocDefinitions <- function(root) {
                                 perl = TRUE)),
       sub("function\\s+", "",
           regmatches(lines, regexpr("function\\s+[A-Za-z_][A-Za-z0-9_]*", lines,
-                                    perl = TRUE))))
+                                    perl = TRUE))),
+      # a JavaScript method of an object literal (View's draw(st, ui) {),
+      # how the visualizer defines most of its functions
+      if (grepl("\\.js$", f)) {
+        m <- sub("\\s*\\(.*$", "",
+                 trimws(regmatches(lines, regexpr("^\\s*[A-Za-z_][A-Za-z0-9_]*\\s*\\([^()]*\\)\\s*\\{",
+                                                  lines, perl = TRUE))))
+        setdiff(m, c("if", "for", "while", "switch", "catch", "function"))
+      })
   })))
 }
 

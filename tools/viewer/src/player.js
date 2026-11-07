@@ -221,6 +221,7 @@ const Player = {
         View.ribbon.setVisible(false);
         View.bolusLabel.show(false);
         View.resetView();
+        View.invalidate();
     },
 
     readFile(f) {
@@ -365,7 +366,10 @@ const Player = {
         const r = this.run; if (!r) return;
         this.T = Math.min(r.t[r.t.length - 1], Math.max(r.t[0], T));
         const st = this.stateAt(this.T);
-        View.draw(st, this.ui);
+        // Only the view shown is drawn (Gemini, 6b52133: the hidden 3D scene
+        // was rebuilt every 2D frame); setView() draws the other on a switch.
+        // Flat.draw() below keeps the state either way, for a resize.
+        if (this.view === '3d') View.draw(st, this.ui);
         const slider = this.$('t');
         slider.value = this.T;
         slider.style.setProperty('--pct', `${100 * (this.T - r.t[0]) / (r.t[r.t.length - 1] - r.t[0])}%`);
@@ -458,6 +462,8 @@ const Player = {
         this.$('brandView').textContent = v === '2d' ? '2D' : '3D';
         document.body.classList.toggle('flat', v === '2d');
         if (v === '3d') View.resize();
+        // The performance card starts again: the two views' frames differ.
+        Perf.restart();
         if (this.run) this.seek(this.T);
     },
     // Stop: pause and go back to the start.

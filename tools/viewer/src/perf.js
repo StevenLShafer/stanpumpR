@@ -35,7 +35,12 @@
 //  between the browser's frame times, the screen's refresh); and the
 //  canvas's pixels. Nothing is measured while the card is hidden. It does
 //  not see the browser's own work after ours (placing the HTML labels,
-//  putting the page on the screen).
+//  putting the page on the screen). In the 2D view it measures the same
+//  frames, ours being the 2D drawing (flat.js), which the page lays out
+//  inside our code; there is no GPU time or canvas, the page drawing it.
+//  While it is shown the 3D view is drawn every frame, as it otherwise is
+//  only when something on screen changes (scene.js), so what it measures
+//  is the drawing.
 // ═══════════════════════════════════════════════════════════════
 
 const Perf = {
@@ -47,6 +52,11 @@ const Perf = {
         this.el.classList.toggle('show', this.shown);
         this.reset(performance.now());
         this.el.innerHTML = '<div class="phead">Performance <kbd>p</kbd></div><div class="pbody">measuring…</div>';
+    },
+    // The view switched (2D and 3D): measure afresh, the card kept.
+    restart() {
+        this.reset(performance.now());
+        if (this.shown) this.el.innerHTML = '<div class="phead">Performance <kbd>p</kbd></div><div class="pbody">measuring…</div>';
     },
     reset(now) {
         this.t0 = now; this.lastFrame = null; this.frames = 0; this.minGap = Infinity;
@@ -70,8 +80,8 @@ const Perf = {
         this.pending.push(q);
     },
     // End of the scene's frame: ts the browser's time for the frame, ms
-    // its JavaScript. The frame times fall on the screen's refreshes, so
-    // the shortest gap between them is one refresh, however late our own
+    // its JavaScript, renderer null in the 2D view. The frame times fall on
+    // the screen's refreshes, so the shortest gap between them is one refresh, however late our own
     // code starts (its clock gave false short gaps after a late frame).
     frame(ts, ms, renderer) {
         if (!this.shown) return;
@@ -83,7 +93,7 @@ const Perf = {
         this.js += js; this.jsMax = Math.max(this.jsMax, js);
         // GPU results arrive a frame or two later; a disjoint one (the GPU
         // was interrupted) is dropped.
-        if (this.ext) {
+        if (this.ext && renderer) {
             const gl = this.gl, disjoint = gl.getParameter(this.ext.GPU_DISJOINT_EXT);
             while (this.pending.length && gl.getQueryParameter(this.pending[0], gl.QUERY_RESULT_AVAILABLE)) {
                 const q = this.pending.shift();
@@ -99,11 +109,16 @@ const Perf = {
     },
     show(renderer, now) {
         const s = (now - this.t0) / 1000, n = this.frames;
-        const c = renderer.domElement, pr = renderer.getPixelRatio();
         const gap = isFinite(this.minGap) ? this.minGap : null;
         const f1 = x => x.toFixed(1);
-        const gpu = !this.ext ? '<td colspan="2">– (no GPU timer in this browser)</td>'
+        const gpu = !renderer ? '<td colspan="2">– (2D view: drawn by the page)</td>'
+            : !this.ext ? '<td colspan="2">– (no GPU timer in this browser)</td>'
             : this.gpuN ? `<td>${f1(this.gpu / this.gpuN)} ms</td><td>worst ${f1(this.gpuMax)}</td>` : '<td>–</td><td></td>';
+        let canvas = '– (2D view)';
+        if (renderer) {
+            const c = renderer.domElement, pr = renderer.getPixelRatio();
+            canvas = `${c.width} × ${c.height} (${(c.width * c.height / 1e6).toFixed(1)} M pixels, scale ${pr})`;
+        }
         this.el.innerHTML = `
           <div class="phead">Performance <kbd>p</kbd></div>
           <table class="perf">
@@ -111,7 +126,7 @@ const Perf = {
             <tr><td class="k">Our code</td><td>${f1(this.js / Math.max(1, n))} ms</td><td>worst ${f1(this.jsMax)}</td></tr>
             <tr><td class="k">GPU</td>${gpu}</tr>
             <tr><td class="k">Frame</td><td>${gap ? f1(gap) + ' ms' : '–'}</td><td>available</td></tr>
-            <tr><td class="k">Canvas</td><td colspan="2">${c.width} × ${c.height} (${(c.width * c.height / 1e6).toFixed(1)} M pixels, scale ${pr})</td></tr>
+            <tr><td class="k">Canvas</td><td colspan="2">${canvas}</td></tr>
           </table>`;
     }
 };
