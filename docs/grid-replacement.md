@@ -573,6 +573,8 @@ ChatGPT re-reviewed `96fb26d`. It re-ran every forged input of the fourth pass a
 |---|---|---|---|
 | N01 | Edit doses, opened for a second drug, briefly showed the first drug's rows under the new title | Confirmed by reading the code: the grid was a `renderUI` output shared by every drug's dialog, and the browser showed its last value until the server's new one arrived. Apply was already safe, because the grid's tag names its drug. | The grid is drawn into the dialog as it opens (`editDosesDialogGrid()`, as Edit events does), so there is no earlier value to show. `table-grid.test.js` reads fentanyl's rows the moment its dialog opens after propofol's. That case fails on the old code and passes on the fix. |
 
+**CodeRabbit** (2026-11-07, of `7f9e441`, its first review once the PR was ready) found that a table grid's cell kept a refused entry on screen when the focus stayed in it: on a dialog's last row Enter does not move the focus, and `renderRow()` leaves a focused control's text alone, so a refused `lots` stayed visible over the value Apply would use (and an accepted `1e1` stayed as typed rather than `10`). Confirmed in the browser; `commit()` now puts the cell's value in its control, as `dose-grid.js` already did, and `table-grid.test.js` checks both on the last row of Drug thresholds (the case failed before the fix).
+
 ## Decisions for Steven Shafer
 
 These are pending. Record each answer here.

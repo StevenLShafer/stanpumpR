@@ -308,16 +308,21 @@
     var col = this.cols[c];
     var text = col.type === 'checkbox' ? ctl.checked : ctl.value;
     var e = this.readEntry(r, c, text);
+    var changed = e.refused === undefined && this.rows[r][c] !== e.value;
     if (e.refused !== undefined) {
       notify([this.refusalLine(c, e) + ' The cell keeps its previous value.'], 'tableGridRefused');
-      this.renderRow(r);
-      return false;
+    } else if (changed) {
+      this.rows[r][c] = e.value;
     }
-    if (this.rows[r][c] === e.value) { this.renderRow(r); return false; }
-    this.rows[r][c] = e.value;
+    // The entry is done, so the control shows what the cell holds: the value
+    // kept, or the value read ("1e3" as 1000).  renderRow() leaves a focused
+    // control's text alone, and on the last row Enter keeps the focus, so a
+    // refused entry stayed on screen over the value Apply would use
+    // (CodeRabbit, PR #683; dose-grid.js does the same).
+    if (col.type !== 'checkbox') ctl.value = this.shown(r, c);
     this.renderRow(r);
-    this.send();
-    return true;
+    if (changed) this.send();
+    return changed;
   };
 
   TableGrid.prototype.snapshot = function() {

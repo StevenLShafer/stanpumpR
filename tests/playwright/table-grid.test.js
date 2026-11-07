@@ -159,6 +159,20 @@ describe('Drug thresholds', () => {
     await page.keyboard.type('2.5');
     await page.keyboard.press('Enter');
     await H.settle(page, 300);
+    // On the last row Enter keeps the focus: a refused entry still shows the
+    // value kept, and an accepted one the value stored (CodeRabbit, PR #683)
+    const last = (await gridRows('editThresholdsTable')).length - 1;
+    const before = (await gridRows('editThresholdsTable'))[last][1];
+    await page.click(cell('editThresholdsTable', last, 1));
+    await page.keyboard.type('lots');
+    await page.keyboard.press('Enter');
+    await H.settle(page, 300);
+    assert.equal(await page.$eval(cell('editThresholdsTable', last, 1), x => x.value), before);
+    await page.click(cell('editThresholdsTable', last, 1));
+    await page.keyboard.type('1e1');
+    await page.keyboard.press('Enter');
+    await H.settle(page, 300);
+    assert.equal(await page.$eval(cell('editThresholdsTable', last, 1), x => x.value), '10');
     await page.click('#thresholdEditsOK');
     await H.settle(page, 1000);
     assert.equal((await H.serverState(page)).endCe.propofol, 2.5);
