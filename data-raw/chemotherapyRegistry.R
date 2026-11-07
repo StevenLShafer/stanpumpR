@@ -211,14 +211,14 @@ pubmedSources[pubmedSources == ""] <- NA
 
 # How far each PubMed document was read here.  Every abstract was screened;
 # the PubMed Central text (without tables or equations) was read for these.
-FULL_TEXT_PARTIAL <- c("P05", "P13", "C12", "C15", "C34", "C35", "N04")
+FULL_TEXT_PARTIAL <- c("P05", "P13", "C12", "C15", "C35", "N04")
 pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
                              "guideline", "primary_study")
 # Read in full: every parameter the model uses, from the PubMed Central
 # text, the PDF still to confirm (FULL_TEXT_READ); or confirmed on the PDF
 # itself (PARAMETERS_VERIFIED: Briki 2026 and Lindemalm 2005, supplied by
 # Shafer 2026-11-06)
-FULL_TEXT_READ <- c("C01", "P02", "C35", "C03", "C37a")
+FULL_TEXT_READ <- c("C01", "P02", "C35", "C03", "C37a", "C34")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
 PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18", "C05", "C06", "N08", "N09")
@@ -618,8 +618,10 @@ registry <- rbind(
     readiness = "implemented", stanpumpr_drug = "melphalan"),
   m("fludarabine__hct__langenhorst2019", "fludarabine", "fludarabine", "IV",
     "258 HCT recipients 0.3-74 years", "F-ara-A",
-    "three compartments; allometric weight; eGFR on renal clearance", "expansion", "linear", "C34",
-    "Dosed as fludarabine phosphate, measured as F-ara-A: the dose basis must be fixed from the paper."),
+    "three compartments allometric in weight about 70 kg: CL (3.24 + 0.782 x eGFR [L/h]) x (WT/70)^0.75, V1 39, V2 20, V3 50 L, Q2 8.6, Q3 3.8 L/h; eGFR Cockcroft-Gault or Schwartz 1976, capped by age",
+    "expansion", "linear", "C34",
+    "Tables and Eq. 7 read in the PubMed Central text (2026-11-07). On Shafer's decisions (2026-11-07): eGFR read in L/h per 70 kg (the abstract's reading; Eq. 7's 'l/h/kg' would make the renal share 2% against the paper's 65%), and doses entered as fludarabine phosphate (label, 365.2 g/mol) with the model run in F-ara-A (x 285.24/365.21), the only basis that reproduces the adult median AUC (26.1 against 26 mg.h/L).",
+    readiness = "implemented", stanpumpr_drug = "fludarabine"),
   m("thiotepa__highdose__dejonge2004", "thiotepa", "thiotepa", "IV",
     "49 adults (86 courses), high-dose cyclophosphamide, thiotepa and carboplatin", "thiotepa and TEPA",
     "thiotepa and TEPA two compartments each; inducible and non-inducible thiotepa elimination, the enzyme induced by cyclophosphamide; joined to the cyclophosphamide model",

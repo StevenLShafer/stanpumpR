@@ -110,7 +110,7 @@ plasmaOnly <- c(
     "istradefylline", "amantadineER", "pimavanserin", "tolcapone",
     # Chemotherapy (2026-11-05): plasma only (inst/help/models/chemotherapy.md)
     "cladribine", "fluorouracil", "carboplatin", "busulfan",
-    "methotrexatePediatric", "methotrexate", "fluorouracilTan", "bendamustine", "oxaliplatinNikanjam", "capecitabine", "capecitabine5FU", "gemcitabine", "gemcitabineDFDU", "etoposideDuong", "melphalanPediatric", "carboplatinPediatric", "daunorubicin", "doxorubicinPediatric", "doxorubicinolPediatric", "etoposide", "cisplatin", "cisplatinBound", "vinorelbine", "topotecan", "irinotecan", "irinotecanSN38", "doxorubicin", "doxorubicinol", "cyclophosphamide", "docetaxel", "vincristine", "melphalan", "etoposidePediatric", "pemetrexed", "paclitaxel", "vincristinePediatric", "oxaliplatin"
+    "methotrexatePediatric", "methotrexate", "fluorouracilTan", "fludarabine", "bendamustine", "oxaliplatinNikanjam", "capecitabine", "capecitabine5FU", "gemcitabine", "gemcitabineDFDU", "etoposideDuong", "melphalanPediatric", "carboplatinPediatric", "daunorubicin", "doxorubicinPediatric", "doxorubicinolPediatric", "etoposide", "cisplatin", "cisplatinBound", "vinorelbine", "topotecan", "irinotecan", "irinotecanSN38", "doxorubicin", "doxorubicinol", "cyclophosphamide", "docetaxel", "vincristine", "melphalan", "etoposidePediatric", "pemetrexed", "paclitaxel", "vincristinePediatric", "oxaliplatin"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

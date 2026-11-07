@@ -613,3 +613,21 @@ decision (2026-11-07): only the base basis reproduces the paper's median
 Cmax (6038 against 5839 ng/mL) and cycle-1 AUC (13,750 against 13,635).
 M3 and M4 were fitted alone with lagged zero-order inputs and are not carried.
 The label's 700 mL/min and Vss 25 L are recorded, not used.
+
+## 36. Fludarabine (Langenhorst 2019) (2026-11-07)
+
+`fludarabine` from Langenhorst 2019 (source C34; Tables 1-2 and Eq. 7 read
+in the PubMed Central text, the PDF still to confirm), children and adults
+0.2-74 years: three compartments allometric in weight about 70 kg, CL
+(3.24 + 0.782 x eGFR) x (WT/70)^0.75 L/h, V1 39, V2 20, V3 50 L, Q2 8.6, Q3
+3.8 L/h. Two decisions of Shafer's (2026-11-07): eGFR is read in L/h per 70
+kg, the abstract's reading (Eq. 7's "l/h/kg" would make the renal share 2%
+against the paper's 65%; this reading gives 63% at eGFR 120); and doses are
+entered as fludarabine phosphate (label NDA 022137, 365.2 g/mol), the model
+run in F-ara-A (x 285.24/365.21 = 0.781), the only basis that reproduces the
+adult median cumulative AUC (26.1 against 26 mg.h/L). The eGFR is the
+paper's: Cockcroft-Gault from 17 (girls) or 14 (boys), Schwartz 1976 below
+(k 0.45, 0.55, 0.70 for a boy of 13), the patient's own creatinine, capped at
+140 mL/min/1.73 m2 with a linear rise from 35 at birth to 1.5 years and a
+fall of 8 per decade after 30. Pregnancy: eGFR x 1.5 with the creatinine
+blank (physiological, applied).
