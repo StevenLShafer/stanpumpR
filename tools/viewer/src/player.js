@@ -427,7 +427,7 @@ const Player = {
 
     togglePlay() { if (this.playing) this.pause(); else this.play(); },
     play() {
-        const r = this.run; if (!r) return;
+        const r = this.run; if (!r || Video.busy) return;
         if (this.T >= r.t[r.t.length - 1]) this.seek(r.t[0]);
         this.playing = true; View.playing = true; this.last = null;
         this.buttons();
@@ -507,6 +507,7 @@ const Keys = {
         help.addEventListener('click', e => { if (e.target === help) help.classList.remove('show'); });
         window.addEventListener('keydown', e => {
             if (e.ctrlKey || e.metaKey || e.altKey) return;
+            if (Video.busy) return;          // saving a video: the keys wait
             // h (or ?) shows the keys; h, Esc or a click outside the card hides them.
             if (e.key === 'h' || e.key === 'H' || e.key === '?') { help.classList.toggle('show'); e.preventDefault(); return; }
             if (e.key === 'Escape') { help.classList.remove('show'); return; }

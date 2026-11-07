@@ -73,7 +73,7 @@ const put = (marker, text) => {
 };
 put('three', safe(threeJs));
 put('viewer.css', fs.readFileSync(path.join(src, 'viewer.css'), 'utf8'));
-for (const f of ['looks.js', 'vessels.js', 'arrows.js', 'ribbon.js', 'labels.js', 'perf.js', 'scene.js', 'flat.js', 'player.js'])
+for (const f of ['looks.js', 'vessels.js', 'arrows.js', 'ribbon.js', 'labels.js', 'perf.js', 'scene.js', 'flat.js', 'player.js', 'video.js'])
     put(f, safe(fs.readFileSync(path.join(src, f), 'utf8')));
 if (/\/\*@@[^@]+@@\*\//.test(html)) throw new Error('a marker was left in viewer.html');
 

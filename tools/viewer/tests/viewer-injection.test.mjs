@@ -548,3 +548,108 @@ test('sizes: proportional within 10:1, compressed to exactly 10:1 beyond it, in 
     assertClean(page);
   }
 });
+
+// ── Save a video (video.js, 2026-11-07): an H.264 MP4 made in the browser.
+// The boxes of an MP4, walked: [{type, start, size, body}] at one level.
+function mp4Boxes(buf, start = 0, end = buf.length) {
+  const out = [];
+  for (let o = start; o + 8 <= end;) {
+    const size = buf.readUInt32BE(o), type = buf.toString('latin1', o + 4, o + 8);
+    assert.ok(size >= 8 && o + size <= end, `box ${type} at ${o}: size ${size} runs past ${end}`);
+    out.push({ type, start: o, size, body: o + 8 });
+    o += size;
+  }
+  return out;
+}
+const child = (buf, b, type, skip = 0) => mp4Boxes(buf, b.body + skip, b.start + b.size).find(x => x.type === type);
+
+async function recordVideo(page, view, withPatient) {
+  return page.evaluate(async ([view, withPatient]) => {
+    Player.setView(view); Player.setSpeed(SPEEDS[SPEEDS.length - 1]);
+    const plan = Video.plan();
+    const blob = await Video.record(plan, withPatient, () => {});
+    View.recording = false;
+    const buf = new Uint8Array(await blob.arrayBuffer());
+    let s = ''; for (let i = 0; i < buf.length; i += 0x8000) s += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+    return { plan, b64: btoa(s) };
+  }, [view, withPatient]);
+}
+
+test('video: the dialog says what it will make, and refuses a video over 5 minutes', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, RUN), true);
+  await page.evaluate(() => Player.setSpeed(30));          // 3600 s at 30x: 2 min
+  await page.click('#saveVideo');
+  let card = await page.evaluate(() => ({ shown: document.getElementById('videoCard').classList.contains('show'),
+    what: document.querySelector('#videoCard .what').textContent, go: document.querySelector('#videoCard .go').disabled,
+    patient: document.querySelector('#videoCard .patient').checked }));
+  assert.ok(card.shown);
+  assert.match(card.what, /2D view/); assert.match(card.what, /2 min 0 s of video at 30 frames a second, 1620 × 1080/);
+  assert.equal(card.go, false);
+  assert.equal(card.patient, false, 'the patient must be left out unless asked for');
+  await page.click('#videoCard .cancel');
+  await page.evaluate(() => Player.setSpeed(1));            // an hour of video
+  await page.click('#saveVideo');
+  card = await page.evaluate(() => ({ go: document.querySelector('#videoCard .go').disabled, why: document.querySelector('#videoCard .why').textContent }));
+  assert.equal(card.go, true);
+  assert.match(card.why, /longest video is 5 min/);
+  assertClean(page);
+});
+
+test('video: each view saves a valid H.264 MP4 of every frame; the patient only when asked; a safe file name', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  const r = clone(RUN); r.drug = '<img src=x onerror=alert(1)>../propofol';
+  assert.equal(await loadRun(page, r), true);
+  for (const view of ['2d', '3d']) {
+    const { plan, b64 } = await recordVideo(page, view, false);
+    const buf = Buffer.from(b64, 'base64');
+    const top = mp4Boxes(buf);
+    assert.deepEqual(top.map(b => b.type), ['ftyp', 'moov', 'mdat'], view + ': top-level boxes');
+    const moov = top[1], trak = child(buf, moov, 'trak'), mdia = child(buf, trak, 'mdia');
+    const stbl = child(buf, child(buf, mdia, 'minf'), 'stbl');
+    const stsd = child(buf, stbl, 'stsd'), avc1 = mp4Boxes(buf, stsd.body + 8, stsd.start + stsd.size)[0];
+    assert.equal(avc1.type, 'avc1');
+    assert.equal(buf.readUInt16BE(avc1.body + 24), plan.w); assert.equal(buf.readUInt16BE(avc1.body + 26), plan.h);
+    assert.ok(child(buf, avc1, 'avcC', 78), 'no avcC');
+    const stsz = child(buf, stbl, 'stsz'), n = buf.readUInt32BE(stsz.body + 8);
+    assert.equal(n, plan.frames, view + ': every frame a sample');
+    let total = 0; for (let i = 0; i < n; i++) total += buf.readUInt32BE(stsz.body + 12 + 4 * i);
+    assert.equal(top[2].size - 8, total, 'mdat holds exactly the samples');
+    const stco = child(buf, stbl, 'stco');
+    assert.equal(buf.readUInt32BE(stco.body + 8), top[2].start + 8, 'the chunk offset is the first sample');
+    const stss = child(buf, stbl, 'stss');
+    assert.equal(buf.readUInt32BE(stss.body + 8), 1, 'the first sample is a key frame');
+    // Each sample is length-prefixed NAL units that fill it exactly.
+    let o = top[2].start + 8;
+    for (let i = 0; i < n; i++) {
+      const end = o + buf.readUInt32BE(stsz.body + 12 + 4 * i);
+      while (o < end) o += 4 + buf.readUInt32BE(o);
+      assert.equal(o, end, `sample ${i} is not whole NAL units`);
+    }
+  }
+  const s = await page.evaluate(() => ({ off: videoHeading(false), on: videoHeading(true), file: videoFileName(Player.run.drug, '2d') }));
+  assert.doesNotMatch(s.off, /kg|cm|male/);
+  assert.match(s.on, /70 kg · 170 cm · 40 y · male/);
+  assert.match(s.file, /^img-src-x-onerror-alert-1-propofol-2D-\d{4}-\d\d-\d\d\.mp4$/);
+  assertClean(page);
+});
+
+test('video: Cancel stops it, and the run, the time and the 3D loop are as they were', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, RUN), true);
+  await page.evaluate(() => { Player.seek(1234); Player.setSpeed(30); });
+  await page.click('#saveVideo');
+  await page.click('#videoCard .go');
+  await new Promise(r => setTimeout(r, 400));
+  assert.equal(await page.evaluate(() => Video.busy), true);
+  await page.keyboard.press('v');                           // the keys wait while it saves
+  await page.click('#videoCard .cancel');
+  await page.waitForFunction(() => !Video.busy, { timeout: 30000 });
+  const after = await page.evaluate(() => ({ T: Player.T, view: Player.view, recording: View.recording, playing: Player.playing,
+    why: document.querySelector('#videoCard .why').textContent }));
+  assert.deepEqual(after, { T: 1234, view: '2d', recording: false, playing: false, why: 'Cancelled.' });
+  assertClean(page);
+});
