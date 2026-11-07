@@ -591,8 +591,14 @@ test('video: the dialog says what it will make, and refuses a video over 5 minut
     patient: document.querySelector('#videoCard .patient').checked }));
   assert.ok(card.shown);
   assert.match(card.what, /2D view/); assert.match(card.what, /2 min 0 s of video at 30 frames a second, 1620 × 1080/);
-  assert.equal(card.go, false);
   assert.equal(card.patient, false, 'the patient must be left out unless asked for');
+  // A browser without WebCodecs is told so, and Save stays off (CodeRabbit, #688).
+  if (!(await page.evaluate(() => 'VideoEncoder' in window))) {
+    assert.equal(card.go, true);
+    assert.match(await page.evaluate(() => document.querySelector('#videoCard .why').textContent), /cannot make videos/);
+    return assertClean(page);
+  }
+  assert.equal(card.go, false);
   await page.click('#videoCard .cancel');
   await page.evaluate(() => Player.setSpeed(1));            // an hour of video
   await page.click('#saveVideo');
@@ -602,7 +608,18 @@ test('video: the dialog says what it will make, and refuses a video over 5 minut
   assertClean(page);
 });
 
-test('video: each view saves a valid H.264 MP4 of every frame; the patient only when asked; a safe file name', { skip }, async t => {
+test('video: the strip names the patient only when asked; a markup drug name gives a safe file name', { skip }, async t => {
+  const page = await viewerPage(t);
+  const r = clone(RUN); r.drug = '<img src=x onerror=alert(1)>../propofol';
+  assert.equal(await loadRun(page, r), true);
+  const s = await page.evaluate(() => ({ off: videoHeading(false), on: videoHeading(true), file: videoFileName(Player.run.drug, '2d') }));
+  assert.doesNotMatch(s.off, /kg|cm|male/);
+  assert.match(s.on, /70 kg · 170 cm · 40 y · male/);
+  assert.match(s.file, /^img-src-x-onerror-alert-1-propofol-2D-\d{4}-\d\d-\d\d\.mp4$/);
+  assertClean(page);
+});
+
+test('video: each view saves a valid H.264 MP4 of every frame', { skip }, async t => {
   const page = await viewerPage(t);
   await page.setViewport({ width: 1200, height: 800 });
   const r = clone(RUN); r.drug = '<img src=x onerror=alert(1)>../propofol';
@@ -642,10 +659,6 @@ test('video: each view saves a valid H.264 MP4 of every frame; the patient only 
       assert.equal(o, end, `sample ${i} is not whole NAL units`);
     }
   }
-  const s = await page.evaluate(() => ({ off: videoHeading(false), on: videoHeading(true), file: videoFileName(Player.run.drug, '2d') }));
-  assert.doesNotMatch(s.off, /kg|cm|male/);
-  assert.match(s.on, /70 kg · 170 cm · 40 y · male/);
-  assert.match(s.file, /^img-src-x-onerror-alert-1-propofol-2D-\d{4}-\d\d-\d\d\.mp4$/);
   assertClean(page);
 });
 
