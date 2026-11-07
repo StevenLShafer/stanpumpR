@@ -51,6 +51,7 @@ const VIDEO_USE = 'stanpumpR is an advisory simulator intended to facilitate per
 const Video = {
     busy: false, cancelled: false,
     pending: null,      // a run that arrived while saving, loaded when the save ends
+    refused: null,      // the message for a run refused after it, shown again then
 
     init() {
         this.card = document.getElementById('videoCard');
@@ -140,6 +141,7 @@ const Video = {
             // included, keeping the word on why the save ended (CodeRabbit, #688).
             const why = this.card.querySelector('.why'), said = why.textContent;
             if (this.pending) { const next = this.pending; this.pending = null; Player.load(next); }
+            if (this.refused) { Player.message(this.refused, true); this.refused = null; }
             if (this.shown() && this.describe() && said) why.textContent = said;
         }
     },

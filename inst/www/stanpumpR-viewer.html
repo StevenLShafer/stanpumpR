@@ -6785,8 +6785,10 @@ const Player = {
         // message waits under the video card and shows when the card closes.
         const p = runProblem(r);
         if (typeof Video !== 'undefined' && Video.busy) {
-            if (p) { this.message(`This run cannot be shown. ${p}`, true); return false; }
-            Video.pending = r; return true;
+            // The later of a queued run and a refused one decides what shows:
+            // a refusal after a queued run is shown again once that run loads.
+            if (p) { Video.refused = `This run cannot be shown. ${p}`; this.message(Video.refused, true); return false; }
+            Video.pending = r; Video.refused = null; return true;
         }
         if (p) { this.message(`This run cannot be shown. ${p}`, true); return false; }
         this.message('');
@@ -7155,6 +7157,7 @@ const VIDEO_USE = 'stanpumpR is an advisory simulator intended to facilitate per
 const Video = {
     busy: false, cancelled: false,
     pending: null,      // a run that arrived while saving, loaded when the save ends
+    refused: null,      // the message for a run refused after it, shown again then
 
     init() {
         this.card = document.getElementById('videoCard');
@@ -7244,6 +7247,7 @@ const Video = {
             // included, keeping the word on why the save ended (CodeRabbit, #688).
             const why = this.card.querySelector('.why'), said = why.textContent;
             if (this.pending) { const next = this.pending; this.pending = null; Player.load(next); }
+            if (this.refused) { Player.message(this.refused, true); this.refused = null; }
             if (this.shown() && this.describe() && said) why.textContent = said;
         }
     },

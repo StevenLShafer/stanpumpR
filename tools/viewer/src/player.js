@@ -244,8 +244,10 @@ const Player = {
         // message waits under the video card and shows when the card closes.
         const p = runProblem(r);
         if (typeof Video !== 'undefined' && Video.busy) {
-            if (p) { this.message(`This run cannot be shown. ${p}`, true); return false; }
-            Video.pending = r; return true;
+            // The later of a queued run and a refused one decides what shows:
+            // a refusal after a queued run is shown again once that run loads.
+            if (p) { Video.refused = `This run cannot be shown. ${p}`; this.message(Video.refused, true); return false; }
+            Video.pending = r; Video.refused = null; return true;
         }
         if (p) { this.message(`This run cannot be shown. ${p}`, true); return false; }
         this.message('');

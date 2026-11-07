@@ -753,6 +753,11 @@ test('video: a resize during a save leaves the card describing the window after 
     msg: document.querySelector('#message .card').textContent }));
   assert.deepEqual([bad.ok, bad.pending, bad.busy, bad.drug], [false, null, true, 'propofol']);
   assert.match(bad.msg, /not a JSON object/);
+  // A good run queued, then a broken one: the good one loads when the save
+  // ends, and the broken one's message is still shown after it.
+  const half = clone(RUN); half.drug = 'half'; half.t = half.t.map(x => x / 2);
+  assert.equal(await page.evaluate(r => Player.load(r), half), true);
+  assert.equal(await page.evaluate(() => Player.load(null)), false);
   await page.setViewport({ width: 800, height: 600 });
   await page.click('#videoCard .cancel');
   await page.waitForFunction(() => !Video.busy, { timeout: 30000 });
@@ -760,5 +765,12 @@ test('video: a resize during a save leaves the card describing the window after 
                                             why: document.querySelector('#videoCard .why').textContent }));
   assert.match(card.what, /1440 × 1080/, 'the card gives the size before the resize: ' + card.what);
   assert.equal(card.why, 'Cancelled.');
+  // Once the card is closed: the queued run is shown, and the refusal is still in view.
+  await page.click('#videoCard .cancel');
+  const after = await page.evaluate(() => ({ shown: Video.shown(), drug: Player.run.drug,
+    msg: document.getElementById('message').classList.contains('show') && document.querySelector('#message .card').textContent }));
+  assert.equal(after.shown, false);
+  assert.equal(after.drug, 'half');
+  assert.match(String(after.msg), /not a JSON object/, 'the refusal was cleared before it could be read');
   assertClean(page);
 });
