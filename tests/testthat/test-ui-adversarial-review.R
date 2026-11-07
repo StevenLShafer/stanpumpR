@@ -45,7 +45,7 @@ targetGrid <- function(...) {
   tableGridInputValue(rows)
 }
 
-# The tag is the drug output$editPriorDosesUI drew the grid for
+# The tag is the drug editDosesDialogGrid() drew the grid for
 editDosesGrid <- function(drug, rows) tableGridInputValue(rows, tag = drug)
 
 recordNotices <- function(session) {

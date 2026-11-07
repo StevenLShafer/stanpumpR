@@ -565,6 +565,14 @@ draft and undo), so a merge is a refactor of its own; until then a change to
 the shared key contract is made in both, and the browser suite's cases run
 on each.
 
+## The external review of the fixes (ChatGPT, fifth pass, 2026-11-07)
+
+ChatGPT re-reviewed `96fb26d`. It re-ran every forged input of the fourth pass and attacked each fix at its boundaries. It also re-ran the dialog matrix, the Minto Visualizer button, the 74 browser cases (all pass) and `devtools::test()` (only the two known `test-agent-docs.R` failures). Its verdict was that F01-F07 are fixed and the migration is ready to merge. It found one new defect, of low severity:
+
+| | Finding | Verdict | Fix |
+|---|---|---|---|
+| N01 | Edit doses, opened for a second drug, briefly showed the first drug's rows under the new title | Confirmed by reading the code: the grid was a `renderUI` output shared by every drug's dialog, and the browser showed its last value until the server's new one arrived. Apply was already safe, because the grid's tag names its drug. | The grid is drawn into the dialog as it opens (`editDosesDialogGrid()`, as Edit events does), so there is no earlier value to show. `table-grid.test.js` reads fentanyl's rows the moment its dialog opens after propofol's. That case fails on the old code and passes on the fix. |
+
 ## Decisions for Steven Shafer
 
 These are pending. Record each answer here.

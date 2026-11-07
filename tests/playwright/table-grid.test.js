@@ -94,6 +94,18 @@ describe('Edit doses', () => {
     await H.settle(page, 1000);
     const propofol = (await H.serverState(page)).table.filter(r => r[0] === 'propofol').map(r => r.join(' ')).sort();
     assert.deepEqual(propofol, ['propofol 0 0 mcg/kg/min', 'propofol 0 120 mg']);
+    // The next drug's dialog shows that drug's rows from the moment it
+    // opens, never the last dialog's under the new title (ChatGPT's fifth
+    // review, N01)
+    await page.evaluate(() => window.Shiny.setInputValue('plot_dblclick',
+      { x: 5, y: 1, panelvar1: 'fentanyl' }, { priority: 'event' }));
+    await page.waitForSelector('.modal-title:has-text("Edit fentanyl doses")', { timeout: 30000 });
+    const first = await page.evaluate(() => {
+      const g = document.getElementById('editPriorDosesTable');
+      return g ? Array.from(g.querySelectorAll('tbody tr')).map(tr =>
+        Array.from(tr.querySelectorAll('input, select')).map(x => x.type === 'checkbox' ? x.checked : x.value)) : null;
+    });
+    assert.deepEqual(first, [[false, '0', '0', 'mcg']]);
   });
 });
 

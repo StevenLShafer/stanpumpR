@@ -2384,7 +2384,7 @@ app_server <- function(input, output, session) {
         # The column must stay headed "Time" (the grid's hooks find it by
         # name), so the unit is said above it
         tags$p(class = "small text-muted mb-1", timeEntryLabel(doseTableFormat())),
-        uiOutput("editPriorDosesUI"),
+        isolate(editDosesDialogGrid(drug)),
         actionButton("editDosesOK", "Apply", class = "btn-primary"),
         actionButton("deleteAllDosesBtn", "Delete All Doses", class = "btn-outline-danger"),
         # The Minto Visualizer (R/viewerRun.R): only for a drug it can draw.
@@ -2444,23 +2444,25 @@ app_server <- function(input, output, session) {
     deleteDrugDoses(DrugTimeUnits()$drug)
   })
 
-  output$editPriorDosesUI <- renderUI({
-    profileCode({
-      dt <- doseTable()
-      drug <- DrugTimeUnits()$drug
-      req(drug)
-      rows <- dt[dt$Drug %in% drug, ]
-      req(nrow(rows) > 0)
-      possibleUnits <- unlist(drugDefaults()$Units[drugDefaults()$Drug == drug])
-      rows$Delete <- FALSE
-      # The drug the grid was drawn for is its tag, returned with every edit,
-      # so that Apply cannot write one drug's rows as another's from a grid
-      # left over from an earlier dialog (editDosesOK)
-      tableGridInput("editPriorDosesTable", editDosesGridColumns(possibleUnits, doseFieldLabel(drug)),
-                     rows[, c("Delete", "Time", "Dose", "Units")], tag = drug, height = 260,
-                     label = paste(drug, "doses"))
-    }, name = "output$editPriorDosesUI")
-  })
+  # The Edit doses dialog's grid, drawn into the dialog as it opens (as Edit
+  # events' is), or NULL for a drug with no rows.  It was a renderUI output
+  # shared by every drug's dialog, and the browser showed the output's last
+  # value, the previous drug's rows, under the new drug's title until the
+  # server's new one arrived (ChatGPT's fifth review, N01; Apply was already
+  # safe, the grid's tag naming the drug it was drawn for).
+  editDosesDialogGrid <- function(drug) {
+    dt <- doseTable()
+    rows <- dt[dt$Drug %in% drug, ]
+    if (!length(drug) || !nzchar(drug) || nrow(rows) == 0) return(NULL)
+    possibleUnits <- unlist(drugDefaults()$Units[drugDefaults()$Drug == drug])
+    rows$Delete <- FALSE
+    # The drug the grid was drawn for is its tag, returned with every edit,
+    # so that Apply cannot write one drug's rows as another's from a grid
+    # left over from an earlier dialog (editDosesOK)
+    tableGridInput("editPriorDosesTable", editDosesGridColumns(possibleUnits, doseFieldLabel(drug)),
+                   rows[, c("Delete", "Time", "Dose", "Units")], tag = drug, height = 260,
+                   label = paste(drug, "doses"))
+  }
 
   observeEvent(
     input$editDosesOK,

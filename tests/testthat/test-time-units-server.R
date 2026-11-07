@@ -395,7 +395,7 @@ test_that("the dialogs show and read times in the dose table's format", {
     doseTable(withTimes("10", "9", "1.5"))
     DrugTimeUnits(list(drug = "propofol"))
     TT <- data.frame(Delete = FALSE, Time = c("10", "9"), Dose = c("1", "2"), Units = c("mg", "mg"))
-    # the drug the real grid is tagged with (output$editPriorDosesUI)
+    # the drug the real grid is tagged with (editDosesDialogGrid())
     session$setInputs(
       editPriorDosesTable = tableGridInputValue(
         lapply(seq_len(nrow(TT)), function(i) unname(as.list(TT[i, ]))), tag = "propofol"
@@ -579,19 +579,18 @@ test_that("the dose field is labelled Dose or Target for a drug with TCI units",
     expect_match(as.character(doseGridInput("doseGrid")),
                  sprintf('data-dose-header="%s"', DOSE_COLUMN_HEADER), fixed = TRUE)
 
-    # the Edit doses dialog's grid (an output is computed at a flush; its
-    # columns are the grid's data-spec)
-    editHeaders <- function() {
-      session$flushReact()
-      html <- output$editPriorDosesUI$html
+    # the Edit doses dialog's grid, drawn as the dialog opens (its columns
+    # are the grid's data-spec)
+    editHeaders <- function(drug) {
+      html <- as.character(isolate(session$env$editDosesDialogGrid(drug)))
       spec <- regmatches(html, regexpr('data-spec="[^"]*"', html))
       spec <- xml2::xml_text(xml2::read_html(paste0("<p>", sub('^data-spec="(.*)"$', "\\1", spec), "</p>")))
       vapply(jsonlite::fromJSON(spec, simplifyVector = FALSE)$columns, `[[`, "", "label")
     }
-    DrugTimeUnits(list(drug = "propofol"))
-    expect_equal(editHeaders(), c("Delete", "Time", "Dose or Target", "Units"))
-    DrugTimeUnits(list(drug = "rocuronium"))
-    expect_equal(editHeaders(), c("Delete", "Time", "Dose", "Units"))
+    expect_equal(editHeaders("propofol"), c("Delete", "Time", "Dose or Target", "Units"))
+    expect_equal(editHeaders("rocuronium"), c("Delete", "Time", "Dose", "Units"))
+    # each drug's own rows, never another's (ChatGPT's fifth review, N01)
+    expect_null(isolate(session$env$editDosesDialogGrid("oxygen")))
   })
 })
 
