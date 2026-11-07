@@ -240,8 +240,13 @@ const Player = {
     load(r) {
         // Saving a video: the run being filmed stays until the save ends
         // (CodeRabbit, #688); the new one is loaded then (Video.close()).
-        if (typeof Video !== 'undefined' && Video.busy) { Video.pending = r; return true; }
+        // A run that cannot be shown is refused at once, not queued: its
+        // message waits under the video card and shows when the card closes.
         const p = runProblem(r);
+        if (typeof Video !== 'undefined' && Video.busy) {
+            if (p) { this.message(`This run cannot be shown. ${p}`, true); return false; }
+            Video.pending = r; return true;
+        }
         if (p) { this.message(`This run cannot be shown. ${p}`, true); return false; }
         this.message('');
         this.pause();
