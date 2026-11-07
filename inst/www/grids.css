@@ -1,0 +1,201 @@
+/* The app's grids: the dose grid (dose-grid.js) and the dialogs' table grid
+   (table-grid.js), loaded with them by gridDependency() (R/table-grid.R). */
+
+/* The dose grid (inst/www/dose-grid.js; docs/grid-replacement.md):
+the four columns, fitted to the 450 px Doses sidebar.  Every cell is a form control: the inputs fill their
+cells, and the Units cell shows the unit as text (wrapped after its route,
+unitWrapText()) with a transparent <select> over it.  A click selects the cell; the arrow
+at its right (UNIT_ARROW_WIDTH in dose-grid.js), a double click, Alt+Down or
+Space opens the browser's own list of the row's units.  The colours are the theme's
+(Bootstrap's variables, with the light values as fallbacks), so a dark theme
+does not leave light text on white; and under a large browser zoom the table
+keeps a usable width and scrolls sideways rather than crushing its columns
+(the external review of 2026-11-05). */
+.stanpumpr-dose-grid {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+}
+.dose-sidebar .stanpumpr-dose-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.dose-grid-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+table.dose-grid {
+  width: 100%;
+  min-width: 300px;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+table.dose-grid th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bs-tertiary-bg, #f0f0f0);
+  color: var(--bs-body-color, #212529);
+  font-weight: normal;
+  text-align: center;
+  border: 1px solid var(--bs-border-color, #ccc);
+  padding: 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+table.dose-grid th.dose-grid-col0 { width: 39%; }
+table.dose-grid th.dose-grid-col1 { width: 13%; }
+table.dose-grid th.dose-grid-col2 { width: 22%; }
+table.dose-grid th.dose-grid-col3 { width: 26%; }
+table.dose-grid td {
+  border: 1px solid var(--bs-border-color, #ccc);
+  padding: 0;
+  height: 24px;
+  position: relative;
+  background: var(--bs-body-bg, #fff);
+  color: var(--bs-body-color, #212529);
+}
+table.dose-grid td input {
+  width: 100%;
+  height: 100%;
+  min-height: 23px;
+  border: 0;
+  padding: 0 4px;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+}
+table.dose-grid td.dose-grid-col1 input,
+table.dose-grid td.dose-grid-col2 input {
+  text-align: right;
+}
+table.dose-grid td input:focus,
+table.dose-grid td.dose-grid-col3:focus-within {
+  outline: 2px solid #4b89ff;
+  outline-offset: -2px;
+}
+table.dose-grid input.dose-grid-illicit {
+  color: #C00000;
+}
+.dose-grid-unit-text {
+  display: block;
+  padding: 1px 18px 1px 4px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+.dose-grid-unit-text::after {
+  content: "\25BE";
+  position: absolute;
+  right: 4px;
+  top: 2px;
+  color: var(--bs-secondary-color, #999);
+}
+table.dose-grid td.dose-grid-col3 select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  font: inherit;
+}
+table.dose-grid td.dose-grid-col3 select:disabled {
+  cursor: default;
+}
+.dose-grid-list {
+  position: absolute;
+  z-index: 1060;
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--bs-body-bg, #fff);
+  color: var(--bs-body-color, #212529);
+  border: 1px solid var(--bs-border-color, #999);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+.dose-grid-list li {
+  padding: 2px 6px;
+  cursor: pointer;
+}
+.dose-grid-list li[aria-selected="true"] {
+  background: var(--bs-primary-bg-subtle, #e6efff);
+}
+.dose-grid-menu {
+  position: absolute;
+  z-index: 1060;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  min-width: 10rem;
+  background: var(--bs-body-bg, #fff);
+  color: var(--bs-body-color, #212529);
+  border: 1px solid var(--bs-border-color, #999);
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+.dose-grid-menu[hidden] {
+  display: none;
+}
+.dose-grid-menu-item {
+  display: block;
+  width: 100%;
+  padding: 4px 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+}
+.dose-grid-menu-item:hover,
+.dose-grid-menu-item:focus {
+  background: var(--bs-tertiary-bg, #f0f0f0);
+  outline: none;
+}
+.dose-grid-status:empty {
+  display: none;
+}
+.dose-grid-unit-text:empty::after {
+  content: none;
+}
+.dose-grid-paste-sink {
+  position: absolute;
+  left: -10000px;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+/* The table grid (table-grid.js): the dialogs' grids, styled as the dose
+   grid.  Numbers sit right; a checkbox sits in the middle of its cell; a cell
+   that cannot be changed is shaded. */
+table.table-grid td.table-grid-time input,
+table.table-grid td.table-grid-dose input,
+table.table-grid td.table-grid-number input {
+  text-align: right;
+}
+table.table-grid td.table-grid-checkbox {
+  text-align: center;
+}
+table.table-grid td.table-grid-checkbox input {
+  width: auto;
+  min-height: 0;
+  height: auto;
+  vertical-align: middle;
+}
+table.table-grid td input[readonly],
+table.table-grid td select:disabled + * {
+  background: var(--bs-tertiary-bg, #f0f0f0);
+}
+table.table-grid td input[readonly] {
+  cursor: default;
+}
+.table-grid-scroll {
+  position: relative;
+}

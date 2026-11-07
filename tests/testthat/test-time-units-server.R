@@ -236,15 +236,13 @@ test_that("an edit from a grid drawn before the switch is converted", {
     session$flushReact()
     # The grid on screen was drawn for minutes ...
     stale <- withTimes("1440", "2880")
-    x <- createHOT(stale, getDrugDefaultsGlobal(), timeFormat("minutes", "relative"))$x
     # ... and the table is now in days
     session$setInputs(timeUnits = "days")
     expect_equal(doseTable()$Time[1], "1")
     refresh <- doseTableRefresh()
-    session$setInputs(doseTableHTML = list(
-      data = lapply(seq_len(nrow(stale)), function(i) as.list(unname(unlist(stale[i, ])))),
-      changes = list(event = "afterChange", source = "calculate"),
-      params = x
+    session$setInputs(doseGrid = doseGridInputValue(
+      lapply(seq_len(nrow(stale)), function(i) as.list(unname(unlist(stale[i, ])))),
+      "minutes/relative"
     ))
     expect_equal(doseTableDraft()$Time[1:2], c("1", "2"))
     expect_gt(doseTableRefresh(), refresh)   # and the grid is redrawn
@@ -379,18 +377,16 @@ test_that("the dialogs show and read times in the dose table's format", {
     # edit events: a row not edited keeps its exact minutes
     eventTable(data.frame(Time = c(1440 / 7, 2160), Event = c("Induction", "Intubation")))
     showEditEventsModal()
-    x <- editEventsHOT()$x
-    rows <- jsonlite::fromJSON(x$data, simplifyDataFrame = FALSE)
     # shown to 0.001 minute: 205.714 minutes
-    expect_equal(vapply(rows, `[[`, character(1), "Time"), c("0.1428569444", "1.5"))
-    asInput <- function(rows) list(
-      data = lapply(rows, function(r) list(r$Delete, r$Time, r$Event)),
-      changes = list(event = "afterChange", source = "edit"),
-      params = x
-    )
+    # (a plain variable of the server, read where it lives: the test's own
+    # copy is the one it had when the session started)
+    shown <- session$env$editEventsShown$text
+    expect_equal(shown, c("0.1428569444", "1.5"))
+    rows <- list(list(FALSE, shown[1], "Induction"), list(FALSE, shown[2], "Intubation"))
+    asInput <- function(rows) tableGridInputValue(rows)
     session$setInputs(editEventsTableHTML = asInput(rows), editEventsOK = 1)
     expect_identical(eventTable()$Time, c(1440 / 7, 2160))
-    rows[[2]]$Time <- "3"
+    rows[[2]][[2]] <- "3"
     showEditEventsModal()
     session$setInputs(editEventsTableHTML = asInput(rows), editEventsOK = 2)
     expect_identical(eventTable()$Time, c(1440 / 7, 4320))
@@ -399,13 +395,10 @@ test_that("the dialogs show and read times in the dose table's format", {
     doseTable(withTimes("10", "9", "1.5"))
     DrugTimeUnits(list(drug = "propofol"))
     TT <- data.frame(Delete = FALSE, Time = c("10", "9"), Dose = c("1", "2"), Units = c("mg", "mg"))
-    # the drug stamp the real grid carries (output$editPriorDosesTable)
-    hot <- c(rhandsontable::rhandsontable(TT)$x, list(drug = "propofol"))
+    # the drug the real grid is tagged with (editDosesDialogGrid())
     session$setInputs(
-      editPriorDosesTable = list(
-        data = lapply(seq_len(nrow(TT)), function(i) unname(as.list(TT[i, ]))),
-        changes = list(event = "afterChange", source = "edit"),
-        params = hot
+      editPriorDosesTable = tableGridInputValue(
+        lapply(seq_len(nrow(TT)), function(i) unname(as.list(TT[i, ]))), tag = "propofol"
       ),
       editDosesOK = 1
     )
@@ -582,21 +575,22 @@ test_that("the dose field is labelled Dose or Target for a drug with TCI units",
     session$setInputs(addDoseDrug = "rocuronium")
     expect_equal(sentLabel(), "Dose")
 
-    # the dose table's grid: display header over the unchanged data column
-    hot <- createHOT(doseTable(), drugDefaults(), doseTableFormat())
-    expect_equal(hot$x$colHeaders, c("Drug", "Time", DOSE_COLUMN_HEADER, "Units"))
-    expect_equal(unlist(hot$x$rColHeaders), c("Drug", "Time", "Dose", "Units"))
+    # the dose table's grid: the display header over the Dose column
+    expect_match(as.character(doseGridInput("doseGrid")),
+                 sprintf('data-dose-header="%s"', DOSE_COLUMN_HEADER), fixed = TRUE)
 
-    # the Edit doses dialog's grid (an output is computed at a flush, and is
-    # the widget's JSON here)
-    editHeaders <- function() {
-      session$flushReact()
-      jsonlite::fromJSON(output$editPriorDosesTable)$x$colHeaders
+    # the Edit doses dialog's grid, drawn as the dialog opens (its columns
+    # are the grid's data-spec)
+    editHeaders <- function(drug) {
+      html <- as.character(isolate(session$env$editDosesDialogGrid(drug)))
+      spec <- regmatches(html, regexpr('data-spec="[^"]*"', html))
+      spec <- xml2::xml_text(xml2::read_html(paste0("<p>", sub('^data-spec="(.*)"$', "\\1", spec), "</p>")))
+      vapply(jsonlite::fromJSON(spec, simplifyVector = FALSE)$columns, `[[`, "", "label")
     }
-    DrugTimeUnits(list(drug = "propofol"))
-    expect_equal(editHeaders(), c("Delete", "Time", "Dose or Target", "Units"))
-    DrugTimeUnits(list(drug = "rocuronium"))
-    expect_equal(editHeaders(), c("Delete", "Time", "Dose", "Units"))
+    expect_equal(editHeaders("propofol"), c("Delete", "Time", "Dose or Target", "Units"))
+    expect_equal(editHeaders("rocuronium"), c("Delete", "Time", "Dose", "Units"))
+    # each drug's own rows, never another's (ChatGPT's fifth review, N01)
+    expect_null(isolate(session$env$editDosesDialogGrid("oxygen")))
   })
 })
 
@@ -624,10 +618,8 @@ test_that("the add-dose and edit-doses dialogs refuse a time or dose they cannot
     DrugTimeUnits(list(drug = "propofol"))
     editWith <- function(TT, n) {
       session$setInputs(
-        editPriorDosesTable = list(
-          data = lapply(seq_len(nrow(TT)), function(i) unname(as.list(TT[i, ]))),
-          changes = list(event = "afterChange", source = "edit"),
-          params = c(rhandsontable::rhandsontable(TT)$x, list(drug = "propofol"))
+        editPriorDosesTable = tableGridInputValue(
+          lapply(seq_len(nrow(TT)), function(i) unname(as.list(TT[i, ]))), tag = "propofol"
         ),
         editDosesOK = n
       )
@@ -667,12 +659,8 @@ test_that("the dose dialogs refuse a clock time that is no time of day", {
     DrugTimeUnits(list(drug = "propofol"))
     before <- doseTable()
     session$setInputs(
-      editPriorDosesTable = list(
-        data = list(list(FALSE, "08:00", "1", "mg"), list(FALSE, "25:00", "2", "mg")),
-        changes = list(event = "afterChange", source = "edit"),
-        params = c(rhandsontable::rhandsontable(
-          data.frame(Delete = FALSE, Time = c("08:00", "25:00"), Dose = c("1", "2"), Units = "mg")
-        )$x, list(drug = "propofol"))
+      editPriorDosesTable = tableGridInputValue(
+        list(list(FALSE, "08:00", "1", "mg"), list(FALSE, "25:00", "2", "mg")), tag = "propofol"
       ),
       editDosesOK = 1
     )

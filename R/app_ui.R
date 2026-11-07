@@ -60,7 +60,8 @@ app_ui <- function() {
         # The parameter converter on the help page models/pk-converter
         tags$script(src = "stanpumpr-assets/pk-convert.js"),
         tags$script(HTML(js_drug_defaults)),
-        tags$script(src = "stanpumpr-assets/hot_funs.js"),
+        # grid-funs.js, dose-grid.js and table-grid.js come with the dose
+        # grid (gridDependency(), R/table-grid.R)
         # The Minto Visualizer's popup (the Edit doses dialog's button)
         tags$script(src = "stanpumpr-assets/viewer-launch.js"),
         tags$link(href = "stanpumpr-assets/app.css", rel = "stylesheet")
@@ -668,7 +669,7 @@ app_ui <- function() {
             padding = 0,
             sidebar = bslib::sidebar(
               position = "right",
-              # The column widths createHOT() sets are fitted to it
+              # The dose grid's columns are fitted to it (grids.css)
               width = 450,
               open = "desktop",
               class = "dose-sidebar",
@@ -679,7 +680,8 @@ app_ui <- function() {
                   htmltools::tagAppendAttributes(class = "small text-muted")
               ),
 
-              rhandsontable::rHandsontableOutput("doseTableHTML"),
+              # the dose grid (R/dose-grid.R, inst/www/dose-grid.js)
+              doseGridInput("doseGrid", applyButton = "dosetable_apply"),
 
               div(
                 class = "d-grid mt-2",

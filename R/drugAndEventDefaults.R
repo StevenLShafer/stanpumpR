@@ -19,10 +19,9 @@ DRUG_LIBRARY_NUMERIC_COLUMNS <- c("Lower", "Upper", "Typical", "MEAC")
 
 # The table the Drug Library dialog shows.  endCe is managed via the Drug
 # Thresholds dialog; Category only groups the startup menu.  The threshold
-# columns go to the grid as TEXT: rhandsontable::hot_to_r() converts each
-# column back to the class it was given (its colClasses() runs as.numeric()
-# over a numeric one), so a typed "bogus" would come back as NA, the same as
-# a cleared cell, and drugLibraryProblems() could not tell them apart.  The
+# columns go to the grid as TEXT, and come back as typed (tableGridRead()):
+# read as numbers, a typed "bogus" would be NA, the same as a cleared cell,
+# and drugLibraryProblems() could not tell them apart.  The
 # input$drugEditsOK observer converts them to numbers after validation.
 drugLibraryGridData <- function(drugDefaults) {
   x <- drugDefaults
@@ -43,7 +42,19 @@ drugLibraryGridData <- function(drugDefaults) {
 # (production audit, 2026-11-01).  The check below needs the text as typed,
 # which is why drugLibraryGridData() hands those columns to the grid as text.
 drugLibraryProblems <- function(edited, current) {
+  # The Drug column is read-only and the grid adds and removes no rows, so
+  # the edited table names the library's drugs, all of them, in its order.
+  # Only the cells beside them were checked: a forged table of one row
+  # replaced the whole library, and a renamed drug became a new one, each
+  # leaving the dose table's drugs unknown and the plot gone (ChatGPT's
+  # fourth review, F03).
+  if (nrow(edited) != nrow(current) ||
+      !identical(as.character(edited$Drug), as.character(current$Drug))) {
+    return("The Drug Library cannot add, remove or rename drugs.")
+  }
   problems <- character(0)
+  # A refused entry is quoted back, but not at any length the browser sends
+  shown <- function(x) ifelse(nchar(x) > 40, paste0(substr(x, 1, 40), "..."), x)
   at <- match(edited$Drug, current$Drug)
   color <- as.character(edited$Color)
   colorBefore <- as.character(current$Color)[at]
@@ -51,7 +62,7 @@ drugLibraryProblems <- function(edited, current) {
   if (any(badColor)) {
     problems <- c(problems, paste0(
       "Color must be a colour name or #RRGGBB (",
-      paste(sprintf("%s: \"%s\"", edited$Drug[badColor], color[badColor]), collapse = ", "), ")."))
+      paste(sprintf("%s: \"%s\"", edited$Drug[badColor], shown(color[badColor])), collapse = ", "), ")."))
   }
   known <- c(allUnits, gasUnits, tciUnits, scheduledUnits)
   units <- drugUnitsSimplify(edited$Units)
@@ -65,7 +76,7 @@ drugLibraryProblems <- function(edited, current) {
     # offer a blank the dose table ignores: refused, as an unknown unit is.
     if (length(tokens) == 0 || any(!nzchar(tokens))) emptied <- c(emptied, edited$Drug[i])
     bad <- tokens[nzchar(tokens) & !tokens %in% known]
-    if (length(bad)) unknown <- c(unknown, sprintf("%s: %s", edited$Drug[i], paste0("\"", bad, "\"", collapse = ", ")))
+    if (length(bad)) unknown <- c(unknown, sprintf("%s: %s", edited$Drug[i], paste0("\"", shown(bad), "\"", collapse = ", ")))
   }
   if (length(unknown)) {
     problems <- c(problems, paste0(
@@ -118,7 +129,7 @@ drugLibraryProblems <- function(edited, current) {
     parsed <- suppressWarnings(as.numeric(valueChr))
     bad <- !is.na(at) & !blank & (is.na(parsed) | !is.finite(parsed) | parsed < 0)
     if (any(bad)) {
-      badNumbers <- c(badNumbers, sprintf("%s %s: \"%s\"", edited$Drug[bad], col, valueChr[bad]))
+      badNumbers <- c(badNumbers, sprintf("%s %s: \"%s\"", edited$Drug[bad], col, shown(valueChr[bad])))
     }
   }
   if (length(badNumbers)) {

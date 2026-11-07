@@ -75,3 +75,21 @@ mammillaryReference <- function(set, times, bolus = 0, rate = 0, tStop = Inf) {
     sum(V[1, ] * g * w) / set$v1
   }, numeric(1))
 }
+
+# What the dose grid sends (input$doseGrid, inst/www/dose-grid.js), through
+# the JSON Shiny reads it from: rows of four strings, the time format they
+# were typed in, and the number of edits sent
+doseGridInputValue <- function(rows, format = "minutes/relative", seq = 1) {
+  json <- jsonlite::toJSON(list(rows = rows, timeFormat = format, seq = seq),
+                           auto_unbox = TRUE, null = "null", na = "null")
+  jsonlite::fromJSON(json, simplifyVector = FALSE)
+}
+
+# What a table grid sends (inst/www/table-grid.js): its rows, a checkbox as
+# TRUE or FALSE, and the tag it was drawn with
+tableGridInputValue <- function(rows, tag = NULL, seq = 1) {
+  value <- list(rows = rows, seq = seq)
+  if (!is.null(tag)) value$tag <- tag
+  json <- jsonlite::toJSON(value, auto_unbox = TRUE, null = "null", na = "null")
+  jsonlite::fromJSON(json, simplifyVector = FALSE)
+}
