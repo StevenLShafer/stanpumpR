@@ -563,6 +563,10 @@ function mp4Boxes(buf, start = 0, end = buf.length) {
 }
 const child = (buf, b, type, skip = 0) => mp4Boxes(buf, b.body + skip, b.start + b.size).find(x => x.type === type);
 
+// Whether this browser can encode the viewer's H.264 at the run's size (a
+// Chromium built without it cannot): the recording tests skip themselves if not.
+const canEncode = page => page.evaluate(async () => !!('VideoEncoder' in window && await videoCodec(Video.plan())));
+
 async function recordVideo(page, view, withPatient) {
   return page.evaluate(async ([view, withPatient]) => {
     Player.setView(view); Player.setSpeed(SPEEDS[SPEEDS.length - 1]);
@@ -602,6 +606,7 @@ test('video: each view saves a valid H.264 MP4 of every frame; the patient only 
   await page.setViewport({ width: 1200, height: 800 });
   const r = clone(RUN); r.drug = '<img src=x onerror=alert(1)>../propofol';
   assert.equal(await loadRun(page, r), true);
+  if (!(await canEncode(page))) return t.skip('this browser cannot encode H.264');
   for (const view of ['2d', '3d']) {
     const { plan, b64 } = await recordVideo(page, view, false);
     const buf = Buffer.from(b64, 'base64');
@@ -640,6 +645,7 @@ test('video: Cancel stops it, and the run, the time and the 3D loop are as they 
   const page = await viewerPage(t);
   await page.setViewport({ width: 1200, height: 800 });
   assert.equal(await loadRun(page, RUN), true);
+  if (!(await canEncode(page))) return t.skip('this browser cannot encode H.264');
   await page.evaluate(() => { Player.seek(1234); Player.setSpeed(30); });
   await page.click('#saveVideo');
   await page.click('#videoCard .go');
@@ -651,5 +657,43 @@ test('video: Cancel stops it, and the run, the time and the 3D loop are as they 
   const after = await page.evaluate(() => ({ T: Player.T, view: Player.view, recording: View.recording, playing: Player.playing,
     why: document.querySelector('#videoCard .why').textContent }));
   assert.deepEqual(after, { T: 1234, view: '2d', recording: false, playing: false, why: 'Cancelled.' });
+  assertClean(page);
+});
+
+test('video: while the card is open the keys wait, Esc closes it, and a resize refreshes what it says', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, RUN), true);
+  await page.evaluate(() => Player.setSpeed(30));
+  await page.click('#saveVideo');
+  for (const k of ['v', '+', '-', ' ']) await page.keyboard.press(k);
+  assert.deepEqual(await page.evaluate(() => [Player.view, Player.speed, Player.playing, Video.shown()]), ['2d', 30, false, true],
+                   'a key changed the view, the speed or the play state behind the card');
+  await page.setViewport({ width: 800, height: 600 });
+  await new Promise(r => setTimeout(r, 150));
+  assert.match(await page.evaluate(() => document.querySelector('#videoCard .what').textContent), /1440 × 1080/,
+               'the card still gives the size before the resize');
+  await page.keyboard.press('Escape');
+  assert.equal(await page.evaluate(() => Video.shown()), false);
+  await page.keyboard.press('v');
+  assert.equal(await page.evaluate(() => Player.view), '3d', 'the keys work again once the card is closed');
+  assertClean(page);
+});
+
+test('video: a run that arrives while a video is made waits, and is loaded when the save ends', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, RUN), true);
+  if (!(await canEncode(page))) return t.skip('this browser cannot encode H.264');
+  await page.evaluate(() => Player.setSpeed(30));
+  await page.click('#saveVideo');
+  await page.click('#videoCard .go');
+  await new Promise(r => setTimeout(r, 300));
+  const r2 = clone(RUN); r2.drug = 'second';
+  const during = await page.evaluate(r => { const ok = Player.load(r); return { ok, drug: Player.run.drug, busy: Video.busy }; }, r2);
+  assert.deepEqual(during, { ok: true, drug: 'propofol', busy: true }, 'the run being filmed was replaced');
+  await page.click('#videoCard .cancel');
+  await page.waitForFunction(() => !Video.busy, { timeout: 30000 });
+  assert.equal(await page.evaluate(() => Player.run.drug), 'second', 'the waiting run was not loaded');
   assertClean(page);
 });

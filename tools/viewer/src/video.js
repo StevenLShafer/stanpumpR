@@ -50,6 +50,7 @@ const VIDEO_USE = 'stanpumpR is an advisory simulator intended to facilitate per
 
 const Video = {
     busy: false, cancelled: false,
+    pending: null,      // a run that arrived while saving, loaded when the save ends
 
     init() {
         this.card = document.getElementById('videoCard');
@@ -58,6 +59,7 @@ const Video = {
             if (this.busy) this.cancelled = true; else this.close();
         });
         this.card.querySelector('.go').addEventListener('click', () => this.save());
+        window.addEventListener('resize', () => { if (this.shown() && !this.busy) this.describe(); });
     },
 
     // What the video will be, for the run and the speed now.
@@ -73,9 +75,20 @@ const Video = {
     },
 
     open() {
-        const p = this.plan(); if (!p || this.busy) return;
+        if (!Player.run || this.busy) return;
         Player.pause();
-        const c = this.card, q = s => c.querySelector(s);
+        const c = this.card;
+        c.querySelector('.bar').style.setProperty('--pct', '0%');
+        c.classList.remove('working');
+        c.classList.add('show');
+        this.describe();
+    },
+    // What will be made, and whether it can be: again whenever the window is
+    // resized while the card is open (CodeRabbit, #688), the view and speed
+    // being held (the keys wait, and the card covers the controls).
+    describe() {
+        const p = this.plan(), c = this.card, q = s => c.querySelector(s);
+        if (!p) return;
         q('.what').textContent = `The whole run, ${hms(Player.run.t[0])} to ${hms(Player.run.t[Player.run.t.length - 1])}, ` +
             `in the ${p.view.toUpperCase()} view at the speed set (${speedLabel(Player.speed)}): ` +
             `${videoLength(p.seconds)} of video at ${VIDEO_FPS} frames a second, ${p.w} × ${p.h}.`;
@@ -84,14 +97,14 @@ const Video = {
         q('.why').textContent = unsupported ? 'This browser cannot make videos (it has no WebCodecs video encoder). Current Chrome, Edge, Safari and Firefox can.'
             : tooLong ? `The longest video is ${videoLength(VIDEO_MAX_SECONDS)}: raise the speed to make this one shorter.` : '';
         q('.go').disabled = tooLong || unsupported;
-        q('.bar').style.setProperty('--pct', '0%');
-        c.classList.remove('working');
-        c.classList.add('show');
+        return !(tooLong || unsupported);
     },
+    shown() { return this.card.classList.contains('show'); },
     close() { this.card.classList.remove('show', 'working'); },
 
     async save() {
-        const p = this.plan(); if (!p || this.busy || p.seconds > VIDEO_MAX_SECONDS) return;
+        if (this.busy || !this.describe()) return;      // and the card says why
+        const p = this.plan();
         const c = this.card, q = s => c.querySelector(s);
         const withPatient = q('.patient').checked;
         this.busy = true; this.cancelled = false;
@@ -121,6 +134,8 @@ const Video = {
             this.busy = false;
             View.recording = false;
             Player.seek(T0);
+            // A run that arrived while the video was being made, loaded now.
+            if (this.pending) { const next = this.pending; this.pending = null; Player.load(next); }
         }
     },
 
@@ -154,8 +169,8 @@ const Video = {
                 Player.seek(Math.min(r.t[r.t.length - 1], r.t[0] + k * step));
                 await this.frame(ctx, p, withPatient, dt);
                 const frame = new VideoFrame(canvas, { timestamp: Math.round(k * 1e6 / VIDEO_FPS), duration: Math.round(1e6 / VIDEO_FPS) });
-                enc.encode(frame, { keyFrame: k % (2 * VIDEO_FPS) === 0 });
-                frame.close();
+                try { enc.encode(frame, { keyFrame: k % (2 * VIDEO_FPS) === 0 }); }
+                finally { frame.close(); }
                 // Keep the encoder's queue short, and let the page breathe.
                 while (enc.encodeQueueSize > 4) await new Promise(res => setTimeout(res, 2));
                 if (k % 10 === 0) { progress(k); await new Promise(res => setTimeout(res, 0)); }

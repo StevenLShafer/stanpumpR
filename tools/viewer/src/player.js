@@ -238,6 +238,9 @@ const Player = {
     },
 
     load(r) {
+        // Saving a video: the run being filmed stays until the save ends
+        // (CodeRabbit, #688); the new one is loaded then (Video.close()).
+        if (typeof Video !== 'undefined' && Video.busy) { Video.pending = r; return true; }
         const p = runProblem(r);
         if (p) { this.message(`This run cannot be shown. ${p}`, true); return false; }
         this.message('');
@@ -507,7 +510,9 @@ const Keys = {
         help.addEventListener('click', e => { if (e.target === help) help.classList.remove('show'); });
         window.addEventListener('keydown', e => {
             if (e.ctrlKey || e.metaKey || e.altKey) return;
-            if (Video.busy) return;          // saving a video: the keys wait
+            // The video card is open: the keys wait (they would change the view
+            // or speed it describes); Esc closes it unless it is saving.
+            if (Video.shown()) { if (e.key === 'Escape' && !Video.busy) Video.close(); return; }
             // h (or ?) shows the keys; h, Esc or a click outside the card hides them.
             if (e.key === 'h' || e.key === 'H' || e.key === '?') { help.classList.toggle('show'); e.preventDefault(); return; }
             if (e.key === 'Escape') { help.classList.remove('show'); return; }

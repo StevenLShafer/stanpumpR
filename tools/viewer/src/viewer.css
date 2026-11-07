@@ -212,6 +212,8 @@ body.over #message .card { border-color: var(--accent); }
 #videoCard .bar { display: none; height: 6px; border-radius: 3px; margin: 8px 0 4px; --pct: 0%;
   background: linear-gradient(to right, var(--accent) 0 var(--pct), rgba(255,255,255,0.18) var(--pct) 100%); }
 #videoCard .done { display: none; color: var(--ink-2); font-size: 12px; }
+#videoCard .keep { display: none; color: var(--ink-2); font-size: 12px; margin-top: 6px; }
+#videoCard.working .keep { display: block; }
 #videoCard.working .bar, #videoCard.working .done { display: block; }
 #videoCard.working .go, #videoCard.working label { opacity: 0.5; pointer-events: none; }
 #videoCard .buttons { margin-top: 10px; text-align: right; }
