@@ -134,16 +134,13 @@ const Video = {
             this.busy = false;
             View.recording = false;
             Player.seek(T0);
-            // A run that arrived while the video was being made, loaded now;
-            // the card, if still open, then describes it, keeping the word
-            // on why the save ended (CodeRabbit, #688).
-            if (this.pending) {
-                const next = this.pending; this.pending = null;
-                if (Player.load(next) && this.shown()) {
-                    const why = this.card.querySelector('.why'), said = why.textContent;
-                    if (this.describe() && said) why.textContent = said;
-                }
-            }
+            // A run that arrived while the video was being made is loaded now.
+            // The card, if still open (cancelled, or failed), then describes
+            // the run and window as they are, a resize during the save
+            // included, keeping the word on why the save ended (CodeRabbit, #688).
+            const why = this.card.querySelector('.why'), said = why.textContent;
+            if (this.pending) { const next = this.pending; this.pending = null; Player.load(next); }
+            if (this.shown() && this.describe() && said) why.textContent = said;
         }
     },
 

@@ -723,3 +723,30 @@ test('video: a run that arrives while a video is made waits, and is loaded when 
   assert.match(card.what, /0:00:00 to 0:30:00.*1 min 0 s of video/, 'the card does not describe the run now loaded: ' + card.what);
   assertClean(page);
 });
+
+test('video: a run loaded while the card is open, and a resize during a save, leave the card describing what is there', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, RUN), true);
+  await page.evaluate(() => Player.setSpeed(30));
+  await page.click('#saveVideo');
+  // A run of half the length arrives while the card is open (not saving).
+  const half = clone(RUN); half.t = half.t.map(x => x / 2);
+  await page.evaluate(r => Player.load(r), half);
+  assert.match(await page.evaluate(() => document.querySelector('#videoCard .what').textContent), /0:00:00 to 0:30:00/,
+               'the card still describes the run before');
+  if (!(await canEncode(page))) return t.skip('this browser cannot encode H.264');
+  // A resize during a save, then Cancel: the card gives the new size, and still says why it stopped.
+  await page.evaluate(() => Player.setSpeed(10));
+  await page.evaluate(() => Video.describe());
+  await page.click('#videoCard .go');
+  await new Promise(r => setTimeout(r, 300));
+  await page.setViewport({ width: 800, height: 600 });
+  await page.click('#videoCard .cancel');
+  await page.waitForFunction(() => !Video.busy, { timeout: 30000 });
+  const card = await page.evaluate(() => ({ what: document.querySelector('#videoCard .what').textContent,
+                                            why: document.querySelector('#videoCard .why').textContent }));
+  assert.match(card.what, /1440 × 1080/, 'the card gives the size before the resize: ' + card.what);
+  assert.equal(card.why, 'Cancelled.');
+  assertClean(page);
+});

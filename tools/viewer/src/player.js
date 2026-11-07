@@ -275,6 +275,8 @@ const Player = {
         this.setSpeed(SPEEDS.find(v => span / v <= PLAY_SECONDS) || SPEEDS[SPEEDS.length - 1]);
         this.seek(r.t[0]);
         View.resetView();
+        // The video card, if open, describes the run now shown (CodeRabbit, #688).
+        if (typeof Video !== 'undefined' && Video.card && Video.shown() && !Video.busy) Video.describe();
         return true;
     },
 
