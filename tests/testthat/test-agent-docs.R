@@ -25,13 +25,17 @@ agentDocCode <- function(root, doc) {
 }
 
 # Every name assigned (`name <-`, `name =`) or declared (`function name`) in
-# the package's R code, its test helpers and its JavaScript.  Local functions
+# the package's R code, its test helpers and its JavaScript (inst/www, and
+# the visualizer's source in tools/viewer/src).  Local functions
 # and reactives inside app_server() count: AGENTS.md names them on purpose.
 agentDocDefinitions <- function(root) {
   files <- c(list.files(file.path(root, "R"), "\\.R$", full.names = TRUE),
              list.files(file.path(root, "tests", "testthat"), "^helper.*\\.R$",
                         full.names = TRUE),
-             list.files(file.path(root, "inst", "www"), "\\.js$", full.names = TRUE))
+             list.files(file.path(root, "inst", "www"), "\\.js$", full.names = TRUE),
+             # the Minto Visualizer's source, whose functions AGENTS.md names
+             # (displayVolumes()); built into inst/www/stanpumpR-viewer.html
+             list.files(file.path(root, "tools", "viewer", "src"), "\\.js$", full.names = TRUE))
   unique(unlist(lapply(files, function(f) {
     lines <- readLines(f, warn = FALSE, encoding = "UTF-8")
     # a plain binding only: not a member (state$values$x <-) or the tail of

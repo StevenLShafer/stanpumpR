@@ -54,6 +54,7 @@
   <button id="pause" title="Pause (space)">&#x275A;&#x275A;<span class="btxt"> Pause</span></button>
   <button id="stop" title="Stop, and go back to the start">&#x25A0;<span class="btxt"> Stop</span></button>
   <button id="viewToggle" title="Switch between the 2D and 3D views (v)">3D view</button>
+  <button id="saveVideo" title="Save the run as an MP4 video">&#x2B73;<span class="btxt"> Video</span></button>
   <span class="clock" id="now">0:00:00</span>
   <input id="t" class="progress" type="range" min="0" max="1" step="any" value="0" aria-label="Time">
   <span class="clock" id="end">0:00:00</span>
@@ -66,6 +67,17 @@
 </div>
 
 <div id="message"><div class="card"></div></div>
+
+<div id="videoCard"><div class="card">
+  <h3>Save a video</h3>
+  <p class="what"></p>
+  <p class="small">Made in this window and saved to your computer: nothing is sent anywhere. Each video names stanpumpR, the drug and the model, and carries stanpumpR's statement of intended use.</p>
+  <label><input type="checkbox" class="patient"> Include the patient (weight, height, age, sex)</label>
+  <div class="bar"></div><span class="done"></span>
+  <p class="keep">Keep this window in view while the video is made: a browser slows a window it cannot see.</p>
+  <p class="why"></p>
+  <div class="buttons"><button class="go">Save MP4</button> <button class="cancel">Cancel</button></div>
+</div></div>
 
 <div id="help">
   <div class="card">
@@ -94,6 +106,7 @@
       <tbody>
       <tr><td><kbd>space</kbd></td><td>play / pause</td></tr>
       <tr><td><kbd>v</kbd></td><td>2D / 3D view (the keys above turn the 3D scene)</td></tr>
+      <tr><td><b>Video</b></td><td>save the whole run, in the view shown, as an MP4 (made in this window; nothing is sent anywhere)</td></tr>
       <tr><td><kbd>+</kbd> <kbd>−</kbd></td><td>faster / slower play (or the Speed slider)</td></tr>
       </tbody>
       <tbody>
@@ -139,11 +152,15 @@
 /*@@player.js@@*/
 </script>
 <script>
+/*@@video.js@@*/
+</script>
+<script>
   Perf.init(document.getElementById('perf'));
   View.init(document.getElementById('view'));
   Flat.init(document.getElementById('flat'));
   Keys.init();
   Player.init();
+  Video.init();
 </script>
 </body>
 </html>

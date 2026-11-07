@@ -198,3 +198,26 @@ body.over #message .card { border-color: var(--accent); }
 #brand { position: fixed; left: 54px; top: 17px; z-index: 4; color: var(--ink); font: 600 16px/1.2 system-ui, "Segoe UI", sans-serif;
   letter-spacing: 0.2px; pointer-events: none; }
 #brand span { color: var(--ink-2); font-weight: 500; font-size: 13px; margin-left: 4px; }
+
+/* ── saving a video (video.js) ────────────────────────────── */
+#videoCard { position: fixed; inset: 0; z-index: 5; display: none; place-items: center; background: rgba(0,0,0,0.35); }
+#videoCard.show { display: grid; }
+#videoCard .card { max-width: min(480px, calc(100vw - 32px)); background: rgba(12, 20, 28, 0.96); color: var(--ink);
+  border: 1px solid var(--card-line); border-radius: 12px; padding: 14px 18px; font-size: 13px; line-height: 1.5; }
+#videoCard h3 { margin: 0 0 6px; font-size: 15px; }
+#videoCard p { margin: 0 0 8px; }
+#videoCard .small { color: var(--ink-2); font-size: 12px; }
+#videoCard .why:empty { display: none; }
+#videoCard .why { color: #fca5a5; }
+#videoCard .bar { display: none; height: 6px; border-radius: 3px; margin: 8px 0 4px; --pct: 0%;
+  background: linear-gradient(to right, var(--accent) 0 var(--pct), rgba(255,255,255,0.18) var(--pct) 100%); }
+#videoCard .done { display: none; color: var(--ink-2); font-size: 12px; }
+#videoCard .keep { display: none; color: var(--ink-2); font-size: 12px; margin-top: 6px; }
+#videoCard.working .keep { display: block; }
+#videoCard.working .bar, #videoCard.working .done { display: block; }
+#videoCard.working .go, #videoCard.working label { opacity: 0.5; pointer-events: none; }
+#videoCard .buttons { margin-top: 10px; text-align: right; }
+#videoCard button { font: inherit; color: var(--ink); background: rgba(255,255,255,0.08); border: 1px solid var(--line);
+  border-radius: 6px; padding: 4px 14px; cursor: pointer; }
+#videoCard button.go { background: var(--accent); border-color: var(--accent); color: #fff; }
+#videoCard button:disabled { opacity: 0.45; cursor: default; }

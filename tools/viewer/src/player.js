@@ -238,7 +238,17 @@ const Player = {
     },
 
     load(r) {
+        // Saving a video: the run being filmed stays until the save ends
+        // (CodeRabbit, #688); the new one is loaded then (Video.close()).
+        // A run that cannot be shown is refused at once, not queued: its
+        // message waits under the video card and shows when the card closes.
         const p = runProblem(r);
+        if (typeof Video !== 'undefined' && Video.busy) {
+            // The later of a queued run and a refused one decides what shows:
+            // a refusal after a queued run is shown again once that run loads.
+            if (p) { Video.refused = `This run cannot be shown. ${p}`; this.message(Video.refused, true); return false; }
+            Video.pending = r; Video.refused = null; return true;
+        }
         if (p) { this.message(`This run cannot be shown. ${p}`, true); return false; }
         this.message('');
         this.pause();
@@ -272,6 +282,8 @@ const Player = {
         this.setSpeed(SPEEDS.find(v => span / v <= PLAY_SECONDS) || SPEEDS[SPEEDS.length - 1]);
         this.seek(r.t[0]);
         View.resetView();
+        // The video card, if open, describes the run now shown (CodeRabbit, #688).
+        if (typeof Video !== 'undefined' && Video.card && Video.shown() && !Video.busy) Video.describe();
         return true;
     },
 
@@ -427,7 +439,7 @@ const Player = {
 
     togglePlay() { if (this.playing) this.pause(); else this.play(); },
     play() {
-        const r = this.run; if (!r) return;
+        const r = this.run; if (!r || Video.busy) return;
         if (this.T >= r.t[r.t.length - 1]) this.seek(r.t[0]);
         this.playing = true; View.playing = true; this.last = null;
         this.buttons();
@@ -507,6 +519,9 @@ const Keys = {
         help.addEventListener('click', e => { if (e.target === help) help.classList.remove('show'); });
         window.addEventListener('keydown', e => {
             if (e.ctrlKey || e.metaKey || e.altKey) return;
+            // The video card is open: the keys wait (they would change the view
+            // or speed it describes); Esc closes it unless it is saving.
+            if (Video.shown()) { if (e.key === 'Escape' && !Video.busy) Video.close(); return; }
             // h (or ?) shows the keys; h, Esc or a click outside the card hides them.
             if (e.key === 'h' || e.key === 'H' || e.key === '?') { help.classList.toggle('show'); e.preventDefault(); return; }
             if (e.key === 'Escape') { help.classList.remove('show'); return; }

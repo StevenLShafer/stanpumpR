@@ -94,6 +94,7 @@ const View = {
     geo: null, clock: null,
     pk: null,           // the volumes setShape() was given, for the vessels' cards
     playing: false,     // set by the player: the arrows and ripples move while it runs
+    recording: false,   // set while a video is saved (video.js): the loop stands aside
 
     init(container) {
         const T = THREE;
@@ -188,6 +189,8 @@ const View = {
         // ts: the browser's time for this frame, on the screen's refresh.
         // ts: the browser's time for this frame, on the screen's refresh.
         const loop = ts => {
+            // Saving a video (video.js): step() draws each frame instead.
+            if (this.recording) { requestAnimationFrame(loop); return; }
             const t0 = performance.now();
             const dt = this.clock.getDelta();
             // The arrows' stripes and V1's ripples move only while the clock runs.
@@ -287,6 +290,16 @@ const View = {
     showLit() {
         for (let k = 1; k <= 3; k++) this.vessels[k].rimMat.color.set(this.lit === 'c' + k ? '#ffd166' : '#ffffff');
         if (this.look) this.ribbon.mat.emissiveIntensity = this.lit === 'ce' ? 0.8 : 0.25;
+    },
+
+    // One frame of a video (video.js): the arrows' stripes and V1's ripples
+    // moved by dt seconds, as if playing, then the scene and its labels drawn.
+    step(dt) {
+        for (const a of Object.values(this.arrows)) a.tick(dt);
+        this.vessels[1].tickRipples(dt, this.v1Mlh || 0, true);
+        this.controls.update();
+        this.renderer.render(this.scene, this.camera);
+        this.labelRenderer.render(this.scene, this.camera);
     },
 
     // The clock is running while play is on, or for a moment after a step.

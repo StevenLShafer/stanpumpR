@@ -548,3 +548,229 @@ test('sizes: proportional within 10:1, compressed to exactly 10:1 beyond it, in 
     assertClean(page);
   }
 });
+
+// ── Save a video (video.js, 2026-11-07): an H.264 MP4 made in the browser.
+// The boxes of an MP4, walked: [{type, start, size, body}] at one level.
+function mp4Boxes(buf, start = 0, end = buf.length) {
+  const out = [];
+  for (let o = start; o + 8 <= end;) {
+    const size = buf.readUInt32BE(o), type = buf.toString('latin1', o + 4, o + 8);
+    assert.ok(size >= 8 && o + size <= end, `box ${type} at ${o}: size ${size} runs past ${end}`);
+    out.push({ type, start: o, size, body: o + 8 });
+    o += size;
+  }
+  return out;
+}
+const child = (buf, b, type, skip = 0) => mp4Boxes(buf, b.body + skip, b.start + b.size).find(x => x.type === type);
+
+// Whether this browser can encode the viewer's H.264 at the run's size (a
+// Chromium built without it cannot): the recording tests skip themselves if not.
+const canEncode = page => page.evaluate(async () => !!('VideoEncoder' in window && await videoCodec(Video.plan())));
+
+async function recordVideo(page, view, withPatient) {
+  return page.evaluate(async ([view, withPatient]) => {
+    // 1 s = 20 min: 91 frames, past the second key frame (sample 61).
+    Player.setView(view); Player.setSpeed(1200);
+    const plan = Video.plan();
+    const blob = await Video.record(plan, withPatient, () => {});
+    View.recording = false;
+    const buf = new Uint8Array(await blob.arrayBuffer());
+    let s = ''; for (let i = 0; i < buf.length; i += 0x8000) s += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+    return { plan, b64: btoa(s) };
+  }, [view, withPatient]);
+}
+
+test('video: the dialog says what it will make, and refuses a video over 5 minutes', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, RUN), true);
+  await page.evaluate(() => Player.setSpeed(30));          // 3600 s at 30x: 2 min
+  await page.click('#saveVideo');
+  let card = await page.evaluate(() => ({ shown: document.getElementById('videoCard').classList.contains('show'),
+    what: document.querySelector('#videoCard .what').textContent, go: document.querySelector('#videoCard .go').disabled,
+    patient: document.querySelector('#videoCard .patient').checked }));
+  assert.ok(card.shown);
+  assert.match(card.what, /2D view/); assert.match(card.what, /2 min 0 s of video at 30 frames a second, 1620 × 1080/);
+  assert.equal(card.patient, false, 'the patient must be left out unless asked for');
+  // A browser without WebCodecs is told so, and Save stays off (CodeRabbit, #688).
+  if (!(await page.evaluate(() => 'VideoEncoder' in window))) {
+    assert.equal(card.go, true);
+    assert.match(await page.evaluate(() => document.querySelector('#videoCard .why').textContent), /cannot make videos/);
+    return assertClean(page);
+  }
+  assert.equal(card.go, false);
+  await page.click('#videoCard .cancel');
+  await page.evaluate(() => Player.setSpeed(1));            // an hour of video
+  await page.click('#saveVideo');
+  card = await page.evaluate(() => ({ go: document.querySelector('#videoCard .go').disabled, why: document.querySelector('#videoCard .why').textContent }));
+  assert.equal(card.go, true);
+  assert.match(card.why, /longest video is 5 min/);
+  assertClean(page);
+});
+
+test('video: the strip names the patient only when asked; a markup drug name gives a safe file name', { skip }, async t => {
+  const page = await viewerPage(t);
+  const r = clone(RUN); r.drug = '<img src=x onerror=alert(1)>../propofol';
+  assert.equal(await loadRun(page, r), true);
+  const s = await page.evaluate(() => ({ off: videoHeading(false), on: videoHeading(true), file: videoFileName(Player.run.drug, '2d') }));
+  assert.doesNotMatch(s.off, /kg|cm|male/);
+  assert.match(s.on, /70 kg · 170 cm · 40 y · male/);
+  assert.match(s.file, /^img-src-x-onerror-alert-1-propofol-2D-\d{4}-\d\d-\d\d\.mp4$/);
+  assertClean(page);
+});
+
+test('video: each view saves a valid H.264 MP4 of every frame', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  const r = clone(RUN); r.drug = '<img src=x onerror=alert(1)>../propofol';
+  assert.equal(await loadRun(page, r), true);
+  if (!(await canEncode(page))) return t.skip('this browser cannot encode H.264');
+  for (const view of ['2d', '3d']) {
+    const { plan, b64 } = await recordVideo(page, view, false);
+    const buf = Buffer.from(b64, 'base64');
+    const top = mp4Boxes(buf);
+    assert.deepEqual(top.map(b => b.type), ['ftyp', 'moov', 'mdat'], view + ': top-level boxes');
+    const moov = top[1], trak = child(buf, moov, 'trak'), mdia = child(buf, trak, 'mdia');
+    const stbl = child(buf, child(buf, mdia, 'minf'), 'stbl');
+    const stsd = child(buf, stbl, 'stsd'), avc1 = mp4Boxes(buf, stsd.body + 8, stsd.start + stsd.size)[0];
+    assert.equal(avc1.type, 'avc1');
+    assert.equal(buf.readUInt16BE(avc1.body + 24), plan.w); assert.equal(buf.readUInt16BE(avc1.body + 26), plan.h);
+    assert.ok(child(buf, avc1, 'avcC', 78), 'no avcC');
+    const stsz = child(buf, stbl, 'stsz'), n = buf.readUInt32BE(stsz.body + 8);
+    assert.equal(plan.frames, 91);
+    assert.equal(n, plan.frames, view + ': every frame a sample');
+    let total = 0; for (let i = 0; i < n; i++) total += buf.readUInt32BE(stsz.body + 12 + 4 * i);
+    assert.equal(top[2].size - 8, total, 'mdat holds exactly the samples');
+    const stco = child(buf, stbl, 'stco');
+    assert.equal(buf.readUInt32BE(stco.body + 8), top[2].start + 8, 'the chunk offset is the first sample');
+    const stss = child(buf, stbl, 'stss'), nKeys = buf.readUInt32BE(stss.body + 4);
+    const keys = Array.from({ length: nKeys }, (_, i) => buf.readUInt32BE(stss.body + 8 + 4 * i));
+    assert.equal(keys[0], 1, 'the first sample is a key frame');
+    assert.ok(keys.includes(61), view + ': the key frame asked for at 2 s (sample 61) is missing: ' + keys);
+    // One timing entry: every sample 1000 ticks of a 30000-per-second clock.
+    const stts = child(buf, stbl, 'stts'), mdhd = child(buf, mdia, 'mdhd');
+    assert.deepEqual([1, 2, 3].map(i => buf.readUInt32BE(stts.body + 4 * i)), [1, n, 1000]);
+    assert.deepEqual([3, 4].map(i => buf.readUInt32BE(mdhd.body + 4 * i)), [30000, n * 1000]);
+    // Each sample is length-prefixed NAL units that fill it exactly.
+    let o = top[2].start + 8;
+    for (let i = 0; i < n; i++) {
+      const end = o + buf.readUInt32BE(stsz.body + 12 + 4 * i);
+      while (o < end) o += 4 + buf.readUInt32BE(o);
+      assert.equal(o, end, `sample ${i} is not whole NAL units`);
+    }
+  }
+  assertClean(page);
+});
+
+test('video: Cancel stops it, and the run, the time and the 3D loop are as they were', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, RUN), true);
+  if (!(await canEncode(page))) return t.skip('this browser cannot encode H.264');
+  await page.evaluate(() => { Player.seek(1234); Player.setSpeed(30); });
+  await page.click('#saveVideo');
+  await page.click('#videoCard .go');
+  await new Promise(r => setTimeout(r, 400));
+  assert.equal(await page.evaluate(() => Video.busy), true);
+  await page.keyboard.press('v');                           // the keys wait while it saves
+  await page.click('#videoCard .cancel');
+  await page.waitForFunction(() => !Video.busy, { timeout: 30000 });
+  const after = await page.evaluate(() => ({ T: Player.T, view: Player.view, recording: View.recording, playing: Player.playing,
+    why: document.querySelector('#videoCard .why').textContent }));
+  assert.deepEqual(after, { T: 1234, view: '2d', recording: false, playing: false, why: 'Cancelled.' });
+  assertClean(page);
+});
+
+test('video: while the card is open the keys wait, Esc closes it, and a resize refreshes what it says', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, RUN), true);
+  await page.evaluate(() => Player.setSpeed(30));
+  await page.click('#saveVideo');
+  for (const k of ['v', '+', '-', ' ']) await page.keyboard.press(k);
+  assert.deepEqual(await page.evaluate(() => [Player.view, Player.speed, Player.playing, Video.shown()]), ['2d', 30, false, true],
+                   'a key changed the view, the speed or the play state behind the card');
+  await page.setViewport({ width: 800, height: 600 });
+  await page.waitForFunction(() => /1440 × 1080/.test(document.querySelector('#videoCard .what').textContent), { timeout: 5000 })
+    .catch(() => {});                         // the assertion below says what it read
+  assert.match(await page.evaluate(() => document.querySelector('#videoCard .what').textContent), /1440 × 1080/,
+               'the card still gives the size before the resize');
+  await page.keyboard.press('Escape');
+  assert.equal(await page.evaluate(() => Video.shown()), false);
+  await page.keyboard.press('v');
+  assert.equal(await page.evaluate(() => Player.view), '3d', 'the keys work again once the card is closed');
+  assertClean(page);
+});
+
+test('video: a run that arrives while a video is made waits, and is loaded when the save ends', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, RUN), true);
+  if (!(await canEncode(page))) return t.skip('this browser cannot encode H.264');
+  await page.evaluate(() => Player.setSpeed(30));
+  await page.click('#saveVideo');
+  await page.click('#videoCard .go');
+  await new Promise(r => setTimeout(r, 300));
+  const r2 = clone(RUN); r2.drug = 'second'; r2.t = r2.t.map(x => x / 2);   // half the length: a card that is refreshed says so
+  const during = await page.evaluate(r => { const ok = Player.load(r); return { ok, drug: Player.run.drug, busy: Video.busy }; }, r2);
+  assert.deepEqual(during, { ok: true, drug: 'propofol', busy: true }, 'the run being filmed was replaced');
+  await page.click('#videoCard .cancel');
+  await page.waitForFunction(() => !Video.busy, { timeout: 30000 });
+  assert.equal(await page.evaluate(() => Player.run.drug), 'second', 'the waiting run was not loaded');
+  const card = await page.evaluate(() => ({ what: document.querySelector('#videoCard .what').textContent,
+                                            why: document.querySelector('#videoCard .why').textContent }));
+  assert.equal(card.why, 'Cancelled.', 'the word on why the save ended was lost');
+  assert.match(card.what, /0:00:00 to 0:30:00.*1 min 0 s of video/, 'the card does not describe the run now loaded: ' + card.what);
+  assertClean(page);
+});
+
+test('video: a run loaded while the card is open (not saving) is described on it', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, RUN), true);
+  await page.evaluate(() => Player.setSpeed(30));
+  await page.click('#saveVideo');
+  const half = clone(RUN); half.t = half.t.map(x => x / 2);
+  await page.evaluate(r => Player.load(r), half);
+  assert.match(await page.evaluate(() => document.querySelector('#videoCard .what').textContent), /0:00:00 to 0:30:00/,
+               'the card still describes the run before');
+  assertClean(page);
+});
+
+test('video: a resize during a save leaves the card describing the window after it; a run that cannot be shown is refused, not queued', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, RUN), true);
+  if (!(await canEncode(page))) return t.skip('this browser cannot encode H.264');
+  await page.evaluate(() => Player.setSpeed(30));
+  await page.click('#saveVideo');
+  // A resize during a save, then Cancel: the card gives the new size, and still says why it stopped.
+  await page.click('#videoCard .go');
+  await new Promise(r => setTimeout(r, 300));
+  // A broken run (a JSON null) dropped mid-save: refused at once, its message
+  // waiting under the card, the run being filmed untouched (CodeRabbit, #688).
+  const bad = await page.evaluate(() => ({ ok: Player.load(null), pending: Video.pending, busy: Video.busy, drug: Player.run.drug,
+    msg: document.querySelector('#message .card').textContent }));
+  assert.deepEqual([bad.ok, bad.pending, bad.busy, bad.drug], [false, null, true, 'propofol']);
+  assert.match(bad.msg, /not a JSON object/);
+  // A good run queued, then a broken one: the good one loads when the save
+  // ends, and the broken one's message is still shown after it.
+  const half = clone(RUN); half.drug = 'half'; half.t = half.t.map(x => x / 2);
+  assert.equal(await page.evaluate(r => Player.load(r), half), true);
+  assert.equal(await page.evaluate(() => Player.load(null)), false);
+  await page.setViewport({ width: 800, height: 600 });
+  await page.click('#videoCard .cancel');
+  await page.waitForFunction(() => !Video.busy, { timeout: 30000 });
+  const card = await page.evaluate(() => ({ what: document.querySelector('#videoCard .what').textContent,
+                                            why: document.querySelector('#videoCard .why').textContent }));
+  assert.match(card.what, /1440 × 1080/, 'the card gives the size before the resize: ' + card.what);
+  assert.equal(card.why, 'Cancelled.');
+  // Once the card is closed: the queued run is shown, and the refusal is still in view.
+  await page.click('#videoCard .cancel');
+  const after = await page.evaluate(() => ({ shown: Video.shown(), drug: Player.run.drug,
+    msg: document.getElementById('message').classList.contains('show') && document.querySelector('#message .card').textContent }));
+  assert.equal(after.shown, false);
+  assert.equal(after.drug, 'half');
+  assert.match(String(after.msg), /not a JSON object/, 'the refusal was cleared before it could be read');
+  assertClean(page);
+});
