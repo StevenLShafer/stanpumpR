@@ -575,6 +575,80 @@ ChatGPT re-reviewed `96fb26d`. It re-ran every forged input of the fourth pass a
 
 **CodeRabbit** (2026-11-07, of `7f9e441`, its first review once the PR was ready) found that a table grid's cell kept a refused entry on screen when the focus stayed in it: on a dialog's last row Enter does not move the focus, and `renderRow()` leaves a focused control's text alone, so a refused `lots` stayed visible over the value Apply would use (and an accepted `1e1` stayed as typed rather than `10`). Confirmed in the browser; `commit()` now puts the cell's value in its control, as `dose-grid.js` already did, and `table-grid.test.js` checks both on the last row of Drug thresholds (the case failed before the fix).
 
+## The production audit (Gemini, 2026-11-08)
+
+After the merge, Gemini audited the grids on stanpumpr.io, at `a64eb29` and then `084ad85`, which changes no grid file. It worked in Firefox 159 and Chromium, with mobile emulation, axe-core, 200% zoom, the dark theme, two tabs and hostile bookmark links, and sent four small forged values. It found no console or page error and no Handsontable asset, and fast typing at the host's real latency lost no character. All seven findings were confirmed in the code before anything changed.
+
+| | Finding | Verdict | Fix |
+|---|---|---|---|
+| 1 | Typing an unoffered unit after a partial match (`mg` on a fentanyl row in `mcg/kg`) said "the unit was not changed" and then committed `mcg`, the unit the first letter had moved to | Confirmed in both grids: the list was not put back when the letters stopped matching | `unitSearch()` and `listSearch()` put the cell's own value back when nothing matches. A dose-grid case and an Edit doses case cover it. |
+| 2 | A blank MEAC in the Drug Library, which the check allowed, stopped every simulation of the drug ("missing value where TRUE/FALSE needed") | Confirmed: the blank was stored as `NA`, and `simCpCe()` tested `PK$MEAC == 0` | A blank MEAC is stored as 0 (none), and `simCpCe()` takes a missing MEAC as none. A blank band (Lower, Upper, Typical) only leaves out the shaded band, and the plot still draws. |
+| 3 | The bookmark in the address bar, and the link Email Slide sends, kept the table from before Apply | Confirmed: the bookmark observer reacted only to inputs, at the default priority, before Apply's observer (priority -1) stored the draft | The observer also reads the tables `onBookmark()` saves, and runs at priority -10, after the observers that change them. A browser case covers it; the test server makes no bookmark. |
+| 4 | The Drug Library's Lower, Upper, Typical and MEAC were text cells, so `1,000` was taken in the cell and refused at Apply; Class was editable and unchecked | Confirmed, and Class matters more than reported: it is what makes a drug an inhaled agent (`gasDrugNames()`) | The four are number cells, and `drugLibraryProblems()` holds them to `MAX_DOSE_VALUE`. Class is read-only and restored from the library on Apply. |
+| 5 | F2 on a read-only cell started an edit, which held Home/End and swallowed Escape | Confirmed | F2 no longer edits a read-only cell, matching the double click. |
+| 6 | Suggest Dosing, Drug thresholds and Single Paper Review read a table cut to fit as if whole; a forged unknown drug was quoted back in the thresholds' refusal; Paper Review dropped `1,000` without a word | Confirmed. Each case was forged, not reachable from the grid, and changed only the sender's own session. | Each refuses a cut table (Paper Review says so in the plot). `thresholdTableToDefaults()` reads only the library's drugs and MAC. Paper Review reads times and doses as `validateDose()` does. |
+| 7 | The dose grid refused an insert at 498 doses, counting the blank row below them, and at 499 still offered a row whose dose the server cut | Confirmed | The cap counts doses, not rows. At 499 doses no blank row is offered, by the grid or by the server's `storeGridEdit()`, which added its own, and a new dose in an inserted blank row is refused and said. A browser case covers 498 and 499; it caught the server's blank row. |
+
+## The production audit (ChatGPT, 2026-11-08)
+
+ChatGPT audited production at the same commit, `a64eb29`, alongside Gemini. Its work:
+
+- **Production:** fast typing at the host's latency, the dialogs, a refused entry on the last row, two tabs, a 16-minute idle session, mobile emulation, and hostile and malformed bookmark links. It sent eight small forged values.
+- **Locally, at the deployed commit:** the 74 browser cases (all pass) and the Single Paper Review and converter test suites.
+
+It found no cross-session exploit, no XSS and no refused value reaching a simulation. Each of its findings was checked against the code:
+
+| | Finding | Verdict | Fix |
+|---|---|---|---|
+| F01 | After Apply, the bookmark kept the dose from before Apply, and reopening it restored the old dose | Confirmed. It is Gemini's finding 3, fixed in the same pull request. | As Gemini's finding 3. The browser case now also opens the link in a fresh page and reads the restored dose, as ChatGPT advised: the screen alone cannot show a stale link. The case fails on the old observer. |
+| F02 | A forged pair of End times (`targetEndTime = c("60", "70")`) ended the Suggest Dosing session (`if()` of length 2) | Confirmed. The drug list had the same weakness, inside a `tryCatch`. | The OK handler reads the End time and the drug as one value each (`doseGridCell()`), and refuses a drug not in the library. `test-ui-adversarial-review.R` reproduces it, and the test fails without the fix. The same unguarded pattern on other inputs (`referenceTime`, Email Slide's comments, `normalization`) is recorded for a pass of its own. |
+| F03 | At a 200%-equivalent width, the two open sidebars (300 and 450 px, from #590) left the plot 48 px wide | Confirmed by reading the widths. It predates the grids, and which sidebar should give way is a layout decision. | Recorded for Shafer, not changed here. |
+
+## Other engines, a phone, and the review of the fixes (2026-11-08)
+
+Until now the browser suite ran only in Chromium. It now also runs in Firefox
+and WebKit (`STANPUMPR_BROWSER=firefox|webkit node tests/playwright/run.js`;
+the environment's setup script installs both engines):
+
+- **WebKit:** the first full run had two failures, both timeouts.
+  - One was a fresh session that loaded slowly; it passed when run again.
+  - The other repeats, and it is in the test, not the app. While the Drug
+    Library's `uiOutput` recalculates, shinycssloaders sets
+    `visibility: hidden` on it, then sets it back to `visible`. The output is
+    `display: contents`, and WebKit leaves the grid's rows with a stale
+    computed `hidden`, so the wait for a visible row timed out. Their cells
+    compute as visible and are drawn; a screenshot shows the whole table.
+    The test now waits for a visible cell.
+- **Firefox:** one failure, which repeats. With touch emulated, every tap
+  after the first is lost (not even a `pointerdown` arrives) while the text
+  the first tap selected stays selected. Clearing the selection or blurring
+  the cell brings the taps back. A plain page that selects text on mouseup
+  does not reproduce it, so the cause is not known. Firefox for Android
+  dismisses a selection on the next tap rather than swallowing every tap
+  after it, so this is taken to be a limit of the emulation, not a grid
+  defect. The test clears the selection between its taps, in Firefox only.
+  Every other case passes in Firefox.
+- **Safari on an iPhone 17 (iOS 26), through BrowserStack, against the PR
+  preview:** all passed. These were editing a dose, a refused `4,5` keeping
+  the 4, the drug autocomplete, Apply while typing, the plot redrawing, and
+  the bookmark holding the applied table.
+
+CodeRabbit's reviews of the fixes found three more defects, each confirmed and
+fixed:
+
+- **Single Paper Review drew four blank rows below the doses, however many
+  there were.** A table of 496 to 499 doses therefore came back as more rows
+  than the grid holds, and was refused as cut. The blank rows now stop at the
+  limit.
+- **A regimen longer than the grid was loaded, then cut.** The browser could
+  cut it, or a change of time unit could cut it silently. It is now refused
+  when it is loaded.
+- **Inserting a row at 498 doses made 500 rows.** Finding 7 allowed the
+  insert, but the server keeps only 499 rows (`restoredDoseTable()`), so a
+  dose typed in the 500th row was dropped. The inserted row now takes the
+  place of the blank row below the doses. Neither the grid nor
+  `storeGridEdit()` ever makes more than 499 rows, blank ones included.
+
 ## Decisions for Steven Shafer
 
 These are pending. Record each answer here.
