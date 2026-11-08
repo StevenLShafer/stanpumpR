@@ -407,6 +407,15 @@ paperReviewServer <- function(input, output, session)
     if (is.null(regimen)) return()
     d <- paperReviewRegimenDoses(regimen)$doses
     if (nrow(d) == 0) return()
+    # The grid holds MAX_DOSE_ROWS - 1 rows; a longer regimen (an hourly
+    # bolus for 500 hours) would be cut by the browser and then refused, or
+    # cut without a word by a change of time unit, so it is refused here.
+    if (nrow(d) > MAX_DOSE_ROWS - 1L) {
+      shiny::showNotification(sprintf(
+        "This regimen has %d doses; the dose table holds at most %d. Enter a shorter part of it by hand.",
+        nrow(d), MAX_DOSE_ROWS - 1L), type = "warning")
+      return()
+    }
     doseTable(d)
     # In the unit the paper uses for this regimen.
     setUnit(paperReviewRegimenTimeUnit(r$extraction, regimen), max(PAPER_REVIEW_MAX_TIME_DEFAULT, ceiling(max(d$Time) * 2)))
@@ -421,7 +430,11 @@ paperReviewServer <- function(input, output, session)
     d <- doseTable()
     d$Units <- as.character(d$Units)
     d$Time <- signif(d$Time / unitMinutes(), 6)
-    blank <- data.frame(Time = rep(NA_real_, 4), Dose = rep(NA_real_, 4), Units = rep(NA_character_, 4))
+    # Up to four blank rows to type into, never past the grid's limit, which
+    # would make tableGridRead() report the table as cut.
+    blankRows <- max(0L, min(4L, MAX_DOSE_ROWS - 1L - nrow(d)))
+    blank <- data.frame(Time = rep(NA_real_, blankRows), Dose = rep(NA_real_, blankRows),
+                        Units = rep(NA_character_, blankRows))
     shiny::div(style = "max-width: 520px",
       tableGridInput(session$ns("doses"), paperReviewDoseColumns(unitName(), units),
                      rbind(d, blank), rowMenu = TRUE, height = 230, label = "Doses"))
