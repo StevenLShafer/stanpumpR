@@ -1,6 +1,6 @@
 ## What to look for
 
-A propofol effect-site target of 3 mcg/mL from time zero, set to zero at one hour, in a 70 kg, 40-year-old man. *Peripheral compartments* is on, so V2 and V3 are drawn under the propofol panel. To watch it, double-click the propofol panel, press **Visualizer**, then **Play**. The gold line on the thin blue effect-site bar is the target.
+A propofol effect-site target of 3 mcg/mL from time zero, set to zero at one hour, in a 70 kg, 40-year-old man. *Peripheral compartments* is on, so V2 and V3 are drawn under the propofol panel. To watch it, press **Visualizer** under the plot (or double-click the propofol panel and press **Visualizer** in its dialog), then **Play**. The gold line on the thin blue effect-site bar is the target.
 
 **A 10-second loading burst.** The pump runs at 306 mg/min for 10 seconds, giving 51 mg, and V1's level leaps to 7.7 mcg/mL, far above the target. The arrow is drawn at its thickest, and its label gives the rate.
 
