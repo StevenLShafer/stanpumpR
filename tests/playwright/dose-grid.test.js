@@ -19,6 +19,7 @@ const { test, describe, before, after, beforeEach, afterEach } = require('node:t
 const assert = require('node:assert/strict');
 const playwright = require('playwright');
 const H = require('./harness');
+const BS = require('./browserstack');
 
 const GRID = process.env.STANPUMPR_GRID || 'native';
 const URL = process.env.STANPUMPR_URL;
@@ -48,14 +49,15 @@ let browser, context, page;
 // clipboard permissions and the slow link (CDP) are Chromium's: elsewhere
 // the clipboard is opened by preference and the slow-link cases are skipped
 // (the external review of 2026-11-06, Gemini's final pass).
-const BROWSER = process.env.STANPUMPR_BROWSER || 'chromium';
+// on BrowserStack, the engine of the platform chosen (browserstack.js)
+const BROWSER = BS.engine();
 const CDP = BROWSER === 'chromium';
 const SLOW_LINK = { skip: !CDP && 'a slow link is emulated through CDP, which only Chromium has' };
 
 before(async () => {
-  browser = await playwright[BROWSER].launch(BROWSER === 'firefox' ? {
+  browser = await BS.launch(playwright, BROWSER, BROWSER === 'firefox' ? {
     firefoxUserPrefs: { 'dom.events.asyncClipboard.readText': true, 'dom.events.testing.asyncClipboard': true }
-  } : {});
+  } : {}, 'dose grid');
 });
 after(async () => { await browser.close(); });
 
