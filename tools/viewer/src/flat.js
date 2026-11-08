@@ -52,6 +52,11 @@ const FLAT_MIN_W = 10;           // px: the narrowest box, so a tiny volume stil
 // than strictly proportional sizes. Within it the sizes are in proportion to
 // volume; beyond it they are compressed (displayVolumes()).
 const SIZE_RATIO_MAX = 10;
+// The vertical layout (ChatGPT, 38e0f3a: fixed offsets put elimination off a
+// small window): above V1, the pump and absorption arrows (TOP); below, the
+// names, volumes, amounts and the elimination arrow (BOTTOM); the plot at
+// least MIN_PLOT px between them.
+const FLAT_TOP = 96, FLAT_BOTTOM = 108, FLAT_MIN_PLOT = 90;
 
 const Flat = {
     el: null, run: null, ui: null, scale: null, last: null, cardH: 0,
@@ -68,6 +73,16 @@ const Flat = {
         }).observe(ctl);
     },
     visible() { return this.el && this.el.style.display !== 'none'; },
+    // The top of the controls, less a margin, within the drawing's height H.
+    controlsTop(H) {
+        const c = document.getElementById('controls');
+        return Math.min(H, c ? c.getBoundingClientRect().top : H) - 8;
+    },
+    // Whether cards h px tall leave the drawing its room (Cards.fit()).
+    fits(h) {
+        const ctl = this.controlsTop(this.el.clientHeight);
+        return !(h > 0) || ctl - h - 22 - FLAT_BOTTOM - FLAT_TOP >= FLAT_MIN_PLOT;
+    },
 
     // A new run: the fixed scales, from every moment of it.
     // stateAt: the player's own function, so the flows are the ones it draws.
@@ -110,25 +125,16 @@ const Flat = {
         // (ChatGPT, 38e0f3a: fixed offsets put elimination off a small
         // window). Above V1: the pump and absorption arrows (TOP); below:
         // the names, volumes, amounts and the elimination arrow (BOTTOM).
-        const TOP = 96, BOTTOM = 108, MIN_PLOT = 90;
-        const ctl = Math.min(H, (document.getElementById('controls') || { getBoundingClientRect: () => ({ top: H }) })
-                                   .getBoundingClientRect().top) - 8;
-        // The cards' height, measured as they would show at this size (the
-        // class that leaves them out is lifted for the measurement, in the
-        // same task, so nothing is painted without it): never a height kept
-        // from another window size or another state of the amounts card
-        // (Gemini, 712e43a).
-        document.body.classList.remove('compact');
-        const h = id => { const el = document.getElementById(id); return el ? el.offsetHeight : 0; };
-        this.cardH = Math.max(h('readout'), h('amounts'));
-        // Above the cards if the plot fits there. If not, the 2D view leaves
-        // the cards out: its own labels give every concentration, volume,
-        // amount and flow, and the cards return in a larger window or the 3D
-        // view. In a window too small even then, the drawing keeps its
-        // minimum size and the 2D view scrolls.
-        const compact = this.cardH > 0 && ctl - this.cardH - 22 - BOTTOM - TOP < MIN_PLOT;
-        document.body.classList.toggle('compact', compact);
-        const floor = compact ? ctl : ctl - this.cardH - 22;
+        const TOP = FLAT_TOP, BOTTOM = FLAT_BOTTOM, MIN_PLOT = FLAT_MIN_PLOT;
+        const ctl = this.controlsTop(H);
+        // The cards that show, by the rule both views share (Cards.fit() in
+        // player.js): both, one, or none, so the drawing keeps its room.
+        // Their labels give every concentration, volume, amount and flow
+        // when a card is left out; in a window too small even then, the
+        // drawing keeps its minimum size and the 2D view scrolls.
+        Cards.fit('2d');
+        this.cardH = Cards.height;
+        const floor = this.cardH > 0 ? ctl - this.cardH - 22 : ctl;
         const Hs = Math.max(H, TOP + MIN_PLOT + BOTTOM + (H - ctl));
         const yTop = TOP, yBase = Math.max(TOP + MIN_PLOT, floor - BOTTOM);
         const ph = yBase - yTop;
@@ -253,11 +259,14 @@ const Flat = {
         // A scroll bar that came or went changes the width: lay out once more.
         if (this.el.clientWidth !== W && !this.again) { this.again = true; this.draw(st); this.again = false; return; }
         // Keep every label inside the window: a label beside a box near an
-        // edge is moved in, never cut off.
-        for (const t of this.el.querySelectorAll('text')) {
-            const b = t.getBBox(), dx = b.x < 2 ? 2 - b.x : b.x + b.width > W - 2 ? W - 2 - b.x - b.width : 0;
+        // edge is moved in, never cut off. Every box is read before any label
+        // moves, so the drawing is laid out once (a move between two reads
+        // made the next read lay it out again; Gemini, 6b52133).
+        const texts = [...this.el.querySelectorAll('text')], boxes = texts.map(t => t.getBBox());
+        texts.forEach((t, i) => {
+            const b = boxes[i], dx = b.x < 2 ? 2 - b.x : b.x + b.width > W - 2 ? W - 2 - b.x - b.width : 0;
             if (dx) t.setAttribute('x', Number(t.getAttribute('x')) + dx);
-        }
+        });
     }
 };
 

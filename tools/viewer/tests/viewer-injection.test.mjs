@@ -386,15 +386,9 @@ test('2D: in a 360 x 260 window the controls and the view switch show and the dr
   // A large window: the drawing ends above the cards.
   await page.setViewport({ width: 1200, height: 800 });
   await new Promise(r => setTimeout(r, 200));
-  const big = await page.evaluate(() => {
-    const cards = Math.min(...['readout', 'amounts'].map(id => document.getElementById(id))
-      .filter(e => e.offsetHeight > 0).map(e => e.getBoundingClientRect().top));
-    let low = 0;
-    for (const el of document.querySelectorAll('#flat svg rect, #flat svg polygon, #flat svg text'))
-      { const b = el.getBoundingClientRect(); if (b.height > 0) low = Math.max(low, b.bottom); }
-    return { cards, low };
-  });
-  assert.ok(big.low <= big.cards, `the drawing reaches ${big.low}, the cards start at ${big.cards}`);
+  const big = await underCards(page);
+  assert.notEqual(big.cards, null, 'no card shows in a 1200 x 800 window');
+  assert.ok(clearOfCards(big), `the drawing reaches ${big.low}, the cards start at ${big.cards}`);
   assertClean(page);
 });
 
@@ -406,8 +400,12 @@ const underCards = page => page.evaluate(() => {
   let low = 0;
   for (const el of document.querySelectorAll('#flat svg rect, #flat svg polygon, #flat svg text'))
     { const b = el.getBoundingClientRect(); if (b.height > 0) low = Math.max(low, b.bottom); }
-  return { cards: cards.length ? Math.min(...cards) : Infinity, low, compact: document.body.classList.contains('compact') };
+  // null, not Infinity, when no card shows: Infinity reaches Node as null,
+  // and 500 <= null is false (ChatGPT, 6b52133).
+  return { cards: cards.length ? Math.min(...cards) : null, low, compact: document.body.classList.contains('compact') };
 });
+// The drawing is clear of the cards: below every card that shows, or no card shows.
+const clearOfCards = g => g.cards == null || g.low <= g.cards;
 
 test('2D: the first frame after a load is laid out around the cards', { skip }, async t => {
   const page = await viewerPage(t);
@@ -415,7 +413,7 @@ test('2D: the first frame after a load is laid out around the cards', { skip }, 
   await new Promise(r => setTimeout(r, 200));
   assert.equal(await loadRun(page, RUN), true);          // no second seek
   const big = await underCards(page);
-  assert.ok(big.low <= big.cards, `first frame reaches ${big.low}, the cards start at ${big.cards}`);
+  assert.ok(clearOfCards(big), `first frame reaches ${big.low}, the cards start at ${big.cards}`);
   await page.setViewport({ width: 360, height: 260 });
   await new Promise(r => setTimeout(r, 200));
   assert.equal(await loadRun(page, RUN), true);
@@ -431,13 +429,13 @@ test('2D: the amounts card (a) and a resize across sizes never leave the cards o
   await page.keyboard.press('a'); await page.evaluate(() => Player.seek(1500));
   await page.keyboard.press('a');                        // the card shows again, paused
   let g = await underCards(page);
-  assert.ok(g.low <= g.cards, `after a, the drawing reaches ${g.low}, the cards ${g.cards}`);
+  assert.ok(clearOfCards(g), `after a, the drawing reaches ${g.low}, the cards ${g.cards}`);
   for (const [w0, h0, w1, h1] of [[800, 500, 800, 580], [1200, 400, 1200, 800], [800, 580, 800, 500]]) {
     await page.setViewport({ width: w0, height: h0 }); await new Promise(r => setTimeout(r, 150));
     await page.evaluate(() => Player.seek(1500));
     await page.setViewport({ width: w1, height: h1 }); await new Promise(r => setTimeout(r, 150));
     const a = await underCards(page);
-    assert.ok(a.compact || a.low <= a.cards, `${w0}x${h0} -> ${w1}x${h1}: drawing ${a.low}, cards ${a.cards}`);
+    assert.ok(a.compact || clearOfCards(a), `${w0}x${h0} -> ${w1}x${h1}: drawing ${a.low}, cards ${a.cards}`);
     await page.evaluate(() => Player.seek(1501));
     const b = await underCards(page);
     assert.equal(b.compact, a.compact, `${w0}x${h0} -> ${w1}x${h1}: the cards flicker on the next frame`);
@@ -482,9 +480,15 @@ test('2D: no two labels overlap, the pump and absorption arrows stand apart, and
       Player.seek(T);
       const bb = [...document.querySelectorAll('#flat svg text')].map(e => ({ s: e.textContent, b: e.getBBox() }));
       const hits = [];
+      // A text's box is its font's full height (and a subscript's drop),
+      // taller than the letters painted: boxes on adjacent lines can meet by
+      // a few pixels where the letters are well apart, by an amount that
+      // varies with the system's fonts (ChatGPT, 6b52133: 2 px for "V1" over
+      // "6.28 L" on Linux). A real collision overlaps by more than that.
+      const SLACK_Y = 4;
       for (let i = 0; i < bb.length; i++) for (let j = i + 1; j < bb.length; j++) {
         const a = bb[i].b, b = bb[j].b;
-        if (a.x < b.x + b.width - 0.5 && b.x < a.x + a.width - 0.5 && a.y < b.y + b.height - 0.5 && b.y < a.y + a.height - 0.5)
+        if (a.x < b.x + b.width - 0.5 && b.x < a.x + a.width - 0.5 && a.y < b.y + b.height - SLACK_Y && b.y < a.y + a.height - SLACK_Y)
           hits.push(bb[i].s + ' / ' + bb[j].s);
       }
       // The two red arrowheads into V1's top.
@@ -772,5 +776,190 @@ test('video: a resize during a save leaves the card describing the window after 
   assert.equal(after.shown, false);
   assert.equal(after.drug, 'half');
   assert.match(String(after.msg), /not a JSON object/, 'the refusal was cleared before it could be read');
+  assertClean(page);
+});
+
+// ── Performance: Gemini's audit of 6b52133 ───────────────────────────────
+// Counts the 3D view's drawings on window.__renders.
+const countRenders = page => page.evaluate(() => {
+  if (!window.__renderWrapped) {
+    const draw = View.renderer.render.bind(View.renderer);
+    View.renderer.render = (s, c) => { window.__renders++; draw(s, c); };
+    window.__renderWrapped = true;
+  }
+  window.__renders = 0;
+});
+const renders = page => page.evaluate(() => window.__renders);
+const pause = ms => new Promise(r => setTimeout(r, ms));
+
+test('performance card: it measures the 2D view, and the 2D frames\' time never reaches a 3D frame', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, RUN), true);
+  await page.keyboard.press('p');
+  await page.evaluate(() => Player.play());
+  // It said "measuring…" for good in 2D, the scene's loop never ending a frame there.
+  await page.waitForFunction(() => /Frames\s+\d+ \/s/.test(document.getElementById('perf').innerText), { timeout: 10000 });
+  const card = await page.evaluate(() => document.getElementById('perf').innerText);
+  assert.match(card, /2D view/);
+  // The player's time is cleared at the end of each 2D frame, not kept for the first 3D one.
+  await pause(400);
+  assert.ok(await page.evaluate(() => Perf.jsFrame) < 50, 'the 2D frames\' time is still accumulating');
+  await page.evaluate(() => { Player.pause(); Player.setView('3d'); });
+  assert.match(await page.evaluate(() => document.getElementById('perf').innerText), /measuring/, 'the card did not start again on the switch');
+  await page.waitForFunction(() => /M pixels/.test(document.getElementById('perf').innerText), { timeout: 20000 });
+  assertClean(page);
+});
+
+test('3D: a paused, still view is drawn again only when something on it changes', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, RUN), true);
+  await page.evaluate(() => { Player.setView('3d'); Player.seek(1500); });
+  await pause(2000);                                    // drawn, and the ripples settled
+  await countRenders(page);
+  await pause(1200);
+  assert.equal(await renders(page), 0, 'a still, paused view was drawn again');
+  // Each change to what is on screen is drawn.
+  for (const [what, change] of [
+    ['a vessel pointed at', () => View.setHover('c1')],
+    ['the camera turned', () => View.orbit(0.2)],
+    ['the lens changed', () => View.fov(-5)],
+    ['a new time', () => Player.seek(2500)],
+    ['another look', () => View.setLook(View.lookName)],
+  ]) {
+    await countRenders(page);
+    await page.evaluate(change);
+    await page.waitForFunction(() => window.__renders > 0, { timeout: 10000 }).catch(() => {});
+    assert.ok(await renders(page) > 0, what + ' was not drawn');
+  }
+  await countRenders(page);
+  await page.setViewport({ width: 1000, height: 700 });
+  await page.waitForFunction(() => window.__renders > 0, { timeout: 10000 }).catch(() => {});
+  assert.ok(await renders(page) > 0, 'a resize was not drawn');
+  // Playing, it is drawn every frame.
+  await countRenders(page);
+  await page.evaluate(() => Player.play());
+  await page.waitForFunction(() => window.__renders >= 3, { timeout: 20000 }).catch(() => {});
+  assert.ok(await renders(page) >= 3, 'not drawn while playing');
+  await page.evaluate(() => Player.pause());
+  assertClean(page);
+});
+
+test('2D frames leave the hidden 3D scene alone; the switch draws the moment shown; a still surface is reshaped only when it changes', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, RUN), true);
+  const seen = await page.evaluate(() => {
+    let n = 0; const draw = View.draw.bind(View);
+    View.draw = (st, ui) => { n++; draw(st, ui); };
+    for (const T of [100, 900, 1800, 2700]) Player.seek(T);
+    const in2d = n;
+    Player.setView('3d');
+    const st = Player.stateAt(Player.T);
+    return { in2d, on3d: n - in2d, h: View.vessels[1].h, want: st.cp * Player.ui.concScale };
+  });
+  assert.equal(seen.in2d, 0, 'the hidden 3D scene was drawn in 2D');
+  assert.equal(seen.on3d, 1);
+  assert.ok(Math.abs(seen.h - seen.want) < 1e-9, 'V1 does not show the moment shown');
+  await pause(1500);                                    // V1's surface shaped by the scene's frames, ripples settled
+  const surf = await page.evaluate(() => [1, 2, 3].map(k => {
+    const v = View.vessels[k], g = v.surface.geometry;
+    if (!v.group.visible) return null;
+    const pos = Array.from(g.attributes.position.array), nor = Array.from(g.attributes.normal.array);
+    const again = v.shapeSurface();                     // unchanged: left alone
+    v.stillR = null; v.shapeSurface();                  // shaped from scratch
+    return { again, same: pos.every((x, i) => x === g.attributes.position.array[i]) &&
+                          nor.every((x, i) => x === g.attributes.normal.array[i]) };
+  }));
+  for (const [k, s] of surf.entries()) if (s) {
+    assert.equal(s.again, false, `V${k + 1}'s still surface was reshaped`);
+    assert.equal(s.same, true, `V${k + 1}'s kept surface is not the one its state gives`);
+  }
+  assertClean(page);
+});
+
+// ── Small windows: ChatGPT's audit of 6b52133 ────────────────────────────
+// The cards that show, their boxes, and the controls' top.
+const shownCards = page => page.evaluate(() => {
+  const out = {};
+  for (const id of ['readout', 'amounts']) {
+    const e = document.getElementById(id);
+    if (getComputedStyle(e).display === 'none' || e.offsetHeight === 0) continue;
+    const b = e.getBoundingClientRect(); out[id] = { left: b.left, right: b.right, top: b.top, bottom: b.bottom, h: b.height };
+  }
+  const C = typeof Cards === 'undefined' ? {} : Cards;     // none before 6b52133's fix: the boxes still tell
+  return { cards: out, ctlTop: document.getElementById('controls').getBoundingClientRect().top, level: C.level, canSwap: C.canSwap };
+});
+
+test('small windows: in both views the cards never overlap, start above the window or bury the picture', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, RUN), true);
+  for (const view of ['2d', '3d']) {
+    await page.evaluate(v => Player.setView(v), view);
+    for (const [w, h] of [[360, 260], [800, 400], [800, 560], [500, 900], [800, 600], [1200, 800]]) {
+      await page.setViewport({ width: w, height: h }); await pause(150);
+      await page.evaluate(() => Player.seek(1500));
+      const s = await shownCards(page), at = `${view} ${w}x${h}`;
+      const cs = Object.values(s.cards);
+      for (const c of cs) assert.ok(c.top >= 0 && c.bottom <= s.ctlTop, `${at}: a card is outside the window or over the controls`);
+      if (cs.length === 2) assert.ok(cs[0].right <= cs[1].left || cs[1].right <= cs[0].left, `${at}: the cards overlap`);
+      if (view === '3d') {
+        const hMax = Math.max(0, ...cs.map(c => c.h)), bottom = Math.max(0, ...cs.map(c => c.bottom));
+        assert.ok(hMax <= 0.5 * bottom + 0.5, `${at}: the cards cover ${hMax} of the ${bottom} px above them`);
+      } else assert.ok(clearOfCards(await underCards(page)), `${at}: the drawing runs under the cards`);
+      if (w === 1200) assert.equal(cs.length, 2, `${at}: both cards should show`);
+    }
+  }
+  assertClean(page);
+});
+
+test('small windows: one card where both do not fit, a swaps it, and where none fits a says so', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, RUN), true);
+  // A window where one card fits and either could: ChatGPT's 800 x 600 lost both.
+  let found = null;
+  for (const [w, h] of [[800, 560], [800, 520], [500, 900], [420, 700], [800, 600]]) {
+    await page.setViewport({ width: w, height: h }); await pause(150);
+    await page.evaluate(() => Player.seek(1500));
+    const s = await shownCards(page);
+    if (s.level === 1 && s.canSwap) { found = [w, h, s]; break; }
+  }
+  assert.ok(found, 'no window size gave one card that a can swap');
+  assert.deepEqual(Object.keys(found[2].cards), ['readout'], 'the readout is the card kept');
+  await page.keyboard.press('a');
+  assert.deepEqual(Object.keys((await shownCards(page)).cards), ['amounts'], 'a did not swap Amounts in');
+  await page.evaluate(() => Player.seek(1600));
+  assert.deepEqual(Object.keys((await shownCards(page)).cards), ['amounts'], 'the swap did not last to the next frame');
+  await page.keyboard.press('a');
+  assert.deepEqual(Object.keys((await shownCards(page)).cards), ['readout'], 'a did not swap the readout back');
+  // No card fits: a says so, and the note goes.
+  await page.setViewport({ width: 360, height: 260 }); await pause(150);
+  await page.evaluate(() => Player.seek(1500));
+  assert.equal((await shownCards(page)).level, 2);
+  await page.keyboard.press('a');
+  const note = await page.evaluate(() => ({ shown: document.getElementById('message').classList.contains('show'),
+                                            text: document.querySelector('#message .card').textContent }));
+  assert.ok(note.shown && /No room for the cards/.test(note.text), 'a did nothing visible where no card fits');
+  await page.waitForFunction(() => !document.getElementById('message').classList.contains('show'), { timeout: 5000 });
+  assertClean(page);
+});
+
+test('video: at 360 x 260 the dialog and both its buttons are inside the window', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 360, height: 260 });
+  assert.equal(await loadRun(page, RUN), true);
+  await page.click('#saveVideo');
+  const g = await page.evaluate(() => {
+    const box = s => { const b = document.querySelector('#videoCard ' + s).getBoundingClientRect();
+                       return { top: b.top, bottom: b.bottom, left: b.left, right: b.right }; };
+    return { card: box('.card'), go: box('.go'), cancel: box('.cancel'), W: innerWidth, H: innerHeight };
+  });
+  for (const k of ['card', 'go', 'cancel'])
+    assert.ok(g[k].top >= 0 && g[k].left >= 0 && g[k].bottom <= g.H && g[k].right <= g.W, `${k} is outside the window: ${JSON.stringify(g[k])}`);
+  await page.click('#videoCard .cancel');                   // by the pointer, at its centre
+  assert.equal(await page.evaluate(() => Video.shown()), false, 'Cancel could not be pressed');
   assertClean(page);
 });

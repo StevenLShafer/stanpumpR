@@ -239,7 +239,10 @@ class Vessel {
         this.surface.position.y = h;
         this.surface.scale.set(this.r, 1, this.r);
         this.flat = false;
-        this.shapeSurface();
+        // V1's surface is shaped by tickRipples(), which the scene runs
+        // before every drawing: shaping it here too did it twice a frame
+        // (Gemini, 6b52133).
+        if (this.k !== 1) this.shapeSurface();
         const L = look.liquid;
         const style = (LIQUID_STYLES[L.style] || LIQUID_STYLES.solid)({ drug: drugRgb });
         for (const m of [this.sideMat, this.topMat, this.botMat]) {
@@ -328,6 +331,10 @@ class Vessel {
     // The normals come from the slope (dy/dd, d the distance in scene
     // units), in the surface's own unscaled space, where a slope s along
     // the radius tilts the normal by s * r: three.js scales them back.
+    // A still surface (no ripples, no bolus ring) depends only on the radius
+    // and the meniscus, so it is left as it is while they are unchanged:
+    // V2's and V3's were rebuilt and sent to the GPU every frame (Gemini,
+    // 6b52133). Returns whether the surface changed.
     shapeSurface() {
         const g = this.surface.geometry, p = g.attributes.position.array, n = g.attributes.normal.array;
         const cs = g.userData.cos, sn = g.userData.sin, r = this.r;
@@ -335,6 +342,10 @@ class Vessel {
         const ripple = this.amp > 1e-4;
         const ringR = this.ring ? this.ring.age * BOLUS_RING_SPEED : 0;
         const ringH = this.ring ? BOLUS_RING_H * Math.exp(-1.5 * this.ring.age) : 0;
+        if (!ripple && !(ringH > 1e-4)) {
+            if (this.stillR === r && this.stillMen === this.men) return false;
+            this.stillR = r; this.stillMen = this.men;
+        } else this.stillR = this.stillMen = null;
         for (let i = 0; i <= SURF_RINGS; i++) {
             const q = i / SURF_RINGS, d = q * r, fade = 1 - q * q, dfade = -2 * q / r;
             const em = this.men * Math.exp(-(1 - q) * r / MENISCUS_W);
@@ -363,10 +374,12 @@ class Vessel {
         }
         g.attributes.position.needsUpdate = true;
         g.attributes.normal.needsUpdate = true;
+        return true;
     }
 
     // V1's ripples, each frame. mlh: the pump's rate now, ml/h; running: the
     // clock is moving. Stopped, the ripples settle and the surface stills.
+    // Returns whether the surface changed (the scene is then drawn again).
     tickRipples(dt, mlh, running) {
         const target = running ? RIPPLE_MAX * Math.sqrt(Math.max(0, mlh) / RIPPLE_MLH) : 0;
         const tau = target > this.amp ? RIPPLE_GROW : RIPPLE_FADE;
@@ -376,8 +389,9 @@ class Vessel {
             if (this.ring) { this.ring.age += dt; if (this.ring.age * BOLUS_RING_SPEED > this.r + 1) this.ring = null; }
         }
         const moving = this.amp > 1e-4 || this.ring;
-        if (moving) { this.shapeSurface(); this.flat = false; }
-        else if (!this.flat) { this.amp = 0; this.shapeSurface(); this.flat = true; }
+        if (moving) { this.flat = false; return this.shapeSurface(); }
+        if (!this.flat) { this.amp = 0; this.flat = true; return this.shapeSurface(); }
+        return false;
     }
 
     bolusRing() { this.ring = { age: 0 }; }

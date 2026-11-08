@@ -373,6 +373,11 @@ function mp4(chunks, description, w, h, fps) {
     const u16 = v => u8([(v >>> 8) & 255, v & 255]);
     const u32 = v => u8([(v >>> 24) & 255, (v >>> 16) & 255, (v >>> 8) & 255, v & 255]);
     const str = s => u8([...s].map(c => c.charCodeAt(0)));
+    // A table of 32-bit numbers, in one array: not one argument per frame,
+    // which a longer video would push past the browser's limit on a call's
+    // arguments (Gemini, 6b52133).
+    const u32s = vs => { const out = new Uint8Array(4 * vs.length), dv = new DataView(out.buffer);
+                         vs.forEach((v, i) => dv.setUint32(4 * i, v)); return out; };
     const cat = parts => { const len = parts.reduce((s, p) => s + p.length, 0), out = new Uint8Array(len);
                            let o = 0; for (const p of parts) { out.set(p, o); o += p.length; } return out; };
     const box = (type, ...parts) => { const body = cat(parts); return cat([u32(8 + body.length), str(type), body]); };
@@ -394,9 +399,9 @@ function mp4(chunks, description, w, h, fps) {
     const stsd = full('stsd', 0, 0, u32(1), avc1);
     const stts = full('stts', 0, 0, u32(1), u32(n), u32(DELTA));
     const keys = chunks.map((c, i) => c.key ? i + 1 : 0).filter(Boolean);
-    const stss = full('stss', 0, 0, u32(keys.length), ...keys.map(u32));
+    const stss = full('stss', 0, 0, u32(keys.length), u32s(keys));
     const stsc = full('stsc', 0, 0, u32(1), u32(1), u32(n), u32(1));
-    const stsz = full('stsz', 0, 0, u32(0), u32(n), ...chunks.map(c => u32(c.data.length)));
+    const stsz = full('stsz', 0, 0, u32(0), u32(n), u32s(chunks.map(c => c.data.length)));
     const build = offset => box('moov', mvhd, box('trak', tkhd, box('mdia', mdhd, hdlr,
         box('minf', vmhd, dinf, box('stbl', stsd, stts, stss, stsc, stsz, full('stco', 0, 0, u32(1), u32(offset)))))));
     const moovSize = build(0).length;
