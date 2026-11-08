@@ -460,8 +460,13 @@ paperReviewServer <- function(input, output, session)
       }
       # Read as validateDose() reads them: "1,000" passed the check above and
       # was then dropped by as.numeric() below without a word (the same audit)
-      fill <- function(x) vapply(x, function(v) { r <- validateDose(v); if (nzchar(r)) r else v },
-                                 character(1), USE.NAMES = FALSE)
+      # A blank is left blank: validateDose() reads it as 0, which put a row
+      # still being filled in (a dose and unit, no time) at time 0 (CodeRabbit)
+      fill <- function(x) vapply(x, function(v) {
+        if (isBlankEntry(v)) return(v)
+        r <- validateDose(v)
+        if (nzchar(r)) r else v
+      }, character(1), USE.NAMES = FALSE)
       d$Time <- fill(d$Time)
       d$Dose <- fill(d$Dose)
     }

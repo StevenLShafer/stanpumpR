@@ -261,6 +261,11 @@ test_that("Single Paper Review reads its doses as validateDose() does, and says 
     session$setInputs(doses = tableGridInputValue(list(list("0", "1,000", "mg"))))
     expect_equal(dosesNow()$Dose, 1000)
     expect_null(attr(dosesNow(), "problem"))
+    # a row still being filled in is passed over, never read as time 0 (CodeRabbit)
+    session$setInputs(doses = tableGridInputValue(list(list("0", "1", "mg"), list("", "5", "mg"),
+                                                       list("10", "", "mg"))))
+    expect_equal(dosesNow()$Dose, 1)
+    expect_null(attr(dosesNow(), "problem"))
     session$setInputs(doses = tableGridInputValue(rep(list(list("0", "1", "mg")), MAX_DOSE_ROWS)))
     expect_match(attr(dosesNow(), "problem"), "at most 499 rows")
   })
