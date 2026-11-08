@@ -355,7 +355,7 @@ app_ui <- function() {
                 # normal creatinine for the patient's age and sex; see
                 # R/renalFunction.R.
                 relevantField("creatinine", fieldHelp(
-                  numericInput(
+                  blankableNumericInput(
                     inputId = "creatinine",
                     label = "Serum creatinine (mg/dL)",
                     value = NA,
@@ -372,7 +372,7 @@ app_ui <- function() {
                 # postmenstrual age, the gestational age at birth plus the
                 # postnatal age.  Blank means a term birth (40 weeks).
                 relevantField("gestationalAge", fieldHelp(
-                  numericInput(
+                  blankableNumericInput(
                     inputId = "gestationalAge",
                     label = "Gestational age at birth (weeks)",
                     value = NA,
