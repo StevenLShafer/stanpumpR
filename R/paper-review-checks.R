@@ -143,6 +143,13 @@ PAPER_REVIEW_DERIVED_KIND <- c(
   AUC_inf = "auc", AUC_0_t = "auc", Cmax = "concentration", tmax = "time",
   tPeak = "time", ke0 = "rate")
 
+# A miss beyond tenfold either way (ratio the paper's over the model's, or
+# the reverse): read as a likely misreading, not as an error in the paper.
+paperReviewTenfold <- function(ratio) isTRUE(is.finite(ratio) && ratio > 0 && (ratio > 10 || ratio < 0.1))
+PAPER_REVIEW_TENFOLD_NOTE <- paste(
+  "A difference of more than tenfold is far more likely a misreading by Claude (of the units, a dose",
+  "or the regimen) than an error in the paper: check the extraction below against the paper first.")
+
 #' The patient a derived quantity was printed for, when not the reference
 #'
 #' A paper may tabulate CL/F, volumes and half-lives at several weights or
@@ -781,14 +788,16 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
       relative = if (is.finite(relative)) sprintf("%+.1f%%", 100 * relative) else "",
       status = status, location = dq$location %or% "", note = trimws(note),
       stringsAsFactors = FALSE)
-    if (status %in% c("differs", "disagrees"))
+    if (status %in% c("differs", "disagrees")) {
+      misread <- paperReviewTenfold(1 + relative)
       findings[[length(findings) + 1]] <- paperReviewFinding(section,
-        if (status == "disagrees") "error" else "concern",
+        if (status == "disagrees" && !misread) "error" else "concern",
         paste0(q, " as printed (", dq$value_text, " ", dq$units, ") ", status,
-               " with the model's own parameters"),
-        paste0("Recomputed from the printed parameters: ",
+               " with the model's own parameters", if (misread) " by more than tenfold"),
+        paste0(if (misread) paste0(PAPER_REVIEW_TENFOLD_NOTE, " "), "Recomputed from the printed parameters: ",
                rows[[length(rows)]]$model, " ", dq$units, " (", rows[[length(rows)]]$relative, "). ", note),
         dq$location)
+    }
   }
   # The rest is about the reference patient.
   pk <- atReference$pk; lambda <- atReference$lambda; coef <- atReference$coef
@@ -1667,10 +1676,17 @@ paperReviewFigureChecks <- function(extraction, drug, reference)
     mdpe <- stats::median(pe); mdape <- stats::median(abs(pe))
     severity <- if (!is.finite(mdape)) "info" else if (mdape <= 0.2) "ok"
                 else if (mdape <= 0.5) "concern" else "error"
+    # A median miss of more than tenfold is far likelier Claude misreading the
+    # units, the dose or the regimen than a model that bad in print (Devin's
+    # stress test, 2026-11-08: +207,756% on a figure whose sibling without the
+    # loading dose matched).
+    misread <- paperReviewTenfold(1 + mdpe)
+    if (misread) severity <- "concern"
     add(severity, paste0(paperReviewFigureTitle(id, points$series), ": the model ",
                          if (severity == "ok") "reproduces" else "does not closely reproduce",
-                         " the digitised points"),
-        paste0(sum(use), " points compared. Median prediction error (observed - predicted) / predicted ",
+                         " the digitised points", if (misread) " (more than tenfold: probably a misreading)"),
+        paste0(if (misread) paste0(PAPER_REVIEW_TENFOLD_NOTE, " "),
+               sum(use), " points compared. Median prediction error (observed - predicted) / predicted ",
                sprintf("%+.0f%%", 100 * mdpe), ", median absolute ", sprintf("%.0f%%", 100 * mdape),
                ".", note, " The points were digitised approximately by Claude (",
                f$digitization_note %or% "",
