@@ -33,7 +33,7 @@ agentDocDefinitions <- function(root) {
              list.files(file.path(root, "tests", "testthat"), "^helper.*\\.R$",
                         full.names = TRUE),
              list.files(file.path(root, "inst", "www"), "\\.js$", full.names = TRUE),
-             # the Minto Visualizer's source, whose functions AGENTS.md names
+             # the Visualizer's source, whose functions AGENTS.md names
              # (displayVolumes()); built into inst/www/stanpumpR-viewer.html
              list.files(file.path(root, "tools", "viewer", "src"), "\\.js$", full.names = TRUE))
   unique(unlist(lapply(files, function(f) {

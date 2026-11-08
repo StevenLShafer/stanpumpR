@@ -1022,7 +1022,7 @@ helpScenarioDefinitions <- function() {
       timeUnits = "days", maximum = 7 * MINS_PER_DAY,
       plasmaLinetype = "solid", effectsiteLinetype = "blank"
     ),
-    # Seeing the compartments: runs made to be watched in the Minto Visualizer
+    # Seeing the compartments: runs made to be watched in the Visualizer
     # (R/viewerRun.R, tools/viewer), in its 2D and 3D views, and saved as
     # teaching videos with its Video button. Peripheral compartments is on, so
     # the plot shows the same V2 and V3 the visualizer draws. The numbers on
@@ -1032,7 +1032,7 @@ helpScenarioDefinitions <- function() {
       "visualizer-propofol-bolus",
       "Watching a propofol bolus redistribute",
       "Seeing the compartments",
-      "Propofol 2 mg/kg as a bolus, made to be watched in the Minto Visualizer: the bolus fills V1 alone, the effect wears off within minutes while most of the dose is still in the body, and the flow between V1 and V2 turns round at the moment their levels cross.",
+      "Propofol 2 mg/kg as a bolus, made to be watched in the Visualizer: the bolus fills V1 alone, the effect wears off within minutes while most of the dose is still in the body, and the flow between V1 and V2 turns round at the moment their levels cross.",
       doses = helpDoses(
         c("propofol", 0, 140, "mg")
       ),
@@ -1042,7 +1042,7 @@ helpScenarioDefinitions <- function() {
       "visualizer-fentanyl-infusion",
       "Watching a fentanyl infusion come back",
       "Seeing the compartments",
-      "Fentanyl 100 mcg and 2 mcg/kg/hr for four hours, then stopped, made to be watched in the Minto Visualizer: half the drug given is in V3 when the pump stops, V3 keeps filling for a quarter of an hour, and then most of what leaves the body over the next four hours has first come back from the periphery.",
+      "Fentanyl 100 mcg and 2 mcg/kg/hr for four hours, then stopped, made to be watched in the Visualizer: half the drug given is in V3 when the pump stops, V3 keeps filling for a quarter of an hour, and then most of what leaves the body over the next four hours has first come back from the periphery.",
       doses = helpDoses(
         c("fentanyl", 0, 100, "mcg"),
         c("fentanyl", 0, 2, "mcg/kg/hr"),
@@ -1054,7 +1054,7 @@ helpScenarioDefinitions <- function() {
       "visualizer-propofol-tci",
       "Watching a TCI pump fill the compartments",
       "Seeing the compartments",
-      "A propofol effect-site target of 3 mcg/mL for an hour, made to be watched in the Minto Visualizer: a 10-second loading burst, the pump off while the effect site catches up, then a rate that falls by two fifths as V2 and V3 fill, and a slow V3 still filling after the target is set to zero.",
+      "A propofol effect-site target of 3 mcg/mL for an hour, made to be watched in the Visualizer: a 10-second loading burst, the pump off while the effect site catches up, then a rate that falls by two fifths as V2 and V3 fill, and a slow V3 still filling after the target is set to zero.",
       doses = helpDoses(
         c("propofol", 0, 3, "Effect site target"),
         c("propofol", 60, 0, "Effect site target")

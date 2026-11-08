@@ -963,3 +963,47 @@ test('video: at 360 x 260 the dialog and both its buttons are inside the window'
   assert.equal(await page.evaluate(() => Video.shown()), false, 'Cancel could not be pressed');
   assertClean(page);
 });
+
+// ── Devin's stress test (2026-11-08) ──────────────────────────────────────
+test('the name is Visualizer, in the page and in a video\'s caption', { skip }, async t => {
+  const page = await viewerPage(t);
+  assert.equal(await loadRun(page, RUN), true);
+  const g = await page.evaluate(() => ({ title: document.title, brand: document.getElementById('brand').textContent,
+                                         strip: videoHeading(false) }));
+  assert.equal(g.title, 'Visualizer');
+  assert.match(g.brand, /^Visualizer /);
+  assert.match(g.strip, /stanpumpR · Visualizer · Propofol/);
+  assert.doesNotMatch(JSON.stringify(g), /Minto Visualizer/);
+  assertClean(page);
+});
+
+test('Open run is offered on its own, not in a pop-up stanpumpR opened', { skip }, async t => {
+  const page = await viewerPage(t);
+  assert.notEqual(await page.$eval('#open', e => getComputedStyle(e).display), 'none', 'hidden when opened on its own');
+  const popup = await browser.newPage();
+  t.after(() => popup.close());
+  await popup.goto('file:///' + VIEWER.replace(/\\/g, '/') + '?t=12345', { waitUntil: 'load' });
+  await popup.waitForFunction('typeof Player !== "undefined"');
+  assert.equal(await popup.$eval('#open', e => getComputedStyle(e).display), 'none', 'offered in stanpumpR\'s pop-up');
+});
+
+test('round-off is shown as 0, not as 4.02e-16', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  const r = clone(RUN);
+  r.c2[0] = 4.02e-16; r.c3[0] = 3.5e-18;          // what remifentanil's V2 and V3 held at time 0
+  assert.equal(await loadRun(page, r), true);
+  const g = await page.evaluate(() => {
+    Player.seek(Player.run.t[0]);
+    const st = Player.stateAt(Player.run.t[0]);
+    return { c2: st.c2, A2: st.A2, texts: [...document.querySelectorAll('#flat svg text')].map(e => e.textContent).join(' | ') };
+  });
+  assert.equal(g.c2, 0);
+  assert.equal(g.A2, 0);
+  assert.doesNotMatch(g.texts, /e-1[0-9]/, 'a label shows round-off: ' + g.texts);
+  // A genuinely small value is still shown (a billionth of the peak is the line).
+  const s = clone(RUN); const peak = Math.max(...s.cp); s.c2[0] = peak * 1e-6;
+  assert.equal(await loadRun(page, s), true);
+  assert.ok(await page.evaluate(() => Player.stateAt(Player.run.t[0]).c2) > 0);
+  assertClean(page);
+});

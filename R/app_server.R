@@ -2327,7 +2327,7 @@ app_server <- function(input, output, session) {
     }, name = "input$stopAdministrationBtn observer")
   })
 
-  # The Minto Visualizer (R/viewerRun.R, inst/www/viewer-launch.js,
+  # The Visualizer (R/viewerRun.R, inst/www/viewer-launch.js,
   # inst/www/stanpumpR-viewer.html; source tools/viewer): the Edit doses
   # dialog's button opens the popup at once in the browser (a window opened
   # later, when the server answers, would be stopped by popup blockers) and
@@ -2349,7 +2349,7 @@ app_server <- function(input, output, session) {
       # Told in the app and in the viewer's window, which would otherwise
       # wait for a run that is not coming.
       fail <- function(message) {
-        showNotification(paste("Minto Visualizer:", message), type = "error")
+        showNotification(paste("Visualizer:", message), type = "error")
         session$sendCustomMessage("stanpumpR-viewer-error", list(token = token, message = message))
       }
       blocked <- simulationBlocked()
@@ -2372,7 +2372,7 @@ app_server <- function(input, output, session) {
 
   # The browser blocked the visualizer's window (inst/www/viewer-launch.js).
   observeEvent(input$viewerBlocked, {
-    showNotification("Minto Visualizer: the browser blocked the window. Allow pop-ups for this site and click again.",
+    showNotification("Visualizer: the browser blocked the window. Allow pop-ups for this site and click again.",
                      type = "warning", duration = 10)
   })
 
@@ -2387,13 +2387,13 @@ app_server <- function(input, output, session) {
         isolate(editDosesDialogGrid(drug)),
         actionButton("editDosesOK", "Apply", class = "btn-primary"),
         actionButton("deleteAllDosesBtn", "Delete All Doses", class = "btn-outline-danger"),
-        # The Minto Visualizer (R/viewerRun.R): only for a drug it can draw.
+        # The Visualizer (R/viewerRun.R): only for a drug it can draw.
         # Not an actionButton: inst/www/viewer-launch.js opens the pop-up and
         # only then reports input$openViewer, so a blocked pop-up leaves this
         # dialog open and asks nothing of the server.
         if (viewerAvailable(drug)) tags$button(
           id = "openViewer", type = "button", class = "btn btn-default btn-outline-primary",
-          icon("cube"), "Minto Visualizer"
+          icon("cube"), "Visualizer"
         ),
         tags$button(
           type = "button",

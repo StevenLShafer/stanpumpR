@@ -1,6 +1,6 @@
 ## What to look for
 
-Fentanyl 100 mcg at time zero and an infusion of 2 mcg/kg/hr (140 mcg an hour) for four hours, then stopped, in a 70 kg, 40-year-old man. *Peripheral compartments* is on, so V2 and V3 are drawn under the fentanyl panel. To watch it, double-click the fentanyl panel, press **Minto Visualizer**, then **Play**.
+Fentanyl 100 mcg at time zero and an infusion of 2 mcg/kg/hr (140 mcg an hour) for four hours, then stopped, in a 70 kg, 40-year-old man. *Peripheral compartments* is on, so V2 and V3 are drawn under the fentanyl panel. To watch it, double-click the fentanyl panel, press **Visualizer**, then **Play**.
 
 **V3 takes most of the drug.** In this man V1 is 12.1 L, V2 35.7 L and V3 224 L. When the pump stops at four hours, 660 mcg has been given. V1 holds 24 mcg, V2 70 mcg and V3 314 mcg, nearly half of everything given, and 252 mcg has been eliminated. V3's level, 1.40 ng/mL, is still below the plasma's 2.0, so V3 is still filling.
 

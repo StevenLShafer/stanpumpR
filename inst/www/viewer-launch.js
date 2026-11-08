@@ -25,7 +25,7 @@
 //  SOFTWARE.
 //
 //  In the app's page. A click on the button with id "openViewer" (the
-//  Minto Visualizer button of the Edit doses dialog; adapted for it by
+//  Visualizer button of the Edit doses dialog; adapted for it by
 //  Claude Code, 2026-11-05) opens the viewer in its own window at once (a window opened later, when the
 //  server answers, is stopped by popup blockers). The server sends the
 //  run as a custom message, "stanpumpR-viewer-run"; the viewer says

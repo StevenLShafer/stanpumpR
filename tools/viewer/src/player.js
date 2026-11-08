@@ -213,6 +213,9 @@ const Cards = {
     }
 };
 
+// A value below this fraction of the run's highest is round-off, shown as 0.
+const TINY_FRACTION = 1e-9;
+
 const Player = {
     run: null, ui: null, T: 0, playing: false, last: null, speed: PLAYER_SPEED,
     // The view shown: '2d' (flat.js, the first, Shafer 2026-11-06) or '3d' (the scene).
@@ -231,6 +234,11 @@ const Player = {
         sp.addEventListener('input', () => this.setSpeed(SPEEDS[+sp.value]));
         this.$('t').addEventListener('input', () => { this.pause(); this.seek(+this.$('t').value); View.kick(); });
         this.$('open').addEventListener('click', () => this.$('file').click());
+        // Opened by stanpumpR (its address carries the click's token): the run
+        // comes from the app, which has no way to save one, so there is nothing
+        // to open (Devin's stress test, 2026-11-08). The viewer opened on its
+        // own keeps the button, and either takes a dropped run file.
+        if (new URLSearchParams(location.search).has('t')) this.$('open').style.display = 'none';
         this.$('file').addEventListener('change', e => { const f = e.target.files[0]; if (f) this.readFile(f); e.target.value = ''; });
         // A run file dropped anywhere on the page.
         window.addEventListener('dragover', e => { e.preventDefault(); document.body.classList.add('over'); });
@@ -313,6 +321,13 @@ const Player = {
         // A loop, not Math.max(...r.cp), which overflows the stack on a long run.
         let maxCp = 0;
         for (const x of r.cp) if (x > maxCp) maxCp = x;
+        // Round-off, not drug: a concentration below a billionth of the run's
+        // highest is shown as 0 (V2 at time 0 read "4.02e-16"; Devin's stress
+        // test, 2026-11-08), and so is a depot below a billionth of its own.
+        let peak = maxCp, depotPeak = 0;
+        for (const v of [r.ce, r.c2, r.c3]) if (v) for (const x of v) if (x > peak) peak = x;
+        if (r.depot) for (const x of r.depot) if (x > depotPeak) depotPeak = x;
+        this.tiny = peak * TINY_FRACTION; this.depotTiny = depotPeak * TINY_FRACTION;
         const level = r.typical > 0 ? r.typical : (maxCp > 0 ? maxCp / 2 : 1);
         // toFixed() takes 0 to 100 digits: a vanishing level would ask for more.
         const mag = Math.max(-6, Math.floor(Math.log10(level)));
@@ -376,8 +391,9 @@ const Player = {
         const lerp = v => v == null ? null : v[i] + (v[i + 1] - v[i]) * a;
         // The value in force: the later sample once T reaches it.
         const j = T >= t[i + 1] ? i + 1 : i;
-        const cp = Math.max(0, lerp(r.cp)), ce = r.ce != null ? Math.max(0, lerp(r.ce)) : 0;
-        const c2 = r.c2 != null ? Math.max(0, lerp(r.c2)) : null, c3 = r.c3 != null ? Math.max(0, lerp(r.c3)) : null;
+        const clean = x => x < this.tiny ? 0 : x;
+        const cp = clean(Math.max(0, lerp(r.cp))), ce = r.ce != null ? clean(Math.max(0, lerp(r.ce))) : 0;
+        const c2 = r.c2 != null ? clean(Math.max(0, lerp(r.c2))) : null, c3 = r.c3 != null ? clean(Math.max(0, lerp(r.c3))) : null;
         const rate = r.rate[j], pk = r.pk;
         const mode = r.mode ? r.mode[j] : 'manual', target = r.target ? r.target[j] : 0;
         // A bolus shows from its time for BOLUS_SHOW_S of play; st.t is the
@@ -391,7 +407,7 @@ const Player = {
         const sc = this.scale;
         const A1 = sc * cp * pk.v1, A2 = c2 != null ? sc * c2 * pk.v2 : 0, A3 = c3 != null ? sc * c3 * pk.v3 : 0;
         const elim = this.elim ? lerp(this.elim) : null;
-        const depot = r.depot != null ? Math.max(0, lerp(r.depot)) : null;
+        const depot = r.depot != null ? (d => d < this.depotTiny ? 0 : d)(Math.max(0, lerp(r.depot))) : null;
         const absorbed = r.absorbed != null ? lerp(r.absorbed) : null;
         // A series' rate of change over this interval, per minute.
         const dt = (t[i + 1] - t[i]) / 60;

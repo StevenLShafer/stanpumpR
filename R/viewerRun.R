@@ -1,4 +1,4 @@
-# stanpumpR viewer (the Minto Visualizer) — the run file
+# stanpumpR viewer (the Visualizer) — the run file
 #
 # Author:    Dr Charles Minto
 # Assisted by: Claude.ai (Anthropic)
