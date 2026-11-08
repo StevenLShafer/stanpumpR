@@ -794,8 +794,12 @@ app_server <- function(input, output, session) {
 
     # make sure that table has changed before updating doseTable reactive
     if (identicalTable(doseTableDraft(), data)) return(FALSE)
-    # add empty row at the bottom if needed
-    if (nrow(data) == 0 || nzchar(utils::tail(data, 1)$Drug)) {
+    # add empty row at the bottom if needed: not once the table holds its
+    # MAX_DOSE_ROWS - 1 doses, the grid's own rule, which offers none there
+    # (a dose typed in it was cut; Gemini's production audit, 2026-11-08,
+    # finding 7)
+    if (nrow(data) == 0 ||
+        (nzchar(utils::tail(data, 1)$Drug) && sum(nzchar(trimws(data$Drug))) < MAX_DOSE_ROWS - 1L)) {
       data[nrow(data) + 1, ] <- ""
     }
 
