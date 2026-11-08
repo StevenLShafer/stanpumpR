@@ -970,6 +970,20 @@ describe('the draft, Apply and undo', () => {
     await page.waitForFunction(() => !document.getElementById('dosetable_apply').disabled);
     await page.click('#dosetable_apply');
     await page.waitForFunction(() => decodeURIComponent(location.search).includes('357'), null, { timeout: 15000 });
+    // and the link, opened afresh, restores it (ChatGPT's production audit,
+    // 2026-11-08, F01: the screen alone could not show the stale link)
+    const link = page.url();
+    const fresh = await page.context().newPage();
+    try {
+      await fresh.goto(link);
+      await fresh.waitForFunction(() => {
+        const g = document.querySelector('#doseGrid tbody');
+        return g && Array.from(g.querySelectorAll('input')).some(i => i.value === '357');
+      }, null, { timeout: 60000 });
+      assert.deepEqual((await adapter.readRows(fresh))[2], ['fentanyl', '0', '357', 'mcg']);
+    } finally {
+      await fresh.close();
+    }
   });
 
   test('an edit is a draft until Apply; undo and redo step through it', async () => {

@@ -2831,8 +2831,19 @@ app_server <- function(input, output, session) {
     input$targetOK,
     {
       profileCode({
+        # One value each, whatever the browser sent: the End time box and the
+        # drug list send one string, but a forged pair of End times made the
+        # test below an if() of length 2, which ended the session (ChatGPT's
+        # production audit, 2026-11-08, F02).  doseGridCell() makes anything
+        # that is not one value blank.
+        endText <- doseGridCell(input$targetEndTime)
+        targetDrug <- doseGridCell(input$targetDrug)
+        if (!targetDrug %in% drugDefaults()$Drug) {
+          showNotification("Choose a drug from the list.", type = "error")
+          return()
+        }
         # Tested before validateTime(), which turns a blank into "0"
-        if (!nzchar(trimws(input$targetEndTime)))
+        if (!nzchar(trimws(endText)))
         {
           outputComments("No endtime")
           return()
@@ -2887,7 +2898,7 @@ app_server <- function(input, output, session) {
         toMinutes <- function(x) {
           displayTimeToMinutes(validateTime(x), reference, format[["unit"]])
         }
-        endTime <- toMinutes(input$targetEndTime)
+        endTime <- toMinutes(endText)
         targetTimes <- as.character(targetTable$Time)
         typed <- !is.na(targetTimes) & nzchar(trimws(targetTimes))
         targetMinutes <- vapply(targetTimes[typed], toMinutes, numeric(1))
@@ -2913,18 +2924,18 @@ app_server <- function(input, output, session) {
         # vasopressin is dosed in units, and a mass unit stopped simCpCe()
         # (finding 3).  Nothing is written to doseTable() unless the regimen
         # is written.
-        inTable <- input$targetDrug %in% cleanDoseTable(doseTable())$Drug
+        inTable <- targetDrug %in% cleanDoseTable(doseTable())$Drug
         suggestDrugs <- function() {
           if (inTable) return(drugs())
-          bolusUnit <- drugDefaults()$Bolus.Units[match(input$targetDrug, drugDefaults()$Drug)]
-          drugPK(data.frame(Drug = input$targetDrug, Time = 0, Dose = 0, Units = bolusUnit,
+          bolusUnit <- drugDefaults()$Bolus.Units[match(targetDrug, drugDefaults()$Drug)]
+          drugPK(data.frame(Drug = targetDrug, Time = 0, Dose = 0, Units = bolusUnit,
                             stringsAsFactors = FALSE))
         }
 
         # Any error from here is said, and the spinner always comes down: an
         # error ended the session, and a req() left the spinner up for good.
         testTable <- tryCatch(
-          suggest(input$targetDrug,
+          suggest(targetDrug,
                   targetTable,
                   endTime,
                   suggestDrugs(),
@@ -2958,7 +2969,7 @@ app_server <- function(input, output, session) {
         # as.character(), which writes 1e5 as "1e+05".
         testTable$Time <- minutesToDisplayTime(testTable$Time, format[["unit"]])
         dt <- doseTable()
-        dt <- dt[!dt$Drug %in% input$targetDrug, ]
+        dt <- dt[!dt$Drug %in% targetDrug, ]
 
         dt <- rbind(
           testTable[,c("Drug","Time","Dose","Units")],

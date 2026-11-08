@@ -589,6 +589,21 @@ After the merge, Gemini audited the grids on stanpumpr.io, at `a64eb29` and then
 | 6 | Suggest Dosing, Drug thresholds and Single Paper Review read a table cut to fit as if whole; a forged unknown drug was quoted back in the thresholds' refusal; Paper Review dropped `1,000` without a word | Confirmed. Each case was forged, not reachable from the grid, and changed only the sender's own session. | Each refuses a cut table (Paper Review says so in the plot). `thresholdTableToDefaults()` reads only the library's drugs and MAC. Paper Review reads times and doses as `validateDose()` does. |
 | 7 | The dose grid refused an insert at 498 doses, counting the blank row below them, and at 499 still offered a row whose dose the server cut | Confirmed | The cap counts doses, not rows. At 499 doses no blank row is offered, by the grid or by the server's `storeGridEdit()`, which added its own, and a new dose in an inserted blank row is refused and said. A browser case covers 498 and 499; it caught the server's blank row. |
 
+## The production audit (ChatGPT, 2026-11-08)
+
+ChatGPT audited production at the same commit, `a64eb29`, alongside Gemini. Its work:
+
+- **Production:** fast typing at the host's latency, the dialogs, a refused entry on the last row, two tabs, a 16-minute idle session, mobile emulation, and hostile and malformed bookmark links. It sent eight small forged values.
+- **Locally, at the deployed commit:** the 74 browser cases (all pass) and the Single Paper Review and converter test suites.
+
+It found no cross-session exploit, no XSS and no refused value reaching a simulation. Each of its findings was checked against the code:
+
+| | Finding | Verdict | Fix |
+|---|---|---|---|
+| F01 | After Apply, the bookmark kept the dose from before Apply, and reopening it restored the old dose | Confirmed. It is Gemini's finding 3, fixed in the same pull request. | As Gemini's finding 3. The browser case now also opens the link in a fresh page and reads the restored dose, as ChatGPT advised: the screen alone cannot show a stale link. The case fails on the old observer. |
+| F02 | A forged pair of End times (`targetEndTime = c("60", "70")`) ended the Suggest Dosing session (`if()` of length 2) | Confirmed. The drug list had the same weakness, inside a `tryCatch`. | The OK handler reads the End time and the drug as one value each (`doseGridCell()`), and refuses a drug not in the library. `test-ui-adversarial-review.R` reproduces it, and the test fails without the fix. The same unguarded pattern on other inputs (`referenceTime`, Email Slide's comments, `normalization`) is recorded for a pass of its own. |
+| F03 | At a 200%-equivalent width, the two open sidebars (300 and 450 px, from #590) left the plot 48 px wide | Confirmed by reading the widths. It predates the grids, and which sidebar should give way is a layout decision. | Recorded for Shafer, not changed here. |
+
 ## Decisions for Steven Shafer
 
 These are pending. Record each answer here.

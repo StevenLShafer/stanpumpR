@@ -512,4 +512,25 @@ test_that("a cut table or an unknown drug is refused in the targets and threshol
   })
 })
 
+# ChatGPT's production audit of the new grids (2026-11-08, F02): a forged pair
+# of End times made an if() of length 2 in the OK handler, which ended the
+# session; a forged drug list fared no better.
+test_that("Suggest Dosing reads its End time and drug as one value each (ChatGPT's production audit, F02)", {
+  shiny::testServer(app_server, {
+    sent <- recordNotices(session)
+    startReview(session, reviewTable(list("propofol", "0", "100", "mg")))
+    before <- doseTable()
+    session$setInputs(targetDrug = "propofol", targetEndTime = c("60", "70"),
+                      targetTableHTML = targetGrid(list("0", 2)), targetOK = 1)
+    expect_false(session$isClosed())
+    expect_identical(doseTable(), before)
+    session$setInputs(targetDrug = c("propofol", "fentanyl"), targetEndTime = "60", targetOK = 2)
+    expect_false(session$isClosed())
+    expect_match(tail(errorsShown(sent), 1), "Choose a drug from the list")
+    session$setInputs(targetDrug = "notadrug", targetOK = 3)
+    expect_match(tail(errorsShown(sent), 1), "Choose a drug from the list")
+    expect_identical(doseTable(), before)
+  })
+})
+
 .sprglobals$config <- oldConfig
