@@ -391,12 +391,22 @@ paperReviewServer <- function(input, output, session)
   # The user picked another unit: convert what is shown.
   shiny::observeEvent(input$timeUnit, {
     if (identical(input$timeUnit, tableUnit())) return()
-    current <- dosesNow()
-    attr(current, "problem") <- NULL
     # A Max time that cannot be used (blank, say) becomes the default rather
     # than following the table into the new unit as NA.
     maximumMinutes <- paperReviewMaxTimeMinutes(input$maximum, unitMinutes())
     if (is.na(maximumMinutes)) maximumMinutes <- PAPER_REVIEW_MAX_TIME_DEFAULT
+    # A table cut to fit (more rows than the grid holds, which only a forged
+    # value can send) is not stored cut: the unit stays as it was and the
+    # table is left to be refused by the simulation (CodeRabbit, PR #691)
+    if (!is.null(input$doses) &&
+        tableGridTruncated(tableGridRead(input$doses, paperReviewDoseColumns("", character(0))))) {
+      shiny::showNotification(sprintf("The dose table holds at most %d rows; the time unit was not changed.",
+                                      MAX_DOSE_ROWS - 1L), type = "warning")
+      setUnit(tableUnit(), maximumMinutes)
+      return()
+    }
+    current <- dosesNow()
+    attr(current, "problem") <- NULL
     doseTable(current)
     setUnit(input$timeUnit, maximumMinutes)
   }, ignoreInit = TRUE)

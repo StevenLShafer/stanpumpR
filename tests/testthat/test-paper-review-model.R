@@ -308,5 +308,14 @@ test_that("Single Paper Review never draws or loads more rows than its grid hold
     regimenRows <<- limit
     session$setInputs(loadRegimen = 2)
     expect_equal(nrow(doseTable()), limit)
+    # a forged value longer than the grid is not stored cut by a change of
+    # time unit (CodeRabbit, PR #691)
+    stored <- doseTable()
+    unit <- tableUnit()
+    session$setInputs(doses = tableGridInputValue(rep(list(list("0", "1", "mg")), limit + 1L)))
+    session$setInputs(timeUnit = if (identical(unit, "h")) "min" else "h")
+    expect_identical(doseTable(), stored)
+    expect_identical(tableUnit(), unit)
+    expect_match(attr(dosesNow(), "problem"), "at most 499 rows")
   })
 })
