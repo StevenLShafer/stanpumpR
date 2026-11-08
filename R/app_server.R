@@ -547,13 +547,19 @@ app_server <- function(input, output, session) {
     setBookmarkExclude(c(bookmarksToExclude,
                          grep(paste0("^", PAPER_REVIEW_MODULE_ID, "-"), names, value = TRUE)))
 
+  # Every time an input changes, and every time a table onBookmark() saves
+  # changes, after the observers that change them: the link was made from
+  # the input alone, at the default priority, so it ran before Apply's
+  # observer (priority -1) stored the draft and kept the table from before
+  # Apply until another input changed, in the address bar and in the link
+  # Email Slide sends (Gemini's production audit, 2026-11-08, finding 3).
   observe({
     profileCode({
-      # Trigger this observer every time an input changes
       excludeFromBookmark(names(reactiveValuesToList(input)))
+      doseTable(); doseTableFormat(); eventTable(); macThreshold(); drugDefaults()
       session$doBookmark()
     }, name = "doBookmark observer")
-  })
+  }, priority = -10)
 
   # This gets called before bookmarking to prepare values that need to be saved
   onBookmark(function(state) {
@@ -2831,6 +2837,13 @@ app_server <- function(input, output, session) {
         req(input$targetTableHTML)
         targetTable <- tableGridRead(input$targetTableHTML, targetGridColumns(), maxRows = MAX_TARGET_ROWS)
         req(targetTable)
+        # A table cut to MAX_TARGET_ROWS was never one the grid sent (Gemini's
+        # production audit, 2026-11-08, finding 6)
+        if (tableGridTruncated(targetTable)) {
+          showNotification(sprintf("The target table holds at most %d targets.", MAX_TARGET_ROWS),
+                           type = "error")
+          return()
+        }
         # What is wrong with the table is said, and the dialog stays open:
         # raised here, the error ended the session (adversarial UI review,
         # 2026-11, findings 1 and 2: a time with no target, an inserted row).
@@ -3030,11 +3043,20 @@ app_server <- function(input, output, session) {
       newDrugDefaults$Lower                <- as.numeric(newDrugDefaults$Lower)
       newDrugDefaults$Upper                <- as.numeric(newDrugDefaults$Upper)
       newDrugDefaults$Typical              <- as.numeric(newDrugDefaults$Typical)
+      # A blank MEAC is no MEAC, which the library writes 0: kept as NA it
+      # stopped every simulation of the drug ("missing value where
+      # TRUE/FALSE needed" in simCpCe(); Gemini's production audit,
+      # 2026-11-08, finding 2)
       newDrugDefaults$MEAC                 <- as.numeric(newDrugDefaults$MEAC)
+      newDrugDefaults$MEAC[is.na(newDrugDefaults$MEAC)] <- 0
 
-      # endCe and Category are not in the table; restore from current values
+      # endCe and Category are not in the table; restore from current values.
+      # Class is shown but read-only: it is what makes a drug an inhaled agent
+      # (gasDrugNames()), which an edit could otherwise give propofol or take
+      # from sevoflurane (the same audit, finding 4).
       newDrugDefaults$endCe     <- current$endCe[match(newDrugDefaults$Drug, current$Drug)]
       newDrugDefaults$Category  <- current$Category[match(newDrugDefaults$Drug, current$Drug)]
+      newDrugDefaults$Class     <- current$Class[match(newDrugDefaults$Drug, current$Drug)]
 
       newDrugDefaults$Units <- drugUnitsExpand(newDrugDefaults$Units)
       drugDefaults(newDrugDefaults)
@@ -3087,6 +3109,12 @@ app_server <- function(input, output, session) {
     req(input$editThresholdsTable)
     tt <- tableGridRead(input$editThresholdsTable, thresholdGridColumns())
     req(tt)
+    # Nor a thresholds table cut to fit (the same audit, finding 6)
+    if (tableGridTruncated(tt)) {
+      showNotification("Threshold not changed: the table holds more rows than the library has drugs.",
+                       id = "thresholdInvalid", type = "error", duration = 10)
+      return()
+    }
     updated <- thresholdTableToDefaults(
       tt, drugDefaults(),
       tryCatch(isolate(age()), error = function(e) 40),

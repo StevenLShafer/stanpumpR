@@ -575,6 +575,20 @@ ChatGPT re-reviewed `96fb26d`. It re-ran every forged input of the fourth pass a
 
 **CodeRabbit** (2026-11-07, of `7f9e441`, its first review once the PR was ready) found that a table grid's cell kept a refused entry on screen when the focus stayed in it: on a dialog's last row Enter does not move the focus, and `renderRow()` leaves a focused control's text alone, so a refused `lots` stayed visible over the value Apply would use (and an accepted `1e1` stayed as typed rather than `10`). Confirmed in the browser; `commit()` now puts the cell's value in its control, as `dose-grid.js` already did, and `table-grid.test.js` checks both on the last row of Drug thresholds (the case failed before the fix).
 
+## The production audit (Gemini, 2026-11-08)
+
+After the merge, Gemini audited the grids on stanpumpr.io, at `a64eb29` and then `084ad85`, which changes no grid file. It worked in Firefox 159 and Chromium, with mobile emulation, axe-core, 200% zoom, the dark theme, two tabs and hostile bookmark links, and sent four small forged values. It found no console or page error and no Handsontable asset, and fast typing at the host's real latency lost no character. All seven findings were confirmed in the code before anything changed.
+
+| | Finding | Verdict | Fix |
+|---|---|---|---|
+| 1 | Typing an unoffered unit after a partial match (`mg` on a fentanyl row in `mcg/kg`) said "the unit was not changed" and then committed `mcg`, the unit the first letter had moved to | Confirmed in both grids: the list was not put back when the letters stopped matching | `unitSearch()` and `listSearch()` put the cell's own value back when nothing matches. A dose-grid case and an Edit doses case cover it. |
+| 2 | A blank MEAC in the Drug Library, which the check allowed, stopped every simulation of the drug ("missing value where TRUE/FALSE needed") | Confirmed: the blank was stored as `NA`, and `simCpCe()` tested `PK$MEAC == 0` | A blank MEAC is stored as 0 (none), and `simCpCe()` takes a missing MEAC as none. A blank band (Lower, Upper, Typical) only leaves out the shaded band, and the plot still draws. |
+| 3 | The bookmark in the address bar, and the link Email Slide sends, kept the table from before Apply | Confirmed: the bookmark observer reacted only to inputs, at the default priority, before Apply's observer (priority -1) stored the draft | The observer also reads the tables `onBookmark()` saves, and runs at priority -10, after the observers that change them. A browser case covers it; the test server makes no bookmark. |
+| 4 | The Drug Library's Lower, Upper, Typical and MEAC were text cells, so `1,000` was taken in the cell and refused at Apply; Class was editable and unchecked | Confirmed, and Class matters more than reported: it is what makes a drug an inhaled agent (`gasDrugNames()`) | The four are number cells, and `drugLibraryProblems()` holds them to `MAX_DOSE_VALUE`. Class is read-only and restored from the library on Apply. |
+| 5 | F2 on a read-only cell started an edit, which held Home/End and swallowed Escape | Confirmed | F2 no longer edits a read-only cell, matching the double click. |
+| 6 | Suggest Dosing, Drug thresholds and Single Paper Review read a table cut to fit as if whole; a forged unknown drug was quoted back in the thresholds' refusal; Paper Review dropped `1,000` without a word | Confirmed. Each case was forged, not reachable from the grid, and changed only the sender's own session. | Each refuses a cut table (Paper Review says so in the plot). `thresholdTableToDefaults()` reads only the library's drugs and MAC. Paper Review reads times and doses as `validateDose()` does. |
+| 7 | The dose grid refused an insert at 498 doses, counting the blank row below them, and at 499 still offered a row whose dose the server cut | Confirmed | The cap counts doses, not rows. At 499 doses no blank row is offered, and a new dose in an inserted blank row is refused and said. A browser case covers 498 and 499. |
+
 ## Decisions for Steven Shafer
 
 These are pending. Record each answer here.

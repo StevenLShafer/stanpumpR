@@ -440,6 +440,11 @@ paperReviewServer <- function(input, output, session)
     # anything else as mg (ChatGPT's fourth review, F01).  A row still
     # being filled in, with a cell blank, is passed over as before.
     problem <- NULL
+    # A table cut to fit was never one the grid sent (Gemini's production
+    # audit, 2026-11-08, finding 6)
+    if (shown && tableGridTruncated(d)) {
+      problem <- sprintf("The dose table holds at most %d rows.", MAX_DOSE_ROWS - 1L)
+    }
     if (shown) {
       r <- currentReview()
       units <- if (is.null(r)) character(0) else as.character(r$drug$units)
@@ -447,11 +452,18 @@ paperReviewServer <- function(input, output, session)
       readable <- function(x) vapply(x, function(v) nzchar(validateDose(v)), logical(1), USE.NAMES = FALSE)
       bad <- filled & !(readable(d$Time) & readable(d$Dose) & d$Units %in% units)
       if (any(bad)) {
-        problem <- sprintf(paste0("Row %s cannot be simulated: enter a time and a dose from 0 to ",
-                                  "1,000,000,000, and a unit from the list (%s)."),
-                           paste(which(bad), collapse = ", "), paste(units, collapse = ", "))
+        problem <- paste(c(problem, sprintf(paste0("Row %s cannot be simulated: enter a time and a dose from 0 to ",
+                                                   "1,000,000,000, and a unit from the list (%s)."),
+                                            paste(which(bad), collapse = ", "), paste(units, collapse = ", "))),
+                         collapse = " ")
         d <- d[!bad, , drop = FALSE]
       }
+      # Read as validateDose() reads them: "1,000" passed the check above and
+      # was then dropped by as.numeric() below without a word (the same audit)
+      fill <- function(x) vapply(x, function(v) { r <- validateDose(v); if (nzchar(r)) r else v },
+                                 character(1), USE.NAMES = FALSE)
+      d$Time <- fill(d$Time)
+      d$Dose <- fill(d$Dose)
     }
     d <- d[is.finite(suppressWarnings(as.numeric(d$Time))) &
              is.finite(suppressWarnings(as.numeric(d$Dose))) & !is.na(d$Units) & nzchar(d$Units), ,

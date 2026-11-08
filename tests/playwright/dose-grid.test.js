@@ -226,6 +226,21 @@ describe('the Units column', () => {
     assert.ok(notes.some(n => /"mg" is not a unit offered for fentanyl/.test(n)), JSON.stringify(notes));
   });
 
+  // "m" moved the list to "mcg"; "mg" then matched nothing and was said
+  // "not changed", but the pause committed "mcg" over "mcg/kg" (Gemini's
+  // production audit, 2026-11-08, finding 1)
+  gt('letters that match no unit leave the unit as it was, even after a partial match', async () => {
+    await adapter.chooseUnit(page, 2, 'mcg/kg');
+    await H.waitForDraft(page, d => d[2][3] === 'mcg/kg');
+    await H.settle(page);
+    await H.clearNotifications(page);
+    await adapter.chooseUnit(page, 2, 'mg');
+    await H.settle(page, 1500);
+    await holds(2, ['fentanyl', '0', '0', 'mcg/kg']);
+    const notes = await H.notifications(page);
+    assert.ok(notes.some(n => /"mg" is not a unit offered for fentanyl/.test(n)), JSON.stringify(notes));
+  });
+
   test('a long unit wraps only after its route', async () => {
     await enter(FIRST_BLANK, 0, 'morphine');
     await H.waitForDraft(page, d => d[FIRST_BLANK][0] === 'morphine');
@@ -414,6 +429,30 @@ describe('paste', () => {
     await H.waitForDraft(page, d => H.filled(d).length === 499, 60000);
     await H.settle(page, 1000);
     assert.deepEqual(await H.notifications(page), []);
+  });
+
+  // The blank row below the doses was counted against them, so a row could
+  // not be inserted at 498 doses; and at 499 a blank row was still offered,
+  // whose dose the server then cut (Gemini's production audit, 2026-11-08,
+  // finding 7)
+  test('a row can be inserted at 498 doses, and none is offered past 499',
+       { timeout: 180000 }, async () => {
+    await H.clearNotifications(page);
+    await adapter.focusCell(page, 0, 0);
+    await H.paste(page, Array.from({ length: 498 }, (_, i) => `propofol\t${i}\t10\tmg`).join('\n'));
+    await H.waitForDraft(page, d => H.filled(d).length === 498, 60000);
+    await H.settle(page, 1000);
+    await adapter.insertRowAbove(page, 0);
+    await H.settle(page, 500);
+    const shown = await rowsShown();
+    assert.equal(shown[0][0], '', 'no row was inserted');
+    assert.ok(!(await H.notifications(page)).some(n => /at most/.test(n)));
+    await enter(0, 0, 'fentanyl');
+    await H.waitForDraft(page, d => H.filled(d).length === 499, 30000);
+    await H.settle(page, 1000);
+    const after = await rowsShown();
+    assert.equal(H.filled(after).length, 499);
+    assert.equal(after.length, 499, 'a blank row past the 499th dose was offered');
   });
 
   // The table holds 499 doses (MAX_DOSE_ROWS - 1) and a blank row.  510 rows
@@ -920,6 +959,17 @@ describe('the draft, Apply and undo', () => {
     await H.settle(page, 800);
     const st = await H.serverState(page);
     assert.deepEqual(st.table[2], ['fentanyl', '0', '350', 'mcg']);
+  });
+
+  // The link in the address bar was made before Apply stored the draft, so
+  // it kept the table from before Apply until another input changed
+  // (Gemini's production audit, 2026-11-08, finding 3)
+  test('the bookmark in the address bar holds the table just applied', async () => {
+    await enter(2, 2, '357');
+    await H.waitForDraft(page, d => d[2][2] === '357');
+    await page.waitForFunction(() => !document.getElementById('dosetable_apply').disabled);
+    await page.click('#dosetable_apply');
+    await page.waitForFunction(() => decodeURIComponent(location.search).includes('357'), null, { timeout: 15000 });
   });
 
   test('an edit is a draft until Apply; undo and redo step through it', async () => {

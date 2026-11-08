@@ -127,14 +127,15 @@ drugLibraryProblems <- function(edited, current) {
     valueChr <- trimws(as.character(edited[[col]]))
     blank <- is.na(edited[[col]]) | !nzchar(valueChr)
     parsed <- suppressWarnings(as.numeric(valueChr))
-    bad <- !is.na(at) & !blank & (is.na(parsed) | !is.finite(parsed) | parsed < 0)
+    # the grid's own limits (a number cell, validateDose())
+    bad <- !is.na(at) & !blank & (is.na(parsed) | !is.finite(parsed) | parsed < 0 | parsed > MAX_DOSE_VALUE)
     if (any(bad)) {
       badNumbers <- c(badNumbers, sprintf("%s %s: \"%s\"", edited$Drug[bad], col, shown(valueChr[bad])))
     }
   }
   if (length(badNumbers)) {
     problems <- c(problems, paste0(
-      "Lower, Upper, Typical and MEAC must be left blank or a number of 0 or more (",
+      "Lower, Upper, Typical and MEAC must be left blank or a number from 0 to 1,000,000,000 (",
       paste(badNumbers, collapse = ", "), ")."))
   }
   problems

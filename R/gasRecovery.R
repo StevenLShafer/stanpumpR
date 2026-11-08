@@ -179,6 +179,12 @@ thresholdTableToDefaults <- function(edited, drugDefaults, age,
     if (is.null(x) || length(x) != 1) return(NA_real_)
     suppressWarnings(as.numeric(as.character(x)))
   }, numeric(1), USE.NAMES = FALSE)
+  # Only the library's drugs and MAC: a row naming anything else is not one
+  # the dialog drew, and its name was quoted back in the refusal (Gemini's
+  # production audit, 2026-11-08, finding 6)
+  known <- drug %in% c(as.character(drugDefaults$Drug), "MAC")
+  drug <- drug[known]
+  value <- value[known]
   # The grid's ceiling, validateDose()'s, held here too (fourth review, F05)
   bad <- !is.finite(value) | value < 0 | value > MAX_DOSE_VALUE
   if (any(bad)) {

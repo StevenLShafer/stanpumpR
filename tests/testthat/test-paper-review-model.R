@@ -250,3 +250,18 @@ test_that("a dose row the grid would not send is said, not simulated", {
     expect_null(attr(doseTable(), "problem"))
   })
 })
+
+# Gemini's production audit of the new grids (2026-11-08, finding 6): a time
+# or dose validateDose() reads ("1,000") was dropped by as.numeric() without
+# a word, and a table cut to fit was read as if whole.
+test_that("Single Paper Review reads its doses as validateDose() does, and says a cut table", {
+  testthat::local_mocked_bindings(paperReviewApiKey = function(...) NULL)
+  shiny::testServer(paperReviewServer, {
+    session$setInputs(weight = 70, height = 170, age = 40, sex = "male", maximum = 240, example = 1)
+    session$setInputs(doses = tableGridInputValue(list(list("0", "1,000", "mg"))))
+    expect_equal(dosesNow()$Dose, 1000)
+    expect_null(attr(dosesNow(), "problem"))
+    session$setInputs(doses = tableGridInputValue(rep(list(list("0", "1", "mg")), MAX_DOSE_ROWS)))
+    expect_match(attr(dosesNow(), "problem"), "at most 499 rows")
+  })
+})
