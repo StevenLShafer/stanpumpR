@@ -797,9 +797,10 @@ app_server <- function(input, output, session) {
     # add empty row at the bottom if needed: not once the table holds its
     # MAX_DOSE_ROWS - 1 doses, the grid's own rule, which offers none there
     # (a dose typed in it was cut; Gemini's production audit, 2026-11-08,
-    # finding 7)
+    # finding 7), and never past MAX_DOSE_ROWS - 1 rows in all, blank ones
+    # included, which is what restoredDoseTable() keeps (CodeRabbit, PR #691)
     if (nrow(data) == 0 ||
-        (nzchar(utils::tail(data, 1)$Drug) && sum(nzchar(trimws(data$Drug))) < MAX_DOSE_ROWS - 1L)) {
+        (nzchar(utils::tail(data, 1)$Drug) && nrow(data) < MAX_DOSE_ROWS - 1L)) {
       data[nrow(data) + 1, ] <- ""
     }
 

@@ -447,12 +447,20 @@ describe('paste', () => {
     const shown = await rowsShown();
     assert.equal(shown[0][0], '', 'no row was inserted');
     assert.ok(!(await H.notifications(page)).some(n => /at most/.test(n)));
+    // the inserted row takes the place of the blank row below the doses: a
+    // 500th row was dropped by the server once a dose was typed in it
+    // (CodeRabbit, PR #691)
+    assert.equal(shown.length, 499, 'the insert made more rows than the server keeps');
     await enter(0, 0, 'fentanyl');
     await H.waitForDraft(page, d => H.filled(d).length === 499, 30000);
     await H.settle(page, 1000);
     const after = await rowsShown();
     assert.equal(H.filled(after).length, 499);
     assert.equal(after.length, 499, 'a blank row past the 499th dose was offered');
+    const d = await draft();
+    assert.deepEqual(d[d.length - 1], ['propofol', '497', '10', 'mg'], 'the last dose was dropped');
+    assert.ok(!(await H.notifications(page)).some(n => /at most|could not be read/.test(n)),
+              JSON.stringify(await H.notifications(page)));
   });
 
   // The table holds 499 doses (MAX_DOSE_ROWS - 1) and a blank row.  510 rows
@@ -1053,6 +1061,15 @@ describe('everything is text', () => {
       await p.tap('#doseGrid tbody tr:nth-child(1) td:nth-child(3) input');
       await H.settle(p, 700);
       assert.ok(!(await adapter.menuOpen(p)), 'a tap opened the row menu');
+      // Playwright's Firefox, with touch emulated, delivers no further tap
+      // anywhere on the page (not even a pointerdown) while the text a tap
+      // selected stays selected, though clearing the selection or blurring
+      // the cell brings taps back.  A plain page that selects on mouseup did
+      // not reproduce it, so the cause is not known; Firefox for Android
+      // dismisses a selection on the next tap, where this swallows every
+      // tap after it, so it is taken for the emulation's and the selection is
+      // cleared here, in Firefox only (2026-11-08)
+      if (BROWSER === 'firefox') await p.evaluate(() => getSelection().removeAllRanges() || document.activeElement.setSelectionRange(0, 0));
       await p.evaluate(() => {
         window.__md = [];
         window.addEventListener('mousedown', e => window.__md.push(e.defaultPrevented));

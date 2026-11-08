@@ -604,6 +604,51 @@ It found no cross-session exploit, no XSS and no refused value reaching a simula
 | F02 | A forged pair of End times (`targetEndTime = c("60", "70")`) ended the Suggest Dosing session (`if()` of length 2) | Confirmed. The drug list had the same weakness, inside a `tryCatch`. | The OK handler reads the End time and the drug as one value each (`doseGridCell()`), and refuses a drug not in the library. `test-ui-adversarial-review.R` reproduces it, and the test fails without the fix. The same unguarded pattern on other inputs (`referenceTime`, Email Slide's comments, `normalization`) is recorded for a pass of its own. |
 | F03 | At a 200%-equivalent width, the two open sidebars (300 and 450 px, from #590) left the plot 48 px wide | Confirmed by reading the widths. It predates the grids, and which sidebar should give way is a layout decision. | Recorded for Shafer, not changed here. |
 
+## Other engines, a phone, and the review of the fixes (2026-11-08)
+
+Until now the browser suite ran only in Chromium. It now also runs in Firefox
+and WebKit (`STANPUMPR_BROWSER=firefox|webkit node tests/playwright/run.js`;
+the environment's setup script installs both engines):
+
+- **WebKit:** the first full run had two failures, both timeouts.
+  - One was a fresh session that loaded slowly; it passed when run again.
+  - The other repeats, and it is in the test, not the app. While the Drug
+    Library's `uiOutput` recalculates, shinycssloaders sets
+    `visibility: hidden` on it, then sets it back to `visible`. The output is
+    `display: contents`, and WebKit leaves the grid's rows with a stale
+    computed `hidden`, so the wait for a visible row timed out. Their cells
+    compute as visible and are drawn; a screenshot shows the whole table.
+    The test now waits for a visible cell.
+- **Firefox:** one failure, which repeats. With touch emulated, every tap
+  after the first is lost (not even a `pointerdown` arrives) while the text
+  the first tap selected stays selected. Clearing the selection or blurring
+  the cell brings the taps back. A plain page that selects text on mouseup
+  does not reproduce it, so the cause is not known. Firefox for Android
+  dismisses a selection on the next tap rather than swallowing every tap
+  after it, so this is taken to be a limit of the emulation, not a grid
+  defect. The test clears the selection between its taps, in Firefox only.
+  Every other case passes in Firefox.
+- **Safari on an iPhone 17 (iOS 26), through BrowserStack, against the PR
+  preview:** all passed. These were editing a dose, a refused `4,5` keeping
+  the 4, the drug autocomplete, Apply while typing, the plot redrawing, and
+  the bookmark holding the applied table.
+
+CodeRabbit's reviews of the fixes found three more defects, each confirmed and
+fixed:
+
+- **Single Paper Review drew four blank rows below the doses, however many
+  there were.** A table of 496 to 499 doses therefore came back as more rows
+  than the grid holds, and was refused as cut. The blank rows now stop at the
+  limit.
+- **A regimen longer than the grid was loaded, then cut.** The browser could
+  cut it, or a change of time unit could cut it silently. It is now refused
+  when it is loaded.
+- **Inserting a row at 498 doses made 500 rows.** Finding 7 allowed the
+  insert, but the server keeps only 499 rows (`restoredDoseTable()`), so a
+  dose typed in the 500th row was dropped. The inserted row now takes the
+  place of the blank row below the doses. Neither the grid nor
+  `storeGridEdit()` ever makes more than 499 rows, blank ones included.
+
 ## Decisions for Steven Shafer
 
 These are pending. Record each answer here.

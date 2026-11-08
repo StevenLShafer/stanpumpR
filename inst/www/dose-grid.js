@@ -379,7 +379,11 @@
       while (this.rows.length > 1 && isBlank(this.rows[this.rows.length - 1][COLS.DRUG])) this.rows.pop();
       return;
     }
-    if (this.rows.length === 0 || !isBlank(this.rows[this.rows.length - 1][COLS.DRUG])) {
+    // Never past maxRows rows in all, blank ones included: the server keeps
+    // that many (restoredDoseTable()), so a dose typed in a row beyond them
+    // was dropped (CodeRabbit, PR #691)
+    if (this.rows.length < this.maxRows &&
+        (this.rows.length === 0 || !isBlank(this.rows[this.rows.length - 1][COLS.DRUG]))) {
       this.rows.push(blankRow());
     }
   };
@@ -604,14 +608,23 @@
     if (r === null || r === undefined || !this.rows[r]) return;
     var col = 0;
     if (action === 'above' || action === 'below') {
-      // maxRows doses and the blank row below them (doseGridValue()'s
-      // MAX_DOSE_ROWS): counting that blank row against the doses refused an
-      // insert at 498 (Gemini's production audit, 2026-11-08, finding 7)
-      if (this.filledRows() >= this.maxRows || this.rows.length > this.maxRows) {
+      // At most maxRows rows, blank ones included, as the server keeps
+      // (restoredDoseTable()).  At the limit the inserted row takes the place
+      // of the blank row below the doses: counting that blank row against
+      // the doses refused an insert at 498 (Gemini's production audit,
+      // 2026-11-08, finding 7), and adding a row beside it made 500, the
+      // last of which the server dropped once a dose was typed in it
+      // (CodeRabbit, PR #691)
+      var last = this.rows.length - 1;
+      var spare = this.rows.length >= this.maxRows && last !== r && isBlank(this.rows[last][COLS.DRUG]) &&
+        this.rows[last].every(function(v) { return isBlank(v); });
+      if (this.filledRows() >= this.maxRows || (this.rows.length >= this.maxRows && !spare)) {
         notify(['The table holds at most ' + this.maxRows + ' doses.'], 'doseGridRowLimit');
         return;
       }
+      if (spare) this.rows.pop();
       var at = action === 'above' ? r : r + 1;
+      at = Math.min(at, this.rows.length);
       this.rows.splice(at, 0, blankRow());
       r = at;
     } else if (action === 'remove') {

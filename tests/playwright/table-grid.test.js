@@ -52,7 +52,11 @@ const sentRows = id => page.evaluate(i => {
 }, id);
 const open = async (input, id) => {
   await page.evaluate(i => window.Shiny.setInputValue(i, Math.random(), { priority: 'event' }), input);
-  await page.waitForSelector(`#${id} tbody tr`, { timeout: 30000 });
+  // A cell, not a row: in WebKit the rows of a grid drawn inside a dialog's
+  // uiOutput keep the visibility: hidden shinycssloaders set on the output
+  // while it recalculated (the output is display: contents), though their
+  // cells are visible and drawn (2026-11-08)
+  await page.waitForSelector(`#${id} tbody td`, { timeout: 30000 });
   await H.settle(page, 300);
 };
 const rowOf = async (id, name) => (await gridRows(id)).findIndex(r => r[0] === name);
