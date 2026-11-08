@@ -69,9 +69,13 @@
         }
     }
 
+    // #openViewer: the Edit doses dialog's button (the dialog's drug).
+    // [data-viewer-drug]: the plot's own button or list (Devin's stress test,
+    // 2026-11-08), which names its drug; sent as input$openViewerDrug.
     document.addEventListener('click', function (e) {
-        const b = e.target.closest && e.target.closest('#openViewer');
+        const b = e.target.closest && e.target.closest('#openViewer, [data-viewer-drug]');
         if (!b || b.disabled) return;
+        const drug = b.getAttribute('data-viewer-drug');
         if (building && win && !win.closed) { win.focus(); return; }
         if (!(window.Shiny && Shiny.setInputValue)) return;   // not connected yet
         token = String(Date.now());
@@ -85,7 +89,8 @@
         }
         win.focus();
         building = true;
-        Shiny.setInputValue('openViewer', token, { priority: 'event' });
+        if (drug !== null) Shiny.setInputValue('openViewerDrug', { token: token, drug: drug }, { priority: 'event' });
+        else Shiny.setInputValue('openViewer', token, { priority: 'event' });
     });
 
     window.addEventListener('message', function (e) {

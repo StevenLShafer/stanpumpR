@@ -2340,12 +2340,20 @@ app_server <- function(input, output, session) {
     isTRUE(tryCatch(is.null(viewerProblem(isolate(drugs())[[drug]])), error = function(e) FALSE))
   }
 
-  observeEvent(input$openViewer, {
-    profileCode({
-      drug <- skipTarget()$drug
-      # The click's token, echoed so the browser can drop an earlier click's answer.
-      token <- as.character(input$openViewer)
-      removeModal()
+  # The drugs the Visualizer can draw: every plotted drug's panel but a
+  # companion model's and an inhaled agent's, for which viewerProblem() is NULL.
+  viewerDrugs <- function(plotted) {
+    keep <- vapply(names(plotted), function(d) {
+      e <- plotted[[d]]
+      is.null(e$companionOf) && !isGasDrug(d) &&
+        isTRUE(tryCatch(is.null(viewerProblem(e)), error = function(err) FALSE))
+    }, logical(1))
+    names(plotted)[keep]
+  }
+
+  # Build one drug's run and send it to the pop-up the browser has opened.
+  # token: the click's, echoed so the browser can drop an earlier click's answer.
+  launchViewer <- function(drug, token) {
       # Told in the app and in the viewer's window, which would otherwise
       # wait for a run that is not coming.
       fail <- function(message) {
@@ -2367,7 +2375,41 @@ app_server <- function(input, output, session) {
         NULL
       })
       if (!is.null(run)) session$sendCustomMessage("stanpumpR-viewer-run", list(token = token, run = run))
+  }
+
+  observeEvent(input$openViewer, {
+    profileCode({
+      drug <- skipTarget()$drug
+      token <- as.character(input$openViewer)
+      removeModal()
+      launchViewer(drug, token)
     }, name = "input$openViewer observer")
+  })
+
+  # The plot's own Visualizer button (beside Add new drug; Devin's stress
+  # test, 2026-11-08, on Shafer's decision): one drawable drug opens it at
+  # once, several drop up a list. The browser sends the drug with the token,
+  # which is untrusted like every input, so it must be one name of a drug the
+  # Visualizer can draw now.
+  output$viewerButtonUI <- renderUI({
+    drawable <- tryCatch(viewerDrugs(drugs()), error = function(e) character(0))
+    viewerPlotButton(drawable)
+  })
+  observeEvent(input$openViewerDrug, {
+    profileCode({
+      v <- input$openViewerDrug
+      if (!is.list(v)) return()
+      token <- doseGridCell(v$token)
+      drug <- doseGridCell(v$drug)
+      if (!nzchar(token)) return()
+      if (!drug %in% tryCatch(viewerDrugs(drugs()), error = function(e) character(0))) {
+        message <- "that drug cannot be drawn now."
+        showNotification(paste("Visualizer:", message), type = "error")
+        session$sendCustomMessage("stanpumpR-viewer-error", list(token = token, message = message))
+        return()
+      }
+      launchViewer(drug, token)
+    }, name = "input$openViewerDrug observer")
   })
 
   # The browser blocked the visualizer's window (inst/www/viewer-launch.js).

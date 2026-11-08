@@ -725,6 +725,9 @@ app_ui <- function() {
                   icon = icon("plus"),
                   class = "btn-sm btn-outline-primary"
                 ),
+                # The Visualizer, for the plotted drugs it can draw (none: no
+                # button; one: a button; several: a list that drops up).
+                uiOutput("viewerButtonUI", inline = TRUE),
                 span("Hover for precise concentration. Click to add new dose. Double click to edit or delete a drug's doses.")
               )
             )
