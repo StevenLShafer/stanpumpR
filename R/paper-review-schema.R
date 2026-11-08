@@ -101,12 +101,13 @@ PAPER_REVIEW_NUMERIC_FIELDS <- c(
   "n", "n_female", "n_male", "coefficient", "reference_value", "duration",
   "error_lower", "error_upper", "group1_value", "group1_se", "group2_value",
   "group2_se", "difference", "difference_se", "p_value", "analyte_fraction",
-  "interval", "decrement_percent", "reading_precision", "y_axis_max", "x_axis_max")
+  "interval", "decrement_percent", "reading_precision", "y_axis_max", "x_axis_max",
+  "weight", "height", "age")
 # Optional strings: NULL when empty.
 PAPER_REVIEW_OPTIONAL_STRINGS <- c("title", "first_author", "journal", "doi",
                                    "pd_model", "regimen_id", "group")
 # Optional enums: NULL when "none".
-PAPER_REVIEW_OPTIONAL_ENUMS <- c("route", "decrement_site", "concentration_site")
+PAPER_REVIEW_OPTIONAL_ENUMS <- c("route", "decrement_site", "concentration_site", "sex")
 
 #' Turn a parsed extraction back into numbers and NULLs
 #'
@@ -333,6 +334,15 @@ paperReviewSchema <- function()
       regimen_id  = schemaNullable(schemaString("For AUC, Cmax, tmax, MRT and coefficients: the regimen it belongs to.")),
       statistic   = schemaEnum(c("typical_value", "mean_of_individuals", "median_of_individuals", "unstated")),
       uncertainty = schemaUncertainty(),
+      at          = schemaObject(list(
+        weight = schemaNullable(schemaNumber("Body weight, kg.")),
+        height = schemaNullable(schemaNumber("Height, cm.")),
+        age    = schemaNullable(schemaNumber("Age, years.")),
+        sex    = schemaNullable(schemaEnum(c("male", "female")))),
+        paste("When the paper gives this value for a stated patient (a table of CL/F and",
+              "half-lives at 10, 20, 30 and 40 kg; a simulation of a 60-year-old), that",
+              "patient's covariates. Every field empty when the value is for the paper's",
+              "typical or reference patient.")),
       location    = schemaLocation()
     ))),
     figures = schemaArray(schemaObject(list(
@@ -458,6 +468,9 @@ paperReviewSystemPrompt <- function()
     "- A daily dose the paper models as a constant input is one row with per_time",
     "  per_day and its duration; a tablet taken repeatedly is one row with its",
     "  interval and duration. Never write a daily dose as a single dose.",
+    "- A derived quantity the paper gives for a stated patient (a table of values",
+    "  at several weights or ages) is one row per patient, with that patient's",
+    "  covariates in at; leave at empty for the typical or reference patient.",
     "- Describe every dosing regimen as dose rows: an infusion is one row with",
     "  its rate, start time and duration.",
     "- When the paper reports more than one model (several drugs, or one drug in",

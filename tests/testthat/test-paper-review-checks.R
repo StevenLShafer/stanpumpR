@@ -638,3 +638,45 @@ test_that("values outside a field's closed choices are named, not passed over in
   x <- paperReviewValidate(paperReviewNormalize(ex))
   expect_match(x$extraction_limitations, 'parameters[1].role ("Vmaxx")', fixed = TRUE)
 })
+
+# Devin's stress test (2026-11-08): a paediatric paper's Table 3 gave CL/F,
+# volumes and half-lives at 10, 20, 30 and 40 kg, and each was compared with
+# the 70 kg reference patient, so 18 of 19 "errors" were the paper being right.
+# A value printed for a stated patient carries it (`at`), and is compared there.
+test_that("a derived quantity printed for a stated patient is compared at that patient", {
+  ex <- paperReviewExample()
+  cl10 <- list(quantity = "CL", value = round(1.2 * (10 / 70)^0.75, 3),
+               value_text = format(round(1.2 * (10 / 70)^0.75, 3)), units = "L/min",
+               statistic = "typical_value", location = "Table 3, p. 6")
+  v60 <- list(quantity = "V1", value = 7.2, value_text = "7.2", units = "L",
+              statistic = "typical_value", location = "Table 3, p. 6")
+  row <- function(x, q, loc = "Table 3, p. 6") {
+    t <- paperReviewRun(x)$consistency
+    t[t$quantity == q & t$location == loc, , drop = FALSE]
+  }
+  # Without its patient, the 10 kg clearance is a false error against 70 kg.
+  bare <- ex; bare$derived_quantities <- c(ex$derived_quantities, list(cl10))
+  expect_equal(row(bare, "CL")$status, "disagrees")
+  # With it, the model is rebuilt at 10 kg and matches; so does a V1 at 60 years.
+  at <- ex
+  at$derived_quantities <- c(ex$derived_quantities,
+                             list(c(cl10, list(at = list(weight = 10))),
+                                  c(v60, list(at = list(age = 60)))))
+  r <- row(at, "CL")
+  expect_equal(r$status, "matches")
+  expect_match(r$note, "Printed for 10 kg")
+  expect_equal(row(at, "V1")$status, "matches")
+  # The reference patient's own values in `at` are the reference.
+  same <- ex
+  same$derived_quantities[[4]]$at <- list(weight = 70, age = 40)
+  expect_equal(row(same, "Vss", same$derived_quantities[[4]]$location)$status, "matches")
+  expect_false(grepl("Printed for", row(same, "Vss", same$derived_quantities[[4]]$location)$note))
+  # A value for another patient never closes the model at the reference.
+  only <- ex
+  only$derived_quantities <- list(c(cl10, list(at = list(weight = 10))))
+  expect_length(paperReviewDerived(only, "CL", 70), 0)
+  expect_length(paperReviewDerived(bare, "CL", 70), 1)
+  # And the schema asks for it, so a reply can carry it through validation.
+  v <- paperReviewValidate(paperReviewNormalize(at))
+  expect_equal(v$derived_quantities[[length(v$derived_quantities) - 1]]$at$weight, 10)
+})

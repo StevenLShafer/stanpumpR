@@ -97,7 +97,8 @@ paperReviewExtravascularDoses <- function(regimen, reference, concUnits)
     if (paperReviewIsRateDose(d)) next
     mg <- c(g = 1000, mg = 1, mcg = 1e-3, ng = 1e-6)[d$mass_unit %or% "other"]
     minutes <- paperReviewMinutes(d$time_units %or% "min")
-    if (is.na(mg) || is.na(minutes)) next
+    if (is.na(mg) || is.na(minutes) || !is.finite(paperReviewNum(d$time)) ||
+        !is.finite(paperReviewNum(d$amount))) next
     amount <- d$amount * mg * (if (identical(d$per_kg, "yes")) reference$weight else 1)
     rows[[length(rows) + 1]] <- data.frame(
       Time = d$time * minutes, amount = amount * paperReviewAmountFactor(concUnits),
@@ -440,9 +441,11 @@ paperReviewIntravenousSeries <- function(extraction, reference, concUnits)
     if (is.null(r) || length(r$doses) != 1) next
     d <- r$doses[[1]]
     mg <- c(g = 1000, mg = 1, mcg = 1e-3, ng = 1e-6)[d$mass_unit %or% "other"]
-    if (is.na(mg)) next
-    amount <- d$amount * mg * (if (identical(d$per_kg, "yes")) reference$weight else 1)
     minutes <- paperReviewMinutes(d$time_units %or% "min")
+    # A dose with no readable time, amount or units is no series to fit.
+    if (is.na(mg) || is.na(minutes) || !is.finite(paperReviewNum(d$time)) ||
+        !is.finite(paperReviewNum(d$amount))) next
+    amount <- d$amount * mg * (if (identical(d$per_kg, "yes")) reference$weight else 1)
     start <- d$time * minutes
     pts <- s$points
     if (identical(d$route, "iv_infusion")) {
