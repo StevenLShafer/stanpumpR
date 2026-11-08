@@ -36,6 +36,11 @@ on:
           - both
           - dose-grid.test.js
           - table-grid.test.js
+  # TEMPORARY, to check the repository secrets and the first real run on the
+  # pull request that adds this workflow; removed before it is merged
+  pull_request:
+    paths:
+      - .github/workflows/browser-suite-browserstack.yaml
 
 permissions:
   contents: read
@@ -91,9 +96,9 @@ jobs:
         env:
           BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
           BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
-          STANPUMPR_BROWSERSTACK: ${{ inputs.platform }}
+          STANPUMPR_BROWSERSTACK: ${{ inputs.platform || 'windows-chrome' }}
           STANPUMPR_RSCRIPT_ARGS: --no-init-file
-          FILES: ${{ inputs.files }}
+          FILES: ${{ inputs.files || 'both' }}
         run: |
           if [ "$FILES" = "both" ]; then node tests/playwright/run.js; else node tests/playwright/run.js "$FILES"; fi
 
