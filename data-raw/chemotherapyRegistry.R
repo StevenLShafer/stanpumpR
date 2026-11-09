@@ -218,7 +218,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 # text, the PDF still to confirm (FULL_TEXT_READ); or confirmed on the PDF
 # itself (PARAMETERS_VERIFIED: Briki 2026 and Lindemalm 2005, supplied by
 # Shafer 2026-11-06)
-FULL_TEXT_READ <- c("C01", "P02", "C35", "C03", "C37a", "C34", "P16")
+FULL_TEXT_READ <- c("C01", "P02", "C35", "C03", "C37a", "C34", "P16", "C21")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
 PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18", "C05", "C06", "N08", "N09")
@@ -585,8 +585,10 @@ registry <- rbind(
     "A CDA genotype is not a Patient Profile field."),
   m("cytarabine__children__periclou1996", "cytarabine", "cytarabine", "IV",
     "52 children 2 months-19 years with leukaemia", "cytarabine and Ara-U",
-    "cytarabine two compartments, Ara-U one; age and BSA on every parameter", "expansion", "linear_metabolite", "C21",
-    "Not an intracellular Ara-CTP model."),
+    "Model I (ara-C alone): two compartments, every parameter linear in AGE x BSA: CL 2.59, Q 2.01 L/h, V1 0.48, V2 38.1 L per year-m2 (abstract; Table 1 I-2 prints 2.60, 1.82, 0.46, 34.6); Model II-3 (with ara-U): k12 1.16, k21 0.08 /h, k13 (conversion to ara-U, the only elimination) 1.53 x AGE /h, V1 1.37 L with no size term, ara-U k30 0.41 /h, V3 4.98 L",
+    "expansion", "linear_metabolite", "C21",
+    "PDF read (supplied 2026-11-07), complete but not implemented. [decision] Pending Shafer: (1) every term is linear in age with no plateau, so CL is 0 at birth and grows without bound; at 18 years it is 38-79 L/h against Krogh-Madsen 2012's adult 272 L/h (a 3.5-7-fold jump at the age boundary); (2) Model I's half-lives are 4 min and 23 h at every age (all four parameters scale together), against the 17 min and 4 h the paper quotes from the two-stage analyses; (3) the abstract and Table 1 disagree; (4) Model II-3 has a central volume of 1.37 L whatever the child's size. Under the model-selection rule it would be cytarabine's candidate for 0.17-19 years beside Krogh-Madsen for adults. Not an intracellular Ara-CTP model.",
+    readiness = "complete_not_implemented"),
   m("cytarabine__aml__kroghmadsen2012", "cytarabine", "cytarabine", "IV",
     "23 adults with AML", "cytarabine",
     "two compartments: CL 272 L/h x (1 - 0.0020 (bWBC - median)), Vc 62.8 L, Q 13.7 L/h, Vp 75.4 L",
