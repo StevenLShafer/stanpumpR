@@ -325,5 +325,8 @@ describe('the dose grid on an iPhone', () => {
     }
     await openDoseTable();
     assert.deepEqual((await readRows())[FENTANYL], ['fentanyl', '0', '357', 'mcg']);
+    // the grid shows the draft; the bookmark must restore the applied table
+    // too (CodeRabbit, PR #697)
+    assert.deepEqual((await serverState()).table[FENTANYL], ['fentanyl', '0', '357', 'mcg']);
   });
 });

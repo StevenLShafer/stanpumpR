@@ -78,8 +78,11 @@ proxy cannot add it.
 
 `iphone.test.js` is a smaller suite for the dose grid on a phone: a tap
 instead of a click, a value committed by tapping the next cell, the drug
-list chosen by tap, the system's own list for Units, Apply, and the
-bookmark. It keeps to
+list chosen by tap, a tap on Units that reaches its list, Apply, and the
+bookmark. The Units list that opens is the system's own, which Playwright
+cannot drive, so the case checks that the tap is not suppressed and then
+chooses the unit as the list would (`selectOption()`); it does not open or
+use the system's picker. It keeps to
 the limits BrowserStack sets on Playwright on a real iPhone (its "Supported
 Playwright commands for iOS"):
 
