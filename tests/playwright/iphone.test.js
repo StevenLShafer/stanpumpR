@@ -296,7 +296,10 @@ describe('the dose grid on an iPhone', () => {
   });
 
   // The link in the address bar after Apply, opened afresh in the same page
-  // (one page is all an iPhone session has), restores the table applied
+  // (one page is all an iPhone session has), restores the table applied.
+  // The page is reloaded, which opens that same address in a new session:
+  // page.goto() with the long bookmark address left the grid empty on a real
+  // iPhone (the third run, 2026-11-09)
   test('the bookmark after Apply restores the table applied', async () => {
     await enter(FENTANYL, 2, '357');
     await holds(FENTANYL, ['fentanyl', '0', '357', 'mcg']);
@@ -304,8 +307,22 @@ describe('the dose grid on an iPhone', () => {
     await page.tap('#dosetable_apply');
     await page.waitForFunction(() => decodeURIComponent(location.search).includes('357'), null, { timeout: 30000 });
     const link = await page.evaluate(() => location.href);
-    await page.goto(link, { waitUntil: 'load' });
-    await waitForRows(rows => rows.some(r => r[2] === '357'), 60000);
+    await page.reload({ waitUntil: 'load' });
+    try {
+      await waitForRows(rows => rows.some(r => r[2] === '357'), 60000);
+    } catch (e) {
+      // what the page showed instead, so a failure on a device says why
+      const seen = await page.evaluate(l => ({
+        sameAddress: location.href === l,
+        addressLength: location.href.length,
+        readyState: document.readyState,
+        shiny: !!(window.Shiny && window.Shiny.shinyapp && window.Shiny.shinyapp.isConnected()),
+        startupMenu: !!document.getElementById('startup_ok'),
+        grid: !!document.querySelector('#doseGrid'),
+        body: document.body ? document.body.innerText.slice(0, 200) : null
+      }), link).catch(err => ({ evaluateFailed: String(err) }));
+      throw new Error(e.message + '\nthe page: ' + JSON.stringify(seen));
+    }
     await openDoseTable();
     assert.deepEqual((await readRows())[FENTANYL], ['fentanyl', '0', '357', 'mcg']);
   });
