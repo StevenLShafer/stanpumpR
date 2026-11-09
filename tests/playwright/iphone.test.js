@@ -1,6 +1,7 @@
 // The dose grid on an iPhone: a smaller suite than dose-grid.test.js, for
-// what a phone does differently (a tap instead of a click, the on-screen
-// keyboard's Enter, the system's own list for a <select>), written to the
+// what a phone does differently (a tap instead of a click, a value
+// committed by tapping the next cell, the system's own list for a
+// <select>), written to the
 // limits BrowserStack sets on Playwright on a real iPhone (its "Supported
 // Playwright commands for iOS"):
 //
@@ -12,8 +13,9 @@
 //   before the app loads (page.addInitScript());
 // - page.evaluate() returns real values only, not an async function's, so
 //   the server's state is read with a synchronous request;
-// - text goes to a cell (locator.fill(), locator.press()), not to the
-//   page's keyboard, which BrowserStack never typed on an iPhone;
+// - text goes to a cell (locator.fill()), not to the page's keyboard, which
+//   BrowserStack never typed on an iPhone, and a cell is committed by
+//   tapping the next one, Enter not reaching the grid there either;
 // - no clipboard: nothing here is pasted.
 //
 // Run here, it runs in Playwright's WebKit as an iPhone 15 (touch, the
@@ -143,15 +145,19 @@ async function holds(r, expected) {
   await waitForDraft(d => same(d[r]));
 }
 
-// A tap on a cell, then the text, then Enter: how a phone enters a value.
-// The text goes to the cell itself (locator.fill(), locator.press()), not
-// to whatever has the focus (page.keyboard): on a real iPhone BrowserStack
-// turns each call into a WebDriver command, and keys sent to the page were
-// never typed (the first run, 2026-11-09)
+// A tap on a cell, the text, then a tap on the next cell: how a phone
+// enters a value, the grid committing the cell as the focus leaves it
+// (onFocusOut in dose-grid.js).  On a real iPhone BrowserStack turns each
+// Playwright call into a WebDriver command, and neither way of pressing
+// Enter worked: keys sent to the page (page.keyboard) were never typed (the
+// first run, 2026-11-09), and Enter sent to the cell left the dose on the
+// screen uncommitted (the second).  So the text goes to the cell itself
+// (locator.fill()), and the cell is committed by tapping the next one.
+// Enter is the desktop suite's (dose-grid.test.js)
 async function enter(r, c, text) {
   await page.tap(input(r, c));
   await typeInto(input(r, c), text);
-  await page.locator(input(r, c)).press('Enter');
+  await page.tap(input(r, c === 1 ? 2 : 1));
   await H.settle(page, 300);
 }
 
