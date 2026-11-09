@@ -10,6 +10,10 @@
 // - no page.$$eval() and no pageerror event: the page is read with
 //   page.evaluate(), and script errors are collected by a script added
 //   before the app loads (page.addInitScript());
+// - page.evaluate() returns real values only, not an async function's, so
+//   the server's state is read with a synchronous request;
+// - text goes to a cell (locator.fill(), locator.press()), not to the
+//   page's keyboard, which BrowserStack never typed on an iPhone;
 // - no clipboard: nothing here is pasted.
 //
 // Run here, it runs in Playwright's WebKit as an iPhone 15 (touch, the
@@ -136,15 +140,51 @@ async function notifications() {
 async function holds(r, expected) {
   const same = x => JSON.stringify(x) === JSON.stringify(expected);
   await waitForRows(rows => same(rows[r]));
-  await H.waitForDraft(page, d => same(d[r]), 30000);
+  await waitForDraft(d => same(d[r]));
 }
 
-// A tap on a cell, then the keyboard, then Enter: how a phone enters a value
+// A tap on a cell, then the text, then Enter: how a phone enters a value.
+// The text goes to the cell itself (locator.fill(), locator.press()), not
+// to whatever has the focus (page.keyboard): on a real iPhone BrowserStack
+// turns each call into a WebDriver command, and keys sent to the page were
+// never typed (the first run, 2026-11-09)
 async function enter(r, c, text) {
   await page.tap(input(r, c));
-  await page.keyboard.type(text);
-  await page.keyboard.press('Enter');
+  await typeInto(input(r, c), text);
+  await page.locator(input(r, c)).press('Enter');
   await H.settle(page, 300);
+}
+
+async function typeInto(selector, text) {
+  await page.locator(selector).fill(text);
+}
+
+// The server's state (exportTestValues(), test mode), read with a
+// synchronous request: on a real iPhone page.evaluate() returns real values
+// only, and an async function's came back as "[object Object]" (the first
+// run, 2026-11-09)
+async function serverState() {
+  const text = await page.evaluate(() => {
+    const u = window.Shiny.shinyapp.getTestSnapshotBaseUrl({ fullUrl: true }) + '&input=0&output=0&export=1&format=json';
+    const x = new XMLHttpRequest();
+    x.open('GET', u, false);
+    x.send();
+    return x.responseText;
+  });
+  const json = JSON.parse(text).export;
+  const rowsOf = t => (t && t.Drug) ? t.Drug.map((d, i) => [d, t.Time[i], t.Dose[i], t.Units[i]]) : [];
+  return { draft: rowsOf(json.doseTableDraft), table: rowsOf(json.doseTable) };
+}
+
+async function waitForDraft(predicate, timeout = 30000) {
+  const deadline = Date.now() + timeout;
+  let state;
+  while (Date.now() < deadline) {
+    state = await serverState();
+    if (predicate(state.draft)) return state;
+    await page.waitForTimeout(250);
+  }
+  throw new Error('server draft never reached the expected state; it holds ' + JSON.stringify(state && state.draft));
 }
 
 describe('the dose grid on an iPhone', () => {
@@ -198,7 +238,7 @@ describe('the dose grid on an iPhone', () => {
 
   test('the drug list offers the drugs that match, and a tap on one chooses it', async () => {
     await page.tap(input(FIRST_BLANK, 0));
-    await page.keyboard.type('fent');
+    await typeInto(input(FIRST_BLANK, 0), 'fent');
     const option = page.locator(`${ROOT} [role=listbox]:not([hidden]) [role=option]`).filter({ hasText: /^fentanyl$/ });
     await option.waitFor({ state: 'visible', timeout: 15000 });
     await option.tap();
@@ -227,7 +267,7 @@ describe('the dose grid on an iPhone', () => {
     assert.ok(other, 'fentanyl offers more than one unit: ' + JSON.stringify(units));
     await page.locator(unitSelect(FENTANYL)).selectOption(other);
     await H.settle(page, 300);
-    await H.waitForDraft(page, d => d[FENTANYL][3] === other, 30000);
+    await waitForDraft(d => d[FENTANYL][3] === other);
   });
 
   test('Apply commits the dose and draws the plot again', async () => {
@@ -241,7 +281,7 @@ describe('the dose grid on an iPhone', () => {
     await page.waitForFunction(() => !document.getElementById('dosetable_apply').disabled, null, { timeout: 15000 });
     await page.tap('#dosetable_apply');
     await H.settle(page, 1000);
-    const state = await H.serverState(page);
+    const state = await serverState();
     assert.deepEqual(state.table[FENTANYL], ['fentanyl', '0', '50', 'mcg']);
     await page.waitForFunction(src => {
       const img = document.querySelector('#PlotSimulation img');
