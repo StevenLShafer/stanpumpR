@@ -113,6 +113,21 @@ afterEach(async () => {
 });
 
 // What the grid shows, row by row: Drug, Time, Dose, Units
+// The page reloads itself, and this waits until the new page is up: a
+// marker set before the reload is gone, and Shiny is connected.  A call made
+// while the page unloads can fail, and is tried again
+async function reloadInPage(timeout = 60000) {
+  await page.evaluate(() => { window.__beforeReload = true; setTimeout(() => location.reload(), 50); });
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    await page.waitForTimeout(500);
+    const ready = await page.evaluate(() => !window.__beforeReload && document.readyState === 'complete' &&
+      !!(window.Shiny && window.Shiny.shinyapp && window.Shiny.shinyapp.isConnected())).catch(() => false);
+    if (ready) return;
+  }
+  throw new Error('the page did not reload within ' + timeout + ' ms');
+}
+
 async function readRows() {
   return page.evaluate(sel => Array.from(document.querySelectorAll(sel + ' tbody tr')).map(tr => {
     const tds = tr.querySelectorAll('td');
@@ -297,9 +312,14 @@ describe('the dose grid on an iPhone', () => {
 
   // The link in the address bar after Apply, opened afresh in the same page
   // (one page is all an iPhone session has), restores the table applied.
-  // The page is reloaded, which opens that same address in a new session:
-  // page.goto() with the long bookmark address left the grid empty on a real
-  // iPhone (the third run, 2026-11-09)
+  // The page reloads itself (location.reload()), which opens that same
+  // address in a new session.  Playwright's own navigation failed on the
+  // iPhone 16 (iOS 18), where BrowserStack translates it: page.goto() with
+  // the bookmark address left the grid empty (the third run, 2026-11-09), and
+  // page.reload() broke the connection ("Object with guid response@... was
+  // not bound", the fifth), the Response each returns not surviving the
+  // translation.  So the reload is the page's, and the wait is a poll of
+  // page.evaluate(), which every run has kept
   test('the bookmark after Apply restores the table applied', async () => {
     await enter(FENTANYL, 2, '357');
     await holds(FENTANYL, ['fentanyl', '0', '357', 'mcg']);
@@ -307,7 +327,7 @@ describe('the dose grid on an iPhone', () => {
     await page.tap('#dosetable_apply');
     await page.waitForFunction(() => decodeURIComponent(location.search).includes('357'), null, { timeout: 30000 });
     const link = await page.evaluate(() => location.href);
-    await page.reload({ waitUntil: 'load' });
+    await reloadInPage();
     try {
       await waitForRows(rows => rows.some(r => r[2] === '357'), 60000);
     } catch (e) {
