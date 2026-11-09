@@ -75,6 +75,7 @@ kbd { font: 11px/1 ui-monospace, Consolas, monospace; border: 1px solid var(--li
 #readout .time { font-size: 20px; font-weight: 600; letter-spacing: 0.5px; margin: 2px 0; }
 #readout .tgt { color: var(--target); }
 #readout .k { color: var(--ink-2); }
+#readout .ce { color: #8db8ff; }   /* a gas run's effect site, the vessel-rich group */
 #readout .foot { color: var(--ink-2); font-size: 12px; margin-top: 2px; }
 #readout .scale { color: var(--ink-2); font-size: 11.5px; max-width: 380px; }
 body.flat #readout .scale { display: none; }   /* the 2D view says it under its boxes */
@@ -194,7 +195,7 @@ body.over #message .card { border-color: var(--accent); }
 #flat .nm .s { font-size: 10px; }
 #flat .sub { fill: #8a9cb0; font-size: 11.5px; }
 #flat .val { fill: #e6edf5; font-size: 13px; font-variant-numeric: tabular-nums; }
-#flat .val.ce { fill: #8db8ff; }
+#flat .val.ce, #flat .sub.ce { fill: #8db8ff; }
 #flat .fl { font-size: 12px; font-variant-numeric: tabular-nums; }
 #flat .fl.in { fill: #ff9a90; } #flat .fl.out { fill: #7fe3a6; } #flat .fl.sub { fill: #8a9cb0; }
 

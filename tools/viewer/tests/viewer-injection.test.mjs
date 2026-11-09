@@ -1007,3 +1007,118 @@ test('round-off is shown as 0, not as 4.02e-16', { skip }, async t => {
   assert.ok(await page.evaluate(() => Player.stateAt(Player.run.t[0]).c2) > 0);
   assertClean(page);
 });
+
+// ── The inhaled anesthetics (Shafer, 2026-11-09): a gas run ("kind": "gas",
+// tools/viewer/src/gas.js) in the 2D view only.
+const GAS = JSON.parse(readFileSync(path.resolve(HERE, '..', 'examples', 'sevoflurane-washin.json'), 'utf8'));
+
+test('gas: a gas run draws the circuit, lungs, VRG, muscle and fat, and the agent adds up', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, GAS), true);
+  for (const T of [60, 600, 1200, 1800]) {
+    const o = await page.evaluate(T => {
+      Player.seek(T);
+      const texts = [...document.querySelectorAll('#flat svg text')].map(e => e.textContent);
+      const num = s => Number(s.replace(/,/g, ''));
+      const cells = [...document.querySelectorAll('#amounts td')].map(e => e.textContent);
+      const at = k => num(cells[cells.indexOf(k) + 1]);
+      return { texts, readout: document.getElementById('readout').innerText,
+               delivered: at('Delivered (fresh gas)'), patient: at('In the patient'), vented: at('Vented'),
+               parts: ['Lungs', 'VRG', 'Muscle', 'Fat'].map(at), st: Player.stateAt(T) };
+    }, T);
+    for (const name of ['Circuit', 'Lungs', 'VRG', 'Muscle', 'Fat', 'end-tidal', 'effect site'])
+      assert.ok(o.texts.includes(name), `T = ${T}: no "${name}" in the drawing`);
+    assert.match(o.readout, /Sevoflurane/);
+    assert.match(o.readout, /End-tidal/);
+    assert.match(o.readout, /VRG \(effect site\)/);
+    // The card adds up, to its rounding: delivered = in the patient + vented.
+    assert.ok(Math.abs(o.delivered - o.patient - o.vented) <= 0.15, `T = ${T}: ${o.delivered} != ${o.patient} + ${o.vented}`);
+    assert.ok(Math.abs(o.parts.reduce((a, b) => a + b, 0) - o.patient) <= 0.25, `T = ${T}: the parts do not add to the patient`);
+    // And so do the flows: what the blood takes from the lungs is what the tissues take.
+    const f = o.st.flow;
+    assert.ok(Math.abs(f.blood - (f.vrg + f.mg + f.fg)) < 1e-9);
+  }
+  assertClean(page);
+});
+
+test('gas: the 3D view is refused and its button hidden; a drug run afterwards has both back', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, RUN), true);
+  await page.evaluate(() => Player.setView('3d'));
+  assert.equal(await loadRun(page, GAS), true);
+  let o = await page.evaluate(() => ({ view: Player.view, toggle: getComputedStyle(document.getElementById('viewToggle')).display }));
+  assert.deepEqual(o, { view: '2d', toggle: 'none' }, 'a gas run loaded in 3D is shown in 2D');
+  await page.keyboard.press('v');
+  o = await page.evaluate(() => ({ view: Player.view, note: document.querySelector('#message .card').textContent }));
+  assert.equal(o.view, '2d');
+  assert.match(o.note, /3D view does not show the inhaled anesthetics/);
+  assert.equal(await loadRun(page, RUN), true);
+  await page.evaluate(() => Player.setView('3d'));
+  o = await page.evaluate(() => ({ view: Player.view, toggle: getComputedStyle(document.getElementById('viewToggle')).display }));
+  assert.equal(o.view, '3d');
+  assert.notEqual(o.toggle, 'none');
+  assertClean(page);
+});
+
+test('gas: no two labels overlap, at 1200 x 800 and 800 x 600', { skip }, async t => {
+  for (const [width, height] of [[1200, 800], [800, 600]]) {
+    const page = await viewerPage(t);
+    await page.setViewport({ width, height });
+    assert.equal(await loadRun(page, GAS), true);
+    for (const T of [0, 30, 120, 600, 660, 1200, 1800]) {
+      const hits = await page.evaluate(T => {
+        Player.seek(T);
+        const bb = [...document.querySelectorAll('#flat svg text')].map(e => ({ s: e.textContent, b: e.getBBox() }));
+        const out = [], SLACK_Y = 4;     // as in the drug test above
+        for (let i = 0; i < bb.length; i++) for (let j = i + 1; j < bb.length; j++) {
+          const a = bb[i].b, b = bb[j].b;
+          if (a.x < b.x + b.width - 0.5 && b.x < a.x + a.width - 0.5 && a.y < b.y + b.height - SLACK_Y && b.y < a.y + a.height - SLACK_Y)
+            out.push(bb[i].s + ' / ' + bb[j].s);
+        }
+        return out;
+      }, T);
+      assert.deepEqual(hits, [], `${width} x ${height}, T = ${T}: labels overlap`);
+    }
+    assertClean(page);
+  }
+});
+
+test('gas: markup and malformed fields are refused, the name is shown as text', { skip }, async t => {
+  const page = await viewerPage(t);
+  for (const [mutate, names] of [[r => { r.units.conc = '%' + P; }, 'units.conc'],
+                                 [r => { r.capacity.vrg = 0; }, 'capacity.vrg'],
+                                 [r => { r.p.fg = r.p.fg.slice(1); }, 'p.fg'],
+                                 [r => { r.fresh[3] = 'x'; }, 'fresh[3]'],
+                                 [r => { r.kind = 'liquid'; }, 'kind']]) {
+    const r = clone(GAS); mutate(r);
+    assert.equal(await loadRun(page, r), false);
+    const p = await probe(page);
+    assertNoInjection(p);
+    assert.ok(p.message.includes(names), `message should name ${names}: ${p.message}`);
+  }
+  const r = clone(GAS); r.drug = P;
+  assert.equal(await loadRun(page, r), true);
+  assertNoInjection(await probe(page));
+  assertClean(page);
+});
+
+test('video: a gas run saves an MP4 of the 2D view', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, GAS), true);
+  if (!(await canEncode(page))) return t.skip('this browser cannot encode H.264');
+  const { plan, b64 } = await page.evaluate(async () => {
+    Player.setSpeed(1200);
+    const plan = Video.plan();
+    const blob = await Video.record(plan, false, () => {});
+    const buf = new Uint8Array(await blob.arrayBuffer());
+    let s = ''; for (let i = 0; i < buf.length; i += 0x8000) s += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+    return { plan, b64: btoa(s) };
+  });
+  assert.equal(plan.view, '2d');
+  const top = mp4Boxes(Buffer.from(b64, 'base64'));
+  assert.deepEqual(top.map(b => b.type), ['ftyp', 'moov', 'mdat']);
+  assertClean(page);
+});

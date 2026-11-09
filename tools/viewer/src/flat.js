@@ -81,13 +81,17 @@ const Flat = {
     // Whether cards h px tall leave the drawing its room (Cards.fit()).
     fits(h) {
         const ctl = this.controlsTop(this.el.clientHeight);
-        return !(h > 0) || ctl - h - 22 - FLAT_BOTTOM - FLAT_TOP >= FLAT_MIN_PLOT;
+        // A gas run's arrows over the circuit need more room above (gas.js).
+        const top = this.run && this.run.kind === 'gas' ? GAS_TOP : FLAT_TOP;
+        return !(h > 0) || ctl - h - 22 - FLAT_BOTTOM - top >= FLAT_MIN_PLOT;
     },
 
     // A new run: the fixed scales, from every moment of it.
     // stateAt: the player's own function, so the flows are the ones it draws.
     setRun(r, ui, stateAt) {
         this.run = r; this.ui = ui; this.last = null;
+        // An inhaled anesthetic (gas.js).
+        if (r.kind === 'gas') { this.setGasRun(r, ui, stateAt); return; }
         const n = r.t.length;
         // The concentration scale: the highest value of every series at
         // every sample (interpolation never exceeds the samples), and every
@@ -119,6 +123,7 @@ const Flat = {
     draw(st) {
         this.last = st;
         if (!this.visible() || !this.run) return;
+        if (this.run.kind === 'gas') { this.drawGas(st); return; }
         const r = this.run, u = this.ui.units, dp = this.ui.concDecimals;
         const W = this.el.clientWidth, H = this.el.clientHeight;
         // The vertical layout, from the space the controls and cards leave
@@ -255,6 +260,12 @@ const Flat = {
         // Sizes not to scale: say so, under the boxes (the volume labels stay exact).
         if (dv.a < 1)
             out.push(`<text x="${x1}" y="${yTop - 8}" text-anchor="end" class="sub">${W >= 560 ? `Widths not to scale (largest ${SIZE_RATIO_MAX}× smallest); heights are concentration` : 'Widths not to scale'}</text>`);
+        this.finish(out, W, Hs, st);
+    },
+
+    // The drawing put in the page, laid out once more if a scroll bar came or
+    // went, and every label kept inside the window.
+    finish(out, W, Hs, st) {
         this.el.innerHTML = `<svg width="${W}" height="${Hs}" viewBox="0 0 ${W} ${Hs}" xmlns="http://www.w3.org/2000/svg">${out.join('')}</svg>`;
         // A scroll bar that came or went changes the width: lay out once more.
         if (this.el.clientWidth !== W && !this.again) { this.again = true; this.draw(st); this.again = false; return; }

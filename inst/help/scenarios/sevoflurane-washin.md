@@ -8,6 +8,7 @@ Hover on the alveolar line just before and a few minutes after 15 minutes.
 
 ## Try next
 
+- Press **Visualizer** under the plot to watch the sevoflurane partial pressure in the breathing circuit, the lungs (end-tidal), the vessel-rich group (the effect site), muscle and fat, each a box as wide as its capacity, with the agent flowing between them. Stop it at 20 minutes: after the flow is cut, the vessel-rich group stands above the end-tidal level and gives agent back to the blood, while muscle and fat go on taking it up.
 - Turn the vaporizer up to 3 per cent at 15 minutes as well, which is what a clinician does when dropping the flow. The alveolar tension no longer drifts down: it goes on rising, to about 2.1 per cent by the end of the hour.
 - Keep the flow at 6 L/min throughout and compare: the alveolar tension keeps climbing towards 2 per cent.
 - Change the ventilation to 10 L/min at time zero. Alveolar ventilation is now higher, so the wash-in is faster, but the fresh gas flow of 6 L/min is below the minute ventilation and there is some rebreathing from the start.

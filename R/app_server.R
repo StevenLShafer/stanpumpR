@@ -2352,11 +2352,12 @@ app_server <- function(input, output, session) {
   }
 
   # The drugs the Visualizer can draw: every plotted drug's panel but a
-  # companion model's and an inhaled agent's, for which viewerProblem() is NULL.
+  # companion model's, for which viewerProblem() is NULL -- the inhaled
+  # anesthetics among them (2026-11-09), but not oxygen or the summed MAC.
   viewerDrugs <- function(plotted) {
     keep <- vapply(names(plotted), function(d) {
       e <- plotted[[d]]
-      is.null(e$companionOf) && !isGasDrug(d) &&
+      is.null(e$companionOf) &&
         isTRUE(tryCatch(is.null(viewerProblem(e)), error = function(err) FALSE))
     }, logical(1))
     names(plotted)[keep]
@@ -2375,12 +2376,17 @@ app_server <- function(input, output, session) {
       if (!is.null(blocked)) return(fail(blocked))
       run <- tryCatch({
         plotted <- drugs()
-        plotted <- plotted[!isGasDrug(names(plotted))]
-        entry <- viewerPlotEntry(drug, plotted[[drug]], doseTableIV(), eventTableClean(), plotted,
-                                 plotMinimum(), plotMaximum(), antiseizureInteractions())
         defaults <- drugDefaults()
-        viewerRun(entry, plotMinimum(), plotMaximum(),
-                  category = defaults$Category[match(drug, defaults$Drug)])
+        category <- defaults$Category[match(drug, defaults$Drug)]
+        if (isGasDrug(drug)) {
+          # An inhaled anesthetic: the gas engine's own states for the plot.
+          viewerGasRun(plotted[[drug]], plotMinimum(), plotMaximum(), category = category)
+        } else {
+          plotted <- plotted[!isGasDrug(names(plotted))]
+          entry <- viewerPlotEntry(drug, plotted[[drug]], doseTableIV(), eventTableClean(), plotted,
+                                   plotMinimum(), plotMaximum(), antiseizureInteractions())
+          viewerRun(entry, plotMinimum(), plotMaximum(), category = category)
+        }
       }, error = function(e) {
         fail(if (inherits(e, "shiny.silent.error")) "the plot is not ready yet; try again." else conditionMessage(e))
         NULL

@@ -31,7 +31,7 @@ The controls: **Play**, **Pause**, **Stop** (pause and go back to the start), th
 
 | File | What it is |
 |---|---|
-| `R/viewerRun.R` | `viewerSimulate()` runs the app's own pipeline (`recalculatePK()` → `processdoseTable()`) at the visualizer's times; `viewerRun()` turns one drug's result into the run; `viewerProblem()` says why a drug cannot be drawn. |
+| `R/viewerRun.R` | `viewerSimulate()` runs the app's own pipeline (`recalculatePK()` → `processdoseTable()`) at the visualizer's times; `viewerRun()` turns one drug's result into the run, `viewerGasRun()` an inhaled anesthetic's; `viewerProblem()` says why a drug cannot be drawn. |
 | `R/app_server.R` | the dialog's button (`viewerAvailable()`), the `openViewer` observer and the `viewerBlocked` notification. |
 | `inst/www/viewer-launch.js` | the browser side of the button: opens the pop-up and hands it the run. |
 | `inst/www/stanpumpR-viewer.html` | the visualizer, one self-contained file (about 830 KB, three.js 0.170.0 included), **built** from `tools/viewer/src`. |
@@ -39,6 +39,7 @@ The controls: **Play**, **Pause**, **Stop** (pause and go back to the start), th
 | `tools/viewer/build/` | `build.mjs`, which makes `inst/www/stanpumpR-viewer.html` from `src/`, and the test runner. |
 | `tools/viewer/tests/viewer-injection.test.mjs` | a run file cannot put markup in the page; the 2D view, the sizes and the video. |
 | `tools/viewer/examples/propofol-tci-e.json` | a sample (version 1) run, for the injection tests and for a look without stanpumpR. |
+| `tools/viewer/examples/sevoflurane-washin.json` | a sample gas run: 2% sevoflurane, 6 L/min of oxygen cut to 1 L/min at 10 minutes. |
 | `tests/testthat/test-viewer.R` | stanpumpR's test of `viewerRun()`. |
 
 `tools/` is in `.Rbuildignore`; only `inst/www/stanpumpR-viewer.html` ships in the package.
@@ -47,7 +48,9 @@ The controls: **Play**, **Pause**, **Stop** (pause and go back to the start), th
 
 Every drug whose plot is a concentration in mcg/mL, ng/mL, pg/mL, IU/mL, mcU/mL or mmol/L (amounts in mg, mcg, ng, IU, U or mmol), and heparinCPB as its anti-Xa activity, whatever its model: linear or saturable (Michaelis–Menten), closed form, transit chain or Runge–Kutta. The visualizer computes no pharmacokinetics: it draws stanpumpR's concentrations, and reads every flow from the amounts as they change, so a flow is right for any model.
 
-Not drawn (`viewerProblem()`): inhaled agents; drugs plotted as an INR (fluindione, acenocoumarol: stanpumpR keeps no drug concentration for them), a serum osmolality (mannitol), a percentage or a flow; and drugs that are the sum of separate systems (ketorolac's S and R enantiomers, warfarin), which one set of compartments cannot show. A drug dosed as a salt in mmol (calcium) is drawn with the drug given unknown.
+And the inhaled anesthetics (sevoflurane, isoflurane, desflurane, nitrous oxide), in the 2D view: see *The inhaled anesthetics* below.
+
+Not drawn (`viewerProblem()`): oxygen and the summed MAC; drugs plotted as an INR (fluindione, acenocoumarol: stanpumpR keeps no drug concentration for them), a serum osmolality (mannitol), a percentage or a flow; and drugs that are the sum of separate systems (ketorolac's S and R enantiomers, warfarin), which one set of compartments cannot show. A drug dosed as a salt in mmol (calcium) is drawn with the drug given unknown.
 
 **The drug given, and eliminated.** `given` counts intravenous rates and boluses (scheduled repeats and the TCI pump's schedule included), the apparent-oral rates (`mg/day PO`) that run straight into V1, and the drug absorbed from a depot, read off the fall of stanpumpR's `Depot` column (the bioavailable amount still to be absorbed; stanpumpR puts a point just before and at each arrival, so the rise holds no absorption to speak of: about 0.01% of a dose). Eliminated is then given less the drug in V1 + V2 + V3. A few drugs have an input stanpumpR rewrites beyond the dose rows — a zero-order oral or SC release, an enteral infusion, exenatide's saturable SC input — and a metabolite's input is its formation: so does a fosphenytoin dose in mg PE, which waits in a conversion compartment that is neither the body nor the depot; for those the run says `inputKnown: false`, the amounts card leaves administered and eliminated blank, and elimination is drawn as CL1 × Cp.
 
@@ -82,6 +85,23 @@ Not drawn (`viewerProblem()`): inhaled agents; drugs plotted as an INR (fluindio
 Between the times, concentrations and amounts are interpolated linearly; each flow is the change over the interval: V2 × ΔC2/Δt into V2, Δabsorbed/Δt for absorption, Δeliminated/Δt for elimination. A file that breaks a rule is refused with a message naming the field.
 
 Display rules, unchanged from Charles Minto's design: the typical concentration stands 3 units tall; every arrow is on one fixed scale (a flow of 2,500 mL/h of a syringe at 10/3 × the typical concentration draws a shaft of radius 2.0, the area proportional to the rate); propofol is white, opioids and neuromuscular blockers a light tint of their syringe-label colour, anything else pale blue; TCI-P shows a gold ring on V1, TCI-E a gold frame on the ribbon.
+
+## The inhaled anesthetics (2D view, Shafer 2026-11-09)
+
+A gas run (`kind: "gas"`, made by `viewerGasRun()`, drawn by `src/gas.js`) shows one agent's **partial pressure**, % of an atmosphere, in five places: the **breathing circuit** (what the patient inspires), the **lungs** (end-tidal), the **vessel-rich group** (the effect site, drawn in the 2D view's effect-site blue), the **muscle group** and the **fat group**. It is drawn after Mapleson's hydraulic analogue of uptake: each compartment is a box whose width is its **capacity**, its volume times its tissue:gas partition coefficient (the lungs' is their volume, 2.5 L at 70 kg), and whose fill height is its partial pressure, on one scale for every box, so the filled area is the agent it holds and agent runs from a higher level to a lower one until they are equal. The widths obey *Sizes* above: sevoflurane's fat holds 493 L of gas, its vessel-rich group 6.6 L, so they are compressed. stanpumpR's ideal circuit has no volume and holds no agent, so it is a narrow bar; GasMan's semi-closed circuit, if a run carries it, is a box of its 8 L. The vaporiser's setting (the fresh gas's own partial pressure) is a gold line on the circuit, and one MAC, age-adjusted, a dashed line across the patient's boxes.
+
+The run is the gas engine's own five states for the plot (`gasDrugEntries()` keeps them, with the body and circuit they were solved with, as `$gasRun`), interpolated onto the visualizer's times: nothing is re-solved. The flows come from the amounts, as for a drug, in mL of vapour a minute: **fresh gas** into the circuit (flow × setting); **ventilation**, the net flow from the circuit into the lungs; the **blood**, out of the lungs and into each tissue, drawn as one line under the boxes with an arrow up into each tissue as it takes agent up and down out of it as it gives agent back; and **vented**, through the pop-off valve, the agent delivered less the agent held. Red flows into the lungs, green out of them. The amounts card gives the agent delivered, in the patient (lungs, vessel-rich group, muscle, fat) and vented. The 3D view does not draw a gas run yet: its button is hidden, and **v** says so.
+
+| Field | Content |
+|---|---|
+| `kind` | `"gas"` |
+| `p` | `circuit`, `lungs`, `vrg`, `mg`, `fg`: partial pressures at each time, %. |
+| `capacity`, `volume`, `partition` | Each compartment's capacity (L of gas), volume (L) and tissue:gas partition coefficient; the ideal circuit's capacity and volume are 0. |
+| `amountScale` | 10: capacity (L) × partial pressure (%) × this is mL of vapour. |
+| `fresh`, `freshFlow`, `ventilation` | In force from each time: the agent's share of the fresh gas (%), the fresh gas flow and the minute ventilation (L/min). |
+| `delivered` | The agent the fresh gas has carried into the circuit since time 0, mL of vapour. |
+| `mac` | One MAC at the patient's age, %. |
+| `circuit` | `"ideal"` (stanpumpR's) or `"semi-closed"` (GasMan's). |
 
 ## Rebuilding after changing `src/`
 

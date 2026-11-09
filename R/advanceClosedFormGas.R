@@ -1044,7 +1044,11 @@ advanceClosedFormGas <- function(
     Drug = "MAC", Time = timeLine, Site = "MAC", Y = macTotal,
     stringsAsFactors = FALSE))
 
-  list(results = results, state = out, timeLine = timeLine)
+  # The body, circuit and patient go with the states, so a reader of them (the
+  # Visualizer's gas run, R/viewerRun.R) knows each compartment's capacity
+  # without rebuilding them.
+  list(results = results, state = out, timeLine = timeLine,
+       body = body, circuit = circuit, weight = weight, age = age)
 }
 
 
