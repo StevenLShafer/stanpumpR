@@ -371,10 +371,27 @@
 
   // A blank row below the last drug, to type the next one in: the server's
   // rule too, so the table it stores is the one drawn
+  // None once the table holds its maxRows doses: a dose typed there was cut
+  // by the server (doseGridValue()) after it had been accepted on screen
+  // (Gemini's production audit, 2026-11-08, finding 7).
   DoseGrid.prototype.ensureTrailingBlank = function() {
-    if (this.rows.length === 0 || !isBlank(this.rows[this.rows.length - 1][COLS.DRUG])) {
+    if (this.filledRows() >= this.maxRows) {
+      while (this.rows.length > 1 && isBlank(this.rows[this.rows.length - 1][COLS.DRUG])) this.rows.pop();
+      return;
+    }
+    // Never past maxRows rows in all, blank ones included: the server keeps
+    // that many (restoredDoseTable()), so a dose typed in a row beyond them
+    // was dropped (CodeRabbit, PR #691)
+    if (this.rows.length < this.maxRows &&
+        (this.rows.length === 0 || !isBlank(this.rows[this.rows.length - 1][COLS.DRUG]))) {
       this.rows.push(blankRow());
     }
+  };
+
+  DoseGrid.prototype.filledRows = function() {
+    var n = 0;
+    for (var i = 0; i < this.rows.length; i++) if (!isBlank(this.rows[i][COLS.DRUG])) n++;
+    return n;
   };
 
   // --- committing --------------------------------------------------------------
@@ -409,6 +426,12 @@
         return false;
       }
       if (drug === row[COLS.DRUG]) { ctl.value = drug; return false; }
+      // a new dose in a blank row, once the table holds its maxRows doses
+      if (drug !== '' && isBlank(row[COLS.DRUG]) && this.filledRows() >= this.maxRows) {
+        notify(['The table holds at most ' + this.maxRows + ' doses.'], 'doseGridRowLimit');
+        ctl.value = '';
+        return false;
+      }
       if (drug === '') {
         this.rows[r] = blankRow();
       } else {
@@ -585,11 +608,23 @@
     if (r === null || r === undefined || !this.rows[r]) return;
     var col = 0;
     if (action === 'above' || action === 'below') {
-      if (this.rows.length >= this.maxRows) {
+      // At most maxRows rows, blank ones included, as the server keeps
+      // (restoredDoseTable()).  At the limit the inserted row takes the place
+      // of the blank row below the doses: counting that blank row against
+      // the doses refused an insert at 498 (Gemini's production audit,
+      // 2026-11-08, finding 7), and adding a row beside it made 500, the
+      // last of which the server dropped once a dose was typed in it
+      // (CodeRabbit, PR #691)
+      var last = this.rows.length - 1;
+      var spare = this.rows.length >= this.maxRows && last !== r && isBlank(this.rows[last][COLS.DRUG]) &&
+        this.rows[last].every(function(v) { return isBlank(v); });
+      if (this.filledRows() >= this.maxRows || (this.rows.length >= this.maxRows && !spare)) {
         notify(['The table holds at most ' + this.maxRows + ' doses.'], 'doseGridRowLimit');
         return;
       }
+      if (spare) this.rows.pop();
       var at = action === 'above' ? r : r + 1;
+      at = Math.min(at, this.rows.length);
       this.rows.splice(at, 0, blankRow());
       r = at;
     } else if (action === 'remove') {
@@ -888,6 +923,13 @@
         s.said = true;
         notifyRefusedUnits([{ drug: this.rows[at[0]][COLS.DRUG], unit: s.text }], 'the unit was not changed.');
       }
+      // and it is not: the letters before may have moved the list ("m" to
+      // "mcg" on a row in "mcg/kg"), which the pause then committed under
+      // the message that nothing changed (Gemini's production audit,
+      // 2026-11-08, finding 1)
+      var kept = this.rows[at[0]] ? this.rows[at[0]][at[1]] : '';
+      t.value = kept;
+      t.parentNode.firstChild.textContent = unitWrapText(kept);
     } else {
       t.value = pick;
       t.parentNode.firstChild.textContent = unitWrapText(pick);

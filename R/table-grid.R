@@ -159,8 +159,11 @@ thresholdGridColumns <- function() {
 # mmol or mOsm (an inhaled agent, calcium, mannitol) is simulated in those
 # units by its own engine or conversion, and switching it to mcg or ng would
 # break the dose conversion in simCpCe(), so its cell cannot be changed
-# (Claude Code, 2026-10-17, from an external review).  The numbers are text,
-# which drugLibraryProblems() reads as typed.
+# (Claude Code, 2026-10-17, from an external review).  The numbers are number
+# cells, read as validateDose() reads them, so "1,000" is 1000 in the cell and
+# at Apply alike; drugLibraryProblems() holds them to the same limits.  Class
+# (what makes a drug an inhaled agent) is read-only (Gemini's production
+# audit, 2026-11-08, finding 4).
 drugLibraryGridColumns <- function(x) {
   list(
     tableColumn("Drug", type = "readonly", width = 130),
@@ -171,11 +174,11 @@ drugLibraryGridColumns <- function(x) {
     tableColumn("Default.Units", type = "select", options = allUnits, wrapUnits = TRUE, width = 120),
     tableColumn("Units", width = 260),
     tableColumn("Color", width = 80),
-    tableColumn("Lower", width = 60),
-    tableColumn("Upper", width = 60),
-    tableColumn("Typical", width = 60),
-    tableColumn("MEAC", width = 60),
-    tableColumn("Class", width = 60)
+    tableColumn("Lower", type = "number", width = 60),
+    tableColumn("Upper", type = "number", width = 60),
+    tableColumn("Typical", type = "number", width = 60),
+    tableColumn("MEAC", type = "number", width = 60),
+    tableColumn("Class", type = "readonly", width = 60)
   )
 }
 

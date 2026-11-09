@@ -568,6 +568,11 @@
         var col = this.cols[at[1]];
         notify(['"' + s.text + '" is not one of the choices in ' + (col.label || col.name) + '; it was not changed.'], 'tableGridRefused');
       }
+      // and it is not: the letters before may have moved the list, which the
+      // pause then committed (Gemini's production audit, 2026-11-08, finding 1)
+      var kept = this.shown(at[0], at[1]), col3 = this.cols[at[1]];
+      t.value = kept;
+      t.parentNode.firstChild.textContent = col3.wrapUnits && typeof unitWrapText === 'function' ? unitWrapText(kept) : kept;
     } else {
       t.value = pick;
       var col2 = this.cols[at[1]];
@@ -599,7 +604,10 @@
       this.catchPaste(at);
       return;
     }
-    if (e.key === 'F2' && text) { e.preventDefault(); this.startEditing(t, at); return; }
+    // not a read-only cell, which a double click does not edit either (F2 on
+    // one held the row's Home/End and swallowed Escape: Gemini's production
+    // audit, 2026-11-08, finding 5)
+    if (e.key === 'F2' && text && !t.readOnly) { e.preventDefault(); this.startEditing(t, at); return; }
     if (this.menu && ((e.key === 'F10' && e.shiftKey) || e.key === 'ContextMenu')) {
       e.preventDefault();
       var box = t.getBoundingClientRect();

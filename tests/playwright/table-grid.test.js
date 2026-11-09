@@ -52,7 +52,11 @@ const sentRows = id => page.evaluate(i => {
 }, id);
 const open = async (input, id) => {
   await page.evaluate(i => window.Shiny.setInputValue(i, Math.random(), { priority: 'event' }), input);
-  await page.waitForSelector(`#${id} tbody tr`, { timeout: 30000 });
+  // A cell, not a row: in WebKit the rows of a grid drawn inside a dialog's
+  // uiOutput keep the visibility: hidden shinycssloaders set on the output
+  // while it recalculated (the output is display: contents), though their
+  // cells are visible and drawn (2026-11-08)
+  await page.waitForSelector(`#${id} tbody td`, { timeout: 30000 });
   await H.settle(page, 300);
 };
 const rowOf = async (id, name) => (await gridRows(id)).findIndex(r => r[0] === name);
@@ -82,6 +86,15 @@ describe('Edit doses', () => {
     await H.settle(page, 300);
     assert.ok((await H.notifications(page)).some(n => /"1,5" was not accepted/.test(n)));
     assert.equal((await gridRows('editPriorDosesTable'))[0][2], '100');
+    // letters that match no unit leave the unit as it was, even after the
+    // first moved the list (Gemini's production audit, 2026-11-08, finding 1)
+    await H.clearNotifications(page);
+    await page.focus(cell('editPriorDosesTable', 1, 3));
+    await page.keyboard.type('mz');
+    await page.keyboard.press('Enter');
+    await H.settle(page, 300);
+    assert.equal((await gridRows('editPriorDosesTable'))[1][3], 'mcg/kg/min');
+    assert.ok((await H.notifications(page)).some(n => /"mz" is not one of the choices/.test(n)));
     // a new dose, the last row deleted, then Apply
     await page.click(cell('editPriorDosesTable', 0, 2));
     await page.keyboard.type('120');
@@ -155,6 +168,12 @@ describe('Drug thresholds', () => {
     await page.click(cell('editThresholdsTable', r, 0));
     await page.keyboard.type('x');
     assert.equal((await gridRows('editThresholdsTable'))[r][0], 'propofol');
+    // F2 on a read-only cell does not start an edit, so End still moves along
+    // the row (Gemini's production audit, 2026-11-08, finding 5)
+    await page.keyboard.press('F2');
+    await page.keyboard.press('End');
+    assert.ok(await page.$eval(cell('editThresholdsTable', r, 1), x => x === document.activeElement),
+              'End did not move from the read-only cell after F2');
     await page.click(cell('editThresholdsTable', r, 1));
     await page.keyboard.type('2.5');
     await page.keyboard.press('Enter');

@@ -468,4 +468,104 @@ test_that("the plot's Visualizer button lists the drawable drugs, and a forged d
   })
 })
 
+# Gemini's production audit of the new grids (2026-11-08), each confirmed in
+# the code before it was fixed.  Findings 1, 5 and 7 are the browser's
+# (tests/playwright), finding 3 too, the test server making no bookmark.
+libraryCells <- function(x) lapply(seq_len(nrow(x)), function(i)
+  lapply(x[i, ], function(v) if (is.na(v)) "" else as.character(v)))
+
+test_that("a blank MEAC is no MEAC, and the simulation still runs (production audit, finding 2)", {
+  shiny::testServer(app_server, {
+    sent <- recordNotices(session)
+    startReview(session, reviewTable(list("fentanyl", "0", "100", "mcg")))
+    shown <- drugLibraryGridData(drugDefaults())
+    for (col in c("MEAC", "Lower", "Upper", "Typical")) shown[[col]][shown$Drug == "fentanyl"] <- ""
+    session$setInputs(editDrugsHTML = tableGridInputValue(libraryCells(shown)), drugEditsOK = 1)
+    expect_equal(drugDefaults()$MEAC[drugDefaults()$Drug == "fentanyl"], 0)
+    expect_no_error(drugs())
+    expect_false(session$isClosed())
+  })
+  # and simCpCe() itself takes a missing MEAC as none
+  original <- getDrugDefaults
+  local_mocked_bindings(getDrugDefaults = function(drug) {
+    d <- original(drug)
+    d$MEAC <- NA_real_
+    d
+  })
+  sim <- simulateDrugsWithCovariates(data.frame(Drug = "fentanyl", Time = 0, Dose = 100, Units = "mcg"),
+                                     eventTableInit, 70, 170, 40, "male", 60, FALSE)
+  expect_true(all(sim$fentanyl$equiSpace$MEAC == 0))
+})
+
+test_that("the Drug Library's numbers are number cells, and Class cannot be edited (production audit, finding 4)", {
+  dd <- getDrugDefaultsGlobal()
+  cols <- drugLibraryGridColumns(drugLibraryGridData(dd))
+  types <- stats::setNames(vapply(cols, `[[`, "", "type"), vapply(cols, `[[`, "", "name"))
+  expect_equal(unname(types[c("Lower", "Upper", "Typical", "MEAC")]), rep("number", 4))
+  expect_equal(unname(types["Class"]), "readonly")
+  grid <- drugLibraryGridData(dd)
+  over <- grid
+  over$Lower[over$Drug == "propofol"] <- "10000000000"
+  expect_match(drugLibraryProblems(over, dd), "from 0 to 1,000,000,000")
+  shiny::testServer(app_server, {
+    sent <- recordNotices(session)
+    startReview(session, reviewTable(list("propofol", "0", "100", "mg")))
+    shown <- drugLibraryGridData(drugDefaults())
+    shown$Class[shown$Drug == "propofol"] <- "gas"
+    shown$Class[shown$Drug == "sevoflurane"] <- ""
+    session$setInputs(editDrugsHTML = tableGridInputValue(libraryCells(shown)), drugEditsOK = 1)
+    expect_true(is.na(drugDefaults()$Class[drugDefaults()$Drug == "propofol"]) ||
+                  drugDefaults()$Class[drugDefaults()$Drug == "propofol"] != "gas")
+    expect_equal(drugDefaults()$Class[drugDefaults()$Drug == "sevoflurane"], "gas")
+  })
+})
+
+test_that("a cut table or an unknown drug is refused in the targets and thresholds (production audit, finding 6)", {
+  dd <- getDrugDefaultsGlobal()
+  # a row naming no drug of the library is not read, nor quoted back
+  forged <- thresholdTableToDefaults(data.frame(Drug = c("propofol", "<b>notadrug</b>"),
+                                                Threshold = c("2", "bad")), dd, 40)
+  expect_length(forged$invalid, 0)
+  expect_equal(forged$drugDefaults$endCe[forged$drugDefaults$Drug == "propofol"], 2)
+  shiny::testServer(app_server, {
+    sent <- recordNotices(session)
+    startReview(session, reviewTable(list("propofol", "0", "100", "mg")))
+    before <- drugDefaults()
+    rows <- rep(list(list("propofol", "3")), MAX_DOSE_ROWS)
+    session$setInputs(editThresholdsTable = tableGridInputValue(rows), thresholdEditsOK = 1)
+    expect_identical(drugDefaults(), before)
+    expect_match(tail(errorsShown(sent), 1), "more rows than the library has drugs")
+    dt <- doseTable()
+    session$setInputs(setTarget = 1)
+    session$setInputs(targetDrug = "propofol", targetEndTime = "60",
+                      targetTableHTML = targetGrid(), targetOK = 1)
+    session$setInputs(targetTableHTML = tableGridInputValue(rep(list(list("0", "3")), MAX_TARGET_ROWS + 1L)),
+                      targetOK = 2)
+    expect_identical(doseTable(), dt)
+    expect_match(tail(errorsShown(sent), 1), "at most 20 targets")
+    expect_false(session$isClosed())
+  })
+})
+
+# ChatGPT's production audit of the new grids (2026-11-08, F02): a forged pair
+# of End times made an if() of length 2 in the OK handler, which ended the
+# session; a forged drug list fared no better.
+test_that("Suggest Dosing reads its End time and drug as one value each (ChatGPT's production audit, F02)", {
+  shiny::testServer(app_server, {
+    sent <- recordNotices(session)
+    startReview(session, reviewTable(list("propofol", "0", "100", "mg")))
+    before <- doseTable()
+    session$setInputs(targetDrug = "propofol", targetEndTime = c("60", "70"),
+                      targetTableHTML = targetGrid(list("0", 2)), targetOK = 1)
+    expect_false(session$isClosed())
+    expect_identical(doseTable(), before)
+    session$setInputs(targetDrug = c("propofol", "fentanyl"), targetEndTime = "60", targetOK = 2)
+    expect_false(session$isClosed())
+    expect_match(tail(errorsShown(sent), 1), "Choose a drug from the list")
+    session$setInputs(targetDrug = "notadrug", targetOK = 3)
+    expect_match(tail(errorsShown(sent), 1), "Choose a drug from the list")
+    expect_identical(doseTable(), before)
+  })
+})
+
 .sprglobals$config <- oldConfig

@@ -421,12 +421,22 @@ paperReviewServer <- function(input, output, session)
   # The user picked another unit: convert what is shown.
   shiny::observeEvent(input$timeUnit, {
     if (identical(input$timeUnit, tableUnit())) return()
-    current <- dosesNow()
-    attr(current, "problem") <- NULL
     # A Max time that cannot be used (blank, say) becomes the default rather
     # than following the table into the new unit as NA.
     maximumMinutes <- paperReviewMaxTimeMinutes(input$maximum, unitMinutes())
     if (is.na(maximumMinutes)) maximumMinutes <- PAPER_REVIEW_MAX_TIME_DEFAULT
+    # A table cut to fit (more rows than the grid holds, which only a forged
+    # value can send) is not stored cut: the unit stays as it was and the
+    # table is left to be refused by the simulation (CodeRabbit, PR #691)
+    if (!is.null(input$doses) &&
+        tableGridTruncated(tableGridRead(input$doses, paperReviewDoseColumns("", character(0))))) {
+      shiny::showNotification(sprintf("The dose table holds at most %d rows; the time unit was not changed.",
+                                      MAX_DOSE_ROWS - 1L), type = "warning")
+      setUnit(tableUnit(), maximumMinutes)
+      return()
+    }
+    current <- dosesNow()
+    attr(current, "problem") <- NULL
     doseTable(current)
     setUnit(input$timeUnit, maximumMinutes)
   }, ignoreInit = TRUE)
@@ -437,6 +447,15 @@ paperReviewServer <- function(input, output, session)
     if (is.null(regimen)) return()
     d <- paperReviewRegimenDoses(regimen)$doses
     if (nrow(d) == 0) return()
+    # The grid holds MAX_DOSE_ROWS - 1 rows; a longer regimen (an hourly
+    # bolus for 500 hours) would be cut by the browser and then refused, or
+    # cut without a word by a change of time unit, so it is refused here.
+    if (nrow(d) > MAX_DOSE_ROWS - 1L) {
+      shiny::showNotification(sprintf(
+        "This regimen has %d doses; the dose table holds at most %d. Enter a shorter part of it by hand.",
+        nrow(d), MAX_DOSE_ROWS - 1L), type = "warning")
+      return()
+    }
     doseTable(d)
     # In the unit the paper uses for this regimen.
     setUnit(paperReviewRegimenTimeUnit(r$extraction, regimen), max(PAPER_REVIEW_MAX_TIME_DEFAULT, ceiling(max(d$Time) * 2)))
@@ -451,7 +470,11 @@ paperReviewServer <- function(input, output, session)
     d <- doseTable()
     d$Units <- as.character(d$Units)
     d$Time <- signif(d$Time / unitMinutes(), 6)
-    blank <- data.frame(Time = rep(NA_real_, 4), Dose = rep(NA_real_, 4), Units = rep(NA_character_, 4))
+    # Up to four blank rows to type into, never past the grid's limit, which
+    # would make tableGridRead() report the table as cut.
+    blankRows <- max(0L, min(4L, MAX_DOSE_ROWS - 1L - nrow(d)))
+    blank <- data.frame(Time = rep(NA_real_, blankRows), Dose = rep(NA_real_, blankRows),
+                        Units = rep(NA_character_, blankRows))
     shiny::div(style = "max-width: 520px",
       tableGridInput(session$ns("doses"), paperReviewDoseColumns(unitName(), units),
                      rbind(d, blank), rowMenu = TRUE, height = 230, label = "Doses"))
@@ -470,6 +493,11 @@ paperReviewServer <- function(input, output, session)
     # anything else as mg (ChatGPT's fourth review, F01).  A row still
     # being filled in, with a cell blank, is passed over as before.
     problem <- NULL
+    # A table cut to fit was never one the grid sent (Gemini's production
+    # audit, 2026-11-08, finding 6)
+    if (shown && tableGridTruncated(d)) {
+      problem <- sprintf("The dose table holds at most %d rows.", MAX_DOSE_ROWS - 1L)
+    }
     if (shown) {
       r <- currentReview()
       units <- if (is.null(r)) character(0) else as.character(r$drug$units)
@@ -477,11 +505,23 @@ paperReviewServer <- function(input, output, session)
       readable <- function(x) vapply(x, function(v) nzchar(validateDose(v)), logical(1), USE.NAMES = FALSE)
       bad <- filled & !(readable(d$Time) & readable(d$Dose) & d$Units %in% units)
       if (any(bad)) {
-        problem <- sprintf(paste0("Row %s cannot be simulated: enter a time and a dose from 0 to ",
-                                  "1,000,000,000, and a unit from the list (%s)."),
-                           paste(which(bad), collapse = ", "), paste(units, collapse = ", "))
+        problem <- paste(c(problem, sprintf(paste0("Row %s cannot be simulated: enter a time and a dose from 0 to ",
+                                                   "1,000,000,000, and a unit from the list (%s)."),
+                                            paste(which(bad), collapse = ", "), paste(units, collapse = ", "))),
+                         collapse = " ")
         d <- d[!bad, , drop = FALSE]
       }
+      # Read as validateDose() reads them: "1,000" passed the check above and
+      # was then dropped by as.numeric() below without a word (the same audit)
+      # A blank is left blank: validateDose() reads it as 0, which put a row
+      # still being filled in (a dose and unit, no time) at time 0 (CodeRabbit)
+      fill <- function(x) vapply(x, function(v) {
+        if (isBlankEntry(v)) return(v)
+        r <- validateDose(v)
+        if (nzchar(r)) r else v
+      }, character(1), USE.NAMES = FALSE)
+      d$Time <- fill(d$Time)
+      d$Dose <- fill(d$Dose)
     }
     d <- d[is.finite(suppressWarnings(as.numeric(d$Time))) &
              is.finite(suppressWarnings(as.numeric(d$Dose))) & !is.na(d$Units) & nzchar(d$Units), ,
