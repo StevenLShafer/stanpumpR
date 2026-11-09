@@ -8,13 +8,15 @@
 // same cases, the same app in Shiny's test mode, the same checks of the
 // server's state.
 //
-// The platforms are desktop browsers: real Chrome and Edge, and Playwright's
-// own Firefox and WebKit builds.  BrowserStack also runs Playwright on real
-// iPhones (Safari), but there a session allows one browser context and one
-// page, and supports only part of Playwright's API (its "Supported Playwright
-// commands for iOS"), where this suite opens a context for every case and
-// uses page.$$eval(), the pageerror event and the clipboard.  iPhone Safari
-// would need a smaller suite of its own (README.md).
+// Two kinds of platform.  The desktop browsers (real Chrome and Edge, and
+// Playwright's own Firefox and WebKit builds) run the whole suite,
+// dose-grid.test.js and table-grid.test.js.  The iPhones (real devices,
+// Safari) run iphone.test.js only: there a session allows one browser
+// context and one page, and only part of Playwright's API (BrowserStack's
+// "Supported Playwright commands for iOS"), where the desktop suite opens a
+// context for every case and uses page.$$eval(), the pageerror event and the
+// clipboard.  An iPhone reaches the tunnelled app at bs-local.com, not
+// localhost, which iOS Safari will not load through the tunnel (appUrl()).
 
 'use strict';
 
@@ -27,7 +29,11 @@ const PLATFORMS = {
   'windows-edge': { engine: 'chromium', caps: { os: 'Windows', os_version: '11', browser: 'edge', browser_version: 'latest' } },
   'macos-chrome': { engine: 'chromium', caps: { os: 'OS X', os_version: 'Sequoia', browser: 'chrome', browser_version: 'latest' } },
   'macos-webkit': { engine: 'webkit', caps: { os: 'OS X', os_version: 'Sequoia', browser: 'playwright-webkit', browser_version: 'latest' } },
-  'windows-firefox': { engine: 'firefox', caps: { os: 'Windows', os_version: '11', browser: 'playwright-firefox', browser_version: 'latest' } }
+  'windows-firefox': { engine: 'firefox', caps: { os: 'Windows', os_version: '11', browser: 'playwright-firefox', browser_version: 'latest' } },
+  // as BrowserStack's own sample connects to one (webkit.connect, safari,
+  // deviceName, osVersion, realMobile)
+  'iphone-16': { engine: 'webkit', mobile: true, caps: { browser: 'safari', deviceName: 'iPhone 16', osVersion: '18', realMobile: 'true' } },
+  'iphone-17': { engine: 'webkit', mobile: true, caps: { browser: 'safari', deviceName: 'iPhone 17', osVersion: '26', realMobile: 'true' } }
 };
 
 const ENDPOINT = 'wss://cdp.browserstack.com/playwright?caps=';
@@ -94,6 +100,21 @@ async function launch(playwright, engine, options, sessionName) {
   return playwright[platform().engine].connect(wsEndpoint(sessionName), { timeout: 120000 });
 }
 
+// Is the platform an iPhone (iphone.test.js, one context and one page)?
+function mobile() {
+  return enabled() && !!platform().mobile;
+}
+
+// The app's address as the browser must use it: an iPhone on BrowserStack
+// reaches the tunnelled app at bs-local.com, which BrowserStack Local maps
+// to this machine, because iOS Safari does not load localhost through it
+function appUrl(url) {
+  if (!mobile()) return url;
+  const u = new URL(url);
+  u.hostname = 'bs-local.com';
+  return u.toString();
+}
+
 // The Playwright browser type the test files should treat the browser as.
 function engine() {
   if (enabled()) return platform().engine;
@@ -136,4 +157,4 @@ async function startTunnel() {
   };
 }
 
-module.exports = { PLATFORMS, enabled, platform, engine, launch, wsEndpoint, startTunnel, localIdentifier };
+module.exports = { PLATFORMS, enabled, platform, mobile, appUrl, engine, launch, wsEndpoint, startTunnel, localIdentifier };

@@ -60,8 +60,9 @@ it. Set the account's credentials and a platform:
 BROWSERSTACK_USERNAME=... BROWSERSTACK_ACCESS_KEY=... STANPUMPR_BROWSERSTACK=windows-chrome node tests/playwright/run.js
 ```
 
-The platforms are `windows-chrome`, `windows-edge`, `macos-chrome`,
-`macos-webkit` and `windows-firefox` (`PLATFORMS` in `browserstack.js`).
+The desktop platforms are `windows-chrome`, `windows-edge`,
+`macos-chrome`, `macos-webkit` and `windows-firefox`; the iPhones are below
+(`PLATFORMS` in `browserstack.js`).
 `require('browserstack-local')` must work as well as `require('playwright')`,
 and the Playwright here must be one BrowserStack supports (1.63 is).
 
@@ -73,12 +74,37 @@ itself: its network does not reach BrowserStack's endpoints, and the access
 key has to travel inside the connection's address, where the session's
 proxy cannot add it.
 
-BrowserStack also runs Playwright on real iPhones (Safari), but not this
-suite. There a session allows one browser context and one page, and only
-part of Playwright's API (BrowserStack's "Supported Playwright commands for
-iOS"). This suite opens a context for every case and uses `page.$$eval()`,
-the `pageerror` event and the clipboard, so iPhone Safari would need a
-smaller suite of its own.
+### On an iPhone
+
+`iphone.test.js` is a smaller suite for the dose grid on a phone: a tap
+instead of a click, the on-screen keyboard's Enter, the drug list chosen by
+tap, the system's own list for Units, Apply, and the bookmark. It keeps to
+the limits BrowserStack sets on Playwright on a real iPhone (its "Supported
+Playwright commands for iOS"):
+
+- one browser context and one page, so each case loads the app afresh;
+- no `page.$$eval()`, no `pageerror` event, no clipboard.
+
+On a phone the dose table's sidebar starts collapsed, so each case opens it
+with its toggle, as a user does.
+
+Run here, it runs in Playwright's WebKit as an iPhone 15:
+
+```bash
+node tests/playwright/run.js iphone.test.js
+```
+
+On BrowserStack it runs in Safari on a real iPhone (`iphone-16`: iPhone 16,
+iOS 18; `iphone-17`: iPhone 17, iOS 26), which reaches the tunnelled app at
+`bs-local.com`, since iOS Safari does not load `localhost` through the
+tunnel:
+
+```bash
+BROWSERSTACK_USERNAME=... BROWSERSTACK_ACCESS_KEY=... STANPUMPR_BROWSERSTACK=iphone-16 node tests/playwright/run.js
+```
+
+An iPhone platform runs `iphone.test.js` by default, and the desktop files
+refuse one.
 
 ## How it works
 

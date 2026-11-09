@@ -28,12 +28,14 @@ on:
           - macos-chrome
           - macos-webkit
           - windows-firefox
+          - iphone-16
+          - iphone-17
       files:
-        description: Test files
+        description: Test files (all = the platform's own suite; an iPhone runs iphone.test.js)
         type: choice
-        default: both
+        default: all
         options:
-          - both
+          - all
           - dose-grid.test.js
           - table-grid.test.js
 
@@ -95,7 +97,7 @@ jobs:
           STANPUMPR_RSCRIPT_ARGS: --no-init-file
           FILES: ${{ inputs.files }}
         run: |
-          if [ "$FILES" = "both" ]; then node tests/playwright/run.js; else node tests/playwright/run.js "$FILES"; fi
+          if [ "$FILES" = "all" ]; then node tests/playwright/run.js; else node tests/playwright/run.js "$FILES"; fi
 
       - name: The app's log
         if: failure()

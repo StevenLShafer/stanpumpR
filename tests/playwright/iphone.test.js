@@ -1,0 +1,266 @@
+// The dose grid on an iPhone: a smaller suite than dose-grid.test.js, for
+// what a phone does differently (a tap instead of a click, the on-screen
+// keyboard's Enter, the system's own list for a <select>), written to the
+// limits BrowserStack sets on Playwright on a real iPhone (its "Supported
+// Playwright commands for iOS"):
+//
+// - one browser context and one page for the whole file, so every case
+//   starts by loading the app afresh in that page (a new Shiny session each
+//   time), where the desktop suite opens a new context per case;
+// - no page.$$eval() and no pageerror event: the page is read with
+//   page.evaluate(), and script errors are collected by a script added
+//   before the app loads (page.addInitScript());
+// - no clipboard: nothing here is pasted.
+//
+// Run here, it runs in Playwright's WebKit as an iPhone 15 (touch, the
+// phone's viewport and user agent), keeping to the same limits, so a case
+// that needs more than BrowserStack allows fails here first.  On BrowserStack
+// (STANPUMPR_BROWSERSTACK=iphone-16 or iphone-17, browserstack.js) it runs
+// in Safari on that iPhone.
+//
+//   node tests/playwright/run.js iphone.test.js
+
+'use strict';
+
+const { describe, test, before, after, beforeEach, afterEach } = require('node:test');
+const assert = require('node:assert/strict');
+const playwright = require('playwright');
+const H = require('./harness');
+const BS = require('./browserstack');
+
+if (!process.env.STANPUMPR_URL) throw new Error('STANPUMPR_URL is not set: run the suite through run.js');
+if (BS.enabled() && !BS.mobile()) {
+  throw new Error('iphone.test.js runs on an iPhone platform (iphone-16, iphone-17) or here');
+}
+const APP = BS.appUrl(process.env.STANPUMPR_URL);
+
+// The startup table: propofol (bolus, infusion), fentanyl, remifentanil
+// (bolus, infusion), rocuronium; then blank rows
+const FENTANYL = 2;
+const FIRST_BLANK = 6;
+
+const ROOT = '#doseGrid';
+const row = r => `${ROOT} tbody tr:nth-child(${r + 1})`;
+const input = (r, c) => `${row(r)} td:nth-child(${c + 1}) input`;
+const unitCell = r => `${row(r)} td:nth-child(4)`;
+const unitSelect = r => `${row(r)} td:nth-child(4) select`;
+
+let browser, context, page;
+
+before(async () => {
+  if (BS.enabled()) {
+    browser = await BS.launch(playwright, 'webkit', {}, 'iPhone');
+    context = await browser.newContext();
+  } else {
+    browser = await playwright.webkit.launch();
+    context = await browser.newContext(playwright.devices['iPhone 15']);
+  }
+  page = await context.newPage();
+  await page.addInitScript(() => {
+    window.__errors = [];
+    window.addEventListener('error', e => window.__errors.push(String(e.message)));
+    window.addEventListener('unhandledrejection', e => window.__errors.push(String(e.reason)));
+  });
+});
+
+after(async () => {
+  await browser.close();
+});
+
+// The app loaded afresh, the startup menu's four drugs ticked and Started
+beforeEach(async () => {
+  await page.goto(APP, { waitUntil: 'load' });
+  await page.waitForSelector('#startup_ok', { timeout: 120000 });
+  await page.evaluate(ds => {
+    for (const d of ds) {
+      const box = document.querySelector('.modal input[type=checkbox][value="' + d + '"]');
+      box.checked = true;
+      window.jQuery(box).trigger('change');
+    }
+  }, H.DEFAULT_DRUGS);
+  await page.tap('#startup_ok');
+  await page.waitForFunction(() => !document.querySelector('.modal.show'), null, { timeout: 60000 });
+  await waitForRows(rows => rows.length > FIRST_BLANK && rows[0][0] === 'propofol');
+  await H.settle(page);
+  await openDoseTable();
+});
+
+// On a phone the dose table's sidebar starts collapsed: a user opens it with
+// its toggle (the arrow at the top right), as this does
+async function openDoseTable() {
+  if (await page.isVisible(input(0, 0))) return;
+  const id = await page.evaluate(() => document.querySelector('aside.dose-sidebar').id);
+  await page.tap(`.collapse-toggle[aria-controls="${id}"]`);
+  await page.waitForSelector(input(0, 0), { state: 'visible', timeout: 15000 });
+  await H.settle(page, 300);
+}
+
+// Whatever a case did, the session must still be there and no script must
+// have failed
+afterEach(async () => {
+  const state = await page.evaluate(() => ({
+    connected: !!(window.Shiny && window.Shiny.shinyapp && window.Shiny.shinyapp.isConnected()),
+    errors: window.__errors || []
+  }));
+  assert.ok(state.connected, 'the Shiny session was closed');
+  assert.deepEqual(state.errors, [], 'the page raised script errors');
+});
+
+// What the grid shows, row by row: Drug, Time, Dose, Units
+async function readRows() {
+  return page.evaluate(sel => Array.from(document.querySelectorAll(sel + ' tbody tr')).map(tr => {
+    const tds = tr.querySelectorAll('td');
+    return [tds[0].querySelector('input').value, tds[1].querySelector('input').value,
+            tds[2].querySelector('input').value,
+            tds[3].querySelector('.dose-grid-unit-text').textContent.replace(/ /g, ' ')];
+  }), ROOT);
+}
+
+async function waitForRows(predicate, timeout = 30000) {
+  const deadline = Date.now() + timeout;
+  let rows;
+  while (Date.now() < deadline) {
+    rows = await readRows();
+    if (predicate(rows)) return rows;
+    await page.waitForTimeout(250);
+  }
+  throw new Error('grid never reached the expected state; it shows ' + JSON.stringify(rows));
+}
+
+async function notifications() {
+  return page.evaluate(() => Array.from(document.querySelectorAll(
+    '#shiny-notification-panel .shiny-notification-content-text')).map(n => n.textContent));
+}
+
+// Both the screen and the server's draft hold `expected` in row r
+async function holds(r, expected) {
+  const same = x => JSON.stringify(x) === JSON.stringify(expected);
+  await waitForRows(rows => same(rows[r]));
+  await H.waitForDraft(page, d => same(d[r]), 30000);
+}
+
+// A tap on a cell, then the keyboard, then Enter: how a phone enters a value
+async function enter(r, c, text) {
+  await page.tap(input(r, c));
+  await page.keyboard.type(text);
+  await page.keyboard.press('Enter');
+  await H.settle(page, 300);
+}
+
+describe('the dose grid on an iPhone', () => {
+  test('the startup menu fills the dose table', async () => {
+    const rows = await readRows();
+    assert.deepEqual(rows.slice(0, FIRST_BLANK).map(r => r[0]),
+                     ['propofol', 'propofol', 'fentanyl', 'remifentanil', 'remifentanil', 'rocuronium']);
+    assert.deepEqual(rows[FENTANYL], ['fentanyl', '0', '0', 'mcg']);
+  });
+
+  // What is typed after a tap must replace the value, not add to it, and the
+  // tap must leave the row menu closed.  The menu bug this guards against
+  // (a tap that selected a cell's text sent a contextmenu event at once,
+  // Gemini's final pass, 2026-11-06) was mobile Chromium's: WebKit sends no
+  // contextmenu on a tap, so with the guard in dose-grid.js removed this case
+  // still passes here (checked 2026-11-09).  dose-grid.test.js catches that
+  // bug under Chromium's touch emulation; this checks only that an iPhone
+  // tap behaves
+  test('a tap selects the whole value without opening the row menu', async () => {
+    await page.tap(input(0, 2));
+    await H.settle(page, 500);
+    const state = await page.evaluate(sel => {
+      const el = document.querySelector(sel);
+      const menu = document.querySelector('.dose-grid-menu');
+      return {
+        focused: document.activeElement === el,
+        selected: [el.selectionStart, el.selectionEnd, el.value.length],
+        menuOpen: !!menu && !menu.hidden
+      };
+    }, input(0, 2));
+    assert.ok(state.focused, 'the tapped cell has the focus');
+    assert.equal(state.selected[0], 0, 'the selection starts at the beginning');
+    assert.equal(state.selected[1], state.selected[2], 'the selection runs to the end');
+    assert.equal(state.menuOpen, false, 'a tap opened the row menu');
+  });
+
+  test('a dose typed after a tap replaces the old one, on the screen and on the server', async () => {
+    await enter(FENTANYL, 2, '25');
+    await holds(FENTANYL, ['fentanyl', '0', '25', 'mcg']);
+  });
+
+  test('an entry a number cannot hold is refused, said, and the dose kept', async () => {
+    await enter(FENTANYL, 2, '25');
+    await holds(FENTANYL, ['fentanyl', '0', '25', 'mcg']);
+    await enter(FENTANYL, 2, '4,5');
+    await page.waitForTimeout(500);
+    await holds(FENTANYL, ['fentanyl', '0', '25', 'mcg']);
+    const notes = await notifications();
+    assert.ok(notes.some(n => n.includes('"4,5" was not accepted')), JSON.stringify(notes));
+  });
+
+  test('the drug list offers the drugs that match, and a tap on one chooses it', async () => {
+    await page.tap(input(FIRST_BLANK, 0));
+    await page.keyboard.type('fent');
+    const option = page.locator(`${ROOT} [role=listbox]:not([hidden]) [role=option]`).filter({ hasText: /^fentanyl$/ });
+    await option.waitFor({ state: 'visible', timeout: 15000 });
+    await option.tap();
+    await H.settle(page, 300);
+    await holds(FIRST_BLANK, ['fentanyl', '0', '0', 'mcg']);
+  });
+
+  // A tap on a Units cell anywhere but its arrow was suppressed, so its list
+  // never opened (Gemini's final pass, 2026-11-06).  The list that opens is
+  // the system's own, which a test cannot drive, so the unit is then chosen
+  // as the list would choose it (selectOption)
+  test('a tap on Units reaches its list, and a unit chosen there is stored', async () => {
+    await page.evaluate(() => {
+      window.__mousedown = [];
+      window.addEventListener('mousedown', e => window.__mousedown.push(e.defaultPrevented));
+    });
+    // the cell's centre, clear of the arrow at its right
+    await page.tap(unitCell(FENTANYL));
+    await H.settle(page, 300);
+    const prevented = await page.evaluate(() => window.__mousedown);
+    assert.ok(prevented.length > 0, 'the tap sent no mousedown, so this checked nothing');
+    assert.ok(!prevented.includes(true), 'the tap on Units was suppressed: ' + JSON.stringify(prevented));
+    const units = await page.evaluate(sel => Array.from(document.querySelectorAll(sel + ' option'))
+      .map(o => o.value).filter(u => u !== ''), unitSelect(FENTANYL));
+    const other = units.find(u => u !== 'mcg');
+    assert.ok(other, 'fentanyl offers more than one unit: ' + JSON.stringify(units));
+    await page.locator(unitSelect(FENTANYL)).selectOption(other);
+    await H.settle(page, 300);
+    await H.waitForDraft(page, d => d[FENTANYL][3] === other, 30000);
+  });
+
+  test('Apply commits the dose and draws the plot again', async () => {
+    const plotBefore = await page.evaluate(() => {
+      const img = document.querySelector('#PlotSimulation img');
+      return img ? img.getAttribute('src') : null;
+    });
+    assert.ok(plotBefore, 'the plot was drawn');
+    await enter(FENTANYL, 2, '50');
+    await holds(FENTANYL, ['fentanyl', '0', '50', 'mcg']);
+    await page.waitForFunction(() => !document.getElementById('dosetable_apply').disabled, null, { timeout: 15000 });
+    await page.tap('#dosetable_apply');
+    await H.settle(page, 1000);
+    const state = await H.serverState(page);
+    assert.deepEqual(state.table[FENTANYL], ['fentanyl', '0', '50', 'mcg']);
+    await page.waitForFunction(src => {
+      const img = document.querySelector('#PlotSimulation img');
+      return img && img.getAttribute('src') !== src;
+    }, plotBefore, { timeout: 60000 });
+  });
+
+  // The link in the address bar after Apply, opened afresh in the same page
+  // (one page is all an iPhone session has), restores the table applied
+  test('the bookmark after Apply restores the table applied', async () => {
+    await enter(FENTANYL, 2, '357');
+    await holds(FENTANYL, ['fentanyl', '0', '357', 'mcg']);
+    await page.waitForFunction(() => !document.getElementById('dosetable_apply').disabled, null, { timeout: 15000 });
+    await page.tap('#dosetable_apply');
+    await page.waitForFunction(() => decodeURIComponent(location.search).includes('357'), null, { timeout: 30000 });
+    const link = await page.evaluate(() => location.href);
+    await page.goto(link, { waitUntil: 'load' });
+    await waitForRows(rows => rows.some(r => r[2] === '357'), 60000);
+    await openDoseTable();
+    assert.deepEqual((await readRows())[FENTANYL], ['fentanyl', '0', '357', 'mcg']);
+  });
+});
