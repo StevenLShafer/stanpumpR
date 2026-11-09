@@ -14,7 +14,17 @@ STANPUMP, a portmanteau of "Stanford" and "Pump", was developed in the Stanski/S
 
 STANPUMP was distributed freely: anyone could copy and share its source and executable code, though not sell it. The STANPUMP pharmacokinetic engine was incorporated into many of the commercially available target controlled infusion devices, where it is still used today.
 
-stanpumpR uses very little of the original STANPUMP code. However, conceptually it is identical: an open-source program to make complex pharmacokinetic algorithms available to support patient care, teaching, and research. However, stanpumpR does not control drug administration. It is simply a web-based simulator that uses the Shiny package in R to simulate the expected concentration of a drug from any dosing regimen; the library now covers not only intravenous anesthetics but oral, subcutaneous, regional and inhaled routes across many other drug classes.
+stanpumpR uses almost none of the original STANPUMP code. However, conceptually it is identical: an open-source program to make complex pharmacokinetic algorithms available to support patient care, teaching, and research. The major difference is that stanpumpR was interfaced to several pumps and controlled drug administration based on pharmacokinetics. StanpumpR has no such ability. It is simply a web-based simulator, programmed in R, and uses the Shiny package to simulate the expected concentration of a drug from any dosing regimen. In the past year stanpumpR has grown from a package focused on anesthesia to a package with nearly all drug classes and well over 100 drugs. The library includes intravenous, oral, subcutaneous, and inhaled routes of delivery. The package understands the effect of pharmacogenetic and drug-drug interactions on CYP metabolism. The package understand the formation of active metabolites, and the conversion of oral prodrugs into active moieties via first-pass and systemic hepatic metabolism.
+
+stanpumpR also has a program to extract pharmacokinetics from published papers and permit generalized simulations using the extracted values.
+
+The pharmacokinetic algorithms in stanpumpR are based on mathematics, supported primarily by the peer reviewed literature. The only exceptions are cases where the peer reviewed literature is absent, in which case the pharmacokinetics are taken from either FDA or EMA monographs. If you ask "I have a patient with Crohn's disease. How will that affect phenytoin metabolism" stanpumpR won't know. However, let's say a study documented reduced absorption of phenytoin in patients with Crohn's disease. I could upload that paper, extract the mathematical model, and have stanpumpR include a checkbox for Crohn's disease if phenytoin is simulated.
+
+I want to give a shout-out to Claude Code, which is my primary programming engine. Most of the expansion of stanpumpR in the past year has been implemented by Claude Code (Opus 5.5 or Fable 5.1). Claude Code can interpret the PK of an uploaded manuscript. Claude Code rigorously inspects each PK paper I upload, including simulations of the graphs to see if the PK actually describe the data. It also checks that the reported PK parameters are internally consistent (e.g., does Clearance = Dose / AUC, and are the half-lives correctly calculated from the volumes and clearances for multicompartmental models).
+
+I also want to acknowledge the role of ChatGPT (Sol 6.1) and Gemini (version 4, Argon) in providing adversarial review. Almost every day ChatGPT and Gemini conduct adversarial reviews of the code and manuscripts parsing. Almost weekly ChatGPT "Daybreak Blue" audits the code and the deployed app for exploitable security flaws. The audit includes execution in all chromium and WebKit browsers, as well as execution on android and IOS.
+
+As an open-source project, I previously permitted interested individuals to edit the repository directly. I no longer permit this because it presents a security risk. A malicious actor could potentially upload compromised code, and use stanpumpR to infect hospital computers. Only two individuals can change the code: Dean Attali (an exceptional R / JS programmer) and me. Dean still programs himself. I only use Claude Code. If there are features you wish to incorporate into stanpumpR, please send me an email (steven.shafer@stanford.edu). I'll likely be able to add them.      
 
 In 2026 stanpumpR gained an engine for the inhaled anesthetics. Its structure and parameters follow GasMan®, the model of inhaled anesthetic uptake and distribution developed by James H. Philip at Brigham and Women's Hospital and Harvard Medical School, which has taught a generation of anesthesiologists how these drugs behave. Richard H. Epstein of the University of Miami validated the stanpumpR engine against GasMan, running the comparison scenarios and tracing each disagreement to its cause; that record is in [`inst/validation/VALIDATION.md`](inst/validation/VALIDATION.md). The places where stanpumpR deliberately departs from GasMan are listed in the [user's guide](docs/users-guide.md).
 
@@ -24,13 +34,7 @@ stanpumpR is a collaborative research project. Individuals interested in adding 
 
 Since October 2026 the library also has an agentic AI step to keep its pharmacokinetics state of the art. A scheduled Claude Code routine, running in the cloud, searches PubMed every week for new pharmacokinetic studies of every drug in the library, screens them, and emails the maintainer the promising ones with its own assessment of what each would add. The maintainer decides what to incorporate; the routine changes no code. See [`docs/literature-watch.md`](docs/literature-watch.md).
 
-Near-term future developments in stanpumpR will include
-
-1. More oral models. stanpumpR simulates PO, SL, IM, IN, SC and regional (RA) delivery by first-order absorption (with zero-order, pulsed and transit-chain oral inputs where a drug needs them); the oral opioids in the library (morphine, hydromorphone, methadone, oxycodone, oxymorphone, codeine, hydrocodone, tramadol) each rest on one published fit, and better-characterised absorption models are welcome.
-2. Improved models of pediatric pharmacokinetics
-3. Improved models of drug interaction
-4. PK changes with pregnancy beyond the drugs that now read the Patient Profile's Pregnant field (about fifty; the help's Pregnancy page lists them) (`R/pregnancy.R`, `inst/extdata/pregnancyRegistry.csv`), and with renal function beyond the drugs that read the serum creatinine. (Each field reaches only the models that name it, the CYP2D6, CYP2C19, CYP2C9 and CYP2B6 phenotypes included; the help's [Cautions](inst/help/cautions.md) page lists which.)
-5. Expanding the in-app help (the **Help** tab): more teaching scenarios, and screenshots.
+stanpumpR is open source, under the MIT license, which means it can be used with no strings attached. 
 
 ### Documentation
 
@@ -148,6 +152,6 @@ renv::restore()
 ```
 
 Steven L. Shafer, MD
-November 2019
+November 2026
 
 
