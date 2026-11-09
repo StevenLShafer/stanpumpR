@@ -38,6 +38,11 @@ on:
           - all
           - dose-grid.test.js
           - table-grid.test.js
+  # TEMPORARY, to run the iPhone suite once on a real iPhone on the pull
+  # request that adds it; removed before it is merged
+  pull_request:
+    paths:
+      - tests/playwright/iphone.test.js
 
 permissions:
   contents: read
@@ -93,9 +98,9 @@ jobs:
         env:
           BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
           BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
-          STANPUMPR_BROWSERSTACK: ${{ inputs.platform }}
+          STANPUMPR_BROWSERSTACK: ${{ inputs.platform || 'iphone-16' }}
           STANPUMPR_RSCRIPT_ARGS: --no-init-file
-          FILES: ${{ inputs.files }}
+          FILES: ${{ inputs.files || 'all' }}
         run: |
           if [ "$FILES" = "all" ]; then node tests/playwright/run.js; else node tests/playwright/run.js "$FILES"; fi
 
