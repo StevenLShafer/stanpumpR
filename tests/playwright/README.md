@@ -42,12 +42,43 @@ STANPUMPR_URL=http://127.0.0.1:7311/ node --test --test-concurrency=1 tests/play
 `STANPUMPR_BROWSER` chooses the browser: `chromium` (the default), `firefox`
 or `webkit`. Off Chromium the clipboard is opened by preference rather than
 by permission, and the two slow-link cases are skipped (they emulate the
-link through CDP). Firefox and WebKit have not been run here: their
-downloads are outside this environment's network. Gemini ran the dose grid's
-cases in Firefox 159 through a shim, on 2026-11-06 (`docs/grid-replacement.md`).
+link through CDP). All three pass (2026-11-08; `docs/grid-replacement.md`,
+"Other engines, a phone, and the review of the fixes").
 
 `RSCRIPT` names the R binary and `STANPUMPR_RSCRIPT_ARGS` adds arguments
 (`--no-init-file` skips the project's `.Rprofile`, and with it renv).
+
+## On BrowserStack
+
+`browserstack.js` runs the same suite in browsers on BrowserStack Automate:
+real Chrome and Edge on Windows 11, Chrome on macOS, and Playwright's own
+Firefox and WebKit builds. The app still runs here, in test mode, and
+`run.js` opens a BrowserStack Local tunnel so the remote browser can reach
+it. Set the account's credentials and a platform:
+
+```bash
+BROWSERSTACK_USERNAME=... BROWSERSTACK_ACCESS_KEY=... STANPUMPR_BROWSERSTACK=windows-chrome node tests/playwright/run.js
+```
+
+The platforms are `windows-chrome`, `windows-edge`, `macos-chrome`,
+`macos-webkit` and `windows-firefox` (`PLATFORMS` in `browserstack.js`).
+`require('browserstack-local')` must work as well as `require('playwright')`,
+and the Playwright here must be one BrowserStack supports (1.63 is).
+
+The usual way is the workflow `.github/workflows/browser-suite-browserstack.yaml`,
+run by hand from the Actions tab with a platform and the files to run. It
+needs the repository secrets `BROWSERSTACK_USERNAME` and
+`BROWSERSTACK_ACCESS_KEY`. A cloud session of Claude Code cannot run it
+itself: its network does not reach BrowserStack's endpoints, and the access
+key has to travel inside the connection's address, where the session's
+proxy cannot add it.
+
+BrowserStack also runs Playwright on real iPhones (Safari), but not this
+suite. There a session allows one browser context and one page, and only
+part of Playwright's API (BrowserStack's "Supported Playwright commands for
+iOS"). This suite opens a context for every case and uses `page.$$eval()`,
+the `pageerror` event and the clipboard, so iPhone Safari would need a
+smaller suite of its own.
 
 ## How it works
 
