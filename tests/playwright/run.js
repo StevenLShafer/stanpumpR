@@ -41,18 +41,25 @@ const BS = require('./browserstack');
       throw e;
     }
   }
-  // spawned, not spawnSync: this process must stay free to run
-  const status = await new Promise(resolve => {
-    const t = spawn(process.execPath, ['--test', '--test-concurrency=1', '--test-reporter=spec', ...files], {
-      stdio: 'inherit',
-      env: Object.assign({}, process.env, { STANPUMPR_URL: url, STANPUMPR_GRID: 'native' })
+  // spawned, not spawnSync: this process must stay free to run.  The tunnel
+  // and the app are closed whatever happens, a test process that cannot
+  // start included (CodeRabbit, PR #693)
+  let status = 1;
+  try {
+    status = await new Promise((resolve, reject) => {
+      const t = spawn(process.execPath, ['--test', '--test-concurrency=1', '--test-reporter=spec', ...files], {
+        stdio: 'inherit',
+        env: Object.assign({}, process.env, { STANPUMPR_URL: url, STANPUMPR_GRID: 'native' })
+      });
+      t.on('error', reject);
+      t.on('exit', code => resolve(code));
     });
-    t.on('exit', code => resolve(code));
-  });
-  if (tunnel) await tunnel.stop();
-  if (app) {
-    if (status !== 0) process.stdout.write(`The app's log: ${app.logFile}\n`);
-    app.stop();
+  } finally {
+    if (tunnel) await tunnel.stop();
+    if (app) {
+      if (status !== 0) process.stdout.write(`The app's log: ${app.logFile}\n`);
+      app.stop();
+    }
   }
   process.exit(status === 0 ? 0 : 1);
 })().catch(e => { console.error(e); process.exit(1); });

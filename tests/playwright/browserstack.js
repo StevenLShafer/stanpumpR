@@ -112,7 +112,22 @@ async function startTunnel() {
       onlyAutomate: 'true'
     }, err => (err ? reject(new Error('BrowserStack Local did not start: ' + err.message)) : resolve()));
   });
-  return { stop: () => new Promise(resolve => local.stop(() => resolve())) };
+  // Stopping never fails the run and never holds it: an error is said, and
+  // a tunnel that does not answer within 30 s is left to the runner's end
+  // (CodeRabbit, PR #693)
+  return {
+    stop: () => new Promise(resolve => {
+      const timer = setTimeout(() => {
+        process.stderr.write('BrowserStack Local did not stop within 30 s\n');
+        resolve();
+      }, 30000);
+      local.stop(err => {
+        clearTimeout(timer);
+        if (err) process.stderr.write('BrowserStack Local did not stop cleanly: ' + err.message + '\n');
+        resolve();
+      });
+    })
+  };
 }
 
 module.exports = { PLATFORMS, enabled, platform, engine, launch, wsEndpoint, startTunnel, localIdentifier };
