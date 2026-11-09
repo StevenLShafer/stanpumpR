@@ -77,18 +77,25 @@ proxy cannot add it.
 ### On an iPhone
 
 `iphone.test.js` is a smaller suite for the dose grid on a phone: a tap
-instead of a click, the on-screen keyboard's Enter, the drug list chosen by
-tap, the system's own list for Units, Apply, and the bookmark. It keeps to
+instead of a click, a value committed by tapping the next cell, the drug
+list chosen by tap, the system's own list for Units, Apply, and the
+bookmark. It keeps to
 the limits BrowserStack sets on Playwright on a real iPhone (its "Supported
 Playwright commands for iOS"):
 
 - one browser context and one page, so each case loads the app afresh;
-- no `page.$$eval()`, no `pageerror` event, no clipboard.
+- no `page.$$eval()`, no `pageerror` event, no clipboard;
+- `page.evaluate()` returns real values only, so the server's state is read
+  with a synchronous request;
+- text goes to a cell (`locator.fill()`), and a cell is committed by tapping
+  the next one: on a real iPhone neither the page's keyboard nor Enter
+  reached the grid. Committing with Enter is the desktop suite's.
 
 On a phone the dose table's sidebar starts collapsed, so each case opens it
 with its toggle, as a user does.
 
-Run here, it runs in Playwright's WebKit as an iPhone 15:
+Run here, it runs in Playwright's WebKit as an iPhone 15, so WebKit must be
+installed (`npx playwright install webkit`) as well as Chromium:
 
 ```bash
 node tests/playwright/run.js iphone.test.js
