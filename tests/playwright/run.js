@@ -55,10 +55,13 @@ const BS = require('./browserstack');
       t.on('exit', code => resolve(code));
     });
   } finally {
-    if (tunnel) await tunnel.stop();
-    if (app) {
-      if (status !== 0) process.stdout.write(`The app's log: ${app.logFile}\n`);
-      app.stop();
+    try {
+      if (tunnel) await tunnel.stop();
+    } finally {
+      if (app) {
+        if (status !== 0) process.stdout.write(`The app's log: ${app.logFile}\n`);
+        app.stop();
+      }
     }
   }
   process.exit(status === 0 ? 0 : 1);

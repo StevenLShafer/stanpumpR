@@ -121,11 +121,17 @@ async function startTunnel() {
         process.stderr.write('BrowserStack Local did not stop within 30 s\n');
         resolve();
       }, 30000);
-      local.stop(err => {
+      try {
+        local.stop(err => {
+          clearTimeout(timer);
+          if (err) process.stderr.write('BrowserStack Local did not stop cleanly: ' + err.message + '\n');
+          resolve();
+        });
+      } catch (e) {
         clearTimeout(timer);
-        if (err) process.stderr.write('BrowserStack Local did not stop cleanly: ' + err.message + '\n');
+        process.stderr.write('BrowserStack Local did not stop cleanly: ' + e.message + '\n');
         resolve();
-      });
+      }
     })
   };
 }
