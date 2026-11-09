@@ -251,6 +251,51 @@ test_that("a dose row the grid would not send is said, not simulated", {
   })
 })
 
+# Devin's stress test (2026-11-08), the smaller items.
+test_that("without a key the tab says so before anything is uploaded", {
+  testthat::local_mocked_bindings(paperReviewApiKey = function(...) NULL)
+  shiny::testServer(paperReviewServer, {
+    expect_match(as.character(output$keyNotice$html), "not enabled on this server")
+  })
+  testthat::local_mocked_bindings(paperReviewApiKey = function(...) "test-key")
+  shiny::testServer(paperReviewServer, {
+    expect_false(grepl("not enabled", paste(as.character(output$keyNotice$html), collapse = "")))
+  })
+})
+
+test_that("a small upload is in kB, and a review says the tokens it used", {
+  expect_equal(paperReviewSize(30 * 1024), "30 kB")
+  expect_equal(paperReviewSize(100), "1 kB")
+  expect_equal(paperReviewSize(2.5 * 1024^2), "2.5 MB")
+  expect_equal(paperReviewUsageText(list(input_tokens = 12000, cache_read_input_tokens = 345, output_tokens = 6789)),
+               " (12,345 tokens read, 6,789 written)")
+  expect_equal(paperReviewUsageText(list()), "")
+})
+
+test_that("a document with no model gets one line, not a review built around nothing", {
+  x <- paperReviewValidate(list(paper = list(title = "Sourdough"), drug = list(name = ""),
+                                structure = list(compartments = 0), extraction_limitations = "Not a PK paper.",
+                                reviewer_notes = list(list(topic = "Wrong document", finding = "A recipe.",
+                                                           severity = "error", location = "p. 1"))))
+  html <- as.character(paperReviewReportTags(paperReviewQuietly(function() paperReviewRun(x)), plots = FALSE))
+  expect_match(html, "found no pharmacokinetic model")
+  expect_match(html, "Wrong document")
+  expect_false(grepl("compartment\\(s\\)", html))
+  expect_false(paperReviewNoModel(paperReviewExample()))
+})
+
+test_that("a miss of more than tenfold is reported as a likely misreading", {
+  expect_true(paperReviewTenfold(2078.56))
+  expect_true(paperReviewTenfold(0.05))
+  expect_false(paperReviewTenfold(3))
+  ex <- paperReviewExample()
+  ex$derived_quantities[[4]]$value <- 148000          # Vss printed in mL, read as L
+  f <- Filter(function(z) grepl("^Vss as printed", z$title), paperReviewRun(ex)$findings)[[1]]
+  expect_equal(f$severity, "concern")
+  expect_match(f$title, "more than tenfold")
+  expect_match(f$detail, "misreading by Claude")
+})
+
 # Gemini's production audit of the new grids (2026-11-08, finding 6): a time
 # or dose validateDose() reads ("1,000") was dropped by as.numeric() without
 # a word, and a table cut to fit was read as if whole.

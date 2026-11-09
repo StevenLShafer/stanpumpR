@@ -348,4 +348,18 @@ test_that("a model that fails for the patient is said in the plot area, not a bl
   })
 })
 
+# Devin's stress test (2026-11-08): numericInput(value = NA) wrote value="NA",
+# which a number input cannot take, and every page load logged "The specified
+# value "NA" cannot be parsed" twice (serum creatinine, gestational age).
+test_that("no number field is drawn with the value NA, and a blank field still reads as blank", {
+  html <- as.character(htmltools::renderTags(app_ui()(list()))$html)
+  expect_false(grepl('value="NA"', html, fixed = TRUE))
+  expect_match(html, 'id="creatinine"', fixed = TRUE)
+  expect_match(as.character(blankableNumericInput("x", "x", value = 1.2)), 'value="1.2"', fixed = TRUE)
+  shiny::testServer(app_server, {
+    session$setInputs(creatinine = NA, gestationalAge = NA)
+    expect_true(is.na(input$creatinine))
+  })
+})
+
 .sprglobals$config <- oldConfig

@@ -1,4 +1,4 @@
-# stanpumpR viewer (the Minto Visualizer) — the run file
+# stanpumpR viewer (the Visualizer) — the run file
 #
 # Author:    Dr Charles Minto
 # Assisted by: Claude.ai (Anthropic)
@@ -461,4 +461,33 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
     # elimination arrow is then not drawn.
     eliminationLinear = is.null(entry$michaelisMenten),
     source = "stanpumpR")
+}
+
+#' The plot's Visualizer button
+#'
+#' Beside Add new drug (Devin's stress test of 2026-11-08, on Shafer's
+#' decision), so the Visualizer is found without knowing to double-click a
+#' panel: hidden when no plotted drug can be drawn, one button for one drug,
+#' a list that drops up for several.  Plain buttons, as in the Edit doses
+#' dialog: inst/www/viewer-launch.js opens the pop-up on the click itself
+#' (one opened later would be blocked) and only then sends the drug
+#' (\code{input$openViewerDrug}).
+#'
+#' @param drugs the drugs the Visualizer can draw now
+#' @returns a tag, or NULL
+#' @noRd
+viewerPlotButton <- function(drugs)
+{
+  if (length(drugs) == 0) return(NULL)
+  label <- list(shiny::icon("cube"), "Visualizer")
+  if (length(drugs) == 1)
+    return(htmltools::tags$button(
+      type = "button", class = "btn btn-sm btn-outline-primary viewer-plot-button",
+      `data-viewer-drug` = drugs, title = paste("Watch", drugs, "in the Visualizer"), label))
+  htmltools::div(class = "btn-group dropup viewer-plot-button",
+    htmltools::tags$button(type = "button", class = "btn btn-sm btn-outline-primary dropdown-toggle",
+                           `data-bs-toggle` = "dropdown", `aria-expanded` = "false", label),
+    htmltools::tags$ul(class = "dropdown-menu",
+      lapply(drugs, function(d) htmltools::tags$li(htmltools::tags$button(
+        type = "button", class = "dropdown-item", `data-viewer-drug` = d, d)))))
 }

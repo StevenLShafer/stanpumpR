@@ -77,6 +77,23 @@ paperReviewReadUpload <- function(datapath)
   readBin(datapath, "raw", size)
 }
 
+# A file's size as people read it: "30 kB", not "0.0 MB" (Devin's stress test).
+paperReviewSize <- function(bytes)
+  if (bytes < 1024^2) paste(max(1, round(bytes / 1024)), "kB") else
+    paste(format(round(bytes / 1024^2, 1), nsmall = 1), "MB")
+
+# The tokens a review used, which set its cost: " (12,345 tokens read, 6,789
+# written)", or "" when the reply did not say.
+paperReviewUsageText <- function(usage)
+{
+  n <- function(x) suppressWarnings(as.numeric(x %or% NA))
+  read <- sum(n(usage$input_tokens), n(usage$cache_read_input_tokens), n(usage$cache_creation_input_tokens),
+              na.rm = TRUE)
+  written <- n(usage$output_tokens)
+  if (!is.finite(written) || read == 0) return("")
+  paste0(" (", format(read, big.mark = ","), " tokens read, ", format(written, big.mark = ","), " written)")
+}
+
 #' Is this a PDF?
 #' @keywords internal
 paperReviewIsPdf <- function(bytes)
@@ -126,6 +143,10 @@ paperReviewPanels <- function(ns = shiny::NS(NULL))
           # The confirmation comes first; until it is ticked the upload and
           # Review controls are greyed out (Shafer: unticked, the old order
           # let a paper be chosen and then refused, which confused).
+          # Said before anything is uploaded when the server has no key
+          # (Devin's stress test, 2026-11-08: the reason came only after a
+          # paper had been chosen and the box ticked).
+          shiny::uiOutput(ns("keyNotice")),
           shiny::checkboxInput(ns("consent"), paste(
             "I may share this paper with Anthropic, as the Privacy tab describes,",
             "to have it reviewed."), FALSE),
@@ -228,8 +249,16 @@ paperReviewServer <- function(input, output, session)
   # pressed it unticked and got only a line of status text.
   hasPdf <- shiny::reactiveVal(FALSE)
   session$onSessionEnded(function() paperReviewDiscard(store))
+  # Can this server review a paper at all?  Without a key only the example
+  # runs, so nothing may be uploaded for nothing.
+  keyed <- !is.null(paperReviewApiKey(NULL))
+  output$keyNotice <- shiny::renderUI(if (!keyed) htmltools::div(
+    class = "alert alert-warning", role = "status", style = "font-size: 0.9em; padding: 8px 10px;",
+    htmltools::strong("Reviews are not enabled on this server yet. "),
+    "Uploading is turned off; the example below still works, and sends nothing."))
   shiny::observe({
-    consent <- isTRUE(input$consent)
+    consent <- isTRUE(input$consent) && keyed
+    shinyjs::toggleState("consent", condition = keyed)
     shinyjs::toggleState("manuscript", condition = consent)
     shinyjs::toggleState("supplement", condition = consent)
     shinyjs::toggleState("review", condition = hasPdf() && consent)
@@ -246,8 +275,8 @@ paperReviewServer <- function(input, output, session)
     }
     assign(slot, bytes, envir = store)
     if (slot == "pdf") hasPdf(TRUE)
-    status(paste0(label, " received (", format(round(length(bytes) / 1024^2, 1), nsmall = 1),
-                  " MB), held in this session's memory only."))
+    status(paste0(label, " received (", paperReviewSize(length(bytes)),
+                  "), held in this session's memory only."))
   }
   shiny::observeEvent(input$manuscript, receive(input$manuscript, "pdf", "The manuscript"))
   shiny::observeEvent(input$supplement, receive(input$supplement, "supplement", "The supplement"))
@@ -292,8 +321,9 @@ paperReviewServer <- function(input, output, session)
     }
     assign("usage", result$usage, envir = store)
     runReview(result$extraction)
-    status(paste0("Reviewed. The manuscript itself has been discarded; the extraction is held in ",
-                  "this session's memory until you discard it or close the page."))
+    status(paste0("Reviewed", paperReviewUsageText(result$usage), ". The manuscript itself has been ",
+                  "discarded; the extraction is held in this session's memory until you discard it ",
+                  "or close the page."))
   })
 
   shiny::observeEvent(input$example, {

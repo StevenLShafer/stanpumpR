@@ -341,7 +341,7 @@ function videoHeading(withPatient) {
     const pat = withPatient ? [pt.weight != null && `${pt.weight} kg`, pt.height != null && `${pt.height} cm`,
                                pt.age != null && `${pt.age} y`, pt.sex].filter(Boolean).join(' · ') : '';
     const name = String(r.drug).charAt(0).toUpperCase() + String(r.drug).slice(1);
-    return [`stanpumpR · Minto Visualizer · ${name}`, r.model ? shortModel(r.model) : '', pat].filter(Boolean).join(' · ');
+    return [`stanpumpR · Visualizer · ${name}`, r.model ? shortModel(r.model) : '', pat].filter(Boolean).join(' · ');
 }
 function videoStrip(ctx, W, H, withPatient) {
     const h = 40, y = H - h;

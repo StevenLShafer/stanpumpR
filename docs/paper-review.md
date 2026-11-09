@@ -384,6 +384,22 @@ be another seam.
   session on that R process, the simulator included. It is harmless while
   no key is deployed (nothing is sent), and must be done before one is.
 
+## Devin's stress test (2026-11-08)
+
+Devin (Cognition AI), for Charles Minto, ran master `a64eb29` on its own machine with Charles's own key (five live reviews, the key revoked after), fuzzed 400 extractions offline, and read the code. Every claim was checked before anything changed.
+
+| Item | Verdict | Change |
+|---|---|---|
+| 1. With no key, a visitor uploads and consents before learning that only the example runs | Confirmed: the key was looked up only on Review | The tab says so at the top, and the consent box, uploads and Review stay off |
+| 2. A review blocks every session on its R process; no per-visitor limit | Confirmed by its measurement (a second visitor waited 169 s); already the reason for *Deferred* above | None here: still the condition for deploying a key. The token counts are now shown after a review |
+| 3. False errors when a paper tabulates values at other covariates (18 of 19 in a paediatric paper) | Confirmed: every derived quantity was compared at the reference patient | `derived_quantities` carry `at` (weight, height, age, sex); the check rebuilds the model there, and such a value never closes or fits the model at the reference |
+| 4. One malformed field loses the paid review (175 of 400 fuzzed) | Reproduced exactly: 225 of 400 rendered | `paperReviewConform()` conforms every field to the schema; five checks read an absent or out-of-choice field unguarded; each check runs on its own. 1,600 fuzzed extractions over four seeds all render, none needing the last guard |
+| A 2,000-fold figure miss reported as the paper's error | A misreading is likelier | A miss beyond tenfold is a concern saying so |
+| A non-PK document gets a full review shell | Confirmed | One line and Claude's notes |
+| "0.0 MB" for a 30 kB upload | Confirmed | kB below 1 MB |
+
+The reference patient Devin called "a mixture" (70 kg, the printed allometric reference, with the population's 110 cm and 6.5 years) is by design: each covariate is taken at the value at which the paper's parameters are its typical values. It is not a patient to simulate, which is why the report gives the source of each number.
+
 ## Setting up the API key
 
 For Shafer to do; no session handles the key itself. During development the

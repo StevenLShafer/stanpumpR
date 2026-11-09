@@ -1,6 +1,6 @@
 ## What to look for
 
-Propofol 140 mg (2 mg/kg) as a bolus at time zero, in a 70 kg, 40-year-old man. *Graph Options → Peripheral compartments* is on, so V2 and V3 are drawn under the propofol panel. This run is made to be watched: double-click the propofol panel, then press **Minto Visualizer** in the *Edit propofol doses* dialog. The visualizer opens in its 2D view, where each compartment is a box whose fill height is its concentration, all on one scale, so drug can be seen running downhill from one box to the next. Press **Play**.
+Propofol 140 mg (2 mg/kg) as a bolus at time zero, in a 70 kg, 40-year-old man. *Graph Options → Peripheral compartments* is on, so V2 and V3 are drawn under the propofol panel. This run is made to be watched: press **Visualizer** under the plot, or double-click the propofol panel and press **Visualizer** in the *Edit propofol doses* dialog. The visualizer opens in its 2D view, where each compartment is a box whose fill height is its concentration, all on one scale, so drug can be seen running downhill from one box to the next. Press **Play**.
 
 **The bolus fills V1 alone.** In this man V1 is 6.3 L, V2 23.6 L and V3 157 L. At 30 seconds the plasma concentration is 16.2 mcg/mL, and V1 holds 102 of the 140 mg. V2 and V3 are still nearly empty, so thick green arrows carry drug out of V1 into both.
 

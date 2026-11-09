@@ -2338,7 +2338,7 @@ app_server <- function(input, output, session) {
     }, name = "input$stopAdministrationBtn observer")
   })
 
-  # The Minto Visualizer (R/viewerRun.R, inst/www/viewer-launch.js,
+  # The Visualizer (R/viewerRun.R, inst/www/viewer-launch.js,
   # inst/www/stanpumpR-viewer.html; source tools/viewer): the Edit doses
   # dialog's button opens the popup at once in the browser (a window opened
   # later, when the server answers, would be stopped by popup blockers) and
@@ -2351,16 +2351,24 @@ app_server <- function(input, output, session) {
     isTRUE(tryCatch(is.null(viewerProblem(isolate(drugs())[[drug]])), error = function(e) FALSE))
   }
 
-  observeEvent(input$openViewer, {
-    profileCode({
-      drug <- skipTarget()$drug
-      # The click's token, echoed so the browser can drop an earlier click's answer.
-      token <- as.character(input$openViewer)
-      removeModal()
+  # The drugs the Visualizer can draw: every plotted drug's panel but a
+  # companion model's and an inhaled agent's, for which viewerProblem() is NULL.
+  viewerDrugs <- function(plotted) {
+    keep <- vapply(names(plotted), function(d) {
+      e <- plotted[[d]]
+      is.null(e$companionOf) && !isGasDrug(d) &&
+        isTRUE(tryCatch(is.null(viewerProblem(e)), error = function(err) FALSE))
+    }, logical(1))
+    names(plotted)[keep]
+  }
+
+  # Build one drug's run and send it to the pop-up the browser has opened.
+  # token: the click's, echoed so the browser can drop an earlier click's answer.
+  launchViewer <- function(drug, token) {
       # Told in the app and in the viewer's window, which would otherwise
       # wait for a run that is not coming.
       fail <- function(message) {
-        showNotification(paste("Minto Visualizer:", message), type = "error")
+        showNotification(paste("Visualizer:", message), type = "error")
         session$sendCustomMessage("stanpumpR-viewer-error", list(token = token, message = message))
       }
       blocked <- simulationBlocked()
@@ -2378,12 +2386,46 @@ app_server <- function(input, output, session) {
         NULL
       })
       if (!is.null(run)) session$sendCustomMessage("stanpumpR-viewer-run", list(token = token, run = run))
+  }
+
+  observeEvent(input$openViewer, {
+    profileCode({
+      drug <- skipTarget()$drug
+      token <- as.character(input$openViewer)
+      removeModal()
+      launchViewer(drug, token)
     }, name = "input$openViewer observer")
+  })
+
+  # The plot's own Visualizer button (beside Add new drug; Devin's stress
+  # test, 2026-11-08, on Shafer's decision): one drawable drug opens it at
+  # once, several drop up a list. The browser sends the drug with the token,
+  # which is untrusted like every input, so it must be one name of a drug the
+  # Visualizer can draw now.
+  output$viewerButtonUI <- renderUI({
+    drawable <- tryCatch(viewerDrugs(drugs()), error = function(e) character(0))
+    viewerPlotButton(drawable)
+  })
+  observeEvent(input$openViewerDrug, {
+    profileCode({
+      v <- input$openViewerDrug
+      if (!is.list(v)) return()
+      token <- doseGridCell(v$token)
+      drug <- doseGridCell(v$drug)
+      if (!nzchar(token)) return()
+      if (!drug %in% tryCatch(viewerDrugs(drugs()), error = function(e) character(0))) {
+        message <- "that drug cannot be drawn now."
+        showNotification(paste("Visualizer:", message), type = "error")
+        session$sendCustomMessage("stanpumpR-viewer-error", list(token = token, message = message))
+        return()
+      }
+      launchViewer(drug, token)
+    }, name = "input$openViewerDrug observer")
   })
 
   # The browser blocked the visualizer's window (inst/www/viewer-launch.js).
   observeEvent(input$viewerBlocked, {
-    showNotification("Minto Visualizer: the browser blocked the window. Allow pop-ups for this site and click again.",
+    showNotification("Visualizer: the browser blocked the window. Allow pop-ups for this site and click again.",
                      type = "warning", duration = 10)
   })
 
@@ -2398,13 +2440,13 @@ app_server <- function(input, output, session) {
         isolate(editDosesDialogGrid(drug)),
         actionButton("editDosesOK", "Apply", class = "btn-primary"),
         actionButton("deleteAllDosesBtn", "Delete All Doses", class = "btn-outline-danger"),
-        # The Minto Visualizer (R/viewerRun.R): only for a drug it can draw.
+        # The Visualizer (R/viewerRun.R): only for a drug it can draw.
         # Not an actionButton: inst/www/viewer-launch.js opens the pop-up and
         # only then reports input$openViewer, so a blocked pop-up leaves this
         # dialog open and asks nothing of the server.
         if (viewerAvailable(drug)) tags$button(
           id = "openViewer", type = "button", class = "btn btn-default btn-outline-primary",
-          icon("cube"), "Minto Visualizer"
+          icon("cube"), "Visualizer"
         ),
         tags$button(
           type = "button",

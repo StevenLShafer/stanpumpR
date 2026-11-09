@@ -1,4 +1,4 @@
-# The Minto Visualizer (3D viewer): the run file's test
+# The Visualizer (3D viewer): the run file's test
 #
 # Author:    Dr Charles Minto
 # Assisted by: Claude.ai (Anthropic)

@@ -433,6 +433,41 @@ test_that("a threshold past the grid's ceiling is refused (fourth review, F05)",
   expect_equal(at$drugDefaults$endCe[at$drugDefaults$Drug == "propofol"], MAX_DOSE_VALUE)
 })
 
+# Devin's stress test (2026-11-08), on Shafer's decision: a Visualizer button
+# beside Add new drug.  The drug it names comes from the browser, so it is
+# untrusted like every input: one name of a drug the Visualizer can draw now.
+test_that("the plot's Visualizer button lists the drawable drugs, and a forged drug is refused", {
+  expect_null(viewerPlotButton(character(0)))
+  one <- as.character(viewerPlotButton("propofol"))
+  expect_match(one, 'data-viewer-drug="propofol"')
+  expect_false(grepl("dropdown", one))
+  two <- as.character(viewerPlotButton(c("propofol", "fentanyl")))
+  expect_match(two, "dropup")
+  expect_match(two, 'data-viewer-drug="fentanyl"')
+  shiny::testServer(app_server, {
+    sent <- recordNotices(session)
+    messages <- list()
+    session$sendCustomMessage <- function(type, message) messages[[length(messages) + 1]] <<- list(type = type, message = message)
+    startReview(session, reviewTable(list("propofol", "0", "140", "mg"), list("fentanyl", "0", "100", "mcg")))
+    html <- as.character(output$viewerButtonUI$html)
+    expect_match(html, 'data-viewer-drug="propofol"')
+    expect_match(html, 'data-viewer-drug="fentanyl"')
+    # Forged: not a list, two drugs, a drug not drawn
+    session$setInputs(openViewerDrug = "propofol")
+    session$setInputs(openViewerDrug = list(token = "1", drug = c("propofol", "fentanyl")))
+    expect_match(tail(errorsShown(sent), 1), "cannot be drawn now")
+    session$setInputs(openViewerDrug = list(token = "2", drug = "<b>notadrug</b>"))
+    expect_match(tail(errorsShown(sent), 1), "cannot be drawn now")
+    expect_false(session$isClosed())
+    # A drawable drug: its run goes to the pop-up, with the click's token.
+    session$setInputs(openViewerDrug = list(token = "3", drug = "fentanyl"))
+    run <- Filter(function(m) identical(m$type, "stanpumpR-viewer-run"), messages)
+    expect_length(run, 1)
+    expect_equal(run[[1]]$message$token, "3")
+    expect_equal(run[[1]]$message$run$drug, "fentanyl")
+  })
+})
+
 # Gemini's production audit of the new grids (2026-11-08), each confirmed in
 # the code before it was fixed.  Findings 1, 5 and 7 are the browser's
 # (tests/playwright), finding 3 too, the test server making no bookmark.

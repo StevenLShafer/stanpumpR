@@ -62,7 +62,7 @@ app_ui <- function() {
         tags$script(HTML(js_drug_defaults)),
         # grid-funs.js, dose-grid.js and table-grid.js come with the dose
         # grid (gridDependency(), R/table-grid.R)
-        # The Minto Visualizer's popup (the Edit doses dialog's button)
+        # The Visualizer's popup (the Edit doses dialog's button)
         tags$script(src = "stanpumpr-assets/viewer-launch.js"),
         tags$link(href = "stanpumpr-assets/app.css", rel = "stylesheet")
       ),
@@ -355,7 +355,7 @@ app_ui <- function() {
                 # normal creatinine for the patient's age and sex; see
                 # R/renalFunction.R.
                 relevantField("creatinine", fieldHelp(
-                  numericInput(
+                  blankableNumericInput(
                     inputId = "creatinine",
                     label = "Serum creatinine (mg/dL)",
                     value = NA,
@@ -372,7 +372,7 @@ app_ui <- function() {
                 # postmenstrual age, the gestational age at birth plus the
                 # postnatal age.  Blank means a term birth (40 weeks).
                 relevantField("gestationalAge", fieldHelp(
-                  numericInput(
+                  blankableNumericInput(
                     inputId = "gestationalAge",
                     label = "Gestational age at birth (weeks)",
                     value = NA,
@@ -725,6 +725,9 @@ app_ui <- function() {
                   icon = icon("plus"),
                   class = "btn-sm btn-outline-primary"
                 ),
+                # The Visualizer, for the plotted drugs it can draw (none: no
+                # button; one: a button; several: a list that drops up).
+                uiOutput("viewerButtonUI", inline = TRUE),
                 span("Hover for precise concentration. Click to add new dose. Double click to edit or delete a drug's doses.")
               )
             )
