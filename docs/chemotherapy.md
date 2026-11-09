@@ -631,3 +631,16 @@ paper's: Cockcroft-Gault from 17 (girls) or 14 (boys), Schwartz 1976 below
 140 mL/min/1.73 m2 with a linear rise from 35 at birth to 1.5 years and a
 fall of 8 per decade after 30. Pregnancy: eGFR x 1.5 with the creatinine
 blank (physiological, applied).
+
+## 37. Doxorubicin, a third model (Perez-Blanco 2016) (2026-11-09)
+
+`doxorubicinPerezBlanco` with the metabolite-only `doxorubicinolPerezBlanco`
+(source P16; tables read in the PubMed Central text, the PDF still to
+confirm), added on Shafer's decision (2026-11-09): 44 adults with NHL on
+R-CHOP, three compartments (CL 62.4 L/h, V1 17.7, V2 1830, V3 71 L, Q2 50.7,
+Q3 28.4 L/h) forming two-compartment doxorubicinol (Fm 0.22 inside the
+parent's clearance, CLm 26.8 L/h, V4 79.8, V5 653 L, Q5 424 L/h); no
+covariates; every volume fixed (doxorubicin's from Kontny 2013, miscited);
+sampling to 3 h after the infusion. Doses as labelled, no conversion,
+mwRatio 1, as the paper's own mass arithmetic. METABOLITE_FORMATION_BASIS
+"joint". Reproduces its AUC = dose/CL and AUCm = Fm x dose/CLm.

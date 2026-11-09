@@ -218,7 +218,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 # text, the PDF still to confirm (FULL_TEXT_READ); or confirmed on the PDF
 # itself (PARAMETERS_VERIFIED: Briki 2026 and Lindemalm 2005, supplied by
 # Shafer 2026-11-06)
-FULL_TEXT_READ <- c("C01", "P02", "C35", "C03", "C37a", "C34")
+FULL_TEXT_READ <- c("C01", "P02", "C35", "C03", "C37a", "C34", "P16")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
 PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18", "C05", "C06", "N08", "N09")
@@ -476,9 +476,11 @@ registry <- rbind(
     "adults and children over 3 years", "doxorubicin",
     "population model (NONMEM); structure not in the abstract", "second", "unknown", "P15"),
   m("doxorubicin__nhl__perezblanco2016", "doxorubicin", "doxorubicin (conventional)", "IV",
-    "adults with non-Hodgkin lymphoma", "doxorubicin and doxorubicinol",
-    "parent and metabolite population model", "second", "linear_metabolite", "P16",
-    "A metabolite drug (doxorubicinol) would join the library with it; formation must be identifiable as the library's metabolite rule requires."),
+    "44 adults with non-Hodgkin lymphoma on R-CHOP", "doxorubicin and doxorubicinol",
+    "three compartments (CL 62.4 L/h, V1 17.7, V2 1830, V3 71 L fixed from Kontny 2013, Q2 50.7, Q3 28.4 L/h) forming two-compartment doxorubicinol (Fm 0.22, CLm 26.8 L/h, V4 79.8, V5 653 L fixed, Q5 424 L/h); no covariates",
+    "second", "linear_metabolite", "P16",
+    "Tables read in the PubMed Central text (2026-11-07). Added as a third doxorubicin model on Shafer's decision (2026-11-09), as doxorubicinPerezBlanco with doxorubicinolPerezBlanco. The fixed volumes are cited to the wrong reference (Rudek; Kontny is ref 15); sampling ends 3 h after the infusion, so the terminal phase is the fixed volumes'. Doses as labelled with no conversion and mwRatio 1, as the paper's own mass arithmetic. Table 3's total-AUC unit is a misprint (mg.h/L).",
+    readiness = "implemented", stanpumpr_drug = "doxorubicinPerezBlanco"),
   m("doxorubicin__breast__joerger2007", "doxorubicin", "doxorubicin (conventional)", "IV",
     "65 women with breast cancer (with cyclophosphamide)", "doxorubicin and doxorubicinol",
     "two compartments forming one-compartment doxorubicinol: CL 47.6 L/h x (BSA/1.8)^1.4 x (AST/21)^-0.24 x (age/56)^-0.54, V1 12.3 L, Q 60.3 L/h, V2 421 L; CL_DOL/fm 108 x (CLcr/80)^0.54 L/h, V3/fm 1580 L",
