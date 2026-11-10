@@ -189,21 +189,37 @@ async function enter(r, c, text) {
 
 // A tap.  Before it taps, Playwright checks that nothing covers the target
 // by asking the page what lies at the point it will tap, and on a real
-// Android phone with the keyboard up that check looks in the wrong place:
-// the keyboard pans the visual viewport to keep the cell typed in visible,
-// and the check, made in the layout viewport's coordinates, found the rows
-// and the navbar above the target "intercepting" a tap on the drug list and
-// on Apply until it timed out (the first real-Pixel run with touch,
-// 2026-11-10).  The tap itself is sent in the visual viewport's coordinates.
-// So on Android, while the visual viewport is panned, the check is skipped
-// (force) and the case checks what the tap did, as every case here does
+// Android phone that check looked in the wrong place: on the drug list and
+// on Apply, both below the first rows, it found the rows and the navbar
+// above the target "intercepting" the tap until it timed out, though nothing
+// covers either (the first two real-Pixel runs with touch, 2026-11-10; the
+// visual viewport was not panned).  So on Android the target is scrolled to
+// the middle of the screen at once (no smooth scroll), the page itself is
+// asked whether the target is on top at its centre, and the tap is sent
+// without Playwright's check (force); each case then checks what its tap did.
+// What the page saw is printed, so a tap that misses says where it went
 async function tapOn(target) {
   const locator = typeof target === 'string' ? page.locator(target) : target;
-  const panned = ANDROID && await page.evaluate(() => {
+  if (!ANDROID) return locator.tap();
+  const seen = await locator.evaluate(el => {
+    el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
+    const r = el.getBoundingClientRect();
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
     const v = window.visualViewport;
-    return !!v && (Math.abs(v.offsetTop) > 1 || Math.abs(v.offsetLeft) > 1);
+    return {
+      target: el.id || el.getAttribute('aria-label') || el.textContent.trim().slice(0, 30),
+      rect: [r.left, r.top, r.width, r.height].map(Math.round),
+      onTop: !!hit && (hit === el || el.contains(hit)),
+      hit: hit ? (hit.id || hit.getAttribute('aria-label') || hit.tagName) : null,
+      viewport: v ? { scale: v.scale, top: v.offsetTop, height: v.height, width: v.width } : null,
+      inner: [window.innerWidth, window.innerHeight],
+      scrollY: Math.round(window.scrollY),
+      dpr: window.devicePixelRatio
+    };
   });
-  await locator.tap(panned ? { force: true } : {});
+  console.log('tap', JSON.stringify(seen));
+  await page.waitForTimeout(100);
+  await locator.tap({ force: true });
 }
 
 async function typeInto(selector, text) {
