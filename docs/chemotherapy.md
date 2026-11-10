@@ -710,8 +710,11 @@ Read from PubMed Central (the tables through the article pages):
 - **Daunorubicin, Varatharajan 2016** (C23): complete for the parent (CL 270
   L/h, against Bogason's 115) but with no formation link to daunorubicinol, no
   dose basis, a 47% residual error and a patient count that does not add up.
-  With 70 patients it would displace Bogason 2011 (40) under the selector, so
-  it waits for Shafer's decision.
+  Its parameters also leave almost nothing in plasma at 24 h, where Bogason
+  measured about 11 ng/mL.  Shafer decided (2026-11-10) to keep it as
+  reference only: Bogason 2011 stays the daunorubicin model for every adult,
+  and Varatharajan is not a selector candidate although its 70 patients
+  outnumber Bogason's 40.
 - **Epirubicin, Ralph 2004** (C24): a limited-sampling study on Ralph 2003's
   model (N10), whose final parameters Ralph 2006 (N11) reprints with an AST
   term that reaches zero clearance at 1650 U/L and an external validation that

@@ -709,7 +709,7 @@ registry <- rbind(
     "70 adults with de novo AML", "daunorubicin and daunorubicinol",
     "two compartments each for daunorubicin (CL 269.8 L/h, V 15.0 L, k12 22.4, k21 0.6 /h) and daunorubicinol (CL 23.6 L/h, V 7.6 L, k12 32.0, k21 0.4 /h); no covariates",
     "expansion", "linear_metabolite", "C23",
-    "PubMed Central text and Tables 1-2 read 2026-11-10. 70 adults 16-60 years (Table 1 lists 42 men and 33 women, 75); day 1 only, 7 samples to 24 h; residual error 47% (parent). How daunorubicinol is formed (fraction, metabolite volume) is not stated, and nor is the dose basis; clearance is 2.3 times Bogason 2011's. Not implemented: with 70 patients against Bogason's 40 it would become the program's choice for adults 16-60 (decision for Shafer, 2026-11-10).",
+    "PubMed Central text and Tables 1-2 read 2026-11-10. 70 adults 16-60 years (Table 1 lists 42 men and 33 women, 75); day 1 only, 7 samples to 24 h; residual error 47% (parent). How daunorubicinol is formed (fraction, metabolite volume) is not stated, and nor is the dose basis; clearance is 2.3 times Bogason 2011's. Its parameters predict a terminal half-life of 2.6 h and almost nothing in plasma at 24 h (Bogason measured about 11 ng/mL there, above this assay's 10 ng/mL limit). Reference only, on Shafer's decision (2026-11-10): Bogason 2011 stays the daunorubicin model for every adult and Varatharajan is not a candidate for the model selector, although it studied more patients.",
     readiness = "complete_not_implemented"),
   m("epirubicin__adult__ralph2004", "epirubicin", "epirubicin", "IV",
     "105 + 18 adults with breast cancer or hepatocellular carcinoma", "epirubicin",
