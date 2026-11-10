@@ -256,7 +256,7 @@ paperReviewReferencePatient <- function(extraction)
 # A covariate's value for a patient, or NA when the simulator does not take it.
 paperReviewCovariateValue <- function(covariate, patient)
 {
-  switch(covariate,
+  switch(covariate %or% "other",
     weight = patient$weight,
     height = patient$height,
     age = patient$age,
@@ -292,7 +292,10 @@ paperReviewCovariateMultiplier <- function(effect, patient, reference)
   m <- switch(form,
     power = (x / ref)^theta,
     linear = 1 + theta * (x - ref),
-    exponential = exp(theta * (x - ref)))
+    exponential = exp(theta * (x - ref)),
+    NULL)
+  # A form outside the schema's choices is not one the review can evaluate.
+  if (is.null(m)) return(notApplied("its form is not one the review can evaluate"))
   list(multiplier = m, applied = TRUE, reason = NULL)
 }
 
@@ -576,6 +579,12 @@ paperReviewRegimenDoses <- function(regimen)
     mass <- d$mass_unit %or% "other"
     if (!mass %in% c("g", "mg", "mcg", "ng") || is.na(minutes)) {
       problems <- c(problems, "A dose's units could not be converted.")
+      next
+    }
+    # A dose with no readable time or amount (set aside by paperReviewConform())
+    # is no dose to simulate.
+    if (!is.finite(paperReviewNum(d$time)) || !is.finite(paperReviewNum(d$amount))) {
+      problems <- c(problems, "A dose has no readable time or amount.")
       next
     }
     perKg <- if (identical(d$per_kg, "yes")) "/kg" else ""

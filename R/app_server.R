@@ -203,22 +203,6 @@ app_server <- function(input, output, session) {
 
   emailSendCount <- reactiveVal(0)
 
-  # Routine to output doseTableHTML from doseTable
-  output$doseTableHTML <- rhandsontable::renderRHandsontable({
-    req(doseTableDraft())
-    req(validateDoseTableInput(doseTableDraft()))
-    doseTableRefresh()
-    # A change of format that leaves every string as it was (no times, or
-    # only clock times) must still redraw the grid, to renew its stamp.
-    format <- doseTableFormat()
-
-    profileCode({
-      outputComments("Rendering doseTableHTML")
-
-      createHOT(doseTableDraft(), drugDefaults(), format, drugChoices())
-    }, name = "createHOT() from doseTableHTML")
-  })
-
   eventTable <- reactiveVal(eventTableInit)
 
   #############################################################################
@@ -563,13 +547,19 @@ app_server <- function(input, output, session) {
     setBookmarkExclude(c(bookmarksToExclude,
                          grep(paste0("^", PAPER_REVIEW_MODULE_ID, "-"), names, value = TRUE)))
 
+  # Every time an input changes, and every time a table onBookmark() saves
+  # changes, after the observers that change them: the link was made from
+  # the input alone, at the default priority, so it ran before Apply's
+  # observer (priority -1) stored the draft and kept the table from before
+  # Apply until another input changed, in the address bar and in the link
+  # Email Slide sends (Gemini's production audit, 2026-11-08, finding 3).
   observe({
     profileCode({
-      # Trigger this observer every time an input changes
       excludeFromBookmark(names(reactiveValuesToList(input)))
+      doseTable(); doseTableFormat(); eventTable(); macThreshold(); drugDefaults()
       session$doBookmark()
     }, name = "doBookmark observer")
-  })
+  }, priority = -10)
 
   # This gets called before bookmarking to prepare values that need to be saved
   onBookmark(function(state) {
@@ -700,6 +690,21 @@ app_server <- function(input, output, session) {
 
   doseTableDraft <- reactive(doseTableHistory()$value)
 
+  # What the browser tests (tests/playwright) read back from the server: the
+  # draft, the committed table and its format.  exportTestValues() does
+  # nothing unless the app runs with options(shiny.testmode = TRUE).
+  exportTestValues(
+    doseTableDraft = doseTableDraft(),
+    doseTable = doseTable(),
+    doseTableFormat = timeFormatString(doseTableFormat()),
+    canUndo = doseTableHistory()$can_undo,
+    canRedo = doseTableHistory()$can_redo,
+    # what the dialogs' grids write (tests/playwright/table-grid.test.js)
+    eventTable = eventTable(),
+    endCe = as.list(stats::setNames(drugDefaults()$endCe, drugDefaults()$Drug)),
+    colors = as.list(stats::setNames(drugDefaults()$Color, drugDefaults()$Drug))
+  )
+
   # Open on what a ?scenario= or ?help= link asks for (R/deep-links.R).  Done
   # here rather than at Startup because setDoseTable() writes the history
   # above.  A ?help= link alone leaves the simulator behind the help empty,
@@ -755,10 +760,13 @@ app_server <- function(input, output, session) {
     shinyjs::toggleState("dosetable_redo", condition = doseTableHistory()$can_redo)
   })
 
+  # After the grid's own observer (priority 0): a cell committed as the focus
+  # left it for the button arrives with the click, and is in the draft that
+  # is applied
   observeEvent(input$dosetable_apply, {
     shinyjs::disable("dosetable_apply")
     doseTable(doseTableDraft())
-  })
+  }, priority = -1)
 
   observeEvent(input$dosetable_undo, {
     doseTableHistory()$undo()
@@ -768,80 +776,119 @@ app_server <- function(input, output, session) {
     doseTableHistory()$redo()
   })
 
-  observeEvent(input$doseTableHTML, {
-    profileCode({
-      outputComments("In observeEvent(input$doseTableHTML,...", level = DEBUG_LEVEL_VERBOSE)
-      data <- input$doseTableHTML
+  # An edited dose table from the grid, made in the time format `stamp`,
+  # stored as the new draft: what either grid sends goes through here
+  # (R/dose-grid.R).  Returns TRUE if the draft changed.
+  storeGridEdit <- function(data, stamp) {
+    # An edit made in a grid drawn before a change of time unit or display
+    # arrives in the old format: in minutes, say, when the table is now in
+    # days.  Stored as it came, Apply would move every dose 1440-fold, so it
+    # is converted; and the grid is redrawn, in the current format.
+    format <- doseTableFormat()
+    if (!is.null(stamp) && !identical(stamp, format)) {
+      doseTableRefresh(doseTableRefresh() + 1)
+      res <- rebaseDoseTimes(data, stamp, format, input$referenceTime)
+      if (!res$ok) return(FALSE)
+      data <- res$table
+    }
 
-      if (is.null(data$changes$source)) {
-        if ("changes" %in% names(data) &&
-            "event" %in% names(data$changes) &&
-            data$changes$event %in% c("afterCreateRow", "afterRemoveRow")) {
-          # If we get here because a row was added or removed, keep going
-        } else {
+    # make sure that table has changed before updating doseTable reactive
+    if (identicalTable(doseTableDraft(), data)) return(FALSE)
+    # add empty row at the bottom if needed: not once the table holds its
+    # MAX_DOSE_ROWS - 1 doses, the grid's own rule, which offers none there
+    # (a dose typed in it was cut; Gemini's production audit, 2026-11-08,
+    # finding 7), and never past MAX_DOSE_ROWS - 1 rows in all, blank ones
+    # included, which is what restoredDoseTable() keeps (CodeRabbit, PR #691)
+    if (nrow(data) == 0 ||
+        (nzchar(utils::tail(data, 1)$Drug) && nrow(data) < MAX_DOSE_ROWS - 1L)) {
+      data[nrow(data) + 1, ] <- ""
+    }
+
+    # As soon as a gas is entered, apply the gas rules: oxygen alongside
+    # nitrous oxide, flows rounded to 0.1 L/min, and a ventilation row.
+    withVentilation <- applyGasTableRules(data, gasVentilationWeight())
+    if (!identicalTable(withVentilation, data)) {
+      data <- withVentilation
+      doseTableRefresh(doseTableRefresh() + 1)
+    }
+
+    doseTableHistory()$do(data)
+    TRUE
+  }
+
+  # The dose grid (R/dose-grid.R, inst/www/dose-grid.js).  It sends the whole table once per committed edit, with the
+  # number of edits it has sent (seq) and its time format; it is sent the
+  # draft whenever the draft changes, with the seq of the last edit read
+  # (ack), and ignores a draft sent before its latest edit was read.  A
+  # draft that equals what it holds is not redrawn.
+  {
+    doseGridAck <- 0
+
+    observe({
+      session$sendInputMessage("doseGrid", doseGridDrugsMessage(drugDefaults(), drugChoices()))
+    })
+
+    observe({
+      doseTableRefresh()
+      draft <- doseTableDraft()
+      format <- doseTableFormat()
+      req(draft)
+      # As the old grid's renderer did, a draft that fails the
+      # table's own checks is not drawn: the grid says why instead.  (An
+      # error raised here would end the session.)
+      problem <- tryCatch({ validateDoseTableInput(draft); "" }, error = function(e) conditionMessage(e))
+      if (nzchar(problem)) {
+        session$sendInputMessage("doseGrid", list(error = problem))
+        return()
+      }
+      outputComments("Sending the draft to the dose grid", level = DEBUG_LEVEL_VERBOSE)
+      msg <- doseGridRowsMessage(draft, format, doseGridAck)
+      msg$error <- ""
+      session$sendInputMessage("doseGrid", msg)
+    })
+
+    # Ctrl+Z / Ctrl+Y in the grid (dose-grid.js): the Undo and Redo buttons'
+    # work, read safely (an error here would end the session)
+    observeEvent(input$doseGrid_history, {
+      value <- input$doseGrid_history
+      action <- if (is.list(value)) doseGridCell(value$action) else ""
+      history <- doseTableHistory()
+      if (identical(action, "undo") && isTRUE(history$can_undo)) history$undo()
+      if (identical(action, "redo") && isTRUE(history$can_redo)) history$redo()
+    })
+
+    observeEvent(input$doseGrid, {
+      profileCode({
+        value <- doseGridValue(input$doseGrid)
+        if (is.null(value)) return()
+        # Only ever rises: the draft sent back answers the latest edit read
+        doseGridAck <<- max(doseGridAck, value$seq)
+        accepted <- doseGridAccepted(value$table, drugDefaults())
+        if (accepted$changed) {
+          showNotification(
+            "Part of the dose table could not be read and was left blank. Check the table.",
+            type = "warning", duration = 8
+          )
+        }
+        if (value$truncated) {
+          showNotification(
+            sprintf("The dose table holds at most %d doses; the rows past them were not added.",
+                    MAX_DOSE_ROWS - 1L),
+            type = "warning", duration = 8
+          )
+        }
+        value$table <- accepted$table
+        if (nrow(value$table) == 0) {
+          doseTableRefresh(doseTableRefresh() + 1)
+          doseTableHistory()$do(blankDoseTableRow(doseTableDraft()))
           return()
         }
-      }
-
-      if ("changes" %in% names(data) &&
-          "source" %in% names(data$changes) &&
-          data$changes$source == "edit") {
-        return()
-      }
-
-      # Because of a bug in hot_to_r(), we can't use it directly. We need to manually change
-      # the row names for it to work
-      nrows <- length(data$data)
-      # The format of the grid the edit was made in (createHOT() stamps it).
-      stamp <- parseTimeFormat(data$params$timeFormat)
-      if (nrows == 0) {
-        # Every row removed through the context menu.  An empty table has no
-        # last row to test below and cannot be drawn (createHOT()), and an
-        # error here ends the session, so it becomes one blank row.
-        doseTableRefresh(doseTableRefresh() + 1)
-        doseTableHistory()$do(blankDoseTableRow(doseTableDraft()))
-        return()
-      }
-      data$params$rRowHeaders <- as.character(seq.int(nrows))
-      data <- rhandsontable::hot_to_r(data) |> profileCode("hot_to_r() in input$doseTableHTML observer")
-      # A row inserted through the context menu arrives as nulls, which
-      # hot_to_r() makes NA.  Stored as NA, its Drug was matched by every
-      # dt[dt$Drug == drug, ] (a phantom row in Edit doses) and stopped
-      # if (dt$Drug[i] > "") with an error that ended the session
-      # (adversarial UI review, 2026-11, finding 5).  A blank cell is "".
-      data <- blankMissingCells(data)
-
-      # An edit made in a grid drawn before a change of time unit or display
-      # arrives in the old format: in minutes, say, when the table is now in
-      # days.  Stored as it came, Apply would move every dose 1440-fold, so it
-      # is converted; and the grid is redrawn, in the current format.
-      format <- doseTableFormat()
-      if (!is.null(stamp) && !identical(stamp, format)) {
-        doseTableRefresh(doseTableRefresh() + 1)
-        res <- rebaseDoseTimes(data, stamp, format, input$referenceTime)
-        if (!res$ok) return()
-        data <- res$table
-      }
-
-      # make sure that table has changed before updating doseTable reactive
-      if ( !identicalTable(doseTableDraft(), data) ) {
-        # add empty row at the bottom if needed
-        if (nrow(data) == 0 || nzchar(utils::tail(data, 1)$Drug)) {
-          data[nrow(data) + 1, ] <- ""
-        }
-
-        # As soon as a gas is entered, apply the gas rules: oxygen alongside
-        # nitrous oxide, flows rounded to 0.1 L/min, and a ventilation row.
-        withVentilation <- applyGasTableRules(data, gasVentilationWeight())
-        if (!identicalTable(withVentilation, data)) {
-          data <- withVentilation
-          doseTableRefresh(doseTableRefresh() + 1)
-        }
-
-        doseTableHistory()$do(data)
-      }
-    }, name = "input$doseTableHTML observer")
-  })
+        # A draft left unchanged (an edit refused, or one that converts to
+        # the draft already held) is sent again, so the grid shows it.
+        if (!storeGridEdit(value$table, value$format)) doseTableRefresh(doseTableRefresh() + 1)
+      }, name = "input$doseGrid observer")
+    })
+  }
 
   weightUnit <- reactive({
     req(input$weightUnit)
@@ -2301,6 +2348,97 @@ app_server <- function(input, output, session) {
     }, name = "input$stopAdministrationBtn observer")
   })
 
+  # The Visualizer (R/viewerRun.R, inst/www/viewer-launch.js,
+  # inst/www/stanpumpR-viewer.html; source tools/viewer): the Edit doses
+  # dialog's button opens the popup at once in the browser (a window opened
+  # later, when the server answers, would be stopped by popup blockers) and
+  # closes the dialog, so the app is free while the visualizer plays. The run
+  # is the plot's own: the drug's concentrations from drugs(), from the
+  # plot's Min time to its Max time, re-solved with the plot's PK only where
+  # its points are too far apart to animate (viewerPlotEntry()). A snapshot
+  # of the committed dose table at the click.
+  viewerAvailable <- function(drug) {
+    isTRUE(tryCatch(is.null(viewerProblem(isolate(drugs())[[drug]])), error = function(e) FALSE))
+  }
+
+  # The drugs the Visualizer can draw: every plotted drug's panel but a
+  # companion model's and an inhaled agent's, for which viewerProblem() is NULL.
+  viewerDrugs <- function(plotted) {
+    keep <- vapply(names(plotted), function(d) {
+      e <- plotted[[d]]
+      is.null(e$companionOf) && !isGasDrug(d) &&
+        isTRUE(tryCatch(is.null(viewerProblem(e)), error = function(err) FALSE))
+    }, logical(1))
+    names(plotted)[keep]
+  }
+
+  # Build one drug's run and send it to the pop-up the browser has opened.
+  # token: the click's, echoed so the browser can drop an earlier click's answer.
+  launchViewer <- function(drug, token) {
+      # Told in the app and in the viewer's window, which would otherwise
+      # wait for a run that is not coming.
+      fail <- function(message) {
+        showNotification(paste("Visualizer:", message), type = "error")
+        session$sendCustomMessage("stanpumpR-viewer-error", list(token = token, message = message))
+      }
+      blocked <- simulationBlocked()
+      if (!is.null(blocked)) return(fail(blocked))
+      run <- tryCatch({
+        plotted <- drugs()
+        plotted <- plotted[!isGasDrug(names(plotted))]
+        entry <- viewerPlotEntry(drug, plotted[[drug]], doseTableIV(), eventTableClean(), plotted,
+                                 plotMinimum(), plotMaximum(), antiseizureInteractions())
+        defaults <- drugDefaults()
+        viewerRun(entry, plotMinimum(), plotMaximum(),
+                  category = defaults$Category[match(drug, defaults$Drug)])
+      }, error = function(e) {
+        fail(if (inherits(e, "shiny.silent.error")) "the plot is not ready yet; try again." else conditionMessage(e))
+        NULL
+      })
+      if (!is.null(run)) session$sendCustomMessage("stanpumpR-viewer-run", list(token = token, run = run))
+  }
+
+  observeEvent(input$openViewer, {
+    profileCode({
+      drug <- skipTarget()$drug
+      token <- as.character(input$openViewer)
+      removeModal()
+      launchViewer(drug, token)
+    }, name = "input$openViewer observer")
+  })
+
+  # The plot's own Visualizer button (beside Add new drug; Devin's stress
+  # test, 2026-11-08, on Shafer's decision): one drawable drug opens it at
+  # once, several drop up a list. The browser sends the drug with the token,
+  # which is untrusted like every input, so it must be one name of a drug the
+  # Visualizer can draw now.
+  output$viewerButtonUI <- renderUI({
+    drawable <- tryCatch(viewerDrugs(drugs()), error = function(e) character(0))
+    viewerPlotButton(drawable)
+  })
+  observeEvent(input$openViewerDrug, {
+    profileCode({
+      v <- input$openViewerDrug
+      if (!is.list(v)) return()
+      token <- doseGridCell(v$token)
+      drug <- doseGridCell(v$drug)
+      if (!nzchar(token)) return()
+      if (!drug %in% tryCatch(viewerDrugs(drugs()), error = function(e) character(0))) {
+        message <- "that drug cannot be drawn now."
+        showNotification(paste("Visualizer:", message), type = "error")
+        session$sendCustomMessage("stanpumpR-viewer-error", list(token = token, message = message))
+        return()
+      }
+      launchViewer(drug, token)
+    }, name = "input$openViewerDrug observer")
+  })
+
+  # The browser blocked the visualizer's window (inst/www/viewer-launch.js).
+  observeEvent(input$viewerBlocked, {
+    showNotification("Visualizer: the browser blocked the window. Allow pop-ups for this site and click again.",
+                     type = "warning", duration = 10)
+  })
+
   showEditDrugModal <- function(drug) {
     skipTarget(list(drug = drug, time = DrugTimeUnits()$time))
     showModal(
@@ -2309,9 +2447,17 @@ app_server <- function(input, output, session) {
         # The column must stay headed "Time" (the grid's hooks find it by
         # name), so the unit is said above it
         tags$p(class = "small text-muted mb-1", timeEntryLabel(doseTableFormat())),
-        rhandsontable::rHandsontableOutput("editPriorDosesTable"),
+        isolate(editDosesDialogGrid(drug)),
         actionButton("editDosesOK", "Apply", class = "btn-primary"),
         actionButton("deleteAllDosesBtn", "Delete All Doses", class = "btn-outline-danger"),
+        # The Visualizer (R/viewerRun.R): only for a drug it can draw.
+        # Not an actionButton: inst/www/viewer-launch.js opens the pop-up and
+        # only then reports input$openViewer, so a blocked pop-up leaves this
+        # dialog open and asks nothing of the server.
+        if (viewerAvailable(drug)) tags$button(
+          id = "openViewer", type = "button", class = "btn btn-default btn-outline-primary",
+          icon("cube"), "Visualizer"
+        ),
         tags$button(
           type = "button",
           class = "btn float-right",
@@ -2361,68 +2507,25 @@ app_server <- function(input, output, session) {
     deleteDrugDoses(DrugTimeUnits()$drug)
   })
 
-  output$editPriorDosesTable <- rhandsontable::renderRHandsontable({
-    profileCode({
-      dt <- doseTable()
-      drug <- DrugTimeUnits()$drug
-      req(drug)
-      editPriorDosesTable <- dt[dt$Drug %in% drug, ]
-      req(nrow(editPriorDosesTable) > 0)
-      possibleUnits <- drugDefaults() %>%
-        dplyr::filter(Drug == drug) %>%
-        dplyr::pull("Units") %>%
-        unlist()
-      editPriorDosesTable$Delete <- FALSE
-
-      editPriorDosesTableHOT <- rhandsontable::rhandsontable(
-        editPriorDosesTable[ , c("Delete","Time","Dose","Units")],
-        overflow = 'visible',
-        rowHeaders = NULL,
-        height = 220,
-        stretchH = "all"
-      ) %>%
-        rhandsontable::hot_col(
-          col = "Delete",
-          type = "checkbox",
-          halign = "htRight"
-        ) %>%
-        rhandsontable::hot_col(
-          col = "Time",
-          halign = "htRight"
-        ) %>%
-        rhandsontable::hot_col(
-          col = "Dose",
-          # Text, not numeric: a numeric column parses a pasted entry itself,
-          # before hookSanitize() (inst/www/hot_funs.js) sees it, and read
-          # "1,000" as 1 and "1,5" as 1.5.  The hook reads it as written.
-          type = "text",
-          halign = "htRight"
-        ) %>%
-        rhandsontable::hot_col(
-          col = "Units",
-          type = "dropdown",
-          source = possibleUnits,
-          strict = TRUE,
-          halign = "htLeft",
-          valign = "vtMiddle",
-          allowInvalid = FALSE
-        ) %>%
-        rhandsontable::hot_table(contextMenu = FALSE) %>%
-        rhandsontable::hot_rows(rowHeights = 10) %>%
-        rhandsontable::hot_cols(colWidths = c(55, 60, 100, 190)) %>%
-        addHotHooks(filterKeys = TRUE, sanitize = TRUE)
-      # "Dose or Target" for a drug with TCI units (as the Add a dose dialog);
-      # the data column stays "Dose", which hot_to_r() names it by
-      editPriorDosesTableHOT$x$colHeaders[editPriorDosesTableHOT$x$colHeaders == "Dose"] <-
-        doseFieldLabel(drug)
-      # The drug the grid was drawn for, returned with every edit, so that
-      # Apply cannot write one drug's rows as another's from a grid left
-      # over from an earlier dialog (editDosesOK).
-      editPriorDosesTableHOT$x$drug <- drug
-
-      editPriorDosesTableHOT
-    }, name = "output$editPriorDosesTable")
-  })
+  # The Edit doses dialog's grid, drawn into the dialog as it opens (as Edit
+  # events' is), or NULL for a drug with no rows.  It was a renderUI output
+  # shared by every drug's dialog, and the browser showed the output's last
+  # value, the previous drug's rows, under the new drug's title until the
+  # server's new one arrived (ChatGPT's fifth review, N01; Apply was already
+  # safe, the grid's tag naming the drug it was drawn for).
+  editDosesDialogGrid <- function(drug) {
+    dt <- doseTable()
+    rows <- dt[dt$Drug %in% drug, ]
+    if (!length(drug) || !nzchar(drug) || nrow(rows) == 0) return(NULL)
+    possibleUnits <- unlist(drugDefaults()$Units[drugDefaults()$Drug == drug])
+    rows$Delete <- FALSE
+    # The drug the grid was drawn for is its tag, returned with every edit,
+    # so that Apply cannot write one drug's rows as another's from a grid
+    # left over from an earlier dialog (editDosesOK)
+    tableGridInput("editPriorDosesTable", editDosesGridColumns(possibleUnits, doseFieldLabel(drug)),
+                   rows[, c("Delete", "Time", "Dose", "Units")], tag = drug, height = 260,
+                   label = paste(drug, "doses"))
+  }
 
   observeEvent(
     input$editDosesOK,
@@ -2434,12 +2537,23 @@ app_server <- function(input, output, session) {
         # Apply wrote as this drug's doses or, with none, stopped on NULL
         # and ended the session (adversarial UI review, 2026-11, finding 6).
         req(input$editPriorDosesTable)
-        if (!identical(input$editPriorDosesTable$params$drug, drug)) return()
-        TT <- blankMissingCells(rhandsontable::hot_to_r(input$editPriorDosesTable))
-        TT$Delete <- tickedRows(TT$Delete)
+        if (!identical(tableGridTag(input$editPriorDosesTable), drug)) return()
+        TT <- tableGridRead(input$editPriorDosesTable, editDosesGridColumns(character(0)))
+        req(TT)
+        # No grid sends more rows than it holds, and the drug's rows and
+        # everyone else's must fit the dose table together: stored past
+        # MAX_DOSE_ROWS the table could not be used and the plot was lost,
+        # with the dialog already closed (ChatGPT's fourth review, F02).
+        others <- doseTable()
+        others <- sum(nzchar(as.character(others$Drug)) & !others$Drug %in% drug, na.rm = TRUE)
+        if (tableGridTruncated(TT) || sum(!TT$Delete) + others > MAX_DOSE_ROWS - 1L) {
+          showNotification(sprintf("The dose table holds at most %d doses.", MAX_DOSE_ROWS - 1L),
+                           type = "error")
+          return()
+        }
         # Every dose kept needs a time and a dose that can be read.  A blank
         # counts as unreadable here: the grid clears an entry it cannot read
-        # (inst/www/hot_funs.js), and validateTime() and validateDose() below
+        # (inst/www/grid-funs.js), and validateTime() and validateDose() below
         # would make the blank 0.  So does a time that names no time in the
         # table's format (validateDoseTime()).  The dialog stays open to be
         # corrected.
@@ -2492,6 +2606,8 @@ app_server <- function(input, output, session) {
         format <- doseTableFormat()
         minutes <- displayTimeToMinutes(dt$Time, referenceFor(format), format[["unit"]])
         dt <- dt[order(is.na(minutes), minutes, dt$Drug), ]
+        # The blank rows sort last; past MAX_DOSE_ROWS there is no room for them
+        dt <- dt[seq_len(min(nrow(dt), MAX_DOSE_ROWS)), , drop = FALSE]
 
         outputComments("doseTable after update:")
         outputComments(dt)
@@ -2559,14 +2675,6 @@ app_server <- function(input, output, session) {
       }, name = "input$addEventBtn observer")
     })
 
-  # Edit prior drug doses
-  editEventsHOT <- reactiveVal(NULL)
-
-  output$editEventsTableHTML <- rhandsontable::renderRHandsontable({
-    req(editEventsHOT())
-    editEventsHOT()
-  })
-
   # The times as the edit-events dialog showed them, and the minutes behind
   # them (editedTimesToMinutes()).  A plain variable: set when the dialog opens.
   editEventsShown <- NULL
@@ -2587,38 +2695,9 @@ app_server <- function(input, output, session) {
       tempTable$Time <- minutesToEntryTime(minutes, format, input$referenceTime)
       editEventsShown <<- list(text = tempTable$Time, minutes = minutes)
       tempTable$Delete <- FALSE
-      tempTableHOT <- rhandsontable::rhandsontable(
-        tempTable[,c("Delete","Time","Event")],
-        overflow = 'visible',
-        rowHeaders = NULL,
-        height = 220,
-        stretchH = "all"
-      ) %>%
-        rhandsontable::hot_col(
-          col = "Delete",
-          type="checkbox",
-          halign = "htRight"
-        ) %>%
-        rhandsontable::hot_col(
-          col = "Time",
-          halign = "htRight"
-        ) %>%
-        rhandsontable::hot_col(
-          col = "Event",
-          type = "dropdown",
-          source = eventDefaults()$Event,
-          strict = TRUE,
-          halign = "htLeft",
-          valign = "vtMiddle",
-          allowInvalid = FALSE
-        ) %>%
-        rhandsontable::hot_table(contextMenu = FALSE) %>%
-        rhandsontable::hot_rows(rowHeights = 10) %>%
-        rhandsontable::hot_cols(colWidths = c(60,65,100)) %>%
-        addHotHooks(filterKeys = TRUE, sanitize = TRUE)
-
-      editEventsHOT(NULL)  # force re-render even if table data is identical
-      editEventsHOT(tempTableHOT)
+      eventsGrid <- tableGridInput("editEventsTableHTML", editEventsGridColumns(eventDefaults()$Event),
+                                   tempTable[, c("Delete", "Time", "Event")],
+                                   maxRows = MAX_EVENT_ROWS, height = 260, label = "Events")
     }
 
     showModal(
@@ -2627,7 +2706,7 @@ app_server <- function(input, output, session) {
         if (hasEvents)
           tagList(
             tags$p(class = "small text-muted mb-1", timeEntryLabel(format)),
-            rhandsontable::rHandsontableOutput(outputId = "editEventsTableHTML")
+            eventsGrid
           )
         else
           tags$p("There are no events yet."),
@@ -2681,7 +2760,17 @@ app_server <- function(input, output, session) {
     {
       profileCode({
         req(input$editEventsTableHTML)
-        ET <- blankMissingCells(rhandsontable::hot_to_r(input$editEventsTableHTML))
+        ET <- tableGridRead(input$editEventsTableHTML, editEventsGridColumns(character(0)),
+                            maxRows = MAX_EVENT_ROWS)
+        req(ET)
+        # The grid holds MAX_EVENT_ROWS events at most: a table cut to fit was
+        # never one the grid sent, and stored whole it replaced the plot with
+        # the row-limit error after the dialog had closed (fourth review, F04).
+        if (tableGridTruncated(ET)) {
+          showNotification(sprintf("The event table holds at most %d events.", MAX_EVENT_ROWS),
+                           type = "error")
+          return()
+        }
         format <- doseTableFormat()
         shown <- editEventsShown
         minutes <- editedTimesToMinutes(ET$Time, shown$text, shown$minutes,
@@ -2716,12 +2805,6 @@ app_server <- function(input, output, session) {
 
   # Target Drug Dosing (TCI Like) ###########################################
   # Event to trigger calculation to set doses for a target
-  targetHOTVal <- reactiveVal(NULL)
-
-  output$targetTableHTML <- rhandsontable::renderRHandsontable({
-    req(targetHOTVal())
-    targetHOTVal()
-  })
 
   observeEvent(
     input$setTarget,
@@ -2740,35 +2823,11 @@ app_server <- function(input, output, session) {
           Time = rep("",6),
           Target = rep("", 6)
         )
-        targetHOT <- rhandsontable::rhandsontable(
-          targetTable,
-          overflow = 'visible',
-          rowHeaders = NULL,
-          height = 220
-        ) %>%
-          rhandsontable::hot_col(
-            col = "Time",
-            halign = "htRight"
-          ) %>%
-          rhandsontable::hot_col(
-            col = "Target",
-            type = "numeric",
-            halign = "htRight"
-          ) %>%
-          rhandsontable::hot_context_menu(
-            allowRowEdit = TRUE,
-            allowColEdit = FALSE
-          ) %>%
-          rhandsontable::hot_rows(
-            rowHeights = 10
-          ) %>%
-          rhandsontable::hot_cols(
-            colWidths = c(70,70)
-          ) %>%
-          addHotHooks(filterKeys = TRUE, sanitize = TRUE)
-
-        targetHOTVal(NULL)
-        targetHOTVal(targetHOT)
+        # Rows can be inserted and removed (Shift+F10, the context-menu key
+        # or a right click), up to MAX_TARGET_ROWS
+        targetGrid <- tableGridInput("targetTableHTML", targetGridColumns(), targetTable,
+                                     rowMenu = TRUE, maxRows = MAX_TARGET_ROWS, height = 260,
+                                     label = "Targets")
         showModal(
           modalDialog(
             `data-submit-btn` = "targetOK",
@@ -2785,9 +2844,7 @@ app_server <- function(input, output, session) {
               choices = sortDrugNames(suggestDrugChoices(drugDefaults()))
             ),
             tags$p(class = "small text-muted mb-1", timeEntryLabel(format)),
-            rhandsontable::rHandsontableOutput(
-              outputId = "targetTableHTML"
-            ),
+            targetGrid,
             textInput(
               inputId = "targetEndTime",
               label = paste("End", timeEntryLabel(format)),
@@ -2827,15 +2884,34 @@ app_server <- function(input, output, session) {
     input$targetOK,
     {
       profileCode({
+        # One value each, whatever the browser sent: the End time box and the
+        # drug list send one string, but a forged pair of End times made the
+        # test below an if() of length 2, which ended the session (ChatGPT's
+        # production audit, 2026-11-08, F02).  doseGridCell() makes anything
+        # that is not one value blank.
+        endText <- doseGridCell(input$targetEndTime)
+        targetDrug <- doseGridCell(input$targetDrug)
+        if (!targetDrug %in% drugDefaults()$Drug) {
+          showNotification("Choose a drug from the list.", type = "error")
+          return()
+        }
         # Tested before validateTime(), which turns a blank into "0"
-        if (!nzchar(trimws(input$targetEndTime)))
+        if (!nzchar(trimws(endText)))
         {
           outputComments("No endtime")
           return()
         }
         # Not before the grid has reported in (a click on OK while it draws)
         req(input$targetTableHTML)
-        targetTable <- blankMissingCells(rhandsontable::hot_to_r(input$targetTableHTML))
+        targetTable <- tableGridRead(input$targetTableHTML, targetGridColumns(), maxRows = MAX_TARGET_ROWS)
+        req(targetTable)
+        # A table cut to MAX_TARGET_ROWS was never one the grid sent (Gemini's
+        # production audit, 2026-11-08, finding 6)
+        if (tableGridTruncated(targetTable)) {
+          showNotification(sprintf("The target table holds at most %d targets.", MAX_TARGET_ROWS),
+                           type = "error")
+          return()
+        }
         # What is wrong with the table is said, and the dialog stays open:
         # raised here, the error ended the session (adversarial UI review,
         # 2026-11, findings 1 and 2: a time with no target, an inserted row).
@@ -2876,7 +2952,7 @@ app_server <- function(input, output, session) {
         toMinutes <- function(x) {
           displayTimeToMinutes(validateTime(x), reference, format[["unit"]])
         }
-        endTime <- toMinutes(input$targetEndTime)
+        endTime <- toMinutes(endText)
         targetTimes <- as.character(targetTable$Time)
         typed <- !is.na(targetTimes) & nzchar(trimws(targetTimes))
         targetMinutes <- vapply(targetTimes[typed], toMinutes, numeric(1))
@@ -2902,18 +2978,18 @@ app_server <- function(input, output, session) {
         # vasopressin is dosed in units, and a mass unit stopped simCpCe()
         # (finding 3).  Nothing is written to doseTable() unless the regimen
         # is written.
-        inTable <- input$targetDrug %in% cleanDoseTable(doseTable())$Drug
+        inTable <- targetDrug %in% cleanDoseTable(doseTable())$Drug
         suggestDrugs <- function() {
           if (inTable) return(drugs())
-          bolusUnit <- drugDefaults()$Bolus.Units[match(input$targetDrug, drugDefaults()$Drug)]
-          drugPK(data.frame(Drug = input$targetDrug, Time = 0, Dose = 0, Units = bolusUnit,
+          bolusUnit <- drugDefaults()$Bolus.Units[match(targetDrug, drugDefaults()$Drug)]
+          drugPK(data.frame(Drug = targetDrug, Time = 0, Dose = 0, Units = bolusUnit,
                             stringsAsFactors = FALSE))
         }
 
         # Any error from here is said, and the spinner always comes down: an
         # error ended the session, and a req() left the spinner up for good.
         testTable <- tryCatch(
-          suggest(input$targetDrug,
+          suggest(targetDrug,
                   targetTable,
                   endTime,
                   suggestDrugs(),
@@ -2947,7 +3023,7 @@ app_server <- function(input, output, session) {
         # as.character(), which writes 1e5 as "1e+05".
         testTable$Time <- minutesToDisplayTime(testTable$Time, format[["unit"]])
         dt <- doseTable()
-        dt <- dt[!dt$Drug %in% input$targetDrug, ]
+        dt <- dt[!dt$Drug %in% targetDrug, ]
 
         dt <- rbind(
           testTable[,c("Drug","Time","Dose","Units")],
@@ -2982,7 +3058,7 @@ app_server <- function(input, output, session) {
           ". Also, you can easily break your session by entering crazy things. If so, just reload your session."
         ),
         br(),
-        shinycssloaders::withSpinner(rhandsontable::rHandsontableOutput("editDrugsHTML", height = 350)),
+        shinycssloaders::withSpinner(uiOutput("editDrugsUI")),
         br(),
         actionButton("drugEditsOK", "Apply", class = "btn-primary"),
         tags$button(
@@ -2998,74 +3074,12 @@ app_server <- function(input, output, session) {
     )
   })
 
-  output$editDrugsHTML <- rhandsontable::renderRHandsontable({
+  output$editDrugsUI <- renderUI({
     profileCode({
       editDrugsTrigger$depend()
       x <- drugLibraryGridData(drugDefaults())
-      drugsHOT <- rhandsontable::rhandsontable(
-        x,
-        overflow = 'visible',
-        rowHeaders = NULL,
-        height = 350
-      ) %>%
-        rhandsontable::hot_col(
-          col = 1,
-          halign = "htRight",
-          readOnly = TRUE
-        ) %>%
-        rhandsontable::hot_col(
-          col = 2,
-          type = "dropdown",
-          source = c("mcg","ng"),
-          strict = TRUE,
-          halign = "htLeft",
-          valign = "vtMiddle",
-          allowInvalid=FALSE
-        ) %>%
-        rhandsontable::hot_col(
-          col = 3,
-          type = "dropdown",
-          source = bolusUnits,
-          strict = TRUE,
-          halign = "htLeft",
-          valign = "vtMiddle",
-          allowInvalid=FALSE
-        ) %>%
-        rhandsontable::hot_col(
-          col = 4,
-          type = "dropdown",
-          source = infusionUnits,
-          strict = TRUE,
-          halign = "htLeft",
-          valign = "vtMiddle",
-          allowInvalid=FALSE
-        ) %>%
-        rhandsontable::hot_col(
-          col = 5,
-          type = "dropdown",
-          source = allUnits,
-          strict = TRUE,
-          halign = "htLeft",
-          valign = "vtMiddle",
-          allowInvalid=FALSE
-        ) %>%
-        rhandsontable::hot_col(col = 6,  halign = "htLeft") %>%
-        rhandsontable::hot_col(col = 7,  halign = "htRight") %>%
-        rhandsontable::hot_col(col = 8,  halign = "htRight") %>%
-        rhandsontable::hot_col(col = 9,  halign = "htRight") %>%
-        rhandsontable::hot_col(col = 10, halign = "htRight") %>%
-        rhandsontable::hot_col(col = 11, halign = "htRight") %>%
-        rhandsontable::hot_table(contextMenu = FALSE)
-      # mcg and ng differ only by the factor shown, so the dropdown offers
-      # those two.  A drug in %, mmol or mOsm (an inhaled agent, calcium,
-      # mannitol) is simulated in those units by its own engine or
-      # conversion, and switching it to mcg or ng would break the dose
-      # conversion in simCpCe(), so its cell is read-only.
-      # (Claude Code, 2026-10-17, from an external review.)
-      for (row in which(!x$Concentration.Units %in% c("mcg", "ng")))
-        drugsHOT <- rhandsontable::hot_cell(drugsHOT, row, 2, readOnly = TRUE)
-      drugsHOT
-    }, name = "output$editDrugsHTML")
+      tableGridInput("editDrugsHTML", drugLibraryGridColumns(x), x, height = 350, label = "Drug Library")
+    }, name = "output$editDrugsUI")
   })
 
   # Evaluate target concentration
@@ -3073,7 +3087,13 @@ app_server <- function(input, output, session) {
     profileCode({
       current      <- drugDefaults()
       req(input$editDrugsHTML)
-      newDrugDefaults <- rhandsontable::hot_to_r(input$editDrugsHTML)
+      newDrugDefaults <- tableGridRead(input$editDrugsHTML, drugLibraryGridColumns(drugLibraryGridData(current)),
+                                       maxRows = nrow(current))
+      req(newDrugDefaults)
+      if (tableGridTruncated(newDrugDefaults)) {
+        showNotification("The Drug Library cannot add drugs.", type = "error", duration = 10)
+        return()
+      }
       # An entry the plot or the dose table cannot use is refused, and the
       # dialog stays open to be corrected (drugLibraryProblems()).
       problems <- drugLibraryProblems(newDrugDefaults, current)
@@ -3092,11 +3112,20 @@ app_server <- function(input, output, session) {
       newDrugDefaults$Lower                <- as.numeric(newDrugDefaults$Lower)
       newDrugDefaults$Upper                <- as.numeric(newDrugDefaults$Upper)
       newDrugDefaults$Typical              <- as.numeric(newDrugDefaults$Typical)
+      # A blank MEAC is no MEAC, which the library writes 0: kept as NA it
+      # stopped every simulation of the drug ("missing value where
+      # TRUE/FALSE needed" in simCpCe(); Gemini's production audit,
+      # 2026-11-08, finding 2)
       newDrugDefaults$MEAC                 <- as.numeric(newDrugDefaults$MEAC)
+      newDrugDefaults$MEAC[is.na(newDrugDefaults$MEAC)] <- 0
 
-      # endCe and Category are not in the table; restore from current values
+      # endCe and Category are not in the table; restore from current values.
+      # Class is shown but read-only: it is what makes a drug an inhaled agent
+      # (gasDrugNames()), which an edit could otherwise give propofol or take
+      # from sevoflurane (the same audit, finding 4).
       newDrugDefaults$endCe     <- current$endCe[match(newDrugDefaults$Drug, current$Drug)]
       newDrugDefaults$Category  <- current$Category[match(newDrugDefaults$Drug, current$Drug)]
+      newDrugDefaults$Class     <- current$Class[match(newDrugDefaults$Drug, current$Drug)]
 
       newDrugDefaults$Units <- drugUnitsExpand(newDrugDefaults$Units)
       drugDefaults(newDrugDefaults)
@@ -3115,7 +3144,7 @@ app_server <- function(input, output, session) {
           "Inhaled agents are in %, shown for this patient's age; the MAC row is in MAC equivalents (multiples of the age-adjusted MAC)."),
         if (input$normalization == NORMALIZE_NONE)
           checkboxInput("showThresholdModal", "Show time until threshold", value = input$showThreshold),
-        shinycssloaders::withSpinner(rhandsontable::rHandsontableOutput("editThresholdsTable", height = 350)),
+        shinycssloaders::withSpinner(uiOutput("editThresholdsUI")),
         br(),
         actionButton("thresholdEditsOK", "Apply", class = "btn-primary"),
         tags$button(
@@ -3131,7 +3160,7 @@ app_server <- function(input, output, session) {
     )
   })
 
-  output$editThresholdsTable <- rhandsontable::renderRHandsontable({
+  output$editThresholdsUI <- renderUI({
     drugThresholdsTrigger$depend()
     # Shown at the patient's age for the volatile agents, and with a row for
     # MAC; see thresholdTableForDisplay().  isolate(): opening the dialog is
@@ -3141,15 +3170,20 @@ app_server <- function(input, output, session) {
       tryCatch(isolate(age()), error = function(e) 40),
       isolate(macThreshold())
     )
-    rhandsontable::rhandsontable(x, overflow = 'visible', rowHeaders = NULL, height = 350) %>%
-      rhandsontable::hot_col(col = 1, halign = "htLeft", readOnly = TRUE) %>%
-      rhandsontable::hot_col(col = 2, halign = "htRight", type = "numeric") %>%
-      rhandsontable::hot_table(contextMenu = FALSE)
+    tableGridInput("editThresholdsTable", thresholdGridColumns(), x, height = 350,
+                   label = "Drug thresholds")
   })
 
   observeEvent(input$thresholdEditsOK, {
     req(input$editThresholdsTable)
-    tt <- rhandsontable::hot_to_r(input$editThresholdsTable)
+    tt <- tableGridRead(input$editThresholdsTable, thresholdGridColumns())
+    req(tt)
+    # Nor a thresholds table cut to fit (the same audit, finding 6)
+    if (tableGridTruncated(tt)) {
+      showNotification("Threshold not changed: the table holds more rows than the library has drugs.",
+                       id = "thresholdInvalid", type = "error", duration = 10)
+      return()
+    }
     updated <- thresholdTableToDefaults(
       tt, drugDefaults(),
       tryCatch(isolate(age()), error = function(e) 40),
@@ -3160,7 +3194,7 @@ app_server <- function(input, output, session) {
     if (length(updated$invalid) > 0) {
       showNotification(
         paste0(
-          "Threshold not changed: enter a number of 0 or more for ",
+          "Threshold not changed: enter a number from 0 to 1,000,000,000 for ",
           paste(unique(updated$invalid), collapse = ", "),
           ". Enter 0 for no threshold."
         ),

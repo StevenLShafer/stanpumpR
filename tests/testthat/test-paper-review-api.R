@@ -163,3 +163,58 @@ test_that("the key comes from the session, then the environment, then config, an
   big <- c(fakePdf(), raw(PAPER_REVIEW_MAX_PDF_BYTES))
   expect_error(paperReviewExtract(big, key = "k"), "too large")
 })
+
+# Devin's stress test (2026-11-08): the schema travels in the prompt, not as an
+# enforced output, and 175 of 400 extractions with one to three fields made
+# wrong (NULL, NA, wrong types, empty lists, vectors, huge or tiny numbers,
+# Unicode) failed in the checks or the report, losing the paid review.  One
+# unreadable field must cost that field, said in the limitations.
+test_that("an unreadable field of the reply is set aside and named, and the review still renders", {
+  ex <- paperReviewExample()
+  ex$derived_quantities[[1]]$value <- list(a = 1)         # a list where a number belongs
+  ex$derived_quantities[[2]]$quantity <- NA                # NA where a choice belongs
+  ex$parameters[[1]]$units <- c("L", "mL")                 # two strings where one belongs
+  ex$covariate_effects[[1]]$form <- "zz"                   # a form outside the choices
+  ex$regimens[[1]]$doses[[1]]$time <- "soon"               # text that is not a number
+  ex$reviewer_notes <- list(list(topic = "x", finding = "y", severity = 123456789, location = "p. 1"))
+  v <- paperReviewValidate(ex)
+  # [[ ]], not $: a removed field would partially match value_text
+  expect_identical(v$derived_quantities[[1]][["value"]], NA_real_)
+  expect_equal(v$derived_quantities[[2]]$quantity, "other")
+  expect_equal(v$parameters[[1]]$units, "other")
+  expect_identical(v$regimens[[1]]$doses[[1]][["time"]], NA_real_)
+  expect_match(v$extraction_limitations, "could not be read and were set aside")
+  expect_match(v$extraction_limitations, "derived_quantities[1].value", fixed = TRUE)
+  review <- paperReviewQuietly(function() paperReviewRun(v))
+  expect_no_error(paperReviewReportTags(review, plots = FALSE))
+  # A readable value is left alone: a number sent as text is read.
+  ok <- paperReviewExample()
+  ok$parameters[[1]]$value <- "12.5"
+  expect_equal(paperReviewValidate(ok)$parameters[[1]]$value, 12.5)
+  expect_false(grepl("set aside", paperReviewValidate(paperReviewExample())$extraction_limitations))
+})
+
+test_that("forty fuzzed extractions all give a report", {
+  ex <- paperReviewExample()
+  paths <- function(x, p = list()) {
+    if (!is.list(x) || length(x) == 0) return(list(p))
+    c(list(p), unlist(lapply(seq_along(x), function(i) paths(x[[i]], c(p, i))), recursive = FALSE))
+  }
+  all <- Filter(length, paths(ex))
+  junk <- list(NULL, NA, "zz", 123456789, -5, 1e-300, list(), list(a = 1), c(1, 2, 3), TRUE,
+               "é中", strrep("x", 2000), list(list()))
+  setAt <- function(x, p, v) {
+    if (length(p) == 1) { if (is.null(v)) x[p[[1]]] <- list(NULL) else x[[p[[1]]]] <- v; return(x) }
+    x[[p[[1]]]] <- setAt(x[[p[[1]]]], p[-1], v)
+    x
+  }
+  withr::local_seed(20261108)
+  for (k in 1:40) {
+    m <- ex
+    for (j in seq_len(sample(1:3, 1)))
+      m <- tryCatch(setAt(m, all[[sample(length(all), 1)]], junk[[sample(length(junk), 1)]]),
+                    error = function(e) m)
+    review <- paperReviewQuietly(function() paperReviewRun(paperReviewValidate(m)))
+    expect_no_error(paperReviewReportTags(review, plots = FALSE))
+  }
+})

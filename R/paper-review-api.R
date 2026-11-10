@@ -236,6 +236,24 @@ paperReviewValidate <- function(x)
       if (nzchar(out$extraction_limitations)) " " else "",
       "The reply had no usable ", paste(missing, collapse = ", "),
       "; the review treats them as empty.")
+  # Every field below the top, against its schema: the schema travels in the
+  # prompt, not as an enforced output, so a field can arrive as anything.  One
+  # unreadable field (a list where a number belongs, NA, a vector) cost the
+  # whole paid review: 175 of 400 fuzzed extractions failed in the checks or
+  # the report (Devin's stress test, 2026-11-08).  Now it costs that field,
+  # which is set aside and named here.
+  notes <- new.env()
+  notes$paths <- character(0)
+  for (name in unlist(schema$required))
+    if (!is.null(out[[name]]))
+      out[name] <- list(paperReviewConform(out[[name]], schema$properties[[name]], name, name, notes))
+  if (length(notes$paths))
+    out$extraction_limitations <- paste0(
+      out$extraction_limitations,
+      if (nzchar(out$extraction_limitations)) " " else "",
+      "Some fields of the reply could not be read and were set aside: ",
+      paste(utils::head(notes$paths, 8), collapse = "; "),
+      if (length(notes$paths) > 8) paste0("; and ", length(notes$paths) - 8, " more") else "", ".")
   # The schema's closed choices are instructions too: a value outside them
   # (an unknown parameter role) is passed over by the checks without a word,
   # so each one is named here, which the report prints.
@@ -248,6 +266,89 @@ paperReviewValidate <- function(x)
       paste(utils::head(stray, 8), collapse = "; "),
       if (length(stray) > 8) paste0("; and ", length(stray) - 8, " more") else "", ".")
   out
+}
+
+#' Make one part of an extraction the shape its schema says
+#'
+#' A readable value is kept, or coerced where the reading is unambiguous (a
+#' number sent as text, one string sent as a number); an unreadable one is set
+#' aside (\code{NA} for a number, an empty string for a required string, the
+#' field's "other" for a required choice, \code{NULL} for an optional field
+#' or an object) and its path recorded in \code{notes}.  A number is kept in
+#' place as \code{NA} rather than removed: removed, \code{d$time} would
+#' partially match \code{d$time_units} and \code{dq$value} \code{dq$value_text},
+#' and a check would multiply \code{"min"} by a number.  An array item that
+#' cannot be read is dropped.  Fields the schema does not name are left as
+#' they are: no check reads them.
+#'
+#' @param value part of the extraction (after \code{paperReviewNormalize()})
+#' @param spec its schema
+#' @param name its field name (decides a numeric or optional field)
+#' @param path where it is, for the note
+#' @param notes an environment whose \code{paths} collects what was set aside
+#' @returns the value, conformed
+#' @keywords internal
+paperReviewConform <- function(value, spec, name, path, notes)
+{
+  if (is.null(value) || !is.list(spec)) return(value)
+  setAside <- function(replacement = NULL) {
+    notes$paths <- c(notes$paths, path)
+    replacement
+  }
+  scalar <- function(v) length(v) == 1 && !is.list(v) && !is.na(v)
+  choices <- if (!is.null(spec$enum)) unlist(spec$enum) else attr(spec, "choices")
+  kind <- if (!is.null(choices)) "choice"
+    else if (spec$type %in% c("object", "array")) spec$type
+    else if (name %in% PAPER_REVIEW_NUMERIC_FIELDS || identical(spec$type, "number")) "number"
+    else spec$type %or% "other"
+  switch(kind,
+    number = {
+      if (is.numeric(value) && scalar(value) && is.finite(value)) return(value)
+      if (is.character(value) && scalar(value)) {
+        n <- suppressWarnings(as.numeric(trimws(value)))
+        if (is.finite(n)) return(n)
+      }
+      setAside(NA_real_)
+    },
+    choice = {
+      if (is.character(value) && scalar(value)) return(value)
+      if ((is.numeric(value) || is.logical(value)) && scalar(value)) return(as.character(value))
+      fallback <- intersect(c("other", "unstated", "none"), choices)
+      setAside(if (name %in% PAPER_REVIEW_OPTIONAL_ENUMS || !length(fallback)) NULL else fallback[1])
+    },
+    string = {
+      if (is.character(value) && scalar(value)) return(value)
+      if ((is.numeric(value) || is.logical(value)) && scalar(value)) return(as.character(value))
+      setAside(if (name %in% PAPER_REVIEW_OPTIONAL_STRINGS) NULL else "")
+    },
+    object = {
+      if (is.list(value) && length(value) == 0) return(stats::setNames(list(), character(0)))
+      if (!is.list(value) || is.null(names(value)) || any(!nzchar(names(value)))) return(setAside())
+      for (field in names(spec$properties)) {
+        if (is.null(value[[field]])) next
+        conformed <- paperReviewConform(value[[field]], spec$properties[[field]], field,
+                                        paste0(path, ".", field), notes)
+        if (is.null(conformed)) value[[field]] <- NULL else value[[field]] <- conformed
+      }
+      value
+    },
+    array = {
+      items <- if (is.list(value) && is.null(names(value))) value
+        # One object sent where a list of them belongs: the one item.
+        else if (is.list(value) && identical(spec$items$type, "object")) list(value)
+        else if (!is.list(value) && !identical(spec$items$type, "object")) as.list(value)
+        else return(setAside(list()))
+      out <- list()
+      for (i in seq_along(items)) {
+        conformed <- paperReviewConform(items[[i]], spec$items, name, paste0(path, "[", i, "]"), notes)
+        if (is.null(conformed)) {
+          if (!is.null(items[[i]]) && !(paste0(path, "[", i, "]") %in% notes$paths))
+            notes$paths <- c(notes$paths, paste0(path, "[", i, "]"))
+        } else out[[length(out) + 1]] <- conformed
+      }
+      out
+    },
+    value)
 }
 
 #' The values of an extraction outside their field's closed choices

@@ -158,7 +158,7 @@ thresholdTableForDisplay <- function(drugDefaults, age, macThreshold = GAS_MAC_T
 #'
 #' The inverse of \code{thresholdTableForDisplay()}.  Rows not in the table keep
 #' the threshold they had.  Zero, entered as 0, is no threshold.  An entry that
-#' is not a non-negative number (blank, ".", text, negative) is refused rather
+#' is not a number from 0 to \code{MAX_DOSE_VALUE} (blank, ".", text, negative, too large) is refused rather
 #' than read as 0: nothing is changed, and \code{invalid} names the rows, so
 #' the dialog can say which to correct.
 #'
@@ -179,7 +179,14 @@ thresholdTableToDefaults <- function(edited, drugDefaults, age,
     if (is.null(x) || length(x) != 1) return(NA_real_)
     suppressWarnings(as.numeric(as.character(x)))
   }, numeric(1), USE.NAMES = FALSE)
-  bad <- !is.finite(value) | value < 0
+  # Only the library's drugs and MAC: a row naming anything else is not one
+  # the dialog drew, and its name was quoted back in the refusal (Gemini's
+  # production audit, 2026-11-08, finding 6)
+  known <- drug %in% c(as.character(drugDefaults$Drug), "MAC")
+  drug <- drug[known]
+  value <- value[known]
+  # The grid's ceiling, validateDose()'s, held here too (fourth review, F05)
+  bad <- !is.finite(value) | value < 0 | value > MAX_DOSE_VALUE
   if (any(bad)) {
     return(list(drugDefaults = drugDefaults, macThreshold = macThreshold,
                 invalid = drug[bad]))

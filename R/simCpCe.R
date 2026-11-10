@@ -82,7 +82,8 @@ finishDrugSeries <- function(wide, PK, maximum, plotRecovery)
   )
 
   equiSpace$Ce[1] <- 0  # Approx tends to make it a very small negative number
-  if (PK$MEAC == 0)
+  # No MEAC: zero, or missing (a library row edited blank)
+  if (!isTRUE(PK$MEAC > 0))
   {
     equiSpace$MEAC <- 0
   } else {

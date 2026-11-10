@@ -37,17 +37,21 @@ restoredDoseTable <- function(x, drugDefaults)
   }
   table <- table[, columns, drop = FALSE]
   changed <- FALSE
-  # The grid holds at most MAX_DOSE_ROWS - 1 rows (createHOT())
-  keep <- MAX_DOSE_ROWS - 1L
-  if (nrow(table) > keep) {
-    table <- table[seq_len(keep), , drop = FALSE]
-    changed <- TRUE
-  }
   text <- function(v) {
     v <- if (is.list(v)) vapply(v, function(e) if (length(e) == 1 && !is.na(e)) as.character(e) else "", "")
          else as.character(v)
     v[is.na(v)] <- ""
     v
+  }
+  # The grid holds at most MAX_DOSE_ROWS - 1 rows.  Blank rows past them (the
+  # one the new grid keeps below 499 doses) are dropped without a word; only
+  # a row that held something is said (the external review of 2026-11-06,
+  # Gemini's final pass: every table of 499 doses was said to be cut).
+  keep <- MAX_DOSE_ROWS - 1L
+  if (nrow(table) > keep) {
+    extra <- table[-seq_len(keep), , drop = FALSE]
+    if (any(vapply(columns, function(cl) any(nzchar(trimws(text(extra[[cl]])))), logical(1)))) changed <- TRUE
+    table <- table[seq_len(keep), , drop = FALSE]
   }
   for (col in columns) table[[col]] <- text(table[[col]])
 

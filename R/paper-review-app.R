@@ -77,6 +77,23 @@ paperReviewReadUpload <- function(datapath)
   readBin(datapath, "raw", size)
 }
 
+# A file's size as people read it: "30 kB", not "0.0 MB" (Devin's stress test).
+paperReviewSize <- function(bytes)
+  if (bytes < 1024^2) paste(max(1, round(bytes / 1024)), "kB") else
+    paste(format(round(bytes / 1024^2, 1), nsmall = 1), "MB")
+
+# The tokens a review used, which set its cost: " (12,345 tokens read, 6,789
+# written)", or "" when the reply did not say.
+paperReviewUsageText <- function(usage)
+{
+  n <- function(x) suppressWarnings(as.numeric(x %or% NA))
+  read <- sum(n(usage$input_tokens), n(usage$cache_read_input_tokens), n(usage$cache_creation_input_tokens),
+              na.rm = TRUE)
+  written <- n(usage$output_tokens)
+  if (!is.finite(written) || read == 0) return("")
+  paste0(" (", format(read, big.mark = ","), " tokens read, ", format(written, big.mark = ","), " written)")
+}
+
 #' Is this a PDF?
 #' @keywords internal
 paperReviewIsPdf <- function(bytes)
@@ -126,6 +143,10 @@ paperReviewPanels <- function(ns = shiny::NS(NULL))
           # The confirmation comes first; until it is ticked the upload and
           # Review controls are greyed out (Shafer: unticked, the old order
           # let a paper be chosen and then refused, which confused).
+          # Said before anything is uploaded when the server has no key
+          # (Devin's stress test, 2026-11-08: the reason came only after a
+          # paper had been chosen and the box ticked).
+          shiny::uiOutput(ns("keyNotice")),
           shiny::checkboxInput(ns("consent"), paste(
             "I may share this paper with Anthropic, as the Privacy tab describes,",
             "to have it reviewed."), FALSE),
@@ -160,7 +181,7 @@ paperReviewPanels <- function(ns = shiny::NS(NULL))
         shiny::uiOutput(ns("simulatorNote")),
         shiny::plotOutput(ns("simPlot"), height = "460px"),
         shiny::h5("Dose table"),
-        rhandsontable::rHandsontableOutput(ns("doses")),
+        shiny::uiOutput(ns("dosesUI")),
         shiny::tableOutput(ns("simParameters"))
       )),
     bslib::nav_panel("Privacy and help", value = "help", paperReviewHelpHtml()))
@@ -228,8 +249,16 @@ paperReviewServer <- function(input, output, session)
   # pressed it unticked and got only a line of status text.
   hasPdf <- shiny::reactiveVal(FALSE)
   session$onSessionEnded(function() paperReviewDiscard(store))
+  # Can this server review a paper at all?  Without a key only the example
+  # runs, so nothing may be uploaded for nothing.
+  keyed <- !is.null(paperReviewApiKey(NULL))
+  output$keyNotice <- shiny::renderUI(if (!keyed) htmltools::div(
+    class = "alert alert-warning", role = "status", style = "font-size: 0.9em; padding: 8px 10px;",
+    htmltools::strong("Reviews are not enabled on this server yet. "),
+    "Uploading is turned off; the example below still works, and sends nothing."))
   shiny::observe({
-    consent <- isTRUE(input$consent)
+    consent <- isTRUE(input$consent) && keyed
+    shinyjs::toggleState("consent", condition = keyed)
     shinyjs::toggleState("manuscript", condition = consent)
     shinyjs::toggleState("supplement", condition = consent)
     shinyjs::toggleState("review", condition = hasPdf() && consent)
@@ -246,8 +275,8 @@ paperReviewServer <- function(input, output, session)
     }
     assign(slot, bytes, envir = store)
     if (slot == "pdf") hasPdf(TRUE)
-    status(paste0(label, " received (", format(round(length(bytes) / 1024^2, 1), nsmall = 1),
-                  " MB), held in this session's memory only."))
+    status(paste0(label, " received (", paperReviewSize(length(bytes)),
+                  "), held in this session's memory only."))
   }
   shiny::observeEvent(input$manuscript, receive(input$manuscript, "pdf", "The manuscript"))
   shiny::observeEvent(input$supplement, receive(input$supplement, "supplement", "The supplement"))
@@ -292,8 +321,9 @@ paperReviewServer <- function(input, output, session)
     }
     assign("usage", result$usage, envir = store)
     runReview(result$extraction)
-    status(paste0("Reviewed. The manuscript itself has been discarded; the extraction is held in ",
-                  "this session's memory until you discard it or close the page."))
+    status(paste0("Reviewed", paperReviewUsageText(result$usage), ". The manuscript itself has been ",
+                  "discarded; the extraction is held in this session's memory until you discard it ",
+                  "or close the page."))
   })
 
   shiny::observeEvent(input$example, {
@@ -391,11 +421,22 @@ paperReviewServer <- function(input, output, session)
   # The user picked another unit: convert what is shown.
   shiny::observeEvent(input$timeUnit, {
     if (identical(input$timeUnit, tableUnit())) return()
-    current <- dosesNow()
     # A Max time that cannot be used (blank, say) becomes the default rather
     # than following the table into the new unit as NA.
     maximumMinutes <- paperReviewMaxTimeMinutes(input$maximum, unitMinutes())
     if (is.na(maximumMinutes)) maximumMinutes <- PAPER_REVIEW_MAX_TIME_DEFAULT
+    # A table cut to fit (more rows than the grid holds, which only a forged
+    # value can send) is not stored cut: the unit stays as it was and the
+    # table is left to be refused by the simulation (CodeRabbit, PR #691)
+    if (!is.null(input$doses) &&
+        tableGridTruncated(tableGridRead(input$doses, paperReviewDoseColumns("", character(0))))) {
+      shiny::showNotification(sprintf("The dose table holds at most %d rows; the time unit was not changed.",
+                                      MAX_DOSE_ROWS - 1L), type = "warning")
+      setUnit(tableUnit(), maximumMinutes)
+      return()
+    }
+    current <- dosesNow()
+    attr(current, "problem") <- NULL
     doseTable(current)
     setUnit(input$timeUnit, maximumMinutes)
   }, ignoreInit = TRUE)
@@ -406,36 +447,90 @@ paperReviewServer <- function(input, output, session)
     if (is.null(regimen)) return()
     d <- paperReviewRegimenDoses(regimen)$doses
     if (nrow(d) == 0) return()
+    # The grid holds MAX_DOSE_ROWS - 1 rows; a longer regimen (an hourly
+    # bolus for 500 hours) would be cut by the browser and then refused, or
+    # cut without a word by a change of time unit, so it is refused here.
+    if (nrow(d) > MAX_DOSE_ROWS - 1L) {
+      shiny::showNotification(sprintf(
+        "This regimen has %d doses; the dose table holds at most %d. Enter a shorter part of it by hand.",
+        nrow(d), MAX_DOSE_ROWS - 1L), type = "warning")
+      return()
+    }
     doseTable(d)
     # In the unit the paper uses for this regimen.
     setUnit(paperReviewRegimenTimeUnit(r$extraction, regimen), max(PAPER_REVIEW_MAX_TIME_DEFAULT, ceiling(max(d$Time) * 2)))
   })
 
-  output$doses <- rhandsontable::renderRHandsontable({
+  # The doses as text, read as R reads them (validateDose()): a numeric
+  # column parsed "1,000" as 1 and "1,5" as 1.5, and refused nothing where it
+  # was typed (docs/grid-replacement.md, step 3 of the migration order)
+  output$dosesUI <- shiny::renderUI({
     r <- currentReview()
     units <- if (is.null(r)) "mg" else r$drug$units
     d <- doseTable()
     d$Units <- as.character(d$Units)
     d$Time <- signif(d$Time / unitMinutes(), 6)
-    blank <- data.frame(Time = rep(NA_real_, 4), Dose = rep(NA_real_, 4), Units = rep(NA_character_, 4))
-    rhandsontable::hot_col(
-      rhandsontable::rhandsontable(rbind(d, blank), rowHeaders = NULL, stretchH = "all",
-                                   width = 520, height = 230,
-                                   colHeaders = c(paste0("Time (", unitName(), ")"), "Dose", "Units")),
-      "Units", type = "dropdown", source = units)
+    # Up to four blank rows to type into, never past the grid's limit, which
+    # would make tableGridRead() report the table as cut.
+    blankRows <- max(0L, min(4L, MAX_DOSE_ROWS - 1L - nrow(d)))
+    blank <- data.frame(Time = rep(NA_real_, blankRows), Dose = rep(NA_real_, blankRows),
+                        Units = rep(NA_character_, blankRows))
+    shiny::div(style = "max-width: 520px",
+      tableGridInput(session$ns("doses"), paperReviewDoseColumns(unitName(), units),
+                     rbind(d, blank), rowMenu = TRUE, height = 230, label = "Doses"))
   })
 
   dosesNow <- shiny::reactive({
     # Minutes, whatever the table shows.
     shown <- !is.null(input$doses)
-    d <- if (shown) rhandsontable::hot_to_r(input$doses) else doseTable()
+    d <- if (shown) tableGridRead(input$doses, paperReviewDoseColumns("", character(0))) else doseTable()
+    if (is.null(d)) d <- doseTable()
     names(d)[1:3] <- c("Time", "Dose", "Units")
+    # A row the grid would not have sent, from a browser that may send
+    # anything: a time or dose validateDose() refuses (past MAX_DOSE_VALUE,
+    # say), or a unit the paper's drug does not offer.  Read before, it was
+    # simulated without a word, an unoffered "mcg" or "g" as itself and
+    # anything else as mg (ChatGPT's fourth review, F01).  A row still
+    # being filled in, with a cell blank, is passed over as before.
+    problem <- NULL
+    # A table cut to fit was never one the grid sent (Gemini's production
+    # audit, 2026-11-08, finding 6)
+    if (shown && tableGridTruncated(d)) {
+      problem <- sprintf("The dose table holds at most %d rows.", MAX_DOSE_ROWS - 1L)
+    }
+    if (shown) {
+      r <- currentReview()
+      units <- if (is.null(r)) character(0) else as.character(r$drug$units)
+      filled <- nzchar(trimws(d$Time)) & nzchar(trimws(d$Dose)) & !is.na(d$Units) & nzchar(d$Units)
+      readable <- function(x) vapply(x, function(v) nzchar(validateDose(v)), logical(1), USE.NAMES = FALSE)
+      bad <- filled & !(readable(d$Time) & readable(d$Dose) & d$Units %in% units)
+      if (any(bad)) {
+        problem <- paste(c(problem, sprintf(paste0("Row %s cannot be simulated: enter a time and a dose from 0 to ",
+                                                   "1,000,000,000, and a unit from the list (%s)."),
+                                            paste(which(bad), collapse = ", "), paste(units, collapse = ", "))),
+                         collapse = " ")
+        d <- d[!bad, , drop = FALSE]
+      }
+      # Read as validateDose() reads them: "1,000" passed the check above and
+      # was then dropped by as.numeric() below without a word (the same audit)
+      # A blank is left blank: validateDose() reads it as 0, which put a row
+      # still being filled in (a dose and unit, no time) at time 0 (CodeRabbit)
+      fill <- function(x) vapply(x, function(v) {
+        if (isBlankEntry(v)) return(v)
+        r <- validateDose(v)
+        if (nzchar(r)) r else v
+      }, character(1), USE.NAMES = FALSE)
+      d$Time <- fill(d$Time)
+      d$Dose <- fill(d$Dose)
+    }
     d <- d[is.finite(suppressWarnings(as.numeric(d$Time))) &
              is.finite(suppressWarnings(as.numeric(d$Dose))) & !is.na(d$Units) & nzchar(d$Units), ,
            drop = FALSE]
     d$Time <- as.numeric(d$Time) * if (shown) unitMinutes() else 1
     d$Dose <- as.numeric(d$Dose)
-    d[order(d$Time), , drop = FALSE]
+    d <- d[order(d$Time), , drop = FALSE]
+    attr(d, "problem") <- problem
+    d
   })
 
   patient <- shiny::reactive(list(weight = input$weight, height = input$height,
@@ -449,6 +544,7 @@ paperReviewServer <- function(input, output, session)
       is_valid_number(p$weight, MIN_WEIGHT, MAX_WEIGHT) && is_valid_number(p$height, MIN_HEIGHT, MAX_HEIGHT) &&
         is_valid_number(p$age, MIN_AGE, MAX_AGE), "Enter a weight, height and age in range."))
     d <- dosesNow()
+    shiny::validate(shiny::need(is.null(attr(d, "problem")), attr(d, "problem")))
     shiny::validate(shiny::need(nrow(d) > 0 && any(d$Dose > 0), "Enter a dose."))
     drug <- paperReviewSilently(paperReviewDrug(r$extraction, p, r$identifiability$closed,
                                                 absorption = simAbsorption(), absorptions = r$absorptions))

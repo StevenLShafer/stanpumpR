@@ -143,13 +143,72 @@ PAPER_REVIEW_DERIVED_KIND <- c(
   AUC_inf = "auc", AUC_0_t = "auc", Cmax = "concentration", tmax = "time",
   tPeak = "time", ke0 = "rate")
 
+# A miss beyond tenfold either way (ratio the paper's over the model's, or
+# the reverse): read as a likely misreading, not as an error in the paper.
+paperReviewTenfold <- function(ratio) isTRUE(is.finite(ratio) && ratio > 0 && (ratio > 10 || ratio < 0.1))
+PAPER_REVIEW_TENFOLD_NOTE <- paste(
+  "A difference of more than tenfold is far more likely a misreading by Claude (of the units, a dose",
+  "or the regimen) than an error in the paper: check the extraction below against the paper first.")
+
+#' The patient a derived quantity was printed for, when not the reference
+#'
+#' A paper may tabulate CL/F, volumes and half-lives at several weights or
+#' ages; each such value is the model at that patient, not at the reference.
+#' Compared at the reference, 18 of 19 "errors" in a paediatric paper were
+#' false (Devin's stress test, 2026-11-08: 0.319 x (10/70)^0.75 is the
+#' printed 0.074 L/min at 10 kg).
+#'
+#' @param dq one derived quantity
+#' @param reference the reference patient
+#' @returns the reference patient with the quantity's own covariates in place
+#'   and \code{changed}, their names; NULL when none differs from the
+#'   reference
+#' @keywords internal
+paperReviewQuantityPatient <- function(dq, reference)
+{
+  at <- dq$at
+  if (!is.list(at) || length(at) == 0) return(NULL)
+  patient <- reference
+  changed <- character(0)
+  for (k in c("weight", "height", "age")) {
+    v <- paperReviewNum(at[[k]])
+    if (is.finite(v) && v > 0 && !isTRUE(all.equal(v, reference[[k]]))) {
+      patient[[k]] <- v
+      changed <- c(changed, k)
+    }
+  }
+  sex <- at[["sex"]]
+  if (is.character(sex) && length(sex) == 1 && sex %in% c("male", "female") && sex != reference$sex) {
+    patient$sex <- sex
+    changed <- c(changed, "sex")
+  }
+  if (!length(changed)) return(NULL)
+  patient$changed <- changed
+  patient
+}
+
+# How a quantity's own patient is described in the report.
+paperReviewPatientText <- function(patient)
+  paste(vapply(patient$changed, function(k) switch(k,
+    weight = paste(prFmt(patient$weight), "kg"), height = paste(prFmt(patient$height), "cm"),
+    age = paste(prFmt(patient$age), "years"), sex = patient$sex), ""), collapse = ", ")
+
 #' The derived quantities of one kind, in internal units
+#'
+#' Only those printed for the reference patient: a value the paper gives for
+#' another patient (\code{at}) describes the model there, and closing or
+#' fitting the model at the reference with it would be wrong.
 #' @keywords internal
 paperReviewDerived <- function(extraction, quantity, weight, concUnits = "ng")
 {
   out <- list()
+  reference <- NULL
   for (dq in extraction$derived_quantities %or% list())
     if (identical(dq$quantity, quantity)) {
+      if (is.list(dq$at) && length(dq$at)) {
+        if (is.null(reference)) reference <- paperReviewReferencePatient(extraction)
+        if (!is.null(paperReviewQuantityPatient(dq, reference))) next
+      }
       v <- paperReviewDerivedInternal(dq, weight, concUnits, extraction$drug$molecular_weight)
       out[[length(out) + 1]] <- c(dq, list(internal = v$value, kind = v$kind))
     }
@@ -501,12 +560,31 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
   # section says why).
   unknownN <- is.na(n) || !n %in% 1:3
   if (unknownN) n <- 1
-  lambda <- c(pk$lambda_1, pk$lambda_2, pk$lambda_3)[seq_len(n)]
-  coef <- c(pk$p_coef_bolus_l1, pk$p_coef_bolus_l2, pk$p_coef_bolus_l3)[seq_len(n)]
-  # The placeholder volume of an absent compartment is not part of Vss.
-  vss <- pk$v1 + (if (n >= 2) pk$v2 else 0) + (if (n >= 3) pk$v3 else 0)
-  ke0 <- if (isTRUE(pk$ke0 > 0)) pk$ke0 else NA_real_
-  tPeak <- if (is.finite(ke0)) effectSitePeakTime(coef, lambda, ke0) else NA_real_
+  # What a PK set gives the rows: its exponents, coefficients, Vss, ke0, tPeak.
+  quantitiesOf <- function(set, weight, patient) {
+    l <- c(set$lambda_1, set$lambda_2, set$lambda_3)[seq_len(n)]
+    a <- c(set$p_coef_bolus_l1, set$p_coef_bolus_l2, set$p_coef_bolus_l3)[seq_len(n)]
+    k <- if (isTRUE(set$ke0 > 0)) set$ke0 else NA_real_
+    # The placeholder volume of an absent compartment is not part of Vss.
+    list(pk = set, lambda = l, coef = a,
+         vss = set$v1 + (if (n >= 2) set$v2 else 0) + (if (n >= 3) set$v3 else 0),
+         ke0 = k, tPeak = if (is.finite(k)) effectSitePeakTime(a, l, k) else NA_real_,
+         w = weight, patient = patient)
+  }
+  atReference <- quantitiesOf(pk, w, reference)
+  # The model at a patient a derived quantity was printed for (its `at`),
+  # built as the reference's is, or an error message.
+  quantitiesAt <- function(patient) {
+    built <- tryCatch(paperReviewQuietly(function() {
+      d <- paperReviewDrug(extraction, patient, drug$closed, absorption = drug$absorption,
+                           absorptions = drug$absorptions)
+      getDrugPK(d$defaults$Drug, patient$weight, patient$height, patient$age, patient$sex,
+                d$defaults, model = d$model)$PK$default
+    }), error = function(e) conditionMessage(e))
+    if (is.character(built)) built else quantitiesOf(built, patient$weight, patient)
+  }
+  lambda <- atReference$lambda; coef <- atReference$coef; vss <- atReference$vss
+  ke0 <- atReference$ke0; tPeak <- atReference$tPeak
   # Derived quantities an absorption was built from (R/paper-review-absorption.R).
   usedKeys <- unlist(lapply(Filter(function(a) isTRUE(a$ok), drug$absorptions %or% list()),
                             function(a) a$used))
@@ -576,6 +654,10 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
   {
     q <- dq$quantity %or% "other"
     if (q %in% c("other", "AUC_0_t", "t_half_absorption")) next
+    # A quantity outside the schema's choices (named in the extraction's
+    # limitations by paperReviewValidate()), or one with no readable value
+    # (set aside by paperReviewConform()), cannot be recomputed.
+    if (!q %in% names(PAPER_REVIEW_DERIVED_KIND) || !is.finite(paperReviewNum(dq$value))) next
     if (unknownN) {
       rows[[length(rows) + 1]] <- data.frame(
         quantity = q, printed = dq$value_text %or% prFmt(paperReviewNum(dq$value)),
@@ -585,11 +667,30 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
         stringsAsFactors = FALSE)
       next
     }
+    # The patient the value was printed for: the reference, or the quantity's
+    # own (its `at`), at which the whole model is rebuilt and compared.
+    own <- paperReviewQuantityPatient(dq, reference)
+    ctx <- if (is.null(own)) atReference else quantitiesAt(own)
+    if (is.character(ctx)) {
+      rows[[length(rows) + 1]] <- data.frame(
+        quantity = q, printed = dq$value_text %or% prFmt(paperReviewNum(dq$value)),
+        units = dq$units %or% "", model = "", relative = "", status = "not recomputed",
+        location = dq$location %or% "",
+        note = paste0("Printed for ", paperReviewPatientText(own), "; the model could not be built ",
+                      "for that patient (", ctx, ")."),
+        stringsAsFactors = FALSE)
+      next
+    }
+    pk <- ctx$pk; lambda <- ctx$lambda; coef <- ctx$coef; vss <- ctx$vss
+    ke0 <- ctx$ke0; tPeak <- ctx$tPeak
+    patientQ <- ctx$patient
     printedValue <- paperReviewNum(dq$value)
-    conv <- paperReviewDerivedInternal(dq, w, concUnits, extraction$drug$molecular_weight)
+    conv <- paperReviewDerivedInternal(dq, ctx$w, concUnits, extraction$drug$molecular_weight)
     expected <- PAPER_REVIEW_DERIVED_KIND[[q]]
     model <- NA_real_
-    note <- ""
+    note <- if (is.null(own)) "" else
+      paste0("Printed for ", paperReviewPatientText(own), ", where the model is evaluated, not at the ",
+             "reference patient.")
     incomparable <- FALSE
     if (expected == "coefficient") {
       i <- as.integer(sub("^.*_", "", q))
@@ -600,14 +701,15 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
         # A fractional coefficient, A(i) / sum(A): the weight of each exponent
         # in the fall after a bolus, often printed as a percent.
         model <- coef[i] / sum(coef); conv$kind <- "coefficient"
-        note <- "A fraction of the sum of the coefficients."
+        note <- trimws(paste(note, "A fraction of the sum of the coefficients."))
       } else if (identical(conv$kind, "concentration")) {
-        bolus <- paperReviewBolusAmount(extraction, dq$regimen_id, concUnits, reference,
+        bolus <- paperReviewBolusAmount(extraction, dq$regimen_id, concUnits, patientQ,
                                         log(2) / lambda[1])
         if (!is.na(bolus$amount)) {
-          model <- coef[i] * bolus$amount; conv$kind <- "coefficient"; note <- bolus$note
+          model <- coef[i] * bolus$amount; conv$kind <- "coefficient"
+          note <- trimws(paste(note, bolus$note))
         } else {
-          note <- "No single intravenous dose to scale the coefficient by."
+          note <- trimws(paste(note, "No single intravenous dose to scale the coefficient by."))
         }
       }
     } else if (q %in% c("AUC_inf", "Cmax", "tmax", "MRT") && !is.null(dq$regimen_id)) {
@@ -626,15 +728,15 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
         incomparable <- TRUE
         note <- routable$why
       } else if (q == "MRT") {
-        model <- paperReviewRegimenMRT(regimen, paperReviewDrugFor(drug, extraction, regimen, reference),
+        model <- paperReviewRegimenMRT(regimen, paperReviewDrugFor(drug, extraction, regimen, patientQ),
                                        vss / pk$cl1)
         if (!is.finite(model))
-          note <- "The regimen's input time is not known, so neither is its mean residence time."
+          note <- trimws(paste(note, "The regimen's input time is not known, so neither is its mean residence time."))
       } else {
-        res <- paperReviewRegimenExposure(extraction, paperReviewDrugFor(drug, extraction, regimen, reference),
-                                          reference, dq$regimen_id)
+        res <- paperReviewRegimenExposure(extraction, paperReviewDrugFor(drug, extraction, regimen, patientQ),
+                                          patientQ, dq$regimen_id)
         model <- res[[q]]
-        note <- res$note
+        note <- trimws(paste(note, res$note))
       }
       if (q %in% c("Cmax", "tmax") && !identical(dq$statistic, "typical_value") && routable$ok)
         note <- paste0(note, " The paper's value is a ",
@@ -643,7 +745,7 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
     } else {
       model <- recomputed(dq)
       if (grepl("^decrement_", q) && is.finite(model))
-        note <- paperReviewSteadyStateNote(pk, as.numeric(sub("^decrement_", "", q)) / 100, model)
+        note <- trimws(paste(note, paperReviewSteadyStateNote(pk, as.numeric(sub("^decrement_", "", q)) / 100, model)))
     }
     kindOk <- identical(conv$kind, expected)
     printedInternal <- if (kindOk) conv$value else NA_real_
@@ -655,7 +757,7 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
     loose <- q %in% c("Cmax", "tmax") && !identical(dq$statistic, "typical_value")
     # Not a match at the centre: is it inside what the inputs' rounding allows?
     withinInputs <- FALSE
-    if (kindOk && is.finite(model) && is.finite(printedInternal) && !incomparable &&
+    if (kindOk && is.finite(model) && is.finite(printedInternal) && !incomparable && is.null(own) &&
         !(withinRounding || abs(relative) <= 0.01)) {
       range <- range(c(model, vapply(cornerSets(), function(set) analytic(dq, set), numeric(1))),
                      na.rm = TRUE)
@@ -686,15 +788,20 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
       relative = if (is.finite(relative)) sprintf("%+.1f%%", 100 * relative) else "",
       status = status, location = dq$location %or% "", note = trimws(note),
       stringsAsFactors = FALSE)
-    if (status %in% c("differs", "disagrees"))
+    if (status %in% c("differs", "disagrees")) {
+      misread <- paperReviewTenfold(1 + relative)
       findings[[length(findings) + 1]] <- paperReviewFinding(section,
-        if (status == "disagrees") "error" else "concern",
+        if (status == "disagrees" && !misread) "error" else "concern",
         paste0(q, " as printed (", dq$value_text, " ", dq$units, ") ", status,
-               " with the model's own parameters"),
-        paste0("Recomputed from the printed parameters: ",
+               " with the model's own parameters", if (misread) " by more than tenfold"),
+        paste0(if (misread) paste0(PAPER_REVIEW_TENFOLD_NOTE, " "), "Recomputed from the printed parameters: ",
                rows[[length(rows)]]$model, " ", dq$units, " (", rows[[length(rows)]]$relative, "). ", note),
         dq$location)
+    }
   }
+  # The rest is about the reference patient.
+  pk <- atReference$pk; lambda <- atReference$lambda; coef <- atReference$coef
+  vss <- atReference$vss; ke0 <- atReference$ke0; tPeak <- atReference$tPeak
   table <- if (length(rows)) do.call(rbind, rows) else NULL
   if (!is.null(table)) {
     compared <- table$status %in% c("matches", "close", "matches within rounding", "differs", "disagrees")
@@ -1169,7 +1276,8 @@ paperReviewCovariateChecks <- function(extraction)
       add("concern", paste("A negative power of age is infinite at age 0:", label),
           "stanpumpR's rule: an age term floors at 18 years unless the source fitted it in younger patients, and then at the youngest age studied.",
           loc)
-    summary <- switch(e$covariate, weight = pop$weight_kg, height = pop$height_cm, age = pop$age_years, NULL)
+    summary <- switch(e$covariate %or% "other", weight = pop$weight_kg, height = pop$height_cm,
+                      age = pop$age_years, NULL)
     ref <- paperReviewNum(e$reference_value)
     if (!is.null(summary) && !is.na(ref)) {
       lo <- paperReviewNum(summary$min); hi <- paperReviewNum(summary$max)
@@ -1568,10 +1676,17 @@ paperReviewFigureChecks <- function(extraction, drug, reference)
     mdpe <- stats::median(pe); mdape <- stats::median(abs(pe))
     severity <- if (!is.finite(mdape)) "info" else if (mdape <= 0.2) "ok"
                 else if (mdape <= 0.5) "concern" else "error"
+    # A median miss of more than tenfold is far likelier Claude misreading the
+    # units, the dose or the regimen than a model that bad in print (Devin's
+    # stress test, 2026-11-08: +207,756% on a figure whose sibling without the
+    # loading dose matched).
+    misread <- paperReviewTenfold(1 + mdpe)
+    if (misread) severity <- "concern"
     add(severity, paste0(paperReviewFigureTitle(id, points$series), ": the model ",
                          if (severity == "ok") "reproduces" else "does not closely reproduce",
-                         " the digitised points"),
-        paste0(sum(use), " points compared. Median prediction error (observed - predicted) / predicted ",
+                         " the digitised points", if (misread) " (more than tenfold: probably a misreading)"),
+        paste0(if (misread) paste0(PAPER_REVIEW_TENFOLD_NOTE, " "),
+               sum(use), " points compared. Median prediction error (observed - predicted) / predicted ",
                sprintf("%+.0f%%", 100 * mdpe), ", median absolute ", sprintf("%.0f%%", 100 * mdape),
                ".", note, " The points were digitised approximately by Claude (",
                f$digitization_note %or% "",
@@ -1594,7 +1709,10 @@ paperReviewFigureChecks <- function(extraction, drug, reference)
 paperReviewClaudeNotes <- function(extraction)
 {
   lapply(extraction$reviewer_notes %or% list(), function(n)
-    paperReviewFinding("Claude's reading", n$severity %or% "info", n$topic %or% "Note",
+    paperReviewFinding("Claude's reading",
+                       # a severity outside the choices is read as information
+                       if (isTRUE((n$severity %or% "") %in% PAPER_REVIEW_SEVERITY_ORDER)) n$severity else "info",
+                       n$topic %or% "Note",
                        n$finding %or% "", n$location, computed = FALSE))
 }
 
@@ -1680,15 +1798,31 @@ paperReviewRunOne <- function(extraction, paperLevel = TRUE)
   drug <- paperReviewDrug(extraction, reference, ident$closed,
                           absorption = if (length(usable)) usable[[1]] else NULL,
                           absorptions = absorptions)
-  consistency <- paperReviewConsistency(extraction, drug, reference, ident)
-  figures <- paperReviewFigureChecks(extraction, drug, reference)
+  # Each check on its own: an extraction a check cannot read costs that
+  # check's section a finding, not the whole review (Devin's stress test,
+  # 2026-11-08; paperReviewConform() sets aside what is unreadable, and this
+  # catches what a well-formed but unusable value still breaks).
+  guarded <- function(section, empty, f) tryCatch(f(), error = function(e) {
+    out <- empty
+    out$findings <- list(paperReviewFinding(section, "concern",
+      "This check could not be computed from the extraction",
+      paste0("The reply could not be used here (", conditionMessage(e), "). Check the extraction ",
+             "tables below against the paper.")))
+    out
+  })
+  consistency <- guarded("Internal consistency", list(table = NULL, pkTable = NULL),
+                         function() paperReviewConsistency(extraction, drug, reference, ident))
+  figures <- guarded("Figures", list(figures = list()),
+                     function() paperReviewFigureChecks(extraction, drug, reference))
+  findingsOf <- function(section, f) guarded(section, list(), function() list(findings = f()))$findings
   modelFindings <- lapply(drug$problems, function(p)
     paperReviewFinding("Model", "concern", p))
-  findings <- c(ident$findings, paperReviewAbsorptionFindings(extraction, absorptions),
-                paperReviewExponentialFindings(extraction, reference, drug),
+  findings <- c(ident$findings,
+                findingsOf("Model", function() paperReviewAbsorptionFindings(extraction, absorptions)),
+                findingsOf("Model", function() paperReviewExponentialFindings(extraction, reference, drug)),
                 modelFindings, consistency$findings,
-                paperReviewCovariateChecks(extraction),
-                if (paperLevel) paperReviewAssumptionChecks(extraction),
+                findingsOf("Covariates", function() paperReviewCovariateChecks(extraction)),
+                if (paperLevel) findingsOf("Assumptions and the library's rules", function() paperReviewAssumptionChecks(extraction)),
                 figures$findings,
                 if (paperLevel) paperReviewClaudeNotes(extraction))
   list(extraction = extraction, reference = reference, identifiability = ident,

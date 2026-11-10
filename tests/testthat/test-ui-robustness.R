@@ -10,8 +10,9 @@ test_that("an empty dose table becomes one blank row, and can be drawn", {
   expect_equal(nrow(row), 1L)
   expect_equal(names(row), names(doseTableBlank))
   expect_true(all(unlist(row) == ""))
-  hot <- createHOT(doseTableBlank[0, ], getDrugDefaultsGlobal())
-  expect_equal(hot$x$rDataDim, c(1L, 4L))   # one row, four columns, in the widget's own data
+  msg <- doseGridRowsMessage(row, timeFormat("minutes", "relative"), 0)
+  expect_length(msg$rows, 1L)               # one row of four cells, as the grid draws it
+  expect_length(msg$rows[[1]], 4L)
 })
 
 test_that("scheduledDoseCount counts the repeats without building them", {
@@ -149,31 +150,31 @@ test_that("the Drug Library refuses a colour ggplot cannot read and units the do
   expect_length(drugLibraryProblems(edited, dd), 0)
 })
 
-test_that("a Drug Library threshold typed as text reaches the check through hot_to_r()", {
-  # hot_to_r() converts each column to the class the grid was given, so a
-  # numeric threshold column would hand back NA for "bogus", the same as a
-  # cleared cell; drugLibraryGridData() gives the grid those columns as text.
+test_that("a Drug Library threshold typed as text reaches the check through the grid", {
+  # A numeric threshold column would hand back NA for "bogus", the same as a
+  # cleared cell; the grid's threshold columns are text (drugLibraryGridColumns()),
+  # and tableGridRead() hands every cell back as typed.
   dd <- getDrugDefaultsGlobal()
   shown <- drugLibraryGridData(dd)
-  hot <- rhandsontable::rhandsontable(shown)
+  columns <- drugLibraryGridColumns(shown)
   # what the browser sends back: each row an array, null for a blank cell
   rows <- lapply(seq_len(nrow(shown)), function(r) {
     lapply(unname(as.list(shown[r, ])), function(v) if (is.na(v)) NULL else v)
   })
-  browser <- function(rows) list(data = rows, changes = list(event = "afterChange"), params = hot$x)
+  read <- function(rows) tableGridRead(tableGridInputValue(rows), columns, maxRows = nrow(dd))
   i <- which(shown$Drug == "propofol")
   lower <- match("Lower", names(shown))
-  untouched <- rhandsontable::hot_to_r(browser(rows))
+  untouched <- read(rows)
   expect_length(drugLibraryProblems(untouched, dd), 0)
   expect_equal(as.numeric(untouched$Lower), dd$Lower)
   expect_equal(as.numeric(untouched$MEAC), dd$MEAC)
   rows[[i]][[lower]] <- "bogus"
-  edited <- rhandsontable::hot_to_r(browser(rows))
+  edited <- read(rows)
   expect_identical(edited$Lower[i], "bogus")
   expect_match(drugLibraryProblems(edited, dd), "propofol Lower: \"bogus\"")
   # a cleared cell is still a legitimate "no band", not an error
   rows[[i]][lower] <- list(NULL)
-  expect_length(drugLibraryProblems(rhandsontable::hot_to_r(browser(rows)), dd), 0)
+  expect_length(drugLibraryProblems(read(rows), dd), 0)
 })
 
 test_that("the James lean body mass is held at its peak past the peak", {
@@ -267,17 +268,17 @@ test_that("removing every dose-table row leaves one blank row, not a dead sessio
     startFormatFromInputs(session)
     doseTable(doseTableInit)
     session$flushReact()
-    refresh <- doseTableRefresh()
-    grid <- createHOT(doseTableInit, drugDefaults(), doseTableFormat())$x
-    # What Handsontable reports after "Remove row" on the last row: no data
-    expect_no_error(session$setInputs(doseTableHTML = list(
-      data = list(), changes = list(event = "afterRemoveRow"), params = grid
-    )))
+    sent <- list()
+    session$sendInputMessage <- function(id, message) sent[[length(sent) + 1]] <<- message
+    # A grid with no rows (dose-grid.js never sends one; a forged message can)
+    expect_no_error(session$setInputs(doseGrid = doseGridInputValue(list())))
     draft <- doseTableDraft()
     expect_equal(nrow(draft), 1L)
     expect_true(all(unlist(draft) == ""))
-    expect_gt(doseTableRefresh(), refresh)                 # and the grid is redrawn
-    expect_no_error(createHOT(draft, drugDefaults(), doseTableFormat()))
+    expect_true(isTRUE(validateDoseTableInput(draft)))
+    # and the grid is sent that one blank row
+    rows <- Filter(function(m) !is.null(m$rows), sent)
+    expect_equal(lapply(rows[[length(rows)]]$rows, as.character), list(c("", "", "", "")))
   })
 })
 
@@ -344,6 +345,20 @@ test_that("a model that fails for the patient is said in the plot area, not a bl
     expect_match(plotMessage(), PLOT_FAILURE_PREFIX, fixed = TRUE)
     session$setInputs(creatinine = 1)
     expect_null(plotMessage())
+  })
+})
+
+# Devin's stress test (2026-11-08): numericInput(value = NA) wrote value="NA",
+# which a number input cannot take, and every page load logged "The specified
+# value "NA" cannot be parsed" twice (serum creatinine, gestational age).
+test_that("no number field is drawn with the value NA, and a blank field still reads as blank", {
+  html <- as.character(htmltools::renderTags(app_ui()(list()))$html)
+  expect_false(grepl('value="NA"', html, fixed = TRUE))
+  expect_match(html, 'id="creatinine"', fixed = TRUE)
+  expect_match(as.character(blankableNumericInput("x", "x", value = 1.2)), 'value="1.2"', fixed = TRUE)
+  shiny::testServer(app_server, {
+    session$setInputs(creatinine = NA, gestationalAge = NA)
+    expect_true(is.na(input$creatinine))
   })
 })
 

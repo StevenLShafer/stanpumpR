@@ -25,13 +25,17 @@ agentDocCode <- function(root, doc) {
 }
 
 # Every name assigned (`name <-`, `name =`) or declared (`function name`) in
-# the package's R code, its test helpers and its JavaScript.  Local functions
+# the package's R code, its test helpers and its JavaScript (inst/www, and
+# the visualizer's source in tools/viewer/src).  Local functions
 # and reactives inside app_server() count: AGENTS.md names them on purpose.
 agentDocDefinitions <- function(root) {
   files <- c(list.files(file.path(root, "R"), "\\.R$", full.names = TRUE),
              list.files(file.path(root, "tests", "testthat"), "^helper.*\\.R$",
                         full.names = TRUE),
-             list.files(file.path(root, "inst", "www"), "\\.js$", full.names = TRUE))
+             list.files(file.path(root, "inst", "www"), "\\.js$", full.names = TRUE),
+             # the Visualizer's source, whose functions AGENTS.md names
+             # (displayVolumes()); built into inst/www/stanpumpR-viewer.html
+             list.files(file.path(root, "tools", "viewer", "src"), "\\.js$", full.names = TRUE))
   unique(unlist(lapply(files, function(f) {
     lines <- readLines(f, warn = FALSE, encoding = "UTF-8")
     # a plain binding only: not a member (state$values$x <-) or the tail of
@@ -41,14 +45,22 @@ agentDocDefinitions <- function(root) {
                                 perl = TRUE)),
       sub("function\\s+", "",
           regmatches(lines, regexpr("function\\s+[A-Za-z_][A-Za-z0-9_]*", lines,
-                                    perl = TRUE))))
+                                    perl = TRUE))),
+      # a JavaScript method of an object literal (View's draw(st, ui) {),
+      # how the visualizer defines most of its functions
+      if (grepl("\\.js$", f)) {
+        m <- sub("\\s*\\(.*$", "",
+                 trimws(regmatches(lines, regexpr("^\\s*[A-Za-z_][A-Za-z0-9_]*\\s*\\([^()]*\\)\\s*\\{",
+                                                  lines, perl = TRUE))))
+        setdiff(m, c("if", "for", "while", "switch", "catch", "function"))
+      })
   })))
 }
 
 test_that("every function the orientation documents name exists", {
   root <- agentDocsRoot()
   defined <- agentDocDefinitions(root)
-  imports <- c("base", "stats", "utils", "shiny", "rhandsontable", "testthat")
+  imports <- c("base", "stats", "utils", "shiny", "testthat")
   inImports <- function(name)
     any(vapply(imports, function(pkg)
       requireNamespace(pkg, quietly = TRUE) && exists(name, envir = asNamespace(pkg)),

@@ -219,3 +219,148 @@ test_that("a blank Max time says what to enter, survives a change of unit, and r
 test_that("the Max time limit is the main simulator's longest, as the message says", {
   expect_equal(PAPER_REVIEW_MAX_TIME_LIMIT, 365 * MINS_PER_DAY)
 })
+
+# ChatGPT's fourth review of PR #683 (F01): a unit the paper's drug does not
+# offer, or a dose the grid refuses, sent by a browser that may send
+# anything, was simulated without a word ("g" as grams, anything else as mg).
+test_that("a dose row the grid would not send is said, not simulated", {
+  testthat::local_mocked_bindings(paperReviewApiKey = function(...) NULL)
+  shiny::testServer(paperReviewServer, {
+    session$setInputs(weight = 70, height = 170, age = 40, sex = "male", maximum = 240, example = 1)
+    units <- currentReview()$drug$units
+    expect_true("mg" %in% units)
+    expect_false("g" %in% units)
+    send <- function(...) session$setInputs(doses = tableGridInputValue(list(...)))
+    send(list("0", "1", "mg"))
+    expect_type(simulation(), "list")
+    for (row in list(list("0", "1", "g"), list("0", "1", "<img src=x onerror=alert(1)>"),
+                     list("0", "1000000001", "mg"), list("-1", "1", "mg"), list("1e10", "1", "mg"))) {
+      send(row, list("", "", ""))
+      expect_match(attr(dosesNow(), "problem"), "Row 1 cannot be simulated", info = row[[3]])
+      expect_error(simulation(), "Row 1 cannot be simulated", info = row[[3]])
+    }
+    # a row still being filled in is passed over, as before
+    send(list("0", "1", "mg"), list("10", "", ""))
+    expect_null(attr(dosesNow(), "problem"))
+    expect_type(simulation(), "list")
+    # and a change of unit carries only what could be read
+    send(list("0", "1", "mg"), list("5", "2", "g"))
+    session$setInputs(timeUnit = "h")
+    expect_equal(doseTable()$Units, "mg")
+    expect_null(attr(doseTable(), "problem"))
+  })
+})
+
+# Devin's stress test (2026-11-08), the smaller items.
+test_that("without a key the tab says so before anything is uploaded", {
+  testthat::local_mocked_bindings(paperReviewApiKey = function(...) NULL)
+  shiny::testServer(paperReviewServer, {
+    expect_match(as.character(output$keyNotice$html), "not enabled on this server")
+  })
+  testthat::local_mocked_bindings(paperReviewApiKey = function(...) "test-key")
+  shiny::testServer(paperReviewServer, {
+    expect_false(grepl("not enabled", paste(as.character(output$keyNotice$html), collapse = "")))
+  })
+})
+
+test_that("a small upload is in kB, and a review says the tokens it used", {
+  expect_equal(paperReviewSize(30 * 1024), "30 kB")
+  expect_equal(paperReviewSize(100), "1 kB")
+  expect_equal(paperReviewSize(2.5 * 1024^2), "2.5 MB")
+  expect_equal(paperReviewUsageText(list(input_tokens = 12000, cache_read_input_tokens = 345, output_tokens = 6789)),
+               " (12,345 tokens read, 6,789 written)")
+  expect_equal(paperReviewUsageText(list()), "")
+})
+
+test_that("a document with no model gets one line, not a review built around nothing", {
+  x <- paperReviewValidate(list(paper = list(title = "Sourdough"), drug = list(name = ""),
+                                structure = list(compartments = 0), extraction_limitations = "Not a PK paper.",
+                                reviewer_notes = list(list(topic = "Wrong document", finding = "A recipe.",
+                                                           severity = "error", location = "p. 1"))))
+  html <- as.character(paperReviewReportTags(paperReviewQuietly(function() paperReviewRun(x)), plots = FALSE))
+  expect_match(html, "found no pharmacokinetic model")
+  expect_match(html, "Wrong document")
+  expect_false(grepl("compartment\\(s\\)", html))
+  expect_false(paperReviewNoModel(paperReviewExample()))
+})
+
+test_that("a miss of more than tenfold is reported as a likely misreading", {
+  expect_true(paperReviewTenfold(2078.56))
+  expect_true(paperReviewTenfold(0.05))
+  expect_false(paperReviewTenfold(3))
+  ex <- paperReviewExample()
+  ex$derived_quantities[[4]]$value <- 148000          # Vss printed in mL, read as L
+  f <- Filter(function(z) grepl("^Vss as printed", z$title), paperReviewRun(ex)$findings)[[1]]
+  expect_equal(f$severity, "concern")
+  expect_match(f$title, "more than tenfold")
+  expect_match(f$detail, "misreading by Claude")
+})
+
+# Gemini's production audit of the new grids (2026-11-08, finding 6): a time
+# or dose validateDose() reads ("1,000") was dropped by as.numeric() without
+# a word, and a table cut to fit was read as if whole.
+test_that("Single Paper Review reads its doses as validateDose() does, and says a cut table", {
+  testthat::local_mocked_bindings(paperReviewApiKey = function(...) NULL)
+  shiny::testServer(paperReviewServer, {
+    session$setInputs(weight = 70, height = 170, age = 40, sex = "male", maximum = 240, example = 1)
+    session$setInputs(doses = tableGridInputValue(list(list("0", "1,000", "mg"))))
+    expect_equal(dosesNow()$Dose, 1000)
+    expect_null(attr(dosesNow(), "problem"))
+    # a row still being filled in is passed over, never read as time 0 (CodeRabbit)
+    session$setInputs(doses = tableGridInputValue(list(list("0", "1", "mg"), list("", "5", "mg"),
+                                                       list("10", "", "mg"))))
+    expect_equal(dosesNow()$Dose, 1)
+    expect_null(attr(dosesNow(), "problem"))
+    session$setInputs(doses = tableGridInputValue(rep(list(list("0", "1", "mg")), MAX_DOSE_ROWS)))
+    expect_match(attr(dosesNow(), "problem"), "at most 499 rows")
+  })
+})
+
+# CodeRabbit on PR #691: the grid was redrawn with four blank rows below the
+# doses whatever their number, so 496 to 499 doses came back over the limit
+# and were refused as a cut table; and a regimen longer than the grid holds
+# was loaded, to be cut by the browser or, silently, by a change of unit.
+test_that("Single Paper Review never draws or loads more rows than its grid holds", {
+  testthat::local_mocked_bindings(paperReviewApiKey = function(...) NULL)
+  limit <- MAX_DOSE_ROWS - 1L
+  shownRows <- function(ui) {
+    spec <- regmatches(ui$html, regexpr("data-spec=\"[^\"]*\"", ui$html))
+    spec <- gsub("&quot;", "\"", sub("^data-spec=\"(.*)\"$", "\\1", spec), fixed = TRUE)
+    spec <- gsub("&amp;", "&", spec, fixed = TRUE)
+    length(jsonlite::fromJSON(spec, simplifyVector = FALSE)$rows)
+  }
+  shiny::testServer(paperReviewServer, {
+    session$setInputs(weight = 70, height = 170, age = 40, sex = "male", maximum = 240, example = 1)
+    for (n in c(1L, limit - 4L, limit - 2L, limit)) {
+      doseTable(data.frame(Time = seq_len(n) - 1, Dose = 1, Units = "mg", stringsAsFactors = FALSE))
+      session$flushReact()
+      expect_equal(shownRows(output$dosesUI), min(n + 4L, limit), info = paste(n, "doses"))
+    }
+    # what the browser then sends back is whole, and simulates
+    session$setInputs(doses = tableGridInputValue(rep(list(list("0", "1", "mg")), limit)))
+    expect_null(attr(dosesNow(), "problem"))
+  })
+  regimenRows <- limit + 1L
+  testthat::local_mocked_bindings(paperReviewRegimenDoses = function(regimen) {
+    list(doses = data.frame(Time = 60 * (seq_len(regimenRows) - 1), Dose = 1, Units = "mg",
+                            stringsAsFactors = FALSE))
+  })
+  shiny::testServer(paperReviewServer, {
+    session$setInputs(weight = 70, height = 170, age = 40, sex = "male", maximum = 240, example = 1)
+    before <- doseTable()
+    session$setInputs(regimen = "R2", loadRegimen = 1)
+    expect_identical(doseTable(), before)
+    regimenRows <<- limit
+    session$setInputs(loadRegimen = 2)
+    expect_equal(nrow(doseTable()), limit)
+    # a forged value longer than the grid is not stored cut by a change of
+    # time unit (CodeRabbit, PR #691)
+    stored <- doseTable()
+    unit <- tableUnit()
+    session$setInputs(doses = tableGridInputValue(rep(list(list("0", "1", "mg")), limit + 1L)))
+    session$setInputs(timeUnit = if (identical(unit, "h")) "min" else "h")
+    expect_identical(doseTable(), stored)
+    expect_identical(tableUnit(), unit)
+    expect_match(attr(dosesNow(), "problem"), "at most 499 rows")
+  })
+})
