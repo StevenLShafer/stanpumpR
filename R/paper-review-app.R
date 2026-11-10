@@ -130,7 +130,7 @@ paperReviewHeader <- function(ns = shiny::NS(NULL))
       id = ns("reviewBusy"), class = "alert alert-info", role = "status",
       style = "position: fixed; top: 64px; left: 50%; transform: translateX(-50%); z-index: 2000; box-shadow: 0 2px 8px rgba(0,0,0,0.2);",
       htmltools::strong("Claude is reading the paper."),
-      " This takes a few minutes, and the app does not respond until it finishes.")))
+      " This takes a few minutes. Keep this page open; the rest of stanpumpR can be used meanwhile.")))
 }
 
 # The review's three tabs: Review, Simulator, Privacy and help.
@@ -249,21 +249,57 @@ paperReviewServer <- function(input, output, session)
   # pressed it unticked and got only a line of status text.
   hasPdf <- shiny::reactiveVal(FALSE)
   session$onSessionEnded(function() paperReviewDiscard(store))
-  # Can this server review a paper at all?  Without a key only the example
-  # runs, so nothing may be uploaded for nothing.
-  keyed <- !is.null(paperReviewApiKey(NULL))
-  output$keyNotice <- shiny::renderUI(if (!keyed) htmltools::div(
-    class = "alert alert-warning", role = "status", style = "font-size: 0.9em; padding: 8px 10px;",
-    htmltools::strong("Reviews are not enabled on this server yet. "),
-    "Uploading is turned off; the example below still works, and sends nothing."))
+  # Can this server review a paper at all?  With the operator's key
+  # (Shafer's, the default for now: R/paper-review-usage.R counts its uses)
+  # or a key the user enters for this session; without either only the
+  # example runs, so nothing may be uploaded for nothing.
+  serverKeyed <- !is.null(paperReviewApiKey(NULL))
+  # The user's own key, held only in this session's input: never stored,
+  # logged or bookmarked (app_server() keeps every paperReview- input out of
+  # the URL; the review app has bookmarking off).
+  ownKey <- shiny::reactive(paperReviewOwnKey(input$ownKey))
+  keyed <- shiny::reactive(serverKeyed || !is.null(ownKey()))
+  output$keyNotice <- shiny::renderUI(htmltools::tagList(
+    if (!serverKeyed) htmltools::div(
+      class = "alert alert-warning", role = "status", style = "font-size: 0.9em; padding: 8px 10px;",
+      htmltools::strong("Reviews on this server need your own Anthropic API key. "),
+      "Enter it below to turn uploading on; the example still works without one, and sends nothing."),
+    htmltools::tags$details(
+      open = if (!serverKeyed) NA, style = "font-size: 0.9em; margin-bottom: 10px;",
+      htmltools::tags$summary(if (serverKeyed) "Use your own Anthropic API key (optional)"
+                              else "Your Anthropic API key"),
+      shiny::passwordInput(session$ns("ownKey"), NULL, placeholder = "sk-ant-..."),
+      htmltools::p(class = "text-muted", style = "margin-bottom: 0;",
+        if (serverKeyed) "Reviews use stanpumpR's own key unless you enter yours. ",
+        "Your key is held only in this page's session, sent only to Anthropic with your review ",
+        "(which your Anthropic account then pays for), and never saved or logged."),
+      shiny::uiOutput(session$ns("ownKeyNote")))))
+  output$ownKeyNote <- shiny::renderUI({
+    typed <- input$ownKey
+    if (!is.character(typed) || !nzchar(trimws(typed))) return(NULL)
+    if (is.null(ownKey()))
+      htmltools::p(class = "text-danger", style = "margin: 4px 0 0;",
+                   "That is not an Anthropic API key (they begin sk-ant-), so it is not used.")
+    else htmltools::p(class = "text-success", style = "margin: 4px 0 0;", "Your key will be used.")
+  })
+  # The review runs in a background process (paperReviewExtractAsync()), so
+  # this session and every other on the worker stay live while it runs.
+  reviewTask <- shiny::ExtendedTask$new(function(pdf, supplement, key, inferenceGeo, shared)
+    paperReviewTrackUse(
+      paperReviewExtractAsync(pdf, supplement, key = key, inferenceGeo = inferenceGeo),
+      shared = shared))
+  reviewing <- shiny::reactive(identical(reviewTask$status(), "running"))
+  # Is the running review still wanted?  Discarding while Claude reads the
+  # paper means its answer is dropped when it comes.
+  awaited <- shiny::reactiveVal(FALSE)
   shiny::observe({
-    consent <- isTRUE(input$consent) && keyed
-    shinyjs::toggleState("consent", condition = keyed)
+    consent <- isTRUE(input$consent) && keyed()
+    shinyjs::toggleState("consent", condition = keyed())
     shinyjs::toggleState("manuscript", condition = consent)
     shinyjs::toggleState("supplement", condition = consent)
-    shinyjs::toggleState("review", condition = hasPdf() && consent)
+    shinyjs::toggleState("review", condition = hasPdf() && consent && !reviewing())
     # Discard is live only when there is something to discard.
-    shinyjs::toggleState("discard", condition = hasPdf() || !is.null(review()))
+    shinyjs::toggleState("discard", condition = hasPdf() || !is.null(review()) || reviewing())
   })
 
   receive <- function(file, slot, label) {
@@ -297,24 +333,33 @@ paperReviewServer <- function(input, output, session)
   }
 
   shiny::observeEvent(input$review, {
+    if (reviewing()) return(status("A review is already running."))
     if (!exists("pdf", envir = store)) return(status("Upload a manuscript first."))
     if (!isTRUE(input$consent)) return(status("Tick the box to confirm the manuscript may be sent."))
-    key <- paperReviewApiKey(if (exists("sessionKey", envir = store)) store$sessionKey else NULL)
-    if (is.null(key)) return(status("No Anthropic API key is configured on this server."))
-    # Custom messages go to the browser at once, before the call blocks.
+    own <- ownKey()
+    key <- paperReviewApiKey(own)
+    if (is.null(key)) return(status("No Anthropic API key is configured on this server; enter your own."))
     shinyjs::show("reviewBusy")
     shinyjs::disable("review")
-    on.exit(shinyjs::hide("reviewBusy"), add = TRUE)
-    result <- tryCatch(
-      paperReviewExtract(store$pdf, if (exists("supplement", envir = store)) store$supplement,
-                         key = key,
-                         inferenceGeo = paperReviewConfig("paper_review_inference_geo")),
-      paper_review_error = function(e) e,
-      error = function(e) paperReviewError("unexpected", "The review failed unexpectedly."))
+    status("Claude is reading the paper.")
+    awaited(TRUE)
+    reviewTask$invoke(store$pdf, if (exists("supplement", envir = store)) store$supplement,
+                      key, paperReviewConfig("paper_review_inference_geo"), is.null(own))
     rm(key)
-    # The manuscript is not needed again: drop it whatever the outcome.
+    # The manuscript is not needed again: the request holds it until it is
+    # sent, and the session drops it now, whatever the outcome.
     suppressWarnings(rm(list = intersect(c("pdf", "supplement"), ls(store)), envir = store))
     hasPdf(FALSE)
+  })
+
+  shiny::observeEvent(reviewTask$status(), {
+    if (reviewTask$status() %in% c("initial", "running")) return()
+    shinyjs::hide("reviewBusy")
+    if (!awaited()) return()
+    awaited(FALSE)
+    result <- tryCatch(reviewTask$result(),
+      paper_review_error = function(e) e,
+      error = function(e) paperReviewError("unexpected", "The review failed unexpectedly."))
     if (inherits(result, "paper_review_error")) {
       status(paste(conditionMessage(result), "The manuscript has been discarded; upload it again to retry."))
       return()
@@ -324,7 +369,7 @@ paperReviewServer <- function(input, output, session)
     status(paste0("Reviewed", paperReviewUsageText(result$usage), ". The manuscript itself has been ",
                   "discarded; the extraction is held in this session's memory until you discard it ",
                   "or close the page."))
-  })
+  }, ignoreInit = TRUE)
 
   shiny::observeEvent(input$example, {
     runReview(paperReviewExample(), example = TRUE)
@@ -333,6 +378,8 @@ paperReviewServer <- function(input, output, session)
 
   shiny::observeEvent(input$discard, {
     paperReviewDiscard(store)
+    awaited(FALSE)
+    shinyjs::hide("reviewBusy")
     hasPdf(FALSE)
     bump()
     status("Discarded. Nothing about the paper remains in this session.")
@@ -649,8 +696,11 @@ paperReviewConfig <- function(name, default = NULL)
 #' A separate app from \code{run_app()}: upload one pharmacokinetic
 #' manuscript, have Claude extract its model through the Anthropic API, read a
 #' review of it computed in stanpumpR, and simulate the paper's drug.  The API
-#' key is read from the \code{ANTHROPIC_API_KEY} environment variable or
-#' \code{anthropic_api_key} in the config file.  See
+#' key is the user's own, entered for the session, or else the operator's,
+#' read from the \code{STANPUMPR_ANTHROPIC_API_KEY} or
+#' \code{ANTHROPIC_API_KEY} environment variable or \code{anthropic_api_key}
+#' in the config file (unless \code{paper_review_shared_key} is
+#' \code{false}).  See
 #' \code{docs/paper-review.md} and \code{docs/paper-review-privacy.md}.
 #'
 #' @param config_file Path to a YAML configuration file, read by

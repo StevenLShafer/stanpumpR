@@ -64,10 +64,12 @@ models. Claude is allowed to see coarse metadata."
   Never content: not the manuscript or any part of it, its file name or size,
   its title, authors or journal, the drug's name, any parameter value,
   covariate, regimen or figure point, the extraction, the review's findings,
-  or the API key. Today the app records none of this, not even the coarse
-  metadata: the token usage is held in the session's memory and discarded
-  with it. If logging is ever added, it is limited to this list. **This
-  definition is for Shafer to confirm or narrow.**
+  or the API key. Since 2026-11-10 the app records exactly this list, and
+  only for a review sent with the operator's own key (Shafer: "track usage
+  and let me know how often it is used"): one line on the server log and one
+  email to the operator per review (`R/paper-review-usage.R`). A review sent
+  with a user's own key records nothing. **This definition is for Shafer to
+  confirm or narrow.**
 
   The rule governs what is recorded and reused. Anthropic necessarily
   processes the whole of each request to answer it, and its automated safety
@@ -105,7 +107,9 @@ These are statements about this code. Each names the function that does it.
    (closing the tab, or a disconnection), whichever comes first
    (`paperReviewDiscard()`, called from `session$onSessionEnded()`).
 6. **No logging.** The app writes nothing about the manuscript, its
-   extraction or its review to the console, the server log or any file. Its
+   extraction or its review to the console, the server log or any file; the
+   only line it writes is the coarse metadata of a review made with the
+   operator's key (section 1a). Its
    computations run with stanpumpR's comment log switched off, and warnings
    are captured rather than printed (`paperReviewQuietly()`). Errors are shown
    to the user only, through Shiny's validation messages, which Shiny does not
@@ -226,10 +230,12 @@ Every quotation below must be checked against the live page before use.
   uploading a manuscript under review to an AI service at all. That is the
   reviewer's obligation; the app should say so (it does, in its help page).
 
-## 6. Bring your own key (designed for, not built)
+## 6. Bring your own key (built 2026-11-10)
 
-`paperReviewApiKey()` takes a key held in the session's store before the
-server's. A later version can let a user paste their own Anthropic key, held
-only in that session's memory and discarded with it. The user's organisation
-then becomes the Anthropic customer for that request, under its own terms
-with Anthropic, and this document would need a second column for that case.
+A user may enter their own Anthropic key in the tab; `paperReviewApiKey()`
+takes it before the operator's. It is held only in that session's input
+(never stored, logged or put in a bookmark), sent only in the request header,
+and discarded with the session. The user's organisation then becomes the
+Anthropic customer for that request, under its own terms with Anthropic, and
+this document would need a second column for that case. Reviews made with a
+user's key are not counted or reported.

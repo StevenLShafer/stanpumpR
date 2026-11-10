@@ -49,9 +49,14 @@ without sending anything anywhere.
 - Those are removed when you press **Discard the paper now**, or when you
   close the page or your session ends, whichever is first.
 - The app keeps no log of manuscripts or of what was extracted, and adds
-  nothing to stanpumpR's paper archive or drug library. At most it may count
-  reviews and record their token use, timing and success or failure; never
-  their content.
+  nothing to stanpumpR's paper archive or drug library. When a review uses
+  stanpumpR's own Anthropic key, the operator is told that a review was made,
+  when, its token use, how long it took and whether it succeeded; never its
+  content.
+- You may use your own Anthropic API key instead (**Use your own Anthropic
+  API key**). It is held only in your session, sent only to Anthropic with
+  your review, never saved or logged, and the review is then billed to your
+  Anthropic account; nothing about it is reported to the operator.
 - Your manuscript and the model extracted from it may not be used to train
   any AI model. That is the operator's requirement. On Anthropic's side it
   rests on Anthropic's commercial terms, which bar training on API content
