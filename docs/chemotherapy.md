@@ -693,3 +693,27 @@ Ibarra 2023; Perez-Blanco 2016 (44 adults) is never chosen while Joerger 2007
 (59) covers the patient; oxaliplatin is Nikanjam 2015 (186 patients, 0.6-86
 years) for nearly everyone, Bastian 2003 only beyond 86.  `cytarabine`
 (section 38) predates the selector and still chooses inside its function.
+
+## 40. Four open-access papers read (2026-11-10)
+
+Read from PubMed Central (the tables through the article pages):
+
+- **Ifosfamide, Kerbusch 2000** (C10): one compartment whose clearance is
+  CL 2.94 L/h times an enzyme amount induced by the drug (Kenz,out 0.0546 /h,
+  IC50 30.7 uM on degradation), V 43.5 L, no covariates, 15 adults.  The
+  equations are images not reached here; the form is inferred from the prose
+  and is to be confirmed on the PDF.  Needs a nonlinear engine with an enzyme
+  state carried across cycles (`needs_engine`).
+- **PEG-asparaginase, Wurthwein 2021** (C38a): the parameters are printed, but
+  the transit chain that makes clearance rise after each dose is only in the
+  supplement's control stream or in Wurthwein 2017 (N12).
+- **Daunorubicin, Varatharajan 2016** (C23): complete for the parent (CL 270
+  L/h, against Bogason's 115) but with no formation link to daunorubicinol, no
+  dose basis, a 47% residual error and a patient count that does not add up.
+  With 70 patients it would displace Bogason 2011 (40) under the selector, so
+  it waits for Shafer's decision.
+- **Epirubicin, Ralph 2004** (C24): a limited-sampling study on Ralph 2003's
+  model (N10), whose final parameters Ralph 2006 (N11) reprints with an AST
+  term that reaches zero clearance at 1650 U/L and an external validation that
+  over-predicted concentrations by 81%.  Ralph 2003's full text is needed to
+  settle its two printed parameter sets.

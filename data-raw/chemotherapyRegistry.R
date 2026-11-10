@@ -204,6 +204,9 @@ N06	10473105	Reid	1999	Clin Cancer Res	5(8):2192-7			Metabolic activation of dac
 N07	21204910	Bogason	2011	Br J Clin Pharmacol	71(4):514-21	10.1111/j.1365-2125.2010.03894.x		Inverse relationship between leukaemic cell burden and plasma concentrations of daunorubicin in patients with acute myeloid leukaemia.
 N08	25557868	Nikanjam	2015	Cancer Chemother Pharmacol	75(3):495-503	10.1007/s00280-014-2667-6	PMC4344382	Population pharmacokinetic analysis of oxaliplatin in adults and children identifies important covariates for dosing.
 N09	30446786	Deyme	2018	Cancer Chemother Pharmacol	83(1):27-42	10.1007/s00280-018-3722-5		Population pharmacokinetics of FOLFIRINOX: a review of studies and parameters.
+N10	12764671	Ralph	2003	Cancer Chemother Pharmacol	52(1):34-40	10.1007/s00280-003-0608-x		A population model of epirubicin pharmacokinetics and application to dosage guidelines.
+N11	16842378	Ralph	2006	Br J Clin Pharmacol	62(1):47-55	10.1111/j.1365-2125.2006.02584.x	PMC1885074	Assessment of the validity of a population pharmacokinetic model for epirubicin.
+N12	28349335	Wurthwein	2017	Eur J Drug Metab Pharmacokinet	42(6):955-963	10.1007/s13318-017-0410-5		Population pharmacokinetics to model the time-varying clearance of the PEGylated asparaginase Oncaspar in children with acute lymphoblastic leukemia.
 ", sep = "\t", header = FALSE, quote = "", colClasses = "character",
   col.names = c("source_id", "pmid", "first_author", "year", "journal",
                 "volume_pages", "doi", "pmcid", "title"))
@@ -211,14 +214,14 @@ pubmedSources[pubmedSources == ""] <- NA
 
 # How far each PubMed document was read here.  Every abstract was screened;
 # the PubMed Central text (without tables or equations) was read for these.
-FULL_TEXT_PARTIAL <- c("P05", "P13", "C12", "C15", "C35", "N04")
+FULL_TEXT_PARTIAL <- c("P05", "P13", "C12", "C15", "C35", "N04", "C10", "C38a")
 pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
                              "guideline", "primary_study")
 # Read in full: every parameter the model uses, from the PubMed Central
 # text, the PDF still to confirm (FULL_TEXT_READ); or confirmed on the PDF
 # itself (PARAMETERS_VERIFIED: Briki 2026 and Lindemalm 2005, supplied by
 # Shafer 2026-11-06)
-FULL_TEXT_READ <- c("C01", "P02", "C35", "C03", "C37a", "C34", "P16", "C21", "C07", "P15", "P08", "C19", "P21", "P25")
+FULL_TEXT_READ <- c("C01", "P02", "C35", "C03", "C37a", "C34", "P16", "C21", "C07", "P15", "P08", "C19", "P21", "P25", "C23", "C24", "N11")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
 PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18", "C05", "C06", "N08", "N09")
@@ -613,7 +616,11 @@ registry <- rbind(
     readiness = "implemented", stanpumpr_drug = "pemetrexed"),
   m("ifosfamide__sarcoma__kerbusch2000", "ifosfamide", "ifosfamide", "IV",
     "15 adults with soft-tissue sarcoma, 72-h infusion", "ifosfamide",
-    "one compartment with enzyme-turnover autoinduction", "expansion", "new_engine", "C10"),
+    "one compartment with enzyme-turnover autoinduction: CL 2.94 L/h x enzyme amount, V 43.5 L, Kenz,out 0.0546 /h, IC50 30.7 uM on enzyme degradation; no covariates",
+    "expansion", "new_engine", "C10",
+    "PubMed Central text and Table 1 read 2026-11-10; equations 1-4 are images not reached, their form inferred from the prose (CLapp = CL x A2; degradation inhibited by Cp/(IC50 + Cp)), to confirm on the PDF. 15 adults, 23-72 years, 49-82 kg, 9-12 g/m2 over 72 h. The model runs in umol (molecular weight not printed). Table 2's AUC unit (um h) cannot be right. Needs a nonlinear engine with an enzyme state carried across cycles.",
+    readiness = "needs_engine",
+    to_obtain = "Kerbusch 2000 (PMID 10848719, PMC2015043): the PDF, for equations 1-4."),
   m("ifosfamide__sclc__kerbusch2001", "ifosfamide", "ifosfamide", "IV",
     "14 adults with small-cell lung cancer", "ifosfamide, 2- and 3-dechloroethylifosfamide, 4-hydroxyifosfamide",
     "autoinduction with metabolite compartments", "expansion", "new_engine", "C11",
@@ -670,7 +677,8 @@ registry <- rbind(
     "1374 children with ALL (1253 for validation)", "asparaginase activity",
     "population model of activity; clearance and volume depend on treatment phase; age over 8 and sex",
     "expansion", "unknown", "C38a",
-    "Activity units (IU) are carried. Phase-dependent parameters might be PK events; silent inactivation is not modelled."),
+    "PubMed Central text and Tables 1-3 read 2026-11-10: IV PEG-asparaginase (Oncaspar), 2545 children 1-17.9 years, BSA 0.41-2.42 m2; V 1.69 L/m2, CL initial 0.126 and Q_tr (= CL induced) 0.918 L/day/m2 at BSA 0.79, linear BSA terms, dose and phase (second induction dose, reinduction), age over 8 and sex on CL. The number of transit compartments and where the clearance rises are printed only in the supplement's control stream or in Wurthwein 2017. Activity in U/L; patients with inactivation excluded.",
+    to_obtain = "Wurthwein 2021 supplement 13318_2021_670_MOESM1_ESM.docx (sections 2 and 4), or Wurthwein 2017 (PMID 28349335) in full: the transit chain."),
   none("calaspargase__none", "asparaginase", "calaspargase pegol", "IV", "expansion",
        "No source model identified in this review; pegaspargase's does not transfer."),
   none("asparaginase_ecoli_native__none", "asparaginase", "native E. coli asparaginase", "IM or IV", "expansion",
@@ -697,12 +705,20 @@ registry <- rbind(
     readiness = "implemented", stanpumpr_drug = "daunorubicin"),
   m("daunorubicin__aml__varatharajan2016", "daunorubicin", "daunorubicin (conventional)", "IV",
     "70 adults with de novo AML", "daunorubicin and daunorubicinol",
-    "parent and metabolite (Monolix); pharmacogenetics", "expansion", "linear_metabolite", "C23",
-    "Not the fixed-ratio liposomal daunorubicin-cytarabine product."),
+    "two compartments each for daunorubicin (CL 269.8 L/h, V 15.0 L, k12 22.4, k21 0.6 /h) and daunorubicinol (CL 23.6 L/h, V 7.6 L, k12 32.0, k21 0.4 /h); no covariates",
+    "expansion", "linear_metabolite", "C23",
+    "PubMed Central text and Tables 1-2 read 2026-11-10. 70 adults 16-60 years (Table 1 lists 42 men and 33 women, 75); day 1 only, 7 samples to 24 h; residual error 47% (parent). How daunorubicinol is formed (fraction, metabolite volume) is not stated, and nor is the dose basis; clearance is 2.3 times Bogason 2011's. Not implemented: with 70 patients against Bogason's 40 it would become the program's choice for adults 16-60 (decision for Shafer, 2026-11-10).",
+    readiness = "complete_not_implemented"),
   m("epirubicin__adult__ralph2004", "epirubicin", "epirubicin", "IV",
     "105 + 18 adults with breast cancer or hepatocellular carcinoma", "epirubicin",
-    "limited-sampling MAP Bayesian clearance on an underlying population model", "expansion", "unknown", "C24",
-    "The underlying population model is what is needed; MAP sampling validation is not clinical validation."),
+    "limited-sampling MAP Bayesian clearance on Ralph 2003's population model", "expansion", "linear", "C24",
+    "PubMed Central text read 2026-11-10: fits no model of its own; its Methods print Ralph 2003's no-covariate set (CL 28, V1 9.88, Q2 29.0, V2 35.2, Q3 60.3 L/h, V3 780 L) and cite it to the wrong reference.",
+    readiness = "complete_not_implemented"),
+  m("epirubicin__breast__ralph2003", "epirubicin", "epirubicin", "IV",
+    "105 women with advanced breast cancer (109 in the abstract), 35-79 years, 37-89 kg", "epirubicin",
+    "three compartments: CL 72.9 x (1 - 0.135 ln AST) L/h, V1 10.3, Q2 30.2, V2 35.7, Q3 61.5 L/h, V3 772 L (as Ralph 2006 Table 4 reprints it)",
+    "expansion", "linear", "N10",
+    "Abstract read; the final model is reprinted in Ralph 2006 (N11, PubMed Central), whose Table 2 gives 74.9 and 0.139 instead. Clearance reaches zero at AST 1650 U/L (studied 7-815) and AST has no Patient Profile field; women only; no size term; sampled to 48 h; the salt basis is not stated. Ralph 2006's external validation over-predicted concentrations by 81%."),
   m("idarubicin__children__reid1990", "idarubicin", "idarubicin", "IV and PO",
     "21 children with relapsed leukaemia", "idarubicin, idarubicinol, CSF",
     "classical three compartments; idarubicinol half-life 56.8 h", "expansion", "linear", "C25",
@@ -771,6 +787,8 @@ relations <- rbind(
   r(withSource$source_id, withSource$drug, "structural_pk", withSource$model_id),
   r("P01", "carboplatin", "dosing_formula", note = "The Calvert formula: a dose from GFR and a target AUC, not a concentration model."),
   r("G06", "carboplatin", "dosing_guideline"),
+  r("N11", "epirubicin", "external_validation", "epirubicin__breast__ralph2003", "Reprints the final model (Table 4) and validates it: internally sound, but in 79 Uppsala patients it over-predicted concentrations by 81% and clearance's imprecision was 43%."),
+  r("N12", "asparaginase", "structural_pk", "pegaspargase__all__wurthwein2021", "The transit-chain structure the 2021 model simplifies; abstract read."),
   r("N09", "oxaliplatin", "external_validation", "oxaliplatin__pedsadult__nikanjam2015", "A review of FOLFIRINOX population models, not new data: it tabulates Nikanjam 2015 at the cohort medians, a check of the transcription, which the oxaliplatinNikanjam test reproduces."),
   r("G14", "carboplatin", "dosing_guideline", note = "Linked to carboplatin, as the handoff asks."),
   r("L01", "carboplatin", "product_label"),
