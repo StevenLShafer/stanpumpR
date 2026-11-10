@@ -98,6 +98,15 @@ the stricter of the two:
   the iPhone 16 Playwright's own navigation did not survive BrowserStack's
   translation.
 
+On a real Android phone two things differ. The page's load event comes late
+through the tunnel, so a case waits for the startup menu, and the reload for
+a connected Shiny, not for the load. With the keyboard up, bringing a target
+below it into view pans the visual viewport, and Playwright's check that
+nothing covers a target does not allow for the pan: it found the rows above
+the target and refused the tap. So on Android a tap scrolls its target into
+view itself, asks the page whether the target is on top there, and is sent
+without that check (`tapOn()`); each case checks what its tap did.
+
 On a phone the dose table's sidebar starts collapsed, so each case opens it
 with its toggle, as a user does.
 
