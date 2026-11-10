@@ -40,11 +40,6 @@ on:
           - all
           - dose-grid.test.js
           - table-grid.test.js
-  # TEMPORARY, to run the phone suite once on a real iPhone on the pull
-  # request that adds it; removed before it is merged
-  pull_request:
-    paths:
-      - tests/playwright/phone.test.js
 
 permissions:
   contents: read
@@ -94,7 +89,7 @@ jobs:
       - name: Install Playwright and BrowserStack Local
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-          PLATFORM: ${{ inputs.platform || 'iphone-16' }}
+          PLATFORM: ${{ inputs.platform }}
         run: |
           version="$PLAYWRIGHT_VERSION"
           case "$PLATFORM" in
@@ -109,9 +104,9 @@ jobs:
         env:
           BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
           BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
-          STANPUMPR_BROWSERSTACK: ${{ inputs.platform || 'iphone-16' }}
+          STANPUMPR_BROWSERSTACK: ${{ inputs.platform }}
           STANPUMPR_RSCRIPT_ARGS: --no-init-file
-          FILES: ${{ inputs.files || 'all' }}
+          FILES: ${{ inputs.files }}
         run: |
           if [ "$FILES" = "all" ]; then node tests/playwright/run.js; else node tests/playwright/run.js "$FILES"; fi
 
