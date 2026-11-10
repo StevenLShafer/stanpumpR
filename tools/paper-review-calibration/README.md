@@ -66,6 +66,8 @@ network secret. Never print it: check it with
    what a choice offered to the user should say about each level. Then update
    decision 8, the time estimates in `inst/paper-review/help.md` and the busy
    banner (`paperReviewHeader()`).
-7. Tell Shafer to delete the variable and revoke the key.
+7. Tell Shafer to delete the variable and revoke the key. (Shafer,
+   2026-11-10: the key stays in the Default environment, so that others can
+   run the calibration and test the app.)
 
 (Claude Code, 2026-11-10.)

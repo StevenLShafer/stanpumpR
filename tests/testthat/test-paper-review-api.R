@@ -20,6 +20,9 @@ test_that("the manuscript goes inline as base64, never through the Files API or 
   # The schema rides in the instructions, not as a structured output.
   expect_null(body$output_config$format)
   expect_equal(body$output_config$effort, "high")
+  # The calibration's decision (docs/paper-review-calibration.md): high, with
+  # the model's 128,000 output tokens, since high used up to 56,348.
+  expect_equal(body$max_tokens, 128000)
   expect_match(body$system, "The JSON schema:", fixed = TRUE)
   expect_true(body$stream)
   expect_equal(body$fallbacks, "default")

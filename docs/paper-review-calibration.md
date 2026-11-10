@@ -244,7 +244,7 @@ shinyapps.io worker, or the background process.
 
 ## Recommendation (for decision 8)
 
-1. **Keep `high` as the default.** It is the lowest level that reads every
+1. **Keep `high` as the default** (decided: Shafer, 2026-11-10). It is the lowest level that reads every
    modern paper's model in full (0.99 of the main-text card numbers, against
    0.94 at `medium`), finds 94% of the known problems (84% at `medium`), and
    never failed: median 3.5 minutes, longest 7, about $0.78 a review.
@@ -269,7 +269,7 @@ shinyapps.io worker, or the background process.
    $0.24 a review: at the planned 200 shared-key reviews, about $48. That is
    too small to justify a lower default; the case for `medium` is time,
    not money.
-3. **Raise `max_tokens` from 64,000 to 128,000.** `high` used up to 56,348
+3. **Raise `max_tokens` from 64,000 to 128,000** (done: Shafer, 2026-11-10). `high` used up to 56,348
    (88% of the limit) on an eight-page paper with twelve per-patient fits; a
    paper with more models would exceed it and fail with nothing to show. The
    limit costs nothing unless it is used, and a review that needs the tokens

@@ -621,9 +621,14 @@ allowed to learn from my models. Claude is allowed to see coarse metadata."
    128,000 (`high` used up to 56,348); keep the 20-minute limit. The same
    request that stalled on production for Hallik 2020 took 2.4 and 3.1
    minutes here, so the stall was not the model's reading time. Still for
-   Shafer: whether to offer the choice at all, and the `max_tokens` change.
+   Shafer: whether to offer the choice at all.
    The calibration also found that most error findings on these verified
    papers are false alarms from the checks themselves (a group that is not a
    model checked as one, conditions the `at` patient cannot carry, decrement
    times without their infusion, an individual compared with a group's
    model), which no choice of effort cures.
+
+   **Decided** (Shafer, 2026-11-10): `max_tokens` raised to 128,000 and
+   `high` kept as the default (`PAPER_REVIEW_MAX_TOKENS`,
+   `PAPER_REVIEW_EFFORT` in `R/paper-review-api.R`). Still open: whether to
+   offer the user a choice of effort.

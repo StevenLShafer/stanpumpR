@@ -44,6 +44,7 @@ outDir <- Sys.getenv("CALIB_RESULTS")
 stopifnot(nzchar(outDir), dir.exists(outDir))
 PRICE_IN <- 4 / 1e6
 PRICE_OUT <- 20 / 1e6
+# The app's limit when the calibration ran; 128,000 since (Shafer, 2026-11-10).
 APP_MAX_TOKENS <- 64000
 APP_TIMEOUT_SEC <- 1200
 
