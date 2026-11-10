@@ -595,3 +595,15 @@ allowed to learn from my models. Claude is allowed to see coarse metadata."
    download is the only copy that outlives a session. Recorded as a
    requirement in `docs/paper-review-privacy.md` section 1a, and said to
    users in `inst/paper-review/help.md` (*Nothing is kept on the server*).
+8. `[decision]` **The effort level, and whether users choose it** (asked
+   2026-11-10). The app runs Claude Opus 5.5 at effort `high` (Shafer: "I
+   care more about getting this right than getting fast answers. Also, I am
+   not constrained by cost. However, my defaults are not necessarily the
+   right defaults for a program that is publicly available, or for a program
+   where I'm footing the initial bill for test users."). He pictures a
+   slider from "fast, inexpensive, less accurate" to "slow, expensive, more
+   accurate". To be decided on the calibration in
+   `tools/paper-review-calibration/` (20 library papers scored against their
+   digest cards at all five effort levels): the default level, whether the
+   choice is offered and how each level is described, and the app's
+   64,000-token and 20-minute limits.
