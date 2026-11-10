@@ -18,4 +18,4 @@ Plasma epirubicin, in ng/mL. Doses are entered as epirubicin hydrochloride, the 
 
 - **An external test failed.** In 79 patients from another centre given FEC, the model over-predicted concentrations by 81% (Ralph 2006).
 - **Women only, first cycle, samples to 48 hours.** The 772-L terminal volume rests on little data.
-- **Pregnancy:** with Pregnant ticked, van Hasselt 2014's factors are applied (clearance ×1.10, central volume ×1.55, the smaller peripheral volume ×2.08), from 10 pregnant women; the typical exposure falls about 8%.
+- **Pregnancy:** with Pregnant ticked, Janssen 2021's factors are applied: the central volume ×1.79 and the smaller peripheral volume ×2.94, from 16 pregnant women; they found no change in clearance, so the exposure barely changes and the peak falls.

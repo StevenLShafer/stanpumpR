@@ -65,21 +65,23 @@
 #
 # PREGNANCY (R/pregnancy.R)
 # =========================
-# van Hasselt JGC, van Calsteren K, Heyns L, et al.  Ann Oncol 2014;25:2059-
-# 2065 (doi 10.1093/annonc/mdu140), PDF supplied by Shafer 2026-11-10: a
-# three-compartment model of epirubicin pooled from 57 nonpregnant patients
-# and 10 pregnant women (20 cycles, 19-36.9 gestational weeks, 100 mg/m2 over
-# 30 min), with one discrete pregnancy factor per parameter (Table 2):
+# Janssen JM, Van Calsteren K, Dorlo TPC, et al.  Population pharmacokinetics
+# of docetaxel, paclitaxel, doxorubicin and epirubicin in pregnant women.  Clin
+# Pharmacokinet 2021;60:775-784 (doi 10.1007/s40262-020-00961-4), PDF read
+# 2026-11-10: the same group's update of van Hasselt 2014 (Ann Oncol 25:2059),
+# 16 pregnant women (22 cycles, 19.0-34.0 weeks) and 66 nonpregnant patients,
+# three compartments with one discrete pregnancy factor per parameter (Table
+# 2):
 #
-#     CL x 1.10 (RSE 9%)   V1 x 1.55 (13%)   V2 x 2.08 (25%)   V3 x 1 (fixed)
+#     V1 x 1.79 (95% CI 1.49-2.12)   V2 x 2.94 (1.91-4.29)   CL: no effect
 #
-# its V2 (10 L, Q 14.5 L/h) the shallow peripheral compartment and its V3
-# (1110 L, Q 70.7 L/h) the deep one, as Ralph's V2 (35.7 L, Q 30.2) and V3
+# its V2 (9.90 L, Q 14.5 L/h) the shallow peripheral compartment and its V3
+# (1100 L, Q 69.6 L/h) the deep one, as Ralph's V2 (35.7 L, Q 30.2) and V3
 # (772 L, Q 61.5) are; so the factors are carried onto Ralph's compartments by
-# that correspondence, the intercompartmental clearances unchanged (no factor
-# was estimated on them).  The typical AUC falls 8.2% (the paper's Table 3).
-# Applied under `pregnant`, for the third trimester (the factor was fitted as
-# one effect over 19-36.9 weeks).
+# that correspondence, clearance and the intercompartmental clearances
+# unchanged.  It supersedes van Hasselt 2014 (10 pregnant women: CL x 1.10, V1
+# x 1.55, V2 x 2.08), whose clearance effect the larger data set did not
+# confirm.  Applied under `pregnant`.
 # NO EFFECT SITE, NO BAND
 # -----------------------------------------------------------------------------
 
@@ -90,8 +92,8 @@ EPIRUBICIN_RALPH <- list(
 )
 EPIRUBICIN_AST_RANGE <- c(7, 815)    # IU/L, the range studied
 EPIRUBICIN_REFERENCE_AST <- 20       # IU/L, a normal AST, for a blank field
-# van Hasselt 2014, Table 2: pregnancy factors on CL, V1 and the shallow V2
-EPIRUBICIN_PREGNANCY <- list(cl = 1.10, v1 = 1.55, v2 = 2.08)
+# Janssen 2021, Table 2: pregnancy factors on V1 and the shallow V2 (none on CL)
+EPIRUBICIN_PREGNANCY <- list(cl = 1, v1 = 1.79, v2 = 2.94)
 
 #' Epirubicin clearance from the AST (Ralph 2003)
 #'
@@ -114,7 +116,7 @@ epirubicinClearance <- function(ast = NULL)
 #' @inheritParams cefazolin
 #' @param ast serum aspartate aminotransferase in IU/L, or NULL for a normal
 #'   AST (20 IU/L); held within the 7-815 IU/L the study covered
-#' @param pregnant TRUE in late pregnancy: van Hasselt 2014's factors
+#' @param pregnant TRUE in late pregnancy: Janssen 2021's factors
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 epirubicin <- function(weight, height, age, sex, adjustToFFM = TRUE, ast = NULL,
@@ -146,8 +148,8 @@ epirubicin <- function(weight, height, age, sex, adjustToFFM = TRUE, ast = NULL,
   )
   if (isTRUE(pregnant))
     reference <- paste(reference, pregnancyReference(
-      "CL x 1.10, V1 x 1.55, V2 x 2.08",
-      "van Hasselt 2014, Ann Oncol 25:2059-2065, https://doi.org/10.1093/annonc/mdu140"))
+      "V1 x 1.79, V2 x 2.94",
+      "Janssen 2021, Clin Pharmacokinet 60:775-784, https://doi.org/10.1007/s40262-020-00961-4"))
 
   list(
     PK = PK,
