@@ -13,6 +13,11 @@
 #                  fields: a parameter's value or printed text, a covariate
 #                  coefficient or reference value, a derived quantity
 #   found_any      how many appear anywhere in the extraction, notes included
+#   found_scaled   misses in the structured fields that are there at a power
+#                  of ten (a table headed "k, 10^2 min^-1" recorded as printed)
+#   key_supplement card numbers whose source is a supplement, which the run
+#                  never saw (only the main PDF is sent); recall_main is the
+#                  recall over the rest
 #   recall_struct  found_struct / key_items: the headline accuracy measure
 #   findings_*     the review's findings by severity: on a verified paper an
 #                  error or concern is either a real problem the paper has or
@@ -60,6 +65,7 @@ cardKey <- function(stem) {
     texts <- numbersIn(p$value)
     if (!length(texts)) return(NULL)
     data.frame(name = p$name %or% "", printed = texts, value = as.numeric(texts),
+               supplement = grepl("sup|supplement|ESM|Table S", p$source %or% "", ignore.case = TRUE),
                tol = sapply(texts, function(t) {
                  d <- if (grepl("\\.", t)) nchar(sub(".*\\.", "", sub("[eE].*", "", t))) else 0
                  0.5 * 10^(-d)
@@ -84,13 +90,15 @@ extractionNumbers <- function(x) {
        everywhere = suppressWarnings(as.numeric(everywhere)))
 }
 
-found <- function(key, values) {
+found <- function(key, values, scale = 1) {
   values <- values[is.finite(values)]
   vapply(seq_len(nrow(key)), function(i) {
     tol <- max(key$tol[i], 0.005 * abs(key$value[i]))
-    any(abs(values - key$value[i]) <= tol | abs(-values - key$value[i]) <= tol)
+    any(vapply(scale, function(k)
+      any(abs(values * k - key$value[i]) <= tol | abs(-values * k - key$value[i]) <= tol), logical(1)))
   }, logical(1))
 }
+POWERS_OF_TEN <- 10^c(-6:-1, 1:6)
 
 files <- list.files(outDir, "\\.json$", full.names = TRUE)
 keys <- list()
@@ -110,7 +118,9 @@ for (f in files) {
                     fails_app_tokens = isTRUE(output > APP_MAX_TOKENS),
                     fails_app_time = isTRUE((r$seconds %or% 0) > APP_TIMEOUT_SEC),
                     key_items = nrow(key), key_nontrivial = sum(!key$trivial),
-                    found_struct = NA, found_any = NA, recall_struct = NA, recall_struct_nontrivial = NA,
+                    key_supplement = sum(key$supplement),
+                    found_struct = NA, found_any = NA, found_scaled = NA, recall_struct = NA,
+                    recall_struct_nontrivial = NA, recall_main = NA,
                     findings_error = NA, findings_concern = NA, findings_ok = NA,
                     stringsAsFactors = FALSE)
   if (identical(r$outcome, "success")) {
@@ -122,9 +132,12 @@ for (f in files) {
     row$found_any <- sum(fa)
     row$recall_struct <- mean(fs)
     row$recall_struct_nontrivial <- mean(fs[!key$trivial])
+    row$recall_main <- if (any(!key$supplement)) mean(fs[!key$supplement]) else NA
+    fsc <- !fs & found(key, nums$structured, POWERS_OF_TEN)
+    row$found_scaled <- sum(fsc)
     if (any(!fs)) misses[[length(misses) + 1]] <- data.frame(
       stem = r$stem, effort = r$effort, rep = r$rep, name = key$name[!fs], printed = key$printed[!fs],
-      anywhere = fa[!fs], stringsAsFactors = FALSE)
+      anywhere = fa[!fs], scaled = fsc[!fs], supplement = key$supplement[!fs], stringsAsFactors = FALSE)
     review <- tryCatch(paperReviewQuietly(function() paperReviewRun(x)), error = function(e) NULL)
     sev <- if (is.null(review)) character(0) else
       unlist(lapply(c(list(review), review$models %or% list()), function(m)
@@ -147,6 +160,8 @@ summary <- do.call(rbind, lapply(names(by), function(e) {
   data.frame(effort = e, runs = nrow(s), succeeded = sum(ok),
              recall_struct_mean = mean(s$recall_struct[ok]),
              recall_nontrivial_mean = mean(s$recall_struct_nontrivial[ok]),
+             recall_main_mean = mean(s$recall_main[ok], na.rm = TRUE),
+             scaled_per_review = mean(s$found_scaled[ok]),
              recall_struct_min = if (any(ok)) min(s$recall_struct[ok]) else NA,
              seconds_median = stats::median(s$seconds, na.rm = TRUE),
              seconds_max = max(s$seconds, na.rm = TRUE),
