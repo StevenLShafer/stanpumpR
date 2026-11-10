@@ -1011,6 +1011,9 @@ test('round-off is shown as 0, not as 4.02e-16', { skip }, async t => {
 // ── The inhaled anesthetics (Shafer, 2026-11-09): a gas run ("kind": "gas",
 // tools/viewer/src/gas.js) in the 2D view only.
 const GAS = JSON.parse(readFileSync(path.resolve(HERE, '..', 'examples', 'sevoflurane-washin.json'), 'utf8'));
+// Desflurane fills muscle far higher than sevoflurane, whose tall liquid once
+// hid the head of the arrow into it from every side (Shafer, 2026-11-10).
+const DES = JSON.parse(readFileSync(path.resolve(HERE, '..', 'examples', 'desflurane-emergence.json'), 'utf8'));
 
 test('gas: a gas run draws the circuit, lungs, VRG, muscle and fat, and the agent adds up', { skip }, async t => {
   const page = await viewerPage(t);
@@ -1086,14 +1089,14 @@ test('gas: the 3D view draws the five glasses, and a drug run afterwards has its
 });
 
 test('gas: the 3D view starts where no glass, arrow or label is hidden, and labels never overlap as it turns', { skip }, async t => {
-  for (const [width, height] of [[1200, 800], [800, 600]]) {
+  for (const [run, name, T] of [[GAS, 'sevoflurane', 1200], [DES, 'desflurane', 7500]]) for (const [width, height] of [[1200, 800], [800, 600]]) {
     const page = await viewerPage(t);
     await page.setViewport({ width, height });
-    assert.equal(await loadRun(page, GAS), true);
-    await page.evaluate(() => { Player.setView('3d'); View.resetView(); Player.seek(1200); });
+    assert.equal(await loadRun(page, run), true);
+    await page.evaluate(T => { Player.setView('3d'); View.resetView(); Player.seek(T); }, T);
     const best = await page.evaluate(() => View.gasHomeScores.reduce((a, b) => (b.score < a.score ? b : a)));
-    assert.equal(best.hidden, 0, `${width} x ${height}: a glass is hidden from the starting view`);
-    assert.equal(best.lost, 0, `${width} x ${height}: an arrow is hidden from the starting view`);
+    assert.equal(best.hidden, 0, `${name}, ${width} x ${height}: a glass is hidden from the starting view`);
+    assert.equal(best.lost, 0, `${name}, ${width} x ${height}: an arrow is hidden from the starting view: ${best.why}`);
     // What the page shows: from the start, and from the drug view's start,
     // where the labels of these glasses fall on one another.
     const overlaps = () => page.evaluate(async () => {
@@ -1109,10 +1112,10 @@ test('gas: the 3D view starts where no glass, arrow or label is hidden, and labe
     });
     let o = await overlaps();
     assert.equal(o.n, 5);
-    assert.deepEqual(o.hits, [], `${width} x ${height}: labels overlap from the starting view`);
+    assert.deepEqual(o.hits, [], `${name}, ${width} x ${height}: labels overlap from the starting view`);
     await page.evaluate(() => { View.persp.position.set(0, 28, 50); View.controls.target.set(0, 3, 0); View.persp.lookAt(View.controls.target); View.invalidate(); });
     o = await overlaps();
-    assert.deepEqual(o.hits, [], `${width} x ${height}: labels overlap once the scene is turned`);
+    assert.deepEqual(o.hits, [], `${name}, ${width} x ${height}: labels overlap once the scene is turned`);
     assertClean(page);
   }
 });

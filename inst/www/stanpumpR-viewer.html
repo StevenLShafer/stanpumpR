@@ -7792,6 +7792,12 @@ const GAS_TUBE_R = 1.5;          // the ideal circuit's tube, which holds no age
 const GAS_CIRCUIT_ANGLE = -95;   // degrees round from straight back: the circuit, to the left
 const GAS_FIRST_TISSUE = -25;    // the vessel-rich group's angle; muscle and fat follow round to the right
 const GAS_CLEAR = 1.5;           // the least gap between two glasses, scene units
+// The gap from the lungs' glass to each other glass, which the breathing and
+// blood arrows span: wider than a drug's (CONNECT_LENGTH), so that an arrow's
+// head stands clear of a tall liquid behind it (desflurane fills muscle far
+// higher than sevoflurane does, and from every side its column hid the head
+// of the arrow into it at the drug view's 8 units).
+const GAS_GAP = 11;
 const GAS_ARROW_MAX = 1;         // the thickest arrow, in ARROW_R: a fresh gas flow far above the rest
 const GAS_MAC_INK = '#c7d2de';
 const GAS_CAPTION = { circuit: 'inspired', lungs: 'end-tidal', vrg: 'effect site' };
@@ -7891,7 +7897,7 @@ Object.assign(View, {
         // The floor arrows, as three points each across their gap.
         const arrows = ['circuit', 'vrg', 'mg', 'fg'].map(k => {
             const u = G.c[k].clone().setY(0).normalize();
-            return [0.25, 0.5, 0.75].map(f => u.clone().multiplyScalar(G.r.lungs + f * CONNECT_LENGTH).setY(0.6));
+            return [0.25, 0.5, 0.75].map(f => u.clone().multiplyScalar(G.r.lungs + f * GAS_GAP).setY(0.6));
         });
         const aim = glasses.reduce((a, g) => a.add(g.c), new THREE.Vector3()).multiplyScalar(1 / glasses.length).setY(H * 0.35);
         let shiftY = 0;
@@ -7942,30 +7948,28 @@ Object.assign(View, {
             for (const x of r.p[g.k]) if (x > top) top = x;
             return { k: g.k, c: g.c, R: G.r[g.k], h: Math.max(0.3, top * ui.concScale) };
         });
-        // Whether the line from the camera to p passes through a column (other
-        // than skip's) before reaching p.
-        const blocked = (p, skip) => {
+        // Whether the line from the camera to p passes through the column col
+        // before reaching p; blocked(): through any column but skip's.
+        const blockedBy = (p, col) => {
             const o = cam.position, d = p.clone().sub(o);
-            return columns.some(col => {
-                if (col.k === skip) return false;
-                const ox = o.x - col.c.x, oz = o.z - col.c.z, a = d.x * d.x + d.z * d.z;
-                if (!(a > 0)) return false;
-                const b = 2 * (ox * d.x + oz * d.z), c = ox * ox + oz * oz - col.R * col.R, disc = b * b - 4 * a * c;
-                if (disc < 0) return false;
-                let t0 = (-b - Math.sqrt(disc)) / (2 * a), t1 = (-b + Math.sqrt(disc)) / (2 * a);
-                if (Math.abs(d.y) > 1e-9) {
-                    const ya = (0 - o.y) / d.y, yb = (col.h - o.y) / d.y;
-                    t0 = Math.max(t0, Math.min(ya, yb)); t1 = Math.min(t1, Math.max(ya, yb));
-                } else if (o.y < 0 || o.y > col.h) return false;
-                return Math.max(t0, 0) < Math.min(t1, 0.999);
-            });
+            const ox = o.x - col.c.x, oz = o.z - col.c.z, a = d.x * d.x + d.z * d.z;
+            if (!(a > 0)) return false;
+            const b = 2 * (ox * d.x + oz * d.z), c = ox * ox + oz * oz - col.R * col.R, disc = b * b - 4 * a * c;
+            if (disc < 0) return false;
+            let t0 = (-b - Math.sqrt(disc)) / (2 * a), t1 = (-b + Math.sqrt(disc)) / (2 * a);
+            if (Math.abs(d.y) > 1e-9) {
+                const ya = (0 - o.y) / d.y, yb = (col.h - o.y) / d.y;
+                t0 = Math.max(t0, Math.min(ya, yb)); t1 = Math.min(t1, Math.max(ya, yb));
+            } else if (o.y < 0 || o.y > col.h) return false;
+            return Math.max(t0, 0) < Math.min(t1, 0.999);
         };
+        const blocked = (p, skip) => columns.some(col => col.k !== skip && blockedBy(p, col));
         // Each glass's liquid seen at five points of its surface; each arrow at three.
         const surface = col => [[0, 0], [0.7, 0], [-0.7, 0], [0, 0.7], [0, -0.7]].map(([a, b]) =>
             new THREE.Vector3(col.c.x + a * col.R, col.h, col.c.z + b * col.R));
         let best = null;
         const scores = [];
-        for (const phi of [22, 27, 32, 37, 42, 48]) for (let theta = -175; theta <= 180; theta += 5) {
+        for (const phi of [22, 27, 32, 37, 42, 48, 54]) for (let theta = -175; theta <= 180; theta += 5) {
             let lo = 10, hi = 500;
             place(theta, phi, hi);
             if (!fits()) continue;
@@ -7974,6 +7978,7 @@ Object.assign(View, {
             const lb = glasses.map(g => { const [x, y] = px(g.c.clone().setY(H + 0.3)), l = label(g.k);
                                           return { k: g.k, x0: x - l.w / 2, x1: x + l.w / 2, y0: y - l.h, y1: y }; });
             const underLabel = (p, own) => { const [x, y] = px(p); return lb.some(b => b.k !== own && inside(b, x, y)); };
+            const underLabelKey = p => { const [x, y] = px(p); const b = lb.find(b => inside(b, x, y)); return b ? b.k : null; };
             let labels = 0, hidden = 0, lost = 0;
             for (let i = 0; i < lb.length; i++) for (let j = i + 1; j < lb.length; j++)
                 labels += area(meet(lb[i], lb[j])) / Math.min(area(lb[i]), area(lb[j]));
@@ -7981,11 +7986,18 @@ Object.assign(View, {
                 const pts = surface(col);
                 hidden += pts.filter(p => blocked(p, col.k) || underLabel(p, col.k)).length / pts.length;
             }
+            const why = [];
+            arrows.forEach((pts, ai) => pts.forEach((p, pi) => {
+                const col = columns.find(c => blockedBy(p, c)), lab = underLabelKey(p);
+                if (col || lab) why.push(`${['circuit', 'vrg', 'mg', 'fg'][ai]}#${pi}:${col ? 'col ' + col.k : 'label ' + lab}`);
+            }));
             for (const pts of arrows) lost += pts.filter(p => blocked(p, null) || underLabel(p, null)).length / pts.length;
-            // Heights are the partial pressures: a view from high above
-            // flattens them, so a moderate height is preferred.
-            const score = 3 * labels + 2 * hidden + 2 * lost + 0.25 * Math.abs(theta) / 180 + 0.8 * Math.abs(phi - 30) / 20;
-            scores.push({ theta, phi, score, labels, hidden, lost, covered: 0 });
+            // Nothing hidden comes first (Shafer, 2026-11-10: "hide nothing");
+            // then labels apart, which gasSpreadLabels() can otherwise mend;
+            // then, the heights being the partial pressures, a moderate
+            // height, which does not flatten them, and the front.
+            const score = 10 * hidden + 10 * lost + 3 * labels + 0.25 * Math.abs(theta) / 180 + 0.8 * Math.abs(phi - 30) / 20;
+            scores.push({ theta, phi, score, labels, hidden, lost, covered: 0, why });
             if (!best || score < best.score) best = { score, eye: cam.position.clone(), aim: aim.clone(), offset: shiftY / Hpx, theta, phi, labels, hidden, lost };
         }
         this.gasHomeScores = scores;         // every view weighed, for the tests
@@ -8068,7 +8080,7 @@ Object.assign(View, {
         // Arrows: cross-section for rate, the run's 95th-percentile flow
         // drawn at ARROW_R, none thicker than GAS_ARROW_MAX of it.
         const rad = f => G.arrowScale * Math.min(GAS_ARROW_MAX * ARROW_R, ARROW_R * Math.sqrt(Math.abs(f) / ui.gasFlowScale));
-        const A = this.gasArrows, len = CONNECT_LENGTH, f = st.flow;
+        const A = this.gasArrows, len = CONNECT_LENGTH, gap = GAS_GAP, f = st.flow;
         const up = new THREE.Vector3(0, 1, 0), down = new THREE.Vector3(0, -1, 0);
         const cc = G.c.circuit, rl = G.r.lungs;
         // The fresh gas, down onto the circuit's liquid; the vented gas, down
@@ -8080,8 +8092,8 @@ Object.assign(View, {
         const between = (a, centre, flow) => {
             const u = centre.clone().setY(0).normalize(), ar = rad(flow);
             // flow > 0 is out of the lungs (to a tissue), green; < 0 into them, red.
-            if (flow >= 0) a.set(u.clone().multiplyScalar(rl).setY(ar), u, len, ar, L.arrows.out, L);
-            else a.set(u.clone().multiplyScalar(rl + len).setY(ar), u.clone().negate(), len, ar, L.arrows.in, L);
+            if (flow >= 0) a.set(u.clone().multiplyScalar(rl).setY(ar), u, gap, ar, L.arrows.out, L);
+            else a.set(u.clone().multiplyScalar(rl + gap).setY(ar), u.clone().negate(), gap, ar, L.arrows.in, L);
         };
         // Breathing in (into the lungs) is red: its flow out of the lungs is -vent.
         between(A.vent, cc, -f.vent);
@@ -8129,7 +8141,7 @@ Object.assign(View, {
 });
 
 // Where each glass stands: the lungs at the origin; every other glass its own
-// radius plus CONNECT_LENGTH out from the lungs' wall, so an arrow of that
+// radius plus GAS_GAP out from the lungs' wall, so an arrow of that
 // length spans the gap; the circuit at GAS_CIRCUIT_ANGLE, the tissues from
 // GAS_FIRST_TISSUE round to the right, each turned on until it stands clear
 // of those already placed. Angles from straight back (-z), to the right (+x)
@@ -8137,7 +8149,7 @@ Object.assign(View, {
 function gasLayout(rad) {
     const rl = rad.lungs;
     const at = (k, deg) => {
-        const d = rl + CONNECT_LENGTH + rad[k], a = deg * Math.PI / 180;
+        const d = rl + GAS_GAP + rad[k], a = deg * Math.PI / 180;
         return new THREE.Vector3(d * Math.sin(a), 0, -d * Math.cos(a));
     };
     const c = { lungs: new THREE.Vector3(0, 0, 0), circuit: at('circuit', GAS_CIRCUIT_ANGLE) };
