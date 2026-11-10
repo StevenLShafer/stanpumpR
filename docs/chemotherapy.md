@@ -644,3 +644,20 @@ covariates; every volume fixed (doxorubicin's from Kontny 2013, miscited);
 sampling to 3 h after the infusion. Doses as labelled, no conversion,
 mwRatio 1, as the paper's own mass arithmetic. METABOLITE_FORMATION_BASIS
 "joint". Reproduces its AUC = dose/CL and AUCm = Fm x dose/CLm.
+
+## 38. Cytarabine: the first drug whose model the program chooses (2026-11-10)
+
+`cytarabine` combines two models under one name on Shafer's decision
+(2026-11-10), following his rule that the program chooses the model
+(AGENTS.md, 2026-11-09): Periclou 1996 (C21; children 0.17-19 years; Model I,
+every parameter x age x BSA, the Results' estimates CL 2.59, Q 2.01 L/h, V1
+0.48, V2 38.1 L) under 19 years, and Krogh-Madsen 2012 (C22; adults 22-68;
+CL 272 L/h, Vc 62.8, Q 13.7, Vp 75.4; white count at the median) from 19
+(CYTARABINE_ADULT_AGE, `cytarabineModel()`). The jump at the boundary (89
+against 272 L/h for a 70-kg, 170-cm man) was accepted. Periclou's limits are
+on the help page: no plateau with age (age floored at 0.17), the same 4-min
+and 23-h half-lives at every age, Table 1 and the Results disagreeing.
+
+Kontny 2013's doxorubicin: Shafer decided (2026-11-10) that, when it is
+implemented, its clearance is the reported 53.3 L/h, not the 85.4 L/h its
+control stream runs (it adds a formation clearance of 32.1 L/h).

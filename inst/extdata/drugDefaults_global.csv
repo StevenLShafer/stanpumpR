@@ -259,3 +259,4 @@ bendamustine,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#6D4C41,0,0,0,0,0,IV,Chemotherapy
 fludarabine,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#00838F,0,0,0,0,0,IV,Chemotherapy
 doxorubicinPerezBlanco,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#AD1457,0,0,0,0,0,IV,Chemotherapy
 doxorubicinolPerezBlanco,ng,,,,,#F48FB1,0,0,0,0,0,IV,
+cytarabine,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#00695C,0,0,0,0,0,IV,Chemotherapy

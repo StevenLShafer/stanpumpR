@@ -441,7 +441,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "istradefylline", "amantadineER", "pimavanserin", "tolcapone",
     # Chemotherapy (2026-11-05): plasma only
     "cladribine", "fluorouracil", "carboplatin", "busulfan",
-    "methotrexatePediatric", "methotrexate", "fluorouracilTan", "doxorubicinPerezBlanco", "doxorubicinolPerezBlanco", "fludarabine", "bendamustine", "oxaliplatinNikanjam", "capecitabine", "capecitabine5FU", "gemcitabine", "gemcitabineDFDU", "etoposideDuong", "melphalanPediatric", "carboplatinPediatric", "daunorubicin", "doxorubicinPediatric", "doxorubicinolPediatric", "etoposide", "cisplatin", "cisplatinBound", "vinorelbine", "topotecan", "irinotecan", "irinotecanSN38", "doxorubicin", "doxorubicinol", "cyclophosphamide", "docetaxel", "vincristine", "melphalan", "etoposidePediatric", "pemetrexed", "paclitaxel", "vincristinePediatric", "oxaliplatin"
+    "methotrexatePediatric", "methotrexate", "fluorouracilTan", "cytarabine", "doxorubicinPerezBlanco", "doxorubicinolPerezBlanco", "fludarabine", "bendamustine", "oxaliplatinNikanjam", "capecitabine", "capecitabine5FU", "gemcitabine", "gemcitabineDFDU", "etoposideDuong", "melphalanPediatric", "carboplatinPediatric", "daunorubicin", "doxorubicinPediatric", "doxorubicinolPediatric", "etoposide", "cisplatin", "cisplatinBound", "vinorelbine", "topotecan", "irinotecan", "irinotecanSN38", "doxorubicin", "doxorubicinol", "cyclophosphamide", "docetaxel", "vincristine", "melphalan", "etoposidePediatric", "pemetrexed", "paclitaxel", "vincristinePediatric", "oxaliplatin"
   ))
 })
 
