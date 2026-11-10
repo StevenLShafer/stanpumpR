@@ -83,7 +83,7 @@
 "P01","carboplatin",NA,"dosing_formula","The Calvert formula: a dose from GFR and a target AUC, not a concentration model."
 "G06","carboplatin",NA,"dosing_guideline",NA
 "N11","epirubicin","epirubicin__breast__ralph2003","external_validation","Reprints the final model (Table 4) and validates it: internally sound, but in 79 Uppsala patients it over-predicted concentrations by 81% and clearance's imprecision was 43%."
-"N12","asparaginase","pegaspargase__all__wurthwein2021","structural_pk","The transit-chain structure the 2021 model simplifies; abstract read."
+"N12","asparaginase","pegaspargase__all__wurthwein2021","structural_pk","The transit-chain structure the 2021 model simplifies: 1342 children, chains of 2-20 compartments compared, 14 chosen; PDF read (supplied 2026-11-10)."
 "N09","oxaliplatin","oxaliplatin__pedsadult__nikanjam2015","external_validation","A review of FOLFIRINOX population models, not new data: it tabulates Nikanjam 2015 at the cohort medians, a check of the transcription, which the oxaliplatinNikanjam test reproduces."
 "G14","carboplatin",NA,"dosing_guideline","Linked to carboplatin, as the handoff asks."
 "L01","carboplatin",NA,"product_label",NA

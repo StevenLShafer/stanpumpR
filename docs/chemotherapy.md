@@ -720,3 +720,29 @@ Read from PubMed Central (the tables through the article pages):
   term that reaches zero clearance at 1650 U/L and an external validation that
   over-predicted concentrations by 81%.  Ralph 2003's full text is needed to
   settle its two printed parameter sets.
+
+## 41. The nine pending papers, read on the PDF (2026-11-10)
+
+Shafer supplied the nine PDFs and the Wurthwein 2021 supplement; every number
+below was confirmed on the page.
+
+- **Epirubicin, Ralph 2003** (N10): the final model is exactly Ralph 2006's
+  Table 4, CL 72.9 x (1 - 0.135 ln AST) L/h with three compartments, 105
+  women.  Complete; waits on a decision about AST (a field, or held).
+- **Ifosfamide, Kerbusch 2000** (C10): equations confirmed (clearance CL x an
+  enzyme amount whose degradation Cp/(Cp + IC50) inhibits); reproduces Figure
+  6.  Needs an enzyme-state engine.
+- **Cyclophosphamide, McCune 2009** (C09): 22 children, the same kind of
+  enzyme-state autoinduction (Emax form).  One engine would serve both.
+- **PEG-asparaginase, Wurthwein 2021 and 2017** (C38a, N12): the supplement's
+  control stream gives 14 identical transit compartments, all counted as
+  serum activity; reproduces the trial's observed medians at days 7 and 14.
+  Needs a transit-chain observation (a defective system) and a dose-phase rule.
+- **Methotrexate, Blackman 2026** (P13): complete, but never the selector's
+  choice (Ibarra 2023 is larger and contains its population).
+- **Capecitabine, Daher Abdi 2014** (C17): no metabolite volumes printed.
+- **nab-paclitaxel, Chen 2014** (C27): which concentration drives the return
+  from the saturable peripheral compartment is ambiguous.
+- **Cisplatin, Thompson 2025** (P05): the unbound clearance's definition is
+  ambiguous and its covariates (first cycle, lorazepam) have no field; Urien
+  2004 is kept.

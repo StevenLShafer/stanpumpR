@@ -214,14 +214,14 @@ pubmedSources[pubmedSources == ""] <- NA
 
 # How far each PubMed document was read here.  Every abstract was screened;
 # the PubMed Central text (without tables or equations) was read for these.
-FULL_TEXT_PARTIAL <- c("P05", "P13", "C12", "C15", "C35", "N04", "C10", "C38a")
+FULL_TEXT_PARTIAL <- c("C12", "C15", "C35", "N04")
 pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
                              "guideline", "primary_study")
 # Read in full: every parameter the model uses, from the PubMed Central
 # text, the PDF still to confirm (FULL_TEXT_READ); or confirmed on the PDF
 # itself (PARAMETERS_VERIFIED: Briki 2026 and Lindemalm 2005, supplied by
 # Shafer 2026-11-06)
-FULL_TEXT_READ <- c("C01", "P02", "C35", "C03", "C37a", "C34", "P16", "C21", "C07", "P15", "P08", "C19", "P21", "P25", "C23", "C24", "N11")
+FULL_TEXT_READ <- c("C01", "P02", "C35", "C03", "C37a", "C34", "P16", "C21", "C07", "P15", "P08", "C19", "P21", "P25", "C23", "C24", "N11", "C10", "C38a", "N12", "N10", "C09", "P13", "C17", "C27", "P05")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
 PARAMETERS_VERIFIED <- c("P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18", "C05", "C06", "N08", "N09")
@@ -382,8 +382,11 @@ registry <- rbind(
     "PDF read (supplied 2026-11-06). Table 2 reproduces the paper's half-lives (1.46, 4.93, 39.9 against 1.5, 4.9, 40 h) and Vss (20.0 L). SCRpop is not printed; the Methods' healthy-adult means 0.92 and 0.77 mg/dL are taken. 68% of courses were hypoalbuminaemic. [decided 2026-11-06, Shafer] An albumin field was added; Ibarra's (albumin/4)^0.594 and Taylor's severe-hypoalbuminaemia factors read it.",
     readiness = "implemented", stanpumpr_drug = "methotrexate"),
   m("methotrexate__mixed__blackman2026", "methotrexate", "methotrexate (high dose)", "IV",
-    "patients receiving high-dose methotrexate", "methotrexate",
-    "population models developed and validated for dosing decisions", "first", "unknown", "P13"),
+    "145 adults 18-84 years (training set of 208), 42-141 kg, BSA 1.32-2.66 m2", "methotrexate",
+    "three compartments: CL 9.41 L/h x (BSA/1.97)^0.61 x (SCR/68.08 umol/L)^-0.56 x exp(0.01 female), V1 30.67, Q2 0.87, V2 5.62, Q3 0.14, V3 10.60, every volume and Q x BSA/1.97",
+    "first", "linear", "P13",
+    "PDF read (supplied 2026-11-10). Complete, but the model selector would never choose it: Ibarra 2023 (243 adults 18-88) contains every patient Blackman studied and is larger, so adding it as a candidate would change no curve. Sampled from 24 h (troughs), so Q2 and Q3 are weak; no assay or BSA formula named; the sex term (1%, interval spanning zero) is called significant.",
+    readiness = "complete_not_implemented"),
   m("methotrexate__pediatric_all__taylor2020", "methotrexate", "methotrexate (high dose)", "IV",
     "772 children with ALL (Nordic protocol), 24-h infusions", "methotrexate",
     "three compartments; demographics and serum creatinine", "first", "linear", "C12",
@@ -452,7 +455,8 @@ registry <- rbind(
     "33 adults 32-75 years, BSA 1.4-2.6 m2, randomised between 5-HT3 antagonists", "unbound and bound platinum",
     "two compartments for unbound platinum forming one compartment of bound platinum (the Urien 2004 structure); visit on V1 and lorazepam on Q",
     "second", "linear_metabolite", "P05",
-    "PubMed Central text read 2026-11-10 (Phoenix NLME; sampled to 240 h); its parameter tables are not in the text. Its covariates are the visit (first or second cycle) and concomitant lorazepam, neither a Patient Profile field; the library's Urien 2004 (43 patients) has the same structure."),
+    "PDF read (supplied 2026-11-10). Combined model: V1_u 31.2 L (x e^2.04 at the first visit), V2_u 484 L, CL2_u 64.0 L/h (x e^0.298 with lorazepam), V1_b 1.10 L, CL1_b 0.508 L/h, fb 0.990, CL1_u 1.64 L/h. Whether 1.64 is the total unbound clearance or its non-binding part is ambiguous; only the former reproduces Figure 5, and even then it is a twentieth of Urien's 35.5 L/h. Covariates (first cycle, lorazepam) have no Patient Profile field. Urien 2004 is kept.",
+    readiness = "complete_not_implemented"),
   m("cisplatin__children__erdlenbruch2001", "cisplatin", "cisplatin", "IV",
     "12 children (25 courses)", "free platinum",
     "two compartments fitted to each child, not a population model", "second", "linear", "N01",
@@ -479,7 +483,10 @@ registry <- rbind(
     readiness = "implemented", stanpumpr_drug = "cyclophosphamide"),
   m("cyclophosphamide__neuroblastoma__mccune2009", "cyclophosphamide", "cyclophosphamide", "IV",
     "22 children with neuroblastoma", "cyclophosphamide, 4-hydroxycyclophosphamide, carboxyethylphosphoramide mustard",
-    "inducible and non-inducible elimination with metabolites; GFR covariate", "second", "new_engine", "C09"),
+    "one compartment, CL_NON 1.83 + CL_IND 1.79 L/h/m2 x an enzyme amount (Emax 5, EC50 0.6 uM fixed, k_enz 0.00657 /h), V 13.1 L/m2, forming 4-hydroxycyclophosphamide and CEPM (measured GFR on their rate constants)",
+    "second", "new_engine", "C09",
+    "PDF read (supplied 2026-11-10). 22 children 1.3-9.4 years, 8.7-52.8 kg, BSA 0.45-1.47 m2; 400 mg/m2 daily over 30 min for 5 days. The parent's only covariate is BSA; induction accumulates across the course (enzyme half-life 105 h). Needs the same enzyme-state engine as ifosfamide (C10); the metabolites need measured GFR, which has no field. Not the library's adult Joerger 2007, which has no induction.",
+    readiness = "needs_engine"),
   m("doxorubicin__adult_child__kontny2013", "doxorubicin", "doxorubicin (conventional)", "IV",
     "adults and children over 3 years (3-73 years, 12-137 kg, BSA 0.6-2.7 m2)", "doxorubicin and doxorubicinol",
     "three compartments: CL 53.3 L/h, V1 17.7 L, Q2 58.7 L/h, V2 1830 L, Q3 21.8 L/h, V3 71.6 L; doxorubicinol one compartment, CL 44 L/h, V 1150 L; every parameter x (1 + 0.643 (BSA - 1.8))",
@@ -584,8 +591,9 @@ registry <- rbind(
     readiness = "implemented", stanpumpr_drug = "capecitabine"),
   m("capecitabine__elderly__daherabdi2014", "capecitabine", "capecitabine", "PO",
     "20 patients 75-92 years and 40 younger adults", "capecitabine and three metabolites",
-    "four sequential compartments; slower absorption at 75 years and over; time-varying 5-FU elimination",
-    "expansion", "new_engine", "C17"),
+    "four sequential compartments: ka 1.86 /h (x 0.45 at 75 years and over), tlag 0.31 h, V1 292 L, CL10 214, CL12 13.6 L/h, k23 10.9, k34 6.0, k40 77.1 /h (x 0.77 from day 15)",
+    "expansion", "new_engine", "C17",
+    "PDF read (supplied 2026-11-10). 20 patients 75-92 years and 40 adults 30-73. No metabolite volume is printed (only rate constants), so 5'-DFUR and 5-FU concentrations cannot be formed without Urien 2005's convention; the 5-FU step is a per-occasion switch; both covariates' bootstrap intervals include 1. The library's Gieschke 2003 is kept."),
   m("gemcitabine__lung__tham2008", "gemcitabine", "gemcitabine", "IV",
     "56 Asian adults with lung cancer", "gemcitabine, dFdU, intracellular dFdCTP",
     "gemcitabine in two compartments (V1 2.96 L, V2 47.6 L, Q 156 L/h, CLG 305.2 L/h per 70 kg/1.76 m) forming dFdU (73%; one compartment, 52.6 L, 21.5 L/h) and PBMC dFdCTP (23%); lean body mass by Janmahasatian, as the 2015 erratum corrects",
@@ -620,9 +628,8 @@ registry <- rbind(
     "15 adults with soft-tissue sarcoma, 72-h infusion", "ifosfamide",
     "one compartment with enzyme-turnover autoinduction: CL 2.94 L/h x enzyme amount, V 43.5 L, Kenz,out 0.0546 /h, IC50 30.7 uM on enzyme degradation; no covariates",
     "expansion", "new_engine", "C10",
-    "PubMed Central text and Table 1 read 2026-11-10; equations 1-4 are images not reached, their form inferred from the prose (CLapp = CL x A2; degradation inhibited by Cp/(IC50 + Cp)), to confirm on the PDF. 15 adults, 23-72 years, 49-82 kg, 9-12 g/m2 over 72 h. The model runs in umol (molecular weight not printed). Table 2's AUC unit (um h) cannot be right. Needs a nonlinear engine with an enzyme state carried across cycles.",
-    readiness = "needs_engine",
-    to_obtain = "Kerbusch 2000 (PMID 10848719, PMC2015043): the PDF, for equations 1-4."),
+    "PDF read (supplied 2026-11-10). Equations confirmed on the page: dA1/dt = R - CL x A2 x Cp; dA2/dt = Kenz,out (1 - A2 (1 - Cp/(Cp + IC50))), A2(0) = 1; no Imax or Hill term. Simulated, it reproduces Figure 6's peaks (108 and 204 uM after 10 and 20 g). Table 2's AUC unit is g h/L, not uM h, and its 20-g value does not reproduce. 15 adults, 23-72 years, 49-82 kg; no covariates; umol (ifosfamide 261.09 g/mol, not printed). Needs a nonlinear engine with an enzyme state carried across cycles, the same as McCune 2009's cyclophosphamide.",
+    readiness = "needs_engine"),
   m("ifosfamide__sclc__kerbusch2001", "ifosfamide", "ifosfamide", "IV",
     "14 adults with small-cell lung cancer", "ifosfamide, 2- and 3-dechloroethylifosfamide, 4-hydroxyifosfamide",
     "autoinduction with metabolite compartments", "expansion", "new_engine", "C11",
@@ -677,10 +684,10 @@ registry <- rbind(
        "No contemporary oral oncology population model was identified. Do not substitute an IBD model or a mercaptopurine model."),
   m("pegaspargase__all__wurthwein2021", "asparaginase", "pegaspargase", "IV",
     "1374 children with ALL (1253 for validation)", "asparaginase activity",
-    "population model of activity; clearance and volume depend on treatment phase; age over 8 and sex",
-    "expansion", "unknown", "C38a",
-    "PubMed Central text and Tables 1-3 read 2026-11-10: IV PEG-asparaginase (Oncaspar), 2545 children 1-17.9 years, BSA 0.41-2.42 m2; V 1.69 L/m2, CL initial 0.126 and Q_tr (= CL induced) 0.918 L/day/m2 at BSA 0.79, linear BSA terms, dose and phase (second induction dose, reinduction), age over 8 and sex on CL. The number of transit compartments and where the clearance rises are printed only in the supplement's control stream or in Wurthwein 2017. Activity in U/L; patients with inactivation excluded.",
-    to_obtain = "Wurthwein 2021 supplement 13318_2021_670_MOESM1_ESM.docx (sections 2 and 4), or Wurthwein 2017 (PMID 28349335) in full: the transit chain."),
+    "a chain of 14 compartments, all serum activity, each losing CL_initial and the last also Q_tr (= CL_induced), so clearance rises with time after each dose; volume, CL and Q linear in BSA; phase (second induction dose, reinduction) on V and CL; age over 8 and sex on CL",
+    "expansion", "new_engine", "C38a",
+    "PubMed Central text and Tables 1-3 read 2026-11-10: IV PEG-asparaginase (Oncaspar), 2545 children 1-17.9 years, BSA 0.41-2.42 m2; V 1.69 L/m2, CL initial 0.126 and Q_tr (= CL induced) 0.918 L/day/m2 at BSA 0.79, linear BSA terms, dose and phase (second induction dose, reinduction), age over 8 and sex on CL. The number of transit compartments and where the clearance rises are printed only in the supplement's control stream or in Wurthwein 2017. Activity in U/L; patients with inactivation excluded. PDF, supplement and Wurthwein 2017 read (supplied 2026-11-10): the supplement's $DES gives 14 identical transit compartments (ktr = Q/V), the observation their sum over V; the $THETA it prints are initial estimates, the final THETAs Table 3 x 0.79. Simulated, it gives 881 and 510 U/L at days 7 and 14 after 2500 U/m2 against the observed medians 901 and 547 (reinduction 1348 and 719 against 1437 and 751). The fourteen equal eigenvalues are a defective system (advanceTransitChain territory), and the phase is set by which dose it is.",
+    readiness = "needs_engine"),
   none("calaspargase__none", "asparaginase", "calaspargase pegol", "IV", "expansion",
        "No source model identified in this review; pegaspargase's does not transfer."),
   none("asparaginase_ecoli_native__none", "asparaginase", "native E. coli asparaginase", "IM or IV", "expansion",
@@ -720,7 +727,8 @@ registry <- rbind(
     "105 women with advanced breast cancer (109 in the abstract), 35-79 years, 37-89 kg", "epirubicin",
     "three compartments: CL 72.9 x (1 - 0.135 ln AST) L/h, V1 10.3, Q2 30.2, V2 35.7, Q3 61.5 L/h, V3 772 L (as Ralph 2006 Table 4 reprints it)",
     "expansion", "linear", "N10",
-    "Abstract read; the final model is reprinted in Ralph 2006 (N11, PubMed Central), whose Table 2 gives 74.9 and 0.139 instead. Clearance reaches zero at AST 1650 U/L (studied 7-815) and AST has no Patient Profile field; women only; no size term; sampled to 48 h; the salt basis is not stated. Ralph 2006's external validation over-predicted concentrations by 81%."),
+    "PDF read (supplied 2026-11-10): Table 3's final model is exactly Ralph 2006's Table 4 (its Table 2's 74.9 and 0.139 are not in this paper). 105 of 109 women modelled, 35-79 years, 37-89 kg, AST 7-815 IU/L; first cycle, samples to 48 h; no LLOQ. BSA had no identifiable effect. Clearance reaches zero at AST 1650 IU/L, with no limit given; AST has no Patient Profile field; the salt basis is not stated. Ralph 2006's external validation over-predicted concentrations by 81%. Implementation waits on Shafer: an AST field (and its floor and cap) or AST held at a reference.",
+    readiness = "complete_not_implemented"),
   m("idarubicin__children__reid1990", "idarubicin", "idarubicin", "IV and PO",
     "21 children with relapsed leukaemia", "idarubicin, idarubicinol, CSF",
     "classical three compartments; idarubicinol half-life 56.8 h", "expansion", "linear", "C25",
@@ -766,7 +774,7 @@ registry <- rbind(
     "150 adults with solid tumours", "paclitaxel",
     "three compartments with saturable distribution and saturable elimination; albumin on elimination",
     "expansion", "new_engine", "C27",
-    "Nonlinear distribution in three compartments; the Michaelis-Menten engine carries one peripheral compartment."),
+    "PDF read (supplied 2026-11-10). 150 adults 24-85 years: V1 15.8, V2 1650, V3 75.4 L, Q (V1-V3) 41.6 L/h; saturable distribution V1-V2 VMTR 325000 ug/h, KMTR 4260 ug/L; saturable elimination VMEL 8070 ug/h x (albumin/3.9 g/dL)^0.554, KMEL 40.2 ug/L. Which concentration drives the return from V2 is not stated (the legend says central; a footnote implies peripheral), which changes the model. Would be a separate drug from solvent-based paclitaxel (Joerger 2006)."),
   m("doxorubicin_liposomal__hsu2018", "doxorubicin", "pegylated liposomal doxorubicin", "IV",
     "not stated in the abstract", "encapsulated and free doxorubicin",
     "encapsulated one compartment releasing into free doxorubicin in two compartments; bioequivalence simulation",
@@ -790,7 +798,7 @@ relations <- rbind(
   r("P01", "carboplatin", "dosing_formula", note = "The Calvert formula: a dose from GFR and a target AUC, not a concentration model."),
   r("G06", "carboplatin", "dosing_guideline"),
   r("N11", "epirubicin", "external_validation", "epirubicin__breast__ralph2003", "Reprints the final model (Table 4) and validates it: internally sound, but in 79 Uppsala patients it over-predicted concentrations by 81% and clearance's imprecision was 43%."),
-  r("N12", "asparaginase", "structural_pk", "pegaspargase__all__wurthwein2021", "The transit-chain structure the 2021 model simplifies; abstract read."),
+  r("N12", "asparaginase", "structural_pk", "pegaspargase__all__wurthwein2021", "The transit-chain structure the 2021 model simplifies: 1342 children, chains of 2-20 compartments compared, 14 chosen; PDF read (supplied 2026-11-10)."),
   r("N09", "oxaliplatin", "external_validation", "oxaliplatin__pedsadult__nikanjam2015", "A review of FOLFIRINOX population models, not new data: it tabulates Nikanjam 2015 at the cohort medians, a check of the transcription, which the oxaliplatinNikanjam test reproduces."),
   r("G14", "carboplatin", "dosing_guideline", note = "Linked to carboplatin, as the handoff asks."),
   r("L01", "carboplatin", "product_label"),
