@@ -19,7 +19,8 @@
 #                  never saw (only the main PDF is sent); recall_main is the
 #                  recall over the rest
 #   recall_struct  found_struct / key_items: the headline accuracy measure
-#   findings_*     the review's findings by severity: on a verified paper an
+#   findings_*     the review's findings by severity (all of them in
+#                  findings.csv): on a verified paper an
 #                  error or concern is either a real problem the paper has or
 #                  a false alarm, which is read by hand
 #   seconds, input/output tokens, cost (USD at $4 / $20 per million), and
@@ -104,6 +105,7 @@ files <- list.files(outDir, "\\.json$", full.names = TRUE)
 keys <- list()
 rows <- list()
 misses <- list()
+findings <- list()
 for (f in files) {
   r <- jsonlite::fromJSON(f, simplifyVector = FALSE)
   if (is.null(keys[[r$stem]])) keys[[r$stem]] <- cardKey(r$stem)
@@ -139,9 +141,18 @@ for (f in files) {
       stem = r$stem, effort = r$effort, rep = r$rep, name = key$name[!fs], printed = key$printed[!fs],
       anywhere = fa[!fs], scaled = fsc[!fs], supplement = key$supplement[!fs], stringsAsFactors = FALSE)
     review <- tryCatch(paperReviewQuietly(function() paperReviewRun(x)), error = function(e) NULL)
-    sev <- if (is.null(review)) character(0) else
-      unlist(lapply(c(list(review), review$models %or% list()), function(m)
-        vapply(m$findings %or% list(), function(f) f$severity %or% "", character(1))))
+    # review$findings holds every finding: with several models, paperReviewRun()
+    # gathers each model's findings and the paper's into it, so the models'
+    # own lists are not counted again.
+    fl <- if (is.null(review)) list() else review$findings %or% list()
+    sev <- vapply(fl, function(f) f$severity %or% "", character(1))
+    if (length(fl)) findings[[length(findings) + 1]] <- data.frame(
+      stem = r$stem, effort = r$effort, rep = r$rep,
+      group = vapply(fl, function(f) f$group %or% "", character(1)),
+      section = vapply(fl, function(f) f$section %or% "", character(1)), severity = sev,
+      title = vapply(fl, function(f) f$title %or% "", character(1)),
+      detail = vapply(fl, function(f) paste(f$detail %or% "", collapse = " "), character(1)),
+      stringsAsFactors = FALSE)
     row$findings_error <- sum(sev == "error")
     row$findings_concern <- sum(sev == "concern")
     row$findings_ok <- sum(sev == "ok")
@@ -152,6 +163,8 @@ scores <- do.call(rbind, rows)
 scores <- scores[order(scores$stem, match(scores$effort, c("low", "medium", "high", "xhigh", "max")), scores$rep), ]
 utils::write.csv(scores, file.path(outDir, "scores.csv"), row.names = FALSE)
 if (length(misses)) utils::write.csv(do.call(rbind, misses), file.path(outDir, "misses.csv"), row.names = FALSE)
+# Every finding of every review, for reading by hand.
+if (length(findings)) utils::write.csv(do.call(rbind, findings), file.path(outDir, "findings.csv"), row.names = FALSE)
 
 by <- split(scores, scores$effort)
 summary <- do.call(rbind, lapply(names(by), function(e) {

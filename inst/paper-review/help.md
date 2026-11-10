@@ -73,18 +73,18 @@ reading, and it depends on the paper far more than on its length:
 
 | The paper | Expect |
 |---|---|
-| A short, clearly typeset paper with one model and one or two tables | about 3 to 5 minutes |
-| A full-length paper, several tables and figures, or a supplement | about 5 to 15 minutes |
-| Several models (more than one population, drug or endpoint), many figures to read, or a scanned or older PDF | 15 minutes or more, and it may not finish |
+| One model, with its tables | about 2 to 4 minutes |
+| Several models (more than one population, drug, enantiomer or endpoint), or a table of each patient's own fit | about 2 to 7 minutes |
 
 **The app waits at most 20 minutes.** A review that takes longer ends with a
 message saying it did not finish, and no review.
 
-These are estimates from the few reviews timed so far, and will be revised
-as more papers are reviewed: a one-page test paper took 1.3 minutes; in an
-outside test of five real papers, one review took about three minutes; and an
-11-page population PK/PD paper with six fitted models was still being read
-after 20 minutes.
+These times come from a calibration on 18 published papers whose models
+stanpumpR already holds, from 7 to 19 pages and from 1969 to 2026, each
+reviewed twice (November 2026): the median was 3.5 minutes and the longest 7.
+The time depends on how much there is to record, the number of models and
+parameters, and hardly at all on the number of pages. Scanned papers were not
+yet part of it, so a scan may take longer.
 
 What makes a paper harder to read:
 

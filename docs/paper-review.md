@@ -607,3 +607,23 @@ allowed to learn from my models. Claude is allowed to see coarse metadata."
    digest cards at all five effort levels): the default level, whether the
    choice is offered and how each level is described, and the app's
    64,000-token and 20-minute limits.
+
+   **The calibration has run** (2026-11-10; `docs/paper-review-calibration.md`:
+   18 of the 20 papers, the two scans being too large for the Drive
+   connector, 126 reviews, about $135). Its recommendation: keep `high`, the
+   lowest level that reads every modern paper's model in full and never
+   failed (median 3.5 minutes, longest 7, about $0.78); if a choice is
+   offered, offer only `medium` beside it (median 2.2 minutes, about $0.54,
+   the same extraction on a paper with one model, less on a paper with
+   several), since `low` returned invalid JSON in one review in six and
+   `xhigh` and `max` found nothing more while running past the 64,000-token
+   limit (a third of `xhigh` runs, every `max` run); raise `max_tokens` to
+   128,000 (`high` used up to 56,348); keep the 20-minute limit. The same
+   request that stalled on production for Hallik 2020 took 2.4 and 3.1
+   minutes here, so the stall was not the model's reading time. Still for
+   Shafer: whether to offer the choice at all, and the `max_tokens` change.
+   The calibration also found that most error findings on these verified
+   papers are false alarms from the checks themselves (a group that is not a
+   model checked as one, conditions the `at` patient cannot carry, decrement
+   times without their infusion, an individual compared with a group's
+   model), which no choice of effort cures.
