@@ -113,11 +113,19 @@ async function openSession(context, url, adapter, drugs = DEFAULT_DRUGS) {
   // there the load event is waited for, with more time, and the startup
   // menu (which the server sends once Shiny is connected) is what counts
   await page.goto(url, REMOTE ? { waitUntil: 'load', timeout: 120000 } : { waitUntil: 'networkidle' });
-  try {
-    await page.waitForSelector('#startup_ok', REMOTE ? { timeout: 120000 } : {});
-  } catch (e) {
-    const seen = await page.evaluate(describePage).catch(err => 'the page could not be read: ' + err.message);
-    throw new Error(e.message + '\nThe page showed: ' + JSON.stringify(seen));
+  if (REMOTE) {
+    // a poll, not one long wait: BrowserStack closes a connection that sends
+    // nothing for about 90 s ("Socket idle from a long time", the second run)
+    const deadline = Date.now() + 120000;
+    while (!(await page.isVisible('#startup_ok'))) {
+      if (Date.now() > deadline) {
+        const seen = await page.evaluate(describePage).catch(err => 'the page could not be read: ' + err.message);
+        throw new Error('the startup menu did not appear within 120 s. The page showed: ' + JSON.stringify(seen));
+      }
+      await page.waitForTimeout(1000);
+    }
+  } else {
+    await page.waitForSelector('#startup_ok');
   }
   await page.evaluate(ds => {
     for (const d of ds) {
