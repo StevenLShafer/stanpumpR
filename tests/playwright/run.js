@@ -4,7 +4,7 @@
 //
 //   node tests/playwright/run.js                       # the desktop suite
 //   node tests/playwright/run.js dose-grid.test.js     # one of its files
-//   node tests/playwright/run.js iphone.test.js        # the iPhone suite
+//   node tests/playwright/run.js phone.test.js         # the phone suite
 //
 // The app runs in Shiny's test mode on port 7400.  Set STANPUMPR_URL to test
 // an app that is already running instead.  With STANPUMPR_BROWSERSTACK set
@@ -22,9 +22,9 @@ const BS = require('./browserstack');
   // A platform that does not exist, or missing credentials, is said before
   // the app is started (BS.platform() throws)
   const remote = BS.enabled() ? BS.platform() : null;
-  // By default, the files the platform runs: an iPhone runs iphone.test.js,
+  // By default, the files the platform runs: a phone runs phone.test.js,
   // everything else the desktop suite (browserstack.js)
-  const defaults = remote && remote.mobile ? ['iphone.test.js'] : ['dose-grid.test.js', 'table-grid.test.js'];
+  const defaults = remote && remote.mobile ? ['phone.test.js'] : ['dose-grid.test.js', 'table-grid.test.js'];
   const files = (process.argv.slice(2).length ? process.argv.slice(2) : defaults)
     .map(f => path.join(__dirname, f));
   let app = null;

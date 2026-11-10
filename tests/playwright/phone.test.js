@@ -1,9 +1,9 @@
-// The dose grid on an iPhone: a smaller suite than dose-grid.test.js, for
+// The dose grid on a phone: a smaller suite than dose-grid.test.js, for
 // what a phone does differently (a tap instead of a click, a value
 // committed by tapping the next cell, the system's own list for a
-// <select>), written to the
-// limits BrowserStack sets on Playwright on a real iPhone (its "Supported
-// Playwright commands for iOS"):
+// <select>), run on real iPhones (Safari) and real Android phones (Chrome),
+// and written to the limits BrowserStack sets on Playwright on a real iPhone
+// (its "Supported Playwright commands for iOS"), the stricter of the two:
 //
 // - one browser context and one page for the whole file, so every case
 //   starts by loading the app afresh in that page (a new Shiny session each
@@ -18,13 +18,15 @@
 //   tapping the next one, Enter not reaching the grid there either;
 // - no clipboard: nothing here is pasted.
 //
-// Run here, it runs in Playwright's WebKit as an iPhone 15 (touch, the
-// phone's viewport and user agent), keeping to the same limits, so a case
-// that needs more than BrowserStack allows fails here first.  On BrowserStack
-// (STANPUMPR_BROWSERSTACK=iphone-16 or iphone-17, browserstack.js) it runs
-// in Safari on that iPhone.
+// Run here, it runs as an iPhone 15 in Playwright's WebKit, or with
+// STANPUMPR_PHONE=android as a Pixel 7 in Chromium (touch, the phone's
+// viewport and user agent), keeping to the same limits, so a case that
+// needs more than BrowserStack allows fails here first.  On BrowserStack
+// (STANPUMPR_BROWSERSTACK=iphone-16, iphone-17, android-pixel-9 or
+// android-galaxy-s25, browserstack.js) it runs on that phone.
 //
-//   node tests/playwright/run.js iphone.test.js
+//   node tests/playwright/run.js phone.test.js
+//   STANPUMPR_PHONE=android node tests/playwright/run.js phone.test.js
 
 'use strict';
 
@@ -36,8 +38,16 @@ const BS = require('./browserstack');
 
 if (!process.env.STANPUMPR_URL) throw new Error('STANPUMPR_URL is not set: run the suite through run.js');
 if (BS.enabled() && !BS.mobile()) {
-  throw new Error('iphone.test.js runs on an iPhone platform (iphone-16, iphone-17) or here');
+  throw new Error('phone.test.js runs on a phone platform (' +
+    Object.keys(BS.PLATFORMS).filter(n => BS.PLATFORMS[n].mobile).join(', ') + ') or here');
 }
+// The phone it stands in for here (no effect on BrowserStack)
+const LOCAL_PHONES = {
+  iphone: { engine: 'webkit', device: 'iPhone 15' },
+  android: { engine: 'chromium', device: 'Pixel 7' }
+};
+const LOCAL_PHONE = LOCAL_PHONES[process.env.STANPUMPR_PHONE || 'iphone'];
+if (!LOCAL_PHONE) throw new Error('STANPUMPR_PHONE is iphone or android');
 const APP = BS.appUrl(process.env.STANPUMPR_URL);
 
 // The startup table: propofol (bolus, infusion), fentanyl, remifentanil
@@ -51,16 +61,11 @@ const input = (r, c) => `${row(r)} td:nth-child(${c + 1}) input`;
 const unitCell = r => `${row(r)} td:nth-child(4)`;
 const unitSelect = r => `${row(r)} td:nth-child(4) select`;
 
-let browser, context, page;
+let phone, context, page;
 
 before(async () => {
-  if (BS.enabled()) {
-    browser = await BS.launch(playwright, 'webkit', {}, 'iPhone');
-    context = await browser.newContext();
-  } else {
-    browser = await playwright.webkit.launch();
-    context = await browser.newContext(playwright.devices['iPhone 15']);
-  }
+  phone = await BS.launchPhone(playwright, LOCAL_PHONE, 'phone');
+  context = phone.context;
   page = await context.newPage();
   await page.addInitScript(() => {
     window.__errors = [];
@@ -70,7 +75,7 @@ before(async () => {
 });
 
 after(async () => {
-  await browser.close();
+  await phone.close();
 });
 
 // The app loaded afresh, the startup menu's four drugs ticked and Started
@@ -208,7 +213,7 @@ async function waitForDraft(predicate, timeout = 30000) {
   throw new Error('server draft never reached the expected state; it holds ' + JSON.stringify(state && state.draft));
 }
 
-describe('the dose grid on an iPhone', () => {
+describe('the dose grid on a phone', () => {
   test('the startup menu fills the dose table', async () => {
     const rows = await readRows();
     assert.deepEqual(rows.slice(0, FIRST_BLANK).map(r => r[0]),

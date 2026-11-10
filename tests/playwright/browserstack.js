@@ -10,13 +10,20 @@
 //
 // Two kinds of platform.  The desktop browsers (real Chrome and Edge, and
 // Playwright's own Firefox and WebKit builds) run the whole suite,
-// dose-grid.test.js and table-grid.test.js.  The iPhones (real devices,
-// Safari) run iphone.test.js only: there a session allows one browser
-// context and one page, and only part of Playwright's API (BrowserStack's
-// "Supported Playwright commands for iOS"), where the desktop suite opens a
-// context for every case and uses page.$$eval(), the pageerror event and the
-// clipboard.  An iPhone reaches the tunnelled app at bs-local.com, not
-// localhost, which iOS Safari will not load through the tunnel (appUrl()).
+// dose-grid.test.js and table-grid.test.js.  The phones (real iPhones with
+// Safari, real Android phones with Chrome) run phone.test.js only: on an
+// iPhone a session allows one browser context and one page, and only part of
+// Playwright's API (BrowserStack's "Supported Playwright commands for iOS"),
+// where the desktop suite opens a context for every case and uses
+// page.$$eval(), the pageerror event and the clipboard, and one smaller
+// suite serves both kinds of phone.  A phone reaches the tunnelled app at
+// bs-local.com, not localhost, which is the phone's own (appUrl()).
+//
+// An Android phone is connected through Playwright's _android API (the
+// device, then Chrome on it, which gives one browser context), as
+// BrowserStack's sample connects one, and only with Playwright 1.62:
+// BrowserStack lists Android for 1.62 and not for 1.63, so the workflow
+// installs 1.62 for an Android platform (ANDROID_PLAYWRIGHT).
 
 'use strict';
 
@@ -33,8 +40,16 @@ const PLATFORMS = {
   // as BrowserStack's own sample connects to one (webkit.connect, safari,
   // deviceName, osVersion, realMobile)
   'iphone-16': { engine: 'webkit', mobile: true, caps: { browser: 'safari', deviceName: 'iPhone 16', osVersion: '18', realMobile: 'true' } },
-  'iphone-17': { engine: 'webkit', mobile: true, caps: { browser: 'safari', deviceName: 'iPhone 17', osVersion: '26', realMobile: 'true' } }
+  'iphone-17': { engine: 'webkit', mobile: true, caps: { browser: 'safari', deviceName: 'iPhone 17', osVersion: '26', realMobile: 'true' } },
+  // as BrowserStack's sample connects one (_android.connect, chrome,
+  // deviceName, osVersion, realMobile); devices from its Android guide
+  'android-pixel-9': { engine: 'chromium', mobile: true, android: true, caps: { browserName: 'chrome', browser: 'chrome', deviceName: 'Google Pixel 9', osVersion: '16.0', realMobile: 'true' } },
+  'android-galaxy-s25': { engine: 'chromium', mobile: true, android: true, caps: { browserName: 'chrome', browser: 'chrome', deviceName: 'Samsung Galaxy S25 Ultra', osVersion: '15.0', realMobile: 'true' } }
 };
+
+// The Playwright an Android phone needs (the newest BrowserStack lists for
+// Android); the workflow reads it from here
+const ANDROID_PLAYWRIGHT = '1.62';
 
 const ENDPOINT = 'wss://cdp.browserstack.com/playwright?caps=';
 
@@ -100,14 +115,42 @@ async function launch(playwright, engine, options, sessionName) {
   return playwright[platform().engine].connect(wsEndpoint(sessionName), { timeout: 120000 });
 }
 
-// Is the platform an iPhone (iphone.test.js, one context and one page)?
+// Is the platform a phone (phone.test.js, one context and one page)?
 function mobile() {
   return enabled() && !!platform().mobile;
 }
 
-// The app's address as the browser must use it: an iPhone on BrowserStack
+// The phone's browser context: on BrowserStack, an iPhone's Safari (one
+// context on a connected WebKit) or an Android phone's Chrome (the device
+// connected, Chrome restarted on it, its one context); here, the browser
+// `local` names launched as the phone its `device` descriptor describes.
+// `close` ends whichever it was.
+async function launchPhone(playwright, local, sessionName) {
+  if (!enabled()) {
+    const browser = await playwright[local.engine].launch();
+    const context = await browser.newContext(playwright.devices[local.device]);
+    return { context, close: () => browser.close() };
+  }
+  const p = platform();
+  if (p.android) {
+    const version = playwrightVersion();
+    if (!version.startsWith(ANDROID_PLAYWRIGHT + '.')) {
+      throw new Error(`an Android phone on BrowserStack needs Playwright ${ANDROID_PLAYWRIGHT}, not ${version}`);
+    }
+    const device = await playwright._android.connect(wsEndpoint(sessionName), { timeout: 120000 });
+    await device.shell('am force-stop com.android.chrome');
+    const context = await device.launchBrowser();
+    return { context, close: async () => { await context.close().catch(() => {}); await device.close(); } };
+  }
+  const browser = await playwright[p.engine].connect(wsEndpoint(sessionName), { timeout: 120000 });
+  const context = await browser.newContext();
+  return { context, close: () => browser.close() };
+}
+
+// The app's address as the browser must use it: a phone on BrowserStack
 // reaches the tunnelled app at bs-local.com, which BrowserStack Local maps
-// to this machine, because iOS Safari does not load localhost through it
+// to this machine; localhost would be the phone's own, and iOS Safari does
+// not load it through the tunnel
 function appUrl(url) {
   if (!mobile()) return url;
   const u = new URL(url);
@@ -157,4 +200,4 @@ async function startTunnel() {
   };
 }
 
-module.exports = { PLATFORMS, enabled, platform, mobile, appUrl, engine, launch, wsEndpoint, startTunnel, localIdentifier };
+module.exports = { PLATFORMS, ANDROID_PLAYWRIGHT, enabled, platform, mobile, appUrl, engine, launch, launchPhone, wsEndpoint, startTunnel, localIdentifier };
