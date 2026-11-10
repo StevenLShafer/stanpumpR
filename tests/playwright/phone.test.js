@@ -49,6 +49,8 @@ const LOCAL_PHONES = {
 const LOCAL_PHONE = LOCAL_PHONES[process.env.STANPUMPR_PHONE || 'iphone'];
 if (!LOCAL_PHONE) throw new Error('STANPUMPR_PHONE is iphone or android');
 const APP = BS.appUrl(process.env.STANPUMPR_URL);
+// A real Android phone on BrowserStack (Chrome, through Playwright's _android)
+const ANDROID = BS.enabled() && !!BS.platform().android;
 
 // The startup table: propofol (bolus, infusion), fentanyl, remifentanil
 // (bolus, infusion), rocuronium; then blank rows
@@ -80,7 +82,11 @@ after(async () => {
 
 // The app loaded afresh, the startup menu's four drugs ticked and Started
 beforeEach(async () => {
-  await page.goto(APP, { waitUntil: 'load' });
+  // On Android the page's load event came late or not at all through the
+  // tunnel (two loads of eight timed out at 30 s, the first real-Pixel run
+  // with touch, 2026-11-10); what the case needs is the startup menu, which
+  // the next line waits for
+  await page.goto(APP, ANDROID ? { waitUntil: 'domcontentloaded', timeout: 90000 } : { waitUntil: 'load' });
   await page.waitForSelector('#startup_ok', { timeout: 120000 });
   await page.evaluate(ds => {
     for (const d of ds) {
@@ -89,7 +95,7 @@ beforeEach(async () => {
       window.jQuery(box).trigger('change');
     }
   }, H.DEFAULT_DRUGS);
-  await page.tap('#startup_ok');
+  await tapOn('#startup_ok');
   await page.waitForFunction(() => !document.querySelector('.modal.show'), null, { timeout: 60000 });
   await waitForRows(rows => rows.length > FIRST_BLANK && rows[0][0] === 'propofol');
   await H.settle(page);
@@ -101,7 +107,7 @@ beforeEach(async () => {
 async function openDoseTable() {
   if (await page.isVisible(input(0, 0))) return;
   const id = await page.evaluate(() => document.querySelector('aside.dose-sidebar').id);
-  await page.tap(`.collapse-toggle[aria-controls="${id}"]`);
+  await tapOn(`.collapse-toggle[aria-controls="${id}"]`);
   await page.waitForSelector(input(0, 0), { state: 'visible', timeout: 15000 });
   await H.settle(page, 300);
 }
@@ -175,10 +181,29 @@ async function holds(r, expected) {
 // (locator.fill()), and the cell is committed by tapping the next one.
 // Enter is the desktop suite's (dose-grid.test.js)
 async function enter(r, c, text) {
-  await page.tap(input(r, c));
+  await tapOn(input(r, c));
   await typeInto(input(r, c), text);
-  await page.tap(input(r, c === 1 ? 2 : 1));
+  await tapOn(input(r, c === 1 ? 2 : 1));
   await H.settle(page, 300);
+}
+
+// A tap.  Before it taps, Playwright checks that nothing covers the target
+// by asking the page what lies at the point it will tap, and on a real
+// Android phone with the keyboard up that check looks in the wrong place:
+// the keyboard pans the visual viewport to keep the cell typed in visible,
+// and the check, made in the layout viewport's coordinates, found the rows
+// and the navbar above the target "intercepting" a tap on the drug list and
+// on Apply until it timed out (the first real-Pixel run with touch,
+// 2026-11-10).  The tap itself is sent in the visual viewport's coordinates.
+// So on Android, while the visual viewport is panned, the check is skipped
+// (force) and the case checks what the tap did, as every case here does
+async function tapOn(target) {
+  const locator = typeof target === 'string' ? page.locator(target) : target;
+  const panned = ANDROID && await page.evaluate(() => {
+    const v = window.visualViewport;
+    return !!v && (Math.abs(v.offsetTop) > 1 || Math.abs(v.offsetLeft) > 1);
+  });
+  await locator.tap(panned ? { force: true } : {});
 }
 
 async function typeInto(selector, text) {
@@ -230,7 +255,7 @@ describe('the dose grid on a phone', () => {
   // bug under Chromium's touch emulation; this checks only that an iPhone
   // tap behaves
   test('a tap selects the whole value without opening the row menu', async () => {
-    await page.tap(input(0, 2));
+    await tapOn(input(0, 2));
     await H.settle(page, 500);
     const state = await page.evaluate(sel => {
       const el = document.querySelector(sel);
@@ -263,11 +288,11 @@ describe('the dose grid on a phone', () => {
   });
 
   test('the drug list offers the drugs that match, and a tap on one chooses it', async () => {
-    await page.tap(input(FIRST_BLANK, 0));
+    await tapOn(input(FIRST_BLANK, 0));
     await typeInto(input(FIRST_BLANK, 0), 'fent');
     const option = page.locator(`${ROOT} [role=listbox]:not([hidden]) [role=option]`).filter({ hasText: /^fentanyl$/ });
     await option.waitFor({ state: 'visible', timeout: 15000 });
-    await option.tap();
+    await tapOn(option);
     await H.settle(page, 300);
     await holds(FIRST_BLANK, ['fentanyl', '0', '0', 'mcg']);
   });
@@ -282,7 +307,7 @@ describe('the dose grid on a phone', () => {
       window.addEventListener('mousedown', e => window.__mousedown.push(e.defaultPrevented));
     });
     // the cell's centre, clear of the arrow at its right
-    await page.tap(unitCell(FENTANYL));
+    await tapOn(unitCell(FENTANYL));
     await H.settle(page, 300);
     const prevented = await page.evaluate(() => window.__mousedown);
     assert.ok(prevented.length > 0, 'the tap sent no mousedown, so this checked nothing');
@@ -305,7 +330,7 @@ describe('the dose grid on a phone', () => {
     await enter(FENTANYL, 2, '50');
     await holds(FENTANYL, ['fentanyl', '0', '50', 'mcg']);
     await page.waitForFunction(() => !document.getElementById('dosetable_apply').disabled, null, { timeout: 15000 });
-    await page.tap('#dosetable_apply');
+    await tapOn('#dosetable_apply');
     await H.settle(page, 1000);
     const state = await serverState();
     assert.deepEqual(state.table[FENTANYL], ['fentanyl', '0', '50', 'mcg']);
@@ -329,7 +354,7 @@ describe('the dose grid on a phone', () => {
     await enter(FENTANYL, 2, '357');
     await holds(FENTANYL, ['fentanyl', '0', '357', 'mcg']);
     await page.waitForFunction(() => !document.getElementById('dosetable_apply').disabled, null, { timeout: 15000 });
-    await page.tap('#dosetable_apply');
+    await tapOn('#dosetable_apply');
     await page.waitForFunction(() => decodeURIComponent(location.search).includes('357'), null, { timeout: 30000 });
     const link = await page.evaluate(() => location.href);
     await reloadInPage();
