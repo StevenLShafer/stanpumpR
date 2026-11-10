@@ -14,18 +14,18 @@ test_that("Table 2 reproduces the paper's half-lives and steady-state volume", {
 
 test_that("creatinine enters as (SCRpop/SCR)^0.694, SCRpop by sex", {
   cl <- function(scr, sex = "male")
-    methotrexate(70, 170, 60, sex, adjustToFFM = FALSE, creatinine = scr)$PK$default$cl1 * 60
+    methotrexateIbarra(70, 170, 60, sex, adjustToFFM = FALSE, creatinine = scr)$PK$default$cl1 * 60
   expect_equal(cl(0.92), 5.92)
   expect_equal(cl(0.77, "female"), 5.92)
   expect_equal(cl(1.84) / cl(0.92), 0.5^0.694)
   # a blank field: the library's assumed normal creatinine, 0.9 / 0.8 mg/dL
-  blank <- methotrexate(70, 170, 60, "male", adjustToFFM = FALSE)$PK$default$cl1 * 60
+  blank <- methotrexateIbarra(70, 170, 60, "male", adjustToFFM = FALSE)$PK$default$cl1 * 60
   expect_equal(blank, 5.92 * (0.92 / 0.9)^0.694)
 })
 
 test_that("albumin enters clearance as (ALB/4)^0.594; blank is the reference 4 g/dL", {
   cl <- function(alb = NULL)
-    methotrexate(70, 170, 60, "male", adjustToFFM = FALSE, creatinine = 0.92,
+    methotrexateIbarra(70, 170, 60, "male", adjustToFFM = FALSE, creatinine = 0.92,
                  albumin = alb)$PK$default
   expect_equal(cl()$cl1 * 60, 5.92)
   expect_equal(cl(4)$cl1, cl()$cl1)
@@ -49,11 +49,11 @@ test_that("albumin enters clearance as (ALB/4)^0.594; blank is the reference 4 g
 })
 
 test_that("weight is allometric; the switch takes the pharmacokinetic weight", {
-  off <- methotrexate(100, 180, 50, "male", adjustToFFM = FALSE, creatinine = 0.92)$PK$default
+  off <- methotrexateIbarra(100, 180, 50, "male", adjustToFFM = FALSE, creatinine = 0.92)$PK$default
   expect_equal_rounded(off$v1, 14.4 * 100 / 70)
   expect_equal_rounded(off$cl2, 0.571 * (100 / 70)^0.75 / 60)
   size <- pkSizeFactors(100, 180, 50, "male", TRUE)
-  on <- methotrexate(100, 180, 50, "male", creatinine = 0.92)$PK$default
+  on <- methotrexateIbarra(100, 180, 50, "male", creatinine = 0.92)$PK$default
   expect_equal_rounded(on$v1, 14.4 * size$pkWeight / 70)
   for (args in list(list(2, 45, 0, "female"), list(250, 210, 90, "male"))) {
     m <- do.call(methotrexate, args)$PK$default

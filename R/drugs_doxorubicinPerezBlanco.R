@@ -57,7 +57,7 @@
 # molar conversion), so no conversion is applied and doxorubicinol forms mass
 # for mass (mwRatio 1), as the paper's own arithmetic does.  Joerger's
 # doxorubicin, by contrast, is converted to base because its molar AUCs
-# require it (R/drugs_doxorubicin.R).
+# require it (R/drugs_doxorubicinJoerger.R).
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================

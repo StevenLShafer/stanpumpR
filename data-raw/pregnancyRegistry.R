@@ -2719,6 +2719,18 @@ registry <- rbind(
       notes = "")
 )
 
+# The candidate models renamed when their drug's model became the program's
+# choice (R/modelSelection.R, 2026-11-10) carry the row the drug had: the
+# drug's name now stands for the choice, and its row for every candidate
+# that has no row of its own.
+renamed <- c(carboplatinDuffull = "carboplatin", doxorubicinJoerger = "doxorubicin",
+             etoposideKroghMadsen = "etoposide", fluorouracilBriki = "fluorouracil",
+             melphalanNath = "melphalan", methotrexateIbarra = "methotrexate",
+             oxaliplatinBastian = "oxaliplatin", vincristineIgarashi = "vincristine")
+copies <- registry[match(renamed, registry$drug), ]
+copies$drug <- names(renamed)
+registry <- rbind(registry, copies)
+
 stopifnot(
   !anyDuplicated(registry$drug),
   all(registry$group %in% GROUPS),

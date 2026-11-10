@@ -28,7 +28,8 @@ test_that("weight is allometric (3/4, 1); the footnote's 15-kg check is 0.646 L/
 test_that("etoposidePediatric is a chemotherapy drug, plasma only, with no band", {
   dd <- getDrugDefaultsGlobal()
   row <- dd[dd$Drug == "etoposidePediatric", ]
-  expect_identical(row$Category, CHEMOTHERAPY_DRUG_CATEGORY)
+  expect_true(is.na(row$Category) || row$Category == "")
+  expect_true(row$Drug %in% unlist(lapply(MODEL_GROUPS, function(g) g$model)))  # a candidate under its drug's one name
   expect_equal(c(row$Lower, row$Upper, row$Typical, row$MEAC), c(0, 0, 0, 0))
   PK <- getDrugPK("etoposidePediatric", 20, 110, 5, "male")
   expect_equal(PK$tPeak, 0)

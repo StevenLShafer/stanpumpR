@@ -52,7 +52,8 @@ test_that("the plateau is R Km / (Vmax - R), an independent check of the engine"
 test_that("fluorouracilTan is a chemotherapy drug, plasma only, with no band", {
   dd <- getDrugDefaultsGlobal()
   row <- dd[dd$Drug == "fluorouracilTan", ]
-  expect_identical(row$Category, CHEMOTHERAPY_DRUG_CATEGORY)
+  expect_true(is.na(row$Category) || row$Category == "")
+  expect_true(row$Drug %in% unlist(lapply(MODEL_GROUPS, function(g) g$model)))  # a candidate under its drug's one name
   expect_equal(c(row$Lower, row$Upper, row$Typical, row$MEAC), c(0, 0, 0, 0))
   PK <- getDrugPK("fluorouracilTan", 70, 170, 60, "male")
   expect_equal(PK$tPeak, 0)

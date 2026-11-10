@@ -39,7 +39,8 @@ test_that("the three are chemotherapy drugs, plasma only, with no band", {
   dd <- getDrugDefaultsGlobal()
   for (drug in c("carboplatinPediatric", "etoposideDuong", "melphalanPediatric")) {
     row <- dd[dd$Drug == drug, ]
-    expect_identical(row$Category, CHEMOTHERAPY_DRUG_CATEGORY)
+    expect_true(is.na(row$Category) || row$Category == "")
+  expect_true(row$Drug %in% unlist(lapply(MODEL_GROUPS, function(g) g$model)))  # a candidate under its drug's one name
     expect_equal(c(row$Lower, row$Upper, row$Typical, row$MEAC), c(0, 0, 0, 0))
     expect_match(getDrugPK(drug, 15, 100, 4, "male")$reference, "Duong")
     expect_identical(therapeuticRange(drug)$band_status, "not_applicable")

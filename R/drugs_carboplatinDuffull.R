@@ -117,7 +117,7 @@ leanBodyWeightPesola <- function(height, sex)
 #'
 #' Two compartments for unbound plasma carboplatin, with lean body weight and
 #' an adjusted Cockcroft-Gault creatinine clearance; see the header of
-#' \code{R/drugs_carboplatin.R}.
+#' \code{R/drugs_carboplatinDuffull.R}.
 #'
 #' @inheritParams cefazolin
 #' @param creatinine serum creatinine, mg/dL, or NULL for an assumed normal
@@ -127,7 +127,7 @@ leanBodyWeightPesola <- function(height, sex)
 #'   pregnancy
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-carboplatin <- function(weight, height, age, sex, adjustToFFM = TRUE,
+carboplatinDuffull <- function(weight, height, age, sex, adjustToFFM = TRUE,
                         creatinine = NULL, pregnant = FALSE)
 {
   p <- CARBOPLATIN_DUFFULL

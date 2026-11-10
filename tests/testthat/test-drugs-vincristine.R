@@ -18,7 +18,7 @@ test_that("Table 2 at the typical patient", {
 })
 
 test_that("the paper's covariate check: 1.7-fold for BSA 1.4 to 1.9, 0.8-fold for age 53 to 82", {
-  cl <- function(bsa, age) vincristine(59, bsa^2 * 3600 / 59, age, "male",
+  cl <- function(bsa, age) vincristineIgarashi(59, bsa^2 * 3600 / 59, age, "male",
                                        adjustToFFM = FALSE)$PK$default$cl1
   expect_equal(round(cl(1.9, 60) / cl(1.4, 60), 3), 1.701)
   expect_equal(round(cl(1.6, 82) / cl(1.6, 53), 3), 0.809)

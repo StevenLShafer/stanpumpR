@@ -16,12 +16,12 @@ test_that("Table 2 for a man at CLCR 116: CL 2.145 L/h, 54% renal, Vss 13.9 L, h
 })
 
 test_that("women's central volume is 27.9% smaller", {
-  v <- function(sex) etoposide(79.4, 175, 52, sex, adjustToFFM = FALSE)$PK$default$v1
+  v <- function(sex) etoposideKroghMadsen(79.4, 175, 52, sex, adjustToFFM = FALSE)$PK$default$v1
   expect_equal(v("female") / v("male"), 1 - 0.2793)
 })
 
 test_that("pregnancy raises the creatinine clearance by 1.5 only with a blank creatinine", {
-  m <- function(...) etoposide(70, 165, 30, "female", adjustToFFM = FALSE, ...)$PK$default$cl1 * 60
+  m <- function(...) etoposideKroghMadsen(70, 165, 30, "female", adjustToFFM = FALSE, ...)$PK$default$cl1 * 60
   expect_equal(m(pregnant = TRUE) - 0.99, 1.5 * (m() - 0.99))
   expect_equal(m(creatinine = 0.6, pregnant = TRUE), m(creatinine = 0.6))
 })

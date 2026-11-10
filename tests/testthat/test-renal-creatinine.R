@@ -46,6 +46,10 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 "melphalan",
                 # oxaliplatin (Bastian 2003): (SCr/87 umol/L)^-0.57 on clearance
                 "oxaliplatin",
+                # the candidate models under their own names, since the drugs
+                # above became the program's choice (R/modelSelection.R)
+                "carboplatinDuffull", "methotrexateIbarra", "melphalanNath",
+                "doxorubicinolJoerger", "etoposideKroghMadsen", "oxaliplatinBastian",
                 # Serum creatinine itself, not an estimate of its clearance,
                 # is magnesium's covariate (R/drugs_magnesiumSulfate.R, Du 2019)
                 "magnesiumSulfate",

@@ -5,7 +5,7 @@
 # concentrations in mcg/mL (= mg/L) of doxorubicinol.
 #
 # Drafted by Claude Code, 2026-11-06.  Metabolite only: it has no units of
-# its own and is not dosed; R/drugs_doxorubicin.R forms it.  Read from
+# its own and is not dosed; R/drugs_doxorubicinJoerger.R forms it.  Read from
 # Joerger 2007 (Clin Pharmacokinet 46:1051-1068), Table IV and Eq. 11, on the
 # page images.
 #
@@ -44,14 +44,14 @@ DOXORUBICINOL_JOERGER <- list(
 #' Doxorubicinol, the metabolite of doxorubicin (Joerger 2007)
 #'
 #' One compartment, a Cockcroft-Gault term on clearance; formed by
-#' \code{doxorubicin()}.  See the header of \code{R/drugs_doxorubicinol.R}.
+#' \code{doxorubicin()}.  See the header of \code{R/drugs_doxorubicinolJoerger.R}.
 #'
 #' @inheritParams cefazolin
 #' @param creatinine serum creatinine, mg/dL, or NULL for an assumed normal
 #'   value
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-doxorubicinol <- function(weight, height, age, sex, adjustToFFM = TRUE,
+doxorubicinolJoerger <- function(weight, height, age, sex, adjustToFFM = TRUE,
                           creatinine = NULL)
 {
   p <- DOXORUBICINOL_JOERGER

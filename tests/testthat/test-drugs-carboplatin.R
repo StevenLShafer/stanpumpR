@@ -20,7 +20,7 @@ test_that("Pesola's LBW and the equations reproduce Table 2 at the cohort means"
 
 test_that("the model is the published equations at the patient's LBW and adjusted ClCr", {
   w <- 70; h <- 165; age <- 60
-  m <- carboplatin(w, h, age, "female", adjustToFFM = FALSE)$PK$default
+  m <- carboplatinDuffull(w, h, age, "female", adjustToFFM = FALSE)$PK$default
   lbw <- 0.9 * (h - 150) + 45
   scr <- max(adultEquivalentCreatinine(NULL, age, "female"), 60 / SCR_UMOL_PER_MG_DL)
   clcr <- (140 - age) * min(lbw, w) / (72 * scr) * 0.85 * 60 / 1000
@@ -31,7 +31,7 @@ test_that("the model is the published equations at the patient's LBW and adjuste
 })
 
 test_that("a low creatinine is floored at 60 uM; a high one lowers clearance", {
-  cl <- function(scr) carboplatin(70, 165, 60, "female", creatinine = scr)$PK$default$cl1
+  cl <- function(scr) carboplatinDuffull(70, 165, 60, "female", creatinine = scr)$PK$default$cl1
   expect_equal(cl(0.4), cl(60 / SCR_UMOL_PER_MG_DL))
   expect_lt(cl(2.0), cl(1.0))
   # the non-renal term remains however poor the kidneys
@@ -40,9 +40,9 @@ test_that("a low creatinine is floored at 60 uM; a high one lowers clearance", {
 })
 
 test_that("height is held at 152 cm, and a child takes its weight", {
-  short <- carboplatin(50, 140, 40, "female", adjustToFFM = FALSE)$PK$default
+  short <- carboplatinDuffull(50, 140, 40, "female", adjustToFFM = FALSE)$PK$default
   expect_equal_rounded(short$v1, 0.26 * min(leanBodyWeightPesola(152, "female"), 50))
-  child <- carboplatin(15, 100, 4, "male", adjustToFFM = FALSE)$PK$default
+  child <- carboplatinDuffull(15, 100, 4, "male", adjustToFFM = FALSE)$PK$default
   expect_equal_rounded(child$v1, 0.26 * 15)
   for (args in list(list(3, 50, 0, "female"), list(250, 210, 90, "male"))) {
     m <- do.call(carboplatin, args)$PK$default
@@ -53,8 +53,8 @@ test_that("height is held at 152 cm, and a child takes its weight", {
 
 test_that("the switch reaches only the weight Cockcroft-Gault compares with LBW", {
   # an adult whose weight exceeds LBW: the switch changes nothing
-  on  <- carboplatin(80, 170, 50, "male", adjustToFFM = TRUE)$PK$default
-  off <- carboplatin(80, 170, 50, "male", adjustToFFM = FALSE)$PK$default
+  on  <- carboplatinDuffull(80, 170, 50, "male", adjustToFFM = TRUE)$PK$default
+  off <- carboplatinDuffull(80, 170, 50, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(on, off)
 })
 

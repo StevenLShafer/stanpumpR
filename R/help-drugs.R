@@ -1438,6 +1438,9 @@ helpRawTableHTML <- function(df, caption = NULL) {
 helpReferencesHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
   patients <- helpReferencePatients()
   iv <- drugDefaults$Drug[!isGasDrug(drugDefaults$Drug)]
+  # A drug whose model the program chooses (R/modelSelection.R) returns its
+  # chosen candidate's citation; each candidate is listed under its own name.
+  iv <- setdiff(iv, names(MODEL_GROUPS))
   cites <- list()
   for (drug in iv) {
     for (i in seq_len(nrow(patients))) {

@@ -1,25 +1,15 @@
-### The model
+### One name, the model chosen for the patient
 
-Etoposide in adults comes from Krogh-Madsen and colleagues (*Cancer Chemother Pharmacol* 2012;69:1155-1163): 23 Danish adults with acute myeloid leukaemia given 100 mg/m² over one hour on five days, with cytarabine and daunorubicin. Two compartments describe it:
+stanpumpR holds 3 published models of etoposide. You do not choose between them: most clinicians have no data to make that choice, so stanpumpR picks the model whose study population best matches the patient you entered (a rule of Steven Shafer's, 9 November 2026). The References panel under the plot names the model in use.
 
-- clearance 0.99 L/h + 0.00996 × creatinine clearance (Cockcroft-Gault, mL/min), so about half renal;
-- central volume 9.13 L in men and 6.58 L in women; a peripheral compartment of 4.75 L exchanging at 1.14 L/h.
+| Model | Source | Studied in |
+|---|---|---|
+| [etoposideKroghMadsen](help:drugs/etoposideKroghMadsen) | Krogh-Madsen 2012 | 23 adults with AML, 22-68 years, 46-117 kg |
+| [etoposidePediatric](help:drugs/etoposidePediatric) | Urien 2011 | 67 children, 14 weeks-16.7 years, 5.3-66 kg, conventional 1-h infusions |
+| [etoposideDuong](help:drugs/etoposideDuong) | Duong 2019 | 51 children with high-risk neuroblastoma, 1.7-8.3 years, 8.6-31 kg, high-dose |
 
-For a man with a creatinine clearance of 116 mL/min, clearance is 2.1 L/h and the half-lives are 1.4 and 5.9 hours. The children's model is [etoposidePediatric](help:drugs/etoposidePediatric).
+**The rule.** Among the models whose studied age range (and weight range, where the paper printed one) includes the patient, the one fitted to more patients is chosen, then the newer. If none includes the patient, the one whose ranges are nearest is chosen.
 
-### What is plotted
+**What that means for etoposide.** In practice Urien 2011 is chosen for children (it is the larger of the two children's studies and covers Duong's ages), the nearer children's model up to about 19 years, and Krogh-Madsen 2012 for adults. Duong 2019 is never chosen while Urien covers the child.
 
-Plasma etoposide in mcg/mL (mg/L). Doses are entered in mg or as an infusion rate; a dose prescribed per m² must be multiplied by the body surface area first. There is no effect site and no band.
-
-### Covariates
-
-- **Serum creatinine**, from the Patient Profile, in Cockcroft-Gault. Left blank, the library's assumed normal value is used.
-- **Sex**, on the central volume.
-- **Held at the reference**: the white cell count at diagnosis, which raised clearance slightly in the study and has no Patient Profile field.
-
-### Where to be careful
-
-- **The paper's text and figure imply a steeper renal effect** than its table: a 30% fall in clearance at a creatinine clearance of 60 mL/min, where the table's slope gives 26%. The table is used.
-- **23 patients**, sampled over the first day. Not a monitoring tool.
-
-Every parameter was read in the paper's PDF.
+The tables on this page are computed at six reference patients, so each uses the model chosen for that patient. Each model's own page gives its parameters, its checks against its paper, and its limits.

@@ -8,7 +8,7 @@
 # (docs/chemotherapy.md, inst/extdata/chemotherapyRegistry.csv).  Every
 # number below was read from the PDF, which Shafer supplied (2026-11-06), on
 # the page images: Tables I and IV and Eq. 12.  The same paper is the
-# library's doxorubicin model (R/drugs_doxorubicin.R).
+# library's doxorubicin model (R/drugs_doxorubicinJoerger.R).
 #
 # THE SOURCE
 # ==========

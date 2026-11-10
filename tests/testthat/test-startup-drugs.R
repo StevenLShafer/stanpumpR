@@ -13,6 +13,9 @@ test_that("every drug that can be dosed has a category the menu knows", {
                   "enalaprilat", "doxorubicinol", "doxorubicinolPediatric", "doxorubicinolPerezBlanco",
                   "irinotecanSN38", "cisplatinBound", "gemcitabineDFDU", "capecitabine5FU",
                   "air", "oxygen", "ventilation")
+  # and the candidate models of a drug whose model the program chooses
+  # (R/modelSelection.R), offered only through their drug's name
+  notOffered <- c(notOffered, modelCandidates())
   dosed <- setdiff(dd$Drug, notOffered)
   expect_true(all(lengths(dd$Units[match(dosed, dd$Drug)]) > 0))
   expect_true(all(dd$Category[match(dosed, dd$Drug)] %in% DRUG_CATEGORIES))

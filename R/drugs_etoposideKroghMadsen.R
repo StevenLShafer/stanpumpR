@@ -83,7 +83,7 @@ ETOPOSIDE_KROGHMADSEN <- list(
 #' Etoposide, intravenous, in adults (Krogh-Madsen 2012)
 #'
 #' Two compartments; a Cockcroft-Gault renal term on clearance and sex on the
-#' central volume.  See the header of \code{R/drugs_etoposide.R}.
+#' central volume.  See the header of \code{R/drugs_etoposideKroghMadsen.R}.
 #'
 #' @inheritParams cefazolin
 #' @param creatinine serum creatinine, mg/dL, or NULL for an assumed normal
@@ -93,7 +93,7 @@ ETOPOSIDE_KROGHMADSEN <- list(
 #'   pregnancy
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-etoposide <- function(weight, height, age, sex, adjustToFFM = TRUE,
+etoposideKroghMadsen <- function(weight, height, age, sex, adjustToFFM = TRUE,
                       creatinine = NULL, pregnant = FALSE)
 {
   p <- ETOPOSIDE_KROGHMADSEN

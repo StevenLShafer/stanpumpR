@@ -140,14 +140,14 @@ OXALIPLATIN_MIN_SCR <- 53
 #' Two compartments with weight, serum creatinine and sex on clearance and a
 #' gallbladder store that fills from the central compartment until 2 h after
 #' each course starts and then returns its content through the gut; see the
-#' header of \code{R/drugs_oxaliplatin.R}.
+#' header of \code{R/drugs_oxaliplatinBastian.R}.
 #'
 #' @inheritParams cefazolin
 #' @param creatinine serum creatinine, mg/dL, or NULL for an assumed normal
 #'   value
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-oxaliplatin <- function(weight, height, age, sex, adjustToFFM = TRUE,
+oxaliplatinBastian <- function(weight, height, age, sex, adjustToFFM = TRUE,
                         creatinine = NULL)
 {
   p <- OXALIPLATIN_BASTIAN

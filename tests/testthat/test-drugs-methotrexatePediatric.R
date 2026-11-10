@@ -89,7 +89,8 @@ test_that("the size covariate takes the pharmacokinetic weight with the switch o
 test_that("methotrexatePediatric is a chemotherapy drug, plasma only, with no band", {
   dd <- getDrugDefaultsGlobal()
   row <- dd[dd$Drug == "methotrexatePediatric", ]
-  expect_identical(row$Category, CHEMOTHERAPY_DRUG_CATEGORY)
+  expect_true(is.na(row$Category) || row$Category == "")
+  expect_true(row$Drug %in% unlist(lapply(MODEL_GROUPS, function(g) g$model)))  # a candidate under its drug's one name
   expect_equal(c(row$Lower, row$Upper, row$Typical, row$MEAC), c(0, 0, 0, 0))
   PK <- getDrugPK("methotrexatePediatric", 30, 120, 8, "male")
   expect_equal(PK$tPeak, 0)

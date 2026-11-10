@@ -1,26 +1,14 @@
-### The model
+### One name, the model chosen for the patient
 
-High-dose melphalan comes from Nath and colleagues (*Br J Clin Pharmacol* 2010;69:484-497): 100 adults aged 36 to 73 with multiple myeloma, given about 200 mg/m² over half an hour before autologous stem-cell transplantation. Two compartments describe total plasma melphalan, its clearance the sum of a non-renal and a renal part:
+stanpumpR holds 2 published models of melphalan. You do not choose between them: most clinicians have no data to make that choice, so stanpumpR picks the model whose study population best matches the patient you entered (a rule of Steven Shafer's, 9 November 2026). The References panel under the plot names the model in use.
 
-- non-renal clearance 17 L/h × (fat-free mass / 50 kg)^0.75 (at the reference haematocrit of 34%);
-- renal clearance 11.1 L/h × (creatinine clearance / 88), the creatinine clearance by Cockcroft-Gault in mL/min per 70 kg;
-- central volume 13.2 L × fat-free mass / 50 kg, and one peripheral compartment of 15 L exchanging at 30.6 L/h.
+| Model | Source | Studied in |
+|---|---|---|
+| [melphalanNath](help:drugs/melphalanNath) | Nath 2010 | 100 adults with myeloma, 36-73 years, 42-132 kg |
+| [melphalanPediatric](help:drugs/melphalanPediatric) | Duong 2019 | 51 children with high-risk neuroblastoma, 1.7-8.3 years, 8.6-31 kg |
 
-At the reference values clearance is 28.1 L/h, 40% of it renal, and the half-lives are 7 and 55 minutes, as the paper reports.
+**The rule.** Among the models whose studied age range (and weight range, where the paper printed one) includes the patient, the one fitted to more patients is chosen, then the newer. If none includes the patient, the one whose ranges are nearest is chosen.
 
-### What is plotted
+**What that means for melphalan.** Duong 2019 is chosen for young children and Nath 2010 for adults; between their ranges the nearer one is used, so the switch comes at about 22 years.
 
-Total plasma melphalan in mcg/mL (mg/L). Doses are entered in mg or as an infusion rate; a dose prescribed per m² must be multiplied by the body surface area first. There is no effect site and no band: the exposures the paper related to toxicity are not a therapeutic range.
-
-### Covariates
-
-- **Fat-free mass**, from weight, height and sex (Janmahasatian's equation in adults, the paper's), on the non-renal clearance and the central volume.
-- **Serum creatinine**, from the Patient Profile, in Cockcroft-Gault normalised to 70 kg, so weight does not enter the renal term. Left blank, the library's assumed normal value is used.
-- **Haematocrit is held at 34%**, the study's median, because the Patient Profile has no field for it. A lower haematocrit lowers the non-renal clearance: by 22% at a haematocrit of 20%.
-
-### Where to be careful
-
-- **The reference fat-free mass** is printed as 50 kg in the final model, although the study's median was 53 kg; it is used as printed.
-- **Adults only**, 36 to 73 years. Not a monitoring tool: the curve is a population prediction.
-
-Every parameter was read in the paper's PDF.
+The tables on this page are computed at six reference patients, so each uses the model chosen for that patient. Each model's own page gives its parameters, its checks against its paper, and its limits.

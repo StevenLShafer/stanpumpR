@@ -87,7 +87,8 @@ test_that("both switch positions are pinned", {
 test_that("oxaliplatinNikanjam is a chemotherapy drug, plasma only, in ng/mL, with no band", {
   dd <- getDrugDefaultsGlobal()
   row <- dd[dd$Drug == "oxaliplatinNikanjam", ]
-  expect_identical(row$Category, CHEMOTHERAPY_DRUG_CATEGORY)
+  expect_true(is.na(row$Category) || row$Category == "")
+  expect_true(row$Drug %in% unlist(lapply(MODEL_GROUPS, function(g) g$model)))  # a candidate under its drug's one name
   expect_identical(row$Concentration.Units, "ng")
   expect_equal(c(row$Lower, row$Upper, row$Typical, row$MEAC), c(0, 0, 0, 0))
   PK <- getDrugPK("oxaliplatinNikanjam", 70, 170, 60, "male")

@@ -130,13 +130,13 @@ bsaMosteller <- function(weight, height) sqrt(weight * height / 3600)
 #'
 #' Two compartments with parallel Michaelis-Menten and linear elimination,
 #' run by the numerical engine (\code{advanceMichaelisMenten()}); see the
-#' header of \code{R/drugs_fluorouracil.R}.
+#' header of \code{R/drugs_fluorouracilBriki.R}.
 #'
 #' @inheritParams cefazolin
 #' @returns a list in the shape \code{getDrugPK()} expects, with a
 #'   \code{michaelisMenten} block
 #' @export
-fluorouracil <- function(weight, height, age, sex, adjustToFFM = TRUE)
+fluorouracilBriki <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   p <- FLUOROURACIL_BRIKI
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,

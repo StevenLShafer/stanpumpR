@@ -12,7 +12,8 @@ test_that("the readers of each field are exactly the models that name it", {
     readers <- patientFieldReaders(arg, dd)
     expect_gt(length(readers), 0, label = arg)
     expect_identical(readers, sort(readers))
-    for (drug in dd$Drug[!isGasDrug(dd$Drug)]) {
+    # a candidate model is read through its drug's name (R/modelSelection.R)
+    for (drug in setdiff(dd$Drug[!isGasDrug(dd$Drug)], modelCandidates())) {
       declares <- arg %in% names(formals(get(drug, mode = "function")))
       expect_identical(drug %in% readers, declares, info = paste(drug, arg))
     }
@@ -28,7 +29,7 @@ test_that("the known readers are in their lists", {
                   c("meloxicam", "phenytoin", "warfarin",
                     "fluindione", "acenocoumarol"))
   expect_identical(patientFieldReaders("cyp2b6"), "methadone")
-  expect_setequal(patientFieldReaders("albumin"), c("methotrexate", "methotrexatePediatric", "docetaxel"))
+  expect_setequal(patientFieldReaders("albumin"), c("methotrexate", "docetaxel"))
   expect_true(all(c("cefazolin", "gentamicin", "mannitol", "vancomycin",
                     "sugammadex", "gabapentin", "pregabalin", "oxycodone",
                     "meloxicam", "lacosamide", "levetiracetam",
@@ -88,7 +89,7 @@ test_that("the gestational-age tooltip says a blank field is a term birth", {
 
 test_that("the albumin tooltip says a blank field is each model's reference", {
   tip <- patientFieldTooltip("albumin")
-  expect_match(tip, "methotrexate and methotrexatePediatric", fixed = TRUE)
+  expect_match(tip, "docetaxel and methotrexate", fixed = TRUE)
   expect_match(tip, "Leave blank to hold each model's reference albumin", fixed = TRUE)
   expect_match(tip, "4 g/dL", fixed = TRUE)
 })

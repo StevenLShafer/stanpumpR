@@ -6,7 +6,7 @@
 scr88 <- (140 - 57) * 70 / (72 * 88)
 
 test_that("Table 5 at the reference: CL 28.1 L/h, 39.5% renal, Table 7's half-lives", {
-  pk <- function(w, h, sex) melphalan(w, h, 57, sex, creatinine = scr88)$PK$default
+  pk <- function(w, h, sex) melphalanNath(w, h, 57, sex, creatinine = scr88)$PK$default
   # find a man whose FFM is 50 kg: search on weight at 170 cm
   w50 <- uniroot(function(w) ffmAlSallami(w, 170, 57, "male") - 50, c(40, 90))$root
   set <- getDrugPK("melphalan", w50, 170, 57, "male", adjustToFFM = FALSE,
@@ -21,7 +21,7 @@ test_that("Table 5 at the reference: CL 28.1 L/h, 39.5% renal, Table 7's half-li
 })
 
 test_that("the renal term is Cockcroft-Gault per 70 kg: weight does not enter it", {
-  cl <- function(w, scr) melphalan(w, 170, 57, "male", adjustToFFM = FALSE,
+  cl <- function(w, scr) melphalanNath(w, 170, 57, "male", adjustToFFM = FALSE,
                                    creatinine = scr)$PK$default$cl1 * 60
   ffm <- function(w) ffmAlSallami(w, 170, 57, "male")
   renal <- function(w, scr) cl(w, scr) - 17 * (ffm(w) / 50)^0.75
@@ -30,7 +30,7 @@ test_that("the renal term is Cockcroft-Gault per 70 kg: weight does not enter it
 })
 
 test_that("pregnancy raises the creatinine clearance by 1.5 only with a blank creatinine", {
-  m <- function(...) melphalan(70, 165, 30, "female", adjustToFFM = FALSE, ...)$PK$default$cl1
+  m <- function(...) melphalanNath(70, 165, 30, "female", adjustToFFM = FALSE, ...)$PK$default$cl1
   nonRenal <- 17 * (ffmAlSallami(70, 165, 30, "female") / 50)^0.75 / 60
   expect_equal(m(pregnant = TRUE) - nonRenal, 1.5 * (m() - nonRenal))
   expect_equal(m(creatinine = 0.6, pregnant = TRUE), m(creatinine = 0.6))

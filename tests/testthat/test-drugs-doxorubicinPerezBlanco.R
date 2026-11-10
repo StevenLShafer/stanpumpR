@@ -50,7 +50,8 @@ test_that("both switch positions are pinned", {
 test_that("a chemotherapy drug and its metabolite-only doxorubicinol, plasma only, no band", {
   dd <- getDrugDefaultsGlobal()
   row <- dd[dd$Drug == "doxorubicinPerezBlanco", ]
-  expect_identical(row$Category, CHEMOTHERAPY_DRUG_CATEGORY)
+  expect_true(is.na(row$Category) || row$Category == "")
+  expect_true(row$Drug %in% unlist(lapply(MODEL_GROUPS, function(g) g$model)))  # a candidate under its drug's one name
   expect_identical(row$Concentration.Units, "ng")
   m <- dd[dd$Drug == "doxorubicinolPerezBlanco", ]
   expect_true(is.na(m$Category) || m$Category == "")

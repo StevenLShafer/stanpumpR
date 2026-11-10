@@ -412,8 +412,8 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "pramipexole", "pramipexoleER", "safinamide", "opicapone",
     "istradefylline", "amantadineER", "pimavanserin", "tolcapone",
     # Chemotherapy (2026-11-05): plasma only
-    "cladribine", "fluorouracil", "carboplatin", "busulfan",
-    "methotrexatePediatric", "methotrexate", "fluorouracilTan", "cytarabine", "doxorubicinPerezBlanco", "doxorubicinolPerezBlanco", "fludarabine", "bendamustine", "oxaliplatinNikanjam", "capecitabine", "capecitabine5FU", "gemcitabine", "gemcitabineDFDU", "etoposideDuong", "melphalanPediatric", "carboplatinPediatric", "daunorubicin", "doxorubicinPediatric", "doxorubicinolPediatric", "etoposide", "cisplatin", "cisplatinBound", "vinorelbine", "topotecan", "irinotecan", "irinotecanSN38", "doxorubicin", "doxorubicinol", "cyclophosphamide", "docetaxel", "vincristine", "melphalan", "etoposidePediatric", "pemetrexed", "paclitaxel", "vincristinePediatric", "oxaliplatin"
+    "cladribine", "fluorouracil", "fluorouracilBriki", "carboplatin", "carboplatinDuffull", "busulfan",
+    "methotrexatePediatric", "methotrexate", "methotrexateIbarra", "fluorouracilTan", "cytarabine", "doxorubicinPerezBlanco", "doxorubicinolPerezBlanco", "fludarabine", "bendamustine", "oxaliplatinNikanjam", "capecitabine", "capecitabine5FU", "gemcitabine", "gemcitabineDFDU", "etoposideDuong", "melphalanPediatric", "carboplatinPediatric", "daunorubicin", "doxorubicinPediatric", "doxorubicinolPediatric", "etoposide", "etoposideKroghMadsen", "cisplatin", "cisplatinBound", "vinorelbine", "topotecan", "irinotecan", "irinotecanSN38", "doxorubicin", "doxorubicinJoerger", "doxorubicinol", "doxorubicinolJoerger", "cyclophosphamide", "docetaxel", "vincristine", "vincristineIgarashi", "melphalan", "melphalanNath", "etoposidePediatric", "pemetrexed", "paclitaxel", "vincristinePediatric", "oxaliplatin", "oxaliplatinBastian"
   ))
 })
 

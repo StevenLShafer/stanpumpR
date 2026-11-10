@@ -80,12 +80,12 @@ VINCRISTINE_IGARASHI <- list(
 #' Vincristine, intravenous, in adults (Igarashi 2021)
 #'
 #' Three compartments; body surface area and age on clearance.  See the
-#' header of \code{R/drugs_vincristine.R}.
+#' header of \code{R/drugs_vincristineIgarashi.R}.
 #'
 #' @inheritParams cefazolin
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-vincristine <- function(weight, height, age, sex, adjustToFFM = TRUE)
+vincristineIgarashi <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   p <- VINCRISTINE_IGARASHI
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,

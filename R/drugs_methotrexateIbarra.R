@@ -93,7 +93,7 @@ METHOTREXATE_IBARRA <- list(
 #'
 #' Three compartments allometric in weight, with the serum creatinine and the
 #' serum albumin on clearance; see the header of
-#' \code{R/drugs_methotrexate.R}.
+#' \code{R/drugs_methotrexateIbarra.R}.
 #'
 #' @inheritParams cefazolin
 #' @param creatinine serum creatinine, mg/dL, or NULL for an assumed normal
@@ -101,7 +101,7 @@ METHOTREXATE_IBARRA <- list(
 #' @param albumin serum albumin, g/dL, or NULL for the reference, 4 g/dL
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-methotrexate <- function(weight, height, age, sex, adjustToFFM = TRUE,
+methotrexateIbarra <- function(weight, height, age, sex, adjustToFFM = TRUE,
                          creatinine = NULL, albumin = NULL)
 {
   p <- METHOTREXATE_IBARRA

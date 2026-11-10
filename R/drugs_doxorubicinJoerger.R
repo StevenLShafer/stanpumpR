@@ -41,7 +41,7 @@
 #
 # In this library's metabolite interface, kFormation is the parent's own
 # k10 = CL/V1 (all of the clearance, fm-scaled, as for aripiprazole), and the
-# doxorubicinol model (R/drugs_doxorubicinol.R) is V3/fm and CL_DOL/fm.  The
+# doxorubicinol model (R/drugs_doxorubicinolJoerger.R) is V3/fm and CL_DOL/fm.  The
 # two were fitted jointly (METABOLITE_FORMATION_BASIS "joint").
 #
 # DOSE BASIS
@@ -65,7 +65,7 @@
 # reducing the dose, was not a covariate.  Age is a negative power, floored at
 # 18 (ADULT_AGE_TERM_FLOOR; the youngest studied was 29).  The BSA formula is
 # not named (Mosteller's is used).  The creatinine clearance of the
-# metabolite's equation is doxorubicinol's (R/drugs_doxorubicinol.R).
+# metabolite's equation is doxorubicinol's (R/drugs_doxorubicinolJoerger.R).
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
@@ -97,12 +97,12 @@ DOXORUBICINOL_PER_HYDROCHLORIDE <- 545.54 / 579.98
 #'
 #' Two compartments, forming doxorubicinol; body surface area and age on
 #' clearance, AST held at the reference.  See the header of
-#' \code{R/drugs_doxorubicin.R}.
+#' \code{R/drugs_doxorubicinJoerger.R}.
 #'
 #' @inheritParams cefazolin
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-doxorubicin <- function(weight, height, age, sex, adjustToFFM = TRUE)
+doxorubicinJoerger <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   p <- DOXORUBICIN_JOERGER
   f <- DOXORUBICIN_BASE_FRACTION
@@ -146,7 +146,7 @@ doxorubicin <- function(weight, height, age, sex, adjustToFFM = TRUE)
     lowerTypical = 0,
     reference = reference,
     metabolite = list(
-      name              = "doxorubicinol",
+      name              = "doxorubicinolJoerger",
       kFormation        = cl1 / v1,          # all clearance, fm-scaled
       firstPassFraction = 0,
       mwRatio           = DOXORUBICINOL_PER_HYDROCHLORIDE   # per mg dosed

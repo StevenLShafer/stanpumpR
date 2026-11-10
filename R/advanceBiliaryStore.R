@@ -4,7 +4,7 @@
 # Provenance
 # ----------
 # Drafted by Claude Code, 2026-11-06, at the request of Steven L. Shafer, for
-# oxaliplatin (R/drugs_oxaliplatin.R; Bastian, Barrail & Urien 2003), whose
+# oxaliplatin (R/drugs_oxaliplatinBastian.R; Bastian, Barrail & Urien 2003), whose
 # enterohepatic recirculation is a gallbladder store filled from the central
 # compartment and emptied, once, as a bolus.  Shafer decided (2026-11-06) to
 # implement the model AS PUBLISHED: the store fills only until TLAG.

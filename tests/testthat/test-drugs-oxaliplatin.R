@@ -8,7 +8,7 @@ SCR_REF <- 87 / SCR_UMOL_PER_MG_DL          # the cohort's median, in mg/dL
 auc <- function(w) sum(diff(w$Time) * (head(w$Plasma, -1) + tail(w$Plasma, -1)) / 2) / 60
 course <- function(hours, dose = 230, sex = "male", weight = 71, creatinine = SCR_REF,
                    maximum = 48 * 60, adjustToFFM = FALSE) {
-  d <- data.frame(Drug = "oxaliplatin", Time = c(0, hours * 60),
+  d <- data.frame(Drug = "oxaliplatinBastian", Time = c(0, hours * 60),
                   Dose = c(dose / hours, 0), Units = "mg/hr")
   simulateDrugsWithCovariates(d, noEvents, weight, 170, 59, sex, maximum, FALSE,
                               creatinine = creatinine,
@@ -56,7 +56,7 @@ rk4Bastian <- function(PK, courses, times, h = 0.2) {
 }
 
 test_that("the model is Table 3 and the covariate equations", {
-  PK <- getDrugPK("oxaliplatin", 71, 170, 59, "male", adjustToFFM = FALSE,
+  PK <- getDrugPK("oxaliplatinBastian", 71, 170, 59, "male", adjustToFFM = FALSE,
                   creatinine = SCR_REF)
   s <- PK$PK$default
   expect_equal_rounded(s$v1, 24.9)
@@ -68,7 +68,7 @@ test_that("the model is Table 3 and the covariate equations", {
   expect_equal_rounded(PK$biliaryStore$ka, 0.23 / 60)
   # weight, creatinine and sex
   w <- 95; scr <- 150 / SCR_UMOL_PER_MG_DL
-  s <- getDrugPK("oxaliplatin", w, 170, 59, "female", adjustToFFM = FALSE,
+  s <- getDrugPK("oxaliplatinBastian", w, 170, 59, "female", adjustToFFM = FALSE,
                  creatinine = scr)$PK$default
   expect_equal_rounded(s$cl1, 14.1 * (w / 71)^1.10 * (150 / 87)^-0.57 * 0.60 / 60)
   expect_equal_rounded(s$v1, 24.9 * (w / 71)^1.29)
@@ -77,19 +77,19 @@ test_that("the model is Table 3 and the covariate equations", {
 })
 
 test_that("the switch evaluates the weight terms at the pharmacokinetic weight", {
-  on <- getDrugPK("oxaliplatin", 110, 170, 59, "male", creatinine = SCR_REF)$PK$default
+  on <- getDrugPK("oxaliplatinBastian", 110, 170, 59, "male", creatinine = SCR_REF)$PK$default
   pkw <- pkSizeFactors(110, 170, 59, "male", TRUE)$pkWeight
   expect_equal_rounded(on$v1, 24.9 * (pkw / 71)^1.29)
   expect_equal_rounded(on$cl1, 14.1 * (pkw / 71)^1.10 / 60)
-  off <- getDrugPK("oxaliplatin", 110, 170, 59, "male", adjustToFFM = FALSE,
+  off <- getDrugPK("oxaliplatinBastian", 110, 170, 59, "male", adjustToFFM = FALSE,
                    creatinine = SCR_REF)$PK$default
   expect_equal_rounded(off$v1, 24.9 * (110 / 71)^1.29)
 })
 
 test_that("creatinine: blank is the assumed normal, and the floor is 53 umol/L", {
-  blank <- getDrugPK("oxaliplatin", 71, 170, 59, "male", adjustToFFM = FALSE)$PK$default
+  blank <- getDrugPK("oxaliplatinBastian", 71, 170, 59, "male", adjustToFFM = FALSE)$PK$default
   expect_equal_rounded(blank$cl1, 14.1 * (0.9 * SCR_UMOL_PER_MG_DL / 87)^-0.57 / 60)
-  low <- getDrugPK("oxaliplatin", 71, 170, 59, "male", adjustToFFM = FALSE,
+  low <- getDrugPK("oxaliplatinBastian", 71, 170, 59, "male", adjustToFFM = FALSE,
                    creatinine = 0.2)$PK$default
   expect_equal_rounded(low$cl1, 14.1 * (53 / 87)^-0.57 / 60)
   expect_equal(OXALIPLATIN_MIN_SCR, 53)
@@ -97,7 +97,7 @@ test_that("creatinine: blank is the assumed normal, and the floor is 53 umol/L",
 
 test_that("the paper's derived numbers: half-lives, Vss and AUC = Dose/CL", {
   half <- function(sex) {
-    s <- getDrugPK("oxaliplatin", 71, 170, 59, sex, adjustToFFM = FALSE,
+    s <- getDrugPK("oxaliplatinBastian", 71, 170, 59, sex, adjustToFFM = FALSE,
                    creatinine = SCR_REF)$PK$default
     k10 <- s$k10; k12 <- s$k12; k21 <- s$k21
     disc <- sqrt((k10 + k12 + k21)^2 - 4 * k10 * k21)
@@ -140,7 +140,7 @@ test_that("Table 4: the covariates scale the area as BW^-1.10 SCr^0.57", {
 })
 
 test_that("the engine matches an independent Runge-Kutta integration", {
-  PK <- getDrugPK("oxaliplatin", 80, 175, 59, "female", adjustToFFM = FALSE,
+  PK <- getDrugPK("oxaliplatinBastian", 80, 175, 59, "female", adjustToFFM = FALSE,
                   creatinine = 1.1)
   checks <- c(30, 90, 119, 120, 121, 150, 200, 240, 300, 360, 400, 600, 900,
               1440, 2000, 2880)
@@ -184,7 +184,7 @@ test_that("courses superpose: the response to two courses is the sum of each", {
   # store is still filling (its switch is at 120).  A rate row replaces the
   # rate in force, as everywhere in the library, so the two infusions do not
   # overlap in time; their stores do.
-  PK <- getDrugPK("oxaliplatin", 71, 170, 59, "male", adjustToFFM = FALSE,
+  PK <- getDrugPK("oxaliplatinBastian", 71, 170, 59, "male", adjustToFFM = FALSE,
                   creatinine = SCR_REF)
   grid <- seq(0, 3000, by = 10)
   pad <- function(d) rbind(d, data.frame(Time = grid, Dose = 0, Units = "mg"))
@@ -221,7 +221,7 @@ test_that("the store and gut are the depot; nothing is stored after TLAG", {
 })
 
 test_that("the time until threshold is exact after the last switch, NA before", {
-  PK <- getDrugPK("oxaliplatin", 71, 170, 59, "male", adjustToFFM = FALSE,
+  PK <- getDrugPK("oxaliplatinBastian", 71, 170, 59, "male", adjustToFFM = FALSE,
                   creatinine = SCR_REF)
   dose <- data.frame(Time = c(0, 120, 360), Dose = c(115 / 60, 0, 0),
                      Units = c("mg/hr", "mg/hr", "mg"))
@@ -239,19 +239,23 @@ test_that("the time until threshold is exact after the last switch, NA before", 
 test_that("getDrugPK and the engine refuse what the store cannot carry", {
   expect_error(validateBiliaryStore(list(k1B = 0, tlag = 1, ka = 1), "x"),
                "Invalid biliaryStore")
-  PK <- getDrugPK("oxaliplatin", 71, 170, 59, "male")
+  PK <- getDrugPK("oxaliplatinBastian", 71, 170, 59, "male")
   expect_error(advanceBiliaryStore(
     data.frame(Time = 0, Dose = 10, Units = "mg PO"), PK, 600),
     "intravenous doses only")
 })
 
-test_that("oxaliplatin is a chemotherapy drug, plasma only, with no band", {
+test_that("oxaliplatin is one name for Bastian 2003 and Nikanjam 2015, chosen by stanpumpR", {
   dd <- getDrugDefaultsGlobal()
   row <- dd[dd$Drug == "oxaliplatin", ]
   expect_identical(row$Category, CHEMOTHERAPY_DRUG_CATEGORY)
   expect_equal(c(row$Lower, row$Upper, row$Typical, row$MEAC), c(0, 0, 0, 0))
-  PK <- getDrugPK("oxaliplatin", 70, 170, 60, "male")
-  expect_equal(PK$tPeak, 0)
-  expect_match(PK$reference, "Bastian G")
+  bastian <- dd[dd$Drug == "oxaliplatinBastian", ]
+  expect_true(is.na(bastian$Category) || bastian$Category == "")
+  # the larger study (Nikanjam, 186 patients, 0.6-86 years) covers adults
+  expect_match(getDrugPK("oxaliplatin", 70, 170, 60, "male")$reference, "Nikanjam")
+  # Bastian only beyond Nikanjam's 86 years
+  expect_match(getDrugPK("oxaliplatin", 70, 170, 88, "male")$reference, "Bastian G")
+  expect_equal(getDrugPK("oxaliplatinBastian", 70, 170, 60, "male")$tPeak, 0)
   expect_identical(therapeuticRange("oxaliplatin")$band_status, "not_applicable")
 })

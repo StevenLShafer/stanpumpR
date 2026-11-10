@@ -89,7 +89,7 @@ MELPHALAN_NATH <- list(
 #'
 #' Two compartments; fat-free mass on the non-renal clearance and V1, a
 #' Cockcroft-Gault renal clearance, haematocrit held at its reference.  See
-#' the header of \code{R/drugs_melphalan.R}.
+#' the header of \code{R/drugs_melphalanNath.R}.
 #'
 #' @inheritParams cefazolin
 #' @param creatinine serum creatinine, mg/dL, or NULL for an assumed normal
@@ -99,7 +99,7 @@ MELPHALAN_NATH <- list(
 #'   pregnancy
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-melphalan <- function(weight, height, age, sex, adjustToFFM = TRUE,
+melphalanNath <- function(weight, height, age, sex, adjustToFFM = TRUE,
                       creatinine = NULL, pregnant = FALSE)
 {
   p <- MELPHALAN_NATH

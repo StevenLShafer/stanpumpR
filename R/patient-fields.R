@@ -39,7 +39,9 @@ PATIENT_FIELD_READER_NOTES <- list(
 #' @return the drug names, in the dose table's spelling, alphabetical.
 #' @noRd
 patientFieldReaders <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
-  drugs <- drugDefaults$Drug
+  # a candidate model of a drug whose model the program chooses is read
+  # through its drug's name (R/modelSelection.R), so only offered names appear
+  drugs <- setdiff(drugDefaults$Drug, modelCandidates())
   readers <- Filter(function(drug) helpDrugDeclares(drug, arg), drugs)
   sort(unique(as.character(readers)))
 }

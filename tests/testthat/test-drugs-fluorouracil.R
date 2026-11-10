@@ -7,7 +7,7 @@ p <- FLUOROURACIL_BRIKI
 
 test_that("the covariate terms reproduce the percentages the paper states", {
   vmaxAt <- function(age, sex)
-    fluorouracil(70, 170, age, sex, adjustToFFM = FALSE)$michaelisMenten$vmax
+    fluorouracilBriki(70, 170, age, sex, adjustToFFM = FALSE)$michaelisMenten$vmax
   # men's Vmax 18% higher than women's of the same age
   expect_equal(vmaxAt(50, "male") / vmaxAt(50, "female"), 1.183)
   # lower at 80 than at 40 years, same sex: 0.176, which the paper gives as 17%
@@ -36,7 +36,7 @@ test_that("with the switch off the published equations hold at total weight", {
 test_that("with the switch on, size covariates take the pharmacokinetic weight", {
   w <- 90; h <- 165
   size <- pkSizeFactors(w, h, 50, "female", TRUE)
-  m <- fluorouracil(w, h, 50, "female")
+  m <- fluorouracilBriki(w, h, 50, "female")
   bsa <- sqrt(size$pkWeight * h / 3600)
   expect_equal_rounded(m$michaelisMenten$clLinear, 52.6 * (bsa / 1.7)^2.61 / 60)
   expect_equal_rounded(m$PK$default$v2, 14.6 * size$pkWeight / 70)
@@ -46,7 +46,7 @@ test_that("with the switch on, size covariates take the pharmacokinetic weight",
 })
 
 test_that("age is held within the source's 24-90 years", {
-  vmaxAt <- function(age) fluorouracil(70, 170, age, "male")$michaelisMenten$vmax
+  vmaxAt <- function(age) fluorouracilBriki(70, 170, age, "male")$michaelisMenten$vmax
   expect_equal(vmaxAt(5), vmaxAt(24))
   expect_equal(vmaxAt(99), vmaxAt(90))
   expect_true(is.finite(vmaxAt(0)))
@@ -58,7 +58,7 @@ test_that("a 46-h infusion reaches the steady state the two eliminations predict
   w <- 70; h <- 175
   bsa <- sqrt(w * h / 3600)
   rate <- 2400 * bsa / 46                          # mg/h
-  mm <- fluorouracil(w, h, 60, "male", adjustToFFM = FALSE)$michaelisMenten
+  mm <- fluorouracilBriki(w, h, 60, "male", adjustToFFM = FALSE)$michaelisMenten
   vmax <- mm$vmax * 60; cl <- mm$clLinear * 60     # per hour
   css <- uniroot(function(C) cl * C + vmax * C / (mm$km + C) - rate, c(0, 50))$root
   wide <- simulateDrugsWithCovariates(

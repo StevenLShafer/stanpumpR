@@ -661,3 +661,35 @@ and 23-h half-lives at every age, Table 1 and the Results disagreeing.
 Kontny 2013's doxorubicin: Shafer decided (2026-11-10) that, when it is
 implemented, its clearance is the reported 53.3 L/h, not the 85.4 L/h its
 control stream runs (it adds a formation clearance of 32.1 L/h).
+
+## 39. One name per drug: the program chooses the model (2026-11-10)
+
+Shafer (2026-11-09, 2026-11-10): the clinician never chooses between
+published models of one drug.  `R/modelSelection.R` holds `MODEL_GROUPS`,
+each drug's candidate models with the age (and, where printed, weight)
+ranges, number of patients and year of the source.  `selectModel()` takes the
+candidates whose ranges contain the patient and chooses the one fitted to more
+patients, then the newer (Shafer's answer of 2026-11-10); if none contains the
+patient, the nearest by years and then kilograms outside the ranges.
+`modelGroup()` builds the drug's function, whose signature is the union of its
+candidates', and prefixes the citation with the choice.
+
+Folded under one name: etoposide (Krogh-Madsen 2012, Urien 2011, Duong 2019),
+carboplatin (Duffull 1997, Duong 2019), melphalan (Nath 2010, Duong 2019),
+methotrexate (Ibarra 2023, Taylor 2023), vincristine (Igarashi 2021, Nijstad
+2022), oxaliplatin (Bastian 2003, Nikanjam 2015; displayed in ng/mL),
+fluorouracil (Briki 2026, Tan 2026) and doxorubicin with doxorubicinol
+(Joerger 2007, Voller 2015, Perez-Blanco 2016; ng/mL).  The adult models kept
+their functions under the source's name (`etoposideKroghMadsen`,
+`carboplatinDuffull`, `melphalanNath`, `methotrexateIbarra`,
+`vincristineIgarashi`, `oxaliplatinBastian`, `fluorouracilBriki`,
+`doxorubicinJoerger`/`doxorubicinolJoerger`).  Every candidate keeps its CSV
+row with no Category, its test, its help page, its therapeutic-range row and
+its pregnancy row (the renamed ones copy their drug's).
+
+Consequences worth knowing: the larger study wins where ranges overlap, so
+methotrexate in an adult under 32 is Taylor 2023 (1668 patients) rather than
+Ibarra 2023; Perez-Blanco 2016 (44 adults) is never chosen while Joerger 2007
+(59) covers the patient; oxaliplatin is Nikanjam 2015 (186 patients, 0.6-86
+years) for nearly everyone, Bastian 2003 only beyond 86.  `cytarabine`
+(section 38) predates the selector and still chooses inside its function.
