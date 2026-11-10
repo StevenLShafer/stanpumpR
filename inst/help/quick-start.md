@@ -1,4 +1,4 @@
-Five steps produce a simulation. Everything else in this help is refinement.
+Five steps produce a simulation, and a sixth lets you watch it: the Visualizer shows the drug moving between the compartments of its model. Everything else in this help is refinement.
 
 <figure class="help-figure">
 <img src="stanpumpr-assets/help/quick-start-simulator.png" alt="The simulator: on the left the Patient Profile, Graph Options, Time, Dose table and Email Slide panels; the plot in the middle with the Add new drug button beneath it; the dose table on the right with Apply Changes, Undo and Redo">
@@ -81,6 +81,38 @@ The **Time** panel, in the left sidebar, sets the time units, how far the simula
 - **Additional plots**, at the foot of Graph Options, adds the clinical events timeline and, while the drugs they need are dosed, the MEAC panel for comparing opioids and the propofol-opioid interaction panel.
 - **Suggest Dosing** (in the *Dose table* panel of the left sidebar) works backwards from a target effect-site concentration.
 - The URL in your browser's address bar encodes the whole simulation; copy it to share or save your work. See [Sharing a simulation by URL](help:sharing).
+
+## 6. Watch the compartments
+
+The **Visualizer** button, beside *Add new drug* under the plot, opens the plotted drug in a window of its own (with several drugs it drops up a list). It plays the plot's own simulation, from its *Min time* to its *Max time*, and shows where the drug is at each moment. Press **Play**, drag the time bar, or press **Video** to save the run as an MP4 for teaching.
+
+It opens in the **2D view**: each compartment is a box whose fill height is the drug's concentration, on one scale for every box, and whose width is its volume, so drug can be seen running downhill from a higher level to a lower one. The arrows are the flows: red into the central compartment, green out of it, thicker for a faster flow.
+
+<figure class="help-figure">
+<img src="stanpumpr-assets/help/quick-start-visualizer-propofol-2d.png" alt="The Visualizer's 2D view of a propofol bolus at 1 minute 36 seconds: V2 on the left, V1 with the blue effect-site bar beside it in the middle, V3 on the right, each a box filled to its concentration; green arrows carry drug from V1 into V2 and V3 and down out of it as elimination; the readout and amounts cards below">
+<figcaption>Propofol 140 mg at 1 minute 36 seconds, in the 2D view: the effect site (the blue bar) has just caught up with the plasma, both at 8.24 µg/mL, while V2 and V3 take up drug and V1 eliminates it.</figcaption>
+</figure>
+
+**3D view** (or the **v** key) shows the same moment as Charles Minto's glasses: each compartment a glass whose floor area is its volume and whose liquid is as tall as the concentration. Drag to turn the scene; point at a glass or an arrow for its numbers.
+
+<figure class="help-figure">
+<img src="stanpumpr-assets/help/quick-start-visualizer-propofol-3d.png" alt="The Visualizer's 3D view of the same moment: V1 as a tall glass in the middle with the blue effect-site ribbon beside it, V2 and V3 as wider, shallower glasses behind on either side, green arrows from V1 to each and down from its base">
+<figcaption>The same moment in the 3D view.</figcaption>
+</figure>
+
+The **inhaled anesthetics** are shown the same way, as **partial pressures**: in the breathing circuit (what the patient inspires), the lungs (end-tidal), the vessel-rich group (the brain and the other well-perfused organs, the effect site, in blue), muscle and fat. A box's width, or a glass's floor area, is the compartment's capacity for the agent, its volume times how soluble the agent is in it, so fat, small in volume but very soluble, is the widest. The arrows show the fresh gas coming in, the gas vented through the pop-off valve, the breathing, and the blood carrying the agent between the lungs and each tissue.
+
+<figure class="help-figure">
+<img src="stanpumpr-assets/help/quick-start-visualizer-sevoflurane-2d.png" alt="The Visualizer's 2D view of sevoflurane five minutes after the vaporizer is turned off: a narrow circuit bar, then the lungs, the blue vessel-rich group, a wide muscle box and a wider fat box, each filled to its partial pressure; arrows on a blood line beneath them carry agent from the vessel-rich group and muscle back to the lungs and on into fat">
+<figcaption>Sevoflurane at 2:05, five minutes after the vaporizer was turned off after two hours, in the 2D view: the lungs (0.30%) have emptied first, the vessel-rich group (0.64%) and muscle (0.92%) are giving agent back to the blood, and fat (0.07%) is still taking it up.</figcaption>
+</figure>
+
+<figure class="help-figure">
+<img src="stanpumpr-assets/help/quick-start-visualizer-sevoflurane-3d.png" alt="The Visualizer's 3D view of the same moment: the lungs, the blue vessel-rich group, muscle and fat as glasses filled to their partial pressures, each labelled, with red arrows from the vessel-rich group and muscle into the lungs, a thin green arrow on into fat, and green arrows carrying the exhaled agent to the circuit and out">
+<figcaption>The same moment in the 3D view. A gas run chooses its own starting view, in which no glass, arrow or label is hidden.</figcaption>
+</figure>
+
+[Watching a propofol bolus redistribute](help:scenarios/visualizer-propofol-bolus) and [Watching sevoflurane leave the body](help:scenarios/visualizer-sevoflurane-emergence) are the runs above, with what to look for; the other runs made to be watched are in the *Seeing the compartments* group of the [teaching scenarios](help:scenarios/index).
 
 ## Try it
 

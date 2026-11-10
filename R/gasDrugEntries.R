@@ -123,9 +123,18 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
     # counterparts of V2 and V3, as tensions in % of an atmosphere, for the
     # compartment panels (R/compartments.R).  Oxygen has no tissue states.
     state <- sim$state[[g]]
-    if (!is.null(state) && ncol(state) >= 5 && !is.null(sim$timeLine))
+    if (!is.null(state) && ncol(state) >= 5 && !is.null(sim$timeLine)) {
       out[[g]]$compartments <- data.frame(Time = sim$timeLine,
                                           MRG = state[, 4], FG = state[, 5])
+      # Every state of the agent (circuit, lungs, VRG, muscle, fat), the body
+      # and circuit they were solved with, and the gas rows, for the
+      # Visualizer's gas run (viewerGasRun() in R/viewerRun.R).  Read by
+      # nothing else.
+      if (!is.null(sim$body))
+        out[[g]]$gasRun <- list(time = sim$timeLine, state = state, body = sim$body,
+                                circuit = sim$circuit, weight = sim$weight, age = sim$age,
+                                gasDose = gasDose)
+    }
   }
 
   # MAC gets its own series when any potent agent is running.

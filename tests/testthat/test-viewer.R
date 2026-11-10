@@ -369,3 +369,117 @@ test_that("viewerActActivity() refuses what is not one finite number", {
     expect_identical(viewerActActivity(x, act), 0)
   expect_gt(viewerActActivity(480, act), 0)
 })
+
+# The inhaled anesthetics (Shafer, 2026-11-09): the agent's partial pressure in
+# the breathing circuit, the lungs, the vessel-rich group (the effect site),
+# the muscle and the fat group, drawn in the 2D view (tools/viewer/src/gas.js).
+# The run is the gas engine's own states for the plot, as gasDrugEntries()
+# keeps them; the viewer reads every flow off the amounts, so the amounts must
+# be right: capacity x partial pressure, and the agent delivered.
+gasPlot <- function(rows, maximum, ...) {
+  DT <- data.frame(Drug = vapply(rows, `[[`, "", 1), Time = as.numeric(vapply(rows, `[[`, "", 2)),
+                   Dose = as.numeric(vapply(rows, `[[`, "", 3)), Units = vapply(rows, `[[`, "", 4),
+                   stringsAsFactors = FALSE)
+  # The engine as simulateGases() calls it for the app; ... sets its circuit
+  # or resolution.
+  gasDrugEntries(advanceClosedFormGas(DT[, c("Time", "Drug", "Dose")], weight = 70, age = 50,
+                                      maximum = maximum, ...), DT, maximum = maximum, age = 50)
+}
+WASHIN <- list(c("oxygen", "0", "6", "L/min"), c("sevoflurane", "0", "2", "%"),
+               c("ventilation", "0", "6", "L/min"), c("oxygen", "15", "1", "L/min"))
+
+test_that("an inhaled anesthetic can be drawn; oxygen and the summed MAC cannot", {
+  E <- gasPlot(WASHIN, 60)
+  expect_null(viewerProblem(E$sevoflurane))
+  expect_match(viewerProblem(E$oxygen), "not oxygen or the summed MAC")
+  expect_match(viewerProblem(E$MAC), "not oxygen or the summed MAC")
+  expect_error(viewerGasRun(E$oxygen, 0, 60), "not oxygen")
+})
+
+test_that("a gas run holds the plot's partial pressures, and its capacities are volume x partition", {
+  E <- gasPlot(WASHIN, 60)
+  r <- viewerGasRun(E$sevoflurane, 0, 60, category = "Inhaled anesthetics")
+  expect_equal(r$kind, "gas")
+  expect_equal(range(r$t), c(0, 3600))
+  # The plot's own: end-tidal is the plotted "Plasma", the VRG its "Effect Site".
+  res <- E$sevoflurane$results
+  tt <- c(5, 15, 30, 59.5)
+  plotted <- function(site) stats::approx(res$Time[res$Site == site], res$Y[res$Site == site], tt)$y
+  atRun <- function(v) stats::approx(r$t / 60, v, tt)$y
+  expect_equal(atRun(r$p$lungs), plotted("Plasma"), tolerance = 1e-9)
+  expect_equal(atRun(r$p$vrg), plotted("Effect Site"), tolerance = 1e-9)
+  # The ideal circuit: no volume, and what is inspired is the fresh gas but
+  # for the little rebreathed while the fresh gas flow (6 L/min) is short of
+  # minute ventilation (6 L/min) plus the uptake.
+  expect_equal(r$circuit, "ideal")
+  expect_equal(r$capacity$circuit, 0)
+  expect_gt(r$p$circuit[r$t == 600], 1.99)
+  expect_lte(r$p$circuit[r$t == 600], 2)
+  body <- getGasBody(70)
+  props <- getGasProperties()
+  sevo <- props[props$gas == "sevoflurane", ]
+  expect_equal(unlist(r$capacity[c("lungs", "vrg", "mg", "fg")]),
+               c(lungs = body$V_alveolar, vrg = body$V_brain * sevo$tg_brain,
+                 mg = body$V_muscle * sevo$tg_muscle, fg = body$V_fat * sevo$tg_fat))
+  expect_equal(r$mac, macForAge(sevo$MAC40, 50))
+  expect_equal(r$amountScale, 10)
+  # The settings in force, and the agent delivered: 6 L/min of 2% for 15 min,
+  # then 1 L/min, is 10 x (6 x 2 x 15 + 1 x 2 x 45) = 2700 mL of vapour.
+  expect_equal(r$freshFlow[r$t == 600], 6)
+  expect_equal(r$freshFlow[r$t == 1200], 1)
+  expect_equal(unique(r$fresh), 2)
+  expect_equal(unique(r$ventilation), 6)
+  expect_equal(tail(r$delivered, 1), 2700, tolerance = 1e-9)
+})
+
+test_that("the agent adds up: nothing is vented that was not delivered, and each tissue takes what its blood brings", {
+  for (scenario in list(WASHIN,
+                        list(c("oxygen", "0", "2", "L/min"), c("sevoflurane", "0", "2", "%"),
+                             c("ventilation", "0", "6", "L/min"), c("sevoflurane", "120", "0", "%"),
+                             c("oxygen", "120", "8", "L/min")))) {
+    maximum <- if (length(scenario) == 4) 60 else 240
+    # A fine engine grid, so the midpoint comparison below is a fair one.
+    E <- gasPlot(scenario, maximum, resolution = 4801)
+    r <- viewerGasRun(E$sevoflurane, 0, maximum)
+    amount <- function(k) r$amountScale * r$capacity[[k]] * r$p[[k]]
+    held <- Reduce(`+`, lapply(names(r$capacity), amount))
+    dt <- diff(r$t) / 60
+    # What the viewer draws as vented, the pop-off valve, never runs backwards.
+    expect_gte(min(diff(r$delivered - held) / dt), 0)
+    # Into each tissue, from its amount (what the viewer draws), against the
+    # perfusion-limited uptake the engine solves, Q_t lambda_b (P_lungs - P_t).
+    # The amounts give the exact uptake over each of the engine's steps; the
+    # midpoint pressures only approximate it, and badly in the first minutes
+    # after a change, when end-tidal moves on a time constant of about 20 s
+    # within the app's steps of 6 to 24 s. So the two are compared on a finer
+    # grid, and where it is quiet.
+    body <- getGasBody(70)
+    props <- getGasProperties()
+    lb <- props$lambda_blood[props$gas == "sevoflurane"]
+    n <- length(r$t)
+    mid <- function(v) (v[-1] + v[-n]) / 2
+    changes <- as.numeric(vapply(scenario, `[[`, "", 2))
+    quiet <- vapply(r$t[-n] / 60, function(m) all(m < changes | m > changes + 5), logical(1))
+    for (k in c("vrg", "mg", "fg")) {
+      f <- c(vrg = body$f_brain, mg = body$f_muscle, fg = body$f_fat)[[k]]
+      fromAmounts <- diff(amount(k)) / dt
+      physiology <- 10 * f * body$Q_cardiac * lb * (mid(r$p$lungs) - mid(r$p[[k]]))
+      expect_lt(max(abs(fromAmounts - physiology)[quiet]), 0.01 * max(abs(physiology)))
+    }
+  }
+})
+
+test_that("a gas run from Min time counts the agent delivered from time 0", {
+  E <- gasPlot(WASHIN, 60)
+  r <- viewerGasRun(E$sevoflurane, 10, 60)
+  expect_equal(r$t[1], 600)
+  expect_equal(r$delivered[1], 10 * 6 * 2 * 10, tolerance = 1e-9)
+})
+
+test_that("GasMan's semi-closed circuit holds agent, and is counted", {
+  E <- gasPlot(WASHIN, 60, circuit = "semi-closed")
+  r <- viewerGasRun(E$sevoflurane, 0, 60)
+  expect_equal(r$capacity$circuit, getGasBody(70)$V_circuit)
+  held <- Reduce(`+`, lapply(names(r$capacity), function(k) r$amountScale * r$capacity[[k]] * r$p[[k]]))
+  expect_gte(min(diff(r$delivered - held)), 0)
+})

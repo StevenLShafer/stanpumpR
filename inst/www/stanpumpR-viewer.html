@@ -112,6 +112,7 @@ kbd { font: 11px/1 ui-monospace, Consolas, monospace; border: 1px solid var(--li
 #readout .time { font-size: 20px; font-weight: 600; letter-spacing: 0.5px; margin: 2px 0; }
 #readout .tgt { color: var(--target); }
 #readout .k { color: var(--ink-2); }
+#readout .ce { color: #8db8ff; }   /* a gas run's effect site, the vessel-rich group */
 #readout .foot { color: var(--ink-2); font-size: 12px; margin-top: 2px; }
 #readout .scale { color: var(--ink-2); font-size: 11.5px; max-width: 380px; }
 body.flat #readout .scale { display: none; }   /* the 2D view says it under its boxes */
@@ -231,7 +232,7 @@ body.over #message .card { border-color: var(--accent); }
 #flat .nm .s { font-size: 10px; }
 #flat .sub { fill: #8a9cb0; font-size: 11.5px; }
 #flat .val { fill: #e6edf5; font-size: 13px; font-variant-numeric: tabular-nums; }
-#flat .val.ce { fill: #8db8ff; }
+#flat .val.ce, #flat .sub.ce { fill: #8db8ff; }
 #flat .fl { font-size: 12px; font-variant-numeric: tabular-nums; }
 #flat .fl.in { fill: #ff9a90; } #flat .fl.out { fill: #7fe3a6; } #flat .fl.sub { fill: #8a9cb0; }
 
@@ -5770,7 +5771,7 @@ const View = {
             }
             // The arrows' stripes and V1's ripples move only while the clock runs.
             const running = this.clockRunning();
-            for (const a of Object.values(this.arrows)) a.tick(running ? dt : 0);
+            for (const a of this.allArrows()) a.tick(running ? dt : 0);
             const rippled = this.vessels[1].tickRipples(dt, this.v1Mlh || 0, running);
             this.controls.update();
             // Drawn only when something on screen changes: the clock running,
@@ -5786,6 +5787,7 @@ const View = {
                 lastEye.copy(this.camera.matrixWorld); lastLens.copy(this.camera.projectionMatrix);
                 Perf.render(this.renderer, () => this.renderer.render(this.scene, this.camera));
                 this.labelRenderer.render(this.scene, this.camera);
+                if (this.gasShown) this.gasSpreadLabels();
             }
             Perf.frame(now, performance.now() - t0, this.renderer);
             requestAnimationFrame(loop);
@@ -5807,6 +5809,9 @@ const View = {
         keyOf.set(this.ribbon.bar, 'ce');
         const arrowOf = new Map();
         for (const [k, a] of Object.entries(this.arrows)) for (const m of a.group.children) arrowOf.set(m, k);
+        // A gas run's (gas3d.js): keys with a colon, which a drug's never have.
+        if (this.gasVessels) for (const [k, v] of Object.entries(this.gasVessels)) for (const m of [v.liquid, v.surface]) keyOf.set(m, 'gv:' + k);
+        if (this.gasArrows) for (const [k, a] of Object.entries(this.gasArrows)) for (const m of a.group.children) arrowOf.set(m, 'ga:' + k);
         // An arrow anywhere along the ray wins: the infusion arrow can stand
         // inside V1's see-through glass, whose near wall the ray meets first.
         const aHit = this.ray.intersectObjects([...arrowOf.keys()], false).find(h => shown(h.object));
@@ -5829,6 +5834,7 @@ const View = {
     fillTip() {
         const el = this.tip, key = this.tipKey, st = this.tipState;
         if (!key || !st) { el.style.display = 'none'; return; }
+        if (key.includes(':')) { this.fillGasTip(); return; }
         const f = st.flow, u = st.units, num = x => Math.abs(x).toFixed(2);
         let html;
         if (key[0] === 'c') {
@@ -5875,21 +5881,26 @@ const View = {
     showLit() {
         this.invalidate();
         for (let k = 1; k <= 3; k++) this.vessels[k].rimMat.color.set(this.lit === 'c' + k ? '#ffd166' : '#ffffff');
+        if (this.gasVessels) for (const [k, v] of Object.entries(this.gasVessels)) v.rimMat.color.set(this.lit === 'gv:' + k ? '#ffd166' : '#ffffff');
         if (this.look) this.ribbon.mat.emissiveIntensity = this.lit === 'ce' ? 0.8 : 0.25;
     },
 
     // One frame of a video (video.js): the arrows' stripes and V1's ripples
     // moved by dt seconds, as if playing, then the scene and its labels drawn.
     step(dt) {
-        for (const a of Object.values(this.arrows)) a.tick(dt);
+        for (const a of this.allArrows()) a.tick(dt);
         this.vessels[1].tickRipples(dt, this.v1Mlh || 0, true);
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
         this.labelRenderer.render(this.scene, this.camera);
+        if (this.gasShown) this.gasSpreadLabels();
     },
 
     // The scene has changed: draw it on the next frame.
     invalidate() { this.dirty = true; },
+
+    // Every arrow in the scene: a drug's, and a gas run's (gas3d.js) once made.
+    allArrows() { return Object.values(this.arrows).concat(this.gasArrows ? Object.values(this.gasArrows) : []); },
 
     // The clock is running while play is on, or for a moment after a step.
     kick() { this.lastStep = performance.now(); },
@@ -5912,7 +5923,9 @@ const View = {
     // so orbiting still turns about the scene's middle.
     applyOffset() {
         const w = this.container.clientWidth, h = this.container.clientHeight;
-        const ox = 0, oy = Math.round(h * 0.05);
+        // A gas run's own (gas3d.js): its scene centred above the cards.
+        const up = this.gasShown && this.gasHome && this.gasHome.offset != null ? this.gasHome.offset : 0.05;
+        const ox = 0, oy = Math.round(h * up);
         this.persp.setViewOffset(w, h, ox, oy, w, h);
         this.persp.updateProjectionMatrix();
     },
@@ -5976,6 +5989,8 @@ const View = {
     // conc is the arrows' scale, in amount per mL: a flow of conc * 2500
     // per hour (ARROW_MLH) draws an arrow of radius ARROW_R.
     draw(st, ui) {
+        // An inhaled anesthetic's moment (gas3d.js).
+        if (st.gas) { this.drawGas(st, ui); return; }
         this.invalidate();
         const G = this.geo, L = this.look;
         const hs = ui.concScale;
@@ -6032,7 +6047,7 @@ const View = {
         // one; the card follows the numbers while the pointer stays on it.
         this.tipState = { ...st, units: ui.units, dp: ui.concDecimals };
         const tk = this.tipKey;
-        if (tk && (tk[0] === 'c' ? +tk[1] > G.n : !this.arrows[tk].group.visible)) this.tipKey = null;
+        if (tk && (tk.includes(':') || (tk[0] === 'c' ? +tk[1] > G.n : !this.arrows[tk].group.visible))) this.tipKey = null;
         this.fillTip();
 
         // Effect site.
@@ -6056,8 +6071,10 @@ const View = {
     resetView() {
         this.flight = null;
         this.persp.up.set(0, 1, 0);
-        this.controls.target.set(...HOME_AIM);
-        this.persp.position.set(...HOME_EYE);
+        const home = this.homePose();
+        this.controls.target.copy(home.aim);
+        this.persp.position.copy(home.eye);
+        this.applyOffset();
         this.persp.fov = 60; this.persp.updateProjectionMatrix();
         this.persp.lookAt(this.controls.target);
     },
@@ -6068,7 +6085,7 @@ const View = {
     // stops there). Never inside V1.
     landEye() {
         const aim = new THREE.Vector3(...LAND_AIM), off = new THREE.Vector3(...LAND_EYE).sub(aim);
-        const R = this.geo ? glassRadius(this.geo.r[1]) + ZOOM_GAP : 0;
+        const R = this.geo ? this.centreGlass().R + ZOOM_GAP : 0;
         return aim.add(off.multiplyScalar(Math.max(1, R / Math.hypot(off.x, off.z))));
     },
 
@@ -6128,7 +6145,7 @@ const View = {
     planFlight(dir) {
         const c = this.controls.target, p = this.persp;
         const start = { pos: p.position.clone(), tgt: c.clone(), fov: p.fov };
-        const home = { pos: new THREE.Vector3(...HOME_EYE), tgt: new THREE.Vector3(...HOME_AIM), fov: 60 };
+        const hp = this.homePose(), home = { pos: hp.eye.clone(), tgt: hp.aim.clone(), fov: 60 };
         const land = { pos: this.landEye(), tgt: new THREE.Vector3(...LAND_AIM), fov: 60 };
         const goal = dir === 'in' ? land : home;
         const F = { dir, pos: [], tgt: [], fov: [], len: [], t: 0, T: 0, at: null };
@@ -6190,6 +6207,23 @@ const View = {
     },
     flyEnd() { if (this.flight) this.flight.at = this.persp.position.clone(); },
 
+    // The starting view: HOME_*, or a gas run's own, chosen so that its labels
+    // and glasses hide one another least (gas3d.js, gasHomePose()).
+    homePose() {
+        if (this.gasShown) {
+            if (!this.gasHome) this.gasHome = this.gasHomePose(this.gasRun, this.gasUi);
+            return this.gasHome;
+        }
+        return { eye: new THREE.Vector3(...HOME_EYE), aim: new THREE.Vector3(...HOME_AIM) };
+    },
+
+    // The glass at the origin, that the close-up looks at and i stops at:
+    // V1's, or a gas run's lungs (gas3d.js).
+    centreGlass() {
+        if (this.gasShown) { const v = this.gasVessels.lungs; return { R: glassRadius(v.r), H: v.glassH }; }
+        return { R: glassRadius(this.geo.r[1]), H: this.vessels[1].glassH };
+    },
+
     // r / R in cylinders.exe: orbit about the vertical by 0.05 rad.
     orbit(da) {
         const c = this.controls.target, p = this.camera.position;
@@ -6222,8 +6256,7 @@ const View = {
         const p = this.camera.position, c = this.controls.target;
         if (f < 1 && this.geo) {
             const q = p.clone().multiplyScalar(f);
-            const R = glassRadius(this.geo.r[1]) + ZOOM_GAP;
-            const H = this.vessels[1].glassH + ZOOM_GAP;
+            const g = this.centreGlass(), R = g.R + ZOOM_GAP, H = g.H + ZOOM_GAP;
             if (Math.hypot(q.x, q.z) < R && q.y < H && q.y > -ZOOM_GAP) return;
         }
         p.multiplyScalar(f);
@@ -6326,13 +6359,17 @@ const Flat = {
     // Whether cards h px tall leave the drawing its room (Cards.fit()).
     fits(h) {
         const ctl = this.controlsTop(this.el.clientHeight);
-        return !(h > 0) || ctl - h - 22 - FLAT_BOTTOM - FLAT_TOP >= FLAT_MIN_PLOT;
+        // A gas run's arrows over the circuit need more room above (gas.js).
+        const top = this.run && this.run.kind === 'gas' ? GAS_TOP : FLAT_TOP;
+        return !(h > 0) || ctl - h - 22 - FLAT_BOTTOM - top >= FLAT_MIN_PLOT;
     },
 
     // A new run: the fixed scales, from every moment of it.
     // stateAt: the player's own function, so the flows are the ones it draws.
     setRun(r, ui, stateAt) {
         this.run = r; this.ui = ui; this.last = null;
+        // An inhaled anesthetic (gas.js).
+        if (r.kind === 'gas') { this.setGasRun(r, ui, stateAt); return; }
         const n = r.t.length;
         // The concentration scale: the highest value of every series at
         // every sample (interpolation never exceeds the samples), and every
@@ -6364,6 +6401,7 @@ const Flat = {
     draw(st) {
         this.last = st;
         if (!this.visible() || !this.run) return;
+        if (this.run.kind === 'gas') { this.drawGas(st); return; }
         const r = this.run, u = this.ui.units, dp = this.ui.concDecimals;
         const W = this.el.clientWidth, H = this.el.clientHeight;
         // The vertical layout, from the space the controls and cards leave
@@ -6500,6 +6538,12 @@ const Flat = {
         // Sizes not to scale: say so, under the boxes (the volume labels stay exact).
         if (dv.a < 1)
             out.push(`<text x="${x1}" y="${yTop - 8}" text-anchor="end" class="sub">${W >= 560 ? `Widths not to scale (largest ${SIZE_RATIO_MAX}× smallest); heights are concentration` : 'Widths not to scale'}</text>`);
+        this.finish(out, W, Hs, st);
+    },
+
+    // The drawing put in the page, laid out once more if a scroll bar came or
+    // went, and every label kept inside the window.
+    finish(out, W, Hs, st) {
         this.el.innerHTML = `<svg width="${W}" height="${Hs}" viewBox="0 0 ${W} ${Hs}" xmlns="http://www.w3.org/2000/svg">${out.join('')}</svg>`;
         // A scroll bar that came or went changes the width: lay out once more.
         if (this.el.clientWidth !== W && !this.again) { this.again = true; this.draw(st); this.again = false; return; }
@@ -6713,6 +6757,8 @@ function runProblem(r) {
         if (!Number.isFinite(r.t[i])) return `t[${i}] is not a number.`;
         if (i && r.t[i] <= r.t[i - 1]) return `t must increase: t[${i}] is not after t[${i - 1}].`;
     }
+    // An inhaled anesthetic's run (gas.js): its own compartments and flows.
+    if (r.kind != null) return r.kind === 'gas' ? gasRunProblem(r, n) : 'kind must be "gas" when it is given.';
     const series = (k, required) => {
         const v = r[k];
         if (v == null) return required ? `${k} is missing.` : null;
@@ -6739,6 +6785,17 @@ function runProblem(r) {
     for (const k of ['cl1'].concat(r.c2 != null ? ['cl2'] : [], r.c3 != null ? ['cl3'] : []))
         if (!(Number.isFinite(pk[k]) && pk[k] >= 0)) return `pk.${k} must be a clearance of 0 or more (L/min).`;
     if (r.typical != null && !(Number.isFinite(r.typical) && r.typical >= 0)) return 'typical must be a number of 0 or more.';
+    if (r.boluses != null) {
+        if (!Array.isArray(r.boluses)) return 'boluses must be an array.';
+        for (const [i, b] of r.boluses.entries())
+            if (!b || !Number.isFinite(b.t) || !Number.isFinite(b.amount)) return `boluses[${i}] needs a time t and an amount.`;
+    }
+    return runTextProblem(r);
+}
+
+// The run's text and patient, checked for every kind of run: what the page
+// shows of them is then a checked number or plain text.
+function runTextProblem(r) {
     const u = r.units || {};
     for (const k of ['conc', 'amount', 'rate'])
         if (typeof u[k] !== 'string' || !/^[^<>&"']{1,40}$/.test(u[k]))
@@ -6749,11 +6806,6 @@ function runProblem(r) {
     for (const k of ['weight', 'height', 'age'])
         if (pt[k] != null && !Number.isFinite(pt[k])) return `patient.${k} must be a number.`;
     if (pt.sex != null && (typeof pt.sex !== 'string' || !/^[^<>&"']{0,40}$/.test(pt.sex))) return 'patient.sex must be short plain text.';
-    if (r.boluses != null) {
-        if (!Array.isArray(r.boluses)) return 'boluses must be an array.';
-        for (const [i, b] of r.boluses.entries())
-            if (!b || !Number.isFinite(b.t) || !Number.isFinite(b.amount)) return `boluses[${i}] needs a time t and an amount.`;
-    }
     return null;
 }
 
@@ -6938,9 +6990,30 @@ const Player = {
         this.message('');
         this.pause();
         this.run = r;
+        this.gas = r.kind === 'gas';
         this.units = microUnits(r.units);
         // Concentration x volume (L) x scale is the amount in units.amount.
         this.scale = r.amountScale != null ? r.amountScale : 1;
+        // An inhaled anesthetic (gas.js; in 3D, gas3d.js) or a drug.
+        if (this.gas) { this.gasSetup(r); View.gasSetup(r, this.ui); }
+        else this.ivSetup(r);
+        Flat.setRun(r, this.ui, T => this.stateAt(T));
+        const slider = this.$('t');
+        slider.min = r.t[0]; slider.max = r.t[r.t.length - 1]; slider.step = 'any';
+        this.$('end').textContent = hms(r.t[r.t.length - 1]);
+        // The first speed plays the whole run in at most PLAY_SECONDS.
+        const span = r.t[r.t.length - 1] - r.t[0];
+        this.setSpeed(SPEEDS.find(v => span / v <= PLAY_SECONDS) || SPEEDS[SPEEDS.length - 1]);
+        this.seek(r.t[0]);
+        View.resetView();
+        // The video card, if open, describes the run now shown (CodeRabbit, #688).
+        if (typeof Video !== 'undefined' && Video.card && Video.shown() && !Video.busy) Video.describe();
+        return true;
+    },
+
+    // A drug's run's setup, from load(): the scales, the mass balance, the
+    // 3D scene's vessels.
+    ivSetup(r) {
         this.balance(r);
         // A loop, not Math.max(...r.cp), which overflows the stack on a long run.
         let maxCp = 0;
@@ -6963,20 +7036,9 @@ const Player = {
         // Sizes compressed to SIZE_RATIO_MAX (flat.js): the readout says so in 3D.
         this.ui.notToScale = displayVolumes([r.pk.v1, r.c2 != null ? r.pk.v2 : 0, r.c3 != null ? r.pk.v3 : 0]).a < 1;
         View.resetGlass();
+        if (View.gasShown) View.gasShow(false);   // a gas run's glasses (gas3d.js)
         View.vessels[1].setVisible(true);       // hidden before the first run (empty())
         View.setShape({ n: this.n, vc: r.pk.v1, v2: r.pk.v2, v3: r.pk.v3 });
-        Flat.setRun(r, this.ui, T => this.stateAt(T));
-        const slider = this.$('t');
-        slider.min = r.t[0]; slider.max = r.t[r.t.length - 1]; slider.step = 'any';
-        this.$('end').textContent = hms(r.t[r.t.length - 1]);
-        // The first speed plays the whole run in at most PLAY_SECONDS.
-        const span = r.t[r.t.length - 1] - r.t[0];
-        this.setSpeed(SPEEDS.find(v => span / v <= PLAY_SECONDS) || SPEEDS[SPEEDS.length - 1]);
-        this.seek(r.t[0]);
-        View.resetView();
-        // The video card, if open, describes the run now shown (CodeRabbit, #688).
-        if (typeof Video !== 'undefined' && Video.card && Video.shown() && !Video.busy) Video.describe();
-        return true;
     },
 
     // The amount eliminated at each time, as the mass balance gives it:
@@ -7010,6 +7072,7 @@ const Player = {
 
     // The scene's state at time T (seconds).
     stateAt(T) {
+        if (this.gas) return this.gasStateAt(T);
         const r = this.run, i = this.index(T), t = r.t;
         const a = Math.min(1, Math.max(0, (T - t[i]) / (t[i + 1] - t[i])));
         const lerp = v => v == null ? null : v[i] + (v[i + 1] - v[i]) * a;
@@ -7112,6 +7175,7 @@ const Player = {
         this.noteTimer = setTimeout(() => { if (this.noting) { this.noting = false; this.message(''); } }, 2500);
     },
     amounts(st) {
+        if (this.gas) { this.gasAmounts(st); return; }
         const a = x => x == null ? '–' : x.toFixed(1), n = st.n;
         const row = (name, x, sub) => `<tr><td class="k${sub ? ' sub' : ''}">${name}</td><td>${a(x)}</td></tr>`;
         this.$('amounts').innerHTML = `
@@ -7130,6 +7194,7 @@ const Player = {
     },
 
     readout(st) {
+        if (this.gas) { this.gasReadout(st); return; }
         const r = this.run, u = this.units, dp = this.ui.concDecimals;
         const c = x => x == null ? '–' : x.toFixed(dp);
         const name = String(r.drug).charAt(0).toUpperCase() + String(r.drug).slice(1);
@@ -7176,16 +7241,20 @@ const Player = {
     // Show the 2D view or the 3D scene; the run, the time and the controls
     // are the same in both.
     setView(v) {
+        this.showView(v);
+        if (v === '3d') View.resize();
+        // The performance card starts again: the two views' frames differ.
+        Perf.restart();
+        if (this.run) this.seek(this.T);
+    },
+    // The view's element, its button and the brand, for view v; drawing nothing.
+    showView(v) {
         this.view = v;
         document.getElementById('flat').style.display = v === '2d' ? 'block' : 'none';
         document.getElementById('view').style.display = v === '3d' ? 'block' : 'none';
         this.$('viewToggle').textContent = v === '2d' ? '3D view' : '2D view';
         this.$('brandView').textContent = v === '2d' ? '2D' : '3D';
         document.body.classList.toggle('flat', v === '2d');
-        if (v === '3d') View.resize();
-        // The performance card starts again: the two views' frames differ.
-        Perf.restart();
-        if (this.run) this.seek(this.T);
     },
     // Stop: pause and go back to the start.
     stop() {
@@ -7287,6 +7356,814 @@ const Keys = {
         requestAnimationFrame(frame);
     }
 };
+
+</script>
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  stanpumpR viewer — the inhaled anesthetics, in the 2D view
+//
+//  Written for stanpumpR by Claude Code (Anthropic), 2026-11-09, at the
+//  request of Steven L. Shafer.
+//
+//  Copyright (c) 2026 Charles Minto and Thomas Schnider
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in all
+//  copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//  SOFTWARE.
+//
+//  A gas run ("kind": "gas", R/viewerRun.R's viewerGasRun()) is one agent's
+//  partial pressure in the breathing circuit (what is inspired), the lungs
+//  (end-tidal), the vessel-rich group (the effect site), the muscle group and
+//  the fat group, in % of an atmosphere, with the fresh gas, its flow and the
+//  ventilation in force and the agent delivered since time 0. Drawn after
+//  Mapleson's hydraulic analogue of uptake: each compartment a box whose
+//  WIDTH is its capacity (volume x tissue:gas partition coefficient) and
+//  whose fill HEIGHT is its partial pressure, so the area is the agent it
+//  holds, and agent flows from higher to lower partial pressure until the
+//  levels are equal. One scale for every box, fixed for the run.
+//
+//  Every flow is read from the amounts as they change, as for the
+//  intravenous drugs: into a tissue, its capacity times the rise in its
+//  partial pressure; out of the lungs into the blood, the three together;
+//  from the circuit into the lungs, that plus the lungs' own rise; out
+//  through the pop-off valve, the agent delivered less the agent held.
+//  Red flows into the lungs, green out of them, as into and out of V1.
+//
+//  The 2D view came first (Shafer, 2026-11-09: "Start with the 2D model");
+//  the 3D view draws the same run in gas3d.js.
+// ═══════════════════════════════════════════════════════════════
+
+// The compartments, left to right, and what each partial pressure is.
+const GAS_KEYS = ['circuit', 'lungs', 'vrg', 'mg', 'fg'];
+const GAS_NAMES = { circuit: 'Circuit', lungs: 'Lungs', vrg: 'VRG', mg: 'Muscle', fg: 'Fat' };
+const GAS_LONG = { circuit: 'Circuit (inspired)', lungs: 'Lungs (end-tidal)', vrg: 'Vessel-rich group (effect site)',
+                   mg: 'Muscle group', fg: 'Fat group' };
+const GAS_CIRCUIT_W = 22;        // px: the ideal circuit, which holds no agent
+const GAS_TINT = '#d8cdf4';      // the vapour's colour; the effect site is the 2D view's blue
+// px above the boxes: the fresh gas and pop-off arrows and their three
+// labels, clear of the Visualizer's name in the corner (the circuit is the
+// leftmost box, under it).
+const GAS_TOP = 128;
+
+// The agent's name as written: nitrousOxide is "Nitrous oxide".
+function gasName(drug) {
+    const s = String(drug).replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
+    return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+// What is wrong with a gas run, as one line, or null. r.t is already checked
+// (runProblem()); n is its length.
+function gasRunProblem(r, n) {
+    const arr = (v, k, min) => {
+        if (!Array.isArray(v) || v.length !== n) return `${k} must be an array as long as t (${n}).`;
+        for (let i = 0; i < n; i++)
+            if (!Number.isFinite(v[i]) || (min != null && v[i] < min)) return `${k}[${i}] must be a number${min != null ? ` of ${min} or more` : ''}.`;
+        return null;
+    };
+    if (!r.p || typeof r.p !== 'object') return 'p must hold the partial pressures (circuit, lungs, vrg, mg, fg).';
+    for (const k of GAS_KEYS) { const q = arr(r.p[k], `p.${k}`); if (q) return q; }
+    for (const [k, min] of [['fresh', 0], ['freshFlow', 0], ['ventilation', 0], ['delivered', 0]]) {
+        const q = arr(r[k], k, min); if (q) return q;
+    }
+    for (const what of ['capacity', 'volume', 'partition']) {
+        const o = r[what];
+        if (!o || typeof o !== 'object') return `${what} must give each compartment's.`;
+        for (const k of GAS_KEYS) {
+            const x = o[k], zeroOk = k === 'circuit' && what !== 'partition';
+            if (!(Number.isFinite(x) && (zeroOk ? x >= 0 : x > 0)))
+                return `${what}.${k} must be a number ${zeroOk ? 'of 0 or more' : 'above 0'}.`;
+        }
+    }
+    if (r.mac != null && !(Number.isFinite(r.mac) && r.mac > 0)) return 'mac must be a number above 0.';
+    if (r.typical != null && !(Number.isFinite(r.typical) && r.typical >= 0)) return 'typical must be a number of 0 or more.';
+    if (r.amountScale != null && !(Number.isFinite(r.amountScale) && r.amountScale > 0)) return 'amountScale must be a number above 0.';
+    if (r.circuit != null && !['ideal', 'semi-closed', 'open'].includes(r.circuit)) return 'circuit must be "ideal", "semi-closed" or "open".';
+    return runTextProblem(r);
+}
+
+// ── the player, for a gas run ──────────────────────────────────
+Object.assign(Player, {
+    // A gas run's setup, from load(): the scales, the decimals, the agent vented.
+    gasSetup(r) {
+        let peak = 0;
+        for (const k of GAS_KEYS) for (const x of r.p[k]) if (x > peak) peak = x;
+        this.tiny = peak * TINY_FRACTION;
+        const level = r.typical > 0 ? r.typical : (peak > 0 ? peak / 2 : 1);
+        const mag = Math.max(-6, Math.floor(Math.log10(level)));
+        // The 3D view's heights (gas3d.js): 6 units for one MAC, or for the
+        // run's highest partial pressure where that is lower (nitrous oxide,
+        // whose MAC is above an atmosphere).
+        const level3d = r.mac > 0 && peak > 0 ? Math.min(r.mac, peak) : level;
+        this.ui = { gas: true, showCe: false, units: this.units, drugRgb: hexRgb(GAS_TINT),
+                    ceRgb: hexRgb(FLAT_COLOURS.ce), concDecimals: Math.max(0, 2 - mag), concScale: 6 / level3d };
+        // Vented: the agent delivered less the agent held, at each time.
+        const n = r.t.length;
+        this.vented = new Float64Array(n);
+        for (let i = 0; i < n; i++) {
+            let held = 0;
+            for (const k of GAS_KEYS) held += r.capacity[k] * r.p[k][i];
+            this.vented[i] = r.delivered[i] - this.scale * held;
+        }
+        // The arrows' scale, for both views: the run's 95th-percentile flow.
+        this.ui.gasFlowScale = gasFlowScale(r, T => this.gasStateAt(T));
+        const keys = r.capacity.circuit > 0 ? GAS_KEYS : GAS_KEYS.slice(1);
+        this.ui.notToScale = displayVolumes(keys.map(k => r.capacity[k])).a < 1;
+    },
+
+    gasStateAt(T) {
+        const r = this.run, i = this.index(T), t = r.t;
+        const a = Math.min(1, Math.max(0, (T - t[i]) / (t[i + 1] - t[i])));
+        const lerp = v => v[i] + (v[i + 1] - v[i]) * a;
+        const j = T >= t[i + 1] ? i + 1 : i;
+        const sc = this.scale, dt = (t[i + 1] - t[i]) / 60;
+        const slope = v => (v[i + 1] - v[i]) / dt;
+        const p = {}, A = {}, into = {};
+        let held = 0;
+        for (const k of GAS_KEYS) {
+            const x = Math.max(0, lerp(r.p[k]));
+            p[k] = x < this.tiny ? 0 : x;
+            A[k] = sc * r.capacity[k] * p[k];
+            held += A[k];
+            // The agent entering the compartment, mL/min, over this interval.
+            into[k] = sc * r.capacity[k] * slope(r.p[k]);
+        }
+        const blood = into.vrg + into.mg + into.fg;
+        return {
+            t: T, gas: true, p, A, held,
+            delivered: lerp(r.delivered), vented: lerp(this.vented),
+            fresh: r.fresh[j], freshFlow: r.freshFlow[j], ventilation: r.ventilation[j],
+            flow: {
+                // Into the circuit with the fresh gas, mL/min of vapour.
+                fresh: sc * r.freshFlow[j] * r.fresh[j],
+                // From the circuit into the lungs, net of what is breathed out.
+                vent: into.lungs + blood,
+                // Out of the lungs into the blood, and from it into each tissue.
+                blood, vrg: into.vrg, mg: into.mg, fg: into.fg,
+                // Out through the pop-off valve.
+                vented: slope(this.vented)
+            }
+        };
+    },
+
+    gasReadout(st) {
+        const r = this.run, u = this.units, dp = this.ui.concDecimals;
+        const c = x => x.toFixed(dp);
+        const name = gasName(r.drug);
+        const p = r.patient || {};
+        const pat = [p.weight != null && `${p.weight} kg`, p.height != null && `${p.height} cm`,
+                     p.age != null && `${p.age} y`, p.sex].filter(Boolean).join(' · ');
+        const mac = r.mac > 0 ? `<div><span class="k">MAC</span> end-tidal ${(st.p.lungs / r.mac).toFixed(2)} · VRG ${(st.p.vrg / r.mac).toFixed(2)}</div>` : '';
+        this.$('readout').innerHTML =
+            `<div><span class="drug">${escapeHtml(name)}</span>${r.model ? ` <span class="model" title="${escapeHtml(r.model)}">· ${escapeHtml(shortModel(r.model))}</span>` : ''}</div>` +
+            `<div class="time">${hms(this.T)}</div>` +
+            `<div><span class="k">Fresh gas</span> ${st.freshFlow.toFixed(1)} L/min at <span class="tgt">${c(st.fresh)}</span> ${u.conc}` +
+            ` · <span class="k">Ventilation</span> ${st.ventilation.toFixed(1)} L/min</div>` +
+            `<div><span class="k">Inspired</span> ${c(st.p.circuit)} · <span class="k">End-tidal</span> ${c(st.p.lungs)} ${u.conc}</div>` +
+            `<div><span class="k">VRG (effect site)</span> <span class="ce">${c(st.p.vrg)}</span> · <span class="k">Muscle</span> ${c(st.p.mg)}` +
+            ` · <span class="k">Fat</span> ${c(st.p.fg)} ${u.conc}</div>` + mac +
+            (this.ui.notToScale ? `<div class="scale">Glasses not to scale: the largest capacity is drawn ${SIZE_RATIO_MAX}× the smallest. Heights are partial pressure.</div>` : '') +
+            `<div class="foot">${pat ? escapeHtml(pat) + ' · ' : ''}${escapeHtml(r.source || '')} · <kbd>h</kbd> keys</div>`;
+    },
+
+    // The amounts card: delivered, then in the patient (and the circuit, if it
+    // holds any), then vented, in mL of vapour at one atmosphere.
+    gasAmounts(st) {
+        const a = x => x.toFixed(1), r = this.run;
+        const row = (name, x, sub) => `<tr><td class="k${sub ? ' sub' : ''}">${name}</td><td>${a(x)}</td></tr>`;
+        const inPatient = st.A.lungs + st.A.vrg + st.A.mg + st.A.fg;
+        this.$('amounts').innerHTML = `
+          <div class="phead">Amounts <kbd>a</kbd></div>
+          <table class="amounts">
+            <tr><th></th><th>${escapeHtml(this.units.amount)} vapour</th></tr>
+            ${row('Delivered (fresh gas)', st.delivered)}
+            ${r.capacity.circuit > 0 ? row('In the circuit', st.A.circuit) : ''}
+            ${row('In the patient', inPatient)}
+            ${row('Lungs', st.A.lungs, true)}
+            ${row('VRG', st.A.vrg, true)}
+            ${row('Muscle', st.A.mg, true)}
+            ${row('Fat', st.A.fg, true)}
+            ${row('Vented', st.vented)}
+          </table>`;
+        this.$('amounts').classList.toggle('show', this.showAmounts);
+    }
+});
+
+// The arrows' scale for a gas run: its 95th-percentile flow (each
+// interval's largest), so a burst of fresh gas does not make every other
+// arrow a hairline; never 0.
+function gasFlowScale(r, stateAt) {
+    const flows = [];
+    for (let i = 0; i < r.t.length - 1; i++) {
+        const f = stateAt((r.t[i] + r.t[i + 1]) / 2).flow;
+        const m = Math.max(Math.abs(f.fresh), Math.abs(f.vent), Math.abs(f.blood), Math.abs(f.vrg), Math.abs(f.mg), Math.abs(f.fg), Math.abs(f.vented));
+        if (Number.isFinite(m)) flows.push(m);
+    }
+    flows.sort((a, b) => a - b);
+    const f95 = flows[Math.floor(0.95 * (flows.length - 1))] || flows[flows.length - 1] || 0;
+    return f95 > 0 ? f95 : (flows[flows.length - 1] || 1);
+}
+
+// ── the 2D drawing of a gas run ────────────────────────────────
+Object.assign(Flat, {
+    setGasRun(r, ui, stateAt) {
+        const n = r.t.length;
+        // One partial-pressure scale: every compartment at every sample, and
+        // the fresh gas (the vaporiser's setting, drawn on the circuit).
+        let top = 0;
+        const up = v => { for (let i = 0; i < n; i++) if (v[i] > top) top = v[i]; };
+        for (const k of GAS_KEYS) up(r.p[k]);
+        up(r.fresh);
+        // The flows' scale, as for a drug: the run's 95th-percentile flow.
+        this.scale = { top: niceTop(top > 0 ? top : 1), fMax: ui.gasFlowScale };
+    },
+
+    drawGas(st) {
+        const r = this.run, u = this.ui.units, dp = this.ui.concDecimals;
+        const W = this.el.clientWidth, H = this.el.clientHeight;
+        const TOP = GAS_TOP, BOTTOM = FLAT_BOTTOM, MIN_PLOT = FLAT_MIN_PLOT;
+        const ctl = this.controlsTop(H);
+        Cards.fit('2d');
+        this.cardH = Cards.height;
+        const floor = this.cardH > 0 ? ctl - this.cardH - 22 : ctl;
+        const Hs = Math.max(H, TOP + MIN_PLOT + BOTTOM + (H - ctl));
+        const yTop = TOP, yBase = Math.max(TOP + MIN_PLOT, floor - BOTTOM);
+        const ph = yBase - yTop;
+        // Left to right: the circuit, the lungs, then the tissues. The ideal
+        // circuit holds no agent and is a bar; a circuit with a volume is a box.
+        const gap = Math.max(48, Math.min(FLAT_GAP, Math.round(W * 0.07)));
+        const x0 = 70, x1 = W - 40;
+        const keys = r.capacity.circuit > 0 ? GAS_KEYS : GAS_KEYS.slice(1);
+        const barW = r.capacity.circuit > 0 ? 0 : GAS_CIRCUIT_W + gap;
+        const room = Math.max(keys.length * FLAT_MIN_W, x1 - x0 - 36 - barW - (keys.length - 1) * gap);
+        const dv = displayVolumes(keys.map(k => r.capacity[k]));
+        const widths = boxWidths(dv.v, room);
+        const x = {}, w = {};
+        // The circuit's arrows' heads clear the axis's unit.
+        let cursor = x0 + 36;
+        if (!(r.capacity.circuit > 0)) { x.circuit = cursor; w.circuit = GAS_CIRCUIT_W; cursor += GAS_CIRCUIT_W + gap; }
+        keys.forEach((k, i) => { x[k] = cursor; w[k] = widths[i]; cursor += widths[i] + gap; });
+        const cx = k => x[k] + w[k] / 2;
+        const yOf = c => yBase - Math.min(1, Math.max(0, c / this.scale.top)) * ph;
+        const thick = f => Number.isNaN(f) ? 0 : Math.min(FLAT_ARROW_MAX, FLAT_ARROW_MAX * Math.abs(f) / this.scale.fMax);
+        // A flow too small to draw: below a millionth of the arrow scale.
+        const flows = f => Math.abs(f) > 1e-6 * this.scale.fMax;
+        const fmt = v => fixedOrSig(v, dp);
+        const amt = v => fixedOrSig(v, v < 10 ? 2 : 1);
+        const e = s => escapeHtml(String(s));
+        const rateTxt = f => `${e(sig3(Math.abs(f)))} ${e(u.rate)}`;
+        const out = [];
+
+        // The partial-pressure axis.
+        for (const tk of ticks(this.scale.top)) {
+            const y = yOf(tk);
+            out.push(`<line x1="${x0 - 6}" y1="${y}" x2="${x0}" y2="${y}" stroke="${FLAT_COLOURS.axis}"/>`,
+                     `<text x="${x0 - 10}" y="${y + 4}" text-anchor="end" class="tk">${e(fmtTick(tk))}</text>`);
+        }
+        out.push(`<line x1="${x0}" y1="${yTop}" x2="${x0}" y2="${yBase}" stroke="${FLAT_COLOURS.axis}"/>`,
+                 `<text x="${x0 - 10}" y="${yTop - 14}" text-anchor="end" class="tk">${e(u.conc)}</text>`);
+
+        // One MAC (age-adjusted), across the patient's compartments.
+        if (r.mac > 0 && r.mac <= this.scale.top) {
+            const y = yOf(r.mac), xa = x.lungs - 4, xb = x.fg + w.fg + 4;
+            out.push(`<line x1="${xa}" y1="${y}" x2="${xb}" y2="${y}" stroke="${FLAT_COLOURS.axis}" stroke-dasharray="5 4"/>`,
+                     `<text x="${xb + 4}" y="${y + 4}" class="sub">1 MAC</text>`);
+        }
+
+        // The value labels sit above the floor's arrow (circuit to lungs) when a box is nearly empty.
+        const band = flows(st.flow.vent) ? Math.max(14, thick(st.flow.vent) / 2 + 6) + thick(st.flow.vent) / 2 + 20 : 0;
+        const valY = y => Math.min(y, yBase - 4) - 8 > yBase - band - 4 ? yBase - band - 4 : Math.min(y, yBase - 4) - 8;
+        const tint = `rgb(${this.ui.drugRgb.map(c => Math.round(c * 255)).join(',')})`;
+        const box = k => {
+            const y = yOf(st.p[k]), ce = k === 'vrg', bar = k === 'circuit' && !(r.capacity.circuit > 0);
+            const vol = r.volume[k], lam = r.partition[k];
+            const size = bar ? 'inspired' : k === 'lungs' || k === 'circuit' ? `${fixedOrSig(vol, vol < 10 ? 2 : 1)} L gas`
+                : `${fixedOrSig(vol, vol < 10 ? 2 : 1)} L × ${e(sig3(lam))}`;
+            out.push(`<rect x="${x[k]}" y="${y}" width="${w[k]}" height="${yBase - y}" fill="${ce ? FLAT_COLOURS.ce : tint}" fill-opacity="0.85"/>`,
+                     `<rect x="${x[k]}" y="${yTop}" width="${w[k]}" height="${ph}" fill="none" stroke="${FLAT_COLOURS.box}"${bar ? ' stroke-dasharray="2 3"' : ''}/>`,
+                     `<text x="${cx(k)}" y="${yBase + 18}" text-anchor="middle" class="nm">${GAS_NAMES[k]}</text>`,
+                     `<text x="${cx(k)}" y="${yBase + 34}" text-anchor="middle" class="sub">${size}</text>`,
+                     // The bar's value beside it, clear of the arrows over it.
+                     bar ? `<text x="${x[k] + w[k] + 5}" y="${Math.max(yTop + 12, valY(y))}" class="val">${e(fmt(st.p[k]))}</text>`
+                         : `<text x="${cx(k)}" y="${valY(y)}" text-anchor="middle" class="val${ce ? ' ce' : ''}">${e(fmt(st.p[k]))}</text>`);
+            if (!bar) out.push(`<text x="${cx(k)}" y="${yBase + 50}" text-anchor="middle" class="sub">${e(amt(st.A[k]))} ${e(u.amount)}</text>`);
+        };
+        for (const k of GAS_KEYS) box(k);
+        // What each partial pressure is, over its box.
+        out.push(`<text x="${cx('lungs')}" y="${yTop - 6}" text-anchor="middle" class="sub">end-tidal</text>`,
+                 `<text x="${cx('vrg')}" y="${yTop - 6}" text-anchor="middle" class="sub ce">effect site</text>`);
+        // The fresh gas's own partial pressure (the vaporiser), on the circuit.
+        {
+            const y = yOf(st.fresh);
+            out.push(`<line x1="${x.circuit - 4}" y1="${y}" x2="${x.circuit + w.circuit + 4}" y2="${y}" stroke="${FLAT_COLOURS.target}" stroke-width="2.5"/>`);
+        }
+
+        // Fresh gas in and the pop-off out, side by side over the circuit;
+        // their labels to the right.
+        const label = (lx, ly, anchor, text, cls) =>
+            out.push(`<text x="${lx}" y="${ly}" text-anchor="${anchor}" class="fl ${cls}">${text}</text>`);
+        const fIn = flows(st.flow.fresh), fOut = flows(st.flow.vented);
+        const twi = thick(st.flow.fresh), two = thick(st.flow.vented);
+        const hi = headWidth(twi), ho = headWidth(two), cc = cx('circuit');
+        const xi = fOut ? cc - hi / 2 - 2 : cc, xo = fIn ? cc + ho / 2 + 2 : cc;
+        if (fIn) arrowVert(out, xi, yTop - 70, yTop - 2, twi, FLAT_COLOURS.in);
+        if (fOut) arrowVert(out, xo, yTop - 2, yTop - 70, two, FLAT_COLOURS.out);
+        const lx = Math.max(xi + hi / 2, xo + ho / 2) + 8;
+        label(lx, yTop - 56, 'start', `Fresh gas ${fIn ? rateTxt(st.flow.fresh) : `0 ${e(u.rate)}`}`, 'in');
+        label(lx, yTop - 40, 'start', `Vented ${fOut ? rateTxt(st.flow.vented) : `0 ${e(u.rate)}`}`, 'out');
+        label(lx, yTop - 24, 'start', `${e(st.freshFlow.toFixed(1))} L/min at ${e(fmt(st.fresh))} ${e(u.conc)}`, 'sub');
+
+        // Breathing: the net flow from the circuit into the lungs, along the floor.
+        if (flows(st.flow.vent)) {
+            const f = st.flow.vent, tw = thick(f), y = yBase - Math.max(14, tw / 2 + 6);
+            const xa = x.circuit + w.circuit, xb = x.lungs;
+            arrowH(out, f > 0 ? xa + 6 : xb - 6, f > 0 ? xb - 6 : xa + 6, y, tw, f > 0 ? FLAT_COLOURS.in : FLAT_COLOURS.out);
+            label((xa + xb) / 2, y - tw / 2 - 6, 'middle', rateTxt(f), f > 0 ? 'in' : 'out');
+        }
+
+        // The blood, under the names: out of the lungs, and into each tissue
+        // (or back, on emergence), every arrow from or to one line.
+        const yLine = yBase + 98, yHead = yBase + 60;
+        out.push(`<line x1="${cx('lungs')}" y1="${yLine}" x2="${cx('fg')}" y2="${yLine}" stroke="${FLAT_COLOURS.axis}" stroke-width="2"/>`,
+                 `<text x="${cx('lungs') - 8}" y="${yLine + 4}" text-anchor="end" class="sub">Blood, ${e(u.rate)}</text>`);
+        // The blood's flows are numbers only, the unit said once on the line,
+        // so they fit between the arrows of a narrow window.
+        const num = f => e(sig3(Math.abs(f)));
+        if (flows(st.flow.blood)) {
+            const f = st.flow.blood, tw = thick(f);
+            // Down out of the lungs (green) on induction, up into them (red) on emergence.
+            if (f > 0) arrowVert(out, cx('lungs'), yHead, yLine, tw, FLAT_COLOURS.out);
+            else arrowVert(out, cx('lungs'), yLine, yHead, tw, FLAT_COLOURS.in);
+            label(cx('lungs') + tw / 2 + 6, yBase + 84, 'start', num(f), f > 0 ? 'out' : 'in');
+        }
+        for (const k of ['vrg', 'mg', 'fg']) {
+            const f = st.flow[k];
+            if (!flows(f)) continue;
+            const tw = thick(f);
+            // Up into the tissue, away from the lungs (green); or down out of it, toward them (red).
+            if (f > 0) arrowVert(out, cx(k), yLine, yHead, tw, FLAT_COLOURS.out);
+            else arrowVert(out, cx(k), yHead, yLine, tw, FLAT_COLOURS.in);
+            label(cx(k) + tw / 2 + 6, yBase + 84, 'start', num(f), f > 0 ? 'out' : 'in');
+        }
+
+        // What the widths and heights are, in the room right of the circuit's
+        // labels (about 6 px a character): in full, briefly, or not at all.
+        const free = x1 - (lx + 190);
+        const note = [`Widths: capacity (volume × tissue:gas partition)${dv.a < 1 ? `, not to scale (largest ${SIZE_RATIO_MAX}× smallest)` : ''}. Heights: partial pressure.`,
+                      `Widths: capacity${dv.a < 1 ? ', not to scale' : ''}`].find(t => t.length * 6 <= free);
+        if (note) out.push(`<text x="${x1}" y="${yTop - 40}" text-anchor="end" class="sub">${note}</text>`);
+        this.finish(out, W, Hs, st);
+    }
+});
+
+// A vertical arrow from y0 to y1, either way, its head at y1.
+function arrowVert(out, x, y0, y1, w, colour) {
+    const dir = y1 > y0 ? 1 : -1, hl = Math.min(14, Math.abs(y1 - y0) / 2), hw = headWidth(w);
+    const ya = Math.min(y0, y1 - dir * hl), yb = Math.max(y0, y1 - dir * hl);
+    out.push(`<rect x="${x - w / 2}" y="${ya}" width="${w}" height="${yb - ya}" fill="${colour}"/>`,
+             `<polygon points="${x - hw / 2},${y1 - dir * hl} ${x + hw / 2},${y1 - dir * hl} ${x},${y1}" fill="${colour}"/>`);
+}
+
+</script>
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  stanpumpR viewer — the inhaled anesthetics, in the 3D view
+//
+//  Written for stanpumpR by Claude Code (Anthropic), 2026-11-10, at the
+//  request of Steven L. Shafer, in Charles Minto's scene (scene.js,
+//  vessels.js, arrows.js), whose glasses, arrows and labels it uses.
+//
+//  Copyright (c) 2026 Charles Minto and Thomas Schnider
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in all
+//  copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//  SOFTWARE.
+//
+//  A gas run (gas.js) as glasses, as a drug's compartments are drawn:
+//    - the lungs at the centre, where V1 stands for a drug; the vessel-rich
+//      group (the effect site, in the effect site's blue), muscle and fat
+//      behind them on an arc, as V2 and V3 are; the breathing circuit to the
+//      left, a narrow tube when it holds no agent (stanpumpR's ideal circuit);
+//    - each glass's floor area its capacity (volume x tissue:gas partition),
+//      compressed as a drug's volumes are (displayVolumes()), and its liquid
+//      as tall as the partial pressure, one scale for every glass, every
+//      glass as tall as the run's highest partial pressure needs;
+//    - the vaporiser's setting a gold ring on the circuit, as a TCI target is
+//      on V1, and one MAC a pale ring round the patient's glasses;
+//    - the arrows on Charles Minto's scale of cross-section for rate: the
+//      fresh gas down into the circuit, the vented gas down out of its base
+//      (as elimination leaves V1), the breathing between the circuit and the
+//      lungs and the blood between the lungs and each tissue along the
+//      floor, red into the lungs and green out of them;
+//    - each glass named over its rim with its partial pressure; pointing at a
+//      glass or an arrow shows its card.
+//  Nothing here computes anything: drawGas() is handed the player's state
+//  (Player.gasStateAt()), whose flows are read from the amounts.
+// ═══════════════════════════════════════════════════════════════
+
+const GAS_TUBE_R = 1.5;          // the ideal circuit's tube, which holds no agent, scene units
+const GAS_CIRCUIT_ANGLE = -95;   // degrees round from straight back: the circuit, to the left
+const GAS_FIRST_TISSUE = -25;    // the vessel-rich group's angle; muscle and fat follow round to the right
+const GAS_CLEAR = 1.5;           // the least gap between two glasses, scene units
+// The gap from the lungs' glass to each other glass, which the breathing and
+// blood arrows span: wider than a drug's (CONNECT_LENGTH), so that an arrow's
+// head stands clear of a tall liquid behind it (desflurane fills muscle far
+// higher than sevoflurane does, and from every side its column hid the head
+// of the arrow into it at the drug view's 8 units).
+const GAS_GAP = 11;
+const GAS_ARROW_MAX = 1;         // the thickest arrow, in ARROW_R: a fresh gas flow far above the rest
+const GAS_MAC_INK = '#c7d2de';
+const GAS_CAPTION = { circuit: 'inspired', lungs: 'end-tidal', vrg: 'effect site' };
+// Below this window size the glasses' labels are one line, name and number:
+// the unit and what each compartment is stay in the readout and the cards.
+const GAS_COMPACT_W = 1000, GAS_COMPACT_H = 700;
+const gasCompact = () => window.innerWidth < GAS_COMPACT_W || window.innerHeight < GAS_COMPACT_H;
+
+Object.assign(View, {
+    gasVessels: null, gasArrows: null, gasLabels: null, gasMacRings: null, gasGeo: null, gasShown: false,
+
+    // The glasses, arrows, labels and rings, made once, on the first gas run.
+    gasBuild() {
+        if (this.gasVessels) return;
+        const s = this.scene;
+        this.gasVessels = {}; this.gasLabels = {}; this.gasMacRings = {};
+        GAS_KEYS.forEach((k, i) => {
+            this.gasVessels[k] = new Vessel(s, 10 + i);       // not 1: no painted Cp, no ripples
+            this.gasVessels[k].setGlass(this.look);
+            this.gasLabels[k] = new SceneLabel(s, 'gas', false);
+            if (k !== 'circuit') {
+                const pts = [], n = 128;
+                for (let j = 0; j < n; j++) {
+                    const a = 2 * Math.PI * j / n, b = 2 * Math.PI * (j + 1) / n;
+                    pts.push(Math.cos(a), 0, Math.sin(a), Math.cos(b), 0, Math.sin(b));
+                }
+                const ring = targetLine(pts);
+                ring.material.color.setStyle(GAS_MAC_INK, THREE.SRGBColorSpace);
+                ring.material.linewidth = 1.5;
+                this.gasVessels[k].group.add(ring);
+                this.gasMacRings[k] = ring;
+            }
+        });
+        this.gasArrows = {};
+        for (const a of ['fresh', 'vented', 'vent', 'vrg', 'mg', 'fg']) this.gasArrows[a] = new FlowArrow(s);
+        this.gasVessels.circuit.setTargetRing(0);     // its line made now, so sized below
+        for (const m of TARGET_LINE_MATS) m.resolution.set(this.container.clientWidth, this.container.clientHeight);
+    },
+
+    // A gas run: the glasses' sizes, places and height, fixed for the run.
+    // r: the run; ui: the player's (concScale, the arrows' scale).
+    gasSetup(r, ui) {
+        this.gasBuild();
+        // Floor area from the capacity, compressed as a drug's volumes are,
+        // the largest between VESSEL_AREA_MIN and _MAX.
+        const keys = r.capacity.circuit > 0 ? GAS_KEYS : GAS_KEYS.slice(1);
+        let dv = displayVolumes(keys.map(k => r.capacity[k])).v;
+        const big = Math.max(...dv), fit = big > 0 ? Math.min(VESSEL_AREA_MAX, Math.max(VESSEL_AREA_MIN, big)) / big : 1;
+        const rad = { circuit: GAS_TUBE_R };
+        keys.forEach((k, i) => { rad[k] = Math.sqrt(dv[i] * fit); });
+        // Every glass as tall as the run's highest partial pressure, or the
+        // fresh gas's, needs: one scale, so levels compare across glasses.
+        let top = 0;
+        for (const k of GAS_KEYS) for (const x of r.p[k]) if (x > top) top = x;
+        for (const x of r.fresh) if (x > top) top = x;
+        const glassH = Math.max(GLASS_MIN, Math.ceil((top * ui.concScale * 1.08 + 0.4) / 2) * 2);
+        // Arrows in proportion to the scene: nitrous oxide's glasses are a
+        // third the size of sevoflurane's, and full-size arrows dwarfed them.
+        const arrowScale = Math.min(1, Math.max(0.4, Math.max(rad.lungs, rad.vrg, rad.mg, rad.fg) / 10));
+        this.gasGeo = { r: rad, c: gasLayout(rad), glassH, arrowScale };
+        // The case the close-up and i look at (centreGlass()).
+        this.geo = { n: 0, r: [0, rad.lungs, 0, 0], c: [null, new THREE.Vector3(), null, null] };
+        // The starting view is chosen when it is first wanted (homePose()),
+        // once the cards hold this run and their size is known.
+        this.gasHome = null; this.gasRun = r; this.gasUi = ui;
+        this.gasShow(true);
+    },
+
+    // The starting view of a gas run: of the views from the front half of the
+    // scene, at several heights, the one in which the glasses' labels overlap
+    // least and the glasses and the arrows between them are least hidden
+    // behind nearer glasses, each view as close as frames the whole scene
+    // above the cards. A run's glasses differ in size (sevoflurane's fat
+    // holds 493 L of gas, nitrous oxide's 16), so no one view serves every
+    // run (Shafer, 2026-11-10: the labels overlapped from the drug view's).
+    gasHomePose(r, ui) {
+        const G = this.gasGeo, H = G.glassH;
+        const W = this.container.clientWidth || window.innerWidth, Hpx = this.container.clientHeight || window.innerHeight;
+        // The scene keeps clear of the cards (Cards, player.js), where they
+        // are in this window (the readout bottom left, the amounts bottom
+        // right), and stands above the controls.
+        const ctl = document.getElementById('controls');
+        const floorY = (ctl ? ctl.getBoundingClientRect().top : Hpx) - 8;
+        const cards = ['readout', 'amounts'].map(id => document.getElementById(id))
+            .filter(el => el && el.offsetWidth > 0 && getComputedStyle(el).display !== 'none')
+            .map(el => { const b = el.getBoundingClientRect(); return { x0: b.left - 6, x1: b.right + 6, y0: b.top - 6, y1: b.bottom }; });
+        // The bottom of the room above the cards: the scene is centred in it.
+        const roomBottom = Math.min(floorY, ...cards.map(c => c.y0));
+        const cam = new THREE.PerspectiveCamera(60, W / Hpx, 0.1, 3000);
+        const glasses = GAS_KEYS.map(k => ({ k, c: G.c[k], R: glassRadius(G.r[k]) }));
+        // The labels' size, px: their text is set later, so estimated from
+        // the longest it can be (name, partial pressure and unit; caption).
+        const small = gasCompact();
+        const label = k => small ? { w: GAS_NAMES[k].length * 8.5 + 50, h: 26 }
+            : { w: Math.max(GAS_NAMES[k].length * 8.5 + 64, GAS_CAPTION[k] ? GAS_CAPTION[k].length * 6.5 : 0) + 18,
+                h: GAS_CAPTION[k] ? 40 : 26 };
+        // The floor arrows, as three points each across their gap.
+        const arrows = ['circuit', 'vrg', 'mg', 'fg'].map(k => {
+            const u = G.c[k].clone().setY(0).normalize();
+            return [0.25, 0.5, 0.75].map(f => u.clone().multiplyScalar(G.r.lungs + f * GAS_GAP).setY(0.6));
+        });
+        const aim = glasses.reduce((a, g) => a.add(g.c), new THREE.Vector3()).multiplyScalar(1 / glasses.length).setY(H * 0.35);
+        let shiftY = 0;
+        const px = v => { const q = v.clone().project(cam); return [(q.x + 1) / 2 * W, (1 - q.y) / 2 * Hpx - shiftY, q.z]; };
+        const box = g => {
+            let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+            for (const dx of [-g.R, g.R]) for (const dz of [-g.R, g.R]) for (const y of [0, H]) {
+                const [x, yy] = px(g.c.clone().add(new THREE.Vector3(dx, y, dz)));
+                x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, yy); y1 = Math.max(y1, yy);
+            }
+            return { x0, x1, y0, y1 };
+        };
+        const area = b => Math.max(0, b.x1 - b.x0) * Math.max(0, b.y1 - b.y0);
+        const meet = (a, b) => ({ x0: Math.max(a.x0, b.x0), x1: Math.min(a.x1, b.x1), y0: Math.max(a.y0, b.y0), y1: Math.min(a.y1, b.y1) });
+        const inside = (b, x, y) => x > b.x0 && x < b.x1 && y > b.y0 && y < b.y1;
+        // The camera at (theta, phi), D from the scene, looking at it; the
+        // picture then moved up (shiftY px, the camera's view offset, which
+        // moves the image and not the camera, so nothing it hides changes)
+        // until the scene is centred in the room above the cards.
+        const place = (theta, phi, D) => {
+            const t = theta * Math.PI / 180, f = phi * Math.PI / 180;
+            cam.position.set(aim.x + D * Math.cos(f) * Math.sin(t), aim.y + D * Math.sin(f), aim.z + D * Math.cos(f) * Math.cos(t));
+            cam.lookAt(aim); cam.updateMatrixWorld(); cam.updateProjectionMatrix();
+            shiftY = 0;
+            let y0 = Infinity, y1 = -Infinity;
+            for (const g of glasses) {
+                const b = box(g), [, ay] = px(g.c.clone().setY(H + 0.3));
+                y0 = Math.min(y0, b.y0, ay - label(g.k).h); y1 = Math.max(y1, b.y1);
+            }
+            shiftY = (y0 + y1) / 2 - (0.08 * Hpx + roomBottom) / 2;
+        };
+        // The circuit's arrows too: the fresh gas above it, the vented gas below.
+        const ends = [H + CONNECT_LENGTH + 0.5, -CONNECT_LENGTH].map(y => G.c.circuit.clone().setY(y));
+        // Everything in view: the glasses, their labels and the circuit's
+        // arrows inside the window, above the controls and off the cards.
+        const clear = b => !cards.some(c => area(meet(b, c)) > 0);
+        const fits = () => glasses.every(g => {
+            const b = box(g), [ax, ay] = px(g.c.clone().setY(H + 0.3)), l = label(g.k);
+            const lb = { x0: ax - l.w / 2, x1: ax + l.w / 2, y0: ay - l.h, y1: ay };
+            return b.x0 > 0.04 * W && b.x1 < 0.96 * W && b.y1 < floorY && lb.y0 > 0.08 * Hpx &&
+                lb.x0 > 0.02 * W && lb.x1 < 0.98 * W && clear(b) && clear(lb);
+        }) && ends.every(p => { const [x, y] = px(p); return x > 0.04 * W && x < 0.96 * W && y > 0.06 * Hpx && y < floorY &&
+                                                         clear({ x0: x - 1, x1: x + 1, y0: y - 1, y1: y + 1 }); });
+        // What hides things: the liquid, not the glass, which is see-through;
+        // each at its highest in the run (at least a sliver).
+        const columns = glasses.map(g => {
+            let top = 0;
+            for (const x of r.p[g.k]) if (x > top) top = x;
+            return { k: g.k, c: g.c, R: G.r[g.k], h: Math.max(0.3, top * ui.concScale) };
+        });
+        // Whether the line from the camera to p passes through the column col
+        // before reaching p; blocked(): through any column but skip's.
+        const blockedBy = (p, col) => {
+            const o = cam.position, d = p.clone().sub(o);
+            const ox = o.x - col.c.x, oz = o.z - col.c.z, a = d.x * d.x + d.z * d.z;
+            if (!(a > 0)) return false;
+            const b = 2 * (ox * d.x + oz * d.z), c = ox * ox + oz * oz - col.R * col.R, disc = b * b - 4 * a * c;
+            if (disc < 0) return false;
+            let t0 = (-b - Math.sqrt(disc)) / (2 * a), t1 = (-b + Math.sqrt(disc)) / (2 * a);
+            if (Math.abs(d.y) > 1e-9) {
+                const ya = (0 - o.y) / d.y, yb = (col.h - o.y) / d.y;
+                t0 = Math.max(t0, Math.min(ya, yb)); t1 = Math.min(t1, Math.max(ya, yb));
+            } else if (o.y < 0 || o.y > col.h) return false;
+            return Math.max(t0, 0) < Math.min(t1, 0.999);
+        };
+        const blocked = (p, skip) => columns.some(col => col.k !== skip && blockedBy(p, col));
+        // Each glass's liquid seen at five points of its surface; each arrow at three.
+        const surface = col => [[0, 0], [0.7, 0], [-0.7, 0], [0, 0.7], [0, -0.7]].map(([a, b]) =>
+            new THREE.Vector3(col.c.x + a * col.R, col.h, col.c.z + b * col.R));
+        let best = null;
+        const scores = [];
+        for (const phi of [22, 27, 32, 37, 42, 48, 54]) for (let theta = -175; theta <= 180; theta += 5) {
+            let lo = 10, hi = 500;
+            place(theta, phi, hi);
+            if (!fits()) continue;
+            for (let i = 0; i < 14; i++) { const D = (lo + hi) / 2; place(theta, phi, D); if (fits()) hi = D; else lo = D; }
+            place(theta, phi, hi * 1.04);
+            const lb = glasses.map(g => { const [x, y] = px(g.c.clone().setY(H + 0.3)), l = label(g.k);
+                                          return { k: g.k, x0: x - l.w / 2, x1: x + l.w / 2, y0: y - l.h, y1: y }; });
+            const underLabel = (p, own) => { const [x, y] = px(p); return lb.some(b => b.k !== own && inside(b, x, y)); };
+            const underLabelKey = p => { const [x, y] = px(p); const b = lb.find(b => inside(b, x, y)); return b ? b.k : null; };
+            let labels = 0, hidden = 0, lost = 0;
+            for (let i = 0; i < lb.length; i++) for (let j = i + 1; j < lb.length; j++)
+                labels += area(meet(lb[i], lb[j])) / Math.min(area(lb[i]), area(lb[j]));
+            for (const col of columns) {
+                const pts = surface(col);
+                hidden += pts.filter(p => blocked(p, col.k) || underLabel(p, col.k)).length / pts.length;
+            }
+            const why = [];
+            arrows.forEach((pts, ai) => pts.forEach((p, pi) => {
+                const col = columns.find(c => blockedBy(p, c)), lab = underLabelKey(p);
+                if (col || lab) why.push(`${['circuit', 'vrg', 'mg', 'fg'][ai]}#${pi}:${col ? 'col ' + col.k : 'label ' + lab}`);
+            }));
+            for (const pts of arrows) lost += pts.filter(p => blocked(p, null) || underLabel(p, null)).length / pts.length;
+            // Nothing hidden comes first (Shafer, 2026-11-10: "hide nothing");
+            // then labels apart, which gasSpreadLabels() can otherwise mend;
+            // then, the heights being the partial pressures, a moderate
+            // height, which does not flatten them, and the front.
+            const score = 10 * hidden + 10 * lost + 3 * labels + 0.25 * Math.abs(theta) / 180 + 0.8 * Math.abs(phi - 30) / 20;
+            scores.push({ theta, phi, score, labels, hidden, lost, covered: 0, why });
+            if (!best || score < best.score) best = { score, eye: cam.position.clone(), aim: aim.clone(), offset: shiftY / Hpx, theta, phi, labels, hidden, lost };
+        }
+        this.gasHomeScores = scores;         // every view weighed, for the tests
+        return best || { eye: new THREE.Vector3(...HOME_EYE), aim: new THREE.Vector3(...HOME_AIM) };
+    },
+
+    // The glasses' labels moved apart on screen where they still overlap
+    // (the scene turned by hand): the lowest on the screen, usually the
+    // nearest, keeps its place and each one above it is lifted just clear of
+    // those already placed. Run after every drawing of the labels, which
+    // places them afresh.
+    gasSpreadLabels() {
+        const items = [];
+        for (const l of Object.values(this.gasLabels)) {
+            const el = l.el;
+            if (!l.obj.visible || el.style.display === 'none') continue;
+            const lift = parseFloat(el.style.top) || 0, b = el.getBoundingClientRect();
+            if (!(b.width > 0)) continue;
+            items.push({ el, x0: b.left, x1: b.right, y0: b.top - lift, y1: b.bottom - lift });
+        }
+        items.sort((a, b) => b.y1 - a.y1);
+        const placed = [];
+        for (const it of items) {
+            let y1 = it.y1, h = it.y1 - it.y0, moved = true;
+            while (moved) {
+                moved = false;
+                for (const p of placed)
+                    if (it.x0 < p.x1 && p.x0 < it.x1 && y1 - h < p.y1 && p.y0 < y1) { y1 = p.y0 - 2; moved = true; }
+            }
+            const lift = y1 - it.y1;
+            const top = lift ? `${lift}px` : '';
+            if (it.el.style.top !== top) it.el.style.top = top;
+            placed.push({ x0: it.x0, x1: it.x1, y0: y1 - h, y1 });
+        }
+    },
+
+    // Show the gas run's things and hide the drug's, or the reverse.
+    gasShow(on) {
+        this.gasShown = on;
+        this.tipKey = null;
+        if (this.gasVessels) {
+            for (const v of Object.values(this.gasVessels)) v.setVisible(on);
+            for (const l of Object.values(this.gasLabels)) l.show(on);
+            for (const a of Object.values(this.gasArrows)) if (!on) a.group.visible = false;
+        }
+        if (on) {
+            for (let k = 1; k <= 3; k++) this.vessels[k].setVisible(false);
+            for (const a of Object.values(this.arrows)) a.group.visible = false;
+            this.ribbon.setVisible(false);
+            this.bolusLabel.show(false);
+            this.v1Mlh = 0;
+        }
+        this.applyOffset();          // a gas run's own picture offset, or the drug view's
+        this.invalidate();
+    },
+
+    // One moment of a gas run (Player.gasStateAt()).
+    drawGas(st, ui) {
+        this.invalidate();
+        const G = this.gasGeo, L = this.look, hs = ui.concScale, H = G.glassH;
+        for (const k of GAS_KEYS) {
+            const v = this.gasVessels[k];
+            v.setShape(G.c[k], G.r[k], H);
+            v.setGlass(L);
+            v.setLiquid(st.p[k], st.p[k] * hs, L, k === 'vrg' ? ui.ceRgb : ui.drugRgb, ui.concDecimals);
+            const ring = this.gasMacRings[k];
+            if (ring) {
+                const y = Player.run.mac > 0 ? Player.run.mac * hs : 0;
+                ring.visible = y > 0 && y <= H;
+                ring.scale.set(glassRadius(G.r[k]), 1, glassRadius(G.r[k]));
+                ring.position.y = y;
+            }
+            const value = escapeHtml(st.p[k].toFixed(ui.concDecimals));
+            this.gasLabels[k].set(G.c[k].clone().setY(H + 0.3), gasCompact() ? `<b>${GAS_NAMES[k]}</b> ${value}`
+                : `<b>${GAS_NAMES[k]}</b> ${value} <i>${escapeHtml(ui.units.conc)}</i>${GAS_CAPTION[k] ? `<br><i>${GAS_CAPTION[k]}</i>` : ''}`);
+        }
+        // The vaporiser's setting, gold on the circuit.
+        this.gasVessels.circuit.setTargetRing(st.fresh * hs);
+
+        // Arrows: cross-section for rate, the run's 95th-percentile flow
+        // drawn at ARROW_R, none thicker than GAS_ARROW_MAX of it.
+        const rad = f => G.arrowScale * Math.min(GAS_ARROW_MAX * ARROW_R, ARROW_R * Math.sqrt(Math.abs(f) / ui.gasFlowScale));
+        const A = this.gasArrows, len = CONNECT_LENGTH, gap = GAS_GAP, f = st.flow;
+        const up = new THREE.Vector3(0, 1, 0), down = new THREE.Vector3(0, -1, 0);
+        const cc = G.c.circuit, rl = G.r.lungs;
+        // The fresh gas, down onto the circuit's liquid; the vented gas, down
+        // out of its base, as a drug's elimination leaves V1.
+        A.fresh.set(cc.clone().setY(st.p.circuit * hs + len + 0.5), down, len, rad(f.fresh), L.arrows.in, L);
+        A.vented.set(cc.clone(), down, len, rad(f.vented), L.arrows.out, L);
+        // Breathing and the blood: across the gap from the lungs, along the
+        // floor, as V1's arrows to V2 and V3.
+        const between = (a, centre, flow) => {
+            const u = centre.clone().setY(0).normalize(), ar = rad(flow);
+            // flow > 0 is out of the lungs (to a tissue), green; < 0 into them, red.
+            if (flow >= 0) a.set(u.clone().multiplyScalar(rl).setY(ar), u, gap, ar, L.arrows.out, L);
+            else a.set(u.clone().multiplyScalar(rl + gap).setY(ar), u.clone().negate(), gap, ar, L.arrows.in, L);
+        };
+        // Breathing in (into the lungs) is red: its flow out of the lungs is -vent.
+        between(A.vent, cc, -f.vent);
+        for (const k of ['vrg', 'mg', 'fg']) between(A[k], G.c[k], f[k]);
+
+        this.tipState = { ...st, units: ui.units, dp: ui.concDecimals };
+        const tk = this.tipKey;
+        if (tk && !tk.includes(':')) this.tipKey = null;
+        this.fillTip();
+    },
+
+    // The card over a gas glass or arrow.
+    fillGasTip() {
+        const el = this.tip, key = this.tipKey, st = this.tipState, r = Player.run;
+        if (!r || r.kind !== 'gas' || !st || !st.gas) { el.style.display = 'none'; return; }
+        const u = st.units, [kind, k] = key.split(':'), num = x => sig3(Math.abs(x));
+        const vapour = x => `<div class="a">${x.toFixed(1)} <i>${escapeHtml(u.amount)} vapour</i></div>`;
+        let html;
+        if (kind === 'gv') {
+            const vol = r.volume[k], cap = r.capacity[k];
+            const size = k === 'circuit' && !(cap > 0) ? 'holds no agent'
+                : k === 'lungs' || k === 'circuit' ? `${vol.toFixed(2)} L of gas`
+                : `${vol.toFixed(1)} L × ${sig3(r.partition[k])} = ${sig3(cap)} L of gas`;
+            html = `<div class="k">${GAS_LONG[k]}, ${size}</div>` +
+                `<div class="v">${st.p[k].toFixed(st.dp)} <i>${escapeHtml(u.conc)}</i></div>` + (cap > 0 ? vapour(st.A[k]) : '');
+        } else {
+            const f = st.flow[k];
+            let name, into;
+            if (k === 'fresh') { name = `Fresh gas, ${st.freshFlow.toFixed(1)} L/min at ${st.fresh.toFixed(st.dp)} ${escapeHtml(u.conc)}`; into = true; }
+            else if (k === 'vented') { name = 'Vented through the pop-off valve'; into = false; }
+            else if (k === 'vent') { into = f >= 0; name = into ? 'Breathed in, net' : 'Breathed out, net'; }
+            else { into = f < 0; name = into ? `${GAS_NAMES[k]} → blood → lungs` : `Lungs → blood → ${GAS_NAMES[k]}`; }
+            const sum = k === 'fresh' ? `<div class="a"><span class="k">Delivered</span> ${st.delivered.toFixed(1)} <i>${escapeHtml(u.amount)}</i></div>`
+                : k === 'vented' ? `<div class="a"><span class="k">Vented</span> ${st.vented.toFixed(1)} <i>${escapeHtml(u.amount)}</i></div>` : '';
+            html = `<div class="k">${name}</div>` +
+                `<div class="v dotted"><span class="dot ${into ? 'in' : 'out'}"></span><span>${num(f)} <i>${escapeHtml(u.rate)} vapour</i></span></div>` + sum;
+        }
+        if (html !== this.tipHtml) { el.innerHTML = html; this.tipHtml = html; }
+        el.style.display = 'block';
+        const box = this.container.getBoundingClientRect();
+        const x = this.tipAt[0] - box.left + 14, y = this.tipAt[1] - box.top + 14;
+        el.style.left = Math.min(x, box.width - el.offsetWidth - 8) + 'px';
+        el.style.top = Math.min(y, box.height - el.offsetHeight - 8) + 'px';
+    }
+});
+
+// Where each glass stands: the lungs at the origin; every other glass its own
+// radius plus GAS_GAP out from the lungs' wall, so an arrow of that
+// length spans the gap; the circuit at GAS_CIRCUIT_ANGLE, the tissues from
+// GAS_FIRST_TISSUE round to the right, each turned on until it stands clear
+// of those already placed. Angles from straight back (-z), to the right (+x)
+// positive. rad: each glass's radius.
+function gasLayout(rad) {
+    const rl = rad.lungs;
+    const at = (k, deg) => {
+        const d = rl + GAS_GAP + rad[k], a = deg * Math.PI / 180;
+        return new THREE.Vector3(d * Math.sin(a), 0, -d * Math.cos(a));
+    };
+    const c = { lungs: new THREE.Vector3(0, 0, 0), circuit: at('circuit', GAS_CIRCUIT_ANGLE) };
+    const placed = [[c.circuit, glassRadius(rad.circuit)]];
+    const clear = (p, R) => placed.every(([q, S]) => p.distanceTo(q) >= R + S + GAS_CLEAR);
+    let deg = GAS_FIRST_TISSUE;
+    for (const k of ['vrg', 'mg', 'fg']) {
+        const R = glassRadius(rad[k]);
+        let p = at(k, deg);
+        while (!clear(p, R) && deg < 250) { deg += 1; p = at(k, deg); }
+        c[k] = p; placed.push([p, R]);
+    }
+    return c;
+}
 
 </script>
 <script>
@@ -7632,7 +8509,7 @@ function videoHeading(withPatient) {
     const r = Player.run, pt = r.patient || {};
     const pat = withPatient ? [pt.weight != null && `${pt.weight} kg`, pt.height != null && `${pt.height} cm`,
                                pt.age != null && `${pt.age} y`, pt.sex].filter(Boolean).join(' · ') : '';
-    const name = String(r.drug).charAt(0).toUpperCase() + String(r.drug).slice(1);
+    const name = r.kind === 'gas' ? gasName(r.drug) : String(r.drug).charAt(0).toUpperCase() + String(r.drug).slice(1);
     return [`stanpumpR · Visualizer · ${name}`, r.model ? shortModel(r.model) : '', pat].filter(Boolean).join(' · ');
 }
 function videoStrip(ctx, W, H, withPatient) {

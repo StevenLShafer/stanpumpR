@@ -468,6 +468,30 @@ test_that("the plot's Visualizer button lists the drawable drugs, and a forged d
   })
 })
 
+# The inhaled anesthetics in the Visualizer (Shafer, 2026-11-09): an agent is
+# on the button, and its run is the gas engine's, drawn in the 2D view.
+# Oxygen and the summed MAC are plotted but cannot be drawn.
+test_that("the Visualizer button offers an inhaled anesthetic, and sends its gas run", {
+  shiny::testServer(app_server, {
+    sent <- recordNotices(session)
+    messages <- list()
+    session$sendCustomMessage <- function(type, message) messages[[length(messages) + 1]] <<- list(type = type, message = message)
+    startReview(session, reviewTable(list("oxygen", "0", "2", "L/min"), list("sevoflurane", "0", "2", "%"),
+                                     list("ventilation", "0", "6", "L/min")))
+    expect_equal(viewerDrugs(drugs()), "sevoflurane")
+    expect_match(as.character(output$viewerButtonUI$html), 'data-viewer-drug="sevoflurane"')
+    session$setInputs(openViewerDrug = list(token = "1", drug = "oxygen"))
+    expect_match(tail(errorsShown(sent), 1), "cannot be drawn now")
+    session$setInputs(openViewerDrug = list(token = "2", drug = "sevoflurane"))
+    run <- Filter(function(m) identical(m$type, "stanpumpR-viewer-run"), messages)
+    expect_length(run, 1)
+    expect_equal(run[[1]]$message$token, "2")
+    expect_equal(run[[1]]$message$run$kind, "gas")
+    expect_equal(run[[1]]$message$run$drug, "sevoflurane")
+    expect_false(session$isClosed())
+  })
+})
+
 # Gemini's production audit of the new grids (2026-11-08), each confirmed in
 # the code before it was fixed.  Findings 1, 5 and 7 are the browser's
 # (tests/playwright), finding 3 too, the test server making no bookmark.
