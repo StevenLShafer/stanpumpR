@@ -28,12 +28,16 @@ on:
           - macos-chrome
           - macos-webkit
           - windows-firefox
+          - iphone-16
+          - iphone-17
+          - android-pixel-9
+          - android-galaxy-s25
       files:
-        description: Test files
+        description: Test files (all = the platform's own suite; a phone runs phone.test.js)
         type: choice
-        default: both
+        default: all
         options:
-          - both
+          - all
           - dose-grid.test.js
           - table-grid.test.js
 
@@ -78,13 +82,22 @@ jobs:
         with:
           extra-packages: any::pkgload
 
-      # Playwright only as a client: the browsers are BrowserStack's
+      # Playwright only as a client: the browsers are BrowserStack's.  An
+      # Android phone needs the Playwright BrowserStack lists for Android
+      # (ANDROID_PLAYWRIGHT in tests/playwright/browserstack.js), which is
+      # older than PLAYWRIGHT_VERSION
       - name: Install Playwright and BrowserStack Local
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          PLATFORM: ${{ inputs.platform }}
         run: |
+          version="$PLAYWRIGHT_VERSION"
+          case "$PLATFORM" in
+            android-*) version=$(node -p "require('./tests/playwright/browserstack.js').ANDROID_PLAYWRIGHT") ;;
+          esac
+          echo "Playwright $version for $PLATFORM"
           npm install --no-save --no-audit --no-fund --prefix "$RUNNER_TEMP/node" \
-            "playwright@$PLAYWRIGHT_VERSION" "browserstack-local@$BROWSERSTACK_LOCAL_VERSION"
+            "playwright@$version" "browserstack-local@$BROWSERSTACK_LOCAL_VERSION"
           echo "NODE_PATH=$RUNNER_TEMP/node/node_modules" >> "$GITHUB_ENV"
 
       - name: Run the suite on BrowserStack
@@ -95,7 +108,7 @@ jobs:
           STANPUMPR_RSCRIPT_ARGS: --no-init-file
           FILES: ${{ inputs.files }}
         run: |
-          if [ "$FILES" = "both" ]; then node tests/playwright/run.js; else node tests/playwright/run.js "$FILES"; fi
+          if [ "$FILES" = "all" ]; then node tests/playwright/run.js; else node tests/playwright/run.js "$FILES"; fi
 
       - name: The app's log
         if: failure()

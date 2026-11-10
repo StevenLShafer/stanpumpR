@@ -60,8 +60,9 @@ it. Set the account's credentials and a platform:
 BROWSERSTACK_USERNAME=... BROWSERSTACK_ACCESS_KEY=... STANPUMPR_BROWSERSTACK=windows-chrome node tests/playwright/run.js
 ```
 
-The platforms are `windows-chrome`, `windows-edge`, `macos-chrome`,
-`macos-webkit` and `windows-firefox` (`PLATFORMS` in `browserstack.js`).
+The desktop platforms are `windows-chrome`, `windows-edge`,
+`macos-chrome`, `macos-webkit` and `windows-firefox`; the phones are below
+(`PLATFORMS` in `browserstack.js`).
 `require('browserstack-local')` must work as well as `require('playwright')`,
 and the Playwright here must be one BrowserStack supports (1.63 is).
 
@@ -73,12 +74,72 @@ itself: its network does not reach BrowserStack's endpoints, and the access
 key has to travel inside the connection's address, where the session's
 proxy cannot add it.
 
-BrowserStack also runs Playwright on real iPhones (Safari), but not this
-suite. There a session allows one browser context and one page, and only
-part of Playwright's API (BrowserStack's "Supported Playwright commands for
-iOS"). This suite opens a context for every case and uses `page.$$eval()`,
-the `pageerror` event and the clipboard, so iPhone Safari would need a
-smaller suite of its own.
+### On a phone
+
+`phone.test.js` is a smaller suite for the dose grid on a phone: a tap
+instead of a click, a value committed by tapping the next cell, the drug
+list chosen by tap, a tap on Units that reaches its list, Apply, and the
+bookmark. The Units list that opens is the system's own, which Playwright
+cannot drive, so the case checks that the tap is not suppressed and then
+chooses the unit as the list would (`selectOption()`); it does not open or
+use the system's picker. One file serves real iPhones (Safari) and real
+Android phones (Chrome). It keeps to the limits BrowserStack sets on
+Playwright on a real iPhone (its "Supported Playwright commands for iOS"),
+the stricter of the two:
+
+- one browser context and one page, so each case loads the app afresh;
+- no `page.$$eval()`, no `pageerror` event, no clipboard;
+- `page.evaluate()` returns real values only, so the server's state is read
+  with a synchronous request;
+- text goes to a cell (`locator.fill()`), and a cell is committed by tapping
+  the next one: on a real iPhone neither the page's keyboard nor Enter
+  reached the grid. Committing with Enter is the desktop suite's;
+- the bookmark case reloads from inside the page (`location.reload()`): on
+  the iPhone 16 Playwright's own navigation did not survive BrowserStack's
+  translation.
+
+On a real Android phone two things differ. The page's load event comes late
+through the tunnel, so a case waits for the startup menu, and the reload for
+a connected Shiny, not for the load. With the keyboard up, bringing a target
+below it into view pans the visual viewport, and Playwright's check that
+nothing covers a target does not allow for the pan: it found the rows above
+the target and refused the tap. So on Android a tap scrolls its target into
+view itself, asks the page whether the target is on top there, and is sent
+without that check (`tapOn()`); each case checks what its tap did.
+
+On a phone the dose table's sidebar starts collapsed, so each case opens it
+with its toggle, as a user does.
+
+Run here, it runs as an iPhone 15 in Playwright's WebKit, so WebKit must be
+installed (`npx playwright install webkit`) as well as Chromium, or with
+`STANPUMPR_PHONE=android` as a Pixel 7 in Chromium:
+
+```bash
+node tests/playwright/run.js phone.test.js
+```
+
+```bash
+STANPUMPR_PHONE=android node tests/playwright/run.js phone.test.js
+```
+
+On BrowserStack it runs on a real phone, which reaches the tunnelled app at
+`bs-local.com` (`localhost` would be the phone's own):
+
+- `iphone-16` (iPhone 16, iOS 18) and `iphone-17` (iPhone 17, iOS 26), in
+  Safari;
+- `android-pixel-9` (Google Pixel 9, Android 16) and `android-galaxy-s25`
+  (Samsung Galaxy S25 Ultra, Android 15), in Chrome. An Android phone is
+  connected through Playwright's `_android` API, and only with Playwright
+  1.62, the newest BrowserStack lists for Android (`ANDROID_PLAYWRIGHT` in
+  `browserstack.js`); the workflow installs it for an Android platform, and
+  a run with another version says so before it connects.
+
+```bash
+BROWSERSTACK_USERNAME=... BROWSERSTACK_ACCESS_KEY=... STANPUMPR_BROWSERSTACK=iphone-16 node tests/playwright/run.js
+```
+
+A phone platform runs `phone.test.js` by default, and the desktop files
+refuse one.
 
 ## How it works
 

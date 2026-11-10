@@ -51,6 +51,7 @@ let browser, context, page;
 // (the external review of 2026-11-06, Gemini's final pass).
 // on BrowserStack, the engine of the platform chosen (browserstack.js)
 const BROWSER = BS.engine();
+if (BS.mobile()) throw new Error('a phone runs phone.test.js, not this file (browserstack.js)');
 const CDP = BROWSER === 'chromium';
 const SLOW_LINK = { skip: !CDP && 'a slow link is emulated through CDP, which only Chromium has' };
 

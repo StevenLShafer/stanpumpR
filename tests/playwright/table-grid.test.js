@@ -19,6 +19,7 @@ const URL = process.env.STANPUMPR_URL;
 if (!URL) throw new Error('STANPUMPR_URL is not set: run the suite through run.js');
 // on BrowserStack, the engine of the platform chosen (browserstack.js)
 const BROWSER = BS.engine();
+if (BS.mobile()) throw new Error('a phone runs phone.test.js, not this file (browserstack.js)');
 
 let browser, context, page;
 
