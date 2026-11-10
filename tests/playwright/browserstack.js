@@ -126,10 +126,19 @@ function mobile() {
 // `local` names launched as the phone its `device` descriptor describes.
 // `close` ends whichever it was.
 async function launchPhone(playwright, local, sessionName) {
+  // What is opened is closed again if a later step fails, so that a failed
+  // start leaves no browser or device connection behind (CodeRabbit, PR #697)
+  const contextOf = async (browser, options) => {
+    try {
+      const context = await browser.newContext(options);
+      return { context, close: () => browser.close() };
+    } catch (e) {
+      await browser.close().catch(() => {});
+      throw e;
+    }
+  };
   if (!enabled()) {
-    const browser = await playwright[local.engine].launch();
-    const context = await browser.newContext(playwright.devices[local.device]);
-    return { context, close: () => browser.close() };
+    return contextOf(await playwright[local.engine].launch(), playwright.devices[local.device]);
   }
   const p = platform();
   if (p.android) {
@@ -138,13 +147,17 @@ async function launchPhone(playwright, local, sessionName) {
       throw new Error(`an Android phone on BrowserStack needs Playwright ${ANDROID_PLAYWRIGHT}, not ${version}`);
     }
     const device = await playwright._android.connect(wsEndpoint(sessionName), { timeout: 120000 });
-    await device.shell('am force-stop com.android.chrome');
-    const context = await device.launchBrowser();
+    let context;
+    try {
+      await device.shell('am force-stop com.android.chrome');
+      context = await device.launchBrowser();
+    } catch (e) {
+      await device.close().catch(() => {});
+      throw e;
+    }
     return { context, close: async () => { await context.close().catch(() => {}); await device.close(); } };
   }
-  const browser = await playwright[p.engine].connect(wsEndpoint(sessionName), { timeout: 120000 });
-  const context = await browser.newContext();
-  return { context, close: () => browser.close() };
+  return contextOf(await playwright[p.engine].connect(wsEndpoint(sessionName), { timeout: 120000 }));
 }
 
 // The app's address as the browser must use it: a phone on BrowserStack
