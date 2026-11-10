@@ -385,10 +385,10 @@ app_ui <- function() {
                 )),
 
                 # Read only by the models that name `albumin` (methotrexate,
-                # methotrexatePediatric).  Blank means each model's own
+                # methotrexatePediatric, docetaxel).  Blank means each model's own
                 # reference albumin.
                 relevantField("albumin", fieldHelp(
-                  numericInput(
+                  blankableNumericInput(
                     inputId = "albumin",
                     label = "Serum albumin (g/dL)",
                     value = NA,
