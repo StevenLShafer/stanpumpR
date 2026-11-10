@@ -19,6 +19,9 @@
 #   CALIB_WORKERS  reviews at a time (default 4)
 #   CALIB_PLAN     "full" (default): every level once, then medium and high
 #                  again; "smoke": the first paper at low, to check the setup
+#   CALIB_SKIP     stems to leave out, comma-separated (a PDF that could not be
+#                  fetched: the Drive connector refuses a file over 10 MB); the
+#                  runs can be resumed with them once their PDFs are in place
 #
 #   Rscript tools/paper-review-calibration/run.R
 #
@@ -36,6 +39,11 @@ pdfDir <- Sys.getenv("CALIB_PDFS")
 outDir <- Sys.getenv("CALIB_RESULTS")
 workers <- as.integer(Sys.getenv("CALIB_WORKERS", "4"))
 plan <- Sys.getenv("CALIB_PLAN", "full")
+skip <- trimws(strsplit(Sys.getenv("CALIB_SKIP"), ",")[[1]])
+if (length(skip)) {
+  cat("Leaving out:", paste(skip, collapse = ", "), "\n")
+  papers <- papers[!papers$stem %in% skip, ]
+}
 stopifnot(nzchar(pdfDir), nzchar(outDir), dir.exists(pdfDir))
 dir.create(outDir, showWarnings = FALSE, recursive = TRUE)
 key <- paperReviewApiKey(NULL, list())

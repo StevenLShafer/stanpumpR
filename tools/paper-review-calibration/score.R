@@ -42,7 +42,10 @@ APP_MAX_TOKENS <- 64000
 APP_TIMEOUT_SEC <- 1200
 
 numbersIn <- function(x) {
-  x <- gsub("[−–]", "-", as.character(x))
+  # The minus sign and en dash as escapes, matched as bytes, so the script
+  # runs in a C locale (where enc2utf8() would mangle them).
+  x <- as.character(x)
+  for (dash in c("\u2212", "\u2013")) x <- gsub(dash, "-", x, fixed = TRUE, useBytes = TRUE)
   m <- regmatches(x, gregexpr("-?[0-9]+(\\.[0-9]+)?([eE][-+]?[0-9]+)?", x))[[1]]
   m
 }
