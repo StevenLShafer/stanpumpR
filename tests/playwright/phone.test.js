@@ -76,8 +76,10 @@ before(async () => {
   });
 });
 
+// With no phone (launchPhone() failed, and that error is the one to report)
+// there is nothing to close
 after(async () => {
-  await phone.close();
+  if (phone) await phone.close();
 });
 
 // The app loaded afresh, the startup menu's four drugs ticked and Started
