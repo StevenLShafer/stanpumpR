@@ -35,6 +35,8 @@ const PLATFORMS = {
   'windows-chrome': { engine: 'chromium', caps: { os: 'Windows', os_version: '11', browser: 'chrome', browser_version: 'latest' } },
   'windows-edge': { engine: 'chromium', caps: { os: 'Windows', os_version: '11', browser: 'edge', browser_version: 'latest' } },
   'macos-chrome': { engine: 'chromium', caps: { os: 'OS X', os_version: 'Sequoia', browser: 'chrome', browser_version: 'latest' } },
+  // Playwright's WebKit on macOS: its WebSocket to the app does not cross
+  // the tunnel, so Shiny never connects (README.md, 2026-11-10)
   'macos-webkit': { engine: 'webkit', caps: { os: 'OS X', os_version: 'Sequoia', browser: 'playwright-webkit', browser_version: 'latest' } },
   'windows-firefox': { engine: 'firefox', caps: { os: 'Windows', os_version: '11', browser: 'playwright-firefox', browser_version: 'latest' } },
   // as BrowserStack's own sample connects to one (webkit.connect, safari,
