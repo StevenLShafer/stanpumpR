@@ -180,6 +180,53 @@ test_that("drugs the viewer cannot draw say why", {
     age = 40, weight = 70, height = 170, sex = "male")$propofol))
 })
 
+test_that("meloxicam is drawn while its doses reach one fit, and refused when they reach both", {
+  # Meloxicam's oral fit takes only oral doses and its intravenous fit
+  # (ANJESO) only intravenous ones (R/drugs_meloxicam.R), so one route's doses
+  # run one ordinary system: the run takes that system's volumes and
+  # clearances, and its drug adds up.
+  M <- getDrugPK("meloxicam", 70, 170, 40, "male", getDrugDefaults("meloxicam"))
+  oral <- M$PK[[1]]
+  iv <- M$parallelSystems[[1]]$PK[[1]]
+
+  r <- vr(data.frame(Drug = "meloxicam", Time = 0, Dose = 15, Units = "mg PO"), 24 * 60)
+  expect_equal(r$pk$v1, oral$v1)
+  expect_equal(r$pk$cl1, oral$cl1)
+  expect_null(r$c3)                      # the oral fit has two compartments
+  expect_false(is.null(r$depot))
+  expect_true(r$inputKnown)
+  e <- eliminated(r)
+  expect_lt(abs(e[["viewer"]] - e[["integral"]]) / utils::tail(r$given, 1), 5e-3)
+
+  # Scheduled oral doses are oral doses too.
+  expect_null(viewerProblem(viewerEntry(
+    data.frame(Drug = "meloxicam", Time = 0, Dose = 7.5, Units = "mg PO bid"), 24 * 60)))
+
+  r <- vr(data.frame(Drug = "meloxicam", Time = 0, Dose = 30, Units = "mg"), 12 * 60)
+  expect_equal(r$pk$v1, iv$v1)
+  expect_equal(r$pk$v3, iv$v3)
+  expect_false(is.null(r$c3))            # ANJESO's fit has three
+  expect_null(r$depot)
+  expect_equal(utils::tail(r$given, 1), 30, tolerance = 1e-9)
+  e <- eliminated(r)
+  expect_lt(abs(e[["viewer"]] - e[["integral"]]) / 30, 5e-3)
+  # The run's plasma concentration is the plot's.
+  plot <- plotSimulation(data.frame(Drug = "meloxicam", Time = 0, Dose = 30, Units = "mg"), 12 * 60)
+  w <- plot$meloxicam$wide
+  expect_equal(stats::approx(r$t / 60, r$cp, w$Time[w$Time > 1])$y,
+               w$Plasma[w$Time > 1], tolerance = 1e-6)
+
+  both <- data.frame(Drug = "meloxicam", Time = c(0, 60), Dose = c(15, 30), Units = c("mg PO", "mg"))
+  plot <- plotSimulation(both, 12 * 60)
+  expect_match(viewerProblem(plot$meloxicam), "oral and intravenous meloxicam")
+  # A route's doses all set to 0 reach no system.
+  zero <- data.frame(Drug = "meloxicam", Time = c(0, 60), Dose = c(15, 0), Units = c("mg PO", "mg"))
+  expect_null(viewerProblem(plotSimulation(zero, 12 * 60)$meloxicam))
+  # Ketorolac's enantiomers both take every dose.
+  k <- plotSimulation(data.frame(Drug = "ketorolac", Time = 0, Dose = 30, Units = "mg"), 600)
+  expect_match(viewerProblem(k$ketorolac), "separate systems")
+})
+
 test_that("a target and a manual infusion at one time: the target wins", {
   # R/tci.R: when both are entered at the same time the target wins, and the
   # simulator zeroes the manual infusion (test-tci.R). The run must say TCI,
