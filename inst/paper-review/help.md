@@ -36,6 +36,70 @@ points in particular are read approximately.
 **Try the example** shows the report and the simulator for a fictional paper,
 without sending anything anywhere.
 
+## Nothing is kept on the server
+
+**stanpumpR's server never stores your manuscript, its supplement, the model
+Claude extracts from it, or the review.** They are not written to disk, to a
+database, to a log or to a backup, and they are not kept after your session
+ends. While you work they exist only in the server's memory, for your browser
+session alone, and no one else can open them. When you close the page, or
+your session ends for any other reason, they are gone, and no one, you
+included, can get them back.
+
+This is deliberate. Single Paper Review is meant for papers under peer review,
+which are confidential, so the server is built to hold nothing of them.
+
+What follows from it:
+
+- **Keep this page open until the review appears.** If you close the page,
+  or the connection is lost, while Claude is reading, the review is lost. It
+  is not kept for you to collect later. A review made with stanpumpR's own
+  key is paid for whether or not you see it.
+- **To keep a review, download it** (**Download the report**). That copy is
+  on your own computer, and it is yours to protect.
+
+The two things recorded about a review are described below: a count kept for
+the operator when stanpumpR's own key is used (never the content), and
+Anthropic's own handling of the request. Neither is a copy of your paper or
+your review on stanpumpR's server.
+
+## How long a review takes
+
+Claude reads the whole paper, finds every model in it, records each parameter
+with where it was printed, reads the derived quantities, the regimens and the
+points of the concentration figures, and only then hands the result to
+stanpumpR, whose checks take seconds. Almost all of the time is Claude's
+reading, and it depends on the paper far more than on its length:
+
+| The paper | Expect |
+|---|---|
+| A short, clearly typeset paper with one model and one or two tables | about 3 to 5 minutes |
+| A full-length paper, several tables and figures, or a supplement | about 5 to 15 minutes |
+| Several models (more than one population, drug or endpoint), many figures to read, or a scanned or older PDF | 15 minutes or more, and it may not finish |
+
+**The app waits at most 20 minutes.** A review that takes longer ends with a
+message saying it did not finish, and no review.
+
+These are estimates from the few reviews timed so far, and will be revised
+as more papers are reviewed: a one-page test paper took 1.3 minutes; in an
+outside test of five real papers, one review took about three minutes; and an
+11-page population PK/PD paper with six fitted models was still being read
+after 20 minutes.
+
+What makes a paper harder to read:
+
+- **More than one model.** A paper that fits the same drug to several
+  endpoints or populations has a model for each, and each is read in full.
+- **Tables and figures.** Every parameter table is read cell by cell, and
+  every concentration figure is digitised point by point.
+- **The PDF itself.** A scanned page is an image that must be read like a
+  figure; equations set as images, multi-column layouts and tables split
+  across pages all take longer and are more often misread.
+- **A supplement**, which adds its own tables and figures.
+
+To shorten a review, upload the supplement only when the model's parameters
+are in it, and prefer the publisher's PDF to a scan.
+
 ## What happens to your manuscript
 
 - The file you upload is read into the memory of your browser session on the
@@ -47,7 +111,8 @@ without sending anything anywhere.
 - As soon as Claude's answer returns, the manuscript itself is removed from
   the app. What remains is the extracted model and the review.
 - Those are removed when you press **Discard the paper now**, or when you
-  close the page or your session ends, whichever is first.
+  close the page or your session ends, whichever is first. Nothing is kept
+  after that (see **Nothing is kept on the server** above).
 - The app keeps no log of manuscripts or of what was extracted, and adds
   nothing to stanpumpR's paper archive or drug library. When a review uses
   stanpumpR's own Anthropic key, the operator is told that a review was made,
@@ -61,7 +126,8 @@ without sending anything anywhere.
   any AI model. That is the operator's requirement. On Anthropic's side it
   rests on Anthropic's commercial terms, which bar training on API content
   unless the customer opts in; the operator does not.
-- If you download the report, that copy is yours, on your computer.
+- If you download the report, that copy is yours, on your computer. It is
+  the only copy of the review that exists anywhere after your session ends.
 
 ### What the app cannot promise
 
