@@ -5,3 +5,7 @@ default:
   source_link: "https://github.com/StevenLShafer/stanpumpR"
   debug: 2   # 0 = off, 1 = normal, 2 = verbose
   # commit: "<git SHA>"   # written by the deploy workflows; shown in the debug log and the Source link's tooltip
+  # Single Paper Review (docs/paper-review.md, "Setting up the API key"):
+  # anthropic_api_key: "<the operator's Anthropic key>"   # every user's default; the production deploy writes it from a secret
+  # paper_review_shared_key: false   # withdraw that key: users must enter their own
+  # paper_review_usage_email: "<address>"   # where each use of the shared key is reported; default email_username

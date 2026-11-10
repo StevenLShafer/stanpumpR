@@ -253,13 +253,24 @@ test_that("a dose row the grid would not send is said, not simulated", {
 
 # Devin's stress test (2026-11-08), the smaller items.
 test_that("without a key the tab says so before anything is uploaded", {
-  testthat::local_mocked_bindings(paperReviewApiKey = function(...) NULL)
+  testthat::local_mocked_bindings(paperReviewApiKey = function(sessionKey = NULL, ...) sessionKey)
   shiny::testServer(paperReviewServer, {
-    expect_match(as.character(output$keyNotice$html), "not enabled on this server")
+    expect_match(as.character(output$keyNotice$html), "need your own Anthropic API key")
+    expect_false(keyed())
+    # A key the user enters turns reviewing on; text that is not a key does not.
+    session$setInputs(ownKey = "not a key")
+    expect_false(keyed())
+    expect_match(as.character(output$ownKeyNote$html), "not an Anthropic API key")
+    session$setInputs(ownKey = "  sk-ant-api03-abcdefghijklmnop  ")
+    expect_true(keyed())
+    expect_equal(ownKey(), "sk-ant-api03-abcdefghijklmnop")
   })
   testthat::local_mocked_bindings(paperReviewApiKey = function(...) "test-key")
   shiny::testServer(paperReviewServer, {
-    expect_false(grepl("not enabled", paste(as.character(output$keyNotice$html), collapse = "")))
+    html <- paste(as.character(output$keyNotice$html), collapse = "")
+    expect_false(grepl("need your own", html))
+    expect_match(html, "Use your own Anthropic API key")
+    expect_true(keyed())
   })
 })
 

@@ -21,6 +21,16 @@
 # PR's code; see shiny-pr-2-deploy.yaml) can read them.  The environment has no
 # required reviewer, by the maintainer's choice, so a push to master deploys
 # without a second person: an accepted risk, recorded in AGENTS.md (Deploy).
+#
+# Single Paper Review (2026-11-10, Shafer: "default to my own key" for now):
+# the operator's Anthropic key is written into config.yml as
+# anthropic_api_key from the first of the secrets PAPER_REVIEW_ANTHROPIC_API_KEY,
+# STANPUMPR_ANTHROPIC_API_KEY or ANTHROPIC_API_KEY that is set (a repository
+# or `production` secret), and every use of it is reported to
+# PAPER_REVIEW_USAGE_EMAIL (a variable; by default the app's own mail
+# account).  Set the variable PAPER_REVIEW_SHARED_KEY to "false" to withdraw
+# the key, so that users must enter their own (R/paper-review-usage.R).  The
+# PR preview is never given the key (see shiny-pr-2-deploy.yaml).
 on:
   workflow_run:
     workflows: [R-CMD-check]
@@ -97,6 +107,10 @@ jobs:
                                 # see https://github.com/rstudio/rsconnect/issues/1315
 
       - name: Authorize and deploy app
+        env:
+          PAPER_REVIEW_KEY: ${{ secrets.PAPER_REVIEW_ANTHROPIC_API_KEY || secrets.STANPUMPR_ANTHROPIC_API_KEY || secrets.ANTHROPIC_API_KEY }}
+          PAPER_REVIEW_USAGE_EMAIL: ${{ vars.PAPER_REVIEW_USAGE_EMAIL }}
+          PAPER_REVIEW_SHARED_KEY: ${{ vars.PAPER_REVIEW_SHARED_KEY }}
         run: |
           shinyConfig <- list(
             default = list(
@@ -106,6 +120,19 @@ jobs:
               commit = Sys.getenv("DEPLOY_SHA")
             )
           )
+          # Single Paper Review's shared key (see the note at the top).  Said
+          # in the summary as set or not, never shown.
+          key <- Sys.getenv("PAPER_REVIEW_KEY")
+          shared <- !identical(tolower(Sys.getenv("PAPER_REVIEW_SHARED_KEY")), "false")
+          if (nzchar(key)) shinyConfig$default$anthropic_api_key <- key
+          if (!shared) shinyConfig$default$paper_review_shared_key <- FALSE
+          if (nzchar(Sys.getenv("PAPER_REVIEW_USAGE_EMAIL")))
+            shinyConfig$default$paper_review_usage_email <- Sys.getenv("PAPER_REVIEW_USAGE_EMAIL")
+          cat("Single Paper Review: ", if (!nzchar(key)) "no shared key (users must enter their own)"
+              else if (!shared) "shared key withdrawn (users must enter their own)"
+              else "the shared key is every user's default", "\n",
+              file = Sys.getenv("GITHUB_STEP_SUMMARY"), append = TRUE, sep = "")
+          rm(key)
           yaml::write_yaml(shinyConfig, "config.yml", fileEncoding = "UTF-8")
           rsconnect::setAccountInfo("${{ vars.SHINY_ACCOUNT }}", "${{ secrets.SHINY_TOKEN }}", "${{ secrets.SHINY_SECRET }}")
           rsconnect::deployApp(
