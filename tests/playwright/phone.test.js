@@ -223,7 +223,10 @@ async function tapOn(target) {
     };
   });
   if (!seen.onTop) console.log('the page finds this tap target covered:', JSON.stringify(seen));
-  await page.waitForTimeout(100);
+  // the scroll is instant, but the tap's point is read from the layout, so
+  // wait for the next two frames to be drawn rather than a fixed time (an
+  // async evaluate: this is Android's Chromium, not BrowserStack's iPhone)
+  await locator.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
   await locator.tap({ force: true });
 }
 
