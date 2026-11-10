@@ -16,6 +16,7 @@ Press **Video**, then **Save MP4**, as on [the propofol page](scenario:visualize
 
 ## Try next
 
+- Press **3D view** (or **v**): the same compartments as glasses, the lungs in the middle, the tissues behind them and the circuit to the left, each glass's floor area its capacity and its liquid as tall as the partial pressure. Drag to turn the scene and watch fat's wide, shallow glass fill.
 - Load [Watching an overpressure induction, then low flow](scenario:visualizer-sevoflurane-overpressure): the same patient, induced faster and maintained with far less agent thrown away.
 - Change the sevoflurane to desflurane at 6 per cent. Desflurane is a third as soluble in fat: its fat box holds 189 L, and every tissue fills faster.
 

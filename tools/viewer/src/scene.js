@@ -209,7 +209,7 @@ const View = {
             }
             // The arrows' stripes and V1's ripples move only while the clock runs.
             const running = this.clockRunning();
-            for (const a of Object.values(this.arrows)) a.tick(running ? dt : 0);
+            for (const a of this.allArrows()) a.tick(running ? dt : 0);
             const rippled = this.vessels[1].tickRipples(dt, this.v1Mlh || 0, running);
             this.controls.update();
             // Drawn only when something on screen changes: the clock running,
@@ -246,6 +246,9 @@ const View = {
         keyOf.set(this.ribbon.bar, 'ce');
         const arrowOf = new Map();
         for (const [k, a] of Object.entries(this.arrows)) for (const m of a.group.children) arrowOf.set(m, k);
+        // A gas run's (gas3d.js): keys with a colon, which a drug's never have.
+        if (this.gasVessels) for (const [k, v] of Object.entries(this.gasVessels)) for (const m of [v.liquid, v.surface]) keyOf.set(m, 'gv:' + k);
+        if (this.gasArrows) for (const [k, a] of Object.entries(this.gasArrows)) for (const m of a.group.children) arrowOf.set(m, 'ga:' + k);
         // An arrow anywhere along the ray wins: the infusion arrow can stand
         // inside V1's see-through glass, whose near wall the ray meets first.
         const aHit = this.ray.intersectObjects([...arrowOf.keys()], false).find(h => shown(h.object));
@@ -268,6 +271,7 @@ const View = {
     fillTip() {
         const el = this.tip, key = this.tipKey, st = this.tipState;
         if (!key || !st) { el.style.display = 'none'; return; }
+        if (key.includes(':')) { this.fillGasTip(); return; }
         const f = st.flow, u = st.units, num = x => Math.abs(x).toFixed(2);
         let html;
         if (key[0] === 'c') {
@@ -314,13 +318,14 @@ const View = {
     showLit() {
         this.invalidate();
         for (let k = 1; k <= 3; k++) this.vessels[k].rimMat.color.set(this.lit === 'c' + k ? '#ffd166' : '#ffffff');
+        if (this.gasVessels) for (const [k, v] of Object.entries(this.gasVessels)) v.rimMat.color.set(this.lit === 'gv:' + k ? '#ffd166' : '#ffffff');
         if (this.look) this.ribbon.mat.emissiveIntensity = this.lit === 'ce' ? 0.8 : 0.25;
     },
 
     // One frame of a video (video.js): the arrows' stripes and V1's ripples
     // moved by dt seconds, as if playing, then the scene and its labels drawn.
     step(dt) {
-        for (const a of Object.values(this.arrows)) a.tick(dt);
+        for (const a of this.allArrows()) a.tick(dt);
         this.vessels[1].tickRipples(dt, this.v1Mlh || 0, true);
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
@@ -329,6 +334,9 @@ const View = {
 
     // The scene has changed: draw it on the next frame.
     invalidate() { this.dirty = true; },
+
+    // Every arrow in the scene: a drug's, and a gas run's (gas3d.js) once made.
+    allArrows() { return Object.values(this.arrows).concat(this.gasArrows ? Object.values(this.gasArrows) : []); },
 
     // The clock is running while play is on, or for a moment after a step.
     kick() { this.lastStep = performance.now(); },
@@ -415,6 +423,8 @@ const View = {
     // conc is the arrows' scale, in amount per mL: a flow of conc * 2500
     // per hour (ARROW_MLH) draws an arrow of radius ARROW_R.
     draw(st, ui) {
+        // An inhaled anesthetic's moment (gas3d.js).
+        if (st.gas) { this.drawGas(st, ui); return; }
         this.invalidate();
         const G = this.geo, L = this.look;
         const hs = ui.concScale;
@@ -471,7 +481,7 @@ const View = {
         // one; the card follows the numbers while the pointer stays on it.
         this.tipState = { ...st, units: ui.units, dp: ui.concDecimals };
         const tk = this.tipKey;
-        if (tk && (tk[0] === 'c' ? +tk[1] > G.n : !this.arrows[tk].group.visible)) this.tipKey = null;
+        if (tk && (tk.includes(':') || (tk[0] === 'c' ? +tk[1] > G.n : !this.arrows[tk].group.visible))) this.tipKey = null;
         this.fillTip();
 
         // Effect site.
@@ -507,7 +517,7 @@ const View = {
     // stops there). Never inside V1.
     landEye() {
         const aim = new THREE.Vector3(...LAND_AIM), off = new THREE.Vector3(...LAND_EYE).sub(aim);
-        const R = this.geo ? glassRadius(this.geo.r[1]) + ZOOM_GAP : 0;
+        const R = this.geo ? this.centreGlass().R + ZOOM_GAP : 0;
         return aim.add(off.multiplyScalar(Math.max(1, R / Math.hypot(off.x, off.z))));
     },
 
@@ -629,6 +639,13 @@ const View = {
     },
     flyEnd() { if (this.flight) this.flight.at = this.persp.position.clone(); },
 
+    // The glass at the origin, that the close-up looks at and i stops at:
+    // V1's, or a gas run's lungs (gas3d.js).
+    centreGlass() {
+        if (this.gasShown) { const v = this.gasVessels.lungs; return { R: glassRadius(v.r), H: v.glassH }; }
+        return { R: glassRadius(this.geo.r[1]), H: this.vessels[1].glassH };
+    },
+
     // r / R in cylinders.exe: orbit about the vertical by 0.05 rad.
     orbit(da) {
         const c = this.controls.target, p = this.camera.position;
@@ -661,8 +678,7 @@ const View = {
         const p = this.camera.position, c = this.controls.target;
         if (f < 1 && this.geo) {
             const q = p.clone().multiplyScalar(f);
-            const R = glassRadius(this.geo.r[1]) + ZOOM_GAP;
-            const H = this.vessels[1].glassH + ZOOM_GAP;
+            const g = this.centreGlass(), R = g.R + ZOOM_GAP, H = g.H + ZOOM_GAP;
             if (Math.hypot(q.x, q.z) < R && q.y < H && q.y > -ZOOM_GAP) return;
         }
         p.multiplyScalar(f);

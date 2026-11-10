@@ -326,12 +326,9 @@ const Player = {
         this.units = microUnits(r.units);
         // Concentration x volume (L) x scale is the amount in units.amount.
         this.scale = r.amountScale != null ? r.amountScale : 1;
-        // Only the 2D view draws an inhaled anesthetic (gas.js).
-        this.$('viewToggle').style.display = this.gas ? 'none' : '';
-        if (this.gas) {
-            this.gasSetup(r);
-            if (this.view === '3d') this.showView('2d');
-        } else this.ivSetup(r);
+        // An inhaled anesthetic (gas.js; in 3D, gas3d.js) or a drug.
+        if (this.gas) { this.gasSetup(r); View.gasSetup(r, this.ui); }
+        else this.ivSetup(r);
         Flat.setRun(r, this.ui, T => this.stateAt(T));
         const slider = this.$('t');
         slider.min = r.t[0]; slider.max = r.t[r.t.length - 1]; slider.step = 'any';
@@ -340,7 +337,7 @@ const Player = {
         const span = r.t[r.t.length - 1] - r.t[0];
         this.setSpeed(SPEEDS.find(v => span / v <= PLAY_SECONDS) || SPEEDS[SPEEDS.length - 1]);
         this.seek(r.t[0]);
-        if (!this.gas) View.resetView();
+        View.resetView();
         // The video card, if open, describes the run now shown (CodeRabbit, #688).
         if (typeof Video !== 'undefined' && Video.card && Video.shown() && !Video.busy) Video.describe();
         return true;
@@ -371,6 +368,7 @@ const Player = {
         // Sizes compressed to SIZE_RATIO_MAX (flat.js): the readout says so in 3D.
         this.ui.notToScale = displayVolumes([r.pk.v1, r.c2 != null ? r.pk.v2 : 0, r.c3 != null ? r.pk.v3 : 0]).a < 1;
         View.resetGlass();
+        if (View.gasShown) View.gasShow(false);   // a gas run's glasses (gas3d.js)
         View.vessels[1].setVisible(true);       // hidden before the first run (empty())
         View.setShape({ n: this.n, vc: r.pk.v1, v2: r.pk.v2, v3: r.pk.v3 });
     },
@@ -575,8 +573,6 @@ const Player = {
     // Show the 2D view or the 3D scene; the run, the time and the controls
     // are the same in both.
     setView(v) {
-        // An inhaled anesthetic has no 3D drawing yet (Shafer, 2026-11-09).
-        if (v === '3d' && this.gas) { this.note('The 3D view does not show the inhaled anesthetics yet.'); return; }
         this.showView(v);
         if (v === '3d') View.resize();
         // The performance card starts again: the two views' frames differ.

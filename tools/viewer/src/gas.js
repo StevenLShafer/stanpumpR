@@ -42,8 +42,8 @@
 //  through the pop-off valve, the agent delivered less the agent held.
 //  Red flows into the lungs, green out of them, as into and out of V1.
 //
-//  Only the 2D view draws a gas run (Shafer, 2026-11-09: "Start with the 2D
-//  model"); the 3D view says so.
+//  The 2D view came first (Shafer, 2026-11-09: "Start with the 2D model");
+//  the 3D view draws the same run in gas3d.js.
 // ═══════════════════════════════════════════════════════════════
 
 // The compartments, left to right, and what each partial pressure is.
@@ -103,8 +103,12 @@ Object.assign(Player, {
         this.tiny = peak * TINY_FRACTION;
         const level = r.typical > 0 ? r.typical : (peak > 0 ? peak / 2 : 1);
         const mag = Math.max(-6, Math.floor(Math.log10(level)));
+        // The 3D view's heights (gas3d.js): 6 units for one MAC, or for the
+        // run's highest partial pressure where that is lower (nitrous oxide,
+        // whose MAC is above an atmosphere).
+        const level3d = r.mac > 0 && peak > 0 ? Math.min(r.mac, peak) : level;
         this.ui = { gas: true, showCe: false, units: this.units, drugRgb: hexRgb(GAS_TINT),
-                    concDecimals: Math.max(0, 2 - mag) };
+                    ceRgb: hexRgb(FLAT_COLOURS.ce), concDecimals: Math.max(0, 2 - mag), concScale: 6 / level3d };
         // Vented: the agent delivered less the agent held, at each time.
         const n = r.t.length;
         this.vented = new Float64Array(n);
@@ -113,6 +117,10 @@ Object.assign(Player, {
             for (const k of GAS_KEYS) held += r.capacity[k] * r.p[k][i];
             this.vented[i] = r.delivered[i] - this.scale * held;
         }
+        // The arrows' scale, for both views: the run's 95th-percentile flow.
+        this.ui.gasFlowScale = gasFlowScale(r, T => this.gasStateAt(T));
+        const keys = r.capacity.circuit > 0 ? GAS_KEYS : GAS_KEYS.slice(1);
+        this.ui.notToScale = displayVolumes(keys.map(k => r.capacity[k])).a < 1;
     },
 
     gasStateAt(T) {
@@ -166,6 +174,7 @@ Object.assign(Player, {
             `<div><span class="k">Inspired</span> ${c(st.p.circuit)} · <span class="k">End-tidal</span> ${c(st.p.lungs)} ${u.conc}</div>` +
             `<div><span class="k">VRG (effect site)</span> <span class="ce">${c(st.p.vrg)}</span> · <span class="k">Muscle</span> ${c(st.p.mg)}` +
             ` · <span class="k">Fat</span> ${c(st.p.fg)} ${u.conc}</div>` + mac +
+            (this.ui.notToScale ? `<div class="scale">Glasses not to scale: the largest capacity is drawn ${SIZE_RATIO_MAX}× the smallest. Heights are partial pressure.</div>` : '') +
             `<div class="foot">${pat ? escapeHtml(pat) + ' · ' : ''}${escapeHtml(r.source || '')} · <kbd>h</kbd> keys</div>`;
     },
 
@@ -192,6 +201,21 @@ Object.assign(Player, {
     }
 });
 
+// The arrows' scale for a gas run: its 95th-percentile flow (each
+// interval's largest), so a burst of fresh gas does not make every other
+// arrow a hairline; never 0.
+function gasFlowScale(r, stateAt) {
+    const flows = [];
+    for (let i = 0; i < r.t.length - 1; i++) {
+        const f = stateAt((r.t[i] + r.t[i + 1]) / 2).flow;
+        const m = Math.max(Math.abs(f.fresh), Math.abs(f.vent), Math.abs(f.blood), Math.abs(f.vrg), Math.abs(f.mg), Math.abs(f.fg), Math.abs(f.vented));
+        if (Number.isFinite(m)) flows.push(m);
+    }
+    flows.sort((a, b) => a - b);
+    const f95 = flows[Math.floor(0.95 * (flows.length - 1))] || flows[flows.length - 1] || 0;
+    return f95 > 0 ? f95 : (flows[flows.length - 1] || 1);
+}
+
 // ── the 2D drawing of a gas run ────────────────────────────────
 Object.assign(Flat, {
     setGasRun(r, ui, stateAt) {
@@ -203,14 +227,7 @@ Object.assign(Flat, {
         for (const k of GAS_KEYS) up(r.p[k]);
         up(r.fresh);
         // The flows' scale, as for a drug: the run's 95th-percentile flow.
-        const flows = [];
-        const consider = st => { const f = st.flow; flows.push(Math.max(Math.abs(f.fresh), Math.abs(f.vent), Math.abs(f.blood),
-                                                                       Math.abs(f.vrg), Math.abs(f.mg), Math.abs(f.fg), Math.abs(f.vented))); };
-        for (let i = 0; i < n - 1; i++) consider(stateAt((r.t[i] + r.t[i + 1]) / 2));
-        for (let i = flows.length - 1; i >= 0; i--) if (!Number.isFinite(flows[i])) flows.splice(i, 1);
-        flows.sort((a, b) => a - b);
-        const f95 = flows[Math.floor(0.95 * (flows.length - 1))] || flows[flows.length - 1] || 0;
-        this.scale = { top: niceTop(top > 0 ? top : 1), fMax: f95 > 0 ? f95 : (flows[flows.length - 1] || 1) };
+        this.scale = { top: niceTop(top > 0 ? top : 1), fMax: ui.gasFlowScale };
     },
 
     drawGas(st) {

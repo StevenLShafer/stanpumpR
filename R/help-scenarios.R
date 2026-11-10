@@ -1061,8 +1061,8 @@ helpScenarioDefinitions <- function() {
       ),
       maximum = 120, plasmaLinetype = "solid", showCompartments = TRUE
     ),
-    # The inhaled anesthetics in the Visualizer's 2D view (tools/viewer/src/
-    # gas.js): the agent's partial pressure in the circuit, the lungs, the
+    # The inhaled anesthetics in the Visualizer (tools/viewer/src/gas.js and,
+    # in 3D, gas3d.js): the agent's partial pressure in the circuit, the lungs, the
     # vessel-rich group, muscle and fat. The numbers on their pages were read
     # from viewerGasRun() for these settings, at the scenarios' 40-year-old,
     # 70 kg man. (Claude Code, 2026-11-09, at the request of Steven L. Shafer.)
