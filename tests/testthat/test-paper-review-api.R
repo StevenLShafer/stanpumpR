@@ -285,7 +285,7 @@ test_that("the parts that run in the background call nothing of stanpumpR", {
     c(if (is.name(f)) as.character(f), if (is.call(f)) called(f),
       unlist(lapply(as.list(e)[-1], called)))
   }
-  for (fn in list(paperReviewTransport, paperReviewSendUsageEmail)) {
+  for (fn in list(paperReviewTransport, paperReviewSendUsageEmail, paperReviewCountUsageEmails)) {
     names <- setdiff(unique(called(body(fn))), c(names(formals(fn)), "smtp"))
     expect_true(all(vapply(names, exists, logical(1), envir = baseenv())),
                 info = paste(names[!vapply(names, exists, logical(1), envir = baseenv())], collapse = ", "))

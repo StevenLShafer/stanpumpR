@@ -285,10 +285,15 @@ paperReviewServer <- function(input, output, session)
   })
   # The review runs in a background process (paperReviewExtractAsync()), so
   # this session and every other on the worker stay live while it runs.
-  reviewTask <- shiny::ExtendedTask$new(function(pdf, supplement, key, inferenceGeo, shared)
-    paperReviewTrackUse(
+  # A review with the operator's key is first admitted against its limit
+  # (paperReviewSharedKeyAdmit(), R/paper-review-usage.R).
+  reviewTask <- shiny::ExtendedTask$new(function(pdf, supplement, key, inferenceGeo, shared) {
+    send <- function(...) paperReviewTrackUse(
       paperReviewExtractAsync(pdf, supplement, key = key, inferenceGeo = inferenceGeo),
-      shared = shared))
+      shared = shared)
+    if (!isTRUE(shared)) return(send())
+    promises::then(paperReviewSharedKeyAdmit(), send)
+  })
   reviewing <- shiny::reactive(identical(reviewTask$status(), "running"))
   # Is the running review still wanted?  Discarding while Claude reads the
   # paper means its answer is dropped when it comes.

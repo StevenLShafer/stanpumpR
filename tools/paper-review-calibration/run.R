@@ -18,7 +18,11 @@
 #                  extractions hold the papers' content)
 #   CALIB_WORKERS  reviews at a time (default 4)
 #   CALIB_PLAN     "full" (default): every level once, then medium and high
-#                  again; "smoke": the first paper at low, to check the setup
+#                  again; "smoke": the first paper at low, to check the setup;
+#                  "custom": the papers in CALIB_PAPERS (comma-separated stems;
+#                  default all) at the levels in CALIB_LEVELS (default high),
+#                  saved as replicate CALIB_REP (default 3), e.g. to check a
+#                  change to the prompt or the checks on the papers it touches
 #   CALIB_SKIP     stems to leave out, comma-separated (a PDF that could not be
 #                  fetched: the Drive connector refuses a file over 10 MB); the
 #                  runs can be resumed with them once their PDFs are in place
@@ -55,8 +59,14 @@ if (length(missing)) stop("PDFs missing from CALIB_PDFS: ", paste(missing, colla
 # high a second time (replicate 2), to measure run-to-run variation. Runs are
 # ordered by replicate, then level, then paper, so a stopped run leaves whole
 # levels done rather than whole papers.
+split <- function(x, default) { v <- trimws(strsplit(x, ",")[[1]]); if (length(v)) v else default }
 design <- if (identical(plan, "smoke")) {
   data.frame(stem = papers$stem[1], effort = "low", rep = 1L)
+} else if (identical(plan, "custom")) {
+  stems <- split(Sys.getenv("CALIB_PAPERS"), papers$stem)
+  stopifnot(all(stems %in% papers$stem))
+  expand.grid(stem = stems, effort = split(Sys.getenv("CALIB_LEVELS"), "high"),
+              rep = as.integer(Sys.getenv("CALIB_REP", "3")), stringsAsFactors = FALSE)
 } else {
   rbind(expand.grid(stem = papers$stem, effort = LEVELS, rep = 1L, stringsAsFactors = FALSE),
         expand.grid(stem = papers$stem, effort = c("medium", "high"), rep = 2L, stringsAsFactors = FALSE))

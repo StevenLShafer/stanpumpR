@@ -75,6 +75,9 @@ paperReviewApiKey <- function(sessionKey = NULL, config = .sprglobals$config)
   # The operator's key can be withdrawn without removing it (after the uses
   # Shafer allows it, users bring their own).
   if (is.list(config) && isFALSE(config$paper_review_shared_key)) return(NULL)
+  # Nor is it once it has made the reviews it is allowed
+  # (paperReviewSharedKeyAdmit(), R/paper-review-usage.R).
+  if (paperReviewSharedKeyExhausted()) return(NULL)
   for (name in PAPER_REVIEW_KEY_ENV) {
     key <- Sys.getenv(name, "")
     if (nzchar(key)) return(key)

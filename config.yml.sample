@@ -9,3 +9,5 @@ default:
   # anthropic_api_key: "<the operator's Anthropic key>"   # every user's default; the production deploy writes it from a secret
   # paper_review_shared_key: false   # withdraw that key: users must enter their own
   # paper_review_usage_email: "<address>"   # where each use of the shared key is reported; default email_username
+  # paper_review_shared_key_limit: 200   # reviews the shared key may make in all, counted in the mail account's Sent folder
+  # paper_review_usage_mailbox: "[Gmail]/Sent Mail"   # where those usage emails are counted
