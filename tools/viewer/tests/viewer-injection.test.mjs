@@ -1085,6 +1085,38 @@ test('gas: the 3D view draws the five glasses, and a drug run afterwards has its
   assertClean(page);
 });
 
+test('gas: the 3D view starts where no glass, arrow or label is hidden, and labels never overlap as it turns', { skip }, async t => {
+  for (const [width, height] of [[1200, 800], [800, 600]]) {
+    const page = await viewerPage(t);
+    await page.setViewport({ width, height });
+    assert.equal(await loadRun(page, GAS), true);
+    await page.evaluate(() => { Player.setView('3d'); View.resetView(); Player.seek(1200); });
+    const best = await page.evaluate(() => View.gasHomeScores.reduce((a, b) => (b.score < a.score ? b : a)));
+    assert.equal(best.hidden, 0, `${width} x ${height}: a glass is hidden from the starting view`);
+    assert.equal(best.lost, 0, `${width} x ${height}: an arrow is hidden from the starting view`);
+    // What the page shows: from the start, and from the drug view's start,
+    // where the labels of these glasses fall on one another.
+    const overlaps = () => page.evaluate(async () => {
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const b = [...document.querySelectorAll('#view .label-layer .lbl')].filter(e => e.style.display !== 'none' && e.offsetWidth > 0)
+        .map(e => ({ s: e.textContent, r: e.getBoundingClientRect() }));
+      const hits = [];
+      for (let i = 0; i < b.length; i++) for (let j = i + 1; j < b.length; j++) {
+        const p = b[i].r, q = b[j].r;
+        if (p.left < q.right - 0.5 && q.left < p.right - 0.5 && p.top < q.bottom - 0.5 && q.top < p.bottom - 0.5) hits.push(b[i].s + ' / ' + b[j].s);
+      }
+      return { n: b.length, hits };
+    });
+    let o = await overlaps();
+    assert.equal(o.n, 5);
+    assert.deepEqual(o.hits, [], `${width} x ${height}: labels overlap from the starting view`);
+    await page.evaluate(() => { View.persp.position.set(0, 28, 50); View.controls.target.set(0, 3, 0); View.persp.lookAt(View.controls.target); View.invalidate(); });
+    o = await overlaps();
+    assert.deepEqual(o.hits, [], `${width} x ${height}: labels overlap once the scene is turned`);
+    assertClean(page);
+  }
+});
+
 test('gas: in 3D the cards over a glass and an arrow give the numbers', { skip }, async t => {
   const page = await viewerPage(t);
   await page.setViewport({ width: 1200, height: 800 });

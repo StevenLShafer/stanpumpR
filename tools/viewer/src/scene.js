@@ -225,6 +225,7 @@ const View = {
                 lastEye.copy(this.camera.matrixWorld); lastLens.copy(this.camera.projectionMatrix);
                 Perf.render(this.renderer, () => this.renderer.render(this.scene, this.camera));
                 this.labelRenderer.render(this.scene, this.camera);
+                if (this.gasShown) this.gasSpreadLabels();
             }
             Perf.frame(now, performance.now() - t0, this.renderer);
             requestAnimationFrame(loop);
@@ -330,6 +331,7 @@ const View = {
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
         this.labelRenderer.render(this.scene, this.camera);
+        if (this.gasShown) this.gasSpreadLabels();
     },
 
     // The scene has changed: draw it on the next frame.
@@ -359,7 +361,9 @@ const View = {
     // so orbiting still turns about the scene's middle.
     applyOffset() {
         const w = this.container.clientWidth, h = this.container.clientHeight;
-        const ox = 0, oy = Math.round(h * 0.05);
+        // A gas run's own (gas3d.js): its scene centred above the cards.
+        const up = this.gasShown && this.gasHome && this.gasHome.offset != null ? this.gasHome.offset : 0.05;
+        const ox = 0, oy = Math.round(h * up);
         this.persp.setViewOffset(w, h, ox, oy, w, h);
         this.persp.updateProjectionMatrix();
     },
@@ -505,8 +509,10 @@ const View = {
     resetView() {
         this.flight = null;
         this.persp.up.set(0, 1, 0);
-        this.controls.target.set(...HOME_AIM);
-        this.persp.position.set(...HOME_EYE);
+        const home = this.homePose();
+        this.controls.target.copy(home.aim);
+        this.persp.position.copy(home.eye);
+        this.applyOffset();
         this.persp.fov = 60; this.persp.updateProjectionMatrix();
         this.persp.lookAt(this.controls.target);
     },
@@ -577,7 +583,7 @@ const View = {
     planFlight(dir) {
         const c = this.controls.target, p = this.persp;
         const start = { pos: p.position.clone(), tgt: c.clone(), fov: p.fov };
-        const home = { pos: new THREE.Vector3(...HOME_EYE), tgt: new THREE.Vector3(...HOME_AIM), fov: 60 };
+        const hp = this.homePose(), home = { pos: hp.eye.clone(), tgt: hp.aim.clone(), fov: 60 };
         const land = { pos: this.landEye(), tgt: new THREE.Vector3(...LAND_AIM), fov: 60 };
         const goal = dir === 'in' ? land : home;
         const F = { dir, pos: [], tgt: [], fov: [], len: [], t: 0, T: 0, at: null };
@@ -638,6 +644,16 @@ const View = {
         return F;
     },
     flyEnd() { if (this.flight) this.flight.at = this.persp.position.clone(); },
+
+    // The starting view: HOME_*, or a gas run's own, chosen so that its labels
+    // and glasses hide one another least (gas3d.js, gasHomePose()).
+    homePose() {
+        if (this.gasShown) {
+            if (!this.gasHome) this.gasHome = this.gasHomePose(this.gasRun, this.gasUi);
+            return this.gasHome;
+        }
+        return { eye: new THREE.Vector3(...HOME_EYE), aim: new THREE.Vector3(...HOME_AIM) };
+    },
 
     // The glass at the origin, that the close-up looks at and i stops at:
     // V1's, or a gas run's lungs (gas3d.js).
