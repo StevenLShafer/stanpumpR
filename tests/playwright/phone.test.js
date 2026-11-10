@@ -132,7 +132,10 @@ async function reloadInPage(timeout = 60000) {
   const deadline = Date.now() + timeout;
   while (Date.now() < deadline) {
     await page.waitForTimeout(500);
-    const ready = await page.evaluate(() => !window.__beforeReload && document.readyState === 'complete' &&
+    // not document.readyState === 'complete': on Android the load event came
+    // late through the tunnel (as in beforeEach), and a connected Shiny is
+    // what the case needs (the fourth real-Pixel run, 2026-11-10)
+    const ready = await page.evaluate(() => !window.__beforeReload &&
       !!(window.Shiny && window.Shiny.shinyapp && window.Shiny.shinyapp.isConnected())).catch(() => false);
     if (ready) return;
   }
@@ -189,15 +192,17 @@ async function enter(r, c, text) {
 
 // A tap.  Before it taps, Playwright checks that nothing covers the target
 // by asking the page what lies at the point it will tap, and on a real
-// Android phone that check looked in the wrong place: on the drug list and
-// on Apply, both below the first rows, it found the rows and the navbar
-// above the target "intercepting" the tap until it timed out, though nothing
-// covers either (the first two real-Pixel runs with touch, 2026-11-10; the
-// visual viewport was not panned).  So on Android the target is scrolled to
-// the middle of the screen at once (no smooth scroll), the page itself is
-// asked whether the target is on top at its centre, and the tap is sent
-// without Playwright's check (force); each case then checks what its tap did.
-// What the page saw is printed, so a tap that misses says where it went
+// Android phone with the keyboard up that check looks in the wrong place.
+// The keyboard shrinks the visual viewport, and bringing a target below it
+// into view pans that viewport down (by 206 px for the drug list and 359 px
+// for Apply on a Pixel 9, the fourth real-Pixel run, 2026-11-10); the check
+// does not allow for the pan, found the rows and the navbar above the target
+// "intercepting" the tap, and timed out (the second and third runs).  So on
+// Android the target is scrolled to the middle of the screen at once (no
+// smooth scroll), the page itself is asked whether the target is on top at
+// its centre, and the tap is sent without Playwright's check (force), which
+// lands; each case then checks what its tap did.  A target the page finds
+// covered is reported, so a tap that misses says where it went
 async function tapOn(target) {
   const locator = typeof target === 'string' ? page.locator(target) : target;
   if (!ANDROID) return locator.tap();
@@ -217,7 +222,7 @@ async function tapOn(target) {
       dpr: window.devicePixelRatio
     };
   });
-  console.log('tap', JSON.stringify(seen));
+  if (!seen.onTop) console.log('the page finds this tap target covered:', JSON.stringify(seen));
   await page.waitForTimeout(100);
   await locator.tap({ force: true });
 }
