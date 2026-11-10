@@ -31,17 +31,31 @@ before(async () => {
 after(async () => { await browser.close(); });
 
 beforeEach(async () => {
+  // cleared first, so that if opening the session fails, afterEach does not
+  // judge the previous case's page or leave this case's context open
+  context = undefined;
+  page = undefined;
   context = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
   if (BROWSER === 'chromium') await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: URL });
   page = await H.openSession(context, URL, adapter);
 });
 
 afterEach(async () => {
-  const alive = await H.connected(page);
-  const errors = page.pageErrors.slice();
-  await context.close();
-  assert.ok(alive, 'the Shiny session was closed');
-  assert.deepEqual(errors, [], 'the page raised script errors');
+  // With no page (openSession() failed, and that error is the one to
+  // report) there is nothing to judge
+  let alive, errors;
+  try {
+    if (page) {
+      alive = await H.connected(page);
+      errors = page.pageErrors.slice();
+    }
+  } finally {
+    if (context) await context.close();
+  }
+  if (page) {
+    assert.ok(alive, 'the Shiny session was closed');
+    assert.deepEqual(errors, [], 'the page raised script errors');
+  }
 });
 
 // The control of row r, column c (0-based) of the grid `id`

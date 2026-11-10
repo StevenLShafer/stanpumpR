@@ -63,6 +63,10 @@ before(async () => {
 after(async () => { await browser.close(); });
 
 beforeEach(async () => {
+  // cleared first, so that if opening the session fails, afterEach does not
+  // judge the previous case's page or leave this case's context open
+  context = undefined;
+  page = undefined;
   context = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
   if (CDP) await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: URL });
   page = await H.openSession(context, URL, adapter);
@@ -70,10 +74,15 @@ beforeEach(async () => {
 
 afterEach(async () => {
   // Whatever a case did, the session must still be there: an error in an
-  // observer ends it (AGENTS.md)
-  const alive = await H.connected(page);
-  await context.close();
-  assert.ok(alive, 'the Shiny session was closed');
+  // observer ends it (AGENTS.md). With no page (openSession() failed, and
+  // that error is the one to report) there is nothing to judge.
+  let alive;
+  try {
+    if (page) alive = await H.connected(page);
+  } finally {
+    if (context) await context.close();
+  }
+  if (page) assert.ok(alive, 'the Shiny session was closed');
 });
 
 const rowsShown = () => adapter.readRows(page);
