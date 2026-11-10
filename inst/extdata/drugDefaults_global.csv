@@ -237,6 +237,8 @@ vincristine,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#1565C0,0,0,0,0,0,IV,Chemotherapy
 vincristineIgarashi,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#1565C0,0,0,0,0,0,IV,
 docetaxel,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#4527A0,0,0,0,0,0,IV,Chemotherapy
 cyclophosphamide,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#AD1457,0,0,0,0,0,IV,Chemotherapy
+cyclophosphamideJoerger,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#AD1457,0,0,0,0,0,IV,
+cyclophosphamideMcCune,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#AD1457,0,0,0,0,0,IV,
 doxorubicin,ng,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#C62828,0,0,0,0,0,IV,Chemotherapy
 doxorubicinJoerger,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#C62828,0,0,0,0,0,IV,
 doxorubicinol,ng,,,,,#EF9A9A,0,0,0,0,0,IV,
@@ -269,3 +271,5 @@ fludarabine,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#00838F,0,0,0,0,0,IV,Chemotherapy
 doxorubicinPerezBlanco,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#AD1457,0,0,0,0,0,IV,
 doxorubicinolPerezBlanco,ng,,,,,#F48FB1,0,0,0,0,0,IV,
 cytarabine,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#00695C,0,0,0,0,0,IV,Chemotherapy
+ifosfamide,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#6A1B9A,0,0,0,0,0,IV,Chemotherapy
+epirubicin,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#C2185B,0,0,0,0,0,IV,Chemotherapy

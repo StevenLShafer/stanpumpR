@@ -816,6 +816,11 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     "<p>This model reads the <strong>Serum albumin</strong> field in the Patient Profile. The tables on ",
     "this page leave the field blank, so they are at the model's reference albumin. See ",
     helpPageLink("patient-profile"), ".</p>") else "")
+  # And the AST, tabulated blank: the model's reference, a normal AST.
+  renalHTML <- paste0(renalHTML, if (helpDrugDeclares(drug, "ast")) paste0(
+    "<p>This model reads the <strong>Serum AST</strong> field in the Patient Profile. The tables on ",
+    "this page leave the field blank, so they are at the model's reference, a normal AST. See ",
+    helpPageLink("patient-profile"), ".</p>") else "")
 
   # --- Absorption routes -----------------------------------------------------
   absorptionHTML <- ""

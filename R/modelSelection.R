@@ -82,6 +82,12 @@ MODEL_GROUPS <- list(
     ageMin = c(18, 0.2, 26), ageMax = c(Inf, 17.7, 84),
     weightMin = c(NA, NA, 43), weightMax = c(NA, NA, 110),
     n = c(59, 94, 44), year = c(2007, 2015, 2016)),
+  cyclophosphamide = data.frame(
+    model = c("cyclophosphamideJoerger", "cyclophosphamideMcCune"),
+    source = c("Joerger 2007", "McCune 2009"),
+    ageMin = c(18, 1.30), ageMax = c(Inf, 9.37),
+    weightMin = c(NA, 8.7), weightMax = c(NA, 52.8),
+    n = c(59, 22), year = c(2007, 2009)),
   doxorubicinol = data.frame(
     model = c("doxorubicinolJoerger", "doxorubicinolPediatric", "doxorubicinolPerezBlanco"),
     source = c("Joerger 2007", "Voller 2015", "Perez-Blanco 2016"),
@@ -269,3 +275,12 @@ doxorubicin <- modelGroup("doxorubicin")
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 doxorubicinol <- modelGroup("doxorubicinol")
+
+#' Cyclophosphamide, intravenous: the model chosen for the patient
+#'
+#' Joerger 2007 (adults) or McCune 2009 (children, with autoinduction),
+#' chosen by \code{selectModel()}; see \code{R/modelSelection.R}.
+#' @param ... the patient's covariates, as the candidates take them
+#' @returns a list in the shape \code{getDrugPK()} expects
+#' @export
+cyclophosphamide <- modelGroup("cyclophosphamide")

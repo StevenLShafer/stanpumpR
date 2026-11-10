@@ -49,6 +49,9 @@
 #' @param albumin serum albumin in g/dL, or NULL (the default), in which case
 #'   each model holds its own reference value.  Passed only to the models that
 #'   declare it (methotrexate, methotrexatePediatric).
+#' @param ast serum aspartate aminotransferase in U/L, or NULL (the default),
+#'   in which case each model holds its own reference value.  Passed only to
+#'   the models that declare it (epirubicin).
 #' @param model internal: a model's output to use in place of calling the
 #'   drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
 #'   drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.
@@ -92,7 +95,8 @@ getDrugPK <- function(
   model = NULL,
   cyp4f2 = CYP4F2_DEFAULT,
   gestationalAge = NULL,
-  albumin = NULL
+  albumin = NULL,
+  ast = NULL
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
@@ -168,6 +172,15 @@ getDrugPK <- function(
          ". Must be a number between ", MIN_ALBUMIN, " and ", MAX_ALBUMIN,
          " g/dL, or NULL for the model's reference value")
   }
+  # And the AST, the same way.
+  if (!is.null(ast) && length(ast) == 1 && is.na(ast) &&
+      !(is.numeric(ast) && is.nan(ast)))
+    ast <- NULL
+  if (!is.null(ast) && !is_valid_number(ast, MIN_AST, MAX_AST)) {
+    stop("Invalid ast: ", paste(ast, collapse = ", "),
+         ". Must be a number between ", MIN_AST, " and ", MAX_AST,
+         " U/L, or NULL for the model's reference value")
+  }
 
   # Every model takes the four patient covariates.  A pharmacogenetic
   # phenotype goes only to models that name it, so that a drug whose kinetics
@@ -229,6 +242,10 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "albumin" %in% names(formals(get(drug, mode = "function"))))
     covariates["albumin"] <- list(albumin)
+  # And the AST, which only the models with an AST term read.
+  if (exists(drug, mode = "function") &&
+      "ast" %in% names(formals(get(drug, mode = "function"))))
+    covariates["ast"] <- list(ast)
   # And the pregnancy flag, which only the models with a measured change in
   # pregnancy read (R/pregnancy.R, inst/extdata/pregnancyRegistry.csv).
   if (exists(drug, mode = "function") &&
@@ -1119,7 +1136,8 @@ getDrugPK <- function(
       adjustToFFM = adjustToFFM,
       resolveMetabolite = FALSE,
       gestationalAge = gestationalAge,
-      albumin = albumin
+      albumin = albumin,
+      ast = ast
     )
     metaboliteSet <- metabolitePK$PK[[PK_EVENT_DEFAULT]]
 

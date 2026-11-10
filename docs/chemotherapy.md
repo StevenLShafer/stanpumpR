@@ -746,3 +746,27 @@ below was confirmed on the page.
 - **Cisplatin, Thompson 2025** (P05): the unbound clearance's definition is
   ambiguous and its covariates (first cycle, lorazepam) have no field; Urien
   2004 is kept.
+
+## 42. The autoinduction engine, ifosfamide, cyclophosphamide in children, and epirubicin (2026-11-10)
+
+Shafer asked (2026-11-10) for the autoinduction engine and an AST field.
+
+- **Engine.** The Michaelis-Menten engine (R/advanceMichaelisMenten.R) gained
+  an optional `autoinduction` block: a clearance multiplied by a relative
+  enzyme amount E (1 before the first dose) with
+  dE/dt = kEnz [(1 + emax C/(ec50 + C)) - E (1 - imax C/(ic50 + C))].  Both
+  published forms are special cases.  `test-autoinduction.R` checks the engine
+  against an independent integration of each paper's equations and against the
+  analytical steady state of a constant infusion.
+- **Ifosfamide** (Kerbusch 2000): reproduces Figure 6's peaks, 108 and 204 uM,
+  and Table 2's 10-g area (1.65 g h/L; the table's unit is misprinted).
+- **Cyclophosphamide** is now a group: Joerger 2007 for adults,
+  `cyclophosphamideMcCune` for children up to about 13.5 years.  For the
+  cohort's median child McCune gives 105 and 70 mg h/L after doses 1 and 4,
+  against the paper's median 112 and 82: the typical-value model induces a
+  little more than the median child.
+- **Epirubicin** (Ralph 2003): the Patient Profile's new **Serum AST**
+  field; the AST held within 7-815 U/L, 20 U/L when blank.
+- **Dose basis.** Shafer's rule (AGENTS.md): unless the paper says otherwise,
+  the parameters are in the units of the FDA-approved product, salt or base.
+  Epirubicin (hydrochloride) and cyclophosphamide are entered as labelled.

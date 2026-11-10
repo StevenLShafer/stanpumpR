@@ -209,6 +209,15 @@ MAX_GESTATIONAL_AGE <- 44
 MIN_ALBUMIN <- 0.5
 MAX_ALBUMIN <- 6
 
+# Serum aspartate aminotransferase (AST), U/L, for the models with an AST
+# covariate (epirubicin, Ralph 2003; Steven L. Shafer, 2026-11-10).  Optional:
+# when it is not entered each model holds its own reference value.  Read only
+# by models that name `ast`.  The bounds take in what a laboratory reports
+# (1 U/L to the 5000 U/L of a fulminant hepatitis); a model guards its own
+# term within the range its source studied.
+MIN_AST <- 1
+MAX_AST <- 5000
+
 MIN_AGE <- 0
 MAX_AGE <- 90
 # The youngest age the adult-fitted covariate terms see.  Several models carry

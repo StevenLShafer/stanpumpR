@@ -1,19 +1,14 @@
-### The model
+### One name, the model chosen for the patient
 
-Cyclophosphamide comes from Joerger and colleagues (*Clin Pharmacokinet* 2007;46:1051-1068): 59 women with breast cancer given 600 mg/m² over 15 minutes after doxorubicin, in their first cycle. One compartment describes it:
+stanpumpR holds 2 published models of cyclophosphamide. You do not choose between them: stanpumpR picks the model whose study population best matches the patient you entered (a rule of Steven Shafer's, 9 November 2026). The References panel under the plot names the model in use.
 
-- clearance 4.23 L/h; volume 34.6 L; half-life 5.7 hours.
+| Model | Source | Studied in |
+|---|---|---|
+| [cyclophosphamideJoerger](help:drugs/cyclophosphamideJoerger) | Joerger 2007 | 59 women with breast cancer (age range not printed; taken as 18 and over) |
+| [cyclophosphamideMcCune](help:drugs/cyclophosphamideMcCune) | McCune 2009 | 22 children with neuroblastoma, 1.3-9.4 years, 8.7-52.8 kg; autoinduction |
 
-No body-size covariate was found. The same paper is the library's [doxorubicin](help:drugs/doxorubicin) model.
+**The rule.** Among the models whose studied age range (and weight range, where the paper printed one) includes the patient, the one fitted to more patients is chosen, then the newer. If none includes the patient, the one whose ranges are nearest is chosen.
 
-### What is plotted
+**What that means for cyclophosphamide.** Children up to about 13½ years get McCune 2009, in which the drug induces its own clearance over a course of daily doses; adults, and adolescents nearer 18 than 9.4, get Joerger 2007, one compartment with no induction (fitted to one dose per patient).
 
-Plasma cyclophosphamide in mcg/mL (mg/L). Cyclophosphamide is a **prodrug**: its active metabolite, 4-hydroxycyclophosphamide, was not measured and is not plotted. Doses are entered in mg or as an infusion rate; a dose prescribed per m² must be multiplied by the body surface area first. There is no effect site and no band.
-
-### Where to be careful
-
-- **Autoinduction.** Cyclophosphamide induces its own metabolism over days of repeated or high-dose treatment; each patient here gave one profile in the first cycle, and the curve does not speed up with repeated doses.
-- **Enzyme-inducing antiepileptics** nearly double the clearance (×1.89 with carbamazepine in this study); the curve assumes none.
-- **Women with breast cancer**, at conventional doses. Not a monitoring tool.
-
-Every parameter was read in the paper's PDF.
+The tables on this page are computed at six reference patients, so each uses the model chosen for that patient. Each model's own page gives its parameters, its checks against its paper, and its limits.

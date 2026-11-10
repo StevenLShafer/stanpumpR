@@ -61,7 +61,7 @@ API_MAX_ROWS <- 500000L
 # in silence (apiUnknownFields()).
 API_REQUEST_FIELDS <- c("patient", "doses", "events", "duration", "timeUnit", "options", "output")
 API_PATIENT_FIELDS <- c("weight", "height", "age", "sex", "weightUnit", "heightUnit", "ageUnit",
-                        "creatinine", "gestationalAge", "albumin", "pregnant", "adjustToFFM",
+                        "creatinine", "gestationalAge", "albumin", "ast", "pregnant", "adjustToFFM",
                         "osmolality",
                         "cyp2d6", "cyp2c19", "cyp2c9", "cyp2b6", "vkorc1", "cyp4f2",
                         "opioidTolerance")
@@ -303,6 +303,12 @@ apiPatient <- function(patient) {
   if (!is.null(albumin)) {
     albumin <- apiNumber(albumin, "patient.albumin", MIN_ALBUMIN, MAX_ALBUMIN)
   }
+  # Read only by the models with an AST term (epirubicin); omitted is each
+  # model's reference AST.
+  ast <- get("ast")
+  if (!is.null(ast)) {
+    ast <- apiNumber(ast, "patient.ast", MIN_AST, MAX_AST)
+  }
   sex <- apiChoice(tolower(apiScalar(get("sex"), "patient.sex")), "patient.sex", SEX_VALUES)
   # Read only by the models with a measured change in pregnancy (R/pregnancy.R);
   # getDrugPK() would refuse it for a man, but the request is told why first.
@@ -322,6 +328,7 @@ apiPatient <- function(patient) {
     creatinine  = creatinine,
     gestationalAge = gestationalAge,
     albumin     = albumin,
+    ast         = ast,
     cyp2d6      = apiChoice(get("cyp2d6", CYP2D6_DEFAULT), "patient.cyp2d6", CYP2D6_VALUES),
     cyp2c19     = apiChoice(get("cyp2c19", CYP2C19_DEFAULT), "patient.cyp2c19", CYP2C19_VALUES),
     cyp2c9      = apiChoice(get("cyp2c9", CYP2C9_DEFAULT), "patient.cyp2c9", CYP2C9_VALUES),
@@ -575,6 +582,7 @@ apiSimulate <- function(request) {
         creatinine = patient$creatinine, pregnant = patient$pregnant,
         gestationalAge = patient$gestationalAge,
         albumin = patient$albumin,
+        ast = patient$ast,
         antiseizureInteractions = asmInteractions,
         opioidTolerance = patient$opioidTolerance),
         # The peaks below are read off each drug's time line, so it must
@@ -672,6 +680,7 @@ apiSimulate <- function(request) {
       creatinine  = if (is.null(patient$creatinine)) NA_real_ else patient$creatinine,
       gestationalAge = if (is.null(patient$gestationalAge)) NA_real_ else patient$gestationalAge,
       albumin = if (is.null(patient$albumin)) NA_real_ else patient$albumin,
+      ast = if (is.null(patient$ast)) NA_real_ else patient$ast,
       cyp2d6 = patient$cyp2d6, cyp2c19 = patient$cyp2c19, cyp2c9 = patient$cyp2c9,
       cyp2b6 = patient$cyp2b6, vkorc1 = patient$vkorc1, cyp4f2 = patient$cyp4f2,
       opioidTolerance = patient$opioidTolerance

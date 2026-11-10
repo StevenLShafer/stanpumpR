@@ -62,12 +62,12 @@ CYCLOPHOSPHAMIDE_JOERGER <- list(
 
 #' Cyclophosphamide, intravenous (Joerger 2007)
 #'
-#' One compartment; see the header of \code{R/drugs_cyclophosphamide.R}.
+#' One compartment; see the header of \code{R/drugs_cyclophosphamideJoerger.R}.
 #'
 #' @inheritParams cefazolin
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-cyclophosphamide <- function(weight, height, age, sex, adjustToFFM = TRUE)
+cyclophosphamideJoerger <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   p <- CYCLOPHOSPHAMIDE_JOERGER
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,

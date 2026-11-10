@@ -268,10 +268,11 @@ test_that("a scenario names every patient field, with creatinine blank by defaul
     expect_true(setequal(names(s$patient),
                          c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9",
                            "vkorc1", "cyp4f2", "cyp2b6", "adjustToFFM", "creatinine", "osmolality",
-                           "pregnant", "gestationalAge", "albumin")), info = s$id)
+                           "pregnant", "gestationalAge", "albumin", "ast")), info = s$id)
     expect_null(s$patient$creatinine, info = s$id)
     expect_null(s$patient$gestationalAge, info = s$id)
     expect_null(s$patient$albumin, info = s$id)
+    expect_null(s$patient$ast, info = s$id)
     expect_true(is.logical(s$patient$pregnant) && length(s$patient$pregnant) == 1, info = s$id)
     expect_equal(s$patient$osmolality, OSMOLALITY_DEFAULT, info = s$id)
   }
