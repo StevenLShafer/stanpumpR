@@ -30,6 +30,21 @@ effective 17 June 2025). Nothing has to be signed separately for this to apply.
 
 ## 1a. Requirements on the deployment (Shafer, 2026-10-30)
 
+- **Nothing held on the server** (Shafer, 2026-11-10). stanpumpR's server
+  never stores a manuscript, its supplement, the extracted model or the
+  review: not on disk, not in a database, not in a log or a backup, and not
+  after the user's session ends. They exist only in the server's memory, for
+  the one browser session that uploaded them, and are gone when that session
+  ends. In Shafer's words: "I am uncomfortable with leaving a finished review
+  on the server, because I believe that 'single paper review' will be used to
+  review submissions to peer reviewed journals. I don't want those papers, or
+  the review, held on the server." So a review that finishes after its page
+  was closed is dropped unread, never kept for the user to collect; the only
+  copy that can outlive a session is the report the user downloads to their
+  own computer. A change that would keep any of these on the server (a cache,
+  a queue of finished reviews, a resumable job) is ruled out by this
+  requirement, not merely deferred.
+
 Steven L. Shafer, as operator: "Claude is not allowed to learn from my
 models. Claude is allowed to see coarse metadata."
 
@@ -92,7 +107,10 @@ These are statements about this code. Each names the function that does it.
 3. **Sent to Anthropic, only on request.** The manuscript leaves the server
    only when the user ticks the confirmation box and presses **Review the
    paper**. It is sent once, inline (base64) in one request to the Anthropic
-   Messages API (`paperReviewExtract()`, `R/paper-review-api.R`), over HTTPS.
+   Messages API, over HTTPS, from a short-lived background R process on the
+   same server (`paperReviewExtractAsync()` and `paperReviewTransport()`,
+   `R/paper-review-api.R`), which receives the request in memory, writes
+   nothing, and exits when the reply has been passed back.
    The app does **not** use Anthropic's Files API (which stores files until
    they are deleted), the Batch API, prompt caching, or any user identifier.
    The request may be re-run inside the same API call on another Anthropic
@@ -101,7 +119,10 @@ These are statements about this code. Each names the function that does it.
 4. **Discarded from the app.** As soon as the response returns, successful or
    not, the manuscript's bytes are removed from the session. What remains is
    the extraction (the model's parameters, figures' digitised points and the
-   locations Claude cited) and the review computed from it.
+   locations Claude cited) and the review computed from it. If the session
+   has already ended when the reply returns (the page was closed while Claude
+   read), the reply is dropped unread: there is no session to give it to, and
+   nothing keeps it for later (section 1a, *Nothing held on the server*).
 5. **Discarded at the end.** The extraction and review are removed when the
    user presses **Discard the paper now**, or when the browser session ends
    (closing the tab, or a disconnection), whichever comes first

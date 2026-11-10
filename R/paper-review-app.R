@@ -130,7 +130,8 @@ paperReviewHeader <- function(ns = shiny::NS(NULL))
       id = ns("reviewBusy"), class = "alert alert-info", role = "status",
       style = "position: fixed; top: 64px; left: 50%; transform: translateX(-50%); z-index: 2000; box-shadow: 0 2px 8px rgba(0,0,0,0.2);",
       htmltools::strong("Claude is reading the paper."),
-      " This takes a few minutes. Keep this page open; the rest of stanpumpR can be used meanwhile.")))
+      " This takes about 3 to 15 minutes, depending on the paper, and stops at 20. Keep this page open:",
+      " nothing is kept on the server, so closing it loses the review. The rest of stanpumpR can be used meanwhile.")))
 }
 
 # The review's three tabs: Review, Simulator, Privacy and help.

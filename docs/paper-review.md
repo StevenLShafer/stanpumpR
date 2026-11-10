@@ -118,6 +118,21 @@ misprinted half-life. First run, 2026-10-30: passed, 1.3 minutes, 9,743
 input and 9,095 output tokens (about $0.22 at list price). A real paper is
 sent only when Shafer supplies it (Open decision 6).
 
+**How long a review takes** (the user's estimates are in
+`inst/paper-review/help.md`, *How long a review takes*, and the busy banner
+in `paperReviewHeader()`; revise both together as reviews are timed):
+- the one-page exampleol paper: 1.3 minutes (2026-10-30, above);
+- Devin's five live reviews (2026-11-08): a second visitor waited 169 s
+  behind one, so that review took at least three minutes; the others were
+  not timed;
+- Hallik 2020 (PMID 31657867; 11 pages, one PK model and six PKPD models,
+  five parameter tables), on production with the operator's key
+  (2026-11-10): still being read when the browser stopped watching at
+  20 minutes, so it likely reached `PAPER_REVIEW_TIMEOUT_SEC` (1200 s)
+  without a review; its outcome and tokens are in the usage email and the
+  server log. The same upload with an invalid key returned 401 in 2 s, so
+  the background path on shinyapps.io works and the time was Claude's.
+
 The first two live attempts were refused, which is why the schema is sent
 in the instructions rather than as a structured output
 (`output_config.format`): the API allows at most 16 nullable or union-typed
@@ -563,3 +578,20 @@ allowed to learn from my models. Claude is allowed to see coarse metadata."
    any upload: read into memory, its bytes dropped once the extraction
    returns, nothing written to disk, logged, digested or committed, and the
    extraction and review discarded when the test ends.
+   **Updated 2026-11-10:** Shafer, asking for a live test of the deployed
+   key, "use papers in my stanpumpRPapers in my Google Drive", so a session
+   may now take a test paper from the archive on his request (read-only,
+   through the Google Drive connector, downloaded to the session's
+   scratchpad and never committed, as `AGENTS.md` says of the archive).
+7. `[decided]` **Nothing held on the server** (Shafer, 2026-11-10): "I am
+   uncomfortable with leaving a finished review on the server, because I
+   believe that 'single paper review' will be used to review submissions to
+   peer reviewed journals. I don't want those papers, or the review, held on
+   the server. The documentation should affirm the 'nothing held' policy in
+   unambiguous language." Asked after the first live review on production
+   outlasted the page that requested it, when keeping a finished review on
+   the server for the user to collect was proposed as a fix and rejected. A
+   review that finishes after its session ended is dropped unread; the
+   download is the only copy that outlives a session. Recorded as a
+   requirement in `docs/paper-review-privacy.md` section 1a, and said to
+   users in `inst/paper-review/help.md` (*Nothing is kept on the server*).
