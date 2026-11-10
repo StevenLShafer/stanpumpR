@@ -150,7 +150,9 @@ async function launchPhone(playwright, local, sessionName) {
     let context;
     try {
       await device.shell('am force-stop com.android.chrome');
-      context = await device.launchBrowser();
+      // touch on, as the phone has it: without it Playwright refused every
+      // tap ("The page does not support tap", the first real-Pixel run)
+      context = await device.launchBrowser({ hasTouch: true });
     } catch (e) {
       await device.close().catch(() => {});
       throw e;
