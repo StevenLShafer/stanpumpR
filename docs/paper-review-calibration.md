@@ -280,9 +280,58 @@ shinyapps.io worker, or the background process.
    failure looks like.
 5. **Fix the false alarms** (above): the review's errors on these verified
    papers are now mostly the checks' own. This matters more to a peer reviewer
-   than any choice of effort.
+   than any choice of effort. (Done the same day: *After the fixes*, below.)
 6. **Run the two scanned papers** when their PDFs can be fetched, before the
    help says anything specific about scans.
+
+## After the fixes
+
+Shafer asked the same day for the false alarms to be fixed (commit "the
+checks' false alarms fixed", PR #710). The checks now:
+
+- report a group with no disposition parameter of its own (a
+  noncompartmental analysis, a PD model, a model-building step) as having no
+  model to check, not as failing to close one; and a group with no effect site
+  of its own as such, when another group holds the ke0;
+- treat one group spelled two ways (R(−) and R(-)) as one;
+- report as a concern, not an error, a derived quantity printed under
+  conditions the `at` patient cannot carry (a new field, `conditions`), one
+  that is a mean or median of individuals' values, and one individual's value
+  beside another's from a model with no covariate that separates them;
+- compare a decrement time at the infusion it was printed after (a new
+  field, `infusion_minutes`, or a length written beside the value);
+- report a covariate term that fails only outside the population studied as a
+  concern;
+
+and the prompt asks for a power of ten printed in a column header to be
+applied to the value.
+
+Measured on the twelve papers the false alarms came from, at `high`:
+
+| | Runs | Main-text card numbers found | Error findings per review | Concerns | Median time | Cost |
+|---|---|---|---|---|---|---|
+| The calibration's runs, old checks | 24 | 0.96 | 6.3 | 21.3 | 4.1 min | $0.83 |
+| The same extractions, new checks | 24 | 0.96 | 3.9 | 22.0 | 4.1 min | $0.83 |
+| New runs, new checks and prompt | 12 | **1.00** | **2.1** | 26.5 | 4.4 min | $0.87 |
+
+On all 126 calibration extractions the new checks alone take the error
+findings from 544 to 381; the new fields need a new extraction, which the
+twelve new runs are. Atropine's rate constants are now recorded in /min
+(its main-text recall rises from 0.62 to 1.00), Hallik 2020 keeps no error
+of its seven groups' "missing ke0", and milrinone's decrement times are each
+compared at their own infusion.
+
+What remains of the 25 error findings in the twelve new runs is almost all
+true: 16 are Claude's reading notes, and every one checked was true (including three
+new ones: exenatide's Table 2 lists Vp twice; Henthorn 2026 prints
+"0.026 ± 002"; phenobarbital's text gives the typical CL/F with valproate as
+0.18 L/h where its own model gives 0.236 × 0.711 = 0.168). The rest are the
+methadone paper, whose missing reference weight for V3 makes any model built
+from it disagree with its own figures and half-lives (correctly an error),
+its EDDP metabolite models (whose printed quantities do not close a model),
+GHB, whose main text prints no model parameter at all (they are in a
+supplement the app cannot take, a Word file: also correctly an error), and
+two of verapamil's per-patient curves (patient 2's is the misprinted Vc).
 
 ## Reproducing it
 
