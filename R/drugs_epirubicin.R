@@ -63,8 +63,23 @@
 # No size covariate: the volumes and clearances scale by the library's factors
 # with the switch on and are fixed with it off.
 #
-# PREGNANCY (R/pregnancy.R): van Hasselt 2014 estimated clearance 1.1-fold in
-# pregnancy (abstract only); recorded, not applied.
+# PREGNANCY (R/pregnancy.R)
+# =========================
+# van Hasselt JGC, van Calsteren K, Heyns L, et al.  Ann Oncol 2014;25:2059-
+# 2065 (doi 10.1093/annonc/mdu140), PDF supplied by Shafer 2026-11-10: a
+# three-compartment model of epirubicin pooled from 57 nonpregnant patients
+# and 10 pregnant women (20 cycles, 19-36.9 gestational weeks, 100 mg/m2 over
+# 30 min), with one discrete pregnancy factor per parameter (Table 2):
+#
+#     CL x 1.10 (RSE 9%)   V1 x 1.55 (13%)   V2 x 2.08 (25%)   V3 x 1 (fixed)
+#
+# its V2 (10 L, Q 14.5 L/h) the shallow peripheral compartment and its V3
+# (1110 L, Q 70.7 L/h) the deep one, as Ralph's V2 (35.7 L, Q 30.2) and V3
+# (772 L, Q 61.5) are; so the factors are carried onto Ralph's compartments by
+# that correspondence, the intercompartmental clearances unchanged (no factor
+# was estimated on them).  The typical AUC falls 8.2% (the paper's Table 3).
+# Applied under `pregnant`, for the third trimester (the factor was fitted as
+# one effect over 19-36.9 weeks).
 # NO EFFECT SITE, NO BAND
 # -----------------------------------------------------------------------------
 
@@ -75,6 +90,8 @@ EPIRUBICIN_RALPH <- list(
 )
 EPIRUBICIN_AST_RANGE <- c(7, 815)    # IU/L, the range studied
 EPIRUBICIN_REFERENCE_AST <- 20       # IU/L, a normal AST, for a blank field
+# van Hasselt 2014, Table 2: pregnancy factors on CL, V1 and the shallow V2
+EPIRUBICIN_PREGNANCY <- list(cl = 1.10, v1 = 1.55, v2 = 2.08)
 
 #' Epirubicin clearance from the AST (Ralph 2003)
 #'
@@ -97,19 +114,22 @@ epirubicinClearance <- function(ast = NULL)
 #' @inheritParams cefazolin
 #' @param ast serum aspartate aminotransferase in IU/L, or NULL for a normal
 #'   AST (20 IU/L); held within the 7-815 IU/L the study covered
+#' @param pregnant TRUE in late pregnancy: van Hasselt 2014's factors
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-epirubicin <- function(weight, height, age, sex, adjustToFFM = TRUE, ast = NULL)
+epirubicin <- function(weight, height, age, sex, adjustToFFM = TRUE, ast = NULL,
+                       pregnant = FALSE)
 {
   p <- EPIRUBICIN_RALPH
+  preg <- if (isTRUE(pregnant)) EPIRUBICIN_PREGNANCY else list(cl = 1, v1 = 1, v2 = 1)
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
                         legacyVolume = 1, legacyClearance = 1)
 
   default <- list(
-    v1  = p$v1 * size$volume,
-    v2  = p$v2 * size$volume,
+    v1  = p$v1 * size$volume * preg$v1,
+    v2  = p$v2 * size$volume * preg$v2,
     v3  = p$v3 * size$volume,
-    cl1 = epirubicinClearance(ast) / 60 * size$clearance,
+    cl1 = epirubicinClearance(ast) / 60 * size$clearance * preg$cl,
     cl2 = p$q2 / 60 * size$clearance,
     cl3 = p$q3 / 60 * size$clearance
   )
@@ -124,6 +144,10 @@ epirubicin <- function(weight, height, age, sex, adjustToFFM = TRUE, ast = NULL)
     "10.3, Q2 30.2, V2 35.7, Q3 61.5 L/h, V3 772 L. ",
     "https://doi.org/10.1007/s00280-003-0608-x"
   )
+  if (isTRUE(pregnant))
+    reference <- paste(reference, pregnancyReference(
+      "CL x 1.10, V1 x 1.55, V2 x 2.08",
+      "van Hasselt 2014, Ann Oncol 25:2059-2065, https://doi.org/10.1093/annonc/mdu140"))
 
   list(
     PK = PK,

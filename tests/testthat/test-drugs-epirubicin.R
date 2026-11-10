@@ -65,3 +65,14 @@ test_that("epirubicin is a chemotherapy drug, plasma only, in ng/mL, with no ban
   expect_match(PK$reference, "Ralph")
   expect_identical(therapeuticRange("epirubicin")$band_status, "not_applicable")
 })
+
+test_that("pregnancy: van Hasselt 2014's factors on CL, V1 and the shallow V2 only", {
+  off <- epirubicin(70, 165, 30, "female", FALSE)$PK$default
+  on <- epirubicin(70, 165, 30, "female", FALSE, pregnant = TRUE)$PK$default
+  expect_equal(on$cl1 / off$cl1, 1.10)
+  expect_equal(on$v1 / off$v1, 1.55)
+  expect_equal(on$v2 / off$v2, 2.08)
+  expect_equal(c(on$v3, on$cl2, on$cl3), c(off$v3, off$cl2, off$cl3))
+  expect_match(getDrugPK("epirubicin", 70, 165, 30, "female", pregnant = TRUE)$reference,
+               "van Hasselt")
+})
