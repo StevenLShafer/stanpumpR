@@ -85,7 +85,8 @@ viewerUnits <- function(concUnits)
 #' Why the viewer cannot draw a simulated drug
 #'
 #' @param entry one drug's entry of the app's simulation (`drugs()`), or of
-#'   `processdoseTable()`; the PK fields alone (`recalculatePK()`) suffice.
+#'   `processdoseTable()`; the PK fields alone (`recalculatePK()`) suffice,
+#'   except for a drug of parallel systems, which needs its dose rows (`$DT`).
 #' @return NULL when the viewer can draw it, else one sentence saying why not.
 #' @noRd
 viewerProblem <- function(entry)
@@ -105,10 +106,45 @@ viewerProblem <- function(entry)
   units <- if (!is.null(entry$act)) "IU" else entry$Concentration.Units
   if (is.null(VIEWER_UNITS[[units]]))
     return("The viewer draws drug concentrations (mcg/mL, ng/mL, pg/mL, IU/mL, mcU/mL, mmol/L).")
-  if (length(entry$parallelSystems) > 0)
-    return(paste("This drug is the sum of separate systems (such as two enantiomers),",
-                 "which one set of compartments cannot show."))
+  if (is.null(viewerSystem(entry)))
+    return(paste("This drug's doses reach more than one of its separate systems (two",
+                 "enantiomers, or two routes each with its own fit, such as oral and",
+                 "intravenous meloxicam), which one set of compartments cannot show."))
   NULL
+}
+
+#' The PK sets of the one system a drug's doses reach
+#'
+#' A drug built from parallel systems (`parallelSystems`, `simCpCe()`) is
+#' drawn only while its doses reach one of them: meloxicam's oral fit takes
+#' only oral doses and its intravenous fit (ANJESO) only intravenous ones, so
+#' a table of one route runs one ordinary system, whose concentrations are the
+#' plotted ones (the other system's being zero). Ketorolac's enantiomers both
+#' take every dose, so it is never drawn.
+#'
+#' @param entry one drug's entry, with its dose rows (`$DT`) when it has
+#'   parallel systems.
+#' @return the system's PK sets (the drug's own `$PK` when it has no
+#'   parallel systems), or NULL when the doses reach more than one, or the
+#'   dose rows are not there to say which.
+#' @noRd
+viewerSystem <- function(entry)
+{
+  if (length(entry$parallelSystems) == 0) return(entry$PK)
+  d <- entry$DT
+  if (is.null(d)) return(NULL)
+  units <- as.character(d$Units[suppressWarnings(as.numeric(d$Dose)) != 0])
+  units <- units[!is.na(units)]
+  if (length(units) == 0) return(NULL)
+  routes <- unique(doseRoute(units))
+  systems <- c(list(list(doseFraction = entry$doseFraction, routes = entry$routes, PK = entry$PK)),
+               entry$parallelSystems)
+  reached <- Filter(function(sys)
+    (is.null(sys$doseFraction) || sys$doseFraction > 0) &&
+      (is.null(sys$routes) || any(routes %in% sys$routes)),
+    systems)
+  if (length(reached) != 1) return(NULL)
+  reached[[1]]$PK
 }
 
 # The run's times, in minutes: from Min time to Max time, 1 s apart or
@@ -291,7 +327,8 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
   times <- viewerTimes(minimum, maximum)
   minimum <- times[1]
   u <- viewerUnits(entry$Concentration.Units)
-  k <- entry$PK[[1]]
+  # The system the doses reach (meloxicam's oral or intravenous fit).
+  k <- viewerSystem(entry)[[1]]
   # A Michaelis-Menten peripheral compartment declared as k23/k32 (GHB) has
   # V2 = V k23 / k32 and Q = k23 V (advanceMichaelisMenten()), not the PK
   # set's placeholders.
