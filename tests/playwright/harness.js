@@ -63,6 +63,42 @@ async function startApp(port) {
   return { url, stop: () => child.kill(), log, logFile };
 }
 
+// On BrowserStack (STANPUMPR_BROWSERSTACK, browserstack.js) the browser is
+// remote and reaches the app through a tunnel
+const REMOTE = !!process.env.STANPUMPR_BROWSERSTACK;
+
+// Run in the page before it loads, on BrowserStack only: records what each
+// WebSocket does, so a session that never connects says why
+function recordWebSockets() {
+  const Native = window.WebSocket;
+  window.__webSockets = [];
+  window.WebSocket = function (address, protocols) {
+    const socket = protocols === undefined ? new Native(address) : new Native(address, protocols);
+    const note = what => window.__webSockets.push(what);
+    note('opening ' + address);
+    socket.addEventListener('open', () => note('open'));
+    socket.addEventListener('error', () => note('error'));
+    socket.addEventListener('close', e => note('closed ' + e.code + (e.reason ? ' ' + e.reason : '')));
+    return socket;
+  };
+  window.WebSocket.prototype = Native.prototype;
+  for (const k of ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED']) window.WebSocket[k] = Native[k];
+}
+
+// What a page that never showed the startup menu shows instead
+function describePage() {
+  return {
+    address: location.href,
+    readyState: document.readyState,
+    title: document.title,
+    shiny: !!window.Shiny,
+    connected: !!(window.Shiny && window.Shiny.shinyapp && window.Shiny.shinyapp.isConnected()),
+    disconnected: !!document.getElementById('shiny-disconnected-overlay'),
+    webSockets: window.__webSockets || null,
+    text: document.body ? document.body.innerText.replace(/\s+/g, ' ').slice(0, 300) : null
+  };
+}
+
 const DEFAULT_DRUGS = ['propofol', 'fentanyl', 'remifentanil', 'rocuronium'];
 
 // A fresh session with `drugs` ticked in the startup menu (whose checkboxes
@@ -72,8 +108,25 @@ async function openSession(context, url, adapter, drugs = DEFAULT_DRUGS) {
   const page = await context.newPage();
   page.pageErrors = [];
   page.on('pageerror', e => page.pageErrors.push(e.message));
-  await page.goto(url, { waitUntil: 'networkidle' });
-  await page.waitForSelector('#startup_ok');
+  if (REMOTE) await page.addInitScript(recordWebSockets);
+  // Through BrowserStack's tunnel the network is rarely idle for long, so
+  // there the load event is waited for, with more time, and the startup
+  // menu (which the server sends once Shiny is connected) is what counts
+  await page.goto(url, REMOTE ? { waitUntil: 'load', timeout: 120000 } : { waitUntil: 'networkidle' });
+  if (REMOTE) {
+    // a poll, not one long wait: BrowserStack closes a connection that sends
+    // nothing for about 90 s ("Socket idle from a long time", the second run)
+    const deadline = Date.now() + 120000;
+    while (!(await page.isVisible('#startup_ok'))) {
+      if (Date.now() > deadline) {
+        const seen = await page.evaluate(describePage).catch(err => 'the page could not be read: ' + err.message);
+        throw new Error('the startup menu did not appear within 120 s. The page showed: ' + JSON.stringify(seen));
+      }
+      await page.waitForTimeout(1000);
+    }
+  } else {
+    await page.waitForSelector('#startup_ok');
+  }
   await page.evaluate(ds => {
     for (const d of ds) {
       const box = document.querySelector('.modal input[type=checkbox][value="' + d + '"]');

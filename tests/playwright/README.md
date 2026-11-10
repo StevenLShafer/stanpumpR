@@ -63,6 +63,21 @@ BROWSERSTACK_USERNAME=... BROWSERSTACK_ACCESS_KEY=... STANPUMPR_BROWSERSTACK=win
 The desktop platforms are `windows-chrome`, `windows-edge`,
 `macos-chrome`, `macos-webkit` and `windows-firefox`; the phones are below
 (`PLATFORMS` in `browserstack.js`).
+
+BrowserStack's Playwright service has no desktop Safari: its desktop
+browsers are Chrome, Edge and Playwright's own Chromium, Firefox and WebKit,
+and real Safari is offered only on iPhones (`phone.test.js`). `macos-webkit`,
+Playwright's WebKit on macOS, does not work through the tunnel today: the
+page loads, but its WebSocket to the app fails (`ws://bs-local.com:7400/`,
+error then close 1006), so Shiny never connects and the startup menu never
+comes (2026-11-10). HTTP crosses the tunnel and that WebSocket does not, as
+it does from an iPhone's Safari, so it looks like WebKit's own networking
+on macOS not sending WebSockets through BrowserStack's proxy. WebKit itself
+runs here (`STANPUMPR_BROWSER=webkit`). On BrowserStack a session waits for
+the load rather than for an idle network, polls for the startup menu (a
+single long wait lets BrowserStack close the connection as idle after about
+90 s), and, if the menu never comes, says what the page showed, the
+WebSockets included (`openSession()` in `harness.js`).
 `require('browserstack-local')` must work as well as `require('playwright')`,
 and the Playwright here must be one BrowserStack supports (1.63 is).
 
