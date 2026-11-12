@@ -2485,7 +2485,18 @@ registry <- rbind(
       source = "Rapamune (sirolimus) label, NDA 021083/021110, 2019",
       source_url = "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=021083",
       to_obtain = "",
-      notes = "Whole blood plotted. Sirolimus is cleared by CYP3A4 and partitions into red cells, so the rise in CYP3A4 activity and the fall in haematocrit of pregnancy would both lower whole-blood concentrations, but neither has been measured for sirolimus.")
+      notes = "Whole blood plotted. Sirolimus is cleared by CYP3A4 and partitions into red cells, so the rise in CYP3A4 activity and the fall in haematocrit of pregnancy would both lower whole-blood concentrations, but neither has been measured for sirolimus."),
+  row("everolimus", "Other", "unknown",
+      finding = "No human study of everolimus pharmacokinetics in pregnancy was found (PubMed: case reports, e.g. Fiocchi 2015 and Yamamura 2017, and reviews). The Zortress label (2026, read in full) gives animal data only.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = "unknown", comparator = "none",
+      design = "none", n = 0L, confidence = "low",
+      evidence_read = "full_text",
+      source = "Zortress (everolimus) label, NDA 021560, 2026",
+      source_url = "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=021560",
+      to_obtain = "",
+      notes = "Whole blood plotted. Everolimus is cleared by CYP3A4 and partitions into red cells, as sirolimus does; neither the rise in CYP3A4 activity nor the fall in haematocrit of pregnancy has been measured for it.")
 )
 
 stopifnot(

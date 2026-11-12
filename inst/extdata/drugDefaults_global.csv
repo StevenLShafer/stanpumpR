@@ -233,3 +233,4 @@ amikacin,mcg,mg,mg/hr,mg/kg,"mg,mg/kg,mg/hr,mg qd,mg bid,mg/kg qd,mg/kg bid",#82
 flumazenil,ng,mg,mg/hr,mg,"mg,mcg/kg,mg/hr",#2E7D32,12,28,20,0,0,IV,Other
 ganciclovir,mcg,mg/kg,mg/hr,mg PO valganciclovir,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO valganciclovir,mg PO valganciclovir qd,mg PO valganciclovir bid",#0277BD,0,0,0,0,0,IV,Other
 sirolimus,ng,,,mg PO,"mg PO,mg PO qd",#4E342E,12,20,16,0,0,IV,Other
+everolimus,ng,,,mg PO bid,"mg PO,mg PO qd,mg PO bid",#6D4C41,3,8,5.5,0,0,IV,Other
