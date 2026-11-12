@@ -454,8 +454,28 @@ the token counts, the duration, the outcome code):
 The count the app itself prints is for its R process only: shinyapps.io keeps
 no disk, and the process restarts when the app sleeps or is redeployed. The
 mailbox, and the Anthropic Console's usage page for the key, are the running
-totals; so the app cannot stop itself at 200, and the switch below is
-thrown by hand when the count is reached.
+totals.
+
+**The limit** (Shafer, 2026-11-10: stop after 200 papers, so that free access
+cannot be used to run up thousands of dollars). Before each review with the
+operator's key, `paperReviewSharedKeyAdmit()` counts the usage emails in the
+mail account's **Sent folder** over IMAP (`[Gmail]/Sent Mail`, searched for the
+subject above, from a background process), which survives restarts and
+redeploys and is shared by every process, and adds the reviews this process
+has started whose email has not yet gone. Past
+`PAPER_REVIEW_SHARED_KEY_LIMIT` (200; `paper_review_shared_key_limit` in
+`config.yml` changes it) the key is not used: the user is asked for their own,
+and that R process offers the key to no new session. A count that cannot be
+read refuses the key too (the limit fails closed), so an IMAP outage means
+users bring their own keys until it passes. Without the mail credentials
+there is no mailbox to count, and the limit holds per R process only. What
+it cannot see: another process's reviews still in progress, so a burst of
+simultaneous reviews on several processes can pass the limit by a few. Do not
+delete the usage emails from the Sent folder, which is the count; to allow
+more reviews, raise the limit. **Set a monthly spend limit on the key's
+workspace in the Anthropic Console as well**: that ceiling holds whatever
+happens in the app. A review costs about $0.80 at effort `high`, and at most
+about $2.75 (128,000 output tokens).
 
 **On shinyapps.io** (`.github/workflows/shiny-deploy-production.yaml`):
 the production deploy writes `anthropic_api_key` into the deployed
@@ -464,7 +484,8 @@ the production deploy writes `anthropic_api_key` into the deployed
 `ANTHROPIC_API_KEY` (a repository secret or one of the `production`
 environment). Two optional Actions **variables** (Settings → Secrets and
 variables → Actions → Variables):
-- `PAPER_REVIEW_USAGE_EMAIL`: where each use is reported;
+- `PAPER_REVIEW_USAGE_EMAIL`: where each use is reported (the limit counts the
+  sending account's Sent folder, wherever the emails are delivered);
 - `PAPER_REVIEW_SHARED_KEY`: set it to `false` to withdraw the operator's
   key (users must then enter their own), then re-run the production deploy
   (Actions → Deployment Production → Run workflow).
@@ -595,3 +616,40 @@ allowed to learn from my models. Claude is allowed to see coarse metadata."
    download is the only copy that outlives a session. Recorded as a
    requirement in `docs/paper-review-privacy.md` section 1a, and said to
    users in `inst/paper-review/help.md` (*Nothing is kept on the server*).
+8. `[decision]` **The effort level, and whether users choose it** (asked
+   2026-11-10). The app runs Claude Opus 5.5 at effort `high` (Shafer: "I
+   care more about getting this right than getting fast answers. Also, I am
+   not constrained by cost. However, my defaults are not necessarily the
+   right defaults for a program that is publicly available, or for a program
+   where I'm footing the initial bill for test users."). He pictures a
+   slider from "fast, inexpensive, less accurate" to "slow, expensive, more
+   accurate". To be decided on the calibration in
+   `tools/paper-review-calibration/` (20 library papers scored against their
+   digest cards at all five effort levels): the default level, whether the
+   choice is offered and how each level is described, and the app's
+   64,000-token and 20-minute limits.
+
+   **The calibration has run** (2026-11-10; `docs/paper-review-calibration.md`:
+   18 of the 20 papers, the two scans being too large for the Drive
+   connector, 126 reviews, about $135). Its recommendation: keep `high`, the
+   lowest level that reads every modern paper's model in full and never
+   failed (median 3.5 minutes, longest 7, about $0.78); if a choice is
+   offered, offer only `medium` beside it (median 2.2 minutes, about $0.54,
+   the same extraction on a paper with one model, less on a paper with
+   several), since `low` returned invalid JSON in one review in six and
+   `xhigh` and `max` found nothing more while running past the 64,000-token
+   limit (a third of `xhigh` runs, every `max` run); raise `max_tokens` to
+   128,000 (`high` used up to 56,348); keep the 20-minute limit. The same
+   request that stalled on production for Hallik 2020 took 2.4 and 3.1
+   minutes here, so the stall was not the model's reading time. Still for
+   Shafer: whether to offer the choice at all.
+   The calibration also found that most error findings on these verified
+   papers are false alarms from the checks themselves (a group that is not a
+   model checked as one, conditions the `at` patient cannot carry, decrement
+   times without their infusion, an individual compared with a group's
+   model), which no choice of effort cures.
+
+   **Decided** (Shafer, 2026-11-10): `max_tokens` raised to 128,000 and
+   `high` kept as the default (`PAPER_REVIEW_MAX_TOKENS`,
+   `PAPER_REVIEW_EFFORT` in `R/paper-review-api.R`). Still open: whether to
+   offer the user a choice of effort.

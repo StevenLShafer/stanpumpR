@@ -30,8 +30,13 @@
 PAPER_REVIEW_API_URL      <- "https://api.anthropic.com/v1/messages"
 PAPER_REVIEW_API_VERSION  <- "2026-10-21"
 PAPER_REVIEW_MODEL        <- "claude-opus-5-5"
+# Effort high and 128,000 output tokens, the model's most: Shafer's decision
+# of 2026-11-10 on the calibration (docs/paper-review-calibration.md), where
+# high used up to 56,348 tokens on an eight-page paper, 88% of the old
+# 64,000. The limit costs nothing unless a review needs it; at about 125
+# tokens a second, 128,000 is about 17 minutes, inside the time limit.
 PAPER_REVIEW_EFFORT       <- "high"
-PAPER_REVIEW_MAX_TOKENS   <- 64000
+PAPER_REVIEW_MAX_TOKENS   <- 128000
 PAPER_REVIEW_TIMEOUT_SEC  <- 1200
 # This app's own key first, so it can sit beside another app's
 # ANTHROPIC_API_KEY in the same ~/.Renviron; then the standard name.
@@ -70,6 +75,9 @@ paperReviewApiKey <- function(sessionKey = NULL, config = .sprglobals$config)
   # The operator's key can be withdrawn without removing it (after the uses
   # Shafer allows it, users bring their own).
   if (is.list(config) && isFALSE(config$paper_review_shared_key)) return(NULL)
+  # Nor is it once it has made the reviews it is allowed
+  # (paperReviewSharedKeyAdmit(), R/paper-review-usage.R).
+  if (paperReviewSharedKeyExhausted()) return(NULL)
   for (name in PAPER_REVIEW_KEY_ENV) {
     key <- Sys.getenv(name, "")
     if (nzchar(key)) return(key)

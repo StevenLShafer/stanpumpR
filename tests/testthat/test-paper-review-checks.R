@@ -103,6 +103,10 @@ test_that("a model closed from exponentials is found by the identifiability chec
 
 test_that("a covariate equation that is not finite and positive for a legal patient is an error", {
   ex <- paperReviewExample()
+  # With no studied range printed, every legal patient counts as studied.
+  ex$population$age_years[c("min", "max")] <- list(NULL, NULL)
+  ex$population$weight_kg[c("min", "max")] <- list(NULL, NULL)
+  ex$population$height_cm[c("min", "max")] <- list(NULL, NULL)
   ex$covariate_effects <- list(
     list(parameter_role = "CL", covariate = "age", form = "power", coefficient = -0.4,
          reference_value = 40, covariate_units = "years", equation_as_printed = "(AGE/40)^-0.4",
@@ -119,6 +123,32 @@ test_that("a covariate equation that is not finite and positive for a legal pati
   expect_true(any(grepl("V1 ~ weight", vapply(bad, `[[`, "", "title"))))
   expect_true(any(grepl("negative power of age", titles)))
   expect_true(all(vapply(bad, function(x) length(x$locations) == 1, logical(1))))
+})
+
+test_that("an equation that fails only outside the population studied is a concern, not an error", {
+  # The calibration of 2026-11-10: rivaroxaban's adult model has a power of
+  # age on V1, infinite at age 0, which is outside the adults it studied.
+  ex <- paperReviewExample()   # studied 25-65 y, 55-110 kg, 158-192 cm
+  ex$covariate_effects <- list(
+    list(parameter_role = "CL", covariate = "age", form = "power", coefficient = -0.4,
+         reference_value = 40, covariate_units = "years", equation_as_printed = "(AGE/40)^-0.4",
+         location = "Equation 4"))
+  f <- paperReviewCovariateChecks(ex)
+  hit <- Filter(function(x) grepl("not finite and positive", x$title), f)
+  expect_length(hit, 1)
+  expect_equal(hit[[1]]$severity, "concern")
+  expect_match(hit[[1]]$detail, "outside the population the paper studied")
+  expect_false(any(severities(f) == "error"))
+  # A term that fails inside the studied range stays an error.
+  ex$covariate_effects[[1]] <- list(parameter_role = "V1", covariate = "age", form = "linear",
+    coefficient = -0.05, reference_value = 40, covariate_units = "years",
+    equation_as_printed = "1 - 0.05 (AGE - 40)", location = "Equation 5")
+  f <- paperReviewCovariateChecks(ex)   # 1 - 0.05 (65 - 40) = -0.25 at 65 y, a studied age
+  hit <- Filter(function(x) grepl("not finite and positive", x$title), f)
+  expect_equal(hit[[1]]$severity, "error")
+  expect_match(hit[[1]]$detail, "within the population the paper studied")
+  expect_equal(paperReviewStudied(data.frame(age = c(0, 40), weight = c(70, 70), height = c(170, 170)),
+                                  ex$population), c(FALSE, TRUE))
 })
 
 test_that("a covariate the simulator does not take is recorded and held at reference", {
@@ -679,4 +709,97 @@ test_that("a derived quantity printed for a stated patient is compared at that p
   # And the schema asks for it, so a reply can carry it through validation.
   v <- paperReviewValidate(paperReviewNormalize(at))
   expect_equal(v$derived_quantities[[length(v$derived_quantities) - 1]]$at$weight, 10)
+})
+
+test_that("a value printed under conditions, as a mean, or for one individual is a concern, not an error", {
+  # The calibration of 2026-11-10 (docs/paper-review-calibration.md) found
+  # each of these reported as an error on papers whose models are verified.
+  ex <- paperReviewExample()
+  find <- function(x) Filter(function(f) grepl("^Vss as printed \\(74", f$title), paperReviewRun(x)$findings)
+  wrong <- ex$derived_quantities[[4]]          # Vss 148 L
+  wrong$value <- 74; wrong$value_text <- "74"; wrong$location <- "Text, p. 9"
+  x <- ex; x$derived_quantities <- c(ex$derived_quantities, list(wrong))
+  n <- length(x$derived_quantities)
+  expect_equal(find(x)[[1]]$severity, "error")
+  # Printed under conditions the review cannot apply.
+  x$derived_quantities[[n]]$conditions <- "during cardiopulmonary bypass"
+  f <- find(x)[[1]]
+  expect_equal(f$severity, "concern")
+  expect_match(f$detail, "cardiopulmonary bypass")
+  # A mean of individuals' values.
+  x$derived_quantities[[n]]$conditions <- ""
+  x$derived_quantities[[n]]$statistic <- "mean_of_individuals"
+  f <- find(x)[[1]]
+  expect_equal(f$severity, "concern")
+  expect_match(f$detail, "mean of individuals' values")
+  # One individual's, beside the typical value, from a model with no
+  # covariate that separates them (hydralazine's subjects, atropine's).
+  y <- ex
+  y$covariate_effects <- list()
+  ind <- wrong; ind$at <- list(age = 31, sex = "female")
+  y$derived_quantities <- c(ex$derived_quantities, list(ind))
+  f <- find(y)[[1]]
+  expect_equal(f$severity, "concern")
+  expect_match(f$detail, "one individual's own")
+  # Alone, a value for a stated patient is that patient's, and still an error.
+  z <- y
+  z$derived_quantities <- c(ex$derived_quantities[-4], list(ind))
+  expect_equal(find(z)[[1]]$severity, "error")
+})
+
+test_that("a decrement time printed after a stated infusion is compared at that infusion", {
+  # Bailey 1994's context-sensitive half-times of milrinone after 30 to
+  # 600 min were compared with the steady-state value (+178% to +793%).
+  expect_equal(paperReviewInfusionMinutes(list(infusion_minutes = 45)), 45)
+  expect_equal(paperReviewInfusionMinutes(list(value_text = "43", location = "p. 621 (45-min infusion)")), 45)
+  expect_equal(paperReviewInfusionMinutes(list(value_text = "61 min after a 3 h infusion")), 180)
+  expect_equal(paperReviewInfusionMinutes(list(value_text = "43", location = "Table 3")), Inf)
+  ex <- paperReviewExample()
+  dq <- list(quantity = "decrement_50", value = 10, value_text = "10", units = "min",
+             statistic = "typical_value", location = "Discussion, p. 7")
+  rowOf <- function(d) {
+    x <- ex; x$derived_quantities <- c(ex$derived_quantities, list(d))
+    t <- paperReviewRun(x)$consistency
+    t[t$quantity == "decrement_50", , drop = FALSE]
+  }
+  steady <- rowOf(dq)
+  after60 <- rowOf(c(dq, list(infusion_minutes = 60)))
+  expect_match(after60$note, "After a 60 min infusion")
+  expect_false(identical(steady$model, after60$model))
+  expect_lt(as.numeric(after60$model), as.numeric(steady$model))
+})
+
+test_that("one group spelled two ways is one group", {
+  expect_identical(paperReviewGroupKey("R(−)-methadone"), paperReviewGroupKey(" r(-)-Methadone "))
+  expect_identical(paperReviewGroupKey("children 7–11 y (NCA)"), paperReviewGroupKey("Children 7-11  y (NCA)"))
+  expect_false(identical(paperReviewGroupKey("R-methadone"), paperReviewGroupKey("S-methadone")))
+  x <- list(parameters = list(list(role = "CL", group = "R(−)-methadone"),
+                              list(role = "V1", group = "R(-)-methadone")),
+            derived_quantities = list(list(quantity = "t_half_terminal", group = "r(-)-methadone")),
+            figures = list(list(series = list(list(label = "a", group = "R(-)-Methadone")))))
+  y <- paperReviewCanonicalGroups(x)
+  expect_length(paperReviewGroups(y), 1)
+  expect_identical(y$figures[[1]]$series[[1]]$group, "R(−)-methadone")
+})
+
+test_that("a group that is not a disposition model is not reported as failing to close one", {
+  ex <- list(parameters = list(list(role = "CL", group = "PK"), list(role = "V1", group = "PK"),
+                               list(role = "ke0", group = "Heart rate"),
+                               list(role = "other", group = "Heart rate"),
+                               list(role = "other", group = "Children (NCA)")))
+  closeError <- paperReviewFinding("Identifiability", "error",
+                                   "The paper does not close the 2-compartment model", "", "Table 2")
+  ke0Error <- paperReviewFinding("Identifiability", "error",
+                                 "The paper describes an effect site but prints no ke0", "", "Methods")
+  f <- paperReviewGroupFindings(list(closeError, ke0Error), "Children (NCA)", ex)
+  expect_equal(vapply(f, `[[`, "", "severity"), c("info", "info"))
+  expect_equal(f[[1]]$title, "No disposition model is reported for this group")
+  expect_match(f[[2]]$detail, "Heart rate")
+  # A group with disposition parameters of its own keeps the error, and the
+  # group that owns the ke0 is not excused from printing it.
+  f <- paperReviewGroupFindings(list(closeError, ke0Error), "PK", ex)
+  expect_equal(f[[1]]$severity, "error")
+  expect_equal(f[[2]]$severity, "info")
+  f <- paperReviewGroupFindings(list(ke0Error), "Heart rate", ex)
+  expect_equal(f[[1]]$severity, "error")
 })
