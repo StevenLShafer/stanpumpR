@@ -85,9 +85,10 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     "olmesartan",
                     # lagged oral absorption (2026-10-17)
                     "empagliflozin", "ertugliflozin",
-                    # Findling 2010's 17.4 min lag (lithium carbonate,
-                    # 2026-11-12)
-                    "lithiumCarbonate",
+                    # Findling 2010's 17.4 min lag (lithium carbonate),
+                    # the FDA reviewer's 0.231 h (sotalol) and Friberg
+                    # 2012's 0.949 h (voriconazole), 2026-11-12
+                    "lithiumCarbonate", "sotalol", "voriconazole",
                     # Melin 2023's fixed 0.248 h lag (dapagliflozin)
                     "dapagliflozin",
                     # Hoeben 2016's lag before the release into the gut

@@ -58,7 +58,13 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 "amantadineER",
                 # Cockcroft-Gault, as a power, on clearance
                 # (R/drugs_tranexamicAcid.R, Lanoiselee 2018)
-                "tranexamicAcid")
+                "tranexamicAcid",
+                # Cockcroft-Gault, as a power, on clearance
+                # (R/drugs_sotalol.R, Yellepeddi 2025)
+                "sotalol",
+                # Cockcroft-Gault, additive and linear, on clearance
+                # (R/drugs_tobramycin.R, Conil 2011; R/drugs_amikacin.R, Tod 1998)
+                "tobramycin", "amikacin")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system),

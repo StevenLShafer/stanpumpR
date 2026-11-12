@@ -222,3 +222,11 @@ amantadineER,ng,,,mg PO qd,"mg PO,mg PO qd",#3949AB,600,1700,1150,0,0,IV,Parkins
 theophylline,mcg,mg/kg aminophylline,mg/kg/hr aminophylline,mg/kg aminophylline,"mg aminophylline,mg/kg aminophylline,mg/hr aminophylline,mg/kg/hr aminophylline,mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg PO bid,mg PO tid,mg PO qid,mg PO q4h",#5D4037,10,15,12.5,0,20,IV,Other
 lithiumCarbonate,mmol,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#00897B,0.4,0.8,0.6,0,1.2,IV,Other
 tranexamicAcid,mcg,g,mg/kg/hr,g,"g,mg,mg/kg,g/hr,mg/hr,mg/kg/hr",#AD1457,0,0,0,0,10,IV,Other
+caffeineNeonatal,mcg,mg/kg citrate,,mg/kg citrate,"mg/kg citrate,mg citrate,mg/kg citrate qd,mg citrate qd",#795548,5,20,12.5,0,0,IV,Other
+tacrolimus,ng,,,mg PO bid,"mg PO,mg PO bid",#6A1B9A,4,11,7.5,0,0,IV,Other
+sotalol,ng,mg,mg/hr,mg PO,"mg,mg/hr,mg PO,mg PO bid",#455A64,0,0,0,0,0,IV,Other
+voriconazole,mcg,mg/kg,mg/kg/hr,mg/kg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg PO bid",#00695C,2,6,4,0,0,IV,Other
+clozapine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#7E57C2,350,600,475,0,0,IV,Antipsychotics
+norclozapine,ng,,,,,#B39DDB,0,0,0,0,0,IV,
+tobramycin,mcg,mg,mg/hr,mg/kg,"mg,mg/kg,mg/hr,mg qd,mg bid,mg tid,mg/kg qd,mg/kg bid,mg/kg tid",#558B2F,0.5,8,4,0,2,IV,Antibiotics
+amikacin,mcg,mg,mg/hr,mg/kg,"mg,mg/kg,mg/hr,mg qd,mg bid,mg/kg qd,mg/kg bid",#827717,2.4,20,4.9,0,4.9,IV,Antibiotics

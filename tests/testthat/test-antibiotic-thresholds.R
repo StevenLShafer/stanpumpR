@@ -13,7 +13,8 @@ test_that("each antibiotic's default threshold is free drug at its MIC", {
   tab <- antibioticMicTable()
   dd  <- getDrugDefaultsGlobal()
   expect_setequal(tab$Drug, c("cefazolin", "cefalexin", "ceftriaxone", "clindamycin",
-                              "gentamicin", "metronidazole", "vancomycin"))
+                              "gentamicin", "metronidazole", "tobramycin", "amikacin",
+                              "vancomycin"))
   for (i in seq_len(nrow(tab))) {
     d <- tab$Drug[i]
     # The CSV ships the table's threshold
