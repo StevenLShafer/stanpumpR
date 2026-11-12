@@ -89,6 +89,9 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     # the FDA reviewer's 0.231 h (sotalol) and Friberg
                     # 2012's 0.949 h (voriconazole), 2026-11-12
                     "lithiumCarbonate", "sotalol", "voriconazole",
+                    # Caldes 2009's 0.382 h lag (valganciclovir, as
+                    # ganciclovir), 2026-11-12
+                    "ganciclovir",
                     # Melin 2023's fixed 0.248 h lag (dapagliflozin)
                     "dapagliflozin",
                     # Hoeben 2016's lag before the release into the gut
