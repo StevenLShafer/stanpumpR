@@ -88,6 +88,23 @@ doseProductFactor <- function(units, products) {
   f
 }
 
+#' Drop the product word from dose units
+#'
+#' After simCpCe() has converted a dose naming a product (`doseProducts`) to
+#' the plotted drug's mass, the unit loses the product word ("mg PO sulfate"
+#' becomes "mg PO", "mg/kg citrate" "mg/kg"), so the rest of the pipeline
+#' classifies it as an ordinary unit of the drug itself.
+#'
+#' @param units Character vector of dose units.
+#' @param products Character vector of product words.
+#' @returns `units` with the product word removed.
+#' @noRd
+stripDoseProduct <- function(units, products) {
+  units <- as.character(units)
+  for (p in products) units <- sub(paste0(" ", p, "( |$)"), "\\1", units)
+  units
+}
+
 #' Is a dose unit an input rate rather than an amount?
 #'
 #' A rate -- mass per minute, hour or day, with or without per kg -- sets a

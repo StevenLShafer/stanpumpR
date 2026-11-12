@@ -42,8 +42,8 @@ test_that("the menu lists the categories in order, each sorted by name", {
                      "remimazolam", "temazepam", "zolpidem"))
   expect_identical(choices[["Antidepressants"]],
                    c("bupropion", "citalopram", "duloxetine", "escitalopram",
-                     "fluoxetine", "mirtazapine", "paroxetine", "sertraline",
-                     "venlafaxine"))
+                     "fluoxetine", "mirtazapine", "nortriptyline", "paroxetine",
+                     "sertraline", "venlafaxine"))
   expect_true(all(STARTUP_DRUGS_DEFAULT %in% unlist(choices)))
   expect_false(any(c("desmetramadol", "desethylamiodarone", "hydroxybupropion", "norfluoxetine", "desvenlafaxine",
                      "air", "oxygen", "ventilation") %in% unlist(choices)))

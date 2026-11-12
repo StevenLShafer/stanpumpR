@@ -436,7 +436,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "digoxinIVPediatric",
     "methyleneBlue",
     # narrow-therapeutic-window drugs (2026-11-12): plasma only
-    "theophylline", "lithiumCarbonate", "tranexamicAcid", "caffeineNeonatal", "tacrolimus", "sotalol", "voriconazole", "clozapine", "norclozapine", "tobramycin", "amikacin", "ganciclovir", "sirolimus", "everolimus",
+    "theophylline", "lithiumCarbonate", "tranexamicAcid", "caffeineNeonatal", "tacrolimus", "sotalol", "voriconazole", "clozapine", "norclozapine", "tobramycin", "amikacin", "ganciclovir", "sirolimus", "everolimus", "dofetilide", "quinidine", "nortriptyline",
     # Parkinson disease drugs (2026-10-19): plasma only; levodopa (all four
     # models) and apomorphine have an effect site (inst/help/models/parkinsons.md)
     "pramipexole", "pramipexoleER", "safinamide", "opicapone",

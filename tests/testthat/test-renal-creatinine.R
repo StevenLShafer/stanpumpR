@@ -66,7 +66,10 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 # (R/drugs_tobramycin.R, Conil 2011; R/drugs_amikacin.R, Tod 1998)
                 "tobramycin", "amikacin",
                 # Cockcroft-Gault on clearance (R/drugs_ganciclovir.R, Caldés 2009)
-                "ganciclovir")
+                "ganciclovir",
+                # creatinine clearance on clearance: dofetilide (FDA review of
+                # NDA 20-931), quinidine (Fattinger 1991)
+                "dofetilide", "quinidine")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system),
