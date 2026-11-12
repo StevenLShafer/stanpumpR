@@ -387,7 +387,8 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
   ivSalt <- entry$michaelisMenten$saltFactor$IV
   if (is.null(ivSalt)) ivSalt <- 1
   steps <- data.frame(Time = manual$Time,
-                      Rate = ivSalt * viewerBaseDose(manual$Dose, manual$Units, weight, u),
+                      Rate = ivSalt * viewerBaseDose(manual$Dose, manual$Units, weight, u) *
+                        doseProductFactor(manual$Units, entry$doseProducts),
                       rank = rep(1, nrow(manual)))
   tciRates <- entry$tci$rates
   if (!is.null(tciRates) && nrow(tciRates) > 0) {
@@ -413,7 +414,10 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
 
   # IV boluses, in base amount.
   b <- d[route == ROUTE_IV & !rate & !tci & !pe, , drop = FALSE]
-  bAmount <- ivSalt * viewerBaseDose(b$Dose, b$Units, weight, u)
+  # A dose named as a product (aminophylline for theophylline) counts as the
+  # plotted drug it carries, as simCpCe() enters it (doseProductFactor()).
+  bAmount <- ivSalt * viewerBaseDose(b$Dose, b$Units, weight, u) *
+    doseProductFactor(b$Units, entry$doseProducts)
   # A dose in a unit the viewer cannot read (a salt, mmol) leaves the drug
   # given unknown; it is drawn as nothing rather than refused.
   unreadable <- anyNA(c(steps$Rate, oralSteps$Rate, bAmount))

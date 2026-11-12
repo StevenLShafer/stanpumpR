@@ -55,7 +55,10 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 "pramipexole", "pramipexoleER",
                 # MDRD eGFR, proportional, on the elimination rate constant
                 # (R/drugs_amantadineER.R, FDA review of NDA 209410)
-                "amantadineER")
+                "amantadineER",
+                # Cockcroft-Gault, as a power, on clearance
+                # (R/drugs_tranexamicAcid.R, Lanoiselee 2018)
+                "tranexamicAcid")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system),

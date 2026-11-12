@@ -379,6 +379,13 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     } else if (any(iuDose)) {
       stop(PK$drug, " is not dosed in international units (IU).")
     }
+    # A dose whose unit names a product other than the plotted drug
+    # ("mg aminophylline" for theophylline, R/drugs_theophylline.R) is
+    # converted to the plotted drug's mass first: the drug's `doseProducts`
+    # block gives the mass of the plotted drug per mass of each product.
+    # A unit that names no product is the plotted drug itself.
+    if (!is.null(PK$doseProducts))
+      dose$Dose <- dose$Dose * doseProductFactor(dose$Units, PK$doseProducts)
     # One factor per dose row (the molar branch may differ row by row).
     mg_Conv  <- rep_len(mg_Conv,  nrow(dose))
     mcg_Conv <- rep_len(mcg_Conv, nrow(dose))

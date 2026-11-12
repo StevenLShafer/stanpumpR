@@ -67,6 +67,27 @@ doseProduct <- function(units, products) {
   product
 }
 
+#' Mass of the plotted drug per mass of the product a dose unit names
+#'
+#' A drug given as a salt or prodrug that the plot does not show
+#' (aminophylline for theophylline) declares a `doseProducts` block: a named
+#' numeric vector, the mass of the plotted drug in one unit mass of each
+#' product, keyed by the product word its units carry (`doseProduct()`).
+#'
+#' @param units Character vector of dose units.
+#' @param products The drug's `doseProducts` block, or NULL.
+#' @returns Numeric vector the length of `units`: the factor for each dose,
+#'   1 for a unit naming no product.
+#' @noRd
+doseProductFactor <- function(units, products) {
+  f <- rep(1, length(units))
+  if (length(products) == 0) return(f)
+  p <- doseProduct(units, names(products))
+  hit <- !is.na(p)
+  f[hit] <- unname(products[p[hit]])
+  f
+}
+
 #' Is a dose unit an input rate rather than an amount?
 #'
 #' A rate -- mass per minute, hour or day, with or without per kg -- sets a

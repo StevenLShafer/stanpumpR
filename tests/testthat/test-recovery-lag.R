@@ -85,6 +85,9 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     "olmesartan",
                     # lagged oral absorption (2026-10-17)
                     "empagliflozin", "ertugliflozin",
+                    # Findling 2010's 17.4 min lag (lithium carbonate,
+                    # 2026-11-12)
+                    "lithiumCarbonate",
                     # Melin 2023's fixed 0.248 h lag (dapagliflozin)
                     "dapagliflozin",
                     # Hoeben 2016's lag before the release into the gut
