@@ -230,3 +230,6 @@ clozapine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#7E57C2,350,600,475,0,
 norclozapine,ng,,,,,#B39DDB,0,0,0,0,0,IV,
 tobramycin,mcg,mg,mg/hr,mg/kg,"mg,mg/kg,mg/hr,mg qd,mg bid,mg tid,mg/kg qd,mg/kg bid,mg/kg tid",#558B2F,0.5,8,4,0,2,IV,Antibiotics
 amikacin,mcg,mg,mg/hr,mg/kg,"mg,mg/kg,mg/hr,mg qd,mg bid,mg/kg qd,mg/kg bid",#827717,2.4,20,4.9,0,4.9,IV,Antibiotics
+flumazenil,ng,mg,mg/hr,mg,"mg,mcg/kg,mg/hr",#2E7D32,12,28,20,0,0,IV,Other
+ganciclovir,mcg,mg/kg,mg/hr,mg PO valganciclovir,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO valganciclovir,mg PO valganciclovir qd,mg PO valganciclovir bid",#0277BD,0,0,0,0,0,IV,Other
+sirolimus,ng,,,mg PO,"mg PO,mg PO qd",#4E342E,12,20,16,0,0,IV,Other
