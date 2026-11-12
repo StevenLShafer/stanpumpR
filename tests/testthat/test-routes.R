@@ -63,11 +63,16 @@ test_that("every unit offered before the oral rate keeps its exact classificatio
   units <- unique(c(setdiff(allUnits, later), gasUnits, tciUnits, scheduledUnits,
                     unlist(getDrugDefaultsGlobal()$Units)))
   units <- setdiff(units, later)
+  # Theophylline's aminophylline units (2026-11-12) were never classified by
+  # the substring rule, which reads the "min" in the salt's name as a rate;
+  # isRateUnit() is checked on them below.
+  units <- setdiff(units, aminophyllineUnits)
   route <- doseRoute(units)
   oldBolus <- route == ROUTE_IV & !(grepl("min", units) | grepl("hr", units))
   newBolus <- route == ROUTE_IV & !isRateUnit(units)
   expect_equal(newBolus, oldBolus)
   expect_false(any(isRateUnit(units[route != ROUTE_IV])))
+  expect_equal(isRateUnit(aminophyllineUnits), c(FALSE, FALSE, TRUE, TRUE))
 })
 
 test_that("doseRoute() reads the route ahead of a dosing frequency", {

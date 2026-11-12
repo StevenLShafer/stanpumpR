@@ -10,7 +10,7 @@ test_that("every drug that can be dosed has a category the menu knows", {
   # and ventilation, which the gas rules add themselves
   notOffered <- c("desmetramadol", "desethylamiodarone", "hydroxybupropion", "norfluoxetine",
                   "desvenlafaxine", "salicylate", "hydroxyrisperidone", "dehydroaripiprazole",
-                  "enalaprilat",
+                  "enalaprilat", "norclozapine",
                   "air", "oxygen", "ventilation")
   dosed <- setdiff(dd$Drug, notOffered)
   expect_true(all(lengths(dd$Units[match(dosed, dd$Drug)]) > 0))
@@ -42,8 +42,8 @@ test_that("the menu lists the categories in order, each sorted by name", {
                      "remimazolam", "temazepam", "zolpidem"))
   expect_identical(choices[["Antidepressants"]],
                    c("bupropion", "citalopram", "duloxetine", "escitalopram",
-                     "fluoxetine", "mirtazapine", "paroxetine", "sertraline",
-                     "venlafaxine"))
+                     "fluoxetine", "mirtazapine", "nortriptyline", "paroxetine",
+                     "sertraline", "venlafaxine"))
   expect_true(all(STARTUP_DRUGS_DEFAULT %in% unlist(choices)))
   expect_false(any(c("desmetramadol", "desethylamiodarone", "hydroxybupropion", "norfluoxetine", "desvenlafaxine",
                      "air", "oxygen", "ventilation") %in% unlist(choices)))

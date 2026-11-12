@@ -55,7 +55,21 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 "pramipexole", "pramipexoleER",
                 # MDRD eGFR, proportional, on the elimination rate constant
                 # (R/drugs_amantadineER.R, FDA review of NDA 209410)
-                "amantadineER")
+                "amantadineER",
+                # Cockcroft-Gault, as a power, on clearance
+                # (R/drugs_tranexamicAcid.R, Lanoiselee 2018)
+                "tranexamicAcid",
+                # Cockcroft-Gault, as a power, on clearance
+                # (R/drugs_sotalol.R, Yellepeddi 2025)
+                "sotalol",
+                # Cockcroft-Gault, additive and linear, on clearance
+                # (R/drugs_tobramycin.R, Conil 2011; R/drugs_amikacin.R, Tod 1998)
+                "tobramycin", "amikacin",
+                # Cockcroft-Gault on clearance (R/drugs_ganciclovir.R, Caldés 2009)
+                "ganciclovir",
+                # creatinine clearance on clearance: dofetilide (FDA review of
+                # NDA 20-931), quinidine (Fattinger 1991)
+                "dofetilide", "quinidine")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system),

@@ -1194,6 +1194,10 @@ getDrugPK <- function(
   # simCpCe() uses to turn a dose in grams into millimoles.  See
   # R/drugs_calcium.R, whose two salts carry one weight each.
   out$molar <- validateMolar(X$molar, drug, drugDefaults$Concentration.Units)
+  # A drug also given as a product the plot does not show (aminophylline for
+  # theophylline): the mass of the plotted drug per mass of each product,
+  # which simCpCe() applies to every dose whose unit names that product.
+  out$doseProducts <- validateDoseProducts(X$doseProducts, drug)
   # A drug whose oral absorption saturates scales each oral dose by its own
   # fraction absorbed: simCpCe() applies it.  See oralSaturationFraction().
   out$oralSaturation <- validateOralSaturation(X$oralSaturation, drug)
@@ -1761,6 +1765,30 @@ molarWeightOfDoses <- function(molar, units, drug = "")
          paste(names(mw), collapse = ", "), ": ",
          paste(unique(as.character(units)[missing]), collapse = ", "))
   unname(mw[product])
+}
+
+#' Validate a drug's `doseProducts` block
+#'
+#' A named numeric vector: for each product word a dose unit may carry
+#' (`doseProduct()`), the mass of the plotted drug in one unit mass of the
+#' product, a finite number above 0 and at most 1 (a salt or prodrug carries
+#' no more of the drug than its own mass).  NULL when the drug declares none.
+#'
+#' @param products the model's `doseProducts` field, or NULL
+#' @param drug the drug name, for the message
+#' @returns the block, or NULL
+#' @keywords internal
+validateDoseProducts <- function(products, drug)
+{
+  if (is.null(products)) return(NULL)
+  ok <- is.numeric(products) && length(products) > 0 &&
+    !is.null(names(products)) && all(nzchar(names(products))) &&
+    !anyDuplicated(names(products)) &&
+    all(is.finite(products)) && all(products > 0 & products <= 1)
+  if (!ok)
+    stop("Invalid doseProducts block for ", drug, ": a named numeric vector of ",
+         "factors above 0 and at most 1 is required.")
+  products
 }
 
 #' Stop on a disposition the engines cannot use

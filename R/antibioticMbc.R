@@ -330,6 +330,48 @@ antibioticMbcTable <- function()
         Note = "Gentamicin is given against them only for synergy with a cell-wall agent; the E. faecalis control strain's MIC is 4 to 16 mg/L.",
         Source = "FDA gentamicin injection label, 2013."),
 
+    # --- Tobramycin ----------------------------------------------------------
+    row("tobramycin", "Enterobacterales (E. coli, Klebsiella, Enterobacter)", "principal",
+        MIC50 = 0.5, MIC90 = 4, MBC50 = 0.5, MBC90 = 4,
+        Basis = "MIC x 1",
+        Note = paste("The MBC is taken as the MIC, as for gentamicin: in the bloodstream isolates of",
+                     "Chamberland 1992 'In general, the MBCs were identical to the MICs', and tolerance",
+                     "(an MBC/MIC ratio of 32 or more) was rarely seen."),
+        Source = c(
+          "MIC50/MIC90 0.5/4 in 9,809 US isolates, 2017-2021 (Sader HS et al., Open Forum Infect Dis",
+          "2023;10:ofad058); MBC and MIC (Chamberland S et al., Clin Infect Dis 1992;15:615-628).")),
+    row("tobramycin", "Pseudomonas aeruginosa", "core",
+        MIC50 = 2, MIC90 = 8, MBC50 = 2, MBC90 = 8,
+        Basis = "MIC x 1",
+        Note = paste("Tobramycin is the aminoglycoside most active against P. aeruginosa: 99% of 78 blood",
+                     "isolates susceptible, MIC range 0.25-8 mg/L."),
+        Source = "Chamberland S et al., Clin Infect Dis 1992;15:615-628, Table 9 (MIC) and its MBC data."),
+    row("tobramycin", "ESBL-producing and carbapenem-resistant Enterobacterales", "excluded",
+        Note = "MIC90 above 16 mg/L.",
+        Source = "Sader 2023."),
+    row("tobramycin", "Enterococci and staphylococci", "excluded",
+        Note = "Given against them only for synergy with a cell-wall agent, as gentamicin is.",
+        Source = "As for gentamicin."),
+
+    # --- Amikacin ------------------------------------------------------------
+    row("amikacin", "Enterobacterales (E. coli, Klebsiella, Enterobacter)", "principal",
+        MIC50 = 2, MIC90 = 4, MBC50 = 2, MBC90 = 4,
+        Basis = "MIC x 1",
+        Note = paste("The MBC is taken as the MIC, as for gentamicin (Chamberland 1992: 'In general, the",
+                     "MBCs were identical to the MICs'). The MIC90 equals the CLSI (2023) susceptible",
+                     "breakpoint."),
+        Source = c(
+          "MIC50/MIC90 2/4 in 9,809 US isolates, 2017-2021 (Sader HS et al., Open Forum Infect Dis",
+          "2023;10:ofad058); Chamberland S et al., Clin Infect Dis 1992;15:615-628.")),
+    row("amikacin", "Pseudomonas aeruginosa", "core",
+        MIC50 = 8, MIC90 = 16, MBC50 = 8, MBC90 = 16,
+        Basis = "MIC x 1",
+        Note = "87% of 78 blood isolates susceptible, MIC range 0.5-32 mg/L.",
+        Source = "Chamberland S et al., Clin Infect Dis 1992;15:615-628, Table 9 (MIC) and its MBC data."),
+    row("amikacin", "Carbapenem-resistant Enterobacterales", "excluded",
+        Note = "MIC50/MIC90 4/32 mg/L.",
+        Source = "Sader 2023."),
+
     # --- Metronidazole -------------------------------------------------------
     row("metronidazole", "Bacteroides fragilis group", "principal",
         MIC50 = 0.5, MIC90 = 1, MBC50 = 1, MBC90 = 4,
