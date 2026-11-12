@@ -21,6 +21,9 @@ A card names its source in `file:` and cites pages within it. Without the PDF yo
 re-check a page reference, which is exactly why the card states the facts rather than
 pointing at them.
 
+Papers that work is waiting on but that could not be downloaded are listed in
+[`to-obtain.md`](to-obtain.md).
+
 ## Reading a card
 
 `digests/README.md` is the authoring guide: the frontmatter contract, the verification
