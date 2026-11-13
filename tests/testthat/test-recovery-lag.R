@@ -92,6 +92,8 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     # Caldes 2009's 0.382 h lag (valganciclovir, as
                     # ganciclovir), 2026-11-12
                     "ganciclovir",
+                    # Vozeh 1982's 0.3 h lag (mexiletine), 2026-11-13
+                    "mexiletine",
                     # Melin 2023's fixed 0.248 h lag (dapagliflozin)
                     "dapagliflozin",
                     # Hoeben 2016's lag before the release into the gut

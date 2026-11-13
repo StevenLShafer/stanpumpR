@@ -241,3 +241,4 @@ linezolid,mcg,mg,mg/hr,mg,"mg,mg/hr,mg bid,mg PO,mg PO bid",#00838F,2,7,4.5,0,2.
 cyclosporine,ng,mg,mg/hr,mg PO bid,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg PO bid",#AD1457,100,200,150,0,0,IV,Other
 scopolamine,pg,,,mg/day TD,mg/day TD,#5E35B1,0,0,0,0,0,IV,Antiemetics
 flecainide,ng,,,mg PO bid,"mg PO,mg PO bid",#EF6C00,200,1000,600,0,0,IV,Other
+mexiletine,mcg,,,mg PO tid,"mg PO,mg PO tid",#6D4C41,0.8,2,1.4,0,0,IV,Other

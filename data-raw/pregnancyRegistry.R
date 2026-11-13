@@ -2573,7 +2573,18 @@ registry <- rbind(
       source = "Ansari J, Carvalho B, Shafer SL, Flood P. Anesth Analg 2016;122:786-804 (the rise in glomerular filtration of pregnancy); van der Zande JA et al. 2023, PMC10103521",
       source_url = "https://doi.org/10.1213/ANE.0000000000001143",
       to_obtain = "Smeets 2025 and Vigneswaran 2014 in full (maternal flecainide for fetal tachycardia)",
-      notes = "CYP2D6 activity, the metabolic half of clearance, rises in pregnancy, which is not applied (no magnitude for flecainide).")
+      notes = "CYP2D6 activity, the metabolic half of clearance, rises in pregnancy, which is not applied (no magnitude for flecainide)."),
+  row("mexiletine", "Other", "unknown",
+      finding = "No pharmacokinetic study of mexiletine in pregnancy was found: case reports only (Timmis 1980; Lownes 1987, PMID 3618696; Gregg 1988, PMID 3236091, which advises monitoring concentrations; Lewis 1981, PMC2426155, milk/plasma ratio 0.79-1.89).",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = "unknown", comparator = "none",
+      design = "case reports", n = 0L, confidence = "low",
+      evidence_read = "abstract",
+      source = "Lownes HE, Ives TJ. Am J Obstet Gynecol 1987 PMID 3618696; Gregg AR, Tomich PG. Am J Perinatol 1988 PMID 3236091",
+      source_url = "https://pubmed.ncbi.nlm.nih.gov/3618696/",
+      to_obtain = "",
+      notes = "Cleared mainly by CYP2D6 and CYP1A2, which change in opposite directions in pregnancy; no magnitude for mexiletine.")
 )
 
 stopifnot(
