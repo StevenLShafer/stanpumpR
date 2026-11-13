@@ -389,7 +389,8 @@ asmSegmentPK <- function(PK, segments)
     s
   }), keys)
   rebuilt <- do.call(getDrugPK, c(list(drug = PK$drug), PK$covariates,
-                                  list(model = X)))
+                                  list(model = X,
+                                       physiology = PK$physiology$factors)))
   PK$PK <- rebuilt$PK
   PK$oralFormulations <- rebuilt$oralFormulations
   PK$pkEvents <- keys

@@ -57,6 +57,31 @@ $(document).on('shiny:sessioninitialized', function() {
   formatTimeSlider('#minimum');
 });
 
+// The physiology sliders (R/physiology.R) hold log10 of a multiple of normal
+// function, -1 to 1, so that they move on a log scale; they show the multiple
+// itself.  As for the time sliders, onUpdate puts the formatter back after a
+// server update (Reset to normal).
+function formatPhysiologyValue(x) {
+  var v = Math.pow(10, x);
+  if (Math.abs(x) < 0.005) return 'normal';
+  return '\u00d7' + (v < 1 ? v.toFixed(2) : v < 10 ? v.toFixed(1) : v.toFixed(0));
+}
+function formatPhysiologySlider(el) {
+  var slider = $(el).data('ionRangeSlider');
+  if (!slider || slider.options.prettify === formatPhysiologyValue) return;
+  slider.update({
+    prettify_enabled: true,
+    prettify: formatPhysiologyValue,
+    hide_min_max: true,
+    onUpdate: function() { formatPhysiologySlider(el); }
+  });
+}
+var PHYSIOLOGY_SLIDERS = '#physiology_liver, #physiology_renal, #physiology_cardiac, #physiology_gi';
+$(document).on('shiny:bound', PHYSIOLOGY_SLIDERS, function() { formatPhysiologySlider(this); });
+$(document).on('shiny:sessioninitialized', function() {
+  $(PHYSIOLOGY_SLIDERS).each(function() { formatPhysiologySlider(this); });
+});
+
 // The startup drug menu (R/startup-drugs.R): each category's summary says how
 // many of its drugs are ticked, so a tick is not lost when it is collapsed.
 function startupDrugTickedCount(group) {

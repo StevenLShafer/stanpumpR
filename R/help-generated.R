@@ -884,5 +884,6 @@ HELP_GENERATED_BLOCKS <- list(
   "antiseizure-interaction-table" = helpAntiseizureInteractionTableMarkdown,
   "antiseizure-interaction-sources" = helpAntiseizureInteractionSourcesMarkdown,
   "field-readers-table" = helpFieldReadersTableMarkdown,
-  "pk-converter" = helpPKConverterHTML
+  "pk-converter" = helpPKConverterHTML,
+  "physiology-table" = function(...) helpPhysiologyTableMarkdown()
 )
