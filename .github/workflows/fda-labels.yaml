@@ -1,0 +1,32 @@
+# The FDA labels in papers/labels/ against their index, inst/extdata/fdaLabels.csv:
+# every listed PDF present with its checksum, no unlisted PDF, every digest card
+# named in papers/digests/. R CMD check cannot do this, because it tests the
+# built package and papers/ is left out of it (.Rbuildignore), so
+# test-fda-labels.R skips these checks there. See data-raw/fdaLabels.R.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+name: FDA labels
+
+permissions:
+  contents: read
+
+jobs:
+  fda-labels:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: r-lib/actions/setup-r@5cc1f0d89c5281319eaa97952fe65a6d55e6f816 #v2
+        with:
+          r-version: 'release'
+          use-public-rspm: true
+
+      - name: Check the label files against the index
+        run: Rscript --vanilla -e 'source("data-raw/fdaLabels.R"); if (!checkFdaLabels()) quit(status = 1)'
