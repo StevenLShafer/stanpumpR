@@ -4,8 +4,9 @@
 # (a tenth of normal) to 10 (ten times normal), all 1 by default:
 #
 #   liver    hepatic metabolic capacity (Vm, and so intrinsic clearance)
-#   renal    renal excretion of unchanged drug
-#   cardiac  cardiac output; liver blood flow is a fixed share of it
+#   renal    renal function: excretion of unchanged drug, and renal
+#            metabolism where a drug has it (propofol)
+#   cardiac  cardiac output; liver and kidney blood flow are fixed shares of it
 #   gi       gastrointestinal absorption rate (ka of the oral routes)
 #
 # They change a drug's PARAMETERS, once, before the engines see them
@@ -28,9 +29,21 @@
 # E' = l E / (q (1 - E) + l E), which sets the oral first-pass loss.
 #
 # Each drug's clearance is split three ways in
-# inst/extdata/physiologyParameters.csv: the renal fraction (unchanged drug
-# in urine), the hepatic fraction, and the rest (extrahepatic, non-renal:
-# plasma esterases, Hofmann elimination), which no slider changes.  Only a
+# inst/extdata/physiologyParameters.csv: the renal fraction, the hepatic
+# fraction, and the rest (extrahepatic, non-renal: plasma esterases, Hofmann
+# elimination), which no slider changes.
+#
+# THE KIDNEY: a renal share that is filtration of unchanged drug scales in
+# proportion to renal function.  A drug the kidney METABOLISES with a
+# measured renal extraction ratio (propofol: 0.58, Takizawa 2005, renal
+# blood flow by para-aminohippurate; its renal metabolism is 27% of total
+# clearance, the likely source of the clearance above hepatic blood flow --
+# Shafer, 2026-11-13) takes the same well-stirred form as the liver, with
+# renal blood flow a fixed share of cardiac output:
+#
+#   CL_R' / CL_R = q r / (q (1 - E_R) + r E_R)
+#
+# (column renal_extraction_ratio; blank means filtration, linear in r).  Only a
 # drug with a row whose values were read in a published source is changed;
 # every other drug ignores the sliders, and the app says which.
 #
@@ -194,9 +207,15 @@ physiologyClearanceFactor <- function(row, physiology)
   fr <- row$fraction_renal
   fh <- row$fraction_hepatic
   E  <- row$extraction_ratio
+  ER <- row$renal_extraction_ratio
   hepatic <- if (fh > 0) hepaticClearanceFactor(E, physiology[["cardiac"]],
                                                 physiology[["liver"]]) else 1
-  fr * physiology[["renal"]] + fh * hepatic + (1 - fr - fh)
+  # The well-stirred form serves the kidney too (organClearanceFactor is the
+  # same function); filtration, with no renal extraction ratio, is linear.
+  renal <- if (!is.null(ER) && isTRUE(is.finite(ER)))
+    hepaticClearanceFactor(ER, physiology[["cardiac"]], physiology[["renal"]])
+  else physiology[["renal"]]
+  fr * renal + fh * hepatic + (1 - fr - fh)
 }
 
 #' Factor on oral bioavailability from the change in hepatic first pass
@@ -327,11 +346,14 @@ physiologyPanel <- function()
       "extraction ratio) nearly in proportion, and flow-limited drugs (high",
       "extraction ratio) hardly at all."),
     renal = paste(
-      "Renal excretion of unchanged drug, as a multiple of normal. Changes",
-      "only the renal share of each drug's clearance."),
+      "Renal function, as a multiple of normal. Changes only the renal share",
+      "of each drug's clearance: excretion of unchanged drug in proportion,",
+      "and renal metabolism (propofol) by the same flow-limited rule as the",
+      "liver."),
     cardiac = paste(
-      "Cardiac output, as a multiple of normal. Liver blood flow is taken as",
-      "a fixed share of it, so the clearance of flow-limited drugs follows it.",
+      "Cardiac output, as a multiple of normal. Liver and kidney blood flow",
+      "are taken as fixed shares of it, so the clearance of flow-limited",
+      "drugs follows it.",
       "It also scales the intercompartmental clearances and the central",
       "volume (a low output gives higher early concentrations)."),
     gi = paste(

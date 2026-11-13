@@ -78,6 +78,27 @@ test_that("the clearance is split into its renal, hepatic and other shares", {
   expect_identical(physiologyClearanceFactor(row, p), 1)
 })
 
+test_that("renal metabolism with an extraction ratio is flow-limited too", {
+  row <- list(fraction_renal = 0.27, fraction_hepatic = 0.6, extraction_ratio = 0.87,
+              renal_extraction_ratio = 0.58)
+  # Renal function alone: well-stirred in r, not linear
+  p <- checkPhysiology(c(renal = 0.1))
+  expect_equal(physiologyClearanceFactor(row, p),
+               0.27 * hepaticClearanceFactor(0.58, 1, 0.1) + 0.6 + 0.13)
+  expect_gt(physiologyClearanceFactor(row, p), 0.27 * 0.1 + 0.73)
+  # Cardiac output reaches the renal share as well as the hepatic one
+  p <- checkPhysiology(c(cardiac = 0.5))
+  expect_equal(physiologyClearanceFactor(row, p),
+               0.27 * hepaticClearanceFactor(0.58, 0.5, 1) +
+                 0.6 * hepaticClearanceFactor(0.87, 0.5, 1) + 0.13)
+  # Filtration (no renal extraction ratio) stays linear and indifferent to flow
+  row$renal_extraction_ratio <- NA
+  expect_equal(physiologyClearanceFactor(row, checkPhysiology(c(renal = 0.1))),
+               0.27 * 0.1 + 0.73)
+  expect_equal(physiologyClearanceFactor(row, checkPhysiology(c(cardiac = 0.5))),
+               0.27 + 0.6 * hepaticClearanceFactor(0.87, 0.5, 1) + 0.13)
+})
+
 test_that("first pass follows the extraction ratio and never passes F = 1", {
   row <- list(extraction_ratio = 0.7, oral_first_pass = TRUE)
   p <- checkPhysiology(c(liver = 0.5))
@@ -198,7 +219,8 @@ test_that("the simulation responds: a lower clearance leaves more drug", {
 test_that("the physiology table is well formed", {
   tab <- physiologyTable()
   expect_named(tab, c("drug", "fraction_renal", "fraction_hepatic",
-                      "extraction_ratio", "oral_first_pass", "basis",
+                      "extraction_ratio", "renal_extraction_ratio",
+                      "oral_first_pass", "basis",
                       "source_renal", "source_hepatic", "source_extraction",
                       "verification", "notes"))
   expect_false(anyDuplicated(tab$drug) > 0)
@@ -216,6 +238,9 @@ test_that("the physiology table is well formed", {
     expect_lte(r$fraction_renal + r$fraction_hepatic, 1 + 1e-9)
     if (r$fraction_hepatic > 0)
       expect_true(is_valid_number(r$extraction_ratio, 0, 1), info = info)
+    if (!is.na(r$renal_extraction_ratio))
+      expect_true(r$fraction_renal > 0 &&
+                    is_valid_number(r$renal_extraction_ratio, 0, 1), info = info)
     expect_true(nzchar(r$source_renal) && nzchar(r$source_hepatic), info = info)
     if (r$fraction_hepatic > 0) expect_true(nzchar(r$source_extraction), info = info)
     # A model whose elimination lives outside the PK set cannot be scaled

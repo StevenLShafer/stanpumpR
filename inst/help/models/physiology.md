@@ -34,24 +34,31 @@ which needs nothing but the drug's extraction ratio E at normal physiology.
   enzyme induction, and hardly changes with hepatic blood flow.
 
 The **Liver function** slider is *l*. The **Cardiac output** slider is *q*,
-because liver blood flow is taken as a fixed share of cardiac output. For a
+because liver blood flow is taken as a fixed share of cardiac output (as is
+renal blood flow, below). For a
 drug given by mouth whose bioavailability includes a hepatic first pass
 (morphine), the new extraction ratio E′ = *l* E / (*q* (1 − E) + *l* E) also
 changes the oral bioavailability, F′ = F (1 − E′)/(1 − E), never above 1.
 
 ## The kidneys
 
-**Renal function** scales only the renal share of a drug's clearance: the
-unchanged drug excreted in urine. Each drug's clearance is split into a renal
+**Renal function** scales only the renal share of a drug's clearance. Each drug's clearance is split into a renal
 share, a hepatic share, and the rest. The rest is elimination outside the liver
 and kidneys, such as plasma and tissue esterases (remifentanil) and Hofmann
 elimination (cisatracurium), and no slider changes it. Setting renal function
 to 0.1 removes 90% of the renal share and nothing else.
 
-The renal slider does not reach a kidney's **metabolism** of a drug. Propofol
-is the example: the kidneys metabolize almost a third of it. The slider
-reaches only unchanged drug in urine. A Patient Profile serum creatinine
-still changes the drugs whose models read it. The slider acts on top of that.
+Some drugs are **metabolized** by the kidney, not just filtered. Propofol is
+the main example. Its total clearance is greater than hepatic blood flow, and
+the kidneys are the likely reason: they metabolize about 27% of it, with a
+renal extraction ratio of 0.58 measured against renal blood flow (Takizawa
+2005). The renal share of such a drug follows the same well-stirred rule as
+the liver, with renal blood flow a fixed share of cardiac output:
+CL<sub>R</sub>′/CL<sub>R</sub> = *q r* / (*q* (1 − E<sub>R</sub>) + *r* E<sub>R</sub>).
+So both renal function and cardiac output change it. A renal share with no
+renal extraction ratio is filtration of unchanged drug, which changes in
+proportion to renal function. A Patient Profile serum creatinine still
+changes the drugs whose models read it, and the slider acts on top of that.
 
 ## Cardiac output and distribution
 
