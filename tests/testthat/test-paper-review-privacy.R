@@ -380,3 +380,64 @@ test_that("stopping a review ends its background process, not only the wait for 
   expect_true(state() %in% c("", "Z"))                # and ended
   expect_false(stop())                                # a second stop does nothing
 })
+
+test_that("the stop function holds no manuscript, and the app lets it go once the answer returns", {
+  # CodeRabbit, PR #720: made inside paperReviewExtractAsync(), it kept that
+  # call's frame, and the manuscript and key in it, alive.
+  stop <- paperReviewStopper("a job", "a file")
+  expect_setequal(ls(environment(stop)), c("job", "pidFile"))
+  testthat::local_mocked_bindings(
+    paperReviewTransport = function(...) list(failure = "connection"),
+    paperReviewInBackground = function(fn, args, timeout) promises::promise_resolve(list(failure = "connection")))
+  held <- NULL
+  p <- paperReviewExtractAsync(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), key = "sk-ant-test",
+                               onJob = function(f) held <<- f)
+  promises::catch(p, function(e) NULL)
+  expect_false(any(c("pdf", "key", "supplement") %in% ls(environment(held))))
+})
+
+test_that("a second click while a quick review's place is asked for does nothing", {
+  dir <- file.path(tempdir(), paste0("upload-", paste(sample(letters, 12), collapse = "")))
+  dir.create(dir)
+  path <- file.path(dir, "0.pdf")
+  writeBin(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), path)
+  clock <- as.POSIXct("2026-11-13 10:00:00", tz = "UTC")
+  admits <- 0
+  resolveSecond <- NULL
+  stopped <- 0
+  efforts <- character(0)
+  rejectFull <- NULL
+  testthat::local_mocked_bindings(
+    paperReviewNow = function() clock,
+    paperReviewApiKey = function(sessionKey = NULL, ...) sessionKey %or% "operator-key",
+    paperReviewSharedKeyAdmit = function(...) {
+      admits <<- admits + 1
+      if (admits == 1) promises::promise_resolve(TRUE)
+      else promises::promise(function(resolve, reject) resolveSecond <<- resolve)
+    },
+    paperReviewSharedKeyRelease = function() NULL,
+    paperReviewUsageReport = function(record, ...) invisible(record),
+    paperReviewExtractAsync = function(pdf, supplement = NULL, key, ..., effort, onJob = NULL) {
+      efforts <<- c(efforts, effort)
+      if (effort == PAPER_REVIEW_EFFORT) {
+        onJob(function() { stopped <<- stopped + 1; rejectFull(paperReviewError("background", "stopped")) })
+        promises::promise(function(resolve, reject) rejectFull <<- reject)
+      } else promises::promise(function(resolve, reject) NULL)   # the quick review runs on
+    })
+  shiny::testServer(paperReviewServer, {
+    session$setInputs(manuscript = list(name = "x.pdf", size = 59, type = "application/pdf", datapath = path),
+                      consent = TRUE)
+    session$setInputs(review = 1)
+    session$flushReact()
+    clock <<- clock + PAPER_REVIEW_LATE_SEC + 1
+    session$elapse(PAPER_REVIEW_LATE_SEC * 1000 + 1000)
+    session$setInputs(quickReview = 1)                 # asks for a place...
+    session$setInputs(quickReview = 2)                 # ...and a second click waits for it
+    expect_equal(admits, 2)
+    resolveSecond(TRUE)
+    settle(session)
+    expect_equal(stopped, 1)
+    expect_equal(efforts, c(PAPER_REVIEW_EFFORT, PAPER_REVIEW_QUICK_EFFORT))
+    expect_null(running$stop)                          # the quick review's mock gave no stop
+  })
+})

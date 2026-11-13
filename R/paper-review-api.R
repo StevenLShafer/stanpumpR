@@ -597,6 +597,32 @@ paperReviewInBackground <- function(fn, args, timeout)
   mirai::mirai(do.call(fn, args), .args = list(fn = fn, args = args), .timeout = timeout * 1000)
 }
 
+#' The function that stops one background review and its process
+#'
+#' Made here, not inside paperReviewExtractAsync(), so that it holds only the
+#' job and the file of its process ID: a function made there would keep that
+#' call's frame, the manuscript and the key with it, alive for as long as the
+#' app keeps the function (CodeRabbit, PR #720).
+#'
+#' @param job the background job
+#' @param pidFile the file its process wrote its ID to
+#' @returns a function of no arguments: TRUE when it stopped a running job
+#' @keywords internal
+paperReviewStopper <- function(job, pidFile)
+{
+  force(job)
+  force(pidFile)
+  function() {
+    # Only while it runs: once it has finished, its ID may be another's.
+    if (!mirai::unresolved(job)) return(invisible(FALSE))
+    pid <- suppressWarnings(as.integer(tryCatch(readLines(pidFile, warn = FALSE)[1],
+                                                error = function(e) NA_character_)))
+    mirai::stop_mirai(job)
+    if (length(pid) == 1 && !is.na(pid) && pid != Sys.getpid()) tools::pskill(pid)
+    invisible(TRUE)
+  }
+}
+
 #' Send one manuscript to the Anthropic API without waiting for it
 #'
 #' The request is built and checked here, sent from a background R process,
@@ -621,15 +647,7 @@ paperReviewExtractAsync <- function(pdf, supplement = NULL, key, ..., onJob = NU
                                  c(paperReviewTransportArgs(prepared, key), list(pidFile = pidFile)),
                                  PAPER_REVIEW_BACKGROUND_TIMEOUT_SEC)
   rm(prepared)
-  if (is.function(onJob)) onJob(function() {
-    # Only while it runs: once it has finished, its ID may be another's.
-    if (!mirai::unresolved(job)) return(invisible(FALSE))
-    pid <- suppressWarnings(as.integer(tryCatch(readLines(pidFile, warn = FALSE)[1],
-                                                error = function(e) NA_character_)))
-    mirai::stop_mirai(job)
-    if (length(pid) == 1 && !is.na(pid) && pid != Sys.getpid()) tools::pskill(pid)
-    invisible(TRUE)
-  })
+  if (is.function(onJob)) onJob(paperReviewStopper(job, pidFile))
   answer <- promises::then(job,
     onFulfilled = function(result) {
       # A failure inside the process comes back as a value, not an error.

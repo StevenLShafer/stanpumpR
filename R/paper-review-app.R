@@ -321,6 +321,8 @@ paperReviewServer <- function(input, output, session)
   # A quick review's place within the shared key's limit, reserved before
   # the full review is stopped.
   preAdmitted <- shiny::reactiveVal(FALSE)
+  # A quick review's place being asked for (a second click waits for it).
+  admitting <- shiny::reactiveVal(FALSE)
   releaseReserved <- function() if (isTRUE(preAdmitted())) {
     preAdmitted(FALSE)
     paperReviewSharedKeyRelease()
@@ -418,7 +420,7 @@ paperReviewServer <- function(input, output, session)
   shiny::observeEvent(input$keepWaiting, shinyjs::hide("reviewLate"))
   shiny::observeEvent(input$quickReview, {
     shinyjs::hide("reviewLate")
-    if (!reviewing() || quick() || stopForQuick() || !exists("inFlight", envir = store)) return()
+    if (!reviewing() || quick() || stopForQuick() || admitting() || !exists("inFlight", envir = store)) return()
     # The stopped review is billed for what it had read, and counted.
     stopFull <- function() {
       stopForQuick(TRUE)
@@ -430,15 +432,21 @@ paperReviewServer <- function(input, output, session)
     # reserved first; with none left, the full review goes on (CodeRabbit,
     # PR #720).
     status("Checking that a quick review can be sent.")
+    admitting(TRUE)
     promises::then(paperReviewSharedKeyAdmit(),
       onFulfilled = function(...) {
-        if (!shiny::isolate(reviewing()) || !exists("inFlight", envir = store))
+        admitting(FALSE)
+        # A place that comes back after the review has moved on is given back.
+        if (!shiny::isolate(reviewing()) || shiny::isolate(quick()) || shiny::isolate(stopForQuick()) ||
+            !exists("inFlight", envir = store))
           return(paperReviewSharedKeyRelease())
         preAdmitted(TRUE)
         stopFull()
       },
-      onRejected = function(e) status(paste("A quick review cannot be sent:", conditionMessage(e),
-                                            "The full review goes on.")))
+      onRejected = function(e) {
+        admitting(FALSE)
+        status(paste("A quick review cannot be sent:", conditionMessage(e), "The full review goes on."))
+      })
     NULL
   })
 
@@ -460,6 +468,7 @@ paperReviewServer <- function(input, output, session)
     releaseReserved()
     shinyjs::hide("reviewBusy")
     shinyjs::hide("reviewLate")
+    running$stop <- NULL
     suppressWarnings(rm(list = intersect("inFlight", ls(store)), envir = store))
     if (!awaited()) return()
     awaited(FALSE)
@@ -488,6 +497,7 @@ paperReviewServer <- function(input, output, session)
     awaited(FALSE)
     stopForQuick(FALSE)
     releaseReserved()
+    running$stop <- NULL
     shinyjs::hide("reviewBusy")
     shinyjs::hide("reviewLate")
     hasPdf(FALSE)
