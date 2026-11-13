@@ -1,9 +1,13 @@
 // The dose grid on a phone: a smaller suite than dose-grid.test.js, for
 // what a phone does differently (a tap instead of a click, a value
 // committed by tapping the next cell, the system's own list for a
-// <select>), run on real iPhones (Safari) and real Android phones (Chrome),
-// and written to the limits BrowserStack sets on Playwright on a real iPhone
-// (its "Supported Playwright commands for iOS"), the stricter of the two:
+// <select>).  It runs as an iPhone 15 in Playwright's WebKit, or with
+// STANPUMPR_PHONE=android as a Pixel 7 in Chromium (touch, the phone's
+// viewport and user agent).
+//
+// It was first written to run on real phones through BrowserStack (removed
+// 2026-11-13), and keeps to the limits Playwright had there on a real
+// iPhone, which cost nothing here:
 //
 // - one browser context and one page for the whole file, so every case
 //   starts by loading the app afresh in that page (a new Shiny session each
@@ -11,19 +15,10 @@
 // - no page.$$eval() and no pageerror event: the page is read with
 //   page.evaluate(), and script errors are collected by a script added
 //   before the app loads (page.addInitScript());
-// - page.evaluate() returns real values only, not an async function's, so
-//   the server's state is read with a synchronous request;
-// - text goes to a cell (locator.fill()), not to the page's keyboard, which
-//   BrowserStack never typed on an iPhone, and a cell is committed by
-//   tapping the next one, Enter not reaching the grid there either;
+// - the server's state is read with a synchronous request;
+// - text goes to a cell (locator.fill()), and a cell is committed by
+//   tapping the next one; Enter is the desktop suite's;
 // - no clipboard: nothing here is pasted.
-//
-// Run here, it runs as an iPhone 15 in Playwright's WebKit, or with
-// STANPUMPR_PHONE=android as a Pixel 7 in Chromium (touch, the phone's
-// viewport and user agent), keeping to the same limits, so a case that
-// needs more than BrowserStack allows fails here first.  On BrowserStack
-// (STANPUMPR_BROWSERSTACK=iphone-16, iphone-17, android-pixel-9 or
-// android-galaxy-s25, browserstack.js) it runs on that phone.
 //
 //   node tests/playwright/run.js phone.test.js
 //   STANPUMPR_PHONE=android node tests/playwright/run.js phone.test.js
@@ -34,23 +29,16 @@ const { describe, test, before, after, beforeEach, afterEach } = require('node:t
 const assert = require('node:assert/strict');
 const playwright = require('playwright');
 const H = require('./harness');
-const BS = require('./browserstack');
 
 if (!process.env.STANPUMPR_URL) throw new Error('STANPUMPR_URL is not set: run the suite through run.js');
-if (BS.enabled() && !BS.mobile()) {
-  throw new Error('phone.test.js runs on a phone platform (' +
-    Object.keys(BS.PLATFORMS).filter(n => BS.PLATFORMS[n].mobile).join(', ') + ') or here');
-}
-// The phone it stands in for here (no effect on BrowserStack)
+// The phone it stands in for
 const LOCAL_PHONES = {
   iphone: { engine: 'webkit', device: 'iPhone 15' },
   android: { engine: 'chromium', device: 'Pixel 7' }
 };
 const LOCAL_PHONE = LOCAL_PHONES[process.env.STANPUMPR_PHONE || 'iphone'];
 if (!LOCAL_PHONE) throw new Error('STANPUMPR_PHONE is iphone or android');
-const APP = BS.appUrl(process.env.STANPUMPR_URL);
-// A real Android phone on BrowserStack (Chrome, through Playwright's _android)
-const ANDROID = BS.enabled() && !!BS.platform().android;
+const APP = process.env.STANPUMPR_URL;
 
 // The startup table: propofol (bolus, infusion), fentanyl, remifentanil
 // (bolus, infusion), rocuronium; then blank rows
@@ -63,11 +51,11 @@ const input = (r, c) => `${row(r)} td:nth-child(${c + 1}) input`;
 const unitCell = r => `${row(r)} td:nth-child(4)`;
 const unitSelect = r => `${row(r)} td:nth-child(4) select`;
 
-let phone, context, page;
+let browser, context, page;
 
 before(async () => {
-  phone = await BS.launchPhone(playwright, LOCAL_PHONE, 'phone');
-  context = phone.context;
+  browser = await playwright[LOCAL_PHONE.engine].launch();
+  context = await browser.newContext(playwright.devices[LOCAL_PHONE.device]);
   page = await context.newPage();
   await page.addInitScript(() => {
     window.__errors = [];
@@ -76,19 +64,15 @@ before(async () => {
   });
 });
 
-// With no phone (launchPhone() failed, and that error is the one to report)
+// With no browser (the launch failed, and that error is the one to report)
 // there is nothing to close
 after(async () => {
-  if (phone) await phone.close();
+  if (browser) await browser.close();
 });
 
 // The app loaded afresh, the startup menu's four drugs ticked and Started
 beforeEach(async () => {
-  // On Android the page's load event came late or not at all through the
-  // tunnel (two loads of eight timed out at 30 s, the first real-Pixel run
-  // with touch, 2026-11-10); what the case needs is the startup menu, which
-  // the next line waits for
-  await page.goto(APP, ANDROID ? { waitUntil: 'domcontentloaded', timeout: 90000 } : { waitUntil: 'load' });
+  await page.goto(APP, { waitUntil: 'load' });
   await page.waitForSelector('#startup_ok', { timeout: 120000 });
   await page.evaluate(ds => {
     for (const d of ds) {
@@ -134,9 +118,7 @@ async function reloadInPage(timeout = 60000) {
   const deadline = Date.now() + timeout;
   while (Date.now() < deadline) {
     await page.waitForTimeout(500);
-    // not document.readyState === 'complete': on Android the load event came
-    // late through the tunnel (as in beforeEach), and a connected Shiny is
-    // what the case needs (the fourth real-Pixel run, 2026-11-10)
+    // a connected Shiny is what the case needs
     const ready = await page.evaluate(() => !window.__beforeReload &&
       !!(window.Shiny && window.Shiny.shinyapp && window.Shiny.shinyapp.isConnected())).catch(() => false);
     if (ready) return;
@@ -178,13 +160,8 @@ async function holds(r, expected) {
 
 // A tap on a cell, the text, then a tap on the next cell: how a phone
 // enters a value, the grid committing the cell as the focus leaves it
-// (onFocusOut in dose-grid.js).  On a real iPhone BrowserStack turns each
-// Playwright call into a WebDriver command, and neither way of pressing
-// Enter worked: keys sent to the page (page.keyboard) were never typed (the
-// first run, 2026-11-09), and Enter sent to the cell left the dose on the
-// screen uncommitted (the second).  So the text goes to the cell itself
-// (locator.fill()), and the cell is committed by tapping the next one.
-// Enter is the desktop suite's (dose-grid.test.js)
+// (onFocusOut in dose-grid.js).  Enter is the desktop suite's
+// (dose-grid.test.js)
 async function enter(r, c, text) {
   await tapOn(input(r, c));
   await typeInto(input(r, c), text);
@@ -192,44 +169,10 @@ async function enter(r, c, text) {
   await H.settle(page, 300);
 }
 
-// A tap.  Before it taps, Playwright checks that nothing covers the target
-// by asking the page what lies at the point it will tap, and on a real
-// Android phone with the keyboard up that check looks in the wrong place.
-// The keyboard shrinks the visual viewport, and bringing a target below it
-// into view pans that viewport down (by 206 px for the drug list and 359 px
-// for Apply on a Pixel 9, the fourth real-Pixel run, 2026-11-10); the check
-// does not allow for the pan, found the rows and the navbar above the target
-// "intercepting" the tap, and timed out (the second and third runs).  So on
-// Android the target is scrolled to the middle of the screen at once (no
-// smooth scroll), the page itself is asked whether the target is on top at
-// its centre, and the tap is sent without Playwright's check (force), which
-// lands; each case then checks what its tap did.  A target the page finds
-// covered is reported, so a tap that misses says where it went
+// A tap on a selector or a locator
 async function tapOn(target) {
   const locator = typeof target === 'string' ? page.locator(target) : target;
-  if (!ANDROID) return locator.tap();
-  const seen = await locator.evaluate(el => {
-    el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
-    const r = el.getBoundingClientRect();
-    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-    const v = window.visualViewport;
-    return {
-      target: el.id || el.getAttribute('aria-label') || el.textContent.trim().slice(0, 30),
-      rect: [r.left, r.top, r.width, r.height].map(Math.round),
-      onTop: !!hit && (hit === el || el.contains(hit)),
-      hit: hit ? (hit.id || hit.getAttribute('aria-label') || hit.tagName) : null,
-      viewport: v ? { scale: v.scale, top: v.offsetTop, height: v.height, width: v.width } : null,
-      inner: [window.innerWidth, window.innerHeight],
-      scrollY: Math.round(window.scrollY),
-      dpr: window.devicePixelRatio
-    };
-  });
-  if (!seen.onTop) console.log('the page finds this tap target covered:', JSON.stringify(seen));
-  // the scroll is instant, but the tap's point is read from the layout, so
-  // wait for the next two frames to be drawn rather than a fixed time (an
-  // async evaluate: this is Android's Chromium, not BrowserStack's iPhone)
-  await locator.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
-  await locator.tap({ force: true });
+  await locator.tap();
 }
 
 async function typeInto(selector, text) {
@@ -237,9 +180,7 @@ async function typeInto(selector, text) {
 }
 
 // The server's state (exportTestValues(), test mode), read with a
-// synchronous request: on a real iPhone page.evaluate() returns real values
-// only, and an async function's came back as "[object Object]" (the first
-// run, 2026-11-09)
+// synchronous request
 async function serverState() {
   const text = await page.evaluate(() => {
     const u = window.Shiny.shinyapp.getTestSnapshotBaseUrl({ fullUrl: true }) + '&input=0&output=0&export=1&format=json';
@@ -366,16 +307,10 @@ describe('the dose grid on a phone', () => {
     }, plotBefore, { timeout: 60000 });
   });
 
-  // The link in the address bar after Apply, opened afresh in the same page
-  // (one page is all an iPhone session has), restores the table applied.
-  // The page reloads itself (location.reload()), which opens that same
-  // address in a new session.  Playwright's own navigation failed on the
-  // iPhone 16 (iOS 18), where BrowserStack translates it: page.goto() with
-  // the bookmark address left the grid empty (the third run, 2026-11-09), and
-  // page.reload() broke the connection ("Object with guid response@... was
-  // not bound", the fifth), the Response each returns not surviving the
-  // translation.  So the reload is the page's, and the wait is a poll of
-  // page.evaluate(), which every run has kept
+  // The link in the address bar after Apply, opened afresh in the same page,
+  // restores the table applied.  The page reloads itself (location.reload()),
+  // which opens that same address in a new session, and the wait is a poll of
+  // page.evaluate()
   test('the bookmark after Apply restores the table applied', async () => {
     await enter(FENTANYL, 2, '357');
     await holds(FENTANYL, ['fentanyl', '0', '357', 'mcg']);
@@ -387,7 +322,7 @@ describe('the dose grid on a phone', () => {
     try {
       await waitForRows(rows => rows.some(r => r[2] === '357'), 60000);
     } catch (e) {
-      // what the page showed instead, so a failure on a device says why
+      // what the page showed instead, so a failure says why
       const seen = await page.evaluate(l => ({
         sameAddress: location.href === l,
         addressLength: location.href.length,
