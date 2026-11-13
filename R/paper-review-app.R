@@ -298,16 +298,17 @@ paperReviewServer <- function(input, output, session)
   # The review runs in a background process (paperReviewExtractAsync()), so
   # this session and every other on the worker stay live while it runs.
   # A review with the operator's key is first admitted against its limit
-  # (paperReviewSharedKeyAdmit(), R/paper-review-usage.R).  Its background
-  # job is kept so that it can be stopped for a quick review.
+  # (paperReviewSharedKeyAdmit(), R/paper-review-usage.R), unless its place
+  # was reserved already (a quick review's).  The function that stops its
+  # background process is kept, for a quick review.
   running <- new.env(parent = emptyenv())
-  reviewTask <- shiny::ExtendedTask$new(function(pdf, supplement, key, inferenceGeo, shared, effort) {
-    running$job <- NULL
+  reviewTask <- shiny::ExtendedTask$new(function(pdf, supplement, key, inferenceGeo, shared, effort, admitted) {
+    running$stop <- NULL
     send <- function(...) paperReviewTrackUse(
       paperReviewExtractAsync(pdf, supplement, key = key, inferenceGeo = inferenceGeo, effort = effort,
-                              onJob = function(job) running$job <- job),
+                              onJob = function(stop) running$stop <- stop),
       shared = shared)
-    if (!isTRUE(shared)) return(send())
+    if (!isTRUE(shared) || isTRUE(admitted)) return(send())
     promises::then(paperReviewSharedKeyAdmit(), send)
   })
   reviewing <- shiny::reactive(identical(reviewTask$status(), "running"))
@@ -317,15 +318,22 @@ paperReviewServer <- function(input, output, session)
   quick <- shiny::reactiveVal(FALSE)
   lateOffered <- shiny::reactiveVal(FALSE)
   stopForQuick <- shiny::reactiveVal(FALSE)
+  # A quick review's place within the shared key's limit, reserved before
+  # the full review is stopped.
+  preAdmitted <- shiny::reactiveVal(FALSE)
+  releaseReserved <- function() if (isTRUE(preAdmitted())) {
+    preAdmitted(FALSE)
+    paperReviewSharedKeyRelease()
+  }
   # The review's key and settings, kept with the manuscript (store$inFlight)
   # so that the quick review can be sent without asking again.
-  sendReview <- function(effort) {
+  sendReview <- function(effort, admitted = FALSE) {
     f <- store$inFlight
     reviewStarted(paperReviewNow())
     lateOffered(FALSE)
     quick(!identical(effort, PAPER_REVIEW_EFFORT))
     reviewTask$invoke(f$pdf, f$supplement, paperReviewApiKey(f$own), paperReviewConfig("paper_review_inference_geo"),
-                      is.null(f$own), effort)
+                      is.null(f$own), effort, admitted)
   }
   # Is the running review still wanted?  Discarding while Claude reads the
   # paper means its answer is dropped when it comes.
@@ -410,11 +418,28 @@ paperReviewServer <- function(input, output, session)
   shiny::observeEvent(input$keepWaiting, shinyjs::hide("reviewLate"))
   shiny::observeEvent(input$quickReview, {
     shinyjs::hide("reviewLate")
-    if (!reviewing() || quick() || !exists("inFlight", envir = store)) return()
-    stopForQuick(TRUE)
-    status("Stopping the full review and starting a quick one.")
+    if (!reviewing() || quick() || stopForQuick() || !exists("inFlight", envir = store)) return()
     # The stopped review is billed for what it had read, and counted.
-    if (!is.null(running$job)) mirai::stop_mirai(running$job)
+    stopFull <- function() {
+      stopForQuick(TRUE)
+      status("Stopping the full review and starting a quick one.")
+      if (is.function(running$stop)) running$stop()
+    }
+    if (!is.null(store$inFlight$own)) return(stopFull())
+    # With stanpumpR's own key, the quick review's place within the limit is
+    # reserved first; with none left, the full review goes on (CodeRabbit,
+    # PR #720).
+    status("Checking that a quick review can be sent.")
+    promises::then(paperReviewSharedKeyAdmit(),
+      onFulfilled = function(...) {
+        if (!shiny::isolate(reviewing()) || !exists("inFlight", envir = store))
+          return(paperReviewSharedKeyRelease())
+        preAdmitted(TRUE)
+        stopFull()
+      },
+      onRejected = function(e) status(paste("A quick review cannot be sent:", conditionMessage(e),
+                                            "The full review goes on.")))
+    NULL
   })
 
   shiny::observeEvent(reviewTask$status(), {
@@ -426,10 +451,13 @@ paperReviewServer <- function(input, output, session)
       if (identical(reviewTask$status(), "error") && awaited() && exists("inFlight", envir = store)) {
         shinyjs::html("reviewBusyTitle", "Claude is reading the paper again, for a quick review.")
         status("Claude is reading the paper again, for a quick review.")
-        sendReview(PAPER_REVIEW_QUICK_EFFORT)
+        admitted <- preAdmitted()
+        preAdmitted(FALSE)
+        sendReview(PAPER_REVIEW_QUICK_EFFORT, admitted = admitted)
         return()
       }
     }
+    releaseReserved()
     shinyjs::hide("reviewBusy")
     shinyjs::hide("reviewLate")
     suppressWarnings(rm(list = intersect("inFlight", ls(store)), envir = store))
@@ -459,6 +487,7 @@ paperReviewServer <- function(input, output, session)
     paperReviewDiscard(store)
     awaited(FALSE)
     stopForQuick(FALSE)
+    releaseReserved()
     shinyjs::hide("reviewBusy")
     shinyjs::hide("reviewLate")
     hasPdf(FALSE)

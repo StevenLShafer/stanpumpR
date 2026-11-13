@@ -460,20 +460,23 @@ paperReviewPrepare <- function(pdf, supplement = NULL, key, ...)
 #' \code{httr2::} or \code{jsonlite::}.  It returns what came back, raw:
 #' the HTTP status, the API's error object for a refused request, or the
 #' server-sent events; paperReviewInterpret() reads them.  It writes nothing
-#' anywhere, and the key is redacted from the request.
+#' anywhere but, when asked, its own process ID (so the app can stop it), and
+#' the key is redacted from the request.
 #'
 #' @param json the request body
 #' @param key the API key
 #' @param fallbacks request the server-side refusal fallback?
 #' @param url,version,beta,timeout the endpoint, API version, fallback beta
 #'   header and time limit (seconds)
+#' @param pidFile a file to write this process's ID to, or NULL
 #' @returns a list: \code{failure} (NULL, \code{"no_httr2"} or
 #'   \code{"connection"}), \code{status}, \code{error}, \code{events}
 #' @keywords internal
 paperReviewTransport <- function(json, key, fallbacks = TRUE,
                                  url = "https://api.anthropic.com/v1/messages",
-                                 version, beta, timeout)
+                                 version, beta, timeout, pidFile = NULL)
 {
+  if (!is.null(pidFile)) writeLines(as.character(Sys.getpid()), pidFile)
   if (!requireNamespace("httr2", quietly = TRUE)) return(list(failure = "no_httr2"))
   req <- httr2::request(url)
   req <- httr2::req_headers(req,
@@ -600,8 +603,11 @@ paperReviewInBackground <- function(fn, args, timeout)
 #' and read here when it returns.
 #'
 #' @inheritParams paperReviewExtract
-#' @param onJob called with the background job once it starts, so that it
-#'   can be stopped (\code{mirai::stop_mirai()}); NULL for none
+#' @param onJob called once the background process starts with a function
+#'   that stops it, or NULL.  Without a dispatcher, \code{mirai::stop_mirai()}
+#'   settles the job here at once but leaves its process reading the paper
+#'   (and billed) until its own time limit, so the stop function also ends
+#'   the process, by the ID it wrote.
 #' @returns a promise of what paperReviewExtract() returns; it is rejected
 #'   with a \code{paper_review_error}
 #' @keywords internal
@@ -610,11 +616,21 @@ paperReviewExtractAsync <- function(pdf, supplement = NULL, key, ..., onJob = NU
   prepared <- tryCatch(paperReviewPrepare(pdf, supplement, key = key, ...),
                        paper_review_error = function(e) e)
   if (inherits(prepared, "paper_review_error")) return(promises::promise_reject(prepared))
-  job <- paperReviewInBackground(paperReviewTransport, paperReviewTransportArgs(prepared, key),
+  pidFile <- tempfile("paper-review-")
+  job <- paperReviewInBackground(paperReviewTransport,
+                                 c(paperReviewTransportArgs(prepared, key), list(pidFile = pidFile)),
                                  PAPER_REVIEW_BACKGROUND_TIMEOUT_SEC)
   rm(prepared)
-  if (is.function(onJob)) onJob(job)
-  promises::then(job,
+  if (is.function(onJob)) onJob(function() {
+    # Only while it runs: once it has finished, its ID may be another's.
+    if (!mirai::unresolved(job)) return(invisible(FALSE))
+    pid <- suppressWarnings(as.integer(tryCatch(readLines(pidFile, warn = FALSE)[1],
+                                                error = function(e) NA_character_)))
+    mirai::stop_mirai(job)
+    if (length(pid) == 1 && !is.na(pid) && pid != Sys.getpid()) tools::pskill(pid)
+    invisible(TRUE)
+  })
+  answer <- promises::then(job,
     onFulfilled = function(result) {
       # A failure inside the process comes back as a value, not an error.
       if (inherits(result, "miraiError") || inherits(result, "errorValue"))
@@ -624,4 +640,5 @@ paperReviewExtractAsync <- function(pdf, supplement = NULL, key, ..., onJob = NU
     onRejected = function(e)
       stop(paperReviewError("background",
                             "The review did not finish (it timed out, or its background process failed). Try again.")))
+  promises::finally(answer, function() unlink(pidFile))
 }

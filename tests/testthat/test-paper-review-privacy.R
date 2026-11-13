@@ -212,18 +212,16 @@ test_that("a review still running after ten minutes is offered a quick one, at e
       pdfs[[length(pdfs) + 1]] <<- pdf
       if (effort == PAPER_REVIEW_EFFORT) {
         # The full review never answers until it is stopped.
-        if (is.function(onJob)) onJob("the full review's job")
+        if (is.function(onJob)) onJob(function() {
+          stopped <<- stopped + 1
+          rejectFull(paperReviewError("background", "stopped"))
+        })
         promises::promise(function(resolve, reject) rejectFull <<- reject)
       } else {
         promises::promise_resolve(list(extraction = paperReviewExample(),
                                        usage = list(input_tokens = 1000, output_tokens = 200)))
       }
     })
-  testthat::local_mocked_bindings(
-    stop_mirai = function(x) {
-      stopped <<- stopped + 1
-      rejectFull(paperReviewError("background", "stopped"))
-    }, .package = "mirai")
   shiny::testServer(paperReviewServer, {
     session$setInputs(manuscript = list(name = "x.pdf", size = 59, type = "application/pdf", datapath = path),
                       consent = TRUE)
@@ -282,4 +280,103 @@ test_that("a full review that answers is not replaced, and is not marked quick",
     html <- as.character(htmltools::renderTags(paperReviewReportTags(review(), plots = FALSE))$html)
     expect_false(grepl("A quick review.", html, fixed = TRUE))
   })
+})
+
+test_that("with stanpumpR's own key, a quick review is sent only if the limit has room for it", {
+  # CodeRabbit, PR #720: its place is reserved before the full review is
+  # stopped, and with none left the full review goes on.
+  dir <- file.path(tempdir(), paste0("upload-", paste(sample(letters, 12), collapse = "")))
+  dir.create(dir)
+  path <- file.path(dir, "0.pdf")
+  writeBin(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), path)
+  clock <- as.POSIXct("2026-11-13 10:00:00", tz = "UTC")
+  room <- FALSE
+  admits <- 0
+  released <- 0
+  efforts <- character(0)
+  rejectFull <- NULL
+  stopped <- 0
+  testthat::local_mocked_bindings(
+    paperReviewNow = function() clock,
+    paperReviewApiKey = function(sessionKey = NULL, ...) sessionKey %or% "operator-key",
+    paperReviewSharedKeyAdmit = function(...) {
+      admits <<- admits + 1
+      if (admits == 1 || room) promises::promise_resolve(TRUE)
+      else promises::promise_reject(paperReviewError("shared_limit", "The key has made its reviews."))
+    },
+    paperReviewSharedKeyRelease = function() released <<- released + 1,
+    paperReviewUsageReport = function(record, ...) invisible(record),
+    paperReviewExtractAsync = function(pdf, supplement = NULL, key, ..., effort, onJob = NULL) {
+      efforts <<- c(efforts, effort)
+      if (effort == PAPER_REVIEW_EFFORT) {
+        onJob(function() { stopped <<- stopped + 1; rejectFull(paperReviewError("background", "stopped")) })
+        promises::promise(function(resolve, reject) rejectFull <<- reject)
+      } else promises::promise_resolve(list(extraction = paperReviewExample(), usage = list()))
+    })
+  shiny::testServer(paperReviewServer, {
+    session$setInputs(manuscript = list(name = "x.pdf", size = 59, type = "application/pdf", datapath = path),
+                      consent = TRUE)
+    session$setInputs(review = 1)
+    session$flushReact()
+    expect_equal(admits, 1)                           # the full review's own place
+    clock <<- clock + PAPER_REVIEW_LATE_SEC + 1
+    session$elapse(PAPER_REVIEW_LATE_SEC * 1000 + 1000)
+    # No room: the full review is not stopped, and goes on.
+    session$setInputs(quickReview = 1)
+    settle(session)
+    expect_equal(admits, 2)
+    expect_equal(stopped, 0)
+    expect_true(reviewing())
+    expect_match(output$status, "cannot be sent")
+    expect_match(output$status, "full review goes on")
+    # Room: the place is reserved, the full review stopped, and the quick
+    # review sent on that place without asking for another.
+    room <<- TRUE
+    session$setInputs(quickReview = 2)
+    settle(session)
+    expect_equal(admits, 3)
+    expect_equal(stopped, 1)
+    expect_equal(efforts, c(PAPER_REVIEW_EFFORT, PAPER_REVIEW_QUICK_EFFORT))
+    expect_equal(released, 0)
+    expect_true(isTRUE(review()$quick))
+  })
+})
+
+test_that("stopping a review ends its background process, not only the wait for it", {
+  # Without a dispatcher, mirai::stop_mirai() settles the job at once but
+  # leaves its process running, still reading the paper and billed
+  # (CodeRabbit, PR #720; measured with mirai 2.7.4).
+  skip_on_cran()
+  skip_on_os("windows")     # the check that the process is gone reads `ps`
+  testthat::local_mocked_bindings(
+    paperReviewTransport = function(json, key, fallbacks = TRUE, url, version, beta, timeout, pidFile = NULL) {
+      writeLines(as.character(Sys.getpid()), pidFile)
+      Sys.sleep(60)
+      list(failure = "connection")
+    })
+  stop <- NULL
+  outcome <- NULL
+  p <- paperReviewExtractAsync(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), key = "sk-ant-test",
+                               onJob = function(f) stop <<- f)
+  promises::then(p, function(x) outcome <<- "answered", function(e) outcome <<- e$code)
+  expect_true(is.function(stop))
+  # Wait for the process to write its ID.
+  pidFile <- NULL
+  for (i in 1:200) {
+    files <- list.files(tempdir(), "^paper-review-", full.names = TRUE)
+    pidFile <- files[file.exists(files) & file.size(files) > 0]
+    if (length(pidFile)) break
+    Sys.sleep(0.05)
+  }
+  pid <- as.integer(readLines(pidFile[length(pidFile)]))
+  # A process that has ended stays a zombie ("Z") until its parent reaps it.
+  state <- function() substr(trimws(paste(suppressWarnings(
+    system2("ps", c("-o", "stat=", "-p", pid), stdout = TRUE, stderr = FALSE)), collapse = "")), 1, 1)
+  expect_true(state() %in% c("S", "R", "D"))          # running
+  expect_true(stop())
+  for (i in 1:100) { later::run_now(0.05); if (!is.null(outcome)) break }
+  expect_equal(outcome, "background")
+  Sys.sleep(0.5)
+  expect_true(state() %in% c("", "Z"))                # and ended
+  expect_false(stop())                                # a second stop does nothing
 })

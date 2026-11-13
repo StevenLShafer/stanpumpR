@@ -658,10 +658,17 @@ allowed to learn from my models. Claude is allowed to see coarse metadata."
    still running after `PAPER_REVIEW_LATE_SEC` (10 minutes; the calibration's
    slowest at `high` took 7) turns the busy banner into a choice, *Keep
    waiting* or *Stop and run a quick review*. The quick review stops the
-   background job (`mirai::stop_mirai()`, through the `onJob` hook of
-   `paperReviewExtractAsync()`) and sends the same manuscript to the same
-   model at `PAPER_REVIEW_QUICK_EFFORT` (`medium`), and its report carries a
-   banner saying it is a quick review (`review$quick`). For this the
+   full one (the `onJob` hook of `paperReviewExtractAsync()` hands the app a
+   stop function) and sends the same manuscript to the same model at
+   `PAPER_REVIEW_QUICK_EFFORT` (`medium`), and its report carries a banner
+   saying it is a quick review (`review$quick`), even when it found no
+   model. Stopping ends the background process itself, by the ID it wrote
+   (`pidFile`): without a dispatcher `mirai::stop_mirai()` settles the job
+   in the app at once but leaves the process reading the paper, and billed,
+   for up to 20 minutes (measured with mirai 2.7.4; CodeRabbit on PR #720).
+   With stanpumpR's own key, the quick review's place within the 200 is
+   reserved before the full review is stopped, and with none left the full
+   review goes on. For this the
    manuscript is held in the session, out of the upload slot, until Claude's
    answer returns (`store$inFlight`), as the help page and the privacy draft
    already said, rather than dropped the moment it was sent. Not a different
