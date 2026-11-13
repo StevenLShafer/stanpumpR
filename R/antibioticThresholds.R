@@ -99,6 +99,16 @@ antibioticMicTable <- function()
       "or more need higher doses; a trough above 2 mg/L reaches AUC/MIC 80 across the epidemiological MIC",
       "distribution); EUCAST Clinical Breakpoint Tables v16.1, 2026, Staphylococcus S <= 4 mg/L; MIC90",
       "1 mg/L in LEADER 2013 (abstract) and 4 mg/L in 39 MRSA (Shah 2024, Table 1). 2 mg/L sits between."),
+    meropenem     = paste(
+      "MIC: EUCAST Clinical Breakpoint Tables v16.1, 2026, Enterobacterales and Pseudomonas aeruginosa",
+      "(indications other than meningitis) S <= 2 mg/L, and the Merrem label's P. aeruginosa S <= 2 mg/L",
+      "(Table 7, for 1 g every 8 hours); MIC90 0.06 mg/L in 9,809 US Enterobacterales (Sader HS et al.,",
+      "Open Forum Infect Dis 2023;10:ofad058, Table 2) and 8 mg/L in 2,282 P. aeruginosa (Shortridge D et",
+      "al., Microbiol Spectr 2022;10:e0271221, Table 3)."),
+    piperacillin  = paste(
+      "MIC: EUCAST Clinical Breakpoint Tables v16.1, 2026, Enterobacterales, piperacillin-tazobactam",
+      "S <= 8, R > 8 mg/L (tazobactam fixed at 4 mg/L); MIC50/MIC90 2/16 mg/L in 9,809 US",
+      "Enterobacterales, 88% susceptible (Sader HS et al., Open Forum Infect Dis 2023;10:ofad058, Table 2)."),
     vancomycin    = paste(
       "MIC: Rybak MJ et al., Am J Health Syst Pharm 2020;77:835-864 (the consensus AUC target assumes",
       "an MIC of 1 mg/L); Diekema DJ et al., Open Forum Infect Dis 2019;6(Suppl 1):S47-S53 (SENTRY:",
@@ -134,6 +144,13 @@ antibioticMicTable <- function()
     linezolid     = paste(
       "Free fraction: 0.69 (Zyvox label, sec. 12.3: 'The plasma protein binding of linezolid is",
       "approximately 31% and is concentration-independent')."),
+    meropenem     = paste(
+      "Free fraction: 0.98 (Merrem label, sec. 12.3: 'The plasma protein binding of meropenem is",
+      "approximately 2%')."),
+    piperacillin  = paste(
+      "Free fraction: 0.70 (Zosyn label, sec. 12.3: 'Both piperacillin and tazobactam are approximately",
+      "30% bound to plasma proteins'); Kong D et al., Clin Pharmacokinet 2025;64:107-126 estimated 0.645",
+      "from paired total and unbound samples, independent of concentration."),
     vancomycin    = paste(
       "Free fraction: Dejaco A et al., Antimicrob Agents Chemother 2026;70:e01593-25",
       "(0.72 in 706 samples from 228 adult in-patients at 37 C and pH 7.4, independent of",
@@ -143,7 +160,8 @@ antibioticMicTable <- function()
 
   x <- data.frame(
     Drug = c("cefazolin", "cefalexin", "ceftriaxone", "clindamycin",
-             "gentamicin", "metronidazole", "tobramycin", "amikacin", "linezolid", "vancomycin"),
+             "gentamicin", "metronidazole", "tobramycin", "amikacin", "linezolid", "meropenem",
+             "piperacillin", "vancomycin"),
     Organism = c(
       "Staphylococcus aureus, methicillin-susceptible (MSSA)",
       "Staphylococcus aureus, methicillin-susceptible (MSSA)",
@@ -154,18 +172,20 @@ antibioticMicTable <- function()
       "Enterobacterales and Pseudomonas aeruginosa",
       "Enterobacterales (E. coli, Klebsiella)",
       "Staphylococcus aureus, including MRSA",
+      "Enterobacterales and Pseudomonas aeruginosa",
+      "Enterobacterales (E. coli, Klebsiella, Enterobacter)",
       "Staphylococcus aureus, including MRSA"
     ),
-    MIC = c(2, 4, 1, 0.5, 2, 4, 2, 4, 2, 1),
-    Plotted = c("unbound", "total", "total", "total", "total", "total", "total", "total", "total", "total"),
-    FreeFraction = c(1, 0.85, 0.065, 0.096, 1, 0.96, 1, 0.82, 0.69, 0.70),
-    Saturable = c(FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
+    MIC = c(2, 4, 1, 0.5, 2, 4, 2, 4, 2, 2, 8, 1),
+    Plotted = c("unbound", "total", "total", "total", "total", "total", "total", "total", "total", "total", "total", "total"),
+    FreeFraction = c(1, 0.85, 0.065, 0.096, 1, 0.96, 1, 0.82, 0.69, 0.98, 0.70, 0.70),
+    Saturable = c(FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
     # The one-site binding fits named in the binding sources, total = free +
     # capacity x free / (Kd + free); FreeFraction is that map's free / total
     # at the MIC, which is what puts the threshold on the curve.
-    BindingKd       = c(NA, NA, 23.7, 0.85, NA, NA, NA, NA, NA, NA),
-    BindingCapacity = c(NA, NA, 354, 12.7, NA, NA, NA, NA, NA, NA),
-    Threshold = c(2, 4.7, 15, 5.2, 2, 4.2, 2, 4.9, 2.9, 1.4),
+    BindingKd       = c(NA, NA, 23.7, 0.85, NA, NA, NA, NA, NA, NA, NA, NA),
+    BindingCapacity = c(NA, NA, 354, 12.7, NA, NA, NA, NA, NA, NA, NA, NA),
+    Threshold = c(2, 4.7, 15, 5.2, 2, 4.2, 2, 4.9, 2.9, 2, 11.4, 1.4),
     MicSource = unname(micSource),
     BindingSource = unname(bindingSource),
     stringsAsFactors = FALSE
