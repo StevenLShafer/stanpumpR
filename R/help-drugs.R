@@ -476,7 +476,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
                                  collapse = ", ") else esc("Not a modelled metabolite of any drug in the library"),
       esc(if (helpNoBand(row)) "None: no range applies to this model, so no band is drawn"
           else if (!is.null(mic) && antibioticBandIsTrough(drug))
-            sprintf("%s to %s %s, total drug: a trough range recommended for monitoring, not an MBC band (see below)",
+            sprintf("%s to %s %s, total drug: a trough range for monitoring, not an MBC band (the recommended range and its source are below)",
                     helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)
           else if (!is.null(mic)) sprintf("%s to %s %s, free drug at the expected MBC of the common pathogens (see below)",
                                           helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)
