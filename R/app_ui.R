@@ -23,9 +23,9 @@ app_ui <- function() {
     # time was more than a day (and the server converts its dose table).
     timeUnit0 <- shiny::restoreInput("timeUnits", NULL)
     if (!identical(validTimeUnit(timeUnit0), timeUnit0)) {
-      timeUnit0 <- legacyTimeUnit(shiny::restoreInput("maximum", 60))
+      timeUnit0 <- legacyTimeUnit(shiny::restoreInput("maximum", TIME_MAXIMUM_DEFAULT))
     }
-    maximum0 <- snapMaximum(shiny::restoreInput("maximum", 60), timeUnit0)
+    maximum0 <- snapMaximum(shiny::restoreInput("maximum", TIME_MAXIMUM_DEFAULT), timeUnit0)
     minimum0 <- snapMinimum(shiny::restoreInput("minimum", 0), maximum0, timeUnit0)
     slider0 <- timeSliderRange(timeUnit0)
 
