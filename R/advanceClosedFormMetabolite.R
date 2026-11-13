@@ -41,9 +41,12 @@
 #
 # INTRAMUSCULAR AND INTRANASAL ARE NOT SUPPORTED HERE
 # ---------------------------------------------------
-# Only the intravenous and oral routes carry metabolite coefficients.  No drug
-# with a metabolite offers IM or IN units today, and silently dropping the
-# metabolite for those doses would be worse than refusing them, so they raise.
+# The intravenous, oral and tissue (regional anesthesia, "mg RA" and the
+# perineural "mg/hr RA") routes carry metabolite coefficients; the tissue
+# route was added 2026-11-13 for lidocaine's MEGX after a nerve block.  No
+# drug with a metabolite offers IM, IN or SL units today, and silently
+# dropping the metabolite for those doses would be worse than refusing them,
+# so they raise.
 #
 # A NOTE ON THE PRODRUG EFFECT SITE
 # ---------------------------------
@@ -78,11 +81,21 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
 
   hasPO <- !is.null(dose$PO) && any(dose$PO)
   if ((!is.null(dose$IM) && any(dose$IM)) || (!is.null(dose$IN) && any(dose$IN)) ||
-      (!is.null(dose$SL) && any(dose$SL)) || (!is.null(dose$RA) && any(dose$RA)) ||
-      (!is.null(dose$RArate) && any(dose$RArate)))
+      (!is.null(dose$SL) && any(dose$SL)))
     stop("A drug with an active metabolite cannot yet be given intramuscularly, ",
-         "intranasally, sublingually or by tissue injection (RA); only intravenous ",
-         "and oral routes carry metabolite coefficients.")
+         "intranasally or sublingually; only the intravenous, oral and tissue ",
+         "(RA) routes carry metabolite coefficients.")
+
+  # The tissue depot (and its slow second depot) and the perineural rate into
+  # it.  A hand-built dose table may carry none of these columns.
+  for (r in c("RA", "RAslow", "RArate"))
+    if (is.null(dose[[r]])) dose[[r]] <- rep(FALSE, nrow(dose))
+  orZeroPK <- function(x) if (is.null(x)) 0 else x
+  kaRA     <- orZeroPK(pkSet$ka_RA)
+  kaRAslow <- orZeroPK(pkSet$ka_RAslow)
+  hasRA <- any(dose$RA | dose$RAslow | dose$RArate)
+  if (hasRA && !(kaRA > 0))
+    stop("A tissue (RA) dose needs the drug's ka_RA.")
 
   # Oral doses appear after their absorption lag.
   givenAt <- dose$Time
@@ -91,6 +104,14 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
   # its own lag.
   hasPO2 <- !is.null(dose$PO2) && any(dose$PO2)
   if (hasPO2) dose$Time[dose$PO2] <- dose$Time[dose$PO2] + pkSet$tlag_PO2
+  # Tissue doses after their own lags, as advanceClosedFormPO_IM_IN() does.
+  if (hasRA)
+  {
+    tlagRA <- orZeroPK(pkSet$tlag_RA)
+    dose$Time[dose$RA]     <- dose$Time[dose$RA] + tlagRA
+    dose$Time[dose$RArate] <- dose$Time[dose$RArate] + tlagRA
+    dose$Time[dose$RAslow] <- dose$Time[dose$RAslow] + orZeroPK(pkSet$tlag_RAslow)
+  }
 
   # Timeline: dose times, the instant before each dose, and a geometric fill so
   # the early curvature is drawn smoothly.
@@ -113,6 +134,7 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
   before <- dose$Bolus
   if (hasPO) before <- before | dose$PO
   if (hasPO2) before <- before | dose$PO2
+  before <- before | dose$RA | dose$RAslow | dose$RArate
   timeLine <- simulationTimeGrid(
     c(dose$Time, dose$Time[before] - PRE_DOSE_OFFSET,
       givenAt[givenAt < dose$Time]),
@@ -124,18 +146,49 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
 
   # The oral line is all zero when there is no oral dose, and an oral row is
   # never an infusion, which is what the loop this replaced did with hasPO.
-  inputs    <- doseLines(dose, timeLine, c("PO", "PO2"))
+  # RArate rows are listed as a route so that they are not taken for
+  # intravenous infusion rows; their rate is read separately below.
+  inputs    <- doseLines(dose, timeLine, c("PO", "PO2", "RA", "RAslow", "RArate"))
   bolusLine <- inputs$bolus
   poLine    <- inputs$PO
   po2Line   <- inputs$PO2
-  # Oral input to the parent's disposition states: both depots feed them.
-  poIn <- function(prefix, j) {
-    x <- pkSet[[paste0(prefix, "_coef_PO_", j)]] * poLine
-    if (hasPO2) x <- x + pkSet[[paste0(prefix, "_coef_PO2_", j)]] * po2Line
-    x
-  }
+  raLine    <- inputs$RA
+  raSlowLine <- inputs$RAslow
   rate      <- inputs$rate
   dt        <- inputs$dt
+  # The perineural rate into the tissue depot, as advanceClosedFormPO_IM_IN()
+  # reads it: a constant rate R over a step adds R c_x/x (1 - exp(-x dt)) to
+  # each exponential state x of a tissue dose with coefficient c_x, exact.
+  raInfusion <- if (any(dose$RArate)) {
+    doseLines(data.frame(Time = dose$Time, Dose = dose$Dose, Bolus = !dose$RArate),
+              timeLine)$rate
+  } else rep(0, L)
+  overRate <- function(coef, x) if (x > 0) coef / x else 0
+  coefOr0 <- function(name) { x <- pkSet[[name]]; if (is.null(x)) 0 else x }
+  # Extravascular input to the parent's disposition (or effect-site) state
+  # j, exponent lam: both oral depots and both tissue depots feed them.
+  poIn <- function(prefix, j, lam) {
+    x <- pkSet[[paste0(prefix, "_coef_PO_", j)]] * poLine
+    if (hasPO2) x <- x + pkSet[[paste0(prefix, "_coef_PO2_", j)]] * po2Line
+    if (hasRA)
+    {
+      cRA <- coefOr0(paste0(prefix, "_coef_RA_", j))
+      cRAslow <- coefOr0(paste0(prefix, "_coef_RAslow_", j))
+      x <- x + cRA * raLine + cRAslow * raSlowLine +
+        raInfusion * (1 - exp(-lam * dt)) * (overRate(cRA, lam) + overRate(cRAslow, lam))
+    }
+    x
+  }
+  # A tissue depot's own state (exponent ka), fed by its doses and the rate.
+  tissueDepotState <- function(prefix, depot, ka, line)
+  {
+    if (!(ka > 0) || !hasRA) return(doseNA)
+    c0 <- coefOr0(paste0(prefix, "_coef_", depot, "_ka"))
+    ka_dt <- exp(-ka * dt)
+    advanceStatePO(ka_dt, doseNA, doseNA,
+                   c0 * line + raInfusion * (1 - ka_dt) * overRate(c0, ka),
+                   doseNA, doseNA, L)
+  }
 
   # ---- Parent ----
 
@@ -146,15 +199,15 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
   p_state_l1 <- advanceStatePO(l1_dt,
                                pkSet$p_coef_bolus_l1 * bolusLine,
                                pkSet$p_coef_infusion_l1 * rate * (1 - l1_dt),
-                               poIn("p", "l1"), doseNA, doseNA, L)
+                               poIn("p", "l1", pkSet$lambda_1), doseNA, doseNA, L)
   p_state_l2 <- advanceStatePO(l2_dt,
                                pkSet$p_coef_bolus_l2 * bolusLine,
                                pkSet$p_coef_infusion_l2 * rate * (1 - l2_dt),
-                               poIn("p", "l2"), doseNA, doseNA, L)
+                               poIn("p", "l2", pkSet$lambda_2), doseNA, doseNA, L)
   p_state_l3 <- advanceStatePO(l3_dt,
                                pkSet$p_coef_bolus_l3 * bolusLine,
                                pkSet$p_coef_infusion_l3 * rate * (1 - l3_dt),
-                               poIn("p", "l3"), doseNA, doseNA, L)
+                               poIn("p", "l3", pkSet$lambda_3), doseNA, doseNA, L)
 
   Cp <- p_state_l1 + p_state_l2 + p_state_l3
   p_state_ka <- doseNA
@@ -173,6 +226,10 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
                                   pkSet$p_coef_PO2_ka * po2Line, doseNA, doseNA, L)
     Cp <- Cp + p_state_ka2
   }
+  # The tissue depots' own states.
+  p_state_kaRA     <- tissueDepotState("p", "RA", kaRA, raLine)
+  p_state_kaRAslow <- tissueDepotState("p", "RAslow", kaRAslow, raSlowLine)
+  Cp <- Cp + p_state_kaRA + p_state_kaRAslow
 
   # The parent's effect site is worked out below, from its own states,
   # together with its recovery.
@@ -191,12 +248,16 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
     for (k in seq_along(coefs$lambda))
     {
       lk_dt <- exp(-coefs$lambda[k] * dt)
+      cRA     <- if (is.null(coefs$RA)) 0 else coefs$RA[k]
+      cRAslow <- if (is.null(coefs$RAslow)) 0 else coefs$RAslow[k]
       states[, k] <- advanceStatePO(
         lk_dt,
         coefs$bolus[k] * bolusLine,
         coefs$infusion[k] * rate * (1 - lk_dt),
         coefs$PO[k] * poLine + (if (is.null(coefs$PO2)) 0 else coefs$PO2[k] * po2Line),
-        doseNA, doseNA, L
+        doseNA, doseNA, L,
+        cRA * raLine + cRAslow * raSlowLine +
+          raInfusion * (1 - lk_dt) * (cRA + cRAslow) / coefs$lambda[k]
       )
     }
     states
@@ -274,19 +335,19 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
     e_state_l1 <- advanceStatePO(l1_dt,
                                  pkSet$e_coef_bolus_l1 * bolusLine,
                                  pkSet$e_coef_infusion_l1 * rate * (1 - l1_dt),
-                                 poIn("e", "l1"), doseNA, doseNA, L)
+                                 poIn("e", "l1", pkSet$lambda_1), doseNA, doseNA, L)
     e_state_l2 <- advanceStatePO(l2_dt,
                                  pkSet$e_coef_bolus_l2 * bolusLine,
                                  pkSet$e_coef_infusion_l2 * rate * (1 - l2_dt),
-                                 poIn("e", "l2"), doseNA, doseNA, L)
+                                 poIn("e", "l2", pkSet$lambda_2), doseNA, doseNA, L)
     e_state_l3 <- advanceStatePO(l3_dt,
                                  pkSet$e_coef_bolus_l3 * bolusLine,
                                  pkSet$e_coef_infusion_l3 * rate * (1 - l3_dt),
-                                 poIn("e", "l3"), doseNA, doseNA, L)
+                                 poIn("e", "l3", pkSet$lambda_3), doseNA, doseNA, L)
     e_state_ke0 <- advanceStatePO(ke0_dt,
                                   pkSet$e_coef_bolus_ke0 * bolusLine,
                                   pkSet$e_coef_infusion_ke0 * rate * (1 - ke0_dt),
-                                  poIn("e", "ke0"), doseNA, doseNA, L)
+                                  poIn("e", "ke0", pkSet$ke0), doseNA, doseNA, L)
     states  <- list(e_state_l1, e_state_l2, e_state_l3, e_state_ke0)
     lambdas <- c(pkSet$lambda_1, pkSet$lambda_2, pkSet$lambda_3, pkSet$ke0)
     if (hasPO && pkSet$ka_PO > 0)
@@ -303,6 +364,16 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
         pkSet$e_coef_PO2_ka * po2Line, doseNA, doseNA, L)
       lambdas <- c(lambdas, pkSet$ka_PO2)
     }
+    if (hasRA)
+    {
+      states[[length(states) + 1]] <- tissueDepotState("e", "RA", kaRA, raLine)
+      lambdas <- c(lambdas, kaRA)
+      if (kaRAslow > 0)
+      {
+        states[[length(states) + 1]] <- tissueDepotState("e", "RAslow", kaRAslow, raSlowLine)
+        lambdas <- c(lambdas, kaRAslow)
+      }
+    }
     recoveryStates <- recoveryStateSet(timeLine, states, lambdas, pending)
     Ce <- rowSums(recoveryStates$state)
   } else {
@@ -313,13 +384,23 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
     lambdas <- c(pkSet$lambda_1, pkSet$lambda_2, pkSet$lambda_3)
     if (hasPO && pkSet$ka_PO > 0)
     {
-      states[[4]] <- Cp - p_state_l1 - p_state_l2 - p_state_l3 - p_state_ka2
+      states[[4]] <- p_state_ka
       lambdas <- c(lambdas, pkSet$ka_PO)
     }
     if (hasPO2)
     {
       states[[length(states) + 1]] <- p_state_ka2
       lambdas <- c(lambdas, pkSet$ka_PO2)
+    }
+    if (hasRA)
+    {
+      states[[length(states) + 1]] <- p_state_kaRA
+      lambdas <- c(lambdas, kaRA)
+      if (kaRAslow > 0)
+      {
+        states[[length(states) + 1]] <- p_state_kaRAslow
+        lambdas <- c(lambdas, kaRAslow)
+      }
     }
     recoveryStates <- recoveryStateSet(timeLine, states, lambdas, pending,
                                        horizon = recoveryHorizonPlasma(maximum))
@@ -336,15 +417,25 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
   # them inputs into the metabolite's central compartment.  A PK set built
   # before the metabolite carried its rate constants has no metabolite
   # compartments to report.
-  parentStates <- list(p_state_l1, p_state_l2, p_state_l3, p_state_ka, p_state_ka2)
+  parentStates <- list(p_state_l1, p_state_l2, p_state_l3, p_state_ka, p_state_ka2,
+                       p_state_kaRA, p_state_kaRAslow)
   parentModes  <- c(pkSet$lambda_1, pkSet$lambda_2, pkSet$lambda_3,
-                    if (hasPO) pkSet$ka_PO else 0, if (hasPO2) pkSet$ka_PO2 else 0)
+                    if (hasPO) pkSet$ka_PO else 0, if (hasPO2) pkSet$ka_PO2 else 0,
+                    if (hasRA) kaRA else 0, if (hasRA) kaRAslow else 0)
   orZero <- function(x) if (is.null(x)) 0 else x
   depot <- doseNA
   if (hasPO)
     depot <- depot + depotAmount(pkSet$ka_PO, dt, pkSet$bioavailability_PO * poLine)
   if (hasPO2)
     depot <- depot + depotAmount(pkSet$ka_PO2, dt, pkSet$bioavailability_PO2 * po2Line)
+  if (hasRA)
+  {
+    fRA <- if (is.null(pkSet$bioavailability_RA)) 1 else pkSet$bioavailability_RA
+    depot <- depot + depotAmount(kaRA, dt, fRA * raLine, fRA * raInfusion)
+    if (kaRAslow > 0)
+      depot <- depot + depotAmount(kaRAslow, dt, pkSet$bioavailability_RAslow * raSlowLine,
+                                   pkSet$bioavailability_RAslow * raInfusion)
+  }
 
   results <- data.frame(
     Time         = timeLine,

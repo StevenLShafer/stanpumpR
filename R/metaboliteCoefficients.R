@@ -235,20 +235,52 @@ convolveExponentials <- function(P, M, K)
 #'   \code{bolus}, \code{infusion} and \code{PO} coefficients on each, and the
 #'   scalar \code{K} used to form them.  A parent with a second oral depot
 #'   (\code{ka_PO2}) adds its absorption constant after the first and a
-#'   \code{PO2} vector for the doses that take that path.
+#'   \code{PO2} vector for the doses that take that path, and a parent with
+#'   a tissue depot (\code{ka_RA}, and \code{ka_RAslow}) adds those absorption
+#'   constants last and \code{RA} (and \code{RAslow}) vectors.
+#' @param transitRate first-order rate constant, per minute, of a transit
+#'   compartment between formation and the metabolite's central compartment;
+#'   0 (the default) for none.  Adds one exponential to the metabolite's set.
 #' @export
 metaboliteCoefficients <- function(parent, metabolite, kFormation, mwRatio = 1,
-                                   unitScale = 1, firstPassFraction = 0)
+                                   unitScale = 1, firstPassFraction = 0,
+                                   transitRate = 0)
 {
   # No upper bound on kFormation.  The old 'fraction' form was capped at 1 because it
   # was a share of elimination; a transfer rate constant has no such ceiling.
   stopifnot(kFormation >= 0, mwRatio > 0, unitScale > 0,
-            firstPassFraction >= 0, firstPassFraction <= 1)
+            firstPassFraction >= 0, firstPassFraction <= 1,
+            length(transitRate) == 1, is.finite(transitRate), transitRate >= 0)
 
   P <- dispositionTerms(parent)
   M <- dispositionTerms(metabolite)
   if (length(P$lambda) == 0 || length(M$lambda) == 0)
     stop("Both the parent and the metabolite need at least one exponential term")
+
+  # A TRANSIT COMPARTMENT between formation and the metabolite's central
+  # compartment (Foong 2025's lidocaine-to-MEGX link): the metabolite formed
+  # enters a compartment that empties first-order at transitRate into the
+  # metabolite's central compartment.  That is exactly the metabolite's
+  # response to a first-order "absorption" at transitRate with F = 1, so the
+  # metabolite's unit response M is replaced by
+  #
+  #     m_j k/(k - mu_j) on each mu_j,   and minus their sum on k,
+  #
+  # the same retardation getDrugPK() applies to an oral dose.  Exact, and one
+  # more exponential in the metabolite's set.  The first-pass branch (below)
+  # enters the metabolite's central compartment directly and so bypasses the
+  # transit, as it always has; no drug declares both.  (Claude Code,
+  # 2026-11-13, at the request of Steven L. Shafer.)
+  if (transitRate > 0)
+  {
+    if (firstPassFraction > 0)
+      stop("A metabolite transit compartment is not available together with ",
+           "first-pass formation.")
+    muT <- separateEigenvalues(M$lambda, transitRate)
+    mT  <- M$coef * transitRate / (transitRate - muT)
+    ktr <- separateEigenvalues(transitRate, c(P$lambda, muT))
+    M <- list(coef = c(mT, -sum(mT)), lambda = c(muT, ktr))
+  }
 
   # Mass of metabolite formed per unit of plasma concentration per minute.  The
   # parent's v1 converts concentration to the amount the transfer acts on; the
@@ -302,6 +334,17 @@ metaboliteCoefficients <- function(parent, metabolite, kFormation, mwRatio = 1,
 
   ka  <- if (is.null(parent$ka_PO)) 0 else parent$ka_PO
   ka2 <- if (is.null(parent$ka_PO2)) 0 else parent$ka_PO2
+  # The tissue depot (regional anesthesia, and the subcutaneous route carried
+  # on it), and its slow second depot.  Each is one more first-order depot, so
+  # its vector is built exactly as an oral one with no first-pass branch: a
+  # local anesthetic injected into tissue reaches the circulation before the
+  # liver.  Its eigenvalue goes after the oral ones, so every drug without a
+  # tissue route keeps exactly the vectors it always had.  A constant rate into
+  # the depot ("mg/hr RA") uses the same vector divided by each eigenvalue, as
+  # an intravenous infusion does (advanceClosedFormMetabolite()).  (Claude
+  # Code, 2026-11-13, at the request of Steven L. Shafer.)
+  kaRA     <- if (is.null(parent$ka_RA)) 0 else parent$ka_RA
+  kaRAslow <- if (is.null(parent$ka_RAslow)) 0 else parent$ka_RAslow
   if (ka > 0)
   {
     bio  <- if (is.null(parent$bioavailability_PO)) 1 else parent$bioavailability_PO
@@ -329,10 +372,36 @@ metaboliteCoefficients <- function(parent, metabolite, kFormation, mwRatio = 1,
     PO <- rep(0, length(lambda))
   }
 
+  # Tissue depots: append each eigenvalue, padding every earlier vector.
+  PO2 <- if (ka > 0 && ka2 > 0) PO2 else NULL
+  tissue <- list()
+  addTissue <- function(name, kaT, bioT)
+  {
+    v <- oralVector(kaT, bioT, 0)
+    n <- length(lambda)
+    pad <- function(x) c(x, 0)
+    # v is (parent, metabolite, ka); place it on the grown vector.
+    vec <- c(v[seq_len(nP + nM)], rep(0, n - nP - nM), v[nP + nM + 1])
+    for (k in names(tissue)) tissue[[k]] <<- pad(tissue[[k]])
+    tissue[[name]] <<- vec
+    lambda   <<- c(lambda, kaT)
+    bolus    <<- pad(bolus)
+    infusion <<- pad(infusion)
+    PO       <<- pad(PO)
+    if (!is.null(PO2)) PO2 <<- pad(PO2)
+  }
+  if (kaRA > 0)
+    addTissue("RA", kaRA,
+              if (is.null(parent$bioavailability_RA)) 1 else parent$bioavailability_RA)
+  if (kaRA > 0 && kaRAslow > 0)
+    addTissue("RAslow", kaRAslow, parent$bioavailability_RAslow)
+
   out <- list(lambda = lambda, bolus = bolus, infusion = infusion, PO = PO, K = K)
-  # Only a parent with a second oral depot carries PO2, so that every other
-  # drug's coefficients keep exactly the shape they always had.
-  if (ka > 0 && ka2 > 0) out$PO2 <- PO2
+  # Only a parent with a second oral depot carries PO2, and only one with a
+  # tissue depot carries RA (and RAslow), so that every other drug's
+  # coefficients keep exactly the shape they always had.
+  if (!is.null(PO2)) out$PO2 <- PO2
+  for (k in names(tissue)) out[[k]] <- tissue[[k]]
   out
 }
 
@@ -448,18 +517,26 @@ METABOLITE_FORMATION_BASIS <- data.frame(
   parent = c("codeine", "hydrocodone", "oxycodone",
              "enalapril", "prednisone",
              "amiodarone", "aripiprazole", "aspirin", "bupropion",
-             "fluoxetine", "risperidone", "tramadol", "venlafaxine"),
+             "fluoxetine", "risperidone", "tramadol", "venlafaxine",
+             # The toxic metabolites (2026-11-13): formation (all of the
+             # parent's clearance, fm fixed to one) and the metabolite's
+             # apparent disposition come from one source, Foong 2025, though
+             # the library's lidocaine is Schnider's (R/drugs_MEGX.R);
+             # norpethidine's apparent volume was calibrated with the
+             # library's own pethidine forming it (R/drugs_norpethidine.R).
+             "lidocaine", "pethidine"),
   metabolite = c("morphine", "hydromorphone", "oxymorphone",
                  "enalaprilat", "prednisolone",
                  "desethylamiodarone", "dehydroaripiprazole", "salicylate",
                  "hydroxybupropion", "norfluoxetine", "hydroxyrisperidone",
-                 "desmetramadol", "desvenlafaxine"),
+                 "desmetramadol", "desvenlafaxine",
+                 "MEGX", "norpethidine"),
   basis = c("reads", "reads", "reads",
             "shared", "shared",
-            rep("joint", 8)),
+            rep("joint", 10)),
   uses = c("libraryReferenceClearance", "hydromorphone",
            "libraryReferenceClearance",
            "enalaprilatSet", "prednisolonePairSystem",
-           rep(NA_character_, 8)),
+           rep(NA_character_, 10)),
   stringsAsFactors = FALSE
 )

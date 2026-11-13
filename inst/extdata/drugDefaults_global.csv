@@ -67,6 +67,8 @@ mannitol,mOsm,,g/hr,g/hr,"g/hr,g/kg/hr",#00A3AD,300,320,310,0,0,IV,Other
 calcium,mmol,g chloride,mg/min chloride,g chloride,"g chloride,mg chloride,mg/kg chloride,mg/min chloride,mg/hr chloride,mg/kg/hr chloride,g/hr chloride,g gluconate,mg gluconate,mg/kg gluconate,mg/min gluconate,mg/hr gluconate,mg/kg/hr gluconate,g/hr gluconate",#C77C2B,0,0,0,0,0,IV,Other
 amiodarone,mcg,,,mg/day PO,"mg/day PO",#B22222,1,2.5,1.5,0,1,IV,Other
 desethylamiodarone,mcg,,,,,#E9967A,0,0,0,0,0,IV,
+MEGX,mcg,,,,,#8C6D1F,0,0,0,0,0,IV,
+norpethidine,mcg,,,,,#8B1A1A,0,0,0,0,0,IV,
 amiodaroneIV,mcg,mg,mg/min,mg,"mg,mg/kg,mg/min,mg/hr",#C2185B,0,0,0,0,0,IV,Other
 escitalopram,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#00838F,20,40,30,0,0,IV,Antidepressants
 citalopram,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#26C6DA,50,110,80,0,0,IV,Antidepressants

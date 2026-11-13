@@ -968,8 +968,10 @@ simulationPlot <- function(
   # This code should work if facetscales gets fixed
   # scales_y <- sapply(as.character(unique(plotTable$Wrap)), function(x) x = scale_y_continuous())
   # if (plotEvents) scales_y$Events <- scale_y_continuous(labels = NULL)
+  # facetToxicLabels(): a toxic metabolite's strip is drawn in red
+  # (R/toxicMetabolites.R).
   plotObject <- plotObject +
-    ggplot2::facet_grid(
+    facetToxicLabels(ggplot2::facet_grid(
       Wrap ~ .,
 #      ncol = 1,
       scales="free_y",
@@ -979,7 +981,7 @@ simulationPlot <- function(
 #      strip.position = "left",
       shrink=FALSE
 #      scales = list(y = scales_y)
-      ) +
+      )) +
     ggplot2::ylab(NULL) +
     ggplot2::theme(strip.background = ggplot2::element_blank(),
           strip.placement = "outside",

@@ -442,6 +442,9 @@ effectSiteCoefficients <- function(coefs, ke0)
   # No drug has both yet (aspirin's salicylate is plasma only).
   # (Claude Code, 2026-10-17.)
   out$PO2 <- link(coefs$PO2)
+  # And the tissue depots (lidocaine's MEGX after a nerve block).
+  out$RA <- link(coefs$RA)
+  out$RAslow <- link(coefs$RAslow)
   out$infusion <- if (is.null(bolus)) NULL else bolus / out$lambda
   out
 }

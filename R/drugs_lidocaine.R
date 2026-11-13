@@ -19,6 +19,7 @@ lidocaine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   lowerTypical <- 0.5
   tPeak <- 5
   MEAC <- 0
+  # MEGX's own citation (Foong 2025) is on its own page (R/drugs_MEGX.R).
   reference <- "Schnider TW et al., Anesthesiology 1996;84(5):1043-1050. https://pubmed.ncbi.nlm.nih.gov/8623997/"
   
   # Size scaling (see docs/weight-adjustment.md): the published parameters
@@ -85,7 +86,25 @@ lidocaine <- function(weight, height, age, sex, adjustToFFM = TRUE)
       typical = typical, 
       upperTypical = upperTypical, 
       lowerTypical = lowerTypical, 
-      reference = reference
+      reference = reference,
+      # MEGX, the toxic metabolite (R/drugs_MEGX.R; Foong 2025).  Foong fixed
+      # the fraction of lidocaine converted to one, so MEGX is formed from ALL
+      # of this model's clearance (k10).  Lidocaine's elimination enters one
+      # transit compartment that empties into MEGX's central compartment at
+      # 1/TRT (TRT 0.513 h).  Molar ratio MEGX 206.28 / lidocaine 234.34.
+      # (Claude Code, 2026-11-13, at the request of Steven L. Shafer.)
+      metabolite = list(
+        name              = "MEGX",
+        kFormation        = cl1 / v1,
+        firstPassFraction = 0,
+        mwRatio           = MEGX_MW / LIDOCAINE_MW,
+        kTransit          = 1 / (MEGX_TRANSIT_TIME * 60)
+      )
     )
   )
 }
+
+# Molar masses for the lidocaine-to-MEGX link, g/mol (lidocaine base
+# C14H22N2O; MEGX C12H18N2O).
+LIDOCAINE_MW <- 234.34
+MEGX_MW      <- 206.28

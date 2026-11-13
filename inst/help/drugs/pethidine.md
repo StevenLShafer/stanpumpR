@@ -16,4 +16,4 @@ MEAC is 0.46 mcg/mL, with the shaded band at 0.8 to 2 MEAC, 0.37 to 0.92 mcg/mL.
 
 ### Where to be careful
 
-Pethidine's active metabolite norpethidine, which accumulates with repeated dosing and in renal failure and causes seizures, is not modelled. Nor is the serotonergic interaction with monoamine oxidase inhibitors. The model is a pharmacokinetic description of a typical adult and nothing more.
+Pethidine's toxic metabolite [norpethidine](help:drugs/norpethidine), which accumulates with repeated dosing and in renal failure and causes seizures, is formed from every dose and drawn in its own panel with a red label. No model of it has been published; the library's was built from descriptive studies, its page says how, and it has no renal term, so in renal impairment it underpredicts. Nor is the serotonergic interaction with monoamine oxidase inhibitors. The model is a pharmacokinetic description of a typical adult and nothing more.

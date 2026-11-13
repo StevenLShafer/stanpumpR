@@ -1140,7 +1140,11 @@ getDrugPK <- function(
           kFormation        = X$metabolite$kFormation,
           mwRatio           = mwRatio,
           unitScale         = unitScale,
-          firstPassFraction = firstPass
+          firstPassFraction = firstPass,
+          # A transit compartment between formation and the metabolite's
+          # central compartment (lidocaine to MEGX, Foong 2025); 0 for none.
+          transitRate       = if (is.null(X$metabolite$kTransit)) 0 else
+            X$metabolite$kTransit
         )
       )
     }
