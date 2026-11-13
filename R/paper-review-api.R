@@ -606,7 +606,12 @@ paperReviewInBackground <- function(fn, args, timeout)
 #'
 #' @param job the background job
 #' @param pidFile the file its process wrote its ID to
-#' @returns a function of no arguments: TRUE when it stopped a running job
+#' @returns a function of no arguments that returns TRUE only when it ended
+#'   the job's process.  Without a readable process ID, or when the signal is
+#'   not delivered, it returns FALSE and leaves the job alone, so that the
+#'   review goes on and its answer is still read: settling the job without
+#'   ending the process would leave a review running, and billed, that nothing
+#'   waits for (CodeRabbit, PR #720).
 #' @keywords internal
 paperReviewStopper <- function(job, pidFile)
 {
@@ -617,8 +622,11 @@ paperReviewStopper <- function(job, pidFile)
     if (!mirai::unresolved(job)) return(invisible(FALSE))
     pid <- suppressWarnings(as.integer(tryCatch(readLines(pidFile, warn = FALSE)[1],
                                                 error = function(e) NA_character_)))
+    if (length(pid) != 1 || is.na(pid) || pid <= 0 || pid == Sys.getpid()) return(invisible(FALSE))
+    if (!isTRUE(tools::pskill(pid))) return(invisible(FALSE))
+    # The process has ended; settle the job, which would otherwise wait for
+    # its timeout.
     mirai::stop_mirai(job)
-    if (length(pid) == 1 && !is.na(pid) && pid != Sys.getpid()) tools::pskill(pid)
     invisible(TRUE)
   }
 }

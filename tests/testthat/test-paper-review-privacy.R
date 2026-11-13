@@ -215,6 +215,7 @@ test_that("a review still running after ten minutes is offered a quick one, at e
         if (is.function(onJob)) onJob(function() {
           stopped <<- stopped + 1
           rejectFull(paperReviewError("background", "stopped"))
+          TRUE
         })
         promises::promise(function(resolve, reject) rejectFull <<- reject)
       } else {
@@ -309,7 +310,7 @@ test_that("with stanpumpR's own key, a quick review is sent only if the limit ha
     paperReviewExtractAsync = function(pdf, supplement = NULL, key, ..., effort, onJob = NULL) {
       efforts <<- c(efforts, effort)
       if (effort == PAPER_REVIEW_EFFORT) {
-        onJob(function() { stopped <<- stopped + 1; rejectFull(paperReviewError("background", "stopped")) })
+        onJob(function() { stopped <<- stopped + 1; rejectFull(paperReviewError("background", "stopped")); TRUE })
         promises::promise(function(resolve, reject) rejectFull <<- reject)
       } else promises::promise_resolve(list(extraction = paperReviewExample(), usage = list()))
     })
@@ -381,6 +382,85 @@ test_that("stopping a review ends its background process, not only the wait for 
   expect_false(stop())                                # a second stop does nothing
 })
 
+test_that("a stop that cannot end the process says so and leaves the review running", {
+  # CodeRabbit, PR #720: without a readable process ID, or when the signal is
+  # not delivered, the stop is not confirmed, so the job is not settled (its
+  # answer is still read) and the stop returns FALSE.
+  skip_on_cran()
+  skip_on_os("windows")
+  own <- tempfile("paper-review-test-")
+  job <- paperReviewInBackground(function(f) { writeLines(as.character(Sys.getpid()), f); Sys.sleep(30); "done" },
+                                 list(f = own), 60)
+  on.exit({
+    pid <- suppressWarnings(as.integer(readLines(own, warn = FALSE)[1]))
+    if (length(pid) == 1 && !is.na(pid)) tools::pskill(pid)
+    mirai::stop_mirai(job)
+    unlink(own)
+  }, add = TRUE)
+  for (i in 1:200) { if (file.exists(own) && file.size(own) > 0) break; Sys.sleep(0.05) }
+  # No process ID written.
+  expect_false(paperReviewStopper(job, tempfile("paper-review-none-"))())
+  expect_true(mirai::unresolved(job))
+  # An unreadable one.
+  junk <- tempfile("paper-review-junk-")
+  writeLines("not a number", junk)
+  expect_false(paperReviewStopper(job, junk)())
+  expect_true(mirai::unresolved(job))
+  # The ID of a process that has already ended: the signal is not delivered.
+  dead <- as.integer(system2("sh", c("-c", shQuote("echo $$")), stdout = TRUE))
+  writeLines(as.character(dead), junk)
+  expect_false(paperReviewStopper(job, junk)())
+  expect_true(mirai::unresolved(job))
+  unlink(junk)
+})
+
+test_that("when the full review cannot be stopped, no quick review is sent and its place is given back", {
+  dir <- file.path(tempdir(), paste0("upload-", paste(sample(letters, 12), collapse = "")))
+  dir.create(dir)
+  path <- file.path(dir, "0.pdf")
+  writeBin(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), path)
+  clock <- as.POSIXct("2026-11-13 10:00:00", tz = "UTC")
+  admits <- 0
+  released <- 0
+  stopped <- 0
+  efforts <- character(0)
+  resolveFull <- NULL
+  testthat::local_mocked_bindings(
+    paperReviewNow = function() clock,
+    paperReviewApiKey = function(sessionKey = NULL, ...) sessionKey %or% "operator-key",
+    paperReviewSharedKeyAdmit = function(...) { admits <<- admits + 1; promises::promise_resolve(TRUE) },
+    paperReviewSharedKeyRelease = function() released <<- released + 1,
+    paperReviewUsageReport = function(record, ...) invisible(record),
+    paperReviewExtractAsync = function(pdf, supplement = NULL, key, ..., effort, onJob = NULL) {
+      efforts <<- c(efforts, effort)
+      onJob(function() { stopped <<- stopped + 1; FALSE })   # the stop is not confirmed
+      promises::promise(function(resolve, reject) resolveFull <<- resolve)
+    })
+  shiny::testServer(paperReviewServer, {
+    session$setInputs(manuscript = list(name = "x.pdf", size = 59, type = "application/pdf", datapath = path),
+                      consent = TRUE)
+    session$setInputs(review = 1)
+    session$flushReact()
+    clock <<- clock + PAPER_REVIEW_LATE_SEC + 1
+    session$elapse(PAPER_REVIEW_LATE_SEC * 1000 + 1000)
+    session$setInputs(quickReview = 1)
+    settle(session)
+    expect_equal(stopped, 1)
+    expect_equal(admits, 2)
+    expect_equal(released, 1)                         # the quick review's place is given back
+    expect_equal(efforts, PAPER_REVIEW_EFFORT)        # and no quick review was sent
+    expect_false(stopForQuick())
+    expect_true(reviewing())
+    expect_match(output$status, "could not be stopped")
+    # The full review's answer is still read.
+    resolveFull(list(extraction = paperReviewExample(), usage = list()))
+    settle(session)
+    expect_false(reviewing())
+    expect_false(isTRUE(review()$quick))
+    expect_false(exists("inFlight", envir = store))
+  })
+})
+
 test_that("the stop function holds no manuscript, and the app lets it go once the answer returns", {
   # CodeRabbit, PR #720: made inside paperReviewExtractAsync(), it kept that
   # call's frame, and the manuscript and key in it, alive.
@@ -420,7 +500,7 @@ test_that("a second click while a quick review's place is asked for does nothing
     paperReviewExtractAsync = function(pdf, supplement = NULL, key, ..., effort, onJob = NULL) {
       efforts <<- c(efforts, effort)
       if (effort == PAPER_REVIEW_EFFORT) {
-        onJob(function() { stopped <<- stopped + 1; rejectFull(paperReviewError("background", "stopped")) })
+        onJob(function() { stopped <<- stopped + 1; rejectFull(paperReviewError("background", "stopped")); TRUE })
         promises::promise(function(resolve, reject) rejectFull <<- reject)
       } else promises::promise(function(resolve, reject) NULL)   # the quick review runs on
     })

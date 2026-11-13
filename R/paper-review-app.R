@@ -422,10 +422,16 @@ paperReviewServer <- function(input, output, session)
     shinyjs::hide("reviewLate")
     if (!reviewing() || quick() || stopForQuick() || admitting() || !exists("inFlight", envir = store)) return()
     # The stopped review is billed for what it had read, and counted.
+    # A stop that cannot be confirmed leaves the full review running and
+    # sends no quick one, rather than pay for two (CodeRabbit, PR #720).
     stopFull <- function() {
       stopForQuick(TRUE)
       status("Stopping the full review and starting a quick one.")
-      if (is.function(running$stop)) running$stop()
+      if (is.function(running$stop) && isTRUE(running$stop())) return(invisible(TRUE))
+      stopForQuick(FALSE)
+      releaseReserved()
+      status("The full review could not be stopped, so it goes on; no quick review was sent.")
+      invisible(FALSE)
     }
     if (!is.null(store$inFlight$own)) return(stopFull())
     # With stanpumpR's own key, the quick review's place within the limit is
