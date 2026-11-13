@@ -55,11 +55,21 @@
 # PHYSIOLOGY_V1_CARDIAC_EXPONENT, an assumption, not a fitted value.
 #
 # ke0 is NOT changed by cardiac output, pending Shafer's decision
-# (2026-11-13, open): low output pares the body down to a heart-lungs-brain
-# circuit, which may make the effect site faster (the brain takes a larger
-# share of a smaller output) or slower (lower absolute brain flow, longer
-# circulation time); the higher, earlier plasma peak from the smaller V1
-# already speeds onset with ke0 unchanged.  The hook is
+# (2026-11-13, open).  ke0 is an equilibration rate, set mainly by the drug's
+# relative solubility in blood and brain (and, for a polar drug, by the
+# blood-brain barrier's permeability), not by brain blood flow: were it flow,
+# every drug acting in the brain would share one ke0 (Shafer).  In a
+# perfusion-and-permeability model, ke0 ~ Q (1 - exp(-PS/Q)) / (V lambda), so
+# flow matters only for a drug whose entry is flow-limited.  Evidence read
+# (abstracts, 2026-11-13): rocuronium's ke0 correlated with cardiac output in
+# patients (Kuipers 2001, PMID 11135721, r2 0.70); for propofol, cardiac
+# output explained 7.6% of the time to BIS 80 (Adachi 2013, PMID 24023993);
+# thiopental and propofol uptake into the sheep brain depended on cerebral
+# blood flow despite partial diffusion limitation (Upton 2000, PMID
+# 11020765); shock's main effect on propofol in swine was a 2.7-fold lower
+# Ce50 with slower intercompartmental clearances (Johnson 2003, PMID
+# 12883414).  The higher, earlier plasma peak from the smaller V1 already
+# speeds onset with ke0 unchanged.  The hook is
 # PHYSIOLOGY_KE0_CARDIAC_EXPONENT, 0 (no change) until that is decided; ke0
 # is taken from the model at normal physiology either way, so the time to
 # peak effect moves with the disposition.
