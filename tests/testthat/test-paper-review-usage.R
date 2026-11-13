@@ -110,6 +110,10 @@ test_that("the operator's key stops after its limit, counted in the mailbox acro
   withr::local_envvar(STANPUMPR_ANTHROPIC_API_KEY = "sk-ant-test")
   expect_null(paperReviewApiKey(NULL, list()))
   expect_equal(paperReviewApiKey("sk-ant-own", list()), "sk-ant-own")
+  # A quick review whose place was reserved before the limit was reached
+  # keeps the key (CodeRabbit, PR #720); withdrawing it still wins.
+  expect_equal(paperReviewApiKey(NULL, list(), admitted = TRUE), "sk-ant-test")
+  expect_null(paperReviewApiKey(NULL, list(paper_review_shared_key = FALSE), admitted = TRUE))
 
   # A count that cannot be read refuses the key (the limit fails closed),
   # but does not end it.
