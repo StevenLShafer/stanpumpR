@@ -302,6 +302,9 @@ paperReviewServer <- function(input, output, session)
   # was reserved already (a quick review's).  The function that stops its
   # background process is kept, for a quick review.
   running <- new.env(parent = emptyenv())
+  # Counts the reviews sent, so that a quick review's place that comes back
+  # late is not applied to a later review (CodeRabbit, PR #720).
+  running$generation <- 0L
   reviewTask <- shiny::ExtendedTask$new(function(pdf, supplement, key, inferenceGeo, shared, effort, admitted) {
     running$stop <- NULL
     send <- function(...) paperReviewTrackUse(
@@ -330,6 +333,7 @@ paperReviewServer <- function(input, output, session)
   # The review's key and settings, kept with the manuscript (store$inFlight)
   # so that the quick review can be sent without asking again.
   sendReview <- function(effort, admitted = FALSE) {
+    running$generation <- running$generation + 1L
     f <- store$inFlight
     reviewStarted(paperReviewNow())
     lateOffered(FALSE)
@@ -439,12 +443,13 @@ paperReviewServer <- function(input, output, session)
     # PR #720).
     status("Checking that a quick review can be sent.")
     admitting(TRUE)
+    askedFor <- running$generation
     promises::then(paperReviewSharedKeyAdmit(),
       onFulfilled = function(...) {
         admitting(FALSE)
         # A place that comes back after the review has moved on is given back.
-        if (!shiny::isolate(reviewing()) || shiny::isolate(quick()) || shiny::isolate(stopForQuick()) ||
-            !exists("inFlight", envir = store))
+        if (running$generation != askedFor || !shiny::isolate(reviewing()) || shiny::isolate(quick()) ||
+            shiny::isolate(stopForQuick()) || !exists("inFlight", envir = store))
           return(paperReviewSharedKeyRelease())
         preAdmitted(TRUE)
         stopFull()

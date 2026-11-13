@@ -521,3 +521,62 @@ test_that("a second click while a quick review's place is asked for does nothing
     expect_null(running$stop)                          # the quick review's mock gave no stop
   })
 })
+
+test_that("a quick review's place that comes back after its review has ended does not touch the next one", {
+  # CodeRabbit, PR #720: the place is bound to the review that asked for it.
+  dir <- file.path(tempdir(), paste0("upload-", paste(sample(letters, 12), collapse = "")))
+  dir.create(dir)
+  path <- file.path(dir, "0.pdf")
+  writeBin(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), path)
+  clock <- as.POSIXct("2026-11-13 10:00:00", tz = "UTC")
+  admits <- 0
+  released <- 0
+  resolveLate <- NULL
+  stopped <- 0
+  efforts <- character(0)
+  resolvers <- list()
+  testthat::local_mocked_bindings(
+    paperReviewNow = function() clock,
+    paperReviewApiKey = function(sessionKey = NULL, ...) sessionKey %or% "operator-key",
+    paperReviewSharedKeyAdmit = function(...) {
+      admits <<- admits + 1
+      if (admits == 2) promises::promise(function(resolve, reject) resolveLate <<- resolve)
+      else promises::promise_resolve(TRUE)
+    },
+    paperReviewSharedKeyRelease = function() released <<- released + 1,
+    paperReviewUsageReport = function(record, ...) invisible(record),
+    paperReviewExtractAsync = function(pdf, supplement = NULL, key, ..., effort, onJob = NULL) {
+      efforts <<- c(efforts, effort)
+      onJob(function() { stopped <<- stopped + 1; TRUE })
+      promises::promise(function(resolve, reject) resolvers[[length(resolvers) + 1]] <<- resolve)
+    })
+  shiny::testServer(paperReviewServer, {
+    session$setInputs(manuscript = list(name = "x.pdf", size = 59, type = "application/pdf", datapath = path),
+                      consent = TRUE)
+    session$setInputs(review = 1)
+    session$flushReact()
+    clock <<- clock + PAPER_REVIEW_LATE_SEC + 1
+    session$elapse(PAPER_REVIEW_LATE_SEC * 1000 + 1000)
+    session$setInputs(quickReview = 1)                 # its place is slow to come back
+    expect_equal(admits, 2)
+    # The full review answers meanwhile, and the user starts another.
+    resolvers[[1]](list(extraction = paperReviewExample(), usage = list()))
+    settle(session)
+    expect_false(reviewing())
+    dir.create(dir, showWarnings = FALSE)                 # the upload was deleted once read
+    writeBin(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), path)
+    session$setInputs(manuscript = list(name = "y.pdf", size = 59, type = "application/pdf", datapath = path))
+    session$setInputs(review = 2)
+    settle(session)
+    expect_true(reviewing())
+    before <- released
+    resolveLate(TRUE)                                  # the first review's place comes back
+    settle(session)
+    expect_equal(released, before + 1)                 # and is given back
+    expect_equal(stopped, 0)                           # the second review is not stopped
+    expect_equal(efforts, c(PAPER_REVIEW_EFFORT, PAPER_REVIEW_EFFORT))
+    expect_true(reviewing())
+    resolvers[[2]](list(extraction = paperReviewExample(), usage = list()))
+    settle(session)
+  })
+})
