@@ -17,9 +17,8 @@
 # ==========
 # The sponsor's population analysis of the phase III trials (14 trials, 1445
 # patients with supraventricular or ventricular arrhythmias, 10335 plasma
-# concentrations, oral doses of 62.5 to 500 mcg once or twice daily),
-# evidently the data set Tunblad 2008 (J Pharmacokinet Pharmacodyn 35:503)
-# published, whose full text was not reachable.  As the review gives it:
+# concentrations, oral doses of 62.5 to 500 mcg once or twice daily).  As the
+# review gives it:
 # "A one-compartment disposition model with first order absorption proved to
 # be adequate ... 14.1 L/h (1%) for apparent clearance (CL/F), 247 L (1.5%)
 # for apparent volume of distribution (V/F), 1.69 /h (9.7%) for Ka ... The
@@ -38,7 +37,26 @@
 # whole clearance, as the label's "women have approximately 12-18% lower
 # dofetilide oral clearances than men ... after correction for weight and
 # creatinine clearance" reads.  CLcr is Cockcroft-Gault, as the label
-# calculates it for dosing.
+# calculates it for dosing, capped at 150 mL/min as Tunblad 2008 capped it
+# ("For physiological reasons the upper limit of creatinine clearance was set
+# at 150 ml/min").
+#
+# TUNBLAD 2008 (read in full on 2026-11-13, from the PDF Shafer supplied)
+# =======================================================================
+# Tunblad K, Lindbom L, McFadyen L, et al.  J Pharmacokinet Pharmacodyn
+# 2008;35:503-526 (doi 10.1007/s10928-008-9099-z) is a second analysis of the
+# same phase III data (10,133 concentrations from 1,445 patients), not the
+# one the review summarises.  Its final model (Table 8): CL/F 15.5 L/h x (1 +
+# 0.0090 (CLcr - 75)), i.e. 5.04 + 0.1395 CLcr; V/F 236 L x (1 + 0.0070
+# (weight - 80)); ka 1.4 /h; CLcr capped at 150 mL/min; and NO sex term,
+# though its selection rule (a 20% change at the covariate's extremes) could
+# not retain a binary 12% effect by construction.  At the reference man
+# Tunblad's clearance is 10% higher (20.9 against 19.0 L/h), in a woman 25%
+# higher.  Steven L. Shafer decided (2026-11-13) to keep the review's model,
+# with its 12% lower clearance in women, which the label also states
+# ("approximately 12-18% lower dofetilide oral clearances than men ... after
+# correction for weight and creatinine clearance"), and to adopt only
+# Tunblad's cap on creatinine clearance.
 #
 # BIOAVAILABILITY
 # ===============
@@ -94,6 +112,7 @@ DOFETILIDE_V            <- 247     # L at 80 kg
 DOFETILIDE_V_SLOPE      <- 1.85    # L per kg ("18.5 L for every 10 kg")
 DOFETILIDE_WT_REF       <- 80      # kg
 DOFETILIDE_KA           <- 1.69    # 1/h
+DOFETILIDE_CLCR_MAX     <- 150     # mL/min (Tunblad 2008)
 
 #' Dofetilide (phase III population model, NDA 20-931)
 #'
@@ -113,7 +132,9 @@ dofetilide <- function(weight, height, age, sex, adjustToFFM = TRUE,
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   scr  <- adultEquivalentCreatinine(creatinine, age, sex)
   gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)
-  crcl <- creatinineClearanceCG(pkW, age, sex, scr) * gfrPregnancy
+  # Capped at 150 mL/min, as Tunblad 2008 capped it
+  crcl <- min(creatinineClearanceCG(pkW, age, sex, scr) * gfrPregnancy,
+              DOFETILIDE_CLCR_MAX)
   cl <- (DOFETILIDE_CL_INTERCEPT + DOFETILIDE_CL_SLOPE * crcl) *
     (if (sex == SEX_FEMALE) DOFETILIDE_FEMALE else 1)
   # The weight line stays positive above 80 - 247 / 1.85 = -53 kg

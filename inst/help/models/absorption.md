@@ -20,7 +20,7 @@ Boluses of the same drug given intravenously add to the same compartments, so or
 
 ## Which drugs have routes
 
-The table is built from the drug library, the same list the dose table's Units selector reads, so it shows every oral, sublingual, intramuscular, intranasal, subcutaneous and regional anesthesia unit on offer. Most of these drugs also offer their units as repeating doses (`mg PO bid`, `mg SC qwk` and so on; see [The dose table](help:dose-table)), which are not listed separately.
+The table is built from the drug library, the same list the dose table's Units selector reads, so it shows every oral, sublingual, intramuscular, intranasal, subcutaneous, transdermal and regional anesthesia unit on offer. Most of these drugs also offer their units as repeating doses (`mg PO bid`, `mg SC qwk` and so on; see [The dose table](help:dose-table)), which are not listed separately.
 
 <!-- generated: route-table -->
 
@@ -65,6 +65,10 @@ Two inputs go beyond a single first-order depot:
 - **Sequential zero-order input**, the whole dose released into the depot at a constant rate and then absorbed first-order, is used by [canagliflozin](help:drugs/canagliflozin)'s oral release: after a lag, each tablet is released into the gut at a constant rate over 0.604 h and absorbed first-order from there.
 
 An **insulin pump** (continuous subcutaneous insulin infusion) is entered as **U/hr SC**: a rate into the SC depot from its row's time until the drug's next U/hr SC row (0 stops it), as `mg/hr RA` is. It is offered only where the product's label permits pump use, which in the library means insulin lispro U-100 (Humalog U-100); concentrated, premixed and long-acting insulins are not. For lispro, the zero-order share of the pump's delivery is given as the zero-order input of each 2-minute portion of it, a close approximation to the ramp a continuous rate would give; the depot share is exact.
+
+## Transdermal patch (TD)
+
+`TD` is a patch, which delivers drug into the skin at a constant rate while it is worn; the skin then releases it into the circulation first-order, and goes on releasing it after the patch is removed. It is entered as a rate, **mg/day TD**: a row at the time the patch is applied, at its labelled delivery rate, and a rate of 0 (the plot's **Stop**) when it is removed. [Scopolamine](help:drugs/scopolamine) (Transderm Scōp, "1 mg/3 days", 0.333 mg/day) offers it; the skin depot's half-life is the label's 9.5-hour decline after removal. The engine carries the patch on the same tissue depot as SC and RA, so a drug offers one of the three.
 
 These models are concentration only. Glucose, the glucose infusion rate of a clamp, HbA1c, urinary glucose excretion and DPP-4 inhibition are separate endpoints with fits of their own, none of which is plotted; see [Antidiabetic models and their limits](help:models/antidiabetics).
 

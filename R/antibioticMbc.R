@@ -432,6 +432,45 @@ antibioticMbcTable <- function()
 }
 
 
+#' The antibiotics whose shaded band is a trough range, not an MBC band
+#'
+#' The MBC band rule needs a principal pathogen that the drug kills.  A
+#' bacteriostatic drug has none among the pathogens it is given against, so
+#' its band is instead the trough range a consensus monitoring guideline
+#' recommends, on the plotted (total) curve, with the reason.  An exception
+#' approved by Steven L. Shafer on 2026-11-13 for linezolid, which the Zyvox
+#' label calls bacteriostatic against enterococci and staphylococci (its MBC
+#' against them is 64 to 2048 mg/L: Sandoe 2006, Shah 2024), and whose
+#' bactericidal activity against streptococci is known only from abstracts.
+#'
+#' @returns a data frame: Drug, Lower, Typical, Upper (mg/L, total drug),
+#'   Reason and Source
+#' @keywords internal
+antibioticTroughBands <- function()
+{
+  data.frame(
+    Drug = "linezolid",
+    Lower = 2, Typical = 4.5, Upper = 7,
+    Reason = paste(
+      "Linezolid is bacteriostatic against staphylococci and enterococci (Zyvox label, sec. 12.4),",
+      "with MBC90s of 32 mg/L or more against MRSA (Shah 2024, Table 1) and 1024-2048 mg/L against",
+      "enterococci (Sandoe 2006, Table 2), so it has no principal pathogen it kills at attainable",
+      "levels; streptococcal MBCs were found only in abstracts."),
+    Source = paste(
+      "Abdul-Aziz MH et al., Intensive Care Med 2020;46:1127-1153 (ESICM/ESCMID position paper),",
+      "Table 4: 'Cmin: 2-7 mg/L', a trough 30 min before the next dose, 48 h into therapy;",
+      "toxicity (thrombocytopenia) above a trough of 7-10 mg/L."),
+    stringsAsFactors = FALSE
+  )
+}
+
+#' Is an antibiotic's band a trough range rather than an MBC band?
+#' @param drug a drug name
+#' @returns TRUE or FALSE
+#' @keywords internal
+antibioticBandIsTrough <- function(drug) drug %in% antibioticTroughBands()$Drug
+
+
 #' One antibiotic's MBC band
 #'
 #' Applies the band rule (see the header of R/antibioticMbc.R) to the drug's

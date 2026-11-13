@@ -32,13 +32,23 @@ ROUTE_RA <- "RA"
 # the tissue-depot fields.  (Claude Code, 2026-10-17, at the request of
 # Steven L. Shafer.)
 ROUTE_SC <- "SC"
-TISSUE_ROUTES <- c(ROUTE_RA, ROUTE_SC)
+# Transdermal (a patch; scopolamine, R/drugs_scopolamine.R): the patch
+# delivers drug into the skin at a constant rate while it is worn, and the
+# skin releases it first-order into the circulation, also after the patch is
+# removed.  Carried on the same tissue depot: the patch is a rate into it
+# ("mg/day TD", tdRateUnits), so applying a patch is a rate row and removing
+# it a 0 rate, which the plot's Stop writes.  A TD model writes its release
+# from the skin as ka_TD (and bioavailability_TD, tlag_TD), which getDrugPK()
+# moves onto the tissue-depot fields.  (Claude Code, 2026-11-13, at the
+# request of Steven L. Shafer.)
+ROUTE_TD <- "TD"
+TISSUE_ROUTES <- c(ROUTE_RA, ROUTE_SC, ROUTE_TD)
 TPEAK_ROUTES <- c(ROUTE_IV, ROUTE_PO)
 
 # Every route a dose can take, in the order the units dropdowns list them.  A
 # dose's route is carried by its Units string; see doseRoute() in R/routes.R.
 DOSE_ROUTES <- c(ROUTE_IV, ROUTE_PO, ROUTE_SL, ROUTE_IM, ROUTE_IN, ROUTE_RA,
-                 ROUTE_SC)
+                 ROUTE_SC, ROUTE_TD)
 
 # CYP2D6 metaboliser phenotype.  Four categories, using the CPIC terms the
 # genotyping laboratories report, rather than the three the UI carried before
@@ -490,13 +500,17 @@ valganciclovirUnits <- paste("mg PO", VALGANCICLOVIR_PRODUCT)
 # unit names the salt and the drug's `doseProducts` block converts it.  Oral;
 # scheduled every 6 or 8 hours, or 4 for loading.
 QUINIDINE_SALT <- "sulfate"
+# A transdermal patch's delivery rate into the skin (ROUTE_TD): Transderm
+# Scop is labelled "1 mg/3 days", 0.333 mg/day, entered when the patch is
+# applied and set to 0 when it is removed.
+tdRateUnits <- c("mg/day TD")
 quinidineSulfateUnits <- paste("mg PO", QUINIDINE_SALT)
 
 allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, enteralRateUnits, poFormulationUnits,
               slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits,
               iuUnits, scUnits, iuScUnits, ghbUnits, insulinUnits, insulinRateUnits,
               ivPotencyUnits, aminophyllineUnits, caffeineCitrateUnits,
-              valganciclovirUnits, quinidineSulfateUnits)
+              valganciclovirUnits, quinidineSulfateUnits, tdRateUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.

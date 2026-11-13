@@ -94,6 +94,11 @@ antibioticMicTable <- function()
       "MIC: CLSI M100 (from 2023; FDA-recognised), Enterobacterales S <= 4 mg/L (Sader HS et al., Open",
       "Forum Infect Dis 2023;10:ofad058, Table 1; the breakpoint fell from 16 that year); MIC50/MIC90",
       "2/4 mg/L in 9,809 US Enterobacterales (Sader 2023)."),
+    linezolid     = paste(
+      "MIC: Abdul-Aziz MH et al., Intensive Care Med 2020;46:1127-1153 (pathogens with an MIC of 2 mg/L",
+      "or more need higher doses; a trough above 2 mg/L reaches AUC/MIC 80 across the epidemiological MIC",
+      "distribution); EUCAST Clinical Breakpoint Tables v16.1, 2026, Staphylococcus S <= 4 mg/L; MIC90",
+      "1 mg/L in LEADER 2013 (abstract) and 4 mg/L in 39 MRSA (Shah 2024, Table 1). 2 mg/L sits between."),
     vancomycin    = paste(
       "MIC: Rybak MJ et al., Am J Health Syst Pharm 2020;77:835-864 (the consensus AUC target assumes",
       "an MIC of 1 mg/L); Diekema DJ et al., Open Forum Infect Dis 2019;6(Suppl 1):S47-S53 (SENTRY:",
@@ -126,6 +131,9 @@ antibioticMicTable <- function()
     amikacin      = paste(
       "Free fraction: 0.82 (17.6-18.0% bound by ultrafiltration, independent of concentration from 1.4",
       "to 74 mg/L; abstract): Brunnemann SR, Segal JL, Life Sci 1991;49:PL1-5."),
+    linezolid     = paste(
+      "Free fraction: 0.69 (Zyvox label, sec. 12.3: 'The plasma protein binding of linezolid is",
+      "approximately 31% and is concentration-independent')."),
     vancomycin    = paste(
       "Free fraction: Dejaco A et al., Antimicrob Agents Chemother 2026;70:e01593-25",
       "(0.72 in 706 samples from 228 adult in-patients at 37 C and pH 7.4, independent of",
@@ -135,7 +143,7 @@ antibioticMicTable <- function()
 
   x <- data.frame(
     Drug = c("cefazolin", "cefalexin", "ceftriaxone", "clindamycin",
-             "gentamicin", "metronidazole", "tobramycin", "amikacin", "vancomycin"),
+             "gentamicin", "metronidazole", "tobramycin", "amikacin", "linezolid", "vancomycin"),
     Organism = c(
       "Staphylococcus aureus, methicillin-susceptible (MSSA)",
       "Staphylococcus aureus, methicillin-susceptible (MSSA)",
@@ -145,18 +153,19 @@ antibioticMicTable <- function()
       "Bacteroides fragilis group",
       "Enterobacterales and Pseudomonas aeruginosa",
       "Enterobacterales (E. coli, Klebsiella)",
+      "Staphylococcus aureus, including MRSA",
       "Staphylococcus aureus, including MRSA"
     ),
-    MIC = c(2, 4, 1, 0.5, 2, 4, 2, 4, 1),
-    Plotted = c("unbound", "total", "total", "total", "total", "total", "total", "total", "total"),
-    FreeFraction = c(1, 0.85, 0.065, 0.096, 1, 0.96, 1, 0.82, 0.70),
-    Saturable = c(FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE),
+    MIC = c(2, 4, 1, 0.5, 2, 4, 2, 4, 2, 1),
+    Plotted = c("unbound", "total", "total", "total", "total", "total", "total", "total", "total", "total"),
+    FreeFraction = c(1, 0.85, 0.065, 0.096, 1, 0.96, 1, 0.82, 0.69, 0.70),
+    Saturable = c(FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
     # The one-site binding fits named in the binding sources, total = free +
     # capacity x free / (Kd + free); FreeFraction is that map's free / total
     # at the MIC, which is what puts the threshold on the curve.
-    BindingKd       = c(NA, NA, 23.7, 0.85, NA, NA, NA, NA, NA),
-    BindingCapacity = c(NA, NA, 354, 12.7, NA, NA, NA, NA, NA),
-    Threshold = c(2, 4.7, 15, 5.2, 2, 4.2, 2, 4.9, 1.4),
+    BindingKd       = c(NA, NA, 23.7, 0.85, NA, NA, NA, NA, NA, NA),
+    BindingCapacity = c(NA, NA, 354, 12.7, NA, NA, NA, NA, NA, NA),
+    Threshold = c(2, 4.7, 15, 5.2, 2, 4.2, 2, 4.9, 2.9, 1.4),
     MicSource = unname(micSource),
     BindingSource = unname(bindingSource),
     stringsAsFactors = FALSE

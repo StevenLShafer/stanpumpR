@@ -429,6 +429,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   routes <- c(if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "sublingual",
               if (ROUTE_IM %in% route) "intramuscular", if (ROUTE_IN %in% route) "intranasal",
               if (ROUTE_SC %in% route) "subcutaneous",
+              if (ROUTE_TD %in% route) "transdermal (a patch)",
               if (ROUTE_RA %in% route) "by tissue injection (regional anesthesia)")
   intravenous <- any(units %in% c(bolusUnits, infusionUnits, calciumUnits, iuUnits, ivPotencyUnits,
                       aminophyllineUnits, caffeineCitrateUnits))
@@ -474,6 +475,9 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
       if (length(parents)) paste(vapply(parents, function(p) helpPageLink(paste0("drugs/", p)), character(1)),
                                  collapse = ", ") else esc("Not a modelled metabolite of any drug in the library"),
       esc(if (helpNoBand(row)) "None: no range applies to this model, so no band is drawn"
+          else if (!is.null(mic) && antibioticBandIsTrough(drug))
+            sprintf("%s to %s %s, total drug: a trough range for monitoring, not an MBC band (the recommended range and its source are below)",
+                    helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)
           else if (!is.null(mic)) sprintf("%s to %s %s, free drug at the expected MBC of the common pathogens (see below)",
                                           helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)
           else sprintf("%s to %s %s", helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)),
@@ -809,6 +813,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     # A subcutaneous drug's absorption rides on the tissue-depot (RA) fields
     # (R/subcutaneous.R), so its rows are named for the route it really has.
     tissue <- if (identical(pkRef$tissueRoute, ROUTE_SC)) "Subcutaneous (SC)" else
+      if (identical(pkRef$tissueRoute, ROUTE_TD)) "Transdermal (TD), release from the skin" else
       "Regional anesthesia (RA)"
     routes <- list(PO = if (secondPO) "Oral (PO), first depot" else "Oral (PO)",
                    PO2 = "Oral (PO), second depot", SL = "Sublingual (SL)",
@@ -900,7 +905,10 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
         if (identical(pkRef$tissueRoute, ROUTE_SC)) paste0(
           "SC is a subcutaneous injection",
           if (any(units %in% insulinRateUnits)) ", or a continuous subcutaneous infusion from an insulin pump (U/hr SC), which feeds the same depot" else "",
-          ". ") else if (any(doseRoute(units) == ROUTE_RA)) paste0(
+          ". ") else if (identical(pkRef$tissueRoute, ROUTE_TD)) paste0(
+          "TD is a transdermal patch, which delivers drug into the skin at a constant rate (mg/day TD) ",
+          "while it is worn; the skin releases it first-order, after the patch is removed as well. ",
+          "Removing the patch is a rate of 0. ") else if (any(doseRoute(units) == ROUTE_RA)) paste0(
           "RA is a local anesthetic injected into tissue (a nerve block or an infiltration)",
           if (any(units %in% raRateUnits)) ", or infused into it through a perineural catheter (mg/hr RA), which feeds the same depot" else "",
           ". ") else "",
@@ -1323,14 +1331,15 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
         paste(c("IV", if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "SL",
                 if (ROUTE_IM %in% route) "IM",
                 if (ROUTE_IN %in% route) "IN", if (ROUTE_RA %in% route) "RA",
-                if (ROUTE_SC %in% route) "SC",
+                if (ROUTE_SC %in% route) "SC", if (ROUTE_TD %in% route) "TD",
                 if (any(units %in% tciUnits)) "TCI"), collapse = ", ")
       } else {
         # No intravenous unit: name the routes it does have
         route <- unique(doseRoute(units))
         paste(c(if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "SL",
                 if (ROUTE_IM %in% route) "IM", if (ROUTE_IN %in% route) "IN",
-                if (ROUTE_RA %in% route) "RA", if (ROUTE_SC %in% route) "SC"),
+                if (ROUTE_RA %in% route) "RA", if (ROUTE_SC %in% route) "SC",
+                if (ROUTE_TD %in% route) "TD"),
               collapse = ", ")
       }
     metabolite <- if (is.null(pk$metaboliteName)) "" else
@@ -1444,9 +1453,22 @@ helpReferencesHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
 #' @returns HTML, or "" for a drug with no MBC rows
 #' @noRd
 helpAntibioticMbcHTML <- function(drug, concUnits) {
+  esc <- htmltools::htmlEscape
+  if (antibioticBandIsTrough(drug)) {
+    tb <- antibioticTroughBands()
+    tb <- tb[tb$Drug == drug, ]
+    return(paste0(
+      helpH2("Shaded band: a trough range, not an MBC"),
+      "<p>Most antibiotics' band marks the expected MBC, the concentration of free drug that kills. ",
+      esc(helpDrugTitle(drug)), " is the exception. ", esc(tb$Reason), "</p>",
+      "<p>Its default band is instead the trough range recommended for monitoring (an edit in the ",
+      "Drug Library changes the band drawn, not this recommendation), ",
+      sprintf("%s to %s %s total drug (typical %s): ", helpFormatNumber(tb$Lower),
+              helpFormatNumber(tb$Upper), esc(concUnits), helpFormatNumber(tb$Typical)),
+      esc(tb$Source), " It is a trough range, drawn against the whole curve.</p>"))
+  }
   band <- antibioticMbcBand(drug)
   if (is.null(band)) return("")
-  esc <- htmltools::htmlEscape
   mic <- antibioticMic(drug)
   x <- antibioticMbcTable()
   x <- x[x$Drug == drug, ]

@@ -2,6 +2,10 @@
 
 Dofetilide's parameters come from the sponsor's population analysis of the phase III trials (1,445 patients with atrial or ventricular arrhythmias, 10,335 plasma concentrations, 62.5-500 mcg once or twice daily), as the FDA's clinical pharmacology review of Tikosyn (NDA 20-931, 1999) gives it. One compartment: apparent clearance 4.5 + 0.128 × creatinine clearance L/h (14.1 L/h at the median 75 mL/min), 12% lower in women; apparent volume 247 L at 80 kg, changing 18.5 L per 10 kg; absorption 1.69 per hour. The oral bioavailability is over 90% (0.98 in the review's study), so the parameters are taken as absolute.
 
+### Sex, and a second analysis of the same trials
+
+Tunblad and colleagues (*J Pharmacokinet Pharmacodyn* 2008) analysed the same phase III data again and kept no sex term: their selection rule required an effect of at least 20% at a covariate's extremes, which a 12% difference between the sexes cannot meet. This model keeps the review's 12% lower clearance in women (Steven L. Shafer's decision, 2026-11-13), which the Tikosyn label also states: women have "approximately 12-18% lower dofetilide oral clearances than men ... after correction for weight and creatinine clearance". From Tunblad it takes only the cap on creatinine clearance, 150 mL/min.
+
 ### Renal function
 
 Clearance follows the Cockcroft-Gault creatinine clearance, from the Patient Profile's serum creatinine, as the label calculates it for dosing; left blank, a normal creatinine for age and sex is assumed. The label contraindicates a creatinine clearance under 20 mL/min. In pregnancy the creatinine clearance takes the 50% rise in filtration of late pregnancy when the creatinine is left blank; there are no pregnancy pharmacokinetic studies.
