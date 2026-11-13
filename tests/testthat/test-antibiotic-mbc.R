@@ -8,7 +8,9 @@
 
 test_that("every antibiotic has an MBC band, and only the antibiotics", {
   x <- antibioticMbcTable()
-  expect_setequal(unique(x$Drug), antibioticMicTable()$Drug)
+  # A bacteriostatic drug's band is a trough range instead (antibioticTroughBands())
+  expect_setequal(unique(x$Drug), setdiff(antibioticMicTable()$Drug, antibioticTroughBands()$Drug))
+  expect_length(intersect(unique(x$Drug), antibioticTroughBands()$Drug), 0)
   expect_true(all(x$Role %in% c("principal", "core", "excluded")))
   for (d in unique(x$Drug)) {
     expect_equal(sum(x$Drug == d & x$Role == "principal"), 1, label = paste(d, "principal pathogens"))
@@ -44,7 +46,7 @@ test_that("each row is internally consistent and sourced", {
 test_that("the band follows the rule and the library ships it", {
   dd <- getDrugDefaultsGlobal()
   x <- antibioticMbcTable()
-  for (d in antibioticMicTable()$Drug) {
+  for (d in setdiff(antibioticMicTable()$Drug, antibioticTroughBands()$Drug)) {
     b <- antibioticMbcBand(d)
     rows <- x[x$Drug == d, ]
     p <- rows[rows$Role == "principal", ]
@@ -116,7 +118,7 @@ test_that("clindamycin's band leaves out the staphylococci it does not kill", {
   expect_equal(staph$Role, "excluded")
   expect_match(staph$Source, "bacteriostatic", fixed = TRUE)
   # Elsewhere the principal pathogen is the MIC line's organism
-  for (d in setdiff(antibioticMicTable()$Drug, "clindamycin")) {
+  for (d in setdiff(antibioticMicTable()$Drug, c("clindamycin", antibioticTroughBands()$Drug))) {
     p <- x$Pathogen[x$Drug == d & x$Role == "principal"]
     organism <- antibioticMic(d)$Organism
     first <- function(s) sub("^([A-Za-z]+).*", "\\1", s)
@@ -125,7 +127,7 @@ test_that("clindamycin's band leaves out the staphylococci it does not kill", {
 })
 
 test_that("each antibiotic's help page explains its band", {
-  for (d in antibioticMicTable()$Drug) {
+  for (d in setdiff(antibioticMicTable()$Drug, antibioticTroughBands()$Drug)) {
     html <- helpDrugPageHTML(d)
     expect_true(grepl("Shaded band: free drug at the MBC", html, fixed = TRUE), label = d)
     expect_true(grepl("free drug at the expected MBC", html, fixed = TRUE), label = d)
@@ -144,4 +146,21 @@ test_that("clindamycin's band lies within the label's steady-state levels", {
   b <- antibioticMbcBand("clindamycin")$plotted
   expect_gte(b[["lower"]], 3.1)
   expect_lte(b[["upper"]], 12.0)
+})
+
+test_that("linezolid's band is the trough range, approved as an exception (2026-11-13)", {
+  tb <- antibioticTroughBands()
+  expect_equal(tb$Drug, "linezolid")
+  expect_true(antibioticBandIsTrough("linezolid"))
+  expect_false(antibioticBandIsTrough("vancomycin"))
+  expect_null(antibioticMbcBand("linezolid"))
+  dd <- getDrugDefaultsGlobal()
+  row <- dd[dd$Drug == "linezolid", ]
+  expect_equal(c(row$Lower, row$Typical, row$Upper), c(tb$Lower, tb$Typical, tb$Upper))
+  X <- linezolid(70, 170, 40, "male")
+  expect_equal(c(X$lowerTypical, X$typical, X$upperTypical), c(2, 4.5, 7))
+  html <- helpDrugPageHTML("linezolid")
+  expect_true(grepl("Shaded band: a trough range, not an MBC", html, fixed = TRUE))
+  expect_true(grepl("bacteriostatic", html, fixed = TRUE))
+  expect_false(grepl("Shaded band: free drug at the MBC", html, fixed = TRUE))
 })

@@ -2529,7 +2529,18 @@ registry <- rbind(
       source = "Yue W, et al. 2023 (review), PMC10442696, quoting Wisner KL, Perel JM, Wheeler SB. Tricyclic dose requirements across pregnancy. Am J Psychiatry 1993;150:1541-1542",
       source_url = "https://pmc.ncbi.nlm.nih.gov/articles/PMC10442696/",
       to_obtain = "Wisner 1993 (Am J Psychiatry 150:1541)",
-      notes = "CYP2D6 activity rises in pregnancy, which agrees in direction; the magnitude is a secondary quotation mixing medians and means, so nothing is applied.")
+      notes = "CYP2D6 activity rises in pregnancy, which agrees in direction; the magnitude is a secondary quotation mixing medians and means, so nothing is applied."),
+  row("linezolid", "Antibiotics", "applied",
+      finding = "One case report: van Kampenhout 2017 (Eur Respir J 49:1601724, not read; quoted by Groen 2023, Clin Pharmacokinet, PMC10042773, read in full), a woman with MDR-TB on 300 mg twice daily from 20 weeks, whose linezolid exposure was 'decreased during the second (by 76%) and third (by 48%) trimester compared with postpartum'. The Zyvox label gives no human pregnancy pharmacokinetics. About a third of linezolid's clearance is renal (Boak 2014: CLR 2.17 of 6.72 L/h at a GFR of 120).",
+      applied = "GFR x 1.5 when the serum creatinine is left blank (physiological: the rise in glomerular filtration of late pregnancy), acting on the renal clearance only. Volume and absorption unchanged.",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = 1.5,
+      trimester = "third", comparator = NA,
+      design = "physiological", n = NA, confidence = "low",
+      evidence_read = "full_text",
+      source = "Ansari J, Carvalho B, Shafer SL, Flood P. Anesth Analg 2016;122:786-804 (the rise in glomerular filtration of pregnancy); Groen F, Prins JR, Lub-de Hooge MN, et al. Clin Pharmacokinet 2023;62:399-434 PMID 36940039",
+      source_url = "https://doi.org/10.1213/ANE.0000000000001143",
+      to_obtain = "van Kampenhout 2017 (Eur Respir J 49:1601724): the measured exposure in one pregnant woman",
+      notes = "The single case's exposure fell by half or more, beyond what the renal term alone predicts; n = 1, so it is recorded, not applied.")
 )
 
 stopifnot(

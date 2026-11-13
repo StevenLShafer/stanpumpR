@@ -69,7 +69,9 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 "ganciclovir",
                 # creatinine clearance on clearance: dofetilide (FDA review of
                 # NDA 20-931), quinidine (Fattinger 1991)
-                "dofetilide", "quinidine")
+                "dofetilide", "quinidine",
+                # Cockcroft-Gault at 65 kg on renal clearance (Boak 2014)
+                "linezolid")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system),

@@ -1442,9 +1442,21 @@ helpReferencesHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
 #' @returns HTML, or "" for a drug with no MBC rows
 #' @noRd
 helpAntibioticMbcHTML <- function(drug, concUnits) {
+  esc <- htmltools::htmlEscape
+  if (antibioticBandIsTrough(drug)) {
+    tb <- antibioticTroughBands()
+    tb <- tb[tb$Drug == drug, ]
+    return(paste0(
+      helpH2("Shaded band: a trough range, not an MBC"),
+      "<p>Most antibiotics' band marks free drug at the expected MBC, the concentration that kills. ",
+      esc(helpDrugTitle(drug)), " is the exception. ", esc(tb$Reason), "</p>",
+      "<p>Its band is instead the trough range recommended for monitoring, ",
+      sprintf("%s to %s %s total drug (typical %s): ", helpFormatNumber(tb$Lower),
+              helpFormatNumber(tb$Upper), esc(concUnits), helpFormatNumber(tb$Typical)),
+      esc(tb$Source), " It is a trough range, drawn against the whole curve.</p>"))
+  }
   band <- antibioticMbcBand(drug)
   if (is.null(band)) return("")
-  esc <- htmltools::htmlEscape
   mic <- antibioticMic(drug)
   x <- antibioticMbcTable()
   x <- x[x$Drug == drug, ]

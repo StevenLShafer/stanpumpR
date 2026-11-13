@@ -237,3 +237,4 @@ everolimus,ng,,,mg PO bid,"mg PO,mg PO qd,mg PO bid",#6D4C41,3,8,5.5,0,0,IV,Othe
 dofetilide,ng,,,mcg PO bid,"mcg PO,mcg PO bid",#37474F,0,0,0,0,0,IV,Other
 quinidine,mcg,,,mg PO sulfate,"mg PO sulfate,mg PO sulfate tid,mg PO sulfate qid,mg PO sulfate q4h",#1565C0,2,6,4,0,0,IV,Other
 nortriptyline,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#6A1B9A,70,170,120,0,0,IV,Antidepressants
+linezolid,mcg,mg,mg/hr,mg,"mg,mg/hr,mg bid,mg PO,mg PO bid",#00838F,2,7,4.5,0,2.9,IV,Antibiotics

@@ -1,6 +1,6 @@
 ## Antibiotics: the MIC line and the MBC band
 
-Each of the nine antibiotics, [cefazolin](help:drugs/cefazolin), [cefalexin](help:drugs/cefalexin), [ceftriaxone](help:drugs/ceftriaxone), [clindamycin](help:drugs/clindamycin), [gentamicin](help:drugs/gentamicin), [tobramycin](help:drugs/tobramycin), [amikacin](help:drugs/amikacin), [metronidazole](help:drugs/metronidazole) and [vancomycin](help:drugs/vancomycin), is drawn against two pharmacodynamic markers, both written on **free** (unbound) drug, which is what reaches the organism:
+Each of the ten antibiotics, [cefazolin](help:drugs/cefazolin), [cefalexin](help:drugs/cefalexin), [ceftriaxone](help:drugs/ceftriaxone), [clindamycin](help:drugs/clindamycin), [gentamicin](help:drugs/gentamicin), [tobramycin](help:drugs/tobramycin), [amikacin](help:drugs/amikacin), [linezolid](help:drugs/linezolid), [metronidazole](help:drugs/metronidazole) and [vancomycin](help:drugs/vancomycin), is drawn against two pharmacodynamic markers, both written on **free** (unbound) drug, which is what reaches the organism:
 
 - **The MIC**, the minimum inhibitory concentration, at which growth stops. It is the drug's threshold for *Time until threshold*: the line shows how long, with no further dose, until free drug falls below the MIC of the organism the drug is mainly given against. See [Time until threshold](help:models/recovery).
 - **The MBC**, the minimum bactericidal concentration, at which 99.9 per cent of the organism is killed in 24 hours. The shaded band marks the expected MBCs of the common pathogens the drug is given against.
@@ -22,6 +22,8 @@ Organisms the drug does not kill at attainable levels are listed on each drug's 
 MBCs are measured in protein-free broth, so they are free-drug values. Cefazolin's curve is unbound drug and its band is drawn at the MBCs themselves. The others plot total drug, so each free MBC is placed on the curve through the drug's binding: divided by the free fraction, or, for ceftriaxone and clindamycin, whose binding saturates, through the one-site binding fit.
 
 <!-- generated: antibiotic-mbc-table -->
+
+**Linezolid** is the one antibiotic whose band is not an MBC band. The label calls it bacteriostatic against staphylococci and enterococci, whose MBCs are 32 mg/L and more (MRSA) and 1,000-2,000 mg/L (enterococci), so it has no principal pathogen it kills at attainable levels. Its band is instead the trough range of the ESICM/ESCMID position paper on antimicrobial monitoring, 2-7 mg/L total drug, drawn against the whole curve; its MIC line is *S. aureus* at 2 mg/L. See [linezolid](help:drugs/linezolid).
 
 ### How much to trust it
 
