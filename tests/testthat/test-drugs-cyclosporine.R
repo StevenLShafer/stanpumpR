@@ -46,3 +46,10 @@ test_that("the band is the Sandimmune label's 100-200 ng/mL", {
   row <- dd[dd$Drug == "cyclosporine", ]
   expect_equal(c(row$Lower, row$Upper, row$Typical), c(100, 200, 150))
 })
+
+test_that("switch on, a 120-kg man: the allometry at the FFM weight, by hand", {
+  w <- 70 * ffmRatioMaleIndependent(120, 170, 50) / 13
+  p <- cyclosporine(120, 170, 50, "male")$PK$default
+  expect_equal_rounded(c(5.3, 19.6, 4.4) * w, c(p$v1, p$v2, p$v3))
+  expect_equal_rounded(c(6.1, 1.5, 3.0) / 60 * w^0.75, c(p$cl1, p$cl2, p$cl3))
+})

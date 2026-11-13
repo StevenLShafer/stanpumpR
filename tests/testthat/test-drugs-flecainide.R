@@ -61,3 +61,11 @@ test_that("the Japanese eGFR helper is Matsuo 2009, floored at 18 years", {
   expect_equal(egfrMatsuo(50, "female", 1), 194 * 50^(-0.287) * 0.739)
   expect_equal(egfrMatsuo(2, "male", 0.5), egfrMatsuo(18, "male", 0.5))
 })
+
+test_that("switch on, a 120-kg man: the weight terms at the FFM weight, by hand", {
+  pkW <- 70 * ffmRatioMaleIndependent(120, 170, 50)
+  egfr <- 194 * 1^(-1.094) * 50^(-0.287)          # serum creatinine 1.0
+  p <- flecainide(120, 170, 50, "male", creatinine = 1)$PK$default
+  expect_equal_rounded(6.0 * pkW, p$v1)
+  expect_equal_rounded((8.83 + 9.79 * egfr / 73 * pkW / 66) / 60, p$cl1)
+})

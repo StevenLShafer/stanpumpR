@@ -14,7 +14,7 @@ At the reference man the model's clearance is 6.5 L/h and half-life 4.7 hours; t
 
 The MIC line is *Staphylococcus aureus*, including MRSA, at 2 mg/L free drug (2.9 mg/L on the total curve, linezolid being 31% bound): pathogens with an MIC of 2 mg/L or more need higher doses (the ESICM/ESCMID position paper), and the susceptible breakpoint is 4 mg/L.
 
-The band is **not** an MBC band, as other antibiotics' are. Linezolid only stops staphylococci and enterococci from growing; it does not kill them at concentrations the curve reaches. Its band is the trough range the position paper recommends for monitoring, 2-7 mg/L: a trough above 2 mg/L reaches the efficacy target for most isolates, and above 7-10 mg/L thrombocytopenia becomes likely. It is a trough range, drawn against the whole curve.
+The band is **not** an MBC band, as other antibiotics' are. Linezolid only stops staphylococci and enterococci from growing; it does not kill them at concentrations the curve reaches. Its band is the trough range the ESICM/ESCMID position paper recommends for monitoring (Abdul-Aziz and colleagues, *Intensive Care Med* 2020;46:1127-1153, doi 10.1007/s00134-020-06050-1, Table 5), 2-7 mg/L of total linezolid in plasma, one sample "30 min or just before the next dosing", taken 48 hours after treatment starts: a trough above 2 mg/L reaches the efficacy target for most isolates, and above 7-10 mg/L thrombocytopenia becomes likely. It is a trough range, drawn against the whole curve.
 
 ### Where to be careful
 

@@ -475,6 +475,9 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
       if (length(parents)) paste(vapply(parents, function(p) helpPageLink(paste0("drugs/", p)), character(1)),
                                  collapse = ", ") else esc("Not a modelled metabolite of any drug in the library"),
       esc(if (helpNoBand(row)) "None: no range applies to this model, so no band is drawn"
+          else if (!is.null(mic) && antibioticBandIsTrough(drug))
+            sprintf("%s to %s %s, total drug: a trough range recommended for monitoring, not an MBC band (see below)",
+                    helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)
           else if (!is.null(mic)) sprintf("%s to %s %s, free drug at the expected MBC of the common pathogens (see below)",
                                           helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)
           else sprintf("%s to %s %s", helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)),
@@ -1454,7 +1457,7 @@ helpAntibioticMbcHTML <- function(drug, concUnits) {
     tb <- tb[tb$Drug == drug, ]
     return(paste0(
       helpH2("Shaded band: a trough range, not an MBC"),
-      "<p>Most antibiotics' band marks free drug at the expected MBC, the concentration that kills. ",
+      "<p>Most antibiotics' band marks the expected MBC, the concentration of free drug that kills. ",
       esc(helpDrugTitle(drug)), " is the exception. ", esc(tb$Reason), "</p>",
       "<p>Its band is instead the trough range recommended for monitoring, ",
       sprintf("%s to %s %s total drug (typical %s): ", helpFormatNumber(tb$Lower),

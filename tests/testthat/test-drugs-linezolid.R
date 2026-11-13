@@ -50,3 +50,14 @@ test_that("the Zyvox label's exposure at 600 mg every 12 hours", {
   auc2 <- sum(diff(s2$Time) * (head(s2$Plasma, -1) + tail(s2$Plasma, -1)) / 2) / 60
   expect_equal(auc2, auc, tolerance = 0.01)
 })
+
+test_that("switch on, a 120-kg man: ideal body weight is the size, by hand", {
+  # 170 cm man: Devine 50 + 2.3 x (170/2.54 - 60) = 65.94 kg, below his
+  # pharmacokinetic weight, so WT is the ideal weight; GFR at 65 kg with a
+  # serum creatinine of 1.0: (140 - 50) x 65 / 72 = 81.25 mL/min
+  ibw <- 50 + 2.3 * (170 / 2.54 - 60)
+  expect_lt(ibw, 70 * ffmRatioMaleIndependent(120, 170, 50))
+  p <- linezolid(120, 170, 50, "male", creatinine = 1)$PK$default
+  expect_equal_rounded(44.3 * ibw / 65, p$v1)
+  expect_equal_rounded((ibw / 65)^0.75 * (81.25 / 120 * 2.17 + 4.55) / 60, p$cl1)
+})

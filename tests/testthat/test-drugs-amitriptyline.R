@@ -92,3 +92,11 @@ test_that("no band: the guideline's range is for the active moiety", {
   tr <- read.csv(system.file("extdata", "therapeuticRanges.csv", package = "stanpumpR"))
   expect_equal(tr$band_status[tr$drug == "amitriptyline"], "sum_not_drawn")
 })
+
+test_that("switch on, a 120-kg man: volumes by the FFM ratio, clearances to 0.75", {
+  f <- ffmRatioMaleIndependent(120, 170, 50)
+  p <- amitriptyline(120, 170, 50, "male")$PK$default
+  expect_equal_rounded(c(155, 1670) * f, c(p$v1, p$v2))
+  expect_equal_rounded(c(61.5 + 30.6, 109) / 60 * f^0.75, c(p$cl1, p$cl2))
+  expect_equal(c(p$v3, p$cl3), c(1, 0))
+})

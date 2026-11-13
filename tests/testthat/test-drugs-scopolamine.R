@@ -44,3 +44,11 @@ test_that("one patch: the label's 87 pg/mL plateau, and a 9.5 h decline after re
   auc <- sum(diff(w$Time) * (head(w$Plasma, -1) + tail(w$Plasma, -1)) / 2)  # pg.min/mL
   expect_equal(auc * 2.53 / 1e6, 1, tolerance = 0.02)                       # mg
 })
+
+test_that("switch on, a 120-kg man: volumes by the FFM ratio, clearances to 0.75", {
+  f <- ffmRatioMaleIndependent(120, 170, 50)
+  p <- scopolamine(120, 170, 50, "male")$PK$default
+  expect_equal_rounded(c(66.3, 250 - 66.3) * f, c(p$v1, p$v2))
+  expect_equal_rounded(c(2.53, 4.78) * f^0.75, c(p$cl1, p$cl2))
+  expect_equal(c(p$v3, p$cl3), c(1, 0))
+})

@@ -34,3 +34,10 @@ test_that("the band is the paper's 0.8-2 mg/L", {
   row <- dd[dd$Drug == "mexiletine", ]
   expect_equal(c(row$Lower, row$Upper, row$Typical), c(0.8, 2, 1.4))
 })
+
+test_that("switch on, a 120-kg man: proportional to the FFM weight, by hand", {
+  pkW <- 70 * ffmRatioMaleIndependent(120, 170, 50)
+  p <- mexiletine(120, 170, 50, "male")$PK$default
+  expect_equal_rounded(5.3 * pkW, p$v1)
+  expect_equal_rounded(0.38 * pkW / 60, p$cl1)
+})

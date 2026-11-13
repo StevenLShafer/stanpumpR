@@ -163,4 +163,6 @@ test_that("linezolid's band is the trough range, approved as an exception (2026-
   expect_true(grepl("Shaded band: a trough range, not an MBC", html, fixed = TRUE))
   expect_true(grepl("bacteriostatic", html, fixed = TRUE))
   expect_false(grepl("Shaded band: free drug at the MBC", html, fixed = TRUE))
+  expect_false(grepl("free drug at the expected MBC", html, fixed = TRUE))
+  expect_true(grepl("a trough range recommended for monitoring", html, fixed = TRUE))
 })
