@@ -343,6 +343,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     !is.na(k) && k == 0
   }, dd$Drug[dd$Class == "IV"])
   expect_setequal(blank, c(
+    "MEGX", "norpethidine",  # toxic metabolites, no ke0 (2026-11-13)
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
     "metronidazole", "gentamicin",

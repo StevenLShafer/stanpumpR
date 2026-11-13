@@ -370,6 +370,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
   # joined on 2026-10-11 too: its effect follows the plasma with no delay
   # (R/drugs_naproxen.R), no metabolite.
   expect_setequal(noCe, c(
+    "MEGX", "norpethidine",  # toxic metabolites, no ke0 (2026-11-13)
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
     "metronidazole", "gentamicin",

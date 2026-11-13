@@ -367,9 +367,13 @@ test_that("a regional infusion before a plasma target does not leak its route in
   seen <- list()
   origDepot <- advanceClosedFormPO_IM_IN
   origIV    <- advanceClosedForm0
+  # Lidocaine forms MEGX (2026-11-13), so its doses now reach the metabolite
+  # engine, which carries the tissue route too.
+  origMet   <- advanceClosedFormMetabolite
   local_mocked_bindings(
     advanceClosedFormPO_IM_IN = function(dose, ...) { seen$depot <<- dose; origDepot(dose, ...) },
-    advanceClosedForm0        = function(dose, ...) { seen$iv    <<- dose; origIV(dose, ...) }
+    advanceClosedForm0        = function(dose, ...) { seen$iv    <<- dose; origIV(dose, ...) },
+    advanceClosedFormMetabolite = function(dose, ...) { seen$depot <<- dose; origMet(dose, ...) }
   )
   lido <- function(unit) data.frame(
     Drug = "lidocaine", Time = c(0, 5), Dose = c(100, 1),
