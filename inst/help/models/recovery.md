@@ -31,6 +31,7 @@ stanpumpR does not simulate protein binding. Each antibiotic's curve shows one f
 | Amikacin | Enterobacterales (*E. coli*, *Klebsiella*) | 4 | Total drug | 0.82 | 4.9 |
 | Linezolid | *S. aureus*, including MRSA | 2 | Total drug | 0.69 | 2.9 |
 | Meropenem | Enterobacterales and *P. aeruginosa* | 2 | Total drug | 0.98 | 2 |
+| Piperacillin | Enterobacterales (*E. coli*, *Klebsiella*, *Enterobacter*) | 8 | Total drug | 0.70 | 11.4 |
 | Vancomycin | *S. aureus*, including MRSA | 1 | Total drug | 0.70 | 1.4 |
 
 The shaded band is a second marker on the same footing: free drug at the expected **MBC**, the concentration that kills, of the common pathogens each antibiotic is given against. Linezolid, which only stops staphylococci and enterococci from growing, is the exception: its band is a total-drug trough range for monitoring, not an MBC. See [Antibiotics: the MIC line and the MBC band](help:models/antibiotics).

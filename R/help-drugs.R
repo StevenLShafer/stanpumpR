@@ -432,7 +432,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
               if (ROUTE_TD %in% route) "transdermal (a patch)",
               if (ROUTE_RA %in% route) "by tissue injection (regional anesthesia)")
   intravenous <- any(units %in% c(bolusUnits, infusionUnits, calciumUnits, iuUnits, ivPotencyUnits,
-                      aminophyllineUnits, caffeineCitrateUnits))
+                      aminophyllineUnits, caffeineCitrateUnits, piperacillinTazobactamUnits))
   tci <- any(units %in% tciUnits)
   given <- if (length(units) == 0) {
     paste0("Not dosed directly: appears only as the active metabolite of ",
@@ -1326,7 +1326,7 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
     units <- helpDrugUnits(row)
     given <- if (length(units) == 0) "metabolite only"
       else if (any(units %in% c(bolusUnits, infusionUnits, calciumUnits, iuUnits, ivPotencyUnits,
-                      aminophyllineUnits, caffeineCitrateUnits))) {
+                      aminophyllineUnits, caffeineCitrateUnits, piperacillinTazobactamUnits))) {
         route <- doseRoute(units)
         paste(c("IV", if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "SL",
                 if (ROUTE_IM %in% route) "IM",

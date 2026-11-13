@@ -500,6 +500,16 @@ valganciclovirUnits <- paste("mg PO", VALGANCICLOVIR_PRODUCT)
 # unit names the salt and the drug's `doseProducts` block converts it.  Oral;
 # scheduled every 6 or 8 hours, or 4 for loading.
 QUINIDINE_SALT <- "sulfate"
+# Piperacillin-tazobactam (R/drugs_piperacillin.R): Zosyn and its generics are
+# labelled by the combined weight ("4.5 g": piperacillin sodium equivalent to
+# 4 g piperacillin and tazobactam sodium equivalent to 0.5 g tazobactam), and
+# are ordered that way, so a unit naming the product ("pip-tazo", the
+# clinical shorthand, short enough for a scheduled unit) carries 4/4.5 of its
+# weight as piperacillin (the drug's `doseProducts` block).  Plain mg units are
+# piperacillin.  Intravenous; scheduled every 4, 6 or 8 hours.
+PIPERACILLIN_TAZOBACTAM_PRODUCT <- "pip-tazo"
+piperacillinTazobactamUnits <- paste(c("mg", "mg/kg", "mg/hr", "mg/kg/hr"),
+                                     PIPERACILLIN_TAZOBACTAM_PRODUCT)
 # A transdermal patch's delivery rate into the skin (ROUTE_TD): Transderm
 # Scop is labelled "1 mg/3 days", 0.333 mg/day, entered when the patch is
 # applied and set to 0 when it is removed.
@@ -510,7 +520,8 @@ allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, enteralRateUnits,
               slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits,
               iuUnits, scUnits, iuScUnits, ghbUnits, insulinUnits, insulinRateUnits,
               ivPotencyUnits, aminophyllineUnits, caffeineCitrateUnits,
-              valganciclovirUnits, quinidineSulfateUnits, tdRateUnits)
+              valganciclovirUnits, quinidineSulfateUnits, tdRateUnits,
+              piperacillinTazobactamUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.
@@ -568,7 +579,9 @@ scheduledUnits <- c(
   # Valganciclovir's once- and twice-daily regimens (R/drugs_ganciclovir.R)
   paste(valganciclovirUnits, c("qd", "bid")),
   # Quinidine sulfate's regimens (R/drugs_quinidine.R)
-  paste(quinidineSulfateUnits, c("tid", "qid", "q4h"))
+  paste(quinidineSulfateUnits, c("tid", "qid", "q4h")),
+  # Piperacillin-tazobactam every 8 or 6 hours (R/drugs_piperacillin.R)
+  as.vector(t(outer(piperacillinTazobactamUnits[1:2], c("tid", "qid", "q4h"), paste)))
 )
 
 # Units for the inhaled gases (Class "gas" in drugDefaults_global.csv): carrier

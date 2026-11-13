@@ -407,6 +407,33 @@ antibioticMbcTable <- function()
                      "the label has no interpretive criteria for enterococci."),
         Source = "Merrem label (2016), sec. 12.4."),
 
+    # --- Piperacillin (as piperacillin-tazobactam) ---------------------------
+    row("piperacillin", "Enterobacterales (E. coli, Klebsiella, Enterobacter)", "principal",
+        MIC50 = 2, MIC90 = 16, MBC50 = 2, MBC90 = 16,
+        Basis = "MIC x 1",
+        Note = paste("Piperacillin kills Enterobacterales at about its MIC: in 420 blood isolates 'MBCs were",
+                     "generally close to MICs with MBC-to-MIC ratios of less than 2' (geometric means: E. coli",
+                     "4.5/5.2, Klebsiella 13.0/18.9, Enterobacter 2.9/5.5 mg/L). 88% of isolates are",
+                     "susceptible by CLSI 2023 (Sader 2023)."),
+        Source = c(
+          "MIC50/MIC90 2/16 in 9,809 US isolates, 2017-2021 (Sader HS et al., Open Forum Infect Dis",
+          "2023;10:ofad058, Table 2); MBC/MIC: Reimer LG et al., Antimicrob Agents Chemother",
+          "1980;17:412-415, Tables 1 and 2.")),
+    row("piperacillin", "Pseudomonas aeruginosa", "core",
+        MIC50 = 4, MIC90 = 16, MBC50 = 4, MBC90 = 32,
+        Basis = "measured",
+        Note = paste("40 isolates at the standard inoculum (5 x 10^5 CFU/mL). Modern isolates are less",
+                     "susceptible (MIC90 about 128 mg/L in US surveillance, abstract only), which this row,",
+                     "of susceptible-era isolates, does not reflect."),
+        Source = "Corrado ML et al., Antimicrob Agents Chemother 1980;18:893-896, Tables 1 and 2."),
+    row("piperacillin", "ESBL-producing and carbapenem-resistant Enterobacterales", "excluded",
+        Note = "ESBL phenotype MIC50/MIC90 8/128 mg/L, 63% susceptible.",
+        Source = "Sader 2023, Table 2."),
+    row("piperacillin", "MRSA and ampicillin-resistant enterococci", "excluded",
+        Note = paste("The Zosyn label lists 'Staphylococcus aureus (methicillin susceptible isolates only)'",
+                     "and 'Enterococcus faecalis (ampicillin or penicillin-susceptible isolates only)'."),
+        Source = "Zosyn label (NDA 050750, 2023), sec. 12.4."),
+
     # --- Metronidazole -------------------------------------------------------
     row("metronidazole", "Bacteroides fragilis group", "principal",
         MIC50 = 0.5, MIC90 = 1, MBC50 = 1, MBC90 = 4,
