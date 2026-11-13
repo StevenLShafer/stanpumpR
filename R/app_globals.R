@@ -29,6 +29,9 @@ eventTableInit <- data.frame(
 )
 
 bookmarksToExclude <- c(
+  # The Bayesian Updating table, saved by onBookmark() as measurements
+  "bayesTable",
+  "bayesClear",
   "editThresholds",
   "plotContainer_full_screen",
   "thresholdEditsOK",

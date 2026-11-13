@@ -726,3 +726,19 @@ bslib-tooltip:has(> .field-help) {
   color: #6c757d;
   font-style: italic;
 }
+
+/* The Bayesian Updating panel (R/bayesian-server.R): its table fits the
+   sidebar, which is narrower than the dialogs the table grid's minimum
+   width was set for; the estimate's own table is compact. */
+#bayesTable table.dose-grid {
+  min-width: 0;
+}
+.bayes-fit-table th,
+.bayes-fit-table td {
+  padding: 0.1rem 0.25rem;
+  text-align: right;
+}
+.bayes-fit-table th:first-child,
+.bayes-fit-table td:first-child {
+  text-align: left;
+}

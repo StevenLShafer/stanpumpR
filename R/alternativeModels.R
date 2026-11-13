@@ -159,6 +159,8 @@ alternativeModelParent <- function(name) {
   # (R/antiseizureInteractions.R)
   name <- sub(paste0(" \\(", ASM_INTERACTIONS_REFERENCE_LABEL, "\\)( TCI)?$"),
               "\\1", name)
+  # The Bayesian update's "<drug> (population)" line (R/bayesian.R)
+  name <- sub(paste0(" \\(", BAYES_PRIOR_LABEL, "\\)( TCI)?$"), "\\1", name)
   for (d in ALTERNATIVE_MODEL_DRUGS) {
     companion <- alternativeModelName(d)
     name[name == companion] <- d

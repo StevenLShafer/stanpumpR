@@ -557,6 +557,7 @@ app_server <- function(input, output, session) {
     profileCode({
       excludeFromBookmark(names(reactiveValuesToList(input)))
       doseTable(); doseTableFormat(); eventTable(); macThreshold(); drugDefaults()
+      bayes$rows()
       session$doBookmark()
     }, name = "doBookmark observer")
   }, priority = -10)
@@ -574,6 +575,11 @@ app_server <- function(input, output, session) {
       # misalign it.
       state$values$macThreshold <- macThreshold()
       state$values$endCe <- changedThresholds(drugDefaults())
+      # The Bayesian update's measured concentrations, in minutes (complete
+      # rows only); saved only when there are some, to keep links short.
+      stored <- bayes$rows()
+      measured <- bayesRowsToObservations(stored$rows, stored$format, input$referenceTime)
+      if (nrow(measured) > 0) state$values$bayes <- measured
       excludeFromBookmark(isolate(names(input)))
     }, name = "onBookmark()")
   })
@@ -671,6 +677,14 @@ app_server <- function(input, output, session) {
       if (is.null(state$input$adjustToFFM)) {
         updateCheckboxInput(session, "adjustToFFM", value = FALSE)
       }
+      # The Bayesian update's measured concentrations, read as untrusted
+      # input like the tables, into the table in the format now shown
+      restoredBayes <- restoredBayesObservations(state$values$bayes, drugDefaults()$Drug)
+      if (restoredBayes$changed) {
+        showNotification("The link's measured concentrations had entries that could not be read. They were left out.",
+                         id = "bookmarkBayesUnreadable", type = "warning", duration = 10)
+      }
+      if (nrow(restoredBayes$table) > 0) bayes$restore(restoredBayes$table)
       # A restored dose table with an illicit drug in it turns the opt-in on, so
       # the drug is not hidden from the table it is part of (R/illicit-drugs.R).
       if (any(isIllicitDrug(DT$Drug, drugDefaults()))) {
@@ -1206,7 +1220,7 @@ app_server <- function(input, output, session) {
   # the table as a placeholder row -- and a write to doseTable() discards the
   # unapplied edits and the undo history, so a suggestion that then failed
   # lost them (CodeRabbit on #674, fixed 2026-11-04).
-  drugPK <- function(doseTable) {
+  drugPK <- function(doseTable, individual = NULL) {
     recalculatePK(
         NULL,
         drugDefaults(),
@@ -1229,9 +1243,70 @@ app_server <- function(input, output, session) {
         adjustToFFM = adjustToFFM(),
         opioidTolerance = opioidTolerance(),
         alternativeModels = companionGroupsOn(),
-        antiseizureInteractions = antiseizureInteractions()
+        antiseizureInteractions = antiseizureInteractions(),
+        individual = individual
       )
   }
+
+  # The Bayesian Updating panel (R/bayesian-server.R): the measured
+  # concentrations and the two variabilities.
+  bayes <- bayesianServer(
+    input, output, session,
+    doseTableClean = function() doseTableClean(),
+    doseTableFormat = function() doseTableFormat(),
+    drugDefaults = function() drugDefaults(),
+    result = function() bayesUpdate()
+  )
+
+  # The fits of the last update, reused for any drug whose inputs have not
+  # changed (bayesianUpdateDrugs()).  A plain variable, as ivSimulationCache.
+  bayesFitCache <- NULL
+
+  # The drugs' PK, with any drug that has measured concentrations updated to
+  # the individual (the maximum a posteriori estimate of its clearance and
+  # volume, R/bayesian.R) and the model's own kept beside it as
+  # "<drug> (population)".  Without measurements, the drugs' PK as it was.
+  bayesUpdate <- reactive({
+    profileCode({
+      req(testCovariates(), doseTableClean(), is.null(timeUnitViolation()), is.null(scheduleProblem()))
+      DT <- doseTableIV()
+      priors <- drugPK(DT) |> profileCode("recalculatePK() in bayesUpdate()")
+      observations <- bayes$observations()
+      if (nrow(observations) == 0) return(list(drugs = priors, fits = list(), problems = character(0)))
+      # The spinner only while an estimate is searched for (a second or two,
+      # half a minute for phenytoin), not when one is reused
+      spinning <- FALSE
+      result <- tryCatch(bayesianUpdateDrugs(
+        priors, DT, eventTableClean(), observations,
+        pkVariability = bayes$pkVariability(),
+        residualVariability = bayes$residualVariability(),
+        rebuild = function(drug, individual) {
+          drugPK(DT[DT$Drug == drug, , drop = FALSE],
+                 individual = stats::setNames(list(individual), drug))[[drug]]
+        },
+        antiseizureInteractions = antiseizureInteractions(),
+        fits = bayesFitCache,
+        onFit = function(drug) {
+          if (!spinning) {
+            shinycssloaders::showPageSpinner(
+              background = "#FFFFFF99",
+              caption = "Updating the pharmacokinetics from the measured concentrations...")
+            spinning <<- TRUE
+          }
+        }
+      ), finally = if (spinning) shinycssloaders::hidePageSpinner())
+      bayesFitCache <<- result$fits
+      result
+    }, name = "bayesUpdate() reactive")
+  })
+
+  # The measured concentrations the plot draws: those of the drugs it draws
+  bayesPoints <- reactive({
+    observations <- bayes$observations()
+    DT <- tryCatch(doseTableIV(), error = function(e) NULL)
+    if (is.null(DT)) return(NULL)
+    observations[observations$Drug %in% DT$Drug, , drop = FALSE]
+  })
 
   drugs <- reactive({
     profileCode({
@@ -1240,7 +1315,8 @@ app_server <- function(input, output, session) {
       # area says why (output$PlotSimulation).
       req(testCovariates(), doseTableClean(), is.null(timeUnitViolation()), is.null(scheduleProblem()))
 
-      newDrugs <- drugPK(doseTableIV()) |> profileCode("recalculatePK() in drugs()")
+      # The PK, updated from any measured concentrations (bayesUpdate())
+      newDrugs <- bayesUpdate()$drugs
 
       newDrugs <- processdoseTable(
         doseTableIV(),
@@ -1612,7 +1688,9 @@ app_server <- function(input, output, session) {
         width = input$plotWidth,
         # renderPlot() draws at the screen's pixel ratio, which is what the
         # graphics device's limit is measured against (maxPlotDevicePixels())
-        pixelRatio = if (is.null(session$clientData$pixelratio)) 1 else session$clientData$pixelratio
+        pixelRatio = if (is.null(session$clientData$pixelratio)) 1 else session$clientData$pixelratio,
+        # The Bayesian update's measured concentrations, as points
+        observations = bayesPoints()
       )
     }, name = "simulationPlotRetval() reactive")
   })

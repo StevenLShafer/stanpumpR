@@ -24,7 +24,8 @@ getDrugPK(
   vkorc1 = VKORC1_DEFAULT,
   model = NULL,
   cyp4f2 = CYP4F2_DEFAULT,
-  gestationalAge = NULL
+  gestationalAge = NULL,
+  individual = NULL
 )
 }
 \arguments{
@@ -92,6 +93,11 @@ passed only to models that name it (warfarin).}
 default) for a term birth.  Passed only to the neonatal models that
 declare it (dobutamineNeonatal), whose clearance matures with
 postmenstrual age (\code{postmenstrualAge()}).}
+
+\item{individual}{NULL (the default) for the model's own patient, or the
+individual's pharmacokinetics as a list of \code{clearance} and
+\code{volume}, each a multiple of the model's, as the Bayesian update
+estimates them (\code{bayesianUpdateDrugs()}, \code{individualizeModel()}).}
 }
 \value{
 a list: the drug's PK sets (\code{PK}, one per PK event), its

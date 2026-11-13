@@ -7,6 +7,30 @@ maxPlotDevicePixels <- function() {
   else MAX_PLOT_DEVICE_PIXELS_CAIRO
 }
 
+# The unit a drug's panel is plotted in, from its Concentration.Units, as the
+# panel's title gives it ("mcg/ml").  Also what the Bayesian Updating panel
+# asks a measured concentration to be entered in (R/bayesian-server.R).
+plottedUnitText <- function(units, drugs) {
+  # Intravenous concentrations are per millilitre; the inhaled gases are a
+  # percentage of one atmosphere and MAC equivalents are dimensionless, so
+  # neither takes the "/ml" suffix.
+  unitText <- paste0(units, "/ml")
+  gasRow <- isGasSeries(drugs)
+  unitText[gasRow] <- units[gasRow]
+  # An osmotic agent is plotted as serum osmolality (drugs_mannitol.R).
+  unitText[units == "mOsm"] <- "mOsm/kg"
+  # A molar drug (intravenous calcium) is plotted in mmol/L, the change
+  # in ionized calcium (drugs_calcium.R).
+  unitText[units == "mmol"] <- "mmol/L"
+  # Warfarin is plotted as the INR it produces, which has no unit
+  # (R/inr.R).
+  unitText[units == "INR"] <- "INR"
+  # Heparin on bypass is plotted as the activated clotting time it produces,
+  # in seconds (R/act.R).
+  unitText[units == "ACT"] <- "ACT (s)"
+  unitText
+}
+
 # Simulation Plot
 simulationPlot <- function(
   drugs,
@@ -32,7 +56,8 @@ simulationPlot <- function(
   logY = FALSE,
   yAxisHeight = 150,
   width = 800,
-  pixelRatio = 1
+  pixelRatio = 1,
+  observations = NULL
   )
 {
   # Notes on what happens below
@@ -271,23 +296,7 @@ simulationPlot <- function(
   switch(
     normalization,
     "none" = {
-      # Intravenous concentrations are per millilitre; the inhaled gases are a
-      # percentage of one atmosphere and MAC equivalents are dimensionless, so
-      # neither takes the "/ml" suffix.
-      unitText <- paste0(plotTable$Concentration.Units, "/ml")
-      gasRow <- isGasSeries(plotTable$Drug)
-      unitText[gasRow] <- plotTable$Concentration.Units[gasRow]
-      # An osmotic agent is plotted as serum osmolality (drugs_mannitol.R).
-      unitText[plotTable$Concentration.Units == "mOsm"] <- "mOsm/kg"
-      # A molar drug (intravenous calcium) is plotted in mmol/L, the change
-      # in ionized calcium (drugs_calcium.R).
-      unitText[plotTable$Concentration.Units == "mmol"] <- "mmol/L"
-      # Warfarin is plotted as the INR it produces, which has no unit
-      # (R/inr.R).
-      unitText[plotTable$Concentration.Units == "INR"] <- "INR"
-      # Heparin on bypass is plotted as the activated clotting time it produces,
-      # in seconds (R/act.R).
-      unitText[plotTable$Concentration.Units == "ACT"] <- "ACT (s)"
+      unitText <- plottedUnitText(plotTable$Concentration.Units, plotTable$Drug)
       panelUnits <- stats::setNames(unitText, plotTable$Drug)
       plotTable$Wrap <- paste0(panelName, "\n(", unitText, ")")
       plotTable$ymin <- plotTable$lowerTypical
@@ -786,6 +795,32 @@ simulationPlot <- function(
         show.legend = FALSE,
         label.padding = grid::unit(0.5, "mm")
       )
+  }
+
+  # Step A1b: the measured concentrations of the Bayesian update
+  # (R/bayesian.R), points on their drug's own panel in the drug's colour.
+  # `observations` is Drug, Time (minutes) and Concentration, in the panel's
+  # units.  Not under normalization, which plots percentages of a peak.
+  if (!is.null(observations) && nrow(observations) > 0 && normalization == NORMALIZE_NONE)
+  {
+    drawn <- as.character(plotTable$Drug)
+    points <- observations[observations$Drug %in% drawn &
+                           observations$Time >= minimum & observations$Time <= maximum, ,
+                           drop = FALSE]
+    if (logY) points <- points[points$Concentration > 0, , drop = FALSE]
+    if (nrow(points) > 0)
+    {
+      points$Wrap <- factor(as.character(plotTable$Wrap)[match(points$Drug, drawn)],
+                            levels = wrapFactors, ordered = TRUE)
+      points$Drug <- factor(points$Drug, levels = drugFactors, ordered = TRUE)
+      plotObject <- plotObject +
+        ggplot2::geom_point(
+          data = points,
+          ggplot2::aes(x = Time, y = Concentration, fill = Drug),
+          shape = 21, colour = "black", size = 3, stroke = 0.8,
+          inherit.aes = FALSE, show.legend = FALSE
+        )
+    }
   }
 
   # Step A2: add scales to plotObject

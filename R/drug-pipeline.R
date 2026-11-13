@@ -115,7 +115,8 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
                           alternativeModels = FALSE,
                           antiseizureInteractions = FALSE,
                           gestationalAge = NULL,
-                          opioidTolerance = OPIOID_TOLERANCE_DEFAULT) {
+                          opioidTolerance = OPIOID_TOLERANCE_DEFAULT,
+                          individual = NULL) {
   # The Patient Profile's Opioid tolerance raises every opioid's MEAC by its
   # factor (OPIOID_TOLERANCE_FACTORS), here, where each drug's MEAC enters
   # its entry, so everything that reads it downstream sees the tolerant MEAC.
@@ -155,7 +156,10 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
         creatinine = creatinine,
         pregnant = pregnant,
         adjustToFFM = adjustToFFM,
-        gestationalAge = gestationalAge
+        gestationalAge = gestationalAge,
+        # The Bayesian update's estimate for this drug, or NULL
+        # (R/bayesian.R): a list of clearance and volume factors, by drug.
+        individual = individual[[drug]]
       )
     )
     drugs
