@@ -41,15 +41,16 @@
 # mammillary model expresses as a smaller V1.  The exponent on V1 is
 # PHYSIOLOGY_V1_CARDIAC_EXPONENT, an assumption, not a fitted value.
 #
-# ke0 is the rate of equilibration with the effect site (the brain), which
-# brain blood flow carries.  In low output brain flow falls too, but less
-# than cardiac output, because the body is pared down to a heart-lungs-brain
-# circuit and brain perfusion is defended at the cost of everything else
-# (Shafer, 2026-11-13).  So ke0 is taken from the model at normal physiology
-# and scaled by cardiac^PHYSIOLOGY_KE0_CARDIAC_EXPONENT, an exponent below 1
-# and an assumption, not a fitted value; the time to peak effect then moves
-# with both the disposition and the effect site.
-#
+# ke0 is NOT changed by cardiac output, pending Shafer's decision
+# (2026-11-13, open): low output pares the body down to a heart-lungs-brain
+# circuit, which may make the effect site faster (the brain takes a larger
+# share of a smaller output) or slower (lower absolute brain flow, longer
+# circulation time); the higher, earlier plasma peak from the smaller V1
+# already speeds onset with ke0 unchanged.  The hook is
+# PHYSIOLOGY_KE0_CARDIAC_EXPONENT, 0 (no change) until that is decided; ke0
+# is taken from the model at normal physiology either way, so the time to
+# peak effect moves with the disposition.
+
 # The GI factor scales ka only: the drug arrives faster or slower, the
 # amount absorbed is unchanged.
 
@@ -81,11 +82,11 @@ PHYSIOLOGY_DEFAULT <- c(liver = 1, renal = 1, cardiac = 1, gi = 1)
 #' @noRd
 PHYSIOLOGY_V1_CARDIAC_EXPONENT <- 1
 
-#' Exponent of cardiac output on ke0 (ke0' = ke0 x cardiac^exponent).  Below
-#' 1 because brain perfusion is defended when cardiac output falls; the size
-#' is an assumption, not fitted.
+#' Exponent of cardiac output on ke0 (ke0' = ke0 x cardiac^exponent).  0, no
+#' change, until Shafer decides which way, if either, ke0 should move
+#' (2026-11-13: an open question; see the header).
 #' @noRd
-PHYSIOLOGY_KE0_CARDIAC_EXPONENT <- 0.5
+PHYSIOLOGY_KE0_CARDIAC_EXPONENT <- 0
 
 #' Exponent of cardiac output on the intercompartmental clearances.
 #' @noRd
@@ -332,9 +333,7 @@ physiologyPanel <- function()
       "Cardiac output, as a multiple of normal. Liver blood flow is taken as",
       "a fixed share of it, so the clearance of flow-limited drugs follows it.",
       "It also scales the intercompartmental clearances and the central",
-      "volume (a low output gives higher early concentrations), and slows",
-      "equilibration with the brain (ke0), less than in proportion because",
-      "brain perfusion is defended."),
+      "volume (a low output gives higher early concentrations)."),
     gi = paste(
       "Gastrointestinal absorption rate (oral ka), as a multiple of normal.",
       "The drug arrives faster or slower; the amount absorbed is unchanged.")

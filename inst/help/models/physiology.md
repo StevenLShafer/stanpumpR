@@ -65,15 +65,14 @@ Besides hepatic blood flow, cardiac output scales two things:
   V1. The size of this effect is an assumption, V1 in proportion to cardiac
   output, and is not fitted to data.
 
-In shock the body is pared down to a heart, lungs and brain circuit. Flow to
-every organ falls, the brain included, but brain perfusion is defended at the
-cost of the rest of the body. So **ke0**, the rate of equilibration with the
-effect site, which brain blood flow carries, also falls with cardiac output,
-but less than in proportion: ke0′ = ke0 × CO<sup>0.5</sup>. The exponent 0.5
-is an assumption, not fitted to data. Liver function, renal function and GI
-absorption leave ke0 alone. At low cardiac output the plasma peak after a
-bolus is higher and earlier, the effect site equilibrates more slowly, and
-the time to peak effect moves with both.
+**ke0**, the rate of equilibration with the effect site, is not changed by
+cardiac output for now; whether it should move, and in which direction, is an
+open question. In shock the body is pared down to a heart, lungs and brain
+circuit: the brain's share of a smaller cardiac output rises, which might
+speed equilibration, while its absolute flow and the circulation time worsen,
+which might slow it. Even with ke0 unchanged, a low cardiac output gives a
+higher, earlier plasma peak after a bolus (the smaller V1), and so a higher
+effect-site peak.
 
 ## The gut
 
