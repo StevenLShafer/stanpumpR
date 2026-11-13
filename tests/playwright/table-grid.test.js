@@ -12,21 +12,19 @@ const { test, describe, before, after, beforeEach, afterEach } = require('node:t
 const assert = require('node:assert/strict');
 const playwright = require('playwright');
 const H = require('./harness');
-const BS = require('./browserstack');
 const adapter = require('./adapters/native');
 
 const URL = process.env.STANPUMPR_URL;
 if (!URL) throw new Error('STANPUMPR_URL is not set: run the suite through run.js');
-// on BrowserStack, the engine of the platform chosen (browserstack.js)
-const BROWSER = BS.engine();
-if (BS.mobile()) throw new Error('a phone runs phone.test.js, not this file (browserstack.js)');
+// STANPUMPR_BROWSER: chromium (the default), firefox or webkit
+const BROWSER = process.env.STANPUMPR_BROWSER || 'chromium';
 
 let browser, context, page;
 
 before(async () => {
-  browser = await BS.launch(playwright, BROWSER, BROWSER === 'firefox' ? {
+  browser = await playwright[BROWSER].launch(BROWSER === 'firefox' ? {
     firefoxUserPrefs: { 'dom.events.asyncClipboard.readText': true, 'dom.events.testing.asyncClipboard': true }
-  } : {}, 'table grid');
+  } : {});
 });
 after(async () => { await browser.close(); });
 
