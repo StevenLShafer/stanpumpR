@@ -74,9 +74,12 @@ PAPER_REVIEW_BACKGROUND_TIMEOUT_SEC <- PAPER_REVIEW_TIMEOUT_SEC + 300
 #'
 #' @param sessionKey a key held in the session's memory, or NULL
 #' @param config the app's configuration list
+#' @param admitted TRUE for a review whose place within the shared key's
+#'   limit is already reserved (a quick review): the limit, reached since by
+#'   another session, does not withdraw the key from it
 #' @returns the key, or NULL when none is configured
 #' @keywords internal
-paperReviewApiKey <- function(sessionKey = NULL, config = .sprglobals$config)
+paperReviewApiKey <- function(sessionKey = NULL, config = .sprglobals$config, admitted = FALSE)
 {
   if (is.character(sessionKey) && length(sessionKey) == 1 && nzchar(sessionKey))
     return(sessionKey)
@@ -85,7 +88,7 @@ paperReviewApiKey <- function(sessionKey = NULL, config = .sprglobals$config)
   if (is.list(config) && isFALSE(config$paper_review_shared_key)) return(NULL)
   # Nor is it once it has made the reviews it is allowed
   # (paperReviewSharedKeyAdmit(), R/paper-review-usage.R).
-  if (paperReviewSharedKeyExhausted()) return(NULL)
+  if (!isTRUE(admitted) && paperReviewSharedKeyExhausted()) return(NULL)
   for (name in PAPER_REVIEW_KEY_ENV) {
     key <- Sys.getenv(name, "")
     if (nzchar(key)) return(key)

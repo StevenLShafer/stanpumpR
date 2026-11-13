@@ -338,7 +338,10 @@ paperReviewServer <- function(input, output, session)
     reviewStarted(paperReviewNow())
     lateOffered(FALSE)
     quick(!identical(effort, PAPER_REVIEW_EFFORT))
-    reviewTask$invoke(f$pdf, f$supplement, paperReviewApiKey(f$own), paperReviewConfig("paper_review_inference_geo"),
+    # A review whose place is already reserved keeps the operator's key even
+    # if another session has since reached the limit (CodeRabbit, PR #720).
+    reviewTask$invoke(f$pdf, f$supplement, paperReviewApiKey(f$own, admitted = admitted),
+                      paperReviewConfig("paper_review_inference_geo"),
                       is.null(f$own), effort, admitted)
   }
   # Is the running review still wanted?  Discarding while Claude reads the

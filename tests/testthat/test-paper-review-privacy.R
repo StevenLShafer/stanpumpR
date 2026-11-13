@@ -297,11 +297,19 @@ test_that("with stanpumpR's own key, a quick review is sent only if the limit ha
   efforts <- character(0)
   rejectFull <- NULL
   stopped <- 0
+  exhausted <- FALSE
+  keys <- list()
   testthat::local_mocked_bindings(
     paperReviewNow = function() clock,
-    paperReviewApiKey = function(sessionKey = NULL, ...) sessionKey %or% "operator-key",
+    # As the real one: the limit, once reached, withdraws the operator's key
+    # except from a review whose place is already reserved.
+    paperReviewApiKey = function(sessionKey = NULL, config = NULL, admitted = FALSE)
+      if (!is.null(sessionKey)) sessionKey else if (exhausted && !isTRUE(admitted)) NULL else "operator-key",
     paperReviewSharedKeyAdmit = function(...) {
       admits <<- admits + 1
+      # The quick review's place is the last: another session then reaches
+      # the limit before the quick review is sent (CodeRabbit, PR #720).
+      if (room) exhausted <<- TRUE
       if (admits == 1 || room) promises::promise_resolve(TRUE)
       else promises::promise_reject(paperReviewError("shared_limit", "The key has made its reviews."))
     },
@@ -309,6 +317,7 @@ test_that("with stanpumpR's own key, a quick review is sent only if the limit ha
     paperReviewUsageReport = function(record, ...) invisible(record),
     paperReviewExtractAsync = function(pdf, supplement = NULL, key, ..., effort, onJob = NULL) {
       efforts <<- c(efforts, effort)
+      keys[length(keys) + 1] <<- list(key)         # a NULL key kept as one
       if (effort == PAPER_REVIEW_EFFORT) {
         onJob(function() { stopped <<- stopped + 1; rejectFull(paperReviewError("background", "stopped")); TRUE })
         promises::promise(function(resolve, reject) rejectFull <<- reject)
@@ -338,6 +347,7 @@ test_that("with stanpumpR's own key, a quick review is sent only if the limit ha
     expect_equal(admits, 3)
     expect_equal(stopped, 1)
     expect_equal(efforts, c(PAPER_REVIEW_EFFORT, PAPER_REVIEW_QUICK_EFFORT))
+    expect_equal(keys[[2]], "operator-key")             # kept, the limit reached since
     expect_equal(released, 0)
     expect_true(isTRUE(review()$quick))
   })
