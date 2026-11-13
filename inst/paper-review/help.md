@@ -76,6 +76,14 @@ reading, and it depends on the paper far more than on its length:
 | One model, with its tables | about 2 to 4 minutes |
 | Several models (more than one population, drug, enantiomer or endpoint), or a table of each patient's own fit | about 2 to 7 minutes |
 
+**If a review takes more than 10 minutes**, the banner says so and offers a
+choice: keep waiting, or stop and run a **quick review**. A quick review sends
+the same paper to the same Claude model again at a lower effort; it usually
+takes 1 to 4 minutes, reads a paper with one model as fully, but may leave out
+secondary models (other populations, drugs or endpoints) and some of a
+per-patient table's detail, and its report says it is a quick review. The
+stopped review is billed for what Claude had read, and so is the quick one.
+
 **The app waits at most 20 minutes.** A review that takes longer ends with a
 message saying it did not finish, and no review.
 

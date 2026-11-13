@@ -651,6 +651,11 @@ fixed:
 
 ## Real phones on BrowserStack (2026-11-09 to 2026-11-10)
 
+BrowserStack was removed on 2026-11-13 (Shafer): the workflow, `browserstack.js`
+and the README's sections went, and `phone.test.js` now runs only locally, as
+an emulated iPhone 15 (WebKit) or Pixel 7 (Chromium). This section is the
+record of what the real phones showed.
+
 `tests/playwright/phone.test.js` runs eight cases of the dose grid on a real
 phone through BrowserStack Automate (`tests/playwright/README.md`). All eight
 pass on an iPhone 16 (iOS 18) and an iPhone 17 (iOS 26) in Safari, and on a
