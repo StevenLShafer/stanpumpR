@@ -1459,7 +1459,8 @@ helpAntibioticMbcHTML <- function(drug, concUnits) {
       helpH2("Shaded band: a trough range, not an MBC"),
       "<p>Most antibiotics' band marks the expected MBC, the concentration of free drug that kills. ",
       esc(helpDrugTitle(drug)), " is the exception. ", esc(tb$Reason), "</p>",
-      "<p>Its band is instead the trough range recommended for monitoring, ",
+      "<p>Its default band is instead the trough range recommended for monitoring (an edit in the ",
+      "Drug Library changes the band drawn, not this recommendation), ",
       sprintf("%s to %s %s total drug (typical %s): ", helpFormatNumber(tb$Lower),
               helpFormatNumber(tb$Upper), esc(concUnits), helpFormatNumber(tb$Typical)),
       esc(tb$Source), " It is a trough range, drawn against the whole curve.</p>"))

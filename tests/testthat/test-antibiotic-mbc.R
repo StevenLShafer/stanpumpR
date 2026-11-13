@@ -165,4 +165,11 @@ test_that("linezolid's band is the trough range, approved as an exception (2026-
   expect_false(grepl("Shaded band: free drug at the MBC", html, fixed = TRUE))
   expect_false(grepl("free drug at the expected MBC", html, fixed = TRUE))
   expect_true(grepl("a trough range for monitoring, not an MBC band", html, fixed = TRUE))
+  # A band edited in the Drug Library is shown as the band drawn, and the
+  # recommendation keeps its own 2-7 mg/L
+  edited <- dd
+  edited[edited$Drug == "linezolid", c("Lower", "Typical", "Upper")] <- list(3, 5, 9)
+  html <- helpDrugPageHTML("linezolid", drugDefaults = edited)
+  expect_true(grepl("3 to 9 mcg/mL, total drug: a trough range for monitoring", html, fixed = TRUE))
+  expect_true(grepl("recommended for monitoring (an edit in the Drug Library changes the band drawn, not this recommendation), 2 to 7", html, fixed = TRUE))
 })
