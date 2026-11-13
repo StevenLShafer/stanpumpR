@@ -61,7 +61,17 @@
 # 60% (the text: "approximately 59%").  The reference man of the library
 # (35 years, serum creatinine 0.9 mg/dL, eGFR 96) clears 11.6 L/h, with
 # half-lives of 0.7 and 1.5 h, against the Merrem label's "approximately 1
-# hour" in subjects with normal renal function.
+# hour" in subjects with normal renal function.  Not used in the fit: the
+# Merrem label (Reference ID 4035314, 2016, sec. 12.3) gives healthy
+# volunteers' peaks after a 30-min infusion of "approximately 23 mcg/mL (range
+# 14-26)" after 500 mg and "49 mcg/mL (range 39-58)" after 1 g, and "about 1
+# mcg/mL at 6 hours" after 500 mg; this model at the reference man gives 25.3,
+# 50.6 and 0.80.  Christensson 1992 (Antimicrob Agents Chemother 36:1532,
+# 500 mg over 30 min, six men of 79 kg with an iohexol GFR of 100, HPLC; read
+# on the page images by a delegated reader) measured a peak of 30.3 mg/L and
+# an AUC of 36.0 mg.h/L; this model for a 30-year-old 79-kg man with a normal
+# creatinine gives 24.0 and 40.6, its clearance 11% below theirs (12.3
+# against about 13.9 L/h, dose/AUC), the peak lower by a larger central volume.
 #
 # THE STEP AT AN eGFR OF 30
 # =========================

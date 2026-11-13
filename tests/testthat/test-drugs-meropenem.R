@@ -67,3 +67,30 @@ test_that("pregnancy raises the eGFR only with a blank creatinine", {
                meropenem(70, 165, 30, "female", creatinine = 0.6)$PK$default$cl1)
   expect_gt(preg, base)
 })
+
+test_that("the Merrem label's healthy-volunteer peaks (not fitted)", {
+  # an independent two-compartment solution of a 30-min infusion
+  conc <- function(p, dose, t, tinf = 30) {
+    A <- matrix(c(-(p$cl1 + p$cl2) / p$v1, p$cl2 / p$v1,
+                  p$cl2 / p$v2, -p$cl2 / p$v2), 2, byrow = TRUE)
+    e <- eigen(A); V <- e$vectors; l <- e$values; Vi <- solve(V)
+    during <- function(s) V %*% diag((exp(l * s) - 1) / l) %*% Vi %*% c(dose / tinf, 0)
+    x <- if (t <= tinf) during(t) else V %*% diag(exp(l * (t - tinf))) %*% Vi %*% during(tinf)
+    x[1] / p$v1
+  }
+  p <- meropenem(70, 170, 35, "male")$PK$default
+  expect_gte(conc(p, 1000, 30), 39); expect_lte(conc(p, 1000, 30), 58)   # 49 (39-58)
+  expect_gte(conc(p, 500, 30), 14);  expect_lte(conc(p, 500, 30), 26)    # 23 (14-26)
+  expect_equal(conc(p, 500, 360), 1, tolerance = 0.25)                   # about 1 at 6 h
+})
+
+test_that("the MIC line and the MBC band", {
+  mic <- antibioticMic("meropenem")
+  expect_equal(c(mic$MIC, mic$FreeFraction, mic$Threshold), c(2, 0.98, 2))
+  band <- antibioticMbcBand("meropenem")
+  expect_equal(unname(band$free), c(0.03, 0.12, 16))
+  expect_equal(unname(band$plotted), c(0.031, 0.12, 16))
+  dd <- getDrugDefaultsGlobal()
+  row <- dd[dd$Drug == "meropenem", ]
+  expect_equal(c(row$Lower, row$Typical, row$Upper, row$endCe), c(0.031, 0.12, 16, 2))
+})

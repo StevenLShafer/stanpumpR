@@ -243,3 +243,4 @@ scopolamine,pg,,,mg/day TD,mg/day TD,#5E35B1,0,0,0,0,0,IV,Antiemetics
 flecainide,ng,,,mg PO bid,"mg PO,mg PO bid",#EF6C00,200,1000,600,0,0,IV,Other
 mexiletine,mcg,,,mg PO tid,"mg PO,mg PO tid",#6D4C41,0.8,2,1.4,0,0,IV,Other
 amitriptyline,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#4527A0,0,0,0,0,0,IV,Antidepressants
+meropenem,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg/kg tid",#1A5276,0.031,16,0.12,0,2,IV,Antibiotics
