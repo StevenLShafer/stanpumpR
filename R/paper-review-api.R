@@ -38,6 +38,14 @@ PAPER_REVIEW_MODEL        <- "claude-opus-5-5"
 PAPER_REVIEW_EFFORT       <- "high"
 PAPER_REVIEW_MAX_TOKENS   <- 128000
 PAPER_REVIEW_TIMEOUT_SEC  <- 1200
+# A review still running after this long (the calibration's slowest at high
+# took 7 minutes) is offered a quick review instead: the same manuscript,
+# the same model, at effort medium, which in the calibration was 1.6 times
+# faster and read a paper with one model as fully, but left out secondary
+# models and some per-patient detail (Shafer, 2026-11-13;
+# docs/paper-review-calibration.md).
+PAPER_REVIEW_LATE_SEC     <- 600
+PAPER_REVIEW_QUICK_EFFORT <- "medium"
 # This app's own key first, so it can sit beside another app's
 # ANTHROPIC_API_KEY in the same ~/.Renviron; then the standard name.
 PAPER_REVIEW_KEY_ENV      <- c("STANPUMPR_ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY")
@@ -592,10 +600,12 @@ paperReviewInBackground <- function(fn, args, timeout)
 #' and read here when it returns.
 #'
 #' @inheritParams paperReviewExtract
+#' @param onJob called with the background job once it starts, so that it
+#'   can be stopped (\code{mirai::stop_mirai()}); NULL for none
 #' @returns a promise of what paperReviewExtract() returns; it is rejected
 #'   with a \code{paper_review_error}
 #' @keywords internal
-paperReviewExtractAsync <- function(pdf, supplement = NULL, key, ...)
+paperReviewExtractAsync <- function(pdf, supplement = NULL, key, ..., onJob = NULL)
 {
   prepared <- tryCatch(paperReviewPrepare(pdf, supplement, key = key, ...),
                        paper_review_error = function(e) e)
@@ -603,6 +613,7 @@ paperReviewExtractAsync <- function(pdf, supplement = NULL, key, ...)
   job <- paperReviewInBackground(paperReviewTransport, paperReviewTransportArgs(prepared, key),
                                  PAPER_REVIEW_BACKGROUND_TIMEOUT_SEC)
   rm(prepared)
+  if (is.function(onJob)) onJob(job)
   promises::then(job,
     onFulfilled = function(result) {
       # A failure inside the process comes back as a value, not an error.

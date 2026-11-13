@@ -653,3 +653,21 @@ allowed to learn from my models. Claude is allowed to see coarse metadata."
    `high` kept as the default (`PAPER_REVIEW_MAX_TOKENS`,
    `PAPER_REVIEW_EFFORT` in `R/paper-review-api.R`). Still open: whether to
    offer the user a choice of effort.
+
+   **A quick review when a review is late** (Shafer, 2026-11-13): a review
+   still running after `PAPER_REVIEW_LATE_SEC` (10 minutes; the calibration's
+   slowest at `high` took 7) turns the busy banner into a choice, *Keep
+   waiting* or *Stop and run a quick review*. The quick review stops the
+   background job (`mirai::stop_mirai()`, through the `onJob` hook of
+   `paperReviewExtractAsync()`) and sends the same manuscript to the same
+   model at `PAPER_REVIEW_QUICK_EFFORT` (`medium`), and its report carries a
+   banner saying it is a quick review (`review$quick`). For this the
+   manuscript is held in the session, out of the upload slot, until Claude's
+   answer returns (`store$inFlight`), as the help page and the privacy draft
+   already said, rather than dropped the moment it was sent. Not a different
+   model: none other was calibrated, and `low` returned invalid JSON in one
+   review in six. Both reviews are billed and, with the operator's key, both
+   counted toward the 200. Rejected with it: blocking the rest of stanpumpR
+   while a review runs (it runs in the background since 2026-11-10) and an
+   offer made before the review starts, when the user cannot yet know
+   whether theirs will be slow.
