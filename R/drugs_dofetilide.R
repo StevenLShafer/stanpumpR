@@ -50,10 +50,13 @@
 # 0.0090 (CLcr - 75)), i.e. 5.04 + 0.1395 CLcr; V/F 236 L x (1 + 0.0070
 # (weight - 80)); ka 1.4 /h; CLcr capped at 150 mL/min; and NO sex term,
 # though its selection rule (a 20% change at the covariate's extremes) could
-# not retain a binary 12% effect by construction.  The review's model is kept
-# because it carries the sex effect the label states; at the reference man
+# not retain a binary 12% effect by construction.  At the reference man
 # Tunblad's clearance is 10% higher (20.9 against 19.0 L/h), in a woman 25%
-# higher.  Which to use is recorded as a question for Shafer.
+# higher.  Steven L. Shafer decided (2026-11-13) to keep the review's model,
+# with its 12% lower clearance in women, which the label also states
+# ("approximately 12-18% lower dofetilide oral clearances than men ... after
+# correction for weight and creatinine clearance"), and to adopt only
+# Tunblad's cap on creatinine clearance.
 #
 # BIOAVAILABILITY
 # ===============
