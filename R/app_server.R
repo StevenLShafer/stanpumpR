@@ -347,13 +347,21 @@ app_server <- function(input, output, session) {
     invisible()
   }
 
+  # The repeating-oral switch of the time settings (see its observer, below)
+  repeatingOralSwitch <- new.env(parent = emptyenv())
+  repeatingOralSwitch$settled <- FALSE
+
   # What the server uses to change the time settings itself: loading a
-  # scenario, restoring a bookmark, the long-term drug prompt.  Setting the
+  # scenario, restoring a bookmark, the long-term drug prompt, the
+  # repeating-oral switch.  Setting the
   # selectors this way and writing the table with setDoseTable() in the format
   # they will report means their echo finds nothing to convert.
   timeApi <- list(
     setDoseTable = setDoseTable,
     showTimeSettings = function(unit, mode, maximum, minimum = 0) {
+      # Time settings chosen for the session (a scenario, a restored link,
+      # the long-term prompt) are never replaced by the repeating-oral default
+      repeatingOralSwitch$settled <- TRUE
       format <- timeFormat(unit, mode)
       updateSelectInput(session, "timeUnits", selected = format[["unit"]])
       syncTimeModeChoices(format[["unit"]], format[["mode"]])
@@ -601,6 +609,9 @@ app_server <- function(input, output, session) {
     # and restoring its absence would leave the dose table unusable (and turn
     # off adjustToFFM, below, as if for an old bookmark).
     if (!isBookmarkRestore(state$values)) return()
+    # A restored link brings its own time settings: the repeating-oral switch
+    # is not applied to them
+    repeatingOralSwitch$settled <- TRUE
     profileCode({
       outputComments(
         "***************************************************************************\n",
@@ -1470,6 +1481,44 @@ app_server <- function(input, output, session) {
     } else {
       showNotification(violation, id = "timeUnitRule", type = "warning", duration = NULL)
     }
+  })
+
+  # The time settings open as an intravenous plot, minutes from 0 to
+  # TIME_MAXIMUM_DEFAULT (app_ui()).  The first time a repeating oral dose is
+  # prescribed (hasRepeatingOralDose(): a scheduled PO or SL dose, or a daily
+  # oral rate) while they are still exactly that, they switch to
+  # REPEATING_ORAL_TIME_UNIT from 0 to REPEATING_ORAL_PLOT_MINUTES, once per
+  # session (Shafer, 2026-11-13).  A drug given both ways starts on the
+  # intravenous plot and moves only when the repeating oral dose appears.
+  # Never again after that, nor once a scenario, a restored link or the
+  # long-term prompt has set the time (showTimeSettings()), nor over settings
+  # the user has changed: these are defaults, not rules.  An environment, not
+  # a reactiveVal, so that settling it invalidates nothing; created with
+  # timeApi, which settles it.
+  observe({
+    if (repeatingOralSwitch$settled) return()
+    DT <- tryCatch(doseTableClean(), error = function(e) NULL)
+    if (!hasRepeatingOralDose(DT)) return()
+    minimum <- suppressWarnings(as.numeric(isolate(input$minimum)))
+    atDefault <- identical(isolate(timeUnit()), TIME_UNIT_DEFAULT) &&
+      identical(isolate(input$timeMode), TIME_MODE_DEFAULT) &&
+      isTRUE(suppressWarnings(as.numeric(isolate(input$maximum))) == TIME_MAXIMUM_DEFAULT) &&
+      (length(minimum) == 0 || isTRUE(minimum == 0))
+    if (!atDefault) {
+      # The user chose the time settings; the default no longer applies
+      repeatingOralSwitch$settled <- TRUE
+      return()
+    }
+    # As for Show 365 days below: a dialog showing times in minutes would be
+    # read in days once the table is converted, so close it first
+    removeModal()
+    timeApi$showTimeSettings(REPEATING_ORAL_TIME_UNIT, "relative", REPEATING_ORAL_PLOT_MINUTES)
+    showNotification(
+      paste0("A repeating oral dose was prescribed, so the time units are now days, from 0 to ",
+             REPEATING_ORAL_PLOT_MINUTES / MINS_PER_DAY,
+             " days. Change them in the Time panel; this happens only once."),
+      id = "repeatingOralTime", type = "message", duration = 10
+    )
   })
 
   # A drug that acts over weeks to months (LONG_TERM_DRUGS) added to a plot

@@ -664,6 +664,15 @@ TIME_UNIT_DEFAULT <- "minutes"
 # start, so it is offered for these units only; days and weeks are elapsed.
 CLOCK_TIME_UNITS <- c("minutes", "hours")
 TIME_MODES <- c("clock", "relative")
+# The plot the app opens with (Shafer, 2026-11-13): minutes, from 0 to 180,
+# the length of an intravenous anaesthetic.  A repeating oral dose prescribed
+# while the time settings are still these switches them, once per session, to
+# REPEATING_ORAL_TIME_UNIT from 0 to REPEATING_ORAL_PLOT_MINUTES
+# (repeatingOralSwitch in R/app_server.R).  Defaults only: the user may change
+# either at any time, and the switch never comes back.
+TIME_MAXIMUM_DEFAULT <- 180
+REPEATING_ORAL_TIME_UNIT <- "days"
+REPEATING_ORAL_PLOT_MINUTES <- 30 * MINS_PER_DAY
 # The Time Display the app opens with: elapsed time, counted from zero.  Actual
 # (clock) time is a choice in the Time panel for minutes and hours.
 TIME_MODE_DEFAULT <- "relative"

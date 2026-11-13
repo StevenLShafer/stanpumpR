@@ -695,3 +695,97 @@ test_that("the app opens in elapsed time", {
   expect_match(select, '<option value="relative" selected>', fixed = TRUE)
   expect_false(grepl('<option value="clock" selected>', select, fixed = TRUE))
 })
+
+# The app opens on an intravenous plot, minutes from 0 to TIME_MAXIMUM_DEFAULT,
+# and the first repeating oral dose switches it, once, to days from 0 to 30
+# (Shafer, 2026-11-13; R/app_server.R, repeatingOralSwitch).
+startAtDefaults <- function(session) {
+  do.call(session$setInputs, appInputs(timeMode = TIME_MODE_DEFAULT,
+                                       maximum = as.character(TIME_MAXIMUM_DEFAULT),
+                                       minimum = "0"))
+  startFormatFromInputs(session)
+}
+morphineRows <- function(...) {
+  rows <- list(...)
+  dt <- doseTableInit[c(1, 7:12), ]
+  for (i in seq_along(rows)) dt[i, ] <- rows[[i]]
+  dt
+}
+
+test_that("the app opens on 180 minutes", {
+  expect_equal(TIME_UNIT_DEFAULT, "minutes")
+  expect_equal(TIME_MAXIMUM_DEFAULT, 180)
+  expect_equal(snapMaximum(TIME_MAXIMUM_DEFAULT, "minutes"), 180)
+  expect_equal(REPEATING_ORAL_PLOT_MINUTES, 30 * MINS_PER_DAY)
+  expect_equal(snapMaximum(REPEATING_ORAL_PLOT_MINUTES, REPEATING_ORAL_TIME_UNIT), 30 * MINS_PER_DAY)
+})
+
+test_that("a repeating oral dose switches the default plot to 30 days, once", {
+  shiny::testServer(app_server, {
+    sent <- recordMessages(session)
+    startAtDefaults(session)
+    # Intravenous first: the plot stays in minutes
+    doseTable(morphineRows(list("morphine", "0", "5", "mg")))
+    session$flushReact()
+    expect_null(lastSent(sent, "timeUnits"))
+    # A single oral dose and an intravenous schedule are not repeating oral doses
+    doseTable(morphineRows(list("morphine", "0", "5", "mg"), list("morphine", "10", "10", "mg PO tablet"),
+                           list("morphine", "20", "2", "mg q4h")))
+    session$flushReact()
+    expect_null(lastSent(sent, "timeUnits"))
+
+    # The repeating oral dose of the same drug switches the plot
+    doseTable(morphineRows(list("morphine", "0", "5", "mg"), list("morphine", "60", "10", "mg PO tablet bid")))
+    session$flushReact()
+    expect_equal(lastSent(sent, "timeUnits")$value, "days")
+    expect_equal(as.numeric(lastSent(sent, "maximum")$value), 30 * MINS_PER_DAY)
+    expect_equal(notified(sent, "repeatingOralTime")$type, "show")
+    echo(session, sent)
+    expect_equal(doseTableFormat(), timeFormat("days", "relative"))
+    expect_equal(plotInfo()$plotMaximum, 30 * MINS_PER_DAY)
+    # The doses stayed where they were
+    expect_equal(doseTableClean()$Time[doseTableClean()$Units == "mg PO tablet bid"], 60)
+
+    # The user goes back to the intravenous plot: never switched again
+    n <- length(sent$inputs)
+    session$setInputs(timeUnits = "minutes")
+    echo(session, sent, since = n)
+    session$setInputs(maximum = as.character(TIME_MAXIMUM_DEFAULT))
+    session$elapse(500)
+    expect_equal(doseTableFormat(), timeFormat("minutes", "relative"))
+    n <- length(sent$inputs)
+    doseTable(morphineRows(list("morphine", "0", "5", "mg"), list("morphine", "90", "20", "mg PO tablet qd")))
+    session$flushReact()
+    expect_false("timeUnits" %in% vapply(sent$inputs[seq_along(sent$inputs) > n], `[[`, character(1), "id"))
+    expect_length(Filter(function(m) is.list(m$message), notifications(sent, "repeatingOralTime")), 1)
+  })
+})
+
+test_that("time settings the user chose are not replaced by the repeating-oral default", {
+  shiny::testServer(app_server, {
+    sent <- recordMessages(session)
+    startAtDefaults(session)
+    session$setInputs(maximum = "360")
+    session$elapse(500)
+    doseTable(morphineRows(list("morphine", "0", "10", "mg PO tablet bid")))
+    session$flushReact()
+    expect_null(lastSent(sent, "timeUnits"))
+    expect_null(notified(sent, "repeatingOralTime"))
+  })
+})
+
+test_that("a daily oral rate is a repeating oral dose; an enteral infusion is not", {
+  dt <- function(units, dose = "10") data.frame(Drug = "x", Time = 0, Dose = dose, Units = units)
+  expect_true(hasRepeatingOralDose(dt("mg PO bid")))
+  expect_true(hasRepeatingOralDose(dt("mg PO tablet qid")))
+  expect_true(hasRepeatingOralDose(dt("mg SL qd")))
+  expect_true(hasRepeatingOralDose(dt("mg PO qpm")))
+  expect_true(hasRepeatingOralDose(dt("mg/day PO")))
+  expect_false(hasRepeatingOralDose(dt("mg PO bid", "0")))   # a scheduled 0 stops a schedule
+  expect_false(hasRepeatingOralDose(dt("mg PO")))
+  expect_false(hasRepeatingOralDose(dt("mg/hr PO")))
+  expect_false(hasRepeatingOralDose(dt("mg bid")))
+  expect_false(hasRepeatingOralDose(dt("mg IM qid")))
+  expect_false(hasRepeatingOralDose(dt("mg SC qwk")))
+  expect_false(hasRepeatingOralDose(NULL))
+})
