@@ -41,7 +41,7 @@ test_that("the menu lists the categories in order, each sorted by name", {
                      "ketamine", "lorazepam", "midazolam", "propofol",
                      "remimazolam", "temazepam", "zolpidem"))
   expect_identical(choices[["Antidepressants"]],
-                   c("bupropion", "citalopram", "duloxetine", "escitalopram",
+                   c("amitriptyline", "bupropion", "citalopram", "duloxetine", "escitalopram",
                      "fluoxetine", "mirtazapine", "nortriptyline", "paroxetine",
                      "sertraline", "venlafaxine"))
   expect_true(all(STARTUP_DRUGS_DEFAULT %in% unlist(choices)))

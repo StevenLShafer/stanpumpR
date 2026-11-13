@@ -2584,7 +2584,18 @@ registry <- rbind(
       source = "Lownes HE, Ives TJ. Am J Obstet Gynecol 1987 PMID 3618696; Gregg AR, Tomich PG. Am J Perinatol 1988 PMID 3236091",
       source_url = "https://pubmed.ncbi.nlm.nih.gov/3618696/",
       to_obtain = "",
-      notes = "Cleared mainly by CYP2D6 and CYP1A2, which change in opposite directions in pregnancy; no magnitude for mexiletine.")
+      notes = "Cleared mainly by CYP2D6 and CYP1A2, which change in opposite directions in pregnancy; no magnitude for mexiletine."),
+  row("amitriptyline", "Antidepressants", "unquantified",
+      finding = "Leutritz 2023 (Br J Clin Pharmacol 89:737, read in full by an earlier session; papers/digests/PMID_36103361.md): concentration per dose of amitriptyline 0.85, 0.53 and 0.53 in the first, second and third trimesters (n = 2, 4 and 3), the analyte (parent or active moiety) not stated. Scherf-Clavel 2025 (PBPK, abstract only) predicts amitriptyline rising and nortriptyline falling, the active moiety unchanged, which conflicts in direction with Leutritz.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = "third", comparator = "first trimester (TDM)",
+      design = "TDM", n = 9L, confidence = "low",
+      evidence_read = "full_text",
+      source = "Leutritz AL et al. Psychotropic medication in pregnancy and lactation and early development of exposed children. Br J Clin Pharmacol 2023;89:737-750 PMID 36103361",
+      source_url = "https://doi.org/10.1111/bcp.15533",
+      to_obtain = "Scherf-Clavel 2025 (PBPK of amitriptyline in pregnancy) in full",
+      notes = "CYP2D6 rises and CYP2C19 falls in pregnancy, moving the parent and its metabolite in opposite directions; the sources disagree, so nothing is applied.")
 )
 
 stopifnot(
