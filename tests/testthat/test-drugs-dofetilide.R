@@ -45,3 +45,8 @@ test_that("half-life near the label's 10 h; finite at any renal function", {
   r <- dofetilide(70, 170, 35, "male", creatinine = 15)$PK$default
   expect_gt(r$cl1, 4.5 / 60)
 })
+
+test_that("creatinine clearance is capped at 150 mL/min (Tunblad 2008)", {
+  hi <- dofetilide(90, 185, 20, "male", adjustToFFM = FALSE, creatinine = 0.5)$PK$default
+  expect_equal(hi$cl1 * 60, 4.5 + 0.128 * 150)
+})
