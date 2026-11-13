@@ -49,11 +49,15 @@ test_that("the creatinine is held at the adults' highest, 5.82 mg/dL", {
 })
 
 test_that("switch on: the weight terms at the pharmacokinetic weight", {
-  w <- pkSizeFactors(120, 170, 50, "male", TRUE)$pkWeight
+  # 120 kg, 170 cm, 50 y man: fat-free-mass factor 1.3049067, so the
+  # pharmacokinetic weight is 70 x 1.3049067 = 91.343469 kg (as the other
+  # drugs' tests pin it), worked out here rather than by pkSizeFactors()
+  w <- 70 * 1.3049067
   set <- piperacillin(120, 170, 50, "male", creatinine = 1)$PK$default
-  expect_equal(set$cl1, kong(w, 50 + 40 / 52, 1) / 60)
-  expect_equal(set$v1, 10.4 * w / 70)
-  expect_equal(set$v2, 11.6 * w / 70)
+  expect_equal_rounded(set$cl1, kong(w, 50 + 40 / 52, 1) / 60)
+  expect_equal_rounded(set$v1, 10.4 * 1.3049067)
+  expect_equal_rounded(set$v2, 11.6 * 1.3049067)
+  expect_equal_rounded(set$cl2, 15.2 * 1.3049067^0.75 / 60)
 })
 
 test_that("pregnancy: the assumed creatinine divided by 1.5 only when blank", {

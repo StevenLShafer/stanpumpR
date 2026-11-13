@@ -44,7 +44,7 @@ The band is free drug at the expected MBC of the common pathogens. The Merrem la
 - **Typical:** 0.12 mg/L, their MBC90.
 - **Upper edge:** 16 mg/L, *P. aeruginosa*'s MBC90.
 
-The *P. aeruginosa* MIC90, 8 mg/L, is at the CLSI resistant breakpoint, so the upper edge is reached only with high doses by extended infusion. See [Antibiotics](help:models/antibiotics).
+The *P. aeruginosa* MIC90, 8 mg/L, is at the CLSI resistant breakpoint. See [Antibiotics](help:models/antibiotics).
 
 There is no consensus therapeutic range. The ESICM/ESCMID position paper (Abdul-Aziz and colleagues, *Intensive Care Med* 2020;46:1127-1153, doi 10.1007/s00134-020-06050-1) recommends monitoring the beta-lactams to a target of 100% of the dosing interval with free drug above the MIC. It recommends a trough sample "30 min or just before the next dosing", 24–48 hours into therapy, or a steady-state concentration above the MIC during a continuous infusion. Its Table 1 gives a carbapenem toxicity threshold of a trough above 44.5 mg/L, from meropenem data.
 

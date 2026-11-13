@@ -51,11 +51,15 @@ test_that("the floors: creatinine 0.5 mg/dL, age 18", {
 })
 
 test_that("switch on: the weight terms at the pharmacokinetic weight", {
-  pkW <- pkSizeFactors(120, 170, 50, "male", TRUE)$pkWeight
+  # 120 kg, 170 cm, 50 y man: fat-free-mass factor 1.3049067, so the
+  # pharmacokinetic weight is 70 x 1.3049067 = 91.343469 kg (as the other
+  # drugs' tests pin it), worked out here rather than by pkSizeFactors()
+  pkW <- 70 * 1.3049067
   set <- meropenem(120, 170, 50, "male", creatinine = 1)$PK$default
-  expect_equal(set$v1, 17.4 * (pkW / 80)^0.487)
-  expect_equal(set$v2, 2.50 * (pkW / 80)^0.324)
-  expect_equal(set$cl1, clReview(mdrd(1, 50), 50) / 60)
+  expect_equal_rounded(set$v1, 17.4 * (pkW / 80)^0.487)
+  expect_equal_rounded(set$v2, 2.50 * (pkW / 80)^0.324)
+  expect_equal_rounded(set$cl1, clReview(mdrd(1, 50), 50) / 60)
+  expect_equal_rounded(set$cl2, 1.52 / 60)
 })
 
 test_that("pregnancy raises the eGFR only with a blank creatinine", {
