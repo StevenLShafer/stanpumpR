@@ -2551,7 +2551,18 @@ registry <- rbind(
       source = "Kozlowska-Boszko B et al. Transplant Proc 1998 PMID 9664952; Thomas AG et al. 1997 PMID 9397102; Bourget P et al. 1993 PMID 8466958",
       source_url = "https://pubmed.ncbi.nlm.nih.gov/9664952/",
       to_obtain = "Kozlowska-Boszko 1998 and Thomas 1997 in full",
-      notes = "Troughs fall in pregnancy, but whole-blood cyclosporine follows the haematocrit, which also falls, so part of the fall is not a change in clearance; nothing is applied.")
+      notes = "Troughs fall in pregnancy, but whole-blood cyclosporine follows the haematocrit, which also falls, so part of the fall is not a change in clearance; nothing is applied."),
+  row("scopolamine", "Antiemetics", "unquantified",
+      finding = "Pihlajamaki, Kanto and Oksman-Caldentey 1986 (PMID 3799206; read as Table 8 of Kanto and Klotz 1988, full text): 4 parturients given scopolamine hydrobromide 0.005 mg/kg intravenously at caesarean, ELISA: t1/2 alpha 5.4 +/- 3.4 min, t1/2 beta 1.9 +/- 2.2 h, V1 0.2 +/- 0.2 L/kg, V beta 1.1 +/- 0.6 L/kg, CL 14.4 +/- 17.4 mL/min/kg. Kanto 1989 (PMID 2800990, abstract): intramuscular at caesarean, elimination half-life 'around 1 h'. Neither has a nonpregnant comparator, the assays differ, and the scatter is very large. The Transderm Scop label: eclamptic seizures in severe preeclampsia; scopolamine crosses the placenta.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = "term", comparator = "none",
+      design = "PK at caesarean, no comparator", n = 4L, confidence = "low",
+      evidence_read = "full_text",
+      source = "Kanto J, Klotz U. Pharmacokinetic implications for the clinical use of atropine, scopolamine and glycopyrrolate. Acta Anaesthesiol Scand 1988;32:69-78 PMID 3279717 (Table 8, quoting Pihlajamaki K, Kanto J, Oksman-Caldentey KM 1986 PMID 3799206); Transderm Scop label, 2025",
+      source_url = "https://pubmed.ncbi.nlm.nih.gov/3279717/",
+      to_obtain = "Pihlajamaki 1986 in full",
+      notes = "Clearance at term (14.4 mL/min/kg, about 1.0 L/min at 70 kg) is below this model's 2.53 L/min, but with no comparator, n = 4 and a different assay nothing is applied. The label avoids the patch in severe preeclampsia.")
 )
 
 stopifnot(
