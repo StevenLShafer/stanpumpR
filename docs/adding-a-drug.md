@@ -556,6 +556,12 @@ splits oral formulations, and `getDrugPK()` refuses `parallelSystems` alongside 
 
 ### When the dose basis is not the plotted analyte
 
+**When the paper does not say** (Steven L. Shafer, 2026-11-10): the drug's units reflect the
+FDA-approved product, and the parameters are read in that product's units. If the approved
+product is the base, the PK are in units of the base; if it is a salt (the usual case), they
+are in units of the salt, and a dose is entered as labelled with no conversion. Convert only
+where the paper states a basis that differs from the product, and say so in the header.
+
 A model's parameters are fitted on a particular mass, which is not always the one the
 plot reports. Three patterns, in increasing order of how loudly they must be said:
 

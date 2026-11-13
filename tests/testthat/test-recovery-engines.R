@@ -440,7 +440,10 @@ test_that("exactly the plasma-only drugs have no effect site", {
     # Parkinson disease drugs (2026-10-19): plasma only; levodopa (all four
     # models) and apomorphine have an effect site (inst/help/models/parkinsons.md)
     "pramipexole", "pramipexoleER", "safinamide", "opicapone",
-    "istradefylline", "amantadineER", "pimavanserin", "tolcapone"
+    "istradefylline", "amantadineER", "pimavanserin", "tolcapone",
+    # Chemotherapy (2026-11-05): plasma only
+    "cladribine", "fluorouracil", "fluorouracilBriki", "carboplatin", "carboplatinDuffull", "busulfan",
+    "methotrexatePediatric", "methotrexate", "methotrexateIbarra", "fluorouracilTan", "cytarabine", "doxorubicinPerezBlanco", "doxorubicinolPerezBlanco", "fludarabine", "bendamustine", "oxaliplatinNikanjam", "capecitabine", "capecitabine5FU", "gemcitabine", "gemcitabineDFDU", "etoposideDuong", "melphalanPediatric", "carboplatinPediatric", "daunorubicin", "doxorubicinPediatric", "doxorubicinolPediatric", "etoposide", "etoposideKroghMadsen", "cisplatin", "cisplatinBound", "vinorelbine", "topotecan", "irinotecan", "irinotecanSN38", "doxorubicin", "doxorubicinJoerger", "doxorubicinol", "doxorubicinolJoerger", "cyclophosphamide", "cyclophosphamideJoerger", "cyclophosphamideMcCune", "ifosfamide", "epirubicin", "temozolomide", "dacarbazine", "thioguanineIV", "docetaxel", "vincristine", "vincristineIgarashi", "melphalan", "melphalanNath", "etoposidePediatric", "pemetrexed", "paclitaxel", "paclitaxelJoerger", "paclitaxelCrombag", "vincristinePediatric", "oxaliplatin", "oxaliplatinBastian"
   ))
 })
 

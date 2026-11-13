@@ -109,9 +109,61 @@
 #     and peripheral states are the free drug, and the plasma concentration
 #     is the free drug, as the paper's output equation has it.
 #
+# rapidBinding may carry plotted = "unbound" (vincristinePediatric,
+# R/drugs_vincristinePediatric.R; Nijstad 2022), for a drug whose bound pool
+# is a tissue store fed from the central amount (vincristine on
+# beta-tubulin) rather than drug bound in the plasma sample: the plasma
+# concentration plotted is then the unbound central concentration, which is
+# what that source observed.  The default, "total", is linagliptin's.  Nijstad
+# fitted the binding as a process (kon 1300 /h, koff 11.5 /h), far too fast for
+# this engine's step (kon is about 22 /min, beyond the Runge-Kutta stability
+# limit of 2.78 / 2 min), so the drug declares its quasi-equilibrium, which is
+# exactly this block: test-drugs-vincristinePediatric.R measures it against a
+# fine-step integration of the full binding ODE.
+#
+# SATURABLE DISTRIBUTION (OPTIONAL)
+# =================================
+# A block saturableDistribution = list(vmax, km, k21) (paclitaxel,
+# R/drugs_paclitaxelJoerger.R; Joerger 2006) adds a further compartment, held as an
+# amount with no volume, filled from the central compartment at the saturable
+# rate vmax Cu / (km + Cu) (vmax an amount per minute, km a concentration) and
+# emptied back into it at the first-order rate k21 (/min) times its amount:
+#
+#     dA/dt  <- ... - vmax_T Cu / (km_T + Cu) + k21 As,
+#     dAs/dt  =       vmax_T Cu / (km_T + Cu) - k21 As.
+#
+# It sits beside the linear peripheral compartment of the PK set's cl2 and v2
+# (which carries paclitaxel's own second, linear, peripheral compartment, its
+# V3).  Having no volume it has no concentration, so the compartment panels
+# (R/compartments.R) show only the linear one.
+#
 # An oral dose of a drug whose block carries kaTransit (vildagliptin's two
 # sequential absorption compartments) passes through a transit compartment,
 # emptied at kaTransit, before the default oral depot.
+#
+# AUTOINDUCTION (OPTIONAL)
+# ========================
+# A block autoinduction = list(cl, kEnz, emax, ec50, imax, ic50) adds a
+# clearance cl (volume per minute) multiplied by a relative enzyme amount E,
+# a state that starts at 1 (the uninduced enzyme) and turns over at kEnz
+# (/min), formed faster by the drug (an Emax term) and degraded more slowly
+# (an inhibition term), both driven by the unbound central concentration:
+#
+#     dA/dt  <- ... - cl E Cu,
+#     dE/dt   = kEnz [(1 + emax Cu / (ec50 + Cu)) - E (1 - imax Cu / (ic50 + Cu))].
+#
+# The two published forms are special cases: ifosfamide's (Kerbusch 2000,
+# R/drugs_ifosfamide.R), where the drug inhibits the enzyme's degradation
+# (emax 0, imax 1, so E rises without bound toward 1 + Cu/ic50), and
+# cyclophosphamide's in children (McCune 2009, R/drugs_cyclophosphamideMcCune.R),
+# where it raises the enzyme's formation (imax 0, E toward 1 + emax).  The
+# clearance that is not induced is clLinear, and vmax is then 0.  The enzyme
+# state is carried through the whole dose table, so induction accumulates
+# over a course of daily doses and fades after the last, which is why the
+# drug needs this engine: the clearance depends on the dose history.  Tests:
+# test-autoinduction.R (an independent fine-step integration, the steady
+# state of a constant infusion, the fall back to the uninduced curve when kEnz
+# is negligible, and mass balance).
 #
 # STEP SIZE
 # =========
@@ -150,11 +202,12 @@ validateMichaelisMenten <- function(mm, drug)
   ok <- is.list(mm) &&
     is_valid_number(mm$vmax) && mm$vmax >= 0 &&
     is_valid_number(mm$km) && mm$km > 0 &&
-    (mm$vmax > 0 || (is_valid_number(mm$clLinear) && mm$clLinear > 0))
+    (mm$vmax > 0 || (is_valid_number(mm$clLinear) && mm$clLinear > 0) ||
+       !is.null(mm$autoinduction))
   if (!ok)
     stop("Invalid michaelisMenten for ", drug, ": needs a vmax (mass per ",
          "minute) and a positive km (concentration), and a positive vmax ",
-         "unless clLinear is positive.")
+         "unless clLinear is positive or the block carries autoinduction.")
   for (s in names(mm$saltFactor))
     if (!is_valid_number(mm$saltFactor[[s]], 0, 1) || mm$saltFactor[[s]] <= 0)
       stop("Invalid michaelisMenten for ", drug, ": salt factor '", s,
@@ -201,9 +254,33 @@ validateMichaelisMenten <- function(mm, drug)
                         is_valid_number(tb$rmaxPeripheral) && tb$rmaxPeripheral >= 0))
     stop("Invalid michaelisMenten for ", drug, ": targetBinding needs a positive ",
          "kd and k2, and koff, kdeg, rmaxCentral and rmaxPeripheral of zero or more.")
+  if (!is.null(rb) && !is.null(rb$plotted) &&
+      !(is.character(rb$plotted) && length(rb$plotted) == 1L &&
+        rb$plotted %in% c("total", "unbound")))
+    stop("Invalid michaelisMenten for ", drug, ": rapidBinding's plotted must be ",
+         "\"total\" or \"unbound\".")
+  sd <- mm$saturableDistribution
+  if (!is.null(sd) && !(is.list(sd) && positive(sd$vmax) && positive(sd$km) &&
+                        positive(sd$k21)))
+    stop("Invalid michaelisMenten for ", drug, ": saturableDistribution needs a ",
+         "positive vmax (amount per minute), km (concentration) and k21 (/min).")
   if (!is.null(rb) && !is.null(tb))
     stop("Invalid michaelisMenten for ", drug, ": rapidBinding and targetBinding ",
          "are alternatives.")
+  ai <- mm$autoinduction
+  if (!is.null(ai)) {
+    nonneg <- function(v) is.null(v) || (is_valid_number(v) && v >= 0)
+    ok <- is.list(ai) && positive(ai$cl) && positive(ai$kEnz) &&
+      nonneg(ai$emax) && nonneg(ai$imax) &&
+      (is.null(ai$imax) || ai$imax <= 1) &&
+      (is.null(ai$emax) || ai$emax == 0 || positive(ai$ec50)) &&
+      (is.null(ai$imax) || ai$imax == 0 || positive(ai$ic50))
+    if (!ok)
+      stop("Invalid michaelisMenten for ", drug, ": autoinduction needs a positive ",
+           "cl (volume/min) and kEnz (/min), an emax of zero or more (with a ",
+           "positive ec50 when above zero) and an imax in [0, 1] (with a positive ",
+           "ic50 when above zero).")
+  }
   if (!is.null(mm$kaTransit) && !positive(mm$kaTransit))
     stop("Invalid michaelisMenten for ", drug, ": kaTransit must be positive.")
   # The optional peripheral compartment: both rate constants or neither, since
@@ -275,6 +352,8 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   sc <- mm$saturableSC
   rb <- mm$rapidBinding
   tb <- mm$targetBinding
+  sd <- mm$saturableDistribution
+  plotUnbound <- !is.null(rb) && identical(rb$plotted, "unbound")
   # Unbound concentrations from the amounts: the amount over the volume, or,
   # with rapid binding, the root of the binding equilibrium.
   V2 <- if (is.null(pkSet$v2)) 1 else pkSet$v2
@@ -318,6 +397,15 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   iT <- nOral + 6      # transit compartment before the default oral depot
   iDRC <- nOral + 7    # drug-target complex, central (targetBinding)
   iDRP <- nOral + 8    # drug-target complex, peripheral
+  iSD <- nOral + 9     # saturable distribution compartment (an amount)
+  iE <- nOral + 10     # relative enzyme amount (autoinduction), starting at 1
+  ai <- mm$autoinduction
+  if (!is.null(ai)) {
+    aiEmax <- if (is.null(ai$emax)) 0 else ai$emax
+    aiImax <- if (is.null(ai$imax)) 0 else ai$imax
+    aiEc50 <- if (aiEmax > 0) ai$ec50 else 1
+    aiIc50 <- if (aiImax > 0) ai$ic50 else 1
+  }
   kT <- if (is.null(mm$kaTransit)) 0 else mm$kaTransit
   # A peripheral compartment declared as rate constants on the amounts (GHB,
   # Chen 2020: k23 and k32; see the header) is the same linear distribution
@@ -465,10 +553,23 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
       dx[iC] <- dx[iC] - bindC + tb$koff * x[iDRC]
       dx[iP] <- dx[iP] - bindP + tb$koff * x[iDRP]
     }
+    if (!is.null(sd)) {
+      toS <- sd$vmax * Cu / (sd$km + Cu)
+      fromSD <- sd$k21 * x[iSD]
+      dx[iSD] <- toS - fromSD
+      dx[iC] <- dx[iC] - toS + fromSD
+    }
+    if (!is.null(ai)) {
+      E <- x[iE]
+      dx[iC] <- dx[iC] - ai$cl * E * Cu
+      dx[iE] <- ai$kEnz * ((1 + aiEmax * Cu / (aiEc50 + Cu)) -
+                             E * (1 - aiImax * Cu / (aiIc50 + Cu)))
+    }
     dx
   }
 
-  x <- numeric(iDRP)
+  x <- numeric(iE)
+  x[iE] <- 1           # the uninduced enzyme (unused without autoinduction)
   Cp <- numeric(L)
   # The peripheral concentration (on the same footing as Cp: the amount in the
   # compartment over its volume) and the amount still to be absorbed, in the
@@ -500,7 +601,7 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
     }
     arriving <- which(jumpAt == i)
     for (j in arriving) x[jumps$state[j]] <- x[jumps$state[j]] + jumps$amount[j]
-    Cp[i] <- x[iC] / V
+    Cp[i] <- if (plotUnbound) unboundC(x[iC]) else x[iC] / V
     if (q > 0) C2[i] <- x[iP] / V2
     depot[i] <- sum(x[depotStates])
   }

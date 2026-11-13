@@ -105,6 +105,8 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     # Mroszczak 1990's 0.2 h oral lag, fitted with ka
                     # (restored 2026-11-01)
                     "ketorolac",
+                    # Variol 2002's 0.15 h oral lag (vinorelbine, 2026-11-06)
+                    "vinorelbine",
                     # Sun 2021's fixed 0.782 h lag; plasma only, so no
                     # effect-site recovery to blank
                     "olanzapine",

@@ -198,6 +198,26 @@ GESTATIONAL_AGE_TERM <- 40
 MIN_GESTATIONAL_AGE <- 22
 MAX_GESTATIONAL_AGE <- 44
 
+# Serum albumin, g/dL, for the models with an albumin covariate (methotrexate,
+# Ibarra 2023; methotrexatePediatric, Taylor 2023; Steven L. Shafer,
+# 2026-11-06).  Optional: when it is not entered (NULL, or NA from an empty
+# field) each model holds its own reference value.  Read only by models that
+# name `albumin`.  The bounds take in any albumin a laboratory reports (the
+# severest hypoalbuminaemia reaches about 1 g/dL, and few labs report above
+# 5.5); the lower bound is also the floor a power of albumin sees, so the
+# term stays finite.
+MIN_ALBUMIN <- 0.5
+MAX_ALBUMIN <- 6
+
+# Serum aspartate aminotransferase (AST), U/L, for the models with an AST
+# covariate (epirubicin, Ralph 2003; Steven L. Shafer, 2026-11-10).  Optional:
+# when it is not entered each model holds its own reference value.  Read only
+# by models that name `ast`.  The bounds take in what a laboratory reports
+# (1 U/L to the 5000 U/L of a fulminant hepatitis); a model guards its own
+# term within the range its source studied.
+MIN_AST <- 1
+MAX_AST <- 5000
+
 MIN_AGE <- 0
 MAX_AGE <- 90
 # The youngest age the adult-fitted covariate terms see.  Several models carry
@@ -586,6 +606,7 @@ DRUG_CATEGORIES <- c(
   "Antihypertensives",
   "Vasoactive and resuscitation",
   "Parkinson disease",
+  "Chemotherapy",
   "Other",
   "Illicit drugs"
 )
@@ -597,6 +618,10 @@ VASOACTIVE_DRUG_CATEGORY <- "Vasoactive and resuscitation"
 # complications (inst/help/models/parkinsons.md): every candidate catalogued in
 # inst/extdata/parkinsonsRegistry.csv, implemented or not.
 PARKINSONS_DRUG_CATEGORY <- "Parkinson disease"
+# The category of the cytotoxic chemotherapy drugs (inst/help/models/
+# chemotherapy.md, docs/chemotherapy.md): every candidate model catalogued in
+# inst/extdata/chemotherapyRegistry.csv, implemented or not.
+CHEMOTHERAPY_DRUG_CATEGORY <- "Chemotherapy"
 # The categories whose every drug, and every metabolite of one, must have a
 # row in inst/extdata/therapeuticRanges.csv (R/therapeuticRanges.R): the
 # range the band draws, or why there is none.  Every category since

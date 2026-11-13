@@ -109,7 +109,10 @@ plasmaOnly <- c(
     # Parkinson disease drugs (2026-10-19): plasma only; levodopa (all four
     # models) and apomorphine have an effect site (inst/help/models/parkinsons.md)
     "pramipexole", "pramipexoleER", "safinamide", "opicapone",
-    "istradefylline", "amantadineER", "pimavanserin", "tolcapone"
+    "istradefylline", "amantadineER", "pimavanserin", "tolcapone",
+    # Chemotherapy (2026-11-05): plasma only (inst/help/models/chemotherapy.md)
+    "cladribine", "fluorouracil", "fluorouracilBriki", "carboplatin", "carboplatinDuffull", "busulfan",
+    "methotrexatePediatric", "methotrexate", "methotrexateIbarra", "fluorouracilTan", "cytarabine", "doxorubicinPerezBlanco", "doxorubicinolPerezBlanco", "fludarabine", "bendamustine", "oxaliplatinNikanjam", "capecitabine", "capecitabine5FU", "gemcitabine", "gemcitabineDFDU", "etoposideDuong", "melphalanPediatric", "carboplatinPediatric", "daunorubicin", "doxorubicinPediatric", "doxorubicinolPediatric", "etoposide", "etoposideKroghMadsen", "cisplatin", "cisplatinBound", "vinorelbine", "topotecan", "irinotecan", "irinotecanSN38", "doxorubicin", "doxorubicinJoerger", "doxorubicinol", "doxorubicinolJoerger", "cyclophosphamide", "cyclophosphamideJoerger", "cyclophosphamideMcCune", "ifosfamide", "epirubicin", "temozolomide", "dacarbazine", "thioguanineIV", "docetaxel", "vincristine", "vincristineIgarashi", "melphalan", "melphalanNath", "etoposidePediatric", "pemetrexed", "paclitaxel", "paclitaxelJoerger", "paclitaxelCrombag", "vincristinePediatric", "oxaliplatin", "oxaliplatinBastian"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {
@@ -341,7 +344,10 @@ test_that("the drug index links every drug", {
 test_that("the bibliography lists every model citation once, with its drugs", {
   html <- helpReferencesHTML(drugDefaults)
   cites <- withoutLinks(html)
-  refs <- unique(unlist(lapply(ivDrugs, function(d) helpDrugParameterTable(d, drugDefaults)$reference)))
+  # a drug whose model the program chooses cites its chosen candidate, listed
+  # under the candidate's own name (R/modelSelection.R)
+  listed <- setdiff(ivDrugs, names(MODEL_GROUPS))
+  refs <- unique(unlist(lapply(listed, function(d) helpDrugParameterTable(d, drugDefaults)$reference)))
   for (r in refs) {
     short <- htmltools::htmlEscape(helpReferenceShort(r))
     expect_equal(lengths(regmatches(cites, gregexpr(short, cites, fixed = TRUE))), 1, info = r)

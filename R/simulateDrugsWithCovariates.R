@@ -39,6 +39,12 @@
 #' @param gestationalAge gestational age at birth in weeks, or NULL for a term
 #'   birth.  Only the neonatal models that declare it (dobutamineNeonatal)
 #'   are affected.
+#' @param albumin serum albumin in g/dL, or NULL for each model's reference
+#'   value.  Only the models that declare it (methotrexate,
+#'   methotrexatePediatric) are affected.
+#' @param ast serum aspartate aminotransferase in U/L, or NULL for each
+#'   model's reference value.  Only the models that declare it (epirubicin)
+#'   are affected.
 #' @param antiseizureInteractions apply the pharmacokinetic interactions among
 #'   the antiseizure drugs (\code{R/antiseizureInteractions.R},
 #'   \code{antiseizureInteractionRegistry()})?  FALSE (the default) simulates
@@ -74,7 +80,9 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                                          antiseizureInteractions = FALSE,
                                          cyp4f2 = CYP4F2_DEFAULT,
                                          gestationalAge = NULL,
-                                         opioidTolerance = OPIOID_TOLERANCE_DEFAULT)
+                                         opioidTolerance = OPIOID_TOLERANCE_DEFAULT,
+                                         albumin = NULL,
+                                         ast = NULL)
 {
   if (length(sex) != 1 || !sex %in% SEX_VALUES) {
     stop("Invalid sex: ", paste(sex, collapse = ", "),
@@ -110,7 +118,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                     cyp2b6 = cyp2b6,
                     osmolality = osmolality, creatinine = creatinine,
                     pregnant = pregnant, adjustToFFM = adjustToFFM,
-                    gestationalAge = gestationalAge)
+                    gestationalAge = gestationalAge, albumin = albumin,
+                    ast = ast)
     pks[[drug]] <- PK
     currentDT <- dose[dose$Drug == drug,]
     X <- simCpCe(currentDT, events, PK, maximum, plotRecovery)
@@ -167,7 +176,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                           cyp2b6 = cyp2b6, osmolality = osmolality,
                           creatinine = creatinine, pregnant = pregnant,
                           adjustToFFM = adjustToFFM,
-                          gestationalAge = gestationalAge)
+                          gestationalAge = gestationalAge, albumin = albumin,
+                    ast = ast)
     output <- attach(output, target, targetPK, targetDefaults)
   }
 

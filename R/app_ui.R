@@ -382,6 +382,37 @@ app_ui <- function() {
                   ),
                   patientFieldTooltip("gestationalAge"),
                   placement = "right"
+                )),
+
+                # Read only by the models that name `albumin` (methotrexate,
+                # methotrexatePediatric, docetaxel).  Blank means each model's own
+                # reference albumin.
+                relevantField("albumin", fieldHelp(
+                  blankableNumericInput(
+                    inputId = "albumin",
+                    label = "Serum albumin (g/dL)",
+                    value = NA,
+                    min = MIN_ALBUMIN,
+                    max = MAX_ALBUMIN,
+                    step = 0.1
+                  ),
+                  patientFieldTooltip("albumin"),
+                  placement = "right"
+                )),
+
+                # Read only by the models that name `ast` (epirubicin).  Blank
+                # means each model's own reference AST.
+                relevantField("ast", fieldHelp(
+                  blankableNumericInput(
+                    inputId = "ast",
+                    label = "Serum AST (U/L)",
+                    value = NA,
+                    min = MIN_AST,
+                    max = MAX_AST,
+                    step = 1
+                  ),
+                  patientFieldTooltip("ast"),
+                  placement = "right"
                 ))
               ),
 

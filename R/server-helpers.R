@@ -31,7 +31,9 @@ showIntroModal <- function() {
 checkNumericCovariates <- function(age, weight, height, errorFx = NULL,
                                    osmolality = OSMOLALITY_DEFAULT,
                                    creatinine = NULL,
-                                   gestationalAge = NULL) {
+                                   gestationalAge = NULL,
+                                   albumin = NULL,
+                                   ast = NULL) {
   msg <- ""
   success <- TRUE
   if (!is_valid_number(age, MIN_AGE, MAX_AGE)) {
@@ -65,6 +67,21 @@ checkNumericCovariates <- function(age, weight, height, errorFx = NULL,
         !(is.numeric(gestationalAge) && is.nan(gestationalAge))) &&
       !is_valid_number(gestationalAge, MIN_GESTATIONAL_AGE, MAX_GESTATIONAL_AGE)) {
     msg <- glue::glue("Gestational age at birth must be between {MIN_GESTATIONAL_AGE} and {MAX_GESTATIONAL_AGE} weeks, or left blank")
+    success <- FALSE
+  }
+  # Optional in the same way: blank means each model's reference albumin.
+  if (!is.null(albumin) &&
+      !(length(albumin) == 1 && is.na(albumin) &&
+        !(is.numeric(albumin) && is.nan(albumin))) &&
+      !is_valid_number(albumin, MIN_ALBUMIN, MAX_ALBUMIN)) {
+    msg <- glue::glue("Serum albumin must be between {MIN_ALBUMIN} and {MAX_ALBUMIN} g/dL, or left blank")
+    success <- FALSE
+  }
+  # And the AST: blank means each model's reference.
+  if (!is.null(ast) &&
+      !(length(ast) == 1 && is.na(ast) && !(is.numeric(ast) && is.nan(ast))) &&
+      !is_valid_number(ast, MIN_AST, MAX_AST)) {
+    msg <- glue::glue("Serum AST must be between {MIN_AST} and {MAX_AST} U/L, or left blank")
     success <- FALSE
   }
 

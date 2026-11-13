@@ -554,9 +554,11 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     {
       # The controller inverts one system; it cannot target a sum of them, nor
       # an INR drug (whose plotted curve is not a concentration).
-      if (!is.null(PK$parallelSystems) || !is.null(PK$inr) || !is.null(PK$act))
+      if (!is.null(PK$parallelSystems) || !is.null(PK$inr) || !is.null(PK$act) ||
+          !is.null(PK$biliaryStore))
         stop("Target-controlled infusion is not available for a drug ",
-             "simulated as several parallel systems or as an INR or ACT.")
+             "simulated as several parallel systems, as an INR or ACT, or ",
+             "with a biliary store.")
       schedule <- tciSchedule(dose, PK, maximum)
       dose <- schedule$dose
       tci <- tciDisplay(schedule, PK)
@@ -568,6 +570,18 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # that switches between them, in place of any clinical event: no drug an
     # interaction can change has a clinical-event PK set of its own.
     if (!is.null(PK$interactionEvents)) events <- PK$interactionEvents
+
+    # A clearance that steps at fixed times after the course's first dose
+    # (PK$courseSteps, getDrugPK(); busulfan) is switched by events built from
+    # this drug's own first dose, likewise in place of any clinical event.
+    if (!is.null(PK$courseSteps) && is.null(PK$interactionEvents))
+    {
+      given <- dose$Time[dose$Dose > 0]
+      events <- if (length(given) == 0) events[0, ] else
+        data.frame(Time = min(given) + PK$courseSteps$after,
+                   Event = PK$courseSteps$event, stringsAsFactors = FALSE)
+      PK$pkEvents <- c(PK$pkEvents, PK$courseSteps$event)
+    }
 
     pkSets <- PK$PK
     pkEvents <- PK$pkEvents
@@ -674,6 +688,14 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       }
       if (length(parts) == 0) parts <- list(runEngines(dose, pkSets))
       results <- superposeEngineResults(parts, plotRecovery, emerge)
+    } else if (!is.null(PK$biliaryStore))
+    {
+      # A biliary store that fills, then empties once, on each course's own
+      # clock (oxaliplatin, Bastian 2003): the whole dose table at once,
+      # exactly, by matrix exponential, each course its own system and the
+      # courses added.  No clinical-event PK switching (getDrugPK() refuses
+      # further PK sets).  See R/advanceBiliaryStore.R.
+      results <- advanceBiliaryStore(dose, PK, maximum, plotRecovery, emerge)
     } else if (!is.null(PK$transitChain))
     {
       # Transit-chain absorption (enalapril): the whole dose table at once,
