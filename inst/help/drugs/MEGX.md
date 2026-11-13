@@ -30,7 +30,11 @@ Size only. Foong found that all of MEGX's volumes and clearances scaled best wit
 
 ### No band
 
-No human equilibration delay has been published for MEGX, so the row plots plasma and has no effect site. No toxic or therapeutic concentration has been established for MEGX alone, so **no band is drawn**. The clinical convention (Crouch and colleagues, *Anesthesiology* 2023;138:71-81) adds MEGX to lidocaine, and a quarter of GX, and compares the sum with lidocaine's toxic threshold of about 5 mcg/mL.
+No human equilibration delay has been published for MEGX, so the row plots plasma and has no effect site. No toxic or therapeutic concentration has been established for MEGX alone, so **no band is drawn**.
+
+### Lidocaine + MEGX against 5 mcg/mL
+
+The clinical convention (Crouch and colleagues, *Anesthesiology* 2023;138:71-81) adds MEGX to lidocaine, and a quarter of glycinexylidide (GX), and compares the sum with lidocaine's toxic threshold of 5 mcg/mL. The MEGX panel draws that sum as a second, red line, **lidocaine + MEGX** (the plasma concentrations added), with a **dashed red line at 5 mcg/mL**. GX is not modelled, so the line drawn leaves out its quarter-weighted share and is slightly low. The sum is drawn only on the concentration axis, not when the plot is normalized.
 
 ### Where to be careful
 

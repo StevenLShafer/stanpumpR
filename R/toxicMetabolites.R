@@ -89,3 +89,78 @@ facetToxicLabels <- function(facet, colour = TOXIC_LABEL_COLOUR)
     }
   )
 }
+
+# -----------------------------------------------------------------------------
+# The summed threshold: lidocaine + MEGX against 5 mcg/mL
+# -----------------------------------------------------------------------------
+# Shafer asked (2026-11-13) for the clinical convention to be drawn: Crouch
+# 2023 adds MEGX to lidocaine (and a quarter of GX, not modelled) and reads
+# the sum against lidocaine's 5 mcg/mL toxic threshold.  The sum is drawn in
+# the metabolite's panel as a companion series (the mechanism that draws the
+# Schnider model beside Eleveld's, R/alternativeModels.R), named "lidocaine +
+# MEGX" and coloured TOXIC_LABEL_COLOUR, with a dashed line at the
+# threshold.  It is drawn only where both drugs' plasma series are, and only
+# on the concentration axis (not under normalization, where the threshold
+# has no meaning).  The panel's own series stays first in plotResults, so a
+# click or hover on the panel still reads MEGX.  (Claude Code, 2026-11-13.)
+# -----------------------------------------------------------------------------
+
+#' The name of a summed toxicity series ("lidocaine + MEGX")
+#' @keywords internal
+toxicSumName <- function(parent, metabolite) paste(parent, "+", metabolite)
+
+#' The summed parent + metabolite plasma series for each TOXIC_SUM_THRESHOLDS row
+#'
+#' @param allResults the plot's series (Drug, Time, Y, Site, ...)
+#' @returns a list: \code{series}, rows in allResults' shape (Site "Plasma"),
+#'   and \code{companions}, one row per sum (Drug, drugColor, Parent)
+#' @keywords internal
+toxicSumSeries <- function(allResults)
+{
+  series <- allResults[0, , drop = FALSE]
+  companions <- data.frame(Drug = character(0), drugColor = character(0),
+                           Parent = character(0), stringsAsFactors = FALSE)
+  for (i in seq_len(nrow(TOXIC_SUM_THRESHOLDS))) {
+    t <- TOXIC_SUM_THRESHOLDS[i, ]
+    met <- allResults[allResults$Drug == t$metabolite & allResults$Site == "Plasma", , drop = FALSE]
+    par <- allResults[allResults$Drug == t$parent & allResults$Site == "Plasma", , drop = FALSE]
+    met <- met[!is.na(met$Y), , drop = FALSE]
+    par <- par[!is.na(par$Y), , drop = FALSE]
+    if (nrow(met) < 2 || nrow(par) < 2) next
+    # On the union of the two lines' times, each interpolated: both are
+    # linear interpolants of their own exact points.
+    times <- sort(unique(c(met$Time, par$Time)))
+    interp <- function(d) stats::approx(d$Time, d$Y, times, rule = 2, ties = "ordered")$y
+    rows <- met[rep(1, length(times)), , drop = FALSE]
+    rows$Drug <- toxicSumName(t$parent, t$metabolite)
+    rows$Time <- times
+    rows$Y <- interp(met) + interp(par)
+    rownames(rows) <- NULL
+    series <- rbind(series, rows)
+    companions <- rbind(companions, data.frame(
+      Drug = toxicSumName(t$parent, t$metabolite), drugColor = TOXIC_LABEL_COLOUR,
+      Parent = t$metabolite, stringsAsFactors = FALSE))
+  }
+  list(series = series, companions = companions)
+}
+
+#' The dashed threshold lines and their labels, one per drawn panel
+#'
+#' @param plotTable the plot's panels (Drug, Wrap), Wrap a factor
+#' @param minimum the start of the time axis, where the label is placed
+#' @returns a data frame of Wrap, threshold and label, or NULL
+#' @keywords internal
+toxicSumThresholds <- function(plotTable, minimum)
+{
+  t <- TOXIC_SUM_THRESHOLDS[TOXIC_SUM_THRESHOLDS$metabolite %in% as.character(plotTable$Drug), , drop = FALSE]
+  if (nrow(t) == 0) return(NULL)
+  wrap <- plotTable$Wrap[match(t$metabolite, as.character(plotTable$Drug))]
+  data.frame(
+    Wrap = wrap,
+    threshold = t$threshold,
+    Time = minimum,
+    label = paste0(toxicSumName(t$parent, t$metabolite), " toxic threshold, ",
+                   t$threshold, " ", t$units),
+    stringsAsFactors = FALSE
+  )
+}

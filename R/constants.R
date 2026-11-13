@@ -815,3 +815,18 @@ PREGNANCY_GFR_FACTOR <- 1.5
 # Their panels' labels are drawn in TOXIC_LABEL_COLOUR (R/toxicMetabolites.R).
 TOXIC_METABOLITES <- c("MEGX", "norpethidine")
 TOXIC_LABEL_COLOUR <- "red"
+
+# The summed toxicity threshold drawn on a toxic metabolite's panel
+# (R/toxicMetabolites.R): the parent plus the metabolite against one
+# concentration.  Lidocaine + MEGX against 5 mcg/mL is the convention of
+# Crouch 2023 (Anesthesiology 138:71-81, read in full: "[lidocaine] + [MEGX]
+# + 0.25*[GX] ... with the reference of toxicity threshold at 5.0 ug/ml"),
+# drawn on Steven L. Shafer's instruction (2026-11-13).  GX is not modelled,
+# so the line drawn is lidocaine + MEGX.
+TOXIC_SUM_THRESHOLDS <- data.frame(
+  metabolite = "MEGX",
+  parent     = "lidocaine",
+  threshold  = 5,          # in the panel's units
+  units      = "mcg/mL",
+  stringsAsFactors = FALSE
+)
