@@ -59,7 +59,7 @@ Eleveld's propofol model gives women a higher clearance than men (2.10 against 1
 
 ## CYP2D6, CYP2C19, CYP2C9 and CYP2B6
 
-**CYP2D6 phenotype** is now a live covariate: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone, the apparent clearance of risperidone, aripiprazole and haloperidol (for risperidone and aripiprazole, the clearance that forms their active metabolites), and metoprolol's clearance and oral bioavailability. See [Active metabolites](help:models/metabolites).
+**CYP2D6 phenotype** is now a live covariate: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone, the apparent clearance of risperidone, aripiprazole and haloperidol (for risperidone and aripiprazole, the clearance that forms their active metabolites), metoprolol's clearance and oral bioavailability, and the fall of flecainide's metabolic clearance with age after 55 or 60 (Doki 2012). See [Active metabolites](help:models/metabolites).
 
 **CYP2C19 phenotype** is read by escitalopram and citalopram, whose published clearances differ by phenotype, and by [voriconazole](help:drugs/voriconazole), whose saturable elimination falls further over the first days of treatment in poor and intermediate metabolisers. The field offers the five terms the genotyping laboratories report (poor, intermediate, normal, rapid, ultrarapid). Neither source estimated all five, so each drug's page says which of its groups each phenotype is given. See [Antidepressant models and their limits](help:models/antidepressants).
 

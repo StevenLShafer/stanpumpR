@@ -2562,7 +2562,18 @@ registry <- rbind(
       source = "Kanto J, Klotz U. Pharmacokinetic implications for the clinical use of atropine, scopolamine and glycopyrrolate. Acta Anaesthesiol Scand 1988;32:69-78 PMID 3279717 (Table 8, quoting Pihlajamaki K, Kanto J, Oksman-Caldentey KM 1986 PMID 3799206); Transderm Scop label, 2025",
       source_url = "https://pubmed.ncbi.nlm.nih.gov/3279717/",
       to_obtain = "Pihlajamaki 1986 in full",
-      notes = "Clearance at term (14.4 mL/min/kg, about 1.0 L/min at 70 kg) is below this model's 2.53 L/min, but with no comparator, n = 4 and a different assay nothing is applied. The label avoids the patch in severe preeclampsia.")
+      notes = "Clearance at term (14.4 mL/min/kg, about 1.0 L/min at 70 kg) is below this model's 2.53 L/min, but with no comparator, n = 4 and a different assay nothing is applied. The label avoids the patch in severe preeclampsia."),
+  row("flecainide", "Other", "applied",
+      finding = "No controlled or paired pregnancy pharmacokinetic study. Van der Zande 2023 (PMC10103521, read in full): one woman, troughs within 0.2-1.0 mg/L through pregnancy, fetal/maternal ratio 0.72, milk/plasma 2.3-3.3. Vigneswaran 2014 and Smeets 2025 (abstracts; transplacental treatment of fetal tachycardia): exposure 'varied both within and between patients'. About half of flecainide's clearance is renal (Doki 2012: 10.3 of 18.6 L/h).",
+      applied = "eGFR x 1.5 when the serum creatinine is left blank (physiological: the rise in glomerular filtration of late pregnancy), on the renal part of clearance only. Volume and absorption unchanged.",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = 1.5,
+      trimester = "third", comparator = NA,
+      design = "physiological", n = NA, confidence = "low",
+      evidence_read = "full_text",
+      source = "Ansari J, Carvalho B, Shafer SL, Flood P. Anesth Analg 2016;122:786-804 (the rise in glomerular filtration of pregnancy); van der Zande JA et al. 2023, PMC10103521",
+      source_url = "https://doi.org/10.1213/ANE.0000000000001143",
+      to_obtain = "Smeets 2025 and Vigneswaran 2014 in full (maternal flecainide for fetal tachycardia)",
+      notes = "CYP2D6 activity, the metabolic half of clearance, rises in pregnancy, which is not applied (no magnitude for flecainide).")
 )
 
 stopifnot(
