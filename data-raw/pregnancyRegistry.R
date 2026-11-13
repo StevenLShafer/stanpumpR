@@ -2540,7 +2540,18 @@ registry <- rbind(
       source = "Ansari J, Carvalho B, Shafer SL, Flood P. Anesth Analg 2016;122:786-804 (the rise in glomerular filtration of pregnancy); Groen F, Prins JR, Lub-de Hooge MN, et al. Clin Pharmacokinet 2023;62:399-434 PMID 36940039",
       source_url = "https://doi.org/10.1213/ANE.0000000000001143",
       to_obtain = "van Kampenhout 2017 (Eur Respir J 49:1601724): the measured exposure in one pregnant woman",
-      notes = "The single case's exposure fell by half or more, beyond what the renal term alone predicts; n = 1, so it is recorded, not applied.")
+      notes = "The single case's exposure fell by half or more, beyond what the renal term alone predicts; n = 1, so it is recorded, not applied."),
+  row("cyclosporine", "Other", "unquantified",
+      finding = "Kozlowska-Boszko 1998 (abstract, PMID 9664952): 15 renal transplant recipients, whole-blood troughs 130.8, 92.0 and 99.0 ng/mL in the first, second and third trimesters at 3.52-3.67 mg/kg/day, haematocrit falling from 42% to 34%. Thomas 1997 (abstract, PMID 9397102): dose-adjusted concentrations fell in 5 of 6. Bourget 1993 (abstract, PMID 8466958), 5 liver transplant recipients: 'no radical need for changes in dosage'. No clearance was measured.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = "second and third", comparator = "first trimester (same women)",
+      design = "TDM", n = 15L, confidence = "low",
+      evidence_read = "abstract",
+      source = "Kozlowska-Boszko B et al. Transplant Proc 1998 PMID 9664952; Thomas AG et al. 1997 PMID 9397102; Bourget P et al. 1993 PMID 8466958",
+      source_url = "https://pubmed.ncbi.nlm.nih.gov/9664952/",
+      to_obtain = "Kozlowska-Boszko 1998 and Thomas 1997 in full",
+      notes = "Troughs fall in pregnancy, but whole-blood cyclosporine follows the haematocrit, which also falls, so part of the fall is not a change in clearance; nothing is applied.")
 )
 
 stopifnot(
