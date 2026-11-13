@@ -458,7 +458,7 @@ antibioticTroughBands <- function()
       "levels; streptococcal MBCs were found only in abstracts."),
     Source = paste(
       "Abdul-Aziz MH et al., Intensive Care Med 2020;46:1127-1153 (ESICM/ESCMID position paper),",
-      "Table 5: 'Cmin: 2-7 mg/L', a trough 30 min before the next dose, 48 h into therapy;",
+      "Table 4: 'Cmin: 2-7 mg/L', a trough 30 min before the next dose, 48 h into therapy;",
       "toxicity (thrombocytopenia) above a trough of 7-10 mg/L."),
     stringsAsFactors = FALSE
   )
