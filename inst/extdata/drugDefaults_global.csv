@@ -262,6 +262,8 @@ capecitabine,mcg,,,mg PO,"mg PO,mg PO bid",#F9A825,0,0,0,0,0,IV,Chemotherapy
 gemcitabineDFDU,mcg,,,,,#81C784,0,0,0,0,0,IV,
 capecitabine5FU,mcg,,,,,#FFD54F,0,0,0,0,0,IV,
 paclitaxel,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#558B2F,0,0,0,0,0,IV,Chemotherapy
+paclitaxelJoerger,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#558B2F,0,0,0,0,0,IV,
+paclitaxelCrombag,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#558B2F,0,0,0,0,0,IV,
 vincristinePediatric,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#0D47A1,0,0,0,0,0,IV,
 oxaliplatin,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#9E9D24,0,0,0,0,0,IV,Chemotherapy
 oxaliplatinBastian,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#9E9D24,0,0,0,0,0,IV,
@@ -291,3 +293,6 @@ everolimus,ng,,,mg PO bid,"mg PO,mg PO qd,mg PO bid",#6D4C41,3,8,5.5,0,0,IV,Othe
 dofetilide,ng,,,mcg PO bid,"mcg PO,mcg PO bid",#37474F,0,0,0,0,0,IV,Other
 quinidine,mcg,,,mg PO sulfate,"mg PO sulfate,mg PO sulfate tid,mg PO sulfate qid,mg PO sulfate q4h",#1565C0,2,6,4,0,0,IV,Other
 nortriptyline,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#6A1B9A,70,170,120,0,0,IV,Antidepressants
+temozolomide,mcg,,,mg PO,"mg PO,mg PO qd",#F4511E,0,0,0,0,0,IV,Chemotherapy
+dacarbazine,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr",#C0CA33,0,0,0,0,0,IV,Chemotherapy
+thioguanineIV,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#5C6BC0,0,0,0,0,0,IV,Chemotherapy

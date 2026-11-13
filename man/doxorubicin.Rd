@@ -4,7 +4,7 @@
 \alias{doxorubicin}
 \title{Doxorubicin, intravenous: the model chosen for the patient}
 \usage{
-doxorubicin(weight, height, age, sex, adjustToFFM = TRUE)
+doxorubicin(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
 }
 \arguments{
 \item{...}{the patient's covariates, as the candidates take them}

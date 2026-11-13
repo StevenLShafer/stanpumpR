@@ -17,6 +17,7 @@
 "P23","busulfan","busulfan__infant_adult__mccune2014","structural_pk",NA
 "C35","busulfan","busulfan__hct__langenhorst2020","structural_pk",NA
 "P17","paclitaxel","paclitaxel__adult__joerger2006","structural_pk",NA
+"N13","paclitaxel","paclitaxel__adult__crombag2019","structural_pk",NA
 "P04","cisplatin","cisplatin__adult__urien2004","structural_pk",NA
 "P05","cisplatin","cisplatin__adult__thompson2025","structural_pk",NA
 "N01","cisplatin","cisplatin__children__erdlenbruch2001","structural_pk",NA

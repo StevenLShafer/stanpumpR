@@ -45,10 +45,10 @@ joergerReference <- function(male, bsa, age, R, tinf, times, h = 0.002) {
 
 run175 <- function(sex, age = 56, weight = W, height = H, hours = 96) {
   bsa <- sqrt(weight * height / 3600)
-  d <- data.frame(Drug = "paclitaxel", Time = c(0, 180),
+  d <- data.frame(Drug = "paclitaxelJoerger", Time = c(0, 180),
                   Dose = c(175 * bsa / 3, 0), Units = "mg/hr")
   simulateDrugsWithCovariates(d, noEvents, weight, height, age, sex, hours * 60, FALSE,
-                              adjustToFFM = FALSE)$paclitaxel$wide
+                              adjustToFFM = FALSE)$paclitaxelJoerger$wide
 }
 # The last time the curve is above 0.1 umol/L, interpolated, in hours
 timeAbove <- function(wide, threshold = 0.1) {
@@ -64,7 +64,7 @@ aucUmol <- function(wide) {
 }
 
 test_that("the model is Table 2 and Equations A-F, converted from umol and hours", {
-  X <- paclitaxel(W, H, 56, "female", adjustToFFM = FALSE)
+  X <- paclitaxelJoerger(W, H, 56, "female", adjustToFFM = FALSE)
   set <- X$PK$default
   mm <- X$michaelisMenten
   expect_equal_rounded(set$v1, 12.8)
@@ -76,7 +76,7 @@ test_that("the model is Table 2 and Equations A-F, converted from umol and hours
   expect_equal_rounded(mm$saturableDistribution$km / MW, 0.826)
   expect_equal_rounded(mm$saturableDistribution$k21 * 60, 1.15)
 
-  M <- paclitaxel(W, H, 56, "male", adjustToFFM = FALSE)
+  M <- paclitaxelJoerger(W, H, 56, "male", adjustToFFM = FALSE)
   expect_equal_rounded(M$michaelisMenten$vmax / mm$vmax, 1.2)
   expect_equal_rounded(M$michaelisMenten$saturableDistribution$vmax /
                          mm$saturableDistribution$vmax, 1.2)
@@ -88,7 +88,7 @@ test_that("the model is Table 2 and Equations A-F, converted from umol and hours
 
 test_that("the text's covariate statements reproduce", {
   vmel <- function(bsa, age, sex = "female")
-    paclitaxel(72, bsa^2 * 3600 / 72, age, sex, adjustToFFM = FALSE)$michaelisMenten$vmax
+    paclitaxelJoerger(72, bsa^2 * 3600 / 72, age, sex, adjustToFFM = FALSE)$michaelisMenten$vmax
   expect_equal(round(vmel(1.8, 56, "male") / vmel(1.8, 56), 2), 1.2)
   expect_equal(round(vmel(2.0, 56) / vmel(1.8, 56) - 1, 2), 0.09)   # +0.2 m2: +9%
   expect_equal(round(vmel(1.8, 66) / vmel(1.8, 56) - 1, 2), -0.06)  # +10 y: the text's "about 5%"
@@ -135,24 +135,24 @@ test_that("the engine agrees with an independent Runge-Kutta integration", {
 
 test_that("saturable distribution: mass is conserved and the dose is not superposable", {
   # Twice the dose gives more than twice the AUC, both pathways saturating
-  d <- function(mg) data.frame(Drug = "paclitaxel", Time = c(0, 180),
+  d <- function(mg) data.frame(Drug = "paclitaxelJoerger", Time = c(0, 180),
                                Dose = c(mg / 3, 0), Units = "mg/hr")
   auc <- function(mg) aucUmol(simulateDrugsWithCovariates(
     d(mg), noEvents, W, H, 56, "female", 96 * 60, FALSE,
-    adjustToFFM = FALSE)$paclitaxel$wide)
+    adjustToFFM = FALSE)$paclitaxelJoerger$wide)
   expect_gt(auc(630), 2.1 * auc(315))
 })
 
 test_that("both switch positions are pinned", {
-  on <- paclitaxel(70, 170, 35, "male")
-  off <- paclitaxel(70, 170, 35, "male", adjustToFFM = FALSE)
+  on <- paclitaxelJoerger(70, 170, 35, "male")
+  off <- paclitaxelJoerger(70, 170, 35, "male", adjustToFFM = FALSE)
   # the reference man: the pharmacokinetic weight is his weight
   expect_equal_rounded(on$PK$default$v1, off$PK$default$v1)
   expect_equal_rounded(off$michaelisMenten$vmax, 0.7600135)
-  w <- paclitaxel(70, 170, 35, "female")
+  w <- paclitaxelJoerger(70, 170, 35, "female")
   # V1 is fixed at the source's 12.8 L whatever the patient (Shafer, 2026-11-06)
   expect_equal_rounded(w$PK$default$v1, 12.8)
-  expect_equal_rounded(paclitaxel(120, 160, 70, "female")$PK$default$v1, 12.8)
+  expect_equal_rounded(paclitaxelJoerger(120, 160, 70, "female")$PK$default$v1, 12.8)
   expect_equal_rounded(w$michaelisMenten$vmax, 0.5837841)
 })
 
@@ -162,15 +162,15 @@ test_that("paclitaxel is a chemotherapy drug, plasma only, with no band", {
   expect_identical(row$Category, CHEMOTHERAPY_DRUG_CATEGORY)
   expect_identical(row$Concentration.Units, "mcg")
   expect_equal(c(row$Lower, row$Upper, row$Typical, row$MEAC), c(0, 0, 0, 0))
-  PK <- getDrugPK("paclitaxel", 70, 170, 60, "male")
+  PK <- getDrugPK("paclitaxelJoerger", 70, 170, 60, "male")
   expect_equal(PK$tPeak, 0)
   expect_match(PK$reference, "Joerger")
   expect_identical(therapeuticRange("paclitaxel")$band_status, "not_applicable")
 })
 
 test_that("pregnancy: Janssen 2021's factors on KMEL, V1 and the linear peripheral volume", {
-  off <- paclitaxel(70, 165, 30, "female", FALSE)
-  on <- paclitaxel(70, 165, 30, "female", FALSE, pregnant = TRUE)
+  off <- paclitaxelJoerger(70, 165, 30, "female", FALSE)
+  on <- paclitaxelJoerger(70, 165, 30, "female", FALSE, pregnant = TRUE)
   expect_equal(on$michaelisMenten$km / off$michaelisMenten$km, 1.32)
   expect_equal(on$PK$default$v1 / off$PK$default$v1, 2.27)
   expect_equal(on$PK$default$v2 / off$PK$default$v2, 2.28)

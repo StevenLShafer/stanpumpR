@@ -88,6 +88,12 @@ MODEL_GROUPS <- list(
     ageMin = c(18, 1.30), ageMax = c(Inf, 9.37),
     weightMin = c(NA, 8.7), weightMax = c(NA, 52.8),
     n = c(59, 22), year = c(2007, 2009)),
+  paclitaxel = data.frame(
+    model = c("paclitaxelJoerger", "paclitaxelCrombag"),
+    source = c("Joerger 2006", "Crombag 2019"),
+    ageMin = c(33, 18), ageMax = c(86, 84),
+    weightMin = c(NA, NA), weightMax = c(NA, NA),
+    n = c(168, 684), year = c(2006, 2019)),
   doxorubicinol = data.frame(
     model = c("doxorubicinolJoerger", "doxorubicinolPediatric", "doxorubicinolPerezBlanco"),
     source = c("Joerger 2007", "Voller 2015", "Perez-Blanco 2016"),
@@ -284,3 +290,12 @@ doxorubicinol <- modelGroup("doxorubicinol")
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 cyclophosphamide <- modelGroup("cyclophosphamide")
+
+#' Paclitaxel, intravenous, solvent-based: the model chosen for the patient
+#'
+#' Crombag 2019 (684 adults, 18-84 years) or Joerger 2006 (168 adults,
+#' 33-86 years), chosen by \code{selectModel()}; see \code{R/modelSelection.R}.
+#' @param ... the patient's covariates, as the candidates take them
+#' @returns a list in the shape \code{getDrugPK()} expects
+#' @export
+paclitaxel <- modelGroup("paclitaxel")

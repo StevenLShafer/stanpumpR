@@ -124,7 +124,7 @@
 # SATURABLE DISTRIBUTION (OPTIONAL)
 # =================================
 # A block saturableDistribution = list(vmax, km, k21) (paclitaxel,
-# R/drugs_paclitaxel.R; Joerger 2006) adds a further compartment, held as an
+# R/drugs_paclitaxelJoerger.R; Joerger 2006) adds a further compartment, held as an
 # amount with no volume, filled from the central compartment at the saturable
 # rate vmax Cu / (km + Cu) (vmax an amount per minute, km a concentration) and
 # emptied back into it at the first-order rate k21 (/min) times its amount:

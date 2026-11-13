@@ -785,3 +785,50 @@ table and footnote are followed).  On the library's models, for Janssen's
 simulated woman (BSA 1.8 m2), the 0-48 h AUC changes by -2, -12, -7 and -6%
 and the peak by -7, -7, -7 and -19%; Janssen's own simulations gave -0.3,
 -10, -7 and -12% and -6, -6, -6 and -24%.
+
+## 44. The ten requested papers, read on the PDF (2026-11-13)
+
+The ten papers of `stanpumpR-papers-needed.csv` reached the archive on
+2026-11-13 and were each read on the PDF (the scanned ones on the page
+images).  Four became models, six are recorded.
+
+- **Paclitaxel is now a group.**  Crombag 2019 (N13) refits Joerger's
+  structure in 684 adults, Joerger 2006's patients among them, with
+  covariates on VMEL only.  The selector chooses it for every age to 84
+  (684 patients against 168, and nearest below 18); Joerger 2006
+  (`paclitaxelJoerger`) is chosen from 85.  It reproduces the text's 5% fall
+  in VMEL per decade and a rise of under 10% in the time above 0.05 uM.
+  Janssen 2021 refitted Crombag's own data, so its pregnancy factors sit on
+  Crombag's parameters directly.
+- **Temozolomide** (Ostermann 2004, C36): oral, with a CSF compartment;
+  reproduces 11.9 L/h in a man and 14.2 L/h and 50.2 L on doubling BSA.  Its
+  dBSA is the relative deviation of Du Bois BSA from the pooled mean, 1.81 m2,
+  computed from Table 1's two trial means.
+- **Dacarbazine** (Breithaupt 1982, C43): no compartmental parameters are
+  printed, but each patient's CL, Vss and two half-lives close a
+  two-compartment model; the mean of six is the model.  Two numbers the
+  derivation did not use agree: the derived V1 against the paper's Ve, and
+  the fast phase's 30% of the area against the text's 28%.
+- **Thioguanine** (Kitchen 1997, N02), as `thioguanineIV`: two compartments
+  with Michaelis-Menten elimination.  The model's 24-h concentrations, put
+  through the paper's own formula, return its clearances (985 and 609
+  against 987 and 608 mL/min/m2).  An intravenous research route; the
+  approved product is the oral tablet.
+- **Not identifiable**: idarubicin (Reid 1990: three half-lives, CL and Vss,
+  five numbers for six) and bleomycin (Hall 1982: its VD is the area volume,
+  CL/beta, so only three independent numbers).  Their registry rows name
+  sources that would close them (Alberts 1978; Maisonneuve 2026).
+- **Complete, waiting on a decision**: vinblastine (Owellen 1977: two
+  patients; Table 1's transfer constants contradict its own exponents, but
+  each run's triexponential solves) and cladribine in children (Kearns 1994:
+  closes and returns its own Vss and half-life, but is intravenous only,
+  where Lindemalm's adult model also offers SC and oral).
+- **Not implemented**: de Jonge 2005's cyclophosphamide (zero-order enzyme
+  growth without turnover, fitted with thiotepa) and Kerbusch 2001's
+  ifosfamide (the same autoinduction as Kerbusch 2000 in 14 patients on 1-h
+  infusions; the selector would never choose it, and whether the infusion
+  schedule should count is put to Shafer).
+- **Labels.**  The FDA-label index that reached master on 2026-11-13
+  requires a row for every dosable drug; the 29 chemotherapy drugs of this
+  branch now have their current DailyMed labels in `papers/labels/` (the
+  innovator's NDA where it is still listed, else a major generic).

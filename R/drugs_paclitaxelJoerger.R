@@ -162,14 +162,14 @@ PACLITAXEL_MW <- 853.9   # g/mol: 1 umol = 0.8539 mg
 #' a first peripheral compartment and linear distribution to a second; sex,
 #' body surface area and age as covariates, run by
 #' \code{advanceMichaelisMenten()}.  See the header of
-#' \code{R/drugs_paclitaxel.R}.
+#' \code{R/drugs_paclitaxelJoerger.R}.
 #'
 #' @inheritParams cefazolin
 #' @param pregnant TRUE in late pregnancy: Janssen 2021's factors
 #' @returns a list in the shape \code{getDrugPK()} expects, with a
 #'   \code{michaelisMenten} block
 #' @export
-paclitaxel <- function(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
+paclitaxelJoerger <- function(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
 {
   p <- PACLITAXEL_JOERGER
   preg <- if (isTRUE(pregnant)) PACLITAXEL_PREGNANCY else list(km = 1, v1 = 1, vLinear = 1)
