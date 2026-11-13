@@ -24,3 +24,7 @@ Plasma doxorubicin in mcg/mL (mg/L). Doses are entered **as labelled, in mg of d
 - The same paper is the library's [cyclophosphamide](help:drugs/cyclophosphamide) model.
 
 Every parameter was read in the paper's PDF.
+
+### Pregnancy
+
+With Pregnant ticked, Janssen 2021's factors are applied (clearance ×1.14, central volume ×1.08), from 22 pregnant women; exposure falls about a tenth, and doxorubicinol is formed faster with the parent's clearance.

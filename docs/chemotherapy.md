@@ -770,3 +770,18 @@ Shafer asked (2026-11-10) for the autoinduction engine and an AST field.
 - **Dose basis.** Shafer's rule (AGENTS.md): unless the paper says otherwise,
   the parameters are in the units of the FDA-approved product, salt or base.
   Epirubicin (hydrochloride) and cyclophosphamide are entered as labelled.
+
+## 43. Pregnancy: Janssen 2021 applied to all four drugs (2026-11-12)
+
+Janssen 2021 (PMID 33506375, read in full) updates van Hasselt 2014 with more
+pregnant women.  On Shafer's decision (2026-11-12: the size of the effect, not
+its p value, is the question), its factors are applied under `pregnant`, each
+mapped onto the library's compartments by correspondence: epirubicin (Ralph)
+V1 x 1.79, shallow V2 x 2.94; doxorubicin (Joerger, Perez-Blanco) CL x 1.14,
+V1 x 1.08; docetaxel (Bruno) CL x 1.08, V1 x 1.19, shallow V2 x 1.12;
+paclitaxel (Joerger 2006) KMEL x 1.32, V1 x 2.27, the linear peripheral volume
+x 2.28 (Janssen's Table 2 names the linear compartment V3, its text V2; the
+table and footnote are followed).  On the library's models, for Janssen's
+simulated woman (BSA 1.8 m2), the 0-48 h AUC changes by -2, -12, -7 and -6%
+and the peak by -7, -7, -7 and -19%; Janssen's own simulations gave -0.3,
+-10, -7 and -12% and -6, -6, -6 and -24%.

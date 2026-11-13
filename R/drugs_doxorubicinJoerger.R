@@ -73,9 +73,24 @@
 # it off; V1, Q and V2, with no covariate, scale by the library's factors with
 # the switch on and are fixed with it off.
 #
-# PREGNANCY (R/pregnancy.R): recorded, not applied (see the registry row).
+# PREGNANCY (R/pregnancy.R)
+# =========================
+# Janssen JM, Van Calsteren K, Dorlo TPC, et al.  Population pharmacokinetics
+# of docetaxel, paclitaxel, doxorubicin and epirubicin in pregnant women.  Clin
+# Pharmacokinet 2021;60:775-784 (doi 10.1007/s40262-020-00961-4), PDF read
+# 2026-11-10: 22 pregnant women (27 cycles, 15.0-36.3 weeks) and 66 nonpregnant
+# patients, three compartments, one discrete pregnancy factor per parameter
+# (Table 2): CL x 1.14 (95% CI 1.00-1.28), V1 x 1.08 (0.85-1.35), no other.
+# Applied under `pregnant` on Shafer's decision (2026-11-10, the p value not
+# being the question): clearance and the central volume map directly onto
+# Joerger's; Q and V2 unchanged.  Doxorubicinol's formation follows the
+# parent's clearance, as always.
 # NO EFFECT SITE, NO BAND
 # -----------------------------------------------------------------------------
+
+# Janssen 2021, Table 2: doxorubicin's pregnancy factors (shared by every
+# adult doxorubicin model; R/drugs_doxorubicinPerezBlanco.R reads them too)
+DOXORUBICIN_PREGNANCY <- list(cl = 1.14, v1 = 1.08)
 
 # Joerger 2007, Table IV and Eq. 10
 DOXORUBICIN_JOERGER <- list(
@@ -100,10 +115,13 @@ DOXORUBICINOL_PER_HYDROCHLORIDE <- 545.54 / 579.98
 #' \code{R/drugs_doxorubicinJoerger.R}.
 #'
 #' @inheritParams cefazolin
+#' @param pregnant TRUE in late pregnancy: Janssen 2021's factors
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-doxorubicinJoerger <- function(weight, height, age, sex, adjustToFFM = TRUE)
+doxorubicinJoerger <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                               pregnant = FALSE)
 {
+  preg <- if (isTRUE(pregnant)) DOXORUBICIN_PREGNANCY else list(cl = 1, v1 = 1)
   p <- DOXORUBICIN_JOERGER
   f <- DOXORUBICIN_BASE_FRACTION
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
@@ -114,8 +132,8 @@ doxorubicinJoerger <- function(weight, height, age, sex, adjustToFFM = TRUE)
   cl <- p$cl * (bsa / p$bsaReference)^p$bsaExponent *
     (ageTerm / p$ageReference)^p$ageExponent                         # L/h
 
-  v1 <- p$v1 * size$volume / f
-  cl1 <- cl / 60 / f
+  v1 <- p$v1 * size$volume / f * preg$v1
+  cl1 <- cl / 60 / f * preg$cl
   default <- list(
     v1  = v1,
     v2  = p$v2 * size$volume / f,
@@ -136,6 +154,8 @@ doxorubicinJoerger <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "doxorubicinol. Doses as the hydrochloride; plasma doxorubicin base. ",
     "https://doi.org/10.2165/00003088-200746120-00005"
   )
+  if (isTRUE(pregnant))
+    reference <- paste(reference, pregnancyReference("CL x 1.14, V1 x 1.08", "Janssen 2021, Clin Pharmacokinet 60:775-784, https://doi.org/10.1007/s40262-020-00961-4"))
 
   list(
     PK = PK,

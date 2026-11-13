@@ -167,3 +167,14 @@ test_that("paclitaxel is a chemotherapy drug, plasma only, with no band", {
   expect_match(PK$reference, "Joerger")
   expect_identical(therapeuticRange("paclitaxel")$band_status, "not_applicable")
 })
+
+test_that("pregnancy: Janssen 2021's factors on KMEL, V1 and the linear peripheral volume", {
+  off <- paclitaxel(70, 165, 30, "female", FALSE)
+  on <- paclitaxel(70, 165, 30, "female", FALSE, pregnant = TRUE)
+  expect_equal(on$michaelisMenten$km / off$michaelisMenten$km, 1.32)
+  expect_equal(on$PK$default$v1 / off$PK$default$v1, 2.27)
+  expect_equal(on$PK$default$v2 / off$PK$default$v2, 2.28)
+  expect_equal(on$michaelisMenten$vmax, off$michaelisMenten$vmax)
+  expect_equal(on$michaelisMenten$saturableDistribution, off$michaelisMenten$saturableDistribution)
+  expect_equal(on$PK$default$cl2, off$PK$default$cl2)
+})

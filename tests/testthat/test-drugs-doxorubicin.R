@@ -74,3 +74,15 @@ test_that("doxorubicin is one name for three models, with the doxorubicinol of t
   expect_identical(therapeuticRange("doxorubicin")$band_status, "not_applicable")
   expect_identical(therapeuticRange("doxorubicinol")$band_status, "not_applicable")
 })
+
+test_that("pregnancy: Janssen 2021's factors on the adult doxorubicin models, CL x 1.14 and V1 x 1.08", {
+  for (f in list(doxorubicinJoerger, doxorubicinPerezBlanco)) {
+    off <- f(70, 165, 30, "female", FALSE)
+    on <- f(70, 165, 30, "female", FALSE, pregnant = TRUE)
+    expect_equal(on$PK$default$cl1 / off$PK$default$cl1, 1.14)
+    expect_equal(on$PK$default$v1 / off$PK$default$v1, 1.08)
+    expect_equal(on$PK$default$v2, off$PK$default$v2)
+  }
+  expect_match(getDrugPK("doxorubicin", 70, 165, 30, "female", pregnant = TRUE)$reference,
+               "Janssen 2021")
+})

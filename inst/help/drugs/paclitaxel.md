@@ -30,3 +30,7 @@ Total plasma paclitaxel in mcg/mL (mg/L); 0.1 µmol/L is 0.085 mcg/mL and 0.05 �
 - **Adults only. Not a monitoring tool:** the curve is a population prediction, not an estimate from measured levels.
 
 Every parameter was read in the paper's PDF. See [chemotherapy](help:models/chemotherapy) for the other models considered.
+
+### Pregnancy
+
+With Pregnant ticked, Janssen 2021's factors are applied (the concentration at half-maximal elimination ×1.32, central volume ×2.27, the linear peripheral volume ×2.28), from 20 pregnant women, fitted on a model of this one's structure; the peak falls about a fifth and the late concentrations rise, the larger peripheral volume slowing the terminal fall.

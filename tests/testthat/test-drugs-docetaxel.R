@@ -44,3 +44,10 @@ test_that("getDrugPK passes the Patient Profile's albumin to docetaxel", {
   b <- docetaxel(70, htMean, 56, "female", adjustToFFM = FALSE, albumin = 3.1)
   expect_equal(a$PK$default$cl1, b$PK$default$cl1)
 })
+
+test_that("pregnancy: Janssen 2021's factors on CL, V1 and the shallow V2", {
+  off <- docetaxel(70, 165, 30, "female", FALSE)$PK$default
+  on <- docetaxel(70, 165, 30, "female", FALSE, pregnant = TRUE)$PK$default
+  expect_equal(c(on$cl1 / off$cl1, on$v1 / off$v1, on$v2 / off$v2), c(1.08, 1.19, 1.12))
+  expect_equal(c(on$v3, on$cl2, on$cl3), c(off$v3, off$cl2, off$cl3))
+})

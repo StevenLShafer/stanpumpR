@@ -13,3 +13,7 @@ stanpumpR holds 3 published models of doxorubicin. You do not choose between the
 **What that means for doxorubicin.** Voller 2015 is chosen for children and Joerger 2007 for adults (59 patients against Perez-Blanco's 44), so Perez-Blanco 2016 is in the library but not currently chosen for anyone. Each forms its own doxorubicinol, and the doxorubicinol panel always comes from the same source as the doxorubicin.
 
 The tables on this page are computed at six reference patients, so each uses the model chosen for that patient. Each model's own page gives its parameters, its checks against its paper, and its limits.
+
+### Pregnancy
+
+With Pregnant ticked, the adult models take Janssen 2021's factors (clearance ×1.14, central volume ×1.08), from 22 pregnant women; exposure falls about a tenth.

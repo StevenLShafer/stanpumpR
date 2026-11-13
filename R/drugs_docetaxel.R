@@ -55,9 +55,16 @@
 #
 # PREGNANCY (R/pregnancy.R)
 # =========================
-# Recorded, not applied: van Hasselt 2014 (three pregnant women) and Janssen
-# 2021 (nine) found a higher clearance and larger volumes in pregnancy, but
-# only the abstracts were read.
+# Janssen JM, Van Calsteren K, Dorlo TPC, et al.  Population pharmacokinetics
+# of docetaxel, paclitaxel, doxorubicin and epirubicin in pregnant women.  Clin
+# Pharmacokinet 2021;60:775-784 (doi 10.1007/s40262-020-00961-4), PDF read
+# 2026-11-10: 9 pregnant women (10 cycles, 26.1-35.0 weeks) and 35 nonpregnant
+# patients, three compartments, one discrete pregnancy factor per parameter
+# (Table 2): CL x 1.08 (95% CI 0.92-1.24), V1 x 1.19 (0.90-1.50) and the
+# shallow peripheral V2 x 1.12 (0.82-1.50).  Its V2 (7.35 L, Q 5.96 L/h) is the
+# shallow compartment, as Bruno's V2 (5.1 L, Q 8.9 L/h) is, so the factor goes
+# there; the deep volume and the intercompartmental clearances unchanged.
+# Applied under `pregnant` on Shafer's decision (2026-11-10).
 #
 # NO EFFECT SITE, NO BAND
 # -----------------------------------------------------------------------------
@@ -74,6 +81,10 @@ DOCETAXEL_BRUNO <- list(
   k12 = 1.07, k21 = 1.74, k13 = 1.28, k31 = 0.0787   # /h
 )
 
+# Janssen 2021, Table 2: docetaxel's pregnancy factors (V2 the shallow
+# peripheral compartment)
+DOCETAXEL_PREGNANCY <- list(cl = 1.08, v1 = 1.19, v2 = 1.12)
+
 #' Docetaxel, intravenous (Bruno 1996)
 #'
 #' Three compartments; body surface area, age and albumin on clearance,
@@ -82,12 +93,14 @@ DOCETAXEL_BRUNO <- list(
 #'
 #' @inheritParams cefazolin
 #' @param albumin serum albumin, g/dL, or NULL for the study mean (4.01 g/dL)
+#' @param pregnant TRUE in late pregnancy: Janssen 2021's factors
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 docetaxel <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                      albumin = NULL)
+                      albumin = NULL, pregnant = FALSE)
 {
   p <- DOCETAXEL_BRUNO
+  preg <- if (isTRUE(pregnant)) DOCETAXEL_PREGNANCY else list(cl = 1, v1 = 1, v2 = 1)
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
                         legacyVolume = 1, legacyClearance = 1)
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
@@ -100,10 +113,10 @@ docetaxel <- function(weight, height, age, sex, adjustToFFM = TRUE,
   q2 <- p$v1 * p$k12                                                 # L/h
   q3 <- p$v1 * p$k13
   default <- list(
-    v1  = p$v1 * size$volume,
-    v2  = p$v1 * p$k12 / p$k21 * size$volume,
+    v1  = p$v1 * size$volume * preg$v1,
+    v2  = p$v1 * p$k12 / p$k21 * size$volume * preg$v2,
     v3  = p$v1 * p$k13 / p$k31 * size$volume,
-    cl1 = cl / 60,
+    cl1 = cl / 60 * preg$cl,
     cl2 = q2 / 60 * size$clearance,
     cl3 = q3 / 60 * size$clearance
   )
@@ -120,6 +133,8 @@ docetaxel <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "k12 1.07, k21 1.74, k13 1.28, k31 0.0787 /h. Plasma docetaxel. ",
     "https://doi.org/10.1007/BF02353487"
   )
+  if (isTRUE(pregnant))
+    reference <- paste(reference, pregnancyReference("CL x 1.08, V1 x 1.19, V2 x 1.12", "Janssen 2021, Clin Pharmacokinet 60:775-784, https://doi.org/10.1007/s40262-020-00961-4"))
 
   list(
     PK = PK,

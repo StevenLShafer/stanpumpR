@@ -65,7 +65,9 @@
 # cohort's mean weight was 71 kg), scaled by the library's factors with the
 # switch on and fixed with it off.
 #
-# PREGNANCY (R/pregnancy.R): recorded, not applied (see the doxorubicin row).
+# PREGNANCY (R/pregnancy.R): Janssen 2021's doxorubicin factors (CL x 1.14,
+# V1 x 1.08; DOXORUBICIN_PREGNANCY, R/drugs_doxorubicinJoerger.R) under
+# `pregnant`, as for Joerger 2007.
 # NO EFFECT SITE, NO BAND
 # -----------------------------------------------------------------------------
 
@@ -82,15 +84,18 @@ DOXORUBICIN_PEREZ_BLANCO <- list(
 #' \code{R/drugs_doxorubicinPerezBlanco.R}.
 #'
 #' @inheritParams cefazolin
+#' @param pregnant TRUE in late pregnancy: Janssen 2021's factors
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-doxorubicinPerezBlanco <- function(weight, height, age, sex, adjustToFFM = TRUE)
+doxorubicinPerezBlanco <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                                   pregnant = FALSE)
 {
   p <- DOXORUBICIN_PEREZ_BLANCO
+  preg <- if (isTRUE(pregnant)) DOXORUBICIN_PREGNANCY else list(cl = 1, v1 = 1)
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
                         legacyVolume = 1, legacyClearance = 1)
-  v1 <- p$v1 * size$volume
-  cl1 <- p$cl / 60 * size$clearance
+  v1 <- p$v1 * size$volume * preg$v1
+  cl1 <- p$cl / 60 * size$clearance * preg$cl
 
   default <- list(
     v1  = v1,
@@ -111,6 +116,8 @@ doxorubicinPerezBlanco <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "Q2 50.7, Q3 28.4 L/h; 22% of the clearance forms doxorubicinol. Doses as labelled, ",
     "no conversion; plasma doxorubicin in ng/mL. https://doi.org/10.1111/bcp.13070"
   )
+  if (isTRUE(pregnant))
+    reference <- paste(reference, pregnancyReference("CL x 1.14, V1 x 1.08", "Janssen 2021, Clin Pharmacokinet 60:775-784, https://doi.org/10.1007/s40262-020-00961-4"))
 
   list(
     PK = PK,

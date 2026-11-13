@@ -115,9 +115,21 @@
 # 10.5 L, against the source's own finding.  KMEL, a concentration, does not
 # scale.
 #
-# PREGNANCY (R/pregnancy.R): van Hasselt 2014 (5 pregnant women) and Janssen
-# 2021 report a higher clearance in pregnancy, read in abstract only; the
-# registry row is unquantified and nothing is applied.
+# PREGNANCY (R/pregnancy.R)
+# =========================
+# Janssen JM, Van Calsteren K, Dorlo TPC, et al.  Population pharmacokinetics
+# of docetaxel, paclitaxel, doxorubicin and epirubicin in pregnant women.  Clin
+# Pharmacokinet 2021;60:775-784 (doi 10.1007/s40262-020-00961-4), PDF read
+# 2026-11-10: 20 pregnant women (25 cycles) and 689 nonpregnant patients, refitted on
+# a model of this one's structure (Crombag 2019), one discrete pregnancy
+# factor per parameter (Table 2): KMEL x 1.32 (95% CI 1.03-1.69), V1 x 2.27
+# (1.57-3.10) and V3 x 2.28 (1.54-3.63).  Its text calls the linear
+# compartment V2, but Table 2 and its footnote give the saturable compartment
+# as the first peripheral (VMTR, KMTR, K21, no volume) and the LINEAR one as V3
+# (267 L, Q2 16.9 L/h), which is this model's linear compartment (V3 252 L, Q
+# 20.1), carried here as v2: so KMEL goes on km, V1 on v1 and V3 on v2.
+# Applied under `pregnant` on Shafer's decision (2026-11-10).  V1 is fixed in
+# both switch positions; the factor multiplies it.
 # NO EFFECT SITE, NO BAND: the time above 0.05 or 0.1 umol/L, the exposure
 # measure of neutropenia, is not a therapeutic range and is not drawn.
 # -----------------------------------------------------------------------------
@@ -139,6 +151,9 @@ PACLITAXEL_JOERGER <- list(
   bilirubinReference = 7,                       # umol/L
   bilirubin = 7                                 # held: no Patient Profile field
 )
+# Janssen 2021, Table 2: paclitaxel's pregnancy factors on KMEL, V1 and the
+# linear peripheral volume (Janssen's V3, this model's v2)
+PACLITAXEL_PREGNANCY <- list(km = 1.32, v1 = 2.27, vLinear = 2.28)
 PACLITAXEL_MW <- 853.9   # g/mol: 1 umol = 0.8539 mg
 
 #' Paclitaxel, intravenous, solvent-based (Joerger 2006)
@@ -150,12 +165,14 @@ PACLITAXEL_MW <- 853.9   # g/mol: 1 umol = 0.8539 mg
 #' \code{R/drugs_paclitaxel.R}.
 #'
 #' @inheritParams cefazolin
+#' @param pregnant TRUE in late pregnancy: Janssen 2021's factors
 #' @returns a list in the shape \code{getDrugPK()} expects, with a
 #'   \code{michaelisMenten} block
 #' @export
-paclitaxel <- function(weight, height, age, sex, adjustToFFM = TRUE)
+paclitaxel <- function(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
 {
   p <- PACLITAXEL_JOERGER
+  preg <- if (isTRUE(pregnant)) PACLITAXEL_PREGNANCY else list(km = 1, v1 = 1, vLinear = 1)
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
                         legacyVolume = 1, legacyClearance = 1)
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
@@ -173,11 +190,11 @@ paclitaxel <- function(weight, height, age, sex, adjustToFFM = TRUE)
   q <- p$q * bsa^p$qBsa                                                  # L/h
 
   vmax <- vmel * mg / 60                           # mg/min
-  km <- p$kmel * mg                                # mg/L
+  km <- p$kmel * mg * preg$km                      # mg/L
 
   default <- list(
-    v1 = p$v1,                                  # fixed (Shafer, 2026-11-06)
-    v2 = v3,                                 # the source's V3, linear
+    v1 = p$v1 * preg$v1,                        # fixed (Shafer, 2026-11-06)
+    v2 = v3 * preg$vLinear,                  # the source's V3, linear
     v3 = 1,                                  # placeholder: see the header
     # The low-concentration limit of the saturable elimination, Vmax / Km,
     # for the help tables only: the simulation uses the michaelisMenten block.
@@ -202,6 +219,9 @@ paclitaxel <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "paclitaxel only. Total plasma paclitaxel. ",
     "https://doi.org/10.1158/1078-0432.CCR-05-2069"
   )
+  if (isTRUE(pregnant))
+    reference <- paste(reference, pregnancyReference("KMEL x 1.32, V1 x 2.27, linear V x 2.28",
+      "Janssen 2021, Clin Pharmacokinet 60:775-784, https://doi.org/10.1007/s40262-020-00961-4"))
 
   list(
     PK = PK,

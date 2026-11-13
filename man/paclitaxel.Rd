@@ -4,7 +4,7 @@
 \alias{paclitaxel}
 \title{Paclitaxel, intravenous, solvent-based (Joerger 2006)}
 \usage{
-paclitaxel(weight, height, age, sex, adjustToFFM = TRUE)
+paclitaxel(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -21,6 +21,8 @@ patient's fat-free mass as described in the
 \code{FALSE} reproduces the published size scaling exactly.  Each drug
 file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
+
+\item{pregnant}{TRUE in late pregnancy: Janssen 2021's factors}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects, with a

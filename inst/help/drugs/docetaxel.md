@@ -24,3 +24,7 @@ Plasma docetaxel in mcg/mL (mg/L). Doses are entered in mg or as an infusion rat
 - **Not a monitoring tool:** the curve is a population prediction.
 
 Every parameter was read in the paper's PDF.
+
+### Pregnancy
+
+With Pregnant ticked, Janssen 2021's factors are applied (clearance ×1.08, central volume ×1.19, the smaller peripheral volume ×1.12), from 9 pregnant women; exposure falls about 7%.

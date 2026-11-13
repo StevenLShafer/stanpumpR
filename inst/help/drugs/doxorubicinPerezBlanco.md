@@ -22,7 +22,7 @@ Doses are entered in mg as labelled (doxorubicin hydrochloride). The paper does 
 ### Where to be careful
 
 - **No therapeutic range** is established for doxorubicin; the paper relates the area under the curve to toxicity.
-- **Pregnancy:** studies in pregnant women found larger volumes and possibly a higher clearance, but no factor was measured well enough to apply.
+- **Pregnancy:** with Pregnant ticked, Janssen 2021's doxorubicin factors are applied (clearance ×1.14, central volume ×1.08), from 22 pregnant women; exposure falls about a tenth.
 - **Not a monitoring tool:** the curve is a population prediction.
 
 The parameters were read in the paper's PubMed Central text; the PDF is still to confirm them. See [chemotherapy](help:models/chemotherapy).

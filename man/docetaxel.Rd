@@ -4,7 +4,7 @@
 \alias{docetaxel}
 \title{Docetaxel, intravenous (Bruno 1996)}
 \usage{
-docetaxel(weight, height, age, sex, adjustToFFM = TRUE, albumin = NULL)
+docetaxel(weight, height, age, sex, adjustToFFM = TRUE, albumin = NULL, pregnant = FALSE)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -23,6 +23,8 @@ file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
 
 \item{albumin}{serum albumin, g/dL, or NULL for the study mean (4.01 g/dL)}
+
+\item{pregnant}{TRUE in late pregnancy: Janssen 2021's factors}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
