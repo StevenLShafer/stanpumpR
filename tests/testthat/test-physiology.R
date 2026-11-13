@@ -125,7 +125,7 @@ test_that("the sliders' log10 values become factors", {
   expect_match(physiologySummary(c(liver = 0.5)), "liver function")
 })
 
-test_that("getDrugPK applies a row, holds ke0 and moves tPeak", {
+test_that("getDrugPK applies a row, scales ke0 with cardiac output and moves tPeak", {
   withPhysiologyTable(testRow("fentanyl", 0.05, 0.95, 0.8), {
     base <- getDrugPK("fentanyl", 70, 170, 40, "male")
     expect_null(base$physiology)
@@ -140,12 +140,24 @@ test_that("getDrugPK applies a row, holds ke0 and moves tPeak", {
     expect_equal(l$cl1, b$cl1 * fac)
     expect_equal(l$v1, b$v1 * 0.5)
     expect_equal(l$cl2, b$cl2 * 0.5)
-    expect_equal(l$ke0, b$ke0, tolerance = 1e-7)
+    expect_equal(l$ke0, b$ke0 * 0.5 ^ PHYSIOLOGY_KE0_CARDIAC_EXPONENT, tolerance = 1e-7)
+    # Liver function alone leaves the effect site where it was
+    liver <- getDrugPK("fentanyl", 70, 170, 40, "male", physiology = c(liver = 0.5))
+    expect_equal(liver$PK$default$ke0, b$ke0, tolerance = 1e-7)
     expect_false(isTRUE(all.equal(low$tPeak, base$tPeak)))
     expect_equal(low$physiology$clearance, fac)
     # Its parameters are those of an ordinary model with the changed values
     # (and the effect site held), so the simulation is unchanged code.
     expect_equal(l$k10, l$cl1 / l$v1)
+  })
+})
+
+test_that("a model that supplies ke0 scales it with cardiac output", {
+  withPhysiologyTable(testRow("etomidate", 0, 0.98, 0.5), {
+    base <- getDrugPK("etomidate", 70, 170, 40, "male")
+    low <- getDrugPK("etomidate", 70, 170, 40, "male", physiology = c(cardiac = 0.25))
+    expect_equal(low$PK$default$ke0, base$PK$default$ke0 * 0.25 ^ PHYSIOLOGY_KE0_CARDIAC_EXPONENT,
+                 tolerance = 1e-7)
   })
 })
 

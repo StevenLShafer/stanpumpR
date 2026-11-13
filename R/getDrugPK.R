@@ -229,8 +229,9 @@ getDrugPK <- function(
   # The physiology sliders (R/physiology.R): liver function, renal function,
   # cardiac output and GI absorption change this drug's parameters here,
   # before anything below reads them, if the drug has an applied row in
-  # inst/extdata/physiologyParameters.csv.  ke0 is held at its value at
-  # normal physiology, so it is solved first, from the unchanged model.
+  # inst/extdata/physiologyParameters.csv.  ke0 is the normal one scaled by
+  # cardiac output (brain flow), so it is solved first, from the unchanged
+  # model.
   physiology <- checkPhysiology(physiology)
   physiologyApplies <- !physiologyIsNormal(physiology) && !is.null(physiologyRow(drug))
   if (physiologyApplies)
@@ -239,7 +240,11 @@ getDrugPK <- function(
       stop("Internal error: ", drug, " has a physiology row, but its model ",
            "carries elimination the physiology sliders cannot scale.")
     nominalKe0 <- NULL
-    if (is.null(X$ke0) && isTRUE(X$tPeak > 0))
+    if (!is.null(X$ke0) && is_valid_number(X$ke0) && X$ke0 > 0)
+    {
+      # A model that supplies ke0 (etomidate): every set starts from it.
+      nominalKe0 <- lapply(X$PK, function(set) X$ke0)
+    } else if (isTRUE(X$tPeak > 0))
     {
       nominal <- getDrugPK(
         drug = drug, weight = weight, height = height, age = age, sex = sex,

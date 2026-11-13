@@ -41,8 +41,14 @@
 # mammillary model expresses as a smaller V1.  The exponent on V1 is
 # PHYSIOLOGY_V1_CARDIAC_EXPONENT, an assumption, not a fitted value.
 #
-# ke0 is a property of the effect site, so it is held at its value at normal
-# physiology, and the time to peak effect moves with the disposition.
+# ke0 is the rate of equilibration with the effect site (the brain), which
+# brain blood flow carries.  In low output brain flow falls too, but less
+# than cardiac output, because the body is pared down to a heart-lungs-brain
+# circuit and brain perfusion is defended at the cost of everything else
+# (Shafer, 2026-11-13).  So ke0 is taken from the model at normal physiology
+# and scaled by cardiac^PHYSIOLOGY_KE0_CARDIAC_EXPONENT, an exponent below 1
+# and an assumption, not a fitted value; the time to peak effect then moves
+# with both the disposition and the effect site.
 #
 # The GI factor scales ka only: the drug arrives faster or slower, the
 # amount absorbed is unchanged.
@@ -74,6 +80,12 @@ PHYSIOLOGY_DEFAULT <- c(liver = 1, renal = 1, cardiac = 1, gi = 1)
 #' pass at low output), the size is not fitted.
 #' @noRd
 PHYSIOLOGY_V1_CARDIAC_EXPONENT <- 1
+
+#' Exponent of cardiac output on ke0 (ke0' = ke0 x cardiac^exponent).  Below
+#' 1 because brain perfusion is defended when cardiac output falls; the size
+#' is an assumption, not fitted.
+#' @noRd
+PHYSIOLOGY_KE0_CARDIAC_EXPONENT <- 0.5
 
 #' Exponent of cardiac output on the intercompartmental clearances.
 #' @noRd
@@ -206,7 +218,7 @@ physiologyFirstPassFactor <- function(row, physiology)
 #' @param row the drug's physiology row
 #' @param physiology a validated physiology vector
 #' @param ke0 NULL, or a named list of the ke0 of each PK set at normal
-#'   physiology, which each set then keeps
+#'   physiology, which each set then takes scaled by cardiac output
 #' @returns X with its PK sets (and oral formulations, and transit chain)
 #'   changed
 #' @noRd
@@ -218,6 +230,7 @@ applyPhysiology <- function(X, row, physiology, ke0 = NULL)
   qFactor  <- cardiac ^ PHYSIOLOGY_Q_CARDIAC_EXPONENT
   fFactor  <- physiologyFirstPassFactor(row, physiology)
   gi       <- physiology[["gi"]]
+  ke0Factor <- cardiac ^ PHYSIOLOGY_KE0_CARDIAC_EXPONENT
   scaleF <- function(f) if (is.null(f)) NULL else min(1, f * fFactor)
   scaleKa <- function(ka) if (is.null(ka)) NULL else ka * gi
 
@@ -237,7 +250,8 @@ applyPhysiology <- function(X, row, physiology, ke0 = NULL)
       f <- if (is.null(s$bioavailability_PO)) 1 else s$bioavailability_PO
       s$bioavailability_PO <- scaleF(f)
     }
-    if (!is.null(ke0[[event]]) && ke0[[event]] > 0) s$ke0Physiology <- ke0[[event]]
+    if (!is.null(ke0[[event]]) && ke0[[event]] > 0)
+      s$ke0Physiology <- ke0[[event]] * ke0Factor
     X$PK[[event]] <- s
   }
   if (!is.null(X$oralFormulations))
@@ -253,6 +267,7 @@ applyPhysiology <- function(X, row, physiology, ke0 = NULL)
     clearance = clFactor,
     v1 = v1Factor,
     intercompartmental = qFactor,
+    ke0 = if (length(ke0)) ke0Factor else 1,
     bioavailability = fFactor,
     ka = gi
   )
@@ -317,7 +332,9 @@ physiologyPanel <- function()
       "Cardiac output, as a multiple of normal. Liver blood flow is taken as",
       "a fixed share of it, so the clearance of flow-limited drugs follows it.",
       "It also scales the intercompartmental clearances and the central",
-      "volume (a low output gives higher early concentrations)."),
+      "volume (a low output gives higher early concentrations), and slows",
+      "equilibration with the brain (ke0), less than in proportion because",
+      "brain perfusion is defended."),
     gi = paste(
       "Gastrointestinal absorption rate (oral ka), as a multiple of normal.",
       "The drug arrives faster or slower; the amount absorbed is unchanged.")
