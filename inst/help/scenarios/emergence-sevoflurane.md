@@ -8,6 +8,7 @@ The fall is fast at first and slow at the end: the brain washes out quickly, but
 
 ## Try next
 
+- Press **Visualizer** under the plot and stop it at 2:05, five minutes after the vaporizer is turned off. The vessel-rich group and muscle are giving agent back to the blood, which carries it to the lungs to be breathed out, while fat, far below them, is still taking it up.
 - Load [emergence from desflurane](scenario:emergence-desflurane) and compare the time-until-threshold lines at 120 minutes. Desflurane's lower solubility (blood:gas 0.42 against 0.65) makes its emergence faster.
 - Set *Max time* to 6 hours and move the vaporizer-off row to 300 minutes. After five hours the fat compartment matters and the tail is longer.
 - Change the oxygen flow at 120 minutes from 8 L/min to 2 L/min, leaving the vaporizer off. Now the circuit is rebreathed and the washout is much slower than the line predicted, because the line assumes no rebreathing.

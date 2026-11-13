@@ -218,6 +218,13 @@ validateMichaelisMenten <- function(mm, drug)
   if (!is.null(mm$clLinear) &&
       !(is_valid_number(mm$clLinear) && mm$clLinear >= 0))
     stop("Invalid michaelisMenten for ", drug, ": clLinear must be zero or positive.")
+  vd <- mm$vmaxDecline
+  if (!is.null(vd) &&
+      !(is.list(vd) && is_valid_number(vd$fraction, 0, 1) &&
+        is_valid_number(vd$t50) && is_valid_number(vd$onset) && vd$onset >= 0 &&
+        vd$t50 > vd$onset))
+    stop("Invalid michaelisMenten for ", drug, ": vmaxDecline needs a fraction in ",
+         "[0, 1], an onset of zero or more and a t50 after the onset (minutes).")
   sc <- mm$saturableSC
   if (!is.null(sc)) {
     ok <- is.list(sc) &&
@@ -471,6 +478,19 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
     ddi[[field]][max(1L, findInterval(t, ddi$time))]
   }
 
+  # A Vmax that declines with time since the first dose (voriconazole's
+  # time-dependent autoinhibition, R/drugs_voriconazole.R): the fraction of
+  # Vmax lost reaches half its maximum t50 minutes after the first dose, and
+  # Vmax is the block's own value until `onset`.  Evaluated at the middle of
+  # each integration step, which is at most MM_MAX_STEP minutes.
+  vd <- mm$vmaxDecline
+  firstDose <- if (nrow(dose) > 0) min(as.numeric(dose$Time)) else 0
+  vmaxDeclineAt <- function(t) {
+    if (is.null(vd)) return(1)
+    s <- max(t - firstDose - vd$onset, 0)
+    1 - vd$fraction * s / (s + vd$t50 - vd$onset)
+  }
+
   # The time line: every dose time and arrival, and the instant before each.
   knots <- unique(c(t0, jumps$time, if (!is.null(ddi)) ddi$time[ddi$time > 0]))
   timeLine <- simulationTimeGrid(c(knots, knots - PRE_DOSE_OFFSET), maximum,
@@ -568,10 +588,11 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
       vmaxStep <- vmax * ddiAt("vmax", timeLine[i - 1])
       kmStep <- km * ddiAt("km", timeLine[i - 1])
       for (k in seq_len(n)) {
-        k1 <- deriv(x, rIV, rPE, vmaxStep, kmStep)
-        k2 <- deriv(x + h / 2 * k1, rIV, rPE, vmaxStep, kmStep)
-        k3 <- deriv(x + h / 2 * k2, rIV, rPE, vmaxStep, kmStep)
-        k4 <- deriv(x + h * k3, rIV, rPE, vmaxStep, kmStep)
+        vmaxK <- vmaxStep * vmaxDeclineAt(timeLine[i - 1] + (k - 0.5) * h)
+        k1 <- deriv(x, rIV, rPE, vmaxK, kmStep)
+        k2 <- deriv(x + h / 2 * k1, rIV, rPE, vmaxK, kmStep)
+        k3 <- deriv(x + h / 2 * k2, rIV, rPE, vmaxK, kmStep)
+        k4 <- deriv(x + h * k3, rIV, rPE, vmaxK, kmStep)
         x <- x + h / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
       }
       # The central amount cannot fall below zero; RK4 can overshoot by

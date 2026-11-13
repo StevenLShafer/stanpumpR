@@ -10,17 +10,33 @@
 # manuscript with adaptive thinking can run for minutes.
 #
 # The key: PAPER_REVIEW_KEY_ENV in the environment, or `anthropic_api_key` in
-# config.yml (git-ignored).  paperReviewApiKey() takes a session key first, the
-# seam for a later bring-your-own-key option in which a user's key is held
-# only in that session's memory.  See docs/paper-review.md and
-# docs/paper-review-privacy.md.  (Claude Code, 2026-10-30, at the request of
-# Steven L. Shafer.)
+# config.yml (git-ignored; on shinyapps.io written by the production deploy
+# from a repository secret).  That is the operator's own key, the default
+# for every user, and `paper_review_shared_key: false` in config.yml turns it
+# off.  A user may instead enter their own key, held only in that session's
+# input (paperReviewOwnKey()), which paperReviewApiKey() takes first.  Uses
+# of the operator's key are counted (R/paper-review-usage.R).  See
+# docs/paper-review.md and docs/paper-review-privacy.md.  (Claude Code,
+# 2026-10-30 and 2026-11-10, at the request of Steven L. Shafer.)
+#
+# The call takes minutes, and one R process serves every session of a
+# shinyapps.io worker, so it runs in a background R process
+# (paperReviewExtractAsync(), through mirai; the server's ExtendedTask):
+# the request is built here, sent and streamed there by
+# paperReviewTransport(), which uses nothing of stanpumpR, and read back here
+# by paperReviewInterpret().  paperReviewExtract() is the same three steps in
+# this process, for the live test and for scripts.
 
 PAPER_REVIEW_API_URL      <- "https://api.anthropic.com/v1/messages"
 PAPER_REVIEW_API_VERSION  <- "2026-10-21"
 PAPER_REVIEW_MODEL        <- "claude-opus-5-5"
+# Effort high and 128,000 output tokens, the model's most: Shafer's decision
+# of 2026-11-10 on the calibration (docs/paper-review-calibration.md), where
+# high used up to 56,348 tokens on an eight-page paper, 88% of the old
+# 64,000. The limit costs nothing unless a review needs it; at about 125
+# tokens a second, 128,000 is about 17 minutes, inside the time limit.
 PAPER_REVIEW_EFFORT       <- "high"
-PAPER_REVIEW_MAX_TOKENS   <- 64000
+PAPER_REVIEW_MAX_TOKENS   <- 128000
 PAPER_REVIEW_TIMEOUT_SEC  <- 1200
 # This app's own key first, so it can sit beside another app's
 # ANTHROPIC_API_KEY in the same ~/.Renviron; then the standard name.
@@ -34,11 +50,19 @@ PAPER_REVIEW_MAX_PDF_BYTES <- 20 * 1024^2
 # the app sees it; run_app() and run_paper_review_app() raise it to this, the
 # PDF limit plus room for the request's own encoding.
 PAPER_REVIEW_MAX_UPLOAD_BYTES <- PAPER_REVIEW_MAX_PDF_BYTES + 1024^2
+# The longest key the own-key field accepts (Anthropic's are about 110).
+PAPER_REVIEW_OWN_KEY_MAX_CHARS <- 300
+# The background process is given the request's own time limit and five
+# minutes more (its start, the retries' waits); past that it is abandoned
+# and the user told, rather than the session waiting for ever.
+PAPER_REVIEW_BACKGROUND_TIMEOUT_SEC <- PAPER_REVIEW_TIMEOUT_SEC + 300
 
 #' The API key for this session
 #'
-#' A key supplied for the session (bring-your-own-key) wins; then the
-#' environment; then config.yml.  The key is returned, never printed.
+#' A key the user entered for the session (bring-your-own-key) wins; then the
+#' operator's: the environment, then config.yml, unless
+#' \code{paper_review_shared_key} is \code{false} there.  The key is
+#' returned, never printed.
 #'
 #' @param sessionKey a key held in the session's memory, or NULL
 #' @param config the app's configuration list
@@ -48,6 +72,12 @@ paperReviewApiKey <- function(sessionKey = NULL, config = .sprglobals$config)
 {
   if (is.character(sessionKey) && length(sessionKey) == 1 && nzchar(sessionKey))
     return(sessionKey)
+  # The operator's key can be withdrawn without removing it (after the uses
+  # Shafer allows it, users bring their own).
+  if (is.list(config) && isFALSE(config$paper_review_shared_key)) return(NULL)
+  # Nor is it once it has made the reviews it is allowed
+  # (paperReviewSharedKeyAdmit(), R/paper-review-usage.R).
+  if (paperReviewSharedKeyExhausted()) return(NULL)
   for (name in PAPER_REVIEW_KEY_ENV) {
     key <- Sys.getenv(name, "")
     if (nzchar(key)) return(key)
@@ -56,6 +86,23 @@ paperReviewApiKey <- function(sessionKey = NULL, config = .sprglobals$config)
   if (is.character(key) && length(key) == 1 && nzchar(key) &&
       !grepl("^<", key)) return(key)
   NULL
+}
+
+#' A key the user typed, if it can be one
+#'
+#' Anthropic API keys begin \code{sk-ant-}.  Anything else (a blank field, a
+#' half-pasted key, text with spaces) is not used, so a review is never sent
+#' with it.
+#'
+#' @param x the field's value
+#' @returns the trimmed key, or NULL
+#' @keywords internal
+paperReviewOwnKey <- function(x)
+{
+  if (!is.character(x) || length(x) != 1 || is.na(x)) return(NULL)
+  x <- trimws(x)
+  if (nchar(x) > PAPER_REVIEW_OWN_KEY_MAX_CHARS || !grepl("^sk-ant-[A-Za-z0-9_-]{10,}$", x)) return(NULL)
+  x
 }
 
 #' The request body for one manuscript
@@ -158,16 +205,14 @@ paperReviewError <- function(code, message)
 #' not its content), cut to 300 characters.  It goes into the condition the
 #' user sees, never into a log.
 #'
-#' @param resp the httr2 response
-#' @returns a string, empty when the body cannot be read
+#' @param error the error body's \code{error} object, a list of \code{type}
+#'   and \code{message}, or NULL
+#' @returns a string, empty when there is none
 #' @keywords internal
-paperReviewApiErrorText <- function(resp)
+paperReviewApiErrorText <- function(error)
 {
-  body <- tryCatch(jsonlite::fromJSON(httr2::resp_body_string(resp), simplifyVector = FALSE),
-                   error = function(e) NULL)
-  e <- body$error
-  if (is.null(e)) return("")
-  substr(paste0("API says (", e$type %or% "error", "): ", e$message %or% ""), 1, 300)
+  if (!is.list(error) || is.null(error$message)) return("")
+  substr(paste0("API says (", error$type %or% "error", "): ", error$message %or% ""), 1, 300)
 }
 
 #' Parse the extraction out of an accumulated response
@@ -377,49 +422,102 @@ paperReviewStrayChoices <- function(value, spec, path = "")
   character(0)
 }
 
-#' Send one manuscript to the Anthropic API and return the extraction
+#' Check a manuscript and build its request
+#'
+#' Everything that can be refused without the network is refused here, in
+#' the app's process, before anything is sent.
 #'
 #' @param pdf,supplement raw bytes (supplement optional)
 #' @param key the API key
-#' @param progress optional function(text) called as the stream advances,
-#'   with counts only
 #' @param ... passed to \code{paperReviewRequestBody()}
-#' @returns a list: \code{extraction}, \code{usage}, \code{model}
+#' @returns a list: \code{json} (the request body) and \code{fallbacks}
+#'   (whether the refusal fallback was requested)
 #' @keywords internal
-paperReviewExtract <- function(pdf, supplement = NULL, key, progress = NULL, ...)
+paperReviewPrepare <- function(pdf, supplement = NULL, key, ...)
 {
-  if (!requireNamespace("httr2", quietly = TRUE))
-    stop(paperReviewError("no_httr2", "The httr2 package is needed to call the Anthropic API."))
   if (is.null(key)) stop(paperReviewError("no_key", "No Anthropic API key is configured."))
   if (!is.raw(pdf) || length(pdf) == 0)
     stop(paperReviewError("no_pdf", "No manuscript was uploaded."))
   if (length(pdf) + length(supplement) > PAPER_REVIEW_MAX_PDF_BYTES)
     stop(paperReviewError("too_large", "The files are too large to send (20 MB together)."))
-
   body <- paperReviewRequestBody(pdf, supplement, ...)
-  req <- httr2::request(PAPER_REVIEW_API_URL)
+  list(json = as.character(jsonlite::toJSON(body, auto_unbox = TRUE, null = "null", digits = NA)),
+       fallbacks = !is.null(body$fallbacks))
+}
+
+#' Send a prepared request and collect the streamed reply
+#'
+#' Runs in a background R process (paperReviewExtractAsync()), so it refers
+#' to nothing of stanpumpR: every constant is an argument and every call is
+#' \code{httr2::} or \code{jsonlite::}.  It returns what came back, raw:
+#' the HTTP status, the API's error object for a refused request, or the
+#' server-sent events; paperReviewInterpret() reads them.  It writes nothing
+#' anywhere, and the key is redacted from the request.
+#'
+#' @param json the request body
+#' @param key the API key
+#' @param fallbacks request the server-side refusal fallback?
+#' @param url,version,beta,timeout the endpoint, API version, fallback beta
+#'   header and time limit (seconds)
+#' @returns a list: \code{failure} (NULL, \code{"no_httr2"} or
+#'   \code{"connection"}), \code{status}, \code{error}, \code{events}
+#' @keywords internal
+paperReviewTransport <- function(json, key, fallbacks = TRUE,
+                                 url = "https://api.anthropic.com/v1/messages",
+                                 version, beta, timeout)
+{
+  if (!requireNamespace("httr2", quietly = TRUE)) return(list(failure = "no_httr2"))
+  req <- httr2::request(url)
   req <- httr2::req_headers(req,
-    `anthropic-version` = PAPER_REVIEW_API_VERSION,
+    `anthropic-version` = version,
     `content-type` = "application/json",
     .redact = "x-api-key")
   req <- httr2::req_headers(req, `x-api-key` = key, .redact = "x-api-key")
-  if (!is.null(body$fallbacks))
-    req <- httr2::req_headers(req, `anthropic-beta` = PAPER_REVIEW_FALLBACK_BETA)
-  req <- httr2::req_body_raw(req, jsonlite::toJSON(body, auto_unbox = TRUE,
-                                                   null = "null", digits = NA),
-                             type = "application/json")
-  req <- httr2::req_timeout(req, PAPER_REVIEW_TIMEOUT_SEC)
+  if (isTRUE(fallbacks)) req <- httr2::req_headers(req, `anthropic-beta` = beta)
+  req <- httr2::req_body_raw(req, json, type = "application/json")
+  req <- httr2::req_timeout(req, timeout)
   req <- httr2::req_error(req, is_error = function(resp) FALSE)
   req <- httr2::req_retry(req, max_tries = 3,
                           is_transient = function(resp)
                             httr2::resp_status(resp) %in% c(429, 500, 502, 503, 529))
-  rm(body)
-
-  resp <- tryCatch(httr2::req_perform_connection(req),
-                   error = function(e) stop(paperReviewError(
-                     "connection", "Could not reach the Anthropic API.")))
+  rm(json)
+  resp <- tryCatch(httr2::req_perform_connection(req), error = function(e) NULL)
+  if (is.null(resp)) return(list(failure = "connection"))
   on.exit(close(resp), add = TRUE)
   status <- httr2::resp_status(resp)
+  if (status >= 400) {
+    body <- tryCatch(jsonlite::fromJSON(httr2::resp_body_string(resp), simplifyVector = FALSE),
+                     error = function(e) NULL)
+    error <- if (is.list(body) && is.list(body$error)) body$error[intersect(c("type", "message"), names(body$error))]
+    return(list(status = status, error = error))
+  }
+  events <- list()
+  while (!httr2::resp_stream_is_complete(resp)) {
+    event <- httr2::resp_stream_sse(resp)
+    if (is.null(event)) next
+    events[[length(events) + 1]] <- event
+  }
+  list(status = status, events = events)
+}
+
+#' Read what paperReviewTransport() brought back
+#'
+#' @param result its return value
+#' @returns a list: \code{extraction}, \code{usage}, \code{model}; or an
+#'   error of class \code{paper_review_error}, which carries the tokens the
+#'   reply used in \code{$usage} when the API answered (a reply cut at the
+#'   output limit is billed too)
+#' @keywords internal
+paperReviewInterpret <- function(result)
+{
+  failure <- result$failure
+  if (identical(failure, "no_httr2"))
+    stop(paperReviewError("no_httr2", "The httr2 package is needed to call the Anthropic API."))
+  if (identical(failure, "connection"))
+    stop(paperReviewError("connection", "Could not reach the Anthropic API."))
+  status <- result$status
+  if (!is.numeric(status) || length(status) != 1)
+    stop(paperReviewError("unexpected", "The review failed unexpectedly."))
   if (status >= 400)
     stop(paperReviewError(paste0("http_", status), paste(switch(
       as.character(status),
@@ -430,19 +528,89 @@ paperReviewExtract <- function(pdf, supplement = NULL, key, progress = NULL, ...
       "429" = "The API's rate limit was reached (429). Try again in a minute.",
       "529" = "The API is overloaded (529). Try again shortly.",
       paste0("The API returned an error (", status, ").")),
-      paperReviewApiErrorText(resp))))
+      paperReviewApiErrorText(result$error))))
+  accumulated <- paperReviewAccumulateEvents(result$events %or% list())
+  extraction <- tryCatch(paperReviewParseResponse(accumulated),
+                         paper_review_error = function(e) {
+                           e$usage <- accumulated$usage
+                           stop(e)
+                         })
+  list(extraction = extraction, usage = accumulated$usage, model = accumulated$model)
+}
 
-  events <- list()
-  while (!httr2::resp_stream_is_complete(resp)) {
-    event <- httr2::resp_stream_sse(resp)
-    if (is.null(event)) next
-    events[[length(events) + 1]] <- event
-    if (is.function(progress) && length(events) %% 200 == 0)
-      progress(paste(length(events), "events received"))
-  }
-  accumulated <- paperReviewAccumulateEvents(events)
-  rm(events)
-  list(extraction = paperReviewParseResponse(accumulated),
-       usage = accumulated$usage,
-       model = accumulated$model)
+# The arguments paperReviewTransport() takes from this package's constants.
+paperReviewTransportArgs <- function(prepared, key)
+  list(json = prepared$json, key = key, fallbacks = prepared$fallbacks,
+       url = PAPER_REVIEW_API_URL, version = PAPER_REVIEW_API_VERSION,
+       beta = PAPER_REVIEW_FALLBACK_BETA, timeout = PAPER_REVIEW_TIMEOUT_SEC)
+
+#' Send one manuscript to the Anthropic API and return the extraction
+#'
+#' In this R process, which waits for it: for scripts and the live test.  The
+#' app uses paperReviewExtractAsync().
+#'
+#' @param pdf,supplement raw bytes (supplement optional)
+#' @param key the API key
+#' @param ... passed to \code{paperReviewRequestBody()}
+#' @returns a list: \code{extraction}, \code{usage}, \code{model}
+#' @keywords internal
+paperReviewExtract <- function(pdf, supplement = NULL, key, ...)
+{
+  if (!requireNamespace("httr2", quietly = TRUE))
+    stop(paperReviewError("no_httr2", "The httr2 package is needed to call the Anthropic API."))
+  prepared <- paperReviewPrepare(pdf, supplement, key = key, ...)
+  paperReviewInterpret(do.call(paperReviewTransport, paperReviewTransportArgs(prepared, key)))
+}
+
+#' Run a function in a background R process
+#'
+#' A mirai, one short-lived R process per call (no daemons are set), so a
+#' minutes-long API call or a mail send never holds the R process every
+#' session of a worker shares.  \code{fn} is sent with the global
+#' environment as its own, so it must be self-contained.  The process is
+#' started with this one's library paths, which it would not otherwise find
+#' where they are set only inside R (renv, a host's own library), and then
+#' waits for ever for a package it cannot load; \code{timeout} bounds it.
+#'
+#' @param fn a self-contained function
+#' @param args its arguments, a list
+#' @param timeout seconds
+#' @returns the mirai, which is also a promise
+#' @keywords internal
+paperReviewInBackground <- function(fn, args, timeout)
+{
+  environment(fn) <- globalenv()
+  old <- Sys.getenv("R_LIBS", unset = NA)
+  Sys.setenv(R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep))
+  on.exit(if (is.na(old)) Sys.unsetenv("R_LIBS") else Sys.setenv(R_LIBS = old), add = TRUE)
+  mirai::mirai(do.call(fn, args), .args = list(fn = fn, args = args), .timeout = timeout * 1000)
+}
+
+#' Send one manuscript to the Anthropic API without waiting for it
+#'
+#' The request is built and checked here, sent from a background R process,
+#' and read here when it returns.
+#'
+#' @inheritParams paperReviewExtract
+#' @returns a promise of what paperReviewExtract() returns; it is rejected
+#'   with a \code{paper_review_error}
+#' @keywords internal
+paperReviewExtractAsync <- function(pdf, supplement = NULL, key, ...)
+{
+  prepared <- tryCatch(paperReviewPrepare(pdf, supplement, key = key, ...),
+                       paper_review_error = function(e) e)
+  if (inherits(prepared, "paper_review_error")) return(promises::promise_reject(prepared))
+  job <- paperReviewInBackground(paperReviewTransport, paperReviewTransportArgs(prepared, key),
+                                 PAPER_REVIEW_BACKGROUND_TIMEOUT_SEC)
+  rm(prepared)
+  promises::then(job,
+    onFulfilled = function(result) {
+      # A failure inside the process comes back as a value, not an error.
+      if (inherits(result, "miraiError") || inherits(result, "errorValue"))
+        stop(paperReviewError("background", "The review's background process failed. Try again."))
+      paperReviewInterpret(result)
+    },
+    onRejected = function(e)
+      stop(paperReviewError("background",
+                            "The review did not finish (it timed out, or its background process failed). Try again.")))
 }

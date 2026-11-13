@@ -478,10 +478,45 @@ iuScUnits <- c("IU SC", "IU/kg SC")
 GHB_SALT <- "oxybate"
 ghbUnits <- paste(c("g PO", "mg PO"), GHB_SALT)
 
+# Aminophylline (R/drugs_theophylline.R): theophylline given intravenously as
+# its ethylenediamine salt, which carries 79% theophylline by mass.  The curve
+# is theophylline, so the unit names the salt, as calcium's units do, and the
+# drug's `doseProducts` block carries the factor (doseProductFactor() in
+# R/routes.R, applied by simCpCe()).  No route word: intravenous.
+AMINOPHYLLINE_SALT <- "aminophylline"
+aminophyllineUnits <- paste(c("mg", "mg/kg", "mg/hr", "mg/kg/hr"), AMINOPHYLLINE_SALT)
+
+# Caffeine citrate (R/drugs_caffeineNeonatal.R): labelled and dosed as the
+# citrate, which is half caffeine base ("20 mg of caffeine citrate is
+# equivalent to 10 mg of caffeine base", Cafcit label); the curve is caffeine,
+# so the unit names the salt and the drug's `doseProducts` block converts it.
+# Intravenous; the daily maintenance dose may be scheduled qd.
+CAFFEINE_SALT <- "citrate"
+caffeineCitrateUnits <- paste(c("mg", "mg/kg"), CAFFEINE_SALT)
+
+# Valganciclovir (R/drugs_ganciclovir.R): the oral prodrug of ganciclovir,
+# labelled and dosed as valganciclovir (Valcyte: tablets of 450 mg
+# valganciclovir, as the hydrochloride; oral solution 50 mg/mL).  The curve is
+# ganciclovir, so the unit names the product and the drug's `doseProducts`
+# block converts it, 0.720 mg ganciclovir per mg valganciclovir (the ratio of
+# molecular weights, as the model's source converted its doses).  Oral, and
+# may be scheduled once or twice daily.
+VALGANCICLOVIR_PRODUCT <- "valganciclovir"
+valganciclovirUnits <- paste("mg PO", VALGANCICLOVIR_PRODUCT)
+
+# Quinidine sulfate (R/drugs_quinidine.R): the oral tablet is labelled and
+# dosed as the sulfate (200 and 300 mg), 82.9% quinidine base, the factor the
+# model's source converted its doses with.  The curve is quinidine, so the
+# unit names the salt and the drug's `doseProducts` block converts it.  Oral;
+# scheduled every 6 or 8 hours, or 4 for loading.
+QUINIDINE_SALT <- "sulfate"
+quinidineSulfateUnits <- paste("mg PO", QUINIDINE_SALT)
+
 allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, enteralRateUnits, poFormulationUnits,
               slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits,
               iuUnits, scUnits, iuScUnits, ghbUnits, insulinUnits, insulinRateUnits,
-              ivPotencyUnits)
+              ivPotencyUnits, aminophyllineUnits, caffeineCitrateUnits,
+              valganciclovirUnits, quinidineSulfateUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.
@@ -533,7 +568,13 @@ scheduledUnits <- c(
   ))),
   # The subcutaneous units take the daily frequencies and qwk, not qam/qpm.
   as.vector(t(outer(c(scUnits, insulinUnits),
-                    names(c(SCHEDULE_INTERVALS, WEEKLY_SCHEDULE_INTERVAL)), paste)))
+                    names(c(SCHEDULE_INTERVALS, WEEKLY_SCHEDULE_INTERVAL)), paste))),
+  # Caffeine citrate's daily maintenance dose (R/drugs_caffeineNeonatal.R)
+  paste(caffeineCitrateUnits, "qd"),
+  # Valganciclovir's once- and twice-daily regimens (R/drugs_ganciclovir.R)
+  paste(valganciclovirUnits, c("qd", "bid")),
+  # Quinidine sulfate's regimens (R/drugs_quinidine.R)
+  paste(quinidineSulfateUnits, c("tid", "qid", "q4h"))
 )
 
 # Units for the inhaled gases (Class "gas" in drugDefaults_global.csv): carrier

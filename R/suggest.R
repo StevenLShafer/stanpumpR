@@ -287,8 +287,10 @@ suggestUnitsSupported <- function(bolusUnits, infusionUnits)
 {
   units <- c(as.character(bolusUnits), as.character(infusionUnits))
   if (length(units) != 2 || any(is.na(units) | !nzchar(units))) return(FALSE)
-  # Told apart as simCpCe() tells them apart: a rate is per minute or per hour
-  rate <- grepl("min|hr", units)
+  # Told apart as simCpCe() tells them apart (isRateUnit(): a rate is per
+  # minute, hour or day), not by substring, which reads "mg/kg aminophylline"
+  # as a rate because the salt's name contains "min"
+  rate <- isRateUnit(units)
   all(doseRoute(units) == ROUTE_IV) && !rate[1] && rate[2]
 }
 

@@ -19,7 +19,6 @@ const { test, describe, before, after, beforeEach, afterEach } = require('node:t
 const assert = require('node:assert/strict');
 const playwright = require('playwright');
 const H = require('./harness');
-const BS = require('./browserstack');
 
 const GRID = process.env.STANPUMPR_GRID || 'native';
 const URL = process.env.STANPUMPR_URL;
@@ -49,19 +48,22 @@ let browser, context, page;
 // clipboard permissions and the slow link (CDP) are Chromium's: elsewhere
 // the clipboard is opened by preference and the slow-link cases are skipped
 // (the external review of 2026-11-06, Gemini's final pass).
-// on BrowserStack, the engine of the platform chosen (browserstack.js)
-const BROWSER = BS.engine();
+const BROWSER = process.env.STANPUMPR_BROWSER || 'chromium';
 const CDP = BROWSER === 'chromium';
 const SLOW_LINK = { skip: !CDP && 'a slow link is emulated through CDP, which only Chromium has' };
 
 before(async () => {
-  browser = await BS.launch(playwright, BROWSER, BROWSER === 'firefox' ? {
+  browser = await playwright[BROWSER].launch(BROWSER === 'firefox' ? {
     firefoxUserPrefs: { 'dom.events.asyncClipboard.readText': true, 'dom.events.testing.asyncClipboard': true }
-  } : {}, 'dose grid');
+  } : {});
 });
 after(async () => { await browser.close(); });
 
 beforeEach(async () => {
+  // cleared first, so that if opening the session fails, afterEach does not
+  // judge the previous case's page or leave this case's context open
+  context = undefined;
+  page = undefined;
   context = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
   if (CDP) await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: URL });
   page = await H.openSession(context, URL, adapter);
@@ -69,10 +71,15 @@ beforeEach(async () => {
 
 afterEach(async () => {
   // Whatever a case did, the session must still be there: an error in an
-  // observer ends it (AGENTS.md)
-  const alive = await H.connected(page);
-  await context.close();
-  assert.ok(alive, 'the Shiny session was closed');
+  // observer ends it (AGENTS.md). With no page (openSession() failed, and
+  // that error is the one to report) there is nothing to judge.
+  let alive;
+  try {
+    if (page) alive = await H.connected(page);
+  } finally {
+    if (context) await context.close();
+  }
+  if (page) assert.ok(alive, 'the Shiny session was closed');
 });
 
 const rowsShown = () => adapter.readRows(page);

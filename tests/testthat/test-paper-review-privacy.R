@@ -86,27 +86,81 @@ test_that("the app is started with bookmarking disabled", {
   expect_equal(app$appOptions$bookmarkStore, "disable")
 })
 
+# Run the event loop until the review's promise settles and its observers run.
+settle <- function(session) {
+  for (i in 1:200) {
+    later::run_now(0.01)
+    session$flushReact()
+    if (later::loop_empty()) break
+  }
+}
+
 test_that("pressing Review runs the call, drops the manuscript and reports, with no network", {
   dir <- file.path(tempdir(), paste0("upload-", paste(sample(letters, 12), collapse = "")))
   dir.create(dir)
   path <- file.path(dir, "0.pdf")
   writeBin(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), path)
   calls <- 0
+  sent <- NULL
   testthat::local_mocked_bindings(
-    paperReviewApiKey = function(...) "test-key",
-    paperReviewExtract = function(...) {
+    paperReviewApiKey = function(sessionKey = NULL, ...) sessionKey %or% "operator-key",
+    paperReviewExtractAsync = function(pdf, supplement = NULL, key, ...) {
       calls <<- calls + 1
-      stop(paperReviewError("http_529", "The API is overloaded (529). Try again shortly."))
-    })
+      sent <<- key
+      promises::promise_reject(paperReviewError("http_529", "The API is overloaded (529). Try again shortly."))
+    },
+    paperReviewUsageReport = function(record, ...) invisible(record))
   shiny::testServer(paperReviewServer, {
     session$setInputs(manuscript = list(name = "x.pdf", size = 59, type = "application/pdf",
                                         datapath = path))
     session$setInputs(consent = TRUE)
     session$setInputs(review = 1)
+    # The manuscript is dropped as soon as it is handed to the request.
+    expect_false(hasPdf())
+    expect_false(exists("pdf", envir = store))
+    settle(session)
     expect_equal(calls, 1)
+    expect_equal(sent, "operator-key")
     expect_match(output$status, "overloaded")
     expect_match(output$status, "The manuscript has been discarded")
-    expect_false(hasPdf())
+  })
+})
+
+test_that("a review that comes back is reported, and one discarded meanwhile is dropped", {
+  upload <- function() {
+    dir <- file.path(tempdir(), paste0("upload-", paste(sample(letters, 12), collapse = "")))
+    dir.create(dir)
+    path <- file.path(dir, "0.pdf")
+    writeBin(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), path)
+    list(name = "x.pdf", size = 59, type = "application/pdf", datapath = path)
+  }
+  sent <- NULL
+  testthat::local_mocked_bindings(
+    paperReviewApiKey = function(sessionKey = NULL, ...) sessionKey %or% "operator-key",
+    paperReviewExtractAsync = function(pdf, supplement = NULL, key, ...) {
+      sent <<- key
+      promises::promise_resolve(list(extraction = paperReviewExample(),
+                                     usage = list(input_tokens = 1000, output_tokens = 200)))
+    },
+    paperReviewUsageReport = function(record, ...) invisible(record))
+  shiny::testServer(paperReviewServer, {
+    session$setInputs(ownKey = "sk-ant-api03-userownkey1234")
+    session$setInputs(manuscript = upload(), consent = TRUE)
+    session$setInputs(review = 1)
+    settle(session)
+    expect_equal(sent, "sk-ant-api03-userownkey1234")   # the user's own key, when entered
+    expect_false(is.null(review()))
+    expect_match(output$status, "1,000 tokens read, 200 written")
+
+    session$setInputs(discard = 1)
+    session$setInputs(ownKey = "")
+    session$setInputs(manuscript = upload())
+    session$setInputs(review = 2)
+    session$setInputs(discard = 2)                      # before the answer is read
+    settle(session)
+    expect_equal(sent, "operator-key")
+    expect_null(review())
+    expect_match(output$status, "Discarded")
   })
 })
 

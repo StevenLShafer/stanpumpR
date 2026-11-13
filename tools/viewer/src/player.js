@@ -89,6 +89,8 @@ function runProblem(r) {
         if (!Number.isFinite(r.t[i])) return `t[${i}] is not a number.`;
         if (i && r.t[i] <= r.t[i - 1]) return `t must increase: t[${i}] is not after t[${i - 1}].`;
     }
+    // An inhaled anesthetic's run (gas.js): its own compartments and flows.
+    if (r.kind != null) return r.kind === 'gas' ? gasRunProblem(r, n) : 'kind must be "gas" when it is given.';
     const series = (k, required) => {
         const v = r[k];
         if (v == null) return required ? `${k} is missing.` : null;
@@ -115,6 +117,17 @@ function runProblem(r) {
     for (const k of ['cl1'].concat(r.c2 != null ? ['cl2'] : [], r.c3 != null ? ['cl3'] : []))
         if (!(Number.isFinite(pk[k]) && pk[k] >= 0)) return `pk.${k} must be a clearance of 0 or more (L/min).`;
     if (r.typical != null && !(Number.isFinite(r.typical) && r.typical >= 0)) return 'typical must be a number of 0 or more.';
+    if (r.boluses != null) {
+        if (!Array.isArray(r.boluses)) return 'boluses must be an array.';
+        for (const [i, b] of r.boluses.entries())
+            if (!b || !Number.isFinite(b.t) || !Number.isFinite(b.amount)) return `boluses[${i}] needs a time t and an amount.`;
+    }
+    return runTextProblem(r);
+}
+
+// The run's text and patient, checked for every kind of run: what the page
+// shows of them is then a checked number or plain text.
+function runTextProblem(r) {
     const u = r.units || {};
     for (const k of ['conc', 'amount', 'rate'])
         if (typeof u[k] !== 'string' || !/^[^<>&"']{1,40}$/.test(u[k]))
@@ -125,11 +138,6 @@ function runProblem(r) {
     for (const k of ['weight', 'height', 'age'])
         if (pt[k] != null && !Number.isFinite(pt[k])) return `patient.${k} must be a number.`;
     if (pt.sex != null && (typeof pt.sex !== 'string' || !/^[^<>&"']{0,40}$/.test(pt.sex))) return 'patient.sex must be short plain text.';
-    if (r.boluses != null) {
-        if (!Array.isArray(r.boluses)) return 'boluses must be an array.';
-        for (const [i, b] of r.boluses.entries())
-            if (!b || !Number.isFinite(b.t) || !Number.isFinite(b.amount)) return `boluses[${i}] needs a time t and an amount.`;
-    }
     return null;
 }
 
@@ -314,9 +322,30 @@ const Player = {
         this.message('');
         this.pause();
         this.run = r;
+        this.gas = r.kind === 'gas';
         this.units = microUnits(r.units);
         // Concentration x volume (L) x scale is the amount in units.amount.
         this.scale = r.amountScale != null ? r.amountScale : 1;
+        // An inhaled anesthetic (gas.js; in 3D, gas3d.js) or a drug.
+        if (this.gas) { this.gasSetup(r); View.gasSetup(r, this.ui); }
+        else this.ivSetup(r);
+        Flat.setRun(r, this.ui, T => this.stateAt(T));
+        const slider = this.$('t');
+        slider.min = r.t[0]; slider.max = r.t[r.t.length - 1]; slider.step = 'any';
+        this.$('end').textContent = hms(r.t[r.t.length - 1]);
+        // The first speed plays the whole run in at most PLAY_SECONDS.
+        const span = r.t[r.t.length - 1] - r.t[0];
+        this.setSpeed(SPEEDS.find(v => span / v <= PLAY_SECONDS) || SPEEDS[SPEEDS.length - 1]);
+        this.seek(r.t[0]);
+        View.resetView();
+        // The video card, if open, describes the run now shown (CodeRabbit, #688).
+        if (typeof Video !== 'undefined' && Video.card && Video.shown() && !Video.busy) Video.describe();
+        return true;
+    },
+
+    // A drug's run's setup, from load(): the scales, the mass balance, the
+    // 3D scene's vessels.
+    ivSetup(r) {
         this.balance(r);
         // A loop, not Math.max(...r.cp), which overflows the stack on a long run.
         let maxCp = 0;
@@ -339,20 +368,9 @@ const Player = {
         // Sizes compressed to SIZE_RATIO_MAX (flat.js): the readout says so in 3D.
         this.ui.notToScale = displayVolumes([r.pk.v1, r.c2 != null ? r.pk.v2 : 0, r.c3 != null ? r.pk.v3 : 0]).a < 1;
         View.resetGlass();
+        if (View.gasShown) View.gasShow(false);   // a gas run's glasses (gas3d.js)
         View.vessels[1].setVisible(true);       // hidden before the first run (empty())
         View.setShape({ n: this.n, vc: r.pk.v1, v2: r.pk.v2, v3: r.pk.v3 });
-        Flat.setRun(r, this.ui, T => this.stateAt(T));
-        const slider = this.$('t');
-        slider.min = r.t[0]; slider.max = r.t[r.t.length - 1]; slider.step = 'any';
-        this.$('end').textContent = hms(r.t[r.t.length - 1]);
-        // The first speed plays the whole run in at most PLAY_SECONDS.
-        const span = r.t[r.t.length - 1] - r.t[0];
-        this.setSpeed(SPEEDS.find(v => span / v <= PLAY_SECONDS) || SPEEDS[SPEEDS.length - 1]);
-        this.seek(r.t[0]);
-        View.resetView();
-        // The video card, if open, describes the run now shown (CodeRabbit, #688).
-        if (typeof Video !== 'undefined' && Video.card && Video.shown() && !Video.busy) Video.describe();
-        return true;
     },
 
     // The amount eliminated at each time, as the mass balance gives it:
@@ -386,6 +404,7 @@ const Player = {
 
     // The scene's state at time T (seconds).
     stateAt(T) {
+        if (this.gas) return this.gasStateAt(T);
         const r = this.run, i = this.index(T), t = r.t;
         const a = Math.min(1, Math.max(0, (T - t[i]) / (t[i + 1] - t[i])));
         const lerp = v => v == null ? null : v[i] + (v[i + 1] - v[i]) * a;
@@ -488,6 +507,7 @@ const Player = {
         this.noteTimer = setTimeout(() => { if (this.noting) { this.noting = false; this.message(''); } }, 2500);
     },
     amounts(st) {
+        if (this.gas) { this.gasAmounts(st); return; }
         const a = x => x == null ? '–' : x.toFixed(1), n = st.n;
         const row = (name, x, sub) => `<tr><td class="k${sub ? ' sub' : ''}">${name}</td><td>${a(x)}</td></tr>`;
         this.$('amounts').innerHTML = `
@@ -506,6 +526,7 @@ const Player = {
     },
 
     readout(st) {
+        if (this.gas) { this.gasReadout(st); return; }
         const r = this.run, u = this.units, dp = this.ui.concDecimals;
         const c = x => x == null ? '–' : x.toFixed(dp);
         const name = String(r.drug).charAt(0).toUpperCase() + String(r.drug).slice(1);
@@ -552,16 +573,20 @@ const Player = {
     // Show the 2D view or the 3D scene; the run, the time and the controls
     // are the same in both.
     setView(v) {
+        this.showView(v);
+        if (v === '3d') View.resize();
+        // The performance card starts again: the two views' frames differ.
+        Perf.restart();
+        if (this.run) this.seek(this.T);
+    },
+    // The view's element, its button and the brand, for view v; drawing nothing.
+    showView(v) {
         this.view = v;
         document.getElementById('flat').style.display = v === '2d' ? 'block' : 'none';
         document.getElementById('view').style.display = v === '3d' ? 'block' : 'none';
         this.$('viewToggle').textContent = v === '2d' ? '3D view' : '2D view';
         this.$('brandView').textContent = v === '2d' ? '2D' : '3D';
         document.body.classList.toggle('flat', v === '2d');
-        if (v === '3d') View.resize();
-        // The performance card starts again: the two views' frames differ.
-        Perf.restart();
-        if (this.run) this.seek(this.T);
     },
     // Stop: pause and go back to the start.
     stop() {

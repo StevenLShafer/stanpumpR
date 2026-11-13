@@ -48,37 +48,38 @@ link through CDP). All three pass (2026-11-08; `docs/grid-replacement.md`,
 `RSCRIPT` names the R binary and `STANPUMPR_RSCRIPT_ARGS` adds arguments
 (`--no-init-file` skips the project's `.Rprofile`, and with it renv).
 
-## On BrowserStack
+## On a phone
 
-`browserstack.js` runs the same suite in browsers on BrowserStack Automate:
-real Chrome and Edge on Windows 11, Chrome on macOS, and Playwright's own
-Firefox and WebKit builds. The app still runs here, in test mode, and
-`run.js` opens a BrowserStack Local tunnel so the remote browser can reach
-it. Set the account's credentials and a platform:
+`phone.test.js` is a smaller suite for the dose grid on a phone: a tap
+instead of a click, a value committed by tapping the next cell, the drug
+list chosen by tap, a tap on Units that reaches its list, Apply, and the
+bookmark. The Units list that opens is the system's own, which Playwright
+cannot drive, so the case checks that the tap is not suppressed and then
+chooses the unit as the list would (`selectOption()`); it does not open or
+use the system's picker. On a phone the dose table's sidebar starts
+collapsed, so each case opens it with its toggle, as a user does.
+
+It runs as an iPhone 15 in Playwright's WebKit, so WebKit must be installed
+(`npx playwright install webkit`) as well as Chromium, or with
+`STANPUMPR_PHONE=android` as a Pixel 7 in Chromium:
 
 ```bash
-BROWSERSTACK_USERNAME=... BROWSERSTACK_ACCESS_KEY=... STANPUMPR_BROWSERSTACK=windows-chrome node tests/playwright/run.js
+node tests/playwright/run.js phone.test.js
 ```
 
-The platforms are `windows-chrome`, `windows-edge`, `macos-chrome`,
-`macos-webkit` and `windows-firefox` (`PLATFORMS` in `browserstack.js`).
-`require('browserstack-local')` must work as well as `require('playwright')`,
-and the Playwright here must be one BrowserStack supports (1.63 is).
+```bash
+STANPUMPR_PHONE=android node tests/playwright/run.js phone.test.js
+```
 
-The usual way is the workflow `.github/workflows/browser-suite-browserstack.yaml`,
-run by hand from the Actions tab with a platform and the files to run. It
-needs the repository secrets `BROWSERSTACK_USERNAME` and
-`BROWSERSTACK_ACCESS_KEY`. A cloud session of Claude Code cannot run it
-itself: its network does not reach BrowserStack's endpoints, and the access
-key has to travel inside the connection's address, where the session's
-proxy cannot add it.
-
-BrowserStack also runs Playwright on real iPhones (Safari), but not this
-suite. There a session allows one browser context and one page, and only
-part of Playwright's API (BrowserStack's "Supported Playwright commands for
-iOS"). This suite opens a context for every case and uses `page.$$eval()`,
-the `pageerror` event and the clipboard, so iPhone Safari would need a
-smaller suite of its own.
+It was first written to run on real phones through BrowserStack Automate
+(2026-11-09 to 2026-11-10; `docs/grid-replacement.md`, "Real phones on
+BrowserStack"), which was removed on 2026-11-13, and it keeps to the
+stricter limits Playwright had there on a real iPhone: one browser context
+and one page, so each case loads the app afresh; no `page.$$eval()`, no
+`pageerror` event, no clipboard; the server's state read with a
+synchronous request; text put into a cell with `locator.fill()` and
+committed by tapping the next cell (Enter is the desktop suite's); and the
+bookmark case reloading from inside the page (`location.reload()`).
 
 ## How it works
 

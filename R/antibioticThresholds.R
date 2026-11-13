@@ -85,6 +85,15 @@ antibioticMicTable <- function()
       "for target attainment by da Silva Neto MJJ et al., J Antimicrob Chemother 2021;76:3212-3219;",
       "wild-type B. fragilis MIC50/MIC90 about 0.5/1 mg/L (Boiten KE et al., J Antimicrob Chemother",
       "2024;79:868-874)."),
+    tobramycin    = paste(
+      "MIC: CLSI M100 (from 2023; FDA-recognised), Enterobacterales S <= 2 mg/L (Sader HS et al., Open",
+      "Forum Infect Dis 2023;10:ofad058, Table 1), and EUCAST Clinical Breakpoint Tables v16.1, 2026,",
+      "Enterobacterales and Pseudomonas (2) mg/L; MIC90 4 mg/L in 9,809 US Enterobacterales (Sader 2023)",
+      "and 8 mg/L in 78 P. aeruginosa from blood (Chamberland S et al., Clin Infect Dis 1992;15:615-628)."),
+    amikacin      = paste(
+      "MIC: CLSI M100 (from 2023; FDA-recognised), Enterobacterales S <= 4 mg/L (Sader HS et al., Open",
+      "Forum Infect Dis 2023;10:ofad058, Table 1; the breakpoint fell from 16 that year); MIC50/MIC90",
+      "2/4 mg/L in 9,809 US Enterobacterales (Sader 2023)."),
     vancomycin    = paste(
       "MIC: Rybak MJ et al., Am J Health Syst Pharm 2020;77:835-864 (the consensus AUC target assumes",
       "an MIC of 1 mg/L); Diekema DJ et al., Open Forum Infect Dis 2019;6(Suppl 1):S47-S53 (SENTRY:",
@@ -111,6 +120,12 @@ antibioticMicTable <- function()
     metronidazole = paste(
       "Free fraction: Dorn C et al., J Antimicrob Chemother 2021;76:2114-2120 (0.964 by ultrafiltration",
       "in adults given 0.5 g for abdominal surgical prophylaxis, independent of concentration)."),
+    tobramycin    = paste(
+      "Free fraction: 1 (binding -2.1% +/- 1.9% by ultrafiltration of pooled human serum at 5 ug/mL):",
+      "Gordon RC et al., Antimicrob Agents Chemother 1972;2:214-216, Table 1."),
+    amikacin      = paste(
+      "Free fraction: 0.82 (17.6-18.0% bound by ultrafiltration, independent of concentration from 1.4",
+      "to 74 mg/L; abstract): Brunnemann SR, Segal JL, Life Sci 1991;49:PL1-5."),
     vancomycin    = paste(
       "Free fraction: Dejaco A et al., Antimicrob Agents Chemother 2026;70:e01593-25",
       "(0.72 in 706 samples from 228 adult in-patients at 37 C and pH 7.4, independent of",
@@ -120,7 +135,7 @@ antibioticMicTable <- function()
 
   x <- data.frame(
     Drug = c("cefazolin", "cefalexin", "ceftriaxone", "clindamycin",
-             "gentamicin", "metronidazole", "vancomycin"),
+             "gentamicin", "metronidazole", "tobramycin", "amikacin", "vancomycin"),
     Organism = c(
       "Staphylococcus aureus, methicillin-susceptible (MSSA)",
       "Staphylococcus aureus, methicillin-susceptible (MSSA)",
@@ -128,18 +143,20 @@ antibioticMicTable <- function()
       "Staphylococcus aureus and other staphylococci",
       "Enterobacterales (E. coli, Klebsiella)",
       "Bacteroides fragilis group",
+      "Enterobacterales and Pseudomonas aeruginosa",
+      "Enterobacterales (E. coli, Klebsiella)",
       "Staphylococcus aureus, including MRSA"
     ),
-    MIC = c(2, 4, 1, 0.5, 2, 4, 1),
-    Plotted = c("unbound", "total", "total", "total", "total", "total", "total"),
-    FreeFraction = c(1, 0.85, 0.065, 0.096, 1, 0.96, 0.70),
-    Saturable = c(FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE),
+    MIC = c(2, 4, 1, 0.5, 2, 4, 2, 4, 1),
+    Plotted = c("unbound", "total", "total", "total", "total", "total", "total", "total", "total"),
+    FreeFraction = c(1, 0.85, 0.065, 0.096, 1, 0.96, 1, 0.82, 0.70),
+    Saturable = c(FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE),
     # The one-site binding fits named in the binding sources, total = free +
     # capacity x free / (Kd + free); FreeFraction is that map's free / total
     # at the MIC, which is what puts the threshold on the curve.
-    BindingKd       = c(NA, NA, 23.7, 0.85, NA, NA, NA),
-    BindingCapacity = c(NA, NA, 354, 12.7, NA, NA, NA),
-    Threshold = c(2, 4.7, 15, 5.2, 2, 4.2, 1.4),
+    BindingKd       = c(NA, NA, 23.7, 0.85, NA, NA, NA, NA, NA),
+    BindingCapacity = c(NA, NA, 354, 12.7, NA, NA, NA, NA, NA),
+    Threshold = c(2, 4.7, 15, 5.2, 2, 4.2, 2, 4.9, 1.4),
     MicSource = unname(micSource),
     BindingSource = unname(bindingSource),
     stringsAsFactors = FALSE

@@ -1007,3 +1007,191 @@ test('round-off is shown as 0, not as 4.02e-16', { skip }, async t => {
   assert.ok(await page.evaluate(() => Player.stateAt(Player.run.t[0]).c2) > 0);
   assertClean(page);
 });
+
+// ── The inhaled anesthetics (Shafer, 2026-11-09): a gas run ("kind": "gas",
+// tools/viewer/src/gas.js) in the 2D view only.
+const GAS = JSON.parse(readFileSync(path.resolve(HERE, '..', 'examples', 'sevoflurane-washin.json'), 'utf8'));
+// Desflurane fills muscle far higher than sevoflurane, whose tall liquid once
+// hid the head of the arrow into it from every side (Shafer, 2026-11-10).
+const DES = JSON.parse(readFileSync(path.resolve(HERE, '..', 'examples', 'desflurane-emergence.json'), 'utf8'));
+
+test('gas: a gas run draws the circuit, lungs, VRG, muscle and fat, and the agent adds up', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, GAS), true);
+  for (const T of [60, 600, 1200, 1800]) {
+    const o = await page.evaluate(T => {
+      Player.seek(T);
+      const texts = [...document.querySelectorAll('#flat svg text')].map(e => e.textContent);
+      const num = s => Number(s.replace(/,/g, ''));
+      const cells = [...document.querySelectorAll('#amounts td')].map(e => e.textContent);
+      const at = k => num(cells[cells.indexOf(k) + 1]);
+      return { texts, readout: document.getElementById('readout').innerText,
+               delivered: at('Delivered (fresh gas)'), patient: at('In the patient'), vented: at('Vented'),
+               parts: ['Lungs', 'VRG', 'Muscle', 'Fat'].map(at), st: Player.stateAt(T) };
+    }, T);
+    for (const name of ['Circuit', 'Lungs', 'VRG', 'Muscle', 'Fat', 'end-tidal', 'effect site'])
+      assert.ok(o.texts.includes(name), `T = ${T}: no "${name}" in the drawing`);
+    assert.match(o.readout, /Sevoflurane/);
+    assert.match(o.readout, /End-tidal/);
+    assert.match(o.readout, /VRG \(effect site\)/);
+    // The card adds up, to its rounding: delivered = in the patient + vented.
+    assert.ok(Math.abs(o.delivered - o.patient - o.vented) <= 0.15, `T = ${T}: ${o.delivered} != ${o.patient} + ${o.vented}`);
+    assert.ok(Math.abs(o.parts.reduce((a, b) => a + b, 0) - o.patient) <= 0.25, `T = ${T}: the parts do not add to the patient`);
+    // And so do the flows: what the blood takes from the lungs is what the tissues take.
+    const f = o.st.flow;
+    assert.ok(Math.abs(f.blood - (f.vrg + f.mg + f.fg)) < 1e-9);
+  }
+  assertClean(page);
+});
+
+test('gas: the 3D view draws the five glasses, and a drug run afterwards has its own back', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, RUN), true);
+  await page.evaluate(() => Player.setView('3d'));
+  assert.equal(await loadRun(page, GAS), true);
+  const shown = () => page.evaluate(() => {
+    const vis = o => { for (let q = o; q; q = q.parent) if (!q.visible) return false; return true; };
+    return {
+      view: Player.view, toggle: getComputedStyle(document.getElementById('viewToggle')).display,
+      gas: View.gasVessels ? Object.keys(View.gasVessels).filter(k => vis(View.gasVessels[k].group)) : [],
+      drug: [1, 2, 3].filter(k => vis(View.vessels[k].group)),
+      labels: [...document.querySelectorAll('#view .label-layer .lbl')].filter(e => e.style.display !== 'none').map(e => e.textContent)
+    };
+  });
+  await page.evaluate(() => Player.seek(600));
+  await new Promise(r => setTimeout(r, 200));
+  let o = await shown();
+  assert.equal(o.view, '3d', 'a gas run loaded in 3D stays in 3D');
+  assert.notEqual(o.toggle, 'none');
+  assert.deepEqual(o.gas, ['circuit', 'lungs', 'vrg', 'mg', 'fg']);
+  assert.deepEqual(o.drug, [], 'no drug vessel with a gas run');
+  for (const name of ['Circuit', 'Lungs', 'VRG', 'Muscle', 'Fat'])
+    assert.ok(o.labels.some(l => l.startsWith(name)), `no label for ${name}: ${o.labels}`);
+  assert.ok(o.labels.some(l => /effect site/.test(l)) && o.labels.some(l => /end-tidal/.test(l)));
+  // No two glasses overlap, and each stands clear of the lungs by the arrows' length.
+  const geo = await page.evaluate(() => Object.fromEntries(Object.entries(View.gasGeo.c).map(([k, c]) => [k, [c.x, c.z, View.gasGeo.r[k]]])));
+  const keys = Object.keys(geo);
+  for (let i = 0; i < keys.length; i++) for (let j = i + 1; j < keys.length; j++) {
+    const [a, b] = [geo[keys[i]], geo[keys[j]]];
+    assert.ok(Math.hypot(a[0] - b[0], a[1] - b[1]) > a[2] + b[2], `${keys[i]} and ${keys[j]} overlap`);
+  }
+  // Back to a drug: its own vessels, and no glass of the gas run.
+  assert.equal(await loadRun(page, RUN), true);
+  await page.evaluate(() => Player.seek(600));
+  o = await shown();
+  assert.equal(o.view, '3d');
+  assert.deepEqual(o.gas, []);
+  assert.deepEqual(o.drug, [1, 2, 3]);
+  assert.ok(!o.labels.some(l => /^Lungs/.test(l)), 'a gas label left over');
+  assertClean(page);
+});
+
+test('gas: the 3D view starts where no glass, arrow or label is hidden, and labels never overlap as it turns', { skip }, async t => {
+  for (const [run, name, T] of [[GAS, 'sevoflurane', 1200], [DES, 'desflurane', 7500]]) for (const [width, height] of [[1200, 800], [800, 600]]) {
+    const page = await viewerPage(t);
+    await page.setViewport({ width, height });
+    assert.equal(await loadRun(page, run), true);
+    await page.evaluate(T => { Player.setView('3d'); View.resetView(); Player.seek(T); }, T);
+    const best = await page.evaluate(() => View.gasHomeScores.reduce((a, b) => (b.score < a.score ? b : a)));
+    assert.equal(best.hidden, 0, `${name}, ${width} x ${height}: a glass is hidden from the starting view`);
+    assert.equal(best.lost, 0, `${name}, ${width} x ${height}: an arrow is hidden from the starting view: ${best.why}`);
+    // What the page shows: from the start, and from the drug view's start,
+    // where the labels of these glasses fall on one another.
+    const overlaps = () => page.evaluate(async () => {
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const b = [...document.querySelectorAll('#view .label-layer .lbl')].filter(e => e.style.display !== 'none' && e.offsetWidth > 0)
+        .map(e => ({ s: e.textContent, r: e.getBoundingClientRect() }));
+      const hits = [];
+      for (let i = 0; i < b.length; i++) for (let j = i + 1; j < b.length; j++) {
+        const p = b[i].r, q = b[j].r;
+        if (p.left < q.right - 0.5 && q.left < p.right - 0.5 && p.top < q.bottom - 0.5 && q.top < p.bottom - 0.5) hits.push(b[i].s + ' / ' + b[j].s);
+      }
+      return { n: b.length, hits };
+    });
+    let o = await overlaps();
+    assert.equal(o.n, 5);
+    assert.deepEqual(o.hits, [], `${name}, ${width} x ${height}: labels overlap from the starting view`);
+    await page.evaluate(() => { View.persp.position.set(0, 28, 50); View.controls.target.set(0, 3, 0); View.persp.lookAt(View.controls.target); View.invalidate(); });
+    o = await overlaps();
+    assert.deepEqual(o.hits, [], `${name}, ${width} x ${height}: labels overlap once the scene is turned`);
+    assertClean(page);
+  }
+});
+
+test('gas: in 3D the cards over a glass and an arrow give the numbers', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, GAS), true);
+  await page.evaluate(() => { Player.setView('3d'); Player.seek(1200); });
+  const tip = key => page.evaluate(key => { View.showTip(key, { clientX: 300, clientY: 300 }); return document.querySelector('.flow-tip').innerText; }, key);
+  const st = await page.evaluate(() => Player.stateAt(1200));
+  assert.match(await tip('gv:lungs'), /Lungs \(end-tidal\)/);
+  assert.match(await tip('gv:vrg'), /Vessel-rich group \(effect site\)/);
+  assert.match(await tip('gv:circuit'), /holds no agent/);
+  const fresh = await tip('ga:fresh');
+  assert.match(fresh, /Fresh gas, 1\.0 L\/min/);
+  assert.match(fresh, /Delivered/);
+  assert.match(await tip('ga:vented'), /pop-off/);
+  // After the flow is cut the brain gives agent back: its card says so.
+  assert.ok(st.flow.vrg < 0, 'the VRG is giving agent back at 20 minutes');
+  assert.match(await tip('ga:vrg'), /VRG → blood → lungs/);
+  assertClean(page);
+});
+
+test('gas: no two labels overlap, at 1200 x 800 and 800 x 600', { skip }, async t => {
+  for (const [width, height] of [[1200, 800], [800, 600]]) {
+    const page = await viewerPage(t);
+    await page.setViewport({ width, height });
+    assert.equal(await loadRun(page, GAS), true);
+    for (const T of [0, 30, 120, 600, 660, 1200, 1800]) {
+      const hits = await page.evaluate(T => {
+        Player.seek(T);
+        const bb = [...document.querySelectorAll('#flat svg text')].map(e => ({ s: e.textContent, b: e.getBBox() }));
+        const out = [], SLACK_Y = 4;     // as in the drug test above
+        for (let i = 0; i < bb.length; i++) for (let j = i + 1; j < bb.length; j++) {
+          const a = bb[i].b, b = bb[j].b;
+          if (a.x < b.x + b.width - 0.5 && b.x < a.x + a.width - 0.5 && a.y < b.y + b.height - SLACK_Y && b.y < a.y + a.height - SLACK_Y)
+            out.push(bb[i].s + ' / ' + bb[j].s);
+        }
+        return out;
+      }, T);
+      assert.deepEqual(hits, [], `${width} x ${height}, T = ${T}: labels overlap`);
+    }
+    assertClean(page);
+  }
+});
+
+test('gas: markup and malformed fields are refused, the name is shown as text', { skip }, async t => {
+  const page = await viewerPage(t);
+  for (const [mutate, names] of [[r => { r.units.conc = '%' + P; }, 'units.conc'],
+                                 [r => { r.capacity.vrg = 0; }, 'capacity.vrg'],
+                                 [r => { r.p.fg = r.p.fg.slice(1); }, 'p.fg'],
+                                 [r => { r.fresh[3] = 'x'; }, 'fresh[3]'],
+                                 [r => { r.kind = 'liquid'; }, 'kind']]) {
+    const r = clone(GAS); mutate(r);
+    assert.equal(await loadRun(page, r), false);
+    const p = await probe(page);
+    assertNoInjection(p);
+    assert.ok(p.message.includes(names), `message should name ${names}: ${p.message}`);
+  }
+  const r = clone(GAS); r.drug = P;
+  assert.equal(await loadRun(page, r), true);
+  assertNoInjection(await probe(page));
+  assertClean(page);
+});
+
+test('video: a gas run saves an MP4 in each view', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, GAS), true);
+  if (!(await canEncode(page))) return t.skip('this browser cannot encode H.264');
+  for (const view of ['2d', '3d']) {
+    const { plan, b64 } = await recordVideo(page, view, false);
+    assert.equal(plan.view, view);
+    const top = mp4Boxes(Buffer.from(b64, 'base64'));
+    assert.deepEqual(top.map(b => b.type), ['ftyp', 'moov', 'mdat'], view);
+  }
+  assertClean(page);
+});

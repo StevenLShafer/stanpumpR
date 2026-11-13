@@ -12,6 +12,7 @@ test_that("every drug that can be dosed has a category the menu knows", {
                   "desvenlafaxine", "salicylate", "hydroxyrisperidone", "dehydroaripiprazole",
                   "enalaprilat", "doxorubicinol", "doxorubicinolPediatric", "doxorubicinolPerezBlanco",
                   "irinotecanSN38", "cisplatinBound", "gemcitabineDFDU", "capecitabine5FU",
+                  "norclozapine",
                   "air", "oxygen", "ventilation")
   # and the candidate models of a drug whose model the program chooses
   # (R/modelSelection.R), offered only through their drug's name
@@ -46,8 +47,8 @@ test_that("the menu lists the categories in order, each sorted by name", {
                      "remimazolam", "temazepam", "zolpidem"))
   expect_identical(choices[["Antidepressants"]],
                    c("bupropion", "citalopram", "duloxetine", "escitalopram",
-                     "fluoxetine", "mirtazapine", "paroxetine", "sertraline",
-                     "venlafaxine"))
+                     "fluoxetine", "mirtazapine", "nortriptyline", "paroxetine",
+                     "sertraline", "venlafaxine"))
   expect_true(all(STARTUP_DRUGS_DEFAULT %in% unlist(choices)))
   expect_false(any(c("desmetramadol", "desethylamiodarone", "hydroxybupropion", "norfluoxetine", "desvenlafaxine",
                      "air", "oxygen", "ventilation") %in% unlist(choices)))

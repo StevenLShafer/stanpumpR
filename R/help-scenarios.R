@@ -1065,6 +1065,63 @@ helpScenarioDefinitions <- function() {
         c("propofol", 60, 0, "Effect site target")
       ),
       maximum = 120, plasmaLinetype = "solid", showCompartments = TRUE
+    ),
+    # The inhaled anesthetics in the Visualizer (tools/viewer/src/gas.js and,
+    # in 3D, gas3d.js): the agent's partial pressure in the circuit, the lungs, the
+    # vessel-rich group, muscle and fat. The numbers on their pages were read
+    # from viewerGasRun() for these settings, at the scenarios' 40-year-old,
+    # 70 kg man. (Claude Code, 2026-11-09, at the request of Steven L. Shafer.)
+    helpScenario(
+      "visualizer-sevoflurane-washin",
+      "Watching sevoflurane fill the body",
+      "Seeing the compartments",
+      "Sevoflurane 2.5 per cent at a high fresh gas flow for an hour, made to be watched in the Visualizer: the vessel-rich group catches up with the lungs in minutes, muscle takes hours, and fat, at a level a seventieth of the brain's, comes to hold more agent than the vessel-rich group.",
+      doses = helpDoses(
+        c("oxygen", 0, 6, "L/min"),
+        c("sevoflurane", 0, 2.5, "%"),
+        c("ventilation", 0, 6, "L/min")
+      ),
+      maximum = 60, showCompartments = TRUE
+    ),
+    helpScenario(
+      "visualizer-sevoflurane-overpressure",
+      "Watching an overpressure induction, then low flow",
+      "Seeing the compartments",
+      "Sevoflurane 8 per cent at 6 L/min for three minutes, then 3 per cent at 1 L/min, made to be watched in the Visualizer: the brain overshoots, gives agent back to the blood for half an hour, and the inspired level rises above the vaporizer setting while the rebreathed gas is the richer.",
+      doses = helpDoses(
+        c("oxygen", 0, 6, "L/min"),
+        c("sevoflurane", 0, 8, "%"),
+        c("ventilation", 0, 6, "L/min"),
+        c("oxygen", 3, 1, "L/min"),
+        c("sevoflurane", 3, 3, "%")
+      ),
+      maximum = 60, showCompartments = TRUE
+    ),
+    helpScenario(
+      "visualizer-sevoflurane-emergence",
+      "Watching sevoflurane leave the body",
+      "Seeing the compartments",
+      "Two hours of sevoflurane, then the vaporizer off and the flow up, made to be watched in the Visualizer: the vessel-rich group and muscle give agent back at once, while fat goes on taking it up for more than an hour.",
+      doses = helpDoses(
+        c("oxygen", 0, 2, "L/min"),
+        c("sevoflurane", 0, 2, "%"),
+        c("ventilation", 0, 6, "L/min"),
+        c("sevoflurane", 120, 0, "%"),
+        c("oxygen", 120, 8, "L/min")
+      ),
+      maximum = 240, showCompartments = TRUE
+    ),
+    helpScenario(
+      "visualizer-nitrous-oxide",
+      "Watching nitrous oxide: an insoluble gas in bulk",
+      "Seeing the compartments",
+      "Nitrous oxide 4 L/min with oxygen 2 L/min, made to be watched in the Visualizer: the boxes are drawn to scale, the brain reaches the lungs' level in minutes, and the patient takes up litres of the gas.",
+      doses = helpDoses(
+        c("oxygen", 0, 2, "L/min"),
+        c("nitrousOxide", 0, 4, "L/min"),
+        c("ventilation", 0, 6, "L/min")
+      ),
+      maximum = 60, showCompartments = TRUE
     )
   )
 }

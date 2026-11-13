@@ -20,6 +20,9 @@ test_that("the manuscript goes inline as base64, never through the Files API or 
   # The schema rides in the instructions, not as a structured output.
   expect_null(body$output_config$format)
   expect_equal(body$output_config$effort, "high")
+  # The calibration's decision (docs/paper-review-calibration.md): high, with
+  # the model's 128,000 output tokens, since high used up to 56,348.
+  expect_equal(body$max_tokens, 128000)
   expect_match(body$system, "The JSON schema:", fixed = TRUE)
   expect_true(body$stream)
   expect_equal(body$fallbacks, "default")
@@ -217,4 +220,94 @@ test_that("forty fuzzed extractions all give a report", {
     review <- paperReviewQuietly(function() paperReviewRun(paperReviewValidate(m)))
     expect_no_error(paperReviewReportTags(review, plots = FALSE))
   }
+})
+
+# 2026-11-10: the operator's key by default, a user's own key first, and a
+# switch that withdraws the operator's (Shafer: users bring their own after
+# about 200 uses).
+test_that("a user's own key wins, and paper_review_shared_key: false withdraws the operator's", {
+  old <- Sys.getenv(PAPER_REVIEW_KEY_ENV, unset = NA)
+  on.exit(for (n in names(old)) if (is.na(old[[n]])) Sys.unsetenv(n) else
+    do.call(Sys.setenv, stats::setNames(list(old[[n]]), n)), add = TRUE)
+  Sys.unsetenv(PAPER_REVIEW_KEY_ENV)
+  config <- list(anthropic_api_key = "operator-key")
+  expect_equal(paperReviewApiKey(NULL, config), "operator-key")
+  expect_equal(paperReviewApiKey("sk-ant-own", config), "sk-ant-own")
+  expect_null(paperReviewApiKey(NULL, c(config, paper_review_shared_key = FALSE)))
+  expect_equal(paperReviewApiKey("sk-ant-own", c(config, paper_review_shared_key = FALSE)), "sk-ant-own")
+  Sys.setenv(STANPUMPR_ANTHROPIC_API_KEY = "env-key")
+  expect_null(paperReviewApiKey(NULL, list(paper_review_shared_key = FALSE)))
+})
+
+test_that("only text shaped like an Anthropic key is taken as the user's own", {
+  expect_equal(paperReviewOwnKey("  sk-ant-api03-AbC_def-1234567 \n"), "sk-ant-api03-AbC_def-1234567")
+  expect_null(paperReviewOwnKey(""))
+  expect_null(paperReviewOwnKey(NULL))
+  expect_null(paperReviewOwnKey(NA_character_))
+  expect_null(paperReviewOwnKey("sk-ant-"))
+  expect_null(paperReviewOwnKey("sk-proj-abcdefghijklmnop"))
+  expect_null(paperReviewOwnKey("sk-ant-abc def ghijklmnop"))
+  expect_null(paperReviewOwnKey(c("sk-ant-abcdefghijklmn", "sk-ant-abcdefghijklmn")))
+  expect_null(paperReviewOwnKey(paste0("sk-ant-", strrep("a", PAPER_REVIEW_OWN_KEY_MAX_CHARS))))
+})
+
+test_that("what comes back from the API is read the way the call used to read it", {
+  expect_error(paperReviewInterpret(list(failure = "connection")), "Could not reach", class = "paper_review_error")
+  e <- tryCatch(paperReviewInterpret(list(status = 401L, error = list(type = "authentication_error",
+                                                                      message = "invalid x-api-key"))),
+                error = function(e) e)
+  expect_equal(e$code, "http_401")
+  expect_match(conditionMessage(e), "not accepted.*authentication_error.*invalid x-api-key")
+  ev <- function(type, data) list(type = type, data = jsonlite::toJSON(data, auto_unbox = TRUE))
+  start <- ev("message_start", list(type = "message_start",
+                                    message = list(model = "claude-opus-5-5", usage = list(input_tokens = 1000))))
+  text <- ev("content_block_delta", list(type = "content_block_delta",
+    delta = list(type = "text_delta",
+                 text = as.character(jsonlite::toJSON(paperReviewExample(), auto_unbox = TRUE, null = "null")))))
+  stop <- function(reason) ev("message_delta", list(type = "message_delta", delta = list(stop_reason = reason),
+                                                     usage = list(output_tokens = 50)))
+  ok <- paperReviewInterpret(list(status = 200L, events = list(start, text, stop("end_turn"))))
+  expect_equal(ok$usage$input_tokens, 1000)
+  expect_equal(ok$extraction$drug$name, paperReviewExample()$drug$name)
+  # A reply cut at the output limit is billed, so its error carries the tokens.
+  cut <- tryCatch(paperReviewInterpret(list(status = 200L, events = list(start, stop("max_tokens")))),
+                  error = function(e) e)
+  expect_equal(cut$code, "max_tokens")
+  expect_equal(cut$usage$output_tokens, 50)
+})
+
+test_that("the parts that run in the background call nothing of stanpumpR", {
+  # Every function called by a bare name must be base R: the rest is pkg::.
+  called <- function(e) {
+    if (!is.call(e)) return(character(0))
+    f <- e[[1]]
+    if (is.call(f) && identical(f[[1]], as.name("::"))) f <- NULL
+    c(if (is.name(f)) as.character(f), if (is.call(f)) called(f),
+      unlist(lapply(as.list(e)[-1], called)))
+  }
+  for (fn in list(paperReviewTransport, paperReviewSendUsageEmail, paperReviewCountUsageEmails)) {
+    names <- setdiff(unique(called(body(fn))), c(names(formals(fn)), "smtp"))
+    expect_true(all(vapply(names, exists, logical(1), envir = baseenv())),
+                info = paste(names[!vapply(names, exists, logical(1), envir = baseenv())], collapse = ", "))
+  }
+})
+
+test_that("a review runs in a background process and its failure comes back as a paper_review_error", {
+  skip_on_cran()
+  testthat::local_mocked_bindings(paperReviewTransportArgs = function(prepared, key)
+    list(json = prepared$json, key = key, fallbacks = FALSE, url = "http://127.0.0.1:9/v1/messages",
+         version = PAPER_REVIEW_API_VERSION, beta = PAPER_REVIEW_FALLBACK_BETA, timeout = 5))
+  outcome <- NULL
+  p <- paperReviewExtractAsync(fakePdf(), key = "secret-key-123")
+  promises::then(p, onFulfilled = function(x) outcome <<- x, onRejected = function(e) outcome <<- e)
+  deadline <- Sys.time() + 60
+  while (is.null(outcome) && Sys.time() < deadline) later::run_now(0.1)
+  expect_s3_class(outcome, "paper_review_error")
+  expect_equal(outcome$code, "connection")
+  expect_false(grepl("secret-key-123", conditionMessage(outcome)))
+  # Refused before anything is started: no key, no manuscript.
+  refused <- NULL
+  promises::then(paperReviewExtractAsync(raw(0), key = "k"), onRejected = function(e) refused <<- e)
+  while (is.null(refused) && !later::loop_empty()) later::run_now(0.01)
+  expect_equal(refused$code, "no_pdf")
 })

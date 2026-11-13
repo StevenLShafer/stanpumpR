@@ -270,6 +270,20 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     expanded <- expandScheduledDoses(dose, maximum)
     dose <- expanded$dose
 
+    # A dose whose unit names a product other than the plotted drug ("mg
+    # aminophylline" for theophylline, "mg PO sulfate" for quinidine) is
+    # converted to the plotted drug's mass here, before any expansion that
+    # rewrites its unit (a zero-order release writes rate rows with no product
+    # word), and the product word is then dropped, so the rest of the
+    # pipeline sees the drug itself in an ordinary unit and the conversion is
+    # made once.  The drug's `doseProducts` block gives the mass of the
+    # plotted drug per mass of each product (doseProductFactor(),
+    # R/routes.R); a unit that names no product is the plotted drug.
+    if (!is.null(PK$doseProducts) && nrow(dose)) {
+      dose$Dose <- dose$Dose * doseProductFactor(dose$Units, PK$doseProducts)
+      dose$Units <- stripDoseProduct(dose$Units, names(PK$doseProducts))
+    }
+
     # A pulsed extended-release product (Adderall XR): each dose of a
     # formulation the drug lists in oralPulses becomes its pulses, ordinary
     # oral doses at fixed delays; see R/oral-pulses.R.
@@ -379,6 +393,8 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     } else if (any(iuDose)) {
       stop(PK$drug, " is not dosed in international units (IU).")
     }
+    # (A unit naming another product, "mg aminophylline", was converted to
+    # the plotted drug's mass after the scheduled expansion above.)
     # One factor per dose row (the molar branch may differ row by row).
     mg_Conv  <- rep_len(mg_Conv,  nrow(dose))
     mcg_Conv <- rep_len(mcg_Conv, nrow(dose))

@@ -58,8 +58,9 @@
 
 # The concentration and amount units for each Concentration.Units the viewer
 # draws, and the factor from stanpumpR's internal amount to the one shown
-# (depotUnits() in R/compartments.R uses the same). Other drugs (gases, and
-# those plotted as mOsm, INR, % or L/min) are not offered.
+# (depotUnits() in R/compartments.R uses the same). Other drugs (those plotted
+# as mOsm, INR or L/min) are not offered; the inhaled anesthetics, plotted in
+# %, are drawn from their own states by viewerGasRun().
 VIEWER_UNITS <- list(
   mcg  = list(conc = "mcg/mL",  amount = "mg",   scale = 1),
   ng   = list(conc = "ng/mL",   amount = "mcg",  scale = 1),
@@ -84,13 +85,20 @@ viewerUnits <- function(concUnits)
 #' Why the viewer cannot draw a simulated drug
 #'
 #' @param entry one drug's entry of the app's simulation (`drugs()`), or of
-#'   `processdoseTable()`; the PK fields alone (`recalculatePK()`) suffice.
+#'   `processdoseTable()`; the PK fields alone (`recalculatePK()`) suffice,
+#'   except for a drug of parallel systems, which needs its dose rows (`$DT`).
 #' @return NULL when the viewer can draw it, else one sentence saying why not.
 #' @noRd
 viewerProblem <- function(entry)
 {
   if (is.null(entry)) return("There is no simulation of this drug to show.")
-  if (isTRUE(isGasDrug(entry$drug))) return("The viewer does not draw inhaled agents.")
+  # An inhaled anesthetic is drawn from its own states (viewerGasRun()); oxygen
+  # has no tissue states, and MAC is a sum over agents, not a gas.
+  if (isTRUE(entry$isGas) || isTRUE(isGasDrug(entry$drug))) {
+    if (is.null(entry$gasRun))
+      return("The Visualizer draws the inhaled anesthetics, not oxygen or the summed MAC.")
+    return(NULL)
+  }
   if (!is.null(entry$inr))
     return("This drug is plotted as an INR, and stanpumpR keeps no drug concentration for it to show.")
   if (!is.null(entry$osmotic))
@@ -98,10 +106,45 @@ viewerProblem <- function(entry)
   units <- if (!is.null(entry$act)) "IU" else entry$Concentration.Units
   if (is.null(VIEWER_UNITS[[units]]))
     return("The viewer draws drug concentrations (mcg/mL, ng/mL, pg/mL, IU/mL, mcU/mL, mmol/L).")
-  if (length(entry$parallelSystems) > 0)
-    return(paste("This drug is the sum of separate systems (such as two enantiomers),",
-                 "which one set of compartments cannot show."))
+  if (is.null(viewerSystem(entry)))
+    return(paste("This drug's doses reach more than one of its separate systems (two",
+                 "enantiomers, or two routes each with its own fit, such as oral and",
+                 "intravenous meloxicam), which one set of compartments cannot show."))
   NULL
+}
+
+#' The PK sets of the one system a drug's doses reach
+#'
+#' A drug built from parallel systems (`parallelSystems`, `simCpCe()`) is
+#' drawn only while its doses reach one of them: meloxicam's oral fit takes
+#' only oral doses and its intravenous fit (ANJESO) only intravenous ones, so
+#' a table of one route runs one ordinary system, whose concentrations are the
+#' plotted ones (the other system's being zero). Ketorolac's enantiomers both
+#' take every dose, so it is never drawn.
+#'
+#' @param entry one drug's entry, with its dose rows (`$DT`) when it has
+#'   parallel systems.
+#' @return the system's PK sets (the drug's own `$PK` when it has no
+#'   parallel systems), or NULL when the doses reach more than one, or the
+#'   dose rows are not there to say which.
+#' @noRd
+viewerSystem <- function(entry)
+{
+  if (length(entry$parallelSystems) == 0) return(entry$PK)
+  d <- entry$DT
+  if (is.null(d)) return(NULL)
+  units <- as.character(d$Units[suppressWarnings(as.numeric(d$Dose)) != 0])
+  units <- units[!is.na(units)]
+  if (length(units) == 0) return(NULL)
+  routes <- unique(doseRoute(units))
+  systems <- c(list(list(doseFraction = entry$doseFraction, routes = entry$routes, PK = entry$PK)),
+               entry$parallelSystems)
+  reached <- Filter(function(sys)
+    (is.null(sys$doseFraction) || sys$doseFraction > 0) &&
+      (is.null(sys$routes) || any(routes %in% sys$routes)),
+    systems)
+  if (length(reached) != 1) return(NULL)
+  reached[[1]]$PK
 }
 
 # The run's times, in minutes: from Min time to Max time, 1 s apart or
@@ -284,7 +327,8 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
   times <- viewerTimes(minimum, maximum)
   minimum <- times[1]
   u <- viewerUnits(entry$Concentration.Units)
-  k <- entry$PK[[1]]
+  # The system the doses reach (meloxicam's oral or intravenous fit).
+  k <- viewerSystem(entry)[[1]]
   # A Michaelis-Menten peripheral compartment declared as k23/k32 (GHB) has
   # V2 = V k23 / k32 and Q = k23 V (advanceMichaelisMenten()), not the PK
   # set's placeholders.
@@ -343,7 +387,8 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
   ivSalt <- entry$michaelisMenten$saltFactor$IV
   if (is.null(ivSalt)) ivSalt <- 1
   steps <- data.frame(Time = manual$Time,
-                      Rate = ivSalt * viewerBaseDose(manual$Dose, manual$Units, weight, u),
+                      Rate = ivSalt * viewerBaseDose(manual$Dose, manual$Units, weight, u) *
+                        doseProductFactor(manual$Units, entry$doseProducts),
                       rank = rep(1, nrow(manual)))
   tciRates <- entry$tci$rates
   if (!is.null(tciRates) && nrow(tciRates) > 0) {
@@ -369,7 +414,10 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
 
   # IV boluses, in base amount.
   b <- d[route == ROUTE_IV & !rate & !tci & !pe, , drop = FALSE]
-  bAmount <- ivSalt * viewerBaseDose(b$Dose, b$Units, weight, u)
+  # A dose named as a product (aminophylline for theophylline) counts as the
+  # plotted drug it carries, as simCpCe() enters it (doseProductFactor()).
+  bAmount <- ivSalt * viewerBaseDose(b$Dose, b$Units, weight, u) *
+    doseProductFactor(b$Units, entry$doseProducts)
   # A dose in a unit the viewer cannot read (a salt, mmol) leaves the drug
   # given unknown; it is drawn as nothing rather than refused.
   unreadable <- anyNA(c(steps$Rate, oralSteps$Rate, bAmount))
@@ -460,6 +508,92 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
     # when the drug given is unknown. A saturable drug's is not, and its
     # elimination arrow is then not drawn.
     eliminationLinear = is.null(entry$michaelisMenten),
+    source = "stanpumpR")
+}
+
+#' One inhaled anesthetic's run for the viewer
+#'
+#' Shafer, 2026-11-09: the partial pressure of the agent in the breathing
+#' circuit (what the patient inspires), the lungs (end-tidal), the vessel-rich
+#' group (the effect site), the muscle group and the fat group, read from the
+#' gas engine's own states for the plot (`gasDrugEntries()` keeps them as
+#' `$gasRun`): the run is the plot's own, interpolated onto the viewer's
+#' times, nothing re-solved.
+#'
+#' Partial pressures are in % of an atmosphere, as stanpumpR plots them. A
+#' compartment's capacity is its volume times its tissue:gas partition
+#' coefficient (the gas phase's is its volume), so the agent it holds, in mL
+#' of vapour at one atmosphere, is 10 x capacity (L) x partial pressure (%):
+#' the run's `amountScale`. The ideal circuit, stanpumpR's, has no volume and
+#' holds none; GasMan's semi-closed circuit holds its 8 L.
+#'
+#' `delivered` is the agent the fresh gas has carried into the circuit since
+#' time 0, in mL of vapour, from the settings in force (the engine reads them
+#' at the start of each interval, as here). The viewer derives every flow from
+#' the amounts (player.js): into each tissue its capacity times the rise in its
+#' partial pressure, out of the lungs into the blood their sum, from the
+#' circuit into the lungs that plus the lungs' own rise, and out through the
+#' pop-off valve the agent delivered less the agent held.
+#'
+#' @param entry the agent's entry in the app's simulation (`drugs()`), with
+#'   `$gasRun`.
+#' @param minimum,maximum the plot's Min and Max time, minutes.
+#' @param category the agent's category, or NA.
+#' @return a list, as `viewerRun()`'s, with `kind = "gas"`.
+#' @noRd
+viewerGasRun <- function(entry, minimum, maximum, category = NA_character_)
+{
+  problem <- viewerProblem(entry)
+  if (!is.null(problem)) stop(problem)
+  gr <- entry$gasRun
+  g <- entry$drug
+  times <- viewerTimes(minimum, maximum)
+  props <- getGasProperties()
+  pr <- props[props$gas == g, ]
+  ltg <- gasPartitionTissueGas(pr)
+  body <- gr$body
+  vol <- c(circuit = if (identical(gr$circuit, "semi-closed")) body$V_circuit else 0,
+           lungs = body$V_alveolar, vrg = body$V_brain, mg = body$V_muscle, fg = body$V_fat)
+  lambda <- c(circuit = 1, lungs = 1, vrg = ltg[["brain"]], mg = ltg[["muscle"]], fg = ltg[["fat"]])
+  capacity <- vol * lambda
+
+  # Linear between the engine's own points, as the plot draws them.
+  at <- function(v) pmax(0, stats::approx(gr$time, v, times, rule = 2, ties = "ordered")$y)
+  p <- stats::setNames(lapply(seq_len(5), function(j) at(gr$state[, j])), names(vol))
+
+  # The settings in force: each a step that changes only at a dose row.
+  rows <- gr$gasDose
+  rows <- data.frame(Time = as.numeric(rows$Time), Drug = as.character(rows$Drug),
+                     Dose = as.numeric(rows$Dose), stringsAsFactors = FALSE)
+  rows <- rows[!is.na(rows$Time) & !is.na(rows$Dose), , drop = FALSE]
+  rows <- rows[order(rows$Time), , drop = FALSE]
+  bySetting <- split(rows, rows$Drug)
+  knots <- sort(unique(c(0, rows$Time[rows$Time > 0])))
+  settings <- lapply(knots, function(k) gasSettingsAt(bySetting, k))
+  flow <- vapply(settings, function(s) s$Q, numeric(1))
+  fresh <- vapply(settings, function(s) unname(s$Ffgf[[g]]), numeric(1))
+  mv <- vapply(settings, function(s) s$MV, numeric(1))
+  # mL of vapour a minute: L/min x % / 100 x 1000 mL/L.
+  rate <- 10 * flow * fresh
+  i <- findInterval(times + 1e-9, knots)
+  deliveredAtKnot <- c(0, cumsum(rate[-length(knots)] * diff(knots)))
+  delivered <- deliveredAtKnot[i] + rate[i] * (times - knots[i])
+
+  mac <- macForAge(pr$MAC40, gr$age)
+  list(
+    format = "stanpumpR-viewer", version = 2, kind = "gas",
+    drug = g,
+    model = "GasMan (Philip 1986), as stanpumpR solves it",
+    category = if (length(category) == 1) category else NA_character_,
+    typical = mac, mac = mac,
+    units = list(conc = "%", amount = "mL", rate = "mL/min"),
+    amountScale = 10,
+    patient = list(weight = gr$weight, age = gr$age),
+    circuit = gr$circuit,
+    volume = as.list(vol), partition = as.list(lambda), capacity = as.list(capacity),
+    t = times * 60, p = p,
+    fresh = fresh[i], freshFlow = flow[i], ventilation = mv[i],
+    delivered = delivered,
     source = "stanpumpR")
 }
 

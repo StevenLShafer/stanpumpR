@@ -28,12 +28,15 @@ Imports:
     grDevices,
     grid,
     htmltools,
+    httr2 (>= 1.1.0),
     jsonlite,
     lubridate,
     magrittr,
     memoise,
+    mirai,
     officer,
     openxlsx,
+    promises,
     purrr,
     rvg,
     shiny,
@@ -48,7 +51,6 @@ Imports:
     utils
 Suggests:
     devtools,
-    httr2 (>= 1.1.0),
     knitr,
     plumber,
     ragg,
@@ -65,5 +67,4 @@ Encoding: UTF-8
 Config/testthat/edition: 3
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr
-Config/roxygen2/version: 8.1.0
-RoxygenNote: 7.3.1
+Config/roxygen2/version: 8.1.1

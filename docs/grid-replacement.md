@@ -649,6 +649,33 @@ fixed:
   place of the blank row below the doses. Neither the grid nor
   `storeGridEdit()` ever makes more than 499 rows, blank ones included.
 
+## Real phones on BrowserStack (2026-11-09 to 2026-11-10)
+
+BrowserStack was removed on 2026-11-13 (Shafer): the workflow, `browserstack.js`
+and the README's sections went, and `phone.test.js` now runs only locally, as
+an emulated iPhone 15 (WebKit) or Pixel 7 (Chromium). This section is the
+record of what the real phones showed.
+
+`tests/playwright/phone.test.js` runs eight cases of the dose grid on a real
+phone through BrowserStack Automate (`tests/playwright/README.md`). All eight
+pass on an iPhone 16 (iOS 18) and an iPhone 17 (iOS 26) in Safari, and on a
+Google Pixel 9 (Android 16) in Chrome; the results for a Samsung Galaxy S25
+Ultra (Android 15) are in the pull request. Every failure on the way was in
+the test or in the way Playwright drives the phone, none in the grid:
+
+- **iPhone:** keys sent to the page never arrived and Enter did not commit,
+  so text goes to the cell and a cell is committed by tapping the next one;
+  `page.evaluate()` returned an async function's value as `[object Object]`,
+  so the server's state is read with a synchronous request; and
+  Playwright's own navigation broke on the bookmark, so the page reloads
+  itself.
+- **Android:** a tap was refused until the browser had touch on; the page's
+  load event came late through the tunnel; and with the keyboard up,
+  Playwright's check that nothing covers a tap target did not allow for the
+  pan of the visual viewport (206 px for the drug list, 359 px for Apply on
+  the Pixel 9), so it found the rows above the target and timed out. Sent
+  without that check, the taps land.
+
 ## Decisions for Steven Shafer
 
 These are pending. Record each answer here.

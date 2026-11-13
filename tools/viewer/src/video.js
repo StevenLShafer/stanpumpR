@@ -340,7 +340,7 @@ function videoHeading(withPatient) {
     const r = Player.run, pt = r.patient || {};
     const pat = withPatient ? [pt.weight != null && `${pt.weight} kg`, pt.height != null && `${pt.height} cm`,
                                pt.age != null && `${pt.age} y`, pt.sex].filter(Boolean).join(' · ') : '';
-    const name = String(r.drug).charAt(0).toUpperCase() + String(r.drug).slice(1);
+    const name = r.kind === 'gas' ? gasName(r.drug) : String(r.drug).charAt(0).toUpperCase() + String(r.drug).slice(1);
     return [`stanpumpR · Visualizer · ${name}`, r.model ? shortModel(r.model) : '', pat].filter(Boolean).join(' · ');
 }
 function videoStrip(ctx, W, H, withPatient) {

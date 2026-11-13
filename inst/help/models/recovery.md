@@ -27,6 +27,8 @@ stanpumpR does not simulate protein binding. Each antibiotic's curve shows one f
 | Clindamycin | Staphylococci | 0.5 | Total drug | about 0.10 (saturable) | 5.2 |
 | Gentamicin | Enterobacterales (*E. coli*, *Klebsiella*) | 2 | Total drug | 1 (unbound) | 2 |
 | Metronidazole | *Bacteroides fragilis* group | 4 | Total drug | 0.96 | 4.2 |
+| Tobramycin | Enterobacterales and *P. aeruginosa* | 2 | Total drug | 1 (unbound) | 2 |
+| Amikacin | Enterobacterales (*E. coli*, *Klebsiella*) | 4 | Total drug | 0.82 | 4.9 |
 | Vancomycin | *S. aureus*, including MRSA | 1 | Total drug | 0.70 | 1.4 |
 
 The shaded band is a second marker on the same footing: free drug at the expected **MBC**, the concentration that kills, of the common pathogens each antibiotic is given against. See [Antibiotics: the MIC line and the MBC band](help:models/antibiotics).

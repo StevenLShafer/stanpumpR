@@ -797,6 +797,7 @@ the intended maintenance step, not a weakening of the test.
 | is an antibiotic with an `endCe` | `antibioticMicTable()` in `R/antibioticThresholds.R`, and its pathogens in `antibioticMbcTable()` in `R/antibioticMbc.R` |
 | needs a new `Category` | `DRUG_CATEGORIES` in `R/constants.R` **and** `bookmarksToExclude` in `R/app_globals.R` |
 | is a long-acting weekly product | `LONG_TERM_DRUGS` |
+| has a `Category` | its FDA label: the PDF in `papers/labels/` and its row in `inst/extdata/fdaLabels.csv` (status `label`), or a row saying why there is none (`no_us_label`, `not_obtained`); `test-fda-labels.R` fails without a row, and `papers/labels/README.md` says how to add one |
 
 A quick way to find any roster you might owe, before CI does: search the suite for a drug
 **already in the same situation as yours** — another plasma-only drug, another TCI drug,

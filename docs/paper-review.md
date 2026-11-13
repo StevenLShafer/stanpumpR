@@ -15,9 +15,10 @@ shiny::runApp(run_app())                 # the tab
 shiny::runApp(run_paper_review_app())    # the app on its own
 ```
 
-Without a key the tab says "No Anthropic API key is configured on this
-server" when Review is pressed, and the example still works; a deployment
-without `anthropic_api_key` therefore sends nothing anywhere.
+Without a key on the server the tab asks the user for their own (it is held
+only in that session) and keeps uploading off until one is entered; the
+example still works. A deployment without `anthropic_api_key` therefore sends
+nothing unless a user brings a key.
 
 **Try the example** works without a key and sends nothing: it loads
 `inst/paper-review/example-extraction.json`, a fictional paper with a
@@ -116,6 +117,21 @@ checks that Claude's extraction reaches the review intact, catching the
 misprinted half-life. First run, 2026-10-30: passed, 1.3 minutes, 9,743
 input and 9,095 output tokens (about $0.22 at list price). A real paper is
 sent only when Shafer supplies it (Open decision 6).
+
+**How long a review takes** (the user's estimates are in
+`inst/paper-review/help.md`, *How long a review takes*, and the busy banner
+in `paperReviewHeader()`; revise both together as reviews are timed):
+- the one-page exampleol paper: 1.3 minutes (2026-10-30, above);
+- Devin's five live reviews (2026-11-08): a second visitor waited 169 s
+  behind one, so that review took at least three minutes; the others were
+  not timed;
+- Hallik 2020 (PMID 31657867; 11 pages, one PK model and six PKPD models,
+  five parameter tables), on production with the operator's key
+  (2026-11-10): still being read when the browser stopped watching at
+  20 minutes, so it likely reached `PAPER_REVIEW_TIMEOUT_SEC` (1200 s)
+  without a review; its outcome and tokens are in the usage email and the
+  server log. The same upload with an invalid key returned 401 in 2 s, so
+  the background path on shinyapps.io works and the time was Claude's.
 
 The first two live attempts were refused, which is why the schema is sent
 in the instructions rather than as a structured output
@@ -376,13 +392,16 @@ be another seam.
 - Linking to the paper archive, and overlaying the uploaded model on library
   drug models and archived papers.
 - ~~Merging into master~~: done, as a tab of stanpumpR (Shafer, 2026-11-01).
-- Bring-your-own-key (the seam is `paperReviewApiKey(sessionKey)`).
-- Running the API call off the main R thread: today it blocks that R process
-  for the minutes the extraction takes, which a local prototype tolerates and a
-  shared deployment does not (Shiny `ExtendedTask` with `mirai` or `future`).
-  As a tab of stanpumpR this matters more: a review would stall every other
-  session on that R process, the simulator included. It is harmless while
-  no key is deployed (nothing is sent), and must be done before one is.
+- ~~Bring-your-own-key~~: done (2026-11-10), see "Setting up the API key".
+- ~~Running the API call off the main R thread~~: done (2026-11-10), before
+  the key was deployed. The request is built in the app's process, sent and
+  streamed in a short-lived background R process (`mirai`, through
+  `paperReviewExtractAsync()` and the server's `ExtendedTask`), and read back
+  in the app's process; `paperReviewTransport()`, the part that runs in the
+  background, calls nothing of stanpumpR (tested). The background process
+  is given `PAPER_REVIEW_BACKGROUND_TIMEOUT_SEC`, and is started with the
+  app's library paths, without which it waits for ever for a package it
+  cannot load.
 
 ## Devin's stress test (2026-11-08)
 
@@ -391,7 +410,7 @@ Devin (Cognition AI), for Charles Minto, ran master `a64eb29` on its own machine
 | Item | Verdict | Change |
 |---|---|---|
 | 1. With no key, a visitor uploads and consents before learning that only the example runs | Confirmed: the key was looked up only on Review | The tab says so at the top, and the consent box, uploads and Review stay off |
-| 2. A review blocks every session on its R process; no per-visitor limit | Confirmed by its measurement (a second visitor waited 169 s); already the reason for *Deferred* above | None here: still the condition for deploying a key. The token counts are now shown after a review |
+| 2. A review blocks every session on its R process; no per-visitor limit | Confirmed by its measurement (a second visitor waited 169 s); already the reason for *Deferred* above | The token counts are now shown after a review. The call moved off the main thread on 2026-11-10, before the key was deployed |
 | 3. False errors when a paper tabulates values at other covariates (18 of 19 in a paediatric paper) | Confirmed: every derived quantity was compared at the reference patient | `derived_quantities` carry `at` (weight, height, age, sex); the check rebuilds the model there, and such a value never closes or fits the model at the reference |
 | 4. One malformed field loses the paid review (175 of 400 fuzzed) | Reproduced exactly: 225 of 400 rendered | `paperReviewConform()` conforms every field to the schema; five checks read an absent or out-of-choice field unguarded; each check runs on its own. 1,600 fuzzed extractions over four seeds all render, none needing the last guard |
 | A 2,000-fold figure miss reported as the paper's error | A misreading is likelier | A miss beyond tenfold is a concern saying so |
@@ -402,58 +421,97 @@ The reference patient Devin called "a mixture" (70 kg, the printed allometric re
 
 ## Setting up the API key
 
-For Shafer to do; no session handles the key itself. During development the
-app deliberately shares IntegrityAnalysis's `ANTHROPIC_API_KEY` (Open
-decision 1), which needs none of these steps; they are for when a separate
-key is wanted, before wider use.
-`paperReviewApiKey()` looks in this order: a key held in the session (the
-bring-your-own-key seam, unused today), then the environment variables
-`STANPUMPR_ANTHROPIC_API_KEY` and `ANTHROPIC_API_KEY`, in that order, then
-`anthropic_api_key` in `config.yml`.
+**Current setup (Shafer, 2026-11-10):** "I want the Single Paper Review to
+access my personal Anthropic API key for now. I have added the key to the
+GitHub repository secrets. Please revise Single Paper Review to default to my
+own key. Please track usage and let me know how often it is used. I'll
+probably force users to use their own keys after 200 uses of my key."
 
-**1. Create a key for this app only.**
-1. Sign in to the Anthropic Console with the account IntegrityAnalysis bills
-   to.
-2. Optional but worth it: create a workspace for this app (for example
-   "stanpumpR Paper Review"), so its usage is reported separately and can
-   carry its own spend limit.
-3. Under API keys, create a key in that workspace named, for example,
-   `stanpumpR-paper-review`. The Console shows it once: copy it straight into
-   step 2 or 3, and nowhere else (not into an email, a chat, or a file in a
-   repository).
-4. In the same account's settings, check that the organisation has not opted
-   in to sharing data for training and is not in the Development Partner
-   Program: Shafer's rule, "Claude is not allowed to learn from my models",
-   depends on it (`docs/paper-review-privacy.md` section 1a).
+So there are two keys:
+- **The operator's key**, every user's default. `paperReviewApiKey()` looks
+  for it in the environment variables `STANPUMPR_ANTHROPIC_API_KEY` and
+  `ANTHROPIC_API_KEY`, in that order, then `anthropic_api_key` in
+  `config.yml`, unless `paper_review_shared_key: false` is set there.
+- **A user's own key**, entered in the tab ("Use your own Anthropic API
+  key"), which wins when it is entered. It is held only in that session's
+  input, sent only to Anthropic in the request header, never stored, logged
+  or bookmarked, and the review is then billed to the user's account.
+  `paperReviewOwnKey()` accepts only text shaped like a key (`sk-ant-`), so
+  a mistyped key is said to be wrong and never sent.
 
-**2. Use it locally.** Put it in your user-level R environment file, not in
-the project (this repository does not git-ignore a project `.Renviron`),
-under its own name so that it sits beside IntegrityAnalysis's
-`ANTHROPIC_API_KEY` without replacing it. The app takes
-`STANPUMPR_ANTHROPIC_API_KEY` first and falls back to `ANTHROPIC_API_KEY`,
-which is what it uses today.
-1. In R, `file.edit("~/.Renviron")`.
-2. Add the line `STANPUMPR_ANTHROPIC_API_KEY=<the key>` and save. Leave the
-   existing `ANTHROPIC_API_KEY` line alone.
-3. Restart R. Check it is set without printing it:
-   `nzchar(Sys.getenv("STANPUMPR_ANTHROPIC_API_KEY"))` should be `TRUE`.
-4. Run the app as in "Run it locally" above. (Alternatively put
-   `anthropic_api_key: "<the key>"` in the worktree's `config.yml`, which is
-   git-ignored.)
+**Counting the operator's uses** (`R/paper-review-usage.R`). Every review
+sent with the operator's key that reached the API is reported, with only the
+coarse metadata `docs/paper-review-privacy.md` section 1a allows (the time,
+the token counts, the duration, the outcome code):
+- one line on the server log, `stanpumpR Single Paper Review: Time: ...`
+  (`rsconnect::showLogs()`);
+- one email to the operator, sent from a background process, whose subject is
+  always **"stanpumpR Single Paper Review: shared key used"**: searching the
+  mailbox for that subject counts the uses. It goes to
+  `paper_review_usage_email` in `config.yml`, or else to the app's own mail
+  account (`email_username`), and is not sent without the mail credentials.
 
-**3. Use it on shinyapps.io.** shinyapps.io has no environment variables, so
-the key goes into the deployed `config.yml`:
-- *From GitHub Actions* (the way stanpumpR itself deploys): add a repository
-  secret, for example `PAPER_REVIEW_ANTHROPIC_API_KEY`, under Settings →
-  Secrets and variables → Actions. The paper-review deploy workflow (not yet
-  written) writes it into the `config.yml` it deploys as `anthropic_api_key`,
-  exactly as `shiny-deploy-production.yaml` writes `email_password`.
-- *By hand from your machine*: deploy with `config.yml` (git-ignored, holding
-  `anthropic_api_key`) in `appFiles`.
+The count the app itself prints is for its R process only: shinyapps.io keeps
+no disk, and the process restarts when the app sleeps or is redeployed. The
+mailbox, and the Anthropic Console's usage page for the key, are the running
+totals.
 
-Either way the key then sits in the app's bundle on Posit's servers, as the
-email password already does. Revoking it in the Console stops it everywhere;
-make a new key and redeploy to rotate it.
+**The limit** (Shafer, 2026-11-10: stop after 200 papers, so that free access
+cannot be used to run up thousands of dollars). Before each review with the
+operator's key, `paperReviewSharedKeyAdmit()` counts the usage emails in the
+mail account's **Sent folder** over IMAP (`[Gmail]/Sent Mail`, searched for the
+subject above, from a background process), which survives restarts and
+redeploys and is shared by every process, and adds the reviews this process
+has started whose email has not yet gone. Past
+`PAPER_REVIEW_SHARED_KEY_LIMIT` (200; `paper_review_shared_key_limit` in
+`config.yml` changes it) the key is not used: the user is asked for their own,
+and that R process offers the key to no new session. A count that cannot be
+read refuses the key too (the limit fails closed), so an IMAP outage means
+users bring their own keys until it passes. Without the mail credentials
+there is no mailbox to count, and the limit holds per R process only. What
+it cannot see: another process's reviews still in progress, so a burst of
+simultaneous reviews on several processes can pass the limit by a few. Do not
+delete the usage emails from the Sent folder, which is the count; to allow
+more reviews, raise the limit. **Set a monthly spend limit on the key's
+workspace in the Anthropic Console as well**: that ceiling holds whatever
+happens in the app. A review costs about $0.80 at effort `high`, and at most
+about $2.75 (128,000 output tokens).
+
+**On shinyapps.io** (`.github/workflows/shiny-deploy-production.yaml`):
+the production deploy writes `anthropic_api_key` into the deployed
+`config.yml` from the first of these secrets that is set:
+`PAPER_REVIEW_ANTHROPIC_API_KEY`, `STANPUMPR_ANTHROPIC_API_KEY`,
+`ANTHROPIC_API_KEY` (a repository secret or one of the `production`
+environment). Two optional Actions **variables** (Settings → Secrets and
+variables → Actions → Variables):
+- `PAPER_REVIEW_USAGE_EMAIL`: where each use is reported (the limit counts the
+  sending account's Sent folder, wherever the emails are delivered);
+- `PAPER_REVIEW_SHARED_KEY`: set it to `false` to withdraw the operator's
+  key (users must then enter their own), then re-run the production deploy
+  (Actions → Deployment Production → Run workflow).
+
+The run's summary says whether the shared key was set, never its value. The
+key then sits in the app's bundle on Posit's servers, as the email password
+already does. The PR preview is never given it (`shiny-pr-2-deploy.yaml`
+runs a PR's own code), so a preview reviews only with a key a user enters.
+Revoking the key in the Console stops it everywhere; make a new key, update
+the secret and redeploy to rotate it.
+
+**Locally**, put the key in the user-level R environment file, not in the
+project (this repository does not git-ignore a project `.Renviron`):
+`file.edit("~/.Renviron")`, add `STANPUMPR_ANTHROPIC_API_KEY=<the key>` (or
+keep the existing `ANTHROPIC_API_KEY`), restart R, and check without printing
+it: `nzchar(Sys.getenv("STANPUMPR_ANTHROPIC_API_KEY"))`. Alternatively put
+`anthropic_api_key: "<the key>"` in the worktree's git-ignored `config.yml`.
+
+**A separate key for this app** is still worth making before wider use, so
+that its spend shows apart from IntegrityAnalysis's and it can be revoked on
+its own: in the Anthropic Console, a workspace for this app (for example
+"stanpumpR Paper Review"), which can carry its own spend limit, and a key in
+it named for it. Check in the same account's settings that the organisation
+has not opted in to sharing data for training and is not in the Development
+Partner Program: Shafer's rule, "Claude is not allowed to learn from my
+models", depends on it (`docs/paper-review-privacy.md` section 1a).
 
 ## Open decisions
 
@@ -517,8 +575,8 @@ allowed to learn from my models. Claude is allowed to see coarse metadata."
    - The host keeps the app's stdout and stderr as its logs; the app writes
      nothing about a paper to either (tested).
    - One R process serves several sessions on shinyapps.io, so the
-     minutes-long API call must move off the main thread (Deferred, above)
-     before real use there.
+     minutes-long API call runs in a background process (Deferred, above;
+     done 2026-11-10).
 4. `[decided]` **Training: "Claude is not allowed to learn from my models.
    Claude is allowed to see coarse metadata."** (2026-10-30, quoted above.)
    Recorded as a requirement on the deployment in
@@ -541,3 +599,57 @@ allowed to learn from my models. Claude is allowed to see coarse metadata."
    any upload: read into memory, its bytes dropped once the extraction
    returns, nothing written to disk, logged, digested or committed, and the
    extraction and review discarded when the test ends.
+   **Updated 2026-11-10:** Shafer, asking for a live test of the deployed
+   key, "use papers in my stanpumpRPapers in my Google Drive", so a session
+   may now take a test paper from the archive on his request (read-only,
+   through the Google Drive connector, downloaded to the session's
+   scratchpad and never committed, as `AGENTS.md` says of the archive).
+7. `[decided]` **Nothing held on the server** (Shafer, 2026-11-10): "I am
+   uncomfortable with leaving a finished review on the server, because I
+   believe that 'single paper review' will be used to review submissions to
+   peer reviewed journals. I don't want those papers, or the review, held on
+   the server. The documentation should affirm the 'nothing held' policy in
+   unambiguous language." Asked after the first live review on production
+   outlasted the page that requested it, when keeping a finished review on
+   the server for the user to collect was proposed as a fix and rejected. A
+   review that finishes after its session ended is dropped unread; the
+   download is the only copy that outlives a session. Recorded as a
+   requirement in `docs/paper-review-privacy.md` section 1a, and said to
+   users in `inst/paper-review/help.md` (*Nothing is kept on the server*).
+8. `[decision]` **The effort level, and whether users choose it** (asked
+   2026-11-10). The app runs Claude Opus 5.5 at effort `high` (Shafer: "I
+   care more about getting this right than getting fast answers. Also, I am
+   not constrained by cost. However, my defaults are not necessarily the
+   right defaults for a program that is publicly available, or for a program
+   where I'm footing the initial bill for test users."). He pictures a
+   slider from "fast, inexpensive, less accurate" to "slow, expensive, more
+   accurate". To be decided on the calibration in
+   `tools/paper-review-calibration/` (20 library papers scored against their
+   digest cards at all five effort levels): the default level, whether the
+   choice is offered and how each level is described, and the app's
+   64,000-token and 20-minute limits.
+
+   **The calibration has run** (2026-11-10; `docs/paper-review-calibration.md`:
+   18 of the 20 papers, the two scans being too large for the Drive
+   connector, 126 reviews, about $135). Its recommendation: keep `high`, the
+   lowest level that reads every modern paper's model in full and never
+   failed (median 3.5 minutes, longest 7, about $0.78); if a choice is
+   offered, offer only `medium` beside it (median 2.2 minutes, about $0.54,
+   the same extraction on a paper with one model, less on a paper with
+   several), since `low` returned invalid JSON in one review in six and
+   `xhigh` and `max` found nothing more while running past the 64,000-token
+   limit (a third of `xhigh` runs, every `max` run); raise `max_tokens` to
+   128,000 (`high` used up to 56,348); keep the 20-minute limit. The same
+   request that stalled on production for Hallik 2020 took 2.4 and 3.1
+   minutes here, so the stall was not the model's reading time. Still for
+   Shafer: whether to offer the choice at all.
+   The calibration also found that most error findings on these verified
+   papers are false alarms from the checks themselves (a group that is not a
+   model checked as one, conditions the `at` patient cannot carry, decrement
+   times without their infusion, an individual compared with a group's
+   model), which no choice of effort cures.
+
+   **Decided** (Shafer, 2026-11-10): `max_tokens` raised to 128,000 and
+   `high` kept as the default (`PAPER_REVIEW_MAX_TOKENS`,
+   `PAPER_REVIEW_EFFORT` in `R/paper-review-api.R`). Still open: whether to
+   offer the user a choice of effort.
