@@ -20,7 +20,7 @@ here (`helpDrugFdaLabelHTML()`, `R/fda-labels.R`). The columns are:
 | `title` | the label's title: the digest card's citation for an `archive` file, DailyMed's title for a `dailymed` one |
 | `application` | NDA, ANDA or BLA number, where known |
 | `published` | the label's revision or posting date, where known |
-| `source` | `archive`: copied from the stanpumpRPapers archive, which its digest card (`card`) reads page by page, so it stays the version the card cites. `dailymed`: the current label, as FDA's Structured Product Labeling, downloaded from [DailyMed](https://dailymed.nlm.nih.gov/) (the National Library of Medicine's distribution of the labels FDA holds) by its `setid` |
+| `source` | `archive`: copied from the stanpumpRPapers archive, which its digest card (`card`) reads page by page, so it stays the version the card cites. `dailymed`: the current label, as FDA's Structured Product Labeling, downloaded from [DailyMed](https://dailymed.nlm.nih.gov/) (the National Library of Medicine's distribution of the labels FDA holds) by its `setid`. `drugsatfda`: saved by hand from [Drugs@FDA](https://www.accessdata.fda.gov/scripts/cder/daf/), for a label DailyMed no longer carries |
 | `setid` | DailyMed set id (for a `dailymed` file) |
 | `card` | the digest card in `../digests/` that reads this file, if any |
 | `md5` | checksum of the file |
@@ -44,15 +44,16 @@ names (`NJ_dailymed-<setid prefix>.pdf`), as their cards cite them.
    outside the US (fluindione, acenocoumarol, vildagliptin, Lecigon), the investigational cetagliptin,
    and plain aspirin (an OTC monograph product). Osmolex ER (`amantadineER`) has been withdrawn and is no
    longer on DailyMed. Its labels are on Drugs@FDA, which refuses automated downloads, so it is
-   `not_obtained`.
+   `not_obtained` at first. It was added by hand from Drugs@FDA on 2026-11-13, its original 2018
+   approval label (`source` `drugsatfda`).
 
 Drugs@FDA (`accessdata.fda.gov`) is the FDA's own archive of every approved label version, but it blocks
 scripted downloads. DailyMed carries the same labels, current version only, and permits them.
 
 ## Keeping it current
 
-`data-raw/fdaLabels.R` checks every file against the index (present, checksum) and, run with
-`refresh = TRUE`, downloads newer versions of the `dailymed` labels. An archive file is never replaced
+`data-raw/fdaLabels.R` checks every file against the index (present, checksum, no unlisted PDF, every card named present); CI runs that check on every push and pull request (`.github/workflows/fda-labels.yaml`), since R CMD check never sees this folder. `refreshFdaLabels(download = TRUE)` downloads newer
+versions of the `dailymed` labels. An archive file is never replaced
 here, because its card cites its pages. A new label for an archive drug goes into the archive first, gets
 its card, and is then copied here. `tests/testthat/test-fda-labels.R` checks that every drug a user can
 dose has a row in the index.
