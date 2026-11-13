@@ -1,4 +1,4 @@
-# Paclitaxel (R/drugs_paclitaxel.R): Joerger 2006, three compartments with
+# Paclitaxel (R/drugs_paclitaxelJoerger.R): Joerger 2006, three compartments with
 # saturable elimination and saturable distribution, on the Michaelis-Menten
 # engine's saturableDistribution block.  Drafted by Claude Code, 2026-11-06.
 
