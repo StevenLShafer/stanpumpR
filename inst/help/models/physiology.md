@@ -1,5 +1,3 @@
-# Physiology sliders: liver, kidney, heart and gut
-
 The **Physiology** panel in the left-hand column asks *what if*: what if hepatic
 function were half of normal, the kidneys shut down, or cardiac output fell
 by two thirds? It has four sliders. Each is a multiple of normal function, on
