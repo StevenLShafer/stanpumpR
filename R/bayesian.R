@@ -423,8 +423,8 @@ bayesianFitSummary <- function(drug, fit)
     if (change == 0) "as the model" else sprintf("%+d%%", change)
   }
   sprintf("%s: clearance x %s (%s), volume x %s (%s); %d %s.",
-          drug, formatC(fit$clearance, digits = 3, format = "fg"), pct(fit$clearance),
-          formatC(fit$volume, digits = 3, format = "fg"), pct(fit$volume),
+          drug, trimws(formatC(fit$clearance, digits = 3, format = "fg")), pct(fit$clearance),
+          trimws(formatC(fit$volume, digits = 3, format = "fg")), pct(fit$volume),
           nrow(fit$observations),
           ngettext(nrow(fit$observations), "measurement", "measurements"))
 }

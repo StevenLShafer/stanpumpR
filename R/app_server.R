@@ -442,8 +442,23 @@ app_server <- function(input, output, session) {
   # The Help tab: see R/help-server.R.  Loading a teaching scenario from the
   # help writes doseTable() and eventTable() directly, as a URL restore does,
   # and sets the time settings through timeApi.
+  # The Bayesian Updating panel (R/bayesian-server.R): the measured
+  # concentrations and the two variabilities.  Created before the help, whose
+  # scenarios can carry measurements, because a ?scenario= link loads its
+  # scenario while this function is still running (below).  Its arguments are
+  # functions, read only once the session runs, so nothing they name needs to
+  # exist yet.
+  bayes <- bayesianServer(
+    input, output, session,
+    doseTableClean = function() doseTableClean(),
+    doseTableFormat = function() doseTableFormat(),
+    drugDefaults = function() drugDefaults(),
+    result = function() bayesUpdate()
+  )
+
+  # A scenario's measured concentrations go into the Bayesian Updating table.
   helpApi <- helpServer(input, output, session, doseTable, eventTable, drugDefaults,
-                        timeApi = timeApi)
+                        timeApi = timeApi, restoreMeasurements = bayes$restore)
 
   # Single Paper Review, a tab of its own that shares nothing with the
   # simulator (R/paper-review-app.R).
@@ -1258,16 +1273,6 @@ app_server <- function(input, output, session) {
         individual = individual
       )
   }
-
-  # The Bayesian Updating panel (R/bayesian-server.R): the measured
-  # concentrations and the two variabilities.
-  bayes <- bayesianServer(
-    input, output, session,
-    doseTableClean = function() doseTableClean(),
-    doseTableFormat = function() doseTableFormat(),
-    drugDefaults = function() drugDefaults(),
-    result = function() bayesUpdate()
-  )
 
   # The fits of the last update, reused for any drug whose inputs have not
   # changed (bayesianUpdateDrugs()).  A plain variable, as ivSimulationCache.

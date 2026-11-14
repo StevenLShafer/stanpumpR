@@ -365,3 +365,68 @@ test_that("the sidebar's measurements update the drug in the app", {
 })
 
 .sprglobals$config <- oldConfig
+
+# --- Teaching scenarios that carry measurements (R/help-scenarios.R) ---------
+
+test_that("a scenario's measurements are checked against its doses and its plot", {
+  s <- helpScenarioById("warfarin-bayesian-inr")
+  expect_length(helpScenarioCheck(s), 0)
+  expect_equal(nrow(s$measurements), 4)
+  bad <- s
+  bad$measurements <- helpMeasurements(c("fentanyl", 1440, 1))
+  expect_match(helpScenarioCheck(bad), "does not dose: fentanyl", all = FALSE)
+  bad$measurements <- helpMeasurements(c("warfarin", 0, 1.2))
+  expect_match(helpScenarioCheck(bad), "not after its first dose", all = FALSE)
+  bad$measurements <- helpMeasurements(c("warfarin", 30 * MINS_PER_DAY, 1.2))
+  expect_match(helpScenarioCheck(bad), "beyond Max time", all = FALSE)
+  bad$measurements <- helpMeasurements(c("warfarin", 1440, 0))
+  expect_match(helpScenarioCheck(bad), "invalid measured concentration", all = FALSE)
+  bad <- s
+  bad$options$bayesResidualVariability <- 0
+  expect_match(helpScenarioCheck(bad), "bayesResidualVariability out of range", all = FALSE)
+  # every scenario carries a table (empty when it has no measurements) and
+  # the variabilities a load sets
+  for (other in helpScenarios()) {
+    expect_true(is.data.frame(other$measurements), info = other$id)
+    expect_equal(other$options$bayesPKVariability, BAYES_PK_VARIABILITY_DEFAULT, info = other$id)
+    expect_equal(other$options$bayesResidualVariability, BAYES_RESIDUAL_VARIABILITY_DEFAULT,
+                 info = other$id)
+  }
+})
+
+test_that("loading a scenario puts its measurements in the table, or clears it", {
+  session <- shiny::MockShinySession$new()
+  doseTable <- shiny::reactiveVal(doseTableInit)
+  eventTable <- shiny::reactiveVal(eventTableInit)
+  got <- NULL
+  restore <- function(measurements, format) got <<- list(m = measurements, format = format)
+  s <- helpScenarioById("warfarin-bayesian-inr")
+  applyHelpScenario(session, s, doseTable, eventTable, restoreMeasurements = restore)
+  expect_identical(got$m, s$measurements)
+  expect_equal(got$format, timeFormat("days", "relative"))
+  # a scenario without measurements clears what the previous session had
+  applyHelpScenario(session, helpScenarioById("propofol-bolus"), doseTable, eventTable,
+                    restoreMeasurements = restore)
+  expect_equal(nrow(got$m), 0)
+  # and the page lists them, with the two variabilities
+  html <- helpScenarioPageHTML("warfarin-bayesian-inr")
+  expect_match(html, "Measured concentrations (Bayesian Updating)", fixed = TRUE)
+  expect_match(html, "1.3 INR", fixed = TRUE)
+  expect_match(html, "Residual variability", fixed = TRUE)
+  expect_false(grepl("Residual variability", helpScenarioPageHTML("propofol-bolus"), fixed = TRUE))
+})
+
+test_that("a ?scenario= link with measurements fills the Bayesian table as the session starts", {
+  oldConfig <- .sprglobals$config
+  .sprglobals$config <- DEFAULT_CONFIG
+  withr::defer(.sprglobals$config <- oldConfig)
+  s <- helpScenarioById("warfarin-bayesian-inr")
+  local_mocked_bindings(deepLinkFromQuery = function(...) list(scenario = s, help = NULL, problems = character(0)))
+  shiny::testServer(app_server, {
+    expect_false(startupMenuOpen)
+    stored <- bayes$rows()
+    expect_equal(stored$rows$Time, c("3", "5", "7", "10"))
+    expect_equal(stored$rows$Concentration, c("1.3", "1.6", "1.9", "2.2"))
+    expect_equal(stored$format, timeFormat("days", "relative"))
+  })
+})

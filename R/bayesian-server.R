@@ -122,8 +122,9 @@ bayesUnitsText <- function(drugs, drugDefaults) {
 #'   this
 #' @returns a list: `observations()` (debounced, minutes), `pkVariability()`,
 #'   `residualVariability()`, `rows` (the table as typed, for the bookmark)
-#'   and `restore(observations)`, which puts a bookmark's measurements in the
-#'   table
+#'   and `restore(observations, format)`, which puts a bookmark's or a
+#'   scenario's measurements in the table, written in `format` (by default
+#'   the dose table's); an empty table clears it
 #' @noRd
 bayesianServer <- function(input, output, session, doseTableClean, doseTableFormat,
                            drugDefaults, result) {
@@ -241,8 +242,8 @@ bayesianServer <- function(input, output, session, doseTableClean, doseTableForm
     pkVariability = pkVariability,
     residualVariability = residualVariability,
     rows = rows,
-    restore = function(observations) {
-      format <- isolate(doseTableFormat())
+    restore = function(observations, format = NULL) {
+      if (is.null(format)) format <- isolate(doseTableFormat())
       rows(list(rows = bayesObservationsToRows(observations, format,
                                                isolate(input$referenceTime)),
                 format = format))
