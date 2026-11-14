@@ -546,10 +546,12 @@ app_server <- function(input, output, session) {
 
   # The last panel clicked (imgDrugTime()), NULL before any click
   DrugTimeUnits <- reactiveVal(NULL)
-  # Its drug, or NULL: what the Edit doses dialog's buttons are about
+  # Its drug, or NULL: what the Edit doses dialog's buttons are about (they
+  # need no time)
   clickedDrug <- function() {
     x <- DrugTimeUnits()
-    if (isPlotTarget(x)) x$drug else NULL
+    drug <- if (is.list(x)) asScalarString(x$drug) else ""
+    if (nzchar(drug)) drug else NULL
   }
 
   ##########################################################
