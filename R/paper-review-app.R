@@ -54,16 +54,47 @@ paperReviewDiscard <- function(store)
   invisible(gc(verbose = FALSE))
 }
 
+#' Is a path a file Shiny's own upload wrote?
+#'
+#' Shiny writes each upload to \code{tempdir()/<24 hex digits>/<n><ext>}
+#' (its FileUploadContext and FileUploadOperation, shiny 1.14).  The path
+#' comes from the browser's input, which a page can set to anything with
+#' \code{Shiny.setInputValue()}: a forged path reached
+#' \code{paperReviewReadUpload()}, which read the file and deleted it and its
+#' directory, from a page that had uploaded nothing and ticked no box
+#' (reproduced in a headless browser, 2026-11-14, checking Carbon's UI audit,
+#' whose F6G saw only that a malformed one stopped the observer).
+#'
+#' @param datapath the upload's path
+#' @returns TRUE for one existing file of that shape, with every symbolic link
+#'   and \code{..} resolved first
+#' @keywords internal
+paperReviewIsUploadPath <- function(datapath)
+{
+  if (!is.character(datapath) || length(datapath) != 1 || is.na(datapath) ||
+      !file.exists(datapath) || dir.exists(datapath))
+    return(FALSE)
+  path <- normalizePath(datapath, mustWork = TRUE)
+  dir <- dirname(path)
+  grepl("^[0-9]+([.][A-Za-z0-9]+)?$", basename(path)) &&
+    grepl("^[0-9a-f]{24}$", basename(dir)) &&
+    identical(dirname(dir), normalizePath(tempdir(), mustWork = TRUE))
+}
+
 #' Read an upload into memory and delete its temporary file
 #'
 #' Shiny writes each upload to a temporary directory of its own; the file is
-#' read and then deleted, with its directory when that is left empty.
+#' read and then deleted, with its directory when that is left empty.  A path
+#' that is not such an upload (\code{paperReviewIsUploadPath()}) is neither
+#' read nor deleted.
 #'
 #' @param datapath the upload's path, from \code{input$<id>$datapath}
-#' @returns the file's bytes
+#' @returns the file's bytes, or none for a path that is not an upload
 #' @keywords internal
 paperReviewReadUpload <- function(datapath)
 {
+  if (!paperReviewIsUploadPath(datapath)) return(raw(0))
+  datapath <- normalizePath(datapath, mustWork = TRUE)
   on.exit({
     unlink(datapath, force = TRUE)
     dir <- dirname(datapath)
@@ -288,8 +319,8 @@ paperReviewServer <- function(input, output, session)
         "(which your Anthropic account then pays for), and never saved or logged."),
       shiny::uiOutput(session$ns("ownKeyNote")))))
   output$ownKeyNote <- shiny::renderUI({
-    typed <- input$ownKey
-    if (!is.character(typed) || !nzchar(trimws(typed))) return(NULL)
+    typed <- asScalarString(input$ownKey)
+    if (!nzchar(trimws(typed))) return(NULL)
     if (is.null(ownKey()))
       htmltools::p(class = "text-danger", style = "margin: 4px 0 0;",
                    "That is not an Anthropic API key (they begin sk-ant-), so it is not used.")
@@ -359,7 +390,13 @@ paperReviewServer <- function(input, output, session)
 
   receive <- function(file, slot, label) {
     if (is.null(file)) return()
-    bytes <- paperReviewReadUpload(file$datapath)
+    # One upload: Shiny's is a data frame of one row, and a value that is not
+    # (a string, several paths) stopped this observer and ended the session
+    # (Carbon's UI audit, 2026-11-14, F6G).  Its path is checked where it is
+    # read (paperReviewIsUploadPath()).
+    datapath <- if (is.list(file)) file$datapath else NULL
+    if (!is.character(datapath) || length(datapath) != 1) return()
+    bytes <- paperReviewReadUpload(datapath)
     if (!paperReviewIsPdf(bytes)) {
       status(paste(label, "is not a PDF and was discarded."))
       return()
@@ -601,6 +638,10 @@ paperReviewServer <- function(input, output, session)
 
   # The user picked another unit: convert what is shown.
   shiny::observeEvent(input$timeUnit, {
+    # One of the offered units: another was stored as the table's unit, and
+    # every later conversion read it as no unit (Carbon's UI audit,
+    # 2026-11-14, F6G)
+    if (!isTRUE(asScalarString(input$timeUnit) %in% PAPER_REVIEW_SIM_TIME_UNITS)) return()
     if (identical(input$timeUnit, tableUnit())) return()
     # A Max time that cannot be used (blank, say) becomes the default rather
     # than following the table into the new unit as NA.
@@ -752,7 +793,7 @@ paperReviewServer <- function(input, output, session)
     if (is.null(r)) return(NULL)
     usable <- Filter(function(a) isTRUE(a$ok), r$absorptions %or% list())
     if (length(usable) == 0) return(NULL)
-    own <- usable[[input$regimen %or% ""]]
+    own <- usable[[asScalarString(input$regimen)]]
     if (is.null(own)) usable[[1]] else own
   })
 
@@ -796,7 +837,7 @@ paperReviewServer <- function(input, output, session)
                     title = s$drug$defaults$Drug) +
       ggplot2::theme_bw(base_size = 14)
     r <- currentReview()
-    if (nzchar(input$overlay %or% "")) {
+    if (nzchar(asScalarString(input$overlay))) {
       fig <- Filter(function(f) identical(f$id, input$overlay), r$figures)
       if (length(fig)) {
         pts <- fig[[1]]$points

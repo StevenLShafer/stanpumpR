@@ -48,7 +48,7 @@ app_server <- function(input, output, session) {
     # then, every call recorded.  An NA here stopped every profiled observer,
     # the bookmarking one included, so emptying the box ended the session at
     # the next change (keyboard review of 2026-11-02).
-    threshold <- suppressWarnings(as.numeric(threshold))
+    threshold <- asScalarNumeric(threshold)
     if (!is_valid_number(threshold)) threshold <- 0
     start_time <- proc.time()[["elapsed"]]
     value <- force(expr)
@@ -324,14 +324,14 @@ app_server <- function(input, output, session) {
   # Min time up to Max time pushes Max time up, or, at the end of the
   # slider, stops a step short.
   observeEvent(input$maximum, ignoreInit = TRUE, {
-    maximum <- suppressWarnings(as.numeric(input$maximum))
-    minimum <- suppressWarnings(as.numeric(input$minimum))
+    maximum <- asScalarNumeric(input$maximum)
+    minimum <- asScalarNumeric(input$minimum)
     if (!is_valid_number(maximum) || !is_valid_number(minimum) || minimum < maximum) return()
     updateSliderInput(session, "minimum", value = snapMinimum(minimum, maximum, timeUnit()))
   })
   observeEvent(input$minimum, ignoreInit = TRUE, {
-    maximum <- suppressWarnings(as.numeric(input$maximum))
-    minimum <- suppressWarnings(as.numeric(input$minimum))
+    maximum <- asScalarNumeric(input$maximum)
+    minimum <- asScalarNumeric(input$minimum)
     if (!is_valid_number(maximum) || !is_valid_number(minimum) || minimum < maximum) return()
     r <- timeSliderRange(timeUnit())
     if (minimum + r$step <= r$max) {
@@ -521,12 +521,16 @@ app_server <- function(input, output, session) {
 
   # Get reference time from client
   # The reference time is passed from app.js on event shiny:sessioninitialized
+  # Read safely: input$referenceTime != '' on a value that was not one
+  # string, and getReferenceTime() on a client_time that was not, ended the
+  # session (Carbon's UI audit, 2026-11-14, F6E)
   observeEvent(input$client_time, {
-    if (input$referenceTime != '') {
+    reference <- input$referenceTime
+    if (!is.null(reference) && !identical(reference, "")) {
       return()
     }
     outputComments("In observeEvent(input$client_time,...", level = DEBUG_LEVEL_VERBOSE)
-    time <- input$client_time
+    time <- asScalarString(input$client_time)
     outputComments("Reference time from client:", time)
     start <- getReferenceTime(time)
     outputComments("Calculated reference time:", start)
@@ -540,7 +544,13 @@ app_server <- function(input, output, session) {
     reqReference(selectorFormat())
   })
 
-  DrugTimeUnits <- reactiveVal("")
+  # The last panel clicked (imgDrugTime()), NULL before any click
+  DrugTimeUnits <- reactiveVal(NULL)
+  # Its drug, or NULL: what the Edit doses dialog's buttons are about
+  clickedDrug <- function() {
+    x <- DrugTimeUnits()
+    if (isPlotTarget(x)) x$drug else NULL
+  }
 
   ##########################################################
   # Code to save state in url and then restore from url
@@ -758,6 +768,29 @@ app_server <- function(input, output, session) {
     tryCatch(isolate(weight()), error = function(e) 70)
   }
 
+  showDoseTableFull <- function() {
+    showNotification(sprintf("The dose table holds at most %d doses. Delete some doses first.",
+                             MAX_DOSE_ROWS - 1L), type = "error", duration = 10)
+  }
+
+  # A table a dialog's button built (Add a dose, Skip next dose, Stop, Edit
+  # doses, Suggest Dosing), written to doseTable(): the gas rules applied
+  # first, as the doseTable() observer below would, so that the rows they add
+  # are counted, then held to the row limit (doseTableWithinLimit()).
+  # FALSE, said and nothing written, when the doses would be more than the
+  # table holds; the caller then leaves its dialog open.  Each wrote its table
+  # unchecked, and one row past the limit cost the dose grid, the plot and
+  # the undo history (Carbon's UI audit, 2026-11-14, F3).
+  commitDoseTable <- function(dt) {
+    dt <- doseTableWithinLimit(applyGasTableRules(dt, gasVentilationWeight()))
+    if (is.null(dt)) {
+      showDoseTableFull()
+      return(FALSE)
+    }
+    doseTable(dt)
+    TRUE
+  }
+
   observeEvent(doseTable(), {
     # Every route into doseTable() -- Apply Changes, the add-dose dialog,
     # Suggest Dosing, restoring a bookmark -- passes through here, so this is
@@ -765,8 +798,20 @@ app_server <- function(input, output, session) {
     # table sets doseTable() again, which brings this observer straight back.
     fixed <- applyGasTableRules(doseTable(), gasVentilationWeight())
     if (!identicalTable(fixed, doseTable())) {
-      doseTable(fixed)
-      return()
+      # The dialogs' tables arrive with the rules applied and within the row
+      # limit (commitDoseTable()); a link's table (restoredDoseTable() keeps
+      # MAX_DOSE_ROWS - 1 rows) may have no room for the rows they add, and
+      # is then kept as it came rather than stored past the limit, which
+      # would cost the grid and the plot.
+      fixed <- doseTableWithinLimit(fixed)
+      if (!is.null(fixed)) {
+        doseTable(fixed)
+        return()
+      }
+      showNotification(sprintf(paste(
+        "The dose table holds at most %d doses, which leaves no room for the oxygen or",
+        "ventilation row an inhaled agent needs. Delete some doses."), MAX_DOSE_ROWS - 1L),
+        type = "warning", duration = NULL)
     }
     # A newly applied or restored table becomes the draft and starts a fresh
     # history: there are no earlier drafts to step back to.
@@ -833,7 +878,15 @@ app_server <- function(input, output, session) {
     # nitrous oxide, flows rounded to 0.1 L/min, and a ventilation row.
     withVentilation <- applyGasTableRules(data, gasVentilationWeight())
     if (!identicalTable(withVentilation, data)) {
-      data <- withVentilation
+      # The rows the gas rules add must fit too: nitrous oxide typed into
+      # the last rows took the draft past the limit, and the grid showed only
+      # an error (Carbon's UI audit, 2026-11-14, F3).  Refused, the grid is
+      # sent the draft again.
+      data <- doseTableWithinLimit(withVentilation)
+      if (is.null(data)) {
+        showDoseTableFull()
+        return(FALSE)
+      }
       doseTableRefresh(doseTableRefresh() + 1)
     }
 
@@ -915,30 +968,21 @@ app_server <- function(input, output, session) {
     })
   }
 
-  weightUnit <- reactive({
-    req(input$weightUnit)
-    as.numeric(input$weightUnit)
-  })
-  heightUnit <- reactive({
-    req(input$heightUnit)
-    as.numeric(input$heightUnit)
-  })
-  ageUnit <- reactive({
-    req(input$ageUnit)
-    as.numeric(input$ageUnit)
-  })
-  weight <- reactive({
-    req(input$weight)
-    input$weight * weightUnit()
-  })
-  height <- reactive({
-    req(input$height)
-    input$height * heightUnit()
-  })
-  age <- reactive({
-    req(input$age)
-    input$age * ageUnit()
-  })
+  # Each one number, or nothing yet (req()): a vector sent for Age reached
+  # assumedCreatinine()'s if() through the creatinine placeholder's observer
+  # and ended the session (Carbon's UI audit, 2026-11-14, F6E).  An entry
+  # that is not one number is said in the plot area (patientEntryProblem()).
+  scalarInput <- function(x) {
+    x <- asScalarNumeric(x)
+    req(is.finite(x))
+    x
+  }
+  weightUnit <- reactive(scalarInput(input$weightUnit))
+  heightUnit <- reactive(scalarInput(input$heightUnit))
+  ageUnit <- reactive(scalarInput(input$ageUnit))
+  weight <- reactive(scalarInput(input$weight) * weightUnit())
+  height <- reactive(scalarInput(input$height) * heightUnit())
+  age <- reactive(scalarInput(input$age) * ageUnit())
   sex <- reactive({
     req(input$sex)
     if (length(input$sex) != 1L || !input$sex %in% SEX_VALUES) {
@@ -1297,6 +1341,9 @@ app_server <- function(input, output, session) {
         },
         antiseizureInteractions = antiseizureInteractions(),
         fits = bayesFitCache,
+        # A level after the end of the plot is set aside, so the fit never
+        # simulates further than the plot does, whose limits are kept above
+        maximum = plotMaximum(),
         onFit = function(drug) {
           if (!spinning) {
             shinycssloaders::showPageSpinner(
@@ -1761,8 +1808,13 @@ app_server <- function(input, output, session) {
   })
 
   # Send Slide -----------------------------
+  # The comments as one string: a value no text box sends (NULL, a vector)
+  # is none.  Read as it came, the checks below stopped on it and ended the
+  # session (Carbon's UI audit, 2026-11-14, F6D).
+  emailComments <- function() asScalarString(input$emailComments)
+
   observeEvent(input$emailComments, {
-    shinyjs::toggle("commentSafe", condition = nzchar(input$emailComments))
+    shinyjs::toggle("commentSafe", condition = nzchar(emailComments()))
   })
 
   observe({
@@ -1777,9 +1829,9 @@ app_server <- function(input, output, session) {
       error <- NULL
       if (!isEmailValid(input$recipient)) {
         error <- "Please enter a valid recipient email address."
-      } else if (nzchar(input$emailComments) && !input$commentSafe) {
+      } else if (nzchar(emailComments()) && !isTRUE(input$commentSafe)) {
         error <- "Please click the box confirming there is no PHI in the comments."
-      } else if (nchar(input$emailComments) > MAX_INPUT_TEXT) {
+      } else if (nchar(emailComments()) > MAX_INPUT_TEXT) {
         error <- glue::glue("Comment is too long, please limit to {MAX_INPUT_TEXT} characters.")
       } else if (emailSendCount() >= EMAIL_SESSION_LIMIT) {
         error <- "This session has reached its email limit."
@@ -1809,7 +1861,7 @@ app_server <- function(input, output, session) {
       }
 
       values <- list(
-        comments = input$emailComments,
+        comments = emailComments(),
         DT = doseTableClean(),
         url = url(),
         ageUnit = ageUnit(),
@@ -1894,7 +1946,15 @@ app_server <- function(input, output, session) {
   })
 
   output$drug_references <- renderUI({
-    simulatedDrugs <- tryCatch(drugs(), shiny.silent.error = function(err) NULL)
+    # A simulation that stopped is said in the plot area (plotMessage());
+    # here it printed the bare error where the references go (Carbon's UI
+    # audit, 2026-11-14, F6F)
+    failed <- FALSE
+    simulatedDrugs <- tryCatch(drugs(), shiny.silent.error = function(err) NULL,
+                               error = function(err) { failed <<- TRUE; NULL })
+    if (failed) {
+      return(span("The references are listed once the simulation can be drawn.", class = "text-muted"))
+    }
     if (length(simulatedDrugs) == 0) {
       return(span("No drugs in the current simulation.", class = "text-muted"))
     }
@@ -1920,7 +1980,8 @@ app_server <- function(input, output, session) {
   # ("3.47 weeks"), or as HH:MM in clock mode -- the MEAC and interaction
   # panels used to say "minutes" even then.  See utils-time-display.R.
   xy_str <- function(e) {
-    if (is.null(e$panelvar1)) return()
+    e <- plotEvent(e)
+    if (is.null(e)) return()
     outputComments("In xy_str")
     outputComments("e$panelvar1 = ", e$panelvar1)
 
@@ -2064,6 +2125,7 @@ app_server <- function(input, output, session) {
         outputComments("in click()")
         x <- imgDrugTime(input$plot_click) |> profileCode("imgDrugTime() in input$plot_click")
         outputComments("in click(), returning from imgDrugTime()")
+        if (!isPlotTarget(x)) return()
         DrugTimeUnits(x)
 
         # The MAC panel is a derived series, not a drug: no dose to add.
@@ -2086,6 +2148,7 @@ app_server <- function(input, output, session) {
       profileCode({
         outputComments("in double click routine")
         x <- imgDrugTime(input$plot_dblclick)
+        if (!isPlotTarget(x)) return()
         DrugTimeUnits(x)
 
         if (x$drug %in% c(PLOT_ID_MEAC, PLOT_ID_INTERACTION, "MAC"))
@@ -2110,6 +2173,8 @@ app_server <- function(input, output, session) {
   imgDrugTime <- function(e)
   {
     outputComments("in imgDrugTime()")
+    e <- plotEvent(e)
+    if (is.null(e)) return(NULL)
     allResults <- allResultsReactive()
     plotResults <- plotResultsReactive()
     plottedDrugs <- unique(allResults$Drug)
@@ -2303,7 +2368,7 @@ app_server <- function(input, output, session) {
   # read.  doseTableClean() would drop such a row without a word, so the dose
   # dialogs refuse it, as the add-event dialog does.
   validateDoseTime <- function(x) {
-    out <- validateTime(x)
+    out <- validateEntry(x, validateTime)
     if (!nzchar(out)) return(out)
     format <- doseTableFormat()
     minutes <- displayTimeToMinutes(out, referenceFor(format), format[["unit"]])
@@ -2313,7 +2378,7 @@ app_server <- function(input, output, session) {
   observeEvent(input$addDoseBtn, {
     profileCode({
       addDoseTime <- validateDoseTime(input$addDoseTime)
-      addDoseAmount <- validateDose(input$addDoseAmount)
+      addDoseAmount <- validateEntry(input$addDoseAmount, validateDose)
       # A time or dose that could not be read ("", see R/validate-input.R and
       # validateDoseTime()) leaves the dialog open to be corrected, as the
       # add-event dialog does, rather than adding a row the simulation would
@@ -2341,9 +2406,6 @@ app_server <- function(input, output, session) {
         showNotification("Choose the units.", type = "error")
         return()
       }
-      removeModal()
-      thisDrug <- which(drugDefaults()$Drug == input$addDoseDrug)
-
       dt <- doseTable()
       # The dose goes into the first blank row; a table with none (a
       # restored bookmark, or its blank row deleted) gets one, as
@@ -2362,7 +2424,8 @@ app_server <- function(input, output, session) {
         dt <- rbind(dt, doseTableNewRow)
       }
 
-      doseTable(dt)
+      # With the table full the dialog stays open, and nothing is written
+      if (commitDoseTable(dt)) removeModal()
     }, name = "input$addDoseBtn observer")
   })
 
@@ -2404,11 +2467,15 @@ app_server <- function(input, output, session) {
     profileCode({
       target <- skipTarget()
       skip <- skipNextDose(target)
-      removeModal()
-      if (is.null(skip)) return()
+      if (is.null(skip)) {
+        removeModal()
+        return()
+      }
       dt <- skip$table
       if (dt$Drug[nrow(dt)] != "") dt <- rbind(dt, doseTableNewRow)
-      doseTable(dt)
+      # The skip writes two rows; with no room the dialog stays open
+      if (!commitDoseTable(dt)) return()
+      removeModal()
       format <- doseTableFormat()
       at <- function(m) minutesToEntryTime(m, format, referenceFor(format))
       showNotification(paste0(
@@ -2454,9 +2521,13 @@ app_server <- function(input, output, session) {
     profileCode({
       target <- skipTarget()
       ended <- stopTarget(target)
+      if (is.null(ended)) {
+        removeModal()
+        return()
+      }
+      # With no room for the stop's rows the dialog stays open
+      if (!commitDoseTable(ended$table)) return()
       removeModal()
-      if (is.null(ended)) return()
-      doseTable(ended$table)
       format <- doseTableFormat()
       showNotification(paste0(
         "Stopped ", stoppedText(ended$stopped$label), " of ", target$drug, " at ",
@@ -2599,8 +2670,9 @@ app_server <- function(input, output, session) {
   }
 
   observeEvent(input$deleteAllDosesBtn, {
-    drug <- DrugTimeUnits()$drug
+    drug <- clickedDrug()
     removeModal()
+    if (is.null(drug)) return()
     if (drugHasNonZeroDoses(doseTable(), drug)) {
       showModal(
         modalDialog(
@@ -2627,7 +2699,8 @@ app_server <- function(input, output, session) {
 
   observeEvent(input$confirmDeleteAllDoses, {
     removeModal()
-    deleteDrugDoses(DrugTimeUnits()$drug)
+    drug <- clickedDrug()
+    if (!is.null(drug)) deleteDrugDoses(drug)
   })
 
   # The Edit doses dialog's grid, drawn into the dialog as it opens (as Edit
@@ -2654,7 +2727,8 @@ app_server <- function(input, output, session) {
     input$editDosesOK,
     {
       profileCode({
-        drug <- DrugTimeUnits()$drug
+        drug <- clickedDrug()
+        if (is.null(drug)) return()
         # Only a grid drawn for this drug: none is drawn for a drug with no
         # rows, and the input then still holds the last dialog's grid, which
         # Apply wrote as this drug's doses or, with none, stopped on NULL
@@ -2734,7 +2808,9 @@ app_server <- function(input, output, session) {
 
         outputComments("doseTable after update:")
         outputComments(dt)
-        doseTable(dt)
+        # The check above counts the doses; this counts the rows the gas
+        # rules add as well
+        commitDoseTable(dt)
       }, name = "input$editDosesOK observer")
     })
 
@@ -2778,7 +2854,7 @@ app_server <- function(input, output, session) {
         # clock time of 24:00 or more, or with no readable procedure start)
         # leaves the dialog open: stored as NA it would stop every plot.
         format <- doseTableFormat()
-        clickTime <- displayTimeToMinutes(validateTime(input$clickTimeEvent),
+        clickTime <- displayTimeToMinutes(validateEntry(input$clickTimeEvent, validateTime),
                                           referenceFor(format), format[["unit"]])
         if (is.na(clickTime)) {
           showNotification(paste0("That time could not be read: enter it as ",
@@ -2786,8 +2862,23 @@ app_server <- function(input, output, session) {
           return()
         }
 
+        # One event from the list, and room for it.  An empty or vector value
+        # stopped data.frame() below and ended the session, and an event not
+        # in the list, or a 101st, made the plot an error, taking with it the
+        # Events panel, the only way back to the dialog that deletes events
+        # (Carbon's UI audit, 2026-11-14, F3 and F6C).  The dialog stays open.
         clickEvent <- input$clickEvent
+        if (!is.character(clickEvent) || length(clickEvent) != 1 ||
+            !isTRUE(clickEvent %in% eventDefaults()$Event)) {
+          showNotification("Choose an event from the list.", type = "error")
+          return()
+        }
         ET <- eventTable()
+        if (nrow(ET) >= MAX_EVENT_ROWS) {
+          showNotification(sprintf("The event table holds at most %d events.", MAX_EVENT_ROWS),
+                           type = "error")
+          return()
+        }
         ET <- data.frame(
           Time  = c(ET$Time, clickTime),
           Event = c(ET$Event, clickEvent)
@@ -3163,7 +3254,7 @@ app_server <- function(input, output, session) {
                                  "Choose lower targets."), type = "error", duration = 10)
           return()
         }
-        doseTable(dt)
+        commitDoseTable(dt)
       }, name = "input$targetOK observer")
     })
 
@@ -3224,6 +3315,7 @@ app_server <- function(input, output, session) {
         return()
       }
       removeModal()
+      edited <- newDrugDefaults
       newDrugDefaults$Drug                 <- as.character(newDrugDefaults$Drug)
       newDrugDefaults$Concentration.Units  <- as.character(newDrugDefaults$Concentration.Units)
       newDrugDefaults$Bolus.Units          <- as.character(newDrugDefaults$Bolus.Units)
@@ -3248,6 +3340,15 @@ app_server <- function(input, output, session) {
       newDrugDefaults$endCe     <- current$endCe[match(newDrugDefaults$Drug, current$Drug)]
       newDrugDefaults$Category  <- current$Category[match(newDrugDefaults$Drug, current$Drug)]
       newDrugDefaults$Class     <- current$Class[match(newDrugDefaults$Drug, current$Drug)]
+      # A drug moved between mcg and ng keeps its range, MEAC and threshold,
+      # converted (drugLibraryRescaleThresholds())
+      rescaled <- drugLibraryRescaleThresholds(newDrugDefaults, edited, current)
+      newDrugDefaults <- rescaled$table
+      if (length(rescaled$drugs) > 0) {
+        showNotification(paste0(
+          "The range, MEAC and threshold of ", paste(rescaled$drugs, collapse = ", "),
+          " were converted to the new concentration units."), type = "message", duration = 10)
+      }
 
       newDrugDefaults$Units <- drugUnitsExpand(newDrugDefaults$Units)
       drugDefaults(newDrugDefaults)
@@ -3264,8 +3365,12 @@ app_server <- function(input, output, session) {
         p("Set the threshold concentration for each drug."),
         p(class = "small text-muted",
           "Inhaled agents are in %, shown for this patient's age; the MAC row is in MAC equivalents (multiples of the age-adjusted MAC)."),
-        if (input$normalization == NORMALIZE_NONE)
-          checkboxInput("showThresholdModal", "Show time until threshold", value = input$showThreshold),
+        # identical() and isTRUE(): either value, not as a browser sends it,
+        # stopped this observer and ended the session (Carbon's UI audit,
+        # 2026-11-14, F6E)
+        if (identical(input$normalization, NORMALIZE_NONE))
+          checkboxInput("showThresholdModal", "Show time until threshold",
+                        value = isTRUE(input$showThreshold)),
         shinycssloaders::withSpinner(uiOutput("editThresholdsUI")),
         br(),
         actionButton("thresholdEditsOK", "Apply", class = "btn-primary"),

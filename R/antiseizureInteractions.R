@@ -327,12 +327,16 @@ asmSegments <- function(time, m, tolerance = ASM_INTERACTION_TOLERANCE)
 #'
 #' @param victim the victim drug
 #' @param rows the active interactions of that victim
-#' @param conc named list of each dosed drug's series (Time, Plasma)
+#' @param conc named list of each dosed drug's series (Time, Plasma), in its
+#'   plotted units
 #' @param time the evaluation grid
+#' @param toRegistry named numbers, by drug: the factor that puts its plotted
+#'   concentration in the registry's mcg/mL (mcgPerMlScale()); a drug not
+#'   named is taken as plotted in mcg/mL
 #' @returns a named list, one multiplier vector per parameter that some row
 #'   changes ("CL", "Vmax", "Km")
 #' @noRd
-asmVictimMultipliers <- function(victim, rows, conc, time)
+asmVictimMultipliers <- function(victim, rows, conc, time, toRegistry = NULL)
 {
   out <- list()
   for (p in unique(rows$parameter))
@@ -349,6 +353,11 @@ asmVictimMultipliers <- function(victim, rows, conc, time)
       series <- conc[[row$perpetrator]]
       C <- stats::approx(series$Time, series$Plasma, xout = time, rule = 2,
                          ties = mean)$y
+      # The registry's Cref and EC50 are mcg/mL; a perpetrator the Drug
+      # Library shows in ng/mL read 1000-fold high, and its induction
+      # saturated (found checking Carbon's UI audit, 2026-11-14, F4)
+      scale <- toRegistry[row$perpetrator]
+      if (length(scale) == 1 && !is.na(scale)) C <- C * scale
       m <- asmInteractionMultiplier(time, C, row)
       if (induced[k]) {
         excess <- excess + (if (self[k]) 1 else selfFold) * (m - 1)
@@ -391,7 +400,7 @@ asmSegmentPK <- function(PK, segments)
   # A drug individualized by the Bayesian update (R/bayesian.R) is rebuilt
   # as the individual's drug.
   rebuilt <- do.call(getDrugPK, c(list(drug = PK$drug), PK$covariates,
-                                  list(model = X, individual = PK$individual)))
+                                  list(model = X), pkRebuildArgs(PK)))
   PK$PK <- rebuilt$PK
   PK$oralFormulations <- rebuilt$oralFormulations
   PK$pkEvents <- keys
@@ -508,6 +517,7 @@ applyAntiseizureInteractions <- function(drugs, DT, ET, plotMaximum, plotRecover
   } else {
     time <- asmInteractionGrid(plotMaximum)
     conc <- lapply(own, function(d) d$wideOwn[, c("Time", "Plasma")])
+    toRegistry <- vapply(own, function(d) mcgPerMlScale(d$Concentration.Units), numeric(1))
     sims <- list()
     for (iteration in seq_len(ASM_INTERACTION_MAX_ITERATIONS))
     {
@@ -516,7 +526,7 @@ applyAntiseizureInteractions <- function(drugs, DT, ET, plotMaximum, plotRecover
       for (v in victims)
       {
         rows <- active[active$victim == v, , drop = FALSE]
-        m <- asmVictimMultipliers(v, rows, conc, time)
+        m <- asmVictimMultipliers(v, rows, conc, time, toRegistry)
         tempDT <- DT[DT$Drug == v, ]
         tempET <- drugs[[v]]$ET
         if (is.null(tempET)) tempET <- ET[0, , drop = FALSE]

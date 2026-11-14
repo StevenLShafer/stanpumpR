@@ -53,6 +53,11 @@
 #'   individual's pharmacokinetics as a list of \code{clearance} and
 #'   \code{volume}, each a multiple of the model's, as the Bayesian update
 #'   estimates them (\code{bayesianUpdateDrugs()}, \code{individualizeModel()}).
+#' @param libraryDefaults NULL (the default) for the package's drug library,
+#'   or the session's (\code{recalculatePK()} passes it), from which an
+#'   active metabolite's row is read: its \code{Concentration.Units} set the
+#'   scale of the metabolite formed, so a metabolite the Drug Library shows in
+#'   other units is formed in those units.
 #'
 #' @returns a list: the drug's PK sets (\code{PK}, one per PK event), its
 #'   \code{tPeak} and \code{reference}, the covariates, and the library's
@@ -93,7 +98,8 @@ getDrugPK <- function(
   model = NULL,
   cyp4f2 = CYP4F2_DEFAULT,
   gestationalAge = NULL,
-  individual = NULL
+  individual = NULL,
+  libraryDefaults = NULL
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
@@ -1089,10 +1095,15 @@ getDrugPK <- function(
   # coefficients ride along inside each PK set, so simCpCe() can hand them
   # straight to advanceClosedFormMetabolite().
   metaboliteName <- NULL
+  metaboliteRows <- NULL
   if (resolveMetabolite && !is.null(X$metabolite))
   {
     metaboliteName <- X$metabolite$name
-    metaboliteDefaults <- getDrugDefaults(metaboliteName)
+    # The session's row, with its Drug Library units: the package's was read
+    # here, so a metabolite shown in ng/mL was still formed in mcg/mL,
+    # 1000-fold low (Carbon's UI audit, 2026-11-14, F4)
+    metaboliteDefaults <- libraryDefaultsRow(metaboliteName, libraryDefaults)
+    metaboliteRows <- metaboliteDefaults
 
     # resolveMetabolite = FALSE: one level only.  A cascade such as codeine to
     # morphine to morphine-6-glucuronide would need a two-stage convolution,
@@ -1196,6 +1207,10 @@ getDrugPK <- function(
   # does not create it: a drug with no metabolite returns exactly the shape it
   # always has.
   out$metaboliteName <- metaboliteName
+  # The library rows the PK was built with, so that a rebuild from the model
+  # (pkRebuildArgs(): doseSizePK(), asmSegmentPK()) builds it with them again
+  out$drugDefaults <- drugDefaults
+  out$libraryDefaults <- metaboliteRows
   # An osmotic agent reports serum osmolality rather than its own
   # concentration: simCpCe() reads the baseline, the fraction and the molecular
   # weight from here.  See R/drugs_mannitol.R.
@@ -1337,9 +1352,11 @@ getDrugPK <- function(
       # amounts the engine carries are the parent's; see
       # metaboliteUnitScale() in R/metaboliteCoefficients.R for why its
       # absence would be wrong by a thousandfold.
+      formedDefaults <- libraryDefaultsRow(formed$name, libraryDefaults)
+      out$libraryDefaults <- formedDefaults
       tc$metabolite$unitScale <- metaboliteUnitScale(
         drugDefaults$Concentration.Units,
-        getDrugDefaults(formed$name)$Concentration.Units
+        formedDefaults$Concentration.Units
       )
       out$metaboliteName <- formed$name
       # What simCpCe() reads to lift the metabolite into a series of its own,
@@ -1421,7 +1438,42 @@ doseSizePK <- function(PK, dose)
 {
   X <- do.call(PK$drug, c(PK$covariates, list(dose = dose)))
   do.call(getDrugPK, c(list(drug = PK$drug), PK$covariates,
-                       list(model = X, individual = PK$individual)))
+                       list(model = X), pkRebuildArgs(PK)))
+}
+
+#' What a rebuild of a drug's PK from its model passes getDrugPK()
+#'
+#' Besides the covariates and the model (doseSizePK(), asmSegmentPK()): the
+#' individual of the Bayesian update, and the library rows the PK was first
+#' built with, so that a session's Drug Library units reach the rebuilt sets
+#' as they reached the first.  Built from the package's rows, a rebuilt
+#' metabolite was formed in the package's units (Carbon's UI audit,
+#' 2026-11-14, F4).
+#'
+#' @param PK the drug's PK from getDrugPK()
+#' @returns a list of getDrugPK() arguments
+#' @keywords internal
+pkRebuildArgs <- function(PK)
+{
+  list(individual = PK$individual,
+       drugDefaults = if (is.null(PK$drugDefaults)) getDrugDefaults(PK$drug) else PK$drugDefaults,
+       libraryDefaults = PK$libraryDefaults)
+}
+
+#' A drug's row of the drug library
+#'
+#' @param drug the drug
+#' @param libraryDefaults the session's drug library, or NULL
+#' @returns its row of `libraryDefaults` where it has one, else the
+#'   package's (getDrugDefaults())
+#' @keywords internal
+libraryDefaultsRow <- function(drug, libraryDefaults = NULL)
+{
+  if (is.data.frame(libraryDefaults)) {
+    row <- libraryDefaults[libraryDefaults$Drug %in% drug, , drop = FALSE]
+    if (nrow(row) > 0) return(row[1, , drop = FALSE])
+  }
+  getDrugDefaults(drug)
 }
 
 #' Check the share of each dose a parallel system receives

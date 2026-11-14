@@ -17,6 +17,8 @@ Opens the table behind every drug. The columns are:
 | MEAC | Minimum effective analgesic concentration; 0 for non-opioids. Drives the MEAC panel and the opioid-MAC interaction |
 | Class | `IV` or `gas` |
 
+A drug in `mcg` or `ng` can be switched between the two; its range, MEAC and recovery threshold are converted with it, unless you typed a new value in the same edit, which is then read in the new units. A metabolite the drug forms, and the drug interactions it drives, follow the switch. Concentrations you have typed elsewhere (a target in the dose table, a measured concentration under Bayesian Updating) are not converted. A unit added to the Units list is tried before it is accepted: one the drug's model cannot simulate, or one that gives no concentration (a route the model has no absorption for), is refused with the reason, and only the inhaled agents take the gas units.
+
 The dialog's warning is sincere: it is intended for collaborators checking a model, and it is easy to break the session by entering something the simulation cannot use. If you do, reload the page.
 
 If you believe a default is wrong, please write to steven.shafer@stanford.edu with the source you would cite.

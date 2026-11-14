@@ -8,7 +8,7 @@ Open the panel with its arrow. The table has three columns:
 - **Time**: when the sample was drawn, typed as the dose table's times are, in the **Time units** and **Time Display** of the [Time](help:time-display) settings (hours, days, or a clock time in Actual time). When the time units change, the table's times are converted with the dose table's.
 - **Conc.**: the measured value, in the units of the drug's own plot, which are listed under the table. For warfarin this is the **INR**, and for heparin on bypass the **activated clotting time** in seconds, because those are what their panels plot.
 
-A row takes effect as soon as it is complete; there is no Apply button. Right-click a row (or press Shift+F10) to insert or remove rows. **Clear measurements** empties the table. A measurement at or before the first dose of the drug cannot be explained by it and is set aside, with a note under the table.
+A row takes effect as soon as it is complete; there is no Apply button. Right-click a row (or press Shift+F10) to insert or remove rows. **Clear measurements** empties the table. A measurement at or before the first dose of the drug cannot be explained by it and is set aside, with a note under the table. So is a measurement after the end of the plot, which the plot cannot show: choose a longer Max time to use it.
 
 ## What is drawn
 

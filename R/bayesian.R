@@ -18,7 +18,8 @@
 #     classic Vmax update with Km fixed;
 #   - a metabolite's formation rate constant moves with k10 (by
 #     clearance/volume), so the share of the parent's elimination that forms
-#     the metabolite is the model's;
+#     the metabolite is the model's: kFormation for a metabolite in closed
+#     form, kMetabolic for one formed in a transit chain (enalapril);
 #   - a parallel system (warfarin's R-enantiomer beside its S) takes the same
 #     two factors, so the enantiomers keep their ratio;
 #   - a drug-target capacity held as an amount (linagliptin, vildagliptin)
@@ -52,6 +53,18 @@
 # interactions on, the drug as they change it.  Drugs with measurements are
 # updated one after another, in the dose table's order, each on the updated
 # drugs before it.
+#
+# OPEN QUESTION for Shafer [decision] (found 2026-11-14 while checking
+# Carbon's UI audit): a TCI target row is expanded into its infusion by
+# tciSchedule() with the PK being simulated, so each candidate's prediction
+# is the target itself, whatever its clearance and volume, and a measurement
+# cannot move the estimate (propofol at an effect-site target of 3, measured
+# 5: clearance and volume factors 1.000 and 1.000).  A pump delivered the
+# rates the population model chose; fitting the individual to those rates
+# (the population's $tci schedule as manual infusions) would make the
+# measurement informative.  Whether the updated plot should then show the
+# pump continuing on the population model or reprogrammed with the
+# individual's (as STANPUMP did after BAYES.C) is the decision.
 
 #' Check the individual's clearance and volume factors
 #'
@@ -115,6 +128,13 @@ individualizeModel <- function(X, individual)
   }
   if (!is.null(X$metabolite$kFormation))
     X$metabolite$kFormation <- X$metabolite$kFormation * fCL / fV
+  # A transit chain's kMetabolic is the share of k10 that forms the
+  # metabolite (R/advanceTransitChain.R), so it moves with k10 too.  Left
+  # alone, a k10 slowed below it (enalapril, fCL / fV under 0.69) was refused
+  # by validateTransitChain() and the update failed; above it, the share
+  # formed changed (Carbon's UI audit, 2026-11-14, F2).
+  if (!is.null(X$transitChain$kMetabolic))
+    X$transitChain$kMetabolic <- X$transitChain$kMetabolic * fCL / fV
   X
 }
 
@@ -183,6 +203,43 @@ bayesianRelevantDrugs <- function(drug, drugs, dosed, antiseizureInteractions)
     !is.null(name) && identical(name, drug)
   }, logical(1))]
   unique(c(drug, parents))
+}
+
+# The latest measurement an update uses (minutes): the end of the plot, and
+# never later than the longest plot the app offers
+bayesianLatestTime <- function(maximum)
+{
+  if (is.null(maximum) || !is_valid_number(maximum)) return(BAYES_MAX_TIME)
+  min(maximum, BAYES_MAX_TIME)
+}
+
+# Where a measurement set aside by bayesianLatestTime() is, in words
+bayesianLateText <- function(maximum)
+{
+  if (bayesianLatestTime(maximum) < BAYES_MAX_TIME)
+    paste0("after the end of the plot (", formatMinutes(maximum), ")")
+  else
+    paste0("after ", formatMinutes(BAYES_MAX_TIME), ", the longest plot,")
+}
+
+# Why a drug's doses cannot be simulated to `horizon` (minutes), or NULL: the
+# plot's own limits (timeUnitViolation() and scheduleProblem() in
+# app_server()), which the app's plot keeps but a caller without one need not
+bayesianHorizonProblem <- function(drug, DT, horizon)
+{
+  acute <- DT$Units %in% tciUnits | isGasDrug(DT$Drug)
+  if (any(acute) && horizon - 1 > ACUTE_MAX_PLOT_MINUTES)
+    return(sprintf(paste(
+      "%s could not be updated: target-controlled infusions and inhaled agents",
+      "are simulated only to %s, and its last measurement is later."),
+      drug, formatMinutes(ACUTE_MAX_PLOT_MINUTES)))
+  n <- scheduledDoseCount(DT, horizon)
+  if (n > MAX_SCHEDULED_DOSES)
+    return(sprintf(paste(
+      "%s could not be updated: its scheduled doses repeat %s times to its last",
+      "measurement, more than the %s the app can simulate."),
+      drug, format(n, big.mark = ","), format(MAX_SCHEDULED_DOSES, big.mark = ",")))
+  NULL
 }
 
 #' Fit one drug's clearance and volume to its measured concentrations
@@ -284,6 +341,9 @@ bayesianFitDrug <- function(drug, drugs, DT, ET, measured, omega, sigma, rebuild
 #'   any drug whose inputs have not changed
 #' @param onFit NULL, or function(drug) called before a drug is fitted afresh
 #'   (not when its estimate is reused): the app shows its spinner then
+#' @param maximum NULL, or the length of the plot (minutes): a measurement
+#'   after it is set aside.  Whatever it is, a measurement later than the
+#'   longest plot the app offers (`BAYES_MAX_TIME`) is set aside too.
 #' @returns a list: `drugs`, updated; `fits`, one per updated drug (with its
 #'   `key`); and `problems`, sentences saying what could not be used
 #' @export
@@ -291,7 +351,7 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
                                 pkVariability = BAYES_PK_VARIABILITY_DEFAULT,
                                 residualVariability = BAYES_RESIDUAL_VARIABILITY_DEFAULT,
                                 rebuild, antiseizureInteractions = FALSE, fits = NULL,
-                                onFit = NULL)
+                                onFit = NULL, maximum = NULL)
 {
   observations <- bayesianObservations(observations)
   problems <- character(0)
@@ -331,9 +391,31 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
         ngettext(sum(early), "is", "are")))
       rows <- rows[!early, , drop = FALSE]
     }
+    # Nor is a level after the end of the plot, which the plot cannot show.
+    # The fit simulates the drug to its last level, and the limits that keep
+    # a simulation within what a worker can do (a week for a TCI target or an
+    # inhaled agent, MAX_SCHEDULED_DOSES for a schedule's repeats) are held
+    # against the plot's length: a level typed at 1e12 minutes held the
+    # worker, and every session on it, in tciSchedule() (Carbon's UI audit,
+    # 2026-11-14, F1).
+    late <- rows$Time > bayesianLatestTime(maximum)
+    if (any(late)) {
+      problems <- c(problems, sprintf(
+        "%s: %d %s %s %s not used.", drug, sum(late),
+        ngettext(sum(late), "measurement", "measurements"), bayesianLateText(maximum),
+        ngettext(sum(late), "is", "are")))
+      rows <- rows[!late, , drop = FALSE]
+    }
     if (nrow(rows) == 0) next
 
     DTsub <- DT[DT$Drug %in% relevant, , drop = FALSE]
+    # And the plot's own limits, for a caller with no plot (the API): the
+    # app's plot keeps them already (timeUnitViolation(), scheduleProblem()).
+    tooLong <- bayesianHorizonProblem(drug, DTsub, max(rows$Time) + 1)
+    if (!is.null(tooLong)) {
+      problems <- c(problems, tooLong)
+      next
+    }
     stripSim <- function(e) e[setdiff(names(e), c("sim", "simKey"))]
     key <- list(
       drug = drug,

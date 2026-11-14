@@ -25,7 +25,8 @@ getDrugPK(
   model = NULL,
   cyp4f2 = CYP4F2_DEFAULT,
   gestationalAge = NULL,
-  individual = NULL
+  individual = NULL,
+  libraryDefaults = NULL
 )
 }
 \arguments{
@@ -98,6 +99,12 @@ postmenstrual age (\code{postmenstrualAge()}).}
 individual's pharmacokinetics as a list of \code{clearance} and
 \code{volume}, each a multiple of the model's, as the Bayesian update
 estimates them (\code{bayesianUpdateDrugs()}, \code{individualizeModel()}).}
+
+\item{libraryDefaults}{NULL (the default) for the package's drug library,
+or the session's (\code{recalculatePK()} passes it), from which an
+active metabolite's row is read: its \code{Concentration.Units} set the
+scale of the metabolite formed, so a metabolite the Drug Library shows in
+other units is formed in those units.}
 }
 \value{
 a list: the drug's PK sets (\code{PK}, one per PK event), its

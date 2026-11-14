@@ -107,6 +107,17 @@ isBlankEntry <- function(x) {
     is.factor(x) && !nzchar(trimEntry(as.character(x)))
 }
 
+# A dialog's text box checked by `validate` (validateTime(), validateDose()).
+# A value no text box sends, a vector or a list, which a forged input can
+# be, is unreadable (""), so the dialog says so and stays open: the
+# validators stop() on it, and an error in an observer ends the session
+# (Carbon's UI audit, 2026-11-14, F6).
+validateEntry <- function(x, validate)
+{
+  if (length(x) > 1 || is.list(x)) return("")
+  validate(x)
+}
+
 # Validate time: a number in the time unit, or H:MM.  See the header.
 validateTime <- function(x)
 {

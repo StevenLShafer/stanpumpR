@@ -86,7 +86,10 @@ restoredBayesObservations <- function(x, drugNames) {
   }, error = function(e) NULL)
   if (is.null(table)) return(list(table = bayesianObservations(NULL), changed = TRUE))
   n <- if (is.data.frame(x)) nrow(x) else 0
-  table <- table[table$Drug %in% drugNames, , drop = FALSE]
+  # No later than the longest plot (BAYES_MAX_TIME): a link opened with a
+  # level at 1e12 minutes, and no click, held the worker in the fit (Carbon's
+  # UI audit, 2026-11-14, F1)
+  table <- table[table$Drug %in% drugNames & table$Time <= BAYES_MAX_TIME, , drop = FALSE]
   if (nrow(table) > MAX_BAYES_OBSERVATIONS) table <- table[seq_len(MAX_BAYES_OBSERVATIONS), ]
   rownames(table) <- NULL
   list(table = table, changed = nrow(table) != n)
@@ -102,7 +105,7 @@ bayesTimeLabel <- function(minutes, format, reference) {
 
 # A slider's value as a number within its range, or its default
 bayesSliderValue <- function(x, default, min, max) {
-  x <- suppressWarnings(as.numeric(x))
+  x <- asScalarNumeric(x)
   if (length(x) != 1 || !is.finite(x)) return(default)
   min(max(x, min), max)
 }

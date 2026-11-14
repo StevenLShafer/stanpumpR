@@ -159,7 +159,10 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
         gestationalAge = gestationalAge,
         # The Bayesian update's estimate for this drug, or NULL
         # (R/bayesian.R): a list of clearance and volume factors, by drug.
-        individual = individual[[drug]]
+        individual = individual[[drug]],
+        # The session's library, from which a metabolite's row (its units)
+        # is read
+        libraryDefaults = drugDefaults
       )
     )
     drugs

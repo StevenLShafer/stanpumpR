@@ -226,7 +226,7 @@ timeSliderRange <- function(unit) {
 # is the unit's first (default) Max time.
 snapMaximum <- function(x, unit) {
   r <- timeSliderRange(unit)
-  x <- suppressWarnings(as.numeric(x))
+  x <- asScalarNumeric(x)
   if (length(x) != 1 || !is.finite(x)) return(MAX_TIMES[[validTimeUnit(unit)]]$times[1])
   # The tolerance keeps a whole number of steps, read back from a string,
   # from being rounded up to the next one
@@ -238,7 +238,7 @@ snapMaximum <- function(x, unit) {
 # non-number is 0.
 snapMinimum <- function(x, maximum, unit) {
   r <- timeSliderRange(unit)
-  x <- suppressWarnings(as.numeric(x))
+  x <- asScalarNumeric(x)
   if (length(x) != 1 || !is.finite(x)) return(0)
   x <- floor(x / r$step + 1e-9) * r$step
   max(0, min(x, maximum - r$step))
@@ -272,7 +272,7 @@ axisTimeBreaks <- function(minimum, maximum, step) {
 # The unit for a bookmark made before there were time units: minutes, unless
 # its Max time was more than a day.
 legacyTimeUnit <- function(maximum) {
-  maximum <- suppressWarnings(as.numeric(maximum))
+  maximum <- asScalarNumeric(maximum)
   if (length(maximum) == 1 && is.finite(maximum) && maximum > MINS_PER_DAY) "days" else "minutes"
 }
 

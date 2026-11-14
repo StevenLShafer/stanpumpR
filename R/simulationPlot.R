@@ -403,11 +403,14 @@ simulationPlot <- function(
     if (length(opioids) > 0 & "propofol" %in% plotTable$Drug & plotInteraction)
     {
       Time <- derivedTimes
-      PropCe <- derivedEffectSite(entryOf("propofol"), derivedTimes)
-      # The surface takes remifentanil-equivalent ng/mL, not % MEAC
-      # (R/modelInteraction.R).
+      # The surface takes propofol in mcg/mL and the opioid as
+      # remifentanil-equivalent ng/mL, not % MEAC (R/modelInteraction.R),
+      # whatever units the Drug Library shows either drug in
+      unitsOf <- function(drug) drugDefaults$Concentration.Units[drugDefaults$Drug == drug][1]
+      PropCe <- derivedEffectSite(entryOf("propofol"), derivedTimes) * mcgPerMlScale(unitsOf("propofol"))
       remifentanilMEAC <- suppressWarnings(as.numeric(
-        drugDefaults$MEAC[drugDefaults$Drug == "remifentanil"][1]))
+        drugDefaults$MEAC[drugDefaults$Drug == "remifentanil"][1])) *
+        mcgPerMlScale(unitsOf("remifentanil")) * 1000
       x <- modelInteraction(PropCe,
                             remifentanilEquivalent(totalMEAC$Y, remifentanilMEAC))
       resultsInteraction <- data.frame(

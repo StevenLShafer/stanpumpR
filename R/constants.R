@@ -262,6 +262,9 @@ MAX_DOSE_ROWS <- 500L
 MAX_EVENT_ROWS <- 100L
 MAX_TARGET_ROWS <- 20L
 MAX_DOSE_VALUE <- 1e9
+# The most units one Drug Library edit may add, each of which is simulated
+# once (drugLibraryUnitProblems(); typically 0.01 s each, at most 1.5 s)
+DRUG_LIBRARY_MAX_NEW_UNITS <- 40L
 MAX_INPUT_TEXT <- 2000L
 MAX_PLOT_WIDTH <- 4096L
 MIN_PLOT_WIDTH <- 100L
@@ -911,6 +914,12 @@ BAYES_RESIDUAL_VARIABILITY_MIN <- 1
 BAYES_RESIDUAL_VARIABILITY_MAX <- 50
 # The most measured concentrations the table holds
 MAX_BAYES_OBSERVATIONS <- 30L
+# The latest measurement an update uses, minutes: the longest plot the app
+# offers (365 days).  The fit simulates to its last measurement, so a time
+# with no ceiling (1e12 minutes, typed or in a link) ran tciSchedule() or a
+# schedule's repeats for hours; in the app the end of the plot is the limit
+# (bayesianUpdateDrugs(maximum =)).
+BAYES_MAX_TIME <- max(MAX_TIME_VALUES)
 # Rows the table is drawn with when empty
 BAYES_TABLE_BLANK_ROWS <- 4L
 # The estimate is searched within this factor of the model's clearance and

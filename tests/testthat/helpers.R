@@ -107,3 +107,11 @@ ffmRatioMaleIndependent <- function(weight, height, age) {
   }
   ffmMale(weight, height, age) / ffmMale(70, 170, 35)
 }
+
+# The name of a directory as Shiny makes one for an upload: 24 hex digits,
+# directly in tempdir() (FileUploadContext, shiny 1.14).  The paper review
+# reads, and deletes, only a file in such a directory
+# (paperReviewIsUploadPath()).
+shinyUploadDirName <- function() {
+  paste(sample(c(0:9, letters[1:6]), 24, replace = TRUE), collapse = "")
+}

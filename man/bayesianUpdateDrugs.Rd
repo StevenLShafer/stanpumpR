@@ -14,7 +14,8 @@ bayesianUpdateDrugs(
   rebuild,
   antiseizureInteractions = FALSE,
   fits = NULL,
-  onFit = NULL
+  onFit = NULL,
+  maximum = NULL
 )
 }
 \arguments{
@@ -45,6 +46,10 @@ any drug whose inputs have not changed}
 
 \item{onFit}{NULL, or function(drug) called before a drug is fitted afresh
 (not when its estimate is reused): the app shows its spinner then}
+
+\item{maximum}{NULL, or the length of the plot (minutes): a measurement
+after it is set aside.  Whatever it is, a measurement later than the
+longest plot the app offers (\code{BAYES_MAX_TIME}) is set aside too.}
 }
 \value{
 a list: \code{drugs}, updated; \code{fits}, one per updated drug (with its

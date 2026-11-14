@@ -105,8 +105,25 @@ drugLibraryProblems <- function(edited, current) {
   for (col in names(dropdowns)) {
     value <- unitText(edited[[col]])
     before <- unitText(current[[col]])[at]
-    bad <- !is.na(at) & value != before & !(value %in% dropdowns[[col]])
+    # A changed entry must be one its list offers.  A concentration unit
+    # must also have been one: the grid draws one outside mcg and ng
+    # read-only (drugLibraryGridColumns()), which a forged value walked past,
+    # and warfarin's INR made mcg stopped every simulation of it (Carbon's UI
+    # audit, 2026-11-14, F4)
+    readOnly <- col == "Concentration.Units" & !(before %in% dropdowns[[col]])
+    bad <- !is.na(at) & value != before & (!(value %in% dropdowns[[col]]) | readOnly)
     if (any(bad)) badUnits <- c(badUnits, sprintf("%s %s", edited$Drug[bad], col))
+  }
+  # The bolus and infusion units are the units Suggest Dosing writes, so a
+  # changed one must also be one of the drug's own: calcium given a bolus
+  # unit of mg had its suggestion refused by the simulation (the same audit)
+  for (col in c("Bolus.Units", "Infusion.Units")) {
+    value <- unitText(edited[[col]])
+    before <- unitText(current[[col]])[at]
+    for (i in which(!is.na(at) & value != before & value %in% dropdowns[[col]])) {
+      offered <- trimws(strsplit(units[i], ",", fixed = TRUE)[[1]])
+      if (!value[i] %in% offered) badUnits <- c(badUnits, sprintf("%s %s", edited$Drug[i], col))
+    }
   }
   default <- unitText(edited$Default.Units)
   defaultBefore <- unitText(current$Default.Units)[at]
@@ -119,7 +136,7 @@ drugLibraryProblems <- function(edited, current) {
   }
   if (length(badUnits)) {
     problems <- c(problems, paste0(
-      "Choose each unit from its list, and a Default.Units from the drug's Units (",
+      "Choose each unit from its list, and a Default.Units, Bolus.Units or Infusion.Units from the drug's Units (",
       paste(badUnits, collapse = ", "), ")."))
   }
   badNumbers <- character(0)
@@ -138,7 +155,108 @@ drugLibraryProblems <- function(edited, current) {
       "Lower, Upper, Typical and MEAC must be left blank or a number from 0 to 1,000,000,000 (",
       paste(badNumbers, collapse = ", "), ")."))
   }
+  # Only once everything above is right, since it simulates
+  if (length(problems) == 0) problems <- drugLibraryUnitProblems(edited, current)
   problems
+}
+
+# What is wrong with the units a Drug Library edit adds to a drug, as
+# sentences, or character(0).  drugLibraryProblems() accepts any unit the
+# dose table knows, but not every drug's model can take every unit: calcium
+# given "mg" stopped every simulation of it once dosed ("Dose unit for
+# calcium must name the product"), and a route its model has no absorption
+# for drew nothing at all (Carbon's UI audit, 2026-11-14, F4).  So each new
+# unit is simulated once, a dose of 1 at time 0 over a day at the reference
+# adult, through the app's own pipeline, and refused with the engine's
+# reason or for giving no concentration; an inhaled agent takes only the gas
+# units and no other drug takes them.  Every unit of every drug in the
+# library passes (test-ui-audit-carbon.R).  At most `maxNew` new units are
+# simulated in one edit, since a forged table could add hundreds.
+drugLibraryUnitProblems <- function(edited, current, maxNew = DRUG_LIBRARY_MAX_NEW_UNITS) {
+  at <- match(edited$Drug, current$Drug)
+  units <- drugUnitsSimplify(edited$Units)
+  unitsBefore <- drugUnitsSimplify(current$Units)[at]
+  tokensOf <- function(x) {
+    if (is.na(x)) return(character(0))
+    t <- trimws(strsplit(x, ",", fixed = TRUE)[[1]])
+    t[nzchar(t)]
+  }
+  added <- list()
+  # identical2(): a metabolite-only row has no units (NA)
+  for (i in which(!is.na(at) & !identical2(units, unitsBefore))) {
+    new <- setdiff(tokensOf(units[i]), tokensOf(unitsBefore[i]))
+    if (length(new)) added[[as.character(edited$Drug[i])]] <- new
+  }
+  if (length(added) == 0) return(character(0))
+  if (length(unlist(added)) > maxNew) {
+    return(sprintf("Add at most %d units in one edit of the Drug Library.", maxNew))
+  }
+  # The library the simulation reads: the current one, with the edited
+  # concentration units where they are the dropdown's
+  library <- current
+  cu <- as.character(edited$Concentration.Units)
+  move <- !is.na(at) & cu %in% c("mcg", "ng")
+  library$Concentration.Units[at[move]] <- cu[move]
+  noEvents <- data.frame(Time = numeric(0), Event = character(0))
+  bad <- character(0)
+  for (drug in names(added)) {
+    row <- library[library$Drug == drug, , drop = FALSE]
+    gas <- identical(as.character(row$Class), "gas")
+    for (unit in added[[drug]]) {
+      if (gas != (unit %in% gasUnits)) {
+        bad <- c(bad, sprintf("%s \"%s\" (%s)", drug, unit,
+                              if (gas) "an inhaled agent is set in L/min or %" else "a unit of the inhaled agents"))
+        next
+      }
+      if (gas) next
+      DT <- data.frame(Drug = drug, Time = 0, Dose = 1, Units = unit, stringsAsFactors = FALSE)
+      why <- tryCatch({
+        drugs <- recalculatePK(NULL, library, DT, age = 35, weight = 70, height = 170, sex = "male")
+        plasma <- processdoseTable(DT, noEvents, drugs, MINS_PER_DAY, FALSE)[[drug]]$wide$Plasma
+        # A drug plotted above a baseline (an INR, an ACT, an osmolality)
+        # starts above zero whatever the unit does
+        baseline <- row$Concentration.Units %in% c("INR", "ACT", "mOsm")
+        if (!baseline && !any(is.finite(plasma) & plasma > 0)) "no concentration follows a dose" else ""
+      }, error = function(e) conditionMessage(e))
+      if (nzchar(why)) bad <- c(bad, sprintf("%s \"%s\" (%s)", drug, unit, why))
+    }
+  }
+  if (length(bad) == 0) return(character(0))
+  paste0("These units cannot be simulated for the drug they were added to: ",
+         paste(bad, collapse = "; "), ".")
+}
+
+# A drug moved between mcg and ng in the Drug Library keeps its thresholds.
+# Its range (Lower, Typical, Upper), MEAC and time-until-threshold value
+# (endCe, which the dialog does not show) are concentrations in its units,
+# so each that the same edit left as it was is converted, by 1000 either way;
+# one the edit changed is taken as typed in the new units.  Left alone they
+# were 1000-fold off the curve drawn beside them, as the metabolites the drug
+# formed and the antiseizure interactions it drove were (found checking
+# Carbon's UI audit, 2026-11-14, F4).
+#
+# `new` is the edited library with its columns converted (the dialog's
+# Apply), `edited` the grid's text as read, `current` the library before.
+# Returns a list: `table`, the library, and `drugs`, those converted.
+drugLibraryRescaleThresholds <- function(new, edited, current) {
+  at <- match(new$Drug, current$Drug)
+  before <- as.character(current$Concentration.Units)[at]
+  after <- as.character(new$Concentration.Units)
+  perMl <- c("mcg", "ng")
+  moved <- which(!is.na(at) & before %in% perMl & after %in% perMl & before != after)
+  # What the grid showed: an entry that reads the same was left as it was
+  shown <- drugLibraryGridData(current)
+  cell <- function(x) { x <- trimws(as.character(x)); x[is.na(x)] <- ""; x }
+  for (i in moved) {
+    factor <- internalDoseScale(before[i]) / internalDoseScale(after[i])
+    for (col in DRUG_LIBRARY_NUMERIC_COLUMNS) {
+      if (cell(edited[[col]][i]) == cell(shown[[col]][at[i]]))
+        new[[col]][i] <- suppressWarnings(as.numeric(current[[col]][at[i]])) * factor
+    }
+    if ("endCe" %in% names(current))
+      new$endCe[i] <- suppressWarnings(as.numeric(current$endCe[at[i]])) * factor
+  }
+  list(table = new, drugs = as.character(new$Drug[moved]))
 }
 
 # Elementwise identical() for two character vectors, NA equal to NA
