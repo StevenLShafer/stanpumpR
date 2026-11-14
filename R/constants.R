@@ -928,5 +928,8 @@ BAYES_TABLE_BLANK_ROWS <- 4L
 # a measurement that no clearance can explain (a level entered in the wrong
 # units) cannot drive the search to a volume of zero.
 BAYES_FACTOR_LIMIT <- 20
+# The most iterations of the search (bayesianSearch(), about three
+# simulations each); the fits measured take 3 to 8
+BAYES_MAX_ITERATIONS <- 50L
 # The label of the population curve drawn beside the individualized one
 BAYES_PRIOR_LABEL <- "population"

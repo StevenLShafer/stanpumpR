@@ -43,8 +43,9 @@
 # function, as BAYES.C's funk() computed it (there with omega^2 and sigma^2
 # entered directly).  A variability entered as a coefficient of variation c is
 # sqrt(log(1 + c^2)) on the log scale (bayesianSD()).  The search is
-# stats::optim()'s L-BFGS-B over the two etas, from the model (eta = 0),
-# within BAYES_FACTOR_LIMIT either way.
+# Gauss-Newton with Levenberg-Marquardt damping over the two etas
+# (bayesianSearch(): the objective is a sum of squares), from the model
+# (eta = 0), within BAYES_FACTOR_LIMIT either way.
 #
 # The prediction is what the plot draws: processdoseTable() on the drug's
 # doses, with the measured times added to its time line (withOutputTimes()),
@@ -242,6 +243,121 @@ bayesianHorizonProblem <- function(drug, DT, horizon)
   NULL
 }
 
+#' Minimise a sum of squares within bounds
+#'
+#' Gauss-Newton with Levenberg-Marquardt damping (the objective of the
+#' Bayesian update is a sum of squares: the etas over omega, the log errors
+#' over sigma), the Jacobian by forward differences.  Each evaluation of
+#' `residuals` is a simulation of the drug, and this search makes about three
+#' per iteration, where stats::optim()'s L-BFGS-B, with its finite-difference
+#' gradients and line searches, made 57 to 102 per fit: a phenytoin level a
+#' week after the dose took 20 s, one at ten weeks about three minutes, each
+#' holding the worker every session on it shares (2026-11-14).
+#'
+#' @param residuals function(par) giving the residuals, or NULL where they
+#'   cannot be computed (a step there is refused)
+#' @param start,lower,upper the starting point and the bounds
+#' @param maxIterations the most iterations
+#' @param delta the relative step of the finite differences
+#' @returns a list: `par`, `value` (the sum of squares there) and
+#'   `converged` (no step improves it, or the last one changed it by less than
+#'   a relative 1e-10)
+#' @keywords internal
+bayesianSearch <- function(residuals, start, lower, upper,
+                           maxIterations = BAYES_MAX_ITERATIONS, delta = 1e-6)
+{
+  par <- pmin(pmax(start, lower), upper)
+  r <- residuals(par)
+  if (is.null(r)) return(list(par = par, value = Inf, converged = FALSE))
+  value <- sum(r^2)
+  n <- length(par)
+  lambda <- 1e-3
+  nu <- 2
+  # The part of the Hessian Gauss-Newton leaves out, sum(r_i * Hessian(r_i)),
+  # by the secant update of Dennis, Gay and Welsch (NL2SOL, 1981) from the
+  # Jacobians already computed.  Where the residuals stay large at the
+  # minimum (a measurement the prior pulls away from) Gauss-Newton alone
+  # crawled along the posterior's ridge: a phenytoin fit spent 70 of its 94
+  # simulations within 0.01 of the minimum.
+  S <- matrix(0, n, n)
+  previous <- NULL
+  for (iteration in seq_len(maxIterations)) {
+    # The Jacobian, each column by a forward difference (inward at a bound)
+    J <- matrix(0, length(r), n)
+    for (j in seq_len(n)) {
+      h <- delta * max(1, abs(par[j]))
+      if (par[j] + h > upper[j]) h <- -h
+      p <- par
+      p[j] <- p[j] + h
+      rj <- residuals(p)
+      if (is.null(rj)) return(list(par = par, value = value, converged = FALSE))
+      J[, j] <- (rj - r) / h
+    }
+    g <- drop(crossprod(J, r))
+    if (!is.null(previous)) {
+      s <- par - previous$par
+      y <- g - drop(crossprod(previous$J, previous$r))
+      ySharp <- g - drop(crossprod(previous$J, r))
+      ys <- sum(y * s)
+      if (ys > 0) {
+        sSs <- drop(crossprod(s, S %*% s))
+        if (sSs != 0) S <- S * min(1, abs(sum(s * ySharp)) / abs(sSs))
+        w <- ySharp - drop(S %*% s)
+        S <- S + (outer(w, y) + outer(y, w)) / ys - sum(w * s) * outer(y, y) / ys^2
+      }
+    }
+    A <- crossprod(J)
+    M <- A + S
+    # A parameter at a bound that the gradient pushes outward is held
+    # there, and the step is solved for the others: solved together and then
+    # cut at the bound, the step mixed in the held one's pull, and a fit held
+    # at the clearance bound crept toward its volume in steps of 0.05.
+    free <- !((par <= lower & g > 0) | (par >= upper & g < 0))
+    if (!any(free)) return(list(par = par, value = value, converged = TRUE))
+    D <- diag(diag(A)[free] + 1e-12, sum(free))
+    # The damped step, damped further until it improves (Nielsen's rule,
+    # 1999: the damping follows how well the model predicted the decrease,
+    # where halving and doubling it at each try rejected every other step); a
+    # step too small to move the estimate is the minimum (or the bound)
+    repeat {
+      step <- numeric(n)
+      solved <- tryCatch({
+        Mf <- M[free, free, drop = FALSE] + lambda * D
+        chol(Mf)    # positive definite, or more damping
+        -solve(Mf, g[free])
+      }, error = function(e) NULL)
+      if (is.null(solved)) {
+        lambda <- lambda * nu
+        nu <- 2 * nu
+        if (lambda > 1e16) return(list(par = par, value = value, converged = TRUE))
+        next
+      }
+      step[free] <- solved
+      trial <- pmin(pmax(par + step, lower), upper)
+      moved <- trial - par
+      if (max(abs(moved)) < 1e-9)
+        return(list(par = par, value = value, converged = TRUE))
+      rt <- residuals(trial)
+      valueT <- if (is.null(rt)) Inf else sum(rt^2)
+      predicted <- -(2 * sum(g * moved) + drop(crossprod(moved, M %*% moved)))
+      if (valueT < value) break
+      lambda <- lambda * nu
+      nu <- 2 * nu
+    }
+    change <- value - valueT
+    gain <- if (predicted > 0) change / predicted else 0
+    lambda <- max(lambda * max(1 / 3, 1 - (2 * gain - 1)^3), 1e-12)
+    nu <- 2
+    previous <- list(par = par, J = J, r = r)
+    par <- trial
+    r <- rt
+    value <- valueT
+    if (change <= 1e-10 * max(value, 1e-10))
+      return(list(par = par, value = value, converged = TRUE))
+  }
+  list(par = par, value = value, converged = FALSE)
+}
+
 #' Fit one drug's clearance and volume to its measured concentrations
 #'
 #' @param drug the drug
@@ -290,25 +406,36 @@ bayesianFitDrug <- function(drug, drugs, DT, ET, measured, omega, sigma, rebuild
   entryFor <- function(eta) rebuild(drug, list(clearance = exp(eta[1]), volume = exp(eta[2])))
 
   population <- predict(drugs[[drug]])
-  objective <- function(eta) {
-    value <- bayesianObjective(eta, measured$Concentration, predict(entryFor(eta)), omega, sigma)
-    # A finite stand-in, so that the search can step back from a parameter
-    # set whose prediction is not usable rather than stop
-    if (is.finite(value)) value else 1e12
+  # Each prediction simulated once: the model's own (eta = 0) is the
+  # population's, and the estimate's is one the search has already made
+  tried <- list(list(eta = c(0, 0), prediction = population))
+  predictAt <- function(eta) {
+    for (t in tried) if (identical(t$eta, eta)) return(t$prediction)
+    prediction <- predict(entryFor(eta))
+    tried[[length(tried) + 1]] <<- list(eta = eta, prediction = prediction)
+    prediction
+  }
+  # The objective is the sum of the squares of these (bayesianObjective());
+  # NULL where a prediction is not a positive number
+  residuals <- function(eta) {
+    prediction <- predictAt(eta)
+    if (length(prediction) != length(times) || any(!is.finite(prediction)) ||
+        any(prediction <= 0))
+      return(NULL)
+    c(eta / omega, (log(measured$Concentration) - log(prediction)) / sigma)
   }
   limit <- log(BAYES_FACTOR_LIMIT)
-  fit <- stats::optim(c(0, 0), objective, method = "L-BFGS-B",
-                      lower = c(-limit, -limit), upper = c(limit, limit),
-                      control = list(factr = 1e7))
+  fit <- bayesianSearch(residuals, c(0, 0), c(-limit, -limit), c(limit, limit))
   eta <- fit$par
-  individual <- predict(entryFor(eta))
+  individual <- predictAt(eta)
   list(
     clearance = exp(eta[1]),
     volume = exp(eta[2]),
     eta = eta,
     objective = fit$value,
     priorObjective = bayesianObjective(c(0, 0), measured$Concentration, population, omega, sigma),
-    converged = fit$convergence == 0,
+    converged = fit$converged,
+    evaluations = length(tried),
     atLimit = any(abs(eta) > limit * (1 - 1e-6)),
     observations = data.frame(Time = times, Measured = measured$Concentration,
                               Population = population, Individual = individual)

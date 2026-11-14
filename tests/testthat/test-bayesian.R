@@ -365,3 +365,31 @@ test_that("the sidebar's measurements update the drug in the app", {
 })
 
 .sprglobals$config <- oldConfig
+
+test_that("the search finds the minimum of a sum of squares, within its bounds", {
+  # Rosenbrock's valley as residuals: the minimum, 0, at (1, 1)
+  fit <- bayesianSearch(function(p) c(10 * (p[2] - p[1]^2), 1 - p[1]),
+                        c(-1.2, 1), c(-5, -5), c(5, 5))
+  expect_true(fit$converged)
+  expect_equal(fit$par, c(1, 1), tolerance = 1e-6)
+  # A minimum beyond a bound: held at the bound, the other parameter free
+  fit <- bayesianSearch(function(p) c(p[1] - 3, p[2] + 1), c(0, 0), c(-2, -2), c(2, 2))
+  expect_true(fit$converged)
+  expect_equal(fit$par, c(2, -1), tolerance = 1e-8)
+  # Nothing to search from
+  expect_false(bayesianSearch(function(p) NULL, c(0, 0), c(-1, -1), c(1, 1))$converged)
+})
+
+test_that("a phenytoin fit takes few simulations, to the same estimate", {
+  # optim()'s L-BFGS-B, which the search replaced (2026-11-14), took 62
+  # simulations to this estimate; each simulates a week of saturable
+  # elimination in 2-minute Runge-Kutta steps
+  DT <- data.frame(Drug = "phenytoin", Time = 0, Dose = 100, Units = "mg PO tid",
+                   stringsAsFactors = FALSE)
+  obs <- data.frame(Drug = "phenytoin", Time = c(3, 7) * 1440, Concentration = c(8, 14))
+  res <- bayesianUpdateDrugs(priorDrugs(DT), DT, noEvents, obs, rebuild = rebuildFor(DT))
+  fit <- res$fits$phenytoin
+  expect_true(fit$converged)
+  expect_lte(fit$evaluations, 30)
+  expect_equal(c(fit$clearance, fit$volume), c(0.6790029, 0.8858258), tolerance = 1e-5)
+})

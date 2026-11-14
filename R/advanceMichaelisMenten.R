@@ -442,26 +442,55 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   # binding to the target (k2, saturable in the free target, Rmax - DR),
   # dissociation (koff) and hydrolysis of the complex (kdeg, which frees the
   # target) are states of their own (Landersdorfer 2012, vildagliptin).
+  #
+  # Called four times a step, every 2 minutes of the plot (200,000 times for
+  # ten weeks), so what does not change during a run is settled here: a term
+  # a drug does not have is not computed, rather than computed as an exact
+  # zero (the results are identical, bit for bit), and binding that is not
+  # there is not a function call.  A Bayesian fit simulates the drug dozens
+  # of times (2026-11-14).
+  depotIdx <- seq_len(iIM)
+  oralIdx <- seq_len(nOral)
+  nState <- iDRP
+  plainBinding <- is.null(rb)
+  hasTransit <- kT != 0
+  hasSC <- !is.null(sc)
+  hasTarget <- !is.null(tb)
+  hasPeripheral <- q != 0 || hasTarget
+  # (bindK, not k2: the step loop below names its Runge-Kutta stages k1 to
+  # k4 in this same environment)
+  if (hasTarget) {
+    kOut <- tb$koff + tb$kdeg
+    bindK <- tb$k2
+  }
   deriv <- function(x, rIV, rPE, vmax, km) {
-    Cu <- unboundC(x[iC])
-    Cpu <- unboundP(x[iP])
-    dx <- numeric(length(x))
-    out <- ka * x[seq_len(iIM)]
-    dx[seq_len(iIM)] <- -out
-    dx[iT] <- -kT * x[iT]
-    dx[1] <- dx[1] + kT * x[iT]
+    Cu <- if (plainBinding) x[iC] / V else unboundC(x[iC])
+    dx <- numeric(nState)
+    out <- ka * x[depotIdx]
+    dx[depotIdx] <- -out
+    if (hasTransit) {
+      dx[iT] <- -kT * x[iT]
+      dx[1] <- dx[1] + kT * x[iT]
+    }
     dx[iConv] <- out[iIM] + rPE - kc * x[iConv]
-    fromS <- scAbsorption(x[iS])
-    dx[iS] <- -fromS
-    toP <- q * (Cu - Cpu)
-    dx[iP] <- toP
-    dx[iC] <- sum(out[seq_len(nOral)]) + kc * x[iConv] + rIV + fromS -
+    fromS <- 0
+    if (hasSC) {
+      fromS <- scAbsorption(x[iS])
+      dx[iS] <- -fromS
+    }
+    toP <- 0
+    if (hasPeripheral) {
+      Cpu <- if (plainBinding) x[iP] / V2 else unboundP(x[iP])
+      toP <- q * (Cu - Cpu)
+      dx[iP] <- toP
+    }
+    dx[iC] <- sum(out[oralIdx]) + kc * x[iConv] + rIV + fromS -
       vmax * Cu / (km + Cu) - clLinear * Cu - toP
-    if (!is.null(tb)) {
-      bindC <- (tb$rmaxCentral - x[iDRC]) * tb$k2 * Cu / (tb$kd + Cu)
-      bindP <- (tb$rmaxPeripheral - x[iDRP]) * tb$k2 * Cpu / (tb$kd + Cpu)
-      dx[iDRC] <- bindC - (tb$koff + tb$kdeg) * x[iDRC]
-      dx[iDRP] <- bindP - (tb$koff + tb$kdeg) * x[iDRP]
+    if (hasTarget) {
+      bindC <- (tb$rmaxCentral - x[iDRC]) * bindK * Cu / (tb$kd + Cu)
+      bindP <- (tb$rmaxPeripheral - x[iDRP]) * bindK * Cpu / (tb$kd + Cpu)
+      dx[iDRC] <- bindC - kOut * x[iDRC]
+      dx[iDRP] <- bindP - kOut * x[iDRP]
       dx[iC] <- dx[iC] - bindC + tb$koff * x[iDRC]
       dx[iP] <- dx[iP] - bindP + tb$koff * x[iDRP]
     }
@@ -487,7 +516,8 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
       vmaxStep <- vmax * ddiAt("vmax", timeLine[i - 1])
       kmStep <- km * ddiAt("km", timeLine[i - 1])
       for (k in seq_len(n)) {
-        vmaxK <- vmaxStep * vmaxDeclineAt(timeLine[i - 1] + (k - 0.5) * h)
+        vmaxK <- if (is.null(vd)) vmaxStep else
+          vmaxStep * vmaxDeclineAt(timeLine[i - 1] + (k - 0.5) * h)
         k1 <- deriv(x, rIV, rPE, vmaxK, kmStep)
         k2 <- deriv(x + h / 2 * k1, rIV, rPE, vmaxK, kmStep)
         k3 <- deriv(x + h / 2 * k2, rIV, rPE, vmaxK, kmStep)
