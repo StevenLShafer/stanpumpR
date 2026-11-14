@@ -138,6 +138,74 @@
 #' @keywords internal
 MM_MAX_STEP <- 2
 
+#' Relative tolerance of the engine's adaptive step (a drug whose
+#' michaelisMenten block sets adaptiveStep, mmDormandPrince())
+#' @keywords internal
+# Calibrated 2026-11-14 on eleven phenytoin regimens (single, qd, bid and tid
+# oral doses over up to 91 days, intravenous loads and infusions,
+# fosphenytoin IV and IM) against a 0.25-minute fixed step: at 1e-6 the
+# largest error is 4.5e-7 of the level where the level is above 5% of its
+# peak (the fixed 2-minute step's was up to 2.3e-7), against the 1% the
+# user set as the bound (Shafer: the assay is 1%, the model 30%).  Looser
+# buys almost nothing, the step being held to the time line's points.
+MM_ADAPTIVE_RTOL <- 1e-6
+
+#' Advance the Michaelis-Menten engine's states across one interval of its
+#' time line with an adaptive step
+#'
+#' The embedded Runge-Kutta pair of Dormand and Prince (1980), fifth order
+#' with a fourth-order error estimate, the first stage of each step the last
+#' of the one before.  A step is taken when its estimated error is within
+#' `atol + rtol * |x|` in every state, and the next is sized from it.  The
+#' engine's fixed 2-minute step is set by its fastest processes (fosphenytoin's
+#' conversion, absorption), which last only while a depot holds drug; for
+#' phenytoin the rest of the time only saturable elimination is left, at
+#' about 1e-5 per minute, and an adaptive step takes it in steps of hours
+#' (2026-11-14).  Doses arrive at points of the time line, never inside an
+#' interval, so each interval is smooth.
+#'
+#' @param f function(t, x) giving the derivative
+#' @param x the states at `t0`
+#' @param t0,t1 the interval
+#' @param h the first step to try
+#' @param rtol,atol the tolerances
+#' @returns a list: `x`, the states at `t1`, and `h`, the step to try next
+#' @keywords internal
+mmDormandPrince <- function(f, x, t0, t1, h, rtol, atol)
+{
+  t <- t0
+  k1 <- f(t, x)
+  span <- t1 - t0
+  while (t < t1) {
+    last <- h >= t1 - t
+    if (last) h <- t1 - t
+    repeat {
+      k2 <- f(t + h / 5, x + h * (k1 / 5))
+      k3 <- f(t + 3 * h / 10, x + h * (3 / 40 * k1 + 9 / 40 * k2))
+      k4 <- f(t + 4 * h / 5, x + h * (44 / 45 * k1 - 56 / 15 * k2 + 32 / 9 * k3))
+      k5 <- f(t + 8 * h / 9, x + h * (19372 / 6561 * k1 - 25360 / 2187 * k2 +
+                                       64448 / 6561 * k3 - 212 / 729 * k4))
+      k6 <- f(t + h, x + h * (9017 / 3168 * k1 - 355 / 33 * k2 + 46732 / 5247 * k3 +
+                                49 / 176 * k4 - 5103 / 18656 * k5))
+      xNew <- x + h * (35 / 384 * k1 + 500 / 1113 * k3 + 125 / 192 * k4 -
+                         2187 / 6784 * k5 + 11 / 84 * k6)
+      k7 <- f(t + h, xNew)
+      e <- h * (71 / 57600 * k1 - 71 / 16695 * k3 + 71 / 1920 * k4 -
+                  17253 / 339200 * k5 + 22 / 525 * k6 - 1 / 40 * k7)
+      err <- max(abs(e) / (atol + rtol * pmax(abs(x), abs(xNew))))
+      # A step too small to matter is taken whatever its estimate
+      if (err <= 1 || h <= 1e-9 * span) break
+      h <- h * max(0.2, 0.9 * err^(-1 / 5))
+      last <- FALSE
+    }
+    t <- if (last) t1 else t + h
+    x <- xNew
+    k1 <- k7
+    h <- h * min(5, max(0.2, 0.9 * max(err, 1e-10)^(-1 / 5)))
+  }
+  list(x = x, h = h)
+}
+
 #' Validate a model's michaelisMenten block
 #'
 #' @param mm the block a drug model returned, or NULL
@@ -506,6 +574,16 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   C2 <- numeric(L)
   depot <- numeric(L)
   depotStates <- c(seq_len(iIM), iT, iS)
+  # The adaptive step (mmDormandPrince()), for a drug whose block asks for
+  # it.  Its absolute tolerance is on amounts, relative to the largest dose
+  # or an hour of the largest rate.
+  adaptive <- isTRUE(mm$adaptiveStep)
+  if (adaptive) {
+    amountScale <- max(c(abs(jumps$amount),
+                         60 * abs(c(ivRateLine + scRateLine, peRateLine)), 0))
+    atol <- MM_ADAPTIVE_RTOL * max(amountScale, .Machine$double.eps)
+    hNext <- MM_MAX_STEP
+  }
   for (i in seq_len(L)) {
     if (i > 1) {
       dt <- timeLine[i] - timeLine[i - 1]
@@ -515,7 +593,15 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
       rPE <- peRateLine[i - 1]
       vmaxStep <- vmax * ddiAt("vmax", timeLine[i - 1])
       kmStep <- km * ddiAt("km", timeLine[i - 1])
-      for (k in seq_len(n)) {
+      if (adaptive) {
+        # An adaptive step for a drug that asks for one (mmDormandPrince())
+        f <- if (is.null(vd)) function(t, y) deriv(y, rIV, rPE, vmaxStep, kmStep) else
+          function(t, y) deriv(y, rIV, rPE, vmaxStep * vmaxDeclineAt(t), kmStep)
+        stepped <- mmDormandPrince(f, x, timeLine[i - 1], timeLine[i], hNext,
+                                   MM_ADAPTIVE_RTOL, atol)
+        x <- stepped$x
+        hNext <- stepped$h
+      } else for (k in seq_len(n)) {
         vmaxK <- if (is.null(vd)) vmaxStep else
           vmaxStep * vmaxDeclineAt(timeLine[i - 1] + (k - 0.5) * h)
         k1 <- deriv(x, rIV, rPE, vmaxK, kmStep)
@@ -530,6 +616,8 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
     }
     arriving <- which(jumpAt == i)
     for (j in arriving) x[jumps$state[j]] <- x[jumps$state[j]] + jumps$amount[j]
+    # A dose starts fast processes again: the step starts small again
+    if (adaptive && length(arriving)) hNext <- min(hNext, MM_MAX_STEP)
     Cp[i] <- x[iC] / V
     if (q > 0) C2[i] <- x[iP] / V2
     depot[i] <- sum(x[depotStates])

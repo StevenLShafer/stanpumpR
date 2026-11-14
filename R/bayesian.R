@@ -265,7 +265,7 @@ bayesianHorizonProblem <- function(drug, DT, horizon)
 #'   a relative 1e-10)
 #' @keywords internal
 bayesianSearch <- function(residuals, start, lower, upper,
-                           maxIterations = BAYES_MAX_ITERATIONS, delta = 1e-6)
+                           maxIterations = BAYES_MAX_ITERATIONS, delta = BAYES_JACOBIAN_STEP)
 {
   par <- pmin(pmax(start, lower), upper)
   r <- residuals(par)

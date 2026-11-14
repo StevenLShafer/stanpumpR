@@ -931,5 +931,7 @@ BAYES_FACTOR_LIMIT <- 20
 # The most iterations of the search (bayesianSearch(), about three
 # simulations each); the fits measured take 3 to 8
 BAYES_MAX_ITERATIONS <- 50L
+# The relative step of the search's finite differences (bayesianSearch())
+BAYES_JACOBIAN_STEP <- 1e-6
 # The label of the population curve drawn beside the individualized one
 BAYES_PRIOR_LABEL <- "population"
