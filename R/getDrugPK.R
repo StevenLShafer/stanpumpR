@@ -46,6 +46,11 @@
 #'   default) for a term birth.  Passed only to the neonatal models that
 #'   declare it (dobutamineNeonatal), whose clearance matures with
 #'   postmenstrual age (\code{postmenstrualAge()}).
+#' @param physiology NULL (normal), or the physiology sliders' factors, a
+#'   numeric vector named \code{liver}, \code{renal}, \code{cardiac},
+#'   \code{gi} (multiples of normal function, 0.1 to 10); applied only to a
+#'   drug with a row in \code{inst/extdata/physiologyParameters.csv}.  See
+#'   \code{R/physiology.R}.
 #' @param model internal: a model's output to use in place of calling the
 #'   drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
 #'   drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.
@@ -93,7 +98,8 @@ getDrugPK <- function(
   model = NULL,
   cyp4f2 = CYP4F2_DEFAULT,
   gestationalAge = NULL,
-  individual = NULL
+  individual = NULL,
+  physiology = NULL
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
@@ -232,6 +238,39 @@ getDrugPK <- function(
   # individual's drug.
   individual <- validateIndividual(individual, drug)
   if (!is.null(individual)) X <- individualizeModel(X, individual)
+  # The physiology sliders (R/physiology.R): liver function, renal function,
+  # cardiac output and GI absorption change this drug's parameters here,
+  # before anything below reads them, if the drug has an applied row in
+  # inst/extdata/physiologyParameters.csv.  ke0 is the normal one scaled by
+  # cardiac output (brain flow), so it is solved first, from the unchanged
+  # model.  It acts after the Bayesian update above: the individual's
+  # drug is the starting point of the what-if.
+  physiology <- checkPhysiology(physiology)
+  physiologyApplies <- !physiologyIsNormal(physiology) && !is.null(physiologyRow(drug))
+  if (physiologyApplies)
+  {
+    if (physiologyUnsupported(X))
+      stop("Internal error: ", drug, " has a physiology row, but its model ",
+           "carries elimination the physiology sliders cannot scale.")
+    nominalKe0 <- NULL
+    if (!is.null(X$ke0) && is_valid_number(X$ke0) && X$ke0 > 0)
+    {
+      # A model that supplies ke0 (etomidate): every set starts from it.
+      nominalKe0 <- lapply(X$PK, function(set) X$ke0)
+    } else if (isTRUE(X$tPeak > 0))
+    {
+      nominal <- getDrugPK(
+        drug = drug, weight = weight, height = height, age = age, sex = sex,
+        drugDefaults = drugDefaults, cyp2d6 = cyp2d6, resolveMetabolite = FALSE,
+        adjustToFFM = adjustToFFM, osmolality = osmolality,
+        creatinine = creatinine, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
+        cyp2b6 = cyp2b6, pregnant = pregnant, vkorc1 = vkorc1, model = X,
+        cyp4f2 = cyp4f2, gestationalAge = gestationalAge
+      )
+      nominalKe0 <- lapply(nominal$PK, function(set) set$ke0)
+    }
+    X <- applyPhysiology(X, physiologyRow(drug), physiology, nominalKe0)
+  }
   # A subcutaneous model writes its absorption as ka_SC and the rest; the
   # engines carry it on the tissue-depot (RA) fields.  See R/subcutaneous.R.
   tissueRoute <- modelTissueRoute(X$PK)
@@ -303,6 +342,10 @@ getDrugPK <- function(
     tPeak <- 0
   }
   tPeakSolved <- list()
+  # A ke0 held at its value at normal physiology (above) moves the time to
+  # peak effect, which is then solved per set as for a model that gave ke0.
+  if (any(vapply(X$PK, function(set) isTRUE(set$ke0Physiology > 0), logical(1))))
+    solveTPeak <- TRUE
   # Which curve tPeak was measured against.  Defaults to the intravenous
   # bolus, which is what every drug in the library assumed before oral-only
   # drugs arrived, so no existing model changes.
@@ -692,7 +735,10 @@ getDrugPK <- function(
     # that error is about 24 minutes.  An oral tPeak is counted from the
     # dose, so the solve carries the drug's absorption lag (pregabalin's is
     # 19 min); without it the effect site would peak one lag late.
-    if (!is.null(X$ke0) && X$ke0 > 0)
+    if (isTRUE(X$PK[[event]]$ke0Physiology > 0))
+    {
+      ke0 <- X$PK[[event]]$ke0Physiology
+    } else if (!is.null(X$ke0) && X$ke0 > 0)
     {
       # A drug may supply ke0 directly, which is the escape hatch for a time
       # to peak effect defined against a curve this function cannot build.
@@ -1111,7 +1157,8 @@ getDrugPK <- function(
       pregnant = pregnant,
       adjustToFFM = adjustToFFM,
       resolveMetabolite = FALSE,
-      gestationalAge = gestationalAge
+      gestationalAge = gestationalAge,
+      physiology = physiology
     )
     metaboliteSet <- metabolitePK$PK[[PK_EVENT_DEFAULT]]
 
@@ -1196,6 +1243,9 @@ getDrugPK <- function(
   # does not create it: a drug with no metabolite returns exactly the shape it
   # always has.
   out$metaboliteName <- metaboliteName
+  # What the physiology sliders did to this drug (R/physiology.R), for the
+  # help and the notification; NULL at normal physiology or without a row.
+  out$physiology <- X$physiology
   # An osmotic agent reports serum osmolality rather than its own
   # concentration: simCpCe() reads the baseline, the fraction and the molecular
   # weight from here.  See R/drugs_mannitol.R.
@@ -1421,7 +1471,8 @@ doseSizePK <- function(PK, dose)
 {
   X <- do.call(PK$drug, c(PK$covariates, list(dose = dose)))
   do.call(getDrugPK, c(list(drug = PK$drug), PK$covariates,
-                       list(model = X, individual = PK$individual)))
+                       list(model = X, individual = PK$individual,
+                            physiology = PK$physiology$factors)))
 }
 
 #' Check the share of each dose a parallel system receives

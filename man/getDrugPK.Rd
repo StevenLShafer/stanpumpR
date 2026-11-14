@@ -25,7 +25,8 @@ getDrugPK(
   model = NULL,
   cyp4f2 = CYP4F2_DEFAULT,
   gestationalAge = NULL,
-  individual = NULL
+  individual = NULL,
+  physiology = NULL
 )
 }
 \arguments{
@@ -98,6 +99,12 @@ postmenstrual age (\code{postmenstrualAge()}).}
 individual's pharmacokinetics as a list of \code{clearance} and
 \code{volume}, each a multiple of the model's, as the Bayesian update
 estimates them (\code{bayesianUpdateDrugs()}, \code{individualizeModel()}).}
+
+\item{physiology}{NULL (normal), or the physiology sliders' factors, a
+numeric vector named \code{liver}, \code{renal}, \code{cardiac},
+\code{gi} (multiples of normal function, 0.1 to 10); applied only to a
+drug with a row in \code{inst/extdata/physiologyParameters.csv}.  See
+\code{R/physiology.R}.}
 }
 \value{
 a list: the drug's PK sets (\code{PK}, one per PK event), its

@@ -475,7 +475,8 @@ alternativeModelProblems <- function(drugs, weight, height, age, sex, pregnant =
 #' @noRd
 alternativeModelEntry <- function(drug, weight, height, age, sex, drugDefaults,
                                   adjustToFFM = TRUE, pregnant = FALSE,
-                                  cyp2c9 = CYP2C9_DEFAULT, vkorc1 = VKORC1_DEFAULT) {
+                                  cyp2c9 = CYP2C9_DEFAULT, vkorc1 = VKORC1_DEFAULT,
+                                  physiology = NULL) {
   if (!is.null(alternativeModelProblem(drug, weight, height, age, sex, pregnant,
                                        cyp2c9 = cyp2c9, vkorc1 = vkorc1))) return(NULL)
   spec <- ALTERNATIVE_MODELS[[drug]]
@@ -488,7 +489,8 @@ alternativeModelEntry <- function(drug, weight, height, age, sex, drugDefaults,
     drugDefaults = drugDefaults,
     adjustToFFM = adjustToFFM,
     pregnant = pregnant,
-    model = model
+    model = model,
+    physiology = physiology
   )
   entry$drug        <- alternativeModelName(drug)
   entry$companionOf <- drug
