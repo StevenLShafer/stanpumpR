@@ -253,3 +253,35 @@ test_that("the physiology table is well formed", {
                                                cardiac = v, gi = v)))
   }
 })
+
+test_that("the ke0 illustration's brain model is the ke0 equation", {
+  # A step in arterial concentration: Ce = 1 - exp(-ke0 t), exactly
+  times <- seq(0, 20, by = 0.05)
+  ce <- effectSiteForArterial(times, rep(1, length(times)), 0.3)
+  expect_equal(ce, 1 - exp(-0.3 * times), tolerance = 1e-12)
+  # A ramp, exact for a piecewise-linear arterial curve
+  ce <- effectSiteForArterial(times, times, 0.3)
+  expect_equal(ce, times - (1 - exp(-0.3 * times)) / 0.3, tolerance = 1e-10)
+  d <- physiologyKe0Drugs()
+  # Calibrated: each drug has its stated ke0 at normal brain flow
+  expect_equal(brainKe0(d$PS, d$lambda, 1), d$ke0)
+  # Flow-limited: ke0 in proportion to brain flow, whatever the solubility
+  for (i in 1:2) expect_equal(brainKe0(d$PS[i], d$lambda[i], 0.3) / d$ke0[i], 0.3, tolerance = 1e-6)
+  # Permeability-limited: barely changes
+  expect_gt(brainKe0(d$PS[3], d$lambda[3], 0.3) / d$ke0[3], 0.9)
+})
+
+test_that("the ke0 rationale renders on the help page", {
+  fig <- helpPhysiologyKe0Figure()
+  expect_match(fig, "<svg")
+  expect_equal(lengths(regmatches(fig, gregexpr("<svg", fig))), 3L)
+  expect_false(grepl("<script|on[a-z]+=", fig))
+  tab <- helpPhysiologyKe0Table()
+  expect_match(tab, "Brain flow")
+  expect_match(tab, "CO<sup>0.35</sup>")
+  prop <- helpPhysiologyPropofolTable()
+  expect_equal(length(strsplit(prop, "\n")[[1]]), 5L)
+  page <- helpExpandGenerated(paste(readLines(system.file("help", "models", "physiology.md",
+                                                           package = "stanpumpR")), collapse = "\n"))
+  expect_false(grepl("<!-- generated:", page))
+})

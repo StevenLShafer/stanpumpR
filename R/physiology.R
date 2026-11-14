@@ -482,3 +482,190 @@ helpPhysiologyTableMarkdown <- function()
     rows
   ), collapse = "\n")
 }
+
+# ---- The ke0 rationale: a brain fed by a fixed arterial curve -----------------
+#
+# For the help page (generated blocks physiology-ke0-figure,
+# physiology-ke0-table, physiology-propofol-table).  The brain is one
+# well-stirred tissue fed by arterial blood (Renkin-Crone):
+#   V dCb/dt = Q E (Ca - Cb/lambda),  E = 1 - exp(-PS/Q),  Ce = Cb/lambda,
+# which is the ke0 equation dCe/dt = ke0 (Ca - Ce) with
+# ke0 = Q E / (V lambda).  Holding Ca(t) fixed and lowering Q shows how the
+# effect site slows when less drug is delivered each minute.
+
+#' Brain volume (L) and normal brain blood flow (L/min) for the illustration
+#' @noRd
+PHYSIOLOGY_BRAIN_VOLUME <- 1.4
+PHYSIOLOGY_BRAIN_FLOW <- 0.75
+
+#' The illustrative drugs: ke0 at normal flow (/min) and PS (L/min)
+#' @noRd
+physiologyKe0Drugs <- function()
+{
+  d <- data.frame(
+    drug = c("Fast, flow-limited (ke0 0.5/min)",
+             "Slow, flow-limited, highly soluble (ke0 0.05/min)",
+             "Slow, permeability-limited, polar (ke0 0.05/min)"),
+    ke0 = c(0.5, 0.05, 0.05),
+    PS  = c(50, 50, 0.05),
+    stringsAsFactors = FALSE)
+  E0 <- 1 - exp(-d$PS / PHYSIOLOGY_BRAIN_FLOW)
+  d$lambda <- PHYSIOLOGY_BRAIN_FLOW * E0 / (PHYSIOLOGY_BRAIN_VOLUME * d$ke0)
+  d
+}
+
+#' ke0 of a well-stirred brain at a fraction of normal brain blood flow
+#'
+#' @param PS permeability-surface product (L/min)
+#' @param lambda brain:blood partition coefficient
+#' @param flow brain blood flow, fraction of normal
+#' @noRd
+brainKe0 <- function(PS, lambda, flow)
+{
+  Q <- PHYSIOLOGY_BRAIN_FLOW * flow
+  Q * (1 - exp(-PS / Q)) / (PHYSIOLOGY_BRAIN_VOLUME * lambda)
+}
+
+#' The fixed arterial curve of the illustration (a bolus-like profile)
+#' @noRd
+physiologyArterialCurve <- function(t)
+{
+  s <- pmax(t - 0.5, 0)
+  ifelse(t < 0.5, 0,
+         10 * (0.85 * exp(-1.2 * s) + 0.15 * exp(-0.05 * s)) * (1 - exp(-6 * s)))
+}
+
+#' Effect-site concentration for an arterial curve, exact for a curve linear
+#' between the times given
+#' @noRd
+effectSiteForArterial <- function(times, arterial, ke0)
+{
+  ce <- numeric(length(times))
+  for (j in seq_along(times)[-1])
+  {
+    dt <- times[j] - times[j - 1]
+    e <- exp(-ke0 * dt)
+    slope <- (arterial[j] - arterial[j - 1]) / dt
+    ce[j] <- ce[j - 1] * e + arterial[j - 1] * (1 - e) + slope * (dt - (1 - e) / ke0)
+  }
+  ce
+}
+
+#' Brain-flow fractions shown in the illustration, with their colours
+#' @noRd
+PHYSIOLOGY_KE0_FLOWS <- c(1, 0.7, 0.5, 0.3)
+PHYSIOLOGY_KE0_COLOURS <- c("#2c3e50", "#2980b9", "#e67e22", "#c0392b")
+
+#' One small SVG line chart for the help page
+#' @noRd
+physiologySvgChart <- function(x, ys, colours, xr, yr, title, xlab, ylab, dashed = NULL)
+{
+  W <- 640; H <- 250; left <- 52; right <- 20; top <- 26; bottom <- 40
+  sx <- function(v) left + (v - xr[1]) / diff(xr) * (W - left - right)
+  sy <- function(v) H - bottom - (pmin(pmax(v, yr[1]), yr[2]) - yr[1]) / diff(yr) * (H - top - bottom)
+  f <- function(v) sprintf("%.1f", v)
+  path <- function(y) paste0("M", paste(f(sx(x)), f(sy(y)), sep = ",", collapse = " L"))
+  xTicks <- pretty(xr); xTicks <- xTicks[xTicks >= xr[1] & xTicks <= xr[2]]
+  yTicks <- pretty(yr, n = 4); yTicks <- yTicks[yTicks >= yr[1] & yTicks <= yr[2]]
+  c(
+    sprintf('<svg viewBox="0 0 %d %d" role="img" aria-label="%s" font-size="12" font-family="inherit" style="width:100%%;max-width:640px;height:auto">',
+            W, H, title),
+    sprintf('<text x="%s" y="16" font-weight="bold">%s</text>', f(left), title),
+    sprintf('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="#e3e8ec"/>',
+            f(sx(xr[1])), f(sy(yTicks)), f(sx(xr[2])), f(sy(yTicks))),
+    sprintf('<text x="%s" y="%s" text-anchor="end" dominant-baseline="middle">%s</text>',
+            f(sx(xr[1]) - 6), f(sy(yTicks)), format(yTicks)),
+    sprintf('<text x="%s" y="%s" text-anchor="middle">%s</text>',
+            f(sx(xTicks)), f(sy(yr[1]) + 16), format(xTicks)),
+    if (!is.null(dashed))
+      sprintf('<path d="%s" fill="none" stroke="#95a5a6" stroke-width="1.5" stroke-dasharray="5,4"/>', path(dashed)),
+    vapply(seq_along(ys), function(i)
+      sprintf('<path d="%s" fill="none" stroke="%s" stroke-width="2.2"/>', path(ys[[i]]), colours[i]),
+      character(1)),
+    sprintf('<text x="%s" y="%s" text-anchor="middle">%s</text>', f((sx(xr[1]) + sx(xr[2])) / 2), f(H - 6), xlab),
+    sprintf('<text transform="translate(13,%s) rotate(-90)" text-anchor="middle">%s</text>',
+            f((sy(yr[1]) + sy(yr[2])) / 2), ylab),
+    "</svg>")
+}
+
+#' Generated block physiology-ke0-figure: effect-site curves for one fixed
+#' arterial curve at four brain blood flows, for three kinds of drug
+#' @noRd
+helpPhysiologyKe0Figure <- function()
+{
+  d <- physiologyKe0Drugs()
+  times <- seq(0, 30, by = 0.02)
+  ca <- physiologyArterialCurve(times)
+  keep <- times <= 20
+  panels <- lapply(seq_len(nrow(d)), function(i) {
+    ys <- lapply(PHYSIOLOGY_KE0_FLOWS, function(q)
+      effectSiteForArterial(times, ca, brainKe0(d$PS[i], d$lambda[i], q))[keep])
+    top <- if (i == 1) 6.5 else 1.5
+    physiologySvgChart(times[keep], ys, PHYSIOLOGY_KE0_COLOURS, c(0, 20), c(0, top),
+                       d$drug[i], "Minutes", "Effect site",
+                       dashed = if (i == 1) ca[keep] else NULL)
+  })
+  legend <- paste(sprintf('<span style="color:%s">&#9644; brain flow &#215;%s</span>',
+                          PHYSIOLOGY_KE0_COLOURS, format(PHYSIOLOGY_KE0_FLOWS)),
+                  collapse = " &nbsp; ")
+  paste(c('<figure class="help-figure">', unlist(panels),
+          sprintf('<figcaption>%s<br>The same arterial curve (dashed, top panel; off scale in the lower two) feeds every line. Only brain blood flow changes.</figcaption>', legend),
+          "</figure>"), collapse = "\n")
+}
+
+#' Generated block physiology-ke0-table: equilibration half-times by brain
+#' flow, and ke0 by cardiac output through the exponent
+#' @noRd
+helpPhysiologyKe0Table <- function()
+{
+  d <- physiologyKe0Drugs()
+  rows <- vapply(seq_len(nrow(d)), function(i) {
+    t50 <- vapply(PHYSIOLOGY_KE0_FLOWS, function(q)
+      log(2) / brainKe0(d$PS[i], d$lambda[i], q), numeric(1))
+    sprintf("| %s | %s |", d$drug[i], paste(helpFormatNumber(t50), collapse = " | "))
+  }, character(1))
+  co <- c(1, 0.7, 0.5, 0.3, 0.1)
+  paste(c(
+    "Minutes for the effect site to reach half of a step in arterial concentration:",
+    "",
+    sprintf("| Drug | %s |", paste(sprintf("Brain flow &#215;%s", format(PHYSIOLOGY_KE0_FLOWS)), collapse = " | ")),
+    paste0("|---", strrep("|---", length(PHYSIOLOGY_KE0_FLOWS)), "|"),
+    rows,
+    "",
+    sprintf("ke0 as stanpumpR applies it, ke0 &#215; CO<sup>%s</sup>:", PHYSIOLOGY_KE0_CARDIAC_EXPONENT),
+    "",
+    sprintf("| Cardiac output | %s |", paste(sprintf("&#215;%s", format(co)), collapse = " | ")),
+    paste0("|---", strrep("|---", length(co)), "|"),
+    sprintf("| ke0, fraction of normal | %s |",
+            paste(helpFormatNumber(co ^ PHYSIOLOGY_KE0_CARDIAC_EXPONENT), collapse = " | "))
+  ), collapse = "\n")
+}
+
+#' Generated block physiology-propofol-table: a 2 mg/kg propofol bolus at
+#' three cardiac outputs, simulated by the app's own code
+#' @noRd
+helpPhysiologyPropofolTable <- function()
+{
+  if (is.null(physiologyRow("propofol"))) return("")
+  dose <- data.frame(Drug = "propofol", Time = 0, Dose = 2, Units = "mg/kg",
+                     stringsAsFactors = FALSE)
+  ev <- data.frame(Time = numeric(0), Event = character(0), stringsAsFactors = FALSE)
+  rows <- vapply(c(1, 0.5, 0.3), function(co) {
+    p <- c(cardiac = co)
+    r <- simulateDrugsWithCovariates(dose, ev, 70, 170, 40, "male", 30, FALSE,
+                                     physiology = p)$propofol$results
+    e <- r[r$Site == "Effect Site", ]
+    pl <- r[r$Site == "Plasma", ]
+    pk <- getDrugPK("propofol", 70, 170, 40, "male", physiology = p)
+    sprintf("| &#215;%s | %s | %s | %s | %s |", format(co),
+            helpFormatNumber(pk$PK$default$ke0),
+            helpFormatNumber(stats::approx(pl$Time, pl$Y, 1)$y),
+            helpFormatNumber(max(e$Y)),
+            helpFormatNumber(e$Time[which.max(e$Y)]))
+  }, character(1))
+  paste(c(
+    "| Cardiac output | ke0 (/min) | Plasma at 1 min (mcg/mL) | Peak effect site (mcg/mL) | Time of peak (min) |",
+    "|---|---|---|---|---|",
+    rows
+  ), collapse = "\n")
+}
