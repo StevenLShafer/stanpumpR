@@ -208,6 +208,10 @@ foldMetabolites <- function(drugs, maximum, plotRecovery = FALSE)
   {
     contribution <- drugs[[parent]]$metaboliteSeries
     if (is.null(contribution)) next
+    # A companion line (another model of a drug, drawn beside it: the
+    # Bayesian update's "(population)" line, R/bayesian.R) forms nothing:
+    # the drug's own entry already gives its metabolite what it forms.
+    if (!is.null(drugs[[parent]]$companionOf)) next
 
     target <- drugs[[parent]]$metaboliteName
     if (is.null(target) || !nzchar(target)) next

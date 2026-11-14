@@ -633,6 +633,64 @@ app_ui <- function() {
                 actionLink("setTarget", "Suggest Dosing")
               ),
 
+              # Measured concentrations individualize the drugs'
+              # pharmacokinetics (R/bayesian.R, R/bayesian-server.R): the
+              # maximum a posteriori estimate of each measured drug's
+              # clearance and volume.  A complete row updates the drug as it
+              # is entered.
+              bslib::accordion_panel(
+                "Bayesian Updating",
+                value = "bayes",
+                icon = icon("vial"),
+                tags$p(
+                  class = "small text-muted mb-2",
+                  "Enter measured concentrations to adjust each drug's clearance and volume to",
+                  "the patient (maximum a posteriori Bayesian estimate). The model's own curve",
+                  "stays on the plot, lighter, as \"(population)\".",
+                  tags$a(href = "#", `data-help-page` = "models/bayesian", "More...")
+                ),
+                uiOutput("bayesTableUI"),
+                fieldHelp(
+                  sliderInput(
+                    "bayesPKVariability",
+                    "PK variability (CV %)",
+                    min = BAYES_PK_VARIABILITY_MIN,
+                    max = BAYES_PK_VARIABILITY_MAX,
+                    value = BAYES_PK_VARIABILITY_DEFAULT,
+                    step = 5,
+                    post = "%",
+                    ticks = FALSE
+                  ),
+                  paste(
+                    "How far the patient's clearance and volume may be from the model's:",
+                    "the coefficient of variation of a log-normal distribution, so 0.5 and 2",
+                    "times the model are equally likely. Larger lets the measurements move",
+                    "the estimate further."
+                  ),
+                  placement = "right"
+                ),
+                fieldHelp(
+                  sliderInput(
+                    "bayesResidualVariability",
+                    "Residual variability (CV %)",
+                    min = BAYES_RESIDUAL_VARIABILITY_MIN,
+                    max = BAYES_RESIDUAL_VARIABILITY_MAX,
+                    value = BAYES_RESIDUAL_VARIABILITY_DEFAULT,
+                    step = 1,
+                    post = "%",
+                    ticks = FALSE
+                  ),
+                  paste(
+                    "How far a measurement may be from the patient's own predicted concentration:",
+                    "the assay, and errors in the recorded dose and sample times and in the model.",
+                    "Log-normal, as the PK variability. Larger trusts each measurement less."
+                  ),
+                  placement = "right"
+                ),
+                uiOutput("bayesSummary"),
+                actionLink("bayesClear", "Clear measurements")
+              ),
+
               bslib::accordion_panel(
                 "Email Slide",
                 icon = icon("envelope"),

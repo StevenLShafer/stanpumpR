@@ -885,3 +885,39 @@ PREGNANCY_MAX_AGE <- 60
 # only when the serum creatinine is blank (pregnancyGfrFactor()): a measured
 # pregnant creatinine already carries the rise.
 PREGNANCY_GFR_FACTOR <- 1.5
+
+# BAYESIAN UPDATE (R/bayesian.R, help page models/bayesian).  The sidebar's
+# Bayesian Updating panel: measured concentrations, and the two variabilities
+# of the maximum a posteriori estimate, each a coefficient of variation in
+# percent.  PK variability is the spread of the individual's clearance and
+# volume about the model's (the prior, omega); residual variability the
+# spread of a measurement about the individual's predicted concentration
+# (sigma), which takes in the assay and also errors in the recorded dose and
+# sample times and in the model itself.  Named "residual", not "assay", and
+# 5% by default, which is about where it comes down to in modelling (Steven L.
+# Shafer, 2026-11-13; he chose both defaults).  The estimate
+# depends only on the ratio of the two (the objective, R/bayesian.R, scaled
+# by sigma^2): at 25% and 5% the standard deviations are 5 to 1, so a
+# measurement weighs about 25 times the prior (inverse variance).
+# The original STANPUMP's generic clearance-and-volume update (BAYES.C,
+# Maitre and Shafer) entered omega 0.26 and sigma 0.05, commented as "30%
+# variability, ln(1.30) = .26", but its funk() divides by them unsquared, so
+# they acted as variances: about 51% and 22% as coefficients of variation.
+BAYES_PK_VARIABILITY_DEFAULT <- 25
+BAYES_PK_VARIABILITY_MIN <- 5
+BAYES_PK_VARIABILITY_MAX <- 100
+BAYES_RESIDUAL_VARIABILITY_DEFAULT <- 5
+BAYES_RESIDUAL_VARIABILITY_MIN <- 1
+BAYES_RESIDUAL_VARIABILITY_MAX <- 50
+# The most measured concentrations the table holds
+MAX_BAYES_OBSERVATIONS <- 30L
+# Rows the table is drawn with when empty
+BAYES_TABLE_BLANK_ROWS <- 4L
+# The estimate is searched within this factor of the model's clearance and
+# volume either way (exp(+/- log(20)), 20 times the 25% prior's standard
+# deviation): a bound the prior never reaches in practice, there only so that
+# a measurement that no clearance can explain (a level entered in the wrong
+# units) cannot drive the search to a volume of zero.
+BAYES_FACTOR_LIMIT <- 20
+# The label of the population curve drawn beside the individualized one
+BAYES_PRIOR_LABEL <- "population"
