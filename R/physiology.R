@@ -54,25 +54,29 @@
 # mammillary model expresses as a smaller V1.  The exponent on V1 is
 # PHYSIOLOGY_V1_CARDIAC_EXPONENT, an assumption, not a fitted value.
 #
-# ke0 is NOT changed by cardiac output, pending Shafer's decision
-# (2026-11-13, open).  ke0 is an equilibration rate, set mainly by the drug's
-# relative solubility in blood and brain (and, for a polar drug, by the
-# blood-brain barrier's permeability), not by brain blood flow: were it flow,
-# every drug acting in the brain would share one ke0 (Shafer).  In a
-# perfusion-and-permeability model, ke0 ~ Q (1 - exp(-PS/Q)) / (V lambda), so
-# flow matters only for a drug whose entry is flow-limited.  Evidence read
-# (abstracts, 2026-11-13): rocuronium's ke0 correlated with cardiac output in
-# patients (Kuipers 2001, PMID 11135721, r2 0.70); for propofol, cardiac
-# output explained 7.6% of the time to BIS 80 (Adachi 2013, PMID 24023993);
-# thiopental and propofol uptake into the sheep brain depended on cerebral
-# blood flow despite partial diffusion limitation (Upton 2000, PMID
-# 11020765); shock's main effect on propofol in swine was a 2.7-fold lower
-# Ce50 with slower intercompartmental clearances (Johnson 2003, PMID
-# 12883414).  The higher, earlier plasma peak from the smaller V1 already
-# speeds onset with ke0 unchanged.  The hook is
-# PHYSIOLOGY_KE0_CARDIAC_EXPONENT, 0 (no change) until that is decided; ke0
-# is taken from the model at normal physiology either way, so the time to
-# peak effect moves with the disposition.
+# ke0 falls slightly with cardiac output (Shafer, 2026-11-14).  ke0 is an
+# equilibration rate, set by the drug's relative solubility in blood and
+# brain (and, for a polar drug, by the blood-brain barrier), not by brain
+# blood flow alone: were it flow, every drug acting in the brain would share
+# one ke0.  But with the arterial curve held the same, a drug whose entry is
+# flow-limited reaches the brain more slowly when brain flow falls: for one
+# well-stirred brain, ke0 = Q (1 - exp(-PS/Q)) / (V lambda), so its ke0 falls
+# in proportion to brain blood flow, whatever its solubility (the absolute
+# delay, 1/ke0, is longest for the most soluble).  Brain flow follows
+# cardiac output with an exponent of about 0.35 while pressure is within
+# autoregulation (abstracts read 2026-11-13): Levine 1994, PMID 8026012,
+# cardiac output -29.9% and middle cerebral artery velocity -15.5% (b 0.47);
+# Ogoh 2005, PMID 16210355, cardiac output lowered and raised at constant
+# pressure and CO2 (b about 0.35); Vlastra 2020, PMID 33068017, grey-matter
+# flow by MRI +8.2% per L/min of cardiac output from 4.0 (b 0.33).  Against:
+# Cook 1997, PMID 9187987, pump flow did not change cerebral flow on
+# hypothermic bypass with pressure held; and Castle-Kirszbaum 2021, PMID
+# 33782372, found the 41 studies too weak to confirm the coupling.  Below
+# the autoregulatory floor brain flow becomes pressure-passive and the
+# exponent rises toward 1, which this does not model.  So ke0 is the model's
+# own at normal physiology times cardiac^PHYSIOLOGY_KE0_CARDIAC_EXPONENT,
+# applied to every drug alike: a drug whose equilibration is permeability-
+# limited would change less, which this does not distinguish.
 
 # The GI factor scales ka only: the drug arrives faster or slower, the
 # amount absorbed is unchanged.
@@ -105,11 +109,12 @@ PHYSIOLOGY_DEFAULT <- c(liver = 1, renal = 1, cardiac = 1, gi = 1)
 #' @noRd
 PHYSIOLOGY_V1_CARDIAC_EXPONENT <- 1
 
-#' Exponent of cardiac output on ke0 (ke0' = ke0 x cardiac^exponent).  0, no
-#' change, until Shafer decides which way, if either, ke0 should move
-#' (2026-11-13: an open question; see the header).
+#' Exponent of cardiac output on ke0 (ke0' = ke0 x cardiac^exponent): the
+#' exponent of brain blood flow on cardiac output within autoregulation,
+#' about 0.35 (Levine 1994, Ogoh 2005, Vlastra 2020; see the header).
+#' Shafer, 2026-11-14.
 #' @noRd
-PHYSIOLOGY_KE0_CARDIAC_EXPONENT <- 0
+PHYSIOLOGY_KE0_CARDIAC_EXPONENT <- 0.35
 
 #' Exponent of cardiac output on the intercompartmental clearances.
 #' @noRd
@@ -365,7 +370,9 @@ physiologyPanel <- function()
       "are taken as fixed shares of it, so the clearance of flow-limited",
       "drugs follows it.",
       "It also scales the intercompartmental clearances and the central",
-      "volume (a low output gives higher early concentrations)."),
+      "volume (a low output gives higher early concentrations), and slows",
+      "equilibration with the brain (ke0) a little, as brain blood flow",
+      "follows cardiac output only partly."),
     gi = paste(
       "Gastrointestinal absorption rate (oral ka), as a multiple of normal.",
       "The drug arrives faster or slower; the amount absorbed is unchanged.")

@@ -72,14 +72,20 @@ Besides hepatic blood flow, cardiac output scales two things:
   V1. The size of this effect is an assumption, V1 in proportion to cardiac
   output, and is not fitted to data.
 
-**ke0**, the rate of equilibration with the effect site, is not changed by
-cardiac output for now; whether it should move, and in which direction, is an
-open question. In shock the body is pared down to a heart, lungs and brain
-circuit: the brain's share of a smaller cardiac output rises, which might
-speed equilibration, while its absolute flow and the circulation time worsen,
-which might slow it. Even with ke0 unchanged, a low cardiac output gives a
-higher, earlier plasma peak after a bolus (the smaller V1), and so a higher
-effect-site peak.
+**ke0**, the rate of equilibration with the effect site, falls a little with
+cardiac output. ke0 is set mainly by the drug's relative solubility in blood
+and brain: a drug that is poorly soluble in brain equilibrates quickly,
+because little has to cross, and a highly soluble one slowly. But with the
+same arterial concentration, less brain blood flow delivers less drug each
+minute, so a drug whose entry is limited by flow equilibrates more slowly,
+its ke0 falling in proportion to brain blood flow. Brain blood flow follows
+cardiac output only partly while blood pressure is within autoregulation,
+about as cardiac output to the power 0.35 (Levine 1994; Ogoh 2005; Vlastra
+2020), so ke0′ = ke0 × CO<sup>0.35</sup>: at half the cardiac output, ke0 is
+0.78 of normal. The evidence for the coupling is not strong (a 2021
+systematic review judged it unconfirmed), and below the autoregulatory floor
+brain flow falls further than this. The smaller V1 still gives a higher,
+earlier plasma peak, so the net effect on onset depends on both.
 
 ## The gut
 
