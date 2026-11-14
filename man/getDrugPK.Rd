@@ -25,6 +25,7 @@ getDrugPK(
   model = NULL,
   cyp4f2 = CYP4F2_DEFAULT,
   gestationalAge = NULL,
+  individual = NULL,
   physiology = NULL
 )
 }
@@ -93,6 +94,11 @@ passed only to models that name it (warfarin).}
 default) for a term birth.  Passed only to the neonatal models that
 declare it (dobutamineNeonatal), whose clearance matures with
 postmenstrual age (\code{postmenstrualAge()}).}
+
+\item{individual}{NULL (the default) for the model's own patient, or the
+individual's pharmacokinetics as a list of \code{clearance} and
+\code{volume}, each a multiple of the model's, as the Bayesian update
+estimates them (\code{bayesianUpdateDrugs()}, \code{individualizeModel()}).}
 
 \item{physiology}{NULL (normal), or the physiology sliders' factors, a
 numeric vector named \code{liver}, \code{renal}, \code{cardiac},

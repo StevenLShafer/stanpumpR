@@ -54,6 +54,10 @@
 #' @param model internal: a model's output to use in place of calling the
 #'   drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
 #'   drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.
+#' @param individual NULL (the default) for the model's own patient, or the
+#'   individual's pharmacokinetics as a list of \code{clearance} and
+#'   \code{volume}, each a multiple of the model's, as the Bayesian update
+#'   estimates them (\code{bayesianUpdateDrugs()}, \code{individualizeModel()}).
 #'
 #' @returns a list: the drug's PK sets (\code{PK}, one per PK event), its
 #'   \code{tPeak} and \code{reference}, the covariates, and the library's
@@ -94,6 +98,7 @@ getDrugPK <- function(
   model = NULL,
   cyp4f2 = CYP4F2_DEFAULT,
   gestationalAge = NULL,
+  individual = NULL,
   physiology = NULL
 )
 {
@@ -226,12 +231,20 @@ getDrugPK <- function(
   # and never reaches here -- still fails with R's own "could not find
   # function", which is what test-gas-routing.R pins.
   X <- if (is.null(model)) do.call(drug, covariates) else model
+  # The Bayesian update (R/bayesian.R): the patient's own clearance and
+  # volume, estimated from measured concentrations, as multiples of the
+  # model's.  Applied to the model's parameters before anything is derived
+  # from them, so every engine, the effect site and the metabolite see the
+  # individual's drug.
+  individual <- validateIndividual(individual, drug)
+  if (!is.null(individual)) X <- individualizeModel(X, individual)
   # The physiology sliders (R/physiology.R): liver function, renal function,
   # cardiac output and GI absorption change this drug's parameters here,
   # before anything below reads them, if the drug has an applied row in
   # inst/extdata/physiologyParameters.csv.  ke0 is the normal one scaled by
   # cardiac output (brain flow), so it is solved first, from the unchanged
-  # model.
+  # model.  It acts after the Bayesian update above: the individual's
+  # drug is the starting point of the what-if.
   physiology <- checkPhysiology(physiology)
   physiologyApplies <- !physiologyIsNormal(physiology) && !is.null(physiologyRow(drug))
   if (physiologyApplies)
@@ -1416,6 +1429,10 @@ getDrugPK <- function(
            "formulations, an INR or a zero-order oral release.")
     out$dosePhase <- dp
   }
+  # Kept for the paths that rebuild the PK from the model (doseSizePK(),
+  # asmSegmentPK()), which must rebuild the individual's drug, and for the
+  # simulation key, so that a new estimate re-simulates the drug.
+  if (!is.null(individual)) out$individual <- individual
   return(out)
 }
 
@@ -1454,7 +1471,8 @@ doseSizePK <- function(PK, dose)
 {
   X <- do.call(PK$drug, c(PK$covariates, list(dose = dose)))
   do.call(getDrugPK, c(list(drug = PK$drug), PK$covariates,
-                       list(model = X, physiology = PK$physiology$factors)))
+                       list(model = X, individual = PK$individual,
+                            physiology = PK$physiology$factors)))
 }
 
 #' Check the share of each dose a parallel system receives

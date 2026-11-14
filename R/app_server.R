@@ -347,13 +347,21 @@ app_server <- function(input, output, session) {
     invisible()
   }
 
+  # The repeating-oral switch of the time settings (see its observer, below)
+  repeatingOralSwitch <- new.env(parent = emptyenv())
+  repeatingOralSwitch$settled <- FALSE
+
   # What the server uses to change the time settings itself: loading a
-  # scenario, restoring a bookmark, the long-term drug prompt.  Setting the
+  # scenario, restoring a bookmark, the long-term drug prompt, the
+  # repeating-oral switch.  Setting the
   # selectors this way and writing the table with setDoseTable() in the format
   # they will report means their echo finds nothing to convert.
   timeApi <- list(
     setDoseTable = setDoseTable,
     showTimeSettings = function(unit, mode, maximum, minimum = 0) {
+      # Time settings chosen for the session (a scenario, a restored link,
+      # the long-term prompt) are never replaced by the repeating-oral default
+      repeatingOralSwitch$settled <- TRUE
       format <- timeFormat(unit, mode)
       updateSelectInput(session, "timeUnits", selected = format[["unit"]])
       syncTimeModeChoices(format[["unit"]], format[["mode"]])
@@ -557,6 +565,7 @@ app_server <- function(input, output, session) {
     profileCode({
       excludeFromBookmark(names(reactiveValuesToList(input)))
       doseTable(); doseTableFormat(); eventTable(); macThreshold(); drugDefaults()
+      bayes$rows()
       session$doBookmark()
     }, name = "doBookmark observer")
   }, priority = -10)
@@ -574,6 +583,11 @@ app_server <- function(input, output, session) {
       # misalign it.
       state$values$macThreshold <- macThreshold()
       state$values$endCe <- changedThresholds(drugDefaults())
+      # The Bayesian update's measured concentrations, in minutes (complete
+      # rows only); saved only when there are some, to keep links short.
+      stored <- bayes$rows()
+      measured <- bayesRowsToObservations(stored$rows, stored$format, input$referenceTime)
+      if (nrow(measured) > 0) state$values$bayes <- measured
       excludeFromBookmark(isolate(names(input)))
     }, name = "onBookmark()")
   })
@@ -601,6 +615,9 @@ app_server <- function(input, output, session) {
     # and restoring its absence would leave the dose table unusable (and turn
     # off adjustToFFM, below, as if for an old bookmark).
     if (!isBookmarkRestore(state$values)) return()
+    # A restored link brings its own time settings: the repeating-oral switch
+    # is not applied to them
+    repeatingOralSwitch$settled <- TRUE
     profileCode({
       outputComments(
         "***************************************************************************\n",
@@ -671,6 +688,14 @@ app_server <- function(input, output, session) {
       if (is.null(state$input$adjustToFFM)) {
         updateCheckboxInput(session, "adjustToFFM", value = FALSE)
       }
+      # The Bayesian update's measured concentrations, read as untrusted
+      # input like the tables, into the table in the format now shown
+      restoredBayes <- restoredBayesObservations(state$values$bayes, drugDefaults()$Drug)
+      if (restoredBayes$changed) {
+        showNotification("The link's measured concentrations had entries that could not be read. They were left out.",
+                         id = "bookmarkBayesUnreadable", type = "warning", duration = 10)
+      }
+      if (nrow(restoredBayes$table) > 0) bayes$restore(restoredBayes$table)
       # A restored dose table with an illicit drug in it turns the opt-in on, so
       # the drug is not hidden from the table it is part of (R/illicit-drugs.R).
       if (any(isIllicitDrug(DT$Drug, drugDefaults()))) {
@@ -1225,7 +1250,7 @@ app_server <- function(input, output, session) {
     physiologyNote(physiology(), doseTableClean()$Drug)
   })
 
-  drugPK <- function(doseTable) {
+  drugPK <- function(doseTable, individual = NULL) {
     recalculatePK(
         NULL,
         drugDefaults(),
@@ -1249,9 +1274,70 @@ app_server <- function(input, output, session) {
         opioidTolerance = opioidTolerance(),
         alternativeModels = companionGroupsOn(),
         antiseizureInteractions = antiseizureInteractions(),
+        individual = individual,
         physiology = physiology()
       )
   }
+
+  # The Bayesian Updating panel (R/bayesian-server.R): the measured
+  # concentrations and the two variabilities.
+  bayes <- bayesianServer(
+    input, output, session,
+    doseTableClean = function() doseTableClean(),
+    doseTableFormat = function() doseTableFormat(),
+    drugDefaults = function() drugDefaults(),
+    result = function() bayesUpdate()
+  )
+
+  # The fits of the last update, reused for any drug whose inputs have not
+  # changed (bayesianUpdateDrugs()).  A plain variable, as ivSimulationCache.
+  bayesFitCache <- NULL
+
+  # The drugs' PK, with any drug that has measured concentrations updated to
+  # the individual (the maximum a posteriori estimate of its clearance and
+  # volume, R/bayesian.R) and the model's own kept beside it as
+  # "<drug> (population)".  Without measurements, the drugs' PK as it was.
+  bayesUpdate <- reactive({
+    profileCode({
+      req(testCovariates(), doseTableClean(), is.null(timeUnitViolation()), is.null(scheduleProblem()))
+      DT <- doseTableIV()
+      priors <- drugPK(DT) |> profileCode("recalculatePK() in bayesUpdate()")
+      observations <- bayes$observations()
+      if (nrow(observations) == 0) return(list(drugs = priors, fits = list(), problems = character(0)))
+      # The spinner only while an estimate is searched for (a second or two,
+      # half a minute for phenytoin), not when one is reused
+      spinning <- FALSE
+      result <- tryCatch(bayesianUpdateDrugs(
+        priors, DT, eventTableClean(), observations,
+        pkVariability = bayes$pkVariability(),
+        residualVariability = bayes$residualVariability(),
+        rebuild = function(drug, individual) {
+          drugPK(DT[DT$Drug == drug, , drop = FALSE],
+                 individual = stats::setNames(list(individual), drug))[[drug]]
+        },
+        antiseizureInteractions = antiseizureInteractions(),
+        fits = bayesFitCache,
+        onFit = function(drug) {
+          if (!spinning) {
+            shinycssloaders::showPageSpinner(
+              background = "#FFFFFF99",
+              caption = "Updating the pharmacokinetics from the measured concentrations...")
+            spinning <<- TRUE
+          }
+        }
+      ), finally = if (spinning) shinycssloaders::hidePageSpinner())
+      bayesFitCache <<- result$fits
+      result
+    }, name = "bayesUpdate() reactive")
+  })
+
+  # The measured concentrations the plot draws: those of the drugs it draws
+  bayesPoints <- reactive({
+    observations <- bayes$observations()
+    DT <- tryCatch(doseTableIV(), error = function(e) NULL)
+    if (is.null(DT)) return(NULL)
+    observations[observations$Drug %in% DT$Drug, , drop = FALSE]
+  })
 
   drugs <- reactive({
     profileCode({
@@ -1260,7 +1346,8 @@ app_server <- function(input, output, session) {
       # area says why (output$PlotSimulation).
       req(testCovariates(), doseTableClean(), is.null(timeUnitViolation()), is.null(scheduleProblem()))
 
-      newDrugs <- drugPK(doseTableIV()) |> profileCode("recalculatePK() in drugs()")
+      # The PK, updated from any measured concentrations (bayesUpdate())
+      newDrugs <- bayesUpdate()$drugs
 
       newDrugs <- processdoseTable(
         doseTableIV(),
@@ -1492,6 +1579,44 @@ app_server <- function(input, output, session) {
     }
   })
 
+  # The time settings open as an intravenous plot, minutes from 0 to
+  # TIME_MAXIMUM_DEFAULT (app_ui()).  The first time a repeating oral dose is
+  # prescribed (hasRepeatingOralDose(): a scheduled PO or SL dose, or a daily
+  # oral rate) while they are still exactly that, they switch to
+  # REPEATING_ORAL_TIME_UNIT from 0 to REPEATING_ORAL_PLOT_MINUTES, once per
+  # session (Shafer, 2026-11-13).  A drug given both ways starts on the
+  # intravenous plot and moves only when the repeating oral dose appears.
+  # Never again after that, nor once a scenario, a restored link or the
+  # long-term prompt has set the time (showTimeSettings()), nor over settings
+  # the user has changed: these are defaults, not rules.  An environment, not
+  # a reactiveVal, so that settling it invalidates nothing; created with
+  # timeApi, which settles it.
+  observe({
+    if (repeatingOralSwitch$settled) return()
+    DT <- tryCatch(doseTableClean(), error = function(e) NULL)
+    if (!hasRepeatingOralDose(DT)) return()
+    minimum <- suppressWarnings(as.numeric(isolate(input$minimum)))
+    atDefault <- identical(isolate(timeUnit()), TIME_UNIT_DEFAULT) &&
+      identical(isolate(input$timeMode), TIME_MODE_DEFAULT) &&
+      isTRUE(suppressWarnings(as.numeric(isolate(input$maximum))) == TIME_MAXIMUM_DEFAULT) &&
+      (length(minimum) == 0 || isTRUE(minimum == 0))
+    if (!atDefault) {
+      # The user chose the time settings; the default no longer applies
+      repeatingOralSwitch$settled <- TRUE
+      return()
+    }
+    # As for Show 365 days below: a dialog showing times in minutes would be
+    # read in days once the table is converted, so close it first
+    removeModal()
+    timeApi$showTimeSettings(REPEATING_ORAL_TIME_UNIT, "relative", REPEATING_ORAL_PLOT_MINUTES)
+    showNotification(
+      paste0("A repeating oral dose was prescribed, so the time units are now days, from 0 to ",
+             REPEATING_ORAL_PLOT_MINUTES / MINS_PER_DAY,
+             " days. Change them in the Time panel; this happens only once."),
+      id = "repeatingOralTime", type = "message", duration = 10
+    )
+  })
+
   # A drug that acts over weeks to months (LONG_TERM_DRUGS) added to a plot
   # shorter than a week: offer, once per addition, to show a year.  Not done
   # automatically: the user may have meant a short plot.  The button goes
@@ -1632,7 +1757,9 @@ app_server <- function(input, output, session) {
         width = input$plotWidth,
         # renderPlot() draws at the screen's pixel ratio, which is what the
         # graphics device's limit is measured against (maxPlotDevicePixels())
-        pixelRatio = if (is.null(session$clientData$pixelratio)) 1 else session$clientData$pixelratio
+        pixelRatio = if (is.null(session$clientData$pixelratio)) 1 else session$clientData$pixelratio,
+        # The Bayesian update's measured concentrations, as points
+        observations = bayesPoints()
       )
     }, name = "simulationPlotRetval() reactive")
   })

@@ -500,6 +500,16 @@ valganciclovirUnits <- paste("mg PO", VALGANCICLOVIR_PRODUCT)
 # unit names the salt and the drug's `doseProducts` block converts it.  Oral;
 # scheduled every 6 or 8 hours, or 4 for loading.
 QUINIDINE_SALT <- "sulfate"
+# Piperacillin-tazobactam (R/drugs_piperacillin.R): Zosyn and its generics are
+# labelled by the combined weight ("4.5 g": piperacillin sodium equivalent to
+# 4 g piperacillin and tazobactam sodium equivalent to 0.5 g tazobactam), and
+# are ordered that way, so a unit naming the product ("pip-tazo", the
+# clinical shorthand, short enough for a scheduled unit) carries 4/4.5 of its
+# weight as piperacillin (the drug's `doseProducts` block).  Plain mg units are
+# piperacillin.  Intravenous; scheduled every 4, 6 or 8 hours.
+PIPERACILLIN_TAZOBACTAM_PRODUCT <- "pip-tazo"
+piperacillinTazobactamUnits <- paste(c("mg", "mg/kg", "mg/hr", "mg/kg/hr"),
+                                     PIPERACILLIN_TAZOBACTAM_PRODUCT)
 # A transdermal patch's delivery rate into the skin (ROUTE_TD): Transderm
 # Scop is labelled "1 mg/3 days", 0.333 mg/day, entered when the patch is
 # applied and set to 0 when it is removed.
@@ -510,7 +520,8 @@ allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, enteralRateUnits,
               slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits,
               iuUnits, scUnits, iuScUnits, ghbUnits, insulinUnits, insulinRateUnits,
               ivPotencyUnits, aminophyllineUnits, caffeineCitrateUnits,
-              valganciclovirUnits, quinidineSulfateUnits, tdRateUnits)
+              valganciclovirUnits, quinidineSulfateUnits, tdRateUnits,
+              piperacillinTazobactamUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.
@@ -568,7 +579,9 @@ scheduledUnits <- c(
   # Valganciclovir's once- and twice-daily regimens (R/drugs_ganciclovir.R)
   paste(valganciclovirUnits, c("qd", "bid")),
   # Quinidine sulfate's regimens (R/drugs_quinidine.R)
-  paste(quinidineSulfateUnits, c("tid", "qid", "q4h"))
+  paste(quinidineSulfateUnits, c("tid", "qid", "q4h")),
+  # Piperacillin-tazobactam every 8 or 6 hours (R/drugs_piperacillin.R)
+  as.vector(t(outer(piperacillinTazobactamUnits[1:2], c("tid", "qid", "q4h"), paste)))
 )
 
 # Units for the inhaled gases (Class "gas" in drugDefaults_global.csv): carrier
@@ -664,6 +677,15 @@ TIME_UNIT_DEFAULT <- "minutes"
 # start, so it is offered for these units only; days and weeks are elapsed.
 CLOCK_TIME_UNITS <- c("minutes", "hours")
 TIME_MODES <- c("clock", "relative")
+# The plot the app opens with (Shafer, 2026-11-13): minutes, from 0 to 180,
+# the length of an intravenous anaesthetic.  A repeating oral dose prescribed
+# while the time settings are still these switches them, once per session, to
+# REPEATING_ORAL_TIME_UNIT from 0 to REPEATING_ORAL_PLOT_MINUTES
+# (repeatingOralSwitch in R/app_server.R).  Defaults only: the user may change
+# either at any time, and the switch never comes back.
+TIME_MAXIMUM_DEFAULT <- 180
+REPEATING_ORAL_TIME_UNIT <- "days"
+REPEATING_ORAL_PLOT_MINUTES <- 30 * MINS_PER_DAY
 # The Time Display the app opens with: elapsed time, counted from zero.  Actual
 # (clock) time is a choice in the Time panel for minutes and hours.
 TIME_MODE_DEFAULT <- "relative"
@@ -863,3 +885,39 @@ PREGNANCY_MAX_AGE <- 60
 # only when the serum creatinine is blank (pregnancyGfrFactor()): a measured
 # pregnant creatinine already carries the rise.
 PREGNANCY_GFR_FACTOR <- 1.5
+
+# BAYESIAN UPDATE (R/bayesian.R, help page models/bayesian).  The sidebar's
+# Bayesian Updating panel: measured concentrations, and the two variabilities
+# of the maximum a posteriori estimate, each a coefficient of variation in
+# percent.  PK variability is the spread of the individual's clearance and
+# volume about the model's (the prior, omega); residual variability the
+# spread of a measurement about the individual's predicted concentration
+# (sigma), which takes in the assay and also errors in the recorded dose and
+# sample times and in the model itself.  Named "residual", not "assay", and
+# 5% by default, which is about where it comes down to in modelling (Steven L.
+# Shafer, 2026-11-13; he chose both defaults).  The estimate
+# depends only on the ratio of the two (the objective, R/bayesian.R, scaled
+# by sigma^2): at 25% and 5% the standard deviations are 5 to 1, so a
+# measurement weighs about 25 times the prior (inverse variance).
+# The original STANPUMP's generic clearance-and-volume update (BAYES.C,
+# Maitre and Shafer) entered omega 0.26 and sigma 0.05, commented as "30%
+# variability, ln(1.30) = .26", but its funk() divides by them unsquared, so
+# they acted as variances: about 51% and 22% as coefficients of variation.
+BAYES_PK_VARIABILITY_DEFAULT <- 25
+BAYES_PK_VARIABILITY_MIN <- 5
+BAYES_PK_VARIABILITY_MAX <- 100
+BAYES_RESIDUAL_VARIABILITY_DEFAULT <- 5
+BAYES_RESIDUAL_VARIABILITY_MIN <- 1
+BAYES_RESIDUAL_VARIABILITY_MAX <- 50
+# The most measured concentrations the table holds
+MAX_BAYES_OBSERVATIONS <- 30L
+# Rows the table is drawn with when empty
+BAYES_TABLE_BLANK_ROWS <- 4L
+# The estimate is searched within this factor of the model's clearance and
+# volume either way (exp(+/- log(20)), 20 times the 25% prior's standard
+# deviation): a bound the prior never reaches in practice, there only so that
+# a measurement that no clearance can explain (a level entered in the wrong
+# units) cannot drive the search to a volume of zero.
+BAYES_FACTOR_LIMIT <- 20
+# The label of the population curve drawn beside the individualized one
+BAYES_PRIOR_LABEL <- "population"

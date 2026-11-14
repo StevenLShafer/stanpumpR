@@ -49,6 +49,21 @@
 
 isScheduledUnit <- function(units) as.character(units) %in% scheduledUnits
 
+# Does a dose table prescribe a repeating oral dose?  A non-zero scheduled dose
+# on the oral or sublingual route ("mg PO bid", "mg SL qd", "mg PO qam"), or a
+# daily oral rate ("mg/day PO", a daily dose spread over the day).  Read by the
+# app's one-time switch of the time settings to days (R/app_server.R,
+# REPEATING_ORAL_TIME_UNIT).  An enteral infusion ("mg/hr PO") is a pump, not
+# a repeated dose, and a single oral dose is not repeated.
+hasRepeatingOralDose <- function(DT) {
+  if (is.null(DT) || !is.data.frame(DT) || nrow(DT) == 0) return(FALSE)
+  units <- as.character(DT$Units)
+  dose <- suppressWarnings(as.numeric(DT$Dose))
+  oral <- doseRoute(units) %in% c(ROUTE_PO, ROUTE_SL)
+  repeating <- (isScheduledUnit(units) & oral) | units %in% poRateUnits
+  any(repeating & !is.na(dose) & dose > 0)
+}
+
 # "mg PO bid" -> "mg PO"
 scheduleBaseUnit <- function(units) {
   sub(paste0(" (", paste(names(ALL_SCHEDULE_INTERVALS), collapse = "|"), ")$"), "", units)

@@ -18,7 +18,7 @@ test_that("each row is complete for its status", {
   expect_true(all(nzchar(labels$file[has])))
   expect_true(all(grepl("\\.pdf$", labels$file[has])))
   expect_true(all(nzchar(labels$title[has])))
-  expect_true(all(labels$source[has] %in% c("archive", "dailymed")))
+  expect_true(all(labels$source[has] %in% c("archive", "dailymed", "drugsatfda")))
   expect_true(all(grepl("^[0-9a-f]{32}$", labels$md5[has])))
   dm <- has & labels$source == "dailymed"
   expect_true(all(grepl("^[0-9a-f-]{36}$", labels$setid[dm])))

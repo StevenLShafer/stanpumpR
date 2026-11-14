@@ -104,6 +104,7 @@ helpStaticPages <- function() {
     "models/meac",              "MEAC: comparing opioids",         "models",
     "models/interaction",       "Propofol-opioid interaction",     "models",
     "models/antiseizure-interactions", "Antiseizure drug interactions", "models",
+    "models/bayesian",          "Bayesian updating from measured concentrations", "models",
     "models/recovery",          "Time until threshold",            "models",
     "models/normalization",     "Normalization",                   "models",
     "models/suggest-algorithm", "How Suggest Dosing searches",     "models",

@@ -16,6 +16,10 @@ A time that is not a round number in the new unit is written to ten significant 
 
 Use minutes or hours for anaesthesia and the hours around it, and days or weeks for drugs given over days to months (antibiotics, steroids, a long opioid course).
 
+### The default
+
+The app opens in **minutes, from 0 to 180 minutes**, the length of an intravenous anaesthetic. The first time a **repeating oral dose** is prescribed (a scheduled oral or sublingual dose such as `mg PO bid` or `mg PO qam`, or a daily oral rate such as `mg/day PO`) while the time settings are still those, they switch to **days, from 0 to 30 days**, and a notification says so. A drug given both ways starts on the intravenous plot and moves to days only when its repeating oral dose appears; a single oral dose does not move it. The switch happens once per session: change the settings back and they stay as you set them. It is a default, not a rule, so it never replaces settings you have already changed, or those of a teaching scenario or a bookmarked link.
+
 ## Time Display
 
 ### Elapsed time
