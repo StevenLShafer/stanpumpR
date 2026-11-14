@@ -31,12 +31,15 @@
 #' @param timeApi the app_server()'s time-units functions (setDoseTable,
 #'   showTimeSettings), through which a scenario sets its time unit and writes
 #'   its dose table; NULL writes the tables directly
+#' @param restoreMeasurements function(measurements, format) that puts a
+#'   scenario's measured concentrations into the Bayesian Updating table
+#'   (applyHelpScenario()), or NULL
 #' @returns a list: `page`, the reactiveVal() holding the current page id, and
 #'   `loadScenario(s)`, which loads a scenario into the simulator (used for a
 #'   ?scenario= link, R/deep-links.R)
 #' @noRd
 helpServer <- function(input, output, session, doseTable, eventTable, drugDefaults,
-                       navId = "mainNav", timeApi = NULL) {
+                       navId = "mainNav", timeApi = NULL, restoreMeasurements = NULL) {
   helpPage <- reactiveVal("home")
 
   registry <- reactive({
@@ -90,7 +93,7 @@ helpServer <- function(input, output, session, doseTable, eventTable, drugDefaul
       return(FALSE)
     }
     outputComments("Loading help scenario", s$id)
-    applyHelpScenario(session, s, doseTable, eventTable, timeApi)
+    applyHelpScenario(session, s, doseTable, eventTable, timeApi, restoreMeasurements)
     bslib::nav_select(navId, "Simulator", session = session)
     showNotification(
       tagList(tags$strong("Loaded: "), s$title, tags$br(),

@@ -1,6 +1,6 @@
 stanpumpR predicts drug concentrations. You describe a patient and a dosing regimen, and it plots the plasma and effect-site concentrations those doses would be expected to produce, using pharmacokinetic models grounded in the peer-reviewed literature, with documented derivations, extrapolations and provisional assumptions where the literature itself leaves a gap (a route, a covariate or a parameter the source study did not measure). It is meant to make pharmacokinetics accessible: for patient care, for teaching, and for research.
 
-**stanpumpR does not control drug delivery and does not measure anything.** Every curve is a model's prediction for a typical patient with the covariates you entered. Real patients vary, sometimes a great deal, around those predictions. Please read [Cautions](help:cautions) once.
+**stanpumpR does not control drug delivery and does not measure anything.** Every curve is a model's prediction for a typical patient with the covariates you entered, unless you enter concentrations measured in the patient, which [Bayesian updating](help:models/bayesian) uses to adjust the drug's model to them. Real patients vary, sometimes a great deal, around those predictions. Please read [Cautions](help:cautions) once.
 
 ## Where to start
 
@@ -13,7 +13,7 @@ stanpumpR predicts drug concentrations. You describe a patient and a dosing regi
 
 | Region | What it does | Help page |
 |---|---|---|
-| Left sidebar | Patient covariates, graph options, additional plots, time settings, dose-table options, email; the arrow at its top collapses it | [Patient profile](help:patient-profile), [Graph options](help:graph-options) |
+| Left sidebar | Patient covariates, graph options, additional plots, time settings, dose-table options, measured concentrations (Bayesian updating), email; the arrow at its top collapses it | [Patient profile](help:patient-profile), [Graph options](help:graph-options), [Bayesian updating](help:models/bayesian) |
 | Plot | Predicted concentrations; hover, click and double-click act on it; *Add new drug* below it | [Reading the plot](help:reading-the-plot) |
 | Dose table | Where you describe the regimen, in a panel at the right that its arrow collapses | [The dose table](help:dose-table) |
 | Time panel (left sidebar) | Time units (minutes to weeks), Max time and Min time, elapsed or clock time | [Time display](help:time-display) |

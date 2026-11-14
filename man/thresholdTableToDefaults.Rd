@@ -29,7 +29,7 @@ returned unchanged)
 \description{
 The inverse of \code{thresholdTableForDisplay()}.  Rows not in the table keep
 the threshold they had.  Zero, entered as 0, is no threshold.  An entry that
-is not a non-negative number (blank, ".", text, negative) is refused rather
+is not a number from 0 to \code{MAX_DOSE_VALUE} (blank, ".", text, negative, too large) is refused rather
 than read as 0: nothing is changed, and \code{invalid} names the rows, so
 the dialog can say which to correct.
 }

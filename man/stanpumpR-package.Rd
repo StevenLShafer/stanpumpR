@@ -13,6 +13,7 @@ Open-source software for pharmacokinetic and pharmacodynamic simulation, intende
 
 Authors:
 \itemize{
+  \item Steven Shafer \email{steven.shafer@stanford.edu} (\href{https://orcid.org/0000-0002-0289-7793}{ORCID})
   \item Dean Attali \email{daattali@gmail.com} (\href{https://orcid.org/0000-0002-5645-3493}{ORCID})
 }
 

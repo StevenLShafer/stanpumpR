@@ -2022,8 +2022,9 @@ paperReviewStudied <- function(grid, pop)
 #' A group's name, for matching only
 #'
 #' Claude sometimes spells one group two ways within an extraction
-#' ("R(\u2212)-methadone" and "R(-)-methadone", "children 7\u201311 y" and
-#' "Children 7-11 y"), which split one model into two, each unable to close.
+#' (`"R(\u2212)-methadone"` and `"R(-)-methadone"`, `"children 7\u201311 y"`
+#' and `"Children 7-11 y"`), which split one model into two, each unable to
+#' close.
 #' Dashes, spaces and ASCII case are folded; matched as bytes, so the result
 #' is the same in any locale.
 #'

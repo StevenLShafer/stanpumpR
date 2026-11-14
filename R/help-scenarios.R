@@ -8,7 +8,8 @@
 # checks every scenario against the drug library (drug names, units, limits)
 # and runs each one through the simulation engine.
 #
-# A scenario is a patient, a dose table, an optional event table and the graph
+# A scenario is a patient, a dose table, an optional event table, optional
+# measured concentrations for the Bayesian update (R/bayesian.R) and the graph
 # options that make its point.  Its help page is generated from this registry
 # (R/help-drugs.R has the drug pages; helpScenarioPageHTML() below has these)
 # and followed by the narrative in inst/help/scenarios/<id>.md, which says what
@@ -67,7 +68,13 @@ helpScenarioDefaultOptions <- function() {
     # Apply the pharmacokinetic interactions among the antiseizure drugs
     # (R/antiseizureInteractions.R); needs an interacting pair, or
     # carbamazepine, dosed
-    antiseizureInteractions = FALSE
+    antiseizureInteractions = FALSE,
+    # The Bayesian Updating panel's two variabilities, coefficients of
+    # variation in percent (R/bayesian.R); read only when the scenario has
+    # measured concentrations, but always set, so that a load leaves nothing
+    # of the previous session's
+    bayesPKVariability = BAYES_PK_VARIABILITY_DEFAULT,
+    bayesResidualVariability = BAYES_RESIDUAL_VARIABILITY_DEFAULT
   )
 }
 
@@ -88,6 +95,9 @@ helpScenarioDefaultOptions <- function() {
 #'   age (pregnancyPossible()); read by the models R/pregnancy.R lists
 #' @param doses data frame with Drug, Time (minutes), Dose, Units
 #' @param events data frame with Time (minutes) and Event, or NULL
+#' @param measurements measured concentrations for the Bayesian update: a
+#'   data frame with Drug, Time (minutes) and Concentration (in the units of
+#'   the drug's plot), or NULL for none (helpMeasurements())
 #' @param ... graph options overriding helpScenarioDefaultOptions()
 #' @noRd
 helpScenario <- function(id, title, group, summary,
@@ -98,7 +108,7 @@ helpScenario <- function(id, title, group, summary,
                          cyp4f2 = CYP4F2_DEFAULT, cyp2b6 = CYP2B6_DEFAULT,
                          creatinine = NULL,
                          osmolality = OSMOLALITY_DEFAULT, pregnant = FALSE,
-                         gestationalAge = NULL, ...) {
+                         gestationalAge = NULL, measurements = NULL, ...) {
   options <- utils::modifyList(helpScenarioDefaultOptions(), list(...))
   doses <- data.frame(
     Drug = as.character(doses$Drug),
@@ -111,6 +121,14 @@ helpScenario <- function(id, title, group, summary,
     events <- data.frame(Time = as.numeric(events$Time), Event = as.character(events$Event),
                          stringsAsFactors = FALSE)
   }
+  # Always a table, empty when there are none: loading a scenario then clears
+  # the previous session's measurements as it replaces everything else
+  measurements <- data.frame(
+    Drug = as.character(measurements$Drug),
+    Time = as.numeric(measurements$Time),
+    Concentration = as.numeric(measurements$Concentration),
+    stringsAsFactors = FALSE
+  )
   list(
     id = id, title = title, group = group, summary = summary,
     # Every Patient Profile field is here, so that loading a scenario leaves
@@ -122,7 +140,7 @@ helpScenario <- function(id, title, group, summary,
                    vkorc1 = vkorc1, cyp4f2 = cyp4f2, cyp2b6 = cyp2b6,
                    adjustToFFM = adjustToFFM, creatinine = creatinine, osmolality = osmolality,
                    pregnant = pregnant, gestationalAge = gestationalAge),
-    doses = doses, events = events, options = options
+    doses = doses, events = events, measurements = measurements, options = options
   )
 }
 
@@ -134,6 +152,18 @@ helpDoses <- function(...) {
     Time = as.numeric(vapply(rows, `[[`, character(1), 2)),
     Dose = as.numeric(vapply(rows, `[[`, character(1), 3)),
     Units = vapply(rows, `[[`, character(1), 4),
+    stringsAsFactors = FALSE
+  )
+}
+
+# Measured concentrations for the Bayesian update, compactly: rows of
+# c(drug, time in minutes, concentration in the units of the drug's plot)
+helpMeasurements <- function(...) {
+  rows <- list(...)
+  data.frame(
+    Drug = vapply(rows, `[[`, character(1), 1),
+    Time = as.numeric(vapply(rows, `[[`, character(1), 2)),
+    Concentration = as.numeric(vapply(rows, `[[`, character(1), 3)),
     stringsAsFactors = FALSE
   )
 }
@@ -982,6 +1012,36 @@ helpScenarioDefinitions <- function() {
       plasmaLinetype = "solid", effectsiteLinetype = "blank",
       hamberg = TRUE
     ),
+    # The Bayesian update (R/bayesian.R) on warfarin's INR: the genotype is not
+    # known, so the model takes the most sensitive VKORC1 (AA, the app's
+    # default by Shafer's rule) and predicts an INR heading for 4 on 5 mg/day;
+    # the four morning INRs measured run lower, and the update moves the
+    # clearance up (x1.45) and the volume (x1.3), bringing the curve down to
+    # settle near 2.4.  The model's own curve stays beside it as "warfarin
+    # (population)".  The step of the help's five-minute tour that shows the
+    # Bayesian Updating panel is made from this scenario
+    # (data-raw/help-screenshots.js).  A teaching example, not dosing
+    # guidance.  (Claude Code, 2026-11-14, at the request of Steven L. Shafer.)
+    helpScenario(
+      "warfarin-bayesian-inr",
+      "Warfarin: updating the model from measured INRs",
+      "Long-term therapy",
+      "Warfarin 5 mg/day in a man whose genotype is not known, so the model assumes the most sensitive VKORC1 and predicts an INR heading for 4. The INRs measured on days 3, 5, 7 and 10 run lower; the Bayesian update raises the model's clearance to fit them, and the updated INR settles inside the 2-3 target while the model's own prediction stays beside it.",
+      age = 62, weight = 82, height = 176, sex = SEX_MALE,
+      cyp2c9 = "*1/*1", vkorc1 = "AA",
+      doses = helpDoses(
+        c("warfarin", 0, 5, "mg PO qd")
+      ),
+      # Morning INRs, drawn at the time of that day's dose, before it
+      measurements = helpMeasurements(
+        c("warfarin", 3 * MINS_PER_DAY, 1.3),
+        c("warfarin", 5 * MINS_PER_DAY, 1.6),
+        c("warfarin", 7 * MINS_PER_DAY, 1.9),
+        c("warfarin", 10 * MINS_PER_DAY, 2.2)
+      ),
+      timeUnits = "days", maximum = 28 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
+    ),
     # The two European vitamin-K antagonists (Verstuyft 2012) begun together, to
     # show how different their INR time courses are: fluindione accumulates
     # slowly to a sustained INR while acenocoumarol, which clears fast, swings
@@ -1192,6 +1252,11 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   for (name in c("showThreshold", "showMEAC", "showCompartments", "logY", "opioidMacInteraction", "mintoSchnider", "hamberg", "antiseizureInteractions")) {
     if (!is.logical(o[[name]]) || length(o[[name]]) != 1) say(name, " is not a single logical")
   }
+  if (!is_valid_number(o$bayesPKVariability, BAYES_PK_VARIABILITY_MIN, BAYES_PK_VARIABILITY_MAX))
+    say("bayesPKVariability out of range: ", o$bayesPKVariability)
+  if (!is_valid_number(o$bayesResidualVariability, BAYES_RESIDUAL_VARIABILITY_MIN,
+                       BAYES_RESIDUAL_VARIABILITY_MAX))
+    say("bayesResidualVariability out of range: ", o$bayesResidualVariability)
 
   d <- s$doses
   if (!is.data.frame(d) || nrow(d) == 0) {
@@ -1238,6 +1303,26 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
         d$Drug[companionModelGroup(d$Drug) %in% group],
         p$weight, p$height, p$age, p$sex, pregnant = isTRUE(p$pregnant),
         cyp2c9 = p$cyp2c9, vkorc1 = p$vkorc1)) say(problem)
+    }
+  }
+
+  # Measured concentrations: each of a drug the scenario doses, after that
+  # drug's first dose (the update sets earlier ones aside) and inside the plot
+  m <- s$measurements
+  if (!is.null(m) && nrow(m) > 0) {
+    if (!all(c("Drug", "Time", "Concentration") %in% names(m))) say("measurements lack columns")
+    if (nrow(m) > MAX_BAYES_OBSERVATIONS) say("more than ", MAX_BAYES_OBSERVATIONS, " measurements")
+    for (i in seq_len(nrow(m))) {
+      drug <- m$Drug[i]
+      if (!drug %in% d$Drug) {
+        say("measurement of a drug the scenario does not dose: ", drug)
+        next
+      }
+      if (!is_valid_number(m$Concentration[i], 0, MAX_DOSE_VALUE) || m$Concentration[i] <= 0)
+        say(drug, ": invalid measured concentration: ", m$Concentration[i])
+      if (!is_valid_number(m$Time[i], 0, Inf)) say(drug, ": invalid measurement time: ", m$Time[i])
+      else if (m$Time[i] >= o$maximum) say(drug, ": measurement at ", m$Time[i], " is beyond Max time ", o$maximum)
+      else if (m$Time[i] <= min(d$Time[d$Drug == drug])) say(drug, ": measurement at ", m$Time[i], " is not after its first dose")
     }
   }
 
@@ -1304,8 +1389,13 @@ helpScenarioEventTable <- function(s) {
 #' @param doseTable,eventTable the app's reactiveVal()s
 #' @param timeApi list(setDoseTable, showTimeSettings), or NULL to write the
 #'   tables directly (tests)
+#' @param restoreMeasurements function(measurements, format) that puts the
+#'   scenario's measured concentrations (minutes) into the Bayesian Updating
+#'   table, written in `format` (the Bayesian panel's restore, R/bayesian-server.R;
+#'   an empty table clears it), or NULL (tests)
 #' @noRd
-applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL) {
+applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL,
+                              restoreMeasurements = NULL) {
   p <- s$patient
   o <- s$options
 
@@ -1361,6 +1451,8 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   updateCheckboxInput(session, "mintoSchnider", value = o$mintoSchnider)
   updateCheckboxInput(session, "hamberg", value = o$hamberg)
   updateCheckboxInput(session, ASM_INTERACTIONS_INPUT, value = o$antiseizureInteractions)
+  updateSliderInput(session, "bayesPKVariability", value = o$bayesPKVariability)
+  updateSliderInput(session, "bayesResidualVariability", value = o$bayesResidualVariability)
 
   eventTable(helpScenarioEventTable(s))
   if (is.null(timeApi)) {
@@ -1369,6 +1461,13 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   } else {
     timeApi$showTimeSettings(o$timeUnits, "relative", o$maximum)
     timeApi$setDoseTable(helpScenarioDoseTable(s), timeFormat(o$timeUnits, "relative"))
+  }
+  # The measured concentrations, in the format the dose table is now written
+  # in; none clears the previous session's
+  if (is.function(restoreMeasurements)) {
+    measurements <- s$measurements
+    if (is.null(measurements)) measurements <- bayesianObservations(NULL)
+    restoreMeasurements(measurements, timeFormat(o$timeUnits, "relative"))
   }
   invisible(s)
 }
@@ -1379,7 +1478,7 @@ helpScenarioLoadButton <- function(s) {
   paste0(
     sprintf(
       '<p><a href="#" class="btn btn-primary help-scenario-btn" data-help-scenario="%s">%s Load into the simulator</a>
-     <span class="small text-muted help-scenario-hint">Replaces the current patient (every Patient Profile field), doses, events and graph options.</span></p>',
+     <span class="small text-muted help-scenario-hint">Replaces the current patient (every Patient Profile field), doses, events, measured concentrations and graph options.</span></p>',
       s$id, as.character(icon("play"))
     ),
     # A link that opens a fresh session on this scenario (R/deep-links.R), for
@@ -1454,6 +1553,24 @@ helpScenarioPageHTML <- function(id) {
     "Hamberg" = if (o$hamberg) "on" else "off",
     "Antiseizure drug interactions" = if (o$antiseizureInteractions) "on" else "off"
   )
+  # The measured concentrations and the two variabilities, only when the
+  # scenario has measurements (R/bayesian.R)
+  measurementsHTML <- ""
+  m <- s$measurements
+  if (!is.null(m) && nrow(m) > 0) {
+    units <- getDrugDefaultsGlobal()$Concentration.Units[match(m$Drug, getDrugDefaultsGlobal()$Drug)]
+    shown <- data.frame(
+      Drug = helpDrugTitle(m$Drug),
+      Time = minutesToDisplayTime(m$Time, o$timeUnits),
+      Measured = paste(helpFormatNumber(m$Concentration, 4), plottedUnitText(units, m$Drug)),
+      check.names = FALSE, stringsAsFactors = FALSE
+    )
+    names(shown)[2] <- timeHeader
+    measurementsHTML <- helpTableHTML(shown, "Measured concentrations (Bayesian Updating)")
+    optionRows <- c(optionRows,
+                    "PK variability" = paste0(o$bayesPKVariability, "%"),
+                    "Residual variability" = paste0(o$bayesResidualVariability, "%"))
+  }
   optionsTable <- data.frame(Option = names(optionRows), Setting = unname(optionRows),
                              stringsAsFactors = FALSE)
   eventsHTML <- ""
@@ -1475,6 +1592,7 @@ helpScenarioPageHTML <- function(id) {
     helpTableHTML(patient, "Patient"),
     helpTableHTML(dosesShown, "Doses"),
     eventsHTML,
+    measurementsHTML,
     helpTableHTML(optionsTable, "Graph options"),
     narrative,
     helpH2("See also"),
