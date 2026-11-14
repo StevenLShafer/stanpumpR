@@ -557,7 +557,14 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       if (!is.null(PK$parallelSystems) || !is.null(PK$inr) || !is.null(PK$act))
         stop("Target-controlled infusion is not available for a drug ",
              "simulated as several parallel systems or as an INR or ACT.")
-      schedule <- tciSchedule(dose, PK, maximum)
+      # The pump computes its rates from the model it was programmed with:
+      # the drug's own, except for a drug the Bayesian update individualized
+      # (R/bayesian.R), whose patient received the rates the library's model
+      # chose, so that a measurement can move the estimate and the
+      # individual's curve shows where the patient really was (Shafer,
+      # 2026-11-14).
+      pump <- if (is.null(PK$tciModel)) PK else PK$tciModel
+      schedule <- tciSchedule(dose, pump, maximum)
       dose <- schedule$dose
       tci <- tciDisplay(schedule, PK)
     }

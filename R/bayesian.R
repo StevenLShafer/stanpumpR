@@ -55,17 +55,18 @@
 # updated one after another, in the dose table's order, each on the updated
 # drugs before it.
 #
-# OPEN QUESTION for Shafer [decision] (found 2026-11-14 while checking
-# Carbon's UI audit): a TCI target row is expanded into its infusion by
-# tciSchedule() with the PK being simulated, so each candidate's prediction
-# is the target itself, whatever its clearance and volume, and a measurement
-# cannot move the estimate (propofol at an effect-site target of 3, measured
-# 5: clearance and volume factors 1.000 and 1.000).  A pump delivered the
-# rates the population model chose; fitting the individual to those rates
-# (the population's $tci schedule as manual infusions) would make the
-# measurement informative.  Whether the updated plot should then show the
-# pump continuing on the population model or reprogrammed with the
-# individual's (as STANPUMP did after BAYES.C) is the decision.
+# A target-controlled infusion.  The dose table holds a TCI row as a target,
+# and the rates are the controller's, computed from a PK model; the update
+# changes the PK model and never the dose table, so the patient received the
+# rates the pump computed from the library's model (Shafer, 2026-11-14).  An
+# individualized drug, and each candidate the search tries, carries that
+# model as `tciModel`, which simCpCe() hands the controller.  Before, the
+# controller ran on each candidate's own model, so every prediction was the
+# target itself and a measurement could not move the estimate (propofol at an
+# effect-site target of 3, measured 5: factors 1.000 and 1.000).  So a level
+# below the prediction puts the individual's whole curve since the infusion
+# began below the target, by less than the level alone suggests, the update
+# being shrunk toward the model.
 
 #' Check the individual's clearance and volume factors
 #'
@@ -403,7 +404,13 @@ bayesianFitDrug <- function(drug, drugs, DT, ET, measured, omega, sigma, rebuild
       values[missing] <- stats::approx(wide$Time, wide$Plasma, times[missing])$y
     values
   }
-  entryFor <- function(eta) rebuild(drug, list(clearance = exp(eta[1]), volume = exp(eta[2])))
+  usesPump <- any(isTciUnit(DTsub$Units[DTsub$Drug == drug]))
+  entryFor <- function(eta) {
+    entry <- rebuild(drug, list(clearance = exp(eta[1]), volume = exp(eta[2])))
+    # The pump ran on the library's model (see the header)
+    if (usesPump) entry$tciModel <- drugs[[drug]]
+    entry
+  }
 
   population <- predict(drugs[[drug]])
   # Each prediction simulated once: the model's own (eta = 0) is the
@@ -588,6 +595,8 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
 
     priors[[drug]] <- entry
     updated <- rebuild(drug, list(clearance = fit$clearance, volume = fit$volume))
+    # The pump ran on the library's model (see the header)
+    if (any(isTciUnit(DTsub$Units[DTsub$Drug == drug]))) updated$tciModel <- entry
     updated$Color <- entry$Color
     updated$bayesian <- list(clearance = fit$clearance, volume = fit$volume,
                              n = nrow(rows))
