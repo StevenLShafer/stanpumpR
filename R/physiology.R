@@ -75,8 +75,10 @@
 # the autoregulatory floor brain flow becomes pressure-passive and the
 # exponent rises toward 1, which this does not model.  So ke0 is the model's
 # own at normal physiology times cardiac^PHYSIOLOGY_KE0_CARDIAC_EXPONENT,
-# applied to every drug alike: a drug whose equilibration is permeability-
-# limited would change less, which this does not distinguish.
+# except a drug whose row marks its equilibration as limited by the
+# blood-brain barrier (ke0_permeability_limited; morphine, Shafer,
+# 2026-11-14), whose ke0 is left as it is: with PS much smaller than Q,
+# ke0 = PS / (V lambda) and brain blood flow drops out.
 
 # The GI factor scales ka only: the drug arrives faster or slower, the
 # amount absorbed is unchanged.
@@ -265,7 +267,10 @@ applyPhysiology <- function(X, row, physiology, ke0 = NULL)
   qFactor  <- cardiac ^ PHYSIOLOGY_Q_CARDIAC_EXPONENT
   fFactor  <- physiologyFirstPassFactor(row, physiology)
   gi       <- physiology[["gi"]]
-  ke0Factor <- cardiac ^ PHYSIOLOGY_KE0_CARDIAC_EXPONENT
+  # A drug whose entry into the brain is limited by the blood-brain barrier
+  # (morphine) keeps its ke0: delivery is not what limits its equilibration.
+  ke0Factor <- if (isTRUE(as.logical(row$ke0_permeability_limited))) 1 else
+    cardiac ^ PHYSIOLOGY_KE0_CARDIAC_EXPONENT
   scaleF <- function(f) if (is.null(f)) NULL else min(1, f * fFactor)
   scaleKa <- function(ka) if (is.null(ka)) NULL else ka * gi
 

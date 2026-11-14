@@ -139,9 +139,17 @@ autoregulatory floor, as in true shock, brain flow becomes pressure-passive and
 falls further than this.
 
 So stanpumpR takes ke0 at normal physiology and multiplies it by
-CO<sup>0.35</sup>. It applies this to every drug alike; a drug whose
-equilibration is limited by the blood-brain barrier would change less.
-Liver function, renal function and GI absorption leave ke0 alone.
+CO<sup>0.35</sup>, for every drug whose entry into the brain is limited by
+flow. Liver function, renal function and GI absorption leave ke0 alone.
+
+**Morphine is the exception.** It is polar, and it crosses the blood-brain
+barrier slowly: its equilibration is limited by the barrier (PS much smaller
+than brain blood flow), not by delivery. Its ke0 is then
+PS / (V λ), and brain blood flow drops out, as the lowest panel of the figure
+above shows. So morphine's ke0 is left as it is at every cardiac output; its
+clearance and central volume still change with cardiac output like any other
+drug's. A drug is marked this way in the physiology table
+(`ke0_permeability_limited`); morphine is the only one so far.
 
 In the app the slower ke0 meets the smaller V1. A 2 mg/kg propofol bolus at
 three cardiac outputs, simulated by stanpumpR itself:
@@ -158,6 +166,10 @@ At a higher setting the drug arrives sooner, and at a lower one later. The
 amount absorbed (the bioavailability) does not change.
 
 ## Which drugs respond
+
+The inhaled anesthetics do not respond to the sliders yet: they are simulated
+by the gas engine, whose cardiac output is fixed at its default for the
+patient's size.
 
 Only drugs whose renal share, hepatic share and extraction ratio were read in
 a published source respond. Any other drug ignores the sliders, and the panel

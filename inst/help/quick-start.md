@@ -78,6 +78,13 @@ The **Time** panel, in the left sidebar, sets the time units, how far the simula
 <figcaption>The Graph Options panel, for propofol alone.</figcaption>
 </figure>
 
+**Physiology** asks *what if*: four sliders change liver function, renal function, cardiac output and gastrointestinal absorption, each from a tenth of normal to ten times normal on a log scale, and the curves move at once. A drug whose clearance is mostly hepatic and high in extraction (propofol) follows cardiac output; one low in extraction (alfentanil) follows liver function; a low cardiac output also shrinks the central volume, so a bolus peaks higher, and slows the effect site a little. Under the sliders the panel names the dosed drugs they changed and any they cannot change yet. **Reset to normal** puts them back. How each slider works, and the evidence for it, is in [Physiology sliders](help:models/physiology).
+
+<figure class="help-figure">
+<img src="stanpumpr-assets/help/quick-start-physiology.png" alt="The Physiology panel: a line saying each slider is a multiple of normal function from a tenth to ten times on a log scale; sliders for Liver function, Renal function, Cardiac output and GI absorption, each with a question-mark tip, all at normal except Cardiac output at ×0.50; a Reset to normal link; and the note Changed: propofol">
+<figcaption>The Physiology panel with cardiac output at half of normal, for a propofol bolus.</figcaption>
+</figure>
+
 - **Additional plots**, at the foot of Graph Options, adds the clinical events timeline and, while the drugs they need are dosed, the MEAC panel for comparing opioids and the propofol-opioid interaction panel.
 - **Suggest Dosing** (in the *Dose table* panel of the left sidebar) works backwards from a target effect-site concentration.
 - The URL in your browser's address bar encodes the whole simulation; copy it to share or save your work. See [Sharing a simulation by URL](help:sharing).

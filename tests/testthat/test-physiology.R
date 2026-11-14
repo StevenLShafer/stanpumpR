@@ -182,6 +182,21 @@ test_that("a model that supplies ke0 scales it with cardiac output", {
   })
 })
 
+test_that("morphine's effect site is not slowed by cardiac output", {
+  # Barrier-limited: ke0 = PS / (V lambda), so brain flow drops out
+  base <- getDrugPK("morphine", 70, 170, 40, "male")
+  low <- getDrugPK("morphine", 70, 170, 40, "male", physiology = c(cardiac = 0.3))
+  expect_equal(low$PK$default$ke0, base$PK$default$ke0, tolerance = 1e-7)
+  # ...while its clearance and V1 still follow cardiac output
+  expect_lt(low$PK$default$cl1, base$PK$default$cl1)
+  expect_lt(low$PK$default$v1, base$PK$default$v1)
+  # A flow-limited drug's ke0 does fall
+  f0 <- getDrugPK("propofol", 70, 170, 40, "male")
+  f1 <- getDrugPK("propofol", 70, 170, 40, "male", physiology = c(cardiac = 0.3))
+  expect_equal(f1$PK$default$ke0, f0$PK$default$ke0 * 0.3 ^ PHYSIOLOGY_KE0_CARDIAC_EXPONENT,
+               tolerance = 1e-7)
+})
+
 test_that("a drug without an applied row ignores the sliders", {
   withPhysiologyTable(testRow("fentanyl", 0.05, 0.95, 0.8), {
     base <- getDrugPK("propofol", 70, 170, 40, "male")
@@ -222,7 +237,7 @@ test_that("the physiology table is well formed", {
                       "extraction_ratio", "renal_extraction_ratio",
                       "oral_first_pass", "basis",
                       "source_renal", "source_hepatic", "source_extraction",
-                      "verification", "notes"))
+                      "ke0_permeability_limited", "verification", "notes"))
   expect_false(anyDuplicated(tab$drug) > 0)
   expect_true(all(tab$verification %in% c(PHYSIOLOGY_APPLIED_VERIFICATION,
                                           "pending_verification")))
