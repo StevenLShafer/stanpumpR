@@ -74,11 +74,21 @@ paperReviewIsUploadPath <- function(datapath)
   if (!is.character(datapath) || length(datapath) != 1 || is.na(datapath) ||
       !file.exists(datapath) || dir.exists(datapath))
     return(FALSE)
-  path <- normalizePath(datapath, mustWork = TRUE)
+  # Both sides normalized alike: on Windows dirname() writes "/" where
+  # normalizePath() writes "\", and its paths ignore case, so the first
+  # version refused every upload there (CI, 2026-11-14)
+  normal <- function(p) normalizePath(p, winslash = "/", mustWork = TRUE)
+  path <- normal(datapath)
   dir <- dirname(path)
+  parent <- normal(dirname(dir))
+  root <- normal(tempdir())
+  if (.Platform$OS.type == "windows") {
+    parent <- tolower(parent)
+    root <- tolower(root)
+  }
   grepl("^[0-9]+([.][A-Za-z0-9]+)?$", basename(path)) &&
     grepl("^[0-9a-f]{24}$", basename(dir)) &&
-    identical(dirname(dir), normalizePath(tempdir(), mustWork = TRUE))
+    identical(parent, root)
 }
 
 #' Read an upload into memory and delete its temporary file
