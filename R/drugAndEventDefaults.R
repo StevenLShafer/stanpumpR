@@ -357,12 +357,17 @@ concentrationUnitsLocked <- function(drugs, units) {
 }
 
 # Whether a drug is simulated on the Michaelis-Menten engine: a property of the
-# model, read once from a reference adult and remembered
-drugOnSaturableEngine <- memoise::memoise(function(drug) {
-  PK <- tryCatch(getDrugPK(drug, weight = 70, height = 170, age = 40, sex = SEX_MALE),
-                 error = function(e) NULL)
-  !is.null(PK$michaelisMenten)
-})
+# model (its michaelisMenten block, R/advanceMichaelisMenten.R), listed.  It
+# was read from getDrugPK() at a reference adult and remembered, which in a
+# fresh worker built the PK of every drug in mcg or ng the first time the Drug
+# Library was drawn: 11.8 s (Carbon's fourth UI audit, 2026-11-15, C3).  The
+# list is held to getDrugPK() for every drug in the library, at the reference
+# adult and at a child, by tests/testthat/test-ui-audit-carbon4-engine.R, so a
+# drug that moves onto or off the engine fails there until it is listed.
+drugOnSaturableEngine <- function(drug) {
+  drug %in% c("cetagliptin", "exenatide", "GHB", "linagliptin", "phenytoin",
+              "vildagliptin", "voriconazole")
+}
 
 # The drugs and units a dose table uses, for drugLibraryProblems(inUse =)
 dosedUnits <- function(dt) {
