@@ -49,6 +49,11 @@
 # alone, so the model has NO parallel system.  inrBaseline() gives the drug-free
 # INR each form starts from.
 #
+# The turnover and indirect forms read the INR as 1 / activity, which grows
+# without limit while a drug holds their inhibition near 1; both are held at
+# INR_CEILING, 21, Hamberg's own maximum (inrFromActivity(); Carbon's third
+# UI audit, 2026-11-15, M1).
+#
 # What is plotted is the INR.  The concentrations are not, and there is no
 # effect site, no MEAC and no time until threshold: the INR falls after
 # warfarin is stopped at the pace of clotting-factor synthesis, which the
@@ -225,7 +230,7 @@ inrEngineResults <- function(parts, inr)
       # Hamberg 2007: S-warfarin only; R-warfarin is not a predictor of the INR.
       inrTransit(s$Time, s$Cp, inr)
     else
-      1 / inrPCA(s$Time, inrInhibition(s$Cp, r$Cp, inr), inr)
+      inrFromActivity(inrPCA(s$Time, inrInhibition(s$Cp, r$Cp, inr), inr))
   }
   data.frame(
     Time = s$Time,
@@ -248,7 +253,8 @@ inrEngineResults <- function(parts, inr)
 #' The drug inhibits the production of 1/INR, so 1/INR falls and the INR rises.
 #' The equation is linear in R with the same form as the turnover model, so it
 #' is solved exactly over each step by \code{inrPCA()} with \code{pca0 = R0} and
-#' a turnover half-life of \code{ln 2 / kout}; the INR is then its reciprocal.
+#' a turnover half-life of \code{ln 2 / kout}; the INR is then its reciprocal,
+#' held at \code{INR_CEILING} (\code{inrFromActivity()}).
 #'
 #' @param time times, minutes, increasing
 #' @param cDrug the coumarin concentration at those times, mg/L (fluindione, or
@@ -263,8 +269,42 @@ inrIndirect <- function(time, cDrug, inr)
   r0 <- inr$kin / inr$kout
   response <- inrPCA(time, inhibition,
                      list(pca0 = r0, halfLife = log(2) / inr$kout))
-  1 / response
+  inrFromActivity(response)
 }
+
+#' The INR from clotting activity, held at INR_CEILING
+#'
+#' The turnover (Xue) and indirect (Verstuyft) models both read the INR as the
+#' reciprocal of an activity that their inhibition, whose maximum is fixed at
+#' 1, drives towards zero.  While a drug holds the inhibition near 1, as an
+#' absurd dose does for months, the activity decays exponentially and so the
+#' INR grows exponentially without limit: 1.4e11 after a year of fluindione
+#' 1e6 mg daily (Carbon's third UI audit, 2026-11-15, M1).  The INR is
+#' therefore held at \code{INR_CEILING}, 21, by flooring the activity at its
+#' reciprocal.  Below 21 nothing changes, bit for bit, so every INR of the
+#' clinical range, and of an overdose up to 21, is the model's own.  21 is the
+#' ceiling of the library's other warfarin INR model, Hamberg 2007's baseline
+#' of 1 plus its INRmax of 20 (fixed by its authors after testing 15 and 25;
+#' inrTransit(), R/alternativeModels.R), so the two warfarin forms and the two
+#' European coumarins plot on one scale.  It is far above the data the three
+#' were fitted to (Hamberg's steady-state INRs 1.36-4.37; Xue's patients
+#' treated to 1.5-2.5, the model's 95th percentile 5 to 6.7; Verstuyft's
+#' healthy volunteers given two doses a day apart; papers/digests/PMID_17301738.md,
+#' PMID_27763679.md, PMID_22149257.md).  The floor is also a guard: an
+#' activity rounded to zero or below would otherwise give an infinite or
+#' negative INR.
+#'
+#' @param activity the activity (PCA, or 1/INR for the indirect form)
+#' @returns the INR, at most \code{INR_CEILING}
+#' @keywords internal
+inrFromActivity <- function(activity)
+{
+  1 / pmax(activity, 1 / INR_CEILING)
+}
+
+# The highest INR plotted (inrFromActivity(); Carbon's third UI audit,
+# 2026-11-15, M1): Hamberg 2007's baseline + INRmax, 1 + 20.
+INR_CEILING <- 21
 
 #' The INR from S-warfarin by the Hamberg 2007 transit-compartment model
 #'

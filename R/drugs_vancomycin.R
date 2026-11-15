@@ -22,8 +22,21 @@
 # dimensionally consistent reading and 2.28 is not a rate constant.
 #
 # The clearance equation is linear in CrCL and reaches zero at 1.06 mL/min.
-# It is not a model of anuria or dialysis, and the function refuses rather
-# than clamps if it is ever driven there.
+# It is not a model of anuria or dialysis.  The creatinine clearance the term
+# reads is therefore held at the lowest Thomson studied, 12 mL/min (Table 1's
+# range of initial CrCL, 12-216 mL/min; THOMSON_MIN_CRCL), where clearance is
+# 2.99 x (1 - 0.0154 x 54) = 0.50 L/h: the model's own prediction at the edge
+# of its data, the AGENTS.md rule for an age term ("at the youngest age the
+# source studied, never below") applied to the renal one.  Until 2026-11-15
+# the function refused instead, with an error, below 1.06 mL/min, which legal
+# entries reach (90 years, 20 kg, 150 cm, a creatinine of 15 mg/dL with the
+# switch off: 0.93 mL/min; a newborn under about 0.35 kg at an assumed
+# creatinine), and the plot area then said why but drew no drug at all
+# (Carbon's third UI audit, 2026-11-15, H3).  Between 1.06 and 12 mL/min it
+# extrapolated the line towards zero (0.33 L/h for a 3.5 kg newborn, now
+# 0.50; 0.09 L/h at 3 mL/min).  Below 12 mL/min the curve is a floor, not a
+# prediction: clearance in anuria and on dialysis is outside the model, and
+# the help page says so.
 #
 # RENAL FUNCTION
 # ==============
@@ -108,6 +121,11 @@
 #   https://doi.org/10.1093/ofid/ofy270
 # -----------------------------------------------------------------------------
 
+# The lowest initial creatinine clearance in Thomson's building set, mL/min
+# (Table 1: 64, range 12-216); the clearance term is held there (see the
+# header's DISPOSITION section).
+THOMSON_MIN_CRCL <- 12
+
 #' Vancomycin pharmacokinetics
 #'
 #' @inheritParams cefazolin
@@ -133,11 +151,12 @@ vancomycin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   # Pregnancy (see the header): the renal term alone.
   gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)
   crcl <- crcl * gfrPregnancy
+  # Held at the lowest creatinine clearance Thomson studied (see the header):
+  # below 1.06 mL/min the line gives no clearance at all (Carbon's third UI
+  # audit, 2026-11-15, H3).
+  crcl <- max(crcl, THOMSON_MIN_CRCL)
 
   cl1 <- 2.99 * (1 + 0.0154 * (crcl - 66)) / 60      # L/min
-  if (cl1 <= 0)
-    stop("The Thomson vancomycin clearance is not defined at a creatinine ",
-         "clearance of ", round(crcl, 1), " mL/min")
   v1  <- 0.675 * pkW
   v2  <- 0.732 * pkW
   cl2 <- 2.28 / 60 * size$clearance
