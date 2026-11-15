@@ -811,7 +811,12 @@ paperReviewServer <- function(input, output, session)
     }
     doseTable(d)
     # In the unit the paper uses for this regimen.
-    setUnit(paperReviewRegimenTimeUnit(r$extraction, regimen), max(PAPER_REVIEW_MAX_TIME_DEFAULT, ceiling(max(d$Time) * 2)))
+    # Twice the regimen, within the limit the Max time is held to: a regimen
+    # past day 182.5 set a Max time paperReviewMaxTimeMinutes() refused, and
+    # the plot asked for a value the app had chosen itself (the code review
+    # of PR #682, 2026-11-15)
+    setUnit(paperReviewRegimenTimeUnit(r$extraction, regimen),
+            min(PAPER_REVIEW_MAX_TIME_LIMIT, max(PAPER_REVIEW_MAX_TIME_DEFAULT, ceiling(max(d$Time) * 2))))
   })
 
   # The doses as text, read as R reads them (validateDose()): a numeric
@@ -903,10 +908,12 @@ paperReviewServer <- function(input, output, session)
                                                 absorption = simAbsorption(), absorptions = r$absorptions))
     shiny::validate(shiny::need(drug$ok, paste(drug$problems, collapse = " ")))
     maximum <- paperReviewMaxTimeMinutes(input$maximum, unitMinutes())
+    # The limit in the unit shown, and in days where that is another unit
+    # ("365 days (365 days)" read twice in days)
     shiny::validate(shiny::need(!is.na(maximum), sprintf(
-      "Enter a Max time greater than 0 and no longer than %s %s (365 days).",
+      "Enter a Max time greater than 0 and no longer than %s %s%s.",
       format(signif(PAPER_REVIEW_MAX_TIME_LIMIT / unitMinutes(), 6), big.mark = ",", scientific = FALSE),
-      unitName())))
+      unitName(), if (unitMinutes() == MINS_PER_DAY) "" else " (365 days)")))
     maximum <- max(maximum, max(d$Time) + 1)
     # Run on far enough to cover an overlaid figure's points.
     fig <- Filter(function(f) identical(f$id, input$overlay), r$figures)

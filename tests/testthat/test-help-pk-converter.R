@@ -412,3 +412,57 @@ test_that("an infusion of years stops at the update limit", {
   expect_true(js$aborted)
   expect_lte(js$n, js$limit)
 })
+
+# --- The code review of PR #682 (2026-11-15) -----------------------------------
+
+test_that("an axis rounded up to a step keeps that step and its top tick", {
+  skipWithoutNode()
+  # 14 is rounded up to 16 at a step of 2; chosen again from 16 the step was
+  # 5, and the axis stopped at 15
+  expect_equal(pkConvertJS("P.axisTicks(16, 5, 2).ticks"), seq(0, 16, by = 2))
+  expect_equal(pkConvertJS("P.axisTicks(16, 5).ticks"), seq(0, 15, by = 5))
+  # A step that would give too many ticks is still refused
+  expect_equal(pkConvertJS("P.axisTicks(1e6, 5, 1).ticks"), c(0, 1e6))
+})
+
+test_that("a trajectory that stops says which limit stopped it", {
+  skipWithoutNode()
+  js <- pkConvertJS(paste0(
+    "(function() { var m = P.fromVolumesClearances(3, [10, 100, 1000], [3, 2, 1]).model;",
+    "  return {updates: P.tciTrajectory(m, 0.5, 'effect', 1e300).reason,",
+    "          search: P.tciTrajectory(m, 1e-4, 'effect', 600).reason,",
+    "          note: P.decrementCurves(m, 0.5, 50, 1e300, 400).effect.reason}; })()"))
+  expect_identical(js$updates, "updates")
+  expect_identical(js$search, "search")
+  expect_identical(js$note, "updates")
+})
+
+test_that("a trajectory the search limit must stop is stopped before it starts", {
+  skipWithoutNode()
+  js <- pkConvertJS(paste0(
+    "(function() { var m = P.fromVolumesClearances(3, [10, 100, 1000], [3, 2, 1]).model;",
+    "  var t0 = Date.now(), tr = P.tciTrajectory(m, 1e-4, 'effect', 600);",
+    "  return {n: tr.states.length, ms: Date.now() - t0}; })()"))
+  # It spent the whole budget, about a second, at every keystroke
+  expect_equal(js$n, 0)
+  expect_lt(js$ms, 200)
+})
+
+test_that("the up-front refusal never refuses a trajectory that would finish", {
+  skipWithoutNode()
+  # The floor is a lower bound on the search a trajectory uses, over models
+  # of one to three compartments and ke0 from fast to just short of the limit
+  js <- pkConvertJS(paste0(
+    "(function() { var models = [P.fromVolumesClearances(3, [10, 100, 1000], [3, 2, 1]).model,",
+    "    P.fromVolumesClearances(2, [5, 50], [1, 4]).model, P.fromVolumesClearances(1, [20], [2]).model];",
+    "  var out = []; models.forEach(function(m) {",
+    "    [2, 0.5, 0.1, 0.02, 5e-3, 2e-3, 1e-3, 5e-4, 3e-4].forEach(function(k) {",
+    "      [60, 600].forEach(function(T) {",
+    "        var tr = P.tciTrajectory(m, k, 'effect', T);",
+    "        if (!tr.aborted) out.push({floor: P.effectSearchFloor(m, k, T), used: tr.searched}); }); }); });",
+    "  return out; })()"))
+  expect_gt(nrow(js), 40)
+  expect_true(all(js$floor <= js$used))
+  # and it is not a vacuous bound
+  expect_gt(max(js$floor / js$used), 0.5)
+})
