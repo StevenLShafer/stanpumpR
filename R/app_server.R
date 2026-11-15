@@ -1190,6 +1190,7 @@ app_server <- function(input, output, session) {
       sim <- simulateGases(
         DT,
         weight  = weight(),
+        physiology = physiology(),
         age     = age(),
         maximum = plotMaximum()
       )

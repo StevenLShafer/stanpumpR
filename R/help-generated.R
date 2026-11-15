@@ -888,5 +888,6 @@ HELP_GENERATED_BLOCKS <- list(
   "physiology-table" = function(...) helpPhysiologyTableMarkdown(),
   "physiology-ke0-figure" = function(...) helpPhysiologyKe0Figure(),
   "physiology-ke0-table" = function(...) helpPhysiologyKe0Table(),
-  "physiology-propofol-table" = function(...) helpPhysiologyPropofolTable()
+  "physiology-propofol-table" = function(...) helpPhysiologyPropofolTable(),
+  "physiology-gas-table" = function(...) helpPhysiologyGasTable()
 )

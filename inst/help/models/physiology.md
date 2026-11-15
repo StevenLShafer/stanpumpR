@@ -165,11 +165,65 @@ delays it.
 At a higher setting the drug arrives sooner, and at a lower one later. The
 amount absorbed (the bioavailability) does not change.
 
+## The inhaled anesthetics
+
+The gas engine is already a model of physiology: cardiac output, and its split
+among the vessel-rich group (the effect site), muscle and fat, are its own
+parameters. So **Cardiac output** acts on the inhaled anesthetics directly,
+with nothing scaled by assumption except how the flow is shared. Liver, renal
+and GI function do not apply: the agents leave by the lungs, and the engine has
+no metabolism or gut.
+
+Eger and Shafer's account of inhaled anesthetic kinetics gives the two effects.
+
+**Uptake.** Less blood passes the lungs, so less agent is carried away and the
+end-tidal concentration (FA) rises toward the inspired (FI) faster. The effect
+is largest for a soluble agent, whose rise is held back most by uptake, and
+small for a poorly soluble one, whose FA/FI is near 1 within minutes whatever
+the output.
+
+**Redistribution.** "In the extreme case of hypovolemic shock, cerebral blood
+flow is preserved at the expense of blood flow to everything else. In this
+reduced heart-brain circuit, FA/FI rises extremely fast." So the flow to the
+brain and heart does not fall with cardiac output: it follows the same
+autoregulated relation as the effect site of the intravenous drugs, cardiac
+output to the power 0.35 (see above). The brain and heart take 16% of resting
+output (brain 12%, heart 4%; Williams and Leggett 1989). What is left of the
+output is shared among the rest of the vessel-rich group, muscle and fat in
+their normal proportions. At a tenth of normal output the brain and heart
+receive 7% of normal output, nearly three quarters of all there is, and the
+rest of the body is all but cut off. At a high output the brain's share falls
+and the extra flow goes to the other tissues.
+
+The engine's vessel-rich group is one 6 L compartment. Lumped like that, the
+flow the brain keeps in shock would be spread over the kidneys, liver and gut,
+and the brain would fill far too slowly. So while the slider is away from
+normal, the brain and heart become a compartment of their own, which is then
+the effect site. Each part has the group's normal flow per litre, so at normal
+output the two fill exactly as the one group did. The engine's agreement with
+GasMan is unchanged. The Visualizer draws the whole group, so the agent it
+holds still adds up.
+
+Simulated by stanpumpR (70 kg, 6 L/min ventilation, fresh gas 6 L/min):
+
+<!-- generated: physiology-gas-table -->
+
+A low output raises FA/FI, much more for sevoflurane than for nitrous oxide.
+The brain fills a little more slowly at first, because less blood reaches it
+each minute, as for the intravenous drugs. It then rises above normal, because
+its blood comes from lungs at a higher tension. At a high output FA/FI rises
+more slowly, and the brain ends lower.
+
+The 16% share is provisional. It is the textbook reference value, but the table
+of Williams and Leggett has not yet been read. Other effects the same chapter
+describes are not modelled yet. These are flow shifted to muscle (exercise,
+excitement) or to fat, hypothermia (higher solubility, lower metabolism),
+ventilation-perfusion mismatch and one-lung ventilation, and children's larger
+vessel-rich group. Ventilation itself is a dose-table row.
+
 ## Which drugs respond
 
-The inhaled anesthetics do not respond to the sliders yet: they are simulated
-by the gas engine, whose cardiac output is fixed at its default for the
-patient's size.
+The inhaled anesthetics respond to **Cardiac output** only, as described above.
 
 Only drugs whose renal share, hepatic share and extraction ratio were read in
 a published source respond. Any other drug ignores the sliders, and the panel
@@ -187,6 +241,9 @@ cerebral blood flow: a systematic review of cardio-cerebral coupling.
 Cook DJ, Proper JA, Orszulak TA, Daly RC, Oliver WC. Effect of pump flow rate
 on cerebral blood flow during hypothermic cardiopulmonary bypass in adults.
 *J Cardiothorac Vasc Anesth* 1997;11:415-9. doi:10.1016/s1053-0770(97)90047-1
+
+Eger EI II, Shafer SL. The evolution of pharmacokinetics. Chapter 8 of Eger's
+scientific autobiography, manuscript, 2017.
 
 Hiraoka H, Yamamoto K, Miyoshi S, et al. Kidneys contribute to the
 extrahepatic clearance of propofol in humans, but not lungs and brain.
@@ -210,3 +267,7 @@ valve implantation. *J Am Geriatr Soc* 2021;69:494-9. doi:10.1111/jgs.16882
 
 Wilkinson GR, Shand DG. Commentary: a physiological approach to hepatic drug
 clearance. *Clin Pharmacol Ther* 1975;18:377-90.
+
+Williams LR, Leggett RW. Reference values for resting blood flow to organs of
+man. *Clin Phys Physiol Meas* 1989;10:187-217.
+doi:10.1088/0143-0815/10/3/001

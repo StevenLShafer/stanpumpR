@@ -122,6 +122,111 @@ PHYSIOLOGY_KE0_CARDIAC_EXPONENT <- 0.35
 #' @noRd
 PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 
+# ---- The inhaled anesthetics -------------------------------------------------
+#
+# The gas engine (R/advanceClosedFormGas.R) is a physiological model already:
+# cardiac output and its split among the vessel-rich group (VRG, the effect
+# site), the muscle group and the fat group are its parameters, so the cardiac
+# slider acts on them directly and nothing is scaled by assumption.  Eger and
+# Shafer's chapter ("The Evolution of Pharmacokinetics", Shafer's decision
+# 2026-11-15 that the slider act on the gases) gives the physics:
+#
+#   * Cardiac output alone.  Less blood passes the lungs, so less agent is
+#     removed and FA/FI rises faster, most for a soluble agent.  The tissues
+#     each fill on their own flow.
+#   * Redistribution.  "In the extreme case of hypovolemic shock, cerebral
+#     blood flow is preserved ... at the expense of blood flow to everything
+#     else.  In this reduced heart-brain circuit, FA/FI rises extremely fast."
+#
+# So the flow to the brain and heart is not scaled with cardiac output: it
+# follows cardiac^PHYSIOLOGY_KE0_CARDIAC_EXPONENT, the same autoregulated
+# relation of brain flow to cardiac output that sets the intravenous drugs'
+# ke0 (assumed to hold for the coronary flow too).  The rest of the output is
+# shared among the rest of the VRG, muscle and fat in their normal proportions,
+# so the total is exactly the slider's multiple of normal and, at a tenth of
+# normal, nearly all of it goes to the heart and brain.  At a high output the
+# protected share shrinks and the extra flow goes to the other tissues.  The
+# brain and heart are split from the rest of the VRG as a compartment of their
+# own, which is then the effect site: lumped into the 6 L group, the flow the
+# brain keeps would be spread over the kidneys, liver and gut, and at a tenth
+# of normal output brain sevoflurane at 2 min came out a fifth of normal
+# instead of near it.  The split adds a sixth state only while the slider is
+# away from normal, and at normal output the two parts fill exactly as the one
+# group did, so the engine's validation against GasMan is untouched.
+#
+# Liver, renal and GI function do not enter: the engine has no metabolism of
+# the agents (their elimination is the lungs) and no gut.
+
+#' Share of resting cardiac output that perfuses the brain and the heart
+#'
+#' Brain 12% and coronary 4% of resting cardiac output in the reference adult
+#' man (Williams and Leggett 1989, Clin Phys Physiol Meas 10:187-217,
+#' doi:10.1088/0143-0815/10/3/001, the reference values ICRP 89 adopted).
+#' PROVISIONAL: the values are the textbook reference values, but the paper's
+#' table has not yet been read (its abstract gives no numbers and it is not in
+#' the archive); recorded as an open question on the help page.  Must stay
+#' below the engine's VRG share (\code{getGasBody()$f_brain}, 0.76).
+#' @noRd
+PHYSIOLOGY_GAS_PROTECTED_SHARE <- 0.12 + 0.04
+
+#' The gas engine's body at a multiple of normal cardiac output
+#'
+#' Scales \code{Q_cardiac} by \code{cardiac} and redistributes it: the brain
+#' and heart (\code{PHYSIOLOGY_GAS_PROTECTED_SHARE} of normal output, inside
+#' the VRG) receive \code{share x cardiac^PHYSIOLOGY_KE0_CARDIAC_EXPONENT} of
+#' normal output, never more than the whole output, and the rest of the VRG,
+#' muscle and fat share what is left in their normal proportions.  At
+#' \code{cardiac = 1} the body is returned unchanged.
+#'
+#' @param body output of \code{getGasBody()}
+#' @param cardiac cardiac output as a multiple of normal, positive
+#' @returns the body, with \code{Q_cardiac}, \code{V_brain}, \code{f_brain},
+#'   \code{f_muscle} and \code{f_fat} changed, the rest of the vessel-rich
+#'   group added as \code{V_vrgRest} and \code{f_vrgRest}, and \code{cardiac}
+#'   recorded
+#' @export
+gasBodyPhysiology <- function(body, cardiac = 1)
+{
+  if (is.null(cardiac)) cardiac <- 1
+  if (!is.numeric(cardiac) || length(cardiac) != 1 || !is.finite(cardiac) ||
+      cardiac <= 0)
+    stop("Invalid cardiac output multiple: ", format(cardiac))
+  if (cardiac == 1) return(body)
+  share <- PHYSIOLOGY_GAS_PROTECTED_SHARE
+  # Normal flows as fractions of normal output.
+  rest0 <- c(vrg = body$f_brain - share, muscle = body$f_muscle,
+             fat = body$f_fat)
+  if (rest0[["vrg"]] < 0)
+    stop("The brain and heart cannot take more than the VRG's share of output")
+  protected <- min(share * cardiac ^ PHYSIOLOGY_KE0_CARDIAC_EXPONENT, cardiac)
+  rest <- rest0 / sum(rest0) * (cardiac - protected)
+  # The brain and heart become a compartment of their own (state 3, the effect
+  # site) and the rest of the vessel-rich group a sixth state
+  # (gasTissueShares()), each with the share of the group's volume that it has
+  # of the group's normal flow.  So at normal output the two fill exactly as
+  # the one group did, and away from it the flow the brain keeps is not spread
+  # over the kidneys, liver and gut.
+  vrgVolume <- body$V_brain
+  body$V_brain   <- vrgVolume * share / body$f_brain
+  body$V_vrgRest <- vrgVolume - body$V_brain
+  body$Q_cardiac <- body$Q_cardiac * cardiac
+  body$f_brain   <- protected / cardiac
+  body$f_vrgRest <- rest[["vrg"]] / cardiac
+  body$f_muscle  <- rest[["muscle"]] / cardiac
+  body$f_fat     <- rest[["fat"]] / cardiac
+  body$cardiac   <- cardiac
+  body
+}
+
+#' The inhaled agents the cardiac slider moves (every soluble agent a user
+#' doses; not the carrier gases or the ventilation)
+#' @noRd
+physiologyGasAgents <- function()
+{
+  props <- getGasProperties()
+  intersect(props$gas[props$soluble], gasDrugNames())
+}
+
 #' Validate a physiology vector
 #'
 #' @param physiology NULL (normal), or a numeric vector named by
@@ -377,7 +482,10 @@ physiologyPanel <- function()
       "It also scales the intercompartmental clearances and the central",
       "volume (a low output gives higher early concentrations), and slows",
       "equilibration with the brain (ke0) a little, as brain blood flow",
-      "follows cardiac output only partly."),
+      "follows cardiac output only partly.",
+      "For the inhaled anesthetics it sets the blood flow through the lungs",
+      "and the tissues, the brain and heart keeping most of theirs, so a low",
+      "output makes the end-tidal and brain concentrations rise faster."),
     gi = paste(
       "Gastrointestinal absorption rate (oral ka), as a multiple of normal.",
       "The drug arrives faster or slower; the amount absorbed is unchanged.")
@@ -450,7 +558,13 @@ physiologyNote <- function(physiology, drugs)
 {
   if (physiologyIsNormal(physiology) || length(drugs) == 0) return(NULL)
   drugs <- unique(drugs)
-  changed <- intersect(drugs, physiologyDrugs())
+  # The carrier gases and the ventilation are settings, not drugs; the agents
+  # respond to cardiac output only (gasBodyPhysiology()).
+  gasAgents <- intersect(drugs, physiologyGasAgents())
+  drugs <- drugs[!isGasDrug(drugs)]
+  cardiacMoved <- checkPhysiology(physiology)[["cardiac"]] != 1
+  changed <- c(intersect(drugs, physiologyDrugs()),
+               if (cardiacMoved) gasAgents)
   unchanged <- setdiff(drugs, changed)
   tags$div(
     class = "small physiology-note",
@@ -459,7 +573,11 @@ physiologyNote <- function(physiology, drugs)
     if (length(unchanged))
       tags$p(class = "text-warning",
              tags$strong("Not changed (no physiology data yet): "),
-             paste(unchanged, collapse = ", "))
+             paste(unchanged, collapse = ", ")),
+    if (length(gasAgents) && !cardiacMoved)
+      tags$p(class = "text-muted",
+             tags$strong("Inhaled agents "), "(", paste(gasAgents, collapse = ", "),
+             ") respond to cardiac output only.")
   )
 }
 
@@ -671,6 +789,42 @@ helpPhysiologyPropofolTable <- function()
   paste(c(
     "| Cardiac output | ke0 (/min) | Plasma at 1 min (mcg/mL) | Peak effect site (mcg/mL) | Time of peak (min) |",
     "|---|---|---|---|---|",
+    rows
+  ), collapse = "\n")
+}
+
+#' The generated help block `physiology-gas-table`: sevoflurane and nitrous
+#' oxide at several cardiac outputs, end-tidal (FA/FI) and brain, simulated by
+#' the gas engine itself.
+#' @noRd
+helpPhysiologyGasTable <- function()
+{
+  if (!is.null(.physiologyCache$gasTable)) return(.physiologyCache$gasTable)
+  runs <- list(
+    sevoflurane = data.frame(Drug = c("sevoflurane", "oxygen", "air", "ventilation"),
+                             Time = 0, Dose = c(2, 3, 3, 6)),
+    # Nitrous oxide is a flow: 4 L/min of it in 2 L/min of oxygen.
+    nitrousOxide = data.frame(Drug = c("nitrousOxide", "oxygen", "ventilation"),
+                              Time = 0, Dose = c(4, 2, 6)))
+  label <- c(sevoflurane = "Sevoflurane 2%", nitrousOxide = "Nitrous oxide 67%")
+  inspired <- c(sevoflurane = 2, nitrousOxide = 100 * 4 / 6)
+  rows <- character(0)
+  for (g in names(runs)) for (co in c(0.25, 0.5, 1, 2)) {
+    sim <- simulateGases(runs[[g]], weight = 70, age = 40, maximum = 10,
+                         physiology = c(cardiac = co))
+    r <- sim$results[sim$results$Drug == g, ]
+    at <- function(site, t)
+      stats::approx(r$Time[r$Site == site], r$Y[r$Site == site], t)$y
+    rows <- c(rows, sprintf("| %s | &#215;%s | %s | %s | %s | %s |",
+                            label[[g]], format(co),
+                            formatC(at("Alveolar", 2) / inspired[[g]], digits = 2, format = "f"),
+                            formatC(at("Alveolar", 10) / inspired[[g]], digits = 2, format = "f"),
+                            helpFormatNumber(at("Brain", 2)),
+                            helpFormatNumber(at("Brain", 10))))
+  }
+  .physiologyCache$gasTable <- paste(c(
+    "| Agent (inspired) | Cardiac output | FA/FI at 2 min | FA/FI at 10 min | Brain at 2 min (%) | Brain at 10 min (%) |",
+    "|---|---|---|---|---|---|",
     rows
   ), collapse = "\n")
 }

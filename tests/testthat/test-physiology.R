@@ -300,3 +300,142 @@ test_that("the ke0 rationale renders on the help page", {
                                                            package = "stanpumpR")), collapse = "\n"))
   expect_false(grepl("<!-- generated:", page))
 })
+
+# ---- The inhaled anesthetics (Shafer, 2026-11-15) ---------------------------
+# The cardiac slider sets the gas engine's cardiac output and its split: the
+# brain and heart keep cardiac^0.35 of their flow, in a compartment of their
+# own (the effect site), and the rest of the output is shared in proportion.
+
+SEVO_RUN <- data.frame(Drug = c("sevoflurane", "oxygen", "air", "ventilation"),
+                       Time = 0, Dose = c(2, 3, 3, 6))
+
+test_that("gasBodyPhysiology leaves a normal body alone and conserves flow and volume", {
+  body <- getGasBody(70)
+  expect_identical(gasBodyPhysiology(body, 1), body)
+  expect_identical(gasBodyPhysiology(body, NULL), body)
+  expect_error(gasBodyPhysiology(body, 0), "Invalid")
+  expect_error(gasBodyPhysiology(body, NA_real_), "Invalid")
+  share <- PHYSIOLOGY_GAS_PROTECTED_SHARE
+  for (c in c(0.1, 0.3, 0.5, 2, 10)) {
+    b <- gasBodyPhysiology(body, c)
+    expect_equal(b$Q_cardiac, body$Q_cardiac * c)
+    expect_equal(sum(gasTissueShares(b)), 1)
+    expect_true(all(gasTissueShares(b) >= 0))
+    expect_equal(gasStateCount(b), 6L)
+    # The brain and heart keep share x c^0.35 of normal output.
+    expect_equal(b$f_brain * b$Q_cardiac,
+                 share * c^PHYSIOLOGY_KE0_CARDIAC_EXPONENT * body$Q_cardiac)
+    # The vessel-rich group's volume is only divided, and the other tissues
+    # share what is left in their normal proportions.
+    expect_equal(b$V_brain + b$V_vrgRest, body$V_brain)
+    expect_equal(b$V_brain, body$V_brain * share / body$f_brain)
+    rest <- c(b$f_vrgRest, b$f_muscle, b$f_fat)
+    expect_equal(rest / sum(rest),
+                 c(body$f_brain - share, body$f_muscle, body$f_fat) /
+                   (1 - share))
+  }
+  # At a tenth of normal most of the output is the heart-brain circuit
+  # (0.16 x 0.1^0.35 = 0.0715 of normal output, of 0.1).
+  expect_equal(gasBodyPhysiology(body, 0.1)$f_brain, 0.16 * 0.1^0.35 / 0.1)
+  expect_gt(gasBodyPhysiology(body, 0.1)$f_brain, 0.7)
+})
+
+test_that("the split vessel-rich group fills exactly as the lumped one at normal output", {
+  # Both parts have the group's flow per volume, so just off normal the
+  # simulation is continuous with the five-state engine.
+  sim1 <- simulateGases(SEVO_RUN, maximum = 60)
+  simN <- simulateGases(SEVO_RUN, maximum = 60,
+                        physiology = c(cardiac = 1 + 1e-9))
+  expect_equal(ncol(sim1$state$sevoflurane), 5)
+  expect_equal(ncol(simN$state$sevoflurane), 6)
+  expect_equal(simN$results$Y, sim1$results$Y, tolerance = 1e-7)
+  expect_equal(simN$state$sevoflurane[, 6], simN$state$sevoflurane[, 3],
+               tolerance = 1e-7)
+  # And at exactly normal nothing changes at all.
+  expect_identical(simulateGases(SEVO_RUN, maximum = 60,
+                                 physiology = PHYSIOLOGY_DEFAULT)$results,
+                   sim1$results)
+})
+
+test_that("a low cardiac output makes end-tidal rise faster, most for a soluble agent", {
+  at <- function(sim, drug, site, t) {
+    r <- sim$results[sim$results$Drug == drug & sim$results$Site == site, ]
+    stats::approx(r$Time, r$Y, t)$y
+  }
+  n2o <- data.frame(Drug = c("nitrousOxide", "oxygen", "ventilation"),
+                    Time = 0, Dose = c(4, 2, 6))
+  for (run in list(list(SEVO_RUN, "sevoflurane", 2), list(n2o, "nitrousOxide", 66.7))) {
+    rise <- vapply(c(0.25, 1, 4), function(c)
+      at(simulateGases(run[[1]], maximum = 30, physiology = c(cardiac = c)),
+         run[[2]], "Alveolar", 2), numeric(1))
+    expect_true(all(diff(rise) < 0))
+  }
+  # Proportionally, the change in FA/FI at 2 min is larger for sevoflurane
+  # (blood:gas 0.65) than for nitrous oxide (0.47) -- the chapter's point.
+  ratio <- function(dt, drug, c) {
+    at(simulateGases(dt, maximum = 30, physiology = c(cardiac = c)), drug, "Alveolar", 2) /
+      at(simulateGases(dt, maximum = 30), drug, "Alveolar", 2)
+  }
+  expect_gt(ratio(SEVO_RUN, "sevoflurane", 0.25), ratio(n2o, "nitrousOxide", 0.25))
+})
+
+test_that("in shock the brain keeps its flow, so it fills from the higher arterial tension", {
+  brain <- function(c, t) {
+    sim <- simulateGases(SEVO_RUN, maximum = 30, physiology = c(cardiac = c))
+    r <- sim$results[sim$results$Drug == "sevoflurane" & sim$results$Site == "Brain", ]
+    stats::approx(r$Time, r$Y, t)$y
+  }
+  # Without the split the 6 L group took the brain's preserved flow and the
+  # brain at 2 min fell to a fifth of normal; with it, it stays near normal,
+  # a little slower (less drug delivered a minute, as for the ke0 of the
+  # intravenous drugs), and later rises above normal.
+  expect_gt(brain(0.1, 2), 0.6 * brain(1, 2))
+  expect_lt(brain(0.1, 2), brain(1, 2))
+  expect_gt(brain(0.1, 30), brain(1, 30))
+})
+
+test_that("the washout and the time until threshold use the simulation's own body", {
+  sim <- simulateGases(SEVO_RUN, maximum = 30, physiology = c(cardiac = 0.3))
+  w <- gasWashout(sim, SEVO_RUN, weight = 70)
+  expect_identical(w$body, sim$body)
+  expect_equal(dim(w$amplitude$sevoflurane)[2], 6)
+  rt <- gasRecoveryTime(w, "sevoflurane", 1)
+  expect_true(all(is.finite(rt)))
+  expect_true(any(rt > 0))
+  # Just off normal, the split washout is the lumped one.
+  w1 <- gasWashout(simulateGases(SEVO_RUN, maximum = 30), SEVO_RUN)
+  wN <- gasWashout(simulateGases(SEVO_RUN, maximum = 30,
+                                 physiology = c(cardiac = 1 + 1e-9)), SEVO_RUN)
+  expect_equal(gasRecoveryTime(wN, "sevoflurane", 1),
+               gasRecoveryTime(w1, "sevoflurane", 1), tolerance = 1e-5)
+  expect_equal(macRecoveryTimeExact(wN, 50), macRecoveryTimeExact(w1, 50),
+               tolerance = 1e-5)
+})
+
+test_that("the Visualizer draws the whole vessel-rich group, so its agent adds up", {
+  DT <- cbind(SEVO_RUN, Units = c("%", "L/min", "L/min", "L/min"))
+  sim <- simulateGases(SEVO_RUN, maximum = 30, physiology = c(cardiac = 0.3))
+  E <- gasDrugEntries(sim, DT, maximum = 30, age = 50)
+  r <- viewerGasRun(E$sevoflurane, 0, 30)
+  b <- sim$body
+  props <- getGasProperties()
+  sevo <- props[props$gas == "sevoflurane", ]
+  expect_equal(r$volume$vrg, b$V_brain + b$V_vrgRest)
+  expect_equal(r$capacity$vrg, (b$V_brain + b$V_vrgRest) * sevo$tg_brain)
+  s <- sim$state$sevoflurane
+  whole <- (b$V_brain * s[, 3] + b$V_vrgRest * s[, 6]) / (b$V_brain + b$V_vrgRest)
+  expect_equal(r$p$vrg, pmax(0, stats::approx(sim$timeLine, whole, r$t / 60,
+                                             rule = 2, ties = "ordered")$y))
+})
+
+test_that("the panel note counts the inhaled agents only when cardiac output moves", {
+  drugs <- c("sevoflurane", "oxygen", "ventilation", "propofol")
+  txt <- function(p) as.character(physiologyNote(p, drugs))
+  low <- txt(c(cardiac = 0.5))
+  expect_match(low, "propofol, sevoflurane", fixed = TRUE)
+  expect_false(grepl("no physiology data", low))
+  expect_false(grepl("oxygen|ventilation", low))
+  liver <- txt(c(liver = 0.5))
+  expect_match(liver, "respond to cardiac output only", fixed = TRUE)
+  expect_false(grepl("no physiology data yet): </strong>sevoflurane", liver, fixed = TRUE))
+})

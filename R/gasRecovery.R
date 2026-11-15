@@ -291,7 +291,9 @@ gasWashout <- function(sim, gasDose, weight = 70, cardiacOutput = NULL,
 {
   circuit <- match.arg(circuit)
   if (is.null(sim)) return(NULL)
-  body <- getGasBody(weight)
+  # The body the simulation was solved with, so a cardiac output changed by
+  # the physiology slider (gasBodyPhysiology()) washes out on the same flows.
+  body <- if (!is.null(sim$body)) sim$body else getGasBody(weight)
   Qco  <- if (is.null(cardiacOutput)) body$Q_cardiac else cardiacOutput
   props <- getGasProperties()
   gases <- props$gas[props$soluble]
@@ -306,7 +308,8 @@ gasWashout <- function(sim, gasDose, weight = 70, cardiacOutput = NULL,
   # of the ideal circuit even WITH rebreathing, because its circuit tension is
   # a function of the alveolar tension and not a state of its own.
   washoutCircuit <- if (!rebreathing) "open" else circuit
-  keep <- if (washoutCircuit == "semi-closed") 1:5 else 2:5
+  nS <- gasStateCount(body)
+  keep <- if (washoutCircuit == "semi-closed") seq_len(nS) else 2:nS
   K <- length(keep)
 
   # Settings are constant between change points, so A is too.  Index each time
@@ -319,7 +322,7 @@ gasWashout <- function(sim, gasDose, weight = 70, cardiacOutput = NULL,
   for (g in gases)
   {
     rate[[g]]      <- matrix(0, nT, K)
-    amplitude[[g]] <- array(0, c(nT, 5, K))
+    amplitude[[g]] <- array(0, c(nT, nS, K))
     y <- sim$state[[g]]
     for (iv in unique(interval))
     {
@@ -388,8 +391,9 @@ gasRecoveryTime <- function(washout, gas, threshold, compartment = 3, exact = TR
   if (exact && !isTRUE(washout$rebreathing) && !is.null(washout$state))
   {
     gases  <- names(washout$state)
-    target <- numeric(4 * length(gases))
-    target[(match(gas, gases) - 1) * 4 + (compartment - 1)] <- 1
+    m <- gasStateCount(washout$body) - 1L
+    target <- numeric(m * length(gases))
+    target[(match(gas, gases) - 1) * m + (compartment - 1)] <- 1
     return(gasCoupledRecovery(washout, off = gas, target = target,
                               threshold = threshold))
   }
@@ -462,9 +466,10 @@ macRecoveryTimeExact <- function(washout, age, threshold = GAS_MAC_THRESHOLD)
 
   # MAC as a linear function of the state: each potent agent's alveolar tension
   # over its age-adjusted MAC.
-  target <- numeric(4 * length(gases))
+  m <- gasStateCount(washout$body) - 1L
+  target <- numeric(m * length(gases))
   for (g in potent)
-    target[(match(g, gases) - 1) * 4 + 1] <-
+    target[(match(g, gases) - 1) * m + 1] <-
       1 / macForAge(props$MAC40[props$gas == g], age)
 
   gasCoupledRecovery(washout, off = potent, target = target, threshold = threshold)
@@ -510,6 +515,8 @@ macRecoveryTimeExact <- function(washout, age, threshold = GAS_MAC_THRESHOLD)
 #' @param off names of the gases turned off
 #' @param target numeric weights on the state, four per soluble gas in the
 #'   order of \code{names(washout$state)}: alveolar, vessel-rich, muscle, fat
+#'   (five, the rest of the vessel-rich group last, when the cardiac-output
+#'   slider has split it; \code{gasTissueShares()})
 #' @param threshold one value, or one per time point
 #' @param maxPoints the most time points to integrate from
 #' @returns numeric vector of minutes, one per time point
@@ -524,22 +531,26 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
   Qco    <- washout$Qco
   Va     <- body$V_alveolar
   nG     <- length(gases)
-  alvCol <- (seq_len(nG) - 1) * 4 + 1          # alveolar column of each gas
+  # States 2 onward of each gas: alveolar, then the tissues (four, or five
+  # with the vessel-rich group split; gasTissueShares()).
+  nS     <- gasStateCount(body)
+  m      <- nS - 1L
+  alvCol <- (seq_len(nG) - 1) * m + 1          # alveolar column of each gas
   volatiles <- setdiff(potentAgents(), "nitrousOxide")
 
   # Summed uptake as a linear function of the state:
   #   u = sum_g lambda_g Qco (alveolar - mixed venous) / 100
-  uWeight <- numeric(4 * nG)
+  uWeight <- numeric(m * nG)
   for (k in seq_len(nG)) {
     lb <- props$lambda_blood[props$gas == gases[k]]
-    uWeight[alvCol[k] + 0:3] <- lb * Qco / 100 *
-      c(1, -body$f_brain, -body$f_muscle, -body$f_fat)
+    uWeight[alvCol[k] + 0:(m - 1)] <- lb * Qco / 100 *
+      c(1, -gasTissueShares(body))
   }
 
   # The time points to start from, and their states side by side: alveolar and
   # the three tissues of each gas.
   idx <- if (nT <= maxPoints) seq_len(nT) else unique(round(seq(1, nT, length.out = maxPoints)))
-  Y0 <- do.call(cbind, lapply(gases, function(g) washout$state[[g]][idx, 2:5, drop = FALSE]))
+  Y0 <- do.call(cbind, lapply(gases, function(g) washout$state[[g]][idx, 2:nS, drop = FALSE]))
   thr0 <- threshold[idx]
   out <- rep(NA_real_, length(idx))
   out[is.na(thr0) | thr0 <= 0] <- 0
@@ -571,16 +582,16 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
 
     # Block-diagonal system matrix, transposed for row-vector states, and the
     # constant inflow.
-    Bt <- matrix(0, 4 * nG, 4 * nG)
-    inflow <- numeric(4 * nG)
+    Bt <- matrix(0, m * nG, m * nG)
+    inflow <- numeric(m * nG)
     for (k in seq_len(nG)) {
       A <- gasSystemSoluble(props[props$gas == gases[k], ], body, s$Q, s$VA, Qco,
-                            Ffgf = 0, totUptake = 0, circuit = "open")$A[2:5, 2:5]
-      j <- alvCol[k] + 0:3
+                            Ffgf = 0, totUptake = 0, circuit = "open")$A[2:nS, 2:nS]
+      j <- alvCol[k] + 0:(m - 1)
       Bt[j, j] <- t(A)
       inflow[alvCol[k]] <- s$VA / Va * Fin[[k]]
     }
-    FinAlv <- numeric(4 * nG); FinAlv[alvCol] <- Fin
+    FinAlv <- numeric(m * nG); FinAlv[alvCol] <- Fin
 
     # Oxygen consumed shrinks the alveolar gas too, net of the carbon dioxide
     # that replaces it; a constant, added to the uptake of the other gases.

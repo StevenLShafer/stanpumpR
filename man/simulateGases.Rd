@@ -10,6 +10,7 @@ simulateGases(
   age = 50,
   maximum = 60,
   cardiacOutput = NULL,
+  physiology = NULL,
   uptakeEffect = TRUE,
   circuit = c("ideal", "semi-closed"),
   deadSpace = GAS_DEAD_SPACE_FRACTION,
@@ -27,6 +28,11 @@ minutes, and \code{Dose}.  Non-gas rows are ignored.}
 \item{maximum}{simulation length in minutes}
 
 \item{cardiacOutput}{optional override in L/min; defaults to GasMan's 5 L/min at 70 kg, scaled by (weight/70)^0.75}
+
+\item{physiology}{NULL, or the physiology sliders' factors (see
+\code{getDrugPK()}); only \code{cardiac} acts on the gases, through
+\code{gasBodyPhysiology()}: cardiac output and its split among the tissue
+groups}
 
 \item{uptakeEffect, circuit, deadSpace, oxygenUptake}{passed to
 \code{advanceClosedFormGas()}}
