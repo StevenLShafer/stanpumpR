@@ -37,6 +37,11 @@
 # 0.50; 0.09 L/h at 3 mL/min).  Below 12 mL/min the curve is a floor, not a
 # prediction: clearance in anuria and on dialysis is outside the model, and
 # the help page says so.
+# [decision] Open for Steven L. Shafer (put 2026-11-15, Carbon's third UI
+# audit): the floor also moves the patients between 1.06 and 12 mL/min, whose
+# curves the straight line drew before; the alternative is to hold the term
+# only where the line would refuse (just above 1.06 mL/min), which keeps the
+# line's own extrapolation for them.
 #
 # RENAL FUNCTION
 # ==============

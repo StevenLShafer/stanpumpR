@@ -303,7 +303,10 @@ inrFromActivity <- function(activity)
 }
 
 # The highest INR plotted (inrFromActivity(); Carbon's third UI audit,
-# 2026-11-15, M1): Hamberg 2007's baseline + INRmax, 1 + 20.
+# 2026-11-15, M1): Hamberg 2007's baseline + INRmax, 1 + 20.  [decision] Open
+# for Steven L. Shafer (put 2026-11-15): warfarin overdoses that plotted 21 to
+# about 194 now plot 21; a ceiling is needed (fluindione reached 1.44e11),
+# its value is his.
 INR_CEILING <- 21
 
 #' The INR from S-warfarin by the Hamberg 2007 transit-compartment model
