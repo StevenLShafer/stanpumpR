@@ -208,14 +208,12 @@ test_that("sugammadex keeps a positive central volume in the heaviest patient", 
 
 test_that("every library model gives a curve at the extremes of the Patient Profile", {
   # The sweep in test-pk-finite-guard.R stops at 250 kg and 190 cm; the review
-  # reached 249 kg at 170 cm and 360 kg.  Vancomycin says why it refuses a
-  # creatinine clearance near zero, and is allowed to.
+  # reached 249 kg at 170 cm and 360 kg.
   dd <- getDrugDefaultsGlobal()
   drugs <- dd$Drug[!is.na(dd$Category) & vapply(dd$Drug, function(d) exists(d, mode = "function"), logical(1))]
   for (d in drugs) for (w in c(249, 360, 500)) for (ffm in c(TRUE, FALSE)) {
     r <- tryCatch({ getDrugPK(d, w, 170, 40, "male", adjustToFFM = ffm); "ok" },
                   error = function(e) conditionMessage(e))
-    if (d == "vancomycin" && grepl("not defined at a creatinine clearance", r)) next
     expect_identical(r, "ok", info = paste(d, w, "kg, adjustToFFM", ffm))
   }
 })
@@ -336,6 +334,17 @@ test_that("the time until threshold is computed only while it is drawn", {
 })
 
 test_that("a model that fails for the patient is said in the plot area, not a blank plot", {
+  # This patient once stopped vancomycin's Thomson clearance (0.93 mL/min);
+  # since Carbon's third UI audit (2026-11-15, H3) the term is held at the
+  # lowest creatinine clearance Thomson studied, and no library model is known
+  # to fail for a legal patient, so the failure is made here.
+  real <- vancomycin
+  testthat::local_mocked_bindings(
+    vancomycin = function(weight, height, age, sex, adjustToFFM = TRUE,
+                          creatinine = NULL, pregnant = FALSE) {
+      if (isTRUE(creatinine >= 15)) stop("This model is not defined for this patient")
+      real(weight, height, age, sex, adjustToFFM, creatinine, pregnant)
+    })
   shiny::testServer(app_server, {
     do.call(session$setInputs, uiInputs(weight = 20, age = 90, height = 150, creatinine = 15, adjustToFFM = FALSE))
     startFormatFromInputs(session)
@@ -343,7 +352,7 @@ test_that("a model that fails for the patient is said in the plot area, not a bl
     dt[1, ] <- list("vancomycin", "0", "1000", "mg")
     doseTable(dt)
     session$flushReact()
-    expect_match(plotMessage(), "not defined at a creatinine clearance", fixed = TRUE)
+    expect_match(plotMessage(), "not defined for this patient", fixed = TRUE)
     expect_match(plotMessage(), PLOT_FAILURE_PREFIX, fixed = TRUE)
     session$setInputs(creatinine = 1)
     expect_null(plotMessage())
