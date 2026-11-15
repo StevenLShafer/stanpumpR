@@ -327,7 +327,9 @@ PLOT_FAILURE_PREFIX <- "The simulation could not be drawn. "
 # Be sure there are more items below then potential facets on the simulation plot
 #                     1     2     3     4     5     6     7     8     9    10    11    12    13    14   15
 bolusUnits <- c("g","mg","mcg", "ng","g/kg","mg/kg","mcg/kg","ng/kg")
-infusionUnits <- c("g/min","g/hr","g/kg/hr","mg/min","mg/hr","mg/kg/min","mg/kg/hr","mcg/min","mcg/hr","mcg/kg/min","mcg/kg/hr")
+infusionUnits <- c("g/min","g/hr","g/kg/hr","mg/min","mg/hr","mg/kg/min","mg/kg/hr","mcg/min","mcg/hr","mcg/kg/min","mcg/kg/hr",
+                   # nanogram rates: the prostacyclins (treprostinil, epoprostenol) are dosed in ng/kg/min
+                   "ng/min","ng/kg/min")
 poUnits <- c("g PO", "g/kg PO", "mg PO", "mg/kg PO", "mcg PO", "mcg/kg PO")
 inUnits <- c("g IN", "g/kg IN", "mg IN", "mg/kg IN", "mcg IN", "mcg/kg IN")
 imUnits <- c("g IM", "g/kg IM", "mg IM", "mg/kg IM", "mcg IM", "mcg/kg IM")
@@ -613,6 +615,7 @@ DRUG_CATEGORIES <- c(
   "Antihypertensives",
   "Vasoactive and resuscitation",
   "Parkinson disease",
+  "Pulmonary hypertension",
   "Other",
   "Illicit drugs"
 )
