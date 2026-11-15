@@ -357,7 +357,10 @@ const View = {
         // in it, when it was first wanted (gasHomePose()): chosen again the
         // next time it is wanted, not reused for another window (Carbon's
         // third UI audit, 2026-11-15, M7). Not here: a drag resizes many times.
-        if (this.gasHome) this.gasHomeStale = true;
+        // The Home flight planned for the old one goes too: its end still
+        // matched the camera, so held Home reused it and flew nowhere, and
+        // the stale view was never chosen again (CodeRabbit, #730).
+        if (this.gasHome) { this.gasHomeStale = true; this.flight = null; }
         this.applyOffset();
         this.invalidate();          // setSize() cleared the canvas
     },
@@ -668,6 +671,11 @@ const View = {
             if (!this.gasHome || this.gasHomeStale) {
                 this.gasHome = this.gasHomePose(this.gasRun, this.gasUi);
                 this.gasHomeStale = false;
+                // Its picture offset with it: resize() applied the old
+                // one, and a flight never applies one, so the scene stayed
+                // displaced into the cards at the new home (CodeRabbit, #730).
+                this.applyOffset();
+                this.invalidate();
             }
             return this.gasHome;
         }

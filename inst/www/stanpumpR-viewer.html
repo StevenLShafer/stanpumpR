@@ -5919,7 +5919,10 @@ const View = {
         // in it, when it was first wanted (gasHomePose()): chosen again the
         // next time it is wanted, not reused for another window (Carbon's
         // third UI audit, 2026-11-15, M7). Not here: a drag resizes many times.
-        if (this.gasHome) this.gasHomeStale = true;
+        // The Home flight planned for the old one goes too: its end still
+        // matched the camera, so held Home reused it and flew nowhere, and
+        // the stale view was never chosen again (CodeRabbit, #730).
+        if (this.gasHome) { this.gasHomeStale = true; this.flight = null; }
         this.applyOffset();
         this.invalidate();          // setSize() cleared the canvas
     },
@@ -6230,6 +6233,11 @@ const View = {
             if (!this.gasHome || this.gasHomeStale) {
                 this.gasHome = this.gasHomePose(this.gasRun, this.gasUi);
                 this.gasHomeStale = false;
+                // Its picture offset with it: resize() applied the old
+                // one, and a flight never applies one, so the scene stayed
+                // displaced into the cards at the new home (CodeRabbit, #730).
+                this.applyOffset();
+                this.invalidate();
             }
             return this.gasHome;
         }
@@ -6718,8 +6726,10 @@ function fmtTick(x) {
 //  scene: the vessels, arrows and ribbon at the run's concentrations and
 //  rates, at any time, by play or the slider. Nothing here computes
 //  pharmacokinetics: between the run's times the concentrations are
-//  interpolated linearly, and the rate, target and mode are those in
-//  force (the value at the time before).
+//  interpolated linearly (where a compartment's volume changes between
+//  two times, its amount, divided by the volume in force), and the rate,
+//  target, mode and volumes are those in force (the value at the time
+//  before).
 //
 //  A run arrives one of three ways:
 //    - from the page that opened this one (window.open), by postMessage:
@@ -7170,9 +7180,22 @@ const Player = {
         // The value in force: the later sample once T reaches it.
         const j = T >= t[i + 1] ? i + 1 : i;
         const clean = x => x < this.tiny ? 0 : x;
-        const cp = clean(Math.max(0, lerp(r.cp))), ce = r.ce != null ? clean(Math.max(0, lerp(r.ce))) : 0;
-        const c2 = r.c2 != null ? clean(Math.max(0, lerp(r.c2))) : null, c3 = r.c3 != null ? clean(Math.max(0, lerp(r.c3))) : null;
-        const rate = r.rate[j], pk = this.pkIn(j);
+        const rate = r.rate[j], pk = this.pkIn(j), sc = this.scale;
+        // A compartment's concentration. Across an interval in which its
+        // volume changes (pkAt: the set switches at a clinical event, and the
+        // later sample is the first in the new set), the drug it holds is
+        // what is continuous, not its concentration (convertState() carries
+        // the amounts): the amount is interpolated (holdings()) and the
+        // concentration is that amount in the volume in force, the earlier
+        // sample's until T reaches the later. Interpolated by itself, the
+        // concentration moved toward the new volume's while the old volume
+        // was drawn, and disagreed with the amounts card (CodeRabbit, #730).
+        // Elsewhere, interpolated as it always was.
+        const p0 = r.pkAt ? this.pkIn(i) : null, p1 = r.pkAt ? this.pkIn(i + 1) : null;
+        const conc = (c, amt, k) => c == null ? null
+            : clean(p0 && p0[k] !== p1[k] ? Math.max(0, lerp(amt)) / (sc * pk[k]) : Math.max(0, lerp(c)));
+        const cp = conc(r.cp, this.a1, 'v1'), ce = r.ce != null ? clean(Math.max(0, lerp(r.ce))) : 0;
+        const c2 = conc(r.c2, this.a2, 'v2'), c3 = conc(r.c3, this.a3, 'v3');
         const mode = r.mode ? r.mode[j] : 'manual', target = r.target ? r.target[j] : 0;
         // A bolus shows from its time for BOLUS_SHOW_S of play; st.t is the
         // bolus's own time while it shows, so its ring starts once.
@@ -7184,7 +7207,6 @@ const Player = {
         // card always adds up.
         // The amounts are interpolated as amounts (holdings()), so that one
         // carried across a change of volume does not jump.
-        const sc = this.scale;
         const held = (c, a) => c ? Math.max(0, lerp(a)) : 0;
         const A1 = held(cp, this.a1), A2 = c2 != null ? held(c2, this.a2) : 0, A3 = c3 != null ? held(c3, this.a3) : 0;
         const elim = this.elim ? lerp(this.elim) : null;
