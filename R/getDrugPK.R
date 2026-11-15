@@ -1695,12 +1695,40 @@ effectSitePeakTime <- function(coef, lambda, ke0, upper = 4000)
 #' is exactly one ke0 for any target later than the plasma peak, and none at
 #' all for a target at or before it.
 #'
-#' That second case is a real failure rather than a numerical one: a reported
-#' peak effect earlier than the reported peak concentration cannot be produced
-#' by any effect site model, and usually means the two numbers came from
-#' different sources or that the earlier one describes onset rather than
-#' maximum.  It raises instead of returning a huge ke0 that would quietly make
-#' the effect site a copy of the plasma curve.
+#' That second case is not an error in the patient.  The library's tPeak is a
+#' property of the drug, measured in typical patients, and ke0 is solved from
+#' it for each patient; a patient whose own plasma curve peaks at or after
+#' that time (hydrocodone's 90 min in a 90-year-old with a creatinine of 15,
+#' whose oral plasma peak is 93 min; a Bayesian candidate with a twentieth of
+#' the model's clearance) is a legal input for which no ke0 exists.  Until
+#' 2026-11-15 the function stopped there, and the stop took every drug off the
+#' plot (Carbon's third UI audit, 2026-11-15, H3).  It now returns the ke0
+#' whose effect-site peak is the NEAREST reachable one, as described below.
+#'
+#' The fallback is the nearest reachable peak, at both ends of the bracket.
+#' \itemize{
+#'   \item A target at or before the plasma peak, or nearer to it than
+#'     \code{KE0_FOLLOWS_PLASMA_FACTOR} times the curve's fastest rate can
+#'     bring the effect site, gets that ke0: the effect site follows the
+#'     plasma curve with a lag of 1% of its fastest time constant and peaks
+#'     as early as any effect site can.  It is the limit the solved ke0 tends
+#'     to as a patient's plasma peak approaches tPeak from below (the solved
+#'     ke0 grows without bound there), so the effect-site curve is continuous
+#'     across the boundary, and finite.
+#'   \item A target later than even \code{KE0_SOLVE_MIN} can reach (a plasma
+#'     curve so brief that only an absurdly slow effect site peaks that late)
+#'     gets that smallest ke0, whose effect site is then close to zero, as the
+#'     exact ke0 below it would also give.
+#' }
+#' Every patient for whom a ke0 exists inside the bracket gets exactly the ke0
+#' it got before, bit for bit.
+#'
+#' What the stop used to guard, a library tPeak entered earlier than the
+#' library's own plasma peak (two numbers from different sources, or an onset
+#' read as a peak), is a property of the drug and not of a patient, so it is
+#' checked where the drug is: test-ui-audit-carbon3-models.R solves every
+#' oral tPeak at the reference patient and requires the effect site to peak
+#' at it.
 #'
 #' The time is counted from the dose.  An absorption lag delays the plasma and
 #' the effect site alike, so the curves are built from the start of absorption
@@ -1727,25 +1755,35 @@ ke0FromTPeak <- function(tPeak, coef, lambda, ka, drug = "this drug", lag = 0)
   oralCoef   <- c(coef[use], -sum(coef[use]))
   oralLambda <- c(lambda[use], ka)
 
+  # The ke0 at which the effect site follows the plasma curve (see above):
+  # the upper end of the bracket, and the answer when tPeak cannot be reached
+  # from above.  Never below 10 /min, the upper end the bracket always had, so
+  # that every ke0 solved before is solved the same way now.
+  follows <- max(10, KE0_FOLLOWS_PLASMA_FACTOR * max(oralLambda))
+
   plasmaPeak <- lag + stats::optimize(
     function(t) sum(oralCoef * exp(-oralLambda * t)),
     c(0, 4000), maximum = TRUE
   )$maximum
 
-  if (tPeak <= plasmaPeak)
-    stop("Cannot solve ke0 for ", drug, ": a peak effect at ", round(tPeak, 1),
-         " min is not reachable, because the oral plasma concentration itself ",
-         "peaks at ", round(plasmaPeak, 1), " min and the effect site always ",
-         "peaks later. Either the time to peak effect belongs after that, or ",
-         "the absorption constant is too slow.")
+  # No ke0 puts the peak at or before the plasma's own (see above): the
+  # nearest reachable peak is the plasma peak itself, approached as ke0 grows
+  # (Carbon's third UI audit, 2026-11-15, H3).
+  if (tPeak <= plasmaPeak) return(follows)
 
   peakAt <- function(ke0) lag + effectSitePeakTime(oralCoef, oralLambda, ke0)
 
   # Bracket: peakAt() falls towards plasmaPeak as ke0 grows.  Widen downwards
-  # until the peak is later than the target, which must happen as ke0 -> 0.
+  # until the peak is later than the target, which must happen as ke0 -> 0,
+  # and upwards to `follows` until it is earlier (a tPeak just after the
+  # plasma peak needs a ke0 above 10 /min, which made uniroot() stop).
   lo <- 1e-6
   hi <- 10
-  while (peakAt(lo) < tPeak && lo > 1e-12) lo <- lo / 10
+  while (peakAt(lo) < tPeak && lo > KE0_SOLVE_MIN) lo <- lo / 10
+  while (peakAt(hi) > tPeak && hi < follows) hi <- min(hi * 10, follows)
+  # Outside the bracket, the end nearest the target (see above)
+  if (peakAt(lo) < tPeak) return(lo)
+  if (peakAt(hi) > tPeak) return(hi)
   stats::uniroot(function(ke0) peakAt(ke0) - tPeak, c(lo, hi),
                  tol = .Machine$double.eps^0.5)$root
 }
@@ -1765,6 +1803,18 @@ ke0FromTPeak <- function(tPeak, coef, lambda, ka, drug = "this drug", lag = 0)
 #' left morphine's 93.8 min solved to 93.83 min.  (Claude Code, 2026-10-17, from
 #' an external review.)
 #'
+#' Reachable in principle is not reachable in floating point.  A plasma curve
+#' that is gone within seconds (a Bayesian candidate at twenty times the
+#' model's clearance and a twentieth of its volume: oxymorphone, pregabalin,
+#' epinephrine and vasopressin) needs a ke0 below 1e-100 per minute to peak at
+#' a tPeak of minutes, which no bracket reaches, and uniroot() stopped, which
+#' failed the Bayesian update of that drug (Carbon's third UI audit,
+#' 2026-11-15, H3).  A target outside the bracket now gets the end of the
+#' bracket nearest to it, as ke0FromTPeak() does: \code{KE0_SOLVE_MIN}, whose
+#' effect site is close to zero, as the exact ke0 would give, for a target
+#' later than it can reach, and \code{KE0_SOLVE_MAX} for one earlier.  Every
+#' tPeak solved before is solved exactly as before.
+#'
 #' @param tPeak observed time to peak effect after a bolus, in minutes
 #' @param coef plasma bolus coefficients on the drug's eigenvalues
 #' @param lambda those eigenvalues; zeros mark absent compartments
@@ -1778,11 +1828,25 @@ ke0FromTPeakBolus <- function(tPeak, coef, lambda)
   # upwards until it is earlier.
   lo <- 1e-3
   hi <- 1
-  while (peakAt(lo) < tPeak && lo > 1e-12) lo <- lo / 10
-  while (peakAt(hi) > tPeak && hi < 1e6) hi <- hi * 10
+  while (peakAt(lo) < tPeak && lo > KE0_SOLVE_MIN) lo <- lo / 10
+  while (peakAt(hi) > tPeak && hi < KE0_SOLVE_MAX) hi <- hi * 10
+  # Outside the bracket, the end nearest the target (see above)
+  if (peakAt(lo) < tPeak) return(lo)
+  if (peakAt(hi) > tPeak) return(hi)
   stats::uniroot(function(ke0) peakAt(ke0) - tPeak, c(lo, hi),
                  tol = .Machine$double.eps^0.5)$root
 }
+
+# The ends of the ke0 brackets, per minute (ke0FromTPeak(),
+# ke0FromTPeakBolus()): the values the two searches always widened to, now
+# also the answers they give for a tPeak no ke0 inside them can reach
+# (Carbon's third UI audit, 2026-11-15, H3).  KE0_FOLLOWS_PLASMA_FACTOR sets
+# the ke0 of an effect site that follows an oral plasma curve, as a multiple
+# of the curve's fastest rate: 100 puts the effect site's lag at 1% of the
+# plasma curve's fastest time constant.
+KE0_SOLVE_MIN <- 1e-12
+KE0_SOLVE_MAX <- 1e6
+KE0_FOLLOWS_PLASMA_FACTOR <- 100
 
 
 # calculate c3 based on 4 coefficients, 4 exponents, and time
