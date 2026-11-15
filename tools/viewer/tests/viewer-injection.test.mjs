@@ -1411,3 +1411,111 @@ test('L1: a key named after a member of every object is no camera key, and the c
   }, names);
   assertClean(page);
 });
+
+// ── CodeRabbit's review of PR #730, 2026-11-15 ──────────────────────────
+// Each case failed on f197d63 before its fix.
+
+// Between two times at which a compartment's volume steps (pkAt: the set
+// switches at a clinical event, the later time the first in the new set),
+// the drug it holds is continuous and its concentration is not: the
+// concentration shown is the interpolated amount in the volume in force,
+// so the amounts card is always concentration x volume. Interpolated by
+// itself, it moved toward the new volume's while the old volume was drawn.
+test('CodeRabbit #730: across a change of volume the concentration is the amount in the volume in force', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  // CodeRabbit's own case: both amounts 10, so 10 throughout, in V1 of 1 L
+  // until the second time.
+  const tiny = { format: 'stanpumpR-viewer', version: 2, t: [0, 60], cp: [10, 5], rate: [0, 0], amountScale: 1,
+                 pk: { v1: 1, cl1: 0.1 }, pkAt: { v1: [1, 2], cl1: [0.1, 0.1] },
+                 units: { conc: 'mcg/mL', amount: 'mg', rate: 'mg/hr' } };
+  assert.equal(await loadRun(page, tiny), true);
+  const s = await page.evaluate(() => [0, 30, 59.9, 60].map(T => { const st = Player.stateAt(T); return [st.cp, st.A1, st.vol.v1]; }));
+  assert.deepEqual(s, [[10, 10, 1], [10, 10, 1], [10, 10, 1], [5, 10, 2]]);
+
+  // The example, its V1 doubled at m, V2 doubled at m2 and V3 tripled at
+  // m3, each concentration divided to keep the drug held the same.
+  const r = clone(RUN), n = r.t.length, m = Math.floor(n / 2), m2 = Math.floor(n / 4), m3 = Math.floor(3 * n / 4);
+  r.pkAt = { v1: r.t.map((_, i) => (i < m ? 1 : 2) * r.pk.v1), v2: r.t.map((_, i) => (i < m2 ? 1 : 2) * r.pk.v2),
+             v3: r.t.map((_, i) => (i < m3 ? 1 : 3) * r.pk.v3), cl1: r.t.map(() => r.pk.cl1) };
+  for (let i = m; i < n; i++) r.cp[i] /= 2;
+  for (let i = m2; i < n; i++) r.c2[i] /= 2;
+  for (let i = m3; i < n; i++) r.c3[i] /= 3;
+  assert.equal(await loadRun(page, r), true);
+  const o = await page.evaluate(([m, m2, m3]) => {
+    const r = Player.run, t = r.t, sc = Player.scale, out = { worst: 0, steps: [], same: 0, differ: [] };
+    const rel = (a, b) => Math.abs(a - b) / Math.max(1e-300, Math.abs(b));
+    for (let i = 0; i + 1 < t.length; i++) for (const f of [0.25, 0.5, 0.9]) {
+      const T = t[i] + f * (t[i + 1] - t[i]), st = Player.stateAt(T);
+      // The amounts card is concentration x volume, at every time.
+      for (const [c, A, k] of [[st.cp, st.A1, 'v1'], [st.c2, st.A2, 'v2'], [st.c3, st.A3, 'v3']])
+        if (A > 0) out.worst = Math.max(out.worst, rel(sc * c * st.vol[k], A));
+      // Where no volume changes, interpolated as before, exactly.
+      if (i !== m - 1 && i !== m2 - 1 && i !== m3 - 1) {
+        const a = Math.min(1, Math.max(0, (T - t[i]) / (t[i + 1] - t[i])));
+        const lerp = v => { const x = Math.max(0, v[i] + (v[i + 1] - v[i]) * a); return x < Player.tiny ? 0 : x; };
+        if (st.cp === lerp(r.cp) && st.c2 === lerp(r.c2) && st.c3 === lerp(r.c3)) out.same++;
+        else out.differ.push(i);
+      }
+    }
+    // Inside each changing interval: the drug held then, in the old volume.
+    for (const [j, c, k, a] of [[m, 'cp', 'v1', Player.a1], [m2, 'c2', 'v2', Player.a2], [m3, 'c3', 'v3', Player.a3]]) {
+      const T = 0.5 * (t[j - 1] + t[j]), st = Player.stateAt(T);
+      out.steps.push([st[c], (a[j - 1] + 0.5 * (a[j] - a[j - 1])) / (sc * r.pkAt[k][j - 1]), st.vol[k], r.pkAt[k][j - 1]]);
+    }
+    return out;
+  }, [m, m2, m3]);
+  assert.ok(o.worst <= 1e-12, `the amounts card differs from concentration x volume by ${o.worst}`);
+  for (const [shown, expected, vol, old] of o.steps) {
+    assert.ok(Math.abs(shown - expected) <= 1e-12 * expected, `shown ${shown}, the amount in the old volume ${expected}`);
+    assert.equal(vol, old);
+  }
+  assert.deepEqual(o.differ, [], 'an interval with no change of volume is drawn differently');
+  assert.equal(o.same, 3 * (n - 4));
+  assertClean(page);
+});
+
+// A gas run's Home after a resize: the flight to the old window's starting
+// view was reused (its end still matched the camera), so Home flew nowhere
+// and the view was never chosen for the new window; and a flight to a
+// starting view chosen afresh kept the old window's picture offset.
+async function gasHomeAfterResize(page, first) {
+  await page.setViewport({ width: 1200, height: 800 });
+  assert.equal(await loadRun(page, GAS), true);
+  const old = await page.evaluate(first => {
+    Player.setView('3d'); View.resetView();
+    View.fly('in', 10); View.flyEnd();
+    if (first === 'home') { View.fly('out', 10); View.flyEnd(); }
+    return { eye: View.persp.position.toArray(), offset: View.gasHome.offset };
+  }, first);
+  await page.setViewport({ width: 800, height: 600 });
+  await new Promise(r => setTimeout(r, 300));
+  return page.evaluate(old => {
+    View.fly('out', 10); View.flyEnd();
+    const h = View.container.clientHeight;
+    const fresh = View.gasHomePose(View.gasRun, View.gasUi);
+    const p = View.persp.position, f = fresh.eye;
+    return { old, stale: View.gasHomeStale, moved: p.distanceTo(new THREE.Vector3(...old.eye)),
+             off: p.distanceTo(f) / f.distanceTo(fresh.aim), freshOffset: fresh.offset,
+             offsetY: View.persp.view.offsetY, want: Math.round(h * fresh.offset), was: Math.round(h * old.offset) };
+  }, old);
+}
+
+test('CodeRabbit #730: Home after a resize flies to the starting view chosen for the new window', { skip }, async t => {
+  const page = await viewerPage(t);
+  const o = await gasHomeAfterResize(page, 'home');
+  assert.equal(o.stale, false, 'the starting view was not chosen again');
+  assert.ok(o.moved > 1e-3, 'Home did not move the camera');
+  assert.ok(o.off <= 1e-6, `the camera is ${o.off} of its distance from the new starting view`);
+  assert.equal(o.offsetY, o.want);
+  assertClean(page);
+});
+
+test('CodeRabbit #730: a starting view chosen again brings its own picture offset', { skip }, async t => {
+  const page = await viewerPage(t);
+  const o = await gasHomeAfterResize(page, 'closeup');
+  assert.notEqual(o.want, o.was, 'the two windows give one offset: the test proves nothing');
+  assert.ok(o.off <= 1e-6, `the camera is ${o.off} of its distance from the new starting view`);
+  assert.equal(o.offsetY, o.want, `the old window's offset (${o.was} px) is applied, not the new one's`);
+  assertClean(page);
+});
