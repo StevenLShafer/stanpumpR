@@ -123,8 +123,10 @@ test_that("the Drug Library refuses a colour ggplot cannot read and units the do
     expect_match(drugLibraryProblems(edited, dd), "at least one unit, with none left blank", all = FALSE,
                  info = deparse(typed))
   }
+  # (keeping propofol's bolus and infusion units, which a Units edit may not
+  # take away: Carbon's second UI audit, 2026-11-15, G7)
   edited <- dd
-  edited$Units[[i]] <- drugUnitsExpand("mg,")[[1]]
+  edited$Units[[i]] <- drugUnitsExpand("mg, mcg/kg/min,")[[1]]
   expect_length(drugLibraryProblems(edited, dd), 0)
   expect_true(isValidColor("steelblue"))
   expect_false(isValidColor(""))
