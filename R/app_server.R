@@ -144,7 +144,7 @@ app_server <- function(input, output, session) {
 
   # Why nothing can be simulated, or NULL: what plotMessage() says before it
   # draws, and the error validating either table would raise.  For the
-  # observers that simulate for themselves (Suggest Dosing, Email Slide),
+  # observers that simulate for themselves (Suggest Dosing, Export),
   # which ask it before they start: in an observer a req() ends the work in
   # silence, and an error ends the session (adversarial UI review, 2026-11,
   # findings 7, 8, 10 and 11).
@@ -560,7 +560,7 @@ app_server <- function(input, output, session) {
   # the input alone, at the default priority, so it ran before Apply's
   # observer (priority -1) stored the draft and kept the table from before
   # Apply until another input changed, in the address bar and in the link
-  # Email Slide sends (Gemini's production audit, 2026-11-08, finding 3).
+  # the Export panel emails (Gemini's production audit, 2026-11-08, finding 3).
   observe({
     profileCode({
       excludeFromBookmark(names(reactiveValuesToList(input)))
@@ -1760,7 +1760,120 @@ app_server <- function(input, output, session) {
     simulationPlotRetval()$plotHeight
   })
 
-  # Send Slide -----------------------------
+  # Export -----------------------------
+  # The Export panel offers the email's three files for download, one at a
+  # time -- the PowerPoint deck, the spreadsheet and the plot as an image --
+  # and still emails all three (R/sendSlide.R writes each).  Both ask
+  # exportProblem() first and read the simulation through exportValues().
+
+  # Why there is no plot to export, or NULL: the simulation cannot run, there
+  # is no dose, or the plot failed or is not drawn yet.  Said, where before
+  # the email observer stopped in silence (a req()), reported the server's
+  # generic failure, or ended the session (validateDoseTableInput();
+  # adversarial UI review, 2026-11, findings 7 and 11).  `verb` is what the
+  # message says cannot be done ("send", "export").
+  exportProblem <- function(verb = "export") {
+    error <- simulationBlocked()
+    if (is.null(error) && is.null(tryCatch(doseTableClean(), error = function(e) NULL))) {
+      error <- paste0("There is no plot to ", verb, ": enter a dose first.")
+    }
+    if (is.null(error)) {
+      # main_plot() is NULL, not an error, when it is still waiting
+      plot <- main_plot()
+      error <- plotFailure(plot)
+      if (is.null(error) && is.null(plot)) error <- paste0("There is no plot to ", verb, " yet.")
+    }
+    error
+  }
+
+  # What the workbook and the email say about the simulation: the patient,
+  # the doses, the options that change what was simulated, and the time
+  # units.  `comments` is the email's; a download has none.
+  exportValues <- function(comments = "") {
+    list(
+      comments = comments,
+      DT = doseTableClean(),
+      url = url(),
+      ageUnit = ageUnit(),
+      weightUnit = weightUnit(),
+      heightUnit = heightUnit(),
+      age = age(),
+      weight = weight(),
+      height = height(),
+      sex = sex(),
+      pregnant = pregnant(),
+      adjustToFFM = adjustToFFM(),
+      osmolality = osmolality(),
+      creatinine = creatinine(),
+      gestationalAge = gestationalAge(),
+      cyp2d6 = input$cyp2d6,
+      cyp2c19 = input$cyp2c19,
+      cyp2c9 = input$cyp2c9,
+      vkorc1 = input$vkorc1,
+      cyp4f2 = input$cyp4f2,
+      cyp2b6 = input$cyp2b6,
+      # Whether each companion model was actually drawn, not just its box
+      # ticked (companionGroupsShown()).
+      mintoSchnider = "mintoSchnider" %in% companionGroupsShown(),
+      hamberg = "hamberg" %in% companionGroupsShown(),
+      # Whether an antiseizure interaction actually changed a drug
+      antiseizureInteractions = ASM_INTERACTIONS_INPUT %in% companionGroupsShown(),
+      # The workbook's times stay in minutes; these add the display unit
+      # beside them and say what the plot showed (sendSlide.R).
+      timeUnit = timeUnit(),
+      maximum = plotMaximum()
+    )
+  }
+
+  # A download of one file.  `write(file)` writes it; `what` names it in the
+  # spinner.  A download cannot be refused before it starts, so when there is
+  # nothing to export the alert says why and the download fails (the browser
+  # lists it as failed); a failure while writing is said the same way, its
+  # detail going only to the server's log, as the email's does.  An error in
+  # a download ends only that request, never the session.
+  exportDownload <- function(extension, what, write) {
+    downloadHandler(
+      filename = function() exportFileName(extension),
+      content = function(file) {
+        problem <- exportProblem()
+        if (!is.null(problem)) {
+          shinyalert::shinyalert("Nothing to export", problem, type = "error", closeOnClickOutside = TRUE)
+          stop(problem, call. = FALSE)
+        }
+        shinycssloaders::showPageSpinner(background = "#FFFFFFEE", caption = paste0("Preparing the ", what, "..."))
+        written <- tryCatch(
+          {
+            write(file)
+            TRUE
+          },
+          error = function(e) {
+            base::message("stanpumpR Export (", extension, ") failed: ", conditionMessage(e))
+            outputComments("Export failed; the detail is in the server log")
+            FALSE
+          },
+          finally = shinycssloaders::hidePageSpinner()
+        )
+        if (!written) {
+          shinyalert::shinyalert("Export failed", EXPORT_FAILURE_MESSAGE, type = "error", closeOnClickOutside = TRUE)
+          stop(EXPORT_FAILURE_MESSAGE, call. = FALSE)
+        }
+      }
+    )
+  }
+
+  output$exportPowerPoint <- exportDownload("pptx", "PowerPoint", function(file) {
+    writeSlideDeck(plotObjectReactive(), file)
+  })
+
+  output$exportSpreadsheet <- exportDownload("xlsx", "spreadsheet", function(file) {
+    writeWorkbook(exportValues(), allResultsReactive(), plotResultsReactive(), drugs(), file)
+  })
+
+  output$exportImage <- exportDownload("png", "image", function(file) {
+    writePlotImage(plotObjectReactive(), file, height = plotHeight(), width = input$plotWidth)
+  })
+
+  # Email: the three files, with a link that reopens the simulation
   observeEvent(input$emailComments, {
     shinyjs::toggle("commentSafe", condition = nzchar(input$emailComments))
   })
@@ -1787,60 +1900,14 @@ app_server <- function(input, output, session) {
         # Shared by every session of this worker (R/email-limits.R)
         error <- emailRateProblem(input$recipient)
       } else {
-        # There is no plot to send while the simulation cannot run, or with
-        # no dose: said, where before the observer stopped in silence (a
-        # req()), reported the server's generic failure, or ended the session
-        # (validateDoseTableInput(); adversarial UI review, 2026-11,
-        # findings 7 and 11).
-        error <- simulationBlocked()
-        if (is.null(error) && is.null(tryCatch(doseTableClean(), error = function(e) NULL))) {
-          error <- "There is no plot to send: enter a dose first."
-        }
-        if (is.null(error)) {
-          # main_plot() is NULL, not an error, when it is still waiting
-          plot <- main_plot()
-          error <- plotFailure(plot)
-          if (is.null(error) && is.null(plot)) error <- "There is no plot to send yet."
-        }
+        error <- exportProblem("send")
       }
       if (!is.null(error)) {
         shinyalert::shinyalert("Error",error, type = "error", closeOnClickOutside = TRUE)
         return()
       }
 
-      values <- list(
-        comments = input$emailComments,
-        DT = doseTableClean(),
-        url = url(),
-        ageUnit = ageUnit(),
-        weightUnit = weightUnit(),
-        heightUnit = heightUnit(),
-        age = age(),
-        weight = weight(),
-        height = height(),
-        sex = sex(),
-        pregnant = pregnant(),
-        adjustToFFM = adjustToFFM(),
-        osmolality = osmolality(),
-        creatinine = creatinine(),
-        gestationalAge = gestationalAge(),
-        cyp2d6 = input$cyp2d6,
-        cyp2c19 = input$cyp2c19,
-        cyp2c9 = input$cyp2c9,
-        vkorc1 = input$vkorc1,
-        cyp4f2 = input$cyp4f2,
-        cyp2b6 = input$cyp2b6,
-        # Whether each companion model was actually drawn, not just its box
-        # ticked (companionGroupsShown()).
-        mintoSchnider = "mintoSchnider" %in% companionGroupsShown(),
-        hamberg = "hamberg" %in% companionGroupsShown(),
-        # Whether an antiseizure interaction actually changed a drug
-        antiseizureInteractions = ASM_INTERACTIONS_INPUT %in% companionGroupsShown(),
-        # The workbook's times stay in minutes; these add the display unit
-        # beside them and say what the plot showed (sendSlide.R).
-        timeUnit = timeUnit(),
-        maximum = plotMaximum()
-      )
+      values <- exportValues(comments = input$emailComments)
 
       recordEmailSend(input$recipient)
       shinycssloaders::showPageSpinner(background = "#FFFFFFEE", caption = "Sending email...")

@@ -213,18 +213,40 @@ test_that("the deck has the whole plot on the first slide and then one slide per
   expect_equal(c(slideNumber(1), slideNumber(2), slideNumber(4)), c("3", "2", "4"))
 })
 
-test_that("the PNG preview fills its image rather than keeping the app's aspect ratio", {
+test_that("the PNG is the plot as the app draws it, at twice the pixels", {
   doseTable <- data.frame(Drug = "propofol", Time = 0, Dose = 2,
                           Units = "mg/kg", stringsAsFactors = FALSE)
   events <- data.frame(Time = numeric(0), Event = character(0))
-  plotObject <- slideTestPlot(doseTable, events)$plot$plotObject
-  expect_false(is.null(plotObject$theme$aspect.ratio))
-  # The ratio is set for renderPlot()'s 72 dpi; the preview is saved at 150
-  preview <- previewPlot(plotObject)
-  expect_null(preview$theme$aspect.ratio)
-  expect_equal(preview$theme$strip.text.y$size, 6)
-  # The plot itself is untouched
-  expect_false(is.null(plotObject$theme$aspect.ratio))
+  plot <- slideTestPlot(doseTable, events)$plot
+  # The size in pixels, from the PNG's IHDR chunk
+  pngSize <- function(path) {
+    header <- readBin(path, "raw", 24)
+    rev(readBin(header[17:24], "integer", n = 2, size = 4, endian = "big"))
+  }
+  file <- writePlotImage(plot$plotObject, tempfile(fileext = ".png"), height = plot$plotHeight, width = 600)
+  on.exit(unlink(file), add = TRUE)
+  expect_equal(pngSize(file), c(2 * plot$plotHeight, 1200))
+
+  # ggsave() is given the plot itself, laid out for renderPlot()'s 72 dpi,
+  # at 72 dpi times the scale, so the drawing is the app's (until
+  # 2026-11-15 the email's preview redrew it at 150 dpi in the app's pixels,
+  # which clipped the legend of a short plot)
+  saved <- list()
+  local_mocked_bindings(ggsave = function(plot, filename, ...) {
+    saved <<- c(list(plot = plot), list(...))
+    file.create(filename)
+  }, .package = "ggplot2")
+  writePlotImage(plot$plotObject, tempfile(fileext = ".png"), height = 300, width = 800)
+  expect_identical(saved$plot, plot$plotObject)
+  expect_equal(saved[c("dpi", "height", "width", "units")],
+               list(dpi = 144, height = 600, width = 1600, units = "px"))
+  # less than twice where twice would pass what the device can draw
+  writePlotImage(plot$plotObject, tempfile(fileext = ".png"), height = 0.75 * maxPlotDevicePixels(), width = 800)
+  expect_equal(saved$height, maxPlotDevicePixels())
+  expect_equal(saved$dpi, 72 * 4 / 3)
+  # and never less than the app's own pixels
+  writePlotImage(plot$plotObject, tempfile(fileext = ".png"), height = 2 * maxPlotDevicePixels(), width = 800)
+  expect_equal(saved[c("dpi", "height")], list(dpi = 72, height = 2 * maxPlotDevicePixels()))
 })
 
 

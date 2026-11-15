@@ -1,5 +1,5 @@
 # How much mail one worker of the app may send (the external security audit
-# of 2026-11-02).  Email Slide sends a branded message, with a link and three
+# of 2026-11-02).  Export's email sends a branded message, with a link and three
 # attachments, to any address the user types; EMAIL_SESSION_LIMIT bounds one
 # session, and reloading the page starts another.  These bound the worker
 # process: every session it serves shares the count, which lives in memory
