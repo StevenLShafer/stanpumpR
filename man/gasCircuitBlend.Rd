@@ -16,7 +16,8 @@ gasCircuitBlend(Q, VA, MV = VA, circuit = "ideal", u = 0, cE = 0)
 \item{circuit}{"ideal" or "open"}
 
 \item{u}{summed uptake of gas from the alveoli, L/min; only a positive value
-adds to what is inspired}
+adds to what is inspired.  A negative value is gas pushed out of the
+alveoli, which a closed circuit rebreathes as far as its shortfall needs.}
 
 \item{cE}{carbon dioxide as a fraction of exhaled gas, removed from whatever
 is rebreathed.  Capped at \code{GAS_MAX_EXHALED_CO2}, which keeps the blend
@@ -27,7 +28,9 @@ a list with \code{fresh} and \code{alveolar}, the composition of
 what is inspired, and \code{supply}, the share of what the alveoli draw
 from the circuit (\code{VA + u+}) that it can give them: one, unless the
 fresh gas is less than the uptake and the carbon dioxide absorbed, when
-the circuit is closed (see THE CLOSED CIRCUIT in the file header)
+the circuit is closed and the gas pushed out of the alveoli (a negative
+\code{u}) does not make up the difference (see THE CLOSED CIRCUIT in the
+file header)
 }
 \description{
 \code{F_circ = fresh * F_fgf + alveolar * F_alv}.  See (1) and (4a) in the

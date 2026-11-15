@@ -43,23 +43,24 @@ Q <  MV + U:  F_circuit = f F_fresh + g F_alveolar
 
 Here c_E is the carbon dioxide fraction of exhaled gas (carbon dioxide production over minute ventilation), which the absorber removes from whatever is rebreathed. With no uptake and no carbon dioxide this reduces to f = Q / (VA + 0.3 Q), g = 1 − f, and the threshold is the familiar Q = MV; the uptake raises it slightly, by about 0.05 L/min on oxygen and sevoflurane and by up to about 0.9 L/min early in an induction with 4 L/min of nitrous oxide in 6 L/min. See [Carbon dioxide](help:models/gas-differences) on the comparison page.
 
-k is the share of the exhaled gas that is rebreathed, so it cannot exceed one. It would when the fresh gas flow is less than the uptake plus the carbon dioxide absorbed (Q < U + VCO2; with no agent being taken up, that is the oxygen consumed, 0.25 L/min at 70 kg). The circuit is then closed: everything exhaled is rebreathed, nothing is vented, and still the circuit falls short, so a real reservoir bag empties. The engine rebreathes all the exhaled gas and no more, and the alveoli receive only what the circuit holds:
+k is the share of the exhaled gas that is rebreathed, so it cannot exceed one. It would when the fresh gas flow is less than the uptake plus the carbon dioxide absorbed (Q < U + VCO2; with no agent being taken up, that is the oxygen consumed, 0.25 L/min at 70 kg). The circuit is then closed: everything exhaled is rebreathed. On emergence, when the total uptake is negative, the alveoli push gas out (P, minus the total uptake; zero otherwise), and that gas is in the circuit too: it is rebreathed as far as the shortfall needs (R of it) and only the rest is vented. Unless it covers the shortfall, nothing is vented and still the circuit falls short, so a real reservoir bag empties. The engine rebreathes all the exhaled gas, and the pushed-out gas the shortfall needs, and no more, and the alveoli receive only what the circuit holds:
 
 ```
-Q < U + VCO2:  k = 1,  F_circuit = (Q F_fresh + VA F_alveolar) / (Q + VA - VCO2)
-               the alveoli receive Q + VA - VCO2 of it, not VA + U
+Q < U + VCO2:  k = 1,  R = min(U + VCO2 - Q, P)           pushed-out gas rebreathed
+               D = Q + VA - VCO2 + R                       what reaches the alveoli
+               F_circuit = (Q F_fresh + (VA + R) F_alveolar) / D
+               s = D / (VA + U)                            the share of their draw the circuit meets
 ```
 
-Each gas then gains only what the fresh gas brings and loses only what the blood takes up, and no gas is created. The alveolar volume is fixed in the model, so the volume the circuit cannot replace appears as gas tensions summing to less than an atmosphere rather than as an emptying bag; with no fresh gas at all the oxygen is used up, as it would be in life. Likewise with no ventilation, the alveoli draw what is taken up from the fresh gas, and no more than the fresh gas supplies.
+Each gas then gains only what the fresh gas brings, and loses only what the blood takes up and what is vented of the pushed-out gas, P − R, which is the circuit's surplus, max(0, Q + P − VCO2), and none while the circuit is short; no gas is created, and none disappears. The alveolar volume is fixed in the model, so the volume the circuit cannot replace appears as gas tensions summing to less than an atmosphere rather than as an emptying bag; with no fresh gas at all the oxygen is used up, as it would be in life. Likewise with no ventilation, the alveoli draw what is taken up from the fresh gas, and no more than the fresh gas supplies.
 
 The alveolar tension of gas i, written here as a fraction, changes with ventilation and with uptake into the blood (each term in L/min),
 
 ```
-V_alv dF_alv/dt = VA (F_circuit - F_alv) - uptake_i + total uptake × F_circuit    (total uptake > 0)
-                                                    + total uptake × F_alv        (total uptake < 0)
+V_alv dF_alv/dt = s (VA + U) F_circuit - VA F_alv - uptake_i - P F_alv
 ```
 
-where the last term is the **concentration and second gas effect**: gas taken up in bulk shrinks the alveolar volume, so make-up gas is drawn in from the circuit, concentrating what remains; when gas comes back out of the blood, as on emergence, alveolar gas is pushed out instead. The total uptake is the sum of every soluble gas's uptake (nitrogen included) plus the oxygen consumed less the carbon dioxide that replaces it, VO2 × (1 − 0.8). Uptake of each gas is cardiac output times the blood:gas coefficient times the alveolar-to-mixed-venous tension difference; each tissue takes up at its share of cardiac output times the arterial-to-tissue difference divided by its capacity. Mixed venous tension is the flow-weighted mean of the tissue tensions.
+with s = 1 except in the closed circuit above. U F_circuit and P F_alv are the **concentration and second gas effect**: gas taken up in bulk shrinks the alveolar volume, so make-up gas is drawn in from the circuit, concentrating what remains; when gas comes back out of the blood, as on emergence, alveolar gas is pushed out instead. In the closed circuit the first term is Q F_fresh + (VA + R) F_alv, so the equation becomes V_alv dF_alv/dt = Q F_fresh − uptake_i − (P − R) F_alv. The total uptake is the sum of every soluble gas's uptake (nitrogen included) plus the oxygen consumed less the carbon dioxide that replaces it, VO2 × (1 − 0.8). Uptake of each gas is cardiac output times the blood:gas coefficient times the alveolar-to-mixed-venous tension difference; each tissue takes up at its share of cardiac output times the arterial-to-tissue difference divided by its capacity. Mixed venous tension is the flow-weighted mean of the tissue tensions.
 
 ## Integration
 
