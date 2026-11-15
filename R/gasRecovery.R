@@ -259,8 +259,14 @@ restoreThresholds <- function(drugDefaults, endCe = NULL, macThreshold = NULL)
     value <- usable(endCe)
     at <- match(names(endCe), drugDefaults$Drug)
     # held to the dialog's ceiling, as a link is untrusted (Carbon's second
-    # UI audit, 2026-11-15, F5)
-    ok <- !is.na(at) & is.finite(value) & value >= 0 & value <= MAX_DOSE_VALUE
+    # UI audit, 2026-11-15, F5).  A volatile agent's threshold is stored at
+    # age 40 and shown at the patient's, so the most the dialog stores is its
+    # ceiling at the oldest age, where MAC is least (gasThresholdForAge());
+    # held to MAX_DOSE_VALUE, a threshold accepted at age 70 was dropped from
+    # the link that saved it (CodeRabbit on PR #730).
+    limit <- ifelse(names(endCe) %in% ageAdjustedThresholdGases(),
+                    MAX_DOSE_VALUE / macForAge(1, MAX_AGE), MAX_DOSE_VALUE)
+    ok <- !is.na(at) & is.finite(value) & value >= 0 & value <= limit
     drugDefaults$endCe[at[ok]] <- value[ok]
   }
 
@@ -329,8 +335,12 @@ gasWashout <- function(sim, gasDose, weight = 70, cardiacOutput = NULL,
 
   # Settings are constant between change points, so A is too.  Index each time
   # point by the interval it falls in; a point exactly on a change takes the
-  # NEW settings, which are the ones that would be left running.
-  changes  <- sort(unique(c(0, gasDose$Time)))
+  # NEW settings, which are the ones that would be left running.  A row that
+  # repeats the setting in force changes nothing and is not a change point:
+  # every interval is integrated on its own to the end of a day by
+  # gasCoupledRecovery(), so 500 such rows held the worker 33 s where one
+  # takes half a second (CodeRabbit on PR #730).
+  changes  <- gasSettingChanges(bySetting, sort(unique(c(0, gasDose$Time))))
   interval <- findInterval(Time + 1e-9, changes)
 
   rate <- list(); amplitude <- list()
@@ -377,6 +387,30 @@ gasWashout <- function(sim, gasDose, weight = 70, cardiacOutput = NULL,
        state = sim$state[gases], bySetting = bySetting, changes = changes,
        interval = interval, body = body, Qco = Qco, deadSpace = deadSpace,
        oxygenUptake = oxygenUptake)
+}
+
+
+# The times at which a gas setting changes: of `times` (sorted, the first
+# kept), those at which the setting in force of some gas row (a flow, a
+# vaporiser, the ventilation) differs from what it was at the last time kept.
+# `bySetting` is the gas rows split by Drug, as gasWashout() holds them, and
+# the settings are read as settingAt() reads them, so a row that repeats the
+# setting in force, or one that a later row at the same time overrides with
+# the same value, changes nothing.
+gasSettingChanges <- function(bySetting, times)
+{
+  # The settings gasSettingsAt() and gasCoupledRecovery() read
+  read <- intersect(names(bySetting), c("air", "oxygen", "nitrousOxide", "ventilation",
+                                        setdiff(potentAgents(), "nitrousOxide")))
+  if (length(times) < 2 || length(read) == 0) return(times)
+  at <- function(t) vapply(read, function(g) as.numeric(settingAt(bySetting[[g]], t)), numeric(1))
+  keep <- rep(TRUE, length(times))
+  last <- at(times[1])
+  for (i in seq_along(times)[-1]) {
+    now <- at(times[i])
+    if (identical(now, last)) keep[i] <- FALSE else last <- now
+  }
+  times[keep]
 }
 
 
