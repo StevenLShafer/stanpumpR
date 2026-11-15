@@ -453,9 +453,12 @@ app_server <- function(input, output, session) {
   # help writes doseTable() and eventTable() directly, as a URL restore does,
   # and sets the time settings through timeApi.
   # A scenario is a new patient, whose measured concentrations are not the
-  # last one's (`bayes` is made below, and read when a scenario loads)
+  # last one's.  `bayes` is made below; a ?scenario= link loads its scenario
+  # before it exists, when there are no measurements to clear.
+  bayes <- NULL
   helpApi <- helpServer(input, output, session, doseTable, eventTable, drugDefaults,
-                        timeApi = timeApi, onLoad = function() bayes$clear())
+                        timeApi = timeApi,
+                        onLoad = function() if (!is.null(bayes)) bayes$clear())
 
   # Single Paper Review, a tab of its own that shares nothing with the
   # simulator (R/paper-review-app.R).

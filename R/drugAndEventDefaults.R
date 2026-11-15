@@ -189,9 +189,15 @@ drugLibraryProblems <- function(edited, current, inUse = NULL) {
     }
   }
   # And a range that runs the right way, for a row the edit changed (Carbon's
-  # third UI audit, 2026-11-15, M6)
-  lowerNow <- suppressWarnings(as.numeric(as.character(edited$Lower)))
-  upperNow <- suppressWarnings(as.numeric(as.character(edited$Upper)))
+  # third UI audit, 2026-11-15, M6); a number outside the limits is refused
+  # above, and is not also called backwards
+  inLimits <- function(x) {
+    x <- suppressWarnings(as.numeric(as.character(x)))
+    x[!is.finite(x) | x < 0 | x > MAX_DOSE_VALUE] <- NA
+    x
+  }
+  lowerNow <- inLimits(edited$Lower)
+  upperNow <- inLimits(edited$Upper)
   rangeChanged <- !is.na(at) & (cellText(edited$Lower) != cellText(shownNow$Lower[at]) |
                                   cellText(edited$Upper) != cellText(shownNow$Upper[at]))
   inverted <- rangeChanged & is.finite(lowerNow) & is.finite(upperNow) & lowerNow > upperNow
