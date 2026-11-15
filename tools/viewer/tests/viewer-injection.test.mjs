@@ -1475,6 +1475,27 @@ test('CodeRabbit #730: across a change of volume the concentration is the amount
   assertClean(page);
 });
 
+// The heights include the concentration shown inside an interval in which
+// a volume changes, which can pass every sample: CodeRabbit's case, 1000
+// before and after with V1 going from 1 L to 10 L, shows 5500 halfway, and
+// was drawn on the samples' scale, 8250 units tall, past HEIGHT_MAX.
+test('CodeRabbit #730: a concentration shown across a change of volume stays within the heights', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  const r = { format: 'stanpumpR-viewer', version: 2, t: [0, 60], cp: [1000, 1000], rate: [0, 0], amountScale: 1,
+              typical: 1, pk: { v1: 1, cl1: 0.1 }, pkAt: { v1: [1, 10], cl1: [0.1, 0.1] },
+              units: { conc: 'mcg/mL', amount: 'mg', rate: 'mg/hr' } };
+  assert.equal(await loadRun(page, r), true);
+  const o = await page.evaluate(() => {
+    let worst = 0;
+    for (let T = 0; T <= 60; T += 0.5) worst = Math.max(worst, Player.stateAt(T).cp * Player.ui.concScale);
+    return { worst, max: HEIGHT_MAX, mid: Player.stateAt(30).cp };
+  });
+  assert.ok(Math.abs(o.mid - 5500) < 1e-9, `halfway ${o.mid}`);
+  assert.ok(o.worst <= o.max * (1 + 1e-12), `a liquid ${o.worst} units tall, past ${o.max}`);
+  assertClean(page);
+});
+
 // A gas run's Home after a resize: the flight to the old window's starting
 // view was reused (its end still matched the camera), so Home flew nowhere
 // and the view was never chosen for the new window; and a flight to a

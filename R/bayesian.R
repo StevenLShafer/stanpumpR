@@ -734,9 +734,12 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
         fitDrugs[[p]] <- bayesianParentEntry(p, drug, drugs, list(clearance = 1, volume = 1), rebuild)
       # A time limit reached on a budget other drugs had already spent is
       # not this drug's, and is not kept as its failure: it was, and was
-      # not tried again after the other drug's levels were removed
-      # (CodeRabbit on PR #730)
-      sharedBudget <- deadline - proc.time()[["elapsed"]] < timeLimit * (1 - 1e-6)
+      # not tried again after the other drug's levels were removed.  Judged
+      # by the drug's own search, which must have taken at least half the
+      # budget: judged by the time already gone, the setup alone made a first
+      # drug's own failure "shared", and every redraw repeated its search
+      # (CodeRabbit on PR #730, twice)
+      searchStart <- proc.time()[["elapsed"]]
       fit <- tryCatch(
         bayesianFitDrug(drug, fitDrugs, DT, ET, rows, omega, sigma, rebuild,
                         antiseizureInteractions, deadline = deadline, initial = initial),
@@ -746,7 +749,8 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
         error = function(e) list(failed = sprintf("%s could not be updated: %s", drug,
                                                   conditionMessage(e))))
       fit$key <- key
-      if (!(isTRUE(fit$timeLimit) && sharedBudget)) cache[[length(cache) + 1]] <- fit
+      ownSearch <- proc.time()[["elapsed"]] - searchStart
+      if (!(isTRUE(fit$timeLimit) && ownSearch < timeLimit / 2)) cache[[length(cache) + 1]] <- fit
     }
     # A fit that failed is not tried again until its inputs change: one that
     # ran out of time would otherwise take its time again at every redraw

@@ -7072,6 +7072,20 @@ const Player = {
         let peak = maxCp, depotPeak = 0;
         for (const v of [r.ce, r.c2, r.c3]) if (v) for (const x of v) if (x > peak) peak = x;
         if (r.depot) for (const x of r.depot) if (x > depotPeak) depotPeak = x;
+        // Inside an interval in which a compartment's volume changes, the
+        // concentration shown is the drug it holds in the earlier volume
+        // (stateAt()), which can pass every sample: at most the larger end's
+        // amount in that volume, which the heights must include (a peak of
+        // 5500 drawn on the scale of the samples' 1000 stood 8250 units, past
+        // HEIGHT_MAX; CodeRabbit, #730).
+        if (r.pkAt) for (let i = 0; i + 1 < r.t.length; i++) {
+            const p0 = this.pkIn(i), p1 = this.pkIn(i + 1);
+            for (const [k, a] of [['v1', this.a1], ['v2', r.c2 != null ? this.a2 : null], ['v3', r.c3 != null ? this.a3 : null]]) {
+                if (!a || p0[k] === p1[k]) continue;
+                const x = Math.max(a[i], a[i + 1]) / (this.scale * p0[k]);
+                if (x > peak) peak = x;
+            }
+        }
         this.tiny = peak * TINY_FRACTION; this.depotTiny = depotPeak * TINY_FRACTION;
         const level = r.typical > 0 ? r.typical : (maxCp > 0 ? maxCp / 2 : 1);
         // toFixed() takes 0 to 100 digits: a vanishing level would ask for more.

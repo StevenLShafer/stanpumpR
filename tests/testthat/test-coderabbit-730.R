@@ -203,11 +203,30 @@ test_that("a time limit reached on a budget another drug spent is tried again", 
     if (drug == "propofol") Sys.sleep(1.2)
     real(drug, ...)
   })
-  res <- bayesianUpdateDrugs(priors, DT, noEvents, obs, rebuild = rebuild, timeLimit = 1)
+  # with time spent before each search (onFit), which the earlier rule took
+  # for another drug's
+  res <- bayesianUpdateDrugs(priors, DT, noEvents, obs, rebuild = rebuild, timeLimit = 1,
+                             onFit = function(drug) Sys.sleep(0.05))
   expect_true("fentanyl" %in% names(res$failed))
   # fentanyl's failure was the shared budget's, and is not kept against it
   cachedFailures <- Filter(function(f) !is.null(f$failed) && identical(f$key$drug, "fentanyl"), res$cache)
   expect_length(cachedFailures, 0)
+  # propofol's was its own, and is kept, so that a redraw does not search
+  # again for the whole budget (CodeRabbit's second look: judged by the time
+  # already gone, the setup made every failure "shared")
+  ownFailures <- Filter(function(f) !is.null(f$failed) && identical(f$key$drug, "propofol"), res$cache)
+  expect_length(ownFailures, 1)
+})
+
+test_that("a link's range is checked in the units it carries", {
+  saved <- data.frame(Drug = "propofol", Concentration.Units = "ng", Lower = "2000", Upper = "1000",
+                      stringsAsFactors = FALSE)
+  back <- restoredDrugLibrary(saved)
+  expect_identical(back$table$Concentration.Units[back$table$Drug == "propofol"], "mcg")
+  expect_match(back$problems, "propofol", fixed = TRUE)
+  ok <- saved
+  ok$Lower <- "1000"; ok$Upper <- "2000"
+  expect_identical(restoredDrugLibrary(ok)$table$Concentration.Units[G$Drug == "propofol"], "ng")
 })
 
 .sprglobals$config <- oldConfig

@@ -470,6 +470,14 @@ restoredDrugLibrary <- function(saved, defaults = getDrugDefaultsGlobal()) {
       candidate[[col]][k] <- asScalarString(v)
     }
     problems <- tryCatch(drugLibraryProblems(candidate, defaults), error = function(e) "unreadable")
+    # The dialog checks a row whose units change after converting the bound
+    # it leaves (input$drugEditsOK), which a link's row skips: its bounds are
+    # already in the units it carries, and are checked so (CodeRabbit on PR
+    # #730)
+    lower <- suppressWarnings(as.numeric(candidate$Lower[k]))
+    upper <- suppressWarnings(as.numeric(candidate$Upper[k]))
+    if (isTRUE(is.finite(lower) && is.finite(upper) && lower > upper))
+      problems <- c(problems, "Lower above Upper")
     if (length(problems) == 0) {
       edited <- candidate
     } else {
