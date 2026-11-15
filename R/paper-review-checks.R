@@ -1796,8 +1796,16 @@ paperReviewRun <- function(extraction)
   # propofol, as columns of one table).  Each model is reviewed on its own
   # items, the items every model shares included; what is about the paper
   # (its assumptions, its claims, Claude's notes) is reviewed once.
+  # A model's own regimen can repeat the id of a shared one, which only its
+  # part holds both of: that part names them, and the paper's limitations,
+  # which the report prints, say so (paperReviewNameRegimens()).
+  parts <- lapply(stats::setNames(groups, groups), function(g)
+    paperReviewRegimenNaming(paperReviewGroupExtraction(extraction, g), model = g))
+  extraction <- paperReviewAddLimitation(extraction, unlist(lapply(parts, function(p) p$said)))
   models <- lapply(stats::setNames(groups, groups), function(g) {
-    m <- paperReviewRunOne(paperReviewGroupExtraction(extraction, g), paperLevel = FALSE)
+    part <- parts[[g]]$extraction
+    part$extraction_limitations <- extraction$extraction_limitations
+    m <- paperReviewRunOne(part, paperLevel = FALSE)
     m$findings <- paperReviewGroupFindings(m$findings, g, extraction)
     m
   })

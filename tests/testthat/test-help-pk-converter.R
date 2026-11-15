@@ -166,13 +166,25 @@ test_that("a model whose derived values are out of numeric range is refused, nam
   expect_true(ok)
 })
 
+# A time compared as a ratio to the time expected.  expect_equal()'s
+# tolerance is absolute once the value expected is below it, so at 1e-308
+# it passed 0, and any time within 1e-9 of it (CodeRabbit, PR #730).
+expectPeakTime <- function(t, expected) expect_equal(t / expected, 1, tolerance = 1e-9)
+
+test_that("a peak time far below the tolerance is compared as a ratio (CodeRabbit, PR #730)", {
+  expect_failure(expectPeakTime(0, 1e-308))
+  expect_failure(expectPeakTime(2e-308, 1e-308))
+  expect_failure(expectPeakTime(0, 1.842068e-307))
+  expect_success(expectPeakTime(1e-308 * (1 + 1e-12), 1e-308))
+})
+
 test_that("the time to peak effect is found when ke0 + lambda1 overflows", {
   skipWithoutNode()
   # One compartment with ke0 equal to k: the peak is at 1 / k
   t <- pkConvertJS("P.peakTime(P.fromVolumesClearances(1, [1], [1e308]).model, 1e308)", timeout = 20)
-  expect_equal(t, 1e-308, tolerance = 1e-9)
+  expectPeakTime(t, 1e-308)
   t <- pkConvertJS("P.peakTime(P.fromVolumesClearances(1, [1], [1e308]).model, 1e300)", timeout = 20)
-  expect_equal(t, log(1e308 / 1e300) / (1e308 - 1e300), tolerance = 1e-9)
+  expectPeakTime(t, log(1e308 / 1e300) / (1e308 - 1e300))
   # and the page's other searches end too
   js <- pkConvertJS(paste0(
     "(function() { var m = P.fromVolumesClearances(1, [1], [1e308]).model;",

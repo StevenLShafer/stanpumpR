@@ -6,18 +6,35 @@
 # checks the page makes before it computes, and what it says when it stops.
 # From the code review of PR #682 (2026-11-15), which found them untested.
 
+# Where Playwright is, as node finds it from the working directory: the
+# tests' own, inside the package, so node's search runs up through the
+# package root's node_modules and on to NODE_PATH and the global folders.
+# "" when it is not found.  The runner is a file under tempdir(), and node
+# resolves a script's require() from the script's own directory, so a
+# project-local Playwright that `node -e "require('playwright')"` found from
+# here was not found by the runner, and every page test failed with
+# MODULE_NOT_FOUND (CodeRabbit, PR #730): the runner requires this path.
+pkConverterPlaywright <- function() {
+  node <- Sys.which("node")
+  if (!nzchar(node)) return("")
+  out <- suppressWarnings(system2(node, c("-e", shQuote("process.stdout.write(require.resolve('playwright'))")),
+                                  stdout = TRUE, stderr = FALSE))
+  if (!is.null(attr(out, "status")) || length(out) != 1 || !file.exists(out)) return("")
+  normalizePath(out, winslash = "/")
+}
+
 pkConverterPageSkip <- function() {
   skip_on_cran()
   skip_if(!nzchar(Sys.which("node")), "node is not installed")
-  ok <- suppressWarnings(system2(Sys.which("node"), c("-e", shQuote("require('playwright')")),
-                                 stdout = FALSE, stderr = FALSE))
-  skip_if(!identical(ok, 0L), "playwright is not installed")
+  skip_if(!nzchar(pkConverterPlaywright()), "playwright is not installed")
 }
 
 # Run `steps` (a JavaScript function body taking `page`, returning a value)
 # on the converter page, after its example model is loaded; the value comes
 # back through JSON
 pkConverterPage <- function(steps, timeout = 60) {
+  playwright <- pkConverterPlaywright()
+  if (!nzchar(playwright)) stop("playwright could not be resolved")
   dir <- tempfile("pkconv")
   dir.create(dir)
   on.exit(unlink(dir, recursive = TRUE))
@@ -30,7 +47,7 @@ pkConverterPage <- function(steps, timeout = 60) {
              file.path(dir, "index.html"), useBytes = TRUE)
   script <- file.path(dir, "run.js")
   writeLines(c(
-    "const { chromium } = require('playwright');",
+    sprintf("const { chromium } = require(%s);", jsonlite::toJSON(playwright, auto_unbox = TRUE)),
     "(async () => {",
     "  const browser = await chromium.launch();",
     "  const page = await browser.newPage();",
@@ -51,6 +68,27 @@ pkConverterPage <- function(steps, timeout = 60) {
   expect_length(res$errors, 0)
   res$value
 }
+
+test_that("a Playwright installed in the project, not globally, runs the page (CodeRabbit, PR #730)", {
+  pkConverterPageSkip()
+  # The package found here, installed as a project's own node_modules
+  installed <- dirname(system2(Sys.which("node"), c("-e", shQuote(
+    "process.stdout.write(require.resolve('playwright'))")), stdout = TRUE))
+  skip_if(!file.exists(file.path(installed, "package.json")), "playwright's package folder was not found")
+  project <- tempfile("project")
+  dir.create(file.path(project, "node_modules"), recursive = TRUE)
+  on.exit(unlink(project, recursive = TRUE), add = TRUE)
+  skip_if(!suppressWarnings(file.symlink(installed, file.path(project, "node_modules", "playwright"))),
+          "a symbolic link cannot be made here")
+  # and nowhere else node looks from the runner's directory under tempdir()
+  withr::local_envvar(NODE_PATH = NA)
+  withr::local_dir(project)
+  # The check found it from here, and the runner found no 'playwright'
+  # (MODULE_NOT_FOUND), which stopped every page test
+  pkConverterPageSkip()
+  n <- pkConverterPage("return await page.evaluate(() => document.querySelectorAll('.pkconv input').length);")
+  expect_gt(n, 30)
+})
 
 test_that("the decrement's longest infusion is refused below one update of the controller", {
   pkConverterPageSkip()
