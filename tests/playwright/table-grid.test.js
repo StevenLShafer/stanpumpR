@@ -288,3 +288,59 @@ describe('Carbon\'s third UI audit, 2026-11-15', () => {
     assert.deepEqual(await gridRows('editPriorDosesTable'), before);
   });
 });
+
+// Carbon's fourth UI audit, 2026-11-15, H1: the Working cover (app.js) made
+// every child of <body> inert, which took the focus from a dialog's cell
+// being typed in (committed as it stood) and from the dialog (Escape no
+// longer closed it); and a dialog opened while it was up was not inert.  The
+// cover is raised as the server's busy message raises it (H.coverPage()).
+describe('Carbon\'s fourth UI audit, 2026-11-15: the Working cover over a dialog', () => {
+  test('a dialog cell being typed in keeps its typing and the focus, and Escape still closes the dialog', async () => {
+    await open('editThresholds', 'editThresholdsTable');
+    const r = await rowOf('editThresholdsTable', 'propofol');
+    const sent = await sentRows('editThresholdsTable');
+    await page.click(cell('editThresholdsTable', r, 1));
+    await page.keyboard.type('2');
+    assert.ok(await H.coverPage(page), 'the cover came down: the page sent something under it');
+    assert.deepEqual(await sentRows('editThresholdsTable'), sent, 'the cell was committed under the cover');
+    assert.equal(await H.focusName(page), 'Threshold, row ' + (r + 1));
+    // the dialog and everything else is inert; the focused cell is not
+    const inert = await page.evaluate(sel => ({
+      ok: !!document.getElementById('thresholdEditsOK').closest('[inert]'),
+      cell: !!document.querySelector(sel).closest('[inert]')
+    }), cell('editThresholdsTable', r, 1));
+    assert.deepEqual(inert, { ok: true, cell: false });
+    await H.uncoverPage(page);
+    await page.keyboard.type('.5');
+    await page.keyboard.press('Enter');
+    await H.settle(page, 300);
+    assert.equal((await gridRows('editThresholdsTable'))[r][1], '2.5');
+    // the focus never left the dialog, so Escape closes it
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('.modal', { state: 'detached', timeout: 10000 });
+  });
+
+  test('a dialog opened while the cover is up is inert under it, and has the focus after', async () => {
+    assert.ok(await H.coverPage(page), 'the cover did not go up');
+    // as the server's showModal() does, without the round trip that would
+    // end the busy spell
+    await page.evaluate(() => window.Shiny.modal.show({ deps: [], html:
+      '<div class="modal fade" id="shiny-modal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">' +
+      '<div class="modal-body"><p>Opened under the cover</p></div><div class="modal-footer">' +
+      '<button type="button" id="lateDismiss" class="btn btn-default" data-bs-dismiss="modal">Dismiss</button>' +
+      '</div></div></div><script>new bootstrap.Modal(document.getElementById("shiny-modal")).show();</script></div>' }));
+    await page.waitForSelector('#shiny-modal.show', { timeout: 5000 });
+    await page.waitForTimeout(500);
+    assert.ok(await page.evaluate(() => !!document.getElementById('shiny-modal-wrapper').closest('[inert]')),
+              'the dialog opened under the cover is not inert');
+    // a click under the cover reaches nothing
+    await page.mouse.click(10, 10);
+    await page.keyboard.press('Escape');
+    assert.ok(await page.evaluate(() => !!document.querySelector('#shiny-modal.show')), 'the dialog closed under the cover');
+    await H.uncoverPage(page);
+    assert.ok(await page.evaluate(() => document.getElementById('shiny-modal').contains(document.activeElement)),
+              'the dialog does not have the focus');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#shiny-modal-wrapper', { state: 'detached', timeout: 10000 });
+  });
+});

@@ -375,7 +375,8 @@ const View = {
     },
 
     setLook(name) {
-        const L = LOOKS[name] || LOOKS[DEFAULT_LOOK];
+        // its own looks only, never a member every object has
+        const L = Object.prototype.hasOwnProperty.call(LOOKS, name) ? LOOKS[name] : LOOKS[DEFAULT_LOOK];
         this.look = L; this.lookName = name;
         const c = document.createElement('canvas');
         c.width = 2; c.height = 256;

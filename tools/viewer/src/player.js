@@ -741,8 +741,13 @@ const Keys = {
             // space: play / pause (a focused button takes its own space press).
             if (e.key === ' ' && !(e.target && e.target.tagName === 'BUTTON')) { Player.togglePlay(); e.preventDefault(); return; }
             if (e.shiftKey) return;
+            // Its own keys only: a key event named "constructor" or
+            // "toString" (none a keyboard sends, but any script can) found
+            // Object's own members, and the next frame threw before it asked
+            // for the one after, so the camera keys never worked again
+            // (Carbon's fourth UI audit, 2026-11-15, L1).
+            if (!Object.prototype.hasOwnProperty.call(VIEW_KEYS, e.key)) return;
             const m = VIEW_KEYS[e.key];
-            if (!m) return;
             e.preventDefault();          // not the slider's, nor the page's scroll
             this.held.set(e.code, m);
         });

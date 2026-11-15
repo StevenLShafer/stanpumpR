@@ -1105,15 +1105,36 @@
   // typing of the last cell edited, so the grid showed one value and the
   // draft held another (the external review of 2026-11-05, reproduced).
   // A text field elsewhere keeps its own undo; a hidden grid does nothing.
+  // Nor does a grid behind a dialog, or under the Working cover (app.js),
+  // which makes it inert: with Edit doses, the Drug Library or any other
+  // dialog open, Ctrl+Z on its buttons undid the dose table behind it,
+  // unseen (Carbon's fourth UI audit, 2026-11-15, H2).  The browser's own
+  // undo is kept from the dialog's buttons too: it is the page's, not the
+  // field's, and took back the last edit of a cell behind the dialog, which,
+  // focused for it and then left, was committed (app.js keeps it from the
+  // dialog's text fields).
   DoseGrid.prototype.onDocumentKey = function(e) {
     if (e.defaultPrevented || !(e.ctrlKey || e.metaKey) || e.altKey) return;
     if (!(e.key === 'z' || e.key === 'Z' || e.key === 'y' || e.key === 'Y')) return;
     if (this.root.offsetParent === null) return;
     var t = e.target;
+    var field = t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
+    if (this.underDialog()) {
+      if (!field) e.preventDefault();
+      return;
+    }
     if (t && t.closest && t.closest('.stanpumpr-dose-grid')) return;
-    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    if (field) return;
     e.preventDefault();
     this.sendHistory(e.key === 'y' || e.key === 'Y' || e.shiftKey ? 'redo' : 'undo');
+  };
+
+  // Inert (the Working cover), or behind an open dialog that does not hold it
+  DoseGrid.prototype.underDialog = function() {
+    if (this.root.closest('[inert]')) return true;
+    var open = document.querySelectorAll('.modal.show');
+    for (var i = 0; i < open.length; i++) if (!open[i].contains(this.root)) return true;
+    return false;
   };
 
   // --- from the server --------------------------------------------------------------

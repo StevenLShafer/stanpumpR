@@ -33,14 +33,19 @@ test_that("the converter is one HTML block that Shiny leaves unbound", {
 # --- The arithmetic, run in Node -------------------------------------------
 
 # Evaluate a JavaScript expression with PKConvert in scope; the result comes
-# back through JSON
-pkConvertJS <- function(expression) {
+# back through JSON.  `timeout` (seconds; 0, none) stops a call that would
+# never return, as the page's peak search once did, with an error rather
+# than a test run that hangs.
+pkConvertJS <- function(expression, timeout = 0) {
   script <- tempfile(fileext = ".js")
   on.exit(unlink(script))
   js <- normalizePath(system.file("www", "pk-convert.js", package = "stanpumpR"), winslash = "/")
   writeLines(c(sprintf("const P = require(%s);", jsonlite::toJSON(js, auto_unbox = TRUE)),
                sprintf("process.stdout.write(JSON.stringify(%s));", expression)), script)
-  out <- system2(Sys.which("node"), shQuote(script), stdout = TRUE, stderr = TRUE)
+  out <- suppressWarnings(system2(Sys.which("node"), shQuote(script), stdout = TRUE, stderr = TRUE,
+                                  timeout = timeout))
+  status <- attr(out, "status")
+  if (!is.null(status) && status == 124) stop("the JavaScript did not return within ", timeout, " s")
   jsonlite::fromJSON(paste(out, collapse = ""), simplifyVector = TRUE)
 }
 
@@ -135,6 +140,45 @@ test_that("an inadmissible definition is refused, naming what failed", {
   expect_type(e, "character")
   expect_match(pkConvertJS("P.fromCoefficients(2, [1, 1], [0.5, 0.5]).error"), "equal")
   expect_match(pkConvertJS("P.fromVolumesClearances(2, [5, 50], [3.5, -1]).error"), "k12")
+})
+
+# Carbon's fourth UI audit, 2026-11-15, M1: inputs that pass the checks can
+# still give values that overflow or underflow, which were shown as Infinity
+# or NaN under "The model is defined"; and a peak search whose bracket
+# overflowed to 0 never ended, which froze the page.
+test_that("a model whose derived values are out of numeric range is refused, naming the value", {
+  skipWithoutNode()
+  e <- pkConvertJS("P.fromMicro(1, 1e308, {k10: 10}).error")
+  expect_match(e, "^CL1 would be Infinity: .*out of the range of numbers")
+  e <- pkConvertJS("P.fromHalfLives(1, {cl: 5e-309, t: [0.69314718]}).error")
+  expect_match(e, "^A1 would be Infinity")
+  # Every definition goes through the same check
+  expect_match(pkConvertJS("P.fromVolumesClearances(2, [1e308, 1e308], [1e308, 1e308]).error"),
+               "^Vdss would be Infinity")
+  expect_match(pkConvertJS("P.fromCoefficients(1, [1e300], [1e-300]).error"), "^CL1 would be 0: ")
+  # and an extreme model that is within range is still defined, every value finite
+  m <- pkConvertJS("P.fromVolumesClearances(1, [1], [1e308]).model")
+  expect_equal(m$lambda, 1e308)
+  ok <- pkConvertJS(paste0(
+    "(function() { var m = P.fromVolumesClearances(1, [1], [1e308]).model;",
+    "  return P.summaryRows(m, 1, 'min').every(function(r) {",
+    "    return r.cells.every(function(c) { return isFinite(c.value) && c.value > 0; }); }); })()"))
+  expect_true(ok)
+})
+
+test_that("the time to peak effect is found when ke0 + lambda1 overflows", {
+  skipWithoutNode()
+  # One compartment with ke0 equal to k: the peak is at 1 / k
+  t <- pkConvertJS("P.peakTime(P.fromVolumesClearances(1, [1], [1e308]).model, 1e308)", timeout = 20)
+  expect_equal(t, 1e-308, tolerance = 1e-9)
+  t <- pkConvertJS("P.peakTime(P.fromVolumesClearances(1, [1], [1e308]).model, 1e300)", timeout = 20)
+  expect_equal(t, log(1e308 / 1e300) / (1e308 - 1e300), tolerance = 1e-9)
+  # and the page's other searches end too
+  js <- pkConvertJS(paste0(
+    "(function() { var m = P.fromVolumesClearances(1, [1], [1e308]).model;",
+    "  var c = P.decrementCurves(m, 1e308, 50, 600, 400);",
+    "  return {plasma: c.plasma.time.length, k: P.ke0FromPeakTime(m, 1)}; })()"), timeout = 20)
+  expect_gt(js$plasma, 0)
 })
 
 test_that("the model table has one layout, whichever panel defined the model", {

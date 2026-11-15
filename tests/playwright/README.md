@@ -100,6 +100,12 @@ bookmark case reloading from inside the page (`location.reload()`).
   listed today.
 - A case with options is written `gt(name, { timeout }, fn)`: `gt()` takes
   the options before the function, as `test()` does.
+- The Working cover (`inst/www/app.js`) is raised by `coverPage()` and
+  lowered by `uncoverPage()` in `harness.js`, which raise the `shiny:busy`
+  and `shiny:idle` events Shiny raises for the server's busy and idle
+  messages, the only ones the cover reads. The server itself is not held
+  busy, so anything the page sends under the cover is answered at once and
+  takes the cover down: `coverPage()` says whether it stayed up.
 
 The R tests (`test-dose-grid.R`, `test-table-grid.R`, and the dialogs'
 handlers in `test-ui-adversarial-review.R` and `test-time-units-server.R`)
