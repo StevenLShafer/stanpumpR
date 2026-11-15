@@ -54,6 +54,27 @@ paperReviewDiscard <- function(store)
   invisible(gc(verbose = FALSE))
 }
 
+#' Does a session's store hold anything that Discard would remove?
+#'
+#' Everything it can hold is about the paper (the manuscript, a supplement,
+#' the manuscript in flight, the extraction, the review, its usage), so the
+#' test is whatever paperReviewDiscard() would remove.
+#' @param store the session's store
+#' @keywords internal
+paperReviewHolds <- function(store) length(ls(store, all.names = TRUE)) > 0
+
+#' The page the report's download serves when there is no report to give
+#' @param why one sentence
+#' @keywords internal
+paperReviewNoReportPage <- function(why)
+{
+  paste0("<!DOCTYPE html>\n", as.character(htmltools::tags$html(
+    htmltools::tags$head(htmltools::tags$meta(charset = "utf-8"),
+                         htmltools::tags$title("Single Paper Review")),
+    htmltools::tags$body(style = "font-family: sans-serif; margin: 24px;",
+                         htmltools::h3("Single Paper Review"), htmltools::p(why)))))
+}
+
 #' Is a path a file Shiny's own upload wrote?
 #'
 #' Shiny writes each upload to \code{tempdir()/<24 hex digits>/<n><ext>}
@@ -302,6 +323,15 @@ paperReviewServer <- function(input, output, session)
   # disabled until there is one and the box is ticked: the first real test
   # pressed it unticked and got only a line of status text.
   hasPdf <- shiny::reactiveVal(FALSE)
+  # Does the session hold anything about a paper?  Drives Discard, which
+  # followed hasPdf() and the review: a supplement uploaded alone, or an
+  # extraction whose review could not be computed, stayed in memory with
+  # Discard disabled until the page closed (Carbon's third UI audit,
+  # 2026-11-15, H9).  The store is an environment, which no reactive sees
+  # change, so every change to it calls stored().
+  storeChanged <- shiny::reactiveVal(0)
+  stored <- function() storeChanged(shiny::isolate(storeChanged()) + 1)
+  holdsPaper <- shiny::reactive({ storeChanged(); version(); paperReviewHolds(store) })
   session$onSessionEnded(function() paperReviewDiscard(store))
   # Can this server review a paper at all?  With the operator's key
   # (Shafer's, the default for now: R/paper-review-usage.R counts its uses)
@@ -395,7 +425,7 @@ paperReviewServer <- function(input, output, session)
     shinyjs::toggleState("supplement", condition = consent)
     shinyjs::toggleState("review", condition = hasPdf() && consent && !reviewing())
     # Discard is live only when there is something to discard.
-    shinyjs::toggleState("discard", condition = hasPdf() || !is.null(review()) || reviewing())
+    shinyjs::toggleState("discard", condition = holdsPaper() || reviewing())
   })
 
   receive <- function(file, slot, label) {
@@ -412,6 +442,7 @@ paperReviewServer <- function(input, output, session)
       return()
     }
     assign(slot, bytes, envir = store)
+    stored()
     if (slot == "pdf") hasPdf(TRUE)
     status(paste0(label, " received (", paperReviewSize(length(bytes)),
                   "), held in this session's memory only."))
@@ -427,12 +458,13 @@ paperReviewServer <- function(input, output, session)
       status("The extraction came back but the review could not be computed from it.")
       assign("extraction", extraction, envir = store)
       bump()
-      return()
+      return(invisible(FALSE))
     }
     assign("extraction", extraction, envir = store)
     assign("review", review, envir = store)
     assign("example", example, envir = store)
     bump()
+    invisible(TRUE)
   }
 
   shiny::observeEvent(input$review, {
@@ -458,6 +490,7 @@ paperReviewServer <- function(input, output, session)
                            supplement = if (exists("supplement", envir = store)) store$supplement,
                            own = own)
     suppressWarnings(rm(list = intersect(c("pdf", "supplement"), ls(store)), envir = store))
+    stored()
     hasPdf(FALSE)
     sendReview(PAPER_REVIEW_EFFORT)
   })
@@ -531,6 +564,7 @@ paperReviewServer <- function(input, output, session)
     shinyjs::hide("reviewLate")
     running$stop <- NULL
     suppressWarnings(rm(list = intersect("inFlight", ls(store)), envir = store))
+    stored()
     if (!awaited()) return()
     awaited(FALSE)
     result <- tryCatch(reviewTask$result(),
@@ -541,7 +575,10 @@ paperReviewServer <- function(input, output, session)
       return()
     }
     assign("usage", result$usage, envir = store)
-    runReview(result$extraction, quick = quick())
+    # A review that could not be computed keeps runReview()'s word for it,
+    # which this line wrote over with "Reviewed" (found reproducing Carbon's
+    # third UI audit, 2026-11-15, H9)
+    if (!runReview(result$extraction, quick = quick())) return()
     status(paste0(if (quick()) "A quick review, done" else "Reviewed", paperReviewUsageText(result$usage),
                   ". The manuscript itself has been ",
                   "discarded; the extraction is held in this session's memory until you discard it ",
@@ -591,9 +628,23 @@ paperReviewServer <- function(input, output, session)
     shiny::downloadButton(session$ns("download"), "Download the report (HTML)", style = "margin-top: 12px;")
   })
   # Shiny writes the page to a temporary file it owns and deletes once served.
+  # The link can be followed after Discard (the button goes, a link already
+  # taken does not) or for a report that cannot be written; each gets a page
+  # that says so.  After Discard it served paperReviewReportPage(NULL), which
+  # says "Claude found no pharmacokinetic model in this document" of a paper
+  # never read, and a report that failed served the browser an error
+  # (Carbon's third UI audit, 2026-11-15, L1).
   output$download <- shiny::downloadHandler(
     filename = "single-paper-review.html",
-    content = function(file) writeLines(paperReviewReportPage(review()), file, useBytes = TRUE),
+    content = function(file) {
+      r <- review()
+      page <- if (is.null(r)) NULL
+              else tryCatch(paperReviewSilently(paperReviewReportPage(r)), error = function(e) NULL)
+      if (is.null(page)) page <- paperReviewNoReportPage(
+        if (is.null(r)) "There is no review to download: it was discarded, or none has been made."
+        else "The report could not be written.")
+      writeLines(page, file, useBytes = TRUE)
+    },
     contentType = "text/html")
 
   # --- Simulator ---------------------------------------------------------------

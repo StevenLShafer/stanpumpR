@@ -15,10 +15,13 @@
 #
 # "Anything else" includes a dose above MAX_DOSE_VALUE and a time longer than
 # MAX_TIME_STRING_LENGTH characters, the limits validateDoseTableInput()
-# enforces.  Until November 2026 they were let through here and refused only
-# there, which replaced the dose grid with an error message and ended the
-# session from any dialog that read the table (adversarial UI review,
-# finding 7: a dose of 10000000000 in Add a dose).
+# enforces, and a dose longer than that once written out, the limit
+# restoredDoseTable() holds the dose grid's cells to.  Until November 2026
+# the first two were let through here and refused only there, which replaced
+# the dose grid with an error message and ended the session from any dialog
+# that read the table (adversarial UI review, finding 7: a dose of
+# 10000000000 in Add a dose); the third was blanked by the server after the
+# grid had shown it taken (Carbon's third UI audit, 2026-11-15, M4).
 #
 # Nothing is guessed at.  Until October 2026 every character that was not a
 # digit, a decimal point or (for a time) a colon was deleted and what was left
@@ -158,7 +161,11 @@ validateTime <- function(x)
 }
 
 # Validate dose: a non-negative number, returned as a character string.  See
-# the header.
+# the header.  A dose whose stored string is longer than MAX_TIME_STRING_LENGTH
+# is refused, the length restoredDoseTable() holds every Dose cell the grid
+# sends to: "1e-35", 37 characters written out, was taken here and by the
+# grid and then blanked by the server (Carbon's third UI audit, 2026-11-15,
+# M4).
 validateDose <- function(x)
 {
   if (length(x) > 1 || is.list(x)) {
@@ -170,5 +177,5 @@ validateDose <- function(x)
   if (x == "") return("0")
 
   out <- readEntryNumber(x)
-  if (is.na(out) || as.numeric(out) > MAX_DOSE_VALUE) "" else out
+  if (is.na(out) || as.numeric(out) > MAX_DOSE_VALUE || nchar(out) > MAX_TIME_STRING_LENGTH) "" else out
 }

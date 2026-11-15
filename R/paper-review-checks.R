@@ -1779,7 +1779,7 @@ paperReviewClaudeNotes <- function(extraction)
 #' @keywords internal
 paperReviewRun <- function(extraction)
 {
-  extraction <- paperReviewCanonicalGroups(extraction)
+  extraction <- paperReviewNameRegimens(paperReviewCanonicalGroups(extraction))
   groups <- paperReviewGroups(extraction)
   if (length(groups) <= 1) return(paperReviewRunOne(extraction))
   # Several models (the Duzitol editorial: one drug in two populations beside
