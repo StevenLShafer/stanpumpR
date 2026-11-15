@@ -18,6 +18,7 @@ the step, minutes
 \code{GAS_RECOVERY_STEP_FIRST_HOUR} for the first hour of washout and
 \code{GAS_RECOVERY_STEP_LATER} after, each held to
 \code{GAS_RECOVERY_ACCURATE_STEP} (first hour) or
-\code{GAS_RECOVERY_STABLE_STEP} (after) time constants of \code{rate}.
+\code{GAS_RECOVERY_STABLE_STEP} (after) time constants of \code{rate}, and
+never less than \code{GAS_RECOVERY_MIN_STEP}.
 }
 \keyword{internal}

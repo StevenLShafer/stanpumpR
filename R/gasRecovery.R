@@ -39,7 +39,10 @@
 # By simulating it.  For each line on the plot, the agent in question is turned
 # off at every time point in turn and the washout is integrated forward, with
 # the engine's own equations in the limit of no rebreathing, until the
-# concentration comes down through the threshold.  The gases stay coupled as
+# concentration comes down through the threshold for the last time -- until,
+# that is, a rise back above it is shown to be impossible, which below the
+# threshold and falling does not show (see "When a row of the washout is
+# finished", below gasCoupledRecovery()).  The gases stay coupled as
 # they are in the engine: nitrous oxide leaving the blood swells the gas leaving
 # the alveoli and carries the other agents out with it, and the agents left
 # running go on being inspired at their fresh-gas concentrations.
@@ -509,12 +512,26 @@ GAS_RECOVERY_STEP_LATER <- 0.25
 GAS_RECOVERY_ACCURATE_STEP <- 1
 GAS_RECOVERY_STABLE_STEP <- 2
 
+# The least a step may be, minutes, whatever the rate: 1.5 seconds, so that a
+# washout runs at most 57,600 steps to the end of its day.  Without it the
+# exponential step followed the coupling's rate down without limit: a cardiac
+# output of 5,000 L/min (gasWashout(cardiacOutput =)) made it 0.0007 minute
+# and the search ran for longer than a minute, and the step had no floor at
+# all (Carbon's fourth UI audit, 2026-11-15, H9).  Nothing the app can enter
+# reaches it: the coupling's rate is largest in the lightest patient the app
+# takes (0.1 kg, whose cardiac output is 10.3 times its lung volume a
+# minute), where even a vaporiser at 100% after nitrous oxide gives under 39
+# per minute, a step above 0.0258 minute.  Why the exponential step stays
+# stable at the floor, see gasCoupledRecovery().
+GAS_RECOVERY_MIN_STEP <- 0.025
+
 #' The coupled washout's step
 #'
 #' \code{GAS_RECOVERY_STEP_FIRST_HOUR} for the first hour of washout and
 #' \code{GAS_RECOVERY_STEP_LATER} after, each held to
 #' \code{GAS_RECOVERY_ACCURATE_STEP} (first hour) or
-#' \code{GAS_RECOVERY_STABLE_STEP} (after) time constants of \code{rate}.
+#' \code{GAS_RECOVERY_STABLE_STEP} (after) time constants of \code{rate}, and
+#' never less than \code{GAS_RECOVERY_MIN_STEP}.
 #'
 #' @param tau minutes of washout so far
 #' @param rate the fastest rate the method samples, per minute
@@ -522,11 +539,12 @@ GAS_RECOVERY_STABLE_STEP <- 2
 #' @keywords internal
 gasRecoveryStep <- function(tau, rate)
 {
-  if (tau < 60) {
+  h <- if (tau < 60) {
     min(GAS_RECOVERY_STEP_FIRST_HOUR, GAS_RECOVERY_ACCURATE_STEP / rate)
   } else {
     min(GAS_RECOVERY_STEP_LATER, GAS_RECOVERY_STABLE_STEP / rate)
   }
+  max(h, GAS_RECOVERY_MIN_STEP)
 }
 
 
@@ -614,13 +632,44 @@ gasEtdCoefficients <- function(blocks, h)
 #' failed ("NAs are not allowed in subscripted assignments"; Carbon's third
 #' UI audit, 2026-11-15, H2).  Shortening the Runge-Kutta step instead would
 #' cost a step per time constant, without limit: the dose table takes a
-#' ventilation of up to \code{MAX_DOSE_VALUE} L/min.  A row is
-#' finished once it is below the threshold and falling, so that a tissue still
-#' filling from the alveoli when the agent is turned off -- below the threshold
-#' but about to rise through it -- is followed over the top and back down.
+#' ventilation of up to \code{MAX_DOSE_VALUE} L/min.  Neither step is ever
+#' less than \code{GAS_RECOVERY_MIN_STEP}, which bounds the work of a row at
+#' 57,600 steps (Carbon's fourth UI audit, 2026-11-15, H9).  Where the floor
+#' holds the exponential step at more than the coupling's time constant (a
+#' cardiac output hundreds of times the body's, which only a caller of
+#' \code{gasWashout(cardiacOutput =)} can give), it stays stable.  The
+#' coupling is driven by the summed uptake, and the exchange between lungs and
+#' blood, which the step solves exactly, holds the uptake to what the
+#' ventilation brings and takes away, whatever the cardiac output; the part of
+#' the coupling that does grow with the cardiac output, its response to the
+#' alveolar tensions, is a fraction (the alveolar tensions' sum over 100) of
+#' the exchange that damps those tensions.  On a single mode the exponential
+#' Runge-Kutta step contracts at every step length when the sampled rate is
+#' below the solved one (checked to steps of 10^7 time constants).  Checked
+#' against the full engine to a cardiac output of 5,000,000 L/min
+#' (tests/testthat/test-ui-audit-carbon4-gas.R).
+#'
+#' A row is finished only when it is proved that it cannot rise above the
+#' threshold again within the day: the washout of each gas \code{target}
+#' weighs, with the coupling left out, is an upper bound on its coupled
+#' washout, and the row is finished when that bound, a sum of exponentials, is
+#' at or below the threshold on a grid of times to a day and, rigorously,
+#' between its points (\code{gasWashoutBound()}; the argument is in the
+#' comments above it).  Until 2026-11-15 a row was finished once it was below
+#' the threshold and falling, which the muscle and fat behind the brain can
+#' contradict (H9).  A tissue still filling from the alveoli when the agent is
+#' turned off -- below the threshold but about to rise through it -- is
+#' followed over the top and back down, as before.  A row still running at
+#' the end of the day reads \code{MINS_PER_DAY} if it is above the threshold
+#' and its last downward crossing otherwise, as \code{recoveryCalc()} reads
+#' its horizon.
 #'
 #' The plot shows a hundred points, so a simulation with more time points than
-#' \code{maxPoints} is sampled and the result interpolated.
+#' \code{maxPoints} is sampled and the result interpolated.  The sample
+#' includes the first and last time point of every interval of constant
+#' settings, and the interpolation stays within each interval, because the time
+#' until threshold jumps where a setting changes; until 2026-11-15 it was
+#' interpolated across the change (H9).
 #'
 #' Provenance: Claude Code (Claude Fable 5.1), 2026-10-05, at the request of
 #' Steven L. Shafer.  Verified on R 4.6.1 against the same manoeuvre in the full
@@ -658,7 +707,7 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
 
   # The time points to start from, and their states side by side: alveolar and
   # the three tissues of each gas.
-  idx <- if (nT <= maxPoints) seq_len(nT) else unique(round(seq(1, nT, length.out = maxPoints)))
+  idx <- gasRecoverySample(washout$interval, maxPoints)
   Y0 <- do.call(cbind, lapply(gases, function(g) washout$state[[g]][idx, 2:5, drop = FALSE]))
   thr0 <- threshold[idx]
   out <- rep(NA_real_, length(idx))
@@ -706,6 +755,10 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
       fastest <- max(fastest, abs(eigen(A, only.values = TRUE)$values))
     }
     FinAlv <- numeric(4 * nG); FinAlv[alvCol] <- Fin
+
+    # What proves a row finished: the uncoupled washout of the gases the
+    # target weighs, an upper bound on the coupled one (gasWashoutBound()).
+    bound <- gasWashoutBound(blocks, target, Fin)
 
     # Oxygen consumed shrinks the alveolar gas too, net of the carbon dioxide
     # that replaces it; a constant, added to the uptake of the other gases.
@@ -798,8 +851,14 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
       down <- val > thr & valNew <= thr
       cross[down] <- tau + h * (val[down] - thr[down]) / (val[down] - valNew[down])
 
-      # Finished: below the threshold and falling, so it will not be back.
-      done <- valNew <= thr & valNew <= val
+      # Finished: below the threshold, and proved unable to rise above it
+      # again within the day.  Below the threshold and falling is not enough:
+      # the muscle and fat behind the brain can bring it back (H9).
+      done <- valNew <= thr
+      if (any(done)) {
+        done[done] <- if (is.null(bound)) FALSE else
+          gasWashoutBelow(bound, Y[done, , drop = FALSE], thr[done])
+      }
       if (any(done)) {
         out[rows[done]] <- cross[done]
         keep <- !done
@@ -809,9 +868,150 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
       val <- valNew
       tau <- tau + h
     }
-    out[rows] <- MINS_PER_DAY
+    # Still running at the end of the day: a day if above the threshold, and
+    # otherwise the last downward crossing, as recoveryCalc() reads its
+    # horizon.
+    out[rows] <- ifelse(!is.na(val) & val <= thr, cross, MINS_PER_DAY)
   }
 
   if (length(idx) == nT) return(out)
-  stats::approx(washout$Time[idx], out, washout$Time, rule = 2)$y
+  # Interpolated within each interval of constant settings, never across a
+  # change, where the time until threshold jumps (H9).  The sample holds every
+  # interval's first and last point (gasRecoverySample()).
+  res <- numeric(nT)
+  for (iv in unique(washout$interval)) {
+    at <- which(washout$interval == iv)
+    from <- which(washout$interval[idx] == iv)
+    res[at] <- if (length(from) == 1) out[from] else
+      stats::approx(washout$Time[idx[from]], out[from], washout$Time[at], rule = 2)$y
+  }
+  res
+}
+
+
+# The time points gasCoupledRecovery() starts from: every point when there
+# are at most maxPoints, and otherwise maxPoints spread evenly together with
+# the first and last point of every interval of constant settings, so that
+# no time is ever interpolated across a change of setting (Carbon's fourth UI
+# audit, 2026-11-15, H9).  With no change of setting the sample is the one
+# used since 2026-10-05.
+gasRecoverySample <- function(interval, maxPoints)
+{
+  nT <- length(interval)
+  if (nT <= maxPoints) return(seq_len(nT))
+  first <- which(c(TRUE, interval[-1] != interval[-nT]))
+  last  <- c(first[-1] - 1L, nT)
+  sort(unique(c(round(seq(1, nT, length.out = maxPoints)), first, last)))
+}
+
+
+# -----------------------------------------------------------------------------
+# When a row of the washout is finished (Carbon's fourth UI audit, 2026-11-15,
+# H9)
+# -----------------------------------------------------------------------------
+# Until this date a row was finished as soon as its concentration was below
+# the threshold and falling, on the reasoning that it would not be back.  That
+# holds for one compartment, not for four.  Isoflurane 2.5% for three hours,
+# then the vaporiser off and the lungs flushed at 25 L/min for five minutes,
+# then a minute ventilation of 0.4 L/min: at the end of the flush the brain is
+# at 0.55%, under a threshold of 0.6% and still falling, so the time read 0;
+# but the barely ventilated alveoli fill from the mixed venous blood, which
+# the loaded muscle keeps high, and the brain rises to 0.90% and is not back
+# under 0.6% for 215 minutes.
+#
+# A row is now finished only when a rise above the threshold is shown to be
+# impossible.  For a gas that is turned off (fresh-gas tension F = 0) the
+# engine's coupling adds (u / Va) y_alv to its alveolar tension when the
+# summed uptake u is negative, gas pushed out, and nothing when u is
+# positive, the make-up gas being fresh gas, which carries none of it.  So,
+# whatever u and the other gases do,
+#
+#     dy/dt = (A + min(u(t), 0) / Va e1 e1') y,
+#
+# with A the gas's own washout matrix.  A is compartmental: its off-diagonal
+# entries are flows and never negative (it is Metzler), and a non-positive
+# term on the diagonal keeps it so.  Then y(t + s) = Phi(s) y(t), where the
+# transition matrix Phi is entrywise non-negative and entrywise no larger
+# than exp(A s): z = exp(A s) e_i - Phi(s) e_i starts at 0 and obeys
+# dz/ds = A z - min(u, 0) / Va e1 e1' Phi e_i, a Metzler system with a
+# non-negative input, so z stays non-negative.  For non-negative weights c --
+# a tension, or tensions over MAC summed --
+#
+#     c' y(t + s) <= c' Phi(s) y+(t) <= c' exp(A s) y+(t),   every s >= 0,
+#
+# y+ being the state with any negative rounding set to zero.  The right side
+# is the gas's washout with the coupling left out, a sum of four exponentials
+# per gas (summed over the gases c weighs).  When it stays at or below the
+# threshold for a day from now, the row cannot rise above the threshold again
+# within the day, and is finished.  The bound holds for the equations
+# integrated here, whatever the coupling does, and it is close: for a
+# volatile agent on its own the coupling is small and the bound nearly the
+# washout itself.
+#
+# It is checked on a grid of times and, rigorously, between the grid's
+# points: on [s_k, s_k+1] a term with a positive amplitude is largest at s_k
+# and one with a negative amplitude at s_k+1 (gasWashoutBelow()).  The grid
+# starts at a thousandth of the fastest time constant and grows by 10% a
+# point to a day, so between two points the bound gives away at most
+# (1.1 - 1) / e, 3.7%, of the negative amplitudes.  A row it does not clear
+# at once it clears a few steps later, further below the threshold; the
+# answer, the last downward crossing, is the same either way.
+# -----------------------------------------------------------------------------
+
+# The washout bound's grid: its first point after zero, in time constants of
+# the fastest rate, and the ratio of neighbouring points.
+GAS_BOUND_FIRST <- 1e-3
+GAS_BOUND_RATIO <- 1.1
+
+# The bound, prepared once per interval of constant settings: for each gas
+# the target weighs, the modes of its own washout matrix, and the grid's
+# exponentials.  NULL where no bound holds -- a negative weight, or a weighed
+# gas still being breathed, whose make-up gas then carries it in -- and the
+# rows then run to the end of the day.  `blocks` are the per-gas matrices,
+# for column-vector states, and `Fin` the fresh-gas tensions.
+gasWashoutBound <- function(blocks, target, Fin)
+{
+  if (any(target < 0)) return(NULL)
+  weighed <- which(vapply(seq_along(blocks), function(k)
+    any(target[(k - 1) * 4 + 1:4] != 0), logical(1)))
+  if (length(weighed) == 0 || any(Fin[weighed] != 0)) return(NULL)
+
+  modes <- lapply(weighed, function(k) {
+    A <- blocks[[k]]
+    # A = C^-1 G, with C the compartments' capacities and G symmetric, so
+    # C^1/2 A C^-1/2 is symmetric: its eigenvectors are orthonormal, and no
+    # ill-conditioned matrix is inverted.  The capacities, relative to the
+    # alveoli's, are A[1, j] / A[j, 1].
+    C <- rep(1, 4)
+    linked <- c(FALSE, A[2:4, 1] > 0)
+    C[linked] <- A[1, linked] / A[linked, 1]
+    S <- diag(sqrt(C)) %*% A %*% diag(1 / sqrt(C))
+    e <- eigen((S + t(S)) / 2, symmetric = TRUE)
+    j <- (k - 1) * 4 + 1:4
+    list(cols    = j,
+         rate    = pmax(-e$values, 0),
+         toModes = diag(sqrt(C)) %*% e$vectors,             # row states to modes
+         weight  = as.vector(target[j] %*% diag(1 / sqrt(C)) %*% e$vectors))
+  })
+  rate <- unlist(lapply(modes, `[[`, "rate"))
+  first <- if (max(rate) > 0) GAS_BOUND_FIRST / max(rate) else Inf
+  s <- if (first < MINS_PER_DAY) {
+    n <- ceiling(log(MINS_PER_DAY / first) / log(GAS_BOUND_RATIO))
+    c(0, exp(seq(log(first), log(MINS_PER_DAY), length.out = n + 1)))
+  } else {
+    c(0, MINS_PER_DAY)
+  }
+  list(modes = modes,
+       left  = exp(-outer(rate, s[-length(s)])),
+       right = exp(-outer(rate, s[-1])))
+}
+
+# The rows of Y (row states, four per gas) whose bound stays at or below
+# their threshold thr for a day: those that cannot rise above it again.
+gasWashoutBelow <- function(bound, Y, thr)
+{
+  alpha <- do.call(cbind, lapply(bound$modes, function(m)
+    sweep(pmax(Y[, m$cols, drop = FALSE], 0) %*% m$toModes, 2, m$weight, `*`)))
+  U <- pmax(alpha, 0) %*% bound$left + pmin(alpha, 0) %*% bound$right
+  rowSums(U > thr | is.na(U)) == 0
 }
