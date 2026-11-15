@@ -933,5 +933,12 @@ BAYES_FACTOR_LIMIT <- 20
 BAYES_MAX_ITERATIONS <- 50L
 # The relative step of the search's finite differences (bayesianSearch())
 BAYES_JACOBIAN_STEP <- 1e-6
+# The longest an update searches, seconds, all drugs together: no further
+# simulation is started after it.  A worker runs one session's R at a time,
+# so a fit holds every session on it; six interacting antiseizure drugs over
+# 52 weeks, each simulation of them seconds long, held one for more than
+# eight minutes (Carbon's second UI audit, 2026-11-15, F3).  The fits
+# measured take 1 to 10 seconds.
+BAYES_MAX_SECONDS <- 30
 # The label of the population curve drawn beside the individualized one
 BAYES_PRIOR_LABEL <- "population"

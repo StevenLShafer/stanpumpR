@@ -501,4 +501,276 @@ test_that("Single Paper Review reads and deletes only what Shiny uploaded (F6G)"
   expect_false(file.exists(path))
 })
 
+# --- Carbon's second audit, of PR #730 at 51f1276 (2026-11-15) ---------------
+# Its findings are G1-G8 here, to keep them apart from the first audit's.
+
+test_that("a dose-dependent drug's population curve is rebuilt from its own model (G1)", {
+  for (case in list(c("insulinRegular", "U SC"), c("lixisenatide", "mcg SC"))) {
+    DT <- oneDose(case[1], 10, case[2])
+    drugs <- priorDrugsFor(DT)
+    p <- withOutputTimes(60, processdoseTable(DT, noEvents, drugs, 600, FALSE))[[case[1]]]$wide
+    p <- p$Plasma[p$Time == 60]
+    obs <- data.frame(Drug = case[1], Time = 60, Concentration = 2 * p)
+    res <- bayesianUpdateDrugs(drugs, DT, noEvents, obs, rebuild = rebuildFor(DT), maximum = 600)
+    population <- bayesianPriorName(case[1])
+    expect_true(population %in% names(res$drugs))
+    out <- withOutputTimes(60, processdoseTable(DT, noEvents, res$drugs, 600, FALSE))
+    # the population curve is the model's, the individual's moves toward the level
+    w <- out[[population]]$wide
+    expect_equal(w$Plasma[w$Time == 60], p, tolerance = 1e-9)
+    w <- out[[case[1]]]$wide
+    expect_gt(w$Plasma[w$Time == 60], 1.2 * p)
+  }
+  expect_identical(pkModelDrug(list(drug = "x (population)", companionOf = "x",
+                                    companionGroup = "bayesian")), "x")
+  expect_error(pkModelDrug(list(drug = "propofol (Schnider)", companionOf = "propofol",
+                                companionGroup = "mintoSchnider")), "model of its own")
+})
+
+test_that("the adaptive step ends, refuses an unreadable step, and stops on an empty system (G2)", {
+  # a step that fails at the smallest step stops, where it looped for ever
+  elapsed <- system.time(expect_error(
+    mmDormandPrince(function(t, y) -1e12 * y + sin(1e12 * t), x = 1, t0 = 0, t1 = 10, h = 1,
+                    rtol = 1e-6, atol = 1e-12),
+    "adaptive step failed"))[["elapsed"]]
+  expect_lt(elapsed, 5)
+  # a stage outside the derivative's domain (NaN) is a step refused
+  f <- function(t, y) ifelse(is.na(y) | y < 0, NaN, -5 * y)
+  r <- mmDormandPrince(f, x = 1, t0 = 0, t1 = 2, h = 2, rtol = 1e-6, atol = 1e-12)
+  expect_equal(r$x, exp(-10), tolerance = 1e-5)
+  # with nothing left and no input the interval is done at once
+  calls <- 0
+  g <- function(t, y) { calls <<- calls + 1; -5 * y }
+  r <- mmDormandPrince(g, x = c(1e-12, 0), t0 = 0, t1 = 1e5, h = 1, rtol = 1e-6, atol = 1e-9)
+  expect_identical(r$x, c(0, 0))
+  expect_lte(calls, 2)
+  # the search's corner in a neonate: stiff, and gone within hours
+  pk <- getDrugPK("phenytoin", weight = 0.5, age = 0, height = 50, sex = "male",
+                  individual = list(clearance = 20, volume = 0.05))
+  DT <- oneDose("phenytoin", 10, "mg")
+  invisible(processdoseTable(DT, noEvents, list(phenytoin = pk), 1440, FALSE))
+  elapsed <- system.time(
+    out <- processdoseTable(DT, noEvents, list(phenytoin = pk), 524160, FALSE))[["elapsed"]]
+  expect_lt(elapsed, 1.5)
+  expect_true(all(is.finite(out$phenytoin$wide$Plasma)))
+})
+
+test_that("an empty or vector entry, and a vector drug, leave the session open (G4)", {
+  expect_identical(validateEntry(character(0), validateTime), "")
+  expect_identical(validateEntry(numeric(0), validateDose), "")
+  expect_identical(validateTime(character(0)), "")
+  expect_identical(validateDose(character(0)), "")
+  expect_identical(validateEntry(NULL, validateDose), "0")
+  shiny::testServer(app_server, {
+    sent <- recordCarbon(session)
+    startCarbon(session, fullTable(3))
+    before <- doseTable()
+    session$setInputs(addDoseDrug = "propofol", addDoseTime = character(0), addDoseAmount = "1",
+                      addDoseUnits = "mg", addDoseBtn = 1)
+    expect_false(session$isClosed())
+    session$setInputs(addDoseTime = "10", addDoseAmount = numeric(0), addDoseBtn = 2)
+    expect_false(session$isClosed())
+    session$setInputs(clickEvent = "Intubation", clickTimeEvent = character(0), addEventBtn = 1)
+    expect_false(session$isClosed())
+    expect_identical(doseTable(), before)
+    skipTarget(list(drug = "propofol", time = 1))
+    session$setInputs(addDoseDrug = c("propofol", "fentanyl"))
+    expect_false(session$isClosed())
+    session$setInputs(skipNextDoseBtn = 1)
+    expect_false(session$isClosed())
+    session$setInputs(stopAdministrationBtn = 1)
+    expect_false(session$isClosed())
+    session$setInputs(addDoseDrug = c("propofol", "fentanyl"), addDoseBtn = 3)
+    expect_false(session$isClosed())
+    expect_identical(doseTable(), before)
+  })
+})
+
+test_that("oral voriconazole stays finite and plausible, with either step (found checking G3)", {
+  DT <- data.frame(Drug = "voriconazole", Time = c(0, 720), Dose = 200, Units = "mg PO",
+                   stringsAsFactors = FALSE)
+  drugs <- priorDrugsFor(DT)
+  run <- function(adaptive) {
+    d <- drugs
+    d$voriconazole$michaelisMenten$adaptiveStep <- adaptive
+    processdoseTable(DT, noEvents, d, 1440, FALSE)$voriconazole$wide
+  }
+  adaptive <- run(TRUE)
+  fixed <- run(FALSE)
+  for (w in list(adaptive, fixed)) {
+    expect_true(all(is.finite(w$Plasma)))
+    # after each peak the level falls steadily and is never zero: it fell to
+    # exactly 0 two hours after the first dose, and the second reached 1e90
+    for (window in list(c(0, 720), c(720, 1440))) {
+      inWindow <- w$Time >= window[1] & w$Time < window[2]
+      y <- w$Plasma[inWindow]
+      after <- y[seq(which.max(y), length(y))]
+      expect_true(all(after > 0))
+      expect_true(all(diff(after) <= 1e-12))
+    }
+    expect_lt(max(w$Plasma), 5)
+  }
+  big <- adaptive$Plasma > 0.05 * max(adaptive$Plasma)
+  expect_lt(max(abs(fixed$Plasma[big] / adaptive$Plasma[big] - 1)), 0.01)
+})
+
+test_that("an update stops at its time limit and does not try again until its inputs change (G3)", {
+  DT <- oneDose("morphine", 10, "mg")
+  obs <- data.frame(Drug = "morphine", Time = 60, Concentration = 0.02)
+  fitted <- 0
+  res <- bayesianUpdateDrugs(priorDrugsFor(DT), DT, noEvents, obs, rebuild = rebuildFor(DT),
+                             timeLimit = 0, onFit = function(drug) fitted <<- fitted + 1)
+  expect_equal(fitted, 1)
+  expect_length(res$fits, 0)
+  expect_match(res$problems, "morphine could not be updated within 0 seconds", fixed = TRUE)
+  again <- bayesianUpdateDrugs(priorDrugsFor(DT), DT, noEvents, obs, rebuild = rebuildFor(DT),
+                               fits = c(res$fits, res$failed),
+                               onFit = function(drug) fitted <<- fitted + 1)
+  expect_equal(fitted, 1)
+  expect_identical(again$problems, res$problems)
+  # changed inputs are tried again, within the usual limit
+  obs$Concentration <- 0.03
+  third <- bayesianUpdateDrugs(priorDrugsFor(DT), DT, noEvents, obs, rebuild = rebuildFor(DT),
+                               fits = c(res$fits, res$failed),
+                               onFit = function(drug) fitted <<- fitted + 1)
+  expect_equal(fitted, 2)
+  expect_named(third$fits, "morphine")
+})
+
+test_that("a threshold past the ceiling locks neither dialog (G5)", {
+  # Drug Library: a range converted from mcg to ng past 1e9 is not an edit
+  current <- G
+  current$Upper[current$Drug == "propofol"] <- 5e9
+  edited <- drugLibraryGridData(current)
+  edited$Lower[edited$Drug == "fentanyl"] <- "0.5"
+  expect_length(drugLibraryProblems(edited, current), 0)
+  # an entry the edit changes is still held to it
+  edited$Upper[edited$Drug == "fentanyl"] <- "5e9"
+  expect_match(drugLibraryProblems(edited, current), "fentanyl Upper", fixed = TRUE)
+
+  # Drug Thresholds: a stored value shown past the ceiling, and a volatile
+  # agent's shown at another age, are not edits
+  dd <- G
+  dd$endCe[dd$Drug == "propofol"] <- 5e9
+  dd$endCe[dd$Drug == "sevoflurane"] <- 9e8 / macForAge(1, 90)
+  shown <- thresholdTableForDisplay(dd, age = 20)
+  expect_gt(shown$Threshold[shown$Drug == "sevoflurane"], MAX_DOSE_VALUE)
+  shown$Threshold[shown$Drug == "fentanyl"] <- 2
+  back <- thresholdTableToDefaults(shown, dd, age = 20)
+  expect_identical(back$invalid, character(0))
+  expect_equal(back$drugDefaults$endCe[dd$Drug == "fentanyl"], 2)
+  # rows left alone keep their stored value, unrounded
+  untouched <- dd$Drug != "fentanyl"
+  expect_identical(back$drugDefaults$endCe[untouched], dd$endCe[untouched])
+  shown$Threshold[shown$Drug == "fentanyl"] <- 5e9
+  expect_identical(thresholdTableToDefaults(shown, dd, age = 20)$invalid, "fentanyl")
+
+  # a link's threshold past the ceiling is left out
+  restored <- restoreThresholds(G, c(propofol = 5e9, fentanyl = 2), macThreshold = 5e9)
+  expect_equal(restored$drugDefaults$endCe[G$Drug == "propofol"], G$endCe[G$Drug == "propofol"])
+  expect_equal(restored$drugDefaults$endCe[G$Drug == "fentanyl"], 2)
+  expect_equal(restored$macThreshold, GAS_MAC_THRESHOLD)
+})
+
+test_that("a drug moved between mcg and ng keeps its TCI targets and measured levels (G6A)", {
+  dt <- data.frame(Drug = c("propofol", "propofol", "fentanyl"), Time = c("0", "10", "0"),
+                   Dose = c("3", "2", "1"), Units = c(TCI_UNIT_EFFECT, "mg", TCI_UNIT_PLASMA),
+                   stringsAsFactors = FALSE)
+  out <- doseTableRescaleTargets(dt, c(propofol = 1000))
+  expect_identical(out$Dose, c("3000", "2", "1"))
+  expect_null(doseTableRescaleTargets(transform(dt, Dose = c("2e6", "2", "1")), c(propofol = 1000)))
+  expect_identical(doseTableRescaleTargets(dt, numeric(0)), dt)
+  # the factors are the thresholds'
+  edited <- drugLibraryGridData(G)
+  edited$Concentration.Units[edited$Drug == "propofol"] <- "ng"
+  new <- edited
+  for (col in DRUG_LIBRARY_NUMERIC_COLUMNS) new[[col]] <- as.numeric(new[[col]])
+  new$endCe <- G$endCe
+  expect_equal(drugLibraryRescaleThresholds(new, edited, G)$factors, c(propofol = 1000))
+  # and with no drug moved there are none (an empty switch() ended the session)
+  same <- drugLibraryGridData(G)
+  newSame <- same
+  for (col in DRUG_LIBRARY_NUMERIC_COLUMNS) newSame[[col]] <- as.numeric(newSame[[col]])
+  newSame$endCe <- G$endCe
+  expect_length(drugLibraryRescaleThresholds(newSame, same, G)$factors, 0)
+  # and the measured concentrations follow
+  shiny::testServer(app_server, {
+    startCarbon(session, oneDose("propofol", 100, "mg"))
+    bayes$rows(list(rows = data.frame(Drug = c("propofol", "propofol"), Time = c("30", "60"),
+                                      Concentration = c("3", "x"), stringsAsFactors = FALSE),
+                    format = timeFormat("minutes", "relative")))
+    bayes$rescale(c(propofol = 1000))
+    expect_identical(bayes$rows()$rows$Concentration, c("3000", "x"))
+  })
+})
+
+test_that("a drug not plotted as a concentration by mass takes no TCI, and a new unit must move the curve (G6B)", {
+  DT <- oneDose("mannitol", 310, TCI_UNIT_PLASMA)
+  expect_error(simulated(DT), "osmolality")
+  current <- G
+  edited <- drugLibraryGridData(G)
+  add <- function(drug, unit) {
+    e <- edited
+    i <- e$Drug == drug
+    e$Units[i] <- paste0(e$Units[i], ",", unit)
+    drugLibraryProblems(e, current)
+  }
+  expect_match(add("mannitol", TCI_UNIT_PLASMA), "osmolality", fixed = TRUE)
+  expect_match(add("mannitol", "mg PO"), "no concentration follows a dose", fixed = TRUE)
+  expect_match(add("gabapentin", TCI_UNIT_EFFECT), "the model has no effect site", fixed = TRUE)
+  expect_match(add("mannitol", TCI_UNIT_EFFECT), "the model has no effect site", fixed = TRUE)
+  expect_length(add("mannitol", "g"), 0)
+})
+
+test_that("Suggest Dosing writes only units the drug takes, and the library keeps them (G7)", {
+  choices <- suggestDrugChoices(G)
+  expect_true("propofol" %in% choices)
+  # given only as boluses, with an infusion unit of mg/hr in the library
+  expect_false(any(c("atropine", "propranolol") %in% choices))
+  for (drug in choices) {
+    i <- G$Drug == drug
+    expect_true(all(c(G$Bolus.Units[i], G$Infusion.Units[i]) %in% unlist(G$Units[i])), info = drug)
+  }
+  edited <- drugLibraryGridData(G)
+  i <- edited$Drug == "propofol"
+  edited$Units[i] <- "mg/kg, mg/kg/hr"
+  edited$Default.Units[i] <- "mg/kg"
+  problems <- drugLibraryProblems(edited, G)
+  expect_match(problems, "propofol Bolus.Units", fixed = TRUE)
+  expect_match(problems, "propofol Infusion.Units", fixed = TRUE)
+  edited$Bolus.Units[i] <- "mg/kg"
+  edited$Infusion.Units[i] <- "mg/kg/hr"
+  expect_length(drugLibraryProblems(edited, G), 0)
+  # a Units edit leaves alone a unit that was not among them before
+  edited <- drugLibraryGridData(G)
+  i <- edited$Drug == "atropine"
+  edited$Units[i] <- paste0(edited$Units[i], ", mcg")
+  expect_length(drugLibraryProblems(edited, G), 0)
+})
+
+test_that("a level before absorption begins is set aside, and a dose of 0 is no dose (G8)", {
+  DT <- oneDose("gabapentin", 300, "mg PO")
+  times <- c(6, 120, 240)
+  p <- withOutputTimes(times, processdoseTable(DT, noEvents, priorDrugsFor(DT), 300, FALSE))
+  p <- p$gabapentin$wide$Plasma[match(times, p$gabapentin$wide$Time)]
+  expect_equal(p[1], 0)
+  obs <- data.frame(Drug = "gabapentin", Time = times, Concentration = c(0.5, 1.5 * p[2:3]))
+  res <- bayesianUpdateDrugs(priorDrugsFor(DT), DT, noEvents, obs, rebuild = rebuildFor(DT),
+                             maximum = 300)
+  expect_true(res$fits$gabapentin$converged)
+  expect_equal(nrow(res$fits$gabapentin$observations), 2)
+  o <- res$fits$gabapentin$observations
+  expect_true(all(o$Individual > o$Population))
+  expect_match(res$problems, "gabapentin: 1 measurement before the drug reaches the plasma",
+               fixed = TRUE)
+
+  zero <- oneDose("propofol", 0, "mg")
+  res <- bayesianUpdateDrugs(priorDrugsFor(zero), zero, noEvents,
+                             data.frame(Drug = "propofol", Time = 30, Concentration = 1),
+                             rebuild = rebuildFor(zero))
+  expect_length(res$fits, 0)
+  expect_false(bayesianPriorName("propofol") %in% names(res$drugs))
+  expect_match(res$problems, "propofol has no dose above 0 yet", fixed = TRUE)
+})
+
 .sprglobals$config <- oldConfig

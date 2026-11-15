@@ -315,13 +315,21 @@ drugHasEffectSite <- memoise::memoise(function(drug)
 
 # The drugs the Suggest Dosing dialog offers, in library order: not a gas, and
 # a supported pair of units and an effect site as suggestSupported() requires.
+# Both units must be among the drug's own, the ones the dose grid accepts for
+# it: atropine and propranolol, given only as boluses, carry an infusion unit
+# of mg/hr in the library, and the suggested regimen's infusion rows lost
+# their units at the next edit of the grid, which blanks a unit the drug does
+# not take (found checking Carbon's second UI audit, 2026-11-15, F7).
 suggestDrugChoices <- function(drugDefaults = getDrugDefaultsGlobal())
 {
   keep <- vapply(seq_len(nrow(drugDefaults)), function(i)
   {
     drug <- drugDefaults$Drug[i]
+    bolus <- as.character(drugDefaults$Bolus.Units[i])
+    infusion <- as.character(drugDefaults$Infusion.Units[i])
     !isGasDrug(drug) &&
-      suggestUnitsSupported(drugDefaults$Bolus.Units[i], drugDefaults$Infusion.Units[i]) &&
+      suggestUnitsSupported(bolus, infusion) &&
+      all(c(bolus, infusion) %in% unlist(drugDefaults$Units[i])) &&
       drugHasEffectSite(drug)
   }, logical(1))
   drugDefaults$Drug[keep]

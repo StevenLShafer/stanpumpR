@@ -244,6 +244,22 @@ bayesianServer <- function(input, output, session, doseTableClean, doseTableForm
     pkVariability = pkVariability,
     residualVariability = residualVariability,
     rows = rows,
+    # Measured concentrations of drugs moved between mcg and ng in the Drug
+    # Library, converted as their thresholds are (`factors` named by drug;
+    # Carbon's second UI audit, 2026-11-15, F6)
+    rescale = function(factors) {
+      stored <- isolate(rows())
+      table <- stored$rows
+      hit <- which(as.character(table$Drug) %in% names(factors))
+      if (length(hit) == 0) return(invisible())
+      for (i in hit) {
+        value <- suppressWarnings(as.numeric(as.character(table$Concentration[i])))
+        if (is.na(value)) next
+        table$Concentration[i] <- plainDecimal(value * factors[[as.character(table$Drug[i])]])
+      }
+      rows(list(rows = table, format = stored$format))
+      redraw(isolate(redraw()) + 1)
+    },
     restore = function(observations) {
       format <- isolate(doseTableFormat())
       rows(list(rows = bayesObservationsToRows(observations, format,

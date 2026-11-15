@@ -156,8 +156,10 @@ thresholdTableForDisplay <- function(drugDefaults, age, macThreshold = GAS_MAC_T
 
 #' Take the edited Drug Thresholds table back into the defaults
 #'
-#' The inverse of \code{thresholdTableForDisplay()}.  Rows not in the table keep
-#' the threshold they had.  Zero, entered as 0, is no threshold.  An entry that
+#' The inverse of \code{thresholdTableForDisplay()}.  Rows not in the table, and
+#' rows left as the dialog showed them, keep the threshold they had (a stored
+#' value past the ceiling, shown at another age or converted from mcg to ng,
+#' therefore no longer refuses every other edit).  Zero, entered as 0, is no threshold.  An entry that
 #' is not a number from 0 to \code{MAX_DOSE_VALUE} (blank, ".", text, negative, too large) is refused rather
 #' than read as 0: nothing is changed, and \code{invalid} names the rows, so
 #' the dialog can say which to correct.
@@ -185,6 +187,16 @@ thresholdTableToDefaults <- function(edited, drugDefaults, age,
   known <- drug %in% c(as.character(drugDefaults$Drug), "MAC")
   drug <- drug[known]
   value <- value[known]
+  # Only an entry the edit changed is read: one left as the dialog showed it
+  # keeps its stored value, unrounded.  A stored value past the grid's
+  # ceiling (a volatile agent's threshold shown at another age, a range
+  # converted from mcg to ng) made every later OK fail, whatever drug it
+  # edited (Carbon's second UI audit, 2026-11-15, F5)
+  shown <- thresholdTableForDisplay(drugDefaults, age, macThreshold)
+  before <- shown$Threshold[match(drug, shown$Drug)]
+  changed <- is.na(before) | is.na(value) | abs(value - before) > 1e-12 * abs(before)
+  drug <- drug[changed]
+  value <- value[changed]
   # The grid's ceiling, validateDose()'s, held here too (fourth review, F05)
   bad <- !is.finite(value) | value < 0 | value > MAX_DOSE_VALUE
   if (any(bad)) {
@@ -243,12 +255,15 @@ restoreThresholds <- function(drugDefaults, endCe = NULL, macThreshold = NULL)
   if (length(endCe) > 0 && !is.null(names(endCe))) {
     value <- usable(endCe)
     at <- match(names(endCe), drugDefaults$Drug)
-    ok <- !is.na(at) & is.finite(value) & value >= 0
+    # held to the dialog's ceiling, as a link is untrusted (Carbon's second
+    # UI audit, 2026-11-15, F5)
+    ok <- !is.na(at) & is.finite(value) & value >= 0 & value <= MAX_DOSE_VALUE
     drugDefaults$endCe[at[ok]] <- value[ok]
   }
 
   mac <- usable(macThreshold)
-  macThreshold <- if (length(mac) == 1 && is.finite(mac) && mac >= 0) mac else GAS_MAC_THRESHOLD
+  macThreshold <- if (length(mac) == 1 && is.finite(mac) && mac >= 0 &&
+                      mac <= MAX_DOSE_VALUE) mac else GAS_MAC_THRESHOLD
 
   list(drugDefaults = drugDefaults, macThreshold = macThreshold)
 }

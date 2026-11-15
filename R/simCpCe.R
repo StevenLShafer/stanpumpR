@@ -553,10 +553,15 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     if (any(isTciUnit(dose$Units)))
     {
       # The controller inverts one system; it cannot target a sum of them, nor
-      # an INR drug (whose plotted curve is not a concentration).
-      if (!is.null(PK$parallelSystems) || !is.null(PK$inr) || !is.null(PK$act))
+      # a drug whose plotted curve is not its concentration by mass: an INR,
+      # an ACT, a serum osmolality (mannitol, baseline included: a target of
+      # 310 drove the osmolality to 462, its rates labelled in mg; Carbon's
+      # second UI audit, 2026-11-15, F6) or a molar concentration.
+      if (!is.null(PK$parallelSystems) || !is.null(PK$inr) || !is.null(PK$act) ||
+          !is.null(PK$osmotic) || !is.null(PK$molar))
         stop("Target-controlled infusion is not available for a drug ",
-             "simulated as several parallel systems or as an INR or ACT.")
+             "simulated as several parallel systems, or plotted as an INR, an ACT, ",
+             "an osmolality or a molar concentration.")
       # The pump computes its rates from the model it was programmed with:
       # the drug's own, except for a drug the Bayesian update individualized
       # (R/bayesian.R), whose patient received the rates the library's model

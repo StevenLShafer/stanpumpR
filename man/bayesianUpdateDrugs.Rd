@@ -15,7 +15,8 @@ bayesianUpdateDrugs(
   antiseizureInteractions = FALSE,
   fits = NULL,
   onFit = NULL,
-  maximum = NULL
+  maximum = NULL,
+  timeLimit = BAYES_MAX_SECONDS
 )
 }
 \arguments{
@@ -50,10 +51,17 @@ any drug whose inputs have not changed}
 \item{maximum}{NULL, or the length of the plot (minutes): a measurement
 after it is set aside.  Whatever it is, a measurement later than the
 longest plot the app offers (\code{BAYES_MAX_TIME}) is set aside too.}
+
+\item{timeLimit}{the longest the update searches, seconds, all drugs
+together (\code{BAYES_MAX_SECONDS}): no simulation is started after it, and a
+drug not finished by then is not updated}
 }
 \value{
 a list: \code{drugs}, updated; \code{fits}, one per updated drug (with its
-\code{key}); and \code{problems}, sentences saying what could not be used
+\code{key}); \code{problems}, sentences saying what could not be used; and
+\code{failed}, the drugs that could not be updated, with their keys, which a
+caller passes back in \code{fits} so that they are not tried again until
+their inputs change
 }
 \description{
 The maximum a posteriori estimate of each measured drug's clearance and

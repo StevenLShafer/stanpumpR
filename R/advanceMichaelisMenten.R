@@ -116,16 +116,26 @@
 # STEP SIZE
 # =========
 # The engine reports on the library's time line (simulationTimeGrid()), so the
-# plot and the derived series behave as for any other drug, and takes Runge-
-# Kutta steps of at most MM_MAX_STEP minutes between its points.  The fastest
-# process is the conversion of fosphenytoin (half-time about 8 to 15 minutes);
-# at a 2 minute step the method's local error on it is below 1e-7 of the dose.
-# Elimination is slower still.  The fastest process of all is vildagliptin's
-# binding to tissue DPP-4 while the target is free (a rate constant near
-# 0.7/min, inside the method's stability limit of 2.78 / 2 min): against a
-# 0.05 minute step its concentrations differ by about 1e-5.  A jump (a bolus, a dose
-# arriving in a depot) and a change of rate happen only at points of the
-# time line, which always carries every dose time, so no step straddles one.
+# plot and the derived series behave as for any other drug.  Between its
+# points it takes adaptive steps (mmDormandPrince(): Dormand and Prince's
+# embedded 5(4) pair, error held to MM_ADAPTIVE_RTOL of each state plus
+# MM_ADAPTIVE_ATOL of the largest dose), every drug's default since
+# 2026-11-15 and phenytoin's since 2026-11-14: short steps while a dose is
+# absorbed, hours between doses.  Calibrated on sixteen regimens of the seven
+# drugs against a 0.1-minute fixed step: the largest error is 1.9e-6 of the
+# level where it is above 5% of its peak, where the fixed step's was 3.2e-3
+# (oral voriconazole), and over 52 weeks it is 2 to 14 times faster.
+#
+# A block's adaptiveStep = FALSE selects the classical Runge-Kutta step of at
+# most MM_MAX_STEP minutes, the second method the tests compare with, held
+# within that method's region of stability for the fastest process while
+# drug is being absorbed (mmStateRates()): at 2 minutes alone, voriconazole's
+# absorption (ka 100 /h) multiplied what was left in the depot by 2.2 a step.
+# Vildagliptin's binding to tissue DPP-4 while the target is free (a rate
+# constant near 0.7/min) holds its fixed step to about 1.4 minutes.  A jump
+# (a bolus, a dose arriving in a depot) and a change of rate happen only at
+# points of the time line, which always carries every dose time, so no step
+# straddles one.
 #
 # NO EFFECT SITE AND NO TIME UNTIL THRESHOLD
 # ==========================================
@@ -134,7 +144,8 @@
 # every point of the time line.  The Recovery column is NA.
 # -----------------------------------------------------------------------------
 
-#' Largest Runge-Kutta step of the Michaelis-Menten engine, minutes
+#' Largest Runge-Kutta step of the Michaelis-Menten engine, minutes: the fixed
+#' step's (adaptiveStep = FALSE), and the adaptive step's first after a dose
 #' @keywords internal
 MM_MAX_STEP <- 2
 
@@ -150,6 +161,63 @@ MM_MAX_STEP <- 2
 # buys almost nothing, the step being held to the time line's points.
 MM_ADAPTIVE_RTOL <- 1e-6
 
+#' The fixed step's limit as a multiple of the reciprocal of the fastest
+#' rate (mmStateRates())
+#' @keywords internal
+# The eigenvalues of a compartmental system lie in the discs centred on its
+# diagonal, each of radius at most the centre's magnitude (a compartment
+# loses no more than it holds); scaled by a step h with h |J_ii| <= 1.2,
+# every such disc lies inside the classical Runge-Kutta method's region of
+# stability (|R(z)| <= 1 on the disc of centre -1.2 and radius 1.2, checked
+# numerically 2026-11-15).  1 keeps a margin.
+MM_STABLE_STEP <- 1
+
+#' What is left in an absorption state below this fraction of the largest
+#' dose is taken to have been absorbed (advanceMichaelisMenten())
+#' @keywords internal
+MM_NEGLIGIBLE_AMOUNT <- 1e-12
+
+#' The rate of each state's first-order loss in a Michaelis-Menten system
+#'
+#' The magnitudes of the Jacobian's diagonal at empty compartments, where a
+#' saturable process is at its fastest, by a forward difference of the
+#' derivative.
+#'
+#' @param f function(x) giving the derivative with no input
+#' @param n the number of states
+#' @returns a rate per state, per minute
+#' @keywords internal
+mmStateRates <- function(f, n)
+{
+  zero <- numeric(n)
+  base <- f(zero)
+  delta <- 1e-9
+  rates <- vapply(seq_len(n), function(i) {
+    x <- zero
+    x[i] <- delta
+    abs(f(x)[i] - base[i]) / delta
+  }, numeric(1))
+  rates[!is.finite(rates)] <- 0
+  rates
+}
+
+#' Absolute tolerance of the engine's adaptive step, as a fraction of the
+#' largest dose or of an hour of the largest rate (mmDormandPrince())
+#' @keywords internal
+# Calibrated 2026-11-15 on sixteen regimens of the seven drugs over two weeks
+# against a fixed step of 0.1 minute: at 1e-6 of the largest dose (the
+# relative tolerance), a drug whose plotted compartment holds a small share
+# of the dose was held to too little of its level (cetagliptin 6e-4 at a
+# tenth of its peak); at 1e-9 the largest error is 1.9e-6 of the level where
+# the level is above 5% of its peak, at much the same cost (the fixed step's
+# largest was 3.2e-3, oral voriconazole's).
+MM_ADAPTIVE_ATOL <- 1e-9
+
+#' The smallest adaptive step, as a fraction of its interval: a step that
+#' still fails its error test there stops the simulation (mmDormandPrince())
+#' @keywords internal
+MM_ADAPTIVE_MIN_STEP <- 1e-9
+
 #' Advance the Michaelis-Menten engine's states across one interval of its
 #' time line with an adaptive step
 #'
@@ -164,18 +232,48 @@ MM_ADAPTIVE_RTOL <- 1e-6
 #' (2026-11-14).  Doses arrive at points of the time line, never inside an
 #' interval, so each interval is smooth.
 #'
+#' Three guards (Carbon's second UI audit, 2026-11-15, F2).  A step whose
+#' error cannot be estimated (a stage that left the states' domain gives NaN
+#' or Inf) is refused like a step that fails its test, where it stopped the
+#' simulation with "missing value where TRUE/FALSE needed".  A step that
+#' still fails at `MM_ADAPTIVE_MIN_STEP` of the interval stops the
+#' simulation with a message, where it was taken anyway and the next one
+#' made five times smaller, until t + h == t and the loop never ended.
+#' And a system left with every state within `atol` of zero and no input is
+#' zero for the rest of the interval: the states are amounts, which with no
+#' input can only fall, so the zero is within the tolerance already
+#' accepted.  Without it, an explicit method on a system made stiff by the
+#' Bayesian search's corner (20 times the clearance and a twentieth of the
+#' volume in a 0.5 kg neonate) stepped noise below `atol` at its stability
+#' limit for the rest of the plot: 240,000 derivatives over 52 weeks for a
+#' drug gone within hours.  An accepted step's negative states (an amount
+#' cannot be negative) are set to zero, as the fixed step's are.
+#'
 #' @param f function(t, x) giving the derivative
 #' @param x the states at `t0`
 #' @param t0,t1 the interval
 #' @param h the first step to try
 #' @param rtol,atol the tolerances
+#' @param clean function(x) applied to the states after each step taken
+#'   (advanceMichaelisMenten() empties a depot left with less than `atol`),
+#'   or NULL
 #' @returns a list: `x`, the states at `t1`, and `h`, the step to try next
 #' @keywords internal
-mmDormandPrince <- function(f, x, t0, t1, h, rtol, atol)
+mmDormandPrince <- function(f, x, t0, t1, h, rtol, atol, clean = NULL)
 {
   t <- t0
-  k1 <- f(t, x)
   span <- t1 - t0
+  hMin <- max(MM_ADAPTIVE_MIN_STEP * span, 64 * .Machine$double.eps * max(1, abs(t1)))
+  # Whether the system has an input in this interval: the derivative at zero
+  # (computed once, when first needed)
+  inputFree <- NULL
+  settled <- function(x) {
+    if (any(abs(x) > atol)) return(FALSE)
+    if (is.null(inputFree)) inputFree <<- all(f(t, 0 * x) == 0)
+    inputFree
+  }
+  if (settled(x)) return(list(x = 0 * x, h = h))
+  k1 <- f(t, x)
   while (t < t1) {
     last <- h >= t1 - t
     if (last) h <- t1 - t
@@ -193,15 +291,19 @@ mmDormandPrince <- function(f, x, t0, t1, h, rtol, atol)
       e <- h * (71 / 57600 * k1 - 71 / 16695 * k3 + 71 / 1920 * k4 -
                   17253 / 339200 * k5 + 22 / 525 * k6 - 1 / 40 * k7)
       err <- max(abs(e) / (atol + rtol * pmax(abs(x), abs(xNew))))
-      # A step too small to matter is taken whatever its estimate
-      if (err <= 1 || h <= 1e-9 * span) break
-      h <- h * max(0.2, 0.9 * err^(-1 / 5))
+      if (is.finite(err) && err <= 1) break
+      if (h <= hMin)
+        stop("The concentration could not be computed: the adaptive step ",
+             "failed at ", signif(t, 6), " minutes.", call. = FALSE)
+      h <- max(hMin, h * (if (is.finite(err)) max(0.2, 0.9 * err^(-1 / 5)) else 0.2))
       last <- FALSE
     }
     t <- if (last) t1 else t + h
-    x <- xNew
-    k1 <- k7
-    h <- h * min(5, max(0.2, 0.9 * max(err, 1e-10)^(-1 / 5)))
+    x <- pmax(xNew, 0)
+    if (!is.null(clean)) x <- clean(x)
+    k1 <- if (identical(x, xNew)) k7 else f(t, x)
+    h <- max(hMin, h * min(5, max(0.2, 0.9 * max(err, 1e-10)^(-1 / 5))))
+    if (t < t1 && settled(x)) return(list(x = 0 * x, h = h))
   }
   list(x = x, h = h)
 }
@@ -457,6 +559,8 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
     if (is.null(ddi)) return(1)
     ddi[[field]][max(1L, findInterval(t, ddi$time))]
   }
+  ddiMax <- function(field) if (is.null(ddi)) 1 else max(ddi[[field]])
+  ddiMin <- function(field) if (is.null(ddi)) 1 else min(ddi[[field]])
 
   # A Vmax that declines with time since the first dose (voriconazole's
   # time-dependent autoinhibition, R/drugs_voriconazole.R): the fraction of
@@ -499,6 +603,10 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   }
 
   jumpAt <- match(jumps$time, timeLine)
+  # The jumps at each point, found once (a which() at every point cost time in
+  # the product of the points and the doses: 6 of the 57 seconds of six
+  # interacting antiseizure drugs over 52 weeks)
+  jumpsAt <- split(seq_along(jumpAt), factor(jumpAt, levels = seq_along(timeLine)))
   if (anyNA(jumpAt[jumps$time <= maximum]))
     stop("Internal error: a dose time is missing from the time line.")
 
@@ -577,17 +685,52 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   # The adaptive step (mmDormandPrince()), for a drug whose block asks for
   # it.  Its absolute tolerance is on amounts, relative to the largest dose
   # or an hour of the largest rate.
-  adaptive <- isTRUE(mm$adaptiveStep)
+  adaptive <- !isFALSE(mm$adaptiveStep)
+  # The fixed step is held within the classical Runge-Kutta method's region
+  # of stability for the system's fastest process (mmStateRates()).  At
+  # MM_MAX_STEP alone, voriconazole's absorption (ka 100 /h, fixed in adults)
+  # made each 2-minute step multiply what was left in the oral depot by 2.2:
+  # a single 200 mg dose fell to zero two hours after it was given, and a
+  # second dose reached 1e32 mg/L (found reproducing Carbon's second UI
+  # audit, 2026-11-15; in the library since the drug was added).  The
+  # absorption states (the depots, the transit and conversion compartments)
+  # hold the step down only while they hold drug: what is left below
+  # MM_NEGLIGIBLE_AMOUNT of the largest dose is taken as absorbed, so that a
+  # fast absorption costs small steps for minutes after a dose, not for the
+  # rest of the plot.
+  absorbing <- unique(c(depotStates, iConv))
+  if (!adaptive) {
+    rates <- mmStateRates(function(y) deriv(y, 0, 0, vmax * ddiMax("vmax"),
+                                            km * ddiMin("km")), iDRP)
+    stableStep <- function(r) if (r > 0) min(MM_MAX_STEP, MM_STABLE_STEP / r) else MM_MAX_STEP
+    stepCore <- stableStep(max(rates[-absorbing], 0))
+    stepAll <- stableStep(max(rates))
+  }
+  amountScale <- max(c(abs(jumps$amount),
+                       60 * abs(c(ivRateLine + scRateLine, peRateLine)), 0))
+  negligible <- MM_NEGLIGIBLE_AMOUNT * amountScale
   if (adaptive) {
-    amountScale <- max(c(abs(jumps$amount),
-                         60 * abs(c(ivRateLine + scRateLine, peRateLine)), 0))
-    atol <- MM_ADAPTIVE_RTOL * max(amountScale, .Machine$double.eps)
+    atol <- MM_ADAPTIVE_ATOL * max(amountScale, .Machine$double.eps)
     hNext <- MM_MAX_STEP
+    # An absorption state left with less than atol has been absorbed, within
+    # the tolerance: emptied, it no longer holds the step to its own rate
+    # (the noise below atol of a fast depot, voriconazole's, otherwise kept
+    # the step at that rate's limit of stability for the rest of the plot).
+    emptyDepots <- function(y) {
+      y[absorbing][y[absorbing] <= atol] <- 0
+      y
+    }
   }
   for (i in seq_len(L)) {
     if (i > 1) {
       dt <- timeLine[i] - timeLine[i - 1]
-      n <- max(1L, ceiling(dt / MM_MAX_STEP))
+      if (!adaptive) {
+        x[absorbing][abs(x[absorbing]) <= negligible] <- 0
+        absorbingNow <- any(x[absorbing] != 0) || peRateLine[i - 1] != 0
+        n <- max(1L, ceiling(dt / (if (absorbingNow) stepAll else stepCore)))
+      } else {
+        n <- 1L
+      }
       h <- dt / n
       rIV <- ivRateLine[i - 1] + scRateLine[i - 1]
       rPE <- peRateLine[i - 1]
@@ -598,7 +741,7 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
         f <- if (is.null(vd)) function(t, y) deriv(y, rIV, rPE, vmaxStep, kmStep) else
           function(t, y) deriv(y, rIV, rPE, vmaxStep * vmaxDeclineAt(t), kmStep)
         stepped <- mmDormandPrince(f, x, timeLine[i - 1], timeLine[i], hNext,
-                                   MM_ADAPTIVE_RTOL, atol)
+                                   MM_ADAPTIVE_RTOL, atol, emptyDepots)
         x <- stepped$x
         hNext <- stepped$h
       } else for (k in seq_len(n)) {
@@ -614,7 +757,7 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
       # rounding when the compartment is empty.
       x[x < 0] <- 0
     }
-    arriving <- which(jumpAt == i)
+    arriving <- jumpsAt[[i]]
     for (j in arriving) x[jumps$state[j]] <- x[jumps$state[j]] + jumps$amount[j]
     # A dose starts fast processes again: the step starts small again
     if (adaptive && length(arriving)) hNext <- min(hNext, MM_MAX_STEP)

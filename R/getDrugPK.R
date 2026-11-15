@@ -319,6 +319,14 @@ getDrugPK <- function(
   }
 
   events <- names(X$PK)
+  # Each event's set, by name.  Built as a list: assign()ed into this frame,
+  # which is not hashed, and gathered back with get0(), the sets cost time
+  # in the square of their number, and an antiseizure interaction makes one
+  # set per segment of its multiplier, hundreds over a year (19.5 of the 84
+  # seconds of six interacting drugs over 52 weeks; found checking Carbon's
+  # second UI audit, 2026-11-15, F3).  An event named like a local variable
+  # (v1) also overwrote it.
+  sets <- list()
   for (event in events)
   {
     v1  <- X$PK[[event]]$v1
@@ -888,8 +896,7 @@ getDrugPK <- function(
             e_coef_bolus_ke0 * exp(-ke0 * tPeak)
         )
     }
-    assign(
-      event,
+    sets[[event]] <-
       list(
         v1 = v1,
         v2 = v2,
@@ -1043,10 +1050,9 @@ getDrugPK <- function(
         e_coef_PO2_ke0 = e_coef_PO2_ke0,
         e_coef_PO2_ka = e_coef_PO2_ka
       )
-    )
   }
 
-  PK <- sapply(events, function(x) list(get0(x)))
+  PK <- sets[events]
 
   # The reported tPeak of a model that gave ke0 and no tPeak is the default
   # PK set's (each set solved its own above, for its vdPeakEffect).
@@ -1436,9 +1442,34 @@ validateDoseBioavailability <- function(x, drug)
 #' @keywords internal
 doseSizePK <- function(PK, dose)
 {
-  X <- do.call(PK$drug, c(PK$covariates, list(dose = dose)))
-  do.call(getDrugPK, c(list(drug = PK$drug), PK$covariates,
+  drug <- pkModelDrug(PK)
+  X <- do.call(drug, c(PK$covariates, list(dose = dose)))
+  do.call(getDrugPK, c(list(drug = drug), PK$covariates,
                        list(model = X), pkRebuildArgs(PK)))
+}
+
+#' The drug whose model function a PK is rebuilt from
+#'
+#' A drug's own PK is rebuilt from its own function.  A companion entry is
+#' named for its panel ("insulinRegular (population)") and is a copy of its
+#' drug's PK, so it is rebuilt from that drug's function: the Bayesian
+#' update's population curve and the antiseizure interactions' reference
+#' curve.  Called by its own name, a dose-dependent drug's population curve
+#' failed ("could not find function") and the plot with it (Carbon's second
+#' UI audit, 2026-11-15, F1).  A companion with a model of its own (Minto,
+#' Schnider) is neither dose-dependent nor an interaction victim and is
+#' never rebuilt.
+#'
+#' @param PK a drug's PK from getDrugPK(), or a companion entry
+#' @returns the name of the model function
+#' @keywords internal
+pkModelDrug <- function(PK)
+{
+  if (is.null(PK$companionOf)) return(PK$drug)
+  if (!identical(PK$companionGroup, "bayesian") &&
+      !identical(PK$companionGroup, ASM_INTERACTIONS_INPUT))
+    stop("Internal error: ", PK$drug, " has a model of its own and cannot be rebuilt.")
+  PK$companionOf
 }
 
 #' What a rebuild of a drug's PK from its model passes getDrugPK()
@@ -1456,7 +1487,7 @@ doseSizePK <- function(PK, dose)
 pkRebuildArgs <- function(PK)
 {
   list(individual = PK$individual,
-       drugDefaults = if (is.null(PK$drugDefaults)) getDrugDefaults(PK$drug) else PK$drugDefaults,
+       drugDefaults = if (is.null(PK$drugDefaults)) getDrugDefaults(pkModelDrug(PK)) else PK$drugDefaults,
        libraryDefaults = PK$libraryDefaults)
 }
 

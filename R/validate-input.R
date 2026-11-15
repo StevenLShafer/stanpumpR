@@ -87,6 +87,9 @@ readEntryNumber <- function(x) {
 # and a negative or infinite number, are unreadable.  A number arriving as a
 # number (a numeric grid column) is written out in plain decimal.
 entryString <- function(x) {
+  # Not one value (a forged input; "length = 0 in coercion to logical(1)"
+  # ended the session: Carbon's second UI audit, 2026-11-15, F4)
+  if (!is.null(x) && (length(x) != 1 || is.list(x))) return(list(done = ""))
   if (is.null(x) || is.na(x) || is.nan(x)) return(list(text = ""))
   if (is.factor(x)) x <- as.character(x)
   if (is.logical(x)) return(list(done = ""))  # TRUE or FALSE is not a number
@@ -108,13 +111,14 @@ isBlankEntry <- function(x) {
 }
 
 # A dialog's text box checked by `validate` (validateTime(), validateDose()).
-# A value no text box sends, a vector or a list, which a forged input can
-# be, is unreadable (""), so the dialog says so and stays open: the
+# A value no text box sends, a vector (of length 0 too: Carbon's second UI
+# audit, 2026-11-15, F4) or a list, which a forged input can be, is
+# unreadable (""), so the dialog says so and stays open: the
 # validators stop() on it, and an error in an observer ends the session
 # (Carbon's UI audit, 2026-11-14, F6).
 validateEntry <- function(x, validate)
 {
-  if (length(x) > 1 || is.list(x)) return("")
+  if (!is.null(x) && (length(x) != 1 || is.list(x))) return("")
   validate(x)
 }
 

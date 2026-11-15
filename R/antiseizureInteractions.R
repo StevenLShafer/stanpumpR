@@ -388,7 +388,8 @@ asmSegmentPK <- function(PK, segments)
 {
   if (is.null(PK$covariates))
     stop("Internal error: no covariates kept for ", PK$drug, ".")
-  X <- do.call(PK$drug, PK$covariates)
+  drug <- pkModelDrug(PK)
+  X <- do.call(drug, PK$covariates)
   base <- X$PK[[PK_EVENT_DEFAULT]]
   n <- nrow(segments)
   keys <- c(PK_EVENT_DEFAULT, if (n > 1) sprintf("ddi%05d", seq_len(n - 1)))
@@ -399,7 +400,7 @@ asmSegmentPK <- function(PK, segments)
   }), keys)
   # A drug individualized by the Bayesian update (R/bayesian.R) is rebuilt
   # as the individual's drug.
-  rebuilt <- do.call(getDrugPK, c(list(drug = PK$drug), PK$covariates,
+  rebuilt <- do.call(getDrugPK, c(list(drug = drug), PK$covariates,
                                   list(model = X), pkRebuildArgs(PK)))
   PK$PK <- rebuilt$PK
   PK$oralFormulations <- rebuilt$oralFormulations

@@ -117,12 +117,22 @@ drugLibraryProblems <- function(edited, current) {
   # The bolus and infusion units are the units Suggest Dosing writes, so a
   # changed one must also be one of the drug's own: calcium given a bolus
   # unit of mg had its suggestion refused by the simulation (the same audit)
+  # Nor may an edit of the Units take away the drug's bolus or infusion
+  # unit, which Suggest Dosing then wrote for rows the grid emptied of units
+  # (Carbon's second UI audit, 2026-11-15, F7).  A unit that was not among
+  # them before is not the edit's doing, and is left as it was.
+  tokens <- function(x) if (is.na(x)) character(0) else trimws(strsplit(x, ",", fixed = TRUE)[[1]])
   for (col in c("Bolus.Units", "Infusion.Units")) {
     value <- unitText(edited[[col]])
     before <- unitText(current[[col]])[at]
     for (i in which(!is.na(at) & value != before & value %in% dropdowns[[col]])) {
       offered <- trimws(strsplit(units[i], ",", fixed = TRUE)[[1]])
       if (!value[i] %in% offered) badUnits <- c(badUnits, sprintf("%s %s", edited$Drug[i], col))
+    }
+    for (i in which(!is.na(at) & value == before & nzchar(value) &
+                    !identical2(units, unitsBefore))) {
+      if (value[i] %in% tokens(unitsBefore[i]) && !value[i] %in% tokens(units[i]))
+        badUnits <- c(badUnits, sprintf("%s %s", edited$Drug[i], col))
     }
   }
   default <- unitText(edited$Default.Units)
@@ -140,12 +150,21 @@ drugLibraryProblems <- function(edited, current) {
       paste(badUnits, collapse = ", "), ")."))
   }
   badNumbers <- character(0)
+  # Only an entry the edit changed is held to the grid's limits: one left as
+  # the grid showed it is the library's own, and a library value past them
+  # (a range converted from mcg to ng, drugLibraryRescaleThresholds()) made
+  # every later Apply fail, whatever drug it edited (Carbon's second UI
+  # audit, 2026-11-15, F5)
+  shownNow <- drugLibraryGridData(current)
+  cellText <- function(x) { x <- trimws(as.character(x)); x[is.na(x)] <- ""; x }
   for (col in DRUG_LIBRARY_NUMERIC_COLUMNS) {
     valueChr <- trimws(as.character(edited[[col]]))
     blank <- is.na(edited[[col]]) | !nzchar(valueChr)
     parsed <- suppressWarnings(as.numeric(valueChr))
+    changed <- is.na(at) | cellText(edited[[col]]) != cellText(shownNow[[col]][at])
     # the grid's own limits (a number cell, validateDose())
-    bad <- !is.na(at) & !blank & (is.na(parsed) | !is.finite(parsed) | parsed < 0 | parsed > MAX_DOSE_VALUE)
+    bad <- !is.na(at) & changed & !blank &
+      (is.na(parsed) | !is.finite(parsed) | parsed < 0 | parsed > MAX_DOSE_VALUE)
     if (any(bad)) {
       badNumbers <- c(badNumbers, sprintf("%s %s: \"%s\"", edited$Drug[bad], col, shown(valueChr[bad])))
     }
@@ -212,11 +231,19 @@ drugLibraryUnitProblems <- function(edited, current, maxNew = DRUG_LIBRARY_MAX_N
       DT <- data.frame(Drug = drug, Time = 0, Dose = 1, Units = unit, stringsAsFactors = FALSE)
       why <- tryCatch({
         drugs <- recalculatePK(NULL, library, DT, age = 35, weight = 70, height = 170, sex = "male")
+        # An effect-site target needs an effect site: without one the
+        # controller targets the plasma, under the effect site's name
+        # (Carbon's second UI audit, 2026-11-15, F6)
+        if (unit == TCI_UNIT_EFFECT && !pkHasEffectSite(drugs[[drug]]))
+          stop("the model has no effect site", call. = FALSE)
         plasma <- processdoseTable(DT, noEvents, drugs, MINS_PER_DAY, FALSE)[[drug]]$wide$Plasma
         # A drug plotted above a baseline (an INR, an ACT, an osmolality)
-        # starts above zero whatever the unit does
+        # starts above zero whatever the unit does, so it must move from
+        # there: mannitol's "mg PO" drew its baseline alone (the same audit)
         baseline <- row$Concentration.Units %in% c("INR", "ACT", "mOsm")
-        if (!baseline && !any(is.finite(plasma) & plasma > 0)) "no concentration follows a dose" else ""
+        moved <- if (baseline) any(is.finite(plasma) & plasma != plasma[1]) else
+          any(is.finite(plasma) & plasma > 0)
+        if (!moved) "no concentration follows a dose" else ""
       }, error = function(e) conditionMessage(e))
       if (nzchar(why)) bad <- c(bad, sprintf("%s \"%s\" (%s)", drug, unit, why))
     }
@@ -256,7 +283,31 @@ drugLibraryRescaleThresholds <- function(new, edited, current) {
     if ("endCe" %in% names(current))
       new$endCe[i] <- suppressWarnings(as.numeric(current$endCe[at[i]])) * factor
   }
-  list(table = new, drugs = as.character(new$Drug[moved]))
+  # drug by drug: internalDoseScale() is a switch(), which takes one unit
+  factors <- vapply(moved, function(i) internalDoseScale(before[i]) / internalDoseScale(after[i]),
+                    numeric(1))
+  list(table = new, drugs = as.character(new$Drug[moved]),
+       factors = stats::setNames(factors, as.character(new$Drug[moved])))
+}
+
+# The target concentrations of a dose table's TCI rows for drugs moved
+# between mcg and ng (drugLibraryRescaleThresholds()), converted as their
+# thresholds are: typed in the drug's units, a target of 3 mcg/mL left as 3
+# became 3 ng/mL, a thousandth of the drug (Carbon's second UI audit,
+# 2026-11-15, F6).  `factors` is named by drug.  Returns the table, or NULL
+# when a converted target is not one the dose table can hold
+# (validateDose()).
+doseTableRescaleTargets <- function(dt, factors) {
+  if (length(factors) == 0 || is.null(dt) || nrow(dt) == 0) return(dt)
+  rows <- which(as.character(dt$Drug) %in% names(factors) & isTciUnit(dt$Units))
+  for (i in rows) {
+    value <- suppressWarnings(as.numeric(as.character(dt$Dose[i])))
+    if (is.na(value)) next   # an unreadable cell is the grid's to refuse
+    converted <- validateDose(plainDecimal(value * factors[[as.character(dt$Drug[i])]]))
+    if (!nzchar(converted)) return(NULL)
+    dt$Dose[i] <- converted
+  }
+  dt
 }
 
 # Elementwise identical() for two character vectors, NA equal to NA

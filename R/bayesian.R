@@ -376,7 +376,7 @@ bayesianSearch <- function(residuals, start, lower, upper,
 #'   frame of Time, Measured, Population and Individual (the predictions)
 #' @keywords internal
 bayesianFitDrug <- function(drug, drugs, DT, ET, measured, omega, sigma, rebuild,
-                            antiseizureInteractions = FALSE)
+                            antiseizureInteractions = FALSE, deadline = Inf)
 {
   dosed <- intersect(unique(DT$Drug), names(drugs))
   relevant <- bayesianRelevantDrugs(drug, drugs, dosed, antiseizureInteractions)
@@ -389,6 +389,10 @@ bayesianFitDrug <- function(drug, drugs, DT, ET, measured, omega, sigma, rebuild
   simCache <- NULL
 
   predict <- function(entry) {
+    # No simulation is started after the deadline (BAYES_MAX_SECONDS)
+    if (proc.time()[["elapsed"]] > deadline)
+      stop(structure(class = c("bayesTimeLimit", "error", "condition"),
+                     list(message = "time limit", call = NULL)))
     candidate <- entries
     candidate[[drug]] <- entry
     out <- withOutputTimes(times, processdoseTable(
@@ -413,6 +417,14 @@ bayesianFitDrug <- function(drug, drugs, DT, ET, measured, omega, sigma, rebuild
   }
 
   population <- predict(drugs[[drug]])
+  # A level the model predicts as no drug at all (before absorption begins:
+  # a lag is neither clearance nor volume, so no estimate can move it) can
+  # be explained by no estimate, and is set aside; until it was, it made
+  # every candidate unreadable and the levels after it went unused (Carbon's
+  # second UI audit, 2026-11-15, F8)
+  use <- is.finite(population) & population > 0
+  if (!any(use))
+    stop("the model predicts no concentration at the measured times.", call. = FALSE)
   # Each prediction simulated once: the model's own (eta = 0) is the
   # population's, and the estimate's is one the search has already made
   tried <- list(list(eta = c(0, 0), prediction = population))
@@ -426,26 +438,28 @@ bayesianFitDrug <- function(drug, drugs, DT, ET, measured, omega, sigma, rebuild
   # NULL where a prediction is not a positive number
   residuals <- function(eta) {
     prediction <- predictAt(eta)
-    if (length(prediction) != length(times) || any(!is.finite(prediction)) ||
-        any(prediction <= 0))
-      return(NULL)
-    c(eta / omega, (log(measured$Concentration) - log(prediction)) / sigma)
+    if (length(prediction) != length(times)) return(NULL)
+    prediction <- prediction[use]
+    if (any(!is.finite(prediction)) || any(prediction <= 0)) return(NULL)
+    c(eta / omega, (log(measured$Concentration[use]) - log(prediction)) / sigma)
   }
   limit <- log(BAYES_FACTOR_LIMIT)
   fit <- bayesianSearch(residuals, c(0, 0), c(-limit, -limit), c(limit, limit))
   eta <- fit$par
-  individual <- predictAt(eta)
+  individual <- predictAt(eta)[use]
   list(
     clearance = exp(eta[1]),
     volume = exp(eta[2]),
     eta = eta,
     objective = fit$value,
-    priorObjective = bayesianObjective(c(0, 0), measured$Concentration, population, omega, sigma),
+    priorObjective = bayesianObjective(c(0, 0), measured$Concentration[use], population[use],
+                                       omega, sigma),
     converged = fit$converged,
     evaluations = length(tried),
     atLimit = any(abs(eta) > limit * (1 - 1e-6)),
-    observations = data.frame(Time = times, Measured = measured$Concentration,
-                              Population = population, Individual = individual)
+    beforeAbsorption = sum(!use),
+    observations = data.frame(Time = times[use], Measured = measured$Concentration[use],
+                              Population = population[use], Individual = individual)
   )
 }
 
@@ -478,20 +492,29 @@ bayesianFitDrug <- function(drug, drugs, DT, ET, measured, omega, sigma, rebuild
 #' @param maximum NULL, or the length of the plot (minutes): a measurement
 #'   after it is set aside.  Whatever it is, a measurement later than the
 #'   longest plot the app offers (`BAYES_MAX_TIME`) is set aside too.
+#' @param timeLimit the longest the update searches, seconds, all drugs
+#'   together (`BAYES_MAX_SECONDS`): no simulation is started after it, and a
+#'   drug not finished by then is not updated
 #' @returns a list: `drugs`, updated; `fits`, one per updated drug (with its
-#'   `key`); and `problems`, sentences saying what could not be used
+#'   `key`); `problems`, sentences saying what could not be used; and
+#'   `failed`, the drugs that could not be updated, with their keys, which a
+#'   caller passes back in `fits` so that they are not tried again until
+#'   their inputs change
 #' @export
 bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
                                 pkVariability = BAYES_PK_VARIABILITY_DEFAULT,
                                 residualVariability = BAYES_RESIDUAL_VARIABILITY_DEFAULT,
                                 rebuild, antiseizureInteractions = FALSE, fits = NULL,
-                                onFit = NULL, maximum = NULL)
+                                onFit = NULL, maximum = NULL,
+                                timeLimit = BAYES_MAX_SECONDS)
 {
   observations <- bayesianObservations(observations)
   problems <- character(0)
   newFits <- list()
+  failed <- list()
+  deadline <- proc.time()[["elapsed"]] + timeLimit
   if (nrow(observations) == 0 || is.null(DT) || nrow(DT) == 0)
-    return(list(drugs = drugs, fits = newFits, problems = problems))
+    return(list(drugs = drugs, fits = newFits, problems = problems, failed = failed))
   omega <- bayesianSD(pkVariability)
   sigma <- bayesianSD(residualVariability)
   ET <- if (is.null(ET)) data.frame(Time = numeric(0), Event = character(0)) else ET
@@ -515,8 +538,17 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
     relevant <- bayesianRelevantDrugs(drug, drugs, intersect(dosed, names(drugs)),
                                       antiseizureInteractions)
     # A level measured before any dose that reaches it cannot be explained by
-    # the drug, and is set aside.
-    firstDose <- min(DT$Time[DT$Drug %in% relevant])
+    # the drug, and is set aside.  A dose of 0 is no dose: the startup menu's
+    # rows are 0 until a dose is typed, and a level entered before then was
+    # fitted to a curve of zeros (Carbon's second UI audit, 2026-11-15, F8).
+    given <- DT$Drug %in% relevant & suppressWarnings(as.numeric(DT$Dose)) > 0
+    if (!any(given, na.rm = TRUE)) {
+      problems <- c(problems, sprintf(
+        "%s has no dose above 0 yet, so its %s cannot be used.",
+        drug, ngettext(nrow(rows), "measurement", "measurements")))
+      next
+    }
+    firstDose <- min(DT$Time[which(given)])
     early <- rows$Time <= firstDose
     if (any(early)) {
       problems <- c(problems, sprintf(
@@ -568,14 +600,26 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
       if (is.function(onFit)) onFit(drug)
       fit <- tryCatch(
         bayesianFitDrug(drug, drugs, DT, ET, rows, omega, sigma, rebuild,
-                        antiseizureInteractions),
-        error = function(e) structure(list(message = conditionMessage(e)), class = "bayesFailed"))
-      if (inherits(fit, "bayesFailed")) {
-        problems <- c(problems, sprintf("%s could not be updated: %s", drug, fit$message))
-        next
-      }
+                        antiseizureInteractions, deadline = deadline),
+        bayesTimeLimit = function(e) list(failed = sprintf(paste(
+          "%s could not be updated within %s seconds: shorten the plot, or enter",
+          "measurements of fewer drugs."), drug, format(timeLimit))),
+        error = function(e) list(failed = sprintf("%s could not be updated: %s", drug,
+                                                  conditionMessage(e))))
       fit$key <- key
     }
+    # A fit that failed is not tried again until its inputs change: one that
+    # ran out of time would otherwise take its time again at every redraw
+    if (!is.null(fit$failed)) {
+      problems <- c(problems, fit$failed)
+      failed[[drug]] <- fit
+      next
+    }
+    if (isTRUE(fit$beforeAbsorption > 0))
+      problems <- c(problems, sprintf(
+        "%s: %d %s before the drug reaches the plasma (the model predicts none) %s not used.",
+        drug, fit$beforeAbsorption, ngettext(fit$beforeAbsorption, "measurement", "measurements"),
+        ngettext(fit$beforeAbsorption, "is", "are")))
     if (anyNA(fit$observations$Population) || anyNA(fit$observations$Individual)) {
       problems <- c(problems, sprintf(
         "%s could not be updated: its plotted concentration could not be read at the measured times.",
@@ -617,7 +661,7 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
     prior$Color <- alternativeModelColor(prior$Color)
     drugs[[name]] <- prior
   }
-  list(drugs = drugs, fits = newFits, problems = problems)
+  list(drugs = drugs, fits = newFits, problems = problems, failed = failed)
 }
 
 # The help page of the Bayesian update

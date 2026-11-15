@@ -1355,7 +1355,9 @@ app_server <- function(input, output, session) {
           }
         }
       ), finally = if (spinning) shinycssloaders::hidePageSpinner())
-      bayesFitCache <<- result$fits
+      # The failures too, so that a fit that ran out of time is not tried
+      # again until its inputs change (bayesianUpdateDrugs())
+      bayesFitCache <<- c(result$fits, result$failed)
       result
     }, name = "bayesUpdate() reactive")
   })
@@ -2354,14 +2356,18 @@ app_server <- function(input, output, session) {
   })
 
   observeEvent(input$addDoseDrug, {
-    req(input$addDoseDrug)
+    # One drug of the library: the selector sends no other, but a forged
+    # vector reached skipTarget() and ended the session at Skip next dose or
+    # Stop (Carbon's second UI audit, 2026-11-15, F4)
+    drug <- asScalarString(input$addDoseDrug)
+    req(drug %in% drugDefaults()$Drug)
     target <- isolate(skipTarget())
-    if (!is.null(target)) skipTarget(list(drug = input$addDoseDrug, time = target$time))
-    thisDrug     <- which(input$addDoseDrug == drugDefaults()$Drug)
+    if (!is.null(target)) skipTarget(list(drug = drug, time = target$time))
+    thisDrug     <- which(drug == drugDefaults()$Drug)
     units        <- unlist(drugDefaults()$Units[thisDrug])
     selectedUnit <- drugDefaults()$Default.Units[thisDrug]
     updateSelectInput(session, "addDoseUnits", choices = units, selected = selectedUnit)
-    updateTextInput(session, "addDoseAmount", label = doseFieldLabel(input$addDoseDrug))
+    updateTextInput(session, "addDoseAmount", label = doseFieldLabel(drug))
   })
 
   # validateTime() for a dose time, but "" also for a time that names no time
@@ -2395,7 +2401,8 @@ app_server <- function(input, output, session) {
                                "1,000,000,000, such as 2.5."), type = "error")
         return()
       }
-      if (!isTRUE(input$addDoseDrug %in% drugDefaults()$Drug)) {
+      drug <- asScalarString(input$addDoseDrug)
+      if (!drug %in% drugDefaults()$Drug) {
         showNotification("Choose a drug.", type = "error")
         return()
       }
@@ -2403,7 +2410,7 @@ app_server <- function(input, output, session) {
       # observer); Enter pressed in between sends no units, or the last
       # drug's, and dt$Units[idx] <- NULL stopped this observer and the
       # session (keyboard review of 2026-11-02, reproduced in testServer()).
-      drugUnits <- unlist(drugDefaults()$Units[drugDefaults()$Drug == input$addDoseDrug])
+      drugUnits <- unlist(drugDefaults()$Units[drugDefaults()$Drug == drug])
       if (length(input$addDoseUnits) != 1 || !input$addDoseUnits %in% drugUnits) {
         showNotification("Choose the units.", type = "error")
         return()
@@ -2418,7 +2425,7 @@ app_server <- function(input, output, session) {
         blank <- nrow(dt)
       }
       idx <- blank[1]
-      dt$Drug[idx]  <- input$addDoseDrug
+      dt$Drug[idx]  <- drug
       dt$Time[idx]  <- addDoseTime
       dt$Dose[idx]  <- addDoseAmount
       dt$Units[idx] <- input$addDoseUnits
@@ -2439,7 +2446,7 @@ app_server <- function(input, output, session) {
   skipTarget <- reactiveVal(NULL)
 
   skipNextDose <- function(target = skipTarget()) {
-    if (is.null(target) || !nzchar(target$drug)) return(NULL)
+    if (is.null(target) || !nzchar(asScalarString(target$drug))) return(NULL)
     format <- doseTableFormat()
     skipNextScheduledDose(
       doseTable(), target$drug, target$time, plotMaximum(), format,
@@ -2493,7 +2500,7 @@ app_server <- function(input, output, session) {
   # agent's setting running at the time clicked.  It writes the 0 row the
   # dose table's own rules read as a stop, at that time.
   stopTarget <- function(target = skipTarget()) {
-    if (is.null(target) || !nzchar(target$drug)) return(NULL)
+    if (is.null(target) || !nzchar(asScalarString(target$drug))) return(NULL)
     format <- doseTableFormat()
     stopAdministration(doseTable(), target$drug, target$time, plotMaximum(), format,
                        referenceFor(format))
@@ -3107,7 +3114,7 @@ app_server <- function(input, output, session) {
         # that is not one value blank.
         endText <- doseGridCell(input$targetEndTime)
         targetDrug <- doseGridCell(input$targetDrug)
-        if (!targetDrug %in% drugDefaults()$Drug) {
+        if (!targetDrug %in% suggestDrugChoices(drugDefaults())) {
           showNotification("Choose a drug from the list.", type = "error")
           return()
         }
@@ -3316,7 +3323,6 @@ app_server <- function(input, output, session) {
         showNotification(paste(problems, collapse = " "), type = "error", duration = 10)
         return()
       }
-      removeModal()
       edited <- newDrugDefaults
       newDrugDefaults$Drug                 <- as.character(newDrugDefaults$Drug)
       newDrugDefaults$Concentration.Units  <- as.character(newDrugDefaults$Concentration.Units)
@@ -3346,10 +3352,26 @@ app_server <- function(input, output, session) {
       # converted (drugLibraryRescaleThresholds())
       rescaled <- drugLibraryRescaleThresholds(newDrugDefaults, edited, current)
       newDrugDefaults <- rescaled$table
+      # And so do its TCI targets and measured concentrations, concentrations
+      # in its units too (Carbon's second UI audit, 2026-11-15, F6).  A target
+      # the dose table could not hold once converted leaves the dialog open.
+      dtNow <- doseTable()
+      dtRescaled <- doseTableRescaleTargets(dtNow, rescaled$factors)
+      if (is.null(dtRescaled)) {
+        showNotification(paste(
+          "The concentration units were not changed: a TCI target of",
+          paste(rescaled$drugs, collapse = ", "),
+          "would be above 1,000,000,000 in the new units."), type = "error", duration = 10)
+        return()
+      }
+      removeModal()
       if (length(rescaled$drugs) > 0) {
         showNotification(paste0(
-          "The range, MEAC and threshold of ", paste(rescaled$drugs, collapse = ", "),
+          "The range, MEAC, threshold, TCI targets and measured concentrations of ",
+          paste(rescaled$drugs, collapse = ", "),
           " were converted to the new concentration units."), type = "message", duration = 10)
+        if (!identical(dtRescaled, dtNow)) commitDoseTable(dtRescaled)
+        bayes$rescale(rescaled$factors)
       }
 
       newDrugDefaults$Units <- drugUnitsExpand(newDrugDefaults$Units)
