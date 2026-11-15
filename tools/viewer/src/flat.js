@@ -150,7 +150,10 @@ const Flat = {
         const gap = Math.max(48, Math.min(FLAT_GAP, Math.round(W * 0.09)));
         const x0 = 70, x1 = W - 40;
         const k = 1 + (st.c2 != null) + (st.c3 != null);
-        const v = [r.pk.v1, st.c2 != null ? r.pk.v2 : 0, st.c3 != null ? r.pk.v3 : 0];
+        // The volumes in force (st.vol: a model's change at a clinical event,
+        // the run's pkAt; Carbon's third UI audit, 2026-11-15, H8).
+        const pk = st.vol || r.pk;
+        const v = [pk.v1, st.c2 != null ? pk.v2 : 0, st.c3 != null ? pk.v3 : 0];
         // The effect-site bar, beside V1, only where the drug has one (Gemini,
         // 712e43a: without one, its space was still kept, and the V1-V3 arrow
         // started 24 px from V1).

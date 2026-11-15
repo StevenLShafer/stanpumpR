@@ -819,6 +819,11 @@ GRID_FINE_POINTS    <- 20000
 DEBUG_LEVEL_OFF <- 0
 DEBUG_LEVEL_NORMAL <- 1
 DEBUG_LEVEL_VERBOSE <- 2
+# The session's debug log (?debug=1) keeps its first line, the build, and its
+# newest lines up to about this many characters (appendDebugLog() in
+# R/app_globals.R): the whole log is copied at every line written and sent to
+# the browser at every flush, so a long session made each write slower.
+DEBUG_LOG_MAX_CHARS <- 200000
 
 # Every https URL on one of these websites in a drug reference, wherever it
 # stands in the citation, is shown in the UI as a link labelled with the

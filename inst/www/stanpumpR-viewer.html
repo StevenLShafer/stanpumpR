@@ -5597,6 +5597,7 @@ const Perf = {
 const FLOOR_Y = -(CONNECT_LENGTH + 1.5);   // below the elimination arrow's tip
 const VESSEL_AREA_MIN = 20, VESSEL_AREA_MAX = 200;   // the largest vessel's floor area, scene units^2 (setShape())
 const GLASS_MIN = 6;                       // the beakers' least height, scene units
+const DRUG_ARROW_MAX = 8;                  // the thickest drug arrow, in ARROW_R (draw())
 const EYE0 = [0, 10, 20];                  // init.cpp 117-119: the starting view's direction
 const ZOOM_GAP = 0.3;                      // i stops this far (scene units) outside V1's glass
 // The starting view and the close-up held End flies to, from the middle of
@@ -5914,6 +5915,11 @@ const View = {
         this.labelRenderer.setSize(w, h);
         for (const m of TARGET_LINE_MATS) m.resolution.set(w, h);   // the targets' lines, in pixels
         this.persp.aspect = w / h;
+        // A gas run's starting view was chosen for the window, and the cards
+        // in it, when it was first wanted (gasHomePose()): chosen again the
+        // next time it is wanted, not reused for another window (Carbon's
+        // third UI audit, 2026-11-15, M7). Not here: a drag resizes many times.
+        if (this.gasHome) this.gasHomeStale = true;
         this.applyOffset();
         this.invalidate();          // setSize() cleared the canvas
     },
@@ -5992,6 +5998,12 @@ const View = {
         // An inhaled anesthetic's moment (gas3d.js).
         if (st.gas) { this.drawGas(st, ui); return; }
         this.invalidate();
+        // A model whose volumes change at a clinical event (the run's pkAt):
+        // the vessels take the volumes in force (Carbon's third UI audit,
+        // 2026-11-15, H8).
+        const vol = st.vol, P = this.pk;
+        if (vol && P && (vol.v1 !== P.vc || vol.v2 !== P.v2 || vol.v3 !== P.v3))
+            this.setShape({ n: P.n, vc: vol.v1, v2: vol.v2, v3: vol.v3 });
         const G = this.geo, L = this.look;
         const hs = ui.concScale;
         const h1 = st.cp * hs, h2 = (st.c2 || 0) * hs, h3 = (st.c3 || 0) * hs, he = st.ce * hs;
@@ -6023,7 +6035,10 @@ const View = {
         // Arrows. The flow in ml/h of the syringe, ARROW_MLH drawing
         // ARROW_R; colours by what the flow does to V1 (green out of it,
         // red into it).
-        const rad = f => ARROW_R * Math.sqrt(Math.abs(f) * 60 / ui.conc / ARROW_MLH);
+        // None thicker than DRUG_ARROW_MAX of ARROW_R: a bolus of 1e9 drew an
+        // arrow of radius 3000, round the camera (found reproducing Carbon's
+        // third UI audit, 2026-11-15, M7); fentanyl 3.5 mg as one bolus draws 5.9.
+        const rad = f => Math.min(DRUG_ARROW_MAX * ARROW_R, ARROW_R * Math.sqrt(Math.abs(f) * 60 / ui.conc / ARROW_MLH));
         const up = new THREE.Vector3(0, 1, 0), down = new THREE.Vector3(0, -1, 0);
         const A = this.arrows, r1 = G.r[1], len = CONNECT_LENGTH;
         // Into V1: the pump, or a bolus at this instant (drawn by its dose).
@@ -6211,7 +6226,10 @@ const View = {
     // and glasses hide one another least (gas3d.js, gasHomePose()).
     homePose() {
         if (this.gasShown) {
-            if (!this.gasHome) this.gasHome = this.gasHomePose(this.gasRun, this.gasUi);
+            if (!this.gasHome || this.gasHomeStale) {
+                this.gasHome = this.gasHomePose(this.gasRun, this.gasUi);
+                this.gasHomeStale = false;
+            }
             return this.gasHome;
         }
         return { eye: new THREE.Vector3(...HOME_EYE), aim: new THREE.Vector3(...HOME_AIM) };
@@ -6428,7 +6446,10 @@ const Flat = {
         const gap = Math.max(48, Math.min(FLAT_GAP, Math.round(W * 0.09)));
         const x0 = 70, x1 = W - 40;
         const k = 1 + (st.c2 != null) + (st.c3 != null);
-        const v = [r.pk.v1, st.c2 != null ? r.pk.v2 : 0, st.c3 != null ? r.pk.v3 : 0];
+        // The volumes in force (st.vol: a model's change at a clinical event,
+        // the run's pkAt; Carbon's third UI audit, 2026-11-15, H8).
+        const pk = st.vol || r.pk;
+        const v = [pk.v1, st.c2 != null ? pk.v2 : 0, st.c3 != null ? pk.v3 : 0];
         // The effect-site bar, beside V1, only where the drug has one (Gemini,
         // 712e43a: without one, its space was still kept, and the V1-V3 arrow
         // started 24 px from V1).
@@ -6784,6 +6805,18 @@ function runProblem(r) {
     for (const k of vols) if (!(Number.isFinite(pk[k]) && pk[k] > 0)) return `pk.${k} must be a volume above 0 (L).`;
     for (const k of ['cl1'].concat(r.c2 != null ? ['cl2'] : [], r.c3 != null ? ['cl3'] : []))
         if (!(Number.isFinite(pk[k]) && pk[k] >= 0)) return `pk.${k} must be a clearance of 0 or more (L/min).`;
+    // The volumes and CL1 in force at each time, for a model that switches
+    // sets at a clinical event (Carbon's third UI audit, 2026-11-15, H8).
+    if (r.pkAt != null) {
+        if (typeof r.pkAt !== 'object' || Array.isArray(r.pkAt)) return 'pkAt must give v1 and cl1 at each time.';
+        for (const k of vols.concat(['cl1'])) {
+            const v = r.pkAt[k], min = k === 'cl1' ? 0 : null;
+            if (!Array.isArray(v) || v.length !== n) return `pkAt.${k} must be an array as long as t (${n}).`;
+            for (let i = 0; i < n; i++)
+                if (!(Number.isFinite(v[i]) && (min === 0 ? v[i] >= 0 : v[i] > 0)))
+                    return `pkAt.${k}[${i}] must be ${min === 0 ? 'a clearance of 0 or more (L/min)' : 'a volume above 0 (L)'}.`;
+        }
+    }
     if (r.typical != null && !(Number.isFinite(r.typical) && r.typical >= 0)) return 'typical must be a number of 0 or more.';
     if (r.boluses != null) {
         if (!Array.isArray(r.boluses)) return 'boluses must be an array.';
@@ -6891,6 +6924,9 @@ const Cards = {
 
 // A value below this fraction of the run's highest is round-off, shown as 0.
 const TINY_FRACTION = 1e-9;
+// The tallest thing a drug run draws in 3D, scene units: what the camera
+// still frames from as far as it goes (the orbit's maxDistance, 1500).
+const HEIGHT_MAX = 1500;
 
 const Player = {
     run: null, ui: null, T: 0, playing: false, last: null, speed: PLAYER_SPEED,
@@ -7014,6 +7050,7 @@ const Player = {
     // A drug's run's setup, from load(): the scales, the mass balance, the
     // 3D scene's vessels.
     ivSetup(r) {
+        this.holdings(r);
         this.balance(r);
         // A loop, not Math.max(...r.cp), which overflows the stack on a long run.
         let maxCp = 0;
@@ -7028,17 +7065,70 @@ const Player = {
         const level = r.typical > 0 ? r.typical : (maxCp > 0 ? maxCp / 2 : 1);
         // toFixed() takes 0 to 100 digits: a vanishing level would ask for more.
         const mag = Math.max(-6, Math.floor(Math.log10(level)));
+        // The heights: the clinical level stands 3 units tall, but nothing the
+        // run draws (a liquid, the effect site, a target) taller than
+        // HEIGHT_MAX: a dose of 1e9 stood 2.4e8 units tall, past the camera's
+        // far plane and beyond any view of it (Carbon's third UI audit,
+        // 2026-11-15, M7). Fentanyl 3.5 mg as one bolus, about 400 times its
+        // level, stands 1205 units, so no dose in use is scaled down; a run
+        // that is, the readout says so.
+        let high = peak;
+        if (r.target) for (let i = 0; i < r.target.length; i++)
+            if ((!r.mode || r.mode[i] !== 'manual') && r.target[i] > high) high = r.target[i];
+        const heightsScaled = high * 3 / level > HEIGHT_MAX;
         this.ui = {
-            showCe: r.ce != null, concScale: 3 / level, units: this.units,
-            drugRgb: hexRgb(runColour(r)), concDecimals: Math.max(0, 2 - mag), conc: 10 / 3 * level * this.scale
+            showCe: r.ce != null, concScale: heightsScaled ? HEIGHT_MAX / high : 3 / level, units: this.units,
+            drugRgb: hexRgb(runColour(r)), concDecimals: Math.max(0, 2 - mag), conc: 10 / 3 * level * this.scale,
+            heightsScaled
         };
         this.n = 1 + (r.c2 != null) + (r.c3 != null);
-        // Sizes compressed to SIZE_RATIO_MAX (flat.js): the readout says so in 3D.
-        this.ui.notToScale = displayVolumes([r.pk.v1, r.c2 != null ? r.pk.v2 : 0, r.c3 != null ? r.pk.v3 : 0]).a < 1;
+        // Sizes compressed to SIZE_RATIO_MAX (flat.js): the readout says so in
+        // 3D, if they are at any time of the run (pkAt: a model whose volumes
+        // change at a clinical event).
+        this.ui.notToScale = false;
+        for (const p of this.pkSets()) if (displayVolumes([p.v1, r.c2 != null ? p.v2 : 0, r.c3 != null ? p.v3 : 0]).a < 1) this.ui.notToScale = true;
         View.resetGlass();
         if (View.gasShown) View.gasShow(false);   // a gas run's glasses (gas3d.js)
         View.vessels[1].setVisible(true);       // hidden before the first run (empty())
-        View.setShape({ n: this.n, vc: r.pk.v1, v2: r.pk.v2, v3: r.pk.v3 });
+        const p0 = this.pkIn(0);
+        View.setShape({ n: this.n, vc: p0.v1, v2: p0.v2, v3: p0.v3 });
+    },
+
+    // The volumes (L) and CL1 (L/min) in force at sample i: the run's pk, or,
+    // for a model that switches sets at a clinical event (the infant
+    // dexmedetomidine model on bypass), that sample's own (pkAt; Carbon's
+    // third UI audit, 2026-11-15, H8: with one set throughout, the drug in the
+    // body jumped at the event and was drawn as a burst of elimination).
+    pkIn(i) {
+        const r = this.run, a = r.pkAt;
+        if (!a) return r.pk;
+        return { v1: a.v1[i], v2: a.v2 ? a.v2[i] : r.pk.v2, v3: a.v3 ? a.v3[i] : r.pk.v3, cl1: a.cl1[i] };
+    },
+    // Each distinct set of volumes the run passes through.
+    pkSets() {
+        const r = this.run;
+        if (!r.pkAt) return [r.pk];
+        const seen = new Map();
+        for (let i = 0; i < r.t.length; i++) {
+            const p = this.pkIn(i), key = `${p.v1} ${p.v2} ${p.v3}`;
+            if (!seen.has(key)) seen.set(key, p);
+        }
+        return [...seen.values()];
+    },
+    // The drug in V1, V2 and V3 at each sample: the concentration times the
+    // volume in force then, so that an amount carried across a change of
+    // volume stays the same amount.
+    holdings(r) {
+        const n = r.t.length, sc = this.scale;
+        this.a1 = new Float64Array(n);
+        this.a2 = r.c2 != null ? new Float64Array(n) : null;
+        this.a3 = r.c3 != null ? new Float64Array(n) : null;
+        for (let i = 0; i < n; i++) {
+            const pk = this.pkIn(i);
+            this.a1[i] = sc * r.cp[i] * pk.v1;
+            if (this.a2) this.a2[i] = sc * r.c2[i] * pk.v2;
+            if (this.a3) this.a3[i] = sc * r.c3[i] * pk.v3;
+        }
     },
 
     // The amount eliminated at each time, as the mass balance gives it:
@@ -7050,14 +7140,14 @@ const Player = {
     //   drug absorbed from a depot); a version 1 run is summed here from its
     //   rate and boluses. With "inputKnown" false there is no balance.
     balance(r) {
-        const n = r.t.length, pk = r.pk, b = r.boluses || [];
+        const n = r.t.length, b = r.boluses || [];
         if (r.inputKnown === false) { this.elim = null; return; }
         this.elim = new Float64Array(n);
         let inf = 0;
         for (let i = 0; i < n; i++) {
             if (i) inf += r.rate[i - 1] * (r.t[i] - r.t[i - 1]) / 60;
             const given = r.given != null ? r.given[i] : inf + b.reduce((s, x) => s + (x.t <= r.t[i] ? x.amount : 0), 0);
-            const body = this.scale * (r.cp[i] * pk.v1 + (r.c2 != null ? r.c2[i] * pk.v2 : 0) + (r.c3 != null ? r.c3[i] * pk.v3 : 0));
+            const body = this.a1[i] + (this.a2 ? this.a2[i] : 0) + (this.a3 ? this.a3[i] : 0);
             this.elim[i] = Math.max(0, given - body);
         }
     },
@@ -7081,7 +7171,7 @@ const Player = {
         const clean = x => x < this.tiny ? 0 : x;
         const cp = clean(Math.max(0, lerp(r.cp))), ce = r.ce != null ? clean(Math.max(0, lerp(r.ce))) : 0;
         const c2 = r.c2 != null ? clean(Math.max(0, lerp(r.c2))) : null, c3 = r.c3 != null ? clean(Math.max(0, lerp(r.c3))) : null;
-        const rate = r.rate[j], pk = r.pk;
+        const rate = r.rate[j], pk = this.pkIn(j);
         const mode = r.mode ? r.mode[j] : 'manual', target = r.target ? r.target[j] : 0;
         // A bolus shows from its time for BOLUS_SHOW_S of play; st.t is the
         // bolus's own time while it shows, so its ring starts once.
@@ -7091,8 +7181,11 @@ const Player = {
         // Eliminated, interpolated like the concentrations; administered is
         // then what is in the body plus what is eliminated, so the amounts
         // card always adds up.
+        // The amounts are interpolated as amounts (holdings()), so that one
+        // carried across a change of volume does not jump.
         const sc = this.scale;
-        const A1 = sc * cp * pk.v1, A2 = c2 != null ? sc * c2 * pk.v2 : 0, A3 = c3 != null ? sc * c3 * pk.v3 : 0;
+        const held = (c, a) => c ? Math.max(0, lerp(a)) : 0;
+        const A1 = held(cp, this.a1), A2 = c2 != null ? held(c2, this.a2) : 0, A3 = c3 != null ? held(c3, this.a3) : 0;
         const elim = this.elim ? lerp(this.elim) : null;
         const depot = r.depot != null ? (d => d < this.depotTiny ? 0 : d)(Math.max(0, lerp(r.depot))) : null;
         const absorbed = r.absorbed != null ? lerp(r.absorbed) : null;
@@ -7101,14 +7194,17 @@ const Player = {
         const slope = v => v == null ? 0 : (v[i + 1] - v[i]) / dt;
         return {
             t: b.length ? b[0].t : T, n: this.n, cp, ce, c2, c3,
+            // The volumes in force, which the views draw.
+            vol: pk,
             A1, A2, A3, elim, depot, absorbed,
             total: elim == null ? null : A1 + A2 + A3 + elim + (depot || 0),
             mode, target, bolus, rate,
             flow: {
                 in: rate,
                 abs: Math.max(0, slope(r.absorbed)),
-                to2: c2 != null ? sc * pk.v2 * slope(r.c2) : 0,
-                to3: c3 != null ? sc * pk.v3 * slope(r.c3) : 0,
+                // The net flow into V2 and V3: the change in the drug each holds.
+                to2: c2 != null ? slope(this.a2) : 0,
+                to3: c3 != null ? slope(this.a3) : 0,
                 // Without the drug given, elimination is CL1 x Cp only where it
                 // is linear; a saturable drug's is not drawn (ChatGPT, ff7e2f0).
                 out: this.elim ? Math.max(0, slope(this.elim))
@@ -7213,6 +7309,7 @@ const Player = {
             `<div><span class="k">Rate</span> ${st.rate.toFixed(2)} ${u.rate}` +
             (st.bolus > 0 ? ` · <span class="k">Bolus</span> ${st.bolus.toFixed(1)} ${u.amount}` : '') + `</div>` +
             (this.ui.notToScale ? `<div class="scale">Vessels not to scale: the largest is drawn ${SIZE_RATIO_MAX}× the smallest. Heights are concentration.</div>` : '') +
+            (this.ui.heightsScaled && this.view === '3d' ? `<div class="scale">Heights scaled down: this run's concentrations reach over ${Math.round(HEIGHT_MAX / 3)}× the drug's typical level.</div>` : '') +
             `<div class="foot">${pat ? escapeHtml(pat) + ' · ' : ''}${escapeHtml(r.source || '')} · <kbd>h</kbd> keys</div>`;
     },
 
@@ -7465,18 +7562,32 @@ Object.assign(Player, {
         const level = r.typical > 0 ? r.typical : (peak > 0 ? peak / 2 : 1);
         const mag = Math.max(-6, Math.floor(Math.log10(level)));
         // The 3D view's heights (gas3d.js): 6 units for one MAC, or for the
-        // run's highest partial pressure where that is lower (nitrous oxide,
-        // whose MAC is above an atmosphere).
-        const level3d = r.mac > 0 && peak > 0 ? Math.min(r.mac, peak) : level;
+        // highest the glasses must hold where that is lower (nitrous oxide,
+        // whose MAC is above an atmosphere): the partial pressures and the
+        // vaporiser's setting, which the glasses are made tall enough for.
+        // From the partial pressures alone, a brief wash-in through the
+        // semi-closed circuit (0.098% at most in the patient, the vaporiser at
+        // 8%) made the glasses 528 units tall, out of every view (Carbon's
+        // third UI audit, 2026-11-15, M7).
+        let top = peak;
+        for (const x of r.fresh) if (x > top) top = x;
+        const level3d = r.mac > 0 && top > 0 ? Math.min(r.mac, top) : level;
         this.ui = { gas: true, showCe: false, units: this.units, drugRgb: hexRgb(GAS_TINT),
                     ceRgb: hexRgb(FLAT_COLOURS.ce), concDecimals: Math.max(0, 2 - mag), concScale: 6 / level3d };
-        // Vented: the agent delivered less the agent held, at each time.
+        // Vented: the agent delivered less the agent held, at each time. The
+        // pop-off valve lets agent out and never in, so what has gone through
+        // it never falls and is never below 0. Where the run's amounts say
+        // otherwise (agent held that was never delivered: the gas engine with
+        // no fresh gas flow), that is the engine's imbalance, not a flow:
+        // drawn as one, its size taken without its sign, it was a thick arrow
+        // venting 4 mL/min that ran the other way (Carbon's third UI audit,
+        // 2026-11-15, H2). The amounts card then does not add up, as it should not.
         const n = r.t.length;
         this.vented = new Float64Array(n);
         for (let i = 0; i < n; i++) {
             let held = 0;
             for (const k of GAS_KEYS) held += r.capacity[k] * r.p[k][i];
-            this.vented[i] = r.delivered[i] - this.scale * held;
+            this.vented[i] = Math.max(i ? this.vented[i - 1] : 0, r.delivered[i] - this.scale * held);
         }
         // The arrows' scale, for both views: the run's 95th-percentile flow.
         this.ui.gasFlowScale = gasFlowScale(r, T => this.gasStateAt(T));
@@ -8241,7 +8352,7 @@ const Video = {
         const W = window.innerWidth, H = window.innerHeight;
         const s = Math.min(2, VIDEO_MAX_W / W, VIDEO_MAX_H / H);
         const even = x => Math.max(2, 2 * Math.round(x / 2));
-        return { span, seconds, frames, scale: s, w: even(W * s), h: even(H * s), view: Player.view };
+        return { span, seconds, frames, scale: s, w: even(W * s), h: even(H * s), view: Player.view, winW: W, winH: H };
     },
 
     open() {
@@ -8363,7 +8474,14 @@ const Video = {
 
     // One frame: the picture, the cards and labels over it, the strip.
     async frame(ctx, p, withPatient, dt) {
-        const s = p.scale, W = p.w, H = p.h;
+        // The window as it is now, fitted into the video's size: each frame is
+        // painted from where the page lays things out, and a window resized
+        // during the save put them off the frame, or in a corner of it, at
+        // the scale of the window it started in (Carbon's third UI audit,
+        // 2026-11-15, M7).
+        const W = p.w, H = p.h;
+        const s = window.innerWidth === p.winW && window.innerHeight === p.winH ? p.scale
+            : Math.min(W / window.innerWidth, H / window.innerHeight);
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.fillStyle = '#0e1a24';
         ctx.fillRect(0, 0, W, H);
