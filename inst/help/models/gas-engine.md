@@ -43,6 +43,15 @@ Q <  MV + U:  F_circuit = f F_fresh + g F_alveolar
 
 Here c_E is the carbon dioxide fraction of exhaled gas (carbon dioxide production over minute ventilation), which the absorber removes from whatever is rebreathed. With no uptake and no carbon dioxide this reduces to f = Q / (VA + 0.3 Q), g = 1 − f, and the threshold is the familiar Q = MV; the uptake raises it slightly, by about 0.05 L/min on oxygen and sevoflurane and by up to about 0.9 L/min early in an induction with 4 L/min of nitrous oxide in 6 L/min. See [Carbon dioxide](help:models/gas-differences) on the comparison page.
 
+k is the share of the exhaled gas that is rebreathed, so it cannot exceed one. It would when the fresh gas flow is less than the uptake plus the carbon dioxide absorbed (Q < U + VCO2; with no agent being taken up, that is the oxygen consumed, 0.25 L/min at 70 kg). The circuit is then closed: everything exhaled is rebreathed, nothing is vented, and still the circuit falls short, so a real reservoir bag empties. The engine rebreathes all the exhaled gas and no more, and the alveoli receive only what the circuit holds:
+
+```
+Q < U + VCO2:  k = 1,  F_circuit = (Q F_fresh + VA F_alveolar) / (Q + VA - VCO2)
+               the alveoli receive Q + VA - VCO2 of it, not VA + U
+```
+
+Each gas then gains only what the fresh gas brings and loses only what the blood takes up, and no gas is created. The alveolar volume is fixed in the model, so the volume the circuit cannot replace appears as gas tensions summing to less than an atmosphere rather than as an emptying bag; with no fresh gas at all the oxygen is used up, as it would be in life. Likewise with no ventilation, the alveoli draw what is taken up from the fresh gas, and no more than the fresh gas supplies.
+
 The alveolar tension of gas i, written here as a fraction, changes with ventilation and with uptake into the blood (each term in L/min),
 
 ```

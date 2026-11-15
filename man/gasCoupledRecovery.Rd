@@ -43,8 +43,19 @@ right-hand side is a few matrix products.
 
 Every time point is integrated at once, as rows of one matrix, by classical
 fourth-order Runge-Kutta.  The step is 0.1 min for the first hour of washout,
-where the crossing nearly always is, and 0.25 min after; the fastest rate in
-the system is under 4 per minute, so both are comfortably fine.  A row is
+where the crossing nearly always is, and 0.25 min after.  That serves while
+each step is within a time constant (first hour) or two (after) of the
+system's fastest rate (\code{GAS_RECOVERY_ACCURATE_STEP},
+\code{GAS_RECOVERY_STABLE_STEP}), as it is at 70 kg and any ordinary
+ventilation.  A faster system is advanced instead by exponential time
+differencing (\code{gasEtdCoefficients()}), which solves the linear part
+exactly and samples only the coupling, with the same steps: a 3 kg patient
+ventilated at 4.6 L/min has a rate of 36 per minute, and the fixed
+Runge-Kutta step, outside its region of stability, grew without bound and
+failed ("NAs are not allowed in subscripted assignments"; Carbon's third
+UI audit, 2026-11-15, H2).  Shortening the Runge-Kutta step instead would
+cost a step per time constant, without limit: the dose table takes a
+ventilation of up to \code{MAX_DOSE_VALUE} L/min.  A row is
 finished once it is below the threshold and falling, so that a tissue still
 filling from the alveoli when the agent is turned off -- below the threshold
 but about to rise through it -- is followed over the top and back down.

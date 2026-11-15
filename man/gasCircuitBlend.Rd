@@ -23,7 +23,11 @@ is rebreathed.  Capped at \code{GAS_MAX_EXHALED_CO2}, which keeps the blend
 physical at any ventilation.}
 }
 \value{
-a list with \code{fresh} and \code{alveolar}
+a list with \code{fresh} and \code{alveolar}, the composition of
+what is inspired, and \code{supply}, the share of what the alveoli draw
+from the circuit (\code{VA + u+}) that it can give them: one, unless the
+fresh gas is less than the uptake and the carbon dioxide absorbed, when
+the circuit is closed (see THE CLOSED CIRCUIT in the file header)
 }
 \description{
 \code{F_circ = fresh * F_fgf + alveolar * F_alv}.  See (1) and (4a) in the
