@@ -272,8 +272,11 @@ be an object of equal-length columns:
 `{"drug": [...], "time": [...], "dose": [...], "units": [...]}`.
 
 - **Drug.** Use the drug's name as it appears in `GET /drugs` (for example
-  `propofol`, `fentanyl`, `remifentanil`).
+  `propofol`, `fentanyl`, `remifentanil`). An active metabolite that cannot
+  be dosed itself (`desmetramadol`, `enalaprilat`, which `GET /drugs` does
+  not list) is refused (400); dose its parent instead.
 - **Units.** Each drug accepts only its own units, which `GET /drugs` lists.
+  Every dose needs one: a missing, empty or `null` unit is refused (400).
   - A **bolus** is a mass (`mg`, `mcg/kg`).
   - An **infusion** is a rate (`mcg/kg/min`, `mg/hr`). It runs until the next
     rate for the same drug. Send a rate of 0 to stop it.

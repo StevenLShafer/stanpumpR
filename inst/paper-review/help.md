@@ -7,7 +7,8 @@
 ## What it does
 
 1. You upload one pharmacokinetic manuscript (a PDF), and optionally its
-   supplement.
+   supplement, together no larger than 20 MB. Choosing another file in
+   either field discards the one it held.
 2. When you press **Review the paper**, the manuscript is sent to Anthropic's
    Claude, which reads it and returns the model it describes: the structure,
    every parameter with where it was printed, the covariate equations, the
