@@ -1,9 +1,9 @@
 # The findings of Carbon's (Gemini) fourth adversarial UI audit, of PR #730
-# at 118bfd4 (2026-11-16), in the app server, the Bayesian update, the Drug
+# at 118bfd4 (2026-11-15), in the app server, the Bayesian update, the Drug
 # Library, the plot and Suggest Dosing.  Each was reproduced before it was
 # fixed; each test here fails on 59094cf.  The browser's, Single Paper
 # Review's and the API's, the gas engine's and the engines' are in
-# test-ui-audit-carbon4-*.R.  Drafted by Claude Code, 2026-11-16, at the
+# test-ui-audit-carbon4-*.R.  Drafted by Claude Code, 2026-11-15, at the
 # request of Steven L. Shafer.
 
 local_mocked_bindings(outputComments = function(...) {})

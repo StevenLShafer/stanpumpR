@@ -580,7 +580,7 @@ applyAntiseizureInteractions <- function(drugs, DT, ET, plotMaximum, plotRecover
     # updated), to a fixed point of their own.  With the other drugs at
     # their estimates, lamotrigine's population line ran against the
     # individual's valproate, 20% off the model (Carbon's fourth UI audit,
-    # 2026-11-16, H8); before that it took no interaction at all (the third
+    # 2026-11-15, H8); before that it took no interaction at all (the third
     # audit, H7).
     if (length(populations) > 0) {
       popEntry <- function(d) {

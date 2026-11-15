@@ -204,7 +204,7 @@ bayesianRelevantDrugs <- function(drug, drugs, dosed, antiseizureInteractions)
   # With the interactions on, the drugs connected to it through them: all
   # dosed drugs made an unrelated propofol TCI hold a lamotrigine fit to a
   # week, and a dose of another drug count as one of its own (Carbon's
-  # fourth UI audit, 2026-11-16, H8)
+  # fourth UI audit, 2026-11-15, H8)
   unique(c(drug, parents, asmConnectedDrugs(c(drug, parents), dosed)))
 }
 
@@ -505,7 +505,7 @@ bayesianFitDrug <- function(drug, drugs, DT, ET, measured, omega, sigma, rebuild
   # The model's own prediction, as its population line draws it: every drug
   # as it was before the update.  Read from the drugs as updated so far, a
   # metabolite's model prediction carried its parent's estimate, 84% off
-  # (Carbon's fourth UI audit, 2026-11-16, H7).
+  # (Carbon's fourth UI audit, 2026-11-15, H7).
   initialEntries <- initial[vapply(initial, function(e) is.null(e$companionOf), logical(1))]
   modelOwn <- if (identical(initialEntries, entries)) population else
     predict(initial[[drug]], base = initialEntries, keep = FALSE)
@@ -597,7 +597,7 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
   # forms, which it then forms as the individual's (bayesianParentEntry()):
   # updated after, its own rebuild dropped the metabolite's estimate and the
   # plotted metabolite went back to the model's (Carbon's fourth UI audit,
-  # 2026-11-16, H7)
+  # 2026-11-15, H7)
   order <- c(intersect(dosed, measuredDrugs), setdiff(measuredDrugs, dosed))
   isParent <- vapply(order, function(d) {
     m <- drugs[[d]]$metaboliteName

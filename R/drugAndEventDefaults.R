@@ -433,7 +433,7 @@ changedDrugLibrary <- function(drugDefaults, defaults = getDrugDefaultsGlobal())
 # library; `problems`, sentences; and `linkUnits`, the concentration units the
 # link carries for each drug whose row could not be applied, which its
 # targets, thresholds and measured concentrations are in
-# (restoredLinkFactors()).  Until Carbon's fourth UI audit (2026-11-16, C2)
+# (restoredLinkFactors()).  Until Carbon's fourth UI audit (2026-11-15, C2)
 # it was applied all or nothing: one row the rules refused (a range converted
 # to ng past 1,000,000,000) dropped every drug's row, and a target saved as
 # 3000 ng/mL was then read as 3000 mcg/mL.

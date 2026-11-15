@@ -79,7 +79,7 @@ suggest <- function(
     # In time order, ties in the order entered, as simCpCe() applies them;
     # so the one in force at the window's start is the last of those at or
     # before it.  which.max() took the first of two at one time, where the
-    # simulation applies the second (Carbon's fourth UI audit, 2026-11-16,
+    # simulation applies the second (Carbon's fourth UI audit, 2026-11-15,
     # M7).
     events <- events[order(events$Time), , drop = FALSE]
     pkEvent <- gsub(" ", "", events$Event) %in% PK$pkEvents

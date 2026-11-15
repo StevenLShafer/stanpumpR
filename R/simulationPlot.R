@@ -764,7 +764,7 @@ simulationPlot <- function(
   # On a log axis a panel with nothing above zero (a drug not yet given in
   # the window, a TCI rate panel at 0) kept no data and was dropped, from
   # the plot and the slide, and a band with a zero edge was read as log10(0)
-  # (Carbon's fourth UI audit, 2026-11-16, M2): such a panel keeps its place,
+  # (Carbon's fourth UI audit, 2026-11-15, M2): such a panel keeps its place,
   # anchored on one decade and saying why it is empty, and the bands are
   # drawn only where they are above zero.
   emptyLogPanels <- character(0)

@@ -562,7 +562,7 @@ app_server <- function(input, output, session) {
   # old start read against the new as one shift, which wrapped across
   # midnight when the start moved later: 08:00 to 08:30 moved every event a
   # day on, and typing a start ratcheted them days ahead (Carbon's fourth
-  # UI audit, 2026-11-16, H3).
+  # UI audit, 2026-11-15, H3).
   lastProcedureStart <- NULL
   observeEvent(input$referenceTime, {
     start <- procedureStart()
@@ -712,7 +712,7 @@ app_server <- function(input, output, session) {
       # A drug whose library row the link could not apply keeps the units in
       # force, and the link's numbers for it, written in its own units, are
       # converted into them (restoredLinkFactors()): a target, a threshold, a
-      # measured level (Carbon's fourth UI audit, 2026-11-16, C2)
+      # measured level (Carbon's fourth UI audit, 2026-11-15, C2)
       linkFactors <- restoredLinkFactors(restoredLibrary$linkUnits, drugDefaults())
       if (length(linkFactors) > 0) {
         converted <- doseTableRescaleTargets(DT, linkFactors)
@@ -3486,7 +3486,7 @@ app_server <- function(input, output, session) {
         }
         # A measured value whose drug is not chosen yet cannot be converted,
         # and would be read in the new units once it is (Carbon's fourth UI
-        # audit, 2026-11-16, C1)
+        # audit, 2026-11-15, C1)
         if (bayes$hasValueWithoutDrug()) {
           refuse("a measured concentration has no drug chosen yet. Choose its drug or clear it first.")
           return()
@@ -3515,7 +3515,7 @@ app_server <- function(input, output, session) {
       # A change of units also ends the dose table's undo and redo history:
       # an entry undone before the change and redone after it came back in
       # the old units (a target of 3000 ng/mL as 3000 mcg/mL) or with a unit
-      # the edit had removed (Carbon's fourth UI audit, 2026-11-16, C1)
+      # the edit had removed (Carbon's fourth UI audit, 2026-11-15, C1)
       unitColumns <- c("Concentration.Units", "Units", "Bolus.Units", "Infusion.Units", "Default.Units")
       if (!identical(newDrugDefaults[unitColumns], current[unitColumns]))
         doseTableHistory()$do(doseTableDraft())$clear()

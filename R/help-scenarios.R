@@ -1267,7 +1267,7 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
 # library's concentration units.  In a session whose Drug Library shows a
 # drug in the other of mcg and ng, its targets are converted, as the Drug
 # Library converts the session's own: loaded as written, propofol's 3 mcg/mL
-# ran at 3 ng/mL (Carbon's fourth UI audit, 2026-11-16, H4).  Returns the
+# ran at 3 ng/mL (Carbon's fourth UI audit, 2026-11-15, H4).  Returns the
 # scenario with `converted`, the drugs converted, or NULL if a converted
 # target would pass the dose table's ceiling.
 helpScenarioInSessionUnits <- function(s, drugDefaults, standard = getDrugDefaultsGlobal()) {

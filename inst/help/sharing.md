@@ -15,7 +15,7 @@ The URL also carries the patient's covariates and regimen. The app does not send
 - The event table
 - Graph options and additional plots
 - Edited recovery thresholds, including the MAC threshold
-- Edits to the Drug Library (concentration units, units, colours, ranges and MEAC), only the rows you changed. Since 2026-11-15: a link made before then opened in the standard library, so a drug switched to ng/mL had its targets and measured levels, typed in ng/mL, read a thousandfold high. A link's edits are held to the Drug Library dialog's own rules, drug by drug: a drug whose edit breaks them opens with its standard entry and the app says so, and that drug's targets, thresholds and measured concentrations, saved in the link's units, are converted to the standard units (since 2026-11-16: until then one such drug dropped every drug's edits, and a target saved as 3000 ng/mL was read as 3000 mcg/mL).
+- Edits to the Drug Library (concentration units, units, colours, ranges and MEAC), only the rows you changed. Since 2026-11-15: a link made before then opened in the standard library, so a drug switched to ng/mL had its targets and measured levels, typed in ng/mL, read a thousandfold high. A link's edits are held to the Drug Library dialog's own rules, drug by drug: a drug whose edit breaks them opens with its standard entry and the app says so, and that drug's targets, thresholds and measured concentrations, saved in the link's units, are converted to the standard units (since 2026-11-15: until then one such drug dropped every drug's edits, and a target saved as 3000 ng/mL was read as 3000 mcg/mL).
 - The time units, time display mode and procedure start
 
 ## What is not included

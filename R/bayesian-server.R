@@ -202,7 +202,7 @@ bayesianServer <- function(input, output, session, doseTableClean, doseTableForm
   # times do, once they can be converted (a clock time needs a readable
   # procedure start).  Converted only where they were drawn, they stayed in
   # the old format, and a Procedure start emptied afterwards in elapsed time
-  # dropped a level typed as 08:30 (Carbon's fourth UI audit, 2026-11-16,
+  # dropped a level typed as 08:30 (Carbon's fourth UI audit, 2026-11-15,
   # M3).  A change of the start in clock time moves the levels as it moves
   # the doses, so they take effect together, not 750 ms apart.
   observeEvent(list(doseTableFormat(), input$referenceTime), {

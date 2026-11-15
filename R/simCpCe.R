@@ -601,7 +601,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # In time order, ties kept in the order entered: the engine applies the
     # rows in order, each from its time on, so an event added after a later
     # one (Add event appends) overrode it (Carbon's fourth UI audit,
-    # 2026-11-16, M7).  A table already in order is unchanged.
+    # 2026-11-15, M7).  A table already in order is unchanged.
     events <- events[order(as.numeric(events$Time)), , drop = FALSE]
 
     # A drug that forms an active metabolite takes its own route, because the
