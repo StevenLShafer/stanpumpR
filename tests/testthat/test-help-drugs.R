@@ -36,6 +36,7 @@ test_that("every narrative belongs to a drug in the library", {
 plasmaOnly <- c(
   "codeine", "tramadol", "prednisone",
   "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
+  "vancomycinKidneyTransplant",
   "metronidazole", "gentamicin",
   "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
   "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
