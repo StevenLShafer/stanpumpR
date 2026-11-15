@@ -1782,9 +1782,13 @@ ke0FromTPeak <- function(tPeak, coef, lambda, ka, drug = "this drug", lag = 0)
   # that every ke0 solved before is solved the same way now.
   follows <- max(10, KE0_FOLLOWS_PLASMA_FACTOR * max(oralLambda))
 
+  # Searched over a window scaled to the rates, as effectSitePeakTime()
+  # does: over 0-4000 min a fast curve (ka 10 /min, lambda 1 /min, its peak at
+  # 0.26 min) had underflowed to 0 where the search began, which then settled
+  # near 4000 and took any tPeak as unreachable (CodeRabbit on PR #730)
   plasmaPeak <- lag + stats::optimize(
     function(t) sum(oralCoef * exp(-oralLambda * t)),
-    c(0, 4000), maximum = TRUE
+    c(0, min(4000, 20 / min(oralLambda))), maximum = TRUE
   )$maximum
 
   # No ke0 puts the peak at or before the plasma's own (see above): the

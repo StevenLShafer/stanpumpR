@@ -20,6 +20,13 @@ asScalarNumeric <- function(x) {
   suppressWarnings(as.numeric(x))
 }
 
+# One number per entry of a named list or vector a link carries, NA where an
+# entry is not one number (asScalarNumeric())
+linkNumbers <- function(x) {
+  if (!is.list(x)) x <- as.list(x)
+  stats::setNames(vapply(x, asScalarNumeric, numeric(1), USE.NAMES = FALSE), names(x))
+}
+
 # One string from a value a browser sent, or `default`: anything but a
 # single non-missing string is `default`
 asScalarString <- function(x, default = "") {

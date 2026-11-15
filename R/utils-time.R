@@ -301,8 +301,11 @@ eventTimesForStart <- function(times, old, new) {
   from <- referenceMinutes(old)
   to <- referenceMinutes(new)
   if (is.na(from) || is.na(to)) return(times)
-  # round(), as minutesToEntryTime() decides which times are clock times
-  clock <- is.finite(times) & times >= 0 & round(times) < MINS_PER_DAY
+  # Every time the mapping can give back, [0, 1440), is a clock time, so a
+  # change and its reverse return each event where it was: round(), as
+  # minutesToEntryTime() reads the dose table, took 0.75 min to 1439.75 at a
+  # start one minute later and then left it there (CodeRabbit on PR #730)
+  clock <- is.finite(times) & times >= 0 & times < MINS_PER_DAY
   times[clock] <- ((from + times[clock]) - to) %% MINS_PER_DAY
   times
 }

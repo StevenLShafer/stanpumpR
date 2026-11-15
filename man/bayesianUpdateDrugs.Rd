@@ -16,7 +16,9 @@ bayesianUpdateDrugs(
   fits = NULL,
   onFit = NULL,
   maximum = NULL,
-  timeLimit = BAYES_MAX_SECONDS
+  timeLimit = BAYES_MAX_SECONDS,
+  jointPasses = BAYES_JOINT_PASSES,
+  jointTolerance = BAYES_JOINT_TOLERANCE
 )
 }
 \arguments{
@@ -58,6 +60,10 @@ longest plot the app offers (\code{BAYES_MAX_TIME}) is set aside too.}
 \item{timeLimit}{the longest the update searches, seconds, all drugs
 together (\code{BAYES_MAX_SECONDS}): no simulation is started after it, and a
 drug not finished by then is not updated}
+
+\item{jointPasses, jointTolerance}{with the antiseizure interactions on, the
+most rounds of updates, and the relative change in every estimate below
+which they stop (\code{BAYES_JOINT_PASSES}, \code{BAYES_JOINT_TOLERANCE})}
 }
 \value{
 a list: \code{drugs}, updated; \code{fits}, one per updated drug (with its

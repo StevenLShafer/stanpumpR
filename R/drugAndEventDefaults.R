@@ -200,7 +200,13 @@ drugLibraryProblems <- function(edited, current, inUse = NULL) {
   upperNow <- inLimits(edited$Upper)
   rangeChanged <- !is.na(at) & (cellText(edited$Lower) != cellText(shownNow$Lower[at]) |
                                   cellText(edited$Upper) != cellText(shownNow$Upper[at]))
-  inverted <- rangeChanged & is.finite(lowerNow) & is.finite(upperNow) & lowerNow > upperNow
+  # A row whose units change is checked after the bounds it leaves are
+  # converted (input$drugEditsOK): its old Upper read against a new Lower
+  # refused 500-2000 ng/mL as above 2 (CodeRabbit on PR #730)
+  unitChanged <- !is.na(at) & "Concentration.Units" %in% names(edited) &
+    cellText(edited$Concentration.Units) != cellText(shownNow$Concentration.Units[at])
+  inverted <- rangeChanged & !unitChanged & is.finite(lowerNow) & is.finite(upperNow) &
+    lowerNow > upperNow
   if (any(inverted)) {
     problems <- c(problems, paste0("Lower must not be above Upper (",
                                    paste(edited$Drug[inverted], collapse = ", "), ")."))

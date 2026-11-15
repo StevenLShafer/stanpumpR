@@ -565,6 +565,9 @@ bayesianFitDrug <- function(drug, drugs, DT, ET, measured, omega, sigma, rebuild
 #' @param timeLimit the longest the update searches, seconds, all drugs
 #'   together (`BAYES_MAX_SECONDS`): no simulation is started after it, and a
 #'   drug not finished by then is not updated
+#' @param jointPasses,jointTolerance with the antiseizure interactions on, the
+#'   most rounds of updates, and the relative change in every estimate below
+#'   which they stop (`BAYES_JOINT_PASSES`, `BAYES_JOINT_TOLERANCE`)
 #' @returns a list: `drugs`, updated; `fits`, one per updated drug (with its
 #'   `key`); `problems`, sentences saying what could not be used; and
 #'   `failed`, the drugs that could not be updated, with their keys, which a
@@ -580,7 +583,9 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
                                 residualVariability = BAYES_RESIDUAL_VARIABILITY_DEFAULT,
                                 rebuild, antiseizureInteractions = FALSE, fits = NULL,
                                 onFit = NULL, maximum = NULL,
-                                timeLimit = BAYES_MAX_SECONDS)
+                                timeLimit = BAYES_MAX_SECONDS,
+                                jointPasses = BAYES_JOINT_PASSES,
+                                jointTolerance = BAYES_JOINT_TOLERANCE)
 {
   observations <- bayesianObservations(observations)
   problems <- character(0)
@@ -628,9 +633,15 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
   # curves, so they are updated in turn until no estimate moves: updated
   # once each, the first was fitted against the second's model and drawn
   # against its estimate, 21% from its own fit (the same audit, H8)
-  passes <- if (isTRUE(antiseizureInteractions)) BAYES_JOINT_PASSES else 1L
+  passes <- if (isTRUE(antiseizureInteractions)) jointPasses else 1L
   previous <- NULL
+  jointConverged <- passes == 1L
+  completed <- NULL
   for (pass in seq_len(passes)) {
+  # What the round starts from, so that a round cut short by the time limit
+  # gives back the last whole one: it kept the drugs it had updated and lost
+  # their fits (CodeRabbit on PR #730)
+  passStart <- list(drugs = drugs, priors = priors)
   problems <- character(0)
   newFits <- list()
   failed <- list()
@@ -721,16 +732,21 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
       fitDrugs[[drug]] <- initial[[drug]]
       for (p in parents) if (!is.null(drugs[[p]]$metaboliteIndividual))
         fitDrugs[[p]] <- bayesianParentEntry(p, drug, drugs, list(clearance = 1, volume = 1), rebuild)
+      # A time limit reached on a budget other drugs had already spent is
+      # not this drug's, and is not kept as its failure: it was, and was
+      # not tried again after the other drug's levels were removed
+      # (CodeRabbit on PR #730)
+      sharedBudget <- deadline - proc.time()[["elapsed"]] < timeLimit * (1 - 1e-6)
       fit <- tryCatch(
         bayesianFitDrug(drug, fitDrugs, DT, ET, rows, omega, sigma, rebuild,
                         antiseizureInteractions, deadline = deadline, initial = initial),
         bayesTimeLimit = function(e) list(failed = sprintf(paste(
           "%s could not be updated within %s seconds: shorten the plot, or enter",
-          "measurements of fewer drugs."), drug, format(timeLimit))),
+          "measurements of fewer drugs."), drug, format(timeLimit)), timeLimit = TRUE),
         error = function(e) list(failed = sprintf("%s could not be updated: %s", drug,
                                                   conditionMessage(e))))
       fit$key <- key
-      cache[[length(cache) + 1]] <- fit
+      if (!(isTRUE(fit$timeLimit) && sharedBudget)) cache[[length(cache) + 1]] <- fit
     }
     # A fit that failed is not tried again until its inputs change: one that
     # ran out of time would otherwise take its time again at every redraw
@@ -793,14 +809,34 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
       drugs[[p]] <- bayesianParentEntry(p, drug, drugs, factors, rebuild)
   }
 
+  # A later round cut short gives back the last whole one, and says so
+  if (pass > 1L && !is.null(completed) && length(setdiff(names(failed), names(completed$failed))) > 0) {
+    drugs <- passStart$drugs
+    priors <- passStart$priors
+    newFits <- completed$fits
+    failed <- completed$failed
+    problems <- c(completed$problems, paste(
+      "The antiseizure interactions' joint update stopped before the estimates",
+      "settled; each drug is drawn with the estimates of the last completed round."))
+    jointConverged <- TRUE
+    break
+  }
+  completed <- list(fits = newFits, failed = failed, problems = problems)
   # Until no estimate moves
   estimates <- lapply(newFits, function(f) c(f$clearance, f$volume))
   if (!is.null(previous) && identical(names(estimates), names(previous)) &&
       all(vapply(names(estimates), function(d)
-        max(abs(estimates[[d]] / previous[[d]] - 1)) < BAYES_JOINT_TOLERANCE, logical(1))))
+        max(abs(estimates[[d]] / previous[[d]] - 1)) < jointTolerance, logical(1)))) {
+    jointConverged <- TRUE
     break
+  }
   previous <- estimates
   }
+  # And one that ran out of rounds (CodeRabbit on PR #730)
+  if (!jointConverged && length(newFits) > 1L)
+    problems <- c(problems, sprintf(paste(
+      "With the antiseizure interactions on, the estimates were still changing after %d",
+      "rounds; each drug is drawn with the others' last estimates."), passes))
 
   # The model's own prediction beside each updated drug, after every drug
   # (a panel's first series is the drug's own: R/alternativeModels.R)

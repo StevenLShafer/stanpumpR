@@ -135,6 +135,8 @@ app_server <- function(input, output, session) {
     if (!is.null(violation)) return(violation)
     schedule <- scheduleProblem()
     if (!is.null(schedule)) return(schedule)
+    gasRows <- gasRowsProblem()
+    if (!is.null(gasRows)) return(gasRows)
     problem <- patientEntryProblem()
     if (!is.null(problem)) return(problem)
     start <- referenceTimeProblem()
@@ -152,6 +154,7 @@ app_server <- function(input, output, session) {
     tryCatch({
       problem <- timeUnitViolation()
       if (is.null(problem)) problem <- scheduleProblem()
+      if (is.null(problem)) problem <- gasRowsProblem()
       if (is.null(problem)) problem <- patientEntryProblem()
       if (is.null(problem)) problem <- referenceTimeProblem()
       if (is.null(problem)) {
@@ -767,7 +770,7 @@ app_server <- function(input, output, session) {
       linkEndCe <- state$values$endCe
       if (length(linkFactors) > 0 && length(linkEndCe) > 0 && !is.null(names(linkEndCe))) {
         moved <- names(linkEndCe) %in% names(linkFactors)
-        value <- suppressWarnings(as.numeric(linkEndCe))
+        value <- linkNumbers(linkEndCe)
         value[moved] <- value[moved] * linkFactors[names(linkEndCe)[moved]]
         linkEndCe <- stats::setNames(value, names(linkEndCe))
       }
@@ -878,6 +881,19 @@ app_server <- function(input, output, session) {
     doseTable(dt)
     TRUE
   }
+
+  # A table that holds an inhaled agent without the oxygen and ventilation
+  # rows it needs, which the gas rules could not add for want of room (a
+  # link's full table, below): nothing is simulated, where the gas engine read
+  # the missing ventilation as 0 (CodeRabbit on PR #730)
+  gasRowsProblem <- reactive({
+    dt <- doseTable()
+    if (is.null(dt) || !any(isGasDrug(dt$Drug))) return(NULL)
+    if (identicalTable(applyGasTableRules(dt, gasVentilationWeight()), dt)) return(NULL)
+    sprintf(paste("An inhaled agent needs its oxygen and ventilation rows, and the dose table,",
+                  "which holds at most %d doses, has no room for them. Delete some doses."),
+            MAX_DOSE_ROWS - 1L)
+  })
 
   observeEvent(doseTable(), {
     # Every route into doseTable() -- Apply Changes, the add-dose dialog,
@@ -1337,7 +1353,7 @@ app_server <- function(input, output, session) {
   gases <- reactive({
     profileCode({
       outputComments("In gases", level = DEBUG_LEVEL_VERBOSE)
-      req(testCovariates(), is.null(timeUnitViolation()))
+      req(testCovariates(), is.null(timeUnitViolation()), is.null(gasRowsProblem()))
       DT <- doseTableClean()
       if (is.null(DT)) return(list())
       sim <- simulateGases(
@@ -3502,6 +3518,25 @@ app_server <- function(input, output, session) {
                        "would be above 1,000,000,000 in the new units."))
           return()
         }
+        # The range in its final units: one bound typed in the new units and
+        # the other converted can cross (1-2 mcg/mL to ng/mL with Upper
+        # typed as 500 gave 1000-500; CodeRabbit on PR #730)
+        lowerFinal <- suppressWarnings(as.numeric(newDrugDefaults$Lower[moved]))
+        upperFinal <- suppressWarnings(as.numeric(newDrugDefaults$Upper[moved]))
+        crossed <- is.finite(lowerFinal) & is.finite(upperFinal) & lowerFinal > upperFinal
+        if (any(crossed)) {
+          refuse(paste0("Lower must not be above Upper in the new units (",
+                        paste(newDrugDefaults$Drug[moved][crossed], collapse = ", "), ")."))
+          return()
+        }
+        # The converted targets are written first, and nothing else changes
+        # if they cannot be: a full table whose inhaled agent lacks a row
+        # refused them, and the library and the levels moved to the new
+        # units without them (CodeRabbit on PR #730)
+        if (!identical(dtRescaled, dtNow) && !isTRUE(commitDoseTable(dtRescaled))) {
+          refuse("its converted TCI targets could not be written to the dose table.")
+          return()
+        }
       }
       removeModal()
       if (length(rescaled$drugs) > 0) {
@@ -3509,7 +3544,6 @@ app_server <- function(input, output, session) {
           "The range, MEAC, threshold, TCI targets and measured concentrations of ",
           paste(rescaled$drugs, collapse = ", "),
           " were converted to the new concentration units."), type = "message", duration = 10)
-        if (!identical(dtRescaled, dtNow)) commitDoseTable(dtRescaled)
         bayes$rescale(rescaled$factors)
       }
       # A change of units also ends the dose table's undo and redo history:

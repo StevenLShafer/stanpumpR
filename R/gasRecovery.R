@@ -256,7 +256,9 @@ restoreThresholds <- function(drugDefaults, endCe = NULL, macThreshold = NULL)
   usable <- function(x) suppressWarnings(as.numeric(x))
 
   if (length(endCe) > 0 && !is.null(names(endCe))) {
-    value <- usable(endCe)
+    # Entry by entry: one nested vector (`{"propofol":[1,2]}`) stopped the
+    # restore (CodeRabbit on PR #730)
+    value <- linkNumbers(endCe)
     at <- match(names(endCe), drugDefaults$Drug)
     # held to the dialog's ceiling, as a link is untrusted (Carbon's second
     # UI audit, 2026-11-15, F5)

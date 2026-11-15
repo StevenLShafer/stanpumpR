@@ -227,9 +227,15 @@ bayesianServer <- function(input, output, session, doseTableClean, doseTableForm
     redraw(redraw() + 1)
   })
 
+  # Each value numbered, so that the debounced one is never older than a
+  # change the app made itself (`lastImmediate`, below)
+  observationsSeq <- 0
   observations <- reactive({
     stored <- rows()
-    bayesRowsToObservations(stored$rows, stored$format, asScalarString(input$referenceTime))
+    observationsSeq <<- observationsSeq + 1
+    out <- bayesRowsToObservations(stored$rows, stored$format, asScalarString(input$referenceTime))
+    attr(out, "seq") <- observationsSeq
+    out
   })
   # Typing a row commits two or three cells in quick succession; the estimate
   # waits for the row.  A change the app makes itself (a link restored, a
@@ -239,8 +245,20 @@ bayesianServer <- function(input, output, session, doseTableClean, doseTableForm
   # audit, 2026-11-15, C4).
   observationsDebounced <- debounce(observations, 750)
   immediate <- reactiveVal(FALSE)
+  # An edit typed within the wait after such a change (a unit switch's
+  # converted levels) would otherwise fall back to the debounced value from
+  # before it, the levels in the old units against the new model, until the
+  # timer fired (CodeRabbit on PR #730)
+  lastImmediate <- NULL
   observationsUsed <- reactive({
-    if (immediate()) observations() else observationsDebounced()
+    if (immediate()) {
+      out <- observations()
+      lastImmediate <<- out
+      return(out)
+    }
+    out <- observationsDebounced()
+    if (!is.null(lastImmediate) && isTRUE(attr(out, "seq") < attr(lastImmediate, "seq")))
+      lastImmediate else out
   })
 
   pkVariability <- debounce(reactive(bayesSliderValue(
