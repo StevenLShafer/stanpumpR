@@ -19,7 +19,7 @@ and \code{E2}, the propagators over the step and the half step;
 }
 \description{
 Cox and Matthews' fourth-order exponential time differencing (ETDRK4): for
-\code{y' = B y + g(y)} the linear part is propagated exactly and only
+\code{dy/dt = B y + g(y)} the linear part is propagated exactly and only
 \code{g} is sampled, at four stages, so the step's stability does not
 depend on \code{B}.  \code{B} is block diagonal, one block per gas; each
 block's phi functions come from one matrix exponential of the augmented
