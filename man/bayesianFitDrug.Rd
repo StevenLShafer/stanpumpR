@@ -13,7 +13,9 @@ bayesianFitDrug(
   omega,
   sigma,
   rebuild,
-  antiseizureInteractions = FALSE
+  antiseizureInteractions = FALSE,
+  deadline = Inf,
+  initial = drugs
 )
 }
 \arguments{
@@ -34,6 +36,13 @@ attached), with any drug already updated}
 individual's clearance and volume factors}
 
 \item{antiseizureInteractions}{are the antiseizure interactions on?}
+
+\item{deadline}{the time (\code{proc.time()[["elapsed"]]}) after which no
+simulation is started: the search stops with the condition \code{bayesTimeLimit}}
+
+\item{initial}{the drug list before any update, whose drugs the fit's
+population prediction is made from (the model's, whatever the other
+drugs' estimates)}
 }
 \value{
 a list: \code{clearance}, \code{volume} (the factors), \code{eta}, \code{objective}

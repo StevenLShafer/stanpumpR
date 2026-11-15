@@ -35,7 +35,9 @@ agentDocDefinitions <- function(root) {
              list.files(file.path(root, "inst", "www"), "\\.js$", full.names = TRUE),
              # the Visualizer's source, whose functions AGENTS.md names
              # (displayVolumes()); built into inst/www/stanpumpR-viewer.html
-             list.files(file.path(root, "tools", "viewer", "src"), "\\.js$", full.names = TRUE))
+             list.files(file.path(root, "tools", "viewer", "src"), "\\.js$", full.names = TRUE),
+             # the scripts that build and check the data (checkFdaLabels())
+             list.files(file.path(root, "data-raw"), "\\.R$", full.names = TRUE))
   unique(unlist(lapply(files, function(f) {
     lines <- readLines(f, warn = FALSE, encoding = "UTF-8")
     # a plain binding only: not a member (state$values$x <-) or the tail of
@@ -60,7 +62,7 @@ agentDocDefinitions <- function(root) {
 test_that("every function the orientation documents name exists", {
   root <- agentDocsRoot()
   defined <- agentDocDefinitions(root)
-  imports <- c("base", "stats", "utils", "shiny", "testthat")
+  imports <- c("base", "stats", "utils", "shiny", "testthat", "mirai")
   inImports <- function(name)
     any(vapply(imports, function(pkg)
       requireNamespace(pkg, quietly = TRUE) && exists(name, envir = asNamespace(pkg)),

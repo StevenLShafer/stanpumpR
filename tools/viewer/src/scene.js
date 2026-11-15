@@ -35,6 +35,7 @@
 const FLOOR_Y = -(CONNECT_LENGTH + 1.5);   // below the elimination arrow's tip
 const VESSEL_AREA_MIN = 20, VESSEL_AREA_MAX = 200;   // the largest vessel's floor area, scene units^2 (setShape())
 const GLASS_MIN = 6;                       // the beakers' least height, scene units
+const DRUG_ARROW_MAX = 8;                  // the thickest drug arrow, in ARROW_R (draw())
 const EYE0 = [0, 10, 20];                  // init.cpp 117-119: the starting view's direction
 const ZOOM_GAP = 0.3;                      // i stops this far (scene units) outside V1's glass
 // The starting view and the close-up held End flies to, from the middle of
@@ -352,6 +353,14 @@ const View = {
         this.labelRenderer.setSize(w, h);
         for (const m of TARGET_LINE_MATS) m.resolution.set(w, h);   // the targets' lines, in pixels
         this.persp.aspect = w / h;
+        // A gas run's starting view was chosen for the window, and the cards
+        // in it, when it was first wanted (gasHomePose()): chosen again the
+        // next time it is wanted, not reused for another window (Carbon's
+        // third UI audit, 2026-11-15, M7). Not here: a drag resizes many times.
+        // The Home flight planned for the old one goes too: its end still
+        // matched the camera, so held Home reused it and flew nowhere, and
+        // the stale view was never chosen again (CodeRabbit, #730).
+        if (this.gasHome) { this.gasHomeStale = true; this.flight = null; }
         this.applyOffset();
         this.invalidate();          // setSize() cleared the canvas
     },
@@ -369,7 +378,8 @@ const View = {
     },
 
     setLook(name) {
-        const L = LOOKS[name] || LOOKS[DEFAULT_LOOK];
+        // its own looks only, never a member every object has
+        const L = Object.prototype.hasOwnProperty.call(LOOKS, name) ? LOOKS[name] : LOOKS[DEFAULT_LOOK];
         this.look = L; this.lookName = name;
         const c = document.createElement('canvas');
         c.width = 2; c.height = 256;
@@ -430,6 +440,12 @@ const View = {
         // An inhaled anesthetic's moment (gas3d.js).
         if (st.gas) { this.drawGas(st, ui); return; }
         this.invalidate();
+        // A model whose volumes change at a clinical event (the run's pkAt):
+        // the vessels take the volumes in force (Carbon's third UI audit,
+        // 2026-11-15, H8).
+        const vol = st.vol, P = this.pk;
+        if (vol && P && (vol.v1 !== P.vc || vol.v2 !== P.v2 || vol.v3 !== P.v3))
+            this.setShape({ n: P.n, vc: vol.v1, v2: vol.v2, v3: vol.v3 });
         const G = this.geo, L = this.look;
         const hs = ui.concScale;
         const h1 = st.cp * hs, h2 = (st.c2 || 0) * hs, h3 = (st.c3 || 0) * hs, he = st.ce * hs;
@@ -461,7 +477,10 @@ const View = {
         // Arrows. The flow in ml/h of the syringe, ARROW_MLH drawing
         // ARROW_R; colours by what the flow does to V1 (green out of it,
         // red into it).
-        const rad = f => ARROW_R * Math.sqrt(Math.abs(f) * 60 / ui.conc / ARROW_MLH);
+        // None thicker than DRUG_ARROW_MAX of ARROW_R: a bolus of 1e9 drew an
+        // arrow of radius 3000, round the camera (found reproducing Carbon's
+        // third UI audit, 2026-11-15, M7); fentanyl 3.5 mg as one bolus draws 5.9.
+        const rad = f => Math.min(DRUG_ARROW_MAX * ARROW_R, ARROW_R * Math.sqrt(Math.abs(f) * 60 / ui.conc / ARROW_MLH));
         const up = new THREE.Vector3(0, 1, 0), down = new THREE.Vector3(0, -1, 0);
         const A = this.arrows, r1 = G.r[1], len = CONNECT_LENGTH;
         // Into V1: the pump, or a bolus at this instant (drawn by its dose).
@@ -649,7 +668,15 @@ const View = {
     // and glasses hide one another least (gas3d.js, gasHomePose()).
     homePose() {
         if (this.gasShown) {
-            if (!this.gasHome) this.gasHome = this.gasHomePose(this.gasRun, this.gasUi);
+            if (!this.gasHome || this.gasHomeStale) {
+                this.gasHome = this.gasHomePose(this.gasRun, this.gasUi);
+                this.gasHomeStale = false;
+                // Its picture offset with it: resize() applied the old
+                // one, and a flight never applies one, so the scene stayed
+                // displaced into the cards at the new home (CodeRabbit, #730).
+                this.applyOffset();
+                this.invalidate();
+            }
             return this.gasHome;
         }
         return { eye: new THREE.Vector3(...HOME_EYE), aim: new THREE.Vector3(...HOME_AIM) };

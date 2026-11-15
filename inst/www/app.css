@@ -742,3 +742,30 @@ bslib-tooltip:has(> .field-help) {
 .bayes-fit-table td:first-child {
   text-align: left;
 }
+
+/* The Working cover (app.js): over everything, notifications included, while
+   the server has been busy for three seconds. */
+#working-cover {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.6);
+  cursor: wait;
+}
+#working-cover .working-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background: #ffffff;
+  border: 1px solid #ced4da;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+#working-cover .working-card p {
+  margin: 0;
+  font-size: 1.1rem;
+}

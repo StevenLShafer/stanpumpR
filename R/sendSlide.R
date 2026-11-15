@@ -22,6 +22,10 @@ sendSlide <- function(
   dir <- tempfile("stanpumpR-slide-")
   dir.create(dir, mode = "0700")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  # Whether the mail server has been asked to take the message: a send that
+  # fails before then is given back to the hour's limit (forgetEmailSend()),
+  # which app_server() counted it against before calling here
+  connecting <- FALSE
   tryCatch({
     prevEcho <- options("ECHO_OUTPUT_COMMENTS" = TRUE)
     on.exit(options("ECHO_OUTPUT_COMMENTS" = prevEcho[[1]]), add = TRUE)
@@ -29,10 +33,13 @@ sendSlide <- function(
     # Not the recipient: this line is echoed to the server log
     outputComments("Preparing email")
 
-    if (is.null(email_username)) {
+    # One string that is not blank each, as paperReviewUsageNotify() reads
+    # them: "" got as far as the mail server
+    configured <- function(x) is.character(x) && length(x) == 1 && !is.na(x) && nzchar(x)
+    if (!configured(email_username)) {
       stop("Email username missing")
     }
-    if (is.null(email_password)) {
+    if (!configured(email_password)) {
       stop("Email password missing")
     }
 
@@ -63,6 +70,7 @@ sendSlide <- function(
       connecttimeout = EMAIL_SMTP_CONNECT_TIMEOUT,
       timeout = EMAIL_SMTP_TIMEOUT
     )
+    connecting <- TRUE
     smtp(msg, verbose = FALSE)
 
     outputComments("Leaving sendMail()")
@@ -74,6 +82,8 @@ sendSlide <- function(
     # more than that.
     base::message("stanpumpR Email Slide failed: ", conditionMessage(e))
     outputComments("Email Slide failed; the detail is in the server log")
+    # (an address that cannot be read is no address to give a send back to)
+    if (!connecting) try(forgetEmailSend(recipient), silent = TRUE)
     EMAIL_FAILURE_MESSAGE
   })
 }
@@ -166,6 +176,17 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
 
   outputComments("Creating workbook")
   wb <- openxlsx::createWorkbook("SLS")
+  # Each covariate one cell: what the field held, its default when it held
+  # nothing, and "unreadable" when it held no one value.  The genotypes come
+  # from the inputs as sent, read by a model only if a drug names them, so on
+  # a run of inhaled agents alone a vector reached here, and character(0)
+  # left the sheet one value short of its names, which stopped the send
+  # (Carbon's third UI audit, 2026-11-15, M5).
+  cell <- function(x, default) {
+    if (is.null(x)) return(as.character(default))
+    if (is.list(x) || length(x) != 1 || is.na(x)) return("unreadable")
+    as.character(x)
+  }
   covariates <- data.frame(
     Covariate = c(
       "Age",
@@ -191,27 +212,27 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       "Antiseizure drug interactions applied"
     ),
     Value = c(
-      values$age / values$ageUnit,
+      cell(values$age / values$ageUnit, ""),
       ageUnit,
-      values$weight / values$weightUnit,
+      cell(values$weight / values$weightUnit, ""),
       weightUnit,
-      values$height / values$heightUnit,
+      cell(values$height / values$heightUnit, ""),
       heightUnit,
-      values$sex,
+      cell(values$sex, ""),
       if (isTRUE(values$pregnant)) "yes" else "no",
       if (isTRUE(values$adjustToFFM)) "yes" else "no",
-      if (is.null(values$osmolality)) OSMOLALITY_DEFAULT else values$osmolality,
-      if (is.null(values$creatinine)) "not entered (assumed normal)" else values$creatinine,
-      if (is.null(values$gestationalAge)) "not entered (term assumed)" else values$gestationalAge,
+      cell(values$osmolality, OSMOLALITY_DEFAULT),
+      cell(values$creatinine, "not entered (assumed normal)"),
+      cell(values$gestationalAge, "not entered (term assumed)"),
       # The phenotypes and the companion models change what was simulated,
       # so the sheet records them.  (Claude Code, 2026-10-17, from an
       # external review.)
-      if (is.null(values$cyp2d6)) CYP2D6_DEFAULT else values$cyp2d6,
-      if (is.null(values$cyp2c19)) CYP2C19_DEFAULT else values$cyp2c19,
-      if (is.null(values$cyp2c9)) CYP2C9_DEFAULT else values$cyp2c9,
-      if (is.null(values$cyp2b6)) CYP2B6_DEFAULT else values$cyp2b6,
-      if (is.null(values$vkorc1)) VKORC1_DEFAULT else values$vkorc1,
-      if (is.null(values$cyp4f2)) CYP4F2_DEFAULT else values$cyp4f2,
+      cell(values$cyp2d6, CYP2D6_DEFAULT),
+      cell(values$cyp2c19, CYP2C19_DEFAULT),
+      cell(values$cyp2c9, CYP2C9_DEFAULT),
+      cell(values$cyp2b6, CYP2B6_DEFAULT),
+      cell(values$vkorc1, VKORC1_DEFAULT),
+      cell(values$cyp4f2, CYP4F2_DEFAULT),
       if (isTRUE(values$mintoSchnider)) "yes" else "no",
       if (isTRUE(values$hamberg)) "yes" else "no",
       if (isTRUE(values$antiseizureInteractions)) "yes" else "no"

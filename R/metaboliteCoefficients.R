@@ -373,6 +373,23 @@ internalDoseScale <- function(concentrationUnits)
 }
 
 
+#' The factor that puts a concentration in `units` per mL in mcg/mL
+#'
+#' For the constants a few models hold in fixed units (the antiseizure
+#' interactions' Cref and EC50, Bouillon's propofol), against a drug's plotted
+#' concentration, which the Drug Library can move between mcg/mL and ng/mL:
+#' read unconverted, a drug moved to ng/mL was 1000-fold high there.
+#'
+#' @param units a drug's `Concentration.Units`
+#' @returns 1/1000 for ng (internalDoseScale()), otherwise 1: mcg, and the
+#'   units no such drug is plotted in
+#' @keywords internal
+mcgPerMlScale <- function(units)
+{
+  if (identical(as.character(units), "ng")) internalDoseScale("ng") else 1
+}
+
+
 #' Unit conversion from a parent's dose units to its metabolite's
 #'
 #' A parent and its metabolite need not report in the same units.  Morphine is

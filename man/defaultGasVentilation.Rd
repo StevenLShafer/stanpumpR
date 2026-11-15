@@ -12,8 +12,13 @@ defaultGasVentilation(weight = 70, deadSpace = GAS_DEAD_SPACE_FRACTION)
 \item{deadSpace}{dead space as a fraction of minute ventilation}
 }
 \value{
-minute ventilation in L/min, rounded to 0.1 so it reads cleanly in
-the dose table
+minute ventilation in L/min, rounded so it reads cleanly in the
+dose table: to 0.1 L/min from 1 L/min up, and to two significant figures
+below.  Rounded to 0.1 L/min throughout, a patient under 0.126 kg (the
+Patient Profile takes 0.1 kg) was given 0 L/min, the apnoea the default
+exists to prevent (\code{ensureGasVentilation()}), and every patient under
+about 7 kg was off by up to 30 percent (0.1 L/min for 0.14 at 0.5 kg; found by
+the session that addressed Carbon's third UI audit, 2026-11-15).
 }
 \description{
 The minute ventilation whose alveolar part is GasMan's default alveolar

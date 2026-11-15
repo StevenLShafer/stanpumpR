@@ -457,6 +457,16 @@ test_that("default ventilation is a minute ventilation whose alveolar part is Ga
   # Missing or invalid weight falls back to the 70 kg standard.
   expect_equal(defaultGasVentilation(NA), 5.7)
   expect_equal(defaultGasVentilation(-5), 5.7)
+  # Below 1 L/min, two significant figures: never 0, which is apnoea (the
+  # Patient Profile takes 0.1 kg, where 0.1 L/min rounding gave 0)
+  exact <- function(w) 4 * (w / 70)^0.75 / 0.7
+  for (w in c(MIN_WEIGHT, 0.12, 0.5, 1, 3, 6.8)) {
+    expect_gt(defaultGasVentilation(w), 0)
+    expect_lt(abs(defaultGasVentilation(w) / exact(w) - 1), 0.05)
+  }
+  expect_equal(defaultGasVentilation(MIN_WEIGHT), 0.042)
+  expect_equal(defaultGasVentilation(0.5), 0.14)
+  expect_equal(defaultGasVentilation(7), 1)
 })
 
 
@@ -574,9 +584,13 @@ test_that("the circuit blend: limits, and what uptake and absorbed carbon dioxid
   bl <- gasCircuitBlend(1, 2.8, 4)
   expect_equal(bl$fresh, 1 / (2.8 + 0.3))
   expect_equal(bl$fresh + bl$alveolar, 1)
-  expect_equal(gasCircuitBlend(4, 2.8, 4), list(fresh = 1, alveolar = 0))
+  # (`supply`, the share of the alveoli's draw the circuit meets, joined the
+  # list 2026-11-15; it is one except in a closed circuit that falls short,
+  # test-ui-audit-carbon3-gas.R.)
+  expect_equal(gasCircuitBlend(4, 2.8, 4), list(fresh = 1, alveolar = 0, supply = 1))
   expect_equal(gasCircuitBlend(0, 2.8, 4)$fresh, 0)
-  expect_equal(gasCircuitBlend(1, 2.8, 4, "open"), list(fresh = 1, alveolar = 0))
+  expect_equal(gasCircuitBlend(1, 2.8, 4, "open"), list(fresh = 1, alveolar = 0, supply = 1))
+  expect_equal(gasCircuitBlend(1, 2.8, 4)$supply, 1)
 
   # Uptake raises what is inspired, and so the flow needed to stop rebreathing.
   expect_lt(gasCircuitBlend(4, 2.8, 4, u = 0.5)$fresh, 1)

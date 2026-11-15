@@ -99,7 +99,12 @@ These are statements about this code. Each names the function that does it.
    server. The app reads it into the session's memory and deletes the file at
    once, and the directory with it when it is left empty
    (`paperReviewReadUpload()`, `R/paper-review-app.R`). A file that is not a
-   PDF is deleted the same way and not kept. The file's name is never stored.
+   PDF is deleted the same way and not kept, and a file larger than a review
+   can send (20 MB, with the other field's file) is deleted unread. The
+   file's name is never stored. Choosing a new file in either field drops
+   what that field held at once, before the new file arrives, whether or not
+   it is kept, so Review never sends a file the field no longer shows (the
+   browser tells the server only that a file was chosen, never its name).
 2. **Held in memory.** The bytes live in an R environment private to that
    browser session (`paperReviewStore()`). They are not written to disk, not
    cached, not put in the URL, and not bookmarked (the app is started with
