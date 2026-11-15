@@ -426,8 +426,10 @@ asmSimulateVictim <- function(PK, multipliers, time, DT, ET, maximum, plotRecove
     one <- function(p) if (is.null(segs[[p]])) data.frame(start = 0, value = 1) else segs[[p]]
     starts <- sort(unique(c(one("Vmax")$start, one("Km")$start)))
     at <- function(s, t) s$value[findInterval(t, s$start)]
+    # `sample`: the grid on which the interactions read this drug's
+    # concentration as a perpetrator, which the engine puts on its time line
     PK$interactionMM <- list(time = starts, vmax = at(one("Vmax"), starts),
-                             km = at(one("Km"), starts))
+                             km = at(one("Km"), starts), sample = time)
   } else {
     if (!identical(names(multipliers), "CL"))
       stop("Internal error: a Vmax or Km interaction on ", PK$drug,
@@ -540,6 +542,19 @@ applyAntiseizureInteractions <- function(drugs, DT, ET, plotMaximum, plotRecover
       tempET <- drugs[[v]]$ET
       if (is.null(tempET)) ET[0, , drop = FALSE] else tempET
     }
+    # The victims whose time until threshold costs nothing to compute, and so
+    # is computed in every pass, the last pass then being the final
+    # simulation itself: a saturable drug, whose engine computes none
+    # (R/advanceMichaelisMenten.R), and a drug with no threshold, whose time
+    # until threshold is 0 throughout (recoveryFromStates()), which is every
+    # antiseizure drug unless its threshold is edited.  The final pass below
+    # re-simulated them with the same multipliers to the same result: for
+    # phenytoin a second integration of the whole plot (Carbon's fourth UI
+    # audit, 2026-11-15, C3).
+    recoveryEachPass <- vapply(victims, function(v)
+      isTRUE(plotRecovery) &&
+        (!is.null(drugs[[v]]$michaelisMenten) || !isTRUE(drugs[[v]]$endCe > 0)),
+      logical(1))
     for (iteration in seq_len(ASM_INTERACTION_MAX_ITERATIONS))
     {
       change <- 0
@@ -549,9 +564,10 @@ applyAntiseizureInteractions <- function(drugs, DT, ET, plotMaximum, plotRecover
         rows <- active[active$victim == v, , drop = FALSE]
         m <- asmVictimMultipliers(v, rows, conc, time, toRegistry)
         # The time until threshold only once, after the last pass: each
-        # pass's own was discarded (Carbon's third UI audit, 2026-11-15, H1)
+        # pass's own was discarded (Carbon's third UI audit, 2026-11-15, H1),
+        # unless it costs nothing (recoveryEachPass, above)
         X <- asmSimulateVictim(drugs[[v]], m, time, victimDT(v), victimET(v),
-                               plotMaximum, FALSE)
+                               plotMaximum, recoveryEachPass[[v]])
         X$interaction$rows <- rows
         sims[[v]] <- X
         lastM[[v]] <- m
@@ -568,7 +584,7 @@ applyAntiseizureInteractions <- function(drugs, DT, ET, plotMaximum, plotRecover
       if (change < ASM_INTERACTION_CONVERGENCE) break
     }
     if (isTRUE(plotRecovery)) {
-      for (v in victims) {
+      for (v in victims[!recoveryEachPass]) {
         X <- asmSimulateVictim(drugs[[v]], lastM[[v]], time, victimDT(v), victimET(v),
                                plotMaximum, TRUE)
         X$interaction$rows <- sims[[v]]$interaction$rows

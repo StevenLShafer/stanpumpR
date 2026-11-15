@@ -135,7 +135,15 @@
 # constant near 0.7/min) holds its fixed step to about 1.4 minutes.  A jump
 # (a bolus, a dose arriving in a depot) and a change of rate happen only at
 # points of the time line, which always carries every dose time, so no step
-# straddles one.
+# straddles one.  So does a switch of the antiseizure interactions' Vmax and
+# Km multipliers, which is a point of the line but not a knot of it (no fill
+# after it, no instant before it: it bends the curve and moves no amount).
+#
+# Where the adaptive step is held short between doses it is by accuracy as
+# much as by stiffness: vildagliptin's binding to tissue DPP-4 is the fastest
+# process (about 0.7/min), and with the binding taken out its 30-day run took
+# 5,218 steps against 7,721 (2026-11-15), so an implicit step for the binding
+# would buy at most a third of the steps, at several times the cost of each.
 #
 # NO EFFECT SITE AND NO TIME UNTIL THRESHOLD
 # ==========================================
@@ -309,6 +317,135 @@ mmDormandPrince <- function(f, x, t0, t1, h, rtol, atol, clean = NULL)
   list(x = x, h = h)
 }
 
+#' The Michaelis-Menten engine's derivative
+#'
+#' The derivative of the states of \code{advanceMichaelisMenten()} (see its
+#' header for the states and the processes), as a closure over the run's
+#' constants.  Elimination and distribution act on the unbound
+#' concentrations.  With targetBinding the central and peripheral amounts are
+#' the free drug, and binding to the target (k2, saturable in the free target,
+#' Rmax - DR), dissociation (koff) and hydrolysis of the complex (kdeg, which
+#' frees the target) are states of their own (Landersdorfer 2012,
+#' vildagliptin).
+#'
+#' Called six times a step (385,000 times for 249 days of vildagliptin), so
+#' what does not change during a run is settled here: a term a drug does not
+#' have is not computed, rather than computed as an exact zero (the results
+#' are identical, bit for bit), and binding that is not there is not a
+#' function call.  A Bayesian fit simulates the drug dozens of times
+#' (2026-11-14).
+#'
+#' It was a closure in \code{advanceMichaelisMenten()} itself, whose frame of
+#' some 110 variables, not hashed, was searched for every name it read: 45%
+#' of vildagliptin's time (16.4 against 9.1 microseconds a call).  Built here,
+#' the closure reads a small frame of its own and is byte-compiled with this
+#' function.  (Moving the old closure with \code{environment<-} would not do:
+#' R drops a closure's byte code when its environment is replaced, and the
+#' JIT did not compile it again, so every simulation after the first in a
+#' process ran twice as slow.)  The same expressions on the same values, so
+#' the same doubles (Carbon's fourth UI audit, 2026-11-15, C3).
+#'
+#' @param V,V2 the central and peripheral volumes
+#' @param ka the absorption rate constants of the oral depots and the
+#'   intramuscular one
+#' @param kT,kc the transit and prodrug-conversion rate constants (0 if none)
+#' @param q the distribution clearance (0 if none)
+#' @param clLinear the parallel linear clearance (0 if none)
+#' @param nOral the number of oral depots
+#' @param iIM,iConv,iC,iP,iS,iT,iDRC,iDRP the states' indices
+#' @param rb,sc,tb the block's rapidBinding, saturableSC and targetBinding,
+#'   or NULL
+#' @returns function(x, rIV, rPE, vmax, km), the derivative of the states
+#' @keywords internal
+mmDerivative <- function(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, iP,
+                         iS, iT, iDRC, iDRP, rb, sc, tb)
+{
+  # Unbound concentrations from the amounts: the amount over the volume, or,
+  # with rapid binding, the root of the binding equilibrium.
+  unboundC <- if (is.null(rb)) function(a) a / V else
+    function(a) unboundAtEquilibrium(a / V, rb$bmaxCentral, rb$kd)
+  unboundP <- if (is.null(rb)) function(a) a / V2 else
+    function(a) unboundAtEquilibrium(a / V2, rb$amaxPeripheral / V2, rb$kd)
+  scAbsorption <- if (is.null(sc)) function(S) 0 else
+    function(S) sc$bioavailability * sc$fraction * sc$kaMax * S / (sc$kmKa + S)
+  depotIdx <- seq_len(iIM)
+  oralIdx <- seq_len(nOral)
+  nState <- iDRP
+  plainBinding <- is.null(rb)
+  hasTransit <- kT != 0
+  hasSC <- !is.null(sc)
+  hasTarget <- !is.null(tb)
+  hasPeripheral <- q != 0 || hasTarget
+  # The binding constants as plain numbers, each the block's own value (a
+  # list lookup at every call cost time and changed no number)
+  if (hasTarget) {
+    kOut <- tb$koff + tb$kdeg
+    bindK <- tb$k2
+    rmaxC <- tb$rmaxCentral
+    rmaxP <- tb$rmaxPeripheral
+    kdT <- tb$kd
+    koffT <- tb$koff
+  }
+  function(x, rIV, rPE, vmax, km) {
+    Cu <- if (plainBinding) x[iC] / V else unboundC(x[iC])
+    dx <- numeric(nState)
+    out <- ka * x[depotIdx]
+    dx[depotIdx] <- -out
+    if (hasTransit) {
+      xT <- x[iT]
+      dx[iT] <- -kT * xT
+      dx[1] <- dx[1] + kT * xT
+    }
+    xConv <- x[iConv]
+    dx[iConv] <- out[iIM] + rPE - kc * xConv
+    fromS <- 0
+    if (hasSC) {
+      fromS <- scAbsorption(x[iS])
+      dx[iS] <- -fromS
+    }
+    toP <- 0
+    if (hasPeripheral) {
+      Cpu <- if (plainBinding) x[iP] / V2 else unboundP(x[iP])
+      toP <- q * (Cu - Cpu)
+      dx[iP] <- toP
+    }
+    dx[iC] <- sum(out[oralIdx]) + kc * xConv + rIV + fromS -
+      vmax * Cu / (km + Cu) - clLinear * Cu - toP
+    if (hasTarget) {
+      xDRC <- x[iDRC]
+      xDRP <- x[iDRP]
+      bindC <- (rmaxC - xDRC) * bindK * Cu / (kdT + Cu)
+      bindP <- (rmaxP - xDRP) * bindK * Cpu / (kdT + Cpu)
+      dx[iDRC] <- bindC - kOut * xDRC
+      dx[iDRP] <- bindP - kOut * xDRP
+      dx[iC] <- dx[iC] - bindC + koffT * xDRC
+      dx[iP] <- dx[iP] - bindP + koffT * xDRP
+    }
+    dx
+  }
+}
+
+#' The derivative over one interval of the engine's time line
+#'
+#' What \code{mmDormandPrince()} integrates: the engine's derivative with the
+#' input rates and the Vmax and Km in force over the interval, and Vmax's
+#' decline with time where the drug has one.  Built here, in a frame holding
+#' only those, for the reason \code{mmDerivative()} gives; the same call of
+#' the derivative with the same values.
+#'
+#' @param deriv the engine's derivative, function(x, rIV, rPE, vmax, km)
+#' @param rIV,rPE the intravenous and prodrug rates over the interval
+#' @param vmax,km Vmax and Km over the interval
+#' @param decline function(t) giving Vmax's fraction left at t, or NULL
+#' @returns function(t, y), the derivative
+#' @keywords internal
+mmIntervalDerivative <- function(deriv, rIV, rPE, vmax, km, decline = NULL)
+{
+  force(deriv); force(rIV); force(rPE); force(vmax); force(km); force(decline)
+  if (is.null(decline)) function(t, y) deriv(y, rIV, rPE, vmax, km) else
+    function(t, y) deriv(y, rIV, rPE, vmax * decline(t), km)
+}
+
 #' Validate a model's michaelisMenten block
 #'
 #' @param mm the block a drug model returned, or NULL
@@ -446,13 +583,8 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   sc <- mm$saturableSC
   rb <- mm$rapidBinding
   tb <- mm$targetBinding
-  # Unbound concentrations from the amounts: the amount over the volume, or,
-  # with rapid binding, the root of the binding equilibrium.
+  # Unbound concentrations from the amounts (mmDerivative())
   V2 <- if (is.null(pkSet$v2)) 1 else pkSet$v2
-  unboundC <- if (is.null(rb)) function(a) a / V else
-    function(a) unboundAtEquilibrium(a / V, rb$bmaxCentral, rb$kd)
-  unboundP <- if (is.null(rb)) function(a) a / V2 else
-    function(a) unboundAtEquilibrium(a / V2, rb$amaxPeripheral / V2, rb$kd)
   salt <- function(key) {
     s <- mm$saltFactor[[key]]
     if (is.null(s)) 1 else s
@@ -556,9 +688,14 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   # multipliers of Vmax and Km, each segment starting at interactionMM$time.
   # Their switching times join the time line, so a step never straddles one.
   ddi <- PK$interactionMM
+  # The multiplier in force at each time, for a vector of times at once: one
+  # findInterval() over the time line rather than one per point, each of which
+  # checked the whole segment vector for order and NAs (thousands of segments
+  # over 52 weeks of interacting antiseizure drugs; Carbon's fourth UI audit,
+  # 2026-11-15, C3).  The same segment, so the same doubles.
   ddiAt <- function(field, t) {
-    if (is.null(ddi)) return(1)
-    ddi[[field]][max(1L, findInterval(t, ddi$time))]
+    if (is.null(ddi)) return(rep(1, length(t)))
+    ddi[[field]][pmax(1L, findInterval(t, ddi$time))]
   }
   ddiMax <- function(field) if (is.null(ddi)) 1 else max(ddi[[field]])
   ddiMin <- function(field) if (is.null(ddi)) 1 else min(ddi[[field]])
@@ -568,8 +705,17 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   # Vmax lost reaches half its maximum t50 minutes after the first dose, and
   # Vmax is the block's own value until `onset`.  Evaluated at the middle of
   # each integration step, which is at most MM_MAX_STEP minutes.
+  #
+  # The first dose is the first above 0, as the Bayesian update reads it
+  # (bayesianUpdateDrugs()): a dose of 0 is no dose, and the startup menu
+  # writes one at time 0 for every drug ticked.  Counted, it started the
+  # decline from 0, so a first real dose a day later met a Vmax already
+  # inhibited (Carbon's fourth UI audit, 2026-11-15, M6).
   vd <- mm$vmaxDecline
-  firstDose <- if (nrow(dose) > 0) min(as.numeric(dose$Time)) else 0
+  given <- suppressWarnings(as.numeric(dose$Dose)) > 0 &
+    !is.na(suppressWarnings(as.numeric(dose$Time)))
+  given[is.na(given)] <- FALSE
+  firstDose <- if (any(given)) min(as.numeric(dose$Time[given])) else 0
   vmaxDeclineAt <- function(t) {
     if (is.null(vd)) return(1)
     s <- max(t - firstDose - vd$onset, 0)
@@ -577,11 +723,30 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   }
 
   # The time line: every dose time and arrival, and the instant before each.
-  knots <- unique(c(t0, jumps$time, if (!is.null(ddi)) ddi$time[ddi$time > 0]))
+  knots <- unique(c(t0, jumps$time))
   timeLine <- simulationTimeGrid(c(knots, knots - PRE_DOSE_OFFSET), maximum,
                                  gridStart(0))
+  # The interaction multipliers' switches are points of the line, so that no
+  # step straddles one, but not knots: a switch changes Vmax or Km, and so
+  # the slope, never the concentration, so it needs neither the instant
+  # before it, which shows a jump, nor the fine fill after it, which resolves
+  # an absorption.  As knots they were most of the line: phenytoin among
+  # seven interacting drugs over 52 weeks had 36,469 points for 2,565
+  # switches, against 9,100 on its own, every one an integration step
+  # (Carbon's fourth UI audit, 2026-11-15, C3).  The times at which the
+  # interactions read this drug's concentration (`sample`, the multipliers'
+  # grid) are points too, so that a perpetrator's concentration is read
+  # where it was computed rather than between points: without them, read
+  # off the sparser line, phenytoin's was up to 1e-3 of its peak out.
+  if (!is.null(ddi)) {
+    extra <- c(ddi$time, ddi$sample)
+    timeLine <- sort(unique(c(timeLine, extra[extra > 0 & extra <= maximum])))
+  }
   timeLine <- timeLine[timeLine >= 0]
   L <- length(timeLine)
+
+  ddiVmaxLine <- ddiAt("vmax", timeLine)
+  ddiKmLine <- ddiAt("km", timeLine)
 
   rateAt <- function(use, times) {
     if (!any(use)) return(rep(0, length(times)))
@@ -611,68 +776,9 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   if (anyNA(jumpAt[jumps$time <= maximum]))
     stop("Internal error: a dose time is missing from the time line.")
 
-  scAbsorption <- if (is.null(sc)) function(S) 0 else
-    function(S) sc$bioavailability * sc$fraction * sc$kaMax * S / (sc$kmKa + S)
-
-  # Elimination and distribution act on the unbound concentrations.  With
-  # targetBinding the central and peripheral amounts are the free drug, and
-  # binding to the target (k2, saturable in the free target, Rmax - DR),
-  # dissociation (koff) and hydrolysis of the complex (kdeg, which frees the
-  # target) are states of their own (Landersdorfer 2012, vildagliptin).
-  #
-  # Called four times a step, every 2 minutes of the plot (200,000 times for
-  # ten weeks), so what does not change during a run is settled here: a term
-  # a drug does not have is not computed, rather than computed as an exact
-  # zero (the results are identical, bit for bit), and binding that is not
-  # there is not a function call.  A Bayesian fit simulates the drug dozens
-  # of times (2026-11-14).
-  depotIdx <- seq_len(iIM)
-  oralIdx <- seq_len(nOral)
-  nState <- iDRP
-  plainBinding <- is.null(rb)
-  hasTransit <- kT != 0
-  hasSC <- !is.null(sc)
-  hasTarget <- !is.null(tb)
-  hasPeripheral <- q != 0 || hasTarget
-  # (bindK, not k2: the step loop below names its Runge-Kutta stages k1 to
-  # k4 in this same environment)
-  if (hasTarget) {
-    kOut <- tb$koff + tb$kdeg
-    bindK <- tb$k2
-  }
-  deriv <- function(x, rIV, rPE, vmax, km) {
-    Cu <- if (plainBinding) x[iC] / V else unboundC(x[iC])
-    dx <- numeric(nState)
-    out <- ka * x[depotIdx]
-    dx[depotIdx] <- -out
-    if (hasTransit) {
-      dx[iT] <- -kT * x[iT]
-      dx[1] <- dx[1] + kT * x[iT]
-    }
-    dx[iConv] <- out[iIM] + rPE - kc * x[iConv]
-    fromS <- 0
-    if (hasSC) {
-      fromS <- scAbsorption(x[iS])
-      dx[iS] <- -fromS
-    }
-    toP <- 0
-    if (hasPeripheral) {
-      Cpu <- if (plainBinding) x[iP] / V2 else unboundP(x[iP])
-      toP <- q * (Cu - Cpu)
-      dx[iP] <- toP
-    }
-    dx[iC] <- sum(out[oralIdx]) + kc * x[iConv] + rIV + fromS -
-      vmax * Cu / (km + Cu) - clLinear * Cu - toP
-    if (hasTarget) {
-      bindC <- (tb$rmaxCentral - x[iDRC]) * bindK * Cu / (tb$kd + Cu)
-      bindP <- (tb$rmaxPeripheral - x[iDRP]) * bindK * Cpu / (tb$kd + Cpu)
-      dx[iDRC] <- bindC - kOut * x[iDRC]
-      dx[iDRP] <- bindP - kOut * x[iDRP]
-      dx[iC] <- dx[iC] - bindC + tb$koff * x[iDRC]
-      dx[iP] <- dx[iP] - bindP + tb$koff * x[iDRP]
-    }
-    dx
-  }
+  # The derivative (mmDerivative()), built in a frame of its own
+  deriv <- mmDerivative(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, iP,
+                        iS, iT, iDRC, iDRP, rb, sc, tb)
 
   x <- numeric(iDRP)
   Cp <- numeric(L)
@@ -743,13 +849,13 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
       h <- dt / n
       rIV <- ivRateLine[i - 1] + scRateLine[i - 1]
       rPE <- peRateLine[i - 1]
-      vmaxStep <- vmax * ddiAt("vmax", timeLine[i - 1])
-      kmStep <- km * ddiAt("km", timeLine[i - 1])
+      vmaxStep <- vmax * ddiVmaxLine[i - 1]
+      kmStep <- km * ddiKmLine[i - 1]
       if (adaptive) {
         # An adaptive step for a drug that asks for one (mmDormandPrince())
         atol <- MM_ADAPTIVE_ATOL * scale
-        f <- if (is.null(vd)) function(t, y) deriv(y, rIV, rPE, vmaxStep, kmStep) else
-          function(t, y) deriv(y, rIV, rPE, vmaxStep * vmaxDeclineAt(t), kmStep)
+        f <- mmIntervalDerivative(deriv, rIV, rPE, vmaxStep, kmStep,
+                                  if (!is.null(vd)) vmaxDeclineAt)
         stepped <- mmDormandPrince(f, x, timeLine[i - 1], timeLine[i], hNext,
                                    MM_ADAPTIVE_RTOL, atol, emptyDepots)
         x <- stepped$x
