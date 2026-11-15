@@ -119,10 +119,14 @@ paperReviewIsUploadPath <- function(datapath)
 #' that is not such an upload (\code{paperReviewIsUploadPath()}) is neither
 #' read nor deleted.
 #'
+#' A file larger than \code{maxBytes} is deleted unread, and none are
+#' returned, with its size as the attribute \code{oversize}.
+#'
 #' @param datapath the upload's path, from \code{input$<id>$datapath}
+#' @param maxBytes the largest file that is read
 #' @returns the file's bytes, or none for a path that is not an upload
 #' @keywords internal
-paperReviewReadUpload <- function(datapath)
+paperReviewReadUpload <- function(datapath, maxBytes = Inf)
 {
   if (!paperReviewIsUploadPath(datapath)) return(raw(0))
   datapath <- normalizePath(datapath, mustWork = TRUE)
@@ -136,6 +140,7 @@ paperReviewReadUpload <- function(datapath)
   }, add = TRUE)
   size <- file.info(datapath)$size
   if (is.na(size)) return(raw(0))
+  if (size > maxBytes) return(structure(raw(0), oversize = size))
   readBin(datapath, "raw", size)
 }
 
@@ -205,6 +210,22 @@ paperReviewHeader <- function(ns = shiny::NS(NULL))
                               class = "btn-sm btn-primary", style = "margin-left: 6px;")))))))
 }
 
+# Choosing a file in either upload field tells the server at once, before
+# the file is uploaded, so that what that field held before is dropped then
+# (`<id>Chosen`; paperReviewServer()).  The field shows the new file from
+# that moment, and Review must never send one it no longer shows, even when
+# Shiny refuses the new file before the app hears of it (over
+# PAPER_REVIEW_MAX_UPLOAD_BYTES), which left the earlier manuscript held and
+# Review sending it (Carbon's fourth UI audit, 2026-11-15, H5).  Only that a
+# file was chosen is sent, never its name.  A delegated jQuery handler, so it
+# also sees the change Shiny triggers for a file dropped on the field.
+paperReviewChosenScript <- function(ns = shiny::NS(NULL))
+  htmltools::tags$script(htmltools::HTML(sprintf(paste0(
+    "jQuery(document).on('change', '#%s, #%s', function() {",
+    " if (this.files && this.files.length > 0 && window.Shiny && Shiny.setInputValue)",
+    " Shiny.setInputValue(this.id + 'Chosen', Date.now(), {priority: 'event'}); });"),
+    ns("manuscript"), ns("supplement"))))
+
 # The review's three tabs: Review, Simulator, Privacy and help.
 paperReviewPanels <- function(ns = shiny::NS(NULL))
 {
@@ -224,6 +245,7 @@ paperReviewPanels <- function(ns = shiny::NS(NULL))
             "to have it reviewed."), FALSE),
           shiny::fileInput(ns("manuscript"), "Manuscript (PDF)", accept = ".pdf"),
           shiny::fileInput(ns("supplement"), "Supplement (PDF, optional)", accept = ".pdf"),
+          paperReviewChosenScript(ns),
           shiny::actionButton(ns("review"), "Review the paper", class = "btn-primary"),
           shiny::hr(),
           shiny::actionButton(ns("example"), "Try the example (nothing is sent)"),
@@ -436,9 +458,31 @@ paperReviewServer <- function(input, output, session)
     # read (paperReviewIsUploadPath()).
     datapath <- if (is.list(file)) file$datapath else NULL
     if (!is.character(datapath) || length(datapath) != 1) return()
-    bytes <- paperReviewReadUpload(datapath)
+    # A new upload replaces what its field held, whatever it turns out to
+    # be: the field shows the new file, and a replacement that was not a PDF
+    # left the earlier one held and sent by Review (Carbon's fourth UI
+    # audit, 2026-11-15, H5).
+    # (In a browser the field's change has dropped it already, chosen().)
+    replaced <- dropSlot(slot) || isTRUE(droppedOnChoice[[slot]])
+    droppedOnChoice[[slot]] <<- FALSE
+    before <- if (replaced) paste0(", as was the ", tolower(sub("^The ", "", label)), " held before it") else ""
+    # Refused here if the request could not carry it: alone over the API's
+    # 20 MB, or over it with the file the other field holds.  Found at
+    # Review, it discarded both files, a valid supplement included.
+    other <- if (slot == "pdf") "supplement" else "pdf"
+    otherBytes <- if (exists(other, envir = store)) length(get(other, envir = store)) else 0
+    bytes <- paperReviewReadUpload(datapath, maxBytes = PAPER_REVIEW_MAX_PDF_BYTES - otherBytes)
+    oversize <- attr(bytes, "oversize")
+    if (!is.null(oversize)) {
+      status(paste0(label, " (", paperReviewSize(oversize), ") was discarded", before, ": ",
+        if (otherBytes > 0)
+          paste0("with the ", if (other == "pdf") "manuscript" else "supplement", " held (",
+                 paperReviewSize(otherBytes), ") the files come to more than the 20 MB a review can send.")
+        else "a review can send at most 20 MB."))
+      return()
+    }
     if (!paperReviewIsPdf(bytes)) {
-      status(paste(label, "is not a PDF and was discarded."))
+      status(paste0(label, " is not a PDF and was discarded", before, "."))
       return()
     }
     assign(slot, bytes, envir = store)
@@ -447,8 +491,29 @@ paperReviewServer <- function(input, output, session)
     status(paste0(label, " received (", paperReviewSize(length(bytes)),
                   "), held in this session's memory only."))
   }
+  # Empty a field's slot; TRUE when it held a file.
+  dropSlot <- function(slot) {
+    held <- exists(slot, envir = store)
+    if (held) {
+      rm(list = slot, envir = store)
+      stored()
+    }
+    if (slot == "pdf") hasPdf(FALSE)
+    held
+  }
   shiny::observeEvent(input$manuscript, receive(input$manuscript, "pdf", "The manuscript"))
   shiny::observeEvent(input$supplement, receive(input$supplement, "supplement", "The supplement"))
+  # A file chosen in a field, before it is uploaded (paperReviewChosenScript()).
+  # What it dropped is remembered, so that receive() can say so of a file
+  # it then refuses.
+  droppedOnChoice <- c(pdf = FALSE, supplement = FALSE)
+  chosen <- function(slot, label) {
+    if (!dropSlot(slot)) return()
+    droppedOnChoice[[slot]] <<- TRUE
+    status(paste0("Another ", label, " was chosen, so the one held before has been discarded."))
+  }
+  shiny::observeEvent(input$manuscriptChosen, chosen("pdf", "manuscript"))
+  shiny::observeEvent(input$supplementChosen, chosen("supplement", "supplement"))
 
   runReview <- function(extraction, example = FALSE, quick = FALSE) {
     review <- tryCatch(paperReviewQuietly(function() paperReviewRun(extraction)),
@@ -471,6 +536,10 @@ paperReviewServer <- function(input, output, session)
     if (reviewing()) return(status("A review is already running."))
     if (!exists("pdf", envir = store)) return(status("Upload a manuscript first."))
     if (!isTRUE(input$consent)) return(status("Tick the box to confirm the manuscript may be sent."))
+    # receive() keeps the two within the limit; refused here, not at the
+    # request, which would discard them both.
+    if (length(store$pdf) + length(get0("supplement", envir = store)) > PAPER_REVIEW_MAX_PDF_BYTES)
+      return(status("The files come to more than the 20 MB a review can send."))
     own <- ownKey()
     key <- paperReviewApiKey(own)
     if (is.null(key)) return(status("No Anthropic API key is configured on this server; enter your own."))
@@ -592,6 +661,7 @@ paperReviewServer <- function(input, output, session)
 
   shiny::observeEvent(input$discard, {
     paperReviewDiscard(store)
+    droppedOnChoice[] <<- FALSE
     awaited(FALSE)
     stopForQuick(FALSE)
     releaseReserved()

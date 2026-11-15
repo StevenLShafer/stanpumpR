@@ -1297,6 +1297,16 @@ paperReviewCovariateChecks <- function(extraction)
                  e$equation_as_printed), loc)
       next
     }
+    # An equation the review cannot apply to anyone (a power with a
+    # reference of 0) is said once, not swept as a multiplier of 1.
+    probe <- suppressWarnings(paperReviewCovariateMultiplier(e, reference, reference))
+    if (!isTRUE(probe$applied)) {
+      add("concern", paste("Not applied:", label),
+          paste0("It is not applied: ", probe$reason, ", so it is probably misread. The simulator ",
+                 "holds the parameter at its typical value. As printed: ", e$equation_as_printed %or% ""),
+          loc)
+      next
+    }
     if (is.na(paperReviewNum(e$reference_value)) && e$form != "category_multiplier")
       add("concern", paste("No reference value printed for", label),
           paste0("Evaluated at the population's central value (",

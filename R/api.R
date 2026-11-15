@@ -357,7 +357,19 @@ apiDoses <- function(doses, unit, maximum, allowIllicit,
       apiError("`doses` row ", i, ": ", drug, " is in the '", ILLICIT_DRUG_CATEGORY,
                "' category, an opt-in research model; set options.allowIllicitDrugs to true.")
     }
-    allowed <- drugDefaults$Units[[row]]
+    # A metabolite-only drug's Units are NA, and a unit sent as null reads
+    # as NA, so `NA %in% NA` let enalaprilat or desmetramadol be dosed in no
+    # unit and simulated (Carbon's fourth UI audit, 2026-11-15, H6).
+    allowed <- unlist(drugDefaults$Units[[row]])
+    allowed <- allowed[!is.na(allowed) & nzchar(allowed)]
+    if (length(allowed) == 0) {
+      apiError("`doses` row ", i, ": ", drug, " is formed as a metabolite of another drug and ",
+               "cannot be dosed itself. GET /drugs lists the drugs that can.")
+    }
+    if (is.na(DT$Units[i]) || !nzchar(DT$Units[i])) {
+      apiError("`doses` row ", i, ": `units` is missing. The units of ", drug, " are: ",
+               paste(allowed, collapse = ", "), ".")
+    }
     if (!DT$Units[i] %in% allowed) {
       apiError("`doses` row ", i, ": '", DT$Units[i], "' is not a unit of ", drug,
                ". Its units are: ", paste(allowed, collapse = ", "), ".")
@@ -755,11 +767,14 @@ apiCsv <- function(df) {
   # defence against CSV injection.  No request reaches a text cell today
   # (Drug and ConcentrationUnits come from the library, the rest are
   # numbers, which are left alone), so this guards a column added later
-  # (Carbon's third UI audit, 2026-11-15, L1).
+  # (Carbon's third UI audit, 2026-11-15, L1).  Whitespace before the
+  # formula character counts too, since some spreadsheets trim it on import
+  # (Carbon's fourth UI audit, L2), and a cell that begins with any of
+  # tab, carriage return or line feed is quoted whatever follows.
   text <- vapply(df, function(x) is.character(x) || is.factor(x), logical(1))
   df[text] <- lapply(df[text], function(x) {
     x <- as.character(x)
-    risky <- !is.na(x) & grepl("^[=+@\t\r-]", x)
+    risky <- !is.na(x) & grepl("^[[:space:]]*[=+@-]|^[\t\r\n]", x)
     x[risky] <- paste0("'", x[risky])
     x
   })

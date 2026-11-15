@@ -374,30 +374,50 @@ paperReviewRegimenId <- function(r)
 #' computed and lost, and the element kept the route's own parameters from
 #' being used (Carbon's third UI audit, 2026-11-15, L1).  Each is named
 #' "regimen n", n its place in the list (made unique), and the report's
-#' limitations say so.  paperReviewRun() calls this first.
+#' limitations say so.  So is a regimen whose id an earlier one already has:
+#' two regimens called "Arm A" kept one absorption between them (the later
+#' one's), and the first's doses were simulated with the second's
+#' absorption and loaded for either (Carbon's fourth UI audit, 2026-11-15,
+#' M5).  The later is called "Arm A (2)", and anything the paper ties to
+#' "Arm A" is read as the first.  paperReviewRun() calls this first.
 #'
 #' @param extraction the extraction
-#' @returns the extraction, every regimen with an id
+#' @returns the extraction, every regimen with an id of its own
 #' @keywords internal
 paperReviewNameRegimens <- function(extraction)
 {
   regs <- extraction$regimens
   if (!is.list(regs) || length(regs) == 0) return(extraction)
   ids <- vapply(regs, paperReviewRegimenId, "")
-  blank <- which(!nzchar(ids) & vapply(regs, is.list, logical(1)))
-  if (length(blank) == 0) return(extraction)
+  isRegimen <- vapply(regs, is.list, logical(1))
+  blank <- which(!nzchar(ids) & isRegimen)
+  repeated <- which(nzchar(ids) & isRegimen & duplicated(ids))
+  if (length(blank) == 0 && length(repeated) == 0) return(extraction)
+  shared <- ids[repeated]
   for (i in blank) {
     id <- paste("regimen", i)
     while (id %in% ids) id <- paste0(id, "'")
     ids[i] <- id
     extraction$regimens[[i]]$id <- id
   }
+  for (i in repeated) {
+    k <- 2L
+    while ((id <- paste0(ids[i], " (", k, ")")) %in% ids) k <- k + 1L
+    ids[i] <- id
+    extraction$regimens[[i]]$id <- id
+  }
   prior <- extraction$extraction_limitations
   if (!is.character(prior) || length(prior) != 1 || is.na(prior)) prior <- ""
-  extraction$extraction_limitations <- paste0(
-    prior, if (nzchar(prior)) " " else "",
-    if (length(blank) == 1) "A regimen had no id and is called " else "Regimens with no id are called ",
-    paste0("\"", ids[blank], "\"", collapse = ", "), " here.")
+  said <- c(
+    if (length(blank))
+      paste0(if (length(blank) == 1) "A regimen had no id and is called " else "Regimens with no id are called ",
+             paste0("\"", ids[blank], "\"", collapse = ", "), " here."),
+    if (length(repeated))
+      paste0("Several regimens had the same id, so ",
+             paste0("the next \"", shared, "\" is called \"", ids[repeated], "\"", collapse = ", "),
+             " here, and what the paper ties to ", paste0("\"", unique(shared), "\"", collapse = ", "),
+             " is read as the first of that name."))
+  extraction$extraction_limitations <- paste0(prior, if (nzchar(prior)) " " else "", paste(said, collapse = " "))
   extraction
 }
 
