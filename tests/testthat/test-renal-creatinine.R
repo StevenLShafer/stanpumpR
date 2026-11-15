@@ -1,7 +1,7 @@
 # The serum creatinine covariate, shared by every model with a renal term.
 # See R/renalFunction.R.
 
-renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex",
+renalDrugs <- c("mannitol", "vancomycin", "vancomycinKidneyTransplant", "gentamicin", "cefazolin", "sugammadex",
                 "gabapentin", "pregabalin", "oxycodone", "hydrocodone", "meloxicam",
                 "lacosamide", "levetiracetam", "metformin", "ertugliflozin", "empagliflozin",
                 "exenatide", "dapagliflozin", "canagliflozin", "lixisenatide",
