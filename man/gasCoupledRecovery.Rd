@@ -55,13 +55,44 @@ Runge-Kutta step, outside its region of stability, grew without bound and
 failed ("NAs are not allowed in subscripted assignments"; Carbon's third
 UI audit, 2026-11-15, H2).  Shortening the Runge-Kutta step instead would
 cost a step per time constant, without limit: the dose table takes a
-ventilation of up to \code{MAX_DOSE_VALUE} L/min.  A row is
-finished once it is below the threshold and falling, so that a tissue still
-filling from the alveoli when the agent is turned off -- below the threshold
-but about to rise through it -- is followed over the top and back down.
+ventilation of up to \code{MAX_DOSE_VALUE} L/min.  Neither step is ever
+less than \code{GAS_RECOVERY_MIN_STEP}, which bounds the work of a row at
+57,600 steps (Carbon's fourth UI audit, 2026-11-15, H9).  Where the floor
+holds the exponential step at more than the coupling's time constant (a
+cardiac output hundreds of times the body's, which only a caller of
+\code{gasWashout(cardiacOutput =)} can give), it stays stable.  The
+coupling is driven by the summed uptake, and the exchange between lungs and
+blood, which the step solves exactly, holds the uptake to what the
+ventilation brings and takes away, whatever the cardiac output; the part of
+the coupling that does grow with the cardiac output, its response to the
+alveolar tensions, is a fraction (the alveolar tensions' sum over 100) of
+the exchange that damps those tensions.  On a single mode the exponential
+Runge-Kutta step contracts at every step length when the sampled rate is
+below the solved one (checked to steps of 10^7 time constants).  Checked
+against the full engine to a cardiac output of 5,000,000 L/min
+(tests/testthat/test-ui-audit-carbon4-gas.R).
+
+A row is finished only when it is proved that it cannot rise above the
+threshold again within the day: the washout of each gas \code{target}
+weighs, with the coupling left out, is an upper bound on its coupled
+washout, and the row is finished when that bound, a sum of exponentials, is
+at or below the threshold on a grid of times to a day and, rigorously,
+between its points (\code{gasWashoutBound()}; the argument is in the
+comments above it).  Until 2026-11-15 a row was finished once it was below
+the threshold and falling, which the muscle and fat behind the brain can
+contradict (H9).  A tissue still filling from the alveoli when the agent is
+turned off -- below the threshold but about to rise through it -- is
+followed over the top and back down, as before.  A row still running at
+the end of the day reads \code{MINS_PER_DAY} if it is above the threshold
+and its last downward crossing otherwise, as \code{recoveryCalc()} reads
+its horizon.
 
 The plot shows a hundred points, so a simulation with more time points than
-\code{maxPoints} is sampled and the result interpolated.
+\code{maxPoints} is sampled and the result interpolated.  The sample
+includes the first and last time point of every interval of constant
+settings, and the interpolation stays within each interval, because the time
+until threshold jumps where a setting changes; until 2026-11-15 it was
+interpolated across the change (H9).
 
 Provenance: Claude Code (Claude Fable 5.1), 2026-10-05, at the request of
 Steven L. Shafer.  Verified on R 4.6.1 against the same manoeuvre in the full
