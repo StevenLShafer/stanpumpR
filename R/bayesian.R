@@ -412,6 +412,11 @@ bayesianSearch <- function(residuals, start, lower, upper,
 #' @param rebuild function(drug, individual) giving the drug's entry for the
 #'   individual's clearance and volume factors
 #' @param antiseizureInteractions are the antiseizure interactions on?
+#' @param deadline the time (`proc.time()[["elapsed"]]`) after which no
+#'   simulation is started: the search stops with the condition `bayesTimeLimit`
+#' @param initial the drug list before any update, whose drugs the fit's
+#'   population prediction is made from (the model's, whatever the other
+#'   drugs' estimates)
 #' @returns a list: `clearance`, `volume` (the factors), `eta`, `objective`
 #'   and `priorObjective`, `converged`, `atLimit`, and `observations`, a data
 #'   frame of Time, Measured, Population and Individual (the predictions)
