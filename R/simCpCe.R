@@ -562,6 +562,18 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         stop("Target-controlled infusion is not available for a drug ",
              "simulated as several parallel systems, or plotted as an INR, an ACT, ",
              "an osmolality or a molar concentration.")
+      # Nor a drug off the linear closed-form engines, whose controller it is:
+      # the saturable and transit-chain engines took the pump's 10-second rate
+      # steps as boluses, a minute's drug each, and a target of 2 reached 11
+      # to 12 (phenytoin, enalapril, exenatide); nor a concentration the rate
+      # panel cannot label in mass per minute (pg, mcU, IU) (Carbon's third
+      # UI audit, 2026-11-15, C5)
+      if (!is.null(PK$michaelisMenten) || !is.null(PK$transitChain))
+        stop("Target-controlled infusion is not available for a drug simulated ",
+             "numerically (saturable elimination or a transit chain).")
+      if (!isTRUE(PK$Concentration.Units %in% c("mcg", "ng")))
+        stop("Target-controlled infusion is available only for a drug plotted ",
+             "in mcg/mL or ng/mL.")
       # The pump computes its rates from the model it was programmed with:
       # the drug's own, except for a drug the Bayesian update individualized
       # (R/bayesian.R), whose patient received the rates the library's model

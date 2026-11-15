@@ -202,7 +202,8 @@ mmStateRates <- function(f, n)
 }
 
 #' Absolute tolerance of the engine's adaptive step, as a fraction of the
-#' largest dose or of an hour of the largest rate (mmDormandPrince())
+#' largest dose or of an hour of the largest rate given so far
+#' (mmDormandPrince())
 #' @keywords internal
 # Calibrated 2026-11-15 on sixteen regimens of the seven drugs over two weeks
 # against a fixed step of 0.1 minute: at 1e-6 of the largest dose (the
@@ -706,12 +707,19 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
     stepCore <- stableStep(max(rates[-absorbing], 0))
     stepAll <- stableStep(max(rates))
   }
-  amountScale <- max(c(abs(jumps$amount),
-                       60 * abs(c(ivRateLine + scRateLine, peRateLine)), 0))
-  negligible <- MM_NEGLIGIBLE_AMOUNT * amountScale
+  # The tolerances' scale: the largest dose, or an hour of the largest rate,
+  # given SO FAR.  Taken over the whole table, a dose not yet given set the
+  # scale for the doses before it: 1e9 mg/kg at 1,400 minutes in a 500 kg
+  # patient made the tolerance 460 mg, and a 300 mg dose at time 0 was
+  # emptied as negligible, its curve 0 until the later dose (Carbon's third
+  # UI audit, 2026-11-15, H5).
+  pointScale <- 60 * pmax(abs(ivRateLine + scRateLine), abs(peRateLine))
+  for (j in which(!is.na(jumpAt)))
+    pointScale[jumpAt[j]] <- max(pointScale[jumpAt[j]], abs(jumps$amount[j]))
+  scaleAt <- cummax(pointScale)
   if (adaptive) {
-    atol <- MM_ADAPTIVE_ATOL * max(amountScale, .Machine$double.eps)
     hNext <- MM_MAX_STEP
+    atol <- MM_ADAPTIVE_ATOL * .Machine$double.eps
     # An absorption state left with less than atol has been absorbed, within
     # the tolerance: emptied, it no longer holds the step to its own rate
     # (the noise below atol of a fast depot, voriconazole's, otherwise kept
@@ -724,8 +732,9 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   for (i in seq_len(L)) {
     if (i > 1) {
       dt <- timeLine[i] - timeLine[i - 1]
+      scale <- max(scaleAt[i - 1], .Machine$double.eps)
       if (!adaptive) {
-        x[absorbing][abs(x[absorbing]) <= negligible] <- 0
+        x[absorbing][abs(x[absorbing]) <= MM_NEGLIGIBLE_AMOUNT * scale] <- 0
         absorbingNow <- any(x[absorbing] != 0) || peRateLine[i - 1] != 0
         n <- max(1L, ceiling(dt / (if (absorbingNow) stepAll else stepCore)))
       } else {
@@ -738,6 +747,7 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
       kmStep <- km * ddiAt("km", timeLine[i - 1])
       if (adaptive) {
         # An adaptive step for a drug that asks for one (mmDormandPrince())
+        atol <- MM_ADAPTIVE_ATOL * scale
         f <- if (is.null(vd)) function(t, y) deriv(y, rIV, rPE, vmaxStep, kmStep) else
           function(t, y) deriv(y, rIV, rPE, vmaxStep * vmaxDeclineAt(t), kmStep)
         stepped <- mmDormandPrince(f, x, timeLine[i - 1], timeLine[i], hNext,

@@ -37,8 +37,11 @@ of a measurement about the individual's prediction (assay, timing and
 model error together)}
 
 \item{rebuild}{function(drug, individual) returning the drug's entry, as
-recalculatePK() builds it, for the individual's factors (a list of
-\code{clearance} and \code{volume}); recalculatePK(individual =) is the usual one}
+recalculatePK() builds it, for \code{individual}, the estimates by drug (a
+named list of lists of \code{clearance} and \code{volume}, the form
+recalculatePK(individual =) takes, which is the usual rebuild): the
+drug's own, and, for a drug that forms a measured metabolite, the
+metabolite's, which it then forms}
 
 \item{antiseizureInteractions}{are the antiseizure interactions on?}
 

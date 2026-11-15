@@ -762,6 +762,11 @@ TIME_EXTEND_MARGIN <- c(minutes = 30, hours = 30, days = MINS_PER_DAY / 2, weeks
 
 REFERENCE_TIME_NONE <- "none"
 NORMALIZE_NONE <- "none"
+# The choices of the plot's own controls, which a link or a forged input can
+# replace with anything (Carbon's third UI audit, 2026-11-15, C1)
+PLOT_NORMALIZATIONS <- c(NORMALIZE_NONE, "Peak plasma", "Peak effect site")
+PLOT_TYPICAL_CHOICES <- c("none", "Mid", "Range")
+PLOT_LINE_TYPES <- c("blank", "solid", "dashed", "dotted", "dotdash")
 PK_EVENT_DEFAULT <- "default"
 
 PLOT_ID_EVENTS      <- "Events"
@@ -942,3 +947,8 @@ BAYES_JACOBIAN_STEP <- 1e-6
 BAYES_MAX_SECONDS <- 30
 # The label of the population curve drawn beside the individualized one
 BAYES_PRIOR_LABEL <- "population"
+# How far its colour is mixed towards black or white (alternativeModelColor()):
+# further than the other companions' 0.45, so that a drug with the
+# population line and another companion (Minto or Schnider, "no
+# interactions") draws the two in different colours
+BAYES_PRIOR_COLOR_AMOUNT <- 0.7

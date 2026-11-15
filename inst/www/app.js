@@ -198,3 +198,64 @@ function setCookie(name, value, days) {
   document.cookie = name + '=' + value + '; expires=' + date.toUTCString() + '; path=/';
 }
 
+
+// The Working cover (Steven L. Shafer, 2026-11-15).  A worker runs one
+// session's R at a time, so while the server is busy nothing the page sends
+// is answered, and a click or a keystroke then waits unseen and lands on a
+// page that has changed under it.  After WORKING_COVER_DELAY of a busy
+// server the page is covered and made inert (no clicks, no focus, no
+// keystrokes) until the server is idle again, and says so.  Only the
+// server's own work counts: a Single Paper Review runs in a background
+// process and leaves the session idle, so its page stays usable (its Stop
+// and Discard buttons included).  The cover replaces the page spinners the
+// Bayesian update and Suggest Dosing put up.
+var WORKING_COVER_DELAY = 3000;
+var WORKING_COVER_TEXT = 'Working. This may take a minute or more.';
+var workingTimer = null;
+var workingInert = [];
+function showWorkingCover() {
+  workingTimer = null;
+  if (document.getElementById('working-cover')) return;
+  var cover = document.createElement('div');
+  cover.id = 'working-cover';
+  cover.setAttribute('role', 'alert');
+  cover.setAttribute('aria-live', 'assertive');
+  var card = document.createElement('div');
+  card.className = 'working-card';
+  var spinner = document.createElement('div');
+  spinner.className = 'spinner-border';
+  spinner.setAttribute('aria-hidden', 'true');
+  var text = document.createElement('p');
+  text.textContent = WORKING_COVER_TEXT;
+  card.appendChild(spinner);
+  card.appendChild(text);
+  cover.appendChild(card);
+  // Everything else on the page, dialogs included, until the server is idle
+  workingInert = [];
+  Array.prototype.forEach.call(document.body.children, function(el) {
+    if (!el.inert) {
+      el.inert = true;
+      workingInert.push(el);
+    }
+  });
+  document.body.appendChild(cover);
+}
+function hideWorkingCover() {
+  if (workingTimer !== null) {
+    clearTimeout(workingTimer);
+    workingTimer = null;
+  }
+  workingInert.forEach(function(el) { el.inert = false; });
+  workingInert = [];
+  var cover = document.getElementById('working-cover');
+  if (cover) cover.parentNode.removeChild(cover);
+}
+$(document).on('shiny:busy', function() {
+  if (workingTimer === null && !document.getElementById('working-cover')) {
+    workingTimer = setTimeout(showWorkingCover, WORKING_COVER_DELAY);
+  }
+});
+$(document).on('shiny:idle', hideWorkingCover);
+// A session that ended while busy shows Shiny's own reload prompt, which must
+// not be covered
+$(document).on('shiny:disconnected', hideWorkingCover);

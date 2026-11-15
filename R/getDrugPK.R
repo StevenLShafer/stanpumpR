@@ -53,6 +53,12 @@
 #'   individual's pharmacokinetics as a list of \code{clearance} and
 #'   \code{volume}, each a multiple of the model's, as the Bayesian update
 #'   estimates them (\code{bayesianUpdateDrugs()}, \code{individualizeModel()}).
+#' @param metaboliteIndividual NULL (the default), or the individual's
+#'   pharmacokinetics of the drug's active metabolite, in the form of
+#'   \code{individual}: the metabolite it forms is then formed into the
+#'   individual's metabolite, as the Bayesian update estimates it from the
+#'   metabolite's measured concentrations.  The parent's own formation is the
+#'   model's (it moves with \code{individual}).
 #' @param libraryDefaults NULL (the default) for the package's drug library,
 #'   or the session's (\code{recalculatePK()} passes it), from which an
 #'   active metabolite's row is read: its \code{Concentration.Units} set the
@@ -99,7 +105,8 @@ getDrugPK <- function(
   cyp4f2 = CYP4F2_DEFAULT,
   gestationalAge = NULL,
   individual = NULL,
-  libraryDefaults = NULL
+  libraryDefaults = NULL,
+  metaboliteIndividual = NULL
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
@@ -1128,7 +1135,13 @@ getDrugPK <- function(
       pregnant = pregnant,
       adjustToFFM = adjustToFFM,
       resolveMetabolite = FALSE,
-      gestationalAge = gestationalAge
+      gestationalAge = gestationalAge,
+      # The individual's metabolite, where the Bayesian update estimated it
+      # from the metabolite's own levels: the parent forms the metabolite the
+      # patient has.  Built from the model's, a morphine level after codeine
+      # could not move its estimate, every candidate forming the same
+      # morphine (Carbon's third UI audit, 2026-11-15, H7)
+      individual = metaboliteIndividual
     )
     metaboliteSet <- metabolitePK$PK[[PK_EVENT_DEFAULT]]
 
@@ -1354,6 +1367,11 @@ getDrugPK <- function(
     if (!is.null(tc$metabolite))
     {
       formed <- tc$metabolite
+      # Its parameters are the parent's model's (enalaprilatSet()), and the
+      # metabolite is never dosed, so no level of it is ever fitted
+      if (!is.null(validateIndividual(metaboliteIndividual, formed$name)))
+        stop("An individual estimate of ", formed$name, ", formed in ", drug,
+             "'s transit chain, is not available.")
       # A parent and its metabolite need not report in the same units, and the
       # amounts the engine carries are the parent's; see
       # metaboliteUnitScale() in R/metaboliteCoefficients.R for why its
@@ -1406,6 +1424,8 @@ getDrugPK <- function(
   # asmSegmentPK()), which must rebuild the individual's drug, and for the
   # simulation key, so that a new estimate re-simulates the drug.
   if (!is.null(individual)) out$individual <- individual
+  if (!is.null(metaboliteName) && !is.null(metaboliteIndividual))
+    out$metaboliteIndividual <- validateIndividual(metaboliteIndividual, metaboliteName)
   return(out)
 }
 
@@ -1487,6 +1507,7 @@ pkModelDrug <- function(PK)
 pkRebuildArgs <- function(PK)
 {
   list(individual = PK$individual,
+       metaboliteIndividual = PK$metaboliteIndividual,
        drugDefaults = if (is.null(PK$drugDefaults)) getDrugDefaults(pkModelDrug(PK)) else PK$drugDefaults,
        libraryDefaults = PK$libraryDefaults)
 }

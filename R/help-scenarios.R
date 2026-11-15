@@ -1379,7 +1379,7 @@ helpScenarioLoadButton <- function(s) {
   paste0(
     sprintf(
       '<p><a href="#" class="btn btn-primary help-scenario-btn" data-help-scenario="%s">%s Load into the simulator</a>
-     <span class="small text-muted help-scenario-hint">Replaces the current patient (every Patient Profile field), doses, events and graph options.</span></p>',
+     <span class="small text-muted help-scenario-hint">Replaces the current patient (every Patient Profile field, and any measured concentrations), doses, events and graph options.</span></p>',
       s$id, as.character(icon("play"))
     ),
     # A link that opens a fresh session on this scenario (R/deep-links.R), for

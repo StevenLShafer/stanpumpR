@@ -198,6 +198,11 @@ simulationPlot <- function(
   # at the panel's right-hand edge, so only one is drawn; the app unticks the
   # other when either is ticked (R/meacOverlay.R).
   if (plotRecovery) plotMEACOverlay <- FALSE
+  # Nor is a logarithmic axis drawn beside any of them, whose labels and
+  # panels are placed on a linear one; the app hides Log Y while they are on
+  # (app_ui()) and passes FALSE, and a caller of its own is held to the same
+  # rule (Carbon's third UI audit, 2026-11-15, M6)
+  if (plotRecovery || plotMEACOverlay || plotEvents || plotInteraction) logY <- FALSE
 
   # Step D3: extend plotTable
 
@@ -748,6 +753,13 @@ simulationPlot <- function(
   if (logY) {
     data <- data[data$Y>0,]
     rateData <- rateData[rateData$Y>0,]
+    # With nothing above zero (no dose yet, or none in the window) ggplot
+    # failed only when the plot was drawn, outside main_plot()'s handling,
+    # and printed its own error in the plot area (Carbon's third UI audit,
+    # 2026-11-15, H4); said here, the plot area explains it
+    if (nrow(data) == 0)
+      stop("A logarithmic axis needs a concentration above zero, and there is none ",
+           "in the plotted window. Untick Log Y or enter a dose.", call. = FALSE)
   }
 
   plotObject <- ggplot2::ggplot() +

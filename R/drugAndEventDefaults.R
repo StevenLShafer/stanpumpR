@@ -41,7 +41,7 @@ drugLibraryGridData <- function(drugDefaults) {
 # "bogus") became NA with no message, erasing the stored threshold
 # (production audit, 2026-11-01).  The check below needs the text as typed,
 # which is why drugLibraryGridData() hands those columns to the grid as text.
-drugLibraryProblems <- function(edited, current) {
+drugLibraryProblems <- function(edited, current, inUse = NULL) {
   # The Drug column is read-only and the grid adds and removes no rows, so
   # the edited table names the library's drugs, all of them, in its order.
   # Only the cells beside them were checked: a forged table of one row
@@ -110,7 +110,8 @@ drugLibraryProblems <- function(edited, current) {
     # read-only (drugLibraryGridColumns()), which a forged value walked past,
     # and warfarin's INR made mcg stopped every simulation of it (Carbon's UI
     # audit, 2026-11-14, F4)
-    readOnly <- col == "Concentration.Units" & !(before %in% dropdowns[[col]])
+    readOnly <- col == "Concentration.Units" &
+      concentrationUnitsLocked(as.character(edited$Drug), before)
     bad <- !is.na(at) & value != before & (!(value %in% dropdowns[[col]]) | readOnly)
     if (any(bad)) badUnits <- c(badUnits, sprintf("%s %s", edited$Drug[bad], col))
   }
@@ -149,6 +150,24 @@ drugLibraryProblems <- function(edited, current) {
       "Choose each unit from its list, and a Default.Units, Bolus.Units or Infusion.Units from the drug's Units (",
       paste(badUnits, collapse = ", "), ")."))
   }
+  # Nor may it take away a unit the dose table uses: the grid blanks a unit
+  # its drug does not take, so the row left the table at the next edit of
+  # any row (Carbon's third UI audit, 2026-11-15, C4).  `inUse` is the
+  # tables' Drug and Units (dosedUnits()).
+  if (!is.null(inUse) && nrow(inUse) > 0) {
+    inUseText <- character(0)
+    for (i in which(!is.na(at) & !identical2(units, unitsBefore))) {
+      drug <- as.character(edited$Drug[i])
+      removed <- setdiff(tokens(unitsBefore[i]), tokens(units[i]))
+      used <- intersect(removed, inUse$Units[inUse$Drug == drug])
+      if (length(used)) inUseText <- c(inUseText, sprintf("%s %s", drug, used))
+    }
+    if (length(inUseText)) {
+      problems <- c(problems, paste0(
+        "A unit the dose table uses cannot be removed; change or delete those doses first (",
+        paste(unique(inUseText), collapse = ", "), ")."))
+    }
+  }
   badNumbers <- character(0)
   # Only an entry the edit changed is held to the grid's limits: one left as
   # the grid showed it is the library's own, and a library value past them
@@ -168,6 +187,17 @@ drugLibraryProblems <- function(edited, current) {
     if (any(bad)) {
       badNumbers <- c(badNumbers, sprintf("%s %s: \"%s\"", edited$Drug[bad], col, shown(valueChr[bad])))
     }
+  }
+  # And a range that runs the right way, for a row the edit changed (Carbon's
+  # third UI audit, 2026-11-15, M6)
+  lowerNow <- suppressWarnings(as.numeric(as.character(edited$Lower)))
+  upperNow <- suppressWarnings(as.numeric(as.character(edited$Upper)))
+  rangeChanged <- !is.na(at) & (cellText(edited$Lower) != cellText(shownNow$Lower[at]) |
+                                  cellText(edited$Upper) != cellText(shownNow$Upper[at]))
+  inverted <- rangeChanged & is.finite(lowerNow) & is.finite(upperNow) & lowerNow > upperNow
+  if (any(inverted)) {
+    problems <- c(problems, paste0("Lower must not be above Upper (",
+                                   paste(edited$Drug[inverted], collapse = ", "), ")."))
   }
   if (length(badNumbers)) {
     problems <- c(problems, paste0(
@@ -308,6 +338,113 @@ doseTableRescaleTargets <- function(dt, factors) {
     dt$Dose[i] <- converted
   }
   dt
+}
+
+# Whether a drug's concentration unit is fixed in the Drug Library: one that
+# is not mcg or ng (an INR, a %, mmol...), and the drugs on the saturable
+# engine, whose Vmax, Km and binding constants are in the model's own unit:
+# moved to ng, phenytoin's curve was 2,225 times the mcg curve rather than
+# 1,000, linagliptin's 0.0034 times rather than 0.001 (Carbon's third UI
+# audit, 2026-11-15, C5).
+concentrationUnitsLocked <- function(drugs, units) {
+  !(units %in% c("mcg", "ng")) | vapply(drugs, drugOnSaturableEngine, logical(1))
+}
+
+# Whether a drug is simulated on the Michaelis-Menten engine: a property of the
+# model, read once from a reference adult and remembered
+drugOnSaturableEngine <- memoise::memoise(function(drug) {
+  PK <- tryCatch(getDrugPK(drug, weight = 70, height = 170, age = 40, sex = SEX_MALE),
+                 error = function(e) NULL)
+  !is.null(PK$michaelisMenten)
+})
+
+# The drugs and units a dose table uses, for drugLibraryProblems(inUse =)
+dosedUnits <- function(dt) {
+  if (is.null(dt) || nrow(dt) == 0) return(data.frame(Drug = character(0), Units = character(0)))
+  drug <- as.character(dt$Drug)
+  units <- as.character(dt$Units)
+  keep <- !is.na(drug) & nzchar(drug) & !is.na(units) & nzchar(units)
+  data.frame(Drug = drug[keep], Units = units[keep], stringsAsFactors = FALSE)
+}
+
+# The library an edit of the Drug Library makes (`edited`, the grid's text as
+# drugLibraryProblems() accepted it; `current`, the library before): the
+# columns typed back, a blank MEAC 0, and the columns the grid does not show or
+# lets no one change (endCe, Category, Class) from `current`.  The dialog's
+# Apply and a restored link share it.
+drugLibraryTable <- function(edited, current) {
+  new <- edited
+  for (col in c("Drug", "Concentration.Units", "Bolus.Units", "Infusion.Units",
+                "Default.Units", "Units", "Color"))
+    new[[col]] <- as.character(new[[col]])
+  for (col in DRUG_LIBRARY_NUMERIC_COLUMNS) new[[col]] <- suppressWarnings(as.numeric(new[[col]]))
+  # A blank MEAC is no MEAC, which the library writes 0: kept as NA it
+  # stopped every simulation of the drug ("missing value where TRUE/FALSE
+  # needed" in simCpCe(); Gemini's production audit, 2026-11-08, finding 2)
+  new$MEAC[is.na(new$MEAC)] <- 0
+  # Class is shown but read-only: it is what makes a drug an inhaled agent
+  # (gasDrugNames()), which an edit could otherwise give propofol or take
+  # from sevoflurane (the same audit, finding 4).
+  at <- match(new$Drug, current$Drug)
+  new$endCe <- current$endCe[at]
+  new$Category <- current$Category[at]
+  new$Class <- current$Class[at]
+  # A row with no units (a metabolite's, which the grid shows as "NA",
+  # drugUnitsSimplify()) keeps none, rather than a unit called "NA"
+  none <- is.na(new$Units) | trimws(new$Units) %in% c("", "NA")
+  new$Units <- drugUnitsExpand(new$Units)
+  new$Units[none] <- list(NA_character_)
+  new
+}
+
+# The columns of the Drug Library a bookmark carries
+DRUG_LIBRARY_BOOKMARK_COLUMNS <- c("Concentration.Units", "Units", "Default.Units",
+                                   "Bolus.Units", "Infusion.Units", "Color",
+                                   DRUG_LIBRARY_NUMERIC_COLUMNS)
+
+# The rows of the Drug Library changed from the package's, as the grid's text,
+# for a bookmark; NULL when none is.  A link that carried the dose table but
+# not the library reopened a drug moved to ng in mcg, its targets and
+# measured levels, converted with it, then 1000 times too high (Carbon's
+# third UI audit, 2026-11-15, C4).
+changedDrugLibrary <- function(drugDefaults, defaults = getDrugDefaultsGlobal()) {
+  now <- drugLibraryGridData(drugDefaults)
+  was <- drugLibraryGridData(defaults)
+  at <- match(now$Drug, was$Drug)
+  cell <- function(x) { x <- trimws(as.character(x)); x[is.na(x)] <- ""; x }
+  changed <- !is.na(at) & Reduce(`|`, lapply(DRUG_LIBRARY_BOOKMARK_COLUMNS, function(col)
+    cell(now[[col]]) != cell(was[[col]][at])))
+  if (!any(changed)) return(NULL)
+  out <- now[changed, c("Drug", DRUG_LIBRARY_BOOKMARK_COLUMNS), drop = FALSE]
+  for (col in DRUG_LIBRARY_BOOKMARK_COLUMNS) out[[col]] <- cell(out[[col]])
+  rownames(out) <- NULL
+  out
+}
+
+# The library a link carries (changedDrugLibrary()), read as untrusted input:
+# applied to the package's library and held to the Drug Library dialog's own
+# rules (drugLibraryProblems()).  Returns a list: `table`, the library (the
+# package's when the link's cannot be used), and `problems`, sentences.
+restoredDrugLibrary <- function(saved, defaults = getDrugDefaultsGlobal()) {
+  if (is.null(saved)) return(list(table = defaults, problems = character(0)))
+  unread <- list(table = defaults, problems = paste(
+    "The link's drug library could not be read; the standard library is used,",
+    "so check the dose table's units and targets."))
+  saved <- tryCatch(as.data.frame(saved, stringsAsFactors = FALSE), error = function(e) NULL)
+  if (is.null(saved) || !"Drug" %in% names(saved) || nrow(saved) > nrow(defaults)) return(unread)
+  edited <- drugLibraryGridData(defaults)
+  for (i in seq_len(nrow(saved))) {
+    k <- match(asScalarString(saved$Drug[[i]]), edited$Drug)
+    if (is.na(k)) next
+    for (col in intersect(DRUG_LIBRARY_BOOKMARK_COLUMNS, names(saved))) {
+      v <- saved[[col]][[i]]
+      if (is.numeric(v) && length(v) == 1) v <- as.character(v)
+      edited[[col]][k] <- asScalarString(v)
+    }
+  }
+  problems <- tryCatch(drugLibraryProblems(edited, defaults), error = function(e) "unreadable")
+  if (length(problems) > 0) return(unread)
+  list(table = drugLibraryTable(edited, defaults), problems = character(0))
 }
 
 # Elementwise identical() for two character vectors, NA equal to NA

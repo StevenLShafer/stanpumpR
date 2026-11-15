@@ -200,11 +200,30 @@ bayesianObservations <- function(observations)
 bayesianRelevantDrugs <- function(drug, drugs, dosed, antiseizureInteractions)
 {
   if (isTRUE(antiseizureInteractions)) return(dosed)
-  parents <- dosed[vapply(dosed, function(d) {
+  unique(c(drug, bayesianParents(drug, drugs, dosed)))
+}
+
+# Those of `candidates` that form `drug` as their active metabolite
+bayesianParents <- function(drug, drugs, candidates)
+{
+  candidates[vapply(candidates, function(d) {
     name <- drugs[[d]]$metaboliteName
     !is.null(name) && identical(name, drug)
   }, logical(1))]
-  unique(c(drug, parents))
+}
+
+# A parent's entry rebuilt to form the individual's metabolite: `factors` is
+# the metabolite's estimate (getDrugPK(metaboliteIndividual =), through
+# recalculatePK(individual =)).  The parent keeps its own estimate, where the
+# update made one, its pump's model and its colour.
+bayesianParentEntry <- function(parent, drug, drugs, factors, rebuild)
+{
+  old <- drugs[[parent]]
+  individual <- stats::setNames(list(factors), drug)
+  if (!is.null(old$individual)) individual[[parent]] <- old$individual
+  entry <- rebuild(parent, individual)
+  for (field in c("Color", "tciModel", "bayesian")) entry[[field]] <- old[[field]]
+  entry
 }
 
 # The latest measurement an update uses (minutes): the end of the plot, and
@@ -388,13 +407,20 @@ bayesianFitDrug <- function(drug, drugs, DT, ET, measured, omega, sigma, rebuild
   maximum <- max(times) + 1
   simCache <- NULL
 
-  predict <- function(entry) {
+  # A metabolite's level is also what its dosed parents form, and they form
+  # the individual's metabolite (bayesianParentEntry()): rebuilt from the
+  # model's, every candidate's parents formed the same metabolite, and a
+  # level of morphine formed from codeine left the estimate where it began
+  # (Carbon's third UI audit, 2026-11-15, H7)
+  parents <- bayesianParents(drug, drugs, setdiff(relevant, drug))
+  predict <- function(entry, parentEntries = list()) {
     # No simulation is started after the deadline (BAYES_MAX_SECONDS)
     if (proc.time()[["elapsed"]] > deadline)
       stop(structure(class = c("bayesTimeLimit", "error", "condition"),
                      list(message = "time limit", call = NULL)))
     candidate <- entries
     candidate[[drug]] <- entry
+    for (p in names(parentEntries)) candidate[[p]] <- parentEntries[[p]]
     out <- withOutputTimes(times, processdoseTable(
       DTsub, ET, candidate, maximum, FALSE, cache = simCache,
       antiseizureInteractions = antiseizureInteractions))
@@ -410,10 +436,16 @@ bayesianFitDrug <- function(drug, drugs, DT, ET, measured, omega, sigma, rebuild
   }
   usesPump <- any(isTciUnit(DTsub$Units[DTsub$Drug == drug]))
   entryFor <- function(eta) {
-    entry <- rebuild(drug, list(clearance = exp(eta[1]), volume = exp(eta[2])))
+    factors <- list(clearance = exp(eta[1]), volume = exp(eta[2]))
+    entry <- rebuild(drug, stats::setNames(list(factors), drug))
     # The pump ran on the library's model (see the header)
     if (usesPump) entry$tciModel <- drugs[[drug]]
     entry
+  }
+  parentsFor <- function(eta) {
+    factors <- list(clearance = exp(eta[1]), volume = exp(eta[2]))
+    stats::setNames(lapply(parents, bayesianParentEntry, drug = drug, drugs = drugs,
+                           factors = factors, rebuild = rebuild), parents)
   }
 
   population <- predict(drugs[[drug]])
@@ -430,7 +462,7 @@ bayesianFitDrug <- function(drug, drugs, DT, ET, measured, omega, sigma, rebuild
   tried <- list(list(eta = c(0, 0), prediction = population))
   predictAt <- function(eta) {
     for (t in tried) if (identical(t$eta, eta)) return(t$prediction)
-    prediction <- predict(entryFor(eta))
+    prediction <- predict(entryFor(eta), parentsFor(eta))
     tried[[length(tried) + 1]] <<- list(eta = eta, prediction = prediction)
     prediction
   }
@@ -482,8 +514,11 @@ bayesianFitDrug <- function(drug, drugs, DT, ET, measured, omega, sigma, rebuild
 #'   of a measurement about the individual's prediction (assay, timing and
 #'   model error together)
 #' @param rebuild function(drug, individual) returning the drug's entry, as
-#'   recalculatePK() builds it, for the individual's factors (a list of
-#'   `clearance` and `volume`); recalculatePK(individual =) is the usual one
+#'   recalculatePK() builds it, for `individual`, the estimates by drug (a
+#'   named list of lists of `clearance` and `volume`, the form
+#'   recalculatePK(individual =) takes, which is the usual rebuild): the
+#'   drug's own, and, for a drug that forms a measured metabolite, the
+#'   metabolite's, which it then forms
 #' @param antiseizureInteractions are the antiseizure interactions on?
 #' @param fits the `fits` of an earlier call, whose estimates are reused for
 #'   any drug whose inputs have not changed
@@ -638,13 +673,30 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
     newFits[[drug]] <- fit
 
     priors[[drug]] <- entry
-    updated <- rebuild(drug, list(clearance = fit$clearance, volume = fit$volume))
+    factors <- list(clearance = fit$clearance, volume = fit$volume)
+    # The model's own line includes what the parents form as the model has
+    # it, as the fit's population prediction did (foldMetabolites())
+    parents <- bayesianParents(drug, drugs, setdiff(relevant, drug))
+    priors[[drug]]$populationSources <- drugs[parents]
+    updated <- rebuild(drug, stats::setNames(list(factors), drug))
     # The pump ran on the library's model (see the header)
     if (any(isTciUnit(DTsub$Units[DTsub$Drug == drug]))) updated$tciModel <- entry
     updated$Color <- entry$Color
     updated$bayesian <- list(clearance = fit$clearance, volume = fit$volume,
                              n = nrow(rows))
     drugs[[drug]] <- updated
+    # Its line without the antiseizure interactions shows what they do to
+    # the drug as drawn, so it is the individual's too (Carbon's third UI
+    # audit, 2026-11-15, H7)
+    reference <- asmReferenceName(drug)
+    if (!is.null(drugs[[reference]])) {
+      kept <- drugs[[reference]][c("drug", "companionOf", "modelLabel", "companionGroup",
+                                   "helpPage", "Color")]
+      drugs[[reference]] <- utils::modifyList(updated, kept)
+    }
+    # And its parents form the individual's metabolite
+    for (p in parents)
+      drugs[[p]] <- bayesianParentEntry(p, drug, drugs, factors, rebuild)
   }
 
   # The model's own prediction beside each updated drug, after every drug
@@ -658,7 +710,11 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
     prior$modelLabel <- BAYES_PRIOR_LABEL
     prior$companionGroup <- "bayesian"
     prior$helpPage <- BAYES_HELP_PAGE
-    prior$Color <- alternativeModelColor(prior$Color)
+    # Its own shade, which the other companions' (Minto and Schnider, the
+    # antiseizure interactions' "no interactions") do not take: all three
+    # took alternativeModelColor()'s, and a drug with two drew them in one
+    # colour (Carbon's third UI audit, 2026-11-15, H7)
+    prior$Color <- alternativeModelColor(prior$Color, amount = BAYES_PRIOR_COLOR_AMOUNT)
     drugs[[name]] <- prior
   }
   list(drugs = drugs, fits = newFits, problems = problems, failed = failed)

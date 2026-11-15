@@ -19,7 +19,7 @@ priorDrugsFor <- function(DT, defaults = G) {
 rebuildFor <- function(DT, defaults = G) {
   function(drug, individual) {
     recalculatePK(NULL, defaults, DT[DT$Drug == drug, , drop = FALSE], age = 50, weight = 70,
-                  height = 170, sex = "male", individual = stats::setNames(list(individual), drug))[[drug]]
+                  height = 170, sex = "male", individual = individual)[[drug]]
   }
 }
 oneDose <- function(drug, dose, units, time = 0) {
@@ -771,6 +771,223 @@ test_that("a level before absorption begins is set aside, and a dose of 0 is no 
   expect_length(res$fits, 0)
   expect_false(bayesianPriorName("propofol") %in% names(res$drugs))
   expect_match(res$problems, "propofol has no dose above 0 yet", fixed = TRUE)
+})
+
+# --- Carbon's third audit, of PR #730 at 4164743 (2026-11-15) ----------------
+
+test_that("a forged genotype or plot option is read as the control's own choice (P3-C1)", {
+  expect_identical(choiceOf("invalid_allele", CYP2D6_VALUES, CYP2D6_DEFAULT), CYP2D6_DEFAULT)
+  expect_identical(choiceOf(c("Range", "Mid"), PLOT_TYPICAL_CHOICES, "Range"), "Range")
+  expect_identical(choiceOf(NULL, PLOT_LINE_TYPES, "solid"), "solid")
+  expect_identical(choiceOf(list("dashed"), PLOT_LINE_TYPES, "solid"), "solid")
+  expect_identical(choiceOf("dashed", PLOT_LINE_TYPES, "solid"), "dashed")
+  shiny::testServer(app_server, {
+    startCarbon(session, oneDose("codeine", 60, "mg PO"))
+    session$setInputs(cyp2d6 = "invalid_allele", typical = c("Range", "Mid"),
+                      normalization = list(1), plasmaLinetype = 3, logY = c(TRUE, FALSE))
+    expect_null(plotMessage())
+    expect_false(session$isClosed())
+  })
+})
+
+test_that("a click or hover on a plot that failed leaves the session open (P3-C1, P3-H4)", {
+  shiny::testServer(app_server, {
+    startCarbon(session, oneDose("propofol", 0, "mg"))
+    session$setInputs(logY = TRUE)
+    expect_match(plotMessage(), "logarithmic axis needs a concentration above zero", fixed = TRUE)
+    e <- list(x = 10, y = 1, panelvar1 = "propofol")
+    session$setInputs(plot_click = e)
+    expect_false(session$isClosed())
+    session$setInputs(plot_hover = e)
+    expect_false(session$isClosed())
+    session$setInputs(plot_dblclick = e)
+    expect_false(session$isClosed())
+  })
+})
+
+test_that("a vector Max time or Min time leaves the time settings working (P3-C2)", {
+  shiny::testServer(app_server, {
+    startCarbon(session, fullTable(1))
+    session$setInputs(maximum = c("60", "120"), minimum = list())
+    session$setInputs(timeUnits = "hours")
+    expect_false(session$isClosed())
+    expect_identical(doseTableFormat(), timeFormat("hours", "relative"))
+  })
+})
+
+test_that("a link carries the Drug Library's edits, read as untrusted input (P3-C4)", {
+  edited <- G
+  edited$Concentration.Units[edited$Drug == "propofol"] <- "ng"
+  edited$Color[edited$Drug == "fentanyl"] <- "#123456"
+  saved <- changedDrugLibrary(edited)
+  expect_setequal(saved$Drug, c("propofol", "fentanyl"))
+  expect_null(changedDrugLibrary(G))
+  back <- restoredDrugLibrary(saved)
+  expect_length(back$problems, 0)
+  expect_identical(back$table$Concentration.Units[back$table$Drug == "propofol"], "ng")
+  expect_identical(back$table$Color[back$table$Drug == "fentanyl"], "#123456")
+  # what the library dialog itself refuses, a link cannot carry
+  forged <- saved
+  forged$Concentration.Units[forged$Drug == "propofol"] <- "INR"
+  expect_identical(restoredDrugLibrary(forged)$table, G)
+  expect_match(restoredDrugLibrary(forged)$problems, "could not be read", fixed = TRUE)
+  expect_identical(restoredDrugLibrary("abc")$table, G)
+  expect_identical(restoredDrugLibrary(list(Drug = 1:1000))$table, G)
+  # and a unit the dose table uses is not removed from under it
+  grid <- drugLibraryGridData(G)
+  grid$Units[grid$Drug == "fentanyl"] <- sub("mcg/kg/min,", "", grid$Units[grid$Drug == "fentanyl"],
+                                             fixed = TRUE)
+  inUse <- data.frame(Drug = "fentanyl", Units = "mcg/kg/min", stringsAsFactors = FALSE)
+  if (!identical(grid$Units, drugLibraryGridData(G)$Units)) {
+    expect_match(drugLibraryProblems(grid, G, inUse = inUse), "cannot be removed", fixed = TRUE)
+  }
+})
+
+test_that("TCI only for a linear drug in mcg or ng, and a saturable drug keeps its units (P3-C5)", {
+  expect_error(simulated(oneDose("phenytoin", 10, TCI_UNIT_PLASMA)), "simulated numerically",
+               fixed = TRUE)
+  expect_error(simulated(oneDose("enalapril", 10, TCI_UNIT_PLASMA)), "simulated numerically",
+               fixed = TRUE)
+  expect_true(concentrationUnitsLocked("phenytoin", "mcg"))
+  expect_false(concentrationUnitsLocked("propofol", "mcg"))
+  edited <- drugLibraryGridData(G)
+  edited$Concentration.Units[edited$Drug == "phenytoin"] <- "ng"
+  expect_match(drugLibraryProblems(edited, G), "phenytoin Concentration.Units", fixed = TRUE)
+})
+
+test_that("a later, larger dose does not change the saturable engine's earlier curve (P3-H5)", {
+  # Carbon's example: a legal later dose in a 500 kg patient set the error
+  # tolerance of the whole run at 460 mg, and the first dose read as none
+  early <- data.frame(Drug = "phenytoin", Time = 0, Dose = 300, Units = "mg PO",
+                      stringsAsFactors = FALSE)
+  both <- rbind(early, data.frame(Drug = "phenytoin", Time = 1400, Dose = 1e9,
+                                  Units = "mg/kg", stringsAsFactors = FALSE))
+  at <- c(60, 360, 1000, 1300)
+  plasma <- function(DT) {
+    drugs <- recalculatePK(NULL, G, DT, age = 50, weight = 500, height = 170, sex = "male")
+    wide <- withOutputTimes(at, processdoseTable(DT, noEvents, drugs, 1440, FALSE))$phenytoin$wide
+    wide$Plasma[match(at, wide$Time)]
+  }
+  a <- plasma(early)
+  expect_true(all(a > 0))
+  expect_equal(plasma(both), a, tolerance = 1e-5)
+})
+
+test_that("Suggest Dosing reads the events against the window it fits (P3-H6)", {
+  # Carbon's example: an infant on bypass from 70 minutes, targets at 60 and
+  # 120.  The bypass was read at 70 minutes of the window that starts at 60,
+  # and the regimen fitted to the clearance before it, 68.6% high.
+  infant <- function(DT) recalculatePK(NULL, G, DT, age = 0.5, weight = 6, height = 65,
+                                       sex = "male")
+  drugs <- infant(oneDose("dexmedetomidine", 0, "mcg/kg"))
+  regimenFor <- function(start) {
+    targets <- data.frame(Time = c(start, start + 60), Target = c(0.6, 0.6))
+    events <- data.frame(Time = start + 10, Event = "CPB Start", stringsAsFactors = FALSE)
+    suggest("dexmedetomidine", targets, start + 70, drugs, G$Drug, events, REFERENCE_TIME_NONE)
+  }
+  r0 <- regimenFor(0)
+  r60 <- regimenFor(60)
+  expect_equal(r60$Time - 60, r0$Time)
+  expect_equal(r60$Dose, r0$Dose, tolerance = 1e-6)
+})
+
+test_that("the library refuses a range that runs backwards, and the plot a log axis it ignores (P3-M6)", {
+  edited <- drugLibraryGridData(G)
+  edited$Lower[edited$Drug == "fentanyl"] <- "10"
+  edited$Upper[edited$Drug == "fentanyl"] <- "1"
+  expect_match(drugLibraryProblems(edited, G), "Lower must not be above Upper (fentanyl)",
+               fixed = TRUE)
+  # a library row already so is not this edit's
+  current <- G
+  current$Lower[current$Drug == "propofol"] <- 9
+  current$Upper[current$Drug == "propofol"] <- 1
+  expect_length(drugLibraryProblems(drugLibraryGridData(current), current), 0)
+})
+
+test_that("a metabolite's level moves its estimate through what its parents form (P3-H7)", {
+  DT <- data.frame(Drug = c("codeine", "morphine"), Time = 0, Dose = c(60, 0),
+                   Units = c("mg PO", "mg"), stringsAsFactors = FALSE)
+  obs <- data.frame(Drug = "morphine", Time = c(120, 240), Concentration = c(0.003, 0.002))
+  res <- bayesianUpdateDrugs(priorDrugsFor(DT), DT, noEvents, obs, rebuild = rebuildFor(DT))
+  fit <- res$fits$morphine
+  # The model predicts less than measured, so the patient clears less
+  expect_true(all(fit$observations$Population < fit$observations$Measured))
+  expect_lt(fit$clearance, 0.9)
+  expect_lt(sum(log(fit$observations$Individual / fit$observations$Measured)^2),
+            sum(log(fit$observations$Population / fit$observations$Measured)^2) / 4)
+  # codeine forms the individual's morphine
+  expect_equal(res$drugs$codeine$metaboliteIndividual,
+               list(clearance = fit$clearance, volume = fit$volume))
+  # and both plotted lines are the fit's predictions, the population's with
+  # the morphine codeine forms
+  out <- withOutputTimes(obs$Time, processdoseTable(DT, noEvents, res$drugs, 600, FALSE))
+  plotted <- function(name) out[[name]]$wide$Plasma[match(obs$Time, out[[name]]$wide$Time)]
+  expect_equal(plotted("morphine"), fit$observations$Individual, tolerance = 1e-6)
+  expect_equal(plotted("morphine (population)"), fit$observations$Population, tolerance = 1e-6)
+  expect_false(identical(res$drugs$morphine$Color, res$drugs[["morphine (population)"]]$Color))
+})
+
+test_that("a victim's population line takes the interactions, in its own colour (P3-H7)", {
+  DT <- data.frame(Drug = c("valproate", "lamotrigine"), Time = 0, Dose = c(500, 100),
+                   Units = c("mg PO bid", "mg PO qd"), stringsAsFactors = FALSE)
+  drugs <- recalculatePK(NULL, G, DT, age = 50, weight = 70, height = 170, sex = "male",
+                         antiseizureInteractions = TRUE)
+  t14 <- 14 * 1440
+  obs <- data.frame(Drug = "lamotrigine", Time = t14, Concentration = 4)
+  res <- bayesianUpdateDrugs(drugs, DT, noEvents, obs, rebuild = rebuildFor(DT),
+                             antiseizureInteractions = TRUE, maximum = 15 * 1440)
+  fit <- res$fits$lamotrigine
+  out <- withOutputTimes(t14, processdoseTable(DT, noEvents, res$drugs, 15 * 1440, FALSE,
+                                               antiseizureInteractions = TRUE))
+  plotted <- function(name) out[[name]]$wide$Plasma[match(t14, out[[name]]$wide$Time)]
+  expect_equal(plotted("lamotrigine (population)"), fit$observations$Population, tolerance = 1e-3)
+  expect_equal(plotted("lamotrigine"), fit$observations$Individual, tolerance = 1e-3)
+  # the line without the interactions is the individual's too, so it lies
+  # below the individual's by what valproate does to it
+  expect_lt(plotted("lamotrigine (no interactions)"), plotted("lamotrigine"))
+  noInteraction <- out[["lamotrigine (no interactions)"]]
+  expect_identical(noInteraction$individual, res$drugs$lamotrigine$individual)
+  colours <- vapply(res$drugs[c("lamotrigine (population)", "lamotrigine (no interactions)")],
+                    function(d) d$Color, "")
+  expect_false(identical(colours[[1]], colours[[2]]))
+})
+
+test_that("an emptied Procedure start is said, and moving it keeps the events' clock times (P3-M2, P3-M5)", {
+  shiny::testServer(app_server, {
+    startCarbon(session, fullTable(1))
+    session$setInputs(timeMode = "clock", referenceTime = "08:00")
+    session$setInputs(client_time = "2026-11-15 07:55:00")
+    expect_null(referenceTimeProblem())
+    session$setInputs(referenceTime = "")
+    expect_match(referenceTimeProblem(), "Enter the Procedure start", fixed = TRUE)
+    session$setInputs(referenceTime = c("08:00", "09:00"))
+    expect_false(session$isClosed())
+    expect_match(plotMessage(), "Procedure start", fixed = TRUE)
+    session$setInputs(referenceTime = "08:00")
+    eventTable(data.frame(Time = 60, Event = "Intubation", stringsAsFactors = FALSE))
+    session$setInputs(referenceTime = "07:30")
+    expect_equal(eventTable()$Time, 90)
+  })
+})
+
+test_that("measured levels keep their clock times until the procedure start can be read (P3-M2)", {
+  clock <- timeFormat("minutes", "clock")
+  rows <- data.frame(Drug = "propofol", Time = "08:30", Concentration = "2",
+                     stringsAsFactors = FALSE)
+  expect_equal(bayesRowsToObservations(rows, clock, "08:00")$Time, 30)
+  expect_equal(nrow(bayesRowsToObservations(rows, clock, "")), 0)
+})
+
+test_that("a teaching scenario clears the measured concentrations (P3-M3)", {
+  shiny::testServer(app_server, {
+    startCarbon(session, oneDose("propofol", 100, "mg"))
+    bayes$rows(list(rows = data.frame(Drug = "propofol", Time = "30", Concentration = "3",
+                                      stringsAsFactors = FALSE),
+                    format = timeFormat("minutes", "relative")))
+    expect_equal(nrow(bayes$rows()$rows), 1)
+    helpApi$loadScenario(helpScenarios()[[1]])
+    expect_equal(nrow(bayes$rows()$rows), 0)
+  })
 })
 
 .sprglobals$config <- oldConfig

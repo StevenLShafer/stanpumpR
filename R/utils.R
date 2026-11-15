@@ -26,6 +26,14 @@ asScalarString <- function(x, default = "") {
   if (is.character(x) && length(x) == 1L && !is.na(x)) x else default
 }
 
+# One of a control's own choices, or its default: a link or a forged input
+# can carry a vector, a list or an unknown value where a select sends one of
+# its options (Carbon's third UI audit, 2026-11-15, C1)
+choiceOf <- function(x, choices, default) {
+  x <- asScalarString(x)
+  if (x %in% choices) x else default
+}
+
 # Check if the contents of two dataframes are identical, ignoring the row names
 identicalTable <- function(x, y) {
   rownames(x) <- NULL

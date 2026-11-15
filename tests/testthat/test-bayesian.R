@@ -16,7 +16,7 @@ rebuildFor <- function(DT) {
   function(drug, individual) {
     recalculatePK(NULL, getDrugDefaultsGlobal(), DT[DT$Drug == drug, , drop = FALSE],
                   age = patient$age, weight = patient$weight, height = patient$height,
-                  sex = patient$sex, individual = stats::setNames(list(individual), drug))[[drug]]
+                  sex = patient$sex, individual = individual)[[drug]]
   }
 }
 

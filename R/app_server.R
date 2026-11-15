@@ -243,8 +243,14 @@ app_server <- function(input, output, session) {
   # The procedure start that times in `format` are read against.  The box is
   # read only in clock mode, so typing in it does not disturb elapsed times.
   referenceFor <- function(format) {
-    if (isClockFormat(format)) input$referenceTime else REFERENCE_TIME_NONE
+    if (isClockFormat(format)) procedureStart() else REFERENCE_TIME_NONE
   }
+  # The Procedure start box, as one string: a link or a forged input could
+  # send a vector or a null there, which took the plot down (Carbon's third
+  # UI audit, 2026-11-15, M5)
+  procedureStart <- function() asScalarString(input$referenceTime)
+  # Has the browser's clock, which fills an empty Procedure start, arrived?
+  clockArrived <- reactiveVal(FALSE)
 
   # As referenceFor(), but waiting while a clock-mode procedure start cannot
   # be read (it is empty until the browser's clock arrives, and may be half
@@ -308,9 +314,13 @@ app_server <- function(input, output, session) {
     minimum <- snapMinimum(minimum, maximum, unit)
     # New values make the plot wait until the browser reports them, rather
     # than simulate first with the old ones (plotInfo())
-    shownMaximum <- suppressWarnings(as.numeric(isolate(input$maximum)))
-    shownMinimum <- suppressWarnings(as.numeric(isolate(input$minimum)))
-    if (length(shownMinimum) != 1) shownMinimum <- 0
+    # One number each, whatever the browser or a link sent: a vector made the
+    # && below an error, which ended the session at a change of time unit
+    # and stopped a bookmark's restore half way (Carbon's third UI audit,
+    # 2026-11-15, C2)
+    shownMaximum <- asScalarNumeric(isolate(input$maximum))
+    shownMinimum <- asScalarNumeric(isolate(input$minimum))
+    if (is.na(shownMinimum)) shownMinimum <- 0
     if (!isTRUE(maximum == shownMaximum && minimum == shownMinimum)) sliderPending(TRUE)
     r <- timeSliderRange(unit)
     updateSliderInput(session, "maximum", value = maximum, min = r$step, max = r$max, step = r$step)
@@ -392,7 +402,7 @@ app_server <- function(input, output, session) {
     }
 
     draft <- doseTableDraft()
-    res <- rebaseDoseTimes(draft, from, target, input$referenceTime)
+    res <- rebaseDoseTimes(draft, from, target, procedureStart())
     if (!res$ok) {
       # Clock times cannot be converted without the procedure start.  Put the
       # selectors back; the table is untouched.
@@ -442,8 +452,10 @@ app_server <- function(input, output, session) {
   # The Help tab: see R/help-server.R.  Loading a teaching scenario from the
   # help writes doseTable() and eventTable() directly, as a URL restore does,
   # and sets the time settings through timeApi.
+  # A scenario is a new patient, whose measured concentrations are not the
+  # last one's (`bayes` is made below, and read when a scenario loads)
   helpApi <- helpServer(input, output, session, doseTable, eventTable, drugDefaults,
-                        timeApi = timeApi)
+                        timeApi = timeApi, onLoad = function() bayes$clear())
 
   # Single Paper Review, a tab of its own that shares nothing with the
   # simulator (R/paper-review-app.R).
@@ -525,8 +537,8 @@ app_server <- function(input, output, session) {
   # string, and getReferenceTime() on a client_time that was not, ended the
   # session (Carbon's UI audit, 2026-11-14, F6E)
   observeEvent(input$client_time, {
-    reference <- input$referenceTime
-    if (!is.null(reference) && !identical(reference, "")) {
+    clockArrived(TRUE)
+    if (nzchar(procedureStart())) {
       return()
     }
     outputComments("In observeEvent(input$client_time,...", level = DEBUG_LEVEL_VERBOSE)
@@ -536,6 +548,27 @@ app_server <- function(input, output, session) {
     outputComments("Calculated reference time:", start)
     updateNumericInput(session, "referenceTime", value = start)
   }, ignoreNULL = TRUE, once = TRUE)
+
+  # A change of the Procedure start in clock time moves the doses, whose
+  # times are clock times read from it, but not the events, which are kept
+  # in minutes after it: moving the start from 08:00 to 07:30 put every event
+  # half an hour earlier against the doses (Carbon's third UI audit,
+  # 2026-11-15, M2).  So the events are moved with the doses, each keeping
+  # its clock time, read as the doses' are (across midnight too).
+  lastProcedureStart <- NULL
+  observeEvent(input$referenceTime, {
+    start <- procedureStart()
+    if (!isValidReferenceTime(start)) return()
+    old <- lastProcedureStart
+    lastProcedureStart <<- start
+    if (is.null(old) || !isClockFormat(selectorFormat())) return()
+    shift <- displayTimeToMinutes(old, start, "minutes")
+    if (!isTRUE(is.finite(shift)) || shift == 0) return()
+    events <- eventTable()
+    if (is.null(events) || nrow(events) == 0) return()
+    events$Time <- as.numeric(events$Time) + shift
+    eventTable(events)
+  }, ignoreNULL = TRUE)
 
   # The procedure start for what is drawn (the axis and hover labels), which
   # follow the selectors: REFERENCE_TIME_NONE when times are elapsed, and in
@@ -595,10 +628,15 @@ app_server <- function(input, output, session) {
       # misalign it.
       state$values$macThreshold <- macThreshold()
       state$values$endCe <- changedThresholds(drugDefaults())
+      # And the Drug Library's changes, which the dose table's units, targets
+      # and measured levels are in: a link without them reopened a drug moved
+      # to ng in mcg, its converted target 1000 times too high (Carbon's
+      # third UI audit, 2026-11-15, C4).  Only the changed rows.
+      state$values$drugLibrary <- changedDrugLibrary(drugDefaults())
       # The Bayesian update's measured concentrations, in minutes (complete
       # rows only); saved only when there are some, to keep links short.
       stored <- bayes$rows()
-      measured <- bayesRowsToObservations(stored$rows, stored$format, input$referenceTime)
+      measured <- bayesRowsToObservations(stored$rows, stored$format, procedureStart())
       if (nrow(measured) > 0) state$values$bayes <- measured
       excludeFromBookmark(isolate(names(input)))
     }, name = "onBookmark()")
@@ -648,8 +686,16 @@ app_server <- function(input, output, session) {
       # back to: it was made while the app opened in clock time, so it is not
       # read with today's TIME_MODE_DEFAULT
       if (is.null(saved)) {
-        saved <- timeFormat(TIME_UNIT_DEFAULT,
-                            if (is.null(state$input$timeMode)) "clock" else state$input$timeMode)
+        saved <- timeFormat(TIME_UNIT_DEFAULT, asScalarString(state$input$timeMode, "clock"))
+      }
+      # The link's Drug Library first, since its units are the dose table's
+      # and its targets are in its concentration units (restoredDrugLibrary(),
+      # held to the dialog's own rules)
+      restoredLibrary <- restoredDrugLibrary(state$values$drugLibrary)
+      if (!identical(restoredLibrary$table, drugDefaults())) drugDefaults(restoredLibrary$table)
+      if (length(restoredLibrary$problems) > 0) {
+        showNotification(paste(restoredLibrary$problems, collapse = " "), id = "bookmarkLibrary",
+                         type = "warning", duration = 15)
       }
       # Always there: a link without a dose table returned above.  Read as
       # untrusted input: a link is text anyone can write (R/bookmark-restore.R).
@@ -662,10 +708,10 @@ app_server <- function(input, output, session) {
                          id = "bookmarkUnreadable", type = "warning", duration = 10)
       }
       target <- selectorFormat()
-      restoredMaximum <- suppressWarnings(as.numeric(state$input$maximum))
-      restoredMinimum <- suppressWarnings(as.numeric(state$input$minimum))
-      if (length(restoredMinimum) != 1) restoredMinimum <- 0
-      res <- rebaseDoseTimes(DT, saved, target, input$referenceTime)
+      restoredMaximum <- asScalarNumeric(state$input$maximum)
+      restoredMinimum <- asScalarNumeric(state$input$minimum)
+      if (is.na(restoredMinimum)) restoredMinimum <- 0
+      res <- rebaseDoseTimes(DT, saved, target, procedureStart())
       if (res$ok) {
         setDoseTable(res$table, target)
         if (!isTRUE(restoredMaximum == snapMaximum(restoredMaximum, target[["unit"]]))) {
@@ -859,7 +905,7 @@ app_server <- function(input, output, session) {
     format <- doseTableFormat()
     if (!is.null(stamp) && !identical(stamp, format)) {
       doseTableRefresh(doseTableRefresh() + 1)
-      res <- rebaseDoseTimes(data, stamp, format, input$referenceTime)
+      res <- rebaseDoseTimes(data, stamp, format, procedureStart())
       if (!res$ok) return(FALSE)
       data <- res$table
     }
@@ -1190,12 +1236,18 @@ app_server <- function(input, output, session) {
 
   # A Procedure start that cannot be read while times are clock times.
   # reqReference() waits for a readable one, so without this the plot would
-  # simply stay blank, with "99:99" left in the box.  Blank is not a problem:
-  # the box is empty until the browser's clock arrives.
+  # simply stay blank, with "99:99" left in the box.  Blank is a problem only
+  # once the browser's clock has arrived, which fills it: emptied after that,
+  # the plot stayed blank and said nothing (Carbon's third UI audit,
+  # 2026-11-15, M2).
   referenceTimeProblem <- reactive({
     if (!isClockFormat(selectorFormat())) return(NULL)
-    reference <- input$referenceTime
-    if (is.null(reference) || !nzchar(trimws(reference)) || isValidReferenceTime(reference)) return(NULL)
+    reference <- procedureStart()
+    if (isValidReferenceTime(reference)) return(NULL)
+    if (!nzchar(trimws(reference))) {
+      if (!clockArrived()) return(NULL)
+      return("Enter the Procedure start as HH:MM, such as 08:30, to see the simulation in clock time.")
+    }
     paste0("The Procedure start \"", reference, "\" is not a clock time. ",
            "Enter it as HH:MM, such as 08:30.")
   })
@@ -1286,13 +1338,17 @@ app_server <- function(input, output, session) {
         weight = weight(),
         height = height(),
         sex = sex(),
-        # NULL on the first pass, before the control has reported in
-        cyp2d6 = if (is.null(input$cyp2d6)) CYP2D6_DEFAULT else input$cyp2d6,
-        cyp2c19 = if (is.null(input$cyp2c19)) CYP2C19_DEFAULT else input$cyp2c19,
-        cyp2c9 = if (is.null(input$cyp2c9)) CYP2C9_DEFAULT else input$cyp2c9,
-        vkorc1 = if (is.null(input$vkorc1)) VKORC1_DEFAULT else input$vkorc1,
-        cyp4f2 = if (is.null(input$cyp4f2)) CYP4F2_DEFAULT else input$cyp4f2,
-        cyp2b6 = if (is.null(input$cyp2b6)) CYP2B6_DEFAULT else input$cyp2b6,
+        # NULL on the first pass, before the control has reported in; and
+        # one of the control's own choices, which a link or a forged input
+        # replaced with anything ("Invalid cyp2d6" took the plot down and
+        # made a click on it end the session: Carbon's third UI audit,
+        # 2026-11-15, C1)
+        cyp2d6 = choiceOf(input$cyp2d6, CYP2D6_VALUES, CYP2D6_DEFAULT),
+        cyp2c19 = choiceOf(input$cyp2c19, CYP2C19_VALUES, CYP2C19_DEFAULT),
+        cyp2c9 = choiceOf(input$cyp2c9, CYP2C9_VALUES, CYP2C9_DEFAULT),
+        vkorc1 = choiceOf(input$vkorc1, VKORC1_VALUES, VKORC1_DEFAULT),
+        cyp4f2 = choiceOf(input$cyp4f2, CYP4F2_VALUES, CYP4F2_DEFAULT),
+        cyp2b6 = choiceOf(input$cyp2b6, CYP2B6_VALUES, CYP2B6_DEFAULT),
         osmolality = osmolality(),
         creatinine = creatinine(),
         gestationalAge = gestationalAge(),
@@ -1330,31 +1386,21 @@ app_server <- function(input, output, session) {
       priors <- drugPK(DT) |> profileCode("recalculatePK() in bayesUpdate()")
       observations <- bayes$observations()
       if (nrow(observations) == 0) return(list(drugs = priors, fits = list(), problems = character(0)))
-      # The spinner only while an estimate is searched for (a second or two,
-      # half a minute for phenytoin), not when one is reused
-      spinning <- FALSE
-      result <- tryCatch(bayesianUpdateDrugs(
+      # A search longer than a few seconds is covered by the page's Working
+      # cover (app.js), which replaced a spinner of its own here
+      result <- bayesianUpdateDrugs(
         priors, DT, eventTableClean(), observations,
         pkVariability = bayes$pkVariability(),
         residualVariability = bayes$residualVariability(),
         rebuild = function(drug, individual) {
-          drugPK(DT[DT$Drug == drug, , drop = FALSE],
-                 individual = stats::setNames(list(individual), drug))[[drug]]
+          drugPK(DT[DT$Drug == drug, , drop = FALSE], individual = individual)[[drug]]
         },
         antiseizureInteractions = antiseizureInteractions(),
         fits = bayesFitCache,
         # A level after the end of the plot is set aside, so the fit never
         # simulates further than the plot does, whose limits are kept above
-        maximum = plotMaximum(),
-        onFit = function(drug) {
-          if (!spinning) {
-            shinycssloaders::showPageSpinner(
-              background = "#FFFFFF99",
-              caption = "Updating the pharmacokinetics from the measured concentrations...")
-            spinning <<- TRUE
-          }
-        }
-      ), finally = if (spinning) shinycssloaders::hidePageSpinner())
+        maximum = plotMaximum()
+      )
       # The failures too, so that a fit that ran out of time is not tried
       # again until its inputs change (bayesianUpdateDrugs())
       bayesFitCache <<- c(result$fits, result$failed)
@@ -1713,8 +1759,15 @@ app_server <- function(input, output, session) {
       updateCheckboxInput(session, "showThreshold", value = FALSE)
   })
 
+  # The plot's own controls, held to their choices (choiceOf()): a link or a
+  # forged input carried a vector or an unknown value into setLinetypes() and
+  # simulationPlot() (Carbon's third UI audit, 2026-11-15, C1)
+  normalizationInput <- reactive(choiceOf(input$normalization, PLOT_NORMALIZATIONS, NORMALIZE_NONE))
+  typicalInput <- reactive(choiceOf(input$typical, PLOT_TYPICAL_CHOICES, "Range"))
   linetypes <- reactive({
-    setLinetypes(input$normalization,input$plasmaLinetype,input$effectsiteLinetype)
+    setLinetypes(normalizationInput(),
+                 choiceOf(input$plasmaLinetype, PLOT_LINE_TYPES, "blank"),
+                 choiceOf(input$effectsiteLinetype, PLOT_LINE_TYPES, "solid"))
   })
 
   simulationPlotRetval <- reactive({
@@ -1752,11 +1805,9 @@ app_server <- function(input, output, session) {
       plotInteraction        <- PLOT_ID_INTERACTION %in% input$addedPlots
       plotCost               <- "Cost"                %in% input$addedPlots
       plotEvents             <- PLOT_ID_EVENTS      %in% input$addedPlots
-      plasmaLinetype         <- input$plasmaLinetype
-      effectsiteLinetype     <- input$effectsiteLinetype
-      normalization          <- input$normalization
-      typical                <- input$typical
-      logY                   <- input$logY
+      normalization          <- normalizationInput()
+      typical                <- typicalInput()
+      logY                   <- isTRUE(input$logY)
       if (plotRecovery() || plotMEACOverlay() || plotEvents || plotInteraction) logY <- FALSE
 
       plasmaLinetype <- linetypes()$plasmaLinetype
@@ -1806,6 +1857,12 @@ app_server <- function(input, output, session) {
   plotResultsReactive <- reactive({
     simulationPlotRetval()$plotResults
   })
+
+  # Both, or NULL while the simulation or the plot cannot be drawn
+  plotResultsOrNull <- function() {
+    tryCatch(list(all = allResultsReactive(), plot = plotResultsReactive()),
+             error = function(err) NULL)
+  }
 
   plotHeight <- reactive({
     simulationPlotRetval()$plotHeight
@@ -1992,7 +2049,12 @@ app_server <- function(input, output, session) {
     yaxis <- gsub("\n"," ", e$panelvar1)
     hoverTime <- function(minutes) formatPlotTime(minutes, timeUnit(), referenceTime())
 
-    plotResults <- plotResultsReactive()
+    # Nothing to read while the plot itself failed: the plot area says why
+    # (main_plot()), and the error, read here, ended the session at a click
+    # and printed itself under the pointer (Carbon's third UI audit,
+    # 2026-11-15, C1)
+    plotResults <- plotResultsOrNull()$plot
+    if (is.null(plotResults)) return()
     if (yaxis == PLOT_NAME_MEAC)
     {
       TO <- plotResults$Drug == "total opioid"
@@ -2056,7 +2118,12 @@ app_server <- function(input, output, session) {
       pumpAt <- function(entry, name) {
         rates <- entry$tci$rates
         if (is.null(rates)) return(NULL)
-        j <- max(which(rates$Time <= e$x), 1)
+        # Before the pump starts it delivers nothing: max(c(), 1) read the
+        # first row there, the loading dose (Carbon's third UI audit,
+        # 2026-11-15, M6)
+        started <- which(rates$Time <= e$x)
+        if (length(started) == 0) return(paste0(name, ": not started"))
+        j <- started[length(started)]
         if (rates$Bolus[j]) {
           b <- entry$tci$boluses
           k <- which(b$Time == rates$Time[j])[1]
@@ -2081,7 +2148,7 @@ app_server <- function(input, output, session) {
     # for a drug with no effect site (hoverConcentration()).
     x <- c(sub("\\s*\\(.*$", "", yaxis),                 # the name as shown
            sub("^.*\\((.*)\\)\\s*$", "\\1", yaxis))      # the units, unbracketed
-    normalization <- if (is.null(input$normalization)) NORMALIZE_NONE else input$normalization
+    normalization <- normalizationInput()
     conc <- hoverConcentration(entry$results, e$x, normalization)
     returnText <- paste0("Time: ", hoverTime(e$x), ", ", x[1], " ", conc$label, ": ",
                          signif(conc$value, 2), " ", x[2])
@@ -2179,8 +2246,10 @@ app_server <- function(input, output, session) {
     outputComments("in imgDrugTime()")
     e <- plotEvent(e)
     if (is.null(e)) return(NULL)
-    allResults <- allResultsReactive()
-    plotResults <- plotResultsReactive()
+    results <- plotResultsOrNull()
+    if (is.null(results)) return(NULL)
+    allResults <- results$all
+    plotResults <- results$plot
     plottedDrugs <- unique(allResults$Drug)
     plottedAll   <- unique(as.character(plotResults$Drug))
     outputComments("plottedDrugs", plottedDrugs)
@@ -2317,7 +2386,7 @@ app_server <- function(input, output, session) {
         textInput(
           inputId = "addDoseTime",
           label = timeEntryLabel(format),
-          value = minutesToEntryTime(time, format, input$referenceTime)
+          value = minutesToEntryTime(time, format, procedureStart())
         ),
         textInput(
           inputId = "addDoseAmount",
@@ -2834,7 +2903,7 @@ app_server <- function(input, output, session) {
         textInput(
           inputId = "clickTimeEvent",
           label = timeEntryLabel(format),
-          value = minutesToEntryTime(time, format, input$referenceTime)
+          value = minutesToEntryTime(time, format, procedureStart())
         ) |> modalFocus(),
         selectInput(
           inputId = "clickEvent",
@@ -2915,7 +2984,7 @@ app_server <- function(input, output, session) {
       # its way back from the browser.
       minutes <- tempTable$Time
       if (!is.numeric(minutes)) minutes <- as.numeric(as.character(minutes))
-      tempTable$Time <- minutesToEntryTime(minutes, format, input$referenceTime)
+      tempTable$Time <- minutesToEntryTime(minutes, format, procedureStart())
       editEventsShown <<- list(text = tempTable$Time, minutes = minutes)
       tempTable$Delete <- FALSE
       eventsGrid <- tableGridInput("editEventsTableHTML", editEventsGridColumns(eventDefaults()$Event),
@@ -3188,7 +3257,6 @@ app_server <- function(input, output, session) {
         targetTable$Time <- targetTimes
 
         removeModal()
-        shinycssloaders::showPageSpinner(background = "#FFFFFFEE", caption = "Calculating doses...")
         # suggest() reads only the drug's PK set and simulates its own
         # regimens.  A drug the simulation does not yet carry has its PK built
         # here, from a 0 dose, rather than written into the dose table as a
@@ -3208,8 +3276,9 @@ app_server <- function(input, output, session) {
                             stringsAsFactors = FALSE))
         }
 
-        # Any error from here is said, and the spinner always comes down: an
-        # error ended the session, and a req() left the spinner up for good.
+        # Any error from here is said: an error ended the session, and a req()
+        # left the spinner it then had up for good (the page's Working cover,
+        # app.js, now covers a long calculation).
         testTable <- tryCatch(
           suggest(targetDrug,
                   targetTable,
@@ -3221,8 +3290,7 @@ app_server <- function(input, output, session) {
           shiny.silent.error = function(e) structure(list(), class = "suggestFailed",
             message = "the simulation cannot run; the plot area says why."),
           error = function(e) structure(list(), class = "suggestFailed",
-            message = conditionMessage(e)),
-          finally = shinycssloaders::hidePageSpinner()
+            message = conditionMessage(e))
         )
         if (inherits(testTable, "suggestFailed")) {
           showNotification(paste("Suggest Dosing failed:", attr(testTable, "message")),
@@ -3318,51 +3386,46 @@ app_server <- function(input, output, session) {
       }
       # An entry the plot or the dose table cannot use is refused, and the
       # dialog stays open to be corrected (drugLibraryProblems()).
-      problems <- drugLibraryProblems(newDrugDefaults, current)
+      problems <- drugLibraryProblems(newDrugDefaults, current,
+                                      inUse = rbind(dosedUnits(doseTable()), dosedUnits(doseTableDraft())))
       if (length(problems) > 0) {
         showNotification(paste(problems, collapse = " "), type = "error", duration = 10)
         return()
       }
       edited <- newDrugDefaults
-      newDrugDefaults$Drug                 <- as.character(newDrugDefaults$Drug)
-      newDrugDefaults$Concentration.Units  <- as.character(newDrugDefaults$Concentration.Units)
-      newDrugDefaults$Bolus.Units          <- as.character(newDrugDefaults$Bolus.Units)
-      newDrugDefaults$Infusion.Units       <- as.character(newDrugDefaults$Infusion.Units)
-      newDrugDefaults$Default.Units        <- as.character(newDrugDefaults$Default.Units)
-      newDrugDefaults$Units                <- as.character(newDrugDefaults$Units)
-      newDrugDefaults$Color                <- as.character(newDrugDefaults$Color)
-      newDrugDefaults$Lower                <- as.numeric(newDrugDefaults$Lower)
-      newDrugDefaults$Upper                <- as.numeric(newDrugDefaults$Upper)
-      newDrugDefaults$Typical              <- as.numeric(newDrugDefaults$Typical)
-      # A blank MEAC is no MEAC, which the library writes 0: kept as NA it
-      # stopped every simulation of the drug ("missing value where
-      # TRUE/FALSE needed" in simCpCe(); Gemini's production audit,
-      # 2026-11-08, finding 2)
-      newDrugDefaults$MEAC                 <- as.numeric(newDrugDefaults$MEAC)
-      newDrugDefaults$MEAC[is.na(newDrugDefaults$MEAC)] <- 0
-
-      # endCe and Category are not in the table; restore from current values.
-      # Class is shown but read-only: it is what makes a drug an inhaled agent
-      # (gasDrugNames()), which an edit could otherwise give propofol or take
-      # from sevoflurane (the same audit, finding 4).
-      newDrugDefaults$endCe     <- current$endCe[match(newDrugDefaults$Drug, current$Drug)]
-      newDrugDefaults$Category  <- current$Category[match(newDrugDefaults$Drug, current$Drug)]
-      newDrugDefaults$Class     <- current$Class[match(newDrugDefaults$Drug, current$Drug)]
+      newDrugDefaults <- drugLibraryTable(edited, current)
       # A drug moved between mcg and ng keeps its range, MEAC and threshold,
-      # converted (drugLibraryRescaleThresholds())
+      # converted (drugLibraryRescaleThresholds()), and its TCI targets and
+      # measured concentrations, concentrations in its units too (Carbon's
+      # second UI audit, 2026-11-15, G6).  Each must still be one the tables
+      # can hold, and a dose table with edits not yet applied is applied or
+      # undone first: converted only in the committed table, a target typed
+      # in the draft was left in the old units, and the committed table's
+      # write erased the draft and its undo history (Carbon's third UI
+      # audit, 2026-11-15, C4).  Refused, the dialog stays open.
       rescaled <- drugLibraryRescaleThresholds(newDrugDefaults, edited, current)
       newDrugDefaults <- rescaled$table
-      # And so do its TCI targets and measured concentrations, concentrations
-      # in its units too (Carbon's second UI audit, 2026-11-15, F6).  A target
-      # the dose table could not hold once converted leaves the dialog open.
-      dtNow <- doseTable()
-      dtRescaled <- doseTableRescaleTargets(dtNow, rescaled$factors)
-      if (is.null(dtRescaled)) {
-        showNotification(paste(
-          "The concentration units were not changed: a TCI target of",
-          paste(rescaled$drugs, collapse = ", "),
-          "would be above 1,000,000,000 in the new units."), type = "error", duration = 10)
-        return()
+      if (length(rescaled$drugs) > 0) {
+        refuse <- function(why) {
+          showNotification(paste("The concentration units were not changed:", why),
+                           type = "error", duration = 10)
+        }
+        dtNow <- doseTable()
+        if (!identicalTable(doseTableDraft(), dtNow)) {
+          refuse("the dose table has changes not yet applied. Apply or undo them first.")
+          return()
+        }
+        dtRescaled <- doseTableRescaleTargets(dtNow, rescaled$factors)
+        if (is.null(dtRescaled)) {
+          refuse(paste("a TCI target of", paste(rescaled$drugs, collapse = ", "),
+                       "would be above 1,000,000,000 in the new units."))
+          return()
+        }
+        if (!bayes$canRescale(rescaled$factors)) {
+          refuse(paste("a measured concentration of", paste(rescaled$drugs, collapse = ", "),
+                       "would be above 1,000,000,000 in the new units."))
+          return()
+        }
       }
       removeModal()
       if (length(rescaled$drugs) > 0) {
@@ -3374,7 +3437,6 @@ app_server <- function(input, output, session) {
         bayes$rescale(rescaled$factors)
       }
 
-      newDrugDefaults$Units <- drugUnitsExpand(newDrugDefaults$Units)
       drugDefaults(newDrugDefaults)
     }, name = "input$drugEditsOK observer")
   })
@@ -3427,7 +3489,9 @@ app_server <- function(input, output, session) {
 
   observeEvent(input$thresholdEditsOK, {
     req(input$editThresholdsTable)
-    tt <- tableGridRead(input$editThresholdsTable, thresholdGridColumns())
+    # No more rows than the dialog drew (Carbon's third UI audit, 2026-11-15, L1)
+    tt <- tableGridRead(input$editThresholdsTable, thresholdGridColumns(),
+                        maxRows = nrow(drugDefaults()) + 1L)
     req(tt)
     # Nor a thresholds table cut to fit (the same audit, finding 6)
     if (tableGridTruncated(tt)) {
@@ -3461,7 +3525,7 @@ app_server <- function(input, output, session) {
     # input$showThresholdModal is the value left from an earlier dialog, and
     # is not this one's (adversarial UI review, 2026-11, finding 13).
     if (identical(input$normalization, NORMALIZE_NONE) && !is.null(input$showThresholdModal)) {
-      updateCheckboxInput(session, "showThreshold", value = input$showThresholdModal)
+      updateCheckboxInput(session, "showThreshold", value = isTRUE(input$showThresholdModal))
     }
   })
 

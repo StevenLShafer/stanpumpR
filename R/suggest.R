@@ -68,6 +68,24 @@ suggest <- function(
   offsetTime <- targets$Time[1]
   targets$Time <- targets$Time - offsetTime
   endTime <- endTime - offsetTime
+  # The events move with the targets: left where they were, a bypass at 70
+  # minutes fell at 70 minutes of the shifted window rather than at 10, and
+  # the regimen was fitted to the PK before bypass (Carbon's third UI audit,
+  # 2026-11-15, H6).  Of the events that change the drug's PK set and fall at
+  # or before the window's start, the last is in force at its start.
+  events <- eventTable
+  if (!is.null(events) && nrow(events) > 0) {
+    events$Time <- as.numeric(events$Time) - offsetTime
+    pkEvent <- gsub(" ", "", events$Event) %in% PK$pkEvents
+    keep <- pkEvent & events$Time > 0
+    before <- which(pkEvent & events$Time <= 0)
+    if (length(before) > 0) {
+      last <- before[which.max(events$Time[before])]
+      events$Time[last] <- 0
+      keep[last] <- TRUE
+    }
+    events <- events[keep, , drop = FALSE]
+  }
 
   regimen <- suggestRegimen(targets, endTime, PK)
   outputComments("Structure of the regimen")
@@ -86,7 +104,7 @@ suggest <- function(
   simulateCe <- function(Dose)
   {
     DT <- data.frame(Time = regimen$Time, Dose = Dose, Units = regimen$Units)
-    wide <- simCpCe(DT, eventTable, PK, endTime, plotRecovery = FALSE)$wide
+    wide <- simCpCe(DT, events, PK, endTime, plotRecovery = FALSE)$wide
     stats::approx(wide$Time, wide$"Effect Site", xout = readTimes, rule = 2)$y
   }
 

@@ -501,25 +501,40 @@ applyAntiseizureInteractions <- function(drugs, DT, ET, plotMaximum, plotRecover
   if (nrow(active) == 0) return(drugs)
 
   victims <- unique(active$victim)
+  # A victim's Bayesian population line (R/bayesian.R) is the model's own
+  # drug among the drugs as plotted, so it takes the interactions too: left
+  # out, valproate's inhibition of lamotrigine was missing from it, and the
+  # line drew 1.2 mcg/mL where the fit's own population prediction was 3.0
+  # (Carbon's third UI audit, 2026-11-15, H7)
+  populations <- names(drugs)[vapply(drugs, function(d)
+    identical(d$companionGroup, "bayesian") && isTRUE(d$companionOf %in% victims) &&
+      !is.null(d$wideOwn), logical(1))]
   # Everything the interaction simulation of the whole group depends on.
-  participants <- sort(unique(c(active$victim, active$perpetrator)))
+  participants <- sort(unique(c(active$victim, active$perpetrator, populations)))
   key <- list(
     keys = lapply(stats::setNames(participants, participants),
                   function(d) drugs[[d]]$simKey),
     active = active,
     tolerance = ASM_INTERACTION_TOLERANCE
   )
-  reused <- !is.null(cache) && all(vapply(victims, function(v)
+  reused <- !is.null(cache) && all(vapply(c(victims, populations), function(v)
     identical(cache[[v]]$interactionKey, key) && !is.null(cache[[v]]$interactionSim),
     logical(1)))
 
   if (reused) {
-    sims <- lapply(stats::setNames(victims, victims), function(v) cache[[v]]$interactionSim)
+    sims <- lapply(stats::setNames(c(victims, populations), c(victims, populations)),
+                   function(v) cache[[v]]$interactionSim)
   } else {
     time <- asmInteractionGrid(plotMaximum)
     conc <- lapply(own, function(d) d$wideOwn[, c("Time", "Plasma")])
     toRegistry <- vapply(own, function(d) mcgPerMlScale(d$Concentration.Units), numeric(1))
     sims <- list()
+    lastM <- list()
+    victimDT <- function(v) DT[DT$Drug == v, ]
+    victimET <- function(v) {
+      tempET <- drugs[[v]]$ET
+      if (is.null(tempET)) ET[0, , drop = FALSE] else tempET
+    }
     for (iteration in seq_len(ASM_INTERACTION_MAX_ITERATIONS))
     {
       change <- 0
@@ -528,13 +543,13 @@ applyAntiseizureInteractions <- function(drugs, DT, ET, plotMaximum, plotRecover
       {
         rows <- active[active$victim == v, , drop = FALSE]
         m <- asmVictimMultipliers(v, rows, conc, time, toRegistry)
-        tempDT <- DT[DT$Drug == v, ]
-        tempET <- drugs[[v]]$ET
-        if (is.null(tempET)) tempET <- ET[0, , drop = FALSE]
-        X <- asmSimulateVictim(drugs[[v]], m, time, tempDT, tempET,
-                               plotMaximum, plotRecovery)
+        # The time until threshold only once, after the last pass: each
+        # pass's own was discarded (Carbon's third UI audit, 2026-11-15, H1)
+        X <- asmSimulateVictim(drugs[[v]], m, time, victimDT(v), victimET(v),
+                               plotMaximum, FALSE)
         X$interaction$rows <- rows
         sims[[v]] <- X
+        lastM[[v]] <- m
         newConc[[v]] <- X$wide[, c("Time", "Plasma")]
         old <- stats::approx(conc[[v]]$Time, conc[[v]]$Plasma,
                              xout = newConc[[v]]$Time, rule = 2, ties = mean)$y
@@ -547,9 +562,43 @@ applyAntiseizureInteractions <- function(drugs, DT, ET, plotMaximum, plotRecover
                      level = DEBUG_LEVEL_VERBOSE)
       if (change < ASM_INTERACTION_CONVERGENCE) break
     }
+    if (isTRUE(plotRecovery)) {
+      for (v in victims) {
+        X <- asmSimulateVictim(drugs[[v]], lastM[[v]], time, victimDT(v), victimET(v),
+                               plotMaximum, TRUE)
+        X$interaction$rows <- sims[[v]]$interaction$rows
+        sims[[v]] <- X
+      }
+    }
+    # Each population line, with the other drugs as converged; its own
+    # concentration stands for the drug's, in a drug that induces its own
+    # metabolism (carbamazepine), so it has a fixed point of its own
+    for (companion in populations)
+    {
+      v <- drugs[[companion]]$companionOf
+      rows <- active[active$victim == v, , drop = FALSE]
+      own <- conc
+      own[[v]] <- drugs[[companion]]$wideOwn[, c("Time", "Plasma")]
+      ownET <- drugs[[companion]]$ET
+      if (is.null(ownET)) ownET <- ET[0, , drop = FALSE]
+      for (iteration in seq_len(ASM_INTERACTION_MAX_ITERATIONS))
+      {
+        m <- asmVictimMultipliers(v, rows, own, time, toRegistry)
+        X <- asmSimulateVictim(drugs[[companion]], m, time, victimDT(v), ownET,
+                               plotMaximum, FALSE)
+        old <- stats::approx(own[[v]]$Time, own[[v]]$Plasma, xout = X$wide$Time,
+                             rule = 2, ties = mean)$y
+        own[[v]] <- X$wide[, c("Time", "Plasma")]
+        peak <- max(X$wide$Plasma, old, .Machine$double.eps)
+        if (!any(rows$perpetrator == v) ||
+            max(abs(X$wide$Plasma - old)) / peak < ASM_INTERACTION_CONVERGENCE) break
+      }
+      X$interaction$rows <- rows
+      sims[[companion]] <- X
+    }
   }
 
-  for (v in victims)
+  for (v in c(victims, populations))
   {
     X <- sims[[v]]
     fields <- simulationFields(X, drugs[[v]]$DT, drugs[[v]]$ET)

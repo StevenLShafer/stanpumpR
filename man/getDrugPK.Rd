@@ -26,7 +26,8 @@ getDrugPK(
   cyp4f2 = CYP4F2_DEFAULT,
   gestationalAge = NULL,
   individual = NULL,
-  libraryDefaults = NULL
+  libraryDefaults = NULL,
+  metaboliteIndividual = NULL
 )
 }
 \arguments{
@@ -105,6 +106,13 @@ or the session's (\code{recalculatePK()} passes it), from which an
 active metabolite's row is read: its \code{Concentration.Units} set the
 scale of the metabolite formed, so a metabolite the Drug Library shows in
 other units is formed in those units.}
+
+\item{metaboliteIndividual}{NULL (the default), or the individual's
+pharmacokinetics of the drug's active metabolite, in the form of
+\code{individual}: the metabolite it forms is then formed into the
+individual's metabolite, as the Bayesian update estimates it from the
+metabolite's measured concentrations.  The parent's own formation is the
+model's (it moves with \code{individual}).}
 }
 \value{
 a list: the drug's PK sets (\code{PK}, one per PK event), its
