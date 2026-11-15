@@ -486,6 +486,100 @@ macRecoveryTimeExact <- function(washout, age, threshold = GAS_MAC_THRESHOLD)
 }
 
 
+# The coupled washout's step (gasCoupledRecovery()), in minutes: 0.1 for the
+# first hour of washout, where the crossing nearly always is, and 0.25 after,
+# as since 2026-10-05.
+GAS_RECOVERY_STEP_FIRST_HOUR <- 0.1
+GAS_RECOVERY_STEP_LATER <- 0.25
+
+# The most a step may be, in time constants of the fastest rate a method
+# samples rather than solves.  In the first hour of washout, one: that hour
+# carries the crossings that ride on the fast alveolar washout (MAC's nearly
+# always), so there the step is the accuracy, and over one time constant the
+# classical Runge-Kutta factor, 0.375, is within 2% of the exact exp(-1).
+# After it, two: only the slow tissues are left and the step need only be
+# stable.  Each gas's system is similar to a symmetric matrix, so its
+# eigenvalues are real and negative, and the classical Runge-Kutta method is
+# stable on the negative real axis to 2.785 time constants; 2 leaves a margin
+# for the coupling between the gases, which the rate allows for without
+# bounding it exactly.  At 70 kg and a ventilation of 4.6 to 12 L/min, with
+# or without nitrous oxide, the fastest rate is 4.2 to 7.5 per minute (it is
+# isoflurane's, which every washout carries), so the two steps are 0.42 to
+# 0.75 and 1.05 to 1.9 time constants, and both stand (gasCoupledRecovery()).
+GAS_RECOVERY_ACCURATE_STEP <- 1
+GAS_RECOVERY_STABLE_STEP <- 2
+
+#' The coupled washout's step
+#'
+#' \code{GAS_RECOVERY_STEP_FIRST_HOUR} for the first hour of washout and
+#' \code{GAS_RECOVERY_STEP_LATER} after, each held to
+#' \code{GAS_RECOVERY_ACCURATE_STEP} (first hour) or
+#' \code{GAS_RECOVERY_STABLE_STEP} (after) time constants of \code{rate}.
+#'
+#' @param tau minutes of washout so far
+#' @param rate the fastest rate the method samples, per minute
+#' @returns the step, minutes
+#' @keywords internal
+gasRecoveryStep <- function(tau, rate)
+{
+  if (tau < 60) {
+    min(GAS_RECOVERY_STEP_FIRST_HOUR, GAS_RECOVERY_ACCURATE_STEP / rate)
+  } else {
+    min(GAS_RECOVERY_STEP_LATER, GAS_RECOVERY_STABLE_STEP / rate)
+  }
+}
+
+
+#' Coefficients of the exponential Runge-Kutta step of the coupled washout
+#'
+#' Cox and Matthews' fourth-order exponential time differencing (ETDRK4): for
+#' \code{y' = B y + g(y)} the linear part is propagated exactly and only
+#' \code{g} is sampled, at four stages, so the step's stability does not
+#' depend on \code{B}.  \code{B} is block diagonal, one block per gas; each
+#' block's phi functions come from one matrix exponential of the augmented
+#' matrix \code{[[hA, I, 0, 0], [0, 0, I, 0], [0, 0, 0, I], [0, 0, 0, 0]]},
+#' whose top row of blocks is \code{exp(hA)}, \code{phi1}, \code{phi2} and
+#' \code{phi3} (\code{expmPade()}, correct when \code{A} is singular, as it is
+#' with no ventilation).
+#'
+#' Cox SM, Matthews PC.  Exponential time differencing for stiff systems.
+#' \emph{J Comput Phys} 2002;176:430-455.
+#'
+#' @param blocks the per-gas system matrices, for column-vector states
+#' @param h the step, minutes
+#' @returns the step's matrices, transposed for row-vector states: \code{E}
+#'   and \code{E2}, the propagators over the step and the half step;
+#'   \code{P2}, the half step's \code{(h/2) phi1}; and \code{F1}, \code{F2},
+#'   \code{F3}, the full step's weights on its stages
+#' @keywords internal
+gasEtdCoefficients <- function(blocks, h)
+{
+  n <- nrow(blocks[[1]])
+  m <- n * length(blocks)
+  out <- lapply(c(E = 0, E2 = 0, P2 = 0, F1 = 0, F2 = 0, F3 = 0),
+                function(x) matrix(0, m, m))
+  I <- diag(n)
+  Z <- matrix(0, n, n)
+  for (b in seq_along(blocks)) {
+    A <- blocks[[b]]
+    full <- expmPade(rbind(cbind(h * A, I, Z, Z), cbind(Z, Z, I, Z),
+                           cbind(Z, Z, Z, I), cbind(Z, Z, Z, Z)))
+    half <- expmPade(rbind(cbind(h / 2 * A, I), cbind(Z, Z)))
+    p1 <- full[1:n, n + 1:n]
+    p2 <- full[1:n, 2 * n + 1:n]
+    p3 <- full[1:n, 3 * n + 1:n]
+    j <- (b - 1) * n + 1:n
+    out$E[j, j]  <- t(full[1:n, 1:n])
+    out$E2[j, j] <- t(half[1:n, 1:n])
+    out$P2[j, j] <- t(h / 2 * half[1:n, n + 1:n])
+    out$F1[j, j] <- t(h * (p1 - 3 * p2 + 4 * p3))
+    out$F2[j, j] <- t(h * (p2 - 2 * p3))
+    out$F3[j, j] <- t(h * (4 * p3 - p2))
+  }
+  out
+}
+
+
 #' Time until a concentration falls to a threshold, by coupled forward simulation
 #'
 #' Turns the gases in \code{off} off at each time point in turn, with no
@@ -508,8 +602,19 @@ macRecoveryTimeExact <- function(washout, age, threshold = GAS_MAC_THRESHOLD)
 #'
 #' Every time point is integrated at once, as rows of one matrix, by classical
 #' fourth-order Runge-Kutta.  The step is 0.1 min for the first hour of washout,
-#' where the crossing nearly always is, and 0.25 min after; the fastest rate in
-#' the system is under 4 per minute, so both are comfortably fine.  A row is
+#' where the crossing nearly always is, and 0.25 min after.  That serves while
+#' each step is within a time constant (first hour) or two (after) of the
+#' system's fastest rate (\code{GAS_RECOVERY_ACCURATE_STEP},
+#' \code{GAS_RECOVERY_STABLE_STEP}), as it is at 70 kg and any ordinary
+#' ventilation.  A faster system is advanced instead by exponential time
+#' differencing (\code{gasEtdCoefficients()}), which solves the linear part
+#' exactly and samples only the coupling, with the same steps: a 3 kg patient
+#' ventilated at 4.6 L/min has a rate of 36 per minute, and the fixed
+#' Runge-Kutta step, outside its region of stability, grew without bound and
+#' failed ("NAs are not allowed in subscripted assignments"; Carbon's third
+#' UI audit, 2026-11-15, H2).  Shortening the Runge-Kutta step instead would
+#' cost a step per time constant, without limit: the dose table takes a
+#' ventilation of up to \code{MAX_DOSE_VALUE} L/min.  A row is
 #' finished once it is below the threshold and falling, so that a tissue still
 #' filling from the alveoli when the agent is turned off -- below the threshold
 #' but about to rise through it -- is followed over the top and back down.
@@ -588,12 +693,17 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
     # constant inflow.
     Bt <- matrix(0, 4 * nG, 4 * nG)
     inflow <- numeric(4 * nG)
+    blocks <- vector("list", nG)
+    fastest <- 0
     for (k in seq_len(nG)) {
       A <- gasSystemSoluble(props[props$gas == gases[k], ], body, s$Q, s$VA, Qco,
                             Ffgf = 0, totUptake = 0, circuit = "open")$A[2:5, 2:5]
       j <- alvCol[k] + 0:3
       Bt[j, j] <- t(A)
+      blocks[[k]] <- A
       inflow[alvCol[k]] <- s$VA / Va * Fin[[k]]
+      # A is similar to a symmetric matrix, so its eigenvalues are real.
+      fastest <- max(fastest, abs(eigen(A, only.values = TRUE)$values))
     }
     FinAlv <- numeric(4 * nG); FinAlv[alvCol] <- Fin
 
@@ -601,6 +711,44 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
     # that replaces it; a constant, added to the uptake of the other gases.
     uOxygen <- if (isTRUE(washout$oxygenUptake))
       body$VO2 * (1 - GAS_RESPIRATORY_QUOTIENT) / Va else 0
+
+    # The fastest rate of the uptake coupling.  Its derivative is the make-up
+    # (or displaced) gas, a gas's tension times the summed uptake per alveolar
+    # volume, whose own rate is at most Qco / Va times the sum of
+    # lambda_blood x tension / 100 over the gases; the uptake itself, which
+    # displaces alveolar gas at |u| / Va, is bounded by the same sum.  The
+    # tensions are taken at their largest, over the rows' starting states and
+    # the gas being breathed: a washout only lowers the gases turned off and
+    # takes the others towards what is inspired.
+    tension <- vapply(seq_len(nG), function(k)
+      max(abs(Y0[rows, alvCol[k] + 0:3]), Fin[[k]]), numeric(1))
+    lambdaBlood <- props$lambda_blood[match(gases, props$gas)]
+    coupling <- 2 * Qco / Va * sum(lambdaBlood * tension) / 100 + uOxygen
+
+    # Each step is the classical Runge-Kutta method's, as since 2026-10-05,
+    # while it is within GAS_RECOVERY_ACCURATE_STEP (first hour) or
+    # GAS_RECOVERY_STABLE_STEP (after) time constants of the whole system's
+    # fastest rate.  Otherwise it is exponential time differencing's, which
+    # solves the linear part exactly and samples only the coupling, so that
+    # only the coupling's rate holds its step.  The fixed Runge-Kutta step was
+    # unstable from a rate of 28 per minute, and 11 after the first hour: a
+    # 3 kg patient ventilated at 4.6 L/min (36), 70 kg at 100 L/min (31), or
+    # 0.5 kg at its own default ventilation (14), whose time until threshold
+    # grew without bound and failed (Carbon's third UI audit, 2026-11-15,
+    # H2).  Shortening that step instead would cost a step per time constant,
+    # without limit: the dose table takes a ventilation of up to
+    # MAX_DOSE_VALUE L/min.
+    rate <- fastest + coupling
+    etd <- list()
+
+    # The coupling and the inflow: the derivative less the linear part.
+    nonlinear <- function(Y) {
+      u <- as.vector(Y %*% uWeight) / Va + uOxygen
+      D <- matrix(inflow, nrow(Y), length(inflow), byrow = TRUE)
+      D <- D + outer(pmax(u, 0), FinAlv)
+      D[, alvCol] <- D[, alvCol] + pmin(u, 0) * Y[, alvCol, drop = FALSE]
+      D
+    }
 
     deriv <- function(Y) {
       u <- as.vector(Y %*% uWeight) / Va + uOxygen
@@ -622,12 +770,28 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
     {
       # Fine while the alveoli are emptying; a longer step later, when only the
       # slow tissues are left, does not trouble the integrator.
-      h <- if (tau < 60) 0.1 else 0.25
-      k1 <- deriv(Y)
-      k2 <- deriv(Y + h / 2 * k1)
-      k3 <- deriv(Y + h / 2 * k2)
-      k4 <- deriv(Y + h * k3)
-      Y <- Y + h / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
+      h <- if (tau < 60) GAS_RECOVERY_STEP_FIRST_HOUR else GAS_RECOVERY_STEP_LATER
+      if (gasRecoveryStep(tau, rate) >= h) {
+        k1 <- deriv(Y)
+        k2 <- deriv(Y + h / 2 * k1)
+        k3 <- deriv(Y + h / 2 * k2)
+        k4 <- deriv(Y + h * k3)
+        Y <- Y + h / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
+      } else {
+        # Cox and Matthews' ETDRK4, in row form (gasEtdCoefficients()).
+        h <- gasRecoveryStep(tau, coupling)
+        key <- format(h, digits = 17)
+        if (is.null(etd[[key]])) etd[[key]] <- gasEtdCoefficients(blocks, h)
+        cf <- etd[[key]]
+        g0 <- nonlinear(Y)
+        a  <- Y %*% cf$E2 + g0 %*% cf$P2
+        ga <- nonlinear(a)
+        b  <- Y %*% cf$E2 + ga %*% cf$P2
+        gb <- nonlinear(b)
+        c4 <- a %*% cf$E2 + (2 * gb - g0) %*% cf$P2
+        gc <- nonlinear(c4)
+        Y <- Y %*% cf$E + g0 %*% cf$F1 + 2 * (ga + gb) %*% cf$F2 + gc %*% cf$F3
+      }
       valNew <- as.vector(Y %*% target)
 
       # Came down through the threshold in this step: a straight line across it.
