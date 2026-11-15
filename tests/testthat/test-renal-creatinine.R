@@ -77,7 +77,9 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 # MDRD eGFR, a sigmoid, on renal clearance (FDA review of NDA 209776)
                 "meropenem",
                 # creatinine against its normal for age, exponential (Kong 2025)
-                "piperacillin")
+                "piperacillin",
+                # Cockcroft-Gault, linear per mL/min, on CL/F (Saleh 2016)
+                "riociguat")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system),

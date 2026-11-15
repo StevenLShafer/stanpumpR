@@ -129,7 +129,11 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     # Parkinson disease drugs (2026-10-19): pramipexole's IR
                     # lag of 0.221 h and pimavanserin's 0.0707 day, both
                     # from the FDA reviews; plasma only
-                    "pramipexole", "pimavanserin"))
+                    "pramipexole", "pimavanserin",
+                    # pulmonary hypertension (2026-11-15): sildenafil's 0.485 h
+                    # (FDA review of NDA 22-473) and selexipag's 0.67 h
+                    # (Krause 2017); plasma only
+                    "sildenafil", "selexipag"))
 })
 
 
