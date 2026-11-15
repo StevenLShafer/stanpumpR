@@ -1177,8 +1177,8 @@ app_server <- function(input, output, session) {
         # Only the drugs whose group is turned on; a drug in a switched-off
         # group is not drawn, so its model is not in question.
         drugsOn <- DT$Drug[companionModelGroup(DT$Drug) %in% groups]
-        cyp2c9 <- if (is.null(input$cyp2c9)) CYP2C9_DEFAULT else input$cyp2c9
-        vkorc1 <- if (is.null(input$vkorc1)) VKORC1_DEFAULT else input$vkorc1
+        cyp2c9 <- genotypes()$cyp2c9
+        vkorc1 <- genotypes()$vkorc1
         problems <- alternativeModelProblems(drugsOn, patient[[1]], patient[[2]], patient[[3]], patient[[4]],
                                              pregnant = patient[[5]], cyp2c9 = cyp2c9, vkorc1 = vkorc1)
       }
@@ -1193,9 +1193,24 @@ app_server <- function(input, output, session) {
 
   osmolality <- reactive({
     # The default until the control reports, and for bookmarks made before it
-    # existed (Shiny restores only the inputs a bookmark saved).
-    if (is.null(input$osmolality)) OSMOLALITY_DEFAULT else input$osmolality
+    # existed (Shiny restores only the inputs a bookmark saved); one number,
+    # whatever a forged input sent
+    if (is.null(input$osmolality)) OSMOLALITY_DEFAULT else asScalarNumeric(input$osmolality)
   })
+
+  # The genotypes, each one of its control's own choices: NULL on the first
+  # pass, before the control has reported in, and anything at all from a link
+  # or a forged input ("Invalid cyp2d6" took the plot down and made a click on
+  # it end the session, and an empty value broke the emailed workbook:
+  # Carbon's third UI audit, 2026-11-15, C1 and M5)
+  genotypes <- reactive(list(
+    cyp2d6 = choiceOf(input$cyp2d6, CYP2D6_VALUES, CYP2D6_DEFAULT),
+    cyp2c19 = choiceOf(input$cyp2c19, CYP2C19_VALUES, CYP2C19_DEFAULT),
+    cyp2c9 = choiceOf(input$cyp2c9, CYP2C9_VALUES, CYP2C9_DEFAULT),
+    vkorc1 = choiceOf(input$vkorc1, VKORC1_VALUES, VKORC1_DEFAULT),
+    cyp4f2 = choiceOf(input$cyp4f2, CYP4F2_VALUES, CYP4F2_DEFAULT),
+    cyp2b6 = choiceOf(input$cyp2b6, CYP2B6_VALUES, CYP2B6_DEFAULT)
+  ))
 
   # The Pregnant control reports "TRUE" or "FALSE" (NULL before it reports,
   # and in a bookmark made before it was live).  The flag is on only while
@@ -1346,12 +1361,12 @@ app_server <- function(input, output, session) {
         # replaced with anything ("Invalid cyp2d6" took the plot down and
         # made a click on it end the session: Carbon's third UI audit,
         # 2026-11-15, C1)
-        cyp2d6 = choiceOf(input$cyp2d6, CYP2D6_VALUES, CYP2D6_DEFAULT),
-        cyp2c19 = choiceOf(input$cyp2c19, CYP2C19_VALUES, CYP2C19_DEFAULT),
-        cyp2c9 = choiceOf(input$cyp2c9, CYP2C9_VALUES, CYP2C9_DEFAULT),
-        vkorc1 = choiceOf(input$vkorc1, VKORC1_VALUES, VKORC1_DEFAULT),
-        cyp4f2 = choiceOf(input$cyp4f2, CYP4F2_VALUES, CYP4F2_DEFAULT),
-        cyp2b6 = choiceOf(input$cyp2b6, CYP2B6_VALUES, CYP2B6_DEFAULT),
+        cyp2d6 = genotypes()$cyp2d6,
+        cyp2c19 = genotypes()$cyp2c19,
+        cyp2c9 = genotypes()$cyp2c9,
+        vkorc1 = genotypes()$vkorc1,
+        cyp4f2 = genotypes()$cyp4f2,
+        cyp2b6 = genotypes()$cyp2b6,
         osmolality = osmolality(),
         creatinine = creatinine(),
         gestationalAge = gestationalAge(),
@@ -1940,12 +1955,12 @@ app_server <- function(input, output, session) {
         osmolality = osmolality(),
         creatinine = creatinine(),
         gestationalAge = gestationalAge(),
-        cyp2d6 = input$cyp2d6,
-        cyp2c19 = input$cyp2c19,
-        cyp2c9 = input$cyp2c9,
-        vkorc1 = input$vkorc1,
-        cyp4f2 = input$cyp4f2,
-        cyp2b6 = input$cyp2b6,
+        cyp2d6 = genotypes()$cyp2d6,
+        cyp2c19 = genotypes()$cyp2c19,
+        cyp2c9 = genotypes()$cyp2c9,
+        vkorc1 = genotypes()$vkorc1,
+        cyp4f2 = genotypes()$cyp4f2,
+        cyp2b6 = genotypes()$cyp2b6,
         # Whether each companion model was actually drawn, not just its box
         # ticked (companionGroupsShown()).
         mintoSchnider = "mintoSchnider" %in% companionGroupsShown(),
@@ -1979,6 +1994,9 @@ app_server <- function(input, output, session) {
         ) |> profileCode("sendSlide()"),
         error = function(e) {
           outputComments("sendSlide() arguments failed:", conditionMessage(e))
+          # Nothing reached the mail server, so the send is not counted
+          # (forgetEmailSend(), as sendSlide() does for its own failures)
+          try(forgetEmailSend(input$recipient), silent = TRUE)
           EMAIL_FAILURE_MESSAGE
         },
         finally = shinycssloaders::hidePageSpinner()
