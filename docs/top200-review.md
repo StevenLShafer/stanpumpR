@@ -21,12 +21,12 @@ disease, antiseizure) are added through it, and their registry rows say how far 
 
 | Rank | Drug | Priority | Note |
 |---|---|---|---|
-| 119 | Tadalafil | 0 requested | requested 2026-11-15 with the pulmonary hypertension drugs; being added now |
-| 160 | Sildenafil | 0 requested | requested 2026-11-15 with the pulmonary hypertension drugs (Revatio IV); being added now |
-| 2 | Levothyroxine | 1 narrow window | FDA narrow-therapeutic-index; endogenous baseline T4, very long half-life |
-| 79 | Insulin Aspart | 1 narrow window | high-alert; the library has the Tham 2017 insulins only |
-| 122 | Insulin Degludec | 1 narrow window | high-alert; the library has the Tham 2017 insulins only |
-| 145 | Methotrexate | 1 narrow window | narrow window at high dose; TDM with leucovorin rescue; renal |
+| 119 | Tadalafil | 0 requested | added 2026-11-15 (`tadalafil`, Ferguson-Sells 2022, pulmonary hypertension; healthy-subject clearance pending a decision) |
+| 160 | Sildenafil | 0 requested | added 2026-11-15 (`sildenafil`, FDA review of NDA 22-473, IV and oral, healthy volunteers) |
+| 2 | Levothyroxine | 1 narrow window | FDA narrow-therapeutic-index; endogenous baseline T4, very long half-life. No compartmental model read: waits for Inada 1975 / Nicoloff 1972 (J Clin Invest, scanned) |
+| 79 | Insulin Aspart | 1 narrow window | high-alert; the library has the Tham 2017 insulins only. Source found (FDA review of Fiasp, NDA 208751: depot then three transit compartments); needs a subcutaneous transit chain, a decision |
+| 122 | Insulin Degludec | 1 narrow window | high-alert; the library has the Tham 2017 insulins only. No fitted model published; registry only for now |
+| 145 | Methotrexate | 1 narrow window | in flight in PR #684 (Chemotherapy: Ibarra 2023 adults, Taylor 2023 children), so not added here; Blackman 2026 (Eur J Clin Pharmacol 82:156, 208 adults, read in full) is a candidate adult source for it |
 | 4 | Amlodipine | 2 perioperative / ICU | antihypertensive registry rows exist; implementation follows docs/antihypertensives.md |
 | 7 | Losartan | 2 perioperative / ICU | antihypertensive registry rows exist; implementation follows docs/antihypertensives.md |
 | 10 | Omeprazole | 2 perioperative / ICU | acid suppression before anaesthesia |
