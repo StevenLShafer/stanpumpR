@@ -266,6 +266,10 @@ MAX_DOSE_VALUE <- 1e9
 # once (drugLibraryUnitProblems(); typically 0.01 s each, at most 1.5 s)
 DRUG_LIBRARY_MAX_NEW_UNITS <- 40L
 MAX_INPUT_TEXT <- 2000L
+# The Help search box's maxlength, which the server holds its value to as
+# well: the browser's limit is the page's to keep, not the server's
+# (Carbon's third UI audit, 2026-11-15, M5)
+HELP_SEARCH_MAX_CHARS <- 100L
 MAX_PLOT_WIDTH <- 4096L
 MIN_PLOT_WIDTH <- 100L
 MAX_YAXIS_HEIGHT <- 350L

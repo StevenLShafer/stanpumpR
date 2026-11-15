@@ -357,6 +357,50 @@ paperReviewAbsorption <- function(extraction, regimen, route, drug, reference)
               used = used, crossCheck = crossCheck, fittedFigures = fittedFigures))
 }
 
+#' A regimen's id, or "" when it has none that can be looked up
+#' @keywords internal
+paperReviewRegimenId <- function(r)
+{
+  id <- if (is.list(r)) r$id else NULL
+  if (is.character(id) && length(id) == 1 && !is.na(id) && nzchar(trimws(id))) id else ""
+}
+
+#' Give every regimen of an extraction an id it can be found by
+#'
+#' A regimen is found by its id: its absorption (paperReviewAbsorptions()),
+#' the Simulator's choice of regimen.  One the reply left without an id, or
+#' with a blank one, was found by nothing: \code{out[[""]] <- x} stores an
+#' element that \code{out[[""]]} never returns, so its absorption was
+#' computed and lost, and the element kept the route's own parameters from
+#' being used (Carbon's third UI audit, 2026-11-15, L1).  Each is named
+#' "regimen n", n its place in the list (made unique), and the report's
+#' limitations say so.  paperReviewRun() calls this first.
+#'
+#' @param extraction the extraction
+#' @returns the extraction, every regimen with an id
+#' @keywords internal
+paperReviewNameRegimens <- function(extraction)
+{
+  regs <- extraction$regimens
+  if (!is.list(regs) || length(regs) == 0) return(extraction)
+  ids <- vapply(regs, paperReviewRegimenId, "")
+  blank <- which(!nzchar(ids) & vapply(regs, is.list, logical(1)))
+  if (length(blank) == 0) return(extraction)
+  for (i in blank) {
+    id <- paste("regimen", i)
+    while (id %in% ids) id <- paste0(id, "'")
+    ids[i] <- id
+    extraction$regimens[[i]]$id <- id
+  }
+  prior <- extraction$extraction_limitations
+  if (!is.character(prior) || length(prior) != 1 || is.na(prior)) prior <- ""
+  extraction$extraction_limitations <- paste0(
+    prior, if (nzchar(prior)) " " else "",
+    if (length(blank) == 1) "A regimen had no id and is called " else "Regimens with no id are called ",
+    paste0("\"", ids[blank], "\"", collapse = ", "), " here.")
+  extraction
+}
+
 #' Absorption for every extravascular regimen of a paper
 #'
 #' @returns a named list (by regimen id; "route" for the route-level
@@ -367,7 +411,10 @@ paperReviewAbsorptions <- function(extraction, drug, reference)
   out <- list()
   for (r in extraction$regimens %or% list()) {
     # A constant input needs no absorption (paperReviewNeedsAbsorption()).
-    if (!paperReviewNeedsAbsorption(r) || is.null(r$id)) next
+    # A regimen with no id is passed over, out[[""]] being unreadable; a
+    # review names every regimen before it gets here
+    # (paperReviewNameRegimens()).
+    if (!paperReviewNeedsAbsorption(r) || !nzchar(paperReviewRegimenId(r))) next
     routes <- vapply(r$doses %or% list(), function(d) d$route %or% "other", "")
     ev <- intersect(routes, names(PAPER_REVIEW_ROUTE_SUFFIX))
     out[[r$id]] <- paperReviewAbsorption(extraction, r, ev[[1]], drug, reference)

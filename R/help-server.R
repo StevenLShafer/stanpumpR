@@ -64,12 +64,19 @@ helpServer <- function(input, output, session, doseTable, eventTable, drugDefaul
     helpPageUI(helpPage(), drugDefaults())
   })
 
-  searchTerm <- debounce(reactive(input$help_search), 300)
+  # One string of at most the box's maxlength: a vector sent for it put a
+  # condition of length 2 in the if() below, which printed R's error in the
+  # results, and a megabyte string was searched for across every page each
+  # time it changed (Carbon's third UI audit, 2026-11-15, M5)
+  searchTerm <- debounce(reactive({
+    term <- trimws(asScalarString(input$help_search))
+    substr(term, 1L, HELP_SEARCH_MAX_CHARS)
+  }), 300)
 
   output$help_search_results <- renderUI({
-    term <- searchTerm()
-    if (is.null(term) || nchar(trimws(term)) < 2) return(NULL)
-    helpSearchResultsUI(trimws(term), helpSearch(trimws(term)))
+    term <- trimws(searchTerm())
+    if (nchar(term) < 2) return(NULL)
+    helpSearchResultsUI(term, helpSearch(term))
   })
 
   # Load a scenario into the simulator: from the Load buttons, and from a

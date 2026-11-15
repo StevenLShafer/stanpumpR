@@ -840,6 +840,15 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
     if (pct === null) pct = 50;
     if (!(pct > 0 && pct < 100)) { bad.push('the decrease must be between 0 and 100%'); $pct.addClass('pkconv-bad'); }
     if (until !== null && !(until > 0)) { bad.push('the longest infusion must be a positive time'); $until.addClass('pkconv-bad'); }
+    // 1e308 hours is a finite entry but Infinity minutes, which passed the
+    // test below, ran the controller to its update limit and printed "After
+    // an infusion of Infinity hours" over an axis with no ticks (Carbon's
+    // third UI audit, 2026-11-15, M4; the graph's own field already sets a
+    // horizon that is not finite aside, plot())
+    else if (until !== null && !isFinite(until * f)) {
+      bad.push('the longest infusion is too long to compute');
+      $until.addClass('pkconv-bad');
+    }
     // The controller updates every 10 s, so a shorter infusion has no
     // decrement curve to draw (1e-323 also underflowed the axis to nothing)
     else if (until !== null && !(until * f >= TCI_UPDATE_MINUTES)) {

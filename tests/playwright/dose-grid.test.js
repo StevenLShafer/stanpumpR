@@ -1131,3 +1131,86 @@ describe('everything is text', () => {
     assert.deepEqual(page.pageErrors, []);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Carbon's (Gemini) third adversarial UI audit, of PR #730 at 4164743,
+// 2026-11-15: C3, M4 and L1 (the R side is test-ui-audit-carbon3-inputs.R)
+describe('Carbon\'s third UI audit, 2026-11-15', () => {
+  // C3: the grid looked a name up in a plain {}, which answered
+  // "constructor" with Object and "__proto__" with Object.prototype; the row
+  // took that as its drug and the server, sent null, blanked it.  The
+  // camel-case names never reached it (the index is lower case), and none
+  // threw: the claimed TypeError did not reproduce.
+  gt('a name every JavaScript object carries is not a drug, typed or pasted', async () => {
+    for (const name of ['constructor', '__proto__', 'toString', 'hasOwnProperty']) {
+      await H.clearNotifications(page);
+      await enter(0, 0, name);
+      await page.keyboard.press('Escape');
+      await holds(0, ['propofol', '0', '0', 'mg']);
+      let notes = await H.notifications(page);
+      assert.ok(notes.some(n => n.includes('"' + name + '" is not a drug')), name + ': ' + JSON.stringify(notes));
+      await H.clearNotifications(page);
+      await adapter.focusCell(page, 0, 0);
+      await H.paste(page, name + '\t5\t10\tmg');
+      await H.settle(page);
+      await holds(0, ['propofol', '0', '0', 'mg']);
+      notes = await H.notifications(page);
+      assert.ok(notes.some(n => n.includes('"' + name + '" is not a drug')), name + ' pasted: ' + JSON.stringify(notes));
+    }
+    assert.deepEqual(page.pageErrors, []);
+  });
+
+  // M4: the grid took a dose whose stored string was longer than the
+  // server keeps (restoredDoseTable()), which then blanked it
+  gt('a dose too long written out is refused where it is typed, and said', async () => {
+    await enter(2, 2, '25');
+    await holds(2, ['fentanyl', '0', '25', 'mcg']);
+    for (const entry of ['1e-35', '100.00000000000000000000000000001']) {
+      await H.clearNotifications(page);
+      await enter(2, 2, entry);
+      await page.waitForTimeout(300);
+      await holds(2, ['fentanyl', '0', '25', 'mcg']);
+      const notes = await H.notifications(page);
+      assert.ok(notes.some(n => n.includes('"' + entry + '" was not accepted') &&
+                                /written out in full cannot be more than 32 characters/.test(n)),
+                entry + ': ' + JSON.stringify(notes));
+    }
+    // and one that fits is kept as written out
+    await enter(2, 2, '1e-30');
+    await holds(2, ['fentanyl', '0', '0.000000000000000000000000000001', 'mcg']);
+  });
+
+  // L1: the document's listeners and the unit search's timer come off when
+  // Shiny unbinds the grid, and the listeners go back on when it binds it
+  // again (initialize() runs once per element)
+  gt('unbinding the grid takes off its document listeners and its unit search', async () => {
+    const before = await adapter.readRows(page);
+    await page.focus(`${adapter.root} tbody tr:nth-child(1) select`);
+    await page.keyboard.type('mc');
+    const off = await page.evaluate(() => {
+      const root = document.getElementById('doseGrid');
+      const g = root._doseGrid;
+      const b = window.jQuery(root).data('shiny-input-binding');
+      const pending = g.search !== null;
+      window.__doseGridCallback = g.callback;
+      b.unsubscribe(root);
+      return { pending, search: g.search, attached: g.documentAttached };
+    });
+    assert.deepEqual(off, { pending: true, search: null, attached: false });
+    // the search's pause has passed: nothing was committed to the unbound grid
+    await page.waitForTimeout(1500);
+    const rows = await page.evaluate(() => document.getElementById('doseGrid')._doseGrid.rows);
+    assert.deepEqual(rows[0], before[0]);
+    const on = await page.evaluate(() => {
+      const root = document.getElementById('doseGrid');
+      const b = window.jQuery(root).data('shiny-input-binding');
+      b.subscribe(root, window.__doseGridCallback);
+      root._doseGrid.renderAll();
+      return { attached: root._doseGrid.documentAttached, callback: root._doseGrid.callback === window.__doseGridCallback };
+    });
+    assert.deepEqual(on, { attached: true, callback: true });
+    // and the grid still works
+    await enter(2, 2, '7');
+    await holds(2, ['fentanyl', '0', '7', 'mcg']);
+  });
+});

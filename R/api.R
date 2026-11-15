@@ -750,6 +750,19 @@ apiXml <- function(result) {
 }
 
 apiCsv <- function(df) {
+  # A text cell a spreadsheet would read as a formula (=, +, -, @, or a tab
+  # or carriage return first) is written after an apostrophe, OWASP's
+  # defence against CSV injection.  No request reaches a text cell today
+  # (Drug and ConcentrationUnits come from the library, the rest are
+  # numbers, which are left alone), so this guards a column added later
+  # (Carbon's third UI audit, 2026-11-15, L1).
+  text <- vapply(df, function(x) is.character(x) || is.factor(x), logical(1))
+  df[text] <- lapply(df[text], function(x) {
+    x <- as.character(x)
+    risky <- !is.na(x) & grepl("^[=+@\t\r-]", x)
+    x[risky] <- paste0("'", x[risky])
+    x
+  })
   con <- textConnection("out", "w", local = TRUE)
   on.exit(close(con))
   utils::write.csv(df, con, row.names = FALSE, na = "")

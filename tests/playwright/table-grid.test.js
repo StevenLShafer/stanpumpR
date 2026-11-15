@@ -229,3 +229,62 @@ describe('Drug Library', () => {
     assert.equal((await H.serverState(page)).colors.propofol, '#123456');
   });
 });
+
+// Carbon's (Gemini) third adversarial UI audit, of PR #730 at 4164743,
+// 2026-11-15: M4 and L1 (the dose grid's are in dose-grid.test.js)
+describe('Carbon\'s third UI audit, 2026-11-15', () => {
+  // M4: validateDose() refuses a number too long written out, which the
+  // dose grid's server would blank; a number cell says why
+  test('a number too long written out is refused with its reason', async () => {
+    await open('editDrugs', 'editDrugsHTML');
+    const r = await rowOf('editDrugsHTML', 'propofol');
+    const before = await page.$eval(cell('editDrugsHTML', r, 7), x => x.value);
+    await H.clearNotifications(page);
+    await page.click(cell('editDrugsHTML', r, 7));
+    await page.keyboard.type('1e-35');
+    await page.keyboard.press('Enter');
+    await H.settle(page, 300);
+    assert.equal(await page.$eval(cell('editDrugsHTML', r, 7), x => x.value), before);
+    const notes = await H.notifications(page);
+    assert.ok(notes.some(n => /"1e-35" was not accepted in Lower: a number written out in full can have at most 32 characters/.test(n)),
+              JSON.stringify(notes));
+  });
+
+  // L1: a list search's timer and the document's listener come off when
+  // Shiny unbinds the grid (a dialog closed), and the listener goes back on
+  // at a bind
+  test('unbinding a dialog\'s grid takes off its document listener and its list search', async () => {
+    await page.evaluate(() => window.Shiny.setInputValue('plot_dblclick',
+      { x: 5, y: 1, panelvar1: 'propofol' }, { priority: 'event' }));
+    await page.waitForSelector('#editPriorDosesTable tbody tr', { timeout: 30000 });
+    await H.settle(page, 300);
+    const before = await gridRows('editPriorDosesTable');
+    await page.focus(cell('editPriorDosesTable', 0, 3));
+    await page.keyboard.type('mc');
+    const off = await page.evaluate(() => {
+      const root = document.getElementById('editPriorDosesTable');
+      const g = root._tableGrid;
+      const b = window.jQuery(root).data('shiny-input-binding');
+      const pending = g.search !== null;
+      window.__tableGridCallback = g.callback;
+      window.__flushes = 0;
+      const flush = g.flushSearch;
+      g.flushSearch = function() { window.__flushes += 1; return flush.apply(this, arguments); };
+      b.unsubscribe(root);
+      return { pending, search: g.search, attached: g.documentAttached };
+    });
+    assert.deepEqual(off, { pending: true, search: null, attached: false });
+    // the search's pause has passed: the unbound grid was not touched
+    await page.waitForTimeout(1500);
+    assert.equal(await page.evaluate(() => window.__flushes), 0);
+    const on = await page.evaluate(() => {
+      const root = document.getElementById('editPriorDosesTable');
+      const b = window.jQuery(root).data('shiny-input-binding');
+      b.subscribe(root, window.__tableGridCallback);
+      root._tableGrid.renderAll();
+      return root._tableGrid.documentAttached;
+    });
+    assert.equal(on, true);
+    assert.deepEqual(await gridRows('editPriorDosesTable'), before);
+  });
+});
