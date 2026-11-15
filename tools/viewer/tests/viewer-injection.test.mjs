@@ -1384,3 +1384,30 @@ test('M7: a video frame after the window is resized still holds the whole window
   assert.ok(o.readout <= plan.h + 0.01 && o.amounts <= plan.w + 0.01, 'a card is painted off the frame');
   assertClean(page);
 });
+
+// Carbon's fourth UI audit, 2026-11-15, L1: the camera keys were looked up
+// in a plain object, so a key event named after one of Object's members was
+// taken for a camera key; the next frame threw before it asked for the one
+// after, and the camera keys never worked again. No keyboard sends such a
+// key, but any script can.
+test('L1: a key named after a member of every object is no camera key, and the camera keys still work', { skip }, async t => {
+  const page = await viewerPage(t);
+  assert.equal(await loadRun(page, RUN), true);
+  await page.evaluate(() => Player.setView('3d'));
+  await new Promise(r => setTimeout(r, 300));
+  const names = ['constructor', 'toString', '__proto__', 'hasOwnProperty', 'valueOf'];
+  await page.evaluate(ks => {
+    for (const k of ks) window.dispatchEvent(new KeyboardEvent('keydown', { key: k, code: 'Key_' + k }));
+  }, names);
+  await new Promise(r => setTimeout(r, 300));
+  const eye = () => page.evaluate(() => View.persp.position.toArray());
+  const before = await eye();
+  await page.keyboard.down('ArrowRight');
+  await new Promise(r => setTimeout(r, 400));
+  await page.keyboard.up('ArrowRight');
+  assert.notDeepEqual(await eye(), before, 'ArrowRight no longer moves the camera');
+  await page.evaluate(ks => {
+    for (const k of ks) window.dispatchEvent(new KeyboardEvent('keyup', { key: k, code: 'Key_' + k }));
+  }, names);
+  assertClean(page);
+});

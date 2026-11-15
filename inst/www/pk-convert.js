@@ -113,7 +113,30 @@ var PKConvert = (function() {
     out.halfLife = l.map(function(x) { return LN2 / x; });
     var sumA = a.reduce(function(s, x) { return s + x; }, 0);
     out.fraction = a.map(function(x) { return x / sumA; });
+    var range = outOfRange(out);
+    if (range) {
+      return {error: range.name + ' would be ' + fmt(range.value) +
+              ': these values are out of the range of numbers the page can compute'};
+    }
     return {model: out};
+  }
+
+  // The first derived value that is not a positive, finite number, or null.
+  // The inputs were checked, but what they give can overflow or underflow:
+  // V1 = 1e308 with k10 = 10 gave CL1 = Infinity, and CL = 5e-309 with a
+  // half-life of ln 2 gave A1 = Infinity and its fraction NaN, each shown
+  // under "The model is defined" (Carbon's fourth UI audit, 2026-11-15, M1).
+  var DERIVED = [['v', 'V'], ['cl', 'CL'], ['lambda', 'λ'], ['halfLife', 't½ λ'], ['A', 'A'],
+                 ['fraction', 'A', '/ΣA']];
+  function outOfRange(out) {
+    for (var d = 0; d < DERIVED.length; d++) {
+      var x = out[DERIVED[d][0]];
+      for (var i = 0; i < x.length; i++) {
+        if (!positive(x[i])) return {name: DERIVED[d][1] + (i + 1) + (DERIVED[d][2] || ''), value: x[i]};
+      }
+    }
+    if (!positive(out.vdss)) return {name: 'Vdss', value: out.vdss};
+    return null;
   }
 
   // A route that was given exponents must give them back: a check on the
@@ -265,9 +288,15 @@ var PKConvert = (function() {
   // The effect site peaks where it meets the plasma curve (dCe/dt =
   // ke0 (Cp - Ce)).  After a bolus Cp only falls and Ce only rises until
   // then, so Cp - Ce changes sign once, and bisection finds it.
+  // The bracket starts at 1 / (ke0 + lambda1), or 1 / max(ke0, lambda1)
+  // where that sum overflows: its reciprocal was 0, which doubling never
+  // moved, and the page froze (V1 = 1, CL1 = 1e308, ke0 = 1e308; Carbon's
+  // fourth UI audit, 2026-11-15, M1).
   function peakTime(model, ke0) {
     var f = function(t) { return plasma(model, t) - effect(model, ke0, t); };
     var lo = 0, hi = 1 / (ke0 + model.lambda[0]);
+    if (!(hi > 0)) hi = 1 / Math.max(ke0, model.lambda[0]);
+    if (!(hi > 0) || !isFinite(hi)) return NaN;
     while (f(hi) > 0 && hi < 1e15) { lo = hi; hi *= 2; }
     for (var i = 0; i < 200 && hi - lo > 1e-13 * hi; i++) {
       var mid = (lo + hi) / 2;
@@ -787,11 +816,13 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
       if (name === 'ke0') ke0 = t;
       else if (name === 'tke0') ke0 = Math.LN2 / t;
       else ke0 = P.ke0FromPeakTime(s.model, t);
+      var peak = ke0 > 0 && isFinite(ke0) ? P.peakTime(s.model, ke0) : NaN;
       if (!(ke0 > 0) || !isFinite(ke0)) {
         $result.text('No ke0 gives a peak at that time.').attr('data-kind', 'error');
+      } else if (!(peak > 0) || !isFinite(peak)) {
+        $result.text('Not admissible: this ke0 is out of the range of numbers the page can compute.').attr('data-kind', 'error');
       } else {
         s.ke0 = ke0;
-        var peak = P.peakTime(s.model, ke0);
         var shown = {ke0: ke0, tke0: Math.LN2 / ke0, tpeak: peak};
         $fields.each(function() {
           var k = $(this).attr('data-pk-effect');
