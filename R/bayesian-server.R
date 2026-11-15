@@ -198,6 +198,29 @@ bayesianServer <- function(input, output, session, doseTableClean, doseTableForm
     rows(list(rows = table, format = format))
   })
 
+  # The stored rows follow the dose table's format, as the dose table's own
+  # times do, once they can be converted (a clock time needs a readable
+  # procedure start).  Converted only where they were drawn, they stayed in
+  # the old format, and a Procedure start emptied afterwards in elapsed time
+  # dropped a level typed as 08:30 (Carbon's fourth UI audit, 2026-11-16,
+  # M3).  A change of the start in clock time moves the levels as it moves
+  # the doses, so they take effect together, not 750 ms apart.
+  observeEvent(list(doseTableFormat(), input$referenceTime), {
+    stored <- rows()
+    if (is.null(stored$format) || nrow(stored$rows) == 0) return()
+    format <- doseTableFormat()
+    reference <- asScalarString(input$referenceTime)
+    if (identical(stored$format, format)) {
+      if (isClockFormat(format)) immediate(TRUE)
+      return()
+    }
+    if ((isClockFormat(stored$format) || isClockFormat(format)) &&
+        !isValidReferenceTime(reference)) return()
+    immediate(TRUE)
+    rows(list(rows = bayesRowsInFormat(stored$rows, stored$format, format, reference),
+              format = format))
+  }, ignoreInit = TRUE)
+
   observeEvent(input$bayesClear, {
     immediate(TRUE)
     rows(list(rows = bayesBlankRows(0), format = NULL))
@@ -287,6 +310,14 @@ bayesianServer <- function(input, output, session, doseTableClean, doseTableForm
     # Library, converted as their thresholds are (`factors` named by drug;
     # Carbon's second UI audit, 2026-11-15, F6)
     canRescale = function(factors) !is.null(rescaledRows(factors)),
+    # A row with a concentration typed and no drug chosen yet
+    hasValueWithoutDrug = function() {
+      table <- isolate(rows())$rows
+      if (is.null(table) || nrow(table) == 0) return(FALSE)
+      drug <- trimws(as.character(table$Drug)); drug[is.na(drug)] <- ""
+      value <- trimws(as.character(table$Concentration)); value[is.na(value)] <- ""
+      any(!nzchar(drug) & nzchar(value))
+    },
     rescale = function(factors) {
       if (!any(as.character(isolate(rows())$rows$Drug) %in% names(factors))) return(invisible())
       converted <- rescaledRows(factors)

@@ -556,20 +556,25 @@ app_server <- function(input, output, session) {
   # times are clock times read from it, but not the events, which are kept
   # in minutes after it: moving the start from 08:00 to 07:30 put every event
   # half an hour earlier against the doses (Carbon's third UI audit,
-  # 2026-11-15, M2).  So the events are moved with the doses, each keeping
-  # its clock time, read as the doses' are (across midnight too).
+  # 2026-11-15, M2).  So the events are moved as the doses are
+  # (eventTimesForStart()): one in the 24 hours after the start keeps its
+  # clock time, one later its elapsed time.  The first version added the
+  # old start read against the new as one shift, which wrapped across
+  # midnight when the start moved later: 08:00 to 08:30 moved every event a
+  # day on, and typing a start ratcheted them days ahead (Carbon's fourth
+  # UI audit, 2026-11-16, H3).
   lastProcedureStart <- NULL
   observeEvent(input$referenceTime, {
     start <- procedureStart()
     if (!isValidReferenceTime(start)) return()
     old <- lastProcedureStart
     lastProcedureStart <<- start
-    if (is.null(old) || !isClockFormat(selectorFormat())) return()
-    shift <- displayTimeToMinutes(old, start, "minutes")
-    if (!isTRUE(is.finite(shift)) || shift == 0) return()
+    if (is.null(old) || identical(old, start) || !isClockFormat(selectorFormat())) return()
     events <- eventTable()
     if (is.null(events) || nrow(events) == 0) return()
-    events$Time <- as.numeric(events$Time) + shift
+    moved <- eventTimesForStart(events$Time, old, start)
+    if (identical(moved, as.numeric(events$Time))) return()
+    events$Time <- moved
     eventTable(events)
   }, ignoreNULL = TRUE)
 
@@ -704,6 +709,23 @@ app_server <- function(input, output, session) {
       # untrusted input: a link is text anyone can write (R/bookmark-restore.R).
       restoredDT <- restoredDoseTable(state$values$DT, drugDefaults())
       DT <- restoredDT$table
+      # A drug whose library row the link could not apply keeps the units in
+      # force, and the link's numbers for it, written in its own units, are
+      # converted into them (restoredLinkFactors()): a target, a threshold, a
+      # measured level (Carbon's fourth UI audit, 2026-11-16, C2)
+      linkFactors <- restoredLinkFactors(restoredLibrary$linkUnits, drugDefaults())
+      if (length(linkFactors) > 0) {
+        converted <- doseTableRescaleTargets(DT, linkFactors)
+        if (is.null(converted)) {
+          # A target past the ceiling in the units in force is left out
+          drop <- as.character(DT$Drug) %in% names(linkFactors) & isTciUnit(DT$Units)
+          DT <- DT[!drop, , drop = FALSE]
+          showNotification("A target of the link's could not be converted to the units in force, and was left out.",
+                           id = "bookmarkTargets", type = "warning", duration = 15)
+        } else {
+          DT <- converted
+        }
+      }
       restoredET <- restoredEventTable(state$values$ET, getEventDefaults(), eventTableInit)
       if (restoredDT$changed || restoredET$changed) {
         showNotification(paste("The link's dose or event table had entries that could not be read.",
@@ -735,11 +757,21 @@ app_server <- function(input, output, session) {
       outputComments(DT)
       ET <- restoredET$table
       eventTable(ET)
+      # The link's events are in minutes after the link's own start, which
+      # is the box's now: a later edit moves them from there
+      if (isValidReferenceTime(procedureStart())) lastProcedureStart <<- procedureStart()
       outputComments("eventTable:")
       outputComments(ET)
       # Thresholds, when the bookmark has them; bookmarks made before they
       # were saved keep the defaults.
-      restored <- restoreThresholds(drugDefaults(), state$values$endCe,
+      linkEndCe <- state$values$endCe
+      if (length(linkFactors) > 0 && length(linkEndCe) > 0 && !is.null(names(linkEndCe))) {
+        moved <- names(linkEndCe) %in% names(linkFactors)
+        value <- suppressWarnings(as.numeric(linkEndCe))
+        value[moved] <- value[moved] * linkFactors[names(linkEndCe)[moved]]
+        linkEndCe <- stats::setNames(value, names(linkEndCe))
+      }
+      restored <- restoreThresholds(drugDefaults(), linkEndCe,
                                     state$values$macThreshold)
       drugDefaults(restored$drugDefaults)
       macThreshold(restored$macThreshold)
@@ -752,6 +784,11 @@ app_server <- function(input, output, session) {
       # The Bayesian update's measured concentrations, read as untrusted
       # input like the tables, into the table in the format now shown
       restoredBayes <- restoredBayesObservations(state$values$bayes, drugDefaults()$Drug)
+      if (length(linkFactors) > 0 && nrow(restoredBayes$table) > 0) {
+        moved <- restoredBayes$table$Drug %in% names(linkFactors)
+        restoredBayes$table$Concentration[moved] <- restoredBayes$table$Concentration[moved] *
+          linkFactors[restoredBayes$table$Drug[moved]]
+      }
       if (restoredBayes$changed) {
         showNotification("The link's measured concentrations had entries that could not be read. They were left out.",
                          id = "bookmarkBayesUnreadable", type = "warning", duration = 10)
@@ -1421,7 +1458,7 @@ app_server <- function(input, output, session) {
       )
       # The failures too, so that a fit that ran out of time is not tried
       # again until its inputs change (bayesianUpdateDrugs())
-      bayesFitCache <<- c(result$fits, result$failed)
+      bayesFitCache <<- result$cache
       result
     }, name = "bayesUpdate() reactive")
   })
@@ -3447,6 +3484,24 @@ app_server <- function(input, output, session) {
                        "would be above 1,000,000,000 in the new units."))
           return()
         }
+        # A measured value whose drug is not chosen yet cannot be converted,
+        # and would be read in the new units once it is (Carbon's fourth UI
+        # audit, 2026-11-16, C1)
+        if (bayes$hasValueWithoutDrug()) {
+          refuse("a measured concentration has no drug chosen yet. Choose its drug or clear it first.")
+          return()
+        }
+        # Nor may a converted range, MEAC or threshold pass the ceiling: a
+        # saved link then could not apply the library, and its targets were
+        # read in the other units (the same audit, C2)
+        moved <- newDrugDefaults$Drug %in% rescaled$drugs
+        numbers <- as.matrix(newDrugDefaults[moved, intersect(c(DRUG_LIBRARY_NUMERIC_COLUMNS, "endCe"),
+                                                              names(newDrugDefaults)), drop = FALSE])
+        if (any(is.finite(numbers) & numbers > MAX_DOSE_VALUE)) {
+          refuse(paste("a range, MEAC or threshold of", paste(rescaled$drugs, collapse = ", "),
+                       "would be above 1,000,000,000 in the new units."))
+          return()
+        }
       }
       removeModal()
       if (length(rescaled$drugs) > 0) {
@@ -3457,6 +3512,13 @@ app_server <- function(input, output, session) {
         if (!identical(dtRescaled, dtNow)) commitDoseTable(dtRescaled)
         bayes$rescale(rescaled$factors)
       }
+      # A change of units also ends the dose table's undo and redo history:
+      # an entry undone before the change and redone after it came back in
+      # the old units (a target of 3000 ng/mL as 3000 mcg/mL) or with a unit
+      # the edit had removed (Carbon's fourth UI audit, 2026-11-16, C1)
+      unitColumns <- c("Concentration.Units", "Units", "Bolus.Units", "Infusion.Units", "Default.Units")
+      if (!identical(newDrugDefaults[unitColumns], current[unitColumns]))
+        doseTableHistory()$do(doseTableDraft())$clear()
 
       drugDefaults(newDrugDefaults)
     }, name = "input$drugEditsOK observer")

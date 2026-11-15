@@ -76,11 +76,17 @@ suggest <- function(
   events <- eventTable
   if (!is.null(events) && nrow(events) > 0) {
     events$Time <- as.numeric(events$Time) - offsetTime
+    # In time order, ties in the order entered, as simCpCe() applies them;
+    # so the one in force at the window's start is the last of those at or
+    # before it.  which.max() took the first of two at one time, where the
+    # simulation applies the second (Carbon's fourth UI audit, 2026-11-16,
+    # M7).
+    events <- events[order(events$Time), , drop = FALSE]
     pkEvent <- gsub(" ", "", events$Event) %in% PK$pkEvents
     keep <- pkEvent & events$Time > 0
     before <- which(pkEvent & events$Time <= 0)
     if (length(before) > 0) {
-      last <- before[which.max(events$Time[before])]
+      last <- before[length(before)]
       events$Time[last] <- 0
       keep[last] <- TRUE
     }

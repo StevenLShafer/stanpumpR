@@ -1263,6 +1263,31 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
 #' written in the scenario's time unit, elapsed (the format applyHelpScenario()
 #' records for them).
 #' @noRd
+# A scenario's target-controlled infusions are written in the standard
+# library's concentration units.  In a session whose Drug Library shows a
+# drug in the other of mcg and ng, its targets are converted, as the Drug
+# Library converts the session's own: loaded as written, propofol's 3 mcg/mL
+# ran at 3 ng/mL (Carbon's fourth UI audit, 2026-11-16, H4).  Returns the
+# scenario with `converted`, the drugs converted, or NULL if a converted
+# target would pass the dose table's ceiling.
+helpScenarioInSessionUnits <- function(s, drugDefaults, standard = getDrugDefaultsGlobal()) {
+  s$converted <- character(0)
+  d <- s$doses
+  if (!is.data.frame(d) || nrow(d) == 0) return(s)
+  rows <- which(isTciUnit(d$Units))
+  for (drug in unique(d$Drug[rows])) {
+    from <- standard$Concentration.Units[match(drug, standard$Drug)]
+    to <- drugDefaults$Concentration.Units[match(drug, drugDefaults$Drug)]
+    if (!isTRUE(from %in% c("mcg", "ng")) || !isTRUE(to %in% c("mcg", "ng")) || from == to) next
+    at <- rows[d$Drug[rows] == drug]
+    d$Dose[at] <- as.numeric(d$Dose[at]) * mcgPerMlScale(from) / mcgPerMlScale(to)
+    if (any(!is.finite(d$Dose[at]) | d$Dose[at] > MAX_DOSE_VALUE)) return(NULL)
+    s$converted <- c(s$converted, drug)
+  }
+  s$doses <- d
+  s
+}
+
 helpScenarioDoseTable <- function(s, blankRows = 3) {
   d <- s$doses
   d <- d[order(d$Time, d$Drug), ]

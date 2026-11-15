@@ -826,11 +826,16 @@ test_that("a link carries the Drug Library's edits, read as untrusted input (P3-
   expect_length(back$problems, 0)
   expect_identical(back$table$Concentration.Units[back$table$Drug == "propofol"], "ng")
   expect_identical(back$table$Color[back$table$Drug == "fentanyl"], "#123456")
-  # what the library dialog itself refuses, a link cannot carry
+  # what the library dialog itself refuses, a link cannot carry; since
+  # Carbon's fourth audit (P4-C2) the refusal is the drug's, not the link's
   forged <- saved
   forged$Concentration.Units[forged$Drug == "propofol"] <- "INR"
-  expect_identical(restoredDrugLibrary(forged)$table, G)
-  expect_match(restoredDrugLibrary(forged)$problems, "could not be read", fixed = TRUE)
+  refused <- restoredDrugLibrary(forged)
+  expect_identical(refused$table[refused$table$Drug != "fentanyl", names(G)], G[G$Drug != "fentanyl", ])
+  expect_identical(refused$table$Color[refused$table$Drug == "fentanyl"], "#123456")
+  expect_match(refused$problems, "entries for propofol could not be used", fixed = TRUE)
+  expect_length(restoredLinkFactors(refused$linkUnits, refused$table), 0)
+  expect_match(restoredDrugLibrary("abc")$problems, "could not be read", fixed = TRUE)
   expect_identical(restoredDrugLibrary("abc")$table, G)
   expect_identical(restoredDrugLibrary(list(Drug = 1:1000))$table, G)
   # and a unit the dose table uses is not removed from under it

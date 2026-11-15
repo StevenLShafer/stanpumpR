@@ -199,8 +199,30 @@ bayesianObservations <- function(observations)
 # interactions on, every dosed drug (the interactions run among them).
 bayesianRelevantDrugs <- function(drug, drugs, dosed, antiseizureInteractions)
 {
-  if (isTRUE(antiseizureInteractions)) return(dosed)
-  unique(c(drug, bayesianParents(drug, drugs, dosed)))
+  parents <- bayesianParents(drug, drugs, dosed)
+  if (!isTRUE(antiseizureInteractions)) return(unique(c(drug, parents)))
+  # With the interactions on, the drugs connected to it through them: all
+  # dosed drugs made an unrelated propofol TCI hold a lamotrigine fit to a
+  # week, and a dose of another drug count as one of its own (Carbon's
+  # fourth UI audit, 2026-11-16, H8)
+  unique(c(drug, parents, asmConnectedDrugs(c(drug, parents), dosed)))
+}
+
+# The dosed drugs joined to `start` through the active antiseizure
+# interactions, in either direction (perpetrator or victim)
+asmConnectedDrugs <- function(start, dosed)
+{
+  active <- activeAntiseizureInteractions(dosed)
+  if (nrow(active) == 0) return(intersect(start, dosed))
+  found <- intersect(start, dosed)
+  repeat {
+    more <- unique(c(active$victim[active$perpetrator %in% found],
+                     active$perpetrator[active$victim %in% found]))
+    more <- setdiff(intersect(more, dosed), found)
+    if (length(more) == 0) break
+    found <- c(found, more)
+  }
+  found
 }
 
 # Those of `candidates` that form `drug` as their active metabolite
@@ -395,7 +417,8 @@ bayesianSearch <- function(residuals, start, lower, upper,
 #'   frame of Time, Measured, Population and Individual (the predictions)
 #' @keywords internal
 bayesianFitDrug <- function(drug, drugs, DT, ET, measured, omega, sigma, rebuild,
-                            antiseizureInteractions = FALSE, deadline = Inf)
+                            antiseizureInteractions = FALSE, deadline = Inf,
+                            initial = drugs)
 {
   dosed <- intersect(unique(DT$Drug), names(drugs))
   relevant <- bayesianRelevantDrugs(drug, drugs, dosed, antiseizureInteractions)
@@ -413,18 +436,18 @@ bayesianFitDrug <- function(drug, drugs, DT, ET, measured, omega, sigma, rebuild
   # level of morphine formed from codeine left the estimate where it began
   # (Carbon's third UI audit, 2026-11-15, H7)
   parents <- bayesianParents(drug, drugs, setdiff(relevant, drug))
-  predict <- function(entry, parentEntries = list()) {
+  predict <- function(entry, parentEntries = list(), base = entries, keep = TRUE) {
     # No simulation is started after the deadline (BAYES_MAX_SECONDS)
     if (proc.time()[["elapsed"]] > deadline)
       stop(structure(class = c("bayesTimeLimit", "error", "condition"),
                      list(message = "time limit", call = NULL)))
-    candidate <- entries
+    candidate <- base
     candidate[[drug]] <- entry
     for (p in names(parentEntries)) candidate[[p]] <- parentEntries[[p]]
     out <- withOutputTimes(times, processdoseTable(
-      DTsub, ET, candidate, maximum, FALSE, cache = simCache,
+      DTsub, ET, candidate, maximum, FALSE, cache = if (keep) simCache,
       antiseizureInteractions = antiseizureInteractions))
-    simCache <<- out
+    if (keep) simCache <<- out
     wide <- out[[drug]]$wide
     if (is.null(wide) || nrow(wide) == 0) return(rep(NA_real_, length(times)))
     at <- match(times, wide$Time)
@@ -479,6 +502,13 @@ bayesianFitDrug <- function(drug, drugs, DT, ET, measured, omega, sigma, rebuild
   fit <- bayesianSearch(residuals, c(0, 0), c(-limit, -limit), c(limit, limit))
   eta <- fit$par
   individual <- predictAt(eta)[use]
+  # The model's own prediction, as its population line draws it: every drug
+  # as it was before the update.  Read from the drugs as updated so far, a
+  # metabolite's model prediction carried its parent's estimate, 84% off
+  # (Carbon's fourth UI audit, 2026-11-16, H7).
+  initialEntries <- initial[vapply(initial, function(e) is.null(e$companionOf), logical(1))]
+  modelOwn <- if (identical(initialEntries, entries)) population else
+    predict(initial[[drug]], base = initialEntries, keep = FALSE)
   list(
     clearance = exp(eta[1]),
     volume = exp(eta[2]),
@@ -491,7 +521,7 @@ bayesianFitDrug <- function(drug, drugs, DT, ET, measured, omega, sigma, rebuild
     atLimit = any(abs(eta) > limit * (1 - 1e-6)),
     beforeAbsorption = sum(!use),
     observations = data.frame(Time = times[use], Measured = measured$Concentration[use],
-                              Population = population[use], Individual = individual)
+                              Population = modelOwn[use], Individual = individual)
   )
 }
 
@@ -534,7 +564,11 @@ bayesianFitDrug <- function(drug, drugs, DT, ET, measured, omega, sigma, rebuild
 #'   `key`); `problems`, sentences saying what could not be used; and
 #'   `failed`, the drugs that could not be updated, with their keys, which a
 #'   caller passes back in `fits` so that they are not tried again until
-#'   their inputs change
+#'   their inputs change; and `cache`, every fit made or reused, with its
+#'   key, which a caller passes back in `fits` to reuse them all (with the
+#'   antiseizure interactions on, the update repeats its round until no
+#'   estimate moves, and a round's fits are keyed by the other drugs'
+#'   estimates)
 #' @export
 bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
                                 pkVariability = BAYES_PK_VARIABILITY_DEFAULT,
@@ -549,7 +583,8 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
   failed <- list()
   deadline <- proc.time()[["elapsed"]] + timeLimit
   if (nrow(observations) == 0 || is.null(DT) || nrow(DT) == 0)
-    return(list(drugs = drugs, fits = newFits, problems = problems, failed = failed))
+    return(list(drugs = drugs, fits = newFits, problems = problems, failed = failed,
+                cache = list()))
   omega <- bayesianSD(pkVariability)
   sigma <- bayesianSD(residualVariability)
   ET <- if (is.null(ET)) data.frame(Time = numeric(0), Event = character(0)) else ET
@@ -557,13 +592,47 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
 
   dosed <- unique(DT$Drug)
   measuredDrugs <- unique(observations$Drug)
-  # In the dose table's order, so that a drug is updated after the drugs before it
+  # In the dose table's order, so that a drug is updated after the drugs
+  # before it, except that a parent is updated before the metabolite it
+  # forms, which it then forms as the individual's (bayesianParentEntry()):
+  # updated after, its own rebuild dropped the metabolite's estimate and the
+  # plotted metabolite went back to the model's (Carbon's fourth UI audit,
+  # 2026-11-16, H7)
   order <- c(intersect(dosed, measuredDrugs), setdiff(measuredDrugs, dosed))
+  isParent <- vapply(order, function(d) {
+    m <- drugs[[d]]$metaboliteName
+    !is.null(m) && m %in% order
+  }, logical(1))
+  order <- c(order[isParent], order[!isParent])
+  # The drugs as they were: each population line, and each fit's model
+  # prediction, is theirs (the same audit, H7)
+  initial <- drugs
   priors <- list()
+  # Every fit made, with its key, so that one whose inputs have not changed
+  # is reused, in a later pass and at a later redraw (`fits`)
+  cache <- list()
+  lookup <- function(key) {
+    for (f in cache) if (is.list(f) && identical(f$key, key)) return(f)
+    for (f in fits) if (is.list(f) && identical(f$key, key)) {
+      cache[[length(cache) + 1]] <<- f
+      return(f)
+    }
+    NULL
+  }
+  # With the antiseizure interactions on, measured drugs move one another's
+  # curves, so they are updated in turn until no estimate moves: updated
+  # once each, the first was fitted against the second's model and drawn
+  # against its estimate, 21% from its own fit (the same audit, H8)
+  passes <- if (isTRUE(antiseizureInteractions)) BAYES_JOINT_PASSES else 1L
+  previous <- NULL
+  for (pass in seq_len(passes)) {
+  problems <- character(0)
+  newFits <- list()
+  failed <- list()
   for (drug in order)
   {
     rows <- observations[observations$Drug == drug, , drop = FALSE]
-    entry <- drugs[[drug]]
+    entry <- initial[[drug]]
     if (!drug %in% dosed || is.null(entry) || !is.null(entry$companionOf)) {
       problems <- c(problems, sprintf(
         "%s is not in the dose table, so its %s cannot be used.",
@@ -572,11 +641,14 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
     }
     relevant <- bayesianRelevantDrugs(drug, drugs, intersect(dosed, names(drugs)),
                                       antiseizureInteractions)
+    parents <- bayesianParents(drug, drugs, setdiff(relevant, drug))
     # A level measured before any dose that reaches it cannot be explained by
     # the drug, and is set aside.  A dose of 0 is no dose: the startup menu's
     # rows are 0 until a dose is typed, and a level entered before then was
     # fitted to a curve of zeros (Carbon's second UI audit, 2026-11-15, F8).
-    given <- DT$Drug %in% relevant & suppressWarnings(as.numeric(DT$Dose)) > 0
+    # Only the drug's own doses and its parents': with the interactions on,
+    # another drug's dose counted (the same audit, H8)
+    given <- DT$Drug %in% c(drug, parents) & suppressWarnings(as.numeric(DT$Dose)) > 0
     if (!any(given, na.rm = TRUE)) {
       problems <- c(problems, sprintf(
         "%s has no dose above 0 yet, so its %s cannot be used.",
@@ -618,11 +690,15 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
       next
     }
     stripSim <- function(e) e[setdiff(names(e), c("sim", "simKey"))]
+    # The models as they were, and the estimates of the other drugs, which
+    # is what the drugs the fit simulates are built from
     key <- list(
       drug = drug,
-      entries = lapply(drugs[intersect(names(drugs), unique(c(relevant, vapply(
-        relevant, function(d) { m <- drugs[[d]]$metaboliteName; if (is.null(m)) "" else m },
+      entries = lapply(initial[intersect(names(initial), unique(c(relevant, vapply(
+        relevant, function(d) { m <- initial[[d]]$metaboliteName; if (is.null(m)) "" else m },
         character(1)))))], stripSim),
+      estimates = lapply(stats::setNames(setdiff(relevant, drug), setdiff(relevant, drug)),
+                         function(d) drugs[[d]]$individual),
       DT = DTsub,
       ET = ET,
       measured = rows[, c("Time", "Concentration")],
@@ -630,18 +706,26 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
       sigma = sigma,
       antiseizureInteractions = isTRUE(antiseizureInteractions)
     )
-    fit <- fits[[drug]]
-    if (is.null(fit) || !identical(fit$key, key)) {
+    fit <- lookup(key)
+    if (is.null(fit)) {
       if (is.function(onFit)) onFit(drug)
+      # Searched from the model: in a later pass the drug, and its parents'
+      # metabolite, carry the last pass's estimate, from which the search
+      # found nothing left to fit and reported a factor of 1
+      fitDrugs <- drugs
+      fitDrugs[[drug]] <- initial[[drug]]
+      for (p in parents) if (!is.null(drugs[[p]]$metaboliteIndividual))
+        fitDrugs[[p]] <- bayesianParentEntry(p, drug, drugs, list(clearance = 1, volume = 1), rebuild)
       fit <- tryCatch(
-        bayesianFitDrug(drug, drugs, DT, ET, rows, omega, sigma, rebuild,
-                        antiseizureInteractions, deadline = deadline),
+        bayesianFitDrug(drug, fitDrugs, DT, ET, rows, omega, sigma, rebuild,
+                        antiseizureInteractions, deadline = deadline, initial = initial),
         bayesTimeLimit = function(e) list(failed = sprintf(paste(
           "%s could not be updated within %s seconds: shorten the plot, or enter",
           "measurements of fewer drugs."), drug, format(timeLimit))),
         error = function(e) list(failed = sprintf("%s could not be updated: %s", drug,
                                                   conditionMessage(e))))
       fit$key <- key
+      cache[[length(cache) + 1]] <- fit
     }
     # A fit that failed is not tried again until its inputs change: one that
     # ran out of time would otherwise take its time again at every redraw
@@ -676,9 +760,14 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
     factors <- list(clearance = fit$clearance, volume = fit$volume)
     # The model's own line includes what the parents form as the model has
     # it, as the fit's population prediction did (foldMetabolites())
-    parents <- bayesianParents(drug, drugs, setdiff(relevant, drug))
-    priors[[drug]]$populationSources <- drugs[parents]
-    updated <- rebuild(drug, stats::setNames(list(factors), drug))
+    priors[[drug]]$populationSources <- initial[parents]
+    individual <- stats::setNames(list(factors), drug)
+    # A parent keeps forming the individual's metabolite, where that was
+    # updated in an earlier pass
+    formed <- entry$metaboliteName
+    if (!is.null(formed) && !is.null(drugs[[formed]]$bayesian))
+      individual[[formed]] <- drugs[[formed]]$bayesian[c("clearance", "volume")]
+    updated <- rebuild(drug, individual)
     # The pump ran on the library's model (see the header)
     if (any(isTciUnit(DTsub$Units[DTsub$Drug == drug]))) updated$tciModel <- entry
     updated$Color <- entry$Color
@@ -699,6 +788,15 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
       drugs[[p]] <- bayesianParentEntry(p, drug, drugs, factors, rebuild)
   }
 
+  # Until no estimate moves
+  estimates <- lapply(newFits, function(f) c(f$clearance, f$volume))
+  if (!is.null(previous) && identical(names(estimates), names(previous)) &&
+      all(vapply(names(estimates), function(d)
+        max(abs(estimates[[d]] / previous[[d]] - 1)) < BAYES_JOINT_TOLERANCE, logical(1))))
+    break
+  previous <- estimates
+  }
+
   # The model's own prediction beside each updated drug, after every drug
   # (a panel's first series is the drug's own: R/alternativeModels.R)
   for (drug in names(priors))
@@ -717,7 +815,8 @@ bayesianUpdateDrugs <- function(drugs, DT, ET, observations,
     prior$Color <- alternativeModelColor(prior$Color, amount = BAYES_PRIOR_COLOR_AMOUNT)
     drugs[[name]] <- prior
   }
-  list(drugs = drugs, fits = newFits, problems = problems, failed = failed)
+  list(drugs = drugs, fits = newFits, problems = unique(problems), failed = failed,
+       cache = cache)
 }
 
 # The help page of the Bayesian update

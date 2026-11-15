@@ -506,11 +506,16 @@ applyAntiseizureInteractions <- function(drugs, DT, ET, plotMaximum, plotRecover
   # out, valproate's inhibition of lamotrigine was missing from it, and the
   # line drew 1.2 mcg/mL where the fit's own population prediction was 3.0
   # (Carbon's third UI audit, 2026-11-15, H7)
+  isPopulation <- function(d) identical(d$companionGroup, "bayesian") && !is.null(d$wideOwn)
   populations <- names(drugs)[vapply(drugs, function(d)
-    identical(d$companionGroup, "bayesian") && isTRUE(d$companionOf %in% victims) &&
-      !is.null(d$wideOwn), logical(1))]
+    isPopulation(d) && isTRUE(d$companionOf %in% victims), logical(1))]
+  # A perpetrator's population line, which the victims' population lines
+  # are run against
+  perpetratorPopulations <- names(drugs)[vapply(drugs, function(d)
+    isPopulation(d) && isTRUE(d$companionOf %in% active$perpetrator), logical(1))]
   # Everything the interaction simulation of the whole group depends on.
-  participants <- sort(unique(c(active$victim, active$perpetrator, populations)))
+  participants <- sort(unique(c(active$victim, active$perpetrator, populations,
+                                perpetratorPopulations)))
   key <- list(
     keys = lapply(stats::setNames(participants, participants),
                   function(d) drugs[[d]]$simKey),
@@ -570,31 +575,46 @@ applyAntiseizureInteractions <- function(drugs, DT, ET, plotMaximum, plotRecover
         sims[[v]] <- X
       }
     }
-    # Each population line, with the other drugs as converged; its own
-    # concentration stands for the drug's, in a drug that induces its own
-    # metabolism (carbamazepine), so it has a fixed point of its own
-    for (companion in populations)
-    {
-      v <- drugs[[companion]]$companionOf
-      rows <- active[active$victim == v, , drop = FALSE]
-      own <- conc
-      own[[v]] <- drugs[[companion]]$wideOwn[, c("Time", "Plasma")]
-      ownET <- drugs[[companion]]$ET
-      if (is.null(ownET)) ownET <- ET[0, , drop = FALSE]
+    # The population lines: the model's own drugs, every interacting drug
+    # at its population values (its "(population)" companion where it was
+    # updated), to a fixed point of their own.  With the other drugs at
+    # their estimates, lamotrigine's population line ran against the
+    # individual's valproate, 20% off the model (Carbon's fourth UI audit,
+    # 2026-11-16, H8); before that it took no interaction at all (the third
+    # audit, H7).
+    if (length(populations) > 0) {
+      popEntry <- function(d) {
+        n <- bayesianPriorName(d)
+        if (!is.null(drugs[[n]]) && isPopulation(drugs[[n]])) drugs[[n]] else drugs[[d]]
+      }
+      popConc <- lapply(stats::setNames(names(own), names(own)),
+                        function(d) popEntry(d)$wideOwn[, c("Time", "Plasma")])
+      popSims <- list()
       for (iteration in seq_len(ASM_INTERACTION_MAX_ITERATIONS))
       {
-        m <- asmVictimMultipliers(v, rows, own, time, toRegistry)
-        X <- asmSimulateVictim(drugs[[companion]], m, time, victimDT(v), ownET,
-                               plotMaximum, FALSE)
-        old <- stats::approx(own[[v]]$Time, own[[v]]$Plasma, xout = X$wide$Time,
-                             rule = 2, ties = mean)$y
-        own[[v]] <- X$wide[, c("Time", "Plasma")]
-        peak <- max(X$wide$Plasma, old, .Machine$double.eps)
-        if (!any(rows$perpetrator == v) ||
-            max(abs(X$wide$Plasma - old)) / peak < ASM_INTERACTION_CONVERGENCE) break
+        change <- 0
+        newPop <- popConc
+        for (v in victims)
+        {
+          rows <- active[active$victim == v, , drop = FALSE]
+          m <- asmVictimMultipliers(v, rows, popConc, time, toRegistry)
+          entry <- popEntry(v)
+          entryET <- entry$ET
+          if (is.null(entryET)) entryET <- ET[0, , drop = FALSE]
+          X <- asmSimulateVictim(entry, m, time, victimDT(v), entryET, plotMaximum, FALSE)
+          X$interaction$rows <- rows
+          popSims[[v]] <- X
+          newPop[[v]] <- X$wide[, c("Time", "Plasma")]
+          old <- stats::approx(popConc[[v]]$Time, popConc[[v]]$Plasma,
+                               xout = newPop[[v]]$Time, rule = 2, ties = mean)$y
+          peak <- max(newPop[[v]]$Plasma, old, .Machine$double.eps)
+          change <- max(change, max(abs(newPop[[v]]$Plasma - old)) / peak)
+        }
+        popConc <- newPop
+        if (change < ASM_INTERACTION_CONVERGENCE) break
       }
-      X$interaction$rows <- rows
-      sims[[companion]] <- X
+      for (companion in populations)
+        sims[[companion]] <- popSims[[drugs[[companion]]$companionOf]]
     }
   }
 

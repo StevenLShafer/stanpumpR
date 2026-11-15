@@ -289,6 +289,24 @@ isValidReferenceTime <- function(reference) {
   !is.na(referenceMinutes(reference))
 }
 
+# Event times (minutes after the procedure start `old`) after the start
+# moves to `new`, as the dose table's times move: one in the 24 hours after
+# the start is a clock time there (minutesToEntryTime()), so it keeps its
+# clock time and is read against the new start as a dose's clock time is,
+# in the 24 hours after it (displayTimeToMinutes()); a later one is an
+# elapsed time there, and keeps it.  Moving the start and moving it back
+# leaves every time as it was.
+eventTimesForStart <- function(times, old, new) {
+  times <- suppressWarnings(as.numeric(times))
+  from <- referenceMinutes(old)
+  to <- referenceMinutes(new)
+  if (is.na(from) || is.na(to)) return(times)
+  # round(), as minutesToEntryTime() decides which times are clock times
+  clock <- is.finite(times) & times >= 0 & round(times) < MINS_PER_DAY
+  times[clock] <- ((from + times[clock]) - to) %% MINS_PER_DAY
+  times
+}
+
 # The reference a format's times are read against: the procedure start in
 # clock mode, else none
 referenceForFormat <- function(format, reference) {

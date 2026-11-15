@@ -961,3 +961,10 @@ BAYES_PRIOR_LABEL <- "population"
 # population line and another companion (Minto or Schnider, "no
 # interactions") draws the two in different colours
 BAYES_PRIOR_COLOR_AMOUNT <- 0.7
+# With the antiseizure interactions on, the measured drugs are updated in
+# turn, at most this many times, until no estimate moves by more than
+# BAYES_JOINT_TOLERANCE (relative) from one pass to the next (R/bayesian.R;
+# Carbon's fourth UI audit, 2026-11-16, H8).  A pass whose inputs did not
+# change reuses its fits, so a single measured drug costs one fit.
+BAYES_JOINT_PASSES <- 6L
+BAYES_JOINT_TOLERANCE <- 1e-3

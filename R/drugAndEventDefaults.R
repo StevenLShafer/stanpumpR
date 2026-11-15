@@ -429,28 +429,68 @@ changedDrugLibrary <- function(drugDefaults, defaults = getDrugDefaultsGlobal())
 
 # The library a link carries (changedDrugLibrary()), read as untrusted input:
 # applied to the package's library and held to the Drug Library dialog's own
-# rules (drugLibraryProblems()).  Returns a list: `table`, the library (the
-# package's when the link's cannot be used), and `problems`, sentences.
+# rules (drugLibraryProblems()), drug by drug.  Returns a list: `table`, the
+# library; `problems`, sentences; and `linkUnits`, the concentration units the
+# link carries for each drug whose row could not be applied, which its
+# targets, thresholds and measured concentrations are in
+# (restoredLinkFactors()).  Until Carbon's fourth UI audit (2026-11-16, C2)
+# it was applied all or nothing: one row the rules refused (a range converted
+# to ng past 1,000,000,000) dropped every drug's row, and a target saved as
+# 3000 ng/mL was then read as 3000 mcg/mL.
 restoredDrugLibrary <- function(saved, defaults = getDrugDefaultsGlobal()) {
-  if (is.null(saved)) return(list(table = defaults, problems = character(0)))
-  unread <- list(table = defaults, problems = paste(
+  none <- list(table = defaults, problems = character(0), linkUnits = character(0))
+  if (is.null(saved)) return(none)
+  unread <- list(table = defaults, linkUnits = character(0), problems = paste(
     "The link's drug library could not be read; the standard library is used,",
     "so check the dose table's units and targets."))
   saved <- tryCatch(as.data.frame(saved, stringsAsFactors = FALSE), error = function(e) NULL)
   if (is.null(saved) || !"Drug" %in% names(saved) || nrow(saved) > nrow(defaults)) return(unread)
   edited <- drugLibraryGridData(defaults)
+  rejected <- character(0)
+  linkUnits <- character(0)
   for (i in seq_len(nrow(saved))) {
-    k <- match(asScalarString(saved$Drug[[i]]), edited$Drug)
+    drug <- asScalarString(saved$Drug[[i]])
+    k <- match(drug, edited$Drug)
     if (is.na(k)) next
+    candidate <- edited
     for (col in intersect(DRUG_LIBRARY_BOOKMARK_COLUMNS, names(saved))) {
       v <- saved[[col]][[i]]
       if (is.numeric(v) && length(v) == 1) v <- as.character(v)
-      edited[[col]][k] <- asScalarString(v)
+      candidate[[col]][k] <- asScalarString(v)
+    }
+    problems <- tryCatch(drugLibraryProblems(candidate, defaults), error = function(e) "unreadable")
+    if (length(problems) == 0) {
+      edited <- candidate
+    } else {
+      rejected <- c(rejected, drug)
+      if ("Concentration.Units" %in% names(saved))
+        linkUnits[[drug]] <- asScalarString(saved$Concentration.Units[[i]])
     }
   }
-  problems <- tryCatch(drugLibraryProblems(edited, defaults), error = function(e) "unreadable")
-  if (length(problems) > 0) return(unread)
-  list(table = drugLibraryTable(edited, defaults), problems = character(0))
+  table <- drugLibraryTable(edited, defaults)
+  converted <- names(restoredLinkFactors(linkUnits, table))
+  problems <- if (length(rejected) > 0) paste0(
+    "The link's Drug Library entries for ", paste(unique(rejected), collapse = ", "),
+    " could not be used, and the standard entries are",
+    if (length(converted) > 0) paste0(
+      "; the targets, thresholds and measured concentrations of ",
+      paste(converted, collapse = ", "), " were converted to the standard units"),
+    ".")
+  list(table = table, problems = problems, linkUnits = linkUnits)
+}
+
+# The factors that bring a link's numbers for each drug from the units the
+# link carries (restoredDrugLibrary()$linkUnits) into the units in force,
+# named by drug: only mcg and ng, and only where they differ
+restoredLinkFactors <- function(linkUnits, drugDefaults) {
+  factors <- numeric(0)
+  for (drug in names(linkUnits)) {
+    from <- linkUnits[[drug]]
+    to <- drugDefaults$Concentration.Units[match(drug, drugDefaults$Drug)]
+    if (isTRUE(from %in% c("mcg", "ng")) && isTRUE(to %in% c("mcg", "ng")) && from != to)
+      factors[[drug]] <- mcgPerMlScale(from) / mcgPerMlScale(to)
+  }
+  factors
 }
 
 # Elementwise identical() for two character vectors, NA equal to NA

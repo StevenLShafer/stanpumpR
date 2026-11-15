@@ -64,7 +64,11 @@ a list: \code{drugs}, updated; \code{fits}, one per updated drug (with its
 \code{key}); \code{problems}, sentences saying what could not be used; and
 \code{failed}, the drugs that could not be updated, with their keys, which a
 caller passes back in \code{fits} so that they are not tried again until
-their inputs change
+their inputs change; and \code{cache}, every fit made or reused, with its
+key, which a caller passes back in \code{fits} to reuse them all (with the
+antiseizure interactions on, the update repeats its round until no
+estimate moves, and a round's fits are keyed by the other drugs'
+estimates)
 }
 \description{
 The maximum a posteriori estimate of each measured drug's clearance and

@@ -761,6 +761,30 @@ simulationPlot <- function(
       stop("A logarithmic axis needs a concentration above zero, and there is none ",
            "in the plotted window. Untick Log Y or enter a dose.", call. = FALSE)
   }
+  # On a log axis a panel with nothing above zero (a drug not yet given in
+  # the window, a TCI rate panel at 0) kept no data and was dropped, from
+  # the plot and the slide, and a band with a zero edge was read as log10(0)
+  # (Carbon's fourth UI audit, 2026-11-16, M2): such a panel keeps its place,
+  # anchored on one decade and saying why it is empty, and the bands are
+  # drawn only where they are above zero.
+  emptyLogPanels <- character(0)
+  bands <- plotTable
+  if (logY) {
+    wraps <- unique(as.character(plotResults$Wrap[plotResults$Wrap != PLOT_NAME_EVENTS]))
+    emptyLogPanels <- setdiff(wraps, unique(as.character(c(data$Wrap, rateData$Wrap))))
+    lowest <- tapply(data$Y, as.character(data$Wrap), min)
+    floorFor <- function(wrap, top) {
+      m <- lowest[as.character(wrap)]
+      ifelse(is.na(m), top / 10, pmin(m, top / 10))
+    }
+    if (identical(typical, "Range")) {
+      bands <- bands[is.finite(bands$ymax) & bands$ymax > 0, , drop = FALSE]
+      low <- !is.finite(bands$ymin) | bands$ymin <= 0
+      bands$ymin[low] <- floorFor(bands$Wrap[low], bands$ymax[low])
+    } else if (identical(typical, "Mid")) {
+      bands <- bands[is.finite(bands$typical) & bands$typical > 0, , drop = FALSE]
+    }
+  }
 
   plotObject <- ggplot2::ggplot() +
     ggplot2::geom_line(
@@ -857,6 +881,19 @@ simulationPlot <- function(
   if (logY)
   {
     plotObject <- plotObject + ggplot2::scale_y_log10()
+    if (length(emptyLogPanels) > 0) {
+      anchor <- data.frame(Wrap = rep(emptyLogPanels, each = 2), Y = c(0.1, 1))
+      note <- data.frame(Wrap = emptyLogPanels, Time = (minimum + maximum) / 2, Y = 0.3,
+                         Label = "Nothing above zero in this window")
+      if (is.factor(plotResults$Wrap)) {
+        anchor$Wrap <- factor(anchor$Wrap, levels = levels(plotResults$Wrap), ordered = TRUE)
+        note$Wrap <- factor(note$Wrap, levels = levels(plotResults$Wrap), ordered = TRUE)
+      }
+      plotObject <- plotObject +
+        ggplot2::geom_blank(data = anchor, ggplot2::aes(y = Y), inherit.aes = FALSE) +
+        ggplot2::geom_text(data = note, ggplot2::aes(x = Time, y = Y, label = Label),
+                           inherit.aes = FALSE, colour = "grey40", size = 3.5)
+    }
   } else {
     # Every panel starts at zero, except a serum osmolality panel: anchored
     # at zero, a rise from 280 to 310 mOsm/kg would be a ripple along the top.
@@ -933,7 +970,7 @@ simulationPlot <- function(
       plotObject <-
         plotObject +
         ggplot2::geom_rect(
-        data=plotTable,
+        data=bands,
         ggplot2::aes(
           xmin=xmin,
           xmax=xmax,
@@ -950,7 +987,7 @@ simulationPlot <- function(
       plotObject <-
         plotObject +
         ggplot2::geom_rect(
-          data=plotTable,
+          data=bands,
           mapping=ggplot2::aes(
             xmin=xmin,
             xmax=xmax,
