@@ -279,6 +279,11 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # N-dealkylations show little isotope effect), so a whole-enzyme rate
 # carries several steps' temperature dependence, with no study of
 # tunnelling in a mammalian CYP (Guengerich 2017, Methods Enzymol 596:217).
+# In five human liver microsome preparations, 7-ethoxycoumarin
+# O-deethylation (mostly CYP1A2) had noncompetitive isotope effects of
+# 7.3-8.1, near the intrinsic 6.1, so C-H cleavage limits that rate in
+# liver; CYP2E1's were attenuated (2-4), other steps limiting it (Kim
+# 2006, FEBS J 273:2223, read in full; no temperature studied).
 # So tunnelling does not act in the slider's 28-37 C, and the chemical
 # step's 7-9%/C brackets this factor with the microsomal data above.
 # Esterases, read in full.  Butyrylcholinesterase (succinylcholine's and
