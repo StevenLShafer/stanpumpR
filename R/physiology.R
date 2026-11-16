@@ -168,7 +168,21 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # 23 C, 7.2%/C (Merrett 1983, Br J Anaesth 55:61); remifentanil in people
 # on bypass, CL x exp(theta (T - 37)), 6.37% per degree, fitted over 20-35
 # C with 16 of 68 patients below 28 C, the only human fit that spans the
-# slider's range (Michelsen 2001, Anesth Analg 93:1100).  The choices: one factor
+# slider's range (Michelsen 2001, Anesth Analg 93:1100).  Also read in
+# full: CYP3A4 (ethylmorphine N-demethylation) in pig liver microsomes 69%
+# of its 38 C activity at 32 C and 48% at 26 C, 6%/C on both intervals,
+# while cooled piglets' fentanyl rose 25% at 31.6 C with cardiac index 41%
+# lower (Fritz 2005, Anesth Analg 100:996); healthy rats cooled to 32.5 C
+# against 37.9 C, clearance 83% for midazolam (CYP3A), 90% for diclofenac
+# (CYP2C), 107% for dextromethorphan (CYP2D) and 63% for chlorzoxazone
+# (CYP2E), i.e. 0-8.5%/C by isoform, cardiac arrest itself lowering CYP3A
+# and CYP2E more than cooling did (Zhou 2011, DMD 39:2209; Tortorici 2009,
+# Crit Care Med 37:263: cooling attenuated the arrest's IL-6-mediated
+# suppression); patients rewarmed from 33 to 37 C, concentrations at the
+# same infusion rates 16, 12 and 11% lower for remifentanil, propofol and
+# midazolam over the 4 C, fentanyl unchanged (Bjelland 2014, Acta
+# Anaesthesiol Scand 58:709); neonatal morphine 292 against 206 ng/mL at
+# 33-34 C (Roka 2008, Pediatrics 121:e844).  The choices: one factor
 # on hepatic intrinsic clearance (inside the well-stirred model) for every
 # drug, or separate CYP, UGT and esterase factors; and whether to extend a
 # fit made above 34.8 C down to 28 C.
