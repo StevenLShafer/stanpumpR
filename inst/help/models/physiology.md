@@ -188,7 +188,8 @@ reduced heart-brain circuit, FA/FI rises extremely fast." So the flow to the
 brain and heart does not fall with cardiac output: it follows the same
 autoregulated relation as the effect site of the intravenous drugs, cardiac
 output to the power 0.35 (see above). The brain and heart take 16% of resting
-output (brain 12%, heart 4%; Williams and Leggett 1989). What is left of the
+output (brain 12%, heart 4%, the 35-year-old reference man of Williams and
+Leggett 1989, Table 17). What is left of the
 output is shared among the rest of the vessel-rich group, muscle and fat in
 their normal proportions. At a tenth of normal output the brain and heart
 receive 7% of normal output, nearly three quarters of all there is, and the
@@ -214,8 +215,7 @@ each minute, as for the intravenous drugs. It then rises above normal, because
 its blood comes from lungs at a higher tension. At a high output FA/FI rises
 more slowly, and the brain ends lower.
 
-The 16% share is provisional. It is the textbook reference value, but the table
-of Williams and Leggett has not yet been read. Other effects the same chapter
+Other effects the same chapter
 describes are not modelled yet. These are flow shifted to muscle (exercise,
 excitement) or to fat, hypothermia (higher solubility, lower metabolism),
 ventilation-perfusion mismatch and one-lung ventilation, and children's larger
@@ -224,7 +224,8 @@ vessel-rich group. Ventilation itself is a dose-table row.
 ## Body temperature and the inhaled anesthetics
 
 **Body temperature** (28 to 37 °C) acts on the volatile agents through the two
-effects of hypothermia that Eger and Shafer's chapter names.
+effects of hypothermia that Eger and Shafer's chapter names, and on nitrous
+oxide through the second.
 
 **Solubility rises.** Cold blood and tissue dissolve more agent. Zhou, Liu and
 Liu measured the blood:gas partition coefficient of desflurane, sevoflurane
@@ -243,6 +244,15 @@ measured for isoflurane and halothane in rats and goats and for desflurane in
 rats, so it is applied to all three volatile agents. The MAC band and the
 summed MAC follow it.
 
+**Nitrous oxide MAC falls less.** The only measurement in any species is in
+rats: Antognini, Lewis and Reitan found MAC 1.9 atm at 37.5 °C and 1.6 atm at
+29.7 °C, with the regression MAC = 0.03827 T + 0.3836 atm. That is 2.1% of the
+normothermic MAC per degree, about half the volatile agents' fall, as its
+smaller change in lipid solubility predicts. It is applied to people because
+there are no human data. Nitrous oxide's solubility is left as it is, because
+its temperature coefficient in blood (Allott and colleagues, 1973) has not yet
+been read.
+
 Simulated by stanpumpR (70 kg, age 40, ventilation 6 L/min, fresh gas 6 L/min):
 
 <!-- generated: physiology-temperature-table -->
@@ -252,8 +262,7 @@ faster than solubility rises. So a given inspired concentration is a deeper
 anesthetic in a hypothermic patient. Dialled to the same multiple of MAC, as
 the chapter says, induction is slower, most for the soluble agents.
 
-**Not modelled.** Nitrous oxide: no measurement in humans of its solubility or
-MAC against temperature was found, so it is left as it is. Cardiac output and
+**Not modelled.** Nitrous oxide's solubility (see above). Cardiac output and
 ventilation also fall with metabolism in hypothermia, but they have their own
 controls (the Cardiac output slider and the ventilation row), so they are not
 counted twice. Lower them yourself to match the patient. The coupling is left
@@ -276,8 +285,8 @@ refit. The model's own line, "(population)", is drawn at the sliders too.
 
 ## Which drugs respond
 
-The inhaled anesthetics respond to **Cardiac output** and, the volatile agents,
-to **Body temperature**, as described above.
+The inhaled anesthetics respond to **Cardiac output** and **Body temperature**,
+as described above.
 
 Only drugs whose renal share, hepatic share and extraction ratio were read in
 a published source respond. Any other drug ignores the sliders, and the panel
@@ -287,6 +296,10 @@ readable source for a missing value.
 <!-- generated: physiology-table -->
 
 ## References
+
+Antognini JF, Lewis BK, Reitan JA. Hypothermia minimally decreases nitrous
+oxide anesthetic requirements. *Anesth Analg* 1994;79:980-2.
+doi:10.1213/00000539-199411000-00027
 
 Castle-Kirszbaum M, Parkin WG, Goldschlager T, Lewis PM. Cardiac output and
 cerebral blood flow: a systematic review of cardio-cerebral coupling.

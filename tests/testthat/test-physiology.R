@@ -549,9 +549,12 @@ test_that("gasPropertiesAt() follows Zhou 2002 and Liu 2001, and is the table at
   expect_equal(p31$MAC40[i], p37$MAC40[i] * gasMacTemperatureFactor(31))
   # About 4.6% of normothermic MAC a degree.
   expect_equal(1 - gasMacTemperatureFactor(36), 0.0784 / (0.0784 * 37 - 1.203))
-  # Nitrous oxide, nitrogen and oxygen are unchanged.
-  other <- !p37$gas %in% names(GAS_SOLUBILITY_TEMPERATURE_SLOPE)
+  # Nitrogen and oxygen are unchanged; nitrous oxide's MAC alone moves (its
+  # own test, below).
+  other <- !p37$gas %in% c(names(GAS_SOLUBILITY_TEMPERATURE_SLOPE), "nitrousOxide")
   expect_identical(p31[other, ], p37[other, ])
+  n <- p37$gas == "nitrousOxide"
+  expect_identical(p31[n, setdiff(names(p31), "MAC40")], p37[n, setdiff(names(p37), "MAC40")])
 })
 
 test_that("hypothermia slows the rise of FA/FI, most for the more soluble agent, and lowers MAC", {
@@ -582,10 +585,41 @@ test_that("hypothermia slows the rise of FA/FI, most for the more soluble agent,
   w <- gasWashout(iso31$sim, dt)
   expect_equal(w$body$temperature, 31)
   expect_true(all(is.finite(gasRecoveryTime(w, "isoflurane", 0.3))))
-  # Nitrous oxide alone does not move.
+  # Nitrous oxide: its tensions do not move (its solubility is unchanged),
+  # its MAC does (Antognini 1994), so the summed MAC rises.
   n2o <- data.frame(Drug = c("nitrousOxide", "oxygen", "ventilation"), Time = 0, Dose = c(4, 2, 6))
-  expect_equal(simulateGases(n2o, maximum = 30, temperature = 31)$results,
-               simulateGases(n2o, maximum = 30)$results)
+  cold <- simulateGases(n2o, maximum = 30, temperature = 31)$results
+  warm <- simulateGases(n2o, maximum = 30)$results
+  expect_equal(cold[cold$Drug == "nitrousOxide", ], warm[warm$Drug == "nitrousOxide", ])
+  expect_equal(cold$Y[cold$Drug == "MAC"],
+               warm$Y[warm$Drug == "MAC"] / gasMacTemperatureFactor(31, "nitrousOxide"),
+               tolerance = 1e-9)
+})
+
+test_that("nitrous oxide MAC follows Antognini 1994's regression in rats", {
+  # MAC = 0.03827 T + 0.3836 atm (Figure 1): the ratio of its values at the
+  # two groups' mean temperatures, 37.5 and 29.7 C
+  mac <- function(T) 0.03827 * T + 0.3836
+  ratio <- gasMacTemperatureFactor(29.7, "nitrousOxide") /
+    gasMacTemperatureFactor(37, "nitrousOxide") / (mac(29.7) / mac(37))
+  expect_equal(ratio, 1, tolerance = 1e-12)
+  expect_equal(gasMacTemperatureFactor(37, "nitrousOxide"), 1)
+  # About 2.1% per degree at 37 C, 19% lower at 28 C (the paper's Table 1:
+  # 20% over 38 to 28 C), half the volatile agents' fall
+  expect_equal(1 - gasMacTemperatureFactor(36, "nitrousOxide"), 0.0213, tolerance = 0.01)
+  expect_equal(gasMacTemperatureFactor(28, "nitrousOxide"), 0.809, tolerance = 1e-3)
+  expect_gt(gasMacTemperatureFactor(28, "nitrousOxide"), gasMacTemperatureFactor(28))
+  p <- gasPropertiesAt(28)
+  p37 <- getGasProperties()
+  n <- p$gas == "nitrousOxide"
+  expect_equal(p$MAC40[n], p37$MAC40[n] * gasMacTemperatureFactor(28, "nitrousOxide"))
+  expect_equal(p$lambda_blood[n], p37$lambda_blood[n])
+  expect_equal(p[p$gas %in% c("nitrogen", "oxygen"), ], p37[p37$gas %in% c("nitrogen", "oxygen"), ])
+})
+
+test_that("the brain-and-heart share is Williams and Leggett's reference man", {
+  # Table 17: brain 12% and heart 4% of resting cardiac output, 35-year-old male
+  expect_equal(PHYSIOLOGY_GAS_PROTECTED_SHARE, 0.16)
 })
 
 test_that("the temperature slider's value is read safely, and the note says what it changes", {
@@ -595,7 +629,7 @@ test_that("the temperature slider's value is read safely, and the note says what
   expect_equal(bodyTemperatureFromInput(33.5), 33.5)
   drugs <- c("sevoflurane", "nitrousOxide", "oxygen", "propofol")
   cold <- gsub("\\s+", " ", as.character(physiologyNote(PHYSIOLOGY_DEFAULT, drugs, temperature = 32)))
-  expect_match(cold, "Changed: </strong> sevoflurane </p>", fixed = TRUE)
-  expect_match(cold, "Not changed by body temperature: </strong> propofol, nitrousOxide", fixed = TRUE)
+  expect_match(cold, "Changed: </strong> sevoflurane, nitrousOxide </p>", fixed = TRUE)
+  expect_match(cold, "Not changed by body temperature: </strong> propofol (it acts", fixed = TRUE)
   expect_null(physiologyNote(PHYSIOLOGY_DEFAULT, drugs, temperature = 37))
 })

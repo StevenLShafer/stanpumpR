@@ -176,10 +176,10 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 #' Brain 12% and coronary 4% of resting cardiac output in the reference adult
 #' man (Williams and Leggett 1989, Clin Phys Physiol Meas 10:187-217,
 #' doi:10.1088/0143-0815/10/3/001, the reference values ICRP 89 adopted).
-#' PROVISIONAL: the values are the textbook reference values, but the paper's
-#' table has not yet been read (its abstract gives no numbers and it is not in
-#' the archive); recorded as an open question on the help page.  Must stay
-#' below the engine's VRG share (\code{getGasBody()$f_brain}, 0.76).
+#' Read in full (2026-11-16): Table 17 gives brain 12% and heart 4% for the
+#' 35-year-old reference male (12% and 5% for the female; the reference man is
+#' the library's reference patient).  Must stay below the engine's VRG share
+#' (\code{getGasBody()$f_brain}, 0.76).
 #' @noRd
 PHYSIOLOGY_GAS_PROTECTED_SHARE <- 0.12 + 0.04
 
@@ -258,8 +258,20 @@ gasBodyPhysiology <- function(body, cardiac = 1)
 #     measured for isoflurane and halothane in rats and goats (Vitez 1974,
 #     Antognini 1993) and for desflurane in rats (Eger 1987, 42% over 10 C).
 #
-# Nitrous oxide is left at its normothermic solubility and MAC: no human
-# measurement of either against temperature was found.  Cardiac output and
+# Nitrous oxide: its MAC follows Antognini 1994 (Anesth Analg 79:980-2,
+# PMID 7978419, read in full), the only measurement of nitrous oxide MAC
+# against temperature found in any species: rats in a hyperbaric chamber,
+# 1.9 +/- 0.2 atm at 37.5 C and 1.6 +/- 0.2 atm at 29.7 C, and the regression
+# of its Figure 1 over all the rats, MAC = 0.03827 T + 0.3836 atm, which is
+# used here as Liu's is for the volatile agents: a factor of
+# (T - T0) / (37 - T0) with T0 = -0.3836 / 0.03827 = -10.0 C, so 2.1% per
+# degree at 37 C and 19% lower at 28 C (the paper's Table 1: 20% over 38-28
+# C), half the volatile agents' fall, as its smaller change of lipid
+# solubility predicts.  Applied to people on Shafer's decision of 2026-11-16
+# ("look for animal data"); no human measurement exists.  Its solubility is
+# left as it is: the source of a nitrous oxide temperature coefficient in
+# blood (Allott 1973, Br J Anaesth 45:294-300, cited by Antognini and by
+# White and Halsey 1974) has not yet been read.  Cardiac output and
 # ventilation fall with metabolism in hypothermia, but they are set by their
 # own controls (the Cardiac output slider, the ventilation row), so as not to
 # be counted twice.  The thresholds of the time until threshold are typed
@@ -283,6 +295,11 @@ GAS_SOLUBILITY_TEMPERATURE_SLOPE <- c(desflurane = 0.0302,
 #' @noRd
 GAS_MAC_ZERO_TEMPERATURE <- 1.203 / 0.0784
 
+#' Temperature at which Antognini 1994's regression of nitrous oxide MAC in
+#' rats (MAC = 0.03827 T + 0.3836 atm) gives zero MAC, C
+#' @noRd
+GAS_MAC_N2O_ZERO_TEMPERATURE <- -0.3836 / 0.03827
+
 #' A body temperature, checked
 #' @noRd
 checkBodyTemperature <- function(temperature)
@@ -296,13 +313,21 @@ checkBodyTemperature <- function(temperature)
   temperature
 }
 
-#' MAC at a body temperature, as a fraction of MAC at 37 C (Liu 2001)
+#' MAC at a body temperature, as a fraction of MAC at 37 C
+#'
+#' Liu 2001's regression in people for the volatile agents; Antognini 1994's
+#' in rats for nitrous oxide.
 #' @param temperature body temperature, C
+#' @param agent the agent: \code{"nitrousOxide"} for nitrous oxide, anything
+#'   else for a volatile agent
 #' @export
-gasMacTemperatureFactor <- function(temperature = PHYSIOLOGY_TEMPERATURE_DEFAULT)
+gasMacTemperatureFactor <- function(temperature = PHYSIOLOGY_TEMPERATURE_DEFAULT,
+                                    agent = "volatile")
 {
   temperature <- checkBodyTemperature(temperature)
-  (temperature - GAS_MAC_ZERO_TEMPERATURE) / (37 - GAS_MAC_ZERO_TEMPERATURE)
+  zero <- if (identical(agent, "nitrousOxide")) GAS_MAC_N2O_ZERO_TEMPERATURE
+          else GAS_MAC_ZERO_TEMPERATURE
+  (temperature - zero) / (37 - zero)
 }
 
 #' The gas properties at a body temperature
@@ -310,7 +335,8 @@ gasMacTemperatureFactor <- function(temperature = PHYSIOLOGY_TEMPERATURE_DEFAULT
 #' \code{getGasProperties()} with each volatile agent's partition coefficients
 #' (blood:gas and every tissue:gas) multiplied by
 #' \code{exp(-slope (T - 37))} (Zhou 2002, 2001) and its MAC by
-#' \code{gasMacTemperatureFactor()} (Liu 2001).  Nitrous oxide, nitrogen and
+#' \code{gasMacTemperatureFactor()} (Liu 2001), and nitrous oxide's MAC by
+#' its own factor (Antognini 1994), its solubility unchanged.  Nitrogen and
 #' oxygen are unchanged.  At 37 C (or NULL) the table is returned as it is.
 #'
 #' @param temperature body temperature, C, or NULL for 37
@@ -327,6 +353,8 @@ gasPropertiesAt <- function(temperature = NULL)
   for (col in c("lambda_blood", "tg_brain", "tg_muscle", "tg_fat"))
     props[[col]] <- props[[col]] * f
   props$MAC40[volatile] <- props$MAC40[volatile] * gasMacTemperatureFactor(temperature)
+  n2o <- props$gas == "nitrousOxide"
+  props$MAC40[n2o] <- props$MAC40[n2o] * gasMacTemperatureFactor(temperature, "nitrousOxide")
   props
 }
 
@@ -728,7 +756,9 @@ physiologyNote <- function(physiology, drugs,
   drugs <- drugs[!isGasDrug(drugs)]
   factorsMoved <- !physiologyIsNormal(physiology)
   cardiacMoved <- checkPhysiology(physiology)[["cardiac"]] != 1
-  volatile <- gasAgents %in% names(GAS_SOLUBILITY_TEMPERATURE_SLOPE)
+  # Every agent a user doses responds to temperature: the volatile agents'
+  # solubility and MAC, nitrous oxide's MAC
+  volatile <- gasAgents %in% c(names(GAS_SOLUBILITY_TEMPERATURE_SLOPE), "nitrousOxide")
   changed <- c(if (factorsMoved) intersect(drugs, physiologyDrugs()),
                gasAgents[cardiacMoved | (cold & volatile)])
   noData <- if (factorsMoved) setdiff(drugs, physiologyDrugs()) else character(0)
@@ -747,7 +777,7 @@ physiologyNote <- function(physiology, drugs,
       tags$p(class = "text-muted",
              tags$strong("Not changed by body temperature: "),
              paste(notByTemperature, collapse = ", "),
-             " (it acts on the volatile agents only)."),
+             " (it acts on the inhaled agents only)."),
     if (length(gasAgents) && !cardiacMoved && !cold)
       tags$p(class = "text-muted",
              tags$strong("Inhaled agents "), "(", paste(gasAgents, collapse = ", "),
@@ -1009,13 +1039,17 @@ helpPhysiologyGasTable <- function()
 helpPhysiologyTemperatureTable <- function()
 {
   if (!is.null(.physiologyCache$temperatureTable)) return(.physiologyCache$temperatureTable)
-  agents <- c(isoflurane = 1.2, sevoflurane = 2, desflurane = 6)
+  # Nitrous oxide is a flow: 4 L/min of it in 2 L/min of oxygen, 67% inspired
+  agents <- c(isoflurane = 1.2, sevoflurane = 2, desflurane = 6, nitrousOxide = 100 * 4 / 6)
   label <- c(isoflurane = "Isoflurane 1.2%", sevoflurane = "Sevoflurane 2%",
-             desflurane = "Desflurane 6%")
+             desflurane = "Desflurane 6%", nitrousOxide = "Nitrous oxide 67%")
   rows <- character(0)
   for (g in names(agents)) for (T in c(37, 34, 31, 28)) {
-    dt <- data.frame(Drug = c(g, "oxygen", "air", "ventilation"), Time = 0,
-                     Dose = c(agents[[g]], 3, 3, 6))
+    dt <- if (g == "nitrousOxide")
+      data.frame(Drug = c(g, "oxygen", "ventilation"), Time = 0, Dose = c(4, 2, 6))
+    else
+      data.frame(Drug = c(g, "oxygen", "air", "ventilation"), Time = 0,
+                 Dose = c(agents[[g]], 3, 3, 6))
     sim <- simulateGases(dt, weight = 70, age = 40, maximum = 10, temperature = T)
     r <- sim$results
     at <- function(site, t) {
