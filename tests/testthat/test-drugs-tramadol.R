@@ -345,6 +345,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
   expect_setequal(blank, c(
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
+    "vancomycinKidneyTransplant",
     "metronidazole", "gentamicin",
     "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
     "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
