@@ -119,6 +119,14 @@ individualizeModel <- function(X, individual)
   if (!is.null(mm)) {
     if (!is.null(mm$vmax)) mm$vmax <- mm$vmax * fCL
     if (!is.null(mm$clLinear)) mm$clLinear <- mm$clLinear * fCL
+    # The clearance the induced enzyme multiplies is a clearance too
+    # (ifosfamide, cyclophosphamide in children, suzetrigine); left alone,
+    # the clearance factor moved nothing a simulation of such a drug reads.
+    # An in-engine metabolite (suzetrigine's M6-SUZ) is formed from a
+    # fraction of what the parent eliminates, so its formation follows; its
+    # own disposition is the model's, as a transit chain's metabolite is.
+    if (!is.null(mm$autoinduction$cl))
+      mm$autoinduction$cl <- mm$autoinduction$cl * fCL
     # A target capacity held as an amount moves with the volume; one held
     # as a concentration (bmaxCentral, kd) does not.
     for (amount in c("rmaxCentral", "rmaxPeripheral"))

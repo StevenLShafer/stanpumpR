@@ -12,7 +12,7 @@ test_that("every drug that can be dosed has a category the menu knows", {
                   "desvenlafaxine", "salicylate", "hydroxyrisperidone", "dehydroaripiprazole",
                   "enalaprilat", "doxorubicinol", "doxorubicinolPediatric", "doxorubicinolPerezBlanco",
                   "irinotecanSN38", "cisplatinBound", "gemcitabineDFDU", "capecitabine5FU",
-                  "norclozapine", "ACT333679",
+                  "norclozapine", "ACT333679", "M6SUZ",
                   "air", "oxygen", "ventilation")
   # and the candidate models of a drug whose model the program chooses
   # (R/modelSelection.R), offered only through their drug's name
@@ -40,7 +40,7 @@ test_that("the menu lists the categories in order, each sorted by name", {
   expect_identical(choices[["Oral analgesics"]],
                    c("acetaminophen", "celecoxib", "diclofenac", "diclofenacEC",
                      "gabapentin", "ibuprofen", "ketorolac", "meloxicam", "naproxen",
-                     "pregabalin"))
+                     "pregabalin", "suzetrigine"))
   expect_identical(choices[["Hypnotics and sedatives"]],
                    c("alprazolam", "clonazepam", "dexmedetomidine", "diazepam", "etomidate",
                      "ketamine", "lorazepam", "midazolam", "propofol",

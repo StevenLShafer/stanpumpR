@@ -81,6 +81,15 @@ test_that("parallel systems and saturable elimination take the same factors", {
   vi <- individualizeModel(v, ind)
   expect_equal(vi$michaelisMenten$targetBinding$rmaxCentral, 2 * v$michaelisMenten$targetBinding$rmaxCentral)
   expect_equal(vi$michaelisMenten$targetBinding$kd, v$michaelisMenten$targetBinding$kd)
+
+  # the clearance an induced enzyme multiplies moves with the clearance
+  # (suzetrigine, ifosfamide); the enzyme's own constants are the model's
+  s <- suzetrigine(70, 170, 50, "male")
+  si <- individualizeModel(s, ind)
+  expect_equal(si$michaelisMenten$autoinduction$cl, 0.5 * s$michaelisMenten$autoinduction$cl)
+  expect_equal(si$michaelisMenten$autoinduction$kEnz, s$michaelisMenten$autoinduction$kEnz)
+  expect_equal(si$michaelisMenten$autoinduction$ec50, s$michaelisMenten$autoinduction$ec50)
+  expect_identical(si$michaelisMenten$metabolite, s$michaelisMenten$metabolite)
 })
 
 test_that("the model's own patient is the model, and nonsense is refused", {

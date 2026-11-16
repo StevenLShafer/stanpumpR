@@ -46,6 +46,8 @@ meloxicam,mcg,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg/kg PO,mg qd,mg/kg qd,mg PO
 ketorolac,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#558B2F,0,0,0,0,0.37,IV,Oral analgesics
 naproxen,mcg,,,mg PO,"mg PO,mg/kg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#0277BD,0,0,0,0,29,IV,Oral analgesics
 celecoxib,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#AD7A00,0,0,0,0,242,IV,Oral analgesics
+suzetrigine,ng,,,mg PO,"mg PO,mg PO bid",#7E57C2,0,0,0,0,0,IV,Oral analgesics
+M6SUZ,ng,,,,,#B39DDB,0,0,0,0,0,IV,
 aspirin,mcg,,,mg PO,"mg PO,mg PO qd",#8D6E63,0,0,0,0,0,IV,Other
 salicylate,mcg,,,,,#3949AB,0,0,0,0,0,IV,
 cefazolin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h",#2E8B57,0.5,8,4,0,2,IV,Antibiotics
