@@ -254,6 +254,19 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # offset against rectal temperature in children, an effect, not a clearance
 # (Playfor 2000, Paediatr Anaesth 10:83); and the reviews of Holley 1982
 # (Clin Pharmacokinet 7:234) and Smits 2020 (Front Pharmacol 11:587).
+# Rat liver S-9 at 26 against 37 C (McAllister 1980, Pharmacology 20:95,
+# read in full): Vmax unchanged and Km higher, 1.5 against 2.5 uM for
+# propranolol and 16.1 against 33.7 uM for verapamil, so Vmax/Km, the
+# intrinsic clearance at low concentration, 4.5 and 6.5%/C, from
+# double-reciprocal extrapolation; the authors themselves expected the
+# in vivo fall of these high-extraction drugs to follow flow and volume.
+# Rat liver microsomes over 8-30 C (Puntarulo 1989, Arch Biochem Biophys
+# 269:569, read in full): CYP activation energies above a transition near
+# 20 C of 14.5-17.4 kcal/mol for ethanol, 11.8-12.9 for dimethylnitrosamine
+# and 11.9-14.8 for benzphetamine (13-21 for other substrates, cited), i.e.
+# 6.2-10.7%/C near 32 C, at saturating substrate; below the transition
+# 37-94 kcal/mol, outside the slider's range.  This factor is equivalent to
+# an activation energy of 12.2 kcal/mol at 32 C, the low end of those.
 #
 # Body temperature and cardiac output are NOT coupled: hypothermia does not
 # lower cardiac output by itself.  Fever raises cardiac output and cooling
