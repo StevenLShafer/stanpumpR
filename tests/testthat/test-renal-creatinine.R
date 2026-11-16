@@ -114,7 +114,10 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 "riociguat",
                 # MDRD eGFR below 60, a step on aprocitentan's clearance
                 # (Bartolucci 2021, R/drugs_aprocitentan.R)
-                "macitentan", "aprocitentan")
+                "macitentan", "aprocitentan",
+                # Garonzik's creatinine clearance (Cockcroft-Gault per 1.73
+                # m2) on CMS's and colistin's clearances (R/drugs_colistimethate.R)
+                "colistimethate", "colistin")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system),

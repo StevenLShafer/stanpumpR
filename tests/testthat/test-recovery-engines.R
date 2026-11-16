@@ -443,6 +443,9 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "suzetrigine", "M6SUZ",
     # ambrisentan (2026-11-16): plasma only
     "ambrisentan", "macitentan", "aprocitentan",
+    # colistimethate and the colistin it forms (2026-11-16): plasma only, no
+    # line until the MIC decision (R/drugs_colistin.R)
+    "colistimethate", "colistin",
     # Parkinson disease drugs (2026-10-19): plasma only; levodopa (all four
     # models) and apomorphine have an effect site (inst/help/models/parkinsons.md)
     "pramipexole", "pramipexoleER", "safinamide", "opicapone",

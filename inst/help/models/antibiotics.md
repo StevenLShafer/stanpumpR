@@ -5,6 +5,8 @@ Each of the twelve antibiotics, [cefazolin](help:drugs/cefazolin), [cefalexin](h
 - **The MIC**, the minimum inhibitory concentration, at which growth stops. It is the drug's threshold for *Time until threshold*: the line shows how long, with no further dose, until free drug falls below the MIC of the organism the drug is mainly given against. See [Time until threshold](help:models/recovery).
 - **The MBC**, the minimum bactericidal concentration, at which 99.9 per cent of the organism is killed in 24 hours. The shaded band marks the expected MBCs of the common pathogens the drug is given against.
 
+[Colistimethate](help:drugs/colistimethate), the prodrug of [colistin](help:drugs/colistin), is the exception: neither marker is drawn yet. The MIC line would be free colistin at the EUCAST breakpoint of 2 mg/L, which is 4.1 mg/L of total colistin, above the average exposure the consensus guideline calls the most that is tolerable (2 mg/L). No MBC source for colistin has been read.
+
 ### The rule for the band
 
 Every antibiotic's band follows one rule:
