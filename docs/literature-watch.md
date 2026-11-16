@@ -42,6 +42,10 @@ deployment; nothing in `R/` refers to it.
    without a model are dropped. Kept papers are ranked: a population the current source does
    not cover (children, obesity, pregnancy, the elderly, renal impairment) first, then a model
    that could replace or sit beside the current source, then a covariate refinement.
+   **A paper with Gideon Koren among its authors is always dropped**, whatever its rank, and
+   so is one built on data from a study he co-authored when the abstract says so (Shafer,
+   2026-11-16: suspected research fraud; AGENTS.md). The author list is checked in full,
+   not from an abbreviated citation.
 4. **Checks it has not already asked.** Every email the routine sends carries the paper's
    PMID in its subject, so a Gmail search of sent mail is the ledger; a PMID already mailed in
    the last six months is not mailed again.
@@ -100,7 +104,7 @@ STEP 2, SEARCH. For each drug call mcp__PubMed__search_articles with query
   <drug>[Title/Abstract] AND (pharmacokinetic* OR "population pharmacokinetic" OR NONMEM OR ke0 OR "effect site")
 datetype "edat", date_from = today minus 8 days (format YYYY/MM/DD), max_results 20, sort "pub_date". The 8-day window overlaps last week's run by a day on purpose. Record every hit with its PMID.
 
-STEP 3, SCREEN. Judge each hit from its title and abstract (get_article_metadata when the search result is thin). KEEP a paper when it is a human population or compartmental pharmacokinetic study that reports parameters (volumes and clearances; ka, F or lag for an oral, sublingual, IM, IN or regional route) with covariates, or a PK/PD link (ke0, time to peak effect, a concentration-effect model). DROP reviews, editorials, animal and in-vitro studies, assay and analytical papers, case reports, dose-finding or safety studies without a model, and drug-interaction studies that report no model. Rank what you keep: (a) a population the current source does not cover (children, neonates, obesity, pregnancy, the elderly, renal or hepatic impairment, critical illness); (b) a model that could replace or sit beside the current source in the same population; (c) a covariate refinement of the existing model. Compare against the current `reference` for that drug when you rank.
+STEP 3, SCREEN. Judge each hit from its title and abstract (get_article_metadata when the search result is thin). KEEP a paper when it is a human population or compartmental pharmacokinetic study that reports parameters (volumes and clearances; ka, F or lag for an oral, sublingual, IM, IN or regional route) with covariates, or a PK/PD link (ke0, time to peak effect, a concentration-effect model). DROP any paper with Gideon Koren among its authors (check the full author list with get_article_metadata; his work is not used in stanpumpR because of suspected research fraud), and any paper whose abstract says it pooled or reanalysed data from a study he co-authored. DROP reviews, editorials, animal and in-vitro studies, assay and analytical papers, case reports, dose-finding or safety studies without a model, and drug-interaction studies that report no model. Rank what you keep: (a) a population the current source does not cover (children, neonates, obesity, pregnancy, the elderly, renal or hepatic impairment, critical illness); (b) a model that could replace or sit beside the current source in the same population; (c) a covariate refinement of the existing model. Compare against the current `reference` for that drug when you rank.
 
 STEP 4, DEDUPE. For each kept paper search Gmail with query  subject:"[stanpumpR PK watch]" "PMID <n>" newer_than:180d  (mcp__Gmail__search_threads). If any thread is found, you already told Steve about it: skip it silently.
 
