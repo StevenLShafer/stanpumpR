@@ -67,7 +67,8 @@ bayesObservationsToRows <- function(observations, format, reference) {
   data.frame(
     Drug = observations$Drug,
     Time = minutesToEntryTime(observations$Time, format, reference),
-    Concentration = vapply(observations$Concentration, format, "",
+    # base::format(): the argument `format` is the time format
+    Concentration = vapply(observations$Concentration, base::format, "",
                            scientific = FALSE, digits = 15, trim = TRUE),
     stringsAsFactors = FALSE
   )

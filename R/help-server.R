@@ -106,7 +106,7 @@ helpServer <- function(input, output, session, doseTable, eventTable, drugDefaul
     s <- helpScenarioInSessionUnits(s, drugDefaults())
     if (is.null(s)) {
       showNotification(
-        "This scenario cannot be loaded with the current drug library: a target in its units would pass 1,000,000,000.",
+        "This scenario cannot be loaded with the current drug library: a target or measured concentration in its units would pass 1,000,000,000.",
         type = "error", duration = 10)
       return(FALSE)
     }
@@ -117,7 +117,7 @@ helpServer <- function(input, output, session, doseTable, eventTable, drugDefaul
     applyHelpScenario(session, s, doseTable, eventTable, timeApi, restoreMeasurements)
     bslib::nav_select(navId, "Simulator", session = session)
     converted <- if (length(s$converted) > 0) tagList(tags$br(), tags$span(class = "small", paste0(
-      "Targets converted to the units your Drug Library shows (",
+      "Targets and measured concentrations converted to the units your Drug Library shows (",
       paste(s$converted, collapse = ", "), ").")))
     showNotification(
       tagList(tags$strong("Loaded: "), s$title, tags$br(),

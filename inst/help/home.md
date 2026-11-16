@@ -13,7 +13,7 @@ stanpumpR predicts drug concentrations. You describe a patient and a dosing regi
 
 | Region | What it does | Help page |
 |---|---|---|
-| Left sidebar | Patient covariates, graph options, additional plots, time settings, dose-table options, measured concentrations (Bayesian updating), email; the arrow at its top collapses it | [Patient profile](help:patient-profile), [Graph options](help:graph-options), [Bayesian updating](help:models/bayesian) |
+| Left sidebar | Patient covariates, graph options, additional plots, time settings, dose-table options, measured concentrations (Bayesian updating), export (download or email); the arrow at its top collapses it | [Patient profile](help:patient-profile), [Graph options](help:graph-options), [Bayesian updating](help:models/bayesian) |
 | Plot | Predicted concentrations; hover, click and double-click act on it; *Add new drug* below it | [Reading the plot](help:reading-the-plot) |
 | Dose table | Where you describe the regimen, in a panel at the right that its arrow collapses | [The dose table](help:dose-table) |
 | Time panel (left sidebar) | Time units (minutes to weeks), Max time and Min time, elapsed or clock time | [Time display](help:time-display) |

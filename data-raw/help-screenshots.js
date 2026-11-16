@@ -27,6 +27,10 @@ const path = require('path');
 const BASE = (process.argv.slice(2).find(a => !a.startsWith('--')) || 'http://127.0.0.1:7788').replace(/\/+$/, '');
 const ONLY_VISUALIZER = process.argv.includes('--visualizer');
 const NO_VISUALIZER = process.argv.includes('--no-visualizer');
+if (ONLY_VISUALIZER && NO_VISUALIZER) {
+  console.error('--visualizer and --no-visualizer together would make no pictures; give one or neither.');
+  process.exit(2);
+}
 const OUT = path.join(__dirname, '..', 'inst', 'www', 'help');
 const SCENARIO = 'propofol-induction-maintenance';
 const VIEWPORT = { width: 1400, height: 820 };

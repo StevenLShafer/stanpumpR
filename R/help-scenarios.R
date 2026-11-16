@@ -1017,7 +1017,7 @@ helpScenarioDefinitions <- function() {
     # default by Shafer's rule) and predicts an INR heading for 4 on 5 mg/day;
     # the four morning INRs measured run lower, and the update moves the
     # clearance up (x1.45) and the volume (x1.3), bringing the curve down to
-    # settle near 2.4.  The model's own curve stays beside it as "warfarin
+    # settle near 2.5 (2.44-2.59 over the last week).  The model's own curve stays beside it as "warfarin
     # (population)".  The step of the help's five-minute tour that shows the
     # Bayesian Updating panel is made from this scenario
     # (data-raw/help-screenshots.js).  A teaching example, not dosing
@@ -1252,11 +1252,16 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   for (name in c("showThreshold", "showMEAC", "showCompartments", "logY", "opioidMacInteraction", "mintoSchnider", "hamberg", "antiseizureInteractions")) {
     if (!is.logical(o[[name]]) || length(o[[name]]) != 1) say(name, " is not a single logical")
   }
-  if (!is_valid_number(o$bayesPKVariability, BAYES_PK_VARIABILITY_MIN, BAYES_PK_VARIABILITY_MAX))
-    say("bayesPKVariability out of range: ", o$bayesPKVariability)
-  if (!is_valid_number(o$bayesResidualVariability, BAYES_RESIDUAL_VARIABILITY_MIN,
-                       BAYES_RESIDUAL_VARIABILITY_MAX))
-    say("bayesResidualVariability out of range: ", o$bayesResidualVariability)
+  # In range and on the slider's step, which the browser would snap to
+  onSlider <- function(x, min, max, step)
+    is_valid_number(x, min, max) && abs((x - min) / step - round((x - min) / step)) < 1e-9
+  if (!onSlider(o$bayesPKVariability, BAYES_PK_VARIABILITY_MIN, BAYES_PK_VARIABILITY_MAX,
+                BAYES_PK_VARIABILITY_STEP))
+    say("bayesPKVariability out of range or off the slider's step: ", o$bayesPKVariability)
+  if (!onSlider(o$bayesResidualVariability, BAYES_RESIDUAL_VARIABILITY_MIN,
+                BAYES_RESIDUAL_VARIABILITY_MAX, BAYES_RESIDUAL_VARIABILITY_STEP))
+    say("bayesResidualVariability out of range or off the slider's step: ",
+        o$bayesResidualVariability)
 
   d <- s$doses
   if (!is.data.frame(d) || nrow(d) == 0) {
@@ -1306,8 +1311,10 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
     }
   }
 
-  # Measured concentrations: each of a drug the scenario doses, after that
-  # drug's first dose (the update sets earlier ones aside) and inside the plot
+  # Measured concentrations: each of a drug the scenario doses above 0, not
+  # an inhaled agent (the panel does not offer them), after that drug's first
+  # dose above 0 (the update sets earlier ones aside, and a dose of 0 is no
+  # dose) and inside the plot
   m <- s$measurements
   if (!is.null(m) && nrow(m) > 0) {
     if (!all(c("Drug", "Time", "Concentration") %in% names(m))) say("measurements lack columns")
@@ -1318,11 +1325,18 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
         say("measurement of a drug the scenario does not dose: ", drug)
         next
       }
+      if (isGasDrug(drug)) {
+        say("measurement of an inhaled agent, which the Bayesian update does not take: ", drug)
+        next
+      }
+      dosed <- suppressWarnings(as.numeric(d$Dose)) > 0
+      firstDose <- suppressWarnings(min(d$Time[d$Drug == drug & dosed %in% TRUE]))
       if (!is_valid_number(m$Concentration[i], 0, MAX_DOSE_VALUE) || m$Concentration[i] <= 0)
         say(drug, ": invalid measured concentration: ", m$Concentration[i])
-      if (!is_valid_number(m$Time[i], 0, Inf)) say(drug, ": invalid measurement time: ", m$Time[i])
+      if (!is.finite(firstDose)) say(drug, ": measured, but never given a dose above 0")
+      else if (!is_valid_number(m$Time[i], 0, Inf)) say(drug, ": invalid measurement time: ", m$Time[i])
       else if (m$Time[i] >= o$maximum) say(drug, ": measurement at ", m$Time[i], " is beyond Max time ", o$maximum)
-      else if (m$Time[i] <= min(d$Time[d$Drug == drug])) say(drug, ": measurement at ", m$Time[i], " is not after its first dose")
+      else if (m$Time[i] <= firstDose) say(drug, ": measurement at ", m$Time[i], " is not after its first dose above 0")
     }
   }
 
@@ -1352,24 +1366,46 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
 # library's concentration units.  In a session whose Drug Library shows a
 # drug in the other of mcg and ng, its targets are converted, as the Drug
 # Library converts the session's own: loaded as written, propofol's 3 mcg/mL
-# ran at 3 ng/mL (Carbon's fourth UI audit, 2026-11-15, H4).  Returns the
-# scenario with `converted`, the drugs converted, or NULL if a converted
-# target would pass the dose table's ceiling.
+# ran at 3 ng/mL (Carbon's fourth UI audit, 2026-11-15, H4).  So are its
+# measured concentrations (the Bayesian Updating table), which are read in
+# the units the drug's plot shows: a propofol level of 2.5 mcg/mL went in as
+# 2.5 ng/mL (review of PR #729, 2026-11-16).  Returns the scenario with
+# `converted`, the drugs converted, or NULL if a converted target or level
+# would pass the dose table's ceiling.
 helpScenarioInSessionUnits <- function(s, drugDefaults, standard = getDrugDefaultsGlobal()) {
   s$converted <- character(0)
-  d <- s$doses
-  if (!is.data.frame(d) || nrow(d) == 0) return(s)
-  rows <- which(isTciUnit(d$Units))
-  for (drug in unique(d$Drug[rows])) {
+  factor <- function(drug) {
     from <- standard$Concentration.Units[match(drug, standard$Drug)]
     to <- drugDefaults$Concentration.Units[match(drug, drugDefaults$Drug)]
-    if (!isTRUE(from %in% c("mcg", "ng")) || !isTRUE(to %in% c("mcg", "ng")) || from == to) next
-    at <- rows[d$Drug[rows] == drug]
-    d$Dose[at] <- as.numeric(d$Dose[at]) * mcgPerMlScale(from) / mcgPerMlScale(to)
-    if (any(!is.finite(d$Dose[at]) | d$Dose[at] > MAX_DOSE_VALUE)) return(NULL)
-    s$converted <- c(s$converted, drug)
+    if (!isTRUE(from %in% c("mcg", "ng")) || !isTRUE(to %in% c("mcg", "ng")) || from == to) return(NULL)
+    mcgPerMlScale(from) / mcgPerMlScale(to)
   }
-  s$doses <- d
+  pastCeiling <- function(x) any(!is.finite(x) | x > MAX_DOSE_VALUE)
+  d <- s$doses
+  if (is.data.frame(d) && nrow(d) > 0) {
+    rows <- which(isTciUnit(d$Units))
+    for (drug in unique(d$Drug[rows])) {
+      f <- factor(drug)
+      if (is.null(f)) next
+      at <- rows[d$Drug[rows] == drug]
+      d$Dose[at] <- as.numeric(d$Dose[at]) * f
+      if (pastCeiling(d$Dose[at])) return(NULL)
+      s$converted <- c(s$converted, drug)
+    }
+    s$doses <- d
+  }
+  m <- s$measurements
+  if (is.data.frame(m) && nrow(m) > 0) {
+    for (drug in unique(m$Drug)) {
+      f <- factor(drug)
+      if (is.null(f)) next
+      at <- m$Drug == drug
+      m$Concentration[at] <- as.numeric(m$Concentration[at]) * f
+      if (pastCeiling(m$Concentration[at])) return(NULL)
+      s$converted <- union(s$converted, drug)
+    }
+    s$measurements <- m
+  }
   s
 }
 
