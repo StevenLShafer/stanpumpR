@@ -55,6 +55,8 @@ deployment; nothing in `R/` refers to it.
    only: tables and figures are not included, and the document says so. The publisher's PDF
    is not fetched: the cloud environment's network policy does not reach PubMed Central
    directly, and a multi-megabyte PDF cannot pass through the Gmail connector in any case.
+   If the full text shows the paper pooled or reanalysed data from a study Gideon Koren
+   co-authored, the paper is dropped without an email.
 6. **Emails the maintainer.**
    - One email per paper it could get, subject `[stanpumpR PK watch] <drug>: <first author>
      <year> (PMID <n>)`, with the document attached and the routine's assessment: the study
