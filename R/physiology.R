@@ -289,7 +289,13 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # Chem A 113:11501); a tunnelling coefficient of 3 of the Wigner form,
 # 1 + (h nu / kT)^2 / 24, changes by -(2/T)(kappa - 1)/kappa, about
 # 0.4%/C at 300 K, a rough bound since the authors found the Wigner form
-# unconverged here.  Rate-limiting steps: C-H cleavage at least partly
+# unconverged here.  Engineered P450 BM3 variants hydroxylating chirally
+# deuterated butanes at 30 C: isotope effects of 7.3-7.8 for one C-H and
+# 18-25 for the other, the latter above the semiclassical limit, the first
+# experimental evidence of tunnelling in a P450, attributed to one spin
+# state; one temperature, and the authors cite tunnelling as changing P450
+# isotope effects by under 20% (Yang 2017, Chem Eur J 23:2571).
+# Rate-limiting steps: C-H cleavage at least partly
 # limits many drug oxidations but not all (product release limits
 # CYP2E1's ethanol oxidation; amine N-dealkylations show little isotope
 # effect; Guengerich 2017, Methods Enzymol 596:217, who knows of no study
