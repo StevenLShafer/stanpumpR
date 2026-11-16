@@ -29,13 +29,13 @@ minutes, and \code{Dose}.  Non-gas rows are ignored.}
 
 \item{cardiacOutput}{optional override in L/min; defaults to GasMan's 5 L/min at 70 kg, scaled by (weight/70)^0.75}
 
+\item{uptakeEffect, circuit, deadSpace, oxygenUptake}{passed to
+\code{advanceClosedFormGas()}}
+
 \item{physiology}{NULL, or the physiology sliders' factors (see
 \code{getDrugPK()}); only \code{cardiac} acts on the gases, through
 \code{gasBodyPhysiology()}: cardiac output and its split among the tissue
 groups}
-
-\item{uptakeEffect, circuit, deadSpace, oxygenUptake}{passed to
-\code{advanceClosedFormGas()}}
 }
 \value{
 \code{NULL} if the dose table contains no gases, otherwise the list
