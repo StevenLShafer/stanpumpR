@@ -262,12 +262,17 @@ RESOLUTION <- 100
 # Max number of emails a single session can send out, to limit abuse
 EMAIL_SESSION_LIMIT <- 25
 
-# What the browser is told when Email Slide fails; the exception itself (an
-# SMTP diagnostic, a path) goes to the server's log (sendSlide()).
+# What the browser is told when Export's email fails; the exception itself
+# (an SMTP diagnostic, a path) goes to the server's log (sendSlide()).
 EMAIL_FAILURE_MESSAGE <- paste0(
   "The slide could not be sent. The server's log has the details; ",
   "please try again later, or tell the app's maintainer.")
-# The Email Slide's SMTP send: attempts, and seconds allowed to connect and
+# And when one of its downloads could not be written (app_server()'s
+# exportDownload()); the exception goes to the server's log in the same way.
+EXPORT_FAILURE_MESSAGE <- paste0(
+  "The file could not be made. The server's log has the details; ",
+  "please try again later, or tell the app's maintainer.")
+# The email's SMTP send: attempts, and seconds allowed to connect and
 # for each attempt as a whole (curl's connecttimeout and timeout).  Measured
 # against an address that never answers: emayili's and curl's defaults held
 # the R process 80 s here, and up to 25 minutes (5 x 300 s) where a dropped

@@ -73,7 +73,7 @@ helpStaticPages <- function() {
     "drug-library",             "Drug Library and Drug Thresholds","simulator",
     "time-display",             "Time display",                    "simulator",
     "sharing",                  "Sharing a simulation by URL",     "simulator",
-    "email-slide",              "Email a slide",                   "simulator",
+    "export",                   "Exporting a simulation",          "simulator",
     "debug-mode",               "Debug mode",                      "simulator",
 
     "drugs/index",              "All drugs",                       "drugs",

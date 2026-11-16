@@ -9,10 +9,14 @@
 //    "stanpumpR" and whose debug is 0 (no Debug Section under the plot):
 //      Rscript -e 'devtools::load_all("."); shiny::runApp(run_app(), port = 7788)'
 // 2. From the repository root, with Playwright installed:
-//      node data-raw/help-screenshots.js [http://127.0.0.1:7788] [--visualizer]
+//      node data-raw/help-screenshots.js [http://127.0.0.1:7788] [--visualizer | --no-visualizer]
 //    --visualizer remakes only the Visualizer's four pictures (a drug and an
 //    inhaled anesthetic, each in the 2D and the 3D view), from the
-//    visualizer-propofol-bolus and visualizer-sevoflurane-emergence scenarios.
+//    visualizer-propofol-bolus and visualizer-sevoflurane-emergence scenarios;
+//    --no-visualizer remakes every picture but those four.
+//
+// Step 7's picture, the Bayesian Updating panel, is made from the
+// warfarin-bayesian-inr scenario, which carries four measured INRs.
 //
 // Every capture is at twice the CSS pixel size, as the help displays them
 // scaled down.
@@ -22,6 +26,7 @@ const path = require('path');
 
 const BASE = (process.argv.slice(2).find(a => !a.startsWith('--')) || 'http://127.0.0.1:7788').replace(/\/+$/, '');
 const ONLY_VISUALIZER = process.argv.includes('--visualizer');
+const NO_VISUALIZER = process.argv.includes('--no-visualizer');
 const OUT = path.join(__dirname, '..', 'inst', 'www', 'help');
 const SCENARIO = 'propofol-induction-maintenance';
 const VIEWPORT = { width: 1400, height: 820 };
@@ -82,8 +87,10 @@ async function visualizer(browser, scenario, T, name) {
   // The Visualizer (step 6 of the tour): a propofol bolus at 1.6 minutes, its
   // effect site at its peak; sevoflurane five minutes after the vaporizer is
   // turned off.
-  await visualizer(browser, 'visualizer-propofol-bolus', 96, 'propofol');
-  await visualizer(browser, 'visualizer-sevoflurane-emergence', 125 * 60, 'sevoflurane');
+  if (!NO_VISUALIZER) {
+    await visualizer(browser, 'visualizer-propofol-bolus', 96, 'propofol');
+    await visualizer(browser, 'visualizer-sevoflurane-emergence', 125 * 60, 'sevoflurane');
+  }
   if (ONLY_VISUALIZER) { await browser.close(); return; }
 
   // The opening dialog, as on a first visit (a fresh browser has no record
@@ -126,6 +133,25 @@ async function visualizer(browser, scenario, T, name) {
     await openPanel(page, 'Graph Options');
     await openPanel(page, 'time');
     await sidebar.screenshot({ path: out('time') });
+    await page.close();
+  }
+
+  // Bayesian updating (step 7 of the tour): the warfarin scenario, whose four
+  // measured INRs go into the Bayesian Updating table, with that panel open
+  // once the estimate is written under it; the whole window, so the panel and
+  // the plot (the points, the updated line and the population line) are seen
+  // together.
+  {
+    const page = await browser.newPage({ viewport: { width: VIEWPORT.width, height: 1240 },
+                                          deviceScaleFactor: 2 });
+    await page.goto(`${BASE}/?scenario=warfarin-bayesian-inr`);
+    await page.waitForSelector('#PlotSimulation img', { timeout: 60000 });
+    await settle(page, 2000);
+    await page.addStyleTag({ content: '#shiny-notification-panel { display: none !important; }' });
+    await openPanel(page, 'bayes');
+    await page.waitForSelector('#bayesSummary .bayes-fit', { timeout: 120000 });
+    await settle(page, 2000);
+    await page.screenshot({ path: out('bayesian') });
     await page.close();
   }
 

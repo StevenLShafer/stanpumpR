@@ -31,15 +31,19 @@
 #' @param timeApi the app_server()'s time-units functions (setDoseTable,
 #'   showTimeSettings), through which a scenario sets its time unit and writes
 #'   its dose table; NULL writes the tables directly
-#' @param onLoad NULL, or a function called once a scenario is loaded, for
-#'   what else belongs to the patient it replaces (app_server() clears the
-#'   measured concentrations of the Bayesian update)
+#' @param onLoad NULL, or a function called as a scenario is loaded, before
+#'   it is put in, for what else belongs to the patient it replaces
+#'   (app_server() clears the measured concentrations of the Bayesian update)
+#' @param restoreMeasurements function(measurements, format) that puts a
+#'   scenario's own measured concentrations into the Bayesian Updating table
+#'   (applyHelpScenario()), or NULL
 #' @returns a list: `page`, the reactiveVal() holding the current page id, and
 #'   `loadScenario(s)`, which loads a scenario into the simulator (used for a
 #'   ?scenario= link, R/deep-links.R)
 #' @noRd
 helpServer <- function(input, output, session, doseTable, eventTable, drugDefaults,
-                       navId = "mainNav", timeApi = NULL, onLoad = NULL) {
+                       navId = "mainNav", timeApi = NULL, onLoad = NULL,
+                       restoreMeasurements = NULL) {
   helpPage <- reactiveVal("home")
 
   registry <- reactive({
@@ -107,8 +111,10 @@ helpServer <- function(input, output, session, doseTable, eventTable, drugDefaul
       return(FALSE)
     }
     outputComments("Loading help scenario", s$id)
-    applyHelpScenario(session, s, doseTable, eventTable, timeApi)
+    # What else belonged to the patient being replaced goes first, so that the
+    # scenario's own measured concentrations and variabilities come after it
     if (is.function(onLoad)) onLoad()
+    applyHelpScenario(session, s, doseTable, eventTable, timeApi, restoreMeasurements)
     bslib::nav_select(navId, "Simulator", session = session)
     converted <- if (length(s$converted) > 0) tagList(tags$br(), tags$span(class = "small", paste0(
       "Targets converted to the units your Drug Library shows (",

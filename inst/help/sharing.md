@@ -21,11 +21,11 @@ The URL also carries the patient's covariates and regimen. The app does not send
 ## What is not included
 
 - Which help page you were reading
-- Anything typed into the Email Slide panel
+- Anything typed into the Export panel's email
 
 ## The URL in an emailed slide
 
-The email that carries the PowerPoint slide includes the same URL as a link, so a simulation can be reopened months later and reconstructed. See [Email a slide](help:email-slide).
+The email that the Export panel sends with the PowerPoint slide includes the same URL as a link, so a simulation can be reopened months later and reconstructed. A downloaded file does not carry it. See [Exporting a simulation](help:export).
 
 ## Linking to a scenario or a help page
 

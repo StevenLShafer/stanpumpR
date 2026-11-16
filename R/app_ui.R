@@ -722,23 +722,41 @@ app_ui <- function() {
                 actionLink("bayesClear", "Clear measurements")
               ),
 
+              # The simulation as files: each downloaded on its own, or all
+              # three emailed (R/sendSlide.R writes them; app_server()'s
+              # exportDownload() and the email observer send them).  Named
+              # Email Slide until 2026-11-15, when it only emailed.
               bslib::accordion_panel(
-                "Email Slide",
-                icon = icon("envelope"),
+                "Export",
+                value = "export",
+                icon = icon("file-export"),
+                tags$h6("Download", class = "mb-2"),
+                div(
+                  class = "d-grid gap-2 mb-3",
+                  downloadButton("exportPowerPoint", "PowerPoint (.pptx)",
+                                 icon = icon("file-powerpoint"), class = "btn-outline-primary btn-sm text-start"),
+                  downloadButton("exportSpreadsheet", "Spreadsheet (.xlsx)",
+                                 icon = icon("file-excel"), class = "btn-outline-primary btn-sm text-start"),
+                  downloadButton("exportImage", "Image (.png)",
+                                 icon = icon("file-image"), class = "btn-outline-primary btn-sm text-start")
+                ),
+                tags$h6("Email", class = "mb-2"),
                 if (is.null(config$email_username) || is.null(config$email_password)) {
                   div(
-                    class = "info-note",
+                    class = "info-note mt-0",
                     icon("circle-info"),
                     "Email is not configured. Please ask admin to set email username and password in app configuration."
                   )
                 } else {
                   tagList(
+                    tags$p(class = "micro text-muted mb-2",
+                           "All three files, with a link that reopens this simulation."),
                     textInput("recipient", NULL, "", placeholder = "Enter email address"),
                     textAreaInput("emailComments", NULL, "", placeholder = "Comments (optional)", rows = 3) |>
                       addInputAttributes(maxlength = MAX_INPUT_TEXT),
                     checkboxInput("commentSafe", "This comment does not contain PHI", FALSE) |>
                       htmltools::tagAppendAttributes(class = "micro"),
-                    actionButton("sendSlide", "Send", class = "btn-primary")
+                    actionButton("sendSlide", "Send", icon = icon("envelope"), class = "btn-primary")
                   )
                 }
               )
