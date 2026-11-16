@@ -267,6 +267,95 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # 6.2-10.7%/C near 32 C, at saturating substrate; below the transition
 # 37-94 kcal/mol, outside the slider's range.  This factor is equivalent to
 # an activation energy of 12.2 kcal/mol at 32 C, the low end of those.
+# The hydrogen-abstraction step itself, all read in full.  Measured:
+# OleT compound I (a bacterial P450 peroxygenase, so no reductase,
+# oxygen binding or substrate entry in the measured step) abstracting
+# from bound eicosanoic acid over 4-21 C, Ea 16.5 kJ/mol (3.95 kcal/mol;
+# Table 1 heads its kJ/mol column "kcal/mol", its second column being the
+# same values in kcal/mol, which the text's "about 6" and "difference of
+# about 5" confirm), about 2.1%/C, with the deuterated substrate's 38.9
+# kJ/mol (9.3 kcal/mol), A_H/A_D 1.54, and an isotope effect of about 15
+# at 4 C, which the authors read as signs of tunnelling (Dutra 2022, J Phys
+# Chem B 126:3493).  These are separately reported values, not one
+# consistent set: the two barriers and A_H/A_D give, by Arrhenius,
+# k_H/k_D of about 25,000 at 4 C, not 15 (CodeRabbit, PR #743); why is
+# unknown (a different fit or definition, or a reporting error), and the
+# 2%/C is the protium fit's slope only;
+# CYP119 compound I oxidising benzyl alcohol over -50 to -25 C, Ea 15.1
+# kcal/mol, but for the DIDEUTERATED substrate, the only one slow enough
+# to time, so not the protium rate (Wang 2009, J Am Chem Soc 131:10629).
+# Computed: QM/MM barriers of 13.2-18.1 kcal/mol for P450cam and BM3,
+# no tunnelling at room temperature, the isotope effect rising steeply
+# only below 250-260 K (Kalita 2025, J Am Chem Soc 147:35576); CYP3A4
+# testosterone 6beta-hydroxylation for compound I and the substrate alone,
+# no protein or solvent, adiabatic barrier 5.6-6.8 kcal/mol, tunnelling
+# coefficients about 3 (small-curvature 2.7-3.4) at 300 K only, isotope
+# effects of 2 and 5 against an experimental 15 (Zhang and Lin 2009, J Phys
+# Chem A 113:11501); a tunnelling coefficient of 3 of the Wigner form,
+# 1 + (h nu / kT)^2 / 24, changes by -(2/T)(kappa - 1)/kappa, about
+# 0.4%/C at 300 K, a rough bound since the authors found the Wigner form
+# unconverged here.  Engineered P450 BM3 variants hydroxylating chirally
+# deuterated butanes at 30 C: isotope effects of 7.3-7.8 for one C-H and
+# 18-25 for the other, the latter above the semiclassical limit, the first
+# experimental evidence of tunnelling in a P450, attributed to one spin
+# state; one temperature, and the authors cite tunnelling as changing P450
+# isotope effects by under 20% (Yang 2017, Chem Eur J 23:2571).
+# Rate-limiting steps: C-H cleavage at least partly
+# limits many drug oxidations but not all (product release limits
+# CYP2E1's ethanol oxidation; amine N-dealkylations show little isotope
+# effect; Guengerich 2017, Methods Enzymol 596:217, who knows of no study
+# of tunnelling in a mammalian CYP); in five human liver microsome
+# preparations 7-ethoxycoumarin O-deethylation (mostly CYP1A2) had
+# noncompetitive isotope effects of 7.3-8.1, so C-H cleavage limits that
+# rate, while CYP2E1's were attenuated to 2-4 (Kim 2006, FEBS J 273:2223;
+# no temperature studied).  So: the one measured protium barrier for the
+# abstraction step, in one bacterial enzyme and one substrate, is low
+# (about 2%/C), below the 6-9%/C that whole enzymes, microsomes and
+# patients show, and the computed barriers differ widely between enzymes.
+# That the rest lies in the other steps of the cycle (electron transfer,
+# oxygen and substrate binding, product release) or in protein motion is a
+# hypothesis these papers do not test.  This factor rests on the measured
+# whole-system rates above, not on the chemistry of one step.
+# Esterases, read in full.  Butyrylcholinesterase (succinylcholine's and
+# mivacurium's enzyme) in serum from 8 volunteers, mivacurium half-lives
+# read from Figure 1 without fluoride: cis-trans 0.86, about 1.55 and 3.85
+# min at 37, 28 and 18 C, trans-trans 1.07, about 2.35 and 7.3, so 6.3
+# and 8.4%/C over 37-28 C and 7.6 and 9.6%/C over 37-18 C, steeper below;
+# the authors cite activity halved from 37 to 25 C, 5.6%/C (Gruber 2002,
+# Anesth Analg 95:397).  The same enzyme's Vmax for o-nitrophenylbutyrate
+# was almost flat above an Arrhenius break at 21 C (3.5 kJ/mol; 18.6 and
+# 19.8 at 25 and 35 C), 26 kJ/mol below it, in Tris buffer whose pH fell
+# with warming, an artificial substrate at saturation (Masson and Balny
+# 1986, BBA 874:90): not the drug, not plasma, so Gruber's numbers stand.
+# Esmolol in human whole blood (red-cell arylesterase) at 37, 25, 15 and
+# 4 C: half-lives 19.6, 47, 152 and 227 min, fitted as T1/2 = 364 x
+# 10^(-0.034 T) (r = 0.98), the same exponential form as this factor at
+# 7.5%/C (Melendez 1990, J Cardiothorac Anesth 4:704, read in full; the
+# 37-25 C pair alone gives 7.0%/C, the curve steeper below).
+# Esmolol on hypothermic bypass, constant infusion: oxygenator inflow
+# concentrations rose to 1.8 times the prebypass arterial at a minimum of
+# 26 C, inversely with temperature (P < 0.0005) and with time, about
+# 5%/C if read crudely, but not at steady state, inflow against arterial,
+# hemodiluted, and with arterial concentrations 6.9 times venous, so the
+# authors suspect tissue esterases and perfusion as well as red-cell
+# esterase (Jacobs 1993, J Clin Pharmacol 33:360).  Suxamethonium on the
+# isolated rat diaphragm blocked more at 20 than at 37 C, but cooling
+# deepens decamethonium's block as much, which no esterase removes, so the
+# effect is partly at the end plate; no clearance (Whittaker 1962, J Pharm
+# Pharmacol 14:803).  Remimazolam, 1 mg/kg/h on bypass at a bladder
+# temperature of 32.6 C (36.3 C before): total concentration fell at the
+# start of bypass and was back at its baseline (about 760 ng/mL) in the
+# cold, with the unbound fraction raised about threefold by hemodilution;
+# the authors treat it as a high-extraction drug and say its kinetics in
+# hypothermia are uncharacterised (Inoue 2026, J Cardiothorac Vasc Anesth
+# 40:1138).  Both read in full; neither gives a per-degree factor.
+# Goats cooled to 22-23 C: serum cholinesterase, assayed in vitro (so the
+# amount of enzyme, not its activity at body temperature), unchanged during
+# hypothermia, then about 30% lower from the first to the seventh day
+# after rewarming and not normal before the fourteenth, with albumin
+# following later; the authors read it as hepatic synthesis suppressed
+# (Timet 1977, Cryobiology 14:516, read in full).  An after-effect of this
+# kind is not modelled: the factor returns to 1 at 37 C.
 #
 # Body temperature and cardiac output are NOT coupled: hypothermia does not
 # lower cardiac output by itself.  Fever raises cardiac output and cooling

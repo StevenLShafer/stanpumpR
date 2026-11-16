@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   R-CMD-check:
-    runs-on: ${{ matrix.config.os }}
+    runs-on: ${{ matrix.config.runner || matrix.config.os }}
 
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})
 
@@ -24,8 +24,13 @@ jobs:
         config:
           - {os: macOS-latest,   r: 'release'}
           - {os: windows-latest, r: 'release'}
-          - {os: ubuntu-latest,   r: 'release'}
-          - {os: ubuntu-latest,   r: 'oldrel-1'}
+          # The Ubuntu jobs keep the os label "ubuntu-latest", which names the
+          # check that master's branch protection requires, but run on
+          # ubuntu-24.04: ubuntu-26.04, which ubuntu-latest moved to on
+          # 2026-11-16, has a sudo that ignores -E, and setup-r-dependencies
+          # then loses R_LIB_FOR_PAK ("zero-length 'path' argument").
+          - {os: ubuntu-latest,   runner: ubuntu-24.04, r: 'release'}
+          - {os: ubuntu-latest,   runner: ubuntu-24.04, r: 'oldrel-1'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
