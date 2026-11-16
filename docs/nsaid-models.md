@@ -38,8 +38,8 @@ model (`R/drugs_celecoxib.R`) is Claude Code's two-compartment fit to the digiti
 checked against NCT04526197, Itthipanichpong 2005 and Werner 2002. The weight exponents are
 from Krishnaswami 2012, a one-compartment population model in children and adults, and the
 effect site (T1/2keo 1.12 h, Ce50 242 ng/mL) is from Hannam 2023. Hannam's one-compartment
-plasma model (CL/F 49 L/h, V/F 346 L) and Stempak 2002 (non-compartmental, children) were
-reviewed and not used for the kinetics. A published population model would replace the fit.
+plasma model (CL/F 49 L/h, V/F 346 L) was reviewed and not used for the kinetics. Papers by
+Gideon Koren are not cited (Shafer, 2026-11-16: suspected research fraud). A published population model would replace the fit.
 
 ## Naproxen
 
