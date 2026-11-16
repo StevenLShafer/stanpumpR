@@ -901,7 +901,9 @@ Supplied by Shafer on 2026-11-16, five of the six asked for that morning
   the intercepts are not printed.  PubMed found two sources that may close
   it: Yee 1983 (children; the abstract prints V1, Vss, CL and both
   half-lives) and Kramer 1978 (adults, two compartments after a 10-min
-  infusion).  Both added to the registry, abstract only.
+  infusion).  Kramer was then supplied and read on the page images: not
+  identifiable either (Table II prints beta, Vd-beta = CL/beta and the
+  clearances, no alpha or intercepts).  Yee 1983 is the remaining candidate.
 - **Savic 2017 (cladribine tablets; C37b): complete, not implemented.**
   Table 4 read: three compartments, CL = 3.52 x Cockcroft-Gault CLCR (L/h) +
   23.4 L/h, the tablet's ka 1.08 /h and F 0.456 fasted (phase I) or ka 1.03
@@ -918,9 +920,8 @@ Supplied by Shafer on 2026-11-16, five of the six asked for that morning
 Section 45's questions stand, except question 6 (answered by Panetta 2003)
 and question 3, restated.  New or restated:
 
-1. **Vinblastine** (Owellen 1977): implement from two patients'
-   triexponentials, or wait for Ratain 1987 (30 patients), still not
-   supplied?
+1. **Vinblastine** (Owellen 1977): Ratain 1987 (30 patients) has been
+   requested from Stanford; wait for it?
 2. **Cladribine in children** (Kearns 1994): add as the children's
    candidate, intravenous only?
 3. **Cladribine tablets** (Savic 2017, now read in full): (a) a candidate of
@@ -936,14 +937,18 @@ and question 3, restated.  New or restated:
 6. **Temozolomide in children** (Panetta 2003): confirm holding the
    clearance and volume proportional to BSA outside the studied 0.45-2.1 m2,
    and Mosteller's BSA (the paper names no formula).
-7. **Idarubicin** (Maisonneuve 2026): build a general linear compartmental
+7. **Idarubicin** (Maisonneuve 2026; the second copy supplied is the same
+   article, without the supplement): build a general linear compartmental
    engine (a matrix exponential of any compartment matrix: elimination and
    metabolite formation from any compartment), which would also carry de
    Jonge 2005 (question 10's engine is a different, zero-order one), or
    implement the parent alone now through its equivalent mammillary model
    (exact for plasma, not for the V2/V3 panels), with no idarubicinol?
-8. **Bleomycin**: supply Yee 1983 (children) and Kramer 1978 (adults); and
-   the dose unit is USP units (activity), as heparin's IU is.
+8. **Bleomycin**: supply Yee 1983 (children; Kramer 1978, the adult
+   candidate, proved not identifiable).  Would a model fitted in children be
+   acceptable for adults, its clearance per m2 (51.8 mL/min/m2) matching
+   Alberts' adult 50.6?  The dose unit would be USP units (activity), as
+   heparin's IU is.
 9. **Thioguanine**: offer the intravenous research model?
 10. **Vincristine (Nijstad 2022)**: confirm kon and koff not scaled, and
     doses as the sulfate.
