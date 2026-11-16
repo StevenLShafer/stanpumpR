@@ -832,3 +832,40 @@ images).  Four became models, six are recorded.
   requires a row for every dosable drug; the 29 chemotherapy drugs of this
   branch now have their current DailyMed labels in `papers/labels/` (the
   innovator's NDA where it is still listed, else a major generic).
+
+## 45. Questions for Shafer (2026-11-16)
+
+No new chemotherapy paper had reached the archive by 2026-11-16: the five
+asked for on 2026-11-13 (Panetta 2003, Maisonneuve 2026, Alberts 1978,
+Ratain 1987, Kantrowitz-Gordon 2018) were not there, and the PDFs added on
+2026-11-12 and 13 belong to other threads.  Read instead from PubMed
+Central: Savic 2017 (cladribine tablets; the text, not its parameter table)
+and Hassan 1999 (cyclophosphamide; abstract only).  The carboplatin rows'
+2026-11-06 question is closed (Duffull 1997 chosen).  Open questions, each
+also in its registry row or drug header:
+
+1. **Vinblastine** (Owellen 1977): implement from two patients'
+   triexponentials, or wait for Ratain 1987 (30 patients)?
+2. **Cladribine in children** (Kearns 1994): add as the children's
+   candidate, intravenous only, so a child's SC or oral dose has no model?
+3. **Cladribine tablets** (Savic 2017, 173 patients with multiple
+   sclerosis): add the approved oral product?  Under the selector it would
+   outnumber Lindemalm (161) and become the adult model for every route.
+4. **Ifosfamide**: should the infusion schedule count in the choice
+   (Kerbusch 2001, 1-h infusions, against Kerbusch 2000, 72-h)?
+5. **Crombag paclitaxel's body size**: V1, V3, VMTR, KMTR, K21 and Q are
+   fixed in both switch positions, by analogy with your Joerger V1 decision
+   (2026-11-06).  Confirm?
+6. **Temozolomide in children**: the adult model (30-79 years) is used for
+   any age until a children's model (Panetta 2003) is read.  Keep, or refuse
+   it below 18?
+7. **Thioguanine**: only an intravenous research model exists
+   (`thioguanineIV`); the approved product is the oral tablet.  Offer it?
+8. **Vincristine (Nijstad 2022)**: confirm kon and koff not allometrically
+   scaled, and doses as the sulfate.
+9. **de Jonge 2005 cyclophosphamide**: its enzymes rise at zero order with
+   no turnover.  Worth an engine option, given the selector would choose it
+   only at 16-17 years?
+10. **Labels**: the 29 chemotherapy labels are DailyMed's current versions,
+    the innovator's NDA where listed, else a major generic; IV thioguanine
+    links the oral Tabloid label.  Acceptable?

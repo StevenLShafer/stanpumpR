@@ -215,7 +215,7 @@ pubmedSources[pubmedSources == ""] <- NA
 
 # How far each PubMed document was read here.  Every abstract was screened;
 # the PubMed Central text (without tables or equations) was read for these.
-FULL_TEXT_PARTIAL <- c("C12", "C15", "C35", "N04")
+FULL_TEXT_PARTIAL <- c("C12", "C15", "C35", "N04", "C37b")
 pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
                              "guideline", "primary_study")
 # Read in full: every parameter the model uses, from the PubMed Central
@@ -345,7 +345,7 @@ registry <- rbind(
     "178 adults (280 courses), conventional and high dose, mostly normal renal function",
     "ultrafilterable platinum", "linear two compartments; no serum-creatinine estimate of renal function related to clearance",
     "first", "linear", "C01",
-    "PDF read (supplied 2026-11-06), Table 2: two compartments, CL 8.33 L/h, V 16.3 L, k12 0.104 /h, k21 0.171 /h, no covariates (Model 1, the best fit). Concentrations are carboplatin equivalents (dose = AUC x 138.8 mL/min in the Discussion). Fitted in creatinine clearance above about 50 mL/min, so it says nothing of renal impairment; its finding that creatinine-based estimates do not predict clearance means a renal covariate must not be grafted on. [decision, asked 2026-11-06] Which carboplatin model the library offers: this one (fitted, blind to renal function), Chatelut 1995 (renal formula, disposition derived from its means), or both as two drugs.",
+    "PDF read (supplied 2026-11-06), Table 2: two compartments, CL 8.33 L/h, V 16.3 L, k12 0.104 /h, k21 0.171 /h, no covariates (Model 1, the best fit). Concentrations are carboplatin equivalents (dose = AUC x 138.8 mL/min in the Discussion). Fitted in creatinine clearance above about 50 mL/min, so it says nothing of renal impairment; its finding that creatinine-based estimates do not predict clearance means a renal covariate must not be grafted on. Decided by Shafer (2026-11-06): neither this model nor Chatelut 1995; the library offers Duffull 1997 (carboplatinDuffull, in the carboplatin group).",
     readiness = "complete_not_implemented"),
   m("carboplatin__ovarian__duffull1997", "carboplatin", "carboplatin", "IV",
     "12 women with ovarian cancer", "intact carboplatin in serum (HPLC)",
@@ -363,7 +363,7 @@ registry <- rbind(
     "adults with cancer", "carboplatin (analyte to confirm)",
     "a clearance equation in creatinine, weight, age and sex (the Chatelut formula); whether the paper gives volumes was not established",
     "first", "unknown", "P02",
-    "PDF read (supplied 2026-11-06). The clearance formula, CL (mL/min) = 0.134 weight + 218 weight (1 - 0.00457 age)(1 - 0.314 sex)/creatinine (uM), sex 1 for women, fitted in 34 patients (creatinine 56-353 uM) and validated prospectively in 36; Table 2 gives only the means of individual two-compartment fits (CL 107 mL/min, distribution half-life 8 min, elimination half-life 3.8 h, Vdss 28 L), which close a two-compartment model by derivation. The paper does not state the creatinine assay, but Leger 2002 (PMID 11750839, PDF read 2026-11-06) says the formula was developed with an ENZYMATIC assay (creatinine amidohydrolase), and that a Jaffe creatinine must be corrected before use, Scr = (Jaffe - 1.6)/1.08 uM (its NONMEM covariate analysis put the Jaffe value 11.6% too high); an earlier note here guessed Jaffe, which was wrong. Leger prints no typical Vc, Vp or Q either. Do not splice its clearance into another source's volumes. [decision, asked 2026-11-06] See the Ekhart 2006 row.",
+    "PDF read (supplied 2026-11-06). The clearance formula, CL (mL/min) = 0.134 weight + 218 weight (1 - 0.00457 age)(1 - 0.314 sex)/creatinine (uM), sex 1 for women, fitted in 34 patients (creatinine 56-353 uM) and validated prospectively in 36; Table 2 gives only the means of individual two-compartment fits (CL 107 mL/min, distribution half-life 8 min, elimination half-life 3.8 h, Vdss 28 L), which close a two-compartment model by derivation. The paper does not state the creatinine assay, but Leger 2002 (PMID 11750839, PDF read 2026-11-06) says the formula was developed with an ENZYMATIC assay (creatinine amidohydrolase), and that a Jaffe creatinine must be corrected before use, Scr = (Jaffe - 1.6)/1.08 uM (its NONMEM covariate analysis put the Jaffe value 11.6% too high); an earlier note here guessed Jaffe, which was wrong. Leger prints no typical Vc, Vp or Q either. Do not splice its clearance into another source's volumes. Decided by Shafer (2026-11-06): Duffull 1997 is offered instead; see the Ekhart 2006 row.",
     readiness = "complete_not_implemented"),
   m("carboplatin__children__peng1995", "carboplatin", "carboplatin", "IV",
     "children with cancer", "carboplatin (analyte to confirm)",
@@ -482,8 +482,9 @@ registry <- rbind(
     readiness = "needs_engine"),
   m("cyclophosphamide__breast__hassan1999", "cyclophosphamide", "cyclophosphamide", "IV",
     "women with breast cancer", "cyclophosphamide",
-    "mechanism-based enzyme model of autoinduction", "second", "new_engine", "P07",
-    "Enzyme turnover is a state the engine lacks for this drug; the antiseizure induction machinery is a design precedent, not a validated substitute."),
+    "two compartments with a non-inducible (1.14 L/h) and an inducible (1.76 L/h) clearance, the drug raising the enzyme's production; enzyme turnover half-life 24 h",
+    "second", "michaelis_menten", "P07",
+    "Abstract read 2026-11-16 (PubMed Central holds no full text). 14 women, 96-h infusion of 6 g/m2 with thiotepa and carboplatin. The structure is the autoinduction block's (formation raised, as McCune 2009), so no new engine is needed; with 14 patients it would never be chosen over Joerger 2007 (59) and the full text is not in the archive."),
   m("cyclophosphamide__breast__joerger2007", "cyclophosphamide", "cyclophosphamide", "IV",
     "65 women with breast cancer (with doxorubicin)", "cyclophosphamide",
     "one compartment: CL 4.23 L/h x 1.89^EIAD, V 34.6 L; joined to a neutropenia model",
@@ -788,12 +789,14 @@ registry <- rbind(
     "25 children with acute leukaemia, 5-day infusion", "cladribine, plasma and CSF",
     "two compartments: Vc 31.3 L/m2, CL 39.4 L/h/m2, kcp 0.52 and kpc 0.05 /h fixed (Table 2 means); renal clearance about half",
     "expansion", "linear", "N05",
-    "PDF read (supplied 2026-11-13). 25 children and young adults 0.7-23.3 years, 8.9 mg/m2/day for 5 days by continuous infusion, radioimmunoassay. The means close a model that returns the paper's own Vdss (356.8 against 356.6 L/m2) and terminal half-life (19.7 h). [decision, asked 2026-11-13] Whether to make cladribine a group with Lindemalm 2005 (adults, IV, SC and oral) and this model for children; this one is intravenous only, so a child's SC or oral dose would have no model unless Lindemalm's absorption were borrowed, which the library does not do."),
+    "PDF read (supplied 2026-11-13). 25 children and young adults 0.7-23.3 years, 8.9 mg/m2/day for 5 days by continuous infusion, radioimmunoassay. The means close a model that returns the paper's own Vdss (356.8 against 356.6 L/m2) and terminal half-life (19.7 h). [decision, asked 2026-11-13] Whether to make cladribine a group with Lindemalm 2005 (adults, IV, SC and oral) and this model for children; this one is intravenous only, so a child's SC or oral dose would have no model unless Lindemalm's absorption were borrowed, which the library does not do.",
+    readiness = "complete_not_implemented"),
   m("cladribine__ms__savic2017", "cladribine", "cladribine (tablets, multiple sclerosis)", "PO",
     "173 adults with multiple sclerosis", "cladribine and 2-chloroadenine",
     "cladribine three compartments, 2-chloroadenine one; creatinine clearance on renal clearance",
     "expansion", "linear_metabolite", "C37b",
-    "Multiple sclerosis tablets: context for an oncology model, not one."),
+    "PubMed Central text read 2026-11-16 (its parameter table is not in the text): 173 adults with multiple sclerosis from four studies, IV (3 mg over 1 h) and the 10-mg tablet; CdA three compartments, CAde one; renal clearance linear in Cockcroft-Gault CrCL (CLR 23.4 and CLNR 22.2 L/h at the mean CrCL), F 45.6% fasted, 40.5% fed, food a 2.44-compartment transit delay (mean 1.04 h); interferon beta-1a CLNR x 1.21; no weight, age or sex effect beyond CrCL. [decision, asked 2026-11-16] Whether the tablet (Mavenclad, the approved oral product) should join cladribine: Savic's 173 patients outnumber Lindemalm's 161, so under the selector it would become the adult model for every route, though its population has multiple sclerosis rather than leukaemia.",
+    to_obtain = "Savic RM et al. Clin Pharmacokinet 2017;56:1245-1253 (PMID 28255849, PMC5591805): the PDF for its parameter table and supplement"),
   m("paclitaxel_nab__adult__chen2014", "paclitaxel", "paclitaxel protein-bound (nab-paclitaxel)", "IV",
     "150 adults with solid tumours", "paclitaxel",
     "three compartments with saturable distribution and saturable elimination; albumin on elimination",
