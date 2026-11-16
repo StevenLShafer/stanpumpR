@@ -331,6 +331,11 @@ MAX_BOOKMARK_URL_CHARS <- 8000L
 # How the plot area introduces the error that stopped the simulation
 PLOT_FAILURE_PREFIX <- "The simulation could not be drawn. "
 
+# What the plot area says while no drug has a dose above 0, the drugs it
+# draws (positiveDoseDrugs(), R/drug-pipeline.R; Shafer, 2026-11-16)
+NOTHING_TO_DRAW_MESSAGE <-
+  "Enter a dose or target above 0 in the dose table to see the simulation."
+
 # Be sure there are more items below then potential facets on the simulation plot
 #                     1     2     3     4     5     6     7     8     9    10    11    12    13    14   15
 bolusUnits <- c("g","mg","mcg", "ng","g/kg","mg/kg","mcg/kg","ng/kg")

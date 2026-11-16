@@ -259,3 +259,53 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
 
   drugs
 }
+
+# Only the drugs given a dose above 0 are drawn (Steven L. Shafer,
+# 2026-11-16).  A drug whose every row is 0, such as each drug the startup
+# menu puts in the table until a dose is typed, has a curve of zeros, and
+# drawing them was nearly all of the time a table of every startup drug
+# took: 51 s, 35 s of it ggplot drawing 231 empty panels (ChatGPT's
+# production audit, 2026-11-15).  Such a drug stays in the dose table; its
+# panel appears with its first dose above 0.
+
+#' The drugs of a dose table given a dose above 0
+#'
+#' @param DT a dose table (Drug, Dose), or NULL
+#' @returns the names of the drugs with at least one dose above 0
+#' @keywords internal
+positiveDoseDrugs <- function(DT)
+{
+  if (is.null(DT) || nrow(DT) == 0) return(character(0))
+  dose <- suppressWarnings(as.numeric(DT$Dose))
+  unique(as.character(DT$Drug[!is.na(dose) & dose > 0]))
+}
+
+#' The drug entries that are drawn
+#'
+#' Those of the drugs given a dose above 0 and of the metabolites they form,
+#' each with its companions (another model drawn beside it, `$companionOf`).
+#' A metabolite formed by a drug that is drawn is drawn whether or not its
+#' own rows are 0: its curve is what the parent forms, and its own rows
+#' (a 0 mg row of morphine beside codeine, which is how a level of morphine
+#' is entered) are simulated with it as before.
+#'
+#' @param drugs the drug list from recalculatePK()
+#' @param given the drugs given a dose above 0 (positiveDoseDrugs())
+#' @returns the drug list without the entries that are not drawn
+#' @keywords internal
+drawnDrugEntries <- function(drugs, given)
+{
+  if (length(drugs) == 0) return(drugs)
+  drawn <- intersect(given, names(drugs))
+  repeat {
+    formed <- unlist(lapply(drawn, function(d) drugs[[d]]$metaboliteName))
+    formed <- setdiff(intersect(formed, names(drugs)), drawn)
+    if (length(formed) == 0) break
+    drawn <- c(drawn, formed)
+  }
+  keep <- vapply(names(drugs), function(name) {
+    source <- drugs[[name]]$companionOf
+    (if (is.null(source)) name else source) %in% drawn
+  }, logical(1))
+  drugs[keep]
+}
