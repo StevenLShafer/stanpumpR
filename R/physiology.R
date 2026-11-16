@@ -274,8 +274,13 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # Table 1 heads its kJ/mol column "kcal/mol", its second column being the
 # same values in kcal/mol, which the text's "about 6" and "difference of
 # about 5" confirm), about 2.1%/C, with the deuterated substrate's 38.9
-# kJ/mol (9.3 kcal/mol), an isotope effect of about 15 at 4 C and A_H/A_D
-# 1.54, the signs of tunnelling (Dutra 2022, J Phys Chem B 126:3493);
+# kJ/mol (9.3 kcal/mol), A_H/A_D 1.54, and an isotope effect of about 15
+# at 4 C, which the authors read as signs of tunnelling (Dutra 2022, J Phys
+# Chem B 126:3493).  These are separately reported values, not one
+# consistent set: the two barriers and A_H/A_D give, by Arrhenius,
+# k_H/k_D of about 25,000 at 4 C, not 15 (CodeRabbit, PR #743), so at
+# least one of them comes from a different fit or definition, and the
+# 2%/C is the protium fit's slope only;
 # CYP119 compound I oxidising benzyl alcohol over -50 to -25 C, Ea 15.1
 # kcal/mol, but for the DIDEUTERATED substrate, the only one slow enough
 # to time, so not the protium rate (Wang 2009, J Am Chem Soc 131:10629).
@@ -304,12 +309,13 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # noncompetitive isotope effects of 7.3-8.1, so C-H cleavage limits that
 # rate, while CYP2E1's were attenuated to 2-4 (Kim 2006, FEBS J 273:2223;
 # no temperature studied).  So: the one measured protium barrier for the
-# abstraction step is low (about 2%/C) and tunnelling-assisted, below the
-# 6-9%/C that whole enzymes, microsomes and patients show; the rest of the
-# temperature dependence lies in the other steps of the cycle (electron
-# transfer, oxygen and substrate binding, product release) and in protein
-# motion, which is why this factor rests on the measured whole-system
-# rates above and not on the chemistry of one step.
+# abstraction step, in one bacterial enzyme and one substrate, is low
+# (about 2%/C), below the 6-9%/C that whole enzymes, microsomes and
+# patients show, and the computed barriers differ widely between enzymes.
+# That the rest lies in the other steps of the cycle (electron transfer,
+# oxygen and substrate binding, product release) or in protein motion is a
+# hypothesis these papers do not test.  This factor rests on the measured
+# whole-system rates above, not on the chemistry of one step.
 # Esterases, read in full.  Butyrylcholinesterase (succinylcholine's and
 # mivacurium's enzyme) in serum from 8 volunteers, mivacurium half-lives
 # read from Figure 1 without fluoride: cis-trans 0.86, about 1.55 and 3.85
