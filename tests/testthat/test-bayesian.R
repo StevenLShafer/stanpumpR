@@ -16,7 +16,7 @@ rebuildFor <- function(DT) {
   function(drug, individual) {
     recalculatePK(NULL, getDrugDefaultsGlobal(), DT[DT$Drug == drug, , drop = FALSE],
                   age = patient$age, weight = patient$weight, height = patient$height,
-                  sex = patient$sex, individual = stats::setNames(list(individual), drug))[[drug]]
+                  sex = patient$sex, individual = individual)[[drug]]
   }
 }
 
@@ -429,4 +429,63 @@ test_that("a ?scenario= link with measurements fills the Bayesian table as the s
     expect_equal(stored$rows$Concentration, c("1.3", "1.6", "1.9", "2.2"))
     expect_equal(stored$format, timeFormat("days", "relative"))
   })
+})
+
+test_that("the search finds the minimum of a sum of squares, within its bounds", {
+  # Rosenbrock's valley as residuals: the minimum, 0, at (1, 1)
+  fit <- bayesianSearch(function(p) c(10 * (p[2] - p[1]^2), 1 - p[1]),
+                        c(-1.2, 1), c(-5, -5), c(5, 5))
+  expect_true(fit$converged)
+  expect_equal(fit$par, c(1, 1), tolerance = 1e-6)
+  # A minimum beyond a bound: held at the bound, the other parameter free
+  fit <- bayesianSearch(function(p) c(p[1] - 3, p[2] + 1), c(0, 0), c(-2, -2), c(2, 2))
+  expect_true(fit$converged)
+  expect_equal(fit$par, c(2, -1), tolerance = 1e-8)
+  # Nothing to search from
+  expect_false(bayesianSearch(function(p) NULL, c(0, 0), c(-1, -1), c(1, 1))$converged)
+})
+
+test_that("a phenytoin fit takes few simulations, to the same estimate", {
+  # optim()'s L-BFGS-B, which the search replaced (2026-11-14), took 62
+  # simulations to this estimate; each simulates a week of saturable
+  # elimination in 2-minute Runge-Kutta steps
+  DT <- data.frame(Drug = "phenytoin", Time = 0, Dose = 100, Units = "mg PO tid",
+                   stringsAsFactors = FALSE)
+  obs <- data.frame(Drug = "phenytoin", Time = c(3, 7) * 1440, Concentration = c(8, 14))
+  res <- bayesianUpdateDrugs(priorDrugs(DT), DT, noEvents, obs, rebuild = rebuildFor(DT))
+  fit <- res$fits$phenytoin
+  expect_true(fit$converged)
+  expect_lte(fit$evaluations, 30)
+  expect_equal(c(fit$clearance, fit$volume), c(0.6790029, 0.8858258), tolerance = 1e-5)
+})
+
+test_that("a TCI drug's patient receives the rates the library's model chose", {
+  # The dose table holds the target; the update changes the PK model, not
+  # the dose table, so the pump's rates are the library model's (Shafer,
+  # 2026-11-14).  Before, the controller ran on each candidate's own model,
+  # every prediction was the target itself, and a measurement left the
+  # estimate at the model's (factors 1.000 and 1.000).
+  DT <- data.frame(Drug = "propofol", Time = 0, Dose = 3, Units = TCI_UNIT_EFFECT,
+                   stringsAsFactors = FALSE)
+  obs <- data.frame(Drug = "propofol", Time = 60, Concentration = 1.5)
+  res <- bayesianUpdateDrugs(priorDrugs(DT), DT, noEvents, obs, rebuild = rebuildFor(DT),
+                             maximum = 120)
+  fit <- res$fits$propofol
+  expect_equal(fit$observations$Population, 3, tolerance = 1e-3)
+  expect_gt(fit$clearance, 1.5)
+  # Half the prediction measured: the individual is below the target, but
+  # by less than the measurement alone says, the update being shrunk
+  # toward the model
+  expect_lt(fit$observations$Individual, 2)
+  expect_gt(fit$observations$Individual, 1.5)
+  out <- processdoseTable(DT, noEvents, res$drugs, 120, FALSE)
+  individual <- out$propofol
+  population <- out[[bayesianPriorName("propofol")]]
+  rates <- function(x) x$tci$rates[, setdiff(names(x$tci$rates), "Drug")]
+  expect_equal(rates(individual), rates(population))
+  # Every level since the infusion began is below the model's
+  w <- individual$wide
+  wp <- population$wide
+  later <- w$Time > 0
+  expect_true(all(w$Plasma[later] < wp$Plasma[match(w$Time[later], wp$Time)]))
 })

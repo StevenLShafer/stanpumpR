@@ -94,7 +94,7 @@
     root.appendChild(this.pasteSink);
     this.pasteSink.addEventListener('paste', function(e) { self.onSinkPaste(e); });
     this.onDocMouseDown = function(e) { if (self.menu && !self.menu.contains(e.target)) self.closeMenu(); };
-    document.addEventListener('mousedown', this.onDocMouseDown);
+    this.attachDocument();
   }
 
   TableGrid.prototype.blankRow = function() {
@@ -290,7 +290,14 @@
     }
     if (col.type === 'dose' || col.type === 'number') {
       var d = validateDose(text);
-      if (d === '') return { refused: t, reason: 'enter a number from 0 to 1,000,000,000' };
+      // a number within the limit refused for its length ("1e-35", 37
+      // characters written out: validateDose())
+      var n = readEntryNumber(t);
+      if (d === '') {
+        return { refused: t, reason: n !== null && Number(n) <= MAX_DOSE_VALUE
+          ? 'a number written out in full can have at most ' + MAX_TIME_STRING_LENGTH + ' characters'
+          : 'enter a number from 0 to 1,000,000,000' };
+      }
       return { value: String(d) };
     }
     return { value: String(text) };
@@ -664,8 +671,22 @@
     }
   };
 
-  TableGrid.prototype.destroy = function() {
+  // The listener on the document, and a list search's timer, belong to a
+  // bound grid: Shiny calls initialize() once for an element but
+  // unsubscribe() at every unbind (a dialog closed) and subscribe() at every
+  // bind.  The timer of a search typed just before the dialog closed fired
+  // on the grid it had left, and a grid bound again had lost its listener
+  // for good (Carbon's third UI audit, 2026-11-15, L1).
+  TableGrid.prototype.attachDocument = function() {
+    if (this.documentAttached) return;
+    document.addEventListener('mousedown', this.onDocMouseDown);
+    this.documentAttached = true;
+  };
+
+  TableGrid.prototype.detachDocument = function() {
+    if (this.search) { clearTimeout(this.search.timer); this.search = null; }
     document.removeEventListener('mousedown', this.onDocMouseDown);
+    this.documentAttached = false;
   };
 
   // --- the Shiny binding ---------------------------------------------------------------
@@ -676,8 +697,10 @@
     find: function(scope) { return $(scope).find('.stanpumpr-table-grid'); },
     initialize: function(root) { root._tableGrid = new TableGrid(root); },
     getValue: function(root) { return root._tableGrid ? root._tableGrid.value : null; },
-    subscribe: function(root, callback) { root._tableGrid.callback = callback; },
-    unsubscribe: function(root) { if (root._tableGrid) { root._tableGrid.callback = null; root._tableGrid.destroy(); } },
+    subscribe: function(root, callback) { root._tableGrid.callback = callback; root._tableGrid.attachDocument(); },
+    unsubscribe: function(root) {
+      if (root._tableGrid) { root._tableGrid.callback = null; root._tableGrid.detachDocument(); }
+    },
     getRatePolicy: function() { return null; }
   });
   Shiny.inputBindings.register(binding, 'stanpumpr.tableGrid');

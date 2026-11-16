@@ -183,13 +183,32 @@ outputComments <- function(
       {
         cat(sprintf("<table: %d rows x %d columns>", nrow(text), ncol(text)), "\n")
       }
-      for (line in outputString) commentsLog(paste0(commentsLog(), "\n", line))
+      # In one write: a line at a time copied the whole log once per line of
+      # the table (Carbon's third UI audit, 2026-11-15, M7).
+      commentsLog(appendDebugLog(commentsLog(), outputString))
     } else {
       if (echo)
       {
         cat(text, "\n")
       }
-      commentsLog(paste0(commentsLog(), "\n", text))
+      commentsLog(appendDebugLog(commentsLog(), text))
     }
   })
+}
+
+# The debug log with `lines` added, each on a line of its own, and held to
+# about DEBUG_LOG_MAX_CHARS: past it, the oldest lines go, all but the first
+# line written, which names the build (app_server()), and a line says so.
+appendDebugLog <- function(log, lines)
+{
+  out <- paste(c(log, lines), collapse = "\n")
+  n <- nchar(out)
+  if (n <= DEBUG_LOG_MAX_CHARS) return(out)
+  dropped <- "\n[earlier lines dropped]"
+  head <- regmatches(out, regexpr("^\n?[^\n]*", out))
+  tail <- substring(out, n - DEBUG_LOG_MAX_CHARS + nchar(head) + nchar(dropped) + 1)
+  # From the start of a line, and without an earlier note of what was dropped.
+  tail <- sub("^[^\n]*", "", tail)
+  if (startsWith(tail, dropped)) tail <- substring(tail, nchar(dropped) + 1)
+  paste0(head, dropped, tail)
 }

@@ -72,7 +72,7 @@ const Video = {
         const W = window.innerWidth, H = window.innerHeight;
         const s = Math.min(2, VIDEO_MAX_W / W, VIDEO_MAX_H / H);
         const even = x => Math.max(2, 2 * Math.round(x / 2));
-        return { span, seconds, frames, scale: s, w: even(W * s), h: even(H * s), view: Player.view };
+        return { span, seconds, frames, scale: s, w: even(W * s), h: even(H * s), view: Player.view, winW: W, winH: H };
     },
 
     open() {
@@ -194,7 +194,14 @@ const Video = {
 
     // One frame: the picture, the cards and labels over it, the strip.
     async frame(ctx, p, withPatient, dt) {
-        const s = p.scale, W = p.w, H = p.h;
+        // The window as it is now, fitted into the video's size: each frame is
+        // painted from where the page lays things out, and a window resized
+        // during the save put them off the frame, or in a corner of it, at
+        // the scale of the window it started in (Carbon's third UI audit,
+        // 2026-11-15, M7).
+        const W = p.w, H = p.h;
+        const s = window.innerWidth === p.winW && window.innerHeight === p.winH ? p.scale
+            : Math.min(W / window.innerWidth, H / window.innerHeight);
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.fillStyle = '#0e1a24';
         ctx.fillRect(0, 0, W, H);

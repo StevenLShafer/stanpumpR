@@ -306,14 +306,20 @@ GAS_DEFAULT_VA_WEIGHT_EXPO <- 0.75
 #'
 #' @param weight patient weight, kg.  Falls back to 70 kg if missing or invalid.
 #' @param deadSpace dead space as a fraction of minute ventilation
-#' @returns minute ventilation in L/min, rounded to 0.1 so it reads cleanly in
-#'   the dose table
+#' @returns minute ventilation in L/min, rounded so it reads cleanly in the
+#'   dose table: to 0.1 L/min from 1 L/min up, and to two significant figures
+#'   below.  Rounded to 0.1 L/min throughout, a patient under 0.126 kg (the
+#'   Patient Profile takes 0.1 kg) was given 0 L/min, the apnoea the default
+#'   exists to prevent (\code{ensureGasVentilation()}), and every patient under
+#'   about 7 kg was off by up to 30 percent (0.1 L/min for 0.14 at 0.5 kg; found by
+#'   the session that addressed Carbon's third UI audit, 2026-11-15).
 #' @export
 defaultGasVentilation <- function(weight = 70, deadSpace = GAS_DEAD_SPACE_FRACTION)
 {
   if (length(weight) != 1 || !is.finite(weight) || weight <= 0) weight <- 70
-  round(GAS_DEFAULT_VA_70KG * (weight / 70)^GAS_DEFAULT_VA_WEIGHT_EXPO /
-          (1 - deadSpace), 1)
+  ventilation <- GAS_DEFAULT_VA_70KG * (weight / 70)^GAS_DEFAULT_VA_WEIGHT_EXPO /
+    (1 - deadSpace)
+  if (ventilation >= 1) round(ventilation, 1) else signif(ventilation, 2)
 }
 
 

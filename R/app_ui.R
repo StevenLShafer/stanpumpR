@@ -15,7 +15,7 @@ app_ui <- function() {
     heading_font = bslib::font_google("Public Sans")
   )
 
-  function(request) {
+  page <- function(request) {
     # The Time units, Max time and Time Display choices depend on one another,
     # and a restored bookmark's selections must be among the choices built
     # here: selectize ignores a selection it has no option for.  A bookmark
@@ -875,4 +875,60 @@ app_ui <- function() {
       )
     )
   }
+
+  # A bookmark link is untrusted input (R/bookmark-restore.R).  Each input
+  # restores itself (shiny::restoreInput()) as the page is built, and a value
+  # no control takes -- a list or a vector where a checkbox, a choice or a
+  # number goes -- stopped the build: the link was answered with Shiny's bare
+  # HTTP 500.  Carbon's UI audit of 2026-11-14 (F5) found Max time and Min
+  # time; every checkbox, several choices and the email boxes did the same.
+  # Such a link is answered with a page that says so and links to the app
+  # without it.  Only a request that restores a bookmark is caught: an error
+  # building the plain page is a fault in this code, and is not disguised.
+  function(request) {
+    if (!isBookmarkQuery(request$QUERY_STRING)) return(page(request))
+    tryCatch({
+      if (!restoredTextReadable(BOOKMARK_TEXT_INPUTS)) stop("unreadable text input")
+      page(request)
+    }, error = function(e) unreadableLinkResponse())
+  }
+}
+
+# The page's text inputs.  A text area restores whatever the link holds as
+# its content, and one holding a list or a vector fails only when Shiny
+# writes the page, after app_ui()'s function has returned, so these are read
+# first (the bookmark fuzz of 2026-11-14 found emailComments)
+BOOKMARK_TEXT_INPUTS <- c("referenceTime", "recipient", "emailComments")
+
+# Is each of `ids` that a link restores one value?  Reading a value here
+# leaves it for the input itself (shiny::restoreInput() marks it used only
+# once the session starts).
+restoredTextReadable <- function(ids) {
+  all(vapply(ids, function(id) {
+    value <- shiny::restoreInput(id, NULL)
+    is.null(value) || (is.atomic(value) && length(value) == 1)
+  }, logical(1)))
+}
+
+# Does a query string restore a bookmark (Shiny's _inputs_ or _values_)?
+isBookmarkQuery <- function(query) {
+  is.character(query) && length(query) == 1 && grepl("(^|[?&])_(inputs|values)_(&|=|$)", query)
+}
+
+# The answer to a link whose bookmark the page cannot be built from
+unreadableLinkResponse <- function() {
+  shiny::httpResponse(
+    status = 400L,
+    content_type = "text/html; charset=UTF-8",
+    content = paste0(
+      "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\">",
+      "<title>stanpumpR: this link could not be opened</title></head>",
+      "<body style=\"font-family: sans-serif; max-width: 40em; margin: 3em auto;\">",
+      "<h1>This link could not be opened</h1>",
+      "<p>Part of the link is not a setting stanpumpR saved, so the page could ",
+      "not be built from it. The link may have been altered or cut short.</p>",
+      "<p><a href=\"./\">Open stanpumpR without it</a></p>",
+      "</body></html>"
+    )
+  )
 }

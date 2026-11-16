@@ -1131,3 +1131,183 @@ describe('everything is text', () => {
     assert.deepEqual(page.pageErrors, []);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Carbon's (Gemini) third adversarial UI audit, of PR #730 at 4164743,
+// 2026-11-15: C3, M4 and L1 (the R side is test-ui-audit-carbon3-inputs.R)
+describe('Carbon\'s third UI audit, 2026-11-15', () => {
+  // C3: the grid looked a name up in a plain {}, which answered
+  // "constructor" with Object and "__proto__" with Object.prototype; the row
+  // took that as its drug and the server, sent null, blanked it.  The
+  // camel-case names never reached it (the index is lower case), and none
+  // threw: the claimed TypeError did not reproduce.
+  gt('a name every JavaScript object carries is not a drug, typed or pasted', async () => {
+    for (const name of ['constructor', '__proto__', 'toString', 'hasOwnProperty']) {
+      await H.clearNotifications(page);
+      await enter(0, 0, name);
+      await page.keyboard.press('Escape');
+      await holds(0, ['propofol', '0', '0', 'mg']);
+      let notes = await H.notifications(page);
+      assert.ok(notes.some(n => n.includes('"' + name + '" is not a drug')), name + ': ' + JSON.stringify(notes));
+      await H.clearNotifications(page);
+      await adapter.focusCell(page, 0, 0);
+      await H.paste(page, name + '\t5\t10\tmg');
+      await H.settle(page);
+      await holds(0, ['propofol', '0', '0', 'mg']);
+      notes = await H.notifications(page);
+      assert.ok(notes.some(n => n.includes('"' + name + '" is not a drug')), name + ' pasted: ' + JSON.stringify(notes));
+    }
+    assert.deepEqual(page.pageErrors, []);
+  });
+
+  // M4: the grid took a dose whose stored string was longer than the
+  // server keeps (restoredDoseTable()), which then blanked it
+  gt('a dose too long written out is refused where it is typed, and said', async () => {
+    await enter(2, 2, '25');
+    await holds(2, ['fentanyl', '0', '25', 'mcg']);
+    for (const entry of ['1e-35', '100.00000000000000000000000000001']) {
+      await H.clearNotifications(page);
+      await enter(2, 2, entry);
+      await page.waitForTimeout(300);
+      await holds(2, ['fentanyl', '0', '25', 'mcg']);
+      const notes = await H.notifications(page);
+      assert.ok(notes.some(n => n.includes('"' + entry + '" was not accepted') &&
+                                /written out in full cannot be more than 32 characters/.test(n)),
+                entry + ': ' + JSON.stringify(notes));
+    }
+    // and one that fits is kept as written out
+    await enter(2, 2, '1e-30');
+    await holds(2, ['fentanyl', '0', '0.000000000000000000000000000001', 'mcg']);
+  });
+
+  // L1: the document's listeners and the unit search's timer come off when
+  // Shiny unbinds the grid, and the listeners go back on when it binds it
+  // again (initialize() runs once per element)
+  gt('unbinding the grid takes off its document listeners and its unit search', async () => {
+    const before = await adapter.readRows(page);
+    await page.focus(`${adapter.root} tbody tr:nth-child(1) select`);
+    await page.keyboard.type('mc');
+    const off = await page.evaluate(() => {
+      const root = document.getElementById('doseGrid');
+      const g = root._doseGrid;
+      const b = window.jQuery(root).data('shiny-input-binding');
+      const pending = g.search !== null;
+      window.__doseGridCallback = g.callback;
+      b.unsubscribe(root);
+      return { pending, search: g.search, attached: g.documentAttached };
+    });
+    assert.deepEqual(off, { pending: true, search: null, attached: false });
+    // the search's pause has passed: nothing was committed to the unbound grid
+    await page.waitForTimeout(1500);
+    const rows = await page.evaluate(() => document.getElementById('doseGrid')._doseGrid.rows);
+    assert.deepEqual(rows[0], before[0]);
+    const on = await page.evaluate(() => {
+      const root = document.getElementById('doseGrid');
+      const b = window.jQuery(root).data('shiny-input-binding');
+      b.subscribe(root, window.__doseGridCallback);
+      root._doseGrid.renderAll();
+      return { attached: root._doseGrid.documentAttached, callback: root._doseGrid.callback === window.__doseGridCallback };
+    });
+    assert.deepEqual(on, { attached: true, callback: true });
+    // and the grid still works
+    await enter(2, 2, '7');
+    await holds(2, ['fentanyl', '0', '7', 'mcg']);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Carbon's fourth UI audit, 2026-11-15.  H1: the Working cover (app.js) made
+// every child of <body> inert, which took the focus from the cell being
+// typed in, and the grid committed it as it stood.  H2: Ctrl+Z with a dialog
+// open undid the dose table behind it.  The cover is raised as the server's
+// busy message raises it (H.coverPage()).
+describe('Carbon\'s fourth UI audit, 2026-11-15: the Working cover and dialogs', () => {
+  gt('a drug being typed, its list open, is kept under the cover, and the typing carries on after it', async () => {
+    await adapter.typeInto(page, FIRST_BLANK, 0, 'f');
+    assert.ok((await adapter.suggestions(page)).length > 0);
+    assert.ok(await H.coverPage(page), 'the cover came down: the page sent something under it');
+    // nothing was committed, and the focus and the list are where they were
+    assert.equal((await draft())[FIRST_BLANK][0], '');
+    assert.equal((await rowsShown())[FIRST_BLANK][0], 'f');
+    assert.equal(await H.focusName(page), 'Drug, row 7');
+    // a key under the cover reaches nothing
+    await page.keyboard.type('x');
+    await page.keyboard.press('Enter');
+    assert.equal(await adapter.activeText(page), 'f');
+    await H.uncoverPage(page);
+    assert.equal((await draft())[FIRST_BLANK][0], '');
+    await page.keyboard.type('ent');
+    assert.equal((await adapter.suggestions(page))[0], 'fentanyl');
+    await page.keyboard.press('Enter');
+    await H.settle(page);
+    const info = await H.drugInfo(page, 'fentanyl');
+    await holds(FIRST_BLANK, ['fentanyl', '0', '0', info.defaultUnit]);
+  });
+
+  gt('a dose typed in part is neither committed nor refused under the cover, nor replaced after it', async () => {
+    await H.clearNotifications(page);
+    await adapter.typeInto(page, 2, 2, '1');
+    assert.ok(await H.coverPage(page), 'the cover came down: the page sent something under it');
+    assert.equal((await draft())[2][2], '0');
+    assert.equal(await H.focusName(page), 'Dose/Target, row 3');
+    await H.uncoverPage(page);
+    // the typing carries on: 100, not 00
+    await page.keyboard.type('00');
+    await page.keyboard.press('Enter');
+    await holds(2, ['fentanyl', '0', '100', 'mcg']);
+    // "1e" on its way to "1e3" is not refused when the cover goes up
+    const r3 = (await rowsShown())[3];
+    await adapter.typeInto(page, 3, 2, '1e');
+    assert.ok(await H.coverPage(page), 'the cover came down: the page sent something under it');
+    assert.deepEqual(await H.notifications(page), []);
+    await H.uncoverPage(page);
+    await page.keyboard.type('3');
+    await page.keyboard.press('Enter');
+    await holds(3, [r3[0], r3[1], '1000', r3[3]]);
+  });
+
+  gt('Ctrl+Z under the cover does not undo the dose table', async () => {
+    await enter(2, 2, '100');
+    await holds(2, ['fentanyl', '0', '100', 'mcg']);
+    await page.evaluate(() => document.activeElement && document.activeElement.blur());
+    assert.ok(await H.coverPage(page), 'the cover came down: the page sent something under it');
+    await page.keyboard.press('ControlOrMeta+Z');
+    await page.waitForTimeout(1000);
+    assert.ok(await page.evaluate(() => !!document.getElementById('working-cover')),
+              'the cover came down: Ctrl+Z reached the server');
+    await H.uncoverPage(page);
+    await H.settle(page, 500);
+    await holds(2, ['fentanyl', '0', '100', 'mcg']);
+  });
+
+  gt('Ctrl+Z and Ctrl+Y in a dialog do not reach the dose table behind it', async () => {
+    await enter(2, 2, '100');
+    await holds(2, ['fentanyl', '0', '100', 'mcg']);
+    await page.evaluate(() => window.Shiny.setInputValue('editThresholds', Math.random(), { priority: 'event' }));
+    await page.waitForSelector('#editThresholdsTable tbody td', { timeout: 30000 });
+    await H.settle(page, 300);
+    // on the dialog's button (the dose table's undo, as on the page)
+    await page.focus('#thresholdEditsOK');
+    await page.keyboard.press('ControlOrMeta+Z');
+    await H.settle(page, 800);
+    await holds(2, ['fentanyl', '0', '100', 'mcg']);
+    await page.keyboard.press('ControlOrMeta+Y');
+    // on one of its cells, with nothing typed in it (the browser's own undo,
+    // which took back the dose cell's typing behind the dialog)
+    await page.click('#editThresholdsTable tbody tr:nth-child(1) td:nth-child(2) input');
+    await page.keyboard.press('ControlOrMeta+Z');
+    await page.keyboard.press('ControlOrMeta+Z');
+    await H.settle(page, 800);
+    await holds(2, ['fentanyl', '0', '100', 'mcg']);
+    assert.ok(await page.evaluate(() => !!document.querySelector('.modal.show')), 'the dialog closed');
+    // and with the dialog gone, Ctrl+Z off the grid is the dose table's undo again
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('.modal', { state: 'detached', timeout: 10000 });
+    await H.settle(page);
+    await page.waitForFunction(() => !document.getElementById('dosetable_apply').disabled);
+    await page.focus('#dosetable_apply');
+    await page.keyboard.press('ControlOrMeta+Z');
+    await H.settle(page, 800);
+    await holds(2, ['fentanyl', '0', '0', 'mcg']);
+  });
+});

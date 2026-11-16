@@ -46,9 +46,13 @@ Entering any gas adds a ventilation row if there is none, because the engine nee
 
 Yes. An age of 90 or above is protected health information under HIPAA and is entered as 90.
 
+## The page went grey and says "Working"
+
+The server is computing something that takes more than three seconds: a long plot, a Bayesian update, Suggest Dosing, an email. Each worker computes one session at a time, so while it works it cannot answer a click or a keystroke, which would otherwise wait unseen and land on a page that had changed under it. The page is therefore covered, and takes no input, until the work is done. A Single Paper Review runs in the background and does not cover the page.
+
 ## Can I save my work?
 
-Copy the URL. It encodes the patient, the doses, the events, the options and any thresholds you edited; opening it restores the simulation. See [Sharing a simulation by URL](help:sharing).
+Copy the URL. It encodes the patient, the doses, the events, the options, any thresholds and Drug Library entries you edited, and the measured concentrations; opening it restores the simulation. See [Sharing a simulation by URL](help:sharing).
 
 ## Can I use the engine from R without the app?
 

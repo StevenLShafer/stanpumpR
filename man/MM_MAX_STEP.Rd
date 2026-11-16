@@ -2,11 +2,13 @@
 % Please edit documentation in R/advanceMichaelisMenten.R
 \name{MM_MAX_STEP}
 \alias{MM_MAX_STEP}
-\title{Largest Runge-Kutta step of the Michaelis-Menten engine, minutes}
+\title{Largest Runge-Kutta step of the Michaelis-Menten engine, minutes: the fixed
+step's (adaptiveStep = FALSE), and the adaptive step's first after a dose}
 \usage{
 MM_MAX_STEP
 }
 \description{
-Largest Runge-Kutta step of the Michaelis-Menten engine, minutes
+Largest Runge-Kutta step of the Michaelis-Menten engine, minutes: the fixed
+step's (adaptiveStep = FALSE), and the adaptive step's first after a dose
 }
 \keyword{internal}

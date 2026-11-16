@@ -327,12 +327,16 @@ asmSegments <- function(time, m, tolerance = ASM_INTERACTION_TOLERANCE)
 #'
 #' @param victim the victim drug
 #' @param rows the active interactions of that victim
-#' @param conc named list of each dosed drug's series (Time, Plasma)
+#' @param conc named list of each dosed drug's series (Time, Plasma), in its
+#'   plotted units
 #' @param time the evaluation grid
+#' @param toRegistry named numbers, by drug: the factor that puts its plotted
+#'   concentration in the registry's mcg/mL (mcgPerMlScale()); a drug not
+#'   named is taken as plotted in mcg/mL
 #' @returns a named list, one multiplier vector per parameter that some row
 #'   changes ("CL", "Vmax", "Km")
 #' @noRd
-asmVictimMultipliers <- function(victim, rows, conc, time)
+asmVictimMultipliers <- function(victim, rows, conc, time, toRegistry = NULL)
 {
   out <- list()
   for (p in unique(rows$parameter))
@@ -349,6 +353,11 @@ asmVictimMultipliers <- function(victim, rows, conc, time)
       series <- conc[[row$perpetrator]]
       C <- stats::approx(series$Time, series$Plasma, xout = time, rule = 2,
                          ties = mean)$y
+      # The registry's Cref and EC50 are mcg/mL; a perpetrator the Drug
+      # Library shows in ng/mL read 1000-fold high, and its induction
+      # saturated (found checking Carbon's UI audit, 2026-11-14, F4)
+      scale <- toRegistry[row$perpetrator]
+      if (length(scale) == 1 && !is.na(scale)) C <- C * scale
       m <- asmInteractionMultiplier(time, C, row)
       if (induced[k]) {
         excess <- excess + (if (self[k]) 1 else selfFold) * (m - 1)
@@ -379,7 +388,8 @@ asmSegmentPK <- function(PK, segments)
 {
   if (is.null(PK$covariates))
     stop("Internal error: no covariates kept for ", PK$drug, ".")
-  X <- do.call(PK$drug, PK$covariates)
+  drug <- pkModelDrug(PK)
+  X <- do.call(drug, PK$covariates)
   base <- X$PK[[PK_EVENT_DEFAULT]]
   n <- nrow(segments)
   keys <- c(PK_EVENT_DEFAULT, if (n > 1) sprintf("ddi%05d", seq_len(n - 1)))
@@ -390,8 +400,8 @@ asmSegmentPK <- function(PK, segments)
   }), keys)
   # A drug individualized by the Bayesian update (R/bayesian.R) is rebuilt
   # as the individual's drug.
-  rebuilt <- do.call(getDrugPK, c(list(drug = PK$drug), PK$covariates,
-                                  list(model = X, individual = PK$individual)))
+  rebuilt <- do.call(getDrugPK, c(list(drug = drug), PK$covariates,
+                                  list(model = X), pkRebuildArgs(PK)))
   PK$PK <- rebuilt$PK
   PK$oralFormulations <- rebuilt$oralFormulations
   PK$pkEvents <- keys
@@ -416,8 +426,10 @@ asmSimulateVictim <- function(PK, multipliers, time, DT, ET, maximum, plotRecove
     one <- function(p) if (is.null(segs[[p]])) data.frame(start = 0, value = 1) else segs[[p]]
     starts <- sort(unique(c(one("Vmax")$start, one("Km")$start)))
     at <- function(s, t) s$value[findInterval(t, s$start)]
+    # `sample`: the grid on which the interactions read this drug's
+    # concentration as a perpetrator, which the engine puts on its time line
     PK$interactionMM <- list(time = starts, vmax = at(one("Vmax"), starts),
-                             km = at(one("Km"), starts))
+                             km = at(one("Km"), starts), sample = time)
   } else {
     if (!identical(names(multipliers), "CL"))
       stop("Internal error: a Vmax or Km interaction on ", PK$drug,
@@ -491,24 +503,58 @@ applyAntiseizureInteractions <- function(drugs, DT, ET, plotMaximum, plotRecover
   if (nrow(active) == 0) return(drugs)
 
   victims <- unique(active$victim)
+  # A victim's Bayesian population line (R/bayesian.R) is the model's own
+  # drug among the drugs as plotted, so it takes the interactions too: left
+  # out, valproate's inhibition of lamotrigine was missing from it, and the
+  # line drew 1.2 mcg/mL where the fit's own population prediction was 3.0
+  # (Carbon's third UI audit, 2026-11-15, H7)
+  isPopulation <- function(d) identical(d$companionGroup, "bayesian") && !is.null(d$wideOwn)
+  populations <- names(drugs)[vapply(drugs, function(d)
+    isPopulation(d) && isTRUE(d$companionOf %in% victims), logical(1))]
+  # A perpetrator's population line, which the victims' population lines
+  # are run against
+  perpetratorPopulations <- names(drugs)[vapply(drugs, function(d)
+    isPopulation(d) && isTRUE(d$companionOf %in% active$perpetrator), logical(1))]
   # Everything the interaction simulation of the whole group depends on.
-  participants <- sort(unique(c(active$victim, active$perpetrator)))
+  participants <- sort(unique(c(active$victim, active$perpetrator, populations,
+                                perpetratorPopulations)))
   key <- list(
     keys = lapply(stats::setNames(participants, participants),
                   function(d) drugs[[d]]$simKey),
     active = active,
     tolerance = ASM_INTERACTION_TOLERANCE
   )
-  reused <- !is.null(cache) && all(vapply(victims, function(v)
+  reused <- !is.null(cache) && all(vapply(c(victims, populations), function(v)
     identical(cache[[v]]$interactionKey, key) && !is.null(cache[[v]]$interactionSim),
     logical(1)))
 
   if (reused) {
-    sims <- lapply(stats::setNames(victims, victims), function(v) cache[[v]]$interactionSim)
+    sims <- lapply(stats::setNames(c(victims, populations), c(victims, populations)),
+                   function(v) cache[[v]]$interactionSim)
   } else {
     time <- asmInteractionGrid(plotMaximum)
     conc <- lapply(own, function(d) d$wideOwn[, c("Time", "Plasma")])
+    toRegistry <- vapply(own, function(d) mcgPerMlScale(d$Concentration.Units), numeric(1))
     sims <- list()
+    lastM <- list()
+    victimDT <- function(v) DT[DT$Drug == v, ]
+    victimET <- function(v) {
+      tempET <- drugs[[v]]$ET
+      if (is.null(tempET)) ET[0, , drop = FALSE] else tempET
+    }
+    # The victims whose time until threshold costs nothing to compute, and so
+    # is computed in every pass, the last pass then being the final
+    # simulation itself: a saturable drug, whose engine computes none
+    # (R/advanceMichaelisMenten.R), and a drug with no threshold, whose time
+    # until threshold is 0 throughout (recoveryFromStates()), which is every
+    # antiseizure drug unless its threshold is edited.  The final pass below
+    # re-simulated them with the same multipliers to the same result: for
+    # phenytoin a second integration of the whole plot (Carbon's fourth UI
+    # audit, 2026-11-15, C3).
+    recoveryEachPass <- vapply(victims, function(v)
+      isTRUE(plotRecovery) &&
+        (!is.null(drugs[[v]]$michaelisMenten) || !isTRUE(drugs[[v]]$endCe > 0)),
+      logical(1))
     for (iteration in seq_len(ASM_INTERACTION_MAX_ITERATIONS))
     {
       change <- 0
@@ -516,14 +562,15 @@ applyAntiseizureInteractions <- function(drugs, DT, ET, plotMaximum, plotRecover
       for (v in victims)
       {
         rows <- active[active$victim == v, , drop = FALSE]
-        m <- asmVictimMultipliers(v, rows, conc, time)
-        tempDT <- DT[DT$Drug == v, ]
-        tempET <- drugs[[v]]$ET
-        if (is.null(tempET)) tempET <- ET[0, , drop = FALSE]
-        X <- asmSimulateVictim(drugs[[v]], m, time, tempDT, tempET,
-                               plotMaximum, plotRecovery)
+        m <- asmVictimMultipliers(v, rows, conc, time, toRegistry)
+        # The time until threshold only once, after the last pass: each
+        # pass's own was discarded (Carbon's third UI audit, 2026-11-15, H1),
+        # unless it costs nothing (recoveryEachPass, above)
+        X <- asmSimulateVictim(drugs[[v]], m, time, victimDT(v), victimET(v),
+                               plotMaximum, recoveryEachPass[[v]])
         X$interaction$rows <- rows
         sims[[v]] <- X
+        lastM[[v]] <- m
         newConc[[v]] <- X$wide[, c("Time", "Plasma")]
         old <- stats::approx(conc[[v]]$Time, conc[[v]]$Plasma,
                              xout = newConc[[v]]$Time, rule = 2, ties = mean)$y
@@ -536,9 +583,58 @@ applyAntiseizureInteractions <- function(drugs, DT, ET, plotMaximum, plotRecover
                      level = DEBUG_LEVEL_VERBOSE)
       if (change < ASM_INTERACTION_CONVERGENCE) break
     }
+    if (isTRUE(plotRecovery)) {
+      for (v in victims[!recoveryEachPass]) {
+        X <- asmSimulateVictim(drugs[[v]], lastM[[v]], time, victimDT(v), victimET(v),
+                               plotMaximum, TRUE)
+        X$interaction$rows <- sims[[v]]$interaction$rows
+        sims[[v]] <- X
+      }
+    }
+    # The population lines: the model's own drugs, every interacting drug
+    # at its population values (its "(population)" companion where it was
+    # updated), to a fixed point of their own.  With the other drugs at
+    # their estimates, lamotrigine's population line ran against the
+    # individual's valproate, 20% off the model (Carbon's fourth UI audit,
+    # 2026-11-15, H8); before that it took no interaction at all (the third
+    # audit, H7).
+    if (length(populations) > 0) {
+      popEntry <- function(d) {
+        n <- bayesianPriorName(d)
+        if (!is.null(drugs[[n]]) && isPopulation(drugs[[n]])) drugs[[n]] else drugs[[d]]
+      }
+      popConc <- lapply(stats::setNames(names(own), names(own)),
+                        function(d) popEntry(d)$wideOwn[, c("Time", "Plasma")])
+      popSims <- list()
+      for (iteration in seq_len(ASM_INTERACTION_MAX_ITERATIONS))
+      {
+        change <- 0
+        newPop <- popConc
+        for (v in victims)
+        {
+          rows <- active[active$victim == v, , drop = FALSE]
+          m <- asmVictimMultipliers(v, rows, popConc, time, toRegistry)
+          entry <- popEntry(v)
+          entryET <- entry$ET
+          if (is.null(entryET)) entryET <- ET[0, , drop = FALSE]
+          X <- asmSimulateVictim(entry, m, time, victimDT(v), entryET, plotMaximum, FALSE)
+          X$interaction$rows <- rows
+          popSims[[v]] <- X
+          newPop[[v]] <- X$wide[, c("Time", "Plasma")]
+          old <- stats::approx(popConc[[v]]$Time, popConc[[v]]$Plasma,
+                               xout = newPop[[v]]$Time, rule = 2, ties = mean)$y
+          peak <- max(newPop[[v]]$Plasma, old, .Machine$double.eps)
+          change <- max(change, max(abs(newPop[[v]]$Plasma - old)) / peak)
+        }
+        popConc <- newPop
+        if (change < ASM_INTERACTION_CONVERGENCE) break
+      }
+      for (companion in populations)
+        sims[[companion]] <- popSims[[drugs[[companion]]$companionOf]]
+    }
   }
 
-  for (v in victims)
+  for (v in c(victims, populations))
   {
     X <- sims[[v]]
     fields <- simulationFields(X, drugs[[v]]$DT, drugs[[v]]$ET)

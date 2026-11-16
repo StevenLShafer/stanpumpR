@@ -12,6 +12,11 @@ a list: \code{weight}, \code{height}, \code{age}, \code{sex} and
 }
 \description{
 Each covariate's printed reference value where there is one, else the
-population's central value, else PAPER_REVIEW_DEFAULT_PATIENT.
+population's central value, else PAPER_REVIEW_DEFAULT_PATIENT.  Only a
+value a patient can have is taken (the Patient Profile's limits), and
+not the reference of a power the review does not apply: a printed
+reference weight of 0 made the reference patient weigh 0 kg, and no
+model could be built for anyone (Carbon's fourth UI audit, 2026-11-15,
+M4).
 }
 \keyword{internal}

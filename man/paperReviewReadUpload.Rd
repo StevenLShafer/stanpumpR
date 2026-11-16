@@ -4,16 +4,24 @@
 \alias{paperReviewReadUpload}
 \title{Read an upload into memory and delete its temporary file}
 \usage{
-paperReviewReadUpload(datapath)
+paperReviewReadUpload(datapath, maxBytes = Inf)
 }
 \arguments{
 \item{datapath}{the upload's path, from \code{input$<id>$datapath}}
+
+\item{maxBytes}{the largest file that is read}
 }
 \value{
-the file's bytes
+the file's bytes, or none for a path that is not an upload
 }
 \description{
 Shiny writes each upload to a temporary directory of its own; the file is
-read and then deleted, with its directory when that is left empty.
+read and then deleted, with its directory when that is left empty.  A path
+that is not such an upload (\code{paperReviewIsUploadPath()}) is neither
+read nor deleted.
+}
+\details{
+A file larger than \code{maxBytes} is deleted unread, and none are
+returned, with its size as the attribute \code{oversize}.
 }
 \keyword{internal}

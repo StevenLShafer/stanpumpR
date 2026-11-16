@@ -31,15 +31,19 @@
 #' @param timeApi the app_server()'s time-units functions (setDoseTable,
 #'   showTimeSettings), through which a scenario sets its time unit and writes
 #'   its dose table; NULL writes the tables directly
+#' @param onLoad NULL, or a function called as a scenario is loaded, before
+#'   it is put in, for what else belongs to the patient it replaces
+#'   (app_server() clears the measured concentrations of the Bayesian update)
 #' @param restoreMeasurements function(measurements, format) that puts a
-#'   scenario's measured concentrations into the Bayesian Updating table
+#'   scenario's own measured concentrations into the Bayesian Updating table
 #'   (applyHelpScenario()), or NULL
 #' @returns a list: `page`, the reactiveVal() holding the current page id, and
 #'   `loadScenario(s)`, which loads a scenario into the simulator (used for a
 #'   ?scenario= link, R/deep-links.R)
 #' @noRd
 helpServer <- function(input, output, session, doseTable, eventTable, drugDefaults,
-                       navId = "mainNav", timeApi = NULL, restoreMeasurements = NULL) {
+                       navId = "mainNav", timeApi = NULL, onLoad = NULL,
+                       restoreMeasurements = NULL) {
   helpPage <- reactiveVal("home")
 
   registry <- reactive({
@@ -64,12 +68,19 @@ helpServer <- function(input, output, session, doseTable, eventTable, drugDefaul
     helpPageUI(helpPage(), drugDefaults())
   })
 
-  searchTerm <- debounce(reactive(input$help_search), 300)
+  # One string of at most the box's maxlength: a vector sent for it put a
+  # condition of length 2 in the if() below, which printed R's error in the
+  # results, and a megabyte string was searched for across every page each
+  # time it changed (Carbon's third UI audit, 2026-11-15, M5)
+  searchTerm <- debounce(reactive({
+    term <- trimws(asScalarString(input$help_search))
+    substr(term, 1L, HELP_SEARCH_MAX_CHARS)
+  }), 300)
 
   output$help_search_results <- renderUI({
-    term <- searchTerm()
-    if (is.null(term) || nchar(trimws(term)) < 2) return(NULL)
-    helpSearchResultsUI(trimws(term), helpSearch(trimws(term)))
+    term <- trimws(searchTerm())
+    if (nchar(term) < 2) return(NULL)
+    helpSearchResultsUI(term, helpSearch(term))
   })
 
   # Load a scenario into the simulator: from the Load buttons, and from a
@@ -92,12 +103,26 @@ helpServer <- function(input, output, session, doseTable, eventTable, drugDefaul
       )
       return(FALSE)
     }
+    s <- helpScenarioInSessionUnits(s, drugDefaults())
+    if (is.null(s)) {
+      showNotification(
+        "This scenario cannot be loaded with the current drug library: a target in its units would pass 1,000,000,000.",
+        type = "error", duration = 10)
+      return(FALSE)
+    }
     outputComments("Loading help scenario", s$id)
+    # What else belonged to the patient being replaced goes first, so that the
+    # scenario's own measured concentrations and variabilities come after it
+    if (is.function(onLoad)) onLoad()
     applyHelpScenario(session, s, doseTable, eventTable, timeApi, restoreMeasurements)
     bslib::nav_select(navId, "Simulator", session = session)
+    converted <- if (length(s$converted) > 0) tagList(tags$br(), tags$span(class = "small", paste0(
+      "Targets converted to the units your Drug Library shows (",
+      paste(s$converted, collapse = ", "), ").")))
     showNotification(
       tagList(tags$strong("Loaded: "), s$title, tags$br(),
-              tags$span(class = "small", "Press Apply Changes after editing the dose table to see your own variations.")),
+              tags$span(class = "small", "Press Apply Changes after editing the dose table to see your own variations."),
+              converted),
       type = "message", duration = 8
     )
     TRUE

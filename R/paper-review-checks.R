@@ -1297,6 +1297,16 @@ paperReviewCovariateChecks <- function(extraction)
                  e$equation_as_printed), loc)
       next
     }
+    # An equation the review cannot apply to anyone (a power with a
+    # reference of 0) is said once, not swept as a multiplier of 1.
+    probe <- suppressWarnings(paperReviewCovariateMultiplier(e, reference, reference))
+    if (!isTRUE(probe$applied)) {
+      add("concern", paste("Not applied:", label),
+          paste0("It is not applied: ", probe$reason, ", so it is probably misread. The simulator ",
+                 "holds the parameter at its typical value. As printed: ", e$equation_as_printed %or% ""),
+          loc)
+      next
+    }
     if (is.na(paperReviewNum(e$reference_value)) && e$form != "category_multiplier")
       add("concern", paste("No reference value printed for", label),
           paste0("Evaluated at the population's central value (",
@@ -1779,15 +1789,23 @@ paperReviewClaudeNotes <- function(extraction)
 #' @keywords internal
 paperReviewRun <- function(extraction)
 {
-  extraction <- paperReviewCanonicalGroups(extraction)
+  extraction <- paperReviewNameRegimens(paperReviewCanonicalGroups(extraction))
   groups <- paperReviewGroups(extraction)
   if (length(groups) <= 1) return(paperReviewRunOne(extraction))
   # Several models (the Duzitol editorial: one drug in two populations beside
   # propofol, as columns of one table).  Each model is reviewed on its own
   # items, the items every model shares included; what is about the paper
   # (its assumptions, its claims, Claude's notes) is reviewed once.
+  # A model's own regimen can repeat the id of a shared one, which only its
+  # part holds both of: that part names them, and the paper's limitations,
+  # which the report prints, say so (paperReviewNameRegimens()).
+  parts <- lapply(stats::setNames(groups, groups), function(g)
+    paperReviewRegimenNaming(paperReviewGroupExtraction(extraction, g), model = g))
+  extraction <- paperReviewAddLimitation(extraction, unlist(lapply(parts, function(p) p$said)))
   models <- lapply(stats::setNames(groups, groups), function(g) {
-    m <- paperReviewRunOne(paperReviewGroupExtraction(extraction, g), paperLevel = FALSE)
+    part <- parts[[g]]$extraction
+    part$extraction_limitations <- extraction$extraction_limitations
+    m <- paperReviewRunOne(part, paperLevel = FALSE)
     m$findings <- paperReviewGroupFindings(m$findings, g, extraction)
     m
   })
