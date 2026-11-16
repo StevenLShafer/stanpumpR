@@ -692,7 +692,7 @@ app_ui <- function() {
                     min = BAYES_PK_VARIABILITY_MIN,
                     max = BAYES_PK_VARIABILITY_MAX,
                     value = BAYES_PK_VARIABILITY_DEFAULT,
-                    step = 5,
+                    step = BAYES_PK_VARIABILITY_STEP,
                     post = "%",
                     ticks = FALSE
                   ),
@@ -711,7 +711,7 @@ app_ui <- function() {
                     min = BAYES_RESIDUAL_VARIABILITY_MIN,
                     max = BAYES_RESIDUAL_VARIABILITY_MAX,
                     value = BAYES_RESIDUAL_VARIABILITY_DEFAULT,
-                    step = 1,
+                    step = BAYES_RESIDUAL_VARIABILITY_STEP,
                     post = "%",
                     ticks = FALSE
                   ),

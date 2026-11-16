@@ -961,6 +961,10 @@ BAYES_PK_VARIABILITY_MAX <- 100
 BAYES_RESIDUAL_VARIABILITY_DEFAULT <- 5
 BAYES_RESIDUAL_VARIABILITY_MIN <- 1
 BAYES_RESIDUAL_VARIABILITY_MAX <- 50
+# The sliders' steps; a teaching scenario's values must lie on them, or the
+# browser snaps a value the scenario's page prints (helpScenarioCheck())
+BAYES_PK_VARIABILITY_STEP <- 5
+BAYES_RESIDUAL_VARIABILITY_STEP <- 1
 # The most measured concentrations the table holds
 MAX_BAYES_OBSERVATIONS <- 30L
 # The latest measurement an update uses, minutes: the longest plot the app

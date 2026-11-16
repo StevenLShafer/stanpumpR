@@ -384,14 +384,87 @@ test_that("a scenario's measurements are checked against its doses and its plot"
   bad <- s
   bad$options$bayesResidualVariability <- 0
   expect_match(helpScenarioCheck(bad), "bayesResidualVariability out of range", all = FALSE)
+  # a value the slider cannot show, which the browser would snap while the
+  # scenario's page printed it (review of PR #729)
+  bad <- s
+  bad$options$bayesPKVariability <- 27
+  expect_match(helpScenarioCheck(bad), "bayesPKVariability .*slider's step", all = FALSE)
+  bad <- s
+  bad$options$bayesResidualVariability <- 5.5
+  expect_match(helpScenarioCheck(bad), "bayesResidualVariability .*slider's step", all = FALSE)
+  ok <- s
+  ok$options$bayesPKVariability <- 40
+  ok$options$bayesResidualVariability <- 12
+  expect_length(helpScenarioCheck(ok), 0)
   # every scenario carries a table (empty when it has no measurements) and
-  # the variabilities a load sets
+  # variabilities the sliders can show
   for (other in helpScenarios()) {
     expect_true(is.data.frame(other$measurements), info = other$id)
-    expect_equal(other$options$bayesPKVariability, BAYES_PK_VARIABILITY_DEFAULT, info = other$id)
-    expect_equal(other$options$bayesResidualVariability, BAYES_RESIDUAL_VARIABILITY_DEFAULT,
-                 info = other$id)
+    expect_false(any(grepl("Variability", helpScenarioCheck(other))), info = other$id)
   }
+})
+
+test_that("a scenario's measurement must be of a drug the panel offers, after a dose above 0", {
+  s <- helpScenarioById("warfarin-bayesian-inr")
+  # a dose of 0 is no dose: the first dose is the first above 0, as the
+  # update counts it (bayesianUpdateDrugs())
+  s$doses <- data.frame(Drug = c("vancomycin", "vancomycin"), Time = c(0, 60),
+                        Dose = c(0, 1000), Units = c("mg", "mg"), stringsAsFactors = FALSE)
+  s$options$timeUnits <- "minutes"
+  s$options$maximum <- 720
+  s$measurements <- helpMeasurements(c("vancomycin", 30, 20))
+  expect_match(helpScenarioCheck(s), "not after its first dose above 0", all = FALSE)
+  s$measurements <- helpMeasurements(c("vancomycin", 90, 20))
+  expect_false(any(grepl("vancomycin", helpScenarioCheck(s))))
+  s$doses$Dose <- c(0, 0)
+  expect_match(helpScenarioCheck(s), "never given a dose above 0", all = FALSE)
+  # the panel leaves the inhaled agents out of its Drug list
+  gas <- Find(function(x) any(isGasDrug(x$doses$Drug)), helpScenarios())
+  agent <- gas$doses$Drug[isGasDrug(gas$doses$Drug)][1]
+  gas$measurements <- helpMeasurements(c(agent, 10, 1))
+  expect_match(helpScenarioCheck(gas), "inhaled agent", all = FALSE)
+})
+
+test_that("a scenario's measurements are converted to the units the Drug Library shows", {
+  s <- helpScenarioById("tci-propofol")
+  s$measurements <- helpMeasurements(c("propofol", 30, 2.5))
+  expect_length(helpScenarioCheck(s), 0)
+  dd <- getDrugDefaultsGlobal()
+  dd$Concentration.Units[dd$Drug == "propofol"] <- "ng"
+  out <- helpScenarioInSessionUnits(s, dd)
+  expect_equal(out$measurements$Concentration, 2500)
+  expect_identical(out$converted, "propofol")
+  # in the library's own units nothing changes
+  expect_identical(helpScenarioInSessionUnits(s, getDrugDefaultsGlobal())$measurements,
+                   s$measurements)
+  # a level a conversion would take past the table's ceiling refuses the load
+  s$measurements$Concentration <- MAX_DOSE_VALUE / 10
+  expect_null(helpScenarioInSessionUnits(s, dd))
+  # and a drug measured but not given by TCI is converted too
+  s <- helpScenarioById("warfarin-bayesian-inr")
+  s$doses <- data.frame(Drug = "vancomycin", Time = 0, Dose = 1000, Units = "mg",
+                        stringsAsFactors = FALSE)
+  s$measurements <- helpMeasurements(c("vancomycin", 1440, 20))
+  dd <- getDrugDefaultsGlobal()
+  from <- dd$Concentration.Units[dd$Drug == "vancomycin"]
+  dd$Concentration.Units[dd$Drug == "vancomycin"] <- setdiff(c("mcg", "ng"), from)
+  expect_equal(helpScenarioInSessionUnits(s, dd)$measurements$Concentration,
+               20 * mcgPerMlScale(from) / mcgPerMlScale(setdiff(c("mcg", "ng"), from)))
+})
+
+test_that("loading a scenario sets the sliders to its own variabilities", {
+  sent <- list()
+  local_mocked_bindings(updateSliderInput = function(session, inputId, value = NULL, ...) {
+    sent[[inputId]] <<- value
+  })
+  session <- shiny::MockShinySession$new()
+  s <- helpScenarioById("warfarin-bayesian-inr")
+  s$options$bayesPKVariability <- 40
+  s$options$bayesResidualVariability <- 12
+  applyHelpScenario(session, s, shiny::reactiveVal(doseTableInit),
+                    shiny::reactiveVal(eventTableInit))
+  expect_equal(sent$bayesPKVariability, 40)
+  expect_equal(sent$bayesResidualVariability, 12)
 })
 
 test_that("loading a scenario puts its measurements in the table, or clears it", {
