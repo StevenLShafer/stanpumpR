@@ -34,7 +34,7 @@
 # falls with age.  Bias 0% and median absolute error 18%, the same out of
 # sample (round-robin jackknife).  The paper's online simulator used Model G
 # from the supplement when it was written; Model D is the one printed, and
-# the one used here.
+# the one used here, on Steven L. Shafer's decision of 2026-11-16.
 #
 # INTRANASAL (Table 1)
 # ==========
