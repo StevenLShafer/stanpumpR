@@ -226,6 +226,12 @@ test_that("the PNG is the plot as the app draws it, at twice the pixels", {
   file <- writePlotImage(plot$plotObject, tempfile(fileext = ".png"), height = plot$plotHeight, width = 600)
   on.exit(unlink(file), add = TRUE)
   expect_equal(pngSize(file), c(2 * plot$plotHeight, 1200))
+  # A plot over 3,600 of the app's pixels (many drugs; a wide screen) is over
+  # ggsave()'s 50 inches at 72 dpi, which it refused by default (CodeRabbit,
+  # PR #731): drawn, at twice its pixels
+  tall <- writePlotImage(plot$plotObject, tempfile(fileext = ".png"), height = 4000, width = 3700)
+  on.exit(unlink(tall), add = TRUE)
+  expect_equal(pngSize(tall), c(8000, 7400))
 
   # ggsave() is given the plot itself, laid out for renderPlot()'s 72 dpi,
   # at 72 dpi times the scale, so the drawing is the app's (until
@@ -238,8 +244,8 @@ test_that("the PNG is the plot as the app draws it, at twice the pixels", {
   }, .package = "ggplot2")
   writePlotImage(plot$plotObject, tempfile(fileext = ".png"), height = 300, width = 800)
   expect_identical(saved$plot, plot$plotObject)
-  expect_equal(saved[c("dpi", "height", "width", "units")],
-               list(dpi = 144, height = 600, width = 1600, units = "px"))
+  expect_equal(saved[c("dpi", "height", "width", "units", "limitsize")],
+               list(dpi = 144, height = 600, width = 1600, units = "px", limitsize = FALSE))
   # less than twice where twice would pass what the device can draw
   writePlotImage(plot$plotObject, tempfile(fileext = ".png"), height = 0.75 * maxPlotDevicePixels(), width = 800)
   expect_equal(saved$height, maxPlotDevicePixels())

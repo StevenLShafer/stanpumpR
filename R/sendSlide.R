@@ -198,6 +198,13 @@ writeSlideDeck <- function(plotObject, file, title = exportTitle(), slide = 1) {
 # plot's own pixels with smaller text (a previewPlot() that has gone), which
 # clipped the legend of a short plot and ran the threshold labels into the
 # panels; the Export panel's Image download made it worth drawing properly.
+#
+# limitsize = FALSE: ggsave() refuses an image over 50 inches, and at 72 dpi
+# times the scale that is any plot over 3,600 of the app's pixels, which a
+# tall plot of many drugs or a wide screen (MAX_PLOT_WIDTH 4,096) passes
+# (CodeRabbit, PR #731).  The bound that matters is in pixels: `scale` is
+# held so the image stays within the device, and simulationPlot() refuses a
+# plot taller than the device draws before it gets here.
 writePlotImage <- function(plotObject, file, height, width, scale = 2) {
   outputComments("Creating PNG file")
   scale <- max(1, min(scale, maxPlotDevicePixels() / max(height, width)))
@@ -207,7 +214,8 @@ writePlotImage <- function(plotObject, file, height, width, scale = 2) {
     dpi = 72 * scale,
     height = height * scale,
     width = width * scale,
-    units = "px"
+    units = "px",
+    limitsize = FALSE
   )
   invisible(file)
 }
