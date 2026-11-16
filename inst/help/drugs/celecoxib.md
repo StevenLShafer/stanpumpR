@@ -17,7 +17,7 @@ The label gives about 30 L/h.
 
 ### Body size
 
-The weight effect is from Krishnaswami and colleagues (*J Clin Pharmacol* 2012;52:1134-1149). Their one-compartment NONMEM model combined 152 children aged 2 to 17 with juvenile rheumatoid arthritis and 36 adults with rheumatoid arthritis. It found CL/F proportional to weight^0.265 and V/F to weight^0.499. The label's statement that 10 kg and 25 kg patients have 40% and 24% lower clearance than a 70 kg adult follows from that exponent. Here clearances scale by (W/70)^0.265 and volumes by (W/70)^0.499. W is the pharmacokinetic weight with the [fat-free-mass switch](help:models/fat-free-mass) on and total weight with it off. Stempak and colleagues (*Clin Pharmacol Ther* 2002;72:490-497) measured a median CL/F of about 1.1 L/h/kg in 11 children with cancer, higher than this model's 0.8 at 40 kg. They sampled for only 12 hours, and their patients were receiving chemotherapy.
+The weight effect is from Krishnaswami and colleagues (*J Clin Pharmacol* 2012;52:1134-1149). Their one-compartment NONMEM model combined 152 children aged 2 to 17 with juvenile rheumatoid arthritis and 36 adults with rheumatoid arthritis. It found CL/F proportional to weight^0.265 and V/F to weight^0.499. The label's statement that 10 kg and 25 kg patients have 40% and 24% lower clearance than a 70 kg adult follows from that exponent. Here clearances scale by (W/70)^0.265 and volumes by (W/70)^0.499. W is the pharmacokinetic weight with the [fat-free-mass switch](help:models/fat-free-mass) on and total weight with it off.
 
 ### Effect site
 
