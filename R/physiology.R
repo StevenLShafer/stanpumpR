@@ -279,6 +279,17 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # N-dealkylations show little isotope effect), so a whole-enzyme rate
 # carries several steps' temperature dependence, with no study of
 # tunnelling in a mammalian CYP (Guengerich 2017, Methods Enzymol 596:217).
+# CYP3A4 testosterone 6beta-hydroxylation, computed for compound I and the
+# substrate alone, no protein or solvent: tunnelling coefficients about 3
+# (small-curvature 2.7-3.4) at 300 K, so tunnelling triples the rate, but
+# isotope effects of 2 and 5 against an experimental 15, and at one
+# temperature only (Zhang and Lin 2009, J Phys Chem A 113:11501, read in
+# full).  A tunnelling coefficient of 3 that follows the Wigner form,
+# 1 + (h nu / kT)^2 / 24, changes by -(2/T)(kappa - 1)/kappa, about
+# 0.4%/C at 300 K, so tunnelling of that size would offset at most about
+# 0.4%/C of the fall; the authors note the Wigner form did not converge
+# here, so this bounds it only roughly.  Its adiabatic barrier, 5.6-6.8
+# kcal/mol in the gas phase, is below the 13-18 of the QM/MM enzymes.
 # In five human liver microsome preparations, 7-ethoxycoumarin
 # O-deethylation (mostly CYP1A2) had noncompetitive isotope effects of
 # 7.3-8.1, near the intrinsic 6.1, so C-H cleavage limits that rate in
