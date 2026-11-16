@@ -110,6 +110,44 @@ test_that("writing the Word report leaves nothing in tempdir() but the file, and
   expect_setequal(list.files(tempdir(), recursive = TRUE, all.files = TRUE), before)
 })
 
+test_that("the cleanup leaves a review's process ID file, written meanwhile, alone", {
+  # CodeRabbit, PR #736: a review's background process writes its ID into
+  # this process's tempdir() (paperReviewExtractAsync()), and the quick
+  # review needs it to stop that process. Written during the build, it was
+  # new, so it was deleted.
+  pid <- tempfile("paper-review-")
+  on.exit(unlink(pid), add = TRUE)
+  path <- tempfile(fileext = ".docx")
+  on.exit(unlink(path), add = TRUE)
+  testthat::local_mocked_bindings(paperReviewDocxUnnumberHeadings = function(doc) {
+    writeLines("12345", pid)
+    invisible(TRUE)
+  })
+  before <- list.files(tempdir(), recursive = TRUE, all.files = TRUE)
+  paperReviewNoReportDocx("Nothing to report.", path)
+  expect_true(file.exists(pid))
+  expect_equal(readLines(pid), "12345")
+  # officer's own files went, as before.
+  expect_setequal(list.files(tempdir(), recursive = TRUE, all.files = TRUE),
+                  union(before, c(basename(path), basename(pid))))
+})
+
+test_that("the file written is kept when its path reaches tempdir() through a link or a './'", {
+  # CodeRabbit, PR #736: the path was resolved before the file existed, which
+  # leaves a link and a "./" as written, and compared with the new entries
+  # resolved after, so the file Shiny serves was taken for scratch.
+  skip_on_os("windows")
+  link <- tempfile("docx-link-", tmpdir = dirname(tempdir()))
+  expect_true(file.symlink(tempdir(), link))
+  on.exit(unlink(link), add = TRUE)
+  name <- basename(tempfile(fileext = ".docx"))
+  on.exit(unlink(file.path(tempdir(), name)), add = TRUE)
+  paperReviewNoReportDocx("Nothing to report.", file.path(link, ".", name))
+  expect_true(file.exists(file.path(tempdir(), name)))
+  expect_equal(trimws(docxParagraphs(file.path(tempdir(), name))),
+               c("Single Paper Review", "Nothing to report."))
+})
+
 test_that("the app serves the Word report, and says when there is none", {
   word <- function(path) paste(docxParagraphs(path), collapse = "\n")
   shiny::testServer(paperReviewServer, {

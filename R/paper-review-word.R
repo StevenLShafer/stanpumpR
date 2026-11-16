@@ -11,11 +11,18 @@
 #
 # Nothing is left on the server. officer unpacks its template into a folder
 # under tempdir() and writes further scratch files there as it builds the
-# document, several of which hold the report's text, and does not remove
-# them; they would stay until the R process ends. So the build notes what is
-# in tempdir() before it starts and removes whatever is new when it ends,
-# except the file it was asked to write. R runs a download handler on the
-# session's one thread, so nothing else writes to tempdir() meanwhile.
+# document (the XML and text it assembles, a copy of each image), several of
+# which hold the report's text, and does not remove them; they would stay
+# until the R process ends. Every one of them, and the PNG this file writes
+# for each plot, is named by tempfile() with its default pattern ("file" and
+# hex digits). So the build notes what is in tempdir() before it starts and,
+# when it ends, removes what is new AND so named, except the file it was
+# asked to write. The second condition is what keeps the cleanup to the
+# build's own files: R runs a download handler on the session's one thread,
+# but a background process can still write into this tempdir() meanwhile,
+# and a review's process writes its ID to a file named "paper-review-..."
+# (paperReviewExtractAsync()), which the quick review needs to stop it;
+# Shiny's uploads are folders of 24 hex digits (CodeRabbit, PR #736).
 # (Claude Code, 2026-11-16, at the request of Steven L. Shafer.)
 
 PAPER_REVIEW_DOCX_TYPE <- "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -45,17 +52,15 @@ paperReviewReportDocx <- function(review, path)
 paperReviewNoReportDocx <- function(why, path)
   paperReviewDocxWrite(path, htmltools::tagList(htmltools::h3("Single Paper Review"), htmltools::p(why)))
 
+# The names tempfile() gives by default, with or without an extension.
+PAPER_REVIEW_DOCX_SCRATCH <- "^file[0-9a-f]+(\\.[A-Za-z0-9]+)?$"
+
 # Write report tags to a .docx, leaving nothing else behind in tempdir().
 paperReviewDocxWrite <- function(path, tags)
 {
-  path <- normalizePath(path, mustWork = FALSE)
   # officer's scratch files, and ours, are removed whatever happens.
   before <- paperReviewTempEntries()
-  on.exit({
-    new <- setdiff(paperReviewTempEntries(), before)
-    new <- new[normalizePath(new, mustWork = FALSE) != path]
-    unlink(new, recursive = TRUE, force = TRUE)
-  }, add = TRUE)
+  on.exit(paperReviewDocxCleanup(before, path), add = TRUE)
   st <- new.env(parent = emptyenv())
   st$doc <- officer::read_docx()
   paperReviewDocxUnnumberHeadings(st$doc)
@@ -75,6 +80,23 @@ paperReviewDocxUnnumberHeadings <- function(doc)
   xml <- paste(readLines(file, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
   writeLines(gsub("<w:numPr>.*?</w:numPr>", "", xml, perl = TRUE), file, useBytes = TRUE)
   invisible(TRUE)
+}
+
+# Remove what the build left in tempdir(): entries new since `before` and
+# named as tempfile() names them, never the file written. Both sides are
+# compared fully resolved, once the file exists: before then a path through
+# a symbolic link (macOS's /var) or with a "./" would not match its resolved
+# self, and the file Shiny serves would be taken for scratch (CodeRabbit,
+# PR #736).
+paperReviewDocxCleanup <- function(before, path)
+{
+  new <- setdiff(paperReviewTempEntries(), before)
+  new <- new[grepl(PAPER_REVIEW_DOCX_SCRATCH, basename(new))]
+  if (length(new) == 0) return(invisible(character(0)))
+  resolved <- function(p) normalizePath(p, winslash = "/", mustWork = FALSE)
+  new <- new[resolved(new) != resolved(path)]
+  unlink(new, recursive = TRUE, force = TRUE)
+  invisible(new)
 }
 
 # Everything directly in tempdir(), as full paths.
