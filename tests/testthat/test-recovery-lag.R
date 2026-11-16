@@ -131,7 +131,10 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     # Parkinson disease drugs (2026-10-19): pramipexole's IR
                     # lag of 0.221 h and pimavanserin's 0.0707 day, both
                     # from the FDA reviews; plasma only
-                    "pramipexole", "pimavanserin"))
+                    "pramipexole", "pimavanserin",
+                    # oral thioguanine's derived 1.0 h lag (Lowe 2001's
+                    # median time to peak, 2026-11-16); plasma only
+                    "thioguanine"))
 })
 
 

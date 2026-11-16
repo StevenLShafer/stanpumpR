@@ -188,7 +188,8 @@ reduced heart-brain circuit, FA/FI rises extremely fast." So the flow to the
 brain and heart does not fall with cardiac output: it follows the same
 autoregulated relation as the effect site of the intravenous drugs, cardiac
 output to the power 0.35 (see above). The brain and heart take 16% of resting
-output (brain 12%, heart 4%; Williams and Leggett 1989). What is left of the
+output (brain 12%, heart 4%, the 35-year-old reference man of Williams and
+Leggett 1989, Table 17). What is left of the
 output is shared among the rest of the vessel-rich group, muscle and fat in
 their normal proportions. At a tenth of normal output the brain and heart
 receive 7% of normal output, nearly three quarters of all there is, and the
@@ -214,8 +215,7 @@ each minute, as for the intravenous drugs. It then rises above normal, because
 its blood comes from lungs at a higher tension. At a high output FA/FI rises
 more slowly, and the brain ends lower.
 
-The 16% share is provisional. It is the textbook reference value, but the table
-of Williams and Leggett has not yet been read. Other effects the same chapter
+Other effects the same chapter
 describes are not modelled yet. These are flow shifted to muscle (exercise,
 excitement) or to fat, hypothermia (higher solubility, lower metabolism),
 ventilation-perfusion mismatch and one-lung ventilation, and children's larger
@@ -224,7 +224,8 @@ vessel-rich group. Ventilation itself is a dose-table row.
 ## Body temperature and the inhaled anesthetics
 
 **Body temperature** (28 to 37 °C) acts on the volatile agents through the two
-effects of hypothermia that Eger and Shafer's chapter names.
+effects of hypothermia that Eger and Shafer's chapter names, and so does
+nitrous oxide, less.
 
 **Solubility rises.** Cold blood and tissue dissolve more agent. Zhou, Liu and
 Liu measured the blood:gas partition coefficient of desflurane, sevoflurane
@@ -243,6 +244,21 @@ measured for isoflurane and halothane in rats and goats and for desflurane in
 rats, so it is applied to all three volatile agents. The MAC band and the
 summed MAC follow it.
 
+**Nitrous oxide MAC falls less.** The only measurement in any species is in
+rats: Antognini, Lewis and Reitan found MAC 1.9 atm at 37.5 °C and 1.6 atm at
+29.7 °C, with the regression MAC = 0.03827 T + 0.3836 atm. That is 2.1% of the
+normothermic MAC per degree, about half the volatile agents' fall, as its
+smaller change in lipid solubility predicts. It is applied to people because
+there are no human data.
+
+**Nitrous oxide is more soluble in the cold too.** Allott, Steward, Flook and
+Mapleson gathered nearly 200 temperature coefficients of anaesthetic
+solubility from the literature. For nitrous oxide in water and the aqueous
+media, blood among them, solubility rises 2.3% a degree as temperature falls.
+Their regression predicts 1.1% a degree in oil and fat, where no coefficient
+had been measured. stanpumpR applies the first to blood, the vessel-rich group
+and muscle, and the second to fat.
+
 Simulated by stanpumpR (70 kg, age 40, ventilation 6 L/min, fresh gas 6 L/min):
 
 <!-- generated: physiology-temperature-table -->
@@ -252,21 +268,52 @@ faster than solubility rises. So a given inspired concentration is a deeper
 anesthetic in a hypothermic patient. Dialled to the same multiple of MAC, as
 the chapter says, induction is slower, most for the soluble agents.
 
-**Not modelled.** Nitrous oxide: no measurement in humans of its solubility or
-MAC against temperature was found, so it is left as it is. Cardiac output and
+**Not modelled.** Cardiac output and
 ventilation also fall with metabolism in hypothermia, but they have their own
 controls (the Cardiac output slider and the ventilation row), so they are not
-counted twice. Lower them yourself to match the patient. The fall in brain
+counted twice. Lower them yourself to match the patient. The coupling is left
+to you on purpose: fever raises cardiac output and cooling would by the same
+logic lower it, but the two have different causes (inflammation, and heat lost
+to the room), so stanpumpR does not tie one slider to the other. The fall in brain
 blood flow is not modelled either. A threshold for the time until threshold is
 a tension you typed and does not move with MAC; the summed MAC series and its
-threshold do. The intravenous drugs are not changed by temperature, although
-hypothermia slows the clearance of many of them. GasMan models none of this:
+threshold do. GasMan models none of this:
 its source code mentions temperature only in the vaporiser's vapour pressure.
+
+## Body temperature and the intravenous drugs
+
+Cooling slows the elimination of most intravenous drugs, because enzymes and
+filtration work more slowly in the cold. stanpumpR multiplies each drug's
+capacity to eliminate it by exp(−0.0658 (37 − T)), 6.4% less for each degree
+below 37 °C, so 55% of normal at 28 °C. The figure is Michelsen and
+colleagues' fit to remifentanil in patients on bypass between 20 and 35 °C,
+the one human study that spans the whole slider. The rest of the evidence
+agrees within its scatter, about 6 to 8% per degree: CYP enzymes in liver
+tissue, glucuronidation, filtration by the kidney (amoxicillin, ceftazidime
+and doxacurium), esterases (remifentanil) and the chemical breakdown of
+atracurium.
+
+The factor acts on what the liver and kidneys can do, not on how much blood
+reaches them, which is the Cardiac output slider's. So a drug whose clearance
+is limited by liver blood flow changes less: propofol keeps 82% of its
+clearance at 28 °C. In patients cooled deeply on bypass, Bartošová and
+colleagues found propofol clearance at 42% of normal at 28 °C, because flow
+falls too. Lower the Cardiac output slider as well to reproduce that: at 0.4
+of normal, propofol falls to 44%. Only drugs with a physiology row respond;
+volumes, intercompartmental clearances and ke0 do not change.
+
+## The sliders and the Bayesian update
+
+When measured concentrations update a drug ([Bayesian updating](help:models/bayesian)),
+the fit is made at normal physiology, and the sliders are applied to the
+patient it finds. The measurements describe the patient as they found them, so
+moving a slider afterwards asks what would happen to that patient, and does not
+refit. The model's own line, "(population)", is drawn at the sliders too.
 
 ## Which drugs respond
 
-The inhaled anesthetics respond to **Cardiac output** and, the volatile agents,
-to **Body temperature**, as described above.
+The inhaled anesthetics respond to **Cardiac output** and **Body temperature**,
+as described above.
 
 Only drugs whose renal share, hepatic share and extraction ratio were read in
 a published source respond. Any other drug ignores the sliders, and the panel
@@ -276,6 +323,18 @@ readable source for a missing value.
 <!-- generated: physiology-table -->
 
 ## References
+
+Allott PR, Steward A, Flook V, Mapleson WW. Variation with temperature of the
+solubilities of inhaled anaesthetics in water, oil and biological media.
+*Br J Anaesth* 1973;45:294-300. doi:10.1093/bja/45.3.294
+
+Antognini JF, Lewis BK, Reitan JA. Hypothermia minimally decreases nitrous
+oxide anesthetic requirements. *Anesth Analg* 1994;79:980-2.
+doi:10.1213/00000539-199411000-00027
+
+Bartošová T, Šíma M, Prskavec T, et al. Deep hypothermia reduces the predictive accuracy of the Eleveld
+propofol model: population pharmacokinetic modelling in cardiac surgery.
+*Biomed Pharmacother* 2026;200:119523. doi:10.1016/j.biopha.2026.119523
 
 Castle-Kirszbaum M, Parkin WG, Goldschlager T, Lewis PM. Cardiac output and
 cerebral blood flow: a systematic review of cardio-cerebral coupling.
@@ -298,6 +357,11 @@ systemic hemodynamics during graded orthostatic stress in humans.
 
 Liu M, Hu X, Liu J. The effect of hypothermia on isoflurane MAC in children.
 *Anesthesiology* 2001;94:429-32. doi:10.1097/00000542-200103000-00011
+
+Michelsen LG, Holford NH, Lu W, Hoke JF, Hug CC, Bailey JM. The pharmacokinetics
+of remifentanil in patients undergoing coronary artery bypass grafting with
+cardiopulmonary bypass. *Anesth Analg* 2001;93:1100-5.
+doi:10.1097/00000539-200111000-00006
 
 Ogoh S, Brothers RM, Barnes Q, et al. The effect of changes in cardiac output
 on middle cerebral artery mean blood velocity at rest and during exercise.

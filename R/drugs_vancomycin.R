@@ -43,6 +43,17 @@
 # only where the line would refuse (just above 1.06 mL/min), which keeps the
 # line's own extrapolation for them.
 #
+# EXTERNAL CHECK (Yu 2026)
+# ========================
+# Yu H et al., AAPS J 2026;28:172 (PMID 42963461, read in full): a
+# one-compartment TDM model in 1,539 hospitalised adults, CL = 4.32 x
+# (CLcr/100) x exp(-0.28 x KT) L/h.  Its non-transplant clearance agrees with
+# this model's at the same Cockcroft-Gault CLcr to within about 5% over
+# 45-150 mL/min (1.94 vs 2.02 L/h at 45, 3.93 vs 4.14 at 91, 6.48 vs 6.86 at
+# 150; tested in test-drugs-vancomycinKidneyTransplant.R).  Its transplant
+# recipients clear 24% less at the same CLcr; that model is the separate drug
+# vancomycinKidneyTransplant (R/drugs_vancomycinKidneyTransplant.R).
+#
 # RENAL FUNCTION
 # ==============
 # CrCL is Cockcroft-Gault at the patient's serum creatinine from the Patient

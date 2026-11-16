@@ -53,6 +53,7 @@ clindamycin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg qd,mg bid
 cefalexin,mcg,,,mg PO,"mg PO,mg/kg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#66CDAA,2.4,9.4,9.4,0,4.7,IV,Antibiotics
 ceftriaxone,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h",#20B2AA,7.8,30,30,0,15,IV,Antibiotics
 vancomycin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h",#008B8B,2.9,11,11,0,1.4,IV,Antibiotics
+vancomycinKidneyTransplant,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h",#2E8B8B,2.9,11,11,0,1.4,IV,Antibiotics
 metronidazole,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#5F9EA0,1,4.2,4.2,0,4.2,IV,Antibiotics
 gentamicin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h",#6B8E23,0.5,2,2,0,2,IV,Antibiotics
 hydrocortisone,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#D2691E,0.2,1,0.5,0,0,IV,Corticosteroids
@@ -243,6 +244,8 @@ doxorubicin,ng,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#C62828,0,0,0,0,0,IV,Che
 doxorubicinJoerger,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#C62828,0,0,0,0,0,IV,
 doxorubicinol,ng,,,,,#EF9A9A,0,0,0,0,0,IV,
 doxorubicinolJoerger,mcg,,,,,#EF9A9A,0,0,0,0,0,IV,
+doxorubicinLiposomal,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#AD1457,0,0,0,0,0,IV,Chemotherapy
+doxorubicinLiposomalFree,ng,,,,,#F48FB1,0,0,0,0,0,IV,
 irinotecan,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#EF6C00,0,0,0,0,0,IV,Chemotherapy
 irinotecanSN38,ng,,,,,#FFB74D,0,0,0,0,0,IV,
 topotecan,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#00838F,0,0,0,0,0,IV,Chemotherapy
@@ -264,6 +267,7 @@ capecitabine5FU,mcg,,,,,#FFD54F,0,0,0,0,0,IV,
 paclitaxel,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#558B2F,0,0,0,0,0,IV,Chemotherapy
 paclitaxelJoerger,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#558B2F,0,0,0,0,0,IV,
 paclitaxelCrombag,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#558B2F,0,0,0,0,0,IV,
+paclitaxelProteinBound,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#7CB342,0,0,0,0,0,IV,Chemotherapy
 vincristinePediatric,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#0D47A1,0,0,0,0,0,IV,
 oxaliplatin,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#9E9D24,0,0,0,0,0,IV,Chemotherapy
 oxaliplatinBastian,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#9E9D24,0,0,0,0,0,IV,
@@ -298,6 +302,7 @@ temozolomideOstermann,mcg,,,mg PO,"mg PO,mg PO qd",#F4511E,0,0,0,0,0,IV,
 temozolomidePanetta,mcg,,,mg PO,"mg PO,mg PO qd",#F4511E,0,0,0,0,0,IV,
 dacarbazine,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr",#C0CA33,0,0,0,0,0,IV,Chemotherapy
 bleomycin,mcU,U,U/hr,U,"U,U/hr",#00897B,0,0,0,0,0,IV,Chemotherapy
+thioguanine,mcg,,,mg PO,"mg PO,mg PO qd",#3949AB,0,0,0,0,0,IV,Chemotherapy
 thioguanineIV,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#5C6BC0,0,0,0,0,0,IV,Chemotherapy
 linezolid,mcg,mg,mg/hr,mg,"mg,mg/hr,mg bid,mg PO,mg PO bid",#00838F,2,7,4.5,0,2.9,IV,Antibiotics
 cyclosporine,ng,mg,mg/hr,mg PO bid,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg PO bid",#AD1457,100,200,150,0,0,IV,Other

@@ -88,6 +88,7 @@ The **Time** panel, in the left sidebar, sets the time units, how far the simula
 - **Additional plots**, at the foot of Graph Options, adds the clinical events timeline and, while the drugs they need are dosed, the MEAC panel for comparing opioids and the propofol-opioid interaction panel.
 - **Suggest Dosing** (in the *Dose table* panel of the left sidebar) works backwards from a target effect-site concentration.
 - The URL in your browser's address bar encodes the whole simulation; copy it to share or save your work. See [Sharing a simulation by URL](help:sharing).
+- **Export**, at the foot of the left sidebar, downloads the simulation as a PowerPoint deck (the whole plot, then a slide per panel), a spreadsheet (the patient, the doses, the concentrations and the pharmacokinetic parameters) or an image of the plot, or emails all three with the link. See [Exporting a simulation](help:export).
 
 ## 6. Watch the compartments
 

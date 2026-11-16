@@ -1252,6 +1252,8 @@ getDrugPK <- function(
 
     firstPass <- X$metabolite$firstPassFraction
     if (is.null(firstPass)) firstPass <- 0
+    direct <- X$metabolite[["directFraction"]]
+    if (is.null(direct)) direct <- 0
     # The molar mass ratio has no safe default: a link that omits it would
     # silently hand over the parent's mass unchanged.  Every link states it,
     # 1 included where the source's amounts are already on the metabolite's
@@ -1279,7 +1281,8 @@ getDrugPK <- function(
           kFormation        = X$metabolite$kFormation,
           mwRatio           = mwRatio,
           unitScale         = unitScale,
-          firstPassFraction = firstPass
+          firstPassFraction = firstPass,
+          directFraction    = direct
         )
       )
     }

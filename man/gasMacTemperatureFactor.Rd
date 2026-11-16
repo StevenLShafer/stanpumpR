@@ -2,13 +2,20 @@
 % Please edit documentation in R/physiology.R
 \name{gasMacTemperatureFactor}
 \alias{gasMacTemperatureFactor}
-\title{MAC at a body temperature, as a fraction of MAC at 37 C (Liu 2001)}
+\title{MAC at a body temperature, as a fraction of MAC at 37 C}
 \usage{
-gasMacTemperatureFactor(temperature = PHYSIOLOGY_TEMPERATURE_DEFAULT)
+gasMacTemperatureFactor(
+  temperature = PHYSIOLOGY_TEMPERATURE_DEFAULT,
+  agent = "volatile"
+)
 }
 \arguments{
 \item{temperature}{body temperature, C}
+
+\item{agent}{the agent: \code{"nitrousOxide"} for nitrous oxide, anything
+else for a volatile agent}
 }
 \description{
-MAC at a body temperature, as a fraction of MAC at 37 C (Liu 2001)
+Liu 2001's regression in people for the volatile agents; Antognini 1994's
+in rats for nitrous oxide.
 }

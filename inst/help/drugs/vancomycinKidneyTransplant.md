@@ -1,0 +1,15 @@
+### The model
+
+This is vancomycin in **kidney transplant recipients**, from Yu and colleagues (*AAPS J* 2026;28:172; [doi:10.1208/s12248-026-01324-w](https://doi.org/10.1208/s12248-026-01324-w)), a one-compartment model of total serum vancomycin fitted to routine drug-monitoring concentrations from 1,539 hospitalised adults at the University of Michigan, 469 of them transplant recipients (courses started more than 30 days after the transplant; dialysis and multi-organ transplants excluded) and 1,070 non-transplant patients matched on age, sex and weight. Clearance is 4.32 L/h × (creatinine clearance / 100 mL/min) × exp(−0.28) and the volume 80.8 L. The factor exp(−0.28) = 0.756 is the transplant effect: a recipient clears vancomycin about **24% more slowly than a non-transplant patient with the same Cockcroft-Gault creatinine clearance**, so a creatinine-based dose overshoots. For any other patient use [vancomycin](help:drugs/vancomycin).
+
+### Covariates
+
+Clearance is proportional to the Cockcroft-Gault creatinine clearance, from the **Serum creatinine** in the Patient Profile, truncated at 150 mL/min as in the source. The source read Cockcroft-Gault at the actual body weight, or at the adjusted body weight (ideal + 0.4 × the excess) when the actual weight was more than 120% of the Devine ideal; that is what happens with [fat-free-mass scaling](help:models/fat-free-mass) switched off. With it on (the default) Cockcroft-Gault reads the pharmacokinetic weight instead, and the volume, which the source left without a size term, takes the library's volume factor; with it off the volume is 80.8 L for everyone. **Enter the creatinine**: left blank, it is assumed normal for age and sex, which a transplant recipient's rarely is (the cohort's median was 1.83 mg/dL).
+
+### Effect site, threshold and band
+
+The same molecule as [vancomycin](help:drugs/vancomycin), so the same free fraction (0.70), the same threshold (free vancomycin at an MIC of 1 mg/L, 1.4 mcg/mL total) and the same shaded MBC band (2.9 to 11 mcg/mL total). The consensus target is an AUC over 24 hours of 400 to 600 mg·h/L, which is the daily dose divided by clearance at steady state.
+
+### Where to be careful
+
+The data were troughs and random samples, which cannot identify a distribution phase (a two-compartment model fitted worse, with its distribution terms 42 to 75% shrunk), so the curve's troughs and area are better founded than its peak just after an infusion. In an external check on 479 MIMIC-IV patients the model over-predicted recipients' concentrations by 16.8% on average (7.6% in non-transplant patients), so the transplant effect may be smaller elsewhere. Yu's non-transplant clearance agrees with Thomson's (the library's vancomycin) to within about 5% at the same creatinine clearance, which is why the transplant factor, and not the model as a whole, is the new information. Fitted in adults only. Nephrotoxicity, which the same paper studied (crude rates higher in recipients, explained after adjustment by baseline renal function and co-administered nephrotoxins rather than by the transplant), is outside the model.
