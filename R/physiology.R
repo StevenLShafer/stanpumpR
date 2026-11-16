@@ -281,6 +281,24 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # tunnelling in a mammalian CYP (Guengerich 2017, Methods Enzymol 596:217).
 # So tunnelling does not act in the slider's 28-37 C, and the chemical
 # step's 7-9%/C brackets this factor with the microsomal data above.
+# Esterases, read in full.  Butyrylcholinesterase (succinylcholine's and
+# mivacurium's enzyme) in serum from 8 volunteers, mivacurium half-lives
+# read from Figure 1 without fluoride: cis-trans 0.86, about 1.55 and 3.85
+# min at 37, 28 and 18 C, trans-trans 1.07, about 2.35 and 7.3, so 6.3
+# and 8.4%/C over 37-28 C and 7.6 and 9.6%/C over 37-18 C, steeper below;
+# the authors cite activity halved from 37 to 25 C, 5.6%/C (Gruber 2002,
+# Anesth Analg 95:397).  The same enzyme's Vmax for o-nitrophenylbutyrate
+# was almost flat above an Arrhenius break at 21 C (3.5 kJ/mol; 18.6 and
+# 19.8 at 25 and 35 C), 26 kJ/mol below it, in Tris buffer whose pH fell
+# with warming, an artificial substrate at saturation (Masson and Balny
+# 1986, BBA 874:90): not the drug, not plasma, so Gruber's numbers stand.
+# Esmolol on hypothermic bypass, constant infusion: oxygenator inflow
+# concentrations rose to 1.8 times the prebypass arterial at a minimum of
+# 26 C, inversely with temperature (P < 0.0005) and with time, about
+# 5%/C if read crudely, but not at steady state, inflow against arterial,
+# hemodiluted, and with arterial concentrations 6.9 times venous, so the
+# authors suspect tissue esterases and perfusion as well as red-cell
+# esterase (Jacobs 1993, J Clin Pharmacol 33:360).
 #
 # Body temperature and cardiac output are NOT coupled: hypothermia does not
 # lower cardiac output by itself.  Fever raises cardiac output and cooling
