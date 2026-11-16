@@ -44,15 +44,13 @@ test_that("getDrugPK() itself applies the check to a model's output", {
 
 test_that("every drug gives a usable disposition at the extremes of a legal patient", {
   # Newborns, a 0.5 kg infant, a 90-year-old, 250 kg, a light old woman; both
-  # sexes; both switch positions.  Vancomycin's Thomson clearance is
-  # explicitly undefined at a creatinine clearance near zero and says so.
+  # sexes; both switch positions.
   dd <- getDrugDefaultsGlobal(FALSE)
   drugs <- dd$Drug[vapply(dd$Drug, function(d) exists(d, mode = "function"), logical(1))]
   patients <- list(c(3.5, 50, 0), c(0.5, 30, 0), c(70, 170, 90), c(250, 190, 40), c(40, 140, 90))
   for (d in drugs) for (p in patients) for (s in c("male", "female")) for (ffm in c(TRUE, FALSE)) {
     r <- tryCatch({ getDrugPK(d, p[1], p[2], p[3], s, getDrugDefaults(d), adjustToFFM = ffm); "ok" },
                   error = function(e) conditionMessage(e))
-    if (d == "vancomycin" && grepl("not defined at a creatinine clearance", r)) next
     expect_identical(r, "ok", label = sprintf("%s at %g kg, %g cm, %g y, %s, ffm %s",
                                               d, p[1], p[2], p[3], s, ffm))
   }

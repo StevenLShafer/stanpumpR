@@ -198,6 +198,11 @@ simulationPlot <- function(
   # at the panel's right-hand edge, so only one is drawn; the app unticks the
   # other when either is ticked (R/meacOverlay.R).
   if (plotRecovery) plotMEACOverlay <- FALSE
+  # Nor is a logarithmic axis drawn beside any of them, whose labels and
+  # panels are placed on a linear one; the app hides Log Y while they are on
+  # (app_ui()) and passes FALSE, and a caller of its own is held to the same
+  # rule (Carbon's third UI audit, 2026-11-15, M6)
+  if (plotRecovery || plotMEACOverlay || plotEvents || plotInteraction) logY <- FALSE
 
   # Step D3: extend plotTable
 
@@ -403,11 +408,14 @@ simulationPlot <- function(
     if (length(opioids) > 0 & "propofol" %in% plotTable$Drug & plotInteraction)
     {
       Time <- derivedTimes
-      PropCe <- derivedEffectSite(entryOf("propofol"), derivedTimes)
-      # The surface takes remifentanil-equivalent ng/mL, not % MEAC
-      # (R/modelInteraction.R).
+      # The surface takes propofol in mcg/mL and the opioid as
+      # remifentanil-equivalent ng/mL, not % MEAC (R/modelInteraction.R),
+      # whatever units the Drug Library shows either drug in
+      unitsOf <- function(drug) drugDefaults$Concentration.Units[drugDefaults$Drug == drug][1]
+      PropCe <- derivedEffectSite(entryOf("propofol"), derivedTimes) * mcgPerMlScale(unitsOf("propofol"))
       remifentanilMEAC <- suppressWarnings(as.numeric(
-        drugDefaults$MEAC[drugDefaults$Drug == "remifentanil"][1]))
+        drugDefaults$MEAC[drugDefaults$Drug == "remifentanil"][1])) *
+        mcgPerMlScale(unitsOf("remifentanil")) * 1000
       x <- modelInteraction(PropCe,
                             remifentanilEquivalent(totalMEAC$Y, remifentanilMEAC))
       resultsInteraction <- data.frame(
@@ -745,6 +753,37 @@ simulationPlot <- function(
   if (logY) {
     data <- data[data$Y>0,]
     rateData <- rateData[rateData$Y>0,]
+    # With nothing above zero (no dose yet, or none in the window) ggplot
+    # failed only when the plot was drawn, outside main_plot()'s handling,
+    # and printed its own error in the plot area (Carbon's third UI audit,
+    # 2026-11-15, H4); said here, the plot area explains it
+    if (nrow(data) == 0)
+      stop("A logarithmic axis needs a concentration above zero, and there is none ",
+           "in the plotted window. Untick Log Y or enter a dose.", call. = FALSE)
+  }
+  # On a log axis a panel with nothing above zero (a drug not yet given in
+  # the window, a TCI rate panel at 0) kept no data and was dropped, from
+  # the plot and the slide, and a band with a zero edge was read as log10(0)
+  # (Carbon's fourth UI audit, 2026-11-15, M2): such a panel keeps its place,
+  # anchored on one decade and saying why it is empty, and the bands are
+  # drawn only where they are above zero.
+  emptyLogPanels <- character(0)
+  bands <- plotTable
+  if (logY) {
+    wraps <- unique(as.character(plotResults$Wrap[plotResults$Wrap != PLOT_NAME_EVENTS]))
+    emptyLogPanels <- setdiff(wraps, unique(as.character(c(data$Wrap, rateData$Wrap))))
+    lowest <- tapply(data$Y, as.character(data$Wrap), min)
+    floorFor <- function(wrap, top) {
+      m <- lowest[as.character(wrap)]
+      ifelse(is.na(m), top / 10, pmin(m, top / 10))
+    }
+    if (identical(typical, "Range")) {
+      bands <- bands[is.finite(bands$ymax) & bands$ymax > 0, , drop = FALSE]
+      low <- !is.finite(bands$ymin) | bands$ymin <= 0
+      bands$ymin[low] <- floorFor(bands$Wrap[low], bands$ymax[low])
+    } else if (identical(typical, "Mid")) {
+      bands <- bands[is.finite(bands$typical) & bands$typical > 0, , drop = FALSE]
+    }
   }
 
   plotObject <- ggplot2::ggplot() +
@@ -842,6 +881,19 @@ simulationPlot <- function(
   if (logY)
   {
     plotObject <- plotObject + ggplot2::scale_y_log10()
+    if (length(emptyLogPanels) > 0) {
+      anchor <- data.frame(Wrap = rep(emptyLogPanels, each = 2), Y = c(0.1, 1))
+      note <- data.frame(Wrap = emptyLogPanels, Time = (minimum + maximum) / 2, Y = 0.3,
+                         Label = "Nothing above zero in this window")
+      if (is.factor(plotResults$Wrap)) {
+        anchor$Wrap <- factor(anchor$Wrap, levels = levels(plotResults$Wrap), ordered = TRUE)
+        note$Wrap <- factor(note$Wrap, levels = levels(plotResults$Wrap), ordered = TRUE)
+      }
+      plotObject <- plotObject +
+        ggplot2::geom_blank(data = anchor, ggplot2::aes(y = Y), inherit.aes = FALSE) +
+        ggplot2::geom_text(data = note, ggplot2::aes(x = Time, y = Y, label = Label),
+                           inherit.aes = FALSE, colour = "grey40", size = 3.5)
+    }
   } else {
     # Every panel starts at zero, except a serum osmolality panel: anchored
     # at zero, a rise from 280 to 310 mOsm/kg would be a ripple along the top.
@@ -918,7 +970,7 @@ simulationPlot <- function(
       plotObject <-
         plotObject +
         ggplot2::geom_rect(
-        data=plotTable,
+        data=bands,
         ggplot2::aes(
           xmin=xmin,
           xmax=xmax,
@@ -935,7 +987,7 @@ simulationPlot <- function(
       plotObject <-
         plotObject +
         ggplot2::geom_rect(
-          data=plotTable,
+          data=bands,
           mapping=ggplot2::aes(
             xmin=xmin,
             xmax=xmax,

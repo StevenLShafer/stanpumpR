@@ -38,6 +38,8 @@ When you switch from clock time to elapsed time, the clock times in the table ar
 
 The procedure start defaults to the time on your computer when the app opened.
 
+Changing the procedure start in clock time keeps every dose, event and measured level at its clock time: an event at 09:00 stays at 09:00, and moves on the elapsed axis. Events and levels within the 24 hours after the start are clock times; one later than that is a time since the start, and stays where it is. Changing the start back puts everything back where it was.
+
 ## Max time
 
 The length of the simulation is set by the **Max time** slider, in the Time panel below **Time units**. It reads in the time unit, and its range and step follow it:

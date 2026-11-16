@@ -28,7 +28,7 @@ helpNavPanel <- function() {
         # No visible label, to keep the sidebar compact; the aria-label gives the
         # field a name that stays once the placeholder has gone.
         textInput("help_search", NULL, "", placeholder = "Search the help") |>
-          addInputAttributes(maxlength = 100, autocomplete = "off",
+          addInputAttributes(maxlength = HELP_SEARCH_MAX_CHARS, autocomplete = "off",
                              `aria-label` = "Search the help"),
         # A polite live region, so a screen reader announces the result ("18
         # pages match", "Nothing found") when a search finishes.

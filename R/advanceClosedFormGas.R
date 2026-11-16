@@ -180,6 +180,51 @@
 #     The patient now inspires MV + u+ and exhales MV, so the fresh gas flow
 #     that stops rebreathing is the minute ventilation plus what is taken up.
 #
+#     THE CLOSED CIRCUIT (Carbon's third UI audit, 2026-11-15, H2).  k is the
+#     share of the exhaled gas that is rebreathed, so it cannot exceed one.
+#     It does when Q < u+ + VCO2 (= u+ + c_E MV): the fresh gas no longer
+#     covers what the patient takes up, oxygen included.  Every litre exhaled
+#     is then rebreathed, nothing is vented, and the circuit still falls short;
+#     a real reservoir bag empties.  Until this date k was left above one, so
+#     more gas was rebreathed than was exhaled, at the exhaled composition:
+#     gas made from nothing.  With no oxygen flow (Q = 0) and 4.6 L/min of
+#     ventilation at 70 kg it made 0.25 L/min, the oxygen consumed; nitrogen
+#     rose past 100% of an atmosphere in the first minutes, the uptake
+#     coupling then fed on it (make-up gas at more than 100% adds more than
+#     it replaces), alveolar nitrogen reached 142% on a day's plot, and on a
+#     three-day plot the states overflowed and the gas panels vanished
+#     ("missing value where TRUE/FALSE needed").  Now k is held at one and the
+#     alveoli receive only what the circuit has, the fresh gas and the
+#     rebreathed gas less the dead space's share,
+#         Q + MV (1 - c_E) - (MV - VA) = Q + VA - VCO2,
+#     whose composition is F_circ = (Q F_fgf + VA F_alv) / (Q + VA - VCO2).
+#     Each gas then gains only what the fresh gas brings and loses only what
+#     the blood takes up: the circuit and the patient are one closed system,
+#     and nothing is created.  The volume deficit is not modelled (the
+#     alveolar volume is fixed), so it appears as tensions summing to less
+#     than an atmosphere rather than as a bag emptying.  The same holds in
+#     apnoea (MV = 0), where the alveoli draw the uptake from the fresh gas as
+#     far as it goes and no further.  gasCircuitBlend() returns the share of
+#     the alveoli's demand that the circuit meets as `supply`.
+#
+#     On emergence (u < 0) the alveoli push gas out, -u L/min at alveolar
+#     composition, and that gas is in the circuit too.  Below the threshold
+#     the circuit vents it first, rebreathing the exhaled gas, and vents more
+#     than it in all (Q - VCO2 - u >= -u while k <= 1).  Once the circuit is
+#     closed that is no longer so: everything exhaled is rebreathed, and the
+#     pushed-out gas is rebreathed as far as the shortfall needs,
+#         r = min(MV + u+ - Q - MV (1 - c_E), -u)     (u+ = 0 here),
+#     only the rest, -u - r = max(0, Q - VCO2 - u), being vented, which is
+#     the circuit's surplus and nothing while it is short.  The alveoli then
+#     receive D = Q + VA - VCO2 + r, at
+#         F_circ = (Q F_fgf + (VA + r) F_alv) / D,
+#     all of VA again (supply 1) while the pushed-out gas covers the
+#     shortfall.  Until 2026-11-15 r was zero, so all of the pushed-out gas
+#     was vented, and a washout of nitrous oxide into a closed circuit lost
+#     every gas at -u times its alveolar tension, though nothing left the
+#     circuit (CodeRabbit on PR #730).  The change is confined to k > 1 with
+#     u < 0, and is continuous at k = 1, where r is zero.
+#
 #     In the steady state the gas vented is the fresh gas less the oxygen
 #     consumed: with 0.3 + 1.0 L/min in and 0.21 L/min consumed, 1.09 L/min
 #     leaves as 92% nitrous oxide and 8% oxygen (dry, carbon dioxide aside).
@@ -440,25 +485,59 @@ gasFreshFraction <- function(Q, VA, circuit = "ideal", MV = VA)
 #' @param MV minute ventilation, L/min
 #' @param circuit "ideal" or "open"
 #' @param u summed uptake of gas from the alveoli, L/min; only a positive value
-#'   adds to what is inspired
+#'   adds to what is inspired.  A negative value is gas pushed out of the
+#'   alveoli, which a closed circuit rebreathes as far as its shortfall needs.
 #' @param cE carbon dioxide as a fraction of exhaled gas, removed from whatever
 #'   is rebreathed.  Capped at \code{GAS_MAX_EXHALED_CO2}, which keeps the blend
 #'   physical at any ventilation.
-#' @returns a list with \code{fresh} and \code{alveolar}
+#' @returns a list with \code{fresh} and \code{alveolar}, the composition of
+#'   what is inspired, and \code{supply}, the share of what the alveoli draw
+#'   from the circuit (\code{VA + u+}) that it can give them: one, unless the
+#'   fresh gas is less than the uptake and the carbon dioxide absorbed, when
+#'   the circuit is closed and the gas pushed out of the alveoli (a negative
+#'   \code{u}) does not make up the difference (see THE CLOSED CIRCUIT in the
+#'   file header)
 #' @keywords internal
 gasCircuitBlend <- function(Q, VA, MV = VA, circuit = "ideal", u = 0, cE = 0)
 {
   inspired <- MV + max(u, 0)
-  if (circuit == "open" || MV <= 0 || Q >= inspired)
-    return(list(fresh = 1, alveolar = 0))
+  if (circuit == "open" || Q >= inspired)
+    return(list(fresh = 1, alveolar = 0, supply = 1))
+  # Apnoea: nothing is exhaled, so the uptake is drawn from the fresh gas,
+  # and only as far as it goes.  Until 2026-11-15 the whole uptake was drawn
+  # at the fresh gas's composition whatever the flow, so with no flow a
+  # vaporiser's setting was drawn into the lungs from nowhere (Carbon's third
+  # UI audit, 2026-11-15, H2).
+  if (MV <= 0)
+    return(list(fresh = 1, alveolar = 0, supply = Q / inspired))
   cE <- min(max(cE, 0), GAS_MAX_EXHALED_CO2)
   k <- (inspired - Q) / (MV * (1 - cE))
-  D <- inspired - k * (MV - VA)
+  supply <- 1
+  # The gas pushed out of the alveoli and rebreathed, L/min: none unless the
+  # circuit is closed (below).
+  pushedBack <- 0
+  if (k <= 1) {
+    D <- inspired - k * (MV - VA)
+  } else {
+    # k is the share of the exhaled gas rebreathed.  Above one the circuit is
+    # closed: all of it is rebreathed (THE CLOSED CIRCUIT in the file header;
+    # Carbon's third UI audit, 2026-11-15, H2).  When the summed uptake is
+    # negative, the gas pushed out of the alveoli, -u, is in the circuit too,
+    # and is rebreathed as far as the shortfall needs; only what is left of
+    # it is vented.  Until 2026-11-15 all of it was vented, so a washout into
+    # a closed circuit lost gas that went nowhere (CodeRabbit on PR #730).
+    # What reaches the alveoli is what there is, Q + VA - VCO2 plus the gas
+    # pushed back, at most the VA + u+ they draw.
+    k <- 1
+    pushedBack <- min(inspired - Q - MV * (1 - cE), max(-u, 0))
+    D <- Q + MV * (1 - cE) - (MV - VA) + pushedBack
+    supply <- D / (VA + max(u, 0))
+  }
   # With cE capped and the dead space under half of the minute ventilation, D
   # is positive; this is a guard against a future change to either, not a
   # branch that runs.
   if (D <= 0) stop("ventilation and dead space do not permit a physical circuit blend")
-  list(fresh = Q / D, alveolar = k * VA / D)
+  list(fresh = Q / D, alveolar = (k * VA + pushedBack) / D, supply = supply)
 }
 
 
@@ -558,8 +637,11 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
   # a constant inflow, and the rebreathed share comes straight back as alveolar
   # gas.  The circuit row and column are then empty, so the propagator leaves
   # that entry alone and the caller sets it from the line above.
+  # When the fresh gas falls short of the uptake the circuit is closed, and the
+  # alveoli receive only the share `supply` of what they draw: the rest does
+  # not exist (THE CLOSED CIRCUIT in the file header).
   bl <- gasCircuitBlend(Q, VA, MV, circuit, totUptake, cE)
-  fromCircuit <- A[2, 1]
+  fromCircuit <- A[2, 1] * bl$supply
   A[2, 2] <- A[2, 2] + fromCircuit * bl$alveolar
   A[1, ] <- 0
   A[, 1] <- 0
@@ -607,6 +689,10 @@ gasSystemOxygen <- function(body, Q, VA, Ffgf,
     # gas.  With no dead space the steady state is F_fgf - 100 VO2 / Q: what is
     # delivered less what is consumed, as it must be.
     bl <- gasCircuitBlend(Q, VA, MV, circuit, totUptake, cE)
+    # A closed circuit gives the alveoli only what it has (`supply`, THE
+    # CLOSED CIRCUIT in the file header): oxygen then gains what the fresh
+    # gas brings and loses what is consumed, and no more.
+    fromCircuit <- fromCircuit * bl$supply
     A <- matrix(0, 2, 2)
     A[2, 2] <- -VA / Va + fromCircuit * bl$alveolar + pushedOut
     b <- c(0, fromCircuit * bl$fresh * Ffgf - 100 * body$VO2 / Va)

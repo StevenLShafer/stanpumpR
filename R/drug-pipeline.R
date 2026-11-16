@@ -55,6 +55,32 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery, cache = 
       for (field in names(sim)) drugs[[drug]][[field]] <- sim[[field]]
       drugs[[drug]]$sim    <- sim
       drugs[[drug]]$simKey <- key
+
+      # A Bayesian update's population line of a metabolite includes what
+      # its dosed parents form as the model has it (R/bayesian.R): the
+      # parents' entries as they were before the update, simulated here on
+      # their own doses for what they form, which foldMetabolites() adds.
+      # Without them the line was the drug's own doses alone, and flat at 0
+      # for a level of morphine formed from codeine (Carbon's third UI audit,
+      # 2026-11-15, H7).
+      sources <- drugs[[drug]]$populationSources
+      formed <- list()
+      for (p in names(sources))
+      {
+        pDT <- DT[DT$Drug == p, ]
+        if (nrow(pDT) == 0) next
+        pET <- ET[gsub(" ", "", ET$Event) %in% sources[[p]]$pkEvents, ]
+        pKey <- simulationKey(sources[[p]], pDT, pET, plotMaximum, FALSE, plotMinimum)
+        f <- cache[[drug]]$formedSims[[p]]
+        if (is.null(f) || !identical(f$key, pKey))
+        {
+          X <- simCpCe(pDT, pET, sources[[p]], plotMaximum, FALSE)
+          f <- list(key = pKey, metaboliteSeries = X$metaboliteSeries,
+                    metaboliteCompartments = X$metaboliteCompartments)
+        }
+        formed[[p]] <- f
+      }
+      drugs[[drug]]$formedSims <- if (length(formed)) formed
     }
 
     # The pharmacokinetic interactions among the antiseizure drugs (Graph
@@ -138,8 +164,7 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
     # getDrugPK() reads it from this session's drugDefaults row, with any
     # Drug Thresholds edit.
     outputComments("Getting PK for", drug)
-    drugs[[drug]] <- utils::modifyList(
-      drugs[[drug]],
+    pk <- function(metaboliteIndividual = NULL)
       getDrugPK(
         drug = drug,
         weight = weight,
@@ -161,9 +186,20 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
         # The Bayesian update's estimate for this drug, or NULL
         # (R/bayesian.R): a list of clearance and volume factors, by drug.
         individual = individual[[drug]],
-        physiology = physiology
+        physiology = physiology,
+        # The session's library, from which a metabolite's row (its units)
+        # is read
+        libraryDefaults = drugDefaults,
+        metaboliteIndividual = metaboliteIndividual
       )
-    )
+    resolved <- pk()
+    # A parent forms the individual's metabolite where the update estimated
+    # the metabolite (getDrugPK(metaboliteIndividual =)); its name is known
+    # once the parent is resolved
+    formed <- resolved$metaboliteName
+    if (!is.null(formed) && !is.null(individual[[formed]]))
+      resolved <- pk(individual[[formed]])
+    drugs[[drug]] <- utils::modifyList(drugs[[drug]], resolved)
     drugs
   }
 

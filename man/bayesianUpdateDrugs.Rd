@@ -14,7 +14,11 @@ bayesianUpdateDrugs(
   rebuild,
   antiseizureInteractions = FALSE,
   fits = NULL,
-  onFit = NULL
+  onFit = NULL,
+  maximum = NULL,
+  timeLimit = BAYES_MAX_SECONDS,
+  jointPasses = BAYES_JOINT_PASSES,
+  jointTolerance = BAYES_JOINT_TOLERANCE
 )
 }
 \arguments{
@@ -35,8 +39,11 @@ of a measurement about the individual's prediction (assay, timing and
 model error together)}
 
 \item{rebuild}{function(drug, individual) returning the drug's entry, as
-recalculatePK() builds it, for the individual's factors (a list of
-\code{clearance} and \code{volume}); recalculatePK(individual =) is the usual one}
+recalculatePK() builds it, for \code{individual}, the estimates by drug (a
+named list of lists of \code{clearance} and \code{volume}, the form
+recalculatePK(individual =) takes, which is the usual rebuild): the
+drug's own, and, for a drug that forms a measured metabolite, the
+metabolite's, which it then forms}
 
 \item{antiseizureInteractions}{are the antiseizure interactions on?}
 
@@ -45,10 +52,29 @@ any drug whose inputs have not changed}
 
 \item{onFit}{NULL, or function(drug) called before a drug is fitted afresh
 (not when its estimate is reused): the app shows its spinner then}
+
+\item{maximum}{NULL, or the length of the plot (minutes): a measurement
+after it is set aside.  Whatever it is, a measurement later than the
+longest plot the app offers (\code{BAYES_MAX_TIME}) is set aside too.}
+
+\item{timeLimit}{the longest the update searches, seconds, all drugs
+together (\code{BAYES_MAX_SECONDS}): no simulation is started after it, and a
+drug not finished by then is not updated}
+
+\item{jointPasses, jointTolerance}{with the antiseizure interactions on, the
+most rounds of updates, and the relative change in every estimate below
+which they stop (\code{BAYES_JOINT_PASSES}, \code{BAYES_JOINT_TOLERANCE})}
 }
 \value{
 a list: \code{drugs}, updated; \code{fits}, one per updated drug (with its
-\code{key}); and \code{problems}, sentences saying what could not be used
+\code{key}); \code{problems}, sentences saying what could not be used; and
+\code{failed}, the drugs that could not be updated, with their keys, which a
+caller passes back in \code{fits} so that they are not tried again until
+their inputs change; and \code{cache}, every fit made or reused, with its
+key, which a caller passes back in \code{fits} to reuse them all (with the
+antiseizure interactions on, the update repeats its round until no
+estimate moves, and a round's fits are keyed by the other drugs'
+estimates)
 }
 \description{
 The maximum a posteriori estimate of each measured drug's clearance and
