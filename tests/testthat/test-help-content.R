@@ -359,7 +359,9 @@ test_that("the cautions page names every model that reads a patient field", {
     paste(readLines(system.file("help", "cautions.md", package = "stanpumpR"), warn = FALSE),
           collapse = "\n")))))
   for (arg in names(HELP_FIELD_READER_ROWS)) {
-    readers <- Filter(function(drug) helpDrugDeclares(drug, arg), getDrugDefaultsGlobal()$Drug)
+    # a candidate model is read through its drug's name (R/modelSelection.R)
+    drugs <- setdiff(getDrugDefaultsGlobal()$Drug, modelCandidates())
+    readers <- Filter(function(drug) helpDrugDeclares(drug, arg), drugs)
     expect_gt(length(readers), 0, label = arg)
     for (drug in readers) {
       # by its name or, for a camel-case name, the title the help shows

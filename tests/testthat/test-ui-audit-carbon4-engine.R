@@ -77,13 +77,23 @@ test_that("drugOnSaturableEngine() is getDrugPK()'s answer for every drug in the
   adult <- vapply(drugs, function(d) isTRUE(pkHasMM(d, weight = 70, height = 170, age = 40,
                                                      sex = SEX_MALE)), logical(1))
   listed <- vapply(drugs, drugOnSaturableEngine, logical(1))
-  expect_identical(listed, adult)
+  child <- vapply(drugs, pkHasMM, logical(1), weight = 20, height = 115, age = 6, sex = SEX_FEMALE)
+  # A group whose model is chosen by age is listed when either patient's
+  # model is on the engine (drugOnSaturableEngine())
+  expect_identical(listed, adult | (!is.na(child) & child))
   expect_identical(sort(names(listed)[listed]),
                    sort(c("cetagliptin", "exenatide", "GHB", "linagliptin", "phenytoin",
-                          "vildagliptin", "voriconazole")))
-  child <- vapply(drugs, pkHasMM, logical(1), weight = 20, height = 115, age = 6, sex = SEX_FEMALE)
+                          "vildagliptin", "voriconazole",
+                          "cyclophosphamide", "cyclophosphamideMcCune", "fluorouracil",
+                          "fluorouracilBriki", "fluorouracilTan", "ifosfamide", "paclitaxel",
+                          "paclitaxelCrombag", "paclitaxelJoerger", "thioguanineIV",
+                          "vincristine", "vincristinePediatric")))
   known <- !is.na(child)
-  expect_identical(listed[known], child[known])
+  # every drug on the engine for a child is listed
+  expect_true(all(listed[known][child[known]]))
+  # and the only drugs listed that a child's model leaves off it are the
+  # groups whose adult model is on it
+  expect_true(all(adult[known][listed[known] & !child[known]]))
 })
 
 test_that("the Drug Library's locked units cost nothing to compute (C3)", {
