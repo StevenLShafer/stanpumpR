@@ -191,7 +191,16 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # drug-metabolising data show no such curve: pig CYP3A4 6%/C on both 38-32
 # and 32-26 C (Fritz 2005), straight Arrhenius plots for rat liver slices
 # over 7-37 C and UGT over about 26-56 C, and remifentanil's exponential
-# fitted over 20-35 C.  The choices: one factor
+# fitted over 20-35 C.  Propofol in adults cooled to 16-20 C on bypass for
+# circulatory arrest (Bartosova 2026, Biomed Pharmacother, PMID 42140058, read
+# in full): CL = 97.2 L/h x (T/36.5)^3.11 x (1 + 1.31 REWARM), the power
+# model fitting best (dOFV -177), so 8.5%/C at 36.5 C and 42% of normal at
+# 28 C, with clearance 2.3 times higher while rewarming than while cooling at
+# the same temperature; the authors read temperature as a surrogate for flow
+# and enzyme activity together, propofol being highly extracted.  A factor
+# of exp(-0.066 x 9) on intrinsic clearance alone, inside the well-stirred
+# model, leaves propofol at 82% of normal at 28 C; with liver and kidney
+# flow at 0.4 of normal it gives 44%, close to Bartosova's 42%.  The choices: one factor
 # on hepatic intrinsic clearance (inside the well-stirred model) for every
 # drug, or separate CYP, UGT and esterase factors; and whether to extend a
 # fit made above 34.8 C down to 28 C.
