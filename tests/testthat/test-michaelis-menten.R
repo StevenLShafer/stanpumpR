@@ -410,3 +410,27 @@ test_that("the new blocks are validated", {
                                             plotted = "free"))), "x"),
     "plotted")
 })
+
+test_that("the adaptive step is exact where the answer is known, and agrees for phenytoin", {
+  # mmDormandPrince() on exponential decay, two states at different rates
+  f <- function(t, x) c(-0.01, -0.2) * x
+  out <- mmDormandPrince(f, c(100, 5), 0, 500, 2, 1e-9, 1e-9)
+  expect_equal(out$x, c(100, 5) * exp(-c(0.01, 0.2) * 500), tolerance = 1e-8)
+  # Phenytoin takes it (its michaelisMenten block's adaptiveStep): the
+  # curve is the fixed 2-minute step's within MM_ADAPTIVE_RTOL's reach,
+  # measured to 5e-7 of the peak across eleven regimens against a 0.25-minute
+  # step (2026-11-14), where the user's bound is 1%
+  ET0 <- data.frame(Time = numeric(0), Event = character(0))
+  for (units in c("mg PO ER tid", "mg PE IM")) {
+    DT <- data.frame(Drug = "phenytoin", Time = 0, Dose = 100, Units = units,
+                     stringsAsFactors = FALSE)
+    drugs <- recalculatePK(NULL, getDrugDefaultsGlobal(), DT, age = 50, weight = 70,
+                           height = 170, sex = "male")
+    expect_true(drugs$phenytoin$michaelisMenten$adaptiveStep)
+    adaptive <- processdoseTable(DT, ET0, drugs, 7 * 1440, FALSE)$phenytoin$wide
+    drugs$phenytoin$michaelisMenten$adaptiveStep <- FALSE
+    fixed <- processdoseTable(DT, ET0, drugs, 7 * 1440, FALSE)$phenytoin$wide
+    expect_identical(adaptive$Time, fixed$Time)
+    expect_lt(max(abs(adaptive$Plasma - fixed$Plasma)) / max(fixed$Plasma), 1e-5)
+  }
+})

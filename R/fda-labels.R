@@ -25,7 +25,10 @@
 # papers/digests/ cites page by page, so it is kept as that card read it) or
 # `dailymed` (the current label as FDA's Structured Product Labeling,
 # downloaded from DailyMed, the National Library of Medicine's distribution of
-# the labels FDA holds, identified by its `setid`).
+# the labels FDA holds, identified by its `setid`) or `drugsatfda` (a label
+# saved by hand from Drugs@FDA, accessdata.fda.gov, which keeps every approved
+# version but refuses scripted downloads: a withdrawn product's label is only
+# there).
 #
 # data-raw/fdaLabels.R checks the files against the index and can refresh the
 # DailyMed rows.  Tests: tests/testthat/test-fda-labels.R.
@@ -80,7 +83,8 @@ helpDrugFdaLabelHTML <- function(drug, labels = fdaLabels()) {
     h <- have[i, ]
     meta <- c(if (nzchar(h$published)) h$published,
               if (nzchar(h$application)) h$application,
-              if (h$source == "dailymed") "from DailyMed")
+              if (h$source == "dailymed") "from DailyMed",
+              if (h$source == "drugsatfda") "from Drugs@FDA")
     sprintf("<li>%s%s%s</li>",
             link(paste0(FDA_LABELS_URL, utils::URLencode(h$file)), h$title),
             if (length(meta)) sprintf(" (%s)", esc(paste(meta, collapse = "; "))) else "",

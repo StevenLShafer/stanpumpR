@@ -6,6 +6,11 @@
 #
 #   source("data-raw/fdaLabels.R")
 #   checkFdaLabels()                  # every file present, checksums match
+#
+# CI runs checkFdaLabels() on every push and pull request
+# (.github/workflows/fda-labels.yaml), because R CMD check cannot: it tests the
+# built package, which leaves papers/ out, so test-fda-labels.R skips its file
+# checks there.
 #   refreshFdaLabels()                # list DailyMed labels with a newer version
 #   refreshFdaLabels(download = TRUE) # download them and update the index
 #
@@ -36,8 +41,8 @@ writeFdaLabelIndex <- function(x, path = FDA_LABELS_INDEX) {
   invisible(x)
 }
 
-#' Every file in the index is in papers/labels/ with its checksum, and every
-#' PDF there is in the index
+#' Every file in the index is in papers/labels/ with its checksum, every PDF
+#' there is in the index, and every digest card named exists
 checkFdaLabels <- function(index = readFdaLabelIndex(), dir = FDA_LABELS_DIR) {
   rows <- index[index$status == "label", ]
   path <- file.path(dir, rows$file)
@@ -45,10 +50,13 @@ checkFdaLabels <- function(index = readFdaLabelIndex(), dir = FDA_LABELS_DIR) {
   present <- file.exists(path)
   bad <- unique(rows$file[present][unname(tools::md5sum(path[present])) != rows$md5[present]])
   stray <- setdiff(list.files(dir, pattern = "\\.pdf$"), rows$file)
+  cards <- unique(rows$card[nzchar(rows$card)])
+  noCard <- cards[!file.exists(file.path("papers", "digests", paste0(cards, ".md")))]
   if (length(missing)) message("Missing: ", paste(missing, collapse = ", "))
   if (length(bad)) message("Checksum differs: ", paste(bad, collapse = ", "))
   if (length(stray)) message("Not in the index: ", paste(stray, collapse = ", "))
-  ok <- !length(missing) && !length(bad) && !length(stray)
+  if (length(noCard)) message("Digest card not found: ", paste(noCard, collapse = ", "))
+  ok <- !length(missing) && !length(bad) && !length(stray) && !length(noCard)
   message(if (ok) sprintf("%d label rows, %d files: all present and unchanged.",
                           nrow(rows), length(unique(rows$file))) else "Problems found.")
   invisible(ok)

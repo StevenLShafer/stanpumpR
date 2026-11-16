@@ -296,3 +296,11 @@ nortriptyline,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#6A1B9A,70,170,120
 temozolomide,mcg,,,mg PO,"mg PO,mg PO qd",#F4511E,0,0,0,0,0,IV,Chemotherapy
 dacarbazine,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr",#C0CA33,0,0,0,0,0,IV,Chemotherapy
 thioguanineIV,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#5C6BC0,0,0,0,0,0,IV,Chemotherapy
+linezolid,mcg,mg,mg/hr,mg,"mg,mg/hr,mg bid,mg PO,mg PO bid",#00838F,2,7,4.5,0,2.9,IV,Antibiotics
+cyclosporine,ng,mg,mg/hr,mg PO bid,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg PO bid",#AD1457,100,200,150,0,0,IV,Other
+scopolamine,pg,,,mg/day TD,mg/day TD,#5E35B1,0,0,0,0,0,IV,Antiemetics
+flecainide,ng,,,mg PO bid,"mg PO,mg PO bid",#EF6C00,200,1000,600,0,0,IV,Other
+mexiletine,mcg,,,mg PO tid,"mg PO,mg PO tid",#6D4C41,0.8,2,1.4,0,0,IV,Other
+amitriptyline,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#4527A0,0,0,0,0,0,IV,Antidepressants
+meropenem,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg/kg tid",#1A5276,0.031,16,0.12,0,2,IV,Antibiotics
+piperacillin,mcg,mg pip-tazo,mg/hr pip-tazo,mg pip-tazo,"mg pip-tazo,mg/kg pip-tazo,mg/hr pip-tazo,mg/kg/hr pip-tazo,mg pip-tazo tid,mg pip-tazo qid,mg pip-tazo q4h,mg/kg pip-tazo tid,mg/kg pip-tazo qid,mg/kg pip-tazo q4h,mg,mg/kg,mg/hr,mg/kg/hr,mg tid,mg qid,mg q4h",#2471A3,2.9,46,23,0,11.4,IV,Antibiotics

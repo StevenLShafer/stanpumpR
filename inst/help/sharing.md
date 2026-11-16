@@ -2,7 +2,7 @@ The URL in your browser's address bar is the simulation. Every change you make i
 
 ## To save or share a simulation
 
-Copy the address bar and paste it into an email, a document, or a teaching handout. Whoever opens it sees the same patient, doses, events, options and thresholds you had; edits to the rest of the Drug Library (concentrations, units, colours, ranges) are not carried, as listed below. The URL is long, because it carries the whole state. A URL that carries doses opens straight onto the simulation, without the startup drug menu. There is a limit: a session with a great many drugs in its dose table can make a URL longer than the server accepts (about 8,000 characters), and such a link would not reopen. The app then says so and leaves the address bar at the plain app address; simulate fewer drugs to get a link again.
+Copy the address bar and paste it into an email, a document, or a teaching handout. Whoever opens it sees the same patient, doses, events, options, thresholds and Drug Library edits you had. The URL is long, because it carries the whole state. A URL that carries doses opens straight onto the simulation, without the startup drug menu. There is a limit: a session with a great many drugs in its dose table can make a URL longer than the server accepts (about 8,000 characters), and such a link would not reopen. The app then says so and leaves the address bar at the plain app address; simulate fewer drugs to get a link again.
 
 A link is plain text that anyone can edit, so the app reads its dose and event tables as it reads what you type: an entry it cannot read (an unknown drug, a unit the drug does not offer, an unreadable time or dose, an unknown event) is left out, and the app says so. Check the tables before relying on a link that did not come from you.
 
@@ -15,11 +15,11 @@ The URL also carries the patient's covariates and regimen. The app does not send
 - The event table
 - Graph options and additional plots
 - Edited recovery thresholds, including the MAC threshold
+- Edits to the Drug Library (concentration units, units, colours, ranges and MEAC), only the rows you changed. Since 2026-11-15: a link made before then opened in the standard library, so a drug switched to ng/mL had its targets and measured levels, typed in ng/mL, read a thousandfold high. A link's edits are held to the Drug Library dialog's own rules, drug by drug: a drug whose edit breaks them opens with its standard entry and the app says so, and that drug's targets, thresholds and measured concentrations, saved in the link's units, are converted to the standard units (since 2026-11-15: until then one such drug dropped every drug's edits, and a target saved as 3000 ng/mL was read as 3000 mcg/mL).
 - The time units, time display mode and procedure start
 
 ## What is not included
 
-- Edits to the Drug Library other than the thresholds
 - Which help page you were reading
 - Anything typed into the Email Slide panel
 

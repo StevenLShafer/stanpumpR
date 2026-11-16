@@ -38,6 +38,14 @@ PAPER_REVIEW_MODEL        <- "claude-opus-5-5"
 PAPER_REVIEW_EFFORT       <- "high"
 PAPER_REVIEW_MAX_TOKENS   <- 128000
 PAPER_REVIEW_TIMEOUT_SEC  <- 1200
+# A review still running after this long (the calibration's slowest at high
+# took 7 minutes) is offered a quick review instead: the same manuscript,
+# the same model, at effort medium, which in the calibration was 1.6 times
+# faster and read a paper with one model as fully, but left out secondary
+# models and some per-patient detail (Shafer, 2026-11-13;
+# docs/paper-review-calibration.md).
+PAPER_REVIEW_LATE_SEC     <- 600
+PAPER_REVIEW_QUICK_EFFORT <- "medium"
 # This app's own key first, so it can sit beside another app's
 # ANTHROPIC_API_KEY in the same ~/.Renviron; then the standard name.
 PAPER_REVIEW_KEY_ENV      <- c("STANPUMPR_ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY")
@@ -66,9 +74,12 @@ PAPER_REVIEW_BACKGROUND_TIMEOUT_SEC <- PAPER_REVIEW_TIMEOUT_SEC + 300
 #'
 #' @param sessionKey a key held in the session's memory, or NULL
 #' @param config the app's configuration list
+#' @param admitted TRUE for a review whose place within the shared key's
+#'   limit is already reserved (a quick review): the limit, reached since by
+#'   another session, does not withdraw the key from it
 #' @returns the key, or NULL when none is configured
 #' @keywords internal
-paperReviewApiKey <- function(sessionKey = NULL, config = .sprglobals$config)
+paperReviewApiKey <- function(sessionKey = NULL, config = .sprglobals$config, admitted = FALSE)
 {
   if (is.character(sessionKey) && length(sessionKey) == 1 && nzchar(sessionKey))
     return(sessionKey)
@@ -77,7 +88,7 @@ paperReviewApiKey <- function(sessionKey = NULL, config = .sprglobals$config)
   if (is.list(config) && isFALSE(config$paper_review_shared_key)) return(NULL)
   # Nor is it once it has made the reviews it is allowed
   # (paperReviewSharedKeyAdmit(), R/paper-review-usage.R).
-  if (paperReviewSharedKeyExhausted()) return(NULL)
+  if (!isTRUE(admitted) && paperReviewSharedKeyExhausted()) return(NULL)
   for (name in PAPER_REVIEW_KEY_ENV) {
     key <- Sys.getenv(name, "")
     if (nzchar(key)) return(key)
@@ -452,20 +463,23 @@ paperReviewPrepare <- function(pdf, supplement = NULL, key, ...)
 #' \code{httr2::} or \code{jsonlite::}.  It returns what came back, raw:
 #' the HTTP status, the API's error object for a refused request, or the
 #' server-sent events; paperReviewInterpret() reads them.  It writes nothing
-#' anywhere, and the key is redacted from the request.
+#' anywhere but, when asked, its own process ID (so the app can stop it), and
+#' the key is redacted from the request.
 #'
 #' @param json the request body
 #' @param key the API key
 #' @param fallbacks request the server-side refusal fallback?
 #' @param url,version,beta,timeout the endpoint, API version, fallback beta
 #'   header and time limit (seconds)
+#' @param pidFile a file to write this process's ID to, or NULL
 #' @returns a list: \code{failure} (NULL, \code{"no_httr2"} or
 #'   \code{"connection"}), \code{status}, \code{error}, \code{events}
 #' @keywords internal
 paperReviewTransport <- function(json, key, fallbacks = TRUE,
                                  url = "https://api.anthropic.com/v1/messages",
-                                 version, beta, timeout)
+                                 version, beta, timeout, pidFile = NULL)
 {
+  if (!is.null(pidFile)) writeLines(as.character(Sys.getpid()), pidFile)
   if (!requireNamespace("httr2", quietly = TRUE)) return(list(failure = "no_httr2"))
   req <- httr2::request(url)
   req <- httr2::req_headers(req,
@@ -586,24 +600,66 @@ paperReviewInBackground <- function(fn, args, timeout)
   mirai::mirai(do.call(fn, args), .args = list(fn = fn, args = args), .timeout = timeout * 1000)
 }
 
+#' The function that stops one background review and its process
+#'
+#' Made here, not inside paperReviewExtractAsync(), so that it holds only the
+#' job and the file of its process ID: a function made there would keep that
+#' call's frame, the manuscript and the key with it, alive for as long as the
+#' app keeps the function (CodeRabbit, PR #720).
+#'
+#' @param job the background job
+#' @param pidFile the file its process wrote its ID to
+#' @returns a function of no arguments that returns TRUE only when it ended
+#'   the job's process.  Without a readable process ID, or when the signal is
+#'   not delivered, it returns FALSE and leaves the job alone, so that the
+#'   review goes on and its answer is still read: settling the job without
+#'   ending the process would leave a review running, and billed, that nothing
+#'   waits for (CodeRabbit, PR #720).
+#' @keywords internal
+paperReviewStopper <- function(job, pidFile)
+{
+  force(job)
+  force(pidFile)
+  function() {
+    # Only while it runs: once it has finished, its ID may be another's.
+    if (!mirai::unresolved(job)) return(invisible(FALSE))
+    pid <- suppressWarnings(as.integer(tryCatch(readLines(pidFile, warn = FALSE)[1],
+                                                error = function(e) NA_character_)))
+    if (length(pid) != 1 || is.na(pid) || pid <= 0 || pid == Sys.getpid()) return(invisible(FALSE))
+    if (!isTRUE(tools::pskill(pid))) return(invisible(FALSE))
+    # The process has ended; settle the job, which would otherwise wait for
+    # its timeout.
+    mirai::stop_mirai(job)
+    invisible(TRUE)
+  }
+}
+
 #' Send one manuscript to the Anthropic API without waiting for it
 #'
 #' The request is built and checked here, sent from a background R process,
 #' and read here when it returns.
 #'
 #' @inheritParams paperReviewExtract
+#' @param onJob called once the background process starts with a function
+#'   that stops it, or NULL.  Without a dispatcher, \code{mirai::stop_mirai()}
+#'   settles the job here at once but leaves its process reading the paper
+#'   (and billed) until its own time limit, so the stop function also ends
+#'   the process, by the ID it wrote.
 #' @returns a promise of what paperReviewExtract() returns; it is rejected
 #'   with a \code{paper_review_error}
 #' @keywords internal
-paperReviewExtractAsync <- function(pdf, supplement = NULL, key, ...)
+paperReviewExtractAsync <- function(pdf, supplement = NULL, key, ..., onJob = NULL)
 {
   prepared <- tryCatch(paperReviewPrepare(pdf, supplement, key = key, ...),
                        paper_review_error = function(e) e)
   if (inherits(prepared, "paper_review_error")) return(promises::promise_reject(prepared))
-  job <- paperReviewInBackground(paperReviewTransport, paperReviewTransportArgs(prepared, key),
+  pidFile <- tempfile("paper-review-")
+  job <- paperReviewInBackground(paperReviewTransport,
+                                 c(paperReviewTransportArgs(prepared, key), list(pidFile = pidFile)),
                                  PAPER_REVIEW_BACKGROUND_TIMEOUT_SEC)
   rm(prepared)
-  promises::then(job,
+  if (is.function(onJob)) onJob(paperReviewStopper(job, pidFile))
+  answer <- promises::then(job,
     onFulfilled = function(result) {
       # A failure inside the process comes back as a value, not an error.
       if (inherits(result, "miraiError") || inherits(result, "errorValue"))
@@ -613,4 +669,5 @@ paperReviewExtractAsync <- function(pdf, supplement = NULL, key, ...)
     onRejected = function(e)
       stop(paperReviewError("background",
                             "The review did not finish (it timed out, or its background process failed). Try again.")))
+  promises::finally(answer, function() unlink(pidFile))
 }

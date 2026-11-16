@@ -372,6 +372,67 @@ antibioticMbcTable <- function()
         Note = "MIC50/MIC90 4/32 mg/L.",
         Source = "Sader 2023."),
 
+    # --- Meropenem -----------------------------------------------------------
+    row("meropenem", "Enterobacterales (E. coli, Klebsiella, Enterobacter)", "principal",
+        MIC50 = 0.03, MIC90 = 0.06, MBC50 = 0.03, MBC90 = 0.12,
+        Basis = "MBC50: MIC x 1; MBC90: MIC x 2",
+        Note = paste("Meropenem is bactericidal at about its MIC: the Merrem label (sec. 12.4) puts",
+                     "bactericidal concentrations at 'typically 1-2 times the bacteriostatic",
+                     "concentrations', and in Edwards 1989 the MBC was the MIC in 57 of 97 strains and",
+                     "at most twice it in 87 (90%), so the median ratio is 1 and the 90th percentile 2."),
+        Source = c(
+          "MIC50/MIC90 0.03/0.06 in 9,809 US isolates, 2017-2021 (Sader HS et al., Open Forum Infect Dis",
+          "2023;10:ofad058, Table 2); MBC/MIC ratios: Edwards JR et al., Antimicrob Agents Chemother",
+          "1989;33:215-222, Table 4, and the Merrem label (2016), sec. 12.4.")),
+    row("meropenem", "Pseudomonas aeruginosa", "core",
+        MIC50 = 0.5, MIC90 = 8, MBC50 = 0.5, MBC90 = 16,
+        Basis = "MBC50: MIC x 1; MBC90: MIC x 2",
+        Note = paste("78% of 2,282 isolates susceptible (SENTRY 2020). The MIC90 of 8 mg/L is at the CLSI",
+                     "resistant breakpoint."),
+        Source = "Shortridge D et al., Microbiol Spectr 2022;10:e0271221, Table 3; ratio as above."),
+    row("meropenem", "ESBL-producing Enterobacterales", "core",
+        MIC50 = 0.03, MIC90 = 0.12, MBC50 = 0.03, MBC90 = 0.25,
+        Basis = "MBC50: MIC x 1; MBC90: MIC x 2",
+        Note = "1,011 ESBL-phenotype isolates; meropenem is a drug of choice against them.",
+        Source = "Sader 2023, Table 2; ratio as above."),
+    row("meropenem", "Carbapenem-resistant Enterobacterales", "excluded",
+        Note = "MIC50/MIC90 16/>32 mg/L, 4.1% susceptible.",
+        Source = "Shortridge 2022, Table 2."),
+    row("meropenem", "Acinetobacter spp.", "excluded",
+        Note = "MIC50/MIC90 1/>32 mg/L, 53% susceptible.",
+        Source = "Shortridge 2022, Table 4."),
+    row("meropenem", "MRSA, MRSE and enterococci", "excluded",
+        Note = paste("'Meropenem does not have in vitro activity against MRSA or MRSE' (label, sec. 12.4);",
+                     "the label has no interpretive criteria for enterococci."),
+        Source = "Merrem label (2016), sec. 12.4."),
+
+    # --- Piperacillin (as piperacillin-tazobactam) ---------------------------
+    row("piperacillin", "Enterobacterales (E. coli, Klebsiella, Enterobacter)", "principal",
+        MIC50 = 2, MIC90 = 16, MBC50 = 2, MBC90 = 16,
+        Basis = "MIC x 1",
+        Note = paste("Piperacillin kills Enterobacterales at about its MIC: in 420 blood isolates 'MBCs were",
+                     "generally close to MICs with MBC-to-MIC ratios of less than 2' (geometric means: E. coli",
+                     "4.5/5.2, Klebsiella 13.0/18.9, Enterobacter 2.9/5.5 mg/L). 88% of isolates are",
+                     "susceptible by CLSI 2023 (Sader 2023)."),
+        Source = c(
+          "MIC50/MIC90 2/16 in 9,809 US isolates, 2017-2021 (Sader HS et al., Open Forum Infect Dis",
+          "2023;10:ofad058, Table 2); MBC/MIC: Reimer LG et al., Antimicrob Agents Chemother",
+          "1980;17:412-415, Tables 1 and 2.")),
+    row("piperacillin", "Pseudomonas aeruginosa", "core",
+        MIC50 = 4, MIC90 = 16, MBC50 = 4, MBC90 = 32,
+        Basis = "measured",
+        Note = paste("40 isolates at the standard inoculum (5 x 10^5 CFU/mL). Modern isolates are less",
+                     "susceptible (MIC90 about 128 mg/L in US surveillance, abstract only), which this row,",
+                     "of susceptible-era isolates, does not reflect."),
+        Source = "Corrado ML et al., Antimicrob Agents Chemother 1980;18:893-896, Tables 1 and 2."),
+    row("piperacillin", "ESBL-producing and carbapenem-resistant Enterobacterales", "excluded",
+        Note = "ESBL phenotype MIC50/MIC90 8/128 mg/L, 63% susceptible.",
+        Source = "Sader 2023, Table 2."),
+    row("piperacillin", "MRSA and ampicillin-resistant enterococci", "excluded",
+        Note = paste("The Zosyn label lists 'Staphylococcus aureus (methicillin susceptible isolates only)'",
+                     "and 'Enterococcus faecalis (ampicillin or penicillin-susceptible isolates only)'."),
+        Source = "Zosyn label (NDA 050750, 2023), sec. 12.4."),
+
     # --- Metronidazole -------------------------------------------------------
     row("metronidazole", "Bacteroides fragilis group", "principal",
         MIC50 = 0.5, MIC90 = 1, MBC50 = 1, MBC90 = 4,
@@ -430,6 +491,45 @@ antibioticMbcTable <- function()
   rownames(x) <- NULL
   x
 }
+
+
+#' The antibiotics whose shaded band is a trough range, not an MBC band
+#'
+#' The MBC band rule needs a principal pathogen that the drug kills.  A
+#' bacteriostatic drug has none among the pathogens it is given against, so
+#' its band is instead the trough range a consensus monitoring guideline
+#' recommends, on the plotted (total) curve, with the reason.  An exception
+#' approved by Steven L. Shafer on 2026-11-13 for linezolid, which the Zyvox
+#' label calls bacteriostatic against enterococci and staphylococci (its MBC
+#' against them is 64 to 2048 mg/L: Sandoe 2006, Shah 2024), and whose
+#' bactericidal activity against streptococci is known only from abstracts.
+#'
+#' @returns a data frame: Drug, Lower, Typical, Upper (mg/L, total drug),
+#'   Reason and Source
+#' @keywords internal
+antibioticTroughBands <- function()
+{
+  data.frame(
+    Drug = "linezolid",
+    Lower = 2, Typical = 4.5, Upper = 7,
+    Reason = paste(
+      "Linezolid is bacteriostatic against staphylococci and enterococci (Zyvox label, sec. 12.4),",
+      "with MBC90s of 32 mg/L or more against MRSA (Shah 2024, Table 1) and 1024-2048 mg/L against",
+      "enterococci (Sandoe 2006, Table 2), so it has no principal pathogen it kills at attainable",
+      "levels; streptococcal MBCs were found only in abstracts."),
+    Source = paste(
+      "Abdul-Aziz MH et al., Intensive Care Med 2020;46:1127-1153 (ESICM/ESCMID position paper),",
+      "Table 4: 'Cmin: 2-7 mg/L', a trough 30 min before the next dose, 48 h into therapy;",
+      "toxicity (thrombocytopenia) above a trough of 7-10 mg/L."),
+    stringsAsFactors = FALSE
+  )
+}
+
+#' Is an antibiotic's band a trough range rather than an MBC band?
+#' @param drug a drug name
+#' @returns TRUE or FALSE
+#' @keywords internal
+antibioticBandIsTrough <- function(drug) drug %in% antibioticTroughBands()$Drug
 
 
 #' One antibiotic's MBC band

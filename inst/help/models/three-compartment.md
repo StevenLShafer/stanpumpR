@@ -34,7 +34,7 @@ Cp(t) = A e^(-α t) + B e^(-β t) + C e^(-γ t)
 
 where α > β > γ are the roots of the characteristic cubic of the rate-constant matrix (stanpumpR solves it in `cube()`), and the coefficients A, B, C follow from the rate constants. The three terms are the rapid distribution, slow distribution and elimination phases of the familiar tri-exponential curve. The pages for each drug report the half-lives ln(2)/α, ln(2)/β and ln(2)/γ.
 
-A constant infusion is the integral of the bolus response, so it is also a sum of the same exponentials with different coefficients. A dose table is therefore simulated by adding up, at each time point, the contribution of every bolus and infusion segment that has started. Nothing is integrated numerically, and the answer is exact at every evaluated time. The exception is the drugs on the nonlinear Michaelis-Menten engine (phenytoin, GHB, exenatide, cetagliptin, linagliptin, vildagliptin), which need a numerical engine of their own (see [How stanpumpR computes](help:models/overview)).
+A constant infusion is the integral of the bolus response, so it is also a sum of the same exponentials with different coefficients. A dose table is therefore simulated by adding up, at each time point, the contribution of every bolus and infusion segment that has started. Nothing is integrated numerically, and the answer is exact at every evaluated time. The exception is the drugs on the nonlinear Michaelis-Menten engine (phenytoin, voriconazole, GHB, exenatide, cetagliptin, linagliptin, vildagliptin), which need a numerical engine of their own (see [How stanpumpR computes](help:models/overview)).
 
 ## What the phases mean clinically
 

@@ -16,7 +16,8 @@ The concentration is not plotted. It drives an **indirect-response model** of th
 
 - the inhibition is sigmoid, `E = C^γ / (C^γ + C50^γ)`, half-maximal at **0.0023 mg/L** with Hill coefficient **1.2**;
 - `d(1/INR)/dt = kin·(1 − E) − kout·(1/INR)`, with `kin` 0.0269 /h and `kout` 0.0268 /h;
-- the baseline 1/INR is `kin/kout`, so the plotted INR starts near 1.0 and rises as acenocoumarol accumulates.
+- the baseline 1/INR is `kin/kout`, so the plotted INR starts near 1.0 and rises as acenocoumarol accumulates;
+- the plotted INR is held at **21**, the ceiling of the library's Hamberg warfarin model (its baseline of 1 plus its maximum of 20). The inhibition reaches 1 at very high concentrations, and 1/INR then decays towards zero, so without the ceiling an absurd dose plots an INR without limit. 21 is far above any INR the model was fitted to; below it the curve is the model's own.
 
 ### Why the INR, not a concentration
 

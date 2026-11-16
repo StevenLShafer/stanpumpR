@@ -29,5 +29,17 @@ meant that a time to peak effect of 100 minutes or more could not be
 reached and returned a wrong ke0 without an error, and the squared error
 left morphine's 93.8 min solved to 93.83 min.  (Claude Code, 2026-10-17, from
 an external review.)
+
+Reachable in principle is not reachable in floating point.  A plasma curve
+that is gone within seconds (a Bayesian candidate at twenty times the
+model's clearance and a twentieth of its volume: oxymorphone, pregabalin,
+epinephrine and vasopressin) needs a ke0 below 1e-100 per minute to peak at
+a tPeak of minutes, which no bracket reaches, and uniroot() stopped, which
+failed the Bayesian update of that drug (Carbon's third UI audit,
+2026-11-15, H3).  A target outside the bracket now gets the end of the
+bracket nearest to it, as ke0FromTPeak() does: \code{KE0_SOLVE_MIN}, whose
+effect site is close to zero, as the exact ke0 would give, for a target
+later than it can reach, and \code{KE0_SOLVE_MAX} for one earlier.  Every
+tPeak solved before is solved exactly as before.
 }
 \keyword{internal}

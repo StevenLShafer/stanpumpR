@@ -208,6 +208,10 @@ foldMetabolites <- function(drugs, maximum, plotRecovery = FALSE)
   {
     contribution <- drugs[[parent]]$metaboliteSeries
     if (is.null(contribution)) next
+    # A companion line (another model of a drug, drawn beside it: the
+    # Bayesian update's "(population)" line, R/bayesian.R) forms nothing:
+    # the drug's own entry already gives its metabolite what it forms.
+    if (!is.null(drugs[[parent]]$companionOf)) next
 
     target <- drugs[[parent]]$metaboliteName
     if (is.null(target) || !nzchar(target)) next
@@ -260,6 +264,34 @@ foldMetabolites <- function(drugs, maximum, plotRecovery = FALSE)
     # Record where it came from, so the row can say so and so that a reader of
     # the object can tell a formed contribution from a given one.
     drugs[[target]]$formedFrom <- contributions[[target]]
+  }
+
+  # A Bayesian update's population line of a metabolite: what the parents
+  # form as the model has it, simulated by processdoseTable() from the
+  # entry's populationSources (R/bayesian.R).  A companion has no time until
+  # threshold.
+  for (target in names(drugs))
+  {
+    formed <- drugs[[target]]$formedSims
+    if (length(formed) == 0 || is.null(drugs[[target]]$wideOwn)) next
+    times <- metaboliteTimeLine(c(
+      list(drugs[[target]]$wideOwn$Time),
+      lapply(formed, function(f) f$metaboliteSeries$Time)
+    ))
+    merged <- drugs[[target]]$wideOwn
+    for (f in formed) merged <- mergeMetaboliteSeries(merged, f$metaboliteSeries, times)
+    if (is.null(merged)) next
+    drugs[[target]]$wide <- merged
+    drugs[[target]]$compartments <- mergeCompartmentSeries(
+      drugs[[target]]$compartmentsOwn,
+      lapply(formed, function(f) f$metaboliteCompartments),
+      merged$Time
+    )
+    X <- finishDrugSeries(merged, drugs[[target]], maximum, FALSE)
+    drugs[[target]]$results   <- X$results
+    drugs[[target]]$equiSpace <- X$equiSpace
+    drugs[[target]]$max       <- X$max
+    drugs[[target]]$formedFrom <- names(formed)
   }
 
   drugs
