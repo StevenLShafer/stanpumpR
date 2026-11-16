@@ -298,7 +298,17 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # 5%/C if read crudely, but not at steady state, inflow against arterial,
 # hemodiluted, and with arterial concentrations 6.9 times venous, so the
 # authors suspect tissue esterases and perfusion as well as red-cell
-# esterase (Jacobs 1993, J Clin Pharmacol 33:360).
+# esterase (Jacobs 1993, J Clin Pharmacol 33:360).  Suxamethonium on the
+# isolated rat diaphragm blocked more at 20 than at 37 C, but cooling
+# deepens decamethonium's block as much, which no esterase removes, so the
+# effect is partly at the end plate; no clearance (Whittaker 1962, J Pharm
+# Pharmacol 14:803).  Remimazolam, 1 mg/kg/h on bypass at a bladder
+# temperature of 32.6 C (36.3 C before): total concentration fell at the
+# start of bypass and was back at its baseline (about 760 ng/mL) in the
+# cold, with the unbound fraction raised about threefold by hemodilution;
+# the authors treat it as a high-extraction drug and say its kinetics in
+# hypothermia are uncharacterised (Inoue 2026, J Cardiothorac Vasc Anesth
+# 40:1138).  Both read in full; neither gives a per-degree factor.
 #
 # Body temperature and cardiac output are NOT coupled: hypothermia does not
 # lower cardiac output by itself.  Fever raises cardiac output and cooling
