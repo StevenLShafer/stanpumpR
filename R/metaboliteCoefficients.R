@@ -229,6 +229,11 @@ convolveExponentials <- function(P, M, K)
 #'   as metabolite, having been converted before reaching the systemic
 #'   circulation.  Defaults to 0.  Ignored when the parent has no oral
 #'   absorption constant.
+#' @param directFraction fraction of an intravenous parent dose (bolus or
+#'   infusion) entering the metabolite's central compartment directly, never
+#'   having been parent: the unencapsulated share of a liposomal product
+#'   (doxorubicinLiposomal, Hsu 2018).  Defaults to 0.  The parent's own model
+#'   carries the rest of the dose (see that drug's header).
 #'
 #' @returns a list with \code{lambda} (the union of eigenvalues: parent, then
 #'   metabolite, then the absorption constant when there is one),
@@ -238,12 +243,14 @@ convolveExponentials <- function(P, M, K)
 #'   \code{PO2} vector for the doses that take that path.
 #' @export
 metaboliteCoefficients <- function(parent, metabolite, kFormation, mwRatio = 1,
-                                   unitScale = 1, firstPassFraction = 0)
+                                   unitScale = 1, firstPassFraction = 0,
+                                   directFraction = 0)
 {
   # No upper bound on kFormation.  The old 'fraction' form was capped at 1 because it
   # was a share of elimination; a transfer rate constant has no such ceiling.
   stopifnot(kFormation >= 0, mwRatio > 0, unitScale > 0,
-            firstPassFraction >= 0, firstPassFraction <= 1)
+            firstPassFraction >= 0, firstPassFraction <= 1,
+            directFraction >= 0, directFraction <= 1)
 
   P <- dispositionTerms(parent)
   M <- dispositionTerms(metabolite)
@@ -258,6 +265,12 @@ metaboliteCoefficients <- function(parent, metabolite, kFormation, mwRatio = 1,
   iv     <- convolveExponentials(P, M, K)
   lambda <- iv$lambda
   bolus  <- iv$coef
+  # A share of an intravenous dose given straight to the metabolite: its own
+  # unit bolus response, on the metabolite's eigenvalues (the vector carries
+  # the parent's first, then the metabolite's)
+  if (directFraction > 0)
+    bolus <- bolus + c(rep(0, length(P$lambda)),
+                       M$coef * directFraction * mwRatio * unitScale)
 
   # An infusion is the integral of the bolus response, so each exponential's
   # infusion coefficient is its bolus coefficient over its own eigenvalue --
@@ -469,7 +482,7 @@ METABOLITE_FORMATION_BASIS <- data.frame(
              "doxorubicinJoerger", "irinotecan", "cisplatin",
              "doxorubicinPediatric", "gemcitabine", "capecitabine",
              "doxorubicinPerezBlanco", "doxorubicin", "clozapine", "amitriptyline",
-             "selexipag", "suzetrigine", "macitentan"),
+             "doxorubicinLiposomal", "selexipag", "suzetrigine", "macitentan"),
   metabolite = c("morphine", "hydromorphone", "oxymorphone",
                  "enalaprilat", "prednisolone",
                  "desethylamiodarone", "dehydroaripiprazole", "salicylate",
@@ -478,14 +491,15 @@ METABOLITE_FORMATION_BASIS <- data.frame(
                  "irinotecanSN38", "cisplatinBound",
                  "doxorubicinolPediatric", "gemcitabineDFDU", "capecitabine5FU",
                  "doxorubicinolPerezBlanco", "doxorubicinol", "norclozapine",
-                 "nortriptyline", "ACT333679", "M6SUZ", "aprocitentan"),
+                 "nortriptyline", "doxorubicinLiposomalFree", "ACT333679", "M6SUZ",
+                 "aprocitentan"),
   basis = c("reads", "reads", "reads",
             "shared", "shared",
-            rep("joint", 17), "reads", "joint", "shared", "shared"),
+            rep("joint", 17), "reads", "joint", "joint", "shared", "shared"),
   uses = c("libraryReferenceClearance", "hydromorphone",
            "libraryReferenceClearance",
            "enalaprilatSet", "prednisolonePairSystem",
-           rep(NA_character_, 17), "nortriptyline", NA_character_, "M6SUZ",
-           "aprocitentan"),
+           rep(NA_character_, 17), "nortriptyline", NA_character_, NA_character_,
+           "M6SUZ", "aprocitentan"),
   stringsAsFactors = FALSE
 )

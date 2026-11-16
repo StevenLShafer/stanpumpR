@@ -379,7 +379,7 @@ drugOnSaturableEngine <- function(drug) {
               "vildagliptin", "voriconazole",
               "cyclophosphamide", "cyclophosphamideMcCune", "fluorouracil",
               "fluorouracilBriki", "fluorouracilTan", "ifosfamide", "paclitaxel",
-              "paclitaxelCrombag", "paclitaxelJoerger", "thioguanineIV", "vincristine",
+              "paclitaxelCrombag", "paclitaxelJoerger", "paclitaxelProteinBound", "thioguanine", "thioguanineIV", "vincristine",
               "vincristinePediatric", "suzetrigine", "macitentan")
 }
 

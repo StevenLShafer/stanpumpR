@@ -289,9 +289,12 @@ helpSaturableTerminalHalfLife <- function(X) {
     # third compartment entered at Vmax/(Km V1) and left at k21: the slowest
     # eigenvalue of the three-compartment rate matrix
     k13 <- sd$vmax / sd$km / v1
+    # its return: first order (k21), or saturable from the store's volume v,
+    # which below Km is the clearance vmax / km over v
+    k31 <- if (is.null(sd[["volume"]])) sd$k21 else sd$vmax / sd$km / sd[["volume"]]
     A <- matrix(c(-(k10 + k12 + k13), k12, k13,
                   k21, -k21, 0,
-                  sd$k21, 0, -sd$k21), 3, 3)
+                  k31, 0, -k31), 3, 3)
     # (an absent linear compartment, k12 = k21 = 0, adds a spurious zero)
     rates <- -Re(eigen(A, only.values = TRUE)$values)
     return(log(2) / min(rates[rates > 1e-12]))
@@ -1169,8 +1172,9 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     mmTab <- do.call(rbind, rowsMM[!vapply(rowsMM, is.null, logical(1))])
     distributionNote <- if (!is.null(mm$saturableDistribution)) paste0(
       "<p>Distribution saturates too: the drug passes from the central compartment into a further ",
-      "compartment at a rate that approaches a ceiling as the concentration rises, and returns at ",
-      "first order. That compartment has no volume of its own (it is an amount), so it is not in ",
+      "compartment at a rate that approaches a ceiling as the concentration rises, and returns ",
+      if (is.null(mm$saturableDistribution[["volume"]])) "at first order. That compartment has no volume of its own (it is an amount), so it is not in " else
+        "at a rate that saturates in the same way. That compartment is not in ",
       "the tables above; the peripheral volume given is the linear compartment's. The terminal ",
       "half-life below Km includes it.</p>") else ""
     linearNote <- if (isTRUE(mm$clLinear > 0)) paste0(

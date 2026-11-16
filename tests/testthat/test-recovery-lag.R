@@ -140,7 +140,10 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     # (FDA review of NDA 219209); plasma only
                     "suzetrigine",
                     # ambrisentan's fixed 0.525 h lag (Okour 2023); plasma only
-                    "ambrisentan"))
+                    "ambrisentan",
+                    # oral thioguanine's derived 1.0 h lag (Lowe 2001's
+                    # median time to peak, 2026-11-16); plasma only
+                    "thioguanine"))
 })
 
 
