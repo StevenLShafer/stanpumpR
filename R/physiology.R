@@ -137,10 +137,15 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # carrier uptake, not CYP), 11.3%/C over 34.3-38.0 C, its renal share
 # unchanged so renal clearance fell as much (Caldwell 2000, Anesthesiology
 # 92:84); remifentanil (esterases), 6.37%/C down to about 29.6 C (Michelsen
-# 2001, as tabulated by Tortorici 2007, Crit Care Med 35:2196).  Abstracts
-# only: morphine (UGT2B7) 6.89%/C in cooled neonates and 6.83%/C pooled for
-# intermediate-clearance drugs, none for high-clearance ones (Favie 2019,
-# 2020).  Bjelland 2013 (DMD 41:214, read in full), cooled patients after
+# 2001, as tabulated by Tortorici 2007, Crit Care Med 35:2196).  Cooled
+# neonates (read in full; 33.5 C then rewarmed to 36.5 C, so a linear effect
+# over 33.5-36.5 C only): morphine CL x (1 + 0.0689 (T - 36.5)), hepatic and
+# renal together, and its glucuronides, cleared by the kidney, x (1 + 0.0491
+# (T - 36.5)) (Favie 2019, PLoS One 14:e0211910); pooled, 6.83%/C (95% CI
+# 5.16-8.34) for morphine, midazolam and 1-hydroxymidazolam together, so
+# UGT2B7 and CYP3A drugs shared one factor, and not identifiable for the
+# renal drugs and lidocaine, whose recovery after birth was much larger
+# (Favie 2020, Clin Pharmacol Ther 108:1098).  Bjelland 2013 (DMD 41:214, read in full), cooled patients after
 # cardiac arrest (33.3 C) against other ICU patients (37.6 C), a group
 # comparison confounded by illness (creatinine clearance 66 against 137
 # mL/min): clearance lower for morphine (1201 against 1687 mL/min, about
