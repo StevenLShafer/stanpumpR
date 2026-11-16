@@ -243,6 +243,17 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # values (midazolam in volunteers, propofol and cisatracurium on bypass)
 # carry falls in blood flow that the Cardiac output slider already models.
 # Michelsen's exponential is the one fit that spans the slider's 28-37 C.
+# Read after the decision: remifentanil within patients, 32, 25 and 35
+# mL/min/kg before, during (28-30 C) and after hypothermic bypass, about
+# 4%/C (Russell 1997, Br J Anaesth 79:456); chlorzoxazone (CYP2E1) in rats
+# after cardiac arrest, 0.580 against 1.26 mL/min at 30 against 37 C, and in
+# microsomes Km 551 against 255 uM with Vmax unchanged, both about 11%/C
+# (Tortorici 2006, Crit Care Med 34:785); a sufentanil TCI model for bypass
+# that ASSUMED Q10 2, exp(-0.0693 (37 - T)) on its terminal eigenvalue (Liu
+# 1992, IEEE Trans Biomed Eng 39:658), a precedent for the form; atracurium
+# offset against rectal temperature in children, an effect, not a clearance
+# (Playfor 2000, Paediatr Anaesth 10:83); and the reviews of Holley 1982
+# (Clin Pharmacokinet 7:234) and Smits 2020 (Front Pharmacol 11:587).
 #
 # Body temperature and cardiac output are NOT coupled: hypothermia does not
 # lower cardiac output by itself.  Fever raises cardiac output and cooling
