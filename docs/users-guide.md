@@ -692,15 +692,23 @@ notification rather than a longer plot.
 
 ---
 
-## Email Slide
+## Export
 
-Enter a recipient and optional comments, press **Send**, and the app emails a
-PowerPoint deck of the current simulation (the whole plot on the first slide,
-then one slide per panel), including the dose table and the pharmacokinetic
-parameters used.
+The **Export** panel (named Email Slide until November 2026) saves the current
+simulation as three files, each downloaded on its own:
 
-Requires the mail settings in `config.yml` to be filled in. A local development
-copy made from `config.yml.sample` will not send mail until you do.
+- **PowerPoint (.pptx)**: the whole plot on the first slide, then one slide per
+  panel.
+- **Spreadsheet (.xlsx)**: the covariates, the dose table, the simulated
+  concentrations and the pharmacokinetic parameters used.
+- **Image (.png)**: the whole plot.
+
+Or enter a recipient and optional comments and press **Send**, and the app emails
+all three, with a link that reopens the simulation.
+
+The downloads need nothing configured. The email requires the mail settings in
+`config.yml` to be filled in; a local development copy made from
+`config.yml.sample` will not send mail until you do.
 
 ---
 

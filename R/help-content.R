@@ -73,7 +73,7 @@ helpStaticPages <- function() {
     "drug-library",             "Drug Library and Drug Thresholds","simulator",
     "time-display",             "Time display",                    "simulator",
     "sharing",                  "Sharing a simulation by URL",     "simulator",
-    "email-slide",              "Email a slide",                   "simulator",
+    "export",                   "Exporting a simulation",          "simulator",
     "debug-mode",               "Debug mode",                      "simulator",
 
     "drugs/index",              "All drugs",                       "drugs",
@@ -85,6 +85,7 @@ helpStaticPages <- function() {
     "models/effect-site",       "The effect site and ke0",         "models",
     "models/pk-converter",      "Converting between parameter sets", "models",
     "models/covariates",        "Covariates and body size",        "models",
+    "models/physiology",        "Physiology sliders: liver, kidney, heart and gut", "models",
     "models/fat-free-mass",     "Scaling to fat-free mass",        "models",
     "models/pregnancy",         "Pregnancy",                       "models",
     "models/minto-schnider",    "The Minto and Schnider models",   "models",

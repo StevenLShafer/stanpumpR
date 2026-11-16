@@ -388,8 +388,44 @@ expmPade <- function(A)
 #' @returns mixed venous tension, percent of one atmosphere
 gasMixedVenous <- function(y, body)
 {
-  y[[3]] * body$f_brain + y[[4]] * body$f_muscle + y[[5]] * body$f_fat
+  sum(y[3:gasStateCount(body)] * gasTissueShares(body))
 }
+
+
+#' The tissue groups of the gas body, in state order
+#'
+#' States 3, 4 and 5 are the vessel-rich group, muscle and fat.  When the
+#' cardiac-output slider has moved (\code{gasBodyPhysiology()}), the brain and
+#' heart are state 3 -- still the effect site, reported as "Brain" -- and the
+#' rest of the vessel-rich group is a sixth state, so that the flow the brain
+#' keeps in a low output is not spread over the kidneys, liver and gut.  Its
+#' tissue:gas partition coefficient is the vessel-rich group's.
+#'
+#' @param body output of \code{getGasBody()}, possibly through
+#'   \code{gasBodyPhysiology()}
+#' @returns \code{gasTissueShares()}: the share of cardiac output of each;
+#'   \code{gasTissueVolumes()}: their volumes, L; \code{gasStateCount()}: the
+#'   number of states of a soluble gas, 5 or 6
+#' @keywords internal
+gasTissueShares <- function(body)
+{
+  f <- c(brain = body$f_brain, muscle = body$f_muscle, fat = body$f_fat)
+  if (!is.null(body$f_vrgRest)) f <- c(f, vrgRest = body$f_vrgRest)
+  f
+}
+
+#' @rdname gasTissueShares
+#' @keywords internal
+gasTissueVolumes <- function(body)
+{
+  v <- c(brain = body$V_brain, muscle = body$V_muscle, fat = body$V_fat)
+  if (!is.null(body$f_vrgRest)) v <- c(v, vrgRest = body$V_vrgRest)
+  v
+}
+
+#' @rdname gasTissueShares
+#' @keywords internal
+gasStateCount <- function(body) 2L + length(gasTissueShares(body))
 
 
 #' Total uptake summed over every soluble gas
@@ -523,7 +559,8 @@ gasCircuitBlend <- function(Q, VA, MV = VA, circuit = "ideal", u = 0, cE = 0)
 #'   the ideal circuit.  Defaults to \code{VA}: no dead space.
 #' @param cE carbon dioxide as a fraction of exhaled gas, absorbed from whatever
 #'   is rebreathed; see \code{gasCircuitBlend()}
-#' @returns a list with \code{A} (5x5), \code{b} (length 5) and, for the ideal
+#' @returns a list with \code{A} (5x5, or 6x6 with the vessel-rich group
+#'   split; see \code{gasTissueShares()}), \code{b} and, for the ideal
 #'   and open circuits, \code{fresh} and \code{alveolar}: the weights from
 #'   which the circuit tension is \code{fresh * Ffgf + alveolar * F_alv}.  They
 #'   are NULL for the semi-closed circuit, whose tension is a state.
@@ -539,17 +576,16 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
   Vc <- body$V_circuit
   Va <- body$V_alveolar
 
-  # Blood flow to each tissue group
-  Qb <- body$f_brain  * Qco
-  Qm <- body$f_muscle * Qco
-  Qf <- body$f_fat    * Qco
+  # Blood flow to each tissue group, and the tissue rate constants
+  # Q_t * lambda_b / (V_t * lambda_t/gas).  The rest of the vessel-rich group,
+  # when it is split from the brain and heart, has the vessel-rich partition.
+  shares <- gasTissueShares(body)
+  n <- 2L + length(shares)
+  partition <- c(brain = ltg[["brain"]], muscle = ltg[["muscle"]],
+                 fat = ltg[["fat"]], vrgRest = ltg[["brain"]])[names(shares)]
+  k <- shares * Qco * lb / (gasTissueVolumes(body) * partition)
 
-  # Tissue rate constants: Q_t * lambda_b / (V_t * lambda_t/gas)
-  kb <- Qb * lb / (body$V_brain  * ltg[["brain"]])
-  km <- Qm * lb / (body$V_muscle * ltg[["muscle"]])
-  kf <- Qf * lb / (body$V_fat    * ltg[["fat"]])
-
-  A <- matrix(0, 5, 5)
+  A <- matrix(0, n, n)
 
   # (1) circuit.  On EMERGENCE (totUptake < 0) alveolar gas is displaced back
   # into the circuit, which GasMan models by subtracting the term from the
@@ -563,14 +599,13 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
   # three tissue states in proportion to their share of cardiac output.
   A[2, 1] <-  VA / Va
   A[2, 2] <- -(VA + lb * Qco) / Va
-  A[2, 3] <-  lb * Qco * body$f_brain  / Va
-  A[2, 4] <-  lb * Qco * body$f_muscle / Va
-  A[2, 5] <-  lb * Qco * body$f_fat    / Va
+  A[2, 3:n] <- lb * Qco * shares / Va
 
   # (3) tissues
-  A[3, 2] <-  kb;  A[3, 3] <- -kb
-  A[4, 2] <-  km;  A[4, 4] <- -km
-  A[5, 2] <-  kf;  A[5, 5] <- -kf
+  for (j in seq_along(k)) {
+    A[2 + j, 2] <- k[[j]]
+    A[2 + j, 2 + j] <- -k[[j]]
+  }
 
   # The uptake coupling.  GasMan's Calc adds this to the alveolar numerator:
   #
@@ -589,7 +624,7 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
     A[2, 2] <- A[2, 2] + totUptake / Va
   }
 
-  b <- c(Q * Ffgf / Vc, 0, 0, 0, 0)
+  b <- c(Q * Ffgf / Vc, rep(0, n - 1))
 
   if (circuit == "semi-closed")
     return(list(A = A, b = b, fresh = NULL, alveolar = NULL))
@@ -610,7 +645,7 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
   A[2, 2] <- A[2, 2] + fromCircuit * bl$alveolar
   A[1, ] <- 0
   A[, 1] <- 0
-  b <- c(0, fromCircuit * bl$fresh * Ffgf, 0, 0, 0)
+  b <- c(0, fromCircuit * bl$fresh * Ffgf, rep(0, n - 2))
 
   list(A = A, b = b, fresh = bl$fresh, alveolar = bl$alveolar)
 }
@@ -932,7 +967,9 @@ advanceClosedFormGas <- function(
   if (is.null(body)) body <- getGasBody(weight)
   Qco <- if (is.null(cardiacOutput)) body$Q_cardiac else cardiacOutput
 
-  props <- getGasProperties()
+  # The partition coefficients and MAC at the body's temperature
+  # (gasPropertiesAt(); 37 C unless the temperature slider has set one).
+  props <- gasPropertiesAt(body$temperature)
 
   # Split the dose table by setting.  Rows for a setting must be time-ordered
   # for settingAt() to pick the last one in force.
@@ -962,7 +999,7 @@ advanceClosedFormGas <- function(
   for (g in solubleGases)
   {
     init <- if (g == "nitrogen") AIR_FRACTION_N2 * 100 else 0
-    state[[g]] <- rep(init, 5)
+    state[[g]] <- rep(init, gasStateCount(body))
   }
   state[["oxygen"]] <- rep(AIR_FRACTION_O2 * 100, 2)
 
@@ -1133,8 +1170,10 @@ advanceClosedFormGas <- function(
   # The body, circuit and patient go with the states, so a reader of them (the
   # Visualizer's gas run, R/viewerRun.R) knows each compartment's capacity
   # without rebuilding them.
+  # Qco is the cardiac output the simulation ran on, an explicit override
+  # included, so the washout runs on the same flows (gasWashout()).
   list(results = results, state = out, timeLine = timeLine,
-       body = body, circuit = circuit, weight = weight, age = age)
+       body = body, circuit = circuit, weight = weight, age = age, Qco = Qco)
 }
 
 
@@ -1158,6 +1197,13 @@ advanceClosedFormGas <- function(
 #' @param age patient age in years
 #' @param maximum simulation length in minutes
 #' @param cardiacOutput optional override in L/min; defaults to GasMan's 5 L/min at 70 kg, scaled by (weight/70)^0.75
+#' @param physiology NULL, or the physiology sliders' factors (see
+#'   \code{getDrugPK()}); only \code{cardiac} acts on the gases, through
+#'   \code{gasBodyPhysiology()}: cardiac output and its split among the tissue
+#'   groups
+#' @param temperature NULL (37 C), or the body temperature in C, which sets
+#'   the agents' solubility and MAC (\code{gasPropertiesAt()}); kept in the
+#'   body as \code{temperature}
 #' @param uptakeEffect,circuit,deadSpace,oxygenUptake passed to
 #'   \code{advanceClosedFormGas()}
 #'
@@ -1168,7 +1214,10 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
                           cardiacOutput = NULL, uptakeEffect = TRUE,
                           circuit = c("ideal", "semi-closed"),
                           deadSpace = GAS_DEAD_SPACE_FRACTION,
-                          oxygenUptake = TRUE)
+                          oxygenUptake = TRUE,
+                          # Appended after the pre-existing arguments, so a
+                          # positional call keeps its binding (exported).
+                          physiology = NULL, temperature = NULL)
 {
   circuit <- match.arg(circuit)
   if (is.null(doseTable) || nrow(doseTable) == 0) return(NULL)
@@ -1185,9 +1234,15 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
   gasDose <- gasDose[!is.na(gasDose$Time) & !is.na(gasDose$Dose), , drop = FALSE]
   if (nrow(gasDose) == 0) return(NULL)
 
+  body <- gasBodyPhysiology(getGasBody(weight),
+                            checkPhysiology(physiology)[["cardiac"]])
+  temperature <- checkBodyTemperature(temperature)
+  if (temperature != 37) body$temperature <- temperature
+
   advanceClosedFormGas(
     gasDose,
     weight        = weight,
+    body          = body,
     age           = age,
     maximum       = maximum,
     cardiacOutput = cardiacOutput,

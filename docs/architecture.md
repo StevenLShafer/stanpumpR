@@ -28,7 +28,7 @@ last two stages.
 ### 01 — Inputs
 
 The sidebar groups inputs into a few categories — patient covariates, graph/display
-options, optional extra plot facets, and the email-slide form.
+options, optional extra plot facets, and the Export panel (downloads and the email form).
 
 The **dose table** is the dose grid (`R/dose-grid.R`, `inst/www/dose-grid.js`), a plain HTML
 table of form controls with its own Shiny input binding, with `Apply` / `Undo` / `Redo`
@@ -491,9 +491,12 @@ All files are flat in `R/`.
   every rate change is inside the window, and the regimen ends with one zero-rate row at the end
   time. The dialog offers only `suggestDrugChoices()`: an effect site and IV bolus and infusion
   units.
-- **Email a slide** (`sendSlide.R`, `Template.pptx`) — builds a branded PPTX from the current
-  simulation and mails it: the plot on the first slide and each panel on a slide of its own,
-  the dose table, and a URL that reconstructs the exact state.
+- **Export** (`sendSlide.R`, `Template.pptx`; the sidebar's Export panel, named Email Slide until
+  2026-11-15) — writes the current simulation as three files, each downloadable on its own
+  (`exportDownload()` in `app_server.R`) or all three emailed: a branded PPTX (`writeSlideDeck()`:
+  the plot on the first slide and each panel on a slide of its own), an Excel workbook
+  (`writeWorkbook()`: covariates, dose table, results and PK parameters) and a PNG of the plot
+  (`writePlotImage()`). The email adds a URL that reconstructs the exact state.
 - **Editors & modals** (`app_server.R`) — in-app Drug Library and Drug Thresholds editors, plus
   click-to-add-dose / double-click-to-edit driven from plot coordinates.
 - **URL bookmarking** (`app_globals.R`) — `enableBookmarking = "url"` encodes inputs into a

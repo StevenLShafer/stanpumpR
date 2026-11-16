@@ -50,6 +50,10 @@
 #'   each opioid's MEAC, band and time-until-threshold value
 #'   (\code{endCe}) by its factor (\code{OPIOID_TOLERANCE_FACTORS}), as the
 #'   app does; the concentrations are unchanged.
+#' @param physiology NULL (normal), or the physiology sliders' factors, a
+#'   numeric vector named \code{liver}, \code{renal}, \code{cardiac},
+#'   \code{gi} (multiples of normal function, 0.1 to 10); see
+#'   \code{getDrugPK()}.
 #'
 #' @returns a list of data frames with the output of the a single drug
 #'   simulation.  A drug that forms an active metabolite adds its contribution
@@ -74,7 +78,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                                          antiseizureInteractions = FALSE,
                                          cyp4f2 = CYP4F2_DEFAULT,
                                          gestationalAge = NULL,
-                                         opioidTolerance = OPIOID_TOLERANCE_DEFAULT)
+                                         opioidTolerance = OPIOID_TOLERANCE_DEFAULT,
+                                         physiology = NULL)
 {
   if (length(sex) != 1 || !sex %in% SEX_VALUES) {
     stop("Invalid sex: ", paste(sex, collapse = ", "),
@@ -110,7 +115,7 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                     cyp2b6 = cyp2b6,
                     osmolality = osmolality, creatinine = creatinine,
                     pregnant = pregnant, adjustToFFM = adjustToFFM,
-                    gestationalAge = gestationalAge)
+                    gestationalAge = gestationalAge, physiology = physiology)
     pks[[drug]] <- PK
     currentDT <- dose[dose$Drug == drug,]
     X <- simCpCe(currentDT, events, PK, maximum, plotRecovery)
@@ -167,7 +172,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                           cyp2b6 = cyp2b6, osmolality = osmolality,
                           creatinine = creatinine, pregnant = pregnant,
                           adjustToFFM = adjustToFFM,
-                          gestationalAge = gestationalAge)
+                          gestationalAge = gestationalAge,
+                          physiology = physiology)
     output <- attach(output, target, targetPK, targetDefaults)
   }
 

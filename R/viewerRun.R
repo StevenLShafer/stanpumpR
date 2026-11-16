@@ -611,18 +611,28 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_)
   gr <- entry$gasRun
   g <- entry$drug
   times <- viewerTimes(minimum, maximum)
-  props <- getGasProperties()
+  props <- gasPropertiesAt(gr$body$temperature)
   pr <- props[props$gas == g, ]
   ltg <- gasPartitionTissueGas(pr)
   body <- gr$body
+  state <- gr$state
+  # The cardiac-output slider splits the brain and heart (state 3) from the
+  # rest of the vessel-rich group (state 6; gasTissueShares()).  The viewer
+  # draws the whole group: its volume, and the partial pressure that holds the
+  # agent both parts hold (one partition coefficient, so volume-weighted).
+  vrgVolume <- body$V_brain
+  if (!is.null(body$V_vrgRest) && ncol(state) >= 6) {
+    vrgVolume <- body$V_brain + body$V_vrgRest
+    state[, 3] <- (body$V_brain * state[, 3] + body$V_vrgRest * state[, 6]) / vrgVolume
+  }
   vol <- c(circuit = if (identical(gr$circuit, "semi-closed")) body$V_circuit else 0,
-           lungs = body$V_alveolar, vrg = body$V_brain, mg = body$V_muscle, fg = body$V_fat)
+           lungs = body$V_alveolar, vrg = vrgVolume, mg = body$V_muscle, fg = body$V_fat)
   lambda <- c(circuit = 1, lungs = 1, vrg = ltg[["brain"]], mg = ltg[["muscle"]], fg = ltg[["fat"]])
   capacity <- vol * lambda
 
   # Linear between the engine's own points, as the plot draws them.
   at <- function(v) pmax(0, stats::approx(gr$time, v, times, rule = 2, ties = "ordered")$y)
-  p <- stats::setNames(lapply(seq_len(5), function(j) at(gr$state[, j])), names(vol))
+  p <- stats::setNames(lapply(seq_len(5), function(j) at(state[, j])), names(vol))
 
   # The settings in force: each a step that changes only at a dose row.
   rows <- gr$gasDose
