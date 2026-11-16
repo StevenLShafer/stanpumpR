@@ -136,7 +136,7 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # over 34.8-37.8 C only (Hostler 2010, DMD 38:781); vecuronium (hepatic
 # carrier uptake, not CYP), 11.3%/C over 34.3-38.0 C, its renal share
 # unchanged so renal clearance fell as much (Caldwell 2000, Anesthesiology
-# 92:84); remifentanil (esterases), 6.37%/C down to about 29.6 C (Michelsen
+# 92:84); remifentanil (esterases), 6.37%/C over 20-35 C (Michelsen
 # 2001, Anesth Analg 93:1100, below).  Cooled
 # neonates (read in full; 33.5 C then rewarmed to 36.5 C, so a linear effect
 # over 33.5-36.5 C only): morphine CL x (1 + 0.0689 (T - 36.5)), hepatic and
