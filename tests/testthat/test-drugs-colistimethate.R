@@ -141,7 +141,7 @@ test_that("Garonzik's own example: 225 mg CBA a day at a CrCL of 40 gives about 
   expect_equal(cssAvg, expected, tolerance = 0.01)
 })
 
-test_that("colistimethate is an antibiotic forming the metabolite-only colistin, with no line or band", {
+test_that("colistimethate is an antibiotic forming the metabolite-only colistin, with an MIC line and no band", {
   dd <- getDrugDefaultsGlobal()
   p <- dd[dd$Drug == "colistimethate", ]
   m <- dd[dd$Drug == "colistin", ]
@@ -150,9 +150,57 @@ test_that("colistimethate is an antibiotic forming the metabolite-only colistin,
   expect_true(all(c("mg", "mg/hr", "mg bid") %in% p$Units[[1]]))
   expect_equal(c(p$Lower, p$Upper, p$Typical, p$MEAC, p$endCe), rep(0, 5))
   expect_true(is.na(m$Category) || !nzchar(m$Category))
-  expect_equal(c(m$Lower, m$Upper, m$Typical, m$MEAC, m$endCe), rep(0, 5))
-  expect_false("colistin" %in% antibioticMicTable()$Drug)
+  # The line (Shafer, 2026-11-16): free colistin at the EUCAST 2 mg/L
+  # breakpoint, at an unbound fraction of 0.49, is 4.1 mg/L total
+  mic <- antibioticMic("colistin")
+  expect_equal(c(mic$MIC, mic$FreeFraction, mic$Threshold), c(2, 0.49, 4.1))
+  expect_equal(m$endCe, 4.1)
+  expect_equal(c(m$Lower, m$Upper, m$Typical, m$MEAC), rep(0, 4))
+  # No band: no MBC source has been read
+  expect_true("colistin" %in% antibioticNoBands()$Drug)
+  expect_null(antibioticMbcBand("colistin"))
+  expect_false("colistin" %in% antibioticMbcBandDrugs())
+  html <- helpDrugPageHTML("colistin")
+  expect_true(grepl("Time until threshold: free drug at the MIC", html, fixed = TRUE))
+  expect_true(grepl("No shaded band", html, fixed = TRUE))
+  expect_true(grepl("maximum tolerable exposure", html, fixed = TRUE))
   expect_identical(therapeuticRange("colistimethate")$band_status, "not_applicable")
   expect_identical(therapeuticRange("colistin")$band_status, "none_established")
   expect_match(getDrugPK("colistimethate", 70, 170, 35, "male")$reference, "Garonzik")
+})
+
+test_that("colistin's time until threshold is the time its curve takes to reach 4.1 mg/L", {
+  # Doses stop at the time read; the simulation run on to the time the line
+  # reports must be AT the threshold there (as for the other antibiotics in
+  # test-antibiotic-thresholds.R), here for a metabolite
+  times <- seq(0, 3 * 1440, by = 720)
+  d <- data.frame(Drug = "colistimethate", Time = times, Dose = 150, Units = "mg")
+  sim <- simulateDrugsWithCovariates(d, noEvents, 70, 170, 60, "male", 4 * 1440, TRUE,
+                                     adjustToFFM = FALSE, creatinine = 5)
+  w <- sim$colistin$wide
+  k <- which.max(w$Plasma)
+  expect_gt(w$Plasma[k], 4.1)
+  t0 <- w$Time[k]
+  rec <- w$Recovery[k]
+  expect_gt(rec, 0)
+  given <- d[d$Time <= t0, ]
+  after <- simulateDrugsWithCovariates(given, noEvents, 70, 170, 60, "male", t0 + rec, FALSE,
+                                       adjustToFFM = FALSE, creatinine = 5)$colistin$wide
+  expect_equal(after$Plasma[nrow(after)], 4.1, tolerance = 1e-3)
+})
+
+test_that("a regimen at the consensus target stays below the line", {
+  # Nation 2017's look-up doses at a CrCL of 40 and 80 mL/min/1.73 m2, scaled
+  # to an average of 2 mg/L (the model is linear): the peak is about 2.2
+  for (x in list(c(40, 220), c(80, 340))) {
+    s <- creatinineFor(x[1], 60, 165, 60, "male")
+    d <- data.frame(Drug = "colistimethate", Time = 0, Dose = x[2] / 2, Units = "mg bid")
+    w <- simulateDrugsWithCovariates(d, noEvents, 60, 165, 60, "male", 8 * 1440, FALSE,
+                                     adjustToFFM = FALSE, creatinine = s)$colistin$wide
+    l <- w[w$Time >= 7 * 1440, ]
+    avg <- sum(diff(l$Time) * (head(l$Plasma, -1) + tail(l$Plasma, -1)) / 2) / 1440
+    peakAtTarget <- max(l$Plasma) * 2 / avg
+    expect_lt(peakAtTarget, 2.3)
+    expect_lt(peakAtTarget, 4.1)
+  }
 })

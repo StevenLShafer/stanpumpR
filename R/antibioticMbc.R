@@ -525,6 +525,33 @@ antibioticTroughBands <- function()
   )
 }
 
+#' The antibiotics with an MIC line and no band
+#'
+#' An antibiotic in \code{antibioticMicTable()} whose band could not be built:
+#' no MBC source has been read, and no consensus range applies to the curve.
+#' Colistin (2026-11-16): its line was drawn on Steven L. Shafer's decision
+#' of that day, and its band waits for an MBC source.
+#'
+#' @returns a data frame: Drug and Reason
+#' @keywords internal
+antibioticNoBands <- function()
+{
+  data.frame(
+    Drug = "colistin",
+    Reason = paste(
+      "No MBC source for colistin has been read, so the band rule cannot be applied. The consensus",
+      "target is an exposure, an average of about 2 mg/L of total colistin over the day (Tsuji BT et",
+      "al., Pharmacotherapy 2019;39:10-39), not a range on the curve."),
+    stringsAsFactors = FALSE
+  )
+}
+
+#' The antibiotics whose band is an MBC band: every one in
+#' \code{antibioticMicTable()} but the trough-range and no-band exceptions
+#' @keywords internal
+antibioticMbcBandDrugs <- function()
+  setdiff(antibioticMicTable()$Drug, c(antibioticTroughBands()$Drug, antibioticNoBands()$Drug))
+
 #' Is an antibiotic's band a trough range rather than an MBC band?
 #' @param drug a drug name
 #' @returns TRUE or FALSE

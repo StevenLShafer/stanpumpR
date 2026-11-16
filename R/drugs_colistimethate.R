@@ -107,8 +107,9 @@
 # PREGNANCY, THE MIC LINE AND THE BAND
 # ====================================
 # Pregnancy was an exclusion criterion and no pregnancy pharmacokinetics were
-# found (registry row).  CMS is inactive, so it has no line or band.  For
-# colistin, see R/drugs_colistin.R: no MIC line or band is drawn yet.
+# found (registry row).  CMS is inactive, so it has no line or band.
+# Colistin's line, free colistin at the 2 mg/L breakpoint (4.1 mg/L total),
+# and why it sits above the consensus target: R/drugs_colistin.R.
 # -----------------------------------------------------------------------------
 
 # Garonzik 2011, Table 2 and equations 6-8
