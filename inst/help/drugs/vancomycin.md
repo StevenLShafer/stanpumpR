@@ -14,6 +14,10 @@ None; only the plasma concentration is plotted. *Time until threshold* is theref
 
 The shaded band (2.9 to 11 mcg/mL total) marks free vancomycin at the measured **MBC** of *Staphylococcus aureus*, from its MBC50 of 2 mg/L to its MBC90 of 8 mg/L (Honda and colleagues, *BMC Infect Dis* 2011;11:335), divided by the free fraction. Enterococci, most viridans streptococci and tolerant staphylococci are not killed by vancomycin at any level the curve reaches and are not in the band. The old trough of 10 to 20 mcg/mL total starts near the top of the band. The 2020 consensus guideline (Rybak and colleagues, *Am J Health Syst Pharm* 2020;77:835-864) recommends instead a total AUC over 24 hours of 400 to 600 mg·h/L at an MIC of 1 mg/L for serious MRSA infection; at steady state that AUC is the daily dose divided by clearance, and can be read off the curve.
 
+### Kidney transplant recipients
+
+Yu and colleagues (*AAPS J* 2026;28:172) fitted vancomycin in 1,539 hospitalised adults. In their 1,070 non-transplant patients, clearance at a given Cockcroft-Gault creatinine clearance agrees with Thomson's to within about 5% from 45 to 150 mL/min, an independent check of this model's clearance. Their 469 kidney transplant recipients cleared vancomycin about 24% more slowly than that creatinine clearance predicts. For a recipient, dose [vancomycin in kidney transplant recipients](help:drugs/vancomycinKidneyTransplant) instead.
+
 ### Where to be careful
 
 The clearance equation is linear in creatinine clearance and reaches zero at 1.06 mL/min; it is not a model of anuria or dialysis. The creatinine clearance it reads is therefore held at 12 mL/min, the lowest in Thomson's data, where clearance is 0.50 L/h, so a patient with less renal function, a newborn among them, is drawn at that floor rather than at a clearance the line extrapolates towards zero. Until November 2026 the model refused such a patient, and the plot showed no drug at all. Loading doses by weight, nephrotoxicity and the vancomycin infusion reaction are outside the model.

@@ -132,6 +132,18 @@
 #     dA/dt  <- ... - vmax_T Cu / (km_T + Cu) + k21 As,
 #     dAs/dt  =       vmax_T Cu / (km_T + Cu) - k21 As.
 #
+# With volume (litres) in place of k21, the return is saturable too, by the
+# same carrier: its rate constant is vmax / (volume (km + Cu)), saturated by
+# the CENTRAL concentration, applied to the store's amount (nab-paclitaxel,
+# R/drugs_paclitaxelProteinBound.R; Chen 2014, Fig. 1, whose legend defines km
+# by the central concentration):
+#
+#     dAs/dt  =  vmax_T (Cu - Cs) / (km_T + Cu),  Cs = As / volume.
+#
+# Below Km that is a linear compartment of that volume, entered and left at
+# the clearance vmax / km.  Read it as sd[["volume"]]: `$` matches a prefix,
+# and a name such as v would read vmax where it is absent.
+#
 # It sits beside the linear peripheral compartment of the PK set's cl2 and v2
 # (which carries paclitaxel's own second, linear, peripheral compartment, its
 # V3).  Having no volume it has no concentration, so the compartment panels
@@ -496,7 +508,10 @@ mmDerivative <- function(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, 
     # Saturable distribution to a compartment held as an amount (paclitaxel)
     if (hasSD) {
       toS <- sd$vmax * Cu / (sd$km + Cu)
-      fromSD <- sd$k21 * x[iSD]
+      # emptied at first order (Joerger), or saturably from the store's own
+      # concentration when the block gives its volume v (nab-paclitaxel, Chen 2014)
+      fromSD <- if (is.null(sd[["volume"]])) sd$k21 * x[iSD] else
+        sd$vmax * (x[iSD] / sd[["volume"]]) / (sd$km + Cu)
       dx[iSD] <- toS - fromSD
       dx[iC] <- dx[iC] - toS + fromSD
     }
@@ -604,9 +619,11 @@ validateMichaelisMenten <- function(mm, drug)
          "\"total\" or \"unbound\".")
   sd <- mm$saturableDistribution
   if (!is.null(sd) && !(is.list(sd) && positive(sd$vmax) && positive(sd$km) &&
-                        positive(sd$k21)))
+                        xor(positive(sd[["k21"]]), positive(sd[["volume"]])) &&
+                        (is.null(sd[["k21"]]) || is.null(sd[["volume"]]))))
     stop("Invalid michaelisMenten for ", drug, ": saturableDistribution needs a ",
-         "positive vmax (amount per minute), km (concentration) and k21 (/min).")
+         "positive vmax (amount per minute), km (concentration) and either k21 ",
+         "(/min, a first-order return) or volume (the store's volume, a saturable return).")
   if (!is.null(rb) && !is.null(tb))
     stop("Invalid michaelisMenten for ", drug, ": rapidBinding and targetBinding ",
          "are alternatives.")

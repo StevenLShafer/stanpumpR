@@ -65,7 +65,7 @@ test_that("the antibiotics, amiodarone, zolpidem, temazepam, ketorolac and napro
   # 1.2 mmol/L alert level) and tranexamic acid (10 mg/L, near-maximal
   # inhibition of fibrinolysis) joined on 2026-11-12.
   expect_setequal(timedOnPlasma,
-                  c(antibioticMicTable()$Drug, "amiodarone", "zolpidem", "temazepam",
+                  c(antibioticMicTable()$Drug, "vancomycinKidneyTransplant", "amiodarone", "zolpidem", "temazepam",
                     "ketorolac", "naproxen",
                     "theophylline", "lithiumCarbonate", "tranexamicAcid"))
   expect_false(any(c("amiodarone", "zolpidem", "temazepam", "ketorolac", "naproxen") %in%

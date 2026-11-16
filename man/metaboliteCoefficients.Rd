@@ -10,7 +10,8 @@ metaboliteCoefficients(
   kFormation,
   mwRatio = 1,
   unitScale = 1,
-  firstPassFraction = 0
+  firstPassFraction = 0,
+  directFraction = 0
 )
 }
 \arguments{
@@ -35,6 +36,12 @@ which is correct only when both drugs share a Concentration.Units.}
 as metabolite, having been converted before reaching the systemic
 circulation.  Defaults to 0.  Ignored when the parent has no oral
 absorption constant.}
+
+\item{directFraction}{fraction of an intravenous parent dose (bolus or
+infusion) entering the metabolite's central compartment directly, never
+having been parent: the unencapsulated share of a liposomal product
+(doxorubicinLiposomal, Hsu 2018).  Defaults to 0.  The parent's own model
+carries the rest of the dose (see that drug's header).}
 }
 \value{
 a list with \code{lambda} (the union of eigenvalues: parent, then

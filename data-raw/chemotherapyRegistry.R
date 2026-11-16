@@ -220,17 +220,17 @@ pubmedSources[pubmedSources == ""] <- NA
 
 # How far each PubMed document was read here.  Every abstract was screened;
 # the PubMed Central text (without tables or equations) was read for these.
-FULL_TEXT_PARTIAL <- c("C12", "C15", "C35", "N04")
+FULL_TEXT_PARTIAL <- c("C12", "C35", "N04")
 pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
                              "guideline", "primary_study")
 # Read in full: every parameter the model uses, from the PubMed Central
 # text, the PDF still to confirm (FULL_TEXT_READ); or confirmed on the PDF
 # itself (PARAMETERS_VERIFIED: Briki 2026 and Lindemalm 2005, supplied by
 # Shafer 2026-11-06)
-FULL_TEXT_READ <- c("C37b", "C45", "C46", "C48", "C41", "C25", "C42", "P06", "C11", "N05", "C01", "P02", "C35", "C03", "C37a", "C34", "P16", "C21", "C07", "P15", "P08", "C19", "P21", "P25", "C23", "C24", "N11", "C10", "C38a", "N12", "N10", "C09", "P13", "C17", "C27", "P05")
+FULL_TEXT_READ <- c("C15", "N01", "N01b", "N01c", "C28", "C37b", "C45", "C46", "C48", "C41", "C25", "C42", "P06", "C11", "N05", "C01", "P02", "C35", "C03", "C37a", "C34", "P16", "C21", "C07", "P15", "P08", "C19", "P21", "P25", "C23", "C24", "N11", "C10", "C38a", "N12", "N10", "C09", "P13", "C17", "P05")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
-PARAMETERS_VERIFIED <- c("C47", "C44", "N13", "C36", "N02", "C43", "P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18", "C05", "C06", "N08", "N09")
+PARAMETERS_VERIFIED <- c("C26", "N03", "C27", "C47", "C44", "N13", "C36", "N02", "C43", "P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18", "C05", "C06", "N08", "N09")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
   ifelse(pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
@@ -410,7 +410,8 @@ registry <- rbind(
   m("methotrexate__infant_all__beechinor2019", "methotrexate", "methotrexate (high dose)", "IV",
     "71 infants with ALL", "methotrexate",
     "two compartments, allometric weight only; high interoccasion variability", "first", "linear", "C15",
-    "Infants only; do not extend older children's models into infancy. Its supplement's two figures (supplied 2026-11-06) show weight-normalised clearance near 0.27 L/h/kg without trend in age (2-15 months) or treatment cycle, and a visual predictive check; Q and the peripheral volume are in the article's own table."),
+    "Infants only; do not extend older children's models into infancy. Its supplement's two figures (supplied 2026-11-06) show weight-normalised clearance near 0.27 L/h/kg without trend in age (2-15 months) or treatment cycle, and a visual predictive check. Article read in full 2026-11-16 (PDF supplied): Table 2, per 70 kg, CL 11.0 L/h, Vc 63.4 L, Vp 13.6 L, Q 0.13 L/h, allometric weight (0.75 on CL and Q, 1 on volumes, fixed); 71 infants under 366 days born after 36 weeks, 3.0-12.1 kg, 4 g/m2 over 24 h (COG P9407); no renal or maturation term (eligibility CrCl > 70 mL/min/1.73 m2). At 7.6 kg the 24-h level is about 63 uM against the observed 61.5. [decision, asked 2026-11-16] Whether to add it as the infants' candidate of the methotrexate group: Taylor 2023 (1668 patients, 0.1-32.3 years) includes infants and is larger, so the selector never chooses it unless infancy is made a rule of its own.",
+    readiness = "complete_not_implemented"),
 
   m("fluorouracil__adult__terret2000", "fluorouracil", "fluorouracil", "IV",
     "21 adults with colorectal cancer (40-79 years, 48-97 kg, BSA 1.46-2.00 m2)", "5-FU",
@@ -471,14 +472,22 @@ registry <- rbind(
     readiness = "complete_not_implemented"),
   m("cisplatin__children__erdlenbruch2001", "cisplatin", "cisplatin", "IV",
     "12 children (25 courses)", "free platinum",
-    "two compartments fitted to each child, not a population model", "second", "linear", "N01",
-    "Too small to be a paediatric population model."),
+    "two compartments fitted to each child (TopFit), not a population model: Table 2's means (n 12) t1/2 alpha 0.36 h, beta 25.9 h, CL 135 mL/min/m2, Vss 126 L/m2, which close V1 7.05, V2 119 L/m2, Q 5.3 L/h/m2",
+    "second", "linear", "N01",
+    "PDF read (supplied 2026-11-16). 12 children 5-19 years, 25 courses of 75-120 mg/m2 over 1-72 h; free platinum by perchloric-acid deproteinisation (90% of ultrafiltrate values), Pt or cisplatin basis unstated; Table 2's spread labelled SEM but SD by its own abstract; three Ae% values do not reproduce. Its free-Pt clearance is 0.58 of Peng 1997's, and its 26-h terminal phase is near the assay limit. Not Urien's analyte or structure (no bound platinum). [decision, asked 2026-11-16] Whether a children's cisplatin candidate should be built from it, or none until a population model exists.",
+    readiness = "complete_not_implemented"),
   m("cisplatin__children__peng1997", "cisplatin", "cisplatin", "IV",
     "21 children, 24-h infusions", "free platinum",
-    "non-compartmental and compartmental analysis", "second", "unknown", "N01b"),
+    "one compartment per child (ADAPT): Table 2 means CL 231 mL/min/m2, V 12.5 L/m2 (t1/2 39 min) of ultrafilterable platinum, in cisplatin equivalents",
+    "second", "linear", "N01b",
+    "PDF read (supplied 2026-11-16). 21 children 0.5-19.3 years, 50-120 mg/m2 over 24 h. Free platinum fell below the limit 2-3 h after the infusion, so no slow phase is observable; no covariates (not GFR, albumin or course). A cross-check for a children's model, not one itself.",
+    readiness = "complete_not_implemented"),
   m("cisplatin__children__evans1982", "cisplatin", "cisplatin", "IV",
     "14 children and adolescents", "platinum",
-    "a physiological flow-limited model and a simplified multicompartment model", "second", "unknown", "N01c"),
+    "a physiological flow-limited model and an operational model (parent one compartment converting to two-compartment 'metabolite' platinum), partly built from dog and in-vitro constants",
+    "second", "linear", "N01c",
+    "PDF read on the page images (supplied 2026-11-16). 14 patients, 90 mg/m2 over 6 h; demographics and assay deferred to Crom 1981. Its conversion constant is an in-vitro aquation rate and its biliary clearance a dog's; the operational model's terminal half-life (about 73 h) misses the measured 44.4 h. Historical; no candidate.",
+    readiness = "complete_not_implemented"),
   m("cyclophosphamide__highdose__dejonge2005", "cyclophosphamide", "cyclophosphamide", "IV",
     "adults, high-dose cyclophosphamide, thiotepa and carboplatin", "cyclophosphamide, 4-hydroxycyclophosphamide, 2-dechloroethylcyclophosphamide, phosphoramide mustard",
     "two compartments (CL 3.03 L/h before induction, V 43.7 L, k37 0.0509, k73 0.00833 /h): 75% of CL through an enzyme induced at zero order (kenz1 0.0223 /h) and inactivated by thiotepa (kass 0.179, kdiss 0.374), 5% through a second (kenz3 0.0198 /h), 20% renal; 4OHCP, PM and 2DCECP one compartment each",
@@ -704,10 +713,11 @@ registry <- rbind(
     "PDF read (supplied 2026-11-13). The model's 24-h concentrations give, through the paper's own CL = Vm Vc / (Km + Css), 985 and 609 mL/min/m2 against its 987 and 608. Implemented as thioguanineIV, an intravenous research route (the approved product is the oral tablet); continuous infusion only, not oral maintenance. BSA formula not named, Mosteller used.",
     readiness = "implemented", stanpumpr_drug = "thioguanineIV"),
   m("thioguanine__all__lowe2001", "thioguanine", "thioguanine", "PO and IV",
-    "children with standard-risk ALL", "thioguanine, plasma and CSF",
-    "no structural model in the abstract", "expansion", "unknown", "N03"),
-  none("thioguanine__oral_maintenance", "thioguanine", "thioguanine (oral maintenance)", "PO", "expansion",
-       "No contemporary oral oncology population model was identified. Do not substitute an IBD model or a mercaptopurine model."),
+    "41 children 1-9 years (median 3) with standard-risk ALL", "thioguanine, plasma and CSF",
+    "noncompartmental: oral 60 mg/m2 (Table 2, n 35: Cmax median 0.29 uM, Tmax median 2.0 h, AUC median 1.0 and mean 1.5 uM h, harmonic-mean t1/2 1.6 h) and the same children's 24-h infusions at 20 mg/m2/h (Css 2.7 uM, CL 935 mL/min/m2)",
+    "expansion", "linear", "N03",
+    "PDF read (supplied 2026-11-16). No model is fitted. Implemented 2026-11-16 on Shafer's decision as the DERIVED oral drug thioguanine: Kitchen 1997's intravenous disposition (thioguanineIV) with F 0.234 (Lowe's mean oral AUC x his intravenous clearance / dose, the library's rule that F be read within one population), ka 0.62 /h and a 1.0-h lag set to his median Cmax and Tmax; checks his median AUC (model 1.03) and half-life (1.75 against 1.6 h). Oral AUC spans 50-fold.",
+    readiness = "implemented", stanpumpr_drug = "thioguanine"),
   m("pegaspargase__all__wurthwein2021", "asparaginase", "pegaspargase", "IV",
     "1374 children with ALL (1253 for validation)", "asparaginase activity",
     "a chain of 14 compartments, all serum activity, each losing CL_initial and the last also Q_tr (= CL_induced), so clearance rises with time after each dose; volume, CL and Q linear in BSA; phase (second induction dose, reinduction) on V and CL; age over 8 and sex on CL",
@@ -835,18 +845,22 @@ registry <- rbind(
     readiness = "complete_not_implemented"),
   m("paclitaxel_nab__adult__chen2014", "paclitaxel", "paclitaxel protein-bound (nab-paclitaxel)", "IV",
     "150 adults with solid tumours", "paclitaxel",
-    "three compartments with saturable distribution and saturable elimination; albumin on elimination",
+    "three compartments: saturable elimination (VMEL 8070 ug/h x (albumin/3.9 g/dL)^0.554, KMEL 40.2 ug/L), saturable carrier transfer to V2 1650 L (VMTR 325000 ug/h, KMTR 4260 ug/L, both directions saturated by the central concentration), linear to V3 75.4 L (Q 41.6 L/h), V1 15.8 L",
     "expansion", "new_engine", "C27",
-    "PDF read (supplied 2026-11-10). 150 adults 24-85 years: V1 15.8, V2 1650, V3 75.4 L, Q (V1-V3) 41.6 L/h; saturable distribution V1-V2 VMTR 325000 ug/h, KMTR 4260 ug/L; saturable elimination VMEL 8070 ug/h x (albumin/3.9 g/dL)^0.554, KMEL 40.2 ug/L. Which concentration drives the return from V2 is not stated (the legend says central; a footnote implies peripheral), which changes the model. Would be a separate drug from solvent-based paclitaxel (Joerger 2006)."),
+    "PDF read (supplied 2026-11-16; first read 2026-11-10). Table 2's mg/h and mg/L are ug (its own sb-paclitaxel column matches Joerger 2006 only in ug, and V1 + V2 + V3 = 1741 L is the label's total volume). The return from V2: Fig. 1 gives both rate constants with one C and the legend defines KMTR by the central concentration, so both directions are saturated by C1, net VMTR (C1 - C2)/(KMTR + C1); [decision, asked 2026-11-16] the other reading (each side by its own concentration) differs by at most 3.5%. Implemented 2026-11-16 on Shafer's decision as its own drug, paclitaxelProteinBound, with the saturable return added to advanceMichaelisMenten()'s saturableDistribution block (its volume field). Reproduces the label's clearance 13-30 L/h/m2 over 80-300 mg/m2 and half-life 13-27 h, which it was not fitted to.",
+    readiness = "implemented", stanpumpr_drug = "paclitaxelProteinBound"),
   m("doxorubicin_liposomal__hsu2018", "doxorubicin", "pegylated liposomal doxorubicin", "IV",
-    "not stated in the abstract", "encapsulated and free doxorubicin",
-    "encapsulated one compartment releasing into free doxorubicin in two compartments; bioequivalence simulation",
-    "expansion", "new_engine", "C26",
-    "Release from a carrier. Conventional doxorubicin's parameters must not be borrowed."),
+    "women with ovarian cancer (number not printed), Doxil/Caelyx 50 mg/m2 over 1 h, crossover", "encapsulated and free doxorubicin",
+    "encapsulated one compartment (V1 2.52 L) emptied only by release (Rel 0.0212 L/h; CLres 0 fixed), 98% encapsulated (fixed), releasing free doxorubicin in two compartments (V 9.52 and 35.1 L, Q 2.87, CL 2.68 L/h)",
+    "expansion", "linear_metabolite", "C26",
+    "PDF read (supplied 2026-11-16). Implemented 2026-11-16 on Shafer's decision as doxorubicinLiposomal with the metabolite-only doxorubicinLiposomalFree (free doxorubicin as a model of its own: its clearance is about a twentieth of conventional doxorubicin's, only the release/elimination ratio being identified); the unencapsulated 2% enters free doxorubicin through the metabolite block's directFraction, added for this drug, and the encapsulated 98% by an exact reparameterisation. Held to an independent integration (1e-4). The label's nonlinearity (higher clearance at 10-20 mg/m2) makes it a 50 mg/m2 curve.",
+    readiness = "implemented", stanpumpr_drug = "doxorubicinLiposomal"),
   m("irinotecan_liposomal__adiwijaya2017", "irinotecan", "liposomal irinotecan", "IV",
     "353 adults from six studies", "total irinotecan and total SN-38",
-    "joint model of the liposomal product; race, BSA and bilirubin", "expansion", "new_engine", "C28",
-    "Total species from a carrier; retained covariates to confirm.")
+    "total irinotecan two compartments (Table S6: V1 4.60 L, CL 13.6 L/week, Q 0.471 L/week, V2 48.7 L); total SN-38 = 0.090 ng/ug x total irinotecan (encapsulated SN-38) + unencapsulated SN-38 in one compartment of volume V1, formed at Kcov 0.00072 /week from the irinotecan amount, CL 14.2 L/week (Table S7); exponential covariates on log10 laboratory values centred on unprinted medians",
+    "expansion", "linear_metabolite", "C28",
+    "PDF and supplement read (supplied 2026-11-16; read by an agent, numbers to confirm before implementing). Half-lives reproduce (irinotecan 38.1 and 12,460 h against 38.2 and 12,200; SN-38 37.7 against 38.2). Doses as irinotecan free base (70 mg/m2 free base = 80 mg/m2 hydrochloride trihydrate); the infusion length is not stated (the label's 90 min). Kcov's units disagree between Tables S7 (/week) and S11 (L/week, 23x); the typical values are the phase 1/2 manufacturer's, NAPOLI-1's product lower (V1 x0.842, CL x0.828, fSN38 x0.54), and which is today's Onivyde is not stated; the irinotecan fast exponent nearly ties SN-38's rate (3.06 against 3.09 /week). [decision, asked 2026-11-16] Which manufacturing reference to use, and whether to build it with SN-38 as a metabolite-only model.",
+    readiness = "complete_not_implemented")
 )
 
 # --- Relations ----------------------------------------------------------------

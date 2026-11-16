@@ -971,3 +971,65 @@ and question 3, restated.  New or restated:
 11. **de Jonge 2005 cyclophosphamide**: an engine option for zero-order
     enzyme rise?
 12. **Labels**: acceptable as chosen (section 45, question 10)?
+
+## 48. Nine more papers, and the three decisions of 2026-11-16
+
+Shafer decided (2026-11-16): nab-paclitaxel as its own drug with the saturable
+return carried by the engine; liposomal doxorubicin with free doxorubicin as a
+model of its own; oral thioguanine derived from Kitchen 1997 and Lowe 2001.
+
+- **Chen 2014 (nab-paclitaxel; C27): implemented** as `paclitaxelProteinBound`.
+  Table 2's mg/h and mg/L are micrograms (its sb-paclitaxel column is
+  Joerger 2006 only in micrograms; V1 + V2 + V3 = 1741 L is the label's total
+  volume).  The transfer to V2 is a carrier saturated by the central
+  concentration both ways (Fig. 1's single C and the legend's definition of
+  KMTR), net VMTR (C1 - C2)/(KMTR + C1): `saturableDistribution` gained a
+  `volume` field for it (read with `[[`, since `$v` partially matched `vmax`
+  and would have turned Joerger's first-order return saturable).  Reproduces
+  the label's clearance 13-30 L/h/m2 over 80-300 mg/m2 and half-life 13-27 h.
+- **Lowe 2001 (thioguanine in children; N03): implemented** as the derived
+  oral `thioguanine`: Kitchen's disposition, F 0.234 from Lowe's own oral AUC
+  and intravenous clearance, ka 0.62 /h and a 1.0-h lag set to his median
+  Cmax and Tmax; his median AUC (model 1.03 against 1.0 uM h) and half-life
+  (1.75 against 1.6 h) are the checks.
+- **Hsu 2018 (liposomal doxorubicin; C26): implemented** as
+  `doxorubicinLiposomal` with the metabolite-only `doxorubicinLiposomalFree`:
+  encapsulated doxorubicin (V1 2.52 L) released at 0.0212 L/h into free
+  doxorubicin (V 9.52 and 35.1 L, Q 2.87, CL 2.68 L/h), a model of its own
+  (only the release/elimination ratio is identified; its clearance is about
+  a twentieth of conventional doxorubicin's).  The unencapsulated 2% enters
+  free doxorubicin through `metaboliteCoefficients(directFraction =)`, added
+  for it; the encapsulated 98% by an exact reparameterisation (v1 and cl1
+  over 0.98, formation 0.98 x Rel / V1).  Both curves match an independent
+  integration to 1e-4.  The label's kinetics are nonlinear (clearance 0.041-
+  0.056 L/h/m2 at 10-20 mg/m2): a 50 mg/m2 curve.
+- **Adiwijaya 2017 (liposomal irinotecan; C28)**: article and supplement
+  read (by an agent; numbers to confirm on the PDF before implementing).
+  Complete for a typical patient; open questions below.
+- **Beechinor 2019 (methotrexate in infants; C15)**: complete (two
+  compartments per 70 kg, allometric weight).  Not chosen by the selector,
+  Taylor 2023 being larger and covering infants.
+- **Erdlenbruch 2001, Peng 1997, Evans 1982 (cisplatin in children; N01,
+  N01b, N01c)**: no population model.  Erdlenbruch's per-child two-compartment
+  fits of free platinum close a model (V1 7.05, V2 119 L/m2, CL 135
+  mL/min/m2); Peng's is one compartment (its slow phase unobservable); Evans's
+  is built partly from dog and in-vitro constants.
+
+Questions (also in the registry rows and drug headers):
+
+1. **Nab-paclitaxel**: confirm the return from V2 saturated by the central
+   concentration (the alternative, each side by its own, differs by at most
+   3.5%).
+2. **Oral thioguanine**: confirm the derivation (F from Lowe's means, ka and
+   lag from his medians).
+3. **Methotrexate in infants**: make infancy (under 1 year) a rule of its
+   own so that Beechinor 2019 is chosen there over Taylor 2023?
+4. **Cisplatin in children**: build a candidate from Erdlenbruch's means
+   (free platinum by perchloric acid, Pt or cisplatin basis unstated), or
+   none until a population model exists?
+5. **Liposomal doxorubicin**: confirm the derivation's two choices (free
+   doxorubicin as its own model; the direct 2%), and that a 50 mg/m2 model is
+   offered at every dose with the label's nonlinearity said on its page.
+6. **Liposomal irinotecan**: which manufacturer's typical values (the phase
+   1/2 product, or NAPOLI-1's, about 17% lower in CL and 46% in fSN38);
+   SN-38 as a metabolite-only model; the 90-minute infusion from the label.

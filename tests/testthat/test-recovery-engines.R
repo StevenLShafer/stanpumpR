@@ -372,6 +372,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
   expect_setequal(noCe, c(
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
+    "vancomycinKidneyTransplant",
     "metronidazole", "gentamicin",
     "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
     "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
@@ -443,7 +444,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "istradefylline", "amantadineER", "pimavanserin", "tolcapone",
     # Chemotherapy (2026-11-05): plasma only
     "cladribine", "fluorouracil", "fluorouracilBriki", "carboplatin", "carboplatinDuffull", "busulfan",
-    "methotrexatePediatric", "methotrexate", "methotrexateIbarra", "fluorouracilTan", "cytarabine", "doxorubicinPerezBlanco", "doxorubicinolPerezBlanco", "fludarabine", "bendamustine", "oxaliplatinNikanjam", "capecitabine", "capecitabine5FU", "gemcitabine", "gemcitabineDFDU", "etoposideDuong", "melphalanPediatric", "carboplatinPediatric", "daunorubicin", "doxorubicinPediatric", "doxorubicinolPediatric", "etoposide", "etoposideKroghMadsen", "cisplatin", "cisplatinBound", "vinorelbine", "topotecan", "irinotecan", "irinotecanSN38", "doxorubicin", "doxorubicinJoerger", "doxorubicinol", "doxorubicinolJoerger", "cyclophosphamide", "cyclophosphamideJoerger", "cyclophosphamideMcCune", "ifosfamide", "epirubicin", "temozolomide", "temozolomideOstermann", "temozolomidePanetta", "dacarbazine", "bleomycin", "thioguanineIV", "docetaxel", "vincristine", "vincristineIgarashi", "melphalan", "melphalanNath", "etoposidePediatric", "pemetrexed", "paclitaxel", "paclitaxelJoerger", "paclitaxelCrombag", "vincristinePediatric", "oxaliplatin", "oxaliplatinBastian"
+    "methotrexatePediatric", "methotrexate", "methotrexateIbarra", "fluorouracilTan", "cytarabine", "doxorubicinPerezBlanco", "doxorubicinolPerezBlanco", "fludarabine", "bendamustine", "oxaliplatinNikanjam", "capecitabine", "capecitabine5FU", "gemcitabine", "gemcitabineDFDU", "etoposideDuong", "melphalanPediatric", "carboplatinPediatric", "daunorubicin", "doxorubicinPediatric", "doxorubicinolPediatric", "etoposide", "etoposideKroghMadsen", "cisplatin", "cisplatinBound", "vinorelbine", "topotecan", "irinotecan", "irinotecanSN38", "doxorubicin", "doxorubicinJoerger", "doxorubicinol", "doxorubicinolJoerger", "cyclophosphamide", "cyclophosphamideJoerger", "cyclophosphamideMcCune", "ifosfamide", "epirubicin", "temozolomide", "temozolomideOstermann", "temozolomidePanetta", "dacarbazine", "bleomycin", "paclitaxelProteinBound", "thioguanine", "doxorubicinLiposomal", "doxorubicinLiposomalFree", "thioguanineIV", "docetaxel", "vincristine", "vincristineIgarashi", "melphalan", "melphalanNath", "etoposidePediatric", "pemetrexed", "paclitaxel", "paclitaxelJoerger", "paclitaxelCrombag", "vincristinePediatric", "oxaliplatin", "oxaliplatinBastian"
   ))
 })
 
