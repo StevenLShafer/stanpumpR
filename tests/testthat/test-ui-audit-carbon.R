@@ -792,10 +792,15 @@ test_that("a forged genotype or plot option is read as the control's own choice 
 
 test_that("a click or hover on a plot that failed leaves the session open (P3-C1, P3-H4)", {
   shiny::testServer(app_server, {
-    startCarbon(session, oneDose("propofol", 0, "mg"))
+    # A drug drawn with nothing above zero: a dose above 0 (only such drugs
+    # are drawn since 2026-11-16, where this was a dose of 0), given so late
+    # that the plot, lengthened 30 minutes past it, ends inside aspirin's
+    # 196-minute absorption lag
+    startCarbon(session, oneDose("aspirin", 325, "mg PO", time = 1438))
+    expect_true("aspirin" %in% names(drugs()))
     session$setInputs(logY = TRUE)
     expect_match(plotMessage(), "logarithmic axis needs a concentration above zero", fixed = TRUE)
-    e <- list(x = 10, y = 1, panelvar1 = "propofol")
+    e <- list(x = 10, y = 1, panelvar1 = "aspirin")
     session$setInputs(plot_click = e)
     expect_false(session$isClosed())
     session$setInputs(plot_hover = e)

@@ -78,6 +78,10 @@ simulationPlot <- function(
 
   outputComments("Entering simulationPlot", level = DEBUG_LEVEL_VERBOSE)
 
+  # Nothing to draw: no drug was given a dose above 0 (drawnDrugEntries(),
+  # R/drug-pipeline.R), the state of the opening table until a dose is typed
+  if (length(drugs) == 0) return(NULL)
+
   # Step D1: create plotTable from `drugs`
 
   plotTable <- as.data.frame(
@@ -123,6 +127,13 @@ simulationPlot <- function(
   # Step C1: create allResults from `drugs`
 
   allResults <- purrr::map_dfr(drugs, "results")
+  # Nothing simulated: said here, before the steps below, which a table of
+  # no rows stopped ("replacement has 1 row, data has 0")
+  if (nrow(allResults) == 0)
+  {
+    message("Returning Null, nrow(allResults) == 0")
+    return(NULL)
+  }
 
   # Four columns: Drug, Time, Site, Y
   # 8 Sites: Plasma, Effect Site, CpNormCp, CeNormCp, CpNormCe, CeNormCe
@@ -153,12 +164,6 @@ simulationPlot <- function(
   allEquispace <- allEquispace[allEquispace$Drug %in% plotTable$Drug,]
 
   # Step C2: check and clean and extend allResults
-
-  if (nrow(allResults) == 0)
-  {
-    message("Returning Null, nrow(allResults) == 0")
-    return(NULL)
-  }
 
   # Remove unnecessary rows from allResults and process normalization
   switch(
@@ -258,7 +263,7 @@ simulationPlot <- function(
   # plot.  Nothing then survives the two filters above, and the assignments
   # below cannot write a length-one value into a zero-row data frame.
   #
-  # The zero-row guard at Step C2 cannot catch this: it runs before the
+  # The zero-row guard at Step C1 cannot catch this: it runs before the
   # linetype filters, when the rows still exist.  Pre-existing rather than new
   # -- master errors here identically -- but nothing exercised the path until
   # a drug appeared that has only one of the two series.

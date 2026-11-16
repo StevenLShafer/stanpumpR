@@ -141,8 +141,14 @@ test_that("a download with nothing to export says why and keeps the session", {
     startExport(session, doseTableBlank)
     spinner$shown <- 0
     spinner$hidden <- 0
-    expect_error(output$exportPowerPoint, "enter a dose first")
-    expect_match(tail(alerts, 1), "There is no plot to export: enter a dose first.", fixed = TRUE)
+    expect_error(output$exportPowerPoint, "enter a dose or target above 0 first")
+    expect_match(tail(alerts, 1), "There is no plot to export: enter a dose or target above 0 first.",
+                 fixed = TRUE)
+    expect_false(session$isClosed())
+
+    # Drugs whose doses are all 0, which are not drawn, say the same
+    session$env$setDoseTable(doseTableInit, timeFormat("minutes", "relative"))
+    expect_error(output$exportPowerPoint, "enter a dose or target above 0 first")
     expect_false(session$isClosed())
 
     # A patient field the simulation cannot read
