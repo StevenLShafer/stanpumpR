@@ -297,6 +297,11 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # 19.8 at 25 and 35 C), 26 kJ/mol below it, in Tris buffer whose pH fell
 # with warming, an artificial substrate at saturation (Masson and Balny
 # 1986, BBA 874:90): not the drug, not plasma, so Gruber's numbers stand.
+# Esmolol in human whole blood (red-cell arylesterase) at 37, 25, 15 and
+# 4 C: half-lives 19.6, 47, 152 and 227 min, fitted as T1/2 = 364 x
+# 10^(-0.034 T) (r = 0.98), the same exponential form as this factor at
+# 7.5%/C (Melendez 1990, J Cardiothorac Anesth 4:704, read in full; the
+# 37-25 C pair alone gives 7.0%/C, the curve steeper below).
 # Esmolol on hypothermic bypass, constant infusion: oxygenator inflow
 # concentrations rose to 1.8 times the prebypass arterial at a minimum of
 # 26 C, inversely with temperature (P < 0.0005) and with time, about
