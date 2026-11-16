@@ -278,8 +278,8 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # at 4 C, which the authors read as signs of tunnelling (Dutra 2022, J Phys
 # Chem B 126:3493).  These are separately reported values, not one
 # consistent set: the two barriers and A_H/A_D give, by Arrhenius,
-# k_H/k_D of about 25,000 at 4 C, not 15 (CodeRabbit, PR #743), so at
-# least one of them comes from a different fit or definition, and the
+# k_H/k_D of about 25,000 at 4 C, not 15 (CodeRabbit, PR #743); why is
+# unknown (a different fit or definition, or a reporting error), and the
 # 2%/C is the protium fit's slope only;
 # CYP119 compound I oxidising benzyl alcohol over -50 to -25 C, Ea 15.1
 # kcal/mol, but for the DIDEUTERATED substrate, the only one slow enough
