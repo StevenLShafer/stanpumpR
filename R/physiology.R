@@ -200,7 +200,13 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # and enzyme activity together, propofol being highly extracted.  A factor
 # of exp(-0.066 x 9) on intrinsic clearance alone, inside the well-stirred
 # model, leaves propofol at 82% of normal at 28 C; with liver and kidney
-# flow at 0.4 of normal it gives 44%, close to Bartosova's 42%.  The choices: one factor
+# flow at 0.4 of normal it gives 44%, close to Bartosova's 42%.  Renal
+# clearance, cooled neonates (33.5 C, rewarmed to 37 C; read in full):
+# amoxicillin CL x (T/33.5)^2.43 (Bijleveld 2017, Clin Pharmacol Ther,
+# PMID 28555724), 6.9%/C over 33.5-37 C; ceftazidime CL x (T/33.5)^2.93
+# (van der Veer 2023, Antimicrob Agents Chemother, PMID 37010414), 8.3%/C;
+# both filtered drugs, both fitted beside postnatal age, with which
+# temperature is partly confounded (the authors' caveat).  The choices: one factor
 # on hepatic intrinsic clearance (inside the well-stirred model) for every
 # drug, or separate CYP, UGT and esterase factors; and whether to extend a
 # fit made above 34.8 C down to 28 C.
