@@ -320,7 +320,10 @@ gasWashout <- function(sim, gasDose, weight = 70, cardiacOutput = NULL,
   # The body the simulation was solved with, so a cardiac output changed by
   # the physiology slider (gasBodyPhysiology()) washes out on the same flows.
   body <- if (!is.null(sim$body)) sim$body else getGasBody(weight)
-  Qco  <- if (is.null(cardiacOutput)) body$Q_cardiac else cardiacOutput
+  # The cardiac output the simulation ran on (an override passed to it
+  # included), unless this call overrides it.
+  Qco  <- if (!is.null(cardiacOutput)) cardiacOutput else
+    if (!is.null(sim$Qco)) sim$Qco else body$Q_cardiac
   props <- getGasProperties()
   gases <- props$gas[props$soluble]
 

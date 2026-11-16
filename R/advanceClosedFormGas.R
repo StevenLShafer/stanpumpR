@@ -1168,8 +1168,10 @@ advanceClosedFormGas <- function(
   # The body, circuit and patient go with the states, so a reader of them (the
   # Visualizer's gas run, R/viewerRun.R) knows each compartment's capacity
   # without rebuilding them.
+  # Qco is the cardiac output the simulation ran on, an explicit override
+  # included, so the washout runs on the same flows (gasWashout()).
   list(results = results, state = out, timeLine = timeLine,
-       body = body, circuit = circuit, weight = weight, age = age)
+       body = body, circuit = circuit, weight = weight, age = age, Qco = Qco)
 }
 
 
@@ -1204,11 +1206,13 @@ advanceClosedFormGas <- function(
 #'   returned by \code{advanceClosedFormGas()}
 #' @export
 simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
-                          cardiacOutput = NULL, physiology = NULL,
-                          uptakeEffect = TRUE,
+                          cardiacOutput = NULL, uptakeEffect = TRUE,
                           circuit = c("ideal", "semi-closed"),
                           deadSpace = GAS_DEAD_SPACE_FRACTION,
-                          oxygenUptake = TRUE)
+                          oxygenUptake = TRUE,
+                          # Appended after the pre-existing arguments, so a
+                          # positional call keeps its binding (exported).
+                          physiology = NULL)
 {
   circuit <- match.arg(circuit)
   if (is.null(doseTable) || nrow(doseTable) == 0) return(NULL)

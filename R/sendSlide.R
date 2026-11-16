@@ -237,6 +237,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       if (isTRUE(values$hamberg)) "yes" else "no",
       if (isTRUE(values$antiseizureInteractions)) "yes" else "no"
     ))
+  covariates <- rbind(covariates, physiologyCovariateRows(values$physiology))
   covariates <- rbind(covariates, plotTimeSettings(values$maximum, timeUnit))
   outputComments("Writing covariates")
   openxlsx::addWorksheet(wb, "Covariates")

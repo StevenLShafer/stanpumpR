@@ -10,11 +10,11 @@ simulateGases(
   age = 50,
   maximum = 60,
   cardiacOutput = NULL,
-  physiology = NULL,
   uptakeEffect = TRUE,
   circuit = c("ideal", "semi-closed"),
   deadSpace = GAS_DEAD_SPACE_FRACTION,
-  oxygenUptake = TRUE
+  oxygenUptake = TRUE,
+  physiology = NULL
 )
 }
 \arguments{

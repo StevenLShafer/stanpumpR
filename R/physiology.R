@@ -122,6 +122,14 @@ PHYSIOLOGY_KE0_CARDIAC_EXPONENT <- 0.35
 #' @noRd
 PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 
+# OPEN QUESTION [decision, for Shafer; raised by CodeRabbit on #727,
+# 2026-11-16]: the Bayesian update (R/bayesian.R) fits its clearance and
+# volume factors to PK built AT the sliders' physiology, so a slider acts as
+# an informed prior and the measured levels then pull the curve back towards
+# them; moving a slider also refits.  The alternative is to fit at normal
+# physiology and apply the sliders to the individual afterwards (a pure
+# what-if, no refit).  Left as it is until decided.
+
 # ---- The inhaled anesthetics -------------------------------------------------
 #
 # The gas engine (R/advanceClosedFormGas.R) is a physiological model already:
@@ -535,6 +543,24 @@ physiologyFromInputs <- function(values)
   # A slider at 0 is exactly normal, not 10^0 rounded.
   out[abs(log10(out)) < PHYSIOLOGY_SLIDER_STEP / 2] <- 1
   out
+}
+
+#' The physiology sliders as rows of the email workbook's Covariates sheet
+#'
+#' One row per factor, as a multiple of normal; NULL (an export made without
+#' them) is normal.
+#' @param physiology the factors, or NULL
+#' @returns a data frame of Covariate and Value
+#' @noRd
+physiologyCovariateRows <- function(physiology)
+{
+  p <- tryCatch(checkPhysiology(physiology), error = function(e) NULL)
+  value <- if (is.null(p)) rep("unreadable", length(PHYSIOLOGY_FACTORS)) else
+    ifelse(p[PHYSIOLOGY_FACTORS] == 1, "normal",
+           paste0("x", trimws(formatC(p[PHYSIOLOGY_FACTORS], digits = 3, format = "fg"))))
+  data.frame(Covariate = paste(PHYSIOLOGY_LABELS[PHYSIOLOGY_FACTORS],
+                               "(multiple of normal)"),
+             Value = unname(value), stringsAsFactors = FALSE)
 }
 
 #' A short description of non-normal physiology ("liver x0.5, cardiac x2")

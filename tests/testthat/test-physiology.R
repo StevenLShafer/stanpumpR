@@ -439,3 +439,59 @@ test_that("the panel note counts the inhaled agents only when cardiac output mov
   expect_match(liver, "respond to cardiac output only", fixed = TRUE)
   expect_false(grepl("no physiology data yet): </strong>sevoflurane", liver, fixed = TRUE))
 })
+
+# ---- CodeRabbit on #727 ------------------------------------------------------
+
+test_that("simulateGases() keeps its positional arguments: physiology comes last", {
+  args <- names(formals(simulateGases))
+  expect_identical(args[1:9], c("doseTable", "weight", "age", "maximum", "cardiacOutput",
+                                "uptakeEffect", "circuit", "deadSpace", "oxygenUptake"))
+  expect_identical(utils::tail(args, 1), "physiology")
+  # The old positional call that turns the uptake coupling off still does.
+  expect_equal(simulateGases(SEVO_RUN, 70, 50, 30, NULL, FALSE)$results,
+               simulateGases(SEVO_RUN, 70, 50, 30, uptakeEffect = FALSE)$results)
+})
+
+test_that("the washout runs on the cardiac output the simulation ran on, an override included", {
+  sim <- simulateGases(SEVO_RUN, maximum = 30, cardiacOutput = 5,
+                       physiology = c(cardiac = 0.3))
+  expect_equal(sim$Qco, 5)
+  expect_equal(gasWashout(sim, SEVO_RUN)$Qco, 5)
+  expect_equal(gasWashout(sim, SEVO_RUN, cardiacOutput = 3)$Qco, 3)
+  expect_equal(gasWashout(simulateGases(SEVO_RUN, maximum = 30,
+                                        physiology = c(cardiac = 0.3)), SEVO_RUN)$Qco,
+               0.3 * getGasBody(70)$Q_cardiac)
+})
+
+test_that("an oral tPeak is re-solved from the oral curve and its lag", {
+  # A three-compartment oral model that gives ke0, no tPeak, and an oral tPeak
+  # route: the solved tPeak is the peak of the effect site after an oral
+  # dose, found here by integrating the whole system on a fine grid.
+  X <- list(PK = list(default = list(v1 = 10, v2 = 20, v3 = 50, cl1 = 1, cl2 = 2,
+                                     cl3 = 0.5, ka_PO = 0.05,
+                                     bioavailability_PO = 1, tlag_PO = 12)),
+            ke0 = 0.1, tPeakRoute = "PO", reference = "test")
+  pk <- getDrugPK("propofol", 70, 170, 35, "male", model = X)
+  ke0 <- pk$PK$default$ke0
+  h <- 0.002; n <- 300 / h
+  gut <- 1; a1 <- 0; a2 <- 0; a3 <- 0; ce <- 0; best <- 0; tBest <- 0
+  for (i in seq_len(n)) {
+    c1 <- a1 / 10
+    d <- c(-0.05 * gut,
+           0.05 * gut - (1 + 2 + 0.5) * c1 + 2 * a2 / 20 + 0.5 * a3 / 50,
+           2 * c1 - 2 * a2 / 20, 0.5 * c1 - 0.5 * a3 / 50, ke0 * (c1 - ce))
+    gut <- gut + h * d[1]; a1 <- a1 + h * d[2]; a2 <- a2 + h * d[3]
+    a3 <- a3 + h * d[4]; ce <- ce + h * d[5]
+    if (ce > best) { best <- ce; tBest <- i * h }
+  }
+  expect_equal(pk$tPeak, 12 + tBest, tolerance = 1e-3)
+})
+
+test_that("the email workbook records the physiology sliders", {
+  rows <- physiologyCovariateRows(c(cardiac = 0.5))
+  expect_equal(nrow(rows), length(PHYSIOLOGY_FACTORS))
+  expect_equal(rows$Value[rows$Covariate == "Cardiac output (multiple of normal)"], "x0.5")
+  expect_equal(rows$Value[rows$Covariate == "Liver function (multiple of normal)"], "normal")
+  expect_true(all(physiologyCovariateRows(NULL)$Value == "normal"))
+  expect_true(all(physiologyCovariateRows("x")$Value == "unreadable"))
+})

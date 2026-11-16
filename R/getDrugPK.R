@@ -270,7 +270,7 @@ getDrugPK <- function(
     {
       # A model that supplies ke0 (etomidate): every set starts from it.
       nominalKe0 <- lapply(X$PK, function(set) X$ke0)
-    } else if (isTRUE(X$tPeak > 0))
+    } else if (isTRUE(X[["tPeak", exact = TRUE]] > 0))
     {
       nominal <- getDrugPK(
         drug = drug, weight = weight, height = height, age = age, sex = sex,
@@ -339,7 +339,7 @@ getDrugPK <- function(
          "sublingual absorption, parallel systems, Michaelis-Menten ",
          "elimination, an osmotic or molar dose basis, pulsed oral release, ",
          "or an active first-order oral depot.")
-  tPeak <- X$tPeak
+  tPeak <- X[["tPeak", exact = TRUE]]   # exact: X$tPeak would match tPeakRoute
   # A model that supplies ke0 directly may leave tPeak out altogether (NULL):
   # the time to peak effect is then solved below, per PK set, as the moment
   # the effect site peaks after a bolus with that ke0 and that disposition.
@@ -829,11 +829,21 @@ getDrugPK <- function(
     # The time to peak effect of a model that gave ke0 and no tPeak (above)
     if (solveTPeak && ke0 > 0)
     {
-      tPeak <- effectSitePeakTime(
-        c(p_coef_bolus_l1, p_coef_bolus_l2, p_coef_bolus_l3),
-        c(lambda_1, lambda_2, lambda_3),
-        ke0
-      )
+      tPeak <- if (identical(tPeakRoute, ROUTE_PO) && ka_PO > 0) {
+        # An oral tPeak (the physiology sliders moving ke0 of such a model)
+        # is the peak of the effect site after an oral dose, counted from the
+        # dose, so the oral curve and its lag (CodeRabbit on #727).
+        oral <- c(p_coef_bolus_l1, p_coef_bolus_l2, p_coef_bolus_l3) *
+          ka_PO / (ka_PO - c(lambda_1, lambda_2, lambda_3)) * bioavailability_PO
+        tlag_PO + effectSitePeakTime(c(oral, -sum(oral)),
+                                     c(lambda_1, lambda_2, lambda_3, ka_PO), ke0)
+      } else {
+        effectSitePeakTime(
+          c(p_coef_bolus_l1, p_coef_bolus_l2, p_coef_bolus_l3),
+          c(lambda_1, lambda_2, lambda_3),
+          ke0
+        )
+      }
       tPeakSolved[[event]] <- tPeak
     }
 
@@ -1640,7 +1650,7 @@ parallelSystemSets <- function(X, PK, events, tPeakRoute, drug, covariates)
       drug = drug,
       weight = covariates$weight, height = covariates$height,
       age = covariates$age, sex = covariates$sex,
-      model = list(PK = sys$PK, tPeak = X$tPeak, tPeakRoute = tPeakRoute,
+      model = list(PK = sys$PK, tPeak = X[["tPeak", exact = TRUE]], tPeakRoute = tPeakRoute,
                    ke0 = if (ke0 > 0) ke0)
     )$PK
     list(

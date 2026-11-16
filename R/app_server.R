@@ -2035,6 +2035,8 @@ app_server <- function(input, output, session) {
         vkorc1 = genotypes()$vkorc1,
         cyp4f2 = genotypes()$cyp4f2,
         cyp2b6 = genotypes()$cyp2b6,
+        # The physiology sliders the simulation was run at (R/physiology.R)
+        physiology = physiology(),
         # Whether each companion model was actually drawn, not just its box
         # ticked (companionGroupsShown()).
         mintoSchnider = "mintoSchnider" %in% companionGroupsShown(),
