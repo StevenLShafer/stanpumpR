@@ -309,6 +309,13 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # the authors treat it as a high-extraction drug and say its kinetics in
 # hypothermia are uncharacterised (Inoue 2026, J Cardiothorac Vasc Anesth
 # 40:1138).  Both read in full; neither gives a per-degree factor.
+# Goats cooled to 22-23 C: serum cholinesterase, assayed in vitro (so the
+# amount of enzyme, not its activity at body temperature), unchanged during
+# hypothermia, then about 30% lower from the first to the seventh day
+# after rewarming and not normal before the fourteenth, with albumin
+# following later; the authors read it as hepatic synthesis suppressed
+# (Timet 1977, Cryobiology 14:516, read in full).  An after-effect of this
+# kind is not modelled: the factor returns to 1 at 37 C.
 #
 # Body temperature and cardiac output are NOT coupled: hypothermia does not
 # lower cardiac output by itself.  Fever raises cardiac output and cooling
