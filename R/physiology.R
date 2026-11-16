@@ -224,7 +224,15 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # Monit 35:217, retrospective, 16 against 7).  Alfentanil (Petros 1995,
 # Anesth Analg 81:458, read in full): clearance 3.55 against 3.57 mL/min/kg
 # after bypass at 26 against 34 C, but over 8 h of sampling, most of it
-# after rewarming, which the authors say would have corrected any fall.  The choices: one factor
+# after rewarming, which the authors say would have corrected any fall.
+# Doxacurium on bypass at 33-36 against 26-30 C: renal clearance 1.40
+# against 0.93 mL/min/kg, about 6.3%/C (Asokumar 1998, Can J Anaesth 45:515).
+# Phenobarbital in neonates, 20 cooled against 19 not, retrospective:
+# hypothermia did not influence clearance once weight and age were in the
+# model (Shellhaas 2013, Pediatr Crit Care Med 14:194); a long half-life
+# against 72 h of cooling.  Gentamicin troughs alike in 55 cooled and
+# normothermic encephalopathic neonates, creatinine explaining them (Liu
+# 2009, Pediatrics 124:310).  All read in full.  The choices: one factor
 # on hepatic intrinsic clearance (inside the well-stirred model) for every
 # drug, or separate CYP, UGT and esterase factors; and whether to extend a
 # fit made above 34.8 C down to 28 C.
