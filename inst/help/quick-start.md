@@ -1,7 +1,7 @@
-Five steps produce a simulation, and a sixth lets you watch it: the Visualizer shows the drug moving between the compartments of its model. Everything else in this help is refinement.
+Five steps produce a simulation, a sixth lets you watch it (the Visualizer shows the drug moving between the compartments of its model), and a seventh fits it to the patient: Bayesian updating adjusts a drug's model to concentrations measured during care. Everything else in this help is refinement.
 
 <figure class="help-figure">
-<img src="stanpumpr-assets/help/quick-start-simulator.png" alt="The simulator: on the left the Patient Profile, Graph Options, Time, Dose table and Email Slide panels; the plot in the middle with the Add new drug button beneath it; the dose table on the right with Apply Changes, Undo and Redo">
+<img src="stanpumpr-assets/help/quick-start-simulator.png" alt="The simulator: on the left the Patient Profile, Graph Options, Time, Dose table, Bayesian Updating and Email Slide panels; the plot in the middle with the Add new drug button beneath it; the dose table on the right with Apply Changes, Undo and Redo">
 <figcaption>The simulator. Patient, graph and time settings on the left, the plot in the middle, the dose table on the right.</figcaption>
 </figure>
 
@@ -113,6 +113,24 @@ The **inhaled anesthetics** are shown the same way, as **partial pressures**: in
 </figure>
 
 [Watching a propofol bolus redistribute](help:scenarios/visualizer-propofol-bolus) and [Watching sevoflurane leave the body](help:scenarios/visualizer-sevoflurane-emergence) are the runs above, with what to look for; the other runs made to be watched are in the *Seeing the compartments* group of the [teaching scenarios](help:scenarios/index).
+
+## 7. Update from measured levels
+
+For a drug measured during care (an INR for warfarin; a level of amiodarone, phenytoin, digoxin, vancomycin or an immunosuppressant), open **Bayesian Updating** in the left sidebar. Each row of its table is one measurement: the *Drug* (any drug in the dose table), the *Time* it was drawn, typed as the dose table's times are, and the measured value in *Conc.*, in the units of that drug's plot (listed under the table; the INR for warfarin).
+
+<figure class="help-figure">
+<img src="stanpumpr-assets/help/quick-start-bayesian.png" alt="The simulator with the Bayesian Updating panel open: four warfarin INRs in its table, the PK variability slider at 25% and the Residual variability slider at 5%, the estimate (clearance and volume as multiples of the model's) and a table of measured, model and updated INRs; on the plot the four INRs as points, the updated INR line through them and the lighter warfarin (population) line above">
+<figcaption>Four INRs measured during a warfarin start. The updated line (dark) passes through them; the model's own prediction, <em>warfarin (population)</em>, stays beside it (light).</figcaption>
+</figure>
+
+A row takes effect as soon as it is complete; there is no Apply. stanpumpR then finds the clearance and volume that best balance the measurements against the model (a maximum a posteriori Bayesian estimate) and redraws the drug with them:
+
+- The **points** are the measurements, and the **updated curve** is the drug as the patient handles it. The model's own curve stays in the same panel, lighter, as *(population)*.
+- Under the table, the estimate is written out (clearance and volume as multiples of the model's), with each measurement beside the model's prediction and the updated one.
+- **PK variability** (25%) is how far the patient may be from the model; **Residual variability** (5%) is how far a measurement may be from the patient's own curve, which takes in the assay and errors in the recorded times. Raise the residual variability to trust each measurement less.
+- Everything downstream uses the updated drug: change a dose, and the prediction is the patient's.
+
+[Warfarin: updating the model from measured INRs](help:scenarios/warfarin-bayesian-inr) loads the run above. [Bayesian updating from measured concentrations](help:models/bayesian) explains what is estimated and its cautions.
 
 ## Try it
 
