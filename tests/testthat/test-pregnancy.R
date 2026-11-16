@@ -38,7 +38,10 @@ test_that("every drug of the library has exactly one row in the pregnancy regist
   expect_true(all(registry$gfr_factor == PREGNANCY_GFR_FACTOR, na.rm = TRUE))
   # each category is the drug table's
   dd <- getDrugDefaultsGlobal()
-  expect_equal(registry$category, dd$Category[match(registry$drug, dd$Drug)])
+  # (a candidate model of a chosen-model group takes its group's)
+  owner <- ifelse(is.na(modelCandidateGroup(registry$drug)), registry$drug,
+                  modelCandidateGroup(registry$drug))
+  expect_equal(registry$category, dd$Category[match(owner, dd$Drug)])
 })
 
 test_that("exactly the applied models read the flag", {

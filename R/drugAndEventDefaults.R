@@ -369,10 +369,18 @@ concentrationUnitsLocked <- function(drugs, units) {
 # Library was drawn: 11.8 s (Carbon's fourth UI audit, 2026-11-15, C3).  The
 # list is held to getDrugPK() for every drug in the library, at the reference
 # adult and at a child, by tests/testthat/test-ui-audit-carbon4-engine.R, so a
-# drug that moves onto or off the engine fails there until it is listed.
+# drug that moves onto or off the engine fails there until it is listed.  A
+# group whose model the program chooses by age (R/modelSelection.R) is listed
+# when any of its candidates is on the engine (vincristine and
+# cyclophosphamide, for a child), since its unit must not move under any of
+# them.
 drugOnSaturableEngine <- function(drug) {
   drug %in% c("cetagliptin", "exenatide", "GHB", "linagliptin", "phenytoin",
-              "vildagliptin", "voriconazole")
+              "vildagliptin", "voriconazole",
+              "cyclophosphamide", "cyclophosphamideMcCune", "fluorouracil",
+              "fluorouracilBriki", "fluorouracilTan", "ifosfamide", "paclitaxel",
+              "paclitaxelCrombag", "paclitaxelJoerger", "thioguanineIV", "vincristine",
+              "vincristinePediatric")
 }
 
 # The drugs and units a dose table uses, for drugLibraryProblems(inUse =)

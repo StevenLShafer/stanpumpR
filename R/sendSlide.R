@@ -267,6 +267,8 @@ writeWorkbook <- function(values, allResults, plotResults, drugs, file) {
       "Baseline serum osmolality (mOsm/kg)",
       "Serum creatinine (mg/dL)",
       "Gestational age at birth (weeks)",
+      "Serum albumin (g/dL)",
+      "Serum AST (U/L)",
       "CYP2D6",
       "CYP2C19",
       "CYP2C9",
@@ -290,6 +292,8 @@ writeWorkbook <- function(values, allResults, plotResults, drugs, file) {
       cell(values$osmolality, OSMOLALITY_DEFAULT),
       cell(values$creatinine, "not entered (assumed normal)"),
       cell(values$gestationalAge, "not entered (term assumed)"),
+      cell(values$albumin, "not entered (each model's reference)"),
+      cell(values$ast, "not entered (each model's reference)"),
       # The phenotypes and the companion models change what was simulated,
       # so the sheet records them.  (Claude Code, 2026-10-17, from an
       # external review.)

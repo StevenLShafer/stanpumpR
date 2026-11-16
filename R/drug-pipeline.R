@@ -141,6 +141,8 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
                           alternativeModels = FALSE,
                           antiseizureInteractions = FALSE,
                           gestationalAge = NULL,
+                          albumin = NULL,
+                          ast = NULL,
                           opioidTolerance = OPIOID_TOLERANCE_DEFAULT,
                           individual = NULL,
                           physiology = NULL) {
@@ -183,6 +185,8 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
         pregnant = pregnant,
         adjustToFFM = adjustToFFM,
         gestationalAge = gestationalAge,
+        albumin = albumin,
+        ast = ast,
         # The Bayesian update's estimate for this drug, or NULL
         # (R/bayesian.R): a list of clearance and volume factors, by drug.
         individual = individual[[drug]],
