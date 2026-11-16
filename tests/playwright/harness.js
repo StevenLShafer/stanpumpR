@@ -176,7 +176,33 @@ async function slowLink(context, page, ms) {
     { offline: false, latency: ms, downloadThroughput: -1, uploadThroughput: -1 });
 }
 
+// The Working cover (inst/www/app.js) goes up after 3 s of a busy server and
+// comes down when it is idle.  It reads only the shiny:busy and shiny:idle
+// events, which Shiny raises in the page for the server's busy and idle
+// messages, so a case raises them itself and the cover goes up as it would
+// over long work.  The server is not held: anything the page sends under
+// the cover is answered at once, and the idle that follows takes the cover
+// down, so coverPage() says when the cover did not stay up.
+async function coverPage(page, ms = 3500) {
+  await page.evaluate(() => window.jQuery(document).trigger('shiny:busy'));
+  await page.waitForTimeout(ms);
+  return page.evaluate(() => !!document.getElementById('working-cover'));
+}
+
+async function uncoverPage(page) {
+  await page.evaluate(() => window.jQuery(document).trigger('shiny:idle'));
+  await page.waitForSelector('#working-cover', { state: 'detached', timeout: 5000 });
+}
+
+// The focused element, as its accessible name, id or tag
+async function focusName(page) {
+  return page.evaluate(() => {
+    const a = document.activeElement;
+    return a ? (a.getAttribute('aria-label') || a.id || a.tagName) : null;
+  });
+}
+
 module.exports = {
   slowLink, REPO, DEFAULT_DRUGS, startApp, openSession, settle, serverState, filled, waitForRows,
-  waitForDraft, connected, notifications, clearNotifications, paste, drugInfo
+  waitForDraft, connected, notifications, clearNotifications, paste, drugInfo, coverPage, uncoverPage, focusName
 };

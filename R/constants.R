@@ -267,7 +267,14 @@ MAX_DOSE_ROWS <- 500L
 MAX_EVENT_ROWS <- 100L
 MAX_TARGET_ROWS <- 20L
 MAX_DOSE_VALUE <- 1e9
+# The most units one Drug Library edit may add, each of which is simulated
+# once (drugLibraryUnitProblems(); typically 0.01 s each, at most 1.5 s)
+DRUG_LIBRARY_MAX_NEW_UNITS <- 40L
 MAX_INPUT_TEXT <- 2000L
+# The Help search box's maxlength, which the server holds its value to as
+# well: the browser's limit is the page's to keep, not the server's
+# (Carbon's third UI audit, 2026-11-15, M5)
+HELP_SEARCH_MAX_CHARS <- 100L
 MAX_PLOT_WIDTH <- 4096L
 MIN_PLOT_WIDTH <- 100L
 MAX_YAXIS_HEIGHT <- 350L
@@ -764,6 +771,11 @@ TIME_EXTEND_MARGIN <- c(minutes = 30, hours = 30, days = MINS_PER_DAY / 2, weeks
 
 REFERENCE_TIME_NONE <- "none"
 NORMALIZE_NONE <- "none"
+# The choices of the plot's own controls, which a link or a forged input can
+# replace with anything (Carbon's third UI audit, 2026-11-15, C1)
+PLOT_NORMALIZATIONS <- c(NORMALIZE_NONE, "Peak plasma", "Peak effect site")
+PLOT_TYPICAL_CHOICES <- c("none", "Mid", "Range")
+PLOT_LINE_TYPES <- c("blank", "solid", "dashed", "dotted", "dotdash")
 PK_EVENT_DEFAULT <- "default"
 
 PLOT_ID_EVENTS      <- "Events"
@@ -816,6 +828,11 @@ GRID_FINE_POINTS    <- 20000
 DEBUG_LEVEL_OFF <- 0
 DEBUG_LEVEL_NORMAL <- 1
 DEBUG_LEVEL_VERBOSE <- 2
+# The session's debug log (?debug=1) keeps its first line, the build, and its
+# newest lines up to about this many characters (appendDebugLog() in
+# R/app_globals.R): the whole log is copied at every line written and sent to
+# the browser at every flush, so a long session made each write slower.
+DEBUG_LOG_MAX_CHARS <- 200000
 
 # Every https URL on one of these websites in a drug reference, wherever it
 # stands in the citation, is shown in the UI as a link labelled with the
@@ -916,6 +933,12 @@ BAYES_RESIDUAL_VARIABILITY_MIN <- 1
 BAYES_RESIDUAL_VARIABILITY_MAX <- 50
 # The most measured concentrations the table holds
 MAX_BAYES_OBSERVATIONS <- 30L
+# The latest measurement an update uses, minutes: the longest plot the app
+# offers (365 days).  The fit simulates to its last measurement, so a time
+# with no ceiling (1e12 minutes, typed or in a link) ran tciSchedule() or a
+# schedule's repeats for hours; in the app the end of the plot is the limit
+# (bayesianUpdateDrugs(maximum =)).
+BAYES_MAX_TIME <- max(MAX_TIME_VALUES)
 # Rows the table is drawn with when empty
 BAYES_TABLE_BLANK_ROWS <- 4L
 # The estimate is searched within this factor of the model's clearance and
@@ -924,5 +947,29 @@ BAYES_TABLE_BLANK_ROWS <- 4L
 # a measurement that no clearance can explain (a level entered in the wrong
 # units) cannot drive the search to a volume of zero.
 BAYES_FACTOR_LIMIT <- 20
+# The most iterations of the search (bayesianSearch(), about three
+# simulations each); the fits measured take 3 to 8
+BAYES_MAX_ITERATIONS <- 50L
+# The relative step of the search's finite differences (bayesianSearch())
+BAYES_JACOBIAN_STEP <- 1e-6
+# The longest an update searches, seconds, all drugs together: no further
+# simulation is started after it.  A worker runs one session's R at a time,
+# so a fit holds every session on it; six interacting antiseizure drugs over
+# 52 weeks, each simulation of them seconds long, held one for more than
+# eight minutes (Carbon's second UI audit, 2026-11-15, F3).  The fits
+# measured take 1 to 10 seconds.
+BAYES_MAX_SECONDS <- 30
 # The label of the population curve drawn beside the individualized one
 BAYES_PRIOR_LABEL <- "population"
+# How far its colour is mixed towards black or white (alternativeModelColor()):
+# further than the other companions' 0.45, so that a drug with the
+# population line and another companion (Minto or Schnider, "no
+# interactions") draws the two in different colours
+BAYES_PRIOR_COLOR_AMOUNT <- 0.7
+# With the antiseizure interactions on, the measured drugs are updated in
+# turn, at most this many times, until no estimate moves by more than
+# BAYES_JOINT_TOLERANCE (relative) from one pass to the next (R/bayesian.R;
+# Carbon's fourth UI audit, 2026-11-15, H8).  A pass whose inputs did not
+# change reuses its fits, so a single measured drug costs one fit.
+BAYES_JOINT_PASSES <- 6L
+BAYES_JOINT_TOLERANCE <- 1e-3

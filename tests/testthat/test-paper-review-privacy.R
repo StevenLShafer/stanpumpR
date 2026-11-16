@@ -4,7 +4,7 @@
 # docs/paper-review-privacy.md.
 
 test_that("reading an upload deletes its file and the directory Shiny made for it", {
-  dir <- file.path(tempdir(), paste0("upload-", paste(sample(letters, 12), collapse = "")))
+  dir <- file.path(tempdir(), shinyUploadDirName())
   dir.create(dir)
   path <- file.path(dir, "0.pdf")
   bytes <- c(charToRaw("%PDF-1.7\n"), as.raw(1:200))
@@ -16,7 +16,7 @@ test_that("reading an upload deletes its file and the directory Shiny made for i
 })
 
 test_that("a non-PDF upload is still deleted", {
-  dir <- file.path(tempdir(), paste0("upload-", paste(sample(letters, 12), collapse = "")))
+  dir <- file.path(tempdir(), shinyUploadDirName())
   dir.create(dir)
   path <- file.path(dir, "0.pdf")
   writeBin(charToRaw("not a pdf"), path)
@@ -57,7 +57,7 @@ test_that("reviewing, reporting and simulating write nothing to the console or t
 })
 
 test_that("the app's server deletes uploads at once and discards on request and at session end", {
-  dir <- file.path(tempdir(), paste0("upload-", paste(sample(letters, 12), collapse = "")))
+  dir <- file.path(tempdir(), shinyUploadDirName())
   dir.create(dir)
   path <- file.path(dir, "0.pdf")
   writeBin(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), path)
@@ -96,7 +96,7 @@ settle <- function(session) {
 }
 
 test_that("pressing Review runs the call, drops the manuscript and reports, with no network", {
-  dir <- file.path(tempdir(), paste0("upload-", paste(sample(letters, 12), collapse = "")))
+  dir <- file.path(tempdir(), shinyUploadDirName())
   dir.create(dir)
   path <- file.path(dir, "0.pdf")
   writeBin(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), path)
@@ -128,7 +128,7 @@ test_that("pressing Review runs the call, drops the manuscript and reports, with
 
 test_that("a review that comes back is reported, and one discarded meanwhile is dropped", {
   upload <- function() {
-    dir <- file.path(tempdir(), paste0("upload-", paste(sample(letters, 12), collapse = "")))
+    dir <- file.path(tempdir(), shinyUploadDirName())
     dir.create(dir)
     path <- file.path(dir, "0.pdf")
     writeBin(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), path)
@@ -193,7 +193,7 @@ test_that("a review still running after ten minutes is offered a quick one, at e
   # Shafer, 2026-11-13: at PAPER_REVIEW_LATE_SEC the banner offers Keep
   # waiting or Stop and run a quick review; the quick review re-sends the
   # same manuscript at PAPER_REVIEW_QUICK_EFFORT, and its report says so.
-  dir <- file.path(tempdir(), paste0("upload-", paste(sample(letters, 12), collapse = "")))
+  dir <- file.path(tempdir(), shinyUploadDirName())
   dir.create(dir)
   path <- file.path(dir, "0.pdf")
   writeBin(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), path)
@@ -256,7 +256,7 @@ test_that("a review still running after ten minutes is offered a quick one, at e
 })
 
 test_that("a full review that answers is not replaced, and is not marked quick", {
-  dir <- file.path(tempdir(), paste0("upload-", paste(sample(letters, 12), collapse = "")))
+  dir <- file.path(tempdir(), shinyUploadDirName())
   dir.create(dir)
   path <- file.path(dir, "0.pdf")
   writeBin(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), path)
@@ -286,7 +286,7 @@ test_that("a full review that answers is not replaced, and is not marked quick",
 test_that("with stanpumpR's own key, a quick review is sent only if the limit has room for it", {
   # CodeRabbit, PR #720: its place is reserved before the full review is
   # stopped, and with none left the full review goes on.
-  dir <- file.path(tempdir(), paste0("upload-", paste(sample(letters, 12), collapse = "")))
+  dir <- file.path(tempdir(), shinyUploadDirName())
   dir.create(dir)
   path <- file.path(dir, "0.pdf")
   writeBin(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), path)
@@ -425,7 +425,7 @@ test_that("a stop that cannot end the process says so and leaves the review runn
 })
 
 test_that("when the full review cannot be stopped, no quick review is sent and its place is given back", {
-  dir <- file.path(tempdir(), paste0("upload-", paste(sample(letters, 12), collapse = "")))
+  dir <- file.path(tempdir(), shinyUploadDirName())
   dir.create(dir)
   path <- file.path(dir, "0.pdf")
   writeBin(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), path)
@@ -487,7 +487,7 @@ test_that("the stop function holds no manuscript, and the app lets it go once th
 })
 
 test_that("a second click while a quick review's place is asked for does nothing", {
-  dir <- file.path(tempdir(), paste0("upload-", paste(sample(letters, 12), collapse = "")))
+  dir <- file.path(tempdir(), shinyUploadDirName())
   dir.create(dir)
   path <- file.path(dir, "0.pdf")
   writeBin(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), path)
@@ -534,7 +534,7 @@ test_that("a second click while a quick review's place is asked for does nothing
 
 test_that("a quick review's place that comes back after its review has ended does not touch the next one", {
   # CodeRabbit, PR #720: the place is bound to the review that asked for it.
-  dir <- file.path(tempdir(), paste0("upload-", paste(sample(letters, 12), collapse = "")))
+  dir <- file.path(tempdir(), shinyUploadDirName())
   dir.create(dir)
   path <- file.path(dir, "0.pdf")
   writeBin(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), path)

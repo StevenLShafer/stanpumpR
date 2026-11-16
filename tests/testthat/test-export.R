@@ -123,8 +123,10 @@ test_that("each file downloads on its own, the same as the email's", {
     expect_equal(unname(pngSize(image)), c(2 * plotHeight(), 2 * 800))
 
     expect_length(alerts, 0)
-    expect_equal(spinner$shown, 3)
-    expect_equal(spinner$hidden, 3)
+    # no page spinner: a long download gets the Working cover instead,
+    # which the busy session raises in the browser (inst/www/app.js)
+    expect_equal(spinner$shown, 0)
+    expect_equal(spinner$hidden, 0)
     expect_false(session$isClosed())
   })
 })
@@ -150,7 +152,7 @@ test_that("a download with nothing to export says why and keeps the session", {
     expect_error(output$exportSpreadsheet)
     expect_match(tail(alerts, 1), "Age")
     expect_false(session$isClosed())
-    # no spinner is left up
+    # no spinner, and none left up
     expect_equal(spinner$shown, 0)
     expect_equal(spinner$hidden, 0)
   })
@@ -169,8 +171,8 @@ test_that("a download that fails while writing says so, and the detail goes only
                    "Export \\(xlsx\\) failed: disk full")
     expect_equal(tail(alerts, 1), EXPORT_FAILURE_MESSAGE)
     expect_no_match(EXPORT_FAILURE_MESSAGE, "secret")
-    expect_equal(spinner$shown, 1)
-    expect_equal(spinner$hidden, 1)
+    expect_equal(spinner$shown, 0)
+    expect_equal(spinner$hidden, 0)
     expect_false(session$isClosed())
   })
 })

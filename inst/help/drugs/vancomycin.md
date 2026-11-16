@@ -16,4 +16,4 @@ The shaded band (2.9 to 11 mcg/mL total) marks free vancomycin at the measured *
 
 ### Where to be careful
 
-The clearance equation is linear in creatinine clearance and reaches zero at 1.06 mL/min; it is not a model of anuria or dialysis, and the code refuses rather than clamps if driven there. Loading doses by weight, nephrotoxicity and the vancomycin infusion reaction are outside the model.
+The clearance equation is linear in creatinine clearance and reaches zero at 1.06 mL/min; it is not a model of anuria or dialysis. The creatinine clearance it reads is therefore held at 12 mL/min, the lowest in Thomson's data, where clearance is 0.50 L/h, so a patient with less renal function, a newborn among them, is drawn at that floor rather than at a clearance the line extrapolates towards zero. Until November 2026 the model refused such a patient, and the plot showed no drug at all. Loading doses by weight, nephrotoxicity and the vancomycin infusion reaction are outside the model.

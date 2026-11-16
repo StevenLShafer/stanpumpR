@@ -31,6 +31,7 @@ R0     = kin / kout      INR = 1 / R
 The drug inhibits the production of 1/INR, so 1/INR falls and the INR rises.
 The equation is linear in R with the same form as the turnover model, so it
 is solved exactly over each step by \code{inrPCA()} with \code{pca0 = R0} and
-a turnover half-life of \code{ln 2 / kout}; the INR is then its reciprocal.
+a turnover half-life of \code{ln 2 / kout}; the INR is then its reciprocal,
+held at \code{INR_CEILING} (\code{inrFromActivity()}).
 }
 \keyword{internal}

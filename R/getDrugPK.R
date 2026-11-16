@@ -53,6 +53,17 @@
 #'   individual's pharmacokinetics as a list of \code{clearance} and
 #'   \code{volume}, each a multiple of the model's, as the Bayesian update
 #'   estimates them (\code{bayesianUpdateDrugs()}, \code{individualizeModel()}).
+#' @param metaboliteIndividual NULL (the default), or the individual's
+#'   pharmacokinetics of the drug's active metabolite, in the form of
+#'   \code{individual}: the metabolite it forms is then formed into the
+#'   individual's metabolite, as the Bayesian update estimates it from the
+#'   metabolite's measured concentrations.  The parent's own formation is the
+#'   model's (it moves with \code{individual}).
+#' @param libraryDefaults NULL (the default) for the package's drug library,
+#'   or the session's (\code{recalculatePK()} passes it), from which an
+#'   active metabolite's row is read: its \code{Concentration.Units} set the
+#'   scale of the metabolite formed, so a metabolite the Drug Library shows in
+#'   other units is formed in those units.
 #'
 #' @returns a list: the drug's PK sets (\code{PK}, one per PK event), its
 #'   \code{tPeak} and \code{reference}, the covariates, and the library's
@@ -93,7 +104,9 @@ getDrugPK <- function(
   model = NULL,
   cyp4f2 = CYP4F2_DEFAULT,
   gestationalAge = NULL,
-  individual = NULL
+  individual = NULL,
+  libraryDefaults = NULL,
+  metaboliteIndividual = NULL
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
@@ -313,6 +326,14 @@ getDrugPK <- function(
   }
 
   events <- names(X$PK)
+  # Each event's set, by name.  Built as a list: assign()ed into this frame,
+  # which is not hashed, and gathered back with get0(), the sets cost time
+  # in the square of their number, and an antiseizure interaction makes one
+  # set per segment of its multiplier, hundreds over a year (19.5 of the 84
+  # seconds of six interacting drugs over 52 weeks; found checking Carbon's
+  # second UI audit, 2026-11-15, F3).  An event named like a local variable
+  # (v1) also overwrote it.
+  sets <- list()
   for (event in events)
   {
     v1  <- X$PK[[event]]$v1
@@ -882,8 +903,7 @@ getDrugPK <- function(
             e_coef_bolus_ke0 * exp(-ke0 * tPeak)
         )
     }
-    assign(
-      event,
+    sets[[event]] <-
       list(
         v1 = v1,
         v2 = v2,
@@ -1037,10 +1057,9 @@ getDrugPK <- function(
         e_coef_PO2_ke0 = e_coef_PO2_ke0,
         e_coef_PO2_ka = e_coef_PO2_ka
       )
-    )
   }
 
-  PK <- sapply(events, function(x) list(get0(x)))
+  PK <- sets[events]
 
   # The reported tPeak of a model that gave ke0 and no tPeak is the default
   # PK set's (each set solved its own above, for its vdPeakEffect).
@@ -1089,10 +1108,15 @@ getDrugPK <- function(
   # coefficients ride along inside each PK set, so simCpCe() can hand them
   # straight to advanceClosedFormMetabolite().
   metaboliteName <- NULL
+  metaboliteRows <- NULL
   if (resolveMetabolite && !is.null(X$metabolite))
   {
     metaboliteName <- X$metabolite$name
-    metaboliteDefaults <- getDrugDefaults(metaboliteName)
+    # The session's row, with its Drug Library units: the package's was read
+    # here, so a metabolite shown in ng/mL was still formed in mcg/mL,
+    # 1000-fold low (Carbon's UI audit, 2026-11-14, F4)
+    metaboliteDefaults <- libraryDefaultsRow(metaboliteName, libraryDefaults)
+    metaboliteRows <- metaboliteDefaults
 
     # resolveMetabolite = FALSE: one level only.  A cascade such as codeine to
     # morphine to morphine-6-glucuronide would need a two-stage convolution,
@@ -1111,7 +1135,13 @@ getDrugPK <- function(
       pregnant = pregnant,
       adjustToFFM = adjustToFFM,
       resolveMetabolite = FALSE,
-      gestationalAge = gestationalAge
+      gestationalAge = gestationalAge,
+      # The individual's metabolite, where the Bayesian update estimated it
+      # from the metabolite's own levels: the parent forms the metabolite the
+      # patient has.  Built from the model's, a morphine level after codeine
+      # could not move its estimate, every candidate forming the same
+      # morphine (Carbon's third UI audit, 2026-11-15, H7)
+      individual = metaboliteIndividual
     )
     metaboliteSet <- metabolitePK$PK[[PK_EVENT_DEFAULT]]
 
@@ -1196,6 +1226,10 @@ getDrugPK <- function(
   # does not create it: a drug with no metabolite returns exactly the shape it
   # always has.
   out$metaboliteName <- metaboliteName
+  # The library rows the PK was built with, so that a rebuild from the model
+  # (pkRebuildArgs(): doseSizePK(), asmSegmentPK()) builds it with them again
+  out$drugDefaults <- drugDefaults
+  out$libraryDefaults <- metaboliteRows
   # An osmotic agent reports serum osmolality rather than its own
   # concentration: simCpCe() reads the baseline, the fraction and the molecular
   # weight from here.  See R/drugs_mannitol.R.
@@ -1333,13 +1367,20 @@ getDrugPK <- function(
     if (!is.null(tc$metabolite))
     {
       formed <- tc$metabolite
+      # Its parameters are the parent's model's (enalaprilatSet()), and the
+      # metabolite is never dosed, so no level of it is ever fitted
+      if (!is.null(validateIndividual(metaboliteIndividual, formed$name)))
+        stop("An individual estimate of ", formed$name, ", formed in ", drug,
+             "'s transit chain, is not available.")
       # A parent and its metabolite need not report in the same units, and the
       # amounts the engine carries are the parent's; see
       # metaboliteUnitScale() in R/metaboliteCoefficients.R for why its
       # absence would be wrong by a thousandfold.
+      formedDefaults <- libraryDefaultsRow(formed$name, libraryDefaults)
+      out$libraryDefaults <- formedDefaults
       tc$metabolite$unitScale <- metaboliteUnitScale(
         drugDefaults$Concentration.Units,
-        getDrugDefaults(formed$name)$Concentration.Units
+        formedDefaults$Concentration.Units
       )
       out$metaboliteName <- formed$name
       # What simCpCe() reads to lift the metabolite into a series of its own,
@@ -1383,6 +1424,8 @@ getDrugPK <- function(
   # asmSegmentPK()), which must rebuild the individual's drug, and for the
   # simulation key, so that a new estimate re-simulates the drug.
   if (!is.null(individual)) out$individual <- individual
+  if (!is.null(metaboliteName) && !is.null(metaboliteIndividual))
+    out$metaboliteIndividual <- validateIndividual(metaboliteIndividual, metaboliteName)
   return(out)
 }
 
@@ -1419,9 +1462,70 @@ validateDoseBioavailability <- function(x, drug)
 #' @keywords internal
 doseSizePK <- function(PK, dose)
 {
-  X <- do.call(PK$drug, c(PK$covariates, list(dose = dose)))
-  do.call(getDrugPK, c(list(drug = PK$drug), PK$covariates,
-                       list(model = X, individual = PK$individual)))
+  drug <- pkModelDrug(PK)
+  X <- do.call(drug, c(PK$covariates, list(dose = dose)))
+  do.call(getDrugPK, c(list(drug = drug), PK$covariates,
+                       list(model = X), pkRebuildArgs(PK)))
+}
+
+#' The drug whose model function a PK is rebuilt from
+#'
+#' A drug's own PK is rebuilt from its own function.  A companion entry is
+#' named for its panel ("insulinRegular (population)") and is a copy of its
+#' drug's PK, so it is rebuilt from that drug's function: the Bayesian
+#' update's population curve and the antiseizure interactions' reference
+#' curve.  Called by its own name, a dose-dependent drug's population curve
+#' failed ("could not find function") and the plot with it (Carbon's second
+#' UI audit, 2026-11-15, F1).  A companion with a model of its own (Minto,
+#' Schnider) is neither dose-dependent nor an interaction victim and is
+#' never rebuilt.
+#'
+#' @param PK a drug's PK from getDrugPK(), or a companion entry
+#' @returns the name of the model function
+#' @keywords internal
+pkModelDrug <- function(PK)
+{
+  if (is.null(PK$companionOf)) return(PK$drug)
+  if (!identical(PK$companionGroup, "bayesian") &&
+      !identical(PK$companionGroup, ASM_INTERACTIONS_INPUT))
+    stop("Internal error: ", PK$drug, " has a model of its own and cannot be rebuilt.")
+  PK$companionOf
+}
+
+#' What a rebuild of a drug's PK from its model passes getDrugPK()
+#'
+#' Besides the covariates and the model (doseSizePK(), asmSegmentPK()): the
+#' individual of the Bayesian update, and the library rows the PK was first
+#' built with, so that a session's Drug Library units reach the rebuilt sets
+#' as they reached the first.  Built from the package's rows, a rebuilt
+#' metabolite was formed in the package's units (Carbon's UI audit,
+#' 2026-11-14, F4).
+#'
+#' @param PK the drug's PK from getDrugPK()
+#' @returns a list of getDrugPK() arguments
+#' @keywords internal
+pkRebuildArgs <- function(PK)
+{
+  list(individual = PK$individual,
+       metaboliteIndividual = PK$metaboliteIndividual,
+       drugDefaults = if (is.null(PK$drugDefaults)) getDrugDefaults(pkModelDrug(PK)) else PK$drugDefaults,
+       libraryDefaults = PK$libraryDefaults)
+}
+
+#' A drug's row of the drug library
+#'
+#' @param drug the drug
+#' @param libraryDefaults the session's drug library, or NULL
+#' @returns its row of `libraryDefaults` where it has one, else the
+#'   package's (getDrugDefaults())
+#' @keywords internal
+libraryDefaultsRow <- function(drug, libraryDefaults = NULL)
+{
+  if (is.data.frame(libraryDefaults)) {
+    row <- libraryDefaults[libraryDefaults$Drug %in% drug, , drop = FALSE]
+    if (nrow(row) > 0) return(row[1, , drop = FALSE])
+  }
+  getDrugDefaults(drug)
 }
 
 #' Check the share of each dose a parallel system receives
@@ -1612,12 +1716,40 @@ effectSitePeakTime <- function(coef, lambda, ke0, upper = 4000)
 #' is exactly one ke0 for any target later than the plasma peak, and none at
 #' all for a target at or before it.
 #'
-#' That second case is a real failure rather than a numerical one: a reported
-#' peak effect earlier than the reported peak concentration cannot be produced
-#' by any effect site model, and usually means the two numbers came from
-#' different sources or that the earlier one describes onset rather than
-#' maximum.  It raises instead of returning a huge ke0 that would quietly make
-#' the effect site a copy of the plasma curve.
+#' That second case is not an error in the patient.  The library's tPeak is a
+#' property of the drug, measured in typical patients, and ke0 is solved from
+#' it for each patient; a patient whose own plasma curve peaks at or after
+#' that time (hydrocodone's 90 min in a 90-year-old with a creatinine of 15,
+#' whose oral plasma peak is 93 min; a Bayesian candidate with a twentieth of
+#' the model's clearance) is a legal input for which no ke0 exists.  Until
+#' 2026-11-15 the function stopped there, and the stop took every drug off the
+#' plot (Carbon's third UI audit, 2026-11-15, H3).  It now returns the ke0
+#' whose effect-site peak is the NEAREST reachable one, as described below.
+#'
+#' The fallback is the nearest reachable peak, at both ends of the bracket.
+#' \itemize{
+#'   \item A target at or before the plasma peak, or nearer to it than
+#'     \code{KE0_FOLLOWS_PLASMA_FACTOR} times the curve's fastest rate can
+#'     bring the effect site, gets that ke0: the effect site follows the
+#'     plasma curve with a lag of 1% of its fastest time constant and peaks
+#'     as early as any effect site can.  It is the limit the solved ke0 tends
+#'     to as a patient's plasma peak approaches tPeak from below (the solved
+#'     ke0 grows without bound there), so the effect-site curve is continuous
+#'     across the boundary, and finite.
+#'   \item A target later than even \code{KE0_SOLVE_MIN} can reach (a plasma
+#'     curve so brief that only an absurdly slow effect site peaks that late)
+#'     gets that smallest ke0, whose effect site is then close to zero, as the
+#'     exact ke0 below it would also give.
+#' }
+#' Every patient for whom a ke0 exists inside the bracket gets exactly the ke0
+#' it got before, bit for bit.
+#'
+#' What the stop used to guard, a library tPeak entered earlier than the
+#' library's own plasma peak (two numbers from different sources, or an onset
+#' read as a peak), is a property of the drug and not of a patient, so it is
+#' checked where the drug is: test-ui-audit-carbon3-models.R solves every
+#' oral tPeak at the reference patient and requires the effect site to peak
+#' at it.
 #'
 #' The time is counted from the dose.  An absorption lag delays the plasma and
 #' the effect site alike, so the curves are built from the start of absorption
@@ -1644,25 +1776,39 @@ ke0FromTPeak <- function(tPeak, coef, lambda, ka, drug = "this drug", lag = 0)
   oralCoef   <- c(coef[use], -sum(coef[use]))
   oralLambda <- c(lambda[use], ka)
 
+  # The ke0 at which the effect site follows the plasma curve (see above):
+  # the upper end of the bracket, and the answer when tPeak cannot be reached
+  # from above.  Never below 10 /min, the upper end the bracket always had, so
+  # that every ke0 solved before is solved the same way now.
+  follows <- max(10, KE0_FOLLOWS_PLASMA_FACTOR * max(oralLambda))
+
+  # Searched over a window scaled to the rates, as effectSitePeakTime()
+  # does: over 0-4000 min a fast curve (ka 10 /min, lambda 1 /min, its peak at
+  # 0.26 min) had underflowed to 0 where the search began, which then settled
+  # near 4000 and took any tPeak as unreachable (CodeRabbit on PR #730)
   plasmaPeak <- lag + stats::optimize(
     function(t) sum(oralCoef * exp(-oralLambda * t)),
-    c(0, 4000), maximum = TRUE
+    c(0, min(4000, 20 / min(oralLambda))), maximum = TRUE
   )$maximum
 
-  if (tPeak <= plasmaPeak)
-    stop("Cannot solve ke0 for ", drug, ": a peak effect at ", round(tPeak, 1),
-         " min is not reachable, because the oral plasma concentration itself ",
-         "peaks at ", round(plasmaPeak, 1), " min and the effect site always ",
-         "peaks later. Either the time to peak effect belongs after that, or ",
-         "the absorption constant is too slow.")
+  # No ke0 puts the peak at or before the plasma's own (see above): the
+  # nearest reachable peak is the plasma peak itself, approached as ke0 grows
+  # (Carbon's third UI audit, 2026-11-15, H3).
+  if (tPeak <= plasmaPeak) return(follows)
 
   peakAt <- function(ke0) lag + effectSitePeakTime(oralCoef, oralLambda, ke0)
 
   # Bracket: peakAt() falls towards plasmaPeak as ke0 grows.  Widen downwards
-  # until the peak is later than the target, which must happen as ke0 -> 0.
+  # until the peak is later than the target, which must happen as ke0 -> 0,
+  # and upwards to `follows` until it is earlier (a tPeak just after the
+  # plasma peak needs a ke0 above 10 /min, which made uniroot() stop).
   lo <- 1e-6
   hi <- 10
-  while (peakAt(lo) < tPeak && lo > 1e-12) lo <- lo / 10
+  while (peakAt(lo) < tPeak && lo > KE0_SOLVE_MIN) lo <- lo / 10
+  while (peakAt(hi) > tPeak && hi < follows) hi <- min(hi * 10, follows)
+  # Outside the bracket, the end nearest the target (see above)
+  if (peakAt(lo) < tPeak) return(lo)
+  if (peakAt(hi) > tPeak) return(hi)
   stats::uniroot(function(ke0) peakAt(ke0) - tPeak, c(lo, hi),
                  tol = .Machine$double.eps^0.5)$root
 }
@@ -1682,6 +1828,18 @@ ke0FromTPeak <- function(tPeak, coef, lambda, ka, drug = "this drug", lag = 0)
 #' left morphine's 93.8 min solved to 93.83 min.  (Claude Code, 2026-10-17, from
 #' an external review.)
 #'
+#' Reachable in principle is not reachable in floating point.  A plasma curve
+#' that is gone within seconds (a Bayesian candidate at twenty times the
+#' model's clearance and a twentieth of its volume: oxymorphone, pregabalin,
+#' epinephrine and vasopressin) needs a ke0 below 1e-100 per minute to peak at
+#' a tPeak of minutes, which no bracket reaches, and uniroot() stopped, which
+#' failed the Bayesian update of that drug (Carbon's third UI audit,
+#' 2026-11-15, H3).  A target outside the bracket now gets the end of the
+#' bracket nearest to it, as ke0FromTPeak() does: \code{KE0_SOLVE_MIN}, whose
+#' effect site is close to zero, as the exact ke0 would give, for a target
+#' later than it can reach, and \code{KE0_SOLVE_MAX} for one earlier.  Every
+#' tPeak solved before is solved exactly as before.
+#'
 #' @param tPeak observed time to peak effect after a bolus, in minutes
 #' @param coef plasma bolus coefficients on the drug's eigenvalues
 #' @param lambda those eigenvalues; zeros mark absent compartments
@@ -1695,11 +1853,25 @@ ke0FromTPeakBolus <- function(tPeak, coef, lambda)
   # upwards until it is earlier.
   lo <- 1e-3
   hi <- 1
-  while (peakAt(lo) < tPeak && lo > 1e-12) lo <- lo / 10
-  while (peakAt(hi) > tPeak && hi < 1e6) hi <- hi * 10
+  while (peakAt(lo) < tPeak && lo > KE0_SOLVE_MIN) lo <- lo / 10
+  while (peakAt(hi) > tPeak && hi < KE0_SOLVE_MAX) hi <- hi * 10
+  # Outside the bracket, the end nearest the target (see above)
+  if (peakAt(lo) < tPeak) return(lo)
+  if (peakAt(hi) > tPeak) return(hi)
   stats::uniroot(function(ke0) peakAt(ke0) - tPeak, c(lo, hi),
                  tol = .Machine$double.eps^0.5)$root
 }
+
+# The ends of the ke0 brackets, per minute (ke0FromTPeak(),
+# ke0FromTPeakBolus()): the values the two searches always widened to, now
+# also the answers they give for a tPeak no ke0 inside them can reach
+# (Carbon's third UI audit, 2026-11-15, H3).  KE0_FOLLOWS_PLASMA_FACTOR sets
+# the ke0 of an effect site that follows an oral plasma curve, as a multiple
+# of the curve's fastest rate: 100 puts the effect site's lag at 1% of the
+# plasma curve's fastest time constant.
+KE0_SOLVE_MIN <- 1e-12
+KE0_SOLVE_MAX <- 1e6
+KE0_FOLLOWS_PLASMA_FACTOR <- 100
 
 
 # calculate c3 based on 4 coefficients, 4 exponents, and time

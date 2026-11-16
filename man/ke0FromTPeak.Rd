@@ -31,12 +31,40 @@ is exactly one ke0 for any target later than the plasma peak, and none at
 all for a target at or before it.
 }
 \details{
-That second case is a real failure rather than a numerical one: a reported
-peak effect earlier than the reported peak concentration cannot be produced
-by any effect site model, and usually means the two numbers came from
-different sources or that the earlier one describes onset rather than
-maximum.  It raises instead of returning a huge ke0 that would quietly make
-the effect site a copy of the plasma curve.
+That second case is not an error in the patient.  The library's tPeak is a
+property of the drug, measured in typical patients, and ke0 is solved from
+it for each patient; a patient whose own plasma curve peaks at or after
+that time (hydrocodone's 90 min in a 90-year-old with a creatinine of 15,
+whose oral plasma peak is 93 min; a Bayesian candidate with a twentieth of
+the model's clearance) is a legal input for which no ke0 exists.  Until
+2026-11-15 the function stopped there, and the stop took every drug off the
+plot (Carbon's third UI audit, 2026-11-15, H3).  It now returns the ke0
+whose effect-site peak is the NEAREST reachable one, as described below.
+
+The fallback is the nearest reachable peak, at both ends of the bracket.
+\itemize{
+\item A target at or before the plasma peak, or nearer to it than
+\code{KE0_FOLLOWS_PLASMA_FACTOR} times the curve's fastest rate can
+bring the effect site, gets that ke0: the effect site follows the
+plasma curve with a lag of 1\% of its fastest time constant and peaks
+as early as any effect site can.  It is the limit the solved ke0 tends
+to as a patient's plasma peak approaches tPeak from below (the solved
+ke0 grows without bound there), so the effect-site curve is continuous
+across the boundary, and finite.
+\item A target later than even \code{KE0_SOLVE_MIN} can reach (a plasma
+curve so brief that only an absurdly slow effect site peaks that late)
+gets that smallest ke0, whose effect site is then close to zero, as the
+exact ke0 below it would also give.
+}
+Every patient for whom a ke0 exists inside the bracket gets exactly the ke0
+it got before, bit for bit.
+
+What the stop used to guard, a library tPeak entered earlier than the
+library's own plasma peak (two numbers from different sources, or an onset
+read as a peak), is a property of the drug and not of a patient, so it is
+checked where the drug is: test-ui-audit-carbon3-models.R solves every
+oral tPeak at the reference patient and requires the effect site to peak
+at it.
 
 The time is counted from the dose.  An absorption lag delays the plasma and
 the effect site alike, so the curves are built from the start of absorption

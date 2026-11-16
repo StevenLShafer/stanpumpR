@@ -9,6 +9,38 @@ is_valid_number <- function(x, min = -Inf, max = Inf) {
   is.numeric(x) && length(x) == 1L && is.finite(x) && x >= min && x <= max
 }
 
+# One number from a value a browser or a link sent, or NA: anything but a
+# single number or string -- NULL, a vector, a list -- is NA.  The
+# suppressWarnings(as.numeric(x)) it replaces gives NA for most of those, but
+# stops with an error on a list holding a vector ({"a":[1,2]} in a link),
+# which in app_ui() served the page as HTTP 500 and in an observer ended the
+# session (Carbon's UI audit, 2026-11-14, F5).
+asScalarNumeric <- function(x) {
+  if (!is.atomic(x) || length(x) != 1L || is.factor(x)) return(NA_real_)
+  suppressWarnings(as.numeric(x))
+}
+
+# One number per entry of a named list or vector a link carries, NA where an
+# entry is not one number (asScalarNumeric())
+linkNumbers <- function(x) {
+  if (!is.list(x)) x <- as.list(x)
+  stats::setNames(vapply(x, asScalarNumeric, numeric(1), USE.NAMES = FALSE), names(x))
+}
+
+# One string from a value a browser sent, or `default`: anything but a
+# single non-missing string is `default`
+asScalarString <- function(x, default = "") {
+  if (is.character(x) && length(x) == 1L && !is.na(x)) x else default
+}
+
+# One of a control's own choices, or its default: a link or a forged input
+# can carry a vector, a list or an unknown value where a select sends one of
+# its options (Carbon's third UI audit, 2026-11-15, C1)
+choiceOf <- function(x, choices, default) {
+  x <- asScalarString(x)
+  if (x %in% choices) x else default
+}
+
 # Check if the contents of two dataframes are identical, ignoring the row names
 identicalTable <- function(x, y) {
   rownames(x) <- NULL
@@ -18,6 +50,10 @@ identicalTable <- function(x, y) {
 
 # Check if an email address look valid
 isEmailValid <- function(email) {
+  # One string, or FALSE: NULL, NA or a vector gave logical(0), NA or a
+  # vector, which the Email Slide observers stopped on, ending the session
+  # (Carbon's UI audit, 2026-11-14, F6D)
+  if (!is.character(email) || length(email) != 1 || is.na(email)) return(FALSE)
   regex_email <- "^\\w+([-+.']\\w+)*@\\w+([-.]\\w+)*\\.\\w{2,}([-.]\\w+)*$"
   nchar(email) == attr(regexpr(regex_email, email, perl = FALSE), "match.length")
 }

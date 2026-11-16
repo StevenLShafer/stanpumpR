@@ -33,6 +33,15 @@
   var UNIT_SEARCH_MS = 1000;
   function blankRow() { return ['', '', '', '']; }
   function isBlank(x) { return x === null || x === undefined || String(x).trim() === ''; }
+  // The drug list and the autocomplete's index are looked up by what is
+  // typed, so they are maps with no prototype, read only by own key: a plain
+  // {} answered "constructor" with Object itself and "__proto__" with
+  // Object.prototype, which commit() stored as the row's drug and sent as
+  // null, so the server blanked the row typed over, dose and all (Carbon's
+  // third UI audit, 2026-11-15, C3; "toString" and the other camel-case
+  // names never reached it, the index being lower case).
+  function lookupMap() { return Object.create(null); }
+  function own(map, key) { return Object.prototype.hasOwnProperty.call(map, key) ? map[key] : undefined; }
   function sameRows(a, b) {
     if (a.length !== b.length) return false;
     for (var i = 0; i < a.length; i++) {
@@ -92,9 +101,9 @@
     this.seq = 0;             // edits sent
     this.value = null;        // what getValue() reports: null until the first edit
     this.callback = null;
-    this.drugs = {};          // name -> { units: [], defaultUnit: '', illicit: bool }
-    this.choices = [];        // the names the autocomplete offers
-    this.choiceIndex = {};    // lower-case name -> name
+    this.drugs = lookupMap();       // name -> { units: [], defaultUnit: '', illicit: bool }
+    this.choices = [];              // the names the autocomplete offers
+    this.choiceIndex = lookupMap(); // lower-case name -> name
     this.error = '';
     this.build();
     root.addEventListener('keydown', function(e) { self.onKeyDown(e); });
@@ -108,17 +117,38 @@
     root.addEventListener('change', function(e) { self.onChange(e); });
     root.addEventListener('paste', function(e) { self.onPaste(e); });
     root.addEventListener('contextmenu', function(e) { self.onContextMenu(e); });
-    document.addEventListener('keydown', function(e) { self.onDocumentKey(e); });
     // A browser sends no paste event to a <select>, so Ctrl+V on a Units
     // cell did nothing and said nothing (the external review of 2026-11-05,
     // Gemini's script, reproduced).  For that one key the focus moves to a
     // hidden text field, which the paste reaches, and comes back to the cell.
     this.pasteSink.addEventListener('paste', function(e) { self.onSinkPaste(e); });
-    document.addEventListener('mousedown', function(e) {
+    this.onDocKey = function(e) { self.onDocumentKey(e); };
+    this.onDocMouseDown = function(e) {
       if (!self.menu.contains(e.target)) self.closeMenu();
       if (!self.listbox.contains(e.target) && e.target !== self.listboxFor) self.closeList();
-    });
+    };
+    this.attachDocument();
   }
+
+  // The listeners on the document, and the unit search's timer, belong to a
+  // bound grid: Shiny calls initialize() once for an element but
+  // unsubscribe() at every unbind and subscribe() at every bind, so they
+  // come off at the one and go back on at the other.  They stayed on a grid
+  // that was unbound, and its timer still fired (Carbon's third UI audit,
+  // 2026-11-15, L1).
+  DoseGrid.prototype.attachDocument = function() {
+    if (this.documentAttached) return;
+    document.addEventListener('keydown', this.onDocKey);
+    document.addEventListener('mousedown', this.onDocMouseDown);
+    this.documentAttached = true;
+  };
+
+  DoseGrid.prototype.detachDocument = function() {
+    if (this.search) { clearTimeout(this.search.timer); this.search = null; }
+    document.removeEventListener('keydown', this.onDocKey);
+    document.removeEventListener('mousedown', this.onDocMouseDown);
+    this.documentAttached = false;
+  };
 
   DoseGrid.prototype.build = function() {
     var self = this;
@@ -218,7 +248,7 @@
     var cells = tr.children;
     var drug = cells[COLS.DRUG].firstChild;
     drug.value = row[COLS.DRUG];
-    var info = this.drugs[row[COLS.DRUG]];
+    var info = own(this.drugs, row[COLS.DRUG]);
     var illicit = !!(info && info.illicit);
     drug.classList.toggle('dose-grid-illicit', illicit);
     // said, not only drawn red (colour is not the only signal)
@@ -323,12 +353,12 @@
   // --- the rules of a row ------------------------------------------------------
 
   DoseGrid.prototype.unitsOf = function(drug) {
-    var info = this.drugs[drug];
+    var info = own(this.drugs, drug);
     return info ? info.units : [];
   };
 
   DoseGrid.prototype.defaultUnitOf = function(drug) {
-    var info = this.drugs[drug];
+    var info = own(this.drugs, drug);
     return info ? info.defaultUnit : '';
   };
 
@@ -339,7 +369,7 @@
     var t = trimEntry(text);
     if (t === '') return '';
     if (current && t.toLowerCase() === String(current).toLowerCase()) return current;
-    var hit = this.choiceIndex[t.toLowerCase()];
+    var hit = own(this.choiceIndex, t.toLowerCase());
     return hit === undefined ? null : hit;
   };
 
@@ -1075,22 +1105,43 @@
   // typing of the last cell edited, so the grid showed one value and the
   // draft held another (the external review of 2026-11-05, reproduced).
   // A text field elsewhere keeps its own undo; a hidden grid does nothing.
+  // Nor does a grid behind a dialog, or under the Working cover (app.js),
+  // which makes it inert: with Edit doses, the Drug Library or any other
+  // dialog open, Ctrl+Z on its buttons undid the dose table behind it,
+  // unseen (Carbon's fourth UI audit, 2026-11-15, H2).  The browser's own
+  // undo is kept from the dialog's buttons too: it is the page's, not the
+  // field's, and took back the last edit of a cell behind the dialog, which,
+  // focused for it and then left, was committed (app.js keeps it from the
+  // dialog's text fields).
   DoseGrid.prototype.onDocumentKey = function(e) {
     if (e.defaultPrevented || !(e.ctrlKey || e.metaKey) || e.altKey) return;
     if (!(e.key === 'z' || e.key === 'Z' || e.key === 'y' || e.key === 'Y')) return;
     if (this.root.offsetParent === null) return;
     var t = e.target;
+    var field = t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
+    if (this.underDialog()) {
+      if (!field) e.preventDefault();
+      return;
+    }
     if (t && t.closest && t.closest('.stanpumpr-dose-grid')) return;
-    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    if (field) return;
     e.preventDefault();
     this.sendHistory(e.key === 'y' || e.key === 'Y' || e.shiftKey ? 'redo' : 'undo');
+  };
+
+  // Inert (the Working cover), or behind an open dialog that does not hold it
+  DoseGrid.prototype.underDialog = function() {
+    if (this.root.closest('[inert]')) return true;
+    var open = document.querySelectorAll('.modal.show');
+    for (var i = 0; i < open.length; i++) if (!open[i].contains(this.root)) return true;
+    return false;
   };
 
   // --- from the server --------------------------------------------------------------
 
   DoseGrid.prototype.receive = function(msg) {
     if (msg.drugs) {
-      var drugs = {};
+      var drugs = lookupMap();
       msg.drugs.forEach(function(d) {
         drugs[d.Drug] = { units: [].concat(d.Units || []), defaultUnit: d.DefaultUnits || '', illicit: !!d.Illicit };
       });
@@ -1098,7 +1149,7 @@
     }
     if (msg.choices) {
       this.choices = [].concat(msg.choices);
-      var index = {};
+      var index = lookupMap();
       this.choices.forEach(function(n) { index[n.toLowerCase()] = n; });
       this.choiceIndex = index;
     }
@@ -1134,8 +1185,10 @@
     find: function(scope) { return $(scope).find('.stanpumpr-dose-grid'); },
     initialize: function(root) { root._doseGrid = new DoseGrid(root); },
     getValue: function(root) { return root._doseGrid ? root._doseGrid.value : null; },
-    subscribe: function(root, callback) { root._doseGrid.callback = callback; },
-    unsubscribe: function(root) { if (root._doseGrid) root._doseGrid.callback = null; },
+    subscribe: function(root, callback) { root._doseGrid.callback = callback; root._doseGrid.attachDocument(); },
+    unsubscribe: function(root) {
+      if (root._doseGrid) { root._doseGrid.callback = null; root._doseGrid.detachDocument(); }
+    },
     receiveMessage: function(root, msg) { root._doseGrid.receive(msg); },
     getRatePolicy: function() { return null; }
   });

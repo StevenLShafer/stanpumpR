@@ -28,8 +28,10 @@
 //  scene: the vessels, arrows and ribbon at the run's concentrations and
 //  rates, at any time, by play or the slider. Nothing here computes
 //  pharmacokinetics: between the run's times the concentrations are
-//  interpolated linearly, and the rate, target and mode are those in
-//  force (the value at the time before).
+//  interpolated linearly (where a compartment's volume changes between
+//  two times, its amount, divided by the volume in force), and the rate,
+//  target, mode and volumes are those in force (the value at the time
+//  before).
 //
 //  A run arrives one of three ways:
 //    - from the page that opened this one (window.open), by postMessage:
@@ -116,6 +118,18 @@ function runProblem(r) {
     for (const k of vols) if (!(Number.isFinite(pk[k]) && pk[k] > 0)) return `pk.${k} must be a volume above 0 (L).`;
     for (const k of ['cl1'].concat(r.c2 != null ? ['cl2'] : [], r.c3 != null ? ['cl3'] : []))
         if (!(Number.isFinite(pk[k]) && pk[k] >= 0)) return `pk.${k} must be a clearance of 0 or more (L/min).`;
+    // The volumes and CL1 in force at each time, for a model that switches
+    // sets at a clinical event (Carbon's third UI audit, 2026-11-15, H8).
+    if (r.pkAt != null) {
+        if (typeof r.pkAt !== 'object' || Array.isArray(r.pkAt)) return 'pkAt must give v1 and cl1 at each time.';
+        for (const k of vols.concat(['cl1'])) {
+            const v = r.pkAt[k], min = k === 'cl1' ? 0 : null;
+            if (!Array.isArray(v) || v.length !== n) return `pkAt.${k} must be an array as long as t (${n}).`;
+            for (let i = 0; i < n; i++)
+                if (!(Number.isFinite(v[i]) && (min === 0 ? v[i] >= 0 : v[i] > 0)))
+                    return `pkAt.${k}[${i}] must be ${min === 0 ? 'a clearance of 0 or more (L/min)' : 'a volume above 0 (L)'}.`;
+        }
+    }
     if (r.typical != null && !(Number.isFinite(r.typical) && r.typical >= 0)) return 'typical must be a number of 0 or more.';
     if (r.boluses != null) {
         if (!Array.isArray(r.boluses)) return 'boluses must be an array.';
@@ -223,6 +237,9 @@ const Cards = {
 
 // A value below this fraction of the run's highest is round-off, shown as 0.
 const TINY_FRACTION = 1e-9;
+// The tallest thing a drug run draws in 3D, scene units: what the camera
+// still frames from as far as it goes (the orbit's maxDistance, 1500).
+const HEIGHT_MAX = 1500;
 
 const Player = {
     run: null, ui: null, T: 0, playing: false, last: null, speed: PLAYER_SPEED,
@@ -346,6 +363,7 @@ const Player = {
     // A drug's run's setup, from load(): the scales, the mass balance, the
     // 3D scene's vessels.
     ivSetup(r) {
+        this.holdings(r);
         this.balance(r);
         // A loop, not Math.max(...r.cp), which overflows the stack on a long run.
         let maxCp = 0;
@@ -356,21 +374,88 @@ const Player = {
         let peak = maxCp, depotPeak = 0;
         for (const v of [r.ce, r.c2, r.c3]) if (v) for (const x of v) if (x > peak) peak = x;
         if (r.depot) for (const x of r.depot) if (x > depotPeak) depotPeak = x;
+        // Inside an interval in which a compartment's volume changes, the
+        // concentration shown is the drug it holds in the earlier volume
+        // (stateAt()), which can pass every sample: at most the larger end's
+        // amount in that volume, which the heights must include (a peak of
+        // 5500 drawn on the scale of the samples' 1000 stood 8250 units, past
+        // HEIGHT_MAX; CodeRabbit, #730).
+        if (r.pkAt) for (let i = 0; i + 1 < r.t.length; i++) {
+            const p0 = this.pkIn(i), p1 = this.pkIn(i + 1);
+            for (const [k, a] of [['v1', this.a1], ['v2', r.c2 != null ? this.a2 : null], ['v3', r.c3 != null ? this.a3 : null]]) {
+                if (!a || p0[k] === p1[k]) continue;
+                const x = Math.max(a[i], a[i + 1]) / (this.scale * p0[k]);
+                if (x > peak) peak = x;
+            }
+        }
         this.tiny = peak * TINY_FRACTION; this.depotTiny = depotPeak * TINY_FRACTION;
         const level = r.typical > 0 ? r.typical : (maxCp > 0 ? maxCp / 2 : 1);
         // toFixed() takes 0 to 100 digits: a vanishing level would ask for more.
         const mag = Math.max(-6, Math.floor(Math.log10(level)));
+        // The heights: the clinical level stands 3 units tall, but nothing the
+        // run draws (a liquid, the effect site, a target) taller than
+        // HEIGHT_MAX: a dose of 1e9 stood 2.4e8 units tall, past the camera's
+        // far plane and beyond any view of it (Carbon's third UI audit,
+        // 2026-11-15, M7). Fentanyl 3.5 mg as one bolus, about 400 times its
+        // level, stands 1205 units, so no dose in use is scaled down; a run
+        // that is, the readout says so.
+        let high = peak;
+        if (r.target) for (let i = 0; i < r.target.length; i++)
+            if ((!r.mode || r.mode[i] !== 'manual') && r.target[i] > high) high = r.target[i];
+        const heightsScaled = high * 3 / level > HEIGHT_MAX;
         this.ui = {
-            showCe: r.ce != null, concScale: 3 / level, units: this.units,
-            drugRgb: hexRgb(runColour(r)), concDecimals: Math.max(0, 2 - mag), conc: 10 / 3 * level * this.scale
+            showCe: r.ce != null, concScale: heightsScaled ? HEIGHT_MAX / high : 3 / level, units: this.units,
+            drugRgb: hexRgb(runColour(r)), concDecimals: Math.max(0, 2 - mag), conc: 10 / 3 * level * this.scale,
+            heightsScaled
         };
         this.n = 1 + (r.c2 != null) + (r.c3 != null);
-        // Sizes compressed to SIZE_RATIO_MAX (flat.js): the readout says so in 3D.
-        this.ui.notToScale = displayVolumes([r.pk.v1, r.c2 != null ? r.pk.v2 : 0, r.c3 != null ? r.pk.v3 : 0]).a < 1;
+        // Sizes compressed to SIZE_RATIO_MAX (flat.js): the readout says so in
+        // 3D, if they are at any time of the run (pkAt: a model whose volumes
+        // change at a clinical event).
+        this.ui.notToScale = false;
+        for (const p of this.pkSets()) if (displayVolumes([p.v1, r.c2 != null ? p.v2 : 0, r.c3 != null ? p.v3 : 0]).a < 1) this.ui.notToScale = true;
         View.resetGlass();
         if (View.gasShown) View.gasShow(false);   // a gas run's glasses (gas3d.js)
         View.vessels[1].setVisible(true);       // hidden before the first run (empty())
-        View.setShape({ n: this.n, vc: r.pk.v1, v2: r.pk.v2, v3: r.pk.v3 });
+        const p0 = this.pkIn(0);
+        View.setShape({ n: this.n, vc: p0.v1, v2: p0.v2, v3: p0.v3 });
+    },
+
+    // The volumes (L) and CL1 (L/min) in force at sample i: the run's pk, or,
+    // for a model that switches sets at a clinical event (the infant
+    // dexmedetomidine model on bypass), that sample's own (pkAt; Carbon's
+    // third UI audit, 2026-11-15, H8: with one set throughout, the drug in the
+    // body jumped at the event and was drawn as a burst of elimination).
+    pkIn(i) {
+        const r = this.run, a = r.pkAt;
+        if (!a) return r.pk;
+        return { v1: a.v1[i], v2: a.v2 ? a.v2[i] : r.pk.v2, v3: a.v3 ? a.v3[i] : r.pk.v3, cl1: a.cl1[i] };
+    },
+    // Each distinct set of volumes the run passes through.
+    pkSets() {
+        const r = this.run;
+        if (!r.pkAt) return [r.pk];
+        const seen = new Map();
+        for (let i = 0; i < r.t.length; i++) {
+            const p = this.pkIn(i), key = `${p.v1} ${p.v2} ${p.v3}`;
+            if (!seen.has(key)) seen.set(key, p);
+        }
+        return [...seen.values()];
+    },
+    // The drug in V1, V2 and V3 at each sample: the concentration times the
+    // volume in force then, so that an amount carried across a change of
+    // volume stays the same amount.
+    holdings(r) {
+        const n = r.t.length, sc = this.scale;
+        this.a1 = new Float64Array(n);
+        this.a2 = r.c2 != null ? new Float64Array(n) : null;
+        this.a3 = r.c3 != null ? new Float64Array(n) : null;
+        for (let i = 0; i < n; i++) {
+            const pk = this.pkIn(i);
+            this.a1[i] = sc * r.cp[i] * pk.v1;
+            if (this.a2) this.a2[i] = sc * r.c2[i] * pk.v2;
+            if (this.a3) this.a3[i] = sc * r.c3[i] * pk.v3;
+        }
     },
 
     // The amount eliminated at each time, as the mass balance gives it:
@@ -382,14 +467,14 @@ const Player = {
     //   drug absorbed from a depot); a version 1 run is summed here from its
     //   rate and boluses. With "inputKnown" false there is no balance.
     balance(r) {
-        const n = r.t.length, pk = r.pk, b = r.boluses || [];
+        const n = r.t.length, b = r.boluses || [];
         if (r.inputKnown === false) { this.elim = null; return; }
         this.elim = new Float64Array(n);
         let inf = 0;
         for (let i = 0; i < n; i++) {
             if (i) inf += r.rate[i - 1] * (r.t[i] - r.t[i - 1]) / 60;
             const given = r.given != null ? r.given[i] : inf + b.reduce((s, x) => s + (x.t <= r.t[i] ? x.amount : 0), 0);
-            const body = this.scale * (r.cp[i] * pk.v1 + (r.c2 != null ? r.c2[i] * pk.v2 : 0) + (r.c3 != null ? r.c3[i] * pk.v3 : 0));
+            const body = this.a1[i] + (this.a2 ? this.a2[i] : 0) + (this.a3 ? this.a3[i] : 0);
             this.elim[i] = Math.max(0, given - body);
         }
     },
@@ -411,9 +496,22 @@ const Player = {
         // The value in force: the later sample once T reaches it.
         const j = T >= t[i + 1] ? i + 1 : i;
         const clean = x => x < this.tiny ? 0 : x;
-        const cp = clean(Math.max(0, lerp(r.cp))), ce = r.ce != null ? clean(Math.max(0, lerp(r.ce))) : 0;
-        const c2 = r.c2 != null ? clean(Math.max(0, lerp(r.c2))) : null, c3 = r.c3 != null ? clean(Math.max(0, lerp(r.c3))) : null;
-        const rate = r.rate[j], pk = r.pk;
+        const rate = r.rate[j], pk = this.pkIn(j), sc = this.scale;
+        // A compartment's concentration. Across an interval in which its
+        // volume changes (pkAt: the set switches at a clinical event, and the
+        // later sample is the first in the new set), the drug it holds is
+        // what is continuous, not its concentration (convertState() carries
+        // the amounts): the amount is interpolated (holdings()) and the
+        // concentration is that amount in the volume in force, the earlier
+        // sample's until T reaches the later. Interpolated by itself, the
+        // concentration moved toward the new volume's while the old volume
+        // was drawn, and disagreed with the amounts card (CodeRabbit, #730).
+        // Elsewhere, interpolated as it always was.
+        const p0 = r.pkAt ? this.pkIn(i) : null, p1 = r.pkAt ? this.pkIn(i + 1) : null;
+        const conc = (c, amt, k) => c == null ? null
+            : clean(p0 && p0[k] !== p1[k] ? Math.max(0, lerp(amt)) / (sc * pk[k]) : Math.max(0, lerp(c)));
+        const cp = conc(r.cp, this.a1, 'v1'), ce = r.ce != null ? clean(Math.max(0, lerp(r.ce))) : 0;
+        const c2 = conc(r.c2, this.a2, 'v2'), c3 = conc(r.c3, this.a3, 'v3');
         const mode = r.mode ? r.mode[j] : 'manual', target = r.target ? r.target[j] : 0;
         // A bolus shows from its time for BOLUS_SHOW_S of play; st.t is the
         // bolus's own time while it shows, so its ring starts once.
@@ -423,8 +521,10 @@ const Player = {
         // Eliminated, interpolated like the concentrations; administered is
         // then what is in the body plus what is eliminated, so the amounts
         // card always adds up.
-        const sc = this.scale;
-        const A1 = sc * cp * pk.v1, A2 = c2 != null ? sc * c2 * pk.v2 : 0, A3 = c3 != null ? sc * c3 * pk.v3 : 0;
+        // The amounts are interpolated as amounts (holdings()), so that one
+        // carried across a change of volume does not jump.
+        const held = (c, a) => c ? Math.max(0, lerp(a)) : 0;
+        const A1 = held(cp, this.a1), A2 = c2 != null ? held(c2, this.a2) : 0, A3 = c3 != null ? held(c3, this.a3) : 0;
         const elim = this.elim ? lerp(this.elim) : null;
         const depot = r.depot != null ? (d => d < this.depotTiny ? 0 : d)(Math.max(0, lerp(r.depot))) : null;
         const absorbed = r.absorbed != null ? lerp(r.absorbed) : null;
@@ -433,14 +533,17 @@ const Player = {
         const slope = v => v == null ? 0 : (v[i + 1] - v[i]) / dt;
         return {
             t: b.length ? b[0].t : T, n: this.n, cp, ce, c2, c3,
+            // The volumes in force, which the views draw.
+            vol: pk,
             A1, A2, A3, elim, depot, absorbed,
             total: elim == null ? null : A1 + A2 + A3 + elim + (depot || 0),
             mode, target, bolus, rate,
             flow: {
                 in: rate,
                 abs: Math.max(0, slope(r.absorbed)),
-                to2: c2 != null ? sc * pk.v2 * slope(r.c2) : 0,
-                to3: c3 != null ? sc * pk.v3 * slope(r.c3) : 0,
+                // The net flow into V2 and V3: the change in the drug each holds.
+                to2: c2 != null ? slope(this.a2) : 0,
+                to3: c3 != null ? slope(this.a3) : 0,
                 // Without the drug given, elimination is CL1 x Cp only where it
                 // is linear; a saturable drug's is not drawn (ChatGPT, ff7e2f0).
                 out: this.elim ? Math.max(0, slope(this.elim))
@@ -545,6 +648,7 @@ const Player = {
             `<div><span class="k">Rate</span> ${st.rate.toFixed(2)} ${u.rate}` +
             (st.bolus > 0 ? ` · <span class="k">Bolus</span> ${st.bolus.toFixed(1)} ${u.amount}` : '') + `</div>` +
             (this.ui.notToScale ? `<div class="scale">Vessels not to scale: the largest is drawn ${SIZE_RATIO_MAX}× the smallest. Heights are concentration.</div>` : '') +
+            (this.ui.heightsScaled && this.view === '3d' ? `<div class="scale">Heights scaled down: this run's concentrations reach over ${Math.round(HEIGHT_MAX / 3)}× the drug's typical level.</div>` : '') +
             `<div class="foot">${pat ? escapeHtml(pat) + ' · ' : ''}${escapeHtml(r.source || '')} · <kbd>h</kbd> keys</div>`;
     },
 
@@ -665,8 +769,13 @@ const Keys = {
             // space: play / pause (a focused button takes its own space press).
             if (e.key === ' ' && !(e.target && e.target.tagName === 'BUTTON')) { Player.togglePlay(); e.preventDefault(); return; }
             if (e.shiftKey) return;
+            // Its own keys only: a key event named "constructor" or
+            // "toString" (none a keyboard sends, but any script can) found
+            // Object's own members, and the next frame threw before it asked
+            // for the one after, so the camera keys never worked again
+            // (Carbon's fourth UI audit, 2026-11-15, L1).
+            if (!Object.prototype.hasOwnProperty.call(VIEW_KEYS, e.key)) return;
             const m = VIEW_KEYS[e.key];
-            if (!m) return;
             e.preventDefault();          // not the slider's, nor the page's scroll
             this.held.set(e.code, m);
         });
