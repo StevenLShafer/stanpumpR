@@ -86,7 +86,8 @@ test_that("drugOnSaturableEngine() is getDrugPK()'s answer for every drug in the
                           "vildagliptin", "voriconazole",
                           "cyclophosphamide", "cyclophosphamideMcCune", "fluorouracil",
                           "fluorouracilBriki", "fluorouracilTan", "ifosfamide", "paclitaxel",
-                          "paclitaxelCrombag", "paclitaxelJoerger", "thioguanineIV",
+                          "paclitaxelCrombag", "paclitaxelJoerger", "paclitaxelProteinBound",
+                          "thioguanine", "thioguanineIV",
                           "vincristine", "vincristinePediatric")))
   known <- !is.na(child)
   # every drug on the engine for a child is listed
