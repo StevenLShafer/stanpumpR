@@ -130,6 +130,21 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # until then the fit was made at the sliders, so a slider acted as a prior the
 # levels pulled back against).
 #
+# OPEN QUESTION [decision, for Shafer, 2026-11-16]: should body temperature
+# also lower the intravenous drugs' clearance, and how?  Read in full so far:
+# midazolam (CYP3A), CL = 18.5 (T/36.5)^4.24 L/h, 11.6%/C at 36.5 C, fitted
+# over 34.8-37.8 C only (Hostler 2010, DMD 38:781); vecuronium (hepatic
+# carrier uptake, not CYP), 11.3%/C over 34.3-38.0 C, its renal share
+# unchanged so renal clearance fell as much (Caldwell 2000, Anesthesiology
+# 92:84); remifentanil (esterases), 6.37%/C down to about 29.6 C (Michelsen
+# 2001, as tabulated by Tortorici 2007, Crit Care Med 35:2196).  Abstracts
+# only: morphine (UGT2B7) 6.89%/C in cooled neonates and 6.83%/C pooled for
+# intermediate-clearance drugs, none for high-clearance ones (Favie 2019,
+# 2020).  No number found for Hofmann elimination.  The choices: one factor
+# on hepatic intrinsic clearance (inside the well-stirred model) for every
+# drug, or separate CYP, UGT and esterase factors; and whether to extend a
+# fit made above 34.8 C down to 28 C.
+#
 # Body temperature and cardiac output are NOT coupled: hypothermia does not
 # lower cardiac output by itself.  Fever raises cardiac output and cooling
 # would by the same logic lower it, but the mechanisms differ (inflammation;
