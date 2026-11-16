@@ -111,7 +111,7 @@ plasmaOnly <- c(
     # suzetrigine and its metabolite (2026-11-16): plasma only
     "suzetrigine", "M6SUZ",
     # ambrisentan (2026-11-16): plasma only
-    "ambrisentan",
+    "ambrisentan", "macitentan", "aprocitentan",
     # Parkinson disease drugs (2026-10-19): plasma only; levodopa (all four
     # models) and apomorphine have an effect site (inst/help/models/parkinsons.md)
     "pramipexole", "pramipexoleER", "safinamide", "opicapone",

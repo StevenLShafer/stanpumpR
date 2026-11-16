@@ -207,6 +207,19 @@
 # any scaling of its bioavailability.  Tests: test-drugs-suzetrigine.R (an
 # independent fine-step integration of the published model with all three).
 #
+# ORAL PATHS (OPTIONAL)
+# =====================
+# oralPaths = list of list(share, ka, lag, zeroOrder, into): each plain oral
+# dose is split among parallel paths, each its own depot emptied at its own
+# ka, after its own lag and, where it has one, a zero-order release over
+# zeroOrder minutes; a path into "metabolite" empties into the metabolite's
+# central compartment, as a dose formed before it reaches the circulation
+# (macitentan and aprocitentan, Bartolucci 2021, R/drugs_macitentan.R).  A
+# path's share of a dose is a constant, times p or 1 - p where p =
+# plogis(gamma - beta log(1 + D)) with D the dose in mg (mmPathShare()).  Not
+# with kaTransit, kaDoseDependence or zeroOrderDepot.  Tests:
+# test-drugs-macitentan.R (an independent integration of the published model).
+#
 # STEP SIZE
 # =========
 # The engine reports on the library's time line (simulationTimeGrid()), so the
@@ -479,7 +492,9 @@ mmDerivative <- function(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, 
   scAbsorption <- if (is.null(sc)) function(S) 0 else
     function(S) sc$bioavailability * sc$fraction * sc$kaMax * S / (sc$kmKa + S)
   depotIdx <- seq_len(iIM)
-  oralIdx <- seq_len(nOral)
+  # The oral depots that empty into the parent: all but those of an oral
+  # path that delivers the metabolite itself (oralPaths)
+  oralIdx <- setdiff(seq_len(nOral), met$oralIdx)
   plainBinding <- is.null(rb)
   hasSD <- !is.null(sd)
   hasAI <- !is.null(ai)
@@ -507,6 +522,7 @@ mmDerivative <- function(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, 
     metV2 <- if (metQ > 0) met$v2 else 1
     metInduced <- isTRUE(met$induced)
     metYield <- if (is.null(met$mwRatio)) 1 else met$mwRatio
+    metOral <- met$oralIdx
   }
   hasTransit <- kT != 0
   hasSC <- !is.null(sc)
@@ -528,7 +544,7 @@ mmDerivative <- function(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, 
     out <- ka * x[depotIdx]
     dx[depotIdx] <- -out
     # A zero-order release into the oral depots (zeroOrderDepot)
-    dx[oralIdx] <- dx[oralIdx] + rD
+    dx[seq_along(rD)] <- dx[seq_along(rD)] + rD
     if (hasTransit) {
       xT <- x[iT]
       dx[iT] <- -kT * xT
@@ -586,6 +602,7 @@ mmDerivative <- function(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, 
       clM <- if (metInduced) metCl * x[iE] else metCl
       toMP <- if (metQ > 0) metQ * (Cm - x[iMP] / metV2) else 0
       dx[iMC] <- metFraction * metYield * eliminated - clM * Cm - toMP
+      if (length(metOral)) dx[iMC] <- dx[iMC] + metYield * sum(out[metOral])
       if (metQ > 0) dx[iMP] <- toMP
     }
     dx
@@ -740,6 +757,34 @@ validateMichaelisMenten <- function(mm, drug)
       stop("Invalid michaelisMenten for ", drug, ": kaDoseDependence is not ",
            "available with kaTransit.")
   }
+  op <- mm$oralPaths
+  if (!is.null(op)) {
+    pathOk <- function(p) {
+      sh <- p$share
+      is.list(p) && positive(p$ka) &&
+        (is.null(p$lag) || (is_valid_number(p$lag) && p$lag >= 0)) &&
+        (is.null(p$zeroOrder) || positive(p$zeroOrder)) &&
+        (is.null(p$into) || isTRUE(p$into %in% c("central", "metabolite"))) &&
+        is.list(sh) && is_valid_number(sh$constant, 0, 1) &&
+        (is.null(sh$logit) || (is.numeric(sh$logit) && length(sh$logit) == 2L &&
+                                 all(is.finite(sh$logit)))) &&
+        (is.null(sh$complement) || isTRUE(sh$complement) || isFALSE(sh$complement))
+    }
+    if (!is.list(op) || length(op) == 0 || !all(vapply(op, pathOk, logical(1))))
+      stop("Invalid michaelisMenten for ", drug, ": each of oralPaths needs a ",
+           "positive ka (/min), optionally a lag (min) of zero or more, a positive ",
+           "zeroOrder (min) and into \"central\" or \"metabolite\", and a share ",
+           "with a constant in [0, 1] and optionally a logit c(gamma, beta) and a ",
+           "logical complement.")
+    if (any(vapply(op, function(p) identical(p$into, "metabolite"), logical(1))) &&
+        is.null(mm$metabolite))
+      stop("Invalid michaelisMenten for ", drug, ": an oral path into the ",
+           "metabolite needs the block's metabolite.")
+    if (!is.null(mm$kaTransit) || !is.null(mm$kaDoseDependence) ||
+        !is.null(mm$zeroOrderDepot))
+      stop("Invalid michaelisMenten for ", drug, ": oralPaths are not available ",
+           "with kaTransit, kaDoseDependence or zeroOrderDepot.")
+  }
   if (!is.null(mm$kaTransit) && !positive(mm$kaTransit))
     stop("Invalid michaelisMenten for ", drug, ": kaTransit must be positive.")
   # The optional peripheral compartment: both rate constants or neither, since
@@ -781,6 +826,26 @@ unboundAtEquilibrium <- function(total, B, kd)
 isEquivalentUnit <- function(units)
 {
   grepl(" PE( |/|$)", as.character(units))
+}
+
+#' The share of an oral dose an oral path takes
+#'
+#' \code{constant} x p, or x (1 - p) for the \code{complement}, where p is
+#' \code{plogis(gamma - beta log(1 + D))} for a path with a \code{logit}
+#' term (macitentan's FMAC, Bartolucci 2021) and 1 for one without.
+#'
+#' @param share the path's share block
+#' @param doseMg the doses as given, in mg
+#' @returns the share of each dose
+#' @keywords internal
+mmPathShare <- function(share, doseMg)
+{
+  out <- rep(share$constant, length(doseMg))
+  if (!is.null(share$logit)) {
+    p <- stats::plogis(share$logit[1] - share$logit[2] * log(1 + doseMg))
+    out <- out * (if (isTRUE(share$complement)) 1 - p else p)
+  }
+  out
 }
 
 #' Simulate a one-compartment Michaelis-Menten drug
@@ -865,6 +930,22 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
     }
   }
 
+  # Oral paths (macitentan, Bartolucci 2021; ORAL PATHS in the header): each
+  # plain oral dose is split among parallel paths, each its own depot with
+  # its own ka, lag and optional zero-order release, one of which may empty
+  # into the metabolite.  The default depot is then unused.
+  paths <- mm$oralPaths
+  pathForms <- character(0)
+  if (!is.null(paths)) {
+    pathForms <- paste0("path", seq_along(paths))
+    for (k in seq_along(paths))
+      absorption[[pathForms[k]]] <- list(
+        ka = paths[[k]]$ka, F = absorption[["default"]]$F,
+        tlag = if (is.null(paths[[k]]$lag)) 0 else paths[[k]]$lag,
+        salt = absorption[["default"]]$salt)
+    forms <- c(forms, pathForms)
+  }
+
   # States: the oral depots, the intramuscular depot of the prodrug, the
   # prodrug's conversion compartment, the central amount, the peripheral
   # amount and the saturable subcutaneous depot.
@@ -914,18 +995,41 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   # many minutes after its lag, rather than all at once.
   zod <- mm$zeroOrderDepot
   boxes <- data.frame(start = numeric(0), end = numeric(0), state = integer(0),
-                      rate = numeric(0))
+                      rate = numeric(0), amount = numeric(0))
+  addBoxes <- function(use, start, duration, state, amount) {
+    if (!any(use)) return(invisible())
+    boxes <<- rbind(boxes, data.frame(start = start[use], end = start[use] + duration,
+                                      state = state[use], rate = amount[use] / duration,
+                                      amount = amount[use]))
+  }
   if (any(isOral)) {
     j <- match(oralForm, forms)
     lag <- vapply(absorption, function(a) a$tlag, numeric(1))[j]
     Fo  <- vapply(absorption, function(a) a$F * a$salt, numeric(1))[j]
+    viaPaths <- isOral & oralForm == "default" & length(pathForms) > 0
+    direct <- isOral & !viaPaths
     if (is.null(zod)) {
       # With a transit compartment the default form's doses enter it first.
-      addJump(isOral, t0 + lag, ifelse(j == 1 & kT > 0, iT, j), D * Fo)
+      addJump(direct, t0 + lag, ifelse(j == 1 & kT > 0, iT, j), D * Fo)
     } else {
-      use <- isOral & D != 0
-      boxes <- data.frame(start = (t0 + lag)[use], end = (t0 + lag)[use] + zod,
-                          state = j[use], rate = (D * Fo)[use] / zod)
+      addBoxes(direct & D != 0, t0 + lag, zod, j, D * Fo)
+    }
+    # Each plain oral dose split among the oral paths, by shares that may
+    # depend on its size in mg (mmPathShare())
+    if (any(viaPaths)) {
+      if (is.null(dose$DoseMg))
+        stop("Internal error: ", PK$drug, "'s oral paths need the dose in mg.")
+      dmg <- as.numeric(dose$DoseMg)
+      for (k in seq_along(paths)) {
+        jk <- match(pathForms[k], forms)
+        amount <- D * Fo * mmPathShare(paths[[k]]$share, dmg)
+        start <- t0 + absorption[[jk]]$tlag
+        use <- viaPaths & amount != 0
+        if (is.null(paths[[k]]$zeroOrder))
+          addJump(use, start, rep(jk, length(t0)), amount)
+        else
+          addBoxes(use, start, paths[[k]]$zeroOrder, rep(jk, length(t0)), amount)
+      }
     }
   }
   ivBolus <- route == ROUTE_IV & !rate & !pe
@@ -1069,7 +1173,13 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
 
   # The derivative (mmDerivative()), built in a frame of its own
   nState <- mmStateCount(iDRP, iSD, iE, sd, ai, iMP, met)
-  if (!is.null(met)) { met$iC <- iMC; met$iP <- iMP }
+  if (!is.null(met)) {
+    met$iC <- iMC
+    met$iP <- iMP
+    # the depots of the oral paths that deliver the metabolite itself
+    toMet <- vapply(paths, function(p) identical(p$into, "metabolite"), logical(1))
+    met$oralIdx <- match(pathForms[toMet], forms)
+  }
   deriv <- mmDerivative(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, iP,
                         iS, iT, iDRC, iDRP, rb, sc, tb, iSD, iE, sd, ai,
                         met, nState)
@@ -1125,7 +1235,7 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   for (k in seq_len(nrow(boxes))) {
     at <- match(boxes$start[k], timeLine)
     if (!is.na(at))
-      pointScale[at] <- max(pointScale[at], boxes$rate[k] * zod)
+      pointScale[at] <- max(pointScale[at], boxes$amount[k])
   }
   for (j in which(!is.na(jumpAt)))
     pointScale[jumpAt[j]] <- max(pointScale[jumpAt[j]], abs(jumps$amount[j]))

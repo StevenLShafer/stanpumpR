@@ -111,7 +111,10 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 # creatinine against its normal for age, exponential (Kong 2025)
                 "piperacillin",
                 # Cockcroft-Gault, linear per mL/min, on CL/F (Saleh 2016)
-                "riociguat")
+                "riociguat",
+                # MDRD eGFR below 60, a step on aprocitentan's clearance
+                # (Bartolucci 2021, R/drugs_aprocitentan.R)
+                "macitentan", "aprocitentan")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system),
@@ -120,7 +123,10 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
 systemClearances <- function(pk)
   c(pk$PK$default$cl1,
     vapply(pk$parallelSystems, function(s) s$PK$default$cl1, numeric(1)),
-    if (!is.null(pk$dosePhase)) pk$PK[[pk$dosePhase$late]]$cl1)
+    if (!is.null(pk$dosePhase)) pk$PK[[pk$dosePhase$late]]$cl1,
+    # a metabolite the saturable engine advances with its parent, whose renal
+    # term may be the metabolite's (macitentan's aprocitentan)
+    pk$michaelisMenten$metabolite$cl)
 
 test_that("a blank creatinine is the assumed normal value for age and sex", {
   expect_equal(patientCreatinine(NULL, 40, "male"), SCR_ASSUMED_MALE)

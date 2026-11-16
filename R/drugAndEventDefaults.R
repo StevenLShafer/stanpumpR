@@ -380,7 +380,7 @@ drugOnSaturableEngine <- function(drug) {
               "cyclophosphamide", "cyclophosphamideMcCune", "fluorouracil",
               "fluorouracilBriki", "fluorouracilTan", "ifosfamide", "paclitaxel",
               "paclitaxelCrombag", "paclitaxelJoerger", "thioguanineIV", "vincristine",
-              "vincristinePediatric", "suzetrigine")
+              "vincristinePediatric", "suzetrigine", "macitentan")
 }
 
 # The drugs and units a dose table uses, for drugLibraryProblems(inUse =)

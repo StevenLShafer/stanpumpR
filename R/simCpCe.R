@@ -476,7 +476,8 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # An absorption rate that depends on the size of each oral dose
     # (suzetrigine, R/advanceMichaelisMenten.R): the engine reads the dose
     # as given, in mg per administration, before any scaling below.
-    if (!is.null(PK$michaelisMenten$kaDoseDependence))
+    if (!is.null(PK$michaelisMenten$kaDoseDependence) ||
+        !is.null(PK$michaelisMenten$oralPaths))
       dose$DoseMg <- dose$Dose * mg_Conv
     if (!is.null(PK$oralSaturation) && any(dose$PO))
       dose$Dose[dose$PO] <- dose$Dose[dose$PO] *
