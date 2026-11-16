@@ -254,6 +254,13 @@ describe('Carbon\'s third UI audit, 2026-11-15', () => {
   // Shiny unbinds the grid (a dialog closed), and the listener goes back on
   // at a bind
   test('unbinding a dialog\'s grid takes off its document listener and its list search', async () => {
+    // propofol given a dose above 0, without which it has no panel to
+    // double-click (only such drugs are drawn; Shafer, 2026-11-16)
+    await adapter.typeInto(page, 0, 2, '100');
+    await page.keyboard.press('Enter');
+    await H.settle(page, 600);
+    await page.click('#dosetable_apply');
+    await H.settle(page, 1500);
     await page.evaluate(() => window.Shiny.setInputValue('plot_dblclick',
       { x: 5, y: 1, panelvar1: 'propofol' }, { priority: 'event' }));
     await page.waitForSelector('#editPriorDosesTable tbody tr', { timeout: 30000 });
