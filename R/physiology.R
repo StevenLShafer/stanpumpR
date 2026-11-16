@@ -267,36 +267,43 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # 6.2-10.7%/C near 32 C, at saturating substrate; below the transition
 # 37-94 kcal/mol, outside the slider's range.  This factor is equivalent to
 # an activation energy of 12.2 kcal/mol at 32 C, the low end of those.
-# The hydrogen-abstraction step itself, read in full: CYP119 compound I
-# oxidising benzyl alcohol over -50 to -25 C, Ea 15.1 kcal/mol, 7.8%/C near
-# 32 C, a lower bound because tunnelling at -50 C flattens the plot (Wang
-# 2009, J Am Chem Soc 131:10629); QM/MM barriers of 13.2-18.1 kcal/mol for
-# P450cam and BM3, 6.9-9.3%/C, with no tunnelling at room temperature,
-# the enzyme's field widening the barrier, and the isotope effect rising
-# steeply only below 250-260 K (Kalita 2025, J Am Chem Soc 147:35576); and
-# C-H cleavage at least partly rate-limiting in many drug oxidations but
-# not all (product release limits CYP2E1's ethanol oxidation, amine
-# N-dealkylations show little isotope effect), so a whole-enzyme rate
-# carries several steps' temperature dependence, with no study of
-# tunnelling in a mammalian CYP (Guengerich 2017, Methods Enzymol 596:217).
-# CYP3A4 testosterone 6beta-hydroxylation, computed for compound I and the
-# substrate alone, no protein or solvent: tunnelling coefficients about 3
-# (small-curvature 2.7-3.4) at 300 K, so tunnelling triples the rate, but
-# isotope effects of 2 and 5 against an experimental 15, and at one
-# temperature only (Zhang and Lin 2009, J Phys Chem A 113:11501, read in
-# full).  A tunnelling coefficient of 3 that follows the Wigner form,
+# The hydrogen-abstraction step itself, all read in full.  Measured:
+# OleT compound I (a bacterial P450 peroxygenase, so no reductase,
+# oxygen binding or substrate entry in the measured step) abstracting
+# from bound eicosanoic acid over 4-21 C, Ea 16.5 kJ/mol (3.95 kcal/mol;
+# Table 1 heads its kJ/mol column "kcal/mol", its second column being the
+# same values in kcal/mol, which the text's "about 6" and "difference of
+# about 5" confirm), about 2.1%/C, with the deuterated substrate's 38.9
+# kJ/mol (9.3 kcal/mol), an isotope effect of about 15 at 4 C and A_H/A_D
+# 1.54, the signs of tunnelling (Dutra 2022, J Phys Chem B 126:3493);
+# CYP119 compound I oxidising benzyl alcohol over -50 to -25 C, Ea 15.1
+# kcal/mol, but for the DIDEUTERATED substrate, the only one slow enough
+# to time, so not the protium rate (Wang 2009, J Am Chem Soc 131:10629).
+# Computed: QM/MM barriers of 13.2-18.1 kcal/mol for P450cam and BM3,
+# no tunnelling at room temperature, the isotope effect rising steeply
+# only below 250-260 K (Kalita 2025, J Am Chem Soc 147:35576); CYP3A4
+# testosterone 6beta-hydroxylation for compound I and the substrate alone,
+# no protein or solvent, adiabatic barrier 5.6-6.8 kcal/mol, tunnelling
+# coefficients about 3 (small-curvature 2.7-3.4) at 300 K only, isotope
+# effects of 2 and 5 against an experimental 15 (Zhang and Lin 2009, J Phys
+# Chem A 113:11501); a tunnelling coefficient of 3 of the Wigner form,
 # 1 + (h nu / kT)^2 / 24, changes by -(2/T)(kappa - 1)/kappa, about
-# 0.4%/C at 300 K, so tunnelling of that size would offset at most about
-# 0.4%/C of the fall; the authors note the Wigner form did not converge
-# here, so this bounds it only roughly.  Its adiabatic barrier, 5.6-6.8
-# kcal/mol in the gas phase, is below the 13-18 of the QM/MM enzymes.
-# In five human liver microsome preparations, 7-ethoxycoumarin
-# O-deethylation (mostly CYP1A2) had noncompetitive isotope effects of
-# 7.3-8.1, near the intrinsic 6.1, so C-H cleavage limits that rate in
-# liver; CYP2E1's were attenuated (2-4), other steps limiting it (Kim
-# 2006, FEBS J 273:2223, read in full; no temperature studied).
-# So tunnelling does not act in the slider's 28-37 C, and the chemical
-# step's 7-9%/C brackets this factor with the microsomal data above.
+# 0.4%/C at 300 K, a rough bound since the authors found the Wigner form
+# unconverged here.  Rate-limiting steps: C-H cleavage at least partly
+# limits many drug oxidations but not all (product release limits
+# CYP2E1's ethanol oxidation; amine N-dealkylations show little isotope
+# effect; Guengerich 2017, Methods Enzymol 596:217, who knows of no study
+# of tunnelling in a mammalian CYP); in five human liver microsome
+# preparations 7-ethoxycoumarin O-deethylation (mostly CYP1A2) had
+# noncompetitive isotope effects of 7.3-8.1, so C-H cleavage limits that
+# rate, while CYP2E1's were attenuated to 2-4 (Kim 2006, FEBS J 273:2223;
+# no temperature studied).  So: the one measured protium barrier for the
+# abstraction step is low (about 2%/C) and tunnelling-assisted, below the
+# 6-9%/C that whole enzymes, microsomes and patients show; the rest of the
+# temperature dependence lies in the other steps of the cycle (electron
+# transfer, oxygen and substrate binding, product release) and in protein
+# motion, which is why this factor rests on the measured whole-system
+# rates above and not on the chemistry of one step.
 # Esterases, read in full.  Butyrylcholinesterase (succinylcholine's and
 # mivacurium's enzyme) in serum from 8 volunteers, mivacurium half-lives
 # read from Figure 1 without fluoride: cis-trans 0.86, about 1.55 and 3.85
