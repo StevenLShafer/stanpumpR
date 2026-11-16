@@ -404,7 +404,7 @@ what the literature offers.
 | Cisatracurium | Sorooshian SS et al., *Anesthesiology* 1996;84(5):1083–1091. [PMID 8624002](https://pubmed.ncbi.nlm.nih.gov/8624002/) |
 | Acetaminophen | Morse JD et al., *Eur J Drug Metab Pharmacokinet* 2022;47:497–507. [DOI 10.1007/s13318-022-00766-9](https://doi.org/10.1007/s13318-022-00766-9) (intravenous and fasted tablet; clearance on normal fat mass). ke0 from Anderson BJ et al., *Eur J Clin Pharmacol* 2001;57:559–569. [DOI 10.1007/s002280100367](https://doi.org/10.1007/s002280100367) |
 | Naloxone | Dowling J et al., *Ther Drug Monit* 2008;30:490–496. [DOI 10.1097/FTD.0b013e3181816214](https://doi.org/10.1097/FTD.0b013e3181816214) (intravenous; clearance on lean body weight). Nasal spray derived from Laffont CM et al., *Front Psychiatry* 2024;15:1399803; k<sub>e0</sub> from Yassen A et al., *Clin Pharmacokinet* 2007;46:965–980 |
-| Oxytocin | Eisenach, unpublished data<br>Second model: Tanaka et al |
+| Oxytocin | Shafer SL et al., *Br J Anaesth* 2025;134(5):1513–1522. [DOI 10.1016/j.bja.2024.12.046](https://doi.org/10.1016/j.bja.2024.12.046) (intravenous, weight and age; intranasal, its own model, F 0.66%)<br>Rat model (weight of 1 kg or less): Tanaka A et al., *Mol Pharm* 2018;15(3):1105–1111. [PMID 29338251](https://pubmed.ncbi.nlm.nih.gov/29338251/) |
 | Oxycodone | Lamminsalo M et al., *Expert Opin Drug Deliv* 2019;16(6):649–656. [PMID 31092024](https://pubmed.ncbi.nlm.nih.gov/31092024/) |
 | Oliceridine | Dahan A et al., *Anesthesiology* 2020;133(3):559–568. [PMID 32788558](https://pubmed.ncbi.nlm.nih.gov/32788558/) |
 | Remimazolam | Eleveld DJ et al., *Br J Anaesth* 2025;135(1):206–217. [PMID 40312166](https://pubmed.ncbi.nlm.nih.gov/40312166/) |
@@ -433,11 +433,6 @@ what the literature offers.
 
 ### Reading these honestly
 
-**Two entries are not peer-reviewed literature.** Oxytocin's human model comes
-from unpublished Eisenach data, and its second model is cited only as "Tanaka et
-al" without a volume or year. These two are the weakest citations in the library
-and are flagged rather than tidied over.
-
 **A citation is the disposition model, not a guarantee of fit.** Each of these
 papers fitted a particular population — often healthy volunteers or elective
 surgical patients of a particular age and size. The model is extrapolated
@@ -446,7 +441,7 @@ hint when that is happening.
 
 **Most models are scaled to fat-free mass, not used exactly as published.** Unless
 the *Adjust weight to fat-free mass* box is unticked, every model in the table
-except propofol, remifentanil and oxytocin has its volumes and clearances scaled
+except propofol and remifentanil has its volumes and clearances scaled
 from the published 70 kg values to the patient's fat-free mass. The published
 parameters are what a 70 kg, 170 cm man receives. Acetaminophen's clearance is
 an exception: it keeps Morse's own normal-fat-mass covariate whichever way the

@@ -166,7 +166,9 @@ test_that("the fat-free-mass switch is reported from the code", {
   # Hydrocodone's own covariates (Melhem's BSA and creatinine clearance) see
   # the pharmacokinetic weight with the switch on, so it now responds.
   expect_true(helpDrugRespondsToFFM("hydrocodone"))
-  expect_false(helpDrugRespondsToFFM("oxytocin"))
+  # Oxytocin (Shafer 2025) evaluates its own weight terms at the
+  # pharmacokinetic weight, so it responds too.
+  expect_true(helpDrugRespondsToFFM("oxytocin"))
   html <- helpDrugPageHTML("morphine")
   expect_match(html, "Adjust weight to fat-free mass", fixed = TRUE)
   expect_match(html, 'data-help-page="models/fat-free-mass"', fixed = TRUE)

@@ -12,7 +12,7 @@ A control hidden by a change of age or sex leaves the flag off: a man, or a woma
 
 A drug is adjusted when its change in pregnancy has been **measured in women** with enough strength to apply: a population model with a pregnancy covariate, a study of the same women during pregnancy and after it, a comparison with nonpregnant women, or a therapeutic-drug-monitoring series of useful size. A few factors are **derived** from such a measurement with arithmetic their drug's page gives: midazolam's intravenous factor from oral data, metoprolol's split between clearance and first-pass, and the changes in total phenytoin and valproate that follow from their higher free fraction. A drug cleared mostly unchanged by filtration, whose model reads renal function, takes the **50% rise in glomerular filtration** of pregnancy where nothing contradicts it (see below).
 
-A change known only in direction, or measured too weakly (a few women, no comparison group, a PBPK prediction alone), is **not** applied, and neither is a drug reported as unchanged or never studied; each drug's page says which. Models fitted in pregnant women (calcium, magnesium sulfate and oxytocin) already describe her, and the field does nothing to them.
+A change known only in direction, or measured too weakly (a few women, no comparison group, a PBPK prediction alone), is **not** applied, and neither is a drug reported as unchanged or never studied; each drug's page says which. Models fitted in pregnant women (calcium and magnesium sulfate) already describe her, and the field does nothing to them.
 
 <!-- generated: pregnancy-table -->
 

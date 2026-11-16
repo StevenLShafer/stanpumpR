@@ -30,7 +30,6 @@ The running record, including what has *not* been checked, is `inst/validation/V
 - The opioid-MAC interaction is an approximate placeholder fitted to nine points.
 - The intramuscular parameters for hydromorphone have no direct citation and are provisional.
 - The regional anesthesia (RA) absorption of each local anesthetic is fitted to, or matched to the peak of, a single published block; bupivacaine's and ropivacaine's rates are labelled provisional in the code.
-- The oxytocin human model is unpublished data.
 
 ## Reporting a problem
 

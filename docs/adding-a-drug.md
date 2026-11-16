@@ -175,8 +175,8 @@ abstract, memory or none) and, in `to_obtain`, any paper whose full text would f
 - **unquantified**: a direction only, or a measurement too weak to apply (a handful of women, no
   comparison group, a PBPK prediction alone); the finding says which. Not applied.
 - **unchanged**, **unknown**: studied and unchanged, or no human data found. Not applied.
-- **source_pregnant**: the model was fitted in pregnant women (calcium, magnesium sulfate,
-  oxytocin), so the flag does nothing.
+- **source_pregnant**: the model was fitted in pregnant women (calcium, magnesium sulfate), so
+  the flag does nothing.
 - **not_applicable**: a pediatric model, a drug contraindicated in pregnancy with nothing to
   apply, or a gas (whose change, a lower MAC, is pharmacodynamic).
 
