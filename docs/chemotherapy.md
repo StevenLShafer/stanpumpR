@@ -894,8 +894,12 @@ Supplied by Shafer on 2026-11-16, five of the six asked for that morning
   elimination), the metabolite formed partly in its own peripheral
   compartment; idarubicinol's elimination k40 0.02 /h was fixed by a grid
   search (24-h sampling).  The closed-form metabolite route forms the
-  metabolite from the parent's central compartment only.  Reid 1990
-  (children) remains not identifiable.
+  metabolite from the parent's central compartment only.  The supplement
+  (Code S1, Tables S1-S3, supplied later the same day) confirms the
+  structure, and shows k40 unidentified: the objective function is flat
+  within 2.7 points from 0.0005 to 0.06 /h (idarubicinol half-life 12 h to
+  58 days), so the idarubicinol curve after 24 h is not a prediction.  Reid
+  1990 (children) remains not identifiable.
 - **Alberts 1978 (bleomycin; C46): not identifiable**, as Hall 1982: its Vd
   is CL/beta, so three independent numbers for a four-parameter model, and
   the intercepts are not printed.  PubMed found two sources that may close
@@ -937,8 +941,9 @@ and question 3, restated.  New or restated:
 6. **Temozolomide in children** (Panetta 2003): confirm holding the
    clearance and volume proportional to BSA outside the studied 0.45-2.1 m2,
    and Mosteller's BSA (the paper names no formula).
-7. **Idarubicin** (Maisonneuve 2026; the second copy supplied is the same
-   article, without the supplement): build a general linear compartmental
+7. **Idarubicin** (Maisonneuve 2026, with its supplement): idarubicinol's
+   elimination is not identified (any half-life from 12 h up fits equally),
+   which bears on the choice.  Build a general linear compartmental
    engine (a matrix exponential of any compartment matrix: elimination and
    metabolite formation from any compartment), which would also carry de
    Jonge 2005 (question 10's engine is a different, zero-order one), or
