@@ -137,7 +137,7 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # carrier uptake, not CYP), 11.3%/C over 34.3-38.0 C, its renal share
 # unchanged so renal clearance fell as much (Caldwell 2000, Anesthesiology
 # 92:84); remifentanil (esterases), 6.37%/C down to about 29.6 C (Michelsen
-# 2001, as tabulated by Tortorici 2007, Crit Care Med 35:2196).  Cooled
+# 2001, Anesth Analg 93:1100, below).  Cooled
 # neonates (read in full; 33.5 C then rewarmed to 36.5 C, so a linear effect
 # over 33.5-36.5 C only): morphine CL x (1 + 0.0689 (T - 36.5)), hepatic and
 # renal together, and its glucuronides, cleared by the kidney, x (1 + 0.0491
@@ -154,10 +154,21 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # (Anesth Analg 80:1007, read in full), volunteers at 34 and 37 C: propofol
 # concentrations 28% higher, total clearance carried by hepatic blood flow
 # (0.79 against 0.59 L/min, intervals overlapping), intercompartmental
-# clearances lower.  Mortensen and Dale 1995 (rat liver slices; quoted by
-# Bjelland, not yet read): 10 C of cooling cut diazepam's CYP metabolism
-# 22% and oxazepam's conjugation 14%.  No number found for Hofmann
-# elimination.  The choices: one factor
+# clearances lower.  Enzymes and chemistry, read in full: in rat liver
+# slices over 7-37 C, Q10 1.76 for ethanol (alcohol dehydrogenase), 1.56
+# for diazepam (CYP) and 1.24 for oxazepam (glucuronidation), i.e. 5.5, 4.4
+# and 2.2%/C, the authors allowing that uptake into the slice may limit
+# oxazepam (Mortensen and Dale 1995, Acta Anaesthesiol Scand 39:199); but
+# in native rat liver microsomes over about 26-56 C, glucuronidation's
+# activation energy is 78-84 kJ/mol, about 10%/C at 37 C (Norling and
+# Hanninen 1974, BBA 350:183); general CYP activity in adult minipig liver
+# microsomes 36% lower at 33 than at 38 C, 8.9%/C (Stroe 2024, Basic Clin
+# Pharmacol Toxicol 135:620); atracurium in human plasma at pH 7.9 (Hofmann
+# elimination and ester hydrolysis), half-life 18 min at 37 C and 49 min at
+# 23 C, 7.2%/C (Merrett 1983, Br J Anaesth 55:61); remifentanil in people
+# on bypass, CL x exp(theta (T - 37)), 6.37% per degree, fitted over 20-35
+# C with 16 of 68 patients below 28 C, the only human fit that spans the
+# slider's range (Michelsen 2001, Anesth Analg 93:1100).  The choices: one factor
 # on hepatic intrinsic clearance (inside the well-stirred model) for every
 # drug, or separate CYP, UGT and esterase factors; and whether to extend a
 # fit made above 34.8 C down to 28 C.
