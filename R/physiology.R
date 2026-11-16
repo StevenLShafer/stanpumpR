@@ -140,7 +140,19 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # 2001, as tabulated by Tortorici 2007, Crit Care Med 35:2196).  Abstracts
 # only: morphine (UGT2B7) 6.89%/C in cooled neonates and 6.83%/C pooled for
 # intermediate-clearance drugs, none for high-clearance ones (Favie 2019,
-# 2020).  No number found for Hofmann elimination.  The choices: one factor
+# 2020).  Bjelland 2013 (DMD 41:214, read in full), cooled patients after
+# cardiac arrest (33.3 C) against other ICU patients (37.6 C), a group
+# comparison confounded by illness (creatinine clearance 66 against 137
+# mL/min): clearance lower for morphine (1201 against 1687 mL/min, about
+# 7.6%/C), fentanyl (726 against 1331, about 13%/C) and propofol (2046
+# against 2665, about 6%/C), not significantly for midazolam.  Leslie 1995
+# (Anesth Analg 80:1007, read in full), volunteers at 34 and 37 C: propofol
+# concentrations 28% higher, total clearance carried by hepatic blood flow
+# (0.79 against 0.59 L/min, intervals overlapping), intercompartmental
+# clearances lower.  Mortensen and Dale 1995 (rat liver slices; quoted by
+# Bjelland, not yet read): 10 C of cooling cut diazepam's CYP metabolism
+# 22% and oxazepam's conjugation 14%.  No number found for Hofmann
+# elimination.  The choices: one factor
 # on hepatic intrinsic clearance (inside the well-stirred model) for every
 # drug, or separate CYP, UGT and esterase factors; and whether to extend a
 # fit made above 34.8 C down to 28 C.
