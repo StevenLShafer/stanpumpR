@@ -224,8 +224,8 @@ vessel-rich group. Ventilation itself is a dose-table row.
 ## Body temperature and the inhaled anesthetics
 
 **Body temperature** (28 to 37 °C) acts on the volatile agents through the two
-effects of hypothermia that Eger and Shafer's chapter names, and on nitrous
-oxide through the second.
+effects of hypothermia that Eger and Shafer's chapter names, and so does
+nitrous oxide, less.
 
 **Solubility rises.** Cold blood and tissue dissolve more agent. Zhou, Liu and
 Liu measured the blood:gas partition coefficient of desflurane, sevoflurane
@@ -249,9 +249,15 @@ rats: Antognini, Lewis and Reitan found MAC 1.9 atm at 37.5 °C and 1.6 atm at
 29.7 °C, with the regression MAC = 0.03827 T + 0.3836 atm. That is 2.1% of the
 normothermic MAC per degree, about half the volatile agents' fall, as its
 smaller change in lipid solubility predicts. It is applied to people because
-there are no human data. Nitrous oxide's solubility is left as it is, because
-its temperature coefficient in blood (Allott and colleagues, 1973) has not yet
-been read.
+there are no human data.
+
+**Nitrous oxide is more soluble in the cold too.** Allott, Steward, Flook and
+Mapleson gathered nearly 200 temperature coefficients of anaesthetic
+solubility from the literature. For nitrous oxide in water and the aqueous
+media, blood among them, solubility rises 2.3% a degree as temperature falls.
+Their regression predicts 1.1% a degree in oil and fat, where no coefficient
+had been measured. stanpumpR applies the first to blood, the vessel-rich group
+and muscle, and the second to fat.
 
 Simulated by stanpumpR (70 kg, age 40, ventilation 6 L/min, fresh gas 6 L/min):
 
@@ -262,7 +268,7 @@ faster than solubility rises. So a given inspired concentration is a deeper
 anesthetic in a hypothermic patient. Dialled to the same multiple of MAC, as
 the chapter says, induction is slower, most for the soluble agents.
 
-**Not modelled.** Nitrous oxide's solubility (see above). Cardiac output and
+**Not modelled.** Cardiac output and
 ventilation also fall with metabolism in hypothermia, but they have their own
 controls (the Cardiac output slider and the ventilation row), so they are not
 counted twice. Lower them yourself to match the patient. The coupling is left
@@ -296,6 +302,10 @@ readable source for a missing value.
 <!-- generated: physiology-table -->
 
 ## References
+
+Allott PR, Steward A, Flook V, Mapleson WW. Variation with temperature of the
+solubilities of inhaled anaesthetics in water, oil and biological media.
+*Br J Anaesth* 1973;45:294-300. doi:10.1093/bja/45.3.294
 
 Antognini JF, Lewis BK, Reitan JA. Hypothermia minimally decreases nitrous
 oxide anesthetic requirements. *Anesth Analg* 1994;79:980-2.

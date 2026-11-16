@@ -549,12 +549,9 @@ test_that("gasPropertiesAt() follows Zhou 2002 and Liu 2001, and is the table at
   expect_equal(p31$MAC40[i], p37$MAC40[i] * gasMacTemperatureFactor(31))
   # About 4.6% of normothermic MAC a degree.
   expect_equal(1 - gasMacTemperatureFactor(36), 0.0784 / (0.0784 * 37 - 1.203))
-  # Nitrogen and oxygen are unchanged; nitrous oxide's MAC alone moves (its
-  # own test, below).
+  # Nitrogen and oxygen are unchanged; nitrous oxide has its own test, below.
   other <- !p37$gas %in% c(names(GAS_SOLUBILITY_TEMPERATURE_SLOPE), "nitrousOxide")
   expect_identical(p31[other, ], p37[other, ])
-  n <- p37$gas == "nitrousOxide"
-  expect_identical(p31[n, setdiff(names(p31), "MAC40")], p37[n, setdiff(names(p37), "MAC40")])
 })
 
 test_that("hypothermia slows the rise of FA/FI, most for the more soluble agent, and lowers MAC", {
@@ -585,15 +582,15 @@ test_that("hypothermia slows the rise of FA/FI, most for the more soluble agent,
   w <- gasWashout(iso31$sim, dt)
   expect_equal(w$body$temperature, 31)
   expect_true(all(is.finite(gasRecoveryTime(w, "isoflurane", 0.3))))
-  # Nitrous oxide: its tensions do not move (its solubility is unchanged),
-  # its MAC does (Antognini 1994), so the summed MAC rises.
+  # Nitrous oxide: more soluble in the cold (Allott 1973), so FA/FI rises
+  # more slowly; its MAC falls (Antognini 1994), so the summed MAC rises.
   n2o <- data.frame(Drug = c("nitrousOxide", "oxygen", "ventilation"), Time = 0, Dose = c(4, 2, 6))
   cold <- simulateGases(n2o, maximum = 30, temperature = 31)$results
   warm <- simulateGases(n2o, maximum = 30)$results
-  expect_equal(cold[cold$Drug == "nitrousOxide", ], warm[warm$Drug == "nitrousOxide", ])
-  expect_equal(cold$Y[cold$Drug == "MAC"],
-               warm$Y[warm$Drug == "MAC"] / gasMacTemperatureFactor(31, "nitrousOxide"),
-               tolerance = 1e-9)
+  et <- function(r) { x <- r[r$Drug == "nitrousOxide" & r$Site == "Alveolar", ]; stats::approx(x$Time, x$Y, 2)$y }
+  expect_lt(et(cold), et(warm))
+  mac <- function(r) { x <- r[r$Drug == "MAC", ]; stats::approx(x$Time, x$Y, 30)$y }
+  expect_gt(mac(cold), mac(warm))
 })
 
 test_that("nitrous oxide MAC follows Antognini 1994's regression in rats", {
@@ -613,7 +610,12 @@ test_that("nitrous oxide MAC follows Antognini 1994's regression in rats", {
   p37 <- getGasProperties()
   n <- p$gas == "nitrousOxide"
   expect_equal(p$MAC40[n], p37$MAC40[n] * gasMacTemperatureFactor(28, "nitrousOxide"))
-  expect_equal(p$lambda_blood[n], p37$lambda_blood[n])
+  # Allott 1973: 2.33%/C in blood and the aqueous tissues (Table II), 1.13%/C
+  # in fat (Table III)
+  expect_equal(p$lambda_blood[n], p37$lambda_blood[n] * exp(0.0233 * 9))
+  expect_equal(p$tg_brain[n], p37$tg_brain[n] * exp(0.0233 * 9))
+  expect_equal(p$tg_muscle[n], p37$tg_muscle[n] * exp(0.0233 * 9))
+  expect_equal(p$tg_fat[n], p37$tg_fat[n] * exp(0.0113 * 9))
   expect_equal(p[p$gas %in% c("nitrogen", "oxygen"), ], p37[p37$gas %in% c("nitrogen", "oxygen"), ])
 })
 

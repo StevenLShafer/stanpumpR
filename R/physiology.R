@@ -268,10 +268,15 @@ gasBodyPhysiology <- function(body, cardiac = 1)
 # degree at 37 C and 19% lower at 28 C (the paper's Table 1: 20% over 38-28
 # C), half the volatile agents' fall, as its smaller change of lipid
 # solubility predicts.  Applied to people on Shafer's decision of 2026-11-16
-# ("look for animal data"); no human measurement exists.  Its solubility is
-# left as it is: the source of a nitrous oxide temperature coefficient in
-# blood (Allott 1973, Br J Anaesth 45:294-300, cited by Antognini and by
-# White and Halsey 1974) has not yet been read.  Cardiac output and
+# ("look for animal data"); no human measurement exists.  Its solubility
+# follows Allott 1973 (Br J Anaesth 45:294-300, PMID 4573001, read in full),
+# the review of nearly 200 temperature coefficients that Antognini and White
+# and Halsey 1974 both cite: 2.33%/C in water and aqueous media (Table II,
+# four coefficients; blood, saline and serum showed no difference from
+# water), for blood, the vessel-rich group and muscle; and 1.13%/C in oil
+# and fat (Table III, its regression's prediction, none measured), for fat.
+# So tissue:blood is unchanged except in fat, which Allott's oil and water
+# lines separate for an agent so little more soluble in oil than in water.  Cardiac output and
 # ventilation fall with metabolism in hypothermia, but they are set by their
 # own controls (the Cardiac output slider, the ventilation row), so as not to
 # be counted twice.  The thresholds of the time until threshold are typed
@@ -290,6 +295,16 @@ PHYSIOLOGY_TEMPERATURE_STEP <- 0.5
 GAS_SOLUBILITY_TEMPERATURE_SLOPE <- c(desflurane = 0.0302,
                                       sevoflurane = 0.0295,
                                       isoflurane = 0.0382)
+
+#' Nitrous oxide's temperature coefficients of solubility, per degree C at
+#' 37 C (Allott 1973, Br J Anaesth 45:294-300, read in full): water and
+#' aqueous media, blood among them, 2.33%/C (Table II, the mean of four
+#' measured coefficients, 95% limits 0.63); oil and fat 1.13%/C (Table III,
+#' predicted by the paper's own regression on solubility, no coefficient
+#' having been measured).  Blood, the vessel-rich group and muscle take the
+#' aqueous one, fat the oil one.
+#' @noRd
+GAS_N2O_SOLUBILITY_TEMPERATURE_SLOPE <- c(aqueous = 0.0233, fat = 0.0113)
 
 #' Temperature at which the regression of Liu 2001 gives zero MAC, C
 #' @noRd
@@ -335,9 +350,10 @@ gasMacTemperatureFactor <- function(temperature = PHYSIOLOGY_TEMPERATURE_DEFAULT
 #' \code{getGasProperties()} with each volatile agent's partition coefficients
 #' (blood:gas and every tissue:gas) multiplied by
 #' \code{exp(-slope (T - 37))} (Zhou 2002, 2001) and its MAC by
-#' \code{gasMacTemperatureFactor()} (Liu 2001), and nitrous oxide's MAC by
-#' its own factor (Antognini 1994), its solubility unchanged.  Nitrogen and
-#' oxygen are unchanged.  At 37 C (or NULL) the table is returned as it is.
+#' \code{gasMacTemperatureFactor()} (Liu 2001); nitrous oxide's blood:gas,
+#' brain and muscle coefficients by Allott 1973's aqueous coefficient, its
+#' fat:gas by the oil one, and its MAC by its own factor (Antognini 1994).
+#' Nitrogen and oxygen are unchanged.  At 37 C (or NULL) the table is returned as it is.
 #'
 #' @param temperature body temperature, C, or NULL for 37
 #' @returns a data frame as \code{getGasProperties()}
@@ -354,6 +370,11 @@ gasPropertiesAt <- function(temperature = NULL)
     props[[col]] <- props[[col]] * f
   props$MAC40[volatile] <- props$MAC40[volatile] * gasMacTemperatureFactor(temperature)
   n2o <- props$gas == "nitrousOxide"
+  aqueous <- exp(-GAS_N2O_SOLUBILITY_TEMPERATURE_SLOPE[["aqueous"]] * (temperature - 37))
+  for (col in c("lambda_blood", "tg_brain", "tg_muscle"))
+    props[[col]][n2o] <- props[[col]][n2o] * aqueous
+  props$tg_fat[n2o] <- props$tg_fat[n2o] *
+    exp(-GAS_N2O_SOLUBILITY_TEMPERATURE_SLOPE[["fat"]] * (temperature - 37))
   props$MAC40[n2o] <- props$MAC40[n2o] * gasMacTemperatureFactor(temperature, "nitrousOxide")
   props
 }
