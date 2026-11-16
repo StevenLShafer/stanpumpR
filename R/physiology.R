@@ -206,7 +206,16 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # PMID 28555724), 6.9%/C over 33.5-37 C; ceftazidime CL x (T/33.5)^2.93
 # (van der Veer 2023, Antimicrob Agents Chemother, PMID 37010414), 8.3%/C;
 # both filtered drugs, both fitted beside postnatal age, with which
-# temperature is partly confounded (the authors' caveat).  The choices: one factor
+# temperature is partly confounded (the authors' caveat).  Benzylpenicillin
+# reuses amoxicillin's (T/33.5)^2.43 rather than estimating its own
+# (Bijleveld 2018, PMID 29378710).  Midazolam in adults cooled to 33 C
+# after cardiac arrest: temperature was not a significant covariate on
+# clearance, 12.6 against 14.2 L/h in normothermic controls (Bastiaans 2013,
+# Int J Clin Pharm 35:210).  Cisatracurium in infants on bypass (Withington
+# 2011, Paediatr Anaesth 21:341), clearance as infusion rate over a
+# pseudo-steady concentration: 5.47 to 1.10 mL/min/kg at about 25 C, but
+# 5.74 to 7.36 at about 34 C, so bypass itself moves it and the deep group's
+# fall (about 14%/C) cannot be read as temperature alone.  All read in full.  The choices: one factor
 # on hepatic intrinsic clearance (inside the well-stirred model) for every
 # drug, or separate CYP, UGT and esterase factors; and whether to extend a
 # fit made above 34.8 C down to 28 C.
