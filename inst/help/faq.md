@@ -58,9 +58,9 @@ Copy the URL. It encodes the patient, the doses, the events, the options, any th
 
 Yes. `simulateDrugsWithCovariates()` and `getDrugPK()` with `simCpCe()` are exported, and two vignettes show how. See [Driving the engine from R](help:scripting). The same engine is offered as a web service, `run_api()` for a dose table and `run_tci_api()` for a pump; see [The TCI API](help:tci-api).
 
-## The Email Slide panel says email is not configured
+## The Export panel says email is not configured
 
-Sending mail needs credentials in the server's `config.yml`. The public app has them; a local copy will not until you add them. See [Email a slide](help:email-slide).
+Sending mail needs credentials in the server's `config.yml`. The public app has them; a local copy will not until you add them. The Export panel's downloads need no configuration. See [Exporting a simulation](help:export).
 
 ## I found an error in a model
 
