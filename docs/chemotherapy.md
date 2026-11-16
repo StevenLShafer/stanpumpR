@@ -869,3 +869,84 @@ also in its registry row or drug header:
 10. **Labels**: the 29 chemotherapy labels are DailyMed's current versions,
     the innovator's NDA where listed, else a major generic; IV thioguanine
     links the oral Tabloid label.  Acceptable?
+
+## 46. Five more papers, read on the PDF (2026-11-16)
+
+Supplied by Shafer on 2026-11-16, five of the six asked for that morning
+(Ratain 1987, vinblastine, is still to come).
+
+- **Panetta 2003 (temozolomide in children; C44): implemented.**
+  `temozolomide` is now a group (`R/modelSelection.R`): Panetta 2003
+  (`temozolomidePanetta`, 39 patients 0.7-21.9 years) for children,
+  Ostermann 2004 (`temozolomideOstermann`, the former `temozolomide`) for
+  adults; the ranges do not overlap, so the nearer wins between them (Panetta
+  to 25.9 years).  One compartment, ka 2.4 /h, F 1: ln CL/F = 0.42 + 1.08 BSA
+  (L/h), ln V/F = 1.34 + 1.09 BSA (L).  At the median BSA (1.1 m2) the
+  equations give ke 0.394 /h against Table 2's 0.39; at 1.8 m2 CL/F 10.6 L/h,
+  between Ostermann's woman (10.0) and man (11.9).  Table 3's age term on
+  CL per m2 is printed without a combined equation and is not applied.
+  Outside the studied 0.45-2.1 m2 the clearance and volume are held
+  proportional to BSA (the exponential equations do not scale with size).
+  This answers question 6 of section 45.
+- **Maisonneuve 2026 (idarubicin, adults with AML; C45): needs an engine.**
+  Three compartments eliminated only by conversion to idarubicinol, from V1
+  (kp1m 0.15 /h) and from the peripheral V3 (kp3m 0.19 /h, most of the
+  elimination), the metabolite formed partly in its own peripheral
+  compartment; idarubicinol's elimination k40 0.02 /h was fixed by a grid
+  search (24-h sampling).  The closed-form metabolite route forms the
+  metabolite from the parent's central compartment only.  Reid 1990
+  (children) remains not identifiable.
+- **Alberts 1978 (bleomycin; C46): not identifiable**, as Hall 1982: its Vd
+  is CL/beta, so three independent numbers for a four-parameter model, and
+  the intercepts are not printed.  PubMed found two sources that may close
+  it: Yee 1983 (children; the abstract prints V1, Vss, CL and both
+  half-lives) and Kramer 1978 (adults, two compartments after a 10-min
+  infusion).  Both added to the registry, abstract only.
+- **Savic 2017 (cladribine tablets; C37b): complete, not implemented.**
+  Table 4 read: three compartments, CL = 3.52 x Cockcroft-Gault CLCR (L/h) +
+  23.4 L/h, the tablet's ka 1.08 /h and F 0.456 fasted (phase I) or ka 1.03
+  /h, F 0.40 and a 0.319-h lag in phase III.  The earlier note had renal and
+  nonrenal clearance swapped (CLR 22.2, CLNR 23.4 L/h); corrected.  Waits on
+  question 3.
+- **Kantrowitz-Gordon 2018 (dacarbazine in pregnancy): recorded.**  The one
+  paired woman's clearance was 694 against 885 mL/min postpartum (x0.78), Vss
+  68 against 74 L, while her renal clearance rose; one subject, so recorded
+  (`unquantified`), not applied.
+
+## 47. Questions for Shafer (2026-11-16, evening)
+
+Section 45's questions stand, except question 6 (answered by Panetta 2003)
+and question 3, restated.  New or restated:
+
+1. **Vinblastine** (Owellen 1977): implement from two patients'
+   triexponentials, or wait for Ratain 1987 (30 patients), still not
+   supplied?
+2. **Cladribine in children** (Kearns 1994): add as the children's
+   candidate, intravenous only?
+3. **Cladribine tablets** (Savic 2017, now read in full): (a) a candidate of
+   the cladribine group, where its 173 patients would make it every adult's
+   model for every route (its patients have multiple sclerosis, Lindemalm's
+   leukaemia); or (b) its own product, `cladribineTablets`, oral only,
+   leaving Lindemalm for IV, SC and the oral solution?  And which absorption:
+   phase I fasted (ka 1.08 /h, F 0.456, no lag) or phase III with food
+   unknown (ka 1.03 /h, F 0.40, lag 0.319 h), the clinical setting?
+4. **Ifosfamide**: should the infusion schedule count in the choice?
+5. **Crombag paclitaxel's body size**: fixed parameters in both switch
+   positions.  Confirm?
+6. **Temozolomide in children** (Panetta 2003): confirm holding the
+   clearance and volume proportional to BSA outside the studied 0.45-2.1 m2,
+   and Mosteller's BSA (the paper names no formula).
+7. **Idarubicin** (Maisonneuve 2026): build a general linear compartmental
+   engine (a matrix exponential of any compartment matrix: elimination and
+   metabolite formation from any compartment), which would also carry de
+   Jonge 2005 (question 10's engine is a different, zero-order one), or
+   implement the parent alone now through its equivalent mammillary model
+   (exact for plasma, not for the V2/V3 panels), with no idarubicinol?
+8. **Bleomycin**: supply Yee 1983 (children) and Kramer 1978 (adults); and
+   the dose unit is USP units (activity), as heparin's IU is.
+9. **Thioguanine**: offer the intravenous research model?
+10. **Vincristine (Nijstad 2022)**: confirm kon and koff not scaled, and
+    doses as the sulfate.
+11. **de Jonge 2005 cyclophosphamide**: an engine option for zero-order
+    enzyme rise?
+12. **Labels**: acceptable as chosen (section 45, question 10)?
