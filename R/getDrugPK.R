@@ -829,14 +829,16 @@ getDrugPK <- function(
     # The time to peak effect of a model that gave ke0 and no tPeak (above)
     if (solveTPeak && ke0 > 0)
     {
-      tPeak <- if (identical(tPeakRoute, ROUTE_PO) && ka_PO > 0) {
+      tPeak <- if (identical(tPeakRoute, ROUTE_PO) && (ka_PO > 0 || ka_PO2 > 0)) {
         # An oral tPeak (the physiology sliders moving ke0 of such a model)
         # is the peak of the effect site after an oral dose, counted from the
-        # dose, so the oral curve and its lag (CodeRabbit on #727).
-        oral <- c(p_coef_bolus_l1, p_coef_bolus_l2, p_coef_bolus_l3) *
-          ka_PO / (ka_PO - c(lambda_1, lambda_2, lambda_3)) * bioavailability_PO
-        tlag_PO + effectSitePeakTime(c(oral, -sum(oral)),
-                                     c(lambda_1, lambda_2, lambda_3, ka_PO), ke0)
+        # dose: every depot that carries drug, each with its own lag
+        # (CodeRabbit on #727).
+        oralEffectSitePeakTime(
+          c(p_coef_bolus_l1, p_coef_bolus_l2, p_coef_bolus_l3),
+          c(lambda_1, lambda_2, lambda_3), ke0,
+          depots = list(list(ka = ka_PO, F = bioavailability_PO, lag = tlag_PO),
+                        list(ka = ka_PO2, F = bioavailability_PO2, lag = tlag_PO2)))
       } else {
         effectSitePeakTime(
           c(p_coef_bolus_l1, p_coef_bolus_l2, p_coef_bolus_l3),
@@ -1767,6 +1769,52 @@ effectSitePeakTime <- function(coef, lambda, ke0, upper = 4000)
     function(t) sum(e * exp(-lambda * t)) - sum(e) * exp(-ke0 * t),
     c(0, upper), maximum = TRUE
   )$maximum
+}
+
+
+#' Time of the effect-site peak after an oral dose
+#'
+#' The effect site after one oral dose given as several first-order depots,
+#' each with its rate, its share of the dose (its bioavailability) and its
+#' lag, counted from the dose.  A depot with no rate or no share is left out.
+#' The peak is found on a grid over the whole curve and refined between the
+#' grid's neighbours of its highest point.
+#'
+#' @param coef,lambda the plasma bolus coefficients and exponents
+#' @param ke0 the effect-site rate constant
+#' @param depots list of lists with \code{ka}, \code{F}, \code{lag}
+#' @returns minutes from the dose
+#' @keywords internal
+oralEffectSitePeakTime <- function(coef, lambda, ke0, depots)
+{
+  use <- lambda > 0
+  coef <- coef[use]; lambda <- lambda[use]
+  parts <- list()
+  for (d in depots) {
+    if (!isTRUE(d$ka > 0) || !isTRUE(d$F > 0)) next
+    ka <- separateEigenvalues(d$ka, lambda)
+    plasma <- coef * ka / (ka - lambda) * d$F
+    rates <- c(lambda, ka)
+    k <- separateEigenvalues(ke0, rates)
+    e <- c(plasma, -sum(plasma)) * k / (k - rates)
+    parts[[length(parts) + 1]] <- list(e = e, rates = rates, k = k, lag = d$lag)
+  }
+  if (length(parts) == 0) return(0)
+  ce <- function(t) {
+    total <- numeric(length(t))
+    for (p in parts) {
+      s <- pmax(t - p$lag, 0)
+      total <- total + (t > p$lag) *
+        (colSums(p$e * exp(-outer(p$rates, s))) - sum(p$e) * exp(-p$k * s))
+    }
+    total
+  }
+  slowest <- min(unlist(lapply(parts, function(p) c(p$rates, p$k))))
+  upper <- max(vapply(parts, `[[`, numeric(1), "lag")) + min(4000, 20 / slowest)
+  grid <- seq(0, upper, length.out = 4001)
+  i <- which.max(ce(grid))
+  lo <- grid[max(1, i - 1)]; hi <- grid[min(length(grid), i + 1)]
+  stats::optimize(ce, c(lo, hi), maximum = TRUE, tol = 1e-8)$maximum
 }
 
 

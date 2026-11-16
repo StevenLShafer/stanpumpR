@@ -487,6 +487,26 @@ test_that("an oral tPeak is re-solved from the oral curve and its lag", {
   expect_equal(pk$tPeak, 12 + tBest, tolerance = 1e-3)
 })
 
+test_that("an oral tPeak counts every depot carrying drug, each with its lag", {
+  # Only the second depot carries drug: moving its lag by 120 min moves the
+  # peak by 120 min, and the peak is the one-depot peak at that rate and lag.
+  model <- function(lag2) list(
+    PK = list(default = list(v1 = 10, v2 = 20, v3 = 50, cl1 = 1, cl2 = 2,
+                             cl3 = 0.5, ka_PO = 0.05, bioavailability_PO = 1,
+                             tlag_PO = 12, ka_PO2 = 0.02, fraction_PO2 = 1,
+                             tlag_PO2 = lag2)),
+    ke0 = 0.1, tPeakRoute = "PO", reference = "test")
+  t30 <- getDrugPK("propofol", 70, 170, 35, "male", model = model(30))$tPeak
+  t150 <- getDrugPK("propofol", 70, 170, 35, "male", model = model(150))$tPeak
+  expect_equal(t150 - t30, 120, tolerance = 1e-6)
+  one <- list(PK = list(default = list(v1 = 10, v2 = 20, v3 = 50, cl1 = 1, cl2 = 2,
+                                       cl3 = 0.5, ka_PO = 0.02, bioavailability_PO = 1,
+                                       tlag_PO = 30)),
+              ke0 = 0.1, tPeakRoute = "PO", reference = "test")
+  expect_equal(t30, getDrugPK("propofol", 70, 170, 35, "male", model = one)$tPeak,
+               tolerance = 1e-6)
+})
+
 test_that("the email workbook records the physiology sliders", {
   rows <- physiologyCovariateRows(c(cardiac = 0.5))
   expect_equal(nrow(rows), length(PHYSIOLOGY_FACTORS))
