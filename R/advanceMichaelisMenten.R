@@ -407,11 +407,23 @@ mmDormandPrince <- function(f, x, t0, t1, h, rtol, atol, clean = NULL)
 #' @param iIM,iConv,iC,iP,iS,iT,iDRC,iDRP,iSD,iE the states' indices
 #' @param rb,sc,tb,sd,ai the block's rapidBinding, saturableSC,
 #'   targetBinding, saturableDistribution and autoinduction, or NULL
+#' @param nState the number of states (mmStateCount())
 #' @returns function(x, rIV, rPE, vmax, km), the derivative of the states
 #' @keywords internal
+#' The engine's number of states
+#'
+#' The saturable-distribution and enzyme states exist only for a drug that
+#' declares them: carried always, the enzyme's constant 1 kept the adaptive
+#' step from ever finding the system empty (mmDormandPrince()), and a year of
+#' phenytoin cost 1.9 s against 1.5.
+#' @keywords internal
+mmStateCount <- function(iDRP, iSD, iE, sd, ai)
+  if (!is.null(ai)) iE else if (!is.null(sd)) iSD else iDRP
+
 mmDerivative <- function(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, iP,
                          iS, iT, iDRC, iDRP, rb, sc, tb, iSD = iDRP + 1L,
-                         iE = iDRP + 2L, sd = NULL, ai = NULL)
+                         iE = iDRP + 2L, sd = NULL, ai = NULL,
+                         nState = mmStateCount(iDRP, iSD, iE, sd, ai))
 {
   # Unbound concentrations from the amounts: the amount over the volume, or,
   # with rapid binding, the root of the binding equilibrium.
@@ -423,7 +435,6 @@ mmDerivative <- function(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, 
     function(S) sc$bioavailability * sc$fraction * sc$kaMax * S / (sc$kmKa + S)
   depotIdx <- seq_len(iIM)
   oralIdx <- seq_len(nOral)
-  nState <- max(iDRP, iSD, iE)
   plainBinding <- is.null(rb)
   hasSD <- !is.null(sd)
   hasAI <- !is.null(ai)
@@ -886,10 +897,12 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
 
   # The derivative (mmDerivative()), built in a frame of its own
   deriv <- mmDerivative(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, iP,
-                        iS, iT, iDRC, iDRP, rb, sc, tb, iSD, iE, sd, ai)
+                        iS, iT, iDRC, iDRP, rb, sc, tb, iSD, iE, sd, ai,
+                        mmStateCount(iDRP, iSD, iE, sd, ai))
 
-  x <- numeric(iE)
-  x[iE] <- 1           # the uninduced enzyme (unused without autoinduction)
+  nState <- mmStateCount(iDRP, iSD, iE, sd, ai)
+  x <- numeric(nState)
+  if (!is.null(ai)) x[iE] <- 1   # the uninduced enzyme
   Cp <- numeric(L)
   # The peripheral concentration (on the same footing as Cp: the amount in the
   # compartment over its volume) and the amount still to be absorbed, in the
@@ -917,7 +930,7 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   absorbing <- unique(c(depotStates, iConv))
   if (!adaptive) {
     rates <- mmStateRates(function(y) deriv(y, 0, 0, vmax * ddiMax("vmax"),
-                                            km * ddiMin("km")), iE)
+                                            km * ddiMin("km")), nState)
     stableStep <- function(r) if (r > 0) min(MM_MAX_STEP, MM_STABLE_STEP / r) else MM_MAX_STEP
     stepCore <- stableStep(max(rates[-absorbing], 0))
     stepAll <- stableStep(max(rates))
