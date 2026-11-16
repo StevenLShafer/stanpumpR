@@ -16,6 +16,8 @@ a data frame as \code{getGasProperties()}
 \code{getGasProperties()} with each volatile agent's partition coefficients
 (blood:gas and every tissue:gas) multiplied by
 \code{exp(-slope (T - 37))} (Zhou 2002, 2001) and its MAC by
-\code{gasMacTemperatureFactor()} (Liu 2001).  Nitrous oxide, nitrogen and
-oxygen are unchanged.  At 37 C (or NULL) the table is returned as it is.
+\code{gasMacTemperatureFactor()} (Liu 2001); nitrous oxide's blood:gas,
+brain and muscle coefficients by Allott 1973's aqueous coefficient, its
+fat:gas by the oil one, and its MAC by its own factor (Antognini 1994).
+Nitrogen and oxygen are unchanged.  At 37 C (or NULL) the table is returned as it is.
 }

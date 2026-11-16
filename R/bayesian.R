@@ -890,3 +890,76 @@ bayesianFitSummary <- function(drug, fit)
           nrow(fit$observations),
           ngettext(nrow(fit$observations), "measurement", "measurements"))
 }
+
+#' The updated drugs at the physiology sliders
+#'
+#' The Bayesian update fits its clearance and volume factors at NORMAL
+#' physiology, and the sliders are then applied to the individual (Shafer,
+#' 2026-11-16): the measured levels describe the patient as the levels found
+#' them, so a slider is a what-if on the fitted patient, not a prior that the
+#' levels pull back against, and moving a slider does not refit.
+#' `getDrugPK()` applies the individual first and the physiology after it,
+#' so each drug is rebuilt with every estimate the update made (its own, and
+#' its metabolite's for a parent) at the sliders; every other entry, the
+#' population companions and the drugs without levels, is the model's drug at
+#' the sliders.
+#'
+#' @param drawn `bayesianUpdateDrugs()$drugs`, fitted at normal physiology
+#' @param priors the drugs at the sliders, without any estimate (what the app
+#'   draws when nothing is measured)
+#' @param rebuild function(drug, individual): the drug at the sliders with
+#'   `individual`, the estimates by drug (recalculatePK()'s form)
+#' @returns `drawn`, each entry at the sliders
+#' @noRd
+bayesianAtPhysiology <- function(drawn, priors, rebuild)
+{
+  estimates <- list()
+  for (d in names(drawn)) {
+    e <- drawn[[d]]
+    if (is.null(e$companionOf) && !is.null(e$bayesian) && !is.null(e$individual))
+      estimates[[d]] <- e$individual
+  }
+  if (length(estimates) == 0) return(drawn)
+  out <- drawn
+  for (d in names(drawn)) {
+    e <- drawn[[d]]
+    if (!is.null(e$companionOf)) next
+    formed <- e$metaboliteName
+    moved <- d %in% names(estimates) || (!is.null(formed) && formed %in% names(estimates))
+    if (!moved) {
+      if (!is.null(priors[[d]])) out[[d]] <- priors[[d]]
+      next
+    }
+    entry <- rebuild(d, estimates)
+    entry$Color <- e$Color
+    entry$bayesian <- e$bayesian
+    # The pump ran on the library's model, at this physiology
+    if (!is.null(e$tciModel)) entry$tciModel <- priors[[d]]
+    out[[d]] <- entry
+  }
+  for (d in names(drawn)) {
+    e <- drawn[[d]]
+    parent <- e$companionOf
+    if (is.null(parent)) next
+    if (identical(e$companionGroup, "bayesian")) {
+      # The model's own drug at the sliders, and what its parents form
+      prior <- priors[[parent]]
+      if (is.null(prior)) next
+      for (field in c("drug", "companionOf", "modelLabel", "companionGroup",
+                      "helpPage", "Color"))
+        prior[[field]] <- e[[field]]
+      if (!is.null(e$populationSources))
+        prior$populationSources <- lapply(stats::setNames(
+          names(e$populationSources), names(e$populationSources)),
+          function(p) if (is.null(priors[[p]])) e$populationSources[[p]] else priors[[p]])
+      out[[d]] <- prior
+    } else if (identical(d, asmReferenceName(parent)) && parent %in% names(estimates)) {
+      # The individual's line without the interactions (bayesianUpdateDrugs())
+      kept <- e[c("drug", "companionOf", "modelLabel", "companionGroup", "helpPage", "Color")]
+      out[[d]] <- utils::modifyList(out[[parent]], kept)
+    } else if (!is.null(priors[[d]])) {
+      out[[d]] <- priors[[d]]
+    }
+  }
+  out
+}

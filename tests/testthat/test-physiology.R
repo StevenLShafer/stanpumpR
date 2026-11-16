@@ -549,8 +549,8 @@ test_that("gasPropertiesAt() follows Zhou 2002 and Liu 2001, and is the table at
   expect_equal(p31$MAC40[i], p37$MAC40[i] * gasMacTemperatureFactor(31))
   # About 4.6% of normothermic MAC a degree.
   expect_equal(1 - gasMacTemperatureFactor(36), 0.0784 / (0.0784 * 37 - 1.203))
-  # Nitrous oxide, nitrogen and oxygen are unchanged.
-  other <- !p37$gas %in% names(GAS_SOLUBILITY_TEMPERATURE_SLOPE)
+  # Nitrogen and oxygen are unchanged; nitrous oxide has its own test, below.
+  other <- !p37$gas %in% c(names(GAS_SOLUBILITY_TEMPERATURE_SLOPE), "nitrousOxide")
   expect_identical(p31[other, ], p37[other, ])
 })
 
@@ -582,10 +582,46 @@ test_that("hypothermia slows the rise of FA/FI, most for the more soluble agent,
   w <- gasWashout(iso31$sim, dt)
   expect_equal(w$body$temperature, 31)
   expect_true(all(is.finite(gasRecoveryTime(w, "isoflurane", 0.3))))
-  # Nitrous oxide alone does not move.
+  # Nitrous oxide: more soluble in the cold (Allott 1973), so FA/FI rises
+  # more slowly; its MAC falls (Antognini 1994), so the summed MAC rises.
   n2o <- data.frame(Drug = c("nitrousOxide", "oxygen", "ventilation"), Time = 0, Dose = c(4, 2, 6))
-  expect_equal(simulateGases(n2o, maximum = 30, temperature = 31)$results,
-               simulateGases(n2o, maximum = 30)$results)
+  cold <- simulateGases(n2o, maximum = 30, temperature = 31)$results
+  warm <- simulateGases(n2o, maximum = 30)$results
+  et <- function(r) { x <- r[r$Drug == "nitrousOxide" & r$Site == "Alveolar", ]; stats::approx(x$Time, x$Y, 2)$y }
+  expect_lt(et(cold), et(warm))
+  mac <- function(r) { x <- r[r$Drug == "MAC", ]; stats::approx(x$Time, x$Y, 30)$y }
+  expect_gt(mac(cold), mac(warm))
+})
+
+test_that("nitrous oxide MAC follows Antognini 1994's regression in rats", {
+  # MAC = 0.03827 T + 0.3836 atm (Figure 1): the ratio of its values at the
+  # two groups' mean temperatures, 37.5 and 29.7 C
+  mac <- function(T) 0.03827 * T + 0.3836
+  ratio <- gasMacTemperatureFactor(29.7, "nitrousOxide") /
+    gasMacTemperatureFactor(37, "nitrousOxide") / (mac(29.7) / mac(37))
+  expect_equal(ratio, 1, tolerance = 1e-12)
+  expect_equal(gasMacTemperatureFactor(37, "nitrousOxide"), 1)
+  # About 2.1% per degree at 37 C, 19% lower at 28 C (the paper's Table 1:
+  # 20% over 38 to 28 C), half the volatile agents' fall
+  expect_equal(1 - gasMacTemperatureFactor(36, "nitrousOxide"), 0.0213, tolerance = 0.01)
+  expect_equal(gasMacTemperatureFactor(28, "nitrousOxide"), 0.809, tolerance = 1e-3)
+  expect_gt(gasMacTemperatureFactor(28, "nitrousOxide"), gasMacTemperatureFactor(28))
+  p <- gasPropertiesAt(28)
+  p37 <- getGasProperties()
+  n <- p$gas == "nitrousOxide"
+  expect_equal(p$MAC40[n], p37$MAC40[n] * gasMacTemperatureFactor(28, "nitrousOxide"))
+  # Allott 1973: 2.33%/C in blood and the aqueous tissues (Table II), 1.13%/C
+  # in fat (Table III)
+  expect_equal(p$lambda_blood[n], p37$lambda_blood[n] * exp(0.0233 * 9))
+  expect_equal(p$tg_brain[n], p37$tg_brain[n] * exp(0.0233 * 9))
+  expect_equal(p$tg_muscle[n], p37$tg_muscle[n] * exp(0.0233 * 9))
+  expect_equal(p$tg_fat[n], p37$tg_fat[n] * exp(0.0113 * 9))
+  expect_equal(p[p$gas %in% c("nitrogen", "oxygen"), ], p37[p37$gas %in% c("nitrogen", "oxygen"), ])
+})
+
+test_that("the brain-and-heart share is Williams and Leggett's reference man", {
+  # Table 17: brain 12% and heart 4% of resting cardiac output, 35-year-old male
+  expect_equal(PHYSIOLOGY_GAS_PROTECTED_SHARE, 0.16)
 })
 
 test_that("the temperature slider's value is read safely, and the note says what it changes", {
@@ -595,7 +631,50 @@ test_that("the temperature slider's value is read safely, and the note says what
   expect_equal(bodyTemperatureFromInput(33.5), 33.5)
   drugs <- c("sevoflurane", "nitrousOxide", "oxygen", "propofol")
   cold <- gsub("\\s+", " ", as.character(physiologyNote(PHYSIOLOGY_DEFAULT, drugs, temperature = 32)))
-  expect_match(cold, "Changed: </strong> sevoflurane </p>", fixed = TRUE)
-  expect_match(cold, "Not changed by body temperature: </strong> propofol, nitrousOxide", fixed = TRUE)
+  # Body temperature now acts on the intravenous drugs with a physiology row
+  # too (physiologyTemperatureFactor())
+  expect_match(cold, "Changed: </strong> propofol, sevoflurane, nitrousOxide </p>", fixed = TRUE)
+  expect_no_match(cold, "Not changed by body temperature", fixed = TRUE)
   expect_null(physiologyNote(PHYSIOLOGY_DEFAULT, drugs, temperature = 37))
+})
+
+test_that("body temperature lowers elimination capacity, not blood flow", {
+  # Shafer, 2026-11-16: one factor exp(theta (T - 37)), theta = -log(1 - 0.0637)
+  # (Michelsen 2001's 6.37% per degree), on hepatic intrinsic clearance inside
+  # the well-stirred model, on renal clearance and on every other route
+  theta <- -log(1 - 0.0637)
+  expect_equal(physiologyTemperatureFactor(c(temperature = 28)), exp(-9 * theta))
+  expect_equal(physiologyTemperatureFactor(NULL), 1)
+  expect_equal(1 - physiologyTemperatureFactor(c(temperature = 36)), 0.0637)
+  # The physiology vector carries it, checked as the slider is
+  expect_equal(checkPhysiology(NULL)[["temperature"]], 37)
+  expect_error(checkPhysiology(c(temperature = 20)), "temperature")
+  expect_false(physiologyIsNormal(c(temperature = 33)))
+  expect_true(physiologyIsNormal(c(temperature = 37)))
+  # Every route of a drug cleared without blood flow limits falls by the factor
+  row <- data.frame(fraction_renal = 0.2, fraction_hepatic = 0.5, extraction_ratio = 1e-9,
+                    renal_extraction_ratio = NA)
+  f <- exp(-9 * theta)
+  expect_equal(physiologyClearanceFactor(row, checkPhysiology(c(temperature = 28))),
+               f, tolerance = 1e-6)
+  # A flow-limited drug changes less: the well-stirred model, liver x f
+  row$extraction_ratio <- 0.9
+  p <- checkPhysiology(c(temperature = 28))
+  expect_equal(physiologyClearanceFactor(row, p),
+               0.2 * f + 0.5 * hepaticClearanceFactor(0.9, 1, f) + 0.3 * f)
+  expect_gt(physiologyClearanceFactor(row, p), f)
+  # Propofol (hepatic E 0.87, renal E 0.58) keeps 82% of its clearance at
+  # 28 C at normal blood flow, and Bartosova 2026's 42% only when the
+  # cardiac slider also lowers flow (recorded in R/physiology.R)
+  pk <- function(...) getDrugPK("propofol", 70, 170, 40, "male", physiology = c(...))$PK$default
+  ratio <- pk(temperature = 28)$cl1 / pk()$cl1
+  expect_equal(ratio, 0.816, tolerance = 2e-3)
+  expect_lt(pk(temperature = 28, cardiac = 0.4)$cl1 / pk()$cl1, 0.5)
+  # Volumes, intercompartmental clearances and ke0 do not move
+  expect_equal(pk(temperature = 28)$v1, pk()$v1)
+  expect_equal(pk(temperature = 28)$cl2, pk()$cl2)
+  # A drug without a physiology row is unchanged
+  expect_null(physiologyRow("notADrug"))
+  # The summary says it
+  expect_match(physiologySummary(c(temperature = 31)), "31 °C", fixed = TRUE)
 })

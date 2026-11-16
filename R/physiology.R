@@ -103,7 +103,7 @@ PHYSIOLOGY_MAX <- 10
 
 #' Normal physiology
 #' @noRd
-PHYSIOLOGY_DEFAULT <- c(liver = 1, renal = 1, cardiac = 1, gi = 1)
+PHYSIOLOGY_DEFAULT <- c(liver = 1, renal = 1, cardiac = 1, gi = 1, temperature = 37)
 
 #' Exponent of cardiac output on V1 (V1' = V1 x cardiac^exponent).  An
 #' assumption: the direction is physiological (less dilution in the first
@@ -122,13 +122,157 @@ PHYSIOLOGY_KE0_CARDIAC_EXPONENT <- 0.35
 #' @noRd
 PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 
-# OPEN QUESTION [decision, for Shafer; raised by CodeRabbit on #727,
-# 2026-11-16]: the Bayesian update (R/bayesian.R) fits its clearance and
-# volume factors to PK built AT the sliders' physiology, so a slider acts as
-# an informed prior and the measured levels then pull the curve back towards
-# them; moving a slider also refits.  The alternative is to fit at normal
-# physiology and apply the sliders to the individual afterwards (a pure
-# what-if, no refit).  Left as it is until decided.
+# The Bayesian update (R/bayesian.R) fits its clearance and volume factors at
+# NORMAL physiology, and the sliders are applied to the individual afterwards
+# (bayesianAtPhysiology()): the measured levels describe the patient as they
+# found them, so a slider is a what-if on the fitted patient, and moving one
+# does not refit (Shafer, 2026-11-16, answering CodeRabbit's question on #727;
+# until then the fit was made at the sliders, so a slider acted as a prior the
+# levels pulled back against).
+#
+# Body temperature and the intravenous drugs (DECIDED by Shafer, 2026-11-16):
+# one factor, exp(PHYSIOLOGY_TEMPERATURE_CLEARANCE_SLOPE (T - 37)), on the
+# liver's intrinsic clearance inside the well-stirred model, on the kidney's
+# clearance and on every other route (physiologyTemperatureFactor()); blood
+# flow is the Cardiac output slider's.  Papers by Gideon Koren are not used
+# (Shafer, 2026-11-16: suspect after findings of research fraud).  The
+# evidence, read in full unless said:
+# midazolam (CYP3A), CL = 18.5 (T/36.5)^4.24 L/h, 11.6%/C at 36.5 C, fitted
+# over 34.8-37.8 C only (Hostler 2010, DMD 38:781); vecuronium (hepatic
+# carrier uptake, not CYP), 11.3%/C over 34.3-38.0 C, its renal share
+# unchanged so renal clearance fell as much (Caldwell 2000, Anesthesiology
+# 92:84); remifentanil (esterases), 6.37%/C over 20-35 C (Michelsen
+# 2001, Anesth Analg 93:1100, below).  Cooled
+# neonates (read in full; 33.5 C then rewarmed to 36.5 C, so a linear effect
+# over 33.5-36.5 C only): morphine CL x (1 + 0.0689 (T - 36.5)), hepatic and
+# renal together, and its glucuronides, cleared by the kidney, x (1 + 0.0491
+# (T - 36.5)) (Favie 2019, PLoS One 14:e0211910); pooled, 6.83%/C (95% CI
+# 5.16-8.34) for morphine, midazolam and 1-hydroxymidazolam together, so
+# UGT2B7 and CYP3A drugs shared one factor, and not identifiable for the
+# renal drugs and lidocaine, whose recovery after birth was much larger
+# (Favie 2020, Clin Pharmacol Ther 108:1098).  Bjelland 2013 (DMD 41:214, read in full), cooled patients after
+# cardiac arrest (33.3 C) against other ICU patients (37.6 C), a group
+# comparison confounded by illness (creatinine clearance 66 against 137
+# mL/min): clearance lower for morphine (1201 against 1687 mL/min, about
+# 7.6%/C), fentanyl (726 against 1331, about 13%/C) and propofol (2046
+# against 2665, about 6%/C), not significantly for midazolam.  Leslie 1995
+# (Anesth Analg 80:1007, read in full), volunteers at 34 and 37 C: propofol
+# concentrations 28% higher, total clearance carried by hepatic blood flow
+# (0.79 against 0.59 L/min, intervals overlapping), intercompartmental
+# clearances lower.  Enzymes and chemistry, read in full: in rat liver
+# slices over 7-37 C, Q10 1.76 for ethanol (alcohol dehydrogenase), 1.56
+# for diazepam (CYP) and 1.24 for oxazepam (glucuronidation), i.e. 5.5, 4.4
+# and 2.2%/C, the authors allowing that uptake into the slice may limit
+# oxazepam (Mortensen and Dale 1995, Acta Anaesthesiol Scand 39:199); but
+# in native rat liver microsomes over about 26-56 C, glucuronidation's
+# activation energy is 78-84 kJ/mol, about 10%/C at 37 C (Norling and
+# Hanninen 1974, BBA 350:183); general CYP activity in adult minipig liver
+# microsomes 36% lower at 33 than at 38 C, 8.9%/C (Stroe 2024, Basic Clin
+# Pharmacol Toxicol 135:620); atracurium in human plasma at pH 7.9 (Hofmann
+# elimination and ester hydrolysis), half-life 18 min at 37 C and 49 min at
+# 23 C, 7.2%/C (Merrett 1983, Br J Anaesth 55:61); remifentanil in people
+# on bypass, CL x exp(theta (T - 37)), 6.37% per degree, fitted over 20-35
+# C with 16 of 68 patients below 28 C, the only human fit that spans the
+# slider's range (Michelsen 2001, Anesth Analg 93:1100).  Also read in
+# full: CYP3A4 (ethylmorphine N-demethylation) in pig liver microsomes 69%
+# of its 38 C activity at 32 C and 48% at 26 C, 6%/C on both intervals,
+# while cooled piglets' fentanyl rose 25% at 31.6 C with cardiac index 41%
+# lower (Fritz 2005, Anesth Analg 100:996); healthy rats cooled to 32.5 C
+# against 37.9 C, clearance 83% for midazolam (CYP3A), 90% for diclofenac
+# (CYP2C), 107% for dextromethorphan (CYP2D) and 63% for chlorzoxazone
+# (CYP2E), i.e. 0-8.5%/C by isoform, cardiac arrest itself lowering CYP3A
+# and CYP2E more than cooling did (Zhou 2011, DMD 39:2209; Tortorici 2009,
+# Crit Care Med 37:263: cooling attenuated the arrest's IL-6-mediated
+# suppression); patients rewarmed from 33 to 37 C, concentrations at the
+# same infusion rates 16, 12 and 11% lower for remifentanil, propofol and
+# midazolam over the 4 C, fentanyl unchanged (Bjelland 2014, Acta
+# Anaesthesiol Scand 58:709); neonatal morphine 292 against 206 ng/mL at
+# 33-34 C (Roka 2008, Pediatrics 121:e844).  Theory (Hobbs 2013, ACS Chem
+# Biol 8:2388; Arcus 2016, Biochemistry 55:1681; read in full): enzyme rates
+# curve on a log scale because the heat capacity of activation is negative,
+# -1 to -12 kJ/mol/K across the enzymes measured, so the per-degree fall
+# grows as temperature drops.  Held to 6.6%/C at 37 C, that would give 46-29%
+# of normal at 28 C for -3 to -12 kJ/mol/K, against an exponential's 55%.  The
+# drug-metabolising data show no such curve: pig CYP3A4 6%/C on both 38-32
+# and 32-26 C (Fritz 2005), straight Arrhenius plots for rat liver slices
+# over 7-37 C and UGT over about 26-56 C, and remifentanil's exponential
+# fitted over 20-35 C.  Propofol in adults cooled to 16-20 C on bypass for
+# circulatory arrest (Bartosova 2026, Biomed Pharmacother, PMID 42140058, read
+# in full): CL = 97.2 L/h x (T/36.5)^3.11 x (1 + 1.31 REWARM), the power
+# model fitting best (dOFV -177), so 8.5%/C at 36.5 C and 42% of normal at
+# 28 C, with clearance 2.3 times higher while rewarming than while cooling at
+# the same temperature; the authors read temperature as a surrogate for flow
+# and enzyme activity together, propofol being highly extracted.  A factor
+# of exp(-0.066 x 9) on intrinsic clearance alone, inside the well-stirred
+# model, leaves propofol at 82% of normal at 28 C; with liver and kidney
+# flow at 0.4 of normal it gives 44%, close to Bartosova's 42%.  Renal
+# clearance, cooled neonates (33.5 C, rewarmed to 37 C; read in full):
+# amoxicillin CL x (T/33.5)^2.43 (Bijleveld 2017, Clin Pharmacol Ther,
+# PMID 28555724), 6.9%/C over 33.5-37 C; ceftazidime CL x (T/33.5)^2.93
+# (van der Veer 2023, Antimicrob Agents Chemother, PMID 37010414), 8.3%/C;
+# both filtered drugs, both fitted beside postnatal age, with which
+# temperature is partly confounded (the authors' caveat).  Benzylpenicillin
+# reuses amoxicillin's (T/33.5)^2.43 rather than estimating its own
+# (Bijleveld 2018, PMID 29378710).  Midazolam in adults cooled to 33 C
+# after cardiac arrest: temperature was not a significant covariate on
+# clearance, 12.6 against 14.2 L/h in normothermic controls (Bastiaans 2013,
+# Int J Clin Pharm 35:210).  Cisatracurium in infants on bypass (Withington
+# 2011, Paediatr Anaesth 21:341), clearance as infusion rate over a
+# pseudo-steady concentration: 5.47 to 1.10 mL/min/kg at about 25 C, but
+# 5.74 to 7.36 at about 34 C, so bypass itself moves it and the deep group's
+# fall (about 14%/C) cannot be read as temperature alone.  All read in full.
+# Gentamicin, filtered only, in cooled asphyxiated neonates (read in full):
+# clearance constant through cooling and rewarming, 29% higher only once
+# normothermic, temperature not a covariate, read by the authors as delayed
+# renal recovery (Bijleveld 2016, Br J Clin Pharmacol 81:1067); 25.5% lower
+# than in asphyxiated neonates not cooled, about 8%/C (Mark 2013, Ther Drug
+# Monit 35:217, retrospective, 16 against 7).  Alfentanil (Petros 1995,
+# Anesth Analg 81:458, read in full): clearance 3.55 against 3.57 mL/min/kg
+# after bypass at 26 against 34 C, but over 8 h of sampling, most of it
+# after rewarming, which the authors say would have corrected any fall.
+# Doxacurium on bypass at 33-36 against 26-30 C: renal clearance 1.40
+# against 0.93 mL/min/kg, about 6.3%/C (Asokumar 1998, Can J Anaesth 45:515).
+# Phenobarbital in neonates, 20 cooled against 19 not, retrospective:
+# hypothermia did not influence clearance once weight and age were in the
+# model (Shellhaas 2013, Pediatr Crit Care Med 14:194); a long half-life
+# against 72 h of cooling.  Gentamicin troughs alike in 55 cooled and
+# normothermic encephalopathic neonates, creatinine explaining them (Liu
+# 2009, Pediatrics 124:310).  All read in full.  Chosen over separate CYP,
+# UGT and esterase factors because the classes do not differ beyond the
+# scatter, and over a factor on total clearance because the steepest human
+# values (midazolam in volunteers, propofol and cisatracurium on bypass)
+# carry falls in blood flow that the Cardiac output slider already models.
+# Michelsen's exponential is the one fit that spans the slider's 28-37 C.
+# Read after the decision: remifentanil within patients, 32, 25 and 35
+# mL/min/kg before, during (28-30 C) and after hypothermic bypass, about
+# 4%/C (Russell 1997, Br J Anaesth 79:456); chlorzoxazone (CYP2E1) in rats
+# after cardiac arrest, 0.580 against 1.26 mL/min at 30 against 37 C, and in
+# microsomes Km 551 against 255 uM with Vmax unchanged, both about 11%/C
+# (Tortorici 2006, Crit Care Med 34:785); a sufentanil TCI model for bypass
+# that ASSUMED Q10 2, exp(-0.0693 (37 - T)) on its terminal eigenvalue (Liu
+# 1992, IEEE Trans Biomed Eng 39:658), a precedent for the form; atracurium
+# offset against rectal temperature in children, an effect, not a clearance
+# (Playfor 2000, Paediatr Anaesth 10:83); and the reviews of Holley 1982
+# (Clin Pharmacokinet 7:234) and Smits 2020 (Front Pharmacol 11:587).
+# Rat liver S-9 at 26 against 37 C (McAllister 1980, Pharmacology 20:95,
+# read in full): Vmax unchanged and Km higher, 1.5 against 2.5 uM for
+# propranolol and 16.1 against 33.7 uM for verapamil, so Vmax/Km, the
+# intrinsic clearance at low concentration, 4.5 and 6.5%/C, from
+# double-reciprocal extrapolation; the authors themselves expected the
+# in vivo fall of these high-extraction drugs to follow flow and volume.
+# Rat liver microsomes over 8-30 C (Puntarulo 1989, Arch Biochem Biophys
+# 269:569, read in full): CYP activation energies above a transition near
+# 20 C of 14.5-17.4 kcal/mol for ethanol, 11.8-12.9 for dimethylnitrosamine
+# and 11.9-14.8 for benzphetamine (13-21 for other substrates, cited), i.e.
+# 6.2-10.7%/C near 32 C, at saturating substrate; below the transition
+# 37-94 kcal/mol, outside the slider's range.  This factor is equivalent to
+# an activation energy of 12.2 kcal/mol at 32 C, the low end of those.
+#
+# Body temperature and cardiac output are NOT coupled: hypothermia does not
+# lower cardiac output by itself.  Fever raises cardiac output and cooling
+# would by the same logic lower it, but the mechanisms differ (inflammation;
+# environmental heat loss), so the clinician sets each slider (Shafer,
+# 2026-11-16).
 
 # ---- The inhaled anesthetics -------------------------------------------------
 #
@@ -170,10 +314,10 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 #' Brain 12% and coronary 4% of resting cardiac output in the reference adult
 #' man (Williams and Leggett 1989, Clin Phys Physiol Meas 10:187-217,
 #' doi:10.1088/0143-0815/10/3/001, the reference values ICRP 89 adopted).
-#' PROVISIONAL: the values are the textbook reference values, but the paper's
-#' table has not yet been read (its abstract gives no numbers and it is not in
-#' the archive); recorded as an open question on the help page.  Must stay
-#' below the engine's VRG share (\code{getGasBody()$f_brain}, 0.76).
+#' Read in full (2026-11-16): Table 17 gives brain 12% and heart 4% for the
+#' 35-year-old reference male (12% and 5% for the female; the reference man is
+#' the library's reference patient).  Must stay below the engine's VRG share
+#' (\code{getGasBody()$f_brain}, 0.76).
 #' @noRd
 PHYSIOLOGY_GAS_PROTECTED_SHARE <- 0.12 + 0.04
 
@@ -252,8 +396,25 @@ gasBodyPhysiology <- function(body, cardiac = 1)
 #     measured for isoflurane and halothane in rats and goats (Vitez 1974,
 #     Antognini 1993) and for desflurane in rats (Eger 1987, 42% over 10 C).
 #
-# Nitrous oxide is left at its normothermic solubility and MAC: no human
-# measurement of either against temperature was found.  Cardiac output and
+# Nitrous oxide: its MAC follows Antognini 1994 (Anesth Analg 79:980-2,
+# PMID 7978419, read in full), the only measurement of nitrous oxide MAC
+# against temperature found in any species: rats in a hyperbaric chamber,
+# 1.9 +/- 0.2 atm at 37.5 C and 1.6 +/- 0.2 atm at 29.7 C, and the regression
+# of its Figure 1 over all the rats, MAC = 0.03827 T + 0.3836 atm, which is
+# used here as Liu's is for the volatile agents: a factor of
+# (T - T0) / (37 - T0) with T0 = -0.3836 / 0.03827 = -10.0 C, so 2.1% per
+# degree at 37 C and 19% lower at 28 C (the paper's Table 1: 20% over 38-28
+# C), half the volatile agents' fall, as its smaller change of lipid
+# solubility predicts.  Applied to people on Shafer's decision of 2026-11-16
+# ("look for animal data"); no human measurement exists.  Its solubility
+# follows Allott 1973 (Br J Anaesth 45:294-300, PMID 4573001, read in full),
+# the review of nearly 200 temperature coefficients that Antognini and White
+# and Halsey 1974 both cite: 2.33%/C in water and aqueous media (Table II,
+# four coefficients; blood, saline and serum showed no difference from
+# water), for blood, the vessel-rich group and muscle; and 1.13%/C in oil
+# and fat (Table III, its regression's prediction, none measured), for fat.
+# So tissue:blood is unchanged except in fat, which Allott's oil and water
+# lines separate for an agent so little more soluble in oil than in water.  Cardiac output and
 # ventilation fall with metabolism in hypothermia, but they are set by their
 # own controls (the Cardiac output slider, the ventilation row), so as not to
 # be counted twice.  The thresholds of the time until threshold are typed
@@ -267,15 +428,43 @@ PHYSIOLOGY_TEMPERATURE_MAX <- 37
 PHYSIOLOGY_TEMPERATURE_DEFAULT <- 37
 PHYSIOLOGY_TEMPERATURE_STEP <- 0.5
 
+#' Slope of ln(elimination capacity) on body temperature, per degree C: 6.37%
+#' per degree, remifentanil's clearance on bypass over 20-35 C (Michelsen 2001,
+#' Anesth Analg 93:1100, exp(theta (T - 37))), the one human fit spanning the
+#' slider's range.  Chosen by Shafer (2026-11-16) as one factor for every
+#' route, from the evidence recorded above: 6-8%/C for CYP (pig CYP3A4
+#' microsomes, Fritz 2005; minipig, Stroe 2024), glucuronidation (Norling
+#' 1974; morphine and the pooled neonatal group, Favie 2019, 2020), filtration
+#' (amoxicillin, ceftazidime, Bijleveld 2017, van der Veer 2023; doxacurium,
+#' Asokumar 1998), esterases (remifentanil) and Hofmann elimination
+#' (atracurium in plasma, Merrett 1983).
+#' @noRd
+PHYSIOLOGY_TEMPERATURE_CLEARANCE_SLOPE <- -log(1 - 0.0637)
+
 #' Slope of ln(blood:gas) on temperature, per degree C (Zhou 2002)
 #' @noRd
 GAS_SOLUBILITY_TEMPERATURE_SLOPE <- c(desflurane = 0.0302,
                                       sevoflurane = 0.0295,
                                       isoflurane = 0.0382)
 
+#' Nitrous oxide's temperature coefficients of solubility, per degree C at
+#' 37 C (Allott 1973, Br J Anaesth 45:294-300, read in full): water and
+#' aqueous media, blood among them, 2.33%/C (Table II, the mean of four
+#' measured coefficients, 95% limits 0.63); oil and fat 1.13%/C (Table III,
+#' predicted by the paper's own regression on solubility, no coefficient
+#' having been measured).  Blood, the vessel-rich group and muscle take the
+#' aqueous one, fat the oil one.
+#' @noRd
+GAS_N2O_SOLUBILITY_TEMPERATURE_SLOPE <- c(aqueous = 0.0233, fat = 0.0113)
+
 #' Temperature at which the regression of Liu 2001 gives zero MAC, C
 #' @noRd
 GAS_MAC_ZERO_TEMPERATURE <- 1.203 / 0.0784
+
+#' Temperature at which Antognini 1994's regression of nitrous oxide MAC in
+#' rats (MAC = 0.03827 T + 0.3836 atm) gives zero MAC, C
+#' @noRd
+GAS_MAC_N2O_ZERO_TEMPERATURE <- -0.3836 / 0.03827
 
 #' A body temperature, checked
 #' @noRd
@@ -290,13 +479,21 @@ checkBodyTemperature <- function(temperature)
   temperature
 }
 
-#' MAC at a body temperature, as a fraction of MAC at 37 C (Liu 2001)
+#' MAC at a body temperature, as a fraction of MAC at 37 C
+#'
+#' Liu 2001's regression in people for the volatile agents; Antognini 1994's
+#' in rats for nitrous oxide.
 #' @param temperature body temperature, C
+#' @param agent the agent: \code{"nitrousOxide"} for nitrous oxide, anything
+#'   else for a volatile agent
 #' @export
-gasMacTemperatureFactor <- function(temperature = PHYSIOLOGY_TEMPERATURE_DEFAULT)
+gasMacTemperatureFactor <- function(temperature = PHYSIOLOGY_TEMPERATURE_DEFAULT,
+                                    agent = "volatile")
 {
   temperature <- checkBodyTemperature(temperature)
-  (temperature - GAS_MAC_ZERO_TEMPERATURE) / (37 - GAS_MAC_ZERO_TEMPERATURE)
+  zero <- if (identical(agent, "nitrousOxide")) GAS_MAC_N2O_ZERO_TEMPERATURE
+          else GAS_MAC_ZERO_TEMPERATURE
+  (temperature - zero) / (37 - zero)
 }
 
 #' The gas properties at a body temperature
@@ -304,8 +501,10 @@ gasMacTemperatureFactor <- function(temperature = PHYSIOLOGY_TEMPERATURE_DEFAULT
 #' \code{getGasProperties()} with each volatile agent's partition coefficients
 #' (blood:gas and every tissue:gas) multiplied by
 #' \code{exp(-slope (T - 37))} (Zhou 2002, 2001) and its MAC by
-#' \code{gasMacTemperatureFactor()} (Liu 2001).  Nitrous oxide, nitrogen and
-#' oxygen are unchanged.  At 37 C (or NULL) the table is returned as it is.
+#' \code{gasMacTemperatureFactor()} (Liu 2001); nitrous oxide's blood:gas,
+#' brain and muscle coefficients by Allott 1973's aqueous coefficient, its
+#' fat:gas by the oil one, and its MAC by its own factor (Antognini 1994).
+#' Nitrogen and oxygen are unchanged.  At 37 C (or NULL) the table is returned as it is.
 #'
 #' @param temperature body temperature, C, or NULL for 37
 #' @returns a data frame as \code{getGasProperties()}
@@ -321,6 +520,13 @@ gasPropertiesAt <- function(temperature = NULL)
   for (col in c("lambda_blood", "tg_brain", "tg_muscle", "tg_fat"))
     props[[col]] <- props[[col]] * f
   props$MAC40[volatile] <- props$MAC40[volatile] * gasMacTemperatureFactor(temperature)
+  n2o <- props$gas == "nitrousOxide"
+  aqueous <- exp(-GAS_N2O_SOLUBILITY_TEMPERATURE_SLOPE[["aqueous"]] * (temperature - 37))
+  for (col in c("lambda_blood", "tg_brain", "tg_muscle"))
+    props[[col]][n2o] <- props[[col]][n2o] * aqueous
+  props$tg_fat[n2o] <- props$tg_fat[n2o] *
+    exp(-GAS_N2O_SOLUBILITY_TEMPERATURE_SLOPE[["fat"]] * (temperature - 37))
+  props$MAC40[n2o] <- props$MAC40[n2o] * gasMacTemperatureFactor(temperature, "nitrousOxide")
   props
 }
 
@@ -344,11 +550,13 @@ checkPhysiology <- function(physiology)
   if (is.null(physiology)) return(PHYSIOLOGY_DEFAULT)
   if (is.list(physiology)) physiology <- unlist(physiology)
   if (!is.numeric(physiology) || is.null(names(physiology)) ||
-      !all(names(physiology) %in% PHYSIOLOGY_FACTORS) ||
+      !all(names(physiology) %in% names(PHYSIOLOGY_DEFAULT)) ||
       anyDuplicated(names(physiology)))
     stop("Invalid physiology: a numeric vector named by ",
-         paste(PHYSIOLOGY_FACTORS, collapse = ", "))
-  for (f in names(physiology))
+         paste(names(PHYSIOLOGY_DEFAULT), collapse = ", "))
+  if ("temperature" %in% names(physiology))
+    physiology[["temperature"]] <- checkBodyTemperature(unname(physiology[["temperature"]]))
+  for (f in intersect(names(physiology), PHYSIOLOGY_FACTORS))
     if (!is_valid_number(unname(physiology[[f]]), PHYSIOLOGY_MIN, PHYSIOLOGY_MAX))
       stop("Invalid physiology: ", f, " must be between ", PHYSIOLOGY_MIN,
            " and ", PHYSIOLOGY_MAX, " (multiples of normal function)")
@@ -361,7 +569,22 @@ checkPhysiology <- function(physiology)
 #' @noRd
 physiologyIsNormal <- function(physiology)
 {
-  all(checkPhysiology(physiology) == 1)
+  p <- checkPhysiology(physiology)
+  all(p[PHYSIOLOGY_FACTORS] == 1) && p[["temperature"]] == PHYSIOLOGY_TEMPERATURE_DEFAULT
+}
+
+#' Elimination capacity at a body temperature, as a multiple of its value at
+#' 37 C: \code{exp(PHYSIOLOGY_TEMPERATURE_CLEARANCE_SLOPE (T - 37))}.  It scales
+#' the liver's intrinsic clearance (inside the well-stirred model, so a drug
+#' whose clearance is limited by blood flow changes less), the kidney's
+#' (filtration in proportion, extraction through the same well-stirred form)
+#' and every other route (esterases, Hofmann elimination).  Blood flow is the
+#' Cardiac output slider's, which temperature does not move.
+#' @noRd
+physiologyTemperatureFactor <- function(physiology)
+{
+  t <- checkPhysiology(physiology)[["temperature"]]
+  exp(PHYSIOLOGY_TEMPERATURE_CLEARANCE_SLOPE * (t - PHYSIOLOGY_TEMPERATURE_DEFAULT))
 }
 
 #' The physiology table
@@ -436,14 +659,17 @@ physiologyClearanceFactor <- function(row, physiology)
   fh <- row$fraction_hepatic
   E  <- row$extraction_ratio
   ER <- row$renal_extraction_ratio
+  # Body temperature scales every organ's capacity, not its blood flow
+  # (physiologyTemperatureFactor())
+  cold <- physiologyTemperatureFactor(physiology)
   hepatic <- if (fh > 0) hepaticClearanceFactor(E, physiology[["cardiac"]],
-                                                physiology[["liver"]]) else 1
+                                                physiology[["liver"]] * cold) else 1
   # The well-stirred form serves the kidney too (organClearanceFactor is the
   # same function); filtration, with no renal extraction ratio, is linear.
   renal <- if (!is.null(ER) && isTRUE(is.finite(ER)))
-    hepaticClearanceFactor(ER, physiology[["cardiac"]], physiology[["renal"]])
-  else physiology[["renal"]]
-  fr * renal + fh * hepatic + (1 - fr - fh)
+    hepaticClearanceFactor(ER, physiology[["cardiac"]], physiology[["renal"]] * cold)
+  else physiology[["renal"]] * cold
+  fr * renal + fh * hepatic + (1 - fr - fh) * cold
 }
 
 #' Factor on oral bioavailability from the change in hepatic first pass
@@ -456,7 +682,8 @@ physiologyFirstPassFactor <- function(row, physiology)
   if (!isTRUE(as.logical(row$oral_first_pass))) return(1)
   E <- row$extraction_ratio
   if (E >= 1) return(1)
-  E2 <- hepaticExtractionAt(E, physiology[["cardiac"]], physiology[["liver"]])
+  E2 <- hepaticExtractionAt(E, physiology[["cardiac"]],
+                            physiology[["liver"]] * physiologyTemperatureFactor(physiology))
   (1 - E2) / (1 - E)
 }
 
@@ -656,7 +883,8 @@ physiologyFromInputs <- function(values)
       out[[f]] <- 10 ^ max(log10(PHYSIOLOGY_MIN), min(log10(PHYSIOLOGY_MAX), v))
   }
   # A slider at 0 is exactly normal, not 10^0 rounded.
-  out[abs(log10(out)) < PHYSIOLOGY_SLIDER_STEP / 2] <- 1
+  f <- PHYSIOLOGY_FACTORS
+  out[f][abs(log10(out[f])) < PHYSIOLOGY_SLIDER_STEP / 2] <- 1
   out
 }
 
@@ -674,6 +902,7 @@ physiologyCovariateRows <- function(physiology, temperature = NULL)
   value <- if (is.null(p)) rep("unreadable", length(PHYSIOLOGY_FACTORS)) else
     ifelse(p[PHYSIOLOGY_FACTORS] == 1, "normal",
            paste0("x", trimws(formatC(p[PHYSIOLOGY_FACTORS], digits = 3, format = "fg"))))
+  if (is.null(temperature) && !is.null(p)) temperature <- p[["temperature"]]
   t <- tryCatch(checkBodyTemperature(temperature), error = function(e) NULL)
   data.frame(Covariate = c(paste(PHYSIOLOGY_LABELS[PHYSIOLOGY_FACTORS],
                                  "(multiple of normal)"),
@@ -696,11 +925,13 @@ bodyTemperatureFromInput <- function(value)
 physiologySummary <- function(physiology)
 {
   physiology <- checkPhysiology(physiology)
-  changed <- physiology[physiology != 1]
-  if (length(changed) == 0) return("")
-  paste(sprintf("%s ×%s", tolower(PHYSIOLOGY_LABELS[names(changed)]),
-                formatC(changed, digits = 2, format = "fg")),
-        collapse = ", ")
+  factors <- physiology[PHYSIOLOGY_FACTORS]
+  changed <- factors[factors != 1]
+  out <- sprintf("%s ×%s", tolower(PHYSIOLOGY_LABELS[names(changed)]),
+                 formatC(changed, digits = 2, format = "fg"))
+  if (physiology[["temperature"]] != PHYSIOLOGY_TEMPERATURE_DEFAULT)
+    out <- c(out, sprintf("%s °C", format(physiology[["temperature"]])))
+  paste(out, collapse = ", ")
 }
 
 #' What the Physiology panel says under its sliders
@@ -709,26 +940,23 @@ physiologySummary <- function(physiology)
 #' @param drugs the dosed drugs
 #' @noRd
 physiologyNote <- function(physiology, drugs,
-                           temperature = PHYSIOLOGY_TEMPERATURE_DEFAULT)
+                           temperature = NULL)
 {
-  cold <- !is.null(temperature) && temperature != PHYSIOLOGY_TEMPERATURE_DEFAULT
-  if ((physiologyIsNormal(physiology) && !cold) || length(drugs) == 0) return(NULL)
+  physiology <- checkPhysiology(physiology)
+  if (!is.null(temperature)) physiology[["temperature"]] <- checkBodyTemperature(temperature)
+  cold <- physiology[["temperature"]] != PHYSIOLOGY_TEMPERATURE_DEFAULT
+  if (physiologyIsNormal(physiology) || length(drugs) == 0) return(NULL)
   drugs <- unique(drugs)
   # The carrier gases and the ventilation are settings, not drugs.  The agents
-  # respond to cardiac output (gasBodyPhysiology()) and, the volatile ones, to
-  # body temperature (gasPropertiesAt()); the intravenous drugs to the four
-  # sliders only.
+  # respond to cardiac output (gasBodyPhysiology()) and to body temperature
+  # (gasPropertiesAt()); the intravenous drugs with a physiology row to the
+  # four sliders and to body temperature (physiologyTemperatureFactor()).
   gasAgents <- intersect(drugs, physiologyGasAgents())
   drugs <- drugs[!isGasDrug(drugs)]
-  factorsMoved <- !physiologyIsNormal(physiology)
-  cardiacMoved <- checkPhysiology(physiology)[["cardiac"]] != 1
-  volatile <- gasAgents %in% names(GAS_SOLUBILITY_TEMPERATURE_SLOPE)
-  changed <- c(if (factorsMoved) intersect(drugs, physiologyDrugs()),
-               gasAgents[cardiacMoved | (cold & volatile)])
-  noData <- if (factorsMoved) setdiff(drugs, physiologyDrugs()) else character(0)
-  notByTemperature <- if (cold && !factorsMoved) drugs else character(0)
-  notByTemperature <- c(notByTemperature,
-                        if (cold && !cardiacMoved) gasAgents[!volatile])
+  cardiacMoved <- physiology[["cardiac"]] != 1
+  changed <- c(intersect(drugs, physiologyDrugs()),
+               gasAgents[rep(cardiacMoved || cold, length(gasAgents))])
+  noData <- setdiff(drugs, physiologyDrugs())
   tags$div(
     class = "small physiology-note",
     if (length(changed))
@@ -737,11 +965,6 @@ physiologyNote <- function(physiology, drugs,
       tags$p(class = "text-warning",
              tags$strong("Not changed (no physiology data yet): "),
              paste(noData, collapse = ", ")),
-    if (length(notByTemperature))
-      tags$p(class = "text-muted",
-             tags$strong("Not changed by body temperature: "),
-             paste(notByTemperature, collapse = ", "),
-             " (it acts on the volatile agents only)."),
     if (length(gasAgents) && !cardiacMoved && !cold)
       tags$p(class = "text-muted",
              tags$strong("Inhaled agents "), "(", paste(gasAgents, collapse = ", "),
@@ -1003,13 +1226,17 @@ helpPhysiologyGasTable <- function()
 helpPhysiologyTemperatureTable <- function()
 {
   if (!is.null(.physiologyCache$temperatureTable)) return(.physiologyCache$temperatureTable)
-  agents <- c(isoflurane = 1.2, sevoflurane = 2, desflurane = 6)
+  # Nitrous oxide is a flow: 4 L/min of it in 2 L/min of oxygen, 67% inspired
+  agents <- c(isoflurane = 1.2, sevoflurane = 2, desflurane = 6, nitrousOxide = 100 * 4 / 6)
   label <- c(isoflurane = "Isoflurane 1.2%", sevoflurane = "Sevoflurane 2%",
-             desflurane = "Desflurane 6%")
+             desflurane = "Desflurane 6%", nitrousOxide = "Nitrous oxide 67%")
   rows <- character(0)
   for (g in names(agents)) for (T in c(37, 34, 31, 28)) {
-    dt <- data.frame(Drug = c(g, "oxygen", "air", "ventilation"), Time = 0,
-                     Dose = c(agents[[g]], 3, 3, 6))
+    dt <- if (g == "nitrousOxide")
+      data.frame(Drug = c(g, "oxygen", "ventilation"), Time = 0, Dose = c(4, 2, 6))
+    else
+      data.frame(Drug = c(g, "oxygen", "air", "ventilation"), Time = 0,
+                 Dose = c(agents[[g]], 3, 3, 6))
     sim <- simulateGases(dt, weight = 70, age = 40, maximum = 10, temperature = T)
     r <- sim$results
     at <- function(site, t) {
