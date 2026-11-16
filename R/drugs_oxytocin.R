@@ -48,9 +48,15 @@
 #
 # DOSE BASIS
 # ==========
-# Doses are mcg of oxytocin, as the paper doses (the injection USP was
-# 16.7 mcg/mL, the labelled 10 USP units/mL).  The marketed injection
-# (Pitocin) is labelled in USP units; the library does not offer units.
+# The marketed injection (Pitocin) is labelled and given in USP units, so
+# doses are entered in units by default: a bolus in U, an infusion in U/hr,
+# U/min or, as labour infusions are written, mU/min (Steven L. Shafer,
+# 2026-11-16).  The paper doses in mcg, and the model is in mcg, so each dose
+# in units is converted to micrograms before the engines read it, at
+# OXYTOCIN_MCG_PER_USP_UNIT, the paper's own equivalence: its injection USP
+# was 16.7 mcg/mL, labelled 10 units/mL, and it gives 100 mcg as 60 IU, both
+# 600 units per mg (unitPotency; potencyToMass() in R/routes.R).  The mcg
+# units stay offered, for the paper's doses.
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
@@ -125,6 +131,9 @@ OXYTOCIN_V1    <- 8.2               # L at 80 kg
 OXYTOCIN_CL2   <- 0.22              # L/min at 80 kg
 OXYTOCIN_V2    <- 5.9               # L at 80 kg
 
+# Micrograms in one USP unit: 600 units per mg (the paper's 16.7 mcg = 10 U)
+OXYTOCIN_MCG_PER_USP_UNIT <- 1000 / 600
+
 #' Oxytocin pharmacokinetics (intravenous)
 #'
 #' Shafer et al. (2025), Model D: two compartments, every parameter
@@ -164,6 +173,7 @@ oxytocin <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   list(
     PK = list(default = default),
+    unitPotency = OXYTOCIN_MCG_PER_USP_UNIT,
     tPeak = 5,
     MEAC = 0,
     typical = 0.1,

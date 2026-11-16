@@ -13,7 +13,7 @@ Its median absolute prediction error was 18%, about that of the remifentanil mod
 
 ### Doses
 
-Doses are in micrograms of oxytocin, as the paper gives them. The marketed injection is labelled in USP units: 10 units is 16.7 mcg.
+Doses are entered in USP units, as the marketed injection is labelled: a bolus in U, an infusion in U/hr, U/min or, as labour infusions are written, mU/min. The model is the paper's, in micrograms, so each dose is converted at the paper's own equivalence, 600 units per mg (10 units is 16.7 mcg). Micrograms are still offered, for the doses the paper gives.
 
 ### Body size and age
 
@@ -25,7 +25,7 @@ The paper estimates no effect site. The time to peak effect of 5 minutes is the 
 
 ### Typical concentrations
 
-The shaded band is 0.05 to 0.2 ng/mL, a display band whose source is not recorded. For scale, 16.7 mcg (10 units) over 10 minutes peaks at about 1.3 ng/mL in the reference man. Oxytocin's uterotonic effect is the clinical end point, and the relation between concentration and uterine tone is not modelled.
+The shaded band is 0.05 to 0.2 ng/mL, a display band whose source is not recorded. For scale, 10 units (16.7 mcg) over 10 minutes peaks at about 1.3 ng/mL in the reference man. Oxytocin's uterotonic effect is the clinical end point, and the relation between concentration and uterine tone is not modelled.
 
 ### Pregnancy
 

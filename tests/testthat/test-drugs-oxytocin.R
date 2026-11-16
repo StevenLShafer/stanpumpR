@@ -63,8 +63,8 @@ test_that("the intranasal route is not offered", {
   expect_null(x$parallelSystems)
   expect_null(x$PK$default$ka_IN)
   units <- getDrugDefaultsGlobal()
-  units <- units$Units[units$Drug == "oxytocin"]
-  expect_false(grepl("IN", units, fixed = TRUE))
+  units <- units$Units[units$Drug == "oxytocin"][[1]]
+  expect_false(any(doseRoute(units) == ROUTE_IN))
 })
 
 test_that("a bolus gives dose / CL", {
@@ -102,4 +102,35 @@ test_that("the effect site and band are unchanged", {
   expect_equal(x$tPeak, 5)
   expect_equal(c(x$lowerTypical, x$typical, x$upperTypical), c(0.05, 0.1, 0.2))
   expect_match(x$reference, "Shafer SL et al., Br J Anaesth 2025")
+})
+
+test_that("doses in USP units are the same doses in micrograms, 600 units per mg", {
+  # Shafer's decision of 2026-11-16: oxytocin is dosed in USP units
+  expect_equal(oxytocin(70, 170, 35, "male")$unitPotency, 1000 / 600)
+  same <- function(a, b) {
+    x <- sim(a); y <- sim(b)
+    expect_equal(x$Y, y$Y, tolerance = 1e-10)
+  }
+  # 10 U bolus = 16.667 mcg
+  same(data.frame(Drug = "oxytocin", Time = 0, Dose = 10, Units = "U"),
+       data.frame(Drug = "oxytocin", Time = 0, Dose = 10000 / 600, Units = "mcg"))
+  # 6 U/hr for 2 h = 10 mcg/hr = 1/6 mcg/min
+  same(data.frame(Drug = "oxytocin", Time = c(0, 120), Dose = c(6, 0), Units = "U/hr"),
+       data.frame(Drug = "oxytocin", Time = c(0, 120), Dose = c(1 / 6, 0), Units = "mcg/min"))
+  # 2 mU/min, a labour infusion, = 2/600 mcg/min
+  same(data.frame(Drug = "oxytocin", Time = c(0, 120), Dose = c(2, 0), Units = "mU/min"),
+       data.frame(Drug = "oxytocin", Time = c(0, 120), Dose = c(2 / 600, 0), Units = "mcg/min"))
+  # The units the dose table offers, U first
+  d <- getDrugDefaultsGlobal()
+  d <- d[d$Drug == "oxytocin", ]
+  expect_equal(d$Default.Units, "U")
+  expect_true(all(c("U", "U/hr", "U/min", "mU/min") %in% d$Units[[1]]))
+})
+
+test_that("potencyToMass converts only unit and milliunit doses", {
+  x <- potencyToMass(c(10, 2, 5, 3), c("U", "mU/min", "mcg", "U/kg/hr"), 1000 / 600)
+  expect_equal(x$Units, c("mcg", "mcg/min", "mcg", "mcg/kg/hr"))
+  expect_equal(x$Dose, c(10000 / 600, 2 / 600, 5, 3000 / 600))
+  y <- potencyToMass(c(10, 2), c("U", "mU/min"), NULL)
+  expect_equal(y$Units, c("U", "mU/min"))
 })

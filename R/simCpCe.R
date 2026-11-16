@@ -283,6 +283,15 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       dose$Dose <- dose$Dose * doseProductFactor(dose$Units, PK$doseProducts)
       dose$Units <- stripDoseProduct(dose$Units, names(PK$doseProducts))
     }
+    # A potency-defined peptide plotted by mass (oxytocin): doses in units
+    # (U, U/hr, mU/min) become micrograms here, by the model's unitPotency,
+    # so the U check below, which is for drugs plotted in mcU/mL, never sees
+    # them.  See potencyToMass() in R/routes.R.
+    if (!is.null(PK$unitPotency) && nrow(dose)) {
+      converted <- potencyToMass(dose$Dose, dose$Units, PK$unitPotency)
+      dose$Dose <- converted$Dose
+      dose$Units <- converted$Units
+    }
 
     # A pulsed extended-release product (Adderall XR): each dose of a
     # formulation the drug lists in oralPulses becomes its pulses, ordinary

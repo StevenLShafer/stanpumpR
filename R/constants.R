@@ -489,6 +489,14 @@ iuUnits <- c("IU", "IU/kg", "IU/hr", "IU/kg/hr")
 # of Steven L. Shafer.)
 ivPotencyUnits <- c("U", "U/min", "U/hr", "U/kg/min", "U/kg/hr")
 
+# Milliunits per minute of a potency-defined peptide, the rate in which
+# oxytocin infusions for labour are written.  For a drug plotted by mass
+# (oxytocin, ng/mL) the units are converted to micrograms by the model's
+# `unitPotency` (micrograms per unit) before anything else reads them
+# (potencyToMass() in R/routes.R), so the U units above serve it too.
+# (Claude Code, 2026-11-16, at the request of Steven L. Shafer.)
+milliunitRateUnits <- c("mU/min")
+
 # Subcutaneous activity units (ROUTE_SC) for a drug plotted as anti-Xa
 # activity (enoxaparin, "IU SC"); the mass units are scUnits, above.  They
 # start with "IU" so simCpCe()'s international-unit check reads them, and
@@ -556,7 +564,7 @@ quinidineSulfateUnits <- paste("mg PO", QUINIDINE_SALT)
 allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, enteralRateUnits, poFormulationUnits,
               slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits,
               iuUnits, scUnits, iuScUnits, ghbUnits, insulinUnits, insulinRateUnits,
-              ivPotencyUnits, aminophyllineUnits, caffeineCitrateUnits,
+              ivPotencyUnits, milliunitRateUnits, aminophyllineUnits, caffeineCitrateUnits,
               valganciclovirUnits, quinidineSulfateUnits, tdRateUnits,
               piperacillinTazobactamUnits)
 

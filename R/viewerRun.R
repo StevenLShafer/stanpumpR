@@ -412,6 +412,11 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
   if (is.null(d)) d <- data.frame(Drug = character(), Time = double(), Dose = double(), Units = character())
   d$Time <- as.numeric(d$Time)
   d <- expandScheduledDoses(d, maximum)$dose
+  # Doses in units of a drug plotted by mass (oxytocin) as micrograms, as
+  # simCpCe() reads them.
+  converted <- potencyToMass(d$Dose, d$Units, entry$unitPotency)
+  d$Dose <- converted$Dose
+  d$Units <- converted$Units
   # In time order (stably: at one time the later row still wins), and only
   # doses before Max time, which the simulation's last point has not taken in.
   d <- d[order(d$Time), , drop = FALSE]
