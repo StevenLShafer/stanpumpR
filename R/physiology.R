@@ -215,7 +215,16 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # 2011, Paediatr Anaesth 21:341), clearance as infusion rate over a
 # pseudo-steady concentration: 5.47 to 1.10 mL/min/kg at about 25 C, but
 # 5.74 to 7.36 at about 34 C, so bypass itself moves it and the deep group's
-# fall (about 14%/C) cannot be read as temperature alone.  All read in full.  The choices: one factor
+# fall (about 14%/C) cannot be read as temperature alone.  All read in full.
+# Gentamicin, filtered only, in cooled asphyxiated neonates (read in full):
+# clearance constant through cooling and rewarming, 29% higher only once
+# normothermic, temperature not a covariate, read by the authors as delayed
+# renal recovery (Bijleveld 2016, Br J Clin Pharmacol 81:1067); 25.5% lower
+# than in asphyxiated neonates not cooled, about 8%/C (Mark 2013, Ther Drug
+# Monit 35:217, retrospective, 16 against 7).  Alfentanil (Petros 1995,
+# Anesth Analg 81:458, read in full): clearance 3.55 against 3.57 mL/min/kg
+# after bypass at 26 against 34 C, but over 8 h of sampling, most of it
+# after rewarming, which the authors say would have corrected any fall.  The choices: one factor
 # on hepatic intrinsic clearance (inside the well-stirred model) for every
 # drug, or separate CYP, UGT and esterase factors; and whether to extend a
 # fit made above 34.8 C down to 28 C.
