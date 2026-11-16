@@ -547,6 +547,10 @@ app_ui <- function() {
                 )
               ),
 
+              # The physiology sliders (R/physiology.R): liver, renal,
+              # cardiac output and GI absorption, as multiples of normal.
+              physiologyPanel(),
+
               # The time settings, with the length of the plot (Max time).
               # The header reads the units and display out while the panel is
               # closed: "Time (hours, Actual time)".

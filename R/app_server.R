@@ -1373,6 +1373,7 @@ app_server <- function(input, output, session) {
       sim <- simulateGases(
         DT,
         weight  = weight(),
+        physiology = physiology(),
         age     = age(),
         maximum = plotMaximum()
       )
@@ -1414,6 +1415,25 @@ app_server <- function(input, output, session) {
   # the table as a placeholder row -- and a write to doseTable() discards the
   # unapplied edits and the undo history, so a suggestion that then failed
   # lost them (CodeRabbit on #674, fixed 2026-11-04).
+  # The physiology sliders (R/physiology.R), as multiples of normal function.
+  # Debounced, so a slider dragged across its range resolves the PK once it
+  # rests rather than at every step.
+  physiology <- debounce(reactive({
+    physiologyFromInputs(stats::setNames(
+      lapply(PHYSIOLOGY_FACTORS, function(f) input[[physiologyInputId(f)]]),
+      PHYSIOLOGY_FACTORS
+    ))
+  }), PHYSIOLOGY_DEBOUNCE_MS)
+
+  observeEvent(input$physiologyReset, {
+    for (f in PHYSIOLOGY_FACTORS)
+      updateSliderInput(session, physiologyInputId(f), value = 0)
+  })
+
+  output$physiologyNote <- renderUI({
+    physiologyNote(physiology(), doseTableClean()$Drug)
+  })
+
   drugPK <- function(doseTable, individual = NULL) {
     recalculatePK(
         NULL,
@@ -1442,7 +1462,8 @@ app_server <- function(input, output, session) {
         opioidTolerance = opioidTolerance(),
         alternativeModels = companionGroupsOn(),
         antiseizureInteractions = antiseizureInteractions(),
-        individual = individual
+        individual = individual,
+        physiology = physiology()
       )
   }
 
@@ -1995,6 +2016,8 @@ app_server <- function(input, output, session) {
       vkorc1 = genotypes()$vkorc1,
       cyp4f2 = genotypes()$cyp4f2,
       cyp2b6 = genotypes()$cyp2b6,
+      # The physiology sliders the simulation was run at (R/physiology.R)
+      physiology = physiology(),
       # Whether each companion model was actually drawn, not just its box
       # ticked (companionGroupsShown()).
       mintoSchnider = "mintoSchnider" %in% companionGroupsShown(),

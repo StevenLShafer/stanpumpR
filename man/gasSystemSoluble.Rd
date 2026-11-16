@@ -42,7 +42,8 @@ the ideal circuit.  Defaults to \code{VA}: no dead space.}
 is rebreathed; see \code{gasCircuitBlend()}}
 }
 \value{
-a list with \code{A} (5x5), \code{b} (length 5) and, for the ideal
+a list with \code{A} (5x5, or 6x6 with the vessel-rich group
+split; see \code{gasTissueShares()}), \code{b} and, for the ideal
 and open circuits, \code{fresh} and \code{alveolar}: the weights from
 which the circuit tension is \code{fresh * Ffgf + alveolar * F_alv}.  They
 are NULL for the semi-closed circuit, whose tension is a state.
