@@ -221,9 +221,52 @@ excitement) or to fat, hypothermia (higher solubility, lower metabolism),
 ventilation-perfusion mismatch and one-lung ventilation, and children's larger
 vessel-rich group. Ventilation itself is a dose-table row.
 
+## Body temperature and the inhaled anesthetics
+
+**Body temperature** (28 to 37 °C) acts on the volatile agents through the two
+effects of hypothermia that Eger and Shafer's chapter names.
+
+**Solubility rises.** Cold blood and tissue dissolve more agent. Zhou, Liu and
+Liu measured the blood:gas partition coefficient of desflurane, sevoflurane
+and isoflurane in human blood from 37 to 17 °C. Its logarithm rises in a
+straight line as temperature falls, by 3.0, 3.0 and 3.8% a degree. In human
+brain, heart, liver, muscle and fat the tissue:gas coefficients rise in
+proportion, so tissue:blood does not change. Every partition coefficient of
+the agent is raised by the same factor. More agent is carried away from the
+lungs, so FA/FI rises more slowly, most for the more soluble isoflurane.
+
+**MAC falls.** Liu, Hu and Liu measured isoflurane MAC in children at 37, 34
+and 31 °C. Their regression, MAC = 0.0784 T − 1.203, falls by 4.6% of the
+normothermic MAC per degree. (The paper's text says "approximately 5.1%",
+which its own regression does not give.) The same fall, 4 to 5% a degree, was
+measured for isoflurane and halothane in rats and goats and for desflurane in
+rats, so it is applied to all three volatile agents. The MAC band and the
+summed MAC follow it.
+
+Simulated by stanpumpR (70 kg, age 40, ventilation 6 L/min, fresh gas 6 L/min):
+
+<!-- generated: physiology-temperature-table -->
+
+The end-tidal concentration rises more slowly in the cold, but MAC falls
+faster than solubility rises. So a given inspired concentration is a deeper
+anesthetic in a hypothermic patient. Dialled to the same multiple of MAC, as
+the chapter says, induction is slower, most for the soluble agents.
+
+**Not modelled.** Nitrous oxide: no measurement in humans of its solubility or
+MAC against temperature was found, so it is left as it is. Cardiac output and
+ventilation also fall with metabolism in hypothermia, but they have their own
+controls (the Cardiac output slider and the ventilation row), so they are not
+counted twice. Lower them yourself to match the patient. The fall in brain
+blood flow is not modelled either. A threshold for the time until threshold is
+a tension you typed and does not move with MAC; the summed MAC series and its
+threshold do. The intravenous drugs are not changed by temperature, although
+hypothermia slows the clearance of many of them. GasMan models none of this:
+its source code mentions temperature only in the vaporiser's vapour pressure.
+
 ## Which drugs respond
 
-The inhaled anesthetics respond to **Cardiac output** only, as described above.
+The inhaled anesthetics respond to **Cardiac output** and, the volatile agents,
+to **Body temperature**, as described above.
 
 Only drugs whose renal share, hepatic share and extraction ratio were read in
 a published source respond. Any other drug ignores the sliders, and the panel
@@ -253,6 +296,9 @@ Levine BD, Giller CA, Lane LD, Buckey JC, Blomqvist CG. Cerebral versus
 systemic hemodynamics during graded orthostatic stress in humans.
 *Circulation* 1994;90:298-306. doi:10.1161/01.cir.90.1.298
 
+Liu M, Hu X, Liu J. The effect of hypothermia on isoflurane MAC in children.
+*Anesthesiology* 2001;94:429-32. doi:10.1097/00000542-200103000-00011
+
 Ogoh S, Brothers RM, Barnes Q, et al. The effect of changes in cardiac output
 on middle cerebral artery mean blood velocity at rest and during exercise.
 *J Physiol* 2005;569:697-704. doi:10.1113/jphysiol.2005.095836
@@ -271,3 +317,11 @@ clearance. *Clin Pharmacol Ther* 1975;18:377-90.
 Williams LR, Leggett RW. Reference values for resting blood flow to organs of
 man. *Clin Phys Physiol Meas* 1989;10:187-217.
 doi:10.1088/0143-0815/10/3/001
+
+Zhou JX, Liu J. The effect of temperature on solubility of volatile
+anesthetics in human tissues. *Anesth Analg* 2001;93:234-8.
+doi:10.1097/00000539-200107000-00047
+
+Zhou J, Liu Y, Liu J. Combined effect of hypothermia and crystalloid
+hemodilution on the solubility of volatile anesthetics in human blood.
+*Chin Med J (Engl)* 2002;115:1014-9.

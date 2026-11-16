@@ -967,7 +967,9 @@ advanceClosedFormGas <- function(
   if (is.null(body)) body <- getGasBody(weight)
   Qco <- if (is.null(cardiacOutput)) body$Q_cardiac else cardiacOutput
 
-  props <- getGasProperties()
+  # The partition coefficients and MAC at the body's temperature
+  # (gasPropertiesAt(); 37 C unless the temperature slider has set one).
+  props <- gasPropertiesAt(body$temperature)
 
   # Split the dose table by setting.  Rows for a setting must be time-ordered
   # for settingAt() to pick the last one in force.
@@ -1199,6 +1201,9 @@ advanceClosedFormGas <- function(
 #'   \code{getDrugPK()}); only \code{cardiac} acts on the gases, through
 #'   \code{gasBodyPhysiology()}: cardiac output and its split among the tissue
 #'   groups
+#' @param temperature NULL (37 C), or the body temperature in C, which sets
+#'   the agents' solubility and MAC (\code{gasPropertiesAt()}); kept in the
+#'   body as \code{temperature}
 #' @param uptakeEffect,circuit,deadSpace,oxygenUptake passed to
 #'   \code{advanceClosedFormGas()}
 #'
@@ -1212,7 +1217,7 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
                           oxygenUptake = TRUE,
                           # Appended after the pre-existing arguments, so a
                           # positional call keeps its binding (exported).
-                          physiology = NULL)
+                          physiology = NULL, temperature = NULL)
 {
   circuit <- match.arg(circuit)
   if (is.null(doseTable) || nrow(doseTable) == 0) return(NULL)
@@ -1231,6 +1236,8 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
 
   body <- gasBodyPhysiology(getGasBody(weight),
                             checkPhysiology(physiology)[["cardiac"]])
+  temperature <- checkBodyTemperature(temperature)
+  if (temperature != 37) body$temperature <- temperature
 
   advanceClosedFormGas(
     gasDose,

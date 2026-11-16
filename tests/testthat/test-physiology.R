@@ -436,7 +436,7 @@ test_that("the panel note counts the inhaled agents only when cardiac output mov
   expect_false(grepl("no physiology data", low))
   expect_false(grepl("oxygen|ventilation", low))
   liver <- txt(c(liver = 0.5))
-  expect_match(liver, "respond to cardiac output only", fixed = TRUE)
+  expect_match(liver, "respond to cardiac output and body temperature only", fixed = TRUE)
   expect_false(grepl("no physiology data yet): </strong>sevoflurane", liver, fixed = TRUE))
 })
 
@@ -446,7 +446,7 @@ test_that("simulateGases() keeps its positional arguments: physiology comes last
   args <- names(formals(simulateGases))
   expect_identical(args[1:9], c("doseTable", "weight", "age", "maximum", "cardiacOutput",
                                 "uptakeEffect", "circuit", "deadSpace", "oxygenUptake"))
-  expect_identical(utils::tail(args, 1), "physiology")
+  expect_identical(utils::tail(args, 2), c("physiology", "temperature"))
   # The old positional call that turns the uptake coupling off still does.
   expect_equal(simulateGases(SEVO_RUN, 70, 50, 30, NULL, FALSE)$results,
                simulateGases(SEVO_RUN, 70, 50, 30, uptakeEffect = FALSE)$results)
@@ -508,10 +508,94 @@ test_that("an oral tPeak counts every depot carrying drug, each with its lag", {
 })
 
 test_that("the email workbook records the physiology sliders", {
-  rows <- physiologyCovariateRows(c(cardiac = 0.5))
-  expect_equal(nrow(rows), length(PHYSIOLOGY_FACTORS))
+  rows <- physiologyCovariateRows(c(cardiac = 0.5), 32)
+  expect_equal(nrow(rows), length(PHYSIOLOGY_FACTORS) + 1)
+  expect_equal(rows$Value[rows$Covariate == "Body temperature (C)"], "32")
+  expect_equal(physiologyCovariateRows(NULL)$Value[length(PHYSIOLOGY_FACTORS) + 1], "37")
   expect_equal(rows$Value[rows$Covariate == "Cardiac output (multiple of normal)"], "x0.5")
   expect_equal(rows$Value[rows$Covariate == "Liver function (multiple of normal)"], "normal")
-  expect_true(all(physiologyCovariateRows(NULL)$Value == "normal"))
-  expect_true(all(physiologyCovariateRows("x")$Value == "unreadable"))
+  n <- length(PHYSIOLOGY_FACTORS)
+  expect_true(all(physiologyCovariateRows(NULL)$Value[seq_len(n)] == "normal"))
+  expect_true(all(physiologyCovariateRows("x", "y")$Value == "unreadable"))
+})
+
+# ---- Body temperature (Shafer, 2026-11-16) ----------------------------------
+# Hypothermia raises every partition coefficient of a volatile agent by
+# exp(-slope (T - 37)) (Zhou 2002 blood, Zhou 2001 tissues: tissue:blood
+# unchanged) and lowers its MAC along Liu 2001's regression.
+
+test_that("gasPropertiesAt() follows Zhou 2002 and Liu 2001, and is the table at 37 C", {
+  p37 <- getGasProperties()
+  expect_identical(gasPropertiesAt(NULL), p37)
+  expect_identical(gasPropertiesAt(37), p37)
+  expect_error(gasPropertiesAt(20), "Invalid body temperature")
+  expect_error(gasPropertiesAt(NA_real_), "Invalid body temperature")
+  p31 <- gasPropertiesAt(31)
+  for (g in c("desflurane", "sevoflurane", "isoflurane")) {
+    i <- p37$gas == g
+    f <- exp(GAS_SOLUBILITY_TEMPERATURE_SLOPE[[g]] * 6)
+    expect_equal(p31$lambda_blood[i], p37$lambda_blood[i] * f)
+    # Tissue:blood unchanged (Zhou 2001).
+    expect_equal(p31$tg_brain[i] / p31$lambda_blood[i], p37$tg_brain[i] / p37$lambda_blood[i])
+    expect_equal(p31$tg_fat[i] / p31$lambda_blood[i], p37$tg_fat[i] / p37$lambda_blood[i])
+  }
+  # Zhou 2002's own regression for isoflurane at a haematocrit of 40%:
+  # ln(lambda) = -0.0382 T + 0.0154 HCT + 1.120, so lambda(31) / lambda(37).
+  zhou <- function(T) exp(-0.0382 * T + 0.0154 * 40 + 1.120)
+  i <- p37$gas == "isoflurane"
+  expect_equal(p31$lambda_blood[i] / p37$lambda_blood[i], zhou(31) / zhou(37))
+  # Liu 2001: MAC = 0.0784 T - 1.203, so the ratio of the line at 31 and 37.
+  expect_equal(gasMacTemperatureFactor(31), (0.0784 * 31 - 1.203) / (0.0784 * 37 - 1.203))
+  expect_equal(p31$MAC40[i], p37$MAC40[i] * gasMacTemperatureFactor(31))
+  # About 4.6% of normothermic MAC a degree.
+  expect_equal(1 - gasMacTemperatureFactor(36), 0.0784 / (0.0784 * 37 - 1.203))
+  # Nitrous oxide, nitrogen and oxygen are unchanged.
+  other <- !p37$gas %in% names(GAS_SOLUBILITY_TEMPERATURE_SLOPE)
+  expect_identical(p31[other, ], p37[other, ])
+})
+
+test_that("hypothermia slows the rise of FA/FI, most for the more soluble agent, and lowers MAC", {
+  run <- function(agent, dose, T) {
+    dt <- data.frame(Drug = c(agent, "oxygen", "air", "ventilation"), Time = 0,
+                     Dose = c(dose, 3, 3, 6))
+    sim <- simulateGases(dt, maximum = 30, temperature = T)
+    r <- sim$results
+    a <- function(d, s, t) { x <- r[r$Drug == d & r$Site == s, ]; stats::approx(x$Time, x$Y, t)$y }
+    list(fafi = a(agent, "Alveolar", 2) / dose, mac = a("MAC", "MAC", 30),
+         sim = sim, et = a(agent, "Alveolar", 30))
+  }
+  iso37 <- run("isoflurane", 1.2, 37); iso31 <- run("isoflurane", 1.2, 31)
+  des37 <- run("desflurane", 6, 37);   des31 <- run("desflurane", 6, 31)
+  expect_lt(iso31$fafi, iso37$fafi)
+  expect_lt(des31$fafi, des37$fafi)
+  expect_lt(iso31$fafi / iso37$fafi, des31$fafi / des37$fafi)
+  # The summed MAC is end-tidal over the hypothermic MAC.
+  expect_equal(iso31$mac,
+               iso31$et / macForAge(gasPropertiesAt(31)$MAC40[gasPropertiesAt(31)$gas == "isoflurane"], 50),
+               tolerance = 1e-6)
+  expect_gt(iso31$mac, iso37$mac)
+  # The body carries the temperature, so the washout uses the same properties.
+  expect_equal(iso31$sim$body$temperature, 31)
+  expect_null(iso37$sim$body$temperature)
+  dt <- data.frame(Drug = c("isoflurane", "oxygen", "air", "ventilation"), Time = 0,
+                   Dose = c(1.2, 3, 3, 6))
+  w <- gasWashout(iso31$sim, dt)
+  expect_equal(w$body$temperature, 31)
+  expect_true(all(is.finite(gasRecoveryTime(w, "isoflurane", 0.3))))
+  # Nitrous oxide alone does not move.
+  n2o <- data.frame(Drug = c("nitrousOxide", "oxygen", "ventilation"), Time = 0, Dose = c(4, 2, 6))
+  expect_equal(simulateGases(n2o, maximum = 30, temperature = 31)$results,
+               simulateGases(n2o, maximum = 30)$results)
+})
+
+test_that("the temperature slider's value is read safely, and the note says what it changes", {
+  expect_equal(bodyTemperatureFromInput(NULL), 37)
+  expect_equal(bodyTemperatureFromInput("x"), 37)
+  expect_equal(bodyTemperatureFromInput(20), PHYSIOLOGY_TEMPERATURE_MIN)
+  expect_equal(bodyTemperatureFromInput(33.5), 33.5)
+  drugs <- c("sevoflurane", "nitrousOxide", "oxygen", "propofol")
+  cold <- gsub("\\s+", " ", as.character(physiologyNote(PHYSIOLOGY_DEFAULT, drugs, temperature = 32)))
+  expect_match(cold, "Changed: </strong> sevoflurane </p>", fixed = TRUE)
+  expect_match(cold, "Not changed by body temperature: </strong> propofol, nitrousOxide", fixed = TRUE)
+  expect_null(physiologyNote(PHYSIOLOGY_DEFAULT, drugs, temperature = 37))
 })

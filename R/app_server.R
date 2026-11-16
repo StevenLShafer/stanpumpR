@@ -1374,6 +1374,7 @@ app_server <- function(input, output, session) {
         DT,
         weight  = weight(),
         physiology = physiology(),
+        temperature = bodyTemperature(),
         age     = age(),
         maximum = plotMaximum()
       )
@@ -1425,13 +1426,22 @@ app_server <- function(input, output, session) {
     ))
   }), PHYSIOLOGY_DEBOUNCE_MS)
 
+  # Body temperature, C (R/physiology.R): the inhaled agents' solubility and
+  # MAC.  An unreadable value is 37.
+  bodyTemperature <- debounce(reactive({
+    bodyTemperatureFromInput(input$physiology_temperature)
+  }), PHYSIOLOGY_DEBOUNCE_MS)
+
   observeEvent(input$physiologyReset, {
     for (f in PHYSIOLOGY_FACTORS)
       updateSliderInput(session, physiologyInputId(f), value = 0)
+    updateSliderInput(session, "physiology_temperature",
+                      value = PHYSIOLOGY_TEMPERATURE_DEFAULT)
   })
 
   output$physiologyNote <- renderUI({
-    physiologyNote(physiology(), doseTableClean()$Drug)
+    physiologyNote(physiology(), doseTableClean()$Drug,
+                   temperature = bodyTemperature())
   })
 
   drugPK <- function(doseTable, individual = NULL) {
@@ -2018,6 +2028,7 @@ app_server <- function(input, output, session) {
       cyp2b6 = genotypes()$cyp2b6,
       # The physiology sliders the simulation was run at (R/physiology.R)
       physiology = physiology(),
+      temperature = bodyTemperature(),
       # Whether each companion model was actually drawn, not just its box
       # ticked (companionGroupsShown()).
       mintoSchnider = "mintoSchnider" %in% companionGroupsShown(),

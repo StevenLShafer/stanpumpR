@@ -324,7 +324,7 @@ gasWashout <- function(sim, gasDose, weight = 70, cardiacOutput = NULL,
   # included), unless this call overrides it.
   Qco  <- if (!is.null(cardiacOutput)) cardiacOutput else
     if (!is.null(sim$Qco)) sim$Qco else body$Q_cardiac
-  props <- getGasProperties()
+  props <- gasPropertiesAt(body$temperature)
   gases <- props$gas[props$soluble]
 
   gasDose <- gasDose[order(gasDose$Time), , drop = FALSE]
@@ -489,7 +489,7 @@ macRecoveryTime <- function(washout, age, threshold = GAS_MAC_THRESHOLD,
 
   nT <- length(washout$Time)
   threshold <- rep_len(threshold, nT)
-  props  <- getGasProperties()
+  props  <- gasPropertiesAt(washout$body$temperature)
   potent <- props$gas[props$potent]
   MAC <- vapply(potent, function(g)
     macForAge(props$MAC40[props$gas == g], age), numeric(1))
@@ -517,7 +517,7 @@ macRecoveryTime <- function(washout, age, threshold = GAS_MAC_THRESHOLD,
 #' @export
 macRecoveryTimeExact <- function(washout, age, threshold = GAS_MAC_THRESHOLD)
 {
-  props  <- getGasProperties()
+  props  <- gasPropertiesAt(washout$body$temperature)
   gases  <- names(washout$state)
   potent <- intersect(props$gas[props$potent], gases)
 
@@ -733,7 +733,7 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
 {
   nT <- length(washout$Time)
   threshold <- rep_len(threshold, nT)
-  props  <- getGasProperties()
+  props  <- gasPropertiesAt(washout$body$temperature)
   gases  <- names(washout$state)
   body   <- washout$body
   Qco    <- washout$Qco
