@@ -138,7 +138,9 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     "sildenafil", "selexipag",
                     # suzetrigine's 0.182 h lag before its zero-order release
                     # (FDA review of NDA 219209); plasma only
-                    "suzetrigine"))
+                    "suzetrigine",
+                    # ambrisentan's fixed 0.525 h lag (Okour 2023); plasma only
+                    "ambrisentan"))
 })
 
 
