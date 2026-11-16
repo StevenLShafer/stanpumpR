@@ -144,8 +144,13 @@ These are statements about this code. Each names the function that does it.
 7. **Plots and downloads.** A plot is drawn to a temporary PNG file that is
    read and deleted at once, as Shiny's own plot output does. If downloads are
    enabled (Open decision 5), the report is written to a temporary file that
-   Shiny marks as owned and deletes after sending it to the browser. Once
-   downloaded, the report is on the user's own computer, outside the app.
+   Shiny marks as owned and deletes after sending it to the browser. The
+   Word version (2026-11-16) is built with officer, which unpacks its
+   template and writes scratch files under `tempdir()`, several holding the
+   report's text, and leaves them there; `paperReviewDocxWrite()` removes
+   everything new in `tempdir()` but the file Shiny serves, whether or not
+   the build succeeds (`test-paper-review-word.R`). Once downloaded, the
+   report is on the user's own computer, outside the app.
 8. **No digest, no archive.** Nothing from an uploaded manuscript is added to
    stanpumpR's paper archive, its digests or its drug library.
 
