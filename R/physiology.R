@@ -122,13 +122,19 @@ PHYSIOLOGY_KE0_CARDIAC_EXPONENT <- 0.35
 #' @noRd
 PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 
-# OPEN QUESTION [decision, for Shafer; raised by CodeRabbit on #727,
-# 2026-11-16]: the Bayesian update (R/bayesian.R) fits its clearance and
-# volume factors to PK built AT the sliders' physiology, so a slider acts as
-# an informed prior and the measured levels then pull the curve back towards
-# them; moving a slider also refits.  The alternative is to fit at normal
-# physiology and apply the sliders to the individual afterwards (a pure
-# what-if, no refit).  Left as it is until decided.
+# The Bayesian update (R/bayesian.R) fits its clearance and volume factors at
+# NORMAL physiology, and the sliders are applied to the individual afterwards
+# (bayesianAtPhysiology()): the measured levels describe the patient as they
+# found them, so a slider is a what-if on the fitted patient, and moving one
+# does not refit (Shafer, 2026-11-16, answering CodeRabbit's question on #727;
+# until then the fit was made at the sliders, so a slider acted as a prior the
+# levels pulled back against).
+#
+# Body temperature and cardiac output are NOT coupled: hypothermia does not
+# lower cardiac output by itself.  Fever raises cardiac output and cooling
+# would by the same logic lower it, but the mechanisms differ (inflammation;
+# environmental heat loss), so the clinician sets each slider (Shafer,
+# 2026-11-16).
 
 # ---- The inhaled anesthetics -------------------------------------------------
 #

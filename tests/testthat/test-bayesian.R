@@ -489,3 +489,42 @@ test_that("a TCI drug's patient receives the rates the library's model chose", {
   later <- w$Time > 0
   expect_true(all(w$Plasma[later] < wp$Plasma[match(w$Time[later], wp$Time)]))
 })
+
+test_that("the fit is made at normal physiology and the sliders act on the individual", {
+  # Shafer, 2026-11-16: the levels describe the patient as they found them,
+  # so the sliders are a what-if on the fitted patient (bayesianAtPhysiology())
+  DT <- data.frame(Drug = "propofol", Time = c(0, 60), Dose = c(100, 0),
+                   Units = "mcg/kg/min", stringsAsFactors = FALSE)
+  obs <- data.frame(Drug = "propofol", Time = c(30, 90), Concentration = c(3, 0.8))
+  slow <- c(liver = 0.3, renal = 1, cardiac = 0.5, gi = 1)
+  build <- function(physiology) function(drug, individual)
+    recalculatePK(NULL, getDrugDefaultsGlobal(), DT[DT$Drug == drug, , drop = FALSE],
+                  age = patient$age, weight = patient$weight, height = patient$height,
+                  sex = patient$sex, individual = individual, physiology = physiology)[[drug]]
+  atSliders <- recalculatePK(NULL, getDrugDefaultsGlobal(), DT, age = patient$age,
+                             weight = patient$weight, height = patient$height,
+                             sex = patient$sex, physiology = slow)
+  res <- bayesianUpdateDrugs(priorDrugs(DT), DT, noEvents, obs, rebuild = rebuildFor(DT))
+  fit <- res$fits$propofol
+  drawn <- bayesianAtPhysiology(res$drugs, atSliders, build(slow))
+  # The individual, at the sliders
+  expected <- build(slow)("propofol", list(propofol = list(clearance = fit$clearance,
+                                                            volume = fit$volume)))
+  expect_equal(drawn$propofol$PK$default$cl1, expected$PK$default$cl1)
+  expect_equal(drawn$propofol$PK$default$v1, expected$PK$default$v1)
+  expect_equal(drawn$propofol$bayesian, res$drugs$propofol$bayesian)
+  expect_equal(drawn$propofol$Color, res$drugs$propofol$Color)
+  # The levels moved the estimate, and the drawn drug is not the population's
+  expect_gt(abs(log(fit$clearance)), 0.05)
+  expect_false(isTRUE(all.equal(drawn$propofol$PK$default$cl1,
+                                atSliders$propofol$PK$default$cl1)))
+  # Slower than the individual at normal physiology
+  expect_lt(drawn$propofol$PK$default$cl1, res$drugs$propofol$PK$default$cl1)
+  # The population line is the model's drug at the sliders
+  companion <- drawn[["propofol (population)"]]
+  expect_equal(companion$PK$default$cl1, atSliders$propofol$PK$default$cl1)
+  expect_equal(companion$companionOf, "propofol")
+  expect_equal(companion$Color, res$drugs[["propofol (population)"]]$Color)
+  # No estimate, nothing changed
+  expect_identical(bayesianAtPhysiology(atSliders, atSliders, build(slow)), atSliders)
+})

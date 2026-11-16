@@ -256,12 +256,23 @@ the chapter says, induction is slower, most for the soluble agents.
 MAC against temperature was found, so it is left as it is. Cardiac output and
 ventilation also fall with metabolism in hypothermia, but they have their own
 controls (the Cardiac output slider and the ventilation row), so they are not
-counted twice. Lower them yourself to match the patient. The fall in brain
+counted twice. Lower them yourself to match the patient. The coupling is left
+to you on purpose: fever raises cardiac output and cooling would by the same
+logic lower it, but the two have different causes (inflammation, and heat lost
+to the room), so stanpumpR does not tie one slider to the other. The fall in brain
 blood flow is not modelled either. A threshold for the time until threshold is
 a tension you typed and does not move with MAC; the summed MAC series and its
 threshold do. The intravenous drugs are not changed by temperature, although
 hypothermia slows the clearance of many of them. GasMan models none of this:
 its source code mentions temperature only in the vaporiser's vapour pressure.
+
+## The sliders and the Bayesian update
+
+When measured concentrations update a drug ([Bayesian updating](help:models/bayesian)),
+the fit is made at normal physiology, and the sliders are applied to the
+patient it finds. The measurements describe the patient as they found them, so
+moving a slider afterwards asks what would happen to that patient, and does not
+refit. The model's own line, "(population)", is drawn at the sliders too.
 
 ## Which drugs respond
 

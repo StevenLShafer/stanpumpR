@@ -1444,7 +1444,9 @@ app_server <- function(input, output, session) {
                    temperature = bodyTemperature())
   })
 
-  drugPK <- function(doseTable, individual = NULL) {
+  # `normalPhysiology`: build at normal physiology, whatever the sliders say
+  # (the Bayesian update's fit, bayesUpdate())
+  drugPK <- function(doseTable, individual = NULL, normalPhysiology = FALSE) {
     recalculatePK(
         NULL,
         drugDefaults(),
@@ -1473,7 +1475,7 @@ app_server <- function(input, output, session) {
         alternativeModels = companionGroupsOn(),
         antiseizureInteractions = antiseizureInteractions(),
         individual = individual,
-        physiology = physiology()
+        physiology = if (normalPhysiology) NULL else physiology()
       )
   }
 
@@ -1492,14 +1494,19 @@ app_server <- function(input, output, session) {
       priors <- drugPK(DT) |> profileCode("recalculatePK() in bayesUpdate()")
       observations <- bayes$observations()
       if (nrow(observations) == 0) return(list(drugs = priors, fits = list(), problems = character(0)))
+      # The fit is made at normal physiology and the sliders are applied to
+      # the individual afterwards (Shafer, 2026-11-16; bayesianAtPhysiology())
+      normal <- physiologyIsNormal(physiology())
+      fitPriors <- if (normal) priors else drugPK(DT, normalPhysiology = TRUE)
       # A search longer than a few seconds is covered by the page's Working
       # cover (app.js), which replaced a spinner of its own here
       result <- bayesianUpdateDrugs(
-        priors, DT, eventTableClean(), observations,
+        fitPriors, DT, eventTableClean(), observations,
         pkVariability = bayes$pkVariability(),
         residualVariability = bayes$residualVariability(),
         rebuild = function(drug, individual) {
-          drugPK(DT[DT$Drug == drug, , drop = FALSE], individual = individual)[[drug]]
+          drugPK(DT[DT$Drug == drug, , drop = FALSE], individual = individual,
+                 normalPhysiology = TRUE)[[drug]]
         },
         antiseizureInteractions = antiseizureInteractions(),
         fits = bayesFitCache,
@@ -1510,6 +1517,10 @@ app_server <- function(input, output, session) {
       # The failures too, so that a fit that ran out of time is not tried
       # again until its inputs change (bayesianUpdateDrugs())
       bayesFitCache <<- result$cache
+      if (!normal)
+        result$drugs <- bayesianAtPhysiology(result$drugs, priors, function(drug, individual) {
+          drugPK(DT[DT$Drug == drug, , drop = FALSE], individual = individual)[[drug]]
+        })
       result
     }, name = "bayesUpdate() reactive")
   })

@@ -26,6 +26,8 @@ Two numbers per drug: the patient's **clearance** and **volume**, each as a mult
 - Warfarin's two enantiomers take the same two factors, so their ratio is the model's.
 - Absorption, bioavailability, lag times, the effect site (ke0 or the time to peak effect), and the links from concentration to INR or ACT are left as the model has them.
 
+The fit is made at **normal physiology**, whatever the [physiology sliders](help:models/physiology) say. The sliders are then applied to the patient the fit found, so they ask what would happen to that patient, and moving one does not refit.
+
 **Only clearance has a direct physiological meaning** (see [How stanpumpR computes](help:models/overview)). With steady-state troughs alone, the measurements say almost nothing about the volume, and the estimate keeps it near the model's. The time course after a change in dose, or a peak and a trough, is what moves the volume.
 
 ## The two variabilities
