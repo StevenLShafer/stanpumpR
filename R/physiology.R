@@ -226,6 +226,104 @@ gasBodyPhysiology <- function(body, cardiac = 1)
   body
 }
 
+# ---- Body temperature (the inhaled anesthetics) ------------------------------
+#
+# Eger and Shafer's chapter: a fall in body temperature raises the solubility
+# of the agents in blood and in every tissue, which slows induction, most for
+# a soluble agent, and lowers MAC (Shafer's decision 2026-11-16 to model it).
+# Two measured relations, both in humans:
+#
+#   * Solubility.  Zhou, Liu and Liu 2002 (Chin Med J 115:1014-9) measured the
+#     blood:gas partition coefficient of desflurane, sevoflurane and isoflurane
+#     in human blood from 37 to 17 C: ln(lambda) is linear in temperature, with
+#     slopes -0.0302, -0.0295 and -0.0382 per C at a fixed haematocrit.  Zhou
+#     and Liu 2001 (Anesth Analg 93:234-8), in human brain, heart, liver,
+#     muscle and fat over the same range, found the tissue:gas coefficients
+#     rise in proportion, so tissue:blood does not change.  So every partition
+#     coefficient of an agent (blood:gas and each tissue:gas) is multiplied by
+#     exp(-slope (T - 37)).
+#   * MAC.  Liu, Hu and Liu 2001 (Anesthesiology 94:429-32, read in full):
+#     isoflurane MAC in children at 37, 34 and 31 C, regression
+#     MAC = 0.0784 T - 1.203, so MAC(T) / MAC(37) = (T - T0) / (37 - T0) with
+#     T0 = 1.203 / 0.0784 = 15.3 C: 4.6% of the normothermic MAC per degree.
+#     (The paper's text says "approximately 5.1%" and an extrapolated zero at
+#     16.2 C; neither follows from its own regression, which is used here.)
+#     Applied to all three volatile agents: the same 4-5% per degree was
+#     measured for isoflurane and halothane in rats and goats (Vitez 1974,
+#     Antognini 1993) and for desflurane in rats (Eger 1987, 42% over 10 C).
+#
+# Nitrous oxide is left at its normothermic solubility and MAC: no human
+# measurement of either against temperature was found.  Cardiac output and
+# ventilation fall with metabolism in hypothermia, but they are set by their
+# own controls (the Cardiac output slider, the ventilation row), so as not to
+# be counted twice.  The thresholds of the time until threshold are typed
+# tensions and do not move; the summed MAC series, and its threshold in MAC,
+# do.  The intravenous drugs are not changed.
+
+#' Body temperature range and default, degrees C
+#' @noRd
+PHYSIOLOGY_TEMPERATURE_MIN <- 28
+PHYSIOLOGY_TEMPERATURE_MAX <- 37
+PHYSIOLOGY_TEMPERATURE_DEFAULT <- 37
+PHYSIOLOGY_TEMPERATURE_STEP <- 0.5
+
+#' Slope of ln(blood:gas) on temperature, per degree C (Zhou 2002)
+#' @noRd
+GAS_SOLUBILITY_TEMPERATURE_SLOPE <- c(desflurane = 0.0302,
+                                      sevoflurane = 0.0295,
+                                      isoflurane = 0.0382)
+
+#' Temperature at which the regression of Liu 2001 gives zero MAC, C
+#' @noRd
+GAS_MAC_ZERO_TEMPERATURE <- 1.203 / 0.0784
+
+#' A body temperature, checked
+#' @noRd
+checkBodyTemperature <- function(temperature)
+{
+  if (is.null(temperature)) return(PHYSIOLOGY_TEMPERATURE_DEFAULT)
+  if (!is.numeric(temperature) || length(temperature) != 1 ||
+      !is.finite(temperature) || temperature < PHYSIOLOGY_TEMPERATURE_MIN ||
+      temperature > PHYSIOLOGY_TEMPERATURE_MAX)
+    stop("Invalid body temperature: ", format(temperature), " (",
+         PHYSIOLOGY_TEMPERATURE_MIN, " to ", PHYSIOLOGY_TEMPERATURE_MAX, " C)")
+  temperature
+}
+
+#' MAC at a body temperature, as a fraction of MAC at 37 C (Liu 2001)
+#' @param temperature body temperature, C
+#' @export
+gasMacTemperatureFactor <- function(temperature = PHYSIOLOGY_TEMPERATURE_DEFAULT)
+{
+  temperature <- checkBodyTemperature(temperature)
+  (temperature - GAS_MAC_ZERO_TEMPERATURE) / (37 - GAS_MAC_ZERO_TEMPERATURE)
+}
+
+#' The gas properties at a body temperature
+#'
+#' \code{getGasProperties()} with each volatile agent's partition coefficients
+#' (blood:gas and every tissue:gas) multiplied by
+#' \code{exp(-slope (T - 37))} (Zhou 2002, 2001) and its MAC by
+#' \code{gasMacTemperatureFactor()} (Liu 2001).  Nitrous oxide, nitrogen and
+#' oxygen are unchanged.  At 37 C (or NULL) the table is returned as it is.
+#'
+#' @param temperature body temperature, C, or NULL for 37
+#' @returns a data frame as \code{getGasProperties()}
+#' @export
+gasPropertiesAt <- function(temperature = NULL)
+{
+  props <- getGasProperties()
+  temperature <- checkBodyTemperature(temperature)
+  if (temperature == 37) return(props)
+  slope <- GAS_SOLUBILITY_TEMPERATURE_SLOPE[props$gas]
+  volatile <- !is.na(slope)
+  f <- ifelse(volatile, exp(-slope * (temperature - 37)), 1)
+  for (col in c("lambda_blood", "tg_brain", "tg_muscle", "tg_fat"))
+    props[[col]] <- props[[col]] * f
+  props$MAC40[volatile] <- props$MAC40[volatile] * gasMacTemperatureFactor(temperature)
+  props
+}
+
 #' The inhaled agents the cardiac slider moves (every soluble agent a user
 #' doses; not the carrier gases or the ventilation)
 #' @noRd
@@ -521,6 +619,23 @@ physiologyPanel <- function()
            "What if? Each slider is a multiple of normal function, from a",
            "tenth to ten times, on a log scale."),
     sliders,
+    fieldHelp(
+      sliderInput(
+        inputId = "physiology_temperature",
+        label = "Body temperature (\u00b0C)",
+        min = PHYSIOLOGY_TEMPERATURE_MIN,
+        max = PHYSIOLOGY_TEMPERATURE_MAX,
+        value = PHYSIOLOGY_TEMPERATURE_DEFAULT,
+        step = PHYSIOLOGY_TEMPERATURE_STEP,
+        ticks = FALSE
+      ),
+      paste("Core temperature. For the inhaled anesthetics, hypothermia",
+            "raises their solubility in blood and tissue, which slows the rise",
+            "of the end-tidal and brain concentrations, and lowers their MAC,",
+            "about 4.6% a degree. It does not change the intravenous drugs,",
+            "nor cardiac output or ventilation, which have their own controls."),
+      placement = "right"
+    ),
     actionLink("physiologyReset", "Reset to normal"),
     uiOutput("physiologyNote")
   )
@@ -550,17 +665,30 @@ physiologyFromInputs <- function(values)
 #' One row per factor, as a multiple of normal; NULL (an export made without
 #' them) is normal.
 #' @param physiology the factors, or NULL
+#' @param temperature the body temperature, C, or NULL (37)
 #' @returns a data frame of Covariate and Value
 #' @noRd
-physiologyCovariateRows <- function(physiology)
+physiologyCovariateRows <- function(physiology, temperature = NULL)
 {
   p <- tryCatch(checkPhysiology(physiology), error = function(e) NULL)
   value <- if (is.null(p)) rep("unreadable", length(PHYSIOLOGY_FACTORS)) else
     ifelse(p[PHYSIOLOGY_FACTORS] == 1, "normal",
            paste0("x", trimws(formatC(p[PHYSIOLOGY_FACTORS], digits = 3, format = "fg"))))
-  data.frame(Covariate = paste(PHYSIOLOGY_LABELS[PHYSIOLOGY_FACTORS],
-                               "(multiple of normal)"),
-             Value = unname(value), stringsAsFactors = FALSE)
+  t <- tryCatch(checkBodyTemperature(temperature), error = function(e) NULL)
+  data.frame(Covariate = c(paste(PHYSIOLOGY_LABELS[PHYSIOLOGY_FACTORS],
+                                 "(multiple of normal)"),
+                           "Body temperature (C)"),
+             Value = c(unname(value), if (is.null(t)) "unreadable" else format(t)),
+             stringsAsFactors = FALSE)
+}
+
+#' The body temperature from its slider: 37 C unless a readable value in range
+#' @noRd
+bodyTemperatureFromInput <- function(value)
+{
+  if (!is.numeric(value) || length(value) != 1 || !is.finite(value))
+    return(PHYSIOLOGY_TEMPERATURE_DEFAULT)
+  max(PHYSIOLOGY_TEMPERATURE_MIN, min(PHYSIOLOGY_TEMPERATURE_MAX, value))
 }
 
 #' A short description of non-normal physiology ("liver x0.5, cardiac x2")
@@ -580,30 +708,44 @@ physiologySummary <- function(physiology)
 #' @param physiology the factors
 #' @param drugs the dosed drugs
 #' @noRd
-physiologyNote <- function(physiology, drugs)
+physiologyNote <- function(physiology, drugs,
+                           temperature = PHYSIOLOGY_TEMPERATURE_DEFAULT)
 {
-  if (physiologyIsNormal(physiology) || length(drugs) == 0) return(NULL)
+  cold <- !is.null(temperature) && temperature != PHYSIOLOGY_TEMPERATURE_DEFAULT
+  if ((physiologyIsNormal(physiology) && !cold) || length(drugs) == 0) return(NULL)
   drugs <- unique(drugs)
-  # The carrier gases and the ventilation are settings, not drugs; the agents
-  # respond to cardiac output only (gasBodyPhysiology()).
+  # The carrier gases and the ventilation are settings, not drugs.  The agents
+  # respond to cardiac output (gasBodyPhysiology()) and, the volatile ones, to
+  # body temperature (gasPropertiesAt()); the intravenous drugs to the four
+  # sliders only.
   gasAgents <- intersect(drugs, physiologyGasAgents())
   drugs <- drugs[!isGasDrug(drugs)]
+  factorsMoved <- !physiologyIsNormal(physiology)
   cardiacMoved <- checkPhysiology(physiology)[["cardiac"]] != 1
-  changed <- c(intersect(drugs, physiologyDrugs()),
-               if (cardiacMoved) gasAgents)
-  unchanged <- setdiff(drugs, changed)
+  volatile <- gasAgents %in% names(GAS_SOLUBILITY_TEMPERATURE_SLOPE)
+  changed <- c(if (factorsMoved) intersect(drugs, physiologyDrugs()),
+               gasAgents[cardiacMoved | (cold & volatile)])
+  noData <- if (factorsMoved) setdiff(drugs, physiologyDrugs()) else character(0)
+  notByTemperature <- if (cold && !factorsMoved) drugs else character(0)
+  notByTemperature <- c(notByTemperature,
+                        if (cold && !cardiacMoved) gasAgents[!volatile])
   tags$div(
     class = "small physiology-note",
     if (length(changed))
       tags$p(tags$strong("Changed: "), paste(changed, collapse = ", ")),
-    if (length(unchanged))
+    if (length(noData))
       tags$p(class = "text-warning",
              tags$strong("Not changed (no physiology data yet): "),
-             paste(unchanged, collapse = ", ")),
-    if (length(gasAgents) && !cardiacMoved)
+             paste(noData, collapse = ", ")),
+    if (length(notByTemperature))
+      tags$p(class = "text-muted",
+             tags$strong("Not changed by body temperature: "),
+             paste(notByTemperature, collapse = ", "),
+             " (it acts on the volatile agents only)."),
+    if (length(gasAgents) && !cardiacMoved && !cold)
       tags$p(class = "text-muted",
              tags$strong("Inhaled agents "), "(", paste(gasAgents, collapse = ", "),
-             ") respond to cardiac output only.")
+             ") respond to cardiac output and body temperature only.")
   )
 }
 
@@ -850,6 +992,41 @@ helpPhysiologyGasTable <- function()
   }
   .physiologyCache$gasTable <- paste(c(
     "| Agent (inspired) | Cardiac output | FA/FI at 2 min | FA/FI at 10 min | Brain at 2 min (%) | Brain at 10 min (%) |",
+    "|---|---|---|---|---|---|",
+    rows
+  ), collapse = "\n")
+}
+
+#' The generated help block `physiology-temperature-table`: the volatile agents
+#' at several body temperatures, simulated by the gas engine itself.
+#' @noRd
+helpPhysiologyTemperatureTable <- function()
+{
+  if (!is.null(.physiologyCache$temperatureTable)) return(.physiologyCache$temperatureTable)
+  agents <- c(isoflurane = 1.2, sevoflurane = 2, desflurane = 6)
+  label <- c(isoflurane = "Isoflurane 1.2%", sevoflurane = "Sevoflurane 2%",
+             desflurane = "Desflurane 6%")
+  rows <- character(0)
+  for (g in names(agents)) for (T in c(37, 34, 31, 28)) {
+    dt <- data.frame(Drug = c(g, "oxygen", "air", "ventilation"), Time = 0,
+                     Dose = c(agents[[g]], 3, 3, 6))
+    sim <- simulateGases(dt, weight = 70, age = 40, maximum = 10, temperature = T)
+    r <- sim$results
+    at <- function(site, t) {
+      x <- r[r$Drug == g & r$Site == site, ]
+      stats::approx(x$Time, x$Y, t)$y
+    }
+    props <- gasPropertiesAt(T)
+    mac <- macForAge(props$MAC40[props$gas == g], 40)
+    rows <- c(rows, sprintf("| %s | %s | %s | %s | %s | %s |",
+                            label[[g]], format(T),
+                            helpFormatNumber(props$lambda_blood[props$gas == g]),
+                            helpFormatNumber(mac),
+                            formatC(at("Alveolar", 2) / agents[[g]], digits = 2, format = "f"),
+                            formatC(at("Brain", 10) / mac, digits = 2, format = "f")))
+  }
+  .physiologyCache$temperatureTable <- paste(c(
+    "| Agent (inspired) | Temperature (\u00b0C) | Blood:gas | MAC (%) | FA/FI at 2 min | Brain at 10 min (MAC) |",
     "|---|---|---|---|---|---|",
     rows
   ), collapse = "\n")

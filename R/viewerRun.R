@@ -611,7 +611,7 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_)
   gr <- entry$gasRun
   g <- entry$drug
   times <- viewerTimes(minimum, maximum)
-  props <- getGasProperties()
+  props <- gasPropertiesAt(gr$body$temperature)
   pr <- props[props$gas == g, ]
   ltg <- gasPartitionTissueGas(pr)
   body <- gr$body

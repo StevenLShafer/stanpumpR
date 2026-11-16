@@ -14,7 +14,8 @@ simulateGases(
   circuit = c("ideal", "semi-closed"),
   deadSpace = GAS_DEAD_SPACE_FRACTION,
   oxygenUptake = TRUE,
-  physiology = NULL
+  physiology = NULL,
+  temperature = NULL
 )
 }
 \arguments{
@@ -36,6 +37,10 @@ minutes, and \code{Dose}.  Non-gas rows are ignored.}
 \code{getDrugPK()}); only \code{cardiac} acts on the gases, through
 \code{gasBodyPhysiology()}: cardiac output and its split among the tissue
 groups}
+
+\item{temperature}{NULL (37 C), or the body temperature in C, which sets
+the agents' solubility and MAC (\code{gasPropertiesAt()}); kept in the
+body as \code{temperature}}
 }
 \value{
 \code{NULL} if the dose table contains no gases, otherwise the list

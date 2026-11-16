@@ -84,7 +84,8 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
   report <- reportableGases(gasDose)
   if (length(report) == 0) return(list())
 
-  props <- getGasProperties()
+  # At the body's temperature (gasPropertiesAt()), so the band follows MAC.
+  props <- gasPropertiesAt(sim$body$temperature)
   xout  <- seq(from = 0, to = maximum, length.out = RESOLUTION)
   out   <- list()
 
