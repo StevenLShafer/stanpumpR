@@ -1420,10 +1420,14 @@ app_server <- function(input, output, session) {
   # Debounced, so a slider dragged across its range resolves the PK once it
   # rests rather than at every step.
   physiology <- debounce(reactive({
-    physiologyFromInputs(stats::setNames(
+    out <- physiologyFromInputs(stats::setNames(
       lapply(PHYSIOLOGY_FACTORS, function(f) input[[physiologyInputId(f)]]),
       PHYSIOLOGY_FACTORS
     ))
+    # Body temperature lowers the intravenous drugs' elimination capacity too
+    # (physiologyTemperatureFactor())
+    out[["temperature"]] <- bodyTemperatureFromInput(input$physiology_temperature)
+    out
   }), PHYSIOLOGY_DEBOUNCE_MS)
 
   # Body temperature, C (R/physiology.R): the inhaled agents' solubility and

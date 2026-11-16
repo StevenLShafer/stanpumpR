@@ -631,7 +631,50 @@ test_that("the temperature slider's value is read safely, and the note says what
   expect_equal(bodyTemperatureFromInput(33.5), 33.5)
   drugs <- c("sevoflurane", "nitrousOxide", "oxygen", "propofol")
   cold <- gsub("\\s+", " ", as.character(physiologyNote(PHYSIOLOGY_DEFAULT, drugs, temperature = 32)))
-  expect_match(cold, "Changed: </strong> sevoflurane, nitrousOxide </p>", fixed = TRUE)
-  expect_match(cold, "Not changed by body temperature: </strong> propofol (it acts", fixed = TRUE)
+  # Body temperature now acts on the intravenous drugs with a physiology row
+  # too (physiologyTemperatureFactor())
+  expect_match(cold, "Changed: </strong> propofol, sevoflurane, nitrousOxide </p>", fixed = TRUE)
+  expect_no_match(cold, "Not changed by body temperature", fixed = TRUE)
   expect_null(physiologyNote(PHYSIOLOGY_DEFAULT, drugs, temperature = 37))
+})
+
+test_that("body temperature lowers elimination capacity, not blood flow", {
+  # Shafer, 2026-11-16: one factor exp(theta (T - 37)), theta = -log(1 - 0.0637)
+  # (Michelsen 2001's 6.37% per degree), on hepatic intrinsic clearance inside
+  # the well-stirred model, on renal clearance and on every other route
+  theta <- -log(1 - 0.0637)
+  expect_equal(physiologyTemperatureFactor(c(temperature = 28)), exp(-9 * theta))
+  expect_equal(physiologyTemperatureFactor(NULL), 1)
+  expect_equal(1 - physiologyTemperatureFactor(c(temperature = 36)), 0.0637)
+  # The physiology vector carries it, checked as the slider is
+  expect_equal(checkPhysiology(NULL)[["temperature"]], 37)
+  expect_error(checkPhysiology(c(temperature = 20)), "temperature")
+  expect_false(physiologyIsNormal(c(temperature = 33)))
+  expect_true(physiologyIsNormal(c(temperature = 37)))
+  # Every route of a drug cleared without blood flow limits falls by the factor
+  row <- data.frame(fraction_renal = 0.2, fraction_hepatic = 0.5, extraction_ratio = 1e-9,
+                    renal_extraction_ratio = NA)
+  f <- exp(-9 * theta)
+  expect_equal(physiologyClearanceFactor(row, checkPhysiology(c(temperature = 28))),
+               f, tolerance = 1e-6)
+  # A flow-limited drug changes less: the well-stirred model, liver x f
+  row$extraction_ratio <- 0.9
+  p <- checkPhysiology(c(temperature = 28))
+  expect_equal(physiologyClearanceFactor(row, p),
+               0.2 * f + 0.5 * hepaticClearanceFactor(0.9, 1, f) + 0.3 * f)
+  expect_gt(physiologyClearanceFactor(row, p), f)
+  # Propofol (hepatic E 0.87, renal E 0.58) keeps 82% of its clearance at
+  # 28 C at normal blood flow, and Bartosova 2026's 42% only when the
+  # cardiac slider also lowers flow (recorded in R/physiology.R)
+  pk <- function(...) getDrugPK("propofol", 70, 170, 40, "male", physiology = c(...))$PK$default
+  ratio <- pk(temperature = 28)$cl1 / pk()$cl1
+  expect_equal(ratio, 0.816, tolerance = 2e-3)
+  expect_lt(pk(temperature = 28, cardiac = 0.4)$cl1 / pk()$cl1, 0.5)
+  # Volumes, intercompartmental clearances and ke0 do not move
+  expect_equal(pk(temperature = 28)$v1, pk()$v1)
+  expect_equal(pk(temperature = 28)$cl2, pk()$cl2)
+  # A drug without a physiology row is unchanged
+  expect_null(physiologyRow("notADrug"))
+  # The summary says it
+  expect_match(physiologySummary(c(temperature = 31)), "31 °C", fixed = TRUE)
 })

@@ -103,7 +103,7 @@ PHYSIOLOGY_MAX <- 10
 
 #' Normal physiology
 #' @noRd
-PHYSIOLOGY_DEFAULT <- c(liver = 1, renal = 1, cardiac = 1, gi = 1)
+PHYSIOLOGY_DEFAULT <- c(liver = 1, renal = 1, cardiac = 1, gi = 1, temperature = 37)
 
 #' Exponent of cardiac output on V1 (V1' = V1 x cardiac^exponent).  An
 #' assumption: the direction is physiological (less dilution in the first
@@ -130,8 +130,13 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # until then the fit was made at the sliders, so a slider acted as a prior the
 # levels pulled back against).
 #
-# OPEN QUESTION [decision, for Shafer, 2026-11-16]: should body temperature
-# also lower the intravenous drugs' clearance, and how?  Read in full so far:
+# Body temperature and the intravenous drugs (DECIDED by Shafer, 2026-11-16):
+# one factor, exp(PHYSIOLOGY_TEMPERATURE_CLEARANCE_SLOPE (T - 37)), on the
+# liver's intrinsic clearance inside the well-stirred model, on the kidney's
+# clearance and on every other route (physiologyTemperatureFactor()); blood
+# flow is the Cardiac output slider's.  Papers by Gideon Koren are not used
+# (Shafer, 2026-11-16: suspect after findings of research fraud).  The
+# evidence, read in full unless said:
 # midazolam (CYP3A), CL = 18.5 (T/36.5)^4.24 L/h, 11.6%/C at 36.5 C, fitted
 # over 34.8-37.8 C only (Hostler 2010, DMD 38:781); vecuronium (hepatic
 # carrier uptake, not CYP), 11.3%/C over 34.3-38.0 C, its renal share
@@ -232,10 +237,12 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # model (Shellhaas 2013, Pediatr Crit Care Med 14:194); a long half-life
 # against 72 h of cooling.  Gentamicin troughs alike in 55 cooled and
 # normothermic encephalopathic neonates, creatinine explaining them (Liu
-# 2009, Pediatrics 124:310).  All read in full.  The choices: one factor
-# on hepatic intrinsic clearance (inside the well-stirred model) for every
-# drug, or separate CYP, UGT and esterase factors; and whether to extend a
-# fit made above 34.8 C down to 28 C.
+# 2009, Pediatrics 124:310).  All read in full.  Chosen over separate CYP,
+# UGT and esterase factors because the classes do not differ beyond the
+# scatter, and over a factor on total clearance because the steepest human
+# values (midazolam in volunteers, propofol and cisatracurium on bypass)
+# carry falls in blood flow that the Cardiac output slider already models.
+# Michelsen's exponential is the one fit that spans the slider's 28-37 C.
 #
 # Body temperature and cardiac output are NOT coupled: hypothermia does not
 # lower cardiac output by itself.  Fever raises cardiac output and cooling
@@ -397,6 +404,19 @@ PHYSIOLOGY_TEMPERATURE_MAX <- 37
 PHYSIOLOGY_TEMPERATURE_DEFAULT <- 37
 PHYSIOLOGY_TEMPERATURE_STEP <- 0.5
 
+#' Slope of ln(elimination capacity) on body temperature, per degree C: 6.37%
+#' per degree, remifentanil's clearance on bypass over 20-35 C (Michelsen 2001,
+#' Anesth Analg 93:1100, exp(theta (T - 37))), the one human fit spanning the
+#' slider's range.  Chosen by Shafer (2026-11-16) as one factor for every
+#' route, from the evidence recorded above: 6-8%/C for CYP (pig CYP3A4
+#' microsomes, Fritz 2005; minipig, Stroe 2024), glucuronidation (Norling
+#' 1974; morphine and the pooled neonatal group, Favie 2019, 2020), filtration
+#' (amoxicillin, ceftazidime, Bijleveld 2017, van der Veer 2023; doxacurium,
+#' Asokumar 1998), esterases (remifentanil) and Hofmann elimination
+#' (atracurium in plasma, Merrett 1983).
+#' @noRd
+PHYSIOLOGY_TEMPERATURE_CLEARANCE_SLOPE <- -log(1 - 0.0637)
+
 #' Slope of ln(blood:gas) on temperature, per degree C (Zhou 2002)
 #' @noRd
 GAS_SOLUBILITY_TEMPERATURE_SLOPE <- c(desflurane = 0.0302,
@@ -506,11 +526,13 @@ checkPhysiology <- function(physiology)
   if (is.null(physiology)) return(PHYSIOLOGY_DEFAULT)
   if (is.list(physiology)) physiology <- unlist(physiology)
   if (!is.numeric(physiology) || is.null(names(physiology)) ||
-      !all(names(physiology) %in% PHYSIOLOGY_FACTORS) ||
+      !all(names(physiology) %in% names(PHYSIOLOGY_DEFAULT)) ||
       anyDuplicated(names(physiology)))
     stop("Invalid physiology: a numeric vector named by ",
-         paste(PHYSIOLOGY_FACTORS, collapse = ", "))
-  for (f in names(physiology))
+         paste(names(PHYSIOLOGY_DEFAULT), collapse = ", "))
+  if ("temperature" %in% names(physiology))
+    physiology[["temperature"]] <- checkBodyTemperature(unname(physiology[["temperature"]]))
+  for (f in intersect(names(physiology), PHYSIOLOGY_FACTORS))
     if (!is_valid_number(unname(physiology[[f]]), PHYSIOLOGY_MIN, PHYSIOLOGY_MAX))
       stop("Invalid physiology: ", f, " must be between ", PHYSIOLOGY_MIN,
            " and ", PHYSIOLOGY_MAX, " (multiples of normal function)")
@@ -523,7 +545,22 @@ checkPhysiology <- function(physiology)
 #' @noRd
 physiologyIsNormal <- function(physiology)
 {
-  all(checkPhysiology(physiology) == 1)
+  p <- checkPhysiology(physiology)
+  all(p[PHYSIOLOGY_FACTORS] == 1) && p[["temperature"]] == PHYSIOLOGY_TEMPERATURE_DEFAULT
+}
+
+#' Elimination capacity at a body temperature, as a multiple of its value at
+#' 37 C: \code{exp(PHYSIOLOGY_TEMPERATURE_CLEARANCE_SLOPE (T - 37))}.  It scales
+#' the liver's intrinsic clearance (inside the well-stirred model, so a drug
+#' whose clearance is limited by blood flow changes less), the kidney's
+#' (filtration in proportion, extraction through the same well-stirred form)
+#' and every other route (esterases, Hofmann elimination).  Blood flow is the
+#' Cardiac output slider's, which temperature does not move.
+#' @noRd
+physiologyTemperatureFactor <- function(physiology)
+{
+  t <- checkPhysiology(physiology)[["temperature"]]
+  exp(PHYSIOLOGY_TEMPERATURE_CLEARANCE_SLOPE * (t - PHYSIOLOGY_TEMPERATURE_DEFAULT))
 }
 
 #' The physiology table
@@ -598,14 +635,17 @@ physiologyClearanceFactor <- function(row, physiology)
   fh <- row$fraction_hepatic
   E  <- row$extraction_ratio
   ER <- row$renal_extraction_ratio
+  # Body temperature scales every organ's capacity, not its blood flow
+  # (physiologyTemperatureFactor())
+  cold <- physiologyTemperatureFactor(physiology)
   hepatic <- if (fh > 0) hepaticClearanceFactor(E, physiology[["cardiac"]],
-                                                physiology[["liver"]]) else 1
+                                                physiology[["liver"]] * cold) else 1
   # The well-stirred form serves the kidney too (organClearanceFactor is the
   # same function); filtration, with no renal extraction ratio, is linear.
   renal <- if (!is.null(ER) && isTRUE(is.finite(ER)))
-    hepaticClearanceFactor(ER, physiology[["cardiac"]], physiology[["renal"]])
-  else physiology[["renal"]]
-  fr * renal + fh * hepatic + (1 - fr - fh)
+    hepaticClearanceFactor(ER, physiology[["cardiac"]], physiology[["renal"]] * cold)
+  else physiology[["renal"]] * cold
+  fr * renal + fh * hepatic + (1 - fr - fh) * cold
 }
 
 #' Factor on oral bioavailability from the change in hepatic first pass
@@ -618,7 +658,8 @@ physiologyFirstPassFactor <- function(row, physiology)
   if (!isTRUE(as.logical(row$oral_first_pass))) return(1)
   E <- row$extraction_ratio
   if (E >= 1) return(1)
-  E2 <- hepaticExtractionAt(E, physiology[["cardiac"]], physiology[["liver"]])
+  E2 <- hepaticExtractionAt(E, physiology[["cardiac"]],
+                            physiology[["liver"]] * physiologyTemperatureFactor(physiology))
   (1 - E2) / (1 - E)
 }
 
@@ -818,7 +859,8 @@ physiologyFromInputs <- function(values)
       out[[f]] <- 10 ^ max(log10(PHYSIOLOGY_MIN), min(log10(PHYSIOLOGY_MAX), v))
   }
   # A slider at 0 is exactly normal, not 10^0 rounded.
-  out[abs(log10(out)) < PHYSIOLOGY_SLIDER_STEP / 2] <- 1
+  f <- PHYSIOLOGY_FACTORS
+  out[f][abs(log10(out[f])) < PHYSIOLOGY_SLIDER_STEP / 2] <- 1
   out
 }
 
@@ -836,6 +878,7 @@ physiologyCovariateRows <- function(physiology, temperature = NULL)
   value <- if (is.null(p)) rep("unreadable", length(PHYSIOLOGY_FACTORS)) else
     ifelse(p[PHYSIOLOGY_FACTORS] == 1, "normal",
            paste0("x", trimws(formatC(p[PHYSIOLOGY_FACTORS], digits = 3, format = "fg"))))
+  if (is.null(temperature) && !is.null(p)) temperature <- p[["temperature"]]
   t <- tryCatch(checkBodyTemperature(temperature), error = function(e) NULL)
   data.frame(Covariate = c(paste(PHYSIOLOGY_LABELS[PHYSIOLOGY_FACTORS],
                                  "(multiple of normal)"),
@@ -858,11 +901,13 @@ bodyTemperatureFromInput <- function(value)
 physiologySummary <- function(physiology)
 {
   physiology <- checkPhysiology(physiology)
-  changed <- physiology[physiology != 1]
-  if (length(changed) == 0) return("")
-  paste(sprintf("%s ×%s", tolower(PHYSIOLOGY_LABELS[names(changed)]),
-                formatC(changed, digits = 2, format = "fg")),
-        collapse = ", ")
+  factors <- physiology[PHYSIOLOGY_FACTORS]
+  changed <- factors[factors != 1]
+  out <- sprintf("%s ×%s", tolower(PHYSIOLOGY_LABELS[names(changed)]),
+                 formatC(changed, digits = 2, format = "fg"))
+  if (physiology[["temperature"]] != PHYSIOLOGY_TEMPERATURE_DEFAULT)
+    out <- c(out, sprintf("%s °C", format(physiology[["temperature"]])))
+  paste(out, collapse = ", ")
 }
 
 #' What the Physiology panel says under its sliders
@@ -871,28 +916,23 @@ physiologySummary <- function(physiology)
 #' @param drugs the dosed drugs
 #' @noRd
 physiologyNote <- function(physiology, drugs,
-                           temperature = PHYSIOLOGY_TEMPERATURE_DEFAULT)
+                           temperature = NULL)
 {
-  cold <- !is.null(temperature) && temperature != PHYSIOLOGY_TEMPERATURE_DEFAULT
-  if ((physiologyIsNormal(physiology) && !cold) || length(drugs) == 0) return(NULL)
+  physiology <- checkPhysiology(physiology)
+  if (!is.null(temperature)) physiology[["temperature"]] <- checkBodyTemperature(temperature)
+  cold <- physiology[["temperature"]] != PHYSIOLOGY_TEMPERATURE_DEFAULT
+  if (physiologyIsNormal(physiology) || length(drugs) == 0) return(NULL)
   drugs <- unique(drugs)
   # The carrier gases and the ventilation are settings, not drugs.  The agents
-  # respond to cardiac output (gasBodyPhysiology()) and, the volatile ones, to
-  # body temperature (gasPropertiesAt()); the intravenous drugs to the four
-  # sliders only.
+  # respond to cardiac output (gasBodyPhysiology()) and to body temperature
+  # (gasPropertiesAt()); the intravenous drugs with a physiology row to the
+  # four sliders and to body temperature (physiologyTemperatureFactor()).
   gasAgents <- intersect(drugs, physiologyGasAgents())
   drugs <- drugs[!isGasDrug(drugs)]
-  factorsMoved <- !physiologyIsNormal(physiology)
-  cardiacMoved <- checkPhysiology(physiology)[["cardiac"]] != 1
-  # Every agent a user doses responds to temperature: the volatile agents'
-  # solubility and MAC, nitrous oxide's MAC
-  volatile <- gasAgents %in% c(names(GAS_SOLUBILITY_TEMPERATURE_SLOPE), "nitrousOxide")
-  changed <- c(if (factorsMoved) intersect(drugs, physiologyDrugs()),
-               gasAgents[cardiacMoved | (cold & volatile)])
-  noData <- if (factorsMoved) setdiff(drugs, physiologyDrugs()) else character(0)
-  notByTemperature <- if (cold && !factorsMoved) drugs else character(0)
-  notByTemperature <- c(notByTemperature,
-                        if (cold && !cardiacMoved) gasAgents[!volatile])
+  cardiacMoved <- physiology[["cardiac"]] != 1
+  changed <- c(intersect(drugs, physiologyDrugs()),
+               gasAgents[rep(cardiacMoved || cold, length(gasAgents))])
+  noData <- setdiff(drugs, physiologyDrugs())
   tags$div(
     class = "small physiology-note",
     if (length(changed))
@@ -901,11 +941,6 @@ physiologyNote <- function(physiology, drugs,
       tags$p(class = "text-warning",
              tags$strong("Not changed (no physiology data yet): "),
              paste(noData, collapse = ", ")),
-    if (length(notByTemperature))
-      tags$p(class = "text-muted",
-             tags$strong("Not changed by body temperature: "),
-             paste(notByTemperature, collapse = ", "),
-             " (it acts on the inhaled agents only)."),
     if (length(gasAgents) && !cardiacMoved && !cold)
       tags$p(class = "text-muted",
              tags$strong("Inhaled agents "), "(", paste(gasAgents, collapse = ", "),

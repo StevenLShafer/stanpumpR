@@ -277,9 +277,30 @@ logic lower it, but the two have different causes (inflammation, and heat lost
 to the room), so stanpumpR does not tie one slider to the other. The fall in brain
 blood flow is not modelled either. A threshold for the time until threshold is
 a tension you typed and does not move with MAC; the summed MAC series and its
-threshold do. The intravenous drugs are not changed by temperature, although
-hypothermia slows the clearance of many of them. GasMan models none of this:
+threshold do. GasMan models none of this:
 its source code mentions temperature only in the vaporiser's vapour pressure.
+
+## Body temperature and the intravenous drugs
+
+Cooling slows the elimination of most intravenous drugs, because enzymes and
+filtration work more slowly in the cold. stanpumpR multiplies each drug's
+capacity to eliminate it by exp(−0.0658 (37 − T)), 6.4% less for each degree
+below 37 °C, so 55% of normal at 28 °C. The figure is Michelsen and
+colleagues' fit to remifentanil in patients on bypass between 20 and 35 °C,
+the one human study that spans the whole slider. The rest of the evidence
+agrees within its scatter, about 6 to 8% per degree: CYP enzymes in liver
+tissue, glucuronidation, filtration by the kidney (amoxicillin, ceftazidime
+and doxacurium), esterases (remifentanil) and the chemical breakdown of
+atracurium.
+
+The factor acts on what the liver and kidneys can do, not on how much blood
+reaches them, which is the Cardiac output slider's. So a drug whose clearance
+is limited by liver blood flow changes less: propofol keeps 82% of its
+clearance at 28 °C. In patients cooled deeply on bypass, Bartošová and
+colleagues found propofol clearance at 42% of normal at 28 °C, because flow
+falls too. Lower the Cardiac output slider as well to reproduce that: at 0.4
+of normal, propofol falls to 44%. Only drugs with a physiology row respond;
+volumes, intercompartmental clearances and ke0 do not change.
 
 ## The sliders and the Bayesian update
 
@@ -311,6 +332,10 @@ Antognini JF, Lewis BK, Reitan JA. Hypothermia minimally decreases nitrous
 oxide anesthetic requirements. *Anesth Analg* 1994;79:980-2.
 doi:10.1213/00000539-199411000-00027
 
+Bartošová T, Šíma M, Prskavec T, et al. Deep hypothermia reduces the predictive accuracy of the Eleveld
+propofol model: population pharmacokinetic modelling in cardiac surgery.
+*Biomed Pharmacother* 2026;200:119523. doi:10.1016/j.biopha.2026.119523
+
 Castle-Kirszbaum M, Parkin WG, Goldschlager T, Lewis PM. Cardiac output and
 cerebral blood flow: a systematic review of cardio-cerebral coupling.
 *J Neurosurg Anesthesiol* 2022;34:352-63. doi:10.1097/ANA.0000000000000768
@@ -332,6 +357,11 @@ systemic hemodynamics during graded orthostatic stress in humans.
 
 Liu M, Hu X, Liu J. The effect of hypothermia on isoflurane MAC in children.
 *Anesthesiology* 2001;94:429-32. doi:10.1097/00000542-200103000-00011
+
+Michelsen LG, Holford NH, Lu W, Hoke JF, Hug CC, Bailey JM. The pharmacokinetics
+of remifentanil in patients undergoing coronary artery bypass grafting with
+cardiopulmonary bypass. *Anesth Analg* 2001;93:1100-5.
+doi:10.1097/00000539-200111000-00006
 
 Ogoh S, Brothers RM, Barnes Q, et al. The effect of changes in cardiac output
 on middle cerebral artery mean blood velocity at rest and during exercise.
