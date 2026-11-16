@@ -267,6 +267,20 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # 6.2-10.7%/C near 32 C, at saturating substrate; below the transition
 # 37-94 kcal/mol, outside the slider's range.  This factor is equivalent to
 # an activation energy of 12.2 kcal/mol at 32 C, the low end of those.
+# The hydrogen-abstraction step itself, read in full: CYP119 compound I
+# oxidising benzyl alcohol over -50 to -25 C, Ea 15.1 kcal/mol, 7.8%/C near
+# 32 C, a lower bound because tunnelling at -50 C flattens the plot (Wang
+# 2009, J Am Chem Soc 131:10629); QM/MM barriers of 13.2-18.1 kcal/mol for
+# P450cam and BM3, 6.9-9.3%/C, with no tunnelling at room temperature,
+# the enzyme's field widening the barrier, and the isotope effect rising
+# steeply only below 250-260 K (Kalita 2025, J Am Chem Soc 147:35576); and
+# C-H cleavage at least partly rate-limiting in many drug oxidations but
+# not all (product release limits CYP2E1's ethanol oxidation, amine
+# N-dealkylations show little isotope effect), so a whole-enzyme rate
+# carries several steps' temperature dependence, with no study of
+# tunnelling in a mammalian CYP (Guengerich 2017, Methods Enzymol 596:217).
+# So tunnelling does not act in the slider's 28-37 C, and the chemical
+# step's 7-9%/C brackets this factor with the microsomal data above.
 #
 # Body temperature and cardiac output are NOT coupled: hypothermia does not
 # lower cardiac output by itself.  Fever raises cardiac output and cooling
