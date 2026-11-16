@@ -2778,7 +2778,7 @@ registry <- rbind(
       cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
       trimester = "third", comparator = "postpartum (same woman)",
       design = "paired NCA", n = 1L, confidence = "low",
-      evidence_read = "full text",
+      evidence_read = "full_text",
       source = "Kantrowitz-Gordon I, Hays K, Kayode O, et al. Cancer Chemother Pharmacol 2018;81:455-460 PMID 29305638",
       source_url = "https://doi.org/10.1007/s00280-017-3511-6",
       to_obtain = "",
