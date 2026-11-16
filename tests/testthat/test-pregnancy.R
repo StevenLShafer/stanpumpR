@@ -38,7 +38,10 @@ test_that("every drug of the library has exactly one row in the pregnancy regist
   expect_true(all(registry$gfr_factor == PREGNANCY_GFR_FACTOR, na.rm = TRUE))
   # each category is the drug table's
   dd <- getDrugDefaultsGlobal()
-  expect_equal(registry$category, dd$Category[match(registry$drug, dd$Drug)])
+  # (a candidate model of a chosen-model group takes its group's)
+  owner <- ifelse(is.na(modelCandidateGroup(registry$drug)), registry$drug,
+                  modelCandidateGroup(registry$drug))
+  expect_equal(registry$category, dd$Category[match(owner, dd$Drug)])
 })
 
 test_that("exactly the applied models read the flag", {
@@ -303,9 +306,10 @@ test_that("every drug's page carries its row of the registry", {
 })
 
 test_that("the slide workbook's covariates say whether the patient was pregnant", {
-  # generateEmail() builds the sheet inline; the row it writes is pinned
-  # here by name so a reordering of the sheet is caught.
-  src <- paste(deparse(generateEmail), collapse = "\n")
+  # writeWorkbook() builds the sheet inline; the row it writes is pinned
+  # here by name so a reordering of the sheet is caught.  (test-export.R
+  # reads the row back from a downloaded workbook.)
+  src <- paste(deparse(writeWorkbook), collapse = "\n")
   expect_match(src, "\"Pregnant\"", fixed = TRUE)
   expect_match(src, "isTRUE(values$pregnant)", fixed = TRUE)
 })

@@ -13,7 +13,9 @@ simulateGases(
   uptakeEffect = TRUE,
   circuit = c("ideal", "semi-closed"),
   deadSpace = GAS_DEAD_SPACE_FRACTION,
-  oxygenUptake = TRUE
+  oxygenUptake = TRUE,
+  physiology = NULL,
+  temperature = NULL
 )
 }
 \arguments{
@@ -30,6 +32,15 @@ minutes, and \code{Dose}.  Non-gas rows are ignored.}
 
 \item{uptakeEffect, circuit, deadSpace, oxygenUptake}{passed to
 \code{advanceClosedFormGas()}}
+
+\item{physiology}{NULL, or the physiology sliders' factors (see
+\code{getDrugPK()}); only \code{cardiac} acts on the gases, through
+\code{gasBodyPhysiology()}: cardiac output and its split among the tissue
+groups}
+
+\item{temperature}{NULL (37 C), or the body temperature in C, which sets
+the agents' solubility and MAC (\code{gasPropertiesAt()}); kept in the
+body as \code{temperature}}
 }
 \value{
 \code{NULL} if the dose table contains no gases, otherwise the list

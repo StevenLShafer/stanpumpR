@@ -33,10 +33,11 @@ function notifyRefusedEntries(refused, timeCol, outcome) {
     if (/^\s*-/.test(r.entry)) {
       return '"' + r.entry + '" was not accepted: a ' + what + ' cannot be negative.';
     }
-    if (readEntryNumber(r.entry) !== null) {
-      return '"' + r.entry + '" was not accepted: ' + (what === 'dose'
+    var n = readEntryNumber(trimEntry(r.entry));
+    if (n !== null) {
+      return '"' + r.entry + '" was not accepted: ' + (what === 'dose' && Number(n) > MAX_DOSE_VALUE
         ? 'a dose cannot be more than 1,000,000,000.'
-        : 'a time cannot be more than ' + MAX_TIME_STRING_LENGTH + ' characters long.');
+        : 'a ' + what + ' written out in full cannot be more than ' + MAX_TIME_STRING_LENGTH + ' characters long.');
     }
     return '"' + r.entry + '" was not accepted: a ' + what + ' must be a number.';
   });
@@ -112,12 +113,16 @@ function padTwo(n) {
 var MAX_DOSE_VALUE = 1e9;
 var MAX_TIME_STRING_LENGTH = 32;
 
-// A blank dose is 0, the number, as the grid has always stored it
+// A blank dose is 0, the number, as the grid has always stored it.  A dose
+// whose stored string is longer than MAX_TIME_STRING_LENGTH is refused, as R's
+// validateDose() refuses it: the server blanks such a cell
+// (restoredDoseTable()), so "1e-35", written out in 37 characters, was shown
+// as taken and then lost (Carbon's third UI audit, 2026-11-15, M4).
 function validateDose(dose) {
   var x = trimEntry(dose);
   if (x === '') return 0;
   var n = readEntryNumber(x);
-  return (n === null || Number(n) > MAX_DOSE_VALUE) ? '' : n;
+  return (n === null || Number(n) > MAX_DOSE_VALUE || n.length > MAX_TIME_STRING_LENGTH) ? '' : n;
 }
 
 function validateTime(time) {

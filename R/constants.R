@@ -208,6 +208,26 @@ GESTATIONAL_AGE_TERM <- 40
 MIN_GESTATIONAL_AGE <- 22
 MAX_GESTATIONAL_AGE <- 44
 
+# Serum albumin, g/dL, for the models with an albumin covariate (methotrexate,
+# Ibarra 2023; methotrexatePediatric, Taylor 2023; Steven L. Shafer,
+# 2026-11-06).  Optional: when it is not entered (NULL, or NA from an empty
+# field) each model holds its own reference value.  Read only by models that
+# name `albumin`.  The bounds take in any albumin a laboratory reports (the
+# severest hypoalbuminaemia reaches about 1 g/dL, and few labs report above
+# 5.5); the lower bound is also the floor a power of albumin sees, so the
+# term stays finite.
+MIN_ALBUMIN <- 0.5
+MAX_ALBUMIN <- 6
+
+# Serum aspartate aminotransferase (AST), U/L, for the models with an AST
+# covariate (epirubicin, Ralph 2003; Steven L. Shafer, 2026-11-10).  Optional:
+# when it is not entered each model holds its own reference value.  Read only
+# by models that name `ast`.  The bounds take in what a laboratory reports
+# (1 U/L to the 5000 U/L of a fulminant hepatitis); a model guards its own
+# term within the range its source studied.
+MIN_AST <- 1
+MAX_AST <- 5000
+
 MIN_AGE <- 0
 MAX_AGE <- 90
 # The youngest age the adult-fitted covariate terms see.  Several models carry
@@ -242,12 +262,17 @@ RESOLUTION <- 100
 # Max number of emails a single session can send out, to limit abuse
 EMAIL_SESSION_LIMIT <- 25
 
-# What the browser is told when Email Slide fails; the exception itself (an
-# SMTP diagnostic, a path) goes to the server's log (sendSlide()).
+# What the browser is told when Export's email fails; the exception itself
+# (an SMTP diagnostic, a path) goes to the server's log (sendSlide()).
 EMAIL_FAILURE_MESSAGE <- paste0(
   "The slide could not be sent. The server's log has the details; ",
   "please try again later, or tell the app's maintainer.")
-# The Email Slide's SMTP send: attempts, and seconds allowed to connect and
+# And when one of its downloads could not be written (app_server()'s
+# exportDownload()); the exception goes to the server's log in the same way.
+EXPORT_FAILURE_MESSAGE <- paste0(
+  "The file could not be made. The server's log has the details; ",
+  "please try again later, or tell the app's maintainer.")
+# The email's SMTP send: attempts, and seconds allowed to connect and
 # for each attempt as a whole (curl's connecttimeout and timeout).  Measured
 # against an address that never answers: emayili's and curl's defaults held
 # the R process 80 s here, and up to 25 minutes (5 x 300 s) where a dropped
@@ -262,7 +287,14 @@ MAX_DOSE_ROWS <- 500L
 MAX_EVENT_ROWS <- 100L
 MAX_TARGET_ROWS <- 20L
 MAX_DOSE_VALUE <- 1e9
+# The most units one Drug Library edit may add, each of which is simulated
+# once (drugLibraryUnitProblems(); typically 0.01 s each, at most 1.5 s)
+DRUG_LIBRARY_MAX_NEW_UNITS <- 40L
 MAX_INPUT_TEXT <- 2000L
+# The Help search box's maxlength, which the server holds its value to as
+# well: the browser's limit is the page's to keep, not the server's
+# (Carbon's third UI audit, 2026-11-15, M5)
+HELP_SEARCH_MAX_CHARS <- 100L
 MAX_PLOT_WIDTH <- 4096L
 MIN_PLOT_WIDTH <- 100L
 MAX_YAXIS_HEIGHT <- 350L
@@ -323,6 +355,11 @@ MAX_BOOKMARK_URL_CHARS <- 8000L
 
 # How the plot area introduces the error that stopped the simulation
 PLOT_FAILURE_PREFIX <- "The simulation could not be drawn. "
+
+# What the plot area says while no drug has a dose above 0, the drugs it
+# draws (positiveDoseDrugs(), R/drug-pipeline.R; Shafer, 2026-11-16)
+NOTHING_TO_DRAW_MESSAGE <-
+  "Enter a dose or target above 0 in the dose table to see the simulation."
 
 # Be sure there are more items below then potential facets on the simulation plot
 #                     1     2     3     4     5     6     7     8     9    10    11    12    13    14   15
@@ -616,6 +653,7 @@ DRUG_CATEGORIES <- c(
   "Vasoactive and resuscitation",
   "Parkinson disease",
   "Pulmonary hypertension",
+  "Chemotherapy",
   "Other",
   "Illicit drugs"
 )
@@ -627,6 +665,10 @@ VASOACTIVE_DRUG_CATEGORY <- "Vasoactive and resuscitation"
 # complications (inst/help/models/parkinsons.md): every candidate catalogued in
 # inst/extdata/parkinsonsRegistry.csv, implemented or not.
 PARKINSONS_DRUG_CATEGORY <- "Parkinson disease"
+# The category of the cytotoxic chemotherapy drugs (inst/help/models/
+# chemotherapy.md, docs/chemotherapy.md): every candidate model catalogued in
+# inst/extdata/chemotherapyRegistry.csv, implemented or not.
+CHEMOTHERAPY_DRUG_CATEGORY <- "Chemotherapy"
 # The categories whose every drug, and every metabolite of one, must have a
 # row in inst/extdata/therapeuticRanges.csv (R/therapeuticRanges.R): the
 # range the band draws, or why there is none.  Every category since
@@ -762,6 +804,11 @@ TIME_EXTEND_MARGIN <- c(minutes = 30, hours = 30, days = MINS_PER_DAY / 2, weeks
 
 REFERENCE_TIME_NONE <- "none"
 NORMALIZE_NONE <- "none"
+# The choices of the plot's own controls, which a link or a forged input can
+# replace with anything (Carbon's third UI audit, 2026-11-15, C1)
+PLOT_NORMALIZATIONS <- c(NORMALIZE_NONE, "Peak plasma", "Peak effect site")
+PLOT_TYPICAL_CHOICES <- c("none", "Mid", "Range")
+PLOT_LINE_TYPES <- c("blank", "solid", "dashed", "dotted", "dotdash")
 PK_EVENT_DEFAULT <- "default"
 
 PLOT_ID_EVENTS      <- "Events"
@@ -814,6 +861,11 @@ GRID_FINE_POINTS    <- 20000
 DEBUG_LEVEL_OFF <- 0
 DEBUG_LEVEL_NORMAL <- 1
 DEBUG_LEVEL_VERBOSE <- 2
+# The session's debug log (?debug=1) keeps its first line, the build, and its
+# newest lines up to about this many characters (appendDebugLog() in
+# R/app_globals.R): the whole log is copied at every line written and sent to
+# the browser at every flush, so a long session made each write slower.
+DEBUG_LOG_MAX_CHARS <- 200000
 
 # Every https URL on one of these websites in a drug reference, wherever it
 # stands in the citation, is shown in the UI as a link labelled with the
@@ -912,8 +964,18 @@ BAYES_PK_VARIABILITY_MAX <- 100
 BAYES_RESIDUAL_VARIABILITY_DEFAULT <- 5
 BAYES_RESIDUAL_VARIABILITY_MIN <- 1
 BAYES_RESIDUAL_VARIABILITY_MAX <- 50
+# The sliders' steps; a teaching scenario's values must lie on them, or the
+# browser snaps a value the scenario's page prints (helpScenarioCheck())
+BAYES_PK_VARIABILITY_STEP <- 5
+BAYES_RESIDUAL_VARIABILITY_STEP <- 1
 # The most measured concentrations the table holds
 MAX_BAYES_OBSERVATIONS <- 30L
+# The latest measurement an update uses, minutes: the longest plot the app
+# offers (365 days).  The fit simulates to its last measurement, so a time
+# with no ceiling (1e12 minutes, typed or in a link) ran tciSchedule() or a
+# schedule's repeats for hours; in the app the end of the plot is the limit
+# (bayesianUpdateDrugs(maximum =)).
+BAYES_MAX_TIME <- max(MAX_TIME_VALUES)
 # Rows the table is drawn with when empty
 BAYES_TABLE_BLANK_ROWS <- 4L
 # The estimate is searched within this factor of the model's clearance and
@@ -922,5 +984,29 @@ BAYES_TABLE_BLANK_ROWS <- 4L
 # a measurement that no clearance can explain (a level entered in the wrong
 # units) cannot drive the search to a volume of zero.
 BAYES_FACTOR_LIMIT <- 20
+# The most iterations of the search (bayesianSearch(), about three
+# simulations each); the fits measured take 3 to 8
+BAYES_MAX_ITERATIONS <- 50L
+# The relative step of the search's finite differences (bayesianSearch())
+BAYES_JACOBIAN_STEP <- 1e-6
+# The longest an update searches, seconds, all drugs together: no further
+# simulation is started after it.  A worker runs one session's R at a time,
+# so a fit holds every session on it; six interacting antiseizure drugs over
+# 52 weeks, each simulation of them seconds long, held one for more than
+# eight minutes (Carbon's second UI audit, 2026-11-15, F3).  The fits
+# measured take 1 to 10 seconds.
+BAYES_MAX_SECONDS <- 30
 # The label of the population curve drawn beside the individualized one
 BAYES_PRIOR_LABEL <- "population"
+# How far its colour is mixed towards black or white (alternativeModelColor()):
+# further than the other companions' 0.45, so that a drug with the
+# population line and another companion (Minto or Schnider, "no
+# interactions") draws the two in different colours
+BAYES_PRIOR_COLOR_AMOUNT <- 0.7
+# With the antiseizure interactions on, the measured drugs are updated in
+# turn, at most this many times, until no estimate moves by more than
+# BAYES_JOINT_TOLERANCE (relative) from one pass to the next (R/bayesian.R;
+# Carbon's fourth UI audit, 2026-11-15, H8).  A pass whose inputs did not
+# change reuses its fits, so a single measured drug costs one fit.
+BAYES_JOINT_PASSES <- 6L
+BAYES_JOINT_TOLERANCE <- 1e-3

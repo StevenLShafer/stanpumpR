@@ -113,7 +113,30 @@ var PKConvert = (function() {
     out.halfLife = l.map(function(x) { return LN2 / x; });
     var sumA = a.reduce(function(s, x) { return s + x; }, 0);
     out.fraction = a.map(function(x) { return x / sumA; });
+    var range = outOfRange(out);
+    if (range) {
+      return {error: range.name + ' would be ' + fmt(range.value) +
+              ': these values are out of the range of numbers the page can compute'};
+    }
     return {model: out};
+  }
+
+  // The first derived value that is not a positive, finite number, or null.
+  // The inputs were checked, but what they give can overflow or underflow:
+  // V1 = 1e308 with k10 = 10 gave CL1 = Infinity, and CL = 5e-309 with a
+  // half-life of ln 2 gave A1 = Infinity and its fraction NaN, each shown
+  // under "The model is defined" (Carbon's fourth UI audit, 2026-11-15, M1).
+  var DERIVED = [['v', 'V'], ['cl', 'CL'], ['lambda', 'λ'], ['halfLife', 't½ λ'], ['A', 'A'],
+                 ['fraction', 'A', '/ΣA']];
+  function outOfRange(out) {
+    for (var d = 0; d < DERIVED.length; d++) {
+      var x = out[DERIVED[d][0]];
+      for (var i = 0; i < x.length; i++) {
+        if (!positive(x[i])) return {name: DERIVED[d][1] + (i + 1) + (DERIVED[d][2] || ''), value: x[i]};
+      }
+    }
+    if (!positive(out.vdss)) return {name: 'Vdss', value: out.vdss};
+    return null;
   }
 
   // A route that was given exponents must give them back: a check on the
@@ -265,9 +288,15 @@ var PKConvert = (function() {
   // The effect site peaks where it meets the plasma curve (dCe/dt =
   // ke0 (Cp - Ce)).  After a bolus Cp only falls and Ce only rises until
   // then, so Cp - Ce changes sign once, and bisection finds it.
+  // The bracket starts at 1 / (ke0 + lambda1), or 1 / max(ke0, lambda1)
+  // where that sum overflows: its reciprocal was 0, which doubling never
+  // moved, and the page froze (V1 = 1, CL1 = 1e308, ke0 = 1e308; Carbon's
+  // fourth UI audit, 2026-11-15, M1).
   function peakTime(model, ke0) {
     var f = function(t) { return plasma(model, t) - effect(model, ke0, t); };
     var lo = 0, hi = 1 / (ke0 + model.lambda[0]);
+    if (!(hi > 0)) hi = 1 / Math.max(ke0, model.lambda[0]);
+    if (!(hi > 0) || !isFinite(hi)) return NaN;
     while (f(hi) > 0 && hi < 1e15) { lo = hi; hi *= 2; }
     for (var i = 0; i < 200 && hi - lo > 1e-13 * hi; i++) {
       var mid = (lo + hi) / 2;
@@ -381,17 +410,49 @@ var PKConvert = (function() {
   // The states while a target of 1 is held at one site, every update to
   // tMax.  The interval lengthens as R/tci.R's does once the plasma is being
   // held, to at most max(10 s, min(10 min, tMax / 2000)).
+  //
+  // A trajectory that stops says which limit stopped it (`reason`: 'search'
+  // or 'updates'), so that the page names the right cause: it blamed the
+  // effect site's peak for an infusion of 1e300 min stopped by the update
+  // limit with an ordinary ke0 (the code review of PR #682, 2026-11-15).  And
+  // one that the search limit must stop is stopped before it starts, where
+  // it spent the whole budget, about a second of the page's one thread, at
+  // every keystroke (the same review).  The test is a lower bound: while the
+  // controller is in effect mode its first update's drug alone carries the
+  // effect site to the target (the later updates add none until it is
+  // within TCI_PLASMA_SWITCH), so effect mode lasts at least as long as a
+  // bolus's effect site takes to reach (1 - TCI_PLASMA_SWITCH) of its peak,
+  // and every update of it costs the same search.  A trajectory that would
+  // finish is never refused by it.
+  function effectSearchFloor(model, K, tMax) {
+    var perUpdate = Math.floor((K.tPeak + 10 / 60 + 1e-12) * 60) + 1;
+    var peak = effect(model, K.ke0, K.tPeak);
+    if (!(peak > 0) || !isFinite(peak)) return 0;
+    // The rise to (1 - TCI_PLASMA_SWITCH) of the peak, a little lower for
+    // the search's one-second grid
+    var level = (1 - TCI_PLASMA_SWITCH) * peak * 0.99;
+    var lo = 0, hi = K.tPeak;
+    for (var i = 0; i < 60; i++) {
+      var mid = (lo + hi) / 2;
+      if (effect(model, K.ke0, mid) < level) lo = mid; else hi = mid;
+    }
+    var updates = Math.floor(Math.min(lo, tMax) / TCI_INTERVAL);
+    return perUpdate * updates;
+  }
+
   function tciTrajectory(model, ke0, site, tMax) {
     var K = tciKinetics(model, ke0);
     var n = model.n, p = new Array(n).fill(0), e = new Array(n + 1).fill(0);
     var dtMax = Math.max(TCI_INTERVAL, Math.min(10, tMax / 2000));
     var t = 0, dt = TCI_INTERVAL, out = [];
     var budget = {used: 0, limit: TCI_MAX_SEARCH};
+    if (site === 'effect' && K.ke0 > 0 && !(effectSearchFloor(model, K, tMax) <= TCI_MAX_SEARCH))
+      return {K: K, states: out, aborted: true, reason: 'search'};
     while (t < tMax - 1e-9) {
-      if (out.length >= TCI_MAX_UPDATES) return {K: K, states: out, aborted: true};
+      if (out.length >= TCI_MAX_UPDATES) return {K: K, states: out, aborted: true, reason: 'updates'};
       var step = Math.min(dt, tMax - t);
       var x = tciRate(p, e, 1, site, step, K, budget);
-      if (x.aborted) return {K: K, states: out, aborted: true};
+      if (x.aborted) return {K: K, states: out, aborted: true, reason: 'search'};
       for (var i = 0; i < n; i++) {
         var d3 = Math.exp(-K.lambda3[i] * step);
         p[i] = p[i] * d3 + K.pinf[i] * x.rate * (1 - d3);
@@ -404,7 +465,8 @@ var PKConvert = (function() {
       out.push({t: t, p: p.slice(), e: e.slice()});
       dt = x.rate > 0 && !x.effectMode && t > K.tPeak ? Math.min(dt * 1.1, dtMax) : TCI_INTERVAL;
     }
-    return {K: K, states: out};
+    // `searched`, the search points used, which effectSearchFloor() never exceeds
+    return {K: K, states: out, searched: budget.used};
   }
 
   // The first time a sum of exponentials, amplitudes a and rates l, falls to
@@ -447,7 +509,7 @@ var PKConvert = (function() {
     var sum = function(x) { return x.reduce(function(s, v) { return s + v; }, 0); };
     sites.forEach(function(site) {
       var tr = tciTrajectory(model, ke0, site, tMax), K = tr.K, st = tr.states;
-      if (tr.aborted) { out[site] = {duration: [], time: [], aborted: true}; return; }
+      if (tr.aborted) { out[site] = {duration: [], time: [], aborted: true, reason: tr.reason}; return; }
       var first = 0;
       while (first < st.length &&
              Math.abs(sum(site === 'plasma' ? st[first].p : st[first].e) - 1) > TCI_PLASMA_SWITCH) first++;
@@ -530,11 +592,15 @@ var PKConvert = (function() {
   // than AXIS_MAX_TICKS, and always finite: a range that underflows the step
   // (1e-323 gave a step of 0, and a loop adding it never ended) or overflows
   // it gives just its two ends, and a range that is not a positive number
-  // gives 0 alone.  `step` comes back for the caller's own rounding.
+  // gives 0 alone.  `step` comes back for the caller's own rounding; a
+  // caller that has rounded its maximum up to a multiple of a step passes
+  // that step, which a step chosen again from the rounded maximum can miss
+  // (14 rounded to 16 at a step of 2 was then ticked at 5, and lost its
+  // top: the code review of PR #682, 2026-11-15).
   var AXIS_MAX_TICKS = 50;
-  function axisTicks(max, count) {
+  function axisTicks(max, count, given) {
     if (!(max > 0) || !isFinite(max)) return {step: NaN, ticks: [0]};
-    var step = niceStep(max, count);
+    var step = given > 0 && isFinite(given) ? given : niceStep(max, count);
     if (!(step > 0) || !isFinite(step) || !(max / step <= AXIS_MAX_TICKS)) return {step: NaN, ticks: [0, max]};
     var ticks = [];
     for (var i = 0; i <= AXIS_MAX_TICKS && i * step - max <= 1e-9 * step; i++) ticks.push(i * step);
@@ -555,7 +621,8 @@ var PKConvert = (function() {
     ke0FromPeakTime: ke0FromPeakTime, fmt: fmt, parseNumber: parseNumber, summaryRows: summaryRows,
     tciTrajectory: tciTrajectory, decrementTime: decrementTime, decrementCurves: decrementCurves,
     axisTicks: axisTicks, niceStep: niceStep, required: REQUIRED,
-    limits: {search: TCI_MAX_SEARCH, updates: TCI_MAX_UPDATES, ticks: AXIS_MAX_TICKS}
+    effectSearchFloor: function(model, ke0, tMax) { return effectSearchFloor(model, tciKinetics(model, ke0), tMax); },
+    limits: {search: TCI_MAX_SEARCH, updates: TCI_MAX_UPDATES, ticks: AXIS_MAX_TICKS, interval: TCI_INTERVAL}
   };
 })();
 
@@ -787,11 +854,13 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
       if (name === 'ke0') ke0 = t;
       else if (name === 'tke0') ke0 = Math.LN2 / t;
       else ke0 = P.ke0FromPeakTime(s.model, t);
+      var peak = ke0 > 0 && isFinite(ke0) ? P.peakTime(s.model, ke0) : NaN;
       if (!(ke0 > 0) || !isFinite(ke0)) {
         $result.text('No ke0 gives a peak at that time.').attr('data-kind', 'error');
+      } else if (!(peak > 0) || !isFinite(peak)) {
+        $result.text('Not admissible: this ke0 is out of the range of numbers the page can compute.').attr('data-kind', 'error');
       } else {
         s.ke0 = ke0;
-        var peak = P.peakTime(s.model, ke0);
         var shown = {ke0: ke0, tke0: Math.LN2 / ke0, tpeak: peak};
         $fields.each(function() {
           var k = $(this).attr('data-pk-effect');
@@ -820,8 +889,8 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
 
   // Shafer and Varvel's recovery curves ran to ten hours
   var DECREMENT_DEFAULT_MAX = 600;
-  // R/tci.R's TCI_INTERVAL, the controller's update, in minutes
-  var TCI_UPDATE_MINUTES = 10 / 60;
+  // The controller's update, in minutes (TCI_INTERVAL above, R/tci.R's)
+  var TCI_UPDATE_MINUTES = P.limits.interval;
 
   function decrement($root, s) {
     var $box = $root.find('.pkconv-decrement');
@@ -840,6 +909,15 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
     if (pct === null) pct = 50;
     if (!(pct > 0 && pct < 100)) { bad.push('the decrease must be between 0 and 100%'); $pct.addClass('pkconv-bad'); }
     if (until !== null && !(until > 0)) { bad.push('the longest infusion must be a positive time'); $until.addClass('pkconv-bad'); }
+    // 1e308 hours is a finite entry but Infinity minutes, which passed the
+    // test below, ran the controller to its update limit and printed "After
+    // an infusion of Infinity hours" over an axis with no ticks (Carbon's
+    // third UI audit, 2026-11-15, M4; the graph's own field already sets a
+    // horizon that is not finite aside, plot())
+    else if (until !== null && !isFinite(until * f)) {
+      bad.push('the longest infusion is too long to compute');
+      $until.addClass('pkconv-bad');
+    }
     // The controller updates every 10 s, so a shorter infusion has no
     // decrement curve to draw (1e-323 also underflowed the axis to nothing)
     else if (until !== null && !(until * f >= TCI_UPDATE_MINUTES)) {
@@ -874,7 +952,7 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
     if (!c.effect) text += ' Enter ke0 or the time to peak effect above to add the effect site.';
     if (c.plasma.aborted || (c.effect && c.effect.aborted)) {
       text += ' The page computes in your browser and stops an infusion that would take it more than about a second: ' +
-              (c.effect && c.effect.aborted && s.ke0
+              (c.effect && c.effect.aborted && c.effect.reason === 'search' && s.ke0
                 ? 'the effect site peaks ' + P.fmt(P.peakTime(s.model, s.ke0) / f, 3) + ' ' + s.unit +
                   ' after a bolus, and the controller searches that far ahead at every update. A larger ke0 or a shorter infusion will draw.'
                 : 'shorten the longest infusion.');
@@ -892,7 +970,7 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
     if (!(yMaxRaw > 0) || !isFinite(yMaxRaw)) yMaxRaw = 1;
     var yStep = niceStep(yMaxRaw, 5), yMax = Math.ceil(yMaxRaw * 1.02 / yStep) * yStep;
     if (!(yMax > 0) || !isFinite(yMax)) yMax = yMaxRaw;
-    var yTicks = axisTicks(yMax, 5).ticks;
+    var yTicks = axisTicks(yMax, 5, yMax === yMaxRaw ? undefined : yStep).ticks;
     var X = function(t) { return L + (W - L - R) * t / o.xMax; };
     var Y = function(v) { return H - B - (H - B - Tp) * v / yMax; };
     var out = ['<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" class="pkconv-graph" aria-label="' + o.aria + '">'];
@@ -994,10 +1072,11 @@ if (typeof document !== 'undefined' && typeof jQuery !== 'undefined') (function(
       ymax = Math.pow(10, top);
     } else {
       var step = niceStep(ymax, 5), rounded = Math.ceil(ymax * 1.02 / step) * step;
-      if (rounded > 0 && isFinite(rounded)) ymax = rounded;
+      var roundedOK = rounded > 0 && isFinite(rounded);
+      if (roundedOK) ymax = rounded;
       ymin = 0;
       ys = function(y) { return H - B - (H - B - Tp) * y / ymax; };
-      yTicks = axisTicks(ymax, 5).ticks;
+      yTicks = axisTicks(ymax, 5, roundedOK ? step : undefined).ticks;
     }
     var xTicks = axisTicks(T / f, 6).ticks;
 

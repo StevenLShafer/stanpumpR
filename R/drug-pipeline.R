@@ -55,6 +55,32 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery, cache = 
       for (field in names(sim)) drugs[[drug]][[field]] <- sim[[field]]
       drugs[[drug]]$sim    <- sim
       drugs[[drug]]$simKey <- key
+
+      # A Bayesian update's population line of a metabolite includes what
+      # its dosed parents form as the model has it (R/bayesian.R): the
+      # parents' entries as they were before the update, simulated here on
+      # their own doses for what they form, which foldMetabolites() adds.
+      # Without them the line was the drug's own doses alone, and flat at 0
+      # for a level of morphine formed from codeine (Carbon's third UI audit,
+      # 2026-11-15, H7).
+      sources <- drugs[[drug]]$populationSources
+      formed <- list()
+      for (p in names(sources))
+      {
+        pDT <- DT[DT$Drug == p, ]
+        if (nrow(pDT) == 0) next
+        pET <- ET[gsub(" ", "", ET$Event) %in% sources[[p]]$pkEvents, ]
+        pKey <- simulationKey(sources[[p]], pDT, pET, plotMaximum, FALSE, plotMinimum)
+        f <- cache[[drug]]$formedSims[[p]]
+        if (is.null(f) || !identical(f$key, pKey))
+        {
+          X <- simCpCe(pDT, pET, sources[[p]], plotMaximum, FALSE)
+          f <- list(key = pKey, metaboliteSeries = X$metaboliteSeries,
+                    metaboliteCompartments = X$metaboliteCompartments)
+        }
+        formed[[p]] <- f
+      }
+      drugs[[drug]]$formedSims <- if (length(formed)) formed
     }
 
     # The pharmacokinetic interactions among the antiseizure drugs (Graph
@@ -115,8 +141,11 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
                           alternativeModels = FALSE,
                           antiseizureInteractions = FALSE,
                           gestationalAge = NULL,
+                          albumin = NULL,
+                          ast = NULL,
                           opioidTolerance = OPIOID_TOLERANCE_DEFAULT,
-                          individual = NULL) {
+                          individual = NULL,
+                          physiology = NULL) {
   # The Patient Profile's Opioid tolerance raises every opioid's MEAC by its
   # factor (OPIOID_TOLERANCE_FACTORS), here, where each drug's MEAC enters
   # its entry, so everything that reads it downstream sees the tolerant MEAC.
@@ -137,8 +166,7 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
     # getDrugPK() reads it from this session's drugDefaults row, with any
     # Drug Thresholds edit.
     outputComments("Getting PK for", drug)
-    drugs[[drug]] <- utils::modifyList(
-      drugs[[drug]],
+    pk <- function(metaboliteIndividual = NULL)
       getDrugPK(
         drug = drug,
         weight = weight,
@@ -157,11 +185,25 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
         pregnant = pregnant,
         adjustToFFM = adjustToFFM,
         gestationalAge = gestationalAge,
+        albumin = albumin,
+        ast = ast,
         # The Bayesian update's estimate for this drug, or NULL
         # (R/bayesian.R): a list of clearance and volume factors, by drug.
-        individual = individual[[drug]]
+        individual = individual[[drug]],
+        physiology = physiology,
+        # The session's library, from which a metabolite's row (its units)
+        # is read
+        libraryDefaults = drugDefaults,
+        metaboliteIndividual = metaboliteIndividual
       )
-    )
+    resolved <- pk()
+    # A parent forms the individual's metabolite where the update estimated
+    # the metabolite (getDrugPK(metaboliteIndividual =)); its name is known
+    # once the parent is resolved
+    formed <- resolved$metaboliteName
+    if (!is.null(formed) && !is.null(individual[[formed]]))
+      resolved <- pk(individual[[formed]])
+    drugs[[drug]] <- utils::modifyList(drugs[[drug]], resolved)
     drugs
   }
 
@@ -208,7 +250,8 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
     idx <- which(drugDefaults$Drug == drug)[1]
     entry <- alternativeModelEntry(
       drug, weight, height, age, sex, drugDefaults[idx, ], adjustToFFM,
-      pregnant = pregnant, cyp2c9 = cyp2c9, vkorc1 = vkorc1
+      pregnant = pregnant, cyp2c9 = cyp2c9, vkorc1 = vkorc1,
+      physiology = physiology
     )
     if (is.null(entry)) next
     outputComments("Getting PK for", entry$drug)
@@ -222,4 +265,54 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
     drugs <- addAntiseizureReferenceEntries(drugs, dosed)
 
   drugs
+}
+
+# Only the drugs given a dose above 0 are drawn (Steven L. Shafer,
+# 2026-11-16).  A drug whose every row is 0, such as each drug the startup
+# menu puts in the table until a dose is typed, has a curve of zeros, and
+# drawing them was nearly all of the time a table of every startup drug
+# took: 51 s, 35 s of it ggplot drawing 231 empty panels (ChatGPT's
+# production audit, 2026-11-15).  Such a drug stays in the dose table; its
+# panel appears with its first dose above 0.
+
+#' The drugs of a dose table given a dose above 0
+#'
+#' @param DT a dose table (Drug, Dose), or NULL
+#' @returns the names of the drugs with at least one dose above 0
+#' @keywords internal
+positiveDoseDrugs <- function(DT)
+{
+  if (is.null(DT) || nrow(DT) == 0) return(character(0))
+  dose <- suppressWarnings(as.numeric(DT$Dose))
+  unique(as.character(DT$Drug[!is.na(dose) & dose > 0]))
+}
+
+#' The drug entries that are drawn
+#'
+#' Those of the drugs given a dose above 0 and of the metabolites they form,
+#' each with its companions (another model drawn beside it, `$companionOf`).
+#' A metabolite formed by a drug that is drawn is drawn whether or not its
+#' own rows are 0: its curve is what the parent forms, and its own rows
+#' (a 0 mg row of morphine beside codeine, which is how a level of morphine
+#' is entered) are simulated with it as before.
+#'
+#' @param drugs the drug list from recalculatePK()
+#' @param given the drugs given a dose above 0 (positiveDoseDrugs())
+#' @returns the drug list without the entries that are not drawn
+#' @keywords internal
+drawnDrugEntries <- function(drugs, given)
+{
+  if (length(drugs) == 0) return(drugs)
+  drawn <- intersect(given, names(drugs))
+  repeat {
+    formed <- unlist(lapply(drawn, function(d) drugs[[d]]$metaboliteName))
+    formed <- setdiff(intersect(formed, names(drugs)), drawn)
+    if (length(formed) == 0) break
+    drawn <- c(drawn, formed)
+  }
+  keep <- vapply(names(drugs), function(name) {
+    source <- drugs[[name]]$companionOf
+    (if (is.null(source)) name else source) %in% drawn
+  }, logical(1))
+  drugs[keep]
 }

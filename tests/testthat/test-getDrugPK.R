@@ -148,6 +148,9 @@ test_that("it returns the same value", {
     Units               = drugDefaults$Units,
     Default.Units       = drugDefaults$Default.Units,
     endCe               = drugDefaults$endCe,
+    # The library row it was built with, for a rebuild from the model
+    # (pkRebuildArgs())
+    drugDefaults        = drugDefaults,
     # The tissue depot's route (R/subcutaneous.R): regional anesthesia for
     # every drug that is not subcutaneous
     tissueRoute         = ROUTE_RA

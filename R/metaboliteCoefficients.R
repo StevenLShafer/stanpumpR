@@ -373,6 +373,23 @@ internalDoseScale <- function(concentrationUnits)
 }
 
 
+#' The factor that puts a concentration in `units` per mL in mcg/mL
+#'
+#' For the constants a few models hold in fixed units (the antiseizure
+#' interactions' Cref and EC50, Bouillon's propofol), against a drug's plotted
+#' concentration, which the Drug Library can move between mcg/mL and ng/mL:
+#' read unconverted, a drug moved to ng/mL was 1000-fold high there.
+#'
+#' @param units a drug's `Concentration.Units`
+#' @returns 1/1000 for ng (internalDoseScale()), otherwise 1: mcg, and the
+#'   units no such drug is plotted in
+#' @keywords internal
+mcgPerMlScale <- function(units)
+{
+  if (identical(as.character(units), "ng")) internalDoseScale("ng") else 1
+}
+
+
 #' Unit conversion from a parent's dose units to its metabolite's
 #'
 #' A parent and its metabolite need not report in the same units.  Morphine is
@@ -449,19 +466,25 @@ METABOLITE_FORMATION_BASIS <- data.frame(
              "enalapril", "prednisone",
              "amiodarone", "aripiprazole", "aspirin", "bupropion",
              "fluoxetine", "risperidone", "tramadol", "venlafaxine",
-             "clozapine", "amitriptyline", "selexipag"),
+             "doxorubicinJoerger", "irinotecan", "cisplatin",
+             "doxorubicinPediatric", "gemcitabine", "capecitabine",
+             "doxorubicinPerezBlanco", "doxorubicin", "clozapine", "amitriptyline",
+             "selexipag"),
   metabolite = c("morphine", "hydromorphone", "oxymorphone",
                  "enalaprilat", "prednisolone",
                  "desethylamiodarone", "dehydroaripiprazole", "salicylate",
                  "hydroxybupropion", "norfluoxetine", "hydroxyrisperidone",
-                 "desmetramadol", "desvenlafaxine",
-                 "norclozapine", "nortriptyline", "ACT333679"),
+                 "desmetramadol", "desvenlafaxine", "doxorubicinolJoerger",
+                 "irinotecanSN38", "cisplatinBound",
+                 "doxorubicinolPediatric", "gemcitabineDFDU", "capecitabine5FU",
+                 "doxorubicinolPerezBlanco", "doxorubicinol", "norclozapine",
+                 "nortriptyline", "ACT333679"),
   basis = c("reads", "reads", "reads",
             "shared", "shared",
-            rep("joint", 9), "reads", "joint"),
+            rep("joint", 17), "reads", "joint"),
   uses = c("libraryReferenceClearance", "hydromorphone",
            "libraryReferenceClearance",
            "enalaprilatSet", "prednisolonePairSystem",
-           rep(NA_character_, 9), "nortriptyline", NA_character_),
+           rep(NA_character_, 17), "nortriptyline", NA_character_),
   stringsAsFactors = FALSE
 )

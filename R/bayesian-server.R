@@ -67,7 +67,8 @@ bayesObservationsToRows <- function(observations, format, reference) {
   data.frame(
     Drug = observations$Drug,
     Time = minutesToEntryTime(observations$Time, format, reference),
-    Concentration = vapply(observations$Concentration, format, "",
+    # base::format(): the argument `format` is the time format
+    Concentration = vapply(observations$Concentration, base::format, "",
                            scientific = FALSE, digits = 15, trim = TRUE),
     stringsAsFactors = FALSE
   )
@@ -86,7 +87,10 @@ restoredBayesObservations <- function(x, drugNames) {
   }, error = function(e) NULL)
   if (is.null(table)) return(list(table = bayesianObservations(NULL), changed = TRUE))
   n <- if (is.data.frame(x)) nrow(x) else 0
-  table <- table[table$Drug %in% drugNames, , drop = FALSE]
+  # No later than the longest plot (BAYES_MAX_TIME): a link opened with a
+  # level at 1e12 minutes, and no click, held the worker in the fit (Carbon's
+  # UI audit, 2026-11-14, F1)
+  table <- table[table$Drug %in% drugNames & table$Time <= BAYES_MAX_TIME, , drop = FALSE]
   if (nrow(table) > MAX_BAYES_OBSERVATIONS) table <- table[seq_len(MAX_BAYES_OBSERVATIONS), ]
   rownames(table) <- NULL
   list(table = table, changed = nrow(table) != n)
@@ -102,7 +106,7 @@ bayesTimeLabel <- function(minutes, format, reference) {
 
 # A slider's value as a number within its range, or its default
 bayesSliderValue <- function(x, default, min, max) {
-  x <- suppressWarnings(as.numeric(x))
+  x <- asScalarNumeric(x)
   if (length(x) != 1 || !is.finite(x)) return(default)
   min(max(x, min), max)
 }
@@ -122,8 +126,9 @@ bayesUnitsText <- function(drugs, drugDefaults) {
 #'   this
 #' @returns a list: `observations()` (debounced, minutes), `pkVariability()`,
 #'   `residualVariability()`, `rows` (the table as typed, for the bookmark)
-#'   and `restore(observations)`, which puts a bookmark's measurements in the
-#'   table
+#'   and `restore(observations, format)`, which puts a bookmark's or a
+#'   scenario's measurements in the table, written in `format` (by default
+#'   the dose table's); an empty table clears it
 #' @noRd
 bayesianServer <- function(input, output, session, doseTableClean, doseTableFormat,
                            drugDefaults, result) {
@@ -146,7 +151,20 @@ bayesianServer <- function(input, output, session, doseTableClean, doseTableForm
     if (length(drugs) == 0)
       return(tags$p(class = "small text-muted", "Enter doses in the dose table first."))
     stored <- isolate(rows())
-    shown <- bayesRowsInFormat(stored$rows, stored$format, format, isolate(input$referenceTime))
+    reference <- isolate(asScalarString(input$referenceTime))
+    # Clock times are converted through the procedure start.  Without a
+    # readable one the rows stay in the format they were typed in, and so
+    # does the grid, which reads what is typed in its own: converted
+    # without it, "08:30" was kept as typed and then read as eight and a
+    # half hours elapsed (Carbon's third UI audit, 2026-11-15, M2).  It is
+    # drawn again when there is one.
+    if (!is.null(stored$format) && !identical(stored$format, format) &&
+        (isClockFormat(stored$format) || isClockFormat(format)) &&
+        !isValidReferenceTime(reference)) {
+      input$referenceTime
+      format <- stored$format
+    }
+    shown <- bayesRowsInFormat(stored$rows, stored$format, format, reference)
     n <- min(MAX_BAYES_OBSERVATIONS, max(BAYES_TABLE_BLANK_ROWS, nrow(shown) + 2L))
     shown <- rbind(shown, bayesBlankRows(n - nrow(shown)))
     tagList(
@@ -174,6 +192,7 @@ bayesianServer <- function(input, output, session, doseTableClean, doseTableForm
     }
     format <- parseTimeFormat(tableGridTag(value))
     if (is.null(format)) return()
+    immediate(FALSE)
     typed <- nzchar(trimws(table$Drug)) | nzchar(trimws(table$Time)) |
       nzchar(trimws(table$Concentration))
     table <- table[typed, , drop = FALSE]
@@ -181,18 +200,68 @@ bayesianServer <- function(input, output, session, doseTableClean, doseTableForm
     rows(list(rows = table, format = format))
   })
 
+  # The stored rows follow the dose table's format, as the dose table's own
+  # times do, once they can be converted (a clock time needs a readable
+  # procedure start).  Converted only where they were drawn, they stayed in
+  # the old format, and a Procedure start emptied afterwards in elapsed time
+  # dropped a level typed as 08:30 (Carbon's fourth UI audit, 2026-11-15,
+  # M3).  A change of the start in clock time moves the levels as it moves
+  # the doses, so they take effect together, not 750 ms apart.
+  observeEvent(list(doseTableFormat(), input$referenceTime), {
+    stored <- rows()
+    if (is.null(stored$format) || nrow(stored$rows) == 0) return()
+    format <- doseTableFormat()
+    reference <- asScalarString(input$referenceTime)
+    if (identical(stored$format, format)) {
+      if (isClockFormat(format)) immediate(TRUE)
+      return()
+    }
+    if ((isClockFormat(stored$format) || isClockFormat(format)) &&
+        !isValidReferenceTime(reference)) return()
+    immediate(TRUE)
+    rows(list(rows = bayesRowsInFormat(stored$rows, stored$format, format, reference),
+              format = format))
+  }, ignoreInit = TRUE)
+
   observeEvent(input$bayesClear, {
+    immediate(TRUE)
     rows(list(rows = bayesBlankRows(0), format = NULL))
     redraw(redraw() + 1)
   })
 
+  # Each value numbered, so that the debounced one is never older than a
+  # change the app made itself (`lastImmediate`, below)
+  observationsSeq <- 0
   observations <- reactive({
     stored <- rows()
-    bayesRowsToObservations(stored$rows, stored$format, input$referenceTime)
+    observationsSeq <<- observationsSeq + 1
+    out <- bayesRowsToObservations(stored$rows, stored$format, asScalarString(input$referenceTime))
+    attr(out, "seq") <- observationsSeq
+    out
   })
   # Typing a row commits two or three cells in quick succession; the estimate
-  # waits for the row.
+  # waits for the row.  A change the app makes itself (a link restored, a
+  # unit switch converting the levels, Clear) takes effect at once: through
+  # the wait, a fit of the old levels against the new units ran first,
+  # reported the search's limit and held the worker (Carbon's third UI
+  # audit, 2026-11-15, C4).
   observationsDebounced <- debounce(observations, 750)
+  immediate <- reactiveVal(FALSE)
+  # An edit typed within the wait after such a change (a unit switch's
+  # converted levels) would otherwise fall back to the debounced value from
+  # before it, the levels in the old units against the new model, until the
+  # timer fired (CodeRabbit on PR #730)
+  lastImmediate <- NULL
+  observationsUsed <- reactive({
+    if (immediate()) {
+      out <- observations()
+      lastImmediate <<- out
+      return(out)
+    }
+    out <- observationsDebounced()
+    if (!is.null(lastImmediate) && isTRUE(attr(out, "seq") < attr(lastImmediate, "seq")))
+      lastImmediate else out
+  })
 
   pkVariability <- debounce(reactive(bayesSliderValue(
     input$bayesPKVariability, BAYES_PK_VARIABILITY_DEFAULT,
@@ -208,7 +277,7 @@ bayesianServer <- function(input, output, session, doseTableClean, doseTableForm
     res <- tryCatch(result(), error = function(e) NULL)
     if (is.null(res)) return(NULL)
     format <- doseTableFormat()
-    reference <- input$referenceTime
+    reference <- asScalarString(input$referenceTime)
     fitBlocks <- lapply(names(res$fits), function(drug) {
       fit <- res$fits[[drug]]
       o <- fit$observations
@@ -236,17 +305,67 @@ bayesianServer <- function(input, output, session, doseTableClean, doseTableForm
     )
   })
 
+  # The converted value of each measured concentration of the drugs in
+  # `factors` (named by drug), or NULL when one would be past the table's
+  # ceiling, which the reading of the rows drops (validateDose())
+  rescaledRows <- function(factors) {
+    stored <- isolate(rows())
+    table <- stored$rows
+    for (i in which(as.character(table$Drug) %in% names(factors))) {
+      value <- suppressWarnings(as.numeric(as.character(table$Concentration[i])))
+      if (is.na(value)) next
+      converted <- validateDose(plainDecimal(value * factors[[as.character(table$Drug[i])]]))
+      if (!nzchar(converted)) return(NULL)
+      table$Concentration[i] <- converted
+    }
+    list(rows = table, format = stored$format)
+  }
+
   list(
-    observations = observationsDebounced,
+    observations = observationsUsed,
     pkVariability = pkVariability,
     residualVariability = residualVariability,
     rows = rows,
-    restore = function(observations) {
-      format <- isolate(doseTableFormat())
+    # Measured concentrations of drugs moved between mcg and ng in the Drug
+    # Library, converted as their thresholds are (`factors` named by drug;
+    # Carbon's second UI audit, 2026-11-15, F6)
+    canRescale = function(factors) !is.null(rescaledRows(factors)),
+    # A row with a concentration typed and no drug chosen yet
+    hasValueWithoutDrug = function() {
+      table <- isolate(rows())$rows
+      if (is.null(table) || nrow(table) == 0) return(FALSE)
+      drug <- trimws(as.character(table$Drug)); drug[is.na(drug)] <- ""
+      value <- trimws(as.character(table$Concentration)); value[is.na(value)] <- ""
+      any(!nzchar(drug) & nzchar(value))
+    },
+    rescale = function(factors) {
+      if (!any(as.character(isolate(rows())$rows$Drug) %in% names(factors))) return(invisible())
+      converted <- rescaledRows(factors)
+      if (is.null(converted)) return(invisible())
+      immediate(TRUE)
+      rows(converted)
+      redraw(isolate(redraw()) + 1)
+    },
+    # A bookmark's or a teaching scenario's measurements (minutes), written
+    # in `format` (by default the dose table's); an empty table clears it
+    restore = function(observations, format = NULL) {
+      immediate(TRUE)
+      if (is.null(format)) format <- isolate(doseTableFormat())
       rows(list(rows = bayesObservationsToRows(observations, format,
-                                               isolate(input$referenceTime)),
+                                               isolate(asScalarString(input$referenceTime))),
                 format = format))
       redraw(isolate(redraw()) + 1)
+    },
+    # A new patient (a teaching scenario): no measurements, and the
+    # variabilities at their defaults (Carbon's third UI audit, 2026-11-15,
+    # M3: a propofol level stayed on a scenario's propofol)
+    clear = function() {
+      immediate(TRUE)
+      rows(list(rows = bayesBlankRows(0), format = NULL))
+      redraw(isolate(redraw()) + 1)
+      updateSliderInput(session, "bayesPKVariability", value = BAYES_PK_VARIABILITY_DEFAULT)
+      updateSliderInput(session, "bayesResidualVariability",
+                        value = BAYES_RESIDUAL_VARIABILITY_DEFAULT)
     }
   )
 }

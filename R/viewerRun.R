@@ -218,12 +218,39 @@ viewerActActivity <- function(actSeconds, act)
 }
 
 # Whether a drug's plotted concentration includes what a parent in the table
-# forms (foldMetabolites(): $wide is $wideOwn plus the formed metabolite).
+# forms (foldMetabolites(): $wide is $wideOwn plus the formed metabolite, and
+# $formedFrom names the parents). A metabolite with no dose row of its own
+# (morphine from codeine alone) has no $wideOwn: it is all formed. Read as
+# not formed, it was "re-solved" without its parent, which simulated nothing
+# and left the plot's own points, minutes apart, to be drawn as the run
+# (Carbon's third UI audit, 2026-11-15, H8).
 viewerFormed <- function(entry)
 {
-  own <- entry$wideOwn$Plasma
   all <- entry$wide$Plasma
-  !is.null(own) && !is.null(all) && !isTRUE(all.equal(own, all))
+  if (is.null(all)) return(FALSE)
+  own <- entry$wideOwn$Plasma
+  if (is.null(own)) return(length(entry$formedFrom) > 0)
+  !isTRUE(all.equal(own, all))
+}
+
+# The name of the PK set in force at each of `times` (minutes): the last of
+# the drug's clinical events at or before it, as advanceClosedForm1() reads
+# them (an event at or after Max time is not reached), or NULL for a drug
+# that keeps one set. `sets` are the PK sets of the system drawn
+# (viewerSystem()).
+viewerSetsInForce <- function(entry, sets, times, maximum)
+{
+  ev <- entry$ET
+  if (length(sets) < 2 || is.null(ev) || nrow(ev) == 0) return(NULL)
+  ev <- data.frame(Time = suppressWarnings(as.numeric(ev$Time)),
+                   Event = gsub(" ", "", as.character(ev$Event)), stringsAsFactors = FALSE)
+  ev <- ev[!is.na(ev$Time) & ev$Time < maximum & ev$Event %in% names(sets), , drop = FALSE]
+  if (nrow(ev) == 0) return(NULL)
+  ev <- ev[order(ev$Time), , drop = FALSE]
+  i <- findInterval(times, ev$Time)
+  out <- rep(PK_EVENT_DEFAULT, length(times))
+  out[i > 0] <- ev$Event[i[i > 0]]
+  out
 }
 
 # Whether the plot's own points are close enough to animate: no gap inside
@@ -328,15 +355,39 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
   minimum <- times[1]
   u <- viewerUnits(entry$Concentration.Units)
   # The system the doses reach (meloxicam's oral or intravenous fit).
-  k <- viewerSystem(entry)[[1]]
+  sys <- viewerSystem(entry)
   # A Michaelis-Menten peripheral compartment declared as k23/k32 (GHB) has
   # V2 = V k23 / k32 and Q = k23 V (advanceMichaelisMenten()), not the PK
   # set's placeholders.
   mm <- entry$michaelisMenten
-  if (!is.null(mm$k23) && !is.null(mm$k32)) {
-    k$v2 <- k$v1 * mm$k23 / mm$k32
-    k$cl2 <- mm$k23 * k$v1
+  if (!is.null(mm$k23) && !is.null(mm$k32))
+    sys <- lapply(sys, function(s) { s$v2 <- s$v1 * mm$k23 / mm$k32; s$cl2 <- mm$k23 * s$v1; s })
+  # The PK set in force at each time. A model that switches sets at a
+  # clinical event (the infant dexmedetomidine model's bypass sets) changes
+  # its volumes there, the amounts carried across (convertState()): the
+  # drug in each compartment is its concentration times the volume IN FORCE.
+  # With the first set's volumes throughout, the drug in the body fell 8% the
+  # instant bypass started, drawn as 23.5 mcg/min eliminated while clearance
+  # had fallen 17-fold, and the elimination drawn on bypass was then that of
+  # the wrong volumes (Carbon's third UI audit, 2026-11-15, H8).
+  # So the run carries the set in force at its first time, and, where the
+  # volumes or CL1 change inside the window, each time's own (pkAt).
+  inForce <- viewerSetsInForce(entry, sys, times, maximum)
+  k <- sys[[if (is.null(inForce)) 1 else inForce[1]]]
+  pkAt <- NULL
+  if (!is.null(inForce)) {
+    used <- unique(inForce)
+    pick <- match(inForce, used)
+    field <- function(name) vapply(used, function(s) {
+      x <- sys[[s]][[name]]
+      if (is.null(x) || !is.finite(x)) 0 else x
+    }, numeric(1), USE.NAMES = FALSE)[pick]
+    pkAt <- list(v1 = field("v1"), v2 = field("v2"), v3 = field("v3"), cl1 = field("cl1"))
+    if (!any(vapply(pkAt, function(x) any(x != x[1]), logical(1)))) pkAt <- NULL
   }
+  # Whether the model has a compartment in any set in force.
+  anySet <- function(name) if (is.null(inForce)) isTRUE(k[[name]] > 0) else
+    any(vapply(unique(inForce), function(s) isTRUE(sys[[s]][[name]] > 0), logical(1)))
   weight <- entry$weight
 
   # Linear between the simulation's own points; at a time given twice (a
@@ -351,10 +402,10 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
   c3 <- if (!is.null(cm$V3)) at(cm$Time, cm$V3) else NULL
   # A 2-compartment drug has V3's column only when another drug in the
   # simulation does (it is all zeros then): no V3 for a model without one.
-  if (!is.null(c3) && !isTRUE(k$v3 > 0)) c3 <- NULL
-  if (!is.null(c2) && !isTRUE(k$v2 > 0)) { c2 <- NULL; c3 <- NULL }
-  if (!is.null(c3) && !isTRUE(k$cl3 > 0)) c3 <- NULL
-  if (!is.null(c2) && !isTRUE(k$cl2 > 0) && is.null(entry$michaelisMenten)) { c2 <- NULL; c3 <- NULL }
+  if (!is.null(c3) && !anySet("v3")) c3 <- NULL
+  if (!is.null(c2) && !anySet("v2")) { c2 <- NULL; c3 <- NULL }
+  if (!is.null(c3) && !anySet("cl3")) c3 <- NULL
+  if (!is.null(c2) && !anySet("cl2") && is.null(entry$michaelisMenten)) { c2 <- NULL; c3 <- NULL }
 
   # The drug's dose rows, scheduled doses expanded into their repeats.
   d <- entry$DT
@@ -438,6 +489,19 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
     fall <- c(0, cumsum(pmax(0, -diff(cm$Depot))))
     absorbedFromDepot <- at(cm$Time, fall)
   }
+  # That fall is the drug absorbed only while nothing fills the depot as it
+  # empties and nothing passes it by: a rate into a tissue depot (a patch, a
+  # perineural or pump infusion), an enteral infusion or a zero-order release
+  # into the depot raises the Depot column while it is absorbed, so its fall
+  # is far less than the absorption (626-fold at 10 h for lidocaine 100 mg RA
+  # with 20 mg/hr RA), and a zero-order share run straight into V1 (the
+  # insulins, amantadine ER) or exenatide's saturable input never enters it.
+  # Then no absorption is drawn at all rather than a wrong one (Carbon's
+  # third UI audit, 2026-11-15, H8): the amounts card says the input is
+  # rewritten (inputKnown below).
+  depotIsAbsorption <- is.null(entry$oralZeroOrder) && is.null(entry$zeroOrderSC) &&
+    is.null(entry$michaelisMenten$saturableSC) && !any(enteral) &&
+    !any(rate & route %in% TISSUE_ROUTES)
   absorbed <- absorbedFromDepot + cumulativeRate(oralSteps, times)
   given <- cumulativeRate(steps[, c("Time", "Rate")], times) + bolusGiven + absorbed
 
@@ -445,12 +509,8 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
   # show (zero-order releases, an enteral infusion, saturable SC input), and
   # a metabolite's input is its formation: the drug given is then unknown,
   # and the viewer says so rather than draw a wrong elimination.
-  inputKnown <- is.null(entry$oralZeroOrder) && is.null(entry$zeroOrderSC) &&
-    !isTRUE(entry$enteralInfusion) && is.null(entry$michaelisMenten$saturableSC) &&
-    is.null(entry$molar) && !any(enteral) && nrow(d) > 0 &&
-    # A rate into a tissue depot raises the Depot column while it is
-    # absorbed, so its fall no longer measures the drug absorbed.
-    !any(rate & route %in% TISSUE_ROUTES) &&
+  inputKnown <- depotIsAbsorption && !isTRUE(entry$enteralInfusion) &&
+    is.null(entry$molar) && nrow(d) > 0 &&
     # Drug bound to its target (linagliptin, vildagliptin) is neither the
     # concentrations times the volumes nor eliminated.
     is.null(entry$michaelisMenten$targetBinding) && is.null(entry$michaelisMenten$rapidBinding) &&
@@ -497,11 +557,14 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
     amountScale = u$scale,
     patient = list(weight = weight, height = entry$height, age = entry$age, sex = entry$sex),
     pk = list(v1 = k$v1, v2 = k$v2, v3 = k$v3, cl1 = k$cl1, cl2 = k$cl2, cl3 = k$cl3),
+    # The volumes (L) and CL1 (L/min) in force at each time, where a clinical
+    # event changes them inside the window; else absent, and `pk` holds.
+    pkAt = pkAt,
     t = times * 60, cp = cp, ce = ce, c2 = c2, c3 = c3,
     rate = rateAt, target = targetAt, mode = modeAt,
     boluses = boluses,
     depot = depot,
-    absorbed = if (any(absorbed > 0)) absorbed else NULL,
+    absorbed = if (depotIsAbsorption && any(absorbed > 0)) absorbed else NULL,
     given = if (inputKnown) given else NULL,
     inputKnown = inputKnown,
     # Whether elimination is CL1 x Cp: the viewer's only stand-in for it
@@ -548,18 +611,28 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_)
   gr <- entry$gasRun
   g <- entry$drug
   times <- viewerTimes(minimum, maximum)
-  props <- getGasProperties()
+  props <- gasPropertiesAt(gr$body$temperature)
   pr <- props[props$gas == g, ]
   ltg <- gasPartitionTissueGas(pr)
   body <- gr$body
+  state <- gr$state
+  # The cardiac-output slider splits the brain and heart (state 3) from the
+  # rest of the vessel-rich group (state 6; gasTissueShares()).  The viewer
+  # draws the whole group: its volume, and the partial pressure that holds the
+  # agent both parts hold (one partition coefficient, so volume-weighted).
+  vrgVolume <- body$V_brain
+  if (!is.null(body$V_vrgRest) && ncol(state) >= 6) {
+    vrgVolume <- body$V_brain + body$V_vrgRest
+    state[, 3] <- (body$V_brain * state[, 3] + body$V_vrgRest * state[, 6]) / vrgVolume
+  }
   vol <- c(circuit = if (identical(gr$circuit, "semi-closed")) body$V_circuit else 0,
-           lungs = body$V_alveolar, vrg = body$V_brain, mg = body$V_muscle, fg = body$V_fat)
+           lungs = body$V_alveolar, vrg = vrgVolume, mg = body$V_muscle, fg = body$V_fat)
   lambda <- c(circuit = 1, lungs = 1, vrg = ltg[["brain"]], mg = ltg[["muscle"]], fg = ltg[["fat"]])
   capacity <- vol * lambda
 
   # Linear between the engine's own points, as the plot draws them.
   at <- function(v) pmax(0, stats::approx(gr$time, v, times, rule = 2, ties = "ordered")$y)
-  p <- stats::setNames(lapply(seq_len(5), function(j) at(gr$state[, j])), names(vol))
+  p <- stats::setNames(lapply(seq_len(5), function(j) at(state[, j])), names(vol))
 
   # The settings in force: each a step that changes only at a dose row.
   rows <- gr$gasDose

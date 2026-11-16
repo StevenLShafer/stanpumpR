@@ -52,8 +52,14 @@ test_that("Thomson's covariate equations are reproduced, Q as a clearance", {
   # 70 kg man of 78.9 years at the assumed creatinine of 0.9 mg/dL.
   y <- vancomycin(70, 171, 140 - 66 * 72 * SCR_ASSUMED_MALE / 70, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(y$cl1 * 60, 2.99, tolerance = 1e-9)
-  # Refuses rather than clamps where the equation is not defined
-  expect_error(vancomycin(70, 171, 139.5, "male", adjustToFFM = FALSE), "not defined")
+  # Below the lowest creatinine clearance Thomson studied, 12 mL/min, the term
+  # is held there (it refused below 1.06 mL/min until Carbon's third UI audit,
+  # 2026-11-15, H3): 2.99 x (1 + 0.0154 x (12 - 66)) = 0.503516 L/h, by hand.
+  floor <- 2.99 * (1 + 0.0154 * (12 - 66))
+  expect_equal(vancomycin(70, 171, 139.5, "male", adjustToFFM = FALSE)$PK$default$cl1 * 60, floor)
+  expect_equal(vancomycin(20, 150, 90, "male", adjustToFFM = FALSE, creatinine = 15)$PK$default$cl1 * 60,
+               floor)
+  expect_equal_rounded(0.503516, floor)
 })
 
 test_that("the Pregnant field applies the review's factor (R/pregnancy.R)", {

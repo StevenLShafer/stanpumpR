@@ -16,7 +16,7 @@ rebuildFor <- function(DT) {
   function(drug, individual) {
     recalculatePK(NULL, getDrugDefaultsGlobal(), DT[DT$Drug == drug, , drop = FALSE],
                   age = patient$age, weight = patient$weight, height = patient$height,
-                  sex = patient$sex, individual = stats::setNames(list(individual), drug))[[drug]]
+                  sex = patient$sex, individual = individual)[[drug]]
   }
 }
 
@@ -365,3 +365,200 @@ test_that("the sidebar's measurements update the drug in the app", {
 })
 
 .sprglobals$config <- oldConfig
+
+# --- Teaching scenarios that carry measurements (R/help-scenarios.R) ---------
+
+test_that("a scenario's measurements are checked against its doses and its plot", {
+  s <- helpScenarioById("warfarin-bayesian-inr")
+  expect_length(helpScenarioCheck(s), 0)
+  expect_equal(nrow(s$measurements), 4)
+  bad <- s
+  bad$measurements <- helpMeasurements(c("fentanyl", 1440, 1))
+  expect_match(helpScenarioCheck(bad), "does not dose: fentanyl", all = FALSE)
+  bad$measurements <- helpMeasurements(c("warfarin", 0, 1.2))
+  expect_match(helpScenarioCheck(bad), "not after its first dose", all = FALSE)
+  bad$measurements <- helpMeasurements(c("warfarin", 30 * MINS_PER_DAY, 1.2))
+  expect_match(helpScenarioCheck(bad), "beyond Max time", all = FALSE)
+  bad$measurements <- helpMeasurements(c("warfarin", 1440, 0))
+  expect_match(helpScenarioCheck(bad), "invalid measured concentration", all = FALSE)
+  bad <- s
+  bad$options$bayesResidualVariability <- 0
+  expect_match(helpScenarioCheck(bad), "bayesResidualVariability out of range", all = FALSE)
+  # a value the slider cannot show, which the browser would snap while the
+  # scenario's page printed it (review of PR #729)
+  bad <- s
+  bad$options$bayesPKVariability <- 27
+  expect_match(helpScenarioCheck(bad), "bayesPKVariability .*slider's step", all = FALSE)
+  bad <- s
+  bad$options$bayesResidualVariability <- 5.5
+  expect_match(helpScenarioCheck(bad), "bayesResidualVariability .*slider's step", all = FALSE)
+  ok <- s
+  ok$options$bayesPKVariability <- 40
+  ok$options$bayesResidualVariability <- 12
+  expect_length(helpScenarioCheck(ok), 0)
+  # every scenario carries a table (empty when it has no measurements) and
+  # variabilities the sliders can show
+  for (other in helpScenarios()) {
+    expect_true(is.data.frame(other$measurements), info = other$id)
+    expect_false(any(grepl("Variability", helpScenarioCheck(other))), info = other$id)
+  }
+})
+
+test_that("a scenario's measurement must be of a drug the panel offers, after a dose above 0", {
+  s <- helpScenarioById("warfarin-bayesian-inr")
+  # a dose of 0 is no dose: the first dose is the first above 0, as the
+  # update counts it (bayesianUpdateDrugs())
+  s$doses <- data.frame(Drug = c("vancomycin", "vancomycin"), Time = c(0, 60),
+                        Dose = c(0, 1000), Units = c("mg", "mg"), stringsAsFactors = FALSE)
+  s$options$timeUnits <- "minutes"
+  s$options$maximum <- 720
+  s$measurements <- helpMeasurements(c("vancomycin", 30, 20))
+  expect_match(helpScenarioCheck(s), "not after its first dose above 0", all = FALSE)
+  s$measurements <- helpMeasurements(c("vancomycin", 90, 20))
+  expect_false(any(grepl("vancomycin", helpScenarioCheck(s))))
+  s$doses$Dose <- c(0, 0)
+  expect_match(helpScenarioCheck(s), "never given a dose above 0", all = FALSE)
+  # the panel leaves the inhaled agents out of its Drug list
+  gas <- Find(function(x) any(isGasDrug(x$doses$Drug)), helpScenarios())
+  agent <- gas$doses$Drug[isGasDrug(gas$doses$Drug)][1]
+  gas$measurements <- helpMeasurements(c(agent, 10, 1))
+  expect_match(helpScenarioCheck(gas), "inhaled agent", all = FALSE)
+})
+
+test_that("a scenario's measurements are converted to the units the Drug Library shows", {
+  s <- helpScenarioById("tci-propofol")
+  s$measurements <- helpMeasurements(c("propofol", 30, 2.5))
+  expect_length(helpScenarioCheck(s), 0)
+  dd <- getDrugDefaultsGlobal()
+  dd$Concentration.Units[dd$Drug == "propofol"] <- "ng"
+  out <- helpScenarioInSessionUnits(s, dd)
+  expect_equal(out$measurements$Concentration, 2500)
+  expect_identical(out$converted, "propofol")
+  # in the library's own units nothing changes
+  expect_identical(helpScenarioInSessionUnits(s, getDrugDefaultsGlobal())$measurements,
+                   s$measurements)
+  # a level a conversion would take past the table's ceiling refuses the load
+  s$measurements$Concentration <- MAX_DOSE_VALUE / 10
+  expect_null(helpScenarioInSessionUnits(s, dd))
+  # and a drug measured but not given by TCI is converted too
+  s <- helpScenarioById("warfarin-bayesian-inr")
+  s$doses <- data.frame(Drug = "vancomycin", Time = 0, Dose = 1000, Units = "mg",
+                        stringsAsFactors = FALSE)
+  s$measurements <- helpMeasurements(c("vancomycin", 1440, 20))
+  dd <- getDrugDefaultsGlobal()
+  from <- dd$Concentration.Units[dd$Drug == "vancomycin"]
+  dd$Concentration.Units[dd$Drug == "vancomycin"] <- setdiff(c("mcg", "ng"), from)
+  expect_equal(helpScenarioInSessionUnits(s, dd)$measurements$Concentration,
+               20 * mcgPerMlScale(from) / mcgPerMlScale(setdiff(c("mcg", "ng"), from)))
+})
+
+test_that("loading a scenario sets the sliders to its own variabilities", {
+  sent <- list()
+  local_mocked_bindings(updateSliderInput = function(session, inputId, value = NULL, ...) {
+    sent[[inputId]] <<- value
+  })
+  session <- shiny::MockShinySession$new()
+  s <- helpScenarioById("warfarin-bayesian-inr")
+  s$options$bayesPKVariability <- 40
+  s$options$bayesResidualVariability <- 12
+  applyHelpScenario(session, s, shiny::reactiveVal(doseTableInit),
+                    shiny::reactiveVal(eventTableInit))
+  expect_equal(sent$bayesPKVariability, 40)
+  expect_equal(sent$bayesResidualVariability, 12)
+})
+
+test_that("loading a scenario puts its measurements in the table, or clears it", {
+  session <- shiny::MockShinySession$new()
+  doseTable <- shiny::reactiveVal(doseTableInit)
+  eventTable <- shiny::reactiveVal(eventTableInit)
+  got <- NULL
+  restore <- function(measurements, format) got <<- list(m = measurements, format = format)
+  s <- helpScenarioById("warfarin-bayesian-inr")
+  applyHelpScenario(session, s, doseTable, eventTable, restoreMeasurements = restore)
+  expect_identical(got$m, s$measurements)
+  expect_equal(got$format, timeFormat("days", "relative"))
+  # a scenario without measurements clears what the previous session had
+  applyHelpScenario(session, helpScenarioById("propofol-bolus"), doseTable, eventTable,
+                    restoreMeasurements = restore)
+  expect_equal(nrow(got$m), 0)
+  # and the page lists them, with the two variabilities
+  html <- helpScenarioPageHTML("warfarin-bayesian-inr")
+  expect_match(html, "Measured concentrations (Bayesian Updating)", fixed = TRUE)
+  expect_match(html, "1.3 INR", fixed = TRUE)
+  expect_match(html, "Residual variability", fixed = TRUE)
+  expect_false(grepl("Residual variability", helpScenarioPageHTML("propofol-bolus"), fixed = TRUE))
+})
+
+test_that("a ?scenario= link with measurements fills the Bayesian table as the session starts", {
+  oldConfig <- .sprglobals$config
+  .sprglobals$config <- DEFAULT_CONFIG
+  withr::defer(.sprglobals$config <- oldConfig)
+  s <- helpScenarioById("warfarin-bayesian-inr")
+  local_mocked_bindings(deepLinkFromQuery = function(...) list(scenario = s, help = NULL, problems = character(0)))
+  shiny::testServer(app_server, {
+    expect_false(startupMenuOpen)
+    stored <- bayes$rows()
+    expect_equal(stored$rows$Time, c("3", "5", "7", "10"))
+    expect_equal(stored$rows$Concentration, c("1.3", "1.6", "1.9", "2.2"))
+    expect_equal(stored$format, timeFormat("days", "relative"))
+  })
+})
+
+test_that("the search finds the minimum of a sum of squares, within its bounds", {
+  # Rosenbrock's valley as residuals: the minimum, 0, at (1, 1)
+  fit <- bayesianSearch(function(p) c(10 * (p[2] - p[1]^2), 1 - p[1]),
+                        c(-1.2, 1), c(-5, -5), c(5, 5))
+  expect_true(fit$converged)
+  expect_equal(fit$par, c(1, 1), tolerance = 1e-6)
+  # A minimum beyond a bound: held at the bound, the other parameter free
+  fit <- bayesianSearch(function(p) c(p[1] - 3, p[2] + 1), c(0, 0), c(-2, -2), c(2, 2))
+  expect_true(fit$converged)
+  expect_equal(fit$par, c(2, -1), tolerance = 1e-8)
+  # Nothing to search from
+  expect_false(bayesianSearch(function(p) NULL, c(0, 0), c(-1, -1), c(1, 1))$converged)
+})
+
+test_that("a phenytoin fit takes few simulations, to the same estimate", {
+  # optim()'s L-BFGS-B, which the search replaced (2026-11-14), took 62
+  # simulations to this estimate; each simulates a week of saturable
+  # elimination in 2-minute Runge-Kutta steps
+  DT <- data.frame(Drug = "phenytoin", Time = 0, Dose = 100, Units = "mg PO tid",
+                   stringsAsFactors = FALSE)
+  obs <- data.frame(Drug = "phenytoin", Time = c(3, 7) * 1440, Concentration = c(8, 14))
+  res <- bayesianUpdateDrugs(priorDrugs(DT), DT, noEvents, obs, rebuild = rebuildFor(DT))
+  fit <- res$fits$phenytoin
+  expect_true(fit$converged)
+  expect_lte(fit$evaluations, 30)
+  expect_equal(c(fit$clearance, fit$volume), c(0.6790029, 0.8858258), tolerance = 1e-5)
+})
+
+test_that("a TCI drug's patient receives the rates the library's model chose", {
+  # The dose table holds the target; the update changes the PK model, not
+  # the dose table, so the pump's rates are the library model's (Shafer,
+  # 2026-11-14).  Before, the controller ran on each candidate's own model,
+  # every prediction was the target itself, and a measurement left the
+  # estimate at the model's (factors 1.000 and 1.000).
+  DT <- data.frame(Drug = "propofol", Time = 0, Dose = 3, Units = TCI_UNIT_EFFECT,
+                   stringsAsFactors = FALSE)
+  obs <- data.frame(Drug = "propofol", Time = 60, Concentration = 1.5)
+  res <- bayesianUpdateDrugs(priorDrugs(DT), DT, noEvents, obs, rebuild = rebuildFor(DT),
+                             maximum = 120)
+  fit <- res$fits$propofol
+  expect_equal(fit$observations$Population, 3, tolerance = 1e-3)
+  expect_gt(fit$clearance, 1.5)
+  # Half the prediction measured: the individual is below the target, but
+  # by less than the measurement alone says, the update being shrunk
+  # toward the model
+  expect_lt(fit$observations$Individual, 2)
+  expect_gt(fit$observations$Individual, 1.5)
+  out <- processdoseTable(DT, noEvents, res$drugs, 120, FALSE)
+  individual <- out$propofol
+  population <- out[[bayesianPriorName("propofol")]]
+  rates <- function(x) x$tci$rates[, setdiff(names(x$tci$rates), "Drug")]
+  expect_equal(rates(individual), rates(population))
+  # Every level since the infusion began is below the model's
+  w <- individual$wide
+  wp <- population$wide
+  later <- w$Time > 0
+  expect_true(all(w$Plasma[later] < wp$Plasma[match(w$Time[later], wp$Time)]))
+})

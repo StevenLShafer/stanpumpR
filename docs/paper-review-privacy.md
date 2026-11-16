@@ -99,7 +99,12 @@ These are statements about this code. Each names the function that does it.
    server. The app reads it into the session's memory and deletes the file at
    once, and the directory with it when it is left empty
    (`paperReviewReadUpload()`, `R/paper-review-app.R`). A file that is not a
-   PDF is deleted the same way and not kept. The file's name is never stored.
+   PDF is deleted the same way and not kept, and a file larger than a review
+   can send (20 MB, with the other field's file) is deleted unread. The
+   file's name is never stored. Choosing a new file in either field drops
+   what that field held at once, before the new file arrives, whether or not
+   it is kept, so Review never sends a file the field no longer shows (the
+   browser tells the server only that a file was chosen, never its name).
 2. **Held in memory.** The bytes live in an R environment private to that
    browser session (`paperReviewStore()`). They are not written to disk, not
    cached, not put in the URL, and not bookmarked (the app is started with
@@ -139,8 +144,13 @@ These are statements about this code. Each names the function that does it.
 7. **Plots and downloads.** A plot is drawn to a temporary PNG file that is
    read and deleted at once, as Shiny's own plot output does. If downloads are
    enabled (Open decision 5), the report is written to a temporary file that
-   Shiny marks as owned and deletes after sending it to the browser. Once
-   downloaded, the report is on the user's own computer, outside the app.
+   Shiny marks as owned and deletes after sending it to the browser. The
+   Word version (2026-11-16) is built with officer, which unpacks its
+   template and writes scratch files under `tempdir()`, several holding the
+   report's text, and leaves them there; `paperReviewDocxWrite()` removes
+   everything new in `tempdir()` but the file Shiny serves, whether or not
+   the build succeeds (`test-paper-review-word.R`). Once downloaded, the
+   report is on the user's own computer, outside the app.
 8. **No digest, no archive.** Nothing from an uploaded manuscript is added to
    stanpumpR's paper archive, its digests or its drug library.
 

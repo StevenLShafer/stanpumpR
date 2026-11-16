@@ -104,18 +104,32 @@ Object.assign(Player, {
         const level = r.typical > 0 ? r.typical : (peak > 0 ? peak / 2 : 1);
         const mag = Math.max(-6, Math.floor(Math.log10(level)));
         // The 3D view's heights (gas3d.js): 6 units for one MAC, or for the
-        // run's highest partial pressure where that is lower (nitrous oxide,
-        // whose MAC is above an atmosphere).
-        const level3d = r.mac > 0 && peak > 0 ? Math.min(r.mac, peak) : level;
+        // highest the glasses must hold where that is lower (nitrous oxide,
+        // whose MAC is above an atmosphere): the partial pressures and the
+        // vaporiser's setting, which the glasses are made tall enough for.
+        // From the partial pressures alone, a brief wash-in through the
+        // semi-closed circuit (0.098% at most in the patient, the vaporiser at
+        // 8%) made the glasses 528 units tall, out of every view (Carbon's
+        // third UI audit, 2026-11-15, M7).
+        let top = peak;
+        for (const x of r.fresh) if (x > top) top = x;
+        const level3d = r.mac > 0 && top > 0 ? Math.min(r.mac, top) : level;
         this.ui = { gas: true, showCe: false, units: this.units, drugRgb: hexRgb(GAS_TINT),
                     ceRgb: hexRgb(FLAT_COLOURS.ce), concDecimals: Math.max(0, 2 - mag), concScale: 6 / level3d };
-        // Vented: the agent delivered less the agent held, at each time.
+        // Vented: the agent delivered less the agent held, at each time. The
+        // pop-off valve lets agent out and never in, so what has gone through
+        // it never falls and is never below 0. Where the run's amounts say
+        // otherwise (agent held that was never delivered: the gas engine with
+        // no fresh gas flow), that is the engine's imbalance, not a flow:
+        // drawn as one, its size taken without its sign, it was a thick arrow
+        // venting 4 mL/min that ran the other way (Carbon's third UI audit,
+        // 2026-11-15, H2). The amounts card then does not add up, as it should not.
         const n = r.t.length;
         this.vented = new Float64Array(n);
         for (let i = 0; i < n; i++) {
             let held = 0;
             for (const k of GAS_KEYS) held += r.capacity[k] * r.p[k][i];
-            this.vented[i] = r.delivered[i] - this.scale * held;
+            this.vented[i] = Math.max(i ? this.vented[i - 1] : 0, r.delivered[i] - this.scale * held);
         }
         // The arrows' scale, for both views: the run's 95th-percentile flow.
         this.ui.gasFlowScale = gasFlowScale(r, T => this.gasStateAt(T));

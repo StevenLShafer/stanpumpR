@@ -22,6 +22,10 @@ sendSlide <- function(
   dir <- tempfile("stanpumpR-slide-")
   dir.create(dir, mode = "0700")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  # Whether the mail server has been asked to take the message: a send that
+  # fails before then is given back to the hour's limit (forgetEmailSend()),
+  # which app_server() counted it against before calling here
+  connecting <- FALSE
   tryCatch({
     prevEcho <- options("ECHO_OUTPUT_COMMENTS" = TRUE)
     on.exit(options("ECHO_OUTPUT_COMMENTS" = prevEcho[[1]]), add = TRUE)
@@ -29,10 +33,13 @@ sendSlide <- function(
     # Not the recipient: this line is echoed to the server log
     outputComments("Preparing email")
 
-    if (is.null(email_username)) {
+    # One string that is not blank each, as paperReviewUsageNotify() reads
+    # them: "" got as far as the mail server
+    configured <- function(x) is.character(x) && length(x) == 1 && !is.na(x) && nzchar(x)
+    if (!configured(email_username)) {
       stop("Email username missing")
     }
-    if (is.null(email_password)) {
+    if (!configured(email_password)) {
       stop("Email password missing")
     }
 
@@ -63,6 +70,7 @@ sendSlide <- function(
       connecttimeout = EMAIL_SMTP_CONNECT_TIMEOUT,
       timeout = EMAIL_SMTP_TIMEOUT
     )
+    connecting <- TRUE
     smtp(msg, verbose = FALSE)
 
     outputComments("Leaving sendMail()")
@@ -74,20 +82,76 @@ sendSlide <- function(
     # more than that.
     base::message("stanpumpR Email Slide failed: ", conditionMessage(e))
     outputComments("Email Slide failed; the detail is in the server log")
+    # (an address that cannot be read is no address to give a send back to)
+    if (!connecting) try(forgetEmailSend(recipient), silent = TRUE)
     EMAIL_FAILURE_MESSAGE
   })
 }
 
+# The email's three files and its body.  The files are the ones the Export
+# panel also offers for download, one at a time (R/app_server.R): each is
+# written by its own function below, so that a download and an email of the
+# same simulation carry the same file.
+#
 # dir: the private directory the files are written to (sendSlide() makes and
 # removes it)
 generateEmail <- function(values, recipient, plotObject, allResults, plotResults, height, width, slide, drugs, dir) {
-  title <- paste("stanpumpR simulation on", format(Sys.time()))
-  DT <- values$DT
-  url <- values$url
+  title <- exportTitle()
 
   outputComments("In function sendSlide()")
 
   TIMESTAMP <- format(Sys.time(), format = "%y%m%d-%H%M%S")
+  pptxfileName <- file.path(dir, paste0("From stanpumpR.", slide, ".", TIMESTAMP, ".pptx"))
+  writeSlideDeck(plotObject, pptxfileName, title = title, slide = slide)
+
+  pngfileName <- file.path(dir, paste0("Preview.", slide, ".", TIMESTAMP, ".png"))
+  writePlotImage(plotObject, pngfileName, height = height, width = width)
+
+  xlsxfileName <- file.path(dir, paste0("From stanpumpR.", slide, ".", TIMESTAMP, ".xlsx"))
+  writeWorkbook(values, allResults, plotResults, drugs, xlsxfileName)
+
+  outputComments("Creating e-mail")
+  units <- exportUnitNames(values)
+  bodyText <- generateBodyText(recipient, values, units$age, units$weight, units$height, values$url, values$comments)
+
+  return(list(
+    title = title,
+    bodyText = bodyText,
+    pptxfileName = pptxfileName,
+    xlsxfileName = xlsxfileName,
+    pngfileName = pngfileName
+    )
+  )
+}
+
+# The title of the deck's first slide and the email's subject
+exportTitle <- function(time = Sys.time()) {
+  paste("stanpumpR simulation on", format(time))
+}
+
+# The name a downloaded file is given: "stanpumpR.261115-142233.pptx", the
+# time it was made (the server's clock) in the email's own format.
+exportFileName <- function(extension, time = Sys.time()) {
+  paste0("stanpumpR.", format(time, format = "%y%m%d-%H%M%S"), ".", extension)
+}
+
+# The names of the units the patient was entered in, for the Covariates sheet
+# and the email: each of values$ageUnit, $weightUnit and $heightUnit is the
+# divisor that turns the stored value into the unit shown, 1 for years,
+# kilograms and centimetres.
+exportUnitNames <- function(values) {
+  list(
+    age = if (values$ageUnit == "1") "years" else "months",
+    weight = if (values$weightUnit == "1") "kilograms" else "pounds",
+    height = if (values$heightUnit == "1") "cms" else "inches"
+  )
+}
+
+# The PowerPoint deck, written to `file` (whose name must end in .pptx): the
+# whole plot on the first slide, titled `title` and numbered `slide` (an
+# email numbers it by the session's sends, as it always has; a download is 1),
+# then one slide per panel (panelPlots()), numbered by its place in the deck.
+writeSlideDeck <- function(plotObject, file, title = exportTitle(), slide = 1) {
   DATE <- format(Sys.Date(), "%m/%d/%y")
   outputComments("reading Template.pptx")
   PPTX <- officer::read_pptx(system.file("extdata", "Template.pptx", package = "stanpumpR"))
@@ -116,46 +180,58 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
     PPTX <- officer::ph_with(PPTX, i + 1, location = officer::ph_location_type ("sldNum"))
     PPTX <- officer::ph_with(PPTX, "From StanpumpR", location = officer::ph_location_type ("ftr"))
   }
-  pptxfileName <- file.path(dir, paste0("From stanpumpR.", slide, ".", TIMESTAMP, ".pptx"))
 
   outputComments("Saving PPTX")
-  print(PPTX, target = pptxfileName)
+  print(PPTX, target = file)
+  invisible(file)
+}
 
-  xlsxfileName <- file.path(dir, paste0("From stanpumpR.", slide, ".", TIMESTAMP, ".xlsx"))
-
+# The PNG of the whole plot, written to `file` (whose name must end in .png),
+# drawn as the app draws it.  renderPlot() draws at 72 dpi, `width` by
+# `height` pixels, and simulationPlot() lays the plot out for that (its
+# aspect ratio sets aside the threshold labels' gap in points as pixels); the
+# image is the same drawing at `scale` times the pixels and the dpi, as a
+# high-resolution screen shows it, so nothing moves.  Less than `scale` only
+# where that would pass what the device can draw (maxPlotDevicePixels()).
+#
+# Until 2026-11-15 the email's PNG was the plot redrawn at 150 dpi into the
+# plot's own pixels with smaller text (a previewPlot() that has gone), which
+# clipped the legend of a short plot and ran the threshold labels into the
+# panels; the Export panel's Image download made it worth drawing properly.
+#
+# limitsize = FALSE: ggsave() refuses an image over 50 inches, and at 72 dpi
+# times the scale that is any plot over 3,600 of the app's pixels, which a
+# tall plot of many drugs or a wide screen (MAX_PLOT_WIDTH 4,096) passes
+# (CodeRabbit, PR #731).  The bound that matters is in pixels: `scale` is
+# held so the image stays within the device, and simulationPlot() refuses a
+# plot taller than the device draws before it gets here.
+writePlotImage <- function(plotObject, file, height, width, scale = 2) {
   outputComments("Creating PNG file")
-
-  pngfileName <- file.path(dir, paste0("Preview.", slide, ".", TIMESTAMP, ".png"))
+  scale <- max(1, min(scale, maxPlotDevicePixels() / max(height, width)))
   ggplot2::ggsave(
-    previewPlot(plotObject),
-    filename = pngfileName,
-    dpi = 150,
-    height = height,
-    width = width,
-    units = "px"
+    plotObject,
+    filename = file,
+    dpi = 72 * scale,
+    height = height * scale,
+    width = width * scale,
+    units = "px",
+    limitsize = FALSE
   )
+  invisible(file)
+}
+
+# The Excel workbook, written to `file`: the patient's covariates, the dose
+# table (with the TCI rates and scheduled repeats merged in), the simulated
+# concentrations, the results as plotted, and one sheet of PK parameters per
+# drug.  `values` is what app_server()'s exportValues() gathers.
+writeWorkbook <- function(values, allResults, plotResults, drugs, file) {
+  DT <- values$DT
 
   outputComments("Fixing Units for export")
-  if (values$ageUnit == "1")
-  {
-    ageUnit <- "years"
-  } else {
-    ageUnit <- "months"
-  }
-
-  if (values$weightUnit == "1")
-  {
-    weightUnit <- "kilograms"
-  } else {
-    weightUnit <- "pounds"
-  }
-
-  if (values$heightUnit == "1")
-  {
-    heightUnit <- "cms"
-  } else {
-    heightUnit <- "inches"
-  }
+  units <- exportUnitNames(values)
+  ageUnit <- units$age
+  weightUnit <- units$weight
+  heightUnit <- units$height
 
   # Every Time column in the workbook is in minutes, which is what the engine
   # works in and what a script reading the sheets expects.  When the plot was
@@ -166,6 +242,17 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
 
   outputComments("Creating workbook")
   wb <- openxlsx::createWorkbook("SLS")
+  # Each covariate one cell: what the field held, its default when it held
+  # nothing, and "unreadable" when it held no one value.  The genotypes come
+  # from the inputs as sent, read by a model only if a drug names them, so on
+  # a run of inhaled agents alone a vector reached here, and character(0)
+  # left the sheet one value short of its names, which stopped the send
+  # (Carbon's third UI audit, 2026-11-15, M5).
+  cell <- function(x, default) {
+    if (is.null(x)) return(as.character(default))
+    if (is.list(x) || length(x) != 1 || is.na(x)) return("unreadable")
+    as.character(x)
+  }
   covariates <- data.frame(
     Covariate = c(
       "Age",
@@ -180,6 +267,8 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       "Baseline serum osmolality (mOsm/kg)",
       "Serum creatinine (mg/dL)",
       "Gestational age at birth (weeks)",
+      "Serum albumin (g/dL)",
+      "Serum AST (U/L)",
       "CYP2D6",
       "CYP2C19",
       "CYP2C9",
@@ -191,31 +280,35 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       "Antiseizure drug interactions applied"
     ),
     Value = c(
-      values$age / values$ageUnit,
+      cell(values$age / values$ageUnit, ""),
       ageUnit,
-      values$weight / values$weightUnit,
+      cell(values$weight / values$weightUnit, ""),
       weightUnit,
-      values$height / values$heightUnit,
+      cell(values$height / values$heightUnit, ""),
       heightUnit,
-      values$sex,
+      cell(values$sex, ""),
       if (isTRUE(values$pregnant)) "yes" else "no",
       if (isTRUE(values$adjustToFFM)) "yes" else "no",
-      if (is.null(values$osmolality)) OSMOLALITY_DEFAULT else values$osmolality,
-      if (is.null(values$creatinine)) "not entered (assumed normal)" else values$creatinine,
-      if (is.null(values$gestationalAge)) "not entered (term assumed)" else values$gestationalAge,
+      cell(values$osmolality, OSMOLALITY_DEFAULT),
+      cell(values$creatinine, "not entered (assumed normal)"),
+      cell(values$gestationalAge, "not entered (term assumed)"),
+      cell(values$albumin, "not entered (each model's reference)"),
+      cell(values$ast, "not entered (each model's reference)"),
       # The phenotypes and the companion models change what was simulated,
       # so the sheet records them.  (Claude Code, 2026-10-17, from an
       # external review.)
-      if (is.null(values$cyp2d6)) CYP2D6_DEFAULT else values$cyp2d6,
-      if (is.null(values$cyp2c19)) CYP2C19_DEFAULT else values$cyp2c19,
-      if (is.null(values$cyp2c9)) CYP2C9_DEFAULT else values$cyp2c9,
-      if (is.null(values$cyp2b6)) CYP2B6_DEFAULT else values$cyp2b6,
-      if (is.null(values$vkorc1)) VKORC1_DEFAULT else values$vkorc1,
-      if (is.null(values$cyp4f2)) CYP4F2_DEFAULT else values$cyp4f2,
+      cell(values$cyp2d6, CYP2D6_DEFAULT),
+      cell(values$cyp2c19, CYP2C19_DEFAULT),
+      cell(values$cyp2c9, CYP2C9_DEFAULT),
+      cell(values$cyp2b6, CYP2B6_DEFAULT),
+      cell(values$vkorc1, VKORC1_DEFAULT),
+      cell(values$cyp4f2, CYP4F2_DEFAULT),
       if (isTRUE(values$mintoSchnider)) "yes" else "no",
       if (isTRUE(values$hamberg)) "yes" else "no",
       if (isTRUE(values$antiseizureInteractions)) "yes" else "no"
     ))
+  covariates <- rbind(covariates, physiologyCovariateRows(values$physiology,
+                                                         values$temperature))
   covariates <- rbind(covariates, plotTimeSettings(values$maximum, timeUnit))
   outputComments("Writing covariates")
   openxlsx::addWorksheet(wb, "Covariates")
@@ -358,19 +451,8 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
     sheet <- sheet + 1
   }
   outputComments("Saving Workbook")
-  openxlsx::saveWorkbook(wb, xlsxfileName, overwrite = TRUE)
-
-  outputComments("Creating e-mail")
-  bodyText <- generateBodyText(recipient, values, ageUnit, weightUnit, heightUnit, url, values$comments)
-
-  return(list(
-    title = title,
-    bodyText = bodyText,
-    pptxfileName = pptxfileName,
-    xlsxfileName = xlsxfileName,
-    pngfileName = pngfileName
-    )
-  )
+  openxlsx::saveWorkbook(wb, file, overwrite = TRUE)
+  invisible(file)
 }
 
  generateBodyText <- function(recipient, values, ageUnit, weightUnit, heightUnit, url, comments = ""){
@@ -492,28 +574,6 @@ plotTimeText <- function(maximum, timeUnit = "minutes")
     else "",
     "</p><p>&nbsp;</p>"
   )
-}
-
-# The plot as the email's PNG preview draws it: smaller text, and no fixed
-# aspect ratio.  simulationPlot() sets the ratio for renderPlot()'s 72 dpi,
-# setting aside the threshold labels' gap in points as pixels, and the
-# preview is saved at 150 dpi, where the same gap is twice as many pixels:
-# left to fill the image, the panels take whatever the furniture leaves.
-previewPlot <- function(plotObject)
-{
-  plotObject +
-    ggplot2::theme(
-      aspect.ratio = NULL,
-      strip.text.y = ggplot2::element_text(size = 6, angle = 180),
-      axis.text.y = ggplot2::element_text(size = 6),
-      axis.text.x = ggplot2::element_text(size = 8),
-      axis.title.x = ggplot2::element_text(size = 12),
-      legend.background = ggplot2::element_blank(),
-      legend.box.background = ggplot2::element_blank(),
-      legend.key = ggplot2::element_blank(),
-      legend.text = ggplot2::element_text(size=8),
-      legend.title = ggplot2::element_text(color="darkblue", size=10, face="bold")
-    )
 }
 
 # A worksheet name Excel accepts: at most 31 characters (openxlsx refuses a

@@ -77,9 +77,13 @@ test_that("the dialogs' columns are the ones their handlers read", {
   expect_equal(vapply(thresholdGridColumns(), `[[`, "", "name"), c("Drug", "Threshold"))
   shown <- drugLibraryGridData(getDrugDefaultsGlobal())
   expect_equal(vapply(drugLibraryGridColumns(shown), `[[`, "", "name"), names(shown))
-  # a drug not in mcg or ng keeps its concentration unit
+  # a drug not in mcg or ng keeps its concentration unit, and so does one on
+  # the saturable engine, whose Vmax and Km are in its model's own units
+  # (Carbon's third UI audit, 2026-11-15, C5)
   ro <- unlist(drugLibraryGridColumns(shown)[[2]]$readonlyRows) + 1L
-  expect_true(all(!shown$Concentration.Units[ro] %in% c("mcg", "ng")))
+  locked <- concentrationUnitsLocked(shown$Drug, shown$Concentration.Units)
+  expect_equal(sort(as.integer(ro)), unname(which(locked)))
   expect_true(all(shown$Concentration.Units[-ro] %in% c("mcg", "ng")))
+  expect_true("phenytoin" %in% shown$Drug[ro])
   expect_equal(vapply(paperReviewDoseColumns("min", "mg"), `[[`, "", "label"), c("Time (min)", "Dose", "Units"))
 })

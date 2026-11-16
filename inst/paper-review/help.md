@@ -7,7 +7,8 @@
 ## What it does
 
 1. You upload one pharmacokinetic manuscript (a PDF), and optionally its
-   supplement.
+   supplement, together no larger than 20 MB. Choosing another file in
+   either field discards the one it held.
 2. When you press **Review the paper**, the manuscript is sent to Anthropic's
    Claude, which reads it and returns the model it describes: the structure,
    every parameter with where it was printed, the covariate equations, the
@@ -55,8 +56,10 @@ What follows from it:
   or the connection is lost, while Claude is reading, the review is lost. It
   is not kept for you to collect later. A review made with stanpumpR's own
   key is paid for whether or not you see it.
-- **To keep a review, download it** (**Download the report**). That copy is
-  on your own computer, and it is yours to protect.
+- **To keep a review, download it**, as a web page (**Download the report
+  (HTML)**) or as a Word document (**Download the report (Word)**). The two
+  hold the same report, plots included. That copy is on your own computer,
+  and it is yours to protect.
 
 The two things recorded about a review are described below: a count kept for
 the operator when stanpumpR's own key is used (never the content), and

@@ -169,6 +169,22 @@
 #      concentration, identical to the enantiomer model's.
 #   3. Convert the three exponentials to V1, V2, V3, CL1, CL2, CL3.
 #
+# The fit in step 2 starts from the geometric means of the two enantiomers'
+# exponentials, pair by pair.  Below a pharmacokinetic weight of about
+# 0.2 kg (a legal entry, the Patient Profile taking 0.1 kg) the weight term
+# shrinks V3 until its exchange is faster than the 0.5-min start of the fit's
+# time line, and from that start the optimiser carried the area constraint on
+# an exponent it could not see: 1e3 to 1e12 /min, a curve 19% off the
+# enantiomer sum, two equal exponents, or a negative one, which then stopped
+# ke0FromTPeakBolus() (Carbon's third UI audit, 2026-11-15, H3; the female
+# case stopped, the male one at the same entry was silently wrong).  A fit
+# whose exponents leave the range of the six it reduces, or come out equal,
+# is not a reduction, so it is refitted from a start on the three slowest
+# phases (the middle pair's geometric mean and each terminal exponent), which
+# is kept if it passes: 0.3% from the enantiomer sum at 0.05-0.17 kg, against
+# 19% for the fits it replaces.  Every fit that passed before is the fit it
+# was, bit for bit, because only a fit that fails the test is refitted.
+#
 # At 70 kg the reduced model is within 2.5% of the enantiomer sum from 1 min
 # to 7 days after a bolus, and within 1% throughout 10 days of 8-hourly
 # dosing.  It drifts low after a week (-26% at 14 days after a single dose,
@@ -359,15 +375,52 @@ methadoneRacemicPK <- function(v3Weight, clFactor = 1,
   objective <- function(p)
   {
     u <- unpack(p)
-    if (u$coef[3] <= 0) return(1e10)
+    # isTRUE(): a coefficient that overflows to NaN is refused rather than
+    # stopping the fit; for every number it is the comparison it was.
+    if (!isTRUE(u$coef[3] > 0)) return(1e10)
     sum((log(udf(u$coef, u$lambda, t)) - log(y))^2)
+  }
+  fitFrom <- function(start, fn = objective)
+  {
+    fit <- stats::optim(start, fn, method = "Nelder-Mead",
+                        control = list(maxit = 20000, reltol = 1e-14))
+    stats::optim(fit$par, fn, method = "BFGS",
+                 control = list(maxit = 5000, reltol = 1e-15))
+  }
+  # A reduction of six exponentials to three needs no exponent faster than
+  # the fastest of the six nor slower than the slowest, and three distinct
+  # ones; a fit outside that is the optimiser carrying the area on a phase the
+  # time line cannot see (the header's REDUCTION section; Carbon's third UI
+  # audit, 2026-11-15, H3).
+  six <- c(e$R$lambda, e$S$lambda)
+  reduces <- function(fit)
+  {
+    u <- unpack(fit$par)
+    all(is.finite(u$lambda)) && all(is.finite(u$coef)) && all(u$coef > 0) &&
+      max(u$lambda) <= max(six) && min(u$lambda) >= min(six) &&
+      min(diff(sort(log(u$lambda)))) > 1e-3
   }
   start <- log(c(0.5 * (e$R$coef[1:2] + e$S$coef[1:2]),
                  sqrt(e$R$lambda * e$S$lambda)))
-  fit <- stats::optim(start, objective, method = "Nelder-Mead",
-                      control = list(maxit = 20000, reltol = 1e-14))
-  fit <- stats::optim(fit$par, objective, method = "BFGS",
-                      control = list(maxit = 5000, reltol = 1e-15))
+  fit <- fitFrom(start)
+  if (!reduces(fit)) {
+    # The three slowest phases: the middle pair at its geometric mean, then
+    # S(+)'s and R(-)'s own terminal exponents (the third coefficient, R's,
+    # follows from the area).  This search ranges further than the first, so
+    # a sum that overflows is refused rather than handed to BFGS, and a search
+    # that fails leaves the first fit to the mammillary check below.
+    bounded <- function(p) {
+      value <- objective(p)
+      if (is.finite(value)) value else 1e10
+    }
+    slow <- tryCatch(
+      fitFrom(log(c(0.5 * (e$R$coef[2] + e$S$coef[2]),
+                    0.5 * e$S$coef[3],
+                    sqrt(e$R$lambda[2] * e$S$lambda[2]),
+                    e$S$lambda[3], e$R$lambda[3])), bounded),
+      error = function(err) NULL)
+    if (!is.null(slow) && reduces(slow)) fit <- slow
+  }
   u <- unpack(fit$par)
   ord <- order(u$lambda, decreasing = TRUE)
   A <- u$coef[ord]
