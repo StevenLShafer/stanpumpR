@@ -182,7 +182,16 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # same infusion rates 16, 12 and 11% lower for remifentanil, propofol and
 # midazolam over the 4 C, fentanyl unchanged (Bjelland 2014, Acta
 # Anaesthesiol Scand 58:709); neonatal morphine 292 against 206 ng/mL at
-# 33-34 C (Roka 2008, Pediatrics 121:e844).  The choices: one factor
+# 33-34 C (Roka 2008, Pediatrics 121:e844).  Theory (Hobbs 2013, ACS Chem
+# Biol 8:2388; Arcus 2016, Biochemistry 55:1681; read in full): enzyme rates
+# curve on a log scale because the heat capacity of activation is negative,
+# -1 to -12 kJ/mol/K across the enzymes measured, so the per-degree fall
+# grows as temperature drops.  Held to 6.6%/C at 37 C, that would give 46-29%
+# of normal at 28 C for -3 to -12 kJ/mol/K, against an exponential's 55%.  The
+# drug-metabolising data show no such curve: pig CYP3A4 6%/C on both 38-32
+# and 32-26 C (Fritz 2005), straight Arrhenius plots for rat liver slices
+# over 7-37 C and UGT over about 26-56 C, and remifentanil's exponential
+# fitted over 20-35 C.  The choices: one factor
 # on hepatic intrinsic clearance (inside the well-stirred model) for every
 # drug, or separate CYP, UGT and esterase factors; and whether to extend a
 # fit made above 34.8 C down to 28 C.
