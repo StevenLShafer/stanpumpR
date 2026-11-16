@@ -589,7 +589,10 @@ allowed to learn from my models. Claude is allowed to see coarse metadata."
    report (it then leaves the app, on the user's own machine)? The prototype
    offers an HTML download, switched by `paper_review_download` in
    `config.yml` (on by default for local evaluation); nothing is kept
-   server-side either way. (Asked 2026-10-30.)
+   server-side either way. (Asked 2026-10-30.) Shafer asked for a Word
+   version beside it (2026-11-16): **Download the report (Word)**, the same
+   report built from the same tags (`R/paper-review-word.R`), under the same
+   switch.
 6. `[decided]` **Test papers: Shafer supplies them.** "No problem. I've got
    lots of papers for testing." (2026-10-30, relayed by the parent session.)
    For each live test the session asks him for a paper in its own session,

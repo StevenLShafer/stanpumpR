@@ -695,7 +695,10 @@ paperReviewServer <- function(input, output, session)
 
   output$downloadUI <- shiny::renderUI({
     if (is.null(review()) || !isTRUE(paperReviewConfig("paper_review_download", TRUE))) return(NULL)
-    shiny::downloadButton(session$ns("download"), "Download the report (HTML)", style = "margin-top: 12px;")
+    htmltools::div(style = "margin-top: 12px;",
+      shiny::downloadButton(session$ns("download"), "Download the report (HTML)"),
+      shiny::downloadButton(session$ns("downloadWord"), "Download the report (Word)",
+                            style = "margin-top: 6px;"))
   })
   # Shiny writes the page to a temporary file it owns and deletes once served.
   # The link can be followed after Discard (the button goes, a link already
@@ -716,6 +719,24 @@ paperReviewServer <- function(input, output, session)
       writeLines(page, file, useBytes = TRUE)
     },
     contentType = "text/html")
+  # The same report as a Word document (Shafer, 2026-11-16), built from the
+  # same tags (R/paper-review-word.R), which leaves nothing in tempdir() but
+  # the file Shiny serves and deletes.  As above, a link followed after
+  # Discard, or a report that cannot be written, gets a document that says so.
+  output$downloadWord <- shiny::downloadHandler(
+    filename = "single-paper-review.docx",
+    content = function(file) {
+      r <- review()
+      written <- !is.null(r) &&
+        isTRUE(tryCatch({
+          paperReviewSilently(paperReviewReportDocx(r, file))
+          TRUE
+        }, error = function(e) FALSE))
+      if (!written) paperReviewNoReportDocx(
+        if (is.null(r)) "There is no review to download: it was discarded, or none has been made."
+        else "The report could not be written.", file)
+    },
+    contentType = PAPER_REVIEW_DOCX_TYPE)
 
   # --- Simulator ---------------------------------------------------------------
 
