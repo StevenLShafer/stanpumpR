@@ -334,7 +334,11 @@ test_that("removing the rows the week rule names clears it, for an agent from th
     doseTableHistory()$do(dt[!dt$Drug %in% c("oxygen", "sevoflurane", "ventilation"), ])
     session$setInputs(dosetable_apply = 1)
     expect_null(timeUnitViolation())
-    expect_identical(names(drugs()), "cefazolin")
+    # The simulation runs again; cefazolin, at the startup menu's 0, is not
+    # drawn (only drugs given a dose above 0 are, since 2026-11-16), and the
+    # plot area says why rather than naming the week rule
+    expect_length(drugs(), 0)
+    expect_identical(plotMessage(), NOTHING_TO_DRAW_MESSAGE)
   })
 })
 
