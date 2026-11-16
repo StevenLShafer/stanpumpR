@@ -25,6 +25,8 @@ getDrugPK(
   model = NULL,
   cyp4f2 = CYP4F2_DEFAULT,
   gestationalAge = NULL,
+  albumin = NULL,
+  ast = NULL,
   individual = NULL,
   libraryDefaults = NULL,
   metaboliteIndividual = NULL,
@@ -96,6 +98,14 @@ passed only to models that name it (warfarin).}
 default) for a term birth.  Passed only to the neonatal models that
 declare it (dobutamineNeonatal), whose clearance matures with
 postmenstrual age (\code{postmenstrualAge()}).}
+
+\item{albumin}{serum albumin in g/dL, or NULL (the default), in which case
+each model holds its own reference value.  Passed only to the models that
+declare it (methotrexate, methotrexatePediatric, docetaxel).}
+
+\item{ast}{serum aspartate aminotransferase in U/L, or NULL (the default),
+in which case each model holds its own reference value.  Passed only to the
+models that declare it (epirubicin).}
 
 \item{individual}{NULL (the default) for the model's own patient, or the
 individual's pharmacokinetics as a list of \code{clearance} and

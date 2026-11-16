@@ -1301,6 +1301,19 @@ app_server <- function(input, output, session) {
     if (is.null(x) || length(x) != 1 || (is.na(x) && !is.nan(x))) NULL else x
   })
 
+  # NULL when the field is blank: the albumin models then hold their own
+  # reference value.
+  albumin <- reactive({
+    x <- input$albumin
+    if (is.null(x) || length(x) != 1 || (is.na(x) && !is.nan(x))) NULL else x
+  })
+
+  # Likewise the AST: blank, and the AST models hold their reference.
+  ast <- reactive({
+    x <- input$ast
+    if (is.null(x) || length(x) != 1 || (is.na(x) && !is.nan(x))) NULL else x
+  })
+
   # The message for the plot area when Age, Weight or Height is not a number.
   # A blank field, or an unfinished entry such as a lone ".", reaches the
   # server as NULL or NA, and req() in age() etc. then stops everything
@@ -1345,7 +1358,9 @@ app_server <- function(input, output, session) {
       checkNumericCovariates(age(), weight(), height(), errorFxn,
                              osmolality = osmolality(),
                              creatinine = creatinine(),
-                             gestationalAge = gestationalAge())
+                             gestationalAge = gestationalAge(),
+                             albumin = albumin(),
+                             ast = ast())
     }, name = "testCovariates() reactive")
   })
 
@@ -1467,6 +1482,8 @@ app_server <- function(input, output, session) {
         osmolality = osmolality(),
         creatinine = creatinine(),
         gestationalAge = gestationalAge(),
+        albumin = albumin(),
+        ast = ast(),
         pregnant = pregnant(),
         adjustToFFM = adjustToFFM(),
         opioidTolerance = opioidTolerance(),
@@ -2020,6 +2037,8 @@ app_server <- function(input, output, session) {
       osmolality = osmolality(),
       creatinine = creatinine(),
       gestationalAge = gestationalAge(),
+      albumin = albumin(),
+      ast = ast(),
       cyp2d6 = genotypes()$cyp2d6,
       cyp2c19 = genotypes()$cyp2c19,
       cyp2c9 = genotypes()$cyp2c9,
@@ -3406,7 +3425,9 @@ app_server <- function(input, output, session) {
                                        function(msg) covariateProblem <<- msg,
                                        osmolality = osmolality(),
                                        creatinine = creatinine(),
-                                       gestationalAge = gestationalAge())
+                                       gestationalAge = gestationalAge(),
+                                       albumin = albumin(),
+                                       ast = ast())
           if (!isTRUE(ok)) blocked <- if (is.null(covariateProblem)) "the Patient Profile is out of range." else covariateProblem
         }
         if (!is.null(blocked)) {

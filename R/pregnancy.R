@@ -182,11 +182,16 @@ pregnancyFindings <- function() {
 #'
 #' Every drug of the library a user can dose: the rows of the drug table with
 #' a Category, which leaves out the metabolites (formed, never dosed) and the
-#' carrier gases (air, oxygen, ventilation).
+#' carrier gases (air, oxygen, ventilation), plus every candidate model of a
+#' drug whose model the program chooses (R/modelSelection.R), each of which
+#' can be the curve a patient gets.
 #' @noRd
 pregnancyCoveredDrugs <- function(drugDefaults = getDrugDefaultsGlobal()) {
   category <- drugDefaults$Category
-  drugDefaults$Drug[!is.na(category) & nzchar(category)]
+  offered <- !is.na(category) & nzchar(category)
+  candidates <- modelCandidates()
+  candidates <- candidates[modelCandidateGroup(candidates) %in% drugDefaults$Drug[offered]]
+  drugDefaults$Drug[offered | drugDefaults$Drug %in% candidates]
 }
 
 #' The rise in filtration a renal term applies in pregnancy
