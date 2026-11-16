@@ -1,21 +1,14 @@
-### The model
+### One name, the model chosen for the patient
 
-Ostermann and colleagues (*Clin Cancer Res* 2004;10:3728-3736) measured temozolomide in plasma and cerebrospinal fluid in 35 adults with malignant glioma, 30 to 79 years, taking 75 mg/m² daily during radiotherapy or 200 mg/m² for 5 days every 4 weeks. Temozolomide is absorbed quickly (absorption rate 5.8 per hour, a half-life of 7 minutes) into a single central volume, and leaves it with a half-life of about 2 hours.
+stanpumpR holds 2 published models of oral temozolomide. You do not choose between them: stanpumpR picks the model whose study population best matches the patient you entered (a rule of Steven Shafer's, 9 November 2026). The References panel under the plot names the model in use.
 
-### Body size and sex
+| Model | Source | Studied in |
+|---|---|---|
+| [temozolomideOstermann](help:drugs/temozolomideOstermann) | Ostermann 2004 | 35 adults with malignant glioma, 30-79 years |
+| [temozolomidePanetta](help:drugs/temozolomidePanetta) | Panetta 2003 | 39 infants, children and young adults with brain tumours, 0.7-21.9 years |
 
-Clearance is 10.0 L/h in a woman of average body-surface area (1.81 m², Du Bois), 19% higher in a man, and rises by 4.2 L/h for each doubling of body-surface area; the volume is 30.3 L, rising by 19.9 L for each doubling. Age, kidney function and the other drugs the patients took had no effect.
+**The rule.** Among the models whose studied age range (and weight range, where the paper printed one) includes the patient, the one fitted to more patients is chosen, then the newer. If none includes the patient, the one whose ranges are nearest is chosen.
 
-### The cerebrospinal fluid
+**What that means for temozolomide.** The two age ranges do not overlap. Patients up to 25.9 years get Panetta 2003, and older patients get Ostermann 2004. At an adult's body-surface area the two give similar clearances (about 10.6 against 10.0 to 11.9 L/h at 1.8 m²), so the switch between them is small. Both are one-compartment models with fast absorption; Ostermann's also carries a small cerebrospinal-fluid compartment.
 
-A small compartment stands for the cerebrospinal fluid. At equilibrium it holds about a fifth of the plasma concentration, as the paper's CSF measurements did. The **Peripheral compartments** panel shows it as V2 on the plasma's scale, not as the CSF concentration itself.
-
-### What is plotted
-
-Plasma temozolomide, in mcg/mL, after oral doses (bioavailability taken as 1, the authors' assumption). Temozolomide breaks down without enzymes to its active form, MTIC, which is not modelled. There is no therapeutic range, so none is drawn.
-
-### Where to be careful
-
-- **Adults only.** Fitted at 30 to 79 years; the body-size terms are not a model of a child's.
-- **The absorption phase is uncertain.** Few samples were taken in the first hours, and the authors say the absorption rate was poorly estimated; the model peaks about 30 minutes after a dose.
-- **Pregnancy:** no pharmacokinetic data were found; nothing is changed.
+The tables on this page are computed at six reference patients, so each uses the model chosen for that patient. Each model's own page gives its parameters, its checks against its paper, and its limits.

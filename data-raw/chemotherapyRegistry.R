@@ -193,6 +193,11 @@ C40	12235447	Xie	2002	Clin Pharmacol Ther	72(3):265-75	10.1067/mcp.2002.126741		
 C41	889590	Owellen	1977	Cancer Res	37(8 Pt 1):2597-602			Pharmacokinetics and metabolism of vinblastine in humans.
 C42	6183016	Hall	1982	Cancer Chemother Pharmacol	9(1):22-5	10.1007/BF00296756		Bleomycin clinical pharmacology by radioimmunoassay.
 C43	7172404	Breithaupt	1982	Cancer Chemother Pharmacol	9(2):103-9	10.1007/BF00265388		Pharmacokinetics of dacarbazine (DTIC) and its metabolite 5-aminoimidazole-4-carboxamide (AIC) following different dose schedules.
+C44	13680158	Panetta	2003	Cancer Chemother Pharmacol	52(6):435-41	10.1007/s00280-003-0670-4		Population pharmacokinetics of temozolomide and metabolites in infants and children with primary central nervous system tumors.
+C45	42863554	Maisonneuve	2026	Eur J Pharmacol	1037:179417	10.1016/j.ejphar.2026.179417		Population pharmacokinetic modeling of idarubicin and idarubicinol in acute myeloid leukemia induction therapy: An ancillary study of the BIG-1 trial.
+C46	86392	Alberts	1978	Cancer Chemother Pharmacol	1(3):177-81	10.1007/BF00253118		Bleomycin pharmacokinetics in man. I. Intravenous administration.
+C47	6188571	Yee	1983	Clin Pharmacol Ther	33(5):668-73	10.1038/clpt.1983.91		Bleomycin disposition in children with cancer.
+C48	78932	Kramer	1978	J Clin Pharmacol	18(7):346-52	10.1002/j.1552-4604.1978.tb01604.x		The pharmacokinetics of bleomycin in man.
 N01	11599657	Erdlenbruch	2001	Eur J Clin Pharmacol	57(5):393-402	10.1007/s002280100319		Pharmacokinetics of cisplatin and relation to nephrotoxicity in paediatric patients.
 N01b	9470840	Peng	1997	Eur J Cancer	33(11):1823-8	10.1016/s0959-8049(97)00341-9		Cisplatin pharmacokinetics in children with cancer.
 N01c	6891625	Evans	1982	Cancer Chemother Pharmacol	10(1):22-6	10.1007/BF00257231		Pharmacokinetic modeling of cisplatin disposition in children and adolescents with cancer.
@@ -215,17 +220,17 @@ pubmedSources[pubmedSources == ""] <- NA
 
 # How far each PubMed document was read here.  Every abstract was screened;
 # the PubMed Central text (without tables or equations) was read for these.
-FULL_TEXT_PARTIAL <- c("C12", "C15", "C35", "N04", "C37b")
+FULL_TEXT_PARTIAL <- c("C12", "C15", "C35", "N04")
 pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
                              "guideline", "primary_study")
 # Read in full: every parameter the model uses, from the PubMed Central
 # text, the PDF still to confirm (FULL_TEXT_READ); or confirmed on the PDF
 # itself (PARAMETERS_VERIFIED: Briki 2026 and Lindemalm 2005, supplied by
 # Shafer 2026-11-06)
-FULL_TEXT_READ <- c("C41", "C25", "C42", "P06", "C11", "N05", "C01", "P02", "C35", "C03", "C37a", "C34", "P16", "C21", "C07", "P15", "P08", "C19", "P21", "P25", "C23", "C24", "N11", "C10", "C38a", "N12", "N10", "C09", "P13", "C17", "C27", "P05")
+FULL_TEXT_READ <- c("C37b", "C45", "C46", "C48", "C41", "C25", "C42", "P06", "C11", "N05", "C01", "P02", "C35", "C03", "C37a", "C34", "P16", "C21", "C07", "P15", "P08", "C19", "P21", "P25", "C23", "C24", "N11", "C10", "C38a", "N12", "N10", "C09", "P13", "C17", "C27", "P05")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
-PARAMETERS_VERIFIED <- c("N13", "C36", "N02", "C43", "P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18", "C05", "C06", "N08", "N09")
+PARAMETERS_VERIFIED <- c("C47", "C44", "N13", "C36", "N02", "C43", "P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18", "C05", "C06", "N08", "N09")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
   ifelse(pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
@@ -681,7 +686,13 @@ registry <- rbind(
     "oral, first-order absorption (Ka 5.8 /h, F 1) into one compartment with a CSF compartment (K23 0.00072, K32 0.76 /h, Vp 0.14 L fixed): CL 10.0 x (1 + 0.19 male) + 4.2 x dBSA L/h, V 30.3 + 19.9 x dBSA L, dBSA the relative deviation of Du Bois BSA from the mean",
     "expansion", "linear", "C36",
     "PDF read (supplied 2026-11-13). Table 4's model; the pooled mean BSA (1.81 m2) from Table 1's two trial means. Reproduces the text's 11.9 L/h in a man and 14.2 L/h and 50.2 L on doubling BSA, and the 2.1-h half-life. The CSF compartment is carried as the PK set's peripheral compartment (exact for plasma); its panel concentration is not the CSF concentration (0.21 of plasma at equilibrium). Oral only; adults 30-79.",
-    readiness = "implemented", stanpumpr_drug = "temozolomide"),
+    readiness = "implemented", stanpumpr_drug = "temozolomideOstermann"),
+  m("temozolomide__children__panetta2003", "temozolomide", "temozolomide", "PO",
+    "39 infants, children and young adults 0.7-21.9 years with CNS tumours", "temozolomide, MTIC, AIC",
+    "oral, first-order absorption (ka 2.4 /h, F 1) into one compartment: ln CL/F = 0.42 + 1.08 BSA (L/h), ln V/F = 1.34 + 1.09 BSA (L)",
+    "expansion", "linear", "C44",
+    "PDF read (supplied 2026-11-16). Two-stage (ADAPT II per study, then linear mixed effects of the log parameters); Table 3's BSA equations are the only complete model of the absolute parameters (an age term on CL per m2 is printed separately, with no combined equation, and is not applied). At the median BSA 1.1 m2 the equations give ke 0.394 /h against Table 2's 0.39, and at 1.8 m2 CL/F 10.6 L/h, between Ostermann's woman and man. [decision, asked 2026-11-16] Held proportional to BSA outside the studied 0.45-2.1 m2, where the exponential equations do not scale with size. The candidate for children in the temozolomide group (Ostermann 2004 for adults). MTIC and AIC not carried (their rate constants are not printed); a 17% fall in clearance at 150 against 200 mg/m2 not modelled.",
+    readiness = "implemented", stanpumpr_drug = "temozolomidePanetta"),
   m("mercaptopurine__all__hawwa2008", "mercaptopurine", "mercaptopurine", "PO",
     "19 children with ALL", "red-cell 6-TGN and 6-mMPN",
     "red-cell metabolite model; BSA and TPMT genotype", "expansion", "new_engine", "C38b",
@@ -749,13 +760,38 @@ registry <- rbind(
     "classical three compartments per patient; Table 1 prints only the three half-lives, Vss and CL",
     "expansion", "linear", "C25",
     "PDF read (supplied 2026-11-13): not identifiable. Table 1 gives per patient the three half-lives, Vdss and CL (mean 13.0 min, 2.1 h, 17.6 h; 562 L/m2; 679 mL/min/m2) but no intercepts or micro-constants, five numbers where three compartments need six; and several Vdss (3-16 L/m2) are implausible beside half-lives of 10-40 h. Idarubicinol gets only a half-life (56.8 h). Intravenous only, children 1-21 years. A source with intercepts or a population model is needed.",
-    readiness = "needs_full_text", to_obtain = "A pediatric or adult idarubicin model with the parameters (e.g. Camaggi 1992, Robert 1993); none is in the archive"),
+    readiness = "needs_full_text", to_obtain = NA_character_),
+  m("idarubicin__aml__maisonneuve2026", "idarubicin", "idarubicin", "IV",
+    "27 adults 21-61 years with AML (BIG-1 induction, 9 mg/m2 over 30 min)", "idarubicin and idarubicinol",
+    "idarubicin three compartments (V1 168.71, V2 2073.24, V3 817.4 x (BSA/1.76)^2.08 L; Q1 266.47 to V2, Q2 610.42 L/h to V3), eliminated ONLY by conversion to idarubicinol, from V1 (kp1m 0.15 /h) into its central compartment V4 = V1 and from V3 (kp3m 0.19 /h) into its peripheral V5 (2155.69 x (lymphocytes/1.43)^-0.3 L, Q3 31.33 L/h); idarubicinol eliminated from V4 at k40 0.02 /h, FIXED by a grid search",
+    "expansion", "new_engine", "C45",
+    "PDF and supplement read (both supplied 2026-11-16). Table 3's final model; the supplement's MLXTRAN code (Code S1) confirms the structure: V4 = V1, k12 = Q1/V1, k13 = Q2/V1, k45 = Q3/V1, transfers 1 to 4 (kp1m) and 3 to 5 (kp3m), elimination from 4 only. Idarubicinol's k40 is NOT identified: over Table S1's grid the objective function stays within 2.7 points of its minimum from 0.0005 to 0.06 /h (an idarubicinol half-life from 12 h to 58 days) and rises only above 0.07 /h, so 0.02 /h (35 h) is one value among equals and the idarubicinol curve after 24 h is not a prediction; Table S3 shows the peripheral metabolite compartment and the V3-to-V5 transfer each worth 59 and 83 OFV points. Most of idarubicin's elimination is from the peripheral compartment (0.19 x 817 = 155 L/h equivalent, against 0.15 x 169 = 25 L/h from V1), and half the metabolite is formed in the metabolite's peripheral compartment, which no engine of the library carries: the closed-form metabolite route forms the metabolite from the parent's central compartment only. The parent's plasma curve alone could be carried exactly by the equivalent mammillary model with central elimination, but its V2/V3 panels would not be the paper's. Idarubicinol's elimination (k40) was fixed, not estimated (24-h sampling), so its terminal phase is not identified. Lymphocyte count has no Patient Profile field. [decision, asked 2026-11-16] Whether to build a general linear compartmental engine (a matrix exponential of any compartment matrix, as advanceTransitChain.R and advanceBiliaryStore.R are for their structures), which would carry this model and de Jonge 2005's, or to implement idarubicin's parent alone now.",
+    readiness = "needs_engine"),
   m("bleomycin__adult__hall1982", "bleomycin", "bleomycin", "IV and SC",
     "19 patients (11 IV, 8 SC)", "bleomycin by radioimmunoassay (units)",
     "biexponential after IV (t1/2 0.26 and 2.3 h, CL 67.8 mL/min/m2, VD 13.2 L/m2); after SC a single phase (peak 1.1 h, t1/2 4.3 h)",
     "expansion", "linear", "C42",
     "PDF read (supplied 2026-11-13): not identifiable. VD is the area volume (CL/beta: 67.8 x 2.3 h / 0.693 = 13.5 L/m2), so CL, VD and the two half-lives are three independent numbers, not the four two compartments need; no intercepts or central volume are printed. The creatinine relation (Fig. 3, r2 0.42, SC patients) is a graph without an equation. Dosed in units (activity), not mass. The handoff named the first author Crooke; PubMed's is Hall.",
-    readiness = "needs_full_text", to_obtain = "Alberts DS et al. Bleomycin pharmacokinetics in man. I. Intravenous administration. Cancer Chemother Pharmacol 1978;1:177-181 (two-compartment parameters), or Crooke ST et al. Cancer Treat Rep 1977;61:1631-1636"),
+    readiness = "needs_full_text", to_obtain = NA_character_),
+  m("bleomycin__adult__alberts1978", "bleomycin", "bleomycin", "IV",
+    "9 adults (8 with normal creatinine) given 13.7-19.9 U/m2 by bolus", "bleomycin by radioimmunoassay (units)",
+    "biexponential per patient (Table 2: half-lives 24.4 min and 241.9 min, CL 50.6 mL/min/m2, Vd 17.5 L/m2, means of 8)",
+    "expansion", "linear", "C46",
+    "PDF read (supplied 2026-11-16): not identifiable, as Hall 1982. Vd is the area volume, Dose/(beta x AUC) = CL/beta (50.6 x 241.9/0.693 = 17.7 L/m2 against the printed 17.5), so CL, Vd and the two half-lives are three independent numbers, not the four two compartments need; Eq. 1's intercepts A and B are not printed, and the composite fit (Fig. 2) is a graph. 24-h urine 44.8% of the dose.",
+    readiness = "needs_full_text",
+    to_obtain = NA_character_),
+  m("bleomycin__children__yee1983", "bleomycin", "bleomycin", "IV",
+    "14 children 1-17 years (median 14.5) with cancer; 11 bolus courses with cisplatin below 300 mg/m2", "bleomycin by radioimmunoassay (units)",
+    "two compartments per m2, closed from Table II's CL 51.8 mL/min/m2, Vc 4.3 and Vss 9.9 L/m2 and the 3.2-h terminal half-life: k12 0.637, k21 0.489 /h, Q 2.74 L/h/m2, V2 5.6 L/m2",
+    "expansion", "linear", "C47",
+    "PDF read (supplied 2026-11-16). Five per-course means for four parameters: the fast half-life (0.3 +/- 0.1 h, one figure) is the check, the closure giving 0.42 h (1.2 SEM); closing on both half-lives instead gives Vss 11.2 (1.2 SEM), on Vss and both half-lives Vc 3.3 (1.9 SEM). [decision, asked 2026-11-16] the closure chosen, and the children's model offered to adults: Alberts 1978's adults (not fitted) measured CL 50.6 mL/min/m2 and half-lives 24.4 and 242 min against this model's 51.8, 25 and 192, and the label quotes 51 mL/min/m2. Not applied: the higher clearance under 3 years (70.5, three courses) and any renal term (two thirds renal; no relation to creatinine clearance found at normal function). Doses in USP units, concentrations in mcU/mL (1 unit = the former mg activity, the label).",
+    readiness = "implemented", stanpumpr_drug = "bleomycin"),
+  m("bleomycin__adult__kramer1978", "bleomycin", "bleomycin", "IV",
+    "adults with cancer, 10-min and 4-5-day infusions", "bleomycin by radioimmunoassay (units)",
+    "biexponential per patient after a 10-min infusion of 7-10 U (Table II, group II, 7 patients: beta 0.371 /h, t1/2 2.03 h, Vd-beta 0.354 L/kg, renal clearance 76.9 and total 128.0 mL/min/1.73 m2); 4-5-day infusions consistent only with levels below 10 microunits/mL excluded",
+    "expansion", "linear", "C48",
+    "PDF read on the page images (supplied 2026-11-16): not identifiable. Table II prints only beta, the half-life, Vd-beta (= CL/beta) and the clearances: two independent numbers, no alpha and no intercepts (Eq. 1's A and B are fitted per patient and not printed). The long infusions' terminal phase below 10 microunits/mL, which the authors attribute to a metabolite in the assay or tissue binding, is a caution for any bleomycin model.",
+    readiness = "needs_full_text", to_obtain = NA_character_),
   m("dacarbazine__adult__breithaupt1982", "dacarbazine", "dacarbazine", "IV",
     "8 adults with melanoma or sarcoma", "dacarbazine and AIC",
     "two compartments derived per patient from Table 2's CL, Vss and both half-lives (which close a two-compartment model) and averaged: V1 0.178, V2 0.454 L/kg, CL 15.4, Q 21.9 mL/min/kg",
@@ -791,12 +827,12 @@ registry <- rbind(
     "expansion", "linear", "N05",
     "PDF read (supplied 2026-11-13). 25 children and young adults 0.7-23.3 years, 8.9 mg/m2/day for 5 days by continuous infusion, radioimmunoassay. The means close a model that returns the paper's own Vdss (356.8 against 356.6 L/m2) and terminal half-life (19.7 h). [decision, asked 2026-11-13] Whether to make cladribine a group with Lindemalm 2005 (adults, IV, SC and oral) and this model for children; this one is intravenous only, so a child's SC or oral dose would have no model unless Lindemalm's absorption were borrowed, which the library does not do.",
     readiness = "complete_not_implemented"),
-  m("cladribine__ms__savic2017", "cladribine", "cladribine (tablets, multiple sclerosis)", "PO",
-    "173 adults with multiple sclerosis", "cladribine and 2-chloroadenine",
-    "cladribine three compartments, 2-chloroadenine one; creatinine clearance on renal clearance",
+  m("cladribine__ms__savic2017", "cladribine", "cladribine (tablets, multiple sclerosis)", "IV and PO",
+    "173 adults 19-65 years with multiple sclerosis", "cladribine and 2-chloroadenine",
+    "cladribine three compartments (Table 4: V1 44.0, V3 347, V4 89.5 L; Q3 14.3, Q4 53.7 L/h; CL = 3.52 x Cockcroft-Gault CLCR (L/h) + 23.4 L/h, 22.2 + 23.4 at the typical 6.31 L/h); tablet ka 1.08 /h and F 0.456 fasted, ka 1.03 /h, F 0.40 and lag 0.319 h in phase III (food unknown), food a transit delay (MTT 0.91 h, 2.24 compartments); 2-chloroadenine one compartment with saturable renal elimination",
     "expansion", "linear_metabolite", "C37b",
-    "PubMed Central text read 2026-11-16 (its parameter table is not in the text): 173 adults with multiple sclerosis from four studies, IV (3 mg over 1 h) and the 10-mg tablet; CdA three compartments, CAde one; renal clearance linear in Cockcroft-Gault CrCL (CLR 23.4 and CLNR 22.2 L/h at the mean CrCL), F 45.6% fasted, 40.5% fed, food a 2.44-compartment transit delay (mean 1.04 h); interferon beta-1a CLNR x 1.21; no weight, age or sex effect beyond CrCL. [decision, asked 2026-11-16] Whether the tablet (Mavenclad, the approved oral product) should join cladribine: Savic's 173 patients outnumber Lindemalm's 161, so under the selector it would become the adult model for every route, though its population has multiple sclerosis rather than leukaemia.",
-    to_obtain = "Savic RM et al. Clin Pharmacokinet 2017;56:1245-1253 (PMID 28255849, PMC5591805): the PDF for its parameter table and supplement"),
+    "PDF read (supplied 2026-11-16): complete. 173 adults from four studies, IV (3 mg over 1 h, 16 patients) and the 10-mg tablet. No effect of weight, age or sex beyond the creatinine clearance; interferon beta-1a CLNR x 1.21. The earlier note (from the PubMed Central text) had renal and nonrenal clearance swapped: CLR is 22.2 and CLNR 23.4 L/h. The 2.24 transit compartments of the fed state are not an integer, which advanceTransitChain.R does not carry; the fasted or phase-III absorption is first order and needs nothing new. [decision, asked 2026-11-13, restated 2026-11-16] Whether the tablet (Mavenclad, the approved oral product) joins cladribine as a group candidate (Savic's 173 patients outnumber Lindemalm's 161, so the selector would make it every adult's model for every route, though its population has multiple sclerosis rather than leukaemia), or is offered as its own product, cladribineTablets, oral only; and which absorption (fasted phase I, or phase III with food unknown, the clinical setting).",
+    readiness = "complete_not_implemented"),
   m("paclitaxel_nab__adult__chen2014", "paclitaxel", "paclitaxel protein-bound (nab-paclitaxel)", "IV",
     "150 adults with solid tumours", "paclitaxel",
     "three compartments with saturable distribution and saturable elimination; albumin on elimination",

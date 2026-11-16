@@ -8,7 +8,9 @@
 # Drafted by Claude Code, 2026-11-13, at the request of Steven L. Shafer, who
 # asked for this paper (stanpumpR-papers-needed.csv, priority 2) and had it
 # added to the papers archive (PMID_15173079).  Every number below was read on
-# the pages of the PDF.
+# the pages of the PDF.  A candidate of the temozolomide group
+# (R/modelSelection.R, 2026-11-16): the program chooses it for adults, Panetta
+# 2003 (R/drugs_temozolomidePanetta.R) for children.
 #
 # THE SOURCE
 # ==========
@@ -48,7 +50,7 @@
 # concentration (the paper's CSF AUC, 20% of plasma's), where A3 / v2 equals
 # the plasma's.  The compartment changes plasma by about 0.1%.
 #
-# CHECKS (test-drugs-temozolomide.R): the reference woman's CL 10.0 L/h and
+# CHECKS (test-drugs-temozolomideOstermann.R): the reference woman's CL 10.0 L/h and
 # VD 30.3 L; a man 11.9 L/h; dBSA = 1 gives 14.2 L/h and 50.2 L; terminal
 # half-life 2.1 h.  The model peaks 30 min after a dose (absorption half-life
 # 7 min); Fig. 2's mean profile peaks at 1.5 h, from sparse early samples, and
@@ -59,7 +61,8 @@
 # and creatinine clearance had no effect.
 #
 # WHAT IT DOES NOT COVER: children (fitted at 30-79 years; the additive BSA
-# term is not a size model for a child, whose curve is an extrapolation); the
+# term is not a size model for a child, and the group gives a child Panetta
+# 2003); the
 # intravenous product (no intravenous data here); MTIC and AIC, the products
 # of temozolomide's spontaneous hydrolysis, which are not modelled.
 #
@@ -88,12 +91,12 @@ TEMOZOLOMIDE_OSTERMANN <- list(
 #'
 #' First-order absorption, one central compartment and a CSF compartment;
 #' sex and body-surface area on clearance, body-surface area on volume.  See
-#' the header of \code{R/drugs_temozolomide.R}.
+#' the header of \code{R/drugs_temozolomideOstermann.R}.
 #'
 #' @inheritParams cefazolin
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-temozolomide <- function(weight, height, age, sex, adjustToFFM = TRUE)
+temozolomideOstermann <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   p <- TEMOZOLOMIDE_OSTERMANN
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,

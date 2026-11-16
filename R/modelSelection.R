@@ -94,6 +94,12 @@ MODEL_GROUPS <- list(
     ageMin = c(33, 18), ageMax = c(86, 84),
     weightMin = c(NA, NA), weightMax = c(NA, NA),
     n = c(168, 684), year = c(2006, 2019)),
+  temozolomide = data.frame(
+    model = c("temozolomideOstermann", "temozolomidePanetta"),
+    source = c("Ostermann 2004", "Panetta 2003"),
+    ageMin = c(30, 0.7), ageMax = c(79, 21.9),
+    weightMin = c(46, NA), weightMax = c(105, NA),
+    n = c(35, 39), year = c(2004, 2003)),
   doxorubicinol = data.frame(
     model = c("doxorubicinolJoerger", "doxorubicinolPediatric", "doxorubicinolPerezBlanco"),
     source = c("Joerger 2007", "Voller 2015", "Perez-Blanco 2016"),
@@ -299,3 +305,13 @@ cyclophosphamide <- modelGroup("cyclophosphamide")
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 paclitaxel <- modelGroup("paclitaxel")
+
+#' Temozolomide, oral: the model chosen for the patient
+#'
+#' Ostermann 2004 (35 adults, 30-79 years) or Panetta 2003 (39 patients,
+#' 0.7-21.9 years), chosen by \code{selectModel()}; see
+#' \code{R/modelSelection.R}.
+#' @param ... the patient's covariates, as the candidates take them
+#' @returns a list in the shape \code{getDrugPK()} expects
+#' @export
+temozolomide <- modelGroup("temozolomide")
