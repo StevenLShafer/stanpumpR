@@ -7,9 +7,7 @@
 
 Its median absolute prediction error was 18%, about that of the remifentanil models.
 
-**Intranasal:** the same paper's intranasal model, from 24 of the same subjects given 100 mcg as four 25-mcg sprays. It has its own two-compartment disposition (CL1 0.75 L/min, V1 14 L, CL2 0.81 L/min, V2 8.6 L), an absorption rate constant of 0.19 per minute and an absolute bioavailability of **0.66%**, with no covariates. stanpumpR runs it as a separate system that takes only the intranasal doses, as the paper's own simulator does, and adds its concentrations to those of the intravenous doses.
-
-The intranasal model is much less certain than the intravenous one. Its median absolute error was 47%, and the authors report that the volumes and the absorption rate constant were poorly determined; clearance and bioavailability were well determined. The product studied (TNX-1900) is investigational, and no intranasal oxytocin is marketed in the United States. The route is offered because most oxytocin research uses it.
+**Intranasal oxytocin is not offered.** The same paper fits an intranasal model (an investigational product; no intranasal oxytocin is marketed in the United States), with an absolute bioavailability of only 0.66% and a median absolute error of 47%. stanpumpR does not use it.
 
 **Weight of 1 kg or less (rats):** a two-compartment model (V1 0.10 L, V2 0.02 L) from Tanaka and colleagues (*Mol Pharm* 2018;15:1105-1111), a study of nasal oxytocin in rats with an LC/MS assay. It is reached only by entering a weight of 1 kg or less.
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/drugs_oxytocin.R
 \name{oxytocin}
 \alias{oxytocin}
-\title{Oxytocin pharmacokinetics (intravenous and intranasal)}
+\title{Oxytocin pharmacokinetics (intravenous)}
 \usage{
 oxytocin(weight, height, age, sex, adjustToFFM = TRUE)
 }
@@ -15,19 +15,15 @@ oxytocin(weight, height, age, sex, adjustToFFM = TRUE)
 
 \item{sex}{sex as a string}
 
-\item{adjustToFFM}{\code{TRUE} (the default) evaluates the intravenous
-model's weight terms at the pharmacokinetic weight and scales the
-intranasal model by fat-free mass; \code{FALSE} uses total body weight
-and the intranasal model as published.}
+\item{adjustToFFM}{\code{TRUE} (the default) evaluates the model's weight
+terms at the pharmacokinetic weight; \code{FALSE} at total body weight.}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-Shafer et al. (2025): two compartments, every parameter proportional to
-weight and clearance falling with age, for intravenous doses; the paper's
-separate intranasal model (absolute bioavailability 0.66\%) for intranasal
-doses, run as a parallel system.  A weight of 1 kg or less selects a rat
-model (Tanaka 2018).  See the file's header.
+Shafer et al. (2025), Model D: two compartments, every parameter
+proportional to weight and clearance falling with age.  A weight of 1 kg or
+less selects a rat model (Tanaka 2018).  See the file's header.
 }
 \keyword{internal}

@@ -57,25 +57,17 @@ test_that("the age term is held at 18 and stays finite at 0", {
   expect_equal(a18$cl1, 0.86 * 70 / 80 * (18 / 33)^-0.17)
 })
 
-test_that("the intranasal system is Table 1's intranasal model on intranasal doses", {
+test_that("the intranasal route is not offered", {
+  # Shafer's decision of 2026-11-16: the paper's intranasal model is not used
   x <- oxytocin(70, 170, 35, "male")
-  expect_equal(x$routes, "IV")
-  expect_length(x$parallelSystems, 1)
-  nasal <- x$parallelSystems[[1]]
-  expect_equal(nasal$routes, "IN")
-  p <- nasal$PK$default
-  # The reference man: the fat-free-mass factors are 1
-  expect_equal(unlist(p[c("cl1", "v1", "cl2", "v2", "ka_IN",
-                          "bioavailability_IN", "tlag_IN")]),
-               c(cl1 = 0.75, v1 = 14, cl2 = 0.81, v2 = 8.6, ka_IN = 0.19,
-                 bioavailability_IN = 0.0066, tlag_IN = 0))
-  # Off: as published, whatever the weight
-  q <- oxytocin(100, 170, 35, "male", adjustToFFM = FALSE)$parallelSystems[[1]]$PK$default
-  expect_equal(q$v1, 14)
-  expect_equal(q$cl1, 0.75)
+  expect_null(x$parallelSystems)
+  expect_null(x$PK$default$ka_IN)
+  units <- getDrugDefaultsGlobal()
+  units <- units$Units[units$Drug == "oxytocin"]
+  expect_false(grepl("IN", units, fixed = TRUE))
 })
 
-test_that("intravenous doses use the intravenous model only", {
+test_that("a bolus gives dose / CL", {
   # A 10 mcg bolus: AUC = dose / CL of the intravenous model
   y <- sim(data.frame(Drug = "oxytocin", Time = 0, Dose = 10, Units = "mcg"),
            maximum = 600)
@@ -83,18 +75,6 @@ test_that("intravenous doses use the intravenous model only", {
   auc <- sum(diff(y$Time) * (head(y$Y, -1) + tail(y$Y, -1)) / 2) +
     y$Y[nrow(y)] / min(p$lambda_1, p$lambda_2)
   expect_equal(auc, 10 / p$cl1, tolerance = 0.01)
-})
-
-test_that("100 mcg intranasal gives F x dose / CL of the intranasal model", {
-  # Study 2's regimen: 50 mcg at 0 and 50 mcg at 5 min
-  x <- sim(data.frame(Drug = "oxytocin", Time = c(0, 5), Dose = c(50, 50),
-                      Units = "mcg IN"), maximum = 600)
-  p <- getDrugPK("oxytocin", 70, 170, 35, "male")$parallelSystems[[1]]$PK$default
-  auc <- sum(diff(x$Time) * (head(x$Y, -1) + tail(x$Y, -1)) / 2) +
-    x$Y[nrow(x)] / min(p$lambda_1, p$lambda_2)
-  expect_equal(auc, 0.0066 * 100 / 0.75, tolerance = 0.01)
-  # Two orders of magnitude below 16.7 mcg IV, as Figure 1 shows
-  expect_lt(peak(x), peak(sim(infusion(16.7, 10))) / 30)
 })
 
 test_that("the model reproduces the check the paper prints", {

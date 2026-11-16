@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Oxytocin: intravenous and intranasal (Shafer 2025), plasma, LC/MS assay
+# Oxytocin: intravenous (Shafer 2025), plasma, LC/MS assay
 # -----------------------------------------------------------------------------
 # Units: time in minutes, volumes in litres, clearances in L/min, doses in
 # mcg of oxytocin, concentrations in ng/mL, venous plasma.
@@ -36,32 +36,15 @@
 # from the supplement when it was written; Model D is the one printed, and
 # the one used here, on Steven L. Shafer's decision of 2026-11-16.
 #
-# INTRANASAL (Table 1)
-# ==========
-# Fitted after the intravenous model, in two steps: with each subject's
-# intravenous disposition the absolute bioavailability was estimated (0.66%);
-# that fit was poor, so F was fixed at its population value and a disposition
-# of its own was estimated with the absorption, again two compartments:
-#     CL1 0.75 L/min, V1 14 L, CL2 0.81 L/min, V2 8.6 L,
-#     ka 0.19 /min, F 0.66% (absolute), no lag
-# with no covariates (none improved the fit).  The authors report the volumes
-# and ka as poorly identified (irregular likelihood profiles), CL1, CL2 and F
-# as well identified, and the model as imprecise (bias +9%, median absolute
-# error 47%).
-#
-# The two routes are therefore two parallel systems (getDrugPK(), as for
-# meloxicam): the drug's own system is the intravenous model and takes only
-# intravenous doses; the intranasal model takes only intranasal doses; the
-# plotted concentration is their sum.  This is how the paper's own simulator
-# runs the intranasal route.  Using the intravenous disposition with the
-# intranasal ka and F instead would mix the two steps of the fit: the
-# intranasal clearance is 0.75, not 0.86 L/min at 80 kg, so exposure would be
-# about 13% lower than the published intranasal model gives.
-#
-# The intranasal product studied (TNX-1900) is investigational; no
-# intranasal oxytocin is marketed in the United States.  The route is offered
-# because intranasal oxytocin is the subject of most oxytocin research, which
-# is what this drug is in the library for.
+# INTRANASAL: NOT OFFERED
+# ========================
+# The paper also fits intranasal oxytocin (TNX-1900, an investigational
+# product; no intranasal oxytocin is marketed in the United States): its own
+# two-compartment disposition (CL1 0.75 L/min, V1 14 L, CL2 0.81 L/min,
+# V2 8.6 L), ka 0.19 /min and an absolute bioavailability of 0.66%, with no
+# covariates, poorly identified volumes and ka, and a median absolute error of
+# 47%.  The route is not offered, on Steven L. Shafer's decision of
+# 2026-11-16.
 #
 # DOSE BASIS
 # ==========
@@ -76,10 +59,7 @@
 # 54.5 kg) and at total weight with it off, as for alprazolam.  The studied
 # weights were about 60-110 kg, with no BMI above 33.6, so the published
 # proportionality to total weight is an extrapolation in obesity, which the
-# switch's default avoids.  The intranasal model has no size covariate: its
-# values are taken as the 70 kg reference man's and scaled by
-# pkSizeFactors() with the switch on, and used as published with it off
-# (legacy factors 1).
+# switch's default avoids.
 #
 # AGE
 # ===
@@ -145,36 +125,24 @@ OXYTOCIN_V1    <- 8.2               # L at 80 kg
 OXYTOCIN_CL2   <- 0.22              # L/min at 80 kg
 OXYTOCIN_V2    <- 5.9               # L at 80 kg
 
-# Shafer 2025, Table 1, intranasal: its own disposition, no covariates
-OXYTOCIN_IN_CL1 <- 0.75             # L/min
-OXYTOCIN_IN_V1  <- 14               # L
-OXYTOCIN_IN_CL2 <- 0.81             # L/min
-OXYTOCIN_IN_V2  <- 8.6              # L
-OXYTOCIN_IN_KA  <- 0.19             # 1/min
-OXYTOCIN_IN_F   <- 0.0066           # absolute (0.66%)
-
-#' Oxytocin pharmacokinetics (intravenous and intranasal)
+#' Oxytocin pharmacokinetics (intravenous)
 #'
-#' Shafer et al. (2025): two compartments, every parameter proportional to
-#' weight and clearance falling with age, for intravenous doses; the paper's
-#' separate intranasal model (absolute bioavailability 0.66%) for intranasal
-#' doses, run as a parallel system.  A weight of 1 kg or less selects a rat
-#' model (Tanaka 2018).  See the file's header.
+#' Shafer et al. (2025), Model D: two compartments, every parameter
+#' proportional to weight and clearance falling with age.  A weight of 1 kg or
+#' less selects a rat model (Tanaka 2018).  See the file's header.
 #'
 #' @inheritParams cefazolin
-#' @param adjustToFFM \code{TRUE} (the default) evaluates the intravenous
-#'   model's weight terms at the pharmacokinetic weight and scales the
-#'   intranasal model by fat-free mass; \code{FALSE} uses total body weight
-#'   and the intranasal model as published.
+#' @param adjustToFFM \code{TRUE} (the default) evaluates the model's weight
+#'   terms at the pharmacokinetic weight; \code{FALSE} at total body weight.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @keywords internal
 oxytocin <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   if (weight <= 1) return(oxytocinRat())
 
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
-  wt   <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
+  wt <- if (isTRUE(adjustToFFM)) {
+    pkSizeFactors(weight, height, age, sex)$pkWeight
+  } else weight
   w    <- wt / OXYTOCIN_REFERENCE_WEIGHT
   ageTerm <- (max(age, ADULT_AGE_TERM_FLOOR) / OXYTOCIN_REFERENCE_AGE)^
     OXYTOCIN_AGE_EXPONENT
@@ -188,33 +156,14 @@ oxytocin <- function(weight, height, age, sex, adjustToFFM = TRUE)
     cl3 = 0
   )
 
-  intranasal <- list(
-    v1  = OXYTOCIN_IN_V1  * size$volume,
-    v2  = OXYTOCIN_IN_V2  * size$volume,
-    v3  = 1,                          # placeholder: a two-compartment model
-    cl1 = OXYTOCIN_IN_CL1 * size$clearance,
-    cl2 = OXYTOCIN_IN_CL2 * size$clearance,
-    cl3 = 0,
-    ka_IN = OXYTOCIN_IN_KA,
-    bioavailability_IN = OXYTOCIN_IN_F,
-    tlag_IN = 0
-  )
-
   reference <- paste0(
     "Shafer SL et al., Br J Anaesth 2025;134(5):1513-1522. ",
-    "https://doi.org/10.1016/j.bja.2024.12.046 (intravenous: Table 1, ",
-    "Model D, weight and age; intranasal: Table 1, its own two-compartment ",
-    "model, F 0.66%, run on intranasal doses only). tPeak 5 min is a guess, ",
-    "not from the paper."
+    "https://doi.org/10.1016/j.bja.2024.12.046 (intravenous, Table 1, ",
+    "Model D: weight and age). tPeak 5 min is a guess, not from the paper."
   )
 
   list(
     PK = list(default = default),
-    routes = ROUTE_IV,
-    parallelSystems = list(
-      list(name = "Intranasal", routes = ROUTE_IN,
-           PK = list(default = intranasal))
-    ),
     tPeak = 5,
     MEAC = 0,
     typical = 0.1,
