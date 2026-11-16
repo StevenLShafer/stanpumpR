@@ -12,7 +12,9 @@ gasCoupledRecovery(washout, off, target, threshold, maxPoints = 120)
 \item{off}{names of the gases turned off}
 
 \item{target}{numeric weights on the state, four per soluble gas in the
-order of \code{names(washout$state)}: alveolar, vessel-rich, muscle, fat}
+order of \code{names(washout$state)}: alveolar, vessel-rich, muscle, fat
+(five, the rest of the vessel-rich group last, when the cardiac-output
+slider has split it; \code{gasTissueShares()})}
 
 \item{threshold}{one value, or one per time point}
 

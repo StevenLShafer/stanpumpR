@@ -29,7 +29,8 @@ getDrugPK(
   ast = NULL,
   individual = NULL,
   libraryDefaults = NULL,
-  metaboliteIndividual = NULL
+  metaboliteIndividual = NULL,
+  physiology = NULL
 )
 }
 \arguments{
@@ -123,6 +124,12 @@ pharmacokinetics of the drug's active metabolite, in the form of
 individual's metabolite, as the Bayesian update estimates it from the
 metabolite's measured concentrations.  The parent's own formation is the
 model's (it moves with \code{individual}).}
+
+\item{physiology}{NULL (normal), or the physiology sliders' factors, a
+numeric vector named \code{liver}, \code{renal}, \code{cardiac},
+\code{gi} (multiples of normal function, 0.1 to 10); applied only to a
+drug with a row in \code{inst/extdata/physiologyParameters.csv}.  See
+\code{R/physiology.R}.}
 }
 \value{
 a list: the drug's PK sets (\code{PK}, one per PK event), its

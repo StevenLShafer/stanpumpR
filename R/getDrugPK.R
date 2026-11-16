@@ -52,6 +52,11 @@
 #' @param ast serum aspartate aminotransferase in U/L, or NULL (the default),
 #'   in which case each model holds its own reference value.  Passed only to
 #'   the models that declare it (epirubicin).
+#' @param physiology NULL (normal), or the physiology sliders' factors, a
+#'   numeric vector named \code{liver}, \code{renal}, \code{cardiac},
+#'   \code{gi} (multiples of normal function, 0.1 to 10); applied only to a
+#'   drug with a row in \code{inst/extdata/physiologyParameters.csv}.  See
+#'   \code{R/physiology.R}.
 #' @param model internal: a model's output to use in place of calling the
 #'   drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
 #'   drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.
@@ -114,7 +119,8 @@ getDrugPK <- function(
   ast = NULL,
   individual = NULL,
   libraryDefaults = NULL,
-  metaboliteIndividual = NULL
+  metaboliteIndividual = NULL,
+  physiology = NULL
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
@@ -281,6 +287,39 @@ getDrugPK <- function(
   # individual's drug.
   individual <- validateIndividual(individual, drug)
   if (!is.null(individual)) X <- individualizeModel(X, individual)
+  # The physiology sliders (R/physiology.R): liver function, renal function,
+  # cardiac output and GI absorption change this drug's parameters here,
+  # before anything below reads them, if the drug has an applied row in
+  # inst/extdata/physiologyParameters.csv.  ke0 is the normal one scaled by
+  # cardiac output (brain flow), so it is solved first, from the unchanged
+  # model.  It acts after the Bayesian update above: the individual's
+  # drug is the starting point of the what-if.
+  physiology <- checkPhysiology(physiology)
+  physiologyApplies <- !physiologyIsNormal(physiology) && !is.null(physiologyRow(drug))
+  if (physiologyApplies)
+  {
+    if (physiologyUnsupported(X))
+      stop("Internal error: ", drug, " has a physiology row, but its model ",
+           "carries elimination the physiology sliders cannot scale.")
+    nominalKe0 <- NULL
+    if (!is.null(X$ke0) && is_valid_number(X$ke0) && X$ke0 > 0)
+    {
+      # A model that supplies ke0 (etomidate): every set starts from it.
+      nominalKe0 <- lapply(X$PK, function(set) X$ke0)
+    } else if (isTRUE(X[["tPeak", exact = TRUE]] > 0))
+    {
+      nominal <- getDrugPK(
+        drug = drug, weight = weight, height = height, age = age, sex = sex,
+        drugDefaults = drugDefaults, cyp2d6 = cyp2d6, resolveMetabolite = FALSE,
+        adjustToFFM = adjustToFFM, osmolality = osmolality,
+        creatinine = creatinine, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
+        cyp2b6 = cyp2b6, pregnant = pregnant, vkorc1 = vkorc1, model = X,
+        cyp4f2 = cyp4f2, gestationalAge = gestationalAge
+      )
+      nominalKe0 <- lapply(nominal$PK, function(set) set$ke0)
+    }
+    X <- applyPhysiology(X, physiologyRow(drug), physiology, nominalKe0)
+  }
   # A subcutaneous model writes its absorption as ka_SC and the rest; the
   # engines carry it on the tissue-depot (RA) fields.  See R/subcutaneous.R.
   tissueRoute <- modelTissueRoute(X$PK)
@@ -336,7 +375,7 @@ getDrugPK <- function(
          "sublingual absorption, parallel systems, Michaelis-Menten ",
          "elimination, an osmotic or molar dose basis, pulsed oral release, ",
          "or an active first-order oral depot.")
-  tPeak <- X$tPeak
+  tPeak <- X[["tPeak", exact = TRUE]]   # exact: X$tPeak would match tPeakRoute
   # A model that supplies ke0 directly may leave tPeak out altogether (NULL):
   # the time to peak effect is then solved below, per PK set, as the moment
   # the effect site peaks after a bolus with that ke0 and that disposition.
@@ -352,6 +391,10 @@ getDrugPK <- function(
     tPeak <- 0
   }
   tPeakSolved <- list()
+  # A ke0 held at its value at normal physiology (above) moves the time to
+  # peak effect, which is then solved per set as for a model that gave ke0.
+  if (any(vapply(X$PK, function(set) isTRUE(set$ke0Physiology > 0), logical(1))))
+    solveTPeak <- TRUE
   # Which curve tPeak was measured against.  Defaults to the intravenous
   # bolus, which is what every drug in the library assumed before oral-only
   # drugs arrived, so no existing model changes.
@@ -749,7 +792,10 @@ getDrugPK <- function(
     # that error is about 24 minutes.  An oral tPeak is counted from the
     # dose, so the solve carries the drug's absorption lag (pregabalin's is
     # 19 min); without it the effect site would peak one lag late.
-    if (!is.null(X$ke0) && X$ke0 > 0)
+    if (isTRUE(X$PK[[event]]$ke0Physiology > 0))
+    {
+      ke0 <- X$PK[[event]]$ke0Physiology
+    } else if (!is.null(X$ke0) && X$ke0 > 0)
     {
       # A drug may supply ke0 directly, which is the escape hatch for a time
       # to peak effect defined against a curve this function cannot build.
@@ -819,11 +865,23 @@ getDrugPK <- function(
     # The time to peak effect of a model that gave ke0 and no tPeak (above)
     if (solveTPeak && ke0 > 0)
     {
-      tPeak <- effectSitePeakTime(
-        c(p_coef_bolus_l1, p_coef_bolus_l2, p_coef_bolus_l3),
-        c(lambda_1, lambda_2, lambda_3),
-        ke0
-      )
+      tPeak <- if (identical(tPeakRoute, ROUTE_PO) && (ka_PO > 0 || ka_PO2 > 0)) {
+        # An oral tPeak (the physiology sliders moving ke0 of such a model)
+        # is the peak of the effect site after an oral dose, counted from the
+        # dose: every depot that carries drug, each with its own lag
+        # (CodeRabbit on #727).
+        oralEffectSitePeakTime(
+          c(p_coef_bolus_l1, p_coef_bolus_l2, p_coef_bolus_l3),
+          c(lambda_1, lambda_2, lambda_3), ke0,
+          depots = list(list(ka = ka_PO, F = bioavailability_PO, lag = tlag_PO),
+                        list(ka = ka_PO2, F = bioavailability_PO2, lag = tlag_PO2)))
+      } else {
+        effectSitePeakTime(
+          c(p_coef_bolus_l1, p_coef_bolus_l2, p_coef_bolus_l3),
+          c(lambda_1, lambda_2, lambda_3),
+          ke0
+        )
+      }
       tPeakSolved[[event]] <- tPeak
     }
 
@@ -1174,6 +1232,7 @@ getDrugPK <- function(
       gestationalAge = gestationalAge,
       albumin = albumin,
       ast = ast,
+      physiology = physiology,
       # The individual's metabolite, where the Bayesian update estimated it
       # from the metabolite's own levels: the parent forms the metabolite the
       # patient has.  Built from the model's, a morphine level after codeine
@@ -1264,6 +1323,9 @@ getDrugPK <- function(
   # does not create it: a drug with no metabolite returns exactly the shape it
   # always has.
   out$metaboliteName <- metaboliteName
+  # What the physiology sliders did to this drug (R/physiology.R), for the
+  # help and the notification; NULL at normal physiology or without a row.
+  out$physiology <- X$physiology
   # The library rows the PK was built with, so that a rebuild from the model
   # (pkRebuildArgs(): doseSizePK(), asmSegmentPK()) builds it with them again
   out$drugDefaults <- drugDefaults
@@ -1604,7 +1666,9 @@ pkRebuildArgs <- function(PK)
   list(individual = PK$individual,
        metaboliteIndividual = PK$metaboliteIndividual,
        drugDefaults = if (is.null(PK$drugDefaults)) getDrugDefaults(pkModelDrug(PK)) else PK$drugDefaults,
-       libraryDefaults = PK$libraryDefaults)
+       libraryDefaults = PK$libraryDefaults,
+       # The physiology sliders the PK was built at (R/physiology.R)
+       physiology = PK$physiology$factors)
 }
 
 #' A drug's row of the drug library
@@ -1683,7 +1747,7 @@ parallelSystemSets <- function(X, PK, events, tPeakRoute, drug, covariates)
       drug = drug,
       weight = covariates$weight, height = covariates$height,
       age = covariates$age, sex = covariates$sex,
-      model = list(PK = sys$PK, tPeak = X$tPeak, tPeakRoute = tPeakRoute,
+      model = list(PK = sys$PK, tPeak = X[["tPeak", exact = TRUE]], tPeakRoute = tPeakRoute,
                    ke0 = if (ke0 > 0) ke0)
     )$PK
     list(
@@ -1800,6 +1864,52 @@ effectSitePeakTime <- function(coef, lambda, ke0, upper = 4000)
     function(t) sum(e * exp(-lambda * t)) - sum(e) * exp(-ke0 * t),
     c(0, upper), maximum = TRUE
   )$maximum
+}
+
+
+#' Time of the effect-site peak after an oral dose
+#'
+#' The effect site after one oral dose given as several first-order depots,
+#' each with its rate, its share of the dose (its bioavailability) and its
+#' lag, counted from the dose.  A depot with no rate or no share is left out.
+#' The peak is found on a grid over the whole curve and refined between the
+#' grid's neighbours of its highest point.
+#'
+#' @param coef,lambda the plasma bolus coefficients and exponents
+#' @param ke0 the effect-site rate constant
+#' @param depots list of lists with \code{ka}, \code{F}, \code{lag}
+#' @returns minutes from the dose
+#' @keywords internal
+oralEffectSitePeakTime <- function(coef, lambda, ke0, depots)
+{
+  use <- lambda > 0
+  coef <- coef[use]; lambda <- lambda[use]
+  parts <- list()
+  for (d in depots) {
+    if (!isTRUE(d$ka > 0) || !isTRUE(d$F > 0)) next
+    ka <- separateEigenvalues(d$ka, lambda)
+    plasma <- coef * ka / (ka - lambda) * d$F
+    rates <- c(lambda, ka)
+    k <- separateEigenvalues(ke0, rates)
+    e <- c(plasma, -sum(plasma)) * k / (k - rates)
+    parts[[length(parts) + 1]] <- list(e = e, rates = rates, k = k, lag = d$lag)
+  }
+  if (length(parts) == 0) return(0)
+  ce <- function(t) {
+    total <- numeric(length(t))
+    for (p in parts) {
+      s <- pmax(t - p$lag, 0)
+      total <- total + (t > p$lag) *
+        (colSums(p$e * exp(-outer(p$rates, s))) - sum(p$e) * exp(-p$k * s))
+    }
+    total
+  }
+  slowest <- min(unlist(lapply(parts, function(p) c(p$rates, p$k))))
+  upper <- max(vapply(parts, `[[`, numeric(1), "lag")) + min(4000, 20 / slowest)
+  grid <- seq(0, upper, length.out = 4001)
+  i <- which.max(ce(grid))
+  lo <- grid[max(1, i - 1)]; hi <- grid[min(length(grid), i + 1)]
+  stats::optimize(ce, c(lo, hi), maximum = TRUE, tol = 1e-8)$maximum
 }
 
 
