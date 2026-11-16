@@ -230,7 +230,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 FULL_TEXT_READ <- c("C37b", "C45", "C46", "C48", "C41", "C25", "C42", "P06", "C11", "N05", "C01", "P02", "C35", "C03", "C37a", "C34", "P16", "C21", "C07", "P15", "P08", "C19", "P21", "P25", "C23", "C24", "N11", "C10", "C38a", "N12", "N10", "C09", "P13", "C17", "C27", "P05")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
-PARAMETERS_VERIFIED <- c("C44", "N13", "C36", "N02", "C43", "P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18", "C05", "C06", "N08", "N09")
+PARAMETERS_VERIFIED <- c("C47", "C44", "N13", "C36", "N02", "C43", "P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18", "C05", "C06", "N08", "N09")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
   ifelse(pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
@@ -779,12 +779,13 @@ registry <- rbind(
     "expansion", "linear", "C46",
     "PDF read (supplied 2026-11-16): not identifiable, as Hall 1982. Vd is the area volume, Dose/(beta x AUC) = CL/beta (50.6 x 241.9/0.693 = 17.7 L/m2 against the printed 17.5), so CL, Vd and the two half-lives are three independent numbers, not the four two compartments need; Eq. 1's intercepts A and B are not printed, and the composite fit (Fig. 2) is a graph. 24-h urine 44.8% of the dose.",
     readiness = "needs_full_text",
-    to_obtain = "Yee GC et al. Bleomycin disposition in children with cancer. Clin Pharmacol Ther 1983;33:668-673 (PMID 6188571; its abstract prints V1 4.3 L/m2, Vss 9.9 L/m2, CL 51.8 mL/min/m2 and both half-lives, which over-determine two compartments). Kramer 1978, the adult candidate, was read and is not identifiable."),
+    to_obtain = NA_character_),
   m("bleomycin__children__yee1983", "bleomycin", "bleomycin", "IV",
-    "14 children with cancer, bolus and 24-48-h infusions", "bleomycin by radioimmunoassay (units)",
-    "two compartments after a bolus (abstract: half-lives 0.3 and 3.2 h, V1 4.3 and Vss 9.9 L/m2, CL 51.8 mL/min/m2, renal 33.5); faster elimination under 3 years; prior cisplatin lowers clearance",
+    "14 children 1-17 years (median 14.5) with cancer; 11 bolus courses with cisplatin below 300 mg/m2", "bleomycin by radioimmunoassay (units)",
+    "two compartments per m2, closed from Table II's CL 51.8 mL/min/m2, Vc 4.3 and Vss 9.9 L/m2 and the 3.2-h terminal half-life: k12 0.637, k21 0.489 /h, Q 2.74 L/h/m2, V2 5.6 L/m2",
     "expansion", "linear", "C47",
-    "Abstract read 2026-11-16 (PubMed): CL, V1 and both half-lives close two compartments, with Vss a check (11.2 L/m2 derived against 9.9 printed, within its spread). Children only; the adult sources (Alberts 1978, Hall 1982) print no V1 or intercepts."),
+    "PDF read (supplied 2026-11-16). Five per-course means for four parameters: the fast half-life (0.3 +/- 0.1 h, one figure) is the check, the closure giving 0.42 h (1.2 SEM); closing on both half-lives instead gives Vss 11.2 (1.2 SEM), on Vss and both half-lives Vc 3.3 (1.9 SEM). [decision, asked 2026-11-16] the closure chosen, and the children's model offered to adults: Alberts 1978's adults (not fitted) measured CL 50.6 mL/min/m2 and half-lives 24.4 and 242 min against this model's 51.8, 25 and 192, and the label quotes 51 mL/min/m2. Not applied: the higher clearance under 3 years (70.5, three courses) and any renal term (two thirds renal; no relation to creatinine clearance found at normal function). Doses in USP units, concentrations in mcU/mL (1 unit = the former mg activity, the label).",
+    readiness = "implemented", stanpumpr_drug = "bleomycin"),
   m("bleomycin__adult__kramer1978", "bleomycin", "bleomycin", "IV",
     "adults with cancer, 10-min and 4-5-day infusions", "bleomycin by radioimmunoassay (units)",
     "biexponential per patient after a 10-min infusion of 7-10 U (Table II, group II, 7 patients: beta 0.371 /h, t1/2 2.03 h, Vd-beta 0.354 L/kg, renal clearance 76.9 and total 128.0 mL/min/1.73 m2); 4-5-day infusions consistent only with levels below 10 microunits/mL excluded",

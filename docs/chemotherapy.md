@@ -907,7 +907,16 @@ Supplied by Shafer on 2026-11-16, five of the six asked for that morning
   half-lives) and Kramer 1978 (adults, two compartments after a 10-min
   infusion).  Kramer was then supplied and read on the page images: not
   identifiable either (Table II prints beta, Vd-beta = CL/beta and the
-  clearances, no alpha or intercepts).  Yee 1983 is the remaining candidate.
+  clearances, no alpha or intercepts).
+- **Yee 1983 (bleomycin, children 1-17 years; C47): implemented** as
+  `bleomycin`, offered at every age.  Table II's five per-course means
+  over-determine two compartments; CL 51.8 mL/min/m2, Vc 4.3 and Vss 9.9
+  L/m2 and the 3.2-h terminal half-life close it, leaving the fast half-life
+  (0.3 +/- 0.1 h) as the check (0.42 h, 1.2 SEM).  Against Alberts' adults,
+  not fitted: CL 51.8 against 50.6 mL/min/m2, fast half-life 25 against 24
+  min, terminal 192 against 242 min.  Doses in USP units, plotted in mcU/mL
+  (the label: one unit is the former milligram activity).  No renal term,
+  the higher clearance under 3 years not applied.
 - **Savic 2017 (cladribine tablets; C37b): complete, not implemented.**
   Table 4 read: three compartments, CL = 3.52 x Cockcroft-Gault CLCR (L/h) +
   23.4 L/h, the tablet's ka 1.08 /h and F 0.456 fasted (phase I) or ka 1.03
@@ -949,11 +958,13 @@ and question 3, restated.  New or restated:
    Jonge 2005 (question 10's engine is a different, zero-order one), or
    implement the parent alone now through its equivalent mammillary model
    (exact for plasma, not for the V2/V3 panels), with no idarubicinol?
-8. **Bleomycin**: supply Yee 1983 (children; Kramer 1978, the adult
-   candidate, proved not identifiable).  Would a model fitted in children be
-   acceptable for adults, its clearance per m2 (51.8 mL/min/m2) matching
-   Alberts' adult 50.6?  The dose unit would be USP units (activity), as
-   heparin's IU is.
+8. **Bleomycin** (Yee 1983, implemented): confirm (a) the closure (CL,
+   Vc, Vss and the terminal half-life, the fast half-life the check), (b)
+   offering a model fitted in children to adults, on the strength of
+   Alberts' adult clearance and half-lives, and (c) no renal term, though
+   two thirds of the clearance is renal and the label reduces the dose below
+   a creatinine clearance of 50 mL/min (no paper read gives a renal
+   equation).
 9. **Thioguanine**: offer the intravenous research model?
 10. **Vincristine (Nijstad 2022)**: confirm kon and koff not scaled, and
     doses as the sulfate.
