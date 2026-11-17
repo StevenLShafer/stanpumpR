@@ -26,6 +26,9 @@ information for the library's drugs is kept in `labels/`, indexed by `inst/extda
 linked from each drug's help page (`labels/README.md`). A label also in the archive keeps its archive
 file name there, so its card's `file:` names it in both places.
 
+Papers that work is waiting on but that could not be downloaded are listed in
+[`to-obtain.md`](to-obtain.md).
+
 ## Reading a card
 
 `digests/README.md` is the authoring guide: the frontmatter contract, the verification
