@@ -523,20 +523,21 @@ METABOLITE_FORMATION_BASIS <- data.frame(
              # apparent disposition come from one source, Foong 2025, though
              # the library's lidocaine is Schnider's (R/drugs_MEGX.R);
              # norpethidine's apparent volume was calibrated with the
-             # library's own pethidine forming it (R/drugs_norpethidine.R).
-             "lidocaine", "pethidine"),
+             # library's own pethidine forming it (R/drugs_norpethidine.R);
+             # PPX's is Sunder 2026's joint fit (R/drugs_PPX.R).
+             "lidocaine", "pethidine", "ropivacaine"),
   metabolite = c("morphine", "hydromorphone", "oxymorphone",
                  "enalaprilat", "prednisolone",
                  "desethylamiodarone", "dehydroaripiprazole", "salicylate",
                  "hydroxybupropion", "norfluoxetine", "hydroxyrisperidone",
                  "desmetramadol", "desvenlafaxine",
-                 "MEGX", "norpethidine"),
+                 "MEGX", "norpethidine", "PPX"),
   basis = c("reads", "reads", "reads",
             "shared", "shared",
-            rep("joint", 10)),
+            rep("joint", 11)),
   uses = c("libraryReferenceClearance", "hydromorphone",
            "libraryReferenceClearance",
            "enalaprilatSet", "prednisolonePairSystem",
-           rep(NA_character_, 10)),
+           rep(NA_character_, 11)),
   stringsAsFactors = FALSE
 )

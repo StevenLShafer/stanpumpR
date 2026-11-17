@@ -811,9 +811,10 @@ PREGNANCY_GFR_FACTOR <- 1.5
 
 # Toxic metabolites (Steven L. Shafer, 2026-11-13): metabolites that add to a
 # drug's toxicity and not to its therapeutic effect -- lidocaine's MEGX
-# (R/drugs_MEGX.R) and pethidine's norpethidine (R/drugs_norpethidine.R).
+# (R/drugs_MEGX.R), pethidine's norpethidine (R/drugs_norpethidine.R) and
+# ropivacaine's PPX (R/drugs_PPX.R, 2026-11-17).
 # Their panels' labels are drawn in TOXIC_LABEL_COLOUR (R/toxicMetabolites.R).
-TOXIC_METABOLITES <- c("MEGX", "norpethidine")
+TOXIC_METABOLITES <- c("MEGX", "norpethidine", "PPX")
 TOXIC_LABEL_COLOUR <- "red"
 
 # The summed toxicity threshold drawn on a toxic metabolite's panel

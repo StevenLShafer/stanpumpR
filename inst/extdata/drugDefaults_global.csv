@@ -69,6 +69,7 @@ amiodarone,mcg,,,mg/day PO,"mg/day PO",#B22222,1,2.5,1.5,0,1,IV,Other
 desethylamiodarone,mcg,,,,,#E9967A,0,0,0,0,0,IV,
 MEGX,mcg,,,,,#8C6D1F,0,0,0,0,0,IV,
 norpethidine,mcg,,,,,#8B1A1A,0,0,0,0,0,IV,
+PPX,mcg,,,,,#1F5F68,0,0,0,0,0,IV,
 amiodaroneIV,mcg,mg,mg/min,mg,"mg,mg/kg,mg/min,mg/hr",#C2185B,0,0,0,0,0,IV,Other
 escitalopram,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#00838F,20,40,30,0,0,IV,Antidepressants
 citalopram,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#26C6DA,50,110,80,0,0,IV,Antidepressants

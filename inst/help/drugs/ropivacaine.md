@@ -14,6 +14,10 @@ A dose in **mg** is intravenous.
 
 None, as for [bupivacaine](help:drugs/bupivacaine): total plasma concentration only, and no band.
 
+### PPX, the toxic metabolite
+
+Ropivacaine's toxic metabolite [PPX](help:drugs/PPX) is formed from every dose, by every route, and drawn in its own panel with a red label (Sunder and colleagues, *Anesthesiology* 2026). During a perineural or epidural infusion lasting days it keeps rising after ropivacaine has levelled off.
+
 ### Where to be careful
 
 A perineural catheter infusion is entered as **mg/hr RA**, a constant rate into the same tissue depot. The postoperative rise in alpha-1-acid glycoprotein, which raises total ropivacaine over days of infusion, and the effect of epinephrine are not represented.

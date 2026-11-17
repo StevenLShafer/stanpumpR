@@ -19,7 +19,17 @@ test_that("returns the published parameters with the switch off", {
     typical = 0,
     upperTypical = 0,
     lowerTypical = 0,
-    reference = ropivacaine(70, 171, 50, "male")$reference
+    reference = ropivacaine(70, 171, 50, "male")$reference,
+    # PPX formed from all of ropivacaine's clearance (k10 = 0.3 / 7), mass
+    # for mass as Sunder 2026 fitted it, through one transit compartment
+    # with its 4.9 min mean delay.
+    metabolite = list(
+      name = "PPX",
+      kFormation = 0.3 / 7,
+      firstPassFraction = 0,
+      mwRatio = 1,
+      kTransit = 1 / 4.9
+    )
   )
   expect_equal_rounded(actual, expected)
 })

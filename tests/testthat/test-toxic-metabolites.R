@@ -20,8 +20,8 @@ stripColours <- function(plotObject) {
   )
 }
 
-test_that("the toxic metabolites are MEGX and norpethidine", {
-  expect_setequal(TOXIC_METABOLITES, c("MEGX", "norpethidine"))
+test_that("the toxic metabolites are MEGX, norpethidine and PPX", {
+  expect_setequal(TOXIC_METABOLITES, c("MEGX", "norpethidine", "PPX"))
   expect_true(all(TOXIC_METABOLITES %in% getDrugDefaultsGlobal(FALSE)$Drug))
   expect_equal(isToxicPanel(c("MEGX\n(mcg/mL)", "MEGX V2\n(mcg/mL)", "lidocaine\n(mcg/mL)",
                               "norpethidine\n(mcg/mL)", "pethidine\n(mcg/mL)")),
