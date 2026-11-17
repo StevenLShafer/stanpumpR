@@ -234,6 +234,19 @@ antipsychoticProfiles <- function() list(
     modelStatus = "blocked", pkVerified = FALSE,
     warnings = "No structural model or coefficients in the accessible report; not registered.",
     pd = list()
+  ),
+
+  clozapine = list(
+    drug = "clozapine", route = ROUTE_PO, formulation = "oral",
+    parameterBasis = "apparent_oral",
+    sourcePopulation = "162 Chinese inpatients with refractory schizophrenia",
+    analyte = c("clozapine", "norclozapine"), matrix = "serum",
+    pkSource = "Li 2012, doi:10.1038/aps.2012.71",
+    modelStatus = "implemented", pkVerified = TRUE,
+    warnings = c("Nonsmoker: smoking raises clearance 45% (norclozapine 54%).",
+                 "Mostly late samples: the swing within a dose interval is understated.",
+                 "No D2 occupancy fit was read for clozapine."),
+    pd = list()
   )
 )
 

@@ -173,6 +173,26 @@ paperReviewReportTags <- function(review, plots = TRUE)
   paper <- x$paper %or% list()
   cite <- paste(c(paper$first_author, if (!is.null(paper$year)) paste0("(", paper$year, ")"),
                   paper$title, paper$journal, paper$doi), collapse = ". ")
+  # A quick review says so, whatever it found (CodeRabbit, PR #720: a quick
+  # review that missed the model is where the warning matters most).
+  quickBanner <- if (isTRUE(review$quick)) htmltools::div(class = "pr-banner",
+    htmltools::strong("A quick review. "),
+    "The full review was taking longer than usual, so Claude read the paper again at a lower effort. ",
+    "A quick review reads a paper with one model as fully, but may leave out secondary models (other ",
+    "populations, drugs or endpoints) and some of a per-patient table's detail.")
+  # No model at all (a document that is not a pharmacokinetic paper): one
+  # line, and Claude's own notes, not a review built around nothing ("0
+  # compartments", "Drug: (, , other)"; Devin's stress test, 2026-11-08).
+  if (paperReviewNoModel(x))
+    return(htmltools::div(class = "pr-report", paperReviewCss(),
+      quickBanner,
+      htmltools::h2("Single Paper Review"),
+      if (nzchar(cite)) htmltools::p(htmltools::strong("Document: "), cite),
+      htmltools::p(htmltools::strong(
+        "Claude found no pharmacokinetic model in this document, so there is nothing to check.")),
+      lapply(paperReviewClaudeNotes(x), paperReviewFindingTag),
+      if (nzchar(x$extraction_limitations %or% ""))
+        htmltools::p(htmltools::em("Limitations Claude noted: "), x$extraction_limitations)))
   findings <- review$findings
   counts <- table(factor(vapply(findings, function(f) f$severity, character(1)),
                          levels = PAPER_REVIEW_SEVERITY_ORDER))
@@ -196,6 +216,7 @@ paperReviewReportTags <- function(review, plots = TRUE)
       htmltools::strong("Draft review, for the reader's judgment. "),
       "The numbers were read from the paper by Claude and may be misread; every finding says where in ",
       "the paper it comes from, so check it there. Computed findings are only as good as the extraction."),
+    quickBanner,
     htmltools::h2("Single Paper Review"),
     htmltools::p(htmltools::strong("Paper: "), cite),
     htmltools::p(htmltools::strong("Drug: "),
@@ -210,6 +231,15 @@ paperReviewReportTags <- function(review, plots = TRUE)
     paperReviewExtractionTables(x),
     if (nzchar(x$extraction_limitations %or% ""))
       htmltools::p(htmltools::em("Limitations Claude noted: "), x$extraction_limitations))
+}
+
+#' Does the extraction hold no model: no parameter and no structure of one
+#' to three compartments?
+#' @keywords internal
+paperReviewNoModel <- function(x)
+{
+  n <- paperReviewNum(x$structure$compartments)
+  length(x$parameters %or% list()) == 0 && !isTRUE(n %in% 1:3)
 }
 
 # The sections that belong to one model; the rest are about the paper.

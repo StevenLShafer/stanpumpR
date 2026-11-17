@@ -67,6 +67,72 @@ doseProduct <- function(units, products) {
   product
 }
 
+#' Mass of the plotted drug per mass of the product a dose unit names
+#'
+#' A drug given as a salt or prodrug that the plot does not show
+#' (aminophylline for theophylline) declares a `doseProducts` block: a named
+#' numeric vector, the mass of the plotted drug in one unit mass of each
+#' product, keyed by the product word its units carry (`doseProduct()`).
+#'
+#' @param units Character vector of dose units.
+#' @param products The drug's `doseProducts` block, or NULL.
+#' @returns Numeric vector the length of `units`: the factor for each dose,
+#'   1 for a unit naming no product.
+#' @noRd
+doseProductFactor <- function(units, products) {
+  f <- rep(1, length(units))
+  if (length(products) == 0) return(f)
+  p <- doseProduct(units, names(products))
+  hit <- !is.na(p)
+  f[hit] <- unname(products[p[hit]])
+  f
+}
+
+#' Doses in units of potency, as micrograms of a drug plotted by mass
+#'
+#' A potency-defined peptide plotted by mass (oxytocin: dosed in USP units,
+#' measured by LC/MS in ng/mL) declares `unitPotency`, the micrograms in one
+#' unit.  Its unit doses ("U", "U/min", "U/hr", "U/kg/min", "U/kg/hr") and
+#' milliunit rates ("mU/min") become the same quantity in micrograms ("mcg",
+#' "mcg/min", ...), so the rest of the pipeline reads ordinary mass units.
+#' Every other unit is returned unchanged.
+#'
+#' @param dose Numeric vector of doses.
+#' @param units Character vector of their units.
+#' @param mcgPerUnit Micrograms in one unit, or NULL for a drug with none.
+#' @returns A list: `Dose` and `Units`, converted.
+#' @noRd
+potencyToMass <- function(dose, units, mcgPerUnit) {
+  units <- as.character(units)
+  if (is.null(mcgPerUnit)) return(list(Dose = dose, Units = units))
+  whole <- grepl("^U(/|$)", units)
+  milli <- grepl("^mU(/|$)", units)
+  if (!any(whole | milli)) return(list(Dose = dose, Units = units))
+  dose <- suppressWarnings(as.numeric(dose))
+  dose[whole] <- dose[whole] * mcgPerUnit
+  dose[milli] <- dose[milli] * mcgPerUnit / 1000
+  units[whole] <- sub("^U", "mcg", units[whole])
+  units[milli] <- sub("^mU", "mcg", units[milli])
+  list(Dose = dose, Units = units)
+}
+
+#' Drop the product word from dose units
+#'
+#' After simCpCe() has converted a dose naming a product (`doseProducts`) to
+#' the plotted drug's mass, the unit loses the product word ("mg PO sulfate"
+#' becomes "mg PO", "mg/kg citrate" "mg/kg"), so the rest of the pipeline
+#' classifies it as an ordinary unit of the drug itself.
+#'
+#' @param units Character vector of dose units.
+#' @param products Character vector of product words.
+#' @returns `units` with the product word removed.
+#' @noRd
+stripDoseProduct <- function(units, products) {
+  units <- as.character(units)
+  for (p in products) units <- sub(paste0(" ", p, "( |$)"), "\\1", units)
+  units
+}
+
 #' Is a dose unit an input rate rather than an amount?
 #'
 #' A rate -- mass per minute, hour or day, with or without per kg -- sets a
@@ -106,7 +172,9 @@ groupUnitsByRoute <- function(units) {
 #'
 #' with D the dose in mg per administration.  That is the inhibitory Emax form
 #' of Tran et al. (J Pharmacokinet Pharmacodyn 2017;44:567-579) and contains
-#' the hyperbolic Dmax / (D50 + D) as the case Imax = 1.  The drug's
+#' the hyperbolic Dmax / (D50 + D) as the case Imax = 1.  An optional `hill`
+#' makes it sigmoid, 1 - Imax D^hill / (ID50^hill + D^hill) (suzetrigine's
+#' hill of 5, FDA review of NDA 219209).  The drug's
 #' `bioavailability_PO` stays the fraction absorbed in the limit of a small
 #' dose; the product of the two is the bioavailability of a given dose.
 #'
@@ -152,7 +220,10 @@ oralSaturationFraction <- function(doseMg, saturation)
 {
   if (is.null(saturation)) return(rep(1, length(doseMg)))
   switch(oralSaturationForm(saturation),
-    saturable = 1 - saturation$Imax * doseMg / (saturation$ID50 + doseMg),
+    saturable = if (is.null(saturation$hill))
+      1 - saturation$Imax * doseMg / (saturation$ID50 + doseMg) else
+      1 - saturation$Imax * doseMg^saturation$hill /
+        (saturation$ID50^saturation$hill + doseMg^saturation$hill),
     rising    = doseMg / (saturation$D50 + doseMg),
     # A negative exponent is infinite at a dose of 0 (opicapone's -0.225), and
     # 0 x Inf is NaN, which stopped the simulation of a scheduled dose of 0;
@@ -207,7 +278,9 @@ validateOralSaturation <- function(saturation, drug, block = "oralSaturation")
   form <- oralSaturationForm(saturation)
   if (form == ORAL_SATURATION_SATURABLE) {
     ok <- is_valid_number(saturation$Imax, 0, 1) &&
-      is_valid_number(saturation$ID50) && saturation$ID50 > 0
+      is_valid_number(saturation$ID50) && saturation$ID50 > 0 &&
+      (is.null(saturation$hill) ||
+         (is_valid_number(saturation$hill) && saturation$hill > 0))
     # Imax above 1 would make the fraction absorbed negative at large doses.
     if (!ok)
       stop("Invalid ", block, " for ", drug, ": needs Imax between 0 and 1 ",

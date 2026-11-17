@@ -1,0 +1,353 @@
+// The dialogs' grids (the table grid: inst/www/table-grid.js, R/table-grid.R),
+// driven in headless Chromium as a user drives them, and checked in what the
+// grid sends and in what the dialog's Apply writes on the server.  The dialog
+// handlers themselves, with forged values, are test-ui-adversarial-review.R
+// and test-time-units-server.R's.  Run with tests/playwright/run.js
+// (README.md).  Drafted by Claude Code, 2026-11-06, when the table grid
+// replaced rhandsontable in every dialog.
+
+'use strict';
+
+const { test, describe, before, after, beforeEach, afterEach } = require('node:test');
+const assert = require('node:assert/strict');
+const playwright = require('playwright');
+const H = require('./harness');
+const adapter = require('./adapters/native');
+
+const URL = process.env.STANPUMPR_URL;
+if (!URL) throw new Error('STANPUMPR_URL is not set: run the suite through run.js');
+// STANPUMPR_BROWSER: chromium (the default), firefox or webkit
+const BROWSER = process.env.STANPUMPR_BROWSER || 'chromium';
+
+let browser, context, page;
+
+before(async () => {
+  browser = await playwright[BROWSER].launch(BROWSER === 'firefox' ? {
+    firefoxUserPrefs: { 'dom.events.asyncClipboard.readText': true, 'dom.events.testing.asyncClipboard': true }
+  } : {});
+});
+after(async () => { await browser.close(); });
+
+beforeEach(async () => {
+  // cleared first, so that if opening the session fails, afterEach does not
+  // judge the previous case's page or leave this case's context open
+  context = undefined;
+  page = undefined;
+  context = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
+  if (BROWSER === 'chromium') await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: URL });
+  page = await H.openSession(context, URL, adapter);
+});
+
+afterEach(async () => {
+  // With no page (openSession() failed, and that error is the one to
+  // report) there is nothing to judge
+  let alive, errors;
+  try {
+    if (page) {
+      alive = await H.connected(page);
+      errors = page.pageErrors.slice();
+    }
+  } finally {
+    if (context) await context.close();
+  }
+  if (page) {
+    assert.ok(alive, 'the Shiny session was closed');
+    assert.deepEqual(errors, [], 'the page raised script errors');
+  }
+});
+
+// The control of row r, column c (0-based) of the grid `id`
+const cell = (id, r, c) => `#${id} tbody tr:nth-child(${r + 1}) td:nth-child(${c + 1}) :is(input, select)`;
+const gridRows = id => page.$$eval(`#${id} tbody tr`, trs => trs.map(tr =>
+  Array.from(tr.querySelectorAll('input, select')).map(x => x.type === 'checkbox' ? x.checked : x.value)));
+// What the grid has sent (the value Shiny holds for it in the browser)
+const sentRows = id => page.evaluate(i => {
+  const v = window.Shiny.shinyapp.$inputValues[i] || window.Shiny.shinyapp.$inputValues[i + ':stanpumpr.tableGrid'];
+  return v ? v.rows : null;
+}, id);
+const open = async (input, id) => {
+  await page.evaluate(i => window.Shiny.setInputValue(i, Math.random(), { priority: 'event' }), input);
+  // A cell, not a row: in WebKit the rows of a grid drawn inside a dialog's
+  // uiOutput keep the visibility: hidden shinycssloaders set on the output
+  // while it recalculated (the output is display: contents), though their
+  // cells are visible and drawn (2026-11-08)
+  await page.waitForSelector(`#${id} tbody td`, { timeout: 30000 });
+  await H.settle(page, 300);
+};
+const rowOf = async (id, name) => (await gridRows(id)).findIndex(r => r[0] === name);
+
+describe('Edit doses', () => {
+  test('edits, deletes and applies a drug\'s doses; refuses what it cannot read', async () => {
+    // propofol's rows: the startup table's bolus and infusion, and one more
+    await adapter.typeInto(page, 0, 2, '100');
+    await page.keyboard.press('Enter');
+    await adapter.focusCell(page, 6, 0);
+    await H.paste(page, 'propofol\t10\t50\tmg');
+    await H.settle(page, 600);
+    await page.click('#dosetable_apply');
+    await H.settle(page, 1500);
+    // a double click on propofol's panel
+    await page.evaluate(() => window.Shiny.setInputValue('plot_dblclick',
+      { x: 5, y: 1, panelvar1: 'propofol' }, { priority: 'event' }));
+    await page.waitForSelector('#editPriorDosesTable tbody tr', { timeout: 30000 });
+    await H.settle(page, 300);
+    const rows = await gridRows('editPriorDosesTable');
+    assert.deepEqual(rows, [[false, '0', '100', 'mg'], [false, '0', '0', 'mcg/kg/min'], [false, '10', '50', 'mg']]);
+    // a dose that cannot be read is refused where it is typed, and said
+    await H.clearNotifications(page);
+    await page.click(cell('editPriorDosesTable', 0, 2));
+    await page.keyboard.type('1,5');
+    await page.keyboard.press('Enter');
+    await H.settle(page, 300);
+    assert.ok((await H.notifications(page)).some(n => /"1,5" was not accepted/.test(n)));
+    assert.equal((await gridRows('editPriorDosesTable'))[0][2], '100');
+    // letters that match no unit leave the unit as it was, even after the
+    // first moved the list (Gemini's production audit, 2026-11-08, finding 1)
+    await H.clearNotifications(page);
+    await page.focus(cell('editPriorDosesTable', 1, 3));
+    await page.keyboard.type('mz');
+    await page.keyboard.press('Enter');
+    await H.settle(page, 300);
+    assert.equal((await gridRows('editPriorDosesTable'))[1][3], 'mcg/kg/min');
+    assert.ok((await H.notifications(page)).some(n => /"mz" is not one of the choices/.test(n)));
+    // a new dose, the last row deleted, then Apply
+    await page.click(cell('editPriorDosesTable', 0, 2));
+    await page.keyboard.type('120');
+    await page.keyboard.press('Enter');
+    await page.click(cell('editPriorDosesTable', 2, 0));
+    await H.settle(page, 300);
+    assert.deepEqual((await sentRows('editPriorDosesTable')).map(r => r.slice(0, 3)),
+                     [[false, '0', '120'], [false, '0', '0'], [true, '10', '50']]);
+    await page.click('#editDosesOK');
+    await H.settle(page, 1000);
+    const propofol = (await H.serverState(page)).table.filter(r => r[0] === 'propofol').map(r => r.join(' ')).sort();
+    assert.deepEqual(propofol, ['propofol 0 0 mcg/kg/min', 'propofol 0 120 mg']);
+    // The next drug's dialog shows that drug's rows from the moment it
+    // opens, never the last dialog's under the new title (ChatGPT's fifth
+    // review, N01)
+    await page.evaluate(() => window.Shiny.setInputValue('plot_dblclick',
+      { x: 5, y: 1, panelvar1: 'fentanyl' }, { priority: 'event' }));
+    await page.waitForSelector('.modal-title:has-text("Edit fentanyl doses")', { timeout: 30000 });
+    const first = await page.evaluate(() => {
+      const g = document.getElementById('editPriorDosesTable');
+      return g ? Array.from(g.querySelectorAll('tbody tr')).map(tr =>
+        Array.from(tr.querySelectorAll('input, select')).map(x => x.type === 'checkbox' ? x.checked : x.value)) : null;
+    });
+    assert.deepEqual(first, [[false, '0', '0', 'mcg']]);
+  });
+});
+
+describe('Suggest Dosing', () => {
+  test('targets are typed, rows inserted from the row menu, and a bad pasted row refused whole', async () => {
+    await open('setTarget', 'targetTableHTML');
+    assert.equal((await gridRows('targetTableHTML')).length, 6);
+    assert.match(await page.$eval('#targetTableHTML table', t =>
+      document.getElementById(t.getAttribute('aria-describedby')).textContent), /Shift\+F10/);
+    await page.click(cell('targetTableHTML', 0, 0));
+    await page.keyboard.type('0');
+    await page.keyboard.press('Tab');
+    await page.keyboard.type('3');
+    await page.keyboard.press('Enter');
+    await H.settle(page, 300);
+    assert.deepEqual((await sentRows('targetTableHTML'))[0], ['0', '3']);
+    // a row inserted above the first
+    await page.click(cell('targetTableHTML', 0, 0), { button: 'right' });
+    await page.click('#targetTableHTML [role=menu] [role=menuitem]:has-text("Insert row above")');
+    await H.settle(page, 300);
+    const rows = await sentRows('targetTableHTML');
+    assert.equal(rows.length, 7);
+    assert.deepEqual(rows.slice(0, 2), [['', ''], ['0', '3']]);
+    // a pasted block: the row with a target that cannot be read is not pasted
+    await H.clearNotifications(page);
+    await page.click(cell('targetTableHTML', 2, 0));
+    await H.paste(page, '10\t2\n20\tlots\n30\t4');
+    await H.settle(page, 400);
+    assert.deepEqual((await sentRows('targetTableHTML')).slice(2, 5), [['10', '2'], ['', ''], ['30', '4']]);
+    assert.ok((await H.notifications(page)).some(n => /"lots" was not accepted/.test(n)));
+  });
+});
+
+describe('Drug thresholds', () => {
+  test('a drug\'s name cannot be changed, its threshold can, and Apply stores it', async () => {
+    await open('editThresholds', 'editThresholdsTable');
+    // named, and its keys told, to a screen reader
+    const named = await page.$eval('#editThresholdsTable table', t => ({
+      caption: t.caption && t.caption.textContent,
+      help: (document.getElementById(t.getAttribute('aria-describedby')) || {}).textContent || ''
+    }));
+    assert.equal(named.caption, 'Drug thresholds');
+    assert.match(named.help, /Escape puts it back/);
+    assert.doesNotMatch(named.help, /Shift\+F10/);
+    const r = await rowOf('editThresholdsTable', 'propofol');
+    assert.ok(r >= 0);
+    await page.click(cell('editThresholdsTable', r, 0));
+    await page.keyboard.type('x');
+    assert.equal((await gridRows('editThresholdsTable'))[r][0], 'propofol');
+    // F2 on a read-only cell does not start an edit, so End still moves along
+    // the row (Gemini's production audit, 2026-11-08, finding 5)
+    await page.keyboard.press('F2');
+    await page.keyboard.press('End');
+    assert.ok(await page.$eval(cell('editThresholdsTable', r, 1), x => x === document.activeElement),
+              'End did not move from the read-only cell after F2');
+    await page.click(cell('editThresholdsTable', r, 1));
+    await page.keyboard.type('2.5');
+    await page.keyboard.press('Enter');
+    await H.settle(page, 300);
+    // On the last row Enter keeps the focus: a refused entry still shows the
+    // value kept, and an accepted one the value stored (CodeRabbit, PR #683)
+    const last = (await gridRows('editThresholdsTable')).length - 1;
+    const before = (await gridRows('editThresholdsTable'))[last][1];
+    await page.click(cell('editThresholdsTable', last, 1));
+    await page.keyboard.type('lots');
+    await page.keyboard.press('Enter');
+    await H.settle(page, 300);
+    assert.equal(await page.$eval(cell('editThresholdsTable', last, 1), x => x.value), before);
+    await page.click(cell('editThresholdsTable', last, 1));
+    await page.keyboard.type('1e1');
+    await page.keyboard.press('Enter');
+    await H.settle(page, 300);
+    assert.equal(await page.$eval(cell('editThresholdsTable', last, 1), x => x.value), '10');
+    await page.click('#thresholdEditsOK');
+    await H.settle(page, 1000);
+    assert.equal((await H.serverState(page)).endCe.propofol, 2.5);
+  });
+});
+
+describe('Drug Library', () => {
+  test('a colour is edited and applied; a gas\'s concentration unit cannot be changed', async () => {
+    await open('editDrugs', 'editDrugsHTML');
+    const gas = await rowOf('editDrugsHTML', 'sevoflurane');
+    assert.ok(gas >= 0);
+    assert.ok(await page.$eval(cell('editDrugsHTML', gas, 1), x => x.disabled), 'the % unit could be changed');
+    const r = await rowOf('editDrugsHTML', 'propofol');
+    await page.click(cell('editDrugsHTML', r, 6));
+    await page.keyboard.type('#123456');
+    await page.keyboard.press('Enter');
+    await H.settle(page, 300);
+    await page.click('#drugEditsOK');
+    await H.settle(page, 1500);
+    assert.equal((await H.serverState(page)).colors.propofol, '#123456');
+  });
+});
+
+// Carbon's (Gemini) third adversarial UI audit, of PR #730 at 4164743,
+// 2026-11-15: M4 and L1 (the dose grid's are in dose-grid.test.js)
+describe('Carbon\'s third UI audit, 2026-11-15', () => {
+  // M4: validateDose() refuses a number too long written out, which the
+  // dose grid's server would blank; a number cell says why
+  test('a number too long written out is refused with its reason', async () => {
+    await open('editDrugs', 'editDrugsHTML');
+    const r = await rowOf('editDrugsHTML', 'propofol');
+    const before = await page.$eval(cell('editDrugsHTML', r, 7), x => x.value);
+    await H.clearNotifications(page);
+    await page.click(cell('editDrugsHTML', r, 7));
+    await page.keyboard.type('1e-35');
+    await page.keyboard.press('Enter');
+    await H.settle(page, 300);
+    assert.equal(await page.$eval(cell('editDrugsHTML', r, 7), x => x.value), before);
+    const notes = await H.notifications(page);
+    assert.ok(notes.some(n => /"1e-35" was not accepted in Lower: a number written out in full can have at most 32 characters/.test(n)),
+              JSON.stringify(notes));
+  });
+
+  // L1: a list search's timer and the document's listener come off when
+  // Shiny unbinds the grid (a dialog closed), and the listener goes back on
+  // at a bind
+  test('unbinding a dialog\'s grid takes off its document listener and its list search', async () => {
+    // propofol given a dose above 0, without which it has no panel to
+    // double-click (only such drugs are drawn; Shafer, 2026-11-16)
+    await adapter.typeInto(page, 0, 2, '100');
+    await page.keyboard.press('Enter');
+    await H.settle(page, 600);
+    await page.click('#dosetable_apply');
+    await H.settle(page, 1500);
+    await page.evaluate(() => window.Shiny.setInputValue('plot_dblclick',
+      { x: 5, y: 1, panelvar1: 'propofol' }, { priority: 'event' }));
+    await page.waitForSelector('#editPriorDosesTable tbody tr', { timeout: 30000 });
+    await H.settle(page, 300);
+    const before = await gridRows('editPriorDosesTable');
+    await page.focus(cell('editPriorDosesTable', 0, 3));
+    await page.keyboard.type('mc');
+    const off = await page.evaluate(() => {
+      const root = document.getElementById('editPriorDosesTable');
+      const g = root._tableGrid;
+      const b = window.jQuery(root).data('shiny-input-binding');
+      const pending = g.search !== null;
+      window.__tableGridCallback = g.callback;
+      window.__flushes = 0;
+      const flush = g.flushSearch;
+      g.flushSearch = function() { window.__flushes += 1; return flush.apply(this, arguments); };
+      b.unsubscribe(root);
+      return { pending, search: g.search, attached: g.documentAttached };
+    });
+    assert.deepEqual(off, { pending: true, search: null, attached: false });
+    // the search's pause has passed: the unbound grid was not touched
+    await page.waitForTimeout(1500);
+    assert.equal(await page.evaluate(() => window.__flushes), 0);
+    const on = await page.evaluate(() => {
+      const root = document.getElementById('editPriorDosesTable');
+      const b = window.jQuery(root).data('shiny-input-binding');
+      b.subscribe(root, window.__tableGridCallback);
+      root._tableGrid.renderAll();
+      return root._tableGrid.documentAttached;
+    });
+    assert.equal(on, true);
+    assert.deepEqual(await gridRows('editPriorDosesTable'), before);
+  });
+});
+
+// Carbon's fourth UI audit, 2026-11-15, H1: the Working cover (app.js) made
+// every child of <body> inert, which took the focus from a dialog's cell
+// being typed in (committed as it stood) and from the dialog (Escape no
+// longer closed it); and a dialog opened while it was up was not inert.  The
+// cover is raised as the server's busy message raises it (H.coverPage()).
+describe('Carbon\'s fourth UI audit, 2026-11-15: the Working cover over a dialog', () => {
+  test('a dialog cell being typed in keeps its typing and the focus, and Escape still closes the dialog', async () => {
+    await open('editThresholds', 'editThresholdsTable');
+    const r = await rowOf('editThresholdsTable', 'propofol');
+    const sent = await sentRows('editThresholdsTable');
+    await page.click(cell('editThresholdsTable', r, 1));
+    await page.keyboard.type('2');
+    assert.ok(await H.coverPage(page), 'the cover came down: the page sent something under it');
+    assert.deepEqual(await sentRows('editThresholdsTable'), sent, 'the cell was committed under the cover');
+    assert.equal(await H.focusName(page), 'Threshold, row ' + (r + 1));
+    // the dialog and everything else is inert; the focused cell is not
+    const inert = await page.evaluate(sel => ({
+      ok: !!document.getElementById('thresholdEditsOK').closest('[inert]'),
+      cell: !!document.querySelector(sel).closest('[inert]')
+    }), cell('editThresholdsTable', r, 1));
+    assert.deepEqual(inert, { ok: true, cell: false });
+    await H.uncoverPage(page);
+    await page.keyboard.type('.5');
+    await page.keyboard.press('Enter');
+    await H.settle(page, 300);
+    assert.equal((await gridRows('editThresholdsTable'))[r][1], '2.5');
+    // the focus never left the dialog, so Escape closes it
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('.modal', { state: 'detached', timeout: 10000 });
+  });
+
+  test('a dialog opened while the cover is up is inert under it, and has the focus after', async () => {
+    assert.ok(await H.coverPage(page), 'the cover did not go up');
+    // as the server's showModal() does, without the round trip that would
+    // end the busy spell
+    await page.evaluate(() => window.Shiny.modal.show({ deps: [], html:
+      '<div class="modal fade" id="shiny-modal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">' +
+      '<div class="modal-body"><p>Opened under the cover</p></div><div class="modal-footer">' +
+      '<button type="button" id="lateDismiss" class="btn btn-default" data-bs-dismiss="modal">Dismiss</button>' +
+      '</div></div></div><script>new bootstrap.Modal(document.getElementById("shiny-modal")).show();</script></div>' }));
+    await page.waitForSelector('#shiny-modal.show', { timeout: 5000 });
+    await page.waitForTimeout(500);
+    assert.ok(await page.evaluate(() => !!document.getElementById('shiny-modal-wrapper').closest('[inert]')),
+              'the dialog opened under the cover is not inert');
+    // a click under the cover reaches nothing
+    await page.mouse.click(10, 10);
+    await page.keyboard.press('Escape');
+    assert.ok(await page.evaluate(() => !!document.querySelector('#shiny-modal.show')), 'the dialog closed under the cover');
+    await H.uncoverPage(page);
+    assert.ok(await page.evaluate(() => document.getElementById('shiny-modal').contains(document.activeElement)),
+              'the dialog does not have the focus');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#shiny-modal-wrapper', { state: 'detached', timeout: 10000 });
+  });
+});

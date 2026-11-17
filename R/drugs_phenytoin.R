@@ -349,6 +349,11 @@ phenytoin <- function(weight, height, age, sex, adjustToFFM = TRUE,
     michaelisMenten = list(
       vmax = vmax,
       km = km,
+      # Steps sized to the dynamics (mmDormandPrince()): absorption and
+      # fosphenytoin's conversion are fast only while a depot holds drug,
+      # and the 2-minute step spent nearly all its work on hours of slow
+      # saturable elimination
+      adaptiveStep = TRUE,
       kConversion = log(2) / 15,       # fosphenytoin, 1/min
       ka_IM = 2.47 / 60,               # fosphenytoin IM, 1/min
       bioavailability_IM = 1,

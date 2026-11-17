@@ -101,12 +101,13 @@ PAPER_REVIEW_NUMERIC_FIELDS <- c(
   "n", "n_female", "n_male", "coefficient", "reference_value", "duration",
   "error_lower", "error_upper", "group1_value", "group1_se", "group2_value",
   "group2_se", "difference", "difference_se", "p_value", "analyte_fraction",
-  "interval", "decrement_percent", "reading_precision", "y_axis_max", "x_axis_max")
+  "interval", "decrement_percent", "reading_precision", "y_axis_max", "x_axis_max",
+  "weight", "height", "age", "infusion_minutes")
 # Optional strings: NULL when empty.
 PAPER_REVIEW_OPTIONAL_STRINGS <- c("title", "first_author", "journal", "doi",
                                    "pd_model", "regimen_id", "group")
 # Optional enums: NULL when "none".
-PAPER_REVIEW_OPTIONAL_ENUMS <- c("route", "decrement_site", "concentration_site")
+PAPER_REVIEW_OPTIONAL_ENUMS <- c("route", "decrement_site", "concentration_site", "sex")
 
 #' Turn a parsed extraction back into numbers and NULLs
 #'
@@ -260,7 +261,9 @@ paperReviewSchema <- function()
       route         = schemaNullable(schemaEnum(PAPER_REVIEW_ROUTES)),
       regimen_id    = schemaNullable(schemaString(
         "For ka, F or tlag of one formulation (a solution and a capsule, say): its regimen.")),
-      value         = schemaNullable(schemaNumber("The typical value, at the reference covariates.")),
+      value         = schemaNullable(schemaNumber(paste(
+        "The typical value, at the reference covariates, in units. A power of ten printed in a",
+        "column header is applied: under 'kPT, 10^2 min^-1' the printed 56.0 is 0.560 1/min."))),
       value_text    = schemaString("The value exactly as printed, digits included."),
       units         = schemaChoice(PAPER_REVIEW_PARAMETER_UNITS),
       uncertainty   = schemaUncertainty(),
@@ -325,7 +328,8 @@ paperReviewSchema <- function()
                                      "and is per unit dose (1/L), a concentration after a stated dose, or a",
                                      "fraction of the sum of the coefficients (units percent or fraction);",
                                      "decrement_50 is the time for the concentration to fall 50% after a",
-                                     "steady-state input stops (the context-sensitive half-time at steady state).")),
+                                     "steady-state input stops (the context-sensitive half-time at steady state),",
+                                     "or after an infusion of the length in infusion_minutes.")),
       group       = schemaGroup(),
       value       = schemaNullable(schemaNumber()),
       value_text  = schemaString("Exactly as printed."),
@@ -333,6 +337,23 @@ paperReviewSchema <- function()
       regimen_id  = schemaNullable(schemaString("For AUC, Cmax, tmax, MRT and coefficients: the regimen it belongs to.")),
       statistic   = schemaEnum(c("typical_value", "mean_of_individuals", "median_of_individuals", "unstated")),
       uncertainty = schemaUncertainty(),
+      infusion_minutes = schemaNullable(schemaNumber(paste(
+        "For a decrement time printed after an infusion of stated length (a context-sensitive",
+        "half-time after 45 min): that length, in minutes. Empty for the steady-state value."))),
+      conditions  = schemaString(paste(
+        "Only a condition that makes this value differ from what the model as printed gives and",
+        "that `at` cannot carry: a renal function, a co-medication, an anaesthetic, a phase of",
+        "surgery, a concentration, a route other than the model's. Empty otherwise: never a",
+        "description of the value, its source or how it was computed.")),
+      at          = schemaObject(list(
+        weight = schemaNullable(schemaNumber("Body weight, kg.")),
+        height = schemaNullable(schemaNumber("Height, cm.")),
+        age    = schemaNullable(schemaNumber("Age, years.")),
+        sex    = schemaNullable(schemaEnum(c("male", "female")))),
+        paste("When the paper gives this value for a stated patient (a table of CL/F and",
+              "half-lives at 10, 20, 30 and 40 kg; a simulation of a 60-year-old), that",
+              "patient's covariates. Every field empty when the value is for the paper's",
+              "typical or reference patient.")),
       location    = schemaLocation()
     ))),
     figures = schemaArray(schemaObject(list(
@@ -435,7 +456,8 @@ paperReviewSystemPrompt <- function()
     "- Report numbers exactly as printed (value_text) and as numbers (value), in",
     "  the paper's own units chosen from the schema's lists. Never convert,",
     "  round, average or infer a value: if the paper does not print it, use",
-    "  null and say so in extraction_limitations.",
+    "  null and say so in extraction_limitations. A power of ten printed in a",
+    "  column header ('k, 10^2 min^-1') is part of the units: apply it to value.",
     "- Give every item its location (table, figure, equation or section, and",
     "  page).",
     "- Parameters are the typical values at the reference covariates. Record",
@@ -444,7 +466,12 @@ paperReviewSystemPrompt <- function()
     "- Derived quantities are everything the paper reports that follows from",
     "  the parameters: half-lives, exponents, coefficients, micro constants,",
     "  V1, Vss, CL, AUC, Cmax, tmax, tPeak, ke0. Say whether each is a typical",
-    "  value or a mean or median of individual values.",
+    "  value or a mean or median of individual values. When a value holds only",
+    "  under conditions the model as printed does not carry (a renal function, a",
+    "  co-medication, an anaesthetic, a phase of surgery, a concentration, a route",
+    "  other than the model's), name them in conditions, and leave conditions empty",
+    "  for anything else. A decrement time after an",
+    "  infusion of stated length takes that length in infusion_minutes.",
     "- For each concentration-time figure, digitise the plotted points as well",
     "  as you can (means or individual data, with error bars if drawn), name the",
     "  regimen it shows, and say in digitization_note how approximate they are.",
@@ -458,12 +485,16 @@ paperReviewSystemPrompt <- function()
     "- A daily dose the paper models as a constant input is one row with per_time",
     "  per_day and its duration; a tablet taken repeatedly is one row with its",
     "  interval and duration. Never write a daily dose as a single dose.",
+    "- A derived quantity the paper gives for a stated patient (a table of values",
+    "  at several weights or ages) is one row per patient, with that patient's",
+    "  covariates in at; leave at empty for the typical or reference patient.",
     "- Describe every dosing regimen as dose rows: an infusion is one row with",
     "  its rate, start time and duration.",
     "- When the paper reports more than one model (several drugs, or one drug in",
     "  several populations, as columns of one table), keep every model: give each a",
     "  short group name and tag every parameter, derived quantity, regimen and",
-    "  figure series with it. Never merge two models' parameters into one set.",
+    "  figure series with it, spelled the same way every time. Never merge two",
+    "  models' parameters into one set.",
     "- reported_differences: any comparison of two groups' means that the paper",
     "  presents as a finding, with the standard errors it prints.",
     "- reviewer_notes: anything a careful pharmacokinetic reviewer would raise",

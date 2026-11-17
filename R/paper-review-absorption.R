@@ -97,7 +97,8 @@ paperReviewExtravascularDoses <- function(regimen, reference, concUnits)
     if (paperReviewIsRateDose(d)) next
     mg <- c(g = 1000, mg = 1, mcg = 1e-3, ng = 1e-6)[d$mass_unit %or% "other"]
     minutes <- paperReviewMinutes(d$time_units %or% "min")
-    if (is.na(mg) || is.na(minutes)) next
+    if (is.na(mg) || is.na(minutes) || !is.finite(paperReviewNum(d$time)) ||
+        !is.finite(paperReviewNum(d$amount))) next
     amount <- d$amount * mg * (if (identical(d$per_kg, "yes")) reference$weight else 1)
     rows[[length(rows) + 1]] <- data.frame(
       Time = d$time * minutes, amount = amount * paperReviewAmountFactor(concUnits),
@@ -356,6 +357,128 @@ paperReviewAbsorption <- function(extraction, regimen, route, drug, reference)
               used = used, crossCheck = crossCheck, fittedFigures = fittedFigures))
 }
 
+#' A regimen's id, or "" when it has none that can be looked up
+#' @keywords internal
+paperReviewRegimenId <- function(r)
+{
+  id <- if (is.list(r)) r$id else NULL
+  if (is.character(id) && length(id) == 1 && !is.na(id) && nzchar(trimws(id))) id else ""
+}
+
+#' Give every regimen of an extraction an id it can be found by
+#'
+#' A regimen is found by its id: its absorption (paperReviewAbsorptions()),
+#' the Simulator's choice of regimen.  One the reply left without an id, or
+#' with a blank one, was found by nothing: \code{out[[""]] <- x} stores an
+#' element that \code{out[[""]]} never returns, so its absorption was
+#' computed and lost, and the element kept the route's own parameters from
+#' being used (Carbon's third UI audit, 2026-11-15, L1).  Each is named
+#' "regimen n", n its place in the list (made unique), and the report's
+#' limitations say so.  So is a regimen whose id an earlier one already has:
+#' two regimens called "Arm A" kept one absorption between them (the later
+#' one's), and the first's doses were simulated with the second's
+#' absorption and loaded for either (Carbon's fourth UI audit, 2026-11-15,
+#' M5).  The later is called "Arm A (2)", and anything the paper ties to
+#' "Arm A" is read as the first.  paperReviewRun() calls this first.
+#'
+#' An id is repeated only within a model.  A paper with several models
+#' (groups) reviews each on its own items and the shared ones
+#' (paperReviewGroupExtraction()), so two groups may each have an "R1": each
+#' model sees only its own, and renaming one cut it off from its group's
+#' ka, F, derived quantities and figure series, which name "R1" (CodeRabbit,
+#' PR #730).  Here a regimen is renamed only when an earlier regimen of its
+#' id has the same group, or the same lack of one; a model's own regimen
+#' that repeats the id of a shared one is renamed in that model's part
+#' alone, by paperReviewRun() through paperReviewRegimenNaming().
+#'
+#' @param extraction the extraction
+#' @returns the extraction, every regimen with an id of its own within its
+#'   model
+#' @keywords internal
+paperReviewNameRegimens <- function(extraction)
+{
+  named <- paperReviewRegimenNaming(extraction)
+  paperReviewAddLimitation(named$extraction, named$said)
+}
+
+#' The model each regimen is reviewed in
+#'
+#' With several models (paperReviewGroups()), a regimen's group, NA for one
+#' with none (every model's: paperReviewGroupExtraction() gives it to each);
+#' with one model, the same key for every regimen.
+#' @returns one key per regimen
+#' @keywords internal
+paperReviewRegimenScope <- function(extraction)
+{
+  regs <- extraction$regimens %or% list()
+  if (length(paperReviewGroups(extraction)) <= 1) return(rep("", length(regs)))
+  vapply(regs, function(r) {
+    g <- if (is.list(r)) r$group else NULL
+    if (is.null(g)) NA_character_
+    else if (is.character(g) && length(g) == 1 && !is.na(g)) g
+    # in no model: paperReviewGroupExtraction() keeps a group of NULL or its own
+    else "\001unreadable"
+  }, "")
+}
+
+#' Name the regimens, and say what was named
+#'
+#' paperReviewNameRegimens() without adding what it says to the limitations.
+#' @param model the model this extraction is the part of, named in what is
+#'   said; NULL for the paper
+#' @returns a list: \code{extraction}, \code{said} (sentences)
+#' @keywords internal
+paperReviewRegimenNaming <- function(extraction, model = NULL)
+{
+  nothing <- list(extraction = extraction, said = character(0))
+  regs <- extraction$regimens
+  if (!is.list(regs) || length(regs) == 0) return(nothing)
+  ids <- vapply(regs, paperReviewRegimenId, "")
+  isRegimen <- vapply(regs, is.list, logical(1))
+  blank <- which(!nzchar(ids) & isRegimen)
+  scope <- paperReviewRegimenScope(extraction)
+  repeated <- which(nzchar(ids) & isRegimen & duplicated(data.frame(scope, ids)))
+  if (length(blank) == 0 && length(repeated) == 0) return(nothing)
+  shared <- ids[repeated]
+  for (i in blank) {
+    id <- paste("regimen", i)
+    while (id %in% ids) id <- paste0(id, "'")
+    ids[i] <- id
+    extraction$regimens[[i]]$id <- id
+  }
+  for (i in repeated) {
+    k <- 2L
+    while ((id <- paste0(ids[i], " (", k, ")")) %in% ids) k <- k + 1L
+    ids[i] <- id
+    extraction$regimens[[i]]$id <- id
+  }
+  # The model a renamed regimen is in, when there are several
+  inModel <- if (!is.null(model)) rep(model, length(repeated))
+             else ifelse(!is.na(scope[repeated]) & nzchar(scope[repeated]), scope[repeated], NA_character_)
+  where <- ifelse(is.na(inModel), "", paste0(" in the model \"", inModel, "\""))
+  said <- c(
+    if (length(blank))
+      paste0(if (length(blank) == 1) "A regimen had no id and is called " else "Regimens with no id are called ",
+             paste0("\"", ids[blank], "\"", collapse = ", "), " here."),
+    if (length(repeated))
+      paste0("Several regimens had the same id, so ",
+             paste0("the next \"", shared, "\"", where, " is called \"", ids[repeated], "\"", collapse = ", "),
+             " here, and what the paper ties to ", paste0("\"", unique(shared), "\"", collapse = ", "),
+             " is read as the first of that name", if (any(!is.na(inModel))) " in its model", "."))
+  list(extraction = extraction, said = said)
+}
+
+#' Add sentences to an extraction's limitations
+#' @keywords internal
+paperReviewAddLimitation <- function(extraction, said)
+{
+  if (length(said) == 0) return(extraction)
+  prior <- extraction$extraction_limitations
+  if (!is.character(prior) || length(prior) != 1 || is.na(prior)) prior <- ""
+  extraction$extraction_limitations <- paste0(prior, if (nzchar(prior)) " " else "", paste(said, collapse = " "))
+  extraction
+}
+
 #' Absorption for every extravascular regimen of a paper
 #'
 #' @returns a named list (by regimen id; "route" for the route-level
@@ -366,7 +489,10 @@ paperReviewAbsorptions <- function(extraction, drug, reference)
   out <- list()
   for (r in extraction$regimens %or% list()) {
     # A constant input needs no absorption (paperReviewNeedsAbsorption()).
-    if (!paperReviewNeedsAbsorption(r) || is.null(r$id)) next
+    # A regimen with no id is passed over, out[[""]] being unreadable; a
+    # review names every regimen before it gets here
+    # (paperReviewNameRegimens()).
+    if (!paperReviewNeedsAbsorption(r) || !nzchar(paperReviewRegimenId(r))) next
     routes <- vapply(r$doses %or% list(), function(d) d$route %or% "other", "")
     ev <- intersect(routes, names(PAPER_REVIEW_ROUTE_SUFFIX))
     out[[r$id]] <- paperReviewAbsorption(extraction, r, ev[[1]], drug, reference)
@@ -440,9 +566,11 @@ paperReviewIntravenousSeries <- function(extraction, reference, concUnits)
     if (is.null(r) || length(r$doses) != 1) next
     d <- r$doses[[1]]
     mg <- c(g = 1000, mg = 1, mcg = 1e-3, ng = 1e-6)[d$mass_unit %or% "other"]
-    if (is.na(mg)) next
-    amount <- d$amount * mg * (if (identical(d$per_kg, "yes")) reference$weight else 1)
     minutes <- paperReviewMinutes(d$time_units %or% "min")
+    # A dose with no readable time, amount or units is no series to fit.
+    if (is.na(mg) || is.na(minutes) || !is.finite(paperReviewNum(d$time)) ||
+        !is.finite(paperReviewNum(d$amount))) next
+    amount <- d$amount * mg * (if (identical(d$per_kg, "yes")) reference$weight else 1)
     start <- d$time * minutes
     pts <- s$points
     if (identical(d$route, "iv_infusion")) {

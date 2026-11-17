@@ -1,3 +1,26 @@
+# RENAL IMPAIRMENT (Rohilla 2026, recorded, not applied)
+# ======================================================
+# Rohilla R et al., J Clin Pharmacol 2026;66:e70268 (PMID 42968396, read in
+# full, 2026-11-02): 35 Indian adults at CKD stages 1-4 (Cockcroft-Gault
+# 19.7-124 mL/min, BMI 18-25), urological surgery, propofol 1.5-2 mg/kg then
+# 200 then 100-150 mcg/kg/min with fentanyl; antecubital VENOUS plasma by
+# HPLC-fluorescence, samples from LOC to eye opening only.  Pumas FOCE-I,
+# three compartments (Table 4): CL 4.46 L/min x (CrCL/75)^0.19 (the exponent
+# is printed on the page and dropped from the PDF text layer; RSE 47%, 95% CI
+# 0.003-0.41), Vc 6.21, Vp1 23.86, Vp2 84.57 L, Q1 2.79, Q2 2.66 L/min; BIS
+# ke0 0.11 /min (Table 5).  Not implemented: Vc matches this model (6.03 L at
+# 62 kg, 32 y) but CL is 3.0x Eleveld's (1.49 L/min) at the same patient and
+# the slowest half-life is 37 min, the signature of venous sampling that
+# stops before washout; the authors' statement that it is "marginally
+# higher" than Schnider's is wrong (Schnider ~1.9 L/min).  Only the RATIO is
+# usable: (20/75)^0.19 = 0.78, a 22% fall at CrCL 20, within the kidney's
+# share of propofol clearance (<= 30%, Takizawa 2005, Hiraoka 2005).  Whether
+# to apply that ratio to Eleveld's CL (it would need the creatinine argument
+# and a new Patient Profile reader) is an open [decision] for Shafer, recorded
+# in papers/digests/PMID_42968396.md.  Its PD (Table 5) does not reproduce its
+# own Figure 7: at EC50 4.8 mcg/mL a plateau of 1.3 mcg/mL gives BIS ~83, not
+# the ~52 drawn.
+#
 # PREGNANCY
 # =========
 # Gin and colleagues, read in full (2026-10-19):

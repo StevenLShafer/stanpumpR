@@ -221,7 +221,12 @@ paperReviewParameterValue <- function(extraction, role, weight, route = NULL)
 #' The patient the paper's typical values describe
 #'
 #' Each covariate's printed reference value where there is one, else the
-#' population's central value, else PAPER_REVIEW_DEFAULT_PATIENT.
+#' population's central value, else PAPER_REVIEW_DEFAULT_PATIENT.  Only a
+#' value a patient can have is taken (the Patient Profile's limits), and
+#' not the reference of a power the review does not apply: a printed
+#' reference weight of 0 made the reference patient weigh 0 kg, and no
+#' model could be built for anyone (Carbon's fourth UI audit, 2026-11-15,
+#' M4).
 #'
 #' @returns a list: \code{weight}, \code{height}, \code{age}, \code{sex} and
 #'   \code{source}, a named character vector saying where each came from
@@ -229,17 +234,23 @@ paperReviewParameterValue <- function(extraction, role, weight, route = NULL)
 paperReviewReferencePatient <- function(extraction)
 {
   pop <- extraction$population %or% list()
+  limits <- list(weight = c(MIN_WEIGHT, MAX_WEIGHT), height = c(MIN_HEIGHT, MAX_HEIGHT),
+                 age = c(MIN_AGE, MAX_AGE))
+  legal <- function(name, x) !is.na(x) && is.finite(x) && x >= limits[[name]][1] && x <= limits[[name]][2]
   ref <- function(covariate) {
-    for (e in extraction$covariate_effects %or% list())
-      if (identical(e$covariate, covariate) && !is.na(paperReviewNum(e$reference_value)))
-        return(paperReviewNum(e$reference_value))
+    for (e in extraction$covariate_effects %or% list()) {
+      r <- paperReviewNum(e$reference_value)
+      if (identical(e$covariate, covariate) && legal(covariate, r) &&
+          !(identical(e$form, "power") && r <= 0))
+        return(r)
+    }
     NA_real_
   }
   pick <- function(name, covariate, summary) {
     r <- ref(covariate)
     if (!is.na(r)) return(list(value = r, source = "printed reference value"))
     c0 <- paperReviewNum(summary$central)
-    if (!is.na(c0)) return(list(value = c0, source = paste("population", summary$central_kind %or% "central value")))
+    if (legal(name, c0)) return(list(value = c0, source = paste("population", summary$central_kind %or% "central value")))
     list(value = PAPER_REVIEW_DEFAULT_PATIENT[[name]], source = "not printed; stanpumpR default")
   }
   w <- pick("weight", "weight", pop$weight_kg)
@@ -256,7 +267,7 @@ paperReviewReferencePatient <- function(extraction)
 # A covariate's value for a patient, or NA when the simulator does not take it.
 paperReviewCovariateValue <- function(covariate, patient)
 {
-  switch(covariate,
+  switch(covariate %or% "other",
     weight = patient$weight,
     height = patient$height,
     age = patient$age,
@@ -289,10 +300,20 @@ paperReviewCovariateMultiplier <- function(effect, patient, reference)
     return(list(multiplier = if (x == 1) theta else 1, applied = TRUE, reason = NULL))
   ref <- paperReviewNum(effect$reference_value)
   if (is.na(ref)) ref <- paperReviewCovariateValue(effect$covariate, reference)
+  # (x / 0)^theta is infinite, or 0 or NaN, for every patient: no equation
+  # a paper could print, so a misreading, which built a model of infinite
+  # ka and stopped getDrugPK() with "missing value where TRUE/FALSE needed"
+  # (Carbon's fourth UI audit, 2026-11-15, M4).
+  if (identical(form, "power") && !(is.finite(ref) && ref > 0))
+    return(notApplied(paste0("a power of a covariate needs a positive reference value, and its reference is ",
+                             prFmt(ref))))
   m <- switch(form,
     power = (x / ref)^theta,
     linear = 1 + theta * (x - ref),
-    exponential = exp(theta * (x - ref)))
+    exponential = exp(theta * (x - ref)),
+    NULL)
+  # A form outside the schema's choices is not one the review can evaluate.
+  if (is.null(m)) return(notApplied("its form is not one the review can evaluate"))
   list(multiplier = m, applied = TRUE, reason = NULL)
 }
 
@@ -305,6 +326,23 @@ paperReviewRoleMultiplier <- function(extraction, role, patient, reference)
     if (identical(e$parameter_role, role))
       m <- m * paperReviewCovariateMultiplier(e, patient, reference)$multiplier
   m
+}
+
+#' The covariate equations that are not finite and positive for a patient
+#'
+#' @returns one sentence per such equation, naming what it gives
+#' @keywords internal
+paperReviewCovariateFaults <- function(extraction, patient, reference)
+{
+  out <- character(0)
+  for (e in extraction$covariate_effects %or% list()) {
+    m <- suppressWarnings(paperReviewCovariateMultiplier(e, patient, reference))
+    if (isTRUE(m$applied) && !(is.finite(m$multiplier) && m$multiplier > 0))
+      out <- c(out, paste0("The paper's equation for ", e$parameter_role, " ~ ", e$covariate, " (",
+                           e$equation_as_printed %or% e$form, ") gives ", prFmt(m$multiplier),
+                           " for this patient."))
+  }
+  out
 }
 
 # --- The model --------------------------------------------------------------
@@ -399,8 +437,11 @@ paperReviewDrug <- function(extraction, patient, closed = NULL, absorption = NUL
   disposition <- paperReviewDisposition(extraction, patient, closed)
   problems <- disposition$problems
   set <- disposition[c("v1", "v2", "v3", "cl1", "cl2", "cl3")]
-  ok <- all(vapply(set, function(x) is.finite(x) && x >= 0, logical(1))) &&
-    isTRUE(set$v1 > 0) && isTRUE(set$cl1 > 0)
+  # Every volume above 0 (an absent compartment's is PAPER_REVIEW_ABSENT_VOLUME),
+  # every clearance at least 0 and the elimination clearance above it.
+  positive <- function(x) length(x) == 1 && is.finite(x) && x > 0
+  ok <- all(vapply(set, function(x) length(x) == 1 && is.finite(x) && x >= 0, logical(1))) &&
+    all(vapply(set[c("v1", "v2", "v3")], positive, logical(1))) && positive(set$cl1)
   if (!ok) problems <- c(problems,
     "The printed parameters do not give a complete, positive disposition model for this patient.")
 
@@ -413,12 +454,25 @@ paperReviewDrug <- function(extraction, patient, closed = NULL, absorption = NUL
   if (!is.null(absorption) && isTRUE(absorption$ok)) {
     route <- absorption$route
     field <- if (route == "sc") "SC" else PAPER_REVIEW_ROUTE_SUFFIX[[route]]
-    set[[paste0("ka_", field)]] <- absorption$ka *
-      paperReviewRoleMultiplier(extraction, "ka", patient, reference)
-    set[[paste0("bioavailability_", field)]] <- absorption$F * absorption$fraction *
-      paperReviewRoleMultiplier(extraction, "F", patient, reference)
+    ka <- absorption$ka * paperReviewRoleMultiplier(extraction, "ka", patient, reference)
+    bio <- absorption$F * absorption$fraction * paperReviewRoleMultiplier(extraction, "F", patient, reference)
+    set[[paste0("ka_", field)]] <- ka
+    set[[paste0("bioavailability_", field)]] <- bio
     set[[paste0("tlag_", field)]] <- absorption$tlag
+    # The covariate effects scale ka and F after the disposition is
+    # checked, so they are checked here: a linear effect on F of
+    # 1 - 0.03 (age - 40) made F negative at 90 and the curve negative
+    # with it (Carbon's fourth UI audit, 2026-11-15, M4).
+    if (!(positive(ka) && positive(bio))) {
+      ok <- FALSE
+      problems <- c(problems, paste0(
+        "The absorption is not finite and positive for this patient (ka ", prFmt(ka * 60), " /h, F ",
+        prFmt(bio), "), so the paper's model cannot be simulated for them."))
+    }
   }
+  # Name the covariate equations that fail for this patient: a model that
+  # cannot be built is otherwise unexplained.
+  if (!ok) problems <- c(problems, paperReviewCovariateFaults(extraction, patient, reference))
 
   model <- list(PK = list(default = set), reference = "Single Paper Review (in memory)")
   effect <- extraction$structure$effect_site %or% "none"
@@ -576,6 +630,12 @@ paperReviewRegimenDoses <- function(regimen)
     mass <- d$mass_unit %or% "other"
     if (!mass %in% c("g", "mg", "mcg", "ng") || is.na(minutes)) {
       problems <- c(problems, "A dose's units could not be converted.")
+      next
+    }
+    # A dose with no readable time or amount (set aside by paperReviewConform())
+    # is no dose to simulate.
+    if (!is.finite(paperReviewNum(d$time)) || !is.finite(paperReviewNum(d$amount))) {
+      problems <- c(problems, "A dose has no readable time or amount.")
       next
     }
     perKg <- if (identical(d$per_kg, "yes")) "/kg" else ""

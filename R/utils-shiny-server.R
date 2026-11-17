@@ -21,26 +21,3 @@ modalFocus <- function(tag) {
   }
 }
 
-# Add hooks to a handsontable. This is not strictly a generic utility function
-# because it does use names of specific hooks used in this package, but otherwise
-# it's a fairly generic function
-addHotHooks <- function(hot, filterKeys = TRUE, sanitize = TRUE, ...) {
-  hooks <- list(...)
-
-  if (filterKeys) hooks$beforeKeyDown <- c("hookFilterKeys", hooks$beforeKeyDown)
-  if (sanitize)   hooks$beforeChange <- c("hookSanitize", hooks$beforeChange)
-
-  js <- c("function(el, x) {", "  var hot = this.hot;")
-
-  for (hookType in names(hooks)) {
-    for (fxn in hooks[[hookType]]) {
-      js <- c(js,
-              sprintf("  hot.removeHook('%s', %s);", hookType, fxn),
-              sprintf("  hot.addHook('%s', %s);", hookType, fxn)
-      )
-    }
-  }
-
-  js <- c(js, "}")
-  htmlwidgets::onRender(hot, paste(js, collapse = "\n"))
-}

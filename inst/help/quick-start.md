@@ -1,11 +1,11 @@
-Five steps produce a simulation. Everything else in this help is refinement.
+Five steps produce a simulation, a sixth lets you watch it (the Visualizer shows the drug moving between the compartments of its model), and a seventh fits it to the patient: Bayesian updating adjusts a drug's model to concentrations measured during care. Everything else in this help is refinement.
 
 <figure class="help-figure">
-<img src="stanpumpr-assets/help/quick-start-simulator.png" alt="The simulator: on the left the Patient Profile, Graph Options, Time, Dose table and Email Slide panels; the plot in the middle with the Add new drug button beneath it; the dose table on the right with Apply Changes, Undo and Redo">
+<img src="stanpumpr-assets/help/quick-start-simulator.png" alt="The simulator: on the left the Patient Profile, Graph Options, Physiology, Time, Dose table, Bayesian Updating and Export panels; the plot in the middle with the Add new drug button beneath it; the dose table on the right with Apply Changes, Undo and Redo">
 <figcaption>The simulator. Patient, graph and time settings on the left, the plot in the middle, the dose table on the right.</figcaption>
 </figure>
 
-When the app opens it asks which drugs to display. The drugs are grouped by category: hypnotics and sedatives, opioids, oral analgesics, neuromuscular blockade, inhaled anesthetics, antibiotics, corticosteroids, antidepressants, stimulants, local anesthetics, antiemetics, antiseizure drugs, antipsychotics, antidiabetic drugs, anticoagulants, antihypertensives, vasoactive and resuscitation drugs, Parkinson disease, and others. Each category starts collapsed, showing only its name and how many drugs it holds; click it to open its list and tick the drugs you want. A category with drugs ticked says how many, even when collapsed again. Nothing is ticked to begin with. The illicit-drug research models are never offered here. **Start** puts each ticked drug in the dose table with a dose of 0 at time 0, ready to edit; with nothing ticked, the dose table starts empty. Any drug can be added to the dose table later.
+When the app opens it asks which drugs to display. The drugs are grouped by category: hypnotics and sedatives, opioids, oral analgesics, neuromuscular blockade, inhaled anesthetics, antibiotics, corticosteroids, antidepressants, stimulants, local anesthetics, antiemetics, antiseizure drugs, antipsychotics, antidiabetic drugs, anticoagulants, antihypertensives, vasoactive and resuscitation drugs, Parkinson disease, and others. Each category starts collapsed, showing only its name and how many drugs it holds; click it to open its list and tick the drugs you want. A category with drugs ticked says how many, even when collapsed again. Nothing is ticked to begin with. The illicit-drug research models are never offered here. **Start** puts each ticked drug in the dose table with a dose of 0 at time 0, ready to edit; with nothing ticked, the dose table starts empty. A drug is drawn once it has a dose above 0, so the plot stays empty until you enter one. Any drug can be added to the dose table later.
 
 <figure class="help-figure help-figure-medium">
 <img src="stanpumpr-assets/help/quick-start-welcome.png" alt="The opening dialog: the statement of what stanpumpR is, a Take the tour button, and the drug categories as collapsed sections, each with the number of drugs it holds, and a Start button at the bottom">
@@ -48,7 +48,7 @@ Press **Apply Changes**. Edits to the dose table do not recalculate until you do
 
 ## 4. Read the plot
 
-Each drug gets its own panel. The solid line is the **effect-site** concentration, the one that matters clinically; the plasma line is hidden by default and can be turned on under **Graph Options**. A drug without an effect-site model (no time to peak effect or ke0) has no effect site, and its solid line is the plasma (or, for a few drugs, whole-blood or serum) concentration; for some drugs the time to peak effect is a clinical estimate rather than a measurement, and each drug's page says which. The shaded band is the drug's usual therapeutic range, from the drug library; what it means (a measured serum range, a response concentration, a target) differs by drug, and each drug's page says.
+Each drug with a dose above 0 gets its own panel; a drug whose doses are all 0 is not drawn, unless a drawn drug forms it as a metabolite. The solid line is the **effect-site** concentration, the one that matters clinically; the plasma line is hidden by default and can be turned on under **Graph Options**. A drug without an effect-site model (no time to peak effect or ke0) has no effect site, and its solid line is the plasma (or, for a few drugs, whole-blood or serum) concentration; for some drugs the time to peak effect is a clinical estimate rather than a measurement, and each drug's page says which. The shaded band is the drug's usual therapeutic range, from the drug library; what it means (a measured serum range, a response concentration, a target) differs by drug, and each drug's page says.
 
 <figure class="help-figure">
 <img src="stanpumpr-assets/help/quick-start-plot.png" alt="The propofol panel: a dashed plasma line spiking after the bolus, a solid effect-site line held inside the shaded band by the infusion, and a thin black time-until-threshold line read against minute labels on the right">
@@ -78,9 +78,67 @@ The **Time** panel, in the left sidebar, sets the time units, how far the simula
 <figcaption>The Graph Options panel, for propofol alone.</figcaption>
 </figure>
 
+**Physiology** asks *what if*: four sliders change liver function, renal function, cardiac output and gastrointestinal absorption, each from a tenth of normal to ten times normal on a log scale, a fifth sets body temperature, and the curves move at once. A drug whose clearance is mostly hepatic and high in extraction (propofol) follows cardiac output; one low in extraction (alfentanil) follows liver function; a low cardiac output also shrinks the central volume, so a bolus peaks higher, and slows the effect site a little. For an inhaled anesthetic, cardiac output sets the blood flow through the lungs and the tissues, the brain and heart keeping most of theirs, so a low output makes the end-tidal concentration rise faster. **Body temperature** acts on the volatile agents: hypothermia makes them more soluble, so the end-tidal concentration rises more slowly, and lowers their MAC, about 4.6% a degree. Under the sliders the panel names the dosed drugs they changed and any they cannot change yet. **Reset to normal** puts them back. How each slider works, and the evidence for it, is in [Physiology sliders](help:models/physiology).
+
+<figure class="help-figure">
+<img src="stanpumpr-assets/help/quick-start-physiology.png" alt="The Physiology panel: a line saying each slider is a multiple of normal function from a tenth to ten times on a log scale; sliders for Liver function, Renal function, Cardiac output and GI absorption, each with a question-mark tip, all at normal except Cardiac output at ×0.50; a Reset to normal link; and the note Changed: propofol">
+<figcaption>The Physiology panel with cardiac output at half of normal, for a propofol bolus.</figcaption>
+</figure>
+
 - **Additional plots**, at the foot of Graph Options, adds the clinical events timeline and, while the drugs they need are dosed, the MEAC panel for comparing opioids and the propofol-opioid interaction panel.
 - **Suggest Dosing** (in the *Dose table* panel of the left sidebar) works backwards from a target effect-site concentration.
 - The URL in your browser's address bar encodes the whole simulation; copy it to share or save your work. See [Sharing a simulation by URL](help:sharing).
+- **Export**, at the foot of the left sidebar, downloads the simulation as a PowerPoint deck (the whole plot, then a slide per panel), a spreadsheet (the patient, the doses, the concentrations and the pharmacokinetic parameters) or an image of the plot, or emails all three with the link. See [Exporting a simulation](help:export).
+
+## 6. Watch the compartments
+
+The **Visualizer** button, beside *Add new drug* under the plot, opens the plotted drug in a window of its own (with several drugs it drops up a list). It plays the plot's own simulation, from its *Min time* to its *Max time*, and shows where the drug is at each moment. Press **Play**, drag the time bar, or press **Video** to save the run as an MP4 for teaching.
+
+It opens in the **2D view**: each compartment is a box whose fill height is the drug's concentration, on one scale for every box, and whose width is its volume, so drug can be seen running downhill from a higher level to a lower one. The arrows are the flows: red into the central compartment, green out of it, thicker for a faster flow.
+
+<figure class="help-figure">
+<img src="stanpumpr-assets/help/quick-start-visualizer-propofol-2d.png" alt="The Visualizer's 2D view of a propofol bolus at 1 minute 36 seconds: V2 on the left, V1 with the blue effect-site bar beside it in the middle, V3 on the right, each a box filled to its concentration; green arrows carry drug from V1 into V2 and V3 and down out of it as elimination; the readout and amounts cards below">
+<figcaption>Propofol 140 mg at 1 minute 36 seconds, in the 2D view: the effect site (the blue bar) has just caught up with the plasma, both at 8.24 µg/mL, while V2 and V3 take up drug and V1 eliminates it.</figcaption>
+</figure>
+
+**3D view** (or the **v** key) shows the same moment as Charles Minto's glasses: each compartment a glass whose floor area is its volume and whose liquid is as tall as the concentration. Drag to turn the scene; point at a glass or an arrow for its numbers.
+
+<figure class="help-figure">
+<img src="stanpumpr-assets/help/quick-start-visualizer-propofol-3d.png" alt="The Visualizer's 3D view of the same moment: V1 as a tall glass in the middle with the blue effect-site ribbon beside it, V2 and V3 as wider, shallower glasses behind on either side, green arrows from V1 to each and down from its base">
+<figcaption>The same moment in the 3D view.</figcaption>
+</figure>
+
+The **inhaled anesthetics** are shown the same way, as **partial pressures**: in the breathing circuit (what the patient inspires), the lungs (end-tidal), the vessel-rich group (the brain and the other well-perfused organs, the effect site, in blue), muscle and fat. A box's width, or a glass's floor area, is the compartment's capacity for the agent, its volume times how soluble the agent is in it, so fat, small in volume but very soluble, is the widest. The arrows show the fresh gas coming in, the gas vented through the pop-off valve, the breathing, and the blood carrying the agent between the lungs and each tissue.
+
+<figure class="help-figure">
+<img src="stanpumpr-assets/help/quick-start-visualizer-sevoflurane-2d.png" alt="The Visualizer's 2D view of sevoflurane five minutes after the vaporizer is turned off: a narrow circuit bar, then the lungs, the blue vessel-rich group, a wide muscle box and a wider fat box, each filled to its partial pressure; arrows on a blood line beneath them carry agent from the vessel-rich group and muscle back to the lungs and on into fat">
+<figcaption>Sevoflurane at 2:05, five minutes after the vaporizer was turned off after two hours, in the 2D view: the lungs (0.30%) have emptied first, the vessel-rich group (0.64%) and muscle (0.92%) are giving agent back to the blood, and fat (0.07%) is still taking it up.</figcaption>
+</figure>
+
+<figure class="help-figure">
+<img src="stanpumpr-assets/help/quick-start-visualizer-sevoflurane-3d.png" alt="The Visualizer's 3D view of the same moment: the lungs, the blue vessel-rich group, muscle and fat as glasses filled to their partial pressures, each labelled, with red arrows from the vessel-rich group and muscle into the lungs, a thin green arrow on into fat, and green arrows carrying the exhaled agent to the circuit and out">
+<figcaption>The same moment in the 3D view. A gas run chooses its own starting view, in which no glass, arrow or label is hidden.</figcaption>
+</figure>
+
+[Watching a propofol bolus redistribute](help:scenarios/visualizer-propofol-bolus) and [Watching sevoflurane leave the body](help:scenarios/visualizer-sevoflurane-emergence) are the runs above, with what to look for; the other runs made to be watched are in the *Seeing the compartments* group of the [teaching scenarios](help:scenarios/index).
+
+## 7. Update from measured levels
+
+For a drug measured during care (an INR for warfarin; a level of amiodarone, phenytoin, digoxin, vancomycin or an immunosuppressant), open **Bayesian Updating** in the left sidebar. Each row of its table is one measurement: the *Drug* (any drug in the dose table but an inhaled agent), the *Time* it was drawn, typed as the dose table's times are, and the measured value in *Conc.*, in the units of that drug's plot (listed under the table; the INR for warfarin).
+
+<figure class="help-figure">
+<img src="stanpumpr-assets/help/quick-start-bayesian.png" alt="The simulator with the Bayesian Updating panel open: four warfarin INRs in its table, the PK variability slider at 25% and the Residual variability slider at 5%, the estimate (clearance and volume as multiples of the model's) and a table of measured, model and updated INRs; on the plot the four INRs as points, the updated INR line through them and the lighter warfarin (population) line above">
+<figcaption>Four INRs measured during a warfarin start. The updated line (dark) passes through them; the model's own prediction, <em>warfarin (population)</em>, stays beside it (light).</figcaption>
+</figure>
+
+A row takes effect as soon as it is complete; there is no Apply. stanpumpR then finds the clearance and volume that best balance the measurements against the model (a maximum a posteriori Bayesian estimate) and redraws the drug with them:
+
+- The **points** are the measurements, and the **updated curve** is the drug as the patient handles it. The model's own curve stays in the same panel, lighter, as *(population)*.
+- Below the sliders, the estimate is written out (clearance and volume as multiples of the model's), with each measurement beside the model's prediction and the updated one.
+- **PK variability** (25%) is how far the patient may be from the model; **Residual variability** (5%) is how far a measurement may be from the patient's own curve, which takes in the assay and errors in the recorded times. Raise the residual variability to trust each measurement less.
+- The curve, the time until threshold and Suggest Dosing use the updated drug: change a dose, and the prediction is the patient's.
+
+[Warfarin: updating the model from measured INRs](help:scenarios/warfarin-bayesian-inr) loads the run above. [Bayesian updating from measured concentrations](help:models/bayesian) explains what is estimated and its cautions.
 
 ## Try it
 

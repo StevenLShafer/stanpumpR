@@ -1,27 +1,25 @@
-# The dose table's Units column (createHOT()): a long unit wraps after its
-# route, in the cell and in its dropdown list, so the column fits the 450 px
-# Doses sidebar.  Drafted by Claude Code, 2026-10-27, at the request of
-# Steven L. Shafer.  The wrapping itself is browser code (inst/www/hot_funs.js,
-# inst/www/app.css); these check that the grid is wired to it.
+# The dose table's Units column: a long unit wraps after its route, so the
+# column fits the 450 px Doses sidebar.  Drafted by Claude Code, 2026-10-27,
+# at the request of Steven L. Shafer; moved to the dose grid (dose-grid.js)
+# when it replaced rhandsontable, 2026-11-06.  The wrapping itself is browser
+# code (unitWrapText() in inst/www/grid-funs.js, inst/www/grids.css), and the
+# browser suite checks it (tests/playwright, "a long unit wraps only after its
+# route"); these check that the grid is wired to it.
 
-test_that("the Units column wraps through the hot_funs.js renderer and hook", {
-  hot <- createHOT(doseTableInit, getDrugDefaultsGlobal())
-  unitsCol <- which(names(doseTableInit) == "Units")
-  expect_equal(as.character(hot$x$columns[[unitsCol]]$renderer), "renderUnitCell")
-  render <- paste(unlist(hot$jsHooks$render), collapse = "\n")
-  expect_true(grepl("hot.addHook('afterBeginEditing', hookWrapUnitList)", render, fixed = TRUE))
-  expect_true(grepl("hot.addHook('afterBeginEditing', hookSelectAllDrugText)", render, fixed = TRUE))
-
-  js <- readLines(system.file("www", "hot_funs.js", package = "stanpumpR"))
-  for (f in c("unitWrapText", "wrapUnitText", "renderUnitCell", "hookWrapUnitList")) {
-    expect_true(any(grepl(paste0("^function ", f, "\\("), js)), info = f)
-  }
+test_that("the Units column wraps through unitWrapText()", {
+  js <- readLines(system.file("www", "grid-funs.js", package = "stanpumpR"))
+  expect_true(any(grepl("^function unitWrapText\\(", js)))
+  grid <- readLines(system.file("www", "dose-grid.js", package = "stanpumpR"))
+  expect_true(any(grepl("unitWrapText(row[COLS.UNITS])", grid, fixed = TRUE)))
+  css <- readLines(system.file("www", "grids.css", package = "stanpumpR"))
+  expect_true(any(grepl("^\\.dose-grid-unit-text \\{", css)))
 })
 
-test_that("the columns fit the Doses sidebar with a vertical scrollbar", {
-  hot <- createHOT(doseTableInit, getDrugDefaultsGlobal())
-  # 450 px sidebar, less 16 px padding each side and a 15 px scrollbar:
-  # measured in the app, 2026-10-27
-  expect_lte(sum(unlist(hot$x$colWidths)), 450 - 2 * 16 - 15)
-  expect_equal(unlist(hot$x$colWidths), c(152, 45, 90, 100))
+test_that("the columns fit the Doses sidebar", {
+  # The four columns share the table's width by percentage (grids.css), and
+  # the table is the sidebar's width, 450 px
+  css <- paste(readLines(system.file("www", "grids.css", package = "stanpumpR")), collapse = "\n")
+  widths <- as.numeric(regmatches(css, gregexpr("(?<=th\\.dose-grid-col[0-3] \\{ width: )[0-9]+(?=%)", css, perl = TRUE))[[1]])
+  expect_length(widths, 4)
+  expect_equal(sum(widths), 100)
 })

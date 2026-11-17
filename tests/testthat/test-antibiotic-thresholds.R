@@ -13,7 +13,9 @@ test_that("each antibiotic's default threshold is free drug at its MIC", {
   tab <- antibioticMicTable()
   dd  <- getDrugDefaultsGlobal()
   expect_setequal(tab$Drug, c("cefazolin", "cefalexin", "ceftriaxone", "clindamycin",
-                              "gentamicin", "metronidazole", "vancomycin"))
+                              "gentamicin", "metronidazole", "tobramycin", "amikacin",
+                              "linezolid", "meropenem", "piperacillin", "vancomycin",
+                              "colistin"))
   for (i in seq_len(nrow(tab))) {
     d <- tab$Drug[i]
     # The CSV ships the table's threshold
@@ -60,9 +62,13 @@ test_that("the antibiotics, amiodarone, zolpidem, temazepam, ketorolac and napro
     if (PK$PK[[PK_EVENT_DEFAULT]]$ke0 == 0 && dd$endCe[dd$Drug == drug] > 0)
       timedOnPlasma <- c(timedOnPlasma, drug)
   }
+  # Theophylline (its 20 mcg/mL adverse-reaction level), lithium carbonate (the
+  # 1.2 mmol/L alert level) and tranexamic acid (10 mg/L, near-maximal
+  # inhibition of fibrinolysis) joined on 2026-11-12.
   expect_setequal(timedOnPlasma,
-                  c(antibioticMicTable()$Drug, "amiodarone", "zolpidem", "temazepam",
-                    "ketorolac", "naproxen"))
+                  c(antibioticMicTable()$Drug, "vancomycinKidneyTransplant", "amiodarone", "zolpidem", "temazepam",
+                    "ketorolac", "naproxen",
+                    "theophylline", "lithiumCarbonate", "tranexamicAcid"))
   expect_false(any(c("amiodarone", "zolpidem", "temazepam", "ketorolac", "naproxen") %in%
                      antibioticMicTable()$Drug))
   # Acute intravenous amiodarone (2026-10-08) deliberately has no default

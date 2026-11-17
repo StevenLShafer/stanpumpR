@@ -54,16 +54,82 @@ paperReviewDiscard <- function(store)
   invisible(gc(verbose = FALSE))
 }
 
+#' Does a session's store hold anything that Discard would remove?
+#'
+#' Everything it can hold is about the paper (the manuscript, a supplement,
+#' the manuscript in flight, the extraction, the review, its usage), so the
+#' test is whatever paperReviewDiscard() would remove.
+#' @param store the session's store
+#' @keywords internal
+paperReviewHolds <- function(store) length(ls(store, all.names = TRUE)) > 0
+
+#' The page the report's download serves when there is no report to give
+#' @param why one sentence
+#' @keywords internal
+paperReviewNoReportPage <- function(why)
+{
+  paste0("<!DOCTYPE html>\n", as.character(htmltools::tags$html(
+    htmltools::tags$head(htmltools::tags$meta(charset = "utf-8"),
+                         htmltools::tags$title("Single Paper Review")),
+    htmltools::tags$body(style = "font-family: sans-serif; margin: 24px;",
+                         htmltools::h3("Single Paper Review"), htmltools::p(why)))))
+}
+
+#' Is a path a file Shiny's own upload wrote?
+#'
+#' Shiny writes each upload to \code{tempdir()/<24 hex digits>/<n><ext>}
+#' (its FileUploadContext and FileUploadOperation, shiny 1.14).  The path
+#' comes from the browser's input, which a page can set to anything with
+#' \code{Shiny.setInputValue()}: a forged path reached
+#' \code{paperReviewReadUpload()}, which read the file and deleted it and its
+#' directory, from a page that had uploaded nothing and ticked no box
+#' (reproduced in a headless browser, 2026-11-14, checking Carbon's UI audit,
+#' whose F6G saw only that a malformed one stopped the observer).
+#'
+#' @param datapath the upload's path
+#' @returns TRUE for one existing file of that shape, with every symbolic link
+#'   and \code{..} resolved first
+#' @keywords internal
+paperReviewIsUploadPath <- function(datapath)
+{
+  if (!is.character(datapath) || length(datapath) != 1 || is.na(datapath) ||
+      !file.exists(datapath) || dir.exists(datapath))
+    return(FALSE)
+  # Both sides normalized alike: on Windows dirname() writes "/" where
+  # normalizePath() writes "\", and its paths ignore case, so the first
+  # version refused every upload there (CI, 2026-11-14)
+  normal <- function(p) normalizePath(p, winslash = "/", mustWork = TRUE)
+  path <- normal(datapath)
+  dir <- dirname(path)
+  parent <- normal(dirname(dir))
+  root <- normal(tempdir())
+  if (.Platform$OS.type == "windows") {
+    parent <- tolower(parent)
+    root <- tolower(root)
+  }
+  grepl("^[0-9]+([.][A-Za-z0-9]+)?$", basename(path)) &&
+    grepl("^[0-9a-f]{24}$", basename(dir)) &&
+    identical(parent, root)
+}
+
 #' Read an upload into memory and delete its temporary file
 #'
 #' Shiny writes each upload to a temporary directory of its own; the file is
-#' read and then deleted, with its directory when that is left empty.
+#' read and then deleted, with its directory when that is left empty.  A path
+#' that is not such an upload (\code{paperReviewIsUploadPath()}) is neither
+#' read nor deleted.
+#'
+#' A file larger than \code{maxBytes} is deleted unread, and none are
+#' returned, with its size as the attribute \code{oversize}.
 #'
 #' @param datapath the upload's path, from \code{input$<id>$datapath}
-#' @returns the file's bytes
+#' @param maxBytes the largest file that is read
+#' @returns the file's bytes, or none for a path that is not an upload
 #' @keywords internal
-paperReviewReadUpload <- function(datapath)
+paperReviewReadUpload <- function(datapath, maxBytes = Inf)
 {
+  if (!paperReviewIsUploadPath(datapath)) return(raw(0))
+  datapath <- normalizePath(datapath, mustWork = TRUE)
   on.exit({
     unlink(datapath, force = TRUE)
     dir <- dirname(datapath)
@@ -74,7 +140,25 @@ paperReviewReadUpload <- function(datapath)
   }, add = TRUE)
   size <- file.info(datapath)$size
   if (is.na(size)) return(raw(0))
+  if (size > maxBytes) return(structure(raw(0), oversize = size))
   readBin(datapath, "raw", size)
+}
+
+# A file's size as people read it: "30 kB", not "0.0 MB" (Devin's stress test).
+paperReviewSize <- function(bytes)
+  if (bytes < 1024^2) paste(max(1, round(bytes / 1024)), "kB") else
+    paste(format(round(bytes / 1024^2, 1), nsmall = 1), "MB")
+
+# The tokens a review used, which set its cost: " (12,345 tokens read, 6,789
+# written)", or "" when the reply did not say.
+paperReviewUsageText <- function(usage)
+{
+  n <- function(x) suppressWarnings(as.numeric(x %or% NA))
+  read <- sum(n(usage$input_tokens), n(usage$cache_read_input_tokens), n(usage$cache_creation_input_tokens),
+              na.rm = TRUE)
+  written <- n(usage$output_tokens)
+  if (!is.finite(written) || read == 0) return("")
+  paste0(" (", format(read, big.mark = ","), " tokens read, ", format(written, big.mark = ","), " written)")
 }
 
 #' Is this a PDF?
@@ -112,9 +196,35 @@ paperReviewHeader <- function(ns = shiny::NS(NULL))
     shinyjs::hidden(htmltools::div(
       id = ns("reviewBusy"), class = "alert alert-info", role = "status",
       style = "position: fixed; top: 64px; left: 50%; transform: translateX(-50%); z-index: 2000; box-shadow: 0 2px 8px rgba(0,0,0,0.2);",
-      htmltools::strong("Claude is reading the paper."),
-      " This takes a few minutes, and the app does not respond until it finishes.")))
+      htmltools::strong(id = ns("reviewBusyTitle"), "Claude is reading the paper."),
+      " This usually takes 2 to 7 minutes, depending on the paper, and stops at 20. Keep this page open:",
+      " nothing is kept on the server, so closing it loses the review. The rest of stanpumpR can be used meanwhile.",
+      # After PAPER_REVIEW_LATE_SEC, the choice of a quick review instead.
+      shinyjs::hidden(htmltools::div(id = ns("reviewLate"), style = "margin-top: 8px;",
+        htmltools::strong("This is taking longer than usual."),
+        " You can keep waiting, or stop and run a quick review: the same paper read again at a lower",
+        " effort, usually in 1 to 4 minutes, which may leave out secondary models and some per-patient detail.",
+        htmltools::div(style = "margin-top: 6px;",
+          shiny::actionButton(ns("keepWaiting"), "Keep waiting", class = "btn-sm btn-secondary"),
+          shiny::actionButton(ns("quickReview"), "Stop and run a quick review",
+                              class = "btn-sm btn-primary", style = "margin-left: 6px;")))))))
 }
+
+# Choosing a file in either upload field tells the server at once, before
+# the file is uploaded, so that what that field held before is dropped then
+# (`<id>Chosen`; paperReviewServer()).  The field shows the new file from
+# that moment, and Review must never send one it no longer shows, even when
+# Shiny refuses the new file before the app hears of it (over
+# PAPER_REVIEW_MAX_UPLOAD_BYTES), which left the earlier manuscript held and
+# Review sending it (Carbon's fourth UI audit, 2026-11-15, H5).  Only that a
+# file was chosen is sent, never its name.  A delegated jQuery handler, so it
+# also sees the change Shiny triggers for a file dropped on the field.
+paperReviewChosenScript <- function(ns = shiny::NS(NULL))
+  htmltools::tags$script(htmltools::HTML(sprintf(paste0(
+    "jQuery(document).on('change', '#%s, #%s', function() {",
+    " if (this.files && this.files.length > 0 && window.Shiny && Shiny.setInputValue)",
+    " Shiny.setInputValue(this.id + 'Chosen', Date.now(), {priority: 'event'}); });"),
+    ns("manuscript"), ns("supplement"))))
 
 # The review's three tabs: Review, Simulator, Privacy and help.
 paperReviewPanels <- function(ns = shiny::NS(NULL))
@@ -126,18 +236,25 @@ paperReviewPanels <- function(ns = shiny::NS(NULL))
           # The confirmation comes first; until it is ticked the upload and
           # Review controls are greyed out (Shafer: unticked, the old order
           # let a paper be chosen and then refused, which confused).
+          # Said before anything is uploaded when the server has no key
+          # (Devin's stress test, 2026-11-08: the reason came only after a
+          # paper had been chosen and the box ticked).
+          shiny::uiOutput(ns("keyNotice")),
           shiny::checkboxInput(ns("consent"), paste(
             "I may share this paper with Anthropic, as the Privacy tab describes,",
             "to have it reviewed."), FALSE),
           shiny::fileInput(ns("manuscript"), "Manuscript (PDF)", accept = ".pdf"),
           shiny::fileInput(ns("supplement"), "Supplement (PDF, optional)", accept = ".pdf"),
+          paperReviewChosenScript(ns),
           shiny::actionButton(ns("review"), "Review the paper", class = "btn-primary"),
           shiny::hr(),
           shiny::actionButton(ns("example"), "Try the example (nothing is sent)"),
           shiny::hr(),
           shiny::actionButton(ns("discard"), "Discard the paper now", class = "btn-danger"),
           shiny::uiOutput(ns("downloadUI")),
-          shiny::div(style = "margin-top: 12px; font-size: 0.85em;", shiny::textOutput(ns("status")))
+          shiny::div(style = "margin-top: 12px; font-size: 0.85em;", shiny::textOutput(ns("status"))),
+          # The note the countdown's asterisk links to (Shafer, 2026-11-17).
+          shiny::uiOutput(ns("sharedNote"))
         ),
         shiny::uiOutput(ns("report"))
       )),
@@ -160,7 +277,7 @@ paperReviewPanels <- function(ns = shiny::NS(NULL))
         shiny::uiOutput(ns("simulatorNote")),
         shiny::plotOutput(ns("simPlot"), height = "460px"),
         shiny::h5("Dose table"),
-        rhandsontable::rHandsontableOutput(ns("doses")),
+        shiny::uiOutput(ns("dosesUI")),
         shiny::tableOutput(ns("simParameters"))
       )),
     bslib::nav_panel("Privacy and help", value = "help", paperReviewHelpHtml()))
@@ -198,6 +315,9 @@ paperReviewNavPanel <- function(id = PAPER_REVIEW_MODULE_ID)
 #' The server of the Single Paper Review tab
 #' @param id the module's namespace
 #' @keywords internal
+# The time, through one function the tests can replace.
+paperReviewNow <- function() Sys.time()
+
 paperReviewModuleServer <- function(id = PAPER_REVIEW_MODULE_ID)
   shiny::moduleServer(id, paperReviewServer)
 
@@ -227,74 +347,380 @@ paperReviewServer <- function(input, output, session)
   # disabled until there is one and the box is ticked: the first real test
   # pressed it unticked and got only a line of status text.
   hasPdf <- shiny::reactiveVal(FALSE)
+  # Does the session hold anything about a paper?  Drives Discard, which
+  # followed hasPdf() and the review: a supplement uploaded alone, or an
+  # extraction whose review could not be computed, stayed in memory with
+  # Discard disabled until the page closed (Carbon's third UI audit,
+  # 2026-11-15, H9).  The store is an environment, which no reactive sees
+  # change, so every change to it calls stored().
+  storeChanged <- shiny::reactiveVal(0)
+  stored <- function() storeChanged(shiny::isolate(storeChanged()) + 1)
+  holdsPaper <- shiny::reactive({ storeChanged(); version(); paperReviewHolds(store) })
   session$onSessionEnded(function() paperReviewDiscard(store))
+  # Can this server review a paper at all?  With the operator's key
+  # (Shafer's, the default for now: R/paper-review-usage.R counts its uses)
+  # or a key the user enters for this session; without either only the
+  # example runs, so nothing may be uploaded for nothing.
+  serverKeyed <- !is.null(paperReviewApiKey(NULL))
+  # The user's own key, held only in this session's input: never stored,
+  # logged or bookmarked (app_server() keeps every paperReview- input out of
+  # the URL; the review app has bookmarking off).  With the operator's key
+  # on the server it is used only while "Supply my own key" is ticked, which
+  # shows its field in place of the countdown of the shared key's reviews
+  # left this month (Shafer, 2026-11-17).
+  useOwn <- shiny::reactive(!serverKeyed || isTRUE(input$ownKeyUse))
+  ownKey <- shiny::reactive(if (useOwn()) paperReviewOwnKey(input$ownKey))
+  # The shared key's reviews left this month: NULL while counting, a list
+  # from paperReviewSharedKeyRemaining(), or list(error = TRUE).
+  sharedLeft <- shiny::reactiveVal(NULL)
+  sharedLimit <- paperReviewSharedKeyLimit()
+  countShared <- function() {
+    if (!serverKeyed) return(invisible(NULL))
+    promises::then(paperReviewSharedKeyRemaining(),
+      onFulfilled = function(x) sharedLeft(x),
+      onRejected = function(e) sharedLeft(list(error = TRUE)))
+    invisible(NULL)
+  }
+  # Counted when the countdown is on screen, not for every session of
+  # stanpumpR (a count logs in to the mail account), and again after each
+  # review.
+  countdownHidden <- paste0("output_", session$ns("sharedCount"), "_hidden")
   shiny::observe({
-    consent <- isTRUE(input$consent)
+    if (isFALSE(session$clientData[[countdownHidden]])) shiny::isolate(countShared())
+  })
+  keyed <- shiny::reactive(
+    if (useOwn()) !is.null(ownKey()) else !isTRUE(sharedLeft()$remaining == 0))
+  ownKeyField <- function()
+    htmltools::tagList(
+      shiny::passwordInput(session$ns("ownKey"), NULL, placeholder = "sk-ant-..."),
+      htmltools::p(class = "text-muted", style = "margin-bottom: 0;",
+        "Your key is held only in this page's session, sent only to Anthropic with your review ",
+        "(which your Anthropic account then pays for), and never saved or logged."),
+      shiny::uiOutput(session$ns("ownKeyNote")))
+  output$keyNotice <- shiny::renderUI({
+    if (!serverKeyed) return(htmltools::tagList(
+      htmltools::div(
+        class = "alert alert-warning", role = "status", style = "font-size: 0.9em; padding: 8px 10px;",
+        htmltools::strong("Reviews on this server need your own Anthropic API key. "),
+        "Enter it below to turn uploading on; the example still works without one, and sends nothing."),
+      htmltools::tags$details(open = NA, style = "font-size: 0.9em; margin-bottom: 10px;",
+        htmltools::tags$summary("Your Anthropic API key"), ownKeyField())))
+    htmltools::div(style = "font-size: 0.9em; margin-bottom: 6px;",
+      shiny::conditionalPanel("!input.ownKeyUse", ns = session$ns,
+        shiny::uiOutput(session$ns("sharedCount"))),
+      shiny::checkboxInput(session$ns("ownKeyUse"), PAPER_REVIEW_OWN_KEY_LABEL, FALSE),
+      shiny::conditionalPanel("input.ownKeyUse", ns = session$ns,
+        htmltools::div(style = "margin-bottom: 10px;", ownKeyField())))
+  })
+  output$sharedCount <- shiny::renderUI({
+    x <- sharedLeft()
+    star <- htmltools::tags$a(href = paste0("#", session$ns("sharedNote")), "*",
+                              title = "About these reviews", style = "text-decoration: none;")
+    line <- function(...) htmltools::p(style = "margin: 0 0 4px;", ...)
+    if (is.null(x)) return(line(class = "text-muted", "Counting this month's reviews...", star))
+    if (isTRUE(x$error))
+      return(line(class = "text-muted", "This month's reviews could not be counted just now.", star))
+    if (x$remaining == 0)
+      return(htmltools::div(class = "alert alert-warning", role = "status",
+        style = "padding: 6px 10px; margin-bottom: 4px;",
+        "This month's ", x$limit, " reviews with stanpumpR's key have been used. They renew on ",
+        paperReviewDayMonth(x$renews), "; to review now, tick \"", PAPER_REVIEW_OWN_KEY_LABEL, "\".", star))
+    line("Reviews left this month: ", htmltools::strong(x$remaining), " of ", x$limit, star)
+  })
+  output$sharedNote <- shiny::renderUI({
+    if (!serverKeyed) return(NULL)
+    htmltools::p(class = "text-muted", style = "font-size: 0.8em; margin-top: 16px;",
+      paste0("* Dr. Shafer is providing ", sharedLimit, " Single Paper Reviews per month through ",
+             "stanpumpR. However, if someone wants to upload many papers, supplying their own ",
+             "Anthropic API key would be welcome."))
+  })
+  output$ownKeyNote <- shiny::renderUI({
+    typed <- asScalarString(input$ownKey)
+    if (!nzchar(trimws(typed))) return(NULL)
+    if (is.null(paperReviewOwnKey(typed)))
+      htmltools::p(class = "text-danger", style = "margin: 4px 0 0;",
+                   "That is not an Anthropic API key (they begin sk-ant-), so it is not used.")
+    else htmltools::p(class = "text-success", style = "margin: 4px 0 0;", "Your key will be used.")
+  })
+  # The review runs in a background process (paperReviewExtractAsync()), so
+  # this session and every other on the worker stay live while it runs.
+  # A review with the operator's key is first admitted against its limit
+  # (paperReviewSharedKeyAdmit(), R/paper-review-usage.R), unless its place
+  # was reserved already (a quick review's).  The function that stops its
+  # background process is kept, for a quick review.
+  running <- new.env(parent = emptyenv())
+  # Counts the reviews sent, so that a quick review's place that comes back
+  # late is not applied to a later review (CodeRabbit, PR #720).
+  running$generation <- 0L
+  reviewTask <- shiny::ExtendedTask$new(function(pdf, supplement, key, inferenceGeo, shared, effort, admitted) {
+    running$stop <- NULL
+    send <- function(...) paperReviewTrackUse(
+      paperReviewExtractAsync(pdf, supplement, key = key, inferenceGeo = inferenceGeo, effort = effort,
+                              onJob = function(stop) running$stop <- stop),
+      shared = shared)
+    if (!isTRUE(shared) || isTRUE(admitted)) return(send())
+    promises::then(paperReviewSharedKeyAdmit(), send)
+  })
+  reviewing <- shiny::reactive(identical(reviewTask$status(), "running"))
+  # The review now running: when it started, whether it is the quick one,
+  # whether the user has been offered the quick one, and whether they took it.
+  reviewStarted <- shiny::reactiveVal(NULL)
+  quick <- shiny::reactiveVal(FALSE)
+  lateOffered <- shiny::reactiveVal(FALSE)
+  stopForQuick <- shiny::reactiveVal(FALSE)
+  # A quick review's place within the shared key's limit, reserved before
+  # the full review is stopped.
+  preAdmitted <- shiny::reactiveVal(FALSE)
+  # A quick review's place being asked for (a second click waits for it).
+  admitting <- shiny::reactiveVal(FALSE)
+  releaseReserved <- function() if (isTRUE(preAdmitted())) {
+    preAdmitted(FALSE)
+    paperReviewSharedKeyRelease()
+  }
+  # The review's key and settings, kept with the manuscript (store$inFlight)
+  # so that the quick review can be sent without asking again.
+  sendReview <- function(effort, admitted = FALSE) {
+    running$generation <- running$generation + 1L
+    f <- store$inFlight
+    reviewStarted(paperReviewNow())
+    lateOffered(FALSE)
+    quick(!identical(effort, PAPER_REVIEW_EFFORT))
+    # A review whose place is already reserved keeps the operator's key even
+    # if another session has since reached the limit (CodeRabbit, PR #720).
+    reviewTask$invoke(f$pdf, f$supplement, paperReviewApiKey(f$own, admitted = admitted),
+                      paperReviewConfig("paper_review_inference_geo"),
+                      is.null(f$own), effort, admitted)
+  }
+  # Is the running review still wanted?  Discarding while Claude reads the
+  # paper means its answer is dropped when it comes.
+  awaited <- shiny::reactiveVal(FALSE)
+  shiny::observe({
+    consent <- isTRUE(input$consent) && keyed()
+    shinyjs::toggleState("consent", condition = keyed())
     shinyjs::toggleState("manuscript", condition = consent)
     shinyjs::toggleState("supplement", condition = consent)
-    shinyjs::toggleState("review", condition = hasPdf() && consent)
+    shinyjs::toggleState("review", condition = hasPdf() && consent && !reviewing())
     # Discard is live only when there is something to discard.
-    shinyjs::toggleState("discard", condition = hasPdf() || !is.null(review()))
+    shinyjs::toggleState("discard", condition = holdsPaper() || reviewing())
   })
 
   receive <- function(file, slot, label) {
     if (is.null(file)) return()
-    bytes <- paperReviewReadUpload(file$datapath)
+    # One upload: Shiny's is a data frame of one row, and a value that is not
+    # (a string, several paths) stopped this observer and ended the session
+    # (Carbon's UI audit, 2026-11-14, F6G).  Its path is checked where it is
+    # read (paperReviewIsUploadPath()).
+    datapath <- if (is.list(file)) file$datapath else NULL
+    if (!is.character(datapath) || length(datapath) != 1) return()
+    # A new upload replaces what its field held, whatever it turns out to
+    # be: the field shows the new file, and a replacement that was not a PDF
+    # left the earlier one held and sent by Review (Carbon's fourth UI
+    # audit, 2026-11-15, H5).
+    # (In a browser the field's change has dropped it already, chosen().)
+    replaced <- dropSlot(slot) || isTRUE(droppedOnChoice[[slot]])
+    droppedOnChoice[[slot]] <<- FALSE
+    before <- if (replaced) paste0(", as was the ", tolower(sub("^The ", "", label)), " held before it") else ""
+    # Refused here if the request could not carry it: alone over the API's
+    # 20 MB, or over it with the file the other field holds.  Found at
+    # Review, it discarded both files, a valid supplement included.
+    other <- if (slot == "pdf") "supplement" else "pdf"
+    otherBytes <- if (exists(other, envir = store)) length(get(other, envir = store)) else 0
+    bytes <- paperReviewReadUpload(datapath, maxBytes = PAPER_REVIEW_MAX_PDF_BYTES - otherBytes)
+    oversize <- attr(bytes, "oversize")
+    if (!is.null(oversize)) {
+      status(paste0(label, " (", paperReviewSize(oversize), ") was discarded", before, ": ",
+        if (otherBytes > 0)
+          paste0("with the ", if (other == "pdf") "manuscript" else "supplement", " held (",
+                 paperReviewSize(otherBytes), ") the files come to more than the 20 MB a review can send.")
+        else "a review can send at most 20 MB."))
+      return()
+    }
     if (!paperReviewIsPdf(bytes)) {
-      status(paste(label, "is not a PDF and was discarded."))
+      status(paste0(label, " is not a PDF and was discarded", before, "."))
       return()
     }
     assign(slot, bytes, envir = store)
+    stored()
     if (slot == "pdf") hasPdf(TRUE)
-    status(paste0(label, " received (", format(round(length(bytes) / 1024^2, 1), nsmall = 1),
-                  " MB), held in this session's memory only."))
+    status(paste0(label, " received (", paperReviewSize(length(bytes)),
+                  "), held in this session's memory only."))
+  }
+  # Empty a field's slot; TRUE when it held a file.
+  dropSlot <- function(slot) {
+    held <- exists(slot, envir = store)
+    if (held) {
+      rm(list = slot, envir = store)
+      stored()
+    }
+    if (slot == "pdf") hasPdf(FALSE)
+    held
   }
   shiny::observeEvent(input$manuscript, receive(input$manuscript, "pdf", "The manuscript"))
   shiny::observeEvent(input$supplement, receive(input$supplement, "supplement", "The supplement"))
+  # A file chosen in a field, before it is uploaded (paperReviewChosenScript()).
+  # What it dropped is remembered, so that receive() can say so of a file
+  # it then refuses.
+  droppedOnChoice <- c(pdf = FALSE, supplement = FALSE)
+  chosen <- function(slot, label) {
+    if (!dropSlot(slot)) return()
+    droppedOnChoice[[slot]] <<- TRUE
+    status(paste0("Another ", label, " was chosen, so the one held before has been discarded."))
+  }
+  shiny::observeEvent(input$manuscriptChosen, chosen("pdf", "manuscript"))
+  shiny::observeEvent(input$supplementChosen, chosen("supplement", "supplement"))
 
-  runReview <- function(extraction, example = FALSE) {
+  runReview <- function(extraction, example = FALSE, quick = FALSE) {
     review <- tryCatch(paperReviewQuietly(function() paperReviewRun(extraction)),
                        error = function(e) NULL)
+    if (!is.null(review)) review$quick <- quick
     if (is.null(review)) {
       status("The extraction came back but the review could not be computed from it.")
       assign("extraction", extraction, envir = store)
       bump()
-      return()
+      return(invisible(FALSE))
     }
     assign("extraction", extraction, envir = store)
     assign("review", review, envir = store)
     assign("example", example, envir = store)
     bump()
+    invisible(TRUE)
   }
 
   shiny::observeEvent(input$review, {
+    if (reviewing()) return(status("A review is already running."))
     if (!exists("pdf", envir = store)) return(status("Upload a manuscript first."))
     if (!isTRUE(input$consent)) return(status("Tick the box to confirm the manuscript may be sent."))
-    key <- paperReviewApiKey(if (exists("sessionKey", envir = store)) store$sessionKey else NULL)
-    if (is.null(key)) return(status("No Anthropic API key is configured on this server."))
-    # Custom messages go to the browser at once, before the call blocks.
+    # receive() keeps the two within the limit; refused here, not at the
+    # request, which would discard them both.
+    if (length(store$pdf) + length(get0("supplement", envir = store)) > PAPER_REVIEW_MAX_PDF_BYTES)
+      return(status("The files come to more than the 20 MB a review can send."))
+    own <- ownKey()
+    # Ticked with no key in the field, the review is not sent with the
+    # operator's key instead.
+    if (serverKeyed && useOwn() && is.null(own))
+      return(status(paste0("Enter your own Anthropic API key, or untick \"", PAPER_REVIEW_OWN_KEY_LABEL,
+                           "\" to use stanpumpR's.")))
+    key <- paperReviewApiKey(own)
+    if (is.null(key)) return(status(if (serverKeyed)
+      paste0("stanpumpR's own key cannot be used just now; tick \"", PAPER_REVIEW_OWN_KEY_LABEL,
+             "\" and enter yours.")
+      else "No Anthropic API key is configured on this server; enter your own."))
     shinyjs::show("reviewBusy")
+    shinyjs::hide("reviewLate")
+    shinyjs::html("reviewBusyTitle", "Claude is reading the paper.")
     shinyjs::disable("review")
-    on.exit(shinyjs::hide("reviewBusy"), add = TRUE)
-    result <- tryCatch(
-      paperReviewExtract(store$pdf, if (exists("supplement", envir = store)) store$supplement,
-                         key = key,
-                         inferenceGeo = paperReviewConfig("paper_review_inference_geo")),
+    status("Claude is reading the paper.")
+    awaited(TRUE)
+    rm(key)
+    # The manuscript stays in the session's memory, out of the upload slot,
+    # only until Claude's answer returns, so that a quick review can be sent
+    # if this one is slow; then it is dropped, whatever the outcome (and at
+    # Discard or the session's end before that).  The key is the user's own
+    # or the operator's, resolved again when sent.
+    store$inFlight <- list(pdf = store$pdf,
+                           supplement = if (exists("supplement", envir = store)) store$supplement,
+                           own = own)
+    suppressWarnings(rm(list = intersect(c("pdf", "supplement"), ls(store)), envir = store))
+    stored()
+    hasPdf(FALSE)
+    sendReview(PAPER_REVIEW_EFFORT)
+  })
+
+  # A full review still running after PAPER_REVIEW_LATE_SEC is offered a
+  # quick one, once.
+  shiny::observe({
+    if (!reviewing() || quick() || lateOffered() || is.null(reviewStarted())) return()
+    left <- PAPER_REVIEW_LATE_SEC - as.numeric(difftime(paperReviewNow(), reviewStarted(), units = "secs"))
+    if (left > 0) return(shiny::invalidateLater(ceiling(left * 1000)))
+    lateOffered(TRUE)
+    shinyjs::show("reviewLate")
+  })
+  shiny::observeEvent(input$keepWaiting, shinyjs::hide("reviewLate"))
+  shiny::observeEvent(input$quickReview, {
+    shinyjs::hide("reviewLate")
+    if (!reviewing() || quick() || stopForQuick() || admitting() || !exists("inFlight", envir = store)) return()
+    # The stopped review is billed for what it had read, and counted.
+    # A stop that cannot be confirmed leaves the full review running and
+    # sends no quick one, rather than pay for two (CodeRabbit, PR #720).
+    stopFull <- function() {
+      stopForQuick(TRUE)
+      status("Stopping the full review and starting a quick one.")
+      if (is.function(running$stop) && isTRUE(running$stop())) return(invisible(TRUE))
+      stopForQuick(FALSE)
+      releaseReserved()
+      status("The full review could not be stopped, so it goes on; no quick review was sent.")
+      invisible(FALSE)
+    }
+    if (!is.null(store$inFlight$own)) return(stopFull())
+    # With stanpumpR's own key, the quick review's place within the limit is
+    # reserved first; with none left, the full review goes on (CodeRabbit,
+    # PR #720).
+    status("Checking that a quick review can be sent.")
+    admitting(TRUE)
+    askedFor <- running$generation
+    promises::then(paperReviewSharedKeyAdmit(),
+      onFulfilled = function(...) {
+        admitting(FALSE)
+        # A place that comes back after the review has moved on is given back.
+        if (running$generation != askedFor || !shiny::isolate(reviewing()) || shiny::isolate(quick()) ||
+            shiny::isolate(stopForQuick()) || !exists("inFlight", envir = store))
+          return(paperReviewSharedKeyRelease())
+        preAdmitted(TRUE)
+        stopFull()
+      },
+      onRejected = function(e) {
+        admitting(FALSE)
+        status(paste("A quick review cannot be sent:", conditionMessage(e), "The full review goes on."))
+      })
+    NULL
+  })
+
+  shiny::observeEvent(reviewTask$status(), {
+    if (reviewTask$status() %in% c("initial", "running")) return()
+    # The full review stopped for a quick one: send the quick one now.
+    if (isTRUE(stopForQuick())) {
+      stopForQuick(FALSE)
+      # (A full review that finished before it could be stopped is kept.)
+      if (identical(reviewTask$status(), "error") && awaited() && exists("inFlight", envir = store)) {
+        shinyjs::html("reviewBusyTitle", "Claude is reading the paper again, for a quick review.")
+        status("Claude is reading the paper again, for a quick review.")
+        admitted <- preAdmitted()
+        preAdmitted(FALSE)
+        sendReview(PAPER_REVIEW_QUICK_EFFORT, admitted = admitted)
+        return()
+      }
+    }
+    releaseReserved()
+    shinyjs::hide("reviewBusy")
+    shinyjs::hide("reviewLate")
+    running$stop <- NULL
+    # The countdown, with this review counted (or given back).
+    countShared()
+    # Whose key was sent, for the message if the API refuses it.
+    sentOwn <- exists("inFlight", envir = store) && !is.null(store$inFlight$own)
+    suppressWarnings(rm(list = intersect("inFlight", ls(store)), envir = store))
+    stored()
+    if (!awaited()) return()
+    awaited(FALSE)
+    result <- tryCatch(reviewTask$result(),
       paper_review_error = function(e) e,
       error = function(e) paperReviewError("unexpected", "The review failed unexpectedly."))
-    rm(key)
-    # The manuscript is not needed again: drop it whatever the outcome.
-    suppressWarnings(rm(list = intersect(c("pdf", "supplement"), ls(store)), envir = store))
-    hasPdf(FALSE)
     if (inherits(result, "paper_review_error")) {
-      status(paste(conditionMessage(result), "The manuscript has been discarded; upload it again to retry."))
+      advice <- paperReviewKeyAdvice(result$code, sentOwn)
+      status(paste(conditionMessage(result), if (nzchar(advice)) advice,
+                   "The manuscript has been discarded; upload it again to retry."))
       return()
     }
     assign("usage", result$usage, envir = store)
-    runReview(result$extraction)
-    status(paste0("Reviewed. The manuscript itself has been discarded; the extraction is held in ",
-                  "this session's memory until you discard it or close the page."))
-  })
+    # A review that could not be computed keeps runReview()'s word for it,
+    # which this line wrote over with "Reviewed" (found reproducing Carbon's
+    # third UI audit, 2026-11-15, H9)
+    if (!runReview(result$extraction, quick = quick())) return()
+    status(paste0(if (quick()) "A quick review, done" else "Reviewed", paperReviewUsageText(result$usage),
+                  ". The manuscript itself has been ",
+                  "discarded; the extraction is held in this session's memory until you discard it ",
+                  "or close the page."))
+  }, ignoreInit = TRUE)
 
   shiny::observeEvent(input$example, {
     runReview(paperReviewExample(), example = TRUE)
@@ -303,6 +729,13 @@ paperReviewServer <- function(input, output, session)
 
   shiny::observeEvent(input$discard, {
     paperReviewDiscard(store)
+    droppedOnChoice[] <<- FALSE
+    awaited(FALSE)
+    stopForQuick(FALSE)
+    releaseReserved()
+    running$stop <- NULL
+    shinyjs::hide("reviewBusy")
+    shinyjs::hide("reviewLate")
     hasPdf(FALSE)
     bump()
     status("Discarded. Nothing about the paper remains in this session.")
@@ -330,13 +763,48 @@ paperReviewServer <- function(input, output, session)
 
   output$downloadUI <- shiny::renderUI({
     if (is.null(review()) || !isTRUE(paperReviewConfig("paper_review_download", TRUE))) return(NULL)
-    shiny::downloadButton(session$ns("download"), "Download the report (HTML)", style = "margin-top: 12px;")
+    htmltools::div(style = "margin-top: 12px;",
+      shiny::downloadButton(session$ns("download"), "Download the report (HTML)"),
+      shiny::downloadButton(session$ns("downloadWord"), "Download the report (Word)",
+                            style = "margin-top: 6px;"))
   })
   # Shiny writes the page to a temporary file it owns and deletes once served.
+  # The link can be followed after Discard (the button goes, a link already
+  # taken does not) or for a report that cannot be written; each gets a page
+  # that says so.  After Discard it served paperReviewReportPage(NULL), which
+  # says "Claude found no pharmacokinetic model in this document" of a paper
+  # never read, and a report that failed served the browser an error
+  # (Carbon's third UI audit, 2026-11-15, L1).
   output$download <- shiny::downloadHandler(
     filename = "single-paper-review.html",
-    content = function(file) writeLines(paperReviewReportPage(review()), file, useBytes = TRUE),
+    content = function(file) {
+      r <- review()
+      page <- if (is.null(r)) NULL
+              else tryCatch(paperReviewSilently(paperReviewReportPage(r)), error = function(e) NULL)
+      if (is.null(page)) page <- paperReviewNoReportPage(
+        if (is.null(r)) "There is no review to download: it was discarded, or none has been made."
+        else "The report could not be written.")
+      writeLines(page, file, useBytes = TRUE)
+    },
     contentType = "text/html")
+  # The same report as a Word document (Shafer, 2026-11-16), built from the
+  # same tags (R/paper-review-word.R), which leaves nothing in tempdir() but
+  # the file Shiny serves and deletes.  As above, a link followed after
+  # Discard, or a report that cannot be written, gets a document that says so.
+  output$downloadWord <- shiny::downloadHandler(
+    filename = "single-paper-review.docx",
+    content = function(file) {
+      r <- review()
+      written <- !is.null(r) &&
+        isTRUE(tryCatch({
+          paperReviewSilently(paperReviewReportDocx(r, file))
+          TRUE
+        }, error = function(e) FALSE))
+      if (!written) paperReviewNoReportDocx(
+        if (is.null(r)) "There is no review to download: it was discarded, or none has been made."
+        else "The report could not be written.", file)
+    },
+    contentType = PAPER_REVIEW_DOCX_TYPE)
 
   # --- Simulator ---------------------------------------------------------------
 
@@ -390,12 +858,27 @@ paperReviewServer <- function(input, output, session)
 
   # The user picked another unit: convert what is shown.
   shiny::observeEvent(input$timeUnit, {
+    # One of the offered units: another was stored as the table's unit, and
+    # every later conversion read it as no unit (Carbon's UI audit,
+    # 2026-11-14, F6G)
+    if (!isTRUE(asScalarString(input$timeUnit) %in% PAPER_REVIEW_SIM_TIME_UNITS)) return()
     if (identical(input$timeUnit, tableUnit())) return()
-    current <- dosesNow()
     # A Max time that cannot be used (blank, say) becomes the default rather
     # than following the table into the new unit as NA.
     maximumMinutes <- paperReviewMaxTimeMinutes(input$maximum, unitMinutes())
     if (is.na(maximumMinutes)) maximumMinutes <- PAPER_REVIEW_MAX_TIME_DEFAULT
+    # A table cut to fit (more rows than the grid holds, which only a forged
+    # value can send) is not stored cut: the unit stays as it was and the
+    # table is left to be refused by the simulation (CodeRabbit, PR #691)
+    if (!is.null(input$doses) &&
+        tableGridTruncated(tableGridRead(input$doses, paperReviewDoseColumns("", character(0))))) {
+      shiny::showNotification(sprintf("The dose table holds at most %d rows; the time unit was not changed.",
+                                      MAX_DOSE_ROWS - 1L), type = "warning")
+      setUnit(tableUnit(), maximumMinutes)
+      return()
+    }
+    current <- dosesNow()
+    attr(current, "problem") <- NULL
     doseTable(current)
     setUnit(input$timeUnit, maximumMinutes)
   }, ignoreInit = TRUE)
@@ -406,36 +889,95 @@ paperReviewServer <- function(input, output, session)
     if (is.null(regimen)) return()
     d <- paperReviewRegimenDoses(regimen)$doses
     if (nrow(d) == 0) return()
+    # The grid holds MAX_DOSE_ROWS - 1 rows; a longer regimen (an hourly
+    # bolus for 500 hours) would be cut by the browser and then refused, or
+    # cut without a word by a change of time unit, so it is refused here.
+    if (nrow(d) > MAX_DOSE_ROWS - 1L) {
+      shiny::showNotification(sprintf(
+        "This regimen has %d doses; the dose table holds at most %d. Enter a shorter part of it by hand.",
+        nrow(d), MAX_DOSE_ROWS - 1L), type = "warning")
+      return()
+    }
     doseTable(d)
     # In the unit the paper uses for this regimen.
-    setUnit(paperReviewRegimenTimeUnit(r$extraction, regimen), max(PAPER_REVIEW_MAX_TIME_DEFAULT, ceiling(max(d$Time) * 2)))
+    # Twice the regimen, within the limit the Max time is held to: a regimen
+    # past day 182.5 set a Max time paperReviewMaxTimeMinutes() refused, and
+    # the plot asked for a value the app had chosen itself (the code review
+    # of PR #682, 2026-11-15)
+    setUnit(paperReviewRegimenTimeUnit(r$extraction, regimen),
+            min(PAPER_REVIEW_MAX_TIME_LIMIT, max(PAPER_REVIEW_MAX_TIME_DEFAULT, ceiling(max(d$Time) * 2))))
   })
 
-  output$doses <- rhandsontable::renderRHandsontable({
+  # The doses as text, read as R reads them (validateDose()): a numeric
+  # column parsed "1,000" as 1 and "1,5" as 1.5, and refused nothing where it
+  # was typed (docs/grid-replacement.md, step 3 of the migration order)
+  output$dosesUI <- shiny::renderUI({
     r <- currentReview()
     units <- if (is.null(r)) "mg" else r$drug$units
     d <- doseTable()
     d$Units <- as.character(d$Units)
     d$Time <- signif(d$Time / unitMinutes(), 6)
-    blank <- data.frame(Time = rep(NA_real_, 4), Dose = rep(NA_real_, 4), Units = rep(NA_character_, 4))
-    rhandsontable::hot_col(
-      rhandsontable::rhandsontable(rbind(d, blank), rowHeaders = NULL, stretchH = "all",
-                                   width = 520, height = 230,
-                                   colHeaders = c(paste0("Time (", unitName(), ")"), "Dose", "Units")),
-      "Units", type = "dropdown", source = units)
+    # Up to four blank rows to type into, never past the grid's limit, which
+    # would make tableGridRead() report the table as cut.
+    blankRows <- max(0L, min(4L, MAX_DOSE_ROWS - 1L - nrow(d)))
+    blank <- data.frame(Time = rep(NA_real_, blankRows), Dose = rep(NA_real_, blankRows),
+                        Units = rep(NA_character_, blankRows))
+    shiny::div(style = "max-width: 520px",
+      tableGridInput(session$ns("doses"), paperReviewDoseColumns(unitName(), units),
+                     rbind(d, blank), rowMenu = TRUE, height = 230, label = "Doses"))
   })
 
   dosesNow <- shiny::reactive({
     # Minutes, whatever the table shows.
     shown <- !is.null(input$doses)
-    d <- if (shown) rhandsontable::hot_to_r(input$doses) else doseTable()
+    d <- if (shown) tableGridRead(input$doses, paperReviewDoseColumns("", character(0))) else doseTable()
+    if (is.null(d)) d <- doseTable()
     names(d)[1:3] <- c("Time", "Dose", "Units")
+    # A row the grid would not have sent, from a browser that may send
+    # anything: a time or dose validateDose() refuses (past MAX_DOSE_VALUE,
+    # say), or a unit the paper's drug does not offer.  Read before, it was
+    # simulated without a word, an unoffered "mcg" or "g" as itself and
+    # anything else as mg (ChatGPT's fourth review, F01).  A row still
+    # being filled in, with a cell blank, is passed over as before.
+    problem <- NULL
+    # A table cut to fit was never one the grid sent (Gemini's production
+    # audit, 2026-11-08, finding 6)
+    if (shown && tableGridTruncated(d)) {
+      problem <- sprintf("The dose table holds at most %d rows.", MAX_DOSE_ROWS - 1L)
+    }
+    if (shown) {
+      r <- currentReview()
+      units <- if (is.null(r)) character(0) else as.character(r$drug$units)
+      filled <- nzchar(trimws(d$Time)) & nzchar(trimws(d$Dose)) & !is.na(d$Units) & nzchar(d$Units)
+      readable <- function(x) vapply(x, function(v) nzchar(validateDose(v)), logical(1), USE.NAMES = FALSE)
+      bad <- filled & !(readable(d$Time) & readable(d$Dose) & d$Units %in% units)
+      if (any(bad)) {
+        problem <- paste(c(problem, sprintf(paste0("Row %s cannot be simulated: enter a time and a dose from 0 to ",
+                                                   "1,000,000,000, and a unit from the list (%s)."),
+                                            paste(which(bad), collapse = ", "), paste(units, collapse = ", "))),
+                         collapse = " ")
+        d <- d[!bad, , drop = FALSE]
+      }
+      # Read as validateDose() reads them: "1,000" passed the check above and
+      # was then dropped by as.numeric() below without a word (the same audit)
+      # A blank is left blank: validateDose() reads it as 0, which put a row
+      # still being filled in (a dose and unit, no time) at time 0 (CodeRabbit)
+      fill <- function(x) vapply(x, function(v) {
+        if (isBlankEntry(v)) return(v)
+        r <- validateDose(v)
+        if (nzchar(r)) r else v
+      }, character(1), USE.NAMES = FALSE)
+      d$Time <- fill(d$Time)
+      d$Dose <- fill(d$Dose)
+    }
     d <- d[is.finite(suppressWarnings(as.numeric(d$Time))) &
              is.finite(suppressWarnings(as.numeric(d$Dose))) & !is.na(d$Units) & nzchar(d$Units), ,
            drop = FALSE]
     d$Time <- as.numeric(d$Time) * if (shown) unitMinutes() else 1
     d$Dose <- as.numeric(d$Dose)
-    d[order(d$Time), , drop = FALSE]
+    d <- d[order(d$Time), , drop = FALSE]
+    attr(d, "problem") <- problem
+    d
   })
 
   patient <- shiny::reactive(list(weight = input$weight, height = input$height,
@@ -449,15 +991,18 @@ paperReviewServer <- function(input, output, session)
       is_valid_number(p$weight, MIN_WEIGHT, MAX_WEIGHT) && is_valid_number(p$height, MIN_HEIGHT, MAX_HEIGHT) &&
         is_valid_number(p$age, MIN_AGE, MAX_AGE), "Enter a weight, height and age in range."))
     d <- dosesNow()
+    shiny::validate(shiny::need(is.null(attr(d, "problem")), attr(d, "problem")))
     shiny::validate(shiny::need(nrow(d) > 0 && any(d$Dose > 0), "Enter a dose."))
     drug <- paperReviewSilently(paperReviewDrug(r$extraction, p, r$identifiability$closed,
                                                 absorption = simAbsorption(), absorptions = r$absorptions))
     shiny::validate(shiny::need(drug$ok, paste(drug$problems, collapse = " ")))
     maximum <- paperReviewMaxTimeMinutes(input$maximum, unitMinutes())
+    # The limit in the unit shown, and in days where that is another unit
+    # ("365 days (365 days)" read twice in days)
     shiny::validate(shiny::need(!is.na(maximum), sprintf(
-      "Enter a Max time greater than 0 and no longer than %s %s (365 days).",
+      "Enter a Max time greater than 0 and no longer than %s %s%s.",
       format(signif(PAPER_REVIEW_MAX_TIME_LIMIT / unitMinutes(), 6), big.mark = ",", scientific = FALSE),
-      unitName())))
+      unitName(), if (unitMinutes() == MINS_PER_DAY) "" else " (365 days)")))
     maximum <- max(maximum, max(d$Time) + 1)
     # Run on far enough to cover an overlaid figure's points.
     fig <- Filter(function(f) identical(f$id, input$overlay), r$figures)
@@ -475,7 +1020,7 @@ paperReviewServer <- function(input, output, session)
     if (is.null(r)) return(NULL)
     usable <- Filter(function(a) isTRUE(a$ok), r$absorptions %or% list())
     if (length(usable) == 0) return(NULL)
-    own <- usable[[input$regimen %or% ""]]
+    own <- usable[[asScalarString(input$regimen)]]
     if (is.null(own)) usable[[1]] else own
   })
 
@@ -519,7 +1064,7 @@ paperReviewServer <- function(input, output, session)
                     title = s$drug$defaults$Drug) +
       ggplot2::theme_bw(base_size = 14)
     r <- currentReview()
-    if (nzchar(input$overlay %or% "")) {
+    if (nzchar(asScalarString(input$overlay))) {
       fig <- Filter(function(f) identical(f$id, input$overlay), r$figures)
       if (length(fig)) {
         pts <- fig[[1]]$points
@@ -553,8 +1098,11 @@ paperReviewConfig <- function(name, default = NULL)
 #' A separate app from \code{run_app()}: upload one pharmacokinetic
 #' manuscript, have Claude extract its model through the Anthropic API, read a
 #' review of it computed in stanpumpR, and simulate the paper's drug.  The API
-#' key is read from the \code{ANTHROPIC_API_KEY} environment variable or
-#' \code{anthropic_api_key} in the config file.  See
+#' key is the user's own, entered for the session, or else the operator's,
+#' read from the \code{STANPUMPR_ANTHROPIC_API_KEY} or
+#' \code{ANTHROPIC_API_KEY} environment variable or \code{anthropic_api_key}
+#' in the config file (unless \code{paper_review_shared_key} is
+#' \code{false}).  See
 #' \code{docs/paper-review.md} and \code{docs/paper-review-privacy.md}.
 #'
 #' @param config_file Path to a YAML configuration file, read by

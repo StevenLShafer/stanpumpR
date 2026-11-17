@@ -236,15 +236,13 @@ test_that("an edit from a grid drawn before the switch is converted", {
     session$flushReact()
     # The grid on screen was drawn for minutes ...
     stale <- withTimes("1440", "2880")
-    x <- createHOT(stale, getDrugDefaultsGlobal(), timeFormat("minutes", "relative"))$x
     # ... and the table is now in days
     session$setInputs(timeUnits = "days")
     expect_equal(doseTable()$Time[1], "1")
     refresh <- doseTableRefresh()
-    session$setInputs(doseTableHTML = list(
-      data = lapply(seq_len(nrow(stale)), function(i) as.list(unname(unlist(stale[i, ])))),
-      changes = list(event = "afterChange", source = "calculate"),
-      params = x
+    session$setInputs(doseGrid = doseGridInputValue(
+      lapply(seq_len(nrow(stale)), function(i) as.list(unname(unlist(stale[i, ])))),
+      "minutes/relative"
     ))
     expect_equal(doseTableDraft()$Time[1:2], c("1", "2"))
     expect_gt(doseTableRefresh(), refresh)   # and the grid is redrawn
@@ -336,7 +334,11 @@ test_that("removing the rows the week rule names clears it, for an agent from th
     doseTableHistory()$do(dt[!dt$Drug %in% c("oxygen", "sevoflurane", "ventilation"), ])
     session$setInputs(dosetable_apply = 1)
     expect_null(timeUnitViolation())
-    expect_identical(names(drugs()), "cefazolin")
+    # The simulation runs again; cefazolin, at the startup menu's 0, is not
+    # drawn (only drugs given a dose above 0 are, since 2026-11-16), and the
+    # plot area says why rather than naming the week rule
+    expect_length(drugs(), 0)
+    expect_identical(plotMessage(), NOTHING_TO_DRAW_MESSAGE)
   })
 })
 
@@ -379,18 +381,16 @@ test_that("the dialogs show and read times in the dose table's format", {
     # edit events: a row not edited keeps its exact minutes
     eventTable(data.frame(Time = c(1440 / 7, 2160), Event = c("Induction", "Intubation")))
     showEditEventsModal()
-    x <- editEventsHOT()$x
-    rows <- jsonlite::fromJSON(x$data, simplifyDataFrame = FALSE)
     # shown to 0.001 minute: 205.714 minutes
-    expect_equal(vapply(rows, `[[`, character(1), "Time"), c("0.1428569444", "1.5"))
-    asInput <- function(rows) list(
-      data = lapply(rows, function(r) list(r$Delete, r$Time, r$Event)),
-      changes = list(event = "afterChange", source = "edit"),
-      params = x
-    )
+    # (a plain variable of the server, read where it lives: the test's own
+    # copy is the one it had when the session started)
+    shown <- session$env$editEventsShown$text
+    expect_equal(shown, c("0.1428569444", "1.5"))
+    rows <- list(list(FALSE, shown[1], "Induction"), list(FALSE, shown[2], "Intubation"))
+    asInput <- function(rows) tableGridInputValue(rows)
     session$setInputs(editEventsTableHTML = asInput(rows), editEventsOK = 1)
     expect_identical(eventTable()$Time, c(1440 / 7, 2160))
-    rows[[2]]$Time <- "3"
+    rows[[2]][[2]] <- "3"
     showEditEventsModal()
     session$setInputs(editEventsTableHTML = asInput(rows), editEventsOK = 2)
     expect_identical(eventTable()$Time, c(1440 / 7, 4320))
@@ -399,13 +399,10 @@ test_that("the dialogs show and read times in the dose table's format", {
     doseTable(withTimes("10", "9", "1.5"))
     DrugTimeUnits(list(drug = "propofol"))
     TT <- data.frame(Delete = FALSE, Time = c("10", "9"), Dose = c("1", "2"), Units = c("mg", "mg"))
-    # the drug stamp the real grid carries (output$editPriorDosesTable)
-    hot <- c(rhandsontable::rhandsontable(TT)$x, list(drug = "propofol"))
+    # the drug the real grid is tagged with (editDosesDialogGrid())
     session$setInputs(
-      editPriorDosesTable = list(
-        data = lapply(seq_len(nrow(TT)), function(i) unname(as.list(TT[i, ]))),
-        changes = list(event = "afterChange", source = "edit"),
-        params = hot
+      editPriorDosesTable = tableGridInputValue(
+        lapply(seq_len(nrow(TT)), function(i) unname(as.list(TT[i, ]))), tag = "propofol"
       ),
       editDosesOK = 1
     )
@@ -582,21 +579,22 @@ test_that("the dose field is labelled Dose or Target for a drug with TCI units",
     session$setInputs(addDoseDrug = "rocuronium")
     expect_equal(sentLabel(), "Dose")
 
-    # the dose table's grid: display header over the unchanged data column
-    hot <- createHOT(doseTable(), drugDefaults(), doseTableFormat())
-    expect_equal(hot$x$colHeaders, c("Drug", "Time", DOSE_COLUMN_HEADER, "Units"))
-    expect_equal(unlist(hot$x$rColHeaders), c("Drug", "Time", "Dose", "Units"))
+    # the dose table's grid: the display header over the Dose column
+    expect_match(as.character(doseGridInput("doseGrid")),
+                 sprintf('data-dose-header="%s"', DOSE_COLUMN_HEADER), fixed = TRUE)
 
-    # the Edit doses dialog's grid (an output is computed at a flush, and is
-    # the widget's JSON here)
-    editHeaders <- function() {
-      session$flushReact()
-      jsonlite::fromJSON(output$editPriorDosesTable)$x$colHeaders
+    # the Edit doses dialog's grid, drawn as the dialog opens (its columns
+    # are the grid's data-spec)
+    editHeaders <- function(drug) {
+      html <- as.character(isolate(session$env$editDosesDialogGrid(drug)))
+      spec <- regmatches(html, regexpr('data-spec="[^"]*"', html))
+      spec <- xml2::xml_text(xml2::read_html(paste0("<p>", sub('^data-spec="(.*)"$', "\\1", spec), "</p>")))
+      vapply(jsonlite::fromJSON(spec, simplifyVector = FALSE)$columns, `[[`, "", "label")
     }
-    DrugTimeUnits(list(drug = "propofol"))
-    expect_equal(editHeaders(), c("Delete", "Time", "Dose or Target", "Units"))
-    DrugTimeUnits(list(drug = "rocuronium"))
-    expect_equal(editHeaders(), c("Delete", "Time", "Dose", "Units"))
+    expect_equal(editHeaders("propofol"), c("Delete", "Time", "Dose or Target", "Units"))
+    expect_equal(editHeaders("rocuronium"), c("Delete", "Time", "Dose", "Units"))
+    # each drug's own rows, never another's (ChatGPT's fifth review, N01)
+    expect_null(isolate(session$env$editDosesDialogGrid("oxygen")))
   })
 })
 
@@ -624,10 +622,8 @@ test_that("the add-dose and edit-doses dialogs refuse a time or dose they cannot
     DrugTimeUnits(list(drug = "propofol"))
     editWith <- function(TT, n) {
       session$setInputs(
-        editPriorDosesTable = list(
-          data = lapply(seq_len(nrow(TT)), function(i) unname(as.list(TT[i, ]))),
-          changes = list(event = "afterChange", source = "edit"),
-          params = c(rhandsontable::rhandsontable(TT)$x, list(drug = "propofol"))
+        editPriorDosesTable = tableGridInputValue(
+          lapply(seq_len(nrow(TT)), function(i) unname(as.list(TT[i, ]))), tag = "propofol"
         ),
         editDosesOK = n
       )
@@ -667,12 +663,8 @@ test_that("the dose dialogs refuse a clock time that is no time of day", {
     DrugTimeUnits(list(drug = "propofol"))
     before <- doseTable()
     session$setInputs(
-      editPriorDosesTable = list(
-        data = list(list(FALSE, "08:00", "1", "mg"), list(FALSE, "25:00", "2", "mg")),
-        changes = list(event = "afterChange", source = "edit"),
-        params = c(rhandsontable::rhandsontable(
-          data.frame(Delete = FALSE, Time = c("08:00", "25:00"), Dose = c("1", "2"), Units = "mg")
-        )$x, list(drug = "propofol"))
+      editPriorDosesTable = tableGridInputValue(
+        list(list(FALSE, "08:00", "1", "mg"), list(FALSE, "25:00", "2", "mg")), tag = "propofol"
       ),
       editDosesOK = 1
     )
@@ -706,4 +698,98 @@ test_that("the app opens in elapsed time", {
   select <- regmatches(html, regexpr('(?s)<select[^>]*id="timeMode"[^>]*>.*?</select>', html, perl = TRUE))
   expect_match(select, '<option value="relative" selected>', fixed = TRUE)
   expect_false(grepl('<option value="clock" selected>', select, fixed = TRUE))
+})
+
+# The app opens on an intravenous plot, minutes from 0 to TIME_MAXIMUM_DEFAULT,
+# and the first repeating oral dose switches it, once, to days from 0 to 30
+# (Shafer, 2026-11-13; R/app_server.R, repeatingOralSwitch).
+startAtDefaults <- function(session) {
+  do.call(session$setInputs, appInputs(timeMode = TIME_MODE_DEFAULT,
+                                       maximum = as.character(TIME_MAXIMUM_DEFAULT),
+                                       minimum = "0"))
+  startFormatFromInputs(session)
+}
+morphineRows <- function(...) {
+  rows <- list(...)
+  dt <- doseTableInit[c(1, 7:12), ]
+  for (i in seq_along(rows)) dt[i, ] <- rows[[i]]
+  dt
+}
+
+test_that("the app opens on 180 minutes", {
+  expect_equal(TIME_UNIT_DEFAULT, "minutes")
+  expect_equal(TIME_MAXIMUM_DEFAULT, 180)
+  expect_equal(snapMaximum(TIME_MAXIMUM_DEFAULT, "minutes"), 180)
+  expect_equal(REPEATING_ORAL_PLOT_MINUTES, 30 * MINS_PER_DAY)
+  expect_equal(snapMaximum(REPEATING_ORAL_PLOT_MINUTES, REPEATING_ORAL_TIME_UNIT), 30 * MINS_PER_DAY)
+})
+
+test_that("a repeating oral dose switches the default plot to 30 days, once", {
+  shiny::testServer(app_server, {
+    sent <- recordMessages(session)
+    startAtDefaults(session)
+    # Intravenous first: the plot stays in minutes
+    doseTable(morphineRows(list("morphine", "0", "5", "mg")))
+    session$flushReact()
+    expect_null(lastSent(sent, "timeUnits"))
+    # A single oral dose and an intravenous schedule are not repeating oral doses
+    doseTable(morphineRows(list("morphine", "0", "5", "mg"), list("morphine", "10", "10", "mg PO tablet"),
+                           list("morphine", "20", "2", "mg q4h")))
+    session$flushReact()
+    expect_null(lastSent(sent, "timeUnits"))
+
+    # The repeating oral dose of the same drug switches the plot
+    doseTable(morphineRows(list("morphine", "0", "5", "mg"), list("morphine", "60", "10", "mg PO tablet bid")))
+    session$flushReact()
+    expect_equal(lastSent(sent, "timeUnits")$value, "days")
+    expect_equal(as.numeric(lastSent(sent, "maximum")$value), 30 * MINS_PER_DAY)
+    expect_equal(notified(sent, "repeatingOralTime")$type, "show")
+    echo(session, sent)
+    expect_equal(doseTableFormat(), timeFormat("days", "relative"))
+    expect_equal(plotInfo()$plotMaximum, 30 * MINS_PER_DAY)
+    # The doses stayed where they were
+    expect_equal(doseTableClean()$Time[doseTableClean()$Units == "mg PO tablet bid"], 60)
+
+    # The user goes back to the intravenous plot: never switched again
+    n <- length(sent$inputs)
+    session$setInputs(timeUnits = "minutes")
+    echo(session, sent, since = n)
+    session$setInputs(maximum = as.character(TIME_MAXIMUM_DEFAULT))
+    session$elapse(500)
+    expect_equal(doseTableFormat(), timeFormat("minutes", "relative"))
+    n <- length(sent$inputs)
+    doseTable(morphineRows(list("morphine", "0", "5", "mg"), list("morphine", "90", "20", "mg PO tablet qd")))
+    session$flushReact()
+    expect_false("timeUnits" %in% vapply(sent$inputs[seq_along(sent$inputs) > n], `[[`, character(1), "id"))
+    expect_length(Filter(function(m) is.list(m$message), notifications(sent, "repeatingOralTime")), 1)
+  })
+})
+
+test_that("time settings the user chose are not replaced by the repeating-oral default", {
+  shiny::testServer(app_server, {
+    sent <- recordMessages(session)
+    startAtDefaults(session)
+    session$setInputs(maximum = "360")
+    session$elapse(500)
+    doseTable(morphineRows(list("morphine", "0", "10", "mg PO tablet bid")))
+    session$flushReact()
+    expect_null(lastSent(sent, "timeUnits"))
+    expect_null(notified(sent, "repeatingOralTime"))
+  })
+})
+
+test_that("a daily oral rate is a repeating oral dose; an enteral infusion is not", {
+  dt <- function(units, dose = "10") data.frame(Drug = "x", Time = 0, Dose = dose, Units = units)
+  expect_true(hasRepeatingOralDose(dt("mg PO bid")))
+  expect_true(hasRepeatingOralDose(dt("mg PO tablet qid")))
+  expect_true(hasRepeatingOralDose(dt("mg SL qd")))
+  expect_true(hasRepeatingOralDose(dt("mg PO qpm")))
+  expect_true(hasRepeatingOralDose(dt("mg/day PO")))
+  expect_false(hasRepeatingOralDose(dt("mg PO bid", "0")))   # a scheduled 0 stops a schedule
+  expect_false(hasRepeatingOralDose(dt("mg PO")))
+  expect_false(hasRepeatingOralDose(dt("mg/hr PO")))
+  expect_false(hasRepeatingOralDose(dt("mg bid")))
+  expect_false(hasRepeatingOralDose(dt("mg IM qid")))
+  expect_false(hasRepeatingOralDose(dt("mg SC qwk")))
+  expect_false(hasRepeatingOralDose(NULL))
 })

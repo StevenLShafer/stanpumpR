@@ -17,7 +17,10 @@ A Shiny app object.
 A separate app from \code{run_app()}: upload one pharmacokinetic
 manuscript, have Claude extract its model through the Anthropic API, read a
 review of it computed in stanpumpR, and simulate the paper's drug.  The API
-key is read from the \code{ANTHROPIC_API_KEY} environment variable or
-\code{anthropic_api_key} in the config file.  See
+key is the user's own, entered for the session, or else the operator's,
+read from the \code{STANPUMPR_ANTHROPIC_API_KEY} or
+\code{ANTHROPIC_API_KEY} environment variable or \code{anthropic_api_key}
+in the config file (unless \code{paper_review_shared_key} is
+\code{false}).  See
 \code{docs/paper-review.md} and \code{docs/paper-review-privacy.md}.
 }

@@ -10,8 +10,9 @@ test_that("an empty dose table becomes one blank row, and can be drawn", {
   expect_equal(nrow(row), 1L)
   expect_equal(names(row), names(doseTableBlank))
   expect_true(all(unlist(row) == ""))
-  hot <- createHOT(doseTableBlank[0, ], getDrugDefaultsGlobal())
-  expect_equal(hot$x$rDataDim, c(1L, 4L))   # one row, four columns, in the widget's own data
+  msg <- doseGridRowsMessage(row, timeFormat("minutes", "relative"), 0)
+  expect_length(msg$rows, 1L)               # one row of four cells, as the grid draws it
+  expect_length(msg$rows[[1]], 4L)
 })
 
 test_that("scheduledDoseCount counts the repeats without building them", {
@@ -122,8 +123,10 @@ test_that("the Drug Library refuses a colour ggplot cannot read and units the do
     expect_match(drugLibraryProblems(edited, dd), "at least one unit, with none left blank", all = FALSE,
                  info = deparse(typed))
   }
+  # (keeping propofol's bolus and infusion units, which a Units edit may not
+  # take away: Carbon's second UI audit, 2026-11-15, G7)
   edited <- dd
-  edited$Units[[i]] <- drugUnitsExpand("mg,")[[1]]
+  edited$Units[[i]] <- drugUnitsExpand("mg, mcg/kg/min,")[[1]]
   expect_length(drugLibraryProblems(edited, dd), 0)
   expect_true(isValidColor("steelblue"))
   expect_false(isValidColor(""))
@@ -149,31 +152,31 @@ test_that("the Drug Library refuses a colour ggplot cannot read and units the do
   expect_length(drugLibraryProblems(edited, dd), 0)
 })
 
-test_that("a Drug Library threshold typed as text reaches the check through hot_to_r()", {
-  # hot_to_r() converts each column to the class the grid was given, so a
-  # numeric threshold column would hand back NA for "bogus", the same as a
-  # cleared cell; drugLibraryGridData() gives the grid those columns as text.
+test_that("a Drug Library threshold typed as text reaches the check through the grid", {
+  # A numeric threshold column would hand back NA for "bogus", the same as a
+  # cleared cell; the grid's threshold columns are text (drugLibraryGridColumns()),
+  # and tableGridRead() hands every cell back as typed.
   dd <- getDrugDefaultsGlobal()
   shown <- drugLibraryGridData(dd)
-  hot <- rhandsontable::rhandsontable(shown)
+  columns <- drugLibraryGridColumns(shown)
   # what the browser sends back: each row an array, null for a blank cell
   rows <- lapply(seq_len(nrow(shown)), function(r) {
     lapply(unname(as.list(shown[r, ])), function(v) if (is.na(v)) NULL else v)
   })
-  browser <- function(rows) list(data = rows, changes = list(event = "afterChange"), params = hot$x)
+  read <- function(rows) tableGridRead(tableGridInputValue(rows), columns, maxRows = nrow(dd))
   i <- which(shown$Drug == "propofol")
   lower <- match("Lower", names(shown))
-  untouched <- rhandsontable::hot_to_r(browser(rows))
+  untouched <- read(rows)
   expect_length(drugLibraryProblems(untouched, dd), 0)
   expect_equal(as.numeric(untouched$Lower), dd$Lower)
   expect_equal(as.numeric(untouched$MEAC), dd$MEAC)
   rows[[i]][[lower]] <- "bogus"
-  edited <- rhandsontable::hot_to_r(browser(rows))
+  edited <- read(rows)
   expect_identical(edited$Lower[i], "bogus")
   expect_match(drugLibraryProblems(edited, dd), "propofol Lower: \"bogus\"")
   # a cleared cell is still a legitimate "no band", not an error
   rows[[i]][lower] <- list(NULL)
-  expect_length(drugLibraryProblems(rhandsontable::hot_to_r(browser(rows)), dd), 0)
+  expect_length(drugLibraryProblems(read(rows), dd), 0)
 })
 
 test_that("the James lean body mass is held at its peak past the peak", {
@@ -205,14 +208,12 @@ test_that("sugammadex keeps a positive central volume in the heaviest patient", 
 
 test_that("every library model gives a curve at the extremes of the Patient Profile", {
   # The sweep in test-pk-finite-guard.R stops at 250 kg and 190 cm; the review
-  # reached 249 kg at 170 cm and 360 kg.  Vancomycin says why it refuses a
-  # creatinine clearance near zero, and is allowed to.
+  # reached 249 kg at 170 cm and 360 kg.
   dd <- getDrugDefaultsGlobal()
   drugs <- dd$Drug[!is.na(dd$Category) & vapply(dd$Drug, function(d) exists(d, mode = "function"), logical(1))]
   for (d in drugs) for (w in c(249, 360, 500)) for (ffm in c(TRUE, FALSE)) {
     r <- tryCatch({ getDrugPK(d, w, 170, 40, "male", adjustToFFM = ffm); "ok" },
                   error = function(e) conditionMessage(e))
-    if (d == "vancomycin" && grepl("not defined at a creatinine clearance", r)) next
     expect_identical(r, "ok", info = paste(d, w, "kg, adjustToFFM", ffm))
   }
 })
@@ -267,17 +268,17 @@ test_that("removing every dose-table row leaves one blank row, not a dead sessio
     startFormatFromInputs(session)
     doseTable(doseTableInit)
     session$flushReact()
-    refresh <- doseTableRefresh()
-    grid <- createHOT(doseTableInit, drugDefaults(), doseTableFormat())$x
-    # What Handsontable reports after "Remove row" on the last row: no data
-    expect_no_error(session$setInputs(doseTableHTML = list(
-      data = list(), changes = list(event = "afterRemoveRow"), params = grid
-    )))
+    sent <- list()
+    session$sendInputMessage <- function(id, message) sent[[length(sent) + 1]] <<- message
+    # A grid with no rows (dose-grid.js never sends one; a forged message can)
+    expect_no_error(session$setInputs(doseGrid = doseGridInputValue(list())))
     draft <- doseTableDraft()
     expect_equal(nrow(draft), 1L)
     expect_true(all(unlist(draft) == ""))
-    expect_gt(doseTableRefresh(), refresh)                 # and the grid is redrawn
-    expect_no_error(createHOT(draft, drugDefaults(), doseTableFormat()))
+    expect_true(isTRUE(validateDoseTableInput(draft)))
+    # and the grid is sent that one blank row
+    rows <- Filter(function(m) !is.null(m$rows), sent)
+    expect_equal(lapply(rows[[length(rows)]]$rows, as.character), list(c("", "", "", "")))
   })
 })
 
@@ -333,6 +334,17 @@ test_that("the time until threshold is computed only while it is drawn", {
 })
 
 test_that("a model that fails for the patient is said in the plot area, not a blank plot", {
+  # This patient once stopped vancomycin's Thomson clearance (0.93 mL/min);
+  # since Carbon's third UI audit (2026-11-15, H3) the term is held at the
+  # lowest creatinine clearance Thomson studied, and no library model is known
+  # to fail for a legal patient, so the failure is made here.
+  real <- vancomycin
+  testthat::local_mocked_bindings(
+    vancomycin = function(weight, height, age, sex, adjustToFFM = TRUE,
+                          creatinine = NULL, pregnant = FALSE) {
+      if (isTRUE(creatinine >= 15)) stop("This model is not defined for this patient")
+      real(weight, height, age, sex, adjustToFFM, creatinine, pregnant)
+    })
   shiny::testServer(app_server, {
     do.call(session$setInputs, uiInputs(weight = 20, age = 90, height = 150, creatinine = 15, adjustToFFM = FALSE))
     startFormatFromInputs(session)
@@ -340,10 +352,24 @@ test_that("a model that fails for the patient is said in the plot area, not a bl
     dt[1, ] <- list("vancomycin", "0", "1000", "mg")
     doseTable(dt)
     session$flushReact()
-    expect_match(plotMessage(), "not defined at a creatinine clearance", fixed = TRUE)
+    expect_match(plotMessage(), "not defined for this patient", fixed = TRUE)
     expect_match(plotMessage(), PLOT_FAILURE_PREFIX, fixed = TRUE)
     session$setInputs(creatinine = 1)
     expect_null(plotMessage())
+  })
+})
+
+# Devin's stress test (2026-11-08): numericInput(value = NA) wrote value="NA",
+# which a number input cannot take, and every page load logged "The specified
+# value "NA" cannot be parsed" twice (serum creatinine, gestational age).
+test_that("no number field is drawn with the value NA, and a blank field still reads as blank", {
+  html <- as.character(htmltools::renderTags(app_ui()(list()))$html)
+  expect_false(grepl('value="NA"', html, fixed = TRUE))
+  expect_match(html, 'id="creatinine"', fixed = TRUE)
+  expect_match(as.character(blankableNumericInput("x", "x", value = 1.2)), 'value="1.2"', fixed = TRUE)
+  shiny::testServer(app_server, {
+    session$setInputs(creatinine = NA, gestationalAge = NA)
+    expect_true(is.na(input$creatinine))
   })
 })
 

@@ -46,9 +46,40 @@
 #'   default) for a term birth.  Passed only to the neonatal models that
 #'   declare it (dobutamineNeonatal), whose clearance matures with
 #'   postmenstrual age (\code{postmenstrualAge()}).
+#' @param albumin serum albumin in g/dL, or NULL (the default), in which case
+#'   each model holds its own reference value.  Passed only to the models that
+#'   declare it (methotrexate, methotrexatePediatric, docetaxel,
+#'   paclitaxelProteinBound).
+#' @param ast serum aspartate aminotransferase in U/L, or NULL (the default),
+#'   in which case each model holds its own reference value.  Passed only to
+#'   the models that declare it (epirubicin).
+#' @param physiology NULL (normal), or the physiology sliders' factors, a
+#'   numeric vector named \code{liver}, \code{renal}, \code{cardiac},
+#'   \code{gi} (multiples of normal function, 0.1 to 10); applied only to a
+#'   drug with a row in \code{inst/extdata/physiologyParameters.csv}.  See
+#'   \code{R/physiology.R}.
+#' @param pulmonaryHypertension does the patient have pulmonary arterial
+#'   hypertension?  TRUE or FALSE (the default).  Passed only to the models
+#'   of a drug with a separate PAH population (sildenafil, tadalafil); see
+#'   \code{R/pulmonaryHypertension.R}.
 #' @param model internal: a model's output to use in place of calling the
 #'   drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
 #'   drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.
+#' @param individual NULL (the default) for the model's own patient, or the
+#'   individual's pharmacokinetics as a list of \code{clearance} and
+#'   \code{volume}, each a multiple of the model's, as the Bayesian update
+#'   estimates them (\code{bayesianUpdateDrugs()}, \code{individualizeModel()}).
+#' @param metaboliteIndividual NULL (the default), or the individual's
+#'   pharmacokinetics of the drug's active metabolite, in the form of
+#'   \code{individual}: the metabolite it forms is then formed into the
+#'   individual's metabolite, as the Bayesian update estimates it from the
+#'   metabolite's measured concentrations.  The parent's own formation is the
+#'   model's (it moves with \code{individual}).
+#' @param libraryDefaults NULL (the default) for the package's drug library,
+#'   or the session's (\code{recalculatePK()} passes it), from which an
+#'   active metabolite's row is read: its \code{Concentration.Units} set the
+#'   scale of the metabolite formed, so a metabolite the Drug Library shows in
+#'   other units is formed in those units.
 #'
 #' @returns a list: the drug's PK sets (\code{PK}, one per PK event), its
 #'   \code{tPeak} and \code{reference}, the covariates, and the library's
@@ -88,7 +119,14 @@ getDrugPK <- function(
   vkorc1 = VKORC1_DEFAULT,
   model = NULL,
   cyp4f2 = CYP4F2_DEFAULT,
-  gestationalAge = NULL
+  gestationalAge = NULL,
+  albumin = NULL,
+  ast = NULL,
+  individual = NULL,
+  libraryDefaults = NULL,
+  metaboliteIndividual = NULL,
+  physiology = NULL,
+  pulmonaryHypertension = FALSE
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
@@ -124,6 +162,10 @@ getDrugPK <- function(
          ". Must be one of: ", paste(CYP2B6_VALUES, collapse = ", "))
   }
   pregnant <- checkPregnant(pregnant, sex)
+  # The Patient Profile's Pulmonary hypertension, read only by the models of a
+  # drug given both for pulmonary arterial hypertension and for something else
+  # (sildenafil, tadalafil), whose patients' pharmacokinetics differ
+  pulmonaryHypertension <- checkPulmonaryHypertension(pulmonaryHypertension)
   if (!is_valid_number(osmolality, MIN_OSMOLALITY, MAX_OSMOLALITY)) {
     stop("Invalid osmolality: ", paste(osmolality, collapse = ", "),
          ". Must be a number between ", MIN_OSMOLALITY, " and ",
@@ -152,6 +194,26 @@ getDrugPK <- function(
     stop("Invalid gestationalAge: ", paste(gestationalAge, collapse = ", "),
          ". Must be a number of weeks between ", MIN_GESTATIONAL_AGE, " and ",
          MAX_GESTATIONAL_AGE, ", or NULL for a term birth")
+  }
+  # The serum albumin likewise: blank (NA) is NULL, the model's reference;
+  # NaN is rejected.
+  if (!is.null(albumin) && length(albumin) == 1 && is.na(albumin) &&
+      !(is.numeric(albumin) && is.nan(albumin)))
+    albumin <- NULL
+  if (!is.null(albumin) &&
+      !is_valid_number(albumin, MIN_ALBUMIN, MAX_ALBUMIN)) {
+    stop("Invalid albumin: ", paste(albumin, collapse = ", "),
+         ". Must be a number between ", MIN_ALBUMIN, " and ", MAX_ALBUMIN,
+         " g/dL, or NULL for the model's reference value")
+  }
+  # And the AST, the same way.
+  if (!is.null(ast) && length(ast) == 1 && is.na(ast) &&
+      !(is.numeric(ast) && is.nan(ast)))
+    ast <- NULL
+  if (!is.null(ast) && !is_valid_number(ast, MIN_AST, MAX_AST)) {
+    stop("Invalid ast: ", paste(ast, collapse = ", "),
+         ". Must be a number between ", MIN_AST, " and ", MAX_AST,
+         " U/L, or NULL for the model's reference value")
   }
 
   # Every model takes the four patient covariates.  A pharmacogenetic
@@ -210,16 +272,69 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "gestationalAge" %in% names(formals(get(drug, mode = "function"))))
     covariates["gestationalAge"] <- list(gestationalAge)
+  # And the serum albumin, which only the models with an albumin term read.
+  if (exists(drug, mode = "function") &&
+      "albumin" %in% names(formals(get(drug, mode = "function"))))
+    covariates["albumin"] <- list(albumin)
+  # And the AST, which only the models with an AST term read.
+  if (exists(drug, mode = "function") &&
+      "ast" %in% names(formals(get(drug, mode = "function"))))
+    covariates["ast"] <- list(ast)
   # And the pregnancy flag, which only the models with a measured change in
   # pregnancy read (R/pregnancy.R, inst/extdata/pregnancyRegistry.csv).
   if (exists(drug, mode = "function") &&
       "pregnant" %in% names(formals(get(drug, mode = "function"))))
     covariates$pregnant <- pregnant
+  # And the pulmonary hypertension flag, which only the models of a drug with
+  # a separate PAH population read (Steven L. Shafer, 2026-11-17).
+  if (exists(drug, mode = "function") &&
+      "pulmonaryHypertension" %in% names(formals(get(drug, mode = "function"))))
+    covariates$pulmonaryHypertension <- pulmonaryHypertension
   # Dispatch on the name, not the resolved function, so that a drug with no
   # covariate function at all -- an inhaled gas, which belongs on the gas path
   # and never reaches here -- still fails with R's own "could not find
   # function", which is what test-gas-routing.R pins.
   X <- if (is.null(model)) do.call(drug, covariates) else model
+  # The Bayesian update (R/bayesian.R): the patient's own clearance and
+  # volume, estimated from measured concentrations, as multiples of the
+  # model's.  Applied to the model's parameters before anything is derived
+  # from them, so every engine, the effect site and the metabolite see the
+  # individual's drug.
+  individual <- validateIndividual(individual, drug)
+  if (!is.null(individual)) X <- individualizeModel(X, individual)
+  # The physiology sliders (R/physiology.R): liver function, renal function,
+  # cardiac output and GI absorption change this drug's parameters here,
+  # before anything below reads them, if the drug has an applied row in
+  # inst/extdata/physiologyParameters.csv.  ke0 is the normal one scaled by
+  # cardiac output (brain flow), so it is solved first, from the unchanged
+  # model.  It acts after the Bayesian update above: the individual's
+  # drug is the starting point of the what-if.
+  physiology <- checkPhysiology(physiology)
+  physiologyApplies <- !physiologyIsNormal(physiology) && !is.null(physiologyRow(drug))
+  if (physiologyApplies)
+  {
+    if (physiologyUnsupported(X))
+      stop("Internal error: ", drug, " has a physiology row, but its model ",
+           "carries elimination the physiology sliders cannot scale.")
+    nominalKe0 <- NULL
+    if (!is.null(X$ke0) && is_valid_number(X$ke0) && X$ke0 > 0)
+    {
+      # A model that supplies ke0 (etomidate): every set starts from it.
+      nominalKe0 <- lapply(X$PK, function(set) X$ke0)
+    } else if (isTRUE(X[["tPeak", exact = TRUE]] > 0))
+    {
+      nominal <- getDrugPK(
+        drug = drug, weight = weight, height = height, age = age, sex = sex,
+        drugDefaults = drugDefaults, cyp2d6 = cyp2d6, resolveMetabolite = FALSE,
+        adjustToFFM = adjustToFFM, osmolality = osmolality,
+        creatinine = creatinine, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
+        cyp2b6 = cyp2b6, pregnant = pregnant, vkorc1 = vkorc1, model = X,
+        cyp4f2 = cyp4f2, gestationalAge = gestationalAge
+      )
+      nominalKe0 <- lapply(nominal$PK, function(set) set$ke0)
+    }
+    X <- applyPhysiology(X, physiologyRow(drug), physiology, nominalKe0)
+  }
   # A subcutaneous model writes its absorption as ka_SC and the rest; the
   # engines carry it on the tissue-depot (RA) fields.  See R/subcutaneous.R.
   tissueRoute <- modelTissueRoute(X$PK)
@@ -275,7 +390,7 @@ getDrugPK <- function(
          "sublingual absorption, parallel systems, Michaelis-Menten ",
          "elimination, an osmotic or molar dose basis, pulsed oral release, ",
          "or an active first-order oral depot.")
-  tPeak <- X$tPeak
+  tPeak <- X[["tPeak", exact = TRUE]]   # exact: X$tPeak would match tPeakRoute
   # A model that supplies ke0 directly may leave tPeak out altogether (NULL):
   # the time to peak effect is then solved below, per PK set, as the moment
   # the effect site peaks after a bolus with that ke0 and that disposition.
@@ -291,6 +406,10 @@ getDrugPK <- function(
     tPeak <- 0
   }
   tPeakSolved <- list()
+  # A ke0 held at its value at normal physiology (above) moves the time to
+  # peak effect, which is then solved per set as for a model that gave ke0.
+  if (any(vapply(X$PK, function(set) isTRUE(set$ke0Physiology > 0), logical(1))))
+    solveTPeak <- TRUE
   # Which curve tPeak was measured against.  Defaults to the intravenous
   # bolus, which is what every drug in the library assumed before oral-only
   # drugs arrived, so no existing model changes.
@@ -301,6 +420,14 @@ getDrugPK <- function(
   }
 
   events <- names(X$PK)
+  # Each event's set, by name.  Built as a list: assign()ed into this frame,
+  # which is not hashed, and gathered back with get0(), the sets cost time
+  # in the square of their number, and an antiseizure interaction makes one
+  # set per segment of its multiplier, hundreds over a year (19.5 of the 84
+  # seconds of six interacting drugs over 52 weeks; found checking Carbon's
+  # second UI audit, 2026-11-15, F3).  An event named like a local variable
+  # (v1) also overwrote it.
+  sets <- list()
   for (event in events)
   {
     v1  <- X$PK[[event]]$v1
@@ -680,7 +807,10 @@ getDrugPK <- function(
     # that error is about 24 minutes.  An oral tPeak is counted from the
     # dose, so the solve carries the drug's absorption lag (pregabalin's is
     # 19 min); without it the effect site would peak one lag late.
-    if (!is.null(X$ke0) && X$ke0 > 0)
+    if (isTRUE(X$PK[[event]]$ke0Physiology > 0))
+    {
+      ke0 <- X$PK[[event]]$ke0Physiology
+    } else if (!is.null(X$ke0) && X$ke0 > 0)
     {
       # A drug may supply ke0 directly, which is the escape hatch for a time
       # to peak effect defined against a curve this function cannot build.
@@ -750,11 +880,23 @@ getDrugPK <- function(
     # The time to peak effect of a model that gave ke0 and no tPeak (above)
     if (solveTPeak && ke0 > 0)
     {
-      tPeak <- effectSitePeakTime(
-        c(p_coef_bolus_l1, p_coef_bolus_l2, p_coef_bolus_l3),
-        c(lambda_1, lambda_2, lambda_3),
-        ke0
-      )
+      tPeak <- if (identical(tPeakRoute, ROUTE_PO) && (ka_PO > 0 || ka_PO2 > 0)) {
+        # An oral tPeak (the physiology sliders moving ke0 of such a model)
+        # is the peak of the effect site after an oral dose, counted from the
+        # dose: every depot that carries drug, each with its own lag
+        # (CodeRabbit on #727).
+        oralEffectSitePeakTime(
+          c(p_coef_bolus_l1, p_coef_bolus_l2, p_coef_bolus_l3),
+          c(lambda_1, lambda_2, lambda_3), ke0,
+          depots = list(list(ka = ka_PO, F = bioavailability_PO, lag = tlag_PO),
+                        list(ka = ka_PO2, F = bioavailability_PO2, lag = tlag_PO2)))
+      } else {
+        effectSitePeakTime(
+          c(p_coef_bolus_l1, p_coef_bolus_l2, p_coef_bolus_l3),
+          c(lambda_1, lambda_2, lambda_3),
+          ke0
+        )
+      }
       tPeakSolved[[event]] <- tPeak
     }
 
@@ -870,8 +1012,7 @@ getDrugPK <- function(
             e_coef_bolus_ke0 * exp(-ke0 * tPeak)
         )
     }
-    assign(
-      event,
+    sets[[event]] <-
       list(
         v1 = v1,
         v2 = v2,
@@ -1025,10 +1166,9 @@ getDrugPK <- function(
         e_coef_PO2_ke0 = e_coef_PO2_ke0,
         e_coef_PO2_ka = e_coef_PO2_ka
       )
-    )
   }
 
-  PK <- sapply(events, function(x) list(get0(x)))
+  PK <- sets[events]
 
   # The reported tPeak of a model that gave ke0 and no tPeak is the default
   # PK set's (each set solved its own above, for its vdPeakEffect).
@@ -1077,10 +1217,15 @@ getDrugPK <- function(
   # coefficients ride along inside each PK set, so simCpCe() can hand them
   # straight to advanceClosedFormMetabolite().
   metaboliteName <- NULL
+  metaboliteRows <- NULL
   if (resolveMetabolite && !is.null(X$metabolite))
   {
     metaboliteName <- X$metabolite$name
-    metaboliteDefaults <- getDrugDefaults(metaboliteName)
+    # The session's row, with its Drug Library units: the package's was read
+    # here, so a metabolite shown in ng/mL was still formed in mcg/mL,
+    # 1000-fold low (Carbon's UI audit, 2026-11-14, F4)
+    metaboliteDefaults <- libraryDefaultsRow(metaboliteName, libraryDefaults)
+    metaboliteRows <- metaboliteDefaults
 
     # resolveMetabolite = FALSE: one level only.  A cascade such as codeine to
     # morphine to morphine-6-glucuronide would need a two-stage convolution,
@@ -1099,7 +1244,17 @@ getDrugPK <- function(
       pregnant = pregnant,
       adjustToFFM = adjustToFFM,
       resolveMetabolite = FALSE,
-      gestationalAge = gestationalAge
+      gestationalAge = gestationalAge,
+      albumin = albumin,
+      ast = ast,
+      physiology = physiology,
+      pulmonaryHypertension = pulmonaryHypertension,
+      # The individual's metabolite, where the Bayesian update estimated it
+      # from the metabolite's own levels: the parent forms the metabolite the
+      # patient has.  Built from the model's, a morphine level after codeine
+      # could not move its estimate, every candidate forming the same
+      # morphine (Carbon's third UI audit, 2026-11-15, H7)
+      individual = metaboliteIndividual
     )
     metaboliteSet <- metabolitePK$PK[[PK_EVENT_DEFAULT]]
 
@@ -1113,6 +1268,8 @@ getDrugPK <- function(
 
     firstPass <- X$metabolite$firstPassFraction
     if (is.null(firstPass)) firstPass <- 0
+    direct <- X$metabolite[["directFraction"]]
+    if (is.null(direct)) direct <- 0
     # The molar mass ratio has no safe default: a link that omits it would
     # silently hand over the parent's mass unchanged.  Every link states it,
     # 1 included where the source's amounts are already on the metabolite's
@@ -1140,7 +1297,8 @@ getDrugPK <- function(
           kFormation        = X$metabolite$kFormation,
           mwRatio           = mwRatio,
           unitScale         = unitScale,
-          firstPassFraction = firstPass
+          firstPassFraction = firstPass,
+          directFraction    = direct
         )
       )
     }
@@ -1157,7 +1315,7 @@ getDrugPK <- function(
       # (e.g. "day2"); the split is by dose time, not a user-entered clinical
       # event, so do not expose the phase name as a pkEvent (it would otherwise
       # appear on the help page as an "event" the user can enter).
-      pkEvents = if (is.null(X$dosePhase)) events else PK_EVENT_DEFAULT,
+      pkEvents = if (is.null(X$dosePhase) && is.null(X$courseSteps)) events else PK_EVENT_DEFAULT,
       reference = if (is.null(X$reference)) "Not Available" else X$reference,
       weight = weight,
       height = height,
@@ -1184,6 +1342,13 @@ getDrugPK <- function(
   # does not create it: a drug with no metabolite returns exactly the shape it
   # always has.
   out$metaboliteName <- metaboliteName
+  # What the physiology sliders did to this drug (R/physiology.R), for the
+  # help and the notification; NULL at normal physiology or without a row.
+  out$physiology <- X$physiology
+  # The library rows the PK was built with, so that a rebuild from the model
+  # (pkRebuildArgs(): doseSizePK(), asmSegmentPK()) builds it with them again
+  out$drugDefaults <- drugDefaults
+  out$libraryDefaults <- metaboliteRows
   # An osmotic agent reports serum osmolality rather than its own
   # concentration: simCpCe() reads the baseline, the fraction and the molecular
   # weight from here.  See R/drugs_mannitol.R.
@@ -1194,6 +1359,13 @@ getDrugPK <- function(
   # simCpCe() uses to turn a dose in grams into millimoles.  See
   # R/drugs_calcium.R, whose two salts carry one weight each.
   out$molar <- validateMolar(X$molar, drug, drugDefaults$Concentration.Units)
+  # A drug also given as a product the plot does not show (aminophylline for
+  # theophylline): the mass of the plotted drug per mass of each product,
+  # which simCpCe() applies to every dose whose unit names that product.
+  out$doseProducts <- validateDoseProducts(X$doseProducts, drug)
+  # A potency-defined peptide plotted by mass (oxytocin): micrograms per unit,
+  # so that its doses in units are read as mass (potencyToMass()).
+  out$unitPotency <- validateUnitPotency(X$unitPotency, drug)
   # A drug whose oral absorption saturates scales each oral dose by its own
   # fraction absorbed: simCpCe() applies it.  See oralSaturationFraction().
   out$oralSaturation <- validateOralSaturation(X$oralSaturation, drug)
@@ -1208,6 +1380,36 @@ getDrugPK <- function(
   # set above carries the low-concentration limit, CL = Vmax / Km, for the
   # parts of the app that need one (the help tables).
   out$michaelisMenten <- validateMichaelisMenten(X$michaelisMenten, drug)
+  # A metabolite the saturable engine advances with the parent (suzetrigine's
+  # M6-SUZ, whose clearance the induced enzyme multiplies as it does the
+  # parent's): declared inside the block, as a transit chain declares
+  # enalaprilat, because the standard resolution convolves exponential
+  # amplitudes a nonlinear system does not have.  The engine returns both
+  # moieties' concentrations, so no coefficients ride along.
+  mmMet <- out$michaelisMenten$metabolite
+  if (!is.null(mmMet))
+  {
+    if (!is.null(X$metabolite) || !is.null(X$transitChain))
+      stop("Invalid michaelisMenten for ", drug, ": a metabolite in the block ",
+           "and an X$metabolite or a transit chain.")
+    if (!is.null(validateIndividual(metaboliteIndividual, mmMet$name)))
+      stop("An individual estimate of ", mmMet$name, ", formed in ", drug,
+           "'s saturable engine, is not available.")
+    formedDefaults <- libraryDefaultsRow(mmMet$name, libraryDefaults)
+    out$libraryDefaults <- formedDefaults
+    out$michaelisMenten$metabolite$unitScale <- metaboliteUnitScale(
+      drugDefaults$Concentration.Units, formedDefaults$Concentration.Units)
+    metaboliteName <- mmMet$name
+    out$metaboliteName <- mmMet$name
+    q <- if (is.null(mmMet$q)) 0 else mmMet$q
+    for (event in names(out$PK))
+      out$PK[[event]]$metabolite <- list(
+        name = mmMet$name,
+        ke0  = 0,
+        k21  = if (q > 0) q / mmMet$v2 else 0,
+        k31  = 0
+      )
+  }
   # A drug plotted as the sum of independent linear systems that share its
   # doses: ketorolac, whose S and R enantiomers have dispositions of their own
   # (R/drugs_ketorolac.R).  The model's own PK is the first system; each entry
@@ -1317,13 +1519,20 @@ getDrugPK <- function(
     if (!is.null(tc$metabolite))
     {
       formed <- tc$metabolite
+      # Its parameters are the parent's model's (enalaprilatSet()), and the
+      # metabolite is never dosed, so no level of it is ever fitted
+      if (!is.null(validateIndividual(metaboliteIndividual, formed$name)))
+        stop("An individual estimate of ", formed$name, ", formed in ", drug,
+             "'s transit chain, is not available.")
       # A parent and its metabolite need not report in the same units, and the
       # amounts the engine carries are the parent's; see
       # metaboliteUnitScale() in R/metaboliteCoefficients.R for why its
       # absence would be wrong by a thousandfold.
+      formedDefaults <- libraryDefaultsRow(formed$name, libraryDefaults)
+      out$libraryDefaults <- formedDefaults
       tc$metabolite$unitScale <- metaboliteUnitScale(
         drugDefaults$Concentration.Units,
-        getDrugDefaults(formed$name)$Concentration.Units
+        formedDefaults$Concentration.Units
       )
       out$metaboliteName <- formed$name
       # What simCpCe() reads to lift the metabolite into a series of its own,
@@ -1339,6 +1548,37 @@ getDrugPK <- function(
         )
     }
     out$transitChain <- tc
+  }
+
+  # A biliary store that fills from the central compartment and empties once,
+  # as a bolus, a fixed time after each course starts (oxaliplatin, Bastian
+  # 2003).  Linear but switched on each course's own clock, so simCpCe()
+  # dispatches such a drug to its own exact engine; see
+  # R/advanceBiliaryStore.R.  Refused beside anything that is a second system,
+  # rewrites the dose rows or switches the kinetics in another way.
+  if (!is.null(X$biliaryStore))
+  {
+    if (!is.null(out$PK[[PK_EVENT_DEFAULT]]$metabolite) ||
+        !is.null(X$metabolite) || !is.null(out$transitChain) ||
+        !is.null(X$oralFormulations) || !is.null(X$parallelSystems) ||
+        !is.null(X$michaelisMenten) || !is.null(X$osmotic) ||
+        !is.null(X$molar) || !is.null(X$oralPulses) ||
+        !is.null(X$oralZeroOrder) || !is.null(X$zeroOrderSC) ||
+        !is.null(X$dosePhase) || !is.null(X$courseSteps) ||
+        isTRUE(X$doseDependent) || !is.null(X$inr) || !is.null(X$act) ||
+        isTRUE(X$enteralInfusion) || length(out$PK) > 1)
+      stop("Invalid biliaryStore for ", drug, ": not available with a ",
+           "metabolite, a transit chain, several oral formulations, parallel ",
+           "systems, Michaelis-Menten elimination, an osmotic or molar dose ",
+           "basis, pulsed or zero-order release, a dose-phase split, course ",
+           "steps, dose-dependent parameters, an INR or ACT, an enteral ",
+           "infusion, or clinical-event PK sets.")
+    d <- out$PK[[PK_EVENT_DEFAULT]]
+    if (any(vapply(c("ka_PO", "ka_IM", "ka_IN", "ka_SL", "ka_RA"), function(f)
+      isTRUE(d[[f]] > 0), logical(1))))
+      stop("Invalid biliaryStore for ", drug, ": the engine takes intravenous ",
+           "doses only, so the model may declare no absorption route.")
+    out$biliaryStore <- validateBiliaryStore(X$biliaryStore, drug)
   }
 
   # Dose-time phase split (dabigatran after hip replacement): doses given before
@@ -1363,6 +1603,38 @@ getDrugPK <- function(
            "formulations, an INR or a zero-order oral release.")
     out$dosePhase <- dp
   }
+
+  # Clearance that steps at fixed times after the course's first dose
+  # (busulfan, McCune 2014): one PK set per step, named in courseSteps$event,
+  # taking over courseSteps$after minutes after the drug's first dose.
+  # simCpCe() builds the switching events from the dose table, in place of
+  # any clinical event, and the event engine advances the steps exactly.  The
+  # sets are internal, so they are not offered as pkEvents.
+  if (!is.null(X$courseSteps))
+  {
+    cs <- X$courseSteps
+    if (!is.list(cs) || length(cs$after) == 0 ||
+        length(cs$after) != length(cs$event) ||
+        !all(vapply(cs$after, is_valid_number, logical(1))) ||
+        any(cs$after <= 0) || is.unsorted(cs$after, strictly = TRUE) ||
+        !all(cs$event %in% names(out$PK)) || PK_EVENT_DEFAULT %in% cs$event)
+      stop("Invalid courseSteps for ", drug, ": needs increasing positive 'after' ",
+           "times (minutes) and an 'event' naming a further PK set for each.")
+    if (!is.null(out$PK[[PK_EVENT_DEFAULT]]$metabolite) ||
+        !is.null(out$parallelSystems) || !is.null(out$michaelisMenten) ||
+        !is.null(out$dosePhase) || !is.null(out$transitChain) || !is.null(out$inr))
+      stop("Invalid courseSteps for ", drug, ": not available with a metabolite, ",
+           "parallel systems, Michaelis-Menten elimination, a dose phase, a ",
+           "transit chain or an INR.")
+    out$courseSteps <- cs
+  }
+
+  # Kept for the paths that rebuild the PK from the model (doseSizePK(),
+  # asmSegmentPK()), which must rebuild the individual's drug, and for the
+  # simulation key, so that a new estimate re-simulates the drug.
+  if (!is.null(individual)) out$individual <- individual
+  if (!is.null(metaboliteName) && !is.null(metaboliteIndividual))
+    out$metaboliteIndividual <- validateIndividual(metaboliteIndividual, metaboliteName)
   return(out)
 }
 
@@ -1399,8 +1671,72 @@ validateDoseBioavailability <- function(x, drug)
 #' @keywords internal
 doseSizePK <- function(PK, dose)
 {
-  X <- do.call(PK$drug, c(PK$covariates, list(dose = dose)))
-  do.call(getDrugPK, c(list(drug = PK$drug), PK$covariates, list(model = X)))
+  drug <- pkModelDrug(PK)
+  X <- do.call(drug, c(PK$covariates, list(dose = dose)))
+  do.call(getDrugPK, c(list(drug = drug), PK$covariates,
+                       list(model = X), pkRebuildArgs(PK)))
+}
+
+#' The drug whose model function a PK is rebuilt from
+#'
+#' A drug's own PK is rebuilt from its own function.  A companion entry is
+#' named for its panel ("insulinRegular (population)") and is a copy of its
+#' drug's PK, so it is rebuilt from that drug's function: the Bayesian
+#' update's population curve and the antiseizure interactions' reference
+#' curve.  Called by its own name, a dose-dependent drug's population curve
+#' failed ("could not find function") and the plot with it (Carbon's second
+#' UI audit, 2026-11-15, F1).  A companion with a model of its own (Minto,
+#' Schnider) is neither dose-dependent nor an interaction victim and is
+#' never rebuilt.
+#'
+#' @param PK a drug's PK from getDrugPK(), or a companion entry
+#' @returns the name of the model function
+#' @keywords internal
+pkModelDrug <- function(PK)
+{
+  if (is.null(PK$companionOf)) return(PK$drug)
+  if (!identical(PK$companionGroup, "bayesian") &&
+      !identical(PK$companionGroup, ASM_INTERACTIONS_INPUT))
+    stop("Internal error: ", PK$drug, " has a model of its own and cannot be rebuilt.")
+  PK$companionOf
+}
+
+#' What a rebuild of a drug's PK from its model passes getDrugPK()
+#'
+#' Besides the covariates and the model (doseSizePK(), asmSegmentPK()): the
+#' individual of the Bayesian update, and the library rows the PK was first
+#' built with, so that a session's Drug Library units reach the rebuilt sets
+#' as they reached the first.  Built from the package's rows, a rebuilt
+#' metabolite was formed in the package's units (Carbon's UI audit,
+#' 2026-11-14, F4).
+#'
+#' @param PK the drug's PK from getDrugPK()
+#' @returns a list of getDrugPK() arguments
+#' @keywords internal
+pkRebuildArgs <- function(PK)
+{
+  list(individual = PK$individual,
+       metaboliteIndividual = PK$metaboliteIndividual,
+       drugDefaults = if (is.null(PK$drugDefaults)) getDrugDefaults(pkModelDrug(PK)) else PK$drugDefaults,
+       libraryDefaults = PK$libraryDefaults,
+       # The physiology sliders the PK was built at (R/physiology.R)
+       physiology = PK$physiology$factors)
+}
+
+#' A drug's row of the drug library
+#'
+#' @param drug the drug
+#' @param libraryDefaults the session's drug library, or NULL
+#' @returns its row of `libraryDefaults` where it has one, else the
+#'   package's (getDrugDefaults())
+#' @keywords internal
+libraryDefaultsRow <- function(drug, libraryDefaults = NULL)
+{
+  if (is.data.frame(libraryDefaults)) {
+    row <- libraryDefaults[libraryDefaults$Drug %in% drug, , drop = FALSE]
+    if (nrow(row) > 0) return(row[1, , drop = FALSE])
+  }
+  getDrugDefaults(drug)
 }
 
 #' Check the share of each dose a parallel system receives
@@ -1463,7 +1799,7 @@ parallelSystemSets <- function(X, PK, events, tPeakRoute, drug, covariates)
       drug = drug,
       weight = covariates$weight, height = covariates$height,
       age = covariates$age, sex = covariates$sex,
-      model = list(PK = sys$PK, tPeak = X$tPeak, tPeakRoute = tPeakRoute,
+      model = list(PK = sys$PK, tPeak = X[["tPeak", exact = TRUE]], tPeakRoute = tPeakRoute,
                    ke0 = if (ke0 > 0) ke0)
     )$PK
     list(
@@ -1583,6 +1919,52 @@ effectSitePeakTime <- function(coef, lambda, ke0, upper = 4000)
 }
 
 
+#' Time of the effect-site peak after an oral dose
+#'
+#' The effect site after one oral dose given as several first-order depots,
+#' each with its rate, its share of the dose (its bioavailability) and its
+#' lag, counted from the dose.  A depot with no rate or no share is left out.
+#' The peak is found on a grid over the whole curve and refined between the
+#' grid's neighbours of its highest point.
+#'
+#' @param coef,lambda the plasma bolus coefficients and exponents
+#' @param ke0 the effect-site rate constant
+#' @param depots list of lists with \code{ka}, \code{F}, \code{lag}
+#' @returns minutes from the dose
+#' @keywords internal
+oralEffectSitePeakTime <- function(coef, lambda, ke0, depots)
+{
+  use <- lambda > 0
+  coef <- coef[use]; lambda <- lambda[use]
+  parts <- list()
+  for (d in depots) {
+    if (!isTRUE(d$ka > 0) || !isTRUE(d$F > 0)) next
+    ka <- separateEigenvalues(d$ka, lambda)
+    plasma <- coef * ka / (ka - lambda) * d$F
+    rates <- c(lambda, ka)
+    k <- separateEigenvalues(ke0, rates)
+    e <- c(plasma, -sum(plasma)) * k / (k - rates)
+    parts[[length(parts) + 1]] <- list(e = e, rates = rates, k = k, lag = d$lag)
+  }
+  if (length(parts) == 0) return(0)
+  ce <- function(t) {
+    total <- numeric(length(t))
+    for (p in parts) {
+      s <- pmax(t - p$lag, 0)
+      total <- total + (t > p$lag) *
+        (colSums(p$e * exp(-outer(p$rates, s))) - sum(p$e) * exp(-p$k * s))
+    }
+    total
+  }
+  slowest <- min(unlist(lapply(parts, function(p) c(p$rates, p$k))))
+  upper <- max(vapply(parts, `[[`, numeric(1), "lag")) + min(4000, 20 / slowest)
+  grid <- seq(0, upper, length.out = 4001)
+  i <- which.max(ce(grid))
+  lo <- grid[max(1, i - 1)]; hi <- grid[min(length(grid), i + 1)]
+  stats::optimize(ce, c(lo, hi), maximum = TRUE, tol = 1e-8)$maximum
+}
+
+
 #' Back-solve ke0 from a time to peak effect observed after an oral dose
 #'
 #' The effect site always peaks LATER than the plasma curve driving it, because
@@ -1591,12 +1973,40 @@ effectSitePeakTime <- function(coef, lambda, ke0, upper = 4000)
 #' is exactly one ke0 for any target later than the plasma peak, and none at
 #' all for a target at or before it.
 #'
-#' That second case is a real failure rather than a numerical one: a reported
-#' peak effect earlier than the reported peak concentration cannot be produced
-#' by any effect site model, and usually means the two numbers came from
-#' different sources or that the earlier one describes onset rather than
-#' maximum.  It raises instead of returning a huge ke0 that would quietly make
-#' the effect site a copy of the plasma curve.
+#' That second case is not an error in the patient.  The library's tPeak is a
+#' property of the drug, measured in typical patients, and ke0 is solved from
+#' it for each patient; a patient whose own plasma curve peaks at or after
+#' that time (hydrocodone's 90 min in a 90-year-old with a creatinine of 15,
+#' whose oral plasma peak is 93 min; a Bayesian candidate with a twentieth of
+#' the model's clearance) is a legal input for which no ke0 exists.  Until
+#' 2026-11-15 the function stopped there, and the stop took every drug off the
+#' plot (Carbon's third UI audit, 2026-11-15, H3).  It now returns the ke0
+#' whose effect-site peak is the NEAREST reachable one, as described below.
+#'
+#' The fallback is the nearest reachable peak, at both ends of the bracket.
+#' \itemize{
+#'   \item A target at or before the plasma peak, or nearer to it than
+#'     \code{KE0_FOLLOWS_PLASMA_FACTOR} times the curve's fastest rate can
+#'     bring the effect site, gets that ke0: the effect site follows the
+#'     plasma curve with a lag of 1% of its fastest time constant and peaks
+#'     as early as any effect site can.  It is the limit the solved ke0 tends
+#'     to as a patient's plasma peak approaches tPeak from below (the solved
+#'     ke0 grows without bound there), so the effect-site curve is continuous
+#'     across the boundary, and finite.
+#'   \item A target later than even \code{KE0_SOLVE_MIN} can reach (a plasma
+#'     curve so brief that only an absurdly slow effect site peaks that late)
+#'     gets that smallest ke0, whose effect site is then close to zero, as the
+#'     exact ke0 below it would also give.
+#' }
+#' Every patient for whom a ke0 exists inside the bracket gets exactly the ke0
+#' it got before, bit for bit.
+#'
+#' What the stop used to guard, a library tPeak entered earlier than the
+#' library's own plasma peak (two numbers from different sources, or an onset
+#' read as a peak), is a property of the drug and not of a patient, so it is
+#' checked where the drug is: test-ui-audit-carbon3-models.R solves every
+#' oral tPeak at the reference patient and requires the effect site to peak
+#' at it.
 #'
 #' The time is counted from the dose.  An absorption lag delays the plasma and
 #' the effect site alike, so the curves are built from the start of absorption
@@ -1623,25 +2033,39 @@ ke0FromTPeak <- function(tPeak, coef, lambda, ka, drug = "this drug", lag = 0)
   oralCoef   <- c(coef[use], -sum(coef[use]))
   oralLambda <- c(lambda[use], ka)
 
+  # The ke0 at which the effect site follows the plasma curve (see above):
+  # the upper end of the bracket, and the answer when tPeak cannot be reached
+  # from above.  Never below 10 /min, the upper end the bracket always had, so
+  # that every ke0 solved before is solved the same way now.
+  follows <- max(10, KE0_FOLLOWS_PLASMA_FACTOR * max(oralLambda))
+
+  # Searched over a window scaled to the rates, as effectSitePeakTime()
+  # does: over 0-4000 min a fast curve (ka 10 /min, lambda 1 /min, its peak at
+  # 0.26 min) had underflowed to 0 where the search began, which then settled
+  # near 4000 and took any tPeak as unreachable (CodeRabbit on PR #730)
   plasmaPeak <- lag + stats::optimize(
     function(t) sum(oralCoef * exp(-oralLambda * t)),
-    c(0, 4000), maximum = TRUE
+    c(0, min(4000, 20 / min(oralLambda))), maximum = TRUE
   )$maximum
 
-  if (tPeak <= plasmaPeak)
-    stop("Cannot solve ke0 for ", drug, ": a peak effect at ", round(tPeak, 1),
-         " min is not reachable, because the oral plasma concentration itself ",
-         "peaks at ", round(plasmaPeak, 1), " min and the effect site always ",
-         "peaks later. Either the time to peak effect belongs after that, or ",
-         "the absorption constant is too slow.")
+  # No ke0 puts the peak at or before the plasma's own (see above): the
+  # nearest reachable peak is the plasma peak itself, approached as ke0 grows
+  # (Carbon's third UI audit, 2026-11-15, H3).
+  if (tPeak <= plasmaPeak) return(follows)
 
   peakAt <- function(ke0) lag + effectSitePeakTime(oralCoef, oralLambda, ke0)
 
   # Bracket: peakAt() falls towards plasmaPeak as ke0 grows.  Widen downwards
-  # until the peak is later than the target, which must happen as ke0 -> 0.
+  # until the peak is later than the target, which must happen as ke0 -> 0,
+  # and upwards to `follows` until it is earlier (a tPeak just after the
+  # plasma peak needs a ke0 above 10 /min, which made uniroot() stop).
   lo <- 1e-6
   hi <- 10
-  while (peakAt(lo) < tPeak && lo > 1e-12) lo <- lo / 10
+  while (peakAt(lo) < tPeak && lo > KE0_SOLVE_MIN) lo <- lo / 10
+  while (peakAt(hi) > tPeak && hi < follows) hi <- min(hi * 10, follows)
+  # Outside the bracket, the end nearest the target (see above)
+  if (peakAt(lo) < tPeak) return(lo)
+  if (peakAt(hi) > tPeak) return(hi)
   stats::uniroot(function(ke0) peakAt(ke0) - tPeak, c(lo, hi),
                  tol = .Machine$double.eps^0.5)$root
 }
@@ -1661,6 +2085,18 @@ ke0FromTPeak <- function(tPeak, coef, lambda, ka, drug = "this drug", lag = 0)
 #' left morphine's 93.8 min solved to 93.83 min.  (Claude Code, 2026-10-17, from
 #' an external review.)
 #'
+#' Reachable in principle is not reachable in floating point.  A plasma curve
+#' that is gone within seconds (a Bayesian candidate at twenty times the
+#' model's clearance and a twentieth of its volume: oxymorphone, pregabalin,
+#' epinephrine and vasopressin) needs a ke0 below 1e-100 per minute to peak at
+#' a tPeak of minutes, which no bracket reaches, and uniroot() stopped, which
+#' failed the Bayesian update of that drug (Carbon's third UI audit,
+#' 2026-11-15, H3).  A target outside the bracket now gets the end of the
+#' bracket nearest to it, as ke0FromTPeak() does: \code{KE0_SOLVE_MIN}, whose
+#' effect site is close to zero, as the exact ke0 would give, for a target
+#' later than it can reach, and \code{KE0_SOLVE_MAX} for one earlier.  Every
+#' tPeak solved before is solved exactly as before.
+#'
 #' @param tPeak observed time to peak effect after a bolus, in minutes
 #' @param coef plasma bolus coefficients on the drug's eigenvalues
 #' @param lambda those eigenvalues; zeros mark absent compartments
@@ -1674,11 +2110,25 @@ ke0FromTPeakBolus <- function(tPeak, coef, lambda)
   # upwards until it is earlier.
   lo <- 1e-3
   hi <- 1
-  while (peakAt(lo) < tPeak && lo > 1e-12) lo <- lo / 10
-  while (peakAt(hi) > tPeak && hi < 1e6) hi <- hi * 10
+  while (peakAt(lo) < tPeak && lo > KE0_SOLVE_MIN) lo <- lo / 10
+  while (peakAt(hi) > tPeak && hi < KE0_SOLVE_MAX) hi <- hi * 10
+  # Outside the bracket, the end nearest the target (see above)
+  if (peakAt(lo) < tPeak) return(lo)
+  if (peakAt(hi) > tPeak) return(hi)
   stats::uniroot(function(ke0) peakAt(ke0) - tPeak, c(lo, hi),
                  tol = .Machine$double.eps^0.5)$root
 }
+
+# The ends of the ke0 brackets, per minute (ke0FromTPeak(),
+# ke0FromTPeakBolus()): the values the two searches always widened to, now
+# also the answers they give for a tPeak no ke0 inside them can reach
+# (Carbon's third UI audit, 2026-11-15, H3).  KE0_FOLLOWS_PLASMA_FACTOR sets
+# the ke0 of an effect site that follows an oral plasma curve, as a multiple
+# of the curve's fastest rate: 100 puts the effect site's lag at 1% of the
+# plasma curve's fastest time constant.
+KE0_SOLVE_MIN <- 1e-12
+KE0_SOLVE_MAX <- 1e6
+KE0_FOLLOWS_PLASMA_FACTOR <- 100
 
 
 # calculate c3 based on 4 coefficients, 4 exponents, and time
@@ -1761,6 +2211,48 @@ molarWeightOfDoses <- function(molar, units, drug = "")
          paste(names(mw), collapse = ", "), ": ",
          paste(unique(as.character(units)[missing]), collapse = ", "))
   unname(mw[product])
+}
+
+#' Validate a drug's `doseProducts` block
+#'
+#' A named numeric vector: for each product word a dose unit may carry
+#' (`doseProduct()`), the mass of the plotted drug in one unit mass of the
+#' product, a finite number above 0 and at most 1 (a salt or prodrug carries
+#' no more of the drug than its own mass).  NULL when the drug declares none.
+#'
+#' @param products the model's `doseProducts` field, or NULL
+#' @param drug the drug name, for the message
+#' @returns the block, or NULL
+#' @keywords internal
+validateDoseProducts <- function(products, drug)
+{
+  if (is.null(products)) return(NULL)
+  ok <- is.numeric(products) && length(products) > 0 &&
+    !is.null(names(products)) && all(nzchar(names(products))) &&
+    !anyDuplicated(names(products)) &&
+    all(is.finite(products)) && all(products > 0 & products <= 1)
+  if (!ok)
+    stop("Invalid doseProducts block for ", drug, ": a named numeric vector of ",
+         "factors above 0 and at most 1 is required.")
+  products
+}
+
+#' Validate a drug's `unitPotency`
+#'
+#' Micrograms of the plotted drug in one unit of potency, a finite number
+#' above 0, for a drug dosed in units and plotted by mass (oxytocin).  NULL
+#' when the drug declares none.
+#'
+#' @param potency the model's `unitPotency` field, or NULL
+#' @param drug the drug name, for the message
+#' @returns the value, or NULL
+#' @keywords internal
+validateUnitPotency <- function(potency, drug)
+{
+  if (is.null(potency)) return(NULL)
+  if (!is.numeric(potency) || length(potency) != 1 || !is.finite(potency) || potency <= 0)
+    stop("Invalid unitPotency for ", drug, ": one finite number of micrograms per unit above 0 is required.")
+  potency
 }
 
 #' Stop on a disposition the engines cannot use

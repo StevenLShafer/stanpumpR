@@ -315,3 +315,15 @@ fieldHelp <- function(control, ..., placement = "right") {
 relevantField <- function(name, ...) {
   div(id = paste0("field_", name), class = "relevant-field", ...)
 }
+
+# A numericInput that may start blank (value NA: serum creatinine, gestational
+# age).  numericInput() writes value="NA", which a number input cannot take:
+# the field showed blank anyway, but every page load logged "The specified
+# value "NA" cannot be parsed" twice (Devin's stress test, 2026-11-08).  The
+# attribute is left out instead; a bookmark's restored value is kept, since
+# numericInput() reads it (restoreInput()) before writing the attribute.
+blankableNumericInput <- function(inputId, ...) {
+  tag <- shiny::numericInput(inputId, ...)
+  htmltools::tagQuery(tag)$find("input")$filter(function(x, i) identical(x$attribs$value, "NA"))$
+    removeAttrs("value")$allTags()
+}

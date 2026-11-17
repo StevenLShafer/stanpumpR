@@ -4,7 +4,7 @@ Four opioids are infused at constant rates for three hours and stopped. The curv
 
 During the infusion, remifentanil reaches 90 per cent of its plateau within about 20 minutes. The other three are far slower: alfentanil, fentanyl and sufentanil are each at about two thirds of their final level at an hour, and are still climbing at three hours.
 
-After the infusions stop at 180 minutes, remifentanil is gone in minutes. Sufentanil falls to half in under half an hour and alfentanil in about three quarters of an hour. Fentanyl is slowest, nearly an hour, and falls further behind as time goes on: its large slow compartment, which it has spent three hours filling, now returns drug to the plasma and holds the concentration up, so that at 360 minutes it is still at a third of its peak and sufentanil at a seventh. Hover on the fentanyl and sufentanil lines at 240 and 360 minutes.
+After the infusions stop at 180 minutes, remifentanil is gone in minutes. Sufentanil falls to half in under half an hour, and fentanyl and alfentanil in about three quarters of an hour, fentanyl a little sooner. But fentanyl then falls behind: its large slow compartment, which it has spent three hours filling, now returns drug to the plasma and holds the concentration up, so that at 360 minutes it is still at a third of its peak, alfentanil at a fifth and sufentanil at a seventh. Hover on the fentanyl and sufentanil lines at 240 and 360 minutes.
 
 This is the **context-sensitive half-time** of Hughes, Glass and Jacobs made visible: the time to fall by half after an infusion depends on how long the infusion ran, and it differs by an order of magnitude between drugs that have similar terminal half-lives.
 

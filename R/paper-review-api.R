@@ -10,18 +10,42 @@
 # manuscript with adaptive thinking can run for minutes.
 #
 # The key: PAPER_REVIEW_KEY_ENV in the environment, or `anthropic_api_key` in
-# config.yml (git-ignored).  paperReviewApiKey() takes a session key first, the
-# seam for a later bring-your-own-key option in which a user's key is held
-# only in that session's memory.  See docs/paper-review.md and
-# docs/paper-review-privacy.md.  (Claude Code, 2026-10-30, at the request of
-# Steven L. Shafer.)
+# config.yml (git-ignored; on shinyapps.io written by the production deploy
+# from a repository secret).  That is the operator's own key, the default
+# for every user, and `paper_review_shared_key: false` in config.yml turns it
+# off.  A user may instead enter their own key, held only in that session's
+# input (paperReviewOwnKey()), which paperReviewApiKey() takes first.  Uses
+# of the operator's key are counted (R/paper-review-usage.R).  See
+# docs/paper-review.md and docs/paper-review-privacy.md.  (Claude Code,
+# 2026-10-30 and 2026-11-10, at the request of Steven L. Shafer.)
+#
+# The call takes minutes, and one R process serves every session of a
+# shinyapps.io worker, so it runs in a background R process
+# (paperReviewExtractAsync(), through mirai; the server's ExtendedTask):
+# the request is built here, sent and streamed there by
+# paperReviewTransport(), which uses nothing of stanpumpR, and read back here
+# by paperReviewInterpret().  paperReviewExtract() is the same three steps in
+# this process, for the live test and for scripts.
 
 PAPER_REVIEW_API_URL      <- "https://api.anthropic.com/v1/messages"
 PAPER_REVIEW_API_VERSION  <- "2026-10-21"
 PAPER_REVIEW_MODEL        <- "claude-opus-5-5"
+# Effort high and 128,000 output tokens, the model's most: Shafer's decision
+# of 2026-11-10 on the calibration (docs/paper-review-calibration.md), where
+# high used up to 56,348 tokens on an eight-page paper, 88% of the old
+# 64,000. The limit costs nothing unless a review needs it; at about 125
+# tokens a second, 128,000 is about 17 minutes, inside the time limit.
 PAPER_REVIEW_EFFORT       <- "high"
-PAPER_REVIEW_MAX_TOKENS   <- 64000
+PAPER_REVIEW_MAX_TOKENS   <- 128000
 PAPER_REVIEW_TIMEOUT_SEC  <- 1200
+# A review still running after this long (the calibration's slowest at high
+# took 7 minutes) is offered a quick review instead: the same manuscript,
+# the same model, at effort medium, which in the calibration was 1.6 times
+# faster and read a paper with one model as fully, but left out secondary
+# models and some per-patient detail (Shafer, 2026-11-13;
+# docs/paper-review-calibration.md).
+PAPER_REVIEW_LATE_SEC     <- 600
+PAPER_REVIEW_QUICK_EFFORT <- "medium"
 # This app's own key first, so it can sit beside another app's
 # ANTHROPIC_API_KEY in the same ~/.Renviron; then the standard name.
 PAPER_REVIEW_KEY_ENV      <- c("STANPUMPR_ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY")
@@ -34,28 +58,89 @@ PAPER_REVIEW_MAX_PDF_BYTES <- 20 * 1024^2
 # the app sees it; run_app() and run_paper_review_app() raise it to this, the
 # PDF limit plus room for the request's own encoding.
 PAPER_REVIEW_MAX_UPLOAD_BYTES <- PAPER_REVIEW_MAX_PDF_BYTES + 1024^2
+# The longest key the own-key field accepts (Anthropic's are about 110).
+PAPER_REVIEW_OWN_KEY_MAX_CHARS <- 300
+# The box that shows the own-key field in place of the countdown of the
+# shared key's reviews left this month (Shafer, 2026-11-17).
+PAPER_REVIEW_OWN_KEY_LABEL <- "Supply my own key"
+# The background process is given the request's own time limit and five
+# minutes more (its start, the retries' waits); past that it is abandoned
+# and the user told, rather than the session waiting for ever.
+PAPER_REVIEW_BACKGROUND_TIMEOUT_SEC <- PAPER_REVIEW_TIMEOUT_SEC + 300
 
 #' The API key for this session
 #'
-#' A key supplied for the session (bring-your-own-key) wins; then the
-#' environment; then config.yml.  The key is returned, never printed.
+#' A key the user entered for the session (bring-your-own-key) wins; then the
+#' operator's: the environment, then config.yml, unless
+#' \code{paper_review_shared_key} is \code{false} there.  The key is
+#' returned, never printed.
 #'
 #' @param sessionKey a key held in the session's memory, or NULL
 #' @param config the app's configuration list
+#' @param admitted TRUE for a review whose place within the shared key's
+#'   limit is already reserved (a quick review): the limit, reached since by
+#'   another session, does not withdraw the key from it
 #' @returns the key, or NULL when none is configured
 #' @keywords internal
-paperReviewApiKey <- function(sessionKey = NULL, config = .sprglobals$config)
+paperReviewApiKey <- function(sessionKey = NULL, config = .sprglobals$config, admitted = FALSE)
 {
   if (is.character(sessionKey) && length(sessionKey) == 1 && nzchar(sessionKey))
     return(sessionKey)
+  # The operator's key can be withdrawn without removing it (after the uses
+  # Shafer allows it, users bring their own).
+  if (is.list(config) && isFALSE(config$paper_review_shared_key)) return(NULL)
+  # Nor is it once it has made the reviews it is allowed
+  # (paperReviewSharedKeyAdmit(), R/paper-review-usage.R).
+  if (!isTRUE(admitted) && paperReviewSharedKeyExhausted()) return(NULL)
+  # Trimmed: a secret pasted with a trailing line break or space reaches
+  # config.yml with it, and the API refuses the key as invalid (401).
   for (name in PAPER_REVIEW_KEY_ENV) {
-    key <- Sys.getenv(name, "")
+    key <- trimws(Sys.getenv(name, ""))
     if (nzchar(key)) return(key)
   }
   key <- if (is.list(config)) config$anthropic_api_key else NULL
-  if (is.character(key) && length(key) == 1 && nzchar(key) &&
+  if (is.character(key) && length(key) == 1 && !is.na(key)) key <- trimws(key)
+  if (is.character(key) && length(key) == 1 && !is.na(key) && nzchar(key) &&
       !grepl("^<", key)) return(key)
   NULL
+}
+
+#' What to do about a refused key
+#'
+#' A 401 or 403 says the key, not the manuscript, was refused, and whose key
+#' it was decides what the user can do: their own they can check; the
+#' operator's only the operator can replace, so the user is pointed to their
+#' own (found testing the deployed app, 2026-11-17, when the shared key was
+#' refused and the message did not say whose it was).
+#'
+#' @param code the \code{paper_review_error}'s code
+#' @param own TRUE when the review was sent with the user's own key
+#' @returns a sentence to add to the message, or ""
+#' @keywords internal
+paperReviewKeyAdvice <- function(code, own)
+{
+  if (!is.character(code) || length(code) != 1 || !code %in% c("http_401", "http_403")) return("")
+  if (isTRUE(own))
+    "The key refused was the one you entered: check it in the Anthropic Console (it may have been mistyped, revoked or disabled)."
+  else paste0("The key refused was stanpumpR's own, which only the site's operator can replace; ",
+              "to review now, tick \"", PAPER_REVIEW_OWN_KEY_LABEL, "\" and enter yours.")
+}
+
+#' A key the user typed, if it can be one
+#'
+#' Anthropic API keys begin \code{sk-ant-}.  Anything else (a blank field, a
+#' half-pasted key, text with spaces) is not used, so a review is never sent
+#' with it.
+#'
+#' @param x the field's value
+#' @returns the trimmed key, or NULL
+#' @keywords internal
+paperReviewOwnKey <- function(x)
+{
+  if (!is.character(x) || length(x) != 1 || is.na(x)) return(NULL)
+  x <- trimws(x)
+  if (nchar(x) > PAPER_REVIEW_OWN_KEY_MAX_CHARS || !grepl("^sk-ant-[A-Za-z0-9_-]{10,}$", x)) return(NULL)
+  x
 }
 
 #' The request body for one manuscript
@@ -158,16 +243,14 @@ paperReviewError <- function(code, message)
 #' not its content), cut to 300 characters.  It goes into the condition the
 #' user sees, never into a log.
 #'
-#' @param resp the httr2 response
-#' @returns a string, empty when the body cannot be read
+#' @param error the error body's \code{error} object, a list of \code{type}
+#'   and \code{message}, or NULL
+#' @returns a string, empty when there is none
 #' @keywords internal
-paperReviewApiErrorText <- function(resp)
+paperReviewApiErrorText <- function(error)
 {
-  body <- tryCatch(jsonlite::fromJSON(httr2::resp_body_string(resp), simplifyVector = FALSE),
-                   error = function(e) NULL)
-  e <- body$error
-  if (is.null(e)) return("")
-  substr(paste0("API says (", e$type %or% "error", "): ", e$message %or% ""), 1, 300)
+  if (!is.list(error) || is.null(error$message)) return("")
+  substr(paste0("API says (", error$type %or% "error", "): ", error$message %or% ""), 1, 300)
 }
 
 #' Parse the extraction out of an accumulated response
@@ -236,6 +319,24 @@ paperReviewValidate <- function(x)
       if (nzchar(out$extraction_limitations)) " " else "",
       "The reply had no usable ", paste(missing, collapse = ", "),
       "; the review treats them as empty.")
+  # Every field below the top, against its schema: the schema travels in the
+  # prompt, not as an enforced output, so a field can arrive as anything.  One
+  # unreadable field (a list where a number belongs, NA, a vector) cost the
+  # whole paid review: 175 of 400 fuzzed extractions failed in the checks or
+  # the report (Devin's stress test, 2026-11-08).  Now it costs that field,
+  # which is set aside and named here.
+  notes <- new.env()
+  notes$paths <- character(0)
+  for (name in unlist(schema$required))
+    if (!is.null(out[[name]]))
+      out[name] <- list(paperReviewConform(out[[name]], schema$properties[[name]], name, name, notes))
+  if (length(notes$paths))
+    out$extraction_limitations <- paste0(
+      out$extraction_limitations,
+      if (nzchar(out$extraction_limitations)) " " else "",
+      "Some fields of the reply could not be read and were set aside: ",
+      paste(utils::head(notes$paths, 8), collapse = "; "),
+      if (length(notes$paths) > 8) paste0("; and ", length(notes$paths) - 8, " more") else "", ".")
   # The schema's closed choices are instructions too: a value outside them
   # (an unknown parameter role) is passed over by the checks without a word,
   # so each one is named here, which the report prints.
@@ -248,6 +349,89 @@ paperReviewValidate <- function(x)
       paste(utils::head(stray, 8), collapse = "; "),
       if (length(stray) > 8) paste0("; and ", length(stray) - 8, " more") else "", ".")
   out
+}
+
+#' Make one part of an extraction the shape its schema says
+#'
+#' A readable value is kept, or coerced where the reading is unambiguous (a
+#' number sent as text, one string sent as a number); an unreadable one is set
+#' aside (\code{NA} for a number, an empty string for a required string, the
+#' field's "other" for a required choice, \code{NULL} for an optional field
+#' or an object) and its path recorded in \code{notes}.  A number is kept in
+#' place as \code{NA} rather than removed: removed, \code{d$time} would
+#' partially match \code{d$time_units} and \code{dq$value} \code{dq$value_text},
+#' and a check would multiply \code{"min"} by a number.  An array item that
+#' cannot be read is dropped.  Fields the schema does not name are left as
+#' they are: no check reads them.
+#'
+#' @param value part of the extraction (after \code{paperReviewNormalize()})
+#' @param spec its schema
+#' @param name its field name (decides a numeric or optional field)
+#' @param path where it is, for the note
+#' @param notes an environment whose \code{paths} collects what was set aside
+#' @returns the value, conformed
+#' @keywords internal
+paperReviewConform <- function(value, spec, name, path, notes)
+{
+  if (is.null(value) || !is.list(spec)) return(value)
+  setAside <- function(replacement = NULL) {
+    notes$paths <- c(notes$paths, path)
+    replacement
+  }
+  scalar <- function(v) length(v) == 1 && !is.list(v) && !is.na(v)
+  choices <- if (!is.null(spec$enum)) unlist(spec$enum) else attr(spec, "choices")
+  kind <- if (!is.null(choices)) "choice"
+    else if (spec$type %in% c("object", "array")) spec$type
+    else if (name %in% PAPER_REVIEW_NUMERIC_FIELDS || identical(spec$type, "number")) "number"
+    else spec$type %or% "other"
+  switch(kind,
+    number = {
+      if (is.numeric(value) && scalar(value) && is.finite(value)) return(value)
+      if (is.character(value) && scalar(value)) {
+        n <- suppressWarnings(as.numeric(trimws(value)))
+        if (is.finite(n)) return(n)
+      }
+      setAside(NA_real_)
+    },
+    choice = {
+      if (is.character(value) && scalar(value)) return(value)
+      if ((is.numeric(value) || is.logical(value)) && scalar(value)) return(as.character(value))
+      fallback <- intersect(c("other", "unstated", "none"), choices)
+      setAside(if (name %in% PAPER_REVIEW_OPTIONAL_ENUMS || !length(fallback)) NULL else fallback[1])
+    },
+    string = {
+      if (is.character(value) && scalar(value)) return(value)
+      if ((is.numeric(value) || is.logical(value)) && scalar(value)) return(as.character(value))
+      setAside(if (name %in% PAPER_REVIEW_OPTIONAL_STRINGS) NULL else "")
+    },
+    object = {
+      if (is.list(value) && length(value) == 0) return(stats::setNames(list(), character(0)))
+      if (!is.list(value) || is.null(names(value)) || any(!nzchar(names(value)))) return(setAside())
+      for (field in names(spec$properties)) {
+        if (is.null(value[[field]])) next
+        conformed <- paperReviewConform(value[[field]], spec$properties[[field]], field,
+                                        paste0(path, ".", field), notes)
+        if (is.null(conformed)) value[[field]] <- NULL else value[[field]] <- conformed
+      }
+      value
+    },
+    array = {
+      items <- if (is.list(value) && is.null(names(value))) value
+        # One object sent where a list of them belongs: the one item.
+        else if (is.list(value) && identical(spec$items$type, "object")) list(value)
+        else if (!is.list(value) && !identical(spec$items$type, "object")) as.list(value)
+        else return(setAside(list()))
+      out <- list()
+      for (i in seq_along(items)) {
+        conformed <- paperReviewConform(items[[i]], spec$items, name, paste0(path, "[", i, "]"), notes)
+        if (is.null(conformed)) {
+          if (!is.null(items[[i]]) && !(paste0(path, "[", i, "]") %in% notes$paths))
+            notes$paths <- c(notes$paths, paste0(path, "[", i, "]"))
+        } else out[[length(out) + 1]] <- conformed
+      }
+      out
+    },
+    value)
 }
 
 #' The values of an extraction outside their field's closed choices
@@ -276,49 +460,105 @@ paperReviewStrayChoices <- function(value, spec, path = "")
   character(0)
 }
 
-#' Send one manuscript to the Anthropic API and return the extraction
+#' Check a manuscript and build its request
+#'
+#' Everything that can be refused without the network is refused here, in
+#' the app's process, before anything is sent.
 #'
 #' @param pdf,supplement raw bytes (supplement optional)
 #' @param key the API key
-#' @param progress optional function(text) called as the stream advances,
-#'   with counts only
 #' @param ... passed to \code{paperReviewRequestBody()}
-#' @returns a list: \code{extraction}, \code{usage}, \code{model}
+#' @returns a list: \code{json} (the request body) and \code{fallbacks}
+#'   (whether the refusal fallback was requested)
 #' @keywords internal
-paperReviewExtract <- function(pdf, supplement = NULL, key, progress = NULL, ...)
+paperReviewPrepare <- function(pdf, supplement = NULL, key, ...)
 {
-  if (!requireNamespace("httr2", quietly = TRUE))
-    stop(paperReviewError("no_httr2", "The httr2 package is needed to call the Anthropic API."))
   if (is.null(key)) stop(paperReviewError("no_key", "No Anthropic API key is configured."))
   if (!is.raw(pdf) || length(pdf) == 0)
     stop(paperReviewError("no_pdf", "No manuscript was uploaded."))
   if (length(pdf) + length(supplement) > PAPER_REVIEW_MAX_PDF_BYTES)
     stop(paperReviewError("too_large", "The files are too large to send (20 MB together)."))
-
   body <- paperReviewRequestBody(pdf, supplement, ...)
-  req <- httr2::request(PAPER_REVIEW_API_URL)
+  list(json = as.character(jsonlite::toJSON(body, auto_unbox = TRUE, null = "null", digits = NA)),
+       fallbacks = !is.null(body$fallbacks))
+}
+
+#' Send a prepared request and collect the streamed reply
+#'
+#' Runs in a background R process (paperReviewExtractAsync()), so it refers
+#' to nothing of stanpumpR: every constant is an argument and every call is
+#' \code{httr2::} or \code{jsonlite::}.  It returns what came back, raw:
+#' the HTTP status, the API's error object for a refused request, or the
+#' server-sent events; paperReviewInterpret() reads them.  It writes nothing
+#' anywhere but, when asked, its own process ID (so the app can stop it), and
+#' the key is redacted from the request.
+#'
+#' @param json the request body
+#' @param key the API key
+#' @param fallbacks request the server-side refusal fallback?
+#' @param url,version,beta,timeout the endpoint, API version, fallback beta
+#'   header and time limit (seconds)
+#' @param pidFile a file to write this process's ID to, or NULL
+#' @returns a list: \code{failure} (NULL, \code{"no_httr2"} or
+#'   \code{"connection"}), \code{status}, \code{error}, \code{events}
+#' @keywords internal
+paperReviewTransport <- function(json, key, fallbacks = TRUE,
+                                 url = "https://api.anthropic.com/v1/messages",
+                                 version, beta, timeout, pidFile = NULL)
+{
+  if (!is.null(pidFile)) writeLines(as.character(Sys.getpid()), pidFile)
+  if (!requireNamespace("httr2", quietly = TRUE)) return(list(failure = "no_httr2"))
+  req <- httr2::request(url)
   req <- httr2::req_headers(req,
-    `anthropic-version` = PAPER_REVIEW_API_VERSION,
+    `anthropic-version` = version,
     `content-type` = "application/json",
     .redact = "x-api-key")
   req <- httr2::req_headers(req, `x-api-key` = key, .redact = "x-api-key")
-  if (!is.null(body$fallbacks))
-    req <- httr2::req_headers(req, `anthropic-beta` = PAPER_REVIEW_FALLBACK_BETA)
-  req <- httr2::req_body_raw(req, jsonlite::toJSON(body, auto_unbox = TRUE,
-                                                   null = "null", digits = NA),
-                             type = "application/json")
-  req <- httr2::req_timeout(req, PAPER_REVIEW_TIMEOUT_SEC)
+  if (isTRUE(fallbacks)) req <- httr2::req_headers(req, `anthropic-beta` = beta)
+  req <- httr2::req_body_raw(req, json, type = "application/json")
+  req <- httr2::req_timeout(req, timeout)
   req <- httr2::req_error(req, is_error = function(resp) FALSE)
   req <- httr2::req_retry(req, max_tries = 3,
                           is_transient = function(resp)
                             httr2::resp_status(resp) %in% c(429, 500, 502, 503, 529))
-  rm(body)
-
-  resp <- tryCatch(httr2::req_perform_connection(req),
-                   error = function(e) stop(paperReviewError(
-                     "connection", "Could not reach the Anthropic API.")))
+  rm(json)
+  resp <- tryCatch(httr2::req_perform_connection(req), error = function(e) NULL)
+  if (is.null(resp)) return(list(failure = "connection"))
   on.exit(close(resp), add = TRUE)
   status <- httr2::resp_status(resp)
+  if (status >= 400) {
+    body <- tryCatch(jsonlite::fromJSON(httr2::resp_body_string(resp), simplifyVector = FALSE),
+                     error = function(e) NULL)
+    error <- if (is.list(body) && is.list(body$error)) body$error[intersect(c("type", "message"), names(body$error))]
+    return(list(status = status, error = error))
+  }
+  events <- list()
+  while (!httr2::resp_stream_is_complete(resp)) {
+    event <- httr2::resp_stream_sse(resp)
+    if (is.null(event)) next
+    events[[length(events) + 1]] <- event
+  }
+  list(status = status, events = events)
+}
+
+#' Read what paperReviewTransport() brought back
+#'
+#' @param result its return value
+#' @returns a list: \code{extraction}, \code{usage}, \code{model}; or an
+#'   error of class \code{paper_review_error}, which carries the tokens the
+#'   reply used in \code{$usage} when the API answered (a reply cut at the
+#'   output limit is billed too)
+#' @keywords internal
+paperReviewInterpret <- function(result)
+{
+  failure <- result$failure
+  if (identical(failure, "no_httr2"))
+    stop(paperReviewError("no_httr2", "The httr2 package is needed to call the Anthropic API."))
+  if (identical(failure, "connection"))
+    stop(paperReviewError("connection", "Could not reach the Anthropic API."))
+  status <- result$status
+  if (!is.numeric(status) || length(status) != 1)
+    stop(paperReviewError("unexpected", "The review failed unexpectedly."))
   if (status >= 400)
     stop(paperReviewError(paste0("http_", status), paste(switch(
       as.character(status),
@@ -329,19 +569,132 @@ paperReviewExtract <- function(pdf, supplement = NULL, key, progress = NULL, ...
       "429" = "The API's rate limit was reached (429). Try again in a minute.",
       "529" = "The API is overloaded (529). Try again shortly.",
       paste0("The API returned an error (", status, ").")),
-      paperReviewApiErrorText(resp))))
+      paperReviewApiErrorText(result$error))))
+  accumulated <- paperReviewAccumulateEvents(result$events %or% list())
+  extraction <- tryCatch(paperReviewParseResponse(accumulated),
+                         paper_review_error = function(e) {
+                           e$usage <- accumulated$usage
+                           stop(e)
+                         })
+  list(extraction = extraction, usage = accumulated$usage, model = accumulated$model)
+}
 
-  events <- list()
-  while (!httr2::resp_stream_is_complete(resp)) {
-    event <- httr2::resp_stream_sse(resp)
-    if (is.null(event)) next
-    events[[length(events) + 1]] <- event
-    if (is.function(progress) && length(events) %% 200 == 0)
-      progress(paste(length(events), "events received"))
+# The arguments paperReviewTransport() takes from this package's constants.
+paperReviewTransportArgs <- function(prepared, key)
+  list(json = prepared$json, key = key, fallbacks = prepared$fallbacks,
+       url = PAPER_REVIEW_API_URL, version = PAPER_REVIEW_API_VERSION,
+       beta = PAPER_REVIEW_FALLBACK_BETA, timeout = PAPER_REVIEW_TIMEOUT_SEC)
+
+#' Send one manuscript to the Anthropic API and return the extraction
+#'
+#' In this R process, which waits for it: for scripts and the live test.  The
+#' app uses paperReviewExtractAsync().
+#'
+#' @param pdf,supplement raw bytes (supplement optional)
+#' @param key the API key
+#' @param ... passed to \code{paperReviewRequestBody()}
+#' @returns a list: \code{extraction}, \code{usage}, \code{model}
+#' @keywords internal
+paperReviewExtract <- function(pdf, supplement = NULL, key, ...)
+{
+  if (!requireNamespace("httr2", quietly = TRUE))
+    stop(paperReviewError("no_httr2", "The httr2 package is needed to call the Anthropic API."))
+  prepared <- paperReviewPrepare(pdf, supplement, key = key, ...)
+  paperReviewInterpret(do.call(paperReviewTransport, paperReviewTransportArgs(prepared, key)))
+}
+
+#' Run a function in a background R process
+#'
+#' A mirai, one short-lived R process per call (no daemons are set), so a
+#' minutes-long API call or a mail send never holds the R process every
+#' session of a worker shares.  \code{fn} is sent with the global
+#' environment as its own, so it must be self-contained.  The process is
+#' started with this one's library paths, which it would not otherwise find
+#' where they are set only inside R (renv, a host's own library), and then
+#' waits for ever for a package it cannot load; \code{timeout} bounds it.
+#'
+#' @param fn a self-contained function
+#' @param args its arguments, a list
+#' @param timeout seconds
+#' @returns the mirai, which is also a promise
+#' @keywords internal
+paperReviewInBackground <- function(fn, args, timeout)
+{
+  environment(fn) <- globalenv()
+  old <- Sys.getenv("R_LIBS", unset = NA)
+  Sys.setenv(R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep))
+  on.exit(if (is.na(old)) Sys.unsetenv("R_LIBS") else Sys.setenv(R_LIBS = old), add = TRUE)
+  mirai::mirai(do.call(fn, args), .args = list(fn = fn, args = args), .timeout = timeout * 1000)
+}
+
+#' The function that stops one background review and its process
+#'
+#' Made here, not inside paperReviewExtractAsync(), so that it holds only the
+#' job and the file of its process ID: a function made there would keep that
+#' call's frame, the manuscript and the key with it, alive for as long as the
+#' app keeps the function (CodeRabbit, PR #720).
+#'
+#' @param job the background job
+#' @param pidFile the file its process wrote its ID to
+#' @returns a function of no arguments that returns TRUE only when it ended
+#'   the job's process.  Without a readable process ID, or when the signal is
+#'   not delivered, it returns FALSE and leaves the job alone, so that the
+#'   review goes on and its answer is still read: settling the job without
+#'   ending the process would leave a review running, and billed, that nothing
+#'   waits for (CodeRabbit, PR #720).
+#' @keywords internal
+paperReviewStopper <- function(job, pidFile)
+{
+  force(job)
+  force(pidFile)
+  function() {
+    # Only while it runs: once it has finished, its ID may be another's.
+    if (!mirai::unresolved(job)) return(invisible(FALSE))
+    pid <- suppressWarnings(as.integer(tryCatch(readLines(pidFile, warn = FALSE)[1],
+                                                error = function(e) NA_character_)))
+    if (length(pid) != 1 || is.na(pid) || pid <= 0 || pid == Sys.getpid()) return(invisible(FALSE))
+    if (!isTRUE(tools::pskill(pid))) return(invisible(FALSE))
+    # The process has ended; settle the job, which would otherwise wait for
+    # its timeout.
+    mirai::stop_mirai(job)
+    invisible(TRUE)
   }
-  accumulated <- paperReviewAccumulateEvents(events)
-  rm(events)
-  list(extraction = paperReviewParseResponse(accumulated),
-       usage = accumulated$usage,
-       model = accumulated$model)
+}
+
+#' Send one manuscript to the Anthropic API without waiting for it
+#'
+#' The request is built and checked here, sent from a background R process,
+#' and read here when it returns.
+#'
+#' @inheritParams paperReviewExtract
+#' @param onJob called once the background process starts with a function
+#'   that stops it, or NULL.  Without a dispatcher, \code{mirai::stop_mirai()}
+#'   settles the job here at once but leaves its process reading the paper
+#'   (and billed) until its own time limit, so the stop function also ends
+#'   the process, by the ID it wrote.
+#' @returns a promise of what paperReviewExtract() returns; it is rejected
+#'   with a \code{paper_review_error}
+#' @keywords internal
+paperReviewExtractAsync <- function(pdf, supplement = NULL, key, ..., onJob = NULL)
+{
+  prepared <- tryCatch(paperReviewPrepare(pdf, supplement, key = key, ...),
+                       paper_review_error = function(e) e)
+  if (inherits(prepared, "paper_review_error")) return(promises::promise_reject(prepared))
+  pidFile <- tempfile("paper-review-")
+  job <- paperReviewInBackground(paperReviewTransport,
+                                 c(paperReviewTransportArgs(prepared, key), list(pidFile = pidFile)),
+                                 PAPER_REVIEW_BACKGROUND_TIMEOUT_SEC)
+  rm(prepared)
+  if (is.function(onJob)) onJob(paperReviewStopper(job, pidFile))
+  answer <- promises::then(job,
+    onFulfilled = function(result) {
+      # A failure inside the process comes back as a value, not an error.
+      if (inherits(result, "miraiError") || inherits(result, "errorValue"))
+        stop(paperReviewError("background", "The review's background process failed. Try again."))
+      paperReviewInterpret(result)
+    },
+    onRejected = function(e)
+      stop(paperReviewError("background",
+                            "The review did not finish (it timed out, or its background process failed). Try again.")))
+  promises::finally(answer, function() unlink(pidFile))
 }

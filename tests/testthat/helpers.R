@@ -75,3 +75,43 @@ mammillaryReference <- function(set, times, bolus = 0, rate = 0, tStop = Inf) {
     sum(V[1, ] * g * w) / set$v1
   }, numeric(1))
 }
+
+# What the dose grid sends (input$doseGrid, inst/www/dose-grid.js), through
+# the JSON Shiny reads it from: rows of four strings, the time format they
+# were typed in, and the number of edits sent
+doseGridInputValue <- function(rows, format = "minutes/relative", seq = 1) {
+  json <- jsonlite::toJSON(list(rows = rows, timeFormat = format, seq = seq),
+                           auto_unbox = TRUE, null = "null", na = "null")
+  jsonlite::fromJSON(json, simplifyVector = FALSE)
+}
+
+# What a table grid sends (inst/www/table-grid.js): its rows, a checkbox as
+# TRUE or FALSE, and the tag it was drawn with
+tableGridInputValue <- function(rows, tag = NULL, seq = 1) {
+  value <- list(rows = rows, seq = seq)
+  if (!is.null(tag)) value$tag <- tag
+  json <- jsonlite::toJSON(value, auto_unbox = TRUE, null = "null", na = "null")
+  jsonlite::fromJSON(json, simplifyVector = FALSE)
+}
+
+# The fat-free-mass ratio of a man to the library's reference man (70 kg,
+# 170 cm, 35 years), written out from Al-Sallami 2015's equation rather than
+# taken from pkSizeFactors(), so a drug test can pin its switch-on scaling
+# independently of the code under test.  Volumes scale by the ratio,
+# clearances by its 0.75 power, and a model's own weight term sees 70 x the
+# ratio (pkWeight).  (Claude Code, 2026-11-13.)
+ffmRatioMaleIndependent <- function(weight, height, age) {
+  ffmMale <- function(w, h, a) {
+    bmi <- w / (h / 100)^2
+    (0.88 + 0.12 / (1 + (a / 13.4)^(-12.7))) * 9270 * w / (6680 + 216 * bmi)
+  }
+  ffmMale(weight, height, age) / ffmMale(70, 170, 35)
+}
+
+# The name of a directory as Shiny makes one for an upload: 24 hex digits,
+# directly in tempdir() (FileUploadContext, shiny 1.14).  The paper review
+# reads, and deletes, only a file in such a directory
+# (paperReviewIsUploadPath()).
+shinyUploadDirName <- function() {
+  paste(sample(c(0:9, letters[1:6]), 24, replace = TRUE), collapse = "")
+}

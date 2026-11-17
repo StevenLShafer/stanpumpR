@@ -27,9 +27,11 @@ were accepted; otherwise \code{drugDefaults} and \code{macThreshold} are
 returned unchanged)
 }
 \description{
-The inverse of \code{thresholdTableForDisplay()}.  Rows not in the table keep
-the threshold they had.  Zero, entered as 0, is no threshold.  An entry that
-is not a non-negative number (blank, ".", text, negative) is refused rather
+The inverse of \code{thresholdTableForDisplay()}.  Rows not in the table, and
+rows left as the dialog showed them, keep the threshold they had (a stored
+value past the ceiling, shown at another age or converted from mcg to ng,
+therefore no longer refuses every other edit).  Zero, entered as 0, is no threshold.  An entry that
+is not a number from 0 to \code{MAX_DOSE_VALUE} (blank, ".", text, negative, too large) is refused rather
 than read as 0: nothing is changed, and \code{invalid} names the rows, so
 the dialog can say which to correct.
 }

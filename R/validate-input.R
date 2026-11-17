@@ -15,10 +15,13 @@
 #
 # "Anything else" includes a dose above MAX_DOSE_VALUE and a time longer than
 # MAX_TIME_STRING_LENGTH characters, the limits validateDoseTableInput()
-# enforces.  Until November 2026 they were let through here and refused only
-# there, which replaced the dose grid with an error message and ended the
-# session from any dialog that read the table (adversarial UI review,
-# finding 7: a dose of 10000000000 in Add a dose).
+# enforces, and a dose longer than that once written out, the limit
+# restoredDoseTable() holds the dose grid's cells to.  Until November 2026
+# the first two were let through here and refused only there, which replaced
+# the dose grid with an error message and ended the session from any dialog
+# that read the table (adversarial UI review, finding 7: a dose of
+# 10000000000 in Add a dose); the third was blanked by the server after the
+# grid had shown it taken (Carbon's third UI audit, 2026-11-15, M4).
 #
 # Nothing is guessed at.  Until October 2026 every character that was not a
 # digit, a decimal point or (for a time) a colon was deleted and what was left
@@ -41,7 +44,7 @@
 # ("0:80" is "01:20").  Whether it is a clock time or an elapsed time depends
 # on the time display; see R/utils-time.R.
 #
-# inst/www/hot_funs.js has the same two functions for the grid, and the two
+# inst/www/grid-funs.js has the same two functions for the grid, and the two
 # must agree: the server checks that every stored time is one validateTime()
 # leaves unchanged (validateDoseTableInput()).
 # -----------------------------------------------------------------------------
@@ -87,6 +90,9 @@ readEntryNumber <- function(x) {
 # and a negative or infinite number, are unreadable.  A number arriving as a
 # number (a numeric grid column) is written out in plain decimal.
 entryString <- function(x) {
+  # Not one value (a forged input; "length = 0 in coercion to logical(1)"
+  # ended the session: Carbon's second UI audit, 2026-11-15, F4)
+  if (!is.null(x) && (length(x) != 1 || is.list(x))) return(list(done = ""))
   if (is.null(x) || is.na(x) || is.nan(x)) return(list(text = ""))
   if (is.factor(x)) x <- as.character(x)
   if (is.logical(x)) return(list(done = ""))  # TRUE or FALSE is not a number
@@ -105,6 +111,18 @@ isBlankEntry <- function(x) {
   if (is.na(x)) return(TRUE)
   is.character(x) && !nzchar(trimEntry(x)) ||
     is.factor(x) && !nzchar(trimEntry(as.character(x)))
+}
+
+# A dialog's text box checked by `validate` (validateTime(), validateDose()).
+# A value no text box sends, a vector (of length 0 too: Carbon's second UI
+# audit, 2026-11-15, F4) or a list, which a forged input can be, is
+# unreadable (""), so the dialog says so and stays open: the
+# validators stop() on it, and an error in an observer ends the session
+# (Carbon's UI audit, 2026-11-14, F6).
+validateEntry <- function(x, validate)
+{
+  if (!is.null(x) && (length(x) != 1 || is.list(x))) return("")
+  validate(x)
 }
 
 # Validate time: a number in the time unit, or H:MM.  See the header.
@@ -129,11 +147,11 @@ validateTime <- function(x)
     # force 80 minutes into 1 hour and 20 minutes
     HH <- HH + floor(MM/60)
     MM <- MM %% 60
-    # Past 2^53 the hour count is not exact, and inst/www/hot_funs.js refuses
+    # Past 2^53 the hour count is not exact, and inst/www/grid-funs.js refuses
     # it (String() writes "1e+21"): refused here too, so the two agree.
     if (HH > 2^53 - 1) return("")
     # %.0f rather than %d, which stops on an hour count too large for an
-    # integer.  inst/www/hot_funs.js validateTime() must give the same string.
+    # integer.  inst/www/grid-funs.js validateTime() must give the same string.
     out <- sprintf("%02.0f:%02.0f", HH, MM)
     return(if (nchar(out) > MAX_TIME_STRING_LENGTH) "" else out)
   }
@@ -143,7 +161,11 @@ validateTime <- function(x)
 }
 
 # Validate dose: a non-negative number, returned as a character string.  See
-# the header.
+# the header.  A dose whose stored string is longer than MAX_TIME_STRING_LENGTH
+# is refused, the length restoredDoseTable() holds every Dose cell the grid
+# sends to: "1e-35", 37 characters written out, was taken here and by the
+# grid and then blanked by the server (Carbon's third UI audit, 2026-11-15,
+# M4).
 validateDose <- function(x)
 {
   if (length(x) > 1 || is.list(x)) {
@@ -155,5 +177,5 @@ validateDose <- function(x)
   if (x == "") return("0")
 
   out <- readEntryNumber(x)
-  if (is.na(out) || as.numeric(out) > MAX_DOSE_VALUE) "" else out
+  if (is.na(out) || as.numeric(out) > MAX_DOSE_VALUE || nchar(out) > MAX_TIME_STRING_LENGTH) "" else out
 }

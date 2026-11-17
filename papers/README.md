@@ -21,6 +21,11 @@ A card names its source in `file:` and cites pages within it. Without the PDF yo
 re-check a page reference, which is exactly why the card states the facts rather than
 pointing at them.
 
+**The FDA labels are the exception.** A product label is a public document, so the US prescribing
+information for the library's drugs is kept in `labels/`, indexed by `inst/extdata/fdaLabels.csv` and
+linked from each drug's help page (`labels/README.md`). A label also in the archive keeps its archive
+file name there, so its card's `file:` names it in both places.
+
 Papers that work is waiting on but that could not be downloaded are listed in
 [`to-obtain.md`](to-obtain.md).
 

@@ -38,7 +38,9 @@ var TIME_UNIT_MINUTES = {minutes: 1, hours: 60, days: 1440, weeks: 10080};
 var TIME_UNIT_SHORT = {minutes: 'min', hours: 'h', days: 'd', weeks: 'wk'};
 function formatSliderMinutes(minutes) {
   var unit = $('#timeUnits').val();
-  if (!TIME_UNIT_MINUTES[unit]) unit = 'minutes';
+  // read by its own keys only: "constructor" is not a unit (Carbon's fourth
+  // UI audit, 2026-11-15, L1)
+  if (!Object.prototype.hasOwnProperty.call(TIME_UNIT_MINUTES, unit)) unit = 'minutes';
   var x = Math.round(minutes / TIME_UNIT_MINUTES[unit] * 100) / 100;
   return x + ' ' + TIME_UNIT_SHORT[unit];
 }
@@ -55,6 +57,54 @@ $(document).on('shiny:bound', '#maximum, #minimum', function() { formatTimeSlide
 $(document).on('shiny:sessioninitialized', function() {
   formatTimeSlider('#maximum');
   formatTimeSlider('#minimum');
+});
+
+// The physiology sliders (R/physiology.R) hold log10 of a multiple of normal
+// function, -1 to 1, so that they move on a log scale; they show the multiple
+// itself.  As for the time sliders, onUpdate puts the formatter back after a
+// server update (Reset to normal).
+function formatPhysiologyValue(x) {
+  var v = Math.pow(10, x);
+  if (Math.abs(x) < 0.005) return 'normal';
+  return '\u00d7' + (v < 1 ? v.toFixed(2) : v < 10 ? v.toFixed(1) : v.toFixed(0));
+}
+function formatPhysiologySlider(el) {
+  var slider = $(el).data('ionRangeSlider');
+  if (!slider || slider.options.prettify === formatPhysiologyValue) return;
+  slider.update({
+    prettify_enabled: true,
+    prettify: formatPhysiologyValue,
+    hide_min_max: true,
+    onUpdate: function() { formatPhysiologySlider(el); }
+  });
+}
+var PHYSIOLOGY_SLIDERS = '#physiology_liver, #physiology_renal, #physiology_cardiac, #physiology_gi';
+$(document).on('shiny:bound', PHYSIOLOGY_SLIDERS, function() { formatPhysiologySlider(this); });
+$(document).on('shiny:sessioninitialized', function() {
+  $(PHYSIOLOGY_SLIDERS).each(function() { formatPhysiologySlider(this); });
+});
+
+// The Physiology panel opens on a statement of what the sliders are for
+// (physiologyIntro() in R/physiology.R); its button shows the sliders.  The
+// server sends physiology_show when the session's physiology is already away
+// from normal (a link or a scenario), so a changed slider is never hidden.
+// The sliders were drawn while hidden, so they are told they are shown.
+function showPhysiologyControls() {
+  var controls = $('#physiology-controls');
+  if (!controls.length || controls.is(':visible')) return;
+  $('#physiology-intro').hide();
+  controls.show();
+  controls.trigger('shown');
+  $(window).trigger('resize');
+}
+$(document).on('click', '.physiology-continue', function(e) {
+  e.preventDefault();
+  showPhysiologyControls();
+});
+$(document).on('shiny:connected', function() {
+  Shiny.addCustomMessageHandler('physiology_show', function(message) {
+    showPhysiologyControls();
+  });
 });
 
 // The startup drug menu (R/startup-drugs.R): each category's summary says how
@@ -163,22 +213,36 @@ $(document).on('shiny:value', function(event) {
 // When a modal opens, auto-focus on the first element that wants focus.  The
 // Add a dose dialog opened empty (the Add new drug button) focuses its drug
 // box instead, so the user can start typing a name at once.
-$(document).on('shown.bs.modal', function() {
+function focusModalStart() {
   var drug = document.getElementById('addDoseDrug');
   if (drug && drug.selectize && !drug.selectize.getValue()) {
     drug.selectize.focus();
     return;
   }
   $('.modal-body .modal-focusme:eq(0)').focus();
-});
+}
+$(document).on('shown.bs.modal', focusModalStart);
+
+// The browser's own undo (Ctrl+Z) and redo belong to the page, not to the
+// field that has the focus: pressed in a dialog with nothing of its own to
+// undo, they took back the last edit of a field behind the dialog, a dose
+// grid cell or a Patient Profile box, unseen, and the field, focused for it
+// and left again, was committed (Carbon's fourth UI audit, 2026-11-15, the
+// defect beside H2).  While a dialog is open they act only inside it.
+document.addEventListener('beforeinput', function(e) {
+  if (e.inputType !== 'historyUndo' && e.inputType !== 'historyRedo') return;
+  var open = document.querySelectorAll('.modal.show');
+  var modal = open[open.length - 1];
+  if (modal && !modal.contains(e.target)) e.preventDefault();
+}, true);
 
 // Submit a modal when Enter is pressed while an input is focused (to enable,
 // add an attribute `data-submit-btn` containing the ID of the submit button
 // to the `modalDialog()` function)
 $(document).on('keyup', '.modal-body input, .modal-body textarea', function(e) {
   if (e.key === 'Enter') {
-    // ignore if Enter is pressed in a selectize or rhandsontable input
-    if ($(this).closest('.selectize-input, .rhandsontable').length > 0) return;
+    // ignore if Enter is pressed in a selectize input or a grid
+    if ($(this).closest('.selectize-input, .stanpumpr-dose-grid, .stanpumpr-table-grid').length > 0) return;
 
     e.preventDefault();
     let modal = $(this).closest('.modal-body');
@@ -198,3 +262,168 @@ function setCookie(name, value, days) {
   document.cookie = name + '=' + value + '; expires=' + date.toUTCString() + '; path=/';
 }
 
+
+// The Working cover (Steven L. Shafer, 2026-11-15).  A worker runs one
+// session's R at a time, so while the server is busy nothing the page sends
+// is answered, and a click or a keystroke then waits unseen and lands on a
+// page that has changed under it.  After WORKING_COVER_DELAY of a busy
+// server the page is covered (no clicks, no focus, no keystrokes) until the
+// server is idle again, and says so.  Only the server's own work counts: a
+// Single Paper Review runs in a background process and leaves the session
+// idle, so its page stays usable (its Stop and Discard buttons included).
+// The cover replaces the page spinners the Bayesian update and Suggest
+// Dosing put up.
+//
+// The cover leaves the focus where it was, and with it whatever was being
+// typed (Carbon's fourth UI audit, 2026-11-15, H1).  It first made every
+// child of <body> inert, which takes the focus from an element inside at
+// once: a grid cell being typed in was committed as it stood ("f", its list
+// open, became fenoldopamPediatric; a dose of 100 typed as far as "1" was
+// stored as 1; "1e" was refused with a message), the next key after the
+// cover went found the cell's text selected and replaced it, and an open
+// dialog lost its Escape.  Now every element but the focused one and its
+// ancestors is made inert, so the focus stays and no focusout fires, and
+// every key and click is stopped before it reaches the page (the focused
+// element included) until the server is idle; the typing then carries on
+// where it stopped.  Ctrl+Z on the page was also the dose table's undo under
+// the cover (dose-grid.js, onDocumentKey()), which inert does not stop.
+// What is added to the page while the cover is up (a dialog the server
+// opens, a notification) is made inert too, and a dialog that opened under
+// the cover takes the focus when it lifts, as it would have without it.
+var WORKING_COVER_DELAY = 3000;
+var WORKING_COVER_TEXT = 'Working. This may take a minute or more.';
+var workingTimer = null;
+var workingUp = false;
+var workingInert = [];
+var workingObserver = null;
+
+function workingMakeInert(el) {
+  if (!(el instanceof HTMLElement) || el.id === 'working-cover' || el.inert) return;
+  el.inert = true;
+  workingInert.push(el);
+}
+
+// A form control's contents (a list's options) are its own, and stay as they are
+function workingHoldsOwn(el) {
+  return !!el && /^(INPUT|SELECT|TEXTAREA|BUTTON)$/.test(el.tagName);
+}
+
+// Every element but `keep` (the focused element, or null) and its ancestors.
+// Inert on an ancestor of the focused element would take the focus from it.
+function workingInertAround(keep) {
+  var chain = [];
+  for (var n = keep; n && n !== document.body; n = n.parentElement) chain.unshift(n);
+  var parent = document.body;
+  chain.forEach(function(onPath) {
+    Array.prototype.forEach.call(parent.children, function(c) { if (c !== onPath) workingMakeInert(c); });
+    parent = onPath;
+  });
+  // what is inside the focused element (a dialog that has the focus itself)
+  if (!workingHoldsOwn(keep)) Array.prototype.forEach.call(parent.children, workingMakeInert);
+}
+
+function workingObserve(keep) {
+  if (typeof MutationObserver === 'undefined') return;
+  workingObserver = new MutationObserver(function(records) {
+    records.forEach(function(rec) {
+      Array.prototype.forEach.call(rec.addedNodes, function(node) {
+        if (!(node instanceof HTMLElement) || !node.isConnected) return;
+        if (node.closest('[inert], #working-cover')) return;
+        if (workingHoldsOwn(keep) && keep.contains(node)) return;
+        workingMakeInert(node);
+      });
+    });
+  });
+  workingObserver.observe(document.body, {childList: true, subtree: true});
+}
+
+function showWorkingCover() {
+  workingTimer = null;
+  if (workingUp || document.getElementById('working-cover')) return;
+  var cover = document.createElement('div');
+  cover.id = 'working-cover';
+  cover.setAttribute('role', 'alert');
+  cover.setAttribute('aria-live', 'assertive');
+  var card = document.createElement('div');
+  card.className = 'working-card';
+  var spinner = document.createElement('div');
+  spinner.className = 'spinner-border';
+  spinner.setAttribute('aria-hidden', 'true');
+  var text = document.createElement('p');
+  text.textContent = WORKING_COVER_TEXT;
+  card.appendChild(spinner);
+  card.appendChild(text);
+  cover.appendChild(card);
+  // The focused element keeps the focus; a frame's keys would not reach the
+  // listeners below, so a focused frame is let go
+  var keep = document.activeElement;
+  if (!keep || keep === document.body || keep === document.documentElement ||
+      !document.body.contains(keep) || keep.tagName === 'IFRAME') keep = null;
+  workingUp = true;
+  workingInert = [];
+  document.body.appendChild(cover);
+  workingInertAround(keep);
+  workingObserve(keep);
+}
+
+// A dialog open with the focus outside it (one the server opened under the
+// cover, which could not take the focus then) takes it now: Escape closes a
+// dialog only from inside it
+function workingRefocus() {
+  var open = document.querySelectorAll('.modal.show');
+  var modal = open[open.length - 1];
+  if (!modal || modal.contains(document.activeElement)) return;
+  focusModalStart();
+  if (!modal.contains(document.activeElement)) modal.focus();
+}
+
+function hideWorkingCover() {
+  if (workingTimer !== null) {
+    clearTimeout(workingTimer);
+    workingTimer = null;
+  }
+  if (workingObserver) {
+    workingObserver.disconnect();
+    workingObserver = null;
+  }
+  var wasUp = workingUp;
+  workingUp = false;
+  workingInert.forEach(function(el) { el.inert = false; });
+  workingInert = [];
+  var cover = document.getElementById('working-cover');
+  if (cover) cover.parentNode.removeChild(cover);
+  if (wasUp) workingRefocus();
+}
+
+// Under the cover no key or click of the user's reaches the page: the
+// listeners run first (on the window, capturing), and stop every one.  The
+// keys that work the browser itself, reload and zoom, still do, and an event
+// a script raises (a click the server asks for) is not the user's.  A button
+// released under the cover is let through, to end a drag begun before it (a
+// slider's) rather than leave it held; it cannot click, the click being stopped.
+var WORKING_BLOCKED_EVENTS = ['keydown', 'keypress', 'keyup', 'beforeinput', 'paste', 'cut', 'drop',
+                              'dragstart', 'pointerdown', 'mousedown', 'click', 'dblclick', 'auxclick',
+                              'contextmenu'];
+function workingBrowserKey(e) {
+  if (e.type.indexOf('key') !== 0) return false;
+  if (e.key === 'F5') return true;
+  return (e.ctrlKey || e.metaKey) && !e.altKey && /^[rR+=\-0]$/.test(e.key);
+}
+function workingBlock(e) {
+  if (!workingUp || !e.isTrusted) return;
+  e.stopImmediatePropagation();
+  if (e.cancelable && !workingBrowserKey(e)) e.preventDefault();
+}
+WORKING_BLOCKED_EVENTS.forEach(function(type) {
+  window.addEventListener(type, workingBlock, true);
+});
+
+$(document).on('shiny:busy', function() {
+  if (workingTimer === null && !workingUp) {
+    workingTimer = setTimeout(showWorkingCover, WORKING_COVER_DELAY);
+  }
+});
+$(document).on('shiny:idle', hideWorkingCover);
+// A session that ended while busy shows Shiny's own reload prompt, which must
+// not be covered
+$(document).on('shiny:disconnected', hideWorkingCover);

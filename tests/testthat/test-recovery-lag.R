@@ -85,6 +85,15 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     "olmesartan",
                     # lagged oral absorption (2026-10-17)
                     "empagliflozin", "ertugliflozin",
+                    # Findling 2010's 17.4 min lag (lithium carbonate),
+                    # the FDA reviewer's 0.231 h (sotalol) and Friberg
+                    # 2012's 0.949 h (voriconazole), 2026-11-12
+                    "lithiumCarbonate", "sotalol", "voriconazole",
+                    # Caldes 2009's 0.382 h lag (valganciclovir, as
+                    # ganciclovir), 2026-11-12
+                    "ganciclovir",
+                    # Vozeh 1982's 0.3 h lag (mexiletine), 2026-11-13
+                    "mexiletine",
                     # Melin 2023's fixed 0.248 h lag (dapagliflozin)
                     "dapagliflozin",
                     # Hoeben 2016's lag before the release into the gut
@@ -98,6 +107,8 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     # Mroszczak 1990's 0.2 h oral lag, fitted with ka
                     # (restored 2026-11-01)
                     "ketorolac",
+                    # Variol 2002's 0.15 h oral lag (vinorelbine, 2026-11-06)
+                    "vinorelbine",
                     # Sun 2021's fixed 0.782 h lag; plasma only, so no
                     # effect-site recovery to blank
                     "olanzapine",
@@ -120,7 +131,19 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     # Parkinson disease drugs (2026-10-19): pramipexole's IR
                     # lag of 0.221 h and pimavanserin's 0.0707 day, both
                     # from the FDA reviews; plasma only
-                    "pramipexole", "pimavanserin"))
+                    "pramipexole", "pimavanserin",
+                    # pulmonary hypertension (2026-11-15): sildenafil's 0.485 h
+                    # (FDA review of NDA 22-473) and selexipag's 0.67 h
+                    # (Krause 2017); plasma only
+                    "sildenafil", "selexipag",
+                    # suzetrigine's 0.182 h lag before its zero-order release
+                    # (FDA review of NDA 219209); plasma only
+                    "suzetrigine",
+                    # ambrisentan's fixed 0.525 h lag (Okour 2023); plasma only
+                    "ambrisentan",
+                    # oral thioguanine's derived 1.0 h lag (Lowe 2001's
+                    # median time to peak, 2026-11-16); plasma only
+                    "thioguanine"))
 })
 
 

@@ -180,6 +180,51 @@
 #     The patient now inspires MV + u+ and exhales MV, so the fresh gas flow
 #     that stops rebreathing is the minute ventilation plus what is taken up.
 #
+#     THE CLOSED CIRCUIT (Carbon's third UI audit, 2026-11-15, H2).  k is the
+#     share of the exhaled gas that is rebreathed, so it cannot exceed one.
+#     It does when Q < u+ + VCO2 (= u+ + c_E MV): the fresh gas no longer
+#     covers what the patient takes up, oxygen included.  Every litre exhaled
+#     is then rebreathed, nothing is vented, and the circuit still falls short;
+#     a real reservoir bag empties.  Until this date k was left above one, so
+#     more gas was rebreathed than was exhaled, at the exhaled composition:
+#     gas made from nothing.  With no oxygen flow (Q = 0) and 4.6 L/min of
+#     ventilation at 70 kg it made 0.25 L/min, the oxygen consumed; nitrogen
+#     rose past 100% of an atmosphere in the first minutes, the uptake
+#     coupling then fed on it (make-up gas at more than 100% adds more than
+#     it replaces), alveolar nitrogen reached 142% on a day's plot, and on a
+#     three-day plot the states overflowed and the gas panels vanished
+#     ("missing value where TRUE/FALSE needed").  Now k is held at one and the
+#     alveoli receive only what the circuit has, the fresh gas and the
+#     rebreathed gas less the dead space's share,
+#         Q + MV (1 - c_E) - (MV - VA) = Q + VA - VCO2,
+#     whose composition is F_circ = (Q F_fgf + VA F_alv) / (Q + VA - VCO2).
+#     Each gas then gains only what the fresh gas brings and loses only what
+#     the blood takes up: the circuit and the patient are one closed system,
+#     and nothing is created.  The volume deficit is not modelled (the
+#     alveolar volume is fixed), so it appears as tensions summing to less
+#     than an atmosphere rather than as a bag emptying.  The same holds in
+#     apnoea (MV = 0), where the alveoli draw the uptake from the fresh gas as
+#     far as it goes and no further.  gasCircuitBlend() returns the share of
+#     the alveoli's demand that the circuit meets as `supply`.
+#
+#     On emergence (u < 0) the alveoli push gas out, -u L/min at alveolar
+#     composition, and that gas is in the circuit too.  Below the threshold
+#     the circuit vents it first, rebreathing the exhaled gas, and vents more
+#     than it in all (Q - VCO2 - u >= -u while k <= 1).  Once the circuit is
+#     closed that is no longer so: everything exhaled is rebreathed, and the
+#     pushed-out gas is rebreathed as far as the shortfall needs,
+#         r = min(MV + u+ - Q - MV (1 - c_E), -u)     (u+ = 0 here),
+#     only the rest, -u - r = max(0, Q - VCO2 - u), being vented, which is
+#     the circuit's surplus and nothing while it is short.  The alveoli then
+#     receive D = Q + VA - VCO2 + r, at
+#         F_circ = (Q F_fgf + (VA + r) F_alv) / D,
+#     all of VA again (supply 1) while the pushed-out gas covers the
+#     shortfall.  Until 2026-11-15 r was zero, so all of the pushed-out gas
+#     was vented, and a washout of nitrous oxide into a closed circuit lost
+#     every gas at -u times its alveolar tension, though nothing left the
+#     circuit (CodeRabbit on PR #730).  The change is confined to k > 1 with
+#     u < 0, and is continuous at k = 1, where r is zero.
+#
 #     In the steady state the gas vented is the fresh gas less the oxygen
 #     consumed: with 0.3 + 1.0 L/min in and 0.21 L/min consumed, 1.09 L/min
 #     leaves as 92% nitrous oxide and 8% oxygen (dry, carbon dioxide aside).
@@ -343,8 +388,44 @@ expmPade <- function(A)
 #' @returns mixed venous tension, percent of one atmosphere
 gasMixedVenous <- function(y, body)
 {
-  y[[3]] * body$f_brain + y[[4]] * body$f_muscle + y[[5]] * body$f_fat
+  sum(y[3:gasStateCount(body)] * gasTissueShares(body))
 }
+
+
+#' The tissue groups of the gas body, in state order
+#'
+#' States 3, 4 and 5 are the vessel-rich group, muscle and fat.  When the
+#' cardiac-output slider has moved (\code{gasBodyPhysiology()}), the brain and
+#' heart are state 3 -- still the effect site, reported as "Brain" -- and the
+#' rest of the vessel-rich group is a sixth state, so that the flow the brain
+#' keeps in a low output is not spread over the kidneys, liver and gut.  Its
+#' tissue:gas partition coefficient is the vessel-rich group's.
+#'
+#' @param body output of \code{getGasBody()}, possibly through
+#'   \code{gasBodyPhysiology()}
+#' @returns \code{gasTissueShares()}: the share of cardiac output of each;
+#'   \code{gasTissueVolumes()}: their volumes, L; \code{gasStateCount()}: the
+#'   number of states of a soluble gas, 5 or 6
+#' @keywords internal
+gasTissueShares <- function(body)
+{
+  f <- c(brain = body$f_brain, muscle = body$f_muscle, fat = body$f_fat)
+  if (!is.null(body$f_vrgRest)) f <- c(f, vrgRest = body$f_vrgRest)
+  f
+}
+
+#' @rdname gasTissueShares
+#' @keywords internal
+gasTissueVolumes <- function(body)
+{
+  v <- c(brain = body$V_brain, muscle = body$V_muscle, fat = body$V_fat)
+  if (!is.null(body$f_vrgRest)) v <- c(v, vrgRest = body$V_vrgRest)
+  v
+}
+
+#' @rdname gasTissueShares
+#' @keywords internal
+gasStateCount <- function(body) 2L + length(gasTissueShares(body))
 
 
 #' Total uptake summed over every soluble gas
@@ -404,25 +485,59 @@ gasFreshFraction <- function(Q, VA, circuit = "ideal", MV = VA)
 #' @param MV minute ventilation, L/min
 #' @param circuit "ideal" or "open"
 #' @param u summed uptake of gas from the alveoli, L/min; only a positive value
-#'   adds to what is inspired
+#'   adds to what is inspired.  A negative value is gas pushed out of the
+#'   alveoli, which a closed circuit rebreathes as far as its shortfall needs.
 #' @param cE carbon dioxide as a fraction of exhaled gas, removed from whatever
 #'   is rebreathed.  Capped at \code{GAS_MAX_EXHALED_CO2}, which keeps the blend
 #'   physical at any ventilation.
-#' @returns a list with \code{fresh} and \code{alveolar}
+#' @returns a list with \code{fresh} and \code{alveolar}, the composition of
+#'   what is inspired, and \code{supply}, the share of what the alveoli draw
+#'   from the circuit (\code{VA + u+}) that it can give them: one, unless the
+#'   fresh gas is less than the uptake and the carbon dioxide absorbed, when
+#'   the circuit is closed and the gas pushed out of the alveoli (a negative
+#'   \code{u}) does not make up the difference (see THE CLOSED CIRCUIT in the
+#'   file header)
 #' @keywords internal
 gasCircuitBlend <- function(Q, VA, MV = VA, circuit = "ideal", u = 0, cE = 0)
 {
   inspired <- MV + max(u, 0)
-  if (circuit == "open" || MV <= 0 || Q >= inspired)
-    return(list(fresh = 1, alveolar = 0))
+  if (circuit == "open" || Q >= inspired)
+    return(list(fresh = 1, alveolar = 0, supply = 1))
+  # Apnoea: nothing is exhaled, so the uptake is drawn from the fresh gas,
+  # and only as far as it goes.  Until 2026-11-15 the whole uptake was drawn
+  # at the fresh gas's composition whatever the flow, so with no flow a
+  # vaporiser's setting was drawn into the lungs from nowhere (Carbon's third
+  # UI audit, 2026-11-15, H2).
+  if (MV <= 0)
+    return(list(fresh = 1, alveolar = 0, supply = Q / inspired))
   cE <- min(max(cE, 0), GAS_MAX_EXHALED_CO2)
   k <- (inspired - Q) / (MV * (1 - cE))
-  D <- inspired - k * (MV - VA)
+  supply <- 1
+  # The gas pushed out of the alveoli and rebreathed, L/min: none unless the
+  # circuit is closed (below).
+  pushedBack <- 0
+  if (k <= 1) {
+    D <- inspired - k * (MV - VA)
+  } else {
+    # k is the share of the exhaled gas rebreathed.  Above one the circuit is
+    # closed: all of it is rebreathed (THE CLOSED CIRCUIT in the file header;
+    # Carbon's third UI audit, 2026-11-15, H2).  When the summed uptake is
+    # negative, the gas pushed out of the alveoli, -u, is in the circuit too,
+    # and is rebreathed as far as the shortfall needs; only what is left of
+    # it is vented.  Until 2026-11-15 all of it was vented, so a washout into
+    # a closed circuit lost gas that went nowhere (CodeRabbit on PR #730).
+    # What reaches the alveoli is what there is, Q + VA - VCO2 plus the gas
+    # pushed back, at most the VA + u+ they draw.
+    k <- 1
+    pushedBack <- min(inspired - Q - MV * (1 - cE), max(-u, 0))
+    D <- Q + MV * (1 - cE) - (MV - VA) + pushedBack
+    supply <- D / (VA + max(u, 0))
+  }
   # With cE capped and the dead space under half of the minute ventilation, D
   # is positive; this is a guard against a future change to either, not a
   # branch that runs.
   if (D <= 0) stop("ventilation and dead space do not permit a physical circuit blend")
-  list(fresh = Q / D, alveolar = k * VA / D)
+  list(fresh = Q / D, alveolar = (k * VA + pushedBack) / D, supply = supply)
 }
 
 
@@ -444,7 +559,8 @@ gasCircuitBlend <- function(Q, VA, MV = VA, circuit = "ideal", u = 0, cE = 0)
 #'   the ideal circuit.  Defaults to \code{VA}: no dead space.
 #' @param cE carbon dioxide as a fraction of exhaled gas, absorbed from whatever
 #'   is rebreathed; see \code{gasCircuitBlend()}
-#' @returns a list with \code{A} (5x5), \code{b} (length 5) and, for the ideal
+#' @returns a list with \code{A} (5x5, or 6x6 with the vessel-rich group
+#'   split; see \code{gasTissueShares()}), \code{b} and, for the ideal
 #'   and open circuits, \code{fresh} and \code{alveolar}: the weights from
 #'   which the circuit tension is \code{fresh * Ffgf + alveolar * F_alv}.  They
 #'   are NULL for the semi-closed circuit, whose tension is a state.
@@ -460,17 +576,16 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
   Vc <- body$V_circuit
   Va <- body$V_alveolar
 
-  # Blood flow to each tissue group
-  Qb <- body$f_brain  * Qco
-  Qm <- body$f_muscle * Qco
-  Qf <- body$f_fat    * Qco
+  # Blood flow to each tissue group, and the tissue rate constants
+  # Q_t * lambda_b / (V_t * lambda_t/gas).  The rest of the vessel-rich group,
+  # when it is split from the brain and heart, has the vessel-rich partition.
+  shares <- gasTissueShares(body)
+  n <- 2L + length(shares)
+  partition <- c(brain = ltg[["brain"]], muscle = ltg[["muscle"]],
+                 fat = ltg[["fat"]], vrgRest = ltg[["brain"]])[names(shares)]
+  k <- shares * Qco * lb / (gasTissueVolumes(body) * partition)
 
-  # Tissue rate constants: Q_t * lambda_b / (V_t * lambda_t/gas)
-  kb <- Qb * lb / (body$V_brain  * ltg[["brain"]])
-  km <- Qm * lb / (body$V_muscle * ltg[["muscle"]])
-  kf <- Qf * lb / (body$V_fat    * ltg[["fat"]])
-
-  A <- matrix(0, 5, 5)
+  A <- matrix(0, n, n)
 
   # (1) circuit.  On EMERGENCE (totUptake < 0) alveolar gas is displaced back
   # into the circuit, which GasMan models by subtracting the term from the
@@ -484,14 +599,13 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
   # three tissue states in proportion to their share of cardiac output.
   A[2, 1] <-  VA / Va
   A[2, 2] <- -(VA + lb * Qco) / Va
-  A[2, 3] <-  lb * Qco * body$f_brain  / Va
-  A[2, 4] <-  lb * Qco * body$f_muscle / Va
-  A[2, 5] <-  lb * Qco * body$f_fat    / Va
+  A[2, 3:n] <- lb * Qco * shares / Va
 
   # (3) tissues
-  A[3, 2] <-  kb;  A[3, 3] <- -kb
-  A[4, 2] <-  km;  A[4, 4] <- -km
-  A[5, 2] <-  kf;  A[5, 5] <- -kf
+  for (j in seq_along(k)) {
+    A[2 + j, 2] <- k[[j]]
+    A[2 + j, 2 + j] <- -k[[j]]
+  }
 
   # The uptake coupling.  GasMan's Calc adds this to the alveolar numerator:
   #
@@ -510,7 +624,7 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
     A[2, 2] <- A[2, 2] + totUptake / Va
   }
 
-  b <- c(Q * Ffgf / Vc, 0, 0, 0, 0)
+  b <- c(Q * Ffgf / Vc, rep(0, n - 1))
 
   if (circuit == "semi-closed")
     return(list(A = A, b = b, fresh = NULL, alveolar = NULL))
@@ -523,12 +637,15 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
   # a constant inflow, and the rebreathed share comes straight back as alveolar
   # gas.  The circuit row and column are then empty, so the propagator leaves
   # that entry alone and the caller sets it from the line above.
+  # When the fresh gas falls short of the uptake the circuit is closed, and the
+  # alveoli receive only the share `supply` of what they draw: the rest does
+  # not exist (THE CLOSED CIRCUIT in the file header).
   bl <- gasCircuitBlend(Q, VA, MV, circuit, totUptake, cE)
-  fromCircuit <- A[2, 1]
+  fromCircuit <- A[2, 1] * bl$supply
   A[2, 2] <- A[2, 2] + fromCircuit * bl$alveolar
   A[1, ] <- 0
   A[, 1] <- 0
-  b <- c(0, fromCircuit * bl$fresh * Ffgf, 0, 0, 0)
+  b <- c(0, fromCircuit * bl$fresh * Ffgf, rep(0, n - 2))
 
   list(A = A, b = b, fresh = bl$fresh, alveolar = bl$alveolar)
 }
@@ -572,6 +689,10 @@ gasSystemOxygen <- function(body, Q, VA, Ffgf,
     # gas.  With no dead space the steady state is F_fgf - 100 VO2 / Q: what is
     # delivered less what is consumed, as it must be.
     bl <- gasCircuitBlend(Q, VA, MV, circuit, totUptake, cE)
+    # A closed circuit gives the alveoli only what it has (`supply`, THE
+    # CLOSED CIRCUIT in the file header): oxygen then gains what the fresh
+    # gas brings and loses what is consumed, and no more.
+    fromCircuit <- fromCircuit * bl$supply
     A <- matrix(0, 2, 2)
     A[2, 2] <- -VA / Va + fromCircuit * bl$alveolar + pushedOut
     b <- c(0, fromCircuit * bl$fresh * Ffgf - 100 * body$VO2 / Va)
@@ -846,7 +967,9 @@ advanceClosedFormGas <- function(
   if (is.null(body)) body <- getGasBody(weight)
   Qco <- if (is.null(cardiacOutput)) body$Q_cardiac else cardiacOutput
 
-  props <- getGasProperties()
+  # The partition coefficients and MAC at the body's temperature
+  # (gasPropertiesAt(); 37 C unless the temperature slider has set one).
+  props <- gasPropertiesAt(body$temperature)
 
   # Split the dose table by setting.  Rows for a setting must be time-ordered
   # for settingAt() to pick the last one in force.
@@ -876,7 +999,7 @@ advanceClosedFormGas <- function(
   for (g in solubleGases)
   {
     init <- if (g == "nitrogen") AIR_FRACTION_N2 * 100 else 0
-    state[[g]] <- rep(init, 5)
+    state[[g]] <- rep(init, gasStateCount(body))
   }
   state[["oxygen"]] <- rep(AIR_FRACTION_O2 * 100, 2)
 
@@ -1044,7 +1167,16 @@ advanceClosedFormGas <- function(
     Drug = "MAC", Time = timeLine, Site = "MAC", Y = macTotal,
     stringsAsFactors = FALSE))
 
-  list(results = results, state = out, timeLine = timeLine)
+  # The body, circuit and patient go with the states, so a reader of them (the
+  # Visualizer's gas run, R/viewerRun.R) knows each compartment's capacity
+  # without rebuilding them.
+  # Qco is the cardiac output the simulation ran on, an explicit override
+  # included, so the washout runs on the same flows (gasWashout()); deadSpace
+  # the share of minute ventilation that did not reach the alveoli, so the
+  # Visualizer can say the alveolar ventilation the engine ran on.
+  list(results = results, state = out, timeLine = timeLine,
+       body = body, circuit = circuit, weight = weight, age = age, Qco = Qco,
+       deadSpace = deadSpace)
 }
 
 
@@ -1068,6 +1200,13 @@ advanceClosedFormGas <- function(
 #' @param age patient age in years
 #' @param maximum simulation length in minutes
 #' @param cardiacOutput optional override in L/min; defaults to GasMan's 5 L/min at 70 kg, scaled by (weight/70)^0.75
+#' @param physiology NULL, or the physiology sliders' factors (see
+#'   \code{getDrugPK()}); only \code{cardiac} acts on the gases, through
+#'   \code{gasBodyPhysiology()}: cardiac output and its split among the tissue
+#'   groups
+#' @param temperature NULL (37 C), or the body temperature in C, which sets
+#'   the agents' solubility and MAC (\code{gasPropertiesAt()}); kept in the
+#'   body as \code{temperature}
 #' @param uptakeEffect,circuit,deadSpace,oxygenUptake passed to
 #'   \code{advanceClosedFormGas()}
 #'
@@ -1078,7 +1217,10 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
                           cardiacOutput = NULL, uptakeEffect = TRUE,
                           circuit = c("ideal", "semi-closed"),
                           deadSpace = GAS_DEAD_SPACE_FRACTION,
-                          oxygenUptake = TRUE)
+                          oxygenUptake = TRUE,
+                          # Appended after the pre-existing arguments, so a
+                          # positional call keeps its binding (exported).
+                          physiology = NULL, temperature = NULL)
 {
   circuit <- match.arg(circuit)
   if (is.null(doseTable) || nrow(doseTable) == 0) return(NULL)
@@ -1095,9 +1237,15 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
   gasDose <- gasDose[!is.na(gasDose$Time) & !is.na(gasDose$Dose), , drop = FALSE]
   if (nrow(gasDose) == 0) return(NULL)
 
+  body <- gasBodyPhysiology(getGasBody(weight),
+                            checkPhysiology(physiology)[["cardiac"]])
+  temperature <- checkBodyTemperature(temperature)
+  if (temperature != 37) body$temperature <- temperature
+
   advanceClosedFormGas(
     gasDose,
     weight        = weight,
+    body          = body,
     age           = age,
     maximum       = maximum,
     cardiacOutput = cardiacOutput,

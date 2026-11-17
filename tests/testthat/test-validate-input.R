@@ -186,14 +186,12 @@ test_that("error work", {
 })
 
 # The grid's Dose column must be text.  A numeric Handsontable column parses
-# a pasted entry itself before hookSanitize() (inst/www/hot_funs.js) sees it:
+# a pasted entry itself before hookSanitize() (inst/www/grid-funs.js) sees it:
 # "1,000" became 1 and "1,5" 1.5, in the browser, whatever validateDose() says.
 test_that("the dose grid passes pasted doses to the sanitiser as typed", {
-  hot <- createHOT(doseTableInit, getDrugDefaultsGlobal())
-  # the data columns' names; colHeaders carries the display header
-  # ("Dose/Target", DOSE_COLUMN_HEADER) over the Dose column
-  headers <- unlist(hot$x$rColHeaders)
-  types <- vapply(hot$x$columns, function(col) col$type, character(1))
-  expect_equal(types[headers == "Dose"], "text")
-  expect_equal(types[headers == "Time"], "text")
+  # Every cell of the dose grid is a text field (or the Units list): nothing
+  # is a number field that would read the entry before validateDose() does
+  js <- readLines(system.file("www", "dose-grid.js", package = "stanpumpR"))
+  expect_false(any(grepl("type: 'number'|type=\"number\"", js)))
+  expect_true(any(grepl("type: 'text'", js, fixed = TRUE)))
 })

@@ -82,7 +82,8 @@ finishDrugSeries <- function(wide, PK, maximum, plotRecovery)
   )
 
   equiSpace$Ce[1] <- 0  # Approx tends to make it a very small negative number
-  if (PK$MEAC == 0)
+  # No MEAC: zero, or missing (a library row edited blank)
+  if (!isTRUE(PK$MEAC > 0))
   {
     equiSpace$MEAC <- 0
   } else {
@@ -269,6 +270,29 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     expanded <- expandScheduledDoses(dose, maximum)
     dose <- expanded$dose
 
+    # A dose whose unit names a product other than the plotted drug ("mg
+    # aminophylline" for theophylline, "mg PO sulfate" for quinidine) is
+    # converted to the plotted drug's mass here, before any expansion that
+    # rewrites its unit (a zero-order release writes rate rows with no product
+    # word), and the product word is then dropped, so the rest of the
+    # pipeline sees the drug itself in an ordinary unit and the conversion is
+    # made once.  The drug's `doseProducts` block gives the mass of the
+    # plotted drug per mass of each product (doseProductFactor(),
+    # R/routes.R); a unit that names no product is the plotted drug.
+    if (!is.null(PK$doseProducts) && nrow(dose)) {
+      dose$Dose <- dose$Dose * doseProductFactor(dose$Units, PK$doseProducts)
+      dose$Units <- stripDoseProduct(dose$Units, names(PK$doseProducts))
+    }
+    # A potency-defined peptide plotted by mass (oxytocin): doses in units
+    # (U, U/hr, mU/min) become micrograms here, by the model's unitPotency,
+    # so the U check below, which is for drugs plotted in mcU/mL, never sees
+    # them.  See potencyToMass() in R/routes.R.
+    if (!is.null(PK$unitPotency) && nrow(dose)) {
+      converted <- potencyToMass(dose$Dose, dose$Units, PK$unitPotency)
+      dose$Dose <- converted$Dose
+      dose$Units <- converted$Units
+    }
+
     # A pulsed extended-release product (Adderall XR): each dose of a
     # formulation the drug lists in oralPulses becomes its pulses, ordinary
     # oral doses at fixed delays; see R/oral-pulses.R.
@@ -364,6 +388,11 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         stop("A dose in units (U) needs a drug reported in mcU/mL; ", PK$drug, " is not.")
       dose$Dose[use] <- dose$Dose[use] * 1000
     }
+    # Milliunits are converted only by a drug's unitPotency (potencyToMass(),
+    # above), which leaves none behind; any left here have no conversion and
+    # would otherwise be read as mass.
+    if (any(grepl("^mU( |/|$)", dose$Units)))
+      stop(PK$drug, " has no unit potency, so a dose in milliunits (mU) cannot be converted.")
     # A drug dosed in international units takes only those, and only it does.
     # Checked before the mass conversions, which would turn a mass unit on an
     # activity drug into NA silently.
@@ -378,6 +407,8 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     } else if (any(iuDose)) {
       stop(PK$drug, " is not dosed in international units (IU).")
     }
+    # (A unit naming another product, "mg aminophylline", was converted to
+    # the plotted drug's mass after the scheduled expansion above.)
     # One factor per dose row (the molar branch may differ row by row).
     mg_Conv  <- rep_len(mg_Conv,  nrow(dose))
     mcg_Conv <- rep_len(mcg_Conv, nrow(dose))
@@ -456,6 +487,12 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # below adds rows, while mg_Conv still has one entry per row: multiplied
     # whole, mg_Conv was recycled against the oral rows, which warned whenever
     # the table held other routes too.  (Claude Code, 2026-10-17.)
+    # An absorption rate that depends on the size of each oral dose
+    # (suzetrigine, R/advanceMichaelisMenten.R): the engine reads the dose
+    # as given, in mg per administration, before any scaling below.
+    if (!is.null(PK$michaelisMenten$kaDoseDependence) ||
+        !is.null(PK$michaelisMenten$oralPaths))
+      dose$DoseMg <- dose$Dose * mg_Conv
     if (!is.null(PK$oralSaturation) && any(dose$PO))
       dose$Dose[dose$PO] <- dose$Dose[dose$PO] *
         oralSaturationFraction(dose$Dose[dose$PO] * mg_Conv[dose$PO],
@@ -536,11 +573,36 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     if (any(isTciUnit(dose$Units)))
     {
       # The controller inverts one system; it cannot target a sum of them, nor
-      # an INR drug (whose plotted curve is not a concentration).
-      if (!is.null(PK$parallelSystems) || !is.null(PK$inr) || !is.null(PK$act))
+      # a drug whose plotted curve is not its concentration by mass: an INR,
+      # an ACT, a biliary store (oxaliplatin), a serum osmolality (mannitol, baseline included: a target of
+      # 310 drove the osmolality to 462, its rates labelled in mg; Carbon's
+      # second UI audit, 2026-11-15, F6) or a molar concentration.
+      if (!is.null(PK$parallelSystems) || !is.null(PK$inr) || !is.null(PK$act) ||
+          !is.null(PK$osmotic) || !is.null(PK$molar) ||
+          !is.null(PK$biliaryStore))
         stop("Target-controlled infusion is not available for a drug ",
-             "simulated as several parallel systems or as an INR or ACT.")
-      schedule <- tciSchedule(dose, PK, maximum)
+             "simulated as several parallel systems, or plotted as an INR, an ACT, ",
+             "an osmolality or a molar concentration, or with a biliary store.")
+      # Nor a drug off the linear closed-form engines, whose controller it is:
+      # the saturable and transit-chain engines took the pump's 10-second rate
+      # steps as boluses, a minute's drug each, and a target of 2 reached 11
+      # to 12 (phenytoin, enalapril, exenatide); nor a concentration the rate
+      # panel cannot label in mass per minute (pg, mcU, IU) (Carbon's third
+      # UI audit, 2026-11-15, C5)
+      if (!is.null(PK$michaelisMenten) || !is.null(PK$transitChain))
+        stop("Target-controlled infusion is not available for a drug simulated ",
+             "numerically (saturable elimination or a transit chain).")
+      if (!isTRUE(PK$Concentration.Units %in% c("mcg", "ng")))
+        stop("Target-controlled infusion is available only for a drug plotted ",
+             "in mcg/mL or ng/mL.")
+      # The pump computes its rates from the model it was programmed with:
+      # the drug's own, except for a drug the Bayesian update individualized
+      # (R/bayesian.R), whose patient received the rates the library's model
+      # chose, so that a measurement can move the estimate and the
+      # individual's curve shows where the patient really was (Shafer,
+      # 2026-11-14).
+      pump <- if (is.null(PK$tciModel)) PK else PK$tciModel
+      schedule <- tciSchedule(dose, pump, maximum)
       dose <- schedule$dose
       tci <- tciDisplay(schedule, PK)
     }
@@ -552,11 +614,28 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # interaction can change has a clinical-event PK set of its own.
     if (!is.null(PK$interactionEvents)) events <- PK$interactionEvents
 
+    # A clearance that steps at fixed times after the course's first dose
+    # (PK$courseSteps, getDrugPK(); busulfan) is switched by events built from
+    # this drug's own first dose, likewise in place of any clinical event.
+    if (!is.null(PK$courseSteps) && is.null(PK$interactionEvents))
+    {
+      given <- dose$Time[dose$Dose > 0]
+      events <- if (length(given) == 0) events[0, ] else
+        data.frame(Time = min(given) + PK$courseSteps$after,
+                   Event = PK$courseSteps$event, stringsAsFactors = FALSE)
+      PK$pkEvents <- c(PK$pkEvents, PK$courseSteps$event)
+    }
+
     pkSets <- PK$PK
     pkEvents <- PK$pkEvents
 
     events$Event <- gsub(" ","", events$Event)
     events <- events[events$Event %in% pkEvents,]
+    # In time order, ties kept in the order entered: the engine applies the
+    # rows in order, each from its time on, so an event added after a later
+    # one (Add event appends) overrode it (Carbon's fourth UI audit,
+    # 2026-11-15, M7).  A table already in order is unchanged.
+    events <- events[order(as.numeric(events$Time)), , drop = FALSE]
 
     # A drug that forms an active metabolite takes its own route, because the
     # metabolite is advanced alongside the parent over the union of the two
@@ -657,6 +736,14 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       }
       if (length(parts) == 0) parts <- list(runEngines(dose, pkSets))
       results <- superposeEngineResults(parts, plotRecovery, emerge)
+    } else if (!is.null(PK$biliaryStore))
+    {
+      # A biliary store that fills, then empties once, on each course's own
+      # clock (oxaliplatin, Bastian 2003): the whole dose table at once,
+      # exactly, by matrix exponential, each course its own system and the
+      # courses added.  No clinical-event PK switching (getDrugPK() refuses
+      # further PK sets).  See R/advanceBiliaryStore.R.
+      results <- advanceBiliaryStore(dose, PK, maximum, plotRecovery, emerge)
     } else if (!is.null(PK$transitChain))
     {
       # Transit-chain absorption (enalapril): the whole dose table at once,

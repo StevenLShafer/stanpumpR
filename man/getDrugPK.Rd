@@ -24,7 +24,14 @@ getDrugPK(
   vkorc1 = VKORC1_DEFAULT,
   model = NULL,
   cyp4f2 = CYP4F2_DEFAULT,
-  gestationalAge = NULL
+  gestationalAge = NULL,
+  albumin = NULL,
+  ast = NULL,
+  individual = NULL,
+  libraryDefaults = NULL,
+  metaboliteIndividual = NULL,
+  physiology = NULL,
+  pulmonaryHypertension = FALSE
 )
 }
 \arguments{
@@ -92,6 +99,44 @@ passed only to models that name it (warfarin).}
 default) for a term birth.  Passed only to the neonatal models that
 declare it (dobutamineNeonatal), whose clearance matures with
 postmenstrual age (\code{postmenstrualAge()}).}
+
+\item{albumin}{serum albumin in g/dL, or NULL (the default), in which case
+each model holds its own reference value.  Passed only to the models that
+declare it (methotrexate, methotrexatePediatric, docetaxel,
+paclitaxelProteinBound).}
+
+\item{ast}{serum aspartate aminotransferase in U/L, or NULL (the default),
+in which case each model holds its own reference value.  Passed only to
+the models that declare it (epirubicin).}
+
+\item{individual}{NULL (the default) for the model's own patient, or the
+individual's pharmacokinetics as a list of \code{clearance} and
+\code{volume}, each a multiple of the model's, as the Bayesian update
+estimates them (\code{bayesianUpdateDrugs()}, \code{individualizeModel()}).}
+
+\item{libraryDefaults}{NULL (the default) for the package's drug library,
+or the session's (\code{recalculatePK()} passes it), from which an
+active metabolite's row is read: its \code{Concentration.Units} set the
+scale of the metabolite formed, so a metabolite the Drug Library shows in
+other units is formed in those units.}
+
+\item{metaboliteIndividual}{NULL (the default), or the individual's
+pharmacokinetics of the drug's active metabolite, in the form of
+\code{individual}: the metabolite it forms is then formed into the
+individual's metabolite, as the Bayesian update estimates it from the
+metabolite's measured concentrations.  The parent's own formation is the
+model's (it moves with \code{individual}).}
+
+\item{physiology}{NULL (normal), or the physiology sliders' factors, a
+numeric vector named \code{liver}, \code{renal}, \code{cardiac},
+\code{gi} (multiples of normal function, 0.1 to 10); applied only to a
+drug with a row in \code{inst/extdata/physiologyParameters.csv}.  See
+\code{R/physiology.R}.}
+
+\item{pulmonaryHypertension}{does the patient have pulmonary arterial
+hypertension?  TRUE or FALSE (the default).  Passed only to the models
+of a drug with a separate PAH population (sildenafil, tadalafil); see
+\code{R/pulmonaryHypertension.R}.}
 }
 \value{
 a list: the drug's PK sets (\code{PK}, one per PK event), its

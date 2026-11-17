@@ -1,0 +1,140 @@
+# The Visualizer (stanpumpR's compartment viewer)
+
+Named the Minto Visualizer until 2026-11-08, when Shafer renamed it, Charles Minto agreeing; its 3D view is still Charles Minto's.
+
+Copyright (c) 2026 Charles Minto and Thomas Schnider. MIT License (see `LICENSE`).
+Written by Dr Charles Minto, assisted by Claude.ai; adapted to stanpumpR's
+pipeline and the Edit doses dialog by Claude Code, 2026-11-05.
+
+The visualizer shows one drug's run from stanpumpR in 3D:
+- **the compartments:** V1, V2 and V3 as cylinders whose liquid height is the concentration, so drug is seen flowing down each gradient, and whose floor area is the volume (in proportion while the largest is at most 10 times the smallest; see *Sizes*);
+- **the flows:** the pump, absorption from a depot, the net flows between V1 and V2 or V3, and elimination, as arrows whose cross-section is the rate;
+- **the effect site:** a ribbon beside V1, with the TCI target marked.
+
+## Where it is in stanpumpR
+
+Press **Visualizer** under the plot, beside **Add new drug** (2026-11-08): it is there only while a plotted drug can be drawn, opens the pop-up at once for one such drug and drops up a list for several (`viewerPlotButton()`, `input$openViewerDrug`). Or double-click a drug's panel: the **Edit *drug* doses** dialog has a **Visualizer** button after **Delete All Doses**, shown only for a drug the visualizer can draw. Both go through `launchViewer()` in `R/app_server.R`. A click opens the visualizer in a pop-up window at once (a window opened later, when the server answers, would be stopped by popup blockers); if the browser blocks it, the app says so.
+
+The pop-up says *Loading data — this may take 30–45 seconds* until the run arrives; further clicks meanwhile are ignored. If the pop-up opened, the dialog closes, so stanpumpR stays free to use while the visualizer plays; if the browser blocked it, the dialog stays open for a retry and the server builds nothing: once the run has arrived, the pop-up needs nothing more from the server.
+
+The run is **the plot's own concentrations**, a snapshot of the committed dose table at the click (press Apply first to see edits), and it spans **the plot's x-axis, from Min time to Max time**. No PK is solved while it plays. When it is built, nothing is solved either if the plot's own points are close enough to animate (`viewerGridFine()`: no gap longer than two of the visualizer's steps); a plot's time line is dense only near doses and kinks, with gaps of an hour on an oral run, so the drug is usually re-solved on the visualizer's times, with the plot's own PK (no covariate recomputed; about a second). Everything is in the **concentration domain**: a drug plotted as an ACT (heparinCPB) is drawn as the anti-Xa activity, IU/mL, that its ACT is computed from. The time is shown as a progress bar, as a video player shows it. Drug given before Min time is counted: the vessels start full and the amounts card starts from what was given since time 0.
+
+**Two views** (Shafer, 2026-11-06). The pop-up, named **Visualizer** in its upper left, opens in a **2D view** (`src/flat.js`, SVG): each compartment is a box whose fill height is its concentration, on one scale shared by every box and fixed for the whole run, and whose width is its volume (see *Sizes*); V2 to the left of V1, V3 to its right, the effect site a thin blue bar beside V1 on the same scale, the TCI target a gold line; every flow an arrow whose thickness is its rate (scaled to the run's 95th-percentile flow, so a brief loading burst does not make every other arrow a hairline; above it an arrow is drawn at the thickest and its label stays exact; below it a small flow is a hairline, its head and label still showing it). The scale's top is the highest concentration or target at any sample of the run; a box narrower than 10 px is held at 10 px and the others share the rest of the width, so every box fits the window; a value that is not zero is never labelled 0 (three significant figures where the fixed decimals would round it away). In a window too small for the picture and both the readout and amounts cards, either view shows one card, the readout unless **a** swaps the amounts card in for it, and in a window too small even for that, neither (Shafer, 2026-11-07, from ChatGPT's audit of 6b52133; `Cards.fit()` in `src/player.js`): the 2D view keeps its drawing's room, its own labels giving the numbers, and the 3D view lets the cards cover at most half the height above the controls, and two cards that would overlap each other count as not fitting. Below about 300 px of height the 2D drawing scrolls; the controls wrap, the view switch on the first row. The **3D view** button (or **v**) switches to Charles Minto's 3D scene and back; the run, the time and the controls carry over, and the 3D renderer pauses while hidden.
+
+**Sizes** (Shafer, 2026-11-06: seeing each concentration rise matters more than strictly proportional sizes). In both views the heights are always concentration, never amount, so a gradient is seen as a difference in level. The sizes are the volumes, in proportion, while the largest is at most `SIZE_RATIO_MAX` = 10 times the smallest; beyond that they are drawn as V^a scaled to the largest, a = log 10 / log(Vmax/Vmin), a log scale of volume that keeps their order and makes the ratio exactly 10 (`displayVolumes()`, `src/flat.js`), and each view says *not to scale* (the 2D view above its boxes, the 3D view in the readout); the volume labels and the amounts card stay exact. The filled area (2D) or the liquid's volume (3D) is then no longer the amount. Propofol's Eleveld volumes (6.28, 23.6, 157 L, 25:1) are compressed. The 3D scene also holds its largest vessel's floor area between 20 and 200 (scene units², `VESSEL_AREA_MIN`/`_MAX`), so a 100,000 L compartment does not fill the view.
+
+**Save a video** (`src/video.js`, Shafer, 2026-11-07). The **Video** button saves the whole run, from its first time to its last, at the speed set and in the view shown (the 3D view from the current viewpoint), as an H.264 MP4 at 30 frames a second, up to 1920 × 1080 and 5 minutes long, which plays in PowerPoint, Keynote and on phones. It is made in the pop-up and nowhere else: each frame is drawn at a fixed step (so none is dropped, and saving is usually faster than watching), encoded by the browser's own WebCodecs encoder (current Chrome, Edge, Safari and Firefox; an older browser is told it cannot), and packed into the MP4 by `mp4()`, written here so the viewer needs no library; nothing is uploaded and nothing new runs on the server. The readout, the amounts card and the 3D labels are page elements, so `paintElement()` paints each onto the frame where the page laid it out. A window resized while a video is made is fitted into the frame from then on, at the size the video started with (Carbon's third UI audit, 2026-11-15: its elements were painted off the frame, or into a corner of it). Every video ends in a strip naming stanpumpR, the drug, the model and the time, with stanpumpR's statement of intended use, since a video travels without the app; the patient's weight, height, age and sex appear only if the box asking for them is ticked (it is not, by default).
+
+**Open run…** loads a saved run file; it is hidden in a pop-up stanpumpR opened (its address carries the click's token), the app having no way to save one, and kept when the page is opened on its own. A concentration below a billionth of the run's highest (`TINY_FRACTION`, `src/player.js`) is shown as 0, so round-off never reads as "4.02e-16".
+
+The controls: **Play**, **Pause**, **Stop** (pause and go back to the start), the progress bar (drag to any time), a **Speed** slider (real time to 1 s = 1 day; a run first plays in at most two minutes), and an **X**, upper left, that closes the window. The mouse turns and zooms the scene; **h** lists the keys.
+
+| File | What it is |
+|---|---|
+| `R/viewerRun.R` | `viewerSimulate()` runs the app's own pipeline (`recalculatePK()` → `processdoseTable()`) at the visualizer's times; `viewerRun()` turns one drug's result into the run, `viewerGasRun()` an inhaled anesthetic's; `viewerProblem()` says why a drug cannot be drawn. |
+| `R/app_server.R` | the dialog's button (`viewerAvailable()`), the `openViewer` observer and the `viewerBlocked` notification. |
+| `inst/www/viewer-launch.js` | the browser side of the button: opens the pop-up and hands it the run. |
+| `inst/www/stanpumpR-viewer.html` | the visualizer, one self-contained file (about 830 KB, three.js 0.170.0 included), **built** from `tools/viewer/src`. |
+| `tools/viewer/src/` | its readable source. |
+| `tools/viewer/build/` | `build.mjs`, which makes `inst/www/stanpumpR-viewer.html` from `src/`, and the test runner. |
+| `tools/viewer/tests/viewer-injection.test.mjs` | a run file cannot put markup in the page; the 2D view, the sizes and the video. |
+| `tools/viewer/examples/propofol-tci-e.json` | a sample (version 1) run, for the injection tests and for a look without stanpumpR. |
+| `tools/viewer/examples/sevoflurane-washin.json` | a sample gas run: 2% sevoflurane, 6 L/min of oxygen cut to 1 L/min at 10 minutes. |
+| `tests/testthat/test-viewer.R` | stanpumpR's test of `viewerRun()`. |
+
+`tools/` is in `.Rbuildignore`; only `inst/www/stanpumpR-viewer.html` ships in the package.
+
+## Which drugs
+
+Every drug whose plot is a concentration in mcg/mL, ng/mL, pg/mL, IU/mL, mcU/mL or mmol/L (amounts in mg, mcg, ng, IU, U or mmol), and heparinCPB as its anti-Xa activity, whatever its model: linear or saturable (Michaelis–Menten), closed form, transit chain or Runge–Kutta. The visualizer computes no pharmacokinetics: it draws stanpumpR's concentrations, and reads every flow from the amounts as they change, so a flow is right for any model.
+
+And the inhaled anesthetics (sevoflurane, isoflurane, desflurane, nitrous oxide), in the 2D view: see *The inhaled anesthetics* below.
+
+Not drawn (`viewerProblem()`): oxygen and the summed MAC; drugs plotted as an INR (fluindione, acenocoumarol: stanpumpR keeps no drug concentration for them), a serum osmolality (mannitol), a percentage or a flow; and drugs whose doses reach more than one of their separate systems (ketorolac's S and R enantiomers, warfarin, meloxicam dosed both orally and intravenously), which one set of compartments cannot show. Meloxicam's oral and intravenous (ANJESO) fits each take only their own route's doses, so meloxicam given by one route is drawn with that route's fit (`viewerSystem()`). A drug dosed as a salt in mmol (calcium) is drawn with the drug given unknown.
+
+**The drug given, and eliminated.** `given` counts intravenous rates and boluses (scheduled repeats and the TCI pump's schedule included), the apparent-oral rates (`mg/day PO`) that run straight into V1, and the drug absorbed from a depot, read off the fall of stanpumpR's `Depot` column (the bioavailable amount still to be absorbed; stanpumpR puts a point just before and at each arrival, so the rise holds no absorption to speak of: about 0.01% of a dose). Eliminated is then given less the drug in V1 + V2 + V3. A few drugs have an input stanpumpR rewrites beyond the dose rows — a zero-order oral or SC release, an enteral infusion, exenatide's saturable SC input — and a metabolite's input is its formation: so does a fosphenytoin dose in mg PE, which waits in a conversion compartment that is neither the body nor the depot; for those the run says `inputKnown: false`, the amounts card leaves administered and eliminated blank, and elimination is drawn as CL1 × Cp. The fall of `Depot` is the absorption only while nothing fills the depot as it empties and nothing passes it by, so a run with a rate into a tissue depot (a patch, a perineural or pump infusion), an enteral infusion, a zero-order release, or a share that runs straight into V1 (the insulins, exenatide) carries no `absorbed` and draws no absorption arrow (Carbon's third UI audit, 2026-11-15). A metabolite formed only from a parent in the table (morphine from codeine) is re-solved with the parent. A model that switches PK sets at a clinical event (the infant dexmedetomidine model on bypass) is drawn and balanced with the volumes in force at each time (`pkAt`), the drug carried across the event unchanged.
+
+**Salts.** A Michaelis–Menten drug dosed as a salt enters its model as the active drug (`michaelisMenten$saltFactor`), and so do its IV doses here: 1000 mg of phenytoin sodium IV is given, and shown, as the 919.9 mg of phenytoin it delivers.
+
+**Administered (bioavailable).** For a drug with a depot, the amounts card's administered is the bioavailable dose: 30 mg of oral morphine (F 0.29) is 8.7 mg.
+
+## The run file (format version 2)
+
+`viewerRun()` makes it; Shiny's `sendCustomMessage()` serialises it (`jsonlite::toJSON(run, auto_unbox = TRUE, digits = NA, null = "null")` writes the same file). Version 1 runs (Charles Minto's original) still load.
+
+| Field | Content |
+|---|---|
+| `format`, `version` | `"stanpumpR-viewer"`, `2` |
+| `drug`, `model`, `category` | Labels; `category` (stanpumpR's) sets the colour. |
+| `typical` | stanpumpR's typical concentration for the drug: the height scale. |
+| `units` | `conc`, `amount`, `rate`: the concentration and amount units shown. |
+| `amountScale` | Concentration × volume (L) × this is the amount in `units.amount` (1000 for IU, 1/1000 for U; 1 otherwise). |
+| `patient` | `weight`, `height`, `age`, `sex`, for the readout. |
+| `pk` | `v1, v2, v3` (L) and `cl1, cl2, cl3` (L/min): the vessels' sizes (and, without a known input, CL1 for elimination), of the PK set in force at the first time. |
+| `pkAt` | `v1, v2, v3` (L) and `cl1` (L/min) at each time, where a clinical event changes them inside the window; else `null`, and `pk` holds throughout. |
+| `t` | Times, in **seconds**, increasing, from Min time to Max time: 1 s apart, longer on plots over 2 h (at most about 7200 times); the last is Max time. |
+| `cp`, `ce`, `c2`, `c3` | Concentrations at each time; `ce`, `c2`, `c3` are `null` where the drug has none. |
+| `depot` | The bioavailable drug still in the depot (amount), or `null`. |
+| `absorbed` | Cumulative drug that has entered V1 other than intravenously (absorbed from the depot, apparent-oral rates), from time 0, or `null` (none, or none the depot's fall can measure). |
+| `given` | Cumulative drug that has entered the body, from time 0; `null` when `inputKnown` is false. |
+| `inputKnown` | Whether the drug given can be accounted for. |
+| `eliminationLinear` | Whether elimination is CL1 × Cp. Without a known input, the elimination arrow is drawn as CL1 × Cp only when it is; a saturable drug's is not drawn. |
+| `rate` | The intravenous rate in force from each time to the next, amount/min. |
+| `target`, `mode` | The TCI target in force, and `"effect"`, `"plasma"` or `"manual"`. |
+| `boluses` | IV boluses inside the window: `[{t, amount}]`, seconds and amount. |
+
+Between the times, concentrations and amounts are interpolated linearly; each flow is the change over the interval: Δ(V2 × C2)/Δt into V2, Δabsorbed/Δt for absorption, Δeliminated/Δt for elimination. A file that breaks a rule is refused with a message naming the field.
+
+Display rules, unchanged from Charles Minto's design: the typical concentration stands 3 units tall; every arrow is on one fixed scale (a flow of 2,500 mL/h of a syringe at 10/3 × the typical concentration draws a shaft of radius 2.0, the area proportional to the rate); propofol is white, opioids and neuromuscular blockers a light tint of their syringe-label colour, anything else pale blue; TCI-P shows a gold ring on V1, TCI-E a gold frame on the ribbon. Two bounds keep a wildly large dose inside the scene (Carbon's third UI audit, 2026-11-15: a dose of 1e9 stood 2.4e8 units tall): nothing stands taller than 1500 units (`HEIGHT_MAX`, what the camera frames from its farthest; the readout then says the heights are scaled down), and no arrow is thicker than 8 × the standard radius (`DRUG_ARROW_MAX`). Fentanyl 3.5 mg as one bolus (50 µg/kg at 70 kg) stands 1205 units and draws an arrow of 5.9, inside both.
+
+## The inhaled anesthetics (Shafer, 2D view 2026-11-09, 3D view 2026-11-10)
+
+A gas run (`kind: "gas"`, made by `viewerGasRun()`, drawn by `src/gas.js`) shows one agent's **partial pressure**, % of an atmosphere, in five places: the **breathing circuit** (what the patient inspires), the **lungs** (end-tidal), the **vessel-rich group** (the effect site, drawn in the 2D view's effect-site blue), the **muscle group** and the **fat group**. It is drawn after Mapleson's hydraulic analogue of uptake: each compartment is a box whose width is its **capacity**, its volume times its tissue:gas partition coefficient (the lungs' is their volume, 2.5 L at 70 kg), and whose fill height is its partial pressure, on one scale for every box, so the filled area is the agent it holds and agent runs from a higher level to a lower one until they are equal. The widths obey *Sizes* above: sevoflurane's fat holds 493 L of gas, its vessel-rich group 6.6 L, so they are compressed. stanpumpR's ideal circuit has no volume and holds no agent, so it is a narrow bar; GasMan's semi-closed circuit, if a run carries it, is a box of its 8 L. The vaporiser's setting (the fresh gas's own partial pressure) is a gold line on the circuit, and one MAC, age-adjusted, a dashed line across the patient's boxes.
+
+The run is the gas engine's own five states for the plot (`gasDrugEntries()` keeps them, with the body and circuit they were solved with, as `$gasRun`), interpolated onto the visualizer's times: nothing is re-solved. The flows come from the amounts, as for a drug, in mL of vapour a minute: **fresh gas** into the circuit (flow × setting); **ventilation**, the net flow from the circuit into the lungs; the **blood**, out of the lungs and into each tissue, drawn as one line under the boxes with an arrow up into each tissue as it takes agent up and down out of it as it gives agent back; and **vented**, through the pop-off valve, the agent delivered less the agent held, which a valve cannot run backwards: where the engine's amounts would make it fall or go below zero (agent held that was never delivered) it is held where it was and no arrow is drawn, so the amounts card does not add up there (Carbon's third UI audit, 2026-11-15). Red flows into the lungs, green out of them. The amounts card gives the agent delivered, in the circuit (GasMan's semi-closed circuit only), in the lungs, the **uptake** (what the tissues hold, which is all the blood has taken from the lungs since time 0: the engine's blood holds none and nothing is metabolised; GasMan's *Uptake*) with the vessel-rich group, muscle and fat under it, and vented; its unit is in its heading, so the card is no taller than it was.
+
+**The blood, the cardiac output and the ventilation** (Shafer, 2026-11-17, from GasMan's display, which shows ART, VEN, CO and VA). Arterial blood is at the end-tidal partial pressure in the engine; **mixed venous** blood is the tissues' partial pressures weighted by their shares of the cardiac output (`gasMixedVenous()`, the run's `venous`). The uptake is the cardiac output times the blood:gas coefficient times their difference, so the 2D view draws the two side by side after the lungs, red **Art** and blue **Ven** bars under the caption *blood*, dashed like the ideal circuit because blood holds no agent in the engine; `test-viewer.R` holds that difference times the cardiac output to the uptake the tissues' amounts give, at normal output and with the Physiology slider at half. The 3D view draws mixed venous as a blue **ring on the lungs' glass**: blood reaches the lungs at the ring and leaves at the liquid's level, so the gap is the gradient. A ring, not glasses of their own: two tubes in front of the lungs left no starting view with nothing hidden in an 800 × 600 window, wherever they stood. The readout gives the minute ventilation with the alveolar ventilation the engine took from it (70%, `GAS_DEAD_SPACE_FRACTION`), the mixed venous partial pressure (in the ring's colour) and the cardiac output the engine ran on (the Physiology slider included), with the circuit's name in its foot, in as many lines as before: a taller card leaves the 3D starting view less room, and the amounts card one row taller than before was dropped beside the readout in an 800 × 600 window (`Cards.fit()`).
+
+**The greenhouse effect** (Shafer, 2026-11-17: "What people care more about is greenhouse gas effect"; `R/gasGreenhouse.R`). The run's `greenhouse` gives the agent's 100-year global warming potential (Sulbaek Andersen 2012, Table 1, read from the rendered page), the kg in a litre of its vapour (an ideal gas at 20 °C, its molecular weight from the formula) and a typical US car's 5.1 tonnes of CO₂ a year (the same paper). All the agent delivered reaches the atmosphere, vented now or breathed out after the case, so the amounts card's last row is the **CO₂ equivalent of the agent delivered**, its tooltip how long a typical US car takes to emit as much CO₂. The rate at the present setting, kg of CO₂ equivalent an hour and as how many US cars emit as much, goes with the fresh gas: the 2D view's label of the setting, the 3D view's card over the fresh gas arrow. The **3D view** (`src/gas3d.js`) draws the same run as glasses, in Charles Minto's scene: the lungs at the centre, where V1 stands for a drug; the vessel-rich group, muscle and fat behind them on an arc, as V2 and V3 are, each its own radius plus 11 units out from the lungs' glass (`GAS_GAP`, wider than a drug's 8, so an arrow's head stands clear of a tall liquid behind it: desflurane's muscle once hid the arrow into it from every side) and turned round until it stands clear of the others; the circuit to the left, a narrow tube when it holds no agent. Each glass's floor area is its capacity (compressed as a drug's volumes are) and its liquid as tall as the partial pressure, one MAC standing 6 units (or the highest the glasses must hold, the partial pressures and the vaporiser's setting, where that is lower: nitrous oxide, whose MAC is above an atmosphere, or a brief wash-in, whose glasses were 528 units tall when scaled to the patient's 0.1%); every glass is as tall as the run's highest partial pressure needs, so levels compare across them. The vaporiser's setting is a gold ring on the circuit, one MAC a pale ring round the patient's glasses. The fresh gas comes down into the circuit and the vented gas leaves through its base, as a drug's infusion and elimination do at V1; breathing and the blood run along the floor between the lungs and the other glasses, red into the lungs and green out of them, on the scene's cross-section-for-rate scale with the run's 95th-percentile flow at the drug view's standard thickness and none thicker. Each glass is named over its rim with its partial pressure (one line, name and number, in a window under 1000 × 700); pointing at a glass or an arrow shows its card. **The starting view is the run's own** (Shafer, 2026-11-10: from the drug view's, labels fell on one another and the blood arrows hid behind the lungs): `gasHomePose()` weighs views from every side at six heights, each as close as keeps the glasses, their labels and the circuit's arrows inside the window and off the cards, and takes the one in which nothing is hidden, then the labels overlap least: hidden meaning any of each glass's liquid or of each arrow, by an exact ray test against the liquid columns at their highest in the run (the glass is see-through), or covered by another glass's label, with a preference for a moderate height (the heights are the partial pressures) and the front. The picture is then moved up by the camera's view offset, which moves the image and not the camera, to centre the scene in the room above the cards. A resized window has its starting view chosen again the next time it is wanted. Turned by hand, labels that still meet are lifted apart on the screen after every drawing (`gasSpreadLabels()`).
+
+| Field | Content |
+|---|---|
+| `kind` | `"gas"` |
+| `p` | `circuit`, `lungs`, `vrg`, `mg`, `fg`: partial pressures at each time, %. |
+| `capacity`, `volume`, `partition` | Each compartment's capacity (L of gas), volume (L) and tissue:gas partition coefficient; the ideal circuit's capacity and volume are 0. |
+| `amountScale` | 10: capacity (L) × partial pressure (%) × this is mL of vapour. |
+| `fresh`, `freshFlow`, `ventilation` | In force from each time: the agent's share of the fresh gas (%), the fresh gas flow and the minute ventilation (L/min). |
+| `alveolarVentilation` | In force from each time: the minute ventilation less the dead space the engine took (L/min). Optional. |
+| `venous` | The mixed venous partial pressure at each time, %. Optional: without it no blood is drawn. |
+| `cardiacOutput` | The cardiac output the engine ran on, L/min. Optional. |
+| `greenhouse` | `gwp100`, `lifetime` (years), `kgPerLitre` (kg of agent in a litre of its vapour at 20 °C), `carKgPerYear` and `source`: what the viewer needs for the CO₂ equivalent of the agent delivered. Optional. |
+| `delivered` | The agent the fresh gas has carried into the circuit since time 0, mL of vapour. |
+| `mac` | One MAC at the patient's age, %. |
+| `circuit` | `"ideal"` (stanpumpR's) or `"semi-closed"` (GasMan's). |
+
+## Rebuilding after changing `src/`
+
+You need Node.js (22.12 or later for the tests). In `tools/viewer/build/`:
+
+```bash
+npm ci
+```
+
+```bash
+node build.mjs
+```
+
+```bash
+npm test
+```
+
+`npm ci` installs three.js 0.170.0, esbuild 0.25.0 and puppeteer-core 25.14.0 (which drives an installed Chrome or Edge, or `CHROME_PATH`; it downloads no browser). `build.mjs` writes `inst/www/stanpumpR-viewer.html`; commit it with the source change.
+
+## How it was tested
+
+Charles Minto's tests (2026-10-24 and 25), on his version: mass balance to 1e-4 or better in six runs; the TCI-to-manual hand-over at exactly 7.000 mg/min; every drawn height equal to the run's concentration × scale; play at the set speed; the End flight never entering V1's glass; the popup in headless Edge on a patched stanpumpR, the run arriving identical to `viewerRun()` in R to 1e-12; several drugs and drugs it cannot draw; a blocked window.
+
+This version (2026-11-05):
+- `tests/testthat/test-viewer.R`: propofol TCI-E (given equals the pump's schedule integrated; eliminated equals ∫CL1·Cp to 1e-3); the hand-over at 7 mg/min; fentanyl boluses with an infusion (given exactly 220 µg); a run from Min time to Max time (starting with the drug given before it, and the same solution as a run from 0); oral morphine (absorbed + depot = F × dose after the lag; eliminated equals ∫CL1·Cp to 5e-3); scheduled IV q4h (every repeat counted); phenytoin (saturable: given exact, eliminated never falling); ketorolac and heparin refused with their reasons.
+- `tools/viewer/tests/viewer-injection.test.mjs`: 28 of 28 in headless Chromium (21-24 from Gemini's audit of 712e43a, 25 the 10:1 size cap, 26-28 the video: the dialog and its 5-minute limit, a valid MP4 of every frame from each view, checked box by box, the patient only when asked, a safe file name, and Cancel) (16-20, 2026-11-06, from ChatGPT's audit of the 2D view: a one-sample peak, `Number.MAX_VALUE` and `MIN_VALUE` concentrations, V1 ≪ V3 and V1 ≫ V3, three-figure rate labels and proportional thin arrows, a 360 × 260 window).
+- In the running app, headless Chromium: `?scenario=tci-propofol` and `?scenario=oral-morphine-depot`; double-click the panel, the dialog's button opens the pop-up, a 7201-time run spanning the plot arrives, Play advances, Pause holds, Stop returns to the start, the speed slider sets the speed, the X closes the window; with `window.open` returning nothing, the app shows the blocked notification.

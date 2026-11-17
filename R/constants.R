@@ -32,13 +32,23 @@ ROUTE_RA <- "RA"
 # the tissue-depot fields.  (Claude Code, 2026-10-17, at the request of
 # Steven L. Shafer.)
 ROUTE_SC <- "SC"
-TISSUE_ROUTES <- c(ROUTE_RA, ROUTE_SC)
+# Transdermal (a patch; scopolamine, R/drugs_scopolamine.R): the patch
+# delivers drug into the skin at a constant rate while it is worn, and the
+# skin releases it first-order into the circulation, also after the patch is
+# removed.  Carried on the same tissue depot: the patch is a rate into it
+# ("mg/day TD", tdRateUnits), so applying a patch is a rate row and removing
+# it a 0 rate, which the plot's Stop writes.  A TD model writes its release
+# from the skin as ka_TD (and bioavailability_TD, tlag_TD), which getDrugPK()
+# moves onto the tissue-depot fields.  (Claude Code, 2026-11-13, at the
+# request of Steven L. Shafer.)
+ROUTE_TD <- "TD"
+TISSUE_ROUTES <- c(ROUTE_RA, ROUTE_SC, ROUTE_TD)
 TPEAK_ROUTES <- c(ROUTE_IV, ROUTE_PO)
 
 # Every route a dose can take, in the order the units dropdowns list them.  A
 # dose's route is carried by its Units string; see doseRoute() in R/routes.R.
 DOSE_ROUTES <- c(ROUTE_IV, ROUTE_PO, ROUTE_SL, ROUTE_IM, ROUTE_IN, ROUTE_RA,
-                 ROUTE_SC)
+                 ROUTE_SC, ROUTE_TD)
 
 # CYP2D6 metaboliser phenotype.  Four categories, using the CPIC terms the
 # genotyping laboratories report, rather than the three the UI carried before
@@ -198,6 +208,26 @@ GESTATIONAL_AGE_TERM <- 40
 MIN_GESTATIONAL_AGE <- 22
 MAX_GESTATIONAL_AGE <- 44
 
+# Serum albumin, g/dL, for the models with an albumin covariate (methotrexate,
+# Ibarra 2023; methotrexatePediatric, Taylor 2023; Steven L. Shafer,
+# 2026-11-06).  Optional: when it is not entered (NULL, or NA from an empty
+# field) each model holds its own reference value.  Read only by models that
+# name `albumin`.  The bounds take in any albumin a laboratory reports (the
+# severest hypoalbuminaemia reaches about 1 g/dL, and few labs report above
+# 5.5); the lower bound is also the floor a power of albumin sees, so the
+# term stays finite.
+MIN_ALBUMIN <- 0.5
+MAX_ALBUMIN <- 6
+
+# Serum aspartate aminotransferase (AST), U/L, for the models with an AST
+# covariate (epirubicin, Ralph 2003; Steven L. Shafer, 2026-11-10).  Optional:
+# when it is not entered each model holds its own reference value.  Read only
+# by models that name `ast`.  The bounds take in what a laboratory reports
+# (1 U/L to the 5000 U/L of a fulminant hepatitis); a model guards its own
+# term within the range its source studied.
+MIN_AST <- 1
+MAX_AST <- 5000
+
 MIN_AGE <- 0
 MAX_AGE <- 90
 # The youngest age the adult-fitted covariate terms see.  Several models carry
@@ -232,12 +262,17 @@ RESOLUTION <- 100
 # Max number of emails a single session can send out, to limit abuse
 EMAIL_SESSION_LIMIT <- 25
 
-# What the browser is told when Email Slide fails; the exception itself (an
-# SMTP diagnostic, a path) goes to the server's log (sendSlide()).
+# What the browser is told when Export's email fails; the exception itself
+# (an SMTP diagnostic, a path) goes to the server's log (sendSlide()).
 EMAIL_FAILURE_MESSAGE <- paste0(
   "The slide could not be sent. The server's log has the details; ",
   "please try again later, or tell the app's maintainer.")
-# The Email Slide's SMTP send: attempts, and seconds allowed to connect and
+# And when one of its downloads could not be written (app_server()'s
+# exportDownload()); the exception goes to the server's log in the same way.
+EXPORT_FAILURE_MESSAGE <- paste0(
+  "The file could not be made. The server's log has the details; ",
+  "please try again later, or tell the app's maintainer.")
+# The email's SMTP send: attempts, and seconds allowed to connect and
 # for each attempt as a whole (curl's connecttimeout and timeout).  Measured
 # against an address that never answers: emayili's and curl's defaults held
 # the R process 80 s here, and up to 25 minutes (5 x 300 s) where a dropped
@@ -252,7 +287,14 @@ MAX_DOSE_ROWS <- 500L
 MAX_EVENT_ROWS <- 100L
 MAX_TARGET_ROWS <- 20L
 MAX_DOSE_VALUE <- 1e9
+# The most units one Drug Library edit may add, each of which is simulated
+# once (drugLibraryUnitProblems(); typically 0.01 s each, at most 1.5 s)
+DRUG_LIBRARY_MAX_NEW_UNITS <- 40L
 MAX_INPUT_TEXT <- 2000L
+# The Help search box's maxlength, which the server holds its value to as
+# well: the browser's limit is the page's to keep, not the server's
+# (Carbon's third UI audit, 2026-11-15, M5)
+HELP_SEARCH_MAX_CHARS <- 100L
 MAX_PLOT_WIDTH <- 4096L
 MIN_PLOT_WIDTH <- 100L
 MAX_YAXIS_HEIGHT <- 350L
@@ -314,10 +356,17 @@ MAX_BOOKMARK_URL_CHARS <- 8000L
 # How the plot area introduces the error that stopped the simulation
 PLOT_FAILURE_PREFIX <- "The simulation could not be drawn. "
 
+# What the plot area says while no drug has a dose above 0, the drugs it
+# draws (positiveDoseDrugs(), R/drug-pipeline.R; Shafer, 2026-11-16)
+NOTHING_TO_DRAW_MESSAGE <-
+  "Enter a dose or target above 0 in the dose table to see the simulation."
+
 # Be sure there are more items below then potential facets on the simulation plot
 #                     1     2     3     4     5     6     7     8     9    10    11    12    13    14   15
 bolusUnits <- c("g","mg","mcg", "ng","g/kg","mg/kg","mcg/kg","ng/kg")
-infusionUnits <- c("g/min","g/hr","g/kg/hr","mg/min","mg/hr","mg/kg/min","mg/kg/hr","mcg/min","mcg/hr","mcg/kg/min","mcg/kg/hr")
+infusionUnits <- c("g/min","g/hr","g/kg/hr","mg/min","mg/hr","mg/kg/min","mg/kg/hr","mcg/min","mcg/hr","mcg/kg/min","mcg/kg/hr",
+                   # nanogram rates: the prostacyclins (treprostinil, epoprostenol) are dosed in ng/kg/min
+                   "ng/min","ng/kg/min")
 poUnits <- c("g PO", "g/kg PO", "mg PO", "mg/kg PO", "mcg PO", "mcg/kg PO")
 inUnits <- c("g IN", "g/kg IN", "mg IN", "mg/kg IN", "mcg IN", "mcg/kg IN")
 imUnits <- c("g IM", "g/kg IM", "mg IM", "mg/kg IM", "mcg IM", "mcg/kg IM")
@@ -442,6 +491,14 @@ iuUnits <- c("IU", "IU/kg", "IU/hr", "IU/kg/hr")
 # of Steven L. Shafer.)
 ivPotencyUnits <- c("U", "U/min", "U/hr", "U/kg/min", "U/kg/hr")
 
+# Milliunits per minute of a potency-defined peptide, the rate in which
+# oxytocin infusions for labour are written.  For a drug plotted by mass
+# (oxytocin, ng/mL) the units are converted to micrograms by the model's
+# `unitPotency` (micrograms per unit) before anything else reads them
+# (potencyToMass() in R/routes.R), so the U units above serve it too.
+# (Claude Code, 2026-11-16, at the request of Steven L. Shafer.)
+milliunitRateUnits <- c("mU/min")
+
 # Subcutaneous activity units (ROUTE_SC) for a drug plotted as anti-Xa
 # activity (enoxaparin, "IU SC"); the mass units are scUnits, above.  They
 # start with "IU" so simCpCe()'s international-unit check reads them, and
@@ -458,10 +515,60 @@ iuScUnits <- c("IU SC", "IU/kg SC")
 GHB_SALT <- "oxybate"
 ghbUnits <- paste(c("g PO", "mg PO"), GHB_SALT)
 
+# Aminophylline (R/drugs_theophylline.R): theophylline given intravenously as
+# its ethylenediamine salt, which carries 79% theophylline by mass.  The curve
+# is theophylline, so the unit names the salt, as calcium's units do, and the
+# drug's `doseProducts` block carries the factor (doseProductFactor() in
+# R/routes.R, applied by simCpCe()).  No route word: intravenous.
+AMINOPHYLLINE_SALT <- "aminophylline"
+aminophyllineUnits <- paste(c("mg", "mg/kg", "mg/hr", "mg/kg/hr"), AMINOPHYLLINE_SALT)
+
+# Caffeine citrate (R/drugs_caffeineNeonatal.R): labelled and dosed as the
+# citrate, which is half caffeine base ("20 mg of caffeine citrate is
+# equivalent to 10 mg of caffeine base", Cafcit label); the curve is caffeine,
+# so the unit names the salt and the drug's `doseProducts` block converts it.
+# Intravenous; the daily maintenance dose may be scheduled qd.
+CAFFEINE_SALT <- "citrate"
+caffeineCitrateUnits <- paste(c("mg", "mg/kg"), CAFFEINE_SALT)
+
+# Valganciclovir (R/drugs_ganciclovir.R): the oral prodrug of ganciclovir,
+# labelled and dosed as valganciclovir (Valcyte: tablets of 450 mg
+# valganciclovir, as the hydrochloride; oral solution 50 mg/mL).  The curve is
+# ganciclovir, so the unit names the product and the drug's `doseProducts`
+# block converts it, 0.720 mg ganciclovir per mg valganciclovir (the ratio of
+# molecular weights, as the model's source converted its doses).  Oral, and
+# may be scheduled once or twice daily.
+VALGANCICLOVIR_PRODUCT <- "valganciclovir"
+valganciclovirUnits <- paste("mg PO", VALGANCICLOVIR_PRODUCT)
+
+# Quinidine sulfate (R/drugs_quinidine.R): the oral tablet is labelled and
+# dosed as the sulfate (200 and 300 mg), 82.9% quinidine base, the factor the
+# model's source converted its doses with.  The curve is quinidine, so the
+# unit names the salt and the drug's `doseProducts` block converts it.  Oral;
+# scheduled every 6 or 8 hours, or 4 for loading.
+QUINIDINE_SALT <- "sulfate"
+# Piperacillin-tazobactam (R/drugs_piperacillin.R): Zosyn and its generics are
+# labelled by the combined weight ("4.5 g": piperacillin sodium equivalent to
+# 4 g piperacillin and tazobactam sodium equivalent to 0.5 g tazobactam), and
+# are ordered that way, so a unit naming the product ("pip-tazo", the
+# clinical shorthand, short enough for a scheduled unit) carries 4/4.5 of its
+# weight as piperacillin (the drug's `doseProducts` block).  Plain mg units are
+# piperacillin.  Intravenous; scheduled every 4, 6 or 8 hours.
+PIPERACILLIN_TAZOBACTAM_PRODUCT <- "pip-tazo"
+piperacillinTazobactamUnits <- paste(c("mg", "mg/kg", "mg/hr", "mg/kg/hr"),
+                                     PIPERACILLIN_TAZOBACTAM_PRODUCT)
+# A transdermal patch's delivery rate into the skin (ROUTE_TD): Transderm
+# Scop is labelled "1 mg/3 days", 0.333 mg/day, entered when the patch is
+# applied and set to 0 when it is removed.
+tdRateUnits <- c("mg/day TD")
+quinidineSulfateUnits <- paste("mg PO", QUINIDINE_SALT)
+
 allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, enteralRateUnits, poFormulationUnits,
               slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits,
               iuUnits, scUnits, iuScUnits, ghbUnits, insulinUnits, insulinRateUnits,
-              ivPotencyUnits)
+              ivPotencyUnits, milliunitRateUnits, aminophyllineUnits, caffeineCitrateUnits,
+              valganciclovirUnits, quinidineSulfateUnits, tdRateUnits,
+              piperacillinTazobactamUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.
@@ -471,7 +578,7 @@ tciUnits <- c(TCI_UNIT_PLASMA, TCI_UNIT_EFFECT)
 # The dose table's Dose column is headed "Dose/Target": a target row's number
 # is a concentration.  The data column is still "Dose" (rColHeaders); the
 # grid's hooks match the header's first word (findColByHeader() in
-# inst/www/hot_funs.js).
+# inst/www/grid-funs.js).
 DOSE_COLUMN_HEADER <- "Dose/Target"
 TCI_INTERVAL <- 10 / 60        # minutes between rate changes (10 s, as STANPUMP)
 TCI_PLASMA_SWITCH <- 0.05      # effect site this close to target: hold the plasma
@@ -513,7 +620,15 @@ scheduledUnits <- c(
   ))),
   # The subcutaneous units take the daily frequencies and qwk, not qam/qpm.
   as.vector(t(outer(c(scUnits, insulinUnits),
-                    names(c(SCHEDULE_INTERVALS, WEEKLY_SCHEDULE_INTERVAL)), paste)))
+                    names(c(SCHEDULE_INTERVALS, WEEKLY_SCHEDULE_INTERVAL)), paste))),
+  # Caffeine citrate's daily maintenance dose (R/drugs_caffeineNeonatal.R)
+  paste(caffeineCitrateUnits, "qd"),
+  # Valganciclovir's once- and twice-daily regimens (R/drugs_ganciclovir.R)
+  paste(valganciclovirUnits, c("qd", "bid")),
+  # Quinidine sulfate's regimens (R/drugs_quinidine.R)
+  paste(quinidineSulfateUnits, c("tid", "qid", "q4h")),
+  # Piperacillin-tazobactam every 8 or 6 hours (R/drugs_piperacillin.R)
+  as.vector(t(outer(piperacillinTazobactamUnits[1:2], c("tid", "qid", "q4h"), paste)))
 )
 
 # Units for the inhaled gases (Class "gas" in drugDefaults_global.csv): carrier
@@ -545,6 +660,8 @@ DRUG_CATEGORIES <- c(
   "Antihypertensives",
   "Vasoactive and resuscitation",
   "Parkinson disease",
+  "Pulmonary hypertension",
+  "Chemotherapy",
   "Other",
   "Illicit drugs"
 )
@@ -556,6 +673,10 @@ VASOACTIVE_DRUG_CATEGORY <- "Vasoactive and resuscitation"
 # complications (inst/help/models/parkinsons.md): every candidate catalogued in
 # inst/extdata/parkinsonsRegistry.csv, implemented or not.
 PARKINSONS_DRUG_CATEGORY <- "Parkinson disease"
+# The category of the cytotoxic chemotherapy drugs (inst/help/models/
+# chemotherapy.md, docs/chemotherapy.md): every candidate model catalogued in
+# inst/extdata/chemotherapyRegistry.csv, implemented or not.
+CHEMOTHERAPY_DRUG_CATEGORY <- "Chemotherapy"
 # The categories whose every drug, and every metabolite of one, must have a
 # row in inst/extdata/therapeuticRanges.csv (R/therapeuticRanges.R): the
 # range the band draws, or why there is none.  Every category since
@@ -609,6 +730,15 @@ TIME_UNIT_DEFAULT <- "minutes"
 # start, so it is offered for these units only; days and weeks are elapsed.
 CLOCK_TIME_UNITS <- c("minutes", "hours")
 TIME_MODES <- c("clock", "relative")
+# The plot the app opens with (Shafer, 2026-11-13): minutes, from 0 to 180,
+# the length of an intravenous anaesthetic.  A repeating oral dose prescribed
+# while the time settings are still these switches them, once per session, to
+# REPEATING_ORAL_TIME_UNIT from 0 to REPEATING_ORAL_PLOT_MINUTES
+# (repeatingOralSwitch in R/app_server.R).  Defaults only: the user may change
+# either at any time, and the switch never comes back.
+TIME_MAXIMUM_DEFAULT <- 180
+REPEATING_ORAL_TIME_UNIT <- "days"
+REPEATING_ORAL_PLOT_MINUTES <- 30 * MINS_PER_DAY
 # The Time Display the app opens with: elapsed time, counted from zero.  Actual
 # (clock) time is a choice in the Time panel for minutes and hours.
 TIME_MODE_DEFAULT <- "relative"
@@ -682,6 +812,11 @@ TIME_EXTEND_MARGIN <- c(minutes = 30, hours = 30, days = MINS_PER_DAY / 2, weeks
 
 REFERENCE_TIME_NONE <- "none"
 NORMALIZE_NONE <- "none"
+# The choices of the plot's own controls, which a link or a forged input can
+# replace with anything (Carbon's third UI audit, 2026-11-15, C1)
+PLOT_NORMALIZATIONS <- c(NORMALIZE_NONE, "Peak plasma", "Peak effect site")
+PLOT_TYPICAL_CHOICES <- c("none", "Mid", "Range")
+PLOT_LINE_TYPES <- c("blank", "solid", "dashed", "dotted", "dotdash")
 PK_EVENT_DEFAULT <- "default"
 
 PLOT_ID_EVENTS      <- "Events"
@@ -734,6 +869,11 @@ GRID_FINE_POINTS    <- 20000
 DEBUG_LEVEL_OFF <- 0
 DEBUG_LEVEL_NORMAL <- 1
 DEBUG_LEVEL_VERBOSE <- 2
+# The session's debug log (?debug=1) keeps its first line, the build, and its
+# newest lines up to about this many characters (appendDebugLog() in
+# R/app_globals.R): the whole log is copied at every line written and sent to
+# the browser at every flush, so a long session made each write slower.
+DEBUG_LOG_MAX_CHARS <- 200000
 
 # Every https URL on one of these websites in a drug reference, wherever it
 # stands in the citation, is shown in the UI as a link labelled with the
@@ -808,3 +948,73 @@ PREGNANCY_MAX_AGE <- 60
 # only when the serum creatinine is blank (pregnancyGfrFactor()): a measured
 # pregnant creatinine already carries the rise.
 PREGNANCY_GFR_FACTOR <- 1.5
+
+# BAYESIAN UPDATE (R/bayesian.R, help page models/bayesian).  The sidebar's
+# Bayesian Updating panel: measured concentrations, and the two variabilities
+# of the maximum a posteriori estimate, each a coefficient of variation in
+# percent.  PK variability is the spread of the individual's clearance and
+# volume about the model's (the prior, omega); residual variability the
+# spread of a measurement about the individual's predicted concentration
+# (sigma), which takes in the assay and also errors in the recorded dose and
+# sample times and in the model itself.  Named "residual", not "assay", and
+# 5% by default, which is about where it comes down to in modelling (Steven L.
+# Shafer, 2026-11-13; he chose both defaults).  The estimate
+# depends only on the ratio of the two (the objective, R/bayesian.R, scaled
+# by sigma^2): at 25% and 5% the standard deviations are 5 to 1, so a
+# measurement weighs about 25 times the prior (inverse variance).
+# The original STANPUMP's generic clearance-and-volume update (BAYES.C,
+# Maitre and Shafer) entered omega 0.26 and sigma 0.05, commented as "30%
+# variability, ln(1.30) = .26", but its funk() divides by them unsquared, so
+# they acted as variances: about 51% and 22% as coefficients of variation.
+BAYES_PK_VARIABILITY_DEFAULT <- 25
+BAYES_PK_VARIABILITY_MIN <- 5
+BAYES_PK_VARIABILITY_MAX <- 100
+BAYES_RESIDUAL_VARIABILITY_DEFAULT <- 5
+BAYES_RESIDUAL_VARIABILITY_MIN <- 1
+BAYES_RESIDUAL_VARIABILITY_MAX <- 50
+# The sliders' steps; a teaching scenario's values must lie on them, or the
+# browser snaps a value the scenario's page prints (helpScenarioCheck())
+BAYES_PK_VARIABILITY_STEP <- 5
+BAYES_RESIDUAL_VARIABILITY_STEP <- 1
+# The most measured concentrations the table holds
+MAX_BAYES_OBSERVATIONS <- 30L
+# The latest measurement an update uses, minutes: the longest plot the app
+# offers (365 days).  The fit simulates to its last measurement, so a time
+# with no ceiling (1e12 minutes, typed or in a link) ran tciSchedule() or a
+# schedule's repeats for hours; in the app the end of the plot is the limit
+# (bayesianUpdateDrugs(maximum =)).
+BAYES_MAX_TIME <- max(MAX_TIME_VALUES)
+# Rows the table is drawn with when empty
+BAYES_TABLE_BLANK_ROWS <- 4L
+# The estimate is searched within this factor of the model's clearance and
+# volume either way (exp(+/- log(20)), 20 times the 25% prior's standard
+# deviation): a bound the prior never reaches in practice, there only so that
+# a measurement that no clearance can explain (a level entered in the wrong
+# units) cannot drive the search to a volume of zero.
+BAYES_FACTOR_LIMIT <- 20
+# The most iterations of the search (bayesianSearch(), about three
+# simulations each); the fits measured take 3 to 8
+BAYES_MAX_ITERATIONS <- 50L
+# The relative step of the search's finite differences (bayesianSearch())
+BAYES_JACOBIAN_STEP <- 1e-6
+# The longest an update searches, seconds, all drugs together: no further
+# simulation is started after it.  A worker runs one session's R at a time,
+# so a fit holds every session on it; six interacting antiseizure drugs over
+# 52 weeks, each simulation of them seconds long, held one for more than
+# eight minutes (Carbon's second UI audit, 2026-11-15, F3).  The fits
+# measured take 1 to 10 seconds.
+BAYES_MAX_SECONDS <- 30
+# The label of the population curve drawn beside the individualized one
+BAYES_PRIOR_LABEL <- "population"
+# How far its colour is mixed towards black or white (alternativeModelColor()):
+# further than the other companions' 0.45, so that a drug with the
+# population line and another companion (Minto or Schnider, "no
+# interactions") draws the two in different colours
+BAYES_PRIOR_COLOR_AMOUNT <- 0.7
+# With the antiseizure interactions on, the measured drugs are updated in
+# turn, at most this many times, until no estimate moves by more than
+# BAYES_JOINT_TOLERANCE (relative) from one pass to the next (R/bayesian.R;
+# Carbon's fourth UI audit, 2026-11-15, H8).  A pass whose inputs did not
+# change reuses its fits, so a single measured drug costs one fit.
+BAYES_JOINT_PASSES <- 6L
+BAYES_JOINT_TOLERANCE <- 1e-3

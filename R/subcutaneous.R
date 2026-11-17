@@ -79,12 +79,15 @@ ZERO_ORDER_UNITS <- "zero-order input"
 #' @keywords internal
 subcutaneousToTissueDepot <- function(pkSet, drug)
 {
-  sc <- grep("_SC(_slow)?$", names(pkSet), value = TRUE)
+  # Subcutaneous and transdermal fields both ride on the tissue depot
+  sc <- grep("_(SC|TD)(_slow)?$", names(pkSet), value = TRUE)
   if (length(sc) == 0) return(pkSet)
-  if (any(grepl("_RA(_slow)?$", names(pkSet))))
-    stop("Invalid model for ", drug, ": a drug may be absorbed subcutaneously ",
-         "or by regional anesthesia, not both (they share the tissue depot).")
-  names(pkSet)[match(sc, names(pkSet))] <- sub("_SC", "_RA", sc)
+  if (any(grepl("_RA(_slow)?$", names(pkSet))) ||
+      (any(grepl("_SC", sc)) && any(grepl("_TD", sc))))
+    stop("Invalid model for ", drug, ": a drug may have one tissue route ",
+         "(subcutaneous, transdermal or regional anesthesia), not both of two: ",
+         "they share the tissue depot.")
+  names(pkSet)[match(sc, names(pkSet))] <- sub("_(SC|TD)", "_RA", sc)
   pkSet
 }
 
@@ -110,7 +113,8 @@ routeKaField <- function(route)
 modelTissueRoute <- function(pkSets)
 {
   sc <- vapply(pkSets, function(s) any(grepl("_SC(_slow)?$", names(s))), logical(1))
-  if (any(sc)) ROUTE_SC else ROUTE_RA
+  td <- vapply(pkSets, function(s) any(grepl("_TD(_slow)?$", names(s))), logical(1))
+  if (any(sc)) ROUTE_SC else if (any(td)) ROUTE_TD else ROUTE_RA
 }
 
 #' Check a drug model's zero-order oral release block

@@ -58,7 +58,9 @@ test_that("non-occupancy and missing endpoints are refused", {
   for (p in c("droperidol", "droperidolIM", "chlorpromazine"))
     expect_error(antipsychoticOccupancy(p, 1), "No pharmacodynamic endpoint")
   expect_error(antipsychoticOccupancy("quetiapine", -1), "nonnegative")
-  expect_error(antipsychoticProfile("clozapine"), "Unknown antipsychotic profile")
+  expect_error(antipsychoticProfile("loxapine"), "Unknown antipsychotic profile")
+  # clozapine (2026-11-12) has no occupancy fit
+  expect_error(antipsychoticOccupancy("clozapine", 1), "No pharmacodynamic endpoint")
 })
 
 test_that("only aripiprazole and the two haloperidols have an effect site", {

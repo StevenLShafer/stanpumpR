@@ -4,7 +4,8 @@ config.yml
 /ignore
 /Slides
 /rsconnect
-.claude/
+.claude/*
+!.claude/skills/
 
 
 # History files
@@ -61,3 +62,6 @@ inst/doc
 .Renviron
 .Renviron.*
 tests/testthat/testthat-problems.rds
+
+# The 3D viewer build (tools/viewer/build)
+node_modules/

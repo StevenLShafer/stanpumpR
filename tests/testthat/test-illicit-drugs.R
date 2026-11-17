@@ -1,5 +1,5 @@
 # Illicit (drug-of-abuse) opt-in and the red dose-table display
-# (R/illicit-drugs.R, R/createHOT.R).  Drafted by Claude Code, 2026-10-10, at
+# (R/illicit-drugs.R, R/dose-grid.R).  Drafted by Claude Code, 2026-10-10, at
 # the request of Steven L. Shafer.
 
 dd <- getDrugDefaultsGlobal()
@@ -30,15 +30,18 @@ test_that("the opt-in gates which drugs are offered", {
 })
 
 test_that("the dose-table autocomplete source honours the opt-in", {
-  drugCol <- which(names(doseTableInit) == "Drug")
-  off <- createHOT(doseTableInit, dd, drugChoices = visibleDrugNames(FALSE, dd))
-  on  <- createHOT(doseTableInit, dd, drugChoices = visibleDrugNames(TRUE, dd))
-  expect_false("diamorphine" %in% off$x$columns[[drugCol]]$source)
-  expect_true("diamorphine" %in% on$x$columns[[drugCol]]$source)
-  # With no drugChoices given, every drug is offered (back-compatible)
-  expect_true("diamorphine" %in% createHOT(doseTableInit, dd)$x$columns[[drugCol]]$source)
-  # The Drug column renderer colours illicit names red
-  expect_true(grepl("_illicitDrugSet", off$x$columns[[drugCol]]$renderer))
+  off <- doseGridDrugsMessage(dd, visibleDrugNames(FALSE, dd))
+  on  <- doseGridDrugsMessage(dd, visibleDrugNames(TRUE, dd))
+  expect_false("diamorphine" %in% off$choices)
+  expect_true("diamorphine" %in% on$choices)
+  # Every drug's units go to the grid either way, so a drug already in the
+  # table keeps its units when the opt-in hides it; and the illicit ones are
+  # marked, which the grid draws red and says (dose-grid.js)
+  illicit <- vapply(off$drugs, function(d) d$Illicit, logical(1))
+  names(illicit) <- vapply(off$drugs, function(d) d$Drug, "")
+  expect_true(illicit[["diamorphine"]])
+  expect_false(illicit[["propofol"]])
+  expect_setequal(names(illicit)[illicit], illicitDrugNames(dd))
 })
 
 test_that("a metabolite that is only formed is never offered for dosing", {
@@ -51,9 +54,7 @@ test_that("a metabolite that is only formed is never offered for dosing", {
   for (showIllicit in c(FALSE, TRUE)) {
     offered <- visibleDrugNames(showIllicit, dd)
     expect_false(any(formedOnly %in% offered))
-    drugCol <- which(names(doseTableInit) == "Drug")
-    source <- createHOT(doseTableInit, dd, drugChoices = offered)$x$columns[[drugCol]]$source
-    expect_false("enalaprilat" %in% source)
+    expect_false("enalaprilat" %in% doseGridDrugsMessage(dd, offered)$choices)
   }
   # The startup menu never listed them (no Category)
   expect_false(any(formedOnly %in% unlist(startupDrugChoices(dd))))

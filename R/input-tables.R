@@ -21,8 +21,8 @@ cleanDoseTable <- function(DT) {
 }
 
 # The text columns of a table read from a grid, with every missing cell ("",
-# NA) made "".  hot_to_r() gives NA for a cell the browser sent as null: a
-# row inserted through a grid's context menu, or a cleared numeric cell.
+# NA) made "".  A table restored from a bookmark, or written by code, can hold
+# NA where a grid holds "".
 # Logical columns (a Delete checkbox) are left to the caller.
 blankMissingCells <- function(table) {
   for (col in names(table)) {
@@ -184,6 +184,26 @@ applyGasTableRules <- function(DT, weight = 70) {
   DT <- ensureGasOxygen(DT)
   DT <- roundGasFlows(DT)
   ensureGasVentilation(DT, weight)
+}
+
+# The dose table held to its row limit: at most MAX_DOSE_ROWS - 1 rows, blank
+# rows included, the dose grid's own limit (doseGridInput()) and what
+# storeGridEdit() and restoredDoseTable() keep.  Blank rows past it are
+# dropped, the last first; NULL when the doses alone are more.  Every table a
+# dialog writes to doseTable() passes through it (commitDoseTable() in
+# app_server()): Add a dose, Skip next dose and Stop each appended rows
+# unchecked, and a table past MAX_DOSE_ROWS fails validateDoseTableInput(),
+# which replaced the dose grid and the plot with an error while the write
+# cleared the undo history, leaving nothing to undo or edit (Carbon's UI
+# audit, 2026-11-14, F3).
+doseTableWithinLimit <- function(DT, limit = MAX_DOSE_ROWS - 1L) {
+  if (nrow(DT) <= limit) return(DT)
+  drug <- as.character(DT$Drug)
+  blank <- is.na(drug) | !nzchar(trimws(drug))
+  if (sum(!blank) > limit) return(NULL)
+  DT <- DT[-utils::tail(which(blank), nrow(DT) - limit), , drop = FALSE]
+  rownames(DT) <- NULL
+  DT
 }
 
 validateDoseTableInput <- function(DT, drugDefaults = getDrugDefaultsGlobal()) {

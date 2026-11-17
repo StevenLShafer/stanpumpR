@@ -2,12 +2,14 @@
 
 stanpumpR is designed so that adding a drug is a small, self-contained change — the goal is to
 let outside investigators contribute and maintain the pharmacokinetics for individual drugs.
-A new drug touches **six** files: the model, its row in the defaults CSV, its test, its help page, its
-pregnancy registry row and its therapeutic-range row. For every drug in the CSV, the tests fail
-without its help page (`test-help-drugs.R`); a drug with a `Category` also needs its pregnancy row
-(`test-pregnancy.R`) and its therapeutic-range row (`test-therapeutic-ranges.R`), as does a
+A new drug touches **seven** things: the model, its row in the defaults CSV, its test, its help page, its
+pregnancy registry row, its therapeutic-range row and its FDA package insert. For every drug in the CSV, the
+tests fail without its help page (`test-help-drugs.R`); a drug with a `Category` also needs its pregnancy row
+(`test-pregnancy.R`), its therapeutic-range row (`test-therapeutic-ranges.R`) and its FDA label (the PDF in
+`papers/labels/` and its row in `inst/extdata/fdaLabels.csv`, or a row saying why there is none:
+`test-fda-labels.R`, and in CI `checkFdaLabels()`; see `papers/labels/README.md`), as does a
 metabolite of one (a therapeutic-range row only), while the carrier gases and ventilation, with no
-`Category`, need neither. Nothing detects a missing test file, so that one is on you. None of the engine code needs to change.
+`Category`, need none of them. Nothing detects a missing test file, so that one is on you. None of the engine code needs to change.
 
 > Every model must handle body size the stanpumpR way — see
 > [weight-adjustment.md](weight-adjustment.md) and step 1 below. This is a requirement, not an option.
@@ -175,8 +177,8 @@ abstract, memory or none) and, in `to_obtain`, any paper whose full text would f
 - **unquantified**: a direction only, or a measurement too weak to apply (a handful of women, no
   comparison group, a PBPK prediction alone); the finding says which. Not applied.
 - **unchanged**, **unknown**: studied and unchanged, or no human data found. Not applied.
-- **source_pregnant**: the model was fitted in pregnant women (calcium, magnesium sulfate,
-  oxytocin), so the flag does nothing.
+- **source_pregnant**: the model was fitted in pregnant women (calcium, magnesium sulfate), so
+  the flag does nothing.
 - **not_applicable**: a pediatric model, a drug contraindicated in pregnancy with nothing to
   apply, or a gas (whose change, a lower MAC, is pharmacodynamic).
 
@@ -556,6 +558,12 @@ splits oral formulations, and `getDrugPK()` refuses `parallelSystems` alongside 
 
 ### When the dose basis is not the plotted analyte
 
+**When the paper does not say** (Steven L. Shafer, 2026-11-10): the drug's units reflect the
+FDA-approved product, and the parameters are read in that product's units. If the approved
+product is the base, the PK are in units of the base; if it is a salt (the usual case), they
+are in units of the salt, and a dose is entered as labelled with no conversion. Convert only
+where the paper states a basis that differs from the product, and say so in the header.
+
 A model's parameters are fitted on a particular mass, which is not always the one the
 plot reports. Three patterns, in increasing order of how loudly they must be said:
 
@@ -777,7 +785,7 @@ caught by any filter derived from the diff.
 
 ### What else a new drug touches
 
-Beyond the six files above, a new drug may need registering in places that enumerate the
+Beyond the seven items above, a new drug may need registering in places that enumerate the
 library by hand. These are **deliberately** hardcoded — `test-drugs-tramadol.R` says so:
 "because the count has been got wrong by hand more than once" — so adding yours to them is
 the intended maintenance step, not a weakening of the test.
@@ -791,6 +799,7 @@ the intended maintenance step, not a weakening of the test.
 | is an antibiotic with an `endCe` | `antibioticMicTable()` in `R/antibioticThresholds.R`, and its pathogens in `antibioticMbcTable()` in `R/antibioticMbc.R` |
 | needs a new `Category` | `DRUG_CATEGORIES` in `R/constants.R` **and** `bookmarksToExclude` in `R/app_globals.R` |
 | is a long-acting weekly product | `LONG_TERM_DRUGS` |
+| has a `Category` | its FDA label: the PDF in `papers/labels/` and its row in `inst/extdata/fdaLabels.csv` (status `label`), or, where no US label exists, a `no_us_label` row saying why (a new drug may not use `not_obtained`, which is kept only for an existing row whose label is still to be downloaded); `test-fda-labels.R` fails without a row, and `papers/labels/README.md` says how to add one |
 
 A quick way to find any roster you might owe, before CI does: search the suite for a drug
 **already in the same situation as yours** — another plasma-only drug, another TCI drug,
