@@ -41,11 +41,11 @@ MODEL_GROUPS <- list(
     weightMin = c(46, 5.3, 8.6), weightMax = c(117, 66, 31),
     n = c(23, 67, 51), year = c(2012, 2011, 2019)),
   carboplatin = data.frame(
-    model = c("carboplatinDuffull", "carboplatinPediatric"),
-    source = c("Duffull 1997", "Duong 2019"),
-    ageMin = c(49, 1.7), ageMax = c(68, 8.3),
-    weightMin = c(46, 8.6), weightMax = c(85, 31),
-    n = c(12, 51), year = c(1997, 2019)),
+    model = c("carboplatinDuffull", "carboplatinPediatric", "carboplatinPeng"),
+    source = c("Duffull 1997", "Duong 2019", "Peng 1995"),
+    ageMin = c(49, 1.7, 1 / 12), ageMax = c(68, 8.3, 221 / 12),
+    weightMin = c(46, 8.6, 5.0), weightMax = c(85, 31, 63),
+    n = c(12, 51, 22), year = c(1997, 2019, 1995)),
   melphalan = data.frame(
     model = c("melphalanNath", "melphalanPediatric"),
     source = c("Nath 2010", "Duong 2019"),

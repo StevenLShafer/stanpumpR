@@ -6,6 +6,14 @@
 
 registry <- pregnancyFindings()
 pregnancyModels <- registry$drug[registry$group == "applied"]
+# A group (R/modelSelection.R) is checked through its candidates' own rows:
+# at the reference woman the group may choose a candidate without the factor
+# (carboplatin chooses Peng 1995, a children's model, below about 34 years;
+# Shafer, 2026-11-17), and the candidate that carries it is tested directly.
+groupCheckedByCandidate <- function(drug) {
+  g <- MODEL_GROUPS[[drug]]
+  !is.null(g) && any(registry$group[match(g$model, registry$drug)] == "applied", na.rm = TRUE)
+}
 woman <- list(weight = 70, height = 165, age = 30, sex = SEX_FEMALE)
 pkOf <- function(drug, pregnant = FALSE, ...) {
   getDrugPK(drug, woman$weight, woman$height, woman$age, woman$sex,
@@ -108,6 +116,7 @@ test_that("each applied model applies the registry's clearance, volume and bioav
   # its factors are on Km and Vmax (test-drugs-phenytoin.R).
   for (i in which(registry$group == "applied")) {
     r <- registry[i, ]
+    if (groupCheckedByCandidate(r$drug)) next
     on  <- setOf(pkOf(r$drug, TRUE))
     off <- setOf(pkOf(r$drug, FALSE))
     if (!is.na(r$cl_factor)) {
@@ -131,6 +140,7 @@ test_that("the rise in filtration reaches a renal term only when the creatinine 
   expect_equal(pregnancyGfrFactor(FALSE, NULL), 1)
   expect_equal(PREGNANCY_GFR_FACTOR, 1.5)
   for (drug in registry$drug[!is.na(registry$gfr_factor)]) {
+    if (groupCheckedByCandidate(drug)) next
     expect_gt(setOf(pkOf(drug, TRUE))$cl1, setOf(pkOf(drug, FALSE))$cl1)
     # a measured creatinine already carries the rise
     expect_equal(pkOf(drug, TRUE, creatinine = 0.6)$PK, pkOf(drug, FALSE, creatinine = 0.6)$PK,
@@ -205,6 +215,7 @@ test_that("methadone's reduction keeps the racemic clearance exact and the volum
 
 test_that("the References panel names the pregnancy source only while the flag is on", {
   for (drug in pregnancyModels) {
+    if (groupCheckedByCandidate(drug)) next
     expect_match(pkOf(drug, TRUE)$reference, "pregnancy:", fixed = TRUE, info = drug)
     expect_no_match(pkOf(drug, FALSE)$reference, "pregnancy:", info = drug)
   }

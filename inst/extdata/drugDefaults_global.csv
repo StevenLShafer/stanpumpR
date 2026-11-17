@@ -260,6 +260,7 @@ doxorubicinPediatric,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#B71C1C,0,0,0,0,0,IV,
 doxorubicinolPediatric,ng,,,,,#E57373,0,0,0,0,0,IV,
 daunorubicin,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#880E4F,0,0,0,0,0,IV,Chemotherapy
 carboplatinPediatric,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#00796B,0,0,0,0,0,IV,
+carboplatinPeng,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#26A69A,0,0,0,0,0,IV,
 melphalanPediatric,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#D84315,0,0,0,0,0,IV,
 etoposideDuong,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#8E24AA,0,0,0,0,0,IV,
 gemcitabine,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#2E7D32,0,0,0,0,0,IV,Chemotherapy
