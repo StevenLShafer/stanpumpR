@@ -60,6 +60,9 @@
 #'   numeric vector named \code{liver}, \code{renal}, \code{cardiac},
 #'   \code{gi} (multiples of normal function, 0.1 to 10); see
 #'   \code{getDrugPK()}.
+#' @param pulmonaryHypertension does the patient have pulmonary arterial
+#'   hypertension?  TRUE or FALSE (the default); read only by sildenafil and
+#'   tadalafil (see \code{getDrugPK()}).
 #'
 #' @returns a list of data frames with the output of the a single drug
 #'   simulation.  A drug that forms an active metabolite adds its contribution
@@ -87,7 +90,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                                          opioidTolerance = OPIOID_TOLERANCE_DEFAULT,
                                          albumin = NULL,
                                          ast = NULL,
-                                         physiology = NULL)
+                                         physiology = NULL,
+                                         pulmonaryHypertension = FALSE)
 {
   if (length(sex) != 1 || !sex %in% SEX_VALUES) {
     stop("Invalid sex: ", paste(sex, collapse = ", "),
@@ -124,7 +128,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                     osmolality = osmolality, creatinine = creatinine,
                     pregnant = pregnant, adjustToFFM = adjustToFFM,
                     gestationalAge = gestationalAge, albumin = albumin,
-                    ast = ast, physiology = physiology)
+                    ast = ast, physiology = physiology,
+                    pulmonaryHypertension = pulmonaryHypertension)
     pks[[drug]] <- PK
     currentDT <- dose[dose$Drug == drug,]
     X <- simCpCe(currentDT, events, PK, maximum, plotRecovery)
@@ -182,7 +187,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                           creatinine = creatinine, pregnant = pregnant,
                           adjustToFFM = adjustToFFM,
                           gestationalAge = gestationalAge, albumin = albumin,
-                          ast = ast, physiology = physiology)
+                          ast = ast, physiology = physiology,
+                    pulmonaryHypertension = pulmonaryHypertension)
     output <- attach(output, target, targetPK, targetDefaults)
   }
 

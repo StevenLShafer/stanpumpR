@@ -61,7 +61,7 @@ API_MAX_ROWS <- 500000L
 # in silence (apiUnknownFields()).
 API_REQUEST_FIELDS <- c("patient", "doses", "events", "duration", "timeUnit", "options", "output")
 API_PATIENT_FIELDS <- c("weight", "height", "age", "sex", "weightUnit", "heightUnit", "ageUnit",
-                        "creatinine", "gestationalAge", "albumin", "ast", "pregnant", "adjustToFFM",
+                        "creatinine", "gestationalAge", "albumin", "ast", "pregnant", "pulmonaryHypertension", "adjustToFFM",
                         "osmolality",
                         "cyp2d6", "cyp2c19", "cyp2c9", "cyp2b6", "vkorc1", "cyp4f2",
                         "opioidTolerance")
@@ -322,6 +322,10 @@ apiPatient <- function(patient) {
     age         = age,
     sex         = sex,
     pregnant    = pregnant,
+    # Read only by the models of a drug with a separate PAH population
+    # (sildenafil, tadalafil; R/pulmonaryHypertension.R)
+    pulmonaryHypertension = apiFlag(get("pulmonaryHypertension", FALSE),
+                                    "patient.pulmonaryHypertension"),
     adjustToFFM = apiFlag(get("adjustToFFM", TRUE), "patient.adjustToFFM"),
     osmolality  = apiNumber(get("osmolality", OSMOLALITY_DEFAULT), "patient.osmolality",
                             MIN_OSMOLALITY, MAX_OSMOLALITY),
@@ -592,6 +596,7 @@ apiSimulate <- function(request) {
         cyp2b6 = patient$cyp2b6, vkorc1 = patient$vkorc1, cyp4f2 = patient$cyp4f2,
         adjustToFFM = patient$adjustToFFM, osmolality = patient$osmolality,
         creatinine = patient$creatinine, pregnant = patient$pregnant,
+        pulmonaryHypertension = patient$pulmonaryHypertension,
         gestationalAge = patient$gestationalAge,
         albumin = patient$albumin,
         ast = patient$ast,
@@ -687,6 +692,7 @@ apiSimulate <- function(request) {
       age    = patient$age,    ageUnit    = "years",
       sex    = patient$sex,
       pregnant = patient$pregnant,
+      pulmonaryHypertension = patient$pulmonaryHypertension,
       adjustToFFM = patient$adjustToFFM,
       osmolality  = patient$osmolality,
       creatinine  = if (is.null(patient$creatinine)) NA_real_ else patient$creatinine,
