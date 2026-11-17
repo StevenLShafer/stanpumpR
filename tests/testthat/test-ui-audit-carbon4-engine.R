@@ -153,12 +153,17 @@ test_that("dexmedetomidine across bypass is unchanged by the event lookups (C3)"
   ET <- data.frame(Time = c(60, 70, 80, 90, 100, 110, 120, 180),
                    Event = c("CPBStart", "CPB36", "CPB35", "CPB34", "CPB33", "CPB32", "CPB31", "CPBEnd"),
                    stringsAsFactors = FALSE)
-  x <- simulatedFor(DT, 600, plotRecovery = TRUE, events = ET)$dexmedetomidine$wide
-  # Pinned at 59094cf
-  expect_equal(nrow(x), 87)
-  expect_equal(sum(x$Plasma), 91.255105748065972, tolerance = 1e-9)
-  expect_equal(sum(x$`Effect Site`), 55.25942864272389, tolerance = 1e-9)
-  expect_equal(sum(x$Recovery, na.rm = TRUE), 10918.180203764487, tolerance = 1e-9)
+  # An infant (0.5 y, 7 kg), whose model (Zuppa) has the bypass sets.  Until
+  # 2026-11-17 this ran at simulatedFor()'s 50-year-old, on Dyck's adult set,
+  # which has none, so the events were ignored; pinned at 59094cf then, and
+  # repinned here when the adult set became Morse's.
+  drugs <- recalculatePK(NULL, G, DT, age = 0.5, weight = 7, height = 65, sex = "male")
+  x <- processdoseTable(DT, ET, drugs, 600, TRUE)$dexmedetomidine$wide
+  # Pinned on 2026-11-17
+  expect_equal(nrow(x), 214)
+  expect_equal(sum(x$Plasma), 85.41218070878989, tolerance = 1e-9)
+  expect_equal(sum(x$`Effect Site`), 84.786730968178745, tolerance = 1e-9)
+  expect_equal(sum(x$Recovery, na.rm = TRUE), 5129.2688691126586, tolerance = 1e-9)
 })
 
 # --- C3: the time until threshold of the interactions ------------------------

@@ -1,3 +1,83 @@
+# Dexmedetomidine: Morse 2020 above one year (since 2026-11-17, replacing
+# Dyck's fixed set); Zuppa 2019 with its bypass sets at one year or under.
+
+morseMF <- function(pma) pma / (52.4 + pma)
+
+test_that("the standard man of Table 1 receives the published values", {
+  # 70 kg, 176 cm, 35 y man: Al-Sallami FFM 56.13 kg, the paper's 56.1
+  x <- dexmedetomidine(70, 176, 35, "male")$PK$default
+  expect_equal(x$v1, 25.2, tolerance = 0.001)
+  expect_equal(x$v2, 34.4, tolerance = 0.001)
+  expect_equal(x$v3, 65.4, tolerance = 0.001)
+  expect_equal(x$cl2, 1.68, tolerance = 0.001)
+  expect_equal(x$cl3, 0.62, tolerance = 0.001)
+  # clearance carries the unnormalised maturation, 0.973 at 35 years
+  expect_equal(x$cl1, 0.897 * morseMF(40 + 52 * 35), tolerance = 0.001)
+  expect_equal_rounded(unlist(x),
+    c(v1 = 25.208103, v2 = 34.411061, v3 = 65.421028,
+      cl1 = 0.872741, cl2 = 1.680615, cl3 = 0.620227))
+})
+
+test_that("the library's reference man is pinned", {
+  x <- dexmedetomidine(70, 170, 35, "male")
+  expect_equal_rounded(unlist(x$PK$default),
+    c(v1 = 24.718918, v2 = 33.743285, v3 = 64.151479,
+      cl1 = 0.853402, cl2 = 1.643374, cl3 = 0.606483))
+  expect_equal(x$tPeak, 14.9)
+  expect_equal(x$MEAC, 0)
+  expect_equal(c(x$lowerTypical, x$typical, x$upperTypical), c(0.4, 0.6, 0.8))
+  expect_match(x$reference, "Morse JD")
+})
+
+test_that("volumes follow normal fat mass and clearances fat-free mass", {
+  ffm <- ffmAlSallami(140, 176, 40, "male")
+  nfm <- ffm + 0.293 * (140 - ffm)
+  x <- dexmedetomidine(140, 176, 40, "male")$PK$default
+  expect_equal(x$v1, 25.2 * nfm / (56.1 + 0.293 * 13.9), tolerance = 1e-8)
+  expect_equal(x$cl2, 1.68 * (ffm / 56.1)^0.75, tolerance = 1e-8)
+  expect_equal(x$cl1, 0.897 * (ffm / 56.1)^0.75 * morseMF(40 + 52 * 40),
+               tolerance = 1e-8)
+  expect_equal_rounded(unlist(x),
+    c(v1 = 40.549187, v2 = 55.352858, v3 = 105.234795,
+      cl1 = 1.130833, cl2 = 2.170297, cl3 = 0.800943))
+})
+
+test_that("clearance matures with postmenstrual age, as the paper says", {
+  # Morse's own function, which the drug uses only above one year
+  # "Clearance in term neonates is 42% of adult values, reaching 80% by 3 years"
+  expect_equal(morseMF(40), 0.433, tolerance = 0.002)
+  expect_equal(morseMF(40 + 52 * 3), 0.789, tolerance = 0.002)
+  term <- dexmedetomidineMorse(3.5, 50, 0, "female")$PK$default
+  pre  <- dexmedetomidineMorse(3.5, 50, 0, "female", gestationalAge = 28)$PK$default
+  expect_equal(term$cl1 / pre$cl1, morseMF(40) / morseMF(28), tolerance = 1e-8)
+  # maturation is on clearance alone
+  expect_equal(term[c("v1", "v2", "v3", "cl2", "cl3")],
+               pre[c("v1", "v2", "v3", "cl2", "cl3")])
+  expect_equal_rounded(c(term$cl1, pre$cl1), c(0.0426725, 0.0343291))
+})
+
+test_that("the size switch does not change Morse's model", {
+  for (a in list(c(70, 170, 35), c(140, 176, 40), c(12, 85, 2))) {
+    expect_equal(dexmedetomidine(a[1], a[2], a[3], "female", adjustToFFM = FALSE),
+                 dexmedetomidine(a[1], a[2], a[3], "female", adjustToFFM = TRUE))
+  }
+})
+
+test_that("the model is finite at the extremes and runs through getDrugPK()", {
+  for (s in c("male", "female")) for (a in c(0, 0.01, 18, 90))
+    for (w in c(0.5, 3, 70, 250)) {
+      x <- unlist(dexmedetomidine(w, if (w < 5) 45 else 170, a, s,
+                                  gestationalAge = 22)$PK)
+      v <- x[grepl("v[123]$", names(x))]
+      k <- x[grepl("cl[123]$", names(x))]
+      expect_true(all(is.finite(v) & v > 0), info = paste(s, a, w))
+      expect_true(all(is.finite(k) & k >= 0), info = paste(s, a, w))
+    }
+  pk <- getDrugPK("dexmedetomidine", 70, 170, 35, "male")$PK$default
+  expect_gt(pk$ke0, 0)
+  expect_true(all(is.finite(c(pk$lambda_1, pk$lambda_2, pk$lambda_3))))
+})
+
 test_that("returns the published parameters with total-body-weight scaling for age <= 1", {
   weight <- 70
   height <- 171
@@ -92,50 +172,6 @@ test_that("returns the published parameters with total-body-weight scaling for a
   expect_equal_rounded(actual, expected)
 })
 
-test_that("returns the published parameters with total-body-weight scaling for age > 1", {
-  weight <- 70
-  height <- 171
-  age <- 2
-  sex <- "male"
-  # The switch off reproduces the pre-fat-free-mass output exactly.
-  actual <- dexmedetomidine(weight, height, age, sex, adjustToFFM = FALSE)
-
-  expected <- list(
-    PK = list(
-      default = list(
-        v1 = 8.0574,
-        v2 = 12.75343,
-        v3 = 177.6944,
-        cl1 = 0.4447685,
-        cl2 = 2.078809,
-        cl3 = 1.990178
-      )
-    ),
-    tPeak = 14.9,   # Colin 2017 MOAA/S ke0 on Hannivoort's kinetics (2026-10-28)
-    MEAC = 0,
-    typical = 0.6,
-    upperTypical = 0.8,
-    lowerTypical = 0.4,
-    reference = "Dyck JB et al., Anesthesiology 1993;78(5):821-828. https://pubmed.ncbi.nlm.nih.gov/8098191/"
-  )
-
-  expect_equal_rounded(actual, expected)
-})
-
-test_that("the adult (Dyck) model scales to fat-free mass for a 120 kg man", {
-  # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126
-  # (worked out from the Al-Sallami formula by hand).
-  actual <- dexmedetomidine(120, 170, 50, "male")
-  expected <- list(
-    v1 = 10.51415,
-    v2 = 16.64204,
-    v3 = 231.8747,
-    cl1 = 0.5430234,
-    cl2 = 2.538044,
-    cl3 = 2.429833
-  )
-  expect_equal_rounded(actual$PK$default[names(expected)], expected)
-})
 
 test_that("the infant (Zuppa) model scales to fat-free mass across its bypass events", {
   # 10 kg, 75 cm, 1 y male: FFM 7.754 kg (maturation 0.88), so volumes
@@ -172,19 +208,25 @@ test_that("a newborn entered as age 0 keeps a clearance after bypass", {
 # model (age > 1) is a step, and a large one: the help page says so, with the
 # numbers pinned here.  This test documents the step so that a change to
 # either side is deliberate (an audit of 2026-10-12 asked for it); the model
-# choice itself is Steven L. Shafer's decision of 2026-10-09.
+
+# The boundary between Zuppa's infant model (age <= 1) and Morse (age > 1) is
+# a step, which the help page describes with these numbers.  The choice to
+# keep Zuppa at one year or under is Steven L. Shafer's decision of
+# 2026-11-17.  Before then the step was to Dyck's set, 16 times in V1.
 test_that("the step at one year is the one the help page describes", {
   infant <- dexmedetomidine(9, 75, 1,     "male")
   child  <- dexmedetomidine(9, 75, 1.001, "male")
+  expect_match(infant$reference, "Zuppa")
+  expect_match(child$reference, "Morse")
   expect_equal_rounded(infant$PK$default$v1, 17.55146)
-  expect_equal_rounded(child$PK$default$v1,  1.071357)
-  # "about 16 times higher" immediately after a bolus, with fat-free-mass scaling
-  expect_equal(infant$PK$default$v1 / child$PK$default$v1, 16.38, tolerance = 0.01)
+  expect_equal_rounded(child$PK$default$v1,  3.249023)
+  # "about 5 times higher" immediately after a bolus, with fat-free-mass scaling
+  expect_equal(infant$PK$default$v1 / child$PK$default$v1, 5.40, tolerance = 0.01)
+  # and the clearance about half
+  expect_equal(child$PK$default$cl1 / infant$PK$default$cl1, 0.451, tolerance = 0.01)
 
-  infantLegacy <- dexmedetomidine(9, 75, 1,     "male", adjustToFFM = FALSE)
-  childLegacy  <- dexmedetomidine(9, 75, 1.001, "male", adjustToFFM = FALSE)
+  infantLegacy <- dexmedetomidine(9, 75, 1, "male", adjustToFFM = FALSE)
   expect_equal_rounded(infantLegacy$PK$default$v1, 16.97143)
-  expect_equal_rounded(childLegacy$PK$default$v1,  8.0574)
-  # "about twice as high" with the published scaling
-  expect_equal(infantLegacy$PK$default$v1 / childLegacy$PK$default$v1, 2.11, tolerance = 0.01)
+  # Morse ignores the switch, so the published-scaling step is about 5.2
+  expect_equal(infantLegacy$PK$default$v1 / child$PK$default$v1, 5.22, tolerance = 0.01)
 })
