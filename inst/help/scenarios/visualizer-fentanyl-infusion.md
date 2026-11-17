@@ -10,7 +10,7 @@ Fentanyl 100 mcg at time zero and an infusion of 2 mcg/kg/hr (140 mcg an hour) f
 
 **Fentanyl's effect site barely lags the plasma at this pace.** The blue bar tracks V1 closely through the infusion, and both are 2.0 ng/mL at four hours.
 
-The boxes are not drawn to scale: V3 is 18.5 times V1, and the visualizer caps the ratio at 10, as the note above the boxes says. The heights, the concentrations, are exact.
+The boxes are not drawn to scale: V3 is 20 times V1, and the visualizer caps the ratio at 10, as the note above the boxes says. The heights, the concentrations, are exact.
 
 ## Making a video
 
