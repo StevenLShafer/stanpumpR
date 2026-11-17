@@ -4,6 +4,9 @@ by two thirds? It has four sliders. Each is a multiple of normal function, on
 a log scale from a tenth (0.1) to ten times (10). All four start at 1, which
 is normal and changes nothing. **Reset to normal** puts them back.
 
+For the reasoning behind each rule and the evidence for it, see
+[Physiology and pharmacokinetics: the evidence](help:models/physiology-and-pharmacokinetics).
+
 The sliders change each drug's pharmacokinetic **parameters**, once, before
 the simulation runs. As with any covariate, the parameters then stay fixed
 for the whole simulation. They do not change over time.
