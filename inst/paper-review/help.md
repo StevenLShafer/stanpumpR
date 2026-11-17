@@ -128,10 +128,11 @@ are in it, and prefer the publisher's PDF to a scan.
   nothing to stanpumpR's paper archive or drug library. When a review uses
   stanpumpR's own Anthropic key, the operator is told that a review was made,
   when, its token use, how long it took and whether it succeeded; never its
-  content. stanpumpR's own key makes a limited number of reviews in all;
-  after that, reviews need your own key.
-- You may use your own Anthropic API key instead (**Use your own Anthropic
-  API key**). It is held only in your session, sent only to Anthropic with
+  content. stanpumpR's own key makes 200 reviews a month (the calendar month
+  in UTC), and the Review tab shows how many are left this month; when they
+  are used, reviews need your own key until the month turns.
+- You may use your own Anthropic API key instead (tick **Supply my own
+  key**). It is held only in your session, sent only to Anthropic with
   your review, never saved or logged, and the review is then billed to your
   Anthropic account; nothing about it is reported to the operator.
 - Your manuscript and the model extracted from it may not be used to train

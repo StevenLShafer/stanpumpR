@@ -2,11 +2,14 @@
 % Please edit documentation in R/paper-review-usage.R
 \name{paperReviewSharedKeyExhausted}
 \alias{paperReviewSharedKeyExhausted}
-\title{Has this process seen the operator's key reach its limit?}
+\title{Has this process seen the operator's key reach this month's limit?}
 \usage{
-paperReviewSharedKeyExhausted()
+paperReviewSharedKeyExhausted(now = Sys.time())
+}
+\arguments{
+\item{now}{the time}
 }
 \description{
-Has this process seen the operator's key reach its limit?
+Has this process seen the operator's key reach this month's limit?
 }
 \keyword{internal}

@@ -4,10 +4,12 @@
 \alias{paperReviewSharedKeyAdmit}
 \title{May the next review use the operator's key?}
 \usage{
-paperReviewSharedKeyAdmit(config = .sprglobals$config)
+paperReviewSharedKeyAdmit(config = .sprglobals$config, now = Sys.time())
 }
 \arguments{
 \item{config}{the app's configuration list}
+
+\item{now}{the time}
 }
 \value{
 a promise of TRUE

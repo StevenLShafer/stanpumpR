@@ -252,7 +252,9 @@ paperReviewPanels <- function(ns = shiny::NS(NULL))
           shiny::hr(),
           shiny::actionButton(ns("discard"), "Discard the paper now", class = "btn-danger"),
           shiny::uiOutput(ns("downloadUI")),
-          shiny::div(style = "margin-top: 12px; font-size: 0.85em;", shiny::textOutput(ns("status")))
+          shiny::div(style = "margin-top: 12px; font-size: 0.85em;", shiny::textOutput(ns("status"))),
+          # The note the countdown's asterisk links to (Shafer, 2026-11-17).
+          shiny::uiOutput(ns("sharedNote"))
         ),
         shiny::uiOutput(ns("report"))
       )),
@@ -362,28 +364,80 @@ paperReviewServer <- function(input, output, session)
   serverKeyed <- !is.null(paperReviewApiKey(NULL))
   # The user's own key, held only in this session's input: never stored,
   # logged or bookmarked (app_server() keeps every paperReview- input out of
-  # the URL; the review app has bookmarking off).
-  ownKey <- shiny::reactive(paperReviewOwnKey(input$ownKey))
-  keyed <- shiny::reactive(serverKeyed || !is.null(ownKey()))
-  output$keyNotice <- shiny::renderUI(htmltools::tagList(
-    if (!serverKeyed) htmltools::div(
-      class = "alert alert-warning", role = "status", style = "font-size: 0.9em; padding: 8px 10px;",
-      htmltools::strong("Reviews on this server need your own Anthropic API key. "),
-      "Enter it below to turn uploading on; the example still works without one, and sends nothing."),
-    htmltools::tags$details(
-      open = if (!serverKeyed) NA, style = "font-size: 0.9em; margin-bottom: 10px;",
-      htmltools::tags$summary(if (serverKeyed) "Use your own Anthropic API key (optional)"
-                              else "Your Anthropic API key"),
+  # the URL; the review app has bookmarking off).  With the operator's key
+  # on the server it is used only while "Supply my own key" is ticked, which
+  # shows its field in place of the countdown of the shared key's reviews
+  # left this month (Shafer, 2026-11-17).
+  useOwn <- shiny::reactive(!serverKeyed || isTRUE(input$ownKeyUse))
+  ownKey <- shiny::reactive(if (useOwn()) paperReviewOwnKey(input$ownKey))
+  # The shared key's reviews left this month: NULL while counting, a list
+  # from paperReviewSharedKeyRemaining(), or list(error = TRUE).
+  sharedLeft <- shiny::reactiveVal(NULL)
+  sharedLimit <- paperReviewSharedKeyLimit()
+  countShared <- function() {
+    if (!serverKeyed) return(invisible(NULL))
+    promises::then(paperReviewSharedKeyRemaining(),
+      onFulfilled = function(x) sharedLeft(x),
+      onRejected = function(e) sharedLeft(list(error = TRUE)))
+    invisible(NULL)
+  }
+  # Counted when the countdown is on screen, not for every session of
+  # stanpumpR (a count logs in to the mail account), and again after each
+  # review.
+  countdownHidden <- paste0("output_", session$ns("sharedCount"), "_hidden")
+  shiny::observe({
+    if (isFALSE(session$clientData[[countdownHidden]])) shiny::isolate(countShared())
+  })
+  keyed <- shiny::reactive(
+    if (useOwn()) !is.null(ownKey()) else !isTRUE(sharedLeft()$remaining == 0))
+  ownKeyField <- function()
+    htmltools::tagList(
       shiny::passwordInput(session$ns("ownKey"), NULL, placeholder = "sk-ant-..."),
       htmltools::p(class = "text-muted", style = "margin-bottom: 0;",
-        if (serverKeyed) "Reviews use stanpumpR's own key unless you enter yours. ",
         "Your key is held only in this page's session, sent only to Anthropic with your review ",
         "(which your Anthropic account then pays for), and never saved or logged."),
-      shiny::uiOutput(session$ns("ownKeyNote")))))
+      shiny::uiOutput(session$ns("ownKeyNote")))
+  output$keyNotice <- shiny::renderUI({
+    if (!serverKeyed) return(htmltools::tagList(
+      htmltools::div(
+        class = "alert alert-warning", role = "status", style = "font-size: 0.9em; padding: 8px 10px;",
+        htmltools::strong("Reviews on this server need your own Anthropic API key. "),
+        "Enter it below to turn uploading on; the example still works without one, and sends nothing."),
+      htmltools::tags$details(open = NA, style = "font-size: 0.9em; margin-bottom: 10px;",
+        htmltools::tags$summary("Your Anthropic API key"), ownKeyField())))
+    htmltools::div(style = "font-size: 0.9em; margin-bottom: 6px;",
+      shiny::conditionalPanel("!input.ownKeyUse", ns = session$ns,
+        shiny::uiOutput(session$ns("sharedCount"))),
+      shiny::checkboxInput(session$ns("ownKeyUse"), PAPER_REVIEW_OWN_KEY_LABEL, FALSE),
+      shiny::conditionalPanel("input.ownKeyUse", ns = session$ns,
+        htmltools::div(style = "margin-bottom: 10px;", ownKeyField())))
+  })
+  output$sharedCount <- shiny::renderUI({
+    x <- sharedLeft()
+    star <- htmltools::tags$a(href = paste0("#", session$ns("sharedNote")), "*",
+                              title = "About these reviews", style = "text-decoration: none;")
+    line <- function(...) htmltools::p(style = "margin: 0 0 4px;", ...)
+    if (is.null(x)) return(line(class = "text-muted", "Counting this month's reviews...", star))
+    if (isTRUE(x$error))
+      return(line(class = "text-muted", "This month's reviews could not be counted just now.", star))
+    if (x$remaining == 0)
+      return(htmltools::div(class = "alert alert-warning", role = "status",
+        style = "padding: 6px 10px; margin-bottom: 4px;",
+        "This month's ", x$limit, " reviews with stanpumpR's key have been used. They renew on ",
+        paperReviewDayMonth(x$renews), "; to review now, tick \"", PAPER_REVIEW_OWN_KEY_LABEL, "\".", star))
+    line("Reviews left this month: ", htmltools::strong(x$remaining), " of ", x$limit, star)
+  })
+  output$sharedNote <- shiny::renderUI({
+    if (!serverKeyed) return(NULL)
+    htmltools::p(class = "text-muted", style = "font-size: 0.8em; margin-top: 16px;",
+      paste0("* Dr. Shafer is providing ", sharedLimit, " Single Paper Reviews per month through ",
+             "stanpumpR. However, if someone wants to upload many papers, supplying their own ",
+             "Anthropic API key would be welcome."))
+  })
   output$ownKeyNote <- shiny::renderUI({
     typed <- asScalarString(input$ownKey)
     if (!nzchar(trimws(typed))) return(NULL)
-    if (is.null(ownKey()))
+    if (is.null(paperReviewOwnKey(typed)))
       htmltools::p(class = "text-danger", style = "margin: 4px 0 0;",
                    "That is not an Anthropic API key (they begin sk-ant-), so it is not used.")
     else htmltools::p(class = "text-success", style = "margin: 4px 0 0;", "Your key will be used.")
@@ -541,8 +595,16 @@ paperReviewServer <- function(input, output, session)
     if (length(store$pdf) + length(get0("supplement", envir = store)) > PAPER_REVIEW_MAX_PDF_BYTES)
       return(status("The files come to more than the 20 MB a review can send."))
     own <- ownKey()
+    # Ticked with no key in the field, the review is not sent with the
+    # operator's key instead.
+    if (serverKeyed && useOwn() && is.null(own))
+      return(status(paste0("Enter your own Anthropic API key, or untick \"", PAPER_REVIEW_OWN_KEY_LABEL,
+                           "\" to use stanpumpR's.")))
     key <- paperReviewApiKey(own)
-    if (is.null(key)) return(status("No Anthropic API key is configured on this server; enter your own."))
+    if (is.null(key)) return(status(if (serverKeyed)
+      paste0("stanpumpR's own key cannot be used just now; tick \"", PAPER_REVIEW_OWN_KEY_LABEL,
+             "\" and enter yours.")
+      else "No Anthropic API key is configured on this server; enter your own."))
     shinyjs::show("reviewBusy")
     shinyjs::hide("reviewLate")
     shinyjs::html("reviewBusyTitle", "Claude is reading the paper.")
@@ -632,6 +694,10 @@ paperReviewServer <- function(input, output, session)
     shinyjs::hide("reviewBusy")
     shinyjs::hide("reviewLate")
     running$stop <- NULL
+    # The countdown, with this review counted (or given back).
+    countShared()
+    # Whose key was sent, for the message if the API refuses it.
+    sentOwn <- exists("inFlight", envir = store) && !is.null(store$inFlight$own)
     suppressWarnings(rm(list = intersect("inFlight", ls(store)), envir = store))
     stored()
     if (!awaited()) return()
@@ -640,7 +706,9 @@ paperReviewServer <- function(input, output, session)
       paper_review_error = function(e) e,
       error = function(e) paperReviewError("unexpected", "The review failed unexpectedly."))
     if (inherits(result, "paper_review_error")) {
-      status(paste(conditionMessage(result), "The manuscript has been discarded; upload it again to retry."))
+      advice <- paperReviewKeyAdvice(result$code, sentOwn)
+      status(paste(conditionMessage(result), if (nzchar(advice)) advice,
+                   "The manuscript has been discarded; upload it again to retry."))
       return()
     }
     assign("usage", result$usage, envir = store)

@@ -60,6 +60,9 @@ PAPER_REVIEW_MAX_PDF_BYTES <- 20 * 1024^2
 PAPER_REVIEW_MAX_UPLOAD_BYTES <- PAPER_REVIEW_MAX_PDF_BYTES + 1024^2
 # The longest key the own-key field accepts (Anthropic's are about 110).
 PAPER_REVIEW_OWN_KEY_MAX_CHARS <- 300
+# The box that shows the own-key field in place of the countdown of the
+# shared key's reviews left this month (Shafer, 2026-11-17).
+PAPER_REVIEW_OWN_KEY_LABEL <- "Supply my own key"
 # The background process is given the request's own time limit and five
 # minutes more (its start, the retries' waits); past that it is abandoned
 # and the user told, rather than the session waiting for ever.
@@ -89,14 +92,38 @@ paperReviewApiKey <- function(sessionKey = NULL, config = .sprglobals$config, ad
   # Nor is it once it has made the reviews it is allowed
   # (paperReviewSharedKeyAdmit(), R/paper-review-usage.R).
   if (!isTRUE(admitted) && paperReviewSharedKeyExhausted()) return(NULL)
+  # Trimmed: a secret pasted with a trailing line break or space reaches
+  # config.yml with it, and the API refuses the key as invalid (401).
   for (name in PAPER_REVIEW_KEY_ENV) {
-    key <- Sys.getenv(name, "")
+    key <- trimws(Sys.getenv(name, ""))
     if (nzchar(key)) return(key)
   }
   key <- if (is.list(config)) config$anthropic_api_key else NULL
-  if (is.character(key) && length(key) == 1 && nzchar(key) &&
+  if (is.character(key) && length(key) == 1 && !is.na(key)) key <- trimws(key)
+  if (is.character(key) && length(key) == 1 && !is.na(key) && nzchar(key) &&
       !grepl("^<", key)) return(key)
   NULL
+}
+
+#' What to do about a refused key
+#'
+#' A 401 or 403 says the key, not the manuscript, was refused, and whose key
+#' it was decides what the user can do: their own they can check; the
+#' operator's only the operator can replace, so the user is pointed to their
+#' own (found testing the deployed app, 2026-11-17, when the shared key was
+#' refused and the message did not say whose it was).
+#'
+#' @param code the \code{paper_review_error}'s code
+#' @param own TRUE when the review was sent with the user's own key
+#' @returns a sentence to add to the message, or ""
+#' @keywords internal
+paperReviewKeyAdvice <- function(code, own)
+{
+  if (!is.character(code) || length(code) != 1 || !code %in% c("http_401", "http_403")) return("")
+  if (isTRUE(own))
+    "The key refused was the one you entered: check it in the Anthropic Console (it may have been mistyped, revoked or disabled)."
+  else paste0("The key refused was stanpumpR's own, which only the site's operator can replace; ",
+              "to review now, tick \"", PAPER_REVIEW_OWN_KEY_LABEL, "\" and enter yours.")
 }
 
 #' A key the user typed, if it can be one

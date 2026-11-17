@@ -20,7 +20,7 @@ test_that("each use is counted, with its tokens, time and outcome and nothing el
   expect_true(any(grepl("Tokens read: 52,341", lines)))
   expect_true(any(grepl("Tokens written: 8,120", lines)))
   expect_true(any(grepl("Duration: 184 s", lines)))
-  expect_true(any(grepl("since 2026-11-10 14:02 UTC: 1 \\(the key stops after 200 in all\\)", lines)))
+  expect_true(any(grepl("since 2026-11-10 14:02 UTC: 1 \\(the key allows 200 a month\\)", lines)))
   expect_true(any(grepl("Tokens read: not reported", paperReviewUsageLines(r2))))
   # An outcome is a code, never an error's text.
   expect_equal(paperReviewUsageRecord("The API said: DRUGNAME", list())$outcome, "unexpected")
@@ -165,4 +165,102 @@ test_that("the mailbox count reads the IMAP SEARCH response", {
   expect_equal(paperReviewCountUsageEmails(PAPER_REVIEW_IMAP_URL, "a", "b", "INBOX", "s", 1, 1), 0)
   reply <- "A003 NO [AUTHENTICATIONFAILED]\r\n"
   expect_error(paperReviewCountUsageEmails(PAPER_REVIEW_IMAP_URL, "a", "b", "INBOX", "s", 1, 1), "SEARCH")
+})
+
+# Shafer, 2026-11-17: 200 reviews a month, the calendar month in UTC, with
+# a countdown of those left shown in the tab.
+test_that("the month is the calendar month in UTC, and the mailbox is searched from its first day", {
+  expect_equal(paperReviewMonth(as.POSIXct("2026-11-30 23:59:59", tz = "UTC")), "2026-11")
+  expect_equal(paperReviewMonth(as.POSIXct("2026-11-30 16:30:00", tz = "America/Los_Angeles")), "2026-12")
+  expect_equal(paperReviewMonthRenews(as.POSIXct("2026-11-17 05:00", tz = "UTC")), as.Date("2026-12-01"))
+  expect_equal(paperReviewMonthRenews(as.POSIXct("2026-12-31 23:00", tz = "UTC")), as.Date("2027-01-01"))
+  expect_equal(paperReviewDayMonth(as.Date("2026-12-01")), "1 December")
+  expect_equal(paperReviewImapSince(as.POSIXct("2026-11-17 05:00", tz = "UTC")), "1-Nov-2026")
+  expect_equal(paperReviewImapSince(as.POSIXct("2027-01-01 00:00", tz = "UTC")), "1-Jan-2027")
+
+  skip_if_not_installed("curl")
+  request <- NULL
+  testthat::local_mocked_bindings(
+    curl_fetch_memory = function(url, handle) list(content = charToRaw("* SEARCH 5 9\r\nA1 OK\r\n")),
+    handle_setopt = function(handle, ...) { request <<- list(...)$customrequest; invisible(handle) },
+    .package = "curl")
+  expect_equal(paperReviewCountUsageEmails(PAPER_REVIEW_IMAP_URL, "a", "b", "INBOX", "s q", 1, 1,
+                                           since = "1-Nov-2026"), 2)
+  expect_equal(request, 'SEARCH SINCE 1-Nov-2026 SUBJECT "s q"')
+  paperReviewCountUsageEmails(PAPER_REVIEW_IMAP_URL, "a", "b", "INBOX", "s", 1, 1)
+  expect_equal(request, 'SEARCH SUBJECT "s"')
+})
+
+test_that("each review is admitted on this month's count, and a new month starts afresh", {
+  old <- resetUsage()
+  on.exit({ resetUsage(); for (n in names(old)) assign(n, old[[n]], envir = .paperReviewUsage) }, add = TRUE)
+  run <- function() { while (!later::loop_empty()) later::run_now(0.01) }
+  settle <- function(p) {
+    out <- NULL
+    promises::then(p, function(x) out <<- list(ok = x), function(e) out <<- list(error = e)); run()
+    out
+  }
+  mail <- list(email_username = "app@example.org", email_password = "pw")
+  asked <- list()
+  inMailbox <- 200
+  testthat::local_mocked_bindings(paperReviewInBackground = function(fn, args, timeout) {
+    asked[[length(asked) + 1]] <<- args
+    promises::promise_resolve(inMailbox)
+  })
+  nov <- as.POSIXct("2026-11-17 05:00", tz = "UTC")
+  r <- suppressMessages(settle(paperReviewSharedKeyAdmit(mail, nov)))
+  expect_equal(asked[[1]]$since, "1-Nov-2026")
+  expect_equal(r$error$code, "shared_limit")
+  expect_match(conditionMessage(r$error), "this month's 200 reviews")
+  expect_match(conditionMessage(r$error), "renew on 1 December")
+  expect_match(conditionMessage(r$error), PAPER_REVIEW_OWN_KEY_LABEL, fixed = TRUE)
+  expect_true(paperReviewSharedKeyExhausted(nov))
+  # The countdown says none are left, without asking the mailbox.
+  n <- length(asked)
+  left <- settle(paperReviewSharedKeyRemaining(mail, nov))$ok
+  expect_equal(left$remaining, 0L)
+  expect_equal(left$renews, as.Date("2026-12-01"))
+  expect_length(asked, n)
+  # December: the limit reached in November no longer holds, and the
+  # mailbox is counted from 1 December.
+  dec <- as.POSIXct("2026-12-01 00:00:30", tz = "UTC")
+  expect_false(paperReviewSharedKeyExhausted(dec))
+  inMailbox <- 0
+  expect_true(settle(paperReviewSharedKeyAdmit(mail, dec))$ok)
+  expect_equal(asked[[length(asked)]]$since, "1-Dec-2026")
+})
+
+test_that("the countdown counts the mailbox at most once a minute, and adds this process's reviews", {
+  old <- resetUsage()
+  on.exit({ resetUsage(); for (n in names(old)) assign(n, old[[n]], envir = .paperReviewUsage) }, add = TRUE)
+  run <- function() { while (!later::loop_empty()) later::run_now(0.01) }
+  settle <- function(p) {
+    out <- NULL
+    promises::then(p, function(x) out <<- list(ok = x), function(e) out <<- list(error = e)); run()
+    out
+  }
+  mail <- list(email_username = "app@example.org", email_password = "pw")
+  logins <- 0
+  inMailbox <- 3
+  testthat::local_mocked_bindings(paperReviewInBackground = function(fn, args, timeout) {
+    logins <<- logins + 1
+    if (is.character(inMailbox)) promises::promise_reject(simpleError(inMailbox))
+    else promises::promise_resolve(inMailbox)
+  })
+  t0 <- Sys.time()
+  expect_equal(settle(paperReviewSharedKeyRemaining(mail, t0))$ok$remaining, 197L)
+  expect_equal(logins, 1)
+  # Within the minute the count is reused, with a review in flight added
+  # and then, once its email has gone, counted as sent.
+  .paperReviewUsage$started <- 1L
+  expect_equal(settle(paperReviewSharedKeyRemaining(mail, t0 + 10))$ok$remaining, 196L)
+  .paperReviewUsage$emailed <- 1L
+  expect_equal(settle(paperReviewSharedKeyRemaining(mail, t0 + 20))$ok$remaining, 196L)
+  expect_equal(logins, 1)
+  # After it, the mailbox is counted again; one that cannot be read says so.
+  inMailbox <- "IMAP down"
+  expect_s3_class(settle(paperReviewSharedKeyRemaining(mail, t0 + 61))$error, "error")
+  expect_equal(logins, 2)
+  # Without the mail credentials, this process's own count.
+  expect_equal(settle(paperReviewSharedKeyRemaining(list(paper_review_shared_key_limit = 3), t0))$ok$remaining, 2L)
 })
