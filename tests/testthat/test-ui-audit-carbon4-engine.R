@@ -154,11 +154,15 @@ test_that("dexmedetomidine across bypass is unchanged by the event lookups (C3)"
                    Event = c("CPBStart", "CPB36", "CPB35", "CPB34", "CPB33", "CPB32", "CPB31", "CPBEnd"),
                    stringsAsFactors = FALSE)
   x <- simulatedFor(DT, 600, plotRecovery = TRUE, events = ET)$dexmedetomidineInfantCPB$wide
-  # Pinned at 59094cf
-  expect_equal(nrow(x), 87)
-  expect_equal(sum(x$Plasma), 91.255105748065972, tolerance = 1e-9)
-  expect_equal(sum(x$`Effect Site`), 55.25942864272389, tolerance = 1e-9)
-  expect_equal(sum(x$Recovery, na.rm = TRUE), 10918.180203764487, tolerance = 1e-9)
+  # Pinned at 59094cf on the drug then named dexmedetomidine, which at this
+  # test's 50-year-old was Dyck's adult model with no bypass sets, so the
+  # events were ignored.  Repinned on 2026-11-17 for dexmedetomidineInfantCPB,
+  # Zuppa's bypass sets, which this patient now reaches through the event
+  # engine the test is about.
+  expect_equal(nrow(x), 214)
+  expect_equal(sum(x$Plasma), 106.4573024079457, tolerance = 1e-9)
+  expect_equal(sum(x$`Effect Site`), 105.83619585029784, tolerance = 1e-9)
+  expect_equal(sum(x$Recovery, na.rm = TRUE), 28429.54480193814, tolerance = 1e-9)
 })
 
 # --- C3: the time until threshold of the interactions ------------------------
