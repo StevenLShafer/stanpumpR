@@ -48,10 +48,11 @@ file holds the run just as a worded one does, and a bare `cat` would print nothi
   whitespace — because `digest_run.py` tests only `os.path.exists`. It is paused on purpose: say so,
   stop, and do not delete it. An empty one is not permission; it is a pause whose note was left out.
 - `digest_run.lock` names a `host` and a `started`. Its own host with a live pid: a run is going here,
-  so wait for it rather than starting another. **Another** host: that computer is running, and only a
-  lock older than 12 hours is treated as a dead run's. Say which computer, and stop. An empty or
-  unparseable lock is the one file where emptiness means nothing — `digest_run.py` reads it as `{}`,
-  deletes it and goes on — so treat it as no lock at all.
+  so wait for it rather than starting another. **Another** host, less than 12 hours old: that computer
+  is running — say which, and stop. Another host's and older than that: `digest_run.py` takes it for
+  a dead run's and clears it, so it is no bar, and neither are you. An empty or unparseable lock is
+  the one file where emptiness means nothing — `digest_run.py` reads it as `{}`, deletes it and goes
+  on — so treat it as no lock at all, whichever host wrote it.
 - Clear to go only when the hold file is absent **and** the lock is one of the four `digest_run.py`
   itself clears: absent; unreadable (empty or not JSON, read as `{}`); this host's with no live pid;
   or another host's and more than 12 hours old. Anything else — this host's with a live pid, another
