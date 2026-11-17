@@ -183,6 +183,21 @@ dexmedetomidineMorse <- function(weight, height, age, sex, gestationalAge = NULL
 # used at one year or under.  Zuppa AF et al., Br J Anaesth 2019;123:839-852
 # (122 infants, 0 to 180 days, at corrective cardiac surgery), unchanged from
 # the infant branch this drug had before 2026-11-17.
+#
+# The parameters are Table 7's ALLOMETRIC model (per 70 kg: CL 1240 mL/min
+# before bypass, 74.1 on it, 623 after; maturation Age/(1.77 + Age), days),
+# re-read on the page image (printed p. 848) on 2026-11-17 and on 2026-10-27
+# (papers/digests/PMID_31623840.md, which also records that Shafer built the
+# model from the final NONMEM control file).  The abstract's "DEX clearance
+# after CPB was 1240 ml min-1 70 kg-1" is the LINEAR model's post-bypass
+# clearance (Table 7, linear column; the Results say "623 (allometric) or 1240
+# (linear)"), which only happens to equal the allometric model's pre-bypass
+# 1240.  The abstract's "50% maximum clearance ... approximately 2 days" is the
+# allometric 1.77 days rounded; its "90% ... 18 days" is normalised to a
+# 180-day-old (Results), which Age/(1.77 + Age) is not (it gives 15.9 days
+# un-normalised, 14.5 normalised; the digest card).  The authors preferred the
+# linear model by AIC (16318 against 16328); the library uses the allometric
+# one, a choice, not an error.
 dexmedetomidineZuppa <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   v3 <- 1
