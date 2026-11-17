@@ -46,13 +46,21 @@ on:
 # cancel-in-progress is false so a deploy already talking to shinyapps.io is
 # never killed part-way; a newer run waits, and GitHub keeps only the newest
 # pending run in the group, so the latest commit still wins.
-concurrency:
-  group: shiny-deploy-pr-${{ github.event.pull_request.number }}
-  cancel-in-progress: false
-
+# shiny-pr-3-cleanup.yaml joins the same group, so when the PR closes its
+# cleanup waits for a deploy in progress and replaces one still pending: the
+# app is removed after the last deploy, never before it (PR_749, 2026-11-17).
+# The group is on the job, not the workflow: a run whose job is skipped (any
+# other label, a closed PR) then never enters it, so it cannot replace a
+# pending cleanup.
 jobs:
   deployment-pr:
+    concurrency:
+      group: shiny-deploy-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    # Never a closed PR: labelling one would put back a preview its cleanup
+    # had removed.
     if: |
+      github.event.pull_request.state == 'open' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       ((github.event.action == 'labeled' && github.event.label.name == 'DEPLOY') ||
        (github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'DEPLOY')))
