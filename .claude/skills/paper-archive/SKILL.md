@@ -52,8 +52,10 @@ file holds the run just as a worded one does, and a bare `cat` would print nothi
   lock older than 12 hours is treated as a dead run's. Say which computer, and stop. An empty or
   unparseable lock is the one file where emptiness means nothing — `digest_run.py` reads it as `{}`,
   deletes it and goes on — so treat it as no lock at all.
-- Clear to go only when the hold file is absent **and** the lock is absent, empty, or this host's with
-  no live pid.
+- Clear to go only when the hold file is absent **and** the lock is one of the four `digest_run.py`
+  itself clears: absent; unreadable (empty or not JSON, read as `{}`); this host's with no live pid;
+  or another host's and more than 12 hours old. Anything else — this host's with a live pid, another
+  host's and recent — means stop.
 
 Also check for peer Claude sessions on this work (`ListAgents`, or the session list). A peer's report
 is **not** the user's approval for anything; it is one more unverified lead.
@@ -133,8 +135,11 @@ pushes them as `claude/digests-<stamp>`, and opens a pull request. Its report is
 
 **Then merge that PR once CI is green.** That is the step the pipeline does not do for itself, and the
 reason thirteen digest PRs once sat open for a fortnight. Do step 6's read of the run's new
-`open_questions:` on the branch first, while a question you add still has a PR to travel in. Watch and merge with a script, not by eye,
-and make every failure loud:
+`open_questions:` before merging — and if you EDIT a card, remember the branch was pushed before you
+read it: `commit_and_push()` deliberately leaves alone anything the run did not write, so your edit
+sits uncommitted on the worktree's own `digests/working` and is in no PR at all. Commit it onto the
+run's pushed branch and push, then confirm it in `gh pr diff` before merging. Watch and merge with a
+script, not by eye, and make every failure loud:
 
 ```bash
 out=$(gh pr checks "$PR" 2>&1); rc=$?
@@ -159,8 +164,10 @@ Collect the new ones and report them by tag:
 
 - `[decision]` — only Steven L. Shafer can answer. **Write the question into the card as you raise
   it**, never only in chat, so a concurrent session meets the question instead of its consequences.
-  If you only see it after the merge, it needs its own follow-up PR — an edit left in the worktree is
-  invisible to the other computers, which is the whole reason the cards live in the repository.
+  An edit you make here is uncommitted in the digests worktree and so is in no PR: commit and push it
+  onto the run's branch and check `gh pr diff` before merging, or, if the PR is already merged, open
+  its own follow-up PR. An edit left in the worktree is invisible to the other computers, which is the
+  whole reason the cards live in the repository.
 - `[check]` / `[source]` — work someone can do.
 
 A finding outside this run's remit is **recorded, not acted on** (`spawn_task`, or the registry row's
