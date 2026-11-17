@@ -22,7 +22,7 @@ Draws clinical events on the time axis and lets you enter them. Click the panel 
 | Clamp On / Clamp Off, Tourniquet On / Tourniquet Off | red / brown |
 | Other | orange |
 
-Most events are annotations. The cardiopulmonary-bypass events (CPB Start, the temperature steps, CPB End) also **change the pharmacokinetics** of any drug whose model has parameters for them; at present that is the infant dexmedetomidine model. See [Events that change the kinetics](help:models/pk-events).
+Most events are annotations. The cardiopulmonary-bypass events (CPB Start, the temperature steps, CPB End) also **change the pharmacokinetics** of any drug whose model has parameters for them; at present that is [dexmedetomidine in infants on bypass](help:drugs/dexmedetomidineInfantCPB). See [Events that change the kinetics](help:models/pk-events).
 
 Unticking Events hides the panel but keeps the events, which still apply to the kinetics. Clicking the MEAC or Interaction panel asks whether to remove that panel.
 
