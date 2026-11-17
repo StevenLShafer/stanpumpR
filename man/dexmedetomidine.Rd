@@ -22,8 +22,9 @@ dexmedetomidine(
 
 \item{sex}{sex as a string}
 
-\item{adjustToFFM}{accepted for a uniform signature and not used: the model
-carries its own size covariates.}
+\item{adjustToFFM}{not used by Morse's model, which carries its own size
+covariates; at one year or under, \code{TRUE} scales Zuppa's model by
+fat-free mass and \code{FALSE} by total body weight, as published.}
 
 \item{gestationalAge}{gestational age at birth in weeks, or \code{NULL} for
 a term birth.}
@@ -32,8 +33,10 @@ a term birth.}
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-Morse et al. (2020): three compartments, volumes on normal fat mass,
-clearances on fat-free mass to the 0.75 power, and a postmenstrual-age
-maturation of clearance.  See the file's header.
+Morse et al. (2020) above one year of age: three compartments, volumes on
+normal fat mass, clearances on fat-free mass to the 0.75 power, and a
+postmenstrual-age maturation of clearance.  Zuppa et al. (2019) at one
+year or under, with parameter sets for cardiopulmonary bypass.  See the
+file's header.
 }
 \keyword{internal}

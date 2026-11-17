@@ -8,8 +8,8 @@ After the infusion stops at 120 minutes the effect site falls slowly. The **time
 
 - Replace the bolus with an infusion of 6 mcg/kg/hr for the first 10 minutes (rows: 6 mcg/kg/hr at 0, 0.5 mcg/kg/hr at 10). The effect site peaks a little later and a little lower (0.90 ng/mL at about 24 minutes), and the plasma peak is about 60% as high.
 - Change the age to 30. Almost nothing changes. Apart from size, the model's only age term is the maturation of clearance, which is complete in adults. The elderly's greater sensitivity to dexmedetomidine's hemodynamic effects is pharmacodynamic and not represented.
-- Change the age to 6 months (set the unit to months) and the weight to 7 kg. The same model applies at every age, with the clearance scaled for size and maturation. To see bypass, change the drug to *dexmedetomidineInfantCPB*, add the Events panel, and enter *CPB Start* at 30 minutes and *CPB End* at 90. That model has separate parameters on bypass, and the concentration rises while clearance is suppressed.
+- Change the age to 6 months (set the unit to months) and the weight to 7 kg, add the Events panel, and enter *CPB Start* at 30 minutes and *CPB End* at 90. At one year or under stanpumpR uses Zuppa's infant model, which has separate parameters on bypass, and the concentration rises while the clearance is suppressed.
 
 ## Background
 
-[Dexmedetomidine](help:drugs/dexmedetomidine) uses Morse and colleagues' universal model, with the time to peak effect from Colin and colleagues' sedation data. [Dexmedetomidine in infants on bypass](help:drugs/dexmedetomidineInfantCPB) is Zuppa's model, and [Events that change the kinetics](help:models/pk-events) explains its bypass parameters.
+[Dexmedetomidine](help:drugs/dexmedetomidine) has two models: Morse and colleagues' universal model above one year, with the time to peak effect from Colin and colleagues' sedation data, and Zuppa's infant model at one year or under, whose time to peak effect is described in the code as a guess. [Events that change the kinetics](help:models/pk-events) explains the infant model's bypass parameters.

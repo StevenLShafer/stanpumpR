@@ -122,7 +122,7 @@ plasmaOnly <- c(
     "istradefylline", "amantadineER", "pimavanserin", "tolcapone",
     # Chemotherapy (2026-11-05): plasma only (inst/help/models/chemotherapy.md)
     "cladribine", "fluorouracil", "fluorouracilBriki", "carboplatin", "carboplatinDuffull", "busulfan",
-    "methotrexatePediatric", "methotrexate", "methotrexateIbarra", "fluorouracilTan", "cytarabine", "doxorubicinPerezBlanco", "doxorubicinolPerezBlanco", "fludarabine", "bendamustine", "oxaliplatinNikanjam", "capecitabine", "capecitabine5FU", "gemcitabine", "gemcitabineDFDU", "etoposideDuong", "melphalanPediatric", "carboplatinPediatric", "daunorubicin", "doxorubicinPediatric", "doxorubicinolPediatric", "etoposide", "etoposideKroghMadsen", "cisplatin", "cisplatinBound", "vinorelbine", "topotecan", "irinotecan", "irinotecanSN38", "doxorubicin", "doxorubicinJoerger", "doxorubicinol", "doxorubicinolJoerger", "cyclophosphamide", "cyclophosphamideJoerger", "cyclophosphamideMcCune", "ifosfamide", "epirubicin", "temozolomide", "temozolomideOstermann", "temozolomidePanetta", "dacarbazine", "bleomycin", "paclitaxelProteinBound", "thioguanine", "doxorubicinLiposomal", "doxorubicinLiposomalFree", "thioguanineIV", "docetaxel", "vincristine", "vincristineIgarashi", "melphalan", "melphalanNath", "etoposidePediatric", "pemetrexed", "paclitaxel", "paclitaxelJoerger", "paclitaxelCrombag", "vincristinePediatric", "oxaliplatin", "oxaliplatinBastian"
+    "methotrexatePediatric", "methotrexate", "carboplatinPeng", "methotrexateIbarra", "fluorouracilTan", "cytarabine", "doxorubicinPerezBlanco", "doxorubicinolPerezBlanco", "fludarabine", "bendamustine", "oxaliplatinNikanjam", "capecitabine", "capecitabine5FU", "gemcitabine", "gemcitabineDFDU", "etoposideDuong", "melphalanPediatric", "carboplatinPediatric", "daunorubicin", "doxorubicinPediatric", "doxorubicinolPediatric", "etoposide", "etoposideKroghMadsen", "cisplatin", "cisplatinBound", "vinorelbine", "topotecan", "irinotecan", "irinotecanSN38", "doxorubicin", "doxorubicinJoerger", "doxorubicinol", "doxorubicinolJoerger", "cyclophosphamide", "cyclophosphamideJoerger", "cyclophosphamideMcCune", "ifosfamide", "epirubicin", "temozolomide", "temozolomideOstermann", "temozolomidePanetta", "dacarbazine", "bleomycin", "paclitaxelProteinBound", "thioguanine", "doxorubicinLiposomal", "doxorubicinLiposomalFree", "thioguanineIV", "docetaxel", "vincristine", "vincristineIgarashi", "melphalan", "melphalanNath", "etoposidePediatric", "pemetrexed", "paclitaxel", "paclitaxelJoerger", "paclitaxelCrombag", "vincristinePediatric", "oxaliplatin", "oxaliplatinBastian"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {
@@ -259,12 +259,10 @@ test_that("half-lives of a day or more are also given in days", {
 })
 
 test_that("the table shows the covariate switches", {
-  # cytarabine chooses its model by age (Periclou under 19, Krogh-Madsen from 19)
-  cyt <- helpDrugParameterTable("cytarabine")
-  expect_equal(length(unique(cyt$reference)), 2)
-  dex <- helpDrugParameterTable("dexmedetomidineInfantCPB")
+  dex <- helpDrugParameterTable("dexmedetomidine")
+  expect_equal(length(unique(dex$reference)), 2)
   expect_match(dex$events[dex$Patient == "Infant"], "CPBStart")
-  expect_equal(helpDrugParameterTable("dexmedetomidine")$events[1], PK_EVENT_DEFAULT)
+  expect_equal(dex$events[dex$Patient == "Reference adult"], PK_EVENT_DEFAULT)
 
   remi <- helpDrugParameterTable("remifentanil")
   obese <- remi[remi$Patient == "Obese adult", ]
@@ -321,7 +319,7 @@ test_that("extravascular routes and events are described where the model has the
   prop <- helpDrugPageHTML("propofol")
   expect_false(grepl("Extravascular routes", prop, fixed = TRUE))
 
-  dex <- helpDrugPageHTML("dexmedetomidineInfantCPB")
+  dex <- helpDrugPageHTML("dexmedetomidine")
   expect_match(dex, "Events that change the kinetics", fixed = TRUE)
   expect_match(dex, "CPBStart", fixed = TRUE)
   expect_false(grepl("Events that change the kinetics", prop, fixed = TRUE))

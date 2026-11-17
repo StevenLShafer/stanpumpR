@@ -147,22 +147,23 @@ test_that("an interaction run through the event engine is unchanged (C3)", {
 })
 
 test_that("dexmedetomidine across bypass is unchanged by the event lookups (C3)", {
-  DT <- data.frame(Drug = "dexmedetomidineInfantCPB", Time = c(0, 0, 30, 200),
+  DT <- data.frame(Drug = "dexmedetomidine", Time = c(0, 0, 30, 200),
                    Dose = c(1, 0.5, 0.7, 0), Units = c("mcg/kg", "mcg/kg/hr", "mcg/kg/hr", "mcg/kg/hr"),
                    stringsAsFactors = FALSE)
   ET <- data.frame(Time = c(60, 70, 80, 90, 100, 110, 120, 180),
                    Event = c("CPBStart", "CPB36", "CPB35", "CPB34", "CPB33", "CPB32", "CPB31", "CPBEnd"),
                    stringsAsFactors = FALSE)
-  x <- simulatedFor(DT, 600, plotRecovery = TRUE, events = ET)$dexmedetomidineInfantCPB$wide
-  # Pinned at 59094cf on the drug then named dexmedetomidine, which at this
-  # test's 50-year-old was Dyck's adult model with no bypass sets, so the
-  # events were ignored.  Repinned on 2026-11-17 for dexmedetomidineInfantCPB,
-  # Zuppa's bypass sets, which this patient now reaches through the event
-  # engine the test is about.
+  # An infant (0.5 y, 7 kg), whose model (Zuppa) has the bypass sets.  Until
+  # 2026-11-17 this ran at simulatedFor()'s 50-year-old, on Dyck's adult set,
+  # which has none, so the events were ignored; pinned at 59094cf then, and
+  # repinned here when the adult set became Morse's.
+  drugs <- recalculatePK(NULL, G, DT, age = 0.5, weight = 7, height = 65, sex = "male")
+  x <- processdoseTable(DT, ET, drugs, 600, TRUE)$dexmedetomidine$wide
+  # Pinned on 2026-11-17
   expect_equal(nrow(x), 214)
-  expect_equal(sum(x$Plasma), 106.4573024079457, tolerance = 1e-9)
-  expect_equal(sum(x$`Effect Site`), 105.83619585029784, tolerance = 1e-9)
-  expect_equal(sum(x$Recovery, na.rm = TRUE), 28429.54480193814, tolerance = 1e-9)
+  expect_equal(sum(x$Plasma), 85.41218070878989, tolerance = 1e-9)
+  expect_equal(sum(x$`Effect Site`), 84.786730968178745, tolerance = 1e-9)
+  expect_equal(sum(x$Recovery, na.rm = TRUE), 5129.2688691126586, tolerance = 1e-9)
 })
 
 # --- C3: the time until threshold of the interactions ------------------------

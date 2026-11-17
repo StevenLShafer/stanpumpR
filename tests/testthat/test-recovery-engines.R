@@ -114,12 +114,12 @@ test_that("an oral dose: time is reported through the absorption phase", {
 
 
 test_that("time-varying PK: the effect site is timed, not the plasma", {
-  # The infant bypass dexmedetomidine model switches PK on cardiopulmonary bypass, which
+  # Dexmedetomidine in an infant (age <= 1) switches PK on cardiopulmonary bypass, which
   # routes it through advanceClosedForm1().
-  PK <- pkFor("dexmedetomidineInfantCPB", weight = 7, height = 65, age = 0.5)
+  PK <- pkFor("dexmedetomidine", weight = 7, height = 65, age = 0.5)
   expect_gte(length(PK$pkEvents), 2)
   ET <- data.frame(Time = 30, Event = "CPB Start")
-  DT <- data.frame(Drug = "dexmedetomidineInfantCPB", Time = c(0, 0), Dose = c(1, 0.7),
+  DT <- data.frame(Drug = "dexmedetomidine", Time = c(0, 0), Dose = c(1, 0.7),
                    Units = c("mcg/kg", "mcg/kg/hr"))
   sim <- simCpCe(DT, ET, PK, 120, TRUE)
   expect_gt(max(sim$equiSpace$Recovery), 0)
@@ -458,7 +458,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "istradefylline", "amantadineER", "pimavanserin", "tolcapone",
     # Chemotherapy (2026-11-05): plasma only
     "cladribine", "fluorouracil", "fluorouracilBriki", "carboplatin", "carboplatinDuffull", "busulfan",
-    "methotrexatePediatric", "methotrexate", "methotrexateIbarra", "fluorouracilTan", "cytarabine", "doxorubicinPerezBlanco", "doxorubicinolPerezBlanco", "fludarabine", "bendamustine", "oxaliplatinNikanjam", "capecitabine", "capecitabine5FU", "gemcitabine", "gemcitabineDFDU", "etoposideDuong", "melphalanPediatric", "carboplatinPediatric", "daunorubicin", "doxorubicinPediatric", "doxorubicinolPediatric", "etoposide", "etoposideKroghMadsen", "cisplatin", "cisplatinBound", "vinorelbine", "topotecan", "irinotecan", "irinotecanSN38", "doxorubicin", "doxorubicinJoerger", "doxorubicinol", "doxorubicinolJoerger", "cyclophosphamide", "cyclophosphamideJoerger", "cyclophosphamideMcCune", "ifosfamide", "epirubicin", "temozolomide", "temozolomideOstermann", "temozolomidePanetta", "dacarbazine", "bleomycin", "paclitaxelProteinBound", "thioguanine", "doxorubicinLiposomal", "doxorubicinLiposomalFree", "thioguanineIV", "docetaxel", "vincristine", "vincristineIgarashi", "melphalan", "melphalanNath", "etoposidePediatric", "pemetrexed", "paclitaxel", "paclitaxelJoerger", "paclitaxelCrombag", "vincristinePediatric", "oxaliplatin", "oxaliplatinBastian"
+    "methotrexatePediatric", "methotrexate", "carboplatinPeng", "methotrexateIbarra", "fluorouracilTan", "cytarabine", "doxorubicinPerezBlanco", "doxorubicinolPerezBlanco", "fludarabine", "bendamustine", "oxaliplatinNikanjam", "capecitabine", "capecitabine5FU", "gemcitabine", "gemcitabineDFDU", "etoposideDuong", "melphalanPediatric", "carboplatinPediatric", "daunorubicin", "doxorubicinPediatric", "doxorubicinolPediatric", "etoposide", "etoposideKroghMadsen", "cisplatin", "cisplatinBound", "vinorelbine", "topotecan", "irinotecan", "irinotecanSN38", "doxorubicin", "doxorubicinJoerger", "doxorubicinol", "doxorubicinolJoerger", "cyclophosphamide", "cyclophosphamideJoerger", "cyclophosphamideMcCune", "ifosfamide", "epirubicin", "temozolomide", "temozolomideOstermann", "temozolomidePanetta", "dacarbazine", "bleomycin", "paclitaxelProteinBound", "thioguanine", "doxorubicinLiposomal", "doxorubicinLiposomalFree", "thioguanineIV", "docetaxel", "vincristine", "vincristineIgarashi", "melphalan", "melphalanNath", "etoposidePediatric", "pemetrexed", "paclitaxel", "paclitaxelJoerger", "paclitaxelCrombag", "vincristinePediatric", "oxaliplatin", "oxaliplatinBastian"
   ))
 })
 

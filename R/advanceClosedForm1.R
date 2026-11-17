@@ -100,8 +100,7 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   # its start from pkSets$default$lambda_4, which no PK set carries, so
   # 0.693 / NULL was numeric(0) and min(numeric(0), 1) a minute; it was surely
   # meant to be ke0, as in the other engines.  Kept at a minute deliberately,
-  # so that the dexmedetomidine bypass runs (dexmedetomidineInfantCPB since
-  # 2026-11-17) -- the only drug that reached this
+  # so that the dexmedetomidine bypass runs -- the only drug that reaches this
   # engine, and whose effect site calculateCe() approximates step by step --
   # are drawn on exactly the line they always were.  (Claude Code, 2026-10-07.)
   timeLine <- simulationTimeGrid(knots[knots <= maximum], maximum, start = 1)

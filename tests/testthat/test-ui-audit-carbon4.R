@@ -238,10 +238,10 @@ test_that("measured levels are converted where they are stored, not only where d
 # --- M7: events in time order, the last of a tie in force -------------------------
 
 test_that("the simulation takes events in time order, and Suggest Dosing the last of a tie (P4-M7)", {
-  drugs <- recalculatePK(NULL, G, data.frame(Drug = "dexmedetomidineInfantCPB", Time = 0, Dose = 0,
+  drugs <- recalculatePK(NULL, G, data.frame(Drug = "dexmedetomidine", Time = 0, Dose = 0,
                                              Units = "mcg/kg"),
                          age = 0.5, weight = 6, height = 65, sex = "male")
-  PK <- drugs$dexmedetomidineInfantCPB
+  PK <- drugs$dexmedetomidine
   DT <- data.frame(Time = 0, Dose = 1, Units = "mcg/kg")
   sorted <- data.frame(Time = c(10, 30), Event = c("CPB Start", "CPB End"))
   unsorted <- sorted[2:1, ]
@@ -252,8 +252,8 @@ test_that("the simulation takes events in time order, and Suggest Dosing the las
   targets <- data.frame(Time = c(60, 120), Target = c(0.7, 0.7))
   tie <- data.frame(Time = c(60, 60), Event = c("CPB Start", "CPB End"))
   only <- data.frame(Time = 60, Event = "CPB End")
-  r1 <- suggest("dexmedetomidineInfantCPB", targets, 130, drugs, G$Drug, tie, REFERENCE_TIME_NONE)
-  r2 <- suggest("dexmedetomidineInfantCPB", targets, 130, drugs, G$Drug, only, REFERENCE_TIME_NONE)
+  r1 <- suggest("dexmedetomidine", targets, 130, drugs, G$Drug, tie, REFERENCE_TIME_NONE)
+  r2 <- suggest("dexmedetomidine", targets, 130, drugs, G$Drug, only, REFERENCE_TIME_NONE)
   expect_equal(r1$Dose, r2$Dose)
 })
 

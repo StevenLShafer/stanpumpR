@@ -1,5 +1,6 @@
 # -----------------------------------------------------------------------------
-# Dexmedetomidine: the universal model of Morse 2020, neonates to obese adults
+# Dexmedetomidine: Morse 2020 above one year; Zuppa 2019, with its bypass sets,
+# at one year or under
 # -----------------------------------------------------------------------------
 # Units: time in minutes, volumes in litres, clearances in L/min, doses in mcg
 # of dexmedetomidine (the product is the hydrochloride, labelled as the base),
@@ -84,18 +85,23 @@
 # range, a library band (inst/extdata/therapeuticRanges.csv); Morse's own
 # simulations target 1 mcg/L.
 #
+# WHICH MODEL
+# ===========
+# Morse is used above one year of age.  At one year or under the drug keeps
+# Zuppa 2019's infant model (dexmedetomidineZuppa() below), whose parameter
+# sets for cardiopulmonary bypass Morse's model cannot represent: Steven L.
+# Shafer's decision of 2026-11-17, over making Morse the default at every age
+# with Zuppa's sets split into a drug of their own.  The step between the two
+# models at one year remains (the help page gives its size).  Because Morse
+# is used only above one year, its maturation factor runs from 0.64 (a
+# term-born one-year-old) upward.
+#
 # HISTORY
 # =======
-# Until 2026-11-17 this drug was two models: fixed parameters close to Dyck
-# 1993's pooled estimates above one year (height term not applied, scaled by
-# fat-free mass), and Zuppa 2019's infant model at or below one year, with
-# separate parameter sets for cardiopulmonary bypass.  Morse replaces both as
-# the default at every age, the program choosing the model (AGENTS.md: its
-# 202 people span term neonates to obese adults of 70 years, wider than
-# either source).  Zuppa's bypass sets describe a condition, not a population, so
-# they are kept as their own drug, dexmedetomidineInfantCPB, as heparinCPB is
-# kept beside heparin.  Both by Claude Code at Steven L. Shafer's request,
-# 2026-11-17; the split is a [decision] for him to confirm.
+# Until 2026-11-17 the branch above one year was fixed parameters close to
+# Dyck 1993's pooled estimates (V1 8.06, V2 12.8, V3 178 L; CL 0.445, Q2 2.08,
+# Q3 1.99 L/min), its height term on clearance not applied, scaled by
+# fat-free mass.  Morse replaced it at Steven L. Shafer's request, 2026-11-17.
 # -----------------------------------------------------------------------------
 
 # Morse 2020, Table 1
@@ -115,19 +121,29 @@ DEXMEDETOMIDINE_NFM_STD <- DEXMEDETOMIDINE_FFM_STD +
 
 #' Dexmedetomidine pharmacokinetics
 #'
-#' Morse et al. (2020): three compartments, volumes on normal fat mass,
-#' clearances on fat-free mass to the 0.75 power, and a postmenstrual-age
-#' maturation of clearance.  See the file's header.
+#' Morse et al. (2020) above one year of age: three compartments, volumes on
+#' normal fat mass, clearances on fat-free mass to the 0.75 power, and a
+#' postmenstrual-age maturation of clearance.  Zuppa et al. (2019) at one
+#' year or under, with parameter sets for cardiopulmonary bypass.  See the
+#' file's header.
 #'
 #' @inheritParams cefazolin
-#' @param adjustToFFM accepted for a uniform signature and not used: the model
-#'   carries its own size covariates.
+#' @param adjustToFFM not used by Morse's model, which carries its own size
+#'   covariates; at one year or under, \code{TRUE} scales Zuppa's model by
+#'   fat-free mass and \code{FALSE} by total body weight, as published.
 #' @param gestationalAge gestational age at birth in weeks, or \code{NULL} for
 #'   a term birth.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @keywords internal
 dexmedetomidine <- function(weight, height, age, sex, adjustToFFM = TRUE,
                             gestationalAge = NULL)
+{
+  if (age <= 1) return(dexmedetomidineZuppa(weight, height, age, sex, adjustToFFM))
+  dexmedetomidineMorse(weight, height, age, sex, gestationalAge)
+}
+
+# Morse 2020 (see the header); used above one year of age.
+dexmedetomidineMorse <- function(weight, height, age, sex, gestationalAge = NULL)
 {
   ffm <- ffmAlSallami(weight, height, age, sex)
   nfm <- ffm + DEXMEDETOMIDINE_FFAT_V * (weight - ffm)
@@ -160,5 +176,173 @@ dexmedetomidine <- function(weight, height, age, sex, adjustToFFM = TRUE,
       "maturation of clearance; tPeak 14.9 min from Colin PJ et al., ",
       "Br J Anaesth 2017;119:200-210)"
     )
+  )
+}
+
+# Zuppa 2019, the infant model with its cardiopulmonary-bypass parameter sets;
+# used at one year or under.  Zuppa AF et al., Br J Anaesth 2019;123:839-852
+# (122 infants, 0 to 180 days, at corrective cardiac surgery), unchanged from
+# the infant branch this drug had before 2026-11-17.
+dexmedetomidineZuppa <- function(weight, height, age, sex, adjustToFFM = TRUE)
+{
+  v3 <- 1
+  cl3 <- 0
+  # Size scaling (see docs/weight-adjustment.md): Zuppa scaled volumes with
+  # weight/70 and clearances with (weight/70)^0.75.  Fv and Fcl replace those
+  # factors with fat-free mass relative to the 70 kg, 170 cm reference male
+  # (Al-Sallami 2015, an extrapolation below 3 years); adjustToFFM = FALSE
+  # reproduces Zuppa's total-body-weight factors exactly.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                        legacyClearance = (weight/70)^0.75)
+  Fv  <- size$volume
+  Fcl <- size$clearance
+  # Before cardiopulmonary bypass:
+  v1 <- 132   * Fv # liters
+  v2 <- 78.9  * Fv # liters
+  cl1 <- 1240 * Fcl / 1000 # (L / min)
+  cl2 <- 2300 * Fcl / 1000 # (L / min)
+  default <- list(
+    v1 = v1,
+    v2 = v2,
+    v3 = v3,
+    cl1 = cl1,
+    cl2 = cl2,
+    cl3 = cl3
+  )
+
+  # During cardiopulmonary bypass ************************************************
+  # 37 degrees
+  v1 <- 115 * Fv * (37 / 37) ^ (-1.6)  # liters
+  v2 <- 144 * Fv # liters
+  cl1 <- 74.1 * Fcl / 1000 # (L / min)
+  cl2 <- 2980 * Fcl / 1000 # (L / min)
+  CPBStart <- list(
+    v1 = v1,
+    v2 = v2,
+    v3 = v3,
+    cl1 = cl1,
+    cl2 = cl2,
+    cl3 = cl3
+  )
+
+  # 36 degrees
+  v1 <- 115 * Fv * (36 / 37) ^ (-1.6)  # liters
+  v2 <- 144 * Fv # liters
+  cl1 <- 74.1 * Fcl / 1000 # (L / min)
+  cl2 <- 2980 * Fcl / 1000 # (L / min)
+  CPB36 <- list(
+    v1 = v1,
+    v2 = v2,
+    v3 = v3,
+    cl1 = cl1,
+    cl2 = cl2,
+    cl3 = cl3
+  )
+
+  # 35 degrees
+  v1 <- 115 * Fv * (35 / 37) ^ (-1.6)  # liters
+  v2 <- 144 * Fv # liters
+  cl1 <- 74.1 * Fcl / 1000 # (L / min)
+  cl2 <- 2980 * Fcl / 1000 # (L / min)
+  CPB35 <- list(
+    v1 = v1,
+    v2 = v2,
+    v3 = v3,
+    cl1 = cl1,
+    cl2 = cl2,
+    cl3 = cl3
+  )
+
+  # 34 degrees
+  v1 <- 115 * Fv * (34 / 37) ^ (-1.6)  # liters
+  v2 <- 144 * Fv # liters
+  cl1 <- 74.1 * Fcl / 1000 # (L / min)
+  cl2 <- 2980 * Fcl / 1000 # (L / min)
+  CPB34 <- list(
+    v1 = v1,
+    v2 = v2,
+    v3 = v3,
+    cl1 = cl1,
+    cl2 = cl2,
+    cl3 = cl3
+  )
+
+  # 33 degrees
+  v1 <- 115 * Fv * (33 / 37) ^ (-1.6)  # liters
+  v2 <- 144 * Fv # liters
+  cl1 <- 74.1 * Fcl / 1000 # (L / min)
+  cl2 <- 2980 * Fcl / 1000 # (L / min)
+  CPB33 <- list(
+    v1 = v1,
+    v2 = v2,
+    v3 = v3,
+    cl1 = cl1,
+    cl2 = cl2,
+    cl3 = cl3
+  )
+  # 32 degrees
+  v1 <- 115 * Fv * (32 / 37) ^ (-1.6)  # liters
+  v2 <- 144 * Fv # liters
+  cl1 <- 74.1 * Fcl / 1000 # (L / min)
+  cl2 <- 2980 * Fcl / 1000 # (L / min)
+  CPB32 <- list(
+    v1 = v1,
+    v2 = v2,
+    v3 = v3,
+    cl1 = cl1,
+    cl2 = cl2,
+    cl3 = cl3
+  )
+
+  # 31 degrees
+  v1 <- 115 * Fv * (31 / 37) ^ (-1.6)  # liters
+  v2 <- 144 * Fv # liters
+  cl1 <- 74.1 * Fcl / 1000 # (L / min)
+  cl2 <- 2980 * Fcl / 1000 # (L / min)
+  CPB31 <- list(
+    v1 = v1,
+    v2 = v2,
+    v3 = v3,
+    cl1 = cl1,
+    cl2 = cl2,
+    cl3 = cl3
+  )
+
+  # After cardiopulmonary bypass.  Clearance matures with postnatal age in
+  # days, PNA / (1.77 + PNA), which is zero at birth: a newborn entered as
+  # age 0 would have no clearance at all (issue #310), so postnatal age is
+  # floored at one day.
+  v1 <-  155 * Fv # liters
+  v2 <-  105 * Fv # liters
+  postnatalDays <- max(age * 365, 1)
+  cl1 <- 623 * Fcl * postnatalDays / (1.77 + postnatalDays) / 1000 # (L / min)
+  cl2 <- 209 * Fcl / 1000 # (L / min)
+  CPBEnd <- list(
+    v1 = v1,
+    v2 = v2,
+    v3 = v3,
+    cl1 = cl1,
+    cl2 = cl2,
+    cl3 = cl3
+  )
+  events <- c(PK_EVENT_DEFAULT, "CPBStart","CPB36", "CPB35", "CPB34", "CPB33", "CPB32", "CPB31", "CPBEnd")
+
+  tPeak <- 2 # Just a guess
+  typical <- 0.6 # midpoint of the 0.4-0.8 ng/mL sedation range (the app reads drugDefaults_global.csv)
+  lowerTypical <- 0.4
+  upperTypical <- 0.8
+  MEAC <- 0
+  reference <- "Zuppa AF et al., Br J Anaesth 2019;123(6):839-852. https://pubmed.ncbi.nlm.nih.gov/31623840/"
+
+  PK <- sapply(events, function(x) list(get0(x)))
+
+  list(
+    PK = PK,
+    tPeak = tPeak,
+    MEAC = MEAC,
+    typical = typical,
+    upperTypical = upperTypical,
+    lowerTypical = lowerTypical,
+    reference = reference
   )
 }

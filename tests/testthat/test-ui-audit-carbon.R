@@ -889,11 +889,11 @@ test_that("Suggest Dosing reads the events against the window it fits (P3-H6)", 
   # and the regimen fitted to the clearance before it, 68.6% high.
   infant <- function(DT) recalculatePK(NULL, G, DT, age = 0.5, weight = 6, height = 65,
                                        sex = "male")
-  drugs <- infant(oneDose("dexmedetomidineInfantCPB", 0, "mcg/kg"))
+  drugs <- infant(oneDose("dexmedetomidine", 0, "mcg/kg"))
   regimenFor <- function(start) {
     targets <- data.frame(Time = c(start, start + 60), Target = c(0.6, 0.6))
     events <- data.frame(Time = start + 10, Event = "CPB Start", stringsAsFactors = FALSE)
-    suggest("dexmedetomidineInfantCPB", targets, start + 70, drugs, G$Drug, events, REFERENCE_TIME_NONE)
+    suggest("dexmedetomidine", targets, start + 70, drugs, G$Drug, events, REFERENCE_TIME_NONE)
   }
   r0 <- regimenFor(0)
   r60 <- regimenFor(60)

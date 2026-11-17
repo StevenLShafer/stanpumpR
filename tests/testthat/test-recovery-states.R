@@ -300,9 +300,9 @@ test_that("the intravenous engines all carry their states out", {
             1e-12 * max(X$metaboliteSeries$Ce))
 
   # advanceClosedForm1: time-varying PK, so a lambda per time point
-  PK <- pkFor("dexmedetomidineInfantCPB", weight = 7, height = 65, age = 0.5, sex = "male")
+  PK <- pkFor("dexmedetomidine", weight = 7, height = 65, age = 0.5, sex = "male")
   expect_gte(length(PK$pkEvents), 2)
-  X <- simCpCe(data.frame(Drug = "dexmedetomidineInfantCPB", Time = c(0, 0),
+  X <- simCpCe(data.frame(Drug = "dexmedetomidine", Time = c(0, 0),
                           Dose = c(1, 0.7), Units = c("mcg/kg", "mcg/kg/hr")),
                data.frame(Time = 30, Event = "CPB Start"), PK, 120, TRUE)
   expect_true(is.matrix(X$recoveryStates$lambda))
