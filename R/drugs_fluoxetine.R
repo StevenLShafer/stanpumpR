@@ -36,8 +36,10 @@
 #   - the peak within a dosing interval is about four times the trough, where
 #     the real fluctuation is small.
 # Steven L. Shafer chose, 2026-10-10, to add the model on these terms rather
-# than leave fluoxetine out or use Panchaud 2011's parent-only model of
-# perinatal women; the help page carries the same warning.
+# than leave fluoxetine out or use another published parent-only model; the
+# help page carries the same warning.  (Panchaud 2011, a model of
+# breastfeeding women, is not cited: it pooled data from Taddio 1996, a paper
+# by Gideon Koren, whose work stanpumpR does not use; Shafer, 2026-11-16.)
 #
 # THE UNITS ARE AS PRINTED
 # ========================
@@ -61,7 +63,9 @@
 # =========================
 #     fluoxetine      CL/F 2.91 L/h (women; x 1.165 in men)   V/F 24.9 L
 #     norfluoxetine   CL/F 3.24 L/h                           V/F 1.52 L
-#     ka 0.3 /h, fixed from the literature (trough data cannot estimate it)
+#     ka 0.3 /h, fixed from the literature (trough data cannot estimate it):
+#     Han cites Panchaud 2011, which fixed it from Altamura 1994 (Clin
+#     Pharmacokinet 26:201-214, PMID 8194283), the value's origin
 # IIV 31.6% on fluoxetine CL/F and 20.9% on norfluoxetine CL/F, not used.
 #
 # NORFLUOXETINE FORMATION
