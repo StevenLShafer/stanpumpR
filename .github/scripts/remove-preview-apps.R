@@ -50,11 +50,36 @@ if (nzchar(prNumber)) {
   message("Preview apps: ", nrow(previews), "; of PRs no longer open: ", nrow(target), ".")
 }
 
+# The sweep removes its apps one at a time, which can take minutes, and a PR
+# reopened meanwhile is redeployed by the triage label.  So each candidate's
+# state is asked of GitHub again just before its app is removed, and an app
+# whose PR is not known to be closed is left (GITHUB_REPOSITORY, GITHUB_TOKEN;
+# CodeRabbit on #761).
+prClosed <- function(number) {
+  repo <- env("GITHUB_REPOSITORY")
+  if (!nzchar(repo)) return(TRUE)   # outside Actions: the list is all there is
+  handle <- curl::new_handle()
+  curl::handle_setheaders(handle, Accept = "application/vnd.github+json")
+  if (nzchar(env("GITHUB_TOKEN"))) {
+    curl::handle_setheaders(handle, Authorization = paste("Bearer", env("GITHUB_TOKEN")))
+  }
+  url <- sprintf("https://api.github.com/repos/%s/pulls/%d", repo, number)
+  tryCatch({
+    res <- curl::curl_fetch_memory(url, handle = handle)
+    if (res$status_code != 200) return(FALSE)
+    identical(jsonlite::fromJSON(rawToChar(res$content))$state, "closed")
+  }, error = function(e) FALSE)
+}
+
 # A purged app may still be listed as "deleted"; there is nothing left to do.
 target <- target[!target$status %in% "deleted", , drop = FALSE]
 failed <- character()
 for (i in seq_len(nrow(target))) {
   name <- target$name[i]
+  if (!nzchar(prNumber) && !prClosed(target$number[i])) {
+    message("Leaving ", name, ": its PR is open, or its state could not be read.")
+    next
+  }
   message("Removing ", name, " (", target$status[i], ")")
   ok <- tryCatch({
     if (!target$status[i] %in% c("terminated", "archived")) {

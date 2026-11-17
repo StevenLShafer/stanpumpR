@@ -81,4 +81,6 @@ jobs:
           SHINY_TOKEN: ${{ secrets.SHINY_TOKEN }}
           SHINY_SECRET: ${{ secrets.SHINY_SECRET }}
           OPEN_PRS: ${{ steps.open.outputs.numbers }}
+          # Each candidate's state is checked again just before its removal
+          GITHUB_TOKEN: ${{ github.token }}
         run: Rscript --vanilla .github/scripts/remove-preview-apps.R
