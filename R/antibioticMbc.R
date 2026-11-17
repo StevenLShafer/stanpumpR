@@ -537,11 +537,16 @@ antibioticTroughBands <- function()
 antibioticNoBands <- function()
 {
   data.frame(
-    Drug = "colistin",
-    Reason = paste(
-      "No MBC source for colistin has been read, so the band rule cannot be applied. The consensus",
-      "target is an exposure, an average of about 2 mg/L of total colistin over the day (Tsuji BT et",
-      "al., Pharmacotherapy 2019;39:10-39), not a range on the curve."),
+    Drug = c("colistin", "cefepime"),
+    Reason = c(
+      paste(
+        "No MBC source for colistin has been read, so the band rule cannot be applied. The consensus",
+        "target is an exposure, an average of about 2 mg/L of total colistin over the day (Tsuji BT et",
+        "al., Pharmacotherapy 2019;39:10-39), not a range on the curve."),
+      paste(
+        "No MBC source for cefepime has been read, so the band rule cannot be applied. The consensus",
+        "target is a time above the MIC (100% fT>MIC; Abdul-Aziz MH et al., Intensive Care Med",
+        "2020;46:1127-1153), not a range on the curve.")),
     stringsAsFactors = FALSE
   )
 }
