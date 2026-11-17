@@ -114,12 +114,12 @@ test_that("an oral dose: time is reported through the absorption phase", {
 
 
 test_that("time-varying PK: the effect site is timed, not the plasma", {
-  # Dexmedetomidine in an infant (age <= 1) switches PK on cardiopulmonary bypass, which
+  # The infant bypass dexmedetomidine model switches PK on cardiopulmonary bypass, which
   # routes it through advanceClosedForm1().
-  PK <- pkFor("dexmedetomidine", weight = 7, height = 65, age = 0.5)
+  PK <- pkFor("dexmedetomidineInfantCPB", weight = 7, height = 65, age = 0.5)
   expect_gte(length(PK$pkEvents), 2)
   ET <- data.frame(Time = 30, Event = "CPB Start")
-  DT <- data.frame(Drug = "dexmedetomidine", Time = c(0, 0), Dose = c(1, 0.7),
+  DT <- data.frame(Drug = "dexmedetomidineInfantCPB", Time = c(0, 0), Dose = c(1, 0.7),
                    Units = c("mcg/kg", "mcg/kg/hr"))
   sim <- simCpCe(DT, ET, PK, 120, TRUE)
   expect_gt(max(sim$equiSpace$Recovery), 0)

@@ -147,13 +147,13 @@ test_that("an interaction run through the event engine is unchanged (C3)", {
 })
 
 test_that("dexmedetomidine across bypass is unchanged by the event lookups (C3)", {
-  DT <- data.frame(Drug = "dexmedetomidine", Time = c(0, 0, 30, 200),
+  DT <- data.frame(Drug = "dexmedetomidineInfantCPB", Time = c(0, 0, 30, 200),
                    Dose = c(1, 0.5, 0.7, 0), Units = c("mcg/kg", "mcg/kg/hr", "mcg/kg/hr", "mcg/kg/hr"),
                    stringsAsFactors = FALSE)
   ET <- data.frame(Time = c(60, 70, 80, 90, 100, 110, 120, 180),
                    Event = c("CPBStart", "CPB36", "CPB35", "CPB34", "CPB33", "CPB32", "CPB31", "CPBEnd"),
                    stringsAsFactors = FALSE)
-  x <- simulatedFor(DT, 600, plotRecovery = TRUE, events = ET)$dexmedetomidine$wide
+  x <- simulatedFor(DT, 600, plotRecovery = TRUE, events = ET)$dexmedetomidineInfantCPB$wide
   # Pinned at 59094cf
   expect_equal(nrow(x), 87)
   expect_equal(sum(x$Plasma), 91.255105748065972, tolerance = 1e-9)

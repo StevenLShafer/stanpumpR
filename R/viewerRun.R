@@ -363,7 +363,7 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
   if (!is.null(mm$k23) && !is.null(mm$k32))
     sys <- lapply(sys, function(s) { s$v2 <- s$v1 * mm$k23 / mm$k32; s$cl2 <- mm$k23 * s$v1; s })
   # The PK set in force at each time. A model that switches sets at a
-  # clinical event (the infant dexmedetomidine model's bypass sets) changes
+  # clinical event (dexmedetomidineInfantCPB's bypass sets) changes
   # its volumes there, the amounts carried across (convertState()): the
   # drug in each compartment is its concentration times the volume IN FORCE.
   # With the first set's volumes throughout, the drug in the body fell 8% the

@@ -454,8 +454,8 @@ intercompartmental clearance follow the rule above. See
 [docs/weight-adjustment.md](weight-adjustment.md).
 
 **Where a drug has two models**, stanpumpR picks between them on a covariate —
-dexmedetomidine switches to the infant model at age ≤ 1 year, for example — so
-the reference that applies depends on the patient you entered.
+cytarabine switches models at 19 years, for example — so the reference that
+applies depends on the patient you entered.
 
 **The effect-site rate constant often comes from a different source than the
 disposition model.** Where the two differ, that is noted on the drug's help page

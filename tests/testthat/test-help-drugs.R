@@ -259,10 +259,12 @@ test_that("half-lives of a day or more are also given in days", {
 })
 
 test_that("the table shows the covariate switches", {
-  dex <- helpDrugParameterTable("dexmedetomidine")
-  expect_equal(length(unique(dex$reference)), 2)
+  # cytarabine chooses its model by age (Periclou under 19, Krogh-Madsen from 19)
+  cyt <- helpDrugParameterTable("cytarabine")
+  expect_equal(length(unique(cyt$reference)), 2)
+  dex <- helpDrugParameterTable("dexmedetomidineInfantCPB")
   expect_match(dex$events[dex$Patient == "Infant"], "CPBStart")
-  expect_equal(dex$events[dex$Patient == "Reference adult"], PK_EVENT_DEFAULT)
+  expect_equal(helpDrugParameterTable("dexmedetomidine")$events[1], PK_EVENT_DEFAULT)
 
   remi <- helpDrugParameterTable("remifentanil")
   obese <- remi[remi$Patient == "Obese adult", ]
@@ -319,7 +321,7 @@ test_that("extravascular routes and events are described where the model has the
   prop <- helpDrugPageHTML("propofol")
   expect_false(grepl("Extravascular routes", prop, fixed = TRUE))
 
-  dex <- helpDrugPageHTML("dexmedetomidine")
+  dex <- helpDrugPageHTML("dexmedetomidineInfantCPB")
   expect_match(dex, "Events that change the kinetics", fixed = TRUE)
   expect_match(dex, "CPBStart", fixed = TRUE)
   expect_false(grepl("Events that change the kinetics", prop, fixed = TRUE))

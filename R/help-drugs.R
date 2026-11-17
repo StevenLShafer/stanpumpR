@@ -24,8 +24,7 @@
 #' Chosen to show which covariates a model responds to: the reference adult
 #' most models are centred on; a woman, for the models with a sex term; an
 #' older adult; an obese adult (BMI 41, which switches remifentanil to the Kim
-#' model); a child; and an infant (dexmedetomidine switches to its infant model
-#' at age <= 1).
+#' model); a child; and an infant (several models mature with age).
 #' @noRd
 helpReferencePatients <- function() {
   data.frame(

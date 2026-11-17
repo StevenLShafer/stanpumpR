@@ -85,12 +85,12 @@ test_that("H8: absorption is drawn only where the fall of the depot is the absor
 })
 
 test_that("H8: a model that switches PK sets at an event is balanced with the volumes in force", {
-  # The infant dexmedetomidine model (age 0.5 y, 7 kg) on bypass from 30 to 90 min.
+  # The infant bypass dexmedetomidine model (age 0.5 y, 7 kg) on bypass from 30 to 90 min.
   ev <- data.frame(Time = c(30, 90), Event = c("CPB Start", "CPB End"))
-  doses <- data.frame(Drug = "dexmedetomidine", Time = 0, Dose = c(1, 0.5), Units = c("mcg/kg", "mcg/kg/hr"))
+  doses <- data.frame(Drug = "dexmedetomidineInfantCPB", Time = 0, Dose = c(1, 0.5), Units = c("mcg/kg", "mcg/kg/hr"))
   x <- carbon3Run(doses, 120, events = ev, age = 0.5, weight = 7, height = 67)
   r <- x$run
-  sets <- x$plot$dexmedetomidine$PK
+  sets <- x$plot$dexmedetomidineInfantCPB$PK
   expect_false(is.null(r$pkAt))
   minutes <- r$t / 60
   inForce <- ifelse(minutes < 30, "default", ifelse(minutes < 90, "CPBStart", "CPBEnd"))
