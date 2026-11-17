@@ -447,7 +447,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
               if (ROUTE_SC %in% route) "subcutaneous",
               if (ROUTE_TD %in% route) "transdermal (a patch)",
               if (ROUTE_RA %in% route) "by tissue injection (regional anesthesia)")
-  intravenous <- any(units %in% c(bolusUnits, infusionUnits, calciumUnits, iuUnits, ivPotencyUnits,
+  intravenous <- any(units %in% c(bolusUnits, infusionUnits, calciumUnits, iuUnits, ivPotencyUnits, milliunitRateUnits,
                       aminophyllineUnits, caffeineCitrateUnits, piperacillinTazobactamUnits))
   tci <- any(units %in% tciUnits)
   given <- if (length(units) == 0) {
@@ -1373,7 +1373,7 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
     conc <- helpConcentrationUnits(row$Concentration.Units)
     units <- helpDrugUnits(row)
     given <- if (length(units) == 0) "metabolite only"
-      else if (any(units %in% c(bolusUnits, infusionUnits, calciumUnits, iuUnits, ivPotencyUnits,
+      else if (any(units %in% c(bolusUnits, infusionUnits, calciumUnits, iuUnits, ivPotencyUnits, milliunitRateUnits,
                       aminophyllineUnits, caffeineCitrateUnits, piperacillinTazobactamUnits))) {
         route <- doseRoute(units)
         paste(c("IV", if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "SL",

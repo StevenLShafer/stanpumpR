@@ -1362,6 +1362,9 @@ getDrugPK <- function(
   # theophylline): the mass of the plotted drug per mass of each product,
   # which simCpCe() applies to every dose whose unit names that product.
   out$doseProducts <- validateDoseProducts(X$doseProducts, drug)
+  # A potency-defined peptide plotted by mass (oxytocin): micrograms per unit,
+  # so that its doses in units are read as mass (potencyToMass()).
+  out$unitPotency <- validateUnitPotency(X$unitPotency, drug)
   # A drug whose oral absorption saturates scales each oral dose by its own
   # fraction absorbed: simCpCe() applies it.  See oralSaturationFraction().
   out$oralSaturation <- validateOralSaturation(X$oralSaturation, drug)
@@ -2231,6 +2234,24 @@ validateDoseProducts <- function(products, drug)
     stop("Invalid doseProducts block for ", drug, ": a named numeric vector of ",
          "factors above 0 and at most 1 is required.")
   products
+}
+
+#' Validate a drug's `unitPotency`
+#'
+#' Micrograms of the plotted drug in one unit of potency, a finite number
+#' above 0, for a drug dosed in units and plotted by mass (oxytocin).  NULL
+#' when the drug declares none.
+#'
+#' @param potency the model's `unitPotency` field, or NULL
+#' @param drug the drug name, for the message
+#' @returns the value, or NULL
+#' @keywords internal
+validateUnitPotency <- function(potency, drug)
+{
+  if (is.null(potency)) return(NULL)
+  if (!is.numeric(potency) || length(potency) != 1 || !is.finite(potency) || potency <= 0)
+    stop("Invalid unitPotency for ", drug, ": one finite number of micrograms per unit above 0 is required.")
+  potency
 }
 
 #' Stop on a disposition the engines cannot use
