@@ -603,6 +603,18 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
 #' circuit into the lungs that plus the lungs' own rise, and out through the
 #' pop-off valve the agent delivered less the agent held.
 #'
+#' The blood (Shafer, 2026-11-17, from GasMan's display, which shows ART and
+#' VEN): `venous` is the mixed venous partial pressure, the tissues' tensions
+#' weighted by their shares of the cardiac output (`gasMixedVenous()`, the
+#' engine's own); arterial blood is at the alveolar (end-tidal) partial
+#' pressure in the engine, so it is not sent twice. `cardiacOutput` is the
+#' cardiac output the engine ran on (the Physiology panel's slider included),
+#' and `alveolarVentilation` the minute ventilation less the dead space it
+#' took. Blood holds no agent in the engine (mixed venous is computed at each
+#' moment), so the viewer draws the blood as bars, as it draws the ideal
+#' circuit. `greenhouse` is `gasGreenhouse()`: what the viewer needs to turn
+#' the agent delivered into kg of CO2 equivalent.
+#'
 #' @param entry the agent's entry in the app's simulation (`drugs()`), with
 #'   `$gasRun`.
 #' @param minimum,maximum the plot's Min and Max time, minutes.
@@ -625,6 +637,9 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_)
   # rest of the vessel-rich group (state 6; gasTissueShares()).  The viewer
   # draws the whole group: its volume, and the partial pressure that holds the
   # agent both parts hold (one partition coefficient, so volume-weighted).
+  # Mixed venous blood, from every state, before the vessel-rich group's two
+  # parts are merged for drawing.
+  venous <- apply(state, 1, function(y) gasMixedVenous(y, body))
   vrgVolume <- body$V_brain
   if (!is.null(body$V_vrgRest) && ncol(state) >= 6) {
     vrgVolume <- body$V_brain + body$V_vrgRest
@@ -647,10 +662,12 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_)
   rows <- rows[order(rows$Time), , drop = FALSE]
   bySetting <- split(rows, rows$Drug)
   knots <- sort(unique(c(0, rows$Time[rows$Time > 0])))
-  settings <- lapply(knots, function(k) gasSettingsAt(bySetting, k))
+  deadSpace <- if (is.null(gr$deadSpace)) GAS_DEAD_SPACE_FRACTION else gr$deadSpace
+  settings <- lapply(knots, function(k) gasSettingsAt(bySetting, k, deadSpace))
   flow <- vapply(settings, function(s) s$Q, numeric(1))
   fresh <- vapply(settings, function(s) unname(s$Ffgf[[g]]), numeric(1))
   mv <- vapply(settings, function(s) s$MV, numeric(1))
+  va <- vapply(settings, function(s) s$VA, numeric(1))
   # mL of vapour a minute: L/min x % / 100 x 1000 mL/L.
   rate <- 10 * flow * fresh
   i <- findInterval(times + 1e-9, knots)
@@ -669,9 +686,11 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_)
     patient = list(weight = gr$weight, age = gr$age),
     circuit = gr$circuit,
     volume = as.list(vol), partition = as.list(lambda), capacity = as.list(capacity),
-    t = times * 60, p = p,
-    fresh = fresh[i], freshFlow = flow[i], ventilation = mv[i],
+    t = times * 60, p = p, venous = at(venous),
+    cardiacOutput = if (is.null(gr$Qco)) body$Q_cardiac else gr$Qco,
+    fresh = fresh[i], freshFlow = flow[i], ventilation = mv[i], alveolarVentilation = va[i],
     delivered = delivered,
+    greenhouse = gasGreenhouse(g),
     source = "stanpumpR")
 }
 

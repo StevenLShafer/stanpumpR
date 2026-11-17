@@ -76,6 +76,7 @@ kbd { font: 11px/1 ui-monospace, Consolas, monospace; border: 1px solid var(--li
 #readout .tgt { color: var(--target); }
 #readout .k { color: var(--ink-2); }
 #readout .ce { color: #8db8ff; }   /* a gas run's effect site, the vessel-rich group */
+#readout .ven { color: #8a94f0; }  /* a gas run's mixed venous blood: its bar (2D), its ring on the lungs (3D) */
 #readout .foot { color: var(--ink-2); font-size: 12px; margin-top: 2px; }
 #readout .scale { color: var(--ink-2); font-size: 11.5px; max-width: 380px; }
 body.flat #readout .scale { display: none; }   /* the 2D view says it under its boxes */

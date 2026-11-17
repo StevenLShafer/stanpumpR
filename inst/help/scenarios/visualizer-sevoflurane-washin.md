@@ -8,7 +8,9 @@ Sevoflurane 2.5 per cent in 6 L/min of oxygen, with a minute ventilation of 6 L/
 
 **Fat's level is low, its store is not.** Sevoflurane's fat holds 493 L of gas against the vessel-rich group's 6.6 L, so its box is the widest even compressed to ten times the narrowest (the note above the boxes says so). Muscle holds more agent than the vessel-rich group from 13 minutes, and fat from 36 minutes, at a level a seventy-fifth of the brain's. At the end of the hour the patient holds 1,052 mL of vapour: 147 in the vessel-rich group, 604 in muscle and 245 in fat. That store is what [emergence](scenario:visualizer-sevoflurane-emergence) has to empty.
 
-**Most of the agent is thrown away.** At 6 L/min, 88 per cent of the agent delivered goes out through the pop-off valve: 7.9 of 9.0 L of vapour. The amounts card keeps the account.
+**The blood shows why the uptake slows.** The two bars after the lungs are the blood, as in GasMan: arterial, at the end-tidal level, and mixed venous, the tissues' levels weighted by their blood flow, which is what returns to the lungs. The uptake is the cardiac output (5 L/min, in the readout) times sevoflurane's blood:gas coefficient (0.65) times their difference. At one minute venous blood returns at 0.25 per cent against 1.42 arterial, and 38 mL/min of vapour goes into the blood. By 20 minutes it returns at 1.68 against 2.16, and the uptake has fallen to 16 mL/min. In the 3D view mixed venous blood is the blue ring on the lungs' glass.
+
+**Most of the agent is thrown away.** At 6 L/min, 88 per cent of the agent delivered goes out through the pop-off valve: 7.9 of 9.0 L of vapour. The amounts card keeps the account. Its last row is the greenhouse effect of the agent delivered: 9.7 kg of CO<sub>2</sub> equivalent in the hour, all of which reaches the atmosphere, vented now or breathed out later. That is as much CO<sub>2</sub> as a typical US car emits in 17 hours; the label of the setting says the same at the present rate, as 16.7 cars. See [The greenhouse effect](help:inhaled-agents).
 
 ## Making a video
 
