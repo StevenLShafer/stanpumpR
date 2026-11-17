@@ -1,6 +1,6 @@
 ---
 name: paper-archive
-description: Take newly downloaded papers into the stanpumpR reference archive and write their evidence cards. Use whenever papers need to be uploaded, filed or ingested into stanpumpR, or the user says "run update.bat", asks to scan Downloads for stanpumpR references, asks which papers still need a digest, or asks about the archive's totals, the needs-a-look pile or the unplaced downloads.
+description: Take newly downloaded papers into the stanpumpR reference archive and write their evidence cards. Use whenever papers need to be uploaded, filed or ingested into stanpumpR, or the user says "run update.bat", asks to scan Downloads for stanpumpR references, asks which papers still need a digest or which a model is still waiting for, or asks about the archive's totals, the needs-a-look pile or the unplaced downloads.
 ---
 
 # Taking papers into the archive
@@ -27,7 +27,7 @@ pipeline moves originals to the Recycle Bin and logs them (`_build\recycled_log.
 
 **The archive is read-only to you except through its `_build` scripts.** Never create, move, edit or
 trash a file in it by hand, with one exception: renaming a "needs a look" PDF to `PMID_<pmid>.pdf`
-(step 3), which is the manual filing the pipeline asks for.
+(step 4), which is the manual filing the pipeline asks for.
 
 ## 1. Preflight: is anyone else running it?
 
@@ -84,15 +84,47 @@ Report each part of what it prints:
 - **Recycled N originals** — identical to an archived copy, or *"the same paper differently stamped"*
   (a proxy-stamped re-download that is not byte-identical; `copy_equivalent()` catches those, on
   Shafer's ruling of 2026-11-01).
-- **Needs a look (N)** — step 3.
+- **Needs a look (N)** — step 4.
 - **Supplements waiting (N)** — journal supplementary files whose article is not in the reference
   list. Listed in `digests\STATUS.md`; leave them unless the user asks.
-- **Not stanpumpR references: N recent PDF(s)** — step 4.
+- **Not stanpumpR references: N recent PDF(s)** — step 5.
 - **OCR** — `REJECTED: page count changed or no text gained` means the guard kept the original. That
   is the guard working, not a failure.
+- **Papers a model is waiting for** — the arrivals report, step 3.
 - **Totals** — `In archive`, `To download`, and `digests: N done, M needed`.
 
-## 3. Triage "Needs a look"
+## 3. Close the loop: the arrivals report
+
+`_build\arrivals.py` is the last thing `update.bat` runs, and it is the only step that connects a
+filed PDF back to the model that asked for it. **Never skip it.** The archive's pull side has always
+worked — a registry row names the paper it wants by PMID, usually with the question it should answer,
+and the card lands in `papers/digests/` beside the code. What never existed was the push: nothing
+noticed that a paper somebody asked for weeks ago was already sitting in the archive. When this was
+first run (2026-11-16) **41 of the 60 `to_obtain` PMIDs were already filed and 14 of those had no
+card**, and nobody had been told.
+
+Run it alone at any time: `C:/Python314/python.exe -E C:\dev\stanpumpRPapers\_build\arrivals.py`
+(`--no-fetch` offline, `--all` to list what is still to obtain). It reads the registries from
+`origin/master`, not from a working tree, because several checkouts live on this machine and any of
+them may be on a branch. It reads only the `to_obtain` column: a PMID under `source` is the paper a
+row was *built* from, not a request.
+
+Four kinds come back, and three of them are work:
+
+- **Arrived, not yet digested** — it is in the digest queue; the batch will reach it. Nothing to do
+  beyond noticing, except to say so, because the person who asked may be waiting.
+- **Digested, but the row still says it is waiting** — *this is the one that rots.* The card exists,
+  so the question was answered, and the registry still advertises the paper as missing. Read the card
+  and update the row's `evidence_read` / `readiness` / `to_obtain`. Report these individually.
+- **A card written from a non-published edition whose published PDF is now here** — an accepted
+  manuscript superseded. Re-digest, or at least read what the AAM's card records that it could not.
+- **Still to obtain** — counted only; `stanpumpr-queue.csv` already tracks those.
+
+Acting on these is a model change and so belongs to the drug's own procedure (`docs/adding-a-drug.md`)
+— but a row that stays stale is how a paper the user went to the trouble of ordering never reaches the
+model that needed it, which is precisely what this report exists to prevent.
+
+## 4. Triage "Needs a look"
 
 These are PDFs the filer refused to guess at: identification is from the paper's own text (a printed
 DOI, or the title verbatim plus the first author's surname), and anything weaker is reported rather
@@ -113,7 +145,7 @@ Two kinds show up, and the second is a trap:
 A one-page PDF matching a long archived paper is normally its erratum, abstract or supplement: file it
 as a supplement or leave it, never over the paper.
 
-## 4. Triage the unplaced downloads
+## 5. Triage the unplaced downloads
 
 `_build\unplaced_downloads.txt` lists every PDF in Downloads from the last 14 days that matched no
 reference, each with the reason and the opening words of page 1. Most genuinely are not stanpumpR
@@ -127,7 +159,7 @@ Grep the repository for the drug or author the opening words suggest before conc
 Report how many you looked at, what you filed, and that the rest stay in Downloads — **do not move or
 delete them**; that is the user's call.
 
-## 5. Supervise the digest batch, and merge its PR
+## 6. Supervise the digest batch, and merge its PR
 
 The batch (`_build\digest_run.py`) runs Claude headless over `digests\STATUS.md`'s queue, two papers
 at a time, most load-bearing first, writes the cards into the `C:\dev\stanpumpR-digests` worktree,
@@ -135,7 +167,7 @@ pushes them as `claude/digests-<stamp>`, and opens a pull request. Its report is
 `_build\digest_runs\<stamp>.md`, whose last lines name the branch and the PR.
 
 **Then merge that PR once CI is green.** That is the step the pipeline does not do for itself, and the
-reason thirteen digest PRs once sat open for a fortnight. Do step 6's read of the run's new
+reason thirteen digest PRs once sat open for a fortnight. Do step 7's read of the run's new
 `open_questions:` before merging — and if you EDIT a card, remember the branch was pushed before you
 read it: `commit_and_push()` deliberately leaves alone anything the run did not write, so your edit
 sits uncommitted on the worktree's own `digests/working` and is in no PR at all. Commit it onto the
@@ -157,9 +189,9 @@ says how to verify instead.
 `digests: N done` counts cards in the digests worktree, not on `master`, so merging the PR does not
 move that number.
 
-## 6. Surface what the new cards ask
+## 7. Surface what the new cards ask
 
-A run's cards may add `open_questions:` entries. **Read them on the branch, before step 5 merges it**,
+A run's cards may add `open_questions:` entries. **Read them on the branch, before step 6 merges it**,
 because a question you add to a card after the merge is not in the merged PR and so reaches nobody.
 Collect the new ones and report them by tag:
 
@@ -174,11 +206,16 @@ Collect the new ones and report them by tag:
 A finding outside this run's remit is **recorded, not acted on** (`spawn_task`, or the registry row's
 own notes). The test is whether you would have started it unprompted.
 
-## 7. Report
+## 8. Report
 
-Filed, recycled, needs-a-look and what you did about each, unplaced looked at, cards written, the PR
-and whether it merged, the new `[decision]` questions, and the totals. State plainly anything you
-could not verify: *"I could not confirm X"* beats a clean-looking summary.
+Filed, recycled, needs-a-look and what you did about each, unplaced looked at, **the arrivals report
+drug by drug**, cards written, the PR and whether it merged, the new `[decision]` questions, and the
+totals. State plainly anything you could not verify: *"I could not confirm X"* beats a clean-looking
+summary.
+
+Lead with the arrivals, not the counts. The user orders these papers because a model needs them, so
+*"Kanto 1981 arrived — `vasoactiveRegistry.csv` wants it to confirm labetalol's dose basis and assay"*
+is the sentence they are waiting for; *"filed 15, 1,295 in archive"* is bookkeeping.
 
 ## Reading a PDF
 
