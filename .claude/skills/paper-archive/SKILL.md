@@ -29,6 +29,24 @@ pipeline moves originals to the Recycle Bin and logs them (`_build\recycled_log.
 trash a file in it by hand, with one exception: renaming a "needs a look" PDF to `PMID_<pmid>.pdf`
 (step 4), which is the manual filing the pipeline asks for.
 
+## 0. Is this a question, or a run?
+
+**A question about the archive is answered WITHOUT running anything.** Totals, what still needs a
+digest, which papers a model is waiting for, the needs-a-look pile, the unplaced downloads: all of
+those are read from files that already exist.
+
+| Asked | Read |
+|---|---|
+| totals, what needs a digest | `C:/dev/stanpumpRPapers/digests/STATUS.md` (the counts are in its first lines) |
+| which papers a model waits for | the arrivals report (step 3) -- it only reads |
+| the needs-a-look pile, what was filed | the last run's report, `_build/digest_runs/<stamp>.md` |
+| unplaced downloads | `_build/unplaced_downloads.txt` |
+
+Run the pipeline (steps 1-8) only when the user asks for a run, or tells you papers have been added.
+It is **not** a read: it moves originals to the Recycle Bin, starts a digest batch, and ends by
+merging a pull request to `master`. Never set that going to answer *"how many papers are in the
+archive?"* If a question genuinely needs a run, say so and ask first.
+
 ## 1. Preflight: is anyone else running it?
 
 Only one computer may run the pipeline at a time — Google Drive does not merge concurrent edits to
@@ -103,8 +121,14 @@ noticed that a paper somebody asked for weeks ago was already sitting in the arc
 first run (2026-11-16) **41 of the 60 `to_obtain` PMIDs were already filed and 14 of those had no
 card**, and nobody had been told.
 
-Run it alone at any time: `C:/Python314/python.exe -E C:\dev\stanpumpRPapers\_build\arrivals.py`
-(`--no-fetch` offline, `--all` to list what is still to obtain). It reads the registries from
+Run it alone at any time — forward slashes, because from the Bash tool unquoted backslashes are
+eaten and `C:\dev\...` reaches Python as `C:devstanpumpRPapers_buildarrivals.py`:
+
+```bash
+C:/Python314/python.exe -E C:/dev/stanpumpRPapers/_build/arrivals.py
+```
+
+Its switches are `--no-fetch` (offline) and `--all` (list what is still to obtain). It reads the registries from
 `origin/master`, not from a working tree, because several checkouts live on this machine and any of
 them may be on a branch. It reads only the `to_obtain` column: a PMID under `source` is the paper a
 row was *built* from, not a request.
@@ -182,7 +206,15 @@ Never pipe a status into `tail` or `grep` ahead of a `&&`: a pipeline's exit cod
 command's, so a network failure reads as success and merges an unverified PR. Capture `rc` from the
 command itself, refuse to merge on any status you could not read, and print what you saw. Afterwards
 confirm the merge against the remote rather than a local ref —
-`gh api repos/StevenLShafer/stanpumpR/pulls/<n> --jq .merged`. In a shallow clone `origin/<branch>` is
+`gh api repos/StevenLShafer/stanpumpR/pulls/<n> --jq .merged`.
+
+**Then run `arrivals.py` again.** Step 3's report was written before this batch's cards existed,
+so a paper it listed as *arrived, not yet digested* is now digested and its registry row is
+stale -- the very state this skill exists to catch. Without the second run it waits for the next
+session, and if none comes it waits for ever. Apply the *row still says it is waiting* procedure
+to the papers from this batch and report them in step 8.
+
+In a shallow clone `origin/<branch>` is
 never updated after a push, so the stop hook's "unpushed commits" warning is usually wrong; AGENTS.md
 says how to verify instead.
 
