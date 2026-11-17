@@ -40,6 +40,11 @@ lacks, or keep their details in the full text. C papers are marginal.
 **Totals.** 279 papers kept across six tables (Appendices 1-6), 54 of them A. Each table lists
 the 1-3 best papers per drug, followed by the drugs searched without a usable result, and notes.
 
+The papers to obtain for the A-priority rows and the registry rows of section 3 are listed, one per
+row, in [`literature-search-2026-11-16-papers.csv`](literature-search-2026-11-16-papers.csv), with
+PMID, DOI, PMCID and whether the PDF is already in the stanpumpRPapers archive (checked 2026-11-17:
+11 of 59 are; 26 of the other 48 have a free PubMed Central copy).
+
 ## 1. The shortlist
 
 These are the papers ranked first across all six areas. A PMCID means the full text is free in
@@ -113,6 +118,8 @@ used.
 
 ## 3. Papers that registries are waiting for
 
+- **Already in the archive:** Schoemaker 2017 and Tuo 2025, below, are in the stanpumpRPapers archive
+  (PMID_28280887.pdf, PMID_40733022.pdf), so these registry rows may only need updating.
 - **Brivaracetam:** Schoemaker 2017 (PMC5423986) has the V/F and ka that the antiseizure registry
   lists as "not retrievable".
 - **Clobazam:** Tuo 2025 (PMC12300161) has the CYP2C19 terms the registry says sit in a table it

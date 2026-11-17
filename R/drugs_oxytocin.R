@@ -10,9 +10,18 @@
 # Plasma pharmacokinetics of intravenous and intranasal oxytocin in
 # nonpregnant adults.  Br J Anaesth 2025;134(5):1513-1522.  PMID 40121179,
 # PMC12106900.  https://doi.org/10.1016/j.bja.2024.12.046
-# Read in full from the archive's PDF (PMID_40121179.pdf), 2026-11-16.  The
-# Supplementary material (the candidate models A-G and the NONMEM control
-# streams) is not in the archive and was not read.
+# Read in full from the archive's PDF (PMID_40121179.pdf), 2026-11-16, and
+# its Pharmacokinetic Appendix (the supplement, supplied by Steven L. Shafer,
+# 2026-11-17), whose table of eight "finalist" models A-H prints Model D as
+# Table 1 does: CL1 0.86 x (Wt/80) x (Age/33)^-0.17, V1 8.2 x (Wt/80),
+# CL2 0.22 x (Wt/80), V2 5.9 x (Wt/80); -2LL 46.1 below Model A (no
+# covariates: CL1 0.8, V1 7.7, CL2 0.22, V2 5.6), MDAPE 18%.  Model G, the
+# one the online simulator used, puts age and BMI on clearance alone
+# (0.81 x (Age/33)^-0.14 x (BMI/25.8)^0.97, V1 7.73, CL2 0.22, V2 5.6;
+# MDAPE 17%).  The appendix also reports that with the volumes and
+# clearances scaled to weight there was no sign of a sex effect, which
+# appeared only when clearance was scaled to BMI, and which the authors read
+# as an artifact of BMI.
 #
 # Two studies of healthy men and nonpregnant women at Wake Forest, venous
 # plasma assayed by a specific LC/MS method (limit 2 pg/mL):
