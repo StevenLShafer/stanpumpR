@@ -1,9 +1,32 @@
 # Workflow for cleaning up deployed Shiny apps after PR closure
+#
+# Three ways a preview outlived its PR (found 2026-11-17, ten previews left on
+# shinyapps.io, PR_409 to PR_749), and what answers each:
+#   - The deploy was still running when the PR closed: cleanup found nothing,
+#     and the deploy then recreated the app (PR_749).  So this workflow shares
+#     the deploy's concurrency group: it waits for a deploy in progress to
+#     finish, replaces one still pending, and so always runs last.
+#   - The run never started (GitHub's "startup failure", every
+#     pull_request_target workflow from 16:10 to about 17:00 on 2026-11-16;
+#     PR_737, PR_739), or failed and took the DEPLOY label with it anyway
+#     (the label step ran `if: always()`).  The label now goes only once the
+#     app is gone, and shiny-pr-4-sweep.yaml removes, every day, any preview
+#     whose PR is no longer open.
+#   - Before 2026-11-02 cleanup only terminated an app, which shinyapps.io
+#     keeps in the list; it now purges as well.
+# A PR that was never deployed (one that changed only papers/) has no app, and
+# that is a success, not the failure it was reported as.
 name: Shiny PR 3 Cleanup
 
 on:
   pull_request_target:
     types: [closed]
+
+# The deploy's group (shiny-pr-2-deploy.yaml).  Not cancel-in-progress, so a
+# deploy already talking to shinyapps.io finishes before its app is removed.
+concurrency:
+  group: shiny-deploy-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
 
 jobs:
   cleanup-pr:
@@ -15,8 +38,17 @@ jobs:
     environment:
       name: preview
     permissions:
+      contents: read
       pull-requests: write
     steps:
+      # pull_request_target checks out the default branch, not the PR's head:
+      # only the removal script is taken, and nothing of the PR is run.
+      - name: Checkout the removal script
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          sparse-checkout: .github/scripts
+          persist-credentials: false
+
       - name: Setup R
         uses: r-lib/actions/setup-r@5cc1f0d89c5281319eaa97952fe65a6d55e6f816 #v2
         with:
@@ -25,17 +57,22 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
 
+      - name: Install rsconnect
+        run: install.packages("rsconnect")
+        shell: Rscript {0}
+
       - name: Delete app
         env:
-          SHINY_APP_NAME: ${{ vars.SHINY_APP_NAME }}_PR_${{ github.event.pull_request.number }}
-        run: |
-          install.packages("rsconnect")
-          rsconnect::setAccountInfo("${{ vars.SHINY_ACCOUNT }}", "${{ secrets.SHINY_TOKEN }}", "${{ secrets.SHINY_SECRET }}")
-          rsconnect::terminateApp(appName = "${{ env.SHINY_APP_NAME }}", account = "${{ vars.SHINY_ACCOUNT }}")
-          rsconnect::purgeApp(appName = "${{ env.SHINY_APP_NAME }}", account = "${{ vars.SHINY_ACCOUNT }}")
-        shell: Rscript {0}
+          SHINY_ACCOUNT: ${{ vars.SHINY_ACCOUNT }}
+          SHINY_APP_NAME: ${{ vars.SHINY_APP_NAME }}
+          SHINY_TOKEN: ${{ secrets.SHINY_TOKEN }}
+          SHINY_SECRET: ${{ secrets.SHINY_SECRET }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: Rscript --vanilla .github/scripts/remove-preview-apps.R
+
+      # Only once the app is gone: a failed cleanup keeps the label, so the PR
+      # still shows a preview to remove (the daily sweep removes it either way).
       - name: Remove DEPLOY label
-        if: always()   # even if previous step fails
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |

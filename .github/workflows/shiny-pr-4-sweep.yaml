@@ -1,0 +1,77 @@
+# Remove every PR preview on shinyapps.io whose PR is no longer open.
+#
+# shiny-pr-3-cleanup.yaml removes a preview when its PR closes, but a run can
+# fail to start (GitHub's "startup failure": every pull_request_target
+# workflow failed so from 16:10 to about 17:00 on 2026-11-16) or fail part-way,
+# and on 2026-11-17 ten previews from PR_409 to PR_749 were still deployed
+# (nine of them sleeping) after their PRs had closed.  This sweep catches what
+# the cleanup missed, once a day and on demand (Actions > Shiny PR 4 Sweep >
+# Run workflow).
+#
+# It runs only the default branch's code, never a PR's, and touches only apps
+# named <SHINY_APP_NAME>_PR_<number> (.github/scripts/remove-preview-apps.R),
+# never the production app.
+name: Shiny PR 4 Sweep
+
+on:
+  schedule:
+    - cron: '23 11 * * *'   # daily, 03:23 Pacific standard time
+  workflow_dispatch:
+
+concurrency:
+  group: shiny-preview-sweep
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sweep:
+    runs-on: ubuntu-24.04
+    environment:
+      name: preview
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: List open PRs
+        id: open
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const prs = await github.paginate(github.rest.pulls.list, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100
+            });
+            const numbers = prs.map(pr => pr.number);
+            core.info(`Open PRs: ${numbers.join(', ') || 'none'}`);
+            core.setOutput('numbers', numbers.join(','));
+
+      - name: Checkout the removal script
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          sparse-checkout: .github/scripts
+          persist-credentials: false
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@5cc1f0d89c5281319eaa97952fe65a6d55e6f816 #v2
+        with:
+          use-public-rspm: true
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
+
+      - name: Install rsconnect
+        run: install.packages("rsconnect")
+        shell: Rscript {0}
+
+      - name: Remove previews of closed PRs
+        env:
+          SHINY_ACCOUNT: ${{ vars.SHINY_ACCOUNT }}
+          SHINY_APP_NAME: ${{ vars.SHINY_APP_NAME }}
+          SHINY_TOKEN: ${{ secrets.SHINY_TOKEN }}
+          SHINY_SECRET: ${{ secrets.SHINY_SECRET }}
+          OPEN_PRS: ${{ steps.open.outputs.numbers }}
+        run: Rscript --vanilla .github/scripts/remove-preview-apps.R
