@@ -283,6 +283,15 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       dose$Dose <- dose$Dose * doseProductFactor(dose$Units, PK$doseProducts)
       dose$Units <- stripDoseProduct(dose$Units, names(PK$doseProducts))
     }
+    # A potency-defined peptide plotted by mass (oxytocin): doses in units
+    # (U, U/hr, mU/min) become micrograms here, by the model's unitPotency,
+    # so the U check below, which is for drugs plotted in mcU/mL, never sees
+    # them.  See potencyToMass() in R/routes.R.
+    if (!is.null(PK$unitPotency) && nrow(dose)) {
+      converted <- potencyToMass(dose$Dose, dose$Units, PK$unitPotency)
+      dose$Dose <- converted$Dose
+      dose$Units <- converted$Units
+    }
 
     # A pulsed extended-release product (Adderall XR): each dose of a
     # formulation the drug lists in oralPulses becomes its pulses, ordinary
@@ -379,6 +388,11 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         stop("A dose in units (U) needs a drug reported in mcU/mL; ", PK$drug, " is not.")
       dose$Dose[use] <- dose$Dose[use] * 1000
     }
+    # Milliunits are converted only by a drug's unitPotency (potencyToMass(),
+    # above), which leaves none behind; any left here have no conversion and
+    # would otherwise be read as mass.
+    if (any(grepl("^mU( |/|$)", dose$Units)))
+      stop(PK$drug, " has no unit potency, so a dose in milliunits (mU) cannot be converted.")
     # A drug dosed in international units takes only those, and only it does.
     # Checked before the mass conversions, which would turn a mass unit on an
     # activity drug into NA silently.

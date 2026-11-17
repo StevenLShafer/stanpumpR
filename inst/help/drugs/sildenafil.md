@@ -18,12 +18,17 @@ The Viagra label puts the peak after 100 mg orally at "approximately 440 ng/mL".
 
 In REVAKI-1 (Ring and colleagues, *Br J Clin Pharmacol* 2017;83:709-720, doi 10.1111/bcp.13162), patients of about 70 years were given 10 mg intravenously at cardiac surgery. Their geometric mean clearance was 17.6 L/h and their AUC 568 ng·h/mL. This model gives 29.5 L/h and 339 ng·h/mL. Expect higher concentrations than plotted in older, sicker or perioperative patients.
 
-### Pulmonary hypertension and age
+### Pulmonary hypertension
 
-The model is the healthy volunteers' and is not adjusted for disease or age.
+The Patient Profile's **Pulmonary hypertension** field switches between two populations. It is shown while sildenafil is in the dose table.
 
-- The review found that it under-predicts patients with pulmonary arterial hypertension, whose clearance was 19 to 33% lower, and concluded that a 30% lower clearance predicts their exposures.
-- The Revatio label reports steady-state concentrations 20 to 50% higher in pulmonary hypertension than in volunteers.
+- **No** (the default): the healthy volunteers' model above, which suits a man taking Viagra for erectile dysfunction.
+- **Yes**: clearance is 30% lower, 20.7 L/h, the adjustment the FDA review itself validated. The review found that the healthy model under-predicts patients with pulmonary arterial hypertension (PAH), who often have severe heart disease. It concluded that "the population model that accounts for 30% difference in clearance between healthy volunteer and PAH patients predicts exposures in PAH patients". Its own estimates of the patients' clearance were 24.7 L/h intravenously (19% lower) and 22.1 L/h orally (33% lower).
+
+The volumes, absorption and bioavailability stay the healthy volunteers'; the review measured none of them in patients. On 20 mg three times a day, the lower clearance more than doubles the trough (6.4 to 14.5 ng/mL) but raises the peak only about 10% (96 to 105 ng/mL). In study A1481140, patients with PAH on that dose had a mean peak of 81.4 ng/mL from sparse samples, and 439.5 ng/mL on 80 mg, where this model gives 629. The healthy model's very fast absorption puts its peaks high, which the review warned of above 50 mg. The Revatio label reports steady-state concentrations 20 to 50% higher in pulmonary hypertension than in volunteers.
+
+Not modelled in either population:
+
 - Healthy volunteers aged 65 or more had concentrations about 84% higher than younger ones.
 - Severe renal impairment (creatinine clearance below 30 mL/min) and cirrhosis roughly double exposure.
 

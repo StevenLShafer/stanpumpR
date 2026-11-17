@@ -50,7 +50,7 @@ The reduction of MAC by opioids is modelled with parameters that are a rough fit
 
 ## Weak citations are flagged, not hidden
 
-Two models rest on unpublished or incompletely cited data (oxytocin, and the infant dexmedetomidine model), and several effect-site parameters are described in the code as guesses. The drug pages say so. See [Bibliography](help:references).
+One model rests on incompletely cited data (the infant dexmedetomidine model), and several effect-site parameters are described in the code as guesses. The drug pages say so. See [Bibliography](help:references).
 
 ## Suggest Dosing is a search, not a proof
 

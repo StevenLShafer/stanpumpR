@@ -20,7 +20,7 @@ rocuronium,mcg,mg,mg/kg/hr,mg,"mg,mg/kg/hr",#F9423A,1,2.2,1.5,0,1,IV,Neuromuscul
 vecuronium,ng,mg,mcg/kg/min,mg,"mg,mg/kg,mcg/kg/min",#8B4513,110,155,135,0,110,IV,Neuromuscular blockade
 cisatracurium,ng,mg,mcg/kg/min,mg,"mg,mg/kg,mcg/kg/min",#556B2F,130,200,165,0,130,IV,Neuromuscular blockade
 naloxone,ng,mcg,mcg/min,mcg,"mcg,mcg/kg,mg,mg/kg,mcg/min,mcg/kg/min,mg/min,mg/kg/min,mg IN",#404040,1,10,3,0,1,IV,Other
-oxytocin,ng,mcg,mcg/min,mcg,"mcg,mg,mg/kg,mcg/min",#008F7D,0.05,0.2,0.1,0,0.05,IV,Other
+oxytocin,ng,mcg,mcg/min,U,"U,U/hr,U/min,mU/min,mcg,mg,mg/kg,mcg/min",#008F7D,0.05,0.2,0.1,0,0.05,IV,Other
 oxycodone,ng,mg,mg/hr,mg PO,"mg,mg/hr,Plasma target,Effect site target,mg PO,mg PO liquid,mg/kg PO liquid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg PO liquid qd,mg PO liquid bid,mg PO liquid tid,mg PO liquid qid,mg PO liquid q4h,mg/kg PO liquid qd,mg/kg PO liquid bid,mg/kg PO liquid tid,mg/kg PO liquid qid,mg/kg PO liquid q4h",#032FED,10,20,14,12,10,IV,Opioids
 oliceridine,ng,mg,mcg/kg/min,mg,"mg,mcg/kg/min",#FF00CC,18.296,37.504,27.4,27.9,27.4,IV,Opioids
 remimazolam,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#E36C0A,0.3,0.6,0.45,0,0.2,IV,Hypnotics and sedatives

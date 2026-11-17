@@ -88,6 +88,34 @@ doseProductFactor <- function(units, products) {
   f
 }
 
+#' Doses in units of potency, as micrograms of a drug plotted by mass
+#'
+#' A potency-defined peptide plotted by mass (oxytocin: dosed in USP units,
+#' measured by LC/MS in ng/mL) declares `unitPotency`, the micrograms in one
+#' unit.  Its unit doses ("U", "U/min", "U/hr", "U/kg/min", "U/kg/hr") and
+#' milliunit rates ("mU/min") become the same quantity in micrograms ("mcg",
+#' "mcg/min", ...), so the rest of the pipeline reads ordinary mass units.
+#' Every other unit is returned unchanged.
+#'
+#' @param dose Numeric vector of doses.
+#' @param units Character vector of their units.
+#' @param mcgPerUnit Micrograms in one unit, or NULL for a drug with none.
+#' @returns A list: `Dose` and `Units`, converted.
+#' @noRd
+potencyToMass <- function(dose, units, mcgPerUnit) {
+  units <- as.character(units)
+  if (is.null(mcgPerUnit)) return(list(Dose = dose, Units = units))
+  whole <- grepl("^U(/|$)", units)
+  milli <- grepl("^mU(/|$)", units)
+  if (!any(whole | milli)) return(list(Dose = dose, Units = units))
+  dose <- suppressWarnings(as.numeric(dose))
+  dose[whole] <- dose[whole] * mcgPerUnit
+  dose[milli] <- dose[milli] * mcgPerUnit / 1000
+  units[whole] <- sub("^U", "mcg", units[whole])
+  units[milli] <- sub("^mU", "mcg", units[milli])
+  list(Dose = dose, Units = units)
+}
+
 #' Drop the product word from dose units
 #'
 #' After simCpCe() has converted a dose naming a product (`doseProducts`) to

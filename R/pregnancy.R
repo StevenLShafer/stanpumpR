@@ -47,8 +47,8 @@
 # A change known only in direction, or measured too weakly (a handful of
 # subjects, no control group, a PBPK prediction alone), is recorded and not
 # applied; so is a drug reported as unchanged or never studied.  A model fitted
-# in pregnant women (calcium, magnesium sulfate, oxytocin) already describes
-# them, and the flag does nothing to it.
+# in pregnant women (calcium, magnesium sulfate) already describes them, and
+# the flag does nothing to it.
 #
 # THE RISE IN FILTRATION AND THE MEASURED CREATININE
 # ==================================================

@@ -204,6 +204,26 @@ app_ui <- function() {
                   )
                 )),
 
+                # Read only by the models of a drug given both for pulmonary
+                # arterial hypertension and for something else (sildenafil,
+                # tadalafil; R/pulmonaryHypertension.R), so shown only while
+                # one is in the dose table (Steven L. Shafer, 2026-11-17).
+                relevantField("pulmonaryHypertension", fieldHelp(
+                  shinyWidgets::radioGroupButtons(
+                    inputId = "pulmonaryHypertension",
+                    label = "Pulmonary hypertension",
+                    choiceNames = list(
+                      span(icon("check"), "Yes"),
+                      span(icon("xmark"), "No")
+                    ),
+                    choiceValues = c(TRUE, FALSE),
+                    justified = TRUE,
+                    selected = FALSE
+                  ),
+                  patientFieldTooltip("pulmonaryHypertension"),
+                  placement = "right"
+                )),
+
                 # Each opioid's MEAC times 1, 1.5, 2 or 3
                 # (OPIOID_TOLERANCE_FACTORS; recalculatePK()).
                 relevantField("opioidTolerance", fieldHelp(
