@@ -269,8 +269,50 @@ test_that("without a key the tab says so before anything is uploaded", {
   shiny::testServer(paperReviewServer, {
     html <- paste(as.character(output$keyNotice$html), collapse = "")
     expect_false(grepl("need your own", html))
-    expect_match(html, "Use your own Anthropic API key")
+    expect_match(html, PAPER_REVIEW_OWN_KEY_LABEL, fixed = TRUE)
     expect_true(keyed())
+  })
+})
+
+# Shafer, 2026-11-17: with stanpumpR's own key, a countdown of the reviews
+# left this month, a box to supply one's own key in its place, and a note.
+test_that("with stanpumpR's key the tab counts down this month's reviews, and a ticked box takes the user's", {
+  left <- list(remaining = 197L, limit = 200L, renews = as.Date("2026-12-01"))
+  testthat::local_mocked_bindings(
+    paperReviewApiKey = function(sessionKey = NULL, ...) sessionKey %or% "operator-key",
+    paperReviewSharedKeyRemaining = function(...) promises::promise_resolve(left))
+  shiny::testServer(paperReviewServer, {
+    html <- paste(as.character(output$keyNotice$html), collapse = "")
+    expect_match(html, PAPER_REVIEW_OWN_KEY_LABEL, fixed = TRUE)
+    expect_match(as.character(output$sharedNote$html),
+                 "Dr. Shafer is providing 200 Single Paper Reviews per month through stanpumpR")
+    expect_match(as.character(output$sharedCount$html), "Counting")
+    countShared()
+    while (!later::loop_empty()) later::run_now(0.01)
+    session$flushReact()
+    count <- gsub("\\s+", " ", as.character(output$sharedCount$html))
+    expect_match(count, "Reviews left this month: <strong>197</strong> of 200", fixed = TRUE)
+    expect_match(count, paste0('href="#', session$ns("sharedNote"), '"'), fixed = TRUE)
+    expect_true(keyed())
+    # A key typed while the box is unticked is not used.
+    session$setInputs(ownKey = "sk-ant-api03-abcdefghijklmnop")
+    expect_null(ownKey())
+    session$setInputs(ownKeyUse = TRUE)
+    expect_equal(ownKey(), "sk-ant-api03-abcdefghijklmnop")
+    # Ticked with no key, nothing can be reviewed, and Review says why.
+    session$setInputs(ownKey = "")
+    expect_false(keyed())
+    session$setInputs(ownKeyUse = FALSE)
+    expect_true(keyed())
+    # None left: reviewing needs the user's key, and the tab says when they renew.
+    sharedLeft(list(remaining = 0L, limit = 200L, renews = as.Date("2026-12-01")))
+    session$flushReact()
+    expect_false(keyed())
+    expect_match(gsub("\\s+", " ", as.character(output$sharedCount$html)), "renew on 1 December")
+    sharedLeft(list(error = TRUE))
+    session$flushReact()
+    expect_true(keyed())
+    expect_match(as.character(output$sharedCount$html), "could not be counted")
   })
 })
 

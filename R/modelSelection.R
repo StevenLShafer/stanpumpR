@@ -41,11 +41,11 @@ MODEL_GROUPS <- list(
     weightMin = c(46, 5.3, 8.6), weightMax = c(117, 66, 31),
     n = c(23, 67, 51), year = c(2012, 2011, 2019)),
   carboplatin = data.frame(
-    model = c("carboplatinDuffull", "carboplatinPediatric"),
-    source = c("Duffull 1997", "Duong 2019"),
-    ageMin = c(49, 1.7), ageMax = c(68, 8.3),
-    weightMin = c(46, 8.6), weightMax = c(85, 31),
-    n = c(12, 51), year = c(1997, 2019)),
+    model = c("carboplatinDuffull", "carboplatinPediatric", "carboplatinPeng"),
+    source = c("Duffull 1997", "Duong 2019", "Peng 1995"),
+    ageMin = c(49, 1.7, 1 / 12), ageMax = c(68, 8.3, 221 / 12),
+    weightMin = c(46, 8.6, 5.0), weightMax = c(85, 31, 63),
+    n = c(12, 51, 22), year = c(1997, 2019, 1995)),
   melphalan = data.frame(
     model = c("melphalanNath", "melphalanPediatric"),
     source = c("Nath 2010", "Duong 2019"),
@@ -216,15 +216,20 @@ modelGroup <- function(group)
 #' Krogh-Madsen 2012 (adults), Urien 2011 (children) or Duong 2019 (children
 #' with neuroblastoma), chosen by \code{selectModel()}; see
 #' \code{R/modelSelection.R}.
-#' @param ... the patient's covariates, as the candidates take them
+#' @inheritParams etoposideKroghMadsen
+#' @inheritParams etoposidePediatric
+#' @inheritParams etoposideDuong
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 etoposide <- modelGroup("etoposide")
 
 #' Carboplatin, intravenous: the model chosen for the patient
 #'
-#' Duffull 1997 (adults) or Duong 2019 (children with neuroblastoma), chosen by \code{selectModel()}; see \code{R/modelSelection.R}.
-#' @param ... the patient's covariates, as the candidates take them
+#' Duffull 1997 (adults), Duong 2019 (children with neuroblastoma) or Peng 1995
+#' (children), chosen by \code{selectModel()}; see \code{R/modelSelection.R}.
+#' @inheritParams carboplatinDuffull
+#' @inheritParams carboplatinPediatric
+#' @inheritParams carboplatinPeng
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 carboplatin <- modelGroup("carboplatin")
@@ -232,7 +237,8 @@ carboplatin <- modelGroup("carboplatin")
 #' Melphalan, intravenous: the model chosen for the patient
 #'
 #' Nath 2010 (adults) or Duong 2019 (children with neuroblastoma), chosen by \code{selectModel()}; see \code{R/modelSelection.R}.
-#' @param ... the patient's covariates, as the candidates take them
+#' @inheritParams melphalanNath
+#' @inheritParams melphalanPediatric
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 melphalan <- modelGroup("melphalan")
@@ -240,7 +246,8 @@ melphalan <- modelGroup("melphalan")
 #' Methotrexate, high-dose intravenous: the model chosen for the patient
 #'
 #' Ibarra 2023 (adults) or Taylor 2023 (children and young adults), chosen by \code{selectModel()}; see \code{R/modelSelection.R}.
-#' @param ... the patient's covariates, as the candidates take them
+#' @inheritParams methotrexateIbarra
+#' @inheritParams methotrexatePediatric
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 methotrexate <- modelGroup("methotrexate")
@@ -248,7 +255,8 @@ methotrexate <- modelGroup("methotrexate")
 #' Vincristine, intravenous: the model chosen for the patient
 #'
 #' Igarashi 2021 (adults) or Nijstad 2022 (children and young adults), chosen by \code{selectModel()}; see \code{R/modelSelection.R}.
-#' @param ... the patient's covariates, as the candidates take them
+#' @inheritParams vincristineIgarashi
+#' @inheritParams vincristinePediatric
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 vincristine <- modelGroup("vincristine")
@@ -256,7 +264,8 @@ vincristine <- modelGroup("vincristine")
 #' Oxaliplatin, intravenous: the model chosen for the patient
 #'
 #' Bastian 2003 (adults) or Nikanjam 2015 (children and adults), chosen by \code{selectModel()}; see \code{R/modelSelection.R}.
-#' @param ... the patient's covariates, as the candidates take them
+#' @inheritParams oxaliplatinBastian
+#' @inheritParams oxaliplatinNikanjam
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 oxaliplatin <- modelGroup("oxaliplatin")
@@ -264,7 +273,8 @@ oxaliplatin <- modelGroup("oxaliplatin")
 #' Fluorouracil, intravenous: the model chosen for the patient
 #'
 #' Briki 2026 or Tan 2026 (adults), chosen by \code{selectModel()}; see \code{R/modelSelection.R}.
-#' @param ... the patient's covariates, as the candidates take them
+#' @inheritParams fluorouracilBriki
+#' @inheritParams fluorouracilTan
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 fluorouracil <- modelGroup("fluorouracil")
@@ -274,7 +284,9 @@ fluorouracil <- modelGroup("fluorouracil")
 #' Joerger 2007 (adults), Voller 2015 (children) or Perez-Blanco 2016 (adults
 #' with NHL), with the doxorubicinol each forms, chosen by
 #' \code{selectModel()}; see \code{R/modelSelection.R}.
-#' @param ... the patient's covariates, as the candidates take them
+#' @inheritParams doxorubicinJoerger
+#' @inheritParams doxorubicinPediatric
+#' @inheritParams doxorubicinPerezBlanco
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 doxorubicin <- modelGroup("doxorubicin")
@@ -283,7 +295,9 @@ doxorubicin <- modelGroup("doxorubicin")
 #'
 #' The doxorubicinol model of the same source as the doxorubicin chosen,
 #' by \code{selectModel()}; see \code{R/modelSelection.R}.
-#' @param ... the patient's covariates, as the candidates take them
+#' @inheritParams doxorubicinolJoerger
+#' @inheritParams doxorubicinolPediatric
+#' @inheritParams doxorubicinolPerezBlanco
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 doxorubicinol <- modelGroup("doxorubicinol")
@@ -292,7 +306,8 @@ doxorubicinol <- modelGroup("doxorubicinol")
 #'
 #' Joerger 2007 (adults) or McCune 2009 (children, with autoinduction),
 #' chosen by \code{selectModel()}; see \code{R/modelSelection.R}.
-#' @param ... the patient's covariates, as the candidates take them
+#' @inheritParams cyclophosphamideJoerger
+#' @inheritParams cyclophosphamideMcCune
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 cyclophosphamide <- modelGroup("cyclophosphamide")
@@ -301,7 +316,8 @@ cyclophosphamide <- modelGroup("cyclophosphamide")
 #'
 #' Crombag 2019 (684 adults, 18-84 years) or Joerger 2006 (168 adults,
 #' 33-86 years), chosen by \code{selectModel()}; see \code{R/modelSelection.R}.
-#' @param ... the patient's covariates, as the candidates take them
+#' @inheritParams paclitaxelJoerger
+#' @inheritParams paclitaxelCrombag
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 paclitaxel <- modelGroup("paclitaxel")
@@ -311,7 +327,8 @@ paclitaxel <- modelGroup("paclitaxel")
 #' Ostermann 2004 (35 adults, 30-79 years) or Panetta 2003 (39 patients,
 #' 0.7-21.9 years), chosen by \code{selectModel()}; see
 #' \code{R/modelSelection.R}.
-#' @param ... the patient's covariates, as the candidates take them
+#' @inheritParams temozolomideOstermann
+#' @inheritParams temozolomidePanetta
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 temozolomide <- modelGroup("temozolomide")

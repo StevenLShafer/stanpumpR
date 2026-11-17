@@ -1171,9 +1171,12 @@ advanceClosedFormGas <- function(
   # Visualizer's gas run, R/viewerRun.R) knows each compartment's capacity
   # without rebuilding them.
   # Qco is the cardiac output the simulation ran on, an explicit override
-  # included, so the washout runs on the same flows (gasWashout()).
+  # included, so the washout runs on the same flows (gasWashout()); deadSpace
+  # the share of minute ventilation that did not reach the alveoli, so the
+  # Visualizer can say the alveolar ventilation the engine ran on.
   list(results = results, state = out, timeLine = timeLine,
-       body = body, circuit = circuit, weight = weight, age = age, Qco = Qco)
+       body = body, circuit = circuit, weight = weight, age = age, Qco = Qco,
+       deadSpace = deadSpace)
 }
 
 

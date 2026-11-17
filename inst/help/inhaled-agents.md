@@ -36,7 +36,7 @@ The **MAC equivalents** panel shows the patient's alveolar concentration *as a m
 
 Ventilation is **minute ventilation**. Thirty per cent of it is taken to be dead space, so the alveolar ventilation, which exchanges gas, is 70 per cent of what you enter.
 
-Cardiac output is fixed at GasMan's default of 5 L/min at 70 kg, scaled by (weight/70)^0.75, and is not currently a user input.
+Cardiac output is GasMan's default of 5 L/min at 70 kg, scaled by (weight/70)^0.75. The **Cardiac output** slider of the [Physiology sliders](help:models/physiology) changes it. The Visualizer's readout gives the cardiac output and the alveolar ventilation the simulation ran on.
 
 ## Fresh gas flow and rebreathing
 
@@ -62,6 +62,16 @@ Opioids lower MAC. Under **Graph Options**, ticking *Include opioid - MAC intera
 | oxygen | Not timed | |
 
 The thresholds can be changed in the Drug Thresholds dialog, where the volatile agents are shown at the patient's age. See [Time until threshold](help:models/recovery) and the [emergence scenarios](help:scenarios/emergence-sevoflurane).
+
+## The greenhouse effect
+
+The volatile agents and nitrous oxide are greenhouse gases. Nothing in the simulation removes agent from the body except breathing, so all the agent delivered reaches the atmosphere: through the pop-off valve during the case, or breathed out after it, unless it is captured. The Visualizer's amounts card gives the **CO<sub>2</sub> equivalent of the agent delivered**, and the fresh gas label gives the rate at the present setting, in kg of CO<sub>2</sub> equivalent an hour and as the number of typical US cars that emit as much.
+
+The CO<sub>2</sub> equivalent is the mass of agent times its 100-year global warming potential, the horizon used by the US Environmental Protection Agency, the European Environment Agency and the Kyoto Protocol (Sulbaek Andersen and colleagues 2012). The mass comes from the vapour delivered, taken as an ideal gas at 20 °C, where the flowmeters read it. A typical US passenger car emits 5.1 tonnes of CO<sub>2</sub> a year (the same paper), 0.58 kg an hour.
+
+<!-- generated: gas-greenhouse-table -->
+
+The arithmetic carries two teaching points. First, the agent the patient does not take up is thrown away at once, so the fresh gas flow, not the patient, decides most of the emission: at 6 L/min, most of the sevoflurane delivered goes straight out through the pop-off valve (the [wash-in scenario](scenario:visualizer-sevoflurane-washin)), and an overpressure induction followed by 1 L/min emits a third as much in the hour, for a store in the patient of the same size (the [overpressure and low flow scenario](scenario:visualizer-sevoflurane-overpressure)). Second, the agents differ by far more than their potency: an hour of desflurane at about 1 MAC emits fifty times the CO<sub>2</sub> equivalent of an hour of sevoflurane at the same flow, and nitrous oxide, whose lifetime in the atmosphere is over a century, is given in such volumes that its emission is large too.
 
 ## Validation
 

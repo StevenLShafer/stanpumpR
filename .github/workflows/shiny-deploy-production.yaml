@@ -122,7 +122,9 @@ jobs:
           )
           # Single Paper Review's shared key (see the note at the top).  Said
           # in the summary as set or not, never shown.
-          key <- Sys.getenv("PAPER_REVIEW_KEY")
+          # Trimmed: a secret pasted with a trailing line break is refused
+          # by the API as an invalid key (401).
+          key <- trimws(Sys.getenv("PAPER_REVIEW_KEY"))
           shared <- !identical(tolower(Sys.getenv("PAPER_REVIEW_SHARED_KEY")), "false")
           if (nzchar(key)) shinyConfig$default$anthropic_api_key <- key
           if (!shared) shinyConfig$default$paper_review_shared_key <- FALSE

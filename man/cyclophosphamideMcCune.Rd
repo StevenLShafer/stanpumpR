@@ -26,5 +26,6 @@ it also sets the weight the creatinine-clearance estimate uses.}
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-One compartment, a non-inducible and an inducible clearance; see the header of \code{R/drugs_cyclophosphamideMcCune.R}.
+One compartment, a non-inducible and an inducible clearance; see the
+header of \code{R/drugs_cyclophosphamideMcCune.R}.
 }

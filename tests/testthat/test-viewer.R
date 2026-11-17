@@ -516,6 +516,56 @@ test_that("the agent adds up: nothing is vented that was not delivered, and each
   }
 })
 
+# The blood, the cardiac output and the alveolar ventilation (Shafer,
+# 2026-11-17, from GasMan's display, which shows them): mixed venous is the
+# engine's own, and the arterial-to-venous gradient carries exactly what the
+# tissues take up, Q lambda_b (P_arterial - P_venous), arterial blood being at
+# the end-tidal partial pressure. Checked at normal cardiac output and with the
+# Physiology slider at half, where the brain and heart are a sixth state.
+test_that("the blood: the mixed venous gradient carries the uptake, at the cardiac output the engine ran on", {
+  props <- getGasProperties()
+  lb <- props$lambda_blood[props$gas == "sevoflurane"]
+  for (cardiac in c(1, 0.5)) {
+    body <- gasBodyPhysiology(getGasBody(70), cardiac)
+    E <- gasPlot(WASHIN, 60, resolution = 4801, body = body)
+    r <- viewerGasRun(E$sevoflurane, 0, 60)
+    expect_equal(r$cardiacOutput, body$Q_cardiac)
+    expect_equal(r$cardiacOutput, getGasBody(70)$Q_cardiac * cardiac, tolerance = 1e-12)
+    expect_length(r$venous, length(r$t))
+    # Venous below arterial while the tissues fill, and never above it here.
+    expect_true(all(r$venous <= r$p$lungs + 1e-12))
+    expect_lt(r$venous[r$t == 600], r$p$lungs[r$t == 600])
+    expect_gt(r$venous[r$t == 600], 0)
+    # What the tissues take, from their amounts, against the blood's gradient.
+    amount <- function(k) r$amountScale * r$capacity[[k]] * r$p[[k]]
+    n <- length(r$t)
+    dt <- diff(r$t) / 60
+    mid <- function(v) (v[-1] + v[-n]) / 2
+    taken <- diff(amount("vrg") + amount("mg") + amount("fg")) / dt
+    gradient <- 10 * r$cardiacOutput * lb * (mid(r$p$lungs) - mid(r$venous))
+    quiet <- vapply(r$t[-n] / 60, function(m) all(m < c(0, 15) | m > c(0, 15) + 5), logical(1))
+    expect_lt(max(abs(taken - gradient)[quiet]), 0.01 * max(abs(gradient)))
+  }
+  # At normal cardiac output, the tissues weighted by their shares of it.
+  body <- getGasBody(70)
+  E <- gasPlot(WASHIN, 60)
+  r <- viewerGasRun(E$sevoflurane, 0, 60)
+  expect_equal(r$venous, body$f_brain * r$p$vrg + body$f_muscle * r$p$mg + body$f_fat * r$p$fg,
+               tolerance = 1e-9)
+  # The ventilation row is minute ventilation; 30% of it is dead space.
+  expect_equal(unique(r$ventilation), 6)
+  expect_equal(unique(r$alveolarVentilation), 6 * (1 - GAS_DEAD_SPACE_FRACTION))
+  # And the agent's greenhouse effect travels with it.
+  expect_equal(r$greenhouse$gwp100, 130)
+  expect_equal(r$greenhouse$kgPerLitre, gasMolecularWeight("sevoflurane") / 1000 / GAS_VAPOUR_MOLAR_VOLUME)
+})
+
+test_that("GasMan's own dead space of 0 makes the alveolar ventilation the row's", {
+  E <- gasPlot(WASHIN, 60, deadSpace = 0)
+  r <- viewerGasRun(E$sevoflurane, 0, 60)
+  expect_equal(unique(r$alveolarVentilation), 6)
+})
+
 test_that("a gas run from Min time counts the agent delivered from time 0", {
   E <- gasPlot(WASHIN, 60)
   r <- viewerGasRun(E$sevoflurane, 10, 60)

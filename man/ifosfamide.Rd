@@ -26,5 +26,6 @@ it also sets the weight the creatinine-clearance estimate uses.}
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-One compartment whose clearance is induced by the drug; see the header of \code{R/drugs_ifosfamide.R}.
+One compartment whose clearance is induced by the drug; see the header of
+\code{R/drugs_ifosfamide.R}.
 }

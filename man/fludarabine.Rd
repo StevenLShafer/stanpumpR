@@ -34,12 +34,13 @@ it also sets the weight the creatinine-clearance estimate uses.}
 value}
 
 \item{pregnant}{is the patient pregnant?  \code{TRUE}, with the creatinine
-blank, raises the creatinine clearance by the rise in filtration of
-pregnancy}
+blank, raises the eGFR by the rise in filtration of pregnancy}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-Three compartments allometric in weight, eGFR on clearance; doses entered as fludarabine phosphate, the curve F-ara-A.  See the header of \code{R/drugs_fludarabine.R}.
+Three compartments allometric in weight, eGFR on clearance; doses entered
+as fludarabine phosphate, the curve F-ara-A.  See the header of
+\code{R/drugs_fludarabine.R}.
 }

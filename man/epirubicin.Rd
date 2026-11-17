@@ -4,7 +4,15 @@
 \alias{epirubicin}
 \title{Epirubicin, intravenous (Ralph 2003)}
 \usage{
-epirubicin(weight, height, age, sex, adjustToFFM = TRUE, ast = NULL)
+epirubicin(
+  weight,
+  height,
+  age,
+  sex,
+  adjustToFFM = TRUE,
+  ast = NULL,
+  pregnant = FALSE
+)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -24,6 +32,8 @@ it also sets the weight the creatinine-clearance estimate uses.}
 
 \item{ast}{serum aspartate aminotransferase in IU/L, or NULL for a normal
 AST (20 IU/L); held within the 7-815 IU/L the study covered}
+
+\item{pregnant}{TRUE in late pregnancy: Janssen 2021's factors}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

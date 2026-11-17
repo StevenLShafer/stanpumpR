@@ -10,6 +10,8 @@ Sevoflurane 8 per cent in 6 L/min of oxygen for three minutes, then 3 per cent i
 
 **Low flow saves agent.** In the hour 3.2 L of vapour is delivered and 2.0 L of it vented, two-thirds; the patient holds 1.1 L at the end. [At 6 L/min throughout](scenario:visualizer-sevoflurane-washin), 9.0 L is delivered and 88 per cent of it vented, for a store of the same size.
 
+**And emits a third as much.** The amounts card's last row is the greenhouse effect of the agent delivered: 3.4 kg of CO<sub>2</sub> equivalent in the hour, against 9.7 kg at 6 L/min throughout. The label of the setting gives the rate: 8 per cent at 6 L/min emits 31 kg an hour, as much as 54 typical US cars, and 3 per cent at 1 L/min 1.9 kg an hour, as 3.3 cars. See [The greenhouse effect](help:inhaled-agents).
+
 ## Try next
 
 - Keep the overpressure for five minutes instead of three. The vessel-rich group reaches 2.2 MAC at five minutes, and the overshoot is deeper and longer.

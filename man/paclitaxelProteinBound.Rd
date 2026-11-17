@@ -33,7 +33,7 @@ it also sets the weight the creatinine-clearance estimate uses.}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects, with a
-  \code{michaelisMenten} block
+\code{michaelisMenten} block
 }
 \description{
 Three compartments with saturable elimination and saturable distribution

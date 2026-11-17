@@ -36,5 +36,7 @@ value}
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-Three compartments allometric in weight, the serum creatinine on clearance and age on V1; see the header of \code{R/drugs_oxaliplatinNikanjam.R}.
+Three compartments allometric in weight, the serum creatinine on
+clearance and age on V1; see the header of
+\code{R/drugs_oxaliplatinNikanjam.R}.
 }

@@ -239,6 +239,33 @@ test_that("a user's own key wins, and paper_review_shared_key: false withdraws t
   expect_null(paperReviewApiKey(NULL, list(paper_review_shared_key = FALSE)))
 })
 
+# 2026-11-17: the deployed app's shared key was refused (401), and the
+# message did not say whose key it was or what the user could do.
+test_that("the operator's key is trimmed, and a refused key says whose it was", {
+  old <- Sys.getenv(PAPER_REVIEW_KEY_ENV, unset = NA)
+  on.exit(for (n in names(old)) if (is.na(old[[n]])) Sys.unsetenv(n) else
+    do.call(Sys.setenv, stats::setNames(list(old[[n]]), n)), add = TRUE)
+  Sys.unsetenv(PAPER_REVIEW_KEY_ENV)
+  # A secret pasted with a trailing line break reaches config.yml with it.
+  expect_equal(paperReviewApiKey(NULL, list(anthropic_api_key = "sk-ant-operator\n")), "sk-ant-operator")
+  expect_equal(paperReviewApiKey(NULL, list(anthropic_api_key = "  sk-ant-operator ")), "sk-ant-operator")
+  expect_null(paperReviewApiKey(NULL, list(anthropic_api_key = " \n")))
+  expect_null(paperReviewApiKey(NULL, list(anthropic_api_key = NA_character_)))
+  Sys.setenv(STANPUMPR_ANTHROPIC_API_KEY = "sk-ant-env\r\n")
+  expect_equal(paperReviewApiKey(NULL, list()), "sk-ant-env")
+  Sys.setenv(STANPUMPR_ANTHROPIC_API_KEY = " ")
+  expect_equal(paperReviewApiKey(NULL, list(anthropic_api_key = "sk-ant-config")), "sk-ant-config")
+
+  shared <- paperReviewKeyAdvice("http_401", own = FALSE)
+  expect_match(shared, "stanpumpR's own")
+  expect_match(shared, PAPER_REVIEW_OWN_KEY_LABEL, fixed = TRUE)
+  expect_match(paperReviewKeyAdvice("http_403", own = FALSE), "stanpumpR's own")
+  expect_match(paperReviewKeyAdvice("http_401", own = TRUE), "the one you entered")
+  expect_identical(paperReviewKeyAdvice("http_429", own = FALSE), "")
+  expect_identical(paperReviewKeyAdvice("connection", own = TRUE), "")
+  expect_identical(paperReviewKeyAdvice(NULL, own = FALSE), "")
+})
+
 test_that("only text shaped like an Anthropic key is taken as the user's own", {
   expect_equal(paperReviewOwnKey("  sk-ant-api03-AbC_def-1234567 \n"), "sk-ant-api03-AbC_def-1234567")
   expect_null(paperReviewOwnKey(""))

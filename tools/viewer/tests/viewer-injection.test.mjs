@@ -1027,17 +1027,31 @@ test('gas: a gas run draws the circuit, lungs, VRG, muscle and fat, and the agen
       const cells = [...document.querySelectorAll('#amounts td')].map(e => e.textContent);
       const at = k => num(cells[cells.indexOf(k) + 1]);
       return { texts, readout: document.getElementById('readout').innerText,
-               delivered: at('Delivered (fresh gas)'), patient: at('In the patient'), vented: at('Vented'),
-               parts: ['Lungs', 'VRG', 'Muscle', 'Fat'].map(at), st: Player.stateAt(T) };
+               delivered: at('Delivered (fresh gas)'), lungs: at('In the lungs'), uptake: at('Uptake (tissues)'), vented: at('Vented'),
+               co2e: cells.find(c => /delivered, kg/.test(c)) ? num(cells[cells.findIndex(c => /delivered, kg/.test(c)) + 1]) : null,
+               parts: ['VRG', 'Muscle', 'Fat'].map(at), st: Player.stateAt(T), run: { g: Player.run.greenhouse } };
     }, T);
-    for (const name of ['Circuit', 'Lungs', 'VRG', 'Muscle', 'Fat', 'end-tidal', 'effect site'])
+    for (const name of ['Circuit', 'Lungs', 'VRG', 'Muscle', 'Fat', 'end-tidal', 'effect site', 'Art', 'Ven', 'blood'])
       assert.ok(o.texts.includes(name), `T = ${T}: no "${name}" in the drawing`);
     assert.match(o.readout, /Sevoflurane/);
     assert.match(o.readout, /End-tidal/);
     assert.match(o.readout, /VRG \(effect site\)/);
-    // The card adds up, to its rounding: delivered = in the patient + vented.
-    assert.ok(Math.abs(o.delivered - o.patient - o.vented) <= 0.15, `T = ${T}: ${o.delivered} != ${o.patient} + ${o.vented}`);
-    assert.ok(Math.abs(o.parts.reduce((a, b) => a + b, 0) - o.patient) <= 0.25, `T = ${T}: the parts do not add to the patient`);
+    // What GasMan shows too (2026-11-17): mixed venous blood, the alveolar
+    // ventilation beside the minute ventilation, the cardiac output, the circuit.
+    assert.match(o.readout, /Mixed venous/);
+    assert.match(o.readout, /Ventilation 6\.0 \(alveolar 4\.2\) L\/min/);
+    assert.match(o.readout, /Cardiac output 5\.0 L\/min/);
+    assert.match(o.readout, /Ideal circuit/);
+    // The card adds up, to its rounding: delivered = in the lungs + taken up + vented,
+    // and the uptake is what the tissues hold.
+    assert.ok(Math.abs(o.delivered - o.lungs - o.uptake - o.vented) <= 0.15, `T = ${T}: ${o.delivered} != ${o.lungs} + ${o.uptake} + ${o.vented}`);
+    assert.ok(Math.abs(o.parts.reduce((a, b) => a + b, 0) - o.uptake) <= 0.2, `T = ${T}: the tissues do not add to the uptake`);
+    // The greenhouse effect of the agent delivered: kg of agent x its 100-year GWP.
+    assert.ok(Math.abs(o.co2e - o.delivered / 1000 * o.run.g.kgPerLitre * o.run.g.gwp100) <= 0.006, `T = ${T}: CO2e ${o.co2e}`);
+    assert.ok(o.texts.some(x => /kg CO₂e an hour, as [0-9.]+ US cars?/.test(x)), `T = ${T}: no greenhouse rate with the setting`);
+    // Arterial blood at end-tidal, mixed venous below it while the tissues fill.
+    assert.equal(o.st.arterial, o.st.p.lungs);
+    if (T <= 600) assert.ok(o.st.venous > 0 && o.st.venous < o.st.arterial, `T = ${T}: venous ${o.st.venous}`);
     // And so do the flows: what the blood takes from the lungs is what the tissues take.
     const f = o.st.flow;
     assert.ok(Math.abs(f.blood - (f.vrg + f.mg + f.fg)) < 1e-9);
@@ -1069,6 +1083,13 @@ test('gas: the 3D view draws the five glasses, and a drug run afterwards has its
   assert.deepEqual(o.drug, [], 'no drug vessel with a gas run');
   for (const name of ['Circuit', 'Lungs', 'VRG', 'Muscle', 'Fat'])
     assert.ok(o.labels.some(l => l.startsWith(name)), `no label for ${name}: ${o.labels}`);
+  // Mixed venous blood: a ring on the lungs' glass at its partial pressure.
+  const ring = await page.evaluate(() => ({ visible: View.gasVenousRing.visible, y: View.gasVenousRing.position.y,
+                                             want: Player.stateAt(600).venous * Player.ui.concScale,
+                                             r: View.gasVenousRing.scale.x, R: glassRadius(View.gasGeo.r.lungs) }));
+  assert.ok(ring.visible, 'no venous ring');
+  assert.ok(Math.abs(ring.y - ring.want) < 1e-9 && ring.want > 0, `venous ring at ${ring.y}, not ${ring.want}`);
+  assert.equal(ring.r, ring.R);
   assert.ok(o.labels.some(l => /effect site/.test(l)) && o.labels.some(l => /end-tidal/.test(l)));
   // No two glasses overlap, and each stands clear of the lungs by the arrows' length.
   const geo = await page.evaluate(() => Object.fromEntries(Object.entries(View.gasGeo.c).map(([k, c]) => [k, [c.x, c.z, View.gasGeo.r[k]]])));
@@ -1095,7 +1116,7 @@ test('gas: the 3D view starts where no glass, arrow or label is hidden, and labe
     assert.equal(await loadRun(page, run), true);
     await page.evaluate(T => { Player.setView('3d'); View.resetView(); Player.seek(T); }, T);
     const best = await page.evaluate(() => View.gasHomeScores.reduce((a, b) => (b.score < a.score ? b : a)));
-    assert.equal(best.hidden, 0, `${name}, ${width} x ${height}: a glass is hidden from the starting view`);
+    assert.equal(best.hidden, 0, `${name}, ${width} x ${height}: a glass is hidden from the starting view: ${best.why}`);
     assert.equal(best.lost, 0, `${name}, ${width} x ${height}: an arrow is hidden from the starting view: ${best.why}`);
     // What the page shows: from the start, and from the drug view's start,
     // where the labels of these glasses fall on one another.
@@ -1127,12 +1148,15 @@ test('gas: in 3D the cards over a glass and an arrow give the numbers', { skip }
   await page.evaluate(() => { Player.setView('3d'); Player.seek(1200); });
   const tip = key => page.evaluate(key => { View.showTip(key, { clientX: 300, clientY: 300 }); return document.querySelector('.flow-tip').innerText; }, key);
   const st = await page.evaluate(() => Player.stateAt(1200));
-  assert.match(await tip('gv:lungs'), /Lungs \(end-tidal\)/);
+  const lungs = await tip('gv:lungs');
+  assert.match(lungs, /Lungs \(end-tidal\)/);
+  assert.match(lungs, /Arterial [0-9.]+ · mixed venous \(ring\) [0-9.]+/);
   assert.match(await tip('gv:vrg'), /Vessel-rich group \(effect site\)/);
   assert.match(await tip('gv:circuit'), /holds no agent/);
   const fresh = await tip('ga:fresh');
   assert.match(fresh, /Fresh gas, 1\.0 L\/min/);
   assert.match(fresh, /Delivered/);
+  assert.match(fresh, /Greenhouse effect [0-9.]+ kg CO₂e an hour/);
   assert.match(await tip('ga:vented'), /pop-off/);
   // After the flow is cut the brain gives agent back: its card says so.
   assert.ok(st.flow.vrg < 0, 'the VRG is giving agent back at 20 minutes');
@@ -1163,13 +1187,38 @@ test('gas: no two labels overlap, at 1200 x 800 and 800 x 600', { skip }, async 
   }
 });
 
+test('gas: a run made before the blood and the greenhouse effect still loads, and draws neither', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  const r = clone(GAS);
+  for (const k of ['venous', 'cardiacOutput', 'alveolarVentilation', 'greenhouse']) delete r[k];
+  assert.equal(await loadRun(page, r), true);
+  const o = await page.evaluate(() => {
+    Player.seek(600);
+    const texts = [...document.querySelectorAll('#flat svg text')].map(e => e.textContent);
+    const amounts = document.getElementById('amounts').innerText, readout = document.getElementById('readout').innerText;
+    Player.setView('3d'); Player.seek(601);
+    return { texts, amounts, readout, ring: View.gasVenousRing.visible };
+  });
+  assert.ok(!o.texts.includes('Art') && !o.texts.includes('Ven'), 'blood drawn without a venous partial pressure');
+  assert.doesNotMatch(o.amounts, /CO2e|CO₂e/);
+  assert.doesNotMatch(o.readout, /Mixed venous|Cardiac output|alveolar/);
+  assert.equal(o.ring, false);
+  assertClean(page);
+});
+
 test('gas: markup and malformed fields are refused, the name is shown as text', { skip }, async t => {
   const page = await viewerPage(t);
   for (const [mutate, names] of [[r => { r.units.conc = '%' + P; }, 'units.conc'],
                                  [r => { r.capacity.vrg = 0; }, 'capacity.vrg'],
                                  [r => { r.p.fg = r.p.fg.slice(1); }, 'p.fg'],
                                  [r => { r.fresh[3] = 'x'; }, 'fresh[3]'],
-                                 [r => { r.kind = 'liquid'; }, 'kind']]) {
+                                 [r => { r.kind = 'liquid'; }, 'kind'],
+                                 [r => { r.venous = r.venous.slice(1); }, 'venous'],
+                                 [r => { r.cardiacOutput = -1; }, 'cardiacOutput'],
+                                 [r => { r.alveolarVentilation[5] = 'x'; }, 'alveolarVentilation[5]'],
+                                 [r => { r.greenhouse.gwp100 = 0; }, 'greenhouse.gwp100'],
+                                 [r => { r.greenhouse.source = '<b>' + P; }, 'greenhouse.source']]) {
     const r = clone(GAS); mutate(r);
     assert.equal(await loadRun(page, r), false);
     const p = await probe(page);

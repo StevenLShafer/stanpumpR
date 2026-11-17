@@ -4,7 +4,7 @@
 \alias{mmIntervalDerivative}
 \title{The derivative over one interval of the engine's time line}
 \usage{
-mmIntervalDerivative(deriv, rIV, rPE, vmax, km, decline = NULL)
+mmIntervalDerivative(deriv, rIV, rPE, vmax, km, decline = NULL, rD = 0)
 }
 \arguments{
 \item{deriv}{the engine's derivative, function(x, rIV, rPE, vmax, km)}
@@ -14,6 +14,8 @@ mmIntervalDerivative(deriv, rIV, rPE, vmax, km, decline = NULL)
 \item{vmax, km}{Vmax and Km over the interval}
 
 \item{decline}{function(t) giving Vmax's fraction left at t, or NULL}
+
+\item{rD}{the zero-order release rates into the oral depots}
 }
 \value{
 function(t, y), the derivative

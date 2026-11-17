@@ -24,7 +24,7 @@ it also sets the weight the creatinine-clearance estimate uses.}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects, with a
-  \code{michaelisMenten} block
+\code{michaelisMenten} block
 }
 \description{
 Kitchen's two-compartment Michaelis-Menten disposition per m2 with an

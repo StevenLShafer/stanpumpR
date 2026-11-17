@@ -86,6 +86,7 @@ helpStaticPages <- function() {
     "models/pk-converter",      "Converting between parameter sets", "models",
     "models/covariates",        "Covariates and body size",        "models",
     "models/physiology",        "Physiology sliders: liver, kidney, heart and gut", "models",
+    "models/physiology-and-pharmacokinetics", "Physiology and pharmacokinetics: the evidence", "models",
     "models/fat-free-mass",     "Scaling to fat-free mass",        "models",
     "models/pregnancy",         "Pregnancy",                       "models",
     "models/minto-schnider",    "The Minto and Schnider models",   "models",
