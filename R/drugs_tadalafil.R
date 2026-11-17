@@ -1,7 +1,8 @@
 # -----------------------------------------------------------------------------
 # Tadalafil (Adcirca, Cialis): one compartment, apparent oral, from Ferguson-
 # Sells 2021's combined adult and paediatric model in pulmonary arterial
-# hypertension, and, for a patient without it, from the Cialis label
+# hypertension, and, for a patient without it, the FDA's model in men with
+# erectile dysfunction
 # -----------------------------------------------------------------------------
 # Units: time in minutes, volumes in litres, clearances in L/min; amounts in
 # mg, so the plotted concentration is ng/mL (= mcg/L), total plasma.
@@ -48,35 +49,38 @@
 # the Patient Profile's Pulmonary hypertension set gets (Steven L. Shafer,
 # 2026-11-17: "very different PK in the two populations, as patients with
 # PAH often have severe cardiac disease").  Without it (Cialis: erectile
-# dysfunction, benign prostatic hyperplasia), no population model was found:
-# PubMed (2026-11-17, tadalafil with population pharmacokinetics or a
-# pharmacokinetic model, and healthy subjects, erectile dysfunction or BPH)
-# gave none, and the model of men with erectile dysfunction that the FDA's
-# Adcirca review (NDA 22-332, p.79) says informed its structure is in the
-# Cialis submission, which has not been obtained.  So that population's
-# model is DERIVED from the Cialis label, read in full (section 12.3, healthy
-# subjects): one compartment (the label: "concentrations declined nearly
-# monoexponentially", Forgue 2006), with
+# dysfunction, benign prostatic hyperplasia) the model is the population
+# model of study H6D-MC-LVBF, 179 men with erectile dysfunction given 2 to 25
+# mg, as the FDA's Biopharmaceutics Review of the Cialis NDA 21-368 (2002-
+# 2003, part 4, p.3, the scanned page read) prints its final estimates:
 #
-#     CL/F 2.5 L/h ("mean oral clearance")
-#     V/F 63 L ("mean apparent volume of distribution ... approximately 63 L")
-#     ka 2.0 /h, solved so the peak falls at the label's median 2 hours
-#         (TADALAFIL_HEALTHY_TMAX; tadalafilHealthyKa())
+#     one compartment, first-order absorption and elimination
+#     CL/F 2.24 L/h (SE 5.8%, IIV 45.3%), in men without "current active
+#         cardiovascular conditions"; 1.59 L/h with them (not applied)
+#     V/F 60.0 L (SE 9.88%)
+#     ka 1.75 /h, fixed ("value estimated from healthy volunteers")
 #
-# no lag, and bioavailability 1 (apparent), with no dose term (the label:
-# "over a dose range of 2.5 to 20 mg, tadalafil exposure (AUC) increases
-# proportionally with dose").  Its half-life is 17.5 h, the label's, and its
-# accumulation on a daily dose 1.63 (label: "approximately 1.6-fold"), both
-# following from the two values, not fitted to them.  Forgue 2006 (Br J Clin
-# Pharmacol 61:280, the integrated analysis of 237 healthy subjects behind
-# the label; abstract read) reports a mean peak of 378 ng/mL after 20 mg
-# where this gives 293: a terminal volume puts the peak low, and a second
-# compartment would be needed to raise it, which no source gives.  Not
+# no lag, bioavailability 1 (apparent).  Of the review's four population
+# analyses it is the one printed in full in men with ED: LVBG fixed ka at
+# 0.393 /h and printed no clearance; LVAC (two compartments, CL/F 1.46 L/h,
+# Vss/F 125 L) printed neither Vc nor Q; LVCE's estimates are not printed.
+# The review's own refit added creatinine clearance (CL/F 1.09 + 0.00898 x
+# CRCL L/h, the unit of CRCL unprinted), which is not applied.  Active
+# cardiovascular disease lowered clearance 29% (1.59 against 2.24 L/h); the
+# Patient Profile has no field for it, so it is not applied either.  Until
+# 2026-11-17 this arm was derived from the Cialis label (CL/F 2.5 L/h, V/F 63
+# L, ka 2.0 /h), which this replaces.
+#
+# Checks (the label, healthy subjects): CL/F "2.5 L/hr", V/F "approximately 63
+# L", half-life "17.5 hours", median peak at 2 hours and accumulation
+# "approximately 1.6-fold" on a daily dose; this model gives 18.6 h, a peak at
+# 2.2 h and 1.69.  After 20 mg its peak is 306 ng/mL; Forgue 2006 (Br J Clin
+# Pharmacol 61:280, healthy subjects, abstract read) reports a mean of 378.
+# So the two populations differ in clearance (1.88 against 2.24 L/h), volume
+# (88.1 against 60 L at 70 kg) and absorption (0.86 against 1.75 /h), and the
+# PAH half-life is about 1.7 times the other (32.5 against 18.6 h).  Not
 # applied: the label's 25% higher exposure in men of 65 or more, and its
-# doubled exposure in renal impairment.  So the two populations differ in
-# clearance (1.88 against 2.5 L/h), volume (88.1 against 63 L at 70 kg) and
-# absorption (0.86 against 2.0 /h), and the PAH half-life is about twice
-# the healthy one (32.5 against 17.5 h), as the labels say (35 and 17.5 h).
+# doubled exposure in renal impairment.
 #
 # AGE FLOOR
 # =========
@@ -113,32 +117,23 @@ TADALAFIL_F_AGE_REF  <- 52.4  # years
 TADALAFIL_F_AGE_EXP  <- 0.100
 TADALAFIL_MIN_AGE    <- 2.5   # years, the youngest the source studied
 
-# Without pulmonary hypertension: the Cialis label, section 12.3
-TADALAFIL_HEALTHY_CL   <- 2.5   # L/h, CL/F
-TADALAFIL_HEALTHY_V    <- 63    # L, V/F
-TADALAFIL_HEALTHY_TMAX <- 2     # h, the median time of the peak
+# Without pulmonary hypertension: study LVBF, men with erectile dysfunction
+# (FDA Biopharmaceutics Review of NDA 21-368, part 4, p.3)
+TADALAFIL_ED_CL <- 2.24   # L/h, CL/F without active cardiovascular disease
+TADALAFIL_ED_V  <- 60.0   # L, V/F
+TADALAFIL_ED_KA <- 1.75   # /h, fixed from healthy volunteers
 
-#' Tadalafil's absorption rate without pulmonary hypertension: the ka that
-#' puts a one-compartment peak at the Cialis label's median 2 hours
-#' @returns ka, /h
-#' @keywords internal
-tadalafilHealthyKa <- function()
-{
-  k <- TADALAFIL_HEALTHY_CL / TADALAFIL_HEALTHY_V
-  stats::uniroot(function(ka) log(ka / k) / (ka - k) - TADALAFIL_HEALTHY_TMAX,
-                 c(k * 1.01, 100), tol = 1e-10)$root
-}
-
-#' Tadalafil (Ferguson-Sells 2022; the Cialis label)
+#' Tadalafil (Ferguson-Sells 2022; the FDA review of NDA 21-368)
 #'
 #' One compartment, apparent oral: in pulmonary arterial hypertension without
-#' bosentan (Ferguson-Sells 2022), and otherwise derived from the Cialis
-#' label; see the header of \code{R/drugs_tadalafil.R}.
+#' bosentan (Ferguson-Sells 2022), and otherwise the FDA review's model in men
+#' with erectile dysfunction (study LVBF); see the header of
+#' \code{R/drugs_tadalafil.R}.
 #'
 #' @inheritParams cefazolin
 #' @param pulmonaryHypertension TRUE for a patient with pulmonary arterial
-#'   hypertension (Ferguson-Sells 2022), FALSE (the default) for the Cialis
-#'   label's healthy subjects
+#'   hypertension (Ferguson-Sells 2022), FALSE (the default) for men with
+#'   erectile dysfunction (study LVBF)
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 tadalafil <- function(weight, height, age, sex, adjustToFFM = TRUE,
@@ -184,7 +179,8 @@ tadalafil <- function(weight, height, age, sex, adjustToFFM = TRUE,
   )
 }
 
-#' Tadalafil without pulmonary hypertension, derived from the Cialis label
+#' Tadalafil without pulmonary hypertension: study LVBF, men with erectile
+#' dysfunction (FDA Biopharmaceutics Review of NDA 21-368)
 #' @inheritParams tadalafil
 #' @keywords internal
 tadalafilHealthy <- function(weight, height, age, sex, adjustToFFM = TRUE)
@@ -192,13 +188,13 @@ tadalafilHealthy <- function(weight, height, age, sex, adjustToFFM = TRUE)
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
                         legacyVolume = 1, legacyClearance = 1)
   default <- list(
-    v1  = TADALAFIL_HEALTHY_V * size$volume,
+    v1  = TADALAFIL_ED_V * size$volume,
     v2  = 1,
     v3  = 1,
-    cl1 = TADALAFIL_HEALTHY_CL / 60 * size$clearance,
+    cl1 = TADALAFIL_ED_CL / 60 * size$clearance,
     cl2 = 0,
     cl3 = 0,
-    ka_PO = tadalafilHealthyKa() / 60,
+    ka_PO = TADALAFIL_ED_KA / 60,
     bioavailability_PO = 1,        # apparent parameters
     tlag_PO = 0
   )
@@ -212,9 +208,11 @@ tadalafilHealthy <- function(weight, height, age, sex, adjustToFFM = TRUE)
     upperTypical = 0,
     lowerTypical = 0,
     reference = paste0(
-      "Without pulmonary hypertension, derived from the Cialis label (section 12.3, ",
-      "healthy subjects; no population model found): one compartment, CL/F 2.5 L/h, ",
-      "V/F 63 L, ka 2.0 /h solved for the median peak at 2 h, no lag. ",
+      "Without pulmonary hypertension: study H6D-MC-LVBF, 179 men with erectile ",
+      "dysfunction, FDA Biopharmaceutics Review of NDA 21-368 (Cialis), part 4, p.3: ",
+      "one compartment, CL/F 2.24 L/h (no active cardiovascular disease), V/F 60.0 L, ",
+      "ka 1.75 /h fixed, no lag. ",
+      "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2003/21-368_Cialis_BioPharmr_P4.pdf. ",
       "With pulmonary hypertension the source is Ferguson-Sells 2022 ",
       "(https://doi.org/10.1007/s40262-021-01052-8).")
   )

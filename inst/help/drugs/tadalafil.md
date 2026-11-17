@@ -4,13 +4,13 @@ The Patient Profile's **Pulmonary hypertension** field switches between two popu
 
 | | Pulmonary hypertension: Yes | No (the default) |
 |---|---|---|
-| Source | Ferguson-Sells 2022, a population model in patients with PAH | Derived from the Cialis label: no population model was found |
-| Apparent clearance | 1.88 L/h | 2.5 L/h |
-| Apparent volume, 70 kg | 88.1 L | 63 L |
-| Absorption rate | 0.86 /h | 2.0 /h |
-| Half-life | 32.5 h (Adcirca label: 35 h) | 17.5 h (Cialis label: 17.5 h) |
+| Source | Ferguson-Sells 2022, a population model in patients with PAH | The FDA's population model in men with erectile dysfunction (study LVBF) |
+| Apparent clearance | 1.88 L/h | 2.24 L/h |
+| Apparent volume, 70 kg | 88.1 L | 60 L |
+| Absorption rate | 0.86 /h | 1.75 /h |
+| Half-life | 32.5 h (Adcirca label: 35 h) | 18.6 h (Cialis label: 17.5 h) |
 
-Patients with pulmonary arterial hypertension, often with severe heart disease, clear tadalafil more slowly, and its half-life is about twice the healthy one.
+Patients with pulmonary arterial hypertension, often with severe heart disease, clear tadalafil more slowly, and its half-life is about 1.7 times the other.
 
 ### The model with pulmonary hypertension
 
@@ -30,14 +30,16 @@ These come from the label, which draws on the same PHIRST-1 data, so they are no
 
 ### The model without pulmonary hypertension
 
-No population model of tadalafil in healthy subjects or in men with erectile dysfunction was found. The FDA's review of Adcirca says such a model, in men with erectile dysfunction, informed the structure of the PAH model, but it is in the Cialis submission, which has not been obtained. So this model is derived from the Cialis label (section 12.3, healthy subjects):
+This is the population model of study LVBF, 179 men with erectile dysfunction given 2 to 25 mg, as printed in the FDA's Biopharmaceutics Review of Cialis (NDA 21-368, 2002-2003):
 
-- one compartment ("concentrations declined nearly monoexponentially");
-- apparent clearance 2.5 L/h and apparent volume 63 L, the label's means;
-- an absorption rate of 2.0 /h, solved so the peak falls at the label's median of 2 hours, with no lag;
-- no dose term: the label says exposure is proportional to dose from 2.5 to 20 mg.
+- one compartment with first-order absorption and elimination, and no lag;
+- apparent clearance 2.24 L/h, in men without "current active cardiovascular conditions";
+- apparent volume 60.0 L;
+- an absorption rate of 1.75 /h, fixed at a "value estimated from healthy volunteers".
 
-Its half-life is 17.5 hours and its accumulation on a daily dose 1.63, both following from those values, as the label says (17.5 hours, "approximately 1.6-fold"). After 20 mg it peaks at 293 ng/mL, where Forgue and colleagues' integrated analysis of 237 healthy subjects (*Br J Clin Pharmacol* 2006;61:280-288, doi 10.1111/j.1365-2125.2005.02553.x, abstract read) reports a mean peak of 378 ng/mL. A one-compartment model built from a terminal volume puts the peak low; a second compartment would raise it, but no source gives one. The label's 25% higher exposure in men of 65 or more is not applied.
+Men with active cardiovascular disease cleared tadalafil 29% more slowly (1.59 L/h). The Patient Profile has no field for that, so it is not applied. The reviewers' own refit added creatinine clearance to the clearance, which is not applied either. Of the review's four population analyses, this is the one printed in full.
+
+Compared with the Cialis label's healthy subjects (17.5 hours, a median peak at 2 hours, about 1.6-fold accumulation on a daily dose), this model gives a half-life of 18.6 hours, a peak at 2.2 hours and 1.69-fold accumulation. After 20 mg it peaks at 306 ng/mL, where Forgue and colleagues' integrated analysis of 237 healthy subjects (*Br J Clin Pharmacol* 2006;61:280-288, doi 10.1111/j.1365-2125.2005.02553.x, abstract read) reports a mean peak of 378 ng/mL. The label's 25% higher exposure in men of 65 or more is not applied.
 
 ### Covariates
 
