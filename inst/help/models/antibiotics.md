@@ -7,6 +7,8 @@ Each of the twelve antibiotics, [cefazolin](help:drugs/cefazolin), [cefalexin](h
 
 [Colistin](help:drugs/colistin), formed from [colistimethate](help:drugs/colistimethate), has the MIC line and no band. Its line, free colistin at the EUCAST breakpoint of 2 mg/L, is 4.1 mg/L of total colistin. That is above the average exposure the consensus guideline calls the most that is tolerable, about 2 mg/L over the day, set by kidney toxicity; its page explains how to read the two together. No MBC source for colistin has been read.
 
+[Cefepime](help:drugs/cefepime) also has the MIC line and no band. Its line is free cefepime at 8 mg/L, the top of the EUCAST "susceptible, increased exposure" range for *Pseudomonas*, which is 10 mg/L of total cefepime. No MBC source for cefepime has been read.
+
 ### The rule for the band
 
 Every antibiotic's band follows one rule:
