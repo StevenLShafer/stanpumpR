@@ -16,6 +16,7 @@ declaredMetabolite <- function(drug) {
     weight = 70, height = 170, age = 35, sex = "male")
   m <- x$metabolite$name
   if (is.null(m)) m <- x$transitChain$metabolite$name
+  if (is.null(m)) m <- x$michaelisMenten$metabolite$name
   m
 }
 

@@ -132,6 +132,15 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     # lag of 0.221 h and pimavanserin's 0.0707 day, both
                     # from the FDA reviews; plasma only
                     "pramipexole", "pimavanserin",
+                    # pulmonary hypertension (2026-11-15): sildenafil's 0.485 h
+                    # (FDA review of NDA 22-473) and selexipag's 0.67 h
+                    # (Krause 2017); plasma only
+                    "sildenafil", "selexipag",
+                    # suzetrigine's 0.182 h lag before its zero-order release
+                    # (FDA review of NDA 219209); plasma only
+                    "suzetrigine",
+                    # ambrisentan's fixed 0.525 h lag (Okour 2023); plasma only
+                    "ambrisentan",
                     # oral thioguanine's derived 1.0 h lag (Lowe 2001's
                     # median time to peak, 2026-11-16); plasma only
                     "thioguanine"))

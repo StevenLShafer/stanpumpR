@@ -88,7 +88,8 @@ test_that("drugOnSaturableEngine() is getDrugPK()'s answer for every drug in the
                           "fluorouracilBriki", "fluorouracilTan", "ifosfamide", "paclitaxel",
                           "paclitaxelCrombag", "paclitaxelJoerger", "paclitaxelProteinBound",
                           "thioguanine", "thioguanineIV",
-                          "vincristine", "vincristinePediatric")))
+                          "vincristine", "vincristinePediatric", "suzetrigine",
+                          "macitentan")))
   known <- !is.na(child)
   # every drug on the engine for a child is listed
   expect_true(all(listed[known][child[known]]))

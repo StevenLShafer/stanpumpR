@@ -177,6 +177,61 @@
 # state of a constant infusion, the fall back to the uninduced curve when kEnz
 # is negligible, and mass balance).
 #
+# An optional hill makes the formation term sigmoid, emax Cu^hill /
+# (ec50^hill + Cu^hill): suzetrigine's induction (FDA Integrated Review of NDA
+# 219209, R/drugs_suzetrigine.R) has a Hill coefficient of 10, so the enzyme
+# is a near switch around 430 ng/mL.  Without hill the term is the hyperbola,
+# computed as before.
+#
+# METABOLITE (OPTIONAL)
+# =====================
+# A block metabolite = list(name, fraction, v1, cl, q, v2, induced, mwRatio)
+# advances an active metabolite with the parent, as advanceTransitChain()
+# advances enalaprilat, because the closed-form metabolite route convolves
+# exponential amplitudes a nonlinear system does not have.  It is formed from
+# a fraction of everything the parent loses by elimination (the saturable,
+# linear and induced pathways together; distribution is not loss), and has a
+# central compartment v1, cleared at cl (times the enzyme E when induced is
+# TRUE: suzetrigine's M6-SUZ, whose clearance Figure 24 multiplies by the same
+# AENZ), with an optional peripheral compartment (q, v2):
+#
+#     dAm/dt  = fraction mwRatio (eliminated) - cl [E] Am/v1 - q (Am/v1 - Amp/v2),
+#     dAmp/dt = q (Am/v1 - Amp/v2).
+#
+# getDrugPK() names the metabolite in the PK set, as for a transit chain, and
+# adds its unitScale; the engine returns CpMetabolite, CeMetabolite (NA) and
+# C2Metabolite, which simCpCe() lifts into the metabolite drug's own series.
+#
+# ZERO-ORDER RELEASE INTO THE DEPOT (OPTIONAL)
+# ============================================
+# zeroOrderDepot (minutes): each oral dose, after its lag, enters its depot
+# at a constant rate over that long rather than all at once, and is then
+# absorbed at first order (suzetrigine's tablet, D1TAB 1.1 h).  The release's
+# start and end are points of the time line, so no step straddles one.
+#
+# AN ABSORPTION RATE THAT DEPENDS ON THE DOSE (OPTIONAL)
+# ======================================================
+# kaDoseDependence = list(emax, d50, hill): an oral dose of D mg is absorbed
+# at ka (1 - emax D^hill / (d50^hill + D^hill)) (suzetrigine, Table 149's KA
+# dose effect).  Each distinct dose size of the default oral form gets a
+# depot of its own, so that a 100 mg and a 50 mg dose absorbed at once keep
+# their own rates.  simCpCe() passes the dose as given, in mg (DoseMg), before
+# any scaling of its bioavailability.  Tests: test-drugs-suzetrigine.R (an
+# independent fine-step integration of the published model with all three).
+#
+# ORAL PATHS (OPTIONAL)
+# =====================
+# oralPaths = list of list(share, ka, lag, zeroOrder, into): each plain oral
+# dose is split among parallel paths, each its own depot emptied at its own
+# ka, after its own lag and, where it has one, a zero-order release over
+# zeroOrder minutes; a path into "metabolite" empties into the metabolite's
+# central compartment, as a dose formed before it reaches the circulation
+# (macitentan and aprocitentan, Bartolucci 2021, R/drugs_macitentan.R).  A
+# path's share of a dose is a constant, times p or 1 - p where p =
+# plogis(gamma - beta log(1 + D)) with D the dose in mg (mmPathShare()).  Not
+# with kaTransit, kaDoseDependence or zeroOrderDepot.  Tests:
+# test-drugs-macitentan.R (an independent integration of the published model).
+#
 # STEP SIZE
 # =========
 # The engine reports on the library's time line (simulationTimeGrid()), so the
@@ -419,8 +474,11 @@ mmDormandPrince <- function(f, x, t0, t1, h, rtol, atol, clean = NULL)
 #' @param iIM,iConv,iC,iP,iS,iT,iDRC,iDRP,iSD,iE the states' indices
 #' @param rb,sc,tb,sd,ai the block's rapidBinding, saturableSC,
 #'   targetBinding, saturableDistribution and autoinduction, or NULL
+#' @param met the block's metabolite, or NULL, with the indices of its
+#'   central and peripheral states added as iC and iP
 #' @param nState the number of states (mmStateCount())
-#' @returns function(x, rIV, rPE, vmax, km), the derivative of the states
+#' @returns function(x, rIV, rPE, vmax, km, rD = 0), the derivative of the
+#'   states, rD the zero-order release rates into the oral depots
 #' @keywords internal
 #' The engine's number of states
 #'
@@ -429,13 +487,13 @@ mmDormandPrince <- function(f, x, t0, t1, h, rtol, atol, clean = NULL)
 #' step from ever finding the system empty (mmDormandPrince()), and a year of
 #' phenytoin cost 1.9 s against 1.5.
 #' @keywords internal
-mmStateCount <- function(iDRP, iSD, iE, sd, ai)
-  if (!is.null(ai)) iE else if (!is.null(sd)) iSD else iDRP
+mmStateCount <- function(iDRP, iSD, iE, sd, ai, iMP = iE + 2L, met = NULL)
+  if (!is.null(met)) iMP else if (!is.null(ai)) iE else if (!is.null(sd)) iSD else iDRP
 
 mmDerivative <- function(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, iP,
                          iS, iT, iDRC, iDRP, rb, sc, tb, iSD = iDRP + 1L,
-                         iE = iDRP + 2L, sd = NULL, ai = NULL,
-                         nState = mmStateCount(iDRP, iSD, iE, sd, ai))
+                         iE = iDRP + 2L, sd = NULL, ai = NULL, met = NULL,
+                         nState = mmStateCount(iDRP, iSD, iE, sd, ai, met$iP, met))
 {
   # Unbound concentrations from the amounts: the amount over the volume, or,
   # with rapid binding, the root of the binding equilibrium.
@@ -446,7 +504,9 @@ mmDerivative <- function(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, 
   scAbsorption <- if (is.null(sc)) function(S) 0 else
     function(S) sc$bioavailability * sc$fraction * sc$kaMax * S / (sc$kmKa + S)
   depotIdx <- seq_len(iIM)
-  oralIdx <- seq_len(nOral)
+  # The oral depots that empty into the parent: all but those of an oral
+  # path that delivers the metabolite itself (oralPaths)
+  oralIdx <- setdiff(seq_len(nOral), met$oralIdx)
   plainBinding <- is.null(rb)
   hasSD <- !is.null(sd)
   hasAI <- !is.null(ai)
@@ -455,6 +515,26 @@ mmDerivative <- function(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, 
     aiImax <- if (is.null(ai$imax)) 0 else ai$imax
     aiEc50 <- if (aiEmax > 0) ai$ec50 else 1
     aiIc50 <- if (aiImax > 0) ai$ic50 else 1
+    # A sigmoid induction (suzetrigine's Hill coefficient of 10); the
+    # hyperbola, the same doubles as before, when there is none
+    aiHill <- if (is.null(ai$hill)) 1 else ai$hill
+    aiStim <- if (aiHill == 1) function(C) C / (aiEc50 + C) else
+      function(C) { Ch <- C^aiHill; Ch / (aiEc50^aiHill + Ch) }
+  }
+  # A metabolite formed from the parent's elimination and advanced here
+  # (METABOLITE in the header)
+  hasMet <- !is.null(met)
+  if (hasMet) {
+    iMC <- met$iC
+    iMP <- met$iP
+    metFraction <- met$fraction
+    metV <- met$v1
+    metCl <- met$cl
+    metQ <- if (is.null(met$q)) 0 else met$q
+    metV2 <- if (metQ > 0) met$v2 else 1
+    metInduced <- isTRUE(met$induced)
+    metYield <- if (is.null(met$mwRatio)) 1 else met$mwRatio
+    metOral <- met$oralIdx
   }
   hasTransit <- kT != 0
   hasSC <- !is.null(sc)
@@ -470,11 +550,13 @@ mmDerivative <- function(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, 
     kdT <- tb$kd
     koffT <- tb$koff
   }
-  function(x, rIV, rPE, vmax, km) {
+  function(x, rIV, rPE, vmax, km, rD = 0) {
     Cu <- if (plainBinding) x[iC] / V else unboundC(x[iC])
     dx <- numeric(nState)
     out <- ka * x[depotIdx]
     dx[depotIdx] <- -out
+    # A zero-order release into the oral depots (zeroOrderDepot)
+    dx[seq_along(rD)] <- dx[seq_along(rD)] + rD
     if (hasTransit) {
       xT <- x[iT]
       dx[iT] <- -kT * xT
@@ -493,8 +575,10 @@ mmDerivative <- function(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, 
       toP <- q * (Cu - Cpu)
       dx[iP] <- toP
     }
+    saturable <- vmax * Cu / (km + Cu)
     dx[iC] <- sum(out[oralIdx]) + kc * xConv + rIV + fromS -
-      vmax * Cu / (km + Cu) - clLinear * Cu - toP
+      saturable - clLinear * Cu - toP
+    eliminated <- saturable + clLinear * Cu
     if (hasTarget) {
       xDRC <- x[iDRC]
       xDRP <- x[iDRP]
@@ -519,9 +603,22 @@ mmDerivative <- function(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, 
     # (AUTOINDUCTION in the header)
     if (hasAI) {
       E <- x[iE]
-      dx[iC] <- dx[iC] - ai$cl * E * Cu
-      dx[iE] <- ai$kEnz * ((1 + aiEmax * Cu / (aiEc50 + Cu)) -
+      induced <- ai$cl * E * Cu
+      dx[iC] <- dx[iC] - induced
+      eliminated <- eliminated + induced
+      dx[iE] <- ai$kEnz * ((1 + aiEmax * aiStim(Cu)) -
                              E * (1 - aiImax * Cu / (aiIc50 + Cu)))
+    }
+    # The metabolite: a fraction of everything the parent loses by
+    # elimination, cleared at a clearance the enzyme multiplies too where the
+    # block says so (suzetrigine's M6-SUZ)
+    if (hasMet) {
+      Cm <- x[iMC] / metV
+      clM <- if (metInduced) metCl * x[iE] else metCl
+      toMP <- if (metQ > 0) metQ * (Cm - x[iMP] / metV2) else 0
+      dx[iMC] <- metFraction * metYield * eliminated - clM * Cm - toMP
+      if (length(metOral)) dx[iMC] <- dx[iMC] + metYield * sum(out[metOral])
+      if (metQ > 0) dx[iMP] <- toMP
     }
     dx
   }
@@ -539,13 +636,15 @@ mmDerivative <- function(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, 
 #' @param rIV,rPE the intravenous and prodrug rates over the interval
 #' @param vmax,km Vmax and Km over the interval
 #' @param decline function(t) giving Vmax's fraction left at t, or NULL
+#' @param rD the zero-order release rates into the oral depots
 #' @returns function(t, y), the derivative
 #' @keywords internal
-mmIntervalDerivative <- function(deriv, rIV, rPE, vmax, km, decline = NULL)
+mmIntervalDerivative <- function(deriv, rIV, rPE, vmax, km, decline = NULL, rD = 0)
 {
   force(deriv); force(rIV); force(rPE); force(vmax); force(km); force(decline)
-  if (is.null(decline)) function(t, y) deriv(y, rIV, rPE, vmax, km) else
-    function(t, y) deriv(y, rIV, rPE, vmax * decline(t), km)
+  force(rD)
+  if (is.null(decline)) function(t, y) deriv(y, rIV, rPE, vmax, km, rD) else
+    function(t, y) deriv(y, rIV, rPE, vmax * decline(t), km, rD)
 }
 
 #' Validate a model's michaelisMenten block
@@ -640,6 +739,68 @@ validateMichaelisMenten <- function(mm, drug)
            "cl (volume/min) and kEnz (/min), an emax of zero or more (with a ",
            "positive ec50 when above zero) and an imax in [0, 1] (with a positive ",
            "ic50 when above zero).")
+    if (!is.null(ai$hill) && !positive(ai$hill))
+      stop("Invalid michaelisMenten for ", drug, ": autoinduction's hill must be ",
+           "positive.")
+  }
+  met <- mm$metabolite
+  if (!is.null(met)) {
+    ok <- is.list(met) && is.character(met$name) && length(met$name) == 1L &&
+      nzchar(met$name) && is_valid_number(met$fraction, 0, 1) &&
+      positive(met$v1) && positive(met$cl) &&
+      (is.null(met$q) || (is_valid_number(met$q) && met$q >= 0)) &&
+      (is.null(met$q) || met$q == 0 || positive(met$v2)) &&
+      (is.null(met$mwRatio) || positive(met$mwRatio)) &&
+      (is.null(met$induced) || isTRUE(met$induced) || isFALSE(met$induced))
+    if (!ok)
+      stop("Invalid michaelisMenten for ", drug, ": metabolite needs a name, a ",
+           "fraction in [0, 1], a positive v1 (L) and cl (L/min), a q of zero ",
+           "or more (with a positive v2 when above zero), and optionally a ",
+           "positive mwRatio and a logical induced.")
+    if (isTRUE(met$induced) && is.null(ai))
+      stop("Invalid michaelisMenten for ", drug, ": an induced metabolite ",
+           "clearance needs the block's autoinduction.")
+  }
+  if (!is.null(mm$zeroOrderDepot) && !positive(mm$zeroOrderDepot))
+    stop("Invalid michaelisMenten for ", drug, ": zeroOrderDepot must be a ",
+         "positive duration (minutes).")
+  kd <- mm$kaDoseDependence
+  if (!is.null(kd)) {
+    if (!(is.list(kd) && is_valid_number(kd$emax, 0, 1) && positive(kd$d50) &&
+          (is.null(kd$hill) || positive(kd$hill))))
+      stop("Invalid michaelisMenten for ", drug, ": kaDoseDependence needs an ",
+           "emax in [0, 1], a positive d50 (mg) and optionally a positive hill.")
+    if (!is.null(mm$kaTransit))
+      stop("Invalid michaelisMenten for ", drug, ": kaDoseDependence is not ",
+           "available with kaTransit.")
+  }
+  op <- mm$oralPaths
+  if (!is.null(op)) {
+    pathOk <- function(p) {
+      sh <- p$share
+      is.list(p) && positive(p$ka) &&
+        (is.null(p$lag) || (is_valid_number(p$lag) && p$lag >= 0)) &&
+        (is.null(p$zeroOrder) || positive(p$zeroOrder)) &&
+        (is.null(p$into) || isTRUE(p$into %in% c("central", "metabolite"))) &&
+        is.list(sh) && is_valid_number(sh$constant, 0, 1) &&
+        (is.null(sh$logit) || (is.numeric(sh$logit) && length(sh$logit) == 2L &&
+                                 all(is.finite(sh$logit)))) &&
+        (is.null(sh$complement) || isTRUE(sh$complement) || isFALSE(sh$complement))
+    }
+    if (!is.list(op) || length(op) == 0 || !all(vapply(op, pathOk, logical(1))))
+      stop("Invalid michaelisMenten for ", drug, ": each of oralPaths needs a ",
+           "positive ka (/min), optionally a lag (min) of zero or more, a positive ",
+           "zeroOrder (min) and into \"central\" or \"metabolite\", and a share ",
+           "with a constant in [0, 1] and optionally a logit c(gamma, beta) and a ",
+           "logical complement.")
+    if (any(vapply(op, function(p) identical(p$into, "metabolite"), logical(1))) &&
+        is.null(mm$metabolite))
+      stop("Invalid michaelisMenten for ", drug, ": an oral path into the ",
+           "metabolite needs the block's metabolite.")
+    if (!is.null(mm$kaTransit) || !is.null(mm$kaDoseDependence) ||
+        !is.null(mm$zeroOrderDepot))
+      stop("Invalid michaelisMenten for ", drug, ": oralPaths are not available ",
+           "with kaTransit, kaDoseDependence or zeroOrderDepot.")
   }
   if (!is.null(mm$kaTransit) && !positive(mm$kaTransit))
     stop("Invalid michaelisMenten for ", drug, ": kaTransit must be positive.")
@@ -682,6 +843,26 @@ unboundAtEquilibrium <- function(total, B, kd)
 isEquivalentUnit <- function(units)
 {
   grepl(" PE( |/|$)", as.character(units))
+}
+
+#' The share of an oral dose an oral path takes
+#'
+#' \code{constant} x p, or x (1 - p) for the \code{complement}, where p is
+#' \code{plogis(gamma - beta log(1 + D))} for a path with a \code{logit}
+#' term (macitentan's FMAC, Bartolucci 2021) and 1 for one without.
+#'
+#' @param share the path's share block
+#' @param doseMg the doses as given, in mg
+#' @returns the share of each dose
+#' @keywords internal
+mmPathShare <- function(share, doseMg)
+{
+  out <- rep(share$constant, length(doseMg))
+  if (!is.null(share$logit)) {
+    p <- stats::plogis(share$logit[1] - share$logit[2] * log(1 + doseMg))
+    out <- out * (if (isTRUE(share$complement)) 1 - p else p)
+  }
+  out
 }
 
 #' Simulate a one-compartment Michaelis-Menten drug
@@ -741,6 +922,46 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   names(absorption) <- forms
   oralForm <- ifelse(!is.na(formulation) & formulation %in% forms, formulation,
                      "default")
+  # An absorption rate constant that falls with the size of each oral dose
+  # (suzetrigine, kaDoseDependence in the header): each distinct dose size of
+  # the default form gets a depot of its own, at its own ka, so that doses
+  # of different sizes absorbed at once do not share one rate.
+  kd <- mm$kaDoseDependence
+  if (!is.null(kd)) {
+    plainOral <- route == ROUTE_PO & !rate & oralForm == "default" &
+      as.numeric(dose$Dose) != 0
+    if (any(plainOral)) {
+      if (is.null(dose$DoseMg))
+        stop("Internal error: ", PK$drug, "'s absorption depends on the dose, ",
+             "and the dose in mg was not passed to the engine.")
+      h <- if (is.null(kd$hill)) 1 else kd$hill
+      d <- as.numeric(dose$DoseMg)[plainOral]
+      fac <- 1 - kd$emax * d^h / (kd$d50^h + d^h)
+      levels <- unique(fac)
+      sized <- paste0("default@", seq_along(levels))
+      for (k in seq_along(levels))
+        absorption[[sized[k]]] <- utils::modifyList(
+          absorption[["default"]], list(ka = absorption[["default"]]$ka * levels[k]))
+      forms <- c(forms, sized)
+      oralForm[plainOral] <- sized[match(fac, levels)]
+    }
+  }
+
+  # Oral paths (macitentan, Bartolucci 2021; ORAL PATHS in the header): each
+  # plain oral dose is split among parallel paths, each its own depot with
+  # its own ka, lag and optional zero-order release, one of which may empty
+  # into the metabolite.  The default depot is then unused.
+  paths <- mm$oralPaths
+  pathForms <- character(0)
+  if (!is.null(paths)) {
+    pathForms <- paste0("path", seq_along(paths))
+    for (k in seq_along(paths))
+      absorption[[pathForms[k]]] <- list(
+        ka = paths[[k]]$ka, F = absorption[["default"]]$F,
+        tlag = if (is.null(paths[[k]]$lag)) 0 else paths[[k]]$lag,
+        salt = absorption[["default"]]$salt)
+    forms <- c(forms, pathForms)
+  }
 
   # States: the oral depots, the intramuscular depot of the prodrug, the
   # prodrug's conversion compartment, the central amount, the peripheral
@@ -756,7 +977,10 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   iDRP <- nOral + 8    # drug-target complex, peripheral
   iSD <- nOral + 9     # saturable distribution compartment (an amount)
   iE <- nOral + 10     # relative enzyme amount (autoinduction), starting at 1
+  iMC <- nOral + 11    # the metabolite's central amount (METABOLITE)
+  iMP <- nOral + 12    # and its peripheral amount
   ai <- mm$autoinduction
+  met <- mm$metabolite
   kT <- if (is.null(mm$kaTransit)) 0 else mm$kaTransit
   # A peripheral compartment declared as rate constants on the amounts (GHB,
   # Chen 2020: k23 and k32; see the header) is the same linear distribution
@@ -783,12 +1007,47 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   D  <- as.numeric(dose$Dose)
 
   isOral <- route == ROUTE_PO & !rate
+  # A zero-order release into the oral depot (zeroOrderDepot, suzetrigine's
+  # tablet): each oral dose enters its depot at a constant rate over that
+  # many minutes after its lag, rather than all at once.
+  zod <- mm$zeroOrderDepot
+  boxes <- data.frame(start = numeric(0), end = numeric(0), state = integer(0),
+                      rate = numeric(0), amount = numeric(0))
+  addBoxes <- function(use, start, duration, state, amount) {
+    if (!any(use)) return(invisible())
+    boxes <<- rbind(boxes, data.frame(start = start[use], end = start[use] + duration,
+                                      state = state[use], rate = amount[use] / duration,
+                                      amount = amount[use]))
+  }
   if (any(isOral)) {
     j <- match(oralForm, forms)
     lag <- vapply(absorption, function(a) a$tlag, numeric(1))[j]
     Fo  <- vapply(absorption, function(a) a$F * a$salt, numeric(1))[j]
-    # With a transit compartment the default form's doses enter it first.
-    addJump(isOral, t0 + lag, ifelse(j == 1 & kT > 0, iT, j), D * Fo)
+    viaPaths <- isOral & oralForm == "default" & length(pathForms) > 0
+    direct <- isOral & !viaPaths
+    if (is.null(zod)) {
+      # With a transit compartment the default form's doses enter it first.
+      addJump(direct, t0 + lag, ifelse(j == 1 & kT > 0, iT, j), D * Fo)
+    } else {
+      addBoxes(direct & D != 0, t0 + lag, zod, j, D * Fo)
+    }
+    # Each plain oral dose split among the oral paths, by shares that may
+    # depend on its size in mg (mmPathShare())
+    if (any(viaPaths)) {
+      if (is.null(dose$DoseMg))
+        stop("Internal error: ", PK$drug, "'s oral paths need the dose in mg.")
+      dmg <- as.numeric(dose$DoseMg)
+      for (k in seq_along(paths)) {
+        jk <- match(pathForms[k], forms)
+        amount <- D * Fo * mmPathShare(paths[[k]]$share, dmg)
+        start <- t0 + absorption[[jk]]$tlag
+        use <- viaPaths & amount != 0
+        if (is.null(paths[[k]]$zeroOrder))
+          addJump(use, start, rep(jk, length(t0)), amount)
+        else
+          addBoxes(use, start, paths[[k]]$zeroOrder, rep(jk, length(t0)), amount)
+      }
+    }
   }
   ivBolus <- route == ROUTE_IV & !rate & !pe
   addJump(ivBolus, t0, rep(iC, length(t0)), D * salt("IV"))
@@ -858,8 +1117,9 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
     1 - vd$fraction * s / (s + vd$t50 - vd$onset)
   }
 
-  # The time line: every dose time and arrival, and the instant before each.
-  knots <- unique(c(t0, jumps$time))
+  # The time line: every dose time and arrival, and the instant before each;
+  # a zero-order release starts and ends at points of it.
+  knots <- unique(c(t0, jumps$time, boxes$start, boxes$end))
   timeLine <- simulationTimeGrid(c(knots, knots - PRE_DOSE_OFFSET), maximum,
                                  gridStart(0))
   # The interaction multipliers' switches are points of the line, so that no
@@ -904,6 +1164,22 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
       sc$bioavailability * (1 - sc$fraction) / sc$duration
   }
 
+  # The zero-order releases into the oral depots, one column per depot: each
+  # box's start and end are points of the line, so the rate at the start of a
+  # step holds through it.
+  depotRateLine <- matrix(0, L, nOral)
+  for (k in seq_len(nrow(boxes))) {
+    inBox <- timeLine >= boxes$start[k] & timeLine < boxes$end[k]
+    depotRateLine[inBox, boxes$state[k]] <- depotRateLine[inBox, boxes$state[k]] +
+      boxes$rate[k]
+  }
+  # What a box has still to release, for the Depot series
+  boxLeft <- function(t) {
+    if (!nrow(boxes)) return(0)
+    on <- boxes$start <= t & t < boxes$end
+    sum(boxes$rate[on] * (boxes$end[on] - t))
+  }
+
   jumpAt <- match(jumps$time, timeLine)
   # The jumps at each point, found once (a which() at every point cost time in
   # the product of the points and the doses: 6 of the 57 seconds of six
@@ -913,11 +1189,18 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
     stop("Internal error: a dose time is missing from the time line.")
 
   # The derivative (mmDerivative()), built in a frame of its own
+  nState <- mmStateCount(iDRP, iSD, iE, sd, ai, iMP, met)
+  if (!is.null(met)) {
+    met$iC <- iMC
+    met$iP <- iMP
+    # the depots of the oral paths that deliver the metabolite itself
+    toMet <- vapply(paths, function(p) identical(p$into, "metabolite"), logical(1))
+    met$oralIdx <- match(pathForms[toMet], forms)
+  }
   deriv <- mmDerivative(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, iP,
                         iS, iT, iDRC, iDRP, rb, sc, tb, iSD, iE, sd, ai,
-                        mmStateCount(iDRP, iSD, iE, sd, ai))
+                        met, nState)
 
-  nState <- mmStateCount(iDRP, iSD, iE, sd, ai)
   x <- numeric(nState)
   if (!is.null(ai)) x[iE] <- 1   # the uninduced enzyme
   Cp <- numeric(L)
@@ -927,6 +1210,13 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   # of the prodrug and the saturable subcutaneous depot; see R/compartments.R.
   C2 <- numeric(L)
   depot <- numeric(L)
+  # The metabolite's concentrations, in its own units (unitScale, from
+  # getDrugPK())
+  Cm <- C2m <- numeric(L)
+  if (!is.null(met)) {
+    mScale <- if (is.null(met$unitScale)) 1 else met$unitScale
+    mQ <- if (is.null(met$q)) 0 else met$q
+  }
   depotStates <- c(seq_len(iIM), iT, iS)
   # The adaptive step (mmDormandPrince()), for a drug whose block asks for
   # it.  Its absolute tolerance is on amounts, relative to the largest dose
@@ -959,6 +1249,11 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   # emptied as negligible, its curve 0 until the later dose (Carbon's third
   # UI audit, 2026-11-15, H5).
   pointScale <- 60 * pmax(abs(ivRateLine + scRateLine), abs(peRateLine))
+  for (k in seq_len(nrow(boxes))) {
+    at <- match(boxes$start[k], timeLine)
+    if (!is.na(at))
+      pointScale[at] <- max(pointScale[at], boxes$amount[k])
+  }
   for (j in which(!is.na(jumpAt)))
     pointScale[jumpAt[j]] <- max(pointScale[jumpAt[j]], abs(jumps$amount[j]))
   scaleAt <- cummax(pointScale)
@@ -980,7 +1275,8 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
       scale <- max(scaleAt[i - 1], .Machine$double.eps)
       if (!adaptive) {
         x[absorbing][abs(x[absorbing]) <= MM_NEGLIGIBLE_AMOUNT * scale] <- 0
-        absorbingNow <- any(x[absorbing] != 0) || peRateLine[i - 1] != 0
+        absorbingNow <- any(x[absorbing] != 0) || peRateLine[i - 1] != 0 ||
+          any(depotRateLine[i - 1, ] != 0)
         n <- max(1L, ceiling(dt / (if (absorbingNow) stepAll else stepCore)))
       } else {
         n <- 1L
@@ -988,13 +1284,14 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
       h <- dt / n
       rIV <- ivRateLine[i - 1] + scRateLine[i - 1]
       rPE <- peRateLine[i - 1]
+      rD <- depotRateLine[i - 1, ]
       vmaxStep <- vmax * ddiVmaxLine[i - 1]
       kmStep <- km * ddiKmLine[i - 1]
       if (adaptive) {
         # An adaptive step for a drug that asks for one (mmDormandPrince())
         atol <- MM_ADAPTIVE_ATOL * scale
         f <- mmIntervalDerivative(deriv, rIV, rPE, vmaxStep, kmStep,
-                                  if (!is.null(vd)) vmaxDeclineAt)
+                                  if (!is.null(vd)) vmaxDeclineAt, rD)
         stepped <- mmDormandPrince(f, x, timeLine[i - 1], timeLine[i], hNext,
                                    MM_ADAPTIVE_RTOL, atol, emptyDepots)
         x <- stepped$x
@@ -1002,10 +1299,10 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
       } else for (k in seq_len(n)) {
         vmaxK <- if (is.null(vd)) vmaxStep else
           vmaxStep * vmaxDeclineAt(timeLine[i - 1] + (k - 0.5) * h)
-        k1 <- deriv(x, rIV, rPE, vmaxK, kmStep)
-        k2 <- deriv(x + h / 2 * k1, rIV, rPE, vmaxK, kmStep)
-        k3 <- deriv(x + h / 2 * k2, rIV, rPE, vmaxK, kmStep)
-        k4 <- deriv(x + h * k3, rIV, rPE, vmaxK, kmStep)
+        k1 <- deriv(x, rIV, rPE, vmaxK, kmStep, rD)
+        k2 <- deriv(x + h / 2 * k1, rIV, rPE, vmaxK, kmStep, rD)
+        k3 <- deriv(x + h / 2 * k2, rIV, rPE, vmaxK, kmStep, rD)
+        k4 <- deriv(x + h * k3, rIV, rPE, vmaxK, kmStep, rD)
         x <- x + h / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
       }
       # The central amount cannot fall below zero; RK4 can overshoot by
@@ -1019,10 +1316,14 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
     Cp[i] <- if (plotUnbound)
       unboundAtEquilibrium(x[iC] / V, rb$bmaxCentral, rb$kd) else x[iC] / V
     if (q > 0) C2[i] <- x[iP] / V2
-    depot[i] <- sum(x[depotStates])
+    depot[i] <- sum(x[depotStates]) + boxLeft(timeLine[i])
+    if (!is.null(met)) {
+      Cm[i] <- x[iMC] * mScale / met$v1
+      if (mQ > 0) C2m[i] <- x[iMP] * mScale / met$v2
+    }
   }
 
-  data.frame(
+  out <- data.frame(
     Time = timeLine,
     Cp = Cp,
     Ce = rep(NA_real_, L),
@@ -1031,4 +1332,13 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
     C3 = rep(0, L),
     Depot = depot
   )
+  # The metabolite's columns, which simCpCe() lifts into a series of its own
+  # (as advanceTransitChain() returns enalaprilat's)
+  if (!is.null(met)) {
+    out$CpMetabolite <- Cm
+    out$CeMetabolite <- rep(NA_real_, L)
+    out$C2Metabolite <- C2m
+    out$C3Metabolite <- rep(0, L)
+  }
+  out
 }

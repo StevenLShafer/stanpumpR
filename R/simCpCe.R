@@ -473,6 +473,12 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # below adds rows, while mg_Conv still has one entry per row: multiplied
     # whole, mg_Conv was recycled against the oral rows, which warned whenever
     # the table held other routes too.  (Claude Code, 2026-10-17.)
+    # An absorption rate that depends on the size of each oral dose
+    # (suzetrigine, R/advanceMichaelisMenten.R): the engine reads the dose
+    # as given, in mg per administration, before any scaling below.
+    if (!is.null(PK$michaelisMenten$kaDoseDependence) ||
+        !is.null(PK$michaelisMenten$oralPaths))
+      dose$DoseMg <- dose$Dose * mg_Conv
     if (!is.null(PK$oralSaturation) && any(dose$PO))
       dose$Dose[dose$PO] <- dose$Dose[dose$PO] *
         oralSaturationFraction(dose$Dose[dose$PO] * mg_Conv[dose$PO],

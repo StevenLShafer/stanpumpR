@@ -1361,6 +1361,36 @@ getDrugPK <- function(
   # set above carries the low-concentration limit, CL = Vmax / Km, for the
   # parts of the app that need one (the help tables).
   out$michaelisMenten <- validateMichaelisMenten(X$michaelisMenten, drug)
+  # A metabolite the saturable engine advances with the parent (suzetrigine's
+  # M6-SUZ, whose clearance the induced enzyme multiplies as it does the
+  # parent's): declared inside the block, as a transit chain declares
+  # enalaprilat, because the standard resolution convolves exponential
+  # amplitudes a nonlinear system does not have.  The engine returns both
+  # moieties' concentrations, so no coefficients ride along.
+  mmMet <- out$michaelisMenten$metabolite
+  if (!is.null(mmMet))
+  {
+    if (!is.null(X$metabolite) || !is.null(X$transitChain))
+      stop("Invalid michaelisMenten for ", drug, ": a metabolite in the block ",
+           "and an X$metabolite or a transit chain.")
+    if (!is.null(validateIndividual(metaboliteIndividual, mmMet$name)))
+      stop("An individual estimate of ", mmMet$name, ", formed in ", drug,
+           "'s saturable engine, is not available.")
+    formedDefaults <- libraryDefaultsRow(mmMet$name, libraryDefaults)
+    out$libraryDefaults <- formedDefaults
+    out$michaelisMenten$metabolite$unitScale <- metaboliteUnitScale(
+      drugDefaults$Concentration.Units, formedDefaults$Concentration.Units)
+    metaboliteName <- mmMet$name
+    out$metaboliteName <- mmMet$name
+    q <- if (is.null(mmMet$q)) 0 else mmMet$q
+    for (event in names(out$PK))
+      out$PK[[event]]$metabolite <- list(
+        name = mmMet$name,
+        ke0  = 0,
+        k21  = if (q > 0) q / mmMet$v2 else 0,
+        k31  = 0
+      )
+  }
   # A drug plotted as the sum of independent linear systems that share its
   # doses: ketorolac, whose S and R enantiomers have dispositions of their own
   # (R/drugs_ketorolac.R).  The model's own PK is the first system; each entry

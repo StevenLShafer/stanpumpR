@@ -584,9 +584,10 @@ helpChemotherapyToObtainMarkdown <- function(drugDefaults = NULL, registry = che
 #' library ships, which the tests hold equal.
 #' @noRd
 helpAntibioticMbcBandMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
-  # A drug whose band is a trough range (antibioticTroughBands()) has no MBC
-  # row; its own page and the antibiotics page say why.
-  drugs <- setdiff(antibioticMicTable()$Drug, antibioticTroughBands()$Drug)
+  # A drug whose band is a trough range (antibioticTroughBands()), or which
+  # has no band (antibioticNoBands()), has no MBC row; its own page and the
+  # antibiotics page say why.
+  drugs <- antibioticMbcBandDrugs()
   rows <- vapply(drugs, function(d) {
     b <- antibioticMbcBand(d)
     m <- antibioticMic(d)

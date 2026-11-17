@@ -144,7 +144,9 @@ groupUnitsByRoute <- function(units) {
 #'
 #' with D the dose in mg per administration.  That is the inhibitory Emax form
 #' of Tran et al. (J Pharmacokinet Pharmacodyn 2017;44:567-579) and contains
-#' the hyperbolic Dmax / (D50 + D) as the case Imax = 1.  The drug's
+#' the hyperbolic Dmax / (D50 + D) as the case Imax = 1.  An optional `hill`
+#' makes it sigmoid, 1 - Imax D^hill / (ID50^hill + D^hill) (suzetrigine's
+#' hill of 5, FDA review of NDA 219209).  The drug's
 #' `bioavailability_PO` stays the fraction absorbed in the limit of a small
 #' dose; the product of the two is the bioavailability of a given dose.
 #'
@@ -190,7 +192,10 @@ oralSaturationFraction <- function(doseMg, saturation)
 {
   if (is.null(saturation)) return(rep(1, length(doseMg)))
   switch(oralSaturationForm(saturation),
-    saturable = 1 - saturation$Imax * doseMg / (saturation$ID50 + doseMg),
+    saturable = if (is.null(saturation$hill))
+      1 - saturation$Imax * doseMg / (saturation$ID50 + doseMg) else
+      1 - saturation$Imax * doseMg^saturation$hill /
+        (saturation$ID50^saturation$hill + doseMg^saturation$hill),
     rising    = doseMg / (saturation$D50 + doseMg),
     # A negative exponent is infinite at a dose of 0 (opicapone's -0.225), and
     # 0 x Inf is NaN, which stopped the simulation of a scheduled dose of 0;
@@ -245,7 +250,9 @@ validateOralSaturation <- function(saturation, drug, block = "oralSaturation")
   form <- oralSaturationForm(saturation)
   if (form == ORAL_SATURATION_SATURABLE) {
     ok <- is_valid_number(saturation$Imax, 0, 1) &&
-      is_valid_number(saturation$ID50) && saturation$ID50 > 0
+      is_valid_number(saturation$ID50) && saturation$ID50 > 0 &&
+      (is.null(saturation$hill) ||
+         (is_valid_number(saturation$hill) && saturation$hill > 0))
     # Imax above 1 would make the fraction absorbed negative at large doses.
     if (!ok)
       stop("Invalid ", block, " for ", drug, ": needs Imax between 0 and 1 ",

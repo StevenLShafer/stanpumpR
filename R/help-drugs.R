@@ -1518,6 +1518,13 @@ helpAntibioticMbcHTML <- function(drug, concUnits) {
               helpFormatNumber(tb$Upper), esc(concUnits), helpFormatNumber(tb$Typical)),
       esc(tb$Source), " It is a trough range, drawn against the whole curve.</p>"))
   }
+  if (drug %in% antibioticNoBands()$Drug) {
+    nb <- antibioticNoBands()
+    return(paste0(
+      helpH2("No shaded band"),
+      "<p>Most antibiotics' band marks the expected MBC, the concentration of free drug that kills. ",
+      esc(helpDrugTitle(drug)), " has none. ", esc(nb$Reason[nb$Drug == drug]), "</p>"))
+  }
   band <- antibioticMbcBand(drug)
   if (is.null(band)) return("")
   mic <- antibioticMic(drug)
