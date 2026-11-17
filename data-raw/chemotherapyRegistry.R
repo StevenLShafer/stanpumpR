@@ -230,7 +230,13 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 FULL_TEXT_READ <- c("C15", "N01", "N01b", "N01c", "C28", "C37b", "C45", "C46", "C48", "C41", "C25", "C42", "P06", "C11", "N05", "C01", "P02", "C35", "C03", "C37a", "C34", "P16", "C21", "C07", "P15", "P08", "C19", "P21", "P25", "C23", "C24", "N11", "C10", "C38a", "N12", "N10", "C09", "P13", "C17", "P05")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
-PARAMETERS_VERIFIED <- c("C26", "N03", "C27", "C47", "C44", "N13", "C36", "N02", "C43", "P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18", "C05", "C06", "N08", "N09")
+PARAMETERS_VERIFIED <- c(
+  # C09 (McCune 2009), C10 (Kerbusch 2000) and N10 (Ralph 2003) joined this list on
+  # 2026-11-16: each row already recorded "PDF read (supplied 2026-11-10)" with the
+  # equations or tables confirmed on the page, while the derived `to_obtain` still asked
+  # for the PDF.  The arrivals report (stanpumpRPapers/_build/arrivals.py) found them.
+  "C09", "C10", "N10",
+  "C26", "N03", "C27", "C47", "C44", "N13", "C36", "N02", "C43", "P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18", "C05", "C06", "N08", "N09")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
   ifelse(pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
@@ -361,9 +367,9 @@ registry <- rbind(
     "357 adults, including the underweight and the obese", "carboplatin (analyte to confirm)",
     "a clearance equation in serum creatinine, cystatin C, weight, age and sex; the disposition model is not in the abstract",
     "first", "unknown", "C03",
-    "Table 2: CL (mL/min) = 117.8 (Scr/75)^-0.450 (cysC/1.0)^-0.385 (ABW/65)^0.504 (age/56)^-0.366 x 0.847^sex (Scr in uM, sex 1 for women). The typical Vc, Vp and Q were taken from a rich-sampling database and are not printed (Vc and Vp proportional to BSA), so the paper does not fix a curve. The Patient Profile has no cystatin C, and serum creatinine is not a substitute for it (the chlorthalidone decision, docs/antihypertensives.md).",
+    "Table 2: CL (mL/min) = 117.8 (Scr/75)^-0.450 (cysC/1.0)^-0.385 (ABW/65)^0.504 (age/56)^-0.366 x 0.847^sex (Scr in uM, sex 1 for women).  NO PAPER WILL UNBLOCK THIS ROW, so `to_obtain` is NA: Schmitt 2009's references 9 (Chatelut 2000, PMID 10741287) and 11 (Leger 2002, PMID 11750839) were both obtained and read in full on 2026-11-06 and digested, and they describe the same two-compartment model on the same 103-patient database with volumes proportional to BSA and print no volume or Q.  Only the authors' own database would fix the curve, and a cystatin C field, which the Patient Profile does not have. The typical Vc, Vp and Q were taken from a rich-sampling database and are not printed (Vc and Vp proportional to BSA), so the paper does not fix a curve. The Patient Profile has no cystatin C, and serum creatinine is not a substitute for it (the chlorthalidone decision, docs/antihypertensives.md).",
     readiness = "needs_full_text",
-    to_obtain = "Nothing published supplies the typical Vc, Vp and Q: Schmitt 2009's references 9 (Chatelut 2000, Eur J Cancer 36:264-269, PMID 10741287) and 11 (Leger 2002, PMID 11750839), both read in full 2026-11-06, describe the same two-compartment model on the same 103-patient database, volumes proportional to BSA, and print no volume or Q. Only the authors' database would fix the curve; and a cystatin C field, which the Patient Profile does not have."),
+    to_obtain = NA),
   m("carboplatin__adult__chatelut1995", "carboplatin", "carboplatin", "IV",
     "adults with cancer", "carboplatin (analyte to confirm)",
     "a clearance equation in creatinine, weight, age and sex (the Chatelut formula); whether the paper gives volumes was not established",
