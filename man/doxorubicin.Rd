@@ -14,4 +14,6 @@ a list in the shape \code{getDrugPK()} expects
 }
 \description{
 Joerger 2007 (adults), Voller 2015 (children) or Perez-Blanco 2016 (adults
+with NHL), with the doxorubicinol each forms, chosen by
+\code{selectModel()}; see \code{R/modelSelection.R}.
 }

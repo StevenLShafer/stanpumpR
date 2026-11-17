@@ -30,7 +30,8 @@ getDrugPK(
   individual = NULL,
   libraryDefaults = NULL,
   metaboliteIndividual = NULL,
-  physiology = NULL
+  physiology = NULL,
+  pulmonaryHypertension = FALSE
 )
 }
 \arguments{
@@ -101,11 +102,12 @@ postmenstrual age (\code{postmenstrualAge()}).}
 
 \item{albumin}{serum albumin in g/dL, or NULL (the default), in which case
 each model holds its own reference value.  Passed only to the models that
-declare it (methotrexate, methotrexatePediatric, docetaxel).}
+declare it (methotrexate, methotrexatePediatric, docetaxel,
+paclitaxelProteinBound).}
 
 \item{ast}{serum aspartate aminotransferase in U/L, or NULL (the default),
-in which case each model holds its own reference value.  Passed only to the
-models that declare it (epirubicin).}
+in which case each model holds its own reference value.  Passed only to
+the models that declare it (epirubicin).}
 
 \item{individual}{NULL (the default) for the model's own patient, or the
 individual's pharmacokinetics as a list of \code{clearance} and
@@ -130,6 +132,11 @@ numeric vector named \code{liver}, \code{renal}, \code{cardiac},
 \code{gi} (multiples of normal function, 0.1 to 10); applied only to a
 drug with a row in \code{inst/extdata/physiologyParameters.csv}.  See
 \code{R/physiology.R}.}
+
+\item{pulmonaryHypertension}{does the patient have pulmonary arterial
+hypertension?  TRUE or FALSE (the default).  Passed only to the models
+of a drug with a separate PAH population (sildenafil, tadalafil); see
+\code{R/pulmonaryHypertension.R}.}
 }
 \value{
 a list: the drug's PK sets (\code{PK}, one per PK event), its

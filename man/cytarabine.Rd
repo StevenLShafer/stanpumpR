@@ -26,5 +26,6 @@ it also sets the weight the creatinine-clearance estimate uses.}
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-Two compartments; the program chooses the model from the patient's age.  See the header of \code{R/drugs_cytarabine.R}.
+Two compartments; the program chooses the model from the patient's age.
+See the header of \code{R/drugs_cytarabine.R}.
 }

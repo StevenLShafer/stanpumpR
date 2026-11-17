@@ -4,7 +4,14 @@
 \alias{oxaliplatinBastian}
 \title{Oxaliplatin, intravenous, in adults (Bastian 2003)}
 \usage{
-oxaliplatinBastian(weight, height, age, sex, adjustToFFM = TRUE, creatinine = NULL)
+oxaliplatinBastian(
+  weight,
+  height,
+  age,
+  sex,
+  adjustToFFM = TRUE,
+  creatinine = NULL
+)
 }
 \arguments{
 \item{weight}{weight in kg}

@@ -23,7 +23,13 @@ mmDerivative(
   iDRP,
   rb,
   sc,
-  tb
+  tb,
+  iSD = iDRP + 1L,
+  iE = iDRP + 2L,
+  sd = NULL,
+  ai = NULL,
+  met = NULL,
+  nState = mmStateCount(iDRP, iSD, iE, sd, ai, met$iP, met)
 )
 }
 \arguments{
@@ -40,13 +46,19 @@ intramuscular one}
 
 \item{nOral}{the number of oral depots}
 
-\item{iIM, iConv, iC, iP, iS, iT, iDRC, iDRP}{the states' indices}
+\item{iIM, iConv, iC, iP, iS, iT, iDRC, iDRP, iSD, iE}{the states' indices}
 
-\item{rb, sc, tb}{the block's rapidBinding, saturableSC and targetBinding,
-or NULL}
+\item{rb, sc, tb, sd, ai}{the block's rapidBinding, saturableSC,
+targetBinding, saturableDistribution and autoinduction, or NULL}
+
+\item{met}{the block's metabolite, or NULL, with the indices of its
+central and peripheral states added as iC and iP}
+
+\item{nState}{the number of states (mmStateCount())}
 }
 \value{
-function(x, rIV, rPE, vmax, km), the derivative of the states
+function(x, rIV, rPE, vmax, km, rD = 0), the derivative of the
+states, rD the zero-order release rates into the oral depots
 }
 \description{
 The derivative of the states of \code{advanceMichaelisMenten()} (see its

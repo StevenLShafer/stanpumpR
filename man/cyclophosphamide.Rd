@@ -14,4 +14,5 @@ a list in the shape \code{getDrugPK()} expects
 }
 \description{
 Joerger 2007 (adults) or McCune 2009 (children, with autoinduction),
+chosen by \code{selectModel()}; see \code{R/modelSelection.R}.
 }

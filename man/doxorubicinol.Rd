@@ -14,4 +14,5 @@ a list in the shape \code{getDrugPK()} expects
 }
 \description{
 The doxorubicinol model of the same source as the doxorubicin chosen,
+by \code{selectModel()}; see \code{R/modelSelection.R}.
 }

@@ -22,4 +22,6 @@ a list in the shape \code{getDrugPK()} expects
 }
 \description{
 Krogh-Madsen 2012 (adults), Urien 2011 (children) or Duong 2019 (children
+with neuroblastoma), chosen by \code{selectModel()}; see
+\code{R/modelSelection.R}.
 }

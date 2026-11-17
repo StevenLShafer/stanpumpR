@@ -4,7 +4,14 @@
 \alias{doxorubicinPerezBlanco}
 \title{Doxorubicin, intravenous, in adults (Perez-Blanco 2016)}
 \usage{
-doxorubicinPerezBlanco(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
+doxorubicinPerezBlanco(
+  weight,
+  height,
+  age,
+  sex,
+  adjustToFFM = TRUE,
+  pregnant = FALSE
+)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -28,5 +35,7 @@ it also sets the weight the creatinine-clearance estimate uses.}
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-Three compartments forming two-compartment doxorubicinol (\code{doxorubicinolPerezBlanco}); see the header of \code{R/drugs_doxorubicinPerezBlanco.R}.
+Three compartments forming two-compartment doxorubicinol
+(\code{doxorubicinolPerezBlanco}); see the header of
+\code{R/drugs_doxorubicinPerezBlanco.R}.
 }

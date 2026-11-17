@@ -14,4 +14,5 @@ a list in the shape \code{getDrugPK()} expects
 }
 \description{
 Crombag 2019 (684 adults, 18-84 years) or Joerger 2006 (168 adults,
+33-86 years), chosen by \code{selectModel()}; see \code{R/modelSelection.R}.
 }
