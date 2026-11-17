@@ -58,8 +58,9 @@
 # (Anesth Analg 67:329-337), which is a MINIMUM EFFECTIVE CONCENTRATION in
 # blood, sampled immediately before each patient-controlled demand, not a
 # post-titration MEAC.  Bae 2020 measured both after open abdominal surgery:
-# median MEC 0.72 and MEAC 0.99 ng/mL (venous plasma).  Not changed with the
-# PK: see docs/opioid-review-2026-10-27.md.
+# median MEC 0.72 and MEAC 0.99 ng/mL (venous plasma).  Kept at 0.6 with the
+# new PK on Steven L. Shafer's decision of 2026-11-17; see also
+# docs/opioid-review-2026-10-27.md.
 #
 # HISTORY
 # =======
