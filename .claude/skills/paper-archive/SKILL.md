@@ -17,8 +17,11 @@ Two paths matter and they are not the same place:
 | `C:\dev\stanpumpRPapers` | the archive: the PDFs, `_build\` (the pipeline), `stanpumpR-references.xlsx`, `stanpumpr-queue.csv`, `digests\STATUS.md`. A junction to `D:\My Drive\stanpumpRPapers`, so **Google Drive syncs it between the user's computers**. |
 | `C:\dev\stanpumpR`, `papers/digests/` | the repository: the cards. `_build\cards.py` writes them into its own worktree `C:\dev\stanpumpR-digests` (branch `digests/working`), never into whatever checkout you are sitting in. |
 
-**The PDFs are copyrighted. They never enter the repository, never go to an external service, and are
-never shared.** The cards are publishable only because they hold facts and paraphrase: no quoted
+**The PDFs are copyrighted. They never enter the repository and are never published or passed to a
+third party** (AGENTS.md, *Read-only, and the papers stay out of the repository*): a PDF or its
+extracted text goes in the scratchpad and is never committed. Reading one *is* the work — you read
+them, and so does the digest batch — so the rule is about distribution, not about whether a model
+sees the text. The cards are publishable only because they hold facts and paraphrase: no quoted
 passage over 15 words, at most one per card. Nothing in the archive is ever permanently deleted — the
 pipeline moves originals to the Recycle Bin and logs them (`_build\recycled_log.json`).
 
@@ -32,10 +35,17 @@ Only one computer may run the pipeline at a time — Google Drive does not merge
 the spreadsheet or the cards.
 
 ```bash
-cat /c/dev/stanpumpRPapers/_build/digest_run.lock /c/dev/stanpumpRPapers/_build/digest_run.hold 2>/dev/null
+B=/c/dev/stanpumpRPapers/_build
+for f in digest_run.hold digest_run.lock; do
+  if [ -e "$B/$f" ]; then echo "$f EXISTS:"; cat "$B/$f"; echo; else echo "$f absent"; fi
+done
 ```
 
-- `digest_run.hold` exists → unattended runs are paused on purpose. Say so and stop; do not delete it.
+Test **existence**, not contents: `digest_run.py` stops on `os.path.exists(HOLD)`, so an empty hold
+file holds the run just as a worded one does, and a bare `cat` would print nothing and read as clear.
+
+- `digest_run.hold` exists → unattended runs are paused on purpose, whether or not it says why. Say
+  so and stop; do not delete it.
 - `digest_run.lock` names a `host` and a `started`. Its own host with a live pid: a run is going here,
   so wait for it rather than starting another. **Another** host: that computer is running, and only a
   lock older than 12 hours is treated as a dead run's. Say which computer, and stop.
@@ -118,7 +128,8 @@ pushes them as `claude/digests-<stamp>`, and opens a pull request. Its report is
 `_build\digest_runs\<stamp>.md`, whose last lines name the branch and the PR.
 
 **Then merge that PR once CI is green.** That is the step the pipeline does not do for itself, and the
-reason thirteen digest PRs once sat open for a fortnight. Watch and merge with a script, not by eye,
+reason thirteen digest PRs once sat open for a fortnight. Do step 6's read of the run's new
+`open_questions:` on the branch first, while a question you add still has a PR to travel in. Watch and merge with a script, not by eye,
 and make every failure loud:
 
 ```bash
@@ -138,10 +149,14 @@ move that number.
 
 ## 6. Surface what the new cards ask
 
-A run's cards may add `open_questions:` entries. Collect the new ones and report them by tag:
+A run's cards may add `open_questions:` entries. **Read them on the branch, before step 5 merges it**,
+because a question you add to a card after the merge is not in the merged PR and so reaches nobody.
+Collect the new ones and report them by tag:
 
 - `[decision]` — only Steven L. Shafer can answer. **Write the question into the card as you raise
   it**, never only in chat, so a concurrent session meets the question instead of its consequences.
+  If you only see it after the merge, it needs its own follow-up PR — an edit left in the worktree is
+  invisible to the other computers, which is the whole reason the cards live in the repository.
 - `[check]` / `[source]` — work someone can do.
 
 A finding outside this run's remit is **recorded, not acted on** (`spawn_task`, or the registry row's
