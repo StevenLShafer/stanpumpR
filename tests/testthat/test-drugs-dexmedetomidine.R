@@ -73,6 +73,12 @@ test_that("the model is finite at the extremes and runs through getDrugPK()", {
       expect_true(all(is.finite(v) & v > 0), info = paste(s, a, w))
       expect_true(all(is.finite(k) & k >= 0), info = paste(s, a, w))
     }
+  # Morse's maturation at the earliest legal birth, which the drug itself
+  # never reaches (it uses Zuppa at one year or under)
+  for (s in c("male", "female")) {
+    m <- unlist(dexmedetomidineMorse(0.5, 30, 0, s, gestationalAge = MIN_GESTATIONAL_AGE)$PK$default)
+    expect_true(all(is.finite(m) & m > 0), info = s)
+  }
   pk <- getDrugPK("dexmedetomidine", 70, 170, 35, "male")$PK$default
   expect_gt(pk$ke0, 0)
   expect_true(all(is.finite(c(pk$lambda_1, pk$lambda_2, pk$lambda_3))))
@@ -203,11 +209,6 @@ test_that("a newborn entered as age 0 keeps a clearance after bypass", {
   expect_gt(pk$k10, 0)
   expect_true(all(is.finite(c(pk$lambda_1, pk$lambda_2, pk$lambda_3))))
 })
-
-# The boundary between Zuppa's infant model (age <= 1) and the Dyck adult
-# model (age > 1) is a step, and a large one: the help page says so, with the
-# numbers pinned here.  This test documents the step so that a change to
-# either side is deliberate (an audit of 2026-10-12 asked for it); the model
 
 # The boundary between Zuppa's infant model (age <= 1) and Morse (age > 1) is
 # a step, which the help page describes with these numbers.  The choice to

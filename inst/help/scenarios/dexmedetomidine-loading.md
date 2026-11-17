@@ -7,7 +7,7 @@ After the infusion stops at 120 minutes the effect site falls slowly. The **time
 ## Try next
 
 - Replace the bolus with an infusion of 6 mcg/kg/hr for the first 10 minutes (rows: 6 mcg/kg/hr at 0, 0.5 mcg/kg/hr at 10). The effect site peaks a little later and a little lower (0.90 ng/mL at about 24 minutes), and the plasma peak is about 60% as high.
-- Change the age to 30. Almost nothing changes. Apart from size, the model's only age term is the maturation of clearance, which is complete in adults. The elderly's greater sensitivity to dexmedetomidine's hemodynamic effects is pharmacodynamic and not represented.
+- Change the age to 30. Almost nothing changes. Apart from size, the model's only age term is the maturation of clearance, which is nearly complete in adults (a factor of 0.968 at 30 and 0.986 at 70). The elderly's greater sensitivity to dexmedetomidine's hemodynamic effects is pharmacodynamic and not represented.
 - Change the age to 6 months (set the unit to months) and the weight to 7 kg, add the Events panel, and enter *CPB Start* at 30 minutes and *CPB End* at 90. At one year or under stanpumpR uses Zuppa's infant model, which has separate parameters on bypass, and the concentration rises while the clearance is suppressed.
 
 ## Background
