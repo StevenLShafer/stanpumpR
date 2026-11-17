@@ -632,6 +632,8 @@ paperReviewServer <- function(input, output, session)
     shinyjs::hide("reviewBusy")
     shinyjs::hide("reviewLate")
     running$stop <- NULL
+    # Whose key was sent, for the message if the API refuses it.
+    sentOwn <- exists("inFlight", envir = store) && !is.null(store$inFlight$own)
     suppressWarnings(rm(list = intersect("inFlight", ls(store)), envir = store))
     stored()
     if (!awaited()) return()
@@ -640,7 +642,9 @@ paperReviewServer <- function(input, output, session)
       paper_review_error = function(e) e,
       error = function(e) paperReviewError("unexpected", "The review failed unexpectedly."))
     if (inherits(result, "paper_review_error")) {
-      status(paste(conditionMessage(result), "The manuscript has been discarded; upload it again to retry."))
+      advice <- paperReviewKeyAdvice(result$code, sentOwn)
+      status(paste(conditionMessage(result), if (nzchar(advice)) advice,
+                   "The manuscript has been discarded; upload it again to retry."))
       return()
     }
     assign("usage", result$usage, envir = store)
