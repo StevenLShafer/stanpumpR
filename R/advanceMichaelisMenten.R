@@ -436,6 +436,16 @@ mmDormandPrince <- function(f, x, t0, t1, h, rtol, atol, clean = NULL)
   list(x = x, h = h)
 }
 
+#' The engine's number of states
+#'
+#' The saturable-distribution and enzyme states exist only for a drug that
+#' declares them: carried always, the enzyme's constant 1 kept the adaptive
+#' step from ever finding the system empty (mmDormandPrince()), and a year of
+#' phenytoin cost 1.9 s against 1.5.
+#' @keywords internal
+mmStateCount <- function(iDRP, iSD, iE, sd, ai, iMP = iE + 2L, met = NULL)
+  if (!is.null(met)) iMP else if (!is.null(ai)) iE else if (!is.null(sd)) iSD else iDRP
+
 #' The Michaelis-Menten engine's derivative
 #'
 #' The derivative of the states of \code{advanceMichaelisMenten()} (see its
@@ -480,16 +490,6 @@ mmDormandPrince <- function(f, x, t0, t1, h, rtol, atol, clean = NULL)
 #' @returns function(x, rIV, rPE, vmax, km, rD = 0), the derivative of the
 #'   states, rD the zero-order release rates into the oral depots
 #' @keywords internal
-#' The engine's number of states
-#'
-#' The saturable-distribution and enzyme states exist only for a drug that
-#' declares them: carried always, the enzyme's constant 1 kept the adaptive
-#' step from ever finding the system empty (mmDormandPrince()), and a year of
-#' phenytoin cost 1.9 s against 1.5.
-#' @keywords internal
-mmStateCount <- function(iDRP, iSD, iE, sd, ai, iMP = iE + 2L, met = NULL)
-  if (!is.null(met)) iMP else if (!is.null(ai)) iE else if (!is.null(sd)) iSD else iDRP
-
 mmDerivative <- function(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, iP,
                          iS, iT, iDRC, iDRP, rb, sc, tb, iSD = iDRP + 1L,
                          iE = iDRP + 2L, sd = NULL, ai = NULL, met = NULL,

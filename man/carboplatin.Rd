@@ -15,11 +15,32 @@ carboplatin(
 )
 }
 \arguments{
-\item{...}{the patient's covariates, as the candidates take them}
+\item{weight}{weight in kg}
+
+\item{height}{height in cm}
+
+\item{age}{age in years}
+
+\item{sex}{sex as a string}
+
+\item{adjustToFFM}{\code{TRUE} (the default) scales the model to the
+patient's fat-free mass as described in the
+\href{https://github.com/StevenLShafer/stanpumpR/blob/master/docs/weight-adjustment.md}{weight-adjustment guide};
+\code{FALSE} reproduces the published size scaling exactly.  Each drug
+file's header says what the switch changes for that model; for cefazolin
+it also sets the weight the creatinine-clearance estimate uses.}
+
+\item{creatinine}{serum creatinine, mg/dL, or NULL for an assumed normal
+value}
+
+\item{pregnant}{is the patient pregnant?  \code{TRUE}, with the creatinine
+blank, raises the creatinine clearance by the rise in filtration of
+pregnancy}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-Duffull 1997 (adults) or Duong 2019 (children with neuroblastoma), chosen by \code{selectModel()}; see \code{R/modelSelection.R}.
+Duffull 1997 (adults), Duong 2019 (children with neuroblastoma) or Peng 1995
+(children), chosen by \code{selectModel()}; see \code{R/modelSelection.R}.
 }

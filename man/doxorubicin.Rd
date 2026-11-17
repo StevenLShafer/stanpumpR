@@ -7,11 +7,28 @@
 doxorubicin(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
 }
 \arguments{
-\item{...}{the patient's covariates, as the candidates take them}
+\item{weight}{weight in kg}
+
+\item{height}{height in cm}
+
+\item{age}{age in years}
+
+\item{sex}{sex as a string}
+
+\item{adjustToFFM}{\code{TRUE} (the default) scales the model to the
+patient's fat-free mass as described in the
+\href{https://github.com/StevenLShafer/stanpumpR/blob/master/docs/weight-adjustment.md}{weight-adjustment guide};
+\code{FALSE} reproduces the published size scaling exactly.  Each drug
+file's header says what the switch changes for that model; for cefazolin
+it also sets the weight the creatinine-clearance estimate uses.}
+
+\item{pregnant}{TRUE in late pregnancy: Janssen 2021's factors}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
 Joerger 2007 (adults), Voller 2015 (children) or Perez-Blanco 2016 (adults
+with NHL), with the doxorubicinol each forms, chosen by
+\code{selectModel()}; see \code{R/modelSelection.R}.
 }

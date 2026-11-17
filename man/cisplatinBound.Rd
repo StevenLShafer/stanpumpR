@@ -4,14 +4,7 @@
 \alias{cisplatinBound}
 \title{Protein-bound platinum after cisplatin (Urien 2004)}
 \usage{
-cisplatinBound(
-  weight,
-  height,
-  age,
-  sex,
-  adjustToFFM = TRUE,
-  creatinine = NULL
-)
+cisplatinBound(weight, height, age, sex, adjustToFFM = TRUE, creatinine = NULL)
 }
 \arguments{
 \item{weight}{weight in kg}

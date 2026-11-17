@@ -48,7 +48,8 @@
 #'   postmenstrual age (\code{postmenstrualAge()}).
 #' @param albumin serum albumin in g/dL, or NULL (the default), in which case
 #'   each model holds its own reference value.  Passed only to the models that
-#'   declare it (methotrexate, methotrexatePediatric).
+#'   declare it (methotrexate, methotrexatePediatric, docetaxel,
+#'   paclitaxelProteinBound).
 #' @param ast serum aspartate aminotransferase in U/L, or NULL (the default),
 #'   in which case each model holds its own reference value.  Passed only to
 #'   the models that declare it (epirubicin).

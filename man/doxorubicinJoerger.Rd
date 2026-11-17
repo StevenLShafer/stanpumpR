@@ -4,7 +4,14 @@
 \alias{doxorubicinJoerger}
 \title{Doxorubicin, intravenous (Joerger 2007)}
 \usage{
-doxorubicinJoerger(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
+doxorubicinJoerger(
+  weight,
+  height,
+  age,
+  sex,
+  adjustToFFM = TRUE,
+  pregnant = FALSE
+)
 }
 \arguments{
 \item{weight}{weight in kg}

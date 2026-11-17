@@ -721,7 +721,7 @@ physiologyDrugs <- function()
 
 #' Ratio of the new hepatic clearance to the old (well-stirred model)
 #'
-#' @param E hepatic extraction ratio at normal flow and capacity, in [0, 1]
+#' @param E hepatic extraction ratio at normal flow and capacity, from 0 to 1
 #' @param flow factor on hepatic blood flow
 #' @param liver factor on hepatic metabolic capacity (intrinsic clearance)
 #' @noRd

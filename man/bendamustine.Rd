@@ -26,5 +26,6 @@ it also sets the weight the creatinine-clearance estimate uses.}
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-Three compartments, no covariates; doses entered as the hydrochloride.  See the header of \code{R/drugs_bendamustine.R}.
+Three compartments, no covariates; doses entered as the hydrochloride.  See
+the header of \code{R/drugs_bendamustine.R}.
 }

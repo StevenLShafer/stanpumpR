@@ -4,7 +4,15 @@
 \alias{docetaxel}
 \title{Docetaxel, intravenous (Bruno 1996)}
 \usage{
-docetaxel(weight, height, age, sex, adjustToFFM = TRUE, albumin = NULL, pregnant = FALSE)
+docetaxel(
+  weight,
+  height,
+  age,
+  sex,
+  adjustToFFM = TRUE,
+  albumin = NULL,
+  pregnant = FALSE
+)
 }
 \arguments{
 \item{weight}{weight in kg}

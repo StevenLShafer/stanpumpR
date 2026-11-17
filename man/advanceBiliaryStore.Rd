@@ -21,8 +21,8 @@ otherwise, as the closed-form engines give}
 }
 \value{
 a data frame of \code{Time}, \code{Cp}, \code{Ce} (NA: no effect site),
-\code{Recovery}, \code{C2}, \code{C3} and \code{Depot} (the drug in the store
-and the gut, still to return), as the other engines return
+\code{Recovery}, \code{C2}, \code{C3} and \code{Depot} (the drug in the store and the gut,
+still to return), as the other engines return
 }
 \description{
 Advance a biliary-store drug, exactly, by matrix exponential

@@ -4,7 +4,14 @@
 \alias{doxorubicinolJoerger}
 \title{Doxorubicinol, the metabolite of doxorubicin (Joerger 2007)}
 \usage{
-doxorubicinolJoerger(weight, height, age, sex, adjustToFFM = TRUE, creatinine = NULL)
+doxorubicinolJoerger(
+  weight,
+  height,
+  age,
+  sex,
+  adjustToFFM = TRUE,
+  creatinine = NULL
+)
 }
 \arguments{
 \item{weight}{weight in kg}
