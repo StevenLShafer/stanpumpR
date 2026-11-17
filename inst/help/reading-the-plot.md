@@ -1,4 +1,4 @@
-Each drug in the dose table gets its own panel, labelled with the drug's name and its concentration units. Panels are stacked, share the time axis, and are coloured with the drug's colour from the library.
+Each drug in the dose table with a dose above 0 gets its own panel, labelled with the drug's name and its concentration units. A drug whose doses are all 0, as the startup menu enters them, is not drawn until one is above 0, and an active metabolite is drawn whenever a drug that forms it is. Panels are stacked, share the time axis, and are coloured with the drug's colour from the library.
 
 ## Plasma and effect site
 

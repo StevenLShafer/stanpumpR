@@ -7,7 +7,8 @@
 ## What it does
 
 1. You upload one pharmacokinetic manuscript (a PDF), and optionally its
-   supplement.
+   supplement, together no larger than 20 MB. Choosing another file in
+   either field discards the one it held.
 2. When you press **Review the paper**, the manuscript is sent to Anthropic's
    Claude, which reads it and returns the model it describes: the structure,
    every parameter with where it was printed, the covariate equations, the
@@ -55,8 +56,10 @@ What follows from it:
   or the connection is lost, while Claude is reading, the review is lost. It
   is not kept for you to collect later. A review made with stanpumpR's own
   key is paid for whether or not you see it.
-- **To keep a review, download it** (**Download the report**). That copy is
-  on your own computer, and it is yours to protect.
+- **To keep a review, download it**, as a web page (**Download the report
+  (HTML)**) or as a Word document (**Download the report (Word)**). The two
+  hold the same report, plots included. That copy is on your own computer,
+  and it is yours to protect.
 
 The two things recorded about a review are described below: a count kept for
 the operator when stanpumpR's own key is used (never the content), and
@@ -75,6 +78,14 @@ reading, and it depends on the paper far more than on its length:
 |---|---|
 | One model, with its tables | about 2 to 4 minutes |
 | Several models (more than one population, drug, enantiomer or endpoint), or a table of each patient's own fit | about 2 to 7 minutes |
+
+**If a review takes more than 10 minutes**, the banner says so and offers a
+choice: keep waiting, or stop and run a **quick review**. A quick review sends
+the same paper to the same Claude model again at a lower effort; it usually
+takes 1 to 4 minutes, reads a paper with one model as fully, but may leave out
+secondary models (other populations, drugs or endpoints) and some of a
+per-patient table's detail, and its report says it is a quick review. The
+stopped review is billed for what Claude had read, and so is the quick one.
 
 **The app waits at most 20 minutes.** A review that takes longer ends with a
 message saying it did not finish, and no review.
@@ -117,10 +128,11 @@ are in it, and prefer the publisher's PDF to a scan.
   nothing to stanpumpR's paper archive or drug library. When a review uses
   stanpumpR's own Anthropic key, the operator is told that a review was made,
   when, its token use, how long it took and whether it succeeded; never its
-  content. stanpumpR's own key makes a limited number of reviews in all;
-  after that, reviews need your own key.
-- You may use your own Anthropic API key instead (**Use your own Anthropic
-  API key**). It is held only in your session, sent only to Anthropic with
+  content. stanpumpR's own key makes 200 reviews a month (the calendar month
+  in UTC), and the Review tab shows how many are left this month; when they
+  are used, reviews need your own key until the month turns.
+- You may use your own Anthropic API key instead (tick **Supply my own
+  key**). It is held only in your session, sent only to Anthropic with
   your review, never saved or logged, and the review is then billed to your
   Anthropic account; nothing about it is reported to the operator.
 - Your manuscript and the model extracted from it may not be used to train

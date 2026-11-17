@@ -432,8 +432,9 @@ So there are two keys:
   for it in the environment variables `STANPUMPR_ANTHROPIC_API_KEY` and
   `ANTHROPIC_API_KEY`, in that order, then `anthropic_api_key` in
   `config.yml`, unless `paper_review_shared_key: false` is set there.
-- **A user's own key**, entered in the tab ("Use your own Anthropic API
-  key"), which wins when it is entered. It is held only in that session's
+- **A user's own key**, entered in the tab (the box **Supply my own key**,
+  which shows the key field in place of the countdown; 2026-11-17), which
+  wins while the box is ticked. It is held only in that session's
   input, sent only to Anthropic in the request header, never stored, logged
   or bookmarked, and the review is then billed to the user's account.
   `paperReviewOwnKey()` accepts only text shaped like a key (`sk-ant-`), so
@@ -457,15 +458,36 @@ mailbox, and the Anthropic Console's usage page for the key, are the running
 totals.
 
 **The limit** (Shafer, 2026-11-10: stop after 200 papers, so that free access
-cannot be used to run up thousands of dollars). Before each review with the
-operator's key, `paperReviewSharedKeyAdmit()` counts the usage emails in the
-mail account's **Sent folder** over IMAP (`[Gmail]/Sent Mail`, searched for the
-subject above, from a background process), which survives restarts and
-redeploys and is shared by every process, and adds the reviews this process
-has started whose email has not yet gone. Past
-`PAPER_REVIEW_SHARED_KEY_LIMIT` (200; `paper_review_shared_key_limit` in
-`config.yml` changes it) the key is not used: the user is asked for their own,
-and that R process offers the key to no new session. A count that cannot be
+cannot be used to run up thousands of dollars; 2026-11-17: **200 a month**,
+with a countdown in the tab). The month is the calendar month in UTC, as the
+Anthropic Console's spend limits reset. Before each review with the
+operator's key, `paperReviewSharedKeyAdmit()` counts the usage emails sent
+since the first of the month in the mail account's **Sent folder** over IMAP
+(`[Gmail]/Sent Mail`, `SEARCH SINCE <1st> SUBJECT <the subject above>`, from a
+background process), which survives restarts and redeploys and is shared by
+every process, and adds the reviews this process has started whose email has
+not yet gone. IMAP's `SINCE` compares the date the server gives each message,
+so a review within hours of midnight UTC at the turn of a month can be
+counted in either month. Past `PAPER_REVIEW_SHARED_KEY_LIMIT` (200 a month;
+`paper_review_shared_key_limit` in `config.yml` changes it) the key is not
+used until the month turns: the user is asked for their own, and that R
+process offers the key to no new session that month.
+
+**The countdown** (Shafer, 2026-11-17). Above the box **Supply my own key**
+the Review tab shows "Reviews left this month: N of 200*", the asterisk
+linking to a note at the foot of the panel: "Dr. Shafer is providing 200
+Single Paper Reviews per month through stanpumpR. However, if someone wants to
+upload many papers, supplying their own Anthropic API key would be welcome."
+Ticking the box hides the countdown and shows the key field; a key typed
+while it is unticked is not used, and with it ticked and no key, nothing is
+sent with the operator's key instead. The countdown is
+`paperReviewSharedKeyRemaining()`: counted only while it is on screen (a
+count logs in to the mail account), reusing a count less than
+`PAPER_REVIEW_COUNT_CACHE_SEC` (60 s) old with this process's later emails
+and reviews in flight added, and counted again after each review. It decides
+nothing; each review is still admitted on a fresh count. With none left the
+tab says when they renew and uploading needs the user's key; a count that
+cannot be read says so and leaves the decision to the admission. A count that cannot be
 read refuses the key too (the limit fails closed), so an IMAP outage means
 users bring their own keys until it passes. Without the mail credentials
 there is no mailbox to count, and the limit holds per R process only. What
@@ -589,7 +611,10 @@ allowed to learn from my models. Claude is allowed to see coarse metadata."
    report (it then leaves the app, on the user's own machine)? The prototype
    offers an HTML download, switched by `paper_review_download` in
    `config.yml` (on by default for local evaluation); nothing is kept
-   server-side either way. (Asked 2026-10-30.)
+   server-side either way. (Asked 2026-10-30.) Shafer asked for a Word
+   version beside it (2026-11-16): **Download the report (Word)**, the same
+   report built from the same tags (`R/paper-review-word.R`), under the same
+   switch.
 6. `[decided]` **Test papers: Shafer supplies them.** "No problem. I've got
    lots of papers for testing." (2026-10-30, relayed by the parent session.)
    For each live test the session asks him for a paper in its own session,
@@ -653,3 +678,28 @@ allowed to learn from my models. Claude is allowed to see coarse metadata."
    `high` kept as the default (`PAPER_REVIEW_MAX_TOKENS`,
    `PAPER_REVIEW_EFFORT` in `R/paper-review-api.R`). Still open: whether to
    offer the user a choice of effort.
+
+   **A quick review when a review is late** (Shafer, 2026-11-13): a review
+   still running after `PAPER_REVIEW_LATE_SEC` (10 minutes; the calibration's
+   slowest at `high` took 7) turns the busy banner into a choice, *Keep
+   waiting* or *Stop and run a quick review*. The quick review stops the
+   full one (the `onJob` hook of `paperReviewExtractAsync()` hands the app a
+   stop function) and sends the same manuscript to the same model at
+   `PAPER_REVIEW_QUICK_EFFORT` (`medium`), and its report carries a banner
+   saying it is a quick review (`review$quick`), even when it found no
+   model. Stopping ends the background process itself, by the ID it wrote
+   (`pidFile`): without a dispatcher `mirai::stop_mirai()` settles the job
+   in the app at once but leaves the process reading the paper, and billed,
+   for up to 20 minutes (measured with mirai 2.7.4; CodeRabbit on PR #720).
+   With stanpumpR's own key, the quick review's place within the 200 is
+   reserved before the full review is stopped, and with none left the full
+   review goes on. For this the
+   manuscript is held in the session, out of the upload slot, until Claude's
+   answer returns (`store$inFlight`), as the help page and the privacy draft
+   already said, rather than dropped the moment it was sent. Not a different
+   model: none other was calibrated, and `low` returned invalid JSON in one
+   review in six. Both reviews are billed and, with the operator's key, both
+   counted toward the 200. Rejected with it: blocking the rest of stanpumpR
+   while a review runs (it runs in the background since 2026-11-10) and an
+   offer made before the review starts, when the user cannot yet know
+   whether theirs will be slow.

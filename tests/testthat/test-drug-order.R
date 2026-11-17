@@ -21,7 +21,7 @@ test_that("the dose table's Drug column lists the drugs alphabetically", {
   dd <- getDrugDefaultsGlobal()
   choices <- doseGridDrugsMessage(dd, sortDrugNames(dd$Drug))$choices
   expect_identical(as.character(choices), sortDrugNames(dd$Drug))
-  expect_identical(head(as.character(choices), 3), c("acenocoumarol", "acetaminophen", "air"))
+  expect_identical(head(as.character(choices), 3), c("acenocoumarol", "acetaminophen", "ACT333679"))
   server <- deparse(body(app_server))
   expect_true(any(grepl("sortDrugNames(visibleDrugNames(", server, fixed = TRUE)))
 })
@@ -38,7 +38,10 @@ test_that("the drug pickers are alphabetical, and a click still finds its drug's
       sex = "male", showThreshold = FALSE, normalization = "none", typical = "Range", logY = FALSE
     )
     startFormatFromInputs(session)
-    doseTable(doseTableInit)
+    # Each drug with a dose above 0, which only are drawn
+    dt <- doseTableInit
+    dt$Dose[dt$Drug != ""] <- "1"
+    doseTable(dt)
     session$flushReact()
 
     # Add a dose and Suggest Dosing offer drugList

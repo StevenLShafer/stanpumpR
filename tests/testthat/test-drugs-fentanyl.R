@@ -1,54 +1,47 @@
-test_that("returns the published parameters with total-body-weight scaling", {
-  weight <- 70
-  height <- 171
-  age <- 50
-  sex <- "male"
-  # The switch off reproduces the pre-fat-free-mass output exactly.
-  actual <- fentanyl(weight, height, age, sex, adjustToFFM = FALSE)
+# Bae J et al., Br J Anaesth 2020;125:976-985, Table 2 (read in full).
 
-  expected <- list(
-    PK = list(
-      default = list(
-        v1 = 12.1,
-        v2 = 35.7,
-        v3 = 224,
-        cl1 = 0.632,
-        cl2 = 2.8,
-        cl3 = 1.55
-      )
-    ),
-    tPeak = 3.6,
-    MEAC = 0.6,
-    typical = 0.72,
-    upperTypical = 1.2,
-    lowerTypical = 0.48,
-    reference = paste0(
-      "Pooled parameter set from five fentanyl studies; the values are printed ",
-      "in none of them. McClain DA, Hug CC. Clin Pharmacol Ther 1980;28:106-114. ",
-      "https://pubmed.ncbi.nlm.nih.gov/7389247/ Scott JC, Stanski DR. ",
-      "J Pharmacol Exp Ther 1987;240:159-166. ",
-      "https://pubmed.ncbi.nlm.nih.gov/3100765/ Hudson RJ et al. ",
-      "Anesthesiology 1986;64:334-338. https://pubmed.ncbi.nlm.nih.gov/3954128/ ",
-      "Varvel JR et al. Anesthesiology 1989;70:928-934. ",
-      "https://pubmed.ncbi.nlm.nih.gov/2729633/ Shafer SL et al. ",
-      "Anesthesiology 1990;73:1091-1102. https://pubmed.ncbi.nlm.nih.gov/2248388/"
-    )
-  )
-  expect_equal_rounded(actual, expected)
+test_that("the reference man gets Table 2's values in both switch positions", {
+  # 70 kg, 170 cm: the pharmacokinetic weight is 70 kg, so every factor is 1
+  expected <- list(v1 = 10.1, v2 = 26.5, v3 = 206,
+                   cl1 = 0.704, cl2 = 2.38, cl3 = 1.49)
+  for (ffm in c(TRUE, FALSE)) {
+    actual <- fentanyl(70, 170, 35, "male", adjustToFFM = ffm)$PK$default
+    expect_equal_rounded(actual[names(expected)], expected)
+  }
 })
 
-test_that("scales to fat-free mass for a 120 kg man", {
-  # 120 kg, 170 cm, 50 y male: FFM 71.09 kg against the 54.48 kg reference, so
-  # volumes x 1.3049067 and clearances x 1.3049067^0.75 = 1.2209126 (worked out
-  # from the Al-Sallami formula by hand, not from the code under test).
-  actual <- fentanyl(120, 170, 50, "male")
-  expected <- list(
-        v1 = 15.78937,
-        v2 = 46.585167,
-        v3 = 292.29909,
-        cl1 = 0.77161678,
-        cl2 = 3.4185553,
-        cl3 = 1.8924146
-  )
-  expect_equal_rounded(actual$PK$default[names(expected)], expected)
+test_that("volumes scale as (WT/70)^1.23 and clearances as (WT/70)^0.313", {
+  x <- fentanyl(100, 175, 50, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(x$v1,  10.1  * (100 / 70)^1.23)
+  expect_equal(x$v3,  206   * (100 / 70)^1.23)
+  expect_equal(x$cl1, 0.704 * (100 / 70)^0.313)
+  expect_equal(x$cl3, 1.49  * (100 / 70)^0.313)
+})
+
+test_that("the switch on evaluates the weight terms at the pharmacokinetic weight", {
+  # 120 kg, 170 cm, 50 y man: pharmacokinetic weight 70 x FFM / 54.48 kg
+  w <- pkSizeFactors(120, 170, 50, "male")$pkWeight
+  x <- fentanyl(120, 170, 50, "male")$PK$default
+  expect_equal(x$v1,  10.1  * (w / 70)^1.23)
+  expect_equal(x$cl1, 0.704 * (w / 70)^0.313)
+  expect_lt(w, 120)
+  # A woman of the same weight has a lower pharmacokinetic weight
+  expect_lt(fentanyl(70, 170, 35, "female")$PK$default$v1, 10.1)
+})
+
+test_that("the effect site, MEAC and band are unchanged", {
+  x <- fentanyl(70, 170, 35, "male")
+  expect_equal(x$tPeak, 3.6)
+  expect_equal(x$MEAC, 0.6)
+  expect_equal(c(x$lowerTypical, x$typical, x$upperTypical), c(0.48, 0.72, 1.2))
+  expect_match(x$reference, "Bae J et al., Br J Anaesth 2020")
+})
+
+test_that("the model stays finite at the Patient Profile's extremes", {
+  for (p in list(c(0.5, 40, 0), c(300, 220, 90), c(3, 50, 0.1))) {
+    for (s in c("male", "female")) for (ffm in c(TRUE, FALSE)) {
+      x <- unlist(fentanyl(p[1], p[2], p[3], s, adjustToFFM = ffm)$PK$default)
+      expect_true(all(is.finite(x) & x > 0))
+    }
+  }
 })

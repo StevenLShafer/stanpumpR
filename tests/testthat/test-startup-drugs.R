@@ -10,8 +10,14 @@ test_that("every drug that can be dosed has a category the menu knows", {
   # and ventilation, which the gas rules add themselves
   notOffered <- c("desmetramadol", "desethylamiodarone", "hydroxybupropion", "norfluoxetine",
                   "desvenlafaxine", "salicylate", "hydroxyrisperidone", "dehydroaripiprazole",
-                  "enalaprilat", "MEGX", "norpethidine", "PPX",
+                  "enalaprilat", "doxorubicinol", "doxorubicinolPediatric", "doxorubicinolPerezBlanco",
+                  "irinotecanSN38", "cisplatinBound", "gemcitabineDFDU", "capecitabine5FU",
+                  "norclozapine", "doxorubicinLiposomalFree", "ACT333679", "M6SUZ",
+                  "aprocitentan", "colistin", "MEGX", "norpethidine", "PPX",
                   "air", "oxygen", "ventilation")
+  # and the candidate models of a drug whose model the program chooses
+  # (R/modelSelection.R), offered only through their drug's name
+  notOffered <- c(notOffered, modelCandidates())
   dosed <- setdiff(dd$Drug, notOffered)
   expect_true(all(lengths(dd$Units[match(dosed, dd$Drug)]) > 0))
   expect_true(all(dd$Category[match(dosed, dd$Drug)] %in% DRUG_CATEGORIES))
@@ -35,15 +41,15 @@ test_that("the menu lists the categories in order, each sorted by name", {
   expect_identical(choices[["Oral analgesics"]],
                    c("acetaminophen", "celecoxib", "diclofenac", "diclofenacEC",
                      "gabapentin", "ibuprofen", "ketorolac", "meloxicam", "naproxen",
-                     "pregabalin"))
+                     "pregabalin", "suzetrigine"))
   expect_identical(choices[["Hypnotics and sedatives"]],
                    c("alprazolam", "clonazepam", "dexmedetomidine", "diazepam", "etomidate",
                      "ketamine", "lorazepam", "midazolam", "propofol",
                      "remimazolam", "temazepam", "zolpidem"))
   expect_identical(choices[["Antidepressants"]],
-                   c("bupropion", "citalopram", "duloxetine", "escitalopram",
-                     "fluoxetine", "mirtazapine", "paroxetine", "sertraline",
-                     "venlafaxine"))
+                   c("amitriptyline", "bupropion", "citalopram", "duloxetine", "escitalopram",
+                     "fluoxetine", "mirtazapine", "nortriptyline", "paroxetine",
+                     "sertraline", "venlafaxine"))
   expect_true(all(STARTUP_DRUGS_DEFAULT %in% unlist(choices)))
   expect_false(any(c("desmetramadol", "desethylamiodarone", "hydroxybupropion", "norfluoxetine", "desvenlafaxine",
                      "air", "oxygen", "ventilation") %in% unlist(choices)))

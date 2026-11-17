@@ -58,8 +58,9 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     stop("A continuous RA infusion (mg/hr RA) cannot yet be combined with a ",
          "clinical event that changes the PK.")
 
-  # The PK set in force at time t: the last event at or before it.
-  eventAt <- function(t) events$Event[utils::tail(which(events$Time <= t), 1)]
+  # The PK set in force at time t: the last event at or before it
+  # (pkEventIndex()).
+  eventIndexAt <- function(t) pkEventIndex(t, events$Time)
   pkField <- function(set, name) {
     x <- set[[name]]
     if (is.null(x) || is.na(x)) 0 else x
@@ -72,10 +73,11 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     if (pkField(set, paste0("ka_", r)) <= 0) set <- pkSets[[PK_EVENT_DEFAULT]]
     pkField(set, paste0("tlag_", r))
   }
+  givenEvent <- eventIndexAt(givenAt)
   for (r in routes)
   {
     for (k in which(dose[[r]]))
-      dose$Time[k] <- dose$Time[k] + lagOf(pkSets[[eventAt(givenAt[k])]], r)
+      dose$Time[k] <- dose$Time[k] + lagOf(pkSets[[events$Event[givenEvent[k]]]], r)
   }
 
   # Create timeline
@@ -113,9 +115,8 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   for (r in routes) depotLine[, r] <- inputs[[r]]
 
   # The PK set in force at each point: the last event at or before it, as
-  # eventAt() reads it, for every point at once.
-  eventIndex <- integer(L)
-  for (j in seq_len(nrow(events))) eventIndex[timeLine >= events$Time[j]] <- j
+  # the dose lags above read it.
+  eventIndex <- eventIndexAt(timeLine)
   pkLine <- events$Event[eventIndex]
 
   # Set up time varying parameters
@@ -158,31 +159,54 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   # without a peripheral compartment (k21 = 0, which made v2 here 0/0 when it
   # shared a run with one that had one) needs no volume for it.
 
-  v1  <- parameters[pkLine,"v1"]
-  k10 <- parameters[pkLine,"k10"]
-  k12 <- parameters[pkLine,"k12"]
-  k13 <- parameters[pkLine,"k13"]
-  k21 <- parameters[pkLine,"k21"]
-  k31 <- parameters[pkLine,"k31"]
-  ke0 <- parameters[pkLine,"ke0"]
-  k   <- parameters[pkLine,"k"]
-  lambda_1   <- parameters[pkLine, "lambda_1"]
-  lambda_2   <- parameters[pkLine, "lambda_2"]
-  lambda_3   <- parameters[pkLine, "lambda_3"]
+  # The parameters by the row of their set, for the sets named by a vector of
+  # event names.  Read by row number rather than by name: indexing a data
+  # frame by row name runs pmatch() over every row for every point of the
+  # time line, which with thousands of PK segments (the antiseizure
+  # interactions) was a large share of the run.  The row is the one the name
+  # indexed (an exact match, as pmatch() finds first; pmatch() itself for a
+  # name with none), so the values are the same doubles.
+  parameterRows <- rownames(parameters)
+  rowsOf <- function(names) {
+    r <- match(names, parameterRows)
+    missing <- is.na(r)
+    if (any(missing)) r[missing] <- pmatch(names[missing], parameterRows,
+                                           duplicates.ok = TRUE)
+    r
+  }
+  # One set's parameters as a list, as as.list(parameters[name, ]) gives them
+  pkRow <- function(name) {
+    r <- rowsOf(name)
+    lapply(parameters, function(column) column[r])
+  }
+  pkRows <- rowsOf(pkLine)
+  at <- function(name, rows) parameters[[name]][rows]
 
-  p_coef_bolus_l1   <- parameters[pkLine, "p_coef_bolus_l1"]
-  p_coef_bolus_l2   <- parameters[pkLine, "p_coef_bolus_l2"]
-  p_coef_bolus_l3   <- parameters[pkLine, "p_coef_bolus_l3"]
+  v1  <- at("v1", pkRows)
+  k10 <- at("k10", pkRows)
+  k12 <- at("k12", pkRows)
+  k13 <- at("k13", pkRows)
+  k21 <- at("k21", pkRows)
+  k31 <- at("k31", pkRows)
+  ke0 <- at("ke0", pkRows)
+  k   <- at("k", pkRows)
+  lambda_1   <- at("lambda_1", pkRows)
+  lambda_2   <- at("lambda_2", pkRows)
+  lambda_3   <- at("lambda_3", pkRows)
+
+  p_coef_bolus_l1   <- at("p_coef_bolus_l1", pkRows)
+  p_coef_bolus_l2   <- at("p_coef_bolus_l2", pkRows)
+  p_coef_bolus_l3   <- at("p_coef_bolus_l3", pkRows)
 
 
-  infusionpkLine <- c(pkLine[1],pkLine[1:(L-1)]) # the prior parameters are used to move the infusion forward
-  p_coef_infusion_l1   <- parameters[infusionpkLine, "p_coef_infusion_l1"]
-  p_coef_infusion_l2   <- parameters[infusionpkLine, "p_coef_infusion_l2"]
-  p_coef_infusion_l3   <- parameters[infusionpkLine, "p_coef_infusion_l3"]
+  infusionRows <- c(pkRows[1], pkRows[1:(L-1)]) # the prior parameters are used to move the infusion forward
+  p_coef_infusion_l1   <- at("p_coef_infusion_l1", infusionRows)
+  p_coef_infusion_l2   <- at("p_coef_infusion_l2", infusionRows)
+  p_coef_infusion_l3   <- at("p_coef_infusion_l3", infusionRows)
 
   # Vectorize calculations.  The decay over the step INTO a point is that of
   # the PK set in force over the step, the same set the infusion and depot
-  # increments use (infusionpkLine).  It used to be the set in force AT the
+  # increments use (infusionRows).  It used to be the set in force AT the
   # point, which for the 0.01-minute step into an event decayed states still
   # in the old set's coordinates with the new set's eigenvalues, an error of
   # about 2e-4 that convertState() then carried for the rest of the run.
@@ -192,9 +216,9 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   # p_coef_bolus / lambda scaled by the new (1 - exp(-lambda dt)) infused 165
   # times the drug over that step and left plasma 2.4% high; see
   # tests/testthat/test-convertState.R.
-  l1_dt <- exp(-parameters[infusionpkLine, "lambda_1"] * dt)
-  l2_dt <- exp(-parameters[infusionpkLine, "lambda_2"] * dt)
-  l3_dt <- exp(-parameters[infusionpkLine, "lambda_3"] * dt)
+  l1_dt <- exp(-at("lambda_1", infusionRows) * dt)
+  l2_dt <- exp(-at("lambda_2", infusionRows) * dt)
+  l3_dt <- exp(-at("lambda_3", infusionRows) * dt)
 
   p_bolus_l1 <- p_coef_bolus_l1 * bolusLine
   p_bolus_l2 <- p_coef_bolus_l2 * bolusLine
@@ -206,14 +230,14 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
 
   # The depots, and what each delivers to the central compartment over each
   # step; see the header.  Like an infusion, the step INTO point i runs on the
-  # PK set in force before it (infusionpkLine), whose state coordinates the
+  # PK set in force before it (infusionRows), whose state coordinates the
   # increment is expressed in.
   depot <- list()
   for (r in routes)
   {
     if (!any(depotLine[, r] != 0)) next
-    kaStep <- parameters[infusionpkLine, paste0("ka_", r)]
-    bio    <- parameters[pkLine, paste0("bioavailability_", r)]
+    kaStep <- at(paste0("ka_", r), infusionRows)
+    bio    <- at(paste0("bioavailability_", r), pkRows)
     G <- rep(0, L)
     G[1] <- bio[1] * depotLine[1, r]
     for (i in seq_len(L)[-1])
@@ -221,8 +245,8 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     Gstart <- c(0, G[-L])
     for (j in 1:3)
     {
-      b   <- parameters[infusionpkLine, paste0("p_coef_bolus_l", j)]
-      lam <- parameters[infusionpkLine, paste0("lambda_", j)]
+      b   <- at(paste0("p_coef_bolus_l", j), infusionRows)
+      lam <- at(paste0("lambda_", j), infusionRows)
       inc <- b * depotInput(lam, kaStep, Gstart, dt)
       if (j == 1) p_infusion_l1 <- p_infusion_l1 + inc
       if (j == 2) p_infusion_l2 <- p_infusion_l2 + inc
@@ -233,13 +257,38 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
 
   p_state_l1 <- p_state_l2 <- p_state_l3 <- rep(0, L)
 
+  # The points of each event's segment, from its start to the next event's,
+  # both included, and the point of the next event itself: a range of the
+  # (strictly increasing) time line, found by findInterval() rather than a
+  # pass over the whole line for every event; the same points as the which()
+  # it replaced, which is kept for a line that is not strictly increasing.
+  ordered <- !is.unsorted(timeLine, strictly = TRUE)
+  if (ordered) {
+    # Every segment's first point (the first at or after its event) and last
+    # (the last at or before the next event), in one pass
+    segmentFirst <- findInterval(events$Time, timeLine, left.open = TRUE) + 1L
+    segmentLast  <- findInterval(events$Time, timeLine)
+  }
+  segmentPoints <- function(i) {
+    if (!ordered)
+      return(which(timeLine >= events$Time[i] & timeLine <= events$Time[i + 1]))
+    lo <- segmentFirst[i]
+    hi <- segmentLast[i + 1]
+    if (lo <= hi) lo:hi else integer(0)
+  }
+  pointAt <- function(i) {
+    if (!ordered) return(which(timeLine == events$Time[i]))
+    j <- segmentLast[i]
+    if (j >= 1L && timeLine[j] == events$Time[i]) j else integer(0)
+  }
+
   for (i in 1:(nrow(events)-1))
   {
-    times <- which(timeLine >= events$Time[i] & timeLine <= events$Time[i+1])
+    times <- segmentPoints(i)
     p_state_l1[times] <- advanceState(l1_dt[times], p_bolus_l1[times], p_infusion_l1[times], p_state_l1[times[1]],length(times))
     p_state_l2[times] <- advanceState(l2_dt[times], p_bolus_l2[times], p_infusion_l2[times], p_state_l2[times[1]],length(times))
     p_state_l3[times] <- advanceState(l3_dt[times], p_bolus_l3[times], p_infusion_l3[times], p_state_l3[times[1]],length(times))
-    now <- which(timeLine == events$Time[i+1])
+    now <- pointAt(i + 1)
     if (now < L)
     {
       # Reverse Bolus Dose (It will go in when the next PK starts)
@@ -248,8 +297,8 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
       p_state_l3[now] <- p_state_l3[now] - p_bolus_l3[now]
 
       # Convert state variables
-      oldPK <- as.list(parameters[events$Event[i],])
-      newPK <- as.list(parameters[events$Event[i+1],])
+      oldPK <- pkRow(events$Event[i])
+      newPK <- pkRow(events$Event[i+1])
       oldState <- c(p_state_l1[now], p_state_l2[now], p_state_l3[now])
       newState <- convertState(oldState, oldPK, newPK)
 
@@ -289,7 +338,7 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   # it; see the same guard in advanceClosedForm0().
   hasCe <- any(ke0 > 0)
   Ce <- if (hasCe) {
-    calculateCe(Cp, parameters[infusionpkLine, "ke0"], dt, L)
+    calculateCe(Cp, at("ke0", infusionRows), dt, L)
   } else {
     rep(NA_real_, L)
   }
@@ -338,7 +387,7 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     b   <- cbind(p_coef_bolus_l1, p_coef_bolus_l2, p_coef_bolus_l3)
     for (r in names(depot))
     {
-      ka <- parameters[pkLine, paste0("ka_", r)]
+      ka <- at(paste0("ka_", r), pkRows)
       # A sum of exponentials cannot carry lambda_i == ka, or ke0 == ka, exactly
       # (the term is then t exp(-ka t)); a relative nudge of 1e-6 moves the
       # answer by far less than anything plotted.
@@ -389,6 +438,32 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   )
   attr(results, "recoveryStates") <- recoveryStates
   return(results)
+}
+
+
+#' The event in force at each time
+#'
+#' The row of `eventTimes` in force at each of `times`: of the rows at or
+#' before it, the one of largest index (the last entered wins a tie), or 0
+#' when there is none, which is what \code{advanceClosedForm1()} always read
+#' (a which() over the events for every dose, and a pass over the time line
+#' for every event).  Found for every time at once: an antiseizure
+#' interaction's thousands of PK segments paid for those in the product of
+#' the segments and the points (Carbon's fourth UI audit, 2026-11-15, C3).
+#'
+#' @param times the times, minutes
+#' @param eventTimes the events' times, in the event table's order
+#' @returns an integer per time: a row of the event table, or 0
+#' @keywords internal
+pkEventIndex <- function(times, eventTimes)
+{
+  o <- order(eventTimes, na.last = NA)
+  # The largest row among the first k events in order of time
+  latest <- cummax(o)
+  k <- findInterval(times, eventTimes[o])
+  out <- integer(length(times))
+  out[k > 0] <- latest[k[k > 0]]
+  out
 }
 
 

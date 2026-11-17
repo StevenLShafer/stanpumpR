@@ -42,6 +42,19 @@
 //  through the pop-off valve, the agent delivered less the agent held.
 //  Red flows into the lungs, green out of them, as into and out of V1.
 //
+//  The blood, and what drives the uptake (Shafer, 2026-11-17, from GasMan's
+//  display, which shows them): arterial blood is at the end-tidal partial
+//  pressure in the engine; mixed venous blood is the tissues' partial
+//  pressures weighted by their shares of the cardiac output (the run's
+//  `venous`). Uptake is cardiac output x blood:gas coefficient x their
+//  difference, so the two are drawn side by side after the lungs, as bars,
+//  since blood holds no agent in the engine. The readout gives the cardiac
+//  output, the minute and alveolar ventilation and the circuit; the amounts
+//  card the uptake (what the tissues hold, which is all the lungs have given
+//  the blood) and the greenhouse effect of the agent delivered, all of which
+//  reaches the atmosphere, through the pop-off valve now or breathed out after
+//  the case (R/gasGreenhouse.R: Sulbaek Andersen 2012's 100-year GWP).
+//
 //  The 2D view came first (Shafer, 2026-11-09: "Start with the 2D model");
 //  the 3D view draws the same run in gas3d.js.
 // ═══════════════════════════════════════════════════════════════
@@ -51,7 +64,13 @@ const GAS_KEYS = ['circuit', 'lungs', 'vrg', 'mg', 'fg'];
 const GAS_NAMES = { circuit: 'Circuit', lungs: 'Lungs', vrg: 'VRG', mg: 'Muscle', fg: 'Fat' };
 const GAS_LONG = { circuit: 'Circuit (inspired)', lungs: 'Lungs (end-tidal)', vrg: 'Vessel-rich group (effect site)',
                    mg: 'Muscle group', fg: 'Fat group' };
-const GAS_CIRCUIT_W = 22;        // px: the ideal circuit, which holds no agent
+const GAS_CIRCUIT_W = 22;        // px: the ideal circuit, which holds no agent, and each blood bar
+// The blood: arterial (at end-tidal) and mixed venous, neither holding agent.
+const GAS_BLOOD_KEYS = ['art', 'ven'];
+const GAS_BLOOD_NAMES = { art: 'Art', ven: 'Ven' };
+const GAS_BLOOD_COLOURS = { art: '#e0566b', ven: '#8a94f0' };
+const GAS_BLOOD_PAIR_GAP = 40;   // px between the two blood bars: room for their values
+const GAS_CIRCUIT_NAMES = { ideal: 'Ideal circuit', 'semi-closed': 'Semi-closed circuit', open: 'Open circuit' };
 const GAS_TINT = '#d8cdf4';      // the vapour's colour; the effect site is the 2D view's blue
 // px above the boxes: the fresh gas and pop-off arrows and their three
 // labels, clear of the Visualizer's name in the corner (the circuit is the
@@ -91,6 +110,18 @@ function gasRunProblem(r, n) {
     if (r.typical != null && !(Number.isFinite(r.typical) && r.typical >= 0)) return 'typical must be a number of 0 or more.';
     if (r.amountScale != null && !(Number.isFinite(r.amountScale) && r.amountScale > 0)) return 'amountScale must be a number above 0.';
     if (r.circuit != null && !['ideal', 'semi-closed', 'open'].includes(r.circuit)) return 'circuit must be "ideal", "semi-closed" or "open".';
+    // The blood, the cardiac output, the alveolar ventilation and the
+    // greenhouse effect (2026-11-17): optional, so an older run still loads.
+    for (const [k, min] of [['venous', 0], ['alveolarVentilation', 0]])
+        if (r[k] != null) { const q = arr(r[k], k, min); if (q) return q; }
+    if (r.cardiacOutput != null && !(Number.isFinite(r.cardiacOutput) && r.cardiacOutput > 0)) return 'cardiacOutput must be a number above 0.';
+    if (r.greenhouse != null) {
+        const g = r.greenhouse;
+        if (typeof g !== 'object') return 'greenhouse must give gwp100, kgPerLitre, lifetime and carKgPerYear.';
+        for (const k of ['gwp100', 'kgPerLitre', 'lifetime', 'carKgPerYear'])
+            if (!(Number.isFinite(g[k]) && g[k] > 0)) return `greenhouse.${k} must be a number above 0.`;
+        if (g.source != null && (typeof g.source !== 'string' || !/^[^<>&"']{0,80}$/.test(g.source))) return 'greenhouse.source must be short plain text.';
+    }
     return runTextProblem(r);
 }
 
@@ -100,22 +131,37 @@ Object.assign(Player, {
     gasSetup(r) {
         let peak = 0;
         for (const k of GAS_KEYS) for (const x of r.p[k]) if (x > peak) peak = x;
+        if (r.venous) for (const x of r.venous) if (x > peak) peak = x;
         this.tiny = peak * TINY_FRACTION;
         const level = r.typical > 0 ? r.typical : (peak > 0 ? peak / 2 : 1);
         const mag = Math.max(-6, Math.floor(Math.log10(level)));
         // The 3D view's heights (gas3d.js): 6 units for one MAC, or for the
-        // run's highest partial pressure where that is lower (nitrous oxide,
-        // whose MAC is above an atmosphere).
-        const level3d = r.mac > 0 && peak > 0 ? Math.min(r.mac, peak) : level;
+        // highest the glasses must hold where that is lower (nitrous oxide,
+        // whose MAC is above an atmosphere): the partial pressures and the
+        // vaporiser's setting, which the glasses are made tall enough for.
+        // From the partial pressures alone, a brief wash-in through the
+        // semi-closed circuit (0.098% at most in the patient, the vaporiser at
+        // 8%) made the glasses 528 units tall, out of every view (Carbon's
+        // third UI audit, 2026-11-15, M7).
+        let top = peak;
+        for (const x of r.fresh) if (x > top) top = x;
+        const level3d = r.mac > 0 && top > 0 ? Math.min(r.mac, top) : level;
         this.ui = { gas: true, showCe: false, units: this.units, drugRgb: hexRgb(GAS_TINT),
                     ceRgb: hexRgb(FLAT_COLOURS.ce), concDecimals: Math.max(0, 2 - mag), concScale: 6 / level3d };
-        // Vented: the agent delivered less the agent held, at each time.
+        // Vented: the agent delivered less the agent held, at each time. The
+        // pop-off valve lets agent out and never in, so what has gone through
+        // it never falls and is never below 0. Where the run's amounts say
+        // otherwise (agent held that was never delivered: the gas engine with
+        // no fresh gas flow), that is the engine's imbalance, not a flow:
+        // drawn as one, its size taken without its sign, it was a thick arrow
+        // venting 4 mL/min that ran the other way (Carbon's third UI audit,
+        // 2026-11-15, H2). The amounts card then does not add up, as it should not.
         const n = r.t.length;
         this.vented = new Float64Array(n);
         for (let i = 0; i < n; i++) {
             let held = 0;
             for (const k of GAS_KEYS) held += r.capacity[k] * r.p[k][i];
-            this.vented[i] = r.delivered[i] - this.scale * held;
+            this.vented[i] = Math.max(i ? this.vented[i - 1] : 0, r.delivered[i] - this.scale * held);
         }
         // The arrows' scale, for both views: the run's 95th-percentile flow.
         this.ui.gasFlowScale = gasFlowScale(r, T => this.gasStateAt(T));
@@ -141,13 +187,29 @@ Object.assign(Player, {
             into[k] = sc * r.capacity[k] * slope(r.p[k]);
         }
         const blood = into.vrg + into.mg + into.fg;
+        // The blood: arterial at end-tidal, mixed venous from the run.
+        let venous = null;
+        if (r.venous) { const x = Math.max(0, lerp(r.venous)); venous = x < this.tiny ? 0 : x; }
+        const delivered = lerp(r.delivered);
+        // The greenhouse effect: kg of CO2 equivalent in the agent delivered,
+        // and at the rate the fresh gas brings it now (mL/min to kg/h).
+        const g = r.greenhouse, kgCO2e = mL => mL / 1000 * g.kgPerLitre * g.gwp100;
+        const freshNow = sc * r.freshFlow[j] * r.fresh[j];
         return {
             t: T, gas: true, p, A, held,
-            delivered: lerp(r.delivered), vented: lerp(this.vented),
+            arterial: p.lungs, venous,
+            // What the tissues hold is all the blood has taken from the lungs
+            // since time 0: the engine's blood holds none and nothing is
+            // metabolised.
+            uptake: A.vrg + A.mg + A.fg,
+            delivered, vented: lerp(this.vented),
+            co2e: g ? kgCO2e(delivered) : null, co2eRate: g ? kgCO2e(freshNow) * 60 : null,
+            cardiacOutput: r.cardiacOutput != null ? r.cardiacOutput : null,
+            alveolarVentilation: r.alveolarVentilation ? r.alveolarVentilation[j] : null,
             fresh: r.fresh[j], freshFlow: r.freshFlow[j], ventilation: r.ventilation[j],
             flow: {
                 // Into the circuit with the fresh gas, mL/min of vapour.
-                fresh: sc * r.freshFlow[j] * r.fresh[j],
+                fresh: freshNow,
                 // From the circuit into the lungs, net of what is breathed out.
                 vent: into.lungs + blood,
                 // Out of the lungs into the blood, and from it into each tissue.
@@ -165,39 +227,75 @@ Object.assign(Player, {
         const p = r.patient || {};
         const pat = [p.weight != null && `${p.weight} kg`, p.height != null && `${p.height} cm`,
                      p.age != null && `${p.age} y`, p.sex].filter(Boolean).join(' · ');
-        const mac = r.mac > 0 ? `<div><span class="k">MAC</span> end-tidal ${(st.p.lungs / r.mac).toFixed(2)} · VRG ${(st.p.vrg / r.mac).toFixed(2)}</div>` : '';
+        const mac = r.mac > 0 ? `<span class="k">MAC</span> end-tidal ${(st.p.lungs / r.mac).toFixed(2)} · VRG ${(st.p.vrg / r.mac).toFixed(2)}` : '';
+        const L = x => escapeHtml(fixedOrSig(x, 1));
+        // The circuit, by name; GasMan's semi-closed circuit with its volume.
+        const circuit = r.circuit ? GAS_CIRCUIT_NAMES[r.circuit] + (r.capacity.circuit > 0 ? `, ${L(r.volume.circuit)} L` : '') : '';
+        // The ventilation row is minute ventilation; the engine takes 30% of
+        // it as dead space, and the rest, the alveolar ventilation, exchanges gas.
+        const va = st.alveolarVentilation != null ? ` (alveolar ${L(st.alveolarVentilation)})` : '';
+        const co = st.cardiacOutput != null ? `<span class="k">Cardiac output</span> ${L(st.cardiacOutput)} L/min` : '';
+        // Arterial blood is at end-tidal in the engine; mixed venous after it.
+        // In the colour of its bar (2D) and its ring on the lungs' glass (3D).
+        const blood = st.venous != null ? ` · <span class="k">Mixed venous</span> <span class="ven">${c(st.venous)}</span>` : '';
+        // As many lines as before the blood and the cardiac output were added
+        // (2026-11-17): a taller card leaves the 3D view's starting view less
+        // room, and the circuit goes in the foot.
         this.$('readout').innerHTML =
             `<div><span class="drug">${escapeHtml(name)}</span>${r.model ? ` <span class="model" title="${escapeHtml(r.model)}">· ${escapeHtml(shortModel(r.model))}</span>` : ''}</div>` +
             `<div class="time">${hms(this.T)}</div>` +
-            `<div><span class="k">Fresh gas</span> ${st.freshFlow.toFixed(1)} L/min at <span class="tgt">${c(st.fresh)}</span> ${u.conc}` +
-            ` · <span class="k">Ventilation</span> ${st.ventilation.toFixed(1)} L/min</div>` +
-            `<div><span class="k">Inspired</span> ${c(st.p.circuit)} · <span class="k">End-tidal</span> ${c(st.p.lungs)} ${u.conc}</div>` +
+            `<div><span class="k">Fresh gas</span> ${L(st.freshFlow)} L/min at <span class="tgt">${c(st.fresh)}</span> ${u.conc}` +
+            ` · <span class="k">Ventilation</span> ${L(st.ventilation)}${va} L/min</div>` +
+            `<div><span class="k">Inspired</span> ${c(st.p.circuit)} · <span class="k">End-tidal</span> ${c(st.p.lungs)}${blood} ${u.conc}</div>` +
             `<div><span class="k">VRG (effect site)</span> <span class="ce">${c(st.p.vrg)}</span> · <span class="k">Muscle</span> ${c(st.p.mg)}` +
-            ` · <span class="k">Fat</span> ${c(st.p.fg)} ${u.conc}</div>` + mac +
+            ` · <span class="k">Fat</span> ${c(st.p.fg)} ${u.conc}</div>` +
+            (mac || co ? `<div>${mac}${mac && co ? ' · ' : ''}${co}</div>` : '') +
             (this.ui.notToScale ? `<div class="scale">Glasses not to scale: the largest capacity is drawn ${SIZE_RATIO_MAX}× the smallest. Heights are partial pressure.</div>` : '') +
-            `<div class="foot">${pat ? escapeHtml(pat) + ' · ' : ''}${escapeHtml(r.source || '')} · <kbd>h</kbd> keys</div>`;
+            `<div class="foot">${pat ? escapeHtml(pat) + ' · ' : ''}${circuit ? escapeHtml(circuit) + ' · ' : ''}${escapeHtml(r.source || '')} · <kbd>h</kbd> keys</div>`;
     },
 
-    // The amounts card: delivered, then in the patient (and the circuit, if it
-    // holds any), then vented, in mL of vapour at one atmosphere.
+    // The amounts card: delivered, then where it is (the circuit, if it holds
+    // any, the lungs, and the uptake, what the tissues have taken from the
+    // blood), then vented, in mL of vapour at one atmosphere; and the
+    // greenhouse effect of the agent delivered.
     gasAmounts(st) {
         const a = x => x.toFixed(1), r = this.run;
         const row = (name, x, sub) => `<tr><td class="k${sub ? ' sub' : ''}">${name}</td><td>${a(x)}</td></tr>`;
-        const inPatient = st.A.lungs + st.A.vrg + st.A.mg + st.A.fg;
         this.$('amounts').innerHTML = `
-          <div class="phead">Amounts <kbd>a</kbd></div>
+          <div class="phead">Amounts, ${escapeHtml(this.units.amount)} of vapour <kbd>a</kbd></div>
           <table class="amounts">
-            <tr><th></th><th>${escapeHtml(this.units.amount)} vapour</th></tr>
             ${row('Delivered (fresh gas)', st.delivered)}
             ${r.capacity.circuit > 0 ? row('In the circuit', st.A.circuit) : ''}
-            ${row('In the patient', inPatient)}
-            ${row('Lungs', st.A.lungs, true)}
+            ${row('In the lungs', st.A.lungs)}
+            ${row('Uptake (tissues)', st.uptake)}
             ${row('VRG', st.A.vrg, true)}
             ${row('Muscle', st.A.mg, true)}
             ${row('Fat', st.A.fg, true)}
             ${row('Vented', st.vented)}
+            ${this.gasGreenhouse(st)}
           </table>`;
         this.$('amounts').classList.toggle('show', this.showAmounts);
+    },
+
+    // The greenhouse effect (R/gasGreenhouse.R), the amounts table's last row:
+    // kg of CO2 equivalent in the agent delivered, all of which reaches the
+    // air, through the pop-off valve now or breathed out after the case (its
+    // tooltip says so, and how long a typical US car takes to emit as much
+    // CO2). One row, with the unit moved from a header row into the heading,
+    // so the card is no taller than before (2026-11-17): a taller one left the
+    // 3D view no starting view with nothing hidden in an 800 x 600 window,
+    // or did not fit beside the readout at all (Cards.fit()). The rate the
+    // fresh gas brings it at now is with the fresh gas: the 2D view's label
+    // of the setting, the 3D view's card over the fresh gas arrow.
+    gasGreenhouse(st) {
+        const g = this.run.greenhouse;
+        if (!g || st.co2e == null) return '';
+        const kg = x => x < 10 ? x.toFixed(2) : x < 100 ? x.toFixed(1) : x.toFixed(0);
+        const car = carTime(st.co2e, g.carKgPerYear);
+        const why = `Greenhouse effect of the agent delivered, kg of CO2 equivalent: ${g.source || ''} (GWP ${g.gwp100}).` +
+                    ` All of it reaches the air, through the pop-off valve now or breathed out after the case.` +
+                    (car ? ` As much CO2 as a typical US car emits in ${car}.` : '');
+        return `<tr class="ghg" title="${escapeHtml(why)}"><td class="k">CO<sub>2</sub>e delivered, kg</td><td>${kg(st.co2e)}</td></tr>`;
     }
 });
 
@@ -225,6 +323,7 @@ Object.assign(Flat, {
         let top = 0;
         const up = v => { for (let i = 0; i < n; i++) if (v[i] > top) top = v[i]; };
         for (const k of GAS_KEYS) up(r.p[k]);
+        if (r.venous) up(r.venous);
         up(r.fresh);
         // The flows' scale, as for a drug: the run's 95th-percentile flow.
         this.scale = { top: niceTop(top > 0 ? top : 1), fMax: ui.gasFlowScale };
@@ -246,7 +345,10 @@ Object.assign(Flat, {
         const gap = Math.max(48, Math.min(FLAT_GAP, Math.round(W * 0.07)));
         const x0 = 70, x1 = W - 40;
         const keys = r.capacity.circuit > 0 ? GAS_KEYS : GAS_KEYS.slice(1);
-        const barW = r.capacity.circuit > 0 ? 0 : GAS_CIRCUIT_W + gap;
+        // The blood's two bars stand between the lungs and the tissues.
+        const blood = st.venous != null;
+        const barW = (r.capacity.circuit > 0 ? 0 : GAS_CIRCUIT_W + gap) +
+                     (blood ? 2 * GAS_CIRCUIT_W + GAS_BLOOD_PAIR_GAP + gap : 0);
         const room = Math.max(keys.length * FLAT_MIN_W, x1 - x0 - 36 - barW - (keys.length - 1) * gap);
         const dv = displayVolumes(keys.map(k => r.capacity[k]));
         const widths = boxWidths(dv.v, room);
@@ -254,7 +356,13 @@ Object.assign(Flat, {
         // The circuit's arrows' heads clear the axis's unit.
         let cursor = x0 + 36;
         if (!(r.capacity.circuit > 0)) { x.circuit = cursor; w.circuit = GAS_CIRCUIT_W; cursor += GAS_CIRCUIT_W + gap; }
-        keys.forEach((k, i) => { x[k] = cursor; w[k] = widths[i]; cursor += widths[i] + gap; });
+        keys.forEach((k, i) => {
+            x[k] = cursor; w[k] = widths[i]; cursor += widths[i] + gap;
+            if (k === 'lungs' && blood) {
+                x.art = cursor; w.art = GAS_CIRCUIT_W; cursor += GAS_CIRCUIT_W + GAS_BLOOD_PAIR_GAP;
+                x.ven = cursor; w.ven = GAS_CIRCUIT_W; cursor += GAS_CIRCUIT_W + gap;
+            }
+        });
         const cx = k => x[k] + w[k] / 2;
         const yOf = c => yBase - Math.min(1, Math.max(0, c / this.scale.top)) * ph;
         const thick = f => Number.isNaN(f) ? 0 : Math.min(FLAT_ARROW_MAX, FLAT_ARROW_MAX * Math.abs(f) / this.scale.fMax);
@@ -301,6 +409,19 @@ Object.assign(Flat, {
             if (!bar) out.push(`<text x="${cx(k)}" y="${yBase + 50}" text-anchor="middle" class="sub">${e(amt(st.A[k]))} ${e(u.amount)}</text>`);
         };
         for (const k of GAS_KEYS) box(k);
+        // The blood: arterial (at end-tidal) and mixed venous, side by side,
+        // so their difference, which with the cardiac output sets the uptake,
+        // is seen. Bars, as the ideal circuit is: blood holds no agent here.
+        if (blood) {
+            for (const k of GAS_BLOOD_KEYS) {
+                const v = k === 'art' ? st.arterial : st.venous, y = yOf(v);
+                out.push(`<rect x="${x[k]}" y="${y}" width="${w[k]}" height="${yBase - y}" fill="${GAS_BLOOD_COLOURS[k]}" fill-opacity="0.85"/>`,
+                         `<rect x="${x[k]}" y="${yTop}" width="${w[k]}" height="${ph}" fill="none" stroke="${FLAT_COLOURS.box}" stroke-dasharray="2 3"/>`,
+                         `<text x="${cx(k)}" y="${yBase + 18}" text-anchor="middle" class="nm">${GAS_BLOOD_NAMES[k]}</text>`,
+                         `<text x="${cx(k)}" y="${valY(y)}" text-anchor="middle" class="val">${e(fmt(v))}</text>`);
+            }
+            out.push(`<text x="${(cx('art') + cx('ven')) / 2}" y="${yTop - 6}" text-anchor="middle" class="sub">blood</text>`);
+        }
         // What each partial pressure is, over its box.
         out.push(`<text x="${cx('lungs')}" y="${yTop - 6}" text-anchor="middle" class="sub">end-tidal</text>`,
                  `<text x="${cx('vrg')}" y="${yTop - 6}" text-anchor="middle" class="sub ce">effect site</text>`);
@@ -323,7 +444,9 @@ Object.assign(Flat, {
         const lx = Math.max(xi + hi / 2, xo + ho / 2) + 8;
         label(lx, yTop - 56, 'start', `Fresh gas ${fIn ? rateTxt(st.flow.fresh) : `0 ${e(u.rate)}`}`, 'in');
         label(lx, yTop - 40, 'start', `Vented ${fOut ? rateTxt(st.flow.vented) : `0 ${e(u.rate)}`}`, 'out');
-        label(lx, yTop - 24, 'start', `${e(st.freshFlow.toFixed(1))} L/min at ${e(fmt(st.fresh))} ${e(u.conc)}`, 'sub');
+        // The setting, and its greenhouse effect at this rate.
+        const ghg = st.co2eRate != null ? ` · ${e(gasCO2eRateText(st))}` : '';
+        label(lx, yTop - 24, 'start', `${e(st.freshFlow.toFixed(1))} L/min at ${e(fmt(st.fresh))} ${e(u.conc)}${ghg}`, 'sub');
 
         // Breathing: the net flow from the circuit into the lungs, along the floor.
         if (flows(st.flow.vent)) {
@@ -360,7 +483,7 @@ Object.assign(Flat, {
 
         // What the widths and heights are, in the room right of the circuit's
         // labels (about 6 px a character): in full, briefly, or not at all.
-        const free = x1 - (lx + 190);
+        const free = x1 - (lx + (st.co2eRate != null ? 290 : 190));
         const note = [`Widths: capacity (volume × tissue:gas partition)${dv.a < 1 ? `, not to scale (largest ${SIZE_RATIO_MAX}× smallest)` : ''}. Heights: partial pressure.`,
                       `Widths: capacity${dv.a < 1 ? ', not to scale' : ''}`].find(t => t.length * 6 <= free);
         if (note) out.push(`<text x="${x1}" y="${yTop - 40}" text-anchor="end" class="sub">${note}</text>`);
@@ -374,4 +497,29 @@ function arrowVert(out, x, y0, y1, w, colour) {
     const ya = Math.min(y0, y1 - dir * hl), yb = Math.max(y0, y1 - dir * hl);
     out.push(`<rect x="${x - w / 2}" y="${ya}" width="${w}" height="${yb - ya}" fill="${colour}"/>`,
              `<polygon points="${x - hw / 2},${y1 - dir * hl} ${x + hw / 2},${y1 - dir * hl} ${x},${y1}" fill="${colour}"/>`);
+}
+
+// How long a typical US car takes to emit kg of CO2 (carKgPerYear a year), as
+// minutes, hours or days; null for nothing.
+function carTime(kg, carKgPerYear) {
+    if (!(kg > 0) || !(carKgPerYear > 0)) return null;
+    const min = kg / carKgPerYear * 365.25 * 24 * 60;
+    if (min < 1) return '< 1 min';
+    if (min < 120) return `${Math.round(min)} min`;
+    const h = min / 60;
+    if (h < 48) return `${Math.round(h)} h`;
+    const d = h / 24;
+    return `${d < 10 ? d.toFixed(1) : Math.round(d)} days`;
+}
+
+// The greenhouse effect at the rate the fresh gas brings the agent now, kg of
+// CO2 equivalent an hour, and as how many typical US cars emit as much (each
+// carKgPerYear a year, Sulbaek Andersen 2012).
+function gasCO2eRateText(st) {
+    const g = Player.run && Player.run.greenhouse;
+    if (!g || st.co2eRate == null) return '';
+    const kg = fixedOrSig(st.co2eRate, st.co2eRate < 10 ? 2 : 1);
+    const cars = st.co2eRate / (g.carKgPerYear / (365.25 * 24));
+    const n = cars >= 10 ? String(Math.round(cars)) : cars >= 0.05 ? cars.toFixed(1) : null;
+    return `${kg} kg CO₂e an hour` + (n ? `, as ${n} US car${n === '1.0' ? '' : 's'}` : '');
 }

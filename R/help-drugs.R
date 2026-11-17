@@ -283,6 +283,22 @@ helpSaturableTerminalHalfLife <- function(X) {
   } else {
     k12 <- k21 <- 0
   }
+  sd <- mm$saturableDistribution
+  if (!is.null(sd)) {
+    # A saturable distribution compartment (paclitaxel) is, below its Km, a
+    # third compartment entered at Vmax/(Km V1) and left at k21: the slowest
+    # eigenvalue of the three-compartment rate matrix
+    k13 <- sd$vmax / sd$km / v1
+    # its return: first order (k21), or saturable from the store's volume v,
+    # which below Km is the clearance vmax / km over v
+    k31 <- if (is.null(sd[["volume"]])) sd$k21 else sd$vmax / sd$km / sd[["volume"]]
+    A <- matrix(c(-(k10 + k12 + k13), k12, k13,
+                  k21, -k21, 0,
+                  k31, 0, -k31), 3, 3)
+    # (an absent linear compartment, k12 = k21 = 0, adds a spurious zero)
+    rates <- -Re(eigen(A, only.values = TRUE)$values)
+    return(log(2) / min(rates[rates > 1e-12]))
+  }
   if (k12 <= 0 || k21 <= 0) return(log(2) / k10)
   # The slower root of the two-compartment characteristic equation
   s <- k10 + k12 + k21
@@ -429,8 +445,10 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   routes <- c(if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "sublingual",
               if (ROUTE_IM %in% route) "intramuscular", if (ROUTE_IN %in% route) "intranasal",
               if (ROUTE_SC %in% route) "subcutaneous",
+              if (ROUTE_TD %in% route) "transdermal (a patch)",
               if (ROUTE_RA %in% route) "by tissue injection (regional anesthesia)")
-  intravenous <- any(units %in% c(bolusUnits, infusionUnits, calciumUnits, iuUnits, ivPotencyUnits))
+  intravenous <- any(units %in% c(bolusUnits, infusionUnits, calciumUnits, iuUnits, ivPotencyUnits, milliunitRateUnits,
+                      aminophyllineUnits, caffeineCitrateUnits, piperacillinTazobactamUnits))
   tci <- any(units %in% tciUnits)
   given <- if (length(units) == 0) {
     paste0("Not dosed directly: appears only as the active metabolite of ",
@@ -473,6 +491,9 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
       if (length(parents)) paste(vapply(parents, function(p) helpPageLink(paste0("drugs/", p)), character(1)),
                                  collapse = ", ") else esc("Not a modelled metabolite of any drug in the library"),
       esc(if (helpNoBand(row)) "None: no range applies to this model, so no band is drawn"
+          else if (!is.null(mic) && antibioticBandIsTrough(drug))
+            sprintf("%s to %s %s, total drug: a trough range for monitoring, not an MBC band (the recommended range and its source are below)",
+                    helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)
           else if (!is.null(mic)) sprintf("%s to %s %s, free drug at the expected MBC of the common pathogens (see below)",
                                           helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)
           else sprintf("%s to %s %s", helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)),
@@ -798,6 +819,16 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     "renal function. The tables on this page leave the field blank, so they are at the normal creatinine ",
     "assumed for each reference patient's age and sex; a higher creatinine lowers the renal part of the ",
     "clearance. See ", helpPageLink("patient-profile"), ".</p>") else ""
+  # Likewise the serum albumin, tabulated blank: each model's reference.
+  renalHTML <- paste0(renalHTML, if (helpDrugDeclares(drug, "albumin")) paste0(
+    "<p>This model reads the <strong>Serum albumin</strong> field in the Patient Profile. The tables on ",
+    "this page leave the field blank, so they are at the model's reference albumin. See ",
+    helpPageLink("patient-profile"), ".</p>") else "")
+  # And the AST, tabulated blank: the model's reference, a normal AST.
+  renalHTML <- paste0(renalHTML, if (helpDrugDeclares(drug, "ast")) paste0(
+    "<p>This model reads the <strong>Serum AST</strong> field in the Patient Profile. The tables on ",
+    "this page leave the field blank, so they are at the model's reference, a normal AST. See ",
+    helpPageLink("patient-profile"), ".</p>") else "")
 
   # --- Absorption routes -----------------------------------------------------
   absorptionHTML <- ""
@@ -808,6 +839,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     # A subcutaneous drug's absorption rides on the tissue-depot (RA) fields
     # (R/subcutaneous.R), so its rows are named for the route it really has.
     tissue <- if (identical(pkRef$tissueRoute, ROUTE_SC)) "Subcutaneous (SC)" else
+      if (identical(pkRef$tissueRoute, ROUTE_TD)) "Transdermal (TD), release from the skin" else
       "Regional anesthesia (RA)"
     routes <- list(PO = if (secondPO) "Oral (PO), first depot" else "Oral (PO)",
                    PO2 = "Oral (PO), second depot", SL = "Sublingual (SL)",
@@ -899,7 +931,10 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
         if (identical(pkRef$tissueRoute, ROUTE_SC)) paste0(
           "SC is a subcutaneous injection",
           if (any(units %in% insulinRateUnits)) ", or a continuous subcutaneous infusion from an insulin pump (U/hr SC), which feeds the same depot" else "",
-          ". ") else if (any(doseRoute(units) == ROUTE_RA)) paste0(
+          ". ") else if (identical(pkRef$tissueRoute, ROUTE_TD)) paste0(
+          "TD is a transdermal patch, which delivers drug into the skin at a constant rate (mg/day TD) ",
+          "while it is worn; the skin releases it first-order, after the patch is removed as well. ",
+          "Removing the patch is a rate of 0. ") else if (any(doseRoute(units) == ROUTE_RA)) paste0(
           "RA is a local anesthetic injected into tissue (a nerve block or an infiltration)",
           if (any(units %in% raRateUnits)) ", or infused into it through a perineural catheter (mg/hr RA), which feeds the same depot" else "",
           ". ") else "",
@@ -1081,7 +1116,21 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   michaelisHTML <- ""
   mmBinding <- !is.null(modelOut$michaelisMenten$rapidBinding) ||
     !is.null(modelOut$michaelisMenten$targetBinding)
-  if (!is.null(modelOut$michaelisMenten) && mmBinding) {
+  if (!is.null(modelOut$michaelisMenten) &&
+      identical(modelOut$michaelisMenten$rapidBinding$plotted, "unbound")) {
+    # Vincristine in children: a tissue pool (beta-tubulin) fed from the
+    # central amount, the unbound plasma concentration plotted
+    michaelisHTML <- paste0(
+      helpH2("Saturable binding"),
+      "<p>This drug binds a tissue target, filled from the central compartment, whose capacity ",
+      "is small: a large dose saturates it, so the unbound concentration plotted is far higher ",
+      "early on than the dose alone would predict, and as the bound drug is released the terminal ",
+      "phase is longer than the linear compartments give. Elimination and distribution act on ",
+      "the unbound drug, so doses do not add independently, and the drug is simulated by ",
+      "numerical integration of the whole dose table at once. The binding is fast and is held at ",
+      "its equilibrium with the unbound drug. The clearance in the table above is that of the ",
+      "unbound drug. See the model description below.</p>")
+  } else if (!is.null(modelOut$michaelisMenten) && mmBinding) {
     michaelisHTML <- paste0(
       helpH2("Saturable binding"),
       "<p>This drug binds its target, dipeptidyl peptidase-4, in the plasma and the tissues, and ",
@@ -1121,6 +1170,13 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
       out
     })
     mmTab <- do.call(rbind, rowsMM[!vapply(rowsMM, is.null, logical(1))])
+    distributionNote <- if (!is.null(mm$saturableDistribution)) paste0(
+      "<p>Distribution saturates too: the drug passes from the central compartment into a further ",
+      "compartment at a rate that approaches a ceiling as the concentration rises, and returns ",
+      if (is.null(mm$saturableDistribution[["volume"]])) "at first order. That compartment has no volume of its own (it is an amount), so it is not in " else
+        "at a rate that saturates in the same way. That compartment is not in ",
+      "the tables above; the peripheral volume given is the linear compartment's. The terminal ",
+      "half-life below Km includes it.</p>") else ""
     linearNote <- if (isTRUE(mm$clLinear > 0)) paste0(
       "<p>A linear clearance runs in parallel with the saturable one, so the clearance never falls ",
       "below it; the CL1 above is the sum of the two at low concentrations.</p>") else ""
@@ -1166,6 +1222,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
         "central volume AND that peripheral compartment, so it is the half-life the table of ",
         "half-lives above cannot give. At the doses the drug is given it is longer still.</p>",
         linearNote,
+        distributionNote,
         saltNote
       )
     }
@@ -1195,6 +1252,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     eventsHTML,
     if (nzchar(narrative)) paste0(helpH2("About this model"), narrative) else "",
     helpDrugPregnancyHTML(drug),
+    helpDrugFdaLabelHTML(drug),
     helpScenariosUsingDrugHTML(drug),
     helpH2("See also"),
     "<ul>",
@@ -1289,6 +1347,7 @@ helpGasPageHTML <- function(gas, row) {
     propsHTML,
     if (nzchar(narrative)) paste0(helpH2("Notes"), narrative) else "",
     helpDrugPregnancyHTML(gas),
+    helpDrugFdaLabelHTML(gas),
     helpScenariosUsingDrugHTML(gas),
     helpH2("See also"),
     "<ul>",
@@ -1314,19 +1373,21 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
     conc <- helpConcentrationUnits(row$Concentration.Units)
     units <- helpDrugUnits(row)
     given <- if (length(units) == 0) "metabolite only"
-      else if (any(units %in% c(bolusUnits, infusionUnits, calciumUnits, iuUnits, ivPotencyUnits))) {
+      else if (any(units %in% c(bolusUnits, infusionUnits, calciumUnits, iuUnits, ivPotencyUnits, milliunitRateUnits,
+                      aminophyllineUnits, caffeineCitrateUnits, piperacillinTazobactamUnits))) {
         route <- doseRoute(units)
         paste(c("IV", if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "SL",
                 if (ROUTE_IM %in% route) "IM",
                 if (ROUTE_IN %in% route) "IN", if (ROUTE_RA %in% route) "RA",
-                if (ROUTE_SC %in% route) "SC",
+                if (ROUTE_SC %in% route) "SC", if (ROUTE_TD %in% route) "TD",
                 if (any(units %in% tciUnits)) "TCI"), collapse = ", ")
       } else {
         # No intravenous unit: name the routes it does have
         route <- unique(doseRoute(units))
         paste(c(if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "SL",
                 if (ROUTE_IM %in% route) "IM", if (ROUTE_IN %in% route) "IN",
-                if (ROUTE_RA %in% route) "RA", if (ROUTE_SC %in% route) "SC"),
+                if (ROUTE_RA %in% route) "RA", if (ROUTE_SC %in% route) "SC",
+                if (ROUTE_TD %in% route) "TD"),
               collapse = ", ")
       }
     metabolite <- if (is.null(pk$metaboliteName)) "" else
@@ -1399,6 +1460,9 @@ helpRawTableHTML <- function(df, caption = NULL) {
 helpReferencesHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
   patients <- helpReferencePatients()
   iv <- drugDefaults$Drug[!isGasDrug(drugDefaults$Drug)]
+  # A drug whose model the program chooses (R/modelSelection.R) returns its
+  # chosen candidate's citation; each candidate is listed under its own name.
+  iv <- setdiff(iv, names(MODEL_GROUPS))
   cites <- list()
   for (drug in iv) {
     for (i in seq_len(nrow(patients))) {
@@ -1440,9 +1504,29 @@ helpReferencesHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
 #' @returns HTML, or "" for a drug with no MBC rows
 #' @noRd
 helpAntibioticMbcHTML <- function(drug, concUnits) {
+  esc <- htmltools::htmlEscape
+  if (antibioticBandIsTrough(drug)) {
+    tb <- antibioticTroughBands()
+    tb <- tb[tb$Drug == drug, ]
+    return(paste0(
+      helpH2("Shaded band: a trough range, not an MBC"),
+      "<p>Most antibiotics' band marks the expected MBC, the concentration of free drug that kills. ",
+      esc(helpDrugTitle(drug)), " is the exception. ", esc(tb$Reason), "</p>",
+      "<p>Its default band is instead the trough range recommended for monitoring (an edit in the ",
+      "Drug Library changes the band drawn, not this recommendation), ",
+      sprintf("%s to %s %s total drug (typical %s): ", helpFormatNumber(tb$Lower),
+              helpFormatNumber(tb$Upper), esc(concUnits), helpFormatNumber(tb$Typical)),
+      esc(tb$Source), " It is a trough range, drawn against the whole curve.</p>"))
+  }
+  if (drug %in% antibioticNoBands()$Drug) {
+    nb <- antibioticNoBands()
+    return(paste0(
+      helpH2("No shaded band"),
+      "<p>Most antibiotics' band marks the expected MBC, the concentration of free drug that kills. ",
+      esc(helpDrugTitle(drug)), " has none. ", esc(nb$Reason[nb$Drug == drug]), "</p>"))
+  }
   band <- antibioticMbcBand(drug)
   if (is.null(band)) return("")
-  esc <- htmltools::htmlEscape
   mic <- antibioticMic(drug)
   x <- antibioticMbcTable()
   x <- x[x$Drug == drug, ]

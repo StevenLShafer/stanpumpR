@@ -68,6 +68,30 @@ suggest <- function(
   offsetTime <- targets$Time[1]
   targets$Time <- targets$Time - offsetTime
   endTime <- endTime - offsetTime
+  # The events move with the targets: left where they were, a bypass at 70
+  # minutes fell at 70 minutes of the shifted window rather than at 10, and
+  # the regimen was fitted to the PK before bypass (Carbon's third UI audit,
+  # 2026-11-15, H6).  Of the events that change the drug's PK set and fall at
+  # or before the window's start, the last is in force at its start.
+  events <- eventTable
+  if (!is.null(events) && nrow(events) > 0) {
+    events$Time <- as.numeric(events$Time) - offsetTime
+    # In time order, ties in the order entered, as simCpCe() applies them;
+    # so the one in force at the window's start is the last of those at or
+    # before it.  which.max() took the first of two at one time, where the
+    # simulation applies the second (Carbon's fourth UI audit, 2026-11-15,
+    # M7).
+    events <- events[order(events$Time), , drop = FALSE]
+    pkEvent <- gsub(" ", "", events$Event) %in% PK$pkEvents
+    keep <- pkEvent & events$Time > 0
+    before <- which(pkEvent & events$Time <= 0)
+    if (length(before) > 0) {
+      last <- before[length(before)]
+      events$Time[last] <- 0
+      keep[last] <- TRUE
+    }
+    events <- events[keep, , drop = FALSE]
+  }
 
   regimen <- suggestRegimen(targets, endTime, PK)
   outputComments("Structure of the regimen")
@@ -86,7 +110,7 @@ suggest <- function(
   simulateCe <- function(Dose)
   {
     DT <- data.frame(Time = regimen$Time, Dose = Dose, Units = regimen$Units)
-    wide <- simCpCe(DT, eventTable, PK, endTime, plotRecovery = FALSE)$wide
+    wide <- simCpCe(DT, events, PK, endTime, plotRecovery = FALSE)$wide
     stats::approx(wide$Time, wide$"Effect Site", xout = readTimes, rule = 2)$y
   }
 
@@ -287,8 +311,10 @@ suggestUnitsSupported <- function(bolusUnits, infusionUnits)
 {
   units <- c(as.character(bolusUnits), as.character(infusionUnits))
   if (length(units) != 2 || any(is.na(units) | !nzchar(units))) return(FALSE)
-  # Told apart as simCpCe() tells them apart: a rate is per minute or per hour
-  rate <- grepl("min|hr", units)
+  # Told apart as simCpCe() tells them apart (isRateUnit(): a rate is per
+  # minute, hour or day), not by substring, which reads "mg/kg aminophylline"
+  # as a rate because the salt's name contains "min"
+  rate <- isRateUnit(units)
   all(doseRoute(units) == ROUTE_IV) && !rate[1] && rate[2]
 }
 
@@ -313,13 +339,21 @@ drugHasEffectSite <- memoise::memoise(function(drug)
 
 # The drugs the Suggest Dosing dialog offers, in library order: not a gas, and
 # a supported pair of units and an effect site as suggestSupported() requires.
+# Both units must be among the drug's own, the ones the dose grid accepts for
+# it: atropine and propranolol, given only as boluses, carry an infusion unit
+# of mg/hr in the library, and the suggested regimen's infusion rows lost
+# their units at the next edit of the grid, which blanks a unit the drug does
+# not take (found checking Carbon's second UI audit, 2026-11-15, F7).
 suggestDrugChoices <- function(drugDefaults = getDrugDefaultsGlobal())
 {
   keep <- vapply(seq_len(nrow(drugDefaults)), function(i)
   {
     drug <- drugDefaults$Drug[i]
+    bolus <- as.character(drugDefaults$Bolus.Units[i])
+    infusion <- as.character(drugDefaults$Infusion.Units[i])
     !isGasDrug(drug) &&
-      suggestUnitsSupported(drugDefaults$Bolus.Units[i], drugDefaults$Infusion.Units[i]) &&
+      suggestUnitsSupported(bolus, infusion) &&
+      all(c(bolus, infusion) %in% unlist(drugDefaults$Units[i])) &&
       drugHasEffectSite(drug)
   }, logical(1))
   drugDefaults$Drug[keep]

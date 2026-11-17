@@ -320,3 +320,21 @@ egfrMDRD <- function(age, sex, scr = adultCreatinine(sex))
   age <- max(age, ADULT_AGE_TERM_FLOOR)
   175 * scr^(-1.154) * age^(-0.203) * (if (sex == SEX_FEMALE) 0.742 else 1)
 }
+
+#' Japanese estimated glomerular filtration rate (Matsuo 2009)
+#'
+#' `194 x SCr^-1.094 x age^-0.287 (x 0.739 in women)`, in mL/min/1.73 m^2,
+#' the Japanese Society of Nephrology's equation (Matsuo S et al., Am J
+#' Kidney Dis 2009;53:982-992), with an enzymatic serum creatinine in mg/dL.
+#' Read by flecainide (Doki 2012), whose model was fitted with it.  The age
+#' term is a negative power, so the age it sees is floored at
+#' `ADULT_AGE_TERM_FLOOR` (18), as `egfrMDRD()` does.
+#'
+#' @inheritParams creatinineClearanceCG
+#' @return eGFR in mL/min/1.73 m^2
+#' @keywords internal
+egfrMatsuo <- function(age, sex, scr = adultCreatinine(sex))
+{
+  age <- max(age, ADULT_AGE_TERM_FLOOR)
+  194 * scr^(-1.094) * age^(-0.287) * (if (sex == SEX_FEMALE) 0.739 else 1)
+}

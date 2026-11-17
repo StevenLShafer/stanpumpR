@@ -31,7 +31,9 @@ showIntroModal <- function() {
 checkNumericCovariates <- function(age, weight, height, errorFx = NULL,
                                    osmolality = OSMOLALITY_DEFAULT,
                                    creatinine = NULL,
-                                   gestationalAge = NULL) {
+                                   gestationalAge = NULL,
+                                   albumin = NULL,
+                                   ast = NULL) {
   msg <- ""
   success <- TRUE
   if (!is_valid_number(age, MIN_AGE, MAX_AGE)) {
@@ -65,6 +67,21 @@ checkNumericCovariates <- function(age, weight, height, errorFx = NULL,
         !(is.numeric(gestationalAge) && is.nan(gestationalAge))) &&
       !is_valid_number(gestationalAge, MIN_GESTATIONAL_AGE, MAX_GESTATIONAL_AGE)) {
     msg <- glue::glue("Gestational age at birth must be between {MIN_GESTATIONAL_AGE} and {MAX_GESTATIONAL_AGE} weeks, or left blank")
+    success <- FALSE
+  }
+  # Optional in the same way: blank means each model's reference albumin.
+  if (!is.null(albumin) &&
+      !(length(albumin) == 1 && is.na(albumin) &&
+        !(is.numeric(albumin) && is.nan(albumin))) &&
+      !is_valid_number(albumin, MIN_ALBUMIN, MAX_ALBUMIN)) {
+    msg <- glue::glue("Serum albumin must be between {MIN_ALBUMIN} and {MAX_ALBUMIN} g/dL, or left blank")
+    success <- FALSE
+  }
+  # And the AST: blank means each model's reference.
+  if (!is.null(ast) &&
+      !(length(ast) == 1 && is.na(ast) && !(is.numeric(ast) && is.nan(ast))) &&
+      !is_valid_number(ast, MIN_AST, MAX_AST)) {
+    msg <- glue::glue("Serum AST must be between {MIN_AST} and {MAX_AST} U/L, or left blank")
     success <- FALSE
   }
 
@@ -120,7 +137,30 @@ withDebugQuery <- function(url, level, default = DEBUG_LEVEL_OFF) {
 # is not a number -- "?debug=abc", "?debug=" -- is `default`; a number past
 # either end is that end.
 debugLevel <- function(x, default = DEBUG_LEVEL_OFF) {
-  level <- suppressWarnings(as.numeric(x))
+  level <- asScalarNumeric(x)
   if (length(level) != 1 || !is.finite(level)) return(default)
   min(max(round(level), DEBUG_LEVEL_OFF), DEBUG_LEVEL_VERBOSE)
+}
+
+# A plot click or hover as Shiny's plot sends it, reduced to what the app
+# reads: one time `x` (minutes) and one panel `panelvar1`.  Anything else is
+# no event, NULL: read as it came, a click with no panel ("if (yaxis ==
+# ...)" on character(0)) ended the session (Carbon's UI audit, 2026-11-14,
+# F6A).
+plotEvent <- function(e) {
+  if (!is.list(e)) return(NULL)
+  x <- asScalarNumeric(e$x)
+  panel <- asScalarString(e$panelvar1)
+  if (!is.finite(x) || !nzchar(panel)) return(NULL)
+  list(x = x, panelvar1 = panel)
+}
+
+# Is `x` what imgDrugTime() returns for a click on a panel: a list naming one
+# drug (or added plot) and one time?  Before any click, and for a click that
+# was no click (plotEvent()), it is not.  DrugTimeUnits() holds the last one,
+# and the Edit doses dialog's buttons read its drug: from the "" it starts as,
+# "$drug" ended the session (Carbon's UI audit, 2026-11-14, F6B).
+isPlotTarget <- function(x) {
+  is.list(x) && is.character(x$drug) && length(x$drug) == 1 && !is.na(x$drug) &&
+    nzchar(x$drug) && is_valid_number(x$time)
 }

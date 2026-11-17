@@ -158,6 +158,17 @@ test_that("ensureGasVentilation: replaces a zero, blank or negative ventilation,
   expect_identical(ensureGasVentilation(mk("6"), weight = 70), mk("6"))
 })
 
+test_that("ensureGasVentilation: the smallest patient is ventilated, not apnoeic", {
+  DT <- data.frame(Drug = c("oxygen", "sevoflurane", ""), Time = c("0", "0", ""),
+                   Dose = c("1", "2", ""), Units = c("L/min", "%", ""), stringsAsFactors = FALSE)
+  out <- ensureGasVentilation(DT, weight = MIN_WEIGHT)
+  vent <- as.numeric(out$Dose[out$Drug == "ventilation"])
+  expect_gt(vent, 0)
+  sim <- simulateGases(cleanDoseTable(out), weight = MIN_WEIGHT, maximum = 30)
+  alv <- sim$results$Y[sim$results$Drug == "sevoflurane" & sim$results$Site == "Alveolar"]
+  expect_gt(utils::tail(alv, 1), 1)
+})
+
 test_that("ensureGasVentilation: with the default in place the gases are actually delivered", {
   DT <- data.frame(
     Drug  = c("nitrousOxide", "oxygen", "air"),

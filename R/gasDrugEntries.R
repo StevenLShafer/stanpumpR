@@ -84,7 +84,8 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
   report <- reportableGases(gasDose)
   if (length(report) == 0) return(list())
 
-  props <- getGasProperties()
+  # At the body's temperature (gasPropertiesAt()), so the band follows MAC.
+  props <- gasPropertiesAt(sim$body$temperature)
   xout  <- seq(from = 0, to = maximum, length.out = RESOLUTION)
   out   <- list()
 
@@ -127,12 +128,13 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
       out[[g]]$compartments <- data.frame(Time = sim$timeLine,
                                           MRG = state[, 4], FG = state[, 5])
       # Every state of the agent (circuit, lungs, VRG, muscle, fat), the body
-      # and circuit they were solved with, and the gas rows, for the
-      # Visualizer's gas run (viewerGasRun() in R/viewerRun.R).  Read by
-      # nothing else.
+      # and circuit they were solved with, the cardiac output and dead space
+      # they ran on, and the gas rows, for the Visualizer's gas run
+      # (viewerGasRun() in R/viewerRun.R).  Read by nothing else.
       if (!is.null(sim$body))
         out[[g]]$gasRun <- list(time = sim$timeLine, state = state, body = sim$body,
                                 circuit = sim$circuit, weight = sim$weight, age = sim$age,
+                                Qco = sim$Qco, deadSpace = sim$deadSpace,
                                 gasDose = gasDose)
     }
   }

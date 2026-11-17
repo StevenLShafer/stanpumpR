@@ -105,16 +105,16 @@ The response (JSON):
   },
   "patient": {
     "weight": 70, "weightUnit": "kg", "height": 170, "heightUnit": "cm",
-    "age": 50, "ageUnit": "years", "sex": "male", "pregnant": false, "adjustToFFM": true,
-    "osmolality": 280, "creatinine": null, "gestationalAge": null,
+    "age": 50, "ageUnit": "years", "sex": "male", "pregnant": false, "pulmonaryHypertension": false, "adjustToFFM": true,
+    "osmolality": 280, "creatinine": null, "gestationalAge": null, "albumin": null, "ast": null,
     "cyp2d6": "normal", "cyp2c19": "normal", "cyp2c9": "*1/*1", "cyp2b6": "normal",
     "vkorc1": "AA", "cyp4f2": "CC", "opioidTolerance": "none"
   },
   "drugs": [
     {
       "Drug": "fentanyl", "Dosed": true, "ConcentrationUnits": "ng/mL", "MEAC": 0.6,
-      "PeakPlasma": 8.264457841, "TimePeakPlasma": 0,
-      "PeakEffectSite": 2.244197188, "TimePeakEffectSite": 3.402395028,
+      "PeakPlasma": 9.900982777, "TimePeakPlasma": 0,
+      "PeakEffectSite": 2.407713106, "TimePeakEffectSite": 3.667123731,
       "RecoveryThreshold": 0.6
     }
   ],
@@ -123,9 +123,9 @@ The response (JSON):
   ],
   "events": [],
   "timeseries": [
-    {"Drug": "fentanyl", "Time": 0,  "Plasma": 8.264457841,  "EffectSite": 0,           "ConcentrationUnits": "ng/mL"},
-    {"Drug": "fentanyl", "Time": 5,  "Plasma": 1.554401881,  "EffectSite": 2.141025469, "ConcentrationUnits": "ng/mL"},
-    {"Drug": "fentanyl", "Time": 10, "Plasma": 0.7994632409, "EffectSite": 1.37732736,  "ConcentrationUnits": "ng/mL"}
+    {"Drug": "fentanyl", "Time": 0,  "Plasma": 9.900982777,  "EffectSite": 0,           "ConcentrationUnits": "ng/mL"},
+    {"Drug": "fentanyl", "Time": 5,  "Plasma": 1.641898948,  "EffectSite": 2.299320861, "ConcentrationUnits": "ng/mL"},
+    {"Drug": "fentanyl", "Time": 10, "Plasma": 0.8582458204, "EffectSite": 1.51788589,  "ConcentrationUnits": "ng/mL"}
   ],
   "warnings": []
 }
@@ -200,12 +200,15 @@ an empty array or an object); anything else is refused (400).
     "sex": "male",           // required: "male" | "female"
     "pregnant": false,       // late-pregnancy kinetics for the drugs that read it (default false);
                              //   true needs sex "female"
+    "pulmonaryHypertension": false, // the PAH population for sildenafil and tadalafil (default false)
     "weightUnit": "kg",      // "kg" (default) | "lb"
     "heightUnit": "cm",      // "cm" (default) | "in"
     "ageUnit": "years",      // "years" (default) | "months"
     "adjustToFFM": true,     // scale each model to fat-free mass (default) rather than total weight
     "creatinine": null,      // serum creatinine, mg/dL; omit or null for the normal value for age and sex
     "gestationalAge": null,  // gestational age at birth, weeks; omit or null for a term birth (neonatal models)
+    "albumin": null,         // serum albumin, g/dL; omit or null for each model's reference (methotrexate)
+    "ast": null,             // serum AST, U/L; omit or null for each model's reference (epirubicin)
     "osmolality": 280,       // baseline serum osmolality, mOsm/kg (read only by mannitol)
     "cyp2d6": "normal",      // poor | intermediate | normal | ultrarapid
     "cyp2c19": "normal",     // poor | intermediate | normal | rapid | ultrarapid
@@ -256,8 +259,11 @@ an empty array or an object); anything else is refused (400).
 | `age` | yes | 0–90 years (after conversion from `months`) |
 | `sex` | yes | `male`, `female` |
 | `pregnant` | no | `false` (default) or `true`, which needs `sex` `female`. Only the drugs with a late-pregnancy model read it. |
+| `pulmonaryHypertension` | no | `false` (default) or `true`: the patient has pulmonary arterial hypertension. Only the drugs given both for PAH and for something else read it, `sildenafil` and `tadalafil`, which then use their PAH population's pharmacokinetics (slower clearance); `false` gives the population of their other use (erectile dysfunction, healthy volunteers). |
 | `creatinine` | no | 0.2–15 mg/dL. If it is omitted, each renally cleared model assumes the normal value for the patient's age and sex. |
 | `gestationalAge` | no | 22–44 weeks, the gestational age at birth. If it is omitted, the birth is taken as at term (40 weeks). Only the neonatal models (`dobutamineNeonatal`) read it, with the age, as the postmenstrual age. |
+| `albumin` | no | 0.5–6 g/dL, the serum albumin. If it is omitted, each model that reads it holds its own reference value. Only the models with an albumin term read it: `methotrexate` (Ibarra 2023, clearance × (albumin/4)^0.594) and `methotrexatePediatric` (Taylor 2023, the severe-hypoalbuminaemia factors on Q2 and Q3 at 2.5 g/dL or less). |
+| `ast` | no | 1–5000 U/L, the serum aspartate aminotransferase. If it is omitted, each model that reads it holds its own reference value (a normal AST, 20 U/L). Only the models with an AST term read it: `epirubicin` (Ralph 2003), whose clearance falls with the logarithm of the AST, the AST held within the 7–815 U/L the study covered. |
 | `osmolality` | no | 200–400 mOsm/kg. The default is 280. |
 | `cyp2d6`, `cyp2c19`, `cyp2c9`, `cyp2b6` | no | The values listed above. The default is the normal phenotype (`*1/*1` for CYP2C9). Only the models that use a phenotype read it. |
 | `vkorc1` | no | The VKORC1 -1639G>A genotype, read by the three vitamin-K antagonists: `warfarin`, `fluindione` and `acenocoumarol`. Unlike the phenotypes above, the default is chosen for sensitivity rather than for frequency: `AA` is the genotype that gives the **largest** INR rise, so that an unentered genotype errs toward underdosing. Pass the patient's own genotype when it is known. |
@@ -272,8 +278,11 @@ be an object of equal-length columns:
 `{"drug": [...], "time": [...], "dose": [...], "units": [...]}`.
 
 - **Drug.** Use the drug's name as it appears in `GET /drugs` (for example
-  `propofol`, `fentanyl`, `remifentanil`).
+  `propofol`, `fentanyl`, `remifentanil`). An active metabolite that cannot
+  be dosed itself (`desmetramadol`, `enalaprilat`, which `GET /drugs` does
+  not list) is refused (400); dose its parent instead.
 - **Units.** Each drug accepts only its own units, which `GET /drugs` lists.
+  Every dose needs one: a missing, empty or `null` unit is refused (400).
   - A **bolus** is a mass (`mg`, `mcg/kg`).
   - An **infusion** is a rate (`mcg/kg/min`, `mg/hr`). It runs until the next
     rate for the same drug. Send a rate of 0 to stop it.
@@ -343,7 +352,7 @@ the request used.
 | Part | Contents |
 |---|---|
 | `meta` | `apiVersion`, `stanpumpRVersion`, `build` (the commit the service was built from, or `null`), `generated` (UTC time stamp), `timeUnit` (`"minutes"`), `duration` (minutes), `grid` (`"requested"` or `"native"`), `antiseizureInteractions` (whether the interactions were applied) |
-| `patient` | The covariates as simulated, after unit conversion and defaults. `creatinine` and `gestationalAge` are `null` when the request left them out: each renal model then assumes the normal serum creatinine for the patient's age and sex (0.9 mg/dL for an adult man, 0.8 for a woman), and the neonatal models a term birth (40 weeks) |
+| `patient` | The covariates as simulated, after unit conversion and defaults. `creatinine`, `gestationalAge`, `albumin` and `ast` are `null` when the request left them out: each renal model then assumes the normal serum creatinine for the patient's age and sex (0.9 mg/dL for an adult man, 0.8 for a woman), the neonatal models a term birth (40 weeks), the albumin models their own reference albumin, and the AST models a normal AST |
 | `drugs` | One row per drug, described below |
 | `doses` | The full dose sequence simulated, described below |
 | `events` | The events, with times in minutes |
@@ -443,7 +452,7 @@ after every dose, but its times differ from drug to drug.
     <drugs><drug Drug="fentanyl" ConcentrationUnits="ng/mL" MEAC="0.6" .../></drugs>
     <doses><dose Drug="fentanyl" Time="0" Dose="100" Units="mcg" Simulated="true"/></doses>
     <events/>
-    <timeseries><point Drug="fentanyl" Time="0" Plasma="8.264457841" EffectSite="0" .../></timeseries>
+    <timeseries><point Drug="fentanyl" Time="0" Plasma="9.900982777" EffectSite="0" .../></timeseries>
     <warnings/>
   </stanpumpR>
   ```

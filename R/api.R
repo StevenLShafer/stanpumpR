@@ -61,7 +61,8 @@ API_MAX_ROWS <- 500000L
 # in silence (apiUnknownFields()).
 API_REQUEST_FIELDS <- c("patient", "doses", "events", "duration", "timeUnit", "options", "output")
 API_PATIENT_FIELDS <- c("weight", "height", "age", "sex", "weightUnit", "heightUnit", "ageUnit",
-                        "creatinine", "gestationalAge", "pregnant", "adjustToFFM", "osmolality",
+                        "creatinine", "gestationalAge", "albumin", "ast", "pregnant", "pulmonaryHypertension", "adjustToFFM",
+                        "osmolality",
                         "cyp2d6", "cyp2c19", "cyp2c9", "cyp2b6", "vkorc1", "cyp4f2",
                         "opioidTolerance")
 API_OUTPUT_FIELDS  <- c("times", "interval", "recovery", "format", "layout")
@@ -296,6 +297,18 @@ apiPatient <- function(patient) {
     gestationalAge <- apiNumber(gestationalAge, "patient.gestationalAge",
                                 MIN_GESTATIONAL_AGE, MAX_GESTATIONAL_AGE)
   }
+  # Read only by the models with an albumin term (methotrexate,
+  # methotrexatePediatric); omitted is each model's reference albumin.
+  albumin <- get("albumin")
+  if (!is.null(albumin)) {
+    albumin <- apiNumber(albumin, "patient.albumin", MIN_ALBUMIN, MAX_ALBUMIN)
+  }
+  # Read only by the models with an AST term (epirubicin); omitted is each
+  # model's reference AST.
+  ast <- get("ast")
+  if (!is.null(ast)) {
+    ast <- apiNumber(ast, "patient.ast", MIN_AST, MAX_AST)
+  }
   sex <- apiChoice(tolower(apiScalar(get("sex"), "patient.sex")), "patient.sex", SEX_VALUES)
   # Read only by the models with a measured change in pregnancy (R/pregnancy.R);
   # getDrugPK() would refuse it for a man, but the request is told why first.
@@ -309,11 +322,17 @@ apiPatient <- function(patient) {
     age         = age,
     sex         = sex,
     pregnant    = pregnant,
+    # Read only by the models of a drug with a separate PAH population
+    # (sildenafil, tadalafil; R/pulmonaryHypertension.R)
+    pulmonaryHypertension = apiFlag(get("pulmonaryHypertension", FALSE),
+                                    "patient.pulmonaryHypertension"),
     adjustToFFM = apiFlag(get("adjustToFFM", TRUE), "patient.adjustToFFM"),
     osmolality  = apiNumber(get("osmolality", OSMOLALITY_DEFAULT), "patient.osmolality",
                             MIN_OSMOLALITY, MAX_OSMOLALITY),
     creatinine  = creatinine,
     gestationalAge = gestationalAge,
+    albumin     = albumin,
+    ast         = ast,
     cyp2d6      = apiChoice(get("cyp2d6", CYP2D6_DEFAULT), "patient.cyp2d6", CYP2D6_VALUES),
     cyp2c19     = apiChoice(get("cyp2c19", CYP2C19_DEFAULT), "patient.cyp2c19", CYP2C19_VALUES),
     cyp2c9      = apiChoice(get("cyp2c9", CYP2C9_DEFAULT), "patient.cyp2c9", CYP2C9_VALUES),
@@ -357,7 +376,19 @@ apiDoses <- function(doses, unit, maximum, allowIllicit,
       apiError("`doses` row ", i, ": ", drug, " is in the '", ILLICIT_DRUG_CATEGORY,
                "' category, an opt-in research model; set options.allowIllicitDrugs to true.")
     }
-    allowed <- drugDefaults$Units[[row]]
+    # A metabolite-only drug's Units are NA, and a unit sent as null reads
+    # as NA, so `NA %in% NA` let enalaprilat or desmetramadol be dosed in no
+    # unit and simulated (Carbon's fourth UI audit, 2026-11-15, H6).
+    allowed <- unlist(drugDefaults$Units[[row]])
+    allowed <- allowed[!is.na(allowed) & nzchar(allowed)]
+    if (length(allowed) == 0) {
+      apiError("`doses` row ", i, ": ", drug, " is formed as a metabolite of another drug and ",
+               "cannot be dosed itself. GET /drugs lists the drugs that can.")
+    }
+    if (is.na(DT$Units[i]) || !nzchar(DT$Units[i])) {
+      apiError("`doses` row ", i, ": `units` is missing. The units of ", drug, " are: ",
+               paste(allowed, collapse = ", "), ".")
+    }
     if (!DT$Units[i] %in% allowed) {
       apiError("`doses` row ", i, ": '", DT$Units[i], "' is not a unit of ", drug,
                ". Its units are: ", paste(allowed, collapse = ", "), ".")
@@ -565,7 +596,10 @@ apiSimulate <- function(request) {
         cyp2b6 = patient$cyp2b6, vkorc1 = patient$vkorc1, cyp4f2 = patient$cyp4f2,
         adjustToFFM = patient$adjustToFFM, osmolality = patient$osmolality,
         creatinine = patient$creatinine, pregnant = patient$pregnant,
+        pulmonaryHypertension = patient$pulmonaryHypertension,
         gestationalAge = patient$gestationalAge,
+        albumin = patient$albumin,
+        ast = patient$ast,
         antiseizureInteractions = asmInteractions,
         opioidTolerance = patient$opioidTolerance),
         # The peaks below are read off each drug's time line, so it must
@@ -658,10 +692,13 @@ apiSimulate <- function(request) {
       age    = patient$age,    ageUnit    = "years",
       sex    = patient$sex,
       pregnant = patient$pregnant,
+      pulmonaryHypertension = patient$pulmonaryHypertension,
       adjustToFFM = patient$adjustToFFM,
       osmolality  = patient$osmolality,
       creatinine  = if (is.null(patient$creatinine)) NA_real_ else patient$creatinine,
       gestationalAge = if (is.null(patient$gestationalAge)) NA_real_ else patient$gestationalAge,
+      albumin = if (is.null(patient$albumin)) NA_real_ else patient$albumin,
+      ast = if (is.null(patient$ast)) NA_real_ else patient$ast,
       cyp2d6 = patient$cyp2d6, cyp2c19 = patient$cyp2c19, cyp2c9 = patient$cyp2c9,
       cyp2b6 = patient$cyp2b6, vkorc1 = patient$vkorc1, cyp4f2 = patient$cyp4f2,
       opioidTolerance = patient$opioidTolerance
@@ -750,6 +787,22 @@ apiXml <- function(result) {
 }
 
 apiCsv <- function(df) {
+  # A text cell a spreadsheet would read as a formula (=, +, -, @, or a tab
+  # or carriage return first) is written after an apostrophe, OWASP's
+  # defence against CSV injection.  No request reaches a text cell today
+  # (Drug and ConcentrationUnits come from the library, the rest are
+  # numbers, which are left alone), so this guards a column added later
+  # (Carbon's third UI audit, 2026-11-15, L1).  Whitespace before the
+  # formula character counts too, since some spreadsheets trim it on import
+  # (Carbon's fourth UI audit, L2), and a cell that begins with any of
+  # tab, carriage return or line feed is quoted whatever follows.
+  text <- vapply(df, function(x) is.character(x) || is.factor(x), logical(1))
+  df[text] <- lapply(df[text], function(x) {
+    x <- as.character(x)
+    risky <- !is.na(x) & grepl("^[[:space:]]*[=+@-]|^[\t\r\n]", x)
+    x[risky] <- paste0("'", x[risky])
+    x
+  })
   con <- textConnection("out", "w", local = TRUE)
   on.exit(close(con))
   utils::write.csv(df, con, row.names = FALSE, na = "")

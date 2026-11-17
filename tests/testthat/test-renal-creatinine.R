@@ -1,7 +1,7 @@
 # The serum creatinine covariate, shared by every model with a renal term.
 # See R/renalFunction.R.
 
-renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex",
+renalDrugs <- c("mannitol", "vancomycin", "vancomycinKidneyTransplant", "gentamicin", "cefazolin", "sugammadex",
                 "gabapentin", "pregabalin", "oxycodone", "hydrocodone", "meloxicam",
                 "lacosamide", "levetiracetam", "metformin", "ertugliflozin", "empagliflozin",
                 "exenatide", "dapagliflozin", "canagliflozin", "lixisenatide",
@@ -18,6 +18,38 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 # fitted no body-size term either, so weight reaches it only
                 # through Cockcroft-Gault.
                 "hydrochlorothiazide",
+                # Carboplatin (Duffull 1997): an adjusted Cockcroft-Gault term
+                # (R/drugs_carboplatin.R)
+                "carboplatin",
+                # methotrexatePediatric (Taylor 2023): the patient's own
+                # creatinine, a power referenced to 40 uM
+                "methotrexatePediatric",
+                # methotrexate (Ibarra 2023): (SCRpop/SCR)^0.694
+                "methotrexate",
+                # pemetrexed (Latz 2006): a linear Cockcroft-Gault term
+                "pemetrexed",
+                # fludarabine (Langenhorst 2019): eGFR (Cockcroft-Gault or Schwartz, the patient's own creatinine) on clearance
+                "fludarabine",
+                # oxaliplatinNikanjam (Nikanjam 2015): (0.6/SCr)^0.67 on clearance, the patient's own creatinine
+                "oxaliplatinNikanjam",
+                # cisplatinBound (Urien 2004): Cockcroft-Gault in fm/Vm
+                "cisplatinBound",
+                # etoposide (Krogh-Madsen 2012): a linear Cockcroft-Gault term
+                "etoposide",
+                # cisplatin (Urien 2004): (CLCr/81)^0.36 on unbound clearance
+                "cisplatin",
+                # topotecan (Mould 2002): Cockcroft-Gault standardised to 70 kg
+                "topotecan",
+                # doxorubicinol (Joerger 2007): Cockcroft-Gault on its clearance
+                "doxorubicinol",
+                # melphalan (Nath 2010): Cockcroft-Gault per 70 kg, a linear renal term
+                "melphalan",
+                # oxaliplatin (Bastian 2003): (SCr/87 umol/L)^-0.57 on clearance
+                "oxaliplatin",
+                # the candidate models under their own names, since the drugs
+                # above became the program's choice (R/modelSelection.R)
+                "carboplatinDuffull", "methotrexateIbarra", "melphalanNath",
+                "doxorubicinolJoerger", "etoposideKroghMadsen", "oxaliplatinBastian",
                 # Serum creatinine itself, not an estimate of its clearance,
                 # is magnesium's covariate (R/drugs_magnesiumSulfate.R, Du 2019)
                 "magnesiumSulfate",
@@ -55,7 +87,37 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 "pramipexole", "pramipexoleER",
                 # MDRD eGFR, proportional, on the elimination rate constant
                 # (R/drugs_amantadineER.R, FDA review of NDA 209410)
-                "amantadineER")
+                "amantadineER",
+                # Cockcroft-Gault, as a power, on clearance
+                # (R/drugs_tranexamicAcid.R, Lanoiselee 2018)
+                "tranexamicAcid",
+                # Cockcroft-Gault, as a power, on clearance
+                # (R/drugs_sotalol.R, Yellepeddi 2025)
+                "sotalol",
+                # Cockcroft-Gault, additive and linear, on clearance
+                # (R/drugs_tobramycin.R, Conil 2011; R/drugs_amikacin.R, Tod 1998)
+                "tobramycin", "amikacin",
+                # Cockcroft-Gault on clearance (R/drugs_ganciclovir.R, Caldés 2009)
+                "ganciclovir",
+                # creatinine clearance on clearance: dofetilide (FDA review of
+                # NDA 20-931), quinidine (Fattinger 1991)
+                "dofetilide", "quinidine",
+                # Cockcroft-Gault at 65 kg on renal clearance (Boak 2014)
+                "linezolid",
+                # the Japanese eGFR on renal clearance (Doki 2012)
+                "flecainide",
+                # MDRD eGFR, a sigmoid, on renal clearance (FDA review of NDA 209776)
+                "meropenem",
+                # creatinine against its normal for age, exponential (Kong 2025)
+                "piperacillin",
+                # Cockcroft-Gault, linear per mL/min, on CL/F (Saleh 2016)
+                "riociguat",
+                # MDRD eGFR below 60, a step on aprocitentan's clearance
+                # (Bartolucci 2021, R/drugs_aprocitentan.R)
+                "macitentan", "aprocitentan",
+                # Garonzik's creatinine clearance (Cockcroft-Gault per 1.73
+                # m2) on CMS's and colistin's clearances (R/drugs_colistimethate.R)
+                "colistimethate", "colistin")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system),
@@ -64,7 +126,10 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
 systemClearances <- function(pk)
   c(pk$PK$default$cl1,
     vapply(pk$parallelSystems, function(s) s$PK$default$cl1, numeric(1)),
-    if (!is.null(pk$dosePhase)) pk$PK[[pk$dosePhase$late]]$cl1)
+    if (!is.null(pk$dosePhase)) pk$PK[[pk$dosePhase$late]]$cl1,
+    # a metabolite the saturable engine advances with its parent, whose renal
+    # term may be the metabolite's (macitentan's aprocitentan)
+    pk$michaelisMenten$metabolite$cl)
 
 test_that("a blank creatinine is the assumed normal value for age and sex", {
   expect_equal(patientCreatinine(NULL, 40, "male"), SCR_ASSUMED_MALE)

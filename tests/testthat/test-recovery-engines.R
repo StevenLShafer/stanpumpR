@@ -24,7 +24,12 @@ bruteRecovery <- function(DT, ET, PK, t, horizon = 720) {
   d <- DT[DT$Time <= t, , drop = FALSE]
   for (u in unique(d$Units[grepl("min|hr", d$Units)]))
     d <- rbind(d, data.frame(Drug = d$Drug[1], Time = t, Dose = 0, Units = u))
-  r <- simCpCe(d[order(d$Time), ], ET, PK, t + horizon, FALSE)$results
+  # Dense output times over the first hour after t: the native line of a run
+  # this long can step straight over the crossing (fentanyl after a bolus,
+  # once its clearance became Bae 2020's), and with no point above the
+  # threshold at or after t the reference read 0.
+  dense <- t + seq(0, 60, by = 0.05)
+  r <- withOutputTimes(dense, simCpCe(d[order(d$Time), ], ET, PK, t + horizon, FALSE))$results
   ce <- r[r$Site == "Effect Site" & r$Time >= t, ]
   above <- which(ce$Y > PK$endCe)
   if (length(above) == 0) return(0)
@@ -373,6 +378,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "MEGX", "norpethidine", "PPX",  # toxic metabolites, no ke0 (2026-11-13)
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
+    "vancomycinKidneyTransplant",
     "metronidazole", "gentamicin",
     "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
     "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
@@ -436,10 +442,24 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "milrinonePediatric",
     "digoxinIVPediatric",
     "methyleneBlue",
+    # narrow-therapeutic-window drugs (2026-11-12): plasma only
+    "theophylline", "lithiumCarbonate", "tranexamicAcid", "caffeineNeonatal", "tacrolimus", "sotalol", "voriconazole", "clozapine", "norclozapine", "tobramycin", "amikacin", "linezolid", "ganciclovir", "sirolimus", "everolimus", "cyclosporine", "scopolamine", "flecainide", "mexiletine", "amitriptyline", "dofetilide", "quinidine", "nortriptyline", "meropenem", "piperacillin",
+    # pulmonary hypertension (2026-11-15): plasma only
+    "treprostinil", "sildenafil", "tadalafil", "riociguat", "selexipag", "ACT333679",
+    # suzetrigine and its metabolite (2026-11-16): plasma only
+    "suzetrigine", "M6SUZ",
+    # ambrisentan (2026-11-16): plasma only
+    "ambrisentan", "macitentan", "aprocitentan",
+    # colistimethate and the colistin it forms (2026-11-16): plasma only, no
+    # line until the MIC decision (R/drugs_colistin.R)
+    "colistimethate", "colistin",
     # Parkinson disease drugs (2026-10-19): plasma only; levodopa (all four
     # models) and apomorphine have an effect site (inst/help/models/parkinsons.md)
     "pramipexole", "pramipexoleER", "safinamide", "opicapone",
-    "istradefylline", "amantadineER", "pimavanserin", "tolcapone"
+    "istradefylline", "amantadineER", "pimavanserin", "tolcapone",
+    # Chemotherapy (2026-11-05): plasma only
+    "cladribine", "fluorouracil", "fluorouracilBriki", "carboplatin", "carboplatinDuffull", "busulfan",
+    "methotrexatePediatric", "methotrexate", "carboplatinPeng", "methotrexateIbarra", "fluorouracilTan", "cytarabine", "doxorubicinPerezBlanco", "doxorubicinolPerezBlanco", "fludarabine", "bendamustine", "oxaliplatinNikanjam", "capecitabine", "capecitabine5FU", "gemcitabine", "gemcitabineDFDU", "etoposideDuong", "melphalanPediatric", "carboplatinPediatric", "daunorubicin", "doxorubicinPediatric", "doxorubicinolPediatric", "etoposide", "etoposideKroghMadsen", "cisplatin", "cisplatinBound", "vinorelbine", "topotecan", "irinotecan", "irinotecanSN38", "doxorubicin", "doxorubicinJoerger", "doxorubicinol", "doxorubicinolJoerger", "cyclophosphamide", "cyclophosphamideJoerger", "cyclophosphamideMcCune", "ifosfamide", "epirubicin", "temozolomide", "temozolomideOstermann", "temozolomidePanetta", "dacarbazine", "bleomycin", "paclitaxelProteinBound", "thioguanine", "doxorubicinLiposomal", "doxorubicinLiposomalFree", "thioguanineIV", "docetaxel", "vincristine", "vincristineIgarashi", "melphalan", "melphalanNath", "etoposidePediatric", "pemetrexed", "paclitaxel", "paclitaxelJoerger", "paclitaxelCrombag", "vincristinePediatric", "oxaliplatin", "oxaliplatinBastian"
   ))
 })
 

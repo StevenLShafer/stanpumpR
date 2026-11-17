@@ -63,7 +63,7 @@ helpExpandGenerated <- function(text, drugDefaults = getDrugDefaultsGlobal()) {
 #' @noRd
 helpRouteInventory <- function(drugDefaults = getDrugDefaultsGlobal()) {
   adult <- helpReferencePatients()[1, ]
-  extravascular <- c(ROUTE_PO, ROUTE_SL, ROUTE_IM, ROUTE_IN, ROUTE_RA, ROUTE_SC)
+  extravascular <- c(ROUTE_PO, ROUTE_SL, ROUTE_IM, ROUTE_IN, ROUTE_RA, ROUTE_SC, ROUTE_TD)
   rows <- lapply(seq_len(nrow(drugDefaults)), function(i) {
     row <- drugDefaults[i, ]
     if (isGasDrug(row$Drug)) return(NULL)
@@ -84,6 +84,7 @@ helpRouteInventory <- function(drugDefaults = getDrugDefaultsGlobal()) {
            notes = c(if (any(isRateUnit(u)))
                        if (r == ROUTE_RA) "continuous infusion into the depot"
                        else if (r == ROUTE_SC) "insulin pump: continuous infusion into the depot"
+                       else if (r == ROUTE_TD) "patch: delivery into the skin while it is worn"
                        else "constant daily rate, no depot",
                      if (length(u) > 0) notes[[r]]))
     })
@@ -101,13 +102,13 @@ helpRouteTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
            if (length(x$notes) > 0) paste0(" (", paste(x$notes, collapse = "; "), ")") else "")
   }
   body <- vapply(helpRouteInventory(drugDefaults), function(d) {
-    sprintf("| [%s](help:drugs/%s) | %s | %s | %s | %s | %s | %s | %s |", helpDrugTitle(d$drug), d$drug,
+    sprintf("| [%s](help:drugs/%s) | %s | %s | %s | %s | %s | %s | %s | %s |", helpDrugTitle(d$drug), d$drug,
             cell(d[[ROUTE_PO]]), cell(d[[ROUTE_SL]]), cell(d[[ROUTE_IM]]), cell(d[[ROUTE_IN]]),
-            cell(d[[ROUTE_RA]]), cell(d[[ROUTE_SC]]), if (d$iv) "yes" else "no")
+            cell(d[[ROUTE_RA]]), cell(d[[ROUTE_SC]]), cell(d[[ROUTE_TD]]), if (d$iv) "yes" else "no")
   }, character(1))
   paste(c(paste("| Drug | Oral (PO) | Sublingual (SL) | Intramuscular (IM) | Intranasal (IN) |",
-                "Regional anesthesia (RA) | Subcutaneous (SC) | Also intravenous |"),
-          "|---|---|---|---|---|---|---|---|",
+                "Regional anesthesia (RA) | Subcutaneous (SC) | Transdermal (TD) | Also intravenous |"),
+          "|---|---|---|---|---|---|---|---|---|",
           body), collapse = "\n")
 }
 
@@ -537,13 +538,56 @@ helpParkinsonsToObtainMarkdown <- function(drugDefaults = NULL, registry = parki
                 want$to_obtain), collapse = "\n")
 }
 
+#' The chemotherapy model registry as a Markdown table
+#'
+#' Built from \code{chemotherapyRegistry()} so the help cannot drift from it.
+#' @noRd
+helpChemotherapyRegistryMarkdown <- function(drugDefaults = NULL, registry = chemotherapyRegistry()) {
+  status <- c(implemented = "In the library",
+              complete_not_implemented = "Read; not offered",
+              needs_full_text = "Needs the paper",
+              needs_engine = "Needs an engine feature",
+              no_source_identified = "No source found")
+  engine <- c(linear = "linear", linear_metabolite = "linear, with a metabolite",
+              michaelis_menten = "saturable elimination",
+              new_engine = "a mechanism the engine lacks", unknown = "not known")
+  wave <- c(first = 1, second = 2, expansion = 3)
+  registry <- registry[order(wave[registry$wave], tolower(registry$drug),
+                             registry$product, registry$model_id), ]
+  drugCell <- ifelse(
+    is.na(registry$stanpumpr_drug), registry$drug,
+    sprintf("[%s](help:drugs/%s)", registry$drug, registry$stanpumpr_drug))
+  source <- ifelse(is.na(registry$source_url), "",
+                   sprintf("[source](%s)", registry$source_url))
+  cell <- function(x) gsub("\\|", "/", x)
+  rows <- sprintf("| %s | %s | %s | %s | %s | %s | %s |",
+                  drugCell, cell(registry$product), cell(registry$population),
+                  cell(registry$structure), engine[registry$engine],
+                  status[registry$readiness], source)
+  paste(c("| Drug | Product | Population | Structure (from the abstract) | Engine | Status | Source |",
+          "|---|---|---|---|---|---|---|", rows), collapse = "\n")
+}
+
+#' The papers that would unblock a chemotherapy model, as a list, first wave first
+#' @noRd
+helpChemotherapyToObtainMarkdown <- function(drugDefaults = NULL, registry = chemotherapyRegistry()) {
+  want <- registry[!is.na(registry$to_obtain) & nzchar(registry$to_obtain), ]
+  wave <- c(first = 1, second = 2, expansion = 3)
+  want <- want[order(wave[want$wave], tolower(want$drug)), ]
+  want <- want[!duplicated(want$to_obtain), ]
+  paste(sprintf("- **%s**: %s", want$drug, want$to_obtain), collapse = "\n")
+}
+
 #' The antibiotics' MBC bands, one row per antibiotic, as a Markdown table
 #'
 #' From \code{antibioticMbcBand()} (R/antibioticMbc.R) and the band the
 #' library ships, which the tests hold equal.
 #' @noRd
 helpAntibioticMbcBandMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
-  drugs <- antibioticMicTable()$Drug
+  # A drug whose band is a trough range (antibioticTroughBands()), or which
+  # has no band (antibioticNoBands()), has no MBC row; its own page and the
+  # antibiotics page say why.
+  drugs <- antibioticMbcBandDrugs()
   rows <- vapply(drugs, function(d) {
     b <- antibioticMbcBand(d)
     m <- antibioticMic(d)
@@ -567,6 +611,9 @@ HELP_FIELD_READER_ROWS <- c(
   pregnant       = "Pregnant",
   creatinine     = "Serum creatinine",
   gestationalAge = "Gestational age at birth",
+  albumin        = "Serum albumin",
+  ast            = "Serum AST",
+  pulmonaryHypertension = "Pulmonary hypertension",
   osmolality     = "Baseline serum osmolality",
   cyp2d6         = "CYP 2D6",
   cyp2c19        = "CYP 2C19",
@@ -877,9 +924,18 @@ HELP_GENERATED_BLOCKS <- list(
   "parkinsons-products-table" = helpParkinsonsProductsMarkdown,
   "parkinsons-registry-table" = helpParkinsonsRegistryMarkdown,
   "parkinsons-to-obtain" = helpParkinsonsToObtainMarkdown,
+  "chemotherapy-registry-table" = helpChemotherapyRegistryMarkdown,
+  "chemotherapy-to-obtain" = helpChemotherapyToObtainMarkdown,
   "antibiotic-mbc-table" = helpAntibioticMbcBandMarkdown,
   "antiseizure-interaction-table" = helpAntiseizureInteractionTableMarkdown,
   "antiseizure-interaction-sources" = helpAntiseizureInteractionSourcesMarkdown,
   "field-readers-table" = helpFieldReadersTableMarkdown,
-  "pk-converter" = helpPKConverterHTML
+  "pk-converter" = helpPKConverterHTML,
+  "physiology-table" = function(...) helpPhysiologyTableMarkdown(),
+  "physiology-ke0-figure" = function(...) helpPhysiologyKe0Figure(),
+  "physiology-ke0-table" = function(...) helpPhysiologyKe0Table(),
+  "physiology-propofol-table" = function(...) helpPhysiologyPropofolTable(),
+  "physiology-gas-table" = function(...) helpPhysiologyGasTable(),
+  "physiology-temperature-table" = function(...) helpPhysiologyTemperatureTable(),
+  "gas-greenhouse-table" = helpGasGreenhouseTableMarkdown
 )

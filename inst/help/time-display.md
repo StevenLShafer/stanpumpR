@@ -16,6 +16,10 @@ A time that is not a round number in the new unit is written to ten significant 
 
 Use minutes or hours for anaesthesia and the hours around it, and days or weeks for drugs given over days to months (antibiotics, steroids, a long opioid course).
 
+### The default
+
+The app opens in **minutes, from 0 to 180 minutes**, the length of an intravenous anaesthetic. The first time a **repeating oral dose** is prescribed (a scheduled oral or sublingual dose such as `mg PO bid` or `mg PO qam`, or a daily oral rate such as `mg/day PO`) while the time settings are still those, they switch to **days, from 0 to 30 days**, and a notification says so. A drug given both ways starts on the intravenous plot and moves to days only when its repeating oral dose appears; a single oral dose does not move it. The switch happens once per session: change the settings back and they stay as you set them. It is a default, not a rule, so it never replaces settings you have already changed, or those of a teaching scenario or a bookmarked link.
+
 ## Time Display
 
 ### Elapsed time
@@ -33,6 +37,8 @@ Enter a **Procedure start** as `HH:MM` (24-hour clock). A time with a colon in t
 When you switch from clock time to elapsed time, the clock times in the table are converted to the time since the procedure start. Switching the other way converts an elapsed `H:MM` to a number of the unit (in clock mode `1:30` would mean half past one), and leaves numbers as they are. A conversion that needs the procedure start, when the box does not hold a time, is refused and the settings put back: enter the procedure start first.
 
 The procedure start defaults to the time on your computer when the app opened.
+
+Changing the procedure start in clock time keeps every dose, event and measured level at its clock time: an event at 09:00 stays at 09:00, and moves on the elapsed axis. Events and levels within the 24 hours after the start are clock times; one later than that is a time since the start, and stays where it is. Changing the start back puts everything back where it was.
 
 ## Max time
 

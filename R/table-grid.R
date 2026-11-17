@@ -168,7 +168,9 @@ drugLibraryGridColumns <- function(x) {
   list(
     tableColumn("Drug", type = "readonly", width = 130),
     tableColumn("Concentration.Units", type = "select", options = c("mcg", "ng"),
-                readonlyRows = which(!x$Concentration.Units %in% c("mcg", "ng")), width = 90),
+                readonlyRows = which(concentrationUnitsLocked(as.character(x$Drug),
+                                                              as.character(x$Concentration.Units))),
+                width = 90),
     tableColumn("Bolus.Units", type = "select", options = bolusUnits, width = 90),
     tableColumn("Infusion.Units", type = "select", options = infusionUnits, width = 110),
     tableColumn("Default.Units", type = "select", options = allUnits, wrapUnits = TRUE, width = 120),

@@ -26,7 +26,9 @@ drug returns an \code{oralSaturation} block, and every oral dose is scaled by
 
 with D the dose in mg per administration.  That is the inhibitory Emax form
 of Tran et al. (J Pharmacokinet Pharmacodyn 2017;44:567-579) and contains
-the hyperbolic Dmax / (D50 + D) as the case Imax = 1.  The drug's
+the hyperbolic Dmax / (D50 + D) as the case Imax = 1.  An optional \code{hill}
+makes it sigmoid, 1 - Imax D^hill / (ID50^hill + D^hill) (suzetrigine's
+hill of 5, FDA review of NDA 219209).  The drug's
 \code{bioavailability_PO} stays the fraction absorbed in the limit of a small
 dose; the product of the two is the bioavailability of a given dose.
 

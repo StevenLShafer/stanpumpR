@@ -15,7 +15,7 @@ app_ui <- function() {
     heading_font = bslib::font_google("Public Sans")
   )
 
-  function(request) {
+  page <- function(request) {
     # The Time units, Max time and Time Display choices depend on one another,
     # and a restored bookmark's selections must be among the choices built
     # here: selectize ignores a selection it has no option for.  A bookmark
@@ -23,9 +23,9 @@ app_ui <- function() {
     # time was more than a day (and the server converts its dose table).
     timeUnit0 <- shiny::restoreInput("timeUnits", NULL)
     if (!identical(validTimeUnit(timeUnit0), timeUnit0)) {
-      timeUnit0 <- legacyTimeUnit(shiny::restoreInput("maximum", 60))
+      timeUnit0 <- legacyTimeUnit(shiny::restoreInput("maximum", TIME_MAXIMUM_DEFAULT))
     }
-    maximum0 <- snapMaximum(shiny::restoreInput("maximum", 60), timeUnit0)
+    maximum0 <- snapMaximum(shiny::restoreInput("maximum", TIME_MAXIMUM_DEFAULT), timeUnit0)
     minimum0 <- snapMinimum(shiny::restoreInput("minimum", 0), maximum0, timeUnit0)
     slider0 <- timeSliderRange(timeUnit0)
 
@@ -202,6 +202,26 @@ app_ui <- function() {
                     ),
                     placement = "right"
                   )
+                )),
+
+                # Read only by the models of a drug given both for pulmonary
+                # arterial hypertension and for something else (sildenafil,
+                # tadalafil; R/pulmonaryHypertension.R), so shown only while
+                # one is in the dose table (Steven L. Shafer, 2026-11-17).
+                relevantField("pulmonaryHypertension", fieldHelp(
+                  shinyWidgets::radioGroupButtons(
+                    inputId = "pulmonaryHypertension",
+                    label = "Pulmonary hypertension",
+                    choiceNames = list(
+                      span(icon("check"), "Yes"),
+                      span(icon("xmark"), "No")
+                    ),
+                    choiceValues = c(TRUE, FALSE),
+                    justified = TRUE,
+                    selected = FALSE
+                  ),
+                  patientFieldTooltip("pulmonaryHypertension"),
+                  placement = "right"
                 )),
 
                 # Each opioid's MEAC times 1, 1.5, 2 or 3
@@ -382,6 +402,37 @@ app_ui <- function() {
                   ),
                   patientFieldTooltip("gestationalAge"),
                   placement = "right"
+                )),
+
+                # Read only by the models that name `albumin` (methotrexate,
+                # methotrexatePediatric, docetaxel).  Blank means each model's own
+                # reference albumin.
+                relevantField("albumin", fieldHelp(
+                  blankableNumericInput(
+                    inputId = "albumin",
+                    label = "Serum albumin (g/dL)",
+                    value = NA,
+                    min = MIN_ALBUMIN,
+                    max = MAX_ALBUMIN,
+                    step = 0.1
+                  ),
+                  patientFieldTooltip("albumin"),
+                  placement = "right"
+                )),
+
+                # Read only by the models that name `ast` (epirubicin).  Blank
+                # means each model's own reference AST.
+                relevantField("ast", fieldHelp(
+                  blankableNumericInput(
+                    inputId = "ast",
+                    label = "Serum AST (U/L)",
+                    value = NA,
+                    min = MIN_AST,
+                    max = MAX_AST,
+                    step = 1
+                  ),
+                  patientFieldTooltip("ast"),
+                  placement = "right"
                 ))
               ),
 
@@ -547,6 +598,10 @@ app_ui <- function() {
                 )
               ),
 
+              # The physiology sliders (R/physiology.R): liver, renal,
+              # cardiac output and GI absorption, as multiples of normal.
+              physiologyPanel(),
+
               # The time settings, with the length of the plot (Max time).
               # The header reads the units and display out while the panel is
               # closed: "Time (hours, Actual time)".
@@ -633,23 +688,99 @@ app_ui <- function() {
                 actionLink("setTarget", "Suggest Dosing")
               ),
 
+              # Measured concentrations individualize the drugs'
+              # pharmacokinetics (R/bayesian.R, R/bayesian-server.R): the
+              # maximum a posteriori estimate of each measured drug's
+              # clearance and volume.  A complete row updates the drug as it
+              # is entered.
               bslib::accordion_panel(
-                "Email Slide",
-                icon = icon("envelope"),
+                "Bayesian Updating",
+                value = "bayes",
+                icon = icon("vial"),
+                tags$p(
+                  class = "small text-muted mb-2",
+                  "Enter measured concentrations to adjust each drug's clearance and volume to",
+                  "the patient (maximum a posteriori Bayesian estimate). The model's own curve",
+                  "stays on the plot, lighter, as \"(population)\".",
+                  tags$a(href = "#", `data-help-page` = "models/bayesian", "More...")
+                ),
+                uiOutput("bayesTableUI"),
+                fieldHelp(
+                  sliderInput(
+                    "bayesPKVariability",
+                    "PK variability (CV %)",
+                    min = BAYES_PK_VARIABILITY_MIN,
+                    max = BAYES_PK_VARIABILITY_MAX,
+                    value = BAYES_PK_VARIABILITY_DEFAULT,
+                    step = BAYES_PK_VARIABILITY_STEP,
+                    post = "%",
+                    ticks = FALSE
+                  ),
+                  paste(
+                    "How far the patient's clearance and volume may be from the model's:",
+                    "the coefficient of variation of a log-normal distribution, so 0.5 and 2",
+                    "times the model are equally likely. Larger lets the measurements move",
+                    "the estimate further."
+                  ),
+                  placement = "right"
+                ),
+                fieldHelp(
+                  sliderInput(
+                    "bayesResidualVariability",
+                    "Residual variability (CV %)",
+                    min = BAYES_RESIDUAL_VARIABILITY_MIN,
+                    max = BAYES_RESIDUAL_VARIABILITY_MAX,
+                    value = BAYES_RESIDUAL_VARIABILITY_DEFAULT,
+                    step = BAYES_RESIDUAL_VARIABILITY_STEP,
+                    post = "%",
+                    ticks = FALSE
+                  ),
+                  paste(
+                    "How far a measurement may be from the patient's own predicted concentration:",
+                    "the assay, and errors in the recorded dose and sample times and in the model.",
+                    "Log-normal, as the PK variability. Larger trusts each measurement less."
+                  ),
+                  placement = "right"
+                ),
+                uiOutput("bayesSummary"),
+                actionLink("bayesClear", "Clear measurements")
+              ),
+
+              # The simulation as files: each downloaded on its own, or all
+              # three emailed (R/sendSlide.R writes them; app_server()'s
+              # exportDownload() and the email observer send them).  Named
+              # Email Slide until 2026-11-15, when it only emailed.
+              bslib::accordion_panel(
+                "Export",
+                value = "export",
+                icon = icon("file-export"),
+                tags$h6("Download", class = "mb-2"),
+                div(
+                  class = "d-grid gap-2 mb-3",
+                  downloadButton("exportPowerPoint", "PowerPoint (.pptx)",
+                                 icon = icon("file-powerpoint"), class = "btn-outline-primary btn-sm text-start"),
+                  downloadButton("exportSpreadsheet", "Spreadsheet (.xlsx)",
+                                 icon = icon("file-excel"), class = "btn-outline-primary btn-sm text-start"),
+                  downloadButton("exportImage", "Image (.png)",
+                                 icon = icon("file-image"), class = "btn-outline-primary btn-sm text-start")
+                ),
+                tags$h6("Email", class = "mb-2"),
                 if (is.null(config$email_username) || is.null(config$email_password)) {
                   div(
-                    class = "info-note",
+                    class = "info-note mt-0",
                     icon("circle-info"),
                     "Email is not configured. Please ask admin to set email username and password in app configuration."
                   )
                 } else {
                   tagList(
+                    tags$p(class = "micro text-muted mb-2",
+                           "All three files, with a link that reopens this simulation."),
                     textInput("recipient", NULL, "", placeholder = "Enter email address"),
                     textAreaInput("emailComments", NULL, "", placeholder = "Comments (optional)", rows = 3) |>
                       addInputAttributes(maxlength = MAX_INPUT_TEXT),
                     checkboxInput("commentSafe", "This comment does not contain PHI", FALSE) |>
                       htmltools::tagAppendAttributes(class = "micro"),
-                    actionButton("sendSlide", "Send", class = "btn-primary")
+                    actionButton("sendSlide", "Send", icon = icon("envelope"), class = "btn-primary")
                   )
                 }
               )
@@ -817,4 +948,60 @@ app_ui <- function() {
       )
     )
   }
+
+  # A bookmark link is untrusted input (R/bookmark-restore.R).  Each input
+  # restores itself (shiny::restoreInput()) as the page is built, and a value
+  # no control takes -- a list or a vector where a checkbox, a choice or a
+  # number goes -- stopped the build: the link was answered with Shiny's bare
+  # HTTP 500.  Carbon's UI audit of 2026-11-14 (F5) found Max time and Min
+  # time; every checkbox, several choices and the email boxes did the same.
+  # Such a link is answered with a page that says so and links to the app
+  # without it.  Only a request that restores a bookmark is caught: an error
+  # building the plain page is a fault in this code, and is not disguised.
+  function(request) {
+    if (!isBookmarkQuery(request$QUERY_STRING)) return(page(request))
+    tryCatch({
+      if (!restoredTextReadable(BOOKMARK_TEXT_INPUTS)) stop("unreadable text input")
+      page(request)
+    }, error = function(e) unreadableLinkResponse())
+  }
+}
+
+# The page's text inputs.  A text area restores whatever the link holds as
+# its content, and one holding a list or a vector fails only when Shiny
+# writes the page, after app_ui()'s function has returned, so these are read
+# first (the bookmark fuzz of 2026-11-14 found emailComments)
+BOOKMARK_TEXT_INPUTS <- c("referenceTime", "recipient", "emailComments")
+
+# Is each of `ids` that a link restores one value?  Reading a value here
+# leaves it for the input itself (shiny::restoreInput() marks it used only
+# once the session starts).
+restoredTextReadable <- function(ids) {
+  all(vapply(ids, function(id) {
+    value <- shiny::restoreInput(id, NULL)
+    is.null(value) || (is.atomic(value) && length(value) == 1)
+  }, logical(1)))
+}
+
+# Does a query string restore a bookmark (Shiny's _inputs_ or _values_)?
+isBookmarkQuery <- function(query) {
+  is.character(query) && length(query) == 1 && grepl("(^|[?&])_(inputs|values)_(&|=|$)", query)
+}
+
+# The answer to a link whose bookmark the page cannot be built from
+unreadableLinkResponse <- function() {
+  shiny::httpResponse(
+    status = 400L,
+    content_type = "text/html; charset=UTF-8",
+    content = paste0(
+      "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\">",
+      "<title>stanpumpR: this link could not be opened</title></head>",
+      "<body style=\"font-family: sans-serif; max-width: 40em; margin: 3em auto;\">",
+      "<h1>This link could not be opened</h1>",
+      "<p>Part of the link is not a setting stanpumpR saved, so the page could ",
+      "not be built from it. The link may have been altered or cut short.</p>",
+      "<p><a href=\"./\">Open stanpumpR without it</a></p>",
+      "</body></html>"
+    )
+  )
 }

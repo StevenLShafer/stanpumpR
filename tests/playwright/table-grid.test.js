@@ -12,21 +12,19 @@ const { test, describe, before, after, beforeEach, afterEach } = require('node:t
 const assert = require('node:assert/strict');
 const playwright = require('playwright');
 const H = require('./harness');
-const BS = require('./browserstack');
 const adapter = require('./adapters/native');
 
 const URL = process.env.STANPUMPR_URL;
 if (!URL) throw new Error('STANPUMPR_URL is not set: run the suite through run.js');
-// on BrowserStack, the engine of the platform chosen (browserstack.js)
-const BROWSER = BS.engine();
-if (BS.mobile()) throw new Error('a phone runs phone.test.js, not this file (browserstack.js)');
+// STANPUMPR_BROWSER: chromium (the default), firefox or webkit
+const BROWSER = process.env.STANPUMPR_BROWSER || 'chromium';
 
 let browser, context, page;
 
 before(async () => {
-  browser = await BS.launch(playwright, BROWSER, BROWSER === 'firefox' ? {
+  browser = await playwright[BROWSER].launch(BROWSER === 'firefox' ? {
     firefoxUserPrefs: { 'dom.events.asyncClipboard.readText': true, 'dom.events.testing.asyncClipboard': true }
-  } : {}, 'table grid');
+  } : {});
 });
 after(async () => { await browser.close(); });
 
@@ -229,5 +227,127 @@ describe('Drug Library', () => {
     await page.click('#drugEditsOK');
     await H.settle(page, 1500);
     assert.equal((await H.serverState(page)).colors.propofol, '#123456');
+  });
+});
+
+// Carbon's (Gemini) third adversarial UI audit, of PR #730 at 4164743,
+// 2026-11-15: M4 and L1 (the dose grid's are in dose-grid.test.js)
+describe('Carbon\'s third UI audit, 2026-11-15', () => {
+  // M4: validateDose() refuses a number too long written out, which the
+  // dose grid's server would blank; a number cell says why
+  test('a number too long written out is refused with its reason', async () => {
+    await open('editDrugs', 'editDrugsHTML');
+    const r = await rowOf('editDrugsHTML', 'propofol');
+    const before = await page.$eval(cell('editDrugsHTML', r, 7), x => x.value);
+    await H.clearNotifications(page);
+    await page.click(cell('editDrugsHTML', r, 7));
+    await page.keyboard.type('1e-35');
+    await page.keyboard.press('Enter');
+    await H.settle(page, 300);
+    assert.equal(await page.$eval(cell('editDrugsHTML', r, 7), x => x.value), before);
+    const notes = await H.notifications(page);
+    assert.ok(notes.some(n => /"1e-35" was not accepted in Lower: a number written out in full can have at most 32 characters/.test(n)),
+              JSON.stringify(notes));
+  });
+
+  // L1: a list search's timer and the document's listener come off when
+  // Shiny unbinds the grid (a dialog closed), and the listener goes back on
+  // at a bind
+  test('unbinding a dialog\'s grid takes off its document listener and its list search', async () => {
+    // propofol given a dose above 0, without which it has no panel to
+    // double-click (only such drugs are drawn; Shafer, 2026-11-16)
+    await adapter.typeInto(page, 0, 2, '100');
+    await page.keyboard.press('Enter');
+    await H.settle(page, 600);
+    await page.click('#dosetable_apply');
+    await H.settle(page, 1500);
+    await page.evaluate(() => window.Shiny.setInputValue('plot_dblclick',
+      { x: 5, y: 1, panelvar1: 'propofol' }, { priority: 'event' }));
+    await page.waitForSelector('#editPriorDosesTable tbody tr', { timeout: 30000 });
+    await H.settle(page, 300);
+    const before = await gridRows('editPriorDosesTable');
+    await page.focus(cell('editPriorDosesTable', 0, 3));
+    await page.keyboard.type('mc');
+    const off = await page.evaluate(() => {
+      const root = document.getElementById('editPriorDosesTable');
+      const g = root._tableGrid;
+      const b = window.jQuery(root).data('shiny-input-binding');
+      const pending = g.search !== null;
+      window.__tableGridCallback = g.callback;
+      window.__flushes = 0;
+      const flush = g.flushSearch;
+      g.flushSearch = function() { window.__flushes += 1; return flush.apply(this, arguments); };
+      b.unsubscribe(root);
+      return { pending, search: g.search, attached: g.documentAttached };
+    });
+    assert.deepEqual(off, { pending: true, search: null, attached: false });
+    // the search's pause has passed: the unbound grid was not touched
+    await page.waitForTimeout(1500);
+    assert.equal(await page.evaluate(() => window.__flushes), 0);
+    const on = await page.evaluate(() => {
+      const root = document.getElementById('editPriorDosesTable');
+      const b = window.jQuery(root).data('shiny-input-binding');
+      b.subscribe(root, window.__tableGridCallback);
+      root._tableGrid.renderAll();
+      return root._tableGrid.documentAttached;
+    });
+    assert.equal(on, true);
+    assert.deepEqual(await gridRows('editPriorDosesTable'), before);
+  });
+});
+
+// Carbon's fourth UI audit, 2026-11-15, H1: the Working cover (app.js) made
+// every child of <body> inert, which took the focus from a dialog's cell
+// being typed in (committed as it stood) and from the dialog (Escape no
+// longer closed it); and a dialog opened while it was up was not inert.  The
+// cover is raised as the server's busy message raises it (H.coverPage()).
+describe('Carbon\'s fourth UI audit, 2026-11-15: the Working cover over a dialog', () => {
+  test('a dialog cell being typed in keeps its typing and the focus, and Escape still closes the dialog', async () => {
+    await open('editThresholds', 'editThresholdsTable');
+    const r = await rowOf('editThresholdsTable', 'propofol');
+    const sent = await sentRows('editThresholdsTable');
+    await page.click(cell('editThresholdsTable', r, 1));
+    await page.keyboard.type('2');
+    assert.ok(await H.coverPage(page), 'the cover came down: the page sent something under it');
+    assert.deepEqual(await sentRows('editThresholdsTable'), sent, 'the cell was committed under the cover');
+    assert.equal(await H.focusName(page), 'Threshold, row ' + (r + 1));
+    // the dialog and everything else is inert; the focused cell is not
+    const inert = await page.evaluate(sel => ({
+      ok: !!document.getElementById('thresholdEditsOK').closest('[inert]'),
+      cell: !!document.querySelector(sel).closest('[inert]')
+    }), cell('editThresholdsTable', r, 1));
+    assert.deepEqual(inert, { ok: true, cell: false });
+    await H.uncoverPage(page);
+    await page.keyboard.type('.5');
+    await page.keyboard.press('Enter');
+    await H.settle(page, 300);
+    assert.equal((await gridRows('editThresholdsTable'))[r][1], '2.5');
+    // the focus never left the dialog, so Escape closes it
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('.modal', { state: 'detached', timeout: 10000 });
+  });
+
+  test('a dialog opened while the cover is up is inert under it, and has the focus after', async () => {
+    assert.ok(await H.coverPage(page), 'the cover did not go up');
+    // as the server's showModal() does, without the round trip that would
+    // end the busy spell
+    await page.evaluate(() => window.Shiny.modal.show({ deps: [], html:
+      '<div class="modal fade" id="shiny-modal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">' +
+      '<div class="modal-body"><p>Opened under the cover</p></div><div class="modal-footer">' +
+      '<button type="button" id="lateDismiss" class="btn btn-default" data-bs-dismiss="modal">Dismiss</button>' +
+      '</div></div></div><script>new bootstrap.Modal(document.getElementById("shiny-modal")).show();</script></div>' }));
+    await page.waitForSelector('#shiny-modal.show', { timeout: 5000 });
+    await page.waitForTimeout(500);
+    assert.ok(await page.evaluate(() => !!document.getElementById('shiny-modal-wrapper').closest('[inert]')),
+              'the dialog opened under the cover is not inert');
+    // a click under the cover reaches nothing
+    await page.mouse.click(10, 10);
+    await page.keyboard.press('Escape');
+    assert.ok(await page.evaluate(() => !!document.querySelector('#shiny-modal.show')), 'the dialog closed under the cover');
+    await H.uncoverPage(page);
+    assert.ok(await page.evaluate(() => document.getElementById('shiny-modal').contains(document.activeElement)),
+              'the dialog does not have the focus');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#shiny-modal-wrapper', { state: 'detached', timeout: 10000 });
   });
 });

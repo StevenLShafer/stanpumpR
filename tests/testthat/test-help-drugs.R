@@ -36,6 +36,7 @@ test_that("every narrative belongs to a drug in the library", {
 plasmaOnly <- c(
   "codeine", "tramadol", "prednisone",
   "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
+  "vancomycinKidneyTransplant",
   "metronidazole", "gentamicin",
   "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
   "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
@@ -106,10 +107,24 @@ plasmaOnly <- c(
     "milrinonePediatric",
     "digoxinIVPediatric",
     "methyleneBlue",
+    # narrow-therapeutic-window drugs (2026-11-12): plasma only
+    "theophylline", "lithiumCarbonate", "tranexamicAcid", "caffeineNeonatal", "tacrolimus", "sotalol", "voriconazole", "clozapine", "norclozapine", "tobramycin", "amikacin", "linezolid", "ganciclovir", "sirolimus", "everolimus", "cyclosporine", "scopolamine", "flecainide", "mexiletine", "amitriptyline", "dofetilide", "quinidine", "nortriptyline", "meropenem", "piperacillin",
+    # pulmonary hypertension (2026-11-15): plasma only
+    "treprostinil", "sildenafil", "tadalafil", "riociguat", "selexipag", "ACT333679",
+    # suzetrigine and its metabolite (2026-11-16): plasma only
+    "suzetrigine", "M6SUZ",
+    # ambrisentan (2026-11-16): plasma only
+    "ambrisentan", "macitentan", "aprocitentan",
+    # colistimethate and the colistin it forms (2026-11-16): plasma only, no
+    # line until the MIC decision (R/drugs_colistin.R)
+    "colistimethate", "colistin",
     # Parkinson disease drugs (2026-10-19): plasma only; levodopa (all four
     # models) and apomorphine have an effect site (inst/help/models/parkinsons.md)
     "pramipexole", "pramipexoleER", "safinamide", "opicapone",
-    "istradefylline", "amantadineER", "pimavanserin", "tolcapone"
+    "istradefylline", "amantadineER", "pimavanserin", "tolcapone",
+    # Chemotherapy (2026-11-05): plasma only (inst/help/models/chemotherapy.md)
+    "cladribine", "fluorouracil", "fluorouracilBriki", "carboplatin", "carboplatinDuffull", "busulfan",
+    "methotrexatePediatric", "methotrexate", "carboplatinPeng", "methotrexateIbarra", "fluorouracilTan", "cytarabine", "doxorubicinPerezBlanco", "doxorubicinolPerezBlanco", "fludarabine", "bendamustine", "oxaliplatinNikanjam", "capecitabine", "capecitabine5FU", "gemcitabine", "gemcitabineDFDU", "etoposideDuong", "melphalanPediatric", "carboplatinPediatric", "daunorubicin", "doxorubicinPediatric", "doxorubicinolPediatric", "etoposide", "etoposideKroghMadsen", "cisplatin", "cisplatinBound", "vinorelbine", "topotecan", "irinotecan", "irinotecanSN38", "doxorubicin", "doxorubicinJoerger", "doxorubicinol", "doxorubicinolJoerger", "cyclophosphamide", "cyclophosphamideJoerger", "cyclophosphamideMcCune", "ifosfamide", "epirubicin", "temozolomide", "temozolomideOstermann", "temozolomidePanetta", "dacarbazine", "bleomycin", "paclitaxelProteinBound", "thioguanine", "doxorubicinLiposomal", "doxorubicinLiposomalFree", "thioguanineIV", "docetaxel", "vincristine", "vincristineIgarashi", "melphalan", "melphalanNath", "etoposidePediatric", "pemetrexed", "paclitaxel", "paclitaxelJoerger", "paclitaxelCrombag", "vincristinePediatric", "oxaliplatin", "oxaliplatinBastian"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {
@@ -162,7 +177,9 @@ test_that("the fat-free-mass switch is reported from the code", {
   # Hydrocodone's own covariates (Melhem's BSA and creatinine clearance) see
   # the pharmacokinetic weight with the switch on, so it now responds.
   expect_true(helpDrugRespondsToFFM("hydrocodone"))
-  expect_false(helpDrugRespondsToFFM("oxytocin"))
+  # Oxytocin (Shafer 2025) evaluates its own weight terms at the
+  # pharmacokinetic weight, so it responds too.
+  expect_true(helpDrugRespondsToFFM("oxytocin"))
   html <- helpDrugPageHTML("morphine")
   expect_match(html, "Adjust weight to fat-free mass", fixed = TRUE)
   expect_match(html, 'data-help-page="models/fat-free-mass"', fixed = TRUE)
@@ -341,7 +358,10 @@ test_that("the drug index links every drug", {
 test_that("the bibliography lists every model citation once, with its drugs", {
   html <- helpReferencesHTML(drugDefaults)
   cites <- withoutLinks(html)
-  refs <- unique(unlist(lapply(ivDrugs, function(d) helpDrugParameterTable(d, drugDefaults)$reference)))
+  # a drug whose model the program chooses cites its chosen candidate, listed
+  # under the candidate's own name (R/modelSelection.R)
+  listed <- setdiff(ivDrugs, names(MODEL_GROUPS))
+  refs <- unique(unlist(lapply(listed, function(d) helpDrugParameterTable(d, drugDefaults)$reference)))
   for (r in refs) {
     short <- htmltools::htmlEscape(helpReferenceShort(r))
     expect_equal(lengths(regmatches(cites, gregexpr(short, cites, fixed = TRUE))), 1, info = r)

@@ -25,7 +25,11 @@ simulateDrugsWithCovariates(
   antiseizureInteractions = FALSE,
   cyp4f2 = CYP4F2_DEFAULT,
   gestationalAge = NULL,
-  opioidTolerance = OPIOID_TOLERANCE_DEFAULT
+  opioidTolerance = OPIOID_TOLERANCE_DEFAULT,
+  albumin = NULL,
+  ast = NULL,
+  physiology = NULL,
+  pulmonaryHypertension = FALSE
 )
 }
 \arguments{
@@ -97,6 +101,23 @@ are affected.}
 each opioid's MEAC, band and time-until-threshold value
 (\code{endCe}) by its factor (\code{OPIOID_TOLERANCE_FACTORS}), as the
 app does; the concentrations are unchanged.}
+
+\item{albumin}{serum albumin in g/dL, or NULL for each model's reference
+value.  Only the models that declare it (methotrexate,
+methotrexatePediatric) are affected.}
+
+\item{ast}{serum aspartate aminotransferase in U/L, or NULL for each
+model's reference value.  Only the models that declare it (epirubicin)
+are affected.}
+
+\item{physiology}{NULL (normal), or the physiology sliders' factors, a
+numeric vector named \code{liver}, \code{renal}, \code{cardiac},
+\code{gi} (multiples of normal function, 0.1 to 10); see
+\code{getDrugPK()}.}
+
+\item{pulmonaryHypertension}{does the patient have pulmonary arterial
+hypertension?  TRUE or FALSE (the default); read only by sildenafil and
+tadalafil (see \code{getDrugPK()}).}
 }
 \value{
 a list of data frames with the output of the a single drug
