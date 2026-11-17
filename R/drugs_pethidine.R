@@ -67,7 +67,19 @@ pethidine <- function(weight, height, age, sex, adjustToFFM = TRUE)
       typical = typical, 
       upperTypical = upperTypical, 
       lowerTypical = lowerTypical, 
-      reference = reference
+      # Norpethidine's own citation is on its own page.
+      reference = reference,
+      # Norpethidine, the toxic metabolite (R/drugs_norpethidine.R): derived
+      # from Kuhnert 1985, formed from ALL of this model's clearance (k10),
+      # its apparent volume calibrated to that, by moles (norpethidine 233.31
+      # / pethidine 247.33).  (Claude Code, 2026-11-13, at the request of
+      # Steven L. Shafer.)
+      metabolite = list(
+        name              = "norpethidine",
+        kFormation        = cl1 / v1,
+        firstPassFraction = 0,
+        mwRatio           = NORPETHIDINE_MW / PETHIDINE_MW
+      )
     )
   )
 }

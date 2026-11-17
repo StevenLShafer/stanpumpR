@@ -11,7 +11,8 @@ metaboliteCoefficients(
   mwRatio = 1,
   unitScale = 1,
   firstPassFraction = 0,
-  directFraction = 0
+  directFraction = 0,
+  transitRate = 0
 )
 }
 \arguments{
@@ -42,6 +43,10 @@ infusion) entering the metabolite's central compartment directly, never
 having been parent: the unencapsulated share of a liposomal product
 (doxorubicinLiposomal, Hsu 2018).  Defaults to 0.  The parent's own model
 carries the rest of the dose (see that drug's header).}
+
+\item{transitRate}{first-order rate constant, per minute, of a transit
+compartment between formation and the metabolite's central compartment;
+0 (the default) for none.  Adds one exponential to the metabolite's set.}
 }
 \value{
 a list with \code{lambda} (the union of eigenvalues: parent, then
@@ -49,7 +54,9 @@ metabolite, then the absorption constant when there is one),
 \code{bolus}, \code{infusion} and \code{PO} coefficients on each, and the
 scalar \code{K} used to form them.  A parent with a second oral depot
 (\code{ka_PO2}) adds its absorption constant after the first and a
-\code{PO2} vector for the doses that take that path.
+\code{PO2} vector for the doses that take that path, and a parent with
+a tissue depot (\code{ka_RA}, and \code{ka_RAslow}) adds those absorption
+constants last and \code{RA} (and \code{RAslow}) vectors.
 }
 \description{
 Returns the metabolite's concentration as a sum of exponentials over the

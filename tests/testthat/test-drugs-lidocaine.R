@@ -27,7 +27,17 @@ test_that("returns the published parameters with total-body-weight scaling", {
     typical = 1,
     upperTypical = 1.5,
     lowerTypical = 0.5,
-    reference = "Schnider TW et al., Anesthesiology 1996;84(5):1043-1050. https://pubmed.ncbi.nlm.nih.gov/8623997/"
+    reference = "Schnider TW et al., Anesthesiology 1996;84(5):1043-1050. https://pubmed.ncbi.nlm.nih.gov/8623997/",
+    # MEGX formed from all of lidocaine's clearance (k10 = 1.505 / 7.07), by
+    # moles (MEGX 206.28 / lidocaine 234.34), through one transit
+    # compartment with Foong 2025's 0.513 h transit time.
+    metabolite = list(
+      name = "MEGX",
+      kFormation = 1.505 / 7.07,
+      firstPassFraction = 0,
+      mwRatio = 206.28 / 234.34,
+      kTransit = 1 / (0.513 * 60)
+    )
   )
   expect_equal_rounded(actual, expected)
 })

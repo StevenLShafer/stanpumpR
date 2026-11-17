@@ -27,6 +27,14 @@ test_that("returns the published parameters with total-body-weight scaling", {
       "https://pubmed.ncbi.nlm.nih.gov/14650375/ (kinetics); ",
       "Austin KL, Stapleton JV, Mather LE, Anesthesiology 1980;53:460-466. ",
       "https://pubmed.ncbi.nlm.nih.gov/7457961/ (MEAC)"
+    ),
+    # Norpethidine formed from all of pethidine's clearance (k10 =
+    # 0.7625801 / 18.1), by moles (norpethidine 233.31 / pethidine 247.33).
+    metabolite = list(
+      name = "norpethidine",
+      kFormation = 0.7625801 / 18.1,
+      firstPassFraction = 0,
+      mwRatio = 233.31 / 247.33
     )
   )
   expect_equal_rounded(actual, expected)

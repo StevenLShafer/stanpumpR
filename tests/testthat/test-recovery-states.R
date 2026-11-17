@@ -251,11 +251,14 @@ test_that("the intravenous engines all carry their states out", {
   expect_equal(recoveryFromStates(X$recoveryStates, PK$endCe), X$wide$Recovery)
 
   # A drug with a regional anesthesia depot carries one more state, ka_RA.
+  # Lidocaine forms MEGX (2026-11-13) and so takes the metabolite engine,
+  # which carries only the states the doses use: its three exponentials (the
+  # third empty), ke0 and ka_RA.
   PK <- pkFor("lidocaine", weight = 70, height = 170, age = 50, sex = "male")
   X <- simCpCe(data.frame(Drug = "lidocaine", Time = 0, Dose = 300,
                           Units = "mg RA"),
                noEvents, PK, 480, TRUE)
-  expect_equal(ncol(X$recoveryStates$state), 8)
+  expect_equal(ncol(X$recoveryStates$state), 5)
   expect_equal(recoveryFromStates(X$recoveryStates, PK$endCe), X$wide$Recovery)
 
   # So does a drug with a sublingual depot, ka_SL (buprenorphine).

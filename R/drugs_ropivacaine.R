@@ -132,7 +132,18 @@ ropivacaine <- function(weight, height, age, sex, adjustToFFM = TRUE)
       typical = 0,
       upperTypical = 0,
       lowerTypical = 0,
-      reference = reference
+      reference = reference,
+      # PPX, the toxic metabolite (R/drugs_PPX.R; Sunder 2026): formed from
+      # ALL of this model's clearance, mass for mass as fitted, through one
+      # transit compartment with the 4.9 min mean of Sunder's metabolic
+      # delay.  (Claude Code, 2026-11-17, at the request of Steven L. Shafer.)
+      metabolite = list(
+        name              = "PPX",
+        kFormation        = default$cl1 / default$v1,
+        firstPassFraction = 0,
+        mwRatio           = 1,
+        kTransit          = 1 / PPX_DELAY
+      )
     )
   )
 }

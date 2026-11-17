@@ -196,6 +196,24 @@ simulationPlot <- function(
     }
   )
 
+  # The summed toxicity series (lidocaine + MEGX), drawn as a companion in
+  # the metabolite's panel against its threshold (R/toxicMetabolites.R).
+  # Here, before a blank plasma line removes the parent's plasma rows, and
+  # only on the concentration axis.
+  toxicSums <- NULL
+  if (identical(normalization, "none"))
+  {
+    toxicSums <- toxicSumSeries(allResults)
+    toxicSums$companions <- toxicSums$companions[
+      toxicSums$companions$Parent %in% plotTable$Drug, , drop = FALSE]
+    if (nrow(toxicSums$companions) > 0)
+    {
+      keep <- toxicSums$series$Drug %in% toxicSums$companions$Drug
+      allResults <- rbind(allResults, toxicSums$series[keep, names(allResults), drop = FALSE])
+      companions <- rbind(companions, toxicSums$companions)
+    }
+  }
+
   if (!plotRecovery)
     allResults <- allResults[allResults$Site != "Recovery",]
 
@@ -1055,13 +1073,44 @@ simulationPlot <- function(
       }
   }
 
+  # The summed toxicity threshold, dashed, in the metabolite's panel
+  # (R/toxicMetabolites.R)
+  if (identical(normalization, "none"))
+  {
+    thresholds <- toxicSumThresholds(plotTable, minimum)
+    if (!is.null(thresholds))
+    {
+      thresholds$Wrap <- factor(as.character(thresholds$Wrap), levels = wrapFactors, ordered = TRUE)
+      plotObject <- plotObject +
+        ggplot2::geom_hline(
+          data = thresholds,
+          ggplot2::aes(yintercept = threshold),
+          color = TOXIC_LABEL_COLOUR,
+          linetype = "dashed",
+          linewidth = 0.6
+        ) +
+        ggplot2::geom_text(
+          data = thresholds,
+          ggplot2::aes(x = Time, y = threshold, label = label),
+          color = TOXIC_LABEL_COLOUR,
+          hjust = -0.02,
+          vjust = -0.4,
+          size = 3.5,
+          inherit.aes = FALSE,
+          show.legend = FALSE
+        )
+    }
+  }
+
   # Step A6: facet wrap
 
   # This code should work if facetscales gets fixed
   # scales_y <- sapply(as.character(unique(plotTable$Wrap)), function(x) x = scale_y_continuous())
   # if (plotEvents) scales_y$Events <- scale_y_continuous(labels = NULL)
+  # facetToxicLabels(): a toxic metabolite's strip is drawn in red
+  # (R/toxicMetabolites.R).
   plotObject <- plotObject +
-    ggplot2::facet_grid(
+    facetToxicLabels(ggplot2::facet_grid(
       Wrap ~ .,
 #      ncol = 1,
       scales="free_y",
@@ -1071,7 +1120,7 @@ simulationPlot <- function(
 #      strip.position = "left",
       shrink=FALSE
 #      scales = list(y = scales_y)
-      ) +
+      )) +
     ggplot2::ylab(NULL) +
     ggplot2::theme(strip.background = ggplot2::element_blank(),
           strip.placement = "outside",

@@ -949,6 +949,29 @@ PREGNANCY_MAX_AGE <- 60
 # pregnant creatinine already carries the rise.
 PREGNANCY_GFR_FACTOR <- 1.5
 
+# Toxic metabolites (Steven L. Shafer, 2026-11-13): metabolites that add to a
+# drug's toxicity and not to its therapeutic effect -- lidocaine's MEGX
+# (R/drugs_MEGX.R), pethidine's norpethidine (R/drugs_norpethidine.R) and
+# ropivacaine's PPX (R/drugs_PPX.R, 2026-11-17).
+# Their panels' labels are drawn in TOXIC_LABEL_COLOUR (R/toxicMetabolites.R).
+TOXIC_METABOLITES <- c("MEGX", "norpethidine", "PPX")
+TOXIC_LABEL_COLOUR <- "red"
+
+# The summed toxicity threshold drawn on a toxic metabolite's panel
+# (R/toxicMetabolites.R): the parent plus the metabolite against one
+# concentration.  Lidocaine + MEGX against 5 mcg/mL is the convention of
+# Crouch 2023 (Anesthesiology 138:71-81, read in full: "[lidocaine] + [MEGX]
+# + 0.25*[GX] ... with the reference of toxicity threshold at 5.0 ug/ml"),
+# drawn on Steven L. Shafer's instruction (2026-11-13).  GX is not modelled,
+# so the line drawn is lidocaine + MEGX.
+TOXIC_SUM_THRESHOLDS <- data.frame(
+  metabolite = "MEGX",
+  parent     = "lidocaine",
+  threshold  = 5,          # in the panel's units
+  units      = "mcg/mL",
+  stringsAsFactors = FALSE
+)
+
 # BAYESIAN UPDATE (R/bayesian.R, help page models/bayesian).  The sidebar's
 # Bayesian Updating panel: measured concentrations, and the two variabilities
 # of the maximum a posteriori estimate, each a coefficient of variation in

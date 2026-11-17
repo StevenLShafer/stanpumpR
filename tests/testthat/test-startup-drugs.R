@@ -13,7 +13,7 @@ test_that("every drug that can be dosed has a category the menu knows", {
                   "enalaprilat", "doxorubicinol", "doxorubicinolPediatric", "doxorubicinolPerezBlanco",
                   "irinotecanSN38", "cisplatinBound", "gemcitabineDFDU", "capecitabine5FU",
                   "norclozapine", "doxorubicinLiposomalFree", "ACT333679", "M6SUZ",
-                  "aprocitentan", "colistin",
+                  "aprocitentan", "colistin", "MEGX", "norpethidine", "PPX",
                   "air", "oxygen", "ventilation")
   # and the candidate models of a drug whose model the program chooses
   # (R/modelSelection.R), offered only through their drug's name
