@@ -174,4 +174,4 @@ Schnider TW, Minto CF, Gambus PL, Andresen C, Goodale DB, Shafer SL, Youngs EJ. 
 
 ## Models present in the drug files but not the ones cited
 
-Shafer SL, Varvel JR, Aziz N, Scott JC. Pharmacokinetics of fentanyl administered by computer-controlled infusion pump. *Anesthesiology* 1990;73:1091-1102. *(One of the five sources pooled in the fentanyl parameters; its own pooled model is different.)*
+Shafer SL, Varvel JR, Aziz N, Scott JC. Pharmacokinetics of fentanyl administered by computer-controlled infusion pump. *Anesthesiology* 1990;73:1091-1102. *(One of the five data sets Bae and colleagues (2020) refitted for the library's fentanyl model; its own pooled model is different.)*

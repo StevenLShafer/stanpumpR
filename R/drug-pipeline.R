@@ -145,7 +145,8 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
                           ast = NULL,
                           opioidTolerance = OPIOID_TOLERANCE_DEFAULT,
                           individual = NULL,
-                          physiology = NULL) {
+                          physiology = NULL,
+                          pulmonaryHypertension = FALSE) {
   # The Patient Profile's Opioid tolerance raises every opioid's MEAC by its
   # factor (OPIOID_TOLERANCE_FACTORS), here, where each drug's MEAC enters
   # its entry, so everything that reads it downstream sees the tolerant MEAC.
@@ -191,6 +192,7 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
         # (R/bayesian.R): a list of clearance and volume factors, by drug.
         individual = individual[[drug]],
         physiology = physiology,
+        pulmonaryHypertension = pulmonaryHypertension,
         # The session's library, from which a metabolite's row (its units)
         # is read
         libraryDefaults = drugDefaults,

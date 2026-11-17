@@ -55,7 +55,7 @@ series; a PBPK prediction; a review.
   lacosamide, topiramate, metformin and enoxaparin apply their measured factor to the whole
   clearance and not through their renal terms, which would undershoot (levetiracetam) or count
   filtration twice (metformin).
-- **Models fitted in pregnant women** (calcium, magnesium sulfate, oxytocin) are
+- **Models fitted in pregnant women** (calcium, magnesium sulfate) are
   `source_pregnant`: the flag does nothing.
 - **Total concentrations.** The library plots total concentration. For phenytoin and valproate
   the factors reproduce the measured fall in TOTAL concentration, which is mostly a rise in free

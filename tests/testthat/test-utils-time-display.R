@@ -124,7 +124,7 @@ test_that("recoveryHorizonFor agrees with where the engines stop", {
   dd <- getDrugDefaultsGlobal(FALSE)
   noEvents <- data.frame(Time = double(), Event = character())
   DT <- data.frame(Drug = c("fentanyl", "vancomycin"), Time = 0,
-                   Dose = c(5000, 100000), Units = c("mcg", "mg"))
+                   Dose = c(20000, 100000), Units = c("mcg", "mg"))
   drugs <- processdoseTable(DT, noEvents,
                             recalculatePK(NULL, dd, DT, 50, 70, 170, "male"),
                             60, TRUE)

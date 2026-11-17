@@ -76,8 +76,8 @@
 # The creatinine clearance takes the rise in filtration of pregnancy (x 1.5,
 # pregnancyGfrFactor(), only when the creatinine is blank): physiological, an
 # assumption, on the unbound clearance only (the bound platinum's model has
-# no pregnancy flag).  Zemlickis 1994 found slightly less binding in pregnancy,
-# recorded and not applied.
+# no pregnancy flag).  No change in binding is applied.  Papers by Gideon
+# Koren are not cited (Shafer, 2026-11-16: suspected research fraud).
 #
 # NO EFFECT SITE, NO BAND
 # -----------------------------------------------------------------------------

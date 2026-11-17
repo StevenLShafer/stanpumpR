@@ -36,4 +36,4 @@ Sex, as published. Age and weight were tested and not retained, within a narrow 
 
 ### Alternatives not used
 
-Panchaud and colleagues (2011, perinatal women; CL/F 8.42 L/h, V/F 690 L) and Wilens and colleagues (2002, children; CL/F 0.181 L/h/kg, V/F 37.4 L/kg) modelled fluoxetine alone and fitted their own populations; Han and colleagues found that both underpredicted the Chinese troughs. Panchaud's half-life, 57 hours, is closer to the label's, but the population is narrow and there is no norfluoxetine. See [Antidepressant models and their limits](help:models/antidepressants).
+Wilens and colleagues (2002, children; CL/F 0.181 L/h/kg, V/F 37.4 L/kg) modelled fluoxetine alone and fitted their own population; Han and colleagues found that it underpredicted the Chinese troughs, and it has no norfluoxetine. A model of breastfeeding women is not cited because it pooled data from a study co-authored by Gideon Koren, whose papers stanpumpR no longer uses because of suspected research fraud. See [Antidepressant models and their limits](help:models/antidepressants).

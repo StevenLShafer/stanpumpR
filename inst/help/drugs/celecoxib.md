@@ -19,6 +19,8 @@ The label gives about 30 L/h.
 
 The weight effect is from Krishnaswami and colleagues (*J Clin Pharmacol* 2012;52:1134-1149). Their one-compartment NONMEM model combined 152 children aged 2 to 17 with juvenile rheumatoid arthritis and 36 adults with rheumatoid arthritis. It found CL/F proportional to weight^0.265 and V/F to weight^0.499. The label's statement that 10 kg and 25 kg patients have 40% and 24% lower clearance than a 70 kg adult follows from that exponent. Here clearances scale by (W/70)^0.265 and volumes by (W/70)^0.499. W is the pharmacokinetic weight with the [fat-free-mass switch](help:models/fat-free-mass) on and total weight with it off.
 
+All papers by Gideon Koren have been removed from stanpumpR because of suspected research fraud. This page no longer cites a study of celecoxib in children that he co-authored.
+
 ### Effect site
 
 ke0 is supplied directly from Hannam and colleagues (*Paediatr Anaesth* 2023;33:291-302). They re-analysed mean pain relief after celecoxib 200 and 400 mg for dental surgery in adults and found an equilibration half-time of 1.12 hours, an effect-site Ce50 of 242 ng/mL and an Emax of 3.25 on a 0–4 pain-relief scale. They estimated it on their own one-compartment kinetics (CL/F 49 L/h, V/F 346 L), so pairing it with this fit is an assumption, as it is for ibuprofen. The *time until threshold* level is the Ce50, 242 ng/mL in the effect site. Celecoxib is not an opioid and is not on the MEAC panel.

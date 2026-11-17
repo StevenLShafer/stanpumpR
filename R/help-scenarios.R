@@ -97,6 +97,9 @@ helpScenarioDefaultOptions <- function() {
 #'   then hold their own reference value)
 #' @param pregnant is the patient pregnant?  Only for a woman of child-bearing
 #'   age (pregnancyPossible()); read by the models R/pregnancy.R lists
+#' @param pulmonaryHypertension does the patient have pulmonary arterial
+#'   hypertension?  Read only by sildenafil and tadalafil
+#'   (R/pulmonaryHypertension.R)
 #' @param doses data frame with Drug, Time (minutes), Dose, Units
 #' @param events data frame with Time (minutes) and Event, or NULL
 #' @param measurements measured concentrations for the Bayesian update: a
@@ -113,7 +116,7 @@ helpScenario <- function(id, title, group, summary,
                          creatinine = NULL,
                          osmolality = OSMOLALITY_DEFAULT, pregnant = FALSE,
                          gestationalAge = NULL, albumin = NULL, ast = NULL,
-                         measurements = NULL, ...) {
+                         measurements = NULL, pulmonaryHypertension = FALSE, ...) {
   options <- utils::modifyList(helpScenarioDefaultOptions(), list(...))
   doses <- data.frame(
     Drug = as.character(doses$Drug),
@@ -145,7 +148,8 @@ helpScenario <- function(id, title, group, summary,
                    vkorc1 = vkorc1, cyp4f2 = cyp4f2, cyp2b6 = cyp2b6,
                    adjustToFFM = adjustToFFM, creatinine = creatinine, osmolality = osmolality,
                    pregnant = pregnant, gestationalAge = gestationalAge,
-                   albumin = albumin, ast = ast),
+                   albumin = albumin, ast = ast,
+                   pulmonaryHypertension = pulmonaryHypertension),
     doses = doses, events = events, measurements = measurements, options = options
   )
 }
@@ -1108,7 +1112,7 @@ helpScenarioDefinitions <- function() {
       "visualizer-fentanyl-infusion",
       "Watching a fentanyl infusion come back",
       "Seeing the compartments",
-      "Fentanyl 100 mcg and 2 mcg/kg/hr for four hours, then stopped, made to be watched in the Visualizer: half the drug given is in V3 when the pump stops, V3 keeps filling for a quarter of an hour, and then most of what leaves the body over the next four hours has first come back from the periphery.",
+      "Fentanyl 100 mcg and 2 mcg/kg/hr for four hours, then stopped, made to be watched in the Visualizer: nearly half the drug given is in V3 when the pump stops, V3 keeps filling for several minutes, and then most of what leaves the body over the next four hours has first come back from the periphery.",
       doses = helpDoses(
         c("fentanyl", 0, 100, "mcg"),
         c("fentanyl", 0, 2, "mcg/kg/hr"),
@@ -1228,6 +1232,9 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   } else if (p$pregnant && !pregnancyPossible(p$age, p$sex)) {
     say("pregnant, but not a woman of ", PREGNANCY_MIN_AGE, " to ", PREGNANCY_MAX_AGE, " years")
   }
+  if (!is.logical(p$pulmonaryHypertension) || length(p$pulmonaryHypertension) != 1 ||
+      is.na(p$pulmonaryHypertension))
+    say("pulmonaryHypertension is not a single logical")
   if (!is.null(p$creatinine) && !is_valid_number(p$creatinine, MIN_CREATININE, MAX_CREATININE)) {
     say("creatinine out of range: ", p$creatinine)
   }
@@ -1483,6 +1490,10 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL,
   # later patient does not inherit the flag.
   shinyWidgets::updateRadioGroupButtons(session, "pregnant",
                                         selected = if (isTRUE(p$pregnant)) "TRUE" else "FALSE")
+  # Likewise Pulmonary hypertension, sent even when hidden
+  shinyWidgets::updateRadioGroupButtons(
+    session, "pulmonaryHypertension",
+    selected = if (isTRUE(p$pulmonaryHypertension)) "TRUE" else "FALSE")
   updateSelectInput(session, "cyp2d6", selected = p$cyp2d6)
   updateSelectInput(session, "cyp2c19", selected = p$cyp2c19)
   updateSelectInput(session, "cyp2c9", selected = p$cyp2c9)
@@ -1604,6 +1615,7 @@ helpScenarioPageHTML <- function(id) {
   )
   # Shown only when set: "Pregnant: no" beside a man's age would be noise.
   if (isTRUE(p$pregnant)) patient$Pregnant <- "yes"
+  if (isTRUE(p$pulmonaryHypertension)) patient$`Pulmonary hypertension` <- "yes"
   # Likewise a gestational age, only when the scenario names one
   if (!is.null(p$gestationalAge))
     patient$`Gestational age at birth` <- sprintf("%s weeks", helpFormatNumber(p$gestationalAge))

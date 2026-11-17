@@ -105,7 +105,7 @@ The response (JSON):
   },
   "patient": {
     "weight": 70, "weightUnit": "kg", "height": 170, "heightUnit": "cm",
-    "age": 50, "ageUnit": "years", "sex": "male", "pregnant": false, "adjustToFFM": true,
+    "age": 50, "ageUnit": "years", "sex": "male", "pregnant": false, "pulmonaryHypertension": false, "adjustToFFM": true,
     "osmolality": 280, "creatinine": null, "gestationalAge": null, "albumin": null, "ast": null,
     "cyp2d6": "normal", "cyp2c19": "normal", "cyp2c9": "*1/*1", "cyp2b6": "normal",
     "vkorc1": "AA", "cyp4f2": "CC", "opioidTolerance": "none"
@@ -113,8 +113,8 @@ The response (JSON):
   "drugs": [
     {
       "Drug": "fentanyl", "Dosed": true, "ConcentrationUnits": "ng/mL", "MEAC": 0.6,
-      "PeakPlasma": 8.264457841, "TimePeakPlasma": 0,
-      "PeakEffectSite": 2.244197188, "TimePeakEffectSite": 3.402395028,
+      "PeakPlasma": 9.900982777, "TimePeakPlasma": 0,
+      "PeakEffectSite": 2.407713106, "TimePeakEffectSite": 3.667123731,
       "RecoveryThreshold": 0.6
     }
   ],
@@ -123,9 +123,9 @@ The response (JSON):
   ],
   "events": [],
   "timeseries": [
-    {"Drug": "fentanyl", "Time": 0,  "Plasma": 8.264457841,  "EffectSite": 0,           "ConcentrationUnits": "ng/mL"},
-    {"Drug": "fentanyl", "Time": 5,  "Plasma": 1.554401881,  "EffectSite": 2.141025469, "ConcentrationUnits": "ng/mL"},
-    {"Drug": "fentanyl", "Time": 10, "Plasma": 0.7994632409, "EffectSite": 1.37732736,  "ConcentrationUnits": "ng/mL"}
+    {"Drug": "fentanyl", "Time": 0,  "Plasma": 9.900982777,  "EffectSite": 0,           "ConcentrationUnits": "ng/mL"},
+    {"Drug": "fentanyl", "Time": 5,  "Plasma": 1.641898948,  "EffectSite": 2.299320861, "ConcentrationUnits": "ng/mL"},
+    {"Drug": "fentanyl", "Time": 10, "Plasma": 0.8582458204, "EffectSite": 1.51788589,  "ConcentrationUnits": "ng/mL"}
   ],
   "warnings": []
 }
@@ -200,6 +200,7 @@ an empty array or an object); anything else is refused (400).
     "sex": "male",           // required: "male" | "female"
     "pregnant": false,       // late-pregnancy kinetics for the drugs that read it (default false);
                              //   true needs sex "female"
+    "pulmonaryHypertension": false, // the PAH population for sildenafil and tadalafil (default false)
     "weightUnit": "kg",      // "kg" (default) | "lb"
     "heightUnit": "cm",      // "cm" (default) | "in"
     "ageUnit": "years",      // "years" (default) | "months"
@@ -258,6 +259,7 @@ an empty array or an object); anything else is refused (400).
 | `age` | yes | 0–90 years (after conversion from `months`) |
 | `sex` | yes | `male`, `female` |
 | `pregnant` | no | `false` (default) or `true`, which needs `sex` `female`. Only the drugs with a late-pregnancy model read it. |
+| `pulmonaryHypertension` | no | `false` (default) or `true`: the patient has pulmonary arterial hypertension. Only the drugs given both for PAH and for something else read it, `sildenafil` and `tadalafil`, which then use their PAH population's pharmacokinetics (slower clearance); `false` gives the population of their other use (erectile dysfunction, healthy volunteers). |
 | `creatinine` | no | 0.2–15 mg/dL. If it is omitted, each renally cleared model assumes the normal value for the patient's age and sex. |
 | `gestationalAge` | no | 22–44 weeks, the gestational age at birth. If it is omitted, the birth is taken as at term (40 weeks). Only the neonatal models (`dobutamineNeonatal`) read it, with the age, as the postmenstrual age. |
 | `albumin` | no | 0.5–6 g/dL, the serum albumin. If it is omitted, each model that reads it holds its own reference value. Only the models with an albumin term read it: `methotrexate` (Ibarra 2023, clearance × (albumin/4)^0.594) and `methotrexatePediatric` (Taylor 2023, the severe-hypoalbuminaemia factors on Q2 and Q3 at 2.5 g/dL or less). |
@@ -450,7 +452,7 @@ after every dose, but its times differ from drug to drug.
     <drugs><drug Drug="fentanyl" ConcentrationUnits="ng/mL" MEAC="0.6" .../></drugs>
     <doses><dose Drug="fentanyl" Time="0" Dose="100" Units="mcg" Simulated="true"/></doses>
     <events/>
-    <timeseries><point Drug="fentanyl" Time="0" Plasma="8.264457841" EffectSite="0" .../></timeseries>
+    <timeseries><point Drug="fentanyl" Time="0" Plasma="9.900982777" EffectSite="0" .../></timeseries>
     <warnings/>
   </stanpumpR>
   ```

@@ -1308,6 +1308,15 @@ app_server <- function(input, output, session) {
     isTRUE(as.logical(input$pregnant)) && pregnancyPossible(age(), sex())
   })
 
+  # The Pulmonary hypertension control reports "TRUE" or "FALSE" (NULL before
+  # it reports, and in a bookmark made before it existed); anything else is
+  # read as no.  Only the models of a drug with a separate PAH population
+  # read it (R/pulmonaryHypertension.R).  A hidden control keeps its value,
+  # as every hidden control does, and changes nothing while no drug reads it.
+  pulmonaryHypertension <- reactive({
+    isTRUE(as.logical(asScalarString(input$pulmonaryHypertension)))
+  })
+
   # NULL when the field is blank: the renal models then assume a normal value.
   creatinine <- reactive({
     x <- input$creatinine
@@ -1511,6 +1520,7 @@ app_server <- function(input, output, session) {
         albumin = albumin(),
         ast = ast(),
         pregnant = pregnant(),
+        pulmonaryHypertension = pulmonaryHypertension(),
         adjustToFFM = adjustToFFM(),
         opioidTolerance = opioidTolerance(),
         alternativeModels = companionGroupsOn(),
@@ -2082,6 +2092,7 @@ app_server <- function(input, output, session) {
       height = height(),
       sex = sex(),
       pregnant = pregnant(),
+      pulmonaryHypertension = pulmonaryHypertension(),
       adjustToFFM = adjustToFFM(),
       osmolality = osmolality(),
       creatinine = creatinine(),

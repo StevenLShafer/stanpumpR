@@ -39,19 +39,30 @@
 # The review warns that the model "cannot predict the AUC after PO
 # administration for doses over 50 mg".  At 100 mg F1 is 0.565.
 #
-# PULMONARY ARTERIAL HYPERTENSION AND AGE (NOT APPLIED)
-# =====================================================
-# The model is the healthy volunteers'.  The review's external validation
-# (p.23-24) found it under-predicted patients with pulmonary arterial
-# hypertension, whose clearance was 19% (intravenous, study 1024, CL 24.7
-# L/h) to 33% (oral, studies 1140/1141) lower, and concluded that "the
-# population model that accounts for 30% difference in clearance ... predicts
-# exposures in PAH patients".  The Revatio label: steady-state concentrations
-# in pulmonary hypertension "20 to 50% higher" than in volunteers; healthy
-# volunteers aged 65 or more reached "approximately 84%" higher concentrations
-# (45% higher unbound).  Neither is applied: the decision whether to plot the
-# patients' lower clearance is recorded in the PR (2026-11-15) and in the help
-# page.
+# PULMONARY ARTERIAL HYPERTENSION (the Patient Profile's field)
+# ================================================================
+# The model is the healthy volunteers', and is what a patient without PAH
+# (Viagra's erectile dysfunction) gets.  With the Patient Profile's
+# Pulmonary hypertension set (Steven L. Shafer, 2026-11-17: "very different
+# PK in the two populations, as patients with PAH often have severe cardiac
+# disease"), clearance is 30% lower (SILDENAFIL_PAH_CL, 0.70), the
+# adjustment the review itself validated.  Its external validation (p.23-24)
+# found the healthy model under-predicted patients with pulmonary arterial
+# hypertension, and concluded that "the population model that accounts for
+# 30% difference in clearance between healthy volunteer and PAH patients
+# predicts exposures in PAH patients".  Its Table 5 gives the patients'
+# clearance from two analyses: 24.7 L/h intravenously (study 1024, 62
+# patients, a steady-state model with no volume), 19.4% below the healthy
+# 29.5; and CL/F 55.1 L/h orally (studies 1140/1141, 337 patients), 22.1 L/h
+# at a bioavailability of 40%, 33% below.  The 30% is between them.  The
+# volumes, absorption and bioavailability are the healthy volunteers': the
+# review measured none of them in patients (the oral analysis was one
+# compartment with zero-order absorption, and the review says "the lower
+# clearance and/or a higher oral bioavailability" without separating them).
+# The Revatio label: steady-state concentrations in pulmonary hypertension
+# "20 to 50% higher" than in volunteers.  Not applied, for either
+# population: healthy volunteers aged 65 or more reached "approximately 84%"
+# higher concentrations (45% higher unbound).
 #
 # CHECKS (not used in the fit)
 # ============================
@@ -89,6 +100,7 @@
 
 # FDA review of NDA 22-473, Tables 3, 9 and 10
 SILDENAFIL_CL    <- 29.5    # L/h
+SILDENAFIL_PAH_CL <- 0.70   # clearance in PAH relative to healthy (p.23-24)
 SILDENAFIL_V1    <- 73.2    # L
 SILDENAFIL_V2    <- 33.3    # L
 SILDENAFIL_Q     <- 5.32    # L/h
@@ -104,17 +116,23 @@ SILDENAFIL_F_EXPONENT <- 0.289
 #' see the header of \code{R/drugs_sildenafil.R}.
 #'
 #' @inheritParams cefazolin
+#' @param pulmonaryHypertension TRUE for a patient with pulmonary arterial
+#'   hypertension (clearance 30% lower), FALSE (the default) for the healthy
+#'   volunteers' model
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-sildenafil <- function(weight, height, age, sex, adjustToFFM = TRUE)
+sildenafil <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                       pulmonaryHypertension = FALSE)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  pah <- isTRUE(pulmonaryHypertension)
+  cl <- SILDENAFIL_CL * (if (pah) SILDENAFIL_PAH_CL else 1)
 
   default <- list(
     v1  = SILDENAFIL_V1 * size$volume,
     v2  = SILDENAFIL_V2 * size$volume,
     v3  = 1,
-    cl1 = SILDENAFIL_CL / 60 * size$clearance,
+    cl1 = cl / 60 * size$clearance,
     cl2 = SILDENAFIL_Q / 60 * size$clearance,
     cl3 = 0,
     ka_PO = SILDENAFIL_KA / 60,
@@ -137,7 +155,10 @@ sildenafil <- function(weight, height, age, sex, adjustToFFM = TRUE)
     reference = paste0(
       "FDA Clinical Pharmacology Review of NDA 22-473 (Revatio injection, 2009), ",
       "Tables 3, 9 and 10: two compartments in 45 healthy men, CL 29.5 L/h, Vc 73.2 L, ",
-      "Vp 33.3 L, Q 5.32 L/h, ka 25.6 /h, lag 0.485 h, oral F 0.355 x (dose/20 mg)^0.289. ",
-      "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2009/022473s000_ClinPharmR.pdf")
+      "Vp 33.3 L, Q 5.32 L/h, ka 25.6 /h, lag 0.485 h, oral F 0.355 x (dose/20 mg)^0.289",
+      if (pah) paste0("; pulmonary arterial hypertension: clearance x 0.70 (20.7 L/h), the ",
+                      "review's validated adjustment (p.23-24)") else
+        "; no pulmonary hypertension (the healthy volunteers')",
+      ". https://www.accessdata.fda.gov/drugsatfda_docs/nda/2009/022473s000_ClinPharmR.pdf")
   )
 }
