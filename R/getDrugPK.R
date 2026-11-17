@@ -57,6 +57,10 @@
 #'   \code{gi} (multiples of normal function, 0.1 to 10); applied only to a
 #'   drug with a row in \code{inst/extdata/physiologyParameters.csv}.  See
 #'   \code{R/physiology.R}.
+#' @param pulmonaryHypertension does the patient have pulmonary arterial
+#'   hypertension?  TRUE or FALSE (the default).  Passed only to the models
+#'   of a drug with a separate PAH population (sildenafil, tadalafil); see
+#'   \code{R/pulmonaryHypertension.R}.
 #' @param model internal: a model's output to use in place of calling the
 #'   drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
 #'   drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.
@@ -120,7 +124,8 @@ getDrugPK <- function(
   individual = NULL,
   libraryDefaults = NULL,
   metaboliteIndividual = NULL,
-  physiology = NULL
+  physiology = NULL,
+  pulmonaryHypertension = FALSE
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
@@ -156,6 +161,10 @@ getDrugPK <- function(
          ". Must be one of: ", paste(CYP2B6_VALUES, collapse = ", "))
   }
   pregnant <- checkPregnant(pregnant, sex)
+  # The Patient Profile's Pulmonary hypertension, read only by the models of a
+  # drug given both for pulmonary arterial hypertension and for something else
+  # (sildenafil, tadalafil), whose patients' pharmacokinetics differ
+  pulmonaryHypertension <- checkPulmonaryHypertension(pulmonaryHypertension)
   if (!is_valid_number(osmolality, MIN_OSMOLALITY, MAX_OSMOLALITY)) {
     stop("Invalid osmolality: ", paste(osmolality, collapse = ", "),
          ". Must be a number between ", MIN_OSMOLALITY, " and ",
@@ -275,6 +284,11 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "pregnant" %in% names(formals(get(drug, mode = "function"))))
     covariates$pregnant <- pregnant
+  # And the pulmonary hypertension flag, which only the models of a drug with
+  # a separate PAH population read (Steven L. Shafer, 2026-11-17).
+  if (exists(drug, mode = "function") &&
+      "pulmonaryHypertension" %in% names(formals(get(drug, mode = "function"))))
+    covariates$pulmonaryHypertension <- pulmonaryHypertension
   # Dispatch on the name, not the resolved function, so that a drug with no
   # covariate function at all -- an inhaled gas, which belongs on the gas path
   # and never reaches here -- still fails with R's own "could not find
@@ -1233,6 +1247,7 @@ getDrugPK <- function(
       albumin = albumin,
       ast = ast,
       physiology = physiology,
+      pulmonaryHypertension = pulmonaryHypertension,
       # The individual's metabolite, where the Bayesian update estimated it
       # from the metabolite's own levels: the parent forms the metabolite the
       # patient has.  Built from the model's, a morphine level after codeine

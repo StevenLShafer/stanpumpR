@@ -63,3 +63,34 @@ test_that("switch on: fat-free mass scaling", {
   expect_equal_rounded(set$cl1, CL / 60 * f^0.75)
   expect_equal_rounded(set$cl2, Q / 60 * f^0.75)
 })
+
+test_that("pulmonary hypertension: clearance 30% lower, the FDA review's adjustment", {
+  # Review of NDA 22-473, p.23-24: "the population model that accounts for
+  # 30% difference in clearance between healthy volunteer and PAH patients
+  # predicts exposures in PAH patients"; Table 5, the patients' clearance
+  # 24.7 L/h (IV) and 22.1 L/h (oral at F 0.4), 19% and 33% below 29.5
+  healthy <- getDrugPK("sildenafil", 70, 170, 55, "male", adjustToFFM = FALSE)$PK$default
+  pah <- getDrugPK("sildenafil", 70, 170, 55, "male", adjustToFFM = FALSE,
+                   pulmonaryHypertension = TRUE)$PK$default
+  expect_equal(healthy$cl1 * 60, 29.5)
+  expect_equal(pah$cl1 * 60, 29.5 * 0.70)
+  # 20.65 L/h: 30% below, between the review's 19% and 33%
+  expect_equal(1 - pah$cl1 / healthy$cl1, 0.30)
+  # nothing else moves
+  for (p in c("v1", "v2", "cl2", "ka_PO", "bioavailability_PO", "tlag_PO"))
+    expect_equal(pah[[p]], healthy[[p]], info = p)
+  expect_match(getDrugPK("sildenafil", 70, 170, 55, "male", pulmonaryHypertension = TRUE)$reference,
+               "pulmonary arterial hypertension")
+  # 20 mg three times a day: the troughs more than double, the peak rises
+  # about 10% (A1481140's PAH patients, sparse sampling: mean Cmax 81.4)
+  ev <- data.frame(Time = double(), Event = character())
+  ss <- function(pah) {
+    w <- simulateDrugsWithCovariates(
+      data.frame(Drug = "sildenafil", Time = 0, Dose = 20, Units = "mg PO tid"),
+      ev, 70, 170, 55, "male", 5 * 1440, FALSE, pulmonaryHypertension = pah)$sildenafil$wide
+    w <- w[w$Time >= 4 * 1440, ]
+    c(peak = max(w$Plasma), trough = min(w$Plasma))
+  }
+  h <- ss(FALSE); p <- ss(TRUE)
+  expect_equal(round(unname(c(h, p)), 1), c(96.1, 6.4, 105.4, 14.5))
+})
