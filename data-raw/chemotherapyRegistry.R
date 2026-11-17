@@ -227,7 +227,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 # text, the PDF still to confirm (FULL_TEXT_READ); or confirmed on the PDF
 # itself (PARAMETERS_VERIFIED: Briki 2026 and Lindemalm 2005, supplied by
 # Shafer 2026-11-06)
-FULL_TEXT_READ <- c("C15", "N01", "N01b", "N01c", "C28", "C37b", "C45", "C46", "C48", "C41", "C25", "C42", "P06", "C11", "N05", "C01", "P02", "C35", "C03", "C37a", "C34", "P16", "C21", "C07", "P15", "P08", "C19", "P21", "P25", "C23", "C24", "N11", "C10", "C38a", "N12", "N10", "C09", "P13", "C17", "P05")
+FULL_TEXT_READ <- c("P03", "P07", "C14", "C38b", "C40", "C15", "N01", "N01b", "N01c", "C28", "C37b", "C45", "C46", "C48", "C41", "C25", "C42", "P06", "C11", "N05", "C01", "P02", "C35", "C03", "C37a", "C34", "P16", "C21", "C07", "P15", "P08", "C19", "P21", "P25", "C23", "C24", "N11", "C10", "C38a", "N12", "N10", "C09", "P13", "C17", "P05")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
 PARAMETERS_VERIFIED <- c("C26", "N03", "C27", "C47", "C44", "N13", "C36", "N02", "C43", "P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18", "C05", "C06", "N08", "N09")
@@ -372,7 +372,10 @@ registry <- rbind(
     readiness = "complete_not_implemented"),
   m("carboplatin__children__peng1995", "carboplatin", "carboplatin", "IV",
     "children with cancer", "carboplatin (analyte to confirm)",
-    "a comparison of methods of estimating carboplatin pharmacokinetics", "first", "unknown", "P03"),
+    "two compartments per m2 (Table 2's lognormal population means, the Bayesian prior): V 5.09 L/m2, k10 0.0206, k12 0.0253, k21 0.0185 /min, i.e. CL 6.3 L/h/m2; no covariate",
+    "first", "linear", "P03",
+    "PDF read (supplied 2026-11-17). Ultrafilterable platinum by atomic absorption, as carboplatin. The prior came from 22 children of an earlier study (ref 21, ages not printed here; 16 fitted with two compartments by ADAPT II maximum likelihood, 6 by MAP), validated in 23 children 1 month-18 years (5-63 kg, GFR 42-213 mL/min/1.73 m2), whose model-independent clearance had a median of 88 mL/min/m2 (5.3 L/h/m2, range 51-129). No renal term in the model: the paper's renal dosing equation, CL = GFR + 0.36 BW, is separate. Against carboplatinPediatric (Duong 2019) the prior's clearance is 40-50% higher at 0.5, 5 and 14 years (2.24 against 1.51, 4.64 against 3.13, 9.40 against 6.72 L/h), and its validation set's median 13-25% higher. [decision, asked 2026-11-17] A candidate of the carboplatin group would be chosen for children the two current models do not contain (under 1.7 and from 8.3 to 18 years), which are where Duong 2019 is now chosen as the nearest: the source population of the prior itself is not printed, and its clearance disagrees with Duong's.",
+    readiness = "complete_not_implemented"),
   m("carboplatin__children_neuroblastoma__duong2019", "carboplatin", "carboplatin", "IV",
     "51 children with high-risk neuroblastoma, high-dose conditioning", "carboplatin (analyte to confirm)",
     "two compartments allometric in weight (CL, Q x (WT/WT_STD)^0.75, volumes x WT/WT_STD): CL 2.7 L/h, VC 8.3 L, Q 0.23 L/h, VP 0.74 L",
@@ -406,7 +409,10 @@ registry <- rbind(
     readiness = "implemented", stanpumpr_drug = "methotrexatePediatric"),
   m("methotrexate__pediatric_all__aumente2006", "methotrexate", "methotrexate (high dose)", "IV",
     "49 children with ALL, 0.5-17 years", "methotrexate",
-    "two compartments; age and weight on clearance and V1", "first", "linear", "C14"),
+    "two compartments: under 10 years CL 0.287 WT^0.876 L/h, V1 0.465 WT L; from 10 years CL 0.149 WT, V1 0.437 WT; k12 0.0155, k21 0.0724 /h (Table III)",
+    "first", "linear", "C14",
+    "PDF read (supplied 2026-11-17). 49 children 0.5-17 years (7.5-80 kg), 3 g/m2 courses; 37 index, 12 validation. The age split makes clearance jump at 10 years (22% at 30 kg). Serum creatinine, urine pH and BSA were tested and not retained. Taylor 2023 (1668 patients, 0.1-32.3 years) contains every child it does, so the selector would never choose it. Not implemented.",
+    readiness = "complete_not_implemented"),
   m("methotrexate__infant_all__beechinor2019", "methotrexate", "methotrexate (high dose)", "IV",
     "71 infants with ALL", "methotrexate",
     "two compartments, allometric weight only; high interoccasion variability", "first", "linear", "C15",
@@ -498,7 +504,8 @@ registry <- rbind(
     "women with breast cancer", "cyclophosphamide",
     "two compartments with a non-inducible (1.14 L/h) and an inducible (1.76 L/h) clearance, the drug raising the enzyme's production; enzyme turnover half-life 24 h",
     "second", "michaelis_menten", "P07",
-    "Abstract read 2026-11-16 (PubMed Central holds no full text). 14 women, 96-h infusion of 6 g/m2 with thiotepa and carboplatin. The structure is the autoinduction block's (formation raised, as McCune 2009), so no new engine is needed; with 14 patients it would never be chosen over Joerger 2007 (59) and the full text is not in the archive."),
+    "PDF read (supplied 2026-11-17). 14 women 33-58 years, 96-h infusion of 6 g/m2 with thiotepa and carboplatin. Table 1: CLind 1.76 and CLnon 1.14 L/h, V1 9.75 L, V2 21.5 L, Q 12.6 L/h; enzyme degradation kenz 0.670 /day; production kenz (1 + SCP C) with SCP 0.0614 per mg/L (printed \"l mol-1\"; the text's steady states, 16 and 32 mg/L doubling and trebling the enzyme, fix the unit); 4-OH-CP CL 301 L/h, V fixed 30 L. The induction is LINEAR in the concentration, where the autoinduction block takes an Emax (an Emax fitted no better, the paper says), so the block would need a slope term. Every parameter was fitted with thiotepa present, a CYP2B6 inhibitor. With 14 patients it would never be chosen over Joerger 2007 (59). Not implemented.",
+    readiness = "complete_not_implemented"),
   m("cyclophosphamide__breast__joerger2007", "cyclophosphamide", "cyclophosphamide", "IV",
     "65 women with breast cancer (with doxorubicin)", "cyclophosphamide",
     "one compartment: CL 4.23 L/h x 1.89^EIAD, V 34.6 L; joined to a neutropenia model",
@@ -558,7 +565,10 @@ registry <- rbind(
     "parent and metabolites", "second", "new_engine", "P20"),
   m("irinotecan__adult__xie2002", "irinotecan", "irinotecan (conventional)", "IV",
     "109 adults", "irinotecan, SN-38, SN-38 glucuronide",
-    "irinotecan three compartments, SN-38 and SN-38G two each", "second", "new_engine", "C40"),
+    "irinotecan three compartments proportional to BSA (CL 16.9, Q2 61.0, Q3 4.75 L/h/m2; V1 36.7, V2 35.9, V3 67.9 L/m2) forming SN-38 (two compartments, CL/Fm 712, Q2/Fm 1530 L/h, V1/Fm 408, V2/Fm 71600 L) forming SN-38G (two compartments, CL/Fm 66.8, Q2/Fm 23.9 L/h, V1/Fm 37, V2/Fm 48.4 L)",
+    "second", "linear_metabolite", "C40",
+    "PDF read (supplied 2026-11-17). 109 adults 34-75 years (38-115 kg, BSA 1.29-2.40 m2), 100-350 mg/m2 over 0.75-2.25 h, 44 with a second course; fitted sequentially (irinotecan's parameters fixed for SN-38's, SN-38's for SN-38G's). Irinotecan CL 31.6 L/h and Vss 263 L at the median BSA. SN-38's V2/Fm of 71,600 L is a terminal tail the 60-h sampling barely defines. Sex and age not significant. [decision, asked 2026-11-17] The library's irinotecan is Klein 2002, on Shafer's choice of 2026-11-06, with no covariates (its covariates could not be rebuilt); Xie 2002 has more patients and BSA on every parameter, and irinotecan forming SN-38 is what the metabolite route already carries (SN-38G, a third generation, would not be). Replace Klein, or leave it?",
+    readiness = "complete_not_implemented"),
   m("etoposide__adult__nguyen1998", "etoposide", "etoposide", "IV and PO",
     "100 adults 25-85 years (35-106 kg, BSA 1.21-2.64 m2)", "total and unbound etoposide",
     "two compartments: CL (mL/min) = 49.8 (1 - 0.009 protein) WT/SCr[uM] + 33.8 (1 - 0.29 liver metastases)(1 - 0.012 albumin); Vc 5.5 x BSA, Vp 4.1 x BSA L; ka 3.2 /h, lag 14 min, F 66%",
@@ -705,7 +715,7 @@ registry <- rbind(
   m("mercaptopurine__all__hawwa2008", "mercaptopurine", "mercaptopurine", "PO",
     "19 children with ALL", "red-cell 6-TGN and 6-mMPN",
     "red-cell metabolite model; BSA and TPMT genotype", "expansion", "new_engine", "C38b",
-    "Red-cell nucleotides are not plasma concentrations; TPMT is not a Patient Profile field."),
+    "PDF read (supplied 2026-11-17). 19 children, 75 samples; models only the red-cell nucleotides (6-TGN, 6-mMPN) at steady state on maintenance, with no plasma mercaptopurine. Red-cell nucleotides are not plasma concentrations, and TPMT is not a Patient Profile field: nothing to implement."),
   m("thioguanine__civ__kitchen1997", "thioguanine", "thioguanine", "IV",
     "18 patients 4-25 years (median 18), mostly solid tumours, continuous infusion", "thioguanine",
     "two compartments with capacity-limited elimination: Vc 56 L/m2, Vm 3.7 uM/h (a rate of change of concentration), Km 2.5 uM, kcp 0.42 and kpc 0.29 /h",

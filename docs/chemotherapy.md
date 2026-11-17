@@ -1033,3 +1033,45 @@ Questions (also in the registry rows and drug headers):
 6. **Liposomal irinotecan**: which manufacturer's typical values (the phase
    1/2 product, or NAPOLI-1's, about 17% lower in CL and 46% in fSN38);
    SN-38 as a metabolite-only model; the 90-minute infusion from the label.
+
+## 49. Five more papers read (2026-11-17)
+
+Shafer supplied five of the papers section 48 still asked for. All five are
+complete or as complete as they will get, and none is implemented: each is
+recorded in the registry with what it holds.
+
+- **Peng 1995** (carboplatin, children; PMID 8541105): two compartments per
+  m2, the Bayesian prior of a limited-sampling method (V 5.09 L/m2, k10
+  0.0206, k12 0.0253, k21 0.0185 /min; CL 6.3 L/h/m2), no renal term.
+- **Aumente 2006** (methotrexate, children; PMID 17112298): two compartments,
+  weight on CL and V1 with a step at 10 years. Taylor 2023 contains every child
+  it covers, with 34 times the patients, so the selector would never choose it.
+- **Hassan 1999** (cyclophosphamide autoinduction; PMID 10594468): two
+  compartments, inducible and non-inducible clearance, induction LINEAR in the
+  concentration (the autoinduction block takes an Emax). Fourteen women, all
+  given thiotepa; Joerger 2007 (59) is always chosen for adults.
+- **Xie 2002** (irinotecan; PMID 12235447): three compartments proportional to
+  BSA, forming SN-38 and SN-38G; 109 adults.
+- **Hawwa 2008** (mercaptopurine; PMID 18823306): red-cell nucleotides only,
+  no plasma model. Nothing to implement.
+
+Questions for Shafer:
+
+1. **Carboplatin in teenagers and infants**: the carboplatin group holds
+   Duffull 1997 (adults 49-68 years) and Duong 2019 (children 1.7-8.3 years),
+   so a teenager or an infant is now given Duong as the nearest. Peng 1995's
+   validation set spans 1 month to 18 years, so as a candidate it would be
+   chosen there. But the prior was fitted in 22 children of an earlier study
+   whose ages it does not print, and its clearance is 40-50% above Duong's at
+   0.5, 5 and 14 years (its own validation set's measured median, 13-25%).
+   Add it as the candidate for those ages, or keep Duong as the nearest?
+2. **Irinotecan**: replace Klein 2002 (your choice of 2026-11-06, no
+   covariates) with Xie 2002 (109 adults, BSA on every parameter), or keep
+   Klein?
+3. **Cyclophosphamide autoinduction in adults**: Hassan 1999 is the only adult
+   autoinduction model in the archive, but it would never be chosen over
+   Joerger 2007 under the selector, and its linear induction needs a slope
+   term in the autoinduction block. Leave it recorded?
+
+Still missing from section 48's list: Ratain 1987 (vinblastine, PMID 3652057,
+requested from Stanford) and Oyaga-Iriarte 2019 (irinotecan, PMID 30610273).
