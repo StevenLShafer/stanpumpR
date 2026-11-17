@@ -258,7 +258,7 @@ test_that("the operator's key is trimmed, and a refused key says whose it was", 
 
   shared <- paperReviewKeyAdvice("http_401", own = FALSE)
   expect_match(shared, "stanpumpR's own")
-  expect_match(shared, "Use your own Anthropic API key", fixed = TRUE)
+  expect_match(shared, PAPER_REVIEW_OWN_KEY_LABEL, fixed = TRUE)
   expect_match(paperReviewKeyAdvice("http_403", own = FALSE), "stanpumpR's own")
   expect_match(paperReviewKeyAdvice("http_401", own = TRUE), "the one you entered")
   expect_identical(paperReviewKeyAdvice("http_429", own = FALSE), "")

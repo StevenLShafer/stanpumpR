@@ -60,6 +60,9 @@ PAPER_REVIEW_MAX_PDF_BYTES <- 20 * 1024^2
 PAPER_REVIEW_MAX_UPLOAD_BYTES <- PAPER_REVIEW_MAX_PDF_BYTES + 1024^2
 # The longest key the own-key field accepts (Anthropic's are about 110).
 PAPER_REVIEW_OWN_KEY_MAX_CHARS <- 300
+# The box that shows the own-key field in place of the countdown of the
+# shared key's reviews left this month (Shafer, 2026-11-17).
+PAPER_REVIEW_OWN_KEY_LABEL <- "Supply my own key"
 # The background process is given the request's own time limit and five
 # minutes more (its start, the retries' waits); past that it is abandoned
 # and the user told, rather than the session waiting for ever.
@@ -119,8 +122,8 @@ paperReviewKeyAdvice <- function(code, own)
   if (!is.character(code) || length(code) != 1 || !code %in% c("http_401", "http_403")) return("")
   if (isTRUE(own))
     "The key refused was the one you entered: check it in the Anthropic Console (it may have been mistyped, revoked or disabled)."
-  else paste("The key refused was stanpumpR's own, which only the site's operator can replace;",
-             "to review now, enter your own key under \"Use your own Anthropic API key\".")
+  else paste0("The key refused was stanpumpR's own, which only the site's operator can replace; ",
+              "to review now, tick \"", PAPER_REVIEW_OWN_KEY_LABEL, "\" and enter yours.")
 }
 
 #' A key the user typed, if it can be one

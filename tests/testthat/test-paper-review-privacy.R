@@ -144,7 +144,7 @@ test_that("a review that comes back is reported, and one discarded meanwhile is 
     },
     paperReviewUsageReport = function(record, ...) invisible(record))
   shiny::testServer(paperReviewServer, {
-    session$setInputs(ownKey = "sk-ant-api03-userownkey1234")
+    session$setInputs(ownKeyUse = TRUE, ownKey = "sk-ant-api03-userownkey1234")
     session$setInputs(manuscript = upload(), consent = TRUE)
     session$setInputs(review = 1)
     settle(session)
@@ -153,7 +153,7 @@ test_that("a review that comes back is reported, and one discarded meanwhile is 
     expect_match(output$status, "1,000 tokens read, 200 written")
 
     session$setInputs(discard = 1)
-    session$setInputs(ownKey = "")
+    session$setInputs(ownKeyUse = FALSE, ownKey = "")
     session$setInputs(manuscript = upload())
     session$setInputs(review = 2)
     session$setInputs(discard = 2)                      # before the answer is read
