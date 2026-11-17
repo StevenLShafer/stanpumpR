@@ -117,7 +117,10 @@ renalDrugs <- c("mannitol", "vancomycin", "vancomycinKidneyTransplant", "gentami
                 "macitentan", "aprocitentan",
                 # Garonzik's creatinine clearance (Cockcroft-Gault per 1.73
                 # m2) on CMS's and colistin's clearances (R/drugs_colistimethate.R)
-                "colistimethate", "colistin")
+                "colistimethate", "colistin",
+                # the 2012 CKD-EPI creatinine eGFR, de-indexed to mL/min, in
+                # proportion on clearance (Barreto 2023, R/drugs_cefepime.R)
+                "cefepime")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system),
