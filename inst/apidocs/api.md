@@ -113,8 +113,8 @@ The response (JSON):
   "drugs": [
     {
       "Drug": "fentanyl", "Dosed": true, "ConcentrationUnits": "ng/mL", "MEAC": 0.6,
-      "PeakPlasma": 8.264457841, "TimePeakPlasma": 0,
-      "PeakEffectSite": 2.244197188, "TimePeakEffectSite": 3.402395028,
+      "PeakPlasma": 9.900982777, "TimePeakPlasma": 0,
+      "PeakEffectSite": 2.407713106, "TimePeakEffectSite": 3.667123731,
       "RecoveryThreshold": 0.6
     }
   ],
@@ -123,9 +123,9 @@ The response (JSON):
   ],
   "events": [],
   "timeseries": [
-    {"Drug": "fentanyl", "Time": 0,  "Plasma": 8.264457841,  "EffectSite": 0,           "ConcentrationUnits": "ng/mL"},
-    {"Drug": "fentanyl", "Time": 5,  "Plasma": 1.554401881,  "EffectSite": 2.141025469, "ConcentrationUnits": "ng/mL"},
-    {"Drug": "fentanyl", "Time": 10, "Plasma": 0.7994632409, "EffectSite": 1.37732736,  "ConcentrationUnits": "ng/mL"}
+    {"Drug": "fentanyl", "Time": 0,  "Plasma": 9.900982777,  "EffectSite": 0,           "ConcentrationUnits": "ng/mL"},
+    {"Drug": "fentanyl", "Time": 5,  "Plasma": 1.641898948,  "EffectSite": 2.299320861, "ConcentrationUnits": "ng/mL"},
+    {"Drug": "fentanyl", "Time": 10, "Plasma": 0.8582458204, "EffectSite": 1.51788589,  "ConcentrationUnits": "ng/mL"}
   ],
   "warnings": []
 }
@@ -452,7 +452,7 @@ after every dose, but its times differ from drug to drug.
     <drugs><drug Drug="fentanyl" ConcentrationUnits="ng/mL" MEAC="0.6" .../></drugs>
     <doses><dose Drug="fentanyl" Time="0" Dose="100" Units="mcg" Simulated="true"/></doses>
     <events/>
-    <timeseries><point Drug="fentanyl" Time="0" Plasma="8.264457841" EffectSite="0" .../></timeseries>
+    <timeseries><point Drug="fentanyl" Time="0" Plasma="9.900982777" EffectSite="0" .../></timeseries>
     <warnings/>
   </stanpumpR>
   ```

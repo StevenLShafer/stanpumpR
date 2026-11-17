@@ -64,10 +64,13 @@ test_that("adjustToFFM = FALSE returns the legacy factors the caller supplies", 
 test_that("getDrugPK passes the switch through to the drug model", {
   on  <- getDrugPK("fentanyl", 120, 170, 50, "male")
   off <- getDrugPK("fentanyl", 120, 170, 50, "male", adjustToFFM = FALSE)
-  expect_equal_rounded(on$PK$default$v1,  12.1 * 1.304907)
-  expect_equal_rounded(on$PK$default$cl1, 0.632 * 1.220913)
-  expect_equal_rounded(off$PK$default$v1,  12.1 * 120 / 70)
-  expect_equal_rounded(off$PK$default$cl1, 0.632 * (120 / 70)^0.75)
+  # Fentanyl (Bae 2020) evaluates its own weight terms at the pharmacokinetic
+  # weight, 70 kg x the fat-free-mass ratio 1.304907, with the switch on, and
+  # at total weight with it off.
+  expect_equal_rounded(on$PK$default$v1,  10.1 * 1.304907^1.23)
+  expect_equal_rounded(on$PK$default$cl1, 0.704 * 1.304907^0.313)
+  expect_equal_rounded(off$PK$default$v1,  10.1 * (120 / 70)^1.23)
+  expect_equal_rounded(off$PK$default$cl1, 0.704 * (120 / 70)^0.313)
 })
 
 test_that("models with their own fat-free-mass covariate ignore the switch", {

@@ -24,7 +24,12 @@ bruteRecovery <- function(DT, ET, PK, t, horizon = 720) {
   d <- DT[DT$Time <= t, , drop = FALSE]
   for (u in unique(d$Units[grepl("min|hr", d$Units)]))
     d <- rbind(d, data.frame(Drug = d$Drug[1], Time = t, Dose = 0, Units = u))
-  r <- simCpCe(d[order(d$Time), ], ET, PK, t + horizon, FALSE)$results
+  # Dense output times over the first hour after t: the native line of a run
+  # this long can step straight over the crossing (fentanyl after a bolus,
+  # once its clearance became Bae 2020's), and with no point above the
+  # threshold at or after t the reference read 0.
+  dense <- t + seq(0, 60, by = 0.05)
+  r <- withOutputTimes(dense, simCpCe(d[order(d$Time), ], ET, PK, t + horizon, FALSE))$results
   ce <- r[r$Site == "Effect Site" & r$Time >= t, ]
   above <- which(ce$Y > PK$endCe)
   if (length(above) == 0) return(0)
