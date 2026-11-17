@@ -47,6 +47,27 @@
 # drug with a row whose values were read in a published source is changed;
 # every other drug ignores the sliders, and the app says which.
 #
+# AN EXTRACTION RATIO MAY BE COMPUTED, not only measured (Shafer,
+# 2026-11-17).  Where a drug's renal fraction (the fraction of its systemic
+# clearance excreted unchanged) and its systemic clearance are read in a
+# source, the hepatic share follows (after any extrahepatic route the source
+# names: esterases, Hofmann elimination), and so does the extraction ratio:
+#
+#   E = fraction_hepatic x CL / (Q_H x B:P)
+#
+# with CL the systemic PLASMA clearance (from intravenous data: an oral
+# CL/F carries the bioavailability), B:P the blood-to-plasma concentration
+# ratio, read where the source or another gives it, and Q_H normal hepatic
+# blood flow.  The row's source_extraction then says it was computed, and
+# from what.  A drug therefore needs its renal fraction read, not a measured
+# hepatic extraction ratio, to respond to all four sliders.
+#
+# THE SLIDERS ARE NOT COVARIATES (Shafer, 2026-11-17).  A feature of the
+# patient that a published model includes (weight, age, sex, creatinine, a
+# genotype) is a covariate, entered in the Patient Profile.  The sliders
+# explore physiology no model describes, through the relationships above,
+# and the panel says so before it shows them (physiologyIntro()).
+#
 # CARDIAC OUTPUT also scales the intercompartmental clearances (Q2, Q3:
 # distribution is perfusion-limited in the mammillary model) and the central
 # volume, V1, in the SAME direction: a low cardiac output gives higher early
@@ -931,6 +952,10 @@ physiologyPanel <- function()
     "Physiology",
     value = "physiology",
     icon = icon("heart-pulse"),
+    physiologyIntro(),
+    tags$div(
+    id = "physiology-controls",
+    style = "display: none;",
     tags$p(class = "small text-muted",
            "What if? Each slider is a multiple of normal function, from a",
            "tenth to ten times, on a log scale."),
@@ -945,15 +970,59 @@ physiologyPanel <- function()
         step = PHYSIOLOGY_TEMPERATURE_STEP,
         ticks = FALSE
       ),
-      paste("Core temperature. For the inhaled anesthetics, hypothermia",
+      paste("Core temperature. It lowers the elimination capacity of the",
+            "intravenous drugs the sliders change, about 6.4% a degree, in the",
+            "liver, the kidneys and every other route, but not blood flow.",
+            "For the inhaled anesthetics, hypothermia",
             "raises their solubility in blood and tissue, which slows the rise",
             "of the end-tidal and brain concentrations, and lowers their MAC,",
-            "about 4.6% a degree. It does not change the intravenous drugs,",
-            "nor cardiac output or ventilation, which have their own controls."),
+            "about 4.6% a degree. It does not change",
+            "cardiac output or ventilation, which have their own controls."),
       placement = "right"
     ),
     actionLink("physiologyReset", "Reset to normal"),
     uiOutput("physiologyNote")
+    )
+  )
+}
+
+#' What the physiology sliders are for, shown before them
+#'
+#' The panel opens on this statement; the sliders appear only once the user
+#' has clicked through it (inst/www/app.js, `.physiology-continue`), or when
+#' the session's physiology is already away from normal (a link or a
+#' scenario; `physiology_show` from app_server()).  Shafer, 2026-11-17: a
+#' feature of the patient a published model includes is a covariate, entered
+#' in the Patient Profile; the sliders explore physiology no model describes.
+#' @noRd
+physiologyIntro <- function()
+{
+  tags$div(
+    id = "physiology-intro",
+    class = "small",
+    tags$p(
+      "Where a published model includes a feature of the patient (weight,",
+      "age, sex, serum creatinine, a genotype), that feature is a covariate",
+      "of the model and is entered in the",
+      tags$strong("Patient Profile", .noWS = "after"), "."),
+    tags$p(
+      "These sliders are for something else: exploring how a change in organ",
+      "function or body temperature might alter a drug's pharmacokinetics",
+      "when no published model describes it. They apply fundamental",
+      "relationships between physiology and pharmacokinetics (the",
+      "well-stirred model of organ clearance, the renal share of clearance,",
+      "the dependence of distribution on blood flow). They are a what-if,",
+      "not a model fitted in patients with the condition, and they change",
+      "only the drugs for which the data they need have been found."),
+    tags$p(
+      "Do not enter one change twice: lowering renal function after entering",
+      "a raised creatinine for a drug whose model reads it counts the",
+      "impairment twice."),
+    tags$p(tags$a(href = "#", `data-help-page` = "models/physiology",
+                  "More about the sliders")),
+    tags$button(type = "button",
+                class = "btn btn-sm btn-primary physiology-continue",
+                "I understand: show the sliders")
   )
 }
 

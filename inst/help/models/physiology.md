@@ -7,6 +7,26 @@ is normal and changes nothing. **Reset to normal** puts them back.
 For the reasoning behind each rule and the evidence for it, see
 [Physiology and pharmacokinetics: the evidence](help:models/physiology-and-pharmacokinetics).
 
+## Sliders and covariates
+
+Where a published model includes a feature of the patient (weight, age,
+sex, serum creatinine, a genotype), that feature is a **covariate** of the
+model, measured in the patients the model was fitted to, and it is entered
+in the **Patient Profile**. The sliders are for something else. They explore
+how a change in organ function or body temperature might alter a drug's
+pharmacokinetics when no published model describes it, using the
+fundamental relationships between physiology and pharmacokinetics set out
+below. They are a *what if*, not a model fitted in patients with the
+condition. For that reason the panel opens on a short statement to this
+effect, and the sliders appear once it has been read (**I understand: show
+the sliders**). A link or a scenario that changes a slider shows them at
+once.
+
+Do not enter one change twice. If a drug's model reads the serum
+creatinine, entering a raised creatinine already lowers its renal
+clearance; lowering the **Renal function** slider as well counts the
+impairment twice.
+
 The sliders change each drug's pharmacokinetic **parameters**, once, before
 the simulation runs. As with any covariate, the parameters then stay fixed
 for the whole simulation. They do not change over time.
