@@ -1112,7 +1112,7 @@ helpScenarioDefinitions <- function() {
       "visualizer-fentanyl-infusion",
       "Watching a fentanyl infusion come back",
       "Seeing the compartments",
-      "Fentanyl 100 mcg and 2 mcg/kg/hr for four hours, then stopped, made to be watched in the Visualizer: half the drug given is in V3 when the pump stops, V3 keeps filling for a quarter of an hour, and then most of what leaves the body over the next four hours has first come back from the periphery.",
+      "Fentanyl 100 mcg and 2 mcg/kg/hr for four hours, then stopped, made to be watched in the Visualizer: nearly half the drug given is in V3 when the pump stops, V3 keeps filling for several minutes, and then most of what leaves the body over the next four hours has first come back from the periphery.",
       doses = helpDoses(
         c("fentanyl", 0, 100, "mcg"),
         c("fentanyl", 0, 2, "mcg/kg/hr"),

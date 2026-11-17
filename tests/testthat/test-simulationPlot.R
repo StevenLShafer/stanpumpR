@@ -246,7 +246,7 @@ test_that("each panel's time-until-threshold labels are in a unit that suits it"
   # threshold past the one-day horizon (labels in hours); enough vancomycin,
   # timed on its plasma, past the one-week horizon (labels in days).
   DT <- data.frame(Drug = c("remifentanil", "fentanyl", "vancomycin"), Time = 0,
-                   Dose = c(1, 5000, 100000), Units = c("mcg/kg", "mcg", "mg"))
+                   Dose = c(1, 20000, 100000), Units = c("mcg/kg", "mcg", "mg"))
   drugs <- simulatedFor(DT, 60, plotRecovery = TRUE)
   expect_lt(drugs$remifentanil$max$Recovery, 2 * MINS_PER_HOUR)
   expect_equal(drugs$fentanyl$max$Recovery, MINS_PER_DAY)
