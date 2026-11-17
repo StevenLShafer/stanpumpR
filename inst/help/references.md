@@ -164,6 +164,8 @@ Weber J, Schmidt J, Wirth S, Schumann S, Philip JH, Eberhart LHJ. Context-sensit
 
 Feldman JM, Lampotang S, Hendrickx J. Is rebreathing prevented when FGF equals MV? *APSF Newsletter*, 20 October 2022. <https://www.apsf.org/article/is-rebreathing-prevented-when-fgf-equals-mv/>
 
+Sulbaek Andersen MP, Nielsen OJ, Wallington TJ, Karpichev B, Sander SP. Assessing the impact on global climate from general anesthetic gases. *Anesth Analg* 2012;114:1081-1085. doi:10.1213/ANE.0b013e31824d6150
+
 ## The Minto and Schnider models
 
 Run beside the library's propofol and remifentanil models when **Minto / Schnider** is ticked under Graph Options; see [The Minto and Schnider models](help:models/minto-schnider).

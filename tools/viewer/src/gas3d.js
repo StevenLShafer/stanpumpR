@@ -42,7 +42,15 @@
 //      lungs and the blood between the lungs and each tissue along the
 //      floor, red into the lungs and green out of them;
 //    - each glass named over its rim with its partial pressure; pointing at a
-//      glass or an arrow shows its card.
+//      glass or an arrow shows its card;
+//    - the blood (2026-11-17, from GasMan's ART and VEN): a ring on the lungs'
+//      glass at the mixed venous partial pressure, in the 2D view's venous
+//      colour. Blood reaches the lungs at the ring and leaves them at the
+//      liquid's level (arterial blood is at end-tidal in the engine), so the
+//      gap between the two is the gradient that, with the cardiac output,
+//      sets the uptake. A ring and not a glass of its own: two more glasses in
+//      front of the lungs left no starting view with nothing hidden in an
+//      800 x 600 window.
 //  Nothing here computes anything: drawGas() is handed the player's state
 //  (Player.gasStateAt()), whose flows are read from the amounts.
 // ═══════════════════════════════════════════════════════════════
@@ -66,7 +74,7 @@ const GAS_COMPACT_W = 1000, GAS_COMPACT_H = 700;
 const gasCompact = () => window.innerWidth < GAS_COMPACT_W || window.innerHeight < GAS_COMPACT_H;
 
 Object.assign(View, {
-    gasVessels: null, gasArrows: null, gasLabels: null, gasMacRings: null, gasGeo: null, gasShown: false,
+    gasVessels: null, gasArrows: null, gasLabels: null, gasMacRings: null, gasVenousRing: null, gasGeo: null, gasShown: false,
 
     // The glasses, arrows, labels and rings, made once, on the first gas run.
     gasBuild() {
@@ -90,6 +98,20 @@ Object.assign(View, {
                 this.gasMacRings[k] = ring;
             }
         });
+        // Mixed venous blood: a ring on the lungs' glass, as one MAC's is.
+        {
+            const pts = [], n = 128;
+            for (let j = 0; j < n; j++) {
+                const a = 2 * Math.PI * j / n, b = 2 * Math.PI * (j + 1) / n;
+                pts.push(Math.cos(a), 0, Math.sin(a), Math.cos(b), 0, Math.sin(b));
+            }
+            const ring = targetLine(pts);
+            ring.material.color.setStyle(GAS_BLOOD_COLOURS.ven, THREE.SRGBColorSpace);
+            ring.material.linewidth = 3;
+            ring.visible = false;
+            this.gasVessels.lungs.group.add(ring);
+            this.gasVenousRing = ring;
+        }
         this.gasArrows = {};
         for (const a of ['fresh', 'vented', 'vent', 'vrg', 'mg', 'fg']) this.gasArrows[a] = new FlowArrow(s);
         this.gasVessels.circuit.setTargetRing(0);     // its line made now, so sized below
@@ -111,6 +133,7 @@ Object.assign(View, {
         // fresh gas's, needs: one scale, so levels compare across glasses.
         let top = 0;
         for (const k of GAS_KEYS) for (const x of r.p[k]) if (x > top) top = x;
+        if (r.venous) for (const x of r.venous) if (x > top) top = x;
         for (const x of r.fresh) if (x > top) top = x;
         const glassH = Math.max(GLASS_MIN, Math.ceil((top * ui.concScale * 1.08 + 0.4) / 2) * 2);
         // Arrows in proportion to the scene: nitrous oxide's glasses are a
@@ -241,11 +264,13 @@ Object.assign(View, {
             let labels = 0, hidden = 0, lost = 0;
             for (let i = 0; i < lb.length; i++) for (let j = i + 1; j < lb.length; j++)
                 labels += area(meet(lb[i], lb[j])) / Math.min(area(lb[i]), area(lb[j]));
+            const why = [];
             for (const col of columns) {
                 const pts = surface(col);
-                hidden += pts.filter(p => blocked(p, col.k) || underLabel(p, col.k)).length / pts.length;
+                const n = pts.filter(p => blocked(p, col.k) || underLabel(p, col.k)).length;
+                hidden += n / pts.length;
+                if (n) why.push(`${col.k}:${n}/${pts.length}`);
             }
-            const why = [];
             arrows.forEach((pts, ai) => pts.forEach((p, pi) => {
                 const col = columns.find(c => blockedBy(p, c)), lab = underLabelKey(p);
                 if (col || lab) why.push(`${['circuit', 'vrg', 'mg', 'fg'][ai]}#${pi}:${col ? 'col ' + col.k : 'label ' + lab}`);
@@ -333,6 +358,13 @@ Object.assign(View, {
             this.gasLabels[k].set(G.c[k].clone().setY(H + 0.3), gasCompact() ? `<b>${GAS_NAMES[k]}</b> ${value}`
                 : `<b>${GAS_NAMES[k]}</b> ${value} <i>${escapeHtml(ui.units.conc)}</i>${GAS_CAPTION[k] ? `<br><i>${GAS_CAPTION[k]}</i>` : ''}`);
         }
+        // Mixed venous blood, a ring on the lungs' glass.
+        {
+            const ring = this.gasVenousRing, y = st.venous != null ? st.venous * hs : -1;
+            ring.visible = y >= 0 && y <= H;
+            ring.scale.set(glassRadius(G.r.lungs), 1, glassRadius(G.r.lungs));
+            ring.position.y = Math.max(y, 0.02);
+        }
         // The vaporiser's setting, gold on the circuit.
         this.gasVessels.circuit.setTargetRing(st.fresh * hs);
 
@@ -376,8 +408,12 @@ Object.assign(View, {
             const size = k === 'circuit' && !(cap > 0) ? 'holds no agent'
                 : k === 'lungs' || k === 'circuit' ? `${vol.toFixed(2)} L of gas`
                 : `${vol.toFixed(1)} L × ${sig3(r.partition[k])} = ${sig3(cap)} L of gas`;
+            // The lungs: arterial blood leaves at their partial pressure, and
+            // mixed venous blood arrives at the blue ring's.
+            const blood = k === 'lungs' && st.venous != null
+                ? `<div class="a"><span class="k">Arterial</span> ${st.arterial.toFixed(st.dp)} · <span class="k">mixed venous (ring)</span> ${st.venous.toFixed(st.dp)} <i>${escapeHtml(u.conc)}</i></div>` : '';
             html = `<div class="k">${GAS_LONG[k]}, ${size}</div>` +
-                `<div class="v">${st.p[k].toFixed(st.dp)} <i>${escapeHtml(u.conc)}</i></div>` + (cap > 0 ? vapour(st.A[k]) : '');
+                `<div class="v">${st.p[k].toFixed(st.dp)} <i>${escapeHtml(u.conc)}</i></div>` + (cap > 0 ? vapour(st.A[k]) : '') + blood;
         } else {
             const f = st.flow[k];
             let name, into;
@@ -385,7 +421,8 @@ Object.assign(View, {
             else if (k === 'vented') { name = 'Vented through the pop-off valve'; into = false; }
             else if (k === 'vent') { into = f >= 0; name = into ? 'Breathed in, net' : 'Breathed out, net'; }
             else { into = f < 0; name = into ? `${GAS_NAMES[k]} → blood → lungs` : `Lungs → blood → ${GAS_NAMES[k]}`; }
-            const sum = k === 'fresh' ? `<div class="a"><span class="k">Delivered</span> ${st.delivered.toFixed(1)} <i>${escapeHtml(u.amount)}</i></div>`
+            const ghg = k === 'fresh' && st.co2eRate != null ? `<div class="a"><span class="k">Greenhouse effect</span> ${escapeHtml(gasCO2eRateText(st))}</div>` : '';
+            const sum = k === 'fresh' ? `<div class="a"><span class="k">Delivered</span> ${st.delivered.toFixed(1)} <i>${escapeHtml(u.amount)}</i></div>` + ghg
                 : k === 'vented' ? `<div class="a"><span class="k">Vented</span> ${st.vented.toFixed(1)} <i>${escapeHtml(u.amount)}</i></div>` : '';
             html = `<div class="k">${name}</div>` +
                 `<div class="v dotted"><span class="dot ${into ? 'in' : 'out'}"></span><span>${num(f)} <i>${escapeHtml(u.rate)} vapour</i></span></div>` + sum;

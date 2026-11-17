@@ -935,5 +935,6 @@ HELP_GENERATED_BLOCKS <- list(
   "physiology-ke0-table" = function(...) helpPhysiologyKe0Table(),
   "physiology-propofol-table" = function(...) helpPhysiologyPropofolTable(),
   "physiology-gas-table" = function(...) helpPhysiologyGasTable(),
-  "physiology-temperature-table" = function(...) helpPhysiologyTemperatureTable()
+  "physiology-temperature-table" = function(...) helpPhysiologyTemperatureTable(),
+  "gas-greenhouse-table" = helpGasGreenhouseTableMarkdown
 )
