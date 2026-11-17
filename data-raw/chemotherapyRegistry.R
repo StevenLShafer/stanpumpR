@@ -220,17 +220,17 @@ pubmedSources[pubmedSources == ""] <- NA
 
 # How far each PubMed document was read here.  Every abstract was screened;
 # the PubMed Central text (without tables or equations) was read for these.
-FULL_TEXT_PARTIAL <- c("C12", "C35", "N04")
+FULL_TEXT_PARTIAL <- c("C35", "N04")
 pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
                              "guideline", "primary_study")
 # Read in full: every parameter the model uses, from the PubMed Central
 # text, the PDF still to confirm (FULL_TEXT_READ); or confirmed on the PDF
 # itself (PARAMETERS_VERIFIED: Briki 2026 and Lindemalm 2005, supplied by
 # Shafer 2026-11-06)
-FULL_TEXT_READ <- c("P03", "P07", "C14", "C38b", "C40", "C15", "N01", "N01b", "N01c", "C28", "C37b", "C45", "C46", "C48", "C41", "C25", "C42", "P06", "C11", "N05", "C01", "P02", "C35", "C03", "C37a", "C34", "P16", "C21", "C07", "P15", "P08", "C19", "P21", "P25", "C23", "C24", "N11", "C10", "C38a", "N12", "N10", "C09", "P13", "C17", "P05")
+FULL_TEXT_READ <- c("C15", "N01", "N01b", "N01c", "C28", "C37b", "C45", "C46", "C48", "C41", "C25", "C42", "P06", "C11", "N05", "C01", "P02", "C35", "C03", "C37a", "C34", "P16", "C21", "C07", "P15", "P08", "C19", "P21", "P25", "C23", "C24", "N11", "C10", "C38a", "N12", "N10", "C09", "P13", "C17", "P05")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
-PARAMETERS_VERIFIED <- c("C26", "N03", "C27", "C47", "C44", "N13", "C36", "N02", "C43", "P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18", "C05", "C06", "N08", "N09")
+PARAMETERS_VERIFIED <- c("P20", "C12", "P03", "P07", "C14", "C38b", "C40", "C26", "N03", "C27", "C47", "C44", "N13", "C36", "N02", "C43", "P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18", "C05", "C06", "N08", "N09")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
   ifelse(pubmedSources$source_id %in% FULL_TEXT_READ, "full_text_read",
@@ -374,8 +374,8 @@ registry <- rbind(
     "children with cancer", "carboplatin (analyte to confirm)",
     "two compartments per m2 (Table 2's lognormal population means, the Bayesian prior): V 5.09 L/m2, k10 0.0206, k12 0.0253, k21 0.0185 /min, i.e. CL 6.3 L/h/m2; no covariate",
     "first", "linear", "P03",
-    "PDF read (supplied 2026-11-17). Ultrafilterable platinum by atomic absorption, as carboplatin. The prior came from 22 children of an earlier study (ref 21, ages not printed here; 16 fitted with two compartments by ADAPT II maximum likelihood, 6 by MAP), validated in 23 children 1 month-18 years (5-63 kg, GFR 42-213 mL/min/1.73 m2), whose model-independent clearance had a median of 88 mL/min/m2 (5.3 L/h/m2, range 51-129). No renal term in the model: the paper's renal dosing equation, CL = GFR + 0.36 BW, is separate. Against carboplatinPediatric (Duong 2019) the prior's clearance is 40-50% higher at 0.5, 5 and 14 years (2.24 against 1.51, 4.64 against 3.13, 9.40 against 6.72 L/h), and its validation set's median 13-25% higher. [decision, asked 2026-11-17] A candidate of the carboplatin group would be chosen for children the two current models do not contain (under 1.7 and from 8.3 to 18 years), which are where Duong 2019 is now chosen as the nearest: the source population of the prior itself is not printed, and its clearance disagrees with Duong's.",
-    readiness = "complete_not_implemented"),
+    "PDF read (supplied 2026-11-17). Ultrafilterable platinum by atomic absorption, as carboplatin. The prior came from 22 children of an earlier study (ref 21, ages not printed here; 16 fitted with two compartments by ADAPT II maximum likelihood, 6 by MAP), validated in 23 children 1 month-18 years (5-63 kg, GFR 42-213 mL/min/1.73 m2), whose model-independent clearance had a median of 88 mL/min/m2 (5.3 L/h/m2, range 51-129). No renal term in the model: the paper's renal dosing equation, CL = GFR + 0.36 BW, is separate. Against carboplatinPediatric (Duong 2019) the prior's clearance is 40-50% higher at 0.5, 5 and 14 years (2.24 against 1.51, 4.64 against 3.13, 9.40 against 6.72 L/h), and its validation set's median 13-25% higher. [decision, asked 2026-11-17] A candidate of the carboplatin group would be chosen for children the two current models do not contain (under 1.7 and from 8.3 to 18 years), which are where Duong 2019 is now chosen as the nearest: the source population of the prior itself is not printed, and its clearance disagrees with Duong's. Decided by Shafer (2026-11-17): yes, a candidate of the carboplatin group, with the validation set's ranges (1 month-18.4 years, 5-63 kg).",
+    readiness = "implemented", stanpumpr_drug = "carboplatinPeng"),
   m("carboplatin__children_neuroblastoma__duong2019", "carboplatin", "carboplatin", "IV",
     "51 children with high-risk neuroblastoma, high-dose conditioning", "carboplatin (analyte to confirm)",
     "two compartments allometric in weight (CL, Q x (WT/WT_STD)^0.75, volumes x WT/WT_STD): CL 2.7 L/h, VC 8.3 L, Q 0.23 L/h, VP 0.74 L",
@@ -398,8 +398,10 @@ registry <- rbind(
     readiness = "complete_not_implemented"),
   m("methotrexate__pediatric_all__taylor2020", "methotrexate", "methotrexate (high dose)", "IV",
     "772 children with ALL (Nordic protocol), 24-h infusions", "methotrexate",
-    "three compartments; demographics and serum creatinine", "first", "linear", "C12",
-    "The model behind MTXPK.org. A simulation must not replace measured levels or rescue guidance (G03, G04)."),
+    "three compartments per 1.73 m2, linear in BSA: CL 11 L/h x (SCr/29 umol/L)^-0.247, V1 16.5 L, Q2 0.602 L/h, V2 4.55 L, Q3 0.111 L/h, V3 13.1 L",
+    "first", "linear", "C12",
+    "PDF read (in the archive, 2026-11-17). The model behind MTXPK.org: 772 children 1-18.8 years (7.2-105 kg, BSA 0.4-2.31 m2) in the Nordic ALL protocols, 31,672 levels, 0.6-10.1 g/m2 over 24 h; serum creatinine time-varying in the fit. At a 4-year-old of 17.8 kg (BSA 0.745 m2, SCr 0.33 mg/dL) its clearance is 4.74 L/h against the library's Taylor 2023 (methotrexatePediatric) 4.00 L/h. Taylor 2023 is its successor from the same group (1668 patients, 0.1-32.3 years) and contains every patient it does, so the selector would never choose it. A simulation must not replace measured levels or rescue guidance (G03, G04). Not implemented.",
+    readiness = "complete_not_implemented"),
   m("methotrexate__pediatric_aya__taylor2023", "methotrexate", "methotrexate (high dose)", "IV",
     "1668 children, adolescents and young adults, 0.1-32.3 years, ALL, osteosarcoma and NHL",
     "methotrexate",
@@ -562,7 +564,10 @@ registry <- rbind(
     readiness = "implemented", stanpumpr_drug = "irinotecan"),
   m("irinotecan__crc__oyagairiarte2019", "irinotecan", "irinotecan (conventional)", "IV",
     "adults with metastatic colorectal cancer", "irinotecan and metabolites",
-    "parent and metabolites", "second", "new_engine", "P20"),
+    "irinotecan two compartments (V1 52.5, V2 145 L, Q 225 L/h) cleared ENTIRELY to SN-38 (CL 46.9 L/h); SN-38 one compartment (V 0.01 L, CL 3730 L/h) to SN-38G, two compartments (V4 392, V5 6455 L, Q2 619, CL 441 L/h), with a one-way return Q3 270 L/h from SN-38G's peripheral compartment to SN-38",
+    "second", "new_engine", "P20",
+    "PDF read (supplied 2026-11-17). 20 patients, 53 FOLFIRINOX cycles; Pmetrics, nonparametric (Table 2's means printed, medians beside them); no covariate retained. Not usable: every mg of irinotecan cleared becomes SN-38 (no other elimination, where the conversion is a few per cent), so SN-38's volume collapses to 0.01 L (shrinkage 83%) and its clearance to 3730 L/h; Q3 is a one-way flow from a 6455-L compartment (shrinkage 61%). Klein 2002 is kept. Not implemented.",
+    readiness = "complete_not_implemented"),
   m("irinotecan__adult__xie2002", "irinotecan", "irinotecan (conventional)", "IV",
     "109 adults", "irinotecan, SN-38, SN-38 glucuronide",
     "irinotecan three compartments proportional to BSA (CL 16.9, Q2 61.0, Q3 4.75 L/h/m2; V1 36.7, V2 35.9, V3 67.9 L/m2) forming SN-38 (two compartments, CL/Fm 712, Q2/Fm 1530 L/h, V1/Fm 408, V2/Fm 71600 L) forming SN-38G (two compartments, CL/Fm 66.8, Q2/Fm 23.9 L/h, V1/Fm 37, V2/Fm 48.4 L)",
@@ -573,7 +578,8 @@ registry <- rbind(
     "100 adults 25-85 years (35-106 kg, BSA 1.21-2.64 m2)", "total and unbound etoposide",
     "two compartments: CL (mL/min) = 49.8 (1 - 0.009 protein) WT/SCr[uM] + 33.8 (1 - 0.29 liver metastases)(1 - 0.012 albumin); Vc 5.5 x BSA, Vp 4.1 x BSA L; ka 3.2 /h, lag 14 min, F 66%",
     "second", "linear", "P21",
-    "PDF read (supplied 2026-11-07): the intercompartmental clearance is printed nowhere, so the two-compartment model cannot be run. Would also need total serum protein and liver-metastasis status. Clearance at a matched adult 2.02 L/h, beside Krogh-Madsen's 2.12 and Urien's 2.05."),
+    "PDF read (supplied 2026-11-07): the intercompartmental clearance is printed nowhere, so the two-compartment model cannot be run. Would also need total serum protein and liver-metastasis status. Clearance at a matched adult 2.02 L/h, beside Krogh-Madsen's 2.12 and Urien's 2.05.",
+    to_obtain = NA_character_),
   m("etoposide__children__urien2011", "etoposide", "etoposide", "IV",
     "67 children 14 weeks-16.7 years", "etoposide",
     "two compartments allometric in weight (3/4 on clearances, 1 on volumes, at 70 kg): CL 2.05 L/h, Vc 9.3 L, Q 0.68 L/h, Vp 5.7 L; no dexamethasone or CYP3A/MDR1 effect",
@@ -604,7 +610,8 @@ registry <- rbind(
     "640 adults in phase II", "docetaxel",
     "no structural parameters: Bayesian estimates with Bruno 1996 (the library's docetaxel) as the prior",
     "expansion", "unknown", "P25",
-    "PDF read (supplied 2026-11-07). Prints no model of its own; its first-course medians (CL 36.3 L/h, AUC 4.81 ug.h/mL, peak 3.26) agree with the library's Bruno 1996 docetaxel within 9%, a consistency check rather than a validation since the estimates shrink to that prior. Its elevated-liver-enzyme clearance fall is 27% (ULN-based) against Bruno 1996's 33.4%; the library holds that factor at 0."),
+    "PDF read (supplied 2026-11-07). Prints no model of its own; its first-course medians (CL 36.3 L/h, AUC 4.81 ug.h/mL, peak 3.26) agree with the library's Bruno 1996 docetaxel within 9%, a consistency check rather than a validation since the estimates shrink to that prior. Its elevated-liver-enzyme clearance fall is 27% (ULN-based) against Bruno 1996's 33.4%; the library holds that factor at 0.",
+    to_obtain = NA_character_),
   m("oxaliplatin__crc__delord2003", "oxaliplatin", "oxaliplatin", "IV",
     "40 adults with colorectal cancer (oxaliplatin, 5-FU, levofolinic acid)", "ultrafilterable platinum; whole-blood platinum",
     "ultrafiltrate: two compartments, CL = 5.49 BSA + 4.55 BSA (140 - age)(1 - 0.15 female)/SCr L/h, V1 40.8 L, V2 21.0 L, no Q; whole blood: three compartments, CL = 0.28 BSA (1 - 0.058 Hb) L/h, V1 17.9 L, k12 2.97, k21 1.77, k13 0.0747, k31 0.0119 /h",
@@ -627,7 +634,8 @@ registry <- rbind(
     "20 patients 75-92 years and 40 younger adults", "capecitabine and three metabolites",
     "four sequential compartments: ka 1.86 /h (x 0.45 at 75 years and over), tlag 0.31 h, V1 292 L, CL10 214, CL12 13.6 L/h, k23 10.9, k34 6.0, k40 77.1 /h (x 0.77 from day 15)",
     "expansion", "new_engine", "C17",
-    "PDF read (supplied 2026-11-10). 20 patients 75-92 years and 40 adults 30-73. No metabolite volume is printed (only rate constants), so 5'-DFUR and 5-FU concentrations cannot be formed without Urien 2005's convention; the 5-FU step is a per-occasion switch; both covariates' bootstrap intervals include 1. The library's Gieschke 2003 is kept."),
+    "PDF read (supplied 2026-11-10). 20 patients 75-92 years and 40 adults 30-73. No metabolite volume is printed (only rate constants), so 5'-DFUR and 5-FU concentrations cannot be formed without Urien 2005's convention; the 5-FU step is a per-occasion switch; both covariates' bootstrap intervals include 1. The library's Gieschke 2003 is kept.",
+    to_obtain = NA_character_),
   m("gemcitabine__lung__tham2008", "gemcitabine", "gemcitabine", "IV",
     "56 Asian adults with lung cancer", "gemcitabine, dFdU, intracellular dFdCTP",
     "gemcitabine in two compartments (V1 2.96 L, V2 47.6 L, Q 156 L/h, CLG 305.2 L/h per 70 kg/1.76 m) forming dFdU (73%; one compartment, 52.6 L, 21.5 L/h) and PBMC dFdCTP (23%); lean body mass by Janmahasatian, as the 2015 erratum corrects",
@@ -715,7 +723,8 @@ registry <- rbind(
   m("mercaptopurine__all__hawwa2008", "mercaptopurine", "mercaptopurine", "PO",
     "19 children with ALL", "red-cell 6-TGN and 6-mMPN",
     "red-cell metabolite model; BSA and TPMT genotype", "expansion", "new_engine", "C38b",
-    "PDF read (supplied 2026-11-17). 19 children, 75 samples; models only the red-cell nucleotides (6-TGN, 6-mMPN) at steady state on maintenance, with no plasma mercaptopurine. Red-cell nucleotides are not plasma concentrations, and TPMT is not a Patient Profile field: nothing to implement."),
+    "PDF read (supplied 2026-11-17). 19 children, 75 samples; models only the red-cell nucleotides (6-TGN, 6-mMPN) at steady state on maintenance, with no plasma mercaptopurine. Red-cell nucleotides are not plasma concentrations, and TPMT is not a Patient Profile field: nothing to implement.",
+    to_obtain = NA_character_),
   m("thioguanine__civ__kitchen1997", "thioguanine", "thioguanine", "IV",
     "18 patients 4-25 years (median 18), mostly solid tumours, continuous infusion", "thioguanine",
     "two compartments with capacity-limited elimination: Vc 56 L/m2, Vm 3.7 uM/h (a rate of change of concentration), Km 2.5 uM, kcp 0.42 and kpc 0.29 /h",
