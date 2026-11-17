@@ -22,15 +22,15 @@ on:
   pull_request_target:
     types: [closed]
 
-# The deploy's group (shiny-pr-2-deploy.yaml).  Not cancel-in-progress, so a
-# deploy already talking to shinyapps.io finishes before its app is removed.
-concurrency:
-  group: shiny-deploy-pr-${{ github.event.pull_request.number }}
-  cancel-in-progress: false
-
 jobs:
   cleanup-pr:
     runs-on: ubuntu-24.04
+    # The deploy job's group (shiny-pr-2-deploy.yaml), on the job as there.
+    # Not cancel-in-progress, so a deploy already talking to shinyapps.io
+    # finishes before its app is removed.
+    concurrency:
+      group: shiny-deploy-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
     # Runs none of the PR's code, so it serves forks too (one deployed before
     # forks stopped being deployed).  Its token is the preview's, from the
     # `preview` environment, like the deploy (see shiny-pr-2-deploy.yaml).
@@ -57,7 +57,10 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
 
+      # Outside the checkout: its .Rprofile sources renv/activate.R, which the
+      # sparse checkout does not hold, and R stops at startup.
       - name: Install rsconnect
+        working-directory: ${{ runner.temp }}
         run: install.packages("rsconnect")
         shell: Rscript {0}
 
