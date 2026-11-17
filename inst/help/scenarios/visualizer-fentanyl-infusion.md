@@ -2,11 +2,11 @@
 
 Fentanyl 100 mcg at time zero and an infusion of 2 mcg/kg/hr (140 mcg an hour) for four hours, then stopped, in a 70 kg, 40-year-old man. *Peripheral compartments* is on, so V2 and V3 are drawn under the fentanyl panel. To watch it, press **Visualizer** under the plot (or double-click the fentanyl panel and press **Visualizer** in its dialog), then **Play**.
 
-**V3 takes most of the drug.** In this man V1 is 12.1 L, V2 35.7 L and V3 224 L. When the pump stops at four hours, 660 mcg has been given. V1 holds 24 mcg, V2 70 mcg and V3 314 mcg, nearly half of everything given, and 252 mcg has been eliminated. V3's level, 1.40 ng/mL, is still below the plasma's 2.0, so V3 is still filling.
+**V3 takes most of the drug.** In this man V1 is 10.1 L, V2 26.5 L and V3 206 L. When the pump stops at four hours, 660 mcg has been given. V1 holds 20 mcg, V2 52 mcg and V3 299 mcg, nearly half of everything given, and 289 mcg has been eliminated. V3's level, 1.45 ng/mL, is still below the plasma's 2.0, so V3 is still filling.
 
-**V3 keeps filling after the pump stops.** V2 turns round at once: its arrow goes red within a few seconds of the stop. V3 goes on taking drug for another 14 minutes, until its level meets the falling plasma's at 1.42 ng/mL, and only then does its arrow turn red.
+**V3 keeps filling after the pump stops.** V2 turns round at once: its arrow goes red within a few seconds of the stop. V3 goes on taking drug for another 7 minutes, until its level meets the falling plasma's at 1.46 ng/mL, and only then does its arrow turn red.
 
-**Then the periphery feeds the plasma.** Over the four hours after the stop, 149 mcg is eliminated, and 137 mcg of it first came back into V1 from V2 and V3, 94 mcg of it from V3. That returning drug is why the plasma falls so slowly. It takes 86 minutes to fall by half (the effect site, 93 minutes): fentanyl's context-sensitive half-time after a four-hour infusion. At eight hours V3 still holds 223 mcg, and its level is above the plasma's.
+**Then the periphery feeds the plasma.** Over the four hours after the stop, 154 mcg is eliminated, and 143 mcg of it first came back into V1 from V2 and V3, 108 mcg of it from V3. That returning drug is why the plasma falls so slowly. It takes 62 minutes to fall by half (the effect site, 69 minutes): fentanyl's context-sensitive half-time after a four-hour infusion. At eight hours V3 still holds 193 mcg, and its level is above the plasma's.
 
 **Fentanyl's effect site barely lags the plasma at this pace.** The blue bar tracks V1 closely through the infusion, and both are 2.0 ng/mL at four hours.
 
