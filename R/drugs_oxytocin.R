@@ -106,7 +106,9 @@
 # because her pharmacokinetic weight is 56.4 kg: Model D has no sex term (the
 # authors tested sex), and the fat-free-mass convention gives women smaller
 # volumes at the same weight (docs/weight-adjustment.md, "Why the reference
-# is a man").  That difference is the library's convention, not the paper's.
+# is a man").  That difference is the library's convention, not the paper's,
+# and it is kept: Steven L. Shafer's decision of 2026-11-17 was to keep the
+# fat-free-mass scaling for oxytocin, as for every other drug.
 #
 # PREGNANCY
 # =========
