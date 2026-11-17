@@ -1,3 +1,5 @@
+Steven L. Shafer, MD, in collaboration with Claude Code.
+
 *Draft, November 2026.*
 
 ## Summary
@@ -429,7 +431,8 @@ Each step above is a simplification, and several rest on weak evidence.
   the MAC of the inhaled agents.
 - **The evidence base.** Much of it comes from animals, from tissue
   preparations, or from patients whose illness and whose cooling cannot
-  be separated. Papers by Gideon Koren were not used.
+  be separated. Papers by Gideon Koren were not used because of evidence
+  of academic misconduct (Taub 2026).
 
 ## 7. Conclusions
 
@@ -446,132 +449,134 @@ enzymatic capacity in general, not of any one enzyme.
 
 ## References
 
-Allott PR, Steward A, Flook V, Mapleson WW. *Br J Anaesth* 1973;45:294-300. doi:10.1093/bja/45.3.294
+Allott PR, Steward A, Flook V, Mapleson WW. Variation with temperature of the solubilities of inhaled anaesthetics in water, oil and biological media. *Br J Anaesth* 1973;45:294-300. doi:10.1093/bja/45.3.294. [PMID 4573001](https://pubmed.ncbi.nlm.nih.gov/4573001/)
 
-Anderson KB, Poloyac SM, Kochanek PM, Empey PE. *Ther Hypothermia Temp Manag* 2016;6:169-79. doi:10.1089/ther.2016.0003
+Anderson KB, Poloyac SM, Kochanek PM, Empey PE. Effect of Hypothermia and Targeted Temperature Management on Drug Disposition and Response Following Cardiac Arrest: A Comprehensive Review of Preclinical and Clinical Investigations. *Ther Hypothermia Temp Manag* 2016;6:169-179. doi:10.1089/ther.2016.0003. [PMID 27622966](https://pubmed.ncbi.nlm.nih.gov/27622966/)
 
-Antognini JF, Lewis BK, Reitan JA. *Anesth Analg* 1994;79:980-2. doi:10.1213/00000539-199411000-00027
+Antognini JF, Lewis BK, Reitan JA. Hypothermia minimally decreases nitrous oxide anesthetic requirements. *Anesth Analg* 1994;79:980-982. doi:10.1213/00000539-199411000-00027. [PMID 7978419](https://pubmed.ncbi.nlm.nih.gov/7978419/)
 
-Arcus VL, et al. *Biochemistry* 2016;55:1681.
+Arcus VL, Prentice EJ, Hobbs JK, Mulholland AJ, Van der Kamp MW, Pudney CR, et al. On the Temperature Dependence of Enzyme-Catalyzed Rates. *Biochemistry* 2016;55:1681-1688. doi:10.1021/acs.biochem.5b01094. [PMID 26881922](https://pubmed.ncbi.nlm.nih.gov/26881922/)
 
-Asokumar B, et al. *Can J Anaesth* 1998;45:515.
+Asokumar B, Cheng D, Chung F, Peniston C, Sandler A, Varin F. Pharmacokinetics of doxacurium during normothermic and hypothermic cardiopulmonary bypass surgery. *Can J Anaesth* 1998;45:515-520. doi:10.1007/BF03012700. [PMID 9669003](https://pubmed.ncbi.nlm.nih.gov/9669003/)
 
-Ballard BE. Pharmacokinetics and temperature. *J Pharm Sci* 1974;63:1345-58. doi:10.1002/jps.2600630903
+Ballard BE. Pharmacokinetics and temperature. *J Pharm Sci* 1974;63:1345-1358. doi:10.1002/jps.2600630903. [PMID 4610118](https://pubmed.ncbi.nlm.nih.gov/4610118/)
 
-Bartošová T, Šíma M, Prskavec T, et al. *Biomed Pharmacother* 2026;200:119523. doi:10.1016/j.biopha.2026.119523
+Bartošová T, Šíma M, Prskavec T, Jansa P, Michálek P, Lipš M, et al. Deep hypothermia reduces the predictive accuracy of the Eleveld propofol model: Population pharmacokinetic modelling in cardiac surgery. *Biomed Pharmacother* 2026;200:119523. doi:10.1016/j.biopha.2026.119523. [PMID 42140058](https://pubmed.ncbi.nlm.nih.gov/42140058/)
 
-Bastiaans DE, et al. *Int J Clin Pharm* 2013;35:210.
+Bastiaans DE, Swart EL, van Akkeren JP, Derijks LJ. Pharmacokinetics of midazolam in resuscitated patients treated with moderate hypothermia. *Int J Clin Pharm* 2013;35:210-216. doi:10.1007/s11096-012-9725-0. [PMID 23192725](https://pubmed.ncbi.nlm.nih.gov/23192725/)
 
-Bijleveld YA, et al. *Br J Clin Pharmacol* 2016;81:1067.
+Bijleveld YA, de Haan TR, van der Lee HJ, Groenendaal F, Dijk PH, van Heijst A, et al. Altered gentamicin pharmacokinetics in term neonates undergoing controlled hypothermia. *Br J Clin Pharmacol* 2016;81:1067-1077. doi:10.1111/bcp.12883. [PMID 26763684](https://pubmed.ncbi.nlm.nih.gov/26763684/)
 
-Bijleveld YA, Mathôt R, van der Lee JH, et al. *Clin Pharmacol Ther* 2018;103:458-67. doi:10.1002/cpt.748
+Bijleveld YA, Mathôt R, van der Lee JH, Groenendaal F, Dijk PH, van Heijst A, et al. Population Pharmacokinetics of Amoxicillin in Term Neonates Undergoing Moderate Hypothermia. *Clin Pharmacol Ther* 2018;103:458-467. doi:10.1002/cpt.748. [PMID 28555724](https://pubmed.ncbi.nlm.nih.gov/28555724/)
 
-Bjelland TW, et al. *Drug Metab Dispos* 2013;41:214.
+Bjelland TW, Klepstad P, Haugen BO, Nilsen T, Dale O. Effects of hypothermia on the disposition of morphine, midazolam, fentanyl, and propofol in intensive care unit patients. *Drug Metab Dispos* 2013;41:214-223. doi:10.1124/dmd.112.045567. [PMID 23115086](https://pubmed.ncbi.nlm.nih.gov/23115086/)
 
-Bjelland TW, et al. *Acta Anaesthesiol Scand* 2014;58:709.
+Bjelland TW, Klepstad P, Haugen BO, Nilsen T, Salvesen O, Dale O. Concentrations of remifentanil, propofol, fentanyl, and midazolam during rewarming from therapeutic hypothermia. *Acta Anaesthesiol Scand* 2014;58:709-715. doi:10.1111/aas.12300. [PMID 24611449](https://pubmed.ncbi.nlm.nih.gov/24611449/)
 
-Caldwell JE, et al. *Anesthesiology* 2000;92:84.
+Caldwell JE, Heier T, Wright PM, Lin S, McCarthy G, Szenohradszky J, et al. Temperature-dependent pharmacokinetics and pharmacodynamics of vecuronium. *Anesthesiology* 2000;92:84-93. doi:10.1097/00000542-200001000-00018. [PMID 10638903](https://pubmed.ncbi.nlm.nih.gov/10638903/)
 
-Castle-Kirszbaum M, Parkin WG, Goldschlager T, Lewis PM. *J Neurosurg Anesthesiol* 2022;34:352-63. doi:10.1097/ANA.0000000000000768
+Castle-Kirszbaum M, Parkin WG, Goldschlager T, Lewis PM. Cardiac Output and Cerebral Blood Flow: A Systematic Review of Cardio-Cerebral Coupling. *J Neurosurg Anesthesiol* 2022;34:352-363. doi:10.1097/ANA.0000000000000768. [PMID 33782372](https://pubmed.ncbi.nlm.nih.gov/33782372/)
 
-Cook DJ, Proper JA, Orszulak TA, Daly RC, Oliver WC. *J Cardiothorac Vasc Anesth* 1997;11:415-9. doi:10.1016/s1053-0770(97)90047-1
+Cook DJ, Proper JA, Orszulak TA, Daly RC, Oliver WC. Effect of pump flow rate on cerebral blood flow during hypothermic cardiopulmonary bypass in adults. *J Cardiothorac Vasc Anesth* 1997;11:415-419. doi:10.1016/s1053-0770(97)90047-1. [PMID 9187987](https://pubmed.ncbi.nlm.nih.gov/9187987/)
 
-Dutra M, Amaya JA, McElhenney S, et al. *J Phys Chem B* 2022;126:3493-504. doi:10.1021/acs.jpcb.1c10280
+Dutra M, Amaya JA, McElhenney S, Manley OM, Makris TM, Rassolov V, et al. Experimental and Theoretical Examination of the Kinetic Isotope Effect in Cytochrome P450 Decarboxylase OleT. *J Phys Chem B* 2022;126:3493-3504. doi:10.1021/acs.jpcb.1c10280. [PMID 35508080](https://pubmed.ncbi.nlm.nih.gov/35508080/)
 
 Eger EI II, Shafer SL. The evolution of pharmacokinetics. Manuscript, 2017.
 
-Favié LMA, et al. *PLoS One* 2019;14:e0211910.
+Favié LMA, Groenendaal F, van den Broek MPH, Rademaker CMA, de Haan TR, van Straaten HLM, et al. Pharmacokinetics of morphine in encephalopathic neonates treated with therapeutic hypothermia. *PLoS One* 2019;14:e0211910. doi:10.1371/journal.pone.0211910. [PMID 30763356](https://pubmed.ncbi.nlm.nih.gov/30763356/)
 
-Favié LMA, et al. *Clin Pharmacol Ther* 2020;108:1098.
+Favié LMA, de Haan TR, Bijleveld YA, Rademaker CMA, Egberts TCG, Nuytemans DHGM, et al. Prediction of Drug Exposure in Critically Ill Encephalopathic Neonates Treated With Therapeutic Hypothermia Based on a Pooled Population Pharmacokinetic Analysis of Seven Drugs and Five Metabolites. *Clin Pharmacol Ther* 2020;108:1098-1106. doi:10.1002/cpt.1917. [PMID 32463940](https://pubmed.ncbi.nlm.nih.gov/32463940/)
 
-Fritz HG, et al. *Anesth Analg* 2005;100:996.
+Fritz HG, Holzmayr M, Walter B, Moeritz KU, Lupp A, Bauer R. The effect of mild hypothermia on plasma fentanyl concentration and biotransformation in juvenile pigs. *Anesth Analg* 2005;100:996-1002. doi:10.1213/01.ANE.0000146517.17910.54. [PMID 15781513](https://pubmed.ncbi.nlm.nih.gov/15781513/)
 
-Gruber M, Lindner R, Prasser C, Wiesner G. *Anesth Analg* 2002;95:397-9. doi:10.1097/00000539-200208000-00029
+Gruber M, Lindner R, Prasser C, Wiesner G. The effect of fluoride and hypothermia on the in vitro metabolism of mivacurium. *Anesth Analg* 2002;95:397-399. doi:10.1097/00000539-200208000-00029. [PMID 12145059](https://pubmed.ncbi.nlm.nih.gov/12145059/)
 
-Guengerich FP. Kinetic deuterium isotope effects in cytochrome P450 reactions. *Methods Enzymol* 2017;596:217-38. doi:10.1016/bs.mie.2017.06.036
+Guengerich FP. Kinetic Deuterium Isotope Effects in Cytochrome P450 Reactions. *Methods Enzymol* 2017;596:217-238. doi:10.1016/bs.mie.2017.06.036. [PMID 28911772](https://pubmed.ncbi.nlm.nih.gov/28911772/)
 
-Hiraoka H, Yamamoto K, Miyoshi S, et al. *Br J Clin Pharmacol* 2005;60:176-82. doi:10.1111/j.1365-2125.2005.02393.x
+Hiraoka H, Yamamoto K, Miyoshi S, Morita T, Nakamura K, Kadoi Y, et al. Kidneys contribute to the extrahepatic clearance of propofol in humans, but not lungs and brain. *Br J Clin Pharmacol* 2005;60:176-182. doi:10.1111/j.1365-2125.2005.02393.x. [PMID 16042671](https://pubmed.ncbi.nlm.nih.gov/16042671/)
 
-Hobbs JK, et al. *ACS Chem Biol* 2013;8:2388.
+Hobbs JK, Jiao W, Easter AD, Parker EJ, Schipper LA, Arcus VL. Change in heat capacity for enzyme catalysis determines temperature dependence of enzyme catalyzed rates. *ACS Chem Biol* 2013;8:2388-2393. doi:10.1021/cb4005029. [PMID 24015933](https://pubmed.ncbi.nlm.nih.gov/24015933/)
 
-Hostler D, et al. *Drug Metab Dispos* 2010;38:781.
+Hostler D, Zhou J, Tortorici MA, Bies RR, Rittenberger JC, Empey PE, et al. Mild hypothermia alters midazolam pharmacokinetics in normal healthy volunteers. *Drug Metab Dispos* 2010;38:781-788. doi:10.1124/dmd.109.031377. [PMID 20164112](https://pubmed.ncbi.nlm.nih.gov/20164112/)
 
-Inoue M, Ueshima S, Kakumoto M, et al. *J Cardiothorac Vasc Anesth* 2026;40:1138-46. doi:10.1053/j.jvca.2025.12.025
+Inoue M, Ueshima S, Kakumoto M, Katsura T, Iwashita N, Suzuki T, et al. Alterations in Total and Unbound Remimazolam Concentrations During Cardiac Surgery Requiring Cardiopulmonary Bypass: A Single-center Observational Study. *J Cardiothorac Vasc Anesth* 2026;40:1138-1146. doi:10.1053/j.jvca.2025.12.025. [PMID 41708364](https://pubmed.ncbi.nlm.nih.gov/41708364/)
 
-Jacobs JR, Croughwell ND, Goodman DK, White WD, Reves JG. *J Clin Pharmacol* 1993;33:360-5. doi:10.1002/j.1552-4604.1993.tb04670.x
+Jacobs JR, Croughwell ND, Goodman DK, White WD, Reves JG. Effect of hypothermia and sampling site on blood esmolol concentrations. *J Clin Pharmacol* 1993;33:360-365. doi:10.1002/j.1552-4604.1993.tb04670.x. [PMID 8097210](https://pubmed.ncbi.nlm.nih.gov/8097210/)
 
-Kalita S, Danovich D, Shaik S. *J Am Chem Soc* 2025;147:35576-86. doi:10.1021/jacs.5c10488
+Kalita S, Danovich D, Shaik S. Local Electric Fields Originate Unusual Kinetic Isotope Effects in the Hydrogen Abstraction Reactions of the Functionally Analogous P450 and TauD Enzymes. *J Am Chem Soc* 2025;147:35576-35586. doi:10.1021/jacs.5c10488. [PMID 40959990](https://pubmed.ncbi.nlm.nih.gov/40959990/)
 
-Kim KH, Isin EM, Yun CH, Kim DH, Guengerich FP. *FEBS J* 2006;273:2223-31. doi:10.1111/j.1742-4658.2006.05235.x
+Kim KH, Isin EM, Yun CH, Kim DH, Guengerich FP. Kinetic deuterium isotope effects for 7-alkoxycoumarin O-dealkylation reactions catalyzed by human cytochromes P450 and in liver microsomes. Rate-limiting C-H bond breaking in cytochrome P450 1A2 substrate oxidation. *FEBS J* 2006;273:2223-2231. doi:10.1111/j.1742-4658.2006.05235.x. [PMID 16649998](https://pubmed.ncbi.nlm.nih.gov/16649998/)
 
-Leys K, Stroe MS, Annaert P, et al. *Expert Opin Drug Metab Toxicol* 2023;19:461-77. doi:10.1080/17425255.2023.2237412
+Leys K, Stroe MS, Annaert P, Van Cruchten S, Carpentier S, Allegaert K, et al. Pharmacokinetics during therapeutic hypothermia in neonates: from pathophysiology to translational knowledge and physiologically-based pharmacokinetic (PBPK) modeling. *Expert Opin Drug Metab Toxicol* 2023;19:461-477. doi:10.1080/17425255.2023.2237412. [PMID 37470686](https://pubmed.ncbi.nlm.nih.gov/37470686/)
 
-Levine BD, Giller CA, Lane LD, Buckey JC, Blomqvist CG. *Circulation* 1994;90:298-306. doi:10.1161/01.cir.90.1.298
+Levine BD, Giller CA, Lane LD, Buckey JC, Blomqvist CG. Cerebral versus systemic hemodynamics during graded orthostatic stress in humans. *Circulation* 1994;90:298-306. doi:10.1161/01.cir.90.1.298. [PMID 8026012](https://pubmed.ncbi.nlm.nih.gov/8026012/)
 
-Liu M, Hu X, Liu J. *Anesthesiology* 2001;94:429-32. doi:10.1097/00000542-200103000-00011
+Liu M, Hu X, Liu J. The effect of hypothermia on isoflurane MAC in children. *Anesthesiology* 2001;94:429-432. doi:10.1097/00000542-200103000-00011. [PMID 11374601](https://pubmed.ncbi.nlm.nih.gov/11374601/)
 
-Lutz IC, Allegaert K, de Hoon JN, Marynissen H. *BMJ Paediatr Open* 2020;4:e000685. doi:10.1136/bmjpo-2020-000685
+Lutz IC, Allegaert K, de Hoon JN, Marynissen H. Pharmacokinetics during therapeutic hypothermia for neonatal hypoxic ischaemic encephalopathy: a literature review. *BMJ Paediatr Open* 2020;4:e000685. doi:10.1136/bmjpo-2020-000685. [PMID 32577535](https://pubmed.ncbi.nlm.nih.gov/32577535/)
 
-Mark LF, et al. *Ther Drug Monit* 2013;35:217.
+Mark LF, Solomon A, Northington FJ, Lee CK. Gentamicin pharmacokinetics in neonates undergoing therapeutic hypothermia. *Ther Drug Monit* 2013;35:217-222. doi:10.1097/FTD.0b013e3182834335. [PMID 23503448](https://pubmed.ncbi.nlm.nih.gov/23503448/)
 
-Masson P, Balny C. *Biochim Biophys Acta* 1986;874:90-8. doi:10.1016/0167-4838(86)90106-8
+Masson P, Balny C. Thermodynamic arguments for temperature-induced cryptic conformational change of human plasma cholinesterase. *Biochim Biophys Acta* 1986;874:90-98. doi:10.1016/0167-4838(86)90106-8. [PMID 3768380](https://pubmed.ncbi.nlm.nih.gov/3768380/)
 
-McAllister RG, Tan TG. *Pharmacology* 1980;20:95-100. doi:10.1159/000137349
+McAllister RG, Tan TG. Effect of hypothermia on drug metabolism. In vitro studies with propranolol and verapamil. *Pharmacology* 1980;20:95-100. doi:10.1159/000137349. [PMID 7384193](https://pubmed.ncbi.nlm.nih.gov/7384193/)
 
-Melendez JA, Stone JG, Delphin E, Quon CY. *J Cardiothorac Anesth* 1990;4:704-6. doi:10.1016/s0888-6296(09)90007-2
+Melendez JA, Stone JG, Delphin E, Quon CY. Influence of temperature on in vitro metabolism of esmolol. *J Cardiothorac Anesth* 1990;4:704-706. doi:10.1016/s0888-6296(09)90007-2. [PMID 1983408](https://pubmed.ncbi.nlm.nih.gov/1983408/)
 
-Merrett RA, et al. *Br J Anaesth* 1983;55:61.
+Merrett RA, Thompson CW, Webb FW. In vitro degradation of atracurium in human plasma. *Br J Anaesth* 1983;55:61-66. doi:10.1093/bja/55.1.61. [PMID 6687375](https://pubmed.ncbi.nlm.nih.gov/6687375/)
 
-Michelsen LG, Holford NH, Lu W, Hoke JF, Hug CC, Bailey JM. *Anesth Analg* 2001;93:1100-5. doi:10.1097/00000539-200111000-00006
+Michelsen LG, Holford NH, Lu W, Hoke JF, Hug CC, Bailey JM. The pharmacokinetics of remifentanil in patients undergoing coronary artery bypass grafting with cardiopulmonary bypass. *Anesth Analg* 2001;93:1100-1105. doi:10.1097/00000539-200111000-00006. [PMID 11682375](https://pubmed.ncbi.nlm.nih.gov/11682375/)
 
-Mortensen ME, Dale O. *Acta Anaesthesiol Scand* 1995;39:199.
+Mortensen B, Dale O. Effects of hypothermia on the elimination of ethanol, diazepam and oxazepam in rat liver slice incubations. *Acta Anaesthesiol Scand* 1995;39:199-204. doi:10.1111/j.1399-6576.1995.tb04043.x. [PMID 7793187](https://pubmed.ncbi.nlm.nih.gov/7793187/)
 
-Norling A, Hänninen O. *Biochim Biophys Acta* 1974;350:183.
+Norling A, Hänninen O. Activation energy of glucuronide biosynthesis. *Biochim Biophys Acta* 1974;350:183-192. doi:10.1016/0005-2744(74)90216-2. [PMID 4210086](https://pubmed.ncbi.nlm.nih.gov/4210086/)
 
-Ogoh S, Brothers RM, Barnes Q, et al. *J Physiol* 2005;569:697-704. doi:10.1113/jphysiol.2005.095836
+Ogoh S, Brothers RM, Barnes Q, Eubank WL, Hawkins MN, Purkayastha S, et al. The effect of changes in cardiac output on middle cerebral artery mean blood velocity at rest and during exercise. *J Physiol* 2005;569:697-704. doi:10.1113/jphysiol.2005.095836. [PMID 16210355](https://pubmed.ncbi.nlm.nih.gov/16210355/)
 
-Petros A, et al. *Anesth Analg* 1995;81:458.
+Petros A, Dunne N, Mehta R, Doré CJ, Van Peer A, Gillbe C, et al. The pharmacokinetics of alfentanil after normothermic and hypothermic cardiopulmonary bypass. *Anesth Analg* 1995;81:458-464. doi:10.1097/00000539-199509000-00005. [PMID 7653804](https://pubmed.ncbi.nlm.nih.gov/7653804/)
 
-Puntarulo S, Cederbaum AI. *Arch Biochem Biophys* 1989;269:569-75. doi:10.1016/0003-9861(89)90142-2
+Puntarulo S, Cederbaum AI. Temperature dependence of the microsomal oxidation of ethanol by cytochrome P450 and hydroxyl radical-dependent reactions. *Arch Biochem Biophys* 1989;269:569-575. doi:10.1016/0003-9861(89)90142-2. [PMID 2537602](https://pubmed.ncbi.nlm.nih.gov/2537602/)
 
-Russell D, et al. *Br J Anaesth* 1997;79:456.
+Russell D, Royston D, Rees PH, Gupta SK, Kenny GN. Effect of temperature and cardiopulmonary bypass on the pharmacokinetics of remifentanil. *Br J Anaesth* 1997;79:456-459. doi:10.1093/bja/79.4.456. [PMID 9389262](https://pubmed.ncbi.nlm.nih.gov/9389262/)
 
-Shellhaas RA, et al. *Pediatr Crit Care Med* 2013;14:194.
+Shellhaas RA, Ng CM, Dillon CH, Barks JD, Bhatt-Mehta V. Population pharmacokinetics of phenobarbital in infants with neonatal encephalopathy treated with therapeutic hypothermia. *Pediatr Crit Care Med* 2013;14:194-202. doi:10.1097/PCC.0b013e31825bbbc2. [PMID 23254984](https://pubmed.ncbi.nlm.nih.gov/23254984/)
 
-Smits A, et al. *Front Pharmacol* 2020;11:587.
+Smits A, Annaert P, Van Cruchten S, Allegaert K. A Physiology-Based Pharmacokinetic Framework to Support Drug Development and Dose Precision During Therapeutic Hypothermia in Neonates. *Front Pharmacol* 2020;11:587. doi:10.3389/fphar.2020.00587. [PMID 32477113](https://pubmed.ncbi.nlm.nih.gov/32477113/)
 
-Stroe MS, et al. *Basic Clin Pharmacol Toxicol* 2024;135:620.
+Stroe MS, De Clerck L, Dhaenens M, Dennis RS, Deforce D, Carpentier S, et al. Effects of hypothermia and hypoxia on cytochrome P450-mediated drug metabolism in neonatal Göttingen minipigs. *Basic Clin Pharmacol Toxicol* 2024;135:620-640. doi:10.1111/bcpt.14081. [PMID 39315536](https://pubmed.ncbi.nlm.nih.gov/39315536/)
 
-Takizawa D, Hiraoka H, Goto F, Yamamoto K, Horiuchi R. *Anesthesiology* 2005;102:327-30. doi:10.1097/00000542-200502000-00014
+Taub B. Did a celebrated researcher obscure a baby's poisoning? *The New Yorker*, January 2026.
 
-Timet D, Mitin V, Tranger M. *Cryobiology* 1977;14:516-8. doi:10.1016/0011-2240(77)90017-7
+Takizawa D, Hiraoka H, Goto F, Yamamoto K, Horiuchi R. Human kidneys play an important role in the elimination of propofol. *Anesthesiology* 2005;102:327-330. doi:10.1097/00000542-200502000-00014. [PMID 15681947](https://pubmed.ncbi.nlm.nih.gov/15681947/)
 
-Tortorici MA, et al. *Crit Care Med* 2006;34:785.
+Timet D, Mitin V, Tranger M. Serum cholinesterase activity in hypothermic and posthypothermic goats. *Cryobiology* 1977;14:516-518. doi:10.1016/0011-2240(77)90017-7. [PMID 891239](https://pubmed.ncbi.nlm.nih.gov/891239/)
 
-Tortorici MA, Kochanek PM, Poloyac SM. *Crit Care Med* 2007;35:2196-204. doi:10.1097/01.ccm.0000281517.97507.6e
+Tortorici MA, Kochanek PM, Bies RR, Poloyac SM. Therapeutic hypothermia-induced pharmacokinetic alterations on CYP2E1 chlorzoxazone-mediated metabolism in a cardiac arrest rat model. *Crit Care Med* 2006;34:785-791. doi:10.1097/01.ccm.0000201899.52739.4f. [PMID 16521272](https://pubmed.ncbi.nlm.nih.gov/16521272/)
 
-Tortorici MA, et al. *Crit Care Med* 2009;37:263.
+Tortorici MA, Kochanek PM, Poloyac SM. Effects of hypothermia on drug disposition, metabolism, and response: A focus of hypothermia-mediated alterations on the cytochrome P450 enzyme system. *Crit Care Med* 2007;35:2196-2204. doi:10.1097/01.ccm.0000281517.97507.6e. [PMID 17855837](https://pubmed.ncbi.nlm.nih.gov/17855837/)
 
-van den Broek MPH, Groenendaal F, Egberts ACG, Rademaker CMA. *Clin Pharmacokinet* 2010;49:277-94. doi:10.2165/11319360-000000000-00000
+Tortorici MA, Mu Y, Kochanek PM, Xie W, Poloyac SM. Moderate hypothermia prevents cardiac arrest-mediated suppression of drug metabolism and induction of interleukin-6 in rats. *Crit Care Med* 2009;37:263-269. doi:10.1097/CCM.0b013e3181931ed3. [PMID 19050605](https://pubmed.ncbi.nlm.nih.gov/19050605/)
 
-van der Veer MAA, de Haan TR, Franken LGW, et al. *Antimicrob Agents Chemother* 2023;67:e0170722. doi:10.1128/aac.01707-22
+van den Broek MP, Groenendaal F, Egberts AC, Rademaker CM. Effects of hypothermia on pharmacokinetics and pharmacodynamics: a systematic review of preclinical and clinical studies. *Clin Pharmacokinet* 2010;49:277-294. doi:10.2165/11319360-000000000-00000. [PMID 20384391](https://pubmed.ncbi.nlm.nih.gov/20384391/)
 
-Vlastra W, van Nieuwkerk AC, Bronzwaer AGT, et al. *J Am Geriatr Soc* 2021;69:494-9. doi:10.1111/jgs.16882
+van der Veer MAA, de Haan TR, Franken LGW, Hodiamont CJ, Groenendaal F, Dijk PH, et al. Population Pharmacokinetics and Dosing Optimization of Ceftazidime in Term Asphyxiated Neonates during Controlled Therapeutic Hypothermia. *Antimicrob Agents Chemother* 2023;67:e0170722. doi:10.1128/aac.01707-22. [PMID 37010414](https://pubmed.ncbi.nlm.nih.gov/37010414/)
 
-Wang Q, Sheng X, Horner JH, Newcomb M. *J Am Chem Soc* 2009;131:10629-36. doi:10.1021/ja9031105
+Vlastra W, van Nieuwkerk AC, Bronzwaer AGT, Versteeg A, Bron EE, Niessen WJ, et al. Cerebral Blood Flow in Patients with Severe Aortic Valve Stenosis Undergoing Transcatheter Aortic Valve Implantation. *J Am Geriatr Soc* 2021;69:494-499. doi:10.1111/jgs.16882. [PMID 33068017](https://pubmed.ncbi.nlm.nih.gov/33068017/)
 
-Wilkinson GR, Shand DG. *Clin Pharmacol Ther* 1975;18:377-90.
+Wang Q, Sheng X, Horner JH, Newcomb M. Quantitative production of compound I from a cytochrome P450 enzyme at low temperatures. Kinetics, activation parameters, and kinetic isotope effects for oxidation of benzyl alcohol. *J Am Chem Soc* 2009;131:10629-10636. doi:10.1021/ja9031105. [PMID 19572732](https://pubmed.ncbi.nlm.nih.gov/19572732/)
 
-Williams LR, Leggett RW. *Clin Phys Physiol Meas* 1989;10:187-217. doi:10.1088/0143-0815/10/3/001
+Wilkinson GR, Shand DG. Commentary: a physiological approach to hepatic drug clearance. *Clin Pharmacol Ther* 1975;18:377-390. doi:10.1002/cpt1975184377. [PMID 1164821](https://pubmed.ncbi.nlm.nih.gov/1164821/)
 
-Yang CL, Lin CH, Luo WI, et al. *Chemistry* 2017;23:2571-82. doi:10.1002/chem.201603956
+Williams LR, Leggett RW. Reference values for resting blood flow to organs of man. *Clin Phys Physiol Meas* 1989;10:187-217. doi:10.1088/0143-0815/10/3/001. [PMID 2697487](https://pubmed.ncbi.nlm.nih.gov/2697487/)
 
-Zhang Y, Lin H. *J Phys Chem A* 2009;113:11501-8. doi:10.1021/jp901850c
+Yang CL, Lin CH, Luo WI, Lee TL, Ramu R, Ng KY, et al. Mechanistic Study of the Stereoselective Hydroxylation of [2-H,3-H]Butanes Catalyzed by Cytochrome P450 BM3 Variants. *Chemistry* 2017;23:2571-2582. doi:10.1002/chem.201603956. [PMID 27798822](https://pubmed.ncbi.nlm.nih.gov/27798822/)
 
-Zhou J, Poloyac SM. *Expert Opin Drug Metab Toxicol* 2011;7:803-16. doi:10.1517/17425255.2011.574127
+Zhang Y, Lin H. Quantum tunneling in testosterone 6beta-hydroxylation by cytochrome P450: reaction dynamics calculations employing multiconfiguration molecular-mechanical potential energy surfaces. *J Phys Chem A* 2009;113:11501-11508. doi:10.1021/jp901850c. [PMID 19480428](https://pubmed.ncbi.nlm.nih.gov/19480428/)
 
-Zhou J, et al. *Drug Metab Dispos* 2011;39:2209.
+Zhou J, Poloyac SM. The effect of therapeutic hypothermia on drug metabolism and response: cellular mechanisms to organ function. *Expert Opin Drug Metab Toxicol* 2011;7:803-816. doi:10.1517/17425255.2011.574127. [PMID 21473710](https://pubmed.ncbi.nlm.nih.gov/21473710/)
 
-Zhou JX, Liu J. *Anesth Analg* 2001;93:234-8. doi:10.1097/00000539-200107000-00047
+Zhou J, Empey PE, Bies RR, Kochanek PM, Poloyac SM. Cardiac arrest and therapeutic hypothermia decrease isoform-specific cytochrome P450 drug metabolism. *Drug Metab Dispos* 2011;39:2209-2218. doi:10.1124/dmd.111.040642. [PMID 21868471](https://pubmed.ncbi.nlm.nih.gov/21868471/)
 
-Zhou J, Liu Y, Liu J. *Chin Med J (Engl)* 2002;115:1014-9.
+Zhou JX, Liu J. The effect of temperature on solubility of volatile anesthetics in human tissues. *Anesth Analg* 2001;93:234-238. doi:10.1097/00000539-200107000-00047. [PMID 11429373](https://pubmed.ncbi.nlm.nih.gov/11429373/)
+
+Zhou J, Liu Y, Liu J. Combined effect of hypothermia and crystalloid hemodilution on the solubility of volatile anesthetics in human blood. *Chin Med J (Engl)* 2002;115:1014-1019. [PMID 12150733](https://pubmed.ncbi.nlm.nih.gov/12150733/)
