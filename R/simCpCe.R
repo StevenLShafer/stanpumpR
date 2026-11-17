@@ -388,6 +388,11 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         stop("A dose in units (U) needs a drug reported in mcU/mL; ", PK$drug, " is not.")
       dose$Dose[use] <- dose$Dose[use] * 1000
     }
+    # Milliunits are converted only by a drug's unitPotency (potencyToMass(),
+    # above), which leaves none behind; any left here have no conversion and
+    # would otherwise be read as mass.
+    if (any(grepl("^mU( |/|$)", dose$Units)))
+      stop(PK$drug, " has no unit potency, so a dose in milliunits (mU) cannot be converted.")
     # A drug dosed in international units takes only those, and only it does.
     # Checked before the mass conversions, which would turn a mass unit on an
     # activity drug into NA silently.

@@ -134,3 +134,17 @@ test_that("potencyToMass converts only unit and milliunit doses", {
   y <- potencyToMass(c(10, 2), c("U", "mU/min"), NULL)
   expect_equal(y$Units, c("U", "mU/min"))
 })
+
+test_that("the rat model takes doses in units too, and mU is refused without a potency", {
+  # CodeRabbit's review of PR #742: the rat model lacked unitPotency, so a
+  # dose in U stopped the run; and a drug without one read mU/min as mass.
+  rat <- function(units, dose)
+    sim(data.frame(Drug = "oxytocin", Time = 0, Dose = dose, Units = units),
+        weight = 0.3, height = 20, age = 0.2)
+  expect_equal(rat("U", 10)$Y, rat("mcg", 10000 / 600)$Y, tolerance = 1e-10)
+  pk <- getDrugPK("propofol", 70, 170, 35, "male")
+  expect_error(
+    simCpCe(data.frame(Drug = "propofol", Time = c(0, 10), Dose = c(5, 0),
+                       Units = "mU/min"), noEvents, pk, 60, FALSE),
+    "milliunits")
+})

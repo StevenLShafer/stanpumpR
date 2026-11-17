@@ -332,8 +332,8 @@ For a drug labelled 1 mg/kg, the 120 kg man's bolus is 91 mg, not 120 mg.
   factors are close to the weight / 70 values the model used before, but they
   are not validated.
 - **Pregnancy.** The formula has not been validated in parturients, and
-  pregnancy weight is mostly fat-free. Oxytocin is exempted for this reason; for
-  other drugs in a pregnant patient, consider turning the switch off.
+  pregnancy weight is mostly fat-free. For any drug in a pregnant patient,
+  consider turning the switch off.
 - **Peripheral volumes of lipophilic drugs.** The scaling applies the same
   fat-free-mass ratio to every volume. The deep peripheral volume of a lipophilic
   drug such as fentanyl tracks fat mass and is larger, not smaller, in an obese

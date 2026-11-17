@@ -211,6 +211,7 @@ oxytocinRat <- function()
       cl2 = 0.000524,  # L/min
       cl3 = 0
     )),
+    unitPotency = OXYTOCIN_MCG_PER_USP_UNIT,   # doses in units, as for people
     tPeak = 5,         # guess
     MEAC = 0,
     typical = 0.1,

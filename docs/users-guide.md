@@ -443,7 +443,10 @@ hint when that is happening.
 the *Adjust weight to fat-free mass* box is unticked, every model in the table
 except propofol and remifentanil has its volumes and clearances scaled
 from the published 70 kg values to the patient's fat-free mass. The published
-parameters are what a 70 kg, 170 cm man receives. Acetaminophen's clearance is
+parameters are what a 70 kg, 170 cm man receives. Oxytocin is an exception:
+its published parameters are for 80 kg and 33 years, so its volumes and
+clearances scale from 80 kg and its clearance also changes with age.
+Acetaminophen's clearance is
 an exception: it keeps Morse's own normal-fat-mass covariate whichever way the
 box is set, and her standard man is 70 kg and 176 cm, so the 70 kg, 170 cm man
 receives 23.9 L/h rather than the published 24.0. Its volumes and
