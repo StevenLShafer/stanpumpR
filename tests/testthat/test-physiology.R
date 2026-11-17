@@ -678,3 +678,57 @@ test_that("body temperature lowers elimination capacity, not blood flow", {
   # The summary says it
   expect_match(physiologySummary(c(temperature = 31)), "31 °C", fixed = TRUE)
 })
+
+test_that("the physiology panel opens on what the sliders are for (Shafer, 2026-11-17)", {
+  html <- as.character(physiologyPanel())
+  intro <- regexpr('id="physiology-intro"', html, fixed = TRUE)
+  controls <- regexpr('id="physiology-controls"', html, fixed = TRUE)
+  expect_gt(intro, 0)
+  expect_gt(controls, intro)
+  # The controls start hidden, and hold every slider and the reset
+  expect_match(html, 'id="physiology-controls" style="display: none;"', fixed = TRUE)
+  tail <- substring(html, controls)
+  for (id in c(physiologyInputId(PHYSIOLOGY_FACTORS), "physiology_temperature",
+               "physiologyReset", "physiologyNote"))
+    expect_match(tail, paste0('id="', id, '"'), fixed = TRUE)
+  # The statement: covariates belong in the Patient Profile, and a button
+  # shows the sliders
+  introHtml <- substring(html, intro, controls)
+  expect_match(introHtml, "Patient Profile", fixed = TRUE)
+  expect_match(introHtml, "covariate", fixed = TRUE)
+  expect_match(introHtml, "physiology-continue", fixed = TRUE)
+  expect_match(introHtml, 'data-help-page="models/physiology"', fixed = TRUE)
+  # The temperature tip no longer says it spares the intravenous drugs
+  expect_false(grepl("does not change the intravenous", html, fixed = TRUE))
+  # The browser shows the controls on the button or the server's message
+  js <- paste(readLines(system.file("www", "app.js", package = "stanpumpR")),
+              collapse = "\n")
+  expect_match(js, "'.physiology-continue'", fixed = TRUE)
+  expect_match(js, "addCustomMessageHandler('physiology_show'", fixed = TRUE)
+})
+
+test_that("a session whose physiology is off normal is shown the sliders", {
+  shiny::testServer(app_server, {
+    messages <- character(0)
+    session$sendCustomMessage <- function(type, message)
+      messages <<- c(messages, type)
+    shown <- function() sum(messages == "physiology_show")
+    session$setInputs(physiology_cardiac = 0, physiology_liver = 0,
+                      physiology_renal = 0, physiology_gi = 0,
+                      physiology_temperature = PHYSIOLOGY_TEMPERATURE_DEFAULT)
+    session$elapse(PHYSIOLOGY_DEBOUNCE_MS + 100)
+    session$flushReact()
+    expect_equal(shown(), 0)
+    # A link or a scenario setting cardiac output to half
+    session$setInputs(physiology_cardiac = log10(0.5))
+    session$elapse(PHYSIOLOGY_DEBOUNCE_MS + 100)
+    session$flushReact()
+    expect_gte(shown(), 1)
+    # Body temperature alone is a change too
+    before <- shown()
+    session$setInputs(physiology_cardiac = 0, physiology_temperature = 32)
+    session$elapse(PHYSIOLOGY_DEBOUNCE_MS + 100)
+    session$flushReact()
+    expect_gt(shown(), before)
+  })
+})

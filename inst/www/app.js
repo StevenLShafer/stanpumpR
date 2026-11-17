@@ -84,6 +84,29 @@ $(document).on('shiny:sessioninitialized', function() {
   $(PHYSIOLOGY_SLIDERS).each(function() { formatPhysiologySlider(this); });
 });
 
+// The Physiology panel opens on a statement of what the sliders are for
+// (physiologyIntro() in R/physiology.R); its button shows the sliders.  The
+// server sends physiology_show when the session's physiology is already away
+// from normal (a link or a scenario), so a changed slider is never hidden.
+// The sliders were drawn while hidden, so they are told they are shown.
+function showPhysiologyControls() {
+  var controls = $('#physiology-controls');
+  if (!controls.length || controls.is(':visible')) return;
+  $('#physiology-intro').hide();
+  controls.show();
+  controls.trigger('shown');
+  $(window).trigger('resize');
+}
+$(document).on('click', '.physiology-continue', function(e) {
+  e.preventDefault();
+  showPhysiologyControls();
+});
+$(document).on('shiny:connected', function() {
+  Shiny.addCustomMessageHandler('physiology_show', function(message) {
+    showPhysiologyControls();
+  });
+});
+
 // The startup drug menu (R/startup-drugs.R): each category's summary says how
 // many of its drugs are ticked, so a tick is not lost when it is collapsed.
 function startupDrugTickedCount(group) {

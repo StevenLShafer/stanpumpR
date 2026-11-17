@@ -1487,6 +1487,14 @@ app_server <- function(input, output, session) {
                       value = PHYSIOLOGY_TEMPERATURE_DEFAULT)
   })
 
+  # A link or a scenario that sets the physiology away from normal shows the
+  # sliders, which otherwise wait behind physiologyIntro() (Shafer,
+  # 2026-11-17): a changed slider is never hidden.
+  observeEvent(physiology(), {
+    if (!physiologyIsNormal(physiology()))
+      session$sendCustomMessage("physiology_show", list())
+  })
+
   output$physiologyNote <- renderUI({
     physiologyNote(physiology(), doseTableClean()$Drug,
                    temperature = bodyTemperature())
