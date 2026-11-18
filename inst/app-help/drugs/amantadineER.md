@@ -12,4 +12,4 @@ Osmolex ER tablets are labelled in mg of amantadine base (129 mg is 160 mg of th
 
 ### What is not in the model
 
-No weight or sex term (24 subjects); [the scaling switch](help:models/fat-free-mass) scales the volume and clearance to fat-free mass. Quinidine and quinine lower amantadine's renal clearance about 30%, and acid urine speeds it; neither is applied.
+No weight or sex term (24 subjects, median 83 kg); [the scaling switch](help:models/fat-free-mass) scales the volume and clearance to fat-free mass from that typical subject. Quinidine and quinine lower amantadine's renal clearance about 30%, and acid urine speeds it; neither is applied.
