@@ -24,7 +24,7 @@ plan <- utils::read.csv(file.path(dir, "plan.csv"), stringsAsFactors = FALSE)
 # A drug already in stanpumpR needs no papers: once it is implemented its
 # models leave models-outside-library.csv, and it would come back as a drug
 # to search PubMed for.  So does a library_change row, a change to a drug the
-# library already has (piperacillin listed and dosed as piperacillin/tazobactam).
+# library already has (piperacillin renamed Zosyn and dosed as the product).
 plan <- plan[!plan$status %in% c("done", "library_change"), , drop = FALSE]
 models <- utils::read.csv(file.path(repo, "docs", "nlmixr2lib", "models-outside-library.csv"),
                           stringsAsFactors = FALSE, colClasses = c(pmid = "character"))
