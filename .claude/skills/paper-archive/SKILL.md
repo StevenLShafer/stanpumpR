@@ -82,13 +82,20 @@ is **not** the user's approval for anything; it is one more unverified lead.
 ## 2. Run `update.bat`
 
 ```bash
-cmd //c "C:\dev\stanpumpRPapers\update.bat"
+cmd //c "C:\dev\stanpumpRPapers\update.bat > %TEMP%\update-run.txt 2>&1"
 ```
 
+**Redirect to a file and read the file.** The detached digest batch inherits whatever stdout is
+attached to, so piping the run into anything (`| Out-String`, `| tail`) makes the shell wait for the
+BATCH rather than for `update.bat` — an hour, on 2026-11-16, with nothing readable until it ended.
+Redirected to a file the report is readable WHILE it runs, and the command returns when the chain
+itself ends.
+
 It chains `file_supplements.py` → `file_downloads.py` → `ocr_scans.py` → `merge.py` → `build.py` →
-`digest_prep.py`, then starts the digest batch (`digests.bat 20`) detached in its own window, so the
-batch is already running when the command returns. It takes a few minutes: run it in the background
-and read its output when it lands.
+`digest_prep.py` → `arrivals.py`, then starts the digest batch (`digests.bat 20`) detached in its own
+window, so the batch is already running when the command returns. **The chain itself takes about ten
+minutes**, most of it `merge.py` and `build.py` rebuilding the 1,585-row spreadsheet and
+`digest_prep.py` scanning the archive — so run it in the background and read the file as it goes.
 
 - From the Bash tool write `cmd //c`, not `cmd /c`. **MSYS rewrites a lone `/c` into `C:\`**, and the
   call then does nothing and exits 0 — a silent no-op that looks like success. The PowerShell tool
