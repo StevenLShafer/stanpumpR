@@ -60,10 +60,53 @@ agentDocDefinitions <- function(root, jsOnly = FALSE) {
   })))
 }
 
+# JavaScript source with every string and comment blanked to spaces, read in
+# one pass so that a quote inside a comment, or // inside a string, is not
+# mistaken for the other.  (A regular-expression literal holding a quote can
+# still mislead it; none of the package's JavaScript has one where it
+# matters.)
+agentDocJsCode <- function(text) {
+  ch <- strsplit(text, "")[[1]]
+  n <- length(ch)
+  out <- ch
+  i <- 1L
+  while (i <= n) {
+    c1 <- ch[i]
+    c2 <- if (i < n) ch[i + 1L] else ""
+    if (c1 == "/" && c2 == "/") {
+      j <- i
+      while (j <= n && ch[j] != "\n") j <- j + 1L
+      out[i:(j - 1L)] <- " "
+      i <- j
+    } else if (c1 == "/" && c2 == "*") {
+      j <- i + 2L
+      while (j < n && !(ch[j] == "*" && ch[j + 1L] == "/")) j <- j + 1L
+      j <- min(j + 1L, n)
+      keep <- ch[i:j] == "\n"
+      out[i:j] <- ifelse(keep, "\n", " ")
+      i <- j + 1L
+    } else if (c1 %in% c("\"", "'", "`")) {
+      j <- i + 1L
+      while (j <= n && ch[j] != c1) {
+        if (ch[j] == "\\") j <- j + 1L
+        else if (c1 != "`" && ch[j] == "\n") break
+        j <- j + 1L
+      }
+      j <- min(j, n)
+      if (j > i + 1L) out[(i + 1L):(j - 1L)] <- ifelse(ch[(i + 1L):(j - 1L)] == "\n", "\n", " ")
+      i <- j + 1L
+    } else {
+      i <- i + 1L
+    }
+  }
+  paste(out, collapse = "")
+}
+
 # Whether the JavaScript defines `Object.method`: assigned as such
-# (Object.method = , Object.prototype.method = ), or written as a method or
-# property inside the braces of the object literal or class that defines
-# Object (const Cards = { ... fit(view) { ... } ... }).
+# (Object.method = , Object.prototype.method = ), or written as a member of
+# the object literal or class that defines Object, at that object's own
+# depth (const Cards = { ... fit(view) { ... } ... }), so that a method of a
+# nested object is not taken for one of Object.
 agentDocJsMember <- function(root, name) {
   parts <- strsplit(name, ".", fixed = TRUE)[[1]]
   if (length(parts) != 2) return(FALSE)
@@ -73,25 +116,29 @@ agentDocJsMember <- function(root, name) {
              list.files(file.path(root, "tools", "viewer", "src"), "\\.js$", full.names = TRUE))
   for (f in files) {
     text <- paste(readLines(f, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
-    # strings and comments may hold braces; blank them before counting (the
-    # strings first, so a // inside one is not taken for a comment)
-    text <- gsub("\"(?:[^\"\\\\\n]|\\\\.)*\"|'(?:[^'\\\\\n]|\\\\.)*'|`(?:[^`\\\\]|\\\\.)*`",
-                 "\"\"", text, perl = TRUE)
-    text <- gsub("/\\*[\\s\\S]*?\\*/|//[^\\n]*", "", text, perl = TRUE)
+    if (!grepl(object, text, fixed = TRUE)) next
+    text <- agentDocJsCode(text)
     if (grepl(sprintf("\\b%s(\\.prototype)?\\.%s\\s*=[^=]", object, method), text, perl = TRUE))
       return(TRUE)
     start <- regexpr(sprintf("(\\b(const|let|var)\\s+%s\\s*=\\s*|\\bclass\\s+%s\\b[^{]*)\\{",
                              object, object), text, perl = TRUE)
     if (start < 0) next
-    # the body: from that brace to the one that closes it
+    # the body, from the object's brace to the one that closes it, keeping
+    # only what stands at the object's own depth: a member's own opening
+    # brace stays, everything inside it goes
     chars <- strsplit(substring(text, start + attr(start, "match.length") - 1), "")[[1]]
-    depth <- cumsum((chars == "{") - (chars == "}"))
-    end <- which(depth == 0)[1]
-    body <- paste(chars[seq_len(if (is.na(end)) length(chars) else end)], collapse = "")
+    after <- cumsum((chars == "{") - (chars == "}"))
+    before <- c(0, after[-length(after)])
+    end <- which(after == 0)[1]
+    if (is.na(end)) end <- length(chars)
+    level <- pmax(before, after)[seq_len(end)]
+    keep <- level <= 1 | (chars[seq_len(end)] == "{" & before[seq_len(end)] == 1)
+    body <- paste(ifelse(keep, chars[seq_len(end)], ""), collapse = "")
     # a shorthand method (fit(view) {), or a property whose value is a
     # function (fit: function, fit: (v) =>, fit: v =>); never a property
-    # holding a value (level: 0), which cannot be called
-    if (grepl(sprintf(paste0("(^|[\\n{])\\s*(async\\s+|get\\s+|set\\s+|static\\s+)?%s\\s*",
+    # holding a value (level: 0), which cannot be called.  A member follows
+    # the object's brace, a comma, a semicolon (a class) or a line break.
+    if (grepl(sprintf(paste0("(^|[\\n{,;}])\\s*(async\\s+|get\\s+|set\\s+|static\\s+)?%s\\s*",
                              "(\\([^()]*\\)\\s*\\{|:\\s*(async\\s+)?(function\\b|\\([^()]*\\)\\s*=>|[A-Za-z_$][A-Za-z0-9_$]*\\s*=>))"),
                       method), body, perl = TRUE))
       return(TRUE)
@@ -124,6 +171,14 @@ test_that("a JavaScript method is found only on the object that defines it", {
   expect_true(agentDocJsMember(fake, "B.draw"))
   expect_false(agentDocJsMember(fake, "A.level"))
   expect_false(agentDocJsMember(fake, "A.draw"))
+  # a quote inside a comment, members after a comma, a nested object's method
+  writeLines(c("/* \" */ const C = { first() {}, second() {} }; const s = \"ok\";",
+               "const D = { nested: { draw() {} }, top() {} };"),
+             file.path(tmp, "y.js"))
+  expect_true(agentDocJsMember(fake, "C.first"))
+  expect_true(agentDocJsMember(fake, "C.second"))
+  expect_true(agentDocJsMember(fake, "D.top"))
+  expect_false(agentDocJsMember(fake, "D.draw"))
 })
 
 test_that("every function the orientation documents name exists", {
