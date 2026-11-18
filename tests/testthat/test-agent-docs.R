@@ -73,6 +73,11 @@ agentDocJsMember <- function(root, name) {
              list.files(file.path(root, "tools", "viewer", "src"), "\\.js$", full.names = TRUE))
   for (f in files) {
     text <- paste(readLines(f, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
+    # strings and comments may hold braces; blank them before counting (the
+    # strings first, so a // inside one is not taken for a comment)
+    text <- gsub("\"(?:[^\"\\\\\n]|\\\\.)*\"|'(?:[^'\\\\\n]|\\\\.)*'|`(?:[^`\\\\]|\\\\.)*`",
+                 "\"\"", text, perl = TRUE)
+    text <- gsub("/\\*[\\s\\S]*?\\*/|//[^\\n]*", "", text, perl = TRUE)
     if (grepl(sprintf("\\b%s(\\.prototype)?\\.%s\\s*=[^=]", object, method), text, perl = TRUE))
       return(TRUE)
     start <- regexpr(sprintf("(\\b(const|let|var)\\s+%s\\s*=\\s*|\\bclass\\s+%s\\b[^{]*)\\{",
@@ -86,7 +91,7 @@ agentDocJsMember <- function(root, name) {
     # a shorthand method (fit(view) {), or a property whose value is a
     # function (fit: function, fit: (v) =>, fit: v =>); never a property
     # holding a value (level: 0), which cannot be called
-    if (grepl(sprintf(paste0("(^|\\n)\\s*(async\\s+|get\\s+|set\\s+|static\\s+)?%s\\s*",
+    if (grepl(sprintf(paste0("(^|[\\n{])\\s*(async\\s+|get\\s+|set\\s+|static\\s+)?%s\\s*",
                              "(\\([^()]*\\)\\s*\\{|:\\s*(async\\s+)?(function\\b|\\([^()]*\\)\\s*=>|[A-Za-z_$][A-Za-z0-9_$]*\\s*=>))"),
                       method), body, perl = TRUE))
       return(TRUE)
@@ -103,6 +108,22 @@ test_that("a JavaScript method is found only on the object that defines it", {
   expect_false(agentDocJsMember(root, "Cardz.fit"))
   # level: 0 is a property of Cards, not a method
   expect_false(agentDocJsMember(root, "Cards.level"))
+  # a brace in a comment or a string does not end the object, and a method
+  # may open on the object's own line
+  tmp <- file.path(tempfile("jsmember"), "tools", "viewer", "src")
+  dir.create(tmp, recursive = TRUE)
+  writeLines(c("const A = { // }",
+               "    label: '}',",
+               "    url: \"http://x/}\",",
+               "    fit(view) { return 1; },",
+               "    level: 0,",
+               "};",
+               "const B = { draw(st) {} };"), file.path(tmp, "x.js"))
+  fake <- dirname(dirname(dirname(tmp)))
+  expect_true(agentDocJsMember(fake, "A.fit"))
+  expect_true(agentDocJsMember(fake, "B.draw"))
+  expect_false(agentDocJsMember(fake, "A.level"))
+  expect_false(agentDocJsMember(fake, "A.draw"))
 })
 
 test_that("every function the orientation documents name exists", {

@@ -60,7 +60,11 @@ readReply <- function(path) {
 # dashes, the multiplication sign and dot.  Superscript digits and minus are
 # exponents, and a run of them is read as "^" and the exponent, so 10\u207b\u00b3
 # is 10^-3 while a typed 10-3 stays a range.
-PRINTED_CHARACTERS <- c(`8722` = "-", `8211` = "-", `8210` = "-", `215` = "x", `183` = "*")
+PRINTED_CHARACTERS <- c(`8722` = "-", `8211` = "-", `8210` = "-", `215` = "x", `183` = "*",
+                        # spaces a PDF copies: no-break, thin, narrow no-break and the rest
+                        `160` = " ", `8194` = " ", `8195` = " ", `8196` = " ", `8197` = " ",
+                        `8198` = " ", `8199` = " ", `8200` = " ", `8201` = " ", `8202` = " ",
+                        `8239` = " ", `8287` = " ")
 SUPERSCRIPTS <- c(`8304` = "0", `185` = "1", `178` = "2", `179` = "3", `8308` = "4",
                   `8309` = "5", `8310` = "6", `8311` = "7", `8312` = "8", `8313` = "9",
                   `8315` = "-")
