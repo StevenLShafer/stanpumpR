@@ -1,4 +1,4 @@
-Two editors under the **Settings** menu in the navigation bar change the drug library for the current session. Changes are not saved on the server, and they are not carried in the URL except for the thresholds; reloading the page restores the defaults.
+Two editors under the **Settings** menu in the navigation bar change the drug library for the current session. Changes are not saved on the server, but a saved link carries them (see [Sharing](help:sharing)); reloading the page without one restores the defaults.
 
 ## Drug Library
 

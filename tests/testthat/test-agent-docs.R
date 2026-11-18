@@ -77,8 +77,14 @@ test_that("every function the orientation documents name exists", {
     code <- agentDocCode(root, doc)
     calls <- unique(sub("\\(\\)$", "",
                         code[grepl("^[A-Za-z.][A-Za-z0-9._]*\\(\\)$", code)]))
+    # A JavaScript object's method, Object.method() (the visualizer's
+    # Cards.fit()), names a definition when both its parts are defined.
+    jsMethod <- function(name) {
+      parts <- strsplit(name, ".", fixed = TRUE)[[1]]
+      grepl("^[A-Z]", name) && length(parts) == 2L && all(parts %in% defined)
+    }
     for (name in calls)
-      expect_true(name %in% defined || inImports(name),
+      expect_true(name %in% defined || jsMethod(name) || inImports(name),
                   info = sprintf("%s names %s(), which nothing defines", doc, name))
     # any qualified call, with or without arguments (renv::install("pkg"))
     qualified <- unique(sub("\\(.*$", "",

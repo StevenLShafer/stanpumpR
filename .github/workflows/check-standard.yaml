@@ -12,6 +12,15 @@ name: R-CMD-check
 permissions:
   contents: read
 
+# A new push to a pull request cancels its earlier check, which no one will
+# read.  A push to master is grouped by its own commit, so it is never
+# cancelled: each master commit's check is what deploys it (Carbon's
+# repository audit, 2026-11-18).  No paths-ignore: the Ubuntu job is a
+# required check, and a pull request it skipped could not merge.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
 jobs:
   R-CMD-check:
     runs-on: ${{ matrix.config.runner || matrix.config.os }}
@@ -60,3 +69,18 @@ jobs:
           upload-snapshots: false
           upload-results: false
           error-on: '"error"'
+
+      # The tests of the orientation documents and of these workflows read
+      # files .Rbuildignore keeps out of the built package (AGENTS.md, docs/,
+      # .github/), so under R CMD check they skip ("not a source checkout")
+      # and had never run here; test-agent-docs.R failed on master unseen
+      # (Carbon's repository audit, 2026-11-18).  Run them from the checkout.
+      - name: Source-checkout tests
+        if: matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release'
+        shell: Rscript {0}
+        run: |
+          pkgload::load_all(".", quiet = TRUE)
+          for (f in c("test-agent-docs.R", "test-workflow-security.R"))
+            testthat::test_file(file.path("tests", "testthat", f),
+                                reporter = "summary",
+                                stop_on_failure = TRUE)

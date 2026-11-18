@@ -97,11 +97,11 @@ paperReviewExtravascularDoses <- function(regimen, reference, concUnits)
     if (paperReviewIsRateDose(d)) next
     mg <- c(g = 1000, mg = 1, mcg = 1e-3, ng = 1e-6)[d$mass_unit %or% "other"]
     minutes <- paperReviewMinutes(d$time_units %or% "min")
-    if (is.na(mg) || is.na(minutes) || !is.finite(paperReviewNum(d$time)) ||
+    if (is.na(mg) || is.na(minutes) || !is.finite(paperReviewNum(d[["time"]])) ||
         !is.finite(paperReviewNum(d$amount))) next
     amount <- d$amount * mg * (if (identical(d$per_kg, "yes")) reference$weight else 1)
     rows[[length(rows) + 1]] <- data.frame(
-      Time = d$time * minutes, amount = amount * paperReviewAmountFactor(concUnits),
+      Time = d[["time"]] * minutes, amount = amount * paperReviewAmountFactor(concUnits),
       fraction = paperReviewNum(d$analyte_fraction), route = d$route,
       stringsAsFactors = FALSE)
   }
@@ -568,16 +568,19 @@ paperReviewIntravenousSeries <- function(extraction, reference, concUnits)
     mg <- c(g = 1000, mg = 1, mcg = 1e-3, ng = 1e-6)[d$mass_unit %or% "other"]
     minutes <- paperReviewMinutes(d$time_units %or% "min")
     # A dose with no readable time, amount or units is no series to fit.
-    if (is.na(mg) || is.na(minutes) || !is.finite(paperReviewNum(d$time)) ||
+    if (is.na(mg) || is.na(minutes) || !is.finite(paperReviewNum(d[["time"]])) ||
         !is.finite(paperReviewNum(d$amount))) next
     amount <- d$amount * mg * (if (identical(d$per_kg, "yes")) reference$weight else 1)
-    start <- d$time * minutes
+    start <- d[["time"]] * minutes
     pts <- s$points
     if (identical(d$route, "iv_infusion")) {
       duration <- paperReviewNum(d$duration) * minutes
       if (!is.finite(duration) || duration > 0.1 * (max(pts$time) - start)) next
       if ((d$per_time %or% "none") == "per_min") amount <- amount * duration
       if ((d$per_time %or% "none") == "per_h") amount <- amount * duration / 60
+      # as paperReviewRegimenDoses() reads it: a rate per day given over a
+      # duration in minutes (1440 mg/day for 10 min is 10 mg, not 1440)
+      if ((d$per_time %or% "none") == "per_day") amount <- amount * duration / 1440
       pts <- pts[pts$time > start + duration, , drop = FALSE]
     } else if (!identical(d$route, "iv_bolus")) next
     pts$time <- pts$time - start

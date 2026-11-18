@@ -1,8 +1,10 @@
 The **Physiology** panel in the left-hand column asks *what if*: what if hepatic
 function were half of normal, the kidneys shut down, or cardiac output fell
-by two thirds? It has four sliders. Each is a multiple of normal function, on
-a log scale from a tenth (0.1) to ten times (10). All four start at 1, which
-is normal and changes nothing. **Reset to normal** puts them back.
+by two thirds? It has four sliders of organ function, and a fifth for body
+temperature (see *Body temperature* below). Each of the four is a multiple of
+normal function, on a log scale from a tenth (0.1) to ten times (10). All four
+start at 1, which is normal and changes nothing. **Reset to normal** puts them
+back, and the temperature to 37 °C.
 
 For the reasoning behind each rule and the evidence for it, see
 [Physiology and pharmacokinetics: the evidence](help:models/physiology-and-pharmacokinetics).
@@ -68,7 +70,8 @@ changes the oral bioavailability, F′ = F (1 − E′)/(1 − E), never above 1
 **Renal function** scales only the renal share of a drug's clearance. Each drug's clearance is split into a renal
 share, a hepatic share, and the rest. The rest is elimination outside the liver
 and kidneys, such as plasma and tissue esterases (remifentanil) and Hofmann
-elimination (cisatracurium), and no slider changes it. Setting renal function
+elimination (cisatracurium), and no organ slider changes it (body temperature
+does: see below). Setting renal function
 to 0.1 removes 90% of the renal share and nothing else.
 
 Some drugs are **metabolized** by the kidney, not just filtered. Propofol is
@@ -150,14 +153,14 @@ cardiac output only partly, about as cardiac output to the power 0.35:
   and albumin, at constant blood pressure and arterial CO<sub>2</sub>, and
   middle cerebral artery velocity rose linearly with it (an exponent of about
   0.35).
-- Vlastra 2020 measured grey-matter blood flow by MRI before and after aortic
+- Vlastra 2021 measured grey-matter blood flow by MRI before and after aortic
   valve replacement: 8.2% more flow per added L/min of cardiac output, from
   4.0 L/min (an exponent of 0.33).
 
 The evidence is not strong. On cardiopulmonary bypass with blood pressure held,
 halving pump flow did not change cerebral blood flow (Cook 1997), and a
 systematic review of 41 studies judged them too weak to confirm that cardiac
-output and cerebral blood flow are coupled (Castle-Kirszbaum 2021). Below the
+output and cerebral blood flow are coupled (Castle-Kirszbaum 2022). Below the
 autoregulatory floor, as in true shock, brain flow becomes pressure-passive and
 falls further than this.
 
@@ -240,7 +243,7 @@ more slowly, and the brain ends lower.
 
 Other effects the same chapter
 describes are not modelled yet. These are flow shifted to muscle (exercise,
-excitement) or to fat, hypothermia (higher solubility, lower metabolism),
+excitement) or to fat,
 ventilation-perfusion mismatch and one-lung ventilation, and children's larger
 vessel-rich group. Ventilation itself is a dose-table row.
 

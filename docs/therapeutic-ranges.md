@@ -191,10 +191,8 @@ ordinary doses reach. The help page says so and names what the band is.
 | digoxin, digoxinIV, digoxinIVPediatric | 0.5–2 ng/mL serum, before the next dose or ≥ 6 h after | LANOXIN label (2019) §2.5: below 0.5 less effective, above 2 more toxic without benefit. Heart failure: 0.5–0.8 (Rathore 2003, abstract). AF guideline: below 1.2 (Joglar 2024, full text) |
 | milrinone, milrinonePediatric | 100–300 ng/mL, typical 167 | PRIMACOR label (2003); Hornik 2019 (full text) |
 | amiodarone | 1.0–2.5 mg/L, typical 1.5 | CORDARONE label (2018) §12.2: "much below 1 mg/L are often ineffective… above 2.5 mg/L are generally not needed". The Health Canada monograph the model cited was not reachable |
-
 | warfarin, fluindione, acenocoumarol | INR 2.0–3.0, typical 2.5 | Coumadin label §2.2 and Holbrook 2012 (abstract). Fluindione and acenocoumarol take the vitamin K antagonist class target; the Previscan and Sintrom product information is still to be read |
 | heparinCPB | ACT 480–600 s, typical 480 | EACTS/EACTAIC/EBCP 2024 §9.3.1 (full text): an ACT above 480 s on bypass. No source gives an upper limit; 600 s is Steven L. Shafer's choice. STS/SCA/AmSECT 2018 abstract only |
-
 | procainamide | 3–10 mg/L, typical 6.5 | Hospira injection label (read in full, 2026-10-28): therapeutic plasma levels "reported to be 3 to 10 mcg/mL"; 6.5 mcg/mL at 50 mcg/kg/min and a 3 h half-life, where the model gives 7.4 at its 3.8 h. Drawn 2026-10-28; the 4–10 mg/L the help page had quoted was never sourced |
 
 Digoxin, milrinone and amiodarone were already drawn; only their sources were checked. The

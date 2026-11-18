@@ -92,7 +92,7 @@ Right-click in the table for the context menu: insert row above, insert row belo
 
 ## Limits
 
-At most 500 rows. Doses above 10⁹ are rejected. Rows that are incomplete (no drug, no time, no dose or no unit) are ignored by the simulation, so a half-typed row does no harm.
+At most 499 doses (the grid keeps one blank row below them, 500 rows in all). Doses above 10⁹ are rejected. Rows that are incomplete (no drug, no time, no dose or no unit) are ignored by the simulation, so a half-typed row does no harm.
 
 ## Rules for the inhaled agents
 

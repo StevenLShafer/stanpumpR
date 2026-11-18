@@ -1,5 +1,3 @@
-## Hydrochlorothiazide
-
 Hydrochlorothiazide is the thiazide diuretic in most fixed-dose combination
 antihypertensives. This curve is its **plasma concentration**: no blood
 pressure, no sodium excretion and no urine output. The source fitted no

@@ -361,7 +361,7 @@ helpPageUI <- function(id, drugDefaults = getDrugDefaultsGlobal()) {
     tags$div(
       class = "help-breadcrumb small text-muted",
       tags$a(href = "#", `data-help-page` = "home", "Help"),
-      " › ",
+      " \u203A ",
       row$sectionTitle
     ),
     # The title gets the same links as the body ("...differs from GasMan")
@@ -460,7 +460,7 @@ helpSearch <- function(term, index = helpSearchIndexCached(), maxHits = 25) {
     start <- max(1, p[1] - 70)
     end <- min(nchar(text), p[1] + attr(p, "match.length")[1] + 70)
     s <- substr(text, start, end)
-    paste0(if (start > 1) "…", s, if (end < nchar(text)) "…")
+    paste0(if (start > 1) "\u2026", s, if (end < nchar(text)) "\u2026")
   }, character(1))
 
   res <- data.frame(
@@ -503,7 +503,7 @@ helpHighlight <- function(text, term) {
 helpSearchResultsUI <- function(term, hits) {
   if (nrow(hits) == 0) {
     return(tags$div(class = "help-search-results small text-muted",
-                    "Nothing found for “", htmltools::htmlEscape(term), "”."))
+                    "Nothing found for \u201C", htmltools::htmlEscape(term), "\u201D."))
   }
   items <- lapply(seq_len(nrow(hits)), function(i) {
     snippet <- helpHighlight(hits$snippet[i], term)
@@ -527,8 +527,8 @@ helpSearchResultsUI <- function(term, hits) {
 #' @noRd
 helpFormatNumber <- function(x, digits = 3) {
   vapply(x, function(v) {
-    if (is.null(v) || length(v) == 0 || is.na(v)) return("—")
-    if (!is.finite(v)) return("—")
+    if (is.null(v) || length(v) == 0 || is.na(v)) return("\u2014")
+    if (!is.finite(v)) return("\u2014")
     if (v == 0) return("0")
     format(signif(v, digits), big.mark = ",", scientific = FALSE, trim = TRUE)
   }, character(1), USE.NAMES = FALSE)

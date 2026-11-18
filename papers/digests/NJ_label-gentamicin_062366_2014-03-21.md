@@ -117,7 +117,7 @@ MIC; synergy use):
 - `inst/extdata/therapeuticRanges.csv:143` (gentamicin row: source, label_statement, notes)
 
 ## Verification against stanpumpR
-Checked in `C:\dev\stanpumpRPapers\_build\master_snapshot` (master 50bb4219).
+Checked in the archive's master snapshot (master 50bb4219).
 
 - `R/antibioticMbc.R:293-296`: Source quotes the FDA label as "bactericidal in vitro against Gram-positive and
   Gram-negative bacteria". The label (PDF p6, Microbiology, image-confirmed) says exactly that. The MIC50/MIC90/MBC

@@ -96,7 +96,10 @@ tciRate <- function(p, e, CT, site, dt, K)
     tau <- unique(c(dt, seq(dt, dt + K$tPeak + 10 / 60, by = 1 / 60)))
     M <- exp(-outer(K$lambda4, tau))                   # 4 x J
     B <- as.vector(e %*% M)
-    E <- as.vector((K$einf * (exp(K$lambda4 * dt) - 1)) %*% M)
+    # (exp(lambda dt) - 1) exp(-lambda tau), written so that nothing
+    # overflows: every tau is at least dt, so both terms lie in [0, 1].  The
+    # product form overflowed to Inf * 0 = NaN once lambda dt passed 709.
+    E <- as.vector(K$einf %*% (exp(-outer(K$lambda4, tau - dt)) - M))
     ok <- E > 0
     rate <- if (any(ok)) min((CT - B[ok]) / E[ok]) else 0
   }

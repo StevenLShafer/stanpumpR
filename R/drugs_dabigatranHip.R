@@ -179,7 +179,7 @@ dabigatranHip <- function(weight, height, age, sex, adjustToFFM = TRUE,
     upperTypical = 0,
     lowerTypical = 0,
     reference = paste0(
-      "Trocóniz IF et al., J Clin Pharmacol 2007;47:371-382 (apparent ",
+      "Troc\u00F3niz IF et al., J Clin Pharmacol 2007;47:371-382 (apparent ",
       "two-compartment, time-varying PK of dabigatran after total hip ",
       "replacement; absorption and clearance lower on days 0-1 than days 2-10; ",
       "gastrin fixed at the study mean, Cockcroft-Gault creatinine clearance, serum ",

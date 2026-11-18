@@ -95,6 +95,14 @@ var PKConvert = (function() {
         return {error: names[i] + ' would be ' + fmt(k) + ' (a rate constant must be positive and finite)'};
       }
     }
+    // k21 = k31: the two peripheral compartments equilibrate at one rate and
+    // act as one, an exponent equal to k21 with a coefficient of exactly 0.
+    // The page said the coefficient was "out of the range of numbers the page
+    // can compute"; say what it is (Carbon's repository audit, 2026-11-18).
+    if (m.n === 3 && Math.abs(m.k21 - m.k31) <= 1e-9 * Math.max(m.k21, m.k31)) {
+      return {error: 'k21 equals k31, so the two peripheral compartments act as one: ' +
+              'enter it as a two-compartment model (V2 + V3, Q2 + Q3)'};
+    }
     var l = exponents(m);
     if (!l || !l.every(positive)) return {error: 'the exponents would be complex'};
     for (i = 1; i < l.length; i++) {
@@ -390,7 +398,6 @@ var PKConvert = (function() {
         budget.used += Math.floor((K.tPeak + 10 / 60 + 1e-12) * 60) + 1;
         if (!(budget.used <= budget.limit)) return {rate: 0, effectMode: true, aborted: true};
       }
-      var grow = K.lambda4.map(function(x) { return Math.exp(x * dt) - 1; });
       rate = Infinity;
       var any = false;
       for (var tau = dt; tau <= dt + K.tPeak + 10 / 60 + 1e-12; tau += 1 / 60) {
@@ -398,7 +405,9 @@ var PKConvert = (function() {
         for (j = 0; j < K.lambda4.length; j++) {
           var m = Math.exp(-K.lambda4[j] * tau);
           B += e[j] * m;
-          E += K.einf[j] * grow[j] * m;
+          // (exp(l dt) - 1) exp(-l tau) as exp(-l (tau - dt)) - exp(-l tau):
+          // tau >= dt, so neither term overflows (R/tci.R does the same)
+          E += K.einf[j] * (Math.exp(-K.lambda4[j] * (tau - dt)) - m);
         }
         if (E > 0) { any = true; rate = Math.min(rate, (CT - B) / E); }
       }

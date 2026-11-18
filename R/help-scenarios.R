@@ -1084,7 +1084,7 @@ helpScenarioDefinitions <- function() {
       "dabigatran-hip-postop",
       "Dabigatran after hip replacement: the first days are different",
       "Perioperative",
-      "Dabigatran etexilate 150 mg twice daily started on the day of total hip replacement, in a 66-year-old. The Trocóniz 2007 model absorbs and clears the day-0 and day-1 doses slowly (post-operative gut), then switches to the faster day-2-to-10 kinetics, so the peaks sharpen and the swings grow after the first day. Raise the serum creatinine to see the later clearance fall.",
+      "Dabigatran etexilate 150 mg twice daily started on the day of total hip replacement, in a 66-year-old. The Troc\u00F3niz 2007 model absorbs and clears the day-0 and day-1 doses slowly (post-operative gut), then switches to the faster day-2-to-10 kinetics, so the peaks sharpen and the swings grow after the first day. Raise the serum creatinine to see the later clearance fall.",
       age = 66, weight = 78, height = 172, sex = SEX_MALE,
       doses = helpDoses(
         c("dabigatranHip", 0, 150, "mg PO bid")
@@ -1510,6 +1510,15 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL,
     updateNumericInput(session, "creatinine", value = p$creatinine)
   }
   updateNumericInput(session, "osmolality", value = p$osmolality)
+  # The patient's opioid tolerance and physiology are part of the patient
+  # the scenario replaces: a scenario carries neither, so it starts opioid-
+  # naive at normal physiology, where both had been kept from before and
+  # silently changed every curve, ke0 and MEAC the scenario describes
+  # (Carbon's repository audit, 2026-11-18).
+  updateSelectInput(session, "opioidTolerance", selected = OPIOID_TOLERANCE_DEFAULT)
+  for (f in PHYSIOLOGY_FACTORS)
+    updateSliderInput(session, physiologyInputId(f), value = 0)
+  updateSliderInput(session, "physiology_temperature", value = PHYSIOLOGY_TEMPERATURE_DEFAULT)
   # Blank, a term birth, unless the scenario names a gestational age: sent
   # explicitly, as the creatinine is, so a previous patient's does not survive
   if (is.null(p$gestationalAge)) {

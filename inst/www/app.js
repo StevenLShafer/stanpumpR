@@ -259,7 +259,9 @@ function getCookie(name) {
 function setCookie(name, value, days) {
   let date = new Date();
   date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-  document.cookie = name + '=' + value + '; expires=' + date.toUTCString() + '; path=/';
+  // SameSite=Lax, and Secure over HTTPS (Carbon's repository audit, 2026-11-18)
+  document.cookie = name + '=' + value + '; expires=' + date.toUTCString() + '; path=/; SameSite=Lax' +
+    (location.protocol === 'https:' ? '; Secure' : '');
 }
 
 

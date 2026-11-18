@@ -1,5 +1,3 @@
-## Azilsartan
-
 Azilsartan is the active moiety of **azilsartan medoxomil** (Edarbi), an
 angiotensin II type 1 receptor blocker. The prodrug is hydrolysed during
 absorption, so what circulates — and what this curve shows — is azilsartan.

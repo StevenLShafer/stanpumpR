@@ -942,6 +942,7 @@ app_ui <- function() {
           "Source",
           href = config$source_link,
           target = "_blank",
+          rel = "noopener noreferrer",
           # The installed version and commit, as a tooltip (stanpumpRBuild())
           title = stanpumpRBuild()$label
         )

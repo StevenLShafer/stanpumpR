@@ -153,8 +153,8 @@ and in its `reference` string. See `R/drugs_vancomycin.R` and `R/renalFunction.R
 **Pregnancy (required for every model).** Every drug in the library has a row in
 `inst/extdata/pregnancyRegistry.csv`, built by `data-raw/pregnancyRegistry.R`, and
 `test-pregnancy.R` fails for a drug without one. So a new model comes with a search of the
-literature on its pharmacokinetics in pregnancy (PubMed and PubMed Central: "<drug> pregnancy
-pharmacokinetics", "<drug> postpartum", "<drug> third trimester", "<drug> parturients"),
+literature on its pharmacokinetics in pregnancy (PubMed and PubMed Central: "`<drug>` pregnancy
+pharmacokinetics", "`<drug>` postpartum", "`<drug>` third trimester", "`<drug>` parturients"),
 preferring, in order, a population model with a pregnancy or gestational-age covariate, a paired
 study of the same women during pregnancy and after it, a comparison with nonpregnant women, a
 therapeutic-drug-monitoring series, and only then a PBPK prediction or a review. Record what was

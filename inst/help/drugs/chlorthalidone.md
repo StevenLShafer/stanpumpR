@@ -1,5 +1,3 @@
-## Chlorthalidone
-
 Chlorthalidone is a long-acting thiazide-like diuretic. It lowers blood
 pressure more than hydrochlorothiazide at the doses commonly used, and has
 the better cardiovascular outcome evidence of the two.

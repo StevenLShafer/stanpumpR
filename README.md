@@ -1,6 +1,6 @@
 # stanpumpR
 
-![](../../workflows/R-CMD-check/badge.svg)
+[![R-CMD-check](https://github.com/StevenLShafer/stanpumpR/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/StevenLShafer/stanpumpR/actions/workflows/check-standard.yaml)
 
 stanpumpR, a PK/PD simulation program
 Copyright 2019-2026 Steven L. Shafer and contributors, steven.shafer@stanford.edu.

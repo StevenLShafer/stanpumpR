@@ -680,7 +680,11 @@ addAntiseizureReferenceEntries <- function(drugs, dosed)
 asmReferenceName <- function(drug)
   paste0(drug, " (", ASM_INTERACTIONS_REFERENCE_LABEL, ")")
 
-#' One line per active interaction, for the notification and the export
+#' One line per active interaction
+#'
+#' Written for a notification and the export, but neither calls it yet
+#' (Carbon's repository audit, 2026-11-18; whether to show it is a decision
+#' for Steven L. Shafer).  Exported for scripts.
 #'
 #' @param drugs names of the dosed drugs
 #' @returns a character vector ("valproate raises lamotrigine: clearance x

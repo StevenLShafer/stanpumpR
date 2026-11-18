@@ -343,15 +343,6 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     rep(NA_real_, L)
   }
 
-  temp <- data.frame(
-    Time = round(timeLine, 2),
-    State1 = round(p_state_l1, 2),
-    State2 = round(p_state_l2, 2),
-    State3 = round(p_state_l3, 2),
-    Cp  = round(Cp, 2),
-    Ce  = round(Ce, 2)
-  )
-
   if (plotRecovery)
   {
     # Time until the EFFECT SITE falls to the threshold if delivery stops now,
