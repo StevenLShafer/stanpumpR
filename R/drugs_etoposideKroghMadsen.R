@@ -56,9 +56,14 @@
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # The Cockcroft-Gault weight is the pharmacokinetic weight with the switch on
-# and total weight with it off; the non-renal clearance, the volumes and Q,
-# with no size covariate, scale by the library's factors with the switch on
-# and are fixed with it off.
+# and total weight with it off, and the renal clearance it gives is not
+# anchored further (Shafer, 2026-11-18: that would correct it twice).  The
+# non-renal clearance, the volumes and Q, with no size covariate, are the
+# cohort's typical patient's and are anchored at that patient with the switch
+# on (ETOPOSIDE_KM_COHORT; Steven L. Shafer, 2026-11-18; factors 0.993 and
+# 0.995), except Vc, which carries the source's sex term (women x 0.7207) and
+# so is a man's: it is anchored at the cohort's man (factor 1.072).  With the
+# switch off they are fixed.
 #
 # PREGNANCY (R/pregnancy.R)
 # =========================
@@ -80,6 +85,16 @@ ETOPOSIDE_KROGHMADSEN <- list(
   v2 = 4.75               # L
 )
 
+# Krogh-Madsen 2012, Table 1 (printed p. 1157), read on the PDF 2026-11-18:
+# means 79.4 kg, BSA 1.91 m2, 52.3 years; 14 men and 9 women analysed (p. 1156).
+# No height is printed; it is back-solved from the BSA by Du Bois's formula,
+# the paper naming none (170.1 cm; Shafer, 2026-11-18).  The size-free
+# parameters are anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort); Vc, whose
+# published value is a man's (women x 0.7207), at the cohort's man; the renal
+# clearance not at all, its Cockcroft-Gault weight carrying the size.
+ETOPOSIDE_KM_COHORT <- list(weight = 79.4, height = 170.1, age = 52.3, men = 14, women = 9)
+
 #' Etoposide, intravenous, in adults (Krogh-Madsen 2012)
 #'
 #' Two compartments; a Cockcroft-Gault renal term on clearance and sex on the
@@ -98,7 +113,13 @@ etoposideKroghMadsen <- function(weight, height, age, sex, adjustToFFM = TRUE,
 {
   p <- ETOPOSIDE_KROGHMADSEN
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1, cohort = do.call(cohortSizeFactors, ETOPOSIDE_KM_COHORT))
+  # Vc's published value is a man's (the sex term below), so it is anchored at
+  # the cohort's man rather than at its sex-weighted patient
+  vcMan <- 1
+  if (isTRUE(adjustToFFM))
+    vcMan <- do.call(cohortSizeFactors, ETOPOSIDE_KM_COHORT)$volume /
+      do.call(cohortSizeFactors, modifyList(ETOPOSIDE_KM_COHORT, list(men = 1, women = 0)))$volume
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   scr <- adultEquivalentCreatinine(creatinine, age, sex)
   gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)
@@ -108,7 +129,7 @@ etoposideKroghMadsen <- function(weight, height, age, sex, adjustToFFM = TRUE,
   v1 <- p$v1 * (if (sex == SEX_FEMALE) 1 + p$v1Female else 1)
 
   default <- list(
-    v1  = v1 * size$volume,
+    v1  = v1 * size$volume * vcMan,
     v2  = p$v2 * size$volume,
     v3  = 1,                                 # placeholder: two compartments
     cl1 = cl / 60,
