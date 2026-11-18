@@ -1,5 +1,12 @@
 """Add an OCR text layer to the archive's scanned PDFs, in place, keeping the file names.
 
+KNOWN LIMITATION, recorded not fixed (CodeRabbit, PR #784): two runs of this script at once
+can race on the same PDF.  The check that `.pre-ocr` is absent and the copy that creates it
+are not atomic, so an interleaving exists in which one run's retained original is overwritten
+by the other.  There is no lock.  update.bat runs this once, in a chain, and the lock that
+stanpumpr-queue.csv needs (see queue_add.py) would serve here too; until it exists, do not
+run two copies of update.bat at the same time.
+
 A scan (no usable text layer) is found the way digest_prep.py finds one: fewer than 100 letters per page from
 pdftotext. Each is run through ocrmypdf (Tesseract + Ghostscript), which draws an invisible text layer under the
 untouched page image, so the file looks the same but pdftotext, grep and digest_prep.py can read it. A file whose
@@ -36,6 +43,10 @@ env = dict(os.environ)
 env["PATH"] = os.pathsep.join([TESS] + GS + [env.get("PATH", "")])
 
 
+class LaunchError(RuntimeError):
+    """pdftotext could not be started at all: fatal for the batch, not for one PDF."""
+
+
 def page_letters(pdf):
     """Letters per page from pdftotext (pages split on form feeds), or None if it FAILED.
 
@@ -47,12 +58,16 @@ def page_letters(pdf):
     try:
         r = subprocess.run([PDFTOTEXT, "-layout", "-enc", "UTF-8", pdf, "-"],
                            capture_output=True, timeout=600)
-    except FileNotFoundError:
-        # pdftotext itself is not there.  Swallowing this skipped every PDF in the archive
-        # and reported "nothing OCR'd" with a successful exit -- a silent no-op that looks
-        # exactly like "no scans to do" (CodeRabbit, PR #784).
-        sys.exit("ocr_scans: cannot run %s -- install poppler or fix PDFTOTEXT" % PDFTOTEXT)
-    except Exception:                            # a timeout or a crash on THIS file
+    except subprocess.TimeoutExpired:
+        return None                              # this PDF only: skip it, keep the batch going
+    except OSError as e:
+        # pdftotext could not be LAUNCHED -- missing, not executable, blocked.  Swallowing
+        # this skipped every PDF in the archive and reported "nothing OCR'd" with a
+        # successful exit: a silent no-op indistinguishable from "no scans to do".
+        # FileNotFoundError alone was not enough; PermissionError and the other OSErrors
+        # reach here too (CodeRabbit, PR #784, twice).
+        raise LaunchError("cannot run %s (%s)" % (PDFTOTEXT, e)) from e
+    except Exception:                            # anything else about THIS file
         return None
     if r.returncode != 0:
         return None
@@ -78,7 +93,9 @@ def page_count(pdf):
 
 log = json.load(open(LOG, encoding="utf-8")) if os.path.exists(LOG) else []
 done = []
-for fn in sorted(os.listdir(ARCH)):
+launch_error = None
+try:
+  for fn in sorted(os.listdir(ARCH)):
     if not fn.lower().endswith(".pdf"):
         continue
     stem = fn[:-4]
@@ -143,12 +160,20 @@ for fn in sorted(os.listdir(ARCH)):
         log.append(entry)
         continue
     staged = pdf + ".ocr-new"
+    partial = backup + ".tmp"
     try:
-        shutil.copy2(pdf, backup)                # original still in place at `pdf`
+        # The backup is written under a .tmp name and renamed, so `.pre-ocr` exists only when
+        # it is COMPLETE.  Copying straight to `.pre-ocr` meant a run interrupted mid-copy
+        # left a half file that the guard above then read as a retained original, refusing
+        # the paper for ever (CodeRabbit, PR #784).  A leftover .tmp is this run's to clear.
+        if os.path.exists(partial):
+            os.remove(partial)
+        shutil.copy2(pdf, partial)               # original still in place at `pdf`
+        os.replace(partial, backup)
         shutil.move(out, staged)                 # onto the archive filesystem, so the swap is atomic
         os.replace(staged, pdf)                  # the one moment of change
     except Exception as e:                       # noqa: BLE001
-        for leftover in (backup, staged):
+        for leftover in (partial, backup, staged):
             if os.path.exists(leftover):
                 try:
                     os.remove(leftover)
@@ -170,5 +195,13 @@ for fn in sorted(os.listdir(ARCH)):
     log.append(entry)
     done.append(stem)
 
+except LaunchError as e:
+  # Save what this batch already did BEFORE giving up.  Exiting here without writing the log
+  # lost the sha pair of every paper already replaced, and digest_prep.py then read those as
+  # content changes and could mark good digests stale (CodeRabbit, PR #784).
+  launch_error = e
+
 json.dump(log, open(LOG, "w", encoding="utf-8"), indent=1)
 print(f"OCR'd {len(done)} file(s): {' '.join(done)}" if done else "nothing OCR'd")
+if launch_error:
+  sys.exit("ocr_scans: %s -- install poppler or fix PDFTOTEXT" % launch_error)

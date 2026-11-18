@@ -137,10 +137,18 @@ def main():
             wr.writerows(rows + added)
         os.replace(tmp, QUEUE)                   # atomic: the queue is on a synced drive
     except PermissionError:
-        if os.path.exists(tmp):
-            os.remove(tmp)
         print("  stanpumpr-queue.csv is open in another program -- nothing added")
         return 1
+    finally:
+        # Any failure, not only PermissionError: a full disk during writerows() or on close
+        # bypassed the handler above and left another partial CSV beside the queue on every
+        # retry (CodeRabbit, PR #784).  os.replace consumes `tmp`, so if it is still here the
+        # write did not finish.  A cleanup failure must not mask the original error.
+        if os.path.exists(tmp):
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
     print("  added %d row(s) to stanpumpr-queue.csv, noted \"%s%s\"" % (len(added), REQUEST_NOTE, label))
     return 0
 

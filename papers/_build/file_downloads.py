@@ -178,6 +178,11 @@ def requested_ref(pmid):
         _requested["failed"] = True              # retryable: the caller must not cache a miss
         return None
     if not src or not src.get("title"):
+        # esummary() drops a PMID whose result carries an `error` entry (ncbi.py), so "no
+        # summary" is a transient NCBI failure as often as a bad PMID.  The row is in the
+        # queue, which means somebody asked for this PMID, so treat it as retryable rather
+        # than caching a permanent miss (CodeRabbit, PR #784).
+        _requested["failed"] = True
         return None
     return {"pmid": pmid, "doi": (src.get("doi") or "").lower(), "title": src["title"],
             "tw": words(src["title"]),
@@ -327,7 +332,14 @@ def identify_any(path):
     # one is silently wrong, and the digest written from it would describe the wrong work.
     if dois:
         r = requested_ref_by_doi(dois[0])
-        if r and (on_top(r) or has_author(r)):
+        # Stricter than the branch above, deliberately.  has_author() searches `flat`, which
+        # is pages 1 AND 2 (pdf_text's default last=2), so a commentary that prints the
+        # queued article's DOI on page 1 and names its author in a reference on page 2 would
+        # pass (CodeRabbit, PR #784 -- it said "the full text", which is not quite right, but
+        # page 2 is enough to be wrong).  A queue row is a bare PubMed record, with none of
+        # the resolution a works.json entry has been through, so the evidence must be on
+        # page 1: the title where an article prints its title, or the author in that region.
+        if r and (on_top(r) or (r["surname"] and r["surname"] in top)):
             return r, "own DOI %s (wanted by the download queue)" % dois[0], None
     # 2. the reference's title at the top of page 1 (punctuation and line breaks ignored), with its first author
     hits = [r for r in refs if on_top(r)]
@@ -445,7 +457,19 @@ import hashlib
 # 2026-11-09 "10": a title read from a file name must agree to the end of the shorter, not just its first 40 letters.
 # 2026-11-10 "11": an unidentified recent download is reported (unidentified_note), not passed over in silence.
 RULES = "11"
-refs_sig = hashlib.sha1((RULES + "|" + "|".join(sorted(r["file"] for r in refs))).encode()).hexdigest()
+# The download queue is part of the signature, not only the cited works.  A cached "not a
+# reference" verdict is replayed without calling identify() at all, so queueing a paper did
+# nothing for a PDF already in Downloads: it stayed unfiled until its size or mtime changed.
+# That cost two manual cache clears on 2026-11-18, once before the rules were even found to
+# be the problem (CodeRabbit, PR #784).  Hashing the queue's bytes means an edit to it
+# invalidates the cache, which is exactly when a verdict may have changed.
+try:
+    with open(os.path.join(ARCHIVE, "stanpumpr-queue.csv"), "rb") as _qf:
+        _queue_sig = hashlib.sha1(_qf.read()).hexdigest()
+except OSError:
+    _queue_sig = "no-queue"
+refs_sig = hashlib.sha1((RULES + "|" + _queue_sig + "|"
+                         + "|".join(sorted(r["file"] for r in refs))).encode()).hexdigest()
 if cache.get("__refs__") != refs_sig:
     # Every verdict is only as good as the list it was made against, the positive ones too: on 2026-10-17 de Winter
     # 2017 was matched to PMID_17385022 while the list held a wrong PMID for it, that file already existed (Hong 2007),
