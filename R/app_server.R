@@ -1496,8 +1496,11 @@ app_server <- function(input, output, session) {
   })
 
   output$physiologyNote <- renderUI({
+    # The drugs whose model chosen for this patient the sliders cannot scale
+    entries <- tryCatch(bayesUpdate()$drugs, error = function(e) NULL)
+    skipped <- names(Filter(function(e) isTRUE(e$slidersSkipped), entries))
     physiologyNote(physiology(), doseTableClean()$Drug,
-                   temperature = bodyTemperature())
+                   temperature = bodyTemperature(), skipped = skipped)
   })
 
   # `normalPhysiology`: build at normal physiology, whatever the sliders say

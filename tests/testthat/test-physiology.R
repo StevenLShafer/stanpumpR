@@ -765,3 +765,36 @@ test_that("a metabolite-forming model is not one the sliders can scale", {
   expect_true(physiologyUnsupported(X))
   expect_true(physiologyUnsupported(list(biliaryStore = list())))
 })
+
+test_that("a child's chosen model the sliders cannot scale is skipped, and said", {
+  low <- c(liver = 0.5, renal = 0.5, cardiac = 0.5, gi = 1)
+  # vincristine chooses vincristinePediatric (target binding) for a child
+  child <- getDrugPK("vincristine", 20, 110, 5, "male", physiology = low)
+  expect_true(isTRUE(child$slidersSkipped))
+  expect_null(child[["physiology", exact = TRUE]])
+  normal <- getDrugPK("vincristine", 20, 110, 5, "male")
+  expect_equal(child$PK[[1]]$cl1, normal$PK[[1]]$cl1)
+  # The adult's model is changed
+  adult <- getDrugPK("vincristine", 70, 170, 35, "male", physiology = low)
+  expect_null(adult$slidersSkipped)
+  expect_lt(adult$PK[[1]]$cl1,
+            getDrugPK("vincristine", 70, 170, 35, "male")$PK[[1]]$cl1)
+  note <- as.character(physiologyNote(low, "vincristine", skipped = "vincristine"))
+  expect_match(note, "Not changed for this patient", fixed = TRUE)
+  expect_false(grepl("Changed: ", note, fixed = TRUE))
+})
+
+test_that("the chemotherapy rows move clearance by their routes (2026-11-17)", {
+  cl <- function(d, ...) getDrugPK(d, 70, 170, 35, "male", ...)$PK[[1]]$cl1
+  # carboplatin: renal 0.71, nothing hepatic
+  expect_equal(cl("carboplatin", physiology = c(renal = 0.1)) / cl("carboplatin"),
+               0.71 * 0.1 + 0.29, tolerance = 1e-6)
+  expect_equal(cl("carboplatin", physiology = c(liver = 0.1)), cl("carboplatin"))
+  # docetaxel: almost all hepatic, capacity limited at E 0.4
+  r <- physiologyRow("docetaxel")
+  expect_equal(cl("docetaxel", physiology = c(liver = 0.5)) / cl("docetaxel"),
+               0.03 + 0.97 * hepaticClearanceFactor(r$extraction_ratio, 1, 0.5),
+               tolerance = 1e-6)
+  # daunorubicin is held back
+  expect_null(physiologyRow("daunorubicin"))
+})

@@ -1130,7 +1130,7 @@ physiologySummary <- function(physiology)
 #' @param drugs the dosed drugs
 #' @noRd
 physiologyNote <- function(physiology, drugs,
-                           temperature = NULL)
+                           temperature = NULL, skipped = character(0))
 {
   physiology <- checkPhysiology(physiology)
   if (!is.null(temperature)) physiology[["temperature"]] <- checkBodyTemperature(temperature)
@@ -1147,10 +1147,20 @@ physiologyNote <- function(physiology, drugs,
   changed <- c(intersect(drugs, physiologyDrugs()),
                gasAgents[rep(cardiacMoved || cold, length(gasAgents))])
   noData <- setdiff(drugs, physiologyDrugs())
+  # A drug whose model, chosen for this patient, the sliders cannot scale
+  # (getDrugPK()'s slidersSkipped)
+  skipped <- intersect(skipped, changed)
+  changed <- setdiff(changed, skipped)
   tags$div(
     class = "small physiology-note",
     if (length(changed))
       tags$p(tags$strong("Changed: "), paste(changed, collapse = ", ")),
+    if (length(skipped))
+      tags$p(class = "text-warning",
+             tags$strong("Not changed for this patient "),
+             "(the model chosen for this patient's age or size carries ",
+             "elimination the sliders cannot scale): ",
+             paste(skipped, collapse = ", ")),
     if (length(noData))
       tags$p(class = "text-warning",
              tags$strong("Not changed (no physiology data yet): "),
