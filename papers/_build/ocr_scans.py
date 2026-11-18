@@ -1,11 +1,18 @@
 """Add an OCR text layer to the archive's scanned PDFs, in place, keeping the file names.
 
-KNOWN LIMITATION, recorded not fixed (CodeRabbit, PR #784): two runs of this script at once
-can race on the same PDF.  The check that `.pre-ocr` is absent and the copy that creates it
-are not atomic, so an interleaving exists in which one run's retained original is overwritten
-by the other.  There is no lock.  update.bat runs this once, in a chain, and the lock that
-stanpumpr-queue.csv needs (see queue_add.py) would serve here too; until it exists, do not
-run two copies of update.bat at the same time.
+Two runs of this script at once no longer race on the same PDF (CodeRabbit, PR #784, which
+pressed the point twice and was right to).  The `.pre-ocr` absence check and the copy that
+creates it are not atomic, so an interleaving existed in which one run published its
+replacement, kept `.pre-ocr` because recycling failed, and the other run then copied that
+replacement over the retained original -- losing the TRUE original, the one thing this script
+must never lose.  `claimPdf()` now makes the whole per-PDF transaction exclusive, from reading
+the file through publishing the replacement to disposing of the backup, with an O_CREAT |
+O_EXCL lock file beside the PDF.  A PDF another run holds is skipped and said; a lock left by
+a run that died is taken after OCR_LOCK_STALE_SECONDS.
+
+The download queue's read-modify-write is still unlocked (see queue_add.py).  It is a
+different resource -- one file with several writers, rather than one file per transaction --
+so it needs its own lock, not this one.
 
 A scan (no usable text layer) is found the way digest_prep.py finds one: fewer than 100 letters per page from
 pdftotext. Each is run through ocrmypdf (Tesseract + Ghostscript), which draws an invisible text layer under the
@@ -41,6 +48,50 @@ ONLY = args[args.index("--only") + 1:] if "--only" in args else None
 os.makedirs(TMP, exist_ok=True)
 env = dict(os.environ)
 env["PATH"] = os.pathsep.join([TESS] + GS + [env.get("PATH", "")])
+
+
+OCR_LOCK_STALE_SECONDS = 6 * 3600
+# A lock older than this is taken as abandoned by a run that died.  Six hours is far longer
+# than any OCR of one PDF (the longest in this archive is minutes) and short enough that a
+# crashed run does not park a paper for ever.
+
+
+def claimPdf(pdf):
+    """Claim one PDF for this run, or None if another run holds it.
+
+    Two runs could both pass the `.pre-ocr` absence check and then one could overwrite the
+    other's retained original, losing the TRUE original (CodeRabbit, PR #784).  The guard and
+    the copy were not atomic; this makes the whole per-PDF transaction exclusive, from reading
+    the file through publishing the replacement to disposing of the backup.
+
+    O_CREAT | O_EXCL is the atomic part: the filesystem decides the winner."""
+    lock = pdf + ".ocr-lock"
+    for attempt in (1, 2):
+        try:
+            fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            os.write(fd, str(os.getpid()).encode())
+            os.close(fd)
+            return lock
+        except FileExistsError:
+            try:
+                age = time.time() - os.path.getmtime(lock)
+            except OSError:
+                continue                         # it vanished: try to take it
+            if attempt == 1 and age > OCR_LOCK_STALE_SECONDS:
+                try:
+                    os.remove(lock)              # abandoned by a dead run
+                    continue
+                except OSError:
+                    return None
+            return None
+    return None
+
+
+def releasePdf(lock):
+    try:
+        os.remove(lock)
+    except OSError:
+        pass
 
 
 class LaunchError(RuntimeError):
@@ -102,98 +153,105 @@ try:
     if ONLY and stem not in ONLY:
         continue
     pdf = os.path.join(ARCH, fn)
-    letters = page_letters(pdf)
-    if letters is None:
-        print(f"{stem}: pdftotext failed -- skipped (cannot tell whether it has a text layer)", flush=True)
-        continue
-    if sum(letters) >= 100 * len(letters):
-        continue  # has a text layer
-    mode = "--force-ocr" if any(0 < n for n in letters) else "--skip-text"
-    print(f"{stem}: {len(letters)} pages, {sum(letters)} letters -> {mode}", flush=True)
-    if DRY:
-        continue
-    out = os.path.join(TMP, fn)
-    if os.path.exists(out):
-        os.remove(out)
-    t0 = time.time()
-    cmd = [sys.executable, "-E", "-m", "ocrmypdf", mode, "--language", "eng", "--output-type", "pdf",
-           "--optimize", "0", "--jobs", JOBS, "--tesseract-timeout", "600", pdf, out]
-    r = subprocess.run(cmd, capture_output=True, env=env)
-    entry = {"stem": stem, "mode": mode, "date": time.strftime("%Y-%m-%d"), "pages": len(letters),
-             "letters_before": sum(letters), "sha_before": sha(pdf), "seconds": round(time.time() - t0)}
-    if r.returncode != 0 or not os.path.exists(out):
-        entry["error"] = r.stderr.decode("utf-8", "replace")[-1500:]
-        print(f"  FAILED (rc {r.returncode}): {entry['error'].strip().splitlines()[-1] if entry['error'].strip() else ''}")
-        log.append(entry)
+    lock = claimPdf(pdf)
+    if lock is None:
+        print(f"{fn}: another run is working on this file -- skipped", flush=True)
         continue
     try:
-        same_pages = page_count(out) == page_count(pdf)
-    except Exception as e:  # noqa: BLE001
-        same_pages, entry["error"] = False, f"page count check failed: {e}"
-    after = page_letters(out)
-    if after is None:                            # cannot verify the replacement: keep the original
-        entry["error"] = "pdftotext failed on the OCR output; original kept"
-        print(f"  REJECTED: {entry['error']}")
+        letters = page_letters(pdf)
+        if letters is None:
+            print(f"{stem}: pdftotext failed -- skipped (cannot tell whether it has a text layer)", flush=True)
+            continue
+        if sum(letters) >= 100 * len(letters):
+            continue  # has a text layer
+        mode = "--force-ocr" if any(0 < n for n in letters) else "--skip-text"
+        print(f"{stem}: {len(letters)} pages, {sum(letters)} letters -> {mode}", flush=True)
+        if DRY:
+            continue
+        out = os.path.join(TMP, fn)
+        if os.path.exists(out):
+            os.remove(out)
+        t0 = time.time()
+        cmd = [sys.executable, "-E", "-m", "ocrmypdf", mode, "--language", "eng", "--output-type", "pdf",
+               "--optimize", "0", "--jobs", JOBS, "--tesseract-timeout", "600", pdf, out]
+        r = subprocess.run(cmd, capture_output=True, env=env)
+        entry = {"stem": stem, "mode": mode, "date": time.strftime("%Y-%m-%d"), "pages": len(letters),
+                 "letters_before": sum(letters), "sha_before": sha(pdf), "seconds": round(time.time() - t0)}
+        if r.returncode != 0 or not os.path.exists(out):
+            entry["error"] = r.stderr.decode("utf-8", "replace")[-1500:]
+            print(f"  FAILED (rc {r.returncode}): {entry['error'].strip().splitlines()[-1] if entry['error'].strip() else ''}")
+            log.append(entry)
+            continue
+        try:
+            same_pages = page_count(out) == page_count(pdf)
+        except Exception as e:  # noqa: BLE001
+            same_pages, entry["error"] = False, f"page count check failed: {e}"
+        after = page_letters(out)
+        if after is None:                            # cannot verify the replacement: keep the original
+            entry["error"] = "pdftotext failed on the OCR output; original kept"
+            print(f"  REJECTED: {entry['error']}")
+            log.append(entry)
+            continue
+        entry["letters_after"] = sum(after)
+        if not same_pages or sum(after) <= sum(letters):
+            entry.setdefault("error", "page count changed or no text gained; original kept")
+            print(f"  REJECTED: {entry['error']}")
+            log.append(entry)
+            continue
+        st = os.stat(pdf)
+        # The archive path must hold a readable PDF at every instant.  Recycling the original
+        # first and moving the replacement in second left it with NO file if the move failed
+        # (CodeRabbit, PR #780); moving the original aside first and the replacement in second
+        # still left a window with nothing there, and a run that stopped in that window left a
+        # `.pre-ocr` file a later run would ignore (CodeRabbit, PR #784).  So: COPY the original
+        # aside, stage the replacement on the archive's own filesystem, and publish it with ONE
+        # os.replace.  If anything fails before that call, the original is untouched at `pdf`;
+        # the copy is recycled only once the replacement is published.
+        backup = pdf + ".pre-ocr"
+        if os.path.exists(backup):
+            # An earlier run's original that the Recycle Bin refused.  Overwriting it would
+            # destroy the true original and keep that run's OCR output in its place.
+            entry["error"] = f"{os.path.basename(backup)} is already here from an earlier run; original kept"
+            print(f"  {entry['error']}")
+            log.append(entry)
+            continue
+        staged = pdf + ".ocr-new"
+        partial = backup + ".tmp"
+        try:
+            # The backup is written under a .tmp name and renamed, so `.pre-ocr` exists only when
+            # it is COMPLETE.  Copying straight to `.pre-ocr` meant a run interrupted mid-copy
+            # left a half file that the guard above then read as a retained original, refusing
+            # the paper for ever (CodeRabbit, PR #784).  A leftover .tmp is this run's to clear.
+            if os.path.exists(partial):
+                os.remove(partial)
+            shutil.copy2(pdf, partial)               # original still in place at `pdf`
+            os.replace(partial, backup)
+            shutil.move(out, staged)                 # onto the archive filesystem, so the swap is atomic
+            os.replace(staged, pdf)                  # the one moment of change
+        except Exception as e:                       # noqa: BLE001
+            for leftover in (partial, backup, staged):
+                if os.path.exists(leftover):
+                    try:
+                        os.remove(leftover)
+                    except OSError:
+                        pass
+            entry["error"] = f"could not publish the OCR output ({e}); original kept"
+            print(f"  {entry['error']}")
+            log.append(entry)
+            continue
+        os.utime(pdf, (st.st_atime, st.st_mtime))  # digests written from the page images are still current
+        if not recycle(backup):                      # the replacement is already in place
+            entry["backup_kept"] = backup
+            print(f"  note: the Recycle Bin refused the original; it is kept as {os.path.basename(backup)}")
+        entry["sha_after"] = sha(pdf)
+        txt = os.path.join(TEXT, stem + ".txt")
+        if os.path.exists(txt):
+            os.remove(txt)  # digest_prep.py re-extracts it
+        print(f"  ok: {sum(after)} letters on {len(after)} pages, {entry['seconds']} s")
         log.append(entry)
-        continue
-    entry["letters_after"] = sum(after)
-    if not same_pages or sum(after) <= sum(letters):
-        entry.setdefault("error", "page count changed or no text gained; original kept")
-        print(f"  REJECTED: {entry['error']}")
-        log.append(entry)
-        continue
-    st = os.stat(pdf)
-    # The archive path must hold a readable PDF at every instant.  Recycling the original
-    # first and moving the replacement in second left it with NO file if the move failed
-    # (CodeRabbit, PR #780); moving the original aside first and the replacement in second
-    # still left a window with nothing there, and a run that stopped in that window left a
-    # `.pre-ocr` file a later run would ignore (CodeRabbit, PR #784).  So: COPY the original
-    # aside, stage the replacement on the archive's own filesystem, and publish it with ONE
-    # os.replace.  If anything fails before that call, the original is untouched at `pdf`;
-    # the copy is recycled only once the replacement is published.
-    backup = pdf + ".pre-ocr"
-    if os.path.exists(backup):
-        # An earlier run's original that the Recycle Bin refused.  Overwriting it would
-        # destroy the true original and keep that run's OCR output in its place.
-        entry["error"] = f"{os.path.basename(backup)} is already here from an earlier run; original kept"
-        print(f"  {entry['error']}")
-        log.append(entry)
-        continue
-    staged = pdf + ".ocr-new"
-    partial = backup + ".tmp"
-    try:
-        # The backup is written under a .tmp name and renamed, so `.pre-ocr` exists only when
-        # it is COMPLETE.  Copying straight to `.pre-ocr` meant a run interrupted mid-copy
-        # left a half file that the guard above then read as a retained original, refusing
-        # the paper for ever (CodeRabbit, PR #784).  A leftover .tmp is this run's to clear.
-        if os.path.exists(partial):
-            os.remove(partial)
-        shutil.copy2(pdf, partial)               # original still in place at `pdf`
-        os.replace(partial, backup)
-        shutil.move(out, staged)                 # onto the archive filesystem, so the swap is atomic
-        os.replace(staged, pdf)                  # the one moment of change
-    except Exception as e:                       # noqa: BLE001
-        for leftover in (partial, backup, staged):
-            if os.path.exists(leftover):
-                try:
-                    os.remove(leftover)
-                except OSError:
-                    pass
-        entry["error"] = f"could not publish the OCR output ({e}); original kept"
-        print(f"  {entry['error']}")
-        log.append(entry)
-        continue
-    os.utime(pdf, (st.st_atime, st.st_mtime))  # digests written from the page images are still current
-    if not recycle(backup):                      # the replacement is already in place
-        entry["backup_kept"] = backup
-        print(f"  note: the Recycle Bin refused the original; it is kept as {os.path.basename(backup)}")
-    entry["sha_after"] = sha(pdf)
-    txt = os.path.join(TEXT, stem + ".txt")
-    if os.path.exists(txt):
-        os.remove(txt)  # digest_prep.py re-extracts it
-    print(f"  ok: {sum(after)} letters on {len(after)} pages, {entry['seconds']} s")
-    log.append(entry)
-    done.append(stem)
+        done.append(stem)
+    finally:
+        releasePdf(lock)
 
 except LaunchError as e:
   # Save what this batch already did BEFORE giving up.  Exiting here without writing the log
