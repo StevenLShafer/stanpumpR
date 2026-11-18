@@ -59,6 +59,14 @@ The report is a lead, not a source, like any other model's reading (AGENTS.md): 
 | Recombinant factor VIIa (eptacog alfa) | Older non-compartmental studies only, on a first look. |
 | Vilobelimab | Lim 2023, PK in critically ill ventilated COVID-19 patients (PANAMO, PMID 37332066). |
 
+### Weekly run, 2026-11-18 (the first)
+
+- **nlmixr2lib moved** from e2b902f to d8a308a (4,228 to 4,581 models). The picks went from 150 to 153, and nine new picks were given PMIDs and PMC IDs. Two report leads dropped out because nlmixr2lib now models their drugs.
+- **114 papers arrived** in the archive on 2026-11-18, all under `PMID_` names: 111 picks and 3 leads. **106 of the 153 picks are now in the archive**, covering 85 drugs. None arrived under a `DOI_` name.
+- **Tazobactam and imipenem**, the first two drugs in plan order, were taken up. Both are `blocked`. `plan.csv` gives the numbers read and the reasons:
+  - **Tazobactam:** its pick, Zhang 2021, is a *ceftolozane*-tazobactam fit. Whether it can stand for Zosyn's tazobactam is a decision for Steven, as are the infection state and the dose units.
+  - **Imipenem:** its pick, Patel 2022, is read. Its Supplementary Methods (the Cockcroft-Gault weight) and the sources the antibiotic band needs (an imipenem MBC/MIC ratio and a plain-imipenem *P. aeruginosa* MIC) are still to get.
+
 ## Downloading
 
 `downloads.md` lists each paper with the file name the archive expects: `PMID_<pmid>.pdf`, or, for a paper with no PMID, `DOI_<doi>.pdf` with every character but letters, digits and dots made `_` (`DOI_10.2133_dmpk.13.376.pdf`). Save a supplement under the same name with a suffix, `_sup1`, `_sup2` and so on (or the publisher's own `_mmc1`, `_ESM1`, `_SDC1`), never under the paper's own name, which would replace it. The archive's pipeline takes it from there.
