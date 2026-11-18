@@ -129,7 +129,8 @@ sildenafilMiura <- function(weight, height, age, sex, adjustToFFM = TRUE,
       "Oral: Miura M, Tanaka S, Aihara R, et al., Br J Clin Pharmacol 2026;92:3611-3621, ",
       "Table 2: one compartment fitted at steady state in Japanese children and adults ",
       "with pulmonary arterial hypertension, CL/F 60.6 L/h x (WT/32.3)^0.537 (no ",
-      "bosentan), V/F 322 L, ka 4.51 /h. https://doi.org/10.1002/bcp.70676 ",
-      "Intravenous: ", iv$reference)
+      "bosentan), V/F 322 L, ka 4.51 /h; intravenous doses on the sildenafilFDA model ",
+      "(the FDA review of NDA 22-473), scaled to the patient. ",
+      "https://doi.org/10.1002/bcp.70676")
   )
 }
