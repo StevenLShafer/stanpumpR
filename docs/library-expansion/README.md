@@ -1,6 +1,6 @@
 # Rounding out stanpumpR: the library expansion
 
-Steven L. Shafer chose the drugs on 2026-11-18, with a weekly return to the list:
+Steven L. Shafer chose the drugs on 2026-11-18, with a regular return to the list (daily for now; see *The weekly routine*):
 - **Antibiotics:** tazobactam, imipenem, ceftazidime/avibactam, teicoplanin. Tazobactam became Zosyn and ceftolozane/tazobactam the same day (see *Combination products* below).
 - **Antifungals:** fluconazole, posaconazole, isavuconazole, caspofungin, micafungin.
 - **Antimalarials** and **antivirals**.
@@ -84,7 +84,7 @@ Lane Library is needed only for the few papers not free in PMC. Claude in Chrome
 
 ## The weekly routine
 
-A scheduled task, **"stanpumpR weekly library expansion"**, runs a fresh cloud session every Sunday at 8:41 pm Pacific, the first on 2026-11-22. Steven created it on 2026-11-18 from claude.ai's routines page, with the StevenLShafer/stanpumpR repository and the Google Drive and PubMed connectors. Each run:
+A scheduled task, **"stanpumpR weekly library expansion"**, runs a fresh cloud session every day at 8:41 pm Pacific (weekly on Sundays as first scheduled; Steven made it daily on 2026-11-18, "for now"). The first run was a trial on 2026-11-18, started by hand. Steven created it on 2026-11-18 from claude.ai's routines page, with the StevenLShafer/stanpumpR repository and the Google Drive and PubMed connectors. Each run:
 1. refreshes the nlmixr2lib cross-check and this directory;
 2. checks which picks and leads have reached the archive;
 3. implements at most two planned drugs whose source papers are now in the archive, each as its own draft pull request, by the full procedure;
