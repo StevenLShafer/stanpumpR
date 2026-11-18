@@ -4,7 +4,7 @@ Zolpidem's parameters are from Kim and colleagues (*CPT Pharmacometrics Syst Pha
 
 The engine has a lag and one absorption rate, not a transit chain. The chain delivers the dose almost as a pure delay (its spread is about 3 minutes either side of 15), so it is represented by a lag of 0.25 h followed by Kim's absorption rate. Compared with the transit model itself, the curves differ only in the first 20 minutes; from 45 minutes on they agree within 0.1 ng/mL, and the peaks are 142.5 and 141.7 ng/mL. During the lag, time until threshold reads blank, as it does for gabapentin and pregabalin.
 
-In the reference man, 10 mg peaks at 143 ng/mL at 35 minutes, with a half-life of 2.5 hours. The US label reports a mean peak of 121 ng/mL (58 to 272) at 1.6 hours and a half-life of 2.5 hours; Greenblatt and colleagues (*J Clin Pharmacol* 2006;46:1469-1480) found about 140 ng/mL after 10 mg. The peak height and half-life agree; the peak comes earlier than in the US studies, as it did in Kim's subjects and in de Haas and colleagues' (median 0.78 hours).
+With the published values (Kim's typical subject, median 60 kg; the 70 kg reference man receives volumes 22% and clearances 16% larger, peaking at 118 ng/mL), 10 mg peaks at 143 ng/mL at 35 minutes, with a half-life of 2.5 hours. The US label reports a mean peak of 121 ng/mL (58 to 272) at 1.6 hours and a half-life of 2.5 hours; Greenblatt and colleagues (*J Clin Pharmacol* 2006;46:1469-1480) found about 140 ng/mL after 10 mg. The peak height and half-life agree; the peak comes earlier than in the US studies, as it did in Kim's subjects and in de Haas and colleagues' (median 0.78 hours).
 
 ### Oral only
 

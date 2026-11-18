@@ -19,11 +19,13 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
 })
 
 test_that("scales to fat-free mass for a 120 kg man", {
+  # The pins from before the anchoring, divided by Jia's cohort factors
+  kc <- cohortFactorsIndependent(HEPARIN_COHORT)
   # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126
   actual <- heparin(120, 170, 50, "male")$PK$default
   expected <- list(
-    v1 = 3.04 * 1.3049067, v2 = 8.01 * 1.3049067,
-    cl1 = 1.18 / 60 * 1.2209126, cl2 = 0.171 / 60 * 1.2209126
+    v1 = 3.04 * 1.3049067 / kc$volume, v2 = 8.01 * 1.3049067 / kc$volume,
+    cl1 = 1.18 / 60 * 1.2209126 / kc$clearance, cl2 = 0.171 / 60 * 1.2209126 / kc$clearance
   )
   expect_equal_rounded(actual[names(expected)], expected)
 })

@@ -42,13 +42,18 @@ test_that("induction: the concentration falls during a constant infusion, as the
 })
 
 test_that("both switch positions are pinned", {
+  # Anchored at Kerbusch's 9 men and 6 women (59 kg, 49 y; NCD-RisC's Dutch
+  # heights, IFOSFAMIDE_COHORT)
+  kc <- cohortFactorsIndependent(IFOSFAMIDE_COHORT)
+  expect_equal(kc$volume, 0.8474891, tolerance = 1e-6)
   on <- ifosfamide(70, 170, 35, "male")$PK$default
   off <- ifosfamide(70, 170, 35, "male", adjustToFFM = FALSE)$PK$default
-  expect_equal_rounded(on$cl1, off$cl1)
+  expect_equal(on$cl1, off$cl1 / kc$clearance, tolerance = 1e-8)
   big <- ifosfamide(120, 170, 35, "male")
   size <- pkSizeFactors(120, 170, 35, "male", TRUE)
-  expect_equal_rounded(big$PK$default$v1, 43.5 * size$volume)
-  expect_equal_rounded(big$michaelisMenten$autoinduction$cl * 60, 2.94 * size$clearance)
+  expect_equal(big$PK$default$v1, 43.5 * size$volume / kc$volume, tolerance = 1e-8)
+  expect_equal(big$michaelisMenten$autoinduction$cl * 60,
+               2.94 * size$clearance / kc$clearance, tolerance = 1e-8)
 })
 
 test_that("ifosfamide is a chemotherapy drug, plasma only, with no band", {

@@ -57,14 +57,31 @@
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # The parameters are fixed values with no size covariate (none was
-# retained).  The demographics are in Table 1, which was not seen either, so
-# the values are written as the library's 70 kg reference adult and scaled
-# to fat-free mass with the switch on; with it off they are as published
+# retained), so they are the cohort's typical patient's (Table 1, read
+# 2026-11-18: 66 kg, 53.4 years, 13 men and 19 women), and with the switch on
+# they are anchored at that patient (HEPARIN_COHORT; Steven L. Shafer,
+# 2026-11-18): the reference man receives the published volumes divided by
+# 0.821 and clearances by 0.862; with it off they are as published
 # (legacyVolume = 1).  Heparin is dosed per kilogram (IU/kg), and that
 # scaling of the dose is independent of the model's.
 #
 # (Claude Code, 2026-10-17, at the request of Steven L. Shafer.)
 # -----------------------------------------------------------------------------
+
+# Jia 2015 (PMID 25638272), Table 1 (p. 2), read on the PDF 2026-11-18: mean
+# 66 kg and 53.4 years, 13 men and 19 women (the 32 who completed; the table's
+# heading says 41), Beijing.
+# No height is printed: each sex's is the country's mean adult height for the
+# birth year (NCD Risk Factor Collaboration, eLife 2016;5:e13410, height at 18
+# by birth year), less the 0.2 cm (men) and 0.3 cm (women) a cohort loses per
+# decade of age after 18 that the same paper reports. China, born 2015 - 53 =
+# 1962: 167.7 cm for men and 156.6 for women.
+# The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort).
+# Factors 0.821 on volume, 0.862 on clearance.
+HEPARIN_COHORT <- list(groups = list(
+  list(weight = 66, height = 167.7, age = 53.4, men = 13, women = 0),
+  list(weight = 66, height = 156.6, age = 53.4, men = 0, women = 19)))
 
 #' Unfractionated heparin pharmacokinetics (anti-IIa activity, bypass)
 #'
@@ -81,7 +98,7 @@
 #' @export
 heparin <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, HEPARIN_COHORT))
 
   default <- list(
     v1  = 3.04 * size$volume,

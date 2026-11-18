@@ -27,7 +27,7 @@ test_that("the switch off gives the pooled Lehmann constants", {
   # With the switch on, anchored at Lehmann's 10 men and 20 women (67.7 kg,
   # 45.7 y; NCD-RisC's German heights, DROPERIDOL_COHORT)
   kc <- cohortFactorsIndependent(DROPERIDOL_COHORT)
-  expect_equal(kc$volume, 0.8437, tolerance = 1e-3)
+  expect_equal(kc$volume, 0.8441296, tolerance = 1e-6)
   on <- droperidol(120, 170, 50, "male")$PK$default
   expect_equal(on$v1, 10.75 * 1.3049067 / kc$volume, tolerance = 1e-7)
   expect_equal(on$cl1, 10.75 * 0.06015 * 1.2209126 / kc$clearance, tolerance = 1e-7)

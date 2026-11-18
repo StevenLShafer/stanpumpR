@@ -29,9 +29,12 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# Fixed published parameters for five men of ordinary size: volumes scale
-# with fat-free mass relative to the reference male, clearances with that
-# ratio ^ 0.75; the switch off uses them as published.
+# Fixed published parameters for Hong's five men (73.6 kg, 32.2 years),
+# anchored with the switch on at their typical man (CORTICOSTEROID_HONG_COHORT,
+# R/drugs_dexamethasone.R; Steven L. Shafer, 2026-11-18): volumes scale with
+# fat-free mass relative to him, clearances with that ratio ^ 0.75, so the
+# 70 kg reference man receives the published volumes divided by 1.067 and
+# clearances by 1.050; the switch off uses them as published.
 #
 # References
 # ----------
@@ -56,9 +59,10 @@ METHYLPREDNISOLONE_KA_PO <- 0.0212903403   # 1/min, = 1.277 /h
 #' @export
 methylprednisolone <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  # Size scaling (see the header): fixed published parameters, unscaled
-  # with the switch off.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  # Size scaling (see the header): fixed published parameters, anchored at
+  # Hong's five men, unscaled with the switch off.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, CORTICOSTEROID_HONG_COHORT))
 
   v1  <- 78.4 * size$volume
   cl1 <- 22.8 / 60 * size$clearance     # L/min

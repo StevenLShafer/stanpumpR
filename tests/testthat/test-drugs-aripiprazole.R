@@ -43,8 +43,8 @@ test_that("both species scale to fat-free mass with the switch on, anchored at K
   # Kim 2008's 34 men and 46 women, 61.9 kg, 34 years, with NCD-RisC's
   # South Korean heights (ARIPIPRAZOLE_COHORT)
   kc <- cohortFactorsIndependent(ARIPIPRAZOLE_COHORT)
-  expect_equal(kc$volume, 0.8128, tolerance = 1e-3)
-  expect_equal(kc$clearance, 0.8559, tolerance = 1e-3)
+  expect_equal(kc$volume, 0.8133494, tolerance = 1e-6)
+  expect_equal(kc$clearance, 0.8564615, tolerance = 1e-6)
   x <- aripiprazole(120, 170, 50, "male")$PK$default
   expect_equal(x$v1, 192 * 1.3049067 / kc$volume, tolerance = 1e-7)
   expect_equal(x$cl1, 3.15 / 60 * 1.2209126 / kc$clearance, tolerance = 1e-7)

@@ -8,7 +8,7 @@ Bioavailability, 0.82, is from Al-Habet and Rogers (*Br J Clin Pharmacol* 1989;2
 
 ### Covariates
 
-None in the source. The parameters take the default [fat-free-mass scaling](help:models/fat-free-mass) and are used as published with the switch off.
+None in the source. The parameters are those of Hong's five men (73.6 kg, 32.2 years; the United States' mean adult height for their birth year, from the NCD Risk Factor Collaboration, since none was printed), and take the default [fat-free-mass scaling](help:models/fat-free-mass) from them: the 70 kg reference man receives volumes 6% and clearances 5% smaller. With the switch off they are used as published.
 
 ### Effect site
 

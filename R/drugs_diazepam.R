@@ -59,11 +59,13 @@
 # Absorption rates are set so that the typical peak matches the observed
 # mean peak, as for oxycodone (kept so by decision of Steven L. Shafer,
 # 2026-10-09):
-#   Oral, absorption half-life 20 min: 10 mg peaks at 302 ng/mL at 27 min.
+#   Oral, absorption half-life 20 min: 10 mg peaks at 302 ng/mL at 27 min
+#     in Hung's typical subject (325 in the 70 kg reference man).
 #     Hogan 2020 (46 adults, 10 mg Valium fasting): geometric mean peaks 338
 #     and 286 ng/mL (51-75 and 76-111 kg) at median 1.0 and 0.75 h; 406
 #     ng/mL (arithmetic mean) in Greenblatt's 48 men; tmax 0.9 h (Divoll).
-#   IM, absorption half-life 50 min: 10 mg peaks at 200 ng/mL at 53 min.
+#   IM, absorption half-life 50 min: 10 mg peaks at 200 ng/mL at 53 min
+#     in Hung's typical subject (215 in the reference man).
 #     Hung 1996 (the same subjects as the disposition): 199 +/- 89 ng/mL at
 #     34 +/- 8 min.
 # Neither route's peak height and time can both be met with this disposition

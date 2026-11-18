@@ -49,8 +49,10 @@
 # intravenous ones wrong by 1/F, so zolpidem is offered by mouth only, with
 # bioavailability_PO = 1 because the apparent scale already contains F.
 #
-# Checks.  The reference patient (70 kg, 170 cm, 35 y man; size factors 1):
-# 10 mg peaks at 142.5 ng/mL at 35 min, AUC 556 ng.h/mL, half-life 2.46 h.
+# Checks.  The published values (Kim's typical subject, or anyone with the
+# switch off): 10 mg peaks at 142.5 ng/mL at 35 min, AUC 556 ng.h/mL,
+# half-life 2.46 h.  The 70 kg, 170 cm, 35 y reference man, larger than Kim's
+# subjects, now 117.6 ng/mL, AUC 460 ng.h/mL, half-life 2.59 h.
 # The Ambien label (n = 45): 121 (58-272) ng/mL at a mean of 1.6 h, half-life
 # 2.5 (1.4-3.8) h; Greenblatt 2006 (n = 70): 14.0 ng/mL per mg, i.e. about 140
 # after 10 mg, at 2.0 h.  The peak height and the half-life agree.  The peak
@@ -61,13 +63,15 @@
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # Kim retained no weight effect, so the published values are fixed and are
-# read as the reference adult's.  Volume scales with fat-free mass relative to
-# the 70 kg, 170 cm reference male and clearance with that ratio ^ 0.75;
-# adjustToFFM = FALSE uses the published values for everyone.  (Kim's median
-# subject weighed 60 kg.  Renormalising the published values to 70 kg
-# allometrically would lower the reference man's peak to 123 ng/mL, closer to
-# the label's 121; that is not done, because Kim found no weight effect to
-# renormalise.)
+# the cohort's typical subject's (median 60.05 kg, 29.5 years, 15 men and 15
+# women).  With the switch on they are anchored at that subject
+# (ZOLPIDEM_COHORT; Steven L. Shafer, 2026-11-18): volume scales with
+# fat-free mass relative to that subject and clearance with that ratio ^
+# 0.75, so the 70 kg reference man receives the published values divided by
+# 0.822 and 0.864; adjustToFFM = FALSE uses the published values for
+# everyone.  (Before the anchoring the published values were read as the
+# reference man's; a note here said that renormalising them would lower his
+# peak toward the label's 121 ng/mL, which the anchoring now does.)
 #
 # SEX
 # ===
@@ -147,6 +151,21 @@ ZOLPIDEM_V    <- 64.0    # L, apparent
 ZOLPIDEM_KA   <- 11.7    # 1/h
 ZOLPIDEM_MTT  <- 0.25    # h, mean transit time, used as the lag
 
+# Kim 2026 (PMID 41749515), Table 1 (p. 3), read on the PDF 2026-11-18: 30
+# healthy Korean volunteers, median 60.05 kg and 29.5 years, 15 men and 15
+# women, Seoul National University Bundang Hospital (the trial of Yoon 2021).
+# No height is printed: each sex's is the country's mean adult height for the
+# birth year (NCD Risk Factor Collaboration, eLife 2016;5:e13410, height at 18
+# by birth year), less the 0.2 cm (men) and 0.3 cm (women) a cohort loses per
+# decade of age after 18 that the same paper reports. South Korea, born 2021 -
+# 30 = 1992: 174.5 cm for men and 161.7 for women.
+# The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort).
+# Factors 0.822 on volume, 0.864 on clearance.
+ZOLPIDEM_COHORT <- list(groups = list(
+  list(weight = 60.05, height = 174.5, age = 29.5, men = 15, women = 0),
+  list(weight = 60.05, height = 161.7, age = 29.5, men = 0, women = 15)))
+
 #' Zolpidem pharmacokinetics (oral)
 #'
 #' Kim et al. (2026): one compartment with apparent (oral) clearance and
@@ -163,9 +182,9 @@ ZOLPIDEM_MTT  <- 0.25    # h, mean transit time, used as the lag
 #' @export
 zolpidem <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  # Size scaling (see the header): fixed published values, read as the
-  # reference adult's.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  # Size scaling (see the header): fixed published values, anchored at Kim's
+  # cohort.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, ZOLPIDEM_COHORT))
 
   default <- list(
     v1 = ZOLPIDEM_V * size$volume,

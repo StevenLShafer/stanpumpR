@@ -12,14 +12,14 @@ The model this was built from proposed a paediatric model (McCann and colleagues
 ### Routes
 
 - **Intravenous**: bolus or infusion.
-- **Oral**: bioavailability 0.94 (Divoll and colleagues, *Anesth Analg* 1983;62:1-8). The absorption half-life, 20 minutes, was chosen so that 10 mg peaks at 302 ng/mL. The geometric mean peaks of 46 fasting adults were 286 and 338 ng/mL (Hogan and colleagues, *Epilepsia* 2020;61:455-464). The model's peak comes at 27 minutes, earlier than their median of 45 to 60 minutes.
+- **Oral**: bioavailability 0.94 (Divoll and colleagues, *Anesth Analg* 1983;62:1-8). The absorption half-life, 20 minutes, was chosen so that 10 mg peaks at 302 ng/mL in Hung's typical subject (325 in the 70 kg reference man). The geometric mean peaks of 46 fasting adults were 286 and 338 ng/mL (Hogan and colleagues, *Epilepsia* 2020;61:455-464). The model's peak comes at 27 minutes, earlier than their median of 45 to 60 minutes.
 - **Intramuscular**: bioavailability 1.0 (Hung and colleagues). The absorption half-life, 50 minutes, gives a peak of 200 ng/mL after 10 mg, as Hung measured, at 53 minutes rather than the observed 34. Diazepam precipitates in muscle and is absorbed erratically; Hung found absorption still at 20 to 50 per cent of its peak rate an hour after the injection.
 
 Rectal gel and nasal spray are not offered.
 
 ### Covariates
 
-None in the source. With the [fat-free-mass switch](help:models/fat-free-mass) on, the volumes scale with fat-free mass and the clearances with its 0.75 power; with it off, everyone receives the published values.
+None in the source. The parameters are those of Hung's four men (80.5 kg, 171.3 cm, 33.5 years). With the [fat-free-mass switch](help:models/fat-free-mass) on, the volumes scale with fat-free mass from them and the clearances with its 0.75 power, so the 70 kg reference man receives volumes 8% and clearances 6% smaller; with it off, everyone receives the published values. The absorption rates are unchanged: the intramuscular rate reproduces Hung's own subjects' peak, and Hogan's oral study prints only weight bands, not a typical patient.
 
 Diazepam's half-life rises steeply with age, from about 20 hours at 20 years to about 90 hours at 80, because its volume grows while its clearance does not (Klotz and colleagues). It is more than doubled in cirrhosis. Neither is modelled.
 

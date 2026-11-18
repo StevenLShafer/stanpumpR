@@ -32,7 +32,7 @@ There is no effect site, no MEAC and no band. Dolder did fit sigmoid models with
 
 ### Covariates
 
-Dolder published no size covariate, so the apparent parameters are a reference adult's: unscaled with *Adjust weight to fat-free mass* off, and scaled with the Al-Sallami fat-free mass ratio (volume) and its 0.75 power (clearance) with it on. That scaling is a stanpumpR convention, not a published fit.
+Dolder published no size covariate, so the apparent parameters are the cohort's typical subject's (68 kg, 33 years, 12 men and 12 women; Switzerland's mean adult heights from the NCD Risk Factor Collaboration, since none was printed): unscaled with *Adjust weight to fat-free mass* off, and scaled from that subject with the Al-Sallami fat-free mass ratio (volume) and its 0.75 power (clearance) with it on, so that the 70 kg reference man receives volumes 12% and clearances 9% larger. That scaling is a stanpumpR convention, not a published fit.
 
 ### Where to be careful
 
