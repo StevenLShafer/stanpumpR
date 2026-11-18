@@ -409,10 +409,17 @@ if True:
         wr.writerow([o.get("pmid", ""), o.get("doi", ""), o.get("journal", ""), o.get("year", ""),
                      o.get("volume", ""), o.get("pages", ""), o.get("download_link", ""),
                      o.get("status") or "pending", o.get("downloaded_at", ""), o.get("notes", "")])
+# Write the whole CSV, then swap it in: the queue is on a synced drive, and writing in place
+# meant a crash or a full disk mid-write left it truncated -- and this file is the only record
+# of what has been asked for but not yet obtained (CodeRabbit on PR #780, 2026-11-18).
+_qtmp = qp + ".new"
 try:
-    with open(qp, "w", newline="", encoding="utf-8") as f:
+    with open(_qtmp, "w", newline="", encoding="utf-8") as f:
         f.write(buf.getvalue())
+    os.replace(_qtmp, qp)                        # atomic within the volume
 except PermissionError:
+    if os.path.exists(_qtmp):
+        os.remove(_qtmp)
     LOCKED.append(qp)
 
 from collections import Counter

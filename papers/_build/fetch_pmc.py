@@ -1,7 +1,12 @@
 """Download free PMC copies from the PMC Article Datasets bucket (s3://pmc-oa-opendata), verify, file as PMID_<pmid>.pdf."""
-import json, os, re, subprocess, time, urllib.request
+import json, os, re, subprocess, sys, time, urllib.request
 from openpyxl import load_workbook
 from ncbi import norm
+
+# A first author called Jarčuška or Škrlín crashed the run on a cp1252 console, AFTER the PDF
+# had been filed but BEFORE the fetch log was written, so the run lost its record of
+# everything it had just done (2026-11-18).
+sys.stdout.reconfigure(encoding="utf-8")
 
 ARCHIVE = r"C:\dev\stanpumpRPapers"
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -39,6 +44,37 @@ h = [c.value for c in ws[1]]
 I = {k: i for i, k in enumerate(h)}
 todo = [{k: r[I[k]] for k in ("Ref", "PMID", "PMCID", "First author", "Year", "Title", "Journal / source", "Pages")}
         for r in ws.iter_rows(min_row=2, values_only=True) if r[I["Archive status"]] == "To download (free at PMC)"]
+
+# The spreadsheet lists the works the stanpumpR SOURCE cites.  A paper can be wanted long
+# before anything cites it -- a registry's `to_obtain`, or a reading list added by
+# queue_add.py -- and those live only in the download queue, so without this they would never
+# be fetched even when PMC has them free (2026-11-18).  The verification below is unchanged:
+# a file whose first page does not carry the title and first author is still HELD.
+if True:
+    import csv as _csv
+    known = {str(t["PMID"]) for t in todo if t["PMID"]}
+    qwant = []
+    with open(os.path.join(ARCHIVE, "stanpumpr-queue.csv"), encoding="utf-8") as _f:
+        for _r in _csv.DictReader(_f):
+            _p = (_r.get("pmid") or "").strip()
+            _n = _r.get("notes") or ""
+            if (_p and _p not in known and _n.startswith("wanted by ") and "free at PMC" in _n
+                    and (_r.get("status") or "").strip().lower() == "pending"
+                    and not os.path.exists(os.path.join(ARCHIVE, "PMID_%s.pdf" % _p))):
+                qwant.append(_p)
+                known.add(_p)
+    if qwant:
+        from ncbi import esummary
+        _meta = esummary(qwant)
+        for _p in qwant:
+            _m = _meta.get(_p)
+            if not _m or not _m.get("pmcid"):
+                continue
+            todo.append({"Ref": "download queue", "PMID": _p, "PMCID": _m["pmcid"],
+                         "First author": _m.get("first_author", ""), "Year": _m.get("year"),
+                         "Title": _m.get("title", ""), "Journal / source": _m.get("journal", ""),
+                         "Pages": _m.get("pages", "")})
+        print("from the download queue: %d paper(s) free at PMC and not yet here" % len(qwant))
 
 log = []
 for t in todo:

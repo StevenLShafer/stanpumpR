@@ -96,7 +96,7 @@ for r in refs:
     r["sur_re"] = surname_pattern(r["label"].rsplit(" ", 1)[0])
 
 
-def pdf_text(path, last=2):
+def pdf_text(path, last=2, strict=False):
     # pdftotext receives its arguments in the Windows ANSI code page, so it cannot open a path with characters
     # outside it, e.g. Wiley's U+2010 hyphen ("long‐term"), and returned nothing: those PDFs were reported as
     # scans (2026-10-10: Pollak 2000, Guay 1988, Stoeckel 1981 ...).  Read such files through an ASCII-named copy.
@@ -109,9 +109,13 @@ def pdf_text(path, last=2):
             os.close(fd)
             shutil.copyfile(path, tmp)
         pages = ["-l", str(last)] if last else []
-        out = subprocess.run(["pdftotext"] + pages + ["-q", tmp or path, "-"], capture_output=True, timeout=120).stdout
-        return out.decode("utf-8", "replace")
+        r = subprocess.run(["pdftotext"] + pages + ["-q", tmp or path, "-"], capture_output=True, timeout=120)
+        if strict and r.returncode != 0:
+            raise RuntimeError("pdftotext returned %d" % r.returncode)
+        return r.stdout.decode("utf-8", "replace")
     except Exception:
+        if strict:                               # the caller must tell "no text" from "could not read"
+            raise
         return ""
     finally:
         if tmp and os.path.exists(tmp):
@@ -157,7 +161,7 @@ def requested_ref(pmid):
     The queue is the gate, not the file name: arrivals.py puts every wanted PMID there, so
     this accepts exactly what somebody asked for and nothing else.  The details come from
     PubMed, as build.py's do, so the row filed is the same shape as any other."""
-    if not _requested:
+    if "rows" not in _requested:                 # not `if not _requested`: by_doi may have filled it
         _requested["rows"] = set()
         try:
             import csv
@@ -183,6 +187,23 @@ def requested_ref(pmid):
             "npages": page_count(src.get("pages")),
             "label": "%s %s" % (src.get("first_author", ""), src.get("year", "")),
             "file": archive_name(pmid, (src.get("doi") or "").lower())}
+
+
+def requested_ref_by_doi(doi):
+    """The queue's row for a DOI, as a ref.  Same gate as requested_ref: only what was asked for."""
+    if not _requested.get("by_doi"):
+        _requested.setdefault("by_doi", {})
+        try:
+            import csv
+            with open(os.path.join(ARCHIVE, "stanpumpr-queue.csv"), encoding="utf-8") as f:
+                for r in csv.DictReader(f):
+                    d, p = (r.get("doi") or "").strip().lower(), (r.get("pmid") or "").strip()
+                    if d and p:
+                        _requested["by_doi"][d] = p
+        except Exception:
+            pass
+    pmid = _requested.get("by_doi", {}).get((doi or "").lower())
+    return requested_ref(pmid) if pmid else None
 
 
 def identify_any(path):
@@ -293,6 +314,15 @@ def identify_any(path):
         r = by_doi[dois[0]]
         if on_top(r) or has_author(r):
             return r, "own DOI %s" % dois[0], None
+    # The same for a paper the DOWNLOAD QUEUE asks for but no citation produced: `by_doi` is
+    # built from works.json, the works the SOURCE cites, so a wanted paper is not in it and a
+    # publisher-named download of one (Wiley's "Br J Clin Pharmacol - 2017 - Moffett - ...")
+    # could not be identified at all -- 30 of them sat unfiled on 2026-11-18.  Same proof as
+    # a cited work: the title on page 1, or the first author (requested_ref, 2026-11-18).
+    for d in dois[:3]:
+        r = requested_ref_by_doi(d)
+        if r and (on_top(r) or has_author(r)):
+            return r, "own DOI %s (wanted by the download queue)" % d, None
     # 2. the reference's title at the top of page 1 (punctuation and line breaks ignored), with its first author
     hits = [r for r in refs if on_top(r)]
     for r in hits:
@@ -469,9 +499,9 @@ DOWNLOAD_STAMP = re.compile(r"downloaded (?:from|for|by)|wiley online library|on
                             r"all rights reserved|copyright ©", re.I)
 
 
-def copy_words(p):
+def copy_words(p, strict=False):
     import collections
-    text = "\n".join(l for l in pdf_text(p, None).splitlines() if not DOWNLOAD_STAMP.search(l))
+    text = "\n".join(l for l in pdf_text(p, None, strict=strict).splitlines() if not DOWNLOAD_STAMP.search(l))
     return collections.Counter(re.findall(r"[a-z0-9]{3,}", text.lower()))
 
 
@@ -488,7 +518,15 @@ def copy_equivalent(path, archived):
             return False
     except Exception:
         return False
-    wa, wb = copy_words(path), copy_words(archived)
+    try:
+        wa, wb = copy_words(path, strict=True), copy_words(archived, strict=True)
+    except Exception:                            # noqa: BLE001
+        # Extraction FAILED, which is not "this copy has no text layer".  A pdftotext timeout
+        # gave empty text, the `na < 50` branch below read that as an image-only scan, and a
+        # download was recycled as redundant against an archived copy that may differ -- a
+        # different edition, or figures this one lacks (CodeRabbit on PR #780, 2026-11-18).
+        # Equivalence cannot be established, so it is not redundant and a person decides.
+        return False
     na, nb = sum(wa.values()), sum(wb.values())
     if na < 50:
         return nb >= 200

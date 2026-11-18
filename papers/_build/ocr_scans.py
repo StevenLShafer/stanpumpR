@@ -37,8 +37,20 @@ env["PATH"] = os.pathsep.join([TESS] + GS + [env.get("PATH", "")])
 
 
 def page_letters(pdf):
-    """Letters per page from pdftotext (pages split on form feeds)."""
-    r = subprocess.run([PDFTOTEXT, "-layout", "-enc", "UTF-8", pdf, "-"], capture_output=True)
+    """Letters per page from pdftotext (pages split on form feeds), or None if it FAILED.
+
+    A failure is not the same as a page with no text, and the difference decides whether this
+    script replaces the file.  pdftotext timing out or crashing returned empty output, the PDF
+    read as a scan with no text layer, and it was OCR'd and its original recycled although its
+    text layer was perfectly good -- and the guard below could not catch it, because OCR then
+    "gained" text against a count of zero (CodeRabbit on PR #780, 2026-11-18)."""
+    try:
+        r = subprocess.run([PDFTOTEXT, "-layout", "-enc", "UTF-8", pdf, "-"],
+                           capture_output=True, timeout=600)
+    except Exception:                            # timeout, or pdftotext missing
+        return None
+    if r.returncode != 0:
+        return None
     text = r.stdout.decode("utf-8", "replace")
     pages = text.split("\f")
     if pages and pages[-1] == "":
@@ -69,6 +81,9 @@ for fn in sorted(os.listdir(ARCH)):
         continue
     pdf = os.path.join(ARCH, fn)
     letters = page_letters(pdf)
+    if letters is None:
+        print(f"{stem}: pdftotext failed -- skipped (cannot tell whether it has a text layer)", flush=True)
+        continue
     if sum(letters) >= 100 * len(letters):
         continue  # has a text layer
     mode = "--force-ocr" if any(0 < n for n in letters) else "--skip-text"
@@ -94,6 +109,11 @@ for fn in sorted(os.listdir(ARCH)):
     except Exception as e:  # noqa: BLE001
         same_pages, entry["error"] = False, f"page count check failed: {e}"
     after = page_letters(out)
+    if after is None:                            # cannot verify the replacement: keep the original
+        entry["error"] = "pdftotext failed on the OCR output; original kept"
+        print(f"  REJECTED: {entry['error']}")
+        log.append(entry)
+        continue
     entry["letters_after"] = sum(after)
     if not same_pages or sum(after) <= sum(letters):
         entry.setdefault("error", "page count changed or no text gained; original kept")
@@ -101,13 +121,31 @@ for fn in sorted(os.listdir(ARCH)):
         log.append(entry)
         continue
     st = os.stat(pdf)
-    if not recycle(pdf):
-        entry["error"] = "could not recycle the original; original kept"
+    # Put the replacement in place BEFORE parting with the original.  Recycling first and
+    # moving second meant that a failed move left the archive with no file at that path at
+    # all: recoverable only by hand from the Recycle Bin, and invisible to a later run, which
+    # cannot retry a file it can no longer find (CodeRabbit on PR #780, 2026-11-18).
+    # os.replace within the archive is atomic, so the path always holds a readable PDF.
+    backup = pdf + ".pre-ocr"
+    try:
+        os.replace(pdf, backup)
+    except OSError as e:
+        entry["error"] = f"could not set the original aside ({e}); original kept"
         print(f"  {entry['error']}")
         log.append(entry)
         continue
-    shutil.move(out, pdf)
+    try:
+        shutil.move(out, pdf)
+    except Exception as e:                       # noqa: BLE001
+        os.replace(backup, pdf)                  # put the original back, exactly as it was
+        entry["error"] = f"could not move the OCR output into place ({e}); original kept"
+        print(f"  {entry['error']}")
+        log.append(entry)
+        continue
     os.utime(pdf, (st.st_atime, st.st_mtime))  # digests written from the page images are still current
+    if not recycle(backup):                      # the replacement is already in place
+        entry["backup_kept"] = backup
+        print(f"  note: the Recycle Bin refused the original; it is kept as {os.path.basename(backup)}")
     entry["sha_after"] = sha(pdf)
     txt = os.path.join(TEXT, stem + ".txt")
     if os.path.exists(txt):
