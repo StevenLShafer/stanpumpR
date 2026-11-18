@@ -388,6 +388,35 @@ amines, which stay out of red cells, so their ratio is taken as
 1 − haematocrit, 0.55; fentanyl's and ketamine's were not found and are
 taken as 1. Each row's notes give the measurements that disagree.
 
+**High-extraction drugs** (2026-11-18): propranolol, metoprolol,
+verapamil, diltiazem, nicardipine, naloxone, flumazenil, buprenorphine and
+intravenous haloperidol have extraction ratios computed from their
+intravenous clearances (0.51 to 0.75), so their clearance follows cardiac
+output more than liver function. Where an oral bioavailability is known
+(metoprolol, verapamil, diltiazem, propranolol), it agrees with the computed
+ratio or implies a somewhat larger one. Oxymorphone and labetalol are held
+back: their models' clearances exceed hepatic blood flow, so no extraction
+ratio can be computed without a measured blood-to-plasma ratio.
+
+**Kidney-cleared drugs** (2026-11-18): the antibiotics cefazolin,
+cefalexin, meropenem, piperacillin, cefepime, gentamicin, tobramycin,
+amikacin and vancomycin; enoxaparin, fondaparinux and dabigatran;
+gabapentin, pregabalin, lisinopril, hydrochlorothiazide, metformin,
+milrinone, digoxin, dofetilide, sotalol, ganciclovir, tranexamic acid,
+mannitol, lithium, pramipexole, amantadine and magnesium sulfate. Each
+renal share is the fraction its label gives as excreted unchanged; where a
+label says only "almost exclusively" or "predominantly" (gentamicin,
+tobramycin, sotalol, lithium), the row says the number is a judgement.
+Most of these models already read the patient's serum creatinine; the
+**Renal function** slider acts on top of it, as a what-if beyond the
+measured value.
+
+**Local anaesthetics** (2026-11-18): bupivacaine (E 0.29) and mepivacaine
+(E 0.27) have computed extraction ratios; the sliders change their systemic
+disposition, not their absorption from the injection site. Lidocaine and
+ropivacaine form their toxic metabolites (MEGX, PPX) at their own rate, so,
+like the other metabolite-forming models, they are not scaled.
+
 <!-- generated: physiology-table -->
 
 ## References

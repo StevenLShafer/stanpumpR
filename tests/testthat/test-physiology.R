@@ -840,3 +840,42 @@ test_that("the remaining anaesthetic rows (2026-11-18)", {
                       physiology = c(liver = 2))$PK[[1]]$bioavailability_PO,
             getDrugPK("hydromorphone", 70, 170, 35, "male")$PK[[1]]$bioavailability_PO)
 })
+
+test_that("the high-extraction drugs (2026-11-18)", {
+  cl <- function(d, ...) getDrugPK(d, 70, 170, 35, "male", ...)$PK[[1]]$cl1
+  # A high-extraction drug follows cardiac output more than liver function
+  for (d in c("propranolol", "naloxone", "nicardipine")) {
+    r <- physiologyRow(d)
+    expect_gt(r$extraction_ratio, 0.6, label = d)
+    flow <- cl(d, physiology = c(cardiac = 0.5)) / cl(d)
+    capacity <- cl(d, physiology = c(liver = 0.5)) / cl(d)
+    expect_lt(flow, capacity, label = d)
+  }
+  # metoprolol's oral first pass follows its extraction ratio
+  expect_true(physiologyRow("metoprolol")$oral_first_pass)
+  # clearances above hepatic blood flow are held back, not forced
+  expect_null(physiologyRow("oxymorphone"))
+  expect_null(physiologyRow("labetalol"))
+})
+
+test_that("the kidney-cleared drugs (2026-11-18)", {
+  cl <- function(d, ...) getDrugPK(d, 70, 170, 35, "male", ...)$PK[[1]]$cl1
+  # amikacin: 0.98 renal, nothing hepatic, so the renal slider carries it
+  # and the liver slider does nothing
+  expect_equal(cl("amikacin", physiology = c(renal = 0.5)) / cl("amikacin"),
+               0.98 * 0.5 + 0.02, tolerance = 1e-6)
+  expect_equal(cl("amikacin", physiology = c(liver = 0.1)), cl("amikacin"))
+  # metformin and gabapentin are wholly renal
+  for (d in c("metformin", "gabapentin"))
+    expect_equal(cl(d, physiology = c(renal = 0.1)) / cl(d), 0.1,
+                 tolerance = 1e-6, label = d)
+})
+
+test_that("the local anaesthetics (2026-11-18)", {
+  # bupivacaine and mepivacaine have rows; lidocaine and ropivacaine form
+  # their toxic metabolites at their own rate and are not scaled
+  expect_false(is.null(physiologyRow("bupivacaine")))
+  expect_false(is.null(physiologyRow("mepivacaine")))
+  expect_true(physiologyUnsupported(lidocaine(70, 170, 35, "male")))
+  expect_true(physiologyUnsupported(ropivacaine(70, 170, 35, "male")))
+})
