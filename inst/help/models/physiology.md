@@ -395,6 +395,19 @@ ratio or implies a somewhat larger one. Oxymorphone and labetalol are held
 back: their models' clearances exceed hepatic blood flow, so no extraction
 ratio can be computed without a measured blood-to-plasma ratio.
 
+**Kidney-cleared drugs** (2026-11-18): the antibiotics cefazolin,
+cefalexin, meropenem, piperacillin, cefepime, gentamicin, tobramycin,
+amikacin and vancomycin; enoxaparin, fondaparinux and dabigatran;
+gabapentin, pregabalin, lisinopril, hydrochlorothiazide, metformin,
+milrinone, digoxin, dofetilide, sotalol, ganciclovir, tranexamic acid,
+mannitol, lithium, pramipexole, amantadine and magnesium sulfate. Each
+renal share is the fraction its label gives as excreted unchanged; where a
+label says only "almost exclusively" or "predominantly" (gentamicin,
+tobramycin, sotalol, lithium), the row says the number is a judgement.
+Most of these models already read the patient's serum creatinine; the
+**Renal function** slider acts on top of it, as a what-if beyond the
+measured value.
+
 <!-- generated: physiology-table -->
 
 ## References

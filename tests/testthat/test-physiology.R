@@ -857,3 +857,16 @@ test_that("the high-extraction drugs (2026-11-18)", {
   expect_null(physiologyRow("oxymorphone"))
   expect_null(physiologyRow("labetalol"))
 })
+
+test_that("the kidney-cleared drugs (2026-11-18)", {
+  cl <- function(d, ...) getDrugPK(d, 70, 170, 35, "male", ...)$PK[[1]]$cl1
+  # amikacin: 0.98 renal, nothing hepatic, so the renal slider carries it
+  # and the liver slider does nothing
+  expect_equal(cl("amikacin", physiology = c(renal = 0.5)) / cl("amikacin"),
+               0.98 * 0.5 + 0.02, tolerance = 1e-6)
+  expect_equal(cl("amikacin", physiology = c(liver = 0.1)), cl("amikacin"))
+  # metformin and gabapentin are wholly renal
+  for (d in c("metformin", "gabapentin"))
+    expect_equal(cl(d, physiology = c(renal = 0.1)) / cl(d), 0.1,
+                 tolerance = 1e-6, label = d)
+})
