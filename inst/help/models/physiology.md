@@ -338,10 +338,34 @@ refit. The model's own line, "(population)", is drawn at the sliders too.
 The inhaled anesthetics respond to **Cardiac output** and **Body temperature**,
 as described above.
 
-Only drugs whose renal share, hepatic share and extraction ratio were read in
-a published source respond. Any other drug ignores the sliders, and the panel
-lists it under **Not changed**. Rows marked "not yet" are still waiting for a
-readable source for a missing value.
+Only drugs whose renal share and hepatic share were read in a published
+source respond. Any other drug ignores the sliders, and the panel lists it
+under **Not changed**. Rows marked "not yet" are still waiting for a readable
+source for a missing value.
+
+**A computed extraction ratio.** Where no hepatic extraction ratio has been
+measured, it is computed from the hepatic share of the drug's clearance:
+E = hepatic share × CL / (Q<sub>H</sub> × B:P), with CL the model's own
+plasma clearance for the reference man, Q<sub>H</sub> normal hepatic blood
+flow, 1.675 L/min (25% of a resting cardiac output of 6.7 L/min, Williams
+and Leggett 1989), and B:P the blood-to-plasma concentration ratio. Where no
+B:P was found it is taken as 1 and the row says so. The renal share is the
+measured fraction of an intravenous dose excreted unchanged in the urine,
+not the share a model's creatinine-clearance term implies; the two can
+differ (melphalan 0.13 measured, 0.43 in Nath's model), and the covariate
+stays the patient's. A route outside the liver and the kidney (chemical
+hydrolysis, irreversible binding to protein, deamination throughout the
+body) is changed only by **Body temperature**.
+
+**Chemotherapy** (2026-11-17): the drugs with a row are listed in the
+table. A drug that forms an active metabolite at its own rate constant
+(doxorubicin, irinotecan, cisplatin, gemcitabine, capecitabine) does not
+respond, since its metabolite's formation would not move with the parent's
+clearance; nor do the saturable drugs (paclitaxel, fluorouracil,
+ifosfamide, thioguanine). Where the program chooses a model by the
+patient's age and the one chosen cannot be scaled (vincristine and
+cyclophosphamide in children, oxaliplatin's biliary-store model), the
+panel says **Not changed for this patient**.
 
 <!-- generated: physiology-table -->
 
