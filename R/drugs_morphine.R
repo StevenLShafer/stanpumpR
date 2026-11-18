@@ -25,12 +25,16 @@
 # MORPHINE_BSA_RANGE, 1.5 to 2.2 m2: below 1.5 m2 Q3 holds its 1.5 m2 value,
 # 8.8 L/h, and above 2.2 m2 its 2.2 m2 value, 40.7 L/h.  (Steven L. Shafer's
 # decision, 2026-10-14, on the PR that introduced the covariate.)
-# [decision] Which clearance the covariate is on is the paper's own
-# contradiction (Carbon's repository audit, 2026-11-18; read on the PDF):
-# Table II puts (BSA/1.83)^4 on Q3M (19.5 L/h, the slow compartment), but the
-# Results (p. 156) say BSA was linked to the clearance between the central
-# and the FAST peripheral compartment (Q2M, 136 L/h).  This file follows the
-# table.  See papers/digests/PMID_12189362.md.
+# WHICH CLEARANCE: the paper contradicts itself (Carbon's repository audit,
+# 2026-11-18; read on the PDF). Table II (printed p. 157) puts (BSA/1.83)^4 on
+# Q3M (19.5 L/h, the slow compartment), but the Results (p. 156) say BSA was
+# linked to the clearance between the central and the FAST peripheral
+# compartment (Q2M, 136 L/h). The table governs (Steven L. Shafer's decision,
+# 2026-11-18): for the table to be wrong, both Q2M and Q3M in model A would
+# have to be misprinted, and model B puts BSA on V3M, which is highly
+# correlated with Q3M, so both models place BSA on the slow compartment; the
+# text's "fast" for "slow" is a single slip, the easier one to pass review.
+# See papers/digests/PMID_12189362.md.
 #
 # EFFECT SITE AND MEAC are not from Lotsch 2002, which measured no effect.
 # tPeak 93.8 min is the library's own value, carried from the program's
