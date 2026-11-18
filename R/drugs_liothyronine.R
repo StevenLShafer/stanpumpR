@@ -75,10 +75,18 @@
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # The source fitted no covariate (its sample of 14 was too small to show
-# even an effect of sex).  Its parameters are taken as the 70 kg reference
-# man's (its cohort averaged 72.3 kg) and scaled by pkSizeFactors(): by
-# fat-free mass with the switch on, not at all with it off (the published
-# model).
+# even an effect of sex), so its parameters are its cohort's typical
+# patient's, and the model is anchored there (Steven L. Shafer's standing
+# rule of 2026-11-18, docs/weight-adjustment.md, *Anchoring at the source's
+# cohort*).  Table 1, read on the PDF: 48.5 +/- 16.0 years, 7 men and 7
+# women, 72.3 +/- 15.8 kg, BMI 25.7 +/- 3.6 kg/m2 (means), so a height of
+# 167.7 cm from the BMI.  cohortSizeFactors() gives that patient volume
+# factors of 1.00589 as a man and 0.82714 as a woman, and geometric means,
+# weighted 7 to 7, of 0.912146 on volumes and 0.933358 on clearances.  With
+# the switch on every published value is divided by these, so a patient like
+# the cohort's receives Table 3's values and the 70 kg reference man V1 9.51
+# L and a clearance of 26.75 L/day; with it off the published values are
+# used unscaled for every patient.
 #
 # DOSE
 # ====
@@ -159,6 +167,11 @@ LIOTHYRONINE_K21  <- 0.08        # /h
 LIOTHYRONINE_KA   <- 1.94        # /h
 LIOTHYRONINE_TLAG <- 0.62        # h
 
+# Van Tassell 2019, Table 1: the cohort's typical patient (means); no height
+# is printed, so the BMI gives it.
+LIOTHYRONINE_COHORT <- list(weight = 72.3, bmi = 25.7, age = 48.5,
+                            men = 7, women = 7)
+
 #' Liothyronine (Van Tassell 2019)
 #'
 #' Two compartments with a lagged first-order absorption, fitted at steady
@@ -171,8 +184,10 @@ LIOTHYRONINE_TLAG <- 0.62        # h
 #' @export
 liothyronine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
+  cohort <- with(LIOTHYRONINE_COHORT,
+                 cohortSizeFactors(weight, age, men, women, bmi = bmi))
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1, cohort = cohort)
   v1 <- LIOTHYRONINE_V1
   cl <- LIOTHYRONINE_KE * v1               # L/h
   q  <- LIOTHYRONINE_K12 * v1              # L/h

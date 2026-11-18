@@ -30,13 +30,34 @@ test_that("Van Tassell 2019 Table 3, switch off: the published model", {
   expect_equal(round(log(2) / lambda, 2), c(2.33, 21.50))
 })
 
-test_that("switch on: volumes by fat-free mass, clearances by its 0.75 power", {
+# Van Tassell's cohort (Table 1): means 72.3 kg, BMI 25.7 (so 167.73 cm), 48.5
+# years, 7 men and 7 women.  Its typical patient's factors, by the
+# independent fat-free-mass formula in helpers.R; every published value is
+# divided by them with the switch on (Shafer, 2026-11-18;
+# docs/weight-adjustment.md, *Anchoring at the source's cohort*).
+vtCohort <- cohortFactorsIndependent(list(weight = 72.3, bmi = 25.7, age = 48.5,
+                                          men = 7, women = 7))
+
+test_that("switch on: anchored at Van Tassell's cohort, scaled by fat-free mass", {
+  expect_equal(round(vtCohort$volume, 6), 0.912146)
+  expect_equal(round(vtCohort$clearance, 6), 0.933358)
   ffm <- ffmAlSallami(120, 170, 50, "male") / ffmAlSallami(70, 170, 35, "male")
   set <- liothyronine(120, 170, 50, "male")$PK$default
-  expect_equal(set$v1, 8.67 * ffm)
-  expect_equal(set$cl1 * 60, vtCl * ffm^0.75)
-  # the reference man is the published model in both positions
-  expect_equal(liothyronine(70, 170, 35, "male")$PK, liothyronine(70, 170, 35, "male", FALSE)$PK)
+  expect_equal(set$v1, 8.67 * ffm / vtCohort$volume, tolerance = 1e-9)
+  expect_equal(set$cl1 * 60, vtCl * ffm^0.75 / vtCohort$clearance, tolerance = 1e-9)
+  # the reference man: 9.51 L and 26.75 L/day
+  ref <- liothyronine(70, 170, 35, "male")$PK$default
+  expect_equal(round(ref$v1, 2), 9.51)
+  expect_equal(round(ref$cl1 * 1440, 2), 26.75)
+})
+
+test_that("the cohort's typical patient receives Table 3's published values", {
+  h <- 100 * sqrt(72.3 / 25.7)
+  mix <- function(f) exp((7 * log(f(72.3, h, 48.5, "male")) + 7 * log(f(72.3, h, 48.5, "female"))) / 14)
+  expect_equal(mix(function(...) liothyronine(...)$PK$default$v1), 8.67, tolerance = 1e-12)
+  expect_equal(mix(function(...) liothyronine(...)$PK$default$v2), vtV2, tolerance = 1e-12)
+  expect_equal(mix(function(...) liothyronine(...)$PK$default$cl1) * 60, vtCl, tolerance = 1e-12)
+  expect_equal(mix(function(...) liothyronine(...)$PK$default$cl2) * 60, vtQ, tolerance = 1e-12)
 })
 
 test_that("the source's patients at steady state: 18.8 mcg every 8 h, Cmax 320 +/- 60 ng/dL at 1.8 h", {

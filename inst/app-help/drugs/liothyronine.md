@@ -12,7 +12,7 @@ Each patient was fitted with two compartments and a lagged first-order absorptio
 
 **Why the steady-state fit.** The same paper also gave a first dose to five of the patients while they were profoundly hypothyroid, after their radioiodine treatment. Their volume was about 1.7 times larger and their peak T3 less than half as high (140 against 320 ng/dL). The authors attribute this to binding sites freed by the loss of thyroid hormone. The model describes a patient already taking liothyronine, which is how the drug is used. A first dose given to a profoundly hypothyroid patient will peak well below this curve.
 
-No covariate was fitted: 14 patients were too few to show even a difference between men and women. With [the scaling switch](help:models/fat-free-mass) on, the volumes and clearances scale with fat-free mass from the 70 kg reference man; with it off they are the published values for every patient.
+No covariate was fitted: 14 patients were too few to show even a difference between men and women. So the published values belong to the study's typical patient: 72.3 kg, 167.7 cm (from the BMI of 25.7), 48.5 years, half men and half women. With [the scaling switch](help:models/fat-free-mass) on, a patient like that receives the published values, and everyone else is scaled from there by fat-free mass, the volumes in proportion and the clearances to the 0.75 power. The 70 kg reference man gets a central volume of 9.5 L and a clearance of 26.8 L/day. With the switch off, every patient gets the published values.
 
 ### Checks
 
