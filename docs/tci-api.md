@@ -75,7 +75,8 @@ logged request can therefore be replayed in the app.
 * One drug per request, from the drugs whose library row offers target units
   (`isTciUnit()` on `getDrugDefaults(drug)$Units[[1]]`): today propofol,
   remifentanil, fentanyl, alfentanil, sufentanil, hydromorphone, oxycodone
-  (added October 2026, issue #131), ketamine, etomidate, lidocaine. A two-channel pump calls twice.
+  (added October 2026, issue #131), ketamine, etomidate, lidocaine, remimazolam
+  (added November 2026). A two-channel pump calls twice.
 * Intravenous delivery only (boluses and infusions), the default PK set of the
   drug (no TCI drug has event-dependent kinetics).
 * Not in v1: Bayesian update from measured concentrations; multi-drug
@@ -176,7 +177,7 @@ plasma holds the target and the pump runs 40.4 mL/hr.
 | `pump.syringeVolumeRemaining` | no | `{ value ≥ 0, units: mL }` (needs `infusate`). Warning `SYRINGE_LOW` when the planned segment plus the fallback segment exceed it; `prediction.syringeEmptyAt` is reported. |
 | `target.site` | yes | `"effect"` or `"plasma"`. |
 | `target.value` | yes | `≥ 0`. **0 stops the infusion** (rate 0, `controller.plan` = `off`). Above the library's `Upper` → warning `TARGET_HIGH`; above `5 × Upper` → 422 `TARGET_OUT_OF_RANGE`. |
-| `target.units` | yes | The drug's concentration units exactly: `mcg/mL` for the mcg/mL drugs (propofol, ketamine, etomidate, lidocaine), `ng/mL` for the ng/mL drugs (the opioids). Any other token, including `mg/L`, is `UNIT_UNKNOWN`; the right token for the wrong drug is `UNIT_MISMATCH`. Never converted. |
+| `target.units` | yes | The drug's concentration units exactly: `mcg/mL` for the mcg/mL drugs (propofol, ketamine, etomidate, lidocaine, remimazolam), `ng/mL` for the ng/mL drugs (the opioids). Any other token, including `mg/L`, is `UNIT_UNKNOWN`; the right token for the wrong drug is `UNIT_MISMATCH`. Never converted. |
 | `timing.latency` | **yes** | Seconds from `now` to the instant the pump **acknowledges** the new rate, which is the instant the controller will record as that segment's `time` in later histories. `[0, interval)`; `≥ interval` is 422 `LATENCY_INVALID`; `> interval/2` is warning `LATENCY_LONG`. Use a high percentile (e.g. the 95th) of observed form-to-acknowledge times, not the mean: landing early is safe, landing late is not (§5.5). No default. |
 | `timing.interval` | **yes** | Seconds the new rate will be held: the controller's update interval. `[TCI_API_MIN_INTERVAL, TCI_API_MAX_INTERVAL]` = `[1, 60]`. Above `tPeak·60/3` for the drug → warning `INTERVAL_LONG`. No default. |
 | `history` | yes (may be empty) | Everything delivered so far: §4.2. At most `TCI_API_MAX_HISTORY` (20000) events, else 413 `HISTORY_TOO_LONG`. |
@@ -334,7 +335,7 @@ new command is acknowledged. The result is the state at
   `nextRequestAt`; remifentanil +2.4% at 60 s and alfentanil +2.0% at 30 s;
   etomidate +1.4% at 30 s and +4.2% at 60 s, its 1.9 min peak being the slowest
   of the fast drugs against a 60 s interval; fentanyl, sufentanil,
-  hydromorphone, oxycodone, ketamine and lidocaine stay within 1%), against
+  hydromorphone, oxycodone, ketamine, lidocaine and remimazolam stay within 1%), against
   ≤ 0.2% at 1–10 s. This is the Shafer–Gregg algorithm at an interval it was
   not designed for, not the search grid, and it is why `INTERVAL_LONG` warns
   above `tPeak/3`; STANPUMP's 10 s is the recommended interval. §8.2 test 5
