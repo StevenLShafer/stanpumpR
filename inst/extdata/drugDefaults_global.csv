@@ -323,11 +323,17 @@ colistin,mcg,,,,,#BF360C,0,0,0,0,4.1,IV,
 cefepime,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg/kg bid,mg/kg tid",#1F618D,0,0,0,0,10,IV,Antibiotics
 treprostinil,ng,,ng/kg/min,ng/kg/min,"ng/kg/min,ng/min",#80CBC4,0,0,0,0,0,IV,Pulmonary hypertension
 sildenafil,ng,mg,,mg PO,"mg,mg tid,mg PO,mg PO tid",#4FC3F7,0,0,0,0,0,IV,Pulmonary hypertension
+sildenafilFDA,ng,mg,,mg PO,"mg,mg tid,mg PO,mg PO tid",#4FC3F7,0,0,0,0,0,IV,
+sildenafilMiura,ng,mg,,mg PO,"mg,mg tid,mg PO,mg PO tid",#4FC3F7,0,0,0,0,0,IV,
 tadalafil,ng,,,mg PO,"mg PO,mg PO qd",#0288D1,0,0,0,0,0,IV,Pulmonary hypertension
+tadalafilFergusonSells,ng,,,mg PO,"mg PO,mg PO qd",#0288D1,0,0,0,0,0,IV,
+tadalafilMiura,ng,,,mg PO,"mg PO,mg PO qd",#0288D1,0,0,0,0,0,IV,
 riociguat,ng,,,mg PO,"mg PO,mg PO tid",#00838F,0,0,0,0,0,IV,Pulmonary hypertension
 selexipag,ng,,,mcg PO,"mcg PO,mcg PO bid",#26A69A,0,0,0,0,0,IV,Pulmonary hypertension
 ACT333679,ng,,,,,#4DB6AC,0,0,0,0,0,IV,
 ambrisentan,ng,,,mg PO,"mg PO,mg PO qd",#00897B,0,0,0,0,0,IV,Pulmonary hypertension
+ambrisentanOkour,ng,,,mg PO,"mg PO,mg PO qd",#00897B,0,0,0,0,0,IV,
+ambrisentanMiura,ng,,,mg PO,"mg PO,mg PO qd",#00897B,0,0,0,0,0,IV,
 bosentan,ng,,,mg PO,"mg PO,mg PO bid",#6B4E3D,0,0,0,0,0,IV,Pulmonary hypertension
 macitentan,ng,,,mg PO,"mg PO,mg PO qd",#5E35B1,0,0,0,0,0,IV,Pulmonary hypertension
 aprocitentan,ng,,,,,#9575CD,0,0,0,0,0,IV,

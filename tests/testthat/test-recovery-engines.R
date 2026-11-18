@@ -452,6 +452,9 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "ambrisentan", "macitentan", "aprocitentan",
     # bosentan (Miura 2026, 2026-11-18): plasma only
     "bosentan",
+    # the pulmonary hypertension groups' candidates (2026-11-18): plasma only
+    "sildenafilFDA", "sildenafilMiura", "tadalafilFergusonSells", "tadalafilMiura",
+    "ambrisentanOkour", "ambrisentanMiura",
     # colistimethate and the colistin it forms (2026-11-16): plasma only, no
     # line until the MIC decision (R/drugs_colistin.R)
     "colistimethate", "colistin",

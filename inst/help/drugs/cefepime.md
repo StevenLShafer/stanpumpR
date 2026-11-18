@@ -39,7 +39,7 @@ Weight acts on the central volume and, through the body surface area, on the eGF
 
 ### The MIC line
 
-The line is free cefepime at **8 mg/L**. In the EUCAST breakpoint tables (v16.1, 2026), *Pseudomonas* isolates up to 8 mg/L are "susceptible, increased exposure", treated with the high dose of 2 g every 8 hours. For Enterobacterales the susceptible breakpoint is 1 mg/L. Cefepime is about 20% bound, so the line sits at 8 / 0.80 = **10 mg/L** of total drug. Against a known isolate the threshold can be edited. See [Antibiotics](help:models/antibiotics).
+The line is free cefepime at **8 mg/L**. In the EUCAST breakpoint tables (v16.1, 2026), *Pseudomonas* isolates up to 8 mg/L are "susceptible, increased exposure", treated with the high dose of 2 g every 8 hours. For Enterobacterales the susceptible breakpoint is 1 mg/L. Cefepime is about 20% bound, so the line sits at 8 / 0.80 = **10 mg/L** of total drug. Steven L. Shafer chose this line on 18 November 2026 over the Enterobacterales breakpoint, which would put it at 1.25 mg/L of total drug. Against a known isolate the threshold can be edited. See [Antibiotics](help:models/antibiotics).
 
 ### No band
 

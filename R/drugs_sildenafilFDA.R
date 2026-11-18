@@ -2,6 +2,12 @@
 # Sildenafil (Revatio, Viagra): two compartments, intravenous and oral, from
 # the FDA's Clinical Pharmacology Review of NDA 22-473 (Revatio injection)
 # -----------------------------------------------------------------------------
+# A CANDIDATE OF THE SILDENAFIL GROUP (2026-11-18): the drug a user doses is
+# sildenafil, whose model the program chooses (R/modelSelection.R).  This
+# model is chosen for adults and adolescents from about 16.4 years; children
+# get Miura 2026 (R/drugs_sildenafilMiura.R), on Shafer's decision of
+# 2026-11-18 ("Use Miura's model for children").
+#
 # Units: time in minutes, volumes in litres, clearances in L/min; amounts in
 # mg, so the plotted concentration is ng/mL (= mcg/L), total plasma.
 #
@@ -110,7 +116,7 @@ SILDENAFIL_F_REF <- 0.355   # oral bioavailability at 20 mg
 SILDENAFIL_F_DOSE_REF <- 20 # mg
 SILDENAFIL_F_EXPONENT <- 0.289
 
-#' Sildenafil (FDA review of NDA 22-473)
+#' Sildenafil: the FDA review of NDA 22-473 (adults; a candidate of the sildenafil group)
 #'
 #' Two compartments, intravenous and oral with dose-dependent bioavailability;
 #' see the header of \code{R/drugs_sildenafil.R}.
@@ -121,7 +127,7 @@ SILDENAFIL_F_EXPONENT <- 0.289
 #'   volunteers' model
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-sildenafil <- function(weight, height, age, sex, adjustToFFM = TRUE,
+sildenafilFDA <- function(weight, height, age, sex, adjustToFFM = TRUE,
                        pulmonaryHypertension = FALSE)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)

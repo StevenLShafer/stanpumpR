@@ -3299,7 +3299,11 @@ renamed <- c(carboplatinDuffull = "carboplatin", doxorubicinJoerger = "doxorubic
              etoposideKroghMadsen = "etoposide", fluorouracilBriki = "fluorouracil",
              melphalanNath = "melphalan", methotrexateIbarra = "methotrexate",
              oxaliplatinBastian = "oxaliplatin", vincristineIgarashi = "vincristine",
-             cyclophosphamideJoerger = "cyclophosphamide")
+             cyclophosphamideJoerger = "cyclophosphamide",
+             # the pulmonary hypertension groups' candidates (2026-11-18)
+             sildenafilFDA = "sildenafil", sildenafilMiura = "sildenafil",
+             tadalafilFergusonSells = "tadalafil", tadalafilMiura = "tadalafil",
+             ambrisentanOkour = "ambrisentan", ambrisentanMiura = "ambrisentan")
 copies <- registry[match(renamed, registry$drug), ]
 copies$drug <- names(renamed)
 registry <- rbind(registry, copies)

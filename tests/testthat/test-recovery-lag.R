@@ -143,6 +143,9 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     "ambrisentan",
                     # bosentan's 0.379 h lag (Miura 2026); plasma only
                     "bosentan",
+                    # the candidates of the sildenafil and ambrisentan groups
+                    # that carry those lags (2026-11-18)
+                    "sildenafilFDA", "ambrisentanOkour",
                     # oral thioguanine's derived 1.0 h lag (Lowe 2001's
                     # median time to peak, 2026-11-16); plasma only
                     "thioguanine"))

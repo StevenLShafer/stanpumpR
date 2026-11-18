@@ -13,7 +13,7 @@ run <- function(dose, units, maximum = 1500) simulateDrugsWithCovariates(
 auc <- function(w) sum(diff(w$Time) * (head(w$Plasma, -1) + tail(w$Plasma, -1)) / 2)
 
 test_that("the parameters are Table 9's, in minutes (switch off)", {
-  X <- sildenafil(90, 185, 60, "female", adjustToFFM = FALSE)
+  X <- sildenafilFDA(90, 185, 60, "female", adjustToFFM = FALSE)
   set <- X$PK$default
   expect_equal(set$v1, V1)
   expect_equal(set$v2, V2)
@@ -57,7 +57,7 @@ test_that("REVAKI-1 (not fitted): healthy clearance, a lower AUC than in surgery
 test_that("switch on: fat-free mass scaling", {
   # 120 kg, 170 cm, 50 y man: fat-free-mass factor 1.3049067
   f <- 1.3049067
-  set <- sildenafil(120, 170, 50, "male")$PK$default
+  set <- sildenafilFDA(120, 170, 50, "male")$PK$default
   expect_equal_rounded(set$v1, V1 * f)
   expect_equal_rounded(set$v2, V2 * f)
   expect_equal_rounded(set$cl1, CL / 60 * f^0.75)

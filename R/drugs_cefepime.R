@@ -102,8 +102,10 @@
 #
 # THE MIC LINE AND THE BAND
 # =========================
-# The line is free drug at the MIC, read from R/antibioticThresholds.R; there
-# is no band (antibioticNoBands()).
+# The line is free drug at the MIC, read from R/antibioticThresholds.R: 8
+# mg/L for Pseudomonas, 10 mg/L of total cefepime, kept there on Shafer's
+# decision of 2026-11-18 over the Enterobacterales breakpoint of 1 mg/L (1.25
+# total).  There is no band (antibioticNoBands()).
 # -----------------------------------------------------------------------------
 
 # Barreto 2023, Table 3 and Table S2
