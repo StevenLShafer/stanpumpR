@@ -49,6 +49,10 @@ test_that("a 1 mg sulfate bolus starts at the base over the central volume", {
 
 test_that("fixed parameters stand with the switch off and scale with it on", {
   size <- pkSizeFactors(110, 175, 50, "male", TRUE)
+  # anchored at Hinderling's three men (Table I's own weights and heights)
+  kc <- cohortFactorsIndependent(list(groups = list(list(weight = 66, height = 173, age = 22.5, men = 1, women = 0), list(weight = 72, height = 174, age = 22.5, men = 1, women = 0), list(weight = 79, height = 180, age = 22.5, men = 1, women = 0))))
+  size$volume <- size$volume / kc$volume
+  size$clearance <- size$clearance / kc$clearance
   on <- atropine(110, 175, 50, "male", adjustToFFM = TRUE)$PK$default
   expect_equal_rounded(CL * size$clearance / BASE, on$cl1)
   expect_equal_rounded(VP * size$volume / BASE, on$v1)

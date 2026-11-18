@@ -10,7 +10,7 @@ The tissue DPP-4 binds a large share of a small dose. As the dose rises it fills
 
 ### Covariates
 
-None; the study had 13 patients. The volumes, clearances and amounts of DPP-4 are scaled by the library's fat-free-mass factors; with **Adjust weight to fat-free mass** unticked they are the published values. The patients weighed 65 to 116 kg.
+None; the study had 13 patients. The volumes, clearances and amounts of DPP-4 are the study's typical patient's (91 kg on average), and with **Adjust weight to fat-free mass** ticked everyone else is scaled from that patient by fat-free mass; unticked they are the published values. The patients weighed 65 to 116 kg.
 
 ### Product and doses
 

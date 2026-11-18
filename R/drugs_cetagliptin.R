@@ -45,9 +45,12 @@
 # paper's observed exposures (below).  Sex, weight, ALT, triglycerides, LDL
 # cholesterol, glucose, urea and creatinine were tested and not retained.
 #
-# BODY SIZE: no size covariate in the source, so the library's fat-free-mass
-# factors, fixed with the switch off (legacyVolume = 1): volumes by the volume
-# factor, Vmax and Cl2 by the clearance factor, Km unchanged.
+# BODY SIZE: no size covariate in the source, so the parameters are the
+# cohort's typical subject's, and with the switch on they are anchored at that
+# subject (CETAGLIPTIN_COHORT; Steven L. Shafer, 2026-11-18): the library's
+# fat-free-mass factors relative to the cohort's, fixed with the switch off
+# (legacyVolume = 1): volumes by the volume factor, Vmax and Cl2 by the
+# clearance factor, Km unchanged.
 #
 # DOSE BASIS: the paper gives doses of 50 and 100 mg of cetagliptin and does
 # not name a salt; doses are entered as the paper gives them.  Only 50 and
@@ -69,6 +72,15 @@
 #   https://doi.org/10.3389/fendo.2024.1359407
 # -----------------------------------------------------------------------------
 
+# Zhou 2024, Table 1 (p. 6), read on the PDF 2026-11-18: the 50 mg and 100 mg
+# cetagliptin arms' means (the sitagliptin and placebo arms are not in the
+# fit).  The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort). Factors 0.951 on volume, 0.963 on
+# clearance.
+CETAGLIPTIN_COHORT <- list(groups = list(
+  list(weight = 69.55, height = 164.98, age = 47.80, men = 9, women = 1),
+  list(weight = 72.56, height = 167.85, age = 45.20, men = 7, women = 3)))
+
 #' Cetagliptin pharmacokinetics (oral, investigational)
 #'
 #' Two compartments with saturable elimination (Zhou 2024), run by the
@@ -81,7 +93,7 @@
 #' @export
 cetagliptin <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, CETAGLIPTIN_COHORT))
   vmax <- 9373 / 60 * size$clearance       # mcg/min
   km   <- 171.5                            # mcg/L
 

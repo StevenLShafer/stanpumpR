@@ -52,9 +52,11 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# Fixed values for the source's adults, scaled to fat-free mass with the
-# switch on; with it off they are the published values for everyone
-# (legacyVolume = 1).
+# Fixed values for the source's three men; with the switch on they are
+# anchored at those men (ATROPINE_COHORT; Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort), so the
+# reference man's volumes are divided by 1.046 and clearances by 1.034; with
+# it off they are the published values for everyone (legacyVolume = 1).
 #
 # EFFECT SITE: tPeak 1.5 MINUTES; NO BAND
 # =======================================
@@ -89,6 +91,17 @@ ATROPINE_KTP <- 0.0557    # /min
 ATROPINE_BASE_MW    <- 289.37
 ATROPINE_SULFATE_MW <- 694.83   # monohydrate, for two molecules of base
 
+# Hinderling 1985, Table I header (printed p. 705), read on the PDF
+# 2026-11-18: the three men's own weights and heights (66 kg, 173 cm;
+# 72, 174; 79, 180), no central value being printed; each at the midpoint of
+# the printed age range, 21-24 years, ages not being printed per subject.
+# The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort). Factors 1.046 on volume, 1.034 on clearance.
+ATROPINE_COHORT <- list(groups = list(
+  list(weight = 66, height = 173, age = 22.5, men = 1, women = 0),
+  list(weight = 72, height = 174, age = 22.5, men = 1, women = 0),
+  list(weight = 79, height = 180, age = 22.5, men = 1, women = 0)))
+
 #' Atropine, intravenous (Hinderling 1985)
 #'
 #' Two compartments in healthy men; doses are atropine sulfate.  See the
@@ -99,7 +112,7 @@ ATROPINE_SULFATE_MW <- 694.83   # monohydrate, for two molecules of base
 #' @export
 atropine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, ATROPINE_COHORT))
   base <- 2 * ATROPINE_BASE_MW / ATROPINE_SULFATE_MW
 
   default <- list(

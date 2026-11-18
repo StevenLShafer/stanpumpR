@@ -43,7 +43,9 @@
 #
 # No covariates: 13 patients.
 #
-# BODY SIZE: the library's fat-free-mass factors, fixed with the switch off
+# BODY SIZE: the cohort's typical patient's values (91 kg, 166 cm, 6 men and
+# 7 women), anchored at that patient with the switch on (VILDAGLIPTIN_COHORT;
+# Steven L. Shafer, 2026-11-18), fixed with the switch off
 # (legacyVolume = 1): volumes and the amounts of DPP-4 by the volume factor,
 # clearances by the clearance factor.  The patients weighed 91 kg on
 # average (65 to 116).
@@ -72,6 +74,14 @@
 
 VILDAGLIPTIN_MOLECULAR_WEIGHT <- 303.40   # g/mol, so ng per nmol
 
+# Landersdorfer 2012 (PMID 22442826), Results (printed p. 395), read on the
+# PDF 2026-11-18: the 13 patients' averages, 91 kg, 166 cm, 53.5 years, 6 men
+# and 7 women (the intravenous data co-modelled from healthy volunteers print
+# no demographics).  The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort). Factors 1.014 on
+# volume, 1.010 on clearance.
+VILDAGLIPTIN_COHORT <- list(weight = 91, height = 166, age = 53.5, men = 6, women = 7)
+
 #' Vildagliptin pharmacokinetics (oral)
 #'
 #' Two compartments with target-mediated binding to DPP-4 and its hydrolysis
@@ -84,7 +94,7 @@ VILDAGLIPTIN_MOLECULAR_WEIGHT <- 303.40   # g/mol, so ng per nmol
 #' @export
 vildagliptin <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, VILDAGLIPTIN_COHORT))
   nmol <- VILDAGLIPTIN_MOLECULAR_WEIGHT / 1000   # mcg per nmol
   cl   <- 36.4 / 60 * size$clearance             # L/min
 

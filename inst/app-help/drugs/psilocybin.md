@@ -38,4 +38,4 @@ Intravenous psilocybin is not offered: it would need a conversion compartment be
 
 ### Covariates
 
-Holze published no size covariate, so the apparent parameters are a reference adult's: unscaled with *Adjust weight to fat-free mass* off, and scaled with the Al-Sallami fat-free mass ratio (volume) and its 0.75 power (clearance) with it on. That scaling is a stanpumpR convention, not a published fit.
+Holze published no size covariate, so the apparent parameters are those of the study's typical subject (72 kg, half men and half women): unscaled with *Adjust weight to fat-free mass* off, and with it on scaled from that subject with the Al-Sallami fat-free mass ratio (volume) and its 0.75 power (clearance). That scaling is a stanpumpR convention, not a published fit.
