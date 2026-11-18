@@ -135,10 +135,12 @@ test_that("an interaction run through the event engine is unchanged (C3)", {
   out <- simulatedFor(DT, 21 * 1440, asm = TRUE)
   at <- function(drug, times) out[[drug]]$wide$Plasma[match(times, out[[drug]]$wide$Time)]
   expect_equal(nrow(out$lamotrigine$interaction$CL), 191)
+  # lamotrigine re-pinned 2026-11-18, after its model was anchored at
+  # Milosheska's cohort (docs/weight-adjustment.md); the engine is unchanged
   expect_equal(at("lamotrigine", c(720, 10080, 20160, 30240)),
-               c(0.90953119360635593, 4.1974622486443804, 3.9708570414423954,
-                 3.8655746842418091), tolerance = 1e-9)
-  expect_equal(sum(out$lamotrigine$wide$Plasma), 23335.340149939024, tolerance = 1e-9)
+               c(0.79175143632605949, 3.74341724792633501, 3.56377048637103799,
+                 3.46858106786972753), tolerance = 1e-9)
+  expect_equal(sum(out$lamotrigine$wide$Plasma), 20773.860809865215, tolerance = 1e-9)
   expect_equal(at("carbamazepine", c(720, 10080, 20160, 30240)),
                c(2.4497747968288675, 8.0169027613422763, 6.8105332273069896,
                  6.643078530623538), tolerance = 1e-9)
