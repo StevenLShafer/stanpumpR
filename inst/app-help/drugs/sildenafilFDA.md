@@ -1,6 +1,6 @@
 ### The model
 
-Sildenafil's parameters come from Pfizer's population model as printed and reproduced in the FDA's Clinical Pharmacology Review of Revatio injection (NDA 22-473, 2009). The model was fitted to 45 healthy men who received sildenafil intravenously (20 to 80 mg) and orally, 1479 concentrations in all. It has two compartments with first-order absorption after a lag:
+Sildenafil's parameters come from Pfizer's population model as printed and reproduced in the FDA's Clinical Pharmacology Review of Revatio injection (NDA 22-473, 2009). The model was fitted to 45 healthy volunteers (the review does not give their sex) who received sildenafil intravenously (20 to 80 mg) and orally, 1479 concentrations in all. It has two compartments with first-order absorption after a lag:
 
 - clearance 29.5 L/h;
 - central volume 73.2 L;

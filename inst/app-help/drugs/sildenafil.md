@@ -4,7 +4,7 @@ stanpumpR holds 2 published models of sildenafil. You do not choose between them
 
 | Model | Source | Studied in |
 |---|---|---|
-| [sildenafilFDA](help:drugs/sildenafilFDA) | FDA review of NDA 22-473 | 45 healthy men (taken as adults, 18 years and over); with the **Pulmonary hypertension** field, clearance 30% lower |
+| [sildenafilFDA](help:drugs/sildenafilFDA) | FDA review of NDA 22-473 | 45 healthy volunteers (taken as adults, 18 years and over); with the **Pulmonary hypertension** field, clearance 30% lower |
 | [sildenafilMiura](help:drugs/sildenafilMiura) | Miura 2026 | children with pulmonary arterial hypertension, 0.4-14.8 years, 6.5-54.9 kg |
 
 **The rule.** Among the models whose studied age range (and weight range, where the paper printed one) includes the patient, the one fitted to more patients is chosen, then the newer. If none includes the patient, the one whose ranges are nearest is chosen.
