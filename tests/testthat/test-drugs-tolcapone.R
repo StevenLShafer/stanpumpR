@@ -23,6 +23,25 @@ test_that("lean body weight 15 kg either side of 55 gives 80% and 119% of CL (th
   expect_equal(on$v2, 12 * size$volume)
 })
 
+test_that("serum albumin on Vp: (albumin/44 g/L)^2.82, the median when blank", {
+  blank <- tolcapone(70, 170, 65, "male", FALSE)$PK$default
+  expect_equal(blank$v2, 12)
+  expect_equal(tolcapone(70, 170, 65, "male", FALSE, albumin = 4.4)$PK$default$v2, 12)
+  low <- tolcapone(70, 170, 65, "male", FALSE, albumin = 3.5)$PK$default
+  expect_equal_rounded(12 * 0.524, low$v2, tolerance = 0.001)
+  # only Vp moves: clearance, Q, Vc and so the steady-state exposure do not
+  expect_equal(low[c("cl1", "cl2", "v1")], blank[c("cl1", "cl2", "v1")])
+  # the power floors at MIN_ALBUMIN, and stays finite and positive
+  floor <- tolcapone(70, 170, 65, "male", FALSE, albumin = 0)$PK$default$v2
+  expect_equal(floor, 12 * (10 * MIN_ALBUMIN / 44)^2.82)
+  expect_gt(floor, 0)
+  # getDrugPK() passes the Patient Profile's field to it
+  expect_true("albumin" %in% names(formals(tolcapone)))
+  expect_true("tolcapone" %in% patientFieldReaders("albumin"))
+  expect_match(tolcapone(70, 170, 65, "male", FALSE)$reference, "held at the median 44 g/L")
+  expect_match(tolcapone(70, 170, 65, "male", FALSE, albumin = 3)$reference, "as entered")
+})
+
 test_that("steady state on 200 mg three times a day: AUC, half-life, the band", {
   res <- pdSimulate(pdRegimen("tolcapone", "mg PO", 200, 360, 40), maximum = 40 * 360,
                     age = 65)
