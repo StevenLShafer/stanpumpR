@@ -8,6 +8,8 @@ Steven L. Shafer chose the drugs on 2026-11-18, with a weekly return to the list
 - **Anesthesia:** single models of esketamine, ciprofol, landiolol, levosimendan and nalbuphine.
 - **Biologics** relevant to surgery and to sepsis.
 
+A second tranche followed the same day: the drugs most prescribed in US outpatients that stanpumpR lacks, from a report ChatGPT wrote for Steven (17 November 2026; see *The outpatient tranche* below).
+
 The list will be revisited every week or so. Each drug is still added the ordinary way: `docs/adding-a-drug.md`, all seven items, every number read in the paper. This directory only finds the papers and keeps track.
 
 ## Files
@@ -16,8 +18,9 @@ The list will be revisited every week or so. Each drug is still added the ordina
 |---|---|---|
 | `plan.csv` | One row per planned drug. Gives its category, the names nlmixr2lib files it under, priority, `status` and notes (product, dose basis, US approval). | Hand. The weekly routine updates `status`. |
 | `candidates.csv` | Every nlmixr2lib model of every planned drug, ranked by study size. `pick` marks the papers to get first: the largest study, and the most recent if that is another paper. | `data-raw/libraryExpansionCandidates.R` |
-| `archive-status.csv` | For each pick: its PMID and PMC ID (from PubMed's ID converter), and whether it is in the stanpumpR paper archive (a Drive search by file name). | The weekly routine, or by hand. |
-| `download-ids.txt` | The same papers as a bare list, one PMID per line (a DOI where there is none), to paste into the local session that downloads papers. | `data-raw/libraryExpansionCandidates.R` |
+| `outpatient-leads.csv` | The papers and FDA documents ChatGPT's report gave for each outpatient drug, one row per lead, with the report's evidence letter (P population fit, C compartmental, D descriptive, R FDA review or label) and what was checked. For a drug nlmixr2lib does not model, these are the papers to get. | Hand, from the report. |
+| `archive-status.csv` | For each pick, and each lead of a drug nlmixr2lib does not model: its PMID and PMC ID (from PubMed's ID converter, or a PubMed search by DOI for a paper not in PMC), and whether it is in the stanpumpR paper archive (a Drive search by file name). | The weekly routine, or by hand. |
+| `download-ids.txt` | The papers to download as a bare list, one PMID per line (a DOI where there is none): the picks not in the archive, then the leads of drugs nlmixr2lib does not model. Paste it into the local session that downloads papers. | `data-raw/libraryExpansionCandidates.R` |
 | `downloads.md` | The picks not yet in the archive, by category, with DOI, PubMed and free-PMC links and the archive file name to save each under. | `data-raw/libraryExpansionCandidates.R` |
 
 Rebuild after `plan.csv` or `archive-status.csv` changes, or after a fresh run of `data-raw/nlmixr2libCrossCheck.R`:
@@ -26,10 +29,23 @@ Rebuild after `plan.csv` or `archive-status.csv` changes, or after a fresh run o
 Rscript --vanilla data-raw/libraryExpansionCandidates.R .
 ```
 
+## The outpatient tranche
+
+ChatGPT's report ranked the drugs stanpumpR lacked against ClinCalc's 2024 US top 300 (prescription counts from MEPS), flagged FDA's oral narrow-therapeutic-index list, and gave starting papers for each. Its claims were checked before anything was recorded here:
+- **The NTI claim holds.** FDA's April 2026 product-specific guidance list (p. 11) names 14 oral NTI ingredients. Of these, stanpumpR lacked levothyroxine and liothyronine. Levothyroxine has since been added (#771, with insulin aspart and insulin degludec), so **liothyronine** is the one left, at priority 1.
+- **Every PMID is real, and none is by Gideon Koren.** Two papers are mislabelled: PMID 24888255 is a glucose-clamp study of IDegAsp, not a population fit; PMID 34201093 is a paediatric trial-design model. The adult levothyroxine DOI resolves to PMID 40348586. The insulin degludec DOI 10.1007/s00210-026-06074-2 is not in PubMed.
+- **Several drugs are already in the antihypertensive or antidiabetic registries** with a status of their own (amlodipine's Donnelly 1993 is ready for source reproduction; losartan, furosemide, spironolactone, clonidine and nifedipine have records awaiting source extraction). `plan.csv` notes each.
+- **Hydroxychloroquine** was already planned under Antimalarials, so it is not repeated. **Desvenlafaxine** is in the library only as venlafaxine's metabolite; its row is a route to add, not a new drug.
+
+Priorities: 1 for an FDA oral NTI drug, 2 for ranks 1-50, 3 for ranks 51-147. The report's caveats (endogenous baselines for the hormones, prodrugs and active metabolites, release formulations, a drug whose only data are descriptive) are in each row's notes. They decide whether a drug can be modelled at all, before any parameter is read.
+
+The report is a lead, not a source, like any other model's reading (AGENTS.md): every number in a model is still read in the paper.
+
 ## Status on 2026-11-18
 
-- **None of the 107 picks was in the archive.** Every one has a PMID, checked against a Drive search by `PMID_` and DOI file name. PubMed's ID converter knows only papers in PubMed Central, so five PMIDs came from a PubMed search by DOI instead.
-- **101 of the 107 are free in PubMed Central**, so they need no library login.
+- **First tranche: none of the 107 picks was in the archive.** Every one has a PMID, checked against a Drive search by `PMID_` and DOI file name. PubMed's ID converter knows only papers in PubMed Central, so five PMIDs came from a PubMed search by DOI instead. 101 of the 107 are free in PubMed Central, so they need no library login.
+- **Outpatient tranche: 43 more picks, none in the archive**, 38 free in PubMed Central. Of the 42 report leads for drugs nlmixr2lib does not model, one is in the archive (losartan's Lo 1995, PMID 8529329, which the antihypertensive registry already cites).
+- **`download-ids.txt` holds 191 PMIDs**: 150 picks and 41 leads.
 - **The picks are chosen mechanically.** The "most recent" pick is sometimes a small or specialised study, such as a PBPK model or neonates only. Read the `candidates.csv` rows of a drug before settling on its source.
 
 ### Drugs nlmixr2lib does not model: leads from a PubMed search (2026-11-18)
