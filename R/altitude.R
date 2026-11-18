@@ -1,0 +1,187 @@
+# -----------------------------------------------------------------------------
+# Altitude and the inhaled anesthetics
+# -----------------------------------------------------------------------------
+# Steven L. Shafer, 2026-11-18: "add to the anesthesia sliders altitude,
+# starting at sea level and increasing to 7000 meters.  The scale can be
+# linear."  Drafted by Claude Code the same day.
+#
+# WHAT ALTITUDE DOES.  The barometric pressure falls; nothing about the drug or
+# the patient changes.  The gas engine (R/advanceClosedFormGas.R) carries every
+# tension as a PARTIAL PRESSURE in % of one sea-level atmosphere (760 Torr),
+# and in those units its mass balance does not depend on the barometric
+# pressure at all: ventilation, cardiac output and the tissue capacities move
+# amounts in proportion to partial pressure (C = P / RT in gas, lambda P / RT in
+# blood and tissue), so the RT cancels and the barometric pressure never
+# enters.  Anesthetic potency follows partial pressure too, so MAC, in % of a
+# sea-level atmosphere, is the same at every altitude (James and White 1984,
+# PMID 6239572, who proposed calling it the minimum alveolar PARTIAL PRESSURE;
+# James 1982, PMID 7091603, nitrous oxide's analgesia falling with its partial
+# pressure at altitude).  What altitude changes is where gas VOLUMES and
+# FRACTIONS meet partial pressures, with r = P_B / 760:
+#
+#   1. Room air, and every carrier gas from a flowmeter, is a FRACTION of the
+#      ambient pressure: oxygen, nitrogen and nitrous oxide enter at r times
+#      their fraction.  70% nitrous oxide at 7000 m is about 32% of a
+#      sea-level atmosphere.
+#   2. A variable-bypass vaporizer (sevoflurane, isoflurane) delivers about the
+#      dial's sea-level PARTIAL PRESSURE at any altitude: the saturated vapour
+#      pressure does not depend on the barometric pressure, so the vapour's
+#      fraction of the output rises as the pressure falls and its partial
+#      pressure stays put (James and White 1984).  The desflurane vaporizer
+#      (Tec 6) is a heated, pressurised gas-vapour blender that delivers the
+#      dial's VOLUME percent (Andrews and Johnston 1993, PMID 8498675), so its
+#      partial pressure is r times the dial (ALTITUDE_VOLUME_PERCENT_VAPORIZERS).
+#   3. The vapour displaces carrier gas in proportion to its FRACTION of the
+#      fresh gas, its partial pressure over r.
+#   4. Gas taken up leaves an ambient VOLUME behind: uptake in L/min at the
+#      ambient pressure is lambda Qco dP / (100 r), 1/r times the sea-level
+#      volume for the same partial pressures.  So the concentration and second
+#      gas effects (the uptake coupling) grow at altitude, and so does the
+#      volume oxygen consumption takes, VO2 (1 - RQ) / r, VO2 being a
+#      sea-level volume.  The carbon dioxide in the exhaled gas, VCO2 / MV of
+#      its volume at sea level, is VCO2 / (MV r) of it.
+#
+# NOT MODELLED.  Water vapour (47 Torr at 37 C) is not carried by the engine at
+# any altitude, and the flows are taken as true ambient flows: a flowmeter
+# calibrated at sea level reads low at altitude (James and White 1984), and
+# the dose table holds the true flow.  Both are [decision]s put to Shafer on
+# 2026-11-18.  The intravenous drugs do not respond to altitude, and neither
+# does cardiac output or ventilation (each has its own control), nor
+# acclimatisation (haemoglobin, a hypoxic ventilatory response).
+#
+# THE PRESSURE.  West 1996 (PMID 8904608, J Appl Physiol 81:1850), the mean of
+# the model atmospheres for latitude 15 degrees in all seasons and 30 degrees
+# in summer, which predicts the pressure at high mountain sites to within 1%
+# where the ICAO standard atmosphere reads too low:
+#     P_B (Torr) = exp(6.63268 - 0.1112 h - 0.00149 h^2),   h in km
+# 759.5 Torr at 0 km (exp(6.63268)), 324 Torr at 7 km, where the ICAO
+# standard atmosphere gives 308.  Read from the abstract; to be confirmed on
+# the PDF.  pressureRatio() divides by the equation's own sea level, so the
+# ratio is exactly 1 at 0 m.
+# -----------------------------------------------------------------------------
+
+#' Altitude range, step and default, metres
+#' @keywords internal
+ALTITUDE_MIN <- 0
+#' @rdname ALTITUDE_MIN
+#' @keywords internal
+ALTITUDE_MAX <- 7000
+#' @rdname ALTITUDE_MIN
+#' @keywords internal
+ALTITUDE_STEP <- 100
+#' @rdname ALTITUDE_MIN
+#' @keywords internal
+ALTITUDE_DEFAULT <- 0
+
+#' West 1996's model atmosphere: ln P_B (Torr) = a + b h + c h^2, h in km
+#' @keywords internal
+ALTITUDE_WEST_COEFFICIENTS <- c(a = 6.63268, b = -0.1112, c = -0.00149)
+
+#' Sea-level pressure, Torr: the unit of the gas engine's tensions
+#' @keywords internal
+SEA_LEVEL_PRESSURE <- 760
+
+#' The vaporizers that deliver the dial's volume percent rather than its
+#' sea-level partial pressure (the desflurane Tec 6; Andrews and Johnston 1993)
+#' @keywords internal
+ALTITUDE_VOLUME_PERCENT_VAPORIZERS <- "desflurane"
+
+#' An altitude, checked
+#' @param altitude metres above sea level, or NULL for sea level
+#' @returns the altitude
+#' @keywords internal
+checkAltitude <- function(altitude)
+{
+  if (is.null(altitude)) return(ALTITUDE_DEFAULT)
+  if (!is.numeric(altitude) || length(altitude) != 1 || !is.finite(altitude) ||
+      altitude < ALTITUDE_MIN || altitude > ALTITUDE_MAX)
+    stop("Invalid altitude: ", format(altitude), " (", ALTITUDE_MIN, " to ",
+         ALTITUDE_MAX, " m)")
+  altitude
+}
+
+#' Barometric pressure at an altitude (West 1996)
+#'
+#' @param altitude metres above sea level
+#' @returns the barometric pressure, Torr
+#' @export
+barometricPressure <- function(altitude = ALTITUDE_DEFAULT)
+{
+  h <- checkAltitude(altitude) / 1000
+  k <- ALTITUDE_WEST_COEFFICIENTS
+  exp(k[["a"]] + k[["b"]] * h + k[["c"]] * h^2)
+}
+
+#' The barometric pressure as a fraction of a sea-level atmosphere
+#'
+#' West's equation gives 759.5 Torr at sea level, not exactly 760, so the
+#' fraction is taken relative to the equation's own sea level: exactly 1 at
+#' 0 m, so that nothing changes there.
+#'
+#' @param altitude metres above sea level
+#' @returns P_B(altitude) / P_B(0)
+#' @keywords internal
+pressureRatio <- function(altitude = ALTITUDE_DEFAULT)
+{
+  barometricPressure(altitude) / barometricPressure(0)
+}
+
+#' The pressure ratio a gas body was built at
+#' @param body output of \code{getGasBody()}, possibly with \code{altitude}
+#' @returns P_B / 760, 1 at sea level
+#' @keywords internal
+gasPressureRatio <- function(body)
+{
+  if (is.null(body) || is.null(body$altitude)) return(1)
+  pressureRatio(body$altitude)
+}
+
+#' An altitude read from the slider; an unreadable value is sea level
+#' @param value \code{input$physiology_altitude}
+#' @returns metres
+#' @keywords internal
+altitudeFromInput <- function(value)
+{
+  v <- suppressWarnings(as.numeric(value))
+  if (length(v) != 1 || !is.finite(v)) return(ALTITUDE_DEFAULT)
+  min(max(v, ALTITUDE_MIN), ALTITUDE_MAX)
+}
+
+#' The generated help block `physiology-altitude-table`
+#'
+#' Each agent at four altitudes, simulated: the barometric pressure, the
+#' inspired partial pressure (% of a sea-level atmosphere), the brain at 10
+#' minutes as a multiple of MAC, and the alveolar oxygen.  Fresh gas equals the
+#' minute ventilation, 6 L/min, so nothing is rebreathed.
+#' @returns markdown table
+#' @noRd
+helpPhysiologyAltitudeTable <- function()
+{
+  if (!is.null(.physiologyCache$altitudeTable)) return(.physiologyCache$altitudeTable)
+  agents <- c(sevoflurane = 2, desflurane = 6, nitrousOxide = 100 * 4 / 6)
+  label <- c(sevoflurane = "Sevoflurane, dial 2%", desflurane = "Desflurane, dial 6%",
+             nitrousOxide = "Nitrous oxide 4 L/min, oxygen 2 L/min")
+  rows <- character(0)
+  for (g in names(agents)) for (h in c(0, 2000, 4000, 7000)) {
+    dt <- if (g == "nitrousOxide")
+      data.frame(Drug = c(g, "oxygen", "ventilation"), Time = 0, Dose = c(4, 2, 6))
+    else
+      data.frame(Drug = c(g, "oxygen", "air", "ventilation"), Time = 0,
+                 Dose = c(agents[[g]], 3, 3, 6))
+    sim <- simulateGases(dt, weight = 70, age = 40, maximum = 10, altitude = h)
+    n <- length(sim$timeLine)
+    props <- gasPropertiesAt(NULL)
+    mac <- macForAge(props$MAC40[props$gas == g], 40)
+    rows <- c(rows, sprintf("| %s | %s | %.0f | %s | %s | %.0f |",
+                            label[[g]], format(h, big.mark = ","),
+                            barometricPressure(h),
+                            formatC(sim$state[[g]][n, 1], digits = 1, format = "f"),
+                            formatC(sim$state[[g]][n, 3] / mac, digits = 2, format = "f"),
+                            sim$state$oxygen[n, 2] * SEA_LEVEL_PRESSURE / 100))
+  }
+  .physiologyCache$altitudeTable <- paste(c(
+    "| Fresh gas | Altitude (m) | Barometric pressure (Torr) | Inspired (% of a sea-level atmosphere) | Brain at 10 min (MAC) | Alveolar oxygen at 10 min (Torr) |",
+    "|---|---|---|---|---|---|",
+    rows
+  ), collapse = "\n")
+}

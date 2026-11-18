@@ -15,7 +15,8 @@ simulateGases(
   deadSpace = GAS_DEAD_SPACE_FRACTION,
   oxygenUptake = TRUE,
   physiology = NULL,
-  temperature = NULL
+  temperature = NULL,
+  altitude = NULL
 )
 }
 \arguments{
@@ -41,6 +42,11 @@ groups}
 \item{temperature}{NULL (37 C), or the body temperature in C, which sets
 the agents' solubility and MAC (\code{gasPropertiesAt()}); kept in the
 body as \code{temperature}}
+
+\item{altitude}{NULL (sea level), or metres above sea level (0 to 7000),
+kept in the body as \code{altitude}; the barometric pressure it sets
+(\code{barometricPressure()}, R/altitude.R) changes the fresh gas, room
+air and the volume taken up, not the potency}
 }
 \value{
 \code{NULL} if the dose table contains no gases, otherwise the list

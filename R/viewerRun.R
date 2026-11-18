@@ -663,7 +663,10 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_)
   bySetting <- split(rows, rows$Drug)
   knots <- sort(unique(c(0, rows$Time[rows$Time > 0])))
   deadSpace <- if (is.null(gr$deadSpace)) GAS_DEAD_SPACE_FRACTION else gr$deadSpace
-  settings <- lapply(knots, function(k) gasSettingsAt(bySetting, k, deadSpace))
+  # Partial pressures at the body's altitude (R/altitude.R), so the vapour
+  # delivered is in sea-level millilitres, as the amounts are
+  settings <- lapply(knots, function(k) gasSettingsAt(bySetting, k, deadSpace,
+                                                      gasPressureRatio(body)))
   flow <- vapply(settings, function(s) s$Q, numeric(1))
   fresh <- vapply(settings, function(s) unname(s$Ffgf[[g]]), numeric(1))
   mv <- vapply(settings, function(s) s$MV, numeric(1))

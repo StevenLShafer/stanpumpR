@@ -1,10 +1,11 @@
 The **Physiology** panel in the left-hand column asks *what if*: what if hepatic
 function were half of normal, the kidneys shut down, or cardiac output fell
-by two thirds? It has four sliders of organ function, and a fifth for body
-temperature (see *Body temperature* below). Each of the four is a multiple of
+by two thirds? It has four sliders of organ function, a fifth for body
+temperature (see *Body temperature* below) and a sixth for altitude, which
+acts on the inhaled anesthetics only (see *Altitude* below). Each of the four is a multiple of
 normal function, on a log scale from a tenth (0.1) to ten times (10). All four
 start at 1, which is normal and changes nothing. **Reset to normal** puts them
-back, and the temperature to 37 °C.
+back, the temperature to 37 °C and the altitude to sea level.
 
 For the reasoning behind each rule and the evidence for it, see
 [Physiology and pharmacokinetics: the evidence](help:models/physiology-and-pharmacokinetics).
@@ -306,6 +307,60 @@ a tension you typed and does not move with MAC; the summed MAC series and its
 threshold do. GasMan models none of this:
 its source code mentions temperature only in the vaporiser's vapour pressure.
 
+## Altitude and the inhaled anesthetics
+
+**Altitude** (0 to 7,000 m) sets the barometric pressure from West's model
+atmosphere, P = exp(6.63268 − 0.1112 h − 0.00149 h²) Torr with h in km:
+760 Torr at sea level, 604 at 2,000 m, 475 at 4,000 m and 324 at 7,000 m.
+West built it for high mountain sites, which it predicts to within 1%, where
+the aviation standard atmosphere reads too low. Altitude acts on the inhaled
+anesthetics only.
+
+**Potency follows partial pressure.** The tensions stanpumpR plots, and MAC,
+are partial pressures in % of a sea-level atmosphere, so 1 MAC means the same
+at every altitude. James and White proposed calling MAC the minimum alveolar
+partial pressure for this reason. James and colleagues found that the
+analgesia of 50% nitrous oxide fell with its partial pressure at 1,460 and
+3,300 m.
+
+**What the machine delivers.** Room air, and every gas from a flowmeter, is a
+fraction of the ambient pressure. So 67% nitrous oxide at 7,000 m is 29% of a
+sea-level atmosphere. A variable-bypass vaporizer (sevoflurane, isoflurane)
+delivers about its dial's sea-level partial pressure at any altitude, because
+the agent's saturated vapour pressure does not depend on the barometric
+pressure. The desflurane vaporizer is a heated, pressurised blender that
+delivers its dial's volume percent, which is a lower partial pressure at
+altitude: to keep the same depth, turn the dial up by 760 over the pressure.
+
+Simulated by stanpumpR (70 kg, age 40, ventilation 6 L/min, fresh gas
+6 L/min):
+
+<!-- generated: physiology-altitude-table -->
+
+**The volumes.** In partial pressures the kinetics do not depend on the
+pressure, and with fresh gas above the minute ventilation the sevoflurane
+curve is the same at every altitude. What changes is where a partial pressure
+becomes a volume. The same partial pressure taken up is a larger ambient
+volume at altitude, so the concentration and second gas effects are larger,
+and so is the volume the oxygen consumed takes. The carbon dioxide is a
+larger share of the exhaled gas, so at low flows the absorber, by removing it,
+concentrates the rebreathed agent more. At 2 L/min of oxygen with 2%
+sevoflurane and a minute ventilation of 5 L/min, the end-tidal tension after an hour is 1.60% at sea level and
+1.81% at 7,000 m.
+
+**Oxygen.** Breathing air at 5 L/min, the alveolar oxygen after 30 minutes falls
+from about 108 Torr at sea level to about 16 Torr at 7,000 m: the inspired
+partial pressure falls, and the oxygen consumed takes the same partial
+pressure from it.
+
+**Not modelled.** Water vapour, which takes 47 Torr of the inspired gas at any
+altitude, is not carried by the engine at sea level or above, so the alveolar
+oxygen is somewhat higher than in a real patient, most at height. Flows are
+taken as true flows; a flowmeter calibrated at sea level reads differently at
+altitude (James and White). Acclimatisation (a larger haemoglobin mass, a
+hypoxic drive to breathe) is not modelled, and cardiac output and ventilation
+keep their own controls. The intravenous drugs do not respond.
+
 ## Body temperature and the intravenous drugs
 
 Cooling slows the elimination of most intravenous drugs, because enzymes and
@@ -425,6 +480,9 @@ Allott PR, Steward A, Flook V, Mapleson WW. Variation with temperature of the
 solubilities of inhaled anaesthetics in water, oil and biological media.
 *Br J Anaesth* 1973;45:294-300. doi:10.1093/bja/45.3.294
 
+Andrews JJ, Johnston RV. The new Tec 6 desflurane vaporizer.
+*Anesth Analg* 1993;76:1338-41. doi:10.1213/00000539-199376060-00027
+
 Antognini JF, Lewis BK, Reitan JA. Hypothermia minimally decreases nitrous
 oxide anesthetic requirements. *Anesth Analg* 1994;79:980-2.
 doi:10.1213/00000539-199411000-00027
@@ -447,6 +505,12 @@ scientific autobiography, manuscript, 2017.
 Hiraoka H, Yamamoto K, Miyoshi S, et al. Kidneys contribute to the
 extrahepatic clearance of propofol in humans, but not lungs and brain.
 *Br J Clin Pharmacol* 2005;60:176-82. doi:10.1111/j.1365-2125.2005.02393.x
+
+James MF, Manson ED, Dennett JE. Nitrous oxide analgesia and altitude.
+*Anaesthesia* 1982;37:285-8. doi:10.1111/j.1365-2044.1982.tb01100.x
+
+James MF, White JF. Anesthetic considerations at moderate altitude.
+*Anesth Analg* 1984;63:1097-105. PMID 6239572
 
 Levine BD, Giller CA, Lane LD, Buckey JC, Blomqvist CG. Cerebral versus
 systemic hemodynamics during graded orthostatic stress in humans.
@@ -474,6 +538,10 @@ valve implantation. *J Am Geriatr Soc* 2021;69:494-9. doi:10.1111/jgs.16882
 
 Wilkinson GR, Shand DG. Commentary: a physiological approach to hepatic drug
 clearance. *Clin Pharmacol Ther* 1975;18:377-90.
+
+West JB. Prediction of barometric pressures at high altitude with the use of
+model atmospheres. *J Appl Physiol* 1996;81:1850-4.
+doi:10.1152/jappl.1996.81.4.1850
 
 Williams LR, Leggett RW. Reference values for resting blood flow to organs of
 man. *Clin Phys Physiol Meas* 1989;10:187-217.

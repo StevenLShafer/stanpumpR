@@ -359,7 +359,7 @@ gasWashout <- function(sim, gasDose, weight = 70, cardiacOutput = NULL,
     y <- sim$state[[g]]
     for (iv in unique(interval))
     {
-      s <- gasSettingsAt(bySetting, changes[iv], deadSpace)
+      s <- gasSettingsAt(bySetting, changes[iv], deadSpace, gasPressureRatio(body))
       # Agent inflow off, no coupling.  "open" is the no-rebreathing limit:
       # the patient inspires fresh gas only, whatever the flow.
       #
@@ -369,8 +369,10 @@ gasWashout <- function(sim, gasDose, weight = 70, cardiacOutput = NULL,
       # oxygen consumed.  It is a constant, so the washout stays linear.
       uO2 <- 0; cE <- 0
       if (rebreathing && oxygenUptake) {
-        uO2 <- body$VO2 * (1 - GAS_RESPIRATORY_QUOTIENT)
-        if (s$MV > 0) cE <- min(GAS_RESPIRATORY_QUOTIENT * body$VO2 / s$MV,
+        # Ambient volumes at the body's altitude (R/altitude.R)
+        VO2 <- body$VO2 / gasPressureRatio(body)
+        uO2 <- VO2 * (1 - GAS_RESPIRATORY_QUOTIENT)
+        if (s$MV > 0) cE <- min(GAS_RESPIRATORY_QUOTIENT * VO2 / s$MV,
                                 GAS_MAX_EXHALED_CO2)
       }
       A <- gasSystemSoluble(props[props$gas == g, ], body, s$Q, s$VA, Qco,
@@ -745,13 +747,17 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
   m      <- nS - 1L
   alvCol <- (seq_len(nG) - 1) * m + 1          # alveolar column of each gas
   volatiles <- setdiff(potentAgents(), "nitrousOxide")
+  # The barometric pressure as a fraction of a sea-level atmosphere
+  # (R/altitude.R): the tensions are partial pressures, the uptake an ambient
+  # volume.
+  ratio  <- gasPressureRatio(body)
 
   # Summed uptake as a linear function of the state:
-  #   u = sum_g lambda_g Qco (alveolar - mixed venous) / 100
+  #   u = sum_g lambda_g Qco (alveolar - mixed venous) / (100 r)
   uWeight <- numeric(m * nG)
   for (k in seq_len(nG)) {
     lb <- props$lambda_blood[props$gas == gases[k]]
-    uWeight[alvCol[k] + 0:(m - 1)] <- lb * Qco / 100 *
+    uWeight[alvCol[k] + 0:(m - 1)] <- lb * Qco / (100 * ratio) *
       c(1, -gasTissueShares(body))
   }
 
@@ -768,7 +774,7 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
     rows <- which(washout$interval[idx] == iv & is.na(out))
     if (length(rows) == 0) next
     t0 <- washout$changes[iv]
-    s  <- gasSettingsAt(washout$bySetting, t0, washout$deadSpace)
+    s  <- gasSettingsAt(washout$bySetting, t0, washout$deadSpace, ratio)
 
     # Fresh gas once `off` is off.  The carrier flows that remain keep their
     # proportions (the total is turned up, not the mixture changed), the
@@ -780,13 +786,16 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
     if (sum(flow) == 0) flow[["oxygen"]] <- 1
     vap <- vapply(volatiles, function(g)
       if (g %in% off) 0 else settingAt(washout$bySetting[[g]], t0), numeric(1))
-    carrier <- max(0, 1 - sum(vap) / 100)
+    # Partial pressures, as gasSettingsAt() gives them (R/altitude.R)
+    vpv <- intersect(names(vap), ALTITUDE_VOLUME_PERCENT_VAPORIZERS)
+    vap[vpv] <- vap[vpv] * ratio
+    carrier <- max(0, 1 - sum(vap) / (100 * ratio))
     Fin <- stats::setNames(numeric(nG), gases)
     for (g in intersect(volatiles, gases)) Fin[[g]] <- vap[[g]]
     if ("nitrousOxide" %in% gases)
-      Fin[["nitrousOxide"]] <- 100 * carrier * flow[["nitrousOxide"]] / sum(flow)
+      Fin[["nitrousOxide"]] <- 100 * ratio * carrier * flow[["nitrousOxide"]] / sum(flow)
     if ("nitrogen" %in% gases)
-      Fin[["nitrogen"]] <- 100 * carrier * AIR_FRACTION_N2 * flow[["air"]] / sum(flow)
+      Fin[["nitrogen"]] <- 100 * ratio * carrier * AIR_FRACTION_N2 * flow[["air"]] / sum(flow)
 
     # Block-diagonal system matrix, transposed for row-vector states, and the
     # constant inflow.
@@ -813,7 +822,7 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
     # Oxygen consumed shrinks the alveolar gas too, net of the carbon dioxide
     # that replaces it; a constant, added to the uptake of the other gases.
     uOxygen <- if (isTRUE(washout$oxygenUptake))
-      body$VO2 * (1 - GAS_RESPIRATORY_QUOTIENT) / Va else 0
+      body$VO2 / ratio * (1 - GAS_RESPIRATORY_QUOTIENT) / Va else 0
 
     # The fastest rate of the uptake coupling.  Its derivative is the make-up
     # (or displaced) gas, a gas's tension times the summed uptake per alveolar
@@ -826,7 +835,7 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
     tension <- vapply(seq_len(nG), function(k)
       max(abs(Y0[rows, alvCol[k] + 0:(m - 1)]), Fin[[k]]), numeric(1))
     lambdaBlood <- props$lambda_blood[match(gases, props$gas)]
-    coupling <- 2 * Qco / Va * sum(lambdaBlood * tension) / 100 + uOxygen
+    coupling <- 2 * Qco / Va * sum(lambdaBlood * tension) / (100 * ratio) + uOxygen
 
     # Each step is the classical Runge-Kutta method's, as since 2026-10-05,
     # while it is within GAS_RECOVERY_ACCURATE_STEP (first hour) or

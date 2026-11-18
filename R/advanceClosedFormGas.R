@@ -437,7 +437,8 @@ gasStateCount <- function(body) 2L + length(gasTissueShares(body))
 #' @param props gas property table from \code{getGasProperties()}
 #' @param body geometry from \code{getGasBody()}
 #' @param Qco cardiac output, L/min
-#' @returns total uptake in L/min
+#' @returns total uptake in L/min, at the ambient pressure of the body's
+#'   altitude
 gasTotalUptake <- function(state, props, body, Qco)
 {
   total <- 0
@@ -448,7 +449,9 @@ gasTotalUptake <- function(state, props, body, Qco)
     lb <- props$lambda_blood[props$gas == g]
     total <- total + lb * Qco * (y[[2]] - gasMixedVenous(y, body)) / 100
   }
-  total
+  # An ambient volume: the same partial pressures are 1/r the volume at sea
+  # level (R/altitude.R)
+  total / gasPressureRatio(body)
 }
 
 
@@ -791,10 +794,18 @@ settingAt <- function(doseRows, t)
 #'   "ventilation" row of the dose table is MINUTE ventilation, and alveolar
 #'   ventilation is \code{MV * (1 - deadSpace)}.  Zero makes the row alveolar
 #'   ventilation, as it is in GasMan.
+#' @param ratio the barometric pressure as a fraction of a sea-level
+#'   atmosphere (\code{gasPressureRatio()}, R/altitude.R).  The fresh gas is
+#'   returned as partial pressures in % of a sea-level atmosphere: a flowmeter
+#'   gas at \code{ratio} times its fraction, a variable-bypass vaporizer at its
+#'   dial, and the desflurane vaporizer, which delivers volume percent, at
+#'   \code{ratio} times its dial.
 #' @returns a list with total fresh gas flow \code{Q}, minute ventilation
-#'   \code{MV}, alveolar ventilation \code{VA}, and the fresh-gas fractions
+#'   \code{MV}, alveolar ventilation \code{VA}, and the fresh-gas partial
+#'   pressures
 #' @keywords internal
-gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION)
+gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION,
+                          ratio = 1)
 {
   Q_air  <- settingAt(split[["air"]],          t)
   Q_O2   <- settingAt(split[["oxygen"]],       t)
@@ -819,19 +830,25 @@ gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION)
   # 2026-10-12) left the fractions summing past 100.  The dose table is
   # checked by gasVaporiserProblems() before it gets here; this is the
   # engine's own refusal.
-  if (sum(F_vap) > 100 + 1e-9) {
+  # The dial's partial pressure (R/altitude.R): a variable-bypass vaporizer
+  # keeps it at any altitude, the desflurane vaporizer keeps its volume percent
+  vpv <- intersect(names(F_vap), ALTITUDE_VOLUME_PERCENT_VAPORIZERS)
+  F_vap[vpv] <- F_vap[vpv] * ratio
+  if (sum(F_vap) > 100 * ratio + 1e-9) {
     stop(sprintf("the vaporisers together are set to %s%% at %s min; the fresh gas cannot be more than 100%% vapour",
                  format(sum(F_vap)), format(t)))
   }
-  carrier <- 1 - sum(F_vap) / 100
+  # The vapour's share of the fresh gas is its partial pressure over the
+  # ambient pressure; the carrier gases share the rest of the ambient pressure.
+  carrier <- 1 - sum(F_vap) / (100 * ratio)
   if (carrier < 0) carrier <- 0
 
   if (Q > 0)
   {
     Ffgf <- c(
-      oxygen       = 100 * carrier * (Q_O2 + AIR_FRACTION_O2 * Q_air) / Q,
-      nitrogen     = 100 * carrier * (AIR_FRACTION_N2 * Q_air) / Q,
-      nitrousOxide = 100 * carrier * Q_N2O / Q
+      oxygen       = 100 * ratio * carrier * (Q_O2 + AIR_FRACTION_O2 * Q_air) / Q,
+      nitrogen     = 100 * ratio * carrier * (AIR_FRACTION_N2 * Q_air) / Q,
+      nitrousOxide = 100 * ratio * carrier * Q_N2O / Q
     )
   } else {
     Ffgf <- c(oxygen = 0, nitrogen = 0, nitrousOxide = 0)
@@ -994,14 +1011,16 @@ advanceClosedFormGas <- function(
   # Initial conditions: patient and circuit equilibrated with room air.  The
   # alveolar oxygen tension relaxes from the inspired value to its steady state
   # within the first minute or so, on the FRC/VA time constant.
+  # Room air is a fraction of the ambient pressure (R/altitude.R).
+  ratio <- gasPressureRatio(body)
   solubleGases <- props$gas[props$soluble]
   state <- list()
   for (g in solubleGases)
   {
-    init <- if (g == "nitrogen") AIR_FRACTION_N2 * 100 else 0
+    init <- if (g == "nitrogen") AIR_FRACTION_N2 * 100 * ratio else 0
     state[[g]] <- rep(init, gasStateCount(body))
   }
-  state[["oxygen"]] <- rep(AIR_FRACTION_O2 * 100, 2)
+  state[["oxygen"]] <- rep(AIR_FRACTION_O2 * 100 * ratio, 2)
 
   times  <- 0
   record <- list()
@@ -1026,7 +1045,7 @@ advanceClosedFormGas <- function(
     # Settings are read at the START of the interval and held across it, which
     # is what makes the interval linear -- apart from the uptake coupling,
     # which is linearised per sub-step below.
-    s <- gasSettingsAt(bySetting, t0, deadSpace)
+    s <- gasSettingsAt(bySetting, t0, deadSpace, ratio)
 
     # Build one propagator per gas for this interval: y <- P y + q.
     #
@@ -1079,7 +1098,10 @@ advanceClosedFormGas <- function(
       # dioxide gives VCO2 back to the alveoli and the absorber then takes it
       # from the rebreathed gas.  All of it stops if the oxygen has run out.
       consuming <- state[["oxygen"]][2] > 0
-      VO2  <- if (consuming) body$VO2 else 0
+      # VO2 is a sea-level volume; at altitude the same oxygen is 1/r the
+      # ambient volume, and the carbon dioxide 1/r the share of the exhaled
+      # gas (R/altitude.R).
+      VO2  <- if (consuming) body$VO2 / ratio else 0
       VCO2 <- GAS_RESPIRATORY_QUOTIENT * VO2
       u <- u + VO2 - VCO2
       buildProp(u, u, if (s$MV > 0) min(VCO2 / s$MV, GAS_MAX_EXHALED_CO2) else 0)
@@ -1207,6 +1229,10 @@ advanceClosedFormGas <- function(
 #' @param temperature NULL (37 C), or the body temperature in C, which sets
 #'   the agents' solubility and MAC (\code{gasPropertiesAt()}); kept in the
 #'   body as \code{temperature}
+#' @param altitude NULL (sea level), or metres above sea level (0 to 7000),
+#'   kept in the body as \code{altitude}; the barometric pressure it sets
+#'   (\code{barometricPressure()}, R/altitude.R) changes the fresh gas, room
+#'   air and the volume taken up, not the potency
 #' @param uptakeEffect,circuit,deadSpace,oxygenUptake passed to
 #'   \code{advanceClosedFormGas()}
 #'
@@ -1220,7 +1246,8 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
                           oxygenUptake = TRUE,
                           # Appended after the pre-existing arguments, so a
                           # positional call keeps its binding (exported).
-                          physiology = NULL, temperature = NULL)
+                          physiology = NULL, temperature = NULL,
+                          altitude = NULL)
 {
   circuit <- match.arg(circuit)
   if (is.null(doseTable) || nrow(doseTable) == 0) return(NULL)
@@ -1241,6 +1268,8 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
                             checkPhysiology(physiology)[["cardiac"]])
   temperature <- checkBodyTemperature(temperature)
   if (temperature != 37) body$temperature <- temperature
+  altitude <- checkAltitude(altitude)
+  if (altitude != ALTITUDE_DEFAULT) body$altitude <- altitude
 
   advanceClosedFormGas(
     gasDose,

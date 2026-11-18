@@ -1419,6 +1419,7 @@ app_server <- function(input, output, session) {
         weight  = weight(),
         physiology = physiology(),
         temperature = bodyTemperature(),
+        altitude = altitude(),
         age     = age(),
         maximum = plotMaximum()
       )
@@ -1480,18 +1481,25 @@ app_server <- function(input, output, session) {
     bodyTemperatureFromInput(input$physiology_temperature)
   }), PHYSIOLOGY_DEBOUNCE_MS)
 
+  # Altitude, metres (R/altitude.R): the barometric pressure the inhaled
+  # anesthetics are given at.  An unreadable value is sea level.
+  altitude <- debounce(reactive({
+    altitudeFromInput(input$physiology_altitude)
+  }), PHYSIOLOGY_DEBOUNCE_MS)
+
   observeEvent(input$physiologyReset, {
     for (f in PHYSIOLOGY_FACTORS)
       updateSliderInput(session, physiologyInputId(f), value = 0)
     updateSliderInput(session, "physiology_temperature",
                       value = PHYSIOLOGY_TEMPERATURE_DEFAULT)
+    updateSliderInput(session, "physiology_altitude", value = ALTITUDE_DEFAULT)
   })
 
   # A link or a scenario that sets the physiology away from normal shows the
   # sliders, which otherwise wait behind physiologyIntro() (Shafer,
   # 2026-11-17): a changed slider is never hidden.
-  observeEvent(physiology(), {
-    if (!physiologyIsNormal(physiology()))
+  observeEvent(list(physiology(), altitude()), {
+    if (!physiologyIsNormal(physiology()) || altitude() != ALTITUDE_DEFAULT)
       session$sendCustomMessage("physiology_show", list())
   })
 
@@ -2119,6 +2127,7 @@ app_server <- function(input, output, session) {
       # The physiology sliders the simulation was run at (R/physiology.R)
       physiology = physiology(),
       temperature = bodyTemperature(),
+      altitude = altitude(),
       # Whether each companion model was actually drawn, not just its box
       # ticked (companionGroupsShown()).
       mintoSchnider = "mintoSchnider" %in% companionGroupsShown(),

@@ -462,7 +462,7 @@ test_that("simulateGases() keeps its positional arguments: physiology comes last
   args <- names(formals(simulateGases))
   expect_identical(args[1:9], c("doseTable", "weight", "age", "maximum", "cardiacOutput",
                                 "uptakeEffect", "circuit", "deadSpace", "oxygenUptake"))
-  expect_identical(utils::tail(args, 2), c("physiology", "temperature"))
+  expect_identical(utils::tail(args, 3), c("physiology", "temperature", "altitude"))
   # The old positional call that turns the uptake coupling off still does.
   expect_equal(simulateGases(SEVO_RUN, 70, 50, 30, NULL, FALSE)$results,
                simulateGases(SEVO_RUN, 70, 50, 30, uptakeEffect = FALSE)$results)
@@ -525,14 +525,16 @@ test_that("an oral tPeak counts every depot carrying drug, each with its lag", {
 
 test_that("the email workbook records the physiology sliders", {
   rows <- physiologyCovariateRows(c(cardiac = 0.5), 32)
-  expect_equal(nrow(rows), length(PHYSIOLOGY_FACTORS) + 1)
+  # The factors, the body temperature and the altitude (R/altitude.R)
+  expect_equal(nrow(rows), length(PHYSIOLOGY_FACTORS) + 2)
+  expect_equal(rows$Value[grepl("Altitude", rows$Covariate)], "0 (760 Torr)")
   expect_equal(rows$Value[rows$Covariate == "Body temperature (C)"], "32")
   expect_equal(physiologyCovariateRows(NULL)$Value[length(PHYSIOLOGY_FACTORS) + 1], "37")
   expect_equal(rows$Value[rows$Covariate == "Cardiac output (multiple of normal)"], "x0.5")
   expect_equal(rows$Value[rows$Covariate == "Liver function (multiple of normal)"], "normal")
   n <- length(PHYSIOLOGY_FACTORS)
   expect_true(all(physiologyCovariateRows(NULL)$Value[seq_len(n)] == "normal"))
-  expect_true(all(physiologyCovariateRows("x", "y")$Value == "unreadable"))
+  expect_true(all(physiologyCovariateRows("x", "y", "z")$Value == "unreadable"))
 })
 
 # ---- Body temperature (Shafer, 2026-11-16) ----------------------------------
@@ -705,7 +707,7 @@ test_that("the physiology panel opens on what the sliders are for (Shafer, 2026-
   expect_match(html, 'id="physiology-controls" style="display: none;"', fixed = TRUE)
   tail <- substring(html, controls)
   for (id in c(physiologyInputId(PHYSIOLOGY_FACTORS), "physiology_temperature",
-               "physiologyReset", "physiologyNote"))
+               "physiology_altitude", "physiologyReset", "physiologyNote"))
     expect_match(tail, paste0('id="', id, '"'), fixed = TRUE)
   # The statement: covariates belong in the Patient Profile, and a button
   # shows the sliders
