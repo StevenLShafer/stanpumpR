@@ -42,8 +42,9 @@
 # not an effect site, and the app has no glucose output.
 #
 # BODY SIZE: Cockcroft-Gault at the pharmacokinetic weight with the switch on
-# and at total weight with it off; V/F by the library factor
-# (legacyVolume = 1).
+# and at total weight with it off; V/F by the library factor relative to
+# Chae's cohort (METFORMIN_COHORT; legacyVolume = 1).  CL/F carries no size
+# factor: its creatinine clearance already does.
 #
 # CHECKS (70 kg, 40 y man, assumed creatinine 0.9 mg/dL)
 # =======================================================
@@ -100,6 +101,15 @@
 METFORMIN_PREGNANCY_CL_FACTOR <- 1.27
 METFORMIN_PREGNANCY_V_FACTOR  <- 1.33
 
+# Chae 2012, Table 1 (printed p. 816), read on the PDF 2026-11-18: the 42
+# men's medians, 69 kg, 170 cm (printed to 0.1 m), 27 years.  V/F is anchored
+# at this cohort (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort; factor 0.992).  CL/F is the creatinine-
+# clearance term alone, whose Cockcroft-Gault weight already carries the size,
+# so it is not anchored (Shafer, 2026-11-18: anchoring it too would correct it
+# twice).
+METFORMIN_COHORT <- list(weight = 69, height = 170, age = 27, men = 42, women = 0)
+
 #' Metformin pharmacokinetics (oral, immediate release)
 #'
 #' One compartment with a renal covariate (Chae 2012); see the header of the
@@ -113,7 +123,7 @@ METFORMIN_PREGNANCY_V_FACTOR  <- 1.33
 metformin <- function(weight, height, age, sex, adjustToFFM = TRUE,
                       creatinine = NULL, pregnant = FALSE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, METFORMIN_COHORT))
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   crcl <- creatinineClearanceCG(pkW, age, sex,
                                 adultEquivalentCreatinine(creatinine, age, sex))

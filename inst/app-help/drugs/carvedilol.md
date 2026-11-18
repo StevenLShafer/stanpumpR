@@ -18,7 +18,7 @@ The source fitted a CYP2D6 effect, and it is real: clearance in its second inter
 
 ### Covariates
 
-None. The paper screened age, height and weight and reports that none was significant, in a cohort whose weight was 70.4 kg give or take 9.6. The parameters take the library's [fat-free-mass scaling](help:models/fat-free-mass) and are used exactly as published when the switch is off, for every patient.
+None. The paper screened age, height and weight and reports that none was significant, in a cohort whose weight was 70.4 kg give or take 9.6. The parameters are therefore the study's men's (about 70 kg and 174 cm), and with [fat-free-mass scaling](help:models/fat-free-mass) on, a man like them receives the published values and everyone else is scaled from there; they are used exactly as published when the switch is off, for every patient.
 
 ### Effect site and blood pressure
 

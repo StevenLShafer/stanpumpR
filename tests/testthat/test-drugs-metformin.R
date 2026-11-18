@@ -11,10 +11,13 @@ test_that("a higher creatinine lowers clearance; switch on uses the pharmacokine
   b <- metformin(70, 170, 40, "male", creatinine = 2.0)$PK$default$cl1
   expect_lt(b, a)
   size <- pkSizeFactors(100, 170, 40, "male", TRUE, legacyVolume = 1)
+  # V/F anchored at Chae's 42 men (Table 1); CL/F, the creatinine-clearance
+  # term alone, not anchored (its Cockcroft-Gault weight carries the size)
+  kc <- cohortFactorsIndependent(list(weight = 69, height = 170, age = 27, men = 42, women = 0))
   on <- metformin(100, 170, 40, "male")$PK$default
   crcl <- creatinineClearanceCG(size$pkWeight, 40, "male", adultEquivalentCreatinine(NULL, 40, "male"))
   expect_equal(on$cl1, 52.6 * (crcl / 106.5)^0.782 / 60)
-  expect_equal(on$v1, 113 * size$volume)
+  expect_equal(on$v1, 113 * size$volume / kc$volume)
 })
 
 test_that("pregnancy: CL/F x 1.27 and V/F x 1.33, renal term not raised", {
@@ -37,7 +40,9 @@ test_that("pregnancy: CL/F x 1.27 and V/F x 1.33, renal term not raised", {
   expect_no_match(off$reference, "Liao", fixed = TRUE)
   # The values the model gives with the flag on
   actual <- metformin(70, 165, 30, "female", pregnant = TRUE)$PK$default
-  expect_equal_rounded(121.1480255, actual$v1)
+  # V/F over the factor of Chae's cohort (Table 1); CL/F not anchored
+  kc <- cohortFactorsIndependent(list(weight = 69, height = 170, age = 27, men = 42, women = 0))
+  expect_equal_rounded(121.1480255 / kc$volume, actual$v1)
   expect_equal_rounded(1, actual$v2)
   expect_equal_rounded(1, actual$v3)
   expect_equal_rounded(0.9895456604, actual$cl1)

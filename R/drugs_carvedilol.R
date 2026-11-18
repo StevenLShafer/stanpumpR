@@ -77,10 +77,15 @@
 # =====================================
 # None in the source: the paper screened age, height and weight and reports
 # that none was significant, in a cohort whose weight range was narrow (70.4
-# plus or minus 9.6 kg).  The parameters are therefore the library's
-# fixed-parameter case, scaled by pkSizeFactors() with legacyVolume = 1, so
-# with the fat-free-mass switch off the published values are used exactly as
-# printed, for every patient.
+# plus or minus 9.6 kg).  The parameters are therefore the cohort's, and with
+# the fat-free-mass switch on they are anchored at it (Steven L. Shafer,
+# 2026-11-18; docs/weight-adjustment.md, Anchoring at the source's cohort),
+# from Table 1 read on the PDF the same day, all 21 men by genotype group:
+# the volumes and Q at all 21 (CARVEDILOL_COHORT; the reference man's divided
+# by 1.022 and 1.016), and CL/F, the GT = 0 value, at the extensive and
+# intermediate-1 metabolisers it describes (CARVEDILOL_CL_COHORT, 13 men;
+# divided by 1.043).  With the switch off, legacyVolume = 1, the published
+# values are used exactly as printed, for every patient.
 #
 # NO EFFECT SITE, NO BLOOD PRESSURE, NO BAND
 # ==========================================
@@ -121,18 +126,34 @@ CARVEDILOL_TLAG_H <- 0.215    # h, absorption lag
 #' @inheritParams cefazolin
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
+# Hwang 2023, Table 1 (PDF p. 5): the 21 men by CYP2D6 group, means.  CL/F
+# (GT = 0) belongs to the EM and IM-1 groups; the volumes and Q to all 21.
+CARVEDILOL_CL_COHORT <- list(groups = list(
+  list(weight = 79.3, height = 175.5, age = 28.5, men = 6, women = 0),   # EM
+  list(weight = 69.5, height = 174.9, age = 29.6, men = 7, women = 0)    # IM-1
+))
+CARVEDILOL_COHORT <- list(groups = c(CARVEDILOL_CL_COHORT$groups, list(
+  list(weight = 64.5, height = 172.6, age = 24.4, men = 8, women = 0)    # IM-2
+)))
+
 carvedilol <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Fixed published parameters, with no covariate in the source: unscaled with
   # the switch off (docs/weight-adjustment.md).
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1)
+                        legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, CARVEDILOL_COHORT))
+  # CL/F belongs to the 13 EM and IM-1 men, not all 21
+  clCohort <- 1
+  if (isTRUE(adjustToFFM))
+    clCohort <- do.call(cohortSizeFactors, CARVEDILOL_COHORT)$clearance /
+      do.call(cohortSizeFactors, CARVEDILOL_CL_COHORT)$clearance
 
   default <- list(
     v1  = CARVEDILOL_V1_F * size$volume,
     v2  = CARVEDILOL_V2_F * size$volume,
     v3  = 1,                                   # two compartments
-    cl1 = CARVEDILOL_CL_F / 60 * size$clearance,
+    cl1 = CARVEDILOL_CL_F / 60 * size$clearance * clCohort,
     cl2 = CARVEDILOL_Q_F  / 60 * size$clearance,
     cl3 = 0
   )
