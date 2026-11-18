@@ -75,3 +75,68 @@ Biologics (sepsis),angiotensin II,angiotensin,1,planned,"Giapreza, vasodilatory 
 Biologics (sepsis),tocilizumab,tocilizumab,1,planned,"COVID-19 and cytokine release."
 Biologics (sepsis),anakinra,anakinra,1,planned,
 Biologics (sepsis),vilobelimab,,1,planned,"Anti-C5a, COVID-19 EUA; not in nlmixr2lib: PubMed search."
+Outpatient (2024 top 200),liothyronine,liothyronine;triiodothyronine,1,planned,"FDA oral NTI (April 2026 product-specific guidance list, p. 11); with levothyroxine the only one of its 14 ingredients missing in the report (levothyroxine since added, #771). Endogenous T3 baseline; read with levothyroxine model."
+Outpatient (2024 top 200),atorvastatin,atorvastatin,2,planned,Rank 1 (ClinCalc 2024). Include active hydroxy metabolites if the source requires them.
+Outpatient (2024 top 200),levothyroxine,levothyroxine,1,done,"Implemented in #771 (fcc3a2f, 2026-11-17). Rank 2 (ClinCalc 2024). FDA oral NTI. Evidence/engine gate: check whether the population fits represent endogenous T4, T4→T3 conversion, and TSH feedback sufficiently for the intended output. Do not transfer the infant fit to adults."
+Outpatient (2024 top 200),amlodipine,amlodipine,2,planned,Rank 4 (ClinCalc 2024). Also covers the amlodipine component of rank-190 amlodipine/benazepril. Antihypertensive registry: Donnelly 1993 ready_for_source_reproduction; label row descriptive_only.
+Outpatient (2024 top 200),losartan,losartan,2,planned,"Rank 7 (ClinCalc 2024). HCTZ combination at rank 91 needs no second HCTZ model; evaluate E3174. Antihypertensive registry: Lo 1995 IV/oral and a day-1/day-7 BP record, both requires_source_extraction."
+Outpatient (2024 top 200),rosuvastatin,rosuvastatin,2,planned,Rank 9 (ClinCalc 2024). Find/verify an adult fit or validate the child model against adult exposure.
+Outpatient (2024 top 200),omeprazole,omeprazole,2,planned,"Rank 10 (ClinCalc 2024). Delayed release, CYP2C19 maturation."
+Outpatient (2024 top 200),pantoprazole,pantoprazole,2,planned,Rank 16 (ClinCalc 2024). Adult IV/PO disposition needs its own validation.
+Outpatient (2024 top 200),trazodone,trazodone,2,planned,Rank 20 (ClinCalc 2024). No confirmed population fit; keep formulations separate.
+Outpatient (2024 top 200),montelukast,montelukast,2,planned,Rank 21 (ClinCalc 2024). Oral tablet/chewable/granules may differ.
+Outpatient (2024 top 200),amoxicillin,amoxicillin,2,planned,Rank 22 (ClinCalc 2024). Model amoxicillin alone and product-specific clavulanate separately.
+Outpatient (2024 top 200),tamsulosin,tamsulosin,2,planned,Rank 24 (ClinCalc 2024). Capsule release and food.
+Outpatient (2024 top 200),simvastatin,simvastatin,2,planned,Rank 26 (ClinCalc 2024). Lactone/active acid separation.
+Outpatient (2024 top 200),furosemide,furosemide,2,planned,"Rank 29 (ClinCalc 2024). The adult oral Weibull input requires source extraction/engine review; do not use oral apparent clearance for IV. Antihypertensive registry: a pooled popPK record, requires_source_extraction; IV and oral label rows."
+Outpatient (2024 top 200),famotidine,famotidine,2,planned,Rank 37 (ClinCalc 2024). No confirmed population fit.
+Outpatient (2024 top 200),buspirone,buspirone,2,planned,Rank 39 (ClinCalc 2024). Parent plus active 1-PP; no confirmed population fit.
+Outpatient (2024 top 200),hydroxyzine,hydroxyzine,2,planned,Rank 43 (ClinCalc 2024). No confirmed population fit; active cetirizine formation.
+Outpatient (2024 top 200),allopurinol,allopurinol;oxypurinol,2,planned,Rank 44 (ClinCalc 2024). Oxypurinol is the main exposure target; renal function.
+Outpatient (2024 top 200),clopidogrel,clopidogrel,2,planned,Rank 45 (ClinCalc 2024). Irreversible platelet inhibition needs separate PD/platelet turnover; CYP2C19.
+Outpatient (2024 top 200),cetirizine,cetirizine,2,planned,Rank 47 (ClinCalc 2024). Adult exposure cross-check.
+Outpatient (2024 top 200),cyclobenzaprine,cyclobenzaprine,2,planned,Rank 49 (ClinCalc 2024). New FDA-approved sublingual product; route-specific absorption.
+Outpatient (2024 top 200),spironolactone,spironolactone;canrenone,2,planned,"Rank 50 (ClinCalc 2024). Active metabolites and release formulation. Antihypertensive registry: Tatipalli 2021, requires_source_extraction."
+Outpatient (2024 top 200),estradiol,estradiol,3,planned,"Rank 52 (ClinCalc 2024). Endogenous baseline; exclude local vaginal/skin cream, include systemic patch and approved gel with their own input."
+Outpatient (2024 top 200),glipizide,glipizide,3,planned,Rank 54 (ClinCalc 2024). No confirmed population fit; assess hypoglycemia risk. Antidiabetic registry: PK-CONSTRAINT.
+Outpatient (2024 top 200),azithromycin,azithromycin,3,planned,Rank 62 (ClinCalc 2024). Cesarean IV source [25595580](https://pubmed.ncbi.nlm.nih.gov/25595580/); long tissue disposition.
+Outpatient (2024 top 200),pravastatin,pravastatin,3,planned,Rank 63 (ClinCalc 2024). Transporter covariates.
+Outpatient (2024 top 200),ezetimibe,ezetimibe,3,planned,Rank 65 (ClinCalc 2024). Enterohepatic recycling may need engine work.
+Outpatient (2024 top 200),ethinyl estradiol/norethindrone,ethinylestradiol;norethindrone,3,planned,Rank 68 (ClinCalc 2024). Product-specific two-analyte fit needed; no transferable population fit located.
+Outpatient (2024 top 200),atenolol,atenolol,3,planned,Rank 71 (ClinCalc 2024). Renal clearance and oral F. Antihypertensive registry: label row only (descriptive_only).
+Outpatient (2024 top 200),doxycycline,doxycycline,3,planned,Rank 73 (ClinCalc 2024). Check product and route-specific absorption.
+Outpatient (2024 top 200),amoxicillin/clavulanate,amoxicillin;clavulanate;clavulanicacid,3,planned,"Rank 74 (ClinCalc 2024). Model both components, not amoxicillin alone."
+Outpatient (2024 top 200),insulin aspart,insulinaspart,3,done,Implemented in #771 as insulinAspart and insulinAspartFiasp. Rank 79 (ClinCalc 2024). NovoLog and Fiasp have different SC absorption; high-alert.
+Outpatient (2024 top 200),finasteride,finasteride,3,planned,Rank 81 (ClinCalc 2024). Assess target-binding nonlinearity and active metabolite.
+Outpatient (2024 top 200),clonidine,clonidine,3,planned,"Rank 83 (ClinCalc 2024). Include oral/IV and, with route data, systemic patch; maturation matters. Antihypertensive registry: Davies 1977 requires_source_extraction; oral and patch label rows."
+Outpatient (2024 top 200),alendronate,alendronate,3,planned,Rank 86 (ClinCalc 2024). Years-long bone retention is not represented by a plasma-only fit.
+Outpatient (2024 top 200),tizanidine,tizanidine,3,planned,Rank 88 (ClinCalc 2024). No transferable fitted set verified; food and tablet/capsule differ.
+Outpatient (2024 top 200),testosterone,testosterone,3,planned,"Rank 93 (ClinCalc 2024). Endogenous baseline; approved systemic patch, gel, injection and oral products require different input fits."
+Outpatient (2024 top 200),fenofibrate,fenofibrate;fenofibricacid,3,planned,Rank 97 (ClinCalc 2024). Prodrug; active fenofibric acid. No confirmed population fit.
+Outpatient (2024 top 200),loratadine,loratadine;desloratadine,3,planned,Rank 101 (ClinCalc 2024). The adult source is not a conventional nonlinear mixed-effects fit; active desloratadine.
+Outpatient (2024 top 200),valacyclovir,valacyclovir;acyclovir;aciclovir,3,planned,Rank 103 (ClinCalc 2024). Model conversion to acyclovir and distinguish oral prodrug from acyclovir.
+Outpatient (2024 top 200),ethinyl estradiol/norgestimate,ethinylestradiol;norgestimate;norelgestromin,3,planned,Rank 105 (ClinCalc 2024). Rapid conversion to norelgestromin/norgestrel; no confirmed population fit.
+Outpatient (2024 top 200),methocarbamol,methocarbamol,3,planned,Rank 107 (ClinCalc 2024). Descriptive PK only; do not use animal parameters.
+Outpatient (2024 top 200),baclofen,baclofen,3,planned,"Rank 111 (ClinCalc 2024). Renal function, oral and intrathecal routes are distinct."
+Outpatient (2024 top 200),sumatriptan,sumatriptan,3,planned,Rank 113 (ClinCalc 2024). Product-specific F and absorption.
+Outpatient (2024 top 200),esomeprazole,esomeprazole,3,planned,"Rank 115 (ClinCalc 2024). CYP2C19, delayed oral release."
+Outpatient (2024 top 200),norethindrone,norethindrone,3,planned,Rank 118 (ClinCalc 2024). Separate progestin and estrogen products; no confirmed population fit.
+Outpatient (2024 top 200),nifedipine,nifedipine,3,planned,"Rank 120 (ClinCalc 2024). Different release formulations; maternal fit n=8 and assumes F. Antihypertensive registry: Shimada 1996 (secondary transcription), requires_source_extraction."
+Outpatient (2024 top 200),progesterone,progesterone,3,planned,Rank 121 (ClinCalc 2024). Endogenous baseline and route-specific first pass; no general population fit.
+Outpatient (2024 top 200),insulin degludec,insulindegludec,3,done,"Implemented in #771 as insulinDegludec. Rank 122 (ClinCalc 2024). Slow SC multihexamer release; assess limited generalizability of the small healthy-adult fit. High-alert, not formally FDA oral NTI."
+Outpatient (2024 top 200),adalimumab,adalimumab,3,planned,Rank 125 (ClinCalc 2024). Antidrug antibodies and SC absorption.
+Outpatient (2024 top 200),sitagliptin,sitagliptin,3,planned,Rank 127 (ClinCalc 2024). Renal function; verify FDA fit parameters. Antidiabetic registry: PK-CONSTRAINT.
+Outpatient (2024 top 200),glimepiride,glimepiride,3,planned,Rank 128 (ClinCalc 2024). Metabolites and hypoglycemia. Antidiabetic registry: PK-CONSTRAINT.
+Outpatient (2024 top 200),oxybutynin,oxybutynin,3,planned,Rank 130 (ClinCalc 2024). FDA systemic patch is in scope; less first-pass N-desethyloxybutynin than PO.
+Outpatient (2024 top 200),ketoconazole,ketoconazole,3,planned,Rank 132* (ClinCalc 2024). FDA-listed oral tablet; rank is mostly topical products and cannot set oral-use priority. Hepatotoxicity and absorption variability.
+Outpatient (2024 top 200),irbesartan,irbesartan,3,planned,Rank 133 (ClinCalc 2024). Published dual-peak model uses delay equations; assess engine reduction. Antihypertensive registry: label row only.
+Outpatient (2024 top 200),trimethoprim/sulfamethoxazole,trimethoprim;sulfamethoxazole,3,planned,Rank 135 (ClinCalc 2024). Both active analytes; renal function and metabolite.
+Outpatient (2024 top 200),benzonatate,benzonatate,3,planned,Rank 136 (ClinCalc 2024). Evidence gate: no defensible fitted disposition found; rapid hydrolysis.
+Outpatient (2024 top 200),nitrofurantoin,nitrofurantoin,3,planned,Rank 137 (ClinCalc 2024). Urine exposure is the treatment target; no confirmed population fit.
+Outpatient (2024 top 200),isosorbide mononitrate/dinitrate,isosorbidemononitrate;isosorbidedinitrate,3,planned,Rank 138 (ClinCalc 2024). ClinCalc combines names; resolve FDA ingredient/product before modeling.
+Outpatient (2024 top 200),triamterene,triamterene,3,planned,"Rank 140 (ClinCalc 2024). HCTZ already present; add only missing component, check active sulfate. Antihypertensive registry: label row only."
+Outpatient (2024 top 200),levocetirizine,levocetirizine,3,planned,Rank 141 (ClinCalc 2024). Study dosed racemic cetirizine; adjust dose basis for pure levocetirizine.
+Outpatient (2024 top 200),atomoxetine,atomoxetine,3,planned,Rank 143 (ClinCalc 2024). Parent/metabolites and CYP2D6.
+Outpatient (2024 top 200),dexmethylphenidate,dexmethylphenidate,3,planned,Rank 144 (ClinCalc 2024). Existing methylphenidate plots the d-isomer from racemate. Verify pure d-isomer labeled dose and release input.
+Outpatient (2024 top 200),donepezil,donepezil,3,planned,Rank 146 (ClinCalc 2024). CYP2D6 and long half-life.
+Outpatient (2024 top 200),desvenlafaxine,desvenlafaxine,3,planned,Route addition: desvenlafaxine is in the library only as venlafaxine's metabolite. Rank 147 (ClinCalc 2024). `desvenlafaxine` exists only as an undosable venlafaxine metabolite in current CSV; add approved direct-dose product.
