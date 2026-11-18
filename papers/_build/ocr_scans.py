@@ -5,10 +5,17 @@ pressed the point twice and was right to).  The `.pre-ocr` absence check and the
 creates it are not atomic, so an interleaving existed in which one run published its
 replacement, kept `.pre-ocr` because recycling failed, and the other run then copied that
 replacement over the retained original -- losing the TRUE original, the one thing this script
-must never lose.  `claimPdf()` now makes the whole per-PDF transaction exclusive, from reading
-the file through publishing the replacement to disposing of the backup, with an O_CREAT |
-O_EXCL lock file beside the PDF.  A PDF another run holds is skipped and said; a lock left by
-a run that died is taken after OCR_LOCK_STALE_SECONDS.
+must never lose.  `claimPdf()` now makes the whole mutating transaction exclusive -- from the
+decision to OCR, through staging and publication, to disposal of the backup -- with a lock
+the OPERATING SYSTEM holds on an open handle (msvcrt.locking on Windows, fcntl.flock
+elsewhere).  A PDF another run holds is skipped and said.  Reading the file needs no lock,
+because publication is a single os.replace: a reader sees the old file or the new one, never
+half of either.
+
+A lock named only by a PATH was tried first and is not enough: with an age-based takeover for
+a crashed run, two runs can both see one stale lock and the second then removes the FRESH lock
+the first has just created.  A kernel lock has no staleness to solve, since the OS drops a
+dead process's lock by itself.
 
 The download queue's read-modify-write is still unlocked (see queue_add.py).  It is a
 different resource -- one file with several writers, rather than one file per transaction --
@@ -50,48 +57,51 @@ env = dict(os.environ)
 env["PATH"] = os.pathsep.join([TESS] + GS + [env.get("PATH", "")])
 
 
-OCR_LOCK_STALE_SECONDS = 6 * 3600
-# A lock older than this is taken as abandoned by a run that died.  Six hours is far longer
-# than any OCR of one PDF (the longest in this archive is minutes) and short enough that a
-# crashed run does not park a paper for ever.
-
-
 def claimPdf(pdf):
     """Claim one PDF for this run, or None if another run holds it.
 
-    Two runs could both pass the `.pre-ocr` absence check and then one could overwrite the
-    other's retained original, losing the TRUE original (CodeRabbit, PR #784).  The guard and
-    the copy were not atomic; this makes the whole per-PDF transaction exclusive, from reading
-    the file through publishing the replacement to disposing of the backup.
+    The lock is held by the OPERATING SYSTEM on an open handle, not by the existence of a
+    path.  A pathname lock with an age-based takeover, which this was first, has a window of
+    its own: two runs can both see one stale lock, and the second then removes the FRESH lock
+    the first has just created, so both proceed -- the very race the lock exists to stop
+    (CodeRabbit, PR #784, which was right to keep pushing).  A second age or identity check
+    before the remove only narrows that window.
 
-    O_CREAT | O_EXCL is the atomic part: the filesystem decides the winner."""
-    lock = pdf + ".ocr-lock"
-    for attempt in (1, 2):
-        try:
-            fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-            os.write(fd, str(os.getpid()).encode())
-            os.close(fd)
-            return lock
-        except FileExistsError:
-            try:
-                age = time.time() - os.path.getmtime(lock)
-            except OSError:
-                continue                         # it vanished: try to take it
-            if attempt == 1 and age > OCR_LOCK_STALE_SECONDS:
-                try:
-                    os.remove(lock)              # abandoned by a dead run
-                    continue
-                except OSError:
-                    return None
-            return None
-    return None
-
-
-def releasePdf(lock):
+    A kernel lock has no staleness problem to solve: when a process dies the OS drops its
+    lock, so a crashed run blocks nobody and nothing has to be reclaimed by guesswork.  The
+    lock file lives in TMP and is never deleted, so no run can delete a lock it does not hold.
+    """
+    os.makedirs(TMP, exist_ok=True)
+    path = os.path.join(TMP, os.path.basename(pdf) + ".lock")
+    f = open(path, "a+b")
     try:
-        os.remove(lock)
+        if os.name == "nt":
+            import msvcrt
+            f.seek(0)
+            msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:                              # held by another run
+        f.close()
+        return None
+    return f
+
+
+def releasePdf(f):
+    """Drop the lock and close the handle.  The lock file itself stays."""
+    try:
+        if os.name == "nt":
+            import msvcrt
+            f.seek(0)
+            msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
     except OSError:
         pass
+    finally:
+        f.close()
 
 
 class LaunchError(RuntimeError):
@@ -153,21 +163,24 @@ try:
     if ONLY and stem not in ONLY:
         continue
     pdf = os.path.join(ARCH, fn)
+    # Reading needs no lock: publication below is a single os.replace, so a reader sees the
+    # old file or the new one, never half of either.  The lock is taken once this PDF is
+    # known to need OCR, which keeps a lock file per SCAN rather than per archived paper.
+    letters = page_letters(pdf)
+    if letters is None:
+        print(f"{stem}: pdftotext failed -- skipped (cannot tell whether it has a text layer)", flush=True)
+        continue
+    if sum(letters) >= 100 * len(letters):
+        continue  # has a text layer
+    mode = "--force-ocr" if any(0 < n for n in letters) else "--skip-text"
+    print(f"{stem}: {len(letters)} pages, {sum(letters)} letters -> {mode}", flush=True)
+    if DRY:
+        continue
     lock = claimPdf(pdf)
     if lock is None:
         print(f"{fn}: another run is working on this file -- skipped", flush=True)
         continue
     try:
-        letters = page_letters(pdf)
-        if letters is None:
-            print(f"{stem}: pdftotext failed -- skipped (cannot tell whether it has a text layer)", flush=True)
-            continue
-        if sum(letters) >= 100 * len(letters):
-            continue  # has a text layer
-        mode = "--force-ocr" if any(0 < n for n in letters) else "--skip-text"
-        print(f"{stem}: {len(letters)} pages, {sum(letters)} letters -> {mode}", flush=True)
-        if DRY:
-            continue
         out = os.path.join(TMP, fn)
         if os.path.exists(out):
             os.remove(out)
