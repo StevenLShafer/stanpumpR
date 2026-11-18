@@ -819,3 +819,24 @@ test_that("the antiseizure rows survive the interactions' rebuilds (2026-11-18)"
   # ethosuximide: Bauer 1982's renal share at steady state
   expect_equal(physiologyRow("ethosuximide")$fraction_renal, 0.25)
 })
+
+test_that("the remaining anaesthetic rows (2026-11-18)", {
+  cl <- function(d, ...) getDrugPK(d, 70, 170, 35, "male", ...)$PK[[1]]$cl1
+  for (d in c("fentanyl", "sufentanil", "hydromorphone", "ketamine",
+              "rocuronium", "vecuronium"))
+    expect_false(is.null(physiologyRow(d)), info = d)
+  # sufentanil: Lange's measured 0.92, hepatic 0.62, renal 0.02, the rest
+  # outside both
+  r <- physiologyRow("sufentanil")
+  expect_equal(cl("sufentanil", physiology = c(liver = 0.5)) / cl("sufentanil"),
+               0.38 + 0.62 * hepaticClearanceFactor(0.92, 1, 0.5),
+               tolerance = 1e-6)
+  # rocuronium: a third renal, so the renal slider moves it by a third
+  expect_equal(cl("rocuronium", physiology = c(renal = 0.1)) / cl("rocuronium"),
+               0.33 * 0.1 + 0.67, tolerance = 1e-6)
+  # hydromorphone's oral first pass follows its extraction ratio
+  expect_true(physiologyRow("hydromorphone")$oral_first_pass)
+  expect_lt(getDrugPK("hydromorphone", 70, 170, 35, "male",
+                      physiology = c(liver = 2))$PK[[1]]$bioavailability_PO,
+            getDrugPK("hydromorphone", 70, 170, 35, "male")$PK[[1]]$bioavailability_PO)
+})

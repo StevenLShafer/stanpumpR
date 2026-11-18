@@ -376,6 +376,15 @@ and ethosuximide's renal share (0.25) is Bauer 1982's renal against total cleara
 antiseizure interactions too, which rebuild each victim at the sliders'
 physiology.
 
+**The remaining anaesthetic drugs** (2026-11-18): fentanyl, hydromorphone,
+ketamine, rocuronium and vecuronium now have computed extraction ratios
+(0.39, 0.48, 0.54, 0.27 and 0.24), and sufentanil has Lange's measured 0.92
+with 62% of its clearance hepatic. Hydromorphone's blood-to-plasma ratio is
+1.35; the others' were not found and are taken as 1. Rocuronium and
+vecuronium are quaternary amines, which stay out of red cells, so their
+true ratio is probably near 0.55 and their extraction ratios about twice
+those shown. Each row's notes give the measurements that disagree.
+
 <!-- generated: physiology-table -->
 
 ## References
