@@ -238,12 +238,36 @@ try:
         # the copy is recycled only once the replacement is published.
         backup = pdf + ".pre-ocr"
         if os.path.exists(backup):
-            # An earlier run's original that the Recycle Bin refused.  Overwriting it would
-            # destroy the true original and keep that run's OCR output in its place.
-            entry["error"] = f"{os.path.basename(backup)} is already here from an earlier run; original kept"
-            print(f"  {entry['error']}")
-            log.append(entry)
-            continue
+            # Two different states leave a `.pre-ocr` behind, and they are told apart by what
+            # is at the archive path (CodeRabbit, PR #784):
+            #
+            #   identical to `pdf`  an attempt that stopped between making the backup and
+            #                       publishing.  Nothing was published, the archive still
+            #                       holds the ORIGINAL, and this copy is a duplicate of it.
+            #                       Refusing on it parked the paper for ever.
+            #   different from `pdf`  a published replacement whose original the Recycle Bin
+            #                       refused.  `.pre-ocr` IS the true original; overwriting it
+            #                       would destroy it and keep the OCR output in its place.
+            #
+            # OCR always gains text, so a published replacement can never be byte-identical
+            # to the original it replaced: the test cannot confuse the two.
+            try:
+                leftover = sha(backup) == sha(pdf)
+            except OSError:
+                leftover = False                     # unreadable: treat it as precious
+            if not leftover:
+                entry["error"] = f"{os.path.basename(backup)} is a retained original from an earlier run; original kept"
+                print(f"  {entry['error']}")
+                log.append(entry)
+                continue
+            try:
+                os.remove(backup)
+                print(f"  cleared {os.path.basename(backup)}, an interrupted attempt's copy of this same file")
+            except OSError as e:
+                entry["error"] = f"could not clear {os.path.basename(backup)} ({e}); original kept"
+                print(f"  {entry['error']}")
+                log.append(entry)
+                continue
         staged = pdf + ".ocr-new"
         partial = backup + ".tmp"
         try:
