@@ -140,6 +140,7 @@ insulinAspartFiasp,mcU,,,U SC,"U SC,U/kg SC,U SC tid,U/hr SC",#E8743B,0,0,0,0,0,
 insulinLisproMix75,mcU,,,U SC bid,"U SC,U SC bid",#B8225A,0,0,0,0,0,IV,Antidiabetic
 insulinLisproMix50,mcU,,,U SC bid,"U SC,U SC bid",#8C1546,0,0,0,0,0,IV,Antidiabetic
 insulinGlargine,mcU,,,U SC qd,"U SC,U/kg SC,U SC qd",#3A4BA8,0,0,0,0,0,IV,Antidiabetic
+insulinDegludec,mcU,,,U SC qd,"U SC,U/kg SC,U SC qd",#2E7D6B,0,0,0,0,0,IV,Antidiabetic
 metformin,mcg,,,mg PO bid,"mg PO,mg PO qd,mg PO bid,mg PO tid",#4F6372,0,0,0,0,0,IV,Antidiabetic
 empagliflozin,ng,,,mg PO qd,"mg PO,mg PO qd",#1F78B4,0,0,0,0,0,IV,Antidiabetic
 ertugliflozin,ng,,,mg PO qd,"mg PO,mg PO qd",#11806A,0,0,0,0,0,IV,Antidiabetic

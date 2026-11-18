@@ -203,16 +203,15 @@ registry <- rbind(
       CON, CON, "PD-CONSTRAINT", DCON, "clamp GIR", NA, NA, FALSE,
       "https://pubmed.ncbi.nlm.nih.gov/15855574/", "1 detemir U = 24 nmol; dose-dependent duration."),
   reg("insulin_degludec_u100_u200", "insulin degludec", "Tresiba U-100/U-200", SC, "core", "US",
-      CON, CON, "PD-CONSTRAINT", DCON, "clamp GIR", NA, NA, FALSE,
-      "https://pubmed.ncbi.nlm.nih.gov/23749405/",
-      paste("Strength equivalence (AUC ratio 0.99). Searched again 2026-11-18 (Shafer's request for the drug): two complete population fits exist, neither read, so not implemented.",
-            "(1) Cao 2026, Naunyn Schmiedebergs Arch Pharmacol, doi 10.1007/s00210-026-06074-2 (PMID 43035562; 30 healthy Chinese men, single-dose clamp): one compartment, first-order absorption with a lag; abstract gives CL/F 1.49 L/h, V/F 25.3 L, ka 0.10 /h, ALAG 0.72 h, BMI on CL/F and weight on V/F, but not the covariate equations, their reference values or the dose basis. Its terminal half-life (11.8 h) is shorter than the label's 25 h at steady state.",
-            "(2) Tang 2026, Clin Pharmacokinet, doi 10.1007/s40262-025-01598-x (PMID 41489799; 307 subjects, joint INS068/degludec fit): one compartment with a lag; no estimates in the abstract.",
-            "Neither is open access or in the archive; both are to obtain.",
-            "Also read: Liu 2022 (PMC9017614, Novo Nordisk, DUAL I China; supplement read) uses Novo's earlier one-compartment model with ka fixed at 0.0382 /h but prints no CL/F or V/F; Kapitza 2015 (PMID 25998481, J Clin Pharmacol) may print them, not obtained.",
-            "Schiavon 2020 (PMC7407002, read in full): steady-state T1D fit inside the UVA/Padova simulator, three subcutaneous compartments (kd 0.0056 /min twice, ka 0.0007 /min, F 0.69) into the simulator's plasma-liver insulin model, concentrations scaled to a 2.85% 'free' fraction; m2-m4 are functions of m1, CL and VI from Visentin 2019 (IEEE TBME 66:2889, PMID 30735983) and Dalla Man 2007 (IEEE TBME 54:1740, PMID 17926672), neither read.",
-            "FDA OCP review of NDA 203314 (read): non-compartmental only; the sponsor's population PK (trial 3586) is not reported; the label cites a pediatric population PK (199 children) with no parameters.",
-            "[decision] for Shafer: wait for the Cao 2026 or Tang 2026 full text; or build from Schiavon 2020 with the simulator's insulin kinetics read from its own sources.")),
+      CON, FIT, "PD-CONSTRAINT", DCON, "clamp GIR", FALSE, "insulinDegludec", TRUE,
+      "https://doi.org/10.1007/s40262-025-01598-x",
+      paste("Tang 2026 (Clin Pharmacokinet 65:417-429, read in full, supplied by Shafer; supplement not read): joint NONMEM model of INS068 and degludec, 307 subjects (degludec 102: healthy men and adults with type 1 diabetes at steady state), one compartment, first-order absorption after a lag, Table 2 (Figure 1).",
+            "Implemented at the type 1 diabetes typical values (ka 0.0476 x 0.837 x 0.85 /h, CL/F 1.93 x 0.978 L/h, Vc/F 20.9 x 0.537 L, lag 0.4 h; weight powers 1.04 and 1.54 about 70 kg, held to the printed 5th-95th percentiles 54.4-93.1 kg); the type 2 diabetes factors, estimated on INS068 troughs only, are not applied.",
+            "Pump use: the TRESIBA label forbids it. 1 U = 6 nmol (FDA OCP review); plotted as total degludec in mcU/mL (6 pmol/L each).",
+            "Checks not in the fit: label 4472 pmol/L at day 8 (0.4 U/kg, T1D) against 4174; FDA Table 7 healthy single dose; Tang Table 4 (its units nmol/L, not the printed pg/mL); Kapitza 2015's weight effect in T2D is shallower (exponent about 0.44 against 1.04).",
+            "Cao 2026 (doi 10.1007/s00210-026-06074-2, read in full): healthy Chinese men sampled to 24 h, covariate forms and references not printed; a check only.",
+            "Strength equivalence U-100/U-200 (AUC ratio 0.99, PMID 23749405): one drug for both.",
+            "[decision] for Shafer, recorded in R/drugs_insulinDegludec.R: the population (type 1 diabetes, healthy, or a diabetes field), the weight hold, and pregnancy.")),
   reg("insulin_icodec_u700", "insulin icodec-abae", "Awiqli U-700 (weekly)", SC, "core", "US (2026, adult T2D)",
       CON, CON, "PD-CONSTRAINT", DCON, "clamp GIR", FALSE, NA, FALSE,
       "https://drc.bmj.com/content/9/1/e002301", "Median tmax 16 h, half-life 196 h: constraints only."),
@@ -385,6 +384,8 @@ vild   <- "https://doi.org/10.1111/j.1365-2125.2011.04108.x"
 fediuk <- "https://doi.org/10.1002/cpdd.970"
 ramb   <- "https://doi.org/10.2147/CPAA.S102676"
 thamPop <- "Tham 2017, 16 studies, mostly healthy volunteers"
+tangUrl <- "https://doi.org/10.1007/s40262-025-01598-x"
+tangPop <- "Tang 2026, 307 subjects (degludec: 102 healthy men and adults with type 1 diabetes)"
 
 thamSupp <- "Table 2; supplement (Word) equations"
 thamWeight <- list(
@@ -459,6 +460,20 @@ parameters <- rbind(
   thamRows("insulinLisproMix50", "43.0", "30.5", rbind(ab("insulinLisproMix50", "lispro protamine, 50%", "0.0365"),
                                                        lispro("insulinLisproMix50")), "lispro"),
   thamRows("insulinGlargine", "768", "74.5", ab("insulinGlargine", "glargine", "0.0830", NULL, "0.822", "0.612"), "glargine"),
+
+  par("insulinDegludec", "ka", "0.0476", "1/h (INS068, healthy; x 0.837 degludec, x 0.85 T1DM)", E, tangPop, tangUrl, "Table 2"),
+  par("insulinDegludec", "IDeg on ka", "0.837", "x ka", E, tangPop, tangUrl, "Table 2; Results text: ka of IDeg 0.0398 /h"),
+  par("insulinDegludec", "T1DM on ka", "0.85", "x ka", E, tangPop, tangUrl, "Table 2"),
+  par("insulinDegludec", "CL/F", "1.93", "L/h at 70 kg (x 0.978 T1DM)", E, tangPop, tangUrl, "Table 2"),
+  par("insulinDegludec", "T1DM on CL/F", "0.978", "x CL/F", E, tangPop, tangUrl, "Table 2"),
+  par("insulinDegludec", "Vc/F", "20.9", "L at 70 kg (x 0.537 T1DM/T2DM)", E, tangPop, tangUrl, "Table 2"),
+  par("insulinDegludec", "T1DM/T2DM on Vc/F", "0.537", "x Vc/F", E, tangPop, tangUrl, "Table 2"),
+  par("insulinDegludec", "ALAG1", "0.4", "h", E, tangPop, tangUrl, "Table 2"),
+  par("insulinDegludec", "weight on CL/F", "(WT/70)^1.04, WT held to 54.4-93.1 kg", "power", E, tangPop, tangUrl, "Table 2, footnote a; reference 70 kg from the forest plot's typical subject; range the printed 5th-95th percentiles"),
+  par("insulinDegludec", "weight on Vc/F", "(WT/70)^1.54, WT held to 54.4-93.1 kg", "power", E, tangPop, tangUrl, "Table 2, footnote a"),
+  par("insulinDegludec", "T2DM on ka and CL/F", "0.18 and 0.764; not applied", "x ka, x CL/F", E, "Tang 2026, INS068 troughs only (no degludec PK in type 2 diabetes)", tangUrl, "Table 2"),
+  par("insulinDegludec", "population chosen", "type 1 diabetes typical values", "-", AS, tangPop, tangUrl, "R/drugs_insulinDegludec.R header"),
+  par("insulinDegludec", "dose basis", "1 U = 6 nmol", "-", ST, "FDA OCP review of NDA 203314 (0.4 U/kg = 2.4 nmol/kg)", tangUrl, "volumes and clearances are amount-free; concentrations in mcU/mL of total degludec"),
 
   par("metformin", "CL/F", "52.6", "L/h (x (CrCl/106.5)^0.782)", E, "Chae 2012, 42 healthy adults, CLcr 90-123 mL/min", chae, "Table 2; final-model equations"),
   par("metformin", "V/F", "113", "L (x library FFM factor)", E, "Chae 2012", chae, "Table 2 (its 56.6% RSE is 4.18% in the text)"),

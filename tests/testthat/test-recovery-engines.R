@@ -413,7 +413,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     # metabolite (inst/help/models/antidiabetics.md)
     "semaglutide", "tirzepatide", "liraglutide", "insulinRegular",
     "insulinRegularU500", "insulinNPH", "insulinHumanMix70", "insulinLispro",
-    "insulinLisproMix75", "insulinLisproMix50", "insulinGlargine", "metformin",
+    "insulinLisproMix75", "insulinLisproMix50", "insulinGlargine", "insulinDegludec", "metformin",
     "empagliflozin", "ertugliflozin", "glyburide", "dulaglutide", "dapagliflozin",
     "pioglitazone", "pramlintideIV", "exenatide", "linagliptin", "vildagliptin", "liraglutideWatson", "dapagliflozinKobuchi", "canagliflozin", "lixisenatide",
     "semaglutideOral", "cetagliptin", "insulinAspart", "insulinAspartFiasp",
