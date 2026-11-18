@@ -4,8 +4,8 @@
 noEvents <- data.frame(Time = numeric(0), Event = character(0))
 trapz <- function(x, y) sum(diff(x) * (utils::head(y, -1) + utils::tail(y, -1)) / 2)
 
-test_that("a normal metaboliser receives the published values", {
-  for (adjust in c(TRUE, FALSE)) {
+test_that("a normal metaboliser receives the published values with the switch off", {
+  for (adjust in FALSE) {
     actual <- aripiprazole(70, 170, 35, "male", adjustToFFM = adjust)
     expected <- list(
       PK = list(default = list(
@@ -23,13 +23,14 @@ test_that("a normal metaboliser receives the published values", {
     )
     expect_equal_rounded(actual, expected)
   }
-  m <- dehydroaripiprazole(70, 170, 35, "male")$PK$default
+  m <- dehydroaripiprazole(70, 170, 35, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(m$v1, 587)
   expect_equal(m$cl1, 8.02 / 60)
 })
 
 test_that("CYP2D6 uses Kim's two named groups; unstudied phenotypes take the nearest", {
-  cl <- function(p) aripiprazole(70, 170, 35, "male", cyp2d6 = p)$PK$default$cl1 * 60
+  cl <- function(p) aripiprazole(70, 170, 35, "male", cyp2d6 = p,
+                                 adjustToFFM = FALSE)$PK$default$cl1 * 60
   expect_equal(cl("normal"), 3.15)
   expect_equal(cl("intermediate"), 1.83)
   expect_equal(cl("poor"), 1.83)
@@ -38,13 +39,18 @@ test_that("CYP2D6 uses Kim's two named groups; unstudied phenotypes take the nea
   expect_equal(1.83 / 3.15, 0.58, tolerance = 0.01)
 })
 
-test_that("both species scale to fat-free mass with the switch on", {
+test_that("both species scale to fat-free mass with the switch on, anchored at Kim's cohort", {
+  # Kim 2008's 34 men and 46 women, 61.9 kg, 34 years, with NCD-RisC's
+  # South Korean heights (ARIPIPRAZOLE_COHORT)
+  kc <- cohortFactorsIndependent(ARIPIPRAZOLE_COHORT)
+  expect_equal(kc$volume, 0.8128, tolerance = 1e-3)
+  expect_equal(kc$clearance, 0.8559, tolerance = 1e-3)
   x <- aripiprazole(120, 170, 50, "male")$PK$default
-  expect_equal_rounded(x$v1, 192 * 1.3049067)
-  expect_equal_rounded(x$cl1, 3.15 / 60 * 1.2209126)
+  expect_equal(x$v1, 192 * 1.3049067 / kc$volume, tolerance = 1e-7)
+  expect_equal(x$cl1, 3.15 / 60 * 1.2209126 / kc$clearance, tolerance = 1e-7)
   m <- dehydroaripiprazole(120, 170, 50, "male")$PK$default
-  expect_equal_rounded(m$v1, 587 * 1.3049067)
-  expect_equal_rounded(m$cl1, 8.02 / 60 * 1.2209126)
+  expect_equal(m$v1, 587 * 1.3049067 / kc$volume, tolerance = 1e-7)
+  expect_equal(m$cl1, 8.02 / 60 * 1.2209126 / kc$clearance, tolerance = 1e-7)
 })
 
 test_that("ke0 is supplied from Kim 2012, not solved", {
@@ -83,8 +89,10 @@ test_that("pregnancy: parent clearance x 2.1, the metabolite's own clearance unc
   for (p in c("v1", "v2", "v3", "cl2", "cl3", "ka_PO", "bioavailability_PO", "tlag_PO", "ke0")) {
     expect_identical(a[[p]], b[[p]], info = p)
   }
-  expect_equal_rounded(0.09379253848, a$cl1)
-  expect_equal_rounded(154.7702502, a$v1)
+  # The pins from before the anchoring, divided by Kim's cohort factors
+  kc <- cohortFactorsIndependent(ARIPIPRAZOLE_COHORT)
+  expect_equal(a$cl1, 0.09379253848 / kc$clearance, tolerance = 1e-8)
+  expect_equal(a$v1, 154.7702502 / kc$volume, tolerance = 1e-8)
   # the formation rate constant follows the parent clearance
   xOn  <- aripiprazole(70, 165, 30, SEX_FEMALE, pregnant = TRUE)
   xOff <- aripiprazole(70, 165, 30, SEX_FEMALE)

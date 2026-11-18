@@ -263,10 +263,10 @@ test_that("an active parent with no effect site is not described as a prodrug", 
 test_that("half-lives of a day or more are also given in days", {
   expect_equal(helpFormatHalfLife(c(10, 1439, 1440, 79717.909, NA)),
                c("10", "1,440", "1,440 (1 d)", "79,700 (55.4 d)", "—"))
-  # Amiodarone's terminal half-lives, 55.4 days (parent) and 60.4 days
+  # Amiodarone's terminal half-lives, 55.7 days (parent) and 60.8 days
   # (desethylamiodarone), at the reference adult
-  expect_match(helpDrugPageHTML("amiodarone"), "(55.4 d)", fixed = TRUE)
-  expect_match(helpDrugPageHTML("desethylamiodarone"), "(60.4 d)", fixed = TRUE)
+  expect_match(helpDrugPageHTML("amiodarone"), "(55.7 d)", fixed = TRUE)
+  expect_match(helpDrugPageHTML("desethylamiodarone"), "(60.8 d)", fixed = TRUE)
 })
 
 test_that("the table shows the covariate switches", {

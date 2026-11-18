@@ -9,8 +9,8 @@ ivDroperidol <- function(dt, maximum) {
 }
 at <- function(w, t) sapply(t, function(x) w$Plasma[which.min(abs(w$Time - x))])
 
-test_that("the reference patient receives the pooled Lehmann constants", {
-  for (adjust in c(TRUE, FALSE)) {
+test_that("the switch off gives the pooled Lehmann constants", {
+  for (adjust in FALSE) {
     actual <- droperidol(70, 170, 35, "male", adjustToFFM = adjust)
     v1 <- 10.75
     expected <- list(
@@ -24,9 +24,13 @@ test_that("the reference patient receives the pooled Lehmann constants", {
     )
     expect_equal_rounded(actual, expected)
   }
+  # With the switch on, anchored at Lehmann's 10 men and 20 women (67.7 kg,
+  # 45.7 y; NCD-RisC's German heights, DROPERIDOL_COHORT)
+  kc <- cohortFactorsIndependent(DROPERIDOL_COHORT)
+  expect_equal(kc$volume, 0.8437, tolerance = 1e-3)
   on <- droperidol(120, 170, 50, "male")$PK$default
-  expect_equal_rounded(on$v1, 10.75 * 1.3049067)
-  expect_equal_rounded(on$cl1, 10.75 * 0.06015 * 1.2209126)
+  expect_equal(on$v1, 10.75 * 1.3049067 / kc$volume, tolerance = 1e-7)
+  expect_equal(on$cl1, 10.75 * 0.06015 * 1.2209126 / kc$clearance, tolerance = 1e-7)
 })
 
 test_that("it reproduces each of Lehmann's mean curves within 20% from 6 min", {

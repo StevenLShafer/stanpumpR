@@ -25,7 +25,7 @@ Sunder studied children and adolescents. Its model was checked against two adult
 | Study | Regimen | Measured | This model |
 |---|---|---|---|
 | Burm 2000 (*Anesthesiology* 93:395-403) | 50 mg, then 20 mg/h epidural for 72 h, 71 kg | 1.0 ± 0.4 mg/L | 0.71 |
-| Burm 2000 | 50 mg, then 30 mg/h for 72 h, 82 kg | 1.2 ± 0.4 | 0.95 |
+| Burm 2000 | 50 mg, then 30 mg/h for 72 h, 82 kg | 1.2 ± 0.4 | 0.94 |
 | Ekatodramis 2003 (*Anesthesiology* 98:143-150) | 225 mg interscalene, then 12 mg/h from 6 to 54 h, 83 kg | 0.35 ± 0.18 | 0.37 |
 | Ekatodramis 2003 | 225 mg, then 18 mg/h from 6 to 54 h, 75 kg | 0.70 ± 0.38 | 0.58 |
 

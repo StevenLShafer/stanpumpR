@@ -32,7 +32,7 @@ Fluoxetine is offered as **mg PO** and **mg PO qd** only. The AGNP consensus the
 
 ### Covariates
 
-Sex, as published. Age and weight were tested and not retained, within a narrow range of weights. The parameters take the library's [fat-free-mass scaling](help:models/fat-free-mass) for fixed published values, as the 70 kg reference man's, and are used exactly as published with the switch off. CYP2D6 and CYP2C19 genotype, which shift the balance between fluoxetine and norfluoxetine, were not studied. The cohort was adolescents and young adults; the infant and child in the table above are extrapolation.
+Sex, as published. Age and weight were tested and not retained, within a narrow range of weights. The parameters are the cohort's typical patient's (median 59 kg and 17 years, 52 men and 146 women; no height was printed, so China's mean adult height from the NCD Risk Factor Collaboration is used), and take the library's [fat-free-mass scaling](help:models/fat-free-mass) from that patient: a patient like them receives the published values, and the 70 kg reference man volumes 31% and clearances 23% larger. With the switch off they are used exactly as published. CYP2D6 and CYP2C19 genotype, which shift the balance between fluoxetine and norfluoxetine, were not studied. The cohort was adolescents and young adults; the infant and child in the table above are extrapolation.
 
 ### Alternatives not used
 

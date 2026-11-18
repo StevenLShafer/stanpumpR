@@ -76,6 +76,38 @@ mammillaryReference <- function(set, times, bolus = 0, rate = 0, tStop = Inf) {
   }, numeric(1))
 }
 
+# The plasma concentration after a first-order depot dose (F x dose absorbed
+# at rate ka) into the same mammillary set, by convolving the depot's input
+# with mammillaryReference()'s unit impulse response, for calibrated
+# absorption rates (bupivacaine, ropivacaine, diazepam)
+depotReference <- function(set, times, dose, ka, F = 1) {
+  peripheral <- Filter(function(i) set[[paste0("cl", i)]] > 0, 2:3)
+  n <- 1 + length(peripheral)
+  K <- matrix(0, n, n)
+  K[1, 1] <- -set$cl1 / set$v1
+  for (j in seq_along(peripheral)) {
+    i <- peripheral[j]
+    q <- set[[paste0("cl", i)]]
+    K[1, 1] <- K[1, 1] - q / set$v1
+    K[1, j + 1] <- q / set[[paste0("v", i)]]
+    K[j + 1, 1] <- q / set$v1
+    K[j + 1, j + 1] <- -q / set[[paste0("v", i)]]
+  }
+  e <- eigen(K)
+  mu <- Re(e$values); V <- Re(e$vectors); w <- solve(V)[, 1]
+  coef <- V[1, ] * w / set$v1
+  vapply(times, function(t) {
+    F * dose * ka * sum(coef * (exp(mu * t) - exp(-ka * t)) / (ka + mu))
+  }, numeric(1))
+}
+
+# The largest concentration depotReference() reaches, and when
+depotPeakReference <- function(set, dose, ka, F = 1, upper = 1440) {
+  o <- optimize(function(t) depotReference(set, t, dose, ka, F), c(0, upper),
+                maximum = TRUE, tol = 1e-10)
+  c(peak = o$objective, time = o$maximum)
+}
+
 # What the dose grid sends (input$doseGrid, inst/www/dose-grid.js), through
 # the JSON Shiny reads it from: rows of four strings, the time format they
 # were typed in, and the number of edits sent

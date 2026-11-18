@@ -26,4 +26,4 @@ The model follows each of Lehmann's three mean curves within 20% from 6 minutes 
 
 ### Covariates and effect
 
-No covariate was found. The values are read as the 70 kg reference adult's and take the library's [fat-free-mass scaling](help:models/fat-free-mass). No concentration-effect relation for sedation, nausea or QTc has been established, so there is **no effect site** and no band. Every one of these studies notes that the two-hour elimination half-life does not explain droperidol's long clinical action.
+No covariate was found. The values are the cohort's typical patient's (67.7 kg and 45.7 years, 10 men and 20 women; no height was printed, so Germany's mean adult height from the NCD Risk Factor Collaboration is used), and take the library's [fat-free-mass scaling](help:models/fat-free-mass) from that patient: the 70 kg reference man receives volumes 18% and clearances 14% larger than published. No concentration-effect relation for sedation, nausea or QTc has been established, so there is **no effect site** and no band. Every one of these studies notes that the two-hour elimination half-life does not explain droperidol's long clinical action.
