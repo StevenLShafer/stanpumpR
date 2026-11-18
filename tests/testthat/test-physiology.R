@@ -870,3 +870,12 @@ test_that("the kidney-cleared drugs (2026-11-18)", {
     expect_equal(cl(d, physiology = c(renal = 0.1)) / cl(d), 0.1,
                  tolerance = 1e-6, label = d)
 })
+
+test_that("the local anaesthetics (2026-11-18)", {
+  # bupivacaine and mepivacaine have rows; lidocaine and ropivacaine form
+  # their toxic metabolites at their own rate and are not scaled
+  expect_false(is.null(physiologyRow("bupivacaine")))
+  expect_false(is.null(physiologyRow("mepivacaine")))
+  expect_true(physiologyUnsupported(lidocaine(70, 170, 35, "male")))
+  expect_true(physiologyUnsupported(ropivacaine(70, 170, 35, "male")))
+})

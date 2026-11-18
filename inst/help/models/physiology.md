@@ -408,6 +408,12 @@ Most of these models already read the patient's serum creatinine; the
 **Renal function** slider acts on top of it, as a what-if beyond the
 measured value.
 
+**Local anaesthetics** (2026-11-18): bupivacaine (E 0.29) and mepivacaine
+(E 0.27) have computed extraction ratios; the sliders change their systemic
+disposition, not their absorption from the injection site. Lidocaine and
+ropivacaine form their toxic metabolites (MEGX, PPX) at their own rate, so,
+like the other metabolite-forming models, they are not scaled.
+
 <!-- generated: physiology-table -->
 
 ## References
