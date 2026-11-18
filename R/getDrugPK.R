@@ -322,6 +322,17 @@ getDrugPK <- function(
   # drug is the starting point of the what-if.
   physiology <- checkPhysiology(physiology)
   physiologyApplies <- !physiologyIsNormal(physiology) && !is.null(physiologyRow(drug))
+  # A drug whose model the program chooses by population (R/modelSelection.R)
+  # may choose, for this patient, a candidate the sliders cannot scale
+  # (vincristinePediatric's target binding, cyclophosphamideMcCune's
+  # autoinduction, oxaliplatinBastian's biliary store): the row then does not
+  # apply to this patient, and the panel says so (slidersSkipped).
+  slidersSkipped <- FALSE
+  if (physiologyApplies && physiologyUnsupported(X) && !is.null(X$modelChosen))
+  {
+    physiologyApplies <- FALSE
+    slidersSkipped <- TRUE
+  }
   if (physiologyApplies)
   {
     if (physiologyUnsupported(X))
@@ -1360,6 +1371,7 @@ getDrugPK <- function(
   # What the physiology sliders did to this drug (R/physiology.R), for the
   # help and the notification; NULL at normal physiology or without a row.
   out$physiology <- X$physiology
+  out$slidersSkipped <- if (slidersSkipped) TRUE else NULL
   # The library rows the PK was built with, so that a rebuild from the model
   # (pkRebuildArgs(): doseSizePK(), asmSegmentPK()) builds it with them again
   out$drugDefaults <- drugDefaults

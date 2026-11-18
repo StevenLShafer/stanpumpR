@@ -234,7 +234,8 @@ test_that("the simulation responds: a lower clearance leaves more drug", {
 test_that("the physiology table is well formed", {
   tab <- physiologyTable()
   expect_named(tab, c("drug", "fraction_renal", "fraction_hepatic",
-                      "extraction_ratio", "renal_extraction_ratio",
+                      "extraction_ratio", "blood_plasma_ratio",
+                      "extraction_basis", "renal_extraction_ratio",
                       "oral_first_pass", "basis",
                       "source_renal", "source_hepatic", "source_extraction",
                       "ke0_permeability_limited", "verification", "notes"))
@@ -258,6 +259,21 @@ test_that("the physiology table is well formed", {
                     is_valid_number(r$renal_extraction_ratio, 0, 1), info = info)
     expect_true(nzchar(r$source_renal) && nzchar(r$source_hepatic), info = info)
     if (r$fraction_hepatic > 0) expect_true(nzchar(r$source_extraction), info = info)
+    if (r$fraction_hepatic > 0)
+      expect_true(r$extraction_basis %in% c("measured", "computed"), info = info)
+    # A computed extraction ratio is the model's own clearance at the
+    # reference man over hepatic blood flow (computedExtractionRatio()), so it
+    # cannot drift from the model it describes
+    if (isTRUE(r$extraction_basis == "computed"))
+    {
+      expect_true(is_valid_number(r$blood_plasma_ratio, 0.05, 20), info = info)
+      X <- get(r$drug, envir = asNamespace("stanpumpR"))(70, 170, 35, "male")
+      expect_equal(r$extraction_ratio,
+                   round(computedExtractionRatio(r$fraction_hepatic,
+                                                 X$PK[[1]]$cl1,
+                                                 r$blood_plasma_ratio), 3),
+                   tolerance = 1e-9, info = info)
+    }
     # A model whose elimination lives outside the PK set cannot be scaled
     X <- get(r$drug, envir = asNamespace("stanpumpR"))(70, 170, 40, "male")
     expect_false(physiologyUnsupported(X), info = info)
@@ -731,4 +747,54 @@ test_that("a session whose physiology is off normal is shown the sliders", {
     session$flushReact()
     expect_gt(shown(), before)
   })
+})
+
+test_that("an extraction ratio computed from the hepatic share (Shafer, 2026-11-17)", {
+  # Williams and Leggett 1989: 25% of 6.7 L/min
+  expect_equal(PHYSIOLOGY_HEPATIC_BLOOD_FLOW, 1.675)
+  expect_equal(computedExtractionRatio(1, 0.8375), 0.5)
+  expect_equal(computedExtractionRatio(0.5, 0.8375, bloodPlasma = 0.5), 0.5)
+  # A hepatic blood clearance above hepatic blood flow cannot be well stirred
+  expect_true(is.na(computedExtractionRatio(1, 2)))
+})
+
+test_that("a metabolite-forming model is not one the sliders can scale", {
+  # The formation rate constant would not move with the parent's clearance
+  X <- doxorubicin(70, 170, 35, "male")
+  expect_false(is.null(X$metabolite))
+  expect_true(physiologyUnsupported(X))
+  expect_true(physiologyUnsupported(list(biliaryStore = list())))
+})
+
+test_that("a child's chosen model the sliders cannot scale is skipped, and said", {
+  low <- c(liver = 0.5, renal = 0.5, cardiac = 0.5, gi = 1)
+  # vincristine chooses vincristinePediatric (target binding) for a child
+  child <- getDrugPK("vincristine", 20, 110, 5, "male", physiology = low)
+  expect_true(isTRUE(child$slidersSkipped))
+  expect_null(child[["physiology", exact = TRUE]])
+  normal <- getDrugPK("vincristine", 20, 110, 5, "male")
+  expect_equal(child$PK[[1]]$cl1, normal$PK[[1]]$cl1)
+  # The adult's model is changed
+  adult <- getDrugPK("vincristine", 70, 170, 35, "male", physiology = low)
+  expect_null(adult$slidersSkipped)
+  expect_lt(adult$PK[[1]]$cl1,
+            getDrugPK("vincristine", 70, 170, 35, "male")$PK[[1]]$cl1)
+  note <- as.character(physiologyNote(low, "vincristine", skipped = "vincristine"))
+  expect_match(note, "Not changed for this patient", fixed = TRUE)
+  expect_false(grepl("Changed: ", note, fixed = TRUE))
+})
+
+test_that("the chemotherapy rows move clearance by their routes (2026-11-17)", {
+  cl <- function(d, ...) getDrugPK(d, 70, 170, 35, "male", ...)$PK[[1]]$cl1
+  # carboplatin: renal 0.71, nothing hepatic
+  expect_equal(cl("carboplatin", physiology = c(renal = 0.1)) / cl("carboplatin"),
+               0.71 * 0.1 + 0.29, tolerance = 1e-6)
+  expect_equal(cl("carboplatin", physiology = c(liver = 0.1)), cl("carboplatin"))
+  # docetaxel: almost all hepatic, capacity limited at E 0.4
+  r <- physiologyRow("docetaxel")
+  expect_equal(cl("docetaxel", physiology = c(liver = 0.5)) / cl("docetaxel"),
+               0.03 + 0.97 * hepaticClearanceFactor(r$extraction_ratio, 1, 0.5),
+               tolerance = 1e-6)
+  # daunorubicin is held back
+  expect_null(physiologyRow("daunorubicin"))
 })

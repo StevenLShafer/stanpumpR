@@ -740,6 +740,31 @@ physiologyDrugs <- function()
   tab$drug[tab$verification %in% PHYSIOLOGY_APPLIED_VERIFICATION]
 }
 
+#' Normal hepatic blood flow of the reference man, L/min
+#'
+#' Williams and Leggett 1989 (Clin Phys Physiol Meas 10:187-217, read in full
+#' 2026-11-16), Table 17: total liver blood flow 25% of resting cardiac output
+#' in the 35-year-old reference male (hepatic artery 6.5%, portal 18.5%),
+#' whose reference resting cardiac output is 6700 mL/min (section 2.1: supine,
+#' 73 kg).  So 0.25 x 6.7 = 1.675 L/min.
+#' @noRd
+PHYSIOLOGY_HEPATIC_BLOOD_FLOW <- 0.25 * 6.7
+
+#' Hepatic extraction ratio computed from the hepatic share of clearance
+#'
+#' E = fraction_hepatic x CL / (Q_H x B:P) (Shafer, 2026-11-17): CL the
+#' systemic plasma clearance (L/min) at the reference patient, B:P the
+#' blood-to-plasma concentration ratio (1 for a model of whole blood).
+#' Returns NA where the hepatic blood clearance would exceed hepatic blood
+#' flow, which the well-stirred model cannot carry: the "hepatic" share then
+#' includes extrahepatic metabolism, and the row must say so instead.
+#' @noRd
+computedExtractionRatio <- function(fractionHepatic, clearance, bloodPlasma = 1)
+{
+  E <- fractionHepatic * clearance / (PHYSIOLOGY_HEPATIC_BLOOD_FLOW * bloodPlasma)
+  ifelse(E < 1, E, NA_real_)
+}
+
 #' Ratio of the new hepatic clearance to the old (well-stirred model)
 #'
 #' @param E hepatic extraction ratio at normal flow and capacity, from 0 to 1
@@ -867,13 +892,20 @@ applyPhysiology <- function(X, row, physiology, ke0 = NULL)
 #' Saturable or target-mediated elimination, parallel systems, a dose-size
 #' rebuild and an INR or ACT output each carry clearance outside the PK set
 #' that applyPhysiology() scales, so a row for such a drug would change only
-#' part of its elimination.  test-physiology.R holds the table to this.
+#' part of its elimination.  So does an active metabolite formed at its own
+#' rate constant (\code{X$metabolite$kFormation}, R/metaboliteCoefficients.R):
+#' the formation would stay where it was while the parent's clearance moved,
+#' and a parent cleared less than it forms would make mass (2026-11-17, from
+#' the chemotherapy batch: doxorubicin, irinotecan, cisplatin, gemcitabine,
+#' capecitabine).  A biliary store (oxaliplatinBastian) is the same.
+#' test-physiology.R holds the table to this.
 #' @noRd
 physiologyUnsupported <- function(X)
 {
   !is.null(X$michaelisMenten) || !is.null(X$parallelSystems) ||
     isTRUE(X$doseDependent) || !is.null(X$inr) || !is.null(X$act) ||
-    !is.null(X$dosePhase) || !is.null(X$transitChain$metabolite)
+    !is.null(X$dosePhase) || !is.null(X$transitChain$metabolite) ||
+    !is.null(X$metabolite) || !is.null(X$biliaryStore)
 }
 
 #' Which dosed drugs the physiology sliders do not change
@@ -1098,7 +1130,7 @@ physiologySummary <- function(physiology)
 #' @param drugs the dosed drugs
 #' @noRd
 physiologyNote <- function(physiology, drugs,
-                           temperature = NULL)
+                           temperature = NULL, skipped = character(0))
 {
   physiology <- checkPhysiology(physiology)
   if (!is.null(temperature)) physiology[["temperature"]] <- checkBodyTemperature(temperature)
@@ -1115,10 +1147,20 @@ physiologyNote <- function(physiology, drugs,
   changed <- c(intersect(drugs, physiologyDrugs()),
                gasAgents[rep(cardiacMoved || cold, length(gasAgents))])
   noData <- setdiff(drugs, physiologyDrugs())
+  # A drug whose model, chosen for this patient, the sliders cannot scale
+  # (getDrugPK()'s slidersSkipped)
+  skipped <- intersect(skipped, changed)
+  changed <- setdiff(changed, skipped)
   tags$div(
     class = "small physiology-note",
     if (length(changed))
       tags$p(tags$strong("Changed: "), paste(changed, collapse = ", ")),
+    if (length(skipped))
+      tags$p(class = "text-warning",
+             tags$strong("Not changed for this patient "),
+             "(the model chosen for this patient's age or size carries ",
+             "elimination the sliders cannot scale): ",
+             paste(skipped, collapse = ", ")),
     if (length(noData))
       tags$p(class = "text-warning",
              tags$strong("Not changed (no physiology data yet): "),
