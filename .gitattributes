@@ -1,0 +1,7 @@
+# The archive pipeline's scripts are a byte-for-byte mirror of the copies that actually run,
+# beside the papers (papers/_build/README.md).  `papers/_build/check_in_step.py` compares the
+# two on every filing run, so Git must not rewrite their line endings on checkout: with
+# core.autocrlf on, every .py would come out CRLF against the archive's LF and the check
+# would call all thirty of them drifted.  The folder is mixed on purpose -- update.bat is
+# CRLF, digests.bat is LF -- so the rule is "convert nothing" rather than a per-type eol.
+papers/_build/** -text
