@@ -3310,7 +3310,18 @@ registry <- rbind(
       source = "Leutritz AL et al. Psychotropic medication in pregnancy and lactation and early development of exposed children. Br J Clin Pharmacol 2023;89:737-750 PMID 36103361",
       source_url = "https://doi.org/10.1111/bcp.15533",
       to_obtain = "Scherf-Clavel 2025 (PBPK of amitriptyline in pregnancy) in full",
-      notes = "CYP2D6 rises and CYP2C19 falls in pregnancy, moving the parent and its metabolite in opposite directions; the sources disagree, so nothing is applied.")
+      notes = "CYP2D6 rises and CYP2C19 falls in pregnancy, moving the parent and its metabolite in opposite directions; the sources disagree, so nothing is applied."),
+  row("levothyroxine", "Other", "unquantified",
+      finding = "Requirements rise, but no pharmacokinetic magnitude is established. Alexander 2004 (NEJM, 19 women with hypothyroidism followed prospectively through 20 pregnancies, abstract read): the mean levothyroxine requirement rose 47 percent during the first half of pregnancy (median onset 8 weeks), plateaued by week 16 and stayed up until delivery; the doses were titrated to TSH, so this is a dose requirement, the sum of a larger T4 pool (thyroxine-binding globulin rises under estrogen), placental deiodination, transfer to the fetus and any change in absorption, not a clearance. Soldin 2010 (Ther Drug Monit, read in full in PubMed Central; 13C-levothyroxine tracer by LC-MS/MS; 9 pregnant and 7 nonpregnant women, 6 of them studied in both states; gestation 13-36 weeks): AUC(0-inf) 23.08 against 14.8 ng.h/mL and median CL/F 4.5 against 7.0 L/h, slower in pregnancy (P < 0.04), median half-lives 32.1 and 24.1 h. Its absolute numbers cannot be reconciled with the other studies of T4 (a half-life of about a day against the 6-7 days of the tracer studies since Sterling 1956; CL/F 4 to 37 times that of XP-8121's phase 1), so it is not applied. A PubMed search on 2026-11-18 (levothyroxine pregnancy dose requirement pharmacokinetics) found no population model with a pregnancy covariate. The Synthroid label (2024, read in full) says pregnancy may require higher doses and gives a titration table, no pharmacokinetics.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = "first to third", comparator = "pre-conception (requirement); postpartum (13C tracer)",
+      design = "prospective dose titration; stable-isotope single-dose NCA", n = 35L, confidence = "low",
+      evidence_read = "abstract",
+      source = "Alexander EK, Marqusee E, Lawrence J, Jarolim P, Fischer GA, Larsen PR. Timing and magnitude of increases in levothyroxine requirements during pregnancy in women with hypothyroidism. N Engl J Med 2004;351:241-249 PMID 15254282; Soldin OP, Soldin SJ, Vinks AA, Younis I, Landy HJ. Longitudinal comparison of thyroxine pharmacokinetics between pregnant and nonpregnant women: a stable isotope study. Ther Drug Monit 2010;32:767-773 PMID 20962709",
+      source_url = "https://doi.org/10.1056/NEJMoa040079",
+      to_obtain = "Alexander 2004 in full",
+      notes = "The plotted curve is T4 above the patient's own baseline; the rise in thyroxine-binding globulin in pregnancy raises total T4 for the same free T4, which a pharmacokinetic factor would not describe. Thyroxine is cleared by deiodination and conjugation, not by filtration, so the rise in filtration does not apply.")
 )
 
 # The candidate models renamed when their drug's model became the program's

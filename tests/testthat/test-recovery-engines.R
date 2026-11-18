@@ -455,6 +455,8 @@ test_that("exactly the plasma-only drugs have no effect site", {
     # the pulmonary hypertension groups' candidates (2026-11-18): plasma only
     "sildenafilFDA", "sildenafilMiura", "tadalafilFergusonSells", "tadalafilMiura",
     "ambrisentanOkour", "ambrisentanMiura",
+    # levothyroxine (Inada 1975, 2026-11-18): plasma only
+    "levothyroxine",
     # colistimethate and the colistin it forms (2026-11-16): plasma only, no
     # line until the MIC decision (R/drugs_colistin.R)
     "colistimethate", "colistin",
