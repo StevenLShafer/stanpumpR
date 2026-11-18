@@ -32,7 +32,7 @@ Do this, in order:
    ```
 
 2. **Check the archive.** Take every pick in `docs/library-expansion/candidates.csv` that `docs/library-expansion/archive-status.csv` marks as not in the archive.
-   - Search the stanpumpR paper archive on Google Drive (folder `stanpumpRPapers`; see the "Source papers" section of AGENTS.md) by file name: `title contains 'PMID_<pmid>'`, several joined with `or`.
+   - Search the stanpumpR paper archive on Google Drive (folder `stanpumpRPapers`; see the "Source papers" section of AGENTS.md) by file name, several joined with `or`: `title contains 'PMID_<pmid>'` for a pick with a PMID, and `title contains 'DOI_<doi>'` (the DOI with every character but letters, digits and dots made `_`, the name `downloads.md` gives) for one without.
    - Include one file you know is there, to check the search works.
    - For any new picks, add PMIDs and PMC IDs with the PubMed connector's ID converter.
    - Update `archive-status.csv` and rerun the candidates script.

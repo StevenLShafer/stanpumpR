@@ -60,16 +60,52 @@ agentDocDefinitions <- function(root, jsOnly = FALSE) {
   })))
 }
 
+# Whether the JavaScript defines `Object.method`: assigned as such
+# (Object.method = , Object.prototype.method = ), or written as a method or
+# property inside the braces of the object literal or class that defines
+# Object (const Cards = { ... fit(view) { ... } ... }).
+agentDocJsMember <- function(root, name) {
+  parts <- strsplit(name, ".", fixed = TRUE)[[1]]
+  if (length(parts) != 2) return(FALSE)
+  object <- parts[1]
+  method <- parts[2]
+  files <- c(list.files(file.path(root, "inst", "www"), "\\.js$", full.names = TRUE),
+             list.files(file.path(root, "tools", "viewer", "src"), "\\.js$", full.names = TRUE))
+  for (f in files) {
+    text <- paste(readLines(f, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
+    if (grepl(sprintf("\\b%s(\\.prototype)?\\.%s\\s*=[^=]", object, method), text, perl = TRUE))
+      return(TRUE)
+    start <- regexpr(sprintf("(\\b(const|let|var)\\s+%s\\s*=\\s*|\\bclass\\s+%s\\b[^{]*)\\{",
+                             object, object), text, perl = TRUE)
+    if (start < 0) next
+    # the body: from that brace to the one that closes it
+    chars <- strsplit(substring(text, start + attr(start, "match.length") - 1), "")[[1]]
+    depth <- cumsum((chars == "{") - (chars == "}"))
+    end <- which(depth == 0)[1]
+    body <- paste(chars[seq_len(if (is.na(end)) length(chars) else end)], collapse = "")
+    if (grepl(sprintf("(^|\\n)\\s*(async\\s+|get\\s+|set\\s+|static\\s+)?%s\\s*(\\([^()]*\\)\\s*\\{|:)",
+                      method), body, perl = TRUE))
+      return(TRUE)
+  }
+  FALSE
+}
+
+test_that("a JavaScript method is found only on the object that defines it", {
+  root <- agentDocsRoot()
+  expect_true(agentDocJsMember(root, "Cards.fit"))
+  # draw() is a method of View, not of Cards
+  expect_false(agentDocJsMember(root, "Cards.draw"))
+  expect_false(agentDocJsMember(root, "Cards.fitt"))
+  expect_false(agentDocJsMember(root, "Cardz.fit"))
+})
+
 test_that("every function the orientation documents name exists", {
   root <- agentDocsRoot()
   defined <- agentDocDefinitions(root)
   # A JavaScript method named through its object (Cards.fit() in the
-  # Visualizer) is found when the object and the method are both defined in
-  # the JavaScript, so a misspelling of either still fails.
-  jsDefined <- agentDocDefinitions(root, jsOnly = TRUE)
-  jsMember <- function(name)
-    grepl(".", name, fixed = TRUE) &&
-      all(strsplit(name, ".", fixed = TRUE)[[1]] %in% jsDefined)
+  # Visualizer) is found only when that object defines it, so a misspelling of
+  # either, or a method another object defines, still fails.
+  jsMember <- function(name) agentDocJsMember(root, name)
   imports <- c("base", "stats", "utils", "shiny", "testthat", "mirai")
   inImports <- function(name)
     any(vapply(imports, function(pkg)

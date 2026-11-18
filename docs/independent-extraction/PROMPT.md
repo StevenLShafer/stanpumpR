@@ -32,7 +32,7 @@ E. **Anything that looks internally inconsistent.** For example, an equation tha
 model,parameter,symbol_as_printed,value_as_printed,units,estimate_type,uncertainty,uncertainty_type,pdf_page,location,quote,notes
 ```
 
-   - `estimate_type` is one of `typical`, `covariate`, `reference_value`, `iiv`, `iov`, `residual`, `fixed`, `derived`.
+   - `estimate_type` is one of `typical`, `covariate`, `reference_value`, `iiv`, `iov`, `residual`, `fixed`, `secondary`. Use `secondary` for a value the paper itself prints but computed from its estimates, such as a half-life, a Vss or an AUC table. A value you computed yourself is never a row: it goes in `notes` (rule 2).
    - Put any value containing a comma in double quotes.
    - Write one row per number. A covariate equation with three numbers is three rows; repeat the equation in `quote`.
 

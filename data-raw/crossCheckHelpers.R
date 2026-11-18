@@ -110,11 +110,17 @@ normaliseDrugToken <- function(x) {
 
 # ---- numbers ---------------------------------------------------------------
 
-# Every number written in a text, as numbers.  A thousands separator is not
-# read (1,033 is two numbers), which errs toward a lead, never a false match.
+# Every number written in a text, as numbers.  A hyphen is a minus sign only
+# where nothing that ends a number or a name stands before it, so a range
+# (10-20) or a date (2016-03-05) gives positive numbers; and a number does not
+# start inside a name or another number (V12.5 gives nothing, not 2.5).  A
+# thousands separator is not read: 1,033 gives 1 and 33, which can make a
+# coincidental match, so a match is a lead to check on the page, not proof.
 numbersIn <- function(text) {
-  tokens <- regmatches(text, gregexpr("(?<![A-Za-z_])-?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?",
-                                      text, perl = TRUE))[[1]]
+  number <- "[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?"
+  tokens <- regmatches(text, gregexpr(
+    paste0("(?<![A-Za-z_0-9.)\\]])-", number, "|(?<![A-Za-z_0-9.])", number),
+    text, perl = TRUE))[[1]]
   values <- suppressWarnings(as.numeric(tokens))
   unique(values[is.finite(values)])
 }

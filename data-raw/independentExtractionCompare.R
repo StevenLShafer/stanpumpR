@@ -42,7 +42,7 @@ if (!length(replyFiles)) {
 readReply <- function(path) {
   lines <- readLines(path, warn = FALSE, encoding = "UTF-8")
   fences <- grep("^\\s*```", lines)
-  for (k in seq_len(length(fences) - 1)) {
+  for (k in seq_len(max(length(fences) - 1, 0))) {
     block <- lines[(fences[k] + 1):(fences[k + 1] - 1)]
     if (length(block) && grepl("value_as_printed", block[1])) {
       df <- tryCatch(utils::read.csv(text = paste(block, collapse = "\n"),
@@ -55,10 +55,37 @@ readReply <- function(path) {
   NULL
 }
 
+# Characters a PDF prints in a number, and what each reads as: the minus
+# sign and dashes, the multiplication sign and dot, and the superscripts.
+# Built from code points so that the script reads the same in any locale.
+PRINTED_FROM <- vapply(c(0x2212, 0x2013, 0x2012, 0x00d7, 0x00b7, 0x2070, 0x00b9, 0x00b2,
+                         0x00b3, 0x2074, 0x2075, 0x2076, 0x2077, 0x2078, 0x2079, 0x207b),
+                       intToUtf8, character(1))
+PRINTED_TO <- c("-", "-", "-", "x", "*", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "-")
+
+# The number a reader printed, or NA if value_as_printed is not one number.
+# PDFs print a minus as U+2212 and powers of ten as "3.5 x 10^-2", "3.5×10−2"
+# or with superscripts; all read as the same number.  A trailing % is the
+# printed form of a percentage and is kept as printed (no conversion).
 firstNumber <- function(x) {
-  hit <- regmatches(x, regexpr("-?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?", x, perl = TRUE))
-  if (length(hit)) as.numeric(hit) else NA_real_
+  if (is.na(x)) return(NA_real_)
+  for (k in seq_along(PRINTED_FROM))
+    x <- gsub(PRINTED_FROM[k], PRINTED_TO[k], x, fixed = TRUE, useBytes = TRUE)
+  x <- gsub("[[:space:],]", "", x)
+  x <- sub("%$", "", x)
+  mantissa <- "(-?[0-9]*\\.?[0-9]+)"
+  m <- regmatches(x, regexec(paste0("^", mantissa, "(?:[eE]([-+]?[0-9]+))?$"), x, perl = TRUE))[[1]]
+  if (length(m)) return(as.numeric(m[2]) * 10^(if (nzchar(m[3])) as.numeric(m[3]) else 0))
+  m <- regmatches(x, regexec(paste0("^", mantissa, "[xX*]10\\^?\\(?([-+]?[0-9]+)\\)?$"), x, perl = TRUE))[[1]]
+  if (length(m)) return(as.numeric(m[2]) * 10^as.numeric(m[3]))
+  NA_real_
 }
+
+# The columns of the prompt's CSV, in its order.  A reply that leaves one out
+# gets it blank, and one it adds is dropped, so every reader's rows bind.
+REPLY_COLUMNS <- c("model", "parameter", "symbol_as_printed", "value_as_printed", "units",
+                   "estimate_type", "uncertainty", "uncertainty_type", "pdf_page",
+                   "location", "quote", "notes")
 
 cards <- readDigestCards(repo)
 nlmx <- tryCatch(utils::read.csv(file.path(repo, "docs", "nlmixr2lib", "shared-parameters.csv"),
@@ -78,6 +105,8 @@ for (stem in stems) {
       message(basename(f), ": no CSV block with the prompt's header; skipped")
       next
     }
+    for (col in setdiff(REPLY_COLUMNS, names(df))) df[[col]] <- NA_character_
+    df <- df[, REPLY_COLUMNS, drop = FALSE]
     df$reader <- reader
     df$value <- vapply(df$value_as_printed, firstNumber, numeric(1))
     readings[[reader]] <- df
@@ -104,8 +133,11 @@ for (stem in stems) {
     type <- tolower(trimws(if ("estimate_type" %in% names(df)) df$estimate_type else ""))
     df$inCard <- vapply(df$value, matchValue, character(1), numbers = cardNumbers)
     df$inCode <- vapply(df$value, matchValue, character(1), numbers = codeNumbers)
+    # Readers transcribe without converting (PROMPT.md, rule 2), so another
+    # reader agrees only with the same number; the unit factors are for
+    # stanpumpR and nlmixr2lib, which may hold a value in other units.
     df$otherReaders <- vapply(df$value, function(v) sum(vapply(others, function(o)
-      nzchar(matchValue(v, unique(readings[[o]]$value[is.finite(readings[[o]]$value)]))),
+      identical(matchValue(v, unique(readings[[o]]$value[is.finite(readings[[o]]$value)])), "exact"),
       logical(1))), integer(1))
     df$inNlmixr2lib <- if (hasNlmx) nzchar(vapply(df$value, matchValue, character(1),
                                                   numbers = nlmxNumbers)) else NA
@@ -113,12 +145,19 @@ for (stem in stems) {
     inStanpumpR <- grepl("exact$", df$inCard) | grepl("exact$", df$inCode)
     converted <- !inStanpumpR & (nzchar(df$inCard) | nzchar(df$inCode))
     variability <- type %in% c("iiv", "iov", "residual")
+    # A value the reader computed is not in the paper, and two readers who
+    # apply one formula agree, so it can never be a transcription lead.  The
+    # prompt keeps such values in notes; "derived" is from replies to its first
+    # wording, which offered that type.  A "secondary" value (one the paper
+    # prints, computed from its estimates) is a transcription and is compared.
+    derived <- type == "derived"
     df$verdict <- ifelse(!is.finite(df$value), "no number",
+                  ifelse(derived, "derived by the reader (not compared)",
                   ifelse(inStanpumpR, "in stanpumpR",
                   ifelse(converted, "in stanpumpR only after a unit factor (check)",
                   ifelse(variability, "variability (not compared)",
                   ifelse(agree >= 1, "LEAD: another reader agrees, not in stanpumpR",
-                         "one reading only, not in stanpumpR")))))
+                         "one reading only, not in stanpumpR"))))))
     df
   }))
   keep <- intersect(c("reader", "model", "parameter", "symbol_as_printed", "value_as_printed",
@@ -127,7 +166,8 @@ for (stem in stems) {
   rows <- rows[order(rows$verdict != "LEAD: another reader agrees, not in stanpumpR",
                      rows$verdict != "in stanpumpR only after a unit factor (check)",
                      rows$verdict != "one reading only, not in stanpumpR", rows$reader), keep]
-  utils::write.csv(rows, file.path(outDir, paste0(stem, ".csv")), row.names = FALSE, na = "")
+  utils::write.csv(rows, file.path(outDir, paste0(stem, ".csv")), row.names = FALSE, na = "",
+                   fileEncoding = "UTF-8")
   count <- function(v) sum(rows$verdict == v)
   summaryRows[[stem]] <- data.frame(
     stem = stem, readers = paste(names(readings), collapse = ";"),

@@ -41,7 +41,7 @@ Antivirals,atazanavir,atazanavir,2,planned,"Boosted; as darunavir."
 Antivirals,lopinavir,lopinavir,2,planned,"Co-formulated with ritonavir."
 Antivirals,maraviroc,maraviroc,2,planned,
 Antivirals,remdesivir,remdesivir,2,planned,"COVID-19; its nucleoside metabolite GS-441524."
-Antivirals,nirmatrelvir,nirmatrelvir;ritonavir,2,planned,"Paxlovid; ritonavir boosting."
+Antivirals,nirmatrelvir,nirmatrelvir,2,planned,"Paxlovid; ritonavir boosting. The nlmixr2lib ritonavir models are of ritonavir boosting other drugs (HCV, HIV) and are not searched for Paxlovid."
 Antivirals,molnupiravir,molnupiravir,2,planned,
 Antivirals,oseltamivir,oseltamivir,2,planned,"Prodrug; oseltamivir carboxylate is the active moiety."
 Antivirals,baloxavir,baloxavir,2,planned,

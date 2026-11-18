@@ -1,6 +1,6 @@
 # Independent readings of stanpumpR's source papers
 
-stanpumpR's models were transcribed from their papers by Claude, and the repository's rule is that every number is read in the PDF. The protocol here has the same papers read again, **blind**, by models from other companies: Gemini (such as "Carbon") and ChatGPT. It then compares their numbers with stanpumpR's.
+stanpumpR's models were transcribed from their papers by Claude, and the repository's rule is that every number is read in the PDF. The protocol here has the same papers read again, **blind**, by models from other companies: Gemini and ChatGPT, each the most capable model and mode the paid plan offers (the one Steven calls "Carbon" is a Gemini model). It then compares their numbers with stanpumpR's.
 
 What each comparison means:
 - **Two independent readers agree on a number that stanpumpR prints nowhere.** stanpumpR has probably missed or misread something, and the number is a strong lead.
@@ -27,7 +27,7 @@ As with every external review, the readers' output is **leads, not findings** (`
    - Use one paper per conversation.
    - Turn off web search, so the reader uses only the paper.
 4. **Ask ChatGPT, in a new conversation, the same way.** Also turn off memory and personalisation, so that an earlier reading cannot leak into this one.
-5. **Save each reply in full**, unedited, as `<stem>.gemini.md` and `<stem>.chatgpt.md`. Put the files in a Google Drive folder of their own, *not* inside the paper archive (the archive's pipeline owns that folder), or upload them to a Claude session.
+5. **Save each reply in full**, unedited, as `<stem>.gemini.md` and `<stem>.chatgpt.md`, and add one first line naming the model and mode the app showed (for example `Reader: <model name>, <mode>`), so a reading can be traced to the model that made it. The script reads only the CSV block, so that line changes nothing else. Put the files in a Google Drive folder of their own, *not* inside the paper archive (the archive's pipeline owns that folder), or upload them to a Claude session.
 6. **Claude takes over from there:**
    - copies the replies into `docs/independent-extraction/replies/`;
    - runs:
@@ -51,9 +51,11 @@ Rscript --vanilla data-raw/independentExtractionIndex.R .
 |---|---|
 | `in stanpumpR` | The number, as printed, is in stanpumpR's digest card or in a model file the card names. |
 | `in stanpumpR only after a unit factor (check)` | Found only as x60, /60, x1000, /1000, x100 or /100 of the value, to 0.5%. This may be stanpumpR's own conversion, or a coincidence: a card prints hundreds of numbers. |
-| `LEAD: another reader agrees, not in stanpumpR` | At least two readers (nlmixr2lib counts as one) report the number, and stanpumpR prints it nowhere. **Read the PDF.** |
+| `LEAD: another reader agrees, not in stanpumpR` | At least two readers (nlmixr2lib counts as one) report the same number, and stanpumpR prints it nowhere. Readers are matched exactly, since the prompt forbids converting; only the comparison with stanpumpR and nlmixr2lib allows the unit factors. **Read the PDF.** |
 | `one reading only, not in stanpumpR` | Probably that reader's error, or a model or table stanpumpR did not use. |
 | `variability (not compared)` | Between-subject variability or residual error. stanpumpR carries these for only a few models. |
+| `derived by the reader (not compared)` | A value the reader computed (`estimate_type` `derived`, from replies to the prompt's first wording). It is not in the paper, and two readers applying one formula agree, so it is never a lead. A value the paper prints but computed (`secondary`) is compared like any other. |
+| `no number` | `value_as_printed` is not one number (a range, a word, two numbers). Minus signs, `x 10^n` and superscripts are read. |
 
 A match means the number was transcribed, not that it sits in the right place: a small integer can match by coincidence. A lead can also be a model in the paper that stanpumpR read but deliberately did not implement. The card usually says so.
 

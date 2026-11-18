@@ -17,6 +17,7 @@ The list will be revisited every week or so. Each drug is still added the ordina
 | `plan.csv` | One row per planned drug. Gives its category, the names nlmixr2lib files it under, priority, `status` and notes (product, dose basis, US approval). | Hand. The weekly routine updates `status`. |
 | `candidates.csv` | Every nlmixr2lib model of every planned drug, ranked by study size. `pick` marks the papers to get first: the largest study, and the most recent if that is another paper. | `data-raw/libraryExpansionCandidates.R` |
 | `archive-status.csv` | For each pick: its PMID and PMC ID (from PubMed's ID converter), and whether it is in the stanpumpR paper archive (a Drive search by file name). | The weekly routine, or by hand. |
+| `download-ids.txt` | The same papers as a bare list, one PMID per line (a DOI where there is none), to paste into the local session that downloads papers. | `data-raw/libraryExpansionCandidates.R` |
 | `downloads.md` | The picks not yet in the archive, by category, with DOI, PubMed and free-PMC links and the archive file name to save each under. | `data-raw/libraryExpansionCandidates.R` |
 
 Rebuild after `plan.csv` or `archive-status.csv` changes, or after a fresh run of `data-raw/nlmixr2libCrossCheck.R`:
@@ -27,7 +28,7 @@ Rscript --vanilla data-raw/libraryExpansionCandidates.R .
 
 ## Status on 2026-11-18
 
-- **None of the 107 picks was in the archive.** That covers both the PubMed ID check (101 have PMIDs, 6 have none) and a Drive search by `PMID_` and DOI file name.
+- **None of the 107 picks was in the archive.** Every one has a PMID, checked against a Drive search by `PMID_` and DOI file name. PubMed's ID converter knows only papers in PubMed Central, so five PMIDs came from a PubMed search by DOI instead.
 - **101 of the 107 are free in PubMed Central**, so they need no library login.
 - **The picks are chosen mechanically.** The "most recent" pick is sometimes a small or specialised study, such as a PBPK model or neonates only. Read the `candidates.csv` rows of a drug before settling on its source.
 
@@ -44,7 +45,7 @@ Rscript --vanilla data-raw/libraryExpansionCandidates.R .
 
 ## Downloading
 
-`downloads.md` lists each paper with the file name the archive expects (`PMID_<pmid>.pdf`). Save the PDF, and any supplement, under that name, and the archive's pipeline takes it from there.
+`downloads.md` lists each paper with the file name the archive expects: `PMID_<pmid>.pdf`, or, for a paper with no PMID, `DOI_<doi>.pdf` with every character but letters, digits and dots made `_` (`DOI_10.2133_dmpk.13.376.pdf`). Save a supplement under the same name with a suffix, `_sup1`, `_sup2` and so on (or the publisher's own `_mmc1`, `_ESM1`, `_SDC1`), never under the paper's own name, which would replace it. The archive's pipeline takes it from there.
 
 Lane Library is needed only for the few papers not free in PMC. Claude in Chrome can do the downloading, but only in a session on Steven's own computer, where Chrome runs: the Claude desktop app, or `claude remote-control` in the stanpumpR folder. A cloud session cannot reach that browser.
 
