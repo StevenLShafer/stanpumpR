@@ -15,6 +15,16 @@ The note ALWAYS begins "wanted by ", because build.py rebuilds this queue from t
 stanpumpR source cites and keeps only the rows carrying that prefix.  Without it a row added
 here would survive exactly until the next filing run and then vanish, which is the trap the
 whole arrangement exists to avoid (papers/_build/README.md).
+
+KNOWN LIMITATION, not yet fixed (CodeRabbit, PR #784): the queue is read, added to, and
+replaced without a lock, and build.py rewrites it the same way.  Two writers at once -- two
+Claude sessions on this machine, or this script while update.bat is running -- can each read
+the queue before either writes, and the later write silently drops the earlier one's rows.
+Each writer now stages on a temporary file of its own, so they cannot publish each other's
+half-written data, but that does not make the read-modify-write safe.  The fix is a lock file
+beside the queue that every writer takes across its whole read-and-replace; it is not here
+because it has to be added to build.py in the same change and wants a test.  Until then, do
+not run this while update.bat is running.
 """
 import os
 import re
@@ -29,9 +39,12 @@ sys.stdout.reconfigure(encoding="utf-8")
 
 
 def archived():
+    """PMIDs whose ARTICLE is here.  Only the unsuffixed name counts: PMID_33205593_sup0002.pdf
+    is a supplement, and treating it as the article meant the article itself was reported as
+    archived and never queued (CodeRabbit, PR #784)."""
     out = set()
     for f in os.listdir(ARCHIVE):
-        m = re.fullmatch(r"PMID_(\d+)(?:_[A-Za-z0-9]+)?\.pdf", f, re.I)
+        m = re.fullmatch(r"PMID_(\d+)\.pdf", f, re.I)
         if m:
             out.add(m.group(1))
     return out
@@ -39,13 +52,16 @@ def archived():
 
 def main():
     import csv
-    args = sys.argv[1:]
-    paths = [a for a in args if not a.startswith("--")]
-    if not paths:
-        print(__doc__)
-        return 2
-    label = args[args.index("--label") + 1] if "--label" in args else "a reading list"
-    dry = "--dry-run" in args
+    import argparse
+    # argparse rather than scanning sys.argv: `--label` with no value raised IndexError, and a
+    # leading `--label x file.txt` took the label's value as the filename (CodeRabbit, PR #784).
+    ap = argparse.ArgumentParser(description="Add PMIDs to the archive's download queue.")
+    ap.add_argument("pmids", metavar="FILE", help="a file of PMIDs, any separator")
+    ap.add_argument("--label", default="a reading list",
+                    help="what to record as having asked for them")
+    ap.add_argument("--dry-run", action="store_true", help="report without writing")
+    ns = ap.parse_args()
+    paths, label, dry = [ns.pmids], ns.label, ns.dry_run
 
     wanted, seen = [], set()
     with open(paths[0], encoding="utf-8") as f:
@@ -107,7 +123,13 @@ def main():
             print("    ... and %d more (--dry-run: nothing written)" % (len(added) - 10))
         return 0
 
-    tmp = QUEUE + ".new"
+    # A staging name of its own.  build.py stages on "<queue>.new" too, and two writers
+    # sharing it meant one could publish the other's half-written file (CodeRabbit, PR #784).
+    # This removes the COLLISION; it does not make concurrent writers safe -- see the module
+    # docstring.
+    import tempfile
+    fd, tmp = tempfile.mkstemp(prefix="queue-add-", suffix=".csv", dir=os.path.dirname(QUEUE))
+    os.close(fd)
     try:
         with open(tmp, "w", newline="", encoding="utf-8") as f:
             wr = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")

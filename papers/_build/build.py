@@ -393,6 +393,13 @@ if True:
             o["downloaded_at"] = NOW
         link = r["Lane proxy"] or r["PubMed"]
         note = ("from " + r["Local copy found"]) if r["Local copy found"] else ("free at PMC %s" % r["PMCID"] if r["PMCID"] else "")
+        # A paper somebody ASKED FOR keeps its requester note until it is actually obtained,
+        # even once the code starts citing it.  Overwriting the note with the generated one
+        # dropped the "wanted by " prefix, and if the citation then went away before the
+        # paper arrived, the next rebuild discarded the request (CodeRabbit, PR #784).
+        _was = (o.get("notes") or "")
+        if _was.startswith("wanted by ") and status != "done":
+            note = _was
         wr.writerow([r["PMID"], r["DOI"], r["_journal_full"] or r["Journal / source"], r["Year"], r["Volume"], r["Pages"], link, status,
                      o.get("downloaded_at", ""), note])
     # Rows no citation produced: papers a registry's `to_obtain` asks for, put here by

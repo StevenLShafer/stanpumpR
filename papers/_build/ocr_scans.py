@@ -47,7 +47,12 @@ def page_letters(pdf):
     try:
         r = subprocess.run([PDFTOTEXT, "-layout", "-enc", "UTF-8", pdf, "-"],
                            capture_output=True, timeout=600)
-    except Exception:                            # timeout, or pdftotext missing
+    except FileNotFoundError:
+        # pdftotext itself is not there.  Swallowing this skipped every PDF in the archive
+        # and reported "nothing OCR'd" with a successful exit -- a silent no-op that looks
+        # exactly like "no scans to do" (CodeRabbit, PR #784).
+        sys.exit("ocr_scans: cannot run %s -- install poppler or fix PDFTOTEXT" % PDFTOTEXT)
+    except Exception:                            # a timeout or a crash on THIS file
         return None
     if r.returncode != 0:
         return None
@@ -121,24 +126,35 @@ for fn in sorted(os.listdir(ARCH)):
         log.append(entry)
         continue
     st = os.stat(pdf)
-    # Put the replacement in place BEFORE parting with the original.  Recycling first and
-    # moving second meant that a failed move left the archive with no file at that path at
-    # all: recoverable only by hand from the Recycle Bin, and invisible to a later run, which
-    # cannot retry a file it can no longer find (CodeRabbit on PR #780, 2026-11-18).
-    # os.replace within the archive is atomic, so the path always holds a readable PDF.
+    # The archive path must hold a readable PDF at every instant.  Recycling the original
+    # first and moving the replacement in second left it with NO file if the move failed
+    # (CodeRabbit, PR #780); moving the original aside first and the replacement in second
+    # still left a window with nothing there, and a run that stopped in that window left a
+    # `.pre-ocr` file a later run would ignore (CodeRabbit, PR #784).  So: COPY the original
+    # aside, stage the replacement on the archive's own filesystem, and publish it with ONE
+    # os.replace.  If anything fails before that call, the original is untouched at `pdf`;
+    # the copy is recycled only once the replacement is published.
     backup = pdf + ".pre-ocr"
-    try:
-        os.replace(pdf, backup)
-    except OSError as e:
-        entry["error"] = f"could not set the original aside ({e}); original kept"
+    if os.path.exists(backup):
+        # An earlier run's original that the Recycle Bin refused.  Overwriting it would
+        # destroy the true original and keep that run's OCR output in its place.
+        entry["error"] = f"{os.path.basename(backup)} is already here from an earlier run; original kept"
         print(f"  {entry['error']}")
         log.append(entry)
         continue
+    staged = pdf + ".ocr-new"
     try:
-        shutil.move(out, pdf)
+        shutil.copy2(pdf, backup)                # original still in place at `pdf`
+        shutil.move(out, staged)                 # onto the archive filesystem, so the swap is atomic
+        os.replace(staged, pdf)                  # the one moment of change
     except Exception as e:                       # noqa: BLE001
-        os.replace(backup, pdf)                  # put the original back, exactly as it was
-        entry["error"] = f"could not move the OCR output into place ({e}); original kept"
+        for leftover in (backup, staged):
+            if os.path.exists(leftover):
+                try:
+                    os.remove(leftover)
+                except OSError:
+                    pass
+        entry["error"] = f"could not publish the OCR output ({e}); original kept"
         print(f"  {entry['error']}")
         log.append(entry)
         continue

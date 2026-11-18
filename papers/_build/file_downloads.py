@@ -175,6 +175,7 @@ def requested_ref(pmid):
         import ncbi
         src = ncbi.esummary([pmid]).get(pmid)
     except Exception:
+        _requested["failed"] = True              # retryable: the caller must not cache a miss
         return None
     if not src or not src.get("title"):
         return None
@@ -319,10 +320,15 @@ def identify_any(path):
     # publisher-named download of one (Wiley's "Br J Clin Pharmacol - 2017 - Moffett - ...")
     # could not be identified at all -- 30 of them sat unfiled on 2026-11-18.  Same proof as
     # a cited work: the title on page 1, or the first author (requested_ref, 2026-11-18).
-    for d in dois[:3]:
-        r = requested_ref_by_doi(d)
+    # ONLY the first DOI on page 1, as the branch above does: that is the article's own.  A
+    # later DOI is one the paper CITES, and has_author() accepts a surname anywhere in the
+    # text, so scanning further could file a PDF under a paper it merely cites (CodeRabbit,
+    # PR #784).  Misfiling is worse than not filing: an unfiled paper is reported, a misfiled
+    # one is silently wrong, and the digest written from it would describe the wrong work.
+    if dois:
+        r = requested_ref_by_doi(dois[0])
         if r and (on_top(r) or has_author(r)):
-            return r, "own DOI %s (wanted by the download queue)" % d, None
+            return r, "own DOI %s (wanted by the download queue)" % dois[0], None
     # 2. the reference's title at the top of page 1 (punctuation and line breaks ignored), with its first author
     hits = [r for r in refs if on_top(r)]
     for r in hits:
@@ -587,7 +593,17 @@ for d, name in candidates():
                 if not in_archive_dir:  # not identical to anything archived (checked above): a second copy
                     recycle_copy(path, hit["file"])
                 continue
+        _requested.pop("failed", None)
         r, why, problem = identify(path)
+        if r is None and _requested.get("failed"):
+            # PubMed could not be reached to check whether the download queue wants this
+            # paper.  "Could not look it up" is not "it is not a reference", and caching the
+            # second would make every later run replay the verdict without trying again --
+            # which is exactly how nine papers stayed unfiled after the rules changed
+            # (CodeRabbit, PR #784).  Nothing is cached, so the next run looks again.
+            review.append((name, "could not reach PubMed to check it against the download queue: "
+                                 "run update.bat again later"))
+            continue
         cache[key] = {"file": r["file"] if r else None, "review": problem, "sha": None if in_archive_dir else h}
         if problem:
             review.append((name, problem))

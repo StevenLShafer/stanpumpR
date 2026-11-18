@@ -50,7 +50,10 @@ todo = [{k: r[I[k]] for k in ("Ref", "PMID", "PMCID", "First author", "Year", "T
 # queue_add.py -- and those live only in the download queue, so without this they would never
 # be fetched even when PMC has them free (2026-11-18).  The verification below is unchanged:
 # a file whose first page does not carry the title and first author is still HELD.
-if True:
+# The queue is an ADDITION to the workbook, never a precondition for it: a missing or
+# unreadable queue, or a PubMed outage, must not stop the workbook's own downloads, which
+# already carry all the metadata they need (CodeRabbit, PR #784).
+try:
     import csv as _csv
     known = {str(t["PMID"]) for t in todo if t["PMID"]}
     qwant = []
@@ -58,7 +61,10 @@ if True:
         for _r in _csv.DictReader(_f):
             _p = (_r.get("pmid") or "").strip()
             _n = _r.get("notes") or ""
-            if (_p and _p not in known and _n.startswith("wanted by ") and "free at PMC" in _n
+            # Selected by the requester prefix alone.  The "free at PMC" marker is written
+            # once, when the row is added, so a paper that gained a PMCID afterwards would be
+            # excluded for ever if it were the filter; PubMed decides below instead.
+            if (_p and _p not in known and _n.startswith("wanted by ")
                     and (_r.get("status") or "").strip().lower() == "pending"
                     and not os.path.exists(os.path.join(ARCHIVE, "PMID_%s.pdf" % _p))):
                 qwant.append(_p)
@@ -66,6 +72,7 @@ if True:
     if qwant:
         from ncbi import esummary
         _meta = esummary(qwant)
+        _free = 0
         for _p in qwant:
             _m = _meta.get(_p)
             if not _m or not _m.get("pmcid"):
@@ -74,7 +81,14 @@ if True:
                          "First author": _m.get("first_author", ""), "Year": _m.get("year"),
                          "Title": _m.get("title", ""), "Journal / source": _m.get("journal", ""),
                          "Pages": _m.get("pages", "")})
-        print("from the download queue: %d paper(s) free at PMC and not yet here" % len(qwant))
+            _free += 1
+        print("from the download queue: %d wanted paper(s), %d of them free at PMC"
+              % (len(qwant), _free))
+except FileNotFoundError:
+    print("no stanpumpr-queue.csv: the workbook's own rows only")
+except Exception as _e:                          # noqa: BLE001 -- an outage, not a reason to stop
+    print("could not read the download queue or reach PubMed (%s); the workbook's own rows only"
+          " -- its requests stay eligible for the next run" % _e)
 
 log = []
 for t in todo:
@@ -114,7 +128,11 @@ for t in todo:
     txt = first_text(tmp)
     tw, pw = words(t["Title"]), words(txt)
     overlap = len(tw & pw) / max(1, len(tw))
-    au = norm((t["First author"] or "").split()[0])
+    # A PubMed record can have a PMCID and no authors at all; `.split()[0]` on "" raised
+    # IndexError, which ended the batch after PDFs were filed but before the log was written
+    # (CodeRabbit, PR #784).  No author means unverified, so the file is HELD for a look.
+    _first = (t["First author"] or "").split()
+    au = norm(_first[0]) if _first else ""
     au_ok = au and au in norm(txt)
     entry.update(bytes=os.path.getsize(tmp), title_overlap=round(overlap, 2), author_on_page=bool(au_ok), version=v)
     if overlap >= 0.6 and au_ok:
