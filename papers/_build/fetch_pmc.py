@@ -130,7 +130,7 @@ for t in todo:
     overlap = len(tw & pw) / max(1, len(tw))
     # A PubMed record can have a PMCID and no authors at all; `.split()[0]` on "" raised
     # IndexError, which ended the batch after PDFs were filed but before the log was written
-    # (CodeRabbit, PR #784).  No author means unverified, so the file is HELD for a look.
+    # (CodeRabbit, PR #784).  What happens to such a file is decided below.
     _first = (t["First author"] or "").split()
     au = norm(_first[0]) if _first else ""
     au_ok = au and au in norm(txt)
@@ -138,6 +138,13 @@ for t in todo:
     if overlap >= 0.6 and au_ok:
         os.replace(tmp, dst)
         entry["result"] = "downloaded"
+    elif not au:
+        # No author to check against, in EITHER case.  The no-text fallback below files a
+        # PDF unverified, on the strength of the workbook's vetted metadata; a queue row is
+        # a bare PubMed record, and one without authors leaves nothing to confirm at all.
+        # The comment above claimed this file was held and the code filed it anyway
+        # (CodeRabbit, PR #784) -- a comment asserting what the code does not do.
+        entry["result"] = "HELD: PubMed lists no author, so neither title nor author could be confirmed"
     elif not txt.strip():
         os.replace(tmp, dst)
         entry["result"] = "downloaded (no text layer - check by eye)"
