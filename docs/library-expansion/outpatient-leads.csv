@@ -95,7 +95,7 @@ rank,drug,planDrug,evidence,label,pmid,doi,url,check
 121,Progesterone,progesterone,D,oral/IM 8513955,8513955,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
 121,Progesterone,progesterone,D,SL/PO/vaginal/rectal 3612635,3612635,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
 122,Insulin degludec,insulin degludec,R,FDA adult population review,,,https://www.accessdata.fda.gov/drugsatfda_docs/nda/2015/203313Orig1s000_203314Orig1s000ClinPharmR.pdf,"FDA, DailyMed or PMDA document; not yet read."
-122,Insulin degludec,insulin degludec,R,FDA pediatric population review,,,https://www.accessdata.fda.gov/drugsatfda_docs/pediatric/203314-Insulin-degludec-clinpharm-prea.pdf,"FDA, DailyMed or PMDA document; not yet read."
+122,Insulin degludec,insulin degludec,R,FDA pediatric population review,,,https://www.accessdata.fda.gov/drugsatfda_docs/pediatric/203314-Insulin-degludec-clinpharm-prea.pdf,"Read in full 2026-11-18 (NDA 203314/S-03): weight exponent on CL/F 0.977 (95% CI 0.815-1.14) in 205 subjects of 1.5-57 years; used to carry insulinDegludec's weight term below 54.4 kg."
 122,Insulin degludec,insulin degludec,P,small adult population fit,,10.1007/s00210-026-06074-2,,DOI not found in PubMed on 2026-11-18; look up on the publisher site.
 122,Insulin degludec,insulin degludec,P,IDegAsp 24888255,24888255,,,Not a population fit: a glucose-clamp study of insulin degludec/insulin aspart (IDegAsp). The report labels it P.
 125,Adalimumab,adalimumab,P,adult rheumatoid arthritis 25223394,25223394,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.

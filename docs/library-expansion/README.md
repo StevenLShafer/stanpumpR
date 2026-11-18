@@ -59,21 +59,29 @@ The report is a lead, not a source, like any other model's reading (AGENTS.md): 
 | Recombinant factor VIIa (eptacog alfa) | Older non-compartmental studies only, on a first look. |
 | Vilobelimab | Lim 2023, PK in critically ill ventilated COVID-19 patients (PANAMO, PMID 37332066). |
 
+### Weekly run, 2026-11-18 (the first)
+
+- **nlmixr2lib moved** from e2b902f to d8a308a (4,228 to 4,581 models). The picks went from 150 to 153, and nine new picks were given PMIDs and PMC IDs. Two report leads dropped out because nlmixr2lib now models their drugs.
+- **114 papers arrived** in the archive on 2026-11-18, all under `PMID_` names: 111 picks and 3 leads. **106 of the 153 picks are now in the archive**, covering 85 drugs. None arrived under a `DOI_` name.
+- **Tazobactam and imipenem**, the first two drugs in plan order, were taken up. Both are `blocked`. `plan.csv` gives the numbers read and the reasons:
+  - **Tazobactam:** its pick, Zhang 2021, is a *ceftolozane*-tazobactam fit. Whether it can stand for Zosyn's tazobactam is a decision for Steven, as are the infection state and the dose units.
+  - **Imipenem:** its pick, Patel 2022, is read. Its Supplementary Methods (the Cockcroft-Gault weight) and the sources the antibiotic band needs (an imipenem MBC/MIC ratio and a plain-imipenem *P. aeruginosa* MIC) are still to get.
+
 ## Downloading
 
 `downloads.md` lists each paper with the file name the archive expects: `PMID_<pmid>.pdf`, or, for a paper with no PMID, `DOI_<doi>.pdf` with every character but letters, digits and dots made `_` (`DOI_10.2133_dmpk.13.376.pdf`). Save a supplement under the same name with a suffix, `_sup1`, `_sup2` and so on (or the publisher's own `_mmc1`, `_ESM1`, `_SDC1`), never under the paper's own name, which would replace it. The archive's pipeline takes it from there.
 
 Lane Library is needed only for the few papers not free in PMC. Claude in Chrome can do the downloading, but only in a session on Steven's own computer, where Chrome runs: the Claude desktop app, or `claude remote-control` in the stanpumpR folder. A cloud session cannot reach that browser.
 
-## The weekly routine (proposed, not yet scheduled)
+## The weekly routine
 
-The plan is a scheduled task that runs a fresh cloud session each week, on Sunday evening, Pacific time. Each run would:
-1. refresh the nlmixr2lib cross-check and this directory;
-2. check which picks have reached the archive;
-3. implement at most two planned drugs whose source papers are now in the archive, each as its own draft pull request, by the full procedure;
-4. update `plan.csv`;
-5. end with a report of what arrived, what was implemented, what to download next, and any decision only Steven can make.
+A scheduled task, **"stanpumpR weekly library expansion"**, runs a fresh cloud session every Sunday at 8:41 pm Pacific, the first on 2026-11-22. Steven created it on 2026-11-18 from claude.ai's routines page, with the StevenLShafer/stanpumpR repository and the Google Drive and PubMed connectors. Each run:
+1. refreshes the nlmixr2lib cross-check and this directory;
+2. checks which picks and leads have reached the archive;
+3. implements at most two planned drugs whose source papers are now in the archive, each as its own draft pull request, by the full procedure;
+4. updates `plan.csv`;
+5. ends with a report of what arrived, what was implemented, what to download next, and any decision only Steven can make.
 
-It would never merge, and it would record every question for Steven where AGENTS.md says questions go.
+It never merges, and it records every question for Steven where AGENTS.md says questions go.
 
-Creating the task from the session of 2026-11-18 was refused by its permission system, so it awaits Steven's go-ahead. That means either a permission rule for scheduled tasks, or creating it himself with the prompt in `weekly-routine-prompt.md`.
+Its prompt is `weekly-routine-prompt.md`, below the `---` line. A change to what the routine does is made in both places: that file, and the task's own prompt on the routines page. The page is where it runs from: a scheduled task made from a cloud session carries no connectors, so the task must be created or edited there.

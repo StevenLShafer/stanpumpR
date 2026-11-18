@@ -1,6 +1,6 @@
 # The weekly routine's prompt
 
-Use this for a scheduled task that runs a fresh cloud session in the stanpumpR environment once a week. The plan was Sunday evening, Pacific time: `CRON_TZ=America/Los_Angeles 41 20 * * 0`.
+This is the prompt of the scheduled task "stanpumpR weekly library expansion" (claude.ai routines page; Sundays at 8:41 pm Pacific, `CRON_TZ=America/Los_Angeles 41 20 * * 0`; the StevenLShafer/stanpumpR repository and the Google Drive and PubMed connectors). Keep this copy and the task's own prompt the same.
 
 ---
 

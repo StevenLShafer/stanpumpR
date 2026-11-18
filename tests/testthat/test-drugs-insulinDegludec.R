@@ -5,7 +5,7 @@ noEvents <- data.frame(Time = numeric(0), Event = character(0))
 
 # Table 2: ka 0.0476 /h x 0.837 (IDeg) x 0.85 (T1DM); CL/F 1.93 L/h x 0.978
 # (T1DM); Vc/F 20.9 L x 0.537 (T1DM/T2DM); lag 0.4 h; weight powers 1.04 and
-# 1.54 about 70 kg, held to 54.4-93.1 kg
+# 1.54 about 70 kg, held at 93.1 kg above and unheld below (Shafer, 2026-11-18)
 tangKa <- 0.0476 * 0.837 * 0.85                       # 0.033865 /h
 tangCl <- function(w) 1.93 * 0.978 * (w / 70)^1.04    # L/h
 tangV  <- function(w) 20.9 * 0.537 * (w / 70)^1.54    # L
@@ -32,20 +32,26 @@ test_that("the reference patient: Table 2's type 1 diabetes typical values", {
   expect_match(actual$reference, "10.1007/s40262-025-01598-x", fixed = TRUE)
 })
 
-test_that("body weight: power terms about 70 kg, held to 54.4-93.1 kg", {
+test_that("body weight: power terms about 70 kg, held at 93.1 kg above only", {
   pk <- function(w) insulinDegludec(w, 170, 35, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(pk(85)$cl1 * 60, tangCl(85))
   expect_equal(pk(85)$v1, tangV(85))
   expect_equal(pk(85)$ka_SC * 60, tangKa)            # no weight term on ka
   expect_equal(pk(120)$cl1 * 60, tangCl(93.1))       # held at the 95th percentile
   expect_equal(pk(120)$v1, tangV(93.1))
-  expect_equal(pk(40)$cl1 * 60, tangCl(54.4))        # held at the 5th percentile
-  expect_equal(pk(10)$v1, tangV(54.4))               # a child: adult model only
+  # below 54.4 kg Tang's terms carry on (FDA pediatric review, exponent 0.977)
+  expect_equal(pk(40)$cl1 * 60, tangCl(40))
+  expect_equal(pk(20)$cl1 * 60, tangCl(20))
+  expect_equal(pk(10)$v1, tangV(10))
+  # per-kilogram dosing gives a child about an adult's average level:
+  # 0.4 U/kg x 6 nmol/U / CL/F / 24 h, 3.90 nmol/L at 20 kg, 3.71 at 70 kg
+  avg <- function(w) 0.4 * w * 6 / tangCl(w) / 24
+  expect_equal(round(c(avg(20), avg(70)), 2), c(3.90, 3.71))
   # With the fat-free-mass switch on, the terms read the pharmacokinetic weight
   w <- pkSizeFactors(120, 170, 50, "male", TRUE)$pkWeight
   on <- insulinDegludec(120, 170, 50, "male")$PK$default
-  expect_equal(on$cl1 * 60, tangCl(min(max(w, 54.4), 93.1)))
-  expect_equal(on$v1, tangV(min(max(w, 54.4), 93.1)))
+  expect_equal(on$cl1 * 60, tangCl(min(w, 93.1)))
+  expect_equal(on$v1, tangV(min(w, 93.1)))
   # the reference man is unchanged by the switch
   expect_equal(insulinDegludec(70, 170, 35, "male")$PK$default$cl1,
                pk(70)$cl1, tolerance = 1e-6)

@@ -38,7 +38,7 @@ a list in the shape \code{getDrugPK()} expects
 \description{
 Tang 2026's joint population model of INS068 and insulin degludec: one
 compartment, first-order absorption after a 0.4 h lag, at the type 1
-diabetes typical values, body weight on CL/F and V/F held to 54.4-93.1 kg.
+diabetes typical values, body weight on CL/F and V/F held at 93.1 kg above.
 Concentrations in mcU/mL of total degludec (1 U = 6 nmol).  See the file's
 header for the source, the population chosen and the checks.
 }
