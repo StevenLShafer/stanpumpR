@@ -1,4 +1,4 @@
-A target-controlled infusion (TCI) pump holds a concentration rather than a rate: you set the concentration you want in the plasma or at the site of drug effect, and the pump's pharmacokinetic model works out the infusion needed to reach it quickly and then hold it. stanpumpR simulates such a pump for propofol, remifentanil, alfentanil, sufentanil, fentanyl, lidocaine, hydromorphone, oxycodone, etomidate and ketamine. The method is Shafer and Gregg's (*J Pharmacokinet Biopharm* 1992;20:147), as implemented in the original STANPUMP.
+A target-controlled infusion (TCI) pump holds a concentration rather than a rate: you set the concentration you want in the plasma or at the site of drug effect, and the pump's pharmacokinetic model works out the infusion needed to reach it quickly and then hold it. stanpumpR simulates such a pump for propofol, remifentanil, alfentanil, sufentanil, fentanyl, lidocaine, hydromorphone, oxycodone, etomidate, ketamine and remimazolam. The method is Shafer and Gregg's (*J Pharmacokinet Biopharm* 1992;20:147), as implemented in the original STANPUMP.
 
 ## Setting a target
 
