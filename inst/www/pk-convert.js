@@ -398,6 +398,7 @@ var PKConvert = (function() {
         budget.used += Math.floor((K.tPeak + 10 / 60 + 1e-12) * 60) + 1;
         if (!(budget.used <= budget.limit)) return {rate: 0, effectMode: true, aborted: true};
       }
+      var grow = K.lambda4.map(function(x) { return Math.exp(x * dt) - 1; });
       rate = Infinity;
       var any = false;
       for (var tau = dt; tau <= dt + K.tPeak + 10 / 60 + 1e-12; tau += 1 / 60) {
@@ -405,9 +406,10 @@ var PKConvert = (function() {
         for (j = 0; j < K.lambda4.length; j++) {
           var m = Math.exp(-K.lambda4[j] * tau);
           B += e[j] * m;
-          // (exp(l dt) - 1) exp(-l tau) as exp(-l (tau - dt)) - exp(-l tau):
-          // tau >= dt, so neither term overflows (R/tci.R does the same)
-          E += K.einf[j] * (Math.exp(-K.lambda4[j] * (tau - dt)) - m);
+          // (exp(l dt) - 1) exp(-l tau); where exp(l dt) overflows, as
+          // exp(-l (tau - dt)) - exp(-l tau), as R/tci.R does
+          E += K.einf[j] * (isFinite(grow[j]) ? grow[j] * m
+                                              : Math.exp(-K.lambda4[j] * (tau - dt)) - m);
         }
         if (E > 0) { any = true; rate = Math.min(rate, (CT - B) / E); }
       }

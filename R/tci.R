@@ -96,10 +96,19 @@ tciRate <- function(p, e, CT, site, dt, K)
     tau <- unique(c(dt, seq(dt, dt + K$tPeak + 10 / 60, by = 1 / 60)))
     M <- exp(-outer(K$lambda4, tau))                   # 4 x J
     B <- as.vector(e %*% M)
-    # (exp(lambda dt) - 1) exp(-lambda tau), written so that nothing
-    # overflows: every tau is at least dt, so both terms lie in [0, 1].  The
-    # product form overflowed to Inf * 0 = NaN once lambda dt passed 709.
-    E <- as.vector(K$einf %*% (exp(-outer(K$lambda4, tau - dt)) - M))
+    # (exp(lambda dt) - 1) exp(-lambda tau).  The product form overflowed to
+    # Inf * 0 = NaN once lambda dt passed 709 (Carbon's repository audit,
+    # 2026-11-18); there it is written exp(-lambda (tau - dt)) - exp(-lambda
+    # tau), both terms in [0, 1] since every tau is at least dt.  Only there:
+    # elsewhere the product form is kept, bit for bit, because its rounding is
+    # what the pump's "off" intervals (exact zeros) and FauxTCI's fixtures,
+    # generated from this function, depend on.
+    grow <- exp(K$lambda4 * dt) - 1
+    E <- if (all(is.finite(grow))) {
+      as.vector((K$einf * grow) %*% M)
+    } else {
+      as.vector(K$einf %*% (exp(-outer(K$lambda4, tau - dt)) - M))
+    }
     ok <- E > 0
     rate <- if (any(ok)) min((CT - B[ok]) / E[ok]) else 0
   }
