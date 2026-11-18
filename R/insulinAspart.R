@@ -78,26 +78,32 @@
 # WHAT IS APPLIED
 # ===============
 # * Body weight: CL/F and V/F proportional to weight (the fixed exponents of
-#   1), about INSULIN_ASPART_REFERENCE_WEIGHT = 75 kg.  THE REFERENCE WEIGHT
-#   IS NOT PRINTED; 75.0 kg is the mean weight of the 135 subjects (Table 1),
-#   and the review's own non-compartmental comparisons are "adjusted for body
-#   weight (75 kg)".  [decision] for Shafer (in the antidiabetic registry's
-#   notes), as Duong 2019's unprinted 15.5 kg was: 75 kg, or 70 kg (the
-#   library's reference man), a 7% difference in every concentration.  The
-#   weight is the pharmacokinetic weight with the fat-free-mass switch on and
-#   the total weight with it off, as for the Tham insulins; it is not held to
-#   the studied 50 to 100 kg, because a proportional term extrapolates as
-#   per-kilogram dosing does, where Tham's steep powers did not.
+#   1).  THE SOURCE'S REFERENCE WEIGHT IS NOT PRINTED; it is taken as 75 kg
+#   (INSULIN_ASPART_SOURCE_WEIGHT), the mean weight of the 135 subjects
+#   (Table 1), the review's own non-compartmental comparisons being "adjusted
+#   for body weight (75 kg)".  On Shafer's decision of 2026-11-18 the model is
+#   then restated at the library's 70 kg reference man and scaled as every
+#   library model is (docs/weight-adjustment.md): Table 5's values are moved
+#   from 75 to 70 kg by the source's own proportional term, CL/F 67.8 x 70/75
+#   = 63.28 L/h and V/F 78.6 x 70/75 = 73.36 L, and pkSizeFactors() scales
+#   them from there.  With the fat-free-mass switch off its legacy factors
+#   are weight/70 on both, which is the source's term exactly (CL/F = 67.8 x
+#   weight/75), so nothing the source predicts changes.  With the switch on,
+#   V/F scales by fat-free mass and CL/F by its 0.75 power, as for every
+#   drug with no size term of its own; for the reference man the two
+#   positions agree.  Neither is held to the studied 50 to 100 kg.
 #
 #   CHECK of the conversion and the reference: the review's Figure 4
 #   (printed p 93) simulates "a typical subject" given 0.2 U/kg; measured
 #   from the figure's pixels against its axis ticks, its central
 #   concentration peaks at about 564 pmol/L at about 58 minutes (Fiasp) and
-#   556 at about 67 (NovoLog).  This model at 75 kg, with 1 U = 6 nmol, gives
-#   545.6 pmol/L at 54.8 min (Fiasp) and 535.9 at 63.6 min (NovoLog) (the
-#   test file pins both): 3.3% and 3.6% lower and 3 minutes earlier than the
-#   figure.  A 70 kg reference would put the peaks 10% lower (509 pmol/L for
-#   Fiasp).  The figure's "typical subject" is not described further (its
+#   556 at about 67 (NovoLog).  This model at 75 kg with the size switch off (the
+#   source's own weight term), with 1 U = 6 nmol, gives 545.6 pmol/L at 54.8
+#   min (Fiasp) and 535.9 at 63.6 min (NovoLog) (the test file pins both):
+#   3.3% and 3.6% lower and 3 minutes earlier than the figure.  Had Table 5's
+#   values described a 70 kg subject instead, every peak would be 7% lower
+#   (509 pmol/L for Fiasp); the 75 kg reading is the one this figure
+#   supports.  The figure's "typical subject" is not described further (its
 #   dose, sex and antibody level would move it through the terms not applied
 #   here), so the residual 3.5% is recorded, not fitted away.
 # * Age group: CL/F x 0.905 at 65 years or more (AGEGRPonCL).  The reference
@@ -210,9 +216,11 @@ INSULIN_ASPART_PRODUCTS <- list(
 # The transit compartments between the depot and the central volume
 INSULIN_ASPART_TRANSITS <- 3L
 
-# The weight CL/F and V/F are proportional to, kg: not printed; the mean of
-# the 135 subjects (Table 1).  A [decision] for Shafer; see the header.
-INSULIN_ASPART_REFERENCE_WEIGHT <- 75
+# The weight Table 5's CL/F and V/F are taken to describe, kg: not printed;
+# the mean of the 135 subjects (Table 1).  The model is restated at the
+# library's 70 kg reference (FFM_REFERENCE_WEIGHT) by the source's
+# proportional term; see the header (Shafer, 2026-11-18).
+INSULIN_ASPART_SOURCE_WEIGHT <- 75
 
 # Age group on CL/F, at INSULIN_ASPART_GERIATRIC_AGE years or more
 INSULIN_ASPART_GERIATRIC_CL <- 0.905
@@ -230,13 +238,16 @@ insulinAspartModel <- function(weight, height, age, sex, adjustToFFM, product,
                                pregnant = FALSE)
 {
   p <- INSULIN_ASPART_PRODUCTS[[product]]
-  pkW <- if (isTRUE(adjustToFFM))
-    pkSizeFactors(weight, height, age, sex, TRUE)$pkWeight else weight
-  size <- pkW / INSULIN_ASPART_REFERENCE_WEIGHT
+  # Table 5 at 75 kg, restated at the 70 kg reference man, then scaled;
+  # with the switch off the legacy factors (weight/70) give the source's
+  # CL/F and V/F x weight/75 exactly
+  toReference <- FFM_REFERENCE_WEIGHT / INSULIN_ASPART_SOURCE_WEIGHT
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
   geriatric <- age >= INSULIN_ASPART_GERIATRIC_AGE
-  cl <- INSULIN_ASPART_CL * size * if (geriatric) INSULIN_ASPART_GERIATRIC_CL else 1
+  cl <- INSULIN_ASPART_CL * toReference * size$clearance *
+    if (geriatric) INSULIN_ASPART_GERIATRIC_CL else 1
   if (isTRUE(pregnant)) cl <- cl * INSULIN_PREGNANCY_CL_FACTOR
-  v <- INSULIN_ASPART_V * size
+  v <- INSULIN_ASPART_V * toReference * size$volume
 
   default <- list(
     v1  = v, v2 = 1, v3 = 1,
@@ -252,8 +263,11 @@ insulinAspartModel <- function(weight, height, age, sex, adjustToFFM, product,
     "FDA Clinical Pharmacology Review of Fiasp (NDA 208751, 2017), Table 5, ",
     p$label, ": a depot (ka ", INSULIN_ASPART_KA, "/h), three transit ",
     "compartments (kt ", p$kt, "/h) and one compartment, CL/F ",
-    INSULIN_ASPART_CL, " L/h and V/F ", INSULIN_ASPART_V, " L x (weight/",
-    INSULIN_ASPART_REFERENCE_WEIGHT, " kg, an assumed reference), relative F ",
+    INSULIN_ASPART_CL, " L/h and V/F ", INSULIN_ASPART_V, " L at an assumed ",
+    INSULIN_ASPART_SOURCE_WEIGHT, " kg, restated at 70 kg (",
+    sprintf("%.2f", INSULIN_ASPART_CL * 70 / INSULIN_ASPART_SOURCE_WEIGHT), " L/h, ",
+    sprintf("%.2f", INSULIN_ASPART_V * 70 / INSULIN_ASPART_SOURCE_WEIGHT),
+    " L) and scaled by body size, relative F ",
     p$f, ", CL/F x ", INSULIN_ASPART_GERIATRIC_CL, " from ",
     INSULIN_ASPART_GERIATRIC_AGE, " years; sex, dose, BMI and antibody terms ",
     "not applied; total insulin aspart in adults with type 1 diabetes, ",

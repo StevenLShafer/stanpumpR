@@ -42,7 +42,8 @@
 # [Vc/F] ...) in T2DM"; the reference weight, 70 kg, is the forest plot's
 # typical subject.  No parameter of degludec differs from INS068's but ka.
 #
-# THE PATIENT THE MODEL DESCRIBES (assumptions; [decision] for Shafer)
+# THE PATIENT THE MODEL DESCRIBES (assumptions; [decision] for Shafer on
+# the population and the weight hold)
 # ====================================================================
 # * Population.  The Patient Profile has no diabetes field, so one population
 #   is chosen: adults with diabetes, as type 1 diabetes is the population in
@@ -121,9 +122,13 @@
 # =========
 # No pharmacokinetic study of degludec in pregnancy was found (PubMed, 2026-
 # 11-18: EXPECT, Mathiesen 2023, is an efficacy trial; the rest are case
-# series).  Nothing is applied.  The Tham insulins apply Catalano 1998's rise
-# in the clearance of infused human insulin (x 1.25); whether it carries to an
-# albumin-bound analogue was not measured ([decision] for Shafer).
+# series).  With the Patient Profile's Pregnant field on, CL/F x
+# INSULIN_PREGNANCY_CL_FACTOR (1.25; Catalano 1998, the metabolic clearance
+# rate of infused insulin at 34-36 weeks against before conception), the
+# factor every insulin in the library takes, on Shafer's decision of
+# 2026-11-18: "Insulin formulation should probably not materially affect
+# clearance (unless specific data state otherwise)."  None do for degludec.
+# Absorption and V/F are unchanged.
 #
 # References
 # ----------
@@ -135,6 +140,8 @@
 # Kapitza C et al.  J Clin Pharmacol 2015;55:1369-1377.
 #   https://doi.org/10.1002/jcph.549 (check)
 # FDA Clinical Pharmacology Review, NDA 203314 (2012).
+# Catalano PM, Drago NM, Amini SB.  Diabetes Care 1998;21:403-408.
+#   https://doi.org/10.2337/diacare.21.3.403 (pregnancy)
 #   https://www.accessdata.fda.gov/drugsatfda_docs/nda/2015/203313Orig1s000_203314Orig1s000ClinPharmR.pdf
 # -----------------------------------------------------------------------------
 
@@ -162,9 +169,12 @@ DEGLUDEC_TANG_WEIGHT <- list(reference = 70, cl = 1.04, v = 1.54,
 #' header for the source, the population chosen and the checks.
 #'
 #' @inheritParams cefazolin
+#' @param pregnant when \code{TRUE}, CL/F x INSULIN_PREGNANCY_CL_FACTOR (see
+#'   the file's header)
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-insulinDegludec <- function(weight, height, age, sex, adjustToFFM = TRUE)
+insulinDegludec <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                            pregnant = FALSE)
 {
   w <- DEGLUDEC_TANG_WEIGHT
   pkW <- if (isTRUE(adjustToFFM))
@@ -174,6 +184,7 @@ insulinDegludec <- function(weight, height, age, sex, adjustToFFM = TRUE)
   t1 <- DEGLUDEC_TANG_T1DM
   ka <- DEGLUDEC_TANG_KA * DEGLUDEC_TANG_IDEG_KA * t1[["ka"]]          # /h
   cl <- DEGLUDEC_TANG_CL * t1[["cl"]] * (pkW / w$reference)^w$cl      # L/h
+  if (isTRUE(pregnant)) cl <- cl * INSULIN_PREGNANCY_CL_FACTOR
   v <- DEGLUDEC_TANG_V * t1[["v"]] * (pkW / w$reference)^w$v          # L
 
   default <- list(
@@ -186,15 +197,23 @@ insulinDegludec <- function(weight, height, age, sex, adjustToFFM = TRUE)
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
-  list(
-    PK = PK, tPeak = 0, MEAC = 0,
-    typical = 0, upperTypical = 0, lowerTypical = 0,
-    reference = paste0(
+  reference <- paste0(
       "Tang 2026 (Clin Pharmacokinet 65:417-429), joint population model of ",
       "INS068 and insulin degludec, at the type 1 diabetes typical values: one ",
       "compartment, ka 0.0476 x 0.837 (degludec) x 0.85 /h, lag 0.4 h, CL/F 1.93 ",
       "x 0.978 x (WT/70)^1.04 L/h, V/F 20.9 x 0.537 x (WT/70)^1.54 L, weight held ",
       "to 54.4-93.1 kg; total degludec, 1 U = 6 nmol, concentration only. ",
       DEGLUDEC_REFERENCE)
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("CL/F x ", INSULIN_PREGNANCY_CL_FACTOR),
+      paste0("Catalano PM et al., Diabetes Care 1998;21:403-408. ",
+             "https://doi.org/10.2337/diacare.21.3.403")))
+  }
+
+  list(
+    PK = PK, tPeak = 0, MEAC = 0,
+    typical = 0, upperTypical = 0, lowerTypical = 0,
+    reference = reference
   )
 }

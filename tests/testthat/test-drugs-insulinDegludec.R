@@ -137,3 +137,14 @@ test_that("the antidiabetic registry's audit holds the numbers the model uses", 
   expect_equal(row$pk_status, "PK-FIT")
   expect_false(row$csii)
 })
+
+test_that("pregnancy: CL/F x 1.25, as every insulin (Shafer, 2026-11-18)", {
+  off <- insulinDegludec(70, 165, 30, "female")
+  on <- insulinDegludec(70, 165, 30, "female", pregnant = TRUE)
+  expect_equal(on$PK$default$cl1 / off$PK$default$cl1, 1.25)
+  same <- c("v1", "ka_SC", "tlag_SC", "bioavailability_SC")
+  expect_identical(on$PK$default[same], off$PK$default[same])
+  expect_match(on$reference, "Catalano", fixed = TRUE)
+  expect_no_match(off$reference, "Catalano", fixed = TRUE)
+  expect_true("insulinDegludec" %in% pregnancyDrugs())
+})

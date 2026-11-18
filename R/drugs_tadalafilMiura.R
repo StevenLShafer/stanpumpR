@@ -39,8 +39,10 @@
 # hypertension), was fitted in 324 patients aged 2.5-90.3 years, children
 # among them, so by the selector's rule (the larger study among those that
 # include the patient) children from 2.5 years keep Ferguson-Sells and this
-# model is chosen below 2.5 years.  Whether Miura should be chosen for every
-# child instead is a [decision] for Shafer, put to him on 2026-11-18.  Where
+# model is chosen below 2.5 years.  Shafer confirmed this on 2026-11-18:
+# "Use Ferguson-Sell's study in larger children.  That is consistent with
+# the general rule of trying to match the patient to the study population."
+# Where
 # it is chosen, it is used whatever the Pulmonary hypertension field says.
 #
 # CHECKS

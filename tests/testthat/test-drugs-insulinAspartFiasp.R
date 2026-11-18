@@ -38,10 +38,18 @@ test_that("Table 5: the parameters, the chain and the subcutaneous route", {
   w <- insulinAspartFiasp(90, 175, 40, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(w$v1, 78.6 * 90 / 75)
   expect_equal(w$cl1, 67.8 / 60 * 90 / 75)
-  # With the switch on, the pharmacokinetic weight
+  # Restated at the 70 kg reference man (Shafer, 2026-11-18): 63.28 L/h and
+  # 73.36 L, the same in both positions of the switch
+  ref <- insulinAspartFiasp(70, 170, 35, "male")$PK$default
+  expect_equal(ref$cl1 * 60, 63.28)
+  expect_equal(ref$v1, 73.36)
+  expect_equal(insulinAspartFiasp(70, 170, 35, "male", FALSE)$PK$default[c("v1", "cl1")],
+               ref[c("v1", "cl1")])
+  # With the switch on, V/F by fat-free mass and CL/F by its 0.75 power
   on <- insulinAspartFiasp(90, 175, 40, "male")$PK$default
-  pkW <- pkSizeFactors(90, 175, 40, "male", TRUE)$pkWeight
-  expect_equal(on$v1, 78.6 * pkW / 75)
+  ffm <- ffmAlSallami(90, 175, 40, "male") / ffmAlSallami(70, 170, 35, "male")
+  expect_equal(on$v1, 73.36 * ffm)
+  expect_equal(on$cl1 * 60, 63.28 * ffm^0.75)
   # Age group: CL/F x 0.905 from 65 years, V/F unchanged
   old <- insulinAspartFiasp(75, 175, 65, "male", adjustToFFM = FALSE)$PK$default
   young <- insulinAspartFiasp(75, 175, 64.9, "male", adjustToFFM = FALSE)$PK$default
@@ -143,7 +151,7 @@ test_that("pregnancy: CL/F x 1.25, absorption and V/F unchanged", {
   # The values the model gives with the flag on, at the woman's
   # pharmacokinetic weight
   actual <- insulinAspartFiasp(70, 165, 30, "female", pregnant = TRUE)$PK$default
-  pkW <- pkSizeFactors(70, 165, 30, "female", TRUE)$pkWeight
-  expect_equal(actual$v1, 78.6 * pkW / 75)
-  expect_equal(actual$cl1, 67.8 * pkW / 75 * 1.25 / 60)
+  ffm <- ffmAlSallami(70, 165, 30, "female") / ffmAlSallami(70, 170, 35, "male")
+  expect_equal(actual$v1, 73.36 * ffm)
+  expect_equal(actual$cl1, 63.28 * ffm^0.75 * 1.25 / 60)
 })

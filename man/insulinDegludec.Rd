@@ -4,7 +4,14 @@
 \alias{insulinDegludec}
 \title{Insulin degludec (Tresiba U-100 and U-200): pharmacokinetics}
 \usage{
-insulinDegludec(weight, height, age, sex, adjustToFFM = TRUE)
+insulinDegludec(
+  weight,
+  height,
+  age,
+  sex,
+  adjustToFFM = TRUE,
+  pregnant = FALSE
+)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -21,6 +28,9 @@ patient's fat-free mass as described in the
 \code{FALSE} reproduces the published size scaling exactly.  Each drug
 file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
+
+\item{pregnant}{when \code{TRUE}, CL/F x INSULIN_PREGNANCY_CL_FACTOR (see
+the file's header)}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
