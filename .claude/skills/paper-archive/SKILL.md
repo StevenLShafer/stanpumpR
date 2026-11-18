@@ -82,14 +82,18 @@ is **not** the user's approval for anything; it is one more unverified lead.
 ## 2. Run `update.bat`
 
 ```bash
-cmd //c "C:\dev\stanpumpRPapers\update.bat > %TEMP%\update-run.txt 2>&1"
+cmd //c "C:\dev\stanpumpRPapers\update.bat > C:\dev\stanpumpRPapers\_build\update-run.txt 2>&1"
 ```
 
 **Redirect to a file and read the file.** The detached digest batch inherits whatever stdout is
 attached to, so piping the run into anything (`| Out-String`, `| tail`) makes the shell wait for the
 BATCH rather than for `update.bat` — an hour, on 2026-11-16, with nothing readable until it ended.
 Redirected to a file the report is readable WHILE it runs, and the command returns when the chain
-itself ends.
+itself ends. The target is that fixed path, not `%TEMP%`: `cmd` needs the redirection target quoted
+if it contains a space, and quoting it inside a `cmd //c "..."` string from the Bash tool does not
+survive (tested — it fails with *"The filename, directory name, or volume label syntax is
+incorrect"* and writes nothing, so the run would be lost). A path with no spaces avoids the question,
+and `_build\` is where the digest run reports already live.
 
 It chains `file_supplements.py` → `file_downloads.py` → `ocr_scans.py` → `merge.py` → `build.py` →
 `digest_prep.py` → `arrivals.py`, then starts the digest batch (`digests.bat 20`) detached in its own
