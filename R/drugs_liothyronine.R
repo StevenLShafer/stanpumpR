@@ -108,6 +108,38 @@
 #   h.  This model gives 449 ng/dL at 1.85 h for that dose, 37% higher: a
 #   volunteer with a working thyroid is not a patient on T3, and the source's
 #   two states already differ more than this.
+# * Euthyroid volunteers, single dose, not used: Jonklaas 2015 (Ther Drug
+#   Monit 37:110-118, PMID 24977379, read in full; 12 volunteers, 77.8 kg, one
+#   50 mcg tablet fasting, Tables 2 and 4): total T3 rose from a mean predose
+#   117 ng/dL to 346 at 2.5 h (a rise of 229), was back to baseline by 48 h,
+#   and its baseline-corrected AUC(0-24 h) was 1860 ng.h/dL.  This model
+#   peaks 428 ng/dL above baseline at 1.85 h and gives an AUC(0-24 h) of
+#   3265, 1.76 times as much; from 1 to 24 h the ratio runs 1.6-2.3.  T3 had
+#   already risen 35 ng/dL at 0.5 h, inside this model's 0.62 h lag.  Their
+#   terminal half-life, 22 h, is this model's 21.5 h.
+# * Euthyroid volunteers, placebo-subtracted, not used: Dumitrescu 2022
+#   (Thyroid 32:196-205, doi 10.1089/thy.2021.0304, read in full; 50 mcg of
+#   liothyronine in a capsule, nine analysed, Table 2): LT3 minus placebo 193,
+#   202, 164 and 23 ng/dL at 2, 3, 4 and 24 h, against this model's 426, 366,
+#   298 and 50.  Their T3 was back to baseline by 36 h: a working thyroid,
+#   suppressed by the dose, gives back less of its own T3, which placebo
+#   subtraction cannot remove.
+# * Hypothyroid patients on once-daily liothyronine, not used: Jonklaas and
+#   Burman 2016 (Thyroid 26:770-778, doi 10.1089/thy.2015.0629, read in
+#   full; 18 patients, 16 with Hashimoto's thyroiditis, mean 81.8 kg; 30-60
+#   mcg once a day, mean 38.3 mcg, Table 1): at week 6 total T3 rose from
+#   96.1 to a peak of 292.8 +/- 152.3 ng/dL at 2.4 +/- 1.5 h, and the
+#   baseline-corrected area from 0.5 to 8 h was 655.6 +/- 404.6 ng.h/dL.
+#   This model at 38.3 mcg once a day rises 325 ng/dL from trough to peak
+#   (the measured rise 197) and gives an area of 1488 (that paper's own
+#   correction, the 0.5 h value subtracted).  Their glands still worked (TSH
+#   3.8 mIU/L at week 6, free T4 0.44 ng/dL), so neither is the source's
+#   patient on T3 alone.
+# * So, outside its own source the model's excursions are 1.6-2 times the
+#   measured ones.  The source's own patients differed 1.7-fold in volume
+#   between their two thyroid states, and all three external groups had thyroid
+#   function of their own; the model describes the source's patients and
+#   is not adjusted to the others [decision for Shafer].
 #
 # PREGNANCY AND THE BAND
 # ======================

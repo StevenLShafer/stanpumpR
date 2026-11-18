@@ -70,6 +70,36 @@ test_that("clearance agrees with Inada 1975's intravenous tracer within 7%", {
   expect_lt(abs(vtCl * 24 / inada - 1), 0.07)
 })
 
+test_that("external checks, not fitted: the model's swings run 1.6-2x the measured ones", {
+  # closed-form one-dose curve from Table 3 (h, mcg -> ng/dL)
+  A <- matrix(0, 3, 3)
+  A[1, 1] <- -vt$ka; A[2, 1] <- vt$ka
+  A[2, 2] <- -(vt$ke + vt$k12); A[3, 2] <- vt$k12; A[2, 3] <- vt$k21; A[3, 3] <- -vt$k21
+  one <- function(t, dose) vapply(t - vt$lag, function(s)
+    if (s <= 0) 0 else (expm(A * s) %*% c(dose, 0, 0))[2] / vt$v1 * 100, numeric(1))
+  expm <- function(M) {                   # matrix exponential by eigen-decomposition
+    e <- eigen(M); Re(e$vectors %*% diag(exp(e$values)) %*% solve(e$vectors))
+  }
+  # Jonklaas 2015 Tables 2 and 4: 50 mcg, peak 346 over a predose 117.3
+  # (mean of -0.5, -0.25 and 0 h); AUC(0-24 h) above baseline 1860
+  g <- seq(0, 24, by = 0.01)
+  y <- one(g, 50)
+  expect_equal(round(max(y)), 428)
+  expect_equal(round(sum(y) * 0.01 / 1860, 2), 1.76)
+  expect_equal(round(max(y) / (346 - mean(c(120, 118, 114))), 2), 1.87)
+  # Dumitrescu 2022 Table 2: LT3 minus placebo, 50 mcg, at 2, 3, 4, 24 h
+  measured <- c(298 - 105, 304 - 102, 265 - 101, 122 - 99)
+  model <- one(c(2, 3, 4, 24), 50)
+  expect_equal(round(model), c(426, 366, 298, 50))
+  expect_true(all(model / measured > 1.5 & model / measured < 2.3))
+  # Jonklaas and Burman 2016: 38.3 mcg once a day at steady state, measured
+  # rise 292.8 - 96.1 = 196.7 ng/dL
+  t <- seq(0, 24, by = 0.01)
+  ss <- Reduce(`+`, lapply(0:60, function(n) one(t + 24 * n, 115 / 3)))
+  expect_equal(round(max(ss) - min(ss)), 325)
+  expect_equal(round((max(ss) - min(ss)) / (292.8 - 96.1), 2), 1.65)
+})
+
 test_that("oral only, no band, no effect site", {
   dd <- getDrugDefaultsGlobal()
   row <- dd[dd$Drug == "liothyronine", ]

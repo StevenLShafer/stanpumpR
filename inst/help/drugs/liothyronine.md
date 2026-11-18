@@ -19,7 +19,12 @@ No covariate was fitted: 14 patients were too few to show even a difference betw
 - **The source's own patients**, 18.8 mcg every 8 hours at steady state: the model peaks at 306 ng/dL at 1.7 hours, against the measured 320 ± 60 ng/dL at 1.8 hours.
 - **The source's own simulation** of 50 mcg a day: a mean of 206 ng/dL whether given once, twice or three times a day. The model gives 200 ng/dL, with peaks of 515, 327 and 271 ng/dL for once, twice and three times a day.
 - **Inada 1975** (*J Clin Invest* 55:1337), intravenous radiolabelled T3 in five normal men: a clearance of 22.2 L/day per 60 kg, 26.8 L/day at the source's 72 kg, against the model's 25.0 L/day.
-- **Healthy volunteers** (Celi's group, *Front Endocrinol* 2022), not used: after 52.5 mcg the peak rose 327 ng/dL above baseline at 2 hours. The model gives 449 ng/dL, 37% higher. Volunteers with a working thyroid are not patients on liothyronine, and the source's own two states differ by more than this.
+- **Healthy volunteers** (Celi's group, *Front Endocrinol* 2022), not used: after 52.5 mcg the peak rose 327 ng/dL above baseline at 2 hours. The model gives 449 ng/dL, 37% higher.
+- **Healthy volunteers, one dose** (Jonklaas 2015, *Ther Drug Monit* 37:110), not used: after a 50 mcg tablet, T3 rose 229 ng/dL above baseline at 2.5 hours and was back to baseline by 48 hours. The model gives a rise of 428 ng/dL at 1.85 hours, and 1.76 times the measured area over 24 hours. The measured terminal half-life, 22 hours, is the model's 21.5.
+- **Healthy volunteers with a placebo arm** (Dumitrescu 2022, *Thyroid* 32:196), not used: after 50 mcg, T3 rose 202 ng/dL above placebo at 3 hours and was back to baseline by 36 hours. The model gives 366 ng/dL at 3 hours.
+- **Hypothyroid patients on once-daily liothyronine** (Jonklaas and Burman 2016, *Thyroid* 26:770), not used: on 38 mcg a day on average, T3 rose 197 ng/dL from trough to peak. The model gives 325 ng/dL.
+
+So outside its own source the model's swings are 1.6 to 2 times those measured. None of those groups matches the source's patients. The volunteers had working thyroids, which the dose suppresses, and most of the hypothyroid patients still had some thyroid function. The source itself found the volume 1.7 times larger in the same patients when they were hypothyroid. The model describes patients on liothyronine alone with no thyroid of their own, and it may overstate the peaks in anyone else.
 
 ### Dose
 
