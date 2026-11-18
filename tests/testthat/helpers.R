@@ -108,6 +108,29 @@ ffmRatioMaleIndependent <- function(weight, height, age) {
   ffmMale(weight, height, age) / ffmMale(70, 170, 35)
 }
 
+# The size factors of a source cohort's typical patient, written out from
+# Al-Sallami 2015's equation rather than taken from cohortSizeFactors(), so a
+# drug test can check a model anchored at its cohort independently of the
+# code under test (docs/weight-adjustment.md, *Anchoring at the source's
+# cohort*): the geometric mean of the cohort's man and woman, weighted by
+# their numbers, against the reference man; clearances on each sex's volume
+# ratio ^ 0.75.  `cohort` is the list a drug file writes: weight, age, men,
+# women, and height or bmi.  (Claude Code, 2026-11-18.)
+cohortFactorsIndependent <- function(cohort) {
+  ffm <- function(w, h, a, male) {
+    bmi <- w / (h / 100)^2
+    if (male) (0.88 + 0.12 / (1 + (a / 13.4)^(-12.7))) * 9270 * w / (6680 + 216 * bmi)
+    else (1.11 - 0.11 / (1 + (a / 7.1)^(-1.1))) * 9270 * w / (8780 + 244 * bmi)
+  }
+  h <- if (!is.null(cohort$height)) cohort$height else 100 * sqrt(cohort$weight / cohort$bmi)
+  ref <- ffm(70, 170, 35, TRUE)
+  vm <- ffm(cohort$weight, h, cohort$age, TRUE) / ref
+  vf <- ffm(cohort$weight, h, cohort$age, FALSE) / ref
+  n <- cohort$men + cohort$women
+  list(volume = exp((cohort$men * log(vm) + cohort$women * log(vf)) / n),
+       clearance = exp((cohort$men * log(vm^0.75) + cohort$women * log(vf^0.75)) / n))
+}
+
 # The name of a directory as Shiny makes one for an upload: 24 hex digits,
 # directly in tempdir() (FileUploadContext, shiny 1.14).  The paper review
 # reads, and deletes, only a file in such a directory
