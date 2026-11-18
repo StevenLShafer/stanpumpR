@@ -168,14 +168,42 @@ if (nrow(unidentified)) {
   lines <- c(lines, "## Picks with no DOI or PMID: look up first", "",
              paste0("- **", unidentified$drug, "**: ", unidentified$reference), "")
 }
+# For a drug nlmixr2lib does not model, the leads another reviewer gave
+# (outpatient-leads.csv: ChatGPT's report of 2026-11-17, every PMID checked in
+# PubMed, no paper read yet) are the papers to get instead.  Each is listed
+# under its drug, with the evidence the report gave it (P population fit,
+# C compartmental, D descriptive, R FDA review or label), and goes into
+# download-ids.txt unless the archive already holds it.
+leadFile <- file.path(dir, "outpatient-leads.csv")
+leadsToGet <- data.frame(pmid = character(), stringsAsFactors = FALSE)
 if (nrow(searches)) {
-  lines <- c(lines, "## Not in nlmixr2lib: search PubMed", "",
-             paste0("- ", searches$drug, " (", searches$category, ")"), "")
+  leads <- if (file.exists(leadFile))
+    utils::read.csv(leadFile, stringsAsFactors = FALSE, colClasses = "character") else NULL
+  lines <- c(lines, "## Not in nlmixr2lib: the report's leads, or search PubMed", "")
+  for (k in seq_len(nrow(searches))) {
+    mine <- if (is.null(leads)) leads else leads[leads$planDrug == searches$drug[k], , drop = FALSE]
+    if (is.null(mine) || !nrow(mine)) {
+      lines <- c(lines, paste0("- ", searches$drug[k], " (", searches$category[k], "): search PubMed."))
+      next
+    }
+    held <- !is.null(status) & mine$pmid %in% status$pmid[status$inArchive == "TRUE" & nzchar(status$pmid)]
+    items <- ifelse(nzchar(mine$pmid),
+                    paste0(mine$evidence, " [PMID ", mine$pmid, "](https://pubmed.ncbi.nlm.nih.gov/",
+                           mine$pmid, "/)", ifelse(held, " (in the archive)", "")),
+                    paste0(mine$evidence, " [", mine$label, "](",
+                           ifelse(nzchar(mine$doi), paste0("https://doi.org/", mine$doi), mine$url), ")"))
+    lines <- c(lines, paste0("- **", searches$drug[k], "** (", searches$category[k], "): ",
+                             paste(items, collapse = "; ")))
+    get <- mine$pmid[nzchar(mine$pmid) & !held]
+    leadsToGet <- rbind(leadsToGet, data.frame(pmid = get, stringsAsFactors = FALSE))
+  }
+  lines <- c(lines, "")
 }
 writeLines(lines, file.path(dir, "downloads.md"), useBytes = TRUE)
 # The same papers as a bare list, one per line, to paste into a session that
 # downloads papers: each paper's PMID, or its DOI where it has none.
-writeLines(as.character(ifelse(nzchar(missing$pmid), missing$pmid, missing$doi)),
-           file.path(dir, "download-ids.txt"), useBytes = TRUE)
-message("wrote docs/library-expansion/candidates.csv (", nrow(cand), " rows), download-ids.txt and downloads.md (",
-        nrow(missing), " papers to download, ", nrow(searches), " drugs to search)")
+ids <- as.character(ifelse(nzchar(missing$pmid), missing$pmid, missing$doi))
+writeLines(unique(c(ids, leadsToGet$pmid)), file.path(dir, "download-ids.txt"), useBytes = TRUE)
+message("wrote docs/library-expansion/candidates.csv (", nrow(cand), " rows), downloads.md and download-ids.txt (",
+        nrow(missing), " picks and ", length(setdiff(unique(leadsToGet$pmid), missing$pmid)),
+        " report leads to download; ", nrow(searches), " drugs without an nlmixr2lib model)")
