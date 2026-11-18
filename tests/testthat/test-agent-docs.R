@@ -28,7 +28,7 @@ agentDocCode <- function(root, doc) {
 # the package's R code, its test helpers and its JavaScript (inst/www, and
 # the visualizer's source in tools/viewer/src).  Local functions
 # and reactives inside app_server() count: AGENTS.md names them on purpose.
-agentDocDefinitions <- function(root) {
+agentDocDefinitions <- function(root, jsOnly = FALSE) {
   files <- c(list.files(file.path(root, "R"), "\\.R$", full.names = TRUE),
              list.files(file.path(root, "tests", "testthat"), "^helper.*\\.R$",
                         full.names = TRUE),
@@ -38,6 +38,7 @@ agentDocDefinitions <- function(root) {
              list.files(file.path(root, "tools", "viewer", "src"), "\\.js$", full.names = TRUE),
              # the scripts that build and check the data (checkFdaLabels())
              list.files(file.path(root, "data-raw"), "\\.R$", full.names = TRUE))
+  if (jsOnly) files <- files[grepl("\\.js$", files)]
   unique(unlist(lapply(files, function(f) {
     lines <- readLines(f, warn = FALSE, encoding = "UTF-8")
     # a plain binding only: not a member (state$values$x <-) or the tail of
@@ -62,6 +63,13 @@ agentDocDefinitions <- function(root) {
 test_that("every function the orientation documents name exists", {
   root <- agentDocsRoot()
   defined <- agentDocDefinitions(root)
+  # A JavaScript method named through its object (Cards.fit() in the
+  # Visualizer) is found when the object and the method are both defined in
+  # the JavaScript, so a misspelling of either still fails.
+  jsDefined <- agentDocDefinitions(root, jsOnly = TRUE)
+  jsMember <- function(name)
+    grepl(".", name, fixed = TRUE) &&
+      all(strsplit(name, ".", fixed = TRUE)[[1]] %in% jsDefined)
   imports <- c("base", "stats", "utils", "shiny", "testthat", "mirai")
   inImports <- function(name)
     any(vapply(imports, function(pkg)
@@ -78,7 +86,7 @@ test_that("every function the orientation documents name exists", {
     calls <- unique(sub("\\(\\)$", "",
                         code[grepl("^[A-Za-z.][A-Za-z0-9._]*\\(\\)$", code)]))
     for (name in calls)
-      expect_true(name %in% defined || inImports(name),
+      expect_true(name %in% defined || inImports(name) || jsMember(name),
                   info = sprintf("%s names %s(), which nothing defines", doc, name))
     # any qualified call, with or without arguments (renv::install("pkg"))
     qualified <- unique(sub("\\(.*$", "",
