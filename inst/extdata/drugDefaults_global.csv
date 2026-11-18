@@ -135,6 +135,8 @@ insulinRegularU500,mcU,,,U SC bid,"U SC,U SC bid,U SC tid",#C25A00,0,0,0,0,0,IV,
 insulinNPH,mcU,,,U SC bid,"U SC,U/kg SC,U SC qd,U SC bid",#7A5230,0,0,0,0,0,IV,Antidiabetic
 insulinHumanMix70,mcU,,,U SC bid,"U SC,U SC bid",#A07850,0,0,0,0,0,IV,Antidiabetic
 insulinLispro,mcU,,,U SC,"U SC,U/kg SC,U SC tid,U/hr SC",#E23D6E,0,0,0,0,0,IV,Antidiabetic
+insulinAspart,mcU,,,U SC,"U SC,U/kg SC,U SC tid,U/hr SC",#D4572A,0,0,0,0,0,IV,Antidiabetic
+insulinAspartFiasp,mcU,,,U SC,"U SC,U/kg SC,U SC tid,U/hr SC",#E8743B,0,0,0,0,0,IV,Antidiabetic
 insulinLisproMix75,mcU,,,U SC bid,"U SC,U SC bid",#B8225A,0,0,0,0,0,IV,Antidiabetic
 insulinLisproMix50,mcU,,,U SC bid,"U SC,U SC bid",#8C1546,0,0,0,0,0,IV,Antidiabetic
 insulinGlargine,mcU,,,U SC qd,"U SC,U/kg SC,U SC qd",#3A4BA8,0,0,0,0,0,IV,Antidiabetic

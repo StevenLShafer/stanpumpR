@@ -1512,13 +1512,14 @@ getDrugPK <- function(
         !is.null(X$parallelSystems) || !is.null(X$michaelisMenten) ||
         !is.null(X$osmotic) || !is.null(X$molar) || !is.null(X$oralPulses) ||
         !is.null(X$oralZeroOrder) || !is.null(X$dosePhase) ||
-        isTRUE(X$doseDependent) || !is.null(X$inr))
+        isTRUE(X$doseDependent) || !is.null(X$inr) ||
+        !is.null(X$zeroOrderSC) || !is.null(X$zeroOrderPO))
       stop("Invalid transitChain for ", drug, ": not available with an ",
            "X$metabolite block, several oral formulations, saturable ",
            "sublingual absorption, parallel systems, Michaelis-Menten ",
            "elimination, an osmotic or molar dose basis, pulsed or zero-order ",
-           "oral release, a dose-phase split, dose-dependent parameters or ",
-           "an INR.")
+           "oral or subcutaneous release, a dose-phase split, dose-dependent ",
+           "parameters or an INR.")
     tc <- validateTransitChain(X$transitChain, out$PK[[PK_EVENT_DEFAULT]], drug)
     if (!is.null(tc$metabolite))
     {

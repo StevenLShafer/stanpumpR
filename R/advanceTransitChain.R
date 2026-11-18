@@ -39,7 +39,8 @@
 # In order, so that the indices below read as the picture:
 #
 #   1 .. n      the chain.  Compartments 1 to n - 1 empty at the block's ktr;
-#               the LAST empties at the PK set's ka_PO, into the central
+#               the LAST empties at the PK set's ka_PO (ka_SC for a
+#               subcutaneous chain; see below), into the central
 #               compartment.  With n = 1 that is an ordinary oral depot.
 #   n + 1       the parent's central compartment, volume v1
 #   then        the parent's peripheral compartments, where it has them
@@ -125,6 +126,23 @@
 # 2026-10-30 so that the Parkinson disease drugs of PR #548 (levodopa, with
 # Mao 2013's motor effect site, behind one transit compartment) can run here
 # instead of on the 1e-5 two-depot approximation of R/transit.R.
+#
+# A SUBCUTANEOUS CHAIN
+# ====================
+# Added 2026-11-18 for insulin aspart (R/insulinAspart.R; the FDA review of
+# Fiasp, NDA 208751: a dose depot, then three transit compartments, then one
+# central compartment), on Steven L. Shafer's request to build it.  A block
+# with route = "SC" is fed by the tissue route instead of the oral one:
+# subcutaneous doses ("U SC", "U/kg SC") enter the head of the chain,
+# multiplied by bioavailability_SC, at their time plus tlag_SC, and a pump
+# rate ("U/hr SC") is a rate into the head, as an enteral rate is for an oral
+# chain.  The chain's last compartment empties at ka_SC.  getDrugPK() has
+# moved the model's _SC fields onto the tissue depot's _RA names
+# (R/subcutaneous.R), which is what transitChainField() reads.  Nothing else
+# changes: the same matrix, the same propagators, the same time until
+# threshold, so it is exact in the same sense.  Refused beside an oral depot,
+# a slow second tissue depot or a zero-order subcutaneous share, which this
+# engine would not carry (validateTransitChain(), getDrugPK()).
 #
 # TIME UNTIL THRESHOLD, BY A ROOT-FIND ON THE PROPAGATOR
 # ======================================================
@@ -236,6 +254,38 @@ expmScaleSquare <- function(M)
 }
 
 
+#' The route whose doses feed a transit chain
+#'
+#' Oral by default.  A subcutaneous chain (`route = "SC"`; insulin aspart,
+#' R/insulinAspart.R) is fed by the tissue route's doses and rates, whose
+#' absorption fields getDrugPK() has moved onto the tissue depot's `_RA`
+#' names (R/subcutaneous.R).
+#'
+#' @param tc a transitChain block
+#' @returns `ROUTE_PO` or `ROUTE_SC`, or NULL for a route the engine does
+#'   not carry
+#' @keywords internal
+transitChainRoute <- function(tc)
+{
+  route <- if (is.null(tc$route)) ROUTE_PO else tc$route
+  if (!is.character(route) || length(route) != 1 ||
+      !(route %in% c(ROUTE_PO, ROUTE_SC))) return(NULL)
+  route
+}
+
+#' The PK-set field of a transit chain's absorption parameter
+#'
+#' @param what "ka", "bioavailability" or "tlag"
+#' @param route the chain's route, from `transitChainRoute()`
+#' @returns the field name: `<what>_PO`, or the tissue depot's `<what>_RA`
+#'   for a subcutaneous chain
+#' @keywords internal
+transitChainField <- function(what, route)
+{
+  paste0(what, if (route == ROUTE_PO) "_PO" else "_RA")
+}
+
+
 #' Validate a model's transitChain block
 #'
 #' @param tc the block a drug model returned, or NULL
@@ -255,9 +305,22 @@ validateTransitChain <- function(tc, pkSet, drug)
   if (tc$n > 1 && !positive(tc$ktr))
     stop("Invalid transitChain for ", drug, ": ktr must be positive (per ",
          "minute) when n is above one.")
-  if (!positive(pkSet$ka_PO))
+  route <- transitChainRoute(tc)
+  if (is.null(route))
+    stop("Invalid transitChain for ", drug, ": route must be \"", ROUTE_PO,
+         "\" (the default) or \"", ROUTE_SC, "\".")
+  if (!positive(pkSet[[transitChainField("ka", route)]]))
     stop("Invalid transitChain for ", drug, ": the chain's last compartment ",
-         "empties at ka_PO, so the model must give a positive one.")
+         "empties at ", if (route == ROUTE_PO) "ka_PO" else "ka_SC",
+         ", so the model must give a positive one.")
+  # A subcutaneous chain is fed by subcutaneous doses alone: an oral depot
+  # beside it would have nowhere to go in this engine, and the chain's one
+  # depot is the whole tissue absorption, so a second, slow tissue depot
+  # would be ignored.
+  if (route != ROUTE_PO && (isTRUE(pkSet$ka_PO > 0) || isTRUE(pkSet$ka_RAslow > 0)))
+    stop("Invalid transitChain for ", drug, ": a subcutaneous chain cannot ",
+         "sit beside a first-order oral depot (ka_PO) or a second, slow ",
+         "subcutaneous depot.")
 
   kMet <- if (is.null(tc$kMetabolic)) 0 else tc$kMetabolic
   if (!(is_valid_number(kMet) && kMet >= 0))
@@ -327,9 +390,15 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
   met <- tc$metabolite
 
   orZero <- function(v, zero = 0) if (is.null(v) || is.na(v)) zero else v
+  # The route whose doses feed the head of the chain, and its absorption
+  # fields: oral, or the tissue depot's for a subcutaneous chain.
+  headRoute <- transitChainRoute(tc)
+  headRoutes <- if (headRoute == ROUTE_PO) ROUTE_PO else TISSUE_ROUTES
+  headF   <- orZero(pkSet[[transitChainField("bioavailability", headRoute)]], 1)
+  headLag <- orZero(pkSet[[transitChainField("tlag", headRoute)]])
   n    <- as.integer(tc$n)
   ktr  <- orZero(tc$ktr)
-  ka   <- pkSet$ka_PO
+  ka   <- pkSet[[transitChainField("ka", headRoute)]]
   V    <- pkSet$v1
   kMet <- orZero(tc$kMetabolic)
   # The parent's loss that does NOT form the metabolite.  max() only against
@@ -386,7 +455,7 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
   # in force when the propagator is applied.
   A[iC, iOne] <- 1
   # And a unit oral rate into the head of the chain, bioavailability included.
-  A[1L, iOneOral] <- orZero(pkSet$bioavailability_PO, 1)
+  A[1L, iOneOral] <- headF
   if (ke0 > 0) { A[iE, iC] <- ke0 / V; A[iE, iE] <- -ke0 }
   if (!is.null(met))
   {
@@ -418,16 +487,20 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
     jumps <<- rbind(jumps, data.frame(time = time[use], state = state[use],
                                       amount = amount[use]))
   }
-  isOral <- route == ROUTE_PO & !isRate
-  addJump(isOral, t0 + orZero(pkSet$tlag_PO), rep(1L, length(t0)),
-          D * orZero(pkSet$bioavailability_PO, 1))
+  # The doses that feed the chain: oral ones, or for a subcutaneous chain
+  # the tissue route's ("isOral" and "oralRate" below mean the chain's own
+  # route either way).
+  isOral <- route %in% headRoutes & !isRate
+  addJump(isOral, t0 + headLag, rep(1L, length(t0)), D * headF)
   ivBolus <- route == ROUTE_IV & !isRate
   addJump(ivBolus, t0, rep(iC, length(t0)), D)
   ivRate <- route == ROUTE_IV & isRate
   # An oral or enteral infusion (levodopa intestinal gel) runs through the
   # whole chain, lagged as an oral dose is.
-  oralRate <- route == ROUTE_PO & isRate
-  tOralRate <- t0 + orZero(pkSet$tlag_PO)
+  # An insulin pump's rate ("U/hr SC") feeds a subcutaneous chain the same
+  # way.
+  oralRate <- route %in% headRoutes & isRate
+  tOralRate <- t0 + headLag
 
   other <- !(isOral | ivBolus | ivRate | oralRate)
   if (any(other & D != 0))
@@ -521,7 +594,7 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
     recovery <- transitChainRecovery(X, A[seq_len(nS), seq_len(nS), drop = FALSE],
                                      cvec, emerge, horizon)
     oralIn <- isOral | oralRate
-    pending <- pendingDoseTimes(t0[oralIn], t0[oralIn] + orZero(pkSet$tlag_PO),
+    pending <- pendingDoseTimes(t0[oralIn], t0[oralIn] + headLag,
                                 D[oralIn], timeLine)
     if (!is.null(pending)) recovery[pending] <- NA_real_
   }
