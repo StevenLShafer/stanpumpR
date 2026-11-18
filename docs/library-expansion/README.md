@@ -1,7 +1,7 @@
 # Rounding out stanpumpR: the library expansion
 
 Steven L. Shafer chose the drugs on 2026-11-18, with a weekly return to the list:
-- **Antibiotics:** tazobactam, imipenem, ceftazidime/avibactam, teicoplanin.
+- **Antibiotics:** tazobactam, imipenem, ceftazidime/avibactam, teicoplanin. Tazobactam became piperacillin/tazobactam and ceftolozane/tazobactam the same day (see *Combination products* below).
 - **Antifungals:** fluconazole, posaconazole, isavuconazole, caspofungin, micafungin.
 - **Antimalarials** and **antivirals**.
 - **Transplant:** mycophenolic acid, to go with tacrolimus.
@@ -16,7 +16,7 @@ The list will be revisited every week or so. Each drug is still added the ordina
 
 | File | What it is | Edited by |
 |---|---|---|
-| `plan.csv` | One row per planned drug. Gives its category, the names nlmixr2lib files it under, priority, `status` and notes (product, dose basis, US approval). | Hand. The weekly routine updates `status`. |
+| `plan.csv` | One row per planned drug. Gives its category, the names nlmixr2lib files it under, priority, `status` and notes (product, dose basis, US approval). `status` is `planned`, `in_progress`, `blocked`, `done`, or `library_change` for a change to a drug the library already has, which needs no paper and which the candidates script and the weekly routine leave alone. | Hand. The weekly routine updates `status`. |
 | `candidates.csv` | Every nlmixr2lib model of every planned drug, ranked by study size. `pick` marks the papers to get first: the largest study, and the most recent if that is another paper. | `data-raw/libraryExpansionCandidates.R` |
 | `outpatient-leads.csv` | The papers and FDA documents ChatGPT's report gave for each outpatient drug, one row per lead, with the report's evidence letter (P population fit, C compartmental, D descriptive, R FDA review or label) and what was checked. For a drug nlmixr2lib does not model, these are the papers to get. | Hand, from the report. |
 | `archive-status.csv` | For each pick, and each lead of a drug nlmixr2lib does not model: its PMID and PMC ID (from PubMed's ID converter, or a PubMed search by DOI for a paper not in PMC), and whether it is in the stanpumpR paper archive (a Drive search by file name). | The weekly routine, or by hand. |
@@ -64,8 +64,17 @@ The report is a lead, not a source, like any other model's reading (AGENTS.md): 
 - **nlmixr2lib moved** from e2b902f to d8a308a (4,228 to 4,581 models). The picks went from 150 to 153, and nine new picks were given PMIDs and PMC IDs. Two report leads dropped out because nlmixr2lib now models their drugs.
 - **114 papers arrived** in the archive on 2026-11-18, all under `PMID_` names: 111 picks and 3 leads. **106 of the 153 picks are now in the archive**, covering 85 drugs. None arrived under a `DOI_` name.
 - **Tazobactam and imipenem**, the first two drugs in plan order, were taken up. Both are `blocked`. `plan.csv` gives the numbers read and the reasons:
-  - **Tazobactam:** its pick, Zhang 2021, is a *ceftolozane*-tazobactam fit. Whether it can stand for Zosyn's tazobactam is a decision for Steven, as are the infection state and the dose units.
-  - **Imipenem:** its pick, Patel 2022, is read. Its Supplementary Methods (the Cockcroft-Gault weight) and the sources the antibiotic band needs (an imipenem MBC/MIC ratio and a plain-imipenem *P. aeruginosa* MIC) are still to get.
+  - **Tazobactam:** its pick, Zhang 2021, is a *ceftolozane*-tazobactam fit. Whether it could stand for Zosyn's tazobactam, and the dose units, were put to Steven; he answered the same day (*Combination products* below).
+  - **Imipenem:** its pick, Patel 2022, is read. Its Supplementary Methods (the Cockcroft-Gault weight) and the sources the antibiotic band needs (an imipenem MBC/MIC ratio and a plain-imipenem *P. aeruginosa* MIC) are still to get. One decision is Steven's: the model's volumes and clearance change with pneumonia and with ventilation, and stanpumpR has no infection field, so which state is plotted, or whether the Patient Profile gains one. Ceftolozane/tazobactam has the same question.
+
+### Combination products (Steven L. Shafer, 2026-11-18)
+
+"Tazobactam should not be a drug at all. It is only used in combination with other antibiotics." So a component given only in combination is not a drug of its own. The product is listed under both names and dosed in the units of its FDA label:
+- **Piperacillin/tazobactam** (Zosyn): g of the combined product for adults (2.25, 3.375 and 4.5 g; 8:1), mg/kg of the combined product for children (90 and 112.5 mg/kg). It is stanpumpR's piperacillin (Kong 2025), which already takes the product and plots piperacillin, so it is a `library_change` and needs no paper. Today it is dosed in mg pip-tazo.
+- **Ceftolozane/tazobactam** (Zerbaxa): g of the combined product for adults (1.5 g = 1 g ceftolozane + 0.5 g tazobactam; 3 g for HABP/VABP), mg/kg of the combined product for children (30, 60 and 75 mg/kg). A new drug, from Zhang 2021's ceftolozane model; the curve is ceftolozane, as piperacillin's is piperacillin.
+- **Ceftazidime/avibactam** (Avycaz), by the same rule, replaces the planned avibactam.
+
+Two things this needs before either is listed that way. A drug's name in stanpumpR is its R function's name, which cannot hold a slash, so the listing needs a display name the library does not yet have, or a renamed identifier with the old name mapped for links. And the infection state above.
 
 ## Downloading
 
