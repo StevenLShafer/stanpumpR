@@ -106,6 +106,23 @@ archiveName <- function(pmid, doi)
 # be the pick of two drugs, so they are made unique by DOI, then by PMID; a
 # pick with neither is listed to be looked up.
 picks <- cand[cand$pick, , drop = FALSE]
+# Before one row of a paper is kept, every row of it takes what any row knows:
+# a PMID, a PMC ID, and whether the archive holds it (found by DOI on one row
+# and by PMID on another).
+if (nrow(picks)) {
+  key <- ifelse(nzchar(picks$doi), tolower(picks$doi), paste0("pmid:", picks$pmid))
+  byPmid <- nzchar(picks$pmid)
+  for (pass in 1:2) {
+    for (col in c("pmid", "pmcid", "archiveFile")) {
+      first <- tapply(picks[[col]], key, function(v) c(v[nzchar(v)], "")[1])
+      picks[[col]] <- ifelse(nzchar(picks[[col]]), picks[[col]], first[key])
+    }
+    held <- tapply(picks$inArchive == "TRUE", key, any)
+    picks$inArchive <- ifelse(held[key], "TRUE", picks$inArchive)
+    # then the same through the PMID, which joins rows with different DOIs
+    key <- ifelse(nzchar(picks$pmid), paste0("pmid:", picks$pmid), key)
+  }
+}
 dupDoi <- nzchar(picks$doi) & duplicated(tolower(picks$doi))
 dupPmid <- nzchar(picks$pmid) & duplicated(picks$pmid)
 picks <- picks[!(dupDoi | dupPmid), , drop = FALSE]

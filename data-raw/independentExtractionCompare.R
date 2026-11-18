@@ -55,13 +55,33 @@ readReply <- function(path) {
   NULL
 }
 
-# Characters a PDF prints in a number, and what each reads as: the minus
-# sign and dashes, the multiplication sign and dot, and the superscripts.
-# Built from code points so that the script reads the same in any locale.
-PRINTED_FROM <- vapply(c(0x2212, 0x2013, 0x2012, 0x00d7, 0x00b7, 0x2070, 0x00b9, 0x00b2,
-                         0x00b3, 0x2074, 0x2075, 0x2076, 0x2077, 0x2078, 0x2079, 0x207b),
-                       intToUtf8, character(1))
-PRINTED_TO <- c("-", "-", "-", "x", "*", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "-")
+# Characters a PDF prints in a number, and what each reads as, by code
+# point (so the script reads the same in any locale): the minus sign and
+# dashes, the multiplication sign and dot.  Superscript digits and minus are
+# exponents, and a run of them is read as "^" and the exponent, so 10\u207b\u00b3
+# is 10^-3 while a typed 10-3 stays a range.
+PRINTED_CHARACTERS <- c(`8722` = "-", `8211` = "-", `8210` = "-", `215` = "x", `183` = "*")
+SUPERSCRIPTS <- c(`8304` = "0", `185` = "1", `178` = "2", `179` = "3", `8308` = "4",
+                  `8309` = "5", `8310` = "6", `8311` = "7", `8312` = "8", `8313` = "9",
+                  `8315` = "-")
+readPrinted <- function(x) {
+  codes <- utf8ToInt(x)
+  if (anyNA(codes)) return(x)
+  out <- character(length(codes))
+  inExponent <- FALSE
+  for (k in seq_along(codes)) {
+    key <- as.character(codes[k])
+    if (key %in% names(SUPERSCRIPTS)) {
+      out[k] <- paste0(if (!inExponent) "^", SUPERSCRIPTS[[key]])
+      inExponent <- TRUE
+    } else {
+      inExponent <- FALSE
+      out[k] <- if (key %in% names(PRINTED_CHARACTERS)) PRINTED_CHARACTERS[[key]] else
+        if (codes[k] < 128) intToUtf8(codes[k]) else "?"
+    }
+  }
+  paste(out, collapse = "")
+}
 
 # The number a reader printed, or NA if value_as_printed is not one number.
 # PDFs print a minus as U+2212 and powers of ten as "3.5 x 10^-2", "3.5×10−2"
@@ -69,8 +89,7 @@ PRINTED_TO <- c("-", "-", "-", "x", "*", "0", "1", "2", "3", "4", "5", "6", "7",
 # printed form of a percentage and is kept as printed (no conversion).
 firstNumber <- function(x) {
   if (is.na(x)) return(NA_real_)
-  for (k in seq_along(PRINTED_FROM))
-    x <- gsub(PRINTED_FROM[k], PRINTED_TO[k], x, fixed = TRUE, useBytes = TRUE)
+  x <- readPrinted(x)
   x <- gsub("[[:space:],]", "", x)
   x <- sub("%$", "", x)
   mantissa <- "(-?[0-9]*\\.?[0-9]+)"
@@ -78,6 +97,9 @@ firstNumber <- function(x) {
   if (length(m)) return(as.numeric(m[2]) * 10^(if (nzchar(m[3])) as.numeric(m[3]) else 0))
   m <- regmatches(x, regexec(paste0("^", mantissa, "[xX*]10\\^?\\(?([-+]?[0-9]+)\\)?$"), x, perl = TRUE))[[1]]
   if (length(m)) return(as.numeric(m[2]) * 10^as.numeric(m[3]))
+  # a bare power of ten (10^-3, as a superscript is read); 10-3 is a range
+  m <- regmatches(x, regexec("^10\\^\\(?([-+]?[0-9]+)\\)?$", x, perl = TRUE))[[1]]
+  if (length(m)) return(10^as.numeric(m[2]))
   NA_real_
 }
 
@@ -150,7 +172,7 @@ for (stem in stems) {
     # prompt keeps such values in notes; "derived" is from replies to its first
     # wording, which offered that type.  A "secondary" value (one the paper
     # prints, computed from its estimates) is a transcription and is compared.
-    derived <- type == "derived"
+    derived <- type %in% "derived"   # NA-safe: a reply may leave the type out
     df$verdict <- ifelse(!is.finite(df$value), "no number",
                   ifelse(derived, "derived by the reader (not compared)",
                   ifelse(inStanpumpR, "in stanpumpR",

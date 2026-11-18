@@ -83,7 +83,11 @@ agentDocJsMember <- function(root, name) {
     depth <- cumsum((chars == "{") - (chars == "}"))
     end <- which(depth == 0)[1]
     body <- paste(chars[seq_len(if (is.na(end)) length(chars) else end)], collapse = "")
-    if (grepl(sprintf("(^|\\n)\\s*(async\\s+|get\\s+|set\\s+|static\\s+)?%s\\s*(\\([^()]*\\)\\s*\\{|:)",
+    # a shorthand method (fit(view) {), or a property whose value is a
+    # function (fit: function, fit: (v) =>, fit: v =>); never a property
+    # holding a value (level: 0), which cannot be called
+    if (grepl(sprintf(paste0("(^|\\n)\\s*(async\\s+|get\\s+|set\\s+|static\\s+)?%s\\s*",
+                             "(\\([^()]*\\)\\s*\\{|:\\s*(async\\s+)?(function\\b|\\([^()]*\\)\\s*=>|[A-Za-z_$][A-Za-z0-9_$]*\\s*=>))"),
                       method), body, perl = TRUE))
       return(TRUE)
   }
@@ -97,6 +101,8 @@ test_that("a JavaScript method is found only on the object that defines it", {
   expect_false(agentDocJsMember(root, "Cards.draw"))
   expect_false(agentDocJsMember(root, "Cards.fitt"))
   expect_false(agentDocJsMember(root, "Cardz.fit"))
+  # level: 0 is a property of Cards, not a method
+  expect_false(agentDocJsMember(root, "Cards.level"))
 })
 
 test_that("every function the orientation documents name exists", {

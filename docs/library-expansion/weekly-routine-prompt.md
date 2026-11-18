@@ -32,7 +32,8 @@ Do this, in order:
    ```
 
 2. **Check the archive.** Take every pick in `docs/library-expansion/candidates.csv` that `docs/library-expansion/archive-status.csv` marks as not in the archive.
-   - Search the stanpumpR paper archive on Google Drive (folder `stanpumpRPapers`; see the "Source papers" section of AGENTS.md) by file name, several joined with `or`: `title contains 'PMID_<pmid>'` for a pick with a PMID, and `title contains 'DOI_<doi>'` (the DOI with every character but letters, digits and dots made `_`, the name `downloads.md` gives) for one without.
+   - Search the stanpumpR paper archive on Google Drive (folder `stanpumpRPapers`; see the "Source papers" section of AGENTS.md) by exact file name, several joined with `or`: `title = 'PMID_<pmid>.pdf'` where the pick has a PMID, and also `title = 'DOI_<doi>.pdf'` where it has a DOI (the DOI with every character but letters, digits and dots made `_`, the name `downloads.md` gives), since a paper may have been saved under its DOI before its PMID was known.
+   - Mark a paper as archived only when the paper itself is found. A supplement alone (`_sup1`, `_mmc1`, `_ESM1`, `_SDC1`) does not count; note it in `archiveFile` and leave `inArchive` FALSE.
    - Include one file you know is there, to check the search works.
    - For any new picks, add PMIDs and PMC IDs with the PubMed connector's ID converter.
    - Update `archive-status.csv` and rerun the candidates script.
