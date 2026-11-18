@@ -8,7 +8,7 @@ The paper does not print the distribution clearance. The value used, 0.297 L/min
 
 **Age.** The peripheral volume is 37% larger in the elderly, which with the same distribution clearance reproduces both elderly half-lives (4.5 and 36.3 minutes). The paper's Table 2 lists an elderly steady-state volume (13.3 L) that is 37% larger than the young Vss rather than reflecting a 37% larger V2; the text is followed because only it agrees with the published half-lives. Ages 50 to 65 were not studied; the volume and the time to peak effect are interpolated linearly across that gap.
 
-**Size.** With *Adjust weight to fat-free mass* ticked, the volumes scale with fat-free mass relative to the 70 kg, 170 cm reference man and the clearances with that ratio to the 0.75 power. Unticked, the parameters are used as published, which is how the source found them best.
+**Size.** The parameters are the typical values of Sorooshian's 64 patients (about 71 kg and 167 cm on average, 36 of them women). With *Adjust weight to fat-free mass* ticked, a patient like them receives the published values, and everyone else's volumes scale with fat-free mass relative to theirs and the clearances with that ratio to the 0.75 power. Unticked, the parameters are used as published, which is how the source found them best.
 
 ### Effect site
 

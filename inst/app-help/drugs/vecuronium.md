@@ -8,7 +8,7 @@ Vecuronium's kinetics are from Vega-Villa and colleagues (*Br J Anaesth* 2014;11
 
 The effect is substantial. A 70-year-old recovers to 25% twitch about 45 minutes after 0.1 mg/kg, against 32 minutes at age 40 — the direction d'Hollander and colleagues reported from steady-state infusions, though they found a larger difference still.
 
-**Size.** The published parameters are absolute, not per kilogram, and burn status was the only covariate Vega-Villa retained. With *Adjust weight to fat-free mass* ticked, the volumes scale with the patient's fat-free mass relative to the 70 kg, 170 cm reference man and the clearances with that ratio to the 0.75 power; unticked, the parameters are used as published.
+**Size.** The published parameters are absolute, not per kilogram, and burn status was the only covariate Vega-Villa retained. They are therefore the study's patients' (about 68 kg and 170 cm, mostly men), and with *Adjust weight to fat-free mass* ticked a patient like them receives the published values: everyone else's volumes scale with fat-free mass relative to theirs and the clearances with that ratio to the 0.75 power; unticked, the parameters are used as published.
 
 ### Effect site
 

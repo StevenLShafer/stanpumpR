@@ -44,17 +44,21 @@ test_that("the elderly have a 37% larger V2 and a later tPeak, interpolated from
                    cisatracurium(70, 170, 18, "male", adjustToFFM = FALSE)$PK)
 })
 
-test_that("scales to fat-free mass for a 120 kg man", {
+test_that("scales to fat-free mass from Sorooshian's cohort for a 120 kg man", {
   # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126
-  # (worked out from the published values by hand).  v3 and cl3 are
+  # (worked out from the published values by hand), each over the factor of
+  # Sorooshian's cohort (Table 1, by age group).  v3 and cl3 are
   # placeholders for a missing compartment and are left alone.
+  k <- cohortFactorsIndependent(list(groups = list(
+    list(weight = 73, height = 168, age = 36, men = 9, women = 22),
+    list(weight = 70, height = 166, age = 74, men = 19, women = 14))))
   actual <- cisatracurium(120, 170, 50, "male")
   expected <- list(
-    v1 = 6.2113559,
-    v2 = 6.4462391,
+    v1 = 6.2113559 / k$volume,
+    v2 = 6.4462391 / k$volume,
     v3 = 1,
-    cl1 = 0.38947112,
-    cl2 = 0.36261104,
+    cl1 = 0.38947112 / k$clearance,
+    cl2 = 0.36261104 / k$clearance,
     cl3 = 0
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)

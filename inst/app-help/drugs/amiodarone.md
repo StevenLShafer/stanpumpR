@@ -25,7 +25,7 @@ Amiodarone is **not a prodrug**. Neither it nor its metabolite has an effect sit
 
 ### Covariates
 
-None. Age, sex, height, weight and lean body mass were tested against every parameter and none was significant. The parameters therefore take the library's default [fat-free-mass scaling](help:models/fat-free-mass) for fixed published values, and are used exactly as published with the switch off. No re-anchoring was needed: the cohort's fat-free mass, about 54 kg at the mean weight, height and age of each sex, is about 1% below the 54.5 kg reference man's. The patients were adults of 22 to 86 years and 39 to 133 kg, so the child and infant in the table above are extrapolation.
+None. Age, sex, height, weight and lean body mass were tested against every parameter and none was significant. The parameters are therefore the study's typical patient's, and with [fat-free-mass scaling](help:models/fat-free-mass) on a patient like Pollak's (men 81 kg and 173 cm, women 72 kg and 158 cm, two men to each woman) receives them, everyone else being scaled from there; the 70 kg reference man's values come out 2% above the published ones. With the switch off they are used exactly as published. The patients were adults of 22 to 86 years and 39 to 133 kg, so the child and infant in the table above are extrapolation.
 
 ### Typical concentrations and regimens
 
