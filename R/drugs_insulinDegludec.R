@@ -42,31 +42,61 @@
 # [Vc/F] ...) in T2DM"; the reference weight, 70 kg, is the forest plot's
 # typical subject.  No parameter of degludec differs from INS068's but ka.
 #
-# THE PATIENT THE MODEL DESCRIBES (assumptions; [decision] for Shafer on
-# the population and the weight hold)
-# ====================================================================
+# THE PATIENT THE MODEL DESCRIBES (Shafer's decisions of 2026-11-18)
+# ==================================================================
 # * Population.  The Patient Profile has no diabetes field, so one population
-#   is chosen: adults with diabetes, as type 1 diabetes is the population in
-#   which Tang measured degludec at steady state (study 102, the bulk of its
-#   degludec data).  ka = 0.0476 x 0.837 x 0.85 = 0.033865 /h, CL/F = 1.93 x
+#   is chosen: type 1 diabetes, the population in which Tang measured
+#   degludec at steady state (study 102, the bulk of its degludec data) and
+#   the one that takes the drug.  The choice matters little: at 70 kg and
+#   0.4 U/kg daily the healthy values give an average steady-state level 2%
+#   lower (CL/F 1.93 against 1.89 L/h), with a slightly smaller swing
+#   (peak/trough 3.94/3.06 against 4.17/2.94 nmol/L), the type 1 volume being
+#   smaller.  ka = 0.0476 x 0.837 x 0.85 = 0.033865 /h, CL/F = 1.93 x
 #   0.978 = 1.88754 L/h, V/F = 20.9 x 0.537 = 11.2233 L at 70 kg.
 #   Tang's type 2 diabetes factors are NOT applied: they were estimated from
 #   INS068 troughs alone, ka's has a bootstrap interval of 0.123-1.15, and
 #   for degludec they would put its absorption half-life at 97 h and its
-#   steady state weeks away, which the label (steady state in 3-4 days) and
-#   the FDA review ("the PK profile was consistent between healthy, Type 1
-#   and Type 2 diabetic subjects") contradict.  The healthy-subject values
+#   steady state weeks away (and raise the average level 28%), which the
+#   label (steady state in 3-4 days) and the FDA review ("the PK profile was
+#   consistent between healthy, Type 1 and Type 2 diabetic subjects")
+#   contradict.  Shafer agreed to leave them out (2026-11-18).  The healthy-subject values
 #   (Table 2 without the T1DM factors: ka 0.03984 /h, CL/F 1.93 L/h, V/F
 #   20.9 L) are used only in the checks below.
 # * Weight.  The power terms are applied to the pharmacokinetic weight (fat-
-#   free-mass equivalent with the switch on, total weight with it off), held
-#   within 54.4-93.1 kg, the only weights the paper prints: the 5th-95th
-#   percentiles of its 307 subjects ("the 90% distribution range"); the
-#   demographics are in Table S2, in the supplement, not supplied.  Tang's exponent on CL/F, 1.04, is
-#   steeper than Novo Nordisk's in type 2 diabetes (Kapitza 2015, below:
-#   exposure 0.77 at 156.8 kg and 1.38 at 41 kg against 85.8 kg, an exponent
-#   of 0.43-0.44), which the hold limits.  The model is for adults: Tang
-#   studied no child, and a child is held at 54.4 kg.
+#   free-mass equivalent with the switch on, total weight with it off).  Tang
+#   prints only the 5th-95th percentiles of its 307 subjects' weights, 54.4-
+#   93.1 kg ("the 90% distribution range"; the demographics are in Table S2,
+#   in the supplement, not supplied).  Outside that range the two ends are
+#   treated differently, on Shafer's decision of 2026-11-18:
+#
+#   ABOVE 93.1 kg the weight is held at 93.1.  Tang's exponent on CL/F, 1.04,
+#   is steeper than Novo Nordisk's in adults: Kapitza 2015 (type 2 diabetes,
+#   to 156.8 kg) measured exposure 0.77 at 156.8 kg and 1.38 at 41 kg against
+#   85.8 kg, an exponent of 0.43-0.44, and the adult population model of
+#   trial 3586 (the pediatric review below, its Table 2) has 0.76.  Holding
+#   the weight reproduces Kapitza's measurement: at 150 kg and 0.4 U/kg
+#   daily the held model's average level is 5.91 nmol/L against 5.68 by
+#   Kapitza's exponent, where Tang's term carried on would give 3.60, 37%
+#   too low.
+#
+#   BELOW 54.4 kg Tang's terms carry on, unheld.  Tang studied no child, but
+#   Tresiba is approved from 1 year, and Novo Nordisk's pediatric population
+#   model, which the FDA reviewed and accepted, puts weight on CL/F with an
+#   exponent of 0.977 (95% CI 0.815-1.14), Tang's 1.04 inside it (FDA
+#   Clinical Pharmacology Review of NDA 203314/S-03, 2016, Table 5, read in
+#   full: 205 subjects aged 1.5-57 years weighing 11.2-102 kg, Table 4; age
+#   was not a covariate once weight was in; "When dosed per kg body weight,
+#   the exposure becomes independent of body weight").  The label agrees
+#   (12.3: "After adjusting for body weight, the total exposure of TRESIBA at
+#   steady state was independent of age").  Holding a child at 54.4 kg had
+#   put a 20 kg child's level at a third of what per-kilogram dosing gives
+#   (1.38 against 3.90 nmol/L at 0.4 U/kg).  Two residuals, stated on the
+#   help page: below 11.2 kg the term is an extrapolation (with an exponent
+#   near 1, per-kilogram dosing still gives the adult level); and Tang's
+#   exponent on V/F, 1.54, is just outside that review's interval for V/F
+#   (1.01, 0.49-1.52), which leaves the average level unchanged but makes an
+#   11.2 kg child's peak 10% higher and trough 12% lower than an exponent of
+#   1.01 would (4.92/2.81 against 4.47/3.19 nmol/L).
 # * Units.  Doses in units: 1 U of degludec is 6 nmol (FDA OCP review of NDA
 #   203314: "0.4 U/kg (2.4 nmol/kg)"; Tang: INS068's unit is 6 nmol "similar
 #   to IDeg"); the molecular weight is 6.104 kDa (label, section 11).  The
@@ -140,6 +170,8 @@
 # Kapitza C et al.  J Clin Pharmacol 2015;55:1369-1377.
 #   https://doi.org/10.1002/jcph.549 (check)
 # FDA Clinical Pharmacology Review, NDA 203314 (2012).
+# FDA Clinical Pharmacology Review, NDA 203314/S-03 (pediatric, 2016).
+#   https://www.accessdata.fda.gov/drugsatfda_docs/pediatric/203314-Insulin-degludec-clinpharm-prea.pdf
 # Catalano PM, Drago NM, Amini SB.  Diabetes Care 1998;21:403-408.
 #   https://doi.org/10.2337/diacare.21.3.403 (pregnancy)
 #   https://www.accessdata.fda.gov/drugsatfda_docs/nda/2015/203313Orig1s000_203314Orig1s000ClinPharmR.pdf
@@ -155,16 +187,17 @@ DEGLUDEC_TANG_LAG <- 0.4            # h
 DEGLUDEC_TANG_IDEG_KA <- 0.837      # IDeg on ka
 # Type 1 diabetes on ka, CL/F; type 1 or 2 diabetes on Vc/F
 DEGLUDEC_TANG_T1DM <- c(ka = 0.85, cl = 0.978, v = 0.537)
-# Body weight: power terms about 70 kg, held to the printed 5th-95th
-# percentiles of Tang's subjects
+# Body weight: power terms about 70 kg, held at the printed 95th percentile
+# of Tang's subjects above it and unheld below (Shafer, 2026-11-18; see the
+# header)
 DEGLUDEC_TANG_WEIGHT <- list(reference = 70, cl = 1.04, v = 1.54,
-                             range = c(54.4, 93.1))
+                             upper = 93.1)
 
 #' Insulin degludec (Tresiba U-100 and U-200): pharmacokinetics
 #'
 #' Tang 2026's joint population model of INS068 and insulin degludec: one
 #' compartment, first-order absorption after a 0.4 h lag, at the type 1
-#' diabetes typical values, body weight on CL/F and V/F held to 54.4-93.1 kg.
+#' diabetes typical values, body weight on CL/F and V/F held at 93.1 kg above.
 #' Concentrations in mcU/mL of total degludec (1 U = 6 nmol).  See the file's
 #' header for the source, the population chosen and the checks.
 #'
@@ -179,7 +212,7 @@ insulinDegludec <- function(weight, height, age, sex, adjustToFFM = TRUE,
   w <- DEGLUDEC_TANG_WEIGHT
   pkW <- if (isTRUE(adjustToFFM))
     pkSizeFactors(weight, height, age, sex, TRUE)$pkWeight else weight
-  pkW <- min(max(pkW, w$range[1]), w$range[2])
+  pkW <- min(pkW, w$upper)
 
   t1 <- DEGLUDEC_TANG_T1DM
   ka <- DEGLUDEC_TANG_KA * DEGLUDEC_TANG_IDEG_KA * t1[["ka"]]          # /h
@@ -202,7 +235,7 @@ insulinDegludec <- function(weight, height, age, sex, adjustToFFM = TRUE,
       "INS068 and insulin degludec, at the type 1 diabetes typical values: one ",
       "compartment, ka 0.0476 x 0.837 (degludec) x 0.85 /h, lag 0.4 h, CL/F 1.93 ",
       "x 0.978 x (WT/70)^1.04 L/h, V/F 20.9 x 0.537 x (WT/70)^1.54 L, weight held ",
-      "to 54.4-93.1 kg; total degludec, 1 U = 6 nmol, concentration only. ",
+      "at 93.1 kg above; total degludec, 1 U = 6 nmol, concentration only. ",
       DEGLUDEC_REFERENCE)
   if (isTRUE(pregnant)) {
     reference <- paste0(reference, "; ", pregnancyReference(
