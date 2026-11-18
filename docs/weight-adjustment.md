@@ -120,31 +120,102 @@ typical patient, so that **a patient like the cohort's receives the published
 values**, and the reference man, and everyone else, are scaled from there.
 
 - **The typical patient** is the cohort's printed central weight, height and
-  age (median or mean, whichever the source prints; for several groups, the
-  count-weighted mean of their values). Where no height is printed, the BMI
-  gives it (height = 100 x sqrt(weight / BMI)).
+  age (median or mean, whichever the source prints). Several groups (dose
+  arms, studies, sexes printed apart) are entered as `groups =`, each with its
+  own values and numbers, and pooled in the geometric mean below. Means are
+  computed from printed individual values where the source gives them
+  (atropine, midazolam); a weight implied only by a per-kilogram dose, or a
+  meta-analysis of study means, is not a cohort (Shafer, 2026-11-18).
+- **A missing height** (Shafer, 2026-11-18: "BSA if printed, else typical
+  height"), in this order:
+  1. a printed BMI: height = 100 x sqrt(weight / BMI);
+  2. a printed body-surface area, solved back through the formula the paper
+     names, else Du Bois (height = (BSA / (0.007184 x weight^0.425))^(1 /
+     0.725) cm), or Mosteller (height = 3600 BSA^2 / weight), rounded to
+     0.1 cm;
+  3. otherwise the **sex-typical adult height of the cohort's population**:
+     the NCD Risk Factor Collaboration's mean height at 18 for the country,
+     sex and birth year (*eLife* 2016;5:e13410, the file
+     `NCD_RisC_eLife_2016_height_age18_countries.csv` from ncdrisc.org's
+     archive), the birth year being the year of data collection (or, where it
+     is not printed, of publication) less the typical age, held within the
+     1896-1996 the collaboration estimated, less the 0.2 cm (men) and 0.3 cm
+     (women) a cohort loses per decade of age after 18 that the same paper
+     reports. A cohort of both sexes is then two groups, each with its sex's
+     height. A cohort of several countries has no single population, and is
+     left for a decision (opicapone).
 - **Sex.** A cohort of both sexes has no single fat-free mass at its median
   weight: a 100 kg man's is about a fifth above a 100 kg woman's. The factor
   is the geometric mean of a man's and a woman's at the typical weight, height
   and age, weighted by the numbers of men and women. For a single-sex cohort
   it is that sex's factor.
-- **The code**: `cohortSizeFactors(weight, age, men, women, height =, bmi =)`
+- **The code**: `cohortSizeFactors(weight, age, men, women, height =, bmi =, groups =)`
   returns the typical patient's factors, and
   `pkSizeFactors(..., cohort = )` divides them out with the switch on and
   ignores them with it off, so the switch off still gives the published values
   unscaled. A model's header gives Table/page, the values read and the
   resulting divisors; its test pins that the cohort's typical patient (the
   geometric mean of its man and woman) receives the published values.
+- **A renal term is not anchored** (Shafer, 2026-11-18: "including weight in
+  creatinine clearance already accounts for it. You would wind up double
+  correcting clearance"). Where a clearance is a creatinine-clearance or eGFR
+  term with weight inside it, that term takes no size factor at all; the
+  volumes, the intercompartmental clearances and any non-renal clearance are
+  anchored (cefazolin, mannitol, metformin, dabigatranHip, etoposide).
+- **A parameter with its own sex term** (an intercept fitted for men, with a
+  factor for women) is anchored at that sex's typical patient, not at the
+  pooled one (etoposideKroghMadsen's central volume).
+- **A metabolite fitted jointly with its parent** shares the parent's cohort
+  (norfluoxetine, desvenlafaxine, dehydroaripiprazole, desethylamiodarone,
+  hydroxybupropion).
+- **An absorption rate calibrated to an observed peak** on the published
+  disposition (Shafer, 2026-11-18: "re-anchor and recalibrate ka") is refitted
+  so that the calibration study's own typical patient, whose disposition is
+  now the anchored model's scaled to that patient, reproduces the peak
+  (ropivacaine against Vainionpaa 1995, bupivacaine against Robison 1991,
+  with the UK's heights). Where the peak came from the disposition's own
+  subjects the rate does not move (diazepam IM), and where the calibration
+  study prints no typical patient it stays, said in the header (diazepam
+  oral, Hogan 2020's weight bands).
 - **Where it does not apply**: a model with its own size covariate (it already
   says whom its values belong to); a model published per kilogram, whose
   values were normalised by the source; and a cohort whose demographics the
   source does not print, which keeps the reference anchor and says so in its
   header.
-- **Applied so far**: bupropion and hydroxybupropion (Ghimire 2026; volumes /
-  1.092, clearances / 1.068). The library's other fixed-value models were
-  anchored at the reference man before this rule; each is to be re-anchored
-  as its source's demographics are read on the PDF, and until then its header
-  is the record of which anchor it uses.
+- **Applied** (2026-11-18, each source's demographics read on the PDF; the
+  model's header gives the table, the values and the divisors, and its test
+  recomputes them from Al-Sallami's equation written out again,
+  `cohortFactorsIndependent()` in `tests/testthat/helpers.R`):
+  amantadineER, amiodarone and desethylamiodarone, aripiprazole and
+  dehydroaripiprazole, atropine, bendamustine, bupivacaine, bupropion and
+  hydroxybupropion, calcium, carvedilol, cefazolin, cetagliptin,
+  cisatracurium, cladribine, cyclophosphamideJoerger, dabigatranHip,
+  dexamethasone, diazepam, diltiazem, droperidol, epirubicin,
+  etoposideKroghMadsen, fluoxetine and norfluoxetine, glyburide,
+  haloperidolIV, heparin, ifosfamide, lamotrigine, LSD, mannitol, metformin,
+  methylprednisolone, metoprolol, midazolam, paroxetine (CL/F only),
+  pioglitazone, pramlintideIV, psilocybin, ropivacaine, sufentanil (and so
+  carfentanil), vecuronium, venlafaxine and desvenlafaxine, vildagliptin,
+  vinorelbine, zolpidem and zonisamide.
+- **Not anchored, and why** (2026-11-18). *The source's paper is not in the
+  archive* (papers/pending-work.csv): duloxetine, nortriptyline, clozapine,
+  scopolamine, everolimus, sirolimus, tacrolimus, amitriptyline,
+  capecitabine, amikacin, ganciclovir, quinidine, vancomycinKidneyTransplant.
+  *The source prints no usable demographics*, so the reference anchor stays:
+  daunorubicin, droperidolIM, risperidone and hydroxyrisperidone,
+  nitroglycerin, phenylephrine, vasopressin, prednisolone and prednisone,
+  diclofenacEC, alfentanil, oliceridine, mepivacaine, glycopyrrolate,
+  neostigmine, clonazepam, apomorphine, sildenafilFDA, ceftriaxone (no
+  weight), benazepril (no height or age), irinotecan (weight only).
+  *Excluded by the rule on partial data*: sertraline and hydrochlorothiazide
+  (meta-analyses of study means), propranolol (a weight implied by
+  per-kilogram doses). *Waiting on a decision of Shafer's*, each written as a
+  `[decision]` in its header: mirtazapine (a BMI step on clearance),
+  doxorubicinPerezBlanco (volumes fixed from Kontny 2013), fosinopril (a
+  BSA-indexed creatinine clearance on the whole clearance), gabapentin (V
+  re-anchored to the label's 58 L), tobramycin (height on clearance),
+  paroxetine's volume (17 L/kg x 60 kg from the literature) and opicapone (a
+  multinational cohort).
 
 ### Why the reference is a man
 

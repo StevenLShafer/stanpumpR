@@ -75,6 +75,17 @@
 # rise in levodopa's AUC (+60-80%, LeWitt 2023), last.  No effect site, no
 # band: no concentration-effect model with published parameters exists.
 #
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): fixed published values belong to the
+# source's cohort, not the reference man. [decision] for Steven L. Shafer: the
+# FDA review's pooled cohort (Table 8, p. 54: median 71 kg, 35 years, 456 men
+# and 268 women, no height) comes from 21 studies in several countries, so
+# there is no single population for a sex-typical height (NCD-RisC), and its
+# CL/F intercept is a man's (the review's reference male, 71 kg, 35 years).
+# Anchor CL/F at a 71 kg, 35-year-old man of an assumed height, V/F at the
+# pooled cohort with an assumed mix of populations, or leave the reference
+# anchor? Until answered, the values stay anchored at the 70 kg reference man.
+#
 # References
 # ----------
 # FDA CDER, Clinical Pharmacology Review, NDA 212489 (Ongentys).

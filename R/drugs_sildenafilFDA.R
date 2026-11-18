@@ -105,6 +105,13 @@
 # -----------------------------------------------------------------------------
 
 # FDA review of NDA 22-473, Tables 3, 9 and 10
+#
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): fixed published values belong to the
+# source's cohort, not the reference man. The FDA review prints no central
+# body size for the healthy subjects the model was fitted to (read
+# 2026-11-18), so the fixed values stay anchored at the 70 kg reference man,
+# as before the rule.
 SILDENAFIL_CL    <- 29.5    # L/h
 SILDENAFIL_PAH_CL <- 0.70   # clearance in PAH relative to healthy (p.23-24)
 SILDENAFIL_V1    <- 73.2    # L

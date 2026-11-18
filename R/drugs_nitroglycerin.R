@@ -171,6 +171,12 @@
 # -----------------------------------------------------------------------------
 
 # Armstrong 1983
+#
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): fixed published values belong to the
+# source's cohort, not the reference man. Armstrong 1983 prints no weight
+# (read 2026-11-18), so the fixed values stay anchored at the 70 kg reference
+# man, as before the rule.
 NITROGLYCERIN_CL  <- 6.2     # L/min
 # Armstrong 1980, quoted by Armstrong 1983: the half-life after a stop
 NITROGLYCERIN_HALF_LIFE <- 1.9   # min

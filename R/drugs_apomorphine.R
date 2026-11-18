@@ -72,6 +72,12 @@
 # it; van Laar's abstract gives the motor response at a mean of 4.7 ng/mL and
 # dyskinesia at 8.5, and the paper itself was not read).
 #
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): fixed published values belong to the
+# source's cohort, not the reference man. The FDA review prints no central
+# body size for the model's data (read 2026-11-18), so the fixed values stay
+# anchored at the 70 kg reference man, as before the rule.
+#
 # References
 # ----------
 # FDA CDER, Clinical Pharmacology and Biopharmaceutics Review, NDA 21-264.

@@ -172,6 +172,13 @@
 # (Claude Code, 2026-11-01, at the request of Steven L. Shafer; see
 # R/pregnancy.R and inst/extdata/pregnancyRegistry.csv.)
 #
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): fixed published values belong to the
+# source's cohort, not the reference man. Alhadab 2020 is a meta-analysis of
+# 27 studies' mean profiles, not a cohort, and by Shafer's rule on partial
+# data (2026-11-18) a meta-analysis of study means is not anchored, so the
+# fixed values stay anchored at the 70 kg reference man, as before the rule.
+#
 # References
 # ----------
 # Alhadab AA, Brundage RC, AAPS J 2020;22:73.

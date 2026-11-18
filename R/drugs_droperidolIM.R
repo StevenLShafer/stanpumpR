@@ -35,6 +35,13 @@
 # EFFECT
 # ======
 # None.  The data identify no sedation EC50, no ke0 and no QTc slope.
+#
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): fixed published values belong to the
+# source's cohort, not the reference man. Foo 2016 did not record weight (read
+# 2026-11-18), so the fixed values stay anchored at the 70 kg reference man,
+# as before the rule.
+#
 # -----------------------------------------------------------------------------
 
 DROPERIDOL_IM_CL <- 41.9    # L/h, apparent

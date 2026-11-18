@@ -1,3 +1,8 @@
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): fixed published values belong to the
+# source's cohort, not the reference man. Scott 1987 prints no weight (read
+# 2026-11-18), so the fixed values stay anchored at the 70 kg reference man,
+# as before the rule.
 alfentanil <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Units **************

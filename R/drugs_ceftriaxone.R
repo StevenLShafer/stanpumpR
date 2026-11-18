@@ -58,6 +58,14 @@
 # male, clearances with that ratio ^ 0.75; the switch off uses them as
 # published.
 #
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): fixed published values belong to the
+# source's cohort, not the reference man. Sanz-Codina 2023 prints age (31.5
+# years), BMI (23.5) and sex (6 men) but no weight or height (read
+# 2026-11-18); the weight could be had from the BMI and a sex-typical height,
+# which was not done here, so the fixed values stay anchored at the 70 kg
+# reference man, as before the rule.
+#
 # References
 # ----------
 # Sanz-Codina M et al., J Antimicrob Chemother 2023;78:380-388.

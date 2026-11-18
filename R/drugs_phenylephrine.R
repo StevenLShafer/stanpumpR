@@ -71,6 +71,13 @@
 # and recorded MAP, cardiac output and SVR every 5 seconds: at every dose
 # the changes were maximal about 42 seconds after the bolus.  That is the
 # tPeak, 0.7 minutes.  No pressure is predicted.
+#
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): fixed published values belong to the
+# source's cohort, not the reference man. Hengstmann 1982 prints no
+# demographics for its subjects (read 2026-11-18), so the fixed values stay
+# anchored at the 70 kg reference man, as before the rule.
+#
 # -----------------------------------------------------------------------------
 
 PHENYLEPHRINE_TPEAK <- 0.7   # min, Schwinn 1989 (42 s to the peak rise in MAP)
