@@ -46,6 +46,7 @@ FIT <- "PK-FIT"; AUD <- "PK-AUDIT"; CON <- "PK-CONSTRAINT"; TPL <- "PK-TEMPLATE"
 DFIT <- "PD-FIT"; DAUD <- "PD-AUDIT"; DCON <- "PD-CONSTRAINT"; DTPL <- "PD-TEMPLATE"
 SC <- "SC"; PO <- "PO"
 fdaRoutes <- "https://www.fda.gov/media/195052/download"
+fiaspReview <- "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2017/208751Orig1s000ClinPharmR.pdf"
 
 registry <- rbind(
   # --- GLP-1 receptor agonists, tirzepatide, amylin -------------------------
@@ -159,11 +160,25 @@ registry <- rbind(
       FIT, FIT, "PD-CONSTRAINT", DCON, "clamp GIR", FALSE, "insulinLisproMix50", TRUE,
       "https://doi.org/10.1002/jcph.899", "Component sum, 50% lispro protamine + 50% lispro (Tham Figure 1)."),
   reg("insulin_aspart_novolog", "insulin aspart", "NovoLog", SC, "core", "US",
-      CON, CON, "PD-CONSTRAINT", DCON, "clamp GIR", TRUE, NA, FALSE,
-      "https://pubmed.ncbi.nlm.nih.gov/12518253/", "No complete fit in hand."),
+      CON, FIT, "PD-CONSTRAINT", DCON, "clamp GIR (effect-compartment Emax, not applied)", TRUE, "insulinAspart", TRUE,
+      fiaspReview,
+      paste("FDA Clinical Pharmacology Review of Fiasp (NDA 208751, 2017), Appendix 5.3, read in full (tables and figures from the page images):",
+            "the Applicant's population model in 135 adults with type 1 diabetes, total insulin aspart. Figure 1: a dose depot (ka 1.53/h), three transit",
+            "compartments (kt 16.1/h for NovoLog) and one compartment, CL/F 67.8 L/h, V/F 78.6 L, relative F 0.99 (Table 5). Run exactly by the transit-chain",
+            "engine's subcutaneous route (R/advanceTransitChain.R), the source's depot-first order reversed, which leaves the input unchanged. Weight on CL/F",
+            "and V/F (exponent 1, fixed); the reference weight is not printed and is taken as 75 kg (the data mean, and the review's own NCA",
+            "standardisation, which its Figure 4 supports), restated at the library's 70 kg reference man (CL/F 63.28 L/h, V/F 73.36 L) and scaled by pkSizeFactors() (Shafer, 2026-11-18). Age group 65+ x 0.905 on CL/F",
+            "(younger reference inferred). Sex (0.914), dose (-0.198), BMI on ka (-1.18) and antibody (-0.183) terms not applied: references not printed.",
+            "Pump: U/hr SC, a rate into the head of the chain, exact. Checks: the review's Figure 4 typical-subject peak (pixel-measured 556 pmol/L at",
+            "67 min) against 536 at 64 min here at 75 kg; the NovoLog label's 82 mU/L after 0.15 U/kg (free insulin) against 67 mcU/mL (total) here;",
+            "the model's terminal half-life 48 min against the measured 68 min.")),
   reg("insulin_aspart_fiasp", "insulin aspart", "Fiasp (faster aspart)", SC, "core", "US",
-      CON, CON, "PD-CONSTRAINT", DCON, "clamp GIR", TRUE, NA, FALSE,
-      "https://pubmed.ncbi.nlm.nih.gov/25846340/", "No complete fit in hand."),
+      CON, FIT, "PD-CONSTRAINT", DCON, "clamp GIR (effect-compartment Emax, not applied)", TRUE, "insulinAspartFiasp", TRUE,
+      fiaspReview,
+      paste("FDA Clinical Pharmacology Review of Fiasp (NDA 208751, 2017), Appendix 5.3, read in full: the same model as NovoLog's with kt 55.8/h",
+            "and F 1 (fixed); see insulin_aspart_novolog for the structure, the unprinted 75 kg reference weight restated at 70 kg and the terms not",
+            "applied. Pump-approved (2019, S-008/S-013). Check: the review's Figure 4 typical-subject peak (pixel-measured 564 pmol/L at 58 min) against",
+            "546 at 55 min here at 75 kg.")),
   reg("insulin_aspart_szjj_merilog", "insulin aspart-szjj", "Merilog (biosimilar)", SC, "core", "US",
       CON, CON, "PD-CONSTRAINT", DCON, "clamp GIR", FALSE, NA, FALSE, fdaRoutes, "SC injection only, not pump-approved."),
   reg("insulin_aspart_fsan_garzulys", "insulin aspart-fsan", "Garzulys (biosimilar)", SC, "core", "US",
@@ -188,8 +203,16 @@ registry <- rbind(
       CON, CON, "PD-CONSTRAINT", DCON, "clamp GIR", NA, NA, FALSE,
       "https://pubmed.ncbi.nlm.nih.gov/15855574/", "1 detemir U = 24 nmol; dose-dependent duration."),
   reg("insulin_degludec_u100_u200", "insulin degludec", "Tresiba U-100/U-200", SC, "core", "US",
-      CON, CON, "PD-CONSTRAINT", DCON, "clamp GIR", NA, NA, FALSE,
-      "https://pubmed.ncbi.nlm.nih.gov/23749405/", "Strength equivalence (AUC ratio 0.99) but no complete fit."),
+      CON, FIT, "PD-CONSTRAINT", DCON, "clamp GIR", FALSE, "insulinDegludec", TRUE,
+      "https://doi.org/10.1007/s40262-025-01598-x",
+      paste("Tang 2026 (Clin Pharmacokinet 65:417-429, read in full, supplied by Shafer; supplement not read): joint NONMEM model of INS068 and degludec, 307 subjects (degludec 102: healthy men and adults with type 1 diabetes at steady state), one compartment, first-order absorption after a lag, Table 2 (Figure 1).",
+            "Implemented at the type 1 diabetes typical values (ka 0.0476 x 0.837 x 0.85 /h, CL/F 1.93 x 0.978 L/h, Vc/F 20.9 x 0.537 L, lag 0.4 h; weight powers 1.04 and 1.54 about 70 kg, held to the printed 5th-95th percentiles 54.4-93.1 kg); the type 2 diabetes factors, estimated on INS068 troughs only, are not applied.",
+            "Pump use: the TRESIBA label forbids it. 1 U = 6 nmol (FDA OCP review); plotted as total degludec in mcU/mL (6 pmol/L each).",
+            "Checks not in the fit: label 4472 pmol/L at day 8 (0.4 U/kg, T1D) against 4174; FDA Table 7 healthy single dose; Tang Table 4 (its units nmol/L, not the printed pg/mL); Kapitza 2015's weight effect in T2D is shallower (exponent about 0.44 against 1.04).",
+            "Cao 2026 (doi 10.1007/s00210-026-06074-2, read in full): healthy Chinese men sampled to 24 h, covariate forms and references not printed; a check only.",
+            "Strength equivalence U-100/U-200 (AUC ratio 0.99, PMID 23749405): one drug for both.",
+            "Pregnancy: CL/F x 1.25 (Catalano 1998), as every library insulin (Shafer, 2026-11-18).",
+            "[decision] for Shafer, recorded in R/drugs_insulinDegludec.R: the population (type 1 diabetes, healthy, or a diabetes field) and the weight hold.")),
   reg("insulin_icodec_u700", "insulin icodec-abae", "Awiqli U-700 (weekly)", SC, "core", "US (2026, adult T2D)",
       CON, CON, "PD-CONSTRAINT", DCON, "clamp GIR", FALSE, NA, FALSE,
       "https://drc.bmj.com/content/9/1/e002301", "Median tmax 16 h, half-life 196 h: constraints only."),
@@ -362,6 +385,8 @@ vild   <- "https://doi.org/10.1111/j.1365-2125.2011.04108.x"
 fediuk <- "https://doi.org/10.1002/cpdd.970"
 ramb   <- "https://doi.org/10.2147/CPAA.S102676"
 thamPop <- "Tham 2017, 16 studies, mostly healthy volunteers"
+tangUrl <- "https://doi.org/10.1007/s40262-025-01598-x"
+tangPop <- "Tang 2026, 307 subjects (degludec: 102 healthy men and adults with type 1 diabetes)"
 
 thamSupp <- "Table 2; supplement (Word) equations"
 thamWeight <- list(
@@ -383,6 +408,24 @@ ab <- function(drug, name, ka, lag = NULL, f1 = NULL, d0 = NULL) rbind(
   if (!is.null(d0)) par(drug, paste0("zero-order duration (", name, ")"), d0, "h", E, thamPop, tham, "Table 2"),
   if (!is.null(d0)) par(drug, paste0("zero-order routing (", name, ")"), "into the central volume, unlagged", "-", ST, thamPop, tham, "Figure 1; supplement abbreviations (lag on first-order absorption; K0 for t <= DUR)"))
 lispro <- function(drug) ab(drug, "lispro", "0.989", "0.265", "0.729", "1.06")
+
+# Insulin aspart (NovoLog, Fiasp): the FDA review of Fiasp, Table 5
+fiaspPop <- "FDA review of Fiasp (NDA 208751), 135 adults with type 1 diabetes, total insulin aspart"
+aspartRows <- function(drug, kt, f, fProvenance) rbind(
+  par(drug, "CL/F", "67.8", "L/h x (weight/75 kg); 75 kg assumed (not printed)", E, fiaspPop, fiaspReview, "Table 5 (printed p 90)"),
+  par(drug, "V/F", "78.6", "L x (weight/75 kg); 75 kg assumed (not printed)", E, fiaspPop, fiaspReview, "Table 5 (printed p 90)"),
+  par(drug, "ka", "1.53", "1/h (the dose depot)", E, fiaspPop, fiaspReview, "Table 5 (printed p 90)"),
+  par(drug, "kt", kt, "1/h (each of three transit compartments)", E, fiaspPop, fiaspReview, "Table 5 (printed p 90)"),
+  par(drug, "relative F", f, "unitless", fProvenance, fiaspPop, fiaspReview, "Table 5 (printed p 90)"),
+  par(drug, "structure", "depot, three transit compartments at kt, one compartment", "-", ST, fiaspPop, fiaspReview, "Figure 1 (printed p 86) and text (printed p 86)"),
+  par(drug, "weight exponent on CL/F and V/F", "1", "unitless", FX, fiaspPop, fiaspReview, "Table 5 (BWonCL, BWonV fixed)"),
+  par(drug, "reference weight", "75", "kg; not printed, the mean of the 135 subjects (Table 1)", AS, fiaspPop, fiaspReview, "Table 1 (printed p 84)"),
+  par(drug, "age 65 y and over on CL/F", "0.905", "x CL/F (younger reference inferred)", E, fiaspPop, fiaspReview, "Table 5 (AGEGRPonCL)"),
+  par(drug, "sex on CL/F", "0.914", "not applied: reference sex not printed", E, fiaspPop, fiaspReview, "Table 5 (SEXonCL)"),
+  par(drug, "dose on CL/F", "-0.198", "not applied: reference dose and units not printed", E, fiaspPop, fiaspReview, "Table 5 (DOSEonCL)"),
+  par(drug, "BMI on ka", "-1.18", "not applied: reference BMI not printed", E, fiaspPop, fiaspReview, "Table 5 (BMIonKA)"),
+  par(drug, "antibody binding on CL/F", "-0.183", "not applied: no antibody field; form not printed", E, fiaspPop, fiaspReview, "Table 5 (ABonCL)"),
+  par(drug, "unit conversion", "6", "pmol/L per mcU/mL (1 U = 6 nmol)", AS, fiaspPop, fiaspReview, "Figure 4 (printed p 93) consistent"))
 
 parameters <- rbind(
   par("semaglutide", "CL/F", "0.0478", "L/h at 85 kg", E, "Carlsson Petri 2018, phase 3 T2D", petri, "Results, Model Qualification (Table S3)"),
@@ -418,6 +461,20 @@ parameters <- rbind(
   thamRows("insulinLisproMix50", "43.0", "30.5", rbind(ab("insulinLisproMix50", "lispro protamine, 50%", "0.0365"),
                                                        lispro("insulinLisproMix50")), "lispro"),
   thamRows("insulinGlargine", "768", "74.5", ab("insulinGlargine", "glargine", "0.0830", NULL, "0.822", "0.612"), "glargine"),
+
+  par("insulinDegludec", "ka", "0.0476", "1/h (INS068, healthy; x 0.837 degludec, x 0.85 T1DM)", E, tangPop, tangUrl, "Table 2"),
+  par("insulinDegludec", "IDeg on ka", "0.837", "x ka", E, tangPop, tangUrl, "Table 2; Results text: ka of IDeg 0.0398 /h"),
+  par("insulinDegludec", "T1DM on ka", "0.85", "x ka", E, tangPop, tangUrl, "Table 2"),
+  par("insulinDegludec", "CL/F", "1.93", "L/h at 70 kg (x 0.978 T1DM)", E, tangPop, tangUrl, "Table 2"),
+  par("insulinDegludec", "T1DM on CL/F", "0.978", "x CL/F", E, tangPop, tangUrl, "Table 2"),
+  par("insulinDegludec", "Vc/F", "20.9", "L at 70 kg (x 0.537 T1DM/T2DM)", E, tangPop, tangUrl, "Table 2"),
+  par("insulinDegludec", "T1DM/T2DM on Vc/F", "0.537", "x Vc/F", E, tangPop, tangUrl, "Table 2"),
+  par("insulinDegludec", "ALAG1", "0.4", "h", E, tangPop, tangUrl, "Table 2"),
+  par("insulinDegludec", "weight on CL/F", "(WT/70)^1.04, WT held to 54.4-93.1 kg", "power", E, tangPop, tangUrl, "Table 2, footnote a; reference 70 kg from the forest plot's typical subject; range the printed 5th-95th percentiles"),
+  par("insulinDegludec", "weight on Vc/F", "(WT/70)^1.54, WT held to 54.4-93.1 kg", "power", E, tangPop, tangUrl, "Table 2, footnote a"),
+  par("insulinDegludec", "T2DM on ka and CL/F", "0.18 and 0.764; not applied", "x ka, x CL/F", E, "Tang 2026, INS068 troughs only (no degludec PK in type 2 diabetes)", tangUrl, "Table 2"),
+  par("insulinDegludec", "population chosen", "type 1 diabetes typical values", "-", AS, tangPop, tangUrl, "R/drugs_insulinDegludec.R header"),
+  par("insulinDegludec", "dose basis", "1 U = 6 nmol", "-", ST, "FDA OCP review of NDA 203314 (0.4 U/kg = 2.4 nmol/kg)", tangUrl, "volumes and clearances are amount-free; concentrations in mcU/mL of total degludec"),
 
   par("metformin", "CL/F", "52.6", "L/h (x (CrCl/106.5)^0.782)", E, "Chae 2012, 42 healthy adults, CLcr 90-123 mL/min", chae, "Table 2; final-model equations"),
   par("metformin", "V/F", "113", "L (x library FFM factor)", E, "Chae 2012", chae, "Table 2 (its 56.6% RSE is 4.18% in the text)"),
@@ -586,7 +643,10 @@ parameters <- rbind(
   par("cetagliptin", "V2/F", "558.0", "L; total bilirubin term (0.3723) not applied", E, zhouPop, zhou, "Supplementary Table 1"),
   par("cetagliptin", "Cl2/F", "9.671", "L/h", E, zhouPop, zhou, "Supplementary Table 1"),
   par("cetagliptin", "ka", "0.06521", "1/h", E, zhouPop, zhou, "Supplementary Table 1"),
-  par("cetagliptin", "elimination structure", "Michaelis-Menten from the central compartment", "-", ST, zhouPop, zhou, "Supplementary Table 1 (Km, Vmax, no CL)")
+  par("cetagliptin", "elimination structure", "Michaelis-Menten from the central compartment", "-", ST, zhouPop, zhou, "Supplementary Table 1 (Km, Vmax, no CL)"),
+
+  aspartRows("insulinAspart", "16.1", "0.99", "estimated"),
+  aspartRows("insulinAspartFiasp", "55.8", "1", "fixed")
 )
 
 utils::write.csv(parameters, file.path(outdir, "antidiabeticParameters.csv"),

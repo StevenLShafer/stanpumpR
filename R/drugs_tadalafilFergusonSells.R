@@ -4,6 +4,12 @@
 # hypertension, and, for a patient without it, the FDA's model in men with
 # erectile dysfunction
 # -----------------------------------------------------------------------------
+# A CANDIDATE OF THE TADALAFIL GROUP (2026-11-18): the drug a user doses is
+# tadalafil, whose model the program chooses (R/modelSelection.R).  This
+# model is chosen from 2.5 years (its studied range, children included);
+# younger children get Miura 2026 (R/drugs_tadalafilMiura.R), on Shafer's
+# decision of 2026-11-18 ("Use Miura's model for children").
+#
 # Units: time in minutes, volumes in litres, clearances in L/min; amounts in
 # mg, so the plotted concentration is ng/mL (= mcg/L), total plasma.
 #
@@ -136,7 +142,7 @@ TADALAFIL_ED_KA <- 1.75   # /h, fixed from healthy volunteers
 #'   erectile dysfunction (study LVBF)
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-tadalafil <- function(weight, height, age, sex, adjustToFFM = TRUE,
+tadalafilFergusonSells <- function(weight, height, age, sex, adjustToFFM = TRUE,
                       pulmonaryHypertension = FALSE)
 {
   if (!isTRUE(pulmonaryHypertension))

@@ -413,10 +413,10 @@ test_that("exactly the plasma-only drugs have no effect site", {
     # metabolite (inst/help/models/antidiabetics.md)
     "semaglutide", "tirzepatide", "liraglutide", "insulinRegular",
     "insulinRegularU500", "insulinNPH", "insulinHumanMix70", "insulinLispro",
-    "insulinLisproMix75", "insulinLisproMix50", "insulinGlargine", "metformin",
+    "insulinLisproMix75", "insulinLisproMix50", "insulinGlargine", "insulinDegludec", "metformin",
     "empagliflozin", "ertugliflozin", "glyburide", "dulaglutide", "dapagliflozin",
     "pioglitazone", "pramlintideIV", "exenatide", "linagliptin", "vildagliptin", "liraglutideWatson", "dapagliflozinKobuchi", "canagliflozin", "lixisenatide",
-    "semaglutideOral", "cetagliptin",
+    "semaglutideOral", "cetagliptin", "insulinAspart", "insulinAspartFiasp",
     # Intravenous calcium joined on 2026-10-13: the ionized calcium itself
     # is the end point, no ke0, no metabolite.
     "calcium",
@@ -452,6 +452,11 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "ambrisentan", "macitentan", "aprocitentan",
     # bosentan (Miura 2026, 2026-11-18): plasma only
     "bosentan",
+    # the pulmonary hypertension groups' candidates (2026-11-18): plasma only
+    "sildenafilFDA", "sildenafilMiura", "tadalafilFergusonSells", "tadalafilMiura",
+    "ambrisentanOkour", "ambrisentanMiura",
+    # levothyroxine (Inada 1975, 2026-11-18): plasma only
+    "levothyroxine",
     # colistimethate and the colistin it forms (2026-11-16): plasma only, no
     # line until the MIC decision (R/drugs_colistin.R)
     "colistimethate", "colistin",

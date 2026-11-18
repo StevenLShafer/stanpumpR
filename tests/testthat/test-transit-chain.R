@@ -594,3 +594,63 @@ test_that("enalapril's eight-deep chain is timed on its plasma", {
                               got$Recovery[i]], rep(0, sum(seq_len(nrow(got)) > i &
                               got$Time > got$Time[i] + got$Recovery[i])))
 })
+
+
+# A subcutaneous chain (route = "SC"; insulin aspart, R/insulinAspart.R),
+# added 2026-11-18.  The drug's own tests check the curve against an
+# independent matrix exponential of the source's chain; these check the
+# engine's handling of the route.
+test_that("a subcutaneous chain is fed by SC doses and rates, lagged and scaled by F", {
+  PK <- getDrugPK("insulinAspartFiasp", 75, 175, 40, "male", adjustToFFM = FALSE)
+  set <- PK$PK[[PK_EVENT_DEFAULT]]
+  # A lag and a bioavailability, to see both applied at the head
+  PK$PK[[PK_EVENT_DEFAULT]]$tlag_RA <- 7
+  PK$PK[[PK_EVENT_DEFAULT]]$bioavailability_RA <- 0.6
+  d <- data.frame(Time = c(0, 0), Dose = c(10000, 0), Units = c("U SC", "U/hr SC"),
+                  stringsAsFactors = FALSE)
+  got <- advanceTransitChain(d, PK, 600)
+  expect_equal(max(got$Cp[got$Time <= 7]), 0)
+  expect_true(7 %in% got$Time)
+  expect_equal(got$Depot[got$Time == 7], 6000)
+  # The same amount through the oral chain of an otherwise identical PK set
+  # gives the same curve: the route changes only which doses feed the head
+  oral <- PK
+  oral$transitChain$route <- NULL
+  oral$PK[[PK_EVENT_DEFAULT]]$ka_PO <- set$ka_RA
+  oral$PK[[PK_EVENT_DEFAULT]]$tlag_PO <- 7
+  oral$PK[[PK_EVENT_DEFAULT]]$bioavailability_PO <- 0.6
+  po <- advanceTransitChain(data.frame(Time = 0, Dose = 10000, Units = "mg PO",
+                                       stringsAsFactors = FALSE), oral, 600)
+  expect_equal(got$Cp, po$Cp, tolerance = 1e-12)
+  # A rate into the head: F x rate / CL at steady state
+  r <- advanceTransitChain(data.frame(Time = 0, Dose = 1000 / 60, Units = "U/hr SC",
+                                      stringsAsFactors = FALSE), PK, 2880)
+  expect_equal(tail(r$Cp, 1), 0.6 * (1000 / 60) / set$cl1, tolerance = 1e-6)
+  # An oral dose cannot reach a subcutaneous chain
+  expect_error(advanceTransitChain(data.frame(Time = 0, Dose = 1, Units = "mg PO",
+                                              stringsAsFactors = FALSE), PK, 600),
+               "cannot simulate units")
+})
+
+test_that("validateTransitChain checks a subcutaneous chain's route and depot", {
+  PK <- getDrugPK("insulinAspartFiasp", 75, 175, 40, "male", adjustToFFM = FALSE)
+  s <- PK$PK[[PK_EVENT_DEFAULT]]
+  tc <- PK$transitChain
+  expect_identical(validateTransitChain(tc, s, "x"), tc)
+  expect_error(validateTransitChain(modifyList(tc, list(route = "IM")), s, "x"), "route")
+  expect_error(validateTransitChain(tc, modifyList(s, list(ka_RA = 0)), "x"), "ka_SC")
+  expect_error(validateTransitChain(tc, modifyList(s, list(ka_PO = 0.1)), "x"), "oral depot")
+  expect_error(validateTransitChain(tc, modifyList(s, list(ka_RAslow = 0.01)), "x"), "slow")
+  # and an oral chain still needs ka_PO
+  tcOral <- tc
+  tcOral$route <- NULL
+  expect_error(validateTransitChain(tcOral, s, "x"), "ka_PO")
+})
+
+test_that("getDrugPK refuses a subcutaneous chain beside a zero-order SC share", {
+  X <- insulinAspartFiasp(75, 175, 40, "male", adjustToFFM = FALSE)
+  X$zeroOrderSC <- list(fraction = 0.2, duration = 60, into = "central")
+  local_mocked_bindings(insulinAspartFiasp = function(...) X)
+  expect_error(getDrugPK("insulinAspartFiasp", 75, 175, 40, "male", adjustToFFM = FALSE),
+               "transitChain")
+})

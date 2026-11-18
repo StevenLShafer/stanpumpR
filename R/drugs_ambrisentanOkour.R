@@ -3,6 +3,12 @@
 # Okour 2022's population model in children with pulmonary arterial
 # hypertension
 # -----------------------------------------------------------------------------
+# A CANDIDATE OF THE AMBRISENTAN GROUP (2026-11-18): the drug a user doses is
+# ambrisentan, whose model the program chooses (R/modelSelection.R).  This
+# model is chosen from 8 years and, as the nearest, for adults; younger
+# children get Miura 2026 (R/drugs_ambrisentanMiura.R), on Shafer's decision
+# of 2026-11-18 ("Use Miura's model for children").
+#
 # Units: time in minutes, volumes in litres, clearances in L/min; amounts in
 # mcg, so the plotted concentration is ng/mL (= mcg/L), total plasma.
 #
@@ -86,7 +92,7 @@ AMBRISENTAN_WT_REF <- 70    # kg
 #' @inheritParams cefazolin
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-ambrisentan <- function(weight, height, age, sex, adjustToFFM = TRUE)
+ambrisentanOkour <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
   f <- (if (isTRUE(adjustToFFM)) size$pkWeight else weight) / AMBRISENTAN_WT_REF

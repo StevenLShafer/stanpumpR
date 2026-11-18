@@ -16,7 +16,7 @@ run <- function(dose, age = 54, pah = TRUE) simulateDrugsWithCovariates(
 auc <- function(w) sum(diff(w$Time) * (head(w$Plasma, -1) + tail(w$Plasma, -1)) / 2)
 
 test_that("Table 2 (pulmonary hypertension), switch off", {
-  X <- tadalafil(55, 160, 52.4, "female", adjustToFFM = FALSE, pulmonaryHypertension = TRUE)
+  X <- tadalafilFergusonSells(55, 160, 52.4, "female", adjustToFFM = FALSE, pulmonaryHypertension = TRUE)
   set <- X$PK$default
   expect_equal(set$cl1 * 60, 1.88, tolerance = 0.001)   # "(calculated) 1.88"
   expect_equal(set$cl1, CLBOS * (1 + NOBOS) / 60)
@@ -25,12 +25,12 @@ test_that("Table 2 (pulmonary hypertension), switch off", {
   expect_equal(set$bioavailability_PO, 1)                # age 52.4
   expect_equal(X$oralSaturation, list(form = "power", Dref = 16.27, exponent = -0.227))
   # the age term
-  expect_equal(tadalafil(70, 170, 80, "male", FALSE, pulmonaryHypertension = TRUE)$PK$default$bioavailability_PO,
+  expect_equal(tadalafilFergusonSells(70, 170, 80, "male", FALSE, pulmonaryHypertension = TRUE)$PK$default$bioavailability_PO,
                (80 / 52.4)^0.100)
 })
 
 test_that("the age term is held at 2.5 years, the youngest studied", {
-  f <- function(age) tadalafil(15, 100, age, "male", FALSE, pulmonaryHypertension = TRUE)$PK$default$bioavailability_PO
+  f <- function(age) tadalafilFergusonSells(15, 100, age, "male", FALSE, pulmonaryHypertension = TRUE)$PK$default$bioavailability_PO
   expect_equal(f(0), (2.5 / 52.4)^0.100)
   expect_equal(f(1), f(2.5))
   expect_gt(f(0), 0)
@@ -43,7 +43,7 @@ test_that("Table 3: a 70-kg adult of 54 on 40 mg (with bosentan) has CL/F 3.95",
 })
 
 test_that("the simulated AUC is dose x F / CL", {
-  set <- tadalafil(70, 170, 54, "male", FALSE, pulmonaryHypertension = TRUE)$PK$default
+  set <- tadalafilFergusonSells(70, 170, 54, "male", FALSE, pulmonaryHypertension = TRUE)$PK$default
   for (dose in c(20, 40)) {
     Fd <- (dose / 16.27)^-0.227 * (54 / 52.4)^0.100
     expect_equal(auc(run(dose)) / 60, dose * 1000 * Fd / (set$cl1 * 60), tolerance = 0.01)
@@ -54,7 +54,7 @@ test_that("the simulated AUC is dose x F / CL", {
 
 test_that("switch on: the weight term at the pharmacokinetic weight", {
   # 120 kg, 170 cm, 50 y man: pharmacokinetic weight 70 x 1.3049067
-  set <- tadalafil(120, 170, 50, "male", pulmonaryHypertension = TRUE)$PK$default
+  set <- tadalafilFergusonSells(120, 170, 50, "male", pulmonaryHypertension = TRUE)$PK$default
   expect_equal_rounded(set$v1, V * 1.3049067)
   expect_equal(set$cl1, CLBOS * (1 + NOBOS) / 60)
 })
@@ -64,7 +64,7 @@ test_that("without pulmonary hypertension: study LVBF, men with erectile dysfunc
   # CL/F 2.24 L/h (no active cardiovascular disease), V/F 60.0 L, ka 1.75 /h
   # fixed.  Checked against the Cialis label (healthy subjects): half-life
   # 17.5 h, median peak at 2 h, accumulation about 1.6-fold
-  X <- tadalafil(70, 170, 35, "male", adjustToFFM = FALSE)
+  X <- tadalafilFergusonSells(70, 170, 35, "male", adjustToFFM = FALSE)
   set <- X$PK$default
   expect_equal(set$cl1 * 60, 2.24)
   expect_equal(set$v1, 60)
@@ -82,7 +82,7 @@ test_that("without pulmonary hypertension: study LVBF, men with erectile dysfunc
   # the peak of 20 mg: 306 ng/mL (Forgue 2006, healthy subjects: mean 378)
   expect_equal(round(max(run(20, pah = FALSE)$Plasma)), 306)
   # the switch: the size factors
-  on <- tadalafil(120, 170, 50, "male")$PK$default
+  on <- tadalafilFergusonSells(120, 170, 50, "male")$PK$default
   size <- pkSizeFactors(120, 170, 50, "male", TRUE)
   expect_equal(on$v1, 60 * size$volume)
   expect_equal(on$cl1, 2.24 / 60 * size$clearance)
