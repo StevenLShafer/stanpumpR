@@ -798,3 +798,24 @@ test_that("the chemotherapy rows move clearance by their routes (2026-11-17)", {
   # daunorubicin is held back
   expect_null(physiologyRow("daunorubicin"))
 })
+
+test_that("the antiseizure rows survive the interactions' rebuilds (2026-11-18)", {
+  doses <- data.frame(Drug = c("valproate", "lamotrigine"), Time = c(0, 0),
+                      Dose = c(500, 100), Units = c("mg PO bid", "mg PO bid"))
+  events <- data.frame(Time = numeric(0), Event = character(0))
+  level <- function(physiology) {
+    s <- simulateDrugsWithCovariates(doses, events, 70, 170, 50, "male", 14 * 1440,
+                                     FALSE, antiseizureInteractions = TRUE,
+                                     physiology = physiology)
+    stats::approx(s$lamotrigine$wide$Time, s$lamotrigine$wide$Plasma,
+                  xout = 13 * 1440)$y
+  }
+  normal <- level(NULL)
+  # Half the liver's capacity: lamotrigine is 0.906 hepatic at a low E, so
+  # its clearance falls by nearly half and its level rises
+  expect_gt(level(c(liver = 0.5)) / normal, 1.5)
+  # Renal function moves it little (0.094 renal)
+  expect_lt(abs(level(c(renal = 0.5)) / normal - 1), 0.1)
+  # ethosuximide: Bauer 1982's renal share at steady state
+  expect_equal(physiologyRow("ethosuximide")$fraction_renal, 0.25)
+})

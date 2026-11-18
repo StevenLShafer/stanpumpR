@@ -367,6 +367,15 @@ patient's age and the one chosen cannot be scaled (vincristine and
 cyclophosphamide in children, oxaliplatin's biliary-store model), the
 panel says **Not changed for this patient**.
 
+**Antiseizure drugs** (2026-11-18): thirteen have a row. Most models are oral
+fits whose clearance is CL/F; with bioavailability near 1 and extraction
+ratios at most 0.06, the difference is immaterial, and each row says so.
+Levetiracetam's hydrolysis in blood and tissues is changed only by **Body
+temperature**. Phenytoin's saturable elimination is outside the sliders,
+and ethosuximide's renal share (0.25) is Bauer 1982's renal against total clearance in healthy adults. The rows act through the
+antiseizure interactions too, which rebuild each victim at the sliders'
+physiology.
+
 <!-- generated: physiology-table -->
 
 ## References
