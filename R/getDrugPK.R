@@ -161,6 +161,17 @@ getDrugPK <- function(
     stop("Invalid cyp2b6: ", paste(cyp2b6, collapse = ", "),
          ". Must be one of: ", paste(CYP2B6_VALUES, collapse = ", "))
   }
+  # One library row: given the whole table (getDrugDefaultsGlobal()), every
+  # field became a vector of hundreds and simCpCe() stopped later on
+  # switch(PK$Concentration.Units, ...) (Carbon's repository audit,
+  # 2026-11-18).  The drug's own row is taken where it is there.
+  if (is.data.frame(drugDefaults) && nrow(drugDefaults) != 1L) {
+    own <- drugDefaults[drugDefaults$Drug %in% drug, , drop = FALSE]
+    if (nrow(own) != 1L)
+      stop("drugDefaults must be the drug's one library row; ", nrow(drugDefaults),
+           " rows were given for ", drug, ".")
+    drugDefaults <- own
+  }
   pregnant <- checkPregnant(pregnant, sex)
   # The Patient Profile's Pulmonary hypertension, read only by the models of a
   # drug given both for pulmonary arterial hypertension and for something else

@@ -180,7 +180,6 @@ remifentanilEleveld <- function(weight, height, age, sex)
   MATF=1.11+((1-1.11)/(1+(age/7.1)^(-1.1)))
   FFMM=MATM*42.92*(HT2)*weight/(30.93*(HT2)+weight)
   FFMF=MATF*37.99*(HT2)*weight/(35.98*(HT2)+weight)
-  FFMF=MATF*37.99*(HT2)*weight/(35.98*(HT2)+weight)
   FFMR=42.92*(1.7*1.7)*70./(30.93*(1.7*1.7)+70.)
 
   MAL=2-M1F2

@@ -4,7 +4,7 @@
 # Provenance
 # ----------
 # Claude Code, 2026-11-01, at the request of Steven L. Shafer, for the help
-# page inst/help/models/why-simulate.md.  Verified by
+# page inst/app-help/models/why-simulate.md.  Verified by
 # tests/testthat/test-duzitol.R.
 #
 # Shafer SL, Stanski DR. Improving the clinical utility of anesthetic drug

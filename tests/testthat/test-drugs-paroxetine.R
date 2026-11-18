@@ -59,7 +59,9 @@ test_that("scales to fat-free mass for a 120 kg man", {
   expected <- list(
     v1 = 1331.00477902,       # 1020 x 1.3049066461
     v2 = 1, v3 = 1,
-    cl1 = 0.3409659769,        # 0.2792714005 x 1.2209126185
+    # the clearance anchored at Kim's cohort (PAROXETINE_COHORT); the volume,
+    # a literature value per kg, is not
+    cl1 = 0.3409659769 / cohortFactorsIndependent(PAROXETINE_COHORT)$clearance,
     cl2 = 0, cl3 = 0
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
@@ -180,7 +182,7 @@ test_that("pregnancy: apparent clearance x 2.0, population-typical (Westin 2017)
     expect_identical(a[[p]], b[[p]], info = p)
   }
   expect_identical(on$oralSaturation, off$oralSaturation)
-  expect_equal_rounded(0.6801175363, a$cl1)
+  expect_equal_rounded(0.6801175363 / cohortFactorsIndependent(PAROXETINE_COHORT)$clearance, a$cl1)
   expect_equal_rounded(822.2169542, a$v1)
   # The reference says the factor is population-typical and reverses in
   # CYP2D6 poor and intermediate metabolisers (the model has no CYP2D6 term)

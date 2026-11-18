@@ -5,7 +5,7 @@
 #
 # Drafted by Claude Code, 2026-10-19, at the request of Steven L. Shafer, as
 # one of the vasoactive and resuscitation drugs used in intensive care
-# (inst/help/models/vasoactive.md, inst/extdata/vasoactiveRegistry.csv).  Every
+# (inst/app-help/models/vasoactive.md, inst/extdata/vasoactiveRegistry.csv).  Every
 # number below was read from the published letter, which he supplied (Table
 # 1 and Figures 1-2), and the check from a second paper he supplied.
 #
@@ -97,6 +97,14 @@
 # -----------------------------------------------------------------------------
 
 # Fagan 1982, Table 1 means
+#
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): fixed published values belong to the
+# source's cohort, not the reference man. Fagan 1982 prints only a weight
+# range and an age range for its six men; a mean weight implied by the
+# per-kilogram doses is not a printed cohort, by Shafer's rule on partial data
+# (2026-11-18), so the fixed values stay anchored at the 70 kg reference man,
+# as before the rule.
 PROPRANOLOL_DOSE  <- 3.8                        # mg
 PROPRANOLOL_COEF  <- c(317, 17.2, 9.3)          # ng/mL, bolus-equivalent
 PROPRANOLOL_EXP   <- c(0.856, 0.0548, 0.203 / 60)   # /min

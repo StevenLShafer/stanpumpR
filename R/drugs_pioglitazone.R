@@ -32,15 +32,24 @@
 # nothing about a population's.  A carrier clears pioglitazone about half
 # again as fast.
 #
-# BODY SIZE: no covariate (sex and weight were not significant); the
-# parameters are scaled by the library's fat-free-mass factors, fixed with
-# the switch off (legacyVolume = 1).
+# BODY SIZE: no covariate (sex and weight were not significant), so the
+# parameters are the cohort's typical subject's; with the switch on they are
+# anchored at that subject (PIOGLITAZONE_COHORT; Steven L. Shafer,
+# 2026-11-18), fixed with the switch off (legacyVolume = 1).
 #
 # References
 # ----------
 # Kadam R et al., Biol Pharm Bull 2013;36:245-251.
 #   https://doi.org/10.1248/bpb.b12-00657
 # -----------------------------------------------------------------------------
+
+# Kadam 2013, Table 1 (printed p. 247), read on the PDF 2026-11-18: the 31
+# subjects' means, 73.1 kg, 170 cm, 36 years, 10 men and 21 women (the
+# clearances are the CYP2C8*1/*1 intercepts, 16 of them, whose demographics
+# are not printed separately).  The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort). Factors 0.899
+# on volume, 0.923 on clearance.
+PIOGLITAZONE_COHORT <- list(weight = 73.1, height = 170, age = 36, men = 10, women = 21)
 
 #' Pioglitazone pharmacokinetics (oral)
 #'
@@ -52,7 +61,7 @@
 #' @export
 pioglitazone <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, PIOGLITAZONE_COHORT))
 
   default <- list(
     v1  = 21.4 * size$volume, v2 = 26.3 * size$volume, v3 = 1,

@@ -5,7 +5,7 @@
 #
 # Drafted by Claude Code, 2026-10-18, at the request of Steven L. Shafer, as
 # one of the vasoactive and resuscitation drugs used in intensive care
-# (inst/help/models/vasoactive.md, inst/extdata/vasoactiveRegistry.csv).  The
+# (inst/app-help/models/vasoactive.md, inst/extdata/vasoactiveRegistry.csv).  The
 # source's full text could not be reached; every number below is from its
 # PubMed abstract, which is enough to fix the model and to check it.  The full
 # text is on the list of papers to obtain.
@@ -40,9 +40,19 @@
 #
 # DOSE BASIS
 # ==========
-# Not stated in the abstract.  Intravenous diltiazem is labelled as the
-# hydrochloride, so a dose is entered as labelled; if the source dosed the
-# base, every concentration here is 9% high (450.98 / 414.52).
+# Stated in the full text (p. 402, read on the PDF 2026-11-18): the infusion
+# was "a solution corresponding to 1 mg/ml expressed as diltiazem base", and
+# 20 mg is 48.3 umol, which is 20 mg / 414.52 g/mol, the base.  Intravenous
+# diltiazem is labelled as the hydrochloride, so a dose is entered as
+# labelled and converted (the library's rule, AGENTS.md, Dose basis): every
+# volume and clearance is multiplied by DILTIAZEM_HCL_PER_BASE = 450.98 /
+# 414.52 = 1.088, so that a dose of the hydrochloride gives the concentration
+# of base.  Until 2026-11-18 the abstract alone had been read, and a dose of
+# hydrochloride was taken as base, every concentration 9% high.  Weir 1989's
+# 24-hour infusions (quoted by Dias 1992; tests), whose dose basis is not
+# known, agreed within 1% and 7% before the conversion and now lie 9% and 14%
+# below the model's peaks; if those doses were hydrochloride, Weir's
+# volunteers reached higher levels than Hoglund's did.
 #
 # NONLINEARITY
 # ============
@@ -58,9 +68,14 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# The parameters are fixed values with no size term, written for the source's
-# adults and scaled to fat-free mass with the switch on; with it off they are
-# the published values for everyone (legacyVolume = 1).
+# The parameters are fixed values with no size term, so they are the source's
+# volunteers' (71.9 kg, 171.5 cm, 44.9 years, 5 men and 5 women, Table 1).
+# With the switch on they are anchored at that cohort (Steven L. Shafer,
+# 2026-11-18; docs/weight-adjustment.md, Anchoring at the source's cohort): a
+# patient like the cohort's receives them, and the 70 kg reference man's
+# volumes are divided by 0.927 and clearances by 0.945 (half the cohort were
+# women, so its fat-free mass is below his).  With the switch off
+# they are the published values for everyone (legacyVolume = 1).
 #
 # WHAT THIS MODEL IS NOT
 # ======================
@@ -91,11 +106,19 @@
 DILTIAZEM_TPEAK <- 3.1        # min, bolus equivalent of Salerno 1989's 4.3 min
 
 # Hoglund 1988, abstract
+# mg of hydrochloride per mg of base: Hoglund dosed the base (DOSE BASIS)
+DILTIAZEM_HCL_PER_BASE <- 450.98 / 414.52
 DILTIAZEM_CL  <- 0.992        # L/min
 DILTIAZEM_V1  <- 119          # L
 DILTIAZEM_VSS <- 209          # L, the check, not used to build
 DILTIAZEM_THALF_ALPHA <- 0.40 * 60   # min
 DILTIAZEM_THALF_BETA  <- 2.77 * 60   # min
+
+# Hoglund 1988, Table 1 (printed p. 402), read on the PDF 2026-11-18: the ten
+# volunteers' means, 71.9 kg, 171.5 cm, 44.9 years, five men and five women.
+# The published values are this cohort's, and the model is anchored at it
+# (docs/weight-adjustment.md, Anchoring at the source's cohort).
+DILTIAZEM_COHORT <- list(weight = 71.9, height = 171.5, age = 44.9, men = 5, women = 5)
 
 #' Diltiazem, intravenous (Hoglund 1988)
 #'
@@ -107,17 +130,18 @@ DILTIAZEM_THALF_BETA  <- 2.77 * 60   # min
 #' @export
 diltiazem <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, DILTIAZEM_COHORT))
 
   p <- twoCompartmentFromCentralVolume(DILTIAZEM_CL, DILTIAZEM_V1,
                                        DILTIAZEM_THALF_ALPHA,
                                        DILTIAZEM_THALF_BETA)
+  h <- DILTIAZEM_HCL_PER_BASE        # doses are hydrochloride, the model base
   default <- list(
-    v1  = p$v1  * size$volume,
-    v2  = p$v2  * size$volume,
+    v1  = p$v1  * size$volume * h,
+    v2  = p$v2  * size$volume * h,
     v3  = 1,                          # placeholder: a two-compartment model
-    cl1 = p$cl1 * size$clearance,
-    cl2 = p$cl2 * size$clearance,
+    cl1 = p$cl1 * size$clearance * h,
+    cl2 = p$cl2 * size$clearance * h,
     cl3 = 0
   )
 
@@ -128,7 +152,8 @@ diltiazem <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "Hoglund P, Nilsson LG, Ther Drug Monit 1988;10:401-409 (abstract).  ",
     "Two compartments in 10 healthy volunteers given 20 mg IV over 20 min: ",
     "CL 992 mL/min, central volume 119 L, half-lives 0.40 and 2.77 h; V2 and ",
-    "Q derived (Vss 203.6 L against 209 printed).  Clearance falls at higher ",
+    "Q derived (Vss 203.6 L against 209 printed); doses of base, so a dose of the ",
+    "hydrochloride is converted.  Clearance falls at higher ",
     "infusion rates. https://doi.org/10.1097/00007691-198804000-00006"
   )
 

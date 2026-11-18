@@ -2,7 +2,7 @@
 % Please edit documentation in R/antiseizureInteractions.R
 \name{antiseizureInteractionSummary}
 \alias{antiseizureInteractionSummary}
-\title{One line per active interaction, for the notification and the export}
+\title{One line per active interaction}
 \usage{
 antiseizureInteractionSummary(drugs)
 }
@@ -14,5 +14,7 @@ a character vector ("valproate raises lamotrigine: clearance x
 0.49 at 75 mcg/mL (UGT inhibition; Rivas 2008)")
 }
 \description{
-One line per active interaction, for the notification and the export
+Written for a notification and the export, but neither calls it yet
+(Carbon's repository audit, 2026-11-18; whether to show it is a decision
+for Steven L. Shafer).  Exported for scripts.
 }

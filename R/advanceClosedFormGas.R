@@ -288,7 +288,7 @@
 # minutes.  In the audit's matched ideal-circuit sevoflurane case the
 # 30-minute alveolar value moves from 1.71176014% with 31 steps to
 # 1.71178091% with 2401, against 1.71178112% from an independent ODE solver.
-# See the Integration section of inst/help/models/gas-engine.md.
+# See the Integration section of inst/app-help/models/gas-engine.md.
 #
 # CORRECTION (2026-09-03): an earlier version of this comment said it was
 # unresolved whether GasMan models it, and a later one said GasMan does not.

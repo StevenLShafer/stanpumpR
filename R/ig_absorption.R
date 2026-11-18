@@ -173,8 +173,21 @@
 #' @return numeric vector, erfcx(x)
 #' @noRd
 erfcxReal <- function(x) {
-  # erfc(x) = 2 * pnorm(-x * sqrt(2))
-  exp(x^2 + log(2) + pnorm(-x * sqrt(2), log.p = TRUE))
+  # erfc(x) = 2 * pnorm(-x * sqrt(2)).  In log space the two terms are each
+  # of order x^2 and cancel: the relative error reached 95% at x = 1e8, the
+  # result underflowed to 0 from 1e10, and from 1.34e154 it was
+  # exp(Inf - Inf) = NaN (Carbon's repository audit, 2026-11-18).  Past 26
+  # the asymptotic series is used instead, to rounding there (its first
+  # omitted term, 10395 y^6 with y = 1/(2 x^2), is about 2e-15).
+  out <- exp(x^2 + log(2) + stats::pnorm(-x * sqrt(2), log.p = TRUE))
+  big <- !is.na(x) & x > 26
+  if (any(big)) {
+    xb <- x[big]
+    y <- 1 / (2 * xb^2)
+    out[big] <- (1 - y * (1 - 3 * y * (1 - 5 * y * (1 - 7 * y * (1 - 9 * y))))) /
+      (sqrt(pi) * xb)
+  }
+  out
 }
 
 

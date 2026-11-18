@@ -484,6 +484,14 @@
       while (k >= 0 && k < total && ctlAt(this, k) && ctlAt(this, k).disabled) k += step;
       this.closeMenu();
       if (k >= 0 && k < total) { e.preventDefault(); this.focusCell(Math.floor(k / this.ncol), k % this.ncol); }
+      else {
+        // From the first or last cell the browser's Tab leaves the grid from
+        // that cell, as in the dose grid, not from the menu just hidden
+        // (Carbon's repository audit, 2026-11-18)
+        var edge = step > 0 ? total - 1 : 0;
+        while (edge >= 0 && edge < total && ctlAt(this, edge) && ctlAt(this, edge).disabled) edge -= step;
+        if (edge >= 0 && edge < total && ctlAt(this, edge)) ctlAt(this, edge).focus();
+      }
     }
     e.stopPropagation();
   };

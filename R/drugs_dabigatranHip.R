@@ -86,11 +86,18 @@
 #     the absorption factors are held positive (they would otherwise drive ka
 #     non-positive) and the result is an extrapolation.
 #   * BODY SIZE (docs/weight-adjustment.md): the source found no weight, sex,
-#     smoking or alcohol effect, so every apparent parameter is size-free and
-#     takes the library's fat-free-mass factors with the adjustToFFM switch on
-#     (size$clearance / size$volume) and the published values with it off
-#     (legacyVolume = 1); weight enters only through the Cockcroft-Gault CRCL,
-#     evaluated at the pharmacokinetic weight with the switch on.
+#     smoking or alcohol effect, so every apparent parameter is the cohort's
+#     typical patient's (78.2 kg, 170.5 cm, 67 years, 47% men).  With the
+#     adjustToFFM switch on they are anchored at that patient
+#     (DABIGATRAN_HIP_COHORT; Steven L. Shafer, 2026-11-18): the library's
+#     fat-free-mass factors relative to the cohort's (size$clearance /
+#     size$volume), and the published values with it off (legacyVolume = 1).
+#     Weight enters the days-2-10 clearance only through the Cockcroft-Gault
+#     CRCL, evaluated at the pharmacokinetic weight with the switch on; that
+#     clearance is CRCL-proportional with no other term, so it takes no size
+#     factor, which would correct it twice (Shafer, 2026-11-18; until then it
+#     was multiplied by size$clearance as well).  The days-0-1 clearance has
+#     no renal term and takes the factor.
 #
 # THRESHOLDS
 # ==========
@@ -98,7 +105,7 @@
 # no time until threshold; no therapeutic range is established, and a simulated
 # level is not an ecarin or dilute-thrombin-time activity or a procedure-safe
 # time.  A research and teaching model, not validated clinical decision support;
-# see inst/help/drugs/dabigatranHip.md.
+# see inst/app-help/drugs/dabigatranHip.md.
 #
 # (Claude Code, 2026-10-19, at the request of Steven L. Shafer.)
 # -----------------------------------------------------------------------------
@@ -109,6 +116,13 @@ DABIGATRAN_HIP_CRCL_REF <- 76.17     # mL/min, reference creatinine clearance
 DABIGATRAN_HIP_SCR_REF  <- 0.964     # mg/dL, reference serum creatinine
 DABIGATRAN_HIP_AGE_REF  <- 66.97     # years, reference age
 DABIGATRAN_HIP_PHASE2   <- "day2"    # the PK key for doses given on days 2 to 10
+
+# Troconiz 2007, Table I (printed p. 373), read on the PDF 2026-11-18: the
+# 287 patients' means, 78.21 kg, 170.5 cm, 66.97 years; sex printed only as
+# 47% men and 53% women, which weight the mean here (no counts printed).  The
+# size-free parameters are anchored at this cohort (Steven L. Shafer,
+# 2026-11-18; docs/weight-adjustment.md, Anchoring at the source's cohort).
+DABIGATRAN_HIP_COHORT <- list(weight = 78.21, height = 170.5, age = 66.97, men = 47, women = 53)
 
 #' Dabigatran pharmacokinetics after total hip replacement (Trocóniz 2007)
 #'
@@ -138,7 +152,7 @@ DABIGATRAN_HIP_PHASE2   <- "day2"    # the PK key for doses given on days 2 to 1
 dabigatranHip <- function(weight, height, age, sex, adjustToFFM = TRUE,
                           creatinine = NULL)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, DABIGATRAN_HIP_COHORT))
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
 
   scr  <- adultEquivalentCreatinine(creatinine, age, sex)       # mg/dL
@@ -163,7 +177,7 @@ dabigatranHip <- function(weight, height, age, sex, adjustToFFM = TRUE,
     ka_PO = 0.022 / 60
   ))
   phase2 <- c(shared, list(
-    cl1 = 82.1 * (crcl / DABIGATRAN_HIP_CRCL_REF) * gast2 * size$clearance / 60,
+    cl1 = 82.1 * (crcl / DABIGATRAN_HIP_CRCL_REF) * gast2 / 60,   # CRCL carries the size
     ka_PO = 0.265 * scrFactor * ageFactor / 60
   ))
 
@@ -179,7 +193,7 @@ dabigatranHip <- function(weight, height, age, sex, adjustToFFM = TRUE,
     upperTypical = 0,
     lowerTypical = 0,
     reference = paste0(
-      "Trocóniz IF et al., J Clin Pharmacol 2007;47:371-382 (apparent ",
+      "Troc\u00F3niz IF et al., J Clin Pharmacol 2007;47:371-382 (apparent ",
       "two-compartment, time-varying PK of dabigatran after total hip ",
       "replacement; absorption and clearance lower on days 0-1 than days 2-10; ",
       "gastrin fixed at the study mean, Cockcroft-Gault creatinine clearance, serum ",

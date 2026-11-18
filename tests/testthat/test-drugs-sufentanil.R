@@ -28,18 +28,24 @@ test_that("returns the published parameters with total-body-weight scaling", {
   expect_equal_rounded(actual, expected)
 })
 
-test_that("scales to fat-free mass for a 120 kg man", {
+test_that("scales to fat-free mass from Gepts's cohort for a 120 kg man", {
   # 120 kg, 170 cm, 50 y male: FFM 71.09 kg against the 54.48 kg reference, so
   # volumes x 1.3049067 and clearances x 1.3049067^0.75 = 1.2209126 (worked out
-  # from the Al-Sallami formula by hand, not from the code under test).
+  # from the Al-Sallami formula by hand, not from the code under test), each
+  # over the factor of Gepts's cohort (Table 1, the 500-1500 ug groups).
+  k <- cohortFactorsIndependent(list(groups = list(
+    list(weight = 71, height = 177, age = 32, men = 2, women = 2),
+    list(weight = 69, height = 169, age = 60, men = 4, women = 0),
+    list(weight = 60, height = 168, age = 43, men = 2, women = 3),
+    list(weight = 64, height = 164, age = 52, men = 4, women = 1))))
   actual <- sufentanil(120, 170, 50, "male")
   expected <- list(
-        v1 = 18.660165,
-        v2 = 82.339613,
-        v3 = 341.36359,
-        cl1 = 1.1232396,
-        cl2 = 1.8924145,
-        cl3 = 0.4029012
+        v1 = 18.660165 / k$volume,
+        v2 = 82.339613 / k$volume,
+        v3 = 341.36359 / k$volume,
+        cl1 = 1.1232396 / k$clearance,
+        cl2 = 1.8924145 / k$clearance,
+        cl3 = 0.4029012 / k$clearance
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
 })

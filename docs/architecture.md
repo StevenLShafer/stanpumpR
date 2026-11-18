@@ -367,7 +367,7 @@ All files are flat in `R/`.
 - `duzitol.R` — help-page only: Table 1 of Shafer and Stanski's 1992 Duzitol editorial,
   `threeCompartmentFromHalfLives()` (Shafer's spreadsheet algebra: a three-compartment model
   from CL, V1, Vss and three half-lives) and the decrement time after an infusion that held the
-  plasma constant, drawn by the generated blocks of `inst/help/models/why-simulate.md`. Duzitol
+  plasma constant, drawn by the generated blocks of `inst/app-help/models/why-simulate.md`. Duzitol
   is fictional and deliberately not a drug in the library (`test-duzitol.R`).
 - `ig_absorption.R` — *validated, not yet wired in.* Closed-form Inverse Gaussian absorption:
   the convolution of an IG input density with the disposition exponentials, in closed form.
@@ -410,7 +410,7 @@ All files are flat in `R/`.
 **Help — the Help tab**
 - `help-content.R` — page registry (`helpStaticPages()`), Markdown rendering via `shiny::markdown()`,
   `help:`/`scenario:` link rewriting, heading ids and table of contents, full-text search.
-- `help-investigators.R` — the investigators named in bold on `inst/help/investigators.md`: the registry,
+- `help-investigators.R` — the investigators named in bold on `inst/app-help/investigators.md`: the registry,
   the links to them in every page and citation (`helpLinkInvestigators()`), and the pop-up about each
   (`helpInvestigatorModal()`, shown on `input$investigator_show`).
 - `help-drugs.R` — pages generated from the drug library: each drug model run at six reference
@@ -418,7 +418,7 @@ All files are flat in `R/`.
 - `help-scenarios.R` — the teaching-scenario registry (`helpScenarios()`), its validator, the
   generated scenario pages, and `applyHelpScenario()`, which loads one into the simulator.
 - `help-ui.R`, `help-server.R` — the nav panel and the server module (`helpServer()`), called
-  once from `app_server()`. Content lives in `inst/help/` (see `inst/help/README.md`).
+  once from `app_server()`. Content lives in `inst/app-help/` (see `inst/app-help/README.md`).
 
 **Util — time & misc**
 - `utils-time.R` — clock-time helpers and the time-unit conversions (`displayTimeToMinutes()`,
@@ -457,7 +457,7 @@ All files are flat in `R/`.
   volume or clearance for the patient (a small child on Schnider, whose clearance intercepts go
   negative; the James lean body mass is held at its peak, so it no longer takes Minto's V1
   negative in the obese) is not built, and the app says so (`alternativeModelProblems()`). Help:
-  `inst/help/models/minto-schnider.md`, with a generated parameter table; scenarios
+  `inst/app-help/models/minto-schnider.md`, with a generated parameter table; scenarios
   `eleveld-vs-minto-schnider`, `tci-eleveld-vs-minto-schnider` and `james-lean-body-mass`; tests `test-minto-schnider.R`.
 - **The TCI API** (`tci-api.R`, `tci-api-server.R`, `inst/api/`) — a stateless HTTP API under
   `/tci/v1` that returns the next infusion rate for one TCI drug in one patient from the
@@ -503,13 +503,13 @@ All files are flat in `R/`.
   shareable link; `bookmarksToExclude` keeps transient UI state out.
 - **Deep links** (`deep-links.R`) — `?scenario=<id>` loads a teaching scenario and
   `?help=<page-id>` opens the Help tab on a page, both read once at startup and both skipping
-  the startup drug menu; see `inst/help/sharing.md`.
+  the startup drug menu; see `inst/app-help/sharing.md`.
 - **Debug & profiler** (`app_globals.R`, `app_server.R`) — `?debug=1` reveals a live log
   (`outputComments()`) and a per-reactive profiler (`profileCode()`).
 - **Front-end assets** (`inst/www/`) — `app.css`, `app.js`; the grids: `dose-grid.js`,
   `table-grid.js`, `grids.css` and `grid-funs.js` (the time and dose readers and messages they
   share), loaded together by `gridDependency()`.
-- **Help** (`R/help-*.R`, `inst/help/`) — the in-app help: Markdown pages plus pages generated
+- **Help** (`R/help-*.R`, `inst/app-help/`) — the in-app help: Markdown pages plus pages generated
   from the drug library and the teaching scenarios, with search and one-click scenario loading.
 - **Config** (`config.yml`, `app_run.R`) — environment-specific title and debug flag,
   merged over `DEFAULT_CONFIG` at launch.

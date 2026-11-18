@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# The investigators: a registry of the people named in inst/help/investigators.md,
+# The investigators: a registry of the people named in inst/app-help/investigators.md,
 # links to them wherever they are named, and the pop-up that shows what of
 # theirs the program uses
 # -----------------------------------------------------------------------------
@@ -10,7 +10,7 @@
 #
 # How it fits together
 # --------------------
-# inst/help/investigators.md names, in bold, every investigator whose work the
+# inst/app-help/investigators.md names, in bold, every investigator whose work the
 # program uses.  That file is the registry: helpInvestigatorRegistry() reads
 # the bold names out of it, splits each into given names and surname, and
 # gives each person a key (surname plus first initial, "eleveld-d").  Two
@@ -38,7 +38,7 @@
 # delegated handler in inst/www/app.js); helpServer() answers with
 # helpInvestigatorModal(), whose body is every paragraph, list item and table
 # row of investigators.md that names the person, grouped by section, followed
-# by their entries in inst/help/references.md.
+# by their entries in inst/app-help/references.md.
 #
 # Adding an investigator: write the name in bold in investigators.md.  Nothing
 # else is needed; the tests check that every bold name parses and that each
@@ -383,7 +383,7 @@ helpMarkdownPlain <- function(text) {
   gsub("\\[([^]]*)\\]\\([^)]*\\)", "\\1", text)
 }
 
-#' The paragraphs of the bibliography (inst/help/references.md)
+#' The paragraphs of the bibliography (inst/app-help/references.md)
 #' @noRd
 helpReferenceParagraphs <- function(text = helpReadMarkdown("references")) {
   lines <- strsplit(text, "\n", fixed = TRUE)[[1]]

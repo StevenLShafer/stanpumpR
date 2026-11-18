@@ -159,7 +159,7 @@ test_that("the CSV band and threshold match the model, and 1 g IV crosses it", {
 })
 
 
-# The two Oral analgesics scenarios (inst/help/scenarios/acetaminophen-*.md)
+# The two Oral analgesics scenarios (inst/app-help/scenarios/acetaminophen-*.md)
 # quote these numbers; if the model changes, the narratives have to change
 # with it.  The curves are the two-compartment oral solution with its effect
 # site, written out from the model's own parameters and checked against the

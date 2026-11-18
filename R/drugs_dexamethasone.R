@@ -38,9 +38,13 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# Fixed published parameters: volumes scale with fat-free mass relative to
-# the reference male, clearances with that ratio ^ 0.75; the switch off uses
-# them as published.
+# Fixed published parameters for Hong's five men (73.6 kg, 32.2 years), so
+# the values are that cohort's typical man's, and with the switch on they are
+# anchored at him (CORTICOSTEROID_HONG_COHORT; Steven L. Shafer, 2026-11-18):
+# volumes scale with fat-free mass relative to him, clearances with that
+# ratio ^ 0.75, so the 70 kg reference man receives the published volumes
+# divided by 1.067 and clearances by 1.050; the switch off uses them as
+# published.
 #
 # PREGNANCY
 # =========
@@ -110,6 +114,19 @@ DEXAMETHASONE_PREGNANCY_CL_FACTOR <- 2
 # rose with it (see the header).  Q follows Vc through Hong's k12.
 DEXAMETHASONE_PREGNANCY_V_FACTOR <- 2
 
+# Hong 2007 (PMID 17385022), read 2026-11-18: five healthy men, 32.2 years and
+# 73.6 kg (mean), Buffalo, New York.
+# No height is printed: each sex's is the country's mean adult height for the
+# birth year (NCD Risk Factor Collaboration, eLife 2016;5:e13410, height at 18
+# by birth year), less the 0.2 cm (men) and 0.3 cm (women) a cohort loses per
+# decade of age after 18 that the same paper reports. The United States, born
+# 2007 - 32 = 1975: 177.2 cm.
+# The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort).
+# Methylprednisolone, from the same five men, shares it.
+# Factors 1.067 on volume, 1.050 on clearance.
+CORTICOSTEROID_HONG_COHORT <- list(weight = 73.6, height = 177.2, age = 32.2, men = 5, women = 0)
+
 #' Dexamethasone pharmacokinetics
 #'
 #' @inheritParams cefazolin
@@ -125,9 +142,9 @@ DEXAMETHASONE_PREGNANCY_V_FACTOR <- 2
 dexamethasone <- function(weight, height, age, sex, adjustToFFM = TRUE,
                           pregnant = FALSE)
 {
-  # Size scaling (see the header): fixed published parameters, unscaled
-  # with the switch off.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  # Size scaling (see the header): fixed published parameters, anchored at
+  # Hong's five men, unscaled with the switch off.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, CORTICOSTEROID_HONG_COHORT))
 
   # Hong 2007: CL 18.1 L/h, Vc 41.6 L, k12 1.09 /h, k21 1.02 /h
   vcRef <- 41.6

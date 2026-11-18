@@ -130,6 +130,15 @@
 # ABCB1 absorption covariate, OCTN1 renal secretion (Urban 2008), dialysis,
 # and saturation shared between overlapping doses.
 #
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): fixed published values belong to the
+# source's cohort, not the reference man. [decision] for Steven L. Shafer: the
+# volume was re-anchored to the label's 58 L (Tran 2017's volume scaled by
+# 58/81), so it is not Tran's cohort's. Anchor Tran's non-renal parameters at
+# Tran's cohort and leave the label volume at the reference man, or anchor the
+# label volume at the label's 70 kg? The renal clearance is not anchored.
+# Until answered, the values stay anchored at the 70 kg reference man.
+#
 # References
 # ----------
 # Tran P et al., J Pharmacokinet Pharmacodyn 2017;44:567-579.

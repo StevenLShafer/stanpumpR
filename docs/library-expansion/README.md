@@ -1,7 +1,7 @@
 # Rounding out stanpumpR: the library expansion
 
 Steven L. Shafer chose the drugs on 2026-11-18, with a regular return to the list (daily for now; see *The weekly routine*):
-- **Antibiotics:** tazobactam, imipenem, ceftazidime/avibactam, teicoplanin. Tazobactam became Zosyn and ceftolozane/tazobactam the same day (see *Combination products* below).
+- **Antibiotics:** tazobactam, imipenem, ceftazidime/avibactam, teicoplanin. Tazobactam became Zosyn and Zerbaxa, and avibactam Avycaz, the same day (see *Combination products* below).
 - **Antifungals:** fluconazole, posaconazole, isavuconazole, caspofungin, micafungin.
 - **Antimalarials** and **antivirals**.
 - **Transplant:** mycophenolic acid, to go with tacrolimus.
@@ -71,10 +71,10 @@ The report is a lead, not a source, like any other model's reading (AGENTS.md): 
 
 "Tazobactam should not be a drug at all. It is only used in combination with other antibiotics." So a component given only in combination is not a drug of its own. The product is the drug, dosed in the units of its FDA label:
 - **Zosyn** (piperacillin/tazobactam), the name Steven chose: "I prefer generic names, but for combination products that can be a problem. Call it Zosyn." Dosed in g of the combined product for adults (2.25, 3.375 and 4.5 g; 8:1), mg/kg of the combined product for children (90 and 112.5 mg/kg). It is stanpumpR's piperacillin (Kong 2025), which already takes the product and plots piperacillin, so it is a `library_change` and needs no paper. Today it is dosed in mg pip-tazo.
-- **Ceftolozane/tazobactam** (Zerbaxa): g of the combined product for adults (1.5 g = 1 g ceftolozane + 0.5 g tazobactam; 3 g for HABP/VABP), mg/kg of the combined product for children (30, 60 and 75 mg/kg). A new drug, from Zhang 2021's ceftolozane model; the curve is ceftolozane, as piperacillin's is piperacillin.
-- **Ceftazidime/avibactam** (Avycaz), by the same rule, replaces the planned avibactam.
+- **Zerbaxa** (ceftolozane/tazobactam): g of the combined product for adults (1.5 g = 1 g ceftolozane + 0.5 g tazobactam; 3 g for HABP/VABP), mg/kg of the combined product for children (30, 60 and 75 mg/kg). A new drug, from Zhang 2021's ceftolozane model; the curve is labelled ceftolozane, as Zosyn's is piperacillin.
+- **Avycaz** (ceftazidime/avibactam), by the same rule, replaces the planned avibactam; its curve is labelled ceftazidime.
 
-A brand name is a valid R name (MEGX and MDMA are drugs already), so Zosyn needs no display name. "The PK should be labelled piperacillin": the drug is Zosyn and its curve is labelled piperacillin. Renaming the drug piperacillin leaves links that name it to be mapped. Still open for Steven: whether Zerbaxa and Avycaz are named the same way (a generic name with a slash cannot be an R name, so it would need a display name the library does not have), and the infection state above.
+A brand name is a valid R name (MEGX and MDMA are drugs already), so Zosyn needs no display name. "The PK should be labelled piperacillin": the drug is Zosyn and its curve is labelled piperacillin. Renaming the drug piperacillin leaves links that name it to be mapped. Steven named the other two the same way the same day: "Use Zerbaxa and Avycaz too." Still open for Steven: the infection state above.
 
 ## Downloading
 

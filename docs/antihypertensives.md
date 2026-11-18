@@ -1511,9 +1511,11 @@ The abstracts are enough to do the identifiability check, and the answer splits
 the two moieties:
 
 **The parent closes.** One compartment for benazepril is determined by Sun
-1994's printed AUC(0-4 h) of 140 ng·h/mL and the reported 0.6 h half-life —
-CL/F about 71 L/h, V/F about 62 L — and `ka` near 2.7 /h follows from the
-0.55 h time to peak against an elimination rate constant of 1.155 /h.
+1994's printed AUC(0-4 h) of 140 ng·h/mL and the 0.6 h half-life Kaiser 1989
+reports (Sun's own 0.6 h is a time to peak) — CL/F about 71 L/h, V/F about 62 L —
+and `ka` near 2.7 /h follows from a 0.55 h time to peak (the mean of Sun's
+alone and with-amlodipine arms, 0.6 and 0.5 h) against an elimination rate
+constant of 1.155 /h.
 
 **The metabolite does not.** AUC = f<sub>m</sub> × dose ÷ CL is one equation in
 two unknowns, and the 17% urinary recovery does **not** pin the formation

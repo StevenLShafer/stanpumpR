@@ -6974,8 +6974,10 @@ const Player = {
         // A run from the page that opened this one.
         window.addEventListener('message', e => {
             // Only stanpumpR's own page, on this origin, may hand this page a
-            // run: a page elsewhere that opened it is an opener too.
-            if (e.origin !== location.origin) return;
+            // run: a page elsewhere that opened it is an opener too.  And only
+            // the page that opened this one, not another window of the origin
+            // (Carbon's repository audit, 2026-11-18).
+            if (e.origin !== location.origin || e.source !== window.opener) return;
             const d = e.data;
             if (d && d.type === 'stanpumpR-viewer-run') this.load(d.run);
             else if (d && d.type === 'stanpumpR-viewer-error')

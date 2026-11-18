@@ -7,7 +7,7 @@
 #
 # Drafted by Claude Code, 2026-10-22, at the request of Steven L. Shafer, as
 # one of the vasoactive and resuscitation drugs used in intensive care
-# (inst/help/models/vasoactive.md, inst/extdata/vasoactiveRegistry.csv).  Every
+# (inst/app-help/models/vasoactive.md, inst/extdata/vasoactiveRegistry.csv).  Every
 # number below was read from the published articles, which he supplied.
 #
 # THE SOURCE
@@ -91,6 +91,13 @@
 # Shafer's provisional clinical observation, until published data are
 # available: the pressor response to a bolus is not immediate, as the heart
 # rate response to epinephrine is.  No pressure is predicted.
+#
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): fixed published values belong to the
+# source's cohort, not the reference man. Fabian 1969 prints no weight (read
+# 2026-11-18), so the fixed values stay anchored at the 70 kg reference man,
+# as before the rule.
+#
 # -----------------------------------------------------------------------------
 
 VASOPRESSIN_V  <- 8.5    # L, Fabian 1969 Table 1 (median)

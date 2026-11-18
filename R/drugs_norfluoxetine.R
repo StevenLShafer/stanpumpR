@@ -35,7 +35,8 @@ NORFLUOXETINE_V1  <- 1.52   # L, V/F
 norfluoxetine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Identical to fluoxetine's call; see the header.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, FLUOXETINE_COHORT))
 
   default <- list(
     v1  = NORFLUOXETINE_V1 * size$volume,

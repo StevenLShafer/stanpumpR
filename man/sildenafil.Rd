@@ -37,7 +37,7 @@ volunteers' model}
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-The FDA review of NDA 22-473 (45 healthy men; adults, with the Pulmonary
+The FDA review of NDA 22-473 (45 healthy volunteers; adults, with the Pulmonary
 hypertension field) or Miura 2026 (children with pulmonary arterial
 hypertension, 0.4-14.8 years), chosen by \code{selectModel()}; see
 \code{R/modelSelection.R}.

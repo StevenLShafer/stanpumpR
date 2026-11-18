@@ -79,7 +79,7 @@ concentrations:
   (with Okusanya 2016).
 
 ## Verification against stanpumpR
-Checked in `C:\dev\stanpumpRPapers\_build\master_snapshot` (stanpumpR master 50bb4219).
+Checked in the archive's master snapshot (stanpumpR master 50bb4219).
 
 - `inst/extdata/therapeuticRanges.csv:184`: analyte "serum magnesium above the patient's baseline", units
   mmol/L, lower/upper/typical NA, band_status `not_applicable`; label_statement "effective anticonvulsant serum

@@ -1,3 +1,12 @@
+# Vega-Villa 2014, Table 1 (printed p. 305): the non-burn and burn groups,
+# whose typical CL, V1, CL2 and V3 are shared (Table 3), and the non-burn
+# group alone, whose V2 and CL3 the library uses.
+VECURONIUM_NONBURN_COHORT <- list(weight = 70, height = 170, age = 40, men = 17, women = 3)
+VECURONIUM_COHORT <- list(groups = list(
+  VECURONIUM_NONBURN_COHORT,
+  list(weight = 65, height = 169, age = 36, men = 16, women = 4)     # burn
+))
+
 vecuronium <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Units **************
@@ -96,12 +105,27 @@ vecuronium <- function(weight, height, age, sex, adjustToFFM = TRUE)
   # far more sensitive (their ED95 was 21.8 mcg/kg, about half the
   # unpotentiated value).  Potentiation by the inhaled agents is not modelled.
   #
-  # Size scaling (see docs/weight-adjustment.md): the published parameters
-  # are treated as describing a 70 kg adult.  Volumes scale with fat-free
-  # mass relative to the 70 kg, 170 cm reference male, clearances with that
-  # ratio ^ 0.75 (Al-Sallami 2015).  adjustToFFM = FALSE uses the parameters
-  # as published, with no size scaling.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  # Size scaling (see docs/weight-adjustment.md): weight was screened and not
+  # retained, so the published parameters are Vega-Villa's patients' (Table 1,
+  # read on the PDF 2026-11-18).  With the switch on they are anchored at
+  # that cohort (Steven L. Shafer, 2026-11-18; Anchoring at the source's
+  # cohort): CL, V1, CL2 and V3 are typical values shared by all 40 patients,
+  # so they are anchored at all 40 (the reference man's divided by 0.944 and
+  # 0.958); V2 and CL3 are the non-burn group's own, so they are anchored at
+  # its 20 (VECURONIUM_NONBURN_COHORT).  Volumes scale with fat-free mass
+  # relative to the cohort's typical patient's, clearances with that ratio
+  # ^ 0.75 (Al-Sallami 2015).  adjustToFFM = FALSE uses the parameters as
+  # published, with no size scaling.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, VECURONIUM_COHORT))
+  # V2 and CL3: re-anchored from all 40 to the non-burn 20
+  nonBurn <- list(volume = 1, clearance = 1)
+  if (isTRUE(adjustToFFM)) {
+    all40 <- do.call(cohortSizeFactors, VECURONIUM_COHORT)
+    nb <- do.call(cohortSizeFactors, VECURONIUM_NONBURN_COHORT)
+    nonBurn <- list(volume = all40$volume / nb$volume,
+                    clearance = all40$clearance / nb$clearance)
+  }
 
   # 0 at 40 years and younger, 1 at 70 and older: Rupp's two groups
   elderly <- min(max((age - 40) / 30, 0), 1)
@@ -110,11 +134,11 @@ vecuronium <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   default <- list(
     v1 = 10.25 * ageVolume * size$volume,
-    v2 = 9.7 * ageVolume * size$volume,
+    v2 = 9.7 * ageVolume * size$volume * nonBurn$volume,
     v3 = 43.79 * ageVolume * size$volume,
     cl1 = 0.51 * ageClearance * size$clearance,
     cl2 = 0.66 * ageClearance * size$clearance,
-    cl3 = 0.095 * ageClearance * size$clearance
+    cl3 = 0.095 * ageClearance * size$clearance * nonBurn$clearance
   )
 
   events <- c(PK_EVENT_DEFAULT)

@@ -125,7 +125,7 @@ test_that("500 mg by mouth matches an independent integration", {
 })
 
 
-# The Oral analgesics scenario (inst/help/scenarios/naproxen-twice-daily.md)
+# The Oral analgesics scenario (inst/app-help/scenarios/naproxen-twice-daily.md)
 # quotes these numbers; if the model changes, the narrative has to change
 # with it.  The curve is the two-compartment oral solution written out from
 # the model's own parameters, checked against the simulation at its time

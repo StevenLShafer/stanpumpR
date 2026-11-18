@@ -65,6 +65,14 @@
 # -----------------------------------------------------------------------------
 
 # Conil 2011, Table 2 (final model)
+#
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): fixed published values belong to the
+# source's cohort, not the reference man. [decision] for Steven L. Shafer:
+# Conil 2011's clearance carries a height term, which is a size covariate of
+# its own, while the volume carries none. Anchor the volume alone at the
+# cohort, or leave the model as one with its own size covariate? Until
+# answered, the values stay anchored at the 70 kg reference man.
 TOBRAMYCIN_CL          <- 3.83    # L/h at Cockcroft-Gault 94 mL/min and 172 cm
 TOBRAMYCIN_CL_PER_CRCL <- 0.020   # L/h per mL/min
 TOBRAMYCIN_CL_PER_CM   <- 0.052   # L/h per cm

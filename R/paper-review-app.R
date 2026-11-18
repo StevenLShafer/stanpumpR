@@ -312,12 +312,12 @@ paperReviewNavPanel <- function(id = PAPER_REVIEW_MODULE_ID)
     do.call(bslib::navset_underline, c(list(id = ns("nav")), paperReviewPanels(ns))))
 }
 
-#' The server of the Single Paper Review tab
-#' @param id the module's namespace
-#' @keywords internal
 # The time, through one function the tests can replace.
 paperReviewNow <- function() Sys.time()
 
+#' The server of the Single Paper Review tab
+#' @param id the module's namespace
+#' @keywords internal
 paperReviewModuleServer <- function(id = PAPER_REVIEW_MODULE_ID)
   shiny::moduleServer(id, paperReviewServer)
 
@@ -356,7 +356,16 @@ paperReviewServer <- function(input, output, session)
   storeChanged <- shiny::reactiveVal(0)
   stored <- function() storeChanged(shiny::isolate(storeChanged()) + 1)
   holdsPaper <- shiny::reactive({ storeChanged(); version(); paperReviewHolds(store) })
-  session$onSessionEnded(function() paperReviewDiscard(store))
+  # The page closed: the review still running is stopped as well, not left
+  # reading the manuscript (and billed) for an answer nobody will see, and a
+  # quick review's reserved place is given back (Carbon's repository audit,
+  # 2026-11-18).  stopRunningReview() and releaseReserved() are defined
+  # below; this runs only when the session ends.
+  session$onSessionEnded(function() {
+    paperReviewDiscard(store)
+    stopRunningReview()
+    shiny::isolate(releaseReserved())
+  })
   # Can this server review a paper at all?  With the operator's key
   # (Shafer's, the default for now: R/paper-review-usage.R counts its uses)
   # or a key the user enters for this session; without either only the
@@ -452,6 +461,15 @@ paperReviewServer <- function(input, output, session)
   # Counts the reviews sent, so that a quick review's place that comes back
   # late is not applied to a later review (CodeRabbit, PR #720).
   running$generation <- 0L
+  # Stops the background process of the review now running, if any.  Its
+  # promise then fails, and the status observer below tidies up as for any
+  # failed review; an answer was not awaited, so nothing is shown.
+  stopRunningReview <- function() {
+    stopFn <- running$stop
+    running$stop <- NULL
+    if (is.function(stopFn)) tryCatch(stopFn(), error = function(e) FALSE)
+    invisible(NULL)
+  }
   reviewTask <- shiny::ExtendedTask$new(function(pdf, supplement, key, inferenceGeo, shared, effort, admitted) {
     running$stop <- NULL
     send <- function(...) paperReviewTrackUse(
@@ -492,7 +510,7 @@ paperReviewServer <- function(input, output, session)
                       is.null(f$own), effort, admitted)
   }
   # Is the running review still wanted?  Discarding while Claude reads the
-  # paper means its answer is dropped when it comes.
+  # paper stops the read, and anything that still comes back is dropped.
   awaited <- shiny::reactiveVal(FALSE)
   shiny::observe({
     consent <- isTRUE(input$consent) && keyed()
@@ -733,7 +751,10 @@ paperReviewServer <- function(input, output, session)
     awaited(FALSE)
     stopForQuick(FALSE)
     releaseReserved()
-    running$stop <- NULL
+    # Discarding while Claude reads the paper stops the read, rather than
+    # only dropping its answer when it comes (Carbon's repository audit,
+    # 2026-11-18): the manuscript is no longer being processed, nor billed.
+    stopRunningReview()
     shinyjs::hide("reviewBusy")
     shinyjs::hide("reviewLate")
     hasPdf(FALSE)

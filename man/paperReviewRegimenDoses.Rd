@@ -8,8 +8,6 @@ paperReviewRegimenDoses(regimen)
 }
 \arguments{
 \item{regimen}{one entry of \code{extraction$regimens}}
-
-\item{route}{the drug's extravascular route, for an extravascular dose}
 }
 \value{
 a list: \code{doses} (Time in minutes, Dose, Units),

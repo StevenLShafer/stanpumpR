@@ -84,13 +84,16 @@
 #
 # Size scaling (see docs/weight-adjustment.md).  The source has no size
 # covariate and found none (weights 79.8 +/- 12.0 kg).  The published
-# parameters are taken to describe the 70 kg reference adult and are scaled to
-# fat-free mass in the library's usual way, so that a child or a very large
-# patient gets a proportionate volume; this is the library's assumption, not
-# the paper's.  With the switch off the published values apply unscaled to
-# everyone, which is how the paper reads: a typical study parturient (80 kg,
-# 34 years, female) with the switch on has volumes 15% smaller than published
-# and peaks about 15% higher than the paper's figure 5.
+# parameters are therefore its typical parturient's (Table 1: 79.8 kg, BMI
+# 30.6, 34.2 years), and with the switch on they are anchored at her
+# (CALCIUM_COHORT; Steven L. Shafer, 2026-11-18, replacing his earlier
+# decision that took them as the 70 kg reference adult's): a patient like her
+# receives the published values, and everyone else is scaled to fat-free mass
+# from there, so that a child or a very large patient gets a proportionate
+# volume; the scaling is the library's assumption, not the paper's.  The
+# 70 kg reference man's volumes are the published ones divided by 0.850 and
+# his clearances divided by 0.885.  With the switch off the published values
+# apply unscaled to everyone, which is how the paper reads.
 #
 # Drafted by Claude Code, 2026-10-13, at the request of Steven L. Shafer.
 
@@ -110,6 +113,12 @@ CALCIUM_SALT_WEIGHTS <- c(
   gluconate = CALCIUM_CHLORIDE_DIHYDRATE_MW * CALCIUM_GLUCONATE_DOSE_RATIO
 )
 
+# Ansari 2025, Table 1 (printed p. 127), read on the PDF 2026-11-18: the 70
+# parturients' means, 79.8 kg, BMI 30.6 (no height printed; 161 cm from the
+# two), 34.2 years (the table includes the 15 saline recipients the final
+# model left out; the 55 are not tabulated separately).
+CALCIUM_COHORT <- list(weight = 79.8, bmi = 30.6, age = 34.2, men = 0, women = 70)
+
 calcium <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Units **************
@@ -125,7 +134,8 @@ calcium <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   # Size scaling: published parameters for the reference adult, scaled to
   # fat-free mass; legacyVolume = 1 because the source does not scale at all.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, CALCIUM_COHORT))
 
   default <- list(
     v1  = v1Ref  * size$volume,

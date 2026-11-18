@@ -62,7 +62,7 @@ test_that("it returns the correct values", {
 
 # The surface takes concentrations: propofol in mcg/mL and the opioid as
 # remifentanil-equivalent ng/mL.  Checked against the equations as printed in
-# the help (inst/help/models/interaction.md), written out independently.
+# the help (inst/app-help/models/interaction.md), written out independently.
 test_that("modelInteraction() is Bouillon's laryngoscopy surface in concentration units", {
   bouillon <- function(prop, U) {
     intensity <- 0.83 * (1 - U^0.72 / (U^0.72 + (1.01 * 0.83)^0.72))

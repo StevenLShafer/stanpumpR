@@ -20,7 +20,7 @@
 #     V/F  x (WT / WT_ref)^0.216 x (age / age_ref)^-0.189 x 0.889 (women)
 #     indication on CL/F, relative to VTE treatment (= 1): atrial
 #       fibrillation 0.849, ACS 1.14, VTE prevention 1.04 (<= 72 h after
-#       surgery) and 1.29 (> 72 h)
+#       the first dose) and 1.29 (> 72 h); not applied
 #
 # The PubMed Central text drops the table's subscripts, so the assignment of
 # the four power estimates to covariates is from the order the final model

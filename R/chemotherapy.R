@@ -24,7 +24,7 @@
 #                              a guideline target, a label, an outcome trial),
 #                              with "global" for guidance that applies to all
 #
-# Help page: inst/help/models/chemotherapy.md.
+# Help page: inst/app-help/models/chemotherapy.md.
 # -----------------------------------------------------------------------------
 
 #' Read one of the chemotherapy registry tables

@@ -121,17 +121,21 @@
 # ====================================================
 # None.  Age, sex, height, weight and lean body mass were tested against
 # every volume and clearance and none met the inclusion criterion (P < .01).
-# Pollak's parameters are therefore fixed published values, and they take
-# the library's default scaling for that class: volumes x the fat-free-mass
-# ratio, clearances x that ratio ^ 0.75, and with the switch off the
-# published values unscaled (legacy factors 1), which reproduces Pollak
-# exactly whatever the patient's size.
+# Pollak's parameters are therefore fixed published values, the typical
+# values of his cohort, and with the switch on they are anchored at it
+# (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md, Anchoring at the
+# source's cohort): volumes x the fat-free-mass ratio to the cohort's typical
+# patient, clearances x that ratio ^ 0.75.  With the switch off, the published
+# values unscaled (legacy factors 1), which reproduces Pollak exactly whatever
+# the patient's size.
 #
-# No re-anchoring is needed.  The cohort's fat-free mass at each sex's mean
-# weight, height and age (men 81.4 kg, 173 cm, 61.3 y: 60.1 kg; women
-# 71.7 kg, 158 cm, 69.0 y: 42.4 kg; weighted 50:27) is 53.9 kg, about 1%
-# below the 54.5 kg reference man the library anchors to, so the published
-# values stand as his.  Desethylamiodarone makes the identical call: its apparent
+# The cohort is taken sex by sex at each sex's own means (Table I, read on
+# the PDF 2026-11-18: men 81.4 kg, 173 cm, 61.3 y, n 50; women 71.7 kg,
+# 158 cm, 69.0 y, n 27), AMIODARONE_COHORT.  Its factors are 0.977 on volume
+# and 0.982 on clearance, so the reference man's values are 2% above the
+# published ones.  (Until 2026-11-18 this header judged the 1% difference in
+# fat-free mass too small to re-anchor; the rule now anchors every such
+# model.)  Desethylamiodarone makes the identical call: its apparent
 # scale is only consistent with the parent's if both scale together.  The
 # cohort was adults of 22 to 86 years and 39 to 133 kg; the help page's
 # child and infant are extrapolation, evaluated only because every model in
@@ -159,6 +163,13 @@ AMIODARONE_CL2 <- 588     # L/day, CL2/F (Table II; the abstract's 599 is a misp
 # The citation both members of the pair return.  One string, so that the
 # bibliography lists one item for both drugs (test-help-drugs.R counts each
 # citation exactly once).
+# Pollak 2000, Table I (printed p. 644): each sex at its own means.  Shared
+# by desethylamiodarone, which must scale identically.
+AMIODARONE_COHORT <- list(groups = list(
+  list(weight = 81.4, height = 173, age = 61.3, men = 50, women = 0),
+  list(weight = 71.7, height = 158, age = 69.0, men = 0, women = 27)
+))
+
 AMIODARONE_REFERENCE <- paste0(
   "Pollak PT, Bouillon T, Shafer SL. Population pharmacokinetics of long-term ",
   "oral amiodarone therapy. Clin Pharmacol Ther 2000;67:642-652. ",
@@ -185,7 +196,8 @@ amiodarone <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Fixed published parameters (see the header): legacy factors 1.
   # Desethylamiodarone must make this call identically.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, AMIODARONE_COHORT))
 
   v1  <- AMIODARONE_V1 * size$volume
   v2  <- AMIODARONE_V2 * size$volume

@@ -1,5 +1,5 @@
 # Suggest Dosing: work backwards from target effect-site concentrations to a
-# dose table.  inst/help/models/suggest-algorithm.md describes the method for
+# dose table.  inst/app-help/models/suggest-algorithm.md describes the method for
 # the user; the steps here follow it.
 #
 #   1. Clean the targets: suggestTargets().

@@ -17,7 +17,7 @@ test_that("every static page has a Markdown file and every file is reachable", {
   static <- helpStaticPages()
   generated <- c("drugs/index", "scenarios/index", "references")
   for (id in setdiff(static$id, generated)) {
-    expect_true(helpHasMarkdown(id), info = paste("missing inst/help/", id, ".md"))
+    expect_true(helpHasMarkdown(id), info = paste("missing inst/app-help/", id, ".md"))
   }
   reg <- helpPageRegistry()
   for (id in helpMarkdownIds()) {
@@ -356,7 +356,7 @@ test_that("the absorption page lists every oral, intramuscular and intranasal un
 # 2026-10-12 found three renal drugs and three CYP2D6 drugs missing).
 test_that("the cautions page names every model that reads a patient field", {
   text <- tolower(helpPlainText(helpMarkdownToHTML(helpExpandGenerated(
-    paste(readLines(system.file("help", "cautions.md", package = "stanpumpR"), warn = FALSE),
+    paste(readLines(system.file("app-help", "cautions.md", package = "stanpumpR"), warn = FALSE),
           collapse = "\n")))))
   for (arg in names(HELP_FIELD_READER_ROWS)) {
     # a candidate model is read through its drug's name (R/modelSelection.R)
@@ -377,7 +377,7 @@ test_that("the cautions page names every model that reads a patient field", {
 # row by row, so a field added to the Patient Profile without a row, or a row
 # whose count disagrees with its readers, fails here.
 test_that("the field-readers table has one row per field, counted from the models", {
-  page <- paste(readLines(system.file("help", "cautions.md", package = "stanpumpR"),
+  page <- paste(readLines(system.file("app-help", "cautions.md", package = "stanpumpR"),
                           warn = FALSE), collapse = "\n")
   expect_match(page, "<!-- generated: field-readers-table -->", fixed = TRUE)
   table <- helpFieldReadersTableMarkdown()
@@ -403,7 +403,7 @@ test_that("the field-readers table has one row per field, counted from the model
 # effect drug by drug, so unlike the patient profile and the glossary they
 # still name the readers; this keeps them complete.
 test_that("the covariates page's genotype paragraphs name every reader", {
-  lines <- readLines(system.file("help", "models", "covariates.md", package = "stanpumpR"),
+  lines <- readLines(system.file("app-help", "models", "covariates.md", package = "stanpumpR"),
                      warn = FALSE)
   leads <- c(cyp2d6 = "**CYP2D6 phenotype**", cyp2c19 = "**CYP2C19 phenotype**",
              cyp2c9 = "**CYP2C9 diplotype**", cyp2b6 = "**CYP2B6 phenotype**")

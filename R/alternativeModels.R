@@ -13,7 +13,7 @@
 # investigators' studies, and Douglas Eleveld built from that pool the
 # general-purpose models that extend to children and to the extremes of
 # weight; those are the library's own propofol and remifentanil models
-# (R/drugs_propofol.R, R/drugs_remifentanil.R).  See inst/help/history.md.
+# (R/drugs_propofol.R, R/drugs_remifentanil.R).  See inst/app-help/history.md.
 #
 # For teaching it helps to see both.  The "Minto / Schnider" box under Graph
 # Options (input$mintoSchnider) runs the Schnider and Minto models BESIDE the

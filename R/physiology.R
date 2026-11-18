@@ -1117,10 +1117,10 @@ physiologySummary <- function(physiology)
   physiology <- checkPhysiology(physiology)
   factors <- physiology[PHYSIOLOGY_FACTORS]
   changed <- factors[factors != 1]
-  out <- sprintf("%s ×%s", tolower(PHYSIOLOGY_LABELS[names(changed)]),
+  out <- sprintf("%s \u00D7%s", tolower(PHYSIOLOGY_LABELS[names(changed)]),
                  formatC(changed, digits = 2, format = "fg"))
   if (physiology[["temperature"]] != PHYSIOLOGY_TEMPERATURE_DEFAULT)
-    out <- c(out, sprintf("%s °C", format(physiology[["temperature"]])))
+    out <- c(out, sprintf("%s \u00B0C", format(physiology[["temperature"]])))
   paste(out, collapse = ", ")
 }
 
@@ -1180,7 +1180,7 @@ helpPhysiologyTableMarkdown <- function()
   tab <- physiologyTable()
   applied <- tab$verification %in% PHYSIOLOGY_APPLIED_VERIFICATION
   tab <- tab[order(!applied, tab$drug), ]
-  num <- function(x) ifelse(is.na(x), "—", formatC(x, digits = 3, format = "fg"))
+  num <- function(x) ifelse(is.na(x), "\u2014", formatC(x, digits = 3, format = "fg"))
   cell <- function(x) gsub("|", "\\|", ifelse(is.na(x), "", x), fixed = TRUE)
   rows <- sprintf(
     "| [%s](help:drugs/%s) | %s | %s | %s | %s | %s | %s |",

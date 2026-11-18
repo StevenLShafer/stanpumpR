@@ -33,16 +33,18 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
 })
 
 test_that("scales to fat-free mass for a 120 kg man", {
+  # The pins from before the anchoring, divided by Hong's cohort factors
+  kc <- cohortFactorsIndependent(CORTICOSTEROID_HONG_COHORT)
   # 120 kg, 170 cm, 50 y male: FFM 71.09 kg against the 54.48 kg reference, so
   # size-free volumes x 1.3049067 and clearances x 1.2209126; a covariate the
   # source wrote on weight sees the pharmacokinetic weight 91.34 kg.
   actual <- dexamethasone(120, 170, 50, "male")
   expected <- list(
-    v1 = 54.284116,
-    v2 = 58.009497,
+    v1 = 54.284116 / kc$volume,
+    v2 = 58.009497 / kc$volume,
     v3 = 1,
-    cl1 = 0.36830864,
-    cl2 = 0.92268436,
+    cl1 = 0.36830864 / kc$clearance,
+    cl2 = 0.92268436 / kc$clearance,
     cl3 = 0
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
@@ -63,6 +65,8 @@ test_that("Hong's microconstants give the published macroparameters", {
 })
 
 test_that("pregnancy: clearance x 2 (Ansari 2016), volumes and Q x 2 (Tsuei 1980)", {
+  # The pins from before the anchoring, divided by Hong's cohort factors
+  kc <- cohortFactorsIndependent(CORTICOSTEROID_HONG_COHORT)
   # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.  CL1, V1,
   # V2 and Q all double, so every rate constant and both half-lives are
   # Hong's, and a dose gives exactly half the concentration.
@@ -96,10 +100,10 @@ test_that("pregnancy: clearance x 2 (Ansari 2016), volumes and Q x 2 (Tsuei 1980
   # a bolus gives half the concentration at every time
   expect_equal(a$p_coef_bolus_l1 / b$p_coef_bolus_l1, 0.5, tolerance = 1e-9)
   expect_equal(a$p_coef_bolus_l2 / b$p_coef_bolus_l2, 0.5, tolerance = 1e-9)
-  expect_equal_rounded(67.06710842, a$v1)
-  expect_equal_rounded(71.66975312, a$v2)
-  expect_equal_rounded(0.5132713368, a$cl1)
-  expect_equal_rounded(1.28584395, a$cl2)
+  expect_equal_rounded(67.06710842 / kc$volume, a$v1)
+  expect_equal_rounded(71.66975312 / kc$volume, a$v2)
+  expect_equal_rounded(0.5132713368 / kc$clearance, a$cl1)
+  expect_equal_rounded(1.28584395 / kc$clearance, a$cl2)
   # the direct call
   x <- dexamethasone(70, 165, 30, "female", pregnant = TRUE)$PK$default
   expect_equal(x[c("v1", "v2", "cl1", "cl2")], a[c("v1", "v2", "cl1", "cl2")])

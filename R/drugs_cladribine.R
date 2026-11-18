@@ -14,7 +14,7 @@
 #
 # THE SOURCE
 # ==========
-# Lindemalm S, Savic RM, Karlsson MO, Juliusson G, Liliemark J, Friberg LE.
+# Lindemalm S, Savic RM, Karlsson MO, Juliusson G, Liliemark J, Albertioni F.
 # Application of population pharmacokinetics to cladribine.  BMC Pharmacol
 # 2005;5:4 (doi 10.1186/1471-2210-5-4).  Pooled data from five Swedish
 # centres and one in the UK, 1990-1996: 1102 plasma concentrations from 161
@@ -60,10 +60,12 @@
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # No size covariate was significant, and the authors conclude that a fixed
-# dose does as well as dosing by weight or body surface area.  The library's
-# rule still applies: the population values are taken as the 70-kg
-# reference man's (the cohort's mean was 76 kg, 79% men) and scaled to
-# fat-free mass with the switch on; with it off they are fixed, as published
+# dose does as well as dosing by weight or body surface area.  The population
+# values are therefore the cohort's typical patient's (mean 76 kg, 174 cm,
+# 60 years, 129 men of 163), and with the switch on they are anchored at that
+# patient (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort): the reference man's volumes are divided by 1.025
+# and clearances by 1.019.  With it off they are fixed, as published
 # (legacyVolume = legacyClearance = 1).
 #
 # PREGNANCY (R/pregnancy.R)
@@ -84,6 +86,12 @@ CLADRIBINE_LINDEMALM <- c(
   kaPO = 1.31, FPO = 0.353, kaSC = 2.48, FSC = 1
 )
 
+# Lindemalm 2005, Table 1 (PDF p. 5), read on the PDF 2026-11-18: the 163
+# patients' means, 76 kg, 174 cm, 60 years, 129 men and 34 women (161 were
+# modelled; the table was not reprinted for them).  The model is anchored at
+# this cohort (docs/weight-adjustment.md, Anchoring at the source's cohort).
+CLADRIBINE_COHORT <- list(weight = 76, height = 174, age = 60, men = 129, women = 34)
+
 #' Cladribine (Lindemalm 2005)
 #'
 #' Three compartments in adults with lymphoid malignancies, intravenous,
@@ -96,7 +104,7 @@ cladribine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   p <- CLADRIBINE_LINDEMALM
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1, cohort = do.call(cohortSizeFactors, CLADRIBINE_COHORT))
 
   default <- list(
     v1  = p[["V1"]] * size$volume,
@@ -117,7 +125,7 @@ cladribine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   PK <- sapply(events, function(x) list(get0(x)))
 
   reference <- paste0(
-    "Lindemalm S, Savic RM, Karlsson MO, Juliusson G, Liliemark J, Friberg LE. ",
+    "Lindemalm S, Savic RM, Karlsson MO, Juliusson G, Liliemark J, Albertioni F. ",
     "Application of population pharmacokinetics to cladribine. BMC Pharmacol ",
     "2005;5:4. Three compartments in 161 adults with lymphoid malignancies: CL ",
     "39.3 L/h, V1 71.7 L, Q2 51.1 L/h, V2 475 L, Q3 105 L/h, V3 73.6 L; oral ",

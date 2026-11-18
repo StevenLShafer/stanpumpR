@@ -10,8 +10,11 @@ clockTimeToDelta <- function(reference, x) {
   if (is.na(start)) return(NA)
   FIX <- grepl(":",x)
   x[FIX] <- as.numeric(unlist(lapply(x[FIX],FUN = hourMinute))) - start
-  x <- as.numeric(x)
-  x[x < 0] <- x[x < 0] + MINS_PER_DAY # Wrap around midnight
+  x <- suppressWarnings(as.numeric(x))
+  # Wrap around midnight.  A blank or unreadable cell is NA, which must not
+  # reach the subscript (NAs are not allowed in subscripted assignments).
+  neg <- !is.na(x) & x < 0
+  x[neg] <- x[neg] + MINS_PER_DAY
   x
 }
 
@@ -22,13 +25,18 @@ deltaToClockTime <- function(reference, x)
     return(as.numeric(x))
   }
   start <- hourMinute(reference)
+  x <- as.numeric(x)
+  if (length(start) != 1L || is.na(start)) return(rep(NA_character_, length(x)))
+  bad <- !is.finite(x)
   # Round to whole minutes BEFORE splitting off the hours.  Rounding the
   # minutes afterwards turned 59.6 minutes past the hour into "HH:60".
-  x <- round(as.numeric(x) + start)
+  x <- round(x + start)
   xHours <- floor(x/60)
   xMinutes <- x - xHours * 60
   xHours <- xHours %% 24
-  return(sprintf("%02d:%02d",xHours,xMinutes))
+  out <- sprintf("%02d:%02d",xHours,xMinutes)
+  out[bad] <- NA_character_
+  out
 }
 
 # Separate hour from minute in hh:ss format. Return number of minutes
@@ -37,9 +45,14 @@ deltaToClockTime <- function(reference, x)
 # elapsedHourMinute() instead.
 hourMinute <- function(x)
 {
-  px <- lubridate::parse_date_time(x, "HM", quiet=TRUE)
-  if (!is.na(px)) px <- 60*lubridate::hour(px) + lubridate::minute(px)
-  return(px)
+  # Always a number of minutes (NA_real_ where it cannot be read), never a
+  # POSIXct NA: one of those made deltaToClockTime() fail on a reference with
+  # seconds ("23:59:59").  Vectorised.
+  px <- suppressWarnings(lubridate::parse_date_time(x, "HM", quiet=TRUE))
+  out <- rep(NA_real_, length(px))
+  ok <- !is.na(px)
+  out[ok] <- 60*lubridate::hour(px[ok]) + lubridate::minute(px[ok])
+  out
 }
 
 getReferenceTime <- function(time) {

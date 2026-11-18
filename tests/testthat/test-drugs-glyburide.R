@@ -5,6 +5,10 @@ test_that("Rambiritch's parameters, fixed with the switch off", {
   expect_equal(c(pk$cl1, pk$cl2) * 60, c(2.16, 3.84))
   expect_equal(pk$ka_PO, 0.53 / 60)
   size <- pkSizeFactors(95, 170, 54, "female", TRUE, legacyVolume = 1)
+  # anchored at Rambiritch's cohort (Table 1)
+  kc <- cohortFactorsIndependent(list(weight = 71.1, height = 156, age = 54, men = 2, women = 20))
+  size$volume <- size$volume / kc$volume
+  size$clearance <- size$clearance / kc$clearance
   on <- glyburide(95, 170, 54, "female")$PK$default
   expect_equal(on$v1, 11.70 * size$volume)
   expect_equal(on$cl2, 3.84 * size$clearance / 60)
@@ -26,11 +30,13 @@ test_that("pregnancy: CL/F x 1.9 and both apparent volumes x 1.57, Q/F unchanged
   expect_match(on$reference, "Hebert", fixed = TRUE)
   expect_no_match(off$reference, "Hebert", fixed = TRUE)
   # The values the model gives with the flag on
+  # Each over the factors of Rambiritch's cohort (Table 1), the anchor
+  kc <- cohortFactorsIndependent(list(weight = 71.1, height = 156, age = 54, men = 2, women = 20))
   actual <- glyburide(70, 165, 30, "female", pregnant = TRUE)$PK$default
-  expect_equal_rounded(14.80716003, actual$v1)
-  expect_equal_rounded(86.1852648, actual$v2)
+  expect_equal_rounded(14.80716003 / kc$volume, actual$v1)
+  expect_equal_rounded(86.1852648 / kc$volume, actual$v2)
   expect_equal_rounded(1, actual$v3)
-  expect_equal_rounded(0.05818965653, actual$cl1)
-  expect_equal_rounded(0.05444646225, actual$cl2)
+  expect_equal_rounded(0.05818965653 / kc$clearance, actual$cl1)
+  expect_equal_rounded(0.05444646225 / kc$clearance, actual$cl2)
   expect_equal_rounded(0, actual$cl3)
 })
