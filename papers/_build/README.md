@@ -1,0 +1,52 @@
+# The paper archive's pipeline
+
+These are the scripts that file, extract, index and digest the source papers. They are the
+**version-controlled record**; the copies that **actually run** live beside the papers, in the
+archive's own `_build` folder (`papers/README.md` says where the archive is and how a session
+reads it).
+
+## Why there are two copies
+
+Most of these scripts find the archive as the parent of their own directory, and the archive
+cannot live in this repository: the PDFs are copyrighted, and keeping them out is the reason the
+digests can be published at all. So the scripts have to sit beside the papers to run.
+
+Until 2026-11-18 that meant they existed **only** on the Drive, with no history, no review and no
+backup — three of them were changed that day, and nothing recorded what they had been. Hence this
+folder.
+
+## Keeping the two in step
+
+`check_in_step.py` compares them and names anything that differs, is in the archive but not
+committed, or is committed but missing from the archive. `update.bat` runs it last on every
+filing run, so drift is reported rather than discovered later; it only ever reports, and always
+succeeds, so it cannot break the chain.
+
+A mirror nobody checks is worse than no mirror — it looks like history while quietly describing
+something else. That is what the check exists to prevent.
+
+```
+python check_in_step.py [--repo <path>] [--archive <path>]
+```
+
+**After changing a script in the archive, copy it here and commit it**, saying in the message what
+changed and why. The next `update.bat` will tell you if you forgot.
+
+## What runs, in the order `update.bat` runs it
+
+| Script | What it does |
+|---|---|
+| `file_supplements.py` | Files publisher supplements beside their article, by sha. |
+| `file_downloads.py` | Identifies each new PDF in Downloads by printed DOI, or by title and first author, and files it as `PMID_<pmid>.pdf`. Accepts a file named by hand when the reference list **or the download queue** asks for that PMID. |
+| `ocr_scans.py` | Adds a text layer to a scan that has none. |
+| `merge.py` | Merges the per-document extractions. |
+| `build.py` | Rebuilds `stanpumpR-references.xlsx` and `stanpumpr-queue.csv` from the works the stanpumpR source cites, keeping rows `arrivals.py` added. |
+| `digest_prep.py` | Works out which papers still need a digest card. |
+| `arrivals.py` | Closes the loop: reports which papers a model is **waiting for** that have now arrived, and adds any wanted paper the download queue does not yet carry. |
+| `check_in_step.py` | Reports whether these copies and the archive's have drifted apart. |
+
+`update.bat` then launches `digests.bat` detached, which writes up to N missing cards through
+`digest_run.py` and opens a pull request.
+
+Nothing here is run by the R package, and `papers/` is excluded from the built package
+(`.Rbuildignore`), so none of this reaches CRAN or the deployed app.
