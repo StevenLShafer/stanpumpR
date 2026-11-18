@@ -14,7 +14,7 @@
 #
 # THE SOURCE
 # ==========
-# Lindemalm S, Savic RM, Karlsson MO, Juliusson G, Liliemark J, Friberg LE.
+# Lindemalm S, Savic RM, Karlsson MO, Juliusson G, Liliemark J, Albertioni F.
 # Application of population pharmacokinetics to cladribine.  BMC Pharmacol
 # 2005;5:4 (doi 10.1186/1471-2210-5-4).  Pooled data from five Swedish
 # centres and one in the UK, 1990-1996: 1102 plasma concentrations from 161
@@ -117,7 +117,7 @@ cladribine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   PK <- sapply(events, function(x) list(get0(x)))
 
   reference <- paste0(
-    "Lindemalm S, Savic RM, Karlsson MO, Juliusson G, Liliemark J, Friberg LE. ",
+    "Lindemalm S, Savic RM, Karlsson MO, Juliusson G, Liliemark J, Albertioni F. ",
     "Application of population pharmacokinetics to cladribine. BMC Pharmacol ",
     "2005;5:4. Three compartments in 161 adults with lymphoid malignancies: CL ",
     "39.3 L/h, V1 71.7 L, Q2 51.1 L/h, V2 475 L, Q3 105 L/h, V3 73.6 L; oral ",
