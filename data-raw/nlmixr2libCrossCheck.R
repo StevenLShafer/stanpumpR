@@ -21,7 +21,8 @@
 #      papers in nlmixr2lib have no digest card?  (candidate-papers.csv)
 #   3. Drugs not in the library.  Which drugs does nlmixr2lib model that
 #      stanpumpR does not, and is each at least mentioned in one of
-#      stanpumpR's registries?  (candidate-drugs.csv)
+#      stanpumpR's registries?  (candidate-drugs.csv, and one row per model
+#      in models-outside-library.csv)
 #
 # Both transcriptions are AI-assisted (stanpumpR's by Claude; much of
 # nlmixr2lib's by an extraction skill), so they can share a failure mode: a
@@ -372,6 +373,12 @@ writeCsv(sharedParams[, c("model", "card", "parameter", "label", "printed", "tra
          "shared-parameters.csv")
 writeCsv(candidatePapers, "candidate-papers.csv")
 writeCsv(candidateDrugs, "candidate-drugs.csv")
+# One row per model of a drug not in the Drug Library, for choosing sources
+# (data-raw/libraryExpansionCandidates.R reads it).
+writeCsv(outside[order(outside$drug, -outside$n),
+                 c("drug", "model", "author", "year", "nSubjects", "ageRange", "weightRange",
+                   "disease", "doi", "pmid", "card", "reference")],
+         "models-outside-library.csv")
 
 # The summary the README links to.
 mdTable <- function(df, cols, n = nrow(df)) {
