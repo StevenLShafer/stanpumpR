@@ -12,24 +12,24 @@ There is no modern population model of levothyroxine, so this model comes from t
 
 Inada also fitted a three-pool model of serum, interstitial fluid and cells. For T4, though, the paper prints only its total volume and the cellular pool, not the other two volumes or the exchange rates, so it cannot be built. The one-compartment model has the right clearance and volume for the days and weeks over which levothyroxine is dosed. It misses the distribution phase in the first day after a dose, when serum T4 rises higher and falls faster than this curve.
 
-**Absorption.** The absorption comes from Marguerite Hays's studies, which gave labelled T4 both orally and intravenously:
+**Absorption.** The model is built for steady-state dosing, where clearance is what matters (Steven L. Shafer, 2026-11-18):
 
-- **Rate:** from Hays 1991 (*Thyroid* 1:241-248, doi 10.1089/thy.1991.1.241), Table 1. After a delay of 13.7 minutes, the absorptive site empties at 0.0194 /min, either into the body (0.0099 /min) or down the gut (0.0095 /min).
-- **Extent:** from Hays and Nielsen 1994 (*Thyroid* 4:55-64, doi 10.1089/thy.1994.4.55), Table 1. Absorption was 69.3% in subjects aged 21 to 69 (n 45) and 62.8% at 70 to 79 (n 8). The paper reports these two groups rather than a model of age, so bioavailability steps from 0.693 to 0.628 at 70 years.
+- **Rate:** from Marguerite Hays's 1991 study (*Thyroid* 1:241-248, doi 10.1089/thy.1991.1.241), Table 1, which gave labelled T4 orally and intravenously to five normal volunteers. Hays called one subject's absorption "abnormally low" (27%), and that subject is left out. In the other four, after a mean delay of 15.3 minutes, the absorptive site empties at 0.0131 /min, either into the body or down the gut.
+- **Extent:** 48%, from Surks and colleagues (*J Clin Invest* 1973;52:805-811), Table I: absorption in seven hypothyroid patients taking tablets at steady state. That is what a patient takes.
 
-Hays gave the tracer as a solution. The Synthroid label gives the tablet 93% of an oral solution, about 64.5% here. In patients on tablets at steady state, absorption has been measured lower still: 48% (Surks 1973) and, by this model, 53% in Inada's treated patients (see Checks).
+Other measurements give more. Hays and Nielsen 1994 (*Thyroid* 4:55-64) measured 69.3% in subjects aged 21 to 69 and 62.8% at 70 to 79, but from a tracer solution, not a tablet. The Synthroid label gives the tablet 93% of an oral solution. By this model, Inada's treated patients absorbed 53% (see Checks).
 
 ### Checks
 
 Against the source's own subjects and other studies:
 
 - **Nicoloff 1972** (*J Clin Invest* 51:473-483) measured a clearance of 1.30 L/day in eight euthyroid adults averaging 73.3 kg. That is 1.064 L/day per 60 kg, within 0.4% of Inada's. Their half-life was 6.2 days. Sterling 1956 measured 6.7 days.
-- **Inada's treated patients.** Three hypothyroid patients took 150 mcg a day and had a mean serum T4 of 9.5 mcg/dL. At their mean weight of 46.3 kg this model predicts 12.3 mcg/dL. That corresponds to a bioavailability of 0.53 rather than 0.693.
-- **XP-8121's phase 1** (Fitch 2025, *Clin Transl Sci*, doi 10.1111/cts.70244), not used in the model. Healthy volunteers averaging 77.7 kg took 600 mcg of Synthroid. Their baseline-adjusted peak was 47.6 ng/mL at a median of 3.1 hours. This model gives 36.3 ng/mL at 4.9 hours, low and late because it lacks the distribution phase. The terminal half-life was 144 hours against this model's 132.
+- **Inada's treated patients.** Three hypothyroid patients took 150 mcg a day and had a mean serum T4 of 9.5 mcg/dL. At their mean weight of 46.3 kg this model predicts 8.55 mcg/dL, 10% low. That corresponds to a bioavailability of 0.53 rather than 0.48.
+- **XP-8121's phase 1** (Fitch 2025, *Clin Transl Sci*, doi 10.1111/cts.70244), not used in the model. Healthy volunteers averaging 77.7 kg took 600 mcg of Synthroid. Their baseline-adjusted peak was 47.6 ng/mL at a median of 3.1 hours. This model gives 24.9 ng/mL at 6.7 hours, half the measured peak. It is low and late because it lacks the distribution phase, its absorption is slower without Hays's subject 1, and its bioavailability is for tablets at steady state. The terminal half-life was 144 hours against this model's 132.
 
 ### Body size and age
 
-The source's volumes and clearances were adjusted to body weight in proportion. With [the scaling switch](help:models/fat-free-mass) on they scale by fat-free mass; with it off, in proportion to total weight, as the source did. The subjects were adults. Below 21 years, the bioavailability of the 21-69 group is used, an extrapolation.
+The source's volumes and clearances were adjusted to body weight in proportion. With [the scaling switch](help:models/fat-free-mass) on they scale by fat-free mass; with it off, in proportion to total weight, as the source did. The subjects were adults; children get the same model scaled by size, an extrapolation.
 
 ### Dose
 

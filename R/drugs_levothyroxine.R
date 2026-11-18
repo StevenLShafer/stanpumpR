@@ -53,14 +53,16 @@
 # is the distribution phase of the first day after a dose: the serum level
 # rises above, and falls faster than, a one-compartment curve in the first
 # hours (see CHECKS).  Over days and weeks, which is what levothyroxine is
-# dosed over, one compartment with the right clearance and volume is right.
+# dosed over, one compartment with the right clearance and volume is right,
+# and Shafer kept it (2026-11-18: "The only thing that matters is clearance
+# with steady state dosing").
 #
 # Why Inada's normal subjects.  The three T4-treated hypothyroid patients
 # (Table II: V 11.8 L, K 0.091 /day, MCR 1.08 L/day per 60 kg) are the
 # population levothyroxine is given to, but they are three, and their
-# clearance is the normals' (1.08 against 1.06).  The normals are the
-# default; the treated group would give the same steady state with a longer
-# half-life (7.6 days against 5.5) [decision for Shafer].
+# clearance is the normals' (1.08 against 1.06).  Shafer chose the normals
+# (2026-11-18, "Use Inada's normal men"); the treated group would give the
+# same steady state with a longer half-life (7.6 days against 5.5).
 #
 # Cross-checks, not used: Nicoloff 1972 (J Clin Invest 51:473-483, doi
 # 10.1172/JCI106835, Table I, eight euthyroid adults aged 25-63, mean 73.3
@@ -75,37 +77,41 @@
 # used for disposition.  Only clearance is comparable between sources
 # (AGENTS.md), and the two-week studies agree on it.
 #
-# ABSORPTION: HAYS 1991 AND HAYS AND NIELSEN 1994
-# ===============================================
+# ABSORPTION: HAYS 1991 (RATE) AND SURKS 1973 (EXTENT)
+# ======================================================
 # Rate and lag: Hays MT.  Localization of human thyroxine absorption.
 # Thyroid 1991;1:241-248, doi 10.1089/thy.1991.1.241, Table 1, the global
 # absorption model (Fig. 2b) fitted to plasma 131I-T4 after oral and
-# intravenous doses in five normal volunteers: a delay DT9 of 13.7 min, then
-# an absorptive site emptying by absorption, k12,7 = 0.0099 /min, and by loss
-# down the gut, k0,7 = 0.0095 /min (means of the five subjects).  The site's
-# first-order emptying is the depot's ka = 0.0099 + 0.0095 = 0.0194 /min
-# (1.164 /h), and the delay is the lag, 13.7 min.  Two readings to note: the
+# intravenous doses in five normal volunteers: a delay DT9, then an
+# absorptive site emptying by absorption (k12,7) and by loss down the gut
+# (k0,7).  The means of all five are DT9 13.7 min, k12,7 0.0099 and k0,7
+# 0.0095 /min, but the mean k0,7 is pulled up by subject 1, whose absorption
+# was "abnormally low" (27%; Hays's text and Table 2 name subject 1, the
+# abstract's "fourth subject" counting only the four imaged).  On Shafer's
+# decision of 2026-11-18 subject 1 is excluded: the means of subjects 2-5 are
+# k12,7 0.009375 and k0,7 0.00375 /min, so the depot's first-order emptying
+# is ka = 0.013125 /min (0.7875 /h), and the lag is their mean DT9, 15.25
+# min.  Hays's own split of the site's emptying into absorbed and lost is not
+# used for the extent (below).  Two readings to note: the
 # delay is SAAM's delay element, taken here as a pure lag; and the paper
 # absorbs into the fast-exchange (hepatic) pool, which a one-compartment
-# model cannot distinguish from absorption into serum.  The mean k0,7 is
-# pulled up by subject 1, whose absorption was "abnormally low" (k0,7 0.0323
-# /min); without subject 1, ka would be 0.0131 /min and the lag 15.3 min
-# [decision for Shafer].
+# model cannot distinguish from absorption into serum.
 #
-# Extent: Hays MT, Nielsen KR.  Human thyroxine absorption: age effects and
-# methodological analyses.  Thyroid 1994;4:55-64, doi 10.1089/thy.1994.4.55,
-# Table 1, the double isotope method in control subjects: 69.3% at 21-69
-# years (n 45), 62.8% at 70-79 (n 8, P < 0.001).  The paper prints these
-# groups, not a model of age, so bioavailability steps from 0.693 to 0.628 at
-# 70; below 21 it is the 21-69 value, an extrapolation.  These are oral
-# tracer SOLUTIONS in albumin, not tablets.  The Synthroid label gives the
-# tablet 93% of an oral solution (which would make it 0.645), and NDA
+# Extent, not used: Hays MT, Nielsen KR.  Human thyroxine absorption: age
+# effects and methodological analyses.  Thyroid 1994;4:55-64, doi
+# 10.1089/thy.1994.4.55, Table 1, the double isotope method in control
+# subjects: 69.3% at 21-69 years (n 45), 62.8% at 70-79 (n 8, P < 0.001).
+# These are oral tracer SOLUTIONS in albumin, not tablets.  The Synthroid
+# label gives the tablet 93% of an oral solution (which would make it 0.645), and NDA
 # 202231's clinical pharmacology review quotes Maxon 1983, Synthroid tablets
 # 66% of intravenous.  At steady state on tablets, absorption was lower:
 # Surks 1973 (J Clin Invest 52:805-811, Table I, seven treated patients)
 # 48.0 +/- 2.6%, and Inada's three treated patients imply 53% (CHECKS).  The
-# bioavailability is read, not fitted (AGENTS.md); which reading applies to
-# the patient's product is a [decision for Shafer].
+# bioavailability is read, not fitted (AGENTS.md).  Shafer chose Surks's
+# 0.480 on 2026-11-18 ("The only thing that matters is clearance with steady
+# state dosing"): it is absorption from tablets at steady state, which is
+# what a patient takes, and Inada's treated patients imply 0.53.  It is not
+# stepped by age: Surks measured one group.
 #
 # DOSE
 # ====
@@ -131,15 +137,18 @@
 # XP-8121's phase 1 (Fitch 2025, Clin Transl Sci, doi 10.1111/cts.70244,
 # Table 2; not used in the model): 600 mcg of oral Synthroid in healthy
 # volunteers (part 1 mean 77.7 kg), baseline-adjusted total T4.  This model
-# at 77.7 kg: Cmax 36.3 ng/mL at 4.9 h against 47.6 at a median 3.1 h (-24%;
-# the missing distribution phase), terminal half-life 132 h against 144
-# (-8%), AUC0-648h 6834 ng.h/mL against 4005 (+71%).  The AUC is not a fair
-# test: in euthyroid volunteers the dose suppresses TSH and their own T4
-# secretion, so subtracting the pre-dose baseline also removes some of the
-# dose's own T4, and negative values were set to zero (S1).  Inada's own
-# treated patients (150 mcg/day, 46.3 kg, aged 52-60): this model's average
-# steady-state T4 is 12.3 mcg/dL against the 9.5 measured (+30%), which is
-# a bioavailability of 0.53 rather than 0.693.
+# at 77.7 kg: Cmax 24.9 ng/mL at 6.7 h against 47.6 at a median 3.1 h (-48%:
+# the missing distribution phase, the slower absorption without subject 1,
+# and a steady-state bioavailability against a single dose), terminal
+# half-life 132 h against 144 (-8%), AUC0-648h 4733 ng.h/mL against 4005
+# (+18%).  The AUC is not a fair test: in euthyroid volunteers the dose
+# suppresses TSH and their own T4 secretion, so subtracting the pre-dose
+# baseline also removes some of the dose's own T4, and negative values were
+# set to zero (S1).  The model is for steady state, which is what Shafer
+# asked of it: Inada's own treated patients (150 mcg/day, 46.3 kg, aged
+# 52-60) had a mean serum T4 of 9.5 mcg/dL, and this model's average
+# steady-state T4 is 8.55 (-10%), a bioavailability of 0.53 rather than
+# 0.48.
 #
 # PREGNANCY AND THE BAND
 # ======================
@@ -154,21 +163,23 @@
 LEVOTHYROXINE_V_60KG  <- 8.4     # L
 LEVOTHYROXINE_CL_60KG <- 1.06    # L/day
 LEVOTHYROXINE_REFERENCE_WEIGHT <- 60  # kg, Inada's adjustment
-# Hays 1991, Table 1, global absorption model, means of five subjects
-LEVOTHYROXINE_K_ABSORBED <- 0.0099   # /min, k12,7
-LEVOTHYROXINE_K_LOST     <- 0.0095   # /min, k0,7
-LEVOTHYROXINE_LAG        <- 13.7     # min, DT9
-# Hays and Nielsen 1994, Table 1
-LEVOTHYROXINE_F_UNDER_70 <- 0.693
-LEVOTHYROXINE_F_70_PLUS  <- 0.628
-LEVOTHYROXINE_F_AGE_STEP <- 70       # years
+# Hays 1991, Table 1, global absorption model, means of subjects 2-5
+# (subject 1, whose absorption was abnormally low, excluded on Shafer's
+# decision of 2026-11-18)
+LEVOTHYROXINE_K_ABSORBED <- (0.0087 + 0.0077 + 0.0098 + 0.0113) / 4   # /min, k12,7
+LEVOTHYROXINE_K_LOST     <- (0.0042 + 0.0028 + 0.0040 + 0.0040) / 4   # /min, k0,7
+LEVOTHYROXINE_LAG        <- (4.6 + 15.8 + 8.2 + 32.4) / 4             # min, DT9
+# Surks 1973, Table I: absorption on tablets at steady state (Shafer,
+# 2026-11-18)
+LEVOTHYROXINE_F          <- 0.480
 # Levothyroxine sodium (anhydrous) to thyroxine
 LEVOTHYROXINE_T4_PER_SALT <- 776.87 / 798.86
 
-#' Levothyroxine (Inada 1975; Hays 1991; Hays and Nielsen 1994)
+#' Levothyroxine (Inada 1975; Hays 1991; Surks 1973)
 #'
 #' One compartment from Inada's intravenous tracer study, oral absorption
-#' from Hays's tracer studies; total serum T4 above the patient's baseline.
+#' rate from Hays's tracer study, extent from Surks's tablets at steady
+#' state; total serum T4 above the patient's baseline.
 #' See the header of \code{R/drugs_levothyroxine.R}.
 #'
 #' @inheritParams cefazolin
@@ -181,8 +192,7 @@ levothyroxine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   v  <- LEVOTHYROXINE_V_60KG * toReference * size$volume / LEVOTHYROXINE_T4_PER_SALT
   cl <- LEVOTHYROXINE_CL_60KG * toReference * size$clearance / LEVOTHYROXINE_T4_PER_SALT /
     MINS_PER_DAY
-  bioavailability <- if (isTRUE(age >= LEVOTHYROXINE_F_AGE_STEP)) LEVOTHYROXINE_F_70_PLUS else
-    LEVOTHYROXINE_F_UNDER_70
+  bioavailability <- LEVOTHYROXINE_F
 
   default <- list(
     v1  = v,
@@ -208,9 +218,10 @@ levothyroxine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     reference = paste0(
       "Inada M, Kasagi K, Kurata S, et al., J Clin Invest 1975;55:1337-1348, Table II ",
       "(T4, normal subjects, extrapolation method): V 8.4 L and clearance 1.06 L/day per ",
-      "60 kg, one compartment; absorption from Hays MT, Thyroid 1991;1:241-248, Table 1 ",
-      "(ka 0.0194 /min, lag 13.7 min), and Hays MT, Nielsen KR, Thyroid 1994;4:55-64, ",
-      "Table 1 (F 0.693 below 70 years, 0.628 from 70); doses in mcg of levothyroxine ",
+      "60 kg, one compartment; absorption rate from Hays MT, Thyroid 1991;1:241-248, ",
+      "Table 1, subject 1 excluded (ka 0.0131 /min, lag 15.3 min), and bioavailability ",
+      "from Surks MI et al., J Clin Invest 1973;52:805-811, Table I (0.480, tablets at ",
+      "steady state); doses in mcg of levothyroxine ",
       "sodium, plotted as total serum T4 above the patient's own baseline. ",
       "https://doi.org/10.1172/JCI108053")
   )

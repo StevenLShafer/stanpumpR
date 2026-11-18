@@ -2,7 +2,7 @@
 % Please edit documentation in R/drugs_levothyroxine.R
 \name{levothyroxine}
 \alias{levothyroxine}
-\title{Levothyroxine (Inada 1975; Hays 1991; Hays and Nielsen 1994)}
+\title{Levothyroxine (Inada 1975; Hays 1991; Surks 1973)}
 \usage{
 levothyroxine(weight, height, age, sex, adjustToFFM = TRUE)
 }
@@ -27,6 +27,7 @@ a list in the shape \code{getDrugPK()} expects
 }
 \description{
 One compartment from Inada's intravenous tracer study, oral absorption
-from Hays's tracer studies; total serum T4 above the patient's baseline.
+rate from Hays's tracer study, extent from Surks's tablets at steady
+state; total serum T4 above the patient's baseline.
 See the header of \code{R/drugs_levothyroxine.R}.
 }
