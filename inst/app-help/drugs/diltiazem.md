@@ -6,7 +6,7 @@ As for [labetalol](help:drugs/labetalol), five numbers fix a four-parameter mode
 
 ### Covariates
 
-None in the source; the parameters are those of the study's adults, scaled to fat-free mass when [the scaling switch](help:models/fat-free-mass) is on.
+None in the source; the parameters are those of the study's ten adults (mean 71.9 kg, 171.5 cm, 44.9 years, five men and five women). With [the scaling switch](help:models/fat-free-mass) on, a patient like them receives the published values and everyone else is scaled from there by fat-free mass.
 
 ### Where to be careful
 

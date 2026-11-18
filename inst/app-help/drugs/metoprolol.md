@@ -12,4 +12,4 @@ Plasma metoprolol in ng/mL, for doses of metoprolol tartrate as labelled, intrav
 
 ### Where to be careful
 
-Twelve healthy men aged 19 to 33 years: no patients, no women, no elderly, no liver disease. The parameters are fixed values, scaled to fat-free mass when [the scaling switch](help:models/fat-free-mass) is on. See [the vasoactive and resuscitation drugs](help:models/vasoactive).
+Twelve healthy men aged 19 to 33 years: no patients, no women, no elderly, no liver disease. The parameters are fixed values, the study's typical man's (median 80 kg, 186 cm); with [the scaling switch](help:models/fat-free-mass) on, everyone else is scaled from him by fat-free mass. See [the vasoactive and resuscitation drugs](help:models/vasoactive).

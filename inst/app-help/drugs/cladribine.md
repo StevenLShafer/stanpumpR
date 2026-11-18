@@ -8,7 +8,7 @@ Plasma cladribine in ng/mL. Cladribine acts as its triphosphate inside lymphocyt
 
 ### Covariates
 
-None was significant. Age, weight, height, sex, body surface area, diagnosis, creatinine clearance, liver tests and lymphocyte count were all tested, and the authors conclude that a fixed dose does as well as dosing by weight or surface area. With [the scaling switch](help:models/fat-free-mass) on, the parameters are scaled to fat-free mass from the 70-kg reference man; with it off they are the published values for everyone.
+None was significant. Age, weight, height, sex, body surface area, diagnosis, creatinine clearance, liver tests and lymphocyte count were all tested, and the authors conclude that a fixed dose does as well as dosing by weight or surface area. The parameters are therefore the study's typical patient's (mean 76 kg, 174 cm, 60 years, four in five men). With [the scaling switch](help:models/fat-free-mass) on, a patient like that receives them and everyone else is scaled from there by fat-free mass; with it off they are the published values for everyone.
 
 ### Where to be careful
 

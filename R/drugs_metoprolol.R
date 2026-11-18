@@ -40,9 +40,12 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# Fixed values with no size term, for the source's young men, scaled to
-# fat-free mass with the switch on; with it off they are the published values
-# for everyone (legacyVolume = 1).
+# Fixed values with no size term, so they are the source's young men's
+# (median 80 kg, 186 cm, 23 years).  With the switch on they are anchored at
+# that man (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort): the 70 kg reference man's volumes are divided by 1.166 and
+# clearances by 1.122.  With it off they are the published values for
+# everyone (legacyVolume = 1).
 #
 # EFFECT SITE: tPeak 5 MINUTES, FOR HEART RATE; NO BAND
 # =====================================================
@@ -151,6 +154,11 @@ METOPROLOL_PREGNANCY_F_FACTOR  <- 0.5
 # Hogstedt 1985 measured.
 METOPROLOL_PREGNANCY_V_FACTOR  <- 1.5
 
+# Lammers 2017, Table 1 (printed p. 1235), read on the PDF 2026-11-18: the 12
+# men's medians, 80 kg, 186 cm, 23 years.  The model is anchored at this
+# cohort (docs/weight-adjustment.md, Anchoring at the source's cohort).
+METOPROLOL_COHORT <- list(weight = 80, height = 186, age = 23, men = 12, women = 0)
+
 #' Metoprolol, intravenous and oral (Lammers 2017)
 #'
 #' Two compartments with first-order oral absorption in healthy men, with
@@ -172,7 +180,7 @@ metoprolol <- function(weight, height, age, sex, adjustToFFM = TRUE,
     stop("Invalid cyp2d6: ", paste(cyp2d6, collapse = ", "),
          ". Must be one of: ", paste(CYP2D6_VALUES, collapse = ", "))
   }
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, METOPROLOL_COHORT))
   # Pregnancy (see the header): induced CYP2D6, so not in a poor metaboliser.
   pregnancyApplied <- isTRUE(pregnant) && cyp2d6 != CYP2D6_POOR
   clPregnancy <- if (pregnancyApplied) METOPROLOL_PREGNANCY_CL_FACTOR else 1

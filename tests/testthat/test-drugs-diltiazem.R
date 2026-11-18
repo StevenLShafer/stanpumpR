@@ -51,14 +51,24 @@ test_that("the printed steady-state volume, which the model does not use, checks
   expect_lt(abs(vss / VSS - 1), 0.03)
 })
 
-test_that("fixed parameters stand with the switch off and scale to fat-free mass with it on", {
+# Hoglund 1988, Table 1: the ten volunteers' means (read on the PDF).
+COHORT <- list(weight = 71.9, height = 171.5, age = 44.9, men = 5, women = 5)
+
+test_that("fixed parameters stand with the switch off and scale from the source's cohort with it on", {
   off <- diltiazem(110, 175, 50, "male", adjustToFFM = FALSE)$PK$default
   expect_equal_rounded(CL, off$cl1)
   expect_equal_rounded(V1, off$v1)
-  size <- pkSizeFactors(110, 175, 50, "male", TRUE)
+  k <- cohortFactorsIndependent(COHORT)
+  r <- ffmRatioMaleIndependent(110, 175, 50)
   on <- diltiazem(110, 175, 50, "male", adjustToFFM = TRUE)$PK$default
-  expect_equal_rounded(CL * size$clearance, on$cl1)
-  expect_equal_rounded(V1 * size$volume, on$v1)
+  expect_equal_rounded(CL * r^0.75 / k$clearance, on$cl1)
+  expect_equal_rounded(V1 * r / k$volume, on$v1)
+  # The cohort's man and woman, averaged geometrically 5 to 5, receive the
+  # published values.
+  m <- diltiazem(71.9, 171.5, 44.9, "male")$PK$default
+  w <- diltiazem(71.9, 171.5, 44.9, "female")$PK$default
+  expect_equal(sqrt(m$v1 * w$v1), V1, tolerance = 1e-12)
+  expect_equal(sqrt(m$cl1 * w$cl1), CL, tolerance = 1e-12)
 })
 
 test_that("the source's own infusion peaks below dose over the central volume", {

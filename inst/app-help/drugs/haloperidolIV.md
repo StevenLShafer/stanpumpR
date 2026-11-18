@@ -8,7 +8,7 @@ Intravenous haloperidol, from Li and colleagues (*Pharmaceutics* 2022;14:549): 2
 
 ### Covariates
 
-Weight, age, sex and CYP2D6 genotype were tested and rejected, so the **CYP 2D6** field does not change this drug (unlike [oral haloperidol](help:drugs/haloperidol)). The final model lowered clearance with C-reactive protein, flattening above about 100 mg/L, but the exact function is in a supplement that was not available, so **the CRP effect is not applied**: this is the typical patient's clearance. The values take the library's [fat-free-mass scaling](help:models/fat-free-mass).
+Weight, age, sex and CYP2D6 genotype were tested and rejected, so the **CYP 2D6** field does not change this drug (unlike [oral haloperidol](help:drugs/haloperidol)). The final model lowered clearance with C-reactive protein, flattening above about 100 mg/L, but the exact function is in a supplement that was not available, so **the CRP effect is not applied**: this is the typical patient's clearance. The values are the study's typical patient's (median 80 kg, 67 years, 12 men and 10 women), and with [fat-free-mass scaling](help:models/fat-free-mass) on, everyone else is scaled from that patient.
 
 ### Where to be careful
 

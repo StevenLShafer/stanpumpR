@@ -58,9 +58,14 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# The parameters are fixed values with no size term, written for the source's
-# adults and scaled to fat-free mass with the switch on; with it off they are
-# the published values for everyone (legacyVolume = 1).
+# The parameters are fixed values with no size term, so they are the source's
+# volunteers' (71.9 kg, 171.5 cm, 44.9 years, 5 men and 5 women, Table 1).
+# With the switch on they are anchored at that cohort (Steven L. Shafer,
+# 2026-11-18; docs/weight-adjustment.md, Anchoring at the source's cohort): a
+# patient like the cohort's receives them, and the 70 kg reference man's
+# volumes are divided by 0.927 and clearances by 0.945 (half the cohort were
+# women, so its fat-free mass is below his).  With the switch off
+# they are the published values for everyone (legacyVolume = 1).
 #
 # WHAT THIS MODEL IS NOT
 # ======================
@@ -97,6 +102,12 @@ DILTIAZEM_VSS <- 209          # L, the check, not used to build
 DILTIAZEM_THALF_ALPHA <- 0.40 * 60   # min
 DILTIAZEM_THALF_BETA  <- 2.77 * 60   # min
 
+# Hoglund 1988, Table 1 (printed p. 402), read on the PDF 2026-11-18: the ten
+# volunteers' means, 71.9 kg, 171.5 cm, 44.9 years, five men and five women.
+# The published values are this cohort's, and the model is anchored at it
+# (docs/weight-adjustment.md, Anchoring at the source's cohort).
+DILTIAZEM_COHORT <- list(weight = 71.9, height = 171.5, age = 44.9, men = 5, women = 5)
+
 #' Diltiazem, intravenous (Hoglund 1988)
 #'
 #' Two compartments from the means reported for ten healthy volunteers; see
@@ -107,7 +118,7 @@ DILTIAZEM_THALF_BETA  <- 2.77 * 60   # min
 #' @export
 diltiazem <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, DILTIAZEM_COHORT))
 
   p <- twoCompartmentFromCentralVolume(DILTIAZEM_CL, DILTIAZEM_V1,
                                        DILTIAZEM_THALF_ALPHA,
