@@ -738,6 +738,9 @@ paperReviewServer <- function(input, output, session)
     shinyjs::hide("reviewLate")
     hasPdf(FALSE)
     bump()
+    # The fields showed the discarded files' names and "Upload complete"
+    # (Shafer's test of 2026-11-17); they are emptied as the store is.
+    for (field in c("manuscript", "supplement")) shinyjs::reset(field)
     status("Discarded. Nothing about the paper remains in this session.")
   })
 

@@ -306,6 +306,24 @@ paperReviewIdentifiability <- function(extraction)
   w <- reference$weight
   n <- paperReviewNum(extraction$structure$compartments)
   structureLoc <- extraction$structure$location
+  # A published model the paper uses as published is not the paper's to
+  # close: rebuilt from a figure of its simulations, Eleveld's propofol model
+  # came out with a V1 of 45.6 L, and was then reported as not reproducing
+  # that figure (Shafer's test of 2026-11-17, BJA-D-26-00728).
+  published <- paperReviewPublishedModels(extraction)
+  if (length(published)) {
+    for (pm in published) {
+      lib <- paperReviewLibraryModel(pm)
+      add("info", paste0("A published model, used as published: ", pm$name %or% "unnamed"),
+          paste0("The paper does not estimate it, so it is not checked for identifiability or ",
+                 "rebuilt from the paper's figures. ",
+                 if (is.null(lib)) "stanpumpR's library does not hold it under this name."
+                 else paste0("stanpumpR's library holds it as ", lib$label, " (", lib$reference,
+                             "): simulate it there.")),
+          pm$location, computed = FALSE)
+    }
+    return(list(verdict = "published", route = NA_character_, closed = NULL, findings = findings))
+  }
   if (is.na(n) || !n %in% 1:3) {
     add("error", "The number of compartments is not 1, 2 or 3",
         paste0("The extraction reports ", prFmt(n), " compartments; stanpumpR's closed forms take one to three."),
@@ -474,6 +492,53 @@ paperReviewIdentifiability <- function(extraction)
         structureLoc)
 
   list(verdict = verdict, route = route, closed = closed, findings = findings, rounding = rounding)
+}
+
+#' The published models one model's part of an extraction uses as published
+#'
+#' One named for this part's group, or with no group when the part prints
+#' no volume or clearance of its own (a paper with its own model that
+#' compares it with a published one keeps its own model's checks).
+#' @keywords internal
+paperReviewPublishedModels <- function(extraction)
+{
+  pms <- Filter(is.list, extraction$published_models %or% list())
+  if (!length(pms)) return(list())
+  roles <- vapply(extraction$parameters %or% list(), function(p)
+    if (is.list(p) && is.character(p$role)) p$role[1] else "", "")
+  own <- any(roles %in% c("CL", "V1", "V2", "V3", "Q2", "Q3"))
+  group <- extraction$drug$name %or% ""
+  Filter(function(pm) {
+    g <- pm$group %or% ""
+    (nzchar(g) && identical(paperReviewGroupKey(g), paperReviewGroupKey(group))) || (!nzchar(g) && !own)
+  }, pms)
+}
+
+#' The library's model of a published model, if stanpumpR holds it
+#'
+#' The drug must be a library drug, and the first word of the model's name
+#' (its first author) must appear in the reference of the library's model of
+#' the drug or of its companion (propofol's Schnider, remifentanil's Minto).
+#' @returns NULL, or a list: \code{label}, \code{reference}
+#' @keywords internal
+paperReviewLibraryModel <- function(pm)
+{
+  drug <- tolower(trimws(pm$drug %or% ""))
+  author <- regmatches(pm$name %or% "", regexpr("[A-Za-z][A-Za-z'-]{2,}", pm$name %or% ""))
+  if (!length(author) || !nzchar(drug)) return(NULL)
+  if (!drug %in% getDrugDefaultsGlobal()$Drug) return(NULL)
+  alt <- ALTERNATIVE_MODELS[[drug]]
+  candidates <- list(list(fn = drug, label = drug))
+  if (!is.null(alt)) candidates[[2]] <- list(fn = alt$model, label = paste0(drug, " (", alt$label, ")"))
+  for (cand in candidates) {
+    ref <- tryCatch({
+      f <- get0(cand$fn, envir = asNamespace("stanpumpR"), mode = "function")
+      if (is.null(f)) NULL else paperReviewQuietly(function() f(70, 170, 35, "male"))$reference
+    }, error = function(e) NULL)
+    if (is.character(ref) && length(ref) && grepl(author, ref[1], ignore.case = TRUE))
+      return(list(label = cand$label, reference = ref[1]))
+  }
+  NULL
 }
 
 #' Perturb a derived route across its inputs' printed uncertainty
@@ -703,6 +768,20 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
       next
     }
     individual <- !is.null(own) && nPatients(q) >= 2 && sameModel(ctx, atReference)
+    # Two reasons the model cannot be compared with the printed value at all,
+    # so that a difference is no finding (Shafer's test of 2026-11-17: nine
+    # false errors on one paper whose every value is right): a covariate
+    # effect the review could not apply, for a patient whose covariate is
+    # not the reference's (it is then held at the reference's value); and
+    # conditions the printed value holds under that the model does not carry
+    # (the schema asks for them only then).
+    unapplied <- paperReviewUnappliedFor(extraction, paperReviewQuantityRoles(q), own, reference)
+    conditions <- trimws(paste(dq$conditions %or% "", collapse = " "))
+    cannotCompare <- c(
+      if (length(unapplied)) paste0("The model cannot be evaluated for this patient: ",
+                                    paste(unapplied, collapse = "; "), "."),
+      if (nzchar(conditions)) paste0("It was printed under conditions the model does not carry (",
+                                     conditions, "), so the model's value is not the paper's."))
     pk <- ctx$pk; lambda <- ctx$lambda; coef <- ctx$coef; vss <- ctx$vss
     ke0 <- ctx$ke0; tPeak <- ctx$tPeak
     patientQ <- ctx$patient
@@ -774,6 +853,10 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
           else paperReviewSteadyStateNote(pk, as.numeric(sub("^decrement_", "", q)) / 100, model)))
       }
     }
+    if (length(cannotCompare)) {
+      incomparable <- TRUE
+      note <- trimws(paste(note, paste(cannotCompare, collapse = " ")))
+    }
     kindOk <- identical(conv$kind, expected)
     printedInternal <- if (kindOk) conv$value else NA_real_
     relative <- (model - printedInternal) / printedInternal
@@ -817,15 +900,13 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
       stringsAsFactors = FALSE)
     if (status %in% c("differs", "disagrees")) {
       misread <- paperReviewTenfold(1 + relative)
-      # Three reasons a printed value may differ from the model without
-      # either being wrong: it was printed under conditions the review
-      # cannot apply, it is a mean of individuals' values (the mean of a
-      # ratio is not the ratio of the means), or it is one individual's.
-      conditions <- trimws(paste(dq$conditions %or% "", collapse = " "))
+      # Two reasons a printed value may differ from the model without
+      # either being wrong: it is a mean of individuals' values (the mean of
+      # a ratio is not the ratio of the means), or it is one individual's.
+      # (A value printed under conditions the model does not carry is not
+      # compared at all, above.)
       averaged <- (dq$statistic %or% "") %in% c("mean_of_individuals", "median_of_individuals")
       why <- c(
-        if (nzchar(conditions)) paste0("It was printed under conditions the review cannot apply (",
-                                       conditions, "); the model is evaluated without them."),
         if (averaged) paste0("The paper's value is the ", sub("_of_individuals", "", dq$statistic),
                              " of individuals' values; the model's is computed from the printed parameters, and ",
                              "the two need not agree (the mean of a ratio is not the ratio of the means)."),
@@ -863,7 +944,7 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
     findings <- list(paperReviewFinding(section, "info",
       "The paper prints no derived quantities to check against the model"))
   }
-  list(table = table, findings = findings, pkTable = paperReviewPKTable(pk))
+  list(table = table, findings = findings, pkTable = paperReviewPKTable(pk), pkSet = pk)
 }
 
 #' How long an infusion takes to reach a steady-state decrement time
@@ -1277,6 +1358,7 @@ paperReviewCovariateChecks <- function(extraction)
           paste0("Typical values are evaluated at the stanpumpR default ", field, " (",
                  reference[[field]], ")."), pop$location)
 
+  undefinedCovariates <- character(0)
   for (e in extraction$covariate_effects %or% list())
   {
     label <- paste0(e$parameter_role, " ~ ", e$covariate, " (", e$form, ")")
@@ -1314,6 +1396,16 @@ paperReviewCovariateChecks <- function(extraction)
     m <- vapply(seq_len(nrow(grid)), function(r)
       suppressWarnings(paperReviewCovariateMultiplier(e, as.list(grid[r, ]), reference)$multiplier),
       numeric(1))
+    # Where stanpumpR's own formula for the covariate gives nothing (James's
+    # lean body mass is negative at 40 kg and 50 cm) the paper's equation is
+    # not at fault: those patients are left out, and said once below, not
+    # once per parameter per model (eighteen times on one paper, Shafer's
+    # test of 2026-11-17).
+    x <- vapply(seq_len(nrow(grid)), function(r)
+      suppressWarnings(paperReviewCovariateValue(e$covariate, as.list(grid[r, ]))), numeric(1))
+    undefined <- e$covariate %in% c("lean_body_mass", "fat_free_mass", "bmi") & (!is.finite(x) | x <= 0)
+    if (any(undefined)) undefinedCovariates <- union(undefinedCovariates, e$covariate)
+    m[undefined] <- 1
     bad <- !is.finite(m) | m <= 0
     if (any(bad)) {
       # A model is fitted for the population it studied: an equation that
@@ -1334,7 +1426,8 @@ paperReviewCovariateChecks <- function(extraction)
     } else {
       add("ok", paste("Finite and positive for every legal patient:", label),
           paste0("Multiplier ranges from ", prFmt(min(m)), " to ", prFmt(max(m)),
-                 " across ages 0-90 y, 3-200 kg, 50-200 cm, both sexes."), loc)
+                 " across ages 0-90 y, 3-200 kg, 50-200 cm, both sexes",
+                 if (any(undefined)) paste0(" (", sum(undefined), " patients left out, below)"), "."), loc)
     }
     if (identical(e$covariate, "age") && identical(e$form, "power") && isTRUE(e$coefficient < 0))
       add("concern", paste("A negative power of age is infinite at age 0:", label),
@@ -1351,6 +1444,13 @@ paperReviewCovariateChecks <- function(extraction)
             c(loc, pop$location))
     }
   }
+  for (covariate in undefinedCovariates)
+    add("info", paste0("stanpumpR's ", gsub("_", " ", covariate), " is not defined for every legal patient"),
+        paste0("Its formula (", switch(covariate, lean_body_mass = "James", fat_free_mass = "Al-Sallami",
+                                       bmi = "weight / height^2", covariate),
+               ") gives no positive value for some of the patients the review sweeps (ages 0-90 y, ",
+               "3-200 kg, 50-200 cm), such as 40 kg at 50 cm. They are left out of the sweep of the ",
+               "paper's equations, which are not at fault there."))
   for (field in c("age_years", "weight_kg"))
   {
     s <- pop[[field]]
@@ -1368,7 +1468,7 @@ paperReviewCovariateChecks <- function(extraction)
 #'
 #' @returns a list of findings
 #' @keywords internal
-paperReviewAssumptionChecks <- function(extraction)
+paperReviewAssumptionChecks <- function(extraction, model = TRUE)
 {
   section <- "Assumptions and the library's rules"
   findings <- list()
@@ -1401,11 +1501,19 @@ paperReviewAssumptionChecks <- function(extraction)
     add("info", "Volumes and clearances are apparent (CL/F, V/F)",
         "They cannot be compared with intravenous values without F.", s$location, computed = FALSE)
 
-  if (!identical(s$elimination %or% "linear", "linear"))
+  # Saturable elimination only: "other" is also what a paper with no
+  # elimination model gets (a response surface, a regression), and was
+  # reported as saturable on three papers that never mention it (Shafer's
+  # test of 2026-11-17).
+  if (model && identical(s$elimination, "michaelis_menten"))
     add("concern", "Elimination is not linear",
         "The in-memory simulator is linear; it uses the printed clearance, which is only the low-concentration limit of saturable elimination.",
         s$location)
-  absorption <- s$absorption %or% "none"
+  else if (model && identical(s$elimination, "other"))
+    add("info", "Elimination is not described as linear",
+        paste("The in-memory simulator is linear. Check how the paper describes elimination:",
+              s$parameterization %or% ""), s$location, computed = FALSE)
+  absorption <- if (model) s$absorption %or% "none" else "none"
   discrete <- any(vapply(extraction$regimens %or% list(), paperReviewNeedsAbsorption, logical(1)))
   if (absorption == "zero_order" && !discrete)
     add("info", "Absorption is zero order",
@@ -1428,6 +1536,20 @@ paperReviewAssumptionChecks <- function(extraction)
     values <- vapply(found, function(p) paperReviewNum(p$value) * paperReviewUnit(p$units %or% "other")$factor,
                      numeric(1))
     if (!all(is.finite(values)) || diff(range(values)) <= 1e-9 * max(abs(values))) next
+    # Values of one parameter at different covariate values (a man's and a
+    # woman's Q2, Shafer's test of 2026-11-17) are no conflict.
+    covaried <- Filter(function(e) identical(e$parameter_role, role) &&
+                         (is.null(e$group) || identical(e$group %or% "", g)),
+                       extraction$covariate_effects %or% list())
+    names <- vapply(found, function(p) p$name_in_paper %or% "", "")
+    if (length(covaried) || paperReviewSexOf(names)$ok) {
+      add("info", paste(role, "is printed for different patients"),
+          paste0(paste(vapply(found, function(p) paste0(p$name_in_paper %or% "", " ", p$value_text %or% "",
+                                                         " (", p$location %or% "", ")"), ""), collapse = "; "),
+                 ". These are the parameter at different covariate values, not a conflict."),
+          vapply(found, function(p) p$location %or% NA_character_, ""), computed = FALSE)
+      next
+    }
     add("concern", paste(role, "is printed with different values"),
         paste0(paste(vapply(found, function(p) paste0(p$value_text %or% "", " (", p$location %or% "", ")"), ""),
                      collapse = "; "),
@@ -1746,10 +1868,24 @@ paperReviewFigureChecks <- function(extraction, drug, reference)
     # loading dose matched).
     misread <- paperReviewTenfold(1 + mdpe)
     if (misread) severity <- "concern"
+    # The curve is the reference patient's with every covariate effect the
+    # review could not apply held at its reference; the figure's patients
+    # may not be that patient (Shafer's test of 2026-11-17: a figure of ICU
+    # patients against a model whose ICU factor was not applied, +73%).  A
+    # miss is then no finding about the paper.
+    unapplied <- if (severity %in% c("concern", "error"))
+      paperReviewUnappliedFor(extraction, c(PAPER_REVIEW_DISPOSITION_ROLES, "ka", "F", "tlag"),
+                              NULL, reference, anyPatient = TRUE) else character(0)
+    if (length(unapplied)) severity <- "info"
     add(severity, paste0(paperReviewFigureTitle(id, points$series), ": the model ",
-                         if (severity == "ok") "reproduces" else "does not closely reproduce",
+                         if (severity == "ok") "reproduces"
+                         else if (length(unapplied)) "cannot be compared with"
+                         else "does not closely reproduce",
                          " the digitised points", if (misread) " (more than tenfold: probably a misreading)"),
-        paste0(if (misread) paste0(PAPER_REVIEW_TENFOLD_NOTE, " "),
+        paste0(if (length(unapplied)) paste0("The model's curve is the reference patient's, and ",
+                                             paste(unapplied, collapse = "; "),
+                                             ", so it is not the curve of this figure's patients. "),
+               if (misread) paste0(PAPER_REVIEW_TENFOLD_NOTE, " "),
                sum(use), " points compared. Median prediction error (observed - predicted) / predicted ",
                sprintf("%+.0f%%", 100 * mdpe), ", median absolute ", sprintf("%.0f%%", 100 * mdape),
                ".", note, " The points were digitised approximately by Claude (",
@@ -1789,7 +1925,21 @@ paperReviewClaudeNotes <- function(extraction)
 #' @keywords internal
 paperReviewRun <- function(extraction)
 {
-  extraction <- paperReviewNameRegimens(paperReviewCanonicalGroups(extraction))
+  extraction <- paperReviewSexValues(paperReviewNameRegimens(paperReviewCanonicalGroups(extraction)))
+  # No pharmacokinetic model (a regression on awakening time, a response
+  # surface of doses, a classifier of train-of-four curves): the checks of a
+  # model would report the paper for failing to close one it never claimed
+  # (Shafer's test of 2026-11-17: "the number of compartments is not 1, 2 or
+  # 3" three times over, "does not close the 1-compartment model").  Only
+  # what is about the paper is reviewed: its dose basis, its claims and
+  # Claude's notes.
+  if (paperReviewNoModel(extraction)) {
+    out <- paperReviewRunOne(extraction, paperLevel = FALSE)
+    out$noModel <- TRUE
+    out$findings <- c(paperReviewAssumptionChecks(extraction, model = FALSE),
+                      paperReviewClaudeNotes(extraction))
+    return(out)
+  }
   groups <- paperReviewGroups(extraction)
   if (length(groups) <= 1) return(paperReviewRunOne(extraction))
   # Several models (the Duzitol editorial: one drug in two populations beside
@@ -1809,6 +1959,7 @@ paperReviewRun <- function(extraction)
     m$findings <- paperReviewGroupFindings(m$findings, g, extraction)
     m
   })
+  models <- paperReviewOneTimeUnit(paperReviewSharedOnce(models))
   paperFindings <- c(paperReviewAssumptionChecks(extraction), paperReviewClaudeNotes(extraction))
   out <- models[[1]]
   out$extraction <- extraction
@@ -1818,6 +1969,60 @@ paperReviewRun <- function(extraction)
     lapply(models[[g]]$findings, function(f) { f$group <- g; f })), recursive = FALSE),
     paperFindings)
   out
+}
+
+#' One time unit for every model's parameter table
+#'
+#' Each model's table took the unit its own terminal half-life reads best
+#' in, so one paper's on-ECMO model was printed in L/h and its post-ECMO
+#' model in L/min (Shafer's test of 2026-11-17).  Every model now takes the
+#' longest of their units.
+#' @keywords internal
+paperReviewOneTimeUnit <- function(models)
+{
+  sets <- Filter(Negate(is.null), lapply(models, function(m) m$pkSet))
+  if (length(sets) < 2) return(models)
+  order <- c("min", "h", "day")
+  unit <- order[max(match(vapply(sets, paperReviewPKTableUnit, ""), order))]
+  for (g in names(models))
+    if (!is.null(models[[g]]$pkSet))
+      models[[g]]$pkTable <- paperReviewPKTable(models[[g]]$pkSet, unit)
+  models
+}
+
+#' A finding that is the same in several models, printed once
+#'
+#' What every model shares (a covariate equation with no group, the studied
+#' ranges, a rule of the library's) gave each model its own copy: the same
+#' note eighteen times on a paper with three models (Shafer's test of
+#' 2026-11-17).  It is kept in the first model that has it, which names the
+#' others.
+#' @param models the models' reviews, by name
+#' @returns the models
+#' @keywords internal
+paperReviewSharedOnce <- function(models)
+{
+  # Only the covariates' findings: a model's own checks (how many of its
+  # derived quantities agree) can read alike and still be each model's.
+  key <- function(f) if (identical(f$section, "Covariates"))
+    paste(f$section, f$severity, f$title, f$detail, sep = "\r") else NA_character_
+  keys <- lapply(models, function(m) vapply(m$findings, key, ""))
+  all <- unlist(lapply(keys, unique))
+  shared <- unique(all[duplicated(all) & !is.na(all)])
+  if (!length(shared)) return(models)
+  seen <- character(0)
+  for (g in names(models)) {
+    k <- keys[[g]]
+    keep <- !(k %in% shared & (k %in% seen | duplicated(k)))
+    for (i in which(keep & k %in% shared)) {
+      others <- setdiff(names(models)[vapply(keys, function(kk) k[i] %in% kk, logical(1))], g)
+      models[[g]]$findings[[i]]$detail <- trimws(paste0(models[[g]]$findings[[i]]$detail,
+        " The same holds for ", paste(others, collapse = ", "), "."))
+    }
+    seen <- c(seen, k[keep & k %in% shared])
+    models[[g]]$findings <- models[[g]]$findings[keep]
+  }
+  models
 }
 
 #' The models a paper reports, by the group names its items carry
@@ -1846,6 +2051,7 @@ paperReviewGroupExtraction <- function(extraction, group)
   x$derived_quantities <- mine(x$derived_quantities)
   x$covariate_effects <- mine(x$covariate_effects)
   x$regimens <- mine(x$regimens)
+  x$published_models <- mine(x$published_models)
   # Every model's curves of a figure share its axes, so the precision of a
   # reading is the figure's, whichever model's curve was read.
   x$paperFigures <- extraction$figures
@@ -1891,8 +2097,10 @@ paperReviewRunOne <- function(extraction, paperLevel = TRUE)
   figures <- guarded("Figures", list(figures = list()),
                      function() paperReviewFigureChecks(extraction, drug, reference))
   findingsOf <- function(section, f) guarded(section, list(), function() list(findings = f()))$findings
-  modelFindings <- lapply(drug$problems, function(p)
-    paperReviewFinding("Model", "concern", p))
+  # (A published model's parameters are the library's to hold, not the
+  # paper's to print.)
+  modelFindings <- if (identical(ident$verdict, "published")) list() else
+    lapply(drug$problems, function(p) paperReviewFinding("Model", "concern", p))
   findings <- c(ident$findings,
                 findingsOf("Model", function() paperReviewAbsorptionFindings(extraction, absorptions)),
                 findingsOf("Model", function() paperReviewExponentialFindings(extraction, reference, drug)),
@@ -1903,7 +2111,7 @@ paperReviewRunOne <- function(extraction, paperLevel = TRUE)
                 if (paperLevel) paperReviewClaudeNotes(extraction))
   list(extraction = extraction, reference = reference, identifiability = ident,
        drug = drug, absorptions = absorptions, consistency = consistency$table,
-       pkTable = consistency$pkTable,
+       pkTable = consistency$pkTable, pkSet = consistency$pkSet,
        figures = figures$figures, findings = findings)
 }
 
@@ -2098,6 +2306,56 @@ paperReviewCanonicalGroups <- function(extraction)
 
 # The roles that make a disposition model.
 PAPER_REVIEW_DISPOSITION_ROLES <- c("CL", "V1", "V2", "V3", "Q2", "Q3", "k10", "k12", "k21", "k13", "k31")
+
+#' The parameter roles a derived quantity depends on
+#' @keywords internal
+paperReviewQuantityRoles <- function(q)
+{
+  c(PAPER_REVIEW_DISPOSITION_ROLES,
+    if (q %in% c("ke0", "tPeak")) c("ke0", "tPeak"),
+    if (q %in% c("AUC_inf", "Cmax", "tmax", "MRT", "MAT", "F")) c("ka", "F", "tlag"))
+}
+
+#' The covariate effects the review could not apply that matter for a patient
+#'
+#' An effect the review cannot evaluate (a form it does not read, a
+#' covariate the simulator does not take, no coefficient) is held at its
+#' reference, which is right for the reference patient and for any patient
+#' whose covariate has the reference's value, and wrong for any other.  So
+#' for a quantity printed for a stated patient, each such effect on a role
+#' it depends on is named, unless the patient's value of that covariate is
+#' known to be the reference's.  (Shafer's test of 2026-11-17: ke0 = 0.221 x
+#' (1 - 0.00979 (AGE - 54)) x (1 + 0.231 SEX), held at its reference, made
+#' every ke0 and decrement time printed at 20 and 75 years "disagree".)
+#'
+#' @param extraction the extraction (one model's part)
+#' @param roles the roles the quantity depends on
+#' @param patient the patient it was printed for, or NULL for the reference
+#' @param reference the reference patient
+#' @param anyPatient name every such effect, whatever the patient (a figure,
+#'   whose patients are not known)
+#' @returns one phrase per effect, empty when none matters
+#' @keywords internal
+paperReviewUnappliedFor <- function(extraction, roles, patient, reference, anyPatient = FALSE)
+{
+  if (is.null(patient) && !anyPatient) return(character(0))
+  out <- character(0)
+  for (e in extraction$covariate_effects %or% list()) {
+    if (!is.list(e) || !isTRUE((e$parameter_role %or% "") %in% roles)) next
+    m <- suppressWarnings(paperReviewCovariateMultiplier(e, reference, reference))
+    if (isTRUE(m$applied)) next
+    covariate <- e$covariate %or% "other"
+    if (!anyPatient) {
+      xp <- paperReviewCovariateValue(covariate, patient)
+      xr <- paperReviewCovariateValue(covariate, reference)
+      if (!is.na(xp) && !is.na(xr) && isTRUE(abs(xp - xr) <= 1e-9 * max(1, abs(xr)))) next
+    }
+    out <- c(out, paste0("the effect of ", gsub("_", " ", covariate), " on ", e$parameter_role %or% "?",
+                         if (nzchar(e$equation_as_printed %or% "")) paste0(" (", e$equation_as_printed, ")"),
+                         " is held at its reference (", m$reason %or% "not applied", ")"))
+  }
+  unique(out)
+}
 
 #' Findings that are about a group, not a model
 #'

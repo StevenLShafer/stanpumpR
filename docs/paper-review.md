@@ -674,6 +674,18 @@ allowed to learn from my models. Claude is allowed to see coarse metadata."
    times without their infusion, an individual compared with a group's
    model), which no choice of effort cures.
 
+   **Shafer's test of 13 manuscripts** (2026-11-17, read independently
+   first, then compared with the reports) found the extraction sound and the
+   remaining false findings again in the checks: covariates held at their
+   reference and then compared as if applied (nine false errors on one paper
+   whose every value reproduces exactly), printed conditions ignored, no-model
+   papers reviewed as failed models, "elimination is not linear" from the
+   placeholder elimination, published models rebuilt from a figure, one
+   library note printed eighteen times, two time units in one report, and a
+   man's and a woman's value of one parameter called a conflict. Each is
+   fixed with a test (2026-11-18; AGENTS.md lists the functions). Not fixed
+   here: the two server disconnects mid-review, which need the host's logs.
+
    **Decided** (Shafer, 2026-11-10): `max_tokens` raised to 128,000 and
    `high` kept as the default (`PAPER_REVIEW_MAX_TOKENS`,
    `PAPER_REVIEW_EFFORT` in `R/paper-review-api.R`). Still open: whether to

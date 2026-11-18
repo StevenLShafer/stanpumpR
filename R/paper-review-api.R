@@ -307,7 +307,7 @@ paperReviewValidate <- function(x)
       string = is.character(value) && length(value) == 1,
       TRUE)
     if (!ok) {
-      missing <- c(missing, name)
+      if (!name %in% PAPER_REVIEW_OPTIONAL_SECTIONS || !is.null(value)) missing <- c(missing, name)
       value <- switch(spec$type, array = list(), object = stats::setNames(list(), character(0)),
                       string = "")
     }

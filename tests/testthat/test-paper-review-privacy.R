@@ -61,6 +61,11 @@ test_that("the app's server deletes uploads at once and discards on request and 
   dir.create(dir)
   path <- file.path(dir, "0.pdf")
   writeBin(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), path)
+  # Discard empties the file fields as well, which kept the discarded files'
+  # names and "Upload complete" (Shafer's test of 2026-11-17).
+  reset <- character(0)
+  testthat::local_mocked_bindings(reset = function(id = "", ...) reset <<- c(reset, id),
+                                  .package = "shinyjs")
   shiny::testServer(paperReviewServer, {
     session$setInputs(manuscript = list(name = "secret.pdf", size = 59, type = "application/pdf",
                                         datapath = path))
@@ -71,6 +76,7 @@ test_that("the app's server deletes uploads at once and discards on request and 
     session$setInputs(discard = 1)
     expect_null(review())
     expect_match(output$status, "Discarded")
+    expect_setequal(reset, c("manuscript", "supplement"))
     # Reviewing with nothing uploaded sends nothing and says why.
     session$setInputs(review = 1)
     expect_match(output$status, "Upload a manuscript first")
