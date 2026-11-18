@@ -102,7 +102,8 @@
 # blood levels above approximately 50 ng/mL appear capable of impairing
 # driving to a degree that increases the risk of a motor vehicle accident"
 # (FDA Drug Safety Communication, January 2013).  Kim's DSST IC50 was 205 ng/mL
-# for a 60 kg subject, and 50% impairment of reaction time 282 ng/mL; the
+# for a 60 kg subject, and its choice-reaction-time EC50 282 ng/mL (the
+# concentration of half the maximum effect, not of 50% impairment); the
 # threshold is far below both, because driving is impaired before a
 # laboratory test detects it.
 #

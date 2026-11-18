@@ -8,8 +8,10 @@ drugs: [bupropion, hydroxybupropion]
 source_read: "text layer; PDF pp. 6 and 11 (Table 3, Section 3.7) checked on rendered page images"
 digest_by: Claude Opus 5.5, 2026-10-12
 checked_against: stanpumpR master 7bc2719
-verification: matches
-revised: 2026-10-27 (citation given its printed title; added the vitamin D formation-clearance contrasts and the authors' interpretation)
+verification: discrepancy
+revised: "2026-10-27 (citation given its printed title; added the vitamin D formation-clearance contrasts and the authors' interpretation); 2026-11-18 (verification set to discrepancy, as the body found (reference weight); that choice put to Shafer as a [decision]; Carbon's repository audit, checked on the PDF)"
+open_questions:
+  - "[decision] R/drugs_bupropion.R takes Ghimire's published values as the 70 kg reference man's, but the cohort's median weight was about 100 kg (Table 2), so with the fat-free-mass switch on a 70 kg patient gets a 100 kg cohort's parameters unscaled. Keep 70 kg, or take about 100 kg as the reference weight (which would lower every volume and clearance for a 70 kg patient)?"
 ---
 
 # Ghimire 2026: population PK of bupropion SR and hydroxybupropion in CKD and controls

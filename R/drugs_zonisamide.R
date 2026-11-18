@@ -54,7 +54,8 @@
 # PBPK prediction is not used.  V/F and the absorption are unchanged.
 # Zonisamide binds saturably to red cells, and the whole-blood to plasma
 # partition may change as the haematocrit falls in pregnancy, which the
-# linear model cannot represent; it is about 40% bound to plasma protein, so
+# linear model cannot represent; it is 40-60% bound to plasma protein (about
+# 60% in Tomson and Battino's review, Table III; papers/digests/PMID_17328580.md), so
 # total and unbound change roughly alike.  See R/pregnancy.R.  (Claude Code,
 # 2026-10-19.)
 #

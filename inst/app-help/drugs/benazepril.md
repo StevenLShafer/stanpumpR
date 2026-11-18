@@ -49,7 +49,7 @@ One caution for anyone revising this. Kaiser's accumulation ratios **fall** with
 
 ### No covariates at all
 
-Kaiser fitted none: 62 healthy young men at a single dose level. In particular **there is no renal term**, even though benazeprilat is substantially cleared by the kidney, so a serum creatinine entered in the [Patient Profile](help:patient-profile) does not reach this drug. That is the source's limit rather than a statement about the drug: the study simply contains no renal-impairment data. Kaiser's companion papers report that clearance is reduced below a creatinine clearance of 30 mL/min, and nothing here represents that.
+Kaiser fitted none: 62 healthy young men at a single dose level. In particular **there is no renal term**, even though benazeprilat is substantially cleared by the kidney, so a serum creatinine entered in the [Patient Profile](help:patient-profile) does not reach this drug. That is the source's limit rather than a statement about the drug: the study simply contains no renal-impairment data. A summary of the same programme's special-population studies (Kaiser, Ackermann and Sioufi, *Am Heart J* 1989;117:746–51) shows benazeprilat's renal clearance falling in proportion to creatinine clearance and its exposure rising steeply below a creatinine clearance of 30 mL/min, and nothing here represents that.
 
 ### Effect site and blood pressure
 

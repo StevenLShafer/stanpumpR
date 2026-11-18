@@ -18,7 +18,7 @@ The 200 microgram arm was fitted separately (absorption rate 1.2 per hour, appar
 
 ### A caution about the half-life this model carries
 
-The 2.6 hour half-life of this 2017 analysis is shorter than the same group's later measurements. Holze and colleagues (*Br J Clin Pharmacol* 2024;90(1):200-208), with 85 and 170 micrograms in 28 subjects, reported 3.7 and 4.0 hours, and a 2025 oral/intravenous crossover reported a terminal half-life of 3.8 hours, an intravenous clearance of 4.7 L/h and an absolute oral bioavailability near 0.80. Different analytical methods and modelling approaches account for much of the difference.
+The 2.6 hour half-life of this 2017 analysis is shorter than the same group's later measurements. Holze and colleagues (*Br J Clin Pharmacol* 2024;90(1):200-208), with 85 and 170 micrograms in 28 subjects, reported 3.7 and 4.0 hours, and a 2025 oral/intravenous crossover reported a terminal half-life of 3.8 hours, an intravenous clearance of 4.7 L/h and an absolute oral bioavailability near 0.80. Holze and colleagues explain the earlier group's differences by a capsule formulation whose LSD content declined (the dose probably about 30% lower than stated) and an assay limit ten times higher (100 against 10 pg/mL) in the earlier 200-microgram study; whether the formulation also affected this 2017 analysis is not settled.
 
 So **this model clears LSD faster than the later data do**. Read it as Dolder's 2017 model, not as a consensus. The 2025 crossover is not implemented: its two-compartment intravenous micro-parameters are in a supplement rather than its main text, and the terminal volume it publishes is a non-compartmental quantity, not a central volume.
 

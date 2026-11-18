@@ -58,8 +58,11 @@
 # group's later measurements: Holze 2024 (85 and 170 micrograms, n = 28)
 # reported 3.7 h and 4.0 h, and the 2025 oral/intravenous crossover reported a
 # terminal half-life of 3.8 h with an intravenous clearance of 4.7 L/h and an
-# absolute oral bioavailability near 0.80.  Different analytical methods and
-# modelling approaches account for much of the difference.  This model
+# absolute oral bioavailability near 0.80.  Holze 2024 explains the earlier
+# group's differences by a capsule formulation whose content declined (dose
+# probably ~30% lower than stated) and a tenfold higher assay limit in the
+# earlier 200 ug study; whether the formulation also affected Dolder 2017 is
+# an open [source] question (papers/digests/PMID_37596682.md).  This model
 # therefore clears LSD FASTER than the later data, and it must be read as
 # Dolder's 2017 model rather than as a consensus.  The 2025 crossover is not
 # implemented: its two-compartment intravenous micro-parameters are in its

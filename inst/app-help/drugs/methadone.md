@@ -14,7 +14,7 @@ Methadone oral solution is entered as **mg PO liquid**, or **mg/kg PO liquid** f
 
 ### Covariates
 
-Weight is the only size covariate, on the deep peripheral volume (weight to the power 1.23, taking the published 208 L as the value at 70 kg; the paper does not state its reference weight, and its subjects averaged 74 kg). The authors tested weight on every other parameter and found no effect, so clearance does not change with weight: a heavier patient has more tissue to fill but eliminates methadone no faster. With *Adjust weight to fat-free mass* ticked the volume term uses the fat-free-mass weight; unticked, total body weight. Age, sex and race had no effect.
+Weight is the only size covariate, on the deep peripheral volume (weight to the power 1.23, taking the published 208 L as the value at 70 kg; the paper does not state its reference weight, and its subjects averaged 74 kg). The authors tested weight on every other parameter and found no effect, so clearance does not change with weight: a heavier patient has more tissue to fill but eliminates methadone no faster. With *Adjust weight to fat-free mass* ticked the volume term uses the fat-free-mass weight; unticked, total body weight. Sex and race had no effect; age was not tested.
 
 ### CYP2B6
 

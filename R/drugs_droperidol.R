@@ -72,9 +72,9 @@
 # ======
 # None.  No validated concentration-to-sedation, antiemetic or QTc relation
 # exists; the published QTc data are dose-group changes (Lischke 1994,
-# Charbit 2008), not a concentration-effect model.  All of these authors note
-# that the two-hour elimination half-life does not explain droperidol's long
-# clinical action.
+# Charbit 2008), not a concentration-effect model.  The two-hour elimination
+# half-life does not explain droperidol's long clinical action, as authors
+# other than Lischke 1994 (which does not discuss the half-life) note.
 # -----------------------------------------------------------------------------
 
 DROPERIDOL_V1  <- 10.75     # L
