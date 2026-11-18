@@ -60,6 +60,13 @@ CYCLOPHOSPHAMIDE_JOERGER <- list(
   v = 34.6            # L
 )
 
+# Joerger 2007, Table I (printed p. 1058), read on the PDF 2026-11-18: the 59
+# women's medians, 70 kg, BSA 1.81 m2, 56 years.  No height is printed; it is
+# back-solved from the BSA by Du Bois's formula, the paper naming none
+# (170.0 cm; Shafer, 2026-11-18).  The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort).
+CYCLOPHOSPHAMIDE_JOERGER_COHORT <- list(weight = 70, height = 170.0, age = 56, men = 0, women = 59)
+
 #' Cyclophosphamide, intravenous (Joerger 2007)
 #'
 #' One compartment; see the header of \code{R/drugs_cyclophosphamideJoerger.R}.
@@ -71,7 +78,7 @@ cyclophosphamideJoerger <- function(weight, height, age, sex, adjustToFFM = TRUE
 {
   p <- CYCLOPHOSPHAMIDE_JOERGER
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1, cohort = do.call(cohortSizeFactors, CYCLOPHOSPHAMIDE_JOERGER_COHORT))
 
   default <- list(
     v1  = p$v * size$volume,

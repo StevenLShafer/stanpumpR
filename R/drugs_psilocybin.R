@@ -84,10 +84,12 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# Holze published no size covariate, so the apparent parameters are those of a
-# reference adult: unscaled with the fat-free-mass switch off
-# (legacyVolume = 1), and with it on, volumes scale with the Al-Sallami
-# fat-free mass ratio and clearance with its 0.75 power.  That scaling is an
+# Holze published no size covariate, so the apparent parameters are those of
+# the 15 mg study's typical subject (72 kg, BMI 23, 14 men and 14 women):
+# unscaled with the fat-free-mass switch off (legacyVolume = 1), and with it
+# on anchored at that subject (PSILOCYBIN_COHORT; Steven L. Shafer,
+# 2026-11-18): volumes scale with the Al-Sallami fat-free mass ratio to the
+# cohort's and clearance with its 0.75 power.  That scaling is an
 # IMPLEMENTATION CONVENTION, not a published fit.
 #
 # References
@@ -123,6 +125,13 @@ PSILOCYBIN_V_F_SRC   <- 448          # L, apparent volume as published
 PSILOCYBIN_CL_F <- PSILOCYBIN_CL_F_SRC / PSILOCIN_PER_PSILOCYBIN / 60  # L/min
 PSILOCYBIN_V_F  <- PSILOCYBIN_V_F_SRC  / PSILOCIN_PER_PSILOCYBIN       # L
 
+# Holze 2023, Participants (printed p. 823), read on the PDF 2026-11-18: the
+# 15 mg study's 28 subjects, means 72 kg, BMI 23 (no height printed; 177 cm
+# from the two), 35 years, 14 men and 14 women.  The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort).
+# Factors 0.954 on volume, 0.965 on clearance.
+PSILOCYBIN_COHORT <- list(weight = 72, bmi = 23, age = 35, men = 14, women = 14)
+
 #' Psilocybin pharmacokinetics: free plasma psilocin after an oral dose
 #'
 #' @param weight patient weight (kg)
@@ -140,7 +149,7 @@ PSILOCYBIN_V_F  <- PSILOCYBIN_V_F_SRC  / PSILOCIN_PER_PSILOCYBIN       # L
 #' @export
 psilocybin <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, PSILOCYBIN_COHORT))
 
   v1  <- PSILOCYBIN_V_F  * size$volume
   cl1 <- PSILOCYBIN_CL_F * size$clearance

@@ -15,7 +15,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 REPO, BASE, HEAD, OUT, ROUND = sys.argv[1:6]
 B = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, B)
-PATHS = ["R", "inst/help", "inst/apidocs", "inst/www", "tests", "docs", "data-raw", "vignettes", "README.md", "AGENTS.md", "NEWS.md"]
+PATHS = ["R", "inst/app-help", "inst/apidocs", "inst/www", "tests", "docs", "data-raw", "vignettes", "README.md", "AGENTS.md", "NEWS.md"]
 
 PMID = re.compile(r"(?:PMID[:\s]*|pubmed\.ncbi\.nlm\.nih\.gov/|PMID_)(\d{5,9})", re.I)
 DOI = re.compile(r"\b(10\.\d{4,9}/[^\s;,\"'<>\]\)]+(?:\([^\s)]*\)[^\s;,\"'<>\]\)]*)?)")

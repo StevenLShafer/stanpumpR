@@ -53,13 +53,21 @@ test_that("body size scales the size-free parameters in both adjustToFFM positio
   off <- dabigatranHip(90, 180, 60, "male", adjustToFFM = FALSE, creatinine = 1)
   expect_equal(off$PK$default$v1, 30.8, tolerance = 1e-9)
   expect_equal(off$PK$default$cl1 * 60, 43.4 * 1.633, tolerance = 1e-6)
-  # Switch on: the library fat-free-mass factors scale v and CL.
+  # Switch on: the library fat-free-mass factors, relative to Troconiz's
+  # cohort (Table I: 78.21 kg, 170.5 cm, 66.97 y, 47% men), scale v and the
+  # size-free clearances.
+  kc <- cohortFactorsIndependent(list(weight = 78.21, height = 170.5, age = 66.97, men = 47, women = 53))
   on  <- dabigatranHip(120, 170, 50, "male", creatinine = 1)
-  vol <- 1.3049067; clr <- 1.2209126   # pinned in test-drugs-alfentanil.R
+  vol <- 1.3049067 / kc$volume; clr <- 1.2209126 / kc$clearance   # pinned in test-drugs-alfentanil.R
   expect_equal(on$PK$default$v1, 30.8 * vol, tolerance = 1e-5)
   expect_equal(on$PK$default$v2, 136 * vol, tolerance = 1e-5)
   expect_equal(on$PK$default$cl2 * 60, 13.6 * clr, tolerance = 1e-5)
   expect_equal(on$PK$default$cl1 * 60, 43.4 * 1.633 * clr, tolerance = 1e-5)
+  # Days 2-10: CL/F is CRCL-proportional, and the CRCL (at the pharmacokinetic
+  # weight) carries the size, so no size factor is applied on top
+  pkW <- 70 * 1.3049067
+  crcl <- (140 - 50) * pkW / (72 * 1)
+  expect_equal(on$PK[[2]]$cl1 * 60, 82.1 * crcl / 76.17 * 1.294, tolerance = 1e-5)
 })
 
 test_that("the plotted concentration is plasma only, with no effect site", {

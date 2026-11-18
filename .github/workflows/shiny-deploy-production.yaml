@@ -73,25 +73,55 @@ jobs:
           ref: ${{ env.DEPLOY_SHA }}
           persist-credentials: false
 
+      # Only the tip of master is deployed from a check.  The checks of two
+      # pushes can finish in either order, and a check of an older commit
+      # finishing after a newer one had deployed put the older commit back
+      # on production (2026-11-17: a12c694 over 173e306; Carbon's repository
+      # audit, 2026-11-18).  The tip's own check deploys it, as in
+      # windows-binary.yaml.  A manual run deploys the commit it was run on.
+      - name: Deploy only the tip of master
+        id: tip
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != "workflow_run" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          tip=$(gh api "repos/$GITHUB_REPOSITORY/commits/$BRANCH" --jq .sha)
+          if [ "$tip" = "$DEPLOY_SHA" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "$BRANCH is now at ${tip::7}, past ${DEPLOY_SHA::7}; its own check deploys it." | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Record the commit being deployed
+        if: steps.tip.outputs.current == 'true'
         run: |
           echo "Deploying ${{ github.repository }}@${DEPLOY_SHA}"
           echo "### Production deploy" >> "$GITHUB_STEP_SUMMARY"
           echo "Commit: \`${DEPLOY_SHA}\` (checked out and installed)" >> "$GITHUB_STEP_SUMMARY"
 
       - uses: r-lib/actions/setup-pandoc@5cc1f0d89c5281319eaa97952fe65a6d55e6f816 #v2
+        if: steps.tip.outputs.current == 'true'
 
       - uses: r-lib/actions/setup-r@5cc1f0d89c5281319eaa97952fe65a6d55e6f816 #v2
+        if: steps.tip.outputs.current == 'true'
         with:
           r-version: 'renv'
           use-public-rspm: true
 
       - name: Install system dependencies
+        if: steps.tip.outputs.current == 'true'
         run: sudo apt-get update && sudo apt-get install -y libgit2-dev
 
       - uses: r-lib/actions/setup-renv@5cc1f0d89c5281319eaa97952fe65a6d55e6f816 #v2
+        if: steps.tip.outputs.current == 'true'
 
       - name: Install stanpumpR from GitHub at the deployed commit
+        if: steps.tip.outputs.current == 'true'
         run: |
           pkg_ref <- paste0("${{ github.repository }}@", Sys.getenv("DEPLOY_SHA"))
           remotes::install_github(pkg_ref, upgrade = "never", force = TRUE)
@@ -102,20 +132,29 @@ jobs:
         shell: Rscript {0}
 
       - name: Remove renv lockfile
+        if: steps.tip.outputs.current == 'true'
         run: sudo rm renv.lock  # now that all pacakges have correct versions, remove lockfile
                                 # because deployApp() will fail if it sees this lockfile
                                 # see https://github.com/rstudio/rsconnect/issues/1315
 
       - name: Authorize and deploy app
+        if: steps.tip.outputs.current == 'true'
         env:
           PAPER_REVIEW_KEY: ${{ secrets.PAPER_REVIEW_ANTHROPIC_API_KEY || secrets.STANPUMPR_ANTHROPIC_API_KEY || secrets.ANTHROPIC_API_KEY }}
           PAPER_REVIEW_USAGE_EMAIL: ${{ vars.PAPER_REVIEW_USAGE_EMAIL }}
           PAPER_REVIEW_SHARED_KEY: ${{ vars.PAPER_REVIEW_SHARED_KEY }}
+          # Read with Sys.getenv(), never pasted into the R source as string
+          # literals, where a quote or backslash in a secret broke the script
+          # (Carbon's repository audit, 2026-11-18)
+          EMAIL_USERNAME: ${{ secrets.SHINY_CONFIG_EMAIL_USERNAME }}
+          EMAIL_PASSWORD: ${{ secrets.SHINY_CONFIG_EMAIL_PASSWORD }}
+          SHINY_TOKEN: ${{ secrets.SHINY_TOKEN }}
+          SHINY_SECRET: ${{ secrets.SHINY_SECRET }}
         run: |
           shinyConfig <- list(
             default = list(
-              email_username = "${{ secrets.SHINY_CONFIG_EMAIL_USERNAME }}",
-              email_password = "${{ secrets.SHINY_CONFIG_EMAIL_PASSWORD }}",
+              email_username = Sys.getenv("EMAIL_USERNAME"),
+              email_password = Sys.getenv("EMAIL_PASSWORD"),
               debug = 0,
               commit = Sys.getenv("DEPLOY_SHA")
             )
@@ -136,7 +175,7 @@ jobs:
               file = Sys.getenv("GITHUB_STEP_SUMMARY"), append = TRUE, sep = "")
           rm(key)
           yaml::write_yaml(shinyConfig, "config.yml", fileEncoding = "UTF-8")
-          rsconnect::setAccountInfo("${{ vars.SHINY_ACCOUNT }}", "${{ secrets.SHINY_TOKEN }}", "${{ secrets.SHINY_SECRET }}")
+          rsconnect::setAccountInfo("${{ vars.SHINY_ACCOUNT }}", Sys.getenv("SHINY_TOKEN"), Sys.getenv("SHINY_SECRET"))
           rsconnect::deployApp(
             appName = "${{ vars.SHINY_APP_NAME }}", account = "${{ vars.SHINY_ACCOUNT }}",
             appDir = ".", appFiles = c("app.R", "config.yml"), forceUpdate = TRUE

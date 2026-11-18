@@ -15,7 +15,9 @@ name: Shiny PR 1 Triage
 on:
   pull_request_target:
     types: [opened, reopened]
-  workflow_dispatch:
+  # No workflow_dispatch: a manual run has no pull request, so it labelled
+  # nothing and its fork step failed on a missing issue number (Carbon's
+  # repository audit, 2026-11-18).
 
 jobs:
   triage:

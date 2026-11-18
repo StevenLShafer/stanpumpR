@@ -151,7 +151,7 @@ ganciclovir <- function(weight, height, age, sex, adjustToFFM = TRUE,
     paste0("assumed normal serum creatinine ", format(scr), " mg/dL") else
     paste0("serum creatinine ", format(creatinine), " mg/dL")
   reference <- paste0(
-    "Caldés A et al., Antimicrob Agents Chemother 2009;53:4816-4824: two ",
+    "Cald\u00E9s A et al., Antimicrob Agents Chemother 2009;53:4816-4824: two ",
     "compartments, CL 7.49 L/h x (Cockcroft-Gault CLCR/57), V1 31.9 L, Q 10.2 ",
     "L/h, V2 32.0 L; valganciclovir as ganciclovir x 0.720, ka 0.895 /h, lag ",
     "0.382 h, F 0.594 (Valcyte label); CLCR ", sprintf("%.0f", crcl),

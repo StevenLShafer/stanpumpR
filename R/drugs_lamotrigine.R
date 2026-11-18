@@ -75,8 +75,11 @@
 # measured level should guide the dose.  See R/pregnancy.R.  (Claude Code,
 # 2026-10-19.)
 #
-# BODY SIZE: the base model's fixed values scaled to fat-free mass; with the
-# switch off, the published values for everyone (legacyVolume = 1).
+# BODY SIZE: the base model's fixed values are the cohort's typical patient's;
+# with the switch on they are anchored at that patient (LAMOTRIGINE_COHORT;
+# Steven L. Shafer, 2026-11-18), the reference man's volumes divided by 0.859
+# and clearances by 0.892; with the switch off, the published values for
+# everyone (legacyVolume = 1).
 #
 # BAND: 3-15 mcg/mL (ILAE, Patsalos 2008, 2.5-15), typical 8.
 #
@@ -104,6 +107,13 @@
 # model, (2.79 + 4.9 x 36 / (12 + 36)) / 2.79 = 2.32 (see the header).
 LAMOTRIGINE_PREGNANCY_CL_FACTOR <- 2.3
 
+# Milosheska 2016, Table 1 (printed p. 403), read on the PDF 2026-11-18: the
+# 100 patients' medians, 70 kg, 167 cm, 39.8 years, 30 men and 70 women (the
+# library uses the base model; the final model's weight term is not used).
+# The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort). Factors 0.859 on volume, 0.892 on clearance.
+LAMOTRIGINE_COHORT <- list(weight = 70, height = 167, age = 39.8, men = 30, women = 70)
+
 #' Lamotrigine pharmacokinetics (oral, immediate release)
 #'
 #' Milosheska et al. (2016) base model; see the header of the file.
@@ -117,7 +127,7 @@ LAMOTRIGINE_PREGNANCY_CL_FACTOR <- 2.3
 lamotrigine <- function(weight, height, age, sex, adjustToFFM = TRUE,
                         pregnant = FALSE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, LAMOTRIGINE_COHORT))
   # Pregnancy (see the header): CL/F only.
   clPregnancy <- if (isTRUE(pregnant)) LAMOTRIGINE_PREGNANCY_CL_FACTOR else 1
 

@@ -11,7 +11,7 @@
 # Primary documents that could not be opened from the build environment
 # (EUCAST rationale documents, CLSI M100, FDA STIC pages, the harmonised EMA
 # SmPCs, several 1970s-1980s MBC tables) are listed in
-# inst/help/models/antibiotics.md as the literature that would firm these
+# inst/app-help/models/antibiotics.md as the literature that would firm these
 # bands up.  Documents Steven Shafer supplied on 2026-10-19 and read in full:
 # the Cleocin HCl and Cleocin Phosphate labels, which add to the clindamycin
 # rows, and the EMA's public outcomes of the Rocephin (Article 30) and

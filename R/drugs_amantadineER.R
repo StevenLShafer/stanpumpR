@@ -7,7 +7,7 @@
 # concentrations in ng/mL of amantadine.
 #
 # Drafted by Claude Code, 2026-10-19, at the request of Steven L. Shafer
-# (inst/help/models/parkinsons.md, inst/extdata/parkinsonsRegistry.csv).
+# (inst/app-help/models/parkinsons.md, inst/extdata/parkinsonsRegistry.csv).
 #
 # THE SOURCE
 # ==========
@@ -65,8 +65,11 @@
 # renal clearance about 30%, not applied.  No genotype is known to matter.
 #
 # BODY SIZE (docs/weight-adjustment.md): the model has no size covariate (24
-# subjects); Vc is scaled by the library's fat-free-mass volume factor and
-# the clearance k x Vc by its clearance factor, both 1 with the switch off.
+# subjects), so its values are the cohort's typical subject's; with the switch
+# on they are anchored at that subject (AMANTADINE_ER_COHORT; Steven L.
+# Shafer, 2026-11-18): Vc is scaled by the library's fat-free-mass volume
+# factor relative to the cohort's and the clearance k x Vc by its clearance
+# factor, both 1 with the switch off.
 #
 # THE BAND: 600 to 1700 ng/mL, the reference range of the AGNP consensus
 # guideline's update 2026 (Hart 2026, Pharmacopsychiatry 59:166-295, Table 5,
@@ -117,6 +120,15 @@ AMANTADINE_ER_F1    <- 0.799    # the share absorbed first order
 # mg of amantadine base per mg of amantadine hydrochloride (151.25 / 187.71)
 AMANTADINE_BASE_PER_HCL <- 151.25 / 187.71
 
+# FDA Clinical Pharmacology Review of NDA 209410 (Osmolex ER), section 4.3,
+# study OS320-PKP07 (p. 28), read on the PDF 2026-11-18: medians 83.2 kg, BMI
+# 29.9 (no height printed; 167 cm from the two), 60 years, 18 men and 6 women.
+# The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort). The eGFR term is per 1.73 m2 and carries no weight, so
+# the clearance is anchored with the rest.  Factors 1.027 on volume, 1.020 on
+# clearance.
+AMANTADINE_ER_COHORT <- list(weight = 83.2, bmi = 29.9, age = 60, men = 18, women = 6)
+
 #' Amantadine, extended-release tablets (Osmolex ER)
 #'
 #' One compartment, apparent (/F), with parallel first- and zero-order oral
@@ -136,7 +148,7 @@ amantadineER <- function(weight, height, age, sex, adjustToFFM = TRUE,
                          creatinine = NULL, pregnant = FALSE)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1, cohort = do.call(cohortSizeFactors, AMANTADINE_ER_COHORT))
   gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)
   egfr <- egfrMDRD(age, sex, adultEquivalentCreatinine(creatinine, age, sex)) *
     gfrPregnancy

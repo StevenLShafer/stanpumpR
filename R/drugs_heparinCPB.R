@@ -58,7 +58,7 @@
 # target: the ACT measured by different devices is not directly comparable (the
 # authors fitted a Hemochron Junior2 ACT), the model is small (50 patients), and
 # clinical use and enforcement of its limits are outside it.  See
-# inst/help/drugs/heparinCPB.md.  No MEAC and no time until threshold.  The band
+# inst/app-help/drugs/heparinCPB.md.  No MEAC and no time until threshold.  The band
 # is 480 to 600 s, typical 480: an ACT above 480 s is the EACTS/EACTAIC/EBCP
 # 2024 threshold on bypass (section 9.3.1), and the upper edge is Steven L.
 # Shafer's choice (2026-10-27, kept 2026-10-28): 600 s was the constant

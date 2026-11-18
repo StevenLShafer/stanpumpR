@@ -70,7 +70,7 @@ End point: arterial blood pressure (pressor effect), in vasodilatory shock (12.2
 - inst/extdata/therapeuticRanges.csv:198 (the vasopressin row is at line 199 in the snapshot) — registry source: no therapeutic concentration range.
 
 ## Verification against stanpumpR
-Checked against `C:\dev\stanpumpRPapers\_build\master_snapshot` (master 50bb4219).
+Checked against the archive's master snapshot (master 50bb4219).
 
 - **R/drugs_vasopressin.R:35-38**: the code says the label gives 9 to 25 mL/min/kg in vasodilatory shock, bracketing Fabian's 1.0 L/min (14 mL/min/kg at 70 kg). The label (PDF p7, image) says 9 to 25 mL/min/kg at 0.01-0.1 units/min in vasodilatory shock. 1.0 L/min / 70 kg = 14.3 mL/min/kg (derived), inside the range. Units are correct (per kg, per min, mL). **matches**.
 - **R/drugs_vasopressin.R:81-87** (context pointer :79): the code says no published bolus tPeak was found, and that the label's 15 minutes is for an infusion. In the label (12.2, PDF p6, image), the peak-within-15-min sentence sits in the paragraph about infusion (effect proportional to infusion rate; fades after stopping the infusion). There is no bolus data. The 3-min tPeak (`VASOPRESSIN_TPEAK`, :92) is not from the label, and the code says so. **matches**.

@@ -1,3 +1,9 @@
+# Sorooshian 1996, Table 1 (printed p. 1086): the two age groups' means.
+CISATRACURIUM_COHORT <- list(groups = list(
+  list(weight = 73, height = 168, age = 36, men = 9, women = 22),    # young
+  list(weight = 70, height = 166, age = 74, men = 19, women = 14)    # elderly
+))
+
 cisatracurium <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Units **************
@@ -61,12 +67,18 @@ cisatracurium <- function(weight, height, age, sex, adjustToFFM = TRUE)
   # weight and age effects on C50 are not applied.
   #
   # Size scaling (see docs/weight-adjustment.md): Sorooshian's parameters
-  # are absolute, for adults averaging 70-73 kg, and are treated as the 70 kg
-  # reference.  Volumes scale with fat-free mass relative to the 70 kg,
-  # 170 cm reference male, clearances with that ratio ^ 0.75 (Al-Sallami
-  # 2015).  adjustToFFM = FALSE uses them as published, with no size scaling,
-  # which is how the source found them best.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  # are absolute, the typical values of his 64 patients (Table 1, read on the
+  # PDF 2026-11-18: young 73 kg, 168 cm, 36 years, 9 men and 22 women;
+  # elderly 70 kg, 166 cm, 74 years, 19 men and 14 women).  With the switch
+  # on they are anchored at that cohort (Steven L. Shafer, 2026-11-18;
+  # docs/weight-adjustment.md, Anchoring at the source's cohort): volumes
+  # scale with fat-free mass relative to its typical patient's, clearances
+  # with that ratio ^ 0.75 (Al-Sallami 2015), so the reference man's volumes
+  # are divided by 0.892 and clearances by 0.918.  adjustToFFM = FALSE uses
+  # them as published, with no size scaling, which is how the source found
+  # them best.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, CISATRACURIUM_COHORT))
 
   # 0 at 50 years and younger, 1 at 65 and older
   elderly <- min(max((age - 50) / 15, 0), 1)

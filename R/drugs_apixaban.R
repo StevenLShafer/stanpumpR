@@ -91,7 +91,7 @@
 # ==========================
 # None: tPeak = 0 and the plotted concentration is plasma.  No band, no MEAC
 # and no time until threshold.  Apixaban has no therapeutic range, and a
-# simulated level is not a procedure-safe time: see inst/help/drugs/apixaban.md.
+# simulated level is not a procedure-safe time: see inst/app-help/drugs/apixaban.md.
 # Anti-factor Xa activity is not plotted; Byon 2017's slope (0.0159 IU/mL per
 # ng/mL, LMWH-calibrated Rotachrom on STA-Compact) belongs to a different
 # (VTE) fit and to one assay.

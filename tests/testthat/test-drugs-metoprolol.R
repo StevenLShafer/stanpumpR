@@ -52,11 +52,14 @@ test_that("an oral dose is 45% bioavailable: AUC ratio to IV", {
 })
 
 test_that("size scaling: fat-free mass with the switch on, published values off", {
-  size <- pkSizeFactors(110, 180, 50, "male", TRUE, legacyVolume = 1)
+  # Lammers 2017 Table 1: 12 men, 80 kg, 186 cm, 23 years (read on the PDF).
+  k <- cohortFactorsIndependent(list(weight = 80, height = 186, age = 23, men = 12, women = 0))
+  r <- ffmRatioMaleIndependent(110, 180, 50)
   on <- metoprolol(110, 180, 50, "male", adjustToFFM = TRUE)$PK$default
   off <- metoprolol(110, 180, 50, "male", adjustToFFM = FALSE)$PK$default
-  expect_equal_rounded(V1 * size$volume, on$v1)
-  expect_equal_rounded(CL / 60 * size$clearance, on$cl1)
+  expect_equal_rounded(V1 * r / k$volume, on$v1)
+  expect_equal_rounded(CL / 60 * r^0.75 / k$clearance, on$cl1)
+  expect_equal(metoprolol(80, 186, 23, "male")$PK$default$v1, V1, tolerance = 1e-12)
   expect_equal_rounded(V1, off$v1)
 })
 
@@ -80,7 +83,9 @@ test_that("pregnancy: clearance, volumes and Q x 1.5 and oral bioavailability x 
                METOPROLOL_PREGNANCY_F_FACTOR, tolerance = 1e-6)
   expect_equal(c(METOPROLOL_PREGNANCY_CL_FACTOR, METOPROLOL_PREGNANCY_F_FACTOR),
                c(1.5, 0.5))
-  expect_equal_rounded(1.399444225, a$cl1)
+  # x 1/1.122, Lammers's cohort of 80 kg, 186 cm men (the anchor)
+  expect_equal_rounded(1.399444225 / cohortFactorsIndependent(
+    list(weight = 80, height = 186, age = 23, men = 12, women = 0))$clearance, a$cl1)
   expect_equal_rounded(0.225, a$bioavailability_PO)
   for (p in c("v1", "v2", "cl2"))
     expect_equal(a[[p]] / b[[p]], METOPROLOL_PREGNANCY_V_FACTOR, tolerance = 1e-12, info = p)

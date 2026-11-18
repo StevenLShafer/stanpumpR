@@ -32,9 +32,11 @@ threeComp <- function(t, p, D, route = c("IV", "PO", "IM", "infusion"), Tinf = 0
 }
 
 
-test_that("the reference patient receives Hung's Table I means", {
+test_that("Hung's typical subject, and everyone with the switch off, receive Hung's Table I means", {
+  # The model is anchored at Hung's four men (80.5 kg, 171.3 cm, 33.5 y)
   for (adjust in c(TRUE, FALSE)) {
-    actual <- diazepam(70, 170, 35, "male", adjustToFFM = adjust)
+    actual <- if (adjust) diazepam(80.5, 171.3, 33.5, "male") else
+      diazepam(70, 170, 35, "male", adjustToFFM = FALSE)
     expected <- list(
       PK = list(default = list(
         v1 = 3.43, v2 = 8.47, v3 = 87.51,
@@ -55,10 +57,16 @@ test_that("the reference patient receives Hung's Table I means", {
 
 
 test_that("size scales to fat-free mass with the switch on, not at all with it off", {
+  # The pins from before the anchoring, divided by Hung's cohort factors
+  kc <- cohortFactorsIndependent(DIAZEPAM_COHORT)
+  expect_equal(kc$volume, 1.086705, tolerance = 1e-6)
+  expect_equal(kc$clearance, 1.064348, tolerance = 1e-6)
   on <- diazepam(120, 170, 50, "male")$PK$default
-  expect_equal_rounded(on[c("v1", "v2", "v3", "cl1", "cl2", "cl3")],
-                       list(v1 = 4.4758297961, v2 = 11.0525592925, v3 = 114.1923806002,
-                            cl1 = 0.0329646407, cl2 = 1.3466666182, cl3 = 0.4090057272))
+  expect_equal(on[c("v1", "v2", "v3", "cl1", "cl2", "cl3")],
+               list(v1 = 4.4758297961 / kc$volume, v2 = 11.0525592925 / kc$volume,
+                    v3 = 114.1923806002 / kc$volume, cl1 = 0.0329646407 / kc$clearance,
+                    cl2 = 1.3466666182 / kc$clearance, cl3 = 0.4090057272 / kc$clearance),
+               tolerance = 1e-8)
   off <- diazepam(120, 170, 50, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(off$v3, 87.51)
   expect_equal(off$cl1, 0.027)
@@ -66,13 +74,13 @@ test_that("size scales to fat-free mass with the switch on, not at all with it o
 
 
 test_that("half-lives, and the time to peak effect gives back Buhrer's 1.6 min", {
-  p <- diazepam(70, 170, 35, "male")$PK$default
+  p <- diazepam(80.5, 171.3, 33.5, "male")$PK$default
   k10 <- p$cl1 / p$v1; k12 <- p$cl2 / p$v1; k13 <- p$cl3 / p$v1
   M <- rbind(c(-(k10 + k12 + k13), p$cl2 / p$v2, p$cl3 / p$v3),
              c(k12, -p$cl2 / p$v2, 0), c(k13, 0, -p$cl3 / p$v3))
   hl <- sort(log(2) / -eigen(M)$values)
   expect_equal(hl, c(1.30281, 24.00900, 2713.143), tolerance = 1e-5)
-  pk <- getDrugPK("diazepam", 70, 170, 35, "male")
+  pk <- getDrugPK("diazepam", 80.5, 171.3, 33.5, "male")
   expect_equal(log(2) / pk$PK$default$ke0, 1.6, tolerance = 0.005)
 })
 
@@ -104,8 +112,8 @@ test_that("Mould 1995's early concentrations, against the published model", {
 })
 
 
-test_that("10 mg by mouth and IM match the observed mean peaks", {
-  p <- diazepam(70, 170, 35, "male")$PK$default
+test_that("10 mg by mouth and IM match the observed mean peaks in Hung's typical subject", {
+  p <- diazepam(80.5, 171.3, 33.5, "male")$PK$default
   t <- seq(0, 150, by = 0.05)
   po <- threeComp(t, p, 10, "PO")
   expect_equal(max(po), 302.00, tolerance = 1e-3)     # Hogan 2020: 286-338

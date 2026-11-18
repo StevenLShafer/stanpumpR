@@ -65,16 +65,19 @@
 # whose parameters are apparent; neither set may be moved to the other route.
 #
 # Body size: Lehmann found no relation to weight (48 to 90 kg) or age, so the
-# pooled values are read as the 70 kg reference adult's and scale to fat-free
-# mass (legacyVolume = 1, fixed values with the switch off).
+# pooled values are the cohort's typical patient's (67.7 kg, 45.7 years, 10
+# men and 20 women), and with the switch on they are anchored at that patient
+# (DROPERIDOL_COHORT; Steven L. Shafer, 2026-11-18): the reference man's
+# volumes are the published values divided by 0.844 and his clearances by
+# 0.881 (legacyVolume = 1, fixed values with the switch off).
 #
 # EFFECT
 # ======
 # None.  No validated concentration-to-sedation, antiemetic or QTc relation
 # exists; the published QTc data are dose-group changes (Lischke 1994,
-# Charbit 2008), not a concentration-effect model.  All of these authors note
-# that the two-hour elimination half-life does not explain droperidol's long
-# clinical action.
+# Charbit 2008), not a concentration-effect model.  The two-hour elimination
+# half-life does not explain droperidol's long clinical action, as authors
+# other than Lischke 1994 (which does not discuss the half-life) note.
 # -----------------------------------------------------------------------------
 
 DROPERIDOL_V1  <- 10.75     # L
@@ -83,6 +86,21 @@ DROPERIDOL_K12 <- 0.2298    # 1/min
 DROPERIDOL_K13 <- 0.06160   # 1/min
 DROPERIDOL_K21 <- 0.07393   # 1/min
 DROPERIDOL_K31 <- 0.01355   # 1/min
+
+# Lehmann 1988 (PMID 3179149), Table II (p. 300), read on the PDF 2026-11-18:
+# the 30 patients' means, 67.7 kg and 45.7 years, 10 men and 20 women,
+# University of Cologne.
+# No height is printed: each sex's is the country's mean adult height for the
+# birth year (NCD Risk Factor Collaboration, eLife 2016;5:e13410, height at 18
+# by birth year), less the 0.2 cm (men) and 0.3 cm (women) a cohort loses per
+# decade of age after 18 that the same paper reports. Germany, born 1988 - 46
+# = 1942: 174.3 cm for men and 162.2 for women.
+# The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort).
+# Factors 0.844 on volume, 0.881 on clearance.
+DROPERIDOL_COHORT <- list(groups = list(
+  list(weight = 67.7, height = 174.3, age = 45.7, men = 10, women = 0),
+  list(weight = 67.7, height = 162.2, age = 45.7, men = 0, women = 20)))
 
 #' Droperidol pharmacokinetics (intravenous)
 #'
@@ -95,7 +113,7 @@ DROPERIDOL_K31 <- 0.01355   # 1/min
 #' @export
 droperidol <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, DROPERIDOL_COHORT))
 
   default <- list(
     v1 = DROPERIDOL_V1 * size$volume,

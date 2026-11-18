@@ -11,7 +11,7 @@ them of every future model, and list the literature to obtain from the Stanford 
 | One row per drug: finding, what is applied, factors, design, n, confidence, sources, what was read, papers to obtain | `inst/extdata/pregnancyRegistry.csv`, built by `data-raw/pregnancyRegistry.R` |
 | The flag, the registry reader, the filtration rule | `R/pregnancy.R` (`pregnancyFindings()`, `pregnancyGfrFactor()`, `pregnancyReference()`) |
 | Each applied factor, its source and arithmetic | the `PREGNANCY` section of `R/drugs_<drug>.R` (insulins: `R/insulinTham.R`) |
-| What the user sees | Help → Models → Pregnancy (`inst/help/models/pregnancy.md` + generated table), and a Pregnancy section on every drug's page (`helpDrugPregnancyHTML()`) |
+| What the user sees | Help → Models → Pregnancy (`inst/app-help/models/pregnancy.md` + generated table), and a Pregnancy section on every drug's page (`helpDrugPregnancyHTML()`) |
 | Enforcement | `tests/testthat/test-pregnancy.R`: every drug has a row; exactly the `applied` drugs name `pregnant`; the registry's `cl_factor`, `v_factor`, `f_factor` are what each model does; the flag off changes nothing |
 | The rule for new models | `AGENTS.md` (Key Rules) and `docs/adding-a-drug.md` ("Pregnancy (required for every model)") |
 

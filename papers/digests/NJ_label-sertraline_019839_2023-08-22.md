@@ -9,6 +9,7 @@ source_read: partial - text layer; Highlights, section 2 Dosage and Administrati
 digest_by: Claude Opus 5.5, 2026-10-12
 checked_against: stanpumpR master 7bc2719
 verification: discrepancy
+revised: "2026-11-18 (the label's concentration-QTc relation recorded, which the card had denied; Carbon's repository audit, checked on the PDF)"
 ---
 
 # Zoloft (sertraline) label, revised 8/2023
@@ -45,8 +46,11 @@ parameters:
 - Cimetidine 800 mg/day: sertraline AUC +50%, Cmax +24%, half-life +26%.
 
 ## Pharmacodynamics and end points
-No exposure-response, therapeutic range or toxic concentration in the label. QT study: at 400 mg/day
-(about 3-fold steady-state exposure) largest mean ddQTc 10 ms. Not an opioid.
+No therapeutic range or toxic concentration in the label. One exposure-response relation: in the thorough QTc
+study (54 healthy adults; 5.10 and 12.2) the QTc interval rose with the serum concentrations of sertraline and
+N-desmethylsertraline. At 400 mg/day (2-fold the maximum dose, about 3-fold steady-state exposure) the largest mean
+ddQTc was 10 ms (upper 90% bound 12 ms); the label adds that the concentration-based analyses showed a lesser effect
+at the highest concentrations than the primary analysis. No slope is printed. Not an opioid.
 
 ## Covariates
 Age (clearance -40% in elderly), hepatic impairment; no renal or sex effect; paediatric weight-adjusted exposure

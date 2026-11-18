@@ -68,7 +68,7 @@
 # used to predict accumulation over longer courses, where it reaches a
 # steady state (rate / CL) in days that the real drug approaches only over
 # weeks to months; the long-term oral entry is for that.  The help page
-# (inst/help/drugs/amiodaroneIV.md) says so prominently.  The drug is
+# (inst/app-help/drugs/amiodaroneIV.md) says so prominently.  The drug is
 # deliberately NOT in LONG_TERM_DRUGS (R/constants.R): it belongs on plots of
 # hours to days.
 #

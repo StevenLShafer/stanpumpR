@@ -20,11 +20,15 @@ test_that("Table 1 with the switch off", {
 
 test_that("switch on: the library's fat-free-mass factors", {
   size <- pkSizeFactors(100, 170, 50, "female", TRUE, legacyVolume = 1)
+  # anchored at Landersdorfer's patients (Results)
+  kc <- cohortFactorsIndependent(list(weight = 91, height = 166, age = 53.5, men = 6, women = 7))
+  size$volume <- size$volume / kc$volume
+  size$clearance <- size$clearance / kc$clearance
   X <- vildagliptin(100, 170, 50, "female", TRUE)
   expect_equal(X$PK$default$v1, 22.2 * size$volume)
   expect_equal(X$michaelisMenten$clLinear * 60, 36.4 * size$clearance)
   expect_equal(X$michaelisMenten$targetBinding$rmaxPeripheral, 13000 * nmol * size$volume)
-  expect_equal_rounded(vildagliptin(70, 170, 40, "male", TRUE)$PK$default$v1, 22.2000110)
+  expect_equal_rounded(vildagliptin(70, 170, 40, "male", TRUE)$PK$default$v1, 22.2000110 / kc$volume)
 })
 
 test_that("clearance falls with the dose, as the paper reports", {

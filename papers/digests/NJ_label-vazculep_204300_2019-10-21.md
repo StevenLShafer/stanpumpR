@@ -63,7 +63,7 @@ End point: arterial blood pressure (12.2, PDF p8-9).
 - inst/extdata/therapeuticRanges.csv:194 (the phenylephrine row is at line 195 in the snapshot) — registry source: no therapeutic concentration range; titrated to effect.
 
 ## Verification against stanpumpR
-Checked against `C:\dev\stanpumpRPapers\_build\master_snapshot` (master 50bb4219).
+Checked against the archive's master snapshot (master 50bb4219).
 
 - **inst/extdata/therapeuticRanges.csv:195** (context said :194): lower/upper/typical 0 ng/mL, band_status none_established, "no therapeutic concentration range; titrated to effect (label read: VAZCULEP, rev. 10/2019)". The label gives no plasma concentration range and says to adjust the dose to the BP goal (2.2, PDF p2, image). Its revision date is 10/2019 (Highlights, PDF p1; "Rev. 10/2019" PDF p10). **matches**.
 - Cross-check outside the cited line (the label is not cited there):

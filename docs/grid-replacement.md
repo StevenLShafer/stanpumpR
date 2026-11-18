@@ -656,9 +656,9 @@ and the README's sections went, and `phone.test.js` now runs only locally, as
 an emulated iPhone 15 (WebKit) or Pixel 7 (Chromium). This section is the
 record of what the real phones showed.
 
-`tests/playwright/phone.test.js` runs eight cases of the dose grid on a real
-phone through BrowserStack Automate (`tests/playwright/README.md`). All eight
-pass on an iPhone 16 (iOS 18) and an iPhone 17 (iOS 26) in Safari, and on a
+`tests/playwright/phone.test.js` ran eight cases of the dose grid on a real
+phone through BrowserStack Automate. All eight
+passed on an iPhone 16 (iOS 18) and an iPhone 17 (iOS 26) in Safari, and on a
 Google Pixel 9 (Android 16) in Chrome; the results for a Samsung Galaxy S25
 Ultra (Android 15) are in the pull request. Every failure on the way was in
 the test or in the way Playwright drives the phone, none in the grid:

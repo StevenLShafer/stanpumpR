@@ -1,6 +1,6 @@
 # stanpumpR
 
-![](../../workflows/R-CMD-check/badge.svg)
+[![R-CMD-check](https://github.com/StevenLShafer/stanpumpR/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/StevenLShafer/stanpumpR/actions/workflows/check-standard.yaml)
 
 stanpumpR, a PK/PD simulation program
 Copyright 2019-2026 Steven L. Shafer and contributors, steven.shafer@stanford.edu.
@@ -63,7 +63,7 @@ stanpumpR is open source, under the MIT License, which means anyone may use, cop
 - **The in-app help** — the **Help** tab in the running app: a user's guide, a generated page
   for every drug (parameters at reference patients, citation, units), the models and methods,
   loadable teaching scenarios, the investigators, and a map of this repository. The hand-written
-  pages are Markdown in [`inst/help/`](inst/help/) (see [`inst/help/README.md`](inst/help/README.md));
+  pages are Markdown in [`inst/app-help/`](inst/app-help/) (see [`inst/app-help/README.md`](inst/app-help/README.md));
   the drug and scenario pages are generated from the code by `R/help-drugs.R` and
   `R/help-scenarios.R`.
 

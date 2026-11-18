@@ -55,6 +55,10 @@ finishDrugSeries <- function(wide, PK, maximum, plotRecovery)
     # and both the hover readout and the total-opioid MEAC sum read equiSpace.
     # The metabolite's row is where the effect actually appears.
     rep(0, length(xout))
+  } else if (sum(!is.na(results$"Effect Site")) < 2) {
+    # a plot of length 0 has one time point, which approx() refuses (the
+    # exported simCpCe() stopped at maximum = 0)
+    rep(results$"Effect Site"[1], length(xout))
   } else {
     stats::approx(x = results$Time, y = results$"Effect Site", xout = xout)$y
   }
@@ -77,7 +81,6 @@ finishDrugSeries <- function(wide, PK, maximum, plotRecovery)
     Drug = PK$drug,
     Time = xout,
     Ce = equiSpaceCe,
-    Time = xout,
     Recovery = equiSpaceRecovery
   )
 
@@ -592,6 +595,15 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       if (!is.null(PK$michaelisMenten) || !is.null(PK$transitChain))
         stop("Target-controlled infusion is not available for a drug simulated ",
              "numerically (saturable elimination or a transit chain).")
+      # Nor a drug whose parameters change with the dose or partway through
+      # the course (dose-size systems, a dose phase, busulfan's course
+      # steps): the controller plans on the first PK set only, and a target
+      # held across dabigatranHip's phase boundary fell 47% below it
+      # (Carbon's repository audit, 2026-11-18; no shipped drug offers a
+      # target unit with these, but a Drug Library edit could add one).
+      if (isTRUE(PK$doseDependent) || !is.null(PK$dosePhase) || !is.null(PK$courseSteps))
+        stop("Target-controlled infusion is not available for a drug whose ",
+             "parameters change with the dose size or during the course.")
       if (!isTRUE(PK$Concentration.Units %in% c("mcg", "ng")))
         stop("Target-controlled infusion is available only for a drug plotted ",
              "in mcg/mL or ng/mL.")

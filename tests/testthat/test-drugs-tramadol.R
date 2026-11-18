@@ -377,7 +377,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
     "olanzapine", "droperidol", "droperidolIM",
     # The antidiabetic drugs (2026-10-17): concentration only, no ke0
-    # (inst/help/models/antidiabetics.md)
+    # (inst/app-help/models/antidiabetics.md)
     "semaglutide", "tirzepatide", "liraglutide", "insulinRegular",
     "insulinRegularU500", "insulinNPH", "insulinHumanMix70", "insulinLispro",
     "insulinLisproMix75", "insulinLisproMix50", "insulinGlargine", "insulinDegludec", "metformin",
@@ -430,7 +430,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     # cefepime (Barreto 2023, 2026-11-17): plasma only, the MIC line, no band
     "cefepime",
     # Parkinson disease drugs (2026-10-19): plasma only; levodopa (all four
-    # models) and apomorphine have an effect site (inst/help/models/parkinsons.md)
+    # models) and apomorphine have an effect site (inst/app-help/models/parkinsons.md)
     "pramipexole", "pramipexoleER", "safinamide", "opicapone",
     "istradefylline", "amantadineER", "pimavanserin", "tolcapone",
     # Chemotherapy (2026-11-05): plasma only

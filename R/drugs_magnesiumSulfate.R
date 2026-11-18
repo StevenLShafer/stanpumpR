@@ -6,7 +6,7 @@
 #
 # Drafted by Claude Code, 2026-10-18, at the request of Steven L. Shafer, as
 # one of the vasoactive and resuscitation drugs used in intensive care
-# (inst/help/models/vasoactive.md, inst/extdata/vasoactiveRegistry.csv).  Every
+# (inst/app-help/models/vasoactive.md, inst/extdata/vasoactiveRegistry.csv).  Every
 # number below was read from the full text of the source in PubMed Central
 # (PMC6518930), Table 3 and the Methods.
 #

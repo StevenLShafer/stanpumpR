@@ -59,11 +59,13 @@
 # Absorption rates are set so that the typical peak matches the observed
 # mean peak, as for oxycodone (kept so by decision of Steven L. Shafer,
 # 2026-10-09):
-#   Oral, absorption half-life 20 min: 10 mg peaks at 302 ng/mL at 27 min.
+#   Oral, absorption half-life 20 min: 10 mg peaks at 302 ng/mL at 27 min
+#     in Hung's typical subject (325 in the 70 kg reference man).
 #     Hogan 2020 (46 adults, 10 mg Valium fasting): geometric mean peaks 338
 #     and 286 ng/mL (51-75 and 76-111 kg) at median 1.0 and 0.75 h; 406
 #     ng/mL (arithmetic mean) in Greenblatt's 48 men; tmax 0.9 h (Divoll).
-#   IM, absorption half-life 50 min: 10 mg peaks at 200 ng/mL at 53 min.
+#   IM, absorption half-life 50 min: 10 mg peaks at 200 ng/mL at 53 min
+#     in Hung's typical subject (215 in the reference man).
 #     Hung 1996 (the same subjects as the disposition): 199 +/- 89 ng/mL at
 #     34 +/- 8 min.
 # Neither route's peak height and time can both be met with this disposition
@@ -75,10 +77,26 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# Fixed published parameters (Hung's subjects averaged 80.5 kg), read as the
-# reference adult's.  Volumes scale with fat-free mass relative to the 70 kg,
-# 170 cm reference male and clearances with that ratio ^ 0.75;
-# adjustToFFM = FALSE uses the published values for everyone.
+# Fixed published parameters, the means of Hung's four men (33.5 years,
+# 80.5 kg, 171.3 cm), so they are that cohort's typical patient's, and with
+# the switch on they are anchored at that patient (DIAZEPAM_COHORT; Steven L.
+# Shafer, 2026-11-18; docs/weight-adjustment.md, Anchoring at the source's
+# cohort): volumes x FFM / FFM_ref divided by 1.087, clearances x
+# (FFM / FFM_ref)^0.75 divided by 1.064, relative to the 70 kg, 170 cm, 35
+# year reference man; adjustToFFM = FALSE uses the published values for
+# everyone.
+#
+# The absorption rates were set on the published disposition, and were
+# reconsidered with the anchoring (Steven L. Shafer, 2026-11-18: re-anchor
+# and recalibrate).  Neither changes.  The IM rate reproduces Hung's own
+# subjects' peak, and Hung's typical patient still receives the published
+# disposition, so it reproduces it still.  The oral rate's target is Hogan
+# 2020's two weight bands (51-75 and 76-111 kg, geometric mean peaks 338 and
+# 286 ng/mL), whose patients' mean weights, heights and ages are not printed,
+# so no typical patient can be placed there; the oral rate stays where it
+# gives 302 ng/mL in Hung's typical patient, between the two bands.  In the
+# 70 kg reference man, a smaller patient, the peaks are now higher (the
+# tests pin both).
 #
 # BAND AND THRESHOLD
 # ==================
@@ -144,6 +162,11 @@
 # effect it gives on the reference patient's bolus curve.
 DIAZEPAM_TPEAK <- 2.63   # minutes after an IV bolus
 
+# Hung 1996 (PMID 8723850), p. 452, read on the PDF 2026-11-18: the four
+# men's means, 80.5 kg, 171.3 cm, 33.5 years.  Factors 1.087 on volume, 1.064
+# on clearance.
+DIAZEPAM_COHORT <- list(weight = 80.5, height = 171.3, age = 33.5, men = 4, women = 0)
+
 #' Diazepam pharmacokinetics
 #'
 #' Three-compartment intravenous kinetics from Hung et al. (1996), the EEG
@@ -160,7 +183,8 @@ diazepam <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Size scaling (see the header): fixed published values, read as the
   # reference adult's.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, DIAZEPAM_COHORT))
 
   # Hung 1996, Table I, means of four men
   default <- list(

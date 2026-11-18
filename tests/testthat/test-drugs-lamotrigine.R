@@ -8,6 +8,10 @@ test_that("reference patient, switch off", {
 test_that("FFM scaling, switch on", {
   a <- lamotrigine(120, 170, 50, "male", adjustToFFM = TRUE)
   s <- pkSizeFactors(120, 170, 50, "male", TRUE)
+  # anchored at Milosheska's cohort (Table 1)
+  kc <- cohortFactorsIndependent(list(weight = 70, height = 167, age = 39.8, men = 30, women = 70))
+  s$volume <- s$volume / kc$volume
+  s$clearance <- s$clearance / kc$clearance
   expect_equal(a$PK$default$v1, 77.6 * s$volume)
   expect_equal(a$PK$default$cl1, 2.32 * s$clearance / 60)
 })
@@ -26,8 +30,9 @@ test_that("pregnancy: CL/F x 2.3, nothing else", {
                tolerance = 0.01)
   for (k in c("v1", "v2", "v3", "cl2", "cl3", "ka_PO", "bioavailability_PO", "tlag_PO"))
     expect_identical(on$PK$default[[k]], off$PK$default[[k]], info = k)
-  expect_equal_rounded(62.55297612, on$PK$default$v1)
-  expect_equal_rounded(0.0756578965, on$PK$default$cl1)
+  kc <- cohortFactorsIndependent(list(weight = 70, height = 167, age = 39.8, men = 30, women = 70))
+  expect_equal_rounded(62.55297612 / kc$volume, on$PK$default$v1)
+  expect_equal_rounded(0.0756578965 / kc$clearance, on$PK$default$cl1)
   expect_match(on$reference, "Karanam")
   expect_no_match(off$reference, "Karanam")
 })

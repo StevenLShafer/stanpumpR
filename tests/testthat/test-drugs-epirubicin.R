@@ -46,12 +46,14 @@ test_that("a 100 mg dose: a higher AST raises the exposure as clearance falls", 
 })
 
 test_that("both switch positions are pinned", {
+  # Ralph 2003 Table 1: women only, 62.8 kg, 157 cm, 57 years (read on the PDF).
+  k <- cohortFactorsIndependent(list(weight = 62.8, height = 157, age = 57, men = 0, women = 109))
   on <- epirubicin(70, 170, 35, "male")$PK$default
   off <- epirubicin(70, 170, 35, "male", adjustToFFM = FALSE)$PK$default
-  expect_equal_rounded(on$v3, off$v3)
+  expect_equal_rounded(on$v3, off$v3 / k$volume)
+  expect_equal(epirubicin(62.8, 157, 57, "female")$PK$default$v3, off$v3, tolerance = 1e-12)
   big <- epirubicin(120, 170, 35, "male")$PK$default
-  size <- pkSizeFactors(120, 170, 35, "male", TRUE)
-  expect_equal_rounded(big$v3, 772 * size$volume)
+  expect_equal_rounded(big$v3, 772 * ffmRatioMaleIndependent(120, 170, 35) / k$volume)
 })
 
 test_that("epirubicin is a chemotherapy drug, plasma only, in ng/mL, with no band", {

@@ -11,7 +11,7 @@ withoutLinks <- function(html) gsub("<a [^>]*>|</a>", "", html)
 test_that("every drug in the library has a narrative", {
   for (drug in drugDefaults$Drug) {
     expect_true(helpHasMarkdown(paste0("drugs/", drug)),
-                info = paste("missing inst/help/drugs/", drug, ".md: every drug needs one (see docs/adding-a-drug.md)"))
+                info = paste("missing inst/app-help/drugs/", drug, ".md: every drug needs one (see docs/adding-a-drug.md)"))
   }
 })
 
@@ -83,7 +83,7 @@ plasmaOnly <- c(
   "calcium",
   # The antidiabetic drugs (2026-10-17): concentration only; glucose,
   # HbA1c, UGE and DPP-4 inhibition are endpoints of their own, with no ke0
-  # (inst/help/models/antidiabetics.md)
+  # (inst/app-help/models/antidiabetics.md)
   "semaglutide", "tirzepatide", "liraglutide", "insulinRegular",
   "insulinRegularU500", "insulinNPH", "insulinHumanMix70", "insulinLispro",
   "insulinLisproMix75", "insulinLisproMix50", "insulinGlargine", "insulinDegludec", "metformin",
@@ -128,10 +128,10 @@ plasmaOnly <- c(
     # cefepime (Barreto 2023, 2026-11-17): plasma only, the MIC line, no band
     "cefepime",
     # Parkinson disease drugs (2026-10-19): plasma only; levodopa (all four
-    # models) and apomorphine have an effect site (inst/help/models/parkinsons.md)
+    # models) and apomorphine have an effect site (inst/app-help/models/parkinsons.md)
     "pramipexole", "pramipexoleER", "safinamide", "opicapone",
     "istradefylline", "amantadineER", "pimavanserin", "tolcapone",
-    # Chemotherapy (2026-11-05): plasma only (inst/help/models/chemotherapy.md)
+    # Chemotherapy (2026-11-05): plasma only (inst/app-help/models/chemotherapy.md)
     "cladribine", "fluorouracil", "fluorouracilBriki", "carboplatin", "carboplatinDuffull", "busulfan",
     "methotrexatePediatric", "methotrexate", "carboplatinPeng", "methotrexateIbarra", "fluorouracilTan", "cytarabine", "doxorubicinPerezBlanco", "doxorubicinolPerezBlanco", "fludarabine", "bendamustine", "oxaliplatinNikanjam", "capecitabine", "capecitabine5FU", "gemcitabine", "gemcitabineDFDU", "etoposideDuong", "melphalanPediatric", "carboplatinPediatric", "daunorubicin", "doxorubicinPediatric", "doxorubicinolPediatric", "etoposide", "etoposideKroghMadsen", "cisplatin", "cisplatinBound", "vinorelbine", "topotecan", "irinotecan", "irinotecanSN38", "doxorubicin", "doxorubicinJoerger", "doxorubicinol", "doxorubicinolJoerger", "cyclophosphamide", "cyclophosphamideJoerger", "cyclophosphamideMcCune", "ifosfamide", "epirubicin", "temozolomide", "temozolomideOstermann", "temozolomidePanetta", "dacarbazine", "bleomycin", "paclitaxelProteinBound", "thioguanine", "doxorubicinLiposomal", "doxorubicinLiposomalFree", "thioguanineIV", "docetaxel", "vincristine", "vincristineIgarashi", "melphalan", "melphalanNath", "etoposidePediatric", "pemetrexed", "paclitaxel", "paclitaxelJoerger", "paclitaxelCrombag", "vincristinePediatric", "oxaliplatin", "oxaliplatinBastian"
 )
@@ -263,10 +263,10 @@ test_that("an active parent with no effect site is not described as a prodrug", 
 test_that("half-lives of a day or more are also given in days", {
   expect_equal(helpFormatHalfLife(c(10, 1439, 1440, 79717.909, NA)),
                c("10", "1,440", "1,440 (1 d)", "79,700 (55.4 d)", "—"))
-  # Amiodarone's terminal half-lives, 55.4 days (parent) and 60.4 days
+  # Amiodarone's terminal half-lives, 55.7 days (parent) and 60.8 days
   # (desethylamiodarone), at the reference adult
-  expect_match(helpDrugPageHTML("amiodarone"), "(55.4 d)", fixed = TRUE)
-  expect_match(helpDrugPageHTML("desethylamiodarone"), "(60.4 d)", fixed = TRUE)
+  expect_match(helpDrugPageHTML("amiodarone"), "(55.7 d)", fixed = TRUE)
+  expect_match(helpDrugPageHTML("desethylamiodarone"), "(60.8 d)", fixed = TRUE)
 })
 
 test_that("the table shows the covariate switches", {

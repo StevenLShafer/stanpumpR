@@ -12,6 +12,10 @@ test_that("Table IV: one compartment, CL 4.23 L/h, V 34.6 L, half-life 5.7 h", {
 
 test_that("the switch scales by the library's factors and leaves the published values off", {
   size <- pkSizeFactors(100, 165, 56, "female", TRUE)
+  # anchored at Joerger's 59 women (Table I; height from the BSA by Du Bois)
+  kc <- cohortFactorsIndependent(list(weight = 70, height = 170.0, age = 56, men = 0, women = 59))
+  size$volume <- size$volume / kc$volume
+  size$clearance <- size$clearance / kc$clearance
   on <- cyclophosphamideJoerger(100, 165, 56, "female")$PK$default
   expect_equal_rounded(on$v1, 34.6 * size$volume)
   expect_equal_rounded(on$cl1 * 60, 4.23 * size$clearance)

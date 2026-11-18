@@ -74,6 +74,15 @@ published: the cohort was heavy but mostly women, and carried less fat-free
 mass than the 70 kg man. With *Adjust weight to fat-free mass* off, V2 is the
 published 8.86 L (see the size-scaling note in `R/drugs_mannitol.R`).
 
+Since 2026-11-18 the other size-free parameters, V1, V3, CL2 and CL3, are
+anchored at Kaneda's cohort too, by Dr Shafer's standing rule
+(`docs/weight-adjustment.md`, *Anchoring at the source's cohort*): Table I's
+two dose groups (0.5 g/kg: 79 kg, 167 cm, 56 years, 3 men and 7 women;
+1.0 g/kg: 93 kg, 168 cm, 56 years, 3 men and 9 women) give factors of 0.960
+on volume and 0.970 on clearance, so the reference man's V1 is 2.92 L and
+V3 12.5 L. CL1 is not anchored: it follows the creatinine clearance, whose
+Cockcroft-Gault weight already carries the size.
+
 ### 2. Clearance: 0.07 L/min, not 0.04 — changed
 
 Kaneda reported clearance separately for the two dose groups: 0.04 L/min after

@@ -27,16 +27,18 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
 })
 
 test_that("scales to fat-free mass for a 120 kg man", {
+  # The pins from before the anchoring, divided by Komatsu's cohort factors (not the renal CLu)
+  kc <- cohortFactorsIndependent(CEFAZOLIN_COHORT)
   # 120 kg, 170 cm, 50 y male: FFM 71.09 kg against the 54.48 kg reference, so
   # size-free volumes x 1.3049067 and clearances x 1.2209126; a covariate the
   # source wrote on weight sees the pharmacokinetic weight 91.34 kg.
   actual <- cefazolin(120, 170, 50, "male")
   expected <- list(
-    v1 = 47.759583,
-    v2 = 55.06706,
+    v1 = 47.759583 / kc$volume,
+    v2 = 55.06706 / kc$volume,
     v3 = 1,
     cl1 = 0.69190916,
-    cl2 = 1.1069608,
+    cl2 = 1.1069608 / kc$clearance,
     cl3 = 0
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
@@ -62,15 +64,17 @@ test_that("the unbound AUC after a dose is dose / CLu", {
 })
 
 test_that("the Pregnant field applies the review's factor (R/pregnancy.R)", {
+  # The pins from before the anchoring, divided by Komatsu's cohort factors (not the renal CLu)
+  kc <- cohortFactorsIndependent(CEFAZOLIN_COHORT)
   # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.  Creatinine clearance x 1.5, so CLu x 1.5^0.586.
   # The values are those the model gives with the flag on; test-pregnancy.R
   # checks the ratio against the flag off and that nothing else moves.
   actual <- cefazolin(70, 165, 30, "female", pregnant = TRUE)$PK$default
-  expect_equal_rounded(29.50307895, actual$v1)
-  expect_equal_rounded(34.01721124, actual$v2)
+  expect_equal_rounded(29.50307895 / kc$volume, actual$v1)
+  expect_equal_rounded(34.01721124 / kc$volume, actual$v2)
   expect_equal_rounded(1, actual$v3)
   expect_equal_rounded(0.7249970217, actual$cl1)
-  expect_equal_rounded(0.7713248818, actual$cl2)
+  expect_equal_rounded(0.7713248818 / kc$clearance, actual$cl2)
   expect_equal_rounded(0, actual$cl3)
   expect_equal(cefazolin(70, 165, 30, "female")$PK$default,
                cefazolin(70, 165, 30, "female", pregnant = FALSE)$PK$default)

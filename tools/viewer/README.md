@@ -48,7 +48,7 @@ The controls: **Play**, **Pause**, **Stop** (pause and go back to the start), th
 
 Every drug whose plot is a concentration in mcg/mL, ng/mL, pg/mL, IU/mL, mcU/mL or mmol/L (amounts in mg, mcg, ng, IU, U or mmol), and heparinCPB as its anti-Xa activity, whatever its model: linear or saturable (Michaelis–Menten), closed form, transit chain or Runge–Kutta. The visualizer computes no pharmacokinetics: it draws stanpumpR's concentrations, and reads every flow from the amounts as they change, so a flow is right for any model.
 
-And the inhaled anesthetics (sevoflurane, isoflurane, desflurane, nitrous oxide), in the 2D view: see *The inhaled anesthetics* below.
+And the inhaled anesthetics (sevoflurane, isoflurane, desflurane, nitrous oxide), in the 2D and the 3D view: see *The inhaled anesthetics* below.
 
 Not drawn (`viewerProblem()`): oxygen and the summed MAC; drugs plotted as an INR (fluindione, acenocoumarol: stanpumpR keeps no drug concentration for them), a serum osmolality (mannitol), a percentage or a flow; and drugs whose doses reach more than one of their separate systems (ketorolac's S and R enantiomers, warfarin, meloxicam dosed both orally and intravenously), which one set of compartments cannot show. Meloxicam's oral and intravenous (ANJESO) fits each take only their own route's doses, so meloxicam given by one route is drawn with that route's fit (`viewerSystem()`). A drug dosed as a salt in mmol (calcium) is drawn with the drug given unknown.
 

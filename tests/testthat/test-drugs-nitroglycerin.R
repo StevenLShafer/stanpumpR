@@ -95,7 +95,7 @@ test_that("the offset after a stop: 16% of the plateau remains at 5 min, as in S
 test_that("the infusion set's effect is stated where the user sees it", {
   ref <- nitroglycerin(70, 175, 60, "male")$reference
   expect_match(ref, "INFUSION SET CHANGES THE DOSE", fixed = TRUE)
-  page <- readLines(system.file("help", "drugs", "nitroglycerin.md",
+  page <- readLines(system.file("app-help", "drugs", "nitroglycerin.md",
                                 package = "stanpumpR"))
   expect_identical(page[1], "### The infusion set changes the dose")
   expect_true(any(grepl("| PVC | 0.33 | 0.31 |", page, fixed = TRUE)))
