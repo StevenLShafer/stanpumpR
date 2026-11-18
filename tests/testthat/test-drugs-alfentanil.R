@@ -22,7 +22,11 @@ test_that("returns the published parameters with total-body-weight scaling", {
     typical = 46.8,
     upperTypical = 78,
     lowerTypical = 31.2,
-    reference = "Scott JC, Stanski DR. J Pharmacol Exp Ther 1987;240(1):159-166. https://pubmed.ncbi.nlm.nih.gov/3100765/"
+    reference = paste0(
+      "Scott JC, Stanski DR. J Pharmacol Exp Ther 1987;240(1):159-166. ",
+      "https://pubmed.ncbi.nlm.nih.gov/3100765/; the parameter set as printed in ",
+      "Shafer SL, Varvel JR. Anesthesiology 1991;74:53-63, Table 1. ",
+      "https://pubmed.ncbi.nlm.nih.gov/1824743/")
   )
 
   expect_equal_rounded(actual, expected)

@@ -1,6 +1,6 @@
 ### The model
 
-Alfentanil's parameters are those of Scott and Stanski (*J Pharmacol Exp Ther* 1987;240:159-166), who gave fentanyl and alfentanil by infusion to surgical patients aged 20 to 89 and modelled the plasma concentrations and the EEG. The volumes are 2.19, 6.70 and 14.5 L and the clearances 0.199, 1.43 and 0.247 L/min.
+Alfentanil's parameters are those of Scott and Stanski (*J Pharmacol Exp Ther* 1987;240:159-166), who gave fentanyl and alfentanil by infusion to surgical patients aged 20 to 89 and modelled the plasma concentrations and the EEG. The volumes are 2.19, 6.70 and 14.5 L and the clearances 0.199, 1.43 and 0.247 L/min. That parameter set is the one Shafer and Varvel (*Anesthesiology* 1991;74:53-63, Table 1) printed as microconstants and attributed to Scott and Stanski; the 1987 paper itself prints the same central volume and half-lives close to it (0.67, 14 and 118 minutes, harmonic means), but its mean clearances are a little lower (0.195, 1.27 and 0.224 L/min).
 
 ### Covariates
 
