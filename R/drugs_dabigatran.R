@@ -59,11 +59,14 @@
 # Body weight is the model's own covariate on V2/F only; the paper found no
 # weight effect on clearance ("Weight has no effect on AUCss").  V2/F is
 # evaluated at the pharmacokinetic weight with the switch on and at total body
-# weight with it off.  CL/F, Q/F and V3/F carry no size term in the source and
-# take the library's fat-free-mass factors with the switch on; with it off they
-# are as published (legacyVolume = 1), so the switch-off position reproduces the
-# source's weight-independent clearance.  Weight also enters CL/F through the
-# Cockcroft-Gault CLcr, as the published model does.
+# weight with it off.  Q/F and V3/F carry no size term in the source and take
+# the library's fat-free-mass factors with the switch on; with it off they are
+# as published (legacyVolume = 1).  CL/F takes no size factor in either
+# position: weight already enters it through the Cockcroft-Gault CLcr, as the
+# published model has it, and a size factor on top would correct clearance for
+# size twice (Steven L. Shafer, 2026-11-18: "including weight in creatinine
+# clearance already accounts for it"; until then CL/F also took the clearance
+# factor, 1.22 for a 120 kg man).
 #
 # EFFECT SITE AND THRESHOLDS
 # ==========================
@@ -102,8 +105,7 @@ dabigatran <- function(weight, height, age, sex, adjustToFFM = TRUE,
   cl <- DABIGATRAN_CLMAX *
     crcl^DABIGATRAN_POWER / (DABIGATRAN_EC50^DABIGATRAN_POWER + crcl^DABIGATRAN_POWER) *
     (1 - 0.0041 * (age - DABIGATRAN_AGE_REF)) *
-    (if (female) 0.917 else 1) *
-    size$clearance                                             # L/h
+    (if (female) 0.917 else 1)                                 # L/h; the CRCL carries the size
 
   default <- list(
     v1  = 673 * (1 + 0.0077 * (pkW - DABIGATRAN_WT_REF)),      # V2/F, median Hgb
