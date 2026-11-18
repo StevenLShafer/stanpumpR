@@ -8,7 +8,7 @@ Total ceftriaxone, which is what a laboratory reports. Ceftriaxone is 85 to 95 p
 
 ### Covariates
 
-None in the source. The parameters take the default [fat-free-mass scaling](help:models/fat-free-mass) and are used as published with the switch off. Renal function is not a covariate: ceftriaxone has substantial biliary elimination and the healthy cohort offered no renal spread to fit.
+None in the source. The parameters are those of Sanz-Codina's six healthy men (mean age 31.5 years, BMI 23.5; their weight, 73.9 kg, follows from the BMI and Austria's mean adult height from the NCD Risk Factor Collaboration, since neither was printed), and take the default [fat-free-mass scaling](help:models/fat-free-mass) from them: the 70 kg reference man receives volumes 7% and clearances 5% smaller. They are used as published with the switch off. Renal function is not a covariate: ceftriaxone has substantial biliary elimination and the healthy cohort offered no renal spread to fit.
 
 ### Effect site
 

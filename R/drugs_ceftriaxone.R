@@ -53,18 +53,13 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# The published parameters are fixed values for a typical healthy man.
-# Volumes scale with fat-free mass relative to the 70 kg, 170 cm reference
-# male, clearances with that ratio ^ 0.75; the switch off uses them as
-# published.
-#
-# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
-# Anchoring at the source's cohort): fixed published values belong to the
-# source's cohort, not the reference man. Sanz-Codina 2023 prints age (31.5
-# years), BMI (23.5) and sex (6 men) but no weight or height (read
-# 2026-11-18); the weight could be had from the BMI and a sex-typical height,
-# which was not done here, so the fixed values stay anchored at the 70 kg
-# reference man, as before the rule.
+# The published parameters are fixed values for Sanz-Codina's six healthy
+# men, so with the switch on they are anchored at that cohort's typical man
+# (CEFTRIAXONE_COHORT; Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): volumes scale with fat-free mass relative
+# to him, clearances with that ratio ^ 0.75, so the 70 kg, 170 cm reference
+# man receives the published volumes divided by 1.070 and clearances by
+# 1.052.  The switch off uses them as published.
 #
 # References
 # ----------
@@ -78,6 +73,16 @@
 #   ceftriaxone, Enterobacterales, S <= 1 mg/L.
 # -----------------------------------------------------------------------------
 
+# Sanz-Codina 2023 (PMID 36433819), p. 384, read 2026-11-18: six healthy
+# men, mean age 31.5 years, BMI 23.5 kg/m2, Medical University of Vienna
+# (ethics approval 1608/2017); no weight or height printed.  The height is
+# Austria's mean adult height for men born 2022 - 31.5 = 1990 (NCD Risk Factor
+# Collaboration, eLife 2016;5:e13410, height at 18 by birth year, 177.6 cm),
+# less the 0.2 cm a cohort of men loses per decade after 18 that the same
+# paper reports: 177.3 cm; the weight follows from the printed BMI, 23.5 x
+# 1.773^2 = 73.9 kg.  Factors 1.070 on volume, 1.052 on clearance.
+CEFTRIAXONE_COHORT <- list(weight = 73.9, height = 177.3, age = 31.5, men = 6, women = 0)
+
 #' Ceftriaxone pharmacokinetics
 #'
 #' @inheritParams cefazolin
@@ -90,7 +95,8 @@ ceftriaxone <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Size scaling (see the header): fixed published parameters, so
   # legacyVolume = 1 leaves them unscaled with the switch off.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, CEFTRIAXONE_COHORT))
 
   # Sanz-Codina 2023, total plasma
   v1  <- 5.76 * size$volume

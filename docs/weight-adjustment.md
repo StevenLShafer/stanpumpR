@@ -196,6 +196,7 @@ values**, and the reference man, and everyone else, are scaled from there.
   methylprednisolone, metoprolol, midazolam, paroxetine (CL/F only),
   pioglitazone, pramlintideIV, psilocybin, ropivacaine, sufentanil (and so
   carfentanil), vecuronium, venlafaxine and desvenlafaxine, vildagliptin,
+  ceftriaxone (its weight from the printed BMI and the typical height),
   vinorelbine, zolpidem and zonisamide.
 - **Not anchored, and why** (2026-11-18). *The source's paper is not in the
   archive* (papers/pending-work.csv): duloxetine, nortriptyline, clozapine,
@@ -205,8 +206,7 @@ values**, and the reference man, and everyone else, are scaled from there.
   daunorubicin, droperidolIM, risperidone and hydroxyrisperidone,
   nitroglycerin, phenylephrine, vasopressin, prednisolone and prednisone,
   diclofenacEC, alfentanil, oliceridine, mepivacaine, glycopyrrolate,
-  neostigmine, clonazepam, apomorphine, sildenafilFDA, ceftriaxone (no
-  weight), benazepril (no height or age), irinotecan (weight only).
+  neostigmine, clonazepam, apomorphine, sildenafilFDA, benazepril (no height or age), irinotecan (weight only).
   *Excluded by the rule on partial data*: sertraline and hydrochlorothiazide
   (meta-analyses of study means), propranolol (a weight implied by
   per-kilogram doses). *Waiting on a decision of Shafer's*, each written as a
