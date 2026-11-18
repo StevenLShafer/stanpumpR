@@ -115,6 +115,8 @@ plasmaOnly <- c(
     "suzetrigine", "M6SUZ",
     # ambrisentan (2026-11-16): plasma only
     "ambrisentan", "macitentan", "aprocitentan",
+    # bosentan (Miura 2026, 2026-11-18): plasma only
+    "bosentan",
     # colistimethate and the colistin it forms (2026-11-16): plasma only, no
     # line until the MIC decision (R/drugs_colistin.R)
     "colistimethate", "colistin",
