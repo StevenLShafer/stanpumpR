@@ -840,3 +840,20 @@ test_that("the remaining anaesthetic rows (2026-11-18)", {
                       physiology = c(liver = 2))$PK[[1]]$bioavailability_PO,
             getDrugPK("hydromorphone", 70, 170, 35, "male")$PK[[1]]$bioavailability_PO)
 })
+
+test_that("the high-extraction drugs (2026-11-18)", {
+  cl <- function(d, ...) getDrugPK(d, 70, 170, 35, "male", ...)$PK[[1]]$cl1
+  # A high-extraction drug follows cardiac output more than liver function
+  for (d in c("propranolol", "naloxone", "nicardipine")) {
+    r <- physiologyRow(d)
+    expect_gt(r$extraction_ratio, 0.6, label = d)
+    flow <- cl(d, physiology = c(cardiac = 0.5)) / cl(d)
+    capacity <- cl(d, physiology = c(liver = 0.5)) / cl(d)
+    expect_lt(flow, capacity, label = d)
+  }
+  # metoprolol's oral first pass follows its extraction ratio
+  expect_true(physiologyRow("metoprolol")$oral_first_pass)
+  # clearances above hepatic blood flow are held back, not forced
+  expect_null(physiologyRow("oxymorphone"))
+  expect_null(physiologyRow("labetalol"))
+})

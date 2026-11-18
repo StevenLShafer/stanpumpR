@@ -385,6 +385,16 @@ amines, which stay out of red cells, so their ratio is taken as
 1 − haematocrit, 0.55; fentanyl's and ketamine's were not found and are
 taken as 1. Each row's notes give the measurements that disagree.
 
+**High-extraction drugs** (2026-11-18): propranolol, metoprolol,
+verapamil, diltiazem, nicardipine, naloxone, flumazenil, buprenorphine and
+intravenous haloperidol have extraction ratios computed from their
+intravenous clearances (0.51 to 0.75), so their clearance follows cardiac
+output more than liver function. Where an oral bioavailability is known
+(metoprolol, verapamil, diltiazem, propranolol), it agrees with the computed
+ratio or implies a somewhat larger one. Oxymorphone and labetalol are held
+back: their models' clearances exceed hepatic blood flow, so no extraction
+ratio can be computed without a measured blood-to-plasma ratio.
+
 <!-- generated: physiology-table -->
 
 ## References
