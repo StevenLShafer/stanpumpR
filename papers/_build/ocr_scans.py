@@ -163,24 +163,40 @@ try:
     if ONLY and stem not in ONLY:
         continue
     pdf = os.path.join(ARCH, fn)
-    # Reading needs no lock: publication below is a single os.replace, so a reader sees the
-    # old file or the new one, never half of either.  The lock is taken once this PDF is
-    # known to need OCR, which keeps a lock file per SCAN rather than per archived paper.
+    # This first reading is only to decide whether the file is worth claiming, and needs no
+    # lock: publication below is a single os.replace, so a reader sees the old file or the
+    # new one, never half of either.  Claiming only a PDF that looks like a scan keeps a lock
+    # file per SCAN rather than per archived paper.  NOTHING here is acted on -- see below.
     letters = page_letters(pdf)
     if letters is None:
         print(f"{stem}: pdftotext failed -- skipped (cannot tell whether it has a text layer)", flush=True)
         continue
     if sum(letters) >= 100 * len(letters):
         continue  # has a text layer
-    mode = "--force-ocr" if any(0 < n for n in letters) else "--skip-text"
-    print(f"{stem}: {len(letters)} pages, {sum(letters)} letters -> {mode}", flush=True)
     if DRY:
+        mode = "--force-ocr" if any(0 < n for n in letters) else "--skip-text"
+        print(f"{stem}: {len(letters)} pages, {sum(letters)} letters -> {mode}", flush=True)
         continue
     lock = claimPdf(pdf)
     if lock is None:
         print(f"{fn}: another run is working on this file -- skipped", flush=True)
         continue
     try:
+        # Classify AGAIN, now the lock is held.  Between the reading above and the claim,
+        # another run can have OCR'd this PDF and published it, and acting on the stale count
+        # would re-OCR an already-OCR'd file -- then accept it, because the "did OCR gain
+        # text?" test below would compare the new output against the OLD count of nearly
+        # nothing (CodeRabbit, PR #784).  --force-ocr rasterises, so that second pass is a
+        # real loss of quality on a file the archive had already finished with.
+        letters = page_letters(pdf)
+        if letters is None:
+            print(f"{stem}: pdftotext failed -- skipped (cannot tell whether it has a text layer)", flush=True)
+            continue
+        if sum(letters) >= 100 * len(letters):
+            print(f"{stem}: another run gave it a text layer while this one waited -- skipped", flush=True)
+            continue
+        mode = "--force-ocr" if any(0 < n for n in letters) else "--skip-text"
+        print(f"{stem}: {len(letters)} pages, {sum(letters)} letters -> {mode}", flush=True)
         out = os.path.join(TMP, fn)
         if os.path.exists(out):
             os.remove(out)
