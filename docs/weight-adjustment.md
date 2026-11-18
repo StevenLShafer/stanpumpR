@@ -188,7 +188,8 @@ values**, and the reference man, and everyone else, are scaled from there.
   `cohortFactorsIndependent()` in `tests/testthat/helpers.R`):
   amantadineER, amiodarone and desethylamiodarone, aripiprazole and
   dehydroaripiprazole, atropine, bendamustine, bupivacaine, bupropion and
-  hydroxybupropion, calcium, carvedilol, cefazolin, cetagliptin,
+  hydroxybupropion, calcium, carvedilol, cefazolin, cenobamate (at the FDA
+  review's medians, 77 kg and BSA 1.9 m2, an even sex mix assumed), cetagliptin,
   cisatracurium, cladribine, cyclophosphamideJoerger, dabigatranHip,
   dexamethasone, diazepam, diltiazem, droperidol, epirubicin,
   etoposideKroghMadsen, fluoxetine and norfluoxetine, glyburide,
