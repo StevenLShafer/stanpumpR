@@ -122,13 +122,16 @@ cohortFactorsIndependent <- function(cohort) {
     if (male) (0.88 + 0.12 / (1 + (a / 13.4)^(-12.7))) * 9270 * w / (6680 + 216 * bmi)
     else (1.11 - 0.11 / (1 + (a / 7.1)^(-1.1))) * 9270 * w / (8780 + 244 * bmi)
   }
-  h <- if (!is.null(cohort$height)) cohort$height else 100 * sqrt(cohort$weight / cohort$bmi)
   ref <- ffm(70, 170, 35, TRUE)
-  vm <- ffm(cohort$weight, h, cohort$age, TRUE) / ref
-  vf <- ffm(cohort$weight, h, cohort$age, FALSE) / ref
-  n <- cohort$men + cohort$women
-  list(volume = exp((cohort$men * log(vm) + cohort$women * log(vf)) / n),
-       clearance = exp((cohort$men * log(vm^0.75) + cohort$women * log(vf^0.75)) / n))
+  groups <- if (!is.null(cohort$groups)) cohort$groups else list(cohort)
+  lv <- 0; n <- 0
+  for (g in groups) {
+    h <- if (!is.null(g$height)) g$height else 100 * sqrt(g$weight / g$bmi)
+    if (g$men > 0) lv <- lv + g$men * log(ffm(g$weight, h, g$age, TRUE) / ref)
+    if (g$women > 0) lv <- lv + g$women * log(ffm(g$weight, h, g$age, FALSE) / ref)
+    n <- n + g$men + g$women
+  }
+  list(volume = exp(lv / n), clearance = exp(0.75 * lv / n))
 }
 
 # The name of a directory as Shiny makes one for an upload: 24 hex digits,

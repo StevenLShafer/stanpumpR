@@ -4,7 +4,15 @@
 \alias{cohortSizeFactors}
 \title{The size factors of a source cohort's typical patient}
 \usage{
-cohortSizeFactors(weight, age, men, women, height = NULL, bmi = NULL)
+cohortSizeFactors(
+  weight = NULL,
+  age = NULL,
+  men = NULL,
+  women = NULL,
+  height = NULL,
+  bmi = NULL,
+  groups = NULL
+)
 }
 \arguments{
 \item{weight}{the cohort's typical weight, kg}
@@ -17,6 +25,10 @@ cohortSizeFactors(weight, age, men, women, height = NULL, bmi = NULL)
 
 \item{bmi}{the cohort's typical BMI, kg/m2, used for the height when no
 height is printed}
+
+\item{groups}{\code{NULL}, or a list of groups, each a list with \code{weight}, \code{age},
+\code{men}, \code{women} and \code{height} or \code{bmi}; given, it replaces the other
+arguments}
 }
 \value{
 a list: \code{volume} and \code{clearance}, the typical patient's factors
@@ -32,5 +44,8 @@ two patients of the cohort's typical weight, height (or BMI) and age, a man
 and a woman, whose fat-free-mass factors are averaged geometrically,
 weighted by the numbers of men and women: a 100 kg man's fat-free mass is
 about a fifth above a 100 kg woman's, so a cohort of both is neither.
+Where a source prints its demographics by group (by sex, by dose, by
+study), \code{groups} takes one such list per group and the mean runs over every
+group's men and women, each at their own group's values.
 }
 \keyword{internal}

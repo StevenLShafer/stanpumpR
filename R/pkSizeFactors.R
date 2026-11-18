@@ -112,6 +112,9 @@ pkSizeFactors <- function(weight, height, age, sex, adjustToFFM = TRUE,
 #' and a woman, whose fat-free-mass factors are averaged geometrically,
 #' weighted by the numbers of men and women: a 100 kg man's fat-free mass is
 #' about a fifth above a 100 kg woman's, so a cohort of both is neither.
+#' Where a source prints its demographics by group (by sex, by dose, by
+#' study), `groups` takes one such list per group and the mean runs over every
+#' group's men and women, each at their own group's values.
 #'
 #' @param weight the cohort's typical weight, kg
 #' @param age the cohort's typical age, years
@@ -119,20 +122,37 @@ pkSizeFactors <- function(weight, height, age, sex, adjustToFFM = TRUE,
 #' @param height the cohort's typical height, cm; or `NULL` with `bmi`
 #' @param bmi the cohort's typical BMI, kg/m2, used for the height when no
 #'   height is printed
+#' @param groups `NULL`, or a list of groups, each a list with `weight`, `age`,
+#'   `men`, `women` and `height` or `bmi`; given, it replaces the other
+#'   arguments
 #' @return a list: `volume` and `clearance`, the typical patient's factors
 #' @keywords internal
-cohortSizeFactors <- function(weight, age, men, women, height = NULL, bmi = NULL)
+cohortSizeFactors <- function(weight = NULL, age = NULL, men = NULL, women = NULL,
+                              height = NULL, bmi = NULL, groups = NULL)
 {
-  if (is.null(height)) {
-    if (is.null(bmi)) stop("cohortSizeFactors() needs a height or a BMI")
-    height <- 100 * sqrt(weight / bmi)
+  if (is.null(groups))
+    groups <- list(list(weight = weight, age = age, men = men, women = women,
+                        height = height, bmi = bmi))
+  total <- 0
+  sums <- c(volume = 0, clearance = 0)
+  for (g in groups) {
+    h <- g$height
+    if (is.null(h)) {
+      if (is.null(g$bmi)) stop("cohortSizeFactors() needs a height or a BMI")
+      h <- 100 * sqrt(g$weight / g$bmi)
+    }
+    if (!(g$men >= 0 && g$women >= 0))
+      stop("cohortSizeFactors() needs counts of men and women of 0 or more")
+    for (sex in c(SEX_MALE, SEX_FEMALE)) {
+      n <- if (sex == SEX_MALE) g$men else g$women
+      if (n == 0) next
+      f <- pkSizeFactors(g$weight, h, g$age, sex, TRUE)
+      sums <- sums + n * c(log(f$volume), log(f$clearance))
+      total <- total + n
+    }
   }
-  if (!(men >= 0 && women >= 0 && men + women > 0))
+  if (total == 0)
     stop("cohortSizeFactors() needs a cohort of at least one man or woman")
-  share <- function(sex) {
-    f <- pkSizeFactors(weight, height, age, sex, TRUE)
-    c(volume = log(f$volume), clearance = log(f$clearance))
-  }
-  mix <- exp((men * share(SEX_MALE) + women * share(SEX_FEMALE)) / (men + women))
-  list(volume = unname(mix["volume"]), clearance = unname(mix["clearance"]))
+  mix <- exp(sums / total)
+  list(volume = unname(mix[1]), clearance = unname(mix[2]))
 }
