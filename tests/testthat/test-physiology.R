@@ -816,6 +816,6 @@ test_that("the antiseizure rows survive the interactions' rebuilds (2026-11-18)"
   expect_gt(level(c(liver = 0.5)) / normal, 1.5)
   # Renal function moves it little (0.094 renal)
   expect_lt(abs(level(c(renal = 0.5)) / normal - 1), 0.1)
-  # ethosuximide is held back
-  expect_null(physiologyRow("ethosuximide"))
+  # ethosuximide: Bauer 1982's renal share at steady state
+  expect_equal(physiologyRow("ethosuximide")$fraction_renal, 0.25)
 })
