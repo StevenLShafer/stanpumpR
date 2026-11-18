@@ -32,6 +32,27 @@ python check_in_step.py [--repo <path>] [--archive <path>]
 **After changing a script in the archive, copy it here and commit it**, saying in the message what
 changed and why. The next `update.bat` will tell you if you forgot.
 
+## The filing cache and the queue, an invariant worth keeping
+
+`file_downloads.py` caches a verdict per file and replays it, so the cache signature decides when
+a verdict is looked at again. It hashes the download queue's **bytes** as well as the cited works,
+because queueing a paper changes what a verdict should be.
+
+That only works while a rebuild of the queue is **byte-stable**. `build.py` rewrites
+`stanpumpr-queue.csv` on every run, and if those bytes moved each time, the signature would change
+each time and every file in Downloads would be identified again on every run — turning a cache into
+a cost.
+
+Measured on 2026-11-18 (CodeRabbit asked, PR #784): the queue's hash was identical before a build,
+after it, and after a second build. The mechanism is that `NOW` is the only time-varying value in
+the writer, and the single line that uses it (`build.py`, `o["downloaded_at"] = NOW`) fires only
+when a row *becomes* `done` with an empty `downloaded_at` — the first build after a paper is filed,
+which is exactly when verdicts should be re-examined.
+
+**So: do not add a timestamp, a run id, a duration or any other per-run value to a queue column.**
+It would silently disable the filing cache. If you need one, keep it outside the queue, or exclude
+that column from the hash deliberately and say so here.
+
 ## What runs, in the order `update.bat` runs it
 
 | Script | What it does |
