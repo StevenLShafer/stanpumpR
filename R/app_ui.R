@@ -913,7 +913,7 @@ app_ui <- function() {
       # stanpumpR.  See R/paper-review-app.R and docs/paper-review.md.
       paperReviewNavPanel(),
 
-      # The help: pages in inst/help plus pages generated from the drug library
+      # The help: pages in inst/app-help plus pages generated from the drug library
       # and the teaching scenarios.  See R/help-content.R.
       helpNavPanel(),
 

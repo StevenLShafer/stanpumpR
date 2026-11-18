@@ -6,7 +6,7 @@
 # concentrations in ng/mL of apomorphine.
 #
 # Drafted by Claude Code, 2026-10-20, at the request of Steven L. Shafer, who
-# supplied Nasser 2024 (inst/help/models/parkinsons.md,
+# supplied Nasser 2024 (inst/app-help/models/parkinsons.md,
 # inst/extdata/parkinsonsRegistry.csv).
 #
 # THE SOURCE

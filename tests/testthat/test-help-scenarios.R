@@ -23,7 +23,7 @@ test_that("every scenario is consistent with the drug library", {
 test_that("every scenario has a narrative, and every narrative a scenario", {
   ids <- helpScenarioIds()
   for (id in ids) {
-    expect_true(helpHasMarkdown(paste0("scenarios/", id)), info = paste("missing inst/help/scenarios/", id, ".md"))
+    expect_true(helpHasMarkdown(paste0("scenarios/", id)), info = paste("missing inst/app-help/scenarios/", id, ".md"))
     text <- helpReadMarkdown(paste0("scenarios/", id))
     expect_match(text, "## What to look for", fixed = TRUE, info = id)
   }

@@ -6,7 +6,7 @@
 # concentrations in mcg/mL (= mg/L) of tolcapone.
 #
 # Drafted by Claude Code, 2026-10-20, at the request of Steven L. Shafer, who
-# supplied the article (inst/help/models/parkinsons.md,
+# supplied the article (inst/app-help/models/parkinsons.md,
 # inst/extdata/parkinsonsRegistry.csv).
 #
 # THE SOURCE

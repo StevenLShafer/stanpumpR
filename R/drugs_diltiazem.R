@@ -5,7 +5,7 @@
 #
 # Drafted by Claude Code, 2026-10-18, at the request of Steven L. Shafer, as
 # one of the vasoactive and resuscitation drugs used in intensive care
-# (inst/help/models/vasoactive.md, inst/extdata/vasoactiveRegistry.csv).  The
+# (inst/app-help/models/vasoactive.md, inst/extdata/vasoactiveRegistry.csv).  The
 # source's full text could not be reached; every number below is from its
 # PubMed abstract, which is enough to fix the model and to check it.  The full
 # text is on the list of papers to obtain.

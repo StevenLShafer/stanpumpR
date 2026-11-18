@@ -14,7 +14,7 @@
 # drawn only where a time to peak effect is known (each drug's tPeak, from a
 # source or, where marked, the clinician-author's experience), and the only
 # bands are the published target ranges of digoxin and milrinone.  Help page:
-# inst/help/models/vasoactive.md.
+# inst/app-help/models/vasoactive.md.
 # -----------------------------------------------------------------------------
 
 #' The vasoactive and resuscitation drug registry

@@ -2,7 +2,7 @@
 # Subcutaneous dosing: the SC route, and zero-order subcutaneous input
 # -----------------------------------------------------------------------------
 # Drafted by Claude Code, 2026-10-17, at the request of Steven L. Shafer, for
-# the antidiabetic library (inst/help/models/antidiabetics.md).  Tests:
+# the antidiabetic library (inst/app-help/models/antidiabetics.md).  Tests:
 # tests/testthat/test-subcutaneous.R.
 #
 # THE ROUTE

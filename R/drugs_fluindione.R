@@ -75,7 +75,7 @@
 # No effect site, no MEAC and no time until threshold: the plotted INR is a
 # turnover endpoint.  This is a research and teaching model; a simulated INR
 # is not a dose recommendation, a bleeding risk or a procedure-safe time; see
-# inst/help/drugs/fluindione.md.
+# inst/app-help/drugs/fluindione.md.
 # The band is the INR target, 2.0 to 3.0 with 2.5 typical (Holbrook 2012's
 # target for every vitamin K antagonist; inst/extdata/therapeuticRanges.csv), drawn on
 # Steven L. Shafer's decision of 2026-10-27 as a reference, not a dosing

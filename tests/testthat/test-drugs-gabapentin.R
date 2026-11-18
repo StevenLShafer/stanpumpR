@@ -198,7 +198,7 @@ test_that("the re-anchored model reproduces the Western single-dose data", {
 
 
 test_that("the saturable-absorption scenario says what the model does", {
-  # inst/help/scenarios/gabapentin-saturable-absorption.md quotes these
+  # inst/app-help/scenarios/gabapentin-saturable-absorption.md quotes these
   # numbers; if the model changes, the narrative has to change with it.
   # Worked out by hand: 40 y, 70 kg man, CrCL 108.0 mL/min at the assumed
   # creatinine of 0.9 mg/dL, half-life 4.98 h; peaks 3.90 and 5.65 mcg/mL

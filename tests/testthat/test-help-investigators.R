@@ -1,4 +1,4 @@
-# The investigators: the registry read from inst/help/investigators.md, the
+# The investigators: the registry read from inst/app-help/investigators.md, the
 # links to their pop-ups in the help and the References panel, and the
 # pop-ups themselves.  See R/help-investigators.R.
 

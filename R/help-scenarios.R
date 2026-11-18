@@ -12,13 +12,13 @@
 # measured concentrations for the Bayesian update (R/bayesian.R) and the graph
 # options that make its point.  Its help page is generated from this registry
 # (R/help-drugs.R has the drug pages; helpScenarioPageHTML() below has these)
-# and followed by the narrative in inst/help/scenarios/<id>.md, which says what
+# and followed by the narrative in inst/app-help/scenarios/<id>.md, which says what
 # to look for and what to try next.  "Load into the simulator" on that page
 # calls applyHelpScenario(), which sets the inputs and the tables and switches
 # to the Simulator tab.
 #
 # To add a scenario: add a helpScenario() call to helpScenarios() and write
-# inst/help/scenarios/<id>.md.  The tests insist on both.
+# inst/app-help/scenarios/<id>.md.  The tests insist on both.
 # -----------------------------------------------------------------------------
 
 HELP_SCENARIO_GROUPS <- c(
@@ -81,7 +81,7 @@ helpScenarioDefaultOptions <- function() {
 #' Build one scenario
 #'
 #' @param id page id, lower case with hyphens; the narrative is
-#'   inst/help/scenarios/<id>.md
+#'   inst/app-help/scenarios/<id>.md
 #' @param title shown in the sidebar and as the page title
 #' @param group one of HELP_SCENARIO_GROUPS
 #' @param summary one sentence: the point the scenario makes

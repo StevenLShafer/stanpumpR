@@ -90,7 +90,7 @@
 # neither a blood pressure nor a resting heart rate: it is the degree to which
 # carvedilol blocks a beta-agonist challenge.  It is recorded in the parameter
 # audit and is not plotted, and no antihypertensive in this library plots a
-# blood pressure (inst/help/models/antihypertensives.md).  tPeak = 0, so ke0
+# blood pressure (inst/app-help/models/antihypertensives.md).  tPeak = 0, so ke0
 # stays zero; MEAC = 0; and the band is zero, because no therapeutic plasma
 # range for carvedilol is established and an inhibitory concentration for a
 # drug challenge is not one.

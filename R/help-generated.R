@@ -8,7 +8,7 @@
 # page listing fewer drugs than the dose table offers by mouth, by injection
 # into muscle or by nasal spray.  Verified by tests/testthat/test-help-content.R.
 #
-# A hand-written page (inst/help/<id>.md) may hold a line that is nothing but
+# A hand-written page (inst/app-help/<id>.md) may hold a line that is nothing but
 #
 #     <!-- generated: NAME -->
 #
@@ -330,7 +330,7 @@ helpIllicitAnalyte <- function(drug) {
 
 #' The James lean body mass against the Al-Sallami fat-free mass, as a figure
 #'
-#' An inline SVG line chart for the Open TCI page (inst/help/opentci.md) and
+#' An inline SVG line chart for the Open TCI page (inst/app-help/opentci.md) and
 #' the obesity scenario: both measures of body size for one woman across
 #' weight, drawn from lbmJames() and ffmAlSallami() themselves, with the James
 #' peak and zero found from the function rather than quoted, the value the
@@ -651,7 +651,7 @@ helpFieldReadersTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()
 
 #' Inverse Gaussian absorption: three input shapes and what they produce
 #'
-#' Two stacked panels for inst/help/models/inverse-gaussian.md, drawn from
+#' Two stacked panels for inst/app-help/models/inverse-gaussian.md, drawn from
 #' igDensity() and igAbsorptionConc() themselves rather than from stored
 #' numbers: the top panel is the absorption density at three shape parameters,
 #' the bottom the plasma curve each produces through one disposition.  The
@@ -759,7 +759,7 @@ helpIGAbsorptionFigure <- function(drugDefaults = NULL) {
 
 #' The three models of the Duzitol editorial, built, as a Markdown table
 #'
-#' For inst/help/models/why-simulate.md: Table 1's six numbers per model, the
+#' For inst/app-help/models/why-simulate.md: Table 1's six numbers per model, the
 #' three-compartment model threeCompartmentFromHalfLives() builds from them,
 #' and the 50% and 80% decrement times after a steady-state infusion
 #' (R/duzitol.R), beside the 50% times the editorial printed.  One column per
@@ -800,7 +800,7 @@ helpDuzitolModelTableMarkdown <- function(drugDefaults = NULL) {
 
 #' The Duzitol editorial's three models, simulated, as a figure
 #'
-#' Two stacked panels for inst/help/models/why-simulate.md, drawn from
+#' Two stacked panels for inst/app-help/models/why-simulate.md, drawn from
 #' R/duzitol.R rather than from stored numbers: above, the context-sensitive
 #' half-time (the 50% decrement time after an infusion that held the plasma
 #' concentration constant) against the length of the infusion, 0 to 600 min,

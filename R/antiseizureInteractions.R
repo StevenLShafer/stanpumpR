@@ -9,7 +9,7 @@
 # valproate, lamotrigine and carbamazepine.  The interactions and their
 # sources are inst/extdata/antiseizureInteractions.csv, built by
 # data-raw/antiseizureInteractions.R; the help page is
-# inst/help/models/antiseizure-interactions.md.  Verified by
+# inst/app-help/models/antiseizure-interactions.md.  Verified by
 # tests/testthat/test-antiseizure-interactions.R.
 #
 # WHAT THE LITERATURE GIVES, AND WHAT IT DOES NOT
@@ -711,7 +711,7 @@ antiseizureInteractionSummary <- function(drugs)
 #' The applied interactions, as a Markdown table for the help page
 #'
 #' Generated block "antiseizure-interaction-table"
-#' (inst/help/models/antiseizure-interactions.md), built from the registry so
+#' (inst/app-help/models/antiseizure-interactions.md), built from the registry so
 #' that the page cannot drift from what the simulation applies.  Each row gives
 #' the published factor at the perpetrator's reference concentration, the
 #' maximal factor that (1) implies, and the EC50.

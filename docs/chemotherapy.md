@@ -23,7 +23,7 @@ the primary document. What was built:
   drugs and products) and `chemotherapyRelations.csv` (which document supports which drug, in
   what role, with cross-cutting guidance marked `global`).
 - `R/chemotherapy.R` (readers), `tests/testthat/test-chemotherapy-registry.R`, and the help page
-  `inst/help/models/chemotherapy.md`, whose model table and reading list are generated from the
+  `inst/app-help/models/chemotherapy.md`, whose model table and reading list are generated from the
   registry.
 - The category `Chemotherapy` (`CHEMOTHERAPY_DRUG_CATEGORY`) and its first two drugs, the only
   two whose complete models could be read here (section 6).

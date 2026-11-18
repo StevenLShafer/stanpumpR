@@ -1,5 +1,5 @@
 # The Duzitol editorial (Shafer and Stanski, Anesthesiology 1992;76:327-30)
-# and the help page built on it, inst/help/models/why-simulate.md.  Duzitol is
+# and the help page built on it, inst/app-help/models/why-simulate.md.  Duzitol is
 # fictional; its Table 1 shows that a table of pharmacokinetic parameters
 # cannot be read by eye: the hepatic failure column, every half-life four
 # times longer, recovers fastest.  The models are checked against Shafer's own

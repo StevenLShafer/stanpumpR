@@ -11,8 +11,8 @@
 # The help is a "Help" tab in the app (R/help-ui.R, R/help-server.R).  Its
 # pages come from two places:
 #
-#   * Hand-written Markdown in inst/help/, one file per page, named by page id
-#     (inst/help/dose-table.md is the page "dose-table"; inst/help/models/
+#   * Hand-written Markdown in inst/app-help/, one file per page, named by page id
+#     (inst/app-help/dose-table.md is the page "dose-table"; inst/app-help/models/
 #     effect-site.md is "models/effect-site").  Files start at "##": the page
 #     title comes from the registry below and is added as the <h1>.
 #
@@ -32,13 +32,13 @@
 # that loads a teaching scenario into the simulator is [text](scenario:id).
 # helpRewriteLinks() turns these into data attributes that inst/www/app.js
 # forwards to Shiny as input$help_goto and input$help_scenario_load.  The
-# names of the investigators in inst/help/investigators.md are linked on every
+# names of the investigators in inst/app-help/investigators.md are linked on every
 # page to a pop-up about them by helpLinkInvestigators()
 # (R/help-investigators.R), which also links "GasMan" to its website.
 #
 # Adding a page: add a row to helpStaticPages() and create the .md file.
 # Adding a drug: the page exists as soon as the drug is in the defaults CSV;
-# add inst/help/drugs/<drug>.md for the narrative, which the tests require.
+# add inst/app-help/drugs/<drug>.md for the narrative, which the tests require.
 # -----------------------------------------------------------------------------
 
 HELP_SECTIONS <- c(
@@ -193,8 +193,8 @@ helpPageExists <- function(id, registry = helpPageRegistry()) {
 # --- Markdown files ----------------------------------------------------------
 
 helpContentDir <- function() {
-  dir <- system.file("help", package = "stanpumpR")
-  if (!nzchar(dir)) stop("The stanpumpR help content (inst/help) was not found")
+  dir <- system.file("app-help", package = "stanpumpR")
+  if (!nzchar(dir)) stop("The stanpumpR help content (inst/app-help) was not found")
   dir
 }
 
@@ -214,7 +214,7 @@ helpReadMarkdown <- function(id) {
   paste(readLines(path, encoding = "UTF-8", warn = FALSE), collapse = "\n")
 }
 
-#' All Markdown files under inst/help, as page ids
+#' All Markdown files under inst/app-help, as page ids
 #' @noRd
 helpMarkdownIds <- function() {
   files <- list.files(helpContentDir(), pattern = "\\.md$", recursive = TRUE)

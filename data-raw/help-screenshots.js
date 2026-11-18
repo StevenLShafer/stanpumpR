@@ -1,5 +1,5 @@
 // Recapture the screenshots of the help's five-minute tour
-// (inst/help/quick-start.md -> inst/www/help/quick-start-*.png).
+// (inst/app-help/quick-start.md -> inst/www/help/quick-start-*.png).
 //
 // The pictures drift as the interface changes, so they are made by this script
 // rather than by hand, from the teaching scenario the tour describes

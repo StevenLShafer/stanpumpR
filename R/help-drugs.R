@@ -15,7 +15,7 @@
 # model table "drifted once already"; this one cannot.
 #
 # The narrative about each model -- the population it was fitted to, where it
-# is extrapolated, who did the work -- is Markdown in inst/help/drugs/<drug>.md
+# is extrapolated, who did the work -- is Markdown in inst/app-help/drugs/<drug>.md
 # and is appended to the generated page.
 # -----------------------------------------------------------------------------
 
@@ -1458,7 +1458,7 @@ helpRawTableHTML <- function(df, caption = NULL) {
 }
 
 #' The bibliography page: every citation the drug models return, then the
-#' hand-written list of methods references in inst/help/references.md
+#' hand-written list of methods references in inst/app-help/references.md
 #' @noRd
 helpReferencesHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
   patients <- helpReferencePatients()

@@ -22,7 +22,7 @@
 # is not plotted, and there is no effect site, no MEAC and no time until
 # threshold: the drug is a research and teaching model, not a validated
 # clinical ACT or a safe anticoagulation target (see
-# inst/help/drugs/heparinCPB.md).  Its band, 480 to 600 s, is a reference.
+# inst/app-help/drugs/heparinCPB.md).  Its band, 480 to 600 s, is a reference.
 #
 # (Claude Code, 2026-10-20, at the request of Steven L. Shafer.)
 # -----------------------------------------------------------------------------

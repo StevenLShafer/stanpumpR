@@ -9,7 +9,7 @@ The full procedure is in `docs/adding-a-drug.md` in the repository. In outline, 
 1. **`R/drugs_<name>.R`**: a function of `(weight, height, age, sex, adjustToFFM = TRUE)` returning the parameter list, `tPeak`, and a `reference` string ending in a PubMed or DOI URL, which the app turns into a link. Body size scaling is required: the model either carries its own size covariate, as the Eleveld models do, or writes its parameters for the 70 kg reference adult and scales them with `pkSizeFactors()`, volumes by `$volume` and clearances by `$clearance` ([Scaling to fat-free mass](help:models/fat-free-mass)). Look at `R/drugs_fentanyl.R` for a simple model and `R/drugs_propofol.R` for a covariate model.
 2. **`inst/extdata/drugDefaults_global.csv`**: one row with the concentration units, the units offered in the dose table, the default unit, a colour, the typical range, MEAC, the recovery threshold, the class, and the `Category` it is listed under in the menu the app opens with (one of `DRUG_CATEGORIES` in `R/constants.R`; blank only for a metabolite with no units of its own). An antibiotic's recovery threshold is its MIC for free drug, recorded in `antibioticMicTable()` in `R/antibioticThresholds.R`.
 3. **`tests/testthat/test-drugs-<name>.R`**: a unit test pinning the parameters with `expect_equal_rounded()`, with the fat-free-mass switch off (the published parameters) and on (a patient away from the reference), so that a later edit cannot silently change them.
-4. **`inst/help/drugs/<name>.md`**: the narrative for the drug's help page: the population the model was fitted in, the covariates, where it is extrapolated, and anything a user should know. The help tests require this file to exist.
+4. **`inst/app-help/drugs/<name>.md`**: the narrative for the drug's help page: the population the model was fitted in, the covariates, where it is extrapolated, and anything a user should know. The help tests require this file to exist.
 5. **Its row in `data-raw/pregnancyRegistry.R`**, rebuilt into `inst/extdata/pregnancyRegistry.csv`: what the literature says of its pharmacokinetics in late pregnancy (`test-pregnancy.R` requires one row per drug with a `Category`).
 6. **Its row in `inst/extdata/therapeuticRanges.csv`**: the therapeutic range its band draws, or why it has none (`test-therapeutic-ranges.R`).
 
@@ -29,11 +29,11 @@ Return a named list of parameter sets, one per clinical event the model distingu
 
 ## Adding a teaching scenario
 
-Add a `helpScenario()` call to `helpScenarios()` in `R/help-scenarios.R` and write `inst/help/scenarios/<id>.md`. The tests check every scenario against the drug library and run it through the engine.
+Add a `helpScenario()` call to `helpScenarios()` in `R/help-scenarios.R` and write `inst/app-help/scenarios/<id>.md`. The tests check every scenario against the drug library and run it through the engine.
 
 ## Adding a help page
 
-Add a row to `helpStaticPages()` in `R/help-content.R` and write the Markdown file. See `inst/help/README.md`.
+Add a row to `helpStaticPages()` in `R/help-content.R` and write the Markdown file. See `inst/app-help/README.md`.
 
 ## Adding an R package
 

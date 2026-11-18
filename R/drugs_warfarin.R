@@ -93,7 +93,7 @@
 # turnover endpoint, not an effect-site concentration, and it falls after
 # warfarin is stopped at the pace of clotting-factor synthesis.  A simulated
 # INR is not a dosing instruction or a procedure-safe time; see
-# inst/help/drugs/warfarin.md.
+# inst/app-help/drugs/warfarin.md.
 # The band is the INR target, 2.0 to 3.0 with 2.5 typical (Coumadin label,
 # section 2.2; Holbrook 2012; inst/extdata/therapeuticRanges.csv), drawn on
 # Steven L. Shafer's decision of 2026-10-27 as a reference, not a dosing

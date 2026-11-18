@@ -98,7 +98,7 @@
 # no time until threshold; no therapeutic range is established, and a simulated
 # level is not an ecarin or dilute-thrombin-time activity or a procedure-safe
 # time.  A research and teaching model, not validated clinical decision support;
-# see inst/help/drugs/dabigatranHip.md.
+# see inst/app-help/drugs/dabigatranHip.md.
 #
 # (Claude Code, 2026-10-19, at the request of Steven L. Shafer.)
 # -----------------------------------------------------------------------------

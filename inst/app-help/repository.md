@@ -8,7 +8,7 @@ stanpumpR is an R package that contains a Shiny application. The source is at [g
 | `DESCRIPTION`, `NAMESPACE` | Package metadata and exports |
 | `R/` | All the code, in flat files (below) |
 | `inst/extdata/` | The drug library (`drugDefaults_global.csv`), the event list (`eventDefaults.csv`), the pregnancy, therapeutic-range and illicit-route registries, the registries and parameter tables of the antiseizure (with their interactions), antidiabetic, anticoagulant, antihypertensive, vasoactive and Parkinson disease drugs (Parkinson's also a product table), and the PowerPoint template |
-| `inst/help/` | The hand-written pages of this help, as Markdown |
+| `inst/app-help/` | The hand-written pages of this help, as Markdown |
 | `inst/plumber/` | The simulation API's `plumber` file (`plumber.R`), which `run_api()` serves |
 | `inst/api/` | The TCI API's deployment entry point (`entrypoint.R`, for Posit Connect) and its OpenAPI document (`openapi.json`) |
 | `inst/www/` | The app's stylesheet and JavaScript, and the screenshots in this help |
@@ -78,4 +78,4 @@ The R version is recorded in the third line of `renv.lock`.
 - `docs/weight-adjustment.md`: how the models are scaled to fat-free mass, summarised under [Scaling to fat-free mass](help:models/fat-free-mass).
 - `docs/tci-api.md`: the TCI API reference, every field, unit token, bound and error code, summarised under [The TCI API](help:tci-api).
 - `AGENTS.md`: orientation for AI coding assistants working on the repository.
-- `inst/help/README.md`: how to write help pages.
+- `inst/app-help/README.md`: how to write help pages.
