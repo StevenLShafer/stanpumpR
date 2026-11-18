@@ -4,7 +4,7 @@ Amikacin's parameters come from Tod and colleagues (*Antimicrob Agents Chemother
 
 ### Covariates
 
-The creatinine clearance is Cockcroft-Gault from the Patient Profile's **Serum creatinine** (blank means an assumed normal creatinine for age and sex). With [the scaling switch](help:models/fat-free-mass) on, the weight in it and the volumes follow fat-free mass.
+The creatinine clearance is Cockcroft-Gault from the Patient Profile's **Serum creatinine** (blank means an assumed normal creatinine for age and sex). With [the scaling switch](help:models/fat-free-mass) on, the weight in it, the volumes and the 1.40 L/h non-renal clearance follow fat-free mass; the renal part takes no further size factor, its creatinine clearance already carrying the weight.
 
 ### Who it describes
 
