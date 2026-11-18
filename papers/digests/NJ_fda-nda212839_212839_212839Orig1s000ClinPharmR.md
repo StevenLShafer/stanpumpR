@@ -9,6 +9,8 @@ source_read: "text layer, whole document (46 PDF pages; PDF page = printed page 
 digest_by: Claude Opus 5.5, 2026-10-27
 checked_against: stanpumpR master 8baa733
 verification: discrepancy
+open_questions:
+  - "[decision] Cenobamate's covariate centring (2026-11-18): the review's p. 41 says the reviewer simulated the typical profile at median BSA 1.9 m2, bilirubin 5.13 uM and weight 77 kg. R/drugs_cenobamate.R replaced the population model's linear BSA (on CL/F) and weight (on V1/F) terms with fat-free-mass scaling because it believed no median was printed. Apply the source's terms centred at these medians (bilirubin held at 5.13 uM), anchor the fat-free-mass scaling at a 77 kg, BSA 1.9 m2 cohort instead (docs/weight-adjustment.md, Anchoring at the source's cohort), or keep the reference anchor?"
 ---
 
 # FDA 2019: NDA 212839 (XCOPRI) clinical pharmacology review

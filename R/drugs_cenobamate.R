@@ -27,10 +27,17 @@
 # ======================
 # Every continuous covariate enters linearly about a centring value,
 # P = P_TV x (1 + theta x (X - X~)), and every categorical one as
-# P_TV x (1 + theta) (Supplemental Methods).  X~ is "typically the median",
-# and no median is printed anywhere in the paper, its supplement, the FDA
-# review or the EMA assessment report, so no continuous term can be
-# evaluated exactly:
+# P_TV x (1 + theta) (Supplemental Methods).  X~ is "typically the median".
+# The paper, its supplement and the EMA assessment report print no median,
+# but the FDA Clinical Pharmacology Review of NDA 212839 does (printed p. 41,
+# read on the PDF 2026-11-18): its reviewer simulated the typical profile with
+# "median body surface area (1.9 m2), median bilirubin level (5.13 uM), and
+# median weight (77 kg)".  Until 2026-11-18 this header said no median was
+# printed anywhere.  Whether those are the centring values X~ of the fit, so
+# that the BSA and weight terms below can be applied as published, is a
+# [decision] for Steven L. Shafer (card
+# papers/digests/NJ_fda-nda212839_212839_212839Orig1s000ClinPharmR.md); until
+# it is answered the terms stay replaced as described:
 #   - daily dose on CL/F, "exponential", -0.0280 (Supplemental Table 2 gives
 #     its unit as m^-2, copied from the BSA row).  The exponential form is
 #     not written out and the reference dose is not printed.  Read as a power of the daily dose about
@@ -46,7 +53,8 @@
 #     underpredicts it after a single large one (0.73 times at 750 mg).  The
 #     first day of daily dosing is reproduced (below), and dosing is daily.
 #   - body surface area on CL/F (0.611 per m^2) and weight on V1/F (0.0120
-#     per kg), medians unprinted.  Replaced by the library's fat-free-mass
+#     per kg), centred on medians printed only in the FDA review (above).
+#     Replaced by the library's fat-free-mass
 #     scaling, as for ethosuximide.  Centred on the 70 kg, 170 cm reference
 #     man (Du Bois BSA), the published slopes and the fat-free-mass factors
 #     agree within 5% for men near that size (80 kg: V1 x1.12 against x1.08,

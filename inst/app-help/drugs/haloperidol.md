@@ -1,6 +1,6 @@
 ### The model
 
-Oral haloperidol, from Pilla Reddy and colleagues (*J Clin Psychopharmacol* 2013;33:731-739), who analysed 122 patients with schizophrenia. Two compartments, first-order absorption, no covariates: apparent clearance 88 L/h, central volume 669 L, peripheral volume 2500 L, intercompartmental clearance 233 L/h, absorption rate constant 0.236 per hour. Half-lives are 1.3 h and 31 h.
+Oral haloperidol, from Pilla Reddy and colleagues (*J Clin Psychopharmacol* 2013;33:731-739), who analysed 122 patients with schizophrenia. Two compartments, first-order absorption, no estimated covariates (apparent clearance carries a fixed allometric weight term, (weight/70)^0.75): apparent clearance 88 L/h, central volume 669 L, peripheral volume 2500 L, intercompartmental clearance 233 L/h, absorption rate constant 0.236 per hour. Half-lives are 1.3 h and 31 h.
 
 **These values have not yet been checked against the full paper**, which could not be obtained. The abstract confirms the two-compartment structure and the 122 subjects, and a later paper cites this model with a clearance of 88 L/h and a total volume of 3169 L, which agree with them.
 
@@ -21,7 +21,7 @@ Neither is applied to the curve.
 
 ### Covariates
 
-None in the source. The published values are read as the reference adult's and take the library's [fat-free-mass scaling](help:models/fat-free-mass).
+None estimated: age, sex and weight were tested and none was significant, but the authors fixed an allometric weight term, (weight/70)^0.75, on the apparent clearance in every fit. The clearance carries that term (at the pharmacokinetic weight under the [fat-free-mass switch](help:models/fat-free-mass), at total weight with it off); the volumes and the intercompartmental clearance, which carry none, take the library's fat-free-mass scaling.
 
 ### Effect site
 
