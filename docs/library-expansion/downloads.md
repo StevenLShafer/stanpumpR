@@ -12,7 +12,7 @@ Save a supplement under the paper's name with `_sup1`, `_sup2` ... added (`PMID_
 
 ## Antibiotics
 
-- **ceftolozane/tazobactam** (n = 139): Pai MP, Cojutti PG, Gatti M, Rinaldi M, Tonetti T, Siniscalchi A, Viale P, Pea F. Keeping the horse with the cart: are we underdosing tazobactam even when using continuous-infusion ceftolozane/tazobactam for effective... [DOI](https://doi.org/10.1128/aac.01215-25) · [free in PMC](https://pmc.ncbi.nlm.nih.gov/articles/PMC12691610/) · [PubMed](https://pubmed.ncbi.nlm.nih.gov/41159735/) · `PMID_41159735.pdf`
+- **Zerbaxa** (n = 139): Pai MP, Cojutti PG, Gatti M, Rinaldi M, Tonetti T, Siniscalchi A, Viale P, Pea F. Keeping the horse with the cart: are we underdosing tazobactam even when using continuous-infusion ceftolozane/tazobactam for effective... [DOI](https://doi.org/10.1128/aac.01215-25) · [free in PMC](https://pmc.ncbi.nlm.nih.gov/articles/PMC12691610/) · [PubMed](https://pubmed.ncbi.nlm.nih.gov/41159735/) · `PMID_41159735.pdf`
 
 ## Antifungals
 
