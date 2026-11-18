@@ -65,3 +65,7 @@ tests/testthat/testthat-problems.rds
 
 # The 3D viewer build (tools/viewer/build)
 node_modules/
+
+# Independent readings quote the papers: keep them out of the repository
+# (docs/independent-extraction/README.md)
+docs/independent-extraction/replies/

@@ -1,0 +1,77 @@
+category,drug,nlmixr2libKeys,priority,status,notes
+Antibiotics,tazobactam,tazobactam,1,planned,"The other half of piperacillin's product (Zosyn); a model fitted jointly with piperacillin is preferred, and stanpumpR's piperacillin must agree with it (AGENTS.md, Parents and their metabolites)."
+Antibiotics,imipenem,imipenem;relebactam,1,planned,"Imipenem-cilastatin (and imipenem-relebactam)."
+Antibiotics,ceftazidime,ceftazidime,1,planned,
+Antibiotics,avibactam,avibactam,1,planned,"Ceftazidime-avibactam; a joint fit preferred."
+Antibiotics,teicoplanin,teicoplanin,1,planned,"Not FDA-approved in the US (no US label: a no_us_label row)."
+Antifungals,fluconazole,fluconazole,1,planned,
+Antifungals,posaconazole,posaconazole,1,planned,"IV, delayed-release tablet and suspension differ in absorption."
+Antifungals,isavuconazole,isavuconazole,1,planned,"Dosed as isavuconazonium sulfate (prodrug): dose basis."
+Antifungals,caspofungin,caspofungin,1,planned,
+Antifungals,micafungin,micafungin,1,planned,
+Antimalarials,artemether,artemether;dihydroartemisinin,2,planned,"Artemether-lumefantrine (Coartem); dihydroartemisinin is the active metabolite."
+Antimalarials,lumefantrine,lumefantrine,2,planned,"Food effect is large; pregnancy data exist."
+Antimalarials,artesunate,artesunate;dihydroartemisinin,2,planned,"IV artesunate is the US treatment of severe malaria."
+Antimalarials,piperaquine,piperaquine,2,planned,"Dihydroartemisinin-piperaquine; not US-approved."
+Antimalarials,primaquine,primaquine,2,planned,
+Antimalarials,tafenoquine,tafenoquine,2,planned,
+Antimalarials,amodiaquine,amodiaquine;desethylamodiaquine,2,planned,"Not US-approved; desethylamodiaquine carries the effect."
+Antimalarials,chloroquine,chloroquine,2,planned,
+Antimalarials,hydroxychloroquine,hydroxychloroquine,2,planned,
+Antimalarials,mefloquine,mefloquine,2,planned,
+Antimalarials,quinine,quinine,2,planned,
+Antimalarials,atovaquone-proguanil,proguanil;atovaquone,2,planned,"Malarone; nlmixr2lib has proguanil only."
+Antimalarials,pyronaridine,pyronaridine,2,planned,"Not US-approved."
+Antimalarials,sulfadoxine-pyrimethamine,sulfadoxine;pyrimethamine,2,planned,"Not US-approved; intermittent preventive treatment in pregnancy."
+Antivirals,tenofovir,tenofovir,2,planned,"Disoproxil and alafenamide are different products; plasma tenofovir only (the intracellular diphosphate is not plotted)."
+Antivirals,emtricitabine,emtricitabine,2,planned,
+Antivirals,efavirenz,efavirenz,2,planned,"CYP2B6 is its main covariate, and already a Patient Profile field."
+Antivirals,dolutegravir,dolutegravir,2,planned,
+Antivirals,bictegravir,bictegravir,2,planned,
+Antivirals,raltegravir,raltegravir,2,planned,
+Antivirals,cabotegravir,cabotegravir,2,planned,"Long-acting IM: flip-flop kinetics on the IM depot."
+Antivirals,rilpivirine,rilpivirine,2,planned,"Long-acting IM with cabotegravir."
+Antivirals,doravirine,doravirine,2,planned,
+Antivirals,nevirapine,nevirapine,2,planned,
+Antivirals,lamivudine,lamivudine,2,planned,
+Antivirals,abacavir,abacavir,2,planned,
+Antivirals,zidovudine,zidovudine,2,planned,"IV zidovudine in labour."
+Antivirals,darunavir,darunavir,2,planned,"Boosted by ritonavir or cobicistat: an interaction stanpumpR does not yet model."
+Antivirals,atazanavir,atazanavir,2,planned,"Boosted; as darunavir."
+Antivirals,lopinavir,lopinavir,2,planned,"Co-formulated with ritonavir."
+Antivirals,maraviroc,maraviroc,2,planned,
+Antivirals,remdesivir,remdesivir,2,planned,"COVID-19; its nucleoside metabolite GS-441524."
+Antivirals,nirmatrelvir,nirmatrelvir,2,planned,"Paxlovid; ritonavir boosting. The nlmixr2lib ritonavir models are of ritonavir boosting other drugs (HCV, HIV) and are not searched for Paxlovid."
+Antivirals,molnupiravir,molnupiravir,2,planned,
+Antivirals,oseltamivir,oseltamivir,2,planned,"Prodrug; oseltamivir carboxylate is the active moiety."
+Antivirals,baloxavir,baloxavir,2,planned,
+Antivirals,zanamivir,zanamivir,2,planned,
+Antivirals,acyclovir,acyclovir;aciclovir,2,planned,
+Antivirals,valganciclovir,valganciclovir,2,planned,"Prodrug of ganciclovir; check stanpumpR's ganciclovir first."
+Antivirals,letermovir,letermovir,2,planned,
+Antivirals,maribavir,maribavir,2,planned,
+Antivirals,tecovirimat,tecovirimat,2,planned,
+Transplant,mycophenolic acid,mycophenolicacid;mycophenolatemofetil;mycophenolatesodium,1,planned,"Goes with tacrolimus; enterohepatic recirculation; mofetil and sodium are different products."
+Anesthesia,esketamine,esketamine,1,planned,"stanpumpR's ketamine is racemic."
+Anesthesia,ciprofol,ciprofol,1,planned,"Not US-approved."
+Anesthesia,landiolol,landiolol,1,planned,"FDA-approved 2024 (Rapiblyk)."
+Anesthesia,levosimendan,levosimendan,1,planned,"Not US-approved; active metabolites OR-1855 and OR-1896."
+Anesthesia,nalbuphine,nalbuphine,1,planned,
+Biologics (surgery),factor VIII,factorviii;lonoctocogalfa;turoctocogalfa;turoctocogalfapegol,1,planned,"Several products with different half-lives; perioperative haemophilia A."
+Biologics (surgery),factor IX,factorix,1,planned,
+Biologics (surgery),fibrinogen concentrate,fibrinogen,1,planned,
+Biologics (surgery),von Willebrand factor,vonicogalfa,1,planned,
+Biologics (surgery),emicizumab,emicizumab,1,planned,
+Biologics (surgery),tenecteplase,tenecteplase,1,planned,
+Biologics (surgery),recombinant factor VIIa,marzeptacogalfa,1,planned,"nlmixr2lib holds a variant (marzeptacog alfa) only: eptacog alfa needs a PubMed search."
+Biologics (surgery),idarucizumab,,1,planned,"Dabigatran reversal; not in nlmixr2lib: PubMed search."
+Biologics (surgery),andexanet alfa,,1,planned,"Factor Xa inhibitor reversal; not in nlmixr2lib: PubMed search."
+Biologics (surgery),prothrombin complex concentrate,,1,planned,"Not in nlmixr2lib: PubMed search."
+Biologics (surgery),alteplase,,1,planned,"Not in nlmixr2lib: PubMed search."
+Biologics (sepsis),immunoglobulin,immunoglobulin,1,planned,
+Biologics (sepsis),antithrombin,antithrombin,1,planned,
+Biologics (sepsis),thrombomodulin alfa,thrombomodulinalfa,1,planned,"Not US-approved (Japan)."
+Biologics (sepsis),angiotensin II,angiotensin,1,planned,"Giapreza, vasodilatory shock: a peptide; fits beside the vasoactive drugs."
+Biologics (sepsis),tocilizumab,tocilizumab,1,planned,"COVID-19 and cytokine release."
+Biologics (sepsis),anakinra,anakinra,1,planned,
+Biologics (sepsis),vilobelimab,,1,planned,"Anti-C5a, COVID-19 EUA; not in nlmixr2lib: PubMed search."

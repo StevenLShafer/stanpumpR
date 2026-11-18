@@ -292,6 +292,8 @@ For each item: what it is, where it comes from, and what it would take.
 
    The TCI API already handles maximum rate and rounding; the app's TCI panel does not.
 8. **Missing drugs, by clinical demand in these tools:**
+
+   *Overtaken (2026-11-18):* the library has since added most of the drugs below: tacrolimus, meropenem, piperacillin, cefepime, amikacin, tobramycin, linezolid, voriconazole, busulfan, caffeine and tranexamic acid. `docs/nlmixr2lib/candidate-drugs.csv` is the current list of drugs nlmixr2lib models that stanpumpR does not.
    - Perioperative/ICU antibiotics: cefepime (Buclin 2020), piperacillin (Chen 2016), meropenem (Li 2006), amikacin, tobramycin (Hennig 2013), daptomycin (Dvorchik 2004), linezolid.
    - Vancomycin companions: Goti 2018 (dialysis) and Buelga 2005, beside Thomson, as Minto/Schnider sit beside Eleveld.
    - Transplant: tacrolimus (Monchaud 2012, a four-step Erlang absorption, for which `advanceTransitChain.R` fits).
