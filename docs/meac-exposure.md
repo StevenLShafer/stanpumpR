@@ -58,7 +58,7 @@ regimens) rather than population thresholds, for the reasons in §6.
 
 | Piece | Where | Notes |
 |---|---|---|
-| Per-drug MEAC | `inst/extdata/drugDefaults_global.csv`, `MEAC` column; mirrored in each `R/drugs_<name>.R` | Twelve opioids and one metabolite (desmetramadol); values and provenance in `inst/help/models/meac.md` and the drug pages |
+| Per-drug MEAC | `inst/extdata/drugDefaults_global.csv`, `MEAC` column; mirrored in each `R/drugs_<name>.R` | Twelve opioids and one metabolite (desmetramadol); values and provenance in `inst/app-help/models/meac.md` and the drug pages |
 | % MEAC per drug | `simCpCe()` writes `equiSpace$MEAC` | Effect-site based |
 | Total opioid U(t) | `totalOpioidMEAC()` in `R/opioidMacInteraction.R` (exported) | Additive sum on a common grid |
 | Metabolite scoring | `R/mergeMetabolite.R`, `foldMetabolites()` | Codeine → morphine, tramadol → desmetramadol, oxycodone → oxymorphone, hydrocodone → hydromorphone; the parent's own MEAC is 0 where its effect is the metabolite's |
@@ -341,7 +341,7 @@ engine (`docs/architecture.md#time-units`).
   criterion and the discount; it writes the new regimen into the dose table
   through `setDoseTable()` so the user can see both on the plot.
 - `exportDoseTable()` gains the summary metrics.
-- A help page, `inst/help/models/meac-exposure.md`, linked from
+- A help page, `inst/app-help/models/meac-exposure.md`, linked from
   `models/meac`, with a scenario showing an oxycodone → hydromorphone rotation.
 
 ### 5.3 Library gaps to close first

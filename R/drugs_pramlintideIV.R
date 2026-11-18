@@ -31,15 +31,22 @@
 # describe sampling in that study and are not applied: a dose is given as
 # entered.  No covariate was found.
 #
-# BODY SIZE: the parameters are scaled by the library's fat-free-mass
-# factors, fixed with the switch off (legacyVolume = 1).  The subjects
-# weighed 77 kg on average.
+# BODY SIZE: the parameters are the cohort's typical man's (77.3 kg,
+# 181.9 cm); with the switch on they are anchored at him (PRAMLINTIDE_IV_COHORT;
+# Steven L. Shafer, 2026-11-18), the reference man's volumes divided by 1.122
+# and clearances by 1.090, and fixed with the switch off (legacyVolume = 1).
 #
 # References
 # ----------
 # Fang J et al., AAPS J 2013;15(1).
 #   https://doi.org/10.1208/s12248-012-9409-7
 # -----------------------------------------------------------------------------
+
+# Fang 2013, Subjects (printed p. 16), read on the PDF 2026-11-18: 25 men,
+# means 170.4 lb (77.3 kg), 71.6 in (181.9 cm), 29.6 years.  The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort).
+# Factors 1.122 on volume, 1.090 on clearance.
+PRAMLINTIDE_IV_COHORT <- list(weight = 77.3, height = 181.9, age = 29.6, men = 25, women = 0)
 
 #' Pramlintide pharmacokinetics (intravenous research model)
 #'
@@ -50,7 +57,7 @@
 #' @export
 pramlintideIV <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, PRAMLINTIDE_IV_COHORT))
 
   default <- list(
     v1  = 19.1 * size$volume, v2 = 11.0 * size$volume, v3 = 1,

@@ -58,8 +58,11 @@
 # group's later measurements: Holze 2024 (85 and 170 micrograms, n = 28)
 # reported 3.7 h and 4.0 h, and the 2025 oral/intravenous crossover reported a
 # terminal half-life of 3.8 h with an intravenous clearance of 4.7 L/h and an
-# absolute oral bioavailability near 0.80.  Different analytical methods and
-# modelling approaches account for much of the difference.  This model
+# absolute oral bioavailability near 0.80.  Holze 2024 explains the earlier
+# group's differences by a capsule formulation whose content declined (dose
+# probably ~30% lower than stated) and a tenfold higher assay limit in the
+# earlier 200 ug study; whether the formulation also affected Dolder 2017 is
+# an open [source] question (papers/digests/PMID_37596682.md).  This model
 # therefore clears LSD FASTER than the later data, and it must be read as
 # Dolder's 2017 model rather than as a consensus.  The 2025 crossover is not
 # implemented: its two-compartment intravenous micro-parameters are in its
@@ -88,9 +91,12 @@
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # Dolder published no size covariate, so the apparent parameters are those of
-# a reference adult: with the fat-free-mass switch off they are used as
-# published at any weight (legacyVolume = 1), and with it on they scale with
-# the Al-Sallami fat-free mass ratio (volume) and its 0.75 power (clearance).
+# the cohort's typical subject (68 kg, 33 years, 12 men and 12 women): with
+# the fat-free-mass switch off they are used as published at any weight
+# (legacyVolume = 1), and with it on they are anchored at that subject
+# (LSD_COHORT; Steven L. Shafer, 2026-11-18) and scale with the Al-Sallami
+# fat-free mass ratio (volume) and its 0.75 power (clearance), the reference
+# man receiving the published values divided by 0.895 and 0.920.
 # That scaling is an IMPLEMENTATION CONVENTION, not a published fit.
 #
 # References
@@ -112,6 +118,21 @@ LSD_KA   <- 1.4 / 60     # 1/min, from 1.4 /h
 LSD_CL_F <- 12.3 / 60    # L/min, apparent clearance, from 12.3 L/h
 LSD_V_F  <- 46           # L, apparent volume
 
+# Dolder 2017 (PMID 28197931), p. 1220, read on the PDF 2026-11-18: the 100 ug
+# study's 24 subjects, mean 68 kg and 33 years, 12 men and 12 women,
+# University Hospital Basel.
+# No height is printed: each sex's is the country's mean adult height for the
+# birth year (NCD Risk Factor Collaboration, eLife 2016;5:e13410, height at 18
+# by birth year), less the 0.2 cm (men) and 0.3 cm (women) a cohort loses per
+# decade of age after 18 that the same paper reports. Switzerland, born 2017 -
+# 33 = 1984: 177.5 cm for men and 163.5 for women.
+# The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort).
+# Factors 0.895 on volume, 0.920 on clearance.
+LSD_COHORT <- list(groups = list(
+  list(weight = 68, height = 177.5, age = 33, men = 12, women = 0),
+  list(weight = 68, height = 163.5, age = 33, men = 0, women = 12)))
+
 #' LSD pharmacokinetics: plasma, oral, apparent parameters
 #'
 #' @param weight patient weight (kg)
@@ -128,7 +149,7 @@ LSD <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # The source fitted no size covariate, so the published parameters stand
   # unscaled with the switch off (legacyVolume = 1).
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, LSD_COHORT))
 
   v1  <- LSD_V_F  * size$volume
   cl1 <- LSD_CL_F * size$clearance

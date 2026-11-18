@@ -51,6 +51,12 @@
 # the reference male, clearances with that ratio ^ 0.75; the switch off uses
 # them as published.
 #
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): fixed published values belong to the
+# source's cohort, not the reference man. The model was fitted to curves
+# digitised from the literature (Xu 2007), which have no single cohort, so the
+# fixed values stay anchored at the 70 kg reference man, as before the rule.
+#
 # References
 # ----------
 # Xu J, Winkler J, Derendorf H. J Pharmacokinet Pharmacodyn 2007;34:355-372.

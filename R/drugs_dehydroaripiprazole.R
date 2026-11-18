@@ -13,7 +13,8 @@
 #
 # Units: time in minutes, volumes in litres, clearances in L/min,
 # concentrations in ng/mL (plasma).  Body size: no weight covariate, scaled to
-# fat-free mass like the parent (legacyVolume = 1).
+# fat-free mass and anchored at Kim's cohort like the parent
+# (ARIPIPRAZOLE_COHORT; legacyVolume = 1).
 # -----------------------------------------------------------------------------
 
 DEHYDROARIPIPRAZOLE_V  <- 587    # L,   Vm/fm
@@ -29,7 +30,8 @@ DEHYDROARIPIPRAZOLE_CL <- 8.02   # L/h, CLm/fm
 #' @export
 dehydroaripiprazole <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, ARIPIPRAZOLE_COHORT))
 
   default <- list(
     v1 = DEHYDROARIPIPRAZOLE_V * size$volume,

@@ -71,17 +71,19 @@ test_that("matches the Buhrer set as Zomorodi 1998 tabulates it", {
 })
 
 test_that("scales to fat-free mass for a 120 kg man", {
+  # The pins from before the anchoring, divided by Buhrer's cohort factors
+  kc <- cohortFactorsIndependent(MIDAZOLAM_COHORT)
   # 120 kg, 170 cm, 50 y male: FFM 71.09 kg against the 54.48 kg reference, so
   # volumes x 1.3049067 and clearances x 1.3049067^0.75 = 1.2209126 (worked out
   # from the Al-Sallami formula by hand, not from the code under test).
   actual <- midazolam(120, 170, 50, "male")
   expected <- list(
-        v1 = 4.3061919,
-        v2 = 22.918702,
-        v3 = 126.25905,
-        cl1 = 0.65342914,
-        cl2 = 2.4595663,
-        cl3 = 1.0159354
+        v1 = 4.3061919 / kc$volume,
+        v2 = 22.918702 / kc$volume,
+        v3 = 126.25905 / kc$volume,
+        cl1 = 0.65342914 / kc$clearance,
+        cl2 = 2.4595663 / kc$clearance,
+        cl3 = 1.0159354 / kc$clearance
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
 })
@@ -106,8 +108,9 @@ test_that("tPeak is Buhrer's parametric equilibration half-time", {
   expect_equal(round(peak, 1), midazolam(70, 170, 50, "male")$tPeak)
 
   # The ke0 the engine solves from tPeak returns that half-time to within the
-  # rounding of tPeak to one decimal (5.70 min).
-  PK <- getDrugPK("midazolam", 70, 170, 50, "male")$PK$default
+  # rounding of tPeak to one decimal (5.70 min), in Buhrer's typical man, who
+  # receives the published kinetics (MIDAZOLAM_COHORT).
+  PK <- getDrugPK("midazolam", 77.6, 176.7, 38.4, "male")$PK$default
   expect_equal(log(2) / PK$ke0, 5.6, tolerance = 0.02)
 })
 

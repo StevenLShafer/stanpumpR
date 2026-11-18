@@ -2186,8 +2186,18 @@ app_server <- function(input, output, session) {
   # session (Carbon's UI audit, 2026-11-14, F6D).
   emailComments <- function() asScalarString(input$emailComments)
 
+  # The attestation is about the comment as it stands: an edit unticks it,
+  # so a comment changed after the box was ticked (a patient's name added)
+  # is never sent on the earlier promise (Carbon's repository audit,
+  # 2026-11-18).
+  lastComment <- reactiveVal("")
   observeEvent(input$emailComments, {
-    shinyjs::toggle("commentSafe", condition = nzchar(emailComments()))
+    comment <- emailComments()
+    shinyjs::toggle("commentSafe", condition = nzchar(comment))
+    if (!identical(comment, lastComment())) {
+      lastComment(comment)
+      if (isTRUE(input$commentSafe)) updateCheckboxInput(session, "commentSafe", value = FALSE)
+    }
   })
 
   observe({

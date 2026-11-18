@@ -129,7 +129,7 @@ try:
             return 1
         if any(l.startswith("R/") for l in locs):
             return 2
-        if any(l.startswith(("tests/", "inst/help/")) for l in locs):
+        if any(l.startswith(("tests/", "inst/app-help/", "inst/help/")) for l in locs):
             return 3
         return 4
 

@@ -7,6 +7,10 @@ test_that("it returns the same value", {
   drugDefaults <- getDrugDefaultsGlobal()
 
   actual <- getDrugPK(drug, weight, height, age, sex, drugDefaults)
+  # Given the whole library table, getDrugPK() takes the drug's own row
+  # (Carbon's repository audit, 2026-11-18); until then every band field
+  # came back as a vector of the whole table, which this test pinned.
+  drugDefaults <- drugDefaults[drugDefaults$Drug == drug, , drop = FALSE]
 
   expected <- list(
     drug = "propofol",

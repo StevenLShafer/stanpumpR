@@ -33,8 +33,12 @@
 # A one-compartment fit to samples taken hours apart will not show the
 # distribution phase right after a bolus.
 #
-# Body size: no weight covariate, so the published values are the 70 kg
-# reference adult's and scale to fat-free mass (legacyVolume = 1).
+# Body size: no weight covariate, so the published values are the cohort's
+# typical patient's (median 80 kg, BMI 27, 67 years, 12 men and 10 women).
+# With the switch on they are anchored at that patient (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort); the reference man's
+# factors are 0.995 and 0.996, so he barely moves.  With it off, the published
+# values (legacyVolume = 1).
 #
 # EFFECT SITE
 # ===========
@@ -51,6 +55,12 @@
 HALOPERIDOL_IV_CL <- 51.7    # L/h, absolute
 HALOPERIDOL_IV_V  <- 1490    # L
 
+# Li 2022, Table 1 (p. 4), read on the PDF 2026-11-18: the 22 patients'
+# medians, 80 kg, BMI 27 (no height printed; 172 cm from the two), 67 years,
+# 12 men and 10 women.  The model is anchored at this cohort
+# (docs/weight-adjustment.md, Anchoring at the source's cohort).
+HALOPERIDOL_IV_COHORT <- list(weight = 80, bmi = 27, age = 67, men = 12, women = 10)
+
 #' Haloperidol pharmacokinetics (intravenous)
 #'
 #' Li et al. (2022): one compartment, absolute parameters from critically ill
@@ -62,7 +72,7 @@ HALOPERIDOL_IV_V  <- 1490    # L
 #' @export
 haloperidolIV <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, HALOPERIDOL_IV_COHORT))
 
   default <- list(
     v1 = HALOPERIDOL_IV_V * size$volume,

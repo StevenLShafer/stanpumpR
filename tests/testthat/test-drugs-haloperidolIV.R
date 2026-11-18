@@ -2,7 +2,9 @@
 # The route split from oral haloperidol is pinned here too.
 
 test_that("IV haloperidol receives Li's absolute values", {
-  for (adjust in c(TRUE, FALSE)) {
+  # Li 2022 Table 1: 80 kg, BMI 27, 67 years, 12 men and 10 women.
+  k <- cohortFactorsIndependent(list(weight = 80, bmi = 27, age = 67, men = 12, women = 10))
+  for (adjust in c(FALSE)) {
     actual <- haloperidolIV(70, 170, 35, "male", adjustToFFM = adjust)
     expected <- list(
       PK = list(default = list(
@@ -15,9 +17,12 @@ test_that("IV haloperidol receives Li's absolute values", {
     )
     expect_equal_rounded(actual, expected)
   }
+  ref <- haloperidolIV(70, 170, 35, "male")$PK$default
+  expect_equal_rounded(ref$v1, 1490 / k$volume)
+  expect_equal_rounded(ref$cl1, 51.7 / 60 / k$clearance)
   on <- haloperidolIV(120, 170, 50, "male")$PK$default
-  expect_equal_rounded(on$v1, 1490 * 1.3049067)
-  expect_equal_rounded(on$cl1, 51.7 / 60 * 1.2209126)
+  expect_equal_rounded(on$v1, 1490 * 1.3049067 / k$volume)
+  expect_equal_rounded(on$cl1, 51.7 / 60 * 1.2209126 / k$clearance)
   # t1/2 = 0.693 x 1490 / 51.7 = 20.0 h
   expect_equal(log(2) * 1490 / 51.7, 19.98, tolerance = 1e-3)
 })

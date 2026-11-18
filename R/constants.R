@@ -666,14 +666,14 @@ DRUG_CATEGORIES <- c(
   "Illicit drugs"
 )
 # The category of the intravenous vasoactive, antiarrhythmic and resuscitation
-# drugs of intensive care (inst/help/models/vasoactive.md): concentration
+# drugs of intensive care (inst/app-help/models/vasoactive.md): concentration
 # only, every one catalogued in inst/extdata/vasoactiveRegistry.csv.
 VASOACTIVE_DRUG_CATEGORY <- "Vasoactive and resuscitation"
 # The category of the drugs used to treat Parkinson's disease and its
-# complications (inst/help/models/parkinsons.md): every candidate catalogued in
+# complications (inst/app-help/models/parkinsons.md): every candidate catalogued in
 # inst/extdata/parkinsonsRegistry.csv, implemented or not.
 PARKINSONS_DRUG_CATEGORY <- "Parkinson disease"
-# The category of the cytotoxic chemotherapy drugs (inst/help/models/
+# The category of the cytotoxic chemotherapy drugs (inst/app-help/models/
 # chemotherapy.md, docs/chemotherapy.md): every candidate model catalogued in
 # inst/extdata/chemotherapyRegistry.csv, implemented or not.
 CHEMOTHERAPY_DRUG_CATEGORY <- "Chemotherapy"

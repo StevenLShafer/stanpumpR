@@ -77,7 +77,7 @@ From the context file: registry source for `inst/extdata/therapeuticRanges.csv:2
 physical line 202 in master 50bb4219).
 
 ## Verification against stanpumpR
-Checked in `C:\dev\stanpumpRPapers\_build\master_snapshot` (master 50bb4219).
+Checked in the archive's master snapshot (master 50bb4219).
 
 - `inst/extdata/therapeuticRanges.csv:202` (context says 201; line 201 is the dobutamineNeonatal row, so the context's
   line number is one short): source "no therapeutic range: lidocaine in 5% dextrose label (Baxter, rev. 02/2017) and

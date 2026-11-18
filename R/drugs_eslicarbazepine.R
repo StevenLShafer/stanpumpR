@@ -46,9 +46,10 @@
 #
 # BAND: 3-35 mcg/mL, typical 15: the AGNP update 2026 (Hart et al.,
 # Pharmacopsychiatry 2026;59:166-295, Table 5; trough 24 h after a dose),
-# based on Jacob 2016's expert guideline and oxcarbazepine's MHD range.
-# Norway's eslicarbazepine-specific 3-26 (Svendsen 2017, Reimers 2018) is
-# narrower, on the ground that eslicarbazepine is 80% of racemic MHD.
+# based on Jacob 2016's expert guideline (whose own Table 1 gives 10-35) and
+# oxcarbazepine's MHD range.  Norway's eslicarbazepine-specific 3-26 (Reimers
+# 2018, from Svendsen 2017's responders, 13-99 umol/L) is narrower, on
+# Reimers's ground that eslicarbazepine is 80% of racemic MHD.
 #
 # PREGNANCY
 # =========

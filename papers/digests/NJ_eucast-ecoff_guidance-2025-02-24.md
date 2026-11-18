@@ -9,6 +9,7 @@ source_read: text layer, 22 pages, all read (MIC distribution table p 11 and the
 digest_by: Claude Opus 5.5, 2026-10-12
 checked_against: stanpumpR master 7bc2719
 verification: partly-verified
+revised: "2026-11-18 (cefazolin PK and PTA moved to PDF p 14, where they are, and the PTA at 2 mg/L read from the table (97-99%, not 99-100%); Carbon's repository audit, checked on the PDF)"
 ---
 
 # EUCAST 2025: cephalosporins for S. aureus infection (guidance and consultation)
@@ -23,15 +24,15 @@ IV agents cefazolin, cefepime, cefotaxime, ceftriaxone and cefuroxime.
 EUCAST S. aureus MIC distributions and ECOFFs (appendix p 11 table; agent headings pp 13-15):
 ```yaml
 parameters:
-  - {name: ECOFF_cefazolin_S_aureus, value: 2, unit: mg/L, source: "p 11 table '(T)ECOFF'; p 13 heading 'Cefazolin [ECOFF = 2]'"}
+  - {name: ECOFF_cefazolin_S_aureus, value: 2, unit: mg/L, source: "p 11 table '(T)ECOFF'; p 14 heading 'Cefazolin [ECOFF = 2]'"}
   - {name: ECOFF_cefepime, value: 8, unit: mg/L, source: "p 11, p 14"}
   - {name: ECOFF_cefotaxime, value: 4, unit: mg/L, source: "p 11"}
   - {name: ECOFF_ceftriaxone, value: 8, unit: mg/L, source: "p 11 '(8)', tentative"}
   - {name: ECOFF_cefuroxime, value: 4, unit: mg/L, source: "p 11; text p 3"}
-  - {name: cefazolin_PB, value: "91.6 +/- 6.7", unit: "%", source: "p 13", note: "used in the simulations"}
-  - {name: cefazolin_Vd_volunteers, value: "6.94 +/- 2.2", unit: L, source: "p 13", note: "t1/2beta 1.45 +/- 0.15 h"}
-  - {name: cefazolin_Vd_patients, value: "13.01 +/- 4.4", unit: L, source: "p 13", note: "t1/2beta 1.8 +/- 0.38 h"}
-  - {name: PD_target, value: "25 / 30 / 35", unit: "% fT>MIC", source: "p 12", note: "stasis / 1-log / 2-log kill (cefotaxime, ceftriaxone, animal); Zelenitsky in vitro 55/75/100% for cefazolin and ceftriaxone"}
+  - {name: cefazolin_PB, value: "91.6 +/- 6.7", unit: "%", source: "p 14", note: "used in the simulations"}
+  - {name: cefazolin_Vd_volunteers, value: "6.94 +/- 2.2", unit: L, source: "p 14", note: "t1/2beta 1.45 +/- 0.15 h"}
+  - {name: cefazolin_Vd_patients, value: "13.01 +/- 4.4", unit: L, source: "p 14", note: "t1/2beta 1.8 +/- 0.38 h"}
+  - {name: PD_target, value: "25 / 30 / 35", unit: "% fT>MIC", source: "p 12", note: "stasis / 1-log / 2-log kill (cefotaxime, ceftriaxone, animal); Zelenitsky in vitro 55/75/100% for cefazolin and ceftriaxone (p 13)"}
 ```
 Recommendations (p 4): MSSA susceptibility may be inferred for cefazolin at 2 g x 3, cefuroxime iv 1.5 g x 3,
 cefotaxime 2 g x 3-4, ceftriaxone 2 g x 2 or 4 g x 1 (preferably follow-on only), cefepime 2 g x 3; and for oral
@@ -40,8 +41,9 @@ trials used 500 mg x 2-4 (adults), 25 mg/kg x 2 (children). The cefazolin inocul
 patients in one study, associated with higher 30-day mortality).
 
 ## Pharmacodynamics and end points
-Antibacterial PK/PD only: fT>MIC targets above; PTA for cefazolin at the ECOFF of 2 mg/L is high (99-100%) with
-2 g x 3 (pp 13-14, read loosely because of column scrambling). Not opioid-related; no MEAC, ke0 or potency ratio.
+Antibacterial PK/PD only: fT>MIC targets above; PTA for cefazolin at the ECOFF of 2 mg/L with 2 g x 3
+(p 14, the regimen columns read from the table): 99% at each of the 25, 30 and 35% fT>MIC targets in volunteers, and
+99%, 98% and 97% in patients; never 100% at 2 mg/L. Not opioid-related; no MEAC, ke0 or potency ratio.
 
 ## Covariates
 None (volunteer vs patient PK sets only).

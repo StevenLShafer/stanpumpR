@@ -18,7 +18,15 @@ test_that("oral haloperidol receives the published apparent values", {
   }
   on <- haloperidol(120, 170, 50, "male")$PK$default
   expect_equal_rounded(on$v2, 2500 * 1.3049067)
-  expect_equal_rounded(on$cl1, 88 / 60 * 1.2209126)
+  # CL/F's own (WT/70)^0.75 at the pharmacokinetic weight, 91.343469 kg
+  expect_equal_rounded(on$cl1, 88 / 60 * (91.343469 / 70)^0.75)
+  expect_equal(on$cl1, 88 / 60 * 1.2209126, tolerance = 1e-6)
+  # with the switch off, the published allometry at total weight; Q/F and the
+  # volumes unscaled
+  off <- haloperidol(120, 170, 50, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(off$cl1, 88 / 60 * (120 / 70)^0.75, tolerance = 1e-12)
+  expect_equal(off$cl2, 233 / 60)
+  expect_equal(off$v1, 669)
 })
 
 test_that("oral haloperidol's half-lives are 1.3 and 31 h", {

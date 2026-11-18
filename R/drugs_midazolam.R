@@ -95,6 +95,17 @@
 # header).
 MIDAZOLAM_PREGNANCY_CL_FACTOR <- 1.28
 
+# Buhrer 1990 (PMID 2225713), part I, Table I (p. 545), read on the PDF
+# 2026-11-18: the five men given midazolam (three volunteers and two patients
+# for knee arthroscopy), 85, 70, 78, 74 and 81 kg, mean 77.6 kg, aged 36, 40,
+# 40, 43 and 33, mean 38.4 years, Stanford and the Palo Alto Veterans
+# Administration Medical Center.  No height is printed: the United States'
+# mean adult height for men born 1990 - 38 = 1952 (NCD Risk Factor
+# Collaboration, eLife 2016;5:e13410, height at 18 by birth year), less the
+# 0.2 cm a cohort of men loses per decade of age after 18 that the same paper
+# reports: 176.7 cm.  Factors 1.096 on volume, 1.071 on clearance.
+MIDAZOLAM_COHORT <- list(weight = 77.6, height = 176.7, age = 38.4, men = 5, women = 0)
+
 midazolam <- function(weight, height, age, sex, adjustToFFM = TRUE,
                       pregnant = FALSE)
 {
@@ -124,11 +135,15 @@ midazolam <- function(weight, height, age, sex, adjustToFFM = TRUE,
   # 2026 the library used 4 min, from no recorded source; Mould's t1/2 ke0 of
   # 3.2 min would give 2.2 min.
   # Size scaling (see docs/weight-adjustment.md): the published parameters
-  # describe a 70 kg adult.  Volumes scale with fat-free mass relative to the
-  # 70 kg, 170 cm reference male, clearances with that ratio ^ 0.75
-  # (Al-Sallami 2015).  adjustToFFM = FALSE reproduces the former behaviour
-  # exactly: no size scaling, the parameters were used as published.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  # are those of Buhrer's five men, so they are anchored at that cohort's
+  # typical man (MIDAZOLAM_COHORT; Steven L. Shafer, 2026-11-18).  Volumes
+  # scale with fat-free mass relative to him, clearances with that ratio ^
+  # 0.75 (Al-Sallami 2015), so the 70 kg, 170 cm reference man receives the
+  # published volumes divided by 1.096 and clearances by 1.071.
+  # adjustToFFM = FALSE reproduces the former behaviour exactly: no size
+  # scaling, the parameters were used as published.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, MIDAZOLAM_COHORT))
   # Pregnancy (see the file's header): elimination clearance only.
   clPregnancy <- if (isTRUE(pregnant)) MIDAZOLAM_PREGNANCY_CL_FACTOR else 1
 

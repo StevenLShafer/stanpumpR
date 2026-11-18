@@ -6,7 +6,7 @@
 # concentrations in mcg/mL (= mg/L) of tolcapone.
 #
 # Drafted by Claude Code, 2026-10-20, at the request of Steven L. Shafer, who
-# supplied the article (inst/help/models/parkinsons.md,
+# supplied the article (inst/app-help/models/parkinsons.md,
 # inst/extdata/parkinsonsRegistry.csv).
 #
 # THE SOURCE
@@ -36,8 +36,12 @@
 #
 # WHAT IS HELD AT THE REFERENCE
 # =============================
-# Serum protein (72 g/L) and albumin (44 g/L), which the Patient Profile does
-# not carry: the authors judged protein's effect on clearance at most +/-10%
+# Serum protein (72 g/L) and albumin (44 g/L), which the Patient Profile did
+# not carry when this model was added.  [decision] The Patient Profile has
+# carried Serum albumin since 2026-11-06 (getDrugPK() passes it to a model
+# that names `albumin`), so Vp x (albumin/44)^2.82 could now be applied;
+# whether to is Shafer's to decide (raised by Carbon's repository audit,
+# 2026-11-18).  Serum protein is still not a field.  The authors judged protein's effect on clearance at most +/-10%
 # over 64-80 g/L.  The dose factor on the volumes, held at the 200 mg value
 # (1): in the fluctuators the total volume rose with the regimen (15 L at
 # 50 mg, 39 L at 400 mg three times a day), which the nonfluctuator data did

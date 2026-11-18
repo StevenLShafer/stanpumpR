@@ -15,19 +15,28 @@ test_that("reference patient, switch off: Supplemental Table 2", {
   expect_equal(b[c("v1", "v2", "cl1", "cl2")], a[c("v1", "v2", "cl1", "cl2")])
 })
 
-test_that("FFM scaling, switch on", {
+test_that("FFM scaling, switch on, anchored at the population's medians", {
+  # 77 kg, BSA 1.9 m2 (171.9 cm by Du Bois), equal men and women at 40 years
+  # (CENOBAMATE_COHORT; the sex mix and age are assumed, the header says why)
+  kc <- cohortFactorsIndependent(CENOBAMATE_COHORT)
+  expect_equal(kc$volume, 0.967, tolerance = 1e-3)
   a <- cenobamate(120, 170, 50, "male", adjustToFFM = TRUE)$PK$default
   s <- pkSizeFactors(120, 170, 50, "male", TRUE)
-  expect_equal(a$v1, 42.4 * s$volume); expect_equal(a$v2, 7.27 * s$volume)
-  expect_equal(a$cl1, 0.533 * s$clearance / 60)
-  expect_equal(a$cl2, 1.84 * s$clearance / 60)
-  # the reference man receives the published values
-  r <- cenobamate(70, 170, 35, "male", adjustToFFM = TRUE)$PK$default
-  expect_equal(r$v1, 42.4); expect_equal(r$cl1, 0.533 / 60)
+  expect_equal(a$v1, 42.4 * s$volume / kc$volume)
+  expect_equal(a$v2, 7.27 * s$volume / kc$volume)
+  expect_equal(a$cl1, 0.533 * s$clearance / kc$clearance / 60)
+  expect_equal(a$cl2, 1.84 * s$clearance / kc$clearance / 60)
+  # the population's typical patient, its man and woman averaged
+  # geometrically, receives the published values
+  m <- cenobamate(77, 171.9, 40, "male")$PK$default
+  w <- cenobamate(77, 171.9, 40, "female")$PK$default
+  expect_equal(sqrt(m$v1 * w$v1), 42.4, tolerance = 1e-12)
+  expect_equal(sqrt(m$cl1 * w$cl1), 0.533 / 60, tolerance = 1e-12)
 })
 
 test_that("half-life and volume agree with the label", {
-  a <- cenobamate(70, 170, 35, "male")$PK$default
+  # the published (typical) values
+  a <- cenobamate(70, 170, 35, "male", adjustToFFM = FALSE)$PK$default
   k10 <- a$cl1 / a$v1; k12 <- a$cl2 / a$v1; k21 <- a$cl2 / a$v2
   s <- k10 + k12 + k21
   beta <- (s - sqrt(s^2 - 4 * k10 * k21)) / 2
@@ -39,7 +48,8 @@ test_that("200 mg once daily reaches the phase 3 steady state", {
   days <- 28
   w <- simulateDrugsWithCovariates(
     data.frame(Drug = "cenobamate", Time = 0, Dose = 200, Units = "mg PO qd"),
-    noEvents, 70, 170, 35, "male", days * 1440, TRUE)$cenobamate$wide
+    noEvents, 70, 170, 35, "male", days * 1440, TRUE,
+    adjustToFFM = FALSE)$cenobamate$wide          # the published typical values
   last <- w[w$Time >= (days - 1) * 1440, ]
   # Analytic steady state: trough 13.68, peak 17.86 mg/L, average 15.63
   # (200 mg / (0.533 L/h x 24 h)); the phase 3 mean at 200 mg/day was
@@ -60,7 +70,8 @@ test_that("200 mg once daily reaches the phase 3 steady state", {
 cenobamateCurve <- function(dose, units, days) {
   w <- simulateDrugsWithCovariates(
     data.frame(Drug = "cenobamate", Time = 0, Dose = dose, Units = units),
-    noEvents, 70, 170, 35, "male", days * 1440, TRUE)$cenobamate$wide
+    noEvents, 70, 170, 35, "male", days * 1440, TRUE,
+    adjustToFFM = FALSE)$cenobamate$wide          # the published typical values
   w[, c("Time", "Plasma")]
 }
 cenobamateAUC <- function(w, from, to) {
@@ -104,7 +115,7 @@ test_that("the concentration per dose matches two clinic TDM series", {
   # Kork (Steinhoff 2024) and Oslo (Johannessen Landmark 2026), adults with
   # refractory epilepsy, not in the fit: mean concentration / mean dose,
   # mg/L per mg/day.  The model's steady-state average is 1 / (CL/F x 24 h).
-  perDose <- 1 / (cenobamate(70, 170, 35, "male")$PK$default$cl1 * 1440)
+  perDose <- 1 / (cenobamate(70, 170, 35, "male", adjustToFFM = FALSE)$PK$default$cl1 * 1440)
   expect_equal(perDose, 0.0782, tolerance = 1e-3)
   observed <- c(
     korkSeizureFree  = 17.8 / 240.3,

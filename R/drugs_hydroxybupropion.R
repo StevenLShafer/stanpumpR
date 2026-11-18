@@ -56,9 +56,11 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# No covariate was retained.  Fixed published parameters, scaled exactly as
-# bupropion is (pkSizeFactors(legacyVolume = 1)): the apparent scale of the
-# pair is only consistent if both members scale together.
+# No covariate was retained.  The published parameters are anchored at
+# Ghimire's cohort exactly as bupropion's are (bupropionSizeFactors(), whose
+# reasoning is in R/drugs_bupropion.R; Steven L. Shafer's decision,
+# 2026-11-18): the apparent scale of the pair is only consistent if both
+# members scale together.
 #
 # References
 # ----------
@@ -86,7 +88,7 @@ HYDROXYBUPROPION_CL2 <- 3.1    # L/h, Q/F
 hydroxybupropion <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Identical to bupropion's call; see the header.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- bupropionSizeFactors(weight, height, age, sex, adjustToFFM)
 
   v1  <- HYDROXYBUPROPION_V1 * size$volume
   v2  <- HYDROXYBUPROPION_V2 * size$volume

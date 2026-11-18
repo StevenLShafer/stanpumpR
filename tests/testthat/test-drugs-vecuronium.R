@@ -30,19 +30,25 @@ test_that("returns the published Vega-Villa parameters with the switch off", {
   expect_equal_rounded(actual, expected)
 })
 
-test_that("scales to fat-free mass for a 120 kg man", {
+test_that("scales to fat-free mass from Vega-Villa's cohort for a 120 kg man", {
   # 120 kg, 170 cm, 40 y male: volumes x 1.3049067, clearances x 1.2209126
   # (worked out from the published values by hand).  The Al-Sallami
   # maturation term is 1 for any adult, so these are the age-50 factors
-  # too; age 40 carries no age factor of its own.
+  # too; age 40 carries no age factor of its own.  Each over the factor of
+  # the cohort the parameter belongs to (Table 1): all 40 patients for the
+  # shared CL, V1, CL2, V3; the 20 non-burn patients for V2 and CL3.
+  nonBurn <- list(weight = 70, height = 170, age = 40, men = 17, women = 3)
+  all40 <- cohortFactorsIndependent(list(groups = list(
+    nonBurn, list(weight = 65, height = 169, age = 36, men = 16, women = 4))))
+  nb <- cohortFactorsIndependent(nonBurn)
   actual <- vecuronium(120, 170, 40, "male")
   expected <- list(
-    v1 = 13.3752937,
-    v2 = 12.657595,
-    v3 = 57.1418644,
-    cl1 = 0.62266543,
-    cl2 = 0.80580232,
-    cl3 = 0.1159867
+    v1 = 13.3752937 / all40$volume,
+    v2 = 12.657595 / nb$volume,
+    v3 = 57.1418644 / all40$volume,
+    cl1 = 0.62266543 / all40$clearance,
+    cl2 = 0.80580232 / all40$clearance,
+    cl3 = 0.1159867 / nb$clearance
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
 })

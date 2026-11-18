@@ -106,6 +106,18 @@
 # clearance) and Brockmoller et al. 2007 (enantiomer-specific kinetics) are
 # separate analyses; neither is combined with Yan's estimates.
 #
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): fixed published values belong to the
+# source's cohort, not the reference man. [decision] for Steven L. Shafer: Yan
+# 2026 (Table 1, p. 6, read on the PDF 2026-11-18) prints the cohort, mean
+# 62.19 kg, 163 cm, 48.5 years, 43 men and 62 women, but the model steps
+# clearance down at a BMI of 28 or more, so its typical clearance belongs to
+# the patients below 28 and the cohort's typical patient (BMI 23.4) is one of
+# them. Anchor every parameter at that cohort, anchor the volume at it and the
+# clearance at the sub-28 patients (whose central values are not printed), or
+# leave the reference anchor? Until answered, the values stay anchored at the
+# 70 kg reference man.
+#
 # References
 # ----------
 # Yan et al. Drug Des Devel Ther 2026 (population pharmacokinetics of

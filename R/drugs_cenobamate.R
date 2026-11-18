@@ -27,10 +27,18 @@
 # ======================
 # Every continuous covariate enters linearly about a centring value,
 # P = P_TV x (1 + theta x (X - X~)), and every categorical one as
-# P_TV x (1 + theta) (Supplemental Methods).  X~ is "typically the median",
-# and no median is printed anywhere in the paper, its supplement, the FDA
-# review or the EMA assessment report, so no continuous term can be
-# evaluated exactly:
+# P_TV x (1 + theta) (Supplemental Methods).  X~ is "typically the median".
+# The paper, its supplement and the EMA assessment report print no median,
+# but the FDA Clinical Pharmacology Review of NDA 212839 does (printed p. 41,
+# read on the PDF 2026-11-18): its reviewer simulated the typical profile with
+# "median body surface area (1.9 m2), median bilirubin level (5.13 uM), and
+# median weight (77 kg)".  Until 2026-11-18 this header said no median was
+# printed anywhere.  Steven L. Shafer decided (2026-11-18) that the body-size
+# terms are normalised to these medians, which are typically very close to
+# the means, through the library's fat-free-mass scaling anchored at a
+# patient of that size (CENOBAMATE_COHORT, BODY SIZE below), so that a
+# patient of the study's size receives the published values.  The other
+# terms are handled as described:
 #   - daily dose on CL/F, "exponential", -0.0280 (Supplemental Table 2 gives
 #     its unit as m^-2, copied from the BSA row).  The exponential form is
 #     not written out and the reference dose is not printed.  Read as a power of the daily dose about
@@ -46,7 +54,10 @@
 #     underpredicts it after a single large one (0.73 times at 750 mg).  The
 #     first day of daily dosing is reproduced (below), and dosing is daily.
 #   - body surface area on CL/F (0.611 per m^2) and weight on V1/F (0.0120
-#     per kg), medians unprinted.  Replaced by the library's fat-free-mass
+#     per kg), centred on medians printed only in the FDA review (above).
+#     Replaced by the library's fat-free-mass scaling, anchored at those
+#     medians (BODY SIZE below).  Before the anchoring this read: replaced by
+#     the library's fat-free-mass
 #     scaling, as for ethosuximide.  Centred on the 70 kg, 170 cm reference
 #     man (Du Bois BSA), the published slopes and the fat-free-mass factors
 #     agree within 5% for men near that size (80 kg: V1 x1.12 against x1.08,
@@ -137,8 +148,16 @@
 # bioequivalent (Vashi 2024), so one oral input serves all.
 #
 # BODY SIZE: the fixed values scaled to fat-free mass in place of the source's
-# linear weight and body-surface-area terms; with the switch off, the
-# published values for everyone (legacyVolume = 1).
+# linear weight and body-surface-area terms, anchored at the population's
+# medians, 77 kg and BSA 1.9 m2 (CENOBAMATE_COHORT; Steven L. Shafer,
+# 2026-11-18; docs/weight-adjustment.md, Anchoring at the source's cohort), so
+# that the 70 kg, 170 cm reference man receives the published volumes divided
+# by 0.967 and clearances by 0.975.  The height, 171.9 cm, is Du Bois solved
+# back from those two.  Neither the FDA review nor Vashi 2023 prints the
+# pooled population's sex mix or age, so the anchor ASSUMES equal numbers of
+# men and women at 40 years: the factor runs from 0.878 (all women) to 1.065
+# (all men) on volume, and age moves it by under 0.5% between 30 and 55.
+# With the switch off, the published values for everyone (legacyVolume = 1).
 #
 # PATIENTS IN CLINICS (independent of the fit)
 # ============================================
@@ -250,6 +269,12 @@
 #   https://doi.org/10.1212/WNL.0000000000007894
 # -----------------------------------------------------------------------------
 
+# The FDA review of NDA 212839, printed p. 41, read on the PDF 2026-11-18:
+# median BSA 1.9 m2 and weight 77 kg; height by Du Bois, (1.9 / (0.007184 x
+# 77^0.425))^(1 / 0.725) = 171.9 cm; sex mix and age assumed (BODY SIZE).
+# Factors 0.967 on volume, 0.975 on clearance.
+CENOBAMATE_COHORT <- list(weight = 77, height = 171.9, age = 40, men = 1, women = 1)
+
 #' Cenobamate pharmacokinetics (oral)
 #'
 #' The sponsor's population model (Vashi et al., 2023), two compartments,
@@ -261,7 +286,8 @@
 #' @export
 cenobamate <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, CENOBAMATE_COHORT))
 
   default <- list(
     v1  = 42.4 * size$volume, v2 = 7.27 * size$volume, v3 = 1,

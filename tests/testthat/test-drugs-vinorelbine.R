@@ -37,3 +37,14 @@ test_that("vinorelbine is a chemotherapy drug, plasma only, with no band", {
   expect_match(PK$reference, "Variol")
   expect_identical(therapeuticRange("vinorelbine")$band_status, "not_applicable")
 })
+
+test_that("with the switch on the parameters are anchored at Variol's cohort", {
+  # Variol 2002, Table 2: 68 kg, BSA 1.74 m2 (163.8 cm by Du Bois), 57 years,
+  # 91 men and 84 women.
+  h <- 163.8   # (1.74 / (0.007184 x 68^0.425))^(1 / 0.725), to 0.1 cm
+  kc <- cohortFactorsIndependent(list(weight = 68, height = h, age = 57, men = 91, women = 84))
+  off <- vinorelbine(70, 170, 35, "male", adjustToFFM = FALSE)$PK$default
+  on <- vinorelbine(70, 170, 35, "male")$PK$default
+  expect_equal_rounded(on$v1, off$v1 / kc$volume)
+  expect_equal_rounded(on$cl1, off$cl1 / kc$clearance)
+})

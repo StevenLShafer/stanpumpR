@@ -16,6 +16,13 @@ test_that("Tod 1998's parameters with the switch off", {
 test_that("no renal function leaves the 1.40 L/h intercept", {
   expect_equal(amikacin(65, 170, 50, "male", adjustToFFM = FALSE,
                         creatinine = 1e6)$PK$default$cl1, 1.40 / 60, tolerance = 1e-4)
+  # With the switch on the intercept, a fixed value, scales with fat-free
+  # mass (0.75 power); the renal term, whose CLcr carries the weight, does not
+  r <- ffmRatioMaleIndependent(120, 170, 50)
+  on <- amikacin(120, 170, 50, "male", creatinine = 1)$PK$default
+  pkW <- 70 * r
+  crcl <- (140 - 50) * pkW / 72
+  expect_equal(on$cl1, (0.367 * crcl * 60 / 1000 + 1.40 * r^0.75) / 60, tolerance = 1e-8)
 })
 
 test_that("20 mg/kg gives a peak near Tod's measured first-dose peaks", {

@@ -20,7 +20,7 @@ guide says:
 1. the model, `R/drugs_<name>.R`;
 2. its row in `inst/extdata/drugDefaults_global.csv`;
 3. its test, `tests/testthat/test-drugs-<name>.R`;
-4. its help narrative, `inst/help/drugs/<name>.md`;
+4. its help narrative, `inst/app-help/drugs/<name>.md`;
 5. its row in the pregnancy registry (`data-raw/pregnancyRegistry.R`);
 6. its row in `inst/extdata/therapeuticRanges.csv`.
 

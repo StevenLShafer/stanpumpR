@@ -79,7 +79,7 @@
 #     0.70 +/- 0.38 mg/L.
 #
 # This model, with the library's ropivacaine and both studies' doses entered
-# as tissue (RA) doses, gives 0.71, 0.95, 0.37 and 0.58 mg/L
+# as tissue (RA) doses, gives 0.71, 0.94, 0.37 and 0.58 mg/L
 # (test-drugs-PPX.R): within one SD of all four.  It is low by 29% and 21%
 # against Burm, whose patients' alpha-1-acid glycoprotein doubled over the
 # 72 h and raised total (not unbound) PPX, which this model, fitted over 26 h,

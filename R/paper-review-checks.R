@@ -1060,8 +1060,8 @@ paperReviewReadingPrecision <- function(f, family = list(f), axis = c("y", "x"))
     # (0-50 min)"), unless it is the duration's.
     tops <- unlist(lapply(family, function(g) {
       note <- g$digitization_note %or% ""
-      m <- regmatches(note, regexpr("(?<![xX][ -])axis\\s*\\(\\s*0\\s*(-|–|to)\\s*[0-9.]+", note, perl = TRUE))
-      if (length(m)) suppressWarnings(as.numeric(sub("^.*(-|–|to)\\s*", "", m))) else NA_real_
+      m <- regmatches(note, regexpr("(?<![xX][ -])axis\\s*\\(\\s*0\\s*(-|\u2013|to)\\s*[0-9.]+", note, perl = TRUE))
+      if (length(m)) suppressWarnings(as.numeric(sub("^.*(-|\u2013|to)\\s*", "", m))) else NA_real_
     }))
     tops <- tops[is.finite(tops) & tops > 0]
     if (length(tops))

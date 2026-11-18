@@ -33,8 +33,11 @@
 # as the source is.  Capsule and oral suspension are label-bridged and share
 # these parameters.
 #
-# BODY SIZE: the fixed values scaled to fat-free mass; with the switch off,
-# the published values for everyone (legacyVolume = 1).
+# BODY SIZE: the fixed values are the cohort's typical 71 kg patient's; with
+# the switch on they are anchored at that patient (ZONISAMIDE_COHORT; Steven
+# L. Shafer, 2026-11-18), the reference man's volumes divided by 0.882 and
+# clearances by 0.910; with the switch off, the published values for everyone
+# (legacyVolume = 1).
 #
 # BAND: 10-40 mcg/mL (ILAE, Patsalos 2008), typical 20.
 #
@@ -54,7 +57,8 @@
 # PBPK prediction is not used.  V/F and the absorption are unchanged.
 # Zonisamide binds saturably to red cells, and the whole-blood to plasma
 # partition may change as the haematocrit falls in pregnancy, which the
-# linear model cannot represent; it is about 40% bound to plasma protein, so
+# linear model cannot represent; it is 40-60% bound to plasma protein (about
+# 60% in Tomson and Battino's review, Table III; papers/digests/PMID_17328580.md), so
 # total and unbound change roughly alike.  See R/pregnancy.R.  (Claude Code,
 # 2026-10-19.)
 #
@@ -80,6 +84,13 @@
 # (see the header).
 ZONISAMIDE_PREGNANCY_CL_FACTOR <- 1.6
 
+# Silva 2025, Table 1 (PDF p. 4), read on the PDF 2026-11-18: the 64
+# patients' medians, 71 kg, 165 cm, 31.5 years, 28 men and 36 women (the
+# Discussion calls CL/F and V/F those of a typical 71 kg adult).  The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort).
+# Factors 0.882 on volume, 0.910 on clearance.
+ZONISAMIDE_COHORT <- list(weight = 71, height = 165, age = 31.5, men = 28, women = 36)
+
 #' Zonisamide pharmacokinetics (oral)
 #'
 #' Silva et al. (2025), one compartment, apparent oral; see the header.
@@ -93,7 +104,7 @@ ZONISAMIDE_PREGNANCY_CL_FACTOR <- 1.6
 zonisamide <- function(weight, height, age, sex, adjustToFFM = TRUE,
                        pregnant = FALSE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, ZONISAMIDE_COHORT))
   # Pregnancy (see the header): CL/F only.
   clPregnancy <- if (isTRUE(pregnant)) ZONISAMIDE_PREGNANCY_CL_FACTOR else 1
 

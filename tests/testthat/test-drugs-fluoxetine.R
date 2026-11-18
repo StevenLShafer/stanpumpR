@@ -66,14 +66,16 @@ test_that("returns the published values at the reference patient", {
 })
 
 test_that("the pair scales to fat-free mass identically for a 120 kg man", {
-  # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126
+  # volumes x 1.3049067, clearances x 1.2209126, divided by the factors of
+  # Han 2025's 52 men and 146 women, 59 kg, 17 years, NCD-RisC's Chinese heights (FLUOXETINE_COHORT)
+  kc <- cohortFactorsIndependent(FLUOXETINE_COHORT)
   p <- fluoxetine(120, 170, 50, "male")
-  expect_equal(p$PK$default$v1, 24.9 * 1.3049067, tolerance = 1e-6)
-  expect_equal(p$PK$default$cl1, 2.91 * 1.165 / 60 * 1.2209126, tolerance = 1e-6)
+  expect_equal(p$PK$default$v1, 24.9 * 1.3049067 / kc$volume, tolerance = 1e-6)
+  expect_equal(p$PK$default$cl1, 2.91 * 1.165 / 60 * 1.2209126 / kc$clearance, tolerance = 1e-6)
   expect_equal(p$metabolite$kFormation, p$PK$default$cl1 / p$PK$default$v1)
   m <- norfluoxetine(120, 170, 50, "male")
-  expect_equal(m$PK$default$v1, 1.52 * 1.3049067, tolerance = 1e-6)
-  expect_equal(m$PK$default$cl1, 3.24 / 60 * 1.2209126, tolerance = 1e-6)
+  expect_equal(m$PK$default$v1, 1.52 * 1.3049067 / kc$volume, tolerance = 1e-6)
+  expect_equal(m$PK$default$cl1, 3.24 / 60 * 1.2209126 / kc$clearance, tolerance = 1e-6)
 })
 
 test_that("the printed parameters reproduce the source's simulated troughs (Table S4)", {

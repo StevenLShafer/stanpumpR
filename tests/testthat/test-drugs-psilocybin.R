@@ -99,3 +99,19 @@ test_that("psilocybin is offered orally only, plasma only, with no band", {
   expect_equal(row$Category, ILLICIT_DRUG_CATEGORY)
   expect_equal(getDrugPK("psilocybin", 70, 171, 50, "male")$PK$default$ke0, 0)
 })
+
+test_that("with the switch on the parameters are anchored at Holze's cohort", {
+  # Holze 2023, Participants: 72 kg, BMI 23, 35 years, 14 men and 14 women.
+  # The cohort's man and woman, averaged geometrically, receive the
+  # published values; the reference man those over the cohort's factors.
+  k <- cohortFactorsIndependent(list(weight = 72, bmi = 23, age = 35, men = 14, women = 14))
+  off <- psilocybin(70, 170, 35, "male", adjustToFFM = FALSE)$PK$default
+  h <- 100 * sqrt(72 / 23)
+  m <- psilocybin(72, h, 35, "male")$PK$default
+  w <- psilocybin(72, h, 35, "female")$PK$default
+  expect_equal(sqrt(m$v1 * w$v1), off$v1, tolerance = 1e-12)
+  expect_equal(sqrt(m$cl1 * w$cl1), off$cl1, tolerance = 1e-12)
+  ref <- psilocybin(70, 170, 35, "male")$PK$default
+  expect_equal_rounded(ref$v1, off$v1 / k$volume)
+  expect_equal_rounded(ref$cl1, off$cl1 / k$clearance)
+})

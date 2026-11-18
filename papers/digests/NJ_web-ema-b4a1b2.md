@@ -56,5 +56,3 @@ None.
 - "No drug-specific dynamic fit": **cannot verify** from this document, which has no PK at all; it supports the
   existence and EU jurisdiction of nadroparin, nothing about the availability of a model.
 - "Do not alias another LMWH": a project policy, not checkable here.
-</content>
-</invoke>

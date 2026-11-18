@@ -90,11 +90,13 @@
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # Weight was tested and not retained ("failed" in the covariate
-# search of Table S3, a narrow weight range).  Fixed published values, taken as the 70 kg
-# reference man's, with the library's fat-free-mass scaling; legacy factors 1
-# reproduce the published values with the switch off.  Norfluoxetine is
-# scaled identically.  The cohort's median weight was 59 kg, smaller than the
-# reference man; no re-anchoring was attempted.
+# search of Table S3, a narrow weight range).  The fixed published values are
+# the cohort's typical patient's (median 59 kg, 17 years, 52 men and 146
+# women), and with the switch on they are anchored at that patient
+# (FLUOXETINE_COHORT; Steven L. Shafer, 2026-11-18): the reference man's
+# volumes are the published values divided by 0.763 and his clearances by
+# 0.816.  Legacy factors 1 reproduce the published values with the switch
+# off.  Norfluoxetine is anchored identically.
 #
 # References
 # ----------
@@ -121,6 +123,24 @@ FLUOXETINE_REFERENCE <- paste0(
   "https://doi.org/10.3390/pharmaceutics17121516"
 )
 
+# Han 2025 (PMID 41471032), Table 1 (p. 7), read on the PDF 2026-11-18:
+# medians 59 kg and 17 years, 52 men and 146 women, Hunan Brain Hospital,
+# Changsha, 2021-2024.
+# No height is printed: each sex's is the country's mean adult height for the
+# birth year (NCD Risk Factor Collaboration, eLife 2016;5:e13410, height at 18
+# by birth year), less the 0.2 cm (men) and 0.3 cm (women) a cohort loses per
+# decade of age after 18 that the same paper reports. China, born 2023 - 17 =
+# 2006, held at 1996, the last birth year the collaboration estimated: 171.8
+# cm for men and 159.7 for women (half the cohort were adolescents, who may
+# not have reached it).
+# The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort); norfluoxetine,
+# fitted jointly, with it.
+# Factors 0.763 on volume, 0.816 on clearance.
+FLUOXETINE_COHORT <- list(groups = list(
+  list(weight = 59, height = 171.8, age = 17, men = 52, women = 0),
+  list(weight = 59, height = 159.7, age = 17, men = 0, women = 146)))
+
 #' Fluoxetine pharmacokinetics, forming norfluoxetine
 #'
 #' Apparent oral one-compartment model of Han et al. (2025), fitted to
@@ -141,7 +161,7 @@ fluoxetine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Fixed published parameters: legacy factors 1.  Norfluoxetine must make
   # this call identically.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, FLUOXETINE_COHORT))
   sexFactor <- if (sex == SEX_MALE) FLUOXETINE_MALE_CL else 1
 
   v1  <- FLUOXETINE_V1 * size$volume

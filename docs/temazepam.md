@@ -14,7 +14,7 @@ checked and reproduced.
 | Model code | `R/drugs_temazepam.R` |
 | Fit script | `data-raw/temazepam-fit.R` (base R; `Rscript data-raw/temazepam-fit.R` from the repository root, about 2 s) |
 | Tests | `tests/testthat/test-drugs-temazepam.R`, including a check that the shipped constants are the minimum of the objective below |
-| Help page | `inst/help/drugs/temazepam.md` |
+| Help page | `inst/app-help/drugs/temazepam.md` |
 | Source check | `docs/sedatives-verification.md` |
 
 Drafted with Claude Code at the request of Steven L. Shafer, 2026-10-09.

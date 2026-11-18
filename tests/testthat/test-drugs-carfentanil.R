@@ -23,9 +23,10 @@ test_that("the disposition is sufentanil's, exactly, at both switch positions", 
 })
 
 test_that("the published sufentanil vector is what arrives, unaltered", {
-  # Gepts 1995 at the 70 kg reference man, so that a change to either drug's
+  # Gepts 1995's published values (the switch off; with it on they belong to
+  # Gepts's cohort, SUFENTANIL_COHORT), so that a change to either drug's
   # constants shows up here rather than silently cancelling.
-  pk <- carfentanil(70, 170, 35, "male")$PK$default
+  pk <- carfentanil(70, 170, 35, "male", adjustToFFM = FALSE)$PK$default
   expect_equal_rounded(14.3,     pk$v1)
   expect_equal_rounded(63.1,     pk$v2)
   expect_equal_rounded(261.6,    pk$v3)

@@ -88,9 +88,15 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# Kim tested no size covariate that was retained: the published values are
-# taken as the 70 kg reference man's and scaled with pkSizeFactors() -- to
-# fat-free mass with the switch on, not at all with it off (legacyVolume = 1).
+# Kim tested no size covariate that was retained.  The fitted CL/F is the
+# cohort's typical patient's (median 58 kg, 71 years, 38 men and 89 women),
+# and with the switch on it is anchored at that patient (PAROXETINE_COHORT;
+# Steven L. Shafer, 2026-11-18): the reference man receives it divided by
+# 0.789.  V/F was not fitted but fixed from the literature, 17 L/kg x 60 kg
+# (p. 5250), and is still read as the 70 kg reference man's, scaled to
+# fat-free mass with the switch on; whether a per-kg value times 60 kg belongs
+# to a 60 kg patient is open (open question in the card PMID_26396498).  Not
+# at all with the switch off (legacyVolume = 1).
 #
 # NO EFFECT SITE
 # ==============
@@ -185,6 +191,19 @@ PAROXETINE_DOSE_EXP <- 0.363    # minus Kim's exponent of daily dose on CL/F
 # paroxetine rises instead.
 PAROXETINE_PREGNANCY_CL_FACTOR <- 2.0
 
+# Kim 2015 (PMID 26396498), Table 1 (p. 5248), read on the PDF 2026-11-18:
+# medians 58 kg and 71 years, 38 men and 89 women, Korean (Seoul).  No height
+# is printed: each sex's is South Korea's mean adult height for the birth year
+# 2015 - 71 = 1944 (NCD Risk Factor Collaboration, eLife 2016;5:e13410, height
+# at 18 by birth year), less the 0.2 cm (men) and 0.3 cm (women) a cohort
+# loses per decade of age after 18 that the same paper reports: 166.1 cm and
+# 153.3 cm.  The CL/F is anchored at this cohort (Steven L. Shafer,
+# 2026-11-18; docs/weight-adjustment.md, Anchoring at the source's cohort).
+# Factors 0.729 on volume (unused), 0.789 on clearance.
+PAROXETINE_COHORT <- list(groups = list(
+  list(weight = 58, height = 166.1, age = 71, men = 38, women = 0),
+  list(weight = 58, height = 153.3, age = 71, men = 0, women = 89)))
+
 #' Paroxetine pharmacokinetics (oral)
 #'
 #' Kim et al. (2015), one compartment with apparent parameters and clearance
@@ -203,15 +222,18 @@ PAROXETINE_PREGNANCY_CL_FACTOR <- 2.0
 paroxetine <- function(weight, height, age, sex, adjustToFFM = TRUE,
                        pregnant = FALSE)
 {
-  # Size scaling (see the header): fixed published values for the reference man
+  # Size scaling (see the header): the volume, a literature value per kg, read
+  # as the reference man's; the clearance, fitted, anchored at Kim's cohort
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  sizeCL <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                          cohort = do.call(cohortSizeFactors, PAROXETINE_COHORT))
 
   v1  <- 1020 * size$volume
   # CL/F at the reference daily dose of 25 mg (the dose term is carried by
   # oralSaturation below), age as published
   # The age term is a negative power, infinite at age 0 and fitted in adults:
   # it sees the age floored at ADULT_AGE_TERM_FLOOR (18), as for every such term.
-  cl1 <- 13.1 * (max(age, ADULT_AGE_TERM_FLOOR) / 71)^-0.702 / 60 * size$clearance   # L/min
+  cl1 <- 13.1 * (max(age, ADULT_AGE_TERM_FLOOR) / 71)^-0.702 / 60 * sizeCL$clearance   # L/min
   # Pregnancy (see the header): apparent clearance only.
   if (isTRUE(pregnant)) cl1 <- cl1 * PAROXETINE_PREGNANCY_CL_FACTOR
   v2  <- 1                                                 # one compartment

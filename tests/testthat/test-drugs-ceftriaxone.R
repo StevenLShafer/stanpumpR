@@ -27,16 +27,18 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
 })
 
 test_that("scales to fat-free mass for a 120 kg man", {
+  # The pins from before the anchoring, divided by Sanz-Codina's cohort factors
+  kc <- cohortFactorsIndependent(CEFTRIAXONE_COHORT)
   # 120 kg, 170 cm, 50 y male: FFM 71.09 kg against the 54.48 kg reference, so
   # size-free volumes x 1.3049067 and clearances x 1.2209126; a covariate the
   # source wrote on weight sees the pharmacokinetic weight 91.34 kg.
   actual <- ceftriaxone(120, 170, 50, "male")
   expected <- list(
-    v1 = 7.5162623,
-    v2 = 3.8755727,
+    v1 = 7.5162623 / kc$volume,
+    v2 = 3.8755727 / kc$volume,
     v3 = 1,
-    cl1 = 0.024621738,
-    cl2 = 0.059417747,
+    cl1 = 0.024621738 / kc$clearance,
+    cl2 = 0.059417747 / kc$clearance,
     cl3 = 0
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)

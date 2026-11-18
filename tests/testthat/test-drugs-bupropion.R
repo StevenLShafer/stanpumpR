@@ -124,22 +124,53 @@ test_that("hydroxybupropion returns Ghimire's estimates with the fat-free-mass s
   expect_equal(hydroxybupropion(120, 160, 80, "female", adjustToFFM = FALSE), actual)
 })
 
-test_that("the pair scales to fat-free mass identically for a 120 kg man", {
-  # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126,
-  # the same factors for both members.
+# Ghimire's cohort (Table 2): the count-weighted mean of the two groups'
+# medians, 99.705 kg, BMI 34.268 (so 170.57 cm), 58.16 years, 9 men and 10
+# women.  Its typical patient's factors, worked out by hand from the
+# Janmahasatian fat-free mass with Al-Sallami's maturation terms against the
+# reference man's 54.475 kg: a man 1.204860, a woman 0.999609 on volume; the
+# geometric mean weighted 9 to 10 is 1.092063976 on volume and 1.068282369
+# on clearance (the same weights on each sex's volume ^ 0.75).  Every
+# published value is divided by these with the switch on (Shafer,
+# 2026-11-18; docs/weight-adjustment.md, *Anchoring at the source's cohort*).
+GHIMIRE_COHORT_VOLUME    <- 1.092063976
+GHIMIRE_COHORT_CLEARANCE <- 1.068282369
+
+test_that("the pair scales to fat-free mass from Ghimire's cohort, identically, for a 120 kg man", {
+  # 120 kg, 170 cm, 50 y male: volumes x 1.3049067 / 1.092063976 =
+  # 1.194899452, clearances x 1.2209126 / 1.068282369 = 1.142874444, the same
+  # factors for both members.
   b <- bupropion(120, 170, 50, "male")
   h <- hydroxybupropion(120, 170, 50, "male")
   expect_equal_rounded(b$PK$default, list(
-    v1 = 684.5540548, v2 = 6533.537356, v3 = 1,
-    cl1 = 3.019723831, cl2 = 5.229575637, cl3 = 0,
+    v1 = 626.8442524, v2 = 5982.742065, v3 = 1,
+    cl1 = 2.826709458, cl2 = 4.895312201, cl3 = 0,
     ka_PO = 0.004833333333, bioavailability_PO = 1, tlag_PO = 0
   ))
   expect_equal_rounded(h$PK$default, list(
-    v1 = 2.87079474, v2 = 23.09684859, v3 = 1,
-    cl1 = 0.018313689, cl2 = 0.06308048433, cl3 = 0
+    v1 = 2.628778794, v2 = 21.14972030, v3 = 1,
+    cl1 = 0.01714311666, cl2 = 0.05904851293, cl3 = 0
   ))
-  # Formation stays fm x the scaled parent's k10: x 1.2209126 / 1.3049067
-  expect_equal_rounded(b$metabolite$kFormation, 4.411227732e-4)
+  # Formation stays fm x the scaled parent's k10: x 1.142874444 / 1.194899452
+  expect_equal_rounded(b$metabolite$kFormation, 4.509428693e-4)
+})
+
+test_that("the cohort's typical patient receives Ghimire's published values", {
+  # Table 2's typical patient as a man and as a woman; the geometric mean of
+  # the two, weighted 9 to 10, is the published value.
+  w <- (13 * 99.2 + 6 * 100.8) / 19
+  h <- 100 * sqrt(w / ((13 * 34 + 6 * 34.85) / 19))
+  a <- (13 * 61 + 6 * 52) / 19
+  mix <- function(f) exp((9 * log(f(w, h, a, "male")) + 10 * log(f(w, h, a, "female"))) / 19)
+  expect_equal(mix(function(...) bupropion(...)$PK$default$v1), 524.6, tolerance = 1e-12)
+  expect_equal(mix(function(...) bupropion(...)$PK$default$cl1) * 60, 148.4, tolerance = 1e-12)
+  expect_equal(mix(function(...) hydroxybupropion(...)$PK$default$v2), 17.7, tolerance = 1e-12)
+  expect_equal(mix(function(...) hydroxybupropion(...)$PK$default$cl2) * 60, 3.1, tolerance = 1e-12)
+  # The reference man receives the published values divided by the cohort's
+  # factors: 524.6 / 1.092063976 L and 148.4 / 1.068282369 L/h.
+  ref <- bupropion(70, 170, 35, "male")$PK$default
+  expect_equal(ref$v1, 524.6 / GHIMIRE_COHORT_VOLUME, tolerance = 1e-9)
+  expect_equal(ref$cl1 * 60, 148.4 / GHIMIRE_COHORT_CLEARANCE, tolerance = 1e-9)
 })
 
 test_that("both drugs give the same, single citation", {

@@ -21,7 +21,9 @@
 # THE SOURCE
 # ==========
 # Pfizer's population model, reproduced by the FDA reviewer (Table 10): 45
-# healthy men, 1479 concentrations, from studies 148-203 (20, 40 and 80 mg
+# healthy volunteers (the review, p. 31, read on the page images 2026-11-18:
+# "the total number of subjects was 45", sex not given; its Table 8 lists 8,
+# 12 and 24, 44 in all), 1479 concentrations, from studies 148-203 (20, 40 and 80 mg
 # intravenously), 148-208 (50 mg intravenously over 50 min crossed with 50 mg
 # orally; Nichols 2002) and 148-211 (oral multiple doses).  Two compartments
 # with first-order absorption after a lag (Table 9, "Mean and 95%CI"):
@@ -85,7 +87,7 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# Fixed values with no size term, for the source's healthy men, scaled to
+# Fixed values with no size term, for the source's healthy volunteers, scaled to
 # fat-free mass with the switch on; with it off they are the published values
 # for everyone (legacyVolume = 1).
 #
@@ -105,6 +107,13 @@
 # -----------------------------------------------------------------------------
 
 # FDA review of NDA 22-473, Tables 3, 9 and 10
+#
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): fixed published values belong to the
+# source's cohort, not the reference man. The FDA review prints no central
+# body size for the healthy subjects the model was fitted to (read
+# 2026-11-18), so the fixed values stay anchored at the 70 kg reference man,
+# as before the rule.
 SILDENAFIL_CL    <- 29.5    # L/h
 SILDENAFIL_PAH_CL <- 0.70   # clearance in PAH relative to healthy (p.23-24)
 SILDENAFIL_V1    <- 73.2    # L
@@ -160,7 +169,7 @@ sildenafilFDA <- function(weight, height, age, sex, adjustToFFM = TRUE,
                           exponent = SILDENAFIL_F_EXPONENT),
     reference = paste0(
       "FDA Clinical Pharmacology Review of NDA 22-473 (Revatio injection, 2009), ",
-      "Tables 3, 9 and 10: two compartments in 45 healthy men, CL 29.5 L/h, Vc 73.2 L, ",
+      "Tables 3, 9 and 10: two compartments in 45 healthy volunteers, CL 29.5 L/h, Vc 73.2 L, ",
       "Vp 33.3 L, Q 5.32 L/h, ka 25.6 /h, lag 0.485 h, oral F 0.355 x (dose/20 mg)^0.289",
       if (pah) paste0("; pulmonary arterial hypertension: clearance x 0.70 (20.7 L/h), the ",
                       "review's validated adjustment (p.23-24)") else

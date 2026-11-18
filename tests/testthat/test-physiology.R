@@ -312,7 +312,7 @@ test_that("the ke0 rationale renders on the help page", {
   expect_match(tab, "CO<sup>0.35</sup>")
   prop <- helpPhysiologyPropofolTable()
   expect_equal(length(strsplit(prop, "\n")[[1]]), 5L)
-  page <- helpExpandGenerated(paste(readLines(system.file("help", "models", "physiology.md",
+  page <- helpExpandGenerated(paste(readLines(system.file("app-help", "models", "physiology.md",
                                                            package = "stanpumpR")), collapse = "\n"))
   expect_false(grepl("<!-- generated:", page))
 })
