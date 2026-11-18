@@ -106,6 +106,46 @@ underdose at the very patient the label was written for. Dividing by the
 reference fat-free mass instead of by 70 kg keeps him at 70 mg and scales
 everyone else from there.
 
+### Anchoring at the source's cohort
+
+**Steven L. Shafer, 2026-11-18, a standing rule.** A model whose published
+parameters are fixed values with no size covariate (none tested, or none
+retained) describes the **typical patient of the cohort it was fitted in**,
+not the 70 kg reference man. Treating its values as the reference man's gives
+a 70 kg patient the parameters of whoever the cohort was: Ghimire 2026's
+bupropion cohort, the case that raised the rule, had a median weight of about
+100 kg and a BMI of 34. So such a model is anchored at its cohort: with the
+switch on, each published value is divided by the size factor of the cohort's
+typical patient, so that **a patient like the cohort's receives the published
+values**, and the reference man, and everyone else, are scaled from there.
+
+- **The typical patient** is the cohort's printed central weight, height and
+  age (median or mean, whichever the source prints; for several groups, the
+  count-weighted mean of their values). Where no height is printed, the BMI
+  gives it (height = 100 x sqrt(weight / BMI)).
+- **Sex.** A cohort of both sexes has no single fat-free mass at its median
+  weight: a 100 kg man's is about a fifth above a 100 kg woman's. The factor
+  is the geometric mean of a man's and a woman's at the typical weight, height
+  and age, weighted by the numbers of men and women. For a single-sex cohort
+  it is that sex's factor.
+- **The code**: `cohortSizeFactors(weight, age, men, women, height =, bmi =)`
+  returns the typical patient's factors, and
+  `pkSizeFactors(..., cohort = )` divides them out with the switch on and
+  ignores them with it off, so the switch off still gives the published values
+  unscaled. A model's header gives Table/page, the values read and the
+  resulting divisors; its test pins that the cohort's typical patient (the
+  geometric mean of its man and woman) receives the published values.
+- **Where it does not apply**: a model with its own size covariate (it already
+  says whom its values belong to); a model published per kilogram, whose
+  values were normalised by the source; and a cohort whose demographics the
+  source does not print, which keeps the reference anchor and says so in its
+  header.
+- **Applied so far**: bupropion and hydroxybupropion (Ghimire 2026; volumes /
+  1.092, clearances / 1.068). The library's other fixed-value models were
+  anchored at the reference man before this rule; each is to be re-anchored
+  as its source's demographics are read on the PDF, and until then its header
+  is the record of which anchor it uses.
+
 ### Why the reference is a man
 
 The reference patient is an **anchor, not a claim** about which patient is
@@ -221,7 +261,7 @@ local anaesthetic and illicit drugs) say how they scale in each model's header a
 
 | Scaled to fat-free mass | Not scaled (own covariates) |
 |---|---|
-| alfentanil, dexmedetomidine at one year or under (Zuppa 2019), etomidate, fentanyl (Bae 2020, on its own weight exponents at the pharmacokinetic weight), hydromorphone, ketamine, lidocaine, mannitol, calcium (Ansari 2025, parturients; the published values taken as the reference adult's), midazolam, morphine (Lötsch 2002, absolute values; its slow intercompartmental clearance keeps the paper's own covariate, the fourth power of body surface area bounded to 1.5 to 2.2 m², in both switch positions, and the other parameters inherit the scaling), oliceridine, oxycodone, pethidine, remimazolam, rocuronium, vecuronium, cisatracurium, sufentanil, codeine, hydrocodone (its source's body-surface-area and creatinine-clearance covariates at the pharmacokinetic weight, Vp/F and Q/F scaled; formation follows hydromorphone), oxymorphone, tramadol, desmetramadol; the antibiotics cefazolin, clindamycin, cefalexin, ceftriaxone, vancomycin, metronidazole, gentamicin; the steroids hydrocortisone, methylprednisolone, dexamethasone, prednisolone, prednisone; sugammadex, neostigmine, glycopyrrolate; amiodarone, desethylamiodarone, amiodaroneIV; the oral analgesics gabapentin and pregabalin, on their own covariates, and naproxen; and the sedatives diazepam, lorazepam, clonazepam, zolpidem and temazepam, and alprazolam on its own weight covariate; the antidepressants escitalopram, sertraline, paroxetine, duloxetine, mirtazapine (with its source's BMI step on clearance), bupropion, hydroxybupropion, fluoxetine, norfluoxetine, venlafaxine and desvenlafaxine, and citalopram on its own weight covariate for S-citalopram clearance; methadone (Henthorn 2025) on its own weight covariate on V3, its other parameters unscaled because the source tested weight on them and rejected it | **propofol** (Eleveld), **remifentanil** (Eleveld, Kim) and **dexmedetomidine** above one year (Morse 2020: clearances on fat-free mass, volumes on normal fat mass) already contain the Al-Sallami or Janmahasatian fat-free mass as a covariate and are used as published. **oxytocin** (Shafer 2025) has its own weight terms, every volume and clearance proportional to weight about 80 kg, evaluated at the pharmacokinetic weight with the switch on and at total weight with it off. **naloxone** (Dowling 2008) has its own lean-body-weight covariate on clearance. Dowling used the Janmahasatian lean body weight; stanpumpR uses the Al-Sallami fat-free mass, which is the same in adult men, the population Dowling studied, and 1 to 3 percent higher in adult women. Its other parameters inherit the scaling. **acetaminophen** (Morse 2022) has its own normal-fat-mass covariate on clearance (fat-free mass plus 0.816 of fat mass); its volumes and intercompartmental clearance inherit the scaling. **ibuprofen** (Morse 2022) has its own normal-fat-mass covariates on clearance (0.863 of fat mass) and on both volumes (0.718); its intercompartmental clearance inherits the scaling. |
+| alfentanil, dexmedetomidine at one year or under (Zuppa 2019), etomidate, fentanyl (Bae 2020, on its own weight exponents at the pharmacokinetic weight), hydromorphone, ketamine, lidocaine, mannitol, calcium (Ansari 2025, parturients; the published values taken as the reference adult's), midazolam, morphine (Lötsch 2002, absolute values; its slow intercompartmental clearance keeps the paper's own covariate, the fourth power of body surface area bounded to 1.5 to 2.2 m², in both switch positions, and the other parameters inherit the scaling), oliceridine, oxycodone, pethidine, remimazolam, rocuronium, vecuronium, cisatracurium, sufentanil, codeine, hydrocodone (its source's body-surface-area and creatinine-clearance covariates at the pharmacokinetic weight, Vp/F and Q/F scaled; formation follows hydromorphone), oxymorphone, tramadol, desmetramadol; the antibiotics cefazolin, clindamycin, cefalexin, ceftriaxone, vancomycin, metronidazole, gentamicin; the steroids hydrocortisone, methylprednisolone, dexamethasone, prednisolone, prednisone; sugammadex, neostigmine, glycopyrrolate; amiodarone, desethylamiodarone, amiodaroneIV; the oral analgesics gabapentin and pregabalin, on their own covariates, and naproxen; and the sedatives diazepam, lorazepam, clonazepam, zolpidem and temazepam, and alprazolam on its own weight covariate; the antidepressants escitalopram, sertraline, paroxetine, duloxetine, mirtazapine (with its source's BMI step on clearance), bupropion and hydroxybupropion (anchored at Ghimire 2026's cohort, 2026-11-18), fluoxetine, norfluoxetine, venlafaxine and desvenlafaxine, and citalopram on its own weight covariate for S-citalopram clearance; methadone (Henthorn 2025) on its own weight covariate on V3, its other parameters unscaled because the source tested weight on them and rejected it | **propofol** (Eleveld), **remifentanil** (Eleveld, Kim) and **dexmedetomidine** above one year (Morse 2020: clearances on fat-free mass, volumes on normal fat mass) already contain the Al-Sallami or Janmahasatian fat-free mass as a covariate and are used as published. **oxytocin** (Shafer 2025) has its own weight terms, every volume and clearance proportional to weight about 80 kg, evaluated at the pharmacokinetic weight with the switch on and at total weight with it off. **naloxone** (Dowling 2008) has its own lean-body-weight covariate on clearance. Dowling used the Janmahasatian lean body weight; stanpumpR uses the Al-Sallami fat-free mass, which is the same in adult men, the population Dowling studied, and 1 to 3 percent higher in adult women. Its other parameters inherit the scaling. **acetaminophen** (Morse 2022) has its own normal-fat-mass covariate on clearance (fat-free mass plus 0.816 of fat mass); its volumes and intercompartmental clearance inherit the scaling. **ibuprofen** (Morse 2022) has its own normal-fat-mass covariates on clearance (0.863 of fat mass) and on both volumes (0.718); its intercompartmental clearance inherits the scaling. |
 
 **Models with their own weight or renal covariates.** Several antibiotic and
 reversal-agent models write a body-weight term into some parameters
@@ -362,7 +402,10 @@ Every model added to the library must do one of two things:
    reference, call `pkSizeFactors(weight, height, age, sex, adjustToFFM, ...)`,
    multiply volumes by `$volume` and clearances by `$clearance`, and pass the
    `legacyVolume` / `legacyClearance` arguments that reproduce the published
-   scaling when the switch is off.
+   scaling when the switch is off. Fixed published values with no size
+   covariate belong to the source's cohort, not the reference man: pass
+   `cohort = cohortSizeFactors(...)` from the cohort's printed demographics
+   ([Anchoring at the source's cohort](#anchoring-at-the-sources-cohort)).
 
 Either way the function signature is
 `<name>(weight, height, age, sex, adjustToFFM = TRUE)` and the unit test pins

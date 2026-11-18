@@ -11,7 +11,8 @@ pkSizeFactors(
   sex,
   adjustToFFM = TRUE,
   legacyVolume = weight/FFM_REFERENCE_WEIGHT,
-  legacyClearance = legacyVolume
+  legacyClearance = legacyVolume,
+  cohort = NULL
 )
 }
 \arguments{
@@ -31,6 +32,13 @@ pkSizeFactors(
 \item{legacyClearance}{clearance factor when \code{adjustToFFM} is \code{FALSE};
 defaults to \code{legacyVolume} (fixed rate constants).  Pass
 \code{(weight / 70)^0.75} for a model that already scaled allometrically.}
+
+\item{cohort}{\code{NULL}, or the size factors of the source cohort's typical
+patient from \code{\link[=cohortSizeFactors]{cohortSizeFactors()}}, for a model whose published parameters
+carry no size covariate and so belong to that patient rather than to the
+70 kg reference man.  With \code{adjustToFFM = TRUE} the factors are then
+relative to that patient, who receives the published values; with
+\code{adjustToFFM = FALSE} it is ignored.}
 }
 \value{
 a list: \code{volume} and \code{clearance} (the multipliers), \code{ffm} (kg),

@@ -25,7 +25,7 @@ The shaded band, **850 to 1500 ng/mL** with 1200 as the typical value, is the AG
 
 ### Covariates
 
-None was retained. The parameters take the same [fat-free-mass scaling](help:models/fat-free-mass) as bupropion's, identically, because the metabolite's apparent scale is consistent with the parent's only if the two scale together. Hydroxybupropion has been reported to accumulate in kidney failure, but the source did not retain kidney disease as a covariate, so the model does not respond to the creatinine field.
+None was retained. The parameters take the same [fat-free-mass scaling](help:models/fat-free-mass) as bupropion's, anchored at the study's typical patient of about 100 kg, identically, because the metabolite's apparent scale is consistent with the parent's only if the two scale together. Hydroxybupropion has been reported to accumulate in kidney failure, but the source did not retain kidney disease as a covariate, so the model does not respond to the creatinine field.
 
 ### Where to be careful
 

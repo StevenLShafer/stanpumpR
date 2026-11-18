@@ -65,18 +65,28 @@ FFM_REFERENCE <- ffmAlSallami(FFM_REFERENCE_WEIGHT, FFM_REFERENCE_HEIGHT,
 #' @param legacyClearance clearance factor when `adjustToFFM` is `FALSE`;
 #'   defaults to `legacyVolume` (fixed rate constants).  Pass
 #'   `(weight / 70)^0.75` for a model that already scaled allometrically.
+#' @param cohort `NULL`, or the size factors of the source cohort's typical
+#'   patient from [cohortSizeFactors()], for a model whose published parameters
+#'   carry no size covariate and so belong to that patient rather than to the
+#'   70 kg reference man.  With `adjustToFFM = TRUE` the factors are then
+#'   relative to that patient, who receives the published values; with
+#'   `adjustToFFM = FALSE` it is ignored.
 #' @return a list: `volume` and `clearance` (the multipliers), `ffm` (kg),
 #'   `ffmReference` (kg), and `pkWeight`, the total body weight a model scaled on
 #'   weight alone would need to produce the same volumes (70 x `volume`).
 #' @keywords internal
 pkSizeFactors <- function(weight, height, age, sex, adjustToFFM = TRUE,
                           legacyVolume = weight / FFM_REFERENCE_WEIGHT,
-                          legacyClearance = legacyVolume)
+                          legacyClearance = legacyVolume, cohort = NULL)
 {
   ffm <- ffmAlSallami(weight, height, age, sex)
   if (isTRUE(adjustToFFM)) {
     volume <- ffm / FFM_REFERENCE
     clearance <- volume^0.75
+    if (!is.null(cohort)) {
+      volume <- volume / cohort$volume
+      clearance <- clearance / cohort$clearance
+    }
   } else {
     volume <- legacyVolume
     clearance <- legacyClearance
@@ -88,4 +98,41 @@ pkSizeFactors <- function(weight, height, age, sex, adjustToFFM = TRUE,
     ffmReference = FFM_REFERENCE,
     pkWeight = FFM_REFERENCE_WEIGHT * ffm / FFM_REFERENCE
   )
+}
+
+#' The size factors of a source cohort's typical patient
+#'
+#' A model whose published parameters carry no size covariate describes the
+#' typical patient of the cohort it was fitted in, not the 70 kg reference man
+#' (Steven L. Shafer, 2026-11-18; `docs/weight-adjustment.md`, *Anchoring at
+#' the source's cohort*).  This returns that patient's factors, which
+#' [pkSizeFactors()] divides out (`cohort =`), so that a patient like the
+#' cohort's receives the published values.  The cohort's sexes are taken as
+#' two patients of the cohort's typical weight, height (or BMI) and age, a man
+#' and a woman, whose fat-free-mass factors are averaged geometrically,
+#' weighted by the numbers of men and women: a 100 kg man's fat-free mass is
+#' about a fifth above a 100 kg woman's, so a cohort of both is neither.
+#'
+#' @param weight the cohort's typical weight, kg
+#' @param age the cohort's typical age, years
+#' @param men,women the numbers of men and women in the cohort
+#' @param height the cohort's typical height, cm; or `NULL` with `bmi`
+#' @param bmi the cohort's typical BMI, kg/m2, used for the height when no
+#'   height is printed
+#' @return a list: `volume` and `clearance`, the typical patient's factors
+#' @keywords internal
+cohortSizeFactors <- function(weight, age, men, women, height = NULL, bmi = NULL)
+{
+  if (is.null(height)) {
+    if (is.null(bmi)) stop("cohortSizeFactors() needs a height or a BMI")
+    height <- 100 * sqrt(weight / bmi)
+  }
+  if (!(men >= 0 && women >= 0 && men + women > 0))
+    stop("cohortSizeFactors() needs a cohort of at least one man or woman")
+  share <- function(sex) {
+    f <- pkSizeFactors(weight, height, age, sex, TRUE)
+    c(volume = log(f$volume), clearance = log(f$clearance))
+  }
+  mix <- exp((men * share(SEX_MALE) + women * share(SEX_FEMALE)) / (men + women))
+  list(volume = unname(mix["volume"]), clearance = unname(mix["clearance"]))
 }

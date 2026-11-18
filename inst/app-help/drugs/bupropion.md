@@ -28,7 +28,7 @@ Bupropion is **not a prodrug**: it is itself an active noradrenaline and dopamin
 
 ### Covariates
 
-None. Kidney disease and vitamin D were examined in the source and not retained, so the model is a typical adult's and does not respond to the creatinine field. The parameters take the library's default [fat-free-mass scaling](help:models/fat-free-mass) for fixed published values, taken as the 70 kg reference man's, and are used exactly as published with the switch off. Hydroxybupropion is scaled identically. The subjects were adults, so the child and infant in the table above are extrapolation.
+None. Kidney disease and vitamin D were examined in the source and not retained, so the model is a typical adult's and does not respond to the creatinine field. No size covariate was retained either, so the published values describe the study's typical patient, who was not the 70 kg reference man: the subjects' median weight was about 100 kg, their median BMI 34, and 10 of the 19 were women. The parameters are therefore anchored at that patient: with [fat-free-mass scaling](help:models/fat-free-mass) on, a patient like the study's receives the published values and everyone else is scaled from there, so the 70 kg reference man's volumes are the published ones divided by 1.092 and his clearances divided by 1.068. With the switch off they are used exactly as published. Hydroxybupropion is scaled identically. The subjects were adults, so the child and infant in the table above are extrapolation.
 
 ### Typical concentrations and regimens
 
