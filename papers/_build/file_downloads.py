@@ -96,7 +96,7 @@ for r in refs:
     r["sur_re"] = surname_pattern(r["label"].rsplit(" ", 1)[0])
 
 
-def pdf_text(path, last=2):
+def pdf_text(path, last=2, strict=False):
     # pdftotext receives its arguments in the Windows ANSI code page, so it cannot open a path with characters
     # outside it, e.g. Wiley's U+2010 hyphen ("long‐term"), and returned nothing: those PDFs were reported as
     # scans (2026-10-10: Pollak 2000, Guay 1988, Stoeckel 1981 ...).  Read such files through an ASCII-named copy.
@@ -109,9 +109,13 @@ def pdf_text(path, last=2):
             os.close(fd)
             shutil.copyfile(path, tmp)
         pages = ["-l", str(last)] if last else []
-        out = subprocess.run(["pdftotext"] + pages + ["-q", tmp or path, "-"], capture_output=True, timeout=120).stdout
-        return out.decode("utf-8", "replace")
+        r = subprocess.run(["pdftotext"] + pages + ["-q", tmp or path, "-"], capture_output=True, timeout=120)
+        if strict and r.returncode != 0:
+            raise RuntimeError("pdftotext returned %d" % r.returncode)
+        return r.stdout.decode("utf-8", "replace")
     except Exception:
+        if strict:                               # the caller must tell "no text" from "could not read"
+            raise
         return ""
     finally:
         if tmp and os.path.exists(tmp):
@@ -157,7 +161,7 @@ def requested_ref(pmid):
     The queue is the gate, not the file name: arrivals.py puts every wanted PMID there, so
     this accepts exactly what somebody asked for and nothing else.  The details come from
     PubMed, as build.py's do, so the row filed is the same shape as any other."""
-    if not _requested:
+    if "rows" not in _requested:                 # not `if not _requested`: by_doi may have filled it
         _requested["rows"] = set()
         try:
             import csv
@@ -171,8 +175,14 @@ def requested_ref(pmid):
         import ncbi
         src = ncbi.esummary([pmid]).get(pmid)
     except Exception:
+        _requested["failed"] = True              # retryable: the caller must not cache a miss
         return None
     if not src or not src.get("title"):
+        # esummary() drops a PMID whose result carries an `error` entry (ncbi.py), so "no
+        # summary" is a transient NCBI failure as often as a bad PMID.  The row is in the
+        # queue, which means somebody asked for this PMID, so treat it as retryable rather
+        # than caching a permanent miss (CodeRabbit, PR #784).
+        _requested["failed"] = True
         return None
     return {"pmid": pmid, "doi": (src.get("doi") or "").lower(), "title": src["title"],
             "tw": words(src["title"]),
@@ -183,6 +193,23 @@ def requested_ref(pmid):
             "npages": page_count(src.get("pages")),
             "label": "%s %s" % (src.get("first_author", ""), src.get("year", "")),
             "file": archive_name(pmid, (src.get("doi") or "").lower())}
+
+
+def requested_ref_by_doi(doi):
+    """The queue's row for a DOI, as a ref.  Same gate as requested_ref: only what was asked for."""
+    if not _requested.get("by_doi"):
+        _requested.setdefault("by_doi", {})
+        try:
+            import csv
+            with open(os.path.join(ARCHIVE, "stanpumpr-queue.csv"), encoding="utf-8") as f:
+                for r in csv.DictReader(f):
+                    d, p = (r.get("doi") or "").strip().lower(), (r.get("pmid") or "").strip()
+                    if d and p:
+                        _requested["by_doi"][d] = p
+        except Exception:
+            pass
+    pmid = _requested.get("by_doi", {}).get((doi or "").lower())
+    return requested_ref(pmid) if pmid else None
 
 
 def identify_any(path):
@@ -293,6 +320,27 @@ def identify_any(path):
         r = by_doi[dois[0]]
         if on_top(r) or has_author(r):
             return r, "own DOI %s" % dois[0], None
+    # The same for a paper the DOWNLOAD QUEUE asks for but no citation produced: `by_doi` is
+    # built from works.json, the works the SOURCE cites, so a wanted paper is not in it and a
+    # publisher-named download of one (Wiley's "Br J Clin Pharmacol - 2017 - Moffett - ...")
+    # could not be identified at all -- 30 of them sat unfiled on 2026-11-18.  Same proof as
+    # a cited work: the title on page 1, or the first author (requested_ref, 2026-11-18).
+    # ONLY the first DOI on page 1, as the branch above does: that is the article's own.  A
+    # later DOI is one the paper CITES, and has_author() accepts a surname anywhere in the
+    # text, so scanning further could file a PDF under a paper it merely cites (CodeRabbit,
+    # PR #784).  Misfiling is worse than not filing: an unfiled paper is reported, a misfiled
+    # one is silently wrong, and the digest written from it would describe the wrong work.
+    if dois:
+        r = requested_ref_by_doi(dois[0])
+        # Stricter than the branch above, deliberately.  has_author() searches `flat`, which
+        # is pages 1 AND 2 (pdf_text's default last=2), so a commentary that prints the
+        # queued article's DOI on page 1 and names its author in a reference on page 2 would
+        # pass (CodeRabbit, PR #784 -- it said "the full text", which is not quite right, but
+        # page 2 is enough to be wrong).  A queue row is a bare PubMed record, with none of
+        # the resolution a works.json entry has been through, so the evidence must be on
+        # page 1: the title where an article prints its title, or the author in that region.
+        if r and (on_top(r) or (r["surname"] and r["surname"] in top)):
+            return r, "own DOI %s (wanted by the download queue)" % dois[0], None
     # 2. the reference's title at the top of page 1 (punctuation and line breaks ignored), with its first author
     hits = [r for r in refs if on_top(r)]
     for r in hits:
@@ -409,7 +457,19 @@ import hashlib
 # 2026-11-09 "10": a title read from a file name must agree to the end of the shorter, not just its first 40 letters.
 # 2026-11-10 "11": an unidentified recent download is reported (unidentified_note), not passed over in silence.
 RULES = "11"
-refs_sig = hashlib.sha1((RULES + "|" + "|".join(sorted(r["file"] for r in refs))).encode()).hexdigest()
+# The download queue is part of the signature, not only the cited works.  A cached "not a
+# reference" verdict is replayed without calling identify() at all, so queueing a paper did
+# nothing for a PDF already in Downloads: it stayed unfiled until its size or mtime changed.
+# That cost two manual cache clears on 2026-11-18, once before the rules were even found to
+# be the problem (CodeRabbit, PR #784).  Hashing the queue's bytes means an edit to it
+# invalidates the cache, which is exactly when a verdict may have changed.
+try:
+    with open(os.path.join(ARCHIVE, "stanpumpr-queue.csv"), "rb") as _qf:
+        _queue_sig = hashlib.sha1(_qf.read()).hexdigest()
+except OSError:
+    _queue_sig = "no-queue"
+refs_sig = hashlib.sha1((RULES + "|" + _queue_sig + "|"
+                         + "|".join(sorted(r["file"] for r in refs))).encode()).hexdigest()
 if cache.get("__refs__") != refs_sig:
     # Every verdict is only as good as the list it was made against, the positive ones too: on 2026-10-17 de Winter
     # 2017 was matched to PMID_17385022 while the list held a wrong PMID for it, that file already existed (Hong 2007),
@@ -469,9 +529,9 @@ DOWNLOAD_STAMP = re.compile(r"downloaded (?:from|for|by)|wiley online library|on
                             r"all rights reserved|copyright ©", re.I)
 
 
-def copy_words(p):
+def copy_words(p, strict=False):
     import collections
-    text = "\n".join(l for l in pdf_text(p, None).splitlines() if not DOWNLOAD_STAMP.search(l))
+    text = "\n".join(l for l in pdf_text(p, None, strict=strict).splitlines() if not DOWNLOAD_STAMP.search(l))
     return collections.Counter(re.findall(r"[a-z0-9]{3,}", text.lower()))
 
 
@@ -488,7 +548,15 @@ def copy_equivalent(path, archived):
             return False
     except Exception:
         return False
-    wa, wb = copy_words(path), copy_words(archived)
+    try:
+        wa, wb = copy_words(path, strict=True), copy_words(archived, strict=True)
+    except Exception:                            # noqa: BLE001
+        # Extraction FAILED, which is not "this copy has no text layer".  A pdftotext timeout
+        # gave empty text, the `na < 50` branch below read that as an image-only scan, and a
+        # download was recycled as redundant against an archived copy that may differ -- a
+        # different edition, or figures this one lacks (CodeRabbit on PR #780, 2026-11-18).
+        # Equivalence cannot be established, so it is not redundant and a person decides.
+        return False
     na, nb = sum(wa.values()), sum(wb.values())
     if na < 50:
         return nb >= 200
@@ -549,7 +617,17 @@ for d, name in candidates():
                 if not in_archive_dir:  # not identical to anything archived (checked above): a second copy
                     recycle_copy(path, hit["file"])
                 continue
+        _requested.pop("failed", None)
         r, why, problem = identify(path)
+        if r is None and _requested.get("failed"):
+            # PubMed could not be reached to check whether the download queue wants this
+            # paper.  "Could not look it up" is not "it is not a reference", and caching the
+            # second would make every later run replay the verdict without trying again --
+            # which is exactly how nine papers stayed unfiled after the rules changed
+            # (CodeRabbit, PR #784).  Nothing is cached, so the next run looks again.
+            review.append((name, "could not reach PubMed to check it against the download queue: "
+                                 "run update.bat again later"))
+            continue
         cache[key] = {"file": r["file"] if r else None, "review": problem, "sha": None if in_archive_dir else h}
         if problem:
             review.append((name, problem))

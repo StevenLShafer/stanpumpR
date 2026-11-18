@@ -53,6 +53,13 @@ def main():
     # This script is compared like any other: it lives in both copies, so excluding it from
     # one list and not the other made it report ITSELF as uncommitted on the first run.
     names = sorted(f for f in os.listdir(MIRROR) if f.endswith((".py", ".sh", ".bat")))
+    if not names:
+        # The folder is there but empty: the checkout is on a branch that predates it, or one
+        # where papers/_build does not exist.  Listing every archive script as "not in git"
+        # there is true but useless, and it reads like a disaster rather than a wrong branch.
+        print("in-step check: %s is empty -- is that checkout on a branch without"
+              " papers/_build? Nothing compared." % MIRROR)
+        return 0
     missing, differs = [], []
     for n in names:
         src = archive_path(n)
