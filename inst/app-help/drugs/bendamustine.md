@@ -18,7 +18,7 @@ The two active metabolites, M3 and M4, were each fitted on their own rather than
 
 ### Body size
 
-With no size covariate, the parameters are taken as the reference adult's and scaled by the library's factors when the fat-free-mass switch is on (fixed when it is off). The study's patients were larger (median 85 kg).
+With no size covariate, the parameters are the study's typical patient's (median 85 kg, two men to each woman), and with the fat-free-mass switch on a patient like that receives them while everyone else is scaled from there (fixed when it is off).
 
 ### Where to be careful
 
