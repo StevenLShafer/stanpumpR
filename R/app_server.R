@@ -2206,15 +2206,31 @@ app_server <- function(input, output, session) {
   # so a comment changed after the box was ticked (a patient's name added)
   # is never sent on the earlier promise (Carbon's repository audit,
   # 2026-11-18).
+  # The untick is a message to the browser, so input$commentSafe stays TRUE
+  # until the browser answers: an edited comment and a click of Send that
+  # reached the server together were sent on the earlier promise.  So the
+  # server also keeps the comment the box was ticked for, and Send needs the
+  # comment as it stands to be that one (Carbon's second repository audit,
+  # 2026-11-19, A2-F15).
   lastComment <- reactiveVal("")
+  attestedComment <- reactiveVal(NULL)
   observeEvent(input$emailComments, {
     comment <- emailComments()
     shinyjs::toggle("commentSafe", condition = nzchar(comment))
     if (!identical(comment, lastComment())) {
       lastComment(comment)
+      attestedComment(NULL)
       if (isTRUE(input$commentSafe)) updateCheckboxInput(session, "commentSafe", value = FALSE)
     }
   })
+  observeEvent(input$commentSafe, {
+    attestedComment(if (isTRUE(input$commentSafe)) emailComments() else NULL)
+  }, ignoreNULL = FALSE, ignoreInit = TRUE)
+  commentAttested <- function() {
+    comment <- emailComments()
+    !nzchar(comment) ||
+      (isTRUE(input$commentSafe) && identical(attestedComment(), comment))
+  }
 
   observe({
     shinyjs::toggleState("sendSlide", condition = isEmailValid(input$recipient))
@@ -2228,7 +2244,7 @@ app_server <- function(input, output, session) {
       error <- NULL
       if (!isEmailValid(input$recipient)) {
         error <- "Please enter a valid recipient email address."
-      } else if (nzchar(emailComments()) && !isTRUE(input$commentSafe)) {
+      } else if (!commentAttested()) {
         error <- "Please click the box confirming there is no PHI in the comments."
       } else if (nchar(emailComments()) > MAX_INPUT_TEXT) {
         error <- glue::glue("Comment is too long, please limit to {MAX_INPUT_TEXT} characters.")

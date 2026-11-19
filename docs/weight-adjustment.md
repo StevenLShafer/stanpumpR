@@ -163,8 +163,14 @@ values**, and the reference man, and everyone else, are scaled from there.
   volumes, the intercompartmental clearances and any non-renal clearance are
   anchored (cefazolin, mannitol, metformin, dabigatranHip, etoposide).
 - **A parameter with its own sex term** (an intercept fitted for men, with a
-  factor for women) is anchored at that sex's typical patient, not at the
-  pooled one (etoposideKroghMadsen's central volume).
+  factor for women) is anchored at the typical patient of the patient's own
+  sex, not at the pooled one (`cohortSexSizeFactors()`; etoposideKroghMadsen's
+  central volume, fluoxetine's CL/F). Anchored at the pooled patient, or at
+  one sex for both, the fat-free-mass difference between the sexes is applied
+  on top of the source's own sex factor, which already holds it, and a cohort
+  patient of one sex or both misses the published value (Carbon's second
+  repository audit, 2026-11-19, A2-F1: fluoxetine's cohort man 14% high, its
+  woman 5% low; etoposide's cohort woman's Vc 18% low).
 - **A metabolite fitted jointly with its parent** shares the parent's cohort
   (norfluoxetine, desvenlafaxine, dehydroaripiprazole, desethylamiodarone,
   hydroxybupropion).
@@ -173,7 +179,10 @@ values**, and the reference man, and everyone else, are scaled from there.
   so that the calibration study's own typical patient, whose disposition is
   now the anchored model's scaled to that patient, reproduces the peak
   (ropivacaine against Vainionpaa 1995, bupivacaine against Robison 1991,
-  with the UK's heights). Where the peak came from the disposition's own
+  with the UK's heights). The rate fitted on the published disposition is
+  kept for the switch off, which gives everyone the published disposition:
+  the refitted rate there put the calibration peaks 22% and 14% low (Carbon's
+  second repository audit, 2026-11-19, A2-F2). Where the peak came from the disposition's own
   subjects the rate does not move (diazepam IM), and where the calibration
   study prints no typical patient it stays, said in the header (diazepam
   oral, Hogan 2020's weight bands).
