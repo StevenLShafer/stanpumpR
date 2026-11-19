@@ -204,7 +204,8 @@
 #   measured ones.  The source's own patients differed 1.7-fold in volume
 #   between their two thyroid states, and all three external groups had thyroid
 #   function of their own; the model describes the source's patients and
-#   is not adjusted to the others [decision for Shafer].
+#   is not adjusted to the others (Steven L. Shafer, 2026-11-19: "Leave the
+#   oral model unadjusted").
 #
 # PREGNANCY AND THE BAND
 # ======================
