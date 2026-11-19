@@ -757,7 +757,7 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
   uWeight <- numeric(m * nG)
   for (k in seq_len(nG)) {
     lb <- props$lambda_blood[props$gas == gases[k]]
-    uWeight[alvCol[k] + 0:(m - 1)] <- lb * Qco / (100 * ratio) *
+    uWeight[alvCol[k] + 0:(m - 1)] <- lb * (1 - gasShunt(body)) * Qco / (100 * ratio) *
       c(1, -gasTissueShares(body))
   }
 

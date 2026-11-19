@@ -204,6 +204,11 @@ body.over #message .card { border-color: var(--accent); }
 #brand { position: fixed; left: 54px; top: 17px; z-index: 4; color: var(--ink); font: 600 16px/1.2 system-ui, "Segoe UI", sans-serif;
   letter-spacing: 0.2px; pointer-events: none; }
 #brand span { color: var(--ink-2); font-weight: 500; font-size: 13px; margin-left: 4px; }
+/* the physiology panel the run was drawn at, under the name (player.js) */
+#physio { font-weight: 400; font-size: 11.5px; color: var(--ink-2); margin-top: 3px; max-width: calc(100vw - 120px); }
+#physio:empty { display: none; }
+#brand #physio span { font-size: 11.5px; font-weight: 400; margin-left: 0; color: var(--ink-2); }
+#brand #physio span.off { color: var(--target); font-weight: 600; }
 
 /* ── saving a video (video.js) ────────────────────────────── */
 #videoCard { position: fixed; inset: 0; z-index: 5; display: none; place-items: center; background: rgba(0,0,0,0.35); }

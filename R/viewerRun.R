@@ -347,7 +347,8 @@ viewerSimulate <- function(drug, doseTable, events, drugs, minimum, maximum,
 #' @return a list; jsonlite::toJSON(x, auto_unbox = TRUE, digits = NA,
 #'   null = "null") is the file the viewer reads.
 #' @noRd
-viewerRun <- function(entry, minimum, maximum, category = NA_character_)
+viewerRun <- function(entry, minimum, maximum, category = NA_character_,
+                      physiology = NULL)
 {
   problem <- viewerProblem(entry)
   if (!is.null(problem)) stop(problem)
@@ -561,6 +562,8 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
     units = list(conc = u$conc, amount = u$amount, rate = paste0(u$amount, "/min")),
     amountScale = u$scale,
     patient = list(weight = weight, height = entry$height, age = entry$age, sex = entry$sex),
+    # The physiology panel the plot was drawn at, shown under the title
+    physiology = viewerPhysiology(physiology),
     pk = list(v1 = k$v1, v2 = k$v2, v3 = k$v3, cl1 = k$cl1, cl2 = k$cl2, cl3 = k$cl3),
     # The volumes (L) and CL1 (L/min) in force at each time, where a clinical
     # event changes them inside the window; else absent, and `pk` holds.
@@ -621,7 +624,8 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
 #' @param category the agent's category, or NA.
 #' @return a list, as `viewerRun()`'s, with `kind = "gas"`.
 #' @noRd
-viewerGasRun <- function(entry, minimum, maximum, category = NA_character_)
+viewerGasRun <- function(entry, minimum, maximum, category = NA_character_,
+                         physiology = NULL)
 {
   problem <- viewerProblem(entry)
   if (!is.null(problem)) stop(problem)
@@ -640,6 +644,9 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_)
   # Mixed venous blood, from every state, before the vessel-rich group's two
   # parts are merged for drawing.
   venous <- apply(state, 1, function(y) gasMixedVenous(y, body))
+  # Arterial blood: end-tidal, unless an endobronchial tube shunts part of the
+  # cardiac output past the ventilated lung (gasArterial(), R/endobronchial.R)
+  arterial <- apply(state, 1, function(y) gasArterial(y, body))
   vrgVolume <- body$V_brain
   if (!is.null(body$V_vrgRest) && ncol(state) >= 6) {
     vrgVolume <- body$V_brain + body$V_vrgRest
@@ -687,9 +694,13 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_)
     units = list(conc = "%", amount = "mL", rate = "mL/min"),
     amountScale = 10,
     patient = list(weight = gr$weight, age = gr$age),
+    # The physiology panel; altitude, intubation, temperature and cardiac
+    # output as the gas engine ran (its body)
+    physiology = viewerPhysiology(physiology, body = body),
     circuit = gr$circuit,
     volume = as.list(vol), partition = as.list(lambda), capacity = as.list(capacity),
     t = times * 60, p = p, venous = at(venous),
+    arterial = if (gasShunt(body) > 0) at(arterial) else NULL,
     cardiacOutput = if (is.null(gr$Qco)) body$Q_cardiac else gr$Qco,
     fresh = fresh[i], freshFlow = flow[i], ventilation = mv[i], alveolarVentilation = va[i],
     delivered = delivered,
@@ -724,4 +735,31 @@ viewerPlotButton <- function(drugs)
     htmltools::tags$ul(class = "dropdown-menu",
       lapply(drugs, function(d) htmltools::tags$li(htmltools::tags$button(
         type = "button", class = "dropdown-item", `data-viewer-drug` = d, d)))))
+}
+
+#' The physiology panel as a run carries it to the Visualizer
+#'
+#' The five controls of every run (the four organ multiples and the body
+#' temperature) and, for an inhaled agent, the altitude and endobronchial
+#' intubation, read from the gas body the engine ran on.  Shafer, 2026-11-19:
+#' "the status of all physiology sliders should appear on 2D and 3D graphs in
+#' the visualizer".
+#'
+#' @param physiology the physiology factors (\code{PHYSIOLOGY_DEFAULT}'s
+#'   names), or NULL for normal
+#' @param body a gas body, or NULL for an intravenous drug's run
+#' @return a named list of numbers (and a logical for the tube)
+#' @keywords internal
+viewerPhysiology <- function(physiology = NULL, body = NULL)
+{
+  p <- tryCatch(checkPhysiology(physiology), error = function(e) PHYSIOLOGY_DEFAULT)
+  out <- lapply(p[c(PHYSIOLOGY_FACTORS, "temperature")], function(x) unname(x))
+  if (!is.null(body)) {
+    # What the engine ran on wins over the panel's reading
+    if (!is.null(body$temperature)) out$temperature <- body$temperature
+    out$altitude <- if (is.null(body$altitude)) ALTITUDE_DEFAULT else body$altitude
+    out$pressure <- round(barometricPressure(out$altitude))
+    out$endobronchial <- isTRUE(body$endobronchial)
+  }
+  out
 }

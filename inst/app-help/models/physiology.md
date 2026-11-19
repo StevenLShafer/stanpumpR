@@ -1,11 +1,15 @@
 The **Physiology** panel in the left-hand column asks *what if*: what if hepatic
 function were half of normal, the kidneys shut down, or cardiac output fell
 by two thirds? It has four sliders of organ function, a fifth for body
-temperature (see *Body temperature* below) and a sixth for altitude, which
-acts on the inhaled anesthetics only (see *Altitude* below). Each of the four is a multiple of
+temperature (see *Body temperature* below), and, while an inhaled anesthetic
+is in the dose table, a slider for altitude and a box for endobronchial
+intubation, which act on the inhaled anesthetics only (see *Altitude* and
+*Endobronchial intubation* below). The Visualizer shows the settings under
+its title. Each of the four is a multiple of
 normal function, on a log scale from a tenth (0.1) to ten times (10). All four
 start at 1, which is normal and changes nothing. **Reset to normal** puts them
-back, the temperature to 37 °C and the altitude to sea level.
+back, the temperature to 37 °C, the altitude to sea level and the tube to the
+trachea.
 
 For the reasoning behind each rule and the evidence for it, see
 [Physiology and pharmacokinetics: the evidence](help:models/physiology-and-pharmacokinetics).
@@ -370,6 +374,37 @@ over the pressure, and much less at low flows. Acclimatisation (a larger haemogl
 hypoxic drive to breathe) is not modelled, and cardiac output and ventilation
 keep their own controls. The intravenous drugs do not respond.
 
+## Endobronchial intubation
+
+The **Endobronchial intubation** box, shown with Altitude while an inhaled
+anesthetic is in the dose table, puts the tracheal tube in one main bronchus.
+Eger and Shafer's chapter on inhaled anesthetic kinetics describes what
+follows: the intubated lung receives all the ventilation, twice its normal
+share, and the other lung is not ventilated but is still perfused. Its blood
+takes up no agent and joins the arterial blood at the mixed venous partial
+pressure, a right-to-left shunt, so end-tidal and arterial partial pressures
+diverge. stanpumpR takes the chapter's idealisation: half the cardiac output
+passes the unventilated lung, and the ventilated lung holds half the alveolar
+gas.
+
+How much the arterial rise is delayed depends on solubility. For a poorly
+soluble agent the end-tidal tension approaches the inspired whatever the blood
+takes, so doubling one lung's ventilation cannot make up for the other, and the
+arterial partial pressure starts at about half of normal. For a highly soluble
+agent doubling the ventilation doubles the delivery and makes up for it, and
+the arterial rise is barely delayed. Eger and Severinghaus predicted this with
+an analogue model, and Stoelting and Longnecker confirmed it in dogs and
+people. In stanpumpR (fresh gas and ventilation 6 L/min), arterial is 72% of
+normal for nitrous oxide at 2 minutes and 78% for isoflurane, 92% and 87% at
+an hour, while end-tidal reads a little above normal. The Visualizer draws the
+arterial bar below the end-tidal one.
+
+**Not modelled.** Hypoxic pulmonary vasoconstriction, which diverts part of the
+blood from the unventilated lung, so the real shunt is usually less than half;
+the lungs' unequal sizes; the slow absorption of the gas trapped in the
+unventilated lung; and arterial oxygen, which the engine does not carry in
+blood. So hypoxaemia, the main danger of an endobronchial tube, is not shown.
+
 ## Body temperature and the intravenous drugs
 
 Cooling slows the elimination of most intravenous drugs, because enzymes and
@@ -511,6 +546,10 @@ on cerebral blood flow during hypothermic cardiopulmonary bypass in adults.
 Eger EI II, Shafer SL. The evolution of pharmacokinetics. Chapter 8 of Eger's
 scientific autobiography, manuscript, 2017.
 
+Eger EI II, Severinghaus JW. Effect of uneven pulmonary distribution of blood
+and gas on induction with inhalation anesthetics. *Anesthesiology*
+1964;25:620-6.
+
 Hiraoka H, Yamamoto K, Miyoshi S, et al. Kidneys contribute to the
 extrahepatic clearance of propofol in humans, but not lungs and brain.
 *Br J Clin Pharmacol* 2005;60:176-82. doi:10.1111/j.1365-2125.2005.02393.x
@@ -547,6 +586,10 @@ valve implantation. *J Am Geriatr Soc* 2021;69:494-9. doi:10.1111/jgs.16882
 
 Wilkinson GR, Shand DG. Commentary: a physiological approach to hepatic drug
 clearance. *Clin Pharmacol Ther* 1975;18:377-90.
+
+Stoelting RK, Longnecker DE. Effect of right-to-left shunt on rate of
+increase in arterial anesthetic concentration. *Anesthesiology*
+1972;36:352-6.
 
 West JB. Prediction of barometric pressures at high altitude with the use of
 model atmospheres. *J Appl Physiol* 1996;81:1850-4.

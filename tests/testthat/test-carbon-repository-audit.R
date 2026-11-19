@@ -110,4 +110,5 @@ test_that("loading a scenario resets opioid tolerance and the physiology (U1)", 
   for (f in PHYSIOLOGY_FACTORS) expect_equal(as.numeric(sent[[physiologyInputId(f)]]$value), 0)
   expect_equal(as.numeric(sent$physiology_temperature$value), PHYSIOLOGY_TEMPERATURE_DEFAULT)
   expect_equal(as.numeric(sent$physiology_altitude$value), ALTITUDE_DEFAULT)
+  expect_false(isTRUE(sent$endobronchialIntubation$value))
 })

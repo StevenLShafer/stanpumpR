@@ -16,7 +16,8 @@ simulateGases(
   oxygenUptake = TRUE,
   physiology = NULL,
   temperature = NULL,
-  altitude = NULL
+  altitude = NULL,
+  endobronchial = FALSE
 )
 }
 \arguments{
@@ -47,6 +48,10 @@ body as \code{temperature}}
 kept in the body as \code{altitude}; the barometric pressure it sets
 (\code{barometricPressure()}, R/altitude.R) changes the fresh gas, room
 air and the volume taken up, not the potency}
+
+\item{endobronchial}{TRUE for an endobronchial tube: one lung ventilated,
+the other perfused and shunting (\code{gasBodyEndobronchial()},
+R/endobronchial.R)}
 }
 \value{
 \code{NULL} if the dose table contains no gases, otherwise the list

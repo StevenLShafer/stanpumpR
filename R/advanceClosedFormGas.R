@@ -447,7 +447,8 @@ gasTotalUptake <- function(state, props, body, Qco)
     if (g == "oxygen") next
     y  <- state[[g]]
     lb <- props$lambda_blood[props$gas == g]
-    total <- total + lb * Qco * (y[[2]] - gasMixedVenous(y, body)) / 100
+    total <- total + lb * (1 - gasShunt(body)) * Qco *
+      (y[[2]] - gasMixedVenous(y, body)) / 100
   }
   # An ambient volume: the same partial pressures are 1/r the volume at sea
   # level (R/altitude.R)
@@ -587,6 +588,10 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
   partition <- c(brain = ltg[["brain"]], muscle = ltg[["muscle"]],
                  fat = ltg[["fat"]], vrgRest = ltg[["brain"]])[names(shares)]
   k <- shares * Qco * lb / (gasTissueVolumes(body) * partition)
+  # An endobronchial tube (R/endobronchial.R): the share `sh` of cardiac
+  # output passes the unventilated lung and takes up nothing
+  sh <- gasShunt(body)
+  lungFlow <- (1 - sh) * Qco
 
   A <- matrix(0, n, n)
 
@@ -601,13 +606,14 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
   # (2) alveolar.  The mixed-venous term redistributes lambda_b * Qco across the
   # three tissue states in proportion to their share of cardiac output.
   A[2, 1] <-  VA / Va
-  A[2, 2] <- -(VA + lb * Qco) / Va
-  A[2, 3:n] <- lb * Qco * shares / Va
+  A[2, 2] <- -(VA + lb * lungFlow) / Va
+  A[2, 3:n] <- lb * lungFlow * shares / Va
 
-  # (3) tissues
+  # (3) tissues, fed by arterial blood: (1 - sh) alveolar and sh mixed venous
   for (j in seq_along(k)) {
-    A[2 + j, 2] <- k[[j]]
-    A[2 + j, 2 + j] <- -k[[j]]
+    A[2 + j, 2] <- k[[j]] * (1 - sh)
+    if (sh > 0) A[2 + j, 3:n] <- A[2 + j, 3:n] + k[[j]] * sh * shares
+    A[2 + j, 2 + j] <- A[2 + j, 2 + j] - k[[j]]
   }
 
   # The uptake coupling.  GasMan's Calc adds this to the alveolar numerator:
@@ -1233,6 +1239,9 @@ advanceClosedFormGas <- function(
 #'   kept in the body as \code{altitude}; the barometric pressure it sets
 #'   (\code{barometricPressure()}, R/altitude.R) changes the fresh gas, room
 #'   air and the volume taken up, not the potency
+#' @param endobronchial TRUE for an endobronchial tube: one lung ventilated,
+#'   the other perfused and shunting (\code{gasBodyEndobronchial()},
+#'   R/endobronchial.R)
 #' @param uptakeEffect,circuit,deadSpace,oxygenUptake passed to
 #'   \code{advanceClosedFormGas()}
 #'
@@ -1247,7 +1256,7 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
                           # Appended after the pre-existing arguments, so a
                           # positional call keeps its binding (exported).
                           physiology = NULL, temperature = NULL,
-                          altitude = NULL)
+                          altitude = NULL, endobronchial = FALSE)
 {
   circuit <- match.arg(circuit)
   if (is.null(doseTable) || nrow(doseTable) == 0) return(NULL)
@@ -1270,6 +1279,7 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
   if (temperature != 37) body$temperature <- temperature
   altitude <- checkAltitude(altitude)
   if (altitude != ALTITUDE_DEFAULT) body$altitude <- altitude
+  body <- gasBodyEndobronchial(body, endobronchial)
 
   advanceClosedFormGas(
     gasDose,

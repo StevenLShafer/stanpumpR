@@ -1012,6 +1012,10 @@ physiologyPanel <- function()
             "cardiac output or ventilation, which have their own controls."),
       placement = "right"
     ),
+    # Altitude and endobronchial intubation act on the inhaled agents only,
+    # so they show only while one is in the dose table (relevantFields())
+    relevantField(
+    "inhaledAgents",
     fieldHelp(
       sliderInput(
         inputId = "physiology_altitude",
@@ -1033,6 +1037,20 @@ physiologyPanel <- function()
             "a lower partial pressure. It does not change cardiac output or",
             "ventilation, which have their own controls."),
       placement = "right"
+    ),
+    fieldHelp(
+      checkboxInput("endobronchialIntubation", "Endobronchial intubation",
+                    value = FALSE),
+      paste("The tube in one main bronchus: that lung takes all the",
+            "ventilation, and the other, unventilated, is still perfused, so",
+            "half the cardiac output passes it and takes up no agent (Eger",
+            "and Shafer's chapter on inhaled anesthetic kinetics). End-tidal",
+            "reads higher than arterial, and the brain rises more slowly,",
+            "most for the poorly soluble agents (nitrous oxide, desflurane).",
+            "Hypoxic pulmonary vasoconstriction and arterial oxygen are not",
+            "modelled."),
+      placement = "right"
+    )
     ),
     actionLink("physiologyReset", "Reset to normal"),
     uiOutput("physiologyNote")
@@ -1107,10 +1125,11 @@ physiologyFromInputs <- function(values)
 #' @param physiology the factors, or NULL
 #' @param temperature the body temperature, C, or NULL (37)
 #' @param altitude metres above sea level, or NULL (sea level)
+#' @param endobronchial TRUE for an endobronchial tube
 #' @returns a data frame of Covariate and Value
 #' @noRd
 physiologyCovariateRows <- function(physiology, temperature = NULL,
-                                    altitude = NULL)
+                                    altitude = NULL, endobronchial = FALSE)
 {
   p <- tryCatch(checkPhysiology(physiology), error = function(e) NULL)
   value <- if (is.null(p)) rep("unreadable", length(PHYSIOLOGY_FACTORS)) else
@@ -1122,10 +1141,12 @@ physiologyCovariateRows <- function(physiology, temperature = NULL,
   data.frame(Covariate = c(paste(PHYSIOLOGY_LABELS[PHYSIOLOGY_FACTORS],
                                  "(multiple of normal)"),
                            "Body temperature (C)",
-                           "Altitude (m), inhaled anesthetics"),
+                           "Altitude (m), inhaled anesthetics",
+                           "Endobronchial intubation, inhaled anesthetics"),
              Value = c(unname(value), if (is.null(t)) "unreadable" else format(t),
                        if (is.null(h)) "unreadable" else
-                         sprintf("%s (%.0f Torr)", format(h), barometricPressure(h))),
+                         sprintf("%s (%.0f Torr)", format(h), barometricPressure(h)),
+                       if (isTRUE(endobronchial)) "yes" else "no"),
              stringsAsFactors = FALSE)
 }
 
