@@ -2561,6 +2561,12 @@ app_server <- function(input, output, session) {
     conc <- hoverConcentration(entry$results, e$x, normalization)
     returnText <- paste0("Time: ", hoverTime(e$x), ", ", x[1], " ", conc$label, ": ",
                          signif(conc$value, 2), " ", x[2])
+    # Oxygen: the arterial blood under the line (R/arterialOxygen.R)
+    ao <- entry$arterialOxygen
+    if (!is.null(ao) && identical(normalization, NORMALIZE_NONE))
+      returnText <- paste0(returnText, ", PaO2 ",
+                           round(seriesStepAt(ao$Time, ao$PaO2, e$x)), " mmHg, SaO2 ",
+                           round(seriesStepAt(ao$Time, ao$SaO2, e$x)), "%")
     # The same reading from each companion model drawn in this panel
     for (companion in companionsOf(drug))
     {

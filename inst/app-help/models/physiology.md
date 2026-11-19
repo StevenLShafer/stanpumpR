@@ -411,11 +411,36 @@ normal for nitrous oxide at 2 minutes and 78% for isoflurane, 92% and 87% at
 an hour, while end-tidal reads a little above normal. The Visualizer draws the
 arterial bar below the end-tidal one.
 
+**Hypoxaemia.** Doubling the ventilation of one lung nearly makes up for the
+other lung's loss of carbon dioxide excretion, because carbon dioxide is freely
+soluble in blood. It cannot make up for oxygen. Haemoglobin leaving the
+ventilated lung is already nearly saturated, so the extra ventilation adds only
+the little oxygen that dissolves, while the shunted half of the blood arrives
+at mixed venous content. Hypoxaemia necessarily follows. stanpumpR computes the
+arterial oxygen from the alveolar oxygen the engine carries: the oxygen content
+of blood leaving the ventilated lung (Severinghaus's 1979 dissociation curve,
+haemoglobin 15 g/dL), less the shunt's share of the body's oxygen use. It draws
+the result as the oxygen panel's second line, and the hover gives the PaO2 and
+the SaO2. For a 70 kg patient at a cardiac output of 5 L/min and oxygen use of
+0.25 L/min, half the cardiac output shunted gives, at 30 minutes:
+
+| Fresh gas (6 L/min) | End-tidal PO2 | PaO2 | SaO2 |
+|---|---|---|---|
+| Oxygen | 710 mmHg | 51 mmHg | 85% |
+| Oxygen 2 L/min, air 4 L/min | 312 mmHg | 44 mmHg | 80% |
+| Air | 114 mmHg | 40 mmHg | 75% |
+
+Even with pure oxygen, the PaO2 is about 50 mmHg. That is the shunt's
+signature: more oxygen hardly helps.
+
 **Not modelled.** Hypoxic pulmonary vasoconstriction, which diverts part of the
-blood from the unventilated lung, so the real shunt is usually less than half;
-the lungs' unequal sizes; the slow absorption of the gas trapped in the
-unventilated lung; and arterial oxygen, which the engine does not carry in
-blood. So hypoxaemia, the main danger of an endobronchial tube, is not shown.
+blood from the unventilated lung, so the shunt is about half only at first and
+the hypoxaemia then eases; the lungs' unequal sizes; the slow absorption of the
+gas trapped in the unventilated lung; the blood's own oxygen store, so the
+arterial oxygen changes at once with the tube or the fresh gas rather than over
+a circulation time; the dissociation curve's shift with temperature and pH; and
+a haemoglobin of the patient's own, there being no Patient Profile field for
+it.
 
 ## Body temperature and the intravenous drugs
 

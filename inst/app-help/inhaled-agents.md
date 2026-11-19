@@ -17,7 +17,7 @@ For each agent two lines, as for an intravenous drug:
 - The "plasma" line is the **alveolar (end-tidal) tension**, the quantity the monitor measures.
 - The "effect site" line is the **vessel-rich group (brain) tension**.
 
-Both are in per cent of one atmosphere. An **oxygen** panel shows the inspired and alveolar oxygen whenever any gas flow is running, because a hypoxic mixture should be visible whatever else is given.
+Both are in per cent of one atmosphere. An **oxygen** panel shows the alveolar oxygen whenever any gas flow is running, because a hypoxic mixture should be visible whatever else is given. Its second line is the **arterial** oxygen tension, the same as end-tidal unless an endobronchial tube shunts blood past the ventilated lung (see [Physiology](help:models/physiology)); the hover gives the PaO2 in mmHg and the SaO2.
 
 ## MAC and MAC equivalents
 
