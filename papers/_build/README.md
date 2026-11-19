@@ -53,12 +53,30 @@ which is exactly when verdicts should be re-examined.
 It would silently disable the filing cache. If you need one, keep it outside the queue, or exclude
 that column from the hash deliberately and say so here.
 
+## Clio deliveries arrive wrapped
+
+Clio, Stanford's interlibrary loan, delivers a scan through a form POST, and a browser that saves
+the response body verbatim writes the whole `multipart/form-data` envelope: a boundary line, the
+part's headers, then the PDF, then the closing boundary. The file is therefore not a PDF by its
+magic bytes, though poppler, pypdf and pdfium all skip the preamble, so it reads, renders and
+extracts normally.
+
+Found 2026-11-18 on nineteen files, twelve of them already filed — whose text extractions and
+digest cards were all sound, which is why nothing had reported it. `file_downloads.py` now strips
+the envelope before it does anything else with a file, recycling the original, so a wrapped
+delivery is repaired on the next run wherever it sits.
+
+**The lesson is about the check, not the envelope**: a strict `%PDF` magic-byte test found in
+seconds what a year of readers that tolerate anything never mentioned. Nothing in this pipeline
+had ever asserted that a PDF was a PDF.
+
 ## What runs, in the order `update.bat` runs it
 
 | Script | What it does |
 |---|---|
+| `fetch_pmc.py` | Downloads the free PMC copy of any paper the reference list **or the download queue** wants, verifies its first page against the title and first author, and files it. |
 | `file_supplements.py` | Files publisher supplements beside their article, by sha. |
-| `file_downloads.py` | Identifies each new PDF in Downloads by printed DOI, or by title and first author, and files it as `PMID_<pmid>.pdf`. Accepts a file named by hand when the reference list **or the download queue** asks for that PMID. |
+| `file_downloads.py` | Identifies each new PDF in Downloads by printed DOI, or by title and first author, and files it as `PMID_<pmid>.pdf`. Accepts a file named by hand when the reference list **or the download queue** asks for that PMID. Strips a multipart form envelope left around a Clio delivery first. |
 | `ocr_scans.py` | Adds a text layer to a scan that has none. |
 | `merge.py` | Merges the per-document extractions. |
 | `build.py` | Rebuilds `stanpumpR-references.xlsx` and `stanpumpr-queue.csv` from the works the stanpumpR source cites, keeping rows `arrivals.py` added. |

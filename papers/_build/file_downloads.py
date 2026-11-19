@@ -122,6 +122,72 @@ def pdf_text(path, last=2, strict=False):
             os.remove(tmp)
 
 
+ENVELOPE_BACKUP = ".pre-unwrap"          # not ".pdf", so the filing loop never offers it as a candidate
+
+
+def unwrap_envelope(path):
+    """Strip a multipart/form-data envelope a download left wrapped around the PDF.
+
+    Clio, Stanford's interlibrary loan, delivers through a form POST, and saving the response
+    body verbatim writes the whole envelope: a boundary line, the part's headers, the PDF, then
+    the closing boundary.  Poppler, pypdf and pdfium all skip the preamble, so such a file reads,
+    renders and extracts normally -- the twelve already in the archive were digested correctly --
+    but it is not a PDF by its magic bytes, and a stricter reader will refuse it.  Found
+    2026-11-18 on nineteen files, seven in Downloads and twelve already filed.
+
+    Returns True if the file was rewritten.  Nothing is replaced unless the body starts with
+    %PDF, carries %%EOF near its end, and opens with the SAME page count as the envelope did;
+    the original is recycled, never deleted, as everything in this archive is."""
+    try:
+        with open(path, "rb") as f:
+            head = f.read(5)
+    except OSError:
+        return False
+    if head.startswith(b"%PDF") or not head.startswith(b"--"):
+        return False                             # a PDF, or something this does not understand
+    try:
+        data = open(path, "rb").read()
+    except OSError:
+        return False
+    start = data.find(b"%PDF")
+    nl = data.find(b"\r\n")
+    boundary = data[:nl] if nl > 0 else b""
+    if start < 0 or not boundary:
+        return False
+    end = data.rfind(boundary)
+    body = (data[start:end] if end > start else data[start:]).rstrip(b"\r\n")
+    if not body.startswith(b"%PDF") or b"%%EOF" not in body[-4096:]:
+        return False
+    import pypdf
+    try:
+        before = len(pypdf.PdfReader(path).pages)
+    except Exception:
+        before = None                            # unreadable as it stands: the page check cannot run
+    tmp, keep = path + ".unwrapped", path + ENVELOPE_BACKUP
+    try:
+        with open(tmp, "wb") as f:
+            f.write(body)
+        after = len(pypdf.PdfReader(tmp).pages)
+        if before is not None and after != before:
+            raise RuntimeError("%d pages before, %d after" % (before, after))
+        shutil.copyfile(path, keep)              # the original, on its way to the Recycle Bin
+        os.replace(tmp, path)
+    except Exception as e:
+        for junk in (tmp, keep):
+            if os.path.exists(junk):
+                os.remove(junk)
+        print("  %s: looks wrapped in a form envelope but was left alone (%s)"
+              % (os.path.basename(path), e), flush=True)
+        return False
+    try:
+        recycle(keep)
+    except Exception:
+        pass                                     # the repair stands; the spare copy is only untidy
+    print("  %s: stripped a %d-byte form envelope (%d pages)"
+          % (os.path.basename(path), len(data) - len(body), after), flush=True)
+    return True
+
+
 def identify(path):
     r, why, problem = identify_any(path)
     # An erratum, an abstract, a first-page preview or a journal's supplementary file repeats the article's DOI or
@@ -592,6 +658,7 @@ for d, name in candidates():
         path = os.path.join(d, name)
         if not name.lower().endswith(".pdf") or not os.path.isfile(path):
             continue
+        unwrap_envelope(path)                    # before the sha, the cache key and the archive skip
         in_archive_dir = os.path.abspath(d) == os.path.abspath(ARCHIVE)
         if in_archive_dir and re.fullmatch(r"(PMID_\d+(_[A-Za-z0-9]+)?|DOI_.+|NJ_.+)\.pdf", name):  # PMID_n_ESM1 = a supplement
             continue  # already filed (NJ_ = non-journal documents, see nonjournal_manifest.json)
