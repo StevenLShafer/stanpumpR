@@ -438,3 +438,89 @@ test_that("Create event records the panel's settings in the event table", {
     expect_equal(nrow(eventTable()), 1)
   })
 })
+
+# --- ChatGPT's adversarial review of PR #796 (at 1f8a80e), each failing there --
+
+reviewEvent <- function(time = 40, ...) {
+  s <- physiologyEventNormal()
+  over <- list(...)
+  for (n in names(over)) s[[n]] <- over[[n]]
+  eventTableRows(time, "Physiology", physiologyEventEncode(s))
+}
+
+test_that("finding 1: with an event at time 0 the pump plans on that physiology", {
+  DT <- data.frame(Drug = "propofol", Time = 0, Dose = 3, Units = TCI_UNIT_PLASMA)
+  ev <- simulateDrugsWithCovariates(DT, reviewEvent(0, cardiac = 0.5), 70, 170, 50, "male",
+                                    maximum = 60, plotRecovery = FALSE)$propofol$wide
+  phys <- PHYSIOLOGY_DEFAULT
+  phys[["cardiac"]] <- 0.5
+  sl <- simulateDrugsWithCovariates(DT, eventTableInit, 70, 170, 50, "male", maximum = 60,
+                                    plotRecovery = FALSE, physiology = phys)$propofol$wide
+  at <- function(w, t) seriesStepAt(w$Time, w$Plasma, t)
+  expect_equal(at(ev, c(1 / 6, 60)), c(3, 3), tolerance = 1e-3)
+  expect_equal(at(ev, c(1 / 6, 60)), at(sl, c(1 / 6, 60)), tolerance = 1e-6)
+})
+
+test_that("finding 2: a measurement that gives no fit keeps the drugs' physiology events", {
+  dd <- getDrugDefaultsGlobal()
+  row <- dd[dd$Drug == "propofol", ]
+  events <- physiologyEventsFrom(reviewEvent(40, cardiac = 0.5))
+  normal <- list(propofol = getDrugPK("propofol", 70, 170, 50, "male", row))
+  priors <- list(propofol = physiologyEventPK(
+    function(p) getDrugPK("propofol", 70, 170, 50, "male", row, physiology = p), events))
+  out <- bayesianAtPhysiology(normal, priors, function(drug, individual) stop("no rebuild"))
+  expect_false(is.null(out$propofol[["physiologyEvents"]]))
+  expect_identical(names(out$propofol$PK), names(priors$propofol$PK))
+})
+
+test_that("finding 3: a bookmark carries no Create event press or time", {
+  expect_true(all(c("physiologyCreateEvent", "physiologyCreateEventBtn", "physiologyEventTime")
+                  %in% bookmarksToExclude))
+})
+
+test_that("finding 4: a rate into the tissue depot keeps normal physiology, and says so, not stops", {
+  DT <- data.frame(Drug = "bupivacaine", Time = c(0, 90), Dose = c(10, 0),
+                   Units = c("mg/hr RA", "mg/hr RA"))
+  plain <- simulateDrugsWithCovariates(DT, eventTableInit, 70, 170, 50, "male",
+                                       maximum = 180, plotRecovery = FALSE)$bupivacaine
+  ev <- simulateDrugsWithCovariates(DT, reviewEvent(40, cardiac = 0.5), 70, 170, 50, "male",
+                                    maximum = 180, plotRecovery = FALSE)$bupivacaine
+  expect_type(ev$physiologyEventsIgnored, "character")
+  expect_equal(seriesStepAt(ev$wide$Time, ev$wide$Plasma, c(30, 60, 120)),
+               seriesStepAt(plain$wide$Time, plain$wide$Plasma, c(30, 60, 120)), tolerance = 1e-12)
+  expect_false(viewerFollowsPhysiologyEvents(ev))
+})
+
+test_that("findings 5 and 6: a repeated time reads after its step, a time before it towards the value before", {
+  t <- c(0, 10, 20, 20, 30)
+  y <- c(0, 1, 1.4444, 1.2463, 2)
+  expect_equal(seriesStepAt(t, y, 20), 1.2463)
+  expect_equal(seriesStepAt(t, y, 19.99), 1 + 0.999 * 0.4444, tolerance = 1e-9)
+  expect_equal(seriesStepAt(t, y, 25), (1.2463 + 2) / 2)
+  expect_equal(seriesStepAt(t, y, c(-1, 40)), c(0, 2))
+  # The gas brain tension at the step's time is the value after it
+  st <- simulateGases(gasDT, weight = 70, age = 40, maximum = 60,
+                      physiologyEvents = gasEventTable(temperature = 32))
+  entries <- gasDrugEntries(st, gasDT, maximum = 60, age = 40)
+  after <- st$state$sevoflurane[which(st$timeLine == 20)[2], 3]
+  expect_equal(hoverConcentration(entries$sevoflurane$results, 20)$value, after)
+})
+
+test_that("finding 7: the Visualizer shows no event a blocked drug did not undergo", {
+  entry <- list(drug = "phenytoin")
+  expect_false(viewerFollowsPhysiologyEvents(entry))
+})
+
+test_that("finding 9: a gas run's body is the one in force at time 0", {
+  st <- simulateGases(gasDT, weight = 70, age = 40, maximum = 60,
+                      physiologyEvents = { e <- gasEventTable(temperature = 28); e$Time <- 0; e })
+  expect_equal(st$body$temperature, 28)
+})
+
+test_that("finding 10: a Settings string with an empty field is refused", {
+  expect_null(physiologyEventDecode("cardiac=0.5;"))
+  expect_null(physiologyEventDecode(";cardiac=0.5"))
+  expect_null(physiologyEventDecode("cardiac=0.5;;liver=1"))
+  expect_null(physiologyEventDecode(""))
+  expect_false(is.null(physiologyEventDecode("cardiac=0.5;liver=1")))
+})

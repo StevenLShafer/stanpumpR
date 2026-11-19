@@ -250,7 +250,7 @@ viewerSetsInForce <- function(entry, sets, times, maximum)
   # Physiology events (R/physiologyEvents.R): the merged sets, on the time
   # line simCpCe() switches them on
   physiology <- entry[["physiologyEvents"]]
-  if (is.data.frame(physiology) && nrow(physiology) > 0) {
+  if (viewerFollowsPhysiologyEvents(entry)) {
     ev <- physiologyEventTimeline(ev, physiology)
     ev <- ev[ev$Time < maximum, , drop = FALSE]
   }
@@ -360,6 +360,14 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_,
 {
   problem <- viewerProblem(entry)
   if (!is.null(problem)) stop(problem)
+  # A drug the physiology events do not change is drawn at normal physiology
+  # throughout, and says so (ChatGPT's review of PR #796, finding 7: the run
+  # showed the events of a drug they had not changed)
+  if (is.data.frame(physiologyEvents) && nrow(physiologyEvents) > 0 &&
+      !viewerFollowsPhysiologyEvents(entry)) {
+    physiologyEvents <- NULL
+    physiology <- NULL
+  }
   times <- viewerTimes(minimum, maximum)
   minimum <- times[1]
   u <- viewerUnits(entry$Concentration.Units)
@@ -771,6 +779,16 @@ viewerPlotButton <- function(drugs)
     htmltools::tags$ul(class = "dropdown-menu",
       lapply(drugs, function(d) htmltools::tags$li(htmltools::tags$button(
         type = "button", class = "dropdown-item", `data-viewer-drug` = d, d)))))
+}
+
+#' Whether a drug's plotted curve follows the physiology events
+#' @param entry the drug's entry
+#' @keywords internal
+viewerFollowsPhysiologyEvents <- function(entry)
+{
+  e <- entry[["physiologyEvents"]]
+  is.data.frame(e) && nrow(e) > 0 && is.null(entry$physiologyEventsIgnored) &&
+    is.null(entry$interactionEvents)
 }
 
 #' The physiology steps a run carries with physiology events

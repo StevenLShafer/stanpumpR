@@ -66,6 +66,12 @@ bookmarksToExclude <- c(
   "addDoseBtn",
   "addNewDrug",
   "addEventBtn",
+  # The physiology panel's Create event dialog (R/physiologyEvents.R): a
+  # bookmark restored the button press and created the event again
+  # (ChatGPT's review of PR #796, finding 3)
+  "physiologyCreateEvent",
+  "physiologyCreateEventBtn",
+  "physiologyEventTime",
   "addDoseTime",
   "clickTimeEvent",
   "addDoseUnits",

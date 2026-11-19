@@ -186,6 +186,9 @@ physiologyEventDecode <- function(s)
   if (!is.character(s) || length(s) != 1 || is.na(s) || nchar(s) > PHYSIOLOGY_EVENT_MAX_CHARS)
     return(NULL)
   if (identical(trimws(s), PHYSIOLOGY_EVENT_NORMAL_TEXT)) return(physiologyEventNormal())
+  # strsplit() drops an empty last field, so "cardiac=0.5;" read as valid
+  # (ChatGPT's review of PR #796, finding 10)
+  if (!nzchar(s) || grepl("^;|;;|;$", s)) return(NULL)
   parts <- strsplit(s, ";", fixed = TRUE)[[1]]
   kv <- strsplit(parts, "=", fixed = TRUE)
   if (length(kv) == 0 || any(lengths(kv) != 2)) return(NULL)
@@ -382,3 +385,66 @@ physiologyEventHover <- function(ET, x, span, gas = TRUE)
 #' Share of the plot's width within which the pointer is on an event
 #' @keywords internal
 PHYSIOLOGY_EVENT_HOVER_SHARE <- 0.02
+
+#' The PK a TCI pump plans on, with physiology events
+#'
+#' The controller plans on the first PK set (tciSchedule()).  With a
+#' physiology event at time 0 the patient is in that event's physiology from
+#' the start, so the pump plans on it, as it plans on the sliders' physiology
+#' without events; a later event is one the pump does not know of.
+#'
+#' @param PK the pump's PK (the drug's, or its tciModel)
+#' @returns the PK with the set in force at time 0 first
+#' @keywords internal
+physiologyEventPump <- function(PK)
+{
+  events <- PK[["physiologyEvents"]]
+  if (!is.data.frame(events) || nrow(events) == 0) return(PK)
+  atZero <- events$State[events$Time <= 0]
+  if (length(atZero) == 0) return(PK)
+  key <- physiologyEventKey(names(PK$PK)[1], max(atZero))
+  if (is.null(PK$PK[[key]])) return(PK)
+  PK$PK <- c(PK$PK[key], PK$PK[setdiff(names(PK$PK), key)])
+  PK
+}
+
+#' A series read at a time, a repeated time read after its step
+#'
+#' A physiology event, a dose or a clinical event repeats its time in a
+#' series, before and after the step.  Linear interpolation between the
+#' last point at or before x and the next, so a point at a step's time reads
+#' its value after the step, and a point just before it reads towards the
+#' value before it (ChatGPT's review of PR #796, findings 5 and 6: R's approx()
+#' averaged the two values, and dropping the earlier made the time before a
+#' step read towards the value after it).
+#'
+#' @param t,y the series, in time order (ties in the order they occur)
+#' @param x times to read
+#' @returns the values at x, held at the ends; NA where either neighbour is NA
+#' @keywords internal
+seriesStepAt <- function(t, y, x)
+{
+  # A missing value stays missing next to it (approx(na.rm = FALSE), which
+  # this replaced in seriesAt(): a time until threshold still pending)
+  ok <- !is.na(t)
+  t <- t[ok]
+  y <- y[ok]
+  n <- length(t)
+  if (n == 0) return(rep(NA_real_, length(x)))
+  if (n == 1) return(rep(y, length(x)))
+  o <- order(t, seq_along(t))
+  t <- t[o]
+  y <- y[o]
+  i <- findInterval(x, t)
+  out <- numeric(length(x))
+  lo <- i < 1
+  hi <- i >= n
+  out[lo] <- y[1]
+  out[hi] <- y[n]
+  mid <- !lo & !hi
+  j <- i[mid]
+  w <- (x[mid] - t[j]) / (t[j + 1] - t[j])
+  # On a point, its own value, whatever the next one is
+  out[mid] <- ifelse(w == 0, y[j], y[j] + w * (y[j + 1] - y[j]))
+  out
+}

@@ -86,6 +86,8 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
 
   # At the body's temperature (gasPropertiesAt()), so the band follows MAC.
   props <- gasPropertiesAt(sim$body$temperature)
+  # (sim$body is the body in force at time 0, an event at 0 included,
+  # advanceClosedFormGas(); ChatGPT's review of PR #796, finding 9)
   xout  <- seq(from = 0, to = maximum, length.out = RESOLUTION)
   out   <- list()
 
@@ -258,16 +260,14 @@ gasEntry <- function(drug, alveolar, brain, xout, drugDefaults,
   )
 
   # A physiology event (R/physiologyEvents.R) repeats its time, before and
-  # after the step; the interpolation takes the value after it
-  lastOf <- function(t) !duplicated(t, fromLast = TRUE)
-  bk <- lastOf(brain$Time)
-  ak <- lastOf(alveolar$Time)
+  # after the step: a point at the step reads after it, one before it reads
+  # towards the value before it (seriesStepAt())
   equiSpace <- data.frame(
     Drug     = drug,
     Time     = xout,
-    Ce       = stats::approx(brain$Time[bk], ce[bk], xout, rule = 2)$y,
+    Ce       = seriesStepAt(brain$Time, ce, xout),
     Recovery = if (is.null(recovery)) 0 else
-      stats::approx(alveolar$Time[ak], recovery[ak], xout, rule = 2)$y,
+      seriesStepAt(alveolar$Time, recovery, xout),
     MEAC     = 0,
     stringsAsFactors = FALSE
   )

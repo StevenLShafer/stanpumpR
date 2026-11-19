@@ -1599,9 +1599,12 @@ app_server <- function(input, output, session) {
     events <- physiologyEvents()
     if (nrow(events) == 0) return(NULL)
     # The drugs in the plot that do not follow them (physiologyEventsBlocked())
-    entries <- tryCatch(bayesUpdate()$drugs, error = function(e) NULL)
-    held <- names(Filter(function(e) is.null(e$companionOf) &&
+    # (drugs(), which carries what the simulation found too: a rate into the
+    # tissue depot keeps a dose table at normal physiology, simCpCe())
+    entries <- tryCatch(drugs(), error = function(e) NULL)
+    held <- names(Filter(function(e) is.null(e$companionOf) && !isTRUE(e$isGas) &&
                            (!is.null(e$physiologyStepsSkipped) ||
+                              !is.null(e$physiologyEventsIgnored) ||
                               (!is.null(e[["physiologyEvents"]]) && !is.null(e$interactionEvents))),
                          entries))
     tagList(

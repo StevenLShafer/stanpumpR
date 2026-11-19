@@ -614,6 +614,10 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       # individual's curve shows where the patient really was (Shafer,
       # 2026-11-14).
       pump <- if (is.null(PK$tciModel)) PK else PK$tciModel
+      # With a physiology event at time 0 the pump plans on that physiology,
+      # as it plans on the sliders' without events (ChatGPT's review of PR
+      # #796, finding 1: it planned on normal and overshot 5.96 against 3)
+      pump <- physiologyEventPump(pump)
       schedule <- tciSchedule(dose, pump, maximum)
       dose <- schedule$dose
       tci <- tciDisplay(schedule, PK)
@@ -656,8 +660,18 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # carrying the amounts across each switch (convertState()).  The
     # antiseizure interactions, which replace the event table with their own
     # segments, take precedence (the drug was held at normal physiology).
+    # A rate into the tissue depot (mg/hr RA, or an oral release carried on
+    # it) is one the event engine does not carry (advanceClosedForm1()), so
+    # such a dose table keeps normal physiology throughout and says so,
+    # rather than stopping (ChatGPT's review of PR #796, finding 4).
+    physiologyEventsIgnored <- NULL
+    if (!is.null(PK[["physiologyEvents"]]) && nrow(PK[["physiologyEvents"]]) > 0 &&
+        isTRUE(any(dose$RArate)))
+      physiologyEventsIgnored <- paste("a rate into the tissue depot (an RA infusion or",
+                                       "an extended-release oral form) cannot switch",
+                                       "physiology during a run")
     if (!is.null(PK[["physiologyEvents"]]) && is.null(PK$interactionEvents) &&
-        nrow(PK[["physiologyEvents"]]) > 0)
+        nrow(PK[["physiologyEvents"]]) > 0 && is.null(physiologyEventsIgnored))
     {
       events <- physiologyEventTimeline(events, PK[["physiologyEvents"]])
       pkEvents <- names(PK$PK)
@@ -929,6 +943,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
   out$metaboliteRecoveryStates <- metaboliteRecoveryStates
 
   out$tci              <- tci
+  out$physiologyEventsIgnored <- physiologyEventsIgnored
   out$scheduled        <- expanded$scheduled
 
   return(out)

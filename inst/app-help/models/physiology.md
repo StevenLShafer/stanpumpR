@@ -476,9 +476,13 @@ What does not follow the events: a drug whose model the sliders do not change
 (*Which drugs respond*, below); a drug on the saturable (Michaelis-Menten),
 transit-chain or other special engines, or one that forms a metabolite, whose
 PK the event engine cannot switch during a run; a drug changed by the
-antiseizure interactions, whose own segments take precedence; and a TCI pump,
-which plans on the physiology at time 0, as a real pump knows nothing of the
-patient's. The Visualizer shows the physiology in force as the run plays; it
+antiseizure interactions, whose own segments take precedence; and a dose
+table with a rate into the tissue depot (a regional-anaesthesia infusion, or
+an extended-release oral form the program releases that way), which keeps
+normal physiology throughout and is named in the panel. A TCI pump plans on
+the physiology in force at time 0 (an event at time 0 included, as the
+sliders are without events); a later event is one the pump does not know of,
+so the concentration drifts from the target, as it would in a patient. The Visualizer shows the physiology in force as the run plays; it
 does not yet draw an inhaled agent whose body temperature or intubation
 changes during the run.
 

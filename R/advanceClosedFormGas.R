@@ -1255,7 +1255,9 @@ advanceClosedFormGas <- function(
   # With physiology events, `body` and `Qco` are those in force at time 0,
   # and `bodySteps` the rest (gasWashout() works through them)
   if (!is.null(bodySteps)) {
-    body <- bodySteps$body[[1]]
+    # The body in force at time 0: an event at time 0 is in force from it
+    # (the gas typical band reads it; ChatGPT's review of PR #796, finding 9)
+    body <- bodySteps$body[[max(1L, findInterval(0, bodySteps$time))]]
     Qco <- if (is.null(cardiacOutput)) body$Q_cardiac else cardiacOutput
   }
   list(results = results, state = out, timeLine = timeLine,
