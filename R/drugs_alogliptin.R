@@ -49,8 +49,10 @@
 #
 # BODY SIZE: the source's own weight terms on CL/F and Vc/F, at the
 # pharmacokinetic weight with the switch on and total weight with it off;
-# Vp/F and Q/F have no covariate and are the published values (a model with
-# its own size covariate is not anchored).  Age, sex, race and the
+# Vp/F and Q/F have no covariate and take the library's fat-free-mass factors
+# with the switch on (docs/weight-adjustment.md: parameters the source left
+# without a size term), the published values with it off; a model with its
+# own size covariate is not anchored at the cohort.  Age, sex, race and the
 # concomitant medicines tested were not retained.
 #
 # DOSE BASIS: mg of alogliptin, as Nesina's strengths (6.25, 12.5 and 25 mg)
@@ -99,8 +101,11 @@ ALOGLIPTIN_KA        <- 2.50    # /h
 alogliptin <- function(weight, height, age, sex, adjustToFFM = TRUE,
                        creatinine = NULL, pregnant = FALSE)
 {
-  pkW  <- if (isTRUE(adjustToFFM))
-    pkSizeFactors(weight, height, age, sex, TRUE)$pkWeight else weight
+  # Vp/F and Q/F have no size term: the library's factors with the switch on,
+  # the published values (factors of 1) with it off
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                        legacyVolume = 1, legacyClearance = 1)
+  pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   crcl <- creatinineClearanceCG(pkW, age, sex,
                                 adultEquivalentCreatinine(creatinine, age, sex)) *
     pregnancyGfrFactor(pregnant, creatinine)
@@ -110,8 +115,8 @@ alogliptin <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   default <- list(
     v1  = ALOGLIPTIN_VC * (pkW / ALOGLIPTIN_WT_REF)^ALOGLIPTIN_VC_WT_EXP,
-    v2  = ALOGLIPTIN_VP, v3 = 1,
-    cl1 = cl / 60, cl2 = ALOGLIPTIN_Q / 60, cl3 = 0,
+    v2  = ALOGLIPTIN_VP * size$volume, v3 = 1,
+    cl1 = cl / 60, cl2 = ALOGLIPTIN_Q / 60 * size$clearance, cl3 = 0,
     ka_PO = ALOGLIPTIN_KA / 60,
     bioavailability_PO = 1,   # apparent parameters
     tlag_PO = 0

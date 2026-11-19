@@ -51,8 +51,10 @@
 #
 # BODY SIZE: the source's own weight term on CL/F, at the pharmacokinetic
 # weight with the switch on and total weight with it off; V/F has no size
-# covariate and is the published value (a model with its own size covariate
-# is not anchored).  Fitted from 60 to 234 kg; adults only.
+# covariate and takes the library's fat-free-mass volume factor with the
+# switch on (docs/weight-adjustment.md: parameters the source left without a
+# size term), the published value with it off.  A model with its own size
+# covariate is not anchored at the cohort.  Fitted from 60 to 234 kg; adults only.
 #
 # CHECKS (test-drugs-liraglutideOvergaard.R): Table S1's values; the
 # forest-plot ratios of Fig. 2 (60 kg 1.41, 234 kg 0.56, men 0.76, 70 or over
@@ -85,14 +87,17 @@ LIRAGLUTIDE_OG_KA       <- 0.0806   # /h
 #' @export
 liraglutideOvergaard <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  pkW <- if (isTRUE(adjustToFFM))
-    pkSizeFactors(weight, height, age, sex, TRUE)$pkWeight else weight
+  # V/F has no size term: the library's volume factor with the switch on, the
+  # published value (a factor of 1) with it off
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                        legacyVolume = 1, legacyClearance = 1)
+  pkW <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   cl <- LIRAGLUTIDE_OG_CL * (pkW / LIRAGLUTIDE_OG_WT_REF)^LIRAGLUTIDE_OG_WT_EXP *
     exp(LIRAGLUTIDE_OG_MALE * (sex == SEX_MALE)) *
     exp(LIRAGLUTIDE_OG_AGE70 * (age >= 70))
 
   default <- list(
-    v1  = LIRAGLUTIDE_OG_V, v2 = 1, v3 = 1,
+    v1  = LIRAGLUTIDE_OG_V * size$volume, v2 = 1, v3 = 1,
     cl1 = cl / 60, cl2 = 0, cl3 = 0,
     ka_SC = LIRAGLUTIDE_OG_KA / 60,
     bioavailability_SC = 1,   # apparent CL/F and V/F

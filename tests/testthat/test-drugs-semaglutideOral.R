@@ -63,3 +63,8 @@ test_that("units: oral, daily; a long-term drug", {
   expect_equal(getDrugDefaults("semaglutideOral")$Units[[1]], c("mg PO", "mg PO qd"))
   expect_true("semaglutideOral" %in% LONG_TERM_DRUGS)
 })
+
+test_that("a named sex string selects the same parameters", {
+  expect_identical(semaglutideOral(85, 170, 50, c(patient = "male"), FALSE)$PK,
+                   semaglutideOral(85, 170, 50, "male", FALSE)$PK)
+})

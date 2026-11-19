@@ -49,7 +49,8 @@
 #   NPH, 21-25 U       5.4 h (Lepore 2000, PMID 11118018),      4.9-5.0 h
 #                      5.9 h (Woodworth)
 #
-# Every product lands within about half an hour of its measured peak, and
+# Every product lands within an hour of its measured peak (lispro 0.3-0.6 h
+# late, regular 0.3-0.7 h and NPH 0.4-0.9 h early), and
 # the faster values that one exponential would give fail the check: at 5.7
 # /h regular insulin's effect would peak at 1.5 h, half the measured 3 h.
 # The residual errors follow the absorption models (Tham's regular insulin

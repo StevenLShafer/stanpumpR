@@ -20,7 +20,7 @@ Minto CF, Schnider TW, Gregg KM, Henthorn TK, Shafer SL. Using the time of maxim
 
 ## Adherence
 
-Why a curve for a drug taken at home is an upper bound, and why stanpumpR prefers a model fitted to outpatients ([Cautions](help:cautions)):
+Why a curve from supervised dosing is likely to overstate the typical exposure of a drug taken at home, and why stanpumpR prefers a model fitted to outpatients ([Cautions](help:cautions)):
 
 Osterberg L, Blaschke T. Adherence to medication. *N Engl J Med* 2005;353:487-497. [DOI 10.1056/NEJMra050100](https://doi.org/10.1056/NEJMra050100)
 

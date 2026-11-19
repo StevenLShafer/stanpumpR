@@ -23,14 +23,20 @@ test_that("Fig. 2's ratios of exposure, which are 1 / the CL/F ratios", {
   expect_equal(cl(100, 45, "male") * 60 * exp(0.18), 1.35, tolerance = 0.01)   # "1.1-1.4"
 })
 
-test_that("switch on: the pharmacokinetic weight in the weight term; V/F fixed", {
+test_that("switch on: the pharmacokinetic weight in the weight term; V/F scaled", {
   size <- pkSizeFactors(130, 170, 50, "male", TRUE)
   p <- liraglutideOvergaard(130, 170, 50, "male")$PK$default
   expect_equal(p$cl1 * 60, 0.86 * (size$pkWeight / 100)^0.68 * exp(0.27))
-  expect_equal(p$v1, 24.6)
+  expect_equal(p$v1, 24.6 * size$volume)
   expect_equal_rounded(liraglutideOvergaard(70, 170, 40, "male")$PK$default$cl1 * 60, 0.8839440)
 })
 
 test_that("units: subcutaneous, daily", {
   expect_equal(getDrugDefaults("liraglutideOvergaard")$Units[[1]], c("mg SC", "mg SC qd"))
+})
+
+test_that("V/F takes the library's volume factor with the switch on (no size term)", {
+  size <- pkSizeFactors(130, 180, 50, "male", TRUE)
+  expect_equal(liraglutideOvergaard(130, 180, 50, "male")$PK$default$v1, 24.6 * size$volume)
+  expect_equal(liraglutideOvergaard(130, 180, 50, "male", FALSE)$PK$default$v1, 24.6)
 })

@@ -51,13 +51,19 @@
 #
 # BODY SIZE: the source's own covariates.  V1/F is proportional to total body
 # weight, evaluated at the pharmacokinetic weight with the switch on and at
-# total weight with it off; Q/F and V2/F have no covariate and are the
-# published values (a model with its own size covariate is not anchored).
+# total weight with it off; Q/F and V2/F have no covariate and take the
+# library's fat-free-mass factors with the switch on (docs/weight-adjustment.md:
+# parameters the source left without a size term), the published values with
+# it off.  A model with its own size covariate is not anchored at the cohort.
 #
 # PREGNANCY: metformin's own late-pregnancy factors (R/drugs_metformin.R; Liao
 # MZ et al., Drug Metab Dispos 2020;48:264-271): CL/F x 1.27, and both
 # apparent volumes x 1.33 (Liao fitted one volume).  The renal term is not
-# also raised.  Measured with the immediate-release tablet; the clearance is
+# also raised.  The CL/F factor contains pregnancy's rise in filtration, so it
+# is applied only with a blank Serum creatinine: a measured pregnant
+# creatinine already raises the Cockcroft-Gault term (the rule of
+# pregnancyGfrFactor(), R/pregnancy.R), and the two together would count it
+# twice.  The volume factors apply either way.  Measured with the immediate-release tablet; the clearance is
 # the drug's, not the tablet's.
 #
 # CHECKS (test-drugs-metforminER.R)
@@ -120,19 +126,26 @@ lbwJanmahasatian <- function(weight, height, sex)
 metforminER <- function(weight, height, age, sex, adjustToFFM = TRUE,
                         creatinine = NULL, pregnant = FALSE)
 {
-  pkW  <- if (isTRUE(adjustToFFM))
-    pkSizeFactors(weight, height, age, sex, TRUE)$pkWeight else weight
+  # Q/F and V2/F have no size term: the library's factors with the switch on,
+  # the published values (factors of 1) with it off
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                        legacyVolume = 1, legacyClearance = 1)
+  pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   crcl <- creatinineClearanceCG(lbwJanmahasatian(weight, height, sex), age, sex,
                                 adultEquivalentCreatinine(creatinine, age, sex))
 
-  clPregnancy <- if (isTRUE(pregnant)) METFORMIN_PREGNANCY_CL_FACTOR else 1
+  # Liao's CL/F factor contains pregnancy's rise in filtration, which a
+  # measured (pregnant) creatinine already carries through Cockcroft-Gault:
+  # applied only with a blank creatinine, as pregnancyGfrFactor() is
+  clPregnancy <- if (isTRUE(pregnant) && is.null(creatinine))
+    METFORMIN_PREGNANCY_CL_FACTOR else 1
   vPregnancy  <- if (isTRUE(pregnant)) METFORMIN_PREGNANCY_V_FACTOR else 1
 
   default <- list(
     v1  = METFORMIN_ER_V1 * pkW / METFORMIN_ER_WT_REF * vPregnancy,
-    v2  = METFORMIN_ER_V2 * vPregnancy, v3 = 1,
+    v2  = METFORMIN_ER_V2 * size$volume * vPregnancy, v3 = 1,
     cl1 = METFORMIN_ER_CL * crcl / METFORMIN_ER_CLCR_REF * clPregnancy,
-    cl2 = METFORMIN_ER_Q, cl3 = 0
+    cl2 = METFORMIN_ER_Q * size$clearance, cl3 = 0
   )
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))

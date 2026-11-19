@@ -122,7 +122,7 @@ semaglutideOral <- function(weight, height, age, sex, adjustToFFM = TRUE)
   pkW  <- if (isTRUE(adjustToFFM))
     pkSizeFactors(weight, height, age, sex, TRUE)$pkWeight else weight
   r    <- pkW / SEMAGLUTIDE_ORAL_WEIGHT_REF
-  male <- identical(sex, SEX_MALE)
+  male <- isTRUE(sex == SEX_MALE)
 
   default <- list(
     v1  = 3.59 * r^0.923, v2 = 4.1 * r^0.923, v3 = 1,

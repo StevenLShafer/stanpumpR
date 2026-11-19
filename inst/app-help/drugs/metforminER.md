@@ -8,7 +8,7 @@ Duong and colleagues' population analysis of metformin (*Clin Pharmacokinet* 201
 
 This drug is the **extended-release** tablet (Glumetza, Glucophage XR, Fortamet and their generics). The immediate-release tablet is [metformin](help:drugs/metformin), from a different study.
 
-- **Disposition:** two compartments. Apparent clearance 1212 mL/min at a creatinine clearance of 100 mL/min, central volume 149 L at 70 kg, intercompartmental clearance 203 mL/min, peripheral volume 182 L.
+- **Disposition:** two compartments. Apparent clearance 1212 mL/min at a creatinine clearance of 100 mL/min, central volume 149 L at 70 kg, intercompartmental clearance 203 mL/min, peripheral volume 182 L. The last two have no size covariate in the paper: with **Adjust weight to fat-free mass** ticked they take the library's fat-free-mass scaling, unticked they are the published values.
 - **The tablet:** drug enters the circulation at a constant rate for 9.55 hours, with no lag. The relative bioavailability falls with the size of the dose: 1.26 at 500 mg, 1.16 at 1000 mg, 1.06 at 1500 mg and 1 at 2000 mg. It is interpolated between those sizes and held at the end values outside them.
 
 ### Covariates
@@ -26,4 +26,4 @@ Age and the 57 transporter variants tested did not change the clearance.
 
 Concentration only, in mcg/mL. Glucose, HbA1c and lactate are not drawn. See [Antidiabetic models and their limits](help:models/antidiabetics).
 
-The pregnancy factors are metformin's own, measured with the immediate-release tablet. They are meant for a blank **Serum creatinine**.
+The pregnancy factors are metformin's own, measured with the immediate-release tablet. The clearance factor is applied only when **Serum creatinine** is blank: a measured creatinine in pregnancy already raises the creatinine clearance, and the two together would count the rise twice. The volume factors apply either way.

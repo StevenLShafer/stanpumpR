@@ -67,3 +67,13 @@ test_that("a 25 mg dose peaks within 1-2 h (the label's tmax)", {
 test_that("units: oral, daily", {
   expect_equal(getDrugDefaults("alogliptin")$Units[[1]], c("mg PO", "mg PO qd"))
 })
+
+test_that("Vp/F and Q/F take the library's factors with the switch on (no size term)", {
+  size <- pkSizeFactors(120, 175, 50, "male", TRUE)
+  on <- alogliptin(120, 175, 50, "male", creatinine = 1)$PK$default
+  expect_equal(on$v2, 149 * size$volume)
+  expect_equal(on$cl2 * 60, 10.2 * size$clearance)
+  off <- alogliptin(120, 175, 50, "male", FALSE, creatinine = 1)$PK$default
+  expect_equal(off$v2, 149)
+  expect_equal(off$cl2 * 60, 10.2)
+})

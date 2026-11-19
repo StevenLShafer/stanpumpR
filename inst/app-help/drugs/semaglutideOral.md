@@ -7,14 +7,14 @@ Overgaard and colleagues' population analysis of oral semaglutide in the PIONEER
 
 ### Why this model: drugs don't work in patients who don't take them
 
-A second model of the same tablets exists, from the same group: Overgaard and colleagues' analysis of six clinical pharmacology trials (*Clin Pharmacokinet* 2021). Every dose in those trials was taken on site, under supervision, exactly as the label says: fasting, with no more than 120 mL of water, at least 30 minutes before food. Its bioavailability is 0.795% at 85 kg. For the same patient it gives about twice the exposure of this model. At 14 mg daily, an 88 kg man reaches an average of 29.4 nmol/L on the supervised model and 13.6 nmol/L on this one. The PIONEER patients averaged 14.6 nmol/L (geometric mean).
+A second model of the same tablets exists, from the same group: Overgaard and colleagues' analysis of six clinical pharmacology trials (*Clin Pharmacokinet* 2021). Every dose in those trials was taken on site, under supervision. Some trials varied the dosing conditions (15 minutes of fasting, 240 mL of water), and the model estimates the bioavailability at the label's conditions (fasting, with no more than 120 mL of water, at least 30 minutes before food): 0.795% at 85 kg. For the same patient it gives about twice the exposure of this model. At 14 mg daily, an 88 kg man reaches an average of 29.4 nmol/L on the supervised model and 13.6 nmol/L on this one. The PIONEER patients averaged 14.6 nmol/L (geometric mean).
 
 Both models describe adults with type 2 diabetes taking the same product. Nothing about the patient tells a clinician which applies, so stanpumpR does not ask. It uses the outpatient model because what separates the two is how the tablet is taken, and patients at home do not take a drug the way a supervised study does. Doses are missed, and conditions as strict as Rybelsus's are not always kept. In ambulatory care, variable adherence rivals pharmacokinetics as the largest source of variation in drug response (Blaschke and colleagues, *Annu Rev Pharmacol Toxicol* 2012). [Cautions](help:cautions) gives the evidence. Overgaard and colleagues leave the cause open: "Whether these observations reflect real problems with drug absorption and/or compliance remains uncertain."
 
 Two consequences:
 
 - **This curve is still a trial's.** The PIONEER patients were enrolled in clinical trials, where adherence is better than in ordinary practice. A typical clinic patient may absorb less than this curve shows.
-- **A patient who takes every dose exactly as labelled** absorbs about twice as much as this curve shows.
+- **For a patient who takes every dose as labelled**, the supervised model predicts about twice this curve's typical exposure. How much of the difference between the two models is missed doses and how much is absorption is not known, and any one patient may be above or below either curve.
 
 ### Covariates
 

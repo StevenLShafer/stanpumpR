@@ -2,7 +2,7 @@
 
 Naik and colleagues' population analysis of alogliptin (*Br J Clin Pharmacol* 2016): 491 subjects in three studies. Healthy volunteers took single and repeated doses of 12.5 to 400 mg; a renal-impairment study gave 50 mg to healthy volunteers and to people with mild, moderate and severe impairment and end-stage renal disease; and 398 adults with type 2 diabetes took 12.5 or 25 mg daily in a phase 3 trial.
 
-- **Disposition:** two compartments. Apparent clearance 17.1 L/h, central volume 194 L, peripheral volume 149 L, intercompartmental clearance 10.2 L/h.
+- **Disposition:** two compartments. Apparent clearance 17.1 L/h, central volume 194 L, peripheral volume 149 L, intercompartmental clearance 10.2 L/h. The last two have no size covariate in the paper: with **Adjust weight to fat-free mass** ticked they take the library's fat-free-mass scaling, unticked they are the published values.
 - **Absorption:** first order, 2.50/h, no lag; a 25 mg dose peaks in about 1 to 2 hours. The parameters are apparent ones (divided by the bioavailability).
 
 ### Covariates

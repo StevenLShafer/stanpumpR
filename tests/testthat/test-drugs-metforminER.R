@@ -78,3 +78,20 @@ test_that("pregnancy: metformin's factors", {
 test_that("units: oral, daily", {
   expect_equal(getDrugDefaults("metforminER")$Units[[1]], c("mg PO", "mg PO qd"))
 })
+
+test_that("Q/F and V2/F take the library's factors with the switch on (no size term)", {
+  size <- pkSizeFactors(110, 175, 50, "male", TRUE)
+  on <- metforminER(110, 175, 50, "male")$PK$default
+  expect_equal(on$v2, 182 * size$volume)
+  expect_equal(on$cl2 * 60, 203 * 60 / 1000 * size$clearance)
+  off <- metforminER(110, 175, 50, "male", FALSE)$PK$default
+  expect_equal(off$v2, 182)
+  expect_equal(off$cl2 * 60, 203 * 60 / 1000)
+})
+
+test_that("pregnancy: the CL/F factor only with a blank creatinine", {
+  base <- metforminER(70, 170, 30, "female", FALSE, creatinine = 0.6)$PK$default
+  preg <- metforminER(70, 170, 30, "female", FALSE, creatinine = 0.6, pregnant = TRUE)$PK$default
+  expect_equal(preg$cl1, base$cl1)        # the measured creatinine carries the rise
+  expect_equal(preg$v1 / base$v1, METFORMIN_PREGNANCY_V_FACTOR)
+})
