@@ -58,16 +58,25 @@
 #
 # SERUM ALBUMIN (applied on Steven L. Shafer's decision of 2026-11-18, after
 # Carbon's repository audit noticed the Patient Profile had carried the field
-# since 2026-11-06): Vp x (albumin/44)^2.82, albumin in g/L, from Table 3 as
-# transcribed when the model was added from the full text (2026-10-20; the
-# exponent and the 44 g/L median are still to be re-read on the PDF, which is
-# not in the archive: papers/pending-work.csv, which also asks for the
-# studied range of albumin).  The Patient Profile's field
-# is in g/dL (x 10); blank holds the median 44 g/L, and the power floors at
-# MIN_ALBUMIN, as every albumin power in the library does.  The exponent is
-# steep, so the peripheral volume moves a great deal: x 0.52 at 3.5 g/dL,
-# x 0.25 at 2.7 g/dL, x 1.43 at 5 g/dL.  Only Vp moves, so clearance and the
-# steady-state exposure do not; the half-life and the swing between doses do.
+# since 2026-11-06): Vp x (albumin/44)^2.82, albumin in g/L, read on the PDF
+# Shafer supplied (2026-11-19): the Methods' equation for the fluctuator
+# dataset, VP = TV(VP) x (Albumin/44)^theta x the dose factors (p. 43), and
+# Table 3's theta_Albumin(Vp) 2.82, SE 1.09 (p. 44; so roughly 0.7 to 5.0),
+# with 44 g/L the fluctuators' median (Table 1, p. 41).  The Patient
+# Profile's field is in g/dL (x 10); blank holds the median 44 g/L.  The
+# albumin is HELD WITHIN THE 26-55 g/L the fluctuators had (Table 1's minimum and maximum), as epirubicin
+# holds its AST, because the field accepts 5 to 60 g/L and a power of 2.82
+# carried to 5 g/L would shrink Vp 460-fold on an exponent the data place
+# anywhere between 0.7 and 5.  Within that range the peripheral volume moves
+# a great deal: x 0.52 at 3.5 g/dL, x 0.23 at 2.6 g/dL (the floor), x 1.88 at
+# 5.5 g/dL (the ceiling).  Only Vp moves, so clearance and the steady-state
+# exposure do not; the half-life and the swing between doses do.  The authors
+# themselves are guarded: the covariates on V "could only be estimated with
+# relatively poor parameter precision ... and may have been driven by a few
+# very high V estimates" (Results, p. 45), the nonfluctuators showed no
+# albumin effect, and the Discussion goes as far as "no relationship was
+# detected" between protein or albumin and distribution (p. 46), which sits
+# oddly beside Table 3; the term is applied as the final model prints it.
 #
 # COVARIATES AND GENOTYPE: no effect of age, sex, dopamine agonists, treatment
 # duration or (in fluctuators) creatinine clearance.  Tolcapone is
@@ -106,6 +115,8 @@ TOLCAPONE_Q       <- 5.2     # L/h
 TOLCAPONE_VP      <- 12      # L at albumin 44 g/L, 200 mg
 TOLCAPONE_VP_ALBUMIN <- 2.82  # on Vp, albumin in g/L (applied 2026-11-18)
 TOLCAPONE_ALBUMIN_REF <- 44   # g/L, the median; held when the field is blank
+TOLCAPONE_ALBUMIN_MIN <- 26   # g/L, the fluctuators' lowest (Table 1)
+TOLCAPONE_ALBUMIN_MAX <- 55   # g/L, the fluctuators' highest (Table 1)
 TOLCAPONE_KA      <- 1.7     # /h
 TOLCAPONE_F       <- 0.6     # fasted, fixed
 TOLCAPONE_F_FOOD  <- 0.88    # relative, with food (not applied)
@@ -123,7 +134,7 @@ TOLCAPONE_DOSE400_V <- 1.40  # volumes at 400 mg tid (not applied)
 #'
 #' @inheritParams cefazolin
 #' @param albumin serum albumin, g/dL, or NULL for the study median
-#'   (4.4 g/dL)
+#'   (4.4 g/dL); held within the studied 2.6-5.5 g/dL
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 tolcapone <- function(weight, height, age, sex, adjustToFFM = TRUE,
@@ -134,7 +145,7 @@ tolcapone <- function(weight, height, age, sex, adjustToFFM = TRUE,
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   lbw <- lbmJamesCapped(w, height, sex)   # held at its peak past it, R/lbmJames.R
   alb <- if (is.null(albumin)) TOLCAPONE_ALBUMIN_REF else
-    10 * max(albumin, MIN_ALBUMIN)       # g/L
+    min(max(10 * albumin, TOLCAPONE_ALBUMIN_MIN), TOLCAPONE_ALBUMIN_MAX)  # g/L
 
   default <- list(
     v1  = TOLCAPONE_VC * (lbw / TOLCAPONE_LBW_REF)^TOLCAPONE_VC_LBW,
@@ -158,7 +169,8 @@ tolcapone <- function(weight, height, age, sex, adjustToFFM = TRUE,
       "Jorga K et al., Br J Clin Pharmacol 2000;49:39-48, fluctuator model (215 ",
       "patients): two compartments, CL 4.8 L/h x (LBW/55)^0.73, Vc 16 L x ",
       "(LBW/55)^0.65, Q 5.2 L/h, Vp 12 L x (albumin/44 g/L)^2.82 (albumin ",
-      if (is.null(albumin)) "held at the median 44 g/L" else "as entered",
+      if (is.null(albumin)) "held at the median 44 g/L" else
+        "as entered, held within the studied 26-55 g/L",
       "), ka 1.7/h, bioavailability 0.6 fasted (fixed); James lean body ",
       "weight; serum protein and the volumes' dose factor held at the ",
       "reference (200 mg); concentration only. ",

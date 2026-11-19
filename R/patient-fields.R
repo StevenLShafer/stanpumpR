@@ -169,7 +169,7 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
       "clearance of the adult model (lower albumin, lower clearance) and,",
       "at 2.5 g/dL or less, the faster distribution of the children's model;",
       "docetaxel's clearance; nab-paclitaxel's maximal elimination rate; and",
-      "tolcapone's peripheral volume."
+      "tolcapone's peripheral volume (held within its studied 2.6-5.5 g/dL)."
     ),
     ast = paste(
       "The patient's serum aspartate aminotransferase (AST), in U/L. It sets",

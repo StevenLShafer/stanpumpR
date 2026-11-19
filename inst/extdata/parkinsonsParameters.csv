@@ -80,7 +80,7 @@
 "tolcapone","F","0.6","absolute, fasted","fixed","full_text","https://doi.org/10.1046/j.1365-2125.2000.00113.x"
 "tolcapone","food on F","0.88","factor (not applied)","estimated","full_text","https://doi.org/10.1046/j.1365-2125.2000.00113.x"
 "tolcapone","protein exponent on CL","-0.81","(protein/72)^-0.81 (not applied)","estimated","full_text","https://doi.org/10.1046/j.1365-2125.2000.00113.x"
-"tolcapone","albumin exponent on Vp","2.82","(albumin/44 g/L)^2.82, applied from the Serum albumin field","estimated","full_text","https://doi.org/10.1046/j.1365-2125.2000.00113.x"
+"tolcapone","albumin exponent on Vp","2.82","(albumin/44 g/L)^2.82, SE 1.09, applied from the Serum albumin field within 26-55 g/L","estimated","full_text","https://doi.org/10.1046/j.1365-2125.2000.00113.x"
 "tolcapone","dose factor 50 mg on V","0.55","factor (not applied)","estimated","full_text","https://doi.org/10.1046/j.1365-2125.2000.00113.x"
 "tolcapone","dose factor 400 mg on V","1.4","factor (not applied)","estimated","full_text","https://doi.org/10.1046/j.1365-2125.2000.00113.x"
 "apomorphine","ka","14.9","1/h","estimated","full_text","https://www.accessdata.fda.gov/drugsatfda_docs/nda/2004/21-264_Apokyn_BioPharmr_P1.pdf"
