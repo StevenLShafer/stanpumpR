@@ -449,8 +449,8 @@ refit. The model's own line, "(population)", is drawn at the sliders too.
 
 ## Which drugs respond
 
-The inhaled anesthetics respond to **Cardiac output** and **Body temperature**,
-as described above.
+The inhaled anesthetics respond to **Cardiac output**, **Body temperature**,
+**Altitude** and **Endobronchial intubation**, as described above.
 
 Only drugs whose renal share and hepatic share were read in a published
 source respond. Any other drug ignores the sliders, and the panel lists it
@@ -492,7 +492,7 @@ physiology.
 
 **The remaining anaesthetic drugs** (2026-11-18): fentanyl, hydromorphone,
 ketamine, rocuronium and vecuronium now have computed extraction ratios
-(0.39, 0.48, 0.54, 0.50 and 0.44), and sufentanil has Lange's measured 0.92
+(0.39, 0.48, 0.54, 0.50 and 0.46), and sufentanil has Lange's measured 0.92
 with 62% of its clearance hepatic. Hydromorphone's blood-to-plasma ratio is
 1.35. Rocuronium and vecuronium were measured in plasma and are quaternary
 amines, which stay out of red cells, so their ratio is taken as
@@ -522,7 +522,7 @@ Most of these models already read the patient's serum creatinine; the
 **Renal function** slider acts on top of it, as a what-if beyond the
 measured value.
 
-**Local anaesthetics** (2026-11-18): bupivacaine (E 0.29) and mepivacaine
+**Local anaesthetics** (2026-11-18): bupivacaine (E 0.28) and mepivacaine
 (E 0.27) have computed extraction ratios; the sliders change their systemic
 disposition, not their absorption from the injection site. Lidocaine and
 ropivacaine form their toxic metabolites (MEGX, PPX) at their own rate, so,

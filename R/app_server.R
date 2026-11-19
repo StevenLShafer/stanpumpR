@@ -492,7 +492,15 @@ app_server <- function(input, output, session) {
   # scenario's own, if it has any, are put in.
   helpApi <- helpServer(input, output, session, doseTable, eventTable, drugDefaults,
                         timeApi = timeApi,
-                        onLoad = function() bayes$clear(),
+                        # A scenario starts from the default MAC threshold
+                        # too: an edited one stayed, and a scenario showing
+                        # the time until threshold drew another threshold's
+                        # curves (Carbon's second repository audit,
+                        # 2026-11-19, A2-F17)
+                        onLoad = function() {
+                          bayes$clear()
+                          macThreshold(GAS_MAC_THRESHOLD)
+                        },
                         restoreMeasurements = bayes$restore)
 
   # Single Paper Review, a tab of its own that shares nothing with the
@@ -905,6 +913,16 @@ app_server <- function(input, output, session) {
   # unchecked, and one row past the limit cost the dose grid, the plot and
   # the undo history (Carbon's UI audit, 2026-11-14, F3).
   commitDoseTable <- function(dt) {
+    # The dialogs (Add, Skip next dose, Stop, Edit doses, Suggest Dosing)
+    # build on the committed table, and a write to it resets the draft: edits
+    # typed into the grid and not yet applied were lost without a word, with
+    # their undo history (Carbon's second repository audit, 2026-11-19,
+    # A2-F18).  So nothing is written while the draft differs; the caller
+    # keeps its dialog open where it can.
+    if (!identicalTable(doseTableDraft(), doseTable())) {
+      showNotification(DOSE_TABLE_UNAPPLIED_MESSAGE, type = "warning", duration = 10)
+      return(FALSE)
+    }
     dt <- doseTableWithinLimit(applyGasTableRules(dt, gasVentilationWeight()))
     if (is.null(dt)) {
       showDoseTableFull()
@@ -1240,7 +1258,7 @@ app_server <- function(input, output, session) {
   # swallows, so the gas curves would simply vanish: say why instead.
   observe({
     DT <- tryCatch(doseTableClean(), error = function(e) NULL)
-    problems <- if (is.null(DT)) character(0) else gasVaporiserProblems(DT)
+    problems <- if (is.null(DT)) character(0) else gasVaporiserProblems(DT, altitude())
     if (length(problems) == 0) {
       removeNotification("gasVaporisers")
     } else {
@@ -1514,7 +1532,8 @@ app_server <- function(input, output, session) {
     entries <- tryCatch(bayesUpdate()$drugs, error = function(e) NULL)
     skipped <- names(Filter(function(e) isTRUE(e$slidersSkipped), entries))
     physiologyNote(physiology(), doseTableClean()$Drug,
-                   temperature = bodyTemperature(), skipped = skipped)
+                   temperature = bodyTemperature(), skipped = skipped,
+                   altitude = altitude(), endobronchial = endobronchial())
   })
 
   # `normalPhysiology`: build at normal physiology, whatever the sliders say

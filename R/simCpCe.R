@@ -604,6 +604,16 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       if (isTRUE(PK$doseDependent) || !is.null(PK$dosePhase) || !is.null(PK$courseSteps))
         stop("Target-controlled infusion is not available for a drug whose ",
              "parameters change with the dose size or during the course.")
+      # Nor while a clinical event or an antiseizure interaction switches the
+      # drug to another PK set: the controller plans on the first, and a
+      # dexmedetomidine target of 0.6 on bypass reached 1.2, a lamotrigine
+      # target of 5 beside valproate 8.8 (Carbon's second repository audit,
+      # 2026-11-19, A2-F9; again only a Drug Library edit offers it).
+      eventSets <- setdiff(PK$pkEvents, PK_EVENT_DEFAULT)
+      if (!is.null(PK$interactionEvents) ||
+          any(gsub(" ", "", as.character(events$Event)) %in% eventSets))
+        stop("Target-controlled infusion is not available while a clinical ",
+             "event or an antiseizure interaction changes the drug's parameters.")
       if (!isTRUE(PK$Concentration.Units %in% c("mcg", "ng")))
         stop("Target-controlled infusion is available only for a drug plotted ",
              "in mcg/mL or ng/mL.")
