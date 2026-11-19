@@ -1098,3 +1098,35 @@ test_that("CodeRabbit on #776: grouped published models alone, same-named entrie
   expect_equal(held$severity, "info")
   expect_match(held$detail, "ICU")
 })
+
+
+test_that("CodeRabbit's second look at #776: derived own models, intravenous figures, group spelling", {
+  # A paper whose own model is closed from derived quantities keeps its own
+  # model's checks beside an ungrouped published comparator.
+  ex <- paperReviewExample()
+  ex$published_models <- list(list(name = "Eleveld 2018", drug = "propofol"))
+  ex$parameters <- Filter(function(p) p$role == "tPeak", ex$parameters)
+  expect_true(any(vapply(ex$derived_quantities, function(d) d$quantity %in% c("CL", "Vss"), logical(1))))
+  expect_length(paperReviewPublishedModels(ex), 0)
+  expect_false(identical(paperReviewRun(ex)$identifiability$verdict, "published"))
+
+  # An intravenous figure does not depend on absorption; an oral one does.
+  ex <- paperReviewExample()
+  iv <- paperReviewFigureRoles(ex$figures[[1]], ex)
+  expect_false(any(c("ka", "F", "tlag") %in% iv))
+  oral <- ex
+  oral$regimens[[1]]$doses[[1]]$route <- "oral"
+  rid <- oral$regimens[[1]]$id
+  oral$figures[[1]]$regimen_id <- rid
+  expect_true(all(c("ka", "F", "tlag") %in% paperReviewFigureRoles(oral$figures[[1]], oral)))
+  expect_false("F" %in% paperReviewFigureRoles(oral$figures[[1]], oral, normalized = TRUE))
+
+  # One group spelled two ways on a figure and a published model is one model.
+  ex <- paperReviewExample()
+  ex$parameters <- list(); ex$derived_quantities <- list(); ex$covariate_effects <- list()
+  ex$published_models <- list(list(name = "Schnider 1998", drug = "propofol", group = "Schnider"),
+                              list(name = "Eleveld 2018", drug = "propofol", group = "Eleveld"))
+  for (i in seq_along(ex$figures))
+    ex$figures[[i]]$series <- lapply(ex$figures[[i]]$series, function(s) { s$group <- "schnider"; s })
+  expect_setequal(names(paperReviewRun(ex)$models), c("Schnider", "Eleveld"))
+})

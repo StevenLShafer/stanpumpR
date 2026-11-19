@@ -506,7 +506,13 @@ paperReviewPublishedModels <- function(extraction)
   if (!length(pms)) return(list())
   roles <- vapply(extraction$parameters %or% list(), function(p)
     if (is.list(p) && is.character(p$role)) p$role[1] else "", "")
-  own <- any(roles %in% c("CL", "V1", "V2", "V3", "Q2", "Q3"))
+  # A model of its own: a volume or clearance printed as a parameter, or
+  # derived quantities that can close one (a CL and a half-life; CodeRabbit
+  # on #776), as paperReviewNoModel() counts them.
+  derived <- vapply(extraction$derived_quantities %or% list(), function(d)
+    if (is.list(d) && is.character(d$quantity)) d$quantity[1] else "", "")
+  own <- any(roles %in% c("CL", "V1", "V2", "V3", "Q2", "Q3")) ||
+    any(derived %in% c("CL", "V1", "Vss", "Varea", "coefficient_1", "coefficient_2", "coefficient_3"))
   group <- extraction$drug$name %or% ""
   # Outside a group's part (the paper's one model), a grouped published
   # model is the paper's too when it prints no model of its own: Eleveld
@@ -1776,7 +1782,7 @@ paperReviewFigureChecks <- function(extraction, drug, reference)
       # effect that changes the curve's shape is held at its reference; F
       # cancels in the division by the peak (CodeRabbit on #776).
       held <- if (isTRUE(checked$finding$severity %in% c("concern", "error")))
-        paperReviewUnappliedFor(extraction, c(PAPER_REVIEW_DISPOSITION_ROLES, "ka", "tlag"),
+        paperReviewUnappliedFor(extraction, paperReviewFigureRoles(f, extraction, normalized = TRUE),
                                 NULL, reference, anyPatient = TRUE) else character(0)
       if (length(held)) {
         checked$finding$severity <- "info"
@@ -1899,7 +1905,7 @@ paperReviewFigureChecks <- function(extraction, drug, reference)
     # patients against a model whose ICU factor was not applied, +73%).  A
     # miss is then no finding about the paper.
     unapplied <- if (severity %in% c("concern", "error"))
-      paperReviewUnappliedFor(extraction, c(PAPER_REVIEW_DISPOSITION_ROLES, "ka", "F", "tlag"),
+      paperReviewUnappliedFor(extraction, paperReviewFigureRoles(f, extraction),
                               NULL, reference, anyPatient = TRUE) else character(0)
     if (length(unapplied)) severity <- "info"
     add(severity, paste0(paperReviewFigureTitle(id, points$series), ": the model ",
@@ -2339,7 +2345,7 @@ paperReviewCanonicalGroups <- function(extraction)
       i
     })
   }
-  for (part in c("parameters", "derived_quantities", "regimens", "covariate_effects"))
+  for (part in c("parameters", "derived_quantities", "regimens", "covariate_effects", "published_models"))
     if (!is.null(extraction[[part]])) extraction[[part]] <- fix(extraction[[part]])
   if (is.list(extraction$figures))
     extraction$figures <- lapply(extraction$figures, function(f) {
@@ -2351,6 +2357,28 @@ paperReviewCanonicalGroups <- function(extraction)
 
 # The roles that make a disposition model.
 PAPER_REVIEW_DISPOSITION_ROLES <- c("CL", "V1", "V2", "V3", "Q2", "Q3", "k10", "k12", "k21", "k13", "k31")
+
+#' The parameter roles a figure's curve depends on
+#'
+#' The disposition always; the absorption only where a regimen the figure
+#' shows has an extravascular dose (or the regimen is not known), since an
+#' intravenous curve does not use it (CodeRabbit on #776); and F only where
+#' the curve is not divided by its peak, in which F cancels.
+#' @keywords internal
+paperReviewFigureRoles <- function(f, extraction, normalized = FALSE)
+{
+  # A series without a regimen of its own shows the figure's.
+  own <- f$regimen_id %or% NA_character_
+  ids <- unique(vapply(f$series %or% list(), function(s) s$regimen_id %or% own, ""))
+  if (!length(ids)) ids <- own
+  extravascular <- any(vapply(ids, function(id) {
+    r <- if (is.na(id)) NULL else paperReviewRegimen(extraction, id)
+    is.null(r) || any(vapply(r$doses %or% list(), function(d)
+      (d$route %or% "other") %in% names(PAPER_REVIEW_ROUTE_SUFFIX), logical(1)))
+  }, logical(1)))
+  c(PAPER_REVIEW_DISPOSITION_ROLES,
+    if (extravascular) c("ka", "tlag", if (!normalized) "F"))
+}
 
 #' The parameter roles a derived quantity depends on
 #' @keywords internal
