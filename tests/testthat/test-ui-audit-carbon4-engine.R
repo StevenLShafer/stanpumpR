@@ -164,8 +164,12 @@ test_that("dexmedetomidine across bypass is unchanged by the event lookups (C3)"
   # Pinned on 2026-11-17
   expect_equal(nrow(x), 214)
   expect_equal(sum(x$Plasma), 85.41218070878989, tolerance = 1e-9)
-  expect_equal(sum(x$`Effect Site`), 84.786730968178745, tolerance = 1e-9)
-  expect_equal(sum(x$Recovery, na.rm = TRUE), 5129.2688691126586, tolerance = 1e-9)
+  # The effect site and the time until threshold repinned on 2026-11-19, when
+  # the event engine's effect site became exact (effectSiteExact(); before,
+  # calculateCe() interpolated the plasma between points): 84.786730968178745
+  # and 5129.2688691126586, a change of 1.1e-5 and 2.3e-7
+  expect_equal(sum(x$`Effect Site`), 84.785788736808087, tolerance = 1e-9)
+  expect_equal(sum(x$Recovery, na.rm = TRUE), 5129.2700617314485, tolerance = 1e-9)
 })
 
 # --- C3: the time until threshold of the interactions ------------------------

@@ -60,6 +60,9 @@
 #'   numeric vector named \code{liver}, \code{renal}, \code{cardiac},
 #'   \code{gi} (multiples of normal function, 0.1 to 10); see
 #'   \code{getDrugPK()}.
+#'   With a Physiology row in \code{events} (a \code{Settings} column; see
+#'   \code{physiologyEventEncode()}, R/physiologyEvents.R), physiology is
+#'   normal from time 0 and each event's from its time, and this is not used.
 #' @param pulmonaryHypertension does the patient have pulmonary arterial
 #'   hypertension?  TRUE or FALSE (the default); read only by sildenafil and
 #'   tadalafil (see \code{getDrugPK()}).
@@ -124,18 +127,25 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
     output
   }
 
+  # Physiology events in the event table (R/physiologyEvents.R): with any,
+  # physiology is normal from time 0 and each event's from its time, and
+  # `physiology` is not used.
+  physiologyEvents <- physiologyEventsFrom(events)
   for (drug in drugList)
   {
     drugDefaults <- opioidToleranceDefaults(getDrugDefaults(drug), opioidTolerance)
-    PK <- getDrugPK(drug, weight, height, age, sex, drugDefaults, cyp2d6 = cyp2d6,
-                    cyp2c19 = cyp2c19, cyp2c9 = cyp2c9, vkorc1 = vkorc1,
-                    cyp4f2 = cyp4f2,
-                    cyp2b6 = cyp2b6,
-                    osmolality = osmolality, creatinine = creatinine,
-                    pregnant = pregnant, adjustToFFM = adjustToFFM,
-                    gestationalAge = gestationalAge, albumin = albumin,
-                    ast = ast, physiology = physiology,
-                    pulmonaryHypertension = pulmonaryHypertension)
+    build <- function(phys)
+      getDrugPK(drug, weight, height, age, sex, drugDefaults, cyp2d6 = cyp2d6,
+                cyp2c19 = cyp2c19, cyp2c9 = cyp2c9, vkorc1 = vkorc1,
+                cyp4f2 = cyp4f2,
+                cyp2b6 = cyp2b6,
+                osmolality = osmolality, creatinine = creatinine,
+                pregnant = pregnant, adjustToFFM = adjustToFFM,
+                gestationalAge = gestationalAge, albumin = albumin,
+                ast = ast, physiology = phys,
+                pulmonaryHypertension = pulmonaryHypertension)
+    PK <- if (nrow(physiologyEvents) > 0) physiologyEventPK(build, physiologyEvents)
+          else build(physiology)
     pks[[drug]] <- PK
     currentDT <- dose[dose$Drug == drug,]
     X <- simCpCe(currentDT, events, PK, maximum, plotRecovery)

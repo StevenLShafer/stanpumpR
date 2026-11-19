@@ -146,7 +146,8 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
                           opioidTolerance = OPIOID_TOLERANCE_DEFAULT,
                           individual = NULL,
                           physiology = NULL,
-                          pulmonaryHypertension = FALSE) {
+                          pulmonaryHypertension = FALSE,
+                          physiologyEvents = NULL) {
   # The Patient Profile's Opioid tolerance raises every opioid's MEAC by its
   # factor (OPIOID_TOLERANCE_FACTORS), here, where each drug's MEAC enters
   # its entry, so everything that reads it downstream sees the tolerant MEAC.
@@ -167,7 +168,7 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
     # getDrugPK() reads it from this session's drugDefaults row, with any
     # Drug Thresholds edit.
     outputComments("Getting PK for", drug)
-    pk <- function(metaboliteIndividual = NULL)
+    pk <- function(metaboliteIndividual = NULL, phys = physiology)
       getDrugPK(
         drug = drug,
         weight = weight,
@@ -191,14 +192,17 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
         # The Bayesian update's estimate for this drug, or NULL
         # (R/bayesian.R): a list of clearance and volume factors, by drug.
         individual = individual[[drug]],
-        physiology = physiology,
+        physiology = phys,
         pulmonaryHypertension = pulmonaryHypertension,
         # The session's library, from which a metabolite's row (its units)
         # is read
         libraryDefaults = drugDefaults,
         metaboliteIndividual = metaboliteIndividual
       )
-    resolved <- pk()
+    # Physiology events (R/physiologyEvents.R): normal physiology from time 0
+    # and each event's from its time, the drug built once per state
+    resolved <- if (!is.null(physiologyEvents) && nrow(physiologyEvents) > 0)
+      physiologyEventPK(function(p) pk(phys = p), physiologyEvents) else pk()
     # A parent forms the individual's metabolite where the update estimated
     # the metabolite (getDrugPK(metaboliteIndividual =)); its name is known
     # once the parent is resolved

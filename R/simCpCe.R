@@ -649,6 +649,20 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # 2026-11-15, M7).  A table already in order is unchanged.
     events <- events[order(as.numeric(events$Time)), , drop = FALSE]
 
+    # Physiology events (R/physiologyEvents.R): the drug's PK sets were built
+    # once per physiology state and merged, keyed by clinical event and state;
+    # the clinical events and the physiology events are interleaved on one
+    # time line, and the event engine switches between the merged sets,
+    # carrying the amounts across each switch (convertState()).  The
+    # antiseizure interactions, which replace the event table with their own
+    # segments, take precedence (the drug was held at normal physiology).
+    if (!is.null(PK[["physiologyEvents"]]) && is.null(PK$interactionEvents) &&
+        nrow(PK[["physiologyEvents"]]) > 0)
+    {
+      events <- physiologyEventTimeline(events, PK[["physiologyEvents"]])
+      pkEvents <- names(PK$PK)
+    }
+
     # A drug that forms an active metabolite takes its own route, because the
     # metabolite is advanced alongside the parent over the union of the two
     # drugs' eigenvalues.
