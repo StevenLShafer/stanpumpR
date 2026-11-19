@@ -69,7 +69,11 @@ def _pmc_log():
         return {}
     try:
         with open(p, encoding="utf-8") as f:
-            return {e["pmid"]: e for e in json.load(f)}
+            # Only records that carry a string `result`: the branches below read it unguarded,
+            # so a half-written record (an interrupted fetch) would stop the whole rebuild --
+            # the opposite of what this function promises (CodeRabbit, PR #797).  fetch_pmc.py
+            # no longer writes one, but a log already on disk may hold it.
+            return {e["pmid"]: e for e in json.load(f) if isinstance(e.get("result"), str)}
     except Exception as e:                       # noqa: BLE001
         print("could not read pmc_fetch_log.json (%s); rebuilding without its notes" % e)
         return {}

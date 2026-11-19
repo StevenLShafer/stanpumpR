@@ -300,9 +300,12 @@ for t in todo:
             # (CodeRabbit, PR #784) -- a comment asserting what the code does not do.
             entry["result"] = "HELD: PubMed lists no author, so neither title nor author could be confirmed"
         elif not txt.strip():
-            # A genuine image-only scan: unverifiable by its nature, not by accident, and
-            # ocr_scans.py will give it a text layer later.  Still filed, and still flagged.
-            file_it("downloaded (no text layer - check by eye)")
+            # Unverifiable by nature rather than by accident, and ocr_scans.py will look at it
+            # later.  Still filed, still flagged -- but the note says only what was LOOKED AT:
+            # first_text() reads two pages, so empty text there does not establish that the
+            # rest of the PDF has none (CodeRabbit, PR #797; the same conflation of "we did
+            # not see it" with "it is not there" as the two above).
+            file_it("downloaded (no text in the first two pages - check by eye)")
         else:
             entry["result"] = "HELD: first page does not match title/author"
         print(pmc, pmid, t["First author"], t["Year"], "->", entry["result"], "overlap=%.2f author=%s %s" % (overlap, bool(au_ok), entry["license"]))
@@ -311,6 +314,12 @@ for t in todo:
         entry["result"] = "FAILED: %s: %s" % (type(e).__name__, e)
         print(pmc, pmid, "->", entry["result"], flush=True)
     finally:
+        # KeyboardInterrupt and SystemExit are not Exception, so Ctrl+C during a paper skips
+        # the handler above and lands here with no `result` set -- and build.py reads
+        # pl["result"] unguarded, so one interrupted paper could block every later workbook
+        # rebuild until that PMID was fetched again (CodeRabbit, PR #797).  This script can
+        # run for minutes, so Ctrl+C is an ordinary event, not an edge case.
+        entry.setdefault("result", "INTERRUPTED: the run ended before this paper finished")
         log.append(entry)
         save_log(log)                            # before the next paper is begun
 
