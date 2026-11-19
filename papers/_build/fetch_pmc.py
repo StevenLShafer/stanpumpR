@@ -46,11 +46,24 @@ def get(url, binary=False):
             raise TimeoutError("the run's %d s fetch budget was spent" % FETCH_BUDGET_SECONDS)
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "stanpumpR-archive/1.0"})
-            with urllib.request.urlopen(req, timeout=120) as r:
+            # The socket timeout TIGHTENS as the budget runs out, so the last request cannot
+            # sit for a full 120 s past a deadline that has already passed.
+            left = max(1.0, DEADLINE - time.time())
+            with urllib.request.urlopen(req, timeout=min(120.0, left)) as r:
                 # timeout= bounds each socket operation, not the whole transfer: a server
                 # trickling bytes kept r.read() running past the budget, so the delay to
                 # filing could exceed what the comment above promised (CodeRabbit, PR #797).
                 # read1() returns after ONE underlying recv, where read(n) may loop to fill n.
+                #
+                # What is still NOT checked between recvs: for a CHUNKED response, read1()
+                # first reads the chunk-size line with readline(), and a server trickling that
+                # line stalls inside one call.  This path is live, not theoretical -- measured
+                # 2026-11-18, the S3 bucket LISTING comes back chunked (the PDF itself carries
+                # Content-Length) -- so the honest residual is one chunk-size line, a few
+                # bytes, each costing at most the tightened timeout above.  Cancelling that
+                # properly needs a watchdog closing the socket from another thread, which is
+                # not worth its complexity here for a handful of bytes from S3; if this script
+                # ever fetches from a host that is not trusted, reopen it.
                 reader = getattr(r, "read1", None) or r.read
                 parts = []
                 while True:
