@@ -526,9 +526,11 @@ an extended-release oral form the program releases that way), which keeps
 normal physiology throughout and is named in the panel. A TCI pump plans on
 the physiology in force at time 0 (an event at time 0 included, as the
 sliders are without events); a later event is one the pump does not know of,
-so the concentration drifts from the target, as it would in a patient. The Visualizer shows the physiology in force as the run plays; it
-does not yet draw an inhaled agent whose body temperature or intubation
-changes during the run.
+so the concentration drifts from the target, as it would in a patient. The Visualizer shows the physiology in force as the run plays, an
+endobronchial tube pulled back (or slipping in) during the run included: the
+unventilated lung is greyed in the 2D view until the tube is tracheal. It
+does not yet draw an inhaled agent whose body temperature changes during the
+run.
 
 ## The sliders and the Bayesian update
 

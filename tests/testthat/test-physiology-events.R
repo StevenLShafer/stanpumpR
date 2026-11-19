@@ -348,7 +348,59 @@ test_that("the Visualizer draws a cardiac-output step and refuses a temperature 
   cold <- simulateGases(gasDT, weight = 70, age = 40, maximum = 60,
                         physiologyEvents = gasEventTable(temperature = 33))
   coldEntries <- gasDrugEntries(cold, gasDT, maximum = 60, age = 40)
-  expect_error(viewerGasRun(coldEntries$sevoflurane, 0, 60), "temperature or intubation")
+  expect_error(viewerGasRun(coldEntries$sevoflurane, 0, 60), "body temperature changes")
+})
+
+# An endobronchial tube pulled back during the run (Shafer, 2026-11-19, for a
+# teaching video: five minutes in one bronchus, then an hour at 1 MAC): only
+# the lungs' capacity changes, the ventilated lung holding its share of the
+# alveolar gas, so the run carries it per time and the tissues' are the run's.
+test_that("the Visualizer draws an intubation that steps, with the lungs' capacity in force at each time", {
+  tube <- rbind({ e <- gasEventTable(endobronchial = 1); e$Time <- 0; e },
+                { e <- gasEventTable(); e$Time <- 5; e })
+  st <- simulateGases(gasDT, weight = 70, age = 40, maximum = 60, physiologyEvents = tube)
+  entries <- gasDrugEntries(st, gasDT, maximum = 60, age = 40)
+  run <- viewerGasRun(entries$sevoflurane, 0, 60)
+  both <- getGasBody(70)$V_alveolar
+  one <- both * ENDOBRONCHIAL_VENTILATED_VOLUME_SHARE
+  # Drawn at both lungs; one lung's gas until the tube is pulled back
+  expect_equal(run$capacity$lungs, both)
+  expect_equal(run$volume$lungs, both)
+  expect_length(run$lungsCapacity, length(run$t))
+  expect_true(all(run$lungsCapacity[run$t < 300] == one))
+  expect_true(all(run$lungsCapacity[run$t >= 300] == both))
+  # The tissues' capacities are those of a run without the tube
+  plain <- viewerGasRun(gasDrugEntries(simulateGases(gasDT, weight = 70, age = 40, maximum = 60),
+                                       gasDT, maximum = 60, age = 40)$sevoflurane, 0, 60)
+  expect_equal(run$capacity[c("vrg", "mg", "fg")], plain$capacity[c("vrg", "mg", "fg")])
+  expect_null(plain$lungsCapacity)
+  # Arterial blood is below end-tidal while half the output is shunted, and
+  # at end-tidal afterwards; the saturation is sent with it
+  early <- which(run$t > 30 & run$t < 290)
+  late <- which(run$t > 310)
+  expect_true(all(run$arterial[early] < run$p$lungs[early]))
+  expect_equal(run$arterial[late], run$p$lungs[late])
+  expect_true(all(run$saturation[early] < 90))
+  expect_true(all(run$saturation[late] > 99))
+  # The steps the viewer shows: endobronchial from the start, tracheal at 5 min
+  expect_length(run$physiologySteps, 2)
+  expect_true(run$physiologySteps[[1]]$endobronchial)
+  expect_false(run$physiologySteps[[2]]$endobronchial)
+  expect_equal(run$physiologySteps[[2]]$time, 300)
+  # The uptake the tissues' amounts give is the blood's, through the lung
+  # that is ventilated: (1 - shunt) x cardiac output x blood:gas x (alveolar
+  # - mixed venous), on either side of the step
+  pr <- gasPropertiesAt(NULL); pr <- pr[pr$gas == "sevoflurane", ]
+  capacity <- unlist(run$capacity[c("vrg", "mg", "fg")])
+  held <- function(i) sum(capacity * c(run$p$vrg[i], run$p$mg[i], run$p$fg[i]))
+  uptake <- function(i) (held(i + 1) - held(i - 1)) / ((run$t[i + 1] - run$t[i - 1]) / 60)
+  blood <- function(i, shunt) (1 - shunt) * run$cardiacOutput[i] * pr$lambda_blood * (run$p$lungs[i] - run$venous[i])
+  expect_equal(uptake(200), blood(200, ENDOBRONCHIAL_SHUNT_FRACTION), tolerance = 0.02)
+  expect_equal(uptake(1200), blood(1200, 0), tolerance = 0.02)
+  # A window after the step holds one capacity, so none is sent per time
+  after <- viewerGasRun(entries$sevoflurane, 10, 60)
+  expect_null(after$lungsCapacity)
+  expect_equal(after$capacity$lungs, both)
 })
 
 # --- The event table -----------------------------------------------------------
