@@ -18,8 +18,15 @@ os.makedirs(TMP, exist_ok=True)
 # update.bat runs this before the filing chain, so a stalled PubMed or PMC request delays the
 # filing of papers ALREADY in Downloads.  Four tries at a 120 s timeout is about 8 minutes for
 # one URL, and a run fetches several.  So the run gets a wall-clock budget: no retry is started
-# past it, the body is read in bounded pieces that stop at it, and no further paper is
-# attempted.  Papers not reached stay `pending` and the next run picks them up.
+# past it, the body is read in pieces with the budget checked between them, and no further
+# paper is attempted.  Papers not reached stay `pending` and the next run picks them up.
+#
+# These are ESTIMATES, not guarantees, and the comments below say so too.  urlopen() sets the
+# socket timeout once per request and it applies PER OPERATION, so a response needing many
+# operations -- any chunked one -- can take many times that timeout without any single
+# operation timing out.  Nothing here can cancel a stalled read outright; only a watchdog
+# closing the socket from another thread could, which is declined below (CodeRabbit, PR #797,
+# the fifth claim in this file that a comment stated more firmly than the code delivers).
 #
 # What it does NOT cover: the PubMed metadata lookup below, which goes through
 # ncbi.esummary() -> ncbi._get(), six tries at a 60 s timeout plus 30 s of backoff -- about
@@ -46,8 +53,10 @@ def get(url, binary=False):
             raise TimeoutError("the run's %d s fetch budget was spent" % FETCH_BUDGET_SECONDS)
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "stanpumpR-archive/1.0"})
-            # The socket timeout TIGHTENS as the budget runs out, so the last request cannot
-            # sit for a full 120 s past a deadline that has already passed.
+            # The socket timeout TIGHTENS as the budget runs out, so no single operation of
+            # the last request waits for a full 120 s past a deadline already passed.  Per
+            # OPERATION: a chunked response makes several, so this shortens the typical
+            # overrun without bounding it.
             left = max(1.0, DEADLINE - time.time())
             with urllib.request.urlopen(req, timeout=min(120.0, left)) as r:
                 # timeout= bounds each socket operation, not the whole transfer: a server
@@ -60,10 +69,11 @@ def get(url, binary=False):
                 # line stalls inside one call.  This path is live, not theoretical -- measured
                 # 2026-11-18, the S3 bucket LISTING comes back chunked (the PDF itself carries
                 # Content-Length) -- so the honest residual is one chunk-size line, a few
-                # bytes, each costing at most the tightened timeout above.  Cancelling that
-                # properly needs a watchdog closing the socket from another thread, which is
-                # not worth its complexity here for a handful of bytes from S3; if this script
-                # ever fetches from a host that is not trusted, reopen it.
+                # bytes, each byte costing at most the tightened timeout above -- a shorter
+                # overrun, not a bounded one.  Cancelling it properly needs a watchdog closing
+                # the socket from another thread, which is not worth its complexity here for a
+                # handful of bytes from S3; if this script ever fetches from a host that is not
+                # trusted, reopen it.
                 reader = getattr(r, "read1", None) or r.read
                 parts = []
                 while True:
@@ -138,9 +148,30 @@ try:
               " its %d wanted paper(s) wait for the next run" % len(qwant))
         qwant = []
     if len(qwant) > METADATA_PMIDS_PER_RUN:      # keep the lookup to ONE esummary chunk
-        print("the download queue wants %d papers; looking up the first %d this run"
-              % (len(qwant), METADATA_PMIDS_PER_RUN))
-        qwant = qwant[:METADATA_PMIDS_PER_RUN]
+        # ROTATING, not the first 150 every run.  A wanted paper with no PMCID is never added
+        # to `todo` and never logged, so it stays eligible for ever: taking the head of the
+        # list each time would let a block of unfetchable entries hold the window and starve
+        # everything after it, with no sign that it was happening (CodeRabbit, PR #797).  The
+        # cursor is a convenience, so if it cannot be read or written the run still proceeds
+        # from where it can.
+        cursor_path = os.path.join(HERE, "pmc_lookup_cursor.json")
+        start = 0
+        try:
+            with open(cursor_path, encoding="utf-8") as f:
+                start = int(json.load(f).get("offset", 0)) % len(qwant)
+        except Exception:                        # noqa: BLE001 -- absent, malformed, unreadable
+            start = 0
+        print("the download queue wants %d papers; looking up %d of them this run, from"
+              " position %d" % (len(qwant), METADATA_PMIDS_PER_RUN, start))
+        rotated = qwant[start:] + qwant[:start]  # wraps, so every entry comes round
+        nxt = (start + METADATA_PMIDS_PER_RUN) % len(qwant)
+        qwant = rotated[:METADATA_PMIDS_PER_RUN]
+        try:
+            with open(cursor_path, "w", encoding="utf-8") as f:
+                json.dump({"offset": nxt}, f)
+        except OSError as e:
+            print("  could not record the lookup position (%s); the next run starts over"
+                  " from the top" % e)
     if qwant:
         from ncbi import esummary
         _meta = esummary(qwant)
