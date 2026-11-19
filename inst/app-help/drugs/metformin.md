@@ -4,7 +4,7 @@ Chae and colleagues' analysis of 42 healthy adults given one 500 mg immediate-re
 
 ### Routes
 
-Immediate release by mouth (`mg PO`, once, twice or three times daily). The extended-release tablets have their own absorption, which no complete published model in hand describes, and are not offered.
+Immediate release by mouth (`mg PO`, once, twice or three times daily). The extended-release tablet is a drug of its own, [metforminER](help:drugs/metforminER) (Duong 2013), with a nine-and-a-half-hour release.
 
 ### What is not plotted
 

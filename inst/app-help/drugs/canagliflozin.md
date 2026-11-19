@@ -11,13 +11,14 @@ Hoeben and colleagues' population analysis of canagliflozin (*Clin Pharmacokinet
 - **Sex:** the central volume above, and so the clearance.
 - **Weight:** central volume × (weight/75.8)<sup>0.583</sup>. With **Adjust weight to fat-free mass** ticked, the pharmacokinetic weight is used. The phase 1 subjects weighed 47.6 to 151 kg.
 - **Age:** central volume × (age/45)<sup>−0.167</sup>, from 18 years.
+- **Under 18:** Goeyvaerts and colleagues' paediatric analysis (*Br J Clin Pharmacol* 2026; 90 patients aged 10 to 17 with type 2 diabetes) found that Hoeben's adult model did not describe children until its covariates were removed. Its final model keeps only weight and sex on the central volume, so below 18 the age, eGFR and body-mass-index terms are left at their reference values (a central volume of 99.3 or 82.6 L × (weight/75.8)<sup>0.583</sup>, an elimination rate of 0.145/h, absorption at 3.68/h after 0.147 hours). The parameters therefore step at the 18th birthday, where the two populations meet; below 10 the model is extrapolated. Children's exposure at 100 and 300 mg matched adults'.
 - **Body mass index:** absorption rate × (BMI/26.1)<sup>−1.41</sup> and lag × (BMI/26.1)<sup>1.41</sup>, with the BMI held within the phase 1 range of 18.0 to 44.5: a heavier patient absorbs later and more slowly. The paper prints one exponent for both; its text says absorption is faster and the lag shorter at a lower BMI.
 
 The clearance is the central volume times the elimination rate, so weight, age and sex change it as well.
 
 ### Reference values
 
-The paper divides each covariate by its population median. Its supplement gives them: 75.8 kg, a BMI of 26.1 and 45 years for the phase 1 subjects to whom the absorption and the central volume were fitted, and an eGFR of 87 for the whole population. The median daily dose is not printed, so the paper's small effect of the daily dose on elimination is not applied: exposure at 300 mg a day is 7% above that at 100 mg (the paper's Table 6).
+The paper divides each covariate by its population median. Its supplement gives them: 75.8 kg, a BMI of 26.1 and 45 years for the phase 1 subjects to whom the absorption and the central volume were fitted, and an eGFR of 87 for the whole population. The paper's small effect of the daily dose on elimination is not applied: exposure at 300 mg a day is 7% above that at 100 mg (the paper's Table 6). Goeyvaerts' paediatric paper prints its reference dose, 100 mg a day, but a total daily dose belongs to the regimen, not to a single dose.
 
 At 300 mg once daily, the steady-state exposure of a 60-year-old man and woman (90 and 78 kg, eGFR 80) averages 23,300 ng·h/mL over a day; the paper predicts 24,941 for its typical patient with type 2 diabetes. A single 100 mg dose peaks 1.3 hours after it is taken. The terminal half-life of the model, 16 hours, is longer than the label's 10.6 to 13.1 hours, which come from the first days after a dose.
 

@@ -27,7 +27,7 @@ a list in the shape \code{getDrugPK()} expects, with a
 \code{michaelisMenten} block
 }
 \description{
-Two compartments with saturable elimination (Zhou 2024), run by the
-numerical engine (\code{advanceMichaelisMenten()}).  See the header of the
-file.
+Two compartments, linear elimination and a saturable efflux back into
+the gut (Lu 2024), run by the numerical engine
+(\code{advanceMichaelisMenten()}).  See the header of the file.
 }

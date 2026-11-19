@@ -121,6 +121,22 @@
 # exactly this block: test-drugs-vincristinePediatric.R measures it against a
 # fine-step integration of the full binding ODE.
 #
+# SATURABLE EFFLUX BACK TO THE GUT (OPTIONAL)
+# ===========================================
+# A block saturableEfflux = list(vmax, km) (cetagliptin, R/drugs_cetagliptin.R;
+# Lu 2024) moves drug from the central compartment back into the default
+# oral depot at the saturable rate vmax Cu / (km + Cu) (vmax an amount per
+# minute, km a concentration), from where it is absorbed again at ka:
+#
+#     dA1/dt <- ... + vmax_E Cu / (km_E + Cu),     (the default oral depot)
+#     dA/dt  <- ... - vmax_E Cu / (km_E + Cu).
+#
+# An intestinal efflux transporter: at low concentrations it returns a fixed
+# fraction of what is absorbed, and it saturates as the dose rises, which
+# makes exposure rise faster than the dose with a LINEAR clearance (clLinear,
+# vmax 0).  Nothing is eliminated by it, so a Bayesian clearance factor
+# leaves it alone.  Tests: test-drugs-cetagliptin.R.
+#
 # SATURABLE DISTRIBUTION (OPTIONAL)
 # =================================
 # A block saturableDistribution = list(vmax, km, k21) (paclitaxel,
@@ -487,13 +503,15 @@ mmStateCount <- function(iDRP, iSD, iE, sd, ai, iMP = iE + 2L, met = NULL)
 #' @param met the block's metabolite, or NULL, with the indices of its
 #'   central and peripheral states added as iC and iP
 #' @param nState the number of states (mmStateCount())
+#' @param ef the block's saturableEfflux, or NULL
 #' @returns function(x, rIV, rPE, vmax, km, rD = 0), the derivative of the
 #'   states, rD the zero-order release rates into the oral depots
 #' @keywords internal
 mmDerivative <- function(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, iP,
                          iS, iT, iDRC, iDRP, rb, sc, tb, iSD = iDRP + 1L,
                          iE = iDRP + 2L, sd = NULL, ai = NULL, met = NULL,
-                         nState = mmStateCount(iDRP, iSD, iE, sd, ai, met$iP, met))
+                         nState = mmStateCount(iDRP, iSD, iE, sd, ai, met$iP, met),
+                         ef = NULL)
 {
   # Unbound concentrations from the amounts: the amount over the volume, or,
   # with rapid binding, the root of the binding equilibrium.
@@ -536,6 +554,12 @@ mmDerivative <- function(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, 
     metYield <- if (is.null(met$mwRatio)) 1 else met$mwRatio
     metOral <- met$oralIdx
   }
+  hasEfflux <- !is.null(ef)
+  if (hasEfflux) {
+    efVmax <- ef$vmax
+    efKm <- ef$km
+  }
+  rm(ef)   # the closure reads only the numbers: its frame stays small (C3)
   hasTransit <- kT != 0
   hasSC <- !is.null(sc)
   hasTarget <- !is.null(tb)
@@ -579,6 +603,12 @@ mmDerivative <- function(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, 
     dx[iC] <- sum(out[oralIdx]) + kc * xConv + rIV + fromS -
       saturable - clLinear * Cu - toP
     eliminated <- saturable + clLinear * Cu
+    # Saturable efflux back into the default oral depot (cetagliptin)
+    if (hasEfflux) {
+      back <- efVmax * Cu / (efKm + Cu)
+      dx[iC] <- dx[iC] - back
+      dx[1] <- dx[1] + back
+    }
     if (hasTarget) {
       xDRC <- x[iDRC]
       xDRP <- x[iDRP]
@@ -723,6 +753,10 @@ validateMichaelisMenten <- function(mm, drug)
     stop("Invalid michaelisMenten for ", drug, ": saturableDistribution needs a ",
          "positive vmax (amount per minute), km (concentration) and either k21 ",
          "(/min, a first-order return) or volume (the store's volume, a saturable return).")
+  ef <- mm$saturableEfflux
+  if (!is.null(ef) && !(is.list(ef) && positive(ef$vmax) && positive(ef$km)))
+    stop("Invalid michaelisMenten for ", drug, ": saturableEfflux needs a ",
+         "positive vmax (amount per minute) and km (concentration).")
   if (!is.null(rb) && !is.null(tb))
     stop("Invalid michaelisMenten for ", drug, ": rapidBinding and targetBinding ",
          "are alternatives.")
@@ -894,6 +928,7 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   rb <- mm$rapidBinding
   tb <- mm$targetBinding
   sd <- mm$saturableDistribution
+  ef <- mm$saturableEfflux
   # Rapid binding may plot the unbound central concentration (vincristine
   # in children), the root of the binding equilibrium
   plotUnbound <- !is.null(rb) && identical(rb$plotted, "unbound")
@@ -1199,7 +1234,7 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   }
   deriv <- mmDerivative(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, iP,
                         iS, iT, iDRC, iDRP, rb, sc, tb, iSD, iE, sd, ai,
-                        met, nState)
+                        met, nState, ef = ef)
 
   x <- numeric(nState)
   if (!is.null(ai)) x[iE] <- 1   # the uninduced enzyme
