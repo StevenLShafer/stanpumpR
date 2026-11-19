@@ -9,7 +9,8 @@
 PAPER_REVIEW_SEVERITY_ORDER <- c("error", "concern", "info", "ok")
 PAPER_REVIEW_SEVERITY_LABEL <- c(error = "Error", concern = "Concern", info = "Note", ok = "Checks out")
 PAPER_REVIEW_SECTIONS <- c("Identifiability", "Model", "Internal consistency", "Covariates",
-                           "Assumptions and the library's rules", "Figures", "Claude's reading")
+                           "Assumptions and the library's rules", "Figures", "Front-end kinetics",
+                           "Claude's reading")
 
 paperReviewCss <- function()
   htmltools::tags$style(htmltools::HTML("
@@ -243,7 +244,8 @@ paperReviewNoModel <- function(x)
 }
 
 # The sections that belong to one model; the rest are about the paper.
-PAPER_REVIEW_MODEL_SECTIONS <- c("Identifiability", "Model", "Internal consistency", "Covariates", "Figures")
+PAPER_REVIEW_MODEL_SECTIONS <- c("Identifiability", "Model", "Internal consistency", "Covariates", "Figures",
+                                 "Front-end kinetics")
 
 #' One model's summary lines and sections
 #' @keywords internal
