@@ -2,6 +2,23 @@
 # a time, physiology normal from 0 and each event's from its time, the
 # amounts in the compartments carried across each step (convertState()).
 
+# A matrix exponential of the test's own (scaling and squaring of a Taylor
+# series), so the reference needs no package: Matrix is not installed on every
+# CI runner, and the engine's own exponentials are not used
+referenceExpm <- function(A)
+{
+  s <- max(0L, as.integer(ceiling(log2(max(1, norm(A, "1")))) + 1L))
+  B <- A / 2^s
+  E <- diag(nrow(A))
+  term <- E
+  for (k in 1:30) {
+    term <- term %*% B / k
+    E <- E + term
+  }
+  for (i in seq_len(s)) E <- E %*% E
+  E
+}
+
 # An independent reference: the compartment amounts and the effect site
 # advanced by one augmented matrix exponential per piece, the amounts carried
 # across every switch of parameters, a bolus added to the central amount.
@@ -23,7 +40,7 @@ physiologyEventReference <- function(pieces, boluses, t)
     if (t <= pc$from) break
     x[1] <- x[1] + sum(boluses$amount[boluses$time == pc$from])
     dt <- min(t, pc$to) - pc$from
-    x <- as.vector(as.matrix(Matrix::expm(Matrix::Matrix(K(pc$pk, pc$rate) * dt))) %*% x)
+    x <- as.vector(referenceExpm(K(pc$pk, pc$rate) * dt) %*% x)
     last <- pc
   }
   c(Cp = x[1] / last$pk$v1, Ce = x[4])
@@ -174,7 +191,7 @@ test_that("an oral dose absorbing across a step: the depot carries over, ka step
       # 100 mg in the engine's mcg (metoprolol is plotted in ng/mL)
       if (a == lag) x[5] <- x[5] + 1e5 * p0$bioavailability_PO
       p <- if (a < 45) p0 else p1
-      x <- as.vector(as.matrix(Matrix::expm(Matrix::Matrix(M(p) * (knots[k] - a)))) %*% x)
+      x <- as.vector(referenceExpm(M(p) * (knots[k] - a)) %*% x)
     }
     c(Cp = x[1] / (if (t <= 45) p0 else p1)$v1, Ce = x[4])
   }
@@ -399,7 +416,7 @@ test_that("Create event records the panel's settings in the event table", {
   local_mocked_bindings(outputComments = function(...) {})
   oldConfig <- .sprglobals$config
   .sprglobals$config <- DEFAULT_CONFIG
-  on.exit(.sprglobals$config <- oldConfig)
+  withr::defer(.sprglobals$config <- oldConfig)
   shiny::testServer(app_server, {
     session$setInputs(timeUnits = "minutes", timeMode = "relative", referenceTime = "08:00",
                       maximum = "240", weight = 70, weightUnit = "1", height = 170,
