@@ -38,5 +38,6 @@ test_that("units: subcutaneous, daily", {
 test_that("V/F takes the library's volume factor with the switch on (no size term)", {
   size <- pkSizeFactors(130, 180, 50, "male", TRUE)
   expect_equal(liraglutideOvergaard(130, 180, 50, "male")$PK$default$v1, 24.6 * size$volume)
+  expect_equal_rounded(liraglutideOvergaard(130, 180, 50, "male")$PK$default$v1, 35.4605322)  # pinned
   expect_equal(liraglutideOvergaard(130, 180, 50, "male", FALSE)$PK$default$v1, 24.6)
 })

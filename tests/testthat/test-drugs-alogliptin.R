@@ -73,6 +73,10 @@ test_that("Vp/F and Q/F take the library's factors with the switch on (no size t
   on <- alogliptin(120, 175, 50, "male", creatinine = 1)$PK$default
   expect_equal(on$v2, 149 * size$volume)
   expect_equal(on$cl2 * 60, 10.2 * size$clearance)
+  # pinned: FFM 73.456 kg against the reference man's 54.5, volume x 1.348,
+  # clearance x 1.348^0.75
+  expect_equal_rounded(on$v2, 200.9172051)
+  expect_equal_rounded(on$cl2 * 60, 12.7636039)
   off <- alogliptin(120, 175, 50, "male", FALSE, creatinine = 1)$PK$default
   expect_equal(off$v2, 149)
   expect_equal(off$cl2 * 60, 10.2)

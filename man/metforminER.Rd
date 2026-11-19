@@ -34,7 +34,8 @@ it also sets the weight the creatinine-clearance estimate uses.}
 value}
 
 \item{pregnant}{when \code{TRUE}, apply metformin's changes of late
-pregnancy: CL/F x 1.27 and both volumes x 1.33 (see the file's header)}
+pregnancy: both volumes x 1.33, and CL/F x 1.27 only when
+\code{creatinine} is blank (see the file's header)}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

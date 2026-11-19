@@ -120,7 +120,8 @@ lbwJanmahasatian <- function(weight, height, sex)
 #' @param creatinine serum creatinine, mg/dL, or NULL for an assumed normal
 #'   value
 #' @param pregnant when \code{TRUE}, apply metformin's changes of late
-#'   pregnancy: CL/F x 1.27 and both volumes x 1.33 (see the file's header)
+#'   pregnancy: both volumes x 1.33, and CL/F x 1.27 only when
+#'   \code{creatinine} is blank (see the file's header)
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 metforminER <- function(weight, height, age, sex, adjustToFFM = TRUE,
@@ -160,8 +161,10 @@ metforminER <- function(weight, height, age, sex, adjustToFFM = TRUE,
   )
   if (isTRUE(pregnant)) {
     reference <- paste0(reference, "; ", pregnancyReference(
-      paste0("CL/F x ", METFORMIN_PREGNANCY_CL_FACTOR, ", V1/F and V2/F x ",
-             METFORMIN_PREGNANCY_V_FACTOR),
+      paste0(if (is.null(creatinine))
+               paste0("CL/F x ", METFORMIN_PREGNANCY_CL_FACTOR, ", ") else
+               "CL/F from the measured creatinine (factor not applied), ",
+             "V1/F and V2/F x ", METFORMIN_PREGNANCY_V_FACTOR),
       paste0("Liao MZ et al., Drug Metab Dispos 2020;48:264-271. ",
              "https://doi.org/10.1124/dmd.119.088435")))
   }
