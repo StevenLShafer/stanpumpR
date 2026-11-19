@@ -467,6 +467,9 @@ simulationFields <- function(X, DT, ET)
     metaboliteRecoveryStates = X$metaboliteRecoveryStates,
     tci               = X$tci,
     scheduled         = X$scheduled,
+    # Why a drug's physiology events were not applied to this dose table
+    # (simCpCe(); R/physiologyEvents.R)
+    physiologyEventsIgnored = X$physiologyEventsIgnored,
     # The peripheral concentrations and the depot (R/compartments.R), own
     # and as plotted, kept apart as wideOwn and wide are, and the formed
     # metabolite's, which foldMetabolites() adds to the metabolite drug's.

@@ -72,7 +72,9 @@ test_that("what the browser sends is read as text and ticks, whatever it holds",
 })
 
 test_that("the dialogs' columns are the ones their handlers read", {
-  expect_equal(vapply(editEventsGridColumns("Induction"), `[[`, "", "name"), c("Delete", "Time", "Event"))
+  expect_equal(vapply(editEventsGridColumns("Induction"), `[[`, "", "name"),
+               # Settings: a Physiology row's, read-only (R/physiologyEvents.R)
+               c("Delete", "Time", "Event", "Settings"))
   expect_equal(vapply(targetGridColumns(), `[[`, "", "name"), c("Time", "Target"))
   expect_equal(vapply(thresholdGridColumns(), `[[`, "", "name"), c("Drug", "Threshold"))
   shown <- drugLibraryGridData(getDrugDefaultsGlobal())

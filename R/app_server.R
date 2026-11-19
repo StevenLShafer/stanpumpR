@@ -1424,6 +1424,7 @@ app_server <- function(input, output, session) {
         temperature = bodyTemperature(),
         altitude = altitude(),
         endobronchial = endobronchial(),
+        physiologyEvents = physiologyEvents(),
         age     = age(),
         maximum = plotMaximum()
       )
@@ -1520,6 +1521,109 @@ app_server <- function(input, output, session) {
                    temperature = bodyTemperature(), skipped = skipped)
   })
 
+  # Physiology events (R/physiologyEvents.R): the Physiology rows of the
+  # event table.  With any, physiology is normal from time 0 and each event's
+  # from its time, and the sliders only set the next event to be recorded.
+  physiologyEvents <- reactive(physiologyEventsFrom(eventTableClean()))
+
+  observeEvent(input$physiologyCreateEvent, {
+    format <- doseTableFormat()
+    showModal(
+      modalDialog(
+        `data-submit-btn` = "physiologyCreateEventBtn",
+        title = "Create a physiology event",
+        tags$p(class = "small",
+               "The physiology panel's settings are recorded at this time:"),
+        tags$p(class = "small text-muted",
+               physiologyEventSummary(physiologyPanelSettings(),
+                                      gas = any(isGasDrug(doseTableClean()$Drug)))),
+        textInput(
+          inputId = "physiologyEventTime",
+          label = timeEntryLabel(format),
+          value = ""
+        ) |> modalFocus(),
+        actionButton("physiologyCreateEventBtn", "Create", class = "btn-primary"),
+        tags$button(type = "button", class = "btn float-right",
+                    `data-bs-dismiss` = "modal", "Cancel"),
+        footer = NULL,
+        easyClose = TRUE,
+        size = "s"
+      )
+    )
+  })
+
+  # The panel's settings as a physiology event records them, read from the
+  # inputs directly (not the debounced reactives, which may lag the slider)
+  physiologyPanelSettings <- function() {
+    p <- physiologyFromInputs(stats::setNames(
+      lapply(PHYSIOLOGY_FACTORS, function(f) input[[physiologyInputId(f)]]),
+      PHYSIOLOGY_FACTORS))
+    c(p[PHYSIOLOGY_FACTORS],
+      temperature = bodyTemperatureFromInput(input$physiology_temperature),
+      altitude = altitudeFromInput(input$physiology_altitude),
+      endobronchial = as.numeric(endobronchialFromInput(input$endobronchialIntubation)))
+  }
+
+  observeEvent(input$physiologyCreateEventBtn, {
+    format <- doseTableFormat()
+    time <- displayTimeToMinutes(validateEntry(input$physiologyEventTime, validateTime),
+                                 referenceFor(format), format[["unit"]])
+    if (length(time) != 1 || is.na(time) || time < 0) {
+      showNotification(paste0("That time could not be read: enter it as ",
+                              timeEntryUnitText(format), "."), type = "error")
+      return()
+    }
+    settings <- tryCatch(physiologyEventEncode(physiologyPanelSettings()),
+                         error = function(e) NULL)
+    if (is.null(settings)) {
+      showNotification("The physiology panel's settings could not be read.", type = "error")
+      return()
+    }
+    ET <- eventTable()
+    if (nrow(ET) >= MAX_EVENT_ROWS) {
+      showNotification(sprintf("The event table holds at most %d events.", MAX_EVENT_ROWS),
+                       type = "error")
+      return()
+    }
+    ET <- eventTableRows(c(ET$Time, time), c(as.character(ET$Event), PHYSIOLOGY_EVENT_NAME),
+                         c(eventTableSettings(ET), settings))
+    problem <- physiologyEventsProblem(ET)
+    if (!is.null(problem)) {
+      showNotification(problem, type = "error")
+      return()
+    }
+    ET <- ET[order(ET$Time, ET$Event), ]
+    rownames(ET) <- NULL
+    eventTable(ET)
+    removeModal()
+  })
+
+  output$physiologyEventsNote <- renderUI({
+    events <- physiologyEvents()
+    if (nrow(events) == 0) return(NULL)
+    # The drugs in the plot that do not follow them (physiologyEventsBlocked())
+    # (drugs(), which carries what the simulation found too: a rate into the
+    # tissue depot keeps a dose table at normal physiology, simCpCe())
+    entries <- tryCatch(drugs(), error = function(e) NULL)
+    held <- names(Filter(function(e) is.null(e$companionOf) && !isTRUE(e$isGas) &&
+                           (!is.null(e$physiologyStepsSkipped) ||
+                              !is.null(e$physiologyEventsIgnored) ||
+                              (!is.null(e[["physiologyEvents"]]) && !is.null(e$interactionEvents))),
+                         entries))
+    tagList(
+      tags$p(class = "small text-muted mt-2",
+             sprintf(paste("%d physiology event%s in the event table: physiology is",
+                           "normal from time 0 and steps to each event's settings",
+                           "at its time. The sliders set the next event to be",
+                           "created."),
+                     nrow(events), if (nrow(events) == 1) "" else "s")),
+      if (length(held) > 0)
+        tags$p(class = "small text-muted",
+               "Not changed by the events (normal physiology throughout): ",
+               paste(held, collapse = ", "), ".")
+    )
+  })
+
   # `normalPhysiology`: build at normal physiology, whatever the sliders say
   # (the Bayesian update's fit, bayesUpdate())
   drugPK <- function(doseTable, individual = NULL, normalPhysiology = FALSE) {
@@ -1554,7 +1658,8 @@ app_server <- function(input, output, session) {
         alternativeModels = companionGroupsOn(),
         antiseizureInteractions = antiseizureInteractions(),
         individual = individual,
-        physiology = if (normalPhysiology) NULL else physiology()
+        physiology = if (normalPhysiology) NULL else physiology(),
+        physiologyEvents = if (normalPhysiology) NULL else physiologyEvents()
       )
   }
 
@@ -1583,7 +1688,9 @@ app_server <- function(input, output, session) {
       if (nrow(observations) == 0) return(list(drugs = priors, fits = list(), problems = character(0)))
       # The fit is made at normal physiology and the sliders are applied to
       # the individual afterwards (Shafer, 2026-11-16; bayesianAtPhysiology())
-      normal <- physiologyIsNormal(physiology())
+      # (and with physiology events, normal throughout, the events applied
+      # to the individual afterwards as the sliders are)
+      normal <- physiologyIsNormal(physiology()) && nrow(physiologyEvents()) == 0
       fitPriors <- if (normal) priors else drugPK(DT, normalPhysiology = TRUE)
       # A search longer than a few seconds is covered by the page's Working
       # cover (app.js), which replaced a spinner of its own here
@@ -2142,6 +2249,7 @@ app_server <- function(input, output, session) {
       temperature = bodyTemperature(),
       altitude = altitude(),
       endobronchial = endobronchial(),
+      physiologyEvents = physiologyEvents(),
       # Whether each companion model was actually drawn, not just its box
       # ticked (companionGroupsShown()).
       mintoSchnider = "mintoSchnider" %in% companionGroupsShown(),
@@ -2383,6 +2491,12 @@ app_server <- function(input, output, session) {
 
     if (yaxis == PLOT_NAME_EVENTS)
     {
+      # A Physiology event under the pointer shows what it recorded
+      # (Shafer, 2026-11-19: the label is "Physiology"; a hover tip reveals
+      # the sliders, the elevation and the intubation)
+      tip <- physiologyEventHover(eventTableClean(), e$x, plotMaximum() - plotMinimum(),
+                                  gas = any(isGasDrug(doseTableClean()$Drug)))
+      if (!is.null(tip)) return(paste0("Physiology at ", hoverTime(tip$time), ": ", tip$text))
       return("Click to enter events, Double click to edit events")
     }
 
@@ -2986,7 +3100,7 @@ app_server <- function(input, output, session) {
           entry <- viewerPlotEntry(drug, plotted[[drug]], doseTableIV(), eventTableClean(), plotted,
                                    plotMinimum(), plotMaximum(), antiseizureInteractions())
           viewerRun(entry, plotMinimum(), plotMaximum(), category = category,
-                    physiology = physiology())
+                    physiology = physiology(), physiologyEvents = physiologyEvents())
         }
       }, error = function(e) {
         fail(if (inherits(e, "shiny.silent.error")) "the plot is not ready yet; try again." else conditionMessage(e))
@@ -3233,7 +3347,9 @@ app_server <- function(input, output, session) {
         selectInput(
           inputId = "clickEvent",
           label = "Event",
-          choices = eventDefaults()$Event
+          # A Physiology event records the panel's settings, so it is made
+          # there (Create event), not here
+          choices = setdiff(eventDefaults()$Event, PHYSIOLOGY_EVENT_NAME)
         ),
         actionButton("addEventBtn", "Add", class = "btn-primary"),
         tags$button(
@@ -3272,7 +3388,8 @@ app_server <- function(input, output, session) {
         # (Carbon's UI audit, 2026-11-14, F3 and F6C).  The dialog stays open.
         clickEvent <- input$clickEvent
         if (!is.character(clickEvent) || length(clickEvent) != 1 ||
-            !isTRUE(clickEvent %in% eventDefaults()$Event)) {
+            !isTRUE(clickEvent %in% eventDefaults()$Event) ||
+            identical(clickEvent, PHYSIOLOGY_EVENT_NAME)) {
           showNotification("Choose an event from the list.", type = "error")
           return()
         }
@@ -3282,10 +3399,8 @@ app_server <- function(input, output, session) {
                            type = "error")
           return()
         }
-        ET <- data.frame(
-          Time  = c(ET$Time, clickTime),
-          Event = c(ET$Event, clickEvent)
-        )
+        ET <- eventTableRows(c(ET$Time, clickTime), c(as.character(ET$Event), clickEvent),
+                             c(eventTableSettings(ET), ""))
         ET <- ET[order(ET$Time,ET$Event),]
         eventTable(ET)
         removeModal()
@@ -3303,7 +3418,7 @@ app_server <- function(input, output, session) {
     format <- doseTableFormat()
 
     if (hasEvents) {
-      tempTable <- tempTable[,c("Time", "Event")]
+      tempTable <- eventTableRows(tempTable$Time, tempTable$Event, eventTableSettings(tempTable))
       # Shown as text in the dose table's format (events are stored in
       # minutes).  A numeric column would also be rounded to four digits on
       # its way back from the browser.
@@ -3313,7 +3428,7 @@ app_server <- function(input, output, session) {
       editEventsShown <<- list(text = tempTable$Time, minutes = minutes)
       tempTable$Delete <- FALSE
       eventsGrid <- tableGridInput("editEventsTableHTML", editEventsGridColumns(eventDefaults()$Event),
-                                   tempTable[, c("Delete", "Time", "Event")],
+                                   tempTable[, c("Delete", "Time", "Event", "Settings")],
                                    maxRows = MAX_EVENT_ROWS, height = 260, label = "Events")
     }
 
@@ -3407,8 +3522,19 @@ app_server <- function(input, output, session) {
           showNotification("Every event needs an event chosen from the list.", type = "error")
           return()
         }
+        # A Physiology row keeps the settings it was created with (the
+        # read-only column; untrusted, as everything the browser sends); a
+        # row turned into one, or added as one, has none to keep
+        events <- as.character(ET$Event[keep])
+        settings <- ifelse(events == PHYSIOLOGY_EVENT_NAME, ET$Settings[keep], "")
+        edited <- eventTableRows(minutes[keep], events, settings)
+        problem <- physiologyEventsProblem(edited)
+        if (!is.null(problem)) {
+          showNotification(problem, type = "error")
+          return()
+        }
         removeModal()
-        ET <- data.frame(Time = minutes[keep], Event = as.character(ET$Event[keep]))
+        ET <- edited
         ET <- ET[order(ET$Time,ET$Event),]
         eventTable(ET)
       }, name = "input$editEventsOK observer")
