@@ -519,7 +519,10 @@ The block has two further forms, chosen with a `form` field (the one above is
   `CL/F × (D / Dref)^-exponent`, which a linear engine cannot hold: write the clearance at
   `Dref`, and the steady-state exposure `D / CL(D)` is reproduced by scaling the dose. The
   half-life stays that of the reference dose, and each administration is read as the day's dose.
-  Paroxetine (`R/drugs_paroxetine.R`).
+  Paroxetine (`R/drugs_paroxetine.R`). A source whose power of the dose is on the
+  bioavailability itself (F1 × (D / Dref)^exponent, with `bioavailability_PO` its value at
+  `Dref`) adds `on = "bioavailability"`, which only changes what the help page says
+  (opicapone, mirabegron); a negative exponent is less than proportional.
 
 Any form may carry `exampleDoses`, the oral doses in mg the help page tabulates.
 

@@ -985,13 +985,25 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
             "<p>", s$route, " bioavailability <strong>rises with the dose</strong>, as D / (",
             helpFormatNumber(sat$D50), " + D) with D the dose in mg, times the bioavailability above, ",
             "which is its maximum. "),
+          # The power acts on apparent clearance (paroxetine, the default) or,
+          # with on = "bioavailability", on F itself (opicapone, mirabegron);
+          # its sign says whether exposure rises faster or slower than the dose.
           power = paste0(
-            "<p>Exposure is <strong>more than proportional to the dose</strong>: each ", tolower(s$route),
+            "<p>Exposure is <strong>", if (sat$exponent > 0) "more" else "less",
+            " than proportional to the dose</strong>: each ", tolower(s$route),
             " dose is scaled by (D / ", helpFormatNumber(sat$Dref), ")<sup>", helpFormatNumber(sat$exponent),
-            "</sup> with D the dose in mg. This carries the source's empirical power of the daily dose ",
-            "on apparent clearance, and reproduces its steady-state exposure for once-daily dosing; the ",
-            "\"fraction\" can exceed 1 above the reference dose, because it is an exposure scale on ",
-            "apparent parameters, not a physical bioavailability. "),
+            "</sup> with D the dose in mg. ",
+            if (identical(sat$on, "bioavailability"))
+              paste0("This is the source's empirical power of the dose on the bioavailability itself, ",
+                     "relative to the bioavailability above, which is its value at a dose of ",
+                     helpFormatNumber(sat$Dref), " mg; the \"fraction\" is that ratio, and can exceed 1 ",
+                     if (sat$exponent > 0) "above" else "below", " the reference dose. ")
+            else
+              paste0("This carries the source's empirical power of the daily dose ",
+                     "on apparent clearance, and reproduces its steady-state exposure for once-daily dosing; the ",
+                     "\"fraction\" can exceed 1 ", if (sat$exponent > 0) "above" else "below",
+                     " the reference dose, because it is an exposure scale on ",
+                     "apparent parameters, not a physical bioavailability. ")),
           reduction = paste0(
             "<p>", s$route, " bioavailability <strong>falls with the dose</strong> above ",
             helpFormatNumber(sat$D0), " mg, as 1 &minus; ", helpFormatNumber(sat$I50),
