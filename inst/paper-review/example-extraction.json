@@ -533,5 +533,20 @@
     }
   ],
   "published_models": [],
+  "front_end": {
+    "model_type": "none",
+    "description": "",
+    "sampling_site": "unstated",
+    "total_flow": {"value": null, "value_text": "", "units": "other"},
+    "unmixed_volume": {"value": null, "value_text": "", "units": "other"},
+    "elimination_clearance": {"value": null, "value_text": "", "units": "other"},
+    "elimination_in_flow": "unstated",
+    "central": [],
+    "pathways": [],
+    "arm": {"present": "no", "rate_constant": {"value": null, "value_text": "", "units": "other"},
+            "exchanging_fraction": null, "partition": null, "partition_rule": "unstated",
+            "driver": "unstated", "location": ""},
+    "location": ""
+  },
   "extraction_limitations": "Figure points are read by eye from the plotted symbols."
 }

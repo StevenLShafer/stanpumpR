@@ -68,8 +68,16 @@
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # BSA and the Cockcroft-Gault weight at the pharmacokinetic weight with the
-# switch on and total weight with it off; Q and V2, with no covariate, scale
-# by the library's factors with the switch on and are fixed with it off.
+# switch on and total weight with it off.  Q and V2, with no covariate,
+# belong to the cohort's typical patient, and with the switch on they are
+# anchored at that patient (CISPLATIN_URIEN_COHORT, below; Steven L. Shafer,
+# 2026-11-19, after Carbon's second repository audit, A2-F4): scaled from the
+# 70 kg reference man, as they were, Urien's own typical patient received a
+# V2 14% and a Q 10% below the published values.  A model with a size
+# covariate on one parameter is not thereby exempt on the others.  With the
+# switch off they are fixed.  The bound platinum (cisplatinBound) has nothing
+# to anchor: its volume carries the BSA and creatinine clearance terms and its
+# elimination is a rate constant.
 #
 # PREGNANCY (R/pregnancy.R)
 # =========================
@@ -93,12 +101,17 @@ CISPLATIN_URIEN <- list(
   kBound = 0.014                         # CLm0/Vm, /h
 )
 
-# Cockcroft-Gault creatinine clearance and BSA shared by the two models
+# Urien 2004, Table 1 (p. 758), as confirmed on the PDF 2026-11-19: medians
+# 64 kg, 168 cm, 58 years; 25 men and 18 women.
+CISPLATIN_URIEN_COHORT <- list(weight = 64, height = 168, age = 58, men = 25, women = 18)
+
+# Cockcroft-Gault creatinine clearance and BSA shared by the two models;
+# cohort, given, anchors the size factors (cohortSizeFactors())
 cisplatinCovariates <- function(weight, height, age, sex, adjustToFFM,
-                                creatinine, pregnant)
+                                creatinine, pregnant, cohort = NULL)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1, cohort = cohort)
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   scr <- adultEquivalentCreatinine(creatinine, age, sex)
   list(
@@ -128,8 +141,11 @@ cisplatin <- function(weight, height, age, sex, adjustToFFM = TRUE,
                       creatinine = NULL, pregnant = FALSE)
 {
   p <- CISPLATIN_URIEN
+  # Q and V2, with no covariate, are anchored at Urien's 43 patients
+  # (CISPLATIN_URIEN_COHORT); V1 and the clearance carry their own BSA terms
   x <- cisplatinCovariates(weight, height, age, sex, adjustToFFM,
-                           creatinine, pregnant)
+                           creatinine, pregnant,
+                           cohort = do.call(cohortSizeFactors, CISPLATIN_URIEN_COHORT))
   v1 <- p$v1 * (x$bsa / p$bsaReference)^p$v1BSAExponent
   cl <- p$cl * (x$bsa / p$bsaReference)^p$clBSAExponent *
     (x$clcr / p$clcrReference)^p$clCrExponent                         # L/h

@@ -100,6 +100,29 @@ MODEL_GROUPS <- list(
     ageMin = c(30, 0.7), ageMax = c(79, 21.9),
     weightMin = c(46, NA), weightMax = c(105, NA),
     n = c(35, 39), year = c(2004, 2003)),
+  # Pulmonary arterial hypertension (2026-11-18, Shafer: "Use Miura's model
+  # for children").  Miura 2026's models are given the range of the
+  # source's CHILDREN, not its whole cohort, so that they are chosen for
+  # children only; n is the whole fit's.  The adults' sildenafil source (45
+  # healthy men) prints no age range, so it is taken as 18 and over.
+  sildenafil = data.frame(
+    model = c("sildenafilFDA", "sildenafilMiura"),
+    source = c("FDA review of NDA 22-473", "Miura 2026"),
+    ageMin = c(18, 0.4), ageMax = c(Inf, 14.8),
+    weightMin = c(NA, 6.5), weightMax = c(NA, 54.9),
+    n = c(45, 24), year = c(2009, 2026)),
+  tadalafil = data.frame(
+    model = c("tadalafilFergusonSells", "tadalafilMiura"),
+    source = c("Ferguson-Sells 2022", "Miura 2026"),
+    ageMin = c(2.5, 0.1), ageMax = c(90.3, 8.3),
+    weightMin = c(NA, 5.4), weightMax = c(NA, 23.9),
+    n = c(324, 31), year = c(2022, 2026)),
+  ambrisentan = data.frame(
+    model = c("ambrisentanOkour", "ambrisentanMiura"),
+    source = c("Okour 2023", "Miura 2026"),
+    ageMin = c(8, 0.4), ageMax = c(16, 8.8),
+    weightMin = c(NA, 7.1), weightMax = c(NA, 21.6),
+    n = c(39, 29), year = c(2023, 2026)),
   doxorubicinol = data.frame(
     model = c("doxorubicinolJoerger", "doxorubicinolPediatric", "doxorubicinolPerezBlanco"),
     source = c("Joerger 2007", "Voller 2015", "Perez-Blanco 2016"),
@@ -332,3 +355,38 @@ paclitaxel <- modelGroup("paclitaxel")
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 temozolomide <- modelGroup("temozolomide")
+
+#' Sildenafil: the model chosen for the patient
+#'
+#' The FDA review of NDA 22-473 (45 healthy volunteers; adults, with the Pulmonary
+#' hypertension field) or Miura 2026 (children with pulmonary arterial
+#' hypertension, 0.4-14.8 years), chosen by \code{selectModel()}; see
+#' \code{R/modelSelection.R}.
+#' @inheritParams sildenafilFDA
+#' @inheritParams sildenafilMiura
+#' @returns a list in the shape \code{getDrugPK()} expects
+#' @export
+sildenafil <- modelGroup("sildenafil")
+
+#' Tadalafil: the model chosen for the patient
+#'
+#' Ferguson-Sells 2022 (324 patients, 2.5-90.3 years; with study LVBF's model
+#' without pulmonary hypertension) or Miura 2026 (children with pulmonary
+#' arterial hypertension, 0.1-8.3 years), chosen by \code{selectModel()}; see
+#' \code{R/modelSelection.R}.
+#' @inheritParams tadalafilFergusonSells
+#' @inheritParams tadalafilMiura
+#' @returns a list in the shape \code{getDrugPK()} expects
+#' @export
+tadalafil <- modelGroup("tadalafil")
+
+#' Ambrisentan: the model chosen for the patient
+#'
+#' Okour 2023 (39 children, 8-16 years, offered to adults as the nearest) or
+#' Miura 2026 (children with pulmonary arterial hypertension, 0.4-8.8
+#' years), chosen by \code{selectModel()}; see \code{R/modelSelection.R}.
+#' @inheritParams ambrisentanOkour
+#' @inheritParams ambrisentanMiura
+#' @returns a list in the shape \code{getDrugPK()} expects
+#' @export
+ambrisentan <- modelGroup("ambrisentan")

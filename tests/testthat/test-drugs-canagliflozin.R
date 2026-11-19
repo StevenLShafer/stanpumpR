@@ -41,15 +41,31 @@ test_that("covariates: weight and age on Vc/F, eGFR on ke, BMI on ka and lag", {
   expect_equal(on$v1, 99.3 * (size$pkWeight / 75.8)^0.583 * (50 / 45)^-0.167)
   expect_equal(on$ka_PO,
                canagliflozin(120, 175, 50, "male", FALSE, creatinine = 1)$PK$default$ka_PO)
-  # age held at 18
-  expect_equal(canagliflozin(40, 150, 12, "male", FALSE, creatinine = 0.6)$PK$default$v1,
-               99.3 * (40 / 75.8)^0.583 * (18 / 45)^-0.167)
   # BMI held to the phase I range, 18.0 to 44.5
   expect_equal(canagliflozin(160, 170, 50, "male", FALSE)$PK$default$ka_PO * 60,
                3.68 * (44.5 / 26.1)^-1.41)
   expect_equal(canagliflozin(45, 170, 50, "male", FALSE)$PK$default$tlag_PO,
                0.147 * (18.0 / 26.1)^1.41 * 60)
   expect_equal_rounded(canagliflozin(70, 170, 40, "male")$PK$default$cl1 * 60, 14.2831238)
+})
+
+test_that("under 18, Goeyvaerts 2026's paediatric model: weight and sex only", {
+  # a 12-year-old: the age, eGFR and BMI terms are at their references
+  kid <- canagliflozin(40, 150, 12, "male", FALSE, creatinine = 0.6)$PK$default
+  vc <- 99.3 * (40 / 75.8)^0.583
+  expect_equal(kid$v1, vc)
+  expect_equal(kid$cl1 * 60, 0.145 * vc)
+  expect_equal(kid$ka_PO * 60, 3.68)
+  expect_equal(kid$tlag_PO, 0.147 * 60)
+  # neither the creatinine nor the BMI moves a child's parameters
+  expect_equal(canagliflozin(40, 150, 12, "male", FALSE, creatinine = 2)$PK$default, kid)
+  expect_equal(canagliflozin(90, 150, 12, "male", FALSE)$PK$default$ka_PO * 60, 3.68)
+  expect_equal(canagliflozin(40, 150, 12, "female", FALSE)$PK$default$v1,
+               82.6 * (40 / 75.8)^0.583)
+  # at 18 the adult covariates take over: Vc/F steps by (18/45)^-0.167
+  adult <- canagliflozin(40, 150, 18, "male", FALSE, creatinine = 0.6)$PK$default
+  expect_equal(adult$v1 / canagliflozin(40, 150, 17.99, "male", FALSE)$PK$default$v1,
+               (18 / 45)^-0.167)
 })
 
 test_that("the lag, then a zero-order release into the gut, matches a numerical solution", {

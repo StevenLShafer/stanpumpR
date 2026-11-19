@@ -307,7 +307,11 @@ paperReviewValidate <- function(x)
       string = is.character(value) && length(value) == 1,
       TRUE)
     if (!ok) {
-      if (!name %in% PAPER_REVIEW_OPTIONAL_SECTIONS || !is.null(value)) missing <- c(missing, name)
+      # A reply without the front-end block (one made before it existed, as
+      # the example and the test fixtures are) has no front-end model; that
+      # is not a defect of the reply to report.
+      if (!name %in% PAPER_REVIEW_OPTIONAL_TOP_LEVEL || name %in% names(x))
+        missing <- c(missing, name)
       value <- switch(spec$type, array = list(), object = stats::setNames(list(), character(0)),
                       string = "")
     }
@@ -348,7 +352,38 @@ paperReviewValidate <- function(x)
       "Some values are not among their field's choices and may be ignored: ",
       paste(utils::head(stray, 8), collapse = "; "),
       if (length(stray) > 8) paste0("; and ", length(stray) - 8, " more") else "", ".")
-  out
+  paperReviewHoldPrefixes(out, schema)
+}
+
+#' Hold a slot for every field whose name begins another's
+#'
+#' The checks read the extraction with \code{$}, which matches a name
+#' partially when it is not there: with \code{difference} absent (empty, or
+#' text where a number belongs, which paperReviewNormalize() drops),
+#' \code{d$difference} read \code{difference_se}, and \code{population$n}
+#' read \code{n_female} (Carbon's second repository audit, 2026-11-19,
+#' A2-F14); \code{value} and \code{value_text}, \code{time} and
+#' \code{time_units} are the same.  A field so named that is missing is put
+#' in as \code{NULL}, which \code{$} then finds exactly.
+#'
+#' @param x part of the extraction
+#' @param spec its schema
+#' @returns \code{x}, with the slots
+#' @keywords internal
+paperReviewHoldPrefixes <- function(x, spec)
+{
+  if (!is.list(x) || !is.list(spec)) return(x)
+  if (identical(spec$type, "array") && is.null(names(x)))
+    return(lapply(x, paperReviewHoldPrefixes, spec = spec$items))
+  props <- spec$properties
+  if (is.null(props) || (length(x) && is.null(names(x)))) return(x)
+  for (name in intersect(names(x), names(props)))
+    if (!is.null(x[[name]]))
+      x[name] <- list(paperReviewHoldPrefixes(x[[name]], props[[name]]))
+  all <- names(props)
+  prefixes <- all[vapply(all, function(a) any(startsWith(all, a) & all != a), logical(1))]
+  for (name in setdiff(prefixes, names(x))) x[name] <- list(NULL)
+  x
 }
 
 #' Make one part of an extraction the shape its schema says
@@ -506,7 +541,14 @@ paperReviewTransport <- function(json, key, fallbacks = TRUE,
                                  url = "https://api.anthropic.com/v1/messages",
                                  version, beta, timeout, pidFile = NULL)
 {
-  if (!is.null(pidFile)) writeLines(as.character(Sys.getpid()), pidFile)
+  if (!is.null(pidFile)) {
+    writeLines(as.character(Sys.getpid()), pidFile)
+    # Stopped before this process had written its ID (paperReviewStopper()
+    # then leaves this file): nothing is sent.  Checked after the ID is
+    # written, and the stopper reads the ID again after leaving the file, so
+    # one of the two always sees the other.
+    if (file.exists(paste0(pidFile, ".stop"))) return(list(failure = "stopped"))
+  }
   if (!requireNamespace("httr2", quietly = TRUE)) return(list(failure = "no_httr2"))
   req <- httr2::request(url)
   req <- httr2::req_headers(req,
@@ -556,6 +598,8 @@ paperReviewInterpret <- function(result)
     stop(paperReviewError("no_httr2", "The httr2 package is needed to call the Anthropic API."))
   if (identical(failure, "connection"))
     stop(paperReviewError("connection", "Could not reach the Anthropic API."))
+  if (identical(failure, "stopped"))
+    stop(paperReviewError("stopped", "The review was stopped before it was sent."))
   status <- result$status
   if (!is.numeric(status) || length(status) != 1)
     stop(paperReviewError("unexpected", "The review failed unexpectedly."))
@@ -650,9 +694,22 @@ paperReviewStopper <- function(job, pidFile)
   function() {
     # Only while it runs: once it has finished, its ID may be another's.
     if (!mirai::unresolved(job)) return(invisible(FALSE))
-    pid <- suppressWarnings(as.integer(tryCatch(readLines(pidFile, warn = FALSE)[1],
-                                                error = function(e) NA_character_)))
-    if (length(pid) != 1 || is.na(pid) || pid <= 0 || pid == Sys.getpid()) return(invisible(FALSE))
+    readPid <- function() suppressWarnings(as.integer(tryCatch(readLines(pidFile, warn = FALSE)[1],
+                                                               error = function(e) NA_character_)))
+    usable <- function(pid) length(pid) == 1 && !is.na(pid) && pid > 0 && pid != Sys.getpid()
+    pid <- readPid()
+    if (!usable(pid)) {
+      # Not started yet: it is told not to send (paperReviewTransport()
+      # checks this file after writing its ID), and its ID is read once more
+      # in case it wrote it meanwhile.  Before, a stop in those moments did
+      # nothing and the review was sent (Carbon's second repository audit,
+      # 2026-11-19, A2-F13).
+      tryCatch(writeLines("stop", paste0(pidFile, ".stop")), error = function(e) NULL)
+      pid <- readPid()
+      # Not ended, so not settled: the process, told not to send, answers
+      # "stopped", and that answer is read as any other
+      if (!usable(pid)) return(invisible(FALSE))
+    }
     if (!isTRUE(tools::pskill(pid))) return(invisible(FALSE))
     # The process has ended; settle the job, which would otherwise wait for
     # its timeout.
@@ -696,5 +753,5 @@ paperReviewExtractAsync <- function(pdf, supplement = NULL, key, ..., onJob = NU
     onRejected = function(e)
       stop(paperReviewError("background",
                             "The review did not finish (it timed out, or its background process failed). Try again.")))
-  promises::finally(answer, function() unlink(pidFile))
+  promises::finally(answer, function() unlink(c(pidFile, paste0(pidFile, ".stop"))))
 }

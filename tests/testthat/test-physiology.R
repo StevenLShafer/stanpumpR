@@ -312,7 +312,7 @@ test_that("the ke0 rationale renders on the help page", {
   expect_match(tab, "CO<sup>0.35</sup>")
   prop <- helpPhysiologyPropofolTable()
   expect_equal(length(strsplit(prop, "\n")[[1]]), 5L)
-  page <- helpExpandGenerated(paste(readLines(system.file("help", "models", "physiology.md",
+  page <- helpExpandGenerated(paste(readLines(system.file("app-help", "models", "physiology.md",
                                                            package = "stanpumpR")), collapse = "\n"))
   expect_false(grepl("<!-- generated:", page))
 })
@@ -452,7 +452,10 @@ test_that("the panel note counts the inhaled agents only when cardiac output mov
   expect_false(grepl("no physiology data", low))
   expect_false(grepl("oxygen|ventilation", low))
   liver <- txt(c(liver = 0.5))
-  expect_match(liver, "respond to cardiac output and body temperature only", fixed = TRUE)
+  # altitude and endobronchial intubation too (Carbon's second repository
+  # audit, A2-F24)
+  expect_match(liver, "respond to cardiac output, body temperature, altitude and endobronchial intubation only",
+               fixed = TRUE)
   expect_false(grepl("no physiology data yet): </strong>sevoflurane", liver, fixed = TRUE))
 })
 
@@ -462,7 +465,9 @@ test_that("simulateGases() keeps its positional arguments: physiology comes last
   args <- names(formals(simulateGases))
   expect_identical(args[1:9], c("doseTable", "weight", "age", "maximum", "cardiacOutput",
                                 "uptakeEffect", "circuit", "deadSpace", "oxygenUptake"))
-  expect_identical(utils::tail(args, 2), c("physiology", "temperature"))
+  expect_identical(utils::tail(args, 6),
+                   c("physiology", "temperature", "altitude", "endobronchial",
+                     "physiologyEvents", "haemoglobin"))
   # The old positional call that turns the uptake coupling off still does.
   expect_equal(simulateGases(SEVO_RUN, 70, 50, 30, NULL, FALSE)$results,
                simulateGases(SEVO_RUN, 70, 50, 30, uptakeEffect = FALSE)$results)
@@ -525,14 +530,20 @@ test_that("an oral tPeak counts every depot carrying drug, each with its lag", {
 
 test_that("the email workbook records the physiology sliders", {
   rows <- physiologyCovariateRows(c(cardiac = 0.5), 32)
-  expect_equal(nrow(rows), length(PHYSIOLOGY_FACTORS) + 1)
+  # The factors, the body temperature, the altitude (R/altitude.R) and
+  # endobronchial intubation (R/endobronchial.R) and the haemoglobin
+  # (R/arterialOxygen.R)
+  expect_equal(nrow(rows), length(PHYSIOLOGY_FACTORS) + 4)
+  expect_equal(rows$Value[grepl("Haemoglobin", rows$Covariate)], "15")
+  expect_equal(rows$Value[grepl("Endobronchial", rows$Covariate)], "no")
+  expect_equal(rows$Value[grepl("Altitude", rows$Covariate)], "0 (760 Torr)")
   expect_equal(rows$Value[rows$Covariate == "Body temperature (C)"], "32")
   expect_equal(physiologyCovariateRows(NULL)$Value[length(PHYSIOLOGY_FACTORS) + 1], "37")
   expect_equal(rows$Value[rows$Covariate == "Cardiac output (multiple of normal)"], "x0.5")
   expect_equal(rows$Value[rows$Covariate == "Liver function (multiple of normal)"], "normal")
   n <- length(PHYSIOLOGY_FACTORS)
   expect_true(all(physiologyCovariateRows(NULL)$Value[seq_len(n)] == "normal"))
-  expect_true(all(physiologyCovariateRows("x", "y")$Value == "unreadable"))
+  expect_true(all(utils::head(physiologyCovariateRows("x", "y", "z")$Value, -2) == "unreadable"))
 })
 
 # ---- Body temperature (Shafer, 2026-11-16) ----------------------------------
@@ -705,6 +716,7 @@ test_that("the physiology panel opens on what the sliders are for (Shafer, 2026-
   expect_match(html, 'id="physiology-controls" style="display: none;"', fixed = TRUE)
   tail <- substring(html, controls)
   for (id in c(physiologyInputId(PHYSIOLOGY_FACTORS), "physiology_temperature",
+               "physiology_altitude", "endobronchialIntubation",
                "physiologyReset", "physiologyNote"))
     expect_match(tail, paste0('id="', id, '"'), fixed = TRUE)
   # The statement: covariates belong in the Patient Profile, and a button
@@ -818,4 +830,64 @@ test_that("the antiseizure rows survive the interactions' rebuilds (2026-11-18)"
   expect_lt(abs(level(c(renal = 0.5)) / normal - 1), 0.1)
   # ethosuximide: Bauer 1982's renal share at steady state
   expect_equal(physiologyRow("ethosuximide")$fraction_renal, 0.25)
+})
+
+test_that("the remaining anaesthetic rows (2026-11-18)", {
+  cl <- function(d, ...) getDrugPK(d, 70, 170, 35, "male", ...)$PK[[1]]$cl1
+  for (d in c("fentanyl", "sufentanil", "hydromorphone", "ketamine",
+              "rocuronium", "vecuronium"))
+    expect_false(is.null(physiologyRow(d)), info = d)
+  # sufentanil: Lange's measured 0.92, hepatic 0.62, renal 0.02, the rest
+  # outside both
+  r <- physiologyRow("sufentanil")
+  expect_equal(cl("sufentanil", physiology = c(liver = 0.5)) / cl("sufentanil"),
+               0.38 + 0.62 * hepaticClearanceFactor(0.92, 1, 0.5),
+               tolerance = 1e-6)
+  # rocuronium: a third renal, so the renal slider moves it by a third
+  expect_equal(cl("rocuronium", physiology = c(renal = 0.1)) / cl("rocuronium"),
+               0.33 * 0.1 + 0.67, tolerance = 1e-6)
+  # hydromorphone's oral first pass follows its extraction ratio
+  expect_true(physiologyRow("hydromorphone")$oral_first_pass)
+  expect_lt(getDrugPK("hydromorphone", 70, 170, 35, "male",
+                      physiology = c(liver = 2))$PK[[1]]$bioavailability_PO,
+            getDrugPK("hydromorphone", 70, 170, 35, "male")$PK[[1]]$bioavailability_PO)
+})
+
+test_that("the high-extraction drugs (2026-11-18)", {
+  cl <- function(d, ...) getDrugPK(d, 70, 170, 35, "male", ...)$PK[[1]]$cl1
+  # A high-extraction drug follows cardiac output more than liver function
+  for (d in c("propranolol", "naloxone", "nicardipine")) {
+    r <- physiologyRow(d)
+    expect_gt(r$extraction_ratio, 0.6, label = d)
+    flow <- cl(d, physiology = c(cardiac = 0.5)) / cl(d)
+    capacity <- cl(d, physiology = c(liver = 0.5)) / cl(d)
+    expect_lt(flow, capacity, label = d)
+  }
+  # metoprolol's oral first pass follows its extraction ratio
+  expect_true(physiologyRow("metoprolol")$oral_first_pass)
+  # clearances above hepatic blood flow are held back, not forced
+  expect_null(physiologyRow("oxymorphone"))
+  expect_null(physiologyRow("labetalol"))
+})
+
+test_that("the kidney-cleared drugs (2026-11-18)", {
+  cl <- function(d, ...) getDrugPK(d, 70, 170, 35, "male", ...)$PK[[1]]$cl1
+  # amikacin: 0.98 renal, nothing hepatic, so the renal slider carries it
+  # and the liver slider does nothing
+  expect_equal(cl("amikacin", physiology = c(renal = 0.5)) / cl("amikacin"),
+               0.98 * 0.5 + 0.02, tolerance = 1e-6)
+  expect_equal(cl("amikacin", physiology = c(liver = 0.1)), cl("amikacin"))
+  # metformin and gabapentin are wholly renal
+  for (d in c("metformin", "gabapentin"))
+    expect_equal(cl(d, physiology = c(renal = 0.1)) / cl(d), 0.1,
+                 tolerance = 1e-6, label = d)
+})
+
+test_that("the local anaesthetics (2026-11-18)", {
+  # bupivacaine and mepivacaine have rows; lidocaine and ropivacaine form
+  # their toxic metabolites at their own rate and are not scaled
+  expect_false(is.null(physiologyRow("bupivacaine")))
+  expect_false(is.null(physiologyRow("mepivacaine")))
+  expect_true(physiologyUnsupported(lidocaine(70, 170, 35, "male")))
+  expect_true(physiologyUnsupported(ropivacaine(70, 170, 35, "male")))
 })

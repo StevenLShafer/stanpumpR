@@ -7,7 +7,7 @@
 # concentrations in ng/mL of pimavanserin.
 #
 # Drafted by Claude Code, 2026-10-19, at the request of Steven L. Shafer
-# (inst/help/models/parkinsons.md, inst/extdata/parkinsonsRegistry.csv).
+# (inst/app-help/models/parkinsons.md, inst/extdata/parkinsonsRegistry.csv).
 #
 # THE SOURCE
 # ==========

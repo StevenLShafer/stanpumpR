@@ -2,7 +2,7 @@
 % Please edit documentation in R/drugs_semaglutideOral.R
 \name{semaglutideOral}
 \alias{semaglutideOral}
-\title{Oral semaglutide pharmacokinetics (Rybelsus)}
+\title{Oral semaglutide pharmacokinetics (Rybelsus), outpatient use}
 \usage{
 semaglutideOral(weight, height, age, sex, adjustToFFM = TRUE)
 }
@@ -26,6 +26,7 @@ it also sets the weight the creatinine-clearance estimate uses.}
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-Two compartments with first-order oral absorption at the recommended
-dosing conditions (Overgaard 2021); see the header of the file.
+Two compartments with first-order oral absorption, the bioavailability
+estimated in the PIONEER trials (Overgaard 2021, Cell Rep Med); see the
+header of the file.
 }

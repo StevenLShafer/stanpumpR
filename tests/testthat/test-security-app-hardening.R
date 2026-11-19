@@ -77,7 +77,9 @@ test_that("a link's event table keeps only known events at readable times", {
   r <- restoredEventTable(list(Time = c(5, 10, -1, NA), Event = c(known, "<img>", known, known)),
                           ev, eventTableInit)
   expect_true(r$changed)
-  expect_identical(r$table, data.frame(Time = 5, Event = known, stringsAsFactors = FALSE))
+  # (Settings: a Physiology row's, "" for every other event; R/physiologyEvents.R)
+  expect_identical(r$table, data.frame(Time = 5, Event = known, Settings = "",
+                                       stringsAsFactors = FALSE))
   expect_true(validateEventTableInput(r$table, ev))
   # no Event column stopped the restore part way
   expect_identical(restoredEventTable(list(Foo = 1), ev, eventTableInit)$table, eventTableInit)
@@ -140,7 +142,7 @@ test_that("the page's own policy: CSP directives, referrer, and an inline script
 # merged change could carry script.  What they render to may hold none.
 test_that("the rendered help and API guide carry no script, handler or foreign embed", {
   root <- system.file(package = "stanpumpR")
-  files <- c(list.files(file.path(root, "help"), "\\.md$", recursive = TRUE, full.names = TRUE),
+  files <- c(list.files(file.path(root, "app-help"), "\\.md$", recursive = TRUE, full.names = TRUE),
              list.files(file.path(root, "apidocs"), "\\.md$", recursive = TRUE, full.names = TRUE))
   expect_gt(length(files), 100)
   bad <- "<script|<iframe|<object|<embed|<form|<base[ >]|<meta[ >]|<link[ >]|javascript:|\\son[a-z]+\\s*=|src=\"(https?:)?//"

@@ -112,9 +112,22 @@ function gasRunProblem(r, n) {
     if (r.circuit != null && !['ideal', 'semi-closed', 'open'].includes(r.circuit)) return 'circuit must be "ideal", "semi-closed" or "open".';
     // The blood, the cardiac output, the alveolar ventilation and the
     // greenhouse effect (2026-11-17): optional, so an older run still loads.
-    for (const [k, min] of [['venous', 0], ['alveolarVentilation', 0]])
+    // Arterial blood (2026-11-19): only where an endobronchial tube shunts
+    // blood past the ventilated lung; otherwise it is the end-tidal.
+    for (const [k, min] of [['venous', 0], ['alveolarVentilation', 0], ['arterial', 0]])
         if (r[k] != null) { const q = arr(r[k], k, min); if (q) return q; }
-    if (r.cardiacOutput != null && !(Number.isFinite(r.cardiacOutput) && r.cardiacOutput > 0)) return 'cardiacOutput must be a number above 0.';
+    // The arterial oxygen with an endobronchial tube (2026-11-19): SaO2 in %,
+    // PaO2 in mmHg, both or neither
+    if ((r.saturation == null) !== (r.paO2 == null)) return 'saturation and paO2 come together.';
+    for (const k of ['saturation', 'paO2'])
+        if (r[k] != null) { const q = arr(r[k], k, 0); if (q) return q; }
+    if (r.saturation != null && r.saturation.some(x => x > 100)) return 'saturation must be at most 100.';
+    // One number, or one per time (physiology events, 2026-11-19)
+    if (r.cardiacOutput != null) {
+        const co = Array.isArray(r.cardiacOutput) ? r.cardiacOutput : [r.cardiacOutput];
+        if (Array.isArray(r.cardiacOutput) && co.length !== r.t.length) return 'cardiacOutput must have one value per time.';
+        if (!co.every(x => Number.isFinite(x) && x > 0)) return 'cardiacOutput must be a number above 0.';
+    }
     if (r.greenhouse != null) {
         const g = r.greenhouse;
         if (typeof g !== 'object') return 'greenhouse must give gwp100, kgPerLitre, lifetime and carKgPerYear.';
@@ -187,9 +200,12 @@ Object.assign(Player, {
             into[k] = sc * r.capacity[k] * slope(r.p[k]);
         }
         const blood = into.vrg + into.mg + into.fg;
-        // The blood: arterial at end-tidal, mixed venous from the run.
+        // The blood: arterial at end-tidal (or the run's own, with a shunt),
+        // mixed venous from the run.
         let venous = null;
         if (r.venous) { const x = Math.max(0, lerp(r.venous)); venous = x < this.tiny ? 0 : x; }
+        let arterial = p.lungs;
+        if (r.arterial) { const x = Math.max(0, lerp(r.arterial)); arterial = x < this.tiny ? 0 : x; }
         const delivered = lerp(r.delivered);
         // The greenhouse effect: kg of CO2 equivalent in the agent delivered,
         // and at the rate the fresh gas brings it now (mL/min to kg/h).
@@ -197,14 +213,16 @@ Object.assign(Player, {
         const freshNow = sc * r.freshFlow[j] * r.fresh[j];
         return {
             t: T, gas: true, p, A, held,
-            arterial: p.lungs, venous,
+            arterial, venous,
+            saturation: r.saturation ? lerp(r.saturation) : null,
+            paO2: r.paO2 ? lerp(r.paO2) : null,
             // What the tissues hold is all the blood has taken from the lungs
             // since time 0: the engine's blood holds none and nothing is
             // metabolised.
             uptake: A.vrg + A.mg + A.fg,
             delivered, vented: lerp(this.vented),
             co2e: g ? kgCO2e(delivered) : null, co2eRate: g ? kgCO2e(freshNow) * 60 : null,
-            cardiacOutput: r.cardiacOutput != null ? r.cardiacOutput : null,
+            cardiacOutput: r.cardiacOutput == null ? null : Array.isArray(r.cardiacOutput) ? r.cardiacOutput[j] : r.cardiacOutput,
             alveolarVentilation: r.alveolarVentilation ? r.alveolarVentilation[j] : null,
             fresh: r.fresh[j], freshFlow: r.freshFlow[j], ventilation: r.ventilation[j],
             flow: {
@@ -237,7 +255,8 @@ Object.assign(Player, {
         const co = st.cardiacOutput != null ? `<span class="k">Cardiac output</span> ${L(st.cardiacOutput)} L/min` : '';
         // Arterial blood is at end-tidal in the engine; mixed venous after it.
         // In the colour of its bar (2D) and its ring on the lungs' glass (3D).
-        const blood = st.venous != null ? ` · <span class="k">Mixed venous</span> <span class="ven">${c(st.venous)}</span>` : '';
+        const blood = (r.arterial ? ` · <span class="k">Arterial</span> ${c(st.arterial)}` : '') +
+            (st.venous != null ? ` · <span class="k">Mixed venous</span> <span class="ven">${c(st.venous)}</span>` : '');
         // As many lines as before the blood and the cardiac output were added
         // (2026-11-17): a taller card leaves the 3D view's starting view less
         // room, and the circuit goes in the foot.

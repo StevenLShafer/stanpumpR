@@ -60,8 +60,12 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# No size covariate: the volumes and clearances scale by the library's factors
-# with the switch on and are fixed with it off.
+# No size covariate, so the values are the cohort's typical patient's: women
+# only, median 62.8 kg, 157 cm, 57 years (Table 1).  With the switch on they
+# are anchored at that woman (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort): the 70 kg reference man's volumes are divided by 0.720 and
+# clearances by 0.781, his fat-free mass being well above hers.  With the
+# switch off they are fixed, as published.
 #
 # PREGNANCY (R/pregnancy.R)
 # =========================
@@ -108,6 +112,12 @@ epirubicinClearance <- function(ast = NULL)
   p$cl * (1 - p$astSlope * log(a))
 }
 
+# Ralph 2003, Table 1 (printed p. 36), read on the PDF 2026-11-18: the 109
+# women's medians, 62.8 kg, 157 cm, 57 years (105 were modelled; no separate
+# table).  The model is anchored at this cohort (docs/weight-adjustment.md,
+# Anchoring at the source's cohort).
+EPIRUBICIN_COHORT <- list(weight = 62.8, height = 157, age = 57, men = 0, women = 109)
+
 #' Epirubicin, intravenous (Ralph 2003)
 #'
 #' Three compartments, clearance set by the serum AST; see the header of
@@ -125,7 +135,7 @@ epirubicin <- function(weight, height, age, sex, adjustToFFM = TRUE, ast = NULL,
   p <- EPIRUBICIN_RALPH
   preg <- if (isTRUE(pregnant)) EPIRUBICIN_PREGNANCY else list(cl = 1, v1 = 1, v2 = 1)
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1, cohort = do.call(cohortSizeFactors, EPIRUBICIN_COHORT))
 
   default <- list(
     v1  = p$v1 * size$volume * preg$v1,

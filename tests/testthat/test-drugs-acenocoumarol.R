@@ -65,12 +65,15 @@ test_that("the switch on uses the fat-free-mass weight and library factors", {
   # 120 kg, 170 cm, 50 y man, switch on: fat-free-mass factors 1.3049067
   # (volumes) and 1.2209126 (clearances), pharmacokinetic weight 91.343469 kg
   # (the factors pinned in test-drugs-alfentanil.R).
+  # CL, Q and V2 are anchored at Verstuyft's cohort (A2-F4, 2026-11-19), so
+  # their factors are divided by the cohort's.
   pkW <- 91.343469; vol <- 1.3049067; clr <- 1.2209126
+  kc <- cohortFactorsIndependent(VERSTUYFT_2012_COHORT)
   m <- acenocoumarol(120, 170, 50, "male")
   expect_equal(m$PK$default$v1, 24.7 * (pkW / 69), tolerance = 1e-6)  # own covariate
-  expect_equal(m$PK$default$cl1, 15.3 * clr / 60, tolerance = 1e-6)   # size-free CL
-  expect_equal(m$PK$default$cl2, 4.85 * clr / 60, tolerance = 1e-6)   # size-free Q
-  expect_equal(m$PK$default$v2, 52.5 * vol, tolerance = 1e-6)         # size-free V2
+  expect_equal(m$PK$default$cl1, 15.3 * clr / kc$clearance / 60, tolerance = 1e-6)  # size-free CL
+  expect_equal(m$PK$default$cl2, 4.85 * clr / kc$clearance / 60, tolerance = 1e-6)  # size-free Q
+  expect_equal(m$PK$default$v2, 52.5 * vol / kc$volume, tolerance = 1e-6)           # size-free V2
 })
 
 test_that("invalid genotypes are rejected", {
@@ -105,4 +108,35 @@ test_that("the steady-state INR follows Table IV's covariate directions", {
   # *3 carrier > wild type; the sensitive AA > the less-sensitive GG.
   expect_gt(endOf("*1/*3", "AA"), endOf("*1/*1", "AA"))
   expect_gt(endOf("*1/*3", "AA"), endOf("*1/*3", "GG"))
+})
+
+test_that("anchored at Verstuyft's cohort: its typical subject receives the published CL, Q and V2 (A2-F4)", {
+  # The cohort is fluindione's (VERSTUYFT_2012_COHORT, R/drugs_acenocoumarol.R):
+  # the same 24 subjects took both drugs.  CL, Q and V2 have no sex term and
+  # are anchored at the pooled subject: the 24 men and women, each at their
+  # own CYP2C9 group's values, receive the published values on the geometric
+  # mean (the wild-type CL; the *3 factor is a genotype term).
+  subjects <- list(list(71.4, 23.6, 28.5, "male", 10), list(71.4, 23.6, 28.5, "female", 1),
+                   list(67.8, 22.4, 26.8, "male", 9), list(67.8, 22.4, 26.8, "female", 4))
+  l <- c(cl1 = 0, cl2 = 0, v2 = 0)
+  for (s in subjects) {
+    x <- acenocoumarol(s[[1]], 100 * sqrt(s[[1]] / s[[2]]), s[[3]], s[[4]],
+                       cyp2c9 = "*1/*1")$PK$default
+    for (p in names(l)) l[[p]] <- l[[p]] + s[[5]] * log(x[[p]])
+  }
+  expect_equal(exp(l[["cl1"]] / 24) * 60, 15.3, tolerance = 1e-9)
+  expect_equal(exp(l[["cl2"]] / 24) * 60, 4.85, tolerance = 1e-9)
+  expect_equal(exp(l[["v2"]] / 24), 52.5, tolerance = 1e-9)
+  # V1 keeps its own weight term at the pharmacokinetic weight
+  h <- 100 * sqrt(67.8 / 22.4)
+  s <- pkSizeFactors(67.8, h, 26.8, "female")
+  expect_equal(acenocoumarol(67.8, h, 26.8, "female")$PK$default$v1, 24.7 * s$pkWeight / 69,
+               tolerance = 1e-9)
+  # The *3 factor still multiplies the anchored CL
+  kc <- cohortFactorsIndependent(VERSTUYFT_2012_COHORT)
+  expect_equal(acenocoumarol(67.8, h, 26.8, "female", cyp2c9 = "*1/*3")$PK$default$cl1 * 60,
+               15.3 * 0.7 * s$clearance / kc$clearance, tolerance = 1e-6)
+  # The switch off is unchanged
+  off <- acenocoumarol(67.8, h, 26.8, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(off$cl1 * 60, 15.3); expect_equal(off$cl2 * 60, 4.85); expect_equal(off$v2, 52.5)
 })

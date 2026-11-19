@@ -41,7 +41,12 @@ test_that("120 mg/m2 x 2.0 m2 over 1 h on days 1 and 2: Cmax and AUC near the pa
 test_that("both switch positions are pinned", {
   on <- bendamustine(70, 170, 35, "male")$PK$default
   off <- bendamustine(70, 170, 35, "male", adjustToFFM = FALSE)$PK$default
-  expect_equal_rounded(on$cl1, off$cl1)
+  # Anchored at Owen's cohort (Table 1: 85 kg, BSA 2.0 m2 so 169.4 cm by
+  # Mosteller, 58.5 years, 50 men and 28 women)
+  kc <- cohortFactorsIndependent(list(weight = 85, height = 169.4,   # 3600 x 2.0^2 / 85, to 0.1 cm
+                                      age = 58.5, men = 50, women = 28))
+  expect_equal_rounded(on$cl1, off$cl1 / kc$clearance)
+  expect_equal_rounded(on$v1, off$v1 / kc$volume)
   big <- bendamustine(120, 170, 35, "male")$PK$default
   expect_gt(big$cl1, on$cl1)
   expect_equal(bendamustine(120, 170, 35, "male", adjustToFFM = FALSE)$PK$default$cl1,

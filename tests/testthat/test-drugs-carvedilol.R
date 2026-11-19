@@ -75,18 +75,27 @@ test_that("the size switch leaves the published model unscaled when off", {
   # published values, whatever their size
   expect_equal_rounded(V1_F, off$v1)
   expect_equal_rounded(CL_F, off$cl1 * 60)
-  # With the switch on, a larger patient is scaled up from the reference man
+  # With the switch on, a larger patient is scaled up from Hwang's men
   on <- getDrugPK("carvedilol", 120, 180, 50, "male",
                   adjustToFFM = TRUE)$PK$default
   expect_gt(on$v1, off$v1)
   expect_gt(on$cl1, off$cl1)
-  # And the reference man is the anchor, where the two agree
+  # Anchored at Hwang's men (Table 1, by CYP2D6 group): the volumes and Q at
+  # all 21, CL/F at the 13 extensive and intermediate-1 metabolisers it
+  # describes.  The reference man's values are the published ones over the
+  # cohort's factors.
+  g <- function(w, h, a, n) list(weight = w, height = h, age = a, men = n, women = 0)
+  all21 <- cohortFactorsIndependent(list(groups = list(g(79.3, 175.5, 28.5, 6),
+    g(69.5, 174.9, 29.6, 7), g(64.5, 172.6, 24.4, 8))))
+  cl13 <- cohortFactorsIndependent(list(groups = list(g(79.3, 175.5, 28.5, 6),
+    g(69.5, 174.9, 29.6, 7))))
   refOn  <- getDrugPK("carvedilol", 70, 170, 35, "male",
                       adjustToFFM = TRUE)$PK$default
-  refOff <- getDrugPK("carvedilol", 70, 170, 35, "male",
-                      adjustToFFM = FALSE)$PK$default
-  expect_equal_rounded(refOff$v1, refOn$v1)
-  expect_equal_rounded(refOff$cl1, refOn$cl1)
+  expect_equal_rounded(V1_F / all21$volume, refOn$v1)
+  expect_equal_rounded(CL_F / cl13$clearance, refOn$cl1 * 60)
+  r <- ffmRatioMaleIndependent(120, 180, 50)
+  expect_equal_rounded(V1_F * r / all21$volume, on$v1)
+  expect_equal_rounded(CL_F * r^0.75 / cl13$clearance, on$cl1 * 60)
 })
 
 test_that("the CYP2D6 effect is recorded but deliberately not applied", {

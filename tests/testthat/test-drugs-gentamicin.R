@@ -33,10 +33,10 @@ test_that("scales to fat-free mass for a 120 kg man", {
   actual <- gentamicin(120, 170, 50, "male")
   expected <- list(
     v1 = 21.66145,
-    v2 = 17.485749,
+    v2 = 17.485749 / cohortFactorsIndependent(GENTAMICIN_COHORT)$volume,       # Vp anchored (A2-F4)
     v3 = 1,
     cl1 = 0.092418069,
-    cl2 = 0.030115845,
+    cl2 = 0.030115845 / cohortFactorsIndependent(GENTAMICIN_COHORT)$clearance,  # Q anchored (A2-F4)
     cl3 = 0
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
@@ -58,10 +58,12 @@ test_that("the Pregnant field applies the review's factor (R/pregnancy.R)", {
   # checks the ratio against the flag off and that nothing else moves.
   actual <- gentamicin(70, 165, 30, "female", pregnant = TRUE)$PK$default
   expect_equal_rounded(13.38117788, actual$v1)
-  expect_equal_rounded(10.80167371, actual$v2)
+  expect_equal_rounded(10.80167371 / cohortFactorsIndependent(GENTAMICIN_COHORT)$volume,
+                       actual$v2)    # Vp anchored at Smit's cohort (A2-F4)
   expect_equal_rounded(1, actual$v3)
   expect_equal_rounded(0.1102026358, actual$cl1)
-  expect_equal_rounded(0.02098457399, actual$cl2)
+  expect_equal_rounded(0.02098457399 / cohortFactorsIndependent(GENTAMICIN_COHORT)$clearance,
+                       actual$cl2)   # Q anchored at Smit's cohort (A2-F4)
   expect_equal_rounded(0, actual$cl3)
   expect_equal(gentamicin(70, 165, 30, "female")$PK$default,
                gentamicin(70, 165, 30, "female", pregnant = FALSE)$PK$default)
@@ -84,4 +86,24 @@ test_that("pregnancy: a measured creatinine gives no pregnancy change", {
   # with the creatinine blank the factor is applied
   expect_gt(gentamicin(70, 165, 30, "female", pregnant = TRUE)$PK$default$cl1,
             gentamicin(70, 165, 30, "female")$PK$default$cl1)
+})
+
+test_that("anchored at Smit's cohort: its typical patient receives the published Q and Vp (A2-F4)", {
+  # Table 1: 347 men and 195 women, median 69.5 y, 90 kg, 175 cm.  Q and Vp
+  # have no sex term and are anchored at the pooled patient, the cohort's man
+  # and woman on the geometric mean; Vc and the renal CL keep their own terms.
+  kc <- cohortFactorsIndependent(GENTAMICIN_COHORT)
+  expect_equal(kc$volume, 1.0963, tolerance = 1e-3)
+  expect_equal(kc$clearance, 1.0714, tolerance = 1e-3)
+  m <- gentamicin(90, 175, 69.5, "male")$PK$default
+  w <- gentamicin(90, 175, 69.5, "female")$PK$default
+  pooled <- function(x, y) exp((347 * log(x) + 195 * log(y)) / 542)
+  expect_equal(pooled(m$v2, w$v2), 13.4, tolerance = 1e-9)
+  expect_equal(pooled(m$cl2, w$cl2) * 60, 1.48, tolerance = 1e-9)
+  # Vc is not anchored: 16.6 L x pharmacokinetic weight / 70
+  expect_equal(m$v1, 16.6 * pkSizeFactors(90, 175, 69.5, "male")$pkWeight / 70, tolerance = 1e-9)
+  # The switch off is unchanged
+  off <- gentamicin(90, 175, 69.5, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(off$v2, 13.4); expect_equal(off$cl2 * 60, 1.48)
+  expect_equal(off$v1, 16.6 * 90 / 70)
 })

@@ -310,7 +310,11 @@ writeWorkbook <- function(values, allResults, plotResults, drugs, file) {
       if (isTRUE(values$antiseizureInteractions)) "yes" else "no"
     ))
   covariates <- rbind(covariates, physiologyCovariateRows(values$physiology,
-                                                         values$temperature))
+                                                         values$temperature,
+                                                         values$altitude,
+                                                         values$endobronchial,
+                                                         values$physiologyEvents,
+                                                         values$haemoglobin))
   covariates <- rbind(covariates, plotTimeSettings(values$maximum, timeUnit))
   outputComments("Writing covariates")
   openxlsx::addWorksheet(wb, "Covariates")

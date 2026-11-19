@@ -2,8 +2,9 @@
 # Glyburide (glibenclamide): two compartments, oral
 # -----------------------------------------------------------------------------
 # Units: time in minutes, volumes in litres, clearances in L/min,
-# concentrations in ng/mL.  Concentration only: no glucose or insulin effect
-# is plotted, and the active metabolites M1 and M2 are not modelled.  Drafted
+# concentrations in ng/mL.  No glucose or insulin effect is plotted, and the
+# active metabolites M1 and M2 are not modelled; the effect site (below) is
+# glyburide's own.  Drafted
 # by Claude Code, 2026-10-17, at the request of Steven L. Shafer; see the
 # antidiabetic registry, inst/extdata/antidiabeticRegistry.csv.
 #
@@ -23,8 +24,44 @@
 # studies.  The PD companion paper's EC50 (printed 85.20 mg/L, likely
 # mcg/L) is an endpoint of its own and is not used.
 #
-# BODY SIZE: no covariates; the parameters are scaled by the library's
-# fat-free-mass factors, fixed with the switch off (legacyVolume = 1).
+# EFFECT SITE (Steven L. Shafer's decision, 2026-11-19)
+# ===========
+# Rydberg T, Jonsson A, Karlsson MO, Melander A.  Concentration-effect
+# relations of glibenclamide and its active metabolites in man: modelling of
+# pharmacokinetics and pharmacodynamics.  Br J Clin Pharmacol 1997;43:
+# 373-381 (PMID 9146849, read in full).  Eight healthy volunteers, 3.5 mg
+# intravenously and orally in a crossover, with intravenous doses of the
+# metabolites M1 and M2; effect, the percent fall in blood glucose against
+# placebo.  Glibenclamide's own effect compartment: ke0 1.59 /h (CV 36%),
+# Emax 56%, CEss50 108 ng/mL (Table 4), on its absolute disposition (Table
+# 3: V1 3.63 L, k10 1.30 /h, k12 0.447 /h, k21 0.916 /h).  On that
+# disposition an intravenous bolus puts the effect-site peak at 38 minutes.
+# It is the only measured glyburide effect site: Rambiritch's own PK/PD
+# companion (Clin Pharmacol 2016;8:141-153, PMID 27713650) found no direct
+# concentration-effect relation and drove its glucose model by dose.
+#
+# ke0 is supplied directly, GLYBURIDE_KE0 = 1.59 /h, not as the 38-minute
+# tPeak (Claude Code, 2026-11-19, departing from the tPeak Shafer approved,
+# for the reason the insulins' effect site gives, R/insulinEffectSite.R; the
+# departure accepted by Shafer the same day):
+# Rambiritch's model is an apparent fit to oral data whose plasma falls far
+# more slowly than Rydberg's measured intravenous disposition (k10 0.18
+# against 1.30 /h), so a 38-minute tPeak solved on it gives ke0 = 3.7 /h,
+# 2.3 times the measured value, and an effect that follows plasma almost
+# without delay.  getDrugPK() solves this model's own time to peak effect
+# from the ke0.
+#
+# What the effect site leaves out: M1 and M2 lower glucose too, more potently
+# at low concentrations (CEss50 23 and 37 ng/mL) and more slowly (ke0 0.178
+# and 0.479 /h), so the glucose-lowering effect outlasts the parent's effect
+# site; the library has no model of either metabolite.  MEAC and the band
+# stay 0 (concentration only).
+#
+# BODY SIZE: no covariates, so the parameters are the cohort's typical
+# patient's (71.1 kg, 156 cm, 20 of 22 women); with the switch on they are
+# anchored at that patient (GLYBURIDE_COHORT; Steven L. Shafer, 2026-11-18),
+# the reference man's volumes divided by 0.782 and clearances by 0.832, and
+# with it off fixed (legacyVolume = 1).
 #
 # PREGNANCY
 # =========
@@ -69,6 +106,16 @@
 GLYBURIDE_PREGNANCY_CL_FACTOR <- 1.9
 GLYBURIDE_PREGNANCY_V_FACTOR  <- 1.57
 
+# Rambiritch 2016, Table 1 (printed p. 85), read on the PDF 2026-11-18: means
+# 71.1 kg, 156 cm, 54 years, 2 men and 20 women (Table 1 accounts for 22 of
+# the 24 enrolled).  The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort). Factors 0.782 on
+# volume, 0.832 on clearance.
+GLYBURIDE_COHORT <- list(weight = 71.1, height = 156, age = 54, men = 2, women = 20)
+
+# Rydberg 1997, Table 4: glibenclamide's own ke0 (see the header).
+GLYBURIDE_KE0 <- 1.59   # /h
+
 #' Glyburide (glibenclamide) pharmacokinetics (oral)
 #'
 #' Two compartments with first-order absorption (Rambiritch 2016); see the
@@ -82,7 +129,7 @@ GLYBURIDE_PREGNANCY_V_FACTOR  <- 1.57
 glyburide <- function(weight, height, age, sex, adjustToFFM = TRUE,
                       pregnant = FALSE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, GLYBURIDE_COHORT))
   # Pregnancy (see the header): CL/F and both volumes; Q/F unchanged.
   clPregnancy <- if (isTRUE(pregnant)) GLYBURIDE_PREGNANCY_CL_FACTOR else 1
   vPregnancy  <- if (isTRUE(pregnant)) GLYBURIDE_PREGNANCY_V_FACTOR else 1
@@ -102,7 +149,10 @@ glyburide <- function(weight, height, age, sex, adjustToFFM = TRUE,
   reference <- paste0(
     "Rambiritch 2016 (24 adults with type 2 diabetes): two compartments, ka ",
     "0.53/h, CL/F 2.16 L/h, Vc/F 11.7 L, Q/F 3.84 L/h, Vp/F 68.1 L; no ",
-    "covariates; concentration only. https://doi.org/10.2147/CPAA.S102676"
+    "covariates. Effect site: Rydberg 1997's ke0 1.59/h (healthy volunteers, ",
+    "IV and oral, Br J Clin Pharmacol 43:373); the active metabolites are not ",
+    "modelled. ",
+    "https://doi.org/10.2147/CPAA.S102676"
   )
   if (isTRUE(pregnant)) {
     reference <- paste0(reference, "; ", pregnancyReference(
@@ -113,7 +163,7 @@ glyburide <- function(weight, height, age, sex, adjustToFFM = TRUE,
   }
 
   list(
-    PK = PK, tPeak = 0, MEAC = 0,
+    PK = PK, ke0 = GLYBURIDE_KE0 / 60, MEAC = 0,
     typical = 0, upperTypical = 0, lowerTypical = 0,
     reference = reference
   )

@@ -78,7 +78,7 @@ test_that("a click on a formed metabolite's panel goes to the drug forming it", 
 })
 
 # -----------------------------------------------------------------------------
-# The generated pharmacokinetic table on inst/help/models/illicit-drugs.md.
+# The generated pharmacokinetic table on inst/app-help/models/illicit-drugs.md.
 # These seven models differ more from one another than the rest of the library
 # does, so the models page carries one table comparing them, built from the
 # models rather than typed, so that it cannot drift from them.

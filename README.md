@@ -1,6 +1,6 @@
 # stanpumpR
 
-![](../../workflows/R-CMD-check/badge.svg)
+[![R-CMD-check](https://github.com/StevenLShafer/stanpumpR/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/StevenLShafer/stanpumpR/actions/workflows/check-standard.yaml)
 
 stanpumpR, a PK/PD simulation program
 Copyright 2019-2026 Steven L. Shafer and contributors, steven.shafer@stanford.edu.
@@ -19,6 +19,10 @@ stanpumpR uses almost none of the original STANPUMP code. However, conceptually 
 stanpumpR also has a program to extract pharmacokinetics from published papers and permit generalized simulations using the extracted values.
 
 The pharmacokinetic algorithms in stanpumpR are based on mathematics, supported primarily by the peer-reviewed literature. The only exceptions are cases where the peer-reviewed literature is absent, in which case the pharmacokinetics are taken from either FDA or EMA monographs. If you ask, "I have a patient with Crohn's disease. How will that affect phenytoin metabolism?", stanpumpR won't know. However, let's say a study documented reduced absorption of phenytoin in patients with Crohn's disease. I could upload that paper, extract the mathematical model, and have stanpumpR include a checkbox for Crohn's disease if phenytoin is simulated.
+
+That literature reaches stanpumpR through Lane Medical Library at Stanford University: its licensed collections for the current journals, and its document delivery service for the older and more obscure papers, some of which are not online anywhere. A model is only as good as the paper it was read from, and in this project the paper is almost always read in full rather than from its abstract, which is possible only because Lane makes it possible. Stanford's library resources made stanpumpR possible. I am deeply grateful to Stanford and to Lane Medical Library for the resources they provide to Stanford faculty, which make projects like stanpumpR possible.
+
+What the papers say is public; the papers themselves are not. Each one is read and condensed into a digest — what the model is, which numbers were read and from which table, what the paper leaves open, and what could not be verified — and those digests are in this repository, in [`papers/digests/`](papers/digests/), one per paper. The journal articles they were made from are copyrighted, so I keep those privately and they are not distributed; the FDA prescribing information is a public document, so those PDFs are in the repository, in [`papers/labels/`](papers/labels/). The digests hold facts and paraphrase rather than copies, which is what makes publishing them possible, and they are what the models are actually built from: when a drug's parameters are questioned, the digest is the record of where each number came from. They are audited regularly for accuracy by large language models — Claude, Gemini and ChatGPT — which is how transcription errors and misread tables are caught.
 
 I want to give a shout-out to Claude Code, which is my primary programming engine. Most of the expansion of stanpumpR in the past year has been implemented by Claude Code (Opus 5.5 or Fable 5.1). Claude Code can interpret the PK of an uploaded manuscript. Claude Code rigorously inspects each PK paper I upload, including simulations of the graphs to see if the PK actually describe the data. It also checks that the reported PK parameters are internally consistent (e.g., does Clearance = Dose / AUC after an intravenous dose, or CL/F = Dose / AUC after an oral dose, where F is the bioavailability, and are the half-lives correctly calculated from the volumes and clearances for multicompartmental models).
 
@@ -59,7 +63,7 @@ stanpumpR is open source, under the MIT License, which means anyone may use, cop
 - **The in-app help** — the **Help** tab in the running app: a user's guide, a generated page
   for every drug (parameters at reference patients, citation, units), the models and methods,
   loadable teaching scenarios, the investigators, and a map of this repository. The hand-written
-  pages are Markdown in [`inst/help/`](inst/help/) (see [`inst/help/README.md`](inst/help/README.md));
+  pages are Markdown in [`inst/app-help/`](inst/app-help/) (see [`inst/app-help/README.md`](inst/app-help/README.md));
   the drug and scenario pages are generated from the code by `R/help-drugs.R` and
   `R/help-scenarios.R`.
 

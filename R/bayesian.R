@@ -927,7 +927,9 @@ bayesianAtPhysiology <- function(drawn, priors, rebuild)
     if (is.null(e$companionOf) && !is.null(e$bayesian) && !is.null(e$individual))
       estimates[[d]] <- e$individual
   }
-  if (length(estimates) == 0) return(drawn)
+  # With no estimate every drug is the model's own at the physiology, its
+  # events included (ChatGPT's review of PR #796, finding 2: a level that
+  # gave no fit returned the normal-physiology drugs, events lost)
   out <- drawn
   for (d in names(drawn)) {
     e <- drawn[[d]]

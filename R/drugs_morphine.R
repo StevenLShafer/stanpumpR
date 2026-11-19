@@ -17,7 +17,11 @@
 # model with a size covariate of its own (naloxone, acetaminophen): Q3 takes
 # it in both switch positions, and the other five parameters are the
 # published values with the switch off and take the fat-free-mass scaling
-# with it on.  Body surface area is Du Bois (bsaDuBois(), R/renalFunction.R).
+# with it on, anchored since 2026-11-19 at Lotsch's eight subjects
+# (MORPHINE_COHORT): a covariate on Q3 does not exempt the others (Shafer,
+# after Carbon's second repository audit, A2-F4).  Before, they scaled from
+# the 70 kg reference man, and Lotsch's own typical subject received
+# clearances 6% and volumes 2% below the published values.  Body surface area is Du Bois (bsaDuBois(), R/renalFunction.R).
 # BOUNDED: a fourth power of body surface area from eight young adults is an
 # extrapolation outside the adult range, and in a small child it would make
 # Q3 tiny (0.6 L/h at 0.8 m2) so that the deep compartment hardly filled.
@@ -25,6 +29,16 @@
 # MORPHINE_BSA_RANGE, 1.5 to 2.2 m2: below 1.5 m2 Q3 holds its 1.5 m2 value,
 # 8.8 L/h, and above 2.2 m2 its 2.2 m2 value, 40.7 L/h.  (Steven L. Shafer's
 # decision, 2026-10-14, on the PR that introduced the covariate.)
+# WHICH CLEARANCE: the paper contradicts itself (Carbon's repository audit,
+# 2026-11-18; read on the PDF). Table II (printed p. 157) puts (BSA/1.83)^4 on
+# Q3M (19.5 L/h, the slow compartment), but the Results (p. 156) say BSA was
+# linked to the clearance between the central and the FAST peripheral
+# compartment (Q2M, 136 L/h). The table governs (Steven L. Shafer's decision,
+# 2026-11-18): for the table to be wrong, both Q2M and Q3M in model A would
+# have to be misprinted, and model B puts BSA on V3M, which is highly
+# correlated with Q3M, so both models place BSA on the slow compartment; the
+# text's "fast" for "slow" is a single slip, the easier one to pass review.
+# See papers/digests/PMID_12189362.md.
 #
 # EFFECT SITE AND MEAC are not from Lotsch 2002, which measured no effect.
 # tPeak 93.8 min is the library's own value, carried from the program's
@@ -63,8 +77,10 @@
 #     tmax 0.75 h for both, and AUC within 10% across every formulation.
 #     Sets how much faster the liquid is absorbed.
 #
-# Bioavailability is set from the pivotal tablet AUC on Lotsch's clearance
-# (74.0 L/h at the 70 kg reference): F = CL x AUC / dose = 0.290, per
+# Bioavailability is set from the pivotal tablet AUC on the clearance the
+# model gives Atrux-Tallau's typical subject (MORPHINE_F_COHORT): 74.0 L/h
+# with the switch off, F = CL x AUC / dose = 0.290; 77.34 L/h with it on
+# (anchored at Lotsch's cohort, 2026-11-19), F = 0.3031.  Per
 # labelled mg of morphine SULFATE, which is how oral morphine is prescribed;
 # it sits inside the 0.2 to 0.4 usually quoted.  The liquid is given the same
 # F: within the pilot, where the two were compared in the same subjects, the
@@ -135,6 +151,27 @@ MORPHINE_PREGNANCY_CL_FACTOR <- 1.7
 # bound (see the header).
 MORPHINE_BSA_RANGE <- c(1.5, 2.2)
 
+# Lotsch 2002, Table I (printed p. 152): the eight volunteers, each entered as
+# printed (weight kg, height cm, age y), four men and four women.  V1, V2,
+# V3, CL and Q2, with no size covariate, belong to this cohort's typical
+# patient and are anchored at it with the switch on (Steven L. Shafer,
+# 2026-11-19, after Carbon's second repository audit, A2-F4; factors 0.980 on
+# volumes, 0.942 on clearances).
+MORPHINE_COHORT <- list(groups = list(
+  list(weight = 78, height = 187, age = 29, men = 1, women = 0),
+  list(weight = 74, height = 183, age = 25, men = 1, women = 0),
+  list(weight = 76, height = 180, age = 25, men = 1, women = 0),
+  list(weight = 98, height = 185, age = 26, men = 1, women = 0),
+  list(weight = 54, height = 165, age = 30, men = 0, women = 1),
+  list(weight = 65, height = 164, age = 28, men = 0, women = 1),
+  list(weight = 58, height = 170, age = 23, men = 0, women = 1),
+  list(weight = 61, height = 167, age = 25, men = 0, women = 1)))
+
+# Atrux-Tallau 2022, Table 1: the pivotal 30 mg study's PK population (n =
+# 41), means 75.6 kg, 171.4 cm, 36 years, 26 men and 15 women (BMI 25.7
+# agrees).  The oral bioavailability is calibrated at this typical subject.
+MORPHINE_F_COHORT <- list(weight = 75.6, height = 171.4, age = 36, men = 26, women = 15)
+
 morphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
                      pregnant = FALSE)
 {
@@ -169,7 +206,11 @@ morphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
   # Oral, immediate-release tablet (the default oral form) and liquid; see
   # the header.  Per labelled mg of morphine sulfate.
   ka_PO              <- 0.01300   # 1/min, half-time 53 min
-  bioavailability_PO <- 0.290
+  # F = CL x AUC / dose at Atrux-Tallau's typical subject, with the
+  # clearance each switch position gives that subject: 74.0 L/h with it off
+  # (0.290), 77.34 L/h anchored with it on (0.3031; Carbon's second
+  # repository audit, A2-F4, as bupivacaine's ka follows the switch)
+  bioavailability_PO <- if (isTRUE(adjustToFFM)) 0.3031 else 0.290
   tlag_PO            <- 17.6      # min
   oralFormulations <- list(
     liquid = list(
@@ -180,14 +221,17 @@ morphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
   )
   
   # Size (see docs/weight-adjustment.md and the header).  The published
-  # values are absolute, for young adults.  With the switch on, volumes scale
-  # with fat-free mass relative to the 70 kg, 170 cm reference male and the
-  # clearances with that ratio ^ 0.75 (Al-Sallami 2015); with it off they are
-  # used as published (legacyVolume = 1, legacyClearance = 1).  Q3 carries the
+  # values are absolute, for Lotsch's eight young adults.  With the switch on,
+  # volumes scale with fat-free mass and the clearances with that ratio ^ 0.75
+  # (Al-Sallami 2015), anchored at Lotsch's cohort (MORPHINE_COHORT), whose
+  # typical patient receives the published values; with it off they are used
+  # as published (legacyVolume = 1, legacyClearance = 1).  Q3 carries the
   # model's own covariate in both positions, 19.5 L/h x (BSA / 1.83)^4, at
-  # the body surface area clamped to MORPHINE_BSA_RANGE.
+  # the body surface area clamped to MORPHINE_BSA_RANGE, and takes no
+  # anchor.
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, MORPHINE_COHORT))
   v1 <- v1Ref * size$volume
   v2 <- v2Ref * size$volume
   v3 <- v3Ref * size$volume

@@ -96,10 +96,13 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# Weight was tested and not retained.  Fixed published values, as the 70 kg
-# reference man's, with the library's fat-free-mass scaling; legacy factors 1
-# reproduce the published values with the switch off.  ODV is scaled
-# identically.
+# Weight was tested and not retained.  The fixed published values are the
+# pooled cohort's typical patient's (24 healthy men and 127 patients, about 62
+# kg), and with the switch on they are anchored at that patient
+# (VENLAFAXINE_COHORT; Steven L. Shafer, 2026-11-18): the reference man's
+# volumes are the published values divided by 0.830 and his clearances by
+# 0.869.  Legacy factors 1 reproduce the published values with the switch
+# off.  ODV is anchored identically.
 #
 # References
 # ----------
@@ -128,6 +131,24 @@ VENLAFAXINE_REFERENCE <- paste0(
   "https://doi.org/10.3389/fphar.2022.978202"
 )
 
+# Wang 2022 (PMID 36569310), Table 1 (p. 4), read on the PDF 2026-11-18: study
+# 1, 24 healthy men, 62.5 kg, 23.1 years; study 2, 127 patients, 61.95 kg,
+# 37.9 years, 57 men and 70 women (44.88% men); China, published 2022.
+# No height is printed: each sex's is the country's mean adult height for the
+# birth year (NCD Risk Factor Collaboration, eLife 2016;5:e13410, height at 18
+# by birth year), less the 0.2 cm (men) and 0.3 cm (women) a cohort loses per
+# decade of age after 18 that the same paper reports. China: born 1999 (held
+# at 1996) for study 1, 171.7 cm; born 1984 for study 2, 170.0 cm for men and
+# 158.2 for women.
+# The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort);
+# desvenlafaxine, fitted jointly, with it.
+# Factors 0.830 on volume, 0.869 on clearance.
+VENLAFAXINE_COHORT <- list(groups = list(
+  list(weight = 62.5, height = 171.7, age = 23.1, men = 24, women = 0),
+  list(weight = 61.95, height = 170.0, age = 37.9, men = 57, women = 0),
+  list(weight = 61.95, height = 158.2, age = 37.9, men = 0, women = 70)))
+
 #' Venlafaxine pharmacokinetics, forming desvenlafaxine (ODV)
 #'
 #' Apparent oral one-compartment model of Wang et al. (2022), with the
@@ -147,7 +168,7 @@ venlafaxine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Fixed published parameters: legacy factors 1.  Desvenlafaxine must make
   # this call identically.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, VENLAFAXINE_COHORT))
 
   clPatient <- VENLAFAXINE_CL_HEALTHY * (1 - VENLAFAXINE_MORBID)   # L/h
   v1  <- VENLAFAXINE_V1 * size$volume

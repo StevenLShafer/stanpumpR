@@ -65,18 +65,28 @@ FFM_REFERENCE <- ffmAlSallami(FFM_REFERENCE_WEIGHT, FFM_REFERENCE_HEIGHT,
 #' @param legacyClearance clearance factor when `adjustToFFM` is `FALSE`;
 #'   defaults to `legacyVolume` (fixed rate constants).  Pass
 #'   `(weight / 70)^0.75` for a model that already scaled allometrically.
+#' @param cohort `NULL`, or the size factors of the source cohort's typical
+#'   patient from [cohortSizeFactors()], for a model whose published parameters
+#'   carry no size covariate and so belong to that patient rather than to the
+#'   70 kg reference man.  With `adjustToFFM = TRUE` the factors are then
+#'   relative to that patient, who receives the published values; with
+#'   `adjustToFFM = FALSE` it is ignored.
 #' @return a list: `volume` and `clearance` (the multipliers), `ffm` (kg),
 #'   `ffmReference` (kg), and `pkWeight`, the total body weight a model scaled on
 #'   weight alone would need to produce the same volumes (70 x `volume`).
 #' @keywords internal
 pkSizeFactors <- function(weight, height, age, sex, adjustToFFM = TRUE,
                           legacyVolume = weight / FFM_REFERENCE_WEIGHT,
-                          legacyClearance = legacyVolume)
+                          legacyClearance = legacyVolume, cohort = NULL)
 {
   ffm <- ffmAlSallami(weight, height, age, sex)
   if (isTRUE(adjustToFFM)) {
     volume <- ffm / FFM_REFERENCE
     clearance <- volume^0.75
+    if (!is.null(cohort)) {
+      volume <- volume / cohort$volume
+      clearance <- clearance / cohort$clearance
+    }
   } else {
     volume <- legacyVolume
     clearance <- legacyClearance
@@ -88,4 +98,97 @@ pkSizeFactors <- function(weight, height, age, sex, adjustToFFM = TRUE,
     ffmReference = FFM_REFERENCE,
     pkWeight = FFM_REFERENCE_WEIGHT * ffm / FFM_REFERENCE
   )
+}
+
+#' The size factors of a source cohort's typical patient
+#'
+#' A model whose published parameters carry no size covariate describes the
+#' typical patient of the cohort it was fitted in, not the 70 kg reference man
+#' (Steven L. Shafer, 2026-11-18; `docs/weight-adjustment.md`, *Anchoring at
+#' the source's cohort*).  This returns that patient's factors, which
+#' [pkSizeFactors()] divides out (`cohort =`), so that a patient like the
+#' cohort's receives the published values.  The cohort's sexes are taken as
+#' two patients of the cohort's typical weight, height (or BMI) and age, a man
+#' and a woman, whose fat-free-mass factors are averaged geometrically,
+#' weighted by the numbers of men and women: a 100 kg man's fat-free mass is
+#' about a fifth above a 100 kg woman's, so a cohort of both is neither.
+#' Where a source prints its demographics by group (by sex, by dose, by
+#' study), `groups` takes one such list per group and the mean runs over every
+#' group's men and women, each at their own group's values.
+#'
+#' @param weight the cohort's typical weight, kg
+#' @param age the cohort's typical age, years
+#' @param men,women the numbers of men and women in the cohort
+#' @param height the cohort's typical height, cm; or `NULL` with `bmi`
+#' @param bmi the cohort's typical BMI, kg/m2, used for the height when no
+#'   height is printed
+#' @param groups `NULL`, or a list of groups, each a list with `weight`, `age`,
+#'   `men`, `women` and `height` or `bmi`; given, it replaces the other
+#'   arguments
+#' @return a list: `volume` and `clearance`, the typical patient's factors
+#' @keywords internal
+cohortSizeFactors <- function(weight = NULL, age = NULL, men = NULL, women = NULL,
+                              height = NULL, bmi = NULL, groups = NULL)
+{
+  if (is.null(groups))
+    groups <- list(list(weight = weight, age = age, men = men, women = women,
+                        height = height, bmi = bmi))
+  total <- 0
+  sums <- c(volume = 0, clearance = 0)
+  for (g in groups) {
+    h <- g$height
+    if (is.null(h)) {
+      if (is.null(g$bmi)) stop("cohortSizeFactors() needs a height or a BMI")
+      h <- 100 * sqrt(g$weight / g$bmi)
+    }
+    if (!(g$men >= 0 && g$women >= 0))
+      stop("cohortSizeFactors() needs counts of men and women of 0 or more")
+    for (sex in c(SEX_MALE, SEX_FEMALE)) {
+      n <- if (sex == SEX_MALE) g$men else g$women
+      if (n == 0) next
+      f <- pkSizeFactors(g$weight, h, g$age, sex, TRUE)
+      sums <- sums + n * c(log(f$volume), log(f$clearance))
+      total <- total + n
+    }
+  }
+  if (total == 0)
+    stop("cohortSizeFactors() needs a cohort of at least one man or woman")
+  mix <- exp(sums / total)
+  list(volume = unname(mix[1]), clearance = unname(mix[2]))
+}
+
+#' The size factors of one sex of a source cohort
+#'
+#' A parameter that carries the source's own sex term (an intercept fitted for
+#' one sex, with a factor for the other) is anchored at that sex's typical
+#' patient, not at the cohort's pooled one (`docs/weight-adjustment.md`,
+#' *Anchoring at the source's cohort*).  Anchored at the pooled patient, the
+#' fat-free-mass difference between the sexes is applied on top of the
+#' source's own sex factor, which already contains it, and neither of the
+#' cohort's typical patients receives the published value (Carbon's second
+#' repository audit, 2026-11-19, A2-F1: fluoxetine's cohort woman 2.78 L/h
+#' for the published 2.91, its man 3.86 for 3.39).
+#'
+#' @param cohort the arguments of [cohortSizeFactors()] as a list (with or
+#'   without `groups`), as the drug files keep them
+#' @param sex `SEX_MALE` or `SEX_FEMALE`: the patient's sex
+#' @return a list: `volume` and `clearance`, the factors of the cohort's
+#'   typical patient of that sex.  A cohort with none of that sex gives the
+#'   factors of one patient of that sex at each group's demographics.
+#' @keywords internal
+cohortSexSizeFactors <- function(cohort, sex)
+{
+  groups <- cohort$groups
+  if (is.null(groups)) groups <- list(cohort)
+  male <- identical(sex, SEX_MALE)
+  own <- function(g) if (male) g$men else g$women
+  none <- sum(vapply(groups, own, numeric(1))) == 0
+  groups <- lapply(groups, function(g) {
+    n <- if (none) 1 else own(g)
+    g$men <- if (male) n else 0
+    g$women <- if (male) 0 else n
+    g
+  })
+  groups <- Filter(function(g) g$men + g$women > 0, groups)
+  cohortSizeFactors(groups = groups)
 }

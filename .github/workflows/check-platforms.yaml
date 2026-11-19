@@ -1,0 +1,71 @@
+# R CMD check on macOS and Windows, weekly and on demand (Steven L. Shafer,
+# 2026-11-19).  Production runs on Linux (shinyapps.io), which check-standard.yaml
+# checks on every pull request and every push to master; macOS and Windows ran
+# there too until 2026-11-19, and every merge and every production deploy
+# waited on them (see the note in check-standard.yaml).  Here they run once a
+# week on master instead, with nothing waiting on them: a failure is found up to
+# a week late, among that week's merges, and GitHub emails it to whoever last
+# changed this schedule.  Run it by hand (Actions, "Run workflow") before a
+# change that touches files, paths, encodings or the platform's own tools.
+#
+# The Windows install users are told to use, the binary built by
+# windows-binary.yaml, is still built, installed and smoke-tested on every push
+# to master.
+#
+# The name must not be "R-CMD-check": shiny-deploy-production.yaml deploys on a
+# successful run of the workflow of that name, and a scheduled run of this one
+# must never deploy.
+on:
+  schedule:
+    - cron: '17 10 * * 0'   # Sundays 10:17 UTC
+  workflow_dispatch:
+
+name: R-CMD-check (macOS and Windows, weekly)
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  R-CMD-check:
+    runs-on: ${{ matrix.config.os }}
+
+    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: macOS-latest,   r: 'release'}
+          - {os: windows-latest, r: 'release'}
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+      RENV_CONFIG_AUTOLOADER_ENABLED: FALSE
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: r-lib/actions/setup-pandoc@5cc1f0d89c5281319eaa97952fe65a6d55e6f816 #v2
+
+      - uses: r-lib/actions/setup-r@5cc1f0d89c5281319eaa97952fe65a6d55e6f816 #v2
+        with:
+          r-version: ${{ matrix.config.r }}
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@5cc1f0d89c5281319eaa97952fe65a6d55e6f816 #v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
+
+      - uses: r-lib/actions/check-r-package@5cc1f0d89c5281319eaa97952fe65a6d55e6f816 #v2
+        with:
+          upload-snapshots: false
+          upload-results: false
+          error-on: '"error"'

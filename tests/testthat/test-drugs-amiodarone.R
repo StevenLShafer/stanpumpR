@@ -138,22 +138,27 @@ test_that("desethylamiodarone returns Pollak's Table II with the fat-free-mass s
   expect_equal(desethylamiodarone(120, 160, 80, "female", adjustToFFM = FALSE), actual)
 })
 
-test_that("the pair scales to fat-free mass identically for a 120 kg man", {
+test_that("the pair scales to fat-free mass from Pollak's cohort identically for a 120 kg man", {
   # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126
   # (worked out from the Al-Sallami formula by hand), the same factors for
-  # both members, so that the apparent metabolite scale stays consistent.
+  # both members, so that the apparent metabolite scale stays consistent;
+  # each over the factor of Pollak's cohort, taken sex by sex (Table I).
+  k <- cohortFactorsIndependent(list(groups = list(
+    list(weight = 81.4, height = 173, age = 61.3, men = 50, women = 0),
+    list(weight = 71.7, height = 158, age = 69.0, men = 0, women = 27))))
   a <- amiodarone(120, 170, 50, "male")
   d <- desethylamiodarone(120, 170, 50, "male")
   expect_equal_rounded(a$PK$default, list(
-    v1 = 1150.927662, v2 = 16572.31441, v3 = 1,
-    cl1 = 0.1941590206, cl2 = 0.4985393192, cl3 = 0
+    v1 = 1150.927662 / k$volume, v2 = 16572.31441 / k$volume, v3 = 1,
+    cl1 = 0.1941590206 / k$clearance, cl2 = 0.4985393192 / k$clearance, cl3 = 0
   ))
   expect_equal_rounded(d$PK$default, list(
-    v1 = 3640.689543, v2 = 10217.41904, v3 = 1,
-    cl1 = 0.2153554202, cl2 = 0.1280262537, cl3 = 0
+    v1 = 3640.689543 / k$volume, v2 = 10217.41904 / k$volume, v3 = 1,
+    cl1 = 0.2153554202 / k$clearance, cl2 = 0.1280262537 / k$clearance, cl3 = 0
   ))
-  # Formation is the scaled parent's own k10: (FFM ratio)^-0.25 x 1.803e-4
-  expect_equal_rounded(a$metabolite$kFormation, 1.686978487e-4)
+  # Formation is the scaled parent's own k10: x the volume / clearance factors
+  expect_equal_rounded(a$metabolite$kFormation,
+                       1.686978487e-4 * k$volume / k$clearance)
 })
 
 test_that("both drugs give the same, single citation", {

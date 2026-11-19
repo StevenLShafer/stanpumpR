@@ -105,3 +105,34 @@ test_that("recalculatePK passes the switch through", {
   expect_equal_rounded(on$ketamine$PK$default$v1,  .0583 * 70 * 1.304907)
   expect_equal_rounded(off$ketamine$PK$default$v1, .0583 * 120)
 })
+
+test_that("a cohort of reference men anchors exactly where the reference does", {
+  k <- cohortSizeFactors(70, 35, men = 5, women = 0, height = 170)
+  expect_equal(k$volume, 1, tolerance = 1e-12)
+  expect_equal(k$clearance, 1, tolerance = 1e-12)
+  expect_equal(pkSizeFactors(90, 180, 40, "female", TRUE, cohort = k)[1:2],
+               pkSizeFactors(90, 180, 40, "female", TRUE)[1:2])
+})
+
+test_that("the cohort's typical patient receives factors of 1, and the switch off ignores the cohort", {
+  # A cohort of 100 kg, 175 cm, 50-year-old men: its typical patient is one.
+  k <- cohortSizeFactors(100, 50, men = 12, women = 0, height = 175)
+  f <- pkSizeFactors(100, 175, 50, "male", TRUE, cohort = k)
+  expect_equal(f$volume, 1, tolerance = 1e-12)
+  expect_equal(f$clearance, 1, tolerance = 1e-12)
+  # With the switch off the legacy factors stand, cohort or not.
+  expect_identical(pkSizeFactors(100, 175, 50, "male", FALSE, legacyVolume = 1, cohort = k)[1:2],
+                   list(volume = 1, clearance = 1))
+})
+
+test_that("a mixed cohort is the geometric mean of its man and its woman, weighted by their numbers", {
+  # The BMI gives the height when none is printed: 81 kg at BMI 28 is 170.08 cm.
+  k <- cohortSizeFactors(81, 45, men = 3, women = 1, bmi = 28)
+  h <- 100 * sqrt(81 / 28)
+  m <- pkSizeFactors(81, h, 45, "male", TRUE)
+  w <- pkSizeFactors(81, h, 45, "female", TRUE)
+  expect_equal(k$volume, (m$volume^3 * w$volume)^(1 / 4), tolerance = 1e-12)
+  expect_equal(k$clearance, (m$clearance^3 * w$clearance)^(1 / 4), tolerance = 1e-12)
+  expect_error(cohortSizeFactors(81, 45, men = 3, women = 1), "height or a BMI")
+  expect_error(cohortSizeFactors(81, 45, men = 0, women = 0, bmi = 28), "at least one")
+})

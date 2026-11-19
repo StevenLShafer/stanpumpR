@@ -166,7 +166,7 @@ test_that("the CSV band and threshold match the model, and 400 mg crosses it", {
 })
 
 
-# The Oral analgesics scenario (inst/help/scenarios/ibuprofen-with-
+# The Oral analgesics scenario (inst/app-help/scenarios/ibuprofen-with-
 # acetaminophen.md) quotes these numbers; if either model changes, the
 # narrative has to change with it.  The curves are each drug's
 # two-compartment solution with its effect site, written out from the model's

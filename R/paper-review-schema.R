@@ -102,10 +102,14 @@ PAPER_REVIEW_NUMERIC_FIELDS <- c(
   "error_lower", "error_upper", "group1_value", "group1_se", "group2_value",
   "group2_se", "difference", "difference_se", "p_value", "analyte_fraction",
   "interval", "decrement_percent", "reading_precision", "y_axis_max", "x_axis_max",
-  "weight", "height", "age", "infusion_minutes")
+  "weight", "height", "age", "infusion_minutes",
+  # the front-end block (R/paper-review-front-end.R)
+  "flow_fraction", "compartments", "exchanging_fraction", "partition")
 # Optional strings: NULL when empty.
 PAPER_REVIEW_OPTIONAL_STRINGS <- c("title", "first_author", "journal", "doi",
                                    "pd_model", "regimen_id", "group")
+# Top-level blocks a reply may lack without that being reported.
+PAPER_REVIEW_OPTIONAL_TOP_LEVEL <- c("front_end", "published_models")
 # Optional enums: NULL when "none".
 PAPER_REVIEW_OPTIONAL_ENUMS <- c("route", "decrement_site", "concentration_site", "sex")
 
@@ -392,6 +396,8 @@ paperReviewSchema <- function()
                              "Which analyte the series plots: the modelled drug, a metabolite, or anything else."),
         regimen_id = schemaNullable(schemaString(
           "The regimen this series shows, when a figure shows several; empty to use the figure's.")),
+        sampling_site = schemaEnum(PAPER_REVIEW_SAMPLING_SITES,
+                                   "Where the blood was drawn: arterial, venous or mixed venous, as the paper says."),
         points = schemaArray(schemaObject(list(
           time        = schemaNumber(),
           value       = schemaNumber(),
@@ -447,13 +453,11 @@ paperReviewSchema <- function()
       "Each published model the paper USES as published (to simulate, to set a target, to",
       "compare with) rather than estimates from its own data. Empty when every model is the",
       "paper's own.")),
+    front_end = paperReviewFrontEndSchema(),
     extraction_limitations = schemaString("What could not be read, or was read with low confidence.")
   ))
 }
 
-# Top-level sections a reply may leave out without the report saying so:
-# added after replies without them were already being read (2026-11-18).
-PAPER_REVIEW_OPTIONAL_SECTIONS <- c("published_models")
 
 #' The instructions sent with the manuscript
 #'
@@ -523,5 +527,6 @@ paperReviewSystemPrompt <- function()
     "- reviewer_notes: anything a careful pharmacokinetic reviewer would raise",
     "  (misprints, inconsistencies, unclear dose basis, unjustified claims),",
     "  each with its location. Be specific and do not pad.",
+    PAPER_REVIEW_FRONT_END_RULE,
     sep = "\n")
 }

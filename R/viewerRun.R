@@ -241,12 +241,20 @@ viewerFormed <- function(entry)
 viewerSetsInForce <- function(entry, sets, times, maximum)
 {
   ev <- entry$ET
-  if (length(sets) < 2 || is.null(ev) || nrow(ev) == 0) return(NULL)
+  if (length(sets) < 2) return(NULL)
+  if (is.null(ev)) ev <- data.frame(Time = numeric(0), Event = character(0))
   ev <- data.frame(Time = suppressWarnings(as.numeric(ev$Time)),
                    Event = gsub(" ", "", as.character(ev$Event)), stringsAsFactors = FALSE)
   ev <- ev[!is.na(ev$Time) & ev$Time < maximum & ev$Event %in% names(sets), , drop = FALSE]
-  if (nrow(ev) == 0) return(NULL)
   ev <- ev[order(ev$Time), , drop = FALSE]
+  # Physiology events (R/physiologyEvents.R): the merged sets, on the time
+  # line simCpCe() switches them on
+  physiology <- entry[["physiologyEvents"]]
+  if (viewerFollowsPhysiologyEvents(entry)) {
+    ev <- physiologyEventTimeline(ev, physiology)
+    ev <- ev[ev$Time < maximum, , drop = FALSE]
+  }
+  if (nrow(ev) == 0) return(NULL)
   i <- findInterval(times, ev$Time)
   out <- rep(PK_EVENT_DEFAULT, length(times))
   out[i > 0] <- ev$Event[i[i > 0]]
@@ -347,10 +355,19 @@ viewerSimulate <- function(drug, doseTable, events, drugs, minimum, maximum,
 #' @return a list; jsonlite::toJSON(x, auto_unbox = TRUE, digits = NA,
 #'   null = "null") is the file the viewer reads.
 #' @noRd
-viewerRun <- function(entry, minimum, maximum, category = NA_character_)
+viewerRun <- function(entry, minimum, maximum, category = NA_character_,
+                      physiology = NULL, physiologyEvents = NULL)
 {
   problem <- viewerProblem(entry)
   if (!is.null(problem)) stop(problem)
+  # A drug the physiology events do not change is drawn at normal physiology
+  # throughout, and says so (ChatGPT's review of PR #796, finding 7: the run
+  # showed the events of a drug they had not changed)
+  if (is.data.frame(physiologyEvents) && nrow(physiologyEvents) > 0 &&
+      !viewerFollowsPhysiologyEvents(entry)) {
+    physiologyEvents <- NULL
+    physiology <- NULL
+  }
   times <- viewerTimes(minimum, maximum)
   minimum <- times[1]
   u <- viewerUnits(entry$Concentration.Units)
@@ -561,6 +578,10 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
     units = list(conc = u$conc, amount = u$amount, rate = paste0(u$amount, "/min")),
     amountScale = u$scale,
     patient = list(weight = weight, height = entry$height, age = entry$age, sex = entry$sex),
+    # The physiology panel the plot was drawn at, shown under the title
+    physiology = viewerPhysiology(physiology),
+    # With physiology events, the settings in force from each time (seconds)
+    physiologySteps = viewerPhysiologySteps(physiologyEvents, minimum),
     pk = list(v1 = k$v1, v2 = k$v2, v3 = k$v3, cl1 = k$cl1, cl2 = k$cl2, cl3 = k$cl3),
     # The volumes (L) and CL1 (L/min) in force at each time, where a clinical
     # event changes them inside the window; else absent, and `pk` holds.
@@ -621,7 +642,8 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_)
 #' @param category the agent's category, or NA.
 #' @return a list, as `viewerRun()`'s, with `kind = "gas"`.
 #' @noRd
-viewerGasRun <- function(entry, minimum, maximum, category = NA_character_)
+viewerGasRun <- function(entry, minimum, maximum, category = NA_character_,
+                         physiology = NULL)
 {
   problem <- viewerProblem(entry)
   if (!is.null(problem)) stop(problem)
@@ -633,13 +655,36 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_)
   ltg <- gasPartitionTissueGas(pr)
   body <- gr$body
   state <- gr$state
+  # Physiology events (R/physiologyEvents.R): a body in force from each step.
+  # A step in cardiac output or altitude changes flows and pressures only,
+  # which the run carries per time; a step in temperature or in the
+  # intubation changes what a compartment holds at a partial pressure (its
+  # capacity, which the viewer draws as one width for the run), so such a run
+  # is not drawn.
+  steps <- gr$bodySteps
+  rowBody <- function(i) body
+  if (!is.null(steps)) {
+    same <- vapply(steps$body, function(b)
+      identical(b$temperature, body$temperature) &&
+        identical(isTRUE(b$endobronchial), isTRUE(body$endobronchial)), TRUE)
+    if (!all(same))
+      stop("The Visualizer cannot yet draw an inhaled agent whose body temperature or ",
+           "intubation changes during the run (physiology events); it can draw one ",
+           "whose cardiac output or altitude changes.")
+    rowBody <- function(i) steps$body[[gr$bodyRow[[i]]]]
+  }
+  bodyAt <- function(t) if (is.null(steps)) body else
+    steps$body[[max(1L, findInterval(t, steps$time))]]
   # The cardiac-output slider splits the brain and heart (state 3) from the
   # rest of the vessel-rich group (state 6; gasTissueShares()).  The viewer
   # draws the whole group: its volume, and the partial pressure that holds the
   # agent both parts hold (one partition coefficient, so volume-weighted).
   # Mixed venous blood, from every state, before the vessel-rich group's two
   # parts are merged for drawing.
-  venous <- apply(state, 1, function(y) gasMixedVenous(y, body))
+  venous <- vapply(seq_len(nrow(state)), function(i) gasMixedVenous(state[i, ], rowBody(i)), 0)
+  # Arterial blood: end-tidal, unless an endobronchial tube shunts part of the
+  # cardiac output past the ventilated lung (gasArterial(), R/endobronchial.R)
+  arterial <- vapply(seq_len(nrow(state)), function(i) gasArterial(state[i, ], rowBody(i)), 0)
   vrgVolume <- body$V_brain
   if (!is.null(body$V_vrgRest) && ncol(state) >= 6) {
     vrgVolume <- body$V_brain + body$V_vrgRest
@@ -661,9 +706,12 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_)
   rows <- rows[!is.na(rows$Time) & !is.na(rows$Dose), , drop = FALSE]
   rows <- rows[order(rows$Time), , drop = FALSE]
   bySetting <- split(rows, rows$Drug)
-  knots <- sort(unique(c(0, rows$Time[rows$Time > 0])))
+  knots <- sort(unique(c(0, rows$Time[rows$Time > 0], steps$time[steps$time > 0])))
   deadSpace <- if (is.null(gr$deadSpace)) GAS_DEAD_SPACE_FRACTION else gr$deadSpace
-  settings <- lapply(knots, function(k) gasSettingsAt(bySetting, k, deadSpace))
+  # Partial pressures at the body's altitude (R/altitude.R), so the vapour
+  # delivered is in sea-level millilitres, as the amounts are
+  settings <- lapply(knots, function(k) gasSettingsAt(bySetting, k, deadSpace,
+                                                      gasPressureRatio(bodyAt(k))))
   flow <- vapply(settings, function(s) s$Q, numeric(1))
   fresh <- vapply(settings, function(s) unname(s$Ffgf[[g]]), numeric(1))
   mv <- vapply(settings, function(s) s$MV, numeric(1))
@@ -684,10 +732,24 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_)
     units = list(conc = "%", amount = "mL", rate = "mL/min"),
     amountScale = 10,
     patient = list(weight = gr$weight, age = gr$age),
+    # The physiology panel; altitude, intubation, temperature and cardiac
+    # output as the gas engine ran (its body)
+    physiology = viewerPhysiology(physiology, body = body),
+    # With physiology events, the settings in force from each time (seconds)
+    physiologySteps = if (!is.null(steps))
+      viewerPhysiologySteps(gr$physiologyEvents, minimum, body = body),
     circuit = gr$circuit,
     volume = as.list(vol), partition = as.list(lambda), capacity = as.list(capacity),
     t = times * 60, p = p, venous = at(venous),
-    cardiacOutput = if (is.null(gr$Qco)) body$Q_cardiac else gr$Qco,
+    arterial = if (gasShunt(body) > 0) at(arterial) else NULL,
+    # The arterial saturation and PaO2 where an endobronchial tube shunts
+    # blood (R/arterialOxygen.R; Shafer, 2026-11-19), shown under the title
+    saturation = if (!is.null(gr$arterialOxygen)) at(gr$arterialOxygen$SaO2) else NULL,
+    paO2 = if (!is.null(gr$arterialOxygen)) at(gr$arterialOxygen$PaO2) else NULL,
+    # One number, or with physiology events the output in force at each time
+    cardiacOutput = if (is.null(steps)) (if (is.null(gr$Qco)) body$Q_cardiac else gr$Qco)
+                    else if (!is.null(gr$cardiacOutput)) gr$cardiacOutput
+                    else vapply(times, function(t) bodyAt(t)$Q_cardiac, 0),
     fresh = fresh[i], freshFlow = flow[i], ventilation = mv[i], alveolarVentilation = va[i],
     delivered = delivered,
     greenhouse = gasGreenhouse(g),
@@ -721,4 +783,70 @@ viewerPlotButton <- function(drugs)
     htmltools::tags$ul(class = "dropdown-menu",
       lapply(drugs, function(d) htmltools::tags$li(htmltools::tags$button(
         type = "button", class = "dropdown-item", `data-viewer-drug` = d, d)))))
+}
+
+#' Whether a drug's plotted curve follows the physiology events
+#' @param entry the drug's entry
+#' @keywords internal
+viewerFollowsPhysiologyEvents <- function(entry)
+{
+  e <- entry[["physiologyEvents"]]
+  is.data.frame(e) && nrow(e) > 0 && is.null(entry$physiologyEventsIgnored) &&
+    is.null(entry$interactionEvents)
+}
+
+#' The physiology steps a run carries with physiology events
+#'
+#' @param events physiologyEventsFrom()'s data frame
+#' @param start the run's first time, minutes
+#' @param body a gas run's body, to add the altitude and the intubation
+#' @returns a list of settings with `time`, the first at `start`, or NULL
+#' @keywords internal
+viewerPhysiologySteps <- function(events, start, body = NULL)
+{
+  if (!is.data.frame(events) || nrow(events) == 0) return(NULL)
+  states <- physiologyEventStates(events)
+  times <- c(0, events$Time)
+  # The step in force at the run's start, then each later one
+  first <- max(which(times <= start))
+  keep <- seq_along(times) >= first
+  lapply(which(keep), function(i) {
+    x <- states[[i]]
+    step <- lapply(x[c(PHYSIOLOGY_FACTORS, "temperature")], unname)
+    # Seconds, as the run's own times
+    step$time <- 60 * (if (i == first) start else times[[i]])
+    if (!is.null(body)) {
+      step$altitude <- unname(x[["altitude"]])
+      step$pressure <- round(barometricPressure(step$altitude))
+      step$endobronchial <- x[["endobronchial"]] == 1
+    }
+    step
+  })
+}
+
+#' The physiology panel as a run carries it to the Visualizer
+#'
+#' The five controls of every run (the four organ multiples and the body
+#' temperature) and, for an inhaled agent, the altitude and endobronchial
+#' intubation, read from the gas body the engine ran on.  Shafer, 2026-11-19:
+#' "the status of all physiology sliders should appear on 2D and 3D graphs in
+#' the visualizer".
+#'
+#' @param physiology the physiology factors (\code{PHYSIOLOGY_DEFAULT}'s
+#'   names), or NULL for normal
+#' @param body a gas body, or NULL for an intravenous drug's run
+#' @return a named list of numbers (and a logical for the tube)
+#' @keywords internal
+viewerPhysiology <- function(physiology = NULL, body = NULL)
+{
+  p <- tryCatch(checkPhysiology(physiology), error = function(e) PHYSIOLOGY_DEFAULT)
+  out <- lapply(p[c(PHYSIOLOGY_FACTORS, "temperature")], function(x) unname(x))
+  if (!is.null(body)) {
+    # What the engine ran on wins over the panel's reading
+    if (!is.null(body$temperature)) out$temperature <- body$temperature
+    out$altitude <- if (is.null(body$altitude)) ALTITUDE_DEFAULT else body$altitude
+    out$pressure <- round(barometricPressure(out$altitude))
+    out$endobronchial <- isTRUE(body$endobronchial)
+  }
+  out
 }

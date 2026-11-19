@@ -33,13 +33,22 @@
 # whole input law published, so ka_RA is the single first-order rate that,
 # with the disposition above and F = 1, reproduces the mean peak of 1.28
 # mcg/mL after axillary block with 5 mg/mL plain ropivacaine, 30-40 mL by
-# weight, taken as 175 mg (Vainionpaa et al., Anesth Analg 1995;81:534-538).
-# The predicted time of peak, about 110 min, is later than the observed
-# median of 52 min, while Vainionpaa's terminal half-life after the block,
-# 7.1 h against 1.7 h intravenously, says that absorption is slow and
-# rate-limiting late on.  A single first-order depot cannot match both the
-# early rise and the long tail: matching the 52 min peak time instead needs
-# ka 0.0147/min and gives a peak of 2.1 mcg/mL.  After epidural injection
+# weight, taken as 175 mg (Vainionpaa et al., Anesth Analg 1995;81:534-538),
+# in THAT study's typical patient: its pharmacokinetic subgroup, Table 1,
+# 75 kg, 168 cm, 37 years, 6 men and 4 women, whose disposition is this
+# model's anchored at Simon's cohort (below), the volumes x 0.839 and the
+# clearances x 0.877 of the published values.  ka_RA = 0.004749/min (an
+# absorption half-time of 146 min; Steven L. Shafer, 2026-11-18, re-anchored
+# and recalibrated together; it was 0.00612/min, fitted on the published
+# disposition, before the anchoring, and remains so with the switch off,
+# which gives the published disposition; Carbon's second repository audit,
+# 2026-11-19, A2-F2).  The predicted time of peak, about 133
+# min, is later than the observed median of 52 min, while Vainionpaa's
+# terminal half-life after the block, 7.1 h against 1.7 h intravenously,
+# says that absorption is slow and rate-limiting late on.  A single
+# first-order depot cannot match both the early rise and the long tail:
+# matching the 52 min peak time instead needs ka 0.0145/min and gives a
+# peak of 2.4 mcg/mL in the same patient.  After epidural injection
 # Simon found two parallel processes (27% with a 10.7 min half-time, 77% with
 # 248 min), which a single first-order depot does not represent.
 #
@@ -54,11 +63,17 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# The parameters are those of a 70 kg patient, so they are the 70 kg
-# reference adult's: volumes x FFM / FFM_ref and clearances x that ^ 0.75 with
-# the switch on, the published values for everyone with it off
-# (legacyVolume = 1).  The age effect on clearance is not modelled: the set is
-# the older group's for every age.  The tissue absorption rate is not scaled.
+# Simon reports absolute volumes and clearances (L, mL/min, not per kg) for
+# a group whose median was 85 kg, 178 cm, 74 years, 8 men and 1 woman (Table
+# 1); Hartog's reading of them as a 70 kg patient's was an assumption, not
+# the paper's.  So the published values are that group's typical patient's,
+# and with the switch on they are anchored at that patient (ROPIVACAINE_COHORT;
+# Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md, Anchoring at the
+# source's cohort): volumes x FFM / FFM_ref divided by 1.134, clearances x
+# (FFM / FFM_ref)^0.75 divided by 1.099.  With the switch off, the published
+# values for everyone (legacyVolume = 1).  The age effect on clearance is not
+# modelled: the set is the older group's for every age.  The tissue
+# absorption rate is not scaled.
 #
 # NO EFFECT SITE, NO BAND
 # =======================
@@ -88,6 +103,15 @@
 # research handoff on local anesthetic tissue-injection pharmacokinetics.)
 # -----------------------------------------------------------------------------
 
+# Simon 2006 (PMID 16368843), Table 1, read on the PDF 2026-11-18: the oldest
+# group (61 years and over), whose disposition this is: median 85 kg, 178 cm,
+# 74 years, 8 men and 1 woman.  Factors 1.134 on volume, 1.099 on clearance.
+ROPIVACAINE_COHORT <- list(weight = 85, height = 178, age = 74, men = 8, women = 1)
+
+# Vainionpaa 1995 (PMID 7653818), Table 1: the pharmacokinetic subgroup whose
+# mean peak ka_RA reproduces, 75 kg, 168 cm, 37 years, 6 men and 4 women.
+ROPIVACAINE_KA_COHORT <- list(weight = 75, height = 168, age = 37, men = 6, women = 4)
+
 #' Ropivacaine pharmacokinetics (intravenous and regional anesthesia)
 #'
 #' Simon et al. (2006) older-adult intravenous tracer disposition, with a
@@ -99,7 +123,8 @@
 #' @export
 ropivacaine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, ROPIVACAINE_COHORT))
 
   default <- list(
     v1 = 7.0 * size$volume,
@@ -108,7 +133,11 @@ ropivacaine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     cl1 = 0.300 * size$clearance,
     cl2 = 0.9666666667 * size$clearance,
     cl3 = 0.400 * size$clearance,
-    ka_RA = 0.00612,           # 1/min, provisional, peak-matched (header)
+    # The rate was fitted with the disposition each switch position gives the
+    # calibration patient: anchored with the switch on, the published values
+    # with it off (Carbon's second repository audit, 2026-11-19, A2-F2: the
+    # anchored rate with the switch off put the calibration peak 14% low).
+    ka_RA = if (isTRUE(adjustToFFM)) 0.004749 else 0.00612,  # 1/min, provisional, peak-matched (header)
     bioavailability_RA = 1,
     tlag_RA = 0
   )

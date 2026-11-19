@@ -157,6 +157,13 @@
 
 # Derived from Kaiser 1989 Table 2 (see the header), expressed as benazeprilat
 # ng/mL per milligram of benazepril hydrochloride dosed.
+#
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): fixed published values belong to the
+# source's cohort, not the reference man. Kaiser 1989 prints a mean weight
+# (73.2 kg, 62 men) but no height and only an age range (read 2026-11-18), so
+# the fixed values stay anchored at the 70 kg reference man, as before the
+# rule.
 BENAZEPRIL_V1_F <- 44.83    # L, apparent central
 BENAZEPRIL_V2_F <- 65.48    # L, apparent peripheral
 BENAZEPRIL_CL_F <- 7.920    # L/h, apparent

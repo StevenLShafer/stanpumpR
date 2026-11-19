@@ -58,9 +58,10 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# No covariate was significant.  Fixed published parameters, scaled exactly
-# as amiodarone is (legacy factors 1): the apparent scale of the pair is only
-# consistent if both members scale together.
+# No covariate was significant.  Fixed published parameters, anchored at
+# Pollak's cohort and scaled exactly as amiodarone is (AMIODARONE_COHORT,
+# legacy factors 1): the apparent scale of the pair is only consistent if
+# both members scale together.
 #
 # References
 # ----------
@@ -90,7 +91,8 @@ DESETHYLAMIODARONE_CL2 <- 151    # L/day
 desethylamiodarone <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Identical to amiodarone's call; see the header.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, AMIODARONE_COHORT))
 
   v1  <- DESETHYLAMIODARONE_V1 * size$volume
   v2  <- DESETHYLAMIODARONE_V2 * size$volume

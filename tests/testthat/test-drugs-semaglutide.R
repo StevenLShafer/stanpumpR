@@ -20,11 +20,37 @@ test_that("men 1.04, and the two older age groups", {
   expect_equal(cl(75, "female"), 0.0478 * 0.961)
 })
 test_that("switch on: the pharmacokinetic weight and the library volume factor", {
+  # V/F is anchored at the phase 3 cohort (SEMAGLUTIDE_COHORT), so the volume
+  # factor is divided by the cohort's; CL/F is not anchored.
+  kc <- cohortFactorsIndependent(SEMAGLUTIDE_COHORT)
   size <- pkSizeFactors(85, 165, 50, "female", TRUE, legacyVolume = 1)
   pk <- semaglutide(85, 165, 50, "female")$PK$default
   expect_equal(pk$cl1, 0.0478 * (size$pkWeight / 85)^0.774 / 60)
-  expect_equal(pk$v1, 12.2 * size$volume)
+  expect_equal(pk$v1, 12.2 * size$volume / kc$volume)
   expect_equal_rounded(pk$cl1 * 60, 0.0376559)
+})
+test_that("anchored at the phase 3 cohort: its typical patient receives the published V/F (A2-F4)", {
+  # ESM Table S1, five trials: V/F carries no sex term, so the cohort's men
+  # and women, each at their own trial's demographics, sit either side of
+  # 12.2 L, and their weighted geometric mean is 12.2 L.
+  lv <- 0; n <- 0
+  for (g in SEMAGLUTIDE_COHORT$groups) {
+    h <- 100 * sqrt(g$weight / g$bmi)
+    lv <- lv + g$men * log(semaglutide(g$weight, h, g$age, "male")$PK$default$v1) +
+      g$women * log(semaglutide(g$weight, h, g$age, "female")$PK$default$v1)
+    n <- n + g$men + g$women
+  }
+  expect_equal(n, 1612)
+  expect_equal(exp(lv / n), 12.2, tolerance = 1e-6)
+  kc <- cohortFactorsIndependent(SEMAGLUTIDE_COHORT)
+  h <- 100 * sqrt(71.3 / 26.3)
+  m <- semaglutide(71.3, h, 58.4, "male")$PK$default
+  r <- ffmRatioMaleIndependent(71.3, h, 58.4)
+  expect_equal(m$v1, 12.2 * r / kc$volume, tolerance = 1e-6)
+  # CL/F keeps its own weight term, unanchored
+  expect_equal(m$cl1 * 60, 0.0478 * (70 * r / 85)^0.774 * 1.04, tolerance = 1e-6)
+  # The switch off is unchanged: 12.2 L
+  expect_equal(semaglutide(71.3, h, 58.4, "male", adjustToFFM = FALSE)$PK$default$v1, 12.2)
 })
 test_that("steady state at 1 mg weekly matches the published 29.8 nmol/L", {
   PK <- getDrugPK("semaglutide", 85, 165, 50, "female", adjustToFFM = FALSE)

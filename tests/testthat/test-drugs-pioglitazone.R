@@ -5,6 +5,10 @@ test_that("Table 3's non-carrier values, fixed with the switch off", {
   expect_equal(c(pk$v1, pk$v2), c(21.4, 26.3))
   expect_equal(pk$ka_PO * 60, 1.82)
   size <- pkSizeFactors(80, 175, 30, "male", TRUE, legacyVolume = 1)
+  # anchored at Kadam's cohort (Table 1)
+  kc <- cohortFactorsIndependent(list(weight = 73.1, height = 170, age = 36, men = 10, women = 21))
+  size$volume <- size$volume / kc$volume
+  size$clearance <- size$clearance / kc$clearance
   on <- pioglitazone(80, 175, 30, "male")$PK$default
   expect_equal(on$v1, 21.4 * size$volume)
   expect_equal(on$cl1, 2.12 * size$clearance / 60)

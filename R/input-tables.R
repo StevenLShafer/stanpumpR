@@ -243,6 +243,8 @@ validateEventTableInput <- function(ET, eventDefaults = getEventDefaults()) {
     stop(shiny::safeError("Event table contains a value that's too long."))
   }
   if (any(!event %in% eventDefaults$Event)) stop(shiny::safeError("Event table contains an unknown event."))
+  physiologyProblem <- physiologyEventsProblem(ET)
+  if (!is.null(physiologyProblem)) stop(shiny::safeError(physiologyProblem))
   # Event times are minutes, stored as numbers whatever the time unit.  They
   # are checked as numbers: as text, as.character(1e5) is "1e+05", which is
   # not a valid time string, so an event 100000 minutes in stopped the plot.

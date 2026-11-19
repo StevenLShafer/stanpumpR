@@ -51,6 +51,13 @@ MANNITOL_MW <- 182.17   # g/mol
 # (Rudehill A et al., J Neurosurg Anesthesiol 1993;5(1):4-12).
 MANNITOL_OSMOTIC_FRACTION <- (310 - 292) / (5.91 * 1000 / MANNITOL_MW)  # 0.555
 
+# Kaneda 2010, Table I (printed p. 539), read on the PDF 2026-11-18: the two
+# dose groups' means.
+MANNITOL_COHORT <- list(groups = list(
+  list(weight = 79, height = 167, age = 56, men = 3, women = 7),    # 0.5 g/kg
+  list(weight = 93, height = 168, age = 56, men = 3, women = 9)     # 1.0 g/kg
+))
+
 mannitol <- function(weight, height, age, sex, adjustToFFM = TRUE,
                      osmolality = OSMOLALITY_DEFAULT, creatinine = NULL,
                      pregnant = FALSE)
@@ -97,8 +104,19 @@ mannitol <- function(weight, height, age, sex, adjustToFFM = TRUE,
   # below it as a weight ratio would suggest.  With the switch off V2 is the
   # published 8.86 L, unscaled.  Kaneda's exponential weight term itself, and
   # the dose term on CL1 (x (1 - 0.344) at 0.5 g/kg), are not applied.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  #
+  # The size-free parameters, V1, V3, CL2 and CL3, are anchored at Kaneda's
+  # cohort by dose group (MANNITOL_COHORT, Table I; Steven L. Shafer,
+  # 2026-11-18; docs/weight-adjustment.md, Anchoring at the source's cohort):
+  # the reference man's volumes are divided by 0.960 and clearances by 0.970.
+  # V2 keeps its own anchor above, at the 87 kg its source's weight term is
+  # centred on (so size$volume's cohort factor is taken back out of it), and
+  # CL1 takes the renal factor below, whose Cockcroft-Gault weight carries the
+  # size (anchoring it too would correct it twice).
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, MANNITOL_COHORT))
   if (isTRUE(adjustToFFM)) {
+    v2Ref <- v2Ref * do.call(cohortSizeFactors, MANNITOL_COHORT)$volume
     ffmKaneda <- (6 * ffmAlSallami(87, 167.5, 56, SEX_MALE) +
                   16 * ffmAlSallami(87, 167.5, 56, SEX_FEMALE)) / 22
     v2Ref <- v2Ref * FFM_REFERENCE / ffmKaneda     # 9.16 L

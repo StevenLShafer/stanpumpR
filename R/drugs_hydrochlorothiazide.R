@@ -182,6 +182,14 @@
 # test file checks.  Late pregnancy is the reference state.  (Claude Code,
 # 2026-10-19.)
 #
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): fixed published values belong to the
+# source's cohort, not the reference man. Van Wart 2013's population is a
+# meta-analysis of studies (73.9 kg, 40.6 years, no sex or height), and by
+# Shafer's rule on partial data (2026-11-18) a meta-analysis of study means is
+# not anchored, so the fixed values stay anchored at the 70 kg reference man,
+# as before the rule.
+#
 # References
 # ----------
 # Van Wart SA, Shoaf SE, Mallikaarjun S, Mager DE.  Biopharm Drug Dispos

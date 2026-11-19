@@ -88,5 +88,3 @@ neither PK parameters nor fit are printed (PDF p4):
 - "Barrett abstract gives CL/F and Vc/F": refers to a different source (Barrett et al.), not to this label;
   **cannot verify** here.
 - Readiness `pending` with no stanpumpR drug: consistent with the label's content.
-</content>
-</invoke>

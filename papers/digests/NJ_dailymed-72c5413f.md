@@ -90,5 +90,3 @@ No weight-based PK beyond the per-kg CL.
   figure may come from another source; the sentence reads as if it were the label's.
 - The ACT/ECT assay column: the label names ACT, aPTT, PT and TT; it does not mention ECT. Minor; the row describes the
   monitoring context rather than quoting the label.
-</content>
-</invoke>

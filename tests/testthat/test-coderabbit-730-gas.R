@@ -17,7 +17,7 @@
 #      half a second for one).  Fixed: a row that changes no setting is not a
 #      change point.
 #
-# (Item 2 was the help page's equations, inst/help/models/gas-engine.md.)
+# (Item 2 was the help page's equations, inst/app-help/models/gas-engine.md.)
 # Each test fails on f197d63.
 #
 # Drafted by Claude Code, 2026-11-15, at the request of Steven L. Shafer.

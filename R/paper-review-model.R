@@ -699,7 +699,6 @@ paperReviewQuietly <- function(f)
 #' A paper regimen as a stanpumpR dose table
 #'
 #' @param regimen one entry of \code{extraction$regimens}
-#' @param route the drug's extravascular route, for an extravascular dose
 #' @returns a list: \code{doses} (Time in minutes, Dose, Units),
 #'   \code{problems}
 #' @keywords internal
@@ -720,12 +719,12 @@ paperReviewRegimenDoses <- function(regimen)
     }
     # A dose with no readable time or amount (set aside by paperReviewConform())
     # is no dose to simulate.
-    if (!is.finite(paperReviewNum(d$time)) || !is.finite(paperReviewNum(d$amount))) {
+    if (!is.finite(paperReviewNum(d[["time"]])) || !is.finite(paperReviewNum(d$amount))) {
       problems <- c(problems, "A dose has no readable time or amount.")
       next
     }
     perKg <- if (identical(d$per_kg, "yes")) "/kg" else ""
-    t0 <- d$time * minutes
+    t0 <- d[["time"]] * minutes
     route <- d$route %or% "other"
     extravascular <- route %in% names(PAPER_REVIEW_ROUTE_SUFFIX)
     if (!extravascular && !route %in% c("iv_bolus", "iv_infusion")) {

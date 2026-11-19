@@ -42,8 +42,9 @@
 # not an effect site, and the app has no glucose output.
 #
 # BODY SIZE: Cockcroft-Gault at the pharmacokinetic weight with the switch on
-# and at total weight with it off; V/F by the library factor
-# (legacyVolume = 1).
+# and at total weight with it off; V/F by the library factor relative to
+# Chae's cohort (METFORMIN_COHORT; legacyVolume = 1).  CL/F carries no size
+# factor: its creatinine clearance already does.
 #
 # CHECKS (70 kg, 40 y man, assumed creatinine 0.9 mg/dL)
 # =======================================================
@@ -72,11 +73,14 @@
 # = 1.33 (Liao at 500 mg, the dose Chae's model was fitted at); ka is
 # unchanged.  The Cockcroft-Gault term is NOT also raised by the library's
 # rise in filtration: Liao's 1.27 already contains it, and 1.5^0.782 = 1.37
-# on top of it would count it twice.  The factors are meant for the assumed
-# normal (nonpregnant) creatinine of a blank field.  A pregnant woman's
-# measured creatinine is low, and Cockcroft-Gault already raises CL/F from
-# it, so with a measured creatinine entered the two together overstate the
-# clearance; leave the field blank to use the pregnancy factor alone.
+# on top of it would count it twice.  For the same reason the CL/F factor is
+# applied only with a blank creatinine (the assumed normal, nonpregnant
+# value), the rule pregnancyGfrFactor() follows (R/pregnancy.R): a pregnant
+# woman's measured creatinine is low, Cockcroft-Gault already raises CL/F
+# from it, and the two together would count the rise twice (Shafer,
+# 2026-11-19, from CodeRabbit's review of the extended-release model, PR
+# #793; until then the factor was applied either way and the help page asked
+# for a blank field).  The V/F factor applies either way.
 # Metformin is essentially unbound, so total and unbound move together.
 # Liao's numbers are from the abstract.  Claude Code, 2026-10-19.  See
 # R/pregnancy.R.
@@ -100,6 +104,15 @@
 METFORMIN_PREGNANCY_CL_FACTOR <- 1.27
 METFORMIN_PREGNANCY_V_FACTOR  <- 1.33
 
+# Chae 2012, Table 1 (printed p. 816), read on the PDF 2026-11-18: the 42
+# men's medians, 69 kg, 170 cm (printed to 0.1 m), 27 years.  V/F is anchored
+# at this cohort (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort; factor 0.992).  CL/F is the creatinine-
+# clearance term alone, whose Cockcroft-Gault weight already carries the size,
+# so it is not anchored (Shafer, 2026-11-18: anchoring it too would correct it
+# twice).
+METFORMIN_COHORT <- list(weight = 69, height = 170, age = 27, men = 42, women = 0)
+
 #' Metformin pharmacokinetics (oral, immediate release)
 #'
 #' One compartment with a renal covariate (Chae 2012); see the header of the
@@ -107,20 +120,23 @@ METFORMIN_PREGNANCY_V_FACTOR  <- 1.33
 #'
 #' @inheritParams cefazolin
 #' @param pregnant when \code{TRUE}, apply the changes of late pregnancy:
-#'   CL/F x 1.27 and V/F x 1.33 (see the file's header)
+#'   V/F x 1.33, and CL/F x 1.27 only when \code{creatinine} is blank (see
+#'   the file's header)
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 metformin <- function(weight, height, age, sex, adjustToFFM = TRUE,
                       creatinine = NULL, pregnant = FALSE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, METFORMIN_COHORT))
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   crcl <- creatinineClearanceCG(pkW, age, sex,
                                 adultEquivalentCreatinine(creatinine, age, sex))
 
-  # Pregnancy (see the header): CL/F and V/F directly; the renal term is not
-  # also raised.
-  clPregnancy <- if (isTRUE(pregnant)) METFORMIN_PREGNANCY_CL_FACTOR else 1
+  # Pregnancy (see the header): V/F directly; CL/F only with a blank
+  # creatinine, since a measured pregnant creatinine already carries the rise
+  # in filtration; the renal term is not also raised.
+  clPregnancy <- if (isTRUE(pregnant) && is.null(creatinine))
+    METFORMIN_PREGNANCY_CL_FACTOR else 1
   vPregnancy  <- if (isTRUE(pregnant)) METFORMIN_PREGNANCY_V_FACTOR else 1
 
   default <- list(
@@ -141,8 +157,10 @@ metformin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   )
   if (isTRUE(pregnant)) {
     reference <- paste0(reference, "; ", pregnancyReference(
-      paste0("CL/F x ", METFORMIN_PREGNANCY_CL_FACTOR, ", V/F x ",
-             METFORMIN_PREGNANCY_V_FACTOR),
+      paste0(if (is.null(creatinine))
+               paste0("CL/F x ", METFORMIN_PREGNANCY_CL_FACTOR, ", ") else
+               "CL/F from the measured creatinine (factor not applied), ",
+             "V/F x ", METFORMIN_PREGNANCY_V_FACTOR),
       paste0("Liao MZ et al., Drug Metab Dispos 2020;48:264-271. ",
              "https://doi.org/10.1124/dmd.119.088435")))
   }

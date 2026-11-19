@@ -52,9 +52,11 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# No size covariate: the volume and both clearances scale by the library's
-# factors with the switch on and are fixed with it off (the cohort's mean
-# weight was 59 kg).  IC50 is a concentration and does not scale.
+# No size covariate: the volume and both clearances are the cohort's typical
+# patient's (59 kg, 49 years, 9 men and 6 women), anchored at that patient
+# with the switch on (IFOSFAMIDE_COHORT; Steven L. Shafer, 2026-11-18; the
+# reference man receives them divided by 0.847 on volume and 0.883 on
+# clearance), and fixed with it off.  IC50 is a concentration and does not scale.
 #
 # PREGNANCY (R/pregnancy.R): no human pharmacokinetics in pregnancy; nothing
 # applied.
@@ -70,6 +72,21 @@ IFOSFAMIDE_KERBUSCH <- list(
 )
 IFOSFAMIDE_MW <- 261.09  # g/mol (C7H15Cl2N2O2P), not printed in the paper
 
+# Kerbusch 2000 (PMID 10848719), p. 557, read on the PDF 2026-11-18: 15
+# patients with soft tissue sarcoma, mean 59 kg and 49 years, 9 men and 6
+# women, the Netherlands Cancer Institute and Leiden.
+# No height is printed: each sex's is the country's mean adult height for the
+# birth year (NCD Risk Factor Collaboration, eLife 2016;5:e13410, height at 18
+# by birth year), less the 0.2 cm (men) and 0.3 cm (women) a cohort loses per
+# decade of age after 18 that the same paper reports. The Netherlands, born
+# 2000 - 49 = 1951: 178.8 cm for men and 165.6 for women.
+# The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort).
+# Factors 0.847 on volume, 0.883 on clearance.
+IFOSFAMIDE_COHORT <- list(groups = list(
+  list(weight = 59, height = 178.8, age = 49, men = 9, women = 0),
+  list(weight = 59, height = 165.6, age = 49, men = 0, women = 6)))
+
 #' Ifosfamide, intravenous (Kerbusch 2000), with autoinduction
 #'
 #' One compartment whose clearance is induced by the drug; see the header of
@@ -82,7 +99,7 @@ ifosfamide <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   p <- IFOSFAMIDE_KERBUSCH
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1, cohort = do.call(cohortSizeFactors, IFOSFAMIDE_COHORT))
   cl <- p$cl / 60 * size$clearance              # L/min, uninduced
 
   default <- list(

@@ -288,7 +288,7 @@
 # minutes.  In the audit's matched ideal-circuit sevoflurane case the
 # 30-minute alveolar value moves from 1.71176014% with 31 steps to
 # 1.71178091% with 2401, against 1.71178112% from an independent ODE solver.
-# See the Integration section of inst/help/models/gas-engine.md.
+# See the Integration section of inst/app-help/models/gas-engine.md.
 #
 # CORRECTION (2026-09-03): an earlier version of this comment said it was
 # unresolved whether GasMan models it, and a later one said GasMan does not.
@@ -437,7 +437,8 @@ gasStateCount <- function(body) 2L + length(gasTissueShares(body))
 #' @param props gas property table from \code{getGasProperties()}
 #' @param body geometry from \code{getGasBody()}
 #' @param Qco cardiac output, L/min
-#' @returns total uptake in L/min
+#' @returns total uptake in L/min, at the ambient pressure of the body's
+#'   altitude
 gasTotalUptake <- function(state, props, body, Qco)
 {
   total <- 0
@@ -446,9 +447,12 @@ gasTotalUptake <- function(state, props, body, Qco)
     if (g == "oxygen") next
     y  <- state[[g]]
     lb <- props$lambda_blood[props$gas == g]
-    total <- total + lb * Qco * (y[[2]] - gasMixedVenous(y, body)) / 100
+    total <- total + lb * (1 - gasShunt(body)) * Qco *
+      (y[[2]] - gasMixedVenous(y, body)) / 100
   }
-  total
+  # An ambient volume: the same partial pressures are 1/r the volume at sea
+  # level (R/altitude.R)
+  total / gasPressureRatio(body)
 }
 
 
@@ -584,6 +588,10 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
   partition <- c(brain = ltg[["brain"]], muscle = ltg[["muscle"]],
                  fat = ltg[["fat"]], vrgRest = ltg[["brain"]])[names(shares)]
   k <- shares * Qco * lb / (gasTissueVolumes(body) * partition)
+  # An endobronchial tube (R/endobronchial.R): the share `sh` of cardiac
+  # output passes the unventilated lung and takes up nothing
+  sh <- gasShunt(body)
+  lungFlow <- (1 - sh) * Qco
 
   A <- matrix(0, n, n)
 
@@ -598,13 +606,14 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
   # (2) alveolar.  The mixed-venous term redistributes lambda_b * Qco across the
   # three tissue states in proportion to their share of cardiac output.
   A[2, 1] <-  VA / Va
-  A[2, 2] <- -(VA + lb * Qco) / Va
-  A[2, 3:n] <- lb * Qco * shares / Va
+  A[2, 2] <- -(VA + lb * lungFlow) / Va
+  A[2, 3:n] <- lb * lungFlow * shares / Va
 
-  # (3) tissues
+  # (3) tissues, fed by arterial blood: (1 - sh) alveolar and sh mixed venous
   for (j in seq_along(k)) {
-    A[2 + j, 2] <- k[[j]]
-    A[2 + j, 2 + j] <- -k[[j]]
+    A[2 + j, 2] <- k[[j]] * (1 - sh)
+    if (sh > 0) A[2 + j, 3:n] <- A[2 + j, 3:n] + k[[j]] * sh * shares
+    A[2 + j, 2 + j] <- A[2 + j, 2 + j] - k[[j]]
   }
 
   # The uptake coupling.  GasMan's Calc adds this to the alveolar numerator:
@@ -645,7 +654,9 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
   A[2, 2] <- A[2, 2] + fromCircuit * bl$alveolar
   A[1, ] <- 0
   A[, 1] <- 0
-  b <- c(0, fromCircuit * bl$fresh * Ffgf, rep(0, n - 2))
+  # The fresh gas humidified in the airway at the body's altitude
+  # (gasHumidityRatio(), R/altitude.R; exactly 1 at sea level)
+  b <- c(0, fromCircuit * bl$fresh * Ffgf * gasHumidityRatio(body), rep(0, n - 2))
 
   list(A = A, b = b, fresh = bl$fresh, alveolar = bl$alveolar)
 }
@@ -695,7 +706,8 @@ gasSystemOxygen <- function(body, Q, VA, Ffgf,
     fromCircuit <- fromCircuit * bl$supply
     A <- matrix(0, 2, 2)
     A[2, 2] <- -VA / Va + fromCircuit * bl$alveolar + pushedOut
-    b <- c(0, fromCircuit * bl$fresh * Ffgf - 100 * body$VO2 / Va)
+    b <- c(0, fromCircuit * bl$fresh * Ffgf * gasHumidityRatio(body) -
+             100 * body$VO2 / Va)
     return(list(A = A, b = b, fresh = bl$fresh, alveolar = bl$alveolar))
   }
 
@@ -791,10 +803,18 @@ settingAt <- function(doseRows, t)
 #'   "ventilation" row of the dose table is MINUTE ventilation, and alveolar
 #'   ventilation is \code{MV * (1 - deadSpace)}.  Zero makes the row alveolar
 #'   ventilation, as it is in GasMan.
+#' @param ratio the barometric pressure as a fraction of a sea-level
+#'   atmosphere (\code{gasPressureRatio()}, R/altitude.R).  The fresh gas is
+#'   returned as partial pressures in % of a sea-level atmosphere: a flowmeter
+#'   gas at \code{ratio} times its fraction, a variable-bypass vaporizer at its
+#'   dial, and the desflurane vaporizer, which delivers volume percent, at
+#'   \code{ratio} times its dial.
 #' @returns a list with total fresh gas flow \code{Q}, minute ventilation
-#'   \code{MV}, alveolar ventilation \code{VA}, and the fresh-gas fractions
+#'   \code{MV}, alveolar ventilation \code{VA}, and the fresh-gas partial
+#'   pressures
 #' @keywords internal
-gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION)
+gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION,
+                          ratio = 1)
 {
   Q_air  <- settingAt(split[["air"]],          t)
   Q_O2   <- settingAt(split[["oxygen"]],       t)
@@ -819,19 +839,25 @@ gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION)
   # 2026-10-12) left the fractions summing past 100.  The dose table is
   # checked by gasVaporiserProblems() before it gets here; this is the
   # engine's own refusal.
-  if (sum(F_vap) > 100 + 1e-9) {
+  # The dial's partial pressure (R/altitude.R): a variable-bypass vaporizer
+  # keeps it at any altitude, the desflurane vaporizer keeps its volume percent
+  vpv <- intersect(names(F_vap), ALTITUDE_VOLUME_PERCENT_VAPORIZERS)
+  F_vap[vpv] <- F_vap[vpv] * ratio
+  if (sum(F_vap) > 100 * ratio + 1e-9) {
     stop(sprintf("the vaporisers together are set to %s%% at %s min; the fresh gas cannot be more than 100%% vapour",
                  format(sum(F_vap)), format(t)))
   }
-  carrier <- 1 - sum(F_vap) / 100
+  # The vapour's share of the fresh gas is its partial pressure over the
+  # ambient pressure; the carrier gases share the rest of the ambient pressure.
+  carrier <- 1 - sum(F_vap) / (100 * ratio)
   if (carrier < 0) carrier <- 0
 
   if (Q > 0)
   {
     Ffgf <- c(
-      oxygen       = 100 * carrier * (Q_O2 + AIR_FRACTION_O2 * Q_air) / Q,
-      nitrogen     = 100 * carrier * (AIR_FRACTION_N2 * Q_air) / Q,
-      nitrousOxide = 100 * carrier * Q_N2O / Q
+      oxygen       = 100 * ratio * carrier * (Q_O2 + AIR_FRACTION_O2 * Q_air) / Q,
+      nitrogen     = 100 * ratio * carrier * (AIR_FRACTION_N2 * Q_air) / Q,
+      nitrousOxide = 100 * ratio * carrier * Q_N2O / Q
     )
   } else {
     Ffgf <- c(oxygen = 0, nitrogen = 0, nitrousOxide = 0)
@@ -857,8 +883,14 @@ gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION)
 #' @returns a character vector of messages, one per offending time, empty when
 #'   the settings are possible
 #' @export
-gasVaporiserProblems <- function(doseTable)
+gasVaporiserProblems <- function(doseTable, altitude = ALTITUDE_DEFAULT)
 {
+  # At altitude the engine holds the vapour to the ambient pressure, a
+  # desflurane vaporizer's dial scaled by it (gasSettingsAt()), so the check
+  # does too: checked at sea level, settings the engine then refused at
+  # altitude made the gas curves vanish without a word (Carbon's second
+  # repository audit, 2026-11-19, A2-F23).
+  ratio <- pressureRatio(altitude)
   if (is.null(doseTable) || nrow(doseTable) == 0) return(character(0))
   volatiles <- setdiff(potentAgents(), "nitrousOxide")
   drug <- as.character(doseTable$Drug)
@@ -876,11 +908,15 @@ gasVaporiserProblems <- function(doseTable)
   split <- split(rows, rows$Drug)
   problems <- character(0)
   for (t in sort(unique(rows$Time))) {
-    total <- sum(vapply(split, function(d) settingAt(d, t), numeric(1)))
-    if (total > 100 + 1e-9) {
-      problems <- c(problems, sprintf(
+    dial <- vapply(split, function(d) settingAt(d, t), numeric(1))
+    vpv <- names(dial) %in% ALTITUDE_VOLUME_PERCENT_VAPORIZERS
+    total <- sum(dial[!vpv]) + sum(dial[vpv]) * ratio
+    if (total > 100 * ratio + 1e-9) {
+      problems <- c(problems, if (ratio == 1) sprintf(
         "At %s min the vaporisers together are set to %s%%; the fresh gas cannot be more than 100%% vapour, so the gases are not simulated until one of them is lowered.",
-        format(t), format(total)))
+        format(t), format(sum(dial))) else sprintf(
+        "At %s min the vaporisers together give a partial pressure of %s%% of a sea-level atmosphere, above the ambient %s%% at %s m; the fresh gas cannot be more than 100%% vapour, so the gases are not simulated until one of them is lowered.",
+        format(t), format(signif(total, 3)), format(signif(100 * ratio, 3)), format(altitude)))
     }
   }
   problems
@@ -922,6 +958,12 @@ gasVaporiserProblems <- function(doseTable)
 #' @param circuit "ideal", the default: no rebreathing once fresh gas flow
 #'   reaches minute ventilation, and no circuit volume.  "semi-closed":
 #'   GasMan's default, the circuit as one well-mixed volume.  See the file header.
+#' @param bodySteps NULL, or \code{gasBodySteps()}'s list of bodies and the
+#'   times from which each is in force (physiology events): the body, its gas
+#'   properties, pressure, humidity and cardiac output are switched at each,
+#'   the agent carried across (\code{gasStateAcrossBodies()}); the result
+#'   then carries \code{bodySteps} and \code{bodyRow}, the body of each row
+#'   (a step's time appears twice, before and after it)
 #' @param oxygenUptake if TRUE (the default), oxygen consumed shrinks the gas
 #'   volume: its net volume, after the carbon dioxide that replaces it in the
 #'   alveoli, joins the summed uptake that couples the gases, oxygen itself
@@ -956,10 +998,17 @@ advanceClosedFormGas <- function(
   uptakeEffect = TRUE,
   circuit = c("ideal", "semi-closed"),
   deadSpace = GAS_DEAD_SPACE_FRACTION,
-  oxygenUptake = TRUE
+  oxygenUptake = TRUE,
+  bodySteps = NULL
 )
 {
   circuit <- match.arg(circuit)
+  # Physiology events (R/physiologyEvents.R): a body in force from each of
+  # bodySteps$time, the first at 0 (gasBodySteps()).  The body, and with it
+  # the gas properties, the pressure, the humidity and the cardiac output,
+  # are switched at each step, the agent in each tissue carried across
+  # (gasStateAcrossBodies()).
+  if (!is.null(bodySteps)) body <- bodySteps$body[[1]]
   # The semi-closed circuit is GasMan's mixing box, kept for comparison with a
   # program that has no oxygen.  It has no absorber in its volume balance, so
   # the oxygen volume model is not applied to it rather than applied wrongly.
@@ -987,23 +1036,30 @@ advanceClosedFormGas <- function(
   # then applied repeatedly.  That is the difference between one matrix
   # exponential per interval per gas and one per plotted point -- roughly a
   # hundredfold, which matters because this runs on every dose-table keystroke.
-  changes <- sort(unique(c(0, gasDose$Time, maximum)))
+  changes <- sort(unique(c(0, gasDose$Time, bodySteps$time, maximum)))
   changes <- changes[changes >= 0 & changes <= maximum]
+  bodyIndex <- 1L
   if (length(changes) < 2) changes <- c(0, maximum)
 
   # Initial conditions: patient and circuit equilibrated with room air.  The
   # alveolar oxygen tension relaxes from the inspired value to its steady state
   # within the first minute or so, on the FRC/VA time constant.
+  # Room air is a fraction of the ambient pressure, humidified in the airway
+  # (R/altitude.R).
+  ratio <- gasPressureRatio(body)
+  humid <- gasHumidityRatio(body)
   solubleGases <- props$gas[props$soluble]
   state <- list()
   for (g in solubleGases)
   {
-    init <- if (g == "nitrogen") AIR_FRACTION_N2 * 100 else 0
+    init <- if (g == "nitrogen") AIR_FRACTION_N2 * 100 * ratio * humid else 0
     state[[g]] <- rep(init, gasStateCount(body))
   }
-  state[["oxygen"]] <- rep(AIR_FRACTION_O2 * 100, 2)
+  state[["oxygen"]] <- rep(AIR_FRACTION_O2 * 100 * ratio * humid, 2)
 
   times  <- 0
+  # The body in force at each recorded row (physiology events)
+  bodyRow <- 1L
   record <- list()
   for (g in props$gas) record[[g]] <- matrix(state[[g]], nrow = 1)
 
@@ -1023,10 +1079,31 @@ advanceClosedFormGas <- function(
     nSub <- max(1, round(resolution * len / maximum))
     dt   <- len / nSub
 
+    # A physiology step at t0: the new body, the agent in each compartment
+    # carried across
+    if (!is.null(bodySteps)) {
+      k <- findInterval(t0, bodySteps$time)
+      if (k != bodyIndex) {
+        newBody <- bodySteps$body[[k]]
+        newProps <- gasPropertiesAt(newBody$temperature)
+        state <- gasStateAcrossBodies(state, props, newProps)
+        body <- newBody
+        props <- newProps
+        ratio <- gasPressureRatio(body)
+        humid <- gasHumidityRatio(body)
+        Qco <- if (is.null(cardiacOutput)) body$Q_cardiac else cardiacOutput
+        bodyIndex <- k
+        # The record shows the step: the same time, the carried state
+        times <- c(times, t0)
+        bodyRow <- c(bodyRow, k)
+        for (g in props$gas) record[[g]] <- rbind(record[[g]], state[[g]])
+      }
+    }
+
     # Settings are read at the START of the interval and held across it, which
     # is what makes the interval linear -- apart from the uptake coupling,
     # which is linearised per sub-step below.
-    s <- gasSettingsAt(bySetting, t0, deadSpace)
+    s <- gasSettingsAt(bySetting, t0, deadSpace, ratio)
 
     # Build one propagator per gas for this interval: y <- P y + q.
     #
@@ -1079,7 +1156,10 @@ advanceClosedFormGas <- function(
       # dioxide gives VCO2 back to the alveoli and the absorber then takes it
       # from the rebreathed gas.  All of it stops if the oxygen has run out.
       consuming <- state[["oxygen"]][2] > 0
-      VO2  <- if (consuming) body$VO2 else 0
+      # VO2 is a sea-level volume; at altitude the same oxygen is 1/r the
+      # ambient volume, and the carbon dioxide 1/r the share of the exhaled
+      # gas (R/altitude.R).
+      VO2  <- if (consuming) body$VO2 / ratio else 0
       VCO2 <- GAS_RESPIRATORY_QUOTIENT * VO2
       u <- u + VO2 - VCO2
       buildProp(u, u, if (s$MV > 0) min(VCO2 / s$MV, GAS_MAX_EXHALED_CO2) else 0)
@@ -1124,6 +1204,7 @@ advanceClosedFormGas <- function(
     }
 
     times <- c(times, t0 + dt * seq_len(nSub))
+    bodyRow <- c(bodyRow, rep(bodyIndex, nSub))
     for (g in props$gas) record[[g]] <- rbind(record[[g]], stepStates[[g]])
   }
 
@@ -1157,11 +1238,18 @@ advanceClosedFormGas <- function(
   # never sums them; additive MAC across agents is ours.  And GasMan uses
   # m_fMAC raw, with no age term, so macForAge() is ours too -- a validation run
   # against GasMan output must use the reference age.
+  # MAC at each row's body temperature (physiology events step it)
   macTotal <- rep(0, nT)
-  for (g in props$gas[props$potent])
+  rowBodies <- if (is.null(bodySteps)) list(body) else bodySteps$body
+  for (k in unique(bodyRow))
   {
-    MAC <- macForAge(props$MAC40[props$gas == g], age)
-    macTotal <- macTotal + out[[g]][, 2] / MAC
+    rows <- which(bodyRow == k)
+    pk <- gasPropertiesAt(rowBodies[[k]]$temperature)
+    for (g in pk$gas[pk$potent])
+    {
+      MAC <- macForAge(pk$MAC40[pk$gas == g], age)
+      macTotal[rows] <- macTotal[rows] + out[[g]][rows, 2] / MAC
+    }
   }
   results <- rbind(results, data.frame(
     Drug = "MAC", Time = timeLine, Site = "MAC", Y = macTotal,
@@ -1174,9 +1262,87 @@ advanceClosedFormGas <- function(
   # included, so the washout runs on the same flows (gasWashout()); deadSpace
   # the share of minute ventilation that did not reach the alveoli, so the
   # Visualizer can say the alveolar ventilation the engine ran on.
+  # With physiology events, `body` and `Qco` are those in force at time 0,
+  # and `bodySteps` the rest (gasWashout() works through them)
+  if (!is.null(bodySteps)) {
+    # The body in force at time 0: an event at time 0 is in force from it
+    # (the gas typical band reads it; ChatGPT's review of PR #796, finding 9)
+    body <- bodySteps$body[[max(1L, findInterval(0, bodySteps$time))]]
+    Qco <- if (is.null(cardiacOutput)) body$Q_cardiac else cardiacOutput
+  }
   list(results = results, state = out, timeLine = timeLine,
        body = body, circuit = circuit, weight = weight, age = age, Qco = Qco,
-       deadSpace = deadSpace)
+       deadSpace = deadSpace, bodySteps = bodySteps, bodyRow = bodyRow,
+       cardiacOutput = cardiacOutput)
+}
+
+#' The agent carried across a change of body temperature
+#'
+#' A physiology event steps the body at a time (R/physiologyEvents.R).  What
+#' is conserved is the amount of agent in each compartment.  In a gas phase
+#' (the circuit and the alveoli) the amount is the partial pressure times
+#' the volume, and neither the volume nor the partial pressure changes with
+#' a step in cardiac output, temperature or altitude (the tensions are
+#' partial pressures, in % of a sea-level atmosphere, whatever the barometric
+#' pressure).  In a tissue the amount is the partial pressure times the
+#' volume times the tissue:gas partition coefficient, which temperature
+#' changes (gasPropertiesAt()), so the tension steps by the ratio of the old
+#' coefficient to the new: a cooled tissue holds the same agent at a lower
+#' tension.  A change of cardiac output changes only flows; the tissue
+#' volumes are the same in every body of one run (gasBodySteps() splits the
+#' vessel-rich group in all of them or none).  An endobronchial tube halves
+#' the alveolar volume the engine ventilates: the gas of the lung it closes
+#' is trapped and not followed, and the lung it reopens returns at the
+#' ventilated lung's tension (R/endobronchial.R says the trapped gas is not
+#' modelled).  Oxygen and nitrogen's tissue coefficients do not change with
+#' temperature (gasPropertiesAt() changes the volatile agents' and nitrous
+#' oxide's), so for them nothing moves.
+#'
+#' @param state named list of state vectors, one per gas
+#' @param from,to gasPropertiesAt() tables of the two bodies
+#' @returns the state in the new body
+#' @keywords internal
+gasStateAcrossBodies <- function(state, from, to)
+{
+  for (g in names(state)) {
+    if (g == "oxygen") next
+    a <- from[from$gas == g, ]
+    b <- to[to$gas == g, ]
+    if (nrow(a) != 1 || nrow(b) != 1) next
+    la <- gasPartitionTissueGas(a)
+    lb <- gasPartitionTissueGas(b)
+    y <- state[[g]]
+    n <- length(y)
+    tissues <- c("brain", "muscle", "fat", "brain")[seq_len(n - 2L)]
+    y[3:n] <- y[3:n] * unname(la[tissues] / lb[tissues])
+    state[[g]] <- y
+  }
+  state
+}
+
+#' The bodies of a gas run with physiology events
+#'
+#' @param weight patient weight, kg
+#' @param events physiologyEventsFrom()'s data frame, at least one row
+#' @returns list(time, body): normal physiology from 0 and each event's from
+#'   its time.  If any body has cardiac output off normal, every body splits
+#'   the vessel-rich group (gasBodyPhysiology(split = TRUE)), so the states
+#'   are the same in all of them.
+#' @keywords internal
+gasBodySteps <- function(weight, events)
+{
+  states <- physiologyEventStates(events)
+  split <- any(vapply(states, function(x) x[["cardiac"]] != 1, TRUE))
+  bodies <- lapply(states, function(x) {
+    body <- gasBodyPhysiology(getGasBody(weight), x[["cardiac"]], split = split)
+    if (x[["temperature"]] != 37) body$temperature <- unname(x[["temperature"]])
+    if (x[["altitude"]] != ALTITUDE_DEFAULT) body$altitude <- unname(x[["altitude"]])
+    body <- gasBodyEndobronchial(body, x[["endobronchial"]] == 1)
+    if (x[["haemoglobin"]] != ARTERIAL_OXYGEN_HAEMOGLOBIN)
+      body$haemoglobin <- unname(x[["haemoglobin"]])
+    body
+  })
+  list(time = c(0, events$Time), body = bodies)
 }
 
 
@@ -1207,6 +1373,23 @@ advanceClosedFormGas <- function(
 #' @param temperature NULL (37 C), or the body temperature in C, which sets
 #'   the agents' solubility and MAC (\code{gasPropertiesAt()}); kept in the
 #'   body as \code{temperature}
+#' @param altitude NULL (sea level), or metres above sea level (0 to 7000),
+#'   kept in the body as \code{altitude}; the barometric pressure it sets
+#'   (\code{barometricPressure()}, R/altitude.R) changes the fresh gas, room
+#'   air and the volume taken up, not the potency
+#' @param endobronchial TRUE for an endobronchial tube: one lung ventilated,
+#'   the other perfused and shunting (\code{gasBodyEndobronchial()},
+#'   R/endobronchial.R)
+#' @param physiologyEvents NULL, or physiologyEventsFrom()'s data frame
+#'   (R/physiologyEvents.R): with any row, physiology is normal from time 0
+#'   and each event's from its time (cardiac output, temperature, altitude
+#'   and intubation, \code{gasBodySteps()}), the agent in each compartment
+#'   carried across each step, and \code{physiology}, \code{temperature},
+#'   \code{altitude}, \code{endobronchial} and \code{haemoglobin} are not used
+#' @param haemoglobin NULL (15 g/dL), or the haemoglobin, g/dL, of the
+#'   arterial oxygen read off the run (\code{gasArterialOxygen()},
+#'   R/arterialOxygen.R), kept in the body as \code{haemoglobin}; the engine
+#'   does not read it
 #' @param uptakeEffect,circuit,deadSpace,oxygenUptake passed to
 #'   \code{advanceClosedFormGas()}
 #'
@@ -1220,7 +1403,9 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
                           oxygenUptake = TRUE,
                           # Appended after the pre-existing arguments, so a
                           # positional call keeps its binding (exported).
-                          physiology = NULL, temperature = NULL)
+                          physiology = NULL, temperature = NULL,
+                          altitude = NULL, endobronchial = FALSE,
+                          physiologyEvents = NULL, haemoglobin = NULL)
 {
   circuit <- match.arg(circuit)
   if (is.null(doseTable) || nrow(doseTable) == 0) return(NULL)
@@ -1241,8 +1426,20 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
                             checkPhysiology(physiology)[["cardiac"]])
   temperature <- checkBodyTemperature(temperature)
   if (temperature != 37) body$temperature <- temperature
+  altitude <- checkAltitude(altitude)
+  if (altitude != ALTITUDE_DEFAULT) body$altitude <- altitude
+  body <- gasBodyEndobronchial(body, endobronchial)
+  # The haemoglobin of the arterial oxygen (R/arterialOxygen.R); the engine
+  # itself does not read it
+  haemoglobin <- checkHaemoglobin(haemoglobin)
+  if (haemoglobin != ARTERIAL_OXYGEN_HAEMOGLOBIN) body$haemoglobin <- haemoglobin
+  # With physiology events, normal physiology from 0 and each event's from
+  # its time; the other physiology arguments are not used
+  # (R/physiologyEvents.R)
+  bodySteps <- if (is.data.frame(physiologyEvents) && nrow(physiologyEvents) > 0)
+    gasBodySteps(weight, physiologyEvents)
 
-  advanceClosedFormGas(
+  sim <- advanceClosedFormGas(
     gasDose,
     weight        = weight,
     body          = body,
@@ -1252,6 +1449,9 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
     uptakeEffect  = uptakeEffect,
     circuit       = circuit,
     deadSpace     = deadSpace,
-    oxygenUptake  = oxygenUptake
+    oxygenUptake  = oxygenUptake,
+    bodySteps     = bodySteps
   )
+  if (!is.null(bodySteps)) sim$physiologyEvents <- physiologyEvents
+  sim
 }

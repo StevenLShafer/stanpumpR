@@ -34,7 +34,8 @@ DESVENLAFAXINE_V1  <- 238    # L, VM/F
 desvenlafaxine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Identical to venlafaxine's call; see the header.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, VENLAFAXINE_COHORT))
 
   default <- list(
     v1  = DESVENLAFAXINE_V1 * size$volume,

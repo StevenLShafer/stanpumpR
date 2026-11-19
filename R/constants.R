@@ -287,6 +287,11 @@ MAX_DOSE_ROWS <- 500L
 MAX_EVENT_ROWS <- 100L
 MAX_TARGET_ROWS <- 20L
 MAX_DOSE_VALUE <- 1e9
+# What a dialog says when it would write the dose table over edits not yet
+# applied (commitDoseTable(); Carbon's second repository audit, A2-F18)
+DOSE_TABLE_UNAPPLIED_MESSAGE <- paste(
+  "The dose table has changes that have not been applied.",
+  "Click Apply Changes, or undo them, and then try again.")
 # The most units one Drug Library edit may add, each of which is simulated
 # once (drugLibraryUnitProblems(); typically 0.01 s each, at most 1.5 s)
 DRUG_LIBRARY_MAX_NEW_UNITS <- 40L
@@ -666,14 +671,14 @@ DRUG_CATEGORIES <- c(
   "Illicit drugs"
 )
 # The category of the intravenous vasoactive, antiarrhythmic and resuscitation
-# drugs of intensive care (inst/help/models/vasoactive.md): concentration
+# drugs of intensive care (inst/app-help/models/vasoactive.md): concentration
 # only, every one catalogued in inst/extdata/vasoactiveRegistry.csv.
 VASOACTIVE_DRUG_CATEGORY <- "Vasoactive and resuscitation"
 # The category of the drugs used to treat Parkinson's disease and its
-# complications (inst/help/models/parkinsons.md): every candidate catalogued in
+# complications (inst/app-help/models/parkinsons.md): every candidate catalogued in
 # inst/extdata/parkinsonsRegistry.csv, implemented or not.
 PARKINSONS_DRUG_CATEGORY <- "Parkinson disease"
-# The category of the cytotoxic chemotherapy drugs (inst/help/models/
+# The category of the cytotoxic chemotherapy drugs (inst/app-help/models/
 # chemotherapy.md, docs/chemotherapy.md): every candidate model catalogued in
 # inst/extdata/chemotherapyRegistry.csv, implemented or not.
 CHEMOTHERAPY_DRUG_CATEGORY <- "Chemotherapy"
@@ -817,6 +822,13 @@ NORMALIZE_NONE <- "none"
 PLOT_NORMALIZATIONS <- c(NORMALIZE_NONE, "Peak plasma", "Peak effect site")
 PLOT_TYPICAL_CHOICES <- c("none", "Mid", "Range")
 PLOT_LINE_TYPES <- c("blank", "solid", "dashed", "dotted", "dotdash")
+# Shown under Graph Options while the plasma and effect-site lines share a
+# line type, which draws two curves that cannot be told apart (Dennis Fisher,
+# 2026-10-08, who suggested the wording)
+LINETYPE_SAME_MESSAGE <- paste(
+  "Plasma and effect site lines should be displayed with different line",
+  "types; with the same one the two curves cannot be told apart."
+)
 PK_EVENT_DEFAULT <- "default"
 
 PLOT_ID_EVENTS      <- "Events"

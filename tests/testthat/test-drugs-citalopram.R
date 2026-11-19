@@ -74,12 +74,54 @@ test_that("scales to fat-free mass for a 120 kg man", {
   # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126;
   # the S weight term is evaluated at the pharmacokinetic weight
   # 70 x 1.3049067 = 91.3435 kg, so (91.3435/70)^0.75 = 1.2209126 too.
-  # CL_R = 13 x (50/60)^-0.822 x 1.2209126, CL_S = 22.1 x (50/60)^-1.33 x
-  # 1.2209126, V_R = 1830 x 1.3049067, V_S = 1390 x 1.3049067.
+  # Anchored at Akil's cohort (CITALOPRAM_COHORT; A2-F4): V_R and V_S divided
+  # by the pooled cohort's volume factor, CL_R (which carries the source's sex
+  # term) by the cohort man's clearance factor; CL_S, on its own weight term,
+  # not at all.  CL_R = 13 x (50/60)^-0.822 x 1.2209126 / 0.9882236, CL_S =
+  # 22.1 x (50/60)^-1.33 x 1.2209126, V_R = 1830 x 1.3049067 / 0.8920944, V_S =
+  # 1390 x 1.3049067 / 0.8920944.
+  kc <- cohortFactorsIndependent(CITALOPRAM_COHORT)
+  km <- cohortFactorsIndependent(modifyList(CITALOPRAM_COHORT, list(women = 0)))
+  expect_equal(kc$volume, 0.8920944, tolerance = 1e-6)
+  expect_equal(km$clearance, 0.9882236, tolerance = 1e-6)
   actual <- citalopram(120, 170, 50, "male")$PK$default
-  expected <- list(v1 = 2061.67153589, v2 = 404.075504392,
-                   cl1 = 0.400079066677, cl2 = 0.0846665135481)
-  expect_equal_rounded(actual[names(expected)], expected)
+  r <- reduceByHand(13 * (50 / 60)^-0.822 * 1.2209126 / km$clearance,
+                    1830 * 1.3049067 / kc$volume,
+                    22.1 * (50 / 60)^-1.33 * 1.2209126,
+                    1390 * 1.3049067 / kc$volume)
+  expected <- list(v1 = r$v1, v2 = r$v2, cl1 = r$cl1 / 60, cl2 = r$cl2 / 60)
+  expect_equal(actual[names(expected)], expected, tolerance = 1e-6)
+  expect_equal_rounded(actual[names(expected)],
+                       list(v1 = 2311.04630187, v2 = 441.880429051,
+                            cl1 = 0.403169727424, cl2 = 0.0829406481339))
+})
+
+test_that("anchored at Akil's cohort: its typical patients receive the published V_R, V_S and CL_R (A2-F4)", {
+  # Table 1 (p. 102): 41 men and 40 women, 71.5 kg, BMI 26.3 (164.9 cm), 77.8
+  # years.  The reduced V1 = 2 / (1/V_R + 1/V_S) depends on the volumes alone,
+  # which carry no sex term: the cohort's man and woman, weighted 41:40
+  # geometrically, receive the published 1579.94 L.  CL_R carries the source's
+  # sex term, so each sex's subject receives its own published CL_R, backed
+  # out of the reduced total clearance 1 / (0.5/CL_R + 0.5/CL_S).
+  h <- 100 * sqrt(71.5 / 26.3)
+  m <- citalopram(71.5, h, 77.8, "male")$PK$default
+  w <- citalopram(71.5, h, 77.8, "female")$PK$default
+  v1 <- 2 / (1 / 1830 + 1 / 1390)
+  expect_equal(exp((41 * log(m$v1) + 40 * log(w$v1)) / 81), v1, tolerance = 1e-6)
+  ageTerm <- 77.8 / 60
+  clRof <- function(p, sex) {
+    pkW <- pkSizeFactors(71.5, h, 77.8, sex)$pkWeight
+    clS <- 22.1 * ageTerm^-1.33 * (pkW / 70)^0.75
+    0.5 / (1 / (p$cl1 * 60) - 0.5 / clS)
+  }
+  expect_equal(clRof(m, "male"), 13 * ageTerm^-0.822, tolerance = 1e-6)
+  expect_equal(clRof(w, "female"), 9.05 * ageTerm^-0.822, tolerance = 1e-6)
+  # The switch off is unchanged: the published values
+  off <- citalopram(71.5, h, 77.8, "female", adjustToFFM = FALSE)$PK$default
+  r <- reduceByHand(9.05 * ageTerm^-0.822, 1830,
+                    22.1 * ageTerm^-1.33 * (71.5 / 70)^0.75, 1390)
+  expect_equal(off$v1, v1, tolerance = 1e-12)
+  expect_equal(off$cl1, r$cl1 / 60, tolerance = 1e-12)
 })
 
 test_that("the switch off evaluates the S weight term at total body weight", {
@@ -226,14 +268,21 @@ test_that("pregnancy: both enantiomers' clearances x 1.32 before the reduction (
     expect_identical(a[[p]], b[[p]], info = p)
   }
   expect_equal(a$v2, b$v2, tolerance = 1e-12)   # unchanged but for rounding
-  expect_equal_rounded(1273.580116, a$v1)
-  expect_equal_rounded(616.9730331, a$v2)
-  expect_equal_rounded(0.4649808069, a$cl1)
-  expect_equal_rounded(0.3183473012, a$cl2)
+  # Anchored at Akil's cohort (A2-F4): V_R and V_S divided by the pooled
+  # cohort's volume factor (0.8920944), CL_R by the cohort woman's clearance
+  # factor (0.8510593); CL_S not at all.
+  expect_equal_rounded(1427.629264, a$v1)
+  expect_equal_rounded(579.2735989, a$v2)
+  expect_equal_rounded(0.5257826952, a$cl1)
+  expect_equal_rounded(0.2770757163, a$cl2)
   # The reduction of the scaled enantiomers, by hand
+  kc <- cohortFactorsIndependent(CITALOPRAM_COHORT)
+  kw <- cohortFactorsIndependent(modifyList(CITALOPRAM_COHORT, list(men = 0)))
   size <- pkSizeFactors(70, 165, 30, SEX_FEMALE, TRUE, legacyVolume = 1)
-  r <- reduceByHand(9.05 * 0.5^-0.822 * size$clearance * 1.32, 1830 * size$volume,
-                    22.1 * 0.5^-1.33 * (size$pkWeight / 70)^0.75 * 1.32, 1390 * size$volume)
+  r <- reduceByHand(9.05 * 0.5^-0.822 * size$clearance / kw$clearance * 1.32,
+                    1830 * size$volume / kc$volume,
+                    22.1 * 0.5^-1.33 * (size$pkWeight / 70)^0.75 * 1.32,
+                    1390 * size$volume / kc$volume)
   expect_equal_rounded(r$cl1 / 60, a$cl1)
   expect_equal_rounded(r$v2, a$v2)
   # and the direct call agrees

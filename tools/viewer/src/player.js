@@ -152,7 +152,58 @@ function runTextProblem(r) {
     for (const k of ['weight', 'height', 'age'])
         if (pt[k] != null && !Number.isFinite(pt[k])) return `patient.${k} must be a number.`;
     if (pt.sex != null && (typeof pt.sex !== 'string' || !/^[^<>&"']{0,40}$/.test(pt.sex))) return 'patient.sex must be short plain text.';
+    // The physiology panel (2026-11-19): optional, so an older run still loads.
+    const ph = r.physiology;
+    if (ph != null) {
+        if (typeof ph !== 'object') return 'physiology must give the panel\'s settings.';
+        for (const k of ['liver', 'renal', 'cardiac', 'gi', 'temperature', 'altitude', 'pressure'])
+            if (ph[k] != null && !(Number.isFinite(ph[k]) && ph[k] >= 0)) return `physiology.${k} must be a number of 0 or more.`;
+        if (ph.endobronchial != null && typeof ph.endobronchial !== 'boolean') return 'physiology.endobronchial must be true or false.';
+    }
+    // Physiology events (2026-11-19): the settings in force from each time,
+    // optional; the first at the run's start.
+    const steps = r.physiologySteps;
+    if (steps != null) {
+        if (!Array.isArray(steps) || steps.length > 60) return 'physiologySteps must be a list of at most 60 settings.';
+        for (const s of steps) {
+            if (!s || typeof s !== 'object' || !Number.isFinite(s.time)) return 'each of physiologySteps needs a time.';
+            for (const k of ['liver', 'renal', 'cardiac', 'gi', 'temperature', 'altitude', 'pressure'])
+                if (s[k] != null && !(Number.isFinite(s[k]) && s[k] >= 0)) return `physiologySteps.${k} must be a number of 0 or more.`;
+            if (s.endobronchial != null && typeof s.endobronchial !== 'boolean') return 'physiologySteps.endobronchial must be true or false.';
+        }
+        for (let i = 1; i < steps.length; i++)
+            if (!(steps[i].time > steps[i - 1].time)) return 'physiologySteps must be in time order.';
+    }
     return null;
+}
+
+// The physiology in force at time T: the last of the run's steps at or
+// before T (physiology events), or the run's one setting.
+function physiologyAt(r, T) {
+    const steps = r.physiologySteps;
+    if (!Array.isArray(steps) || steps.length === 0) return { index: -1, ph: r.physiology };
+    let i = 0;
+    while (i + 1 < steps.length && steps[i + 1].time <= T) i++;
+    return { index: i, ph: steps[i] };
+}
+
+// The physiology panel the run was drawn at, one line under the title in both
+// views (and so in a video, which paints the title): every control, those
+// away from normal marked.  Shafer, 2026-11-19: "the status of all
+// physiology sliders should appear on 2D and 3D graphs in the visualizer".
+function physiologyLine(ph) {
+    if (!ph) return '';
+    const items = [];
+    const mult = (label, x) => {
+        if (x == null) return;
+        const v = Math.abs(x - 1) < 1e-9 ? '×1' : '×' + (x >= 1 ? x.toFixed(2) : x.toPrecision(2)).replace(/\.?0+$/, '');
+        items.push([label, v, Math.abs(x - 1) >= 1e-9]);
+    };
+    mult('Liver', ph.liver); mult('Kidney', ph.renal); mult('Cardiac output', ph.cardiac); mult('GI', ph.gi);
+    if (ph.temperature != null) items.push(['Temperature', `${ph.temperature} °C`, ph.temperature !== 37]);
+    if (ph.altitude != null) items.push(['Altitude', ph.altitude > 0 ? `${ph.altitude} m (${ph.pressure} Torr)` : 'sea level', ph.altitude > 0]);
+    if (ph.endobronchial != null) items.push(['Intubation', ph.endobronchial ? 'endobronchial' : 'tracheal', ph.endobronchial]);
+    return items.map(([k, v, off]) => `<span class="${off ? 'off' : ''}">${escapeHtml(k)} ${escapeHtml(v)}</span>`).join(' · ');
 }
 
 // The drug's liquid colour, from the run.
@@ -275,8 +326,10 @@ const Player = {
         // A run from the page that opened this one.
         window.addEventListener('message', e => {
             // Only stanpumpR's own page, on this origin, may hand this page a
-            // run: a page elsewhere that opened it is an opener too.
-            if (e.origin !== location.origin) return;
+            // run: a page elsewhere that opened it is an opener too.  And only
+            // the page that opened this one, not another window of the origin
+            // (Carbon's repository audit, 2026-11-18).
+            if (e.origin !== location.origin || e.source !== window.opener) return;
             const d = e.data;
             if (d && d.type === 'stanpumpR-viewer-run') this.load(d.run);
             else if (d && d.type === 'stanpumpR-viewer-error')
@@ -340,6 +393,9 @@ const Player = {
         this.pause();
         this.run = r;
         this.gas = r.kind === 'gas';
+        // With physiology events the line follows the clock (seek())
+        this.physioIndex = null;
+        this.$('physio').innerHTML = physiologyLine(physiologyAt(r, r.t[0]).ph);
         this.units = microUnits(r.units);
         // Concentration x volume (L) x scale is the amount in units.amount.
         this.scale = r.amountScale != null ? r.amountScale : 1;
@@ -564,6 +620,18 @@ const Player = {
         slider.value = this.T;
         slider.style.setProperty('--pct', `${100 * (this.T - r.t[0]) / (r.t[r.t.length - 1] - r.t[0])}%`);
         this.$('now').textContent = hms(this.T);
+        const phys = physiologyAt(r, this.T);
+        if (phys.index !== this.physioIndex) {
+            this.physioIndex = phys.index;
+            this.$('physio').innerHTML = physiologyLine(phys.ph) +
+                (phys.index >= 0 ? ` <span class="step">(physiology event${phys.index > 0 ? ' at ' + hms(phys.ph.time) : 's: normal'})</span>` : '');
+        }
+        // Arterial oxygen under the title with an endobronchial tube, amber
+        // below 90% (Shafer, 2026-11-19); the cards do not grow
+        const ox = this.$('oxygen');
+        if (ox) ox.innerHTML = st.saturation != null && Number.isFinite(st.saturation)
+            ? `<span class="${st.saturation < 90 ? 'off' : ''}">SaO₂ ${Math.round(st.saturation)}% · PaO₂ ${Math.round(st.paO2)} mmHg</span>`
+            : '';
         this.readout(st);
         this.amounts(st);
         if (this.view === '3d') Cards.fit('3d');

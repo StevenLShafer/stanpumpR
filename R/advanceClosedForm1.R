@@ -100,9 +100,11 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   # its start from pkSets$default$lambda_4, which no PK set carries, so
   # 0.693 / NULL was numeric(0) and min(numeric(0), 1) a minute; it was surely
   # meant to be ke0, as in the other engines.  Kept at a minute deliberately,
-  # so that the dexmedetomidine bypass runs -- the only drug that reaches this
-  # engine, and whose effect site calculateCe() approximates step by step --
-  # are drawn on exactly the line they always were.  (Claude Code, 2026-10-07.)
+  # so that the dexmedetomidine bypass runs -- then the only drug that reached
+  # this engine -- are drawn on exactly the line they always were.  (Claude
+  # Code, 2026-10-07.)  The effect site is exact over every step since
+  # 2026-11-19 (effectSiteExact(), below), so the fill sets only where the
+  # curve is drawn, not its accuracy.
   timeLine <- simulationTimeGrid(knots[knots <= maximum], maximum, start = 1)
   L <- length(timeLine)
 
@@ -233,6 +235,7 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   # PK set in force before it (infusionRows), whose state coordinates the
   # increment is expressed in.
   depot <- list()
+  depotSteps <- list()
   for (r in routes)
   {
     if (!any(depotLine[, r] != 0)) next
@@ -253,6 +256,7 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
       if (j == 3) p_infusion_l3 <- p_infusion_l3 + inc
     }
     depot[[r]] <- G
+    depotSteps[[r]] <- list(ka = kaStep, Gstart = Gstart)
   }
 
   p_state_l1 <- p_state_l2 <- p_state_l3 <- rep(0, L)
@@ -338,19 +342,17 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   # it; see the same guard in advanceClosedForm0().
   hasCe <- any(ke0 > 0)
   Ce <- if (hasCe) {
-    calculateCe(Cp, at("ke0", infusionRows), dt, L)
+    effectSiteExact(
+      states = cbind(p_state_l1, p_state_l2, p_state_l3),
+      lambda = cbind(at("lambda_1", infusionRows), at("lambda_2", infusionRows),
+                     at("lambda_3", infusionRows)),
+      infusion = cbind(p_coef_infusion_l1, p_coef_infusion_l2, p_coef_infusion_l3) * rate,
+      bolusCoef = cbind(at("p_coef_bolus_l1", infusionRows), at("p_coef_bolus_l2", infusionRows),
+                        at("p_coef_bolus_l3", infusionRows)),
+      depots = depotSteps, ke0 = at("ke0", infusionRows), dt = dt)
   } else {
     rep(NA_real_, L)
   }
-
-  temp <- data.frame(
-    Time = round(timeLine, 2),
-    State1 = round(p_state_l1, 2),
-    State2 = round(p_state_l2, 2),
-    State3 = round(p_state_l3, 2),
-    Cp  = round(Cp, 2),
-    Ce  = round(Ce, 2)
-  )
 
   if (plotRecovery)
   {
@@ -487,4 +489,68 @@ depotInput <- function(lambda, ka, G, dt)
                           (exp(-ka * dt) - exp(-lambda * dt)) / ifelse(same, 1, d))
   out[G == 0 | ka <= 0] <- 0
   out
+}
+
+#' The effect site of the event engine, exact over every step
+#'
+#' Over the step into point i the PK set in force (`infusionRows`) is fixed,
+#' and each plasma state, in that set's coordinates, is
+#'     s_j(tau) = B_j + (S_j - B_j) exp(-lambda_j tau)
+#'                + sum_depots b_j ka G0 (exp(-ka tau) - exp(-lambda_j tau)) / (lambda_j - ka),
+#' with S_j the state at point i - 1 (after its bolus, and after the change of
+#' coordinates at an event), B_j the infusion's steady state and G0 the depot
+#' at the step's start.  The effect site, dCe/dt = ke0 (Cp - Ce), answers a
+#' plasma term exp(-mu tau) at the step's end with
+#'     E(mu) = ke0 (exp(-mu dt) - exp(-ke0 dt)) / (ke0 - mu),
+#' and a constant with E(0) = 1 - exp(-ke0 dt), so Ce is advanced exactly,
+#' where calculateCe() interpolated the plasma between points (log-linearly
+#' when falling, linearly when rising), which is exact for neither a sum of
+#' exponentials nor a change of PK set.  The effect site is a concentration
+#' and carries across an event unchanged.  (Claude Code, 2026-11-19, for the
+#' physiology events, which bring every intravenous drug the sliders change
+#' to this engine: calculateCe() was 0.8% off the matrix exponential for
+#' propofol; tests/testthat/test-physiology-events.R.)
+#'
+#' @param states L x 3 plasma states (final, as the engine leaves them)
+#' @param lambda,infusion,bolusCoef L x 3: over the step into each point, the
+#'   eigenvalues, the infusion's steady-state amplitudes (p_coef_infusion x
+#'   rate, the state an infusion approaches)
+#'   and the bolus coefficients
+#' @param depots list per route of `ka` and `Gstart` (per step)
+#' @param ke0,dt per step
+#' @returns Ce, length L, 0 at the first point
+#' @keywords internal
+effectSiteExact <- function(states, lambda, infusion, bolusCoef, depots, ke0, dt)
+{
+  L <- nrow(states)
+  Ce <- numeric(L)
+  if (L < 2) return(Ce)
+  i <- 2:L
+  k <- ke0[i]
+  h <- dt[i]
+  ek <- exp(-k * h)
+  response <- function(mu) {
+    d <- k - mu
+    same <- abs(d) < 1e-9 * pmax(abs(k), 1e-12)
+    k * ifelse(same, h * ek, (exp(-mu * h) - ek) / ifelse(same, 1, d))
+  }
+  inc <- numeric(L - 1)
+  for (j in 1:3) {
+    lam <- lambda[i, j]
+    S <- states[i - 1L, j]
+    B <- infusion[i, j]
+    inc <- inc + B * (1 - ek) + (S - B) * response(lam)
+    for (r in names(depots)) {
+      ka <- depots[[r]]$ka[i]
+      G0 <- depots[[r]]$Gstart[i]
+      d <- lam - ka
+      same <- abs(d) < 1e-9 * pmax(abs(ka), 1e-12)
+      ka <- ifelse(same, ka * (1 + 1e-6), ka)
+      term <- bolusCoef[i, j] * ka * G0 / (lam - ka) * (response(ka) - response(lam))
+      term[G0 == 0 | !is.finite(term)] <- 0
+      inc <- inc + term
+    }
+  }
+  for (n in i) Ce[n] <- Ce[n - 1L] * ek[n - 1L] + inc[n - 1L]
+  Ce
 }

@@ -8,7 +8,7 @@
 # page listing fewer drugs than the dose table offers by mouth, by injection
 # into muscle or by nasal spray.  Verified by tests/testthat/test-help-content.R.
 #
-# A hand-written page (inst/help/<id>.md) may hold a line that is nothing but
+# A hand-written page (inst/app-help/<id>.md) may hold a line that is nothing but
 #
 #     <!-- generated: NAME -->
 #
@@ -97,7 +97,7 @@ helpRouteInventory <- function(drugDefaults = getDrugDefaultsGlobal()) {
 #' @noRd
 helpRouteTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
   cell <- function(x) {
-    if (length(x$units) == 0) return("—")
+    if (length(x$units) == 0) return("\u2014")
     paste0(paste0("`", x$units, "`", collapse = ", "),
            if (length(x$notes) > 0) paste0(" (", paste(x$notes, collapse = "; "), ")") else "")
   }
@@ -123,7 +123,7 @@ helpRouteTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
 #' @noRd
 helpAlternativeModelTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
   patients <- helpReferencePatients()
-  num <- function(x, digits = 3) if (is.null(x) || is.na(x)) "—" else helpFormatNumber(x, digits)
+  num <- function(x, digits = 3) if (is.null(x) || is.na(x)) "\u2014" else helpFormatNumber(x, digits)
   # This block is the Minto / Schnider help page's table, so it covers that
   # group's drugs only; the Hamberg companion has its own hand-written page.
   tables <- vapply(companionGroupDrugs("mintoSchnider"), function(drug) {
@@ -136,7 +136,7 @@ helpAlternativeModelTableMarkdown <- function(drugDefaults = getDrugDefaultsGlob
       problem <- alternativeModelProblem(drug, p$weight, p$height, p$age, p$sex)
       own <- helpDrugPK(drug, p, drugDefaults)
       ownSet <- if (is.null(own)) NULL else own$PK[[PK_EVENT_DEFAULT]]
-      ownText <- if (is.null(ownSet)) "—" else
+      ownText <- if (is.null(ownSet)) "\u2014" else
         sprintf("CL1 %s L/min, V1 %s L, ke0 %s/min", num(ownSet$cl1), num(ownSet$v1), num(ownSet$ke0))
       if (!is.null(problem)) {
         return(sprintf("| %s | not defined: %s | | | | | | | | %s |", patient,
@@ -294,7 +294,7 @@ helpIllicitPKTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
     kas <- kas[!is.na(kas) & kas > 0]
     routes <- paste(route, collapse = ", ")
     absorption <- if (length(kas) == 0) {
-      "—"
+      "\u2014"
     } else if (length(unique(round(kas, 9))) > 1) {
       # Each route absorbs at its own rate; one number here would be a lie.
       sprintf("%s, each at its own rate", routes)
@@ -324,13 +324,13 @@ helpIllicitPKTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
 helpIllicitAnalyte <- function(drug) {
   registry <- illicitRouteRegistry()
   rows <- registry[registry$drug == drug & registry$offered == "yes", ]
-  if (nrow(rows) == 0) return("—")
+  if (nrow(rows) == 0) return("\u2014")
   paste(unique(rows$analyte), collapse = ", ")
 }
 
 #' The James lean body mass against the Al-Sallami fat-free mass, as a figure
 #'
-#' An inline SVG line chart for the Open TCI page (inst/help/opentci.md) and
+#' An inline SVG line chart for the Open TCI page (inst/app-help/opentci.md) and
 #' the obesity scenario: both measures of body size for one woman across
 #' weight, drawn from lbmJames() and ffmAlSallami() themselves, with the James
 #' peak and zero found from the function rather than quoted, the value the
@@ -651,7 +651,7 @@ helpFieldReadersTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()
 
 #' Inverse Gaussian absorption: three input shapes and what they produce
 #'
-#' Two stacked panels for inst/help/models/inverse-gaussian.md, drawn from
+#' Two stacked panels for inst/app-help/models/inverse-gaussian.md, drawn from
 #' igDensity() and igAbsorptionConc() themselves rather than from stored
 #' numbers: the top panel is the absorption density at three shape parameters,
 #' the bottom the plasma curve each produces through one disposition.  The
@@ -759,7 +759,7 @@ helpIGAbsorptionFigure <- function(drugDefaults = NULL) {
 
 #' The three models of the Duzitol editorial, built, as a Markdown table
 #'
-#' For inst/help/models/why-simulate.md: Table 1's six numbers per model, the
+#' For inst/app-help/models/why-simulate.md: Table 1's six numbers per model, the
 #' three-compartment model threeCompartmentFromHalfLives() builds from them,
 #' and the 50% and 80% decrement times after a steady-state infusion
 #' (R/duzitol.R), beside the 50% times the editorial printed.  One column per
@@ -800,7 +800,7 @@ helpDuzitolModelTableMarkdown <- function(drugDefaults = NULL) {
 
 #' The Duzitol editorial's three models, simulated, as a figure
 #'
-#' Two stacked panels for inst/help/models/why-simulate.md, drawn from
+#' Two stacked panels for inst/app-help/models/why-simulate.md, drawn from
 #' R/duzitol.R rather than from stored numbers: above, the context-sensitive
 #' half-time (the 50% decrement time after an infusion that held the plasma
 #' concentration constant) against the length of the infusion, 0 to 600 min,
@@ -931,11 +931,13 @@ HELP_GENERATED_BLOCKS <- list(
   "antiseizure-interaction-sources" = helpAntiseizureInteractionSourcesMarkdown,
   "field-readers-table" = helpFieldReadersTableMarkdown,
   "pk-converter" = helpPKConverterHTML,
+  "pd-adaptation-table" = function(...) helpPdAdaptationTableMarkdown(),
   "physiology-table" = function(...) helpPhysiologyTableMarkdown(),
   "physiology-ke0-figure" = function(...) helpPhysiologyKe0Figure(),
   "physiology-ke0-table" = function(...) helpPhysiologyKe0Table(),
   "physiology-propofol-table" = function(...) helpPhysiologyPropofolTable(),
   "physiology-gas-table" = function(...) helpPhysiologyGasTable(),
   "physiology-temperature-table" = function(...) helpPhysiologyTemperatureTable(),
+  "physiology-altitude-table" = function(...) helpPhysiologyAltitudeTable(),
   "gas-greenhouse-table" = helpGasGreenhouseTableMarkdown
 )

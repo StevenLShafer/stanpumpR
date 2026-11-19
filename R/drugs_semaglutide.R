@@ -34,10 +34,18 @@
 # renal impairment (mild 0.948, moderate 0.955, severe 0.920), whose eGFR
 # categories the paper does not say how it estimated.  All are within 8%.
 #
-# BODY SIZE: the model has its own weight covariate, evaluated at the
-# pharmacokinetic weight (size$pkWeight) with the switch on and at total
-# body weight with it off; V/F, which carries no weight term, is scaled by
-# the library factor (legacyVolume = 1).
+# BODY SIZE: the model has its own weight covariate on CL/F, evaluated at
+# the pharmacokinetic weight (size$pkWeight) with the switch on and at total
+# body weight with it off.  V/F, which carries no covariate, belongs to the
+# typical patient of the phase 3 trials, and with the switch on it is
+# anchored at the cohort (SEMAGLUTIDE_COHORT, below; Steven L. Shafer,
+# 2026-11-19, after Carbon's second repository audit, A2-F4): V/F x the
+# patient's fat-free-mass ratio to the cohort's typical patient.  Scaled from
+# the 70 kg reference man, as it was, the cohort's own typical patient
+# received a V/F 0.4% above the published 12.2 L (factor 1.004).  A model
+# with a size covariate on one parameter is not thereby exempt on the
+# others.  The 85 kg reference subject is CL/F's, not V/F's.  With the switch
+# off V/F is 12.2 L (legacyVolume = 1).
 #
 # WHY NOT THE TWO-COMPARTMENT FIT
 # ===============================
@@ -74,6 +82,22 @@ SEMAGLUTIDE_CL_MALE <- 1.04
 SEMAGLUTIDE_CL_AGE_65_74 <- 0.988
 SEMAGLUTIDE_CL_AGE_75 <- 0.961
 
+# Carlsson Petri 2018, ESM Table S1 (the supplement's docx), by trial in the
+# table's order (SUSTAIN 1, 2, 3, 6 and SUSTAIN-Japan; 1612 in all): mean
+# weight, BMI and age and the numbers of men and women of each.  No height is
+# printed; each trial's comes from its weight and BMI, the same for both
+# sexes, the table giving no means by sex.
+# (The article's Table 2, p. 1539, pools 1612 subjects, 927 men and 685 women,
+# 86.2 kg, BMI 31.1, and prints no age.)  V/F is anchored at this cohort
+# (Steven L. Shafer, 2026-11-19, after Carbon's second repository audit,
+# A2-F4; see the header).
+SEMAGLUTIDE_COHORT <- list(groups = list(
+  list(weight = 93.8, bmi = 33.4, age = 53.2, men = 128, women = 109),
+  list(weight = 89.4, bmi = 32.3, age = 55.8, men = 204, women = 213),
+  list(weight = 96.2, bmi = 34.1, age = 56.3, men = 193, women = 173),
+  list(weight = 88.3, bmi = 32.1, age = 65.4, men = 66, women = 52),
+  list(weight = 71.3, bmi = 26.3, age = 58.4, men = 336, women = 138)))
+
 #' Semaglutide pharmacokinetics (subcutaneous, once weekly)
 #'
 #' One compartment with first-order absorption (Carlsson Petri 2018); see the
@@ -84,7 +108,11 @@ SEMAGLUTIDE_CL_AGE_75 <- 0.961
 #' @export
 semaglutide <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  # V/F, with no covariate, is anchored at the phase 3 cohort
+  # (SEMAGLUTIDE_COHORT); CL/F carries its own weight term, read at pkWeight,
+  # which does not depend on the anchor, and takes no size factor.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, SEMAGLUTIDE_COHORT))
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   sexFactor <- if (sex == SEX_MALE) SEMAGLUTIDE_CL_MALE else 1
   ageFactor <- if (age >= 75) SEMAGLUTIDE_CL_AGE_75 else

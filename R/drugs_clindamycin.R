@@ -25,9 +25,20 @@
 # =====================================
 # The source scaled clearance with total weight to the power 0.497 and left
 # the volume fixed.  With the fat-free-mass switch on, the same 0.497 exponent
-# is applied to the FAT-FREE-MASS ratio instead, and the volume follows the
-# library convention (x FFM / FFM_ref).  With it off, the model is exactly
-# the published one: CL x (weight/70)^0.497, V unscaled.
+# is applied to the FAT-FREE-MASS ratio instead.  The volume, with no size
+# covariate, belongs to Bouazza's typical patient, and with the switch on it
+# is anchored at the cohort (CLINDAMYCIN_COHORT, below; Steven L. Shafer,
+# 2026-11-19, after Carbon's second repository audit, A2-F4): it follows the
+# library convention (x FFM / FFM_ref) divided by the cohort's factor, 0.9207,
+# so that Bouazza's own typical patient receives the published 66.2 L; scaled
+# from the 70 kg reference man, as it was, that patient received a V 7.9% low.
+# A size covariate on CL does not exempt V.  The clearance's own 0.497 power
+# is not anchored.  The cohort's weight and age are the text's (p. 972: 70.9
+# kg, 58.7 years); Table 1 prints 69.9 kg and 56.7 years, which disagree with
+# the text (its "SD" column, 2.7-3.0, can only be standard errors), and the
+# text was used; the Table 1 pair would lower the factor by about 0.7%.  With
+# the switch off, the model is exactly the published one: CL x
+# (weight/70)^0.497, V unscaled.
 #
 # NOT MODELLED
 # ============
@@ -75,6 +86,17 @@
 #   susceptible to clindamycin).  https://doi.org/10.1093/ofid/ofy270
 # -----------------------------------------------------------------------------
 
+# Bouazza 2012, text p. 972: 50 patients, 30 men and 20 women, mean weight
+# 70.9 kg, mean age 58.7 years; Paris, 2008-10 (Table 1's 69.9 kg and 56.7
+# years disagree; the text is used, see the header).  No height is printed:
+# NCD-RisC's mean height at 18 for France, birth cohort 1950 (about 2009 less
+# 59), less the loss with age to 58.7 years, is 173.1 cm for the men and 160.4
+# cm for the women.  V is anchored at this cohort (Steven L. Shafer,
+# 2026-11-19, after Carbon's second repository audit, A2-F4).
+CLINDAMYCIN_COHORT <- list(groups = list(
+  list(weight = 70.9, height = 173.1, age = 58.7, men = 30, women = 0),
+  list(weight = 70.9, height = 160.4, age = 58.7, men = 0, women = 20)))
+
 #' Clindamycin pharmacokinetics
 #'
 #' @inheritParams cefazolin
@@ -86,14 +108,17 @@
 #' @export
 clindamycin <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  # Size scaling (see the header).  Volume: library convention, unscaled when
-  # the switch is off.  Clearance: the published 0.497 exponent, on the
-  # fat-free-mass ratio when the switch is on and on weight/70 when it is off.
+  # Size scaling (see the header).  Volume: library convention, anchored at
+  # Bouazza's cohort (CLINDAMYCIN_COHORT), unscaled when the switch is off.
+  # Clearance: the published 0.497 exponent, on the (unanchored) fat-free-mass
+  # ratio when the switch is on and on weight/70 when it is off.
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  sizeFree <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                            cohort = do.call(cohortSizeFactors, CLINDAMYCIN_COHORT))
   clSize <- if (isTRUE(adjustToFFM)) size$volume^0.497 else (weight / 70)^0.497
 
   # Bouazza 2012, final table
-  v1  <- 66.2 * size$volume
+  v1  <- 66.2 * sizeFree$volume
   cl1 <- 15.2 * clSize / 60            # L/min
   v2  <- 1                             # one compartment
   v3  <- 1

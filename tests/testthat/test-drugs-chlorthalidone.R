@@ -94,3 +94,20 @@ test_that("both switch positions give a usable parameter set", {
                 info = as.character(ffm))
   }
 })
+
+test_that("anchored at Tsai's cohort: each sex's subject receives the published values (A2-F4)", {
+  # Table S1: 86 kg, BMI 30.8 (167.1 cm), 58 years, 46% men.  CL/F and V1/F
+  # carry the sex terms and are anchored at each sex's subject; V2/F and Q/F
+  # at the pooled subject.
+  h <- 100 * sqrt(86 / 30.8)
+  w <- chlorthalidone(86, h, 58, "female")$PK$default
+  m <- chlorthalidone(86, h, 58, "male")$PK$default
+  expect_equal(w$v1, 62.1, tolerance = 1e-12)
+  expect_equal(w$cl1 * 60, 4.13, tolerance = 1e-12)
+  expect_equal(m$v1, 62.1 * 2.19, tolerance = 1e-12)
+  expect_equal(m$cl1 * 60, 4.13 * 1.253, tolerance = 1e-12)
+  # the man-to-woman ratios are the source's, not compounded with fat-free mass
+  expect_equal(m$v1 / w$v1, 2.19, tolerance = 1e-12)
+  kc <- cohortFactorsIndependent(CHLORTHALIDONE_COHORT)
+  expect_equal(w$v2, 120 * pkSizeFactors(86, h, 58, "female")$volume / kc$volume, tolerance = 1e-6)
+})

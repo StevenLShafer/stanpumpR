@@ -88,7 +88,7 @@ Renal function (dose table above). No age effect on PK in controlled studies (p7
   plasma therapeutic range 100 to 300 ng/mL, co-cited with Hornik 2019.
 
 ## Verification against stanpumpR
-Checked in `C:\dev\stanpumpRPapers\_build\master_snapshot` (master 50bb4219).
+Checked in the archive's master snapshot (master 50bb4219).
 
 - `therapeuticRanges.csv:181` (milrinone): matrix plasma, lower 100, upper 300, units ng/mL, source "PRIMACOR
   (milrinone) label, rev. 01/2003, Clinical Pharmacology; Hornik CP et al. 2019". Label PDF p2 (image) gives

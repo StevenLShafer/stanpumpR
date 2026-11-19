@@ -58,7 +58,7 @@
 # target: the ACT measured by different devices is not directly comparable (the
 # authors fitted a Hemochron Junior2 ACT), the model is small (50 patients), and
 # clinical use and enforcement of its limits are outside it.  See
-# inst/help/drugs/heparinCPB.md.  No MEAC and no time until threshold.  The band
+# inst/app-help/drugs/heparinCPB.md.  No MEAC and no time until threshold.  The band
 # is 480 to 600 s, typical 480: an ACT above 480 s is the EACTS/EACTAIC/EBCP
 # 2024 threshold on bypass (section 9.3.1), and the upper edge is Steven L.
 # Shafer's choice (2026-10-27, kept 2026-10-28): 600 s was the constant
@@ -70,13 +70,26 @@
 # =====================================
 # Vc and CL carry the model's own weight covariate, evaluated at the
 # pharmacokinetic weight with the switch on (size$pkWeight) and at total body
-# weight with it off.  Vp and Q have no size term in the source and take the
-# library's fat-free-mass factors with the switch on; with it off they are the
+# weight with it off.  Vp and Q have no size term in the source: they belong
+# to the cohort's typical patient, and with the switch on they are anchored at
+# that patient (HEPARIN_CPB_COHORT, below; Steven L. Shafer, 2026-11-19, after
+# Carbon's second repository audit, A2-F4).  Delavenne's cohort (38 men and 12
+# women, median 77.5 kg) sits almost exactly at the 70 kg reference man
+# (cohort factors 1.002 and 1.001), so scaled from him, as they were, its
+# typical patient was off by 0.2% at most and the anchor moves nothing
+# measurable; it is applied for consistency.  A size covariate on Vc and CL
+# does not exempt the other parameters.  With the switch off they are the
 # published values (legacyVolume = 1).  Heparin is dosed per kilogram (IU/kg),
 # and that scaling of the dose is independent of the model's.
 #
 # (Claude Code, 2026-10-20, at the request of Steven L. Shafer.)
 # -----------------------------------------------------------------------------
+
+# Delavenne 2017, Table 1 (p. 707): 50 patients, 38 men and 12 women; median
+# weight 77.5 kg, BMI 27.2, age 67.5 years.  No height is printed; it comes
+# from the weight and BMI (168.8 cm).  Vp and Q are anchored at this cohort
+# (see the header).
+HEPARIN_CPB_COHORT <- list(weight = 77.5, bmi = 27.2, age = 67.5, men = 38, women = 12)
 
 #' Unfractionated heparin PK/PD on cardiopulmonary bypass (ACT, Delavenne 2017)
 #'
@@ -97,7 +110,11 @@
 #' @export
 heparinCPB <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  # Vp and Q, with no size term, are anchored at Delavenne's cohort
+  # (HEPARIN_CPB_COHORT); Vc and CL carry their own weight term, at the
+  # pharmacokinetic weight, which does not depend on the cohort.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, HEPARIN_CPB_COHORT))
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
 
   default <- list(

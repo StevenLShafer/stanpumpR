@@ -62,7 +62,8 @@ PAPER_REVIEW_IMAP_TIMEOUT <- 30
 
 # Outcomes of a review that never reached the API, so cost nothing and are
 # not counted.
-PAPER_REVIEW_UNSENT_CODES <- c("no_key", "no_pdf", "too_large", "no_httr2", "connection")
+PAPER_REVIEW_UNSENT_CODES <- c("no_key", "no_pdf", "too_large", "no_httr2", "connection",
+                               "stopped", "discarded")
 
 #' Record one review sent with the operator's key
 #'

@@ -36,3 +36,19 @@ test_that("etoposide is a chemotherapy drug, plasma only, with no band", {
   expect_match(PK$reference, "Krogh-Madsen")
   expect_identical(therapeuticRange("etoposide")$band_status, "not_applicable")
 })
+
+test_that("with the switch on: anchored at Krogh-Madsen's cohort, Vc at its man, renal CL not", {
+  # Table 1: 79.4 kg, BSA 1.91 m2 (170.1 cm by Du Bois, to 0.1 cm), 52.3 years,
+  # 14 men and 9 women analysed.
+  co <- list(weight = 79.4, height = 170.1, age = 52.3, men = 14, women = 9)
+  kAll <- cohortFactorsIndependent(co)
+  kMan <- cohortFactorsIndependent(modifyList(co, list(men = 1, women = 0)))
+  on <- etoposideKroghMadsen(70, 170, 35, "male", creatinine = 0.9)$PK$default
+  off <- etoposideKroghMadsen(70, 170, 35, "male", adjustToFFM = FALSE, creatinine = 0.9)$PK$default
+  expect_equal_rounded(on$v1, off$v1 / kMan$volume)     # Vc: a man's value
+  expect_equal_rounded(on$v2, off$v2 / kAll$volume)
+  expect_equal_rounded(on$cl2, off$cl2 / kAll$clearance)
+  # CL = non-renal (anchored) + renal (Cockcroft-Gault, at 70 kg the same both ways)
+  crcl <- (140 - 35) * 70 / (72 * 0.9)
+  expect_equal_rounded(on$cl1 * 60, 0.99 / kAll$clearance + 0.00996 * crcl)
+})

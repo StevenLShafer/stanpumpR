@@ -72,6 +72,16 @@
 # -----------------------------------------------------------------------------
 
 # Perez-Blanco 2016, Table 2 (L/h, L)
+#
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): fixed published values belong to the
+# source's cohort, not the reference man. [decision] for Steven L. Shafer:
+# Perez-Blanco 2016 (Table 1, p. 1519, read on the PDF 2026-11-18) prints its
+# cohort, 71 kg, 164 cm, 66 years, 23 men and 22 women, but every volume was
+# fixed from Kontny 2013's different population, so only the clearances belong
+# to this cohort. Anchor the clearances here and the volumes at Kontny's
+# cohort (to be read), anchor everything here, or leave the reference anchor?
+# Until answered, the values stay anchored at the 70 kg reference man.
 DOXORUBICIN_PEREZ_BLANCO <- list(
   cl = 62.4, v1 = 17.7, q2 = 50.7, v2 = 1830, q3 = 28.4, v3 = 71,
   fm = 0.22, clm = 26.8, v4 = 79.8, q5 = 424, v5 = 653

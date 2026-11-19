@@ -42,9 +42,10 @@
 # Vss 16.1 L (16.3 at the paper's own V1 of 12.9 L, which is V1 at the mean
 # BSA).  The Alimta label gives CL 91.8 mL/min, Vss 16.1 L, half-life 3.5 h.
 #
-# The intercept means clearance never falls below 43 mL/min however poor the
-# kidneys, which the data cannot support below a CrCL of about 40 mL/min
-# (the lowest studied was 36): the authors themselves suggest a sigmoid or a
+# The intercept means clearance never falls below 43 mL/min (for the
+# cohort's typical patient; see BODY SIZE) however poor the kidneys, which
+# the data cannot support below a CrCL of about 40 mL/min (the lowest
+# studied was 36): the authors themselves suggest a sigmoid or a
 # split line would be better there.  Pemetrexed is contraindicated below 45
 # mL/min.  Folate deficiency (CL 33% lower, n = 5) was found and left out of
 # the final model.
@@ -63,9 +64,17 @@
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # BSA and the Cockcroft-Gault weight are evaluated at the pharmacokinetic
-# weight with the switch on and total weight with it off; Q and V2, with no
-# covariate, scale by the library's factors with the switch on and are fixed
-# with it off.
+# weight with the switch on and total weight with it off.  Q, V2 and the
+# non-renal intercept of the clearance (43.0 mL/min, a fixed value, which
+# takes the clearance factor as amikacin's does), with no covariate, belong
+# to the cohort's typical patient, and with the switch on they are anchored at
+# that patient (PEMETREXED_LATZ_COHORT, below; Steven L. Shafer, 2026-11-19,
+# after Carbon's second repository audit, A2-F4): scaled from the 70 kg
+# reference man, as Q and V2 were, Latz's own typical patient received a V2
+# 14% and a Q 10% below the published values, and the intercept was not
+# scaled at all.  The Cockcroft-Gault slope is renal and is not anchored.  A
+# model with a size covariate on one parameter is not thereby exempt on the
+# others.  With the switch off they are fixed.
 #
 # PREGNANCY (R/pregnancy.R)
 # =========================
@@ -88,6 +97,14 @@ PEMETREXED_LATZ <- list(
   v2 = 3.38               # L
 )
 
+# Latz 2006, the index data set on which the model was built (8 trials, 209
+# patients), as confirmed on the PDF 2026-11-19: Table 1, 108 men and 101
+# women; Table 2, medians 57.3 years, 66.0 kg, BSA 1.74 m2.  No height is
+# printed; it is back-solved from the weight and BSA by Du Bois's formula
+# (166.7 cm; the paper's BSA formula is not named).  The validation set is
+# not the fit's cohort and is left out.
+PEMETREXED_LATZ_COHORT <- list(weight = 66.0, height = 166.7, age = 57.3, men = 108, women = 101)
+
 #' Pemetrexed, intravenous (Latz 2006)
 #'
 #' Two compartments; Cockcroft-Gault creatinine clearance on clearance and
@@ -105,15 +122,21 @@ pemetrexed <- function(weight, height, age, sex, adjustToFFM = TRUE,
                        creatinine = NULL, pregnant = FALSE)
 {
   p <- PEMETREXED_LATZ
+  # Q, V2 and the non-renal intercept, with no covariate, are anchored at
+  # Latz's index set (PEMETREXED_LATZ_COHORT); V1 carries its own BSA term
+  # and the renal slope its Cockcroft-Gault clearance
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, PEMETREXED_LATZ_COHORT))
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   bsa <- bsaMosteller(w, height)
   scr <- adultEquivalentCreatinine(creatinine, age, sex)
   gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)
   crcl <- creatinineClearanceCG(w, age, sex, scr) * gfrPregnancy      # mL/min
 
-  cl <- p$clIntercept + p$clCrCL * crcl / p$crclMedian                 # mL/min
+  # the non-renal intercept, a fixed value, takes the clearance factor
+  cl <- p$clIntercept * size$clearance +
+    p$clCrCL * crcl / p$crclMedian                                     # mL/min
 
   default <- list(
     v1  = p$v1 * bsa^p$v1BSAExponent,

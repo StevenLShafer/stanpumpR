@@ -98,9 +98,19 @@
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # Vc/F carries the model's own LBM covariate in both switch positions.  The
-# source found no size effect on CL/F, Q/F or Vp/F; those take the library's
-# fat-free-mass factors with the switch on and are left as published with it
-# off (legacyVolume = 1).
+# source found no size effect on CL/F, Q/F or Vp/F, so those belong to
+# Aoyama's typical subject, and with the switch on they are anchored at the
+# cohort (MELOXICAM_COHORT, below; Steven L. Shafer, 2026-11-19, after
+# Carbon's second repository audit, A2-F4): Vp/F x the patient's
+# fat-free-mass ratio to the cohort's typical man, CL/F and Q/F x that ratio
+# ^ 0.75.  Scaled from the 70 kg reference man, as they were, the cohort's
+# own typical man received values within 0.4% of the published ones (factors
+# 1.004 and 1.003), so the anchor is for consistency.  A model with a size
+# covariate on one parameter is not thereby exempt on the others.  With the
+# switch off they are left as published (legacyVolume = 1).  This applies to
+# the oral (Aoyama) system only: the intravenous ANJESO system carries total
+# body weight on every parameter, in both switch positions, and is not
+# anchored.
 #
 # CYP2C9
 # ======
@@ -123,6 +133,18 @@
 
 MELOXICAM_CYP2C9_VALUES <- c("*1/*1", "*1/*2", "*1/*3", "*2/*2", "*2/*3", "*3/*3")
 MELOXICAM_DT <- 1.91   # h, zero-order duration = lag of the first-order path
+
+# Aoyama 2017, Table 1 (p. 824), medians of the four groups, all men: 30
+# Japanese 63.5 kg, 172 cm, 24 years; 30 Chinese 67.0 kg, 168 cm, 31 years;
+# 29 Korean 69.1 kg, 177 cm, 24 years; 30 white 74.5 kg, 177 cm, 26 years.
+# Heights printed, none derived.  The oral system's CL/F, Q/F and Vp/F are
+# anchored at this cohort (Steven L. Shafer, 2026-11-19, after Carbon's
+# second repository audit, A2-F4; see the header).
+MELOXICAM_COHORT <- list(groups = list(
+  list(weight = 63.5, height = 172, age = 24, men = 30, women = 0),
+  list(weight = 67.0, height = 168, age = 31, men = 30, women = 0),
+  list(weight = 69.1, height = 177, age = 24, men = 29, women = 0),
+  list(weight = 74.5, height = 177, age = 26, men = 30, women = 0)))
 
 #' Meloxicam pharmacokinetics (apparent oral, and intravenous ANJESO)
 #'
@@ -151,7 +173,11 @@ meloxicam <- function(weight, height, age, sex, adjustToFFM = TRUE,
   n2 <- sum(alleles == "*2")
   n3 <- sum(alleles == "*3")
 
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  # The oral system's size-free CL/F, Q/F and Vp/F are anchored at Aoyama's
+  # men (MELOXICAM_COHORT); Vc/F carries its own LBM term and takes no size
+  # factor.  The intravenous system below does not use these factors.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, MELOXICAM_COHORT))
   lbm  <- ffmAlSallami(weight, height, age, sex)   # in place of James's LBM
 
   # Apparent parameters: the whole dose, F = 1.  Path 1 (zero-order over DT

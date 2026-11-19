@@ -47,7 +47,9 @@
 # mg/m2 over 46 h gives an AUC of 20.8 mg h/L here and 17.9 with Briki's
 # model, and with a 400 mg/m2 bolus first 28.7 and 24.7: Briki's runs about
 # 14% lower throughout, a difference between the two cohorts that neither
-# model can settle.  Neither is preferred here; both are offered.
+# model can settle.  Both are candidates of the `fluorouracil` group
+# (R/modelSelection.R), which chooses for the patient by the studied ranges
+# and then the larger study, so an adult the two both include gets Briki's.
 #
 # WHAT IT DOES NOT COVER
 # ======================
@@ -58,8 +60,14 @@
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # As for fluorouracil: BSA from the pharmacokinetic weight with the switch on
-# and total weight with it off; V1, V2 and Q, with no covariate, scale by the
-# library's factors with the switch on and are fixed with it off.
+# and total weight with it off.  V1, V2 and Q, with no covariate, belong to
+# the cohort's typical patient, and with the switch on they are anchored at
+# that patient (FLUOROURACIL_TAN_COHORT, below; Steven L. Shafer, 2026-11-19,
+# after Carbon's second repository audit, A2-F4).  Tan's typical patient is
+# so close to the 70 kg reference man in fat-free mass that the factor is
+# 1.000 (to three places): the anchor changes nothing measurable, and is
+# applied for consistency.  A model with a size covariate on one parameter is
+# not thereby exempt on the others.  With the switch off they are fixed.
 #
 # PREGNANCY: see fluorouracil (unknown; nothing applied).
 # NO EFFECT SITE, NO BAND: the AUC target (20-30 mg h/L) is not drawn.
@@ -76,6 +84,12 @@ FLUOROURACIL_TAN <- list(
   v2 = 15             # L
 )
 
+# Tan 2026, Table 1 (p. 1032), the Overall column: 140 patients, 77 men and
+# 63 women; median age 63, mean weight 78.64 kg, mean BSA 1.94 m2.  No height
+# is printed; it is back-solved from the weight and BSA by Du Bois's formula
+# (174.8 cm; the paper's BSA formula is not named).
+FLUOROURACIL_TAN_COHORT <- list(weight = 78.64, height = 174.8, age = 63, men = 77, women = 63)
+
 #' Fluorouracil, intravenous (Tan 2026)
 #'
 #' Two compartments with Michaelis-Menten elimination alone, Vmax scaled by
@@ -89,8 +103,11 @@ FLUOROURACIL_TAN <- list(
 fluorouracilTan <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   p <- FLUOROURACIL_TAN
+  # V1, V2 and Q, with no covariate, are anchored at Tan's 140 patients
+  # (FLUOROURACIL_TAN_COHORT); Vmax carries its own BSA term
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, FLUOROURACIL_TAN_COHORT))
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   bsa <- bsaMosteller(w, height)
   vmax <- p$vmax * (bsa / p$bsaReference)^p$bsaExponent / 60      # mg/min

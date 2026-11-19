@@ -6,7 +6,7 @@
 # concentrations in mcg/mL (= mg/L) of tolcapone.
 #
 # Drafted by Claude Code, 2026-10-20, at the request of Steven L. Shafer, who
-# supplied the article (inst/help/models/parkinsons.md,
+# supplied the article (inst/app-help/models/parkinsons.md,
 # inst/extdata/parkinsonsRegistry.csv).
 #
 # THE SOURCE
@@ -36,10 +36,10 @@
 #
 # WHAT IS HELD AT THE REFERENCE
 # =============================
-# Serum protein (72 g/L) and albumin (44 g/L), which the Patient Profile does
-# not carry: the authors judged protein's effect on clearance at most +/-10%
-# over 64-80 g/L.  The dose factor on the volumes, held at the 200 mg value
-# (1): in the fluctuators the total volume rose with the regimen (15 L at
+# Serum protein (72 g/L), which the Patient Profile does not carry; the
+# authors judged its effect on clearance at most +/-10% over 64-80 g/L.
+# The dose factor on the volumes, held at the 200 mg value (1): in the
+# fluctuators the total volume rose with the regimen (15 L at
 # 50 mg, 39 L at 400 mg three times a day), which the nonfluctuator data did
 # not confirm and the authors attributed partly to "a few very high V
 # estimates"; clearance, and so the steady-state exposure, did not depend on
@@ -56,6 +56,30 @@
 # volume is real or an artefact of sparse sampling, and the label's half-life
 # is the volunteers'.
 #
+# SERUM ALBUMIN (applied on Steven L. Shafer's decision of 2026-11-18, after
+# Carbon's repository audit noticed the Patient Profile had carried the field
+# since 2026-11-06): Vp x (albumin/44)^2.82, albumin in g/L, read on the PDF
+# Shafer supplied (2026-11-19): the Methods' equation for the fluctuator
+# dataset, VP = TV(VP) x (Albumin/44)^theta x the dose factors (p. 43), and
+# Table 3's theta_Albumin(Vp) 2.82, SE 1.09 (p. 44; so roughly 0.7 to 5.0),
+# with 44 g/L the fluctuators' median (Table 1, p. 41).  The Patient
+# Profile's field is in g/dL (x 10); blank holds the median 44 g/L.  The
+# albumin is HELD WITHIN THE 26-55 g/L the fluctuators had (Table 1's minimum and maximum), as epirubicin
+# holds its AST, because the field accepts 5 to 60 g/L and a power of 2.82
+# carried to 5 g/L would shrink Vp 460-fold on an exponent the data place
+# anywhere between 0.7 and 5.  Within that range the peripheral volume moves
+# a great deal: x 0.52 at 3.5 g/dL, x 0.23 at 2.6 g/dL (the floor), x 1.88 at
+# 5.5 g/dL (the ceiling).  Only Vp moves, so clearance and the steady-state
+# exposure do not; the half-life and the swing between doses do.  The authors
+# themselves are guarded: the covariates on V "could only be estimated with
+# relatively poor parameter precision ... and may have been driven by a few
+# very high V estimates" (Results, p. 45), the nonfluctuators showed no
+# albumin effect, and the Discussion goes as far as "no relationship was
+# detected" between protein or albumin and distribution (p. 46), which sits
+# oddly beside Table 3; the term is applied as the final model prints it,
+# within the studied range (Shafer's decision of 2026-11-19, with those
+# caveats in front of him).
+#
 # COVARIATES AND GENOTYPE: no effect of age, sex, dopamine agonists, treatment
 # duration or (in fluctuators) creatinine clearance.  Tolcapone is
 # glucuronidated (UGT1A9); the label states that "polymorphic metabolism is
@@ -66,8 +90,19 @@
 # BODY SIZE (docs/weight-adjustment.md): the model's own lean body weight
 # terms on CL and Vc, with James's formula evaluated at the pharmacokinetic
 # weight with the fat-free-mass switch on and at total body weight with it off
-# (as for istradefylline); the size-free Q and Vp are scaled by the library's
-# factors, which are 1 with the switch off.
+# (as for istradefylline).  Q and Vp, with no size covariate, belong to
+# Jorga's typical patient, and with the switch on they are anchored at the
+# cohort (TOLCAPONE_COHORT, below; Steven L. Shafer, 2026-11-19, after
+# Carbon's second repository audit, A2-F4): Vp x the patient's fat-free-mass
+# ratio to the cohort's typical patient, Q x that ratio ^ 0.75, Vp's albumin
+# term applied as before.  Scaled from the 70 kg reference man, as they were,
+# the cohort's own typical patient received a Vp 6% and a Q 5% below the
+# published values (factors 0.937 and 0.952).  A model with a size covariate
+# on some parameters is not thereby exempt on the others.  With the switch off
+# Q and Vp are the published values (factors 1).  The cohort is Table 1's
+# (p. 41), which describes the 412 patients of the three trials, not the 275
+# analysed; sex is printed only for the trials as a whole (p. 40).  The PDF
+# Shafer supplied is not yet in the reference archive.
 #
 # NO BAND: the AGNP consensus guideline's update 2017 (Hiemke 2018, as Muller
 # 2024 quotes it) gave 3 to 6 mcg/mL two hours after a dose, but the update
@@ -91,7 +126,10 @@ TOLCAPONE_VC      <- 16      # L at LBW 55 kg, 200 mg
 TOLCAPONE_VC_LBW  <- 0.65
 TOLCAPONE_Q       <- 5.2     # L/h
 TOLCAPONE_VP      <- 12      # L at albumin 44 g/L, 200 mg
-TOLCAPONE_VP_ALBUMIN <- 2.82  # held at the reference albumin, not applied
+TOLCAPONE_VP_ALBUMIN <- 2.82  # on Vp, albumin in g/L (applied 2026-11-18)
+TOLCAPONE_ALBUMIN_REF <- 44   # g/L, the median; held when the field is blank
+TOLCAPONE_ALBUMIN_MIN <- 26   # g/L, the fluctuators' lowest (Table 1)
+TOLCAPONE_ALBUMIN_MAX <- 55   # g/L, the fluctuators' highest (Table 1)
 TOLCAPONE_KA      <- 1.7     # /h
 TOLCAPONE_F       <- 0.6     # fasted, fixed
 TOLCAPONE_F_FOOD  <- 0.88    # relative, with food (not applied)
@@ -99,26 +137,49 @@ TOLCAPONE_LBW_REF <- 55      # kg, the median
 TOLCAPONE_DOSE50_V  <- 0.55  # volumes at 50 mg tid (not applied)
 TOLCAPONE_DOSE400_V <- 1.40  # volumes at 400 mg tid (not applied)
 
+# Jorga 2000, Table 1 (p. 41), the trial population: 412 patients, 262 men and
+# 150 women (p. 40), medians 71 kg, 170 cm and 65 years (the fluctuator
+# column: 71 kg, 169 cm, 65 years, LBW 55 kg).  It describes the 412 patients
+# enrolled, not the 275 analysed.  Height printed, none derived.  Q and Vp are
+# anchored at this cohort (Steven L. Shafer, 2026-11-19, after Carbon's second
+# repository audit, A2-F4; see the header).
+TOLCAPONE_COHORT <- list(weight = 71, height = 170, age = 65, men = 262, women = 150)
+
 #' Tolcapone pharmacokinetics (oral)
 #'
 #' Two compartments with first-order absorption, lean body weight on
-#' clearance and the central volume (Jorga 2000, fluctuator model), absolute
-#' parameters with the bioavailability fixed at 0.6.  See the header of
+#' clearance and the central volume and serum albumin on the peripheral
+#' volume (Jorga 2000, fluctuator model), absolute parameters with the
+#' bioavailability fixed at 0.6.  See the header of
 #' \code{R/drugs_tolcapone.R}.
 #'
 #' @inheritParams cefazolin
+#' @param albumin serum albumin, g/dL, or NULL for the study median
+#'   (4.4 g/dL); held within the studied 2.6-5.5 g/dL
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-tolcapone <- function(weight, height, age, sex, adjustToFFM = TRUE)
+tolcapone <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                      albumin = NULL)
 {
+  # Q and Vp, with no size covariate, are anchored at Jorga's cohort
+  # (TOLCAPONE_COHORT); CL and Vc carry their own LBW terms, read at pkWeight,
+  # which does not depend on the anchor, and take no size factor.
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, TOLCAPONE_COHORT))
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   lbw <- lbmJamesCapped(w, height, sex)   # held at its peak past it, R/lbmJames.R
+  # A blank albumin is the median, as getDrugPK() passes it; an NA from a
+  # script's data frame gave Vp = NA (Carbon's second repository audit,
+  # 2026-11-19, A2-F26)
+  if (!is.null(albumin) && (length(albumin) != 1 || !is.finite(albumin))) albumin <- NULL
+  alb <- if (is.null(albumin)) TOLCAPONE_ALBUMIN_REF else
+    min(max(10 * albumin, TOLCAPONE_ALBUMIN_MIN), TOLCAPONE_ALBUMIN_MAX)  # g/L
 
   default <- list(
     v1  = TOLCAPONE_VC * (lbw / TOLCAPONE_LBW_REF)^TOLCAPONE_VC_LBW,
-    v2  = TOLCAPONE_VP * size$volume,
+    v2  = TOLCAPONE_VP * (alb / TOLCAPONE_ALBUMIN_REF)^TOLCAPONE_VP_ALBUMIN *
+      size$volume,
     v3  = 1,
     cl1 = TOLCAPONE_CL * (lbw / TOLCAPONE_LBW_REF)^TOLCAPONE_CL_LBW / 60,
     cl2 = TOLCAPONE_Q * size$clearance / 60,
@@ -136,9 +197,12 @@ tolcapone <- function(weight, height, age, sex, adjustToFFM = TRUE)
     reference = paste0(
       "Jorga K et al., Br J Clin Pharmacol 2000;49:39-48, fluctuator model (215 ",
       "patients): two compartments, CL 4.8 L/h x (LBW/55)^0.73, Vc 16 L x ",
-      "(LBW/55)^0.65, Q 5.2 L/h, Vp 12 L, ka 1.7/h, bioavailability 0.6 fasted ",
-      "(fixed); James lean body weight; serum protein, albumin and the volumes' ",
-      "dose factor held at the reference (200 mg); concentration only. ",
+      "(LBW/55)^0.65, Q 5.2 L/h, Vp 12 L x (albumin/44 g/L)^2.82 (albumin ",
+      if (is.null(albumin)) "held at the median 44 g/L" else
+        "as entered, held within the studied 26-55 g/L",
+      "), ka 1.7/h, bioavailability 0.6 fasted (fixed); James lean body ",
+      "weight; serum protein and the volumes' dose factor held at the ",
+      "reference (200 mg); concentration only. ",
       "https://doi.org/10.1046/j.1365-2125.2000.00113.x"
     )
   )

@@ -9,7 +9,7 @@
 # valproate, lamotrigine and carbamazepine.  The interactions and their
 # sources are inst/extdata/antiseizureInteractions.csv, built by
 # data-raw/antiseizureInteractions.R; the help page is
-# inst/help/models/antiseizure-interactions.md.  Verified by
+# inst/app-help/models/antiseizure-interactions.md.  Verified by
 # tests/testthat/test-antiseizure-interactions.R.
 #
 # WHAT THE LITERATURE GIVES, AND WHAT IT DOES NOT
@@ -467,6 +467,9 @@ simulationFields <- function(X, DT, ET)
     metaboliteRecoveryStates = X$metaboliteRecoveryStates,
     tci               = X$tci,
     scheduled         = X$scheduled,
+    # Why a drug's physiology events were not applied to this dose table
+    # (simCpCe(); R/physiologyEvents.R)
+    physiologyEventsIgnored = X$physiologyEventsIgnored,
     # The peripheral concentrations and the depot (R/compartments.R), own
     # and as plotted, kept apart as wideOwn and wide are, and the formed
     # metabolite's, which foldMetabolites() adds to the metabolite drug's.
@@ -680,7 +683,14 @@ addAntiseizureReferenceEntries <- function(drugs, dosed)
 asmReferenceName <- function(drug)
   paste0(drug, " (", ASM_INTERACTIONS_REFERENCE_LABEL, ")")
 
-#' One line per active interaction, for the notification and the export
+#' One line per active interaction
+#'
+#' Exported for scripts; the app does not call it (Steven L. Shafer,
+#' 2026-11-18, after Carbon's repository audit flagged it as unused: keep it
+#' for scripts for now).  If it is ever shown in the app or the export, its
+#' reference concentration must follow the Drug Library's units (it prints
+#' mcg/mL) and its wording should separate the change in concentration from
+#' the factor on clearance.
 #'
 #' @param drugs names of the dosed drugs
 #' @returns a character vector ("valproate raises lamotrigine: clearance x
@@ -707,7 +717,7 @@ antiseizureInteractionSummary <- function(drugs)
 #' The applied interactions, as a Markdown table for the help page
 #'
 #' Generated block "antiseizure-interaction-table"
-#' (inst/help/models/antiseizure-interactions.md), built from the registry so
+#' (inst/app-help/models/antiseizure-interactions.md), built from the registry so
 #' that the page cannot drift from what the simulation applies.  Each row gives
 #' the published factor at the perpetrator's reference concentration, the
 #' maximal factor that (1) implies, and the EC50.

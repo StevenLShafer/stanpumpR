@@ -56,8 +56,16 @@
 # (as WT/69); both are the model's OWN covariate and are evaluated at the
 # pharmacokinetic weight with the adjustToFFM switch on (size$pkWeight) and at
 # total body weight with it off, as edoxaban and dabigatran are.  Q and V2 carry
-# no weight term in the source and take the library's fat-free-mass factors with
-# the switch on (size$clearance / size$volume); with it off they are as published
+# no weight term in the source: they belong to Verstuyft's typical subject, and
+# with the switch on they take the library's fat-free-mass factors anchored at
+# the cohort (VERSTUYFT_2012_COHORT, defined in R/drugs_acenocoumarol.R, the
+# same 24 subjects having taken both drugs; Steven L. Shafer, 2026-11-19, after
+# Carbon's second repository audit, A2-F4).  Scaled from the 70 kg reference
+# man, as they were, the cohort's own typical subject received a V2 2.5% and a
+# Q 1.8% below the published values (cohort factors 0.9755 on volumes, 0.9816
+# on clearances).  A size covariate on CL and V1 does not exempt the other
+# parameters.  The CYP2C9 *3 factor is a genotype term, not a sex term, so the
+# pooled subject is the anchor.  With the switch off Q and V2 are as published
 # (legacyVolume = 1), so the switch-off position reproduces the source's values.
 #
 # VKORC1 GENOTYPE: 1173C>T vs the -1639G>A FIELD
@@ -75,7 +83,7 @@
 # No effect site, no MEAC and no time until threshold: the plotted INR is a
 # turnover endpoint.  This is a research and teaching model; a simulated INR
 # is not a dose recommendation, a bleeding risk or a procedure-safe time; see
-# inst/help/drugs/fluindione.md.
+# inst/app-help/drugs/fluindione.md.
 # The band is the INR target, 2.0 to 3.0 with 2.5 typical (Holbrook 2012's
 # target for every vitamin K antagonist; inst/extdata/therapeuticRanges.csv), drawn on
 # Steven L. Shafer's decision of 2026-10-27 as a reference, not a dosing
@@ -122,7 +130,11 @@ fluindione <- function(weight, height, age, sex, adjustToFFM = TRUE,
     stop("Invalid vkorc1: ", paste(vkorc1, collapse = ", "), ". Must be one of: ",
          paste(VKORC1_VALUES, collapse = ", "))
 
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  # Q and V2, with no size covariate, are anchored at Verstuyft's subjects
+  # (VERSTUYFT_2012_COHORT, in R/drugs_acenocoumarol.R); the own weight terms
+  # on CL and V1 read size$pkWeight, which the anchor does not touch
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, VERSTUYFT_2012_COHORT))
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
 
   cyp2c9Factor <- if (grepl("\\*3", cyp2c9)) 1 - 0.363 else 1   # beta_CL = -0.363

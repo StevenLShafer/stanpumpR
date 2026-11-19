@@ -8,8 +8,7 @@ $(document).on('shiny:sessioninitialized', function(event) {
   Shiny.setInputValue("client_time", timeNow);
 
   // determine if to show the intro modal based on last time it was shown
-  if (!getCookie('intro_shown')) {
-    setCookie('intro_shown', 'true', 7);
+  if (introDue()) {
     Shiny.setInputValue('show_intro_modal', true, {priority: 'event'});
   }
 
@@ -251,6 +250,30 @@ $(document).on('keyup', '.modal-body input, .modal-body textarea', function(e) {
   }
 });
 
+// The welcome is shown once a week (INTRO_INTERVAL_DAYS).  When it was last
+// shown is kept in localStorage, not a cookie: stanpumpR.io shows the app in
+// a frame from shinyapps.io, a third-party context, where browsers refuse a
+// SameSite=Lax cookie (and Chrome one with no SameSite, which it reads as
+// Lax), so the welcome came back on every visit (Carbon's second repository
+// audit, 2026-11-19, A2-F16).  A frame's localStorage is kept per top-level
+// site.  Where storage is refused, the cookie is the fallback.
+var INTRO_INTERVAL_DAYS = 7;
+var INTRO_KEY = 'stanpumpR.introShown';
+function introDue() {
+  var now = Date.now();
+  try {
+    var last = Number(window.localStorage.getItem(INTRO_KEY));
+    if (isFinite(last) && last > 0 && last <= now &&
+        now - last < INTRO_INTERVAL_DAYS * 864e5) return false;
+    window.localStorage.setItem(INTRO_KEY, String(now));
+    return true;
+  } catch (e) {
+    if (getCookie('intro_shown')) return false;
+    setCookie('intro_shown', 'true', INTRO_INTERVAL_DAYS);
+    return true;
+  }
+}
+
 function getCookie(name) {
   let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
   return match ? match[2] : null;
@@ -259,7 +282,9 @@ function getCookie(name) {
 function setCookie(name, value, days) {
   let date = new Date();
   date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-  document.cookie = name + '=' + value + '; expires=' + date.toUTCString() + '; path=/';
+  // SameSite=Lax, and Secure over HTTPS (Carbon's repository audit, 2026-11-18)
+  document.cookie = name + '=' + value + '; expires=' + date.toUTCString() + '; path=/; SameSite=Lax' +
+    (location.protocol === 'https:' ? '; Secure' : '');
 }
 
 

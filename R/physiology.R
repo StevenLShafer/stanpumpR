@@ -442,18 +442,23 @@ PHYSIOLOGY_GAS_PROTECTED_SHARE <- 0.12 + 0.04
 #'
 #' @param body output of \code{getGasBody()}
 #' @param cardiac cardiac output as a multiple of normal, positive
+#' @param split split the vessel-rich group at normal output too
 #' @returns the body, with \code{Q_cardiac}, \code{V_brain}, \code{f_brain},
 #'   \code{f_muscle} and \code{f_fat} changed, the rest of the vessel-rich
 #'   group added as \code{V_vrgRest} and \code{f_vrgRest}, and \code{cardiac}
 #'   recorded
 #' @export
-gasBodyPhysiology <- function(body, cardiac = 1)
+gasBodyPhysiology <- function(body, cardiac = 1, split = FALSE)
 {
   if (is.null(cardiac)) cardiac <- 1
   if (!is.numeric(cardiac) || length(cardiac) != 1 || !is.finite(cardiac) ||
       cardiac <= 0)
     stop("Invalid cardiac output multiple: ", format(cardiac))
-  if (cardiac == 1) return(body)
+  # `split`: split the vessel-rich group even at normal output, so that a run
+  # whose physiology events change cardiac output has the same states in
+  # every body (gasBodySteps()); at normal output the two groups fill exactly
+  # as the one did
+  if (cardiac == 1 && !isTRUE(split)) return(body)
   share <- PHYSIOLOGY_GAS_PROTECTED_SHARE
   # Normal flows as fractions of normal output.
   rest0 <- c(vrg = body$f_brain - share, muscle = body$f_muscle,
@@ -929,6 +934,14 @@ physiologyInputId <- function(factor) paste0("physiology_", factor)
 PHYSIOLOGY_DEBOUNCE_MS <- 400
 
 #' Slider step, in log10 units (about 2.3% per step)
+#'
+#' NOT A DEFECT (Shafer's decision of 2026-11-19, after ChatGPT's review of
+#' PR #796, finding 8): a step on the log scale lands on 10^(k/100), so the
+#' slider shows a rounded multiple (x0.50) while the factor applied is the
+#' step's exact value (0.5012 = 10^-0.30), which a physiology event records
+#' too; plasma at the propofol benchmark reads 6.535 against exact 0.5's
+#' 6.550.  The difference is invisible in use and the slider is left alone:
+#' an audit should not report the label and the factor differing slightly.
 #' @noRd
 PHYSIOLOGY_SLIDER_STEP <- 0.01
 
@@ -1012,7 +1025,83 @@ physiologyPanel <- function()
             "cardiac output or ventilation, which have their own controls."),
       placement = "right"
     ),
+    # Altitude and endobronchial intubation act on the inhaled agents only,
+    # so they show only while one is in the dose table (relevantFields())
+    relevantField(
+    "inhaledAgents",
+    fieldHelp(
+      sliderInput(
+        inputId = "physiology_altitude",
+        label = "Altitude (m)",
+        min = ALTITUDE_MIN,
+        max = ALTITUDE_MAX,
+        value = ALTITUDE_DEFAULT,
+        step = ALTITUDE_STEP,
+        ticks = FALSE
+      ),
+      paste("Height above sea level, which sets the barometric pressure",
+            "(West 1996: 760 Torr at sea level, 324 Torr at 7000 m). It acts",
+            "on the inhaled anesthetics only. Their potency follows partial",
+            "pressure, so MAC and the plotted tensions, in % of a sea-level",
+            "atmosphere, mean the same at every altitude. Room air and",
+            "nitrous oxide from a flowmeter fall with the pressure; a",
+            "sevoflurane or isoflurane vaporizer keeps its dial's partial",
+            "pressure, the desflurane vaporizer its volume percent, which is",
+            "a lower partial pressure. It does not change cardiac output or",
+            "ventilation, which have their own controls."),
+      placement = "right"
+    ),
+    fieldHelp(
+      checkboxInput("endobronchialIntubation", "Endobronchial intubation",
+                    value = FALSE),
+      paste("The tube in one main bronchus: that lung takes all the",
+            "ventilation, and the other, unventilated, is still perfused, so",
+            "half the cardiac output passes it and takes up no agent (Eger",
+            "and Shafer's chapter on inhaled anesthetic kinetics). End-tidal",
+            "reads higher than arterial, and the brain rises more slowly,",
+            "most for the poorly soluble agents (nitrous oxide, desflurane).",
+            "Arterial oxygen falls: the shunted blood carries no oxygen from",
+            "the lungs, and more inspired oxygen hardly helps. Hypoxic",
+            "pulmonary vasoconstriction is not modelled."),
+      placement = "right"
+    ),
+    # The haemoglobin sets how far the shunt desaturates the arterial blood
+    # (R/arterialOxygen.R; Shafer, 2026-11-19), so it is shown with the box
+    conditionalPanel(
+      condition = "input.endobronchialIntubation",
+      fieldHelp(
+        sliderInput(
+          inputId = "physiology_haemoglobin",
+          label = "Haemoglobin (g/dL)",
+          min = HAEMOGLOBIN_MIN,
+          max = HAEMOGLOBIN_MAX,
+          value = ARTERIAL_OXYGEN_HAEMOGLOBIN,
+          step = HAEMOGLOBIN_STEP,
+          ticks = FALSE
+        ),
+        paste("With half the cardiac output shunted, the oxygen the shunt",
+              "fails to carry is a larger share of a smaller capacity, so an",
+              "anaemic patient desaturates more: on pure oxygen the arterial",
+              "saturation is about 69% at 7 g/dL and 87% at 17 g/dL. Without",
+              "a shunt it changes nothing the plot shows."),
+        placement = "right"
+      )
+    )
+    ),
     actionLink("physiologyReset", "Reset to normal"),
+    # Physiology events (R/physiologyEvents.R): these settings recorded in
+    # the event table at a time, physiology normal before the first
+    tags$div(
+      class = "mt-2",
+      actionButton("physiologyCreateEvent", "Create event",
+                   class = "btn-sm btn-outline-primary"),
+      tags$p(class = "small text-muted mt-1",
+             "Records these settings as a Physiology event at a time you",
+             "enter. With any Physiology event, physiology is normal from",
+             "time 0 and steps to each event's settings at its time. Edit or",
+             "delete it with the other events (double-click the Events panel).")
+    ),
+    uiOutput("physiologyEventsNote"),
     uiOutput("physiologyNote")
     )
   )
@@ -1084,20 +1173,44 @@ physiologyFromInputs <- function(values)
 #' them) is normal.
 #' @param physiology the factors, or NULL
 #' @param temperature the body temperature, C, or NULL (37)
+#' @param altitude metres above sea level, or NULL (sea level)
+#' @param endobronchial TRUE for an endobronchial tube
 #' @returns a data frame of Covariate and Value
 #' @noRd
-physiologyCovariateRows <- function(physiology, temperature = NULL)
+physiologyCovariateRows <- function(physiology, temperature = NULL,
+                                    altitude = NULL, endobronchial = FALSE,
+                                    events = NULL, haemoglobin = NULL)
 {
+  # With physiology events (R/physiologyEvents.R) the simulation ran at
+  # normal physiology from time 0 and each event's settings from its time;
+  # the panel's settings only set the next event
+  if (is.data.frame(events) && nrow(events) > 0)
+    return(data.frame(
+      Covariate = c("Physiology events",
+                    sprintf("Physiology from %s min", format(events$Time))),
+      Value = c(sprintf("%d; normal physiology from time 0, the panel's settings not applied",
+                        nrow(events)),
+                vapply(seq_len(nrow(events)), function(i)
+                  physiologyEventSummary(unlist(events[i, PHYSIOLOGY_EVENT_FIELDS])), "")),
+      stringsAsFactors = FALSE))
   p <- tryCatch(checkPhysiology(physiology), error = function(e) NULL)
   value <- if (is.null(p)) rep("unreadable", length(PHYSIOLOGY_FACTORS)) else
     ifelse(p[PHYSIOLOGY_FACTORS] == 1, "normal",
            paste0("x", trimws(formatC(p[PHYSIOLOGY_FACTORS], digits = 3, format = "fg"))))
   if (is.null(temperature) && !is.null(p)) temperature <- p[["temperature"]]
   t <- tryCatch(checkBodyTemperature(temperature), error = function(e) NULL)
+  h <- tryCatch(checkAltitude(altitude), error = function(e) NULL)
   data.frame(Covariate = c(paste(PHYSIOLOGY_LABELS[PHYSIOLOGY_FACTORS],
                                  "(multiple of normal)"),
-                           "Body temperature (C)"),
-             Value = c(unname(value), if (is.null(t)) "unreadable" else format(t)),
+                           "Body temperature (C)",
+                           "Altitude (m), inhaled anesthetics",
+                           "Endobronchial intubation, inhaled anesthetics",
+                           "Haemoglobin (g/dL), arterial oxygen with an endobronchial tube"),
+             Value = c(unname(value), if (is.null(t)) "unreadable" else format(t),
+                       if (is.null(h)) "unreadable" else
+                         sprintf("%s (%.0f Torr)", format(h), barometricPressure(h)),
+                       if (isTRUE(endobronchial)) "yes" else "no",
+                       format(haemoglobinFromInput(haemoglobin))),
              stringsAsFactors = FALSE)
 }
 
@@ -1117,10 +1230,10 @@ physiologySummary <- function(physiology)
   physiology <- checkPhysiology(physiology)
   factors <- physiology[PHYSIOLOGY_FACTORS]
   changed <- factors[factors != 1]
-  out <- sprintf("%s ×%s", tolower(PHYSIOLOGY_LABELS[names(changed)]),
+  out <- sprintf("%s \u00D7%s", tolower(PHYSIOLOGY_LABELS[names(changed)]),
                  formatC(changed, digits = 2, format = "fg"))
   if (physiology[["temperature"]] != PHYSIOLOGY_TEMPERATURE_DEFAULT)
-    out <- c(out, sprintf("%s °C", format(physiology[["temperature"]])))
+    out <- c(out, sprintf("%s \u00B0C", format(physiology[["temperature"]])))
   paste(out, collapse = ", ")
 }
 
@@ -1128,14 +1241,21 @@ physiologySummary <- function(physiology)
 #'
 #' @param physiology the factors
 #' @param drugs the dosed drugs
+#' @param altitude,endobronchial the inhaled agents' own two controls
+#'   (R/altitude.R, R/endobronchial.R), which the note left out: with only
+#'   they moved it said nothing, and otherwise it said the agents respond to
+#'   cardiac output and temperature only (Carbon's second repository audit,
+#'   2026-11-19, A2-F24)
 #' @noRd
 physiologyNote <- function(physiology, drugs,
-                           temperature = NULL, skipped = character(0))
+                           temperature = NULL, skipped = character(0),
+                           altitude = ALTITUDE_DEFAULT, endobronchial = FALSE)
 {
   physiology <- checkPhysiology(physiology)
   if (!is.null(temperature)) physiology[["temperature"]] <- checkBodyTemperature(temperature)
   cold <- physiology[["temperature"]] != PHYSIOLOGY_TEMPERATURE_DEFAULT
-  if (physiologyIsNormal(physiology) || length(drugs) == 0) return(NULL)
+  gasOnly <- !isTRUE(altitude == ALTITUDE_DEFAULT) || isTRUE(endobronchial)
+  if ((physiologyIsNormal(physiology) && !gasOnly) || length(drugs) == 0) return(NULL)
   drugs <- unique(drugs)
   # The carrier gases and the ventilation are settings, not drugs.  The agents
   # respond to cardiac output (gasBodyPhysiology()) and to body temperature
@@ -1144,9 +1264,10 @@ physiologyNote <- function(physiology, drugs,
   gasAgents <- intersect(drugs, physiologyGasAgents())
   drugs <- drugs[!isGasDrug(drugs)]
   cardiacMoved <- physiology[["cardiac"]] != 1
-  changed <- c(intersect(drugs, physiologyDrugs()),
-               gasAgents[rep(cardiacMoved || cold, length(gasAgents))])
-  noData <- setdiff(drugs, physiologyDrugs())
+  gasMoved <- cardiacMoved || cold || gasOnly
+  changed <- c(if (!physiologyIsNormal(physiology)) intersect(drugs, physiologyDrugs()),
+               gasAgents[rep(gasMoved, length(gasAgents))])
+  noData <- if (physiologyIsNormal(physiology)) character(0) else setdiff(drugs, physiologyDrugs())
   # A drug whose model, chosen for this patient, the sliders cannot scale
   # (getDrugPK()'s slidersSkipped)
   skipped <- intersect(skipped, changed)
@@ -1165,10 +1286,11 @@ physiologyNote <- function(physiology, drugs,
       tags$p(class = "text-warning",
              tags$strong("Not changed (no physiology data yet): "),
              paste(noData, collapse = ", ")),
-    if (length(gasAgents) && !cardiacMoved && !cold)
+    if (length(gasAgents) && !gasMoved)
       tags$p(class = "text-muted",
              tags$strong("Inhaled agents "), "(", paste(gasAgents, collapse = ", "),
-             ") respond to cardiac output and body temperature only.")
+             paste(") respond to cardiac output, body temperature, altitude and",
+                   "endobronchial intubation only."))
   )
 }
 
@@ -1180,7 +1302,7 @@ helpPhysiologyTableMarkdown <- function()
   tab <- physiologyTable()
   applied <- tab$verification %in% PHYSIOLOGY_APPLIED_VERIFICATION
   tab <- tab[order(!applied, tab$drug), ]
-  num <- function(x) ifelse(is.na(x), "—", formatC(x, digits = 3, format = "fg"))
+  num <- function(x) ifelse(is.na(x), "\u2014", formatC(x, digits = 3, format = "fg"))
   cell <- function(x) gsub("|", "\\|", ifelse(is.na(x), "", x), fixed = TRUE)
   rows <- sprintf(
     "| [%s](help:drugs/%s) | %s | %s | %s | %s | %s | %s |",

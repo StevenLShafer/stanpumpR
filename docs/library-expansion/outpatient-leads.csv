@@ -1,0 +1,126 @@
+rank,drug,planDrug,evidence,label,pmid,doi,url,check
+1,Atorvastatin,atorvastatin,P,adult 34761521,34761521,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+1,Atorvastatin,atorvastatin,P,child parent/metabolite 23381936,23381936,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+2,Levothyroxine,levothyroxine,P,infants 34117565,34117565,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+2,Levothyroxine,levothyroxine,P,adult oral population analysis,40348586,10.1111/cts.70244,,"DOI resolves to PMID 40348586 (PubMed, 2026-11-18). Content not yet read."
+2,Levothyroxine,levothyroxine,C,T4/T3 tracer 1133178,1133178,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+2,Levothyroxine,levothyroxine,D,oral/IV F 6688797,6688797,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+2,Levothyroxine,levothyroxine,D,pregnancy/postpartum 20962709,20962709,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+2,Levothyroxine,levothyroxine,D,FDA NTI guidance,,,https://www.accessdata.fda.gov/drugsatfda_docs/psg/PSG_021924.pdf,"FDA, DailyMed or PMDA document; not yet read."
+4,Amlodipine,amlodipine,P,adult 16413246,16413246,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+4,Amlodipine,amlodipine,P,child 16855075,16855075,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+4,Amlodipine,amlodipine,D,delivery 29523279,29523279,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+7,Losartan,losartan,C,IV/oral parent and active E3174 8529329,8529329,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+9,Rosuvastatin,rosuvastatin,P,child 26387811,26387811,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+10,Omeprazole,omeprazole,P,adult 35522794,35522794,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+10,Omeprazole,omeprazole,P,neonate/CYP2C19 29377228,29377228,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+16,Pantoprazole,pantoprazole,P,birth–16 years IV/oral 20484619,20484619,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+16,Pantoprazole,pantoprazole,P,PICU IV 19173681,19173681,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+20,Trazodone,trazodone,C/D,adult IV/oral 3608351,3608351,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+20,Trazodone,trazodone,C/D,IR/CR 2072810,2072810,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+21,Montelukast,montelukast,P,children and adults 11402629,11402629,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+22,Amoxicillin,amoxicillin,P,adult IV/PO co-amoxiclav 32888018,32888018,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+22,Amoxicillin,amoxicillin,P,neonate IV/PO 37757471,37757471,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+22,Amoxicillin,amoxicillin,P,intrapartum IV 19032729,19032729,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+24,Tamsulosin,tamsulosin,P,BPH patients 39037497,39037497,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+26,Simvastatin,simvastatin,P,child parent and four metabolites 31172248,31172248,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+29,Furosemide,furosemide,P,adult IV/PO 24151207,24151207,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+29,Furosemide,furosemide,P,preterm infant 42003090,42003090,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+37,Famotidine,famotidine,C/D,adult IV/PO 2888738,2888738,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+37,Famotidine,famotidine,C/D,child IV 8932543,8932543,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+39,Buspirone,buspirone,D/R,repeated oral dosing 7911763,7911763,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+39,Buspirone,buspirone,D/R,FDA biopharmaceutics review,,,https://www.accessdata.fda.gov/drugsatfda_docs/nda/2000/21-190_buspar_biopharmr.pdf,"FDA, DailyMed or PMDA document; not yet read."
+43,Hydroxyzine,hydroxyzine,D,adult 6141198,6141198,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+43,Hydroxyzine,hydroxyzine,D,older adults 2562944,2562944,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+44,Allopurinol,allopurinol,P,parent and oxypurinol in gout 23475133,23475133,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+45,Clopidogrel,clopidogrel,P,parent/active thiol metabolite 28914344,28914344,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+47,Cetirizine,cetirizine,P,child 15025737,15025737,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+49,Cyclobenzaprine,cyclobenzaprine,C,oral 24151591,24151591,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+49,Cyclobenzaprine,cyclobenzaprine,D/R,sublingual 41749492,41749492,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+49,Cyclobenzaprine,cyclobenzaprine,D/R,steady state 41948806,41948806,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+49,Cyclobenzaprine,cyclobenzaprine,D/R,TONMYA label,,,https://www.accessdata.fda.gov/drugsatfda_docs/label/2025/219428s000lbl.pdf,"FDA, DailyMed or PMDA document; not yet read."
+50,Spironolactone,spironolactone,P,parent/canrenone 34201093,34201093,,,Not a parent/canrenone population fit of an adult product: a paediatric trial-design (simulation) model. Read before relying on it.
+50,Spironolactone,spironolactone,P,infant metabolites 38041740,38041740,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+52,Estradiol (systemic oral/patch/gel),estradiol,C/D,oral/patch 9125276,9125276,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+52,Estradiol (systemic oral/patch/gel),estradiol,C/D,IV/PO estradiol/estrone 8240460,8240460,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+52,Estradiol (systemic oral/patch/gel),estradiol,R,EstroGel FDA PK review,,,https://www.accessdata.fda.gov/drugsatfda_docs/nda/2004/21166_Estrogel%20Gel_biopharmr.PDF,"FDA, DailyMed or PMDA document; not yet read."
+54,Glipizide,glipizide,C,IV/PO 6341263,6341263,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+54,Glipizide,glipizide,D,type 2 diabetes 8888072,8888072,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+62,Azithromycin,azithromycin,P,adult 20875372,20875372,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+62,Azithromycin,azithromycin,P,pregnant/nonpregnant 22106226,22106226,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+62,Azithromycin,azithromycin,P,pediatric IV 29941652,29941652,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+63,Pravastatin,pravastatin,P,adult 26744986,26744986,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+65,Ezetimibe,ezetimibe,P,parent/glucuronide 29629619,29629619,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+68,Ethinyl estradiol/norethindrone,ethinyl estradiol/norethindrone,R,oral product label PK,,,https://www.accessdata.fda.gov/drugsatfda_docs/label/2017/204654s008lbl.pdf,"FDA, DailyMed or PMDA document; not yet read."
+71,Atenolol,atenolol,C,adult IV/PO 428185,428185,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+71,Atenolol,atenolol,C,pediatric IV 2598566,2598566,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+73,Doxycycline,doxycycline,P,adult PO 28052851,28052851,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+73,Doxycycline,doxycycline,P,pediatric IV/PO 31548185,31548185,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+74,Amoxicillin/clavulanate,amoxicillin/clavulanate,P,adult IV/PO amoxicillin 32888018,32888018,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+74,Amoxicillin/clavulanate,amoxicillin/clavulanate,P,pediatric joint 26349821,26349821,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+74,Amoxicillin/clavulanate,amoxicillin/clavulanate,P,neonatal clavulanate 39205386,39205386,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+79,Insulin aspart,insulin aspart,P,subcutaneous population analysis 35320591,35320591,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+79,Insulin aspart,insulin aspart,R,Fiasp FDA population review,,,https://www.accessdata.fda.gov/drugsatfda_docs/nda/2017/208751Orig1s000ClinPharmR.pdf,"FDA, DailyMed or PMDA document; not yet read."
+79,Insulin aspart,insulin aspart,D,pediatric comparison 10923219,10923219,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+79,Insulin aspart,insulin aspart,D,pregnancy 24855162,24855162,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+81,Finasteride,finasteride,C,nonlinear PK/PD 20460827,20460827,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+83,Clonidine,clonidine,P,"children, IV/epidural/rectal 17767627",17767627,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+83,Clonidine,clonidine,P,adult ICU 32150285,32150285,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+83,Clonidine,clonidine,D,pregnancy 19116263,19116263,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+86,Alendronate,alendronate,C,oral plasma/urine model 23886303,23886303,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+88,Tizanidine,tizanidine,D/R,human oral PK 3447935,3447935,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+88,Tizanidine,tizanidine,D/R,FDA label,,,https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=c8278b4e-cca2-4880-8924-c8202ce084d6,"FDA, DailyMed or PMDA document; not yet read."
+93,Testosterone (systemic products),testosterone,C/D,patch disposition 9506009,9506009,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+93,Testosterone (systemic products),testosterone,C/D,patch/gel comparison 16422889,16422889,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+93,Testosterone (systemic products),testosterone,R,FDA review of transdermal products,,,https://www.accessdata.fda.gov/drugsatfda_docs/nda/2023/208088Orig1s000RiskR.pdf,"FDA, DailyMed or PMDA document; not yet read."
+97,Fenofibrate,fenofibrate,D/R,fenofibrate/fenofibric acid 20145261,20145261,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+97,Fenofibrate,fenofibrate,D/R,label,,,https://www.dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=45364845-c3b4-40a1-a677-82202ffaa5ad,"FDA, DailyMed or PMDA document; not yet read."
+101,Loratadine,loratadine,D,72-subject aggregate PK 20206796,20206796,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+101,Loratadine,loratadine,D,child parent/metabolite 11850699,11850699,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+103,Valacyclovir,valacyclovir,P,child oral valacyclovir/IV acyclovir 32988829,32988829,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+105,Ethinyl estradiol/norgestimate,ethinyl estradiol/norgestimate,D/R,product study 21395656,21395656,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+105,Ethinyl estradiol/norgestimate,ethinyl estradiol/norgestimate,D/R,FDA label,,,https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=c25cd86c-2940-475a-9628-ee75b0294e8d,"FDA, DailyMed or PMDA document; not yet read."
+107,Methocarbamol,methocarbamol,D/R,human renal impairment 2253675,2253675,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+107,Methocarbamol,methocarbamol,D/R,IV label,,,https://dailymed.nlm.nih.gov/dailymed/fda/fdaDrugXsl.cfm?setid=bdf17640-221c-4c80-b48c-101daaece1d6&type=display,"FDA, DailyMed or PMDA document; not yet read."
+111,Baclofen,baclofen,P,pediatric PO 24607242,24607242,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+111,Baclofen,baclofen,P,adult ICU 30826461,30826461,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+111,Baclofen,baclofen,C,adult oral/IV 25028414,25028414,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+113,Sumatriptan,sumatriptan,P,mixed-effects 10567953,10567953,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+113,Sumatriptan,sumatriptan,D,PO/SC/IN/rectal 9795022,9795022,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+115,Esomeprazole,esomeprazole,P,pediatric IV/PO 27875488,27875488,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+115,Esomeprazole,esomeprazole,C,adult IV PK/PD 26970404,26970404,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+118,Norethindrone,norethindrone,C,oral combination fit 6641224,6641224,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+120,Nifedipine,nifedipine,P,adult hypertensive 40857211,40857211,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+120,Nifedipine,nifedipine,P,small pregnant tocolysis fit 25407260,25407260,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+121,Progesterone,progesterone,D,oral/IM 8513955,8513955,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+121,Progesterone,progesterone,D,SL/PO/vaginal/rectal 3612635,3612635,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+122,Insulin degludec,insulin degludec,R,FDA adult population review,,,https://www.accessdata.fda.gov/drugsatfda_docs/nda/2015/203313Orig1s000_203314Orig1s000ClinPharmR.pdf,"FDA, DailyMed or PMDA document; not yet read."
+122,Insulin degludec,insulin degludec,R,FDA pediatric population review,,,https://www.accessdata.fda.gov/drugsatfda_docs/pediatric/203314-Insulin-degludec-clinpharm-prea.pdf,"Read in full 2026-11-18 (NDA 203314/S-03): weight exponent on CL/F 0.977 (95% CI 0.815-1.14) in 205 subjects of 1.5-57 years; used to carry insulinDegludec's weight term below 54.4 kg."
+122,Insulin degludec,insulin degludec,P,small adult population fit,,10.1007/s00210-026-06074-2,,DOI not found in PubMed on 2026-11-18; look up on the publisher site.
+122,Insulin degludec,insulin degludec,P,IDegAsp 24888255,24888255,,,Not a population fit: a glucose-clamp study of insulin degludec/insulin aspart (IDegAsp). The report labels it P.
+125,Adalimumab,adalimumab,P,adult rheumatoid arthritis 25223394,25223394,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+125,Adalimumab,adalimumab,P,child JIA 38630199,38630199,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+127,Sitagliptin,sitagliptin,R,FDA clinical pharmacology review,,,https://www.accessdata.fda.gov/drugsatfda_docs/nda/2006/021995s000_ClinPharmR.pdf,"FDA, DailyMed or PMDA document; not yet read."
+127,Sitagliptin,sitagliptin,R,PMDA population analysis,,,https://www.pmda.go.jp/files/000153174.pdf,"FDA, DailyMed or PMDA document; not yet read."
+128,Glimepiride,glimepiride,P,CYP2C9 oral 21476064,21476064,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+128,Glimepiride,glimepiride,C,oral 22046814,22046814,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+130,Oxybutynin,oxybutynin,P,oral parent/metabolite 33368382,33368382,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+130,Oxybutynin,oxybutynin,D,patch versus ER oral 12934778,12934778,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+132,Ketoconazole (oral),ketoconazole,D,human PO 3767339,3767339,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+133,Irbesartan,irbesartan,P,oral 32736091,32736091,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+134,Hydroxychloroquine,hydroxychloroquine,P,adult whole blood 39315408,39315408,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+134,Hydroxychloroquine,hydroxychloroquine,P,pregnancy 30255310,30255310,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+134,Hydroxychloroquine,hydroxychloroquine,P,child parent/metabolite 36328395,36328395,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+135,Trimethoprim/sulfamethoxazole,trimethoprim/sulfamethoxazole,P,adult joint 39148353,39148353,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+135,Trimethoprim/sulfamethoxazole,trimethoprim/sulfamethoxazole,P,child joint 29084742,29084742,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+136,Benzonatate,benzonatate,D,human oral 31129533,31129533,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+137,Nitrofurantoin,nitrofurantoin,D,plasma/urine crossover 30859184,30859184,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+137,Nitrofurantoin,nitrofurantoin,D,oral/IV F 352255,352255,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+138,Isosorbide mononitrate / dinitrate,isosorbide mononitrate/dinitrate,D,mononitrate IR/ER 9689420,9689420,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+138,Isosorbide mononitrate / dinitrate,isosorbide mononitrate/dinitrate,C,dinitrate and two active metabolites 1976063,1976063,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+140,Triamterene (in HCTZ combination),triamterene,C,IV/PO parent/sulfate metabolite 6831748,6831748,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+141,Levocetirizine,levocetirizine,P,child 15787865,15787865,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+143,Atomoxetine,atomoxetine,P,child/adolescent CYP2D6 38117180,38117180,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+144,Dexmethylphenidate,dexmethylphenidate,R,FDA Focalin XR clinical pharmacology,,,https://www.accessdata.fda.gov/drugsatfda_docs/nda/2005/021802s000_ClinPharmR.pdf,"FDA, DailyMed or PMDA document; not yet read."
+146,Donepezil,donepezil,P,older patients 24433464,24433464,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.
+147,Desvenlafaxine direct oral dosing,desvenlafaxine,P,oral model 29228473,29228473,,,PMID found in PubMed; no author is Gideon Koren (checked 2026-11-18). Content not yet read.

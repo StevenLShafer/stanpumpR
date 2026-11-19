@@ -16,11 +16,59 @@ test_that("Table 3 at the median lean body weight, switch off", {
 test_that("lean body weight 15 kg either side of 55 gives 80% and 119% of CL (the paper)", {
   expect_equal_rounded(0.792, (40 / 55)^TOLCAPONE_CL_LBW, tolerance = 0.001)
   expect_equal_rounded(1.193, (70 / 55)^TOLCAPONE_CL_LBW, tolerance = 0.001)
-  # switch on: James at the pharmacokinetic weight, the library factors on Q and Vp
+  # switch on: James at the pharmacokinetic weight, the library factors on Q and
+  # Vp, relative to Jorga's cohort (TOLCAPONE_COHORT), at which they are anchored
+  kc <- cohortFactorsIndependent(TOLCAPONE_COHORT)
   size <- pkSizeFactors(120, 170, 65, "female", TRUE)
   on <- tolcapone(120, 170, 65, "female", TRUE)$PK$default
   expect_equal(on$cl1 * 60, 4.8 * (lbmJames(size$pkWeight, 170, "female") / 55)^0.73)
-  expect_equal(on$v2, 12 * size$volume)
+  expect_equal(on$v2, 12 * size$volume / kc$volume)
+})
+
+test_that("anchored at Jorga's cohort: its typical patient receives the published Q and Vp (A2-F4)", {
+  # Table 1 (the trial population): 71 kg, 170 cm, 65 years; 262 men and 150
+  # women.  Q and Vp carry no sex term, so the cohort's man and woman sit
+  # either side of the published values and their weighted geometric mean is
+  # the published value; Vc and CL keep their own LBW terms.
+  m <- tolcapone(71, 170, 65, "male")$PK$default
+  w <- tolcapone(71, 170, 65, "female")$PK$default
+  pooled <- function(x, y) exp((262 * log(x) + 150 * log(y)) / 412)
+  expect_equal(pooled(m$v2, w$v2), 12, tolerance = 1e-6)
+  expect_equal(pooled(m$cl2, w$cl2) * 60, 5.2, tolerance = 1e-6)
+  kc <- cohortFactorsIndependent(TOLCAPONE_COHORT)
+  expect_equal(m$v2, 12 * ffmRatioMaleIndependent(71, 170, 65) / kc$volume,
+               tolerance = 1e-6)
+  expect_equal(m$cl1 * 60,
+               4.8 * (lbmJames(70 * ffmRatioMaleIndependent(71, 170, 65), 170, "male") / 55)^0.73,
+               tolerance = 1e-6)
+  # The switch off is unchanged: the published Q and Vp
+  off <- tolcapone(71, 170, 65, "female", FALSE)$PK$default
+  expect_equal(off$v2, 12)
+  expect_equal(off$cl2 * 60, 5.2)
+})
+
+test_that("serum albumin on Vp: (albumin/44 g/L)^2.82, the median when blank", {
+  blank <- tolcapone(70, 170, 65, "male", FALSE)$PK$default
+  expect_equal(blank$v2, 12)
+  expect_equal(tolcapone(70, 170, 65, "male", FALSE, albumin = 4.4)$PK$default$v2, 12)
+  low <- tolcapone(70, 170, 65, "male", FALSE, albumin = 3.5)$PK$default
+  expect_equal_rounded(12 * 0.524, low$v2, tolerance = 0.001)
+  # only Vp moves: clearance, Q, Vc and so the steady-state exposure do not
+  expect_equal(low[c("cl1", "cl2", "v1")], blank[c("cl1", "cl2", "v1")])
+  # held within the fluctuators' 26-55 g/L (Jorga 2000, Table 1)
+  expect_equal(tolcapone(70, 170, 65, "male", FALSE, albumin = 0.5)$PK$default$v2,
+               12 * (26 / 44)^2.82)
+  expect_equal(tolcapone(70, 170, 65, "male", FALSE, albumin = 6)$PK$default$v2,
+               12 * (55 / 44)^2.82)
+  expect_equal_rounded(12 * 0.227,
+                       tolcapone(70, 170, 65, "male", FALSE, albumin = 2.6)$PK$default$v2,
+                       tolerance = 0.001)
+  # getDrugPK() passes the Patient Profile's field to it
+  expect_true("albumin" %in% names(formals(tolcapone)))
+  expect_true("tolcapone" %in% patientFieldReaders("albumin"))
+  expect_match(tolcapone(70, 170, 65, "male", FALSE)$reference, "held at the median 44 g/L")
+  expect_match(tolcapone(70, 170, 65, "male", FALSE, albumin = 3)$reference,
+               "as entered, held within the studied 26-55 g/L")
 })
 
 test_that("steady state on 200 mg three times a day: AUC, half-life, the band", {

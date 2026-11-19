@@ -48,10 +48,12 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# The source retained no body-size term on its volumes or on Qu.  Those
-# parameters follow the library convention: volumes x FFM / FFM_ref,
-# clearances x that ratio ^ 0.75, with the switch off leaving them as
-# published.  The renal term already carries size through Cockcroft-Gault,
+# The source retained no body-size term on its volumes or on Qu, so they are
+# the cohort's typical patient's (median 66.5 kg, 66 years, 139 men and 13
+# women), and with the switch on they are anchored at that patient
+# (CEFAZOLIN_COHORT; Steven L. Shafer, 2026-11-18): volumes x FFM / FFM_ref
+# divided by 0.941, Qu x that ratio ^ 0.75 divided by 0.956, with the switch
+# off leaving them as published.  The renal term already carries size through Cockcroft-Gault,
 # which uses the pharmacokinetic weight with the switch on and total body
 # weight with it off.  CLu itself receives no further size factor.
 #
@@ -105,6 +107,23 @@
 #   https://doi.org/10.1213/ANE.0000000000004766
 # -----------------------------------------------------------------------------
 
+# Komatsu 2024 (PMID 38771029), Table 1, read on the PDF 2026-11-18: 152
+# patients, median 66.5 kg and 66 years, 139 men and 13 women, Kitasato
+# University Hospital, December 2021 to July 2023.
+# No height is printed: each sex's is the country's mean adult height for the
+# birth year (NCD Risk Factor Collaboration, eLife 2016;5:e13410, height at 18
+# by birth year), less the 0.2 cm (men) and 0.3 cm (women) a cohort loses per
+# decade of age after 18 that the same paper reports. Japan, born 2022 - 66 =
+# 1956: 168.4 cm for men and 155.1 for women.
+# The volumes and Qu are anchored at this cohort (Steven L. Shafer,
+# 2026-11-18; docs/weight-adjustment.md, Anchoring at the source's cohort);
+# the renal clearance is not, its Cockcroft-Gault creatinine clearance already
+# carrying the patient's size.
+# Factors 0.941 on volume, 0.956 on clearance (Qu).
+CEFAZOLIN_COHORT <- list(groups = list(
+  list(weight = 66.5, height = 168.4, age = 66, men = 139, women = 0),
+  list(weight = 66.5, height = 155.1, age = 66, men = 0, women = 13)))
+
 #' Cefazolin pharmacokinetics (unbound)
 #'
 #' @param weight weight in kg
@@ -132,7 +151,7 @@ cefazolin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   # are used as published (legacyVolume = 1).  pkW is the weight the renal
   # covariate sees: the pharmacokinetic weight with the switch on, total
   # weight with it off.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, CEFAZOLIN_COHORT))
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
 
   crcl <- creatinineClearanceCG(pkW, age, sex,       # mL/min

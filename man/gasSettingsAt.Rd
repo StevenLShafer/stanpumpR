@@ -4,7 +4,7 @@
 \alias{gasSettingsAt}
 \title{Settings in force at a given time, and the derived fresh-gas composition}
 \usage{
-gasSettingsAt(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION)
+gasSettingsAt(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION, ratio = 1)
 }
 \arguments{
 \item{split}{list of per-setting data frames, from \code{split()} on Drug}
@@ -15,10 +15,18 @@ gasSettingsAt(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION)
 "ventilation" row of the dose table is MINUTE ventilation, and alveolar
 ventilation is \code{MV * (1 - deadSpace)}.  Zero makes the row alveolar
 ventilation, as it is in GasMan.}
+
+\item{ratio}{the barometric pressure as a fraction of a sea-level
+atmosphere (\code{gasPressureRatio()}, R/altitude.R).  The fresh gas is
+returned as partial pressures in \% of a sea-level atmosphere: a flowmeter
+gas at \code{ratio} times its fraction, a variable-bypass vaporizer at its
+dial, and the desflurane vaporizer, which delivers volume percent, at
+\code{ratio} times its dial.}
 }
 \value{
 a list with total fresh gas flow \code{Q}, minute ventilation
-\code{MV}, alveolar ventilation \code{VA}, and the fresh-gas fractions
+\code{MV}, alveolar ventilation \code{VA}, and the fresh-gas partial
+pressures
 }
 \description{
 Collects the six dose-table settings and turns the three flowmeter rows plus

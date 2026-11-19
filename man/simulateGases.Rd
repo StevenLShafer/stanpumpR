@@ -15,7 +15,11 @@ simulateGases(
   deadSpace = GAS_DEAD_SPACE_FRACTION,
   oxygenUptake = TRUE,
   physiology = NULL,
-  temperature = NULL
+  temperature = NULL,
+  altitude = NULL,
+  endobronchial = FALSE,
+  physiologyEvents = NULL,
+  haemoglobin = NULL
 )
 }
 \arguments{
@@ -41,6 +45,27 @@ groups}
 \item{temperature}{NULL (37 C), or the body temperature in C, which sets
 the agents' solubility and MAC (\code{gasPropertiesAt()}); kept in the
 body as \code{temperature}}
+
+\item{altitude}{NULL (sea level), or metres above sea level (0 to 7000),
+kept in the body as \code{altitude}; the barometric pressure it sets
+(\code{barometricPressure()}, R/altitude.R) changes the fresh gas, room
+air and the volume taken up, not the potency}
+
+\item{endobronchial}{TRUE for an endobronchial tube: one lung ventilated,
+the other perfused and shunting (\code{gasBodyEndobronchial()},
+R/endobronchial.R)}
+
+\item{physiologyEvents}{NULL, or physiologyEventsFrom()'s data frame
+(R/physiologyEvents.R): with any row, physiology is normal from time 0
+and each event's from its time (cardiac output, temperature, altitude
+and intubation, \code{gasBodySteps()}), the agent in each compartment
+carried across each step, and \code{physiology}, \code{temperature},
+\code{altitude}, \code{endobronchial} and \code{haemoglobin} are not used}
+
+\item{haemoglobin}{NULL (15 g/dL), or the haemoglobin, g/dL, of the
+arterial oxygen read off the run (\code{gasArterialOxygen()},
+R/arterialOxygen.R), kept in the body as \code{haemoglobin}; the engine
+does not read it}
 }
 \value{
 \code{NULL} if the dose table contains no gases, otherwise the list

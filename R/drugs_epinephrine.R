@@ -5,7 +5,7 @@
 #
 # Drafted by Claude Code, 2026-10-18, at the request of Steven L. Shafer, as
 # one of the vasoactive and resuscitation drugs used in intensive care
-# (inst/help/models/vasoactive.md, inst/extdata/vasoactiveRegistry.csv).  Every
+# (inst/app-help/models/vasoactive.md, inst/extdata/vasoactiveRegistry.csv).  Every
 # number below was read from the full text of the source in PubMed Central
 # (PMC2750169), Table 3 and the Results.
 #
@@ -62,8 +62,14 @@
 # at the pharmacokinetic weight with the fat-free-mass switch on
 # (size$pkWeight) and at total body weight with it off, which reproduces the
 # published equation exactly.  The volume was fitted as a fixed 7.9 L with no
-# size term, so it is scaled by the library's fat-free-mass factor with the
-# switch on and left at 7.9 L with it off (legacyVolume = 1).
+# size term, so it belongs to Abboud's typical patient, and with the switch on
+# it is anchored at the cohort (EPINEPHRINE_COHORT, below; Steven L. Shafer,
+# 2026-11-19, after Carbon's second repository audit, A2-F4): the volume x the
+# patient's fat-free-mass ratio to the cohort's typical patient.  Scaled from
+# the 70 kg reference man, as it was, the cohort's own typical patient
+# received a volume 9% below the published 7.9 L (factor 0.907).  A model with
+# a size covariate on one parameter is not thereby exempt on the others.  With
+# the switch off the volume is 7.9 L (legacyVolume = 1).
 #
 # WHAT THIS MODEL IS NOT
 # ======================
@@ -97,6 +103,16 @@ EPINEPHRINE_SAPS_REF <- 50      # the reference score, used for every patient
 EPINEPHRINE_MW       <- 183.2   # g/mol, the base
 EPINEPHRINE_TPEAK    <- 1       # min, clinical: the immediate tachycardia
 
+# Abboud 2009, Table 1: 38 patients, 25 men and 13 women, mean 68 kg and 64
+# years; Paris, January to June 2006.  No height is printed: NCD-RisC's mean
+# height at 18 for France, birth cohort 1942 (2006 less 64), less the loss
+# with age to 64 years, is 171.7 cm for the men and 159.5 cm for the women.
+# V is anchored at this cohort (Steven L. Shafer, 2026-11-19, after Carbon's
+# second repository audit, A2-F4; see the header).
+EPINEPHRINE_COHORT <- list(groups = list(
+  list(weight = 68, height = 171.7, age = 64, men = 25, women = 0),
+  list(weight = 68, height = 159.5, age = 64, men = 0, women = 13)))
+
 #' Epinephrine (Abboud 2009)
 #'
 #' One compartment in adult septic shock; see the header of
@@ -107,7 +123,11 @@ EPINEPHRINE_TPEAK    <- 1       # min, clinical: the immediate tachycardia
 #' @export
 epinephrine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  # V, with no covariate, is anchored at Abboud's cohort (EPINEPHRINE_COHORT);
+  # the clearance carries its own weight term, read at pkWeight, which does
+  # not depend on the anchor, and takes no size factor.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, EPINEPHRINE_COHORT))
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
 
   cl <- EPINEPHRINE_CL / 60 * (pkW / 70)^EPINEPHRINE_CL_BW *

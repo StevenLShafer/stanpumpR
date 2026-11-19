@@ -69,14 +69,16 @@ test_that("K23 = CL/V reproduces the source's own healthy half-life", {
 })
 
 test_that("the pair scales to fat-free mass identically for a 120 kg man", {
-  # volumes x 1.3049067, clearances x 1.2209126
+  # volumes x 1.3049067, clearances x 1.2209126, divided by the factors of
+  # Wang 2022's two studies, NCD-RisC's Chinese heights (VENLAFAXINE_COHORT)
+  kc <- cohortFactorsIndependent(VENLAFAXINE_COHORT)
   p <- venlafaxine(120, 170, 50, "male")
-  expect_equal(p$PK$default$v1, 628 * 1.3049067, tolerance = 1e-6)
-  expect_equal(p$PK$default$cl1, 80.9 * 0.383 / 60 * 1.2209126, tolerance = 1e-6)
+  expect_equal(p$PK$default$v1, 628 * 1.3049067 / kc$volume, tolerance = 1e-6)
+  expect_equal(p$PK$default$cl1, 80.9 * 0.383 / 60 * 1.2209126 / kc$clearance, tolerance = 1e-6)
   expect_equal(p$metabolite$kFormation, p$PK$default$cl1 / p$PK$default$v1)
   m <- desvenlafaxine(120, 170, 50, "male")
-  expect_equal(m$PK$default$v1, 238 * 1.3049067, tolerance = 1e-6)
-  expect_equal(m$PK$default$cl1, 22.1 / 60 * 1.2209126, tolerance = 1e-6)
+  expect_equal(m$PK$default$v1, 238 * 1.3049067 / kc$volume, tolerance = 1e-6)
+  expect_equal(m$PK$default$cl1, 22.1 / 60 * 1.2209126 / kc$clearance, tolerance = 1e-6)
 })
 
 test_that("the engine reproduces Figure 1, single dose and repeated", {

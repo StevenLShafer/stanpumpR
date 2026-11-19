@@ -11,8 +11,8 @@
 # The help is a "Help" tab in the app (R/help-ui.R, R/help-server.R).  Its
 # pages come from two places:
 #
-#   * Hand-written Markdown in inst/help/, one file per page, named by page id
-#     (inst/help/dose-table.md is the page "dose-table"; inst/help/models/
+#   * Hand-written Markdown in inst/app-help/, one file per page, named by page id
+#     (inst/app-help/dose-table.md is the page "dose-table"; inst/app-help/models/
 #     effect-site.md is "models/effect-site").  Files start at "##": the page
 #     title comes from the registry below and is added as the <h1>.
 #
@@ -32,13 +32,13 @@
 # that loads a teaching scenario into the simulator is [text](scenario:id).
 # helpRewriteLinks() turns these into data attributes that inst/www/app.js
 # forwards to Shiny as input$help_goto and input$help_scenario_load.  The
-# names of the investigators in inst/help/investigators.md are linked on every
+# names of the investigators in inst/app-help/investigators.md are linked on every
 # page to a pop-up about them by helpLinkInvestigators()
 # (R/help-investigators.R), which also links "GasMan" to its website.
 #
 # Adding a page: add a row to helpStaticPages() and create the .md file.
 # Adding a drug: the page exists as soon as the drug is in the defaults CSV;
-# add inst/help/drugs/<drug>.md for the narrative, which the tests require.
+# add inst/app-help/drugs/<drug>.md for the narrative, which the tests require.
 # -----------------------------------------------------------------------------
 
 HELP_SECTIONS <- c(
@@ -82,6 +82,7 @@ helpStaticPages <- function() {
     "models/three-compartment", "The three-compartment model",     "models",
     "models/why-simulate",      "Why tables of PK parameters must be simulated", "models",
     "models/compartments",      "Peripheral compartments and the depot", "models",
+    "models/tolerance",         "Tolerance and tachyphylaxis",     "models",
     "models/effect-site",       "The effect site and ke0",         "models",
     "models/pk-converter",      "Converting between parameter sets", "models",
     "models/covariates",        "Covariates and body size",        "models",
@@ -193,8 +194,8 @@ helpPageExists <- function(id, registry = helpPageRegistry()) {
 # --- Markdown files ----------------------------------------------------------
 
 helpContentDir <- function() {
-  dir <- system.file("help", package = "stanpumpR")
-  if (!nzchar(dir)) stop("The stanpumpR help content (inst/help) was not found")
+  dir <- system.file("app-help", package = "stanpumpR")
+  if (!nzchar(dir)) stop("The stanpumpR help content (inst/app-help) was not found")
   dir
 }
 
@@ -214,7 +215,7 @@ helpReadMarkdown <- function(id) {
   paste(readLines(path, encoding = "UTF-8", warn = FALSE), collapse = "\n")
 }
 
-#' All Markdown files under inst/help, as page ids
+#' All Markdown files under inst/app-help, as page ids
 #' @noRd
 helpMarkdownIds <- function() {
   files <- list.files(helpContentDir(), pattern = "\\.md$", recursive = TRUE)
@@ -361,7 +362,7 @@ helpPageUI <- function(id, drugDefaults = getDrugDefaultsGlobal()) {
     tags$div(
       class = "help-breadcrumb small text-muted",
       tags$a(href = "#", `data-help-page` = "home", "Help"),
-      " › ",
+      " \u203A ",
       row$sectionTitle
     ),
     # The title gets the same links as the body ("...differs from GasMan")
@@ -460,7 +461,7 @@ helpSearch <- function(term, index = helpSearchIndexCached(), maxHits = 25) {
     start <- max(1, p[1] - 70)
     end <- min(nchar(text), p[1] + attr(p, "match.length")[1] + 70)
     s <- substr(text, start, end)
-    paste0(if (start > 1) "…", s, if (end < nchar(text)) "…")
+    paste0(if (start > 1) "\u2026", s, if (end < nchar(text)) "\u2026")
   }, character(1))
 
   res <- data.frame(
@@ -503,7 +504,7 @@ helpHighlight <- function(text, term) {
 helpSearchResultsUI <- function(term, hits) {
   if (nrow(hits) == 0) {
     return(tags$div(class = "help-search-results small text-muted",
-                    "Nothing found for “", htmltools::htmlEscape(term), "”."))
+                    "Nothing found for \u201C", htmltools::htmlEscape(term), "\u201D."))
   }
   items <- lapply(seq_len(nrow(hits)), function(i) {
     snippet <- helpHighlight(hits$snippet[i], term)
@@ -527,8 +528,8 @@ helpSearchResultsUI <- function(term, hits) {
 #' @noRd
 helpFormatNumber <- function(x, digits = 3) {
   vapply(x, function(v) {
-    if (is.null(v) || length(v) == 0 || is.na(v)) return("—")
-    if (!is.finite(v)) return("—")
+    if (is.null(v) || length(v) == 0 || is.na(v)) return("\u2014")
+    if (!is.finite(v)) return("\u2014")
     if (v == 0) return("0")
     format(signif(v, digits), big.mark = ",", scientific = FALSE, trim = TRUE)
   }, character(1), USE.NAMES = FALSE)

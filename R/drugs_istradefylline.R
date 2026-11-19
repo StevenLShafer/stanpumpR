@@ -6,7 +6,7 @@
 # concentrations in ng/mL.
 #
 # Drafted by Claude Code, 2026-10-19, at the request of Steven L. Shafer
-# (inst/help/models/parkinsons.md, inst/extdata/parkinsonsRegistry.csv).
+# (inst/app-help/models/parkinsons.md, inst/extdata/parkinsonsRegistry.csv).
 #
 # THE SOURCE
 # ==========
@@ -68,9 +68,11 @@
 # h); time to peak after one tablet about 4 h (label: 4 h fasted).
 #
 # NO EFFECT SITE, NO BAND: the review's exposure-response is a direct Emax of
-# daily OFF time on steady-state AUC (maximum fall 5.79 percentage points,
-# AUC50 1690 ng.h/mL; Knebel 2012), which is a dose-level relation, not a
-# time course; there is no published concentration range.
+# daily OFF time on steady-state AUC (Knebel 2012, Table II: maximum fall
+# 3.57 percentage points, AUC50 1860 ng.h/mL in the final model, the fall
+# 1.88 times larger with a COMT inhibitor; 5.79 and 1690 were the base
+# model's), which is a dose-level relation, not a time course; there is no
+# published concentration range.
 #
 # References
 # ----------

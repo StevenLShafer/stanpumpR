@@ -42,27 +42,35 @@ test_that("returns the published parameters with the switch off", {
   expect_equal_rounded(actual, expected)
 })
 
-test_that("scales to fat-free mass for a 120 kg man", {
+test_that("scales to fat-free mass from Ansari's parturients for a 120 kg man", {
   # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126
-  # (the factors pinned in test-drugs-alfentanil.R, worked out by hand).  The
-  # placeholders v3 = 1 and cl3 = 0 are left alone.
+  # (the factors pinned in test-drugs-alfentanil.R, worked out by hand), each
+  # over the factor of Ansari's cohort (Table 1).  The placeholders v3 = 1 and
+  # cl3 = 0 are left alone.
+  kc <- cohortFactorsIndependent(list(weight = 79.8, bmi = 30.6, age = 34.2, men = 0, women = 70))
   actual <- calcium(120, 170, 50, "male")
   expected <- list(
-    v1 = 14.223483,
-    v2 = 21.530961,
+    v1 = 14.223483 / kc$volume,
+    v2 = 21.530961 / kc$volume,
     v3 = 1,
-    cl1 = 0.22342701,
-    cl2 = 1.5261408,
+    cl1 = 0.22342701 / kc$clearance,
+    cl2 = 1.5261408 / kc$clearance,
     cl3 = 0
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
 })
 
-test_that("the reference man receives the published parameters", {
+test_that("the study's typical parturient receives the published parameters", {
   published <- list(v1 = 10.9, v2 = 16.5, v3 = 1, cl1 = 0.183, cl2 = 1.25, cl3 = 0)
-  expect_equal_rounded(calcium(70, 170, 35, "male")$PK$default, published)
+  expect_equal_rounded(calcium(79.8, 100 * sqrt(79.8 / 30.6), 34.2, "female")$PK$default,
+                       published)
   expect_equal_rounded(calcium(70, 170, 35, "male", adjustToFFM = FALSE)$PK$default,
                        published)
+  # The reference man: the published values over the cohort's factors
+  kc <- cohortFactorsIndependent(list(weight = 79.8, bmi = 30.6, age = 34.2, men = 0, women = 70))
+  ref <- calcium(70, 170, 35, "male")$PK$default
+  expect_equal_rounded(ref$v1, 10.9 / kc$volume)
+  expect_equal_rounded(ref$cl1, 0.183 / kc$clearance)
 })
 
 test_that("the units name the salt and nothing else", {
@@ -226,13 +234,19 @@ test_that("the rise scales with the dose and with fat-free mass", {
   two <- simulateCalcium(dose(2))
   expect_equal(two$Plasma, 2 * one$Plasma)
 
-  # 120 kg, 170 cm, 50 y man, switch on: V1 is 14.223483 L, so the peak of
-  # the 1 g infusion is lower (0.30435980 from the independent solution
-  # with the scaled volumes and clearances); switch off, the published
+  # 120 kg, 170 cm, 50 y man, switch on: the published values x his
+  # fat-free-mass factors over the cohort's, so the peak of the 1 g infusion
+  # is lower; from the independent eigendecomposition (mammillaryReference(),
+  # helpers.R) with those volumes and clearances; switch off, the published
   # parameters, so the same as the reference man.
+  kc <- cohortFactorsIndependent(list(weight = 79.8, bmi = 30.6, age = 34.2, men = 0, women = 70))
+  set <- list(v1 = 10.9 * 1.3049067 / kc$volume, v2 = 16.5 * 1.3049067 / kc$volume, v3 = 1,
+              cl1 = 0.183 * 1.2209126 / kc$clearance, cl2 = 1.25 * 1.2209126 / kc$clearance,
+              cl3 = 0)
   heavyOn  <- simulateCalcium(dose(1), adjustToFFM = TRUE,  weight = 120, age = 50)
   heavyOff <- simulateCalcium(dose(1), adjustToFFM = FALSE, weight = 120, age = 50)
-  expect_equal_rounded(at(heavyOn, 10), 0.30435980)
+  expect_equal_rounded(at(heavyOn, 10),
+                       mammillaryReference(set, 10, rate = 100 / 147.01, tStop = 10))
   expect_equal(heavyOff$Plasma, one$Plasma)
 })
 

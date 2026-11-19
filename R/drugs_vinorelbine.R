@@ -62,6 +62,15 @@ VINORELBINE_VARIOL <- list(
   f = 0.36, ka = 0.481, tlag = 0.15   # oral: fraction, /h, h
 )
 
+# Variol 2002, Table 2 (printed p. 470), read on the PDF 2026-11-18: the 175
+# patients' means, 68 kg, BSA 1.74 m2, 57 years, 91 men and 84 women (Table 3's
+# model was fitted to the 111 phase I patients, whose demographics are not
+# printed separately).  No height is printed; it is back-solved from the BSA by
+# Du Bois's formula, the paper naming none (163.8 cm; Shafer, 2026-11-18).
+# The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort).
+VINORELBINE_COHORT <- list(weight = 68, height = 163.8, age = 57, men = 91, women = 84)
+
 #' Vinorelbine, intravenous and oral (Variol 2002)
 #'
 #' Three compartments with a lagged first-order oral input; see the header of
@@ -74,7 +83,7 @@ vinorelbine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   p <- VINORELBINE_VARIOL
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1, cohort = do.call(cohortSizeFactors, VINORELBINE_COHORT))
   v1 <- p$v1 * size$volume
 
   default <- list(

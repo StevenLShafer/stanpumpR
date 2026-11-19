@@ -1,3 +1,17 @@
+# Gepts 1995, Table 1 (printed p. 1198), read on the PDF 2026-11-18: the dose
+# groups whose volumes and clearances make Table 3's two-stage log means (the
+# 250 ug group was excluded, p. 1197), by group: weight, height, age, men,
+# women.  The parameters are this cohort's, and the model is anchored at it
+# (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md, Anchoring at the
+# source's cohort): the reference man's volumes are divided by 0.896 and
+# clearances by 0.921.
+SUFENTANIL_COHORT <- list(groups = list(
+  list(weight = 71, height = 177, age = 32, men = 2, women = 2),   # 500 ug
+  list(weight = 69, height = 169, age = 60, men = 4, women = 0),   # 750 ug
+  list(weight = 60, height = 168, age = 43, men = 2, women = 3),   # 1000 ug
+  list(weight = 64, height = 164, age = 52, men = 4, women = 1)    # 1500 ug
+))
+
 sufentanil <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Units **************
@@ -5,11 +19,14 @@ sufentanil <- function(weight, height, age, sex, adjustToFFM = TRUE)
   # Volume: Liters
   
   # Size scaling (see docs/weight-adjustment.md): the published parameters
-  # describe a 70 kg adult.  Volumes scale with fat-free mass relative to the
-  # 70 kg, 170 cm reference male, clearances with that ratio ^ 0.75
-  # (Al-Sallami 2015).  adjustToFFM = FALSE reproduces the former behaviour
-  # exactly: no size scaling, the parameters were used as published.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  # describe Gepts's patients (no weight or lean-mass relation was found), so
+  # with the switch on they are anchored at that cohort (SUFENTANIL_COHORT):
+  # volumes scale with fat-free mass relative to its typical patient's,
+  # clearances with that ratio ^ 0.75 (Al-Sallami 2015).  adjustToFFM = FALSE
+  # reproduces the former behaviour exactly: no size scaling, the parameters
+  # as published.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, SUFENTANIL_COHORT))
 
   # Gepts 1995, Table 3 and abstract: the two-stage log means, as printed.
   # Until 2026-10-17 V3 was 251.9 L, the volume implied by k31 rounded to

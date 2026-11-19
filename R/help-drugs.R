@@ -15,7 +15,7 @@
 # model table "drifted once already"; this one cannot.
 #
 # The narrative about each model -- the population it was fitted to, where it
-# is extrapolated, who did the work -- is Markdown in inst/help/drugs/<drug>.md
+# is extrapolated, who did the work -- is Markdown in inst/app-help/drugs/<drug>.md
 # and is appended to the generated page.
 # -----------------------------------------------------------------------------
 
@@ -465,7 +465,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   # A drug with no dosing unit reads the blank CSV cell as NA, which
   # nzchar() alone would print as "NA"
   defaultShown <- if (!is.na(row$Default.Units) && nzchar(as.character(row$Default.Units)))
-    as.character(row$Default.Units) else "—"
+    as.character(row$Default.Units) else "\u2014"
   meacShown <- if (!is.na(row$MEAC) && row$MEAC > 0) {
     sprintf("%s %s", helpFormatNumber(row$MEAC), concUnits)
   } else if (prodrug) {
@@ -1051,7 +1051,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
       },
       helpTableHTML(tab),
       "<p class='small text-muted'>Sources: ", esc(mic$MicSource), " ", esc(mic$BindingSource),
-      " The threshold can be changed under Settings → Drug Thresholds; see ",
+      " The threshold can be changed under Settings \u2192 Drug Thresholds; see ",
       helpPageLink("models/recovery"), ".</p>"
     )
   }
@@ -1162,11 +1162,14 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
         `Peripheral volume (L)` =
           if (!is.null(k23) && !is.null(k32)) helpFormatNumber(k23 / k32 * v1)
           else if (isTRUE(set$cl2 > 0)) helpFormatNumber(set$v2)
-          else "—",
-        `Terminal t½ below Km (min)` =
+          else "\u2014",
+        TerminalHalfLife =
           helpFormatHalfLife(helpSaturableTerminalHalfLife(X)),
         check.names = FALSE, stringsAsFactors = FALSE)
       names(out)[names(out) == "Vmax"] <- vmaxCol
+      # named here: R takes no \u escape inside backticks, and the R code
+      # must be ASCII (R CMD check)
+      names(out)[names(out) == "TerminalHalfLife"] <- "Terminal t\u00BD below Km (min)"
       out
     })
     mmTab <- do.call(rbind, rowsMM[!vapply(rowsMM, is.null, logical(1))])
@@ -1206,8 +1209,8 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
         "<p class='text-center'><em>rate = Vmax &times; C / (Km + C)</em></p>",
         "<p>Two consequences, and they are the reason the drug is modelled this way. Exposure rises ",
         "<strong>faster than the dose</strong>: doubling a dose more than doubles the area under the ",
-        "curve once concentrations approach Km. And doses do not add independently — a second dose ",
-        "is cleared more slowly because the first is still present — so this drug is simulated by ",
+        "curve once concentrations approach Km. And doses do not add independently \u2014 a second dose ",
+        "is cleared more slowly because the first is still present \u2014 so this drug is simulated by ",
         "numerical integration of the whole dose table at once rather than by adding exponentials.</p>",
         "<p>Below Km the rate becomes Vmax &times; C / Km, an ordinary first-order clearance of ",
         "Vmax/Km, which is the CL1 given in the table above. That is the fastest this drug is ever ",
@@ -1291,6 +1294,7 @@ helpGasPageHTML <- function(gas, row) {
           else if (gas == "ventilation") "Minute ventilation, L/min (30% is dead space)"
           else "Flowmeter setting, L/min of fresh gas"),
       esc(if (gas %in% c("air", "ventilation")) "Not plotted: an input, not a result"
+          else if (gas == "oxygen") "Alveolar (end-tidal) tension as the \u201cplasma\u201d line; arterial tension as the \u201ceffect site\u201d line, below end-tidal with an endobronchial tube"
           else "Alveolar (end-tidal) tension as the \u201cplasma\u201d line; vessel-rich group (brain) tension as the \u201ceffect site\u201d line"),
       esc(if (!is.na(row$endCe) && row$endCe > 0) {
         if (gas %in% ageAdjustedThresholdGases())
@@ -1401,7 +1405,7 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
       `Given as` = given,
       `Active metabolite` = metabolite,
       `Default unit` = htmltools::htmlEscape(if (!is.na(row$Default.Units) && nzchar(as.character(row$Default.Units)))
-                                               as.character(row$Default.Units) else "—"),
+                                               as.character(row$Default.Units) else "\u2014"),
       `Typical range` = if (helpNoBand(row)) "none" else
         sprintf("%s\u2013%s %s", helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), conc),
       MEAC = if (!is.na(row$MEAC) && row$MEAC > 0) sprintf("%s %s", helpFormatNumber(row$MEAC), conc) else "",
@@ -1455,7 +1459,7 @@ helpRawTableHTML <- function(df, caption = NULL) {
 }
 
 #' The bibliography page: every citation the drug models return, then the
-#' hand-written list of methods references in inst/help/references.md
+#' hand-written list of methods references in inst/app-help/references.md
 #' @noRd
 helpReferencesHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
   patients <- helpReferencePatients()

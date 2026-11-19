@@ -256,7 +256,7 @@ test_that("the model reproduces the single-dose data it is checked against", {
 
 
 test_that("the linear-absorption scenario says what the model does", {
-  # inst/help/scenarios/pregabalin-linear-absorption.md quotes these numbers;
+  # inst/app-help/scenarios/pregabalin-linear-absorption.md quotes these numbers;
   # if the model changes, the narrative has to change with it.  Worked out by
   # hand: 40 y, 70 kg man at the assumed creatinine of 0.9 mg/dL, NCLcr 103.2
   # (above the breakpoint, so Chan's typical CL/F of 4.96 L/h), half-life

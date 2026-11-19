@@ -12,18 +12,33 @@ name: R-CMD-check
 permissions:
   contents: read
 
+# A new push to a pull request cancels its earlier check, which no one will
+# read.  A push to master is grouped by its own commit, so it is never
+# cancelled: each master commit's check is what deploys it (Carbon's
+# repository audit, 2026-11-18).  No paths-ignore: the Ubuntu job is a
+# required check, and a pull request it skipped could not merge.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
 jobs:
   R-CMD-check:
     runs-on: ${{ matrix.config.runner || matrix.config.os }}
 
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})
 
+    # Linux only, the platform production runs on (shinyapps.io).  macOS and
+    # Windows are checked weekly by check-platforms.yaml instead (Steven L.
+    # Shafer, 2026-11-19): every pull request and every push to master waited
+    # on them, and the production deploy, which needs this whole workflow to
+    # succeed, waited too: on 2026-11-19 a macOS job on master queued 77
+    # minutes for a runner, and one on a pull request was cancelled after 78
+    # without one (on master, such a cancellation leaves the commit
+    # undeployed until someone deploys it by hand).
     strategy:
       fail-fast: false
       matrix:
         config:
-          - {os: macOS-latest,   r: 'release'}
-          - {os: windows-latest, r: 'release'}
           # The Ubuntu jobs keep the os label "ubuntu-latest", which names the
           # check that master's branch protection requires, but run on
           # ubuntu-24.04: ubuntu-26.04, which ubuntu-latest moved to on
@@ -60,3 +75,22 @@ jobs:
           upload-snapshots: false
           upload-results: false
           error-on: '"error"'
+
+      # The tests of the orientation documents and of these workflows read
+      # files .Rbuildignore keeps out of the built package (AGENTS.md, docs/,
+      # .github/), so under R CMD check they skip ("not a source checkout")
+      # and had never run here; test-agent-docs.R failed on master unseen
+      # (Carbon's repository audit, 2026-11-18).  Run them from the checkout,
+      # with the first audit's regression tests, whose check that the R code
+      # is ASCII reads R/ and skipped under R CMD check too (Carbon's second
+      # repository audit, 2026-11-19, A2-F21).
+      - name: Source-checkout tests
+        if: matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release'
+        shell: Rscript {0}
+        run: |
+          pkgload::load_all(".", quiet = TRUE)
+          for (f in c("test-agent-docs.R", "test-workflow-security.R",
+                      "test-carbon-repository-audit.R"))
+            testthat::test_file(file.path("tests", "testthat", f),
+                                reporter = "summary",
+                                stop_on_failure = TRUE)

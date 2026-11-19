@@ -410,13 +410,13 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
     "olanzapine", "droperidol", "droperidolIM",
     # The antidiabetic drugs (2026-10-17): concentration only, no ke0, no
-    # metabolite (inst/help/models/antidiabetics.md)
-    "semaglutide", "tirzepatide", "liraglutide", "insulinRegular",
-    "insulinRegularU500", "insulinNPH", "insulinHumanMix70", "insulinLispro",
-    "insulinLisproMix75", "insulinLisproMix50", "insulinGlargine", "metformin",
-    "empagliflozin", "ertugliflozin", "glyburide", "dulaglutide", "dapagliflozin",
+    # metabolite (inst/app-help/models/antidiabetics.md)
+    "semaglutide", "tirzepatide", "liraglutide", "liraglutideOvergaard", "metformin", "metforminER",
+    "empagliflozin", "ertugliflozin", "dulaglutide", "dapagliflozin",
     "pioglitazone", "pramlintideIV", "exenatide", "linagliptin", "vildagliptin", "liraglutideWatson", "dapagliflozinKobuchi", "canagliflozin", "lixisenatide",
-    "semaglutideOral", "cetagliptin",
+    "semaglutideOral", "cetagliptin", "alogliptin",
+    # (the insulins and glyburide have effect sites since 2026-11-19:
+    # R/insulinEffectSite.R, R/drugs_glyburide.R)
     # Intravenous calcium joined on 2026-10-13: the ionized calcium itself
     # is the end point, no ke0, no metabolite.
     "calcium",
@@ -452,13 +452,20 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "ambrisentan", "macitentan", "aprocitentan",
     # bosentan (Miura 2026, 2026-11-18): plasma only
     "bosentan",
+    # the pulmonary hypertension groups' candidates (2026-11-18): plasma only
+    "sildenafilFDA", "sildenafilMiura", "tadalafilFergusonSells", "tadalafilMiura",
+    "ambrisentanOkour", "ambrisentanMiura",
+    # levothyroxine (Inada 1975, 2026-11-18): plasma only
+    "levothyroxine",
+    # liothyronine (Van Tassell 2019, 2026-11-18): plasma only
+    "liothyronine",
     # colistimethate and the colistin it forms (2026-11-16): plasma only, no
     # line until the MIC decision (R/drugs_colistin.R)
     "colistimethate", "colistin",
     # cefepime (Barreto 2023, 2026-11-17): plasma only, the MIC line, no band
     "cefepime",
     # Parkinson disease drugs (2026-10-19): plasma only; levodopa (all four
-    # models) and apomorphine have an effect site (inst/help/models/parkinsons.md)
+    # models) and apomorphine have an effect site (inst/app-help/models/parkinsons.md)
     "pramipexole", "pramipexoleER", "safinamide", "opicapone",
     "istradefylline", "amantadineER", "pimavanserin", "tolcapone",
     # Chemotherapy (2026-11-05): plasma only

@@ -388,14 +388,14 @@ what the literature offers.
 | Propofol | Eleveld DJ et al., *Br J Anaesth* 2018;120(5):942–959. [PMID 29661412](https://pubmed.ncbi.nlm.nih.gov/29661412/). With *Minto / Schnider* ticked, also Schnider TW et al., *Anesthesiology* 1998;88(5):1170–1182. [PMID 9605675](https://pubmed.ncbi.nlm.nih.gov/9605675/) |
 | Remifentanil | Eleveld DJ et al., *Anesthesiology* 2017;126(6):1005–1018. [PMID 28509794](https://pubmed.ncbi.nlm.nih.gov/28509794/), **except** adults (age 18+) at BMI 30 and above, who get Kim TK et al., *Anesthesiology* 2017;126(6):1019–1032. [PMID 28509796](https://pubmed.ncbi.nlm.nih.gov/28509796/) instead — Kim was fitted only in adults, so a child stays on Eleveld regardless of BMI, and a patient for whom Kim's equations give a non-positive volume or clearance also falls back to Eleveld. With *Minto / Schnider* ticked, also Minto CF et al., *Anesthesiology* 1997;86:10–23. [PMID 9009935](https://pubmed.ncbi.nlm.nih.gov/9009935/) |
 | Fentanyl | Bae J et al., *Br J Anaesth* 2020;125:976-985. [DOI 10.1016/j.bja.2020.06.066](https://doi.org/10.1016/j.bja.2020.06.066) (the five classic data sets refitted with 30 new patients; volumes and clearances on their own weight exponents) |
-| Alfentanil | Scott JC, Stanski DR. *J Pharmacol Exp Ther* 1987;240(1):159–166. [PMID 3100765](https://pubmed.ncbi.nlm.nih.gov/3100765/) |
+| Alfentanil | Scott JC, Stanski DR. *J Pharmacol Exp Ther* 1987;240(1):159–166. [PMID 3100765](https://pubmed.ncbi.nlm.nih.gov/3100765/), the parameter set as printed in Shafer SL, Varvel JR, *Anesthesiology* 1991;74:53–63, Table 1 |
 | Sufentanil | Gepts E et al., *Anesthesiology* 1995;83(6):1194–1204. [PMID 8533912](https://pubmed.ncbi.nlm.nih.gov/8533912/) |
 | Morphine | Lötsch J et al., *Clin Pharmacol Ther* 2002;72(2):151–162. [PMID 12189362](https://pubmed.ncbi.nlm.nih.gov/12189362/) |
 | Pethidine (meperidine) | Björkman S, *J Pharmacokinet Pharmacodyn* 2003;30(4):285–307. [PMID 14650375](https://pubmed.ncbi.nlm.nih.gov/14650375/) |
 | Hydromorphone | Drover DR et al., *Anesthesiology* 2002;97(4):827–836. [PMID 12357147](https://pubmed.ncbi.nlm.nih.gov/12357147/) |
 | Methadone | Henthorn TK, Kharasch ED, *Clin Pharmacol Ther* 2026;119(3):739–750. [doi:10.1002/cpt.70147](https://doi.org/10.1002/cpt.70147). The **CYP 2B6** field scales each enantiomer's non-renal clearance, from Kharasch ED et al., *Anesthesiology* 2015;123(5):1142–1153. [PMID 26389554](https://pubmed.ncbi.nlm.nih.gov/26389554/) |
 | Ketamine | Domino EF et al., *Clin Pharmacol Ther* 1984;36(5):645–653. [PMID 6488686](https://pubmed.ncbi.nlm.nih.gov/6488686/) |
-| Dexmedetomidine | Adult: Dyck JB et al., *Anesthesiology* 1993;78(5):821–828. [PMID 8098191](https://pubmed.ncbi.nlm.nih.gov/8098191/)<br>Age ≤ 1 yr: Zuppa AF et al., *Br J Anaesth* 2019;123(6):839–852. [PMID 31623840](https://pubmed.ncbi.nlm.nih.gov/31623840/) |
+| Dexmedetomidine | Above 1 yr: Morse JD, Cortinez LI, Anderson BJ, *J Clin Med* 2020;9(11):3480. [doi:10.3390/jcm9113480](https://doi.org/10.3390/jcm9113480)<br>Age ≤ 1 yr: Zuppa AF et al., *Br J Anaesth* 2019;123(6):839–852. [PMID 31623840](https://pubmed.ncbi.nlm.nih.gov/31623840/) |
 | Midazolam | Zomorodi K et al., *Anesthesiology* 1998;89(6):1418–1429, Table 3. [PMID 9856717](https://pubmed.ncbi.nlm.nih.gov/9856717/) Kinetics fitted to the data of Bührer M et al., *Clin Pharmacol Ther* 1990;48(5):544–554. [PMID 2225713](https://pubmed.ncbi.nlm.nih.gov/2225713/) Time to peak effect from Bührer M et al., *Clin Pharmacol Ther* 1990;48(5):555–567. [PMID 2225714](https://pubmed.ncbi.nlm.nih.gov/2225714/) |
 | Etomidate | Arden JR et al., *Anesthesiology* 1986;65(1):19–27. [PMID 3729056](https://pubmed.ncbi.nlm.nih.gov/3729056/) |
 | Lidocaine | Schnider TW et al., *Anesthesiology* 1996;84(5):1043–1050. [PMID 8623997](https://pubmed.ncbi.nlm.nih.gov/8623997/) |
@@ -405,7 +405,7 @@ what the literature offers.
 | Acetaminophen | Morse JD et al., *Eur J Drug Metab Pharmacokinet* 2022;47:497–507. [DOI 10.1007/s13318-022-00766-9](https://doi.org/10.1007/s13318-022-00766-9) (intravenous and fasted tablet; clearance on normal fat mass). ke0 from Anderson BJ et al., *Eur J Clin Pharmacol* 2001;57:559–569. [DOI 10.1007/s002280100367](https://doi.org/10.1007/s002280100367) |
 | Naloxone | Dowling J et al., *Ther Drug Monit* 2008;30:490–496. [DOI 10.1097/FTD.0b013e3181816214](https://doi.org/10.1097/FTD.0b013e3181816214) (intravenous; clearance on lean body weight). Nasal spray derived from Laffont CM et al., *Front Psychiatry* 2024;15:1399803; k<sub>e0</sub> from Yassen A et al., *Clin Pharmacokinet* 2007;46:965–980 |
 | Oxytocin | Shafer SL et al., *Br J Anaesth* 2025;134(5):1513–1522. [DOI 10.1016/j.bja.2024.12.046](https://doi.org/10.1016/j.bja.2024.12.046) (intravenous, Model D: weight and age)<br>Rat model (weight of 1 kg or less): Tanaka A et al., *Mol Pharm* 2018;15(3):1105–1111. [PMID 29338251](https://pubmed.ncbi.nlm.nih.gov/29338251/) |
-| Oxycodone | Lamminsalo M et al., *Expert Opin Drug Deliv* 2019;16(6):649–656. [PMID 31092024](https://pubmed.ncbi.nlm.nih.gov/31092024/) |
+| Oxycodone | Pöyhiä R et al., *Br J Clin Pharmacol* 1991;32:516–518; Kirvelä M et al., *J Clin Anesth* 1996;8:13–18; Liukas A et al., *Drugs Aging* 2011;28:41–50 (pooled intravenous disposition; age and renal function on clearance); Lalovic B et al., *Clin Pharmacol Ther* 2006;79:461–479 (oral absorption, k<sub>e0</sub>); Balyan R et al., *Pharmacogenomics* 2017;18:337–348 (CYP2D6) |
 | Oliceridine | Dahan A et al., *Anesthesiology* 2020;133(3):559–568. [PMID 32788558](https://pubmed.ncbi.nlm.nih.gov/32788558/) |
 | Remimazolam | Eleveld DJ et al., *Br J Anaesth* 2025;135(1):206–217. [PMID 40312166](https://pubmed.ncbi.nlm.nih.gov/40312166/) |
 | Sugammadex | Kleijn HJ et al., *Br J Clin Pharmacol* 2011;72:415–433. [DOI 10.1111/j.1365-2125.2011.04000.x](https://doi.org/10.1111/j.1365-2125.2011.04000.x) (total sugammadex; rocuronium binding not modelled) |
@@ -442,8 +442,10 @@ hint when that is happening.
 **Most models are scaled to fat-free mass, not used exactly as published.** Unless
 the *Adjust weight to fat-free mass* box is unticked, every model in the table
 except propofol and remifentanil has its volumes and clearances scaled
-from the published 70 kg values to the patient's fat-free mass. The published
-parameters are what a 70 kg, 170 cm man receives. Oxytocin is an exception:
+to the patient's fat-free mass. A model published with no size covariate is
+anchored at its source's typical patient, who receives the published values
+(`docs/weight-adjustment.md`, *Anchoring at the source's cohort*); one whose
+source has no usable demographics keeps the 70 kg, 170 cm reference man. Oxytocin is an exception:
 its published parameters are for 80 kg and 33 years, so its volumes and
 clearances scale from 80 kg and its clearance also changes with age.
 Acetaminophen's clearance is
@@ -501,8 +503,10 @@ alveolus, so sevoflurane rises faster in its presence. It has been validated
 against GasMan itself across five scenarios; see `inst/validation/VALIDATION.md`
 for the record.
 
-Cardiac output is fixed at GasMan's default, 5 L/min at 70 kg scaled by
-(weight / 70)^0.75, and is not currently a user input.
+Cardiac output starts at GasMan's default, 5 L/min at 70 kg scaled by
+(weight / 70)^0.75, and the Physiology panel's **Cardiac output** slider
+multiplies it; **Body temperature**, **Altitude** and **Endobronchial
+intubation** act on the inhaled agents too (`inst/app-help/models/physiology.md`).
 
 Ventilation is **minute ventilation**. Thirty percent of it is taken to be dead
 space, so the alveolar ventilation, which is what exchanges gas, is 70% of what
