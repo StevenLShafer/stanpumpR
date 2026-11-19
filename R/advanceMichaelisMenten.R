@@ -559,6 +559,7 @@ mmDerivative <- function(V, V2, ka, kT, kc, q, clLinear, nOral, iIM, iConv, iC, 
     efVmax <- ef$vmax
     efKm <- ef$km
   }
+  rm(ef)   # the closure reads only the numbers: its frame stays small (C3)
   hasTransit <- kT != 0
   hasSC <- !is.null(sc)
   hasTarget <- !is.null(tb)

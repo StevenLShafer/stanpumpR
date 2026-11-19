@@ -282,8 +282,11 @@ test_that("the saturable engine's derivative reads a small frame and keeps its b
                    stringsAsFactors = FALSE)
   for (run in 1:2) simulatedFor(DT, 2880)
   deriv <- seen[[2]]
-  # Its frame holds the run's constants, not the engine's 110 variables
-  expect_lt(length(ls(environment(deriv), all.names = TRUE)), 45)
+  # Its frame holds the run's constants, not the engine's 110 variables.  The
+  # bound is a fence between those two sizes, not a count: it was set with no
+  # room at 44 names, and raised to 50 when the saturable efflux (cetagliptin,
+  # 2026-11-19) added one more constant
+  expect_lt(length(ls(environment(deriv), all.names = TRUE)), 50)
   expect_true(all(c("V", "ka", "rmaxP", "koffT") %in% ls(environment(deriv))))
   # Compiled in the second simulation as in the first: moved into a frame of
   # its own with environment<-, it lost its byte code and the JIT did not
