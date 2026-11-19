@@ -1151,3 +1151,67 @@ test_that("CodeRabbit's third look at #776: names that differ only by source, ef
   f$concentration_site <- "effect_site"
   expect_true(all(c("ke0", "tPeak") %in% paperReviewFigureRoles(f, ex, normalized = TRUE)))
 })
+
+test_that("CodeRabbit's later looks at #776: the follow-up items", {
+  ex <- paperReviewExample()
+  # A CL derived as k10 V1 depends on k10 and V1 alone, not on k12.
+  micro <- ex
+  micro$parameters <- list(
+    list(role = "V1", value = 8, value_text = "8", units = "L"),
+    list(role = "k10", value = 0.15, value_text = "0.15", units = "1/min"))
+  expect_setequal(paperReviewQuantityRoles("CL", micro), c("k10", "V1"))
+  expect_false("k12" %in% paperReviewQuantityRoles("CL", micro))
+
+  # A coefficient given as a fraction of the sum is no model of the paper's own.
+  frac <- list(derived_quantities = list(list(quantity = "coefficient_1", value = 80, units = "percent")))
+  expect_false(paperReviewOwnModelEvidence(frac))
+  abs <- list(derived_quantities = list(list(quantity = "coefficient_1", value = 0.1, units = "1/L")))
+  expect_true(paperReviewOwnModelEvidence(abs))
+  expect_true(paperReviewNoModel(frac))
+
+  # A metabolite series that is set aside brings no absorption into the figure.
+  met <- ex
+  met$regimens <- c(met$regimens, list(list(id = "RO", doses = list(list(route = "oral", time = 0,
+    amount = 10, mass_unit = "mg", per_kg = "no", per_time = "none", time_units = "min")))))
+  f <- met$figures[[1]]
+  f$series <- c(f$series, list(list(label = "metabolite", analyte = "metabolite", regimen_id = "RO",
+                                     points = list())))
+  expect_false(any(c("ka", "F") %in% paperReviewFigureRoles(f, met)))
+
+  # A normalized figure of a regimen mixing IV and oral doses keeps F.
+  mix <- ex
+  mix$regimens[[1]]$doses <- c(mix$regimens[[1]]$doses, list(list(route = "oral", time = 60,
+    amount = 10, mass_unit = "mg", per_kg = "no", per_time = "none", time_units = "min")))
+  expect_true("F" %in% paperReviewFigureRoles(mix$figures[[1]], mix, normalized = TRUE))
+  oral <- ex
+  oral$regimens[[1]]$doses[[1]]$route <- "oral"
+  expect_false("F" %in% paperReviewFigureRoles(oral$figures[[1]], oral, normalized = TRUE))
+
+  # Two names giving one patient are a conflict.
+  cov <- paperReviewExample()
+  cl <- which(vapply(cov$parameters, function(p) p$role, "") == "CL")
+  a <- cov$parameters[[cl]]; a$name_in_paper <- "CL at 35 kg"
+  b <- a; b$value <- 1.26; b$value_text <- "1.26"; b$name_in_paper <- "CL at 35 kg (abstract)"
+  cov$parameters <- c(cov$parameters[-cl], list(a, b))
+  t <- Filter(function(f) grepl("^CL is printed", f$title), paperReviewAssumptionChecks(cov))[[1]]$title
+  expect_equal(t, "CL is printed with different values")
+
+  # A decrement time after an infusion written in the conditions is compared.
+  dq <- list(quantity = "decrement_50", value = 10, value_text = "10", units = "min",
+             statistic = "typical_value", conditions = "after a 60-min infusion", location = "Text")
+  x <- ex; x$derived_quantities <- c(ex$derived_quantities, list(dq))
+  r <- paperReviewRun(x)$consistency
+  expect_false(identical(r$status[r$quantity == "decrement_50"], "not comparable"))
+  dq$conditions <- "after a 60-min infusion during cardiopulmonary bypass"
+  x <- ex; x$derived_quantities <- c(ex$derived_quantities, list(dq))
+  r <- paperReviewRun(x)$consistency
+  expect_equal(r$status[r$quantity == "decrement_50"], "not comparable")
+
+  # A decrement-time figure's miss is a note while an effect is held.
+  held <- paperReviewHeldFigure(list(severity = "error", detail = "miss"),
+    list(covariate_effects = list(list(parameter_role = "CL", covariate = "other",
+      form = "category_multiplier", coefficient = 0.5, equation_as_printed = "CL x 0.5 in ICU"))),
+    paperReviewReferencePatient(ex), PAPER_REVIEW_DISPOSITION_ROLES)
+  expect_equal(held$severity, "info")
+  expect_match(held$detail, "ICU")
+})

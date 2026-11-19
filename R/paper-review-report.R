@@ -255,14 +255,7 @@ paperReviewNoModel <- function(x)
   # A recirculatory or mixing model carries its numbers in front_end and
   # leaves parameters empty, as the prompt asks.
   if (paperReviewHasFrontEnd(x)) return(FALSE)
-  roles <- vapply(x$parameters %or% list(), function(p)
-    if (is.list(p) && is.character(p$role)) p$role[1] else "", "")
-  derived <- vapply(x$derived_quantities %or% list(), function(d)
-    if (is.list(d) && is.character(d$quantity)) d$quantity[1] else "", "")
-  sizes <- c("CL", "V1", "V2", "V3", "Q2", "Q3")
-  !any(roles %in% sizes) &&
-    !any(derived %in% c("CL", "V1", "Vss", "Varea", "coefficient_1", "coefficient_2", "coefficient_3")) &&
-    length(x$published_models %or% list()) == 0
+  !paperReviewOwnModelEvidence(x) && length(x$published_models %or% list()) == 0
 }
 
 # The sections that belong to one model; the rest are about the paper.

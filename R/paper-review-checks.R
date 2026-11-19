@@ -509,10 +509,7 @@ paperReviewPublishedModels <- function(extraction)
   # A model of its own: a volume or clearance printed as a parameter, or
   # derived quantities that can close one (a CL and a half-life; CodeRabbit
   # on #776), as paperReviewNoModel() counts them.
-  derived <- vapply(extraction$derived_quantities %or% list(), function(d)
-    if (is.list(d) && is.character(d$quantity)) d$quantity[1] else "", "")
-  own <- any(roles %in% c("CL", "V1", "V2", "V3", "Q2", "Q3")) ||
-    any(derived %in% c("CL", "V1", "Vss", "Varea", "coefficient_1", "coefficient_2", "coefficient_3"))
+  own <- paperReviewOwnModelEvidence(extraction)
   group <- extraction$drug$name %or% ""
   # Outside a group's part (the paper's one model), a grouped published
   # model is the paper's too when it prints no model of its own: Eleveld
@@ -524,6 +521,26 @@ paperReviewPublishedModels <- function(extraction)
     (nzchar(g) && identical(paperReviewGroupKey(g), paperReviewGroupKey(group))) ||
       ((!nzchar(g) || whole) && !own)
   }, pms)
+}
+
+#' Does an extraction print a model of its own?
+#'
+#' A volume or clearance printed as a parameter, or derived quantities that
+#' can close one: CL, V1, Vss, Varea, or a coefficient in absolute units (a
+#' percent or a fraction of the sum cannot close a model; CodeRabbit on #776).
+#' paperReviewNoModel() and paperReviewPublishedModels() share it.
+#' @keywords internal
+paperReviewOwnModelEvidence <- function(x)
+{
+  roles <- vapply(x$parameters %or% list(), function(p)
+    if (is.list(p) && is.character(p$role)) p$role[1] else "", "")
+  if (any(roles %in% c("CL", "V1", "V2", "V3", "Q2", "Q3"))) return(TRUE)
+  any(vapply(x$derived_quantities %or% list(), function(d) {
+    q <- if (is.list(d) && is.character(d$quantity)) d$quantity[1] else ""
+    q %in% c("CL", "V1", "Vss", "Varea") ||
+      (grepl("^coefficient_[123]$", q) &&
+         !identical(paperReviewUnit(d$units %or% "other")$kind, "fraction"))
+  }, logical(1)))
 }
 
 #' The library's model of a published model, if stanpumpR holds it
@@ -788,7 +805,13 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
     # conditions the printed value holds under that the model does not carry
     # (the schema asks for them only then).
     unapplied <- paperReviewUnappliedFor(extraction, paperReviewQuantityRoles(q, extraction), own, reference)
-    conditions <- trimws(paste(dq$conditions %or% "", collapse = " "))
+    # An infusion's length written in the conditions is carried by the
+    # calculation (paperReviewInfusionMinutes()), so it is no condition the
+    # model lacks (CodeRabbit on #776).
+    conditions <- trimws(gsub(
+      "(after|following)?\\s*(an?\\s*)?[0-9]+(\\.[0-9]+)?[ -]*(min|minute|minutes|h|hr|hrs|hour|hours)[ -]+infusion",
+      "", paste(dq$conditions %or% "", collapse = " "), ignore.case = TRUE))
+    if (!grepl("[[:alnum:]]", conditions)) conditions <- ""
     cannotCompare <- c(
       if (length(unapplied)) paste0("The model cannot be evaluated for this patient: ",
                                     paste(unapplied, collapse = "; "), "."),
@@ -1564,11 +1587,15 @@ paperReviewAssumptionChecks <- function(extraction, model = TRUE)
     # ...and names that differ must name the patients they differ in (a
     # weight, an age, a population), not merely where the value was printed:
     # "CL" and "CL (abstract)" are a conflict (CodeRabbit on #776).
-    patientNamed <- distinctNames && any(grepl(paste0(
+    # ...and the patients the names give must differ: "CL at 35 kg" and
+    # "CL at 35 kg (abstract)" name one patient.
+    patientPattern <- paste0(
       "[0-9.]+\\s*(kg|g|years?|yrs?|y|months?|mo|weeks?|wk|days?|d|cm|m2|m\u00b2|ml/min|mL/min)\\b|",
       "\\b(neonates?|infants?|child(ren)?|adolescents?|adults?|elderly|pregnan\\w*|obese|men|women|",
-      "males?|females?|boys?|girls?|healthy|patients?|renal|hepatic|smokers?)\\b"),
-      names, ignore.case = TRUE, perl = TRUE))
+      "males?|females?|boys?|girls?|healthy|patients?|renal|hepatic|smokers?)\\b")
+    labels <- vapply(names, function(n) paste(sort(tolower(gsub("\\s+", "", regmatches(n,
+      gregexpr(patientPattern, n, ignore.case = TRUE, perl = TRUE))[[1]]))), collapse = "|"), "")
+    patientNamed <- distinctNames && any(nzchar(labels)) && length(unique(labels)) > 1
     if ((length(covaried) && patientNamed) || paperReviewSexOf(names)$ok) {
       add("info", paste(role, "is printed for different patients"),
           paste0(paste(vapply(found, function(p) paste0(p$name_in_paper %or% "", " ", p$value_text %or% "",
@@ -1775,6 +1802,9 @@ paperReviewFigureChecks <- function(extraction, drug, reference)
     id <- f$figure_id %or% "Figure"
     if (identical(f$y_quantity, "decrement_time")) {
       checked <- paperReviewDecrementFigure(f, drug, reference, paperReviewFigureFamily(f, extraction))
+      checked$finding <- paperReviewHeldFigure(checked$finding, extraction, reference,
+        c(PAPER_REVIEW_DISPOSITION_ROLES,
+          if (identical(f$decrement_site, "effect_site")) c("ke0", "tPeak")))
       findings[[length(findings) + 1]] <- checked$finding
       if (!is.null(checked$figure)) figures[[length(figures) + 1]] <- checked$figure
       next
@@ -1789,15 +1819,8 @@ paperReviewFigureChecks <- function(extraction, drug, reference)
       # As for a concentration figure below, a miss is no finding while an
       # effect that changes the curve's shape is held at its reference; F
       # cancels in the division by the peak (CodeRabbit on #776).
-      held <- if (isTRUE(checked$finding$severity %in% c("concern", "error")))
-        paperReviewUnappliedFor(extraction, paperReviewFigureRoles(f, extraction, normalized = TRUE),
-                                NULL, reference, anyPatient = TRUE) else character(0)
-      if (length(held)) {
-        checked$finding$severity <- "info"
-        checked$finding$detail <- paste0("The model's curve is the reference patient's, and ",
-          paste(held, collapse = "; "), ", so it is not the curve of this figure's patients. ",
-          checked$finding$detail)
-      }
+      checked$finding <- paperReviewHeldFigure(checked$finding, extraction, reference,
+                                               paperReviewFigureRoles(f, extraction, normalized = TRUE))
       findings[[length(findings) + 1]] <- checked$finding
       if (!is.null(checked$figure)) figures[[length(figures) + 1]] <- checked$figure
       next
@@ -2375,20 +2398,44 @@ PAPER_REVIEW_DISPOSITION_ROLES <- c("CL", "V1", "V2", "V3", "Q2", "Q3", "k10", "
 #' @keywords internal
 paperReviewFigureRoles <- function(f, extraction, normalized = FALSE)
 {
-  # A series without a regimen of its own shows the figure's.
+  # A series without a regimen of its own shows the figure's; only the
+  # series the check scores count (a metabolite's is set aside).
   own <- f$regimen_id %or% NA_character_
-  ids <- unique(vapply(f$series %or% list(), function(s) s$regimen_id %or% own, ""))
+  scored <- Filter(function(s) (s$analyte %or% "parent") %in% "parent", f$series %or% list())
+  ids <- unique(vapply(scored, function(s) s$regimen_id %or% own, ""))
   if (!length(ids)) ids <- own
-  extravascular <- any(vapply(ids, function(id) {
+  routes <- lapply(ids, function(id) {
     r <- if (is.na(id)) NULL else paperReviewRegimen(extraction, id)
-    is.null(r) || any(vapply(r$doses %or% list(), function(d)
-      (d$route %or% "other") %in% names(PAPER_REVIEW_ROUTE_SUFFIX), logical(1)))
-  }, logical(1)))
+    if (is.null(r)) return(NULL)
+    vapply(r$doses %or% list(), function(d) d$route %or% "other", "")
+  })
+  isEV <- function(rt) rt %in% names(PAPER_REVIEW_ROUTE_SUFFIX)
+  extravascular <- any(vapply(routes, function(rt) is.null(rt) || any(isEV(rt)), logical(1)))
+  # F cancels in the division by the peak only where every dose of a
+  # regimen is extravascular: IV(t) + F oral(t) keeps it.
+  mixed <- any(vapply(routes, function(rt) is.null(rt) || (any(isEV(rt)) && any(!isEV(rt))), logical(1)))
   # An effect-site curve also depends on ke0, or the time to peak it is
   # solved from (CodeRabbit on #776).
   c(PAPER_REVIEW_DISPOSITION_ROLES,
-    if (extravascular) c("ka", "tlag", if (!normalized) "F"),
+    if (extravascular) c("ka", "tlag", if (!normalized || mixed) "F"),
     if (identical(f$concentration_site, "effect_site")) c("ke0", "tPeak"))
+}
+
+#' A figure's finding while an effect its curve depends on is held
+#'
+#' A miss is no finding about the paper while an effect on a role the curve
+#' depends on is held at its reference: the curve is the reference
+#' patient's, and the figure's patients may not be.
+#' @keywords internal
+paperReviewHeldFigure <- function(finding, extraction, reference, roles)
+{
+  if (!isTRUE(finding$severity %in% c("concern", "error"))) return(finding)
+  held <- paperReviewUnappliedFor(extraction, roles, NULL, reference, anyPatient = TRUE)
+  if (!length(held)) return(finding)
+  finding$severity <- "info"
+  finding$detail <- paste0("The model's curve is the reference patient's, and ",
+    paste(held, collapse = "; "), ", so it is not the curve of this figure's patients. ", finding$detail)
+  finding
 }
 
 #' The parameter roles a derived quantity depends on
@@ -2401,6 +2448,9 @@ paperReviewQuantityRoles <- function(q, extraction = NULL)
   printed <- vapply(extraction$parameters %or% list(), function(p)
     if (is.list(p) && is.character(p$role)) p$role[1] else "", "")
   if (q %in% c("CL", "V1") && q %in% printed) return(q)
+  # Derived from the other two of CL = k10 V1.
+  if (identical(q, "CL") && all(c("k10", "V1") %in% printed)) return(c("k10", "V1"))
+  if (identical(q, "V1") && all(c("CL", "k10") %in% printed)) return(c("CL", "k10"))
   if (identical(q, "ke0") && "ke0" %in% printed) return("ke0")
   c(PAPER_REVIEW_DISPOSITION_ROLES,
     if (q %in% c("ke0", "tPeak")) c("ke0", "tPeak"),
