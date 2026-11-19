@@ -307,7 +307,11 @@ paperReviewValidate <- function(x)
       string = is.character(value) && length(value) == 1,
       TRUE)
     if (!ok) {
-      missing <- c(missing, name)
+      # A reply without the front-end block (one made before it existed, as
+      # the example and the test fixtures are) has no front-end model; that
+      # is not a defect of the reply to report.
+      if (!name %in% PAPER_REVIEW_OPTIONAL_TOP_LEVEL || name %in% names(x))
+        missing <- c(missing, name)
       value <- switch(spec$type, array = list(), object = stats::setNames(list(), character(0)),
                       string = "")
     }

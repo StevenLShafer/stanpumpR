@@ -335,6 +335,12 @@ test_that("a document with no model gets one line, not a review built around not
   expect_match(html, "Wrong document")
   expect_false(grepl("compartment\\(s\\)", html))
   expect_false(paperReviewNoModel(paperReviewExample()))
+  # A front-end model keeps its numbers in front_end, not parameters.
+  frontEnd <- list(parameters = list(), structure = list(compartments = 0),
+                   front_end = list(model_type = "recirculatory"))
+  expect_false(paperReviewNoModel(frontEnd))
+  frontEnd$front_end$model_type <- "none"
+  expect_true(paperReviewNoModel(frontEnd))
 })
 
 test_that("a miss of more than tenfold is reported as a likely misreading", {

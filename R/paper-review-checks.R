@@ -1868,7 +1868,13 @@ paperReviewGroupExtraction <- function(extraction, group)
 paperReviewRunOne <- function(extraction, paperLevel = TRUE)
 {
   reference <- paperReviewReferencePatient(extraction)
+  # A front-end model whose paper prints no mammillary model the checks can
+  # close (no parameters, and derived quantities that do not close one) is
+  # not a one-to-three compartment model left open: its own section checks
+  # it. One closed from derived quantities is still reviewed as usual.
   ident <- paperReviewIdentifiability(extraction)
+  if (paperReviewFrontEndOnly(extraction) && identical(ident$verdict, "underdetermined"))
+    ident <- list(verdict = "front_end", route = NA_character_, closed = NULL, findings = list())
   # Absorption is derived per extravascular regimen against the disposition,
   # then the drug carries the first regimen that has one (the simulator can
   # switch), and every check builds the drug for the regimen it checks.
@@ -1894,6 +1900,11 @@ paperReviewRunOne <- function(extraction, paperLevel = TRUE)
                          function() paperReviewConsistency(extraction, drug, reference, ident))
   figures <- guarded("Figures", list(figures = list()),
                      function() paperReviewFigureChecks(extraction, drug, reference))
+  # A front-end (recirculatory) model, when the paper has one
+  # (R/paper-review-front-end.R): its own section, and its figures beside the
+  # mammillary model's.
+  frontEnd <- guarded(PAPER_REVIEW_FRONT_END_SECTION, list(findings = list(), figures = list(), spec = NULL),
+                      function() paperReviewFrontEndChecks(extraction, reference))
   findingsOf <- function(section, f) guarded(section, list(), function() list(findings = f()))$findings
   modelFindings <- lapply(drug$problems, function(p)
     paperReviewFinding("Model", "concern", p))
@@ -1903,12 +1914,13 @@ paperReviewRunOne <- function(extraction, paperLevel = TRUE)
                 modelFindings, consistency$findings,
                 findingsOf("Covariates", function() paperReviewCovariateChecks(extraction)),
                 if (paperLevel) findingsOf("Assumptions and the library's rules", function() paperReviewAssumptionChecks(extraction)),
-                figures$findings,
+                figures$findings, frontEnd$findings,
                 if (paperLevel) paperReviewClaudeNotes(extraction))
   list(extraction = extraction, reference = reference, identifiability = ident,
        drug = drug, absorptions = absorptions, consistency = consistency$table,
        pkTable = consistency$pkTable,
-       figures = figures$figures, findings = findings)
+       figures = c(figures$figures, frontEnd$figures), frontEnd = frontEnd$spec,
+       findings = findings)
 }
 
 #' One finding per extravascular regimen: where its absorption came from
