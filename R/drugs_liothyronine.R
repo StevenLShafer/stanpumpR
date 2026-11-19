@@ -63,14 +63,29 @@
 # the drug is dosed in.  A first dose to a profoundly hypothyroid patient
 # (myxedema, or after a withdrawal) peaks far lower than this curve.
 #
-# INTRAVENOUS DOSES ARE NOT OFFERED
-# =================================
-# Liothyronine sodium injection exists (for myxedema coma), but no source
-# gives its disposition: the injection's label says "no pharmacokinetic
-# studies have been performed with intravenous liothyronine (T3) in myxedema
-# coma or precoma patients", and this model is apparent oral and fitted in
-# the euthyroid-on-T3 state, the opposite of myxedema [decision for Shafer:
-# whether to offer it with the label's 95% absorption].
+# INTRAVENOUS DOSES: DECIDED, WAITING ON A PAPER
+# ==============================================
+# Liothyronine sodium injection (Triostat and generics) is for myxedema coma,
+# and its label says "no pharmacokinetic studies have been performed with
+# intravenous liothyronine (T3) in myxedema coma or precoma patients".  This
+# model is apparent oral and fitted in the euthyroid-on-T3 state, the
+# opposite of myxedema.  Steven L. Shafer decided (2026-11-19) to offer the
+# injection, with its disposition taken from HYPOTHYROID patients, the only
+# ones who receive it, while noting that they become euthyroid on treatment
+# and no study has followed the kinetics through that change.
+#
+# Van Tassell's own hypothyroid first-dose fit (Table 3: one compartment
+# behind a transit compartment, V 149 dL, ke 0.24 /h, n = 5) is NOT that
+# source: it was sampled for 12 hours, the authors say its 3.62 h half-life
+# "is similar to the rapid distribution phase", and it implies a clearance of
+# 3.58 L/h (86 L/day), 3.4 times the steady-state 25 L/day where hypothyroid
+# clearance of T3 is lower than normal.  Over days of injections it would
+# miss the accumulation.  The source to use is Nicoloff 1972 (J Clin Invest
+# 51:473-483, PMID 4110897, PMC302152), intravenous 125I-T3 in 9 primary
+# hypothyroid patients: kT3 0.50 /day (half-life 1.38 days) against 0.68 in
+# euthyroid subjects (abstract), with each group's distribution space and
+# clearance in its tables, which have not yet been read.  The paper is not
+# in the archive (papers/pending-work.csv).
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================

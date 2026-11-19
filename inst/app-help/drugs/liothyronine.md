@@ -30,7 +30,7 @@ So outside its own source the model's swings are 1.6 to 2 times those measured. 
 
 Doses are entered as labelled, in micrograms. Cytomel tablets "contain liothyronine sodium equivalent to liothyronine", so a 25 mcg tablet is 25 mcg of T3. The units offered are a single oral dose and doses once, twice or three times a day.
 
-Intravenous liothyronine (for myxedema coma) is not offered. Its label says no pharmacokinetic study of it has been done in myxedema, and this model was fitted in the opposite state, patients replete with T3.
+Intravenous liothyronine (for myxedema coma) is not offered yet. It will be, with its disposition taken from patients who are hypothyroid, the only patients who receive it (Steven L. Shafer, 2026-11-19). Its label says no pharmacokinetic study of it has been done in myxedema, and this model was fitted in the opposite state, patients replete with T3. The source will be Nicoloff 1972, which gave labelled T3 intravenously to patients with primary hypothyroidism; its tables have not yet been read.
 
 ### Pregnancy
 
