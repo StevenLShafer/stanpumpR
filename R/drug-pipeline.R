@@ -273,13 +273,28 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
   drugs
 }
 
-# Only the drugs given a dose above 0 are drawn (Steven L. Shafer,
-# 2026-11-16).  A drug whose every row is 0, such as each drug the startup
-# menu puts in the table until a dose is typed, has a curve of zeros, and
-# drawing them was nearly all of the time a table of every startup drug
-# took: 51 s, 35 s of it ggplot drawing 231 empty panels (ChatGPT's
-# production audit, 2026-11-15).  Such a drug stays in the dose table; its
-# panel appears with its first dose above 0.
+# Every drug in the dose table is drawn, whatever its doses (Steven L.
+# Shafer, 2026-11-19: "design choices should not appear to be bugs").  From
+# 2026-11-16 only the drugs given a dose above 0 were drawn, after ChatGPT's
+# production audit timed a table of every startup drug at 51 s, 35 s of it
+# ggplot drawing 231 empty panels; but a handful of drugs chosen at the
+# startup menu then opened on an empty plot, which on a phone looked like a
+# failure.  A drug the user does not want is removed from the dose table
+# (Edit doses, Delete All Doses).  positiveDoseDrugs() still says which drugs
+# have a dose, for the options that follow the doses given (the Interaction
+# plot, relevantFields()).
+
+#' The drugs of a dose table, every one drawn
+#'
+#' @param DT a dose table (Drug), or NULL
+#' @returns the names of the drugs it holds, in order, without blanks
+#' @keywords internal
+tableDrugs <- function(DT)
+{
+  if (is.null(DT) || nrow(DT) == 0) return(character(0))
+  drug <- as.character(DT$Drug)
+  unique(drug[!is.na(drug) & nzchar(trimws(drug))])
+}
 
 #' The drugs of a dose table given a dose above 0
 #'
@@ -295,7 +310,7 @@ positiveDoseDrugs <- function(DT)
 
 #' The drug entries that are drawn
 #'
-#' Those of the drugs given a dose above 0 and of the metabolites they form,
+#' Those of the drugs given (tableDrugs()) and of the metabolites they form,
 #' each with its companions (another model drawn beside it, `$companionOf`).
 #' A metabolite formed by a drug that is drawn is drawn whether or not its
 #' own rows are 0: its curve is what the parent forms, and its own rows
@@ -303,7 +318,7 @@ positiveDoseDrugs <- function(DT)
 #' is entered) are simulated with it as before.
 #'
 #' @param drugs the drug list from recalculatePK()
-#' @param given the drugs given a dose above 0 (positiveDoseDrugs())
+#' @param given the drugs drawn (tableDrugs())
 #' @returns the drug list without the entries that are not drawn
 #' @keywords internal
 drawnDrugEntries <- function(drugs, given)

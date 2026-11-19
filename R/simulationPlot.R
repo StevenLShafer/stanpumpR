@@ -79,8 +79,8 @@ simulationPlot <- function(
 
   outputComments("Entering simulationPlot", level = DEBUG_LEVEL_VERBOSE)
 
-  # Nothing to draw: no drug was given a dose above 0 (drawnDrugEntries(),
-  # R/drug-pipeline.R), the state of the opening table until a dose is typed
+  # Nothing to draw: the dose table holds no drug (tableDrugs(),
+  # R/drug-pipeline.R), an empty opening table
   if (length(drugs) == 0) return(NULL)
 
   # Step D1: create plotTable from `drugs`

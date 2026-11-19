@@ -146,17 +146,17 @@ app_server <- function(input, output, session) {
     plotFailure(main_plot())
   })
 
-  # What the plot area says while it has nothing to draw: no drug has a dose
-  # above 0 (positiveDoseDrugs(), R/drug-pipeline.R) and no inhaled agent or
-  # carrier gas is set above 0 (reportableGases()), so a table of drugs at 0,
-  # as the startup menu writes it, is not a blank plot area.  NULL while the
+  # What the plot area says while it has nothing to draw: the dose table holds
+  # no drug (tableDrugs(), R/drug-pipeline.R; every drug in it is drawn, at 0
+  # too, since 2026-11-19) and no inhaled agent or carrier gas set above 0
+  # (reportableGases()), so an empty table is not a blank plot area.  NULL while the
   # table cannot be read yet, or not at all, which main_plot() then says.
   nothingToDraw <- reactive({
     DT <- tryCatch(doseTableClean(), error = function(e) e)
     if (inherits(DT, "error")) return(NULL)
     if (!is.null(DT)) {
       gas <- isGasDrug(DT$Drug)
-      if (length(positiveDoseDrugs(DT[!gas, , drop = FALSE])) > 0) return(NULL)
+      if (length(tableDrugs(DT[!gas, , drop = FALSE])) > 0) return(NULL)
       if (length(reportableGases(DT[gas, , drop = FALSE])) > 0) return(NULL)
     }
     NOTHING_TO_DRAW_MESSAGE
@@ -1285,8 +1285,8 @@ app_server <- function(input, output, session) {
       if (!is.null(patient)) {
         # Only the drugs whose group is turned on; a drug in a switched-off
         # group is not drawn, so its model is not in question.
-        # and only the drugs drawn, those given a dose above 0
-        drugsOn <- positiveDoseDrugs(DT)
+        # and only the drugs drawn, every drug in the table
+        drugsOn <- tableDrugs(DT)
         drugsOn <- drugsOn[companionModelGroup(drugsOn) %in% groups]
         cyp2c9 <- genotypes()$cyp2c9
         vkorc1 <- genotypes()$vkorc1
@@ -1713,14 +1713,8 @@ app_server <- function(input, output, session) {
       req(testCovariates(), doseTableClean(), is.null(timeUnitViolation()), is.null(scheduleProblem()))
       DT <- doseTableIV()
       observations <- bayes$observations()
-      # The PK of the drugs drawn, those given a dose above 0, and of the
-      # drugs measured, whose levels are said to have no dose to explain
-      # them rather than to be missing from the table.  A drug whose every
-      # row is 0 is not drawn (drawnDrugEntries(), R/drug-pipeline.R), and
-      # building the PK of the 223 intravenous drugs of the startup menu
-      # took 2 s.
-      if (!is.null(DT))
-        DT <- DT[DT$Drug %in% c(positiveDoseDrugs(DT), observations$Drug), , drop = FALSE]
+      # The PK of every drug in the table, each drawn whatever its doses
+      # (tableDrugs(), R/drug-pipeline.R; Shafer, 2026-11-19)
       priors <- drugPK(DT) |> profileCode("recalculatePK() in bayesUpdate()")
       if (nrow(observations) == 0) return(list(drugs = priors, fits = list(), problems = character(0)))
       # The fit is made at normal physiology and the sliders are applied to
@@ -1772,10 +1766,10 @@ app_server <- function(input, output, session) {
       req(testCovariates(), doseTableClean(), is.null(timeUnitViolation()), is.null(scheduleProblem()))
 
       # The PK, updated from any measured concentrations (bayesUpdate()), of
-      # the drugs drawn: those given a dose above 0 and the metabolites they
-      # form, with their rows (R/drug-pipeline.R)
+      # the drugs drawn: every drug in the table, at 0 too, and the
+      # metabolites they form, with their rows (R/drug-pipeline.R)
       DT <- doseTableIV()
-      newDrugs <- drawnDrugEntries(bayesUpdate()$drugs, positiveDoseDrugs(DT))
+      newDrugs <- drawnDrugEntries(bayesUpdate()$drugs, tableDrugs(DT))
       if (!is.null(DT)) DT <- DT[DT$Drug %in% names(newDrugs), , drop = FALSE]
 
       newDrugs <- processdoseTable(
@@ -2251,10 +2245,9 @@ app_server <- function(input, output, session) {
   # message says cannot be done ("send", "export").
   exportProblem <- function(verb = "export") {
     error <- simulationBlocked()
-    # Nor with no dose above 0: only the drugs given one are drawn
-    # (positiveDoseDrugs(), R/drug-pipeline.R), and an empty table is the same
+    # Nor with no drug in the table (tableDrugs(), R/drug-pipeline.R)
     if (is.null(error) && !is.null(nothingToDraw())) {
-      error <- paste0("There is no plot to ", verb, ": enter a dose or target above 0 first.")
+      error <- paste0("There is no plot to ", verb, ": add a drug to the dose table first.")
     }
     if (is.null(error)) {
       # main_plot() is NULL, not an error, when it is still waiting
