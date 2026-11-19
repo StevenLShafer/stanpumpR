@@ -121,14 +121,74 @@ test_that("external checks, not fitted: the model's swings run 1.6-2x the measur
   expect_equal(round((max(ss) - min(ss)) / (292.8 - 96.1), 2), 1.65)
 })
 
-test_that("oral only, no band, no effect site", {
+# Nicoloff 1972, Table I: six patients with primary hypothyroidism after an
+# intravenous pulse of 125I-T3, one compartment.  Each patient's clearance is
+# the distribution space times kT3, and the table's means are V 37.6 L and CL
+# 18.5 L/day.  Their means are 70.6 kg, 161 cm and 52.2 years; the sexes are
+# unprinted, so an even mix is assumed.
+nicoloff <- data.frame(k = c(43, 41, 40, 66, 63, 46) / 100,
+                       ds = c(38.3, 38.0, 41.7, 33.3, 35.3, 39.2),
+                       cl = c(16.5, 15.6, 16.7, 22.0, 22.2, 18.0))
+ivCohort <- cohortFactorsIndependent(list(weight = 70.6, height = 161, age = 52.2,
+                                          men = 3, women = 3))
+
+test_that("Nicoloff 1972 Table I: the rows close and give its means", {
+  expect_equal(round(nicoloff$ds * nicoloff$k, 1), nicoloff$cl, tolerance = 0.06)
+  expect_equal(round(mean(nicoloff$ds), 1), 37.6)
+  expect_equal(round(mean(nicoloff$cl), 1), 18.5)
+  expect_equal(round(log(2) / (18.5 / 37.6), 2), 1.41)                 # days
+})
+
+test_that("intravenous doses go to Nicoloff's one compartment, oral doses to Van Tassell's", {
+  x <- liothyronine(70, 170, 35, "male", adjustToFFM = FALSE)
+  expect_identical(x$routes, ROUTE_PO)
+  expect_length(x$parallelSystems, 1)
+  iv <- x$parallelSystems[[1]]
+  expect_identical(iv$routes, ROUTE_IV)
+  set <- iv$PK$default
+  expect_equal(set$v1, 37.6)
+  expect_equal(set$cl1 * 1440, 18.5)
+  expect_equal(c(set$cl2, set$cl3), c(0, 0))
+  # switch on: anchored at Nicoloff's patients, 0.867752 and 0.899077
+  expect_equal(round(ivCohort$volume, 6), 0.867752)
+  expect_equal(round(ivCohort$clearance, 6), 0.899077)
+  ref <- liothyronine(70, 170, 35, "male")$parallelSystems[[1]]$PK$default
+  expect_equal(ref$v1, 37.6 / ivCohort$volume, tolerance = 1e-9)
+  expect_equal(ref$cl1 * 1440, 18.5 / ivCohort$clearance, tolerance = 1e-9)
+  # and a patient like theirs receives the published values
+  mix <- function(f) exp((3 * log(f(70.6, 161, 52.2, "male")) + 3 * log(f(70.6, 161, 52.2, "female"))) / 6)
+  ivOf <- function(...) liothyronine(...)$parallelSystems[[1]]$PK$default
+  expect_equal(mix(function(...) ivOf(...)$v1), 37.6, tolerance = 1e-12)
+  expect_equal(mix(function(...) ivOf(...)$cl1) * 1440, 18.5, tolerance = 1e-12)
+})
+
+test_that("a 50 mcg injection: one exponential with a half-life of 1.41 days", {
+  dt <- data.frame(Drug = "liothyronine", Time = 0, Dose = 50, Units = "mcg")
+  w <- simulateDrugsWithCovariates(dt, noEvents, 70, 170, 35, "male", 7 * 1440, FALSE,
+                                   adjustToFFM = FALSE)$liothyronine$wide
+  t <- c(1, 2, 4, 7) * 1440
+  expected <- 50 / 37.6 * exp(-(18.5 / 37.6) * t / 1440)                # ng/mL
+  expect_equal(approx(w$Time, w$Plasma, t)$y, expected, tolerance = 1e-4)
+  # the oral system receives nothing: the same dose by mouth is a different curve
+  po <- simulateDrugsWithCovariates(transform(dt, Units = "mcg PO"), noEvents, 70, 170,
+                                    35, "male", 7 * 1440, FALSE,
+                                    adjustToFFM = FALSE)$liothyronine$wide
+  expect_gt(abs(approx(po$Time, po$Plasma, 1440)$y - expected[1]), 0.05)
+})
+
+test_that("clearance: Nicoloff's euthyroid 26.1 L/day against Van Tassell's 25.0", {
+  expect_lt(abs(vtCl * 24 / 26.1 - 1), 0.05)
+})
+
+test_that("no band, no effect site; oral schedules and an intravenous bolus", {
   dd <- getDrugDefaultsGlobal()
   row <- dd[dd$Drug == "liothyronine", ]
   expect_equal(c(row$Lower, row$Typical, row$Upper, row$MEAC, row$endCe), c(0, 0, 0, 0, 0))
   expect_identical(row$Concentration.Units, "ng")
   expect_identical(row$Category, "Other")
   units <- unlist(row$Units)
-  expect_true(all(grepl("PO", units)))
+  expect_setequal(units, c("mcg PO tid", "mcg PO bid", "mcg PO qd", "mcg PO", "mcg"))
+  expect_identical(row$Default.Units, "mcg PO tid")
   expect_identical(therapeuticRange("liothyronine")$band_status, "none_established")
   expect_equal(liothyronine(70, 170, 40, "male")$tPeak, 0)
 })

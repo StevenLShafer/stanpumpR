@@ -1,7 +1,8 @@
 # -----------------------------------------------------------------------------
-# Liothyronine (Cytomel and generics; liothyronine sodium tablets): two
-# compartments, oral, from patients on established T3 therapy with no thyroid
-# hormone of their own
+# Liothyronine (Cytomel and generics; liothyronine sodium tablets and
+# injection): oral doses on two compartments from patients on established T3
+# therapy with no thyroid hormone of their own; intravenous doses on one
+# compartment from patients with primary hypothyroidism
 # -----------------------------------------------------------------------------
 # Units: time in minutes, volumes in litres, clearances in L/min; amounts in
 # mcg, so the plotted concentration is ng/mL (= mcg/L) of total serum
@@ -63,33 +64,73 @@
 # the drug is dosed in.  A first dose to a profoundly hypothyroid patient
 # (myxedema, or after a withdrawal) peaks far lower than this curve.
 #
-# INTRAVENOUS DOSES: DECIDED, WAITING ON A PAPER
-# ==============================================
+# INTRAVENOUS DOSES: NICOLOFF 1972, PRIMARY HYPOTHYROIDISM
+# =======================================================
 # Liothyronine sodium injection (Triostat and generics) is for myxedema coma,
 # and its label says "no pharmacokinetic studies have been performed with
-# intravenous liothyronine (T3) in myxedema coma or precoma patients".  This
-# model is apparent oral and fitted in the euthyroid-on-T3 state, the
-# opposite of myxedema.  Steven L. Shafer decided (2026-11-19) to offer the
-# injection, with its disposition taken from HYPOTHYROID patients, the only
-# ones who receive it, while noting that they become euthyroid on treatment
-# and no study has followed the kinetics through that change.
+# intravenous liothyronine (T3) in myxedema coma or precoma patients".
+# Steven L. Shafer decided (2026-11-19) to offer it, with its disposition
+# taken from HYPOTHYROID patients, the only ones who receive it, while noting
+# that they become euthyroid on treatment and that no study has followed the
+# kinetics through that change: the parameters below describe the start of
+# treatment, not the patient a week later.
+#
+# Source: Nicoloff JT, Low JC, Dussault JH, Fisher DA.  Simultaneous
+# measurement of thyroxine and triiodothyronine peripheral turnover kinetics
+# in man.  J Clin Invest 1972;51:473-483, doi 10.1172/JCI106835 (PMID
+# 4110897), read in full (supplied by Shafer, 2026-11-19).  A pulse of
+# 125I-T3 intravenously; serum drawn every 1-2 h for 24-36 h from 16-20 h
+# after the injection, T3 separated from iodoproteins on an anion column;
+# one exponential fitted after equilibration.  Table I, the six patients with
+# primary hypothyroidism (spontaneous thyroid failure; ages 43-63, means 52.2
+# years, 161 cm, 70.6 kg):
+#
+#     kT3 %/day       43   41   40   66   63   46    mean 50  (49.8 in text)
+#     T3 DS, L      38.3 38.0 41.7 33.3 35.3 39.2    mean 37.6
+#     T3 CL, L/day  16.5 15.6 16.7 22.0 22.2 18.0    mean 18.5
+#
+# (each CL = DS x kT3; the means are the table's).  So one compartment, V
+# 37.6 L and CL 18.5 L/day: a half-life of 1.41 days.  Their euthyroid
+# subjects cleared 26.1 L/day, a third more; Van Tassell's oral model gives
+# 25.0 L/day.  The structure is one compartment for the reason levothyroxine's
+# is (Shafer, 2026-11-18: "The only thing that matters is clearance with
+# steady state dosing"): sampling began 16-20 h after the injection, and the
+# 33-h equilibration in these patients (22 h in the euthyroid) was not
+# characterised, so the first day after an injection is not described and
+# its early concentrations are higher than this curve.  The authors' own
+# check: constant infusions in two of these patients gave 13.0 and 16.3
+# L/day, against their single-compartment 15.6 and 16.7, and they estimate a
+# single compartment overstates the space by about 20%.  The three patients
+# with hypothyroidism after treated Graves' disease are not used: the paper
+# shows their T3 turnover stayed near normal (kT3 57%/day, CL 24 L/day).
+# These are absolute parameters (intravenous), with no bioavailability.
 #
 # Van Tassell's own hypothyroid first-dose fit (Table 3: one compartment
-# behind a transit compartment, V 149 dL, ke 0.24 /h, n = 5) is NOT that
-# source: it was sampled for 12 hours, the authors say its 3.62 h half-life
-# "is similar to the rapid distribution phase", and it implies a clearance of
-# 3.58 L/h (86 L/day), 3.4 times the steady-state 25 L/day where hypothyroid
-# clearance of T3 is lower than normal.  Over days of injections it would
-# miss the accumulation.  The source to use is Nicoloff 1972 (J Clin Invest
-# 51:473-483, PMID 4110897, PMC302152), intravenous 125I-T3 in 9 primary
-# hypothyroid patients: kT3 0.50 /day (half-life 1.38 days) against 0.68 in
-# euthyroid subjects (abstract), with each group's distribution space and
-# clearance in its tables, which have not yet been read.  The paper is not
-# in the archive (papers/pending-work.csv).
+# behind a transit compartment, V 149 dL, ke 0.24 /h, n = 5) is not used: it
+# was sampled for 12 hours, the authors say its 3.62 h half-life "is similar
+# to the rapid distribution phase", and it implies a clearance of 86 L/day.
+#
+# The two fits are run as parallel systems (parallelSystems, getDrugPK(),
+# as meloxicam's oral and intravenous fits are): the oral fit takes only
+# oral doses and the intravenous fit only intravenous ones, and the plotted
+# T3 is their sum.  The intravenous system carries the oral absorption
+# parameters only so that both run on one time line; it receives no oral
+# dose.  Units: mcg of liothyronine as a bolus, the injection being labelled
+# "liothyronine sodium equivalent to 10 mcg of liothyronine" per mL (ANDA
+# 076923).
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# The source fitted no covariate (its sample of 14 was too small to show
+# Intravenous: Nicoloff's table prints each patient's age, height and weight
+# but not their sex, and fitted no covariate, so the intravenous parameters
+# are anchored at the six patients' means, 70.6 kg, 161 cm and 52.2 years,
+# with an even sex mix assumed, as the FDA review of cenobamate was
+# [decision for Shafer: the sexes are unprinted, and primary hypothyroidism
+# is commoner in women].  cohortSizeFactors() gives 0.867752 on volumes and
+# 0.899077 on clearances (a man of their means 0.956288, a woman 0.787413), so
+# the reference man receives V 43.3 L and 20.6 L/day.
+#
+# Oral: the source fitted no covariate (its sample of 14 was too small to show
 # even an effect of sex), so its parameters are its cohort's typical
 # patient's, and the model is anchored there (Steven L. Shafer's standing
 # rule of 2026-11-18, docs/weight-adjustment.md, *Anchoring at the source's
@@ -187,12 +228,21 @@ LIOTHYRONINE_TLAG <- 0.62        # h
 LIOTHYRONINE_COHORT <- list(weight = 72.3, bmi = 25.7, age = 48.5,
                             men = 7, women = 7)
 
-#' Liothyronine (Van Tassell 2019)
+# Nicoloff 1972, Table I: the six patients with primary hypothyroidism, after
+# an intravenous pulse of 125I-T3 (means; one compartment)
+LIOTHYRONINE_IV_V  <- 37.6       # L, T3 distribution space
+LIOTHYRONINE_IV_CL <- 18.5       # L/day, T3 clearance
+# their means; sex not printed, an even mix assumed [decision for Shafer]
+LIOTHYRONINE_IV_COHORT <- list(weight = 70.6, height = 161, age = 52.2,
+                               men = 3, women = 3)
+
+#' Liothyronine (Van Tassell 2019 oral, Nicoloff 1972 intravenous)
 #'
-#' Two compartments with a lagged first-order absorption, fitted at steady
-#' state in thyroidectomised patients on liothyronine alone; total serum T3
-#' above the patient's baseline.  See the header of
-#' \code{R/drugs_liothyronine.R}.
+#' Oral doses: two compartments with a lagged first-order absorption, fitted
+#' at steady state in thyroidectomised patients on liothyronine alone.
+#' Intravenous doses: one compartment from patients with primary
+#' hypothyroidism.  Total serum T3 above the patient's baseline.  See the
+#' header of \code{R/drugs_liothyronine.R}.
 #'
 #' @inheritParams cefazolin
 #' @returns a list in the shape \code{getDrugPK()} expects
@@ -219,11 +269,30 @@ liothyronine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     bioavailability_PO = 1,               # apparent: complete absorption assumed
     tlag_PO = LIOTHYRONINE_TLAG * 60
   )
+  ivCohort <- with(LIOTHYRONINE_IV_COHORT,
+                   cohortSizeFactors(weight, age, men, women, height = height))
+  ivSize <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                          legacyVolume = 1, legacyClearance = 1,
+                          cohort = ivCohort)
+  ivSet <- c(list(
+    v1  = LIOTHYRONINE_IV_V * ivSize$volume,
+    v2  = 1,
+    v3  = 1,
+    cl1 = LIOTHYRONINE_IV_CL / 1440 * ivSize$clearance,
+    cl2 = 0,
+    cl3 = 0
+  ), default[c("ka_PO", "bioavailability_PO", "tlag_PO")])
+
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
   list(
     PK = PK,
+    routes = ROUTE_PO,
+    parallelSystems = list(
+      list(name = "Intravenous (Nicoloff 1972)", routes = ROUTE_IV,
+           PK = list(default = ivSet))
+    ),
     tPeak = 0,
     MEAC = 0,
     typical = 0,
@@ -235,6 +304,11 @@ liothyronine <- function(weight, height, age, sex, adjustToFFM = TRUE)
       "patients on liothyronine alone): two compartments, V 8.67 L, ke 0.12 /h, ",
       "k12 0.13 /h, k21 0.08 /h, ka 1.94 /h, lag 0.62 h, apparent (complete ",
       "absorption assumed); doses in mcg of liothyronine, plotted as total serum T3 ",
-      "above the patient's own baseline. https://doi.org/10.1089/thy.2019.0101")
+      "above the patient's own baseline. https://doi.org/10.1089/thy.2019.0101 ",
+      "Intravenous: Nicoloff JT, Low JC, Dussault JH, Fisher DA, J Clin Invest ",
+      "1972;51:473-483, Table I (intravenous 125I-T3 in six patients with primary ",
+      "hypothyroidism: one compartment, V 37.6 L, CL 18.5 L/day). ",
+      "https://doi.org/10.1172/JCI106835 Each route uses its own fit; their ",
+      "concentrations are added.")
   )
 }
