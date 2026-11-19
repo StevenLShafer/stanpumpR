@@ -186,11 +186,16 @@ values**, and the reference man, and everyone else, are scaled from there.
   subjects the rate does not move (diazepam IM), and where the calibration
   study prints no typical patient it stays, said in the header (diazepam
   oral, Hogan 2020's weight bands).
-- **Where it does not apply**: a model with its own size covariate (it already
-  says whom its values belong to); a model published per kilogram, whose
+- **Where it does not apply**: a parameter with its own size covariate (it
+  already says whom its value belongs to); a model published per kilogram, whose
   values were normalised by the source; and a cohort whose demographics the
   source does not print, which keeps the reference anchor and says so in its
-  header.
+  header. A covariate on one parameter does not exempt the others (Shafer,
+  2026-11-19, after Carbon's second repository audit, A2-F4):
+  doxorubicinJoerger's clearance carries BSA, and its V1, Q and V2, scaled
+  from the reference man, gave Joerger's own typical woman a V1 18% low. The
+  library's other models with a covariate on some parameters only have not
+  yet been reviewed against this.
 - **Applied** (2026-11-18, each source's demographics read on the PDF; the
   model's header gives the table, the values and the divisors, and its test
   recomputes them from Al-Sallami's equation written out again,
@@ -207,7 +212,10 @@ values**, and the reference man, and everyone else, are scaled from there.
   pioglitazone, pramlintideIV, psilocybin, ropivacaine, sufentanil (and so
   carfentanil), vecuronium, venlafaxine and desvenlafaxine, vildagliptin,
   ceftriaxone (its weight from the printed BMI and the typical height),
-  vinorelbine, zolpidem and zonisamide.
+  vinorelbine, zolpidem and zonisamide; and (2026-11-19) chlorthalidone (Tsai
+  2016's Table S1, its sex-term CL/F and V1/F at each sex's subject),
+  doxorubicinJoerger (V1, Q and V2) and doxorubicinolJoerger (V/fm), at
+  Joerger 2007's 59 women.
 - **Not anchored, and why** (2026-11-18). *The source's paper is not in the
   archive* (papers/pending-work.csv): duloxetine, nortriptyline, clozapine,
   scopolamine, everolimus, sirolimus, tacrolimus, amitriptyline,
