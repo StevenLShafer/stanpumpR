@@ -1201,7 +1201,19 @@ test_that("CodeRabbit's later looks at #776: the follow-up items", {
              statistic = "typical_value", conditions = "after a 60-min infusion", location = "Text")
   x <- ex; x$derived_quantities <- c(ex$derived_quantities, list(dq))
   r <- paperReviewRun(x)$consistency
-  expect_false(identical(r$status[r$quantity == "decrement_50"], "not comparable"))
+  row <- r[r$quantity == "decrement_50", ]
+  expect_equal(nrow(row), 1)
+  expect_false(identical(row$status, "not comparable"))
+  expect_match(row$note, "After a 60 min infusion")
+  infused <- paperReviewRun(modifyList(x, list(derived_quantities = c(ex$derived_quantities,
+    list(modifyList(dq, list(conditions = "", infusion_minutes = 60)))))))$consistency
+  expect_equal(row$model, infused$model[infused$quantity == "decrement_50"])
+  # Another quantity's infusion condition is not carried, so it stays not comparable.
+  tp <- list(quantity = "tPeak", value = 3, value_text = "3", units = "min",
+             statistic = "typical_value", conditions = "after a 60-min infusion", location = "Text")
+  y <- ex; y$derived_quantities <- c(ex$derived_quantities, list(tp))
+  r <- paperReviewRun(y)$consistency
+  expect_equal(r$status[r$quantity == "tPeak" & r$location == "Text"], "not comparable")
   dq$conditions <- "after a 60-min infusion during cardiopulmonary bypass"
   x <- ex; x$derived_quantities <- c(ex$derived_quantities, list(dq))
   r <- paperReviewRun(x)$consistency

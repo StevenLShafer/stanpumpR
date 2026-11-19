@@ -808,9 +808,12 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
     # An infusion's length written in the conditions is carried by the
     # calculation (paperReviewInfusionMinutes()), so it is no condition the
     # model lacks (CodeRabbit on #776).
-    conditions <- trimws(gsub(
+    # (Only for a decrement time: no other quantity's calculation reads it.)
+    conditions <- paste(dq$conditions %or% "", collapse = " ")
+    if (grepl("^decrement_", q)) conditions <- gsub(
       "(after|following)?\\s*(an?\\s*)?[0-9]+(\\.[0-9]+)?[ -]*(min|minute|minutes|h|hr|hrs|hour|hours)[ -]+infusion",
-      "", paste(dq$conditions %or% "", collapse = " "), ignore.case = TRUE))
+      "", conditions, ignore.case = TRUE)
+    conditions <- trimws(conditions)
     if (!grepl("[[:alnum:]]", conditions)) conditions <- ""
     cannotCompare <- c(
       if (length(unapplied)) paste0("The model cannot be evaluated for this patient: ",
