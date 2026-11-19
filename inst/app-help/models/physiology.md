@@ -439,6 +439,10 @@ falls too. Lower the Cardiac output slider as well to reproduce that: at 0.4
 of normal, propofol falls to 44%. Only drugs with a physiology row respond;
 volumes, intercompartmental clearances and ke0 do not change.
 
+The sliders move in small steps on a log scale, so the multiple a slider
+shows is rounded: x0.50 applies 0.501, x2.00 applies 1.995. The difference is
+far below anything the curves can show, and it is not an error.
+
 ## Physiology events: physiology that changes during a case
 
 The sliders describe one physiology for the whole plot. To let it change

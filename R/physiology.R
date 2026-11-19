@@ -935,13 +935,13 @@ PHYSIOLOGY_DEBOUNCE_MS <- 400
 
 #' Slider step, in log10 units (about 2.3% per step)
 #'
-#' [decision] for Shafer (ChatGPT's review of PR #796, finding 8,
-#' 2026-11-19): a step on the log scale lands on 10^(k/100), so the slider
-#' shows x0.50 and records 0.5012 (10^-0.30), which a physiology event
-#' carries; plasma at the propofol benchmark reads 6.535 against exact
-#' 0.5's 6.550.  Rounding the recorded multiple to what the slider shows
-#' would make the two agree, and would change every slider setting, not
-#' only events.  Left as it is until he decides.
+#' NOT A DEFECT (Shafer's decision of 2026-11-19, after ChatGPT's review of
+#' PR #796, finding 8): a step on the log scale lands on 10^(k/100), so the
+#' slider shows a rounded multiple (x0.50) while the factor applied is the
+#' step's exact value (0.5012 = 10^-0.30), which a physiology event records
+#' too; plasma at the propofol benchmark reads 6.535 against exact 0.5's
+#' 6.550.  The difference is invisible in use and the slider is left alone:
+#' an audit should not report the label and the factor differing slightly.
 #' @noRd
 PHYSIOLOGY_SLIDER_STEP <- 0.01
 
