@@ -40,7 +40,9 @@
 # clearances x 0.877 of the published values.  ka_RA = 0.004749/min (an
 # absorption half-time of 146 min; Steven L. Shafer, 2026-11-18, re-anchored
 # and recalibrated together; it was 0.00612/min, fitted on the published
-# disposition, before the anchoring).  The predicted time of peak, about 133
+# disposition, before the anchoring, and remains so with the switch off,
+# which gives the published disposition; Carbon's second repository audit,
+# 2026-11-19, A2-F2).  The predicted time of peak, about 133
 # min, is later than the observed median of 52 min, while Vainionpaa's
 # terminal half-life after the block, 7.1 h against 1.7 h intravenously,
 # says that absorption is slow and rate-limiting late on.  A single
@@ -131,7 +133,11 @@ ropivacaine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     cl1 = 0.300 * size$clearance,
     cl2 = 0.9666666667 * size$clearance,
     cl3 = 0.400 * size$clearance,
-    ka_RA = 0.004749,          # 1/min, provisional, peak-matched (header)
+    # The rate was fitted with the disposition each switch position gives the
+    # calibration patient: anchored with the switch on, the published values
+    # with it off (Carbon's second repository audit, 2026-11-19, A2-F2: the
+    # anchored rate with the switch off put the calibration peak 14% low).
+    ka_RA = if (isTRUE(adjustToFFM)) 0.004749 else 0.00612,  # 1/min, provisional, peak-matched (header)
     bioavailability_RA = 1,
     tlag_RA = 0
   )

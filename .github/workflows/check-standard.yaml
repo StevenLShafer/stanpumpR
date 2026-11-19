@@ -80,13 +80,17 @@ jobs:
       # files .Rbuildignore keeps out of the built package (AGENTS.md, docs/,
       # .github/), so under R CMD check they skip ("not a source checkout")
       # and had never run here; test-agent-docs.R failed on master unseen
-      # (Carbon's repository audit, 2026-11-18).  Run them from the checkout.
+      # (Carbon's repository audit, 2026-11-18).  Run them from the checkout,
+      # with the first audit's regression tests, whose check that the R code
+      # is ASCII reads R/ and skipped under R CMD check too (Carbon's second
+      # repository audit, 2026-11-19, A2-F21).
       - name: Source-checkout tests
         if: matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release'
         shell: Rscript {0}
         run: |
           pkgload::load_all(".", quiet = TRUE)
-          for (f in c("test-agent-docs.R", "test-workflow-security.R"))
+          for (f in c("test-agent-docs.R", "test-workflow-security.R",
+                      "test-carbon-repository-audit.R"))
             testthat::test_file(file.path("tests", "testthat", f),
                                 reporter = "summary",
                                 stop_on_failure = TRUE)

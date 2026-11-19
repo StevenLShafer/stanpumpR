@@ -464,7 +464,14 @@ paperReviewServer <- function(input, output, session)
   # Stops the background process of the review now running, if any.  Its
   # promise then fails, and the status observer below tidies up as for any
   # failed review; an answer was not awaited, so nothing is shown.
+  # The review it stops is marked as unwanted first (running$cancelled, its
+  # generation), so that one still waiting on the shared key's count, or
+  # whose background process has not yet started, is not sent when it gets
+  # there: a Discard, or the page closed, in those seconds stopped nothing,
+  # and the manuscript was sent and the review counted after "Nothing about
+  # the paper remains" (Carbon's second repository audit, 2026-11-19, A2-F13).
   stopRunningReview <- function() {
+    running$cancelled <- running$generation
     stopFn <- running$stop
     running$stop <- NULL
     if (is.function(stopFn)) tryCatch(stopFn(), error = function(e) FALSE)
@@ -472,10 +479,22 @@ paperReviewServer <- function(input, output, session)
   }
   reviewTask <- shiny::ExtendedTask$new(function(pdf, supplement, key, inferenceGeo, shared, effort, admitted) {
     running$stop <- NULL
-    send <- function(...) paperReviewTrackUse(
-      paperReviewExtractAsync(pdf, supplement, key = key, inferenceGeo = inferenceGeo, effort = effort,
-                              onJob = function(stop) running$stop <- stop),
-      shared = shared)
+    generation <- running$generation
+    unwanted <- function() identical(running$cancelled, generation)
+    send <- function(...) {
+      if (unwanted()) {
+        # Its place in the shared key's count was taken for a review that is
+        # not sent
+        if (isTRUE(shared)) paperReviewSharedKeyRelease()
+        stop(paperReviewError("discarded", "The review was discarded before it was sent."))
+      }
+      paperReviewTrackUse(
+        paperReviewExtractAsync(pdf, supplement, key = key, inferenceGeo = inferenceGeo, effort = effort,
+                                onJob = function(stopFn) {
+                                  if (unwanted()) stopFn() else running$stop <- stopFn
+                                }),
+        shared = shared)
+    }
     if (!isTRUE(shared) || isTRUE(admitted)) return(send())
     promises::then(paperReviewSharedKeyAdmit(), send)
   })

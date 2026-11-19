@@ -1123,6 +1123,10 @@ paperReviewBolusAmount <- function(extraction, regimenId, concUnits, reference,
     perTime <- d$per_time %or% "none"
     if (perTime == "per_min") amountMg <- amountMg * duration
     if (perTime == "per_h") amountMg <- amountMg * duration / 60
+    # A rate per day, as paperReviewAbsorption() reads it: taken as a total,
+    # a 1-min infusion written per day was 1440 times its amount (Carbon's
+    # second repository audit, 2026-11-19, A2-F14)
+    if (perTime == "per_day") amountMg <- amountMg * duration / 1440
     note <- paste0("The ", prFmt(duration, 2), "-min infusion is treated as a bolus, as a ",
                    "sum-of-exponentials fit to it does.")
   } else if (!identical(d$route, "iv_bolus")) {

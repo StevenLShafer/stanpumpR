@@ -146,6 +146,10 @@ tolcapone <- function(weight, height, age, sex, adjustToFFM = TRUE,
                         legacyVolume = 1, legacyClearance = 1)
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   lbw <- lbmJamesCapped(w, height, sex)   # held at its peak past it, R/lbmJames.R
+  # A blank albumin is the median, as getDrugPK() passes it; an NA from a
+  # script's data frame gave Vp = NA (Carbon's second repository audit,
+  # 2026-11-19, A2-F26)
+  if (!is.null(albumin) && (length(albumin) != 1 || !is.finite(albumin))) albumin <- NULL
   alb <- if (is.null(albumin)) TOLCAPONE_ALBUMIN_REF else
     min(max(10 * albumin, TOLCAPONE_ALBUMIN_MIN), TOLCAPONE_ALBUMIN_MAX)  # g/L
 

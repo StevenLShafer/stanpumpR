@@ -278,6 +278,15 @@ drugLibraryUnitProblems <- function(edited, current, maxNew = DRUG_LIBRARY_MAX_N
         # (Carbon's second UI audit, 2026-11-15, F6)
         if (unit == TCI_UNIT_EFFECT && !pkHasEffectSite(drugs[[drug]]))
           stop("the model has no effect site", call. = FALSE)
+        # A target is checked here at age 35 with no events and no other
+        # drug, where a model that clinical events or the antiseizure
+        # interactions switch to another PK set passed, and its targets were
+        # then missed by up to 99% (Carbon's second repository audit,
+        # 2026-11-19, A2-F9)
+        if (unit %in% tciUnits && length(setdiff(drugs[[drug]]$pkEvents, PK_EVENT_DEFAULT)) > 0)
+          stop("its parameters change with clinical events", call. = FALSE)
+        if (unit %in% tciUnits && drug %in% asmInteractionVictims())
+          stop("its parameters change with the antiseizure interactions", call. = FALSE)
         plasma <- processdoseTable(DT, noEvents, drugs, MINS_PER_DAY, FALSE)[[drug]]$wide$Plasma
         # A drug plotted above a baseline (an INR, an ACT, an osmolality)
         # starts above zero whatever the unit does, so it must move from

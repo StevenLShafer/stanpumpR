@@ -39,7 +39,9 @@
 # published values.  ka_RA = 0.011958/min, an absorption half-time of 58 min
 # (Steven L. Shafer, 2026-11-18, re-anchored and recalibrated together; it
 # was 0.0187/min, fitted on the published disposition, before the
-# anchoring).  It is calibrated to that peak by construction; the predicted
+# anchoring, and remains so with the switch off, which gives the published
+# disposition; Carbon's second repository audit, 2026-11-19, A2-F2).  It is
+# calibrated to that peak by construction; the predicted
 # time of peak, 61 min, is a model output.  The same study's epinephrine
 # group peaked at 0.98 mcg/mL, and plain infiltration of the lower abdominal
 # wall at 2.23 mcg/mL after 200 mg (Martin and Neill 1987); on the published
@@ -143,7 +145,11 @@ bupivacaine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     cl1 = cl * size$clearance,
     cl2 = q * size$clearance,
     cl3 = 0,
-    ka_RA = 0.011958,          # 1/min, provisional, peak-matched (header)
+    # The rate was fitted with the disposition each switch position gives the
+    # calibration patient: anchored with the switch on, the published values
+    # with it off (Carbon's second repository audit, 2026-11-19, A2-F2: the
+    # anchored rate with the switch off put the calibration peak 22% low).
+    ka_RA = if (isTRUE(adjustToFFM)) 0.011958 else 0.0187,  # 1/min, provisional, peak-matched (header)
     bioavailability_RA = 1,
     tlag_RA = 0
   )

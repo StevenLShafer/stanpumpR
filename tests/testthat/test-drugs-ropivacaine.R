@@ -9,7 +9,7 @@ test_that("returns the published parameters with the switch off", {
         cl1 = 0.3,
         cl2 = 0.9666666667,
         cl3 = 0.4,
-        ka_RA = 0.004749,
+        ka_RA = 0.00612,         # fitted on the published disposition (A2-F2)
         bioavailability_RA = 1,
         tlag_RA = 0
       )
@@ -67,7 +67,13 @@ test_that("ka_RA reproduces Vainionpaa's 1.28 mcg/mL peak in that study's typica
   set <- p
   for (n in c("v1", "v2", "v3")) set[[n]] <- p[[n]] * kv$volume / ks$volume
   for (n in c("cl1", "cl2", "cl3")) set[[n]] <- p[[n]] * kv$clearance / ks$clearance
-  peak <- depotPeakReference(set, 175, p$ka_RA)
+  ka <- ropivacaine(70, 170, 35, "male")$PK$default$ka_RA   # the switch on
+  peak <- depotPeakReference(set, 175, ka)
   expect_equal(peak[["peak"]], 1.28, tolerance = 1e-4)
   expect_equal(peak[["time"]], 133.3, tolerance = 2e-3)
+  # With the switch off everyone has the published disposition, on which the
+  # switch-off rate was fitted to the same peak (Carbon's second repository
+  # audit, A2-F2)
+  peak <- depotPeakReference(p, 175, p$ka_RA)
+  expect_equal(peak[["peak"]], 1.28, tolerance = 1e-3)
 })

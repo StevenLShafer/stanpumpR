@@ -1241,14 +1241,21 @@ physiologySummary <- function(physiology)
 #'
 #' @param physiology the factors
 #' @param drugs the dosed drugs
+#' @param altitude,endobronchial the inhaled agents' own two controls
+#'   (R/altitude.R, R/endobronchial.R), which the note left out: with only
+#'   they moved it said nothing, and otherwise it said the agents respond to
+#'   cardiac output and temperature only (Carbon's second repository audit,
+#'   2026-11-19, A2-F24)
 #' @noRd
 physiologyNote <- function(physiology, drugs,
-                           temperature = NULL, skipped = character(0))
+                           temperature = NULL, skipped = character(0),
+                           altitude = ALTITUDE_DEFAULT, endobronchial = FALSE)
 {
   physiology <- checkPhysiology(physiology)
   if (!is.null(temperature)) physiology[["temperature"]] <- checkBodyTemperature(temperature)
   cold <- physiology[["temperature"]] != PHYSIOLOGY_TEMPERATURE_DEFAULT
-  if (physiologyIsNormal(physiology) || length(drugs) == 0) return(NULL)
+  gasOnly <- !isTRUE(altitude == ALTITUDE_DEFAULT) || isTRUE(endobronchial)
+  if ((physiologyIsNormal(physiology) && !gasOnly) || length(drugs) == 0) return(NULL)
   drugs <- unique(drugs)
   # The carrier gases and the ventilation are settings, not drugs.  The agents
   # respond to cardiac output (gasBodyPhysiology()) and to body temperature
@@ -1257,9 +1264,10 @@ physiologyNote <- function(physiology, drugs,
   gasAgents <- intersect(drugs, physiologyGasAgents())
   drugs <- drugs[!isGasDrug(drugs)]
   cardiacMoved <- physiology[["cardiac"]] != 1
-  changed <- c(intersect(drugs, physiologyDrugs()),
-               gasAgents[rep(cardiacMoved || cold, length(gasAgents))])
-  noData <- setdiff(drugs, physiologyDrugs())
+  gasMoved <- cardiacMoved || cold || gasOnly
+  changed <- c(if (!physiologyIsNormal(physiology)) intersect(drugs, physiologyDrugs()),
+               gasAgents[rep(gasMoved, length(gasAgents))])
+  noData <- if (physiologyIsNormal(physiology)) character(0) else setdiff(drugs, physiologyDrugs())
   # A drug whose model, chosen for this patient, the sliders cannot scale
   # (getDrugPK()'s slidersSkipped)
   skipped <- intersect(skipped, changed)
@@ -1278,10 +1286,11 @@ physiologyNote <- function(physiology, drugs,
       tags$p(class = "text-warning",
              tags$strong("Not changed (no physiology data yet): "),
              paste(noData, collapse = ", ")),
-    if (length(gasAgents) && !cardiacMoved && !cold)
+    if (length(gasAgents) && !gasMoved)
       tags$p(class = "text-muted",
              tags$strong("Inhaled agents "), "(", paste(gasAgents, collapse = ", "),
-             ") respond to cardiac output and body temperature only.")
+             paste(") respond to cardiac output, body temperature, altitude and",
+                   "endobronchial intubation only."))
   )
 }
 

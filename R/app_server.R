@@ -492,7 +492,15 @@ app_server <- function(input, output, session) {
   # scenario's own, if it has any, are put in.
   helpApi <- helpServer(input, output, session, doseTable, eventTable, drugDefaults,
                         timeApi = timeApi,
-                        onLoad = function() bayes$clear(),
+                        # A scenario starts from the default MAC threshold
+                        # too: an edited one stayed, and a scenario showing
+                        # the time until threshold drew another threshold's
+                        # curves (Carbon's second repository audit,
+                        # 2026-11-19, A2-F17)
+                        onLoad = function() {
+                          bayes$clear()
+                          macThreshold(GAS_MAC_THRESHOLD)
+                        },
                         restoreMeasurements = bayes$restore)
 
   # Single Paper Review, a tab of its own that shares nothing with the
@@ -905,6 +913,16 @@ app_server <- function(input, output, session) {
   # unchecked, and one row past the limit cost the dose grid, the plot and
   # the undo history (Carbon's UI audit, 2026-11-14, F3).
   commitDoseTable <- function(dt) {
+    # The dialogs (Add, Skip next dose, Stop, Edit doses, Suggest Dosing)
+    # build on the committed table, and a write to it resets the draft: edits
+    # typed into the grid and not yet applied were lost without a word, with
+    # their undo history (Carbon's second repository audit, 2026-11-19,
+    # A2-F18).  So nothing is written while the draft differs; the caller
+    # keeps its dialog open where it can.
+    if (!identicalTable(doseTableDraft(), doseTable())) {
+      showNotification(DOSE_TABLE_UNAPPLIED_MESSAGE, type = "warning", duration = 10)
+      return(FALSE)
+    }
     dt <- doseTableWithinLimit(applyGasTableRules(dt, gasVentilationWeight()))
     if (is.null(dt)) {
       showDoseTableFull()
@@ -1246,7 +1264,7 @@ app_server <- function(input, output, session) {
   # swallows, so the gas curves would simply vanish: say why instead.
   observe({
     DT <- tryCatch(doseTableClean(), error = function(e) NULL)
-    problems <- if (is.null(DT)) character(0) else gasVaporiserProblems(DT)
+    problems <- if (is.null(DT)) character(0) else gasVaporiserProblems(DT, altitude())
     if (length(problems) == 0) {
       removeNotification("gasVaporisers")
     } else {
@@ -1528,7 +1546,8 @@ app_server <- function(input, output, session) {
     entries <- tryCatch(bayesUpdate()$drugs, error = function(e) NULL)
     skipped <- names(Filter(function(e) isTRUE(e$slidersSkipped), entries))
     physiologyNote(physiology(), doseTableClean()$Drug,
-                   temperature = bodyTemperature(), skipped = skipped)
+                   temperature = bodyTemperature(), skipped = skipped,
+                   altitude = altitude(), endobronchial = endobronchial())
   })
 
   # Physiology events (R/physiologyEvents.R): the Physiology rows of the
@@ -2346,15 +2365,31 @@ app_server <- function(input, output, session) {
   # so a comment changed after the box was ticked (a patient's name added)
   # is never sent on the earlier promise (Carbon's repository audit,
   # 2026-11-18).
+  # The untick is a message to the browser, so input$commentSafe stays TRUE
+  # until the browser answers: an edited comment and a click of Send that
+  # reached the server together were sent on the earlier promise.  So the
+  # server also keeps the comment the box was ticked for, and Send needs the
+  # comment as it stands to be that one (Carbon's second repository audit,
+  # 2026-11-19, A2-F15).
   lastComment <- reactiveVal("")
+  attestedComment <- reactiveVal(NULL)
   observeEvent(input$emailComments, {
     comment <- emailComments()
     shinyjs::toggle("commentSafe", condition = nzchar(comment))
     if (!identical(comment, lastComment())) {
       lastComment(comment)
+      attestedComment(NULL)
       if (isTRUE(input$commentSafe)) updateCheckboxInput(session, "commentSafe", value = FALSE)
     }
   })
+  observeEvent(input$commentSafe, {
+    attestedComment(if (isTRUE(input$commentSafe)) emailComments() else NULL)
+  }, ignoreNULL = FALSE, ignoreInit = TRUE)
+  commentAttested <- function() {
+    comment <- emailComments()
+    !nzchar(comment) ||
+      (isTRUE(input$commentSafe) && identical(attestedComment(), comment))
+  }
 
   observe({
     shinyjs::toggleState("sendSlide", condition = isEmailValid(input$recipient))
@@ -2368,7 +2403,7 @@ app_server <- function(input, output, session) {
       error <- NULL
       if (!isEmailValid(input$recipient)) {
         error <- "Please enter a valid recipient email address."
-      } else if (nzchar(emailComments()) && !isTRUE(input$commentSafe)) {
+      } else if (!commentAttested()) {
         error <- "Please click the box confirming there is no PHI in the comments."
       } else if (nchar(emailComments()) > MAX_INPUT_TEXT) {
         error <- glue::glue("Comment is too long, please limit to {MAX_INPUT_TEXT} characters.")

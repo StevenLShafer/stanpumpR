@@ -883,8 +883,14 @@ gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION,
 #' @returns a character vector of messages, one per offending time, empty when
 #'   the settings are possible
 #' @export
-gasVaporiserProblems <- function(doseTable)
+gasVaporiserProblems <- function(doseTable, altitude = ALTITUDE_DEFAULT)
 {
+  # At altitude the engine holds the vapour to the ambient pressure, a
+  # desflurane vaporizer's dial scaled by it (gasSettingsAt()), so the check
+  # does too: checked at sea level, settings the engine then refused at
+  # altitude made the gas curves vanish without a word (Carbon's second
+  # repository audit, 2026-11-19, A2-F23).
+  ratio <- pressureRatio(altitude)
   if (is.null(doseTable) || nrow(doseTable) == 0) return(character(0))
   volatiles <- setdiff(potentAgents(), "nitrousOxide")
   drug <- as.character(doseTable$Drug)
@@ -902,11 +908,15 @@ gasVaporiserProblems <- function(doseTable)
   split <- split(rows, rows$Drug)
   problems <- character(0)
   for (t in sort(unique(rows$Time))) {
-    total <- sum(vapply(split, function(d) settingAt(d, t), numeric(1)))
-    if (total > 100 + 1e-9) {
-      problems <- c(problems, sprintf(
+    dial <- vapply(split, function(d) settingAt(d, t), numeric(1))
+    vpv <- names(dial) %in% ALTITUDE_VOLUME_PERCENT_VAPORIZERS
+    total <- sum(dial[!vpv]) + sum(dial[vpv]) * ratio
+    if (total > 100 * ratio + 1e-9) {
+      problems <- c(problems, if (ratio == 1) sprintf(
         "At %s min the vaporisers together are set to %s%%; the fresh gas cannot be more than 100%% vapour, so the gases are not simulated until one of them is lowered.",
-        format(t), format(total)))
+        format(t), format(sum(dial))) else sprintf(
+        "At %s min the vaporisers together give a partial pressure of %s%% of a sea-level atmosphere, above the ambient %s%% at %s m; the fresh gas cannot be more than 100%% vapour, so the gases are not simulated until one of them is lowered.",
+        format(t), format(signif(total, 3)), format(signif(100 * ratio, 3)), format(altitude)))
     }
   }
   problems
