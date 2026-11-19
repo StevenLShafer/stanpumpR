@@ -817,6 +817,13 @@ NORMALIZE_NONE <- "none"
 PLOT_NORMALIZATIONS <- c(NORMALIZE_NONE, "Peak plasma", "Peak effect site")
 PLOT_TYPICAL_CHOICES <- c("none", "Mid", "Range")
 PLOT_LINE_TYPES <- c("blank", "solid", "dashed", "dotted", "dotdash")
+# Shown under Graph Options while the plasma and effect-site lines share a
+# line type, which draws two curves that cannot be told apart (Dennis Fisher,
+# 2026-10-08, who suggested the wording)
+LINETYPE_SAME_MESSAGE <- paste(
+  "Plasma and effect site lines should be displayed with different line",
+  "types; with the same one the two curves cannot be told apart."
+)
 PK_EVENT_DEFAULT <- "default"
 
 PLOT_ID_EVENTS      <- "Events"
