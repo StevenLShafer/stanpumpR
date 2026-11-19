@@ -53,7 +53,7 @@ stanpumpR is an R package that contains a Shiny application. The source is at [g
 
 ## Deployment
 
-Pull requests are deployed automatically to a test copy of the app on shinyapps.io when labelled `DEPLOY`; merges to `master` deploy to production once R-CMD-check passes on them (a manual run of the production workflow deploys the commit it is run on without that check). The R-CMD-check workflow runs the test suite on Linux, macOS and Windows.
+Pull requests are deployed automatically to a test copy of the app on shinyapps.io when labelled `DEPLOY`; merges to `master` deploy to production once R-CMD-check passes on them (a manual run of the production workflow deploys the commit it is run on without that check). The R-CMD-check workflow runs the test suite on Linux, the platform production runs on, for every pull request and every merge; a second workflow runs it on macOS and Windows once a week.
 
 ## Running it yourself
 
