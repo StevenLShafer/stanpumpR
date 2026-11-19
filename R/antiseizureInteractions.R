@@ -682,9 +682,12 @@ asmReferenceName <- function(drug)
 
 #' One line per active interaction
 #'
-#' Written for a notification and the export, but neither calls it yet
-#' (Carbon's repository audit, 2026-11-18; whether to show it is a decision
-#' for Steven L. Shafer).  Exported for scripts.
+#' Exported for scripts; the app does not call it (Steven L. Shafer,
+#' 2026-11-18, after Carbon's repository audit flagged it as unused: keep it
+#' for scripts for now).  If it is ever shown in the app or the export, its
+#' reference concentration must follow the Drug Library's units (it prints
+#' mcg/mL) and its wording should separate the change in concentration from
+#' the factor on clearance.
 #'
 #' @param drugs names of the dosed drugs
 #' @returns a character vector ("valproate raises lamotrigine: clearance x

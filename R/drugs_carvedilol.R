@@ -118,14 +118,6 @@ CARVEDILOL_Q_F    <- 41.3     # L/h, apparent intercompartmental
 CARVEDILOL_D1_H   <- 0.383    # h, zero-order release duration
 CARVEDILOL_TLAG_H <- 0.215    # h, absorption lag
 
-#' Carvedilol pharmacokinetics (oral, apparent, zero-order release)
-#'
-#' Hwang et al. (2023), two compartments with zero-order absorption and a lag
-#' in 21 healthy Korean men; see the header.
-#'
-#' @inheritParams cefazolin
-#' @returns a list in the shape \code{getDrugPK()} expects
-#' @export
 # Hwang 2023, Table 1 (PDF p. 5): the 21 men by CYP2D6 group, means.  CL/F
 # (GT = 0) belongs to the EM and IM-1 groups; the volumes and Q to all 21.
 CARVEDILOL_CL_COHORT <- list(groups = list(
@@ -136,6 +128,14 @@ CARVEDILOL_COHORT <- list(groups = c(CARVEDILOL_CL_COHORT$groups, list(
   list(weight = 64.5, height = 172.6, age = 24.4, men = 8, women = 0)    # IM-2
 )))
 
+#' Carvedilol pharmacokinetics (oral, apparent, zero-order release)
+#'
+#' Hwang et al. (2023), two compartments with zero-order absorption and a lag
+#' in 21 healthy Korean men; see the header.
+#'
+#' @inheritParams cefazolin
+#' @returns a list in the shape \code{getDrugPK()} expects
+#' @export
 carvedilol <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Fixed published parameters, with no covariate in the source: unscaled with
