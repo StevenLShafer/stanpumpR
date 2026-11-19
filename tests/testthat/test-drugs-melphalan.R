@@ -46,3 +46,28 @@ test_that("melphalan is a chemotherapy drug, plasma only, with no band", {
   expect_match(PK$reference, "Nath")
   expect_identical(therapeuticRange("melphalan")$band_status, "not_applicable")
 })
+
+test_that("Nath's size-free parameters are anchored at her 100 patients (A2-F4)", {
+  # Table 2: 78 kg, 168 cm, 57 years, 59 men and 41 women.  With the switch
+  # on, Q and V2 are the published values divided by the cohort's pooled
+  # factors, so that its men and women, pooled geometrically, receive the
+  # published values; with the switch off they are fixed.  V1 and the
+  # non-renal clearance carry their own fat-free mass and do not move.
+  kc <- cohortFactorsIndependent(MELPHALAN_NATH_COHORT)
+  pk <- function(sex, ffm = TRUE)
+    melphalanNath(78, 168, 57, sex, adjustToFFM = ffm, creatinine = 1)$PK$default
+  for (sex in c("male", "female")) {
+    own <- pkSizeFactors(78, 168, 57, sex)
+    on <- pk(sex)
+    off <- pk(sex, FALSE)
+    expect_equal(off$v2, 15, tolerance = 1e-12)
+    expect_equal(off$cl2 * 60, 30.6, tolerance = 1e-12)
+    expect_equal(on$v2, 15 * own$volume / kc$volume, tolerance = 1e-6)
+    expect_equal(on$cl2 * 60, 30.6 * own$clearance / kc$clearance, tolerance = 1e-6)
+    expect_equal(on$v1, off$v1)
+    expect_equal(on$cl1, off$cl1)
+  }
+  pooled <- function(f) exp((59 * log(f("male")) + 41 * log(f("female"))) / 100)
+  expect_equal(pooled(function(s) pk(s)$v2), 15, tolerance = 1e-6)
+  expect_equal(pooled(function(s) pk(s)$cl2 * 60), 30.6, tolerance = 1e-6)
+})

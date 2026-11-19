@@ -1,5 +1,9 @@
 # Convert clock times (x) to difference from the reference time
 clockTimeToDelta <- function(reference, x) {
+  # An NA or vector reference failed in the `==` below (Carbon's second
+  # repository audit, 2026-11-19, A2-F8).
+  if (!is.character(reference) || length(reference) != 1L || is.na(reference))
+    return(rep(NA_real_, length(x)))
   if (reference == REFERENCE_TIME_NONE) {
     FIX <- grepl(":",x)
     x[FIX] <- as.numeric(unlist(lapply(x[FIX],FUN = hourMinute)))
@@ -21,37 +25,66 @@ clockTimeToDelta <- function(reference, x) {
 # Convert delta time (x) from the reference time to an actual clock time
 deltaToClockTime <- function(reference, x)
 {
+  if (!is.character(reference) || length(reference) != 1L || is.na(reference))
+    return(rep(NA_character_, length(x)))
   if (reference == REFERENCE_TIME_NONE) {
     return(as.numeric(x))
   }
   start <- hourMinute(reference)
-  x <- as.numeric(x)
-  if (length(start) != 1L || is.na(start)) return(rep(NA_character_, length(x)))
-  bad <- !is.finite(x)
+  x <- suppressWarnings(as.numeric(x))
+  out <- rep(NA_character_, length(x))
+  if (length(start) != 1L || is.na(start)) return(out)
+  # Only finite times are formatted: sprintf("%02d") stops on Inf or NaN, so
+  # marking them NA after formatting, as the first version did, came too late
+  # (Carbon's second repository audit, 2026-11-19, A2-F8).
+  ok <- is.finite(x)
   # Round to whole minutes BEFORE splitting off the hours.  Rounding the
   # minutes afterwards turned 59.6 minutes past the hour into "HH:60".
-  x <- round(x + start)
-  xHours <- floor(x/60)
-  xMinutes <- x - xHours * 60
+  m <- round(x[ok] + start)
+  xHours <- floor(m/60)
+  xMinutes <- m - xHours * 60
   xHours <- xHours %% 24
-  out <- sprintf("%02d:%02d",xHours,xMinutes)
-  out[bad] <- NA_character_
+  out[ok] <- sprintf("%02d:%02d", as.integer(xHours), as.integer(xMinutes))
   out
 }
 
-# Separate hour from minute in hh:ss format. Return number of minutes
-# Used for clock times (clockTimeToDelta, displayTimeToMinutes); it wraps 24:xx
-# to 0:xx and cannot read 25:00 or more, so an elapsed H:MM is read with
-# elapsedHourMinute() instead.
+# A clock time to minutes after midnight, NA_real_ where it cannot be read.
+# Used for clock times (clockTimeToDelta, displayTimeToMinutes, the Procedure
+# start); it wraps 24:xx to 0:xx and cannot read 25:00 or more, so an elapsed
+# H:MM is read with elapsedHourMinute() instead.  Vectorised.
+#
+# Read: "H:MM" or "HH:MM" (also "HHMM", "H.MM", "HHhMM") and an optional
+# am/pm, which is applied.  Seconds are not read, as the dose grid refuses
+# them (validateTime()) and as before.  Anything else is NA, so
+# the Procedure start says it cannot be read.  lubridate's "HM" order, used
+# until 2026-11-19, ignored a trailing am/pm and any other trailing text:
+# "2:30 pm" was 02:30, twelve hours early, with no warning, and "12:30abc" was
+# 12:30 (Carbon's second repository audit, 2026-11-19, A2-F7).  It never
+# returns a POSIXct NA: one of those made deltaToClockTime() fail on a
+# reference with seconds ("23:59:59").
 hourMinute <- function(x)
 {
-  # Always a number of minutes (NA_real_ where it cannot be read), never a
-  # POSIXct NA: one of those made deltaToClockTime() fail on a reference with
-  # seconds ("23:59:59").  Vectorised.
-  px <- suppressWarnings(lubridate::parse_date_time(x, "HM", quiet=TRUE))
-  out <- rep(NA_real_, length(px))
-  ok <- !is.na(px)
-  out[ok] <- 60*lubridate::hour(px[ok]) + lubridate::minute(px[ok])
+  x <- tolower(trimws(as.character(x)))
+  out <- rep(NA_real_, length(x))
+  pattern <- paste0("^([0-9]{1,2})(?:[:.h]([0-9]{1,2})|([0-9]{2}))",
+                    "[[:space:]]*(am|pm|a[.]m[.]|p[.]m[.])?$")
+  ok <- !is.na(x) & grepl(pattern, x, perl = TRUE)
+  if (!any(ok)) return(out)
+  parts <- regmatches(x[ok], regexec(pattern, x[ok], perl = TRUE))
+  minutes <- vapply(parts, function(p) {
+    hh <- as.numeric(p[2])
+    mm <- as.numeric(if (nzchar(p[3])) p[3] else p[4])
+    meridiem <- substr(p[5], 1, 1)
+    if (mm > 59) return(NA_real_)
+    if (nzchar(meridiem)) {
+      if (hh < 1 || hh > 12) return(NA_real_)
+      hh <- hh %% 12 + if (meridiem == "p") 12 else 0
+    } else if (hh > 24) {
+      return(NA_real_)
+    }
+    (hh %% 24) * MINS_PER_HOUR + mm
+  }, numeric(1))
+  out[ok] <- minutes
   out
 }
 

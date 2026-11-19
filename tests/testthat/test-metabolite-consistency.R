@@ -58,7 +58,10 @@ test_that("a 'reads' or 'shared' parent really calls what it names", {
 test_that("libraryReferenceClearance() is the model's own CL1 at the reference man", {
   expect_equal(libraryReferenceClearance("morphine"),
                morphine(70, 170, 35, "male")$PK$default$cl1 * 60)
-  expect_equal(libraryReferenceClearance("morphine"), 74.0)
+  # Lotsch's 74.0 L/h is his cohort's typical subject's; the reference man's
+  # is that over the cohort's clearance factor (anchored 2026-11-19)
+  expect_equal(libraryReferenceClearance("morphine"),
+               74.0 / cohortFactorsIndependent(MORPHINE_COHORT)$clearance, tolerance = 1e-9)
   expect_error(libraryReferenceClearance("notADrug"), "No drug model")
 })
 

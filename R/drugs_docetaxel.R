@@ -49,9 +49,15 @@
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # BSA at the pharmacokinetic weight with the switch on and total weight with
-# it off; the volumes and intercompartmental clearances, which carry no
-# covariate, scale by the library's factors with the switch on and are fixed
-# with it off.
+# it off.  V1, V2, V3, Q2 and Q3 (V1 and the rate constants k12, k21, k13 and
+# k31), with no covariate, belong to the cohort's typical patient, and with
+# the switch on they are anchored at that patient (DOCETAXEL_BRUNO_COHORT,
+# below; Steven L. Shafer, 2026-11-19, after Carbon's second repository
+# audit, A2-F4): scaled from the 70 kg reference man, as they were, Bruno's
+# own typical patient received volumes 12% and intercompartmental clearances
+# 9% below the published values (his typical woman 19% and 15%).  A model
+# with a size covariate on one parameter is not thereby exempt on the
+# others.  With the switch off they are fixed.
 #
 # PREGNANCY (R/pregnancy.R)
 # =========================
@@ -85,6 +91,13 @@ DOCETAXEL_BRUNO <- list(
 # peripheral compartment)
 DOCETAXEL_PREGNANCY <- list(cl = 1.08, v1 = 1.19, v2 = 1.12)
 
+# Bruno 1996, Table I (p. 155), N = 547, as read on the page image
+# 2026-11-19 (the scan's text layer is unreliable): means 69.3 kg, 168 cm,
+# 56.0 years (medians 67 kg, 167 cm, 57 years); 253 men and 294 women.  The
+# means, as the header quotes them; the model (Table II) is the whole data
+# set's.
+DOCETAXEL_BRUNO_COHORT <- list(weight = 69.3, height = 168, age = 56, men = 253, women = 294)
+
 #' Docetaxel, intravenous (Bruno 1996)
 #'
 #' Three compartments; body surface area, age and albumin on clearance,
@@ -101,8 +114,12 @@ docetaxel <- function(weight, height, age, sex, adjustToFFM = TRUE,
 {
   p <- DOCETAXEL_BRUNO
   preg <- if (isTRUE(pregnant)) DOCETAXEL_PREGNANCY else list(cl = 1, v1 = 1, v2 = 1)
+  # V1, V2, V3, Q2 and Q3, with no covariate, are anchored at Bruno's 547
+  # patients (DOCETAXEL_BRUNO_COHORT); the clearance carries its own BSA,
+  # age and albumin terms
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, DOCETAXEL_BRUNO_COHORT))
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   bsa <- bsaMosteller(w, height)
   alb <- if (is.null(albumin)) p$albumin else 10 * albumin         # g/L

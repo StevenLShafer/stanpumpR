@@ -94,9 +94,15 @@
 # the cohort's typical patient's (median 59 kg, 17 years, 52 men and 146
 # women), and with the switch on they are anchored at that patient
 # (FLUOXETINE_COHORT; Steven L. Shafer, 2026-11-18): the reference man's
-# volumes are the published values divided by 0.763 and his clearances by
-# 0.816.  Legacy factors 1 reproduce the published values with the switch
-# off.  Norfluoxetine is anchored identically.
+# volumes are the published values divided by 0.763.  CL/F, a women's
+# intercept with a men's factor, is anchored at the cohort's patient of the
+# patient's own sex (cohortSexSizeFactors(); Carbon's second repository
+# audit, 2026-11-19, A2-F1), so that both of the cohort's typical patients
+# receive the published values: anchored at the pooled patient, the
+# fat-free-mass difference between the sexes was applied on top of the men's
+# factor, which already holds it.  Legacy factors 1 reproduce the published
+# values with the switch off.  Norfluoxetine, with no sex term, is anchored
+# at the pooled patient.
 #
 # References
 # ----------
@@ -159,9 +165,14 @@ FLUOXETINE_COHORT <- list(groups = list(
 #' @export
 fluoxetine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  # Fixed published parameters: legacy factors 1.  Norfluoxetine must make
-  # this call identically.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, FLUOXETINE_COHORT))
+  # Fixed published parameters: legacy factors 1.  V/F, with no sex term, is
+  # anchored at the cohort's pooled patient, as norfluoxetine's parameters
+  # are; CL/F, a women's intercept with a men's factor, at the cohort's
+  # patient of the patient's own sex, so that the cohort's woman receives
+  # 2.91 L/h and its man 3.39 (Carbon's second repository audit, A2-F1).
+  anchor <- do.call(cohortSizeFactors, FLUOXETINE_COHORT)
+  anchor$clearance <- cohortSexSizeFactors(FLUOXETINE_COHORT, sex)$clearance
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = anchor)
   sexFactor <- if (sex == SEX_MALE) FLUOXETINE_MALE_CL else 1
 
   v1  <- FLUOXETINE_V1 * size$volume

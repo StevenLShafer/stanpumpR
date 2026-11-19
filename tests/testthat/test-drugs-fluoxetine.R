@@ -71,7 +71,11 @@ test_that("the pair scales to fat-free mass identically for a 120 kg man", {
   kc <- cohortFactorsIndependent(FLUOXETINE_COHORT)
   p <- fluoxetine(120, 170, 50, "male")
   expect_equal(p$PK$default$v1, 24.9 * 1.3049067 / kc$volume, tolerance = 1e-6)
-  expect_equal(p$PK$default$cl1, 2.91 * 1.165 / 60 * 1.2209126 / kc$clearance, tolerance = 1e-6)
+  # CL/F, which carries the source's sex term, is anchored at the cohort's
+  # man (Carbon's second repository audit, A2-F1); norfluoxetine's at the
+  # pooled patient
+  km <- cohortFactorsIndependent(list(groups = FLUOXETINE_COHORT$groups[1]))
+  expect_equal(p$PK$default$cl1, 2.91 * 1.165 / 60 * 1.2209126 / km$clearance, tolerance = 1e-6)
   expect_equal(p$metabolite$kFormation, p$PK$default$cl1 / p$PK$default$v1)
   m <- norfluoxetine(120, 170, 50, "male")
   expect_equal(m$PK$default$v1, 1.52 * 1.3049067 / kc$volume, tolerance = 1e-6)

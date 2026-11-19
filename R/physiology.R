@@ -1060,9 +1060,32 @@ physiologyPanel <- function()
             "and Shafer's chapter on inhaled anesthetic kinetics). End-tidal",
             "reads higher than arterial, and the brain rises more slowly,",
             "most for the poorly soluble agents (nitrous oxide, desflurane).",
-            "Hypoxic pulmonary vasoconstriction and arterial oxygen are not",
-            "modelled."),
+            "Arterial oxygen falls: the shunted blood carries no oxygen from",
+            "the lungs, and more inspired oxygen hardly helps. Hypoxic",
+            "pulmonary vasoconstriction is not modelled."),
       placement = "right"
+    ),
+    # The haemoglobin sets how far the shunt desaturates the arterial blood
+    # (R/arterialOxygen.R; Shafer, 2026-11-19), so it is shown with the box
+    conditionalPanel(
+      condition = "input.endobronchialIntubation",
+      fieldHelp(
+        sliderInput(
+          inputId = "physiology_haemoglobin",
+          label = "Haemoglobin (g/dL)",
+          min = HAEMOGLOBIN_MIN,
+          max = HAEMOGLOBIN_MAX,
+          value = ARTERIAL_OXYGEN_HAEMOGLOBIN,
+          step = HAEMOGLOBIN_STEP,
+          ticks = FALSE
+        ),
+        paste("With half the cardiac output shunted, the oxygen the shunt",
+              "fails to carry is a larger share of a smaller capacity, so an",
+              "anaemic patient desaturates more: on pure oxygen the arterial",
+              "saturation is about 69% at 7 g/dL and 87% at 17 g/dL. Without",
+              "a shunt it changes nothing the plot shows."),
+        placement = "right"
+      )
     )
     ),
     actionLink("physiologyReset", "Reset to normal"),
@@ -1156,7 +1179,7 @@ physiologyFromInputs <- function(values)
 #' @noRd
 physiologyCovariateRows <- function(physiology, temperature = NULL,
                                     altitude = NULL, endobronchial = FALSE,
-                                    events = NULL)
+                                    events = NULL, haemoglobin = NULL)
 {
   # With physiology events (R/physiologyEvents.R) the simulation ran at
   # normal physiology from time 0 and each event's settings from its time;
@@ -1181,11 +1204,13 @@ physiologyCovariateRows <- function(physiology, temperature = NULL,
                                  "(multiple of normal)"),
                            "Body temperature (C)",
                            "Altitude (m), inhaled anesthetics",
-                           "Endobronchial intubation, inhaled anesthetics"),
+                           "Endobronchial intubation, inhaled anesthetics",
+                           "Haemoglobin (g/dL), arterial oxygen with an endobronchial tube"),
              Value = c(unname(value), if (is.null(t)) "unreadable" else format(t),
                        if (is.null(h)) "unreadable" else
                          sprintf("%s (%.0f Torr)", format(h), barometricPressure(h)),
-                       if (isTRUE(endobronchial)) "yes" else "no"),
+                       if (isTRUE(endobronchial)) "yes" else "no",
+                       format(haemoglobinFromInput(haemoglobin))),
              stringsAsFactors = FALSE)
 }
 
@@ -1216,14 +1241,21 @@ physiologySummary <- function(physiology)
 #'
 #' @param physiology the factors
 #' @param drugs the dosed drugs
+#' @param altitude,endobronchial the inhaled agents' own two controls
+#'   (R/altitude.R, R/endobronchial.R), which the note left out: with only
+#'   they moved it said nothing, and otherwise it said the agents respond to
+#'   cardiac output and temperature only (Carbon's second repository audit,
+#'   2026-11-19, A2-F24)
 #' @noRd
 physiologyNote <- function(physiology, drugs,
-                           temperature = NULL, skipped = character(0))
+                           temperature = NULL, skipped = character(0),
+                           altitude = ALTITUDE_DEFAULT, endobronchial = FALSE)
 {
   physiology <- checkPhysiology(physiology)
   if (!is.null(temperature)) physiology[["temperature"]] <- checkBodyTemperature(temperature)
   cold <- physiology[["temperature"]] != PHYSIOLOGY_TEMPERATURE_DEFAULT
-  if (physiologyIsNormal(physiology) || length(drugs) == 0) return(NULL)
+  gasOnly <- !isTRUE(altitude == ALTITUDE_DEFAULT) || isTRUE(endobronchial)
+  if ((physiologyIsNormal(physiology) && !gasOnly) || length(drugs) == 0) return(NULL)
   drugs <- unique(drugs)
   # The carrier gases and the ventilation are settings, not drugs.  The agents
   # respond to cardiac output (gasBodyPhysiology()) and to body temperature
@@ -1232,9 +1264,10 @@ physiologyNote <- function(physiology, drugs,
   gasAgents <- intersect(drugs, physiologyGasAgents())
   drugs <- drugs[!isGasDrug(drugs)]
   cardiacMoved <- physiology[["cardiac"]] != 1
-  changed <- c(intersect(drugs, physiologyDrugs()),
-               gasAgents[rep(cardiacMoved || cold, length(gasAgents))])
-  noData <- setdiff(drugs, physiologyDrugs())
+  gasMoved <- cardiacMoved || cold || gasOnly
+  changed <- c(if (!physiologyIsNormal(physiology)) intersect(drugs, physiologyDrugs()),
+               gasAgents[rep(gasMoved, length(gasAgents))])
+  noData <- if (physiologyIsNormal(physiology)) character(0) else setdiff(drugs, physiologyDrugs())
   # A drug whose model, chosen for this patient, the sliders cannot scale
   # (getDrugPK()'s slidersSkipped)
   skipped <- intersect(skipped, changed)
@@ -1253,10 +1286,11 @@ physiologyNote <- function(physiology, drugs,
       tags$p(class = "text-warning",
              tags$strong("Not changed (no physiology data yet): "),
              paste(noData, collapse = ", ")),
-    if (length(gasAgents) && !cardiacMoved && !cold)
+    if (length(gasAgents) && !gasMoved)
       tags$p(class = "text-muted",
              tags$strong("Inhaled agents "), "(", paste(gasAgents, collapse = ", "),
-             ") respond to cardiac output and body temperature only.")
+             paste(") respond to cardiac output, body temperature, altitude and",
+                   "endobronchial intubation only."))
   )
 }
 

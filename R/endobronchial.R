@@ -42,8 +42,9 @@
 # diverts part of the blood from the unventilated lung, so the shunt is less
 # than the half the chapter assumes; the lungs' unequal sizes (the right lung
 # takes about 55% of the blood); the slow absorption of the gas trapped in the
-# unventilated lung; and arterial hypoxaemia, since the engine carries oxygen
-# as gas only, with no blood or shunt of its own.  The shunt fraction was put
+# unventilated lung.  Arterial hypoxaemia IS shown (Shafer, 2026-11-19): the
+# engine carries oxygen as gas only, and R/arterialOxygen.R reads the
+# arterial oxygen off its alveolar oxygen through the shunt.  The shunt fraction was put
 # to Shafer on 2026-11-19 and DECIDED the same day: keep the chapter's 50%.
 # The volume share remains a [decision].
 # -----------------------------------------------------------------------------

@@ -78,12 +78,36 @@ test_that("scales to fat-free mass for a 120 kg man", {
   # 120 kg, 170 cm, 50 y male: fat-free-mass factors 1.3049067 (volumes) and
   # 1.2209126 (clearances), pharmacokinetic weight 91.343469 kg (pinned in
   # test-drugs-alfentanil.R).  Vc and CL use the pharmacokinetic weight in their
-  # own covariate; Vp and Q take the fat-free-mass factors.
+  # own covariate; Vp and Q take the fat-free-mass factors, divided by
+  # Delavenne's cohort factors (HEPARIN_CPB_COHORT; A2-F4).
   pkW <- 91.343469; vol <- 1.3049067; clr <- 1.2209126
+  kc <- cohortFactorsIndependent(HEPARIN_CPB_COHORT)
+  expect_equal(kc$volume, 1.0019416, tolerance = 1e-6)
+  expect_equal(kc$clearance, 1.0014559, tolerance = 1e-6)
   actual <- heparinCPB(120, 170, 50, "male")$PK$default
   expect_equal_rounded(actual[c("v1", "v2", "cl1", "cl2")],
                        list(v1 = 3.1 * (pkW / 70),
-                            v2 = 2.23 * vol,
+                            v2 = 2.23 * vol / kc$volume,
                             cl1 = 0.841 * (pkW / 70)^0.767 / 60,
-                            cl2 = 4.67 / 60 * clr))
+                            cl2 = 4.67 / 60 * clr / kc$clearance))
+})
+
+test_that("anchored at Delavenne's cohort: its typical patient receives the published Vp and Q (A2-F4)", {
+  # Table 1 (p. 707): 38 men and 12 women, 77.5 kg, BMI 27.2 (168.8 cm), 67.5
+  # years.  Vp and Q carry no sex term, so they are anchored at the pooled
+  # patient: the cohort's man and woman, weighted 38:12 geometrically, receive
+  # the published values.
+  h <- 100 * sqrt(77.5 / 27.2)
+  m <- heparinCPB(77.5, h, 67.5, "male")$PK$default
+  w <- heparinCPB(77.5, h, 67.5, "female")$PK$default
+  pooled <- function(x, y) exp((38 * log(x) + 12 * log(y)) / 50)
+  expect_equal(pooled(m$v2, w$v2), 2.23, tolerance = 1e-6)
+  expect_equal(pooled(m$cl2, w$cl2) * 60, 4.67, tolerance = 1e-6)
+  kc <- cohortFactorsIndependent(HEPARIN_CPB_COHORT)
+  expect_equal(m$v2, 2.23 * pkSizeFactors(77.5, h, 67.5, "male")$volume / kc$volume,
+               tolerance = 1e-6)
+  # The switch off is unchanged: the published values
+  off <- heparinCPB(77.5, h, 67.5, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(off$v2, 2.23)
+  expect_equal(off$cl2, 4.67 / 60)
 })

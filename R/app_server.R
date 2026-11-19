@@ -492,7 +492,15 @@ app_server <- function(input, output, session) {
   # scenario's own, if it has any, are put in.
   helpApi <- helpServer(input, output, session, doseTable, eventTable, drugDefaults,
                         timeApi = timeApi,
-                        onLoad = function() bayes$clear(),
+                        # A scenario starts from the default MAC threshold
+                        # too: an edited one stayed, and a scenario showing
+                        # the time until threshold drew another threshold's
+                        # curves (Carbon's second repository audit,
+                        # 2026-11-19, A2-F17)
+                        onLoad = function() {
+                          bayes$clear()
+                          macThreshold(GAS_MAC_THRESHOLD)
+                        },
                         restoreMeasurements = bayes$restore)
 
   # Single Paper Review, a tab of its own that shares nothing with the
@@ -905,6 +913,16 @@ app_server <- function(input, output, session) {
   # unchecked, and one row past the limit cost the dose grid, the plot and
   # the undo history (Carbon's UI audit, 2026-11-14, F3).
   commitDoseTable <- function(dt) {
+    # The dialogs (Add, Skip next dose, Stop, Edit doses, Suggest Dosing)
+    # build on the committed table, and a write to it resets the draft: edits
+    # typed into the grid and not yet applied were lost without a word, with
+    # their undo history (Carbon's second repository audit, 2026-11-19,
+    # A2-F18).  So nothing is written while the draft differs; the caller
+    # keeps its dialog open where it can.
+    if (!identicalTable(doseTableDraft(), doseTable())) {
+      showNotification(DOSE_TABLE_UNAPPLIED_MESSAGE, type = "warning", duration = 10)
+      return(FALSE)
+    }
     dt <- doseTableWithinLimit(applyGasTableRules(dt, gasVentilationWeight()))
     if (is.null(dt)) {
       showDoseTableFull()
@@ -1208,9 +1226,15 @@ app_server <- function(input, output, session) {
   # (relevantFields() in R/patient-fields.R).  A hidden control keeps its
   # value, which does nothing while no drug reads it.
   observe({
-    drugs <- c(doseTable()$Drug,
-               tryCatch(doseTableDraft()$Drug, error = function(e) NULL))
-    shown <- relevantFields(drugs, drugDefaults())
+    draft <- tryCatch(doseTableDraft(), error = function(e) NULL)
+    inTable <- c(doseTable()$Drug, draft$Drug)
+    # The drugs drawn, given a dose above 0, for the options that add a panel
+    # of something plotted (the Interaction plot, Tolerance and tachyphylaxis),
+    # and the metabolites they form, which are drawn too (drugs() holds the
+    # drawn entries, drawnDrugEntries(): codeine's morphine)
+    formed <- tryCatch(names(drugs()), error = function(e) character(0))
+    plotted <- c(positiveDoseDrugs(doseTable()), positiveDoseDrugs(draft), formed)
+    shown <- relevantFields(inTable, drugDefaults(), plotted = plotted)
     for (field in setdiff(names(shown), c("plotMEAC", "plotInteraction")))
       shinyjs::toggle(id = paste0("field_", field), condition = shown[[field]])
     # The two optional Additional plots, inside their checkbox group
@@ -1240,7 +1264,7 @@ app_server <- function(input, output, session) {
   # swallows, so the gas curves would simply vanish: say why instead.
   observe({
     DT <- tryCatch(doseTableClean(), error = function(e) NULL)
-    problems <- if (is.null(DT)) character(0) else gasVaporiserProblems(DT)
+    problems <- if (is.null(DT)) character(0) else gasVaporiserProblems(DT, altitude())
     if (length(problems) == 0) {
       removeNotification("gasVaporisers")
     } else {
@@ -1421,6 +1445,7 @@ app_server <- function(input, output, session) {
         temperature = bodyTemperature(),
         altitude = altitude(),
         endobronchial = endobronchial(),
+        haemoglobin = haemoglobin(),
         physiologyEvents = physiologyEvents(),
         age     = age(),
         maximum = plotMaximum()
@@ -1491,6 +1516,11 @@ app_server <- function(input, output, session) {
 
   # Endobronchial intubation (R/endobronchial.R): one lung ventilated
   endobronchial <- reactive(endobronchialFromInput(input$endobronchialIntubation))
+  # Haemoglobin, g/dL (R/arterialOxygen.R): the arterial oxygen through the
+  # shunt
+  haemoglobin <- debounce(reactive({
+    haemoglobinFromInput(input$physiology_haemoglobin)
+  }), PHYSIOLOGY_DEBOUNCE_MS)
 
   observeEvent(input$physiologyReset, {
     for (f in PHYSIOLOGY_FACTORS)
@@ -1499,6 +1529,7 @@ app_server <- function(input, output, session) {
                       value = PHYSIOLOGY_TEMPERATURE_DEFAULT)
     updateSliderInput(session, "physiology_altitude", value = ALTITUDE_DEFAULT)
     updateCheckboxInput(session, "endobronchialIntubation", value = FALSE)
+    updateSliderInput(session, "physiology_haemoglobin", value = ARTERIAL_OXYGEN_HAEMOGLOBIN)
   })
 
   # A link or a scenario that sets the physiology away from normal shows the
@@ -1515,7 +1546,8 @@ app_server <- function(input, output, session) {
     entries <- tryCatch(bayesUpdate()$drugs, error = function(e) NULL)
     skipped <- names(Filter(function(e) isTRUE(e$slidersSkipped), entries))
     physiologyNote(physiology(), doseTableClean()$Drug,
-                   temperature = bodyTemperature(), skipped = skipped)
+                   temperature = bodyTemperature(), skipped = skipped,
+                   altitude = altitude(), endobronchial = endobronchial())
   })
 
   # Physiology events (R/physiologyEvents.R): the Physiology rows of the
@@ -1558,7 +1590,8 @@ app_server <- function(input, output, session) {
     c(p[PHYSIOLOGY_FACTORS],
       temperature = bodyTemperatureFromInput(input$physiology_temperature),
       altitude = altitudeFromInput(input$physiology_altitude),
-      endobronchial = as.numeric(endobronchialFromInput(input$endobronchialIntubation)))
+      endobronchial = as.numeric(endobronchialFromInput(input$endobronchialIntubation)),
+      haemoglobin = haemoglobinFromInput(input$physiology_haemoglobin))
   }
 
   observeEvent(input$physiologyCreateEventBtn, {
@@ -2075,6 +2108,19 @@ app_server <- function(input, output, session) {
   # forged input carried a vector or an unknown value into setLinetypes() and
   # simulationPlot() (Carbon's third UI audit, 2026-11-15, C1)
   normalizationInput <- reactive(choiceOf(input$normalization, PLOT_NORMALIZATIONS, NORMALIZE_NONE))
+
+  # Whether a tolerance or tachyphylaxis panel is drawn (R/pdAdaptation.R):
+  # the option ticked, no normalization (simulationPlot() drops the panels
+  # under it), and a drawn drug with a model.  Log Y is hidden (app_ui(),
+  # through output.adaptationDrawn) and turned off only then, so a tick left
+  # behind by a normalization or a removed drug does not take it away.
+  adaptationDrawn <- reactive({
+    isTRUE(input$showAdaptation) &&
+      identical(normalizationInput(), NORMALIZE_NONE) &&
+      length(pdAdaptationDrugs(names(drugs()), drugDefaults = drugDefaults())) > 0
+  })
+  output$adaptationDrawn <- reactive(adaptationDrawn())
+  outputOptions(output, "adaptationDrawn", suspendWhenHidden = FALSE)
   typicalInput <- reactive(choiceOf(input$typical, PLOT_TYPICAL_CHOICES, "Range"))
   linetypes <- reactive({
     setLinetypes(normalizationInput(),
@@ -2122,9 +2168,11 @@ app_server <- function(input, output, session) {
         opioidReceptorSeries(drugs(), input$opioidTolerance) else NULL
       normalization          <- normalizationInput()
       typical                <- typicalInput()
+      # Tolerance and tachyphylaxis panels (R/pdAdaptation.R)
+      plotAdaptation         <- adaptationDrawn()
       logY                   <- isTRUE(input$logY)
       if (plotRecovery() || plotMEACOverlay() || plotEvents || plotInteraction ||
-          !is.null(opioidReceptor)) logY <- FALSE
+          plotAdaptation || !is.null(opioidReceptor)) logY <- FALSE
 
       plasmaLinetype <- linetypes()$plasmaLinetype
       effectsiteLinetype <- linetypes()$effectsiteLinetype
@@ -2150,6 +2198,7 @@ app_server <- function(input, output, session) {
         plotRecovery = plotRecovery(),
         plotMEACOverlay = plotMEACOverlay(),
         plotCompartments = isTRUE(input$showCompartments),
+        plotAdaptation = plotAdaptation,
         typical = typical,
         logY = logY,
         yAxisHeight = input$yaxisHeight,
@@ -2247,6 +2296,7 @@ app_server <- function(input, output, session) {
       temperature = bodyTemperature(),
       altitude = altitude(),
       endobronchial = endobronchial(),
+      haemoglobin = haemoglobin(),
       physiologyEvents = physiologyEvents(),
       # Whether each companion model was actually drawn, not just its box
       # ticked (companionGroupsShown()).
@@ -2319,15 +2369,31 @@ app_server <- function(input, output, session) {
   # so a comment changed after the box was ticked (a patient's name added)
   # is never sent on the earlier promise (Carbon's repository audit,
   # 2026-11-18).
+  # The untick is a message to the browser, so input$commentSafe stays TRUE
+  # until the browser answers: an edited comment and a click of Send that
+  # reached the server together were sent on the earlier promise.  So the
+  # server also keeps the comment the box was ticked for, and Send needs the
+  # comment as it stands to be that one (Carbon's second repository audit,
+  # 2026-11-19, A2-F15).
   lastComment <- reactiveVal("")
+  attestedComment <- reactiveVal(NULL)
   observeEvent(input$emailComments, {
     comment <- emailComments()
     shinyjs::toggle("commentSafe", condition = nzchar(comment))
     if (!identical(comment, lastComment())) {
       lastComment(comment)
+      attestedComment(NULL)
       if (isTRUE(input$commentSafe)) updateCheckboxInput(session, "commentSafe", value = FALSE)
     }
   })
+  observeEvent(input$commentSafe, {
+    attestedComment(if (isTRUE(input$commentSafe)) emailComments() else NULL)
+  }, ignoreNULL = FALSE, ignoreInit = TRUE)
+  commentAttested <- function() {
+    comment <- emailComments()
+    !nzchar(comment) ||
+      (isTRUE(input$commentSafe) && identical(attestedComment(), comment))
+  }
 
   observe({
     shinyjs::toggleState("sendSlide", condition = isEmailValid(input$recipient))
@@ -2341,7 +2407,7 @@ app_server <- function(input, output, session) {
       error <- NULL
       if (!isEmailValid(input$recipient)) {
         error <- "Please enter a valid recipient email address."
-      } else if (nzchar(emailComments()) && !isTRUE(input$commentSafe)) {
+      } else if (!commentAttested()) {
         error <- "Please click the box confirming there is no PHI in the comments."
       } else if (nchar(emailComments()) > MAX_INPUT_TEXT) {
         error <- glue::glue("Comment is too long, please limit to {MAX_INPUT_TEXT} characters.")
@@ -2523,6 +2589,26 @@ app_server <- function(input, output, session) {
                     signif(stats::approx(cm$Time, column, e$x, rule = 2)$y, 3), " ", units))
     }
 
+    # A tolerance or tachyphylaxis panel (R/pdAdaptation.R): the share of the
+    # naive potency (or effect) left, and, as wind chill is reported, what the
+    # concentration works like.
+    adapted <- pdAdaptationSeriesDrug(drug, drugDefaults())
+    if (!is.na(adapted))
+    {
+      rows <- plotResults[as.character(plotResults$Wrap) == e$panelvar1, ]
+      if (nrow(rows) < 2) return(NULL)
+      left <- panelSeriesAt(rows, e$x)
+      entry <- drugs()[[adapted]]
+      ce <- if (is.null(entry)) NA else hoverConcentration(entry$results, e$x)
+      worksLike <- if (is.list(ce) && is.finite(ce$value))
+        paste0(", ", ce$label, " ", signif(ce$value, 3), " works like ",
+               signif(ce$value * left / 100, 3))
+      return(paste0("Time: ", hoverTime(e$x), ", ", drug, ": ",
+                    signif(left, 3),
+                    pdAdaptationUnits(pdAdaptationRow(adapted, drugDefaults = drugDefaults())),
+                    worksLike))
+    }
+
     # A TCI rate panel: report the pump rate in force at that moment, and the
     # companion pump's after it.
     if (grepl(" TCI$", drug))
@@ -2566,6 +2652,12 @@ app_server <- function(input, output, session) {
     conc <- hoverConcentration(entry$results, e$x, normalization)
     returnText <- paste0("Time: ", hoverTime(e$x), ", ", x[1], " ", conc$label, ": ",
                          signif(conc$value, 2), " ", x[2])
+    # Oxygen: the arterial blood under the line (R/arterialOxygen.R)
+    ao <- entry$arterialOxygen
+    if (!is.null(ao) && identical(normalization, NORMALIZE_NONE))
+      returnText <- paste0(returnText, ", PaO2 ",
+                           round(seriesStepAt(ao$Time, ao$PaO2, e$x)), " mmHg, SaO2 ",
+                           round(seriesStepAt(ao$Time, ao$SaO2, e$x)), "%")
     # The same reading from each companion model drawn in this panel
     for (companion in companionsOf(drug))
     {
@@ -2701,6 +2793,9 @@ app_server <- function(input, output, session) {
       # And a click on one of its compartment panels (R/compartments.R)
       compartment <- compartmentSeries(drug)
       if (!is.na(compartment$drug)) drug <- compartment$drug
+      # And on its tolerance or tachyphylaxis panel (R/pdAdaptation.R)
+      adapted <- pdAdaptationSeriesDrug(drug, drugDefaults())
+      if (!is.na(adapted)) drug <- adapted
       drug <- alternativeModelParent(drug)
       # And a click on a metabolite that is only ever formed (no dose units)
       # on the drug that forms it

@@ -62,6 +62,20 @@
 #                 as the one number in this source that a reader of the
 #                 printed paper cannot use.
 #
+# BODY SIZE (docs/weight-adjustment.md)
+# =====================================
+# With the BMI term left out, the model has no size covariate: its values
+# belong to Tsai's typical subject, and with the switch on they are anchored
+# at the cohort (CHLORTHALIDONE_COHORT; Steven L. Shafer, 2026-11-19, after
+# Carbon's second repository audit, A2-F4).  CL/F and V1/F carry the source's
+# own sex terms (women the reference, men x 1.253 and x 2.19), so each is
+# anchored at the cohort's subject of the patient's own sex: the source's sex
+# factor already holds the difference in body composition, and scaled from
+# the 70 kg reference man, as they were, the fat-free-mass difference was
+# applied on top of it (a man's V1/F 2.67 times a woman's at the same size,
+# for the published 2.19).  With the switch off the published values are
+# used unscaled.
+#
 # THE DOSE BASIS NEEDS NO DERIVATION
 # ==================================
 # Unlike azilsartan in the same paper, chlorthalidone is not a prodrug and
@@ -81,6 +95,16 @@ CHLORTHALIDONE_SEX_CL  <- 0.253    # proportional increase in men
 CHLORTHALIDONE_SEX_V   <- 1.19     # proportional increase in men
 CHLORTHALIDONE_AGE_REF <- 58       # years, population median
 
+# Tsai 2016, Supplemental Table S1 (sup0001.zip, read 2026-11-19), the 1481
+# subjects of the PK population: medians 86.0 kg, BMI 30.8, 58.0 years; 46%
+# men and 54% women (also p990 of the paper).  No height is printed; it comes
+# from the weight and BMI (167.1 cm), the same for both sexes, the table
+# giving no medians by sex.  The model is anchored at this cohort (Steven L.
+# Shafer, 2026-11-19, after Carbon's second repository audit, A2-F4; see the
+# header).
+CHLORTHALIDONE_COHORT <- list(weight = 86, bmi = 30.8, age = 58,
+                              men = round(0.46 * 1481), women = round(0.54 * 1481))
+
 #' Chlorthalidone pharmacokinetics (oral, apparent, plasma)
 #'
 #' Tsai et al. (2016), two compartments with first-order absorption in 1059
@@ -94,9 +118,19 @@ chlorthalidone <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # The source carries no weight or height term at all: its only size
   # covariate is the BMI term on volume that cannot be read (see the header).
-  # So the published parameters are reproduced unscaled with the switch off.
+  # So the published parameters are reproduced unscaled with the switch off,
+  # and with it on they are anchored at Tsai's cohort: V2/F and Q/F at its
+  # pooled patient, CL/F and V1/F, which carry the source's sex terms, at its
+  # patient of the patient's own sex (cohortSexSizeFactors()).
+  pooled <- do.call(cohortSizeFactors, CHLORTHALIDONE_COHORT)
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1, cohort = pooled)
+  ownSex <- list(volume = 1, clearance = 1)
+  if (isTRUE(adjustToFFM)) {
+    own <- cohortSexSizeFactors(CHLORTHALIDONE_COHORT, sex)
+    ownSex <- list(volume = pooled$volume / own$volume,
+                   clearance = pooled$clearance / own$clearance)
+  }
 
   male <- identical(tolower(as.character(sex)), "male")
 
@@ -110,10 +144,10 @@ chlorthalidone <- function(weight, height, age, sex, adjustToFFM = TRUE)
   v1F <- CHLORTHALIDONE_V1_F * (1 + if (male) CHLORTHALIDONE_SEX_V else 0)
 
   default <- list(
-    v1  = v1F * size$volume,
+    v1  = v1F * size$volume * ownSex$volume,
     v2  = CHLORTHALIDONE_V2_F * size$volume,
     v3  = 1,                            # two compartments
-    cl1 = clF / 60 * size$clearance,    # L/min
+    cl1 = clF / 60 * size$clearance * ownSex$clearance,    # L/min
     cl2 = CHLORTHALIDONE_Q_F / 60 * size$clearance,
     cl3 = 0,
     ka_PO = CHLORTHALIDONE_KA / 60,     # 1/min

@@ -35,7 +35,7 @@ test_that("scales to fat-free mass for a 120 kg man", {
   # source wrote on weight sees the pharmacokinetic weight 91.34 kg.
   actual <- clindamycin(120, 170, 50, "male")
   expected <- list(
-    v1 = 86.38482,
+    v1 = 86.38482 / cohortFactorsIndependent(CLINDAMYCIN_COHORT)$volume,  # V anchored (A2-F4)
     v2 = 1,
     v3 = 1,
     cl1 = 0.28915807,
@@ -62,4 +62,25 @@ test_that("an oral dose carries the bioavailability once", {
   aucIV <- PK$p_coef_bolus_l1 / PK$lambda_1
   aucPO <- PK$p_coef_PO_l1 / PK$lambda_1 + PK$p_coef_PO_ka / PK$ka_PO
   expect_equal(aucPO / aucIV, 0.876)
+})
+
+test_that("anchored at Bouazza's cohort: its typical patient receives the published V (A2-F4)", {
+  # Text p. 972: 30 men and 20 women, 70.9 kg, 58.7 y; heights from NCD-RisC
+  # (France, born 1950, less the loss to 58.7 y), 173.1 and 160.4 cm.  V has
+  # no sex term and is anchored at the pooled patient, the cohort's man and
+  # woman on the geometric mean; CL keeps its own 0.497 power, unanchored.
+  kc <- cohortFactorsIndependent(CLINDAMYCIN_COHORT)
+  expect_equal(kc$volume, 0.9207, tolerance = 1e-3)
+  m <- clindamycin(70.9, 173.1, 58.7, "male")$PK$default
+  w <- clindamycin(70.9, 160.4, 58.7, "female")$PK$default
+  pooled <- exp((30 * log(m$v1) + 20 * log(w$v1)) / 50)
+  expect_equal(pooled, 66.2, tolerance = 1e-9)
+  expect_equal(m$v1, 66.2 * pkSizeFactors(70.9, 173.1, 58.7, "male")$volume / kc$volume,
+               tolerance = 1e-6)
+  expect_equal(m$cl1 * 60, 15.2 * pkSizeFactors(70.9, 173.1, 58.7, "male")$volume^0.497,
+               tolerance = 1e-9)
+  # The switch off is unchanged
+  off <- clindamycin(70.9, 173.1, 58.7, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(off$v1, 66.2)
+  expect_equal(off$cl1 * 60, 15.2 * (70.9 / 70)^0.497)
 })

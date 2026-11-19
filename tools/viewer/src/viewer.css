@@ -207,6 +207,10 @@ body.over #message .card { border-color: var(--accent); }
 /* the physiology panel the run was drawn at, under the name (player.js) */
 #physio { font-weight: 400; font-size: 11.5px; color: var(--ink-2); margin-top: 3px; max-width: calc(100vw - 120px); }
 #physio:empty { display: none; }
+#oxygen { font-size: 11.5px; margin-top: 2px; }
+#oxygen:empty { display: none; }
+#brand #oxygen span { font-size: 11.5px; font-weight: 400; margin-left: 0; color: var(--ink-2); }
+#brand #oxygen span.off { color: var(--target); font-weight: 600; }
 #brand #physio span { font-size: 11.5px; font-weight: 400; margin-left: 0; color: var(--ink-2); }
 #brand #physio span.off { color: var(--target); font-weight: 600; }
 

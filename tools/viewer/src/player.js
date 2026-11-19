@@ -626,6 +626,12 @@ const Player = {
             this.$('physio').innerHTML = physiologyLine(phys.ph) +
                 (phys.index >= 0 ? ` <span class="step">(physiology event${phys.index > 0 ? ' at ' + hms(phys.ph.time) : 's: normal'})</span>` : '');
         }
+        // Arterial oxygen under the title with an endobronchial tube, amber
+        // below 90% (Shafer, 2026-11-19); the cards do not grow
+        const ox = this.$('oxygen');
+        if (ox) ox.innerHTML = st.saturation != null && Number.isFinite(st.saturation)
+            ? `<span class="${st.saturation < 90 ? 'off' : ''}">SaO₂ ${Math.round(st.saturation)}% · PaO₂ ${Math.round(st.paO2)} mmHg</span>`
+            : '';
         this.readout(st);
         this.amounts(st);
         if (this.view === '3d') Cards.fit('3d');

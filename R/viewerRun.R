@@ -742,6 +742,10 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_,
     volume = as.list(vol), partition = as.list(lambda), capacity = as.list(capacity),
     t = times * 60, p = p, venous = at(venous),
     arterial = if (gasShunt(body) > 0) at(arterial) else NULL,
+    # The arterial saturation and PaO2 where an endobronchial tube shunts
+    # blood (R/arterialOxygen.R; Shafer, 2026-11-19), shown under the title
+    saturation = if (!is.null(gr$arterialOxygen)) at(gr$arterialOxygen$SaO2) else NULL,
+    paO2 = if (!is.null(gr$arterialOxygen)) at(gr$arterialOxygen$PaO2) else NULL,
     # One number, or with physiology events the output in force at each time
     cardiacOutput = if (is.null(steps)) (if (is.null(gr$Qco)) body$Q_cardiac else gr$Qco)
                     else if (!is.null(gr$cardiacOutput)) gr$cardiacOutput

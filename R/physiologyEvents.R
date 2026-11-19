@@ -51,7 +51,12 @@
 # antiseizure interactions replace with their own segments keeps the
 # interactions' and is held at normal physiology, said in the panel
 # (physiologyStepsSkipped()).  The TCI pump plans on the set in force at time
-# 0, as a real pump knows nothing of the patient's physiology.
+# 0 (an event at time 0 included, physiologyEventPump()) and does not re-plan
+# at a later event, so the concentration drifts from the target after it, as
+# it would in a patient.  The Bayesian update fits at normal physiology
+# throughout and applies the events to the patient it finds.  Both DECIDED by
+# Shafer on 2026-11-19 ("Keep both"): do not make the pump re-plan at events
+# or the fit read them without reopening that decision.
 # -----------------------------------------------------------------------------
 
 #' The event name of a recorded physiology
@@ -68,12 +73,14 @@ PHYSIOLOGY_EVENT_MAX <- 50L
 
 #' The settings one physiology event records, in order
 #' @keywords internal
-PHYSIOLOGY_EVENT_FIELDS <- c(names(PHYSIOLOGY_DEFAULT), "altitude", "endobronchial")
+PHYSIOLOGY_EVENT_FIELDS <- c(names(PHYSIOLOGY_DEFAULT), "altitude", "endobronchial",
+                             "haemoglobin")
 
 #' Normal physiology as a physiology event's settings
 #' @keywords internal
 physiologyEventNormal <- function()
-  c(PHYSIOLOGY_DEFAULT, altitude = ALTITUDE_DEFAULT, endobronchial = 0)
+  c(PHYSIOLOGY_DEFAULT, altitude = ALTITUDE_DEFAULT, endobronchial = 0,
+    haemoglobin = ARTERIAL_OXYGEN_HAEMOGLOBIN)
 
 #' Check one physiology event's settings
 #'
@@ -97,6 +104,7 @@ checkPhysiologyEvent <- function(x)
   out[["altitude"]] <- checkAltitude(out[["altitude"]])
   if (!out[["endobronchial"]] %in% c(0, 1))
     stop("Invalid physiology event settings: endobronchial must be 0 or 1")
+  out[["haemoglobin"]] <- checkHaemoglobin(out[["haemoglobin"]])
   out
 }
 
@@ -219,7 +227,9 @@ physiologyEventSummary <- function(x, gas = TRUE)
                  sprintf("Altitude %s m (%.0f Torr)", format(x[["altitude"]]),
                          barometricPressure(x[["altitude"]]))
                else "Sea level",
-               if (x[["endobronchial"]] == 1) "Endobronchial intubation" else "Tracheal intubation")
+               if (x[["endobronchial"]] == 1)
+                 sprintf("Endobronchial intubation, haemoglobin %s g/dL", format(x[["haemoglobin"]]))
+               else "Tracheal intubation")
   paste(parts, collapse = ", ")
 }
 

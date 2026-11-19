@@ -76,7 +76,9 @@
 # CL 3.45, Q 4.74 L/min; Table III).  That ke0 belongs to that disposition,
 # not to Dowling's, so it is carried as the time to peak it gives there
 # (Minto 2003): 3.58 min after a bolus.  getDrugPK() solves ke0 against
-# Dowling's disposition from that, 0.095 /min for the 70 kg reference.  Until
+# Dowling's disposition from that, 0.099 /min for the 70 kg reference man
+# with the switch on (0.095 before the peripheral parameters were anchored at
+# Dowling's men, 2026-11-19; see BODY SIZE).  Until
 # 2026-10-12 the ke0 (6.40 /h) was put directly on Dowling's disposition,
 # which peaked a bolus at 3.4 min; changed by decision of Steven L. Shafer,
 # 2026-10-12, in the opioid MEAC and tPeak audit.  No antagonism model is
@@ -85,10 +87,19 @@
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # Clearance uses its own lean-body-weight covariate in both switch
-# positions.  With the switch on, Vc sees the pharmacokinetic weight and the
-# size-free peripheral volumes and clearances follow the library convention;
-# with it off, Vc sees total body weight and the peripheral parameters are
-# fixed, which is the published model exactly.
+# positions.  With the switch on, Vc sees the pharmacokinetic weight; with it
+# off, Vc sees total body weight and the peripheral parameters are fixed,
+# which is the published model exactly.  The peripheral volumes and
+# clearances (V2, V3, Q2, Q3), with no size covariate, belong to Dowling's
+# typical subject, and with the switch on they are anchored at the cohort
+# (NALOXONE_COHORT, below; Steven L. Shafer, 2026-11-19, after Carbon's second
+# repository audit, A2-F4): volumes x the patient's fat-free-mass ratio to the
+# cohort's typical man, Q2 and Q3 x that ratio ^ 0.75.  Scaled from the 70 kg
+# reference man, as they were, Dowling's own typical man received peripheral
+# volumes 12% and peripheral clearances 9% above the published values
+# (factors 1.122 and 1.090).  A model with a size covariate on some
+# parameters is not thereby exempt on the others.  The intranasal F, anchored
+# on the reference man's clearance, which is not anchored, is unaffected.
 #
 # References
 # ----------
@@ -105,6 +116,12 @@
 NALOXONE_TPEAK <- 3.58           # min after an intravenous bolus
 NALOXONE_LAFFONT_CL_F <- 396     # L/h, apparent clearance of the 4 mg spray
 
+# Dowling 2008, Methods (Subjects): six healthy men, median 80 kg, 1.78 m and
+# 25 years.  Height printed, none derived.  V2, V3, Q2 and Q3 are anchored at
+# this cohort (Steven L. Shafer, 2026-11-19, after Carbon's second repository
+# audit, A2-F4; see the header).
+NALOXONE_COHORT <- list(weight = 80, height = 178, age = 25, men = 6, women = 0)
+
 #' Naloxone pharmacokinetics
 #'
 #' @inheritParams cefazolin
@@ -119,9 +136,12 @@ NALOXONE_LAFFONT_CL_F <- 396     # L/h, apparent clearance of the 4 mg spray
 naloxone <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Size scaling (see the header).  size$ffm is ffmAlSallami()'s fat-free
-  # mass, which the clearance covariate takes in either switch position.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
-  pkW   <- 70 * size$volume
+  # mass, which the clearance covariate takes in either switch position.  The
+  # peripheral parameters are anchored at Dowling's men (NALOXONE_COHORT);
+  # Vc's own weight term reads pkWeight, which does not depend on the anchor.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                        cohort = do.call(cohortSizeFactors, NALOXONE_COHORT))
+  pkW   <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   fixV  <- if (isTRUE(adjustToFFM)) size$volume    else 1
   fixCL <- if (isTRUE(adjustToFFM)) size$clearance else 1
 

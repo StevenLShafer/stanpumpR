@@ -59,3 +59,32 @@ test_that("cisplatin is a chemotherapy drug with the metabolite-only cisplatinBo
   expect_identical(therapeuticRange("cisplatin")$band_status, "not_applicable")
   expect_identical(therapeuticRange("cisplatinBound")$band_status, "not_applicable")
 })
+
+test_that("Urien's size-free parameters are anchored at her 43 patients (A2-F4)", {
+  # Table 1 (p. 758): 64 kg, 168 cm, 58 years, 25 men and 18 women.  With the
+  # switch on, Q and V2 are the published values divided by the cohort's
+  # pooled factors, so that its men and women, pooled geometrically, receive
+  # the published values; with the switch off they are fixed.
+  kc <- cohortFactorsIndependent(CISPLATIN_URIEN_COHORT)
+  pk <- function(sex, ffm = TRUE)
+    cisplatin(64, 168, 58, sex, adjustToFFM = ffm, creatinine = 1)$PK$default
+  for (sex in c("male", "female")) {
+    own <- pkSizeFactors(64, 168, 58, sex)
+    on <- pk(sex)
+    off <- pk(sex, FALSE)
+    expect_equal(off$v2, 12.0, tolerance = 1e-12)
+    expect_equal(off$cl2 * 60, 8.64, tolerance = 1e-12)
+    expect_equal(on$v2, 12.0 * own$volume / kc$volume, tolerance = 1e-6)
+    expect_equal(on$cl2 * 60, 8.64 * own$clearance / kc$clearance, tolerance = 1e-6)
+  }
+  pooled <- function(f) exp((25 * log(f("male")) + 18 * log(f("female"))) / 43)
+  expect_equal(pooled(function(s) pk(s)$v2), 12.0, tolerance = 1e-6)
+  expect_equal(pooled(function(s) pk(s)$cl2 * 60), 8.64, tolerance = 1e-6)
+  # the bound platinum has nothing to anchor: the switch moves it only
+  # through the BSA and Cockcroft-Gault weight
+  b <- function(ffm) cisplatinBound(64, 168, 58, "female", adjustToFFM = ffm,
+                                    creatinine = 1)$PK$default$v1
+  w <- pkSizeFactors(64, 168, 58, "female")$pkWeight
+  expect_equal(b(TRUE), cisplatinBound(w, 168, 58, "female", adjustToFFM = FALSE,
+                                       creatinine = 1)$PK$default$v1)
+})

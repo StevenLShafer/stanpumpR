@@ -70,8 +70,14 @@
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # BSA at the pharmacokinetic weight with the switch on and total weight with
-# it off; V1, Q and V2, with no covariate, scale by the library's factors with
-# the switch on and are fixed with it off.
+# it off.  V1, Q and V2, with no covariate, belong to the cohort's typical
+# patient, and with the switch on they are anchored at her
+# (DOXORUBICIN_JOERGER_COHORT, below; Steven L. Shafer, 2026-11-19, after
+# Carbon's second repository audit, A2-F4): scaled from the 70 kg reference
+# man, as they were, Joerger's own typical woman received a V1 18% and a Q
+# 14% below the published values.  A model with a size covariate on one
+# parameter is not thereby exempt on the others.  With the switch off they
+# are fixed.  Doxorubicinol is anchored at the same cohort.
 #
 # PREGNANCY (R/pregnancy.R)
 # =========================
@@ -108,6 +114,11 @@ DOXORUBICIN_BASE_FRACTION <- 543.52 / 579.98
 # Doxorubicinol over doxorubicin hydrochloride (545.54 / 579.98 g/mol)
 DOXORUBICINOL_PER_HYDROCHLORIDE <- 545.54 / 579.98
 
+# Joerger 2007, Table I (printed p. 1058), as read on the PDF 2026-11-18 for
+# cyclophosphamideJoerger (the same 59 women): medians 70 kg, BSA 1.81 m2, 56
+# years; the height back-solved from the BSA by Du Bois's formula (170.0 cm).
+DOXORUBICIN_JOERGER_COHORT <- list(weight = 70, height = 170.0, age = 56, men = 0, women = 59)
+
 #' Doxorubicin, intravenous (Joerger 2007)
 #'
 #' Two compartments, forming doxorubicinol; body surface area and age on
@@ -124,8 +135,11 @@ doxorubicinJoerger <- function(weight, height, age, sex, adjustToFFM = TRUE,
   preg <- if (isTRUE(pregnant)) DOXORUBICIN_PREGNANCY else list(cl = 1, v1 = 1)
   p <- DOXORUBICIN_JOERGER
   f <- DOXORUBICIN_BASE_FRACTION
+  # V1, Q and V2, with no covariate, are anchored at Joerger's 59 women
+  # (DOXORUBICIN_JOERGER_COHORT); the clearance carries its own BSA term
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, DOXORUBICIN_JOERGER_COHORT))
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   bsa <- bsaMosteller(w, height)
   ageTerm <- max(age, ADULT_AGE_TERM_FLOOR)

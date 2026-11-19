@@ -287,6 +287,11 @@ MAX_DOSE_ROWS <- 500L
 MAX_EVENT_ROWS <- 100L
 MAX_TARGET_ROWS <- 20L
 MAX_DOSE_VALUE <- 1e9
+# What a dialog says when it would write the dose table over edits not yet
+# applied (commitDoseTable(); Carbon's second repository audit, A2-F18)
+DOSE_TABLE_UNAPPLIED_MESSAGE <- paste(
+  "The dose table has changes that have not been applied.",
+  "Click Apply Changes, or undo them, and then try again.")
 # The most units one Drug Library edit may add, each of which is simulated
 # once (drugLibraryUnitProblems(); typically 0.01 s each, at most 1.5 s)
 DRUG_LIBRARY_MAX_NEW_UNITS <- 40L

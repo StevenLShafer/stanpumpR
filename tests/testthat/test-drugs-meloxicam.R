@@ -40,19 +40,45 @@ test_that("CYP2C9 alleles reduce apparent clearance per allele", {
 })
 
 test_that("scales the size-free parameters to fat-free mass for a 120 kg man", {
-  # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126;
-  # Vc/F on the Al-Sallami fat-free mass, 70.7 kg, either way
+  # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126,
+  # divided by the factors of Aoyama's men (MELOXICAM_COHORT), at whom the
+  # size-free parameters are anchored; Vc/F on the Al-Sallami fat-free mass,
+  # 70.7 kg, either way
+  kc <- cohortFactorsIndependent(MELOXICAM_COHORT)
   actual <- meloxicam(120, 170, 50, "male")$PK$default
   expected <- list(
     v1 = 7.79 * ((9270 * 120 / (6680 + 216 * 120 / 1.7^2)) / 55)^1.05,
-    v2 = 2.73 * 1.3049067,
-    cl1 = 0.391 / 60 * 1.2209126,
-    cl2 = 1.24 / 60 * 1.2209126
+    v2 = 2.73 * 1.3049067 / kc$volume,
+    cl1 = 0.391 / 60 * 1.2209126 / kc$clearance,
+    cl2 = 1.24 / 60 * 1.2209126 / kc$clearance
   )
   expect_equal_rounded(actual[names(expected)], expected)
   off <- meloxicam(120, 170, 50, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(off$v1, actual$v1)
   expect_equal(off$cl1, 0.391 / 60)
+})
+
+test_that("anchored at Aoyama's men: their typical man receives the published size-free values (A2-F4)", {
+  # Table 1, four groups of men, each at its own medians.  CL/F, Q/F and Vp/F
+  # carry no size term, so the groups' men sit either side of the published
+  # values and their weighted geometric mean is the published value.
+  lv <- c(v2 = 0, cl1 = 0, cl2 = 0); n <- 0
+  for (g in MELOXICAM_COHORT$groups) {
+    x <- meloxicam(g$weight, g$height, g$age, "male")$PK$default
+    lv <- lv + g$men * log(c(v2 = x$v2, cl1 = x$cl1, cl2 = x$cl2))
+    n <- n + g$men
+  }
+  expect_equal(n, 119)
+  expect_equal(unname(exp(lv / n)), c(2.73, 0.391 / 60, 1.24 / 60), tolerance = 1e-6)
+  kc <- cohortFactorsIndependent(MELOXICAM_COHORT)
+  x <- meloxicam(74.5, 177, 26, "male")$PK$default
+  expect_equal(x$v2, 2.73 * ffmRatioMaleIndependent(74.5, 177, 26) / kc$volume,
+               tolerance = 1e-6)
+  # The switch off is unchanged; the intravenous system is not anchored
+  off <- meloxicam(74.5, 177, 26, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(c(off$v2, off$cl1 * 60, off$cl2 * 60), c(2.73, 0.391, 1.24))
+  iv <- meloxicam(74.5, 177, 26, "male", creatinine = 1)$parallelSystems[[1]]$PK$default
+  expect_equal(iv$v1, 4.16 * (74.5 / 70)^0.776)
 })
 
 test_that("Vc/F is defined at every weight, where James's lean body mass was not", {

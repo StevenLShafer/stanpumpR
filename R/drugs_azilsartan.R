@@ -132,7 +132,13 @@ azilsartan <- function(weight, height, age, sex, adjustToFFM = TRUE)
   v1  <- AZILSARTAN_V1_F / AZILSARTAN_MOIETY * size$volume
   v2  <- AZILSARTAN_V2_F / AZILSARTAN_MOIETY * size$volume
   cl1 <- clF            / AZILSARTAN_MOIETY * size$clearance / 60   # L/min
-  cl2 <- AZILSARTAN_Q_F / AZILSARTAN_MOIETY * size$clearance / 60
+  # Q/F has no weight term in the source: with the switch off it is the
+  # published value.  It took the clearance's (weight/86)^0.267 there, 0.646
+  # L/h at 120 kg for the published 0.591 (Carbon's second repository audit,
+  # 2026-11-19, A2-F3).  With the switch on every clearance takes the
+  # library's fat-free-mass factor, which stands in for the source's term.
+  qSize <- if (isTRUE(adjustToFFM)) size$clearance else 1
+  cl2 <- AZILSARTAN_Q_F / AZILSARTAN_MOIETY * qSize / 60
 
   default <- list(
     v1  = v1,

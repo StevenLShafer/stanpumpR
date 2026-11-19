@@ -883,8 +883,14 @@ gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION,
 #' @returns a character vector of messages, one per offending time, empty when
 #'   the settings are possible
 #' @export
-gasVaporiserProblems <- function(doseTable)
+gasVaporiserProblems <- function(doseTable, altitude = ALTITUDE_DEFAULT)
 {
+  # At altitude the engine holds the vapour to the ambient pressure, a
+  # desflurane vaporizer's dial scaled by it (gasSettingsAt()), so the check
+  # does too: checked at sea level, settings the engine then refused at
+  # altitude made the gas curves vanish without a word (Carbon's second
+  # repository audit, 2026-11-19, A2-F23).
+  ratio <- pressureRatio(altitude)
   if (is.null(doseTable) || nrow(doseTable) == 0) return(character(0))
   volatiles <- setdiff(potentAgents(), "nitrousOxide")
   drug <- as.character(doseTable$Drug)
@@ -902,11 +908,15 @@ gasVaporiserProblems <- function(doseTable)
   split <- split(rows, rows$Drug)
   problems <- character(0)
   for (t in sort(unique(rows$Time))) {
-    total <- sum(vapply(split, function(d) settingAt(d, t), numeric(1)))
-    if (total > 100 + 1e-9) {
-      problems <- c(problems, sprintf(
+    dial <- vapply(split, function(d) settingAt(d, t), numeric(1))
+    vpv <- names(dial) %in% ALTITUDE_VOLUME_PERCENT_VAPORIZERS
+    total <- sum(dial[!vpv]) + sum(dial[vpv]) * ratio
+    if (total > 100 * ratio + 1e-9) {
+      problems <- c(problems, if (ratio == 1) sprintf(
         "At %s min the vaporisers together are set to %s%%; the fresh gas cannot be more than 100%% vapour, so the gases are not simulated until one of them is lowered.",
-        format(t), format(total)))
+        format(t), format(sum(dial))) else sprintf(
+        "At %s min the vaporisers together give a partial pressure of %s%% of a sea-level atmosphere, above the ambient %s%% at %s m; the fresh gas cannot be more than 100%% vapour, so the gases are not simulated until one of them is lowered.",
+        format(t), format(signif(total, 3)), format(signif(100 * ratio, 3)), format(altitude)))
     }
   }
   problems
@@ -1327,7 +1337,10 @@ gasBodySteps <- function(weight, events)
     body <- gasBodyPhysiology(getGasBody(weight), x[["cardiac"]], split = split)
     if (x[["temperature"]] != 37) body$temperature <- unname(x[["temperature"]])
     if (x[["altitude"]] != ALTITUDE_DEFAULT) body$altitude <- unname(x[["altitude"]])
-    gasBodyEndobronchial(body, x[["endobronchial"]] == 1)
+    body <- gasBodyEndobronchial(body, x[["endobronchial"]] == 1)
+    if (x[["haemoglobin"]] != ARTERIAL_OXYGEN_HAEMOGLOBIN)
+      body$haemoglobin <- unname(x[["haemoglobin"]])
+    body
   })
   list(time = c(0, events$Time), body = bodies)
 }
@@ -1372,7 +1385,11 @@ gasBodySteps <- function(weight, events)
 #'   and each event's from its time (cardiac output, temperature, altitude
 #'   and intubation, \code{gasBodySteps()}), the agent in each compartment
 #'   carried across each step, and \code{physiology}, \code{temperature},
-#'   \code{altitude} and \code{endobronchial} are not used
+#'   \code{altitude}, \code{endobronchial} and \code{haemoglobin} are not used
+#' @param haemoglobin NULL (15 g/dL), or the haemoglobin, g/dL, of the
+#'   arterial oxygen read off the run (\code{gasArterialOxygen()},
+#'   R/arterialOxygen.R), kept in the body as \code{haemoglobin}; the engine
+#'   does not read it
 #' @param uptakeEffect,circuit,deadSpace,oxygenUptake passed to
 #'   \code{advanceClosedFormGas()}
 #'
@@ -1388,7 +1405,7 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
                           # positional call keeps its binding (exported).
                           physiology = NULL, temperature = NULL,
                           altitude = NULL, endobronchial = FALSE,
-                          physiologyEvents = NULL)
+                          physiologyEvents = NULL, haemoglobin = NULL)
 {
   circuit <- match.arg(circuit)
   if (is.null(doseTable) || nrow(doseTable) == 0) return(NULL)
@@ -1412,6 +1429,10 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
   altitude <- checkAltitude(altitude)
   if (altitude != ALTITUDE_DEFAULT) body$altitude <- altitude
   body <- gasBodyEndobronchial(body, endobronchial)
+  # The haemoglobin of the arterial oxygen (R/arterialOxygen.R); the engine
+  # itself does not read it
+  haemoglobin <- checkHaemoglobin(haemoglobin)
+  if (haemoglobin != ARTERIAL_OXYGEN_HAEMOGLOBIN) body$haemoglobin <- haemoglobin
   # With physiology events, normal physiology from 0 and each event's from
   # its time; the other physiology arguments are not used
   # (R/physiologyEvents.R)

@@ -49,7 +49,7 @@
 #' @param albumin serum albumin in g/dL, or NULL (the default), in which case
 #'   each model holds its own reference value.  Passed only to the models that
 #'   declare it (methotrexate, methotrexatePediatric, docetaxel,
-#'   paclitaxelProteinBound).
+#'   paclitaxelProteinBound, tolcapone).
 #' @param ast serum aspartate aminotransferase in U/L, or NULL (the default),
 #'   in which case each model holds its own reference value.  Passed only to
 #'   the models that declare it (epirubicin).
@@ -168,8 +168,9 @@ getDrugPK <- function(
   if (is.data.frame(drugDefaults) && nrow(drugDefaults) != 1L) {
     own <- drugDefaults[drugDefaults$Drug %in% drug, , drop = FALSE]
     if (nrow(own) != 1L)
-      stop("drugDefaults must be the drug's one library row; ", nrow(drugDefaults),
-           " rows were given for ", drug, ".")
+      stop("drugDefaults must be the drug's one library row; ", nrow(own),
+           " of the ", nrow(drugDefaults), " rows given are ", drug,
+           "'s (Carbon's second repository audit, A2-F11).")
     drugDefaults <- own
   }
   pregnant <- checkPregnant(pregnant, sex)

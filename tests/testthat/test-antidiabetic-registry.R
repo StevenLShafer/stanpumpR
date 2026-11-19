@@ -44,7 +44,21 @@ test_that("no pharmacodynamic endpoint is implemented", {
   defaults <- getDrugDefaultsGlobal()
   ad <- defaults[defaults$Category %in% "Antidiabetic", ]
   expect_true(all(ad$MEAC == 0 & ad$Lower == 0 & ad$Upper == 0 & ad$Typical == 0 & ad$endCe == 0))
-  for (d in ad$Drug) expect_equal(get(d)(70, 170, 40, "male")$tPeak, 0, info = d)
+  # Effect sites are the exception (Shafer, 2026-11-19): the insulins share
+  # one (R/insulinEffectSite.R) and glyburide has Rydberg 1997's; each is a
+  # ke0 supplied directly, with no tPeak, and no glucose endpoint is drawn.
+  insulins <- ad$Drug[grepl("^insulin", ad$Drug)]
+  expect_length(insulins, 11)
+  for (d in ad$Drug) {
+    m <- get(d)(70, 170, 40, "male")
+    if (d %in% insulins) {
+      expect_null(m$tPeak); expect_equal(m$ke0, INSULIN_KE0 / 60, info = d)
+    } else if (d == "glyburide") {
+      expect_null(m$tPeak); expect_equal(m$ke0, 1.59 / 60, info = d)
+    } else {
+      expect_equal(m$tPeak, 0, info = d)
+    }
+  }
 })
 
 test_that("only a product whose label permits a pump offers U/hr SC", {
@@ -111,14 +125,26 @@ test_that("the audited numbers are the ones the models use", {
                as.numeric(parameters$value[parameters$drug == "tirzepatide" & parameters$parameter == "F"]),
                tolerance = 1e-3)
   val <- function(d, p) as.numeric(parameters$value[parameters$drug == d & parameters$parameter == p])
-  so <- semaglutideOral(85, 175, 50, "male", adjustToFFM = FALSE)$PK$default
+  so <- semaglutideOral(85, 165, 50, "female", adjustToFFM = FALSE)$PK$default
   expect_equal(100 * so$bioavailability_PO, val("semaglutideOral", "F"))
   expect_equal(so$v1, val("semaglutideOral", "Vc"))
-  expect_equal(SEMAGLUTIDE_ORAL_T2D_CL, val("semaglutideOral", "T2D factor on CL"))
+  expect_equal(so$cl1 * 60, val("semaglutideOral", "CL"))
+  expect_equal(SEMAGLUTIDE_ORAL_MALE_F, val("semaglutideOral", "sex factor on F"))
+  expect_equal(SEMAGLUTIDE_ORAL_WEIGHT_F, val("semaglutideOral", "weight exponent on F"))
   ce <- cetagliptin(70, 170, 46, "male", adjustToFFM = FALSE)
-  expect_equal(ce$michaelisMenten$vmax * 60, val("cetagliptin", "Vmax"))
-  expect_equal(ce$michaelisMenten$km, val("cetagliptin", "Km"))
+  expect_equal(ce$michaelisMenten$saturableEfflux$vmax * 60, val("cetagliptin", "efflux Vmax"))
+  expect_equal(ce$michaelisMenten$saturableEfflux$km, val("cetagliptin", "efflux Kt"))
+  expect_equal(ce$michaelisMenten$clLinear * 60, val("cetagliptin", "CL/F"))
   expect_equal(ce$PK$default$v2, val("cetagliptin", "V2/F"))
+  al <- alogliptin(84.9, 175, 50, "male", FALSE)$PK$default
+  expect_equal(al$v1, val("alogliptin", "Vc/F"))
+  expect_equal(al$cl2 * 60, val("alogliptin", "Q/F"))
+  mer <- metforminER(70, 170, 40, "male", FALSE)$PK$default
+  expect_equal(mer$v1, val("metforminER", "V1/F"))
+  expect_equal(mer$v2, val("metforminER", "V2/F"))
+  lo <- liraglutideOvergaard(100, 165, 45, "female", FALSE)$PK$default
+  expect_equal(lo$cl1 * 60, val("liraglutideOvergaard", "CL/F"))
+  expect_equal(lo$v1, val("liraglutideOvergaard", "V/F"))
   # at each insulin's reference weight (80 kg; glargine 71.4 kg) and dose
   for (d in c("insulinRegular", "insulinLispro", "insulinGlargine")) {
     rows <- parameters[parameters$drug == d, ]
