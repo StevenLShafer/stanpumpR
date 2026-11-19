@@ -439,6 +439,57 @@ falls too. Lower the Cardiac output slider as well to reproduce that: at 0.4
 of normal, propofol falls to 44%. Only drugs with a physiology row respond;
 volumes, intercompartmental clearances and ke0 do not change.
 
+The sliders move in small steps on a log scale, so the multiple a slider
+shows is rounded: x0.50 applies 0.501, x2.00 applies 1.995. The difference is
+far below anything the curves can show, and it is not an error.
+
+## Physiology events: physiology that changes during a case
+
+The sliders describe one physiology for the whole plot. To let it change
+during a case, set the sliders and click **Create event**, below them, and
+enter a time in the plot's time units. The settings are recorded as an event
+labelled **Physiology** in the Events panel; resting the pointer on it shows
+what it recorded. Once the event table holds any Physiology event:
+
+* physiology is **normal from time 0** (every slider at 1, 37 °C, sea level,
+  a tracheal tube), and steps to each event's settings at its time, as a
+  step, not a ramp. For a gradual change, create several events, a few
+  minutes apart;
+* the sliders no longer set the plot; they set the next event to be created,
+  and the panel says so;
+* at each step **the drug in each compartment stays where it is**. Volumes,
+  clearances and flows change; amounts do not move from one compartment to
+  another. A central volume that halves therefore doubles the plasma
+  concentration at that instant. This is the conversion Steven Shafer wrote
+  for the Zuppa dexmedetomidine model, whose parameters change on and off
+  bypass, and it is checked against an exact matrix-exponential solution;
+* for the inhaled anesthetics, the partial pressures in the breathing
+  circuit and the lungs carry across, and a cooled tissue keeps the agent it
+  held at a lower partial pressure, because it now dissolves more of it.
+  MAC steps with the temperature;
+* the time until threshold, at each moment, assumes the physiology in force
+  at that moment continues.
+
+Events are edited, moved and deleted with the other events (double-click the
+Events panel); the dialog shows each Physiology event's settings, only those
+away from normal. They travel in a bookmark and are listed in the exported
+workbook. A clinical event that changes a drug's model (bypass, for
+dexmedetomidine) and a physiology event act together.
+
+What does not follow the events: a drug whose model the sliders do not change
+(*Which drugs respond*, below); a drug on the saturable (Michaelis-Menten),
+transit-chain or other special engines, or one that forms a metabolite, whose
+PK the event engine cannot switch during a run; a drug changed by the
+antiseizure interactions, whose own segments take precedence; and a dose
+table with a rate into the tissue depot (a regional-anaesthesia infusion, or
+an extended-release oral form the program releases that way), which keeps
+normal physiology throughout and is named in the panel. A TCI pump plans on
+the physiology in force at time 0 (an event at time 0 included, as the
+sliders are without events); a later event is one the pump does not know of,
+so the concentration drifts from the target, as it would in a patient. The Visualizer shows the physiology in force as the run plays; it
+does not yet draw an inhaled agent whose body temperature or intubation
+changes during the run.
+
 ## The sliders and the Bayesian update
 
 When measured concentrations update a drug ([Bayesian updating](help:models/bayesian)),
@@ -446,6 +497,8 @@ the fit is made at normal physiology, and the sliders are applied to the
 patient it finds. The measurements describe the patient as they found them, so
 moving a slider afterwards asks what would happen to that patient, and does not
 refit. The model's own line, "(population)", is drawn at the sliders too.
+With physiology events the same holds: the fit is made at normal physiology
+throughout, and the events are applied to the patient it finds.
 
 ## Which drugs respond
 

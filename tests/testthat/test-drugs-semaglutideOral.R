@@ -1,70 +1,70 @@
-# oral semaglutide: see R/drugs_semaglutideOral.R (Overgaard 2021, ESM Table 1).
+# oral semaglutide: see R/drugs_semaglutideOral.R (Overgaard 2021, Cell Rep
+# Med, PIONEER outpatients; Methods S1 and Supplementary Table 1).
 noEvents <- data.frame(Time = numeric(0), Event = character(0))
-halfLife <- function(p) {
-  k10 <- p$cl1 / p$v1; k12 <- p$cl2 / p$v1; k21 <- p$cl2 / p$v2
-  s <- k10 + k12 + k21
-  log(2) / ((s - sqrt(s^2 - 4 * k10 * k21)) / 2) / 60     # h
-}
 
-test_that("the 85 kg reference subject, switch off, has ESM Table 1's values", {
-  p <- semaglutideOral(85, 175, 50, "male", adjustToFFM = FALSE)$PK$default
-  expect_equal(p$cl1 * 60, 0.0348 * 1.09)
+test_that("the 85 kg reference woman, switch off, has Table S1's values", {
+  p <- semaglutideOral(85, 165, 50, "female", adjustToFFM = FALSE)$PK$default
+  expect_equal(p$cl1 * 60, 0.039)
   expect_equal(p$cl2 * 60, 0.304)
   expect_equal(p$v1, 3.59)
   expect_equal(p$v2, 4.1)
   expect_equal(p$ka_PO * 60, 2.09)
-  expect_equal(p$bioavailability_PO, 0.00795)
+  expect_equal(p$bioavailability_PO, 0.00471)
   expect_equal(p$tlag_PO, 0)
+  # the fixed clearance is Overgaard 2019's 0.0348 L/h in type 2 diabetes (x 1.12)
+  expect_equal(0.0348 * 1.12, 0.039, tolerance = 0.001)
 })
 
-test_that("Table 2's typical values follow at the groups' mean weights", {
-  # healthy subjects, 80.7 kg: the diabetes factor divided out
-  h <- semaglutideOral(80.7, 175, 47, "male", adjustToFFM = FALSE)$PK$default
-  h$cl1 <- h$cl1 / SEMAGLUTIDE_ORAL_T2D_CL
-  expect_equal(round(h$cl1 * 60, 3), 0.033)
-  expect_equal(round(h$v1, 1), 3.4)
-  expect_equal(round(h$v2, 1), 3.9)
-  expect_equal(round(h$cl2 * 60, 2), 0.29)          # paper 0.28
-  expect_equal(round(100 * h$bioavailability_PO, 2), 0.76)
-  expect_equal(halfLife(h), 158, tolerance = 0.01)
-  # type 2 diabetes, 89.3 kg; the 0.841 factor on F is the separate analysis's
-  d <- semaglutideOral(89.3, 175, 61, "male", adjustToFFM = FALSE)$PK$default
-  expect_equal(round(d$cl1 * 60, 3), 0.040)          # paper 0.039
-  expect_equal(round(d$v1, 1), 3.8)                  # paper 3.7
-  expect_equal(round(100 * d$bioavailability_PO * 0.841, 2), 0.69)
-  expect_equal(halfLife(d), 145, tolerance = 0.01)
-})
-
-test_that("weight: positive on F, held to the oral trials' 51.1-122 kg; switch on", {
-  f <- function(w) semaglutideOral(w, 175, 50, "male", adjustToFFM = FALSE)$PK$default
-  expect_equal(f(60)$bioavailability_PO, 0.00795 * (60 / 85)^0.741)
-  expect_equal(f(150)$bioavailability_PO, 0.00795 * (122 / 85)^0.741)
-  expect_equal(f(40)$bioavailability_PO, 0.00795 * (51.1 / 85)^0.741)
-  expect_equal(f(150)$cl1 * 60, 0.0348 * (150 / 85)^1.01 * 1.09)  # not held
-  # exposure F / CL still falls with weight
-  expect_lt(f(110)$bioavailability_PO / f(110)$cl1, f(60)$bioavailability_PO / f(60)$cl1)
+test_that("men: F x 0.814; weight on F to the power 0.374, not held", {
+  f <- function(w, s) semaglutideOral(w, 170, 50, s, adjustToFFM = FALSE)$PK$default
+  expect_equal(f(85, "male")$bioavailability_PO, 0.00471 * 0.814)
+  expect_equal(f(85, "male")$cl1, f(85, "female")$cl1)
+  expect_equal(f(40, "female")$bioavailability_PO, 0.00471 * (40 / 85)^0.374)
+  expect_equal(f(180, "female")$bioavailability_PO, 0.00471 * (180 / 85)^0.374)
+  expect_equal(f(180, "female")$cl1 * 60, 0.039 * (180 / 85)^1.01)
+  expect_equal(f(180, "female")$v2, 4.1 * (180 / 85)^0.923)
+  # exposure F / CL falls with weight
+  expect_lt(f(120, "female")$bioavailability_PO / f(120, "female")$cl1,
+            f(60, "female")$bioavailability_PO / f(60, "female")$cl1)
   size <- pkSizeFactors(120, 175, 50, "male", TRUE)
   on <- semaglutideOral(120, 175, 50, "male")$PK$default
   expect_equal(on$v1, 3.59 * (size$pkWeight / 85)^0.923)
-  expect_equal_rounded(on$cl1 * 60, 0.0421668)
+  expect_equal(on$bioavailability_PO, 0.00471 * 0.814 * (size$pkWeight / 85)^0.374)
 })
 
-test_that("14 mg daily: twice PIONEER's outpatient exposure (supervised dosing)", {
-  PK <- getDrugPK("semaglutideOral", 88, 175, 60, "male", adjustToFFM = FALSE)
-  w <- simCpCe(data.frame(Drug = "semaglutideOral", Time = 0, Dose = 14, Units = "mg PO qd"),
-               noEvents, PK, 70 * MINS_PER_DAY, FALSE)$wide
-  last <- w$Time >= 69 * MINS_PER_DAY
-  t <- w$Time[last]; cp <- w$Plasma[last]
-  nmol <- sum(diff(t) * (head(cp, -1) + tail(cp, -1)) / 2) / MINS_PER_DAY / 4.11358
-  p <- PK$PK$default
-  expect_equal(nmol, p$bioavailability_PO * 14e6 / (p$cl1 * MINS_PER_DAY) / 4113.58,
-               tolerance = 0.005)                      # dose x F / CL
-  expect_equal(nmol, 29.4, tolerance = 0.01)
-  expect_equal(nmol / 14.6, 2.0, tolerance = 0.02)     # Cell Rep Med 2021, PIONEER
-  expect_true(all(is.na(w$`Effect Site`)))
+test_that("14 mg daily reproduces PIONEER's average concentration (14.6 nmol/L)", {
+  cavg <- function(w, s) {
+    PK <- getDrugPK("semaglutideOral", w, 170, 60, s, adjustToFFM = FALSE)
+    out <- simCpCe(data.frame(Drug = "semaglutideOral", Time = 0, Dose = 14, Units = "mg PO qd"),
+                   noEvents, PK, 70 * MINS_PER_DAY, FALSE)$wide
+    last <- out$Time >= 69 * MINS_PER_DAY
+    t <- out$Time[last]; cp <- out$Plasma[last]
+    nmol <- sum(diff(t) * (head(cp, -1) + tail(cp, -1)) / 2) / MINS_PER_DAY / 4.11358
+    p <- PK$PK$default
+    expect_equal(nmol, p$bioavailability_PO * 14e6 / (p$cl1 * MINS_PER_DAY) / 4113.58,
+                 tolerance = 0.005)                    # dose x F / CL
+    expect_true(all(is.na(out$`Effect Site`)))
+    nmol
+  }
+  woman <- cavg(85, "female"); man <- cavg(88, "male")
+  expect_equal(woman, 17.1, tolerance = 0.01)
+  expect_equal(man, 13.6, tolerance = 0.01)
+  # the PIONEER geometric mean lies between them
+  expect_gt(14.6, man); expect_lt(14.6, woman)
+  # the supervised model this replaced (Overgaard 2021, Clin Pharmacokinet,
+  # 0.795% x (88/85)^0.741 and CL 0.0348 x 1.09 x (88/85)^1.01) gave 29.4
+  supervised <- 0.00795 * (88 / 85)^0.741 * 14 /
+    (0.0348 * 1.09 * (88 / 85)^1.01 * 24) / 4113.58 * 1e6   # mg/L to nmol/L
+  expect_equal(supervised, 29.4, tolerance = 0.01)
+  expect_equal(man / supervised, 0.46, tolerance = 0.02)
 })
 
 test_that("units: oral, daily; a long-term drug", {
   expect_equal(getDrugDefaults("semaglutideOral")$Units[[1]], c("mg PO", "mg PO qd"))
   expect_true("semaglutideOral" %in% LONG_TERM_DRUGS)
+})
+
+test_that("a named sex string selects the same parameters", {
+  expect_identical(semaglutideOral(85, 170, 50, c(patient = "male"), FALSE)$PK,
+                   semaglutideOral(85, 170, 50, "male", FALSE)$PK)
 })

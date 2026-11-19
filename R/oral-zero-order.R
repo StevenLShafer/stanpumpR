@@ -62,6 +62,15 @@
 # so they never overlap there, but a four-hourly dose of a two-hour release
 # would.)
 #
+# A RELATIVE BIOAVAILABILITY BY DOSE (OPTIONAL)
+# =============================================
+# relativeF = list(dose = c(...), f = c(...)) (metforminER, Duong 2013:
+# 1.26, 1.16, 1.06 and 1 at 500, 1000, 1500 and 2000 mg) multiplies each
+# release by the fraction for its size, the doses in the drug's dosing unit,
+# interpolated linearly between the tabulated sizes and held at the end
+# values outside them.  Saturable oral absorption (oralSaturation) cannot do
+# this, because it scales the PO rows and a release is a rate row (below).
+#
 # WHAT IT IS NOT COMBINED WITH
 # ============================
 # getDrugPK() refuses oralZeroOrder together with an active metabolite,
@@ -98,7 +107,30 @@ validateOralZeroOrder <- function(zeroOrder, drug)
   if (!is_valid_number(lag) || lag < 0)
     stop("Invalid oralZeroOrder for ", drug, ": lag must be a number of ",
          "minutes, zero or more.")
-  list(duration = duration, lag = lag)
+  rf <- zeroOrder$relativeF
+  if (!is.null(rf) &&
+      !(is.list(rf) && is.numeric(rf$dose) && is.numeric(rf$f) &&
+        length(rf$dose) >= 1 && length(rf$dose) == length(rf$f) &&
+        all(is.finite(rf$dose)) && all(rf$dose > 0) && !is.unsorted(rf$dose, strictly = TRUE) &&
+        all(is.finite(rf$f)) && all(rf$f > 0)))
+    stop("Invalid oralZeroOrder for ", drug, ": relativeF needs increasing ",
+         "positive doses and as many positive fractions.")
+  out <- list(duration = duration, lag = lag)
+  if (!is.null(rf)) out$relativeF <- rf
+  out
+}
+
+#' The relative bioavailability of a zero-order release of each dose size
+#'
+#' @param doses the doses, in the drug's dosing unit
+#' @param relativeF the block's relativeF, or NULL
+#' @returns the fractions: linear between the tabulated sizes, held outside
+#' @keywords internal
+oralZeroOrderFraction <- function(doses, relativeF)
+{
+  if (is.null(relativeF) || !length(doses)) return(rep(1, length(doses)))
+  if (length(relativeF$dose) == 1) return(rep(relativeF$f, length(doses)))
+  stats::approx(relativeF$dose, relativeF$f, xout = doses, rule = 2)$y
 }
 
 #' The amount unit of a dose unit, without its route or formulation words
@@ -153,7 +185,8 @@ expandOralZeroOrder <- function(dose, zeroOrder, maximum)
 
   start <- as.numeric(dose$Time[isZero]) + zeroOrder$lag
   stop_ <- start + duration
-  rate  <- as.numeric(dose$Dose[isZero]) / duration
+  amount <- as.numeric(dose$Dose[isZero])
+  rate  <- amount * oralZeroOrderFraction(amount, zeroOrder$relativeF) / duration
 
   # The total rate active at each breakpoint: sum over the releases that have
   # begun and have not ended.  Written this way so that overlapping releases

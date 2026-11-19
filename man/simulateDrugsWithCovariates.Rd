@@ -113,7 +113,10 @@ are affected.}
 \item{physiology}{NULL (normal), or the physiology sliders' factors, a
 numeric vector named \code{liver}, \code{renal}, \code{cardiac},
 \code{gi} (multiples of normal function, 0.1 to 10); see
-\code{getDrugPK()}.}
+\code{getDrugPK()}.
+With a Physiology row in \code{events} (a \code{Settings} column; see
+\code{physiologyEventEncode()}, R/physiologyEvents.R), physiology is
+normal from time 0 and each event's from its time, and this is not used.}
 
 \item{pulmonaryHypertension}{does the patient have pulmonary arterial
 hypertension?  TRUE or FALSE (the default); read only by sildenafil and

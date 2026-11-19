@@ -25,7 +25,7 @@ test_that("the reference patient: Table 2's type 1 diabetes typical values", {
       cl1 = 1.88754 / 60, cl2 = 0, cl3 = 0,
       ka_SC = 0.03386502 / 60, bioavailability_SC = 1, tlag_SC = 24
     )),
-    tPeak = 0, MEAC = 0, typical = 0, upperTypical = 0, lowerTypical = 0
+    ke0 = INSULIN_KE0 / 60, MEAC = 0, typical = 0, upperTypical = 0, lowerTypical = 0
   )
   expect_equal_rounded(actual[names(expected)], expected)
   expect_equal(actual$PK$default$ka_SC * 60, tangKa)

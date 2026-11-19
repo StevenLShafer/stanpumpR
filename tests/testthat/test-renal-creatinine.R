@@ -120,7 +120,13 @@ renalDrugs <- c("mannitol", "vancomycin", "vancomycinKidneyTransplant", "gentami
                 "colistimethate", "colistin",
                 # the 2012 CKD-EPI creatinine eGFR, de-indexed to mL/min, in
                 # proportion on clearance (Barreto 2023, R/drugs_cefepime.R)
-                "cefepime")
+                "cefepime",
+                # Cockcroft-Gault on the Janmahasatian lean body weight, in
+                # proportion on CL/F (Duong 2013, R/drugs_metforminER.R)
+                "metforminER",
+                # Cockcroft-Gault, a power on CL/F with its own coefficient
+                # below 30 mL/min (Naik 2016, R/drugs_alogliptin.R)
+                "alogliptin")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system),

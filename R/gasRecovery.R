@@ -317,6 +317,30 @@ gasWashout <- function(sim, gasDose, weight = 70, cardiacOutput = NULL,
 {
   circuit <- match.arg(circuit)
   if (is.null(sim)) return(NULL)
+  # Physiology events (R/physiologyEvents.R): each segment's rows wash out on
+  # the body in force over them, as an intravenous drug's time until
+  # threshold uses the PK in force at each moment
+  if (!is.null(sim$bodySteps) && !is.null(sim$bodyRow)) {
+    segments <- list()
+    rows <- list()
+    for (k in unique(sim$bodyRow)) {
+      r <- which(sim$bodyRow == k)
+      sub <- sim
+      sub$bodySteps <- NULL
+      sub$bodyRow <- NULL
+      sub$timeLine <- sim$timeLine[r]
+      sub$state <- lapply(sim$state, function(m) m[r, , drop = FALSE])
+      sub$body <- sim$bodySteps$body[[k]]
+      sub$Qco <- if (is.null(sim$cardiacOutput)) sub$body$Q_cardiac else sim$cardiacOutput
+      segments[[length(segments) + 1L]] <- gasWashout(sub, gasDose, weight, cardiacOutput,
+                                                      rebreathing, circuit, deadSpace,
+                                                      oxygenUptake)
+      rows[[length(rows) + 1L]] <- r
+    }
+    return(list(Time = sim$timeLine, segments = segments, rows = rows,
+                rate = segments[[1]]$rate, rebreathing = rebreathing,
+                body = sim$body))
+  }
   # The body the simulation was solved with, so a cardiac output changed by
   # the physiology slider (gasBodyPhysiology()) washes out on the same flows.
   body <- if (!is.null(sim$body)) sim$body else getGasBody(weight)
@@ -444,6 +468,9 @@ gasSettingChanges <- function(bySetting, times)
 #' @export
 gasRecoveryTime <- function(washout, gas, threshold, compartment = 3, exact = TRUE)
 {
+  if (!is.null(washout$segments))
+    return(gasRecoveryBySegment(washout, function(w, i)
+      gasRecoveryTime(w, gas, threshold, compartment, exact)))
   nT <- length(washout$Time)
   if (is.null(threshold) || is.na(threshold) || threshold <= 0) return(rep(0, nT))
 
@@ -486,6 +513,11 @@ gasRecoveryTime <- function(washout, gas, threshold, compartment = 3, exact = TR
 macRecoveryTime <- function(washout, age, threshold = GAS_MAC_THRESHOLD,
                             exact = TRUE)
 {
+  if (!is.null(washout$segments)) {
+    threshold <- rep_len(threshold, length(washout$Time))
+    return(gasRecoveryBySegment(washout, function(w, i)
+      macRecoveryTime(w, age, threshold[i], exact)))
+  }
   if (exact && !isTRUE(washout$rebreathing) && !is.null(washout$state))
     return(macRecoveryTimeExact(washout, age, threshold))
 
@@ -1078,4 +1110,20 @@ gasWashoutBelow <- function(bound, Y, thr)
     sweep(pmax(Y[, m$cols, drop = FALSE], 0) %*% m$toModes, 2, m$weight, `*`)))
   U <- pmax(alpha, 0) %*% bound$left + pmin(alpha, 0) %*% bound$right
   rowSums(U > thr | is.na(U)) == 0
+}
+
+
+#' A time until threshold over a washout made of physiology segments
+#'
+#' @param washout gasWashout()'s value for a run with physiology events
+#'   (`segments`, `rows`)
+#' @param f function(segment washout, its rows) giving one value per row
+#' @returns one value per time point of the whole run
+#' @keywords internal
+gasRecoveryBySegment <- function(washout, f)
+{
+  out <- numeric(length(washout$Time))
+  for (k in seq_along(washout$segments))
+    out[washout$rows[[k]]] <- f(washout$segments[[k]], washout$rows[[k]])
+  out
 }
