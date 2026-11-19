@@ -567,7 +567,7 @@ app_ui <- function() {
                   ))
                 ),
                 conditionalPanel(
-                  condition = sprintf("!(input.showThreshold || input.showMEAC || input.showAdaptation || input.addedPlots.includes('%s') || input.addedPlots.includes('%s'))", PLOT_ID_EVENTS, PLOT_ID_INTERACTION),
+                  condition = sprintf("!(input.showThreshold || input.showMEAC || output.adaptationDrawn || input.addedPlots.includes('%s') || input.addedPlots.includes('%s'))", PLOT_ID_EVENTS, PLOT_ID_INTERACTION),
                   checkboxInput(
                     inputId = "logY",
                     label = "Log Y axis",

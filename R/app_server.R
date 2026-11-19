@@ -2081,6 +2081,19 @@ app_server <- function(input, output, session) {
   # forged input carried a vector or an unknown value into setLinetypes() and
   # simulationPlot() (Carbon's third UI audit, 2026-11-15, C1)
   normalizationInput <- reactive(choiceOf(input$normalization, PLOT_NORMALIZATIONS, NORMALIZE_NONE))
+
+  # Whether a tolerance or tachyphylaxis panel is drawn (R/pdAdaptation.R):
+  # the option ticked, no normalization (simulationPlot() drops the panels
+  # under it), and a drawn drug with a model.  Log Y is hidden (app_ui(),
+  # through output.adaptationDrawn) and turned off only then, so a tick left
+  # behind by a normalization or a removed drug does not take it away.
+  adaptationDrawn <- reactive({
+    isTRUE(input$showAdaptation) &&
+      identical(normalizationInput(), NORMALIZE_NONE) &&
+      length(pdAdaptationDrugs(names(drugs()), drugDefaults = drugDefaults())) > 0
+  })
+  output$adaptationDrawn <- reactive(adaptationDrawn())
+  outputOptions(output, "adaptationDrawn", suspendWhenHidden = FALSE)
   typicalInput <- reactive(choiceOf(input$typical, PLOT_TYPICAL_CHOICES, "Range"))
   linetypes <- reactive({
     setLinetypes(normalizationInput(),
@@ -2125,10 +2138,8 @@ app_server <- function(input, output, session) {
       plotEvents             <- PLOT_ID_EVENTS      %in% input$addedPlots
       normalization          <- normalizationInput()
       typical                <- typicalInput()
-      # Tolerance and tachyphylaxis panels (R/pdAdaptation.R), while the
-      # option is shown, that is while such a drug is drawn
-      plotAdaptation         <- isTRUE(input$showAdaptation) &&
-        length(pdAdaptationDrugs(names(drugs()), drugDefaults = drugDefaults())) > 0
+      # Tolerance and tachyphylaxis panels (R/pdAdaptation.R)
+      plotAdaptation         <- adaptationDrawn()
       logY                   <- isTRUE(input$logY)
       if (plotRecovery() || plotMEACOverlay() || plotEvents || plotInteraction ||
           plotAdaptation) logY <- FALSE

@@ -154,7 +154,10 @@ test_that("the panel does not depend on the Drug Library's concentration unit", 
   ng  <- pdAdaptationSeries(list(results = results(1),    Concentration.Units = "ng"), row)
   mcg <- pdAdaptationSeries(list(results = results(1e-3), Concentration.Units = "mcg"), row)
   expect_equal(ng$Y, mcg$Y, tolerance = 1e-12)
-  expect_true(all(diff(ng$Y[t >= 10 & t <= 100]) < 0))
+  # falls while the compartment fills (to about 70 min) and recovers once
+  # the effect site has fallen below it
+  expect_true(all(diff(ng$Y[t >= 10 & t <= 60]) < 0))
+  expect_true(all(diff(ng$Y[t >= 90]) > 0))
   # driven by plasma where the source says so
   plasma <- pdAdaptationSeries(list(results = results(1), Concentration.Units = "ng"),
                                adaptationRow(driver = "Plasma", k = 0.02, c50 = 0.001))
