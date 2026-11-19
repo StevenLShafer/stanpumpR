@@ -191,7 +191,7 @@ paperReviewReportTags <- function(review, plots = TRUE)
   # No pharmacokinetic model: what is about the paper and Claude's notes,
   # and what Claude read (a response surface's coefficients are still worth
   # checking against the paper), never the checks of a model.
-  if (isTRUE(review$noModel) || (is.null(review$noModel) && paperReviewNoModel(x)))
+  if (isTRUE(review$noModel))
     return(htmltools::div(class = "pr-report", paperReviewCss(),
       quickBanner,
       htmltools::h2("Single Paper Review"),
@@ -199,7 +199,7 @@ paperReviewReportTags <- function(review, plots = TRUE)
       htmltools::p(htmltools::strong(
         "Claude found no pharmacokinetic model in this document, so stanpumpR has no model to check.")),
       if (length(findings)) htmltools::p(htmltools::strong("Findings: "), countText),
-      lapply(if (is.null(review$noModel)) paperReviewClaudeNotes(x) else findings, paperReviewFindingTag),
+      lapply(findings, paperReviewFindingTag),
       if (length(x$parameters %or% list())) htmltools::tagList(
         htmltools::h3("What Claude extracted"),
         htmltools::p("Check these against the paper."),

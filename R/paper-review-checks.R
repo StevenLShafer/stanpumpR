@@ -508,9 +508,15 @@ paperReviewPublishedModels <- function(extraction)
     if (is.list(p) && is.character(p$role)) p$role[1] else "", "")
   own <- any(roles %in% c("CL", "V1", "V2", "V3", "Q2", "Q3"))
   group <- extraction$drug$name %or% ""
+  # Outside a group's part (the paper's one model), a grouped published
+  # model is the paper's too when it prints no model of its own: Eleveld
+  # alone, grouped "Eleveld", was dropped and the paper closed as its own
+  # (CodeRabbit on #776).
+  whole <- is.null(extraction$groupPart)
   Filter(function(pm) {
     g <- pm$group %or% ""
-    (nzchar(g) && identical(paperReviewGroupKey(g), paperReviewGroupKey(group))) || (!nzchar(g) && !own)
+    (nzchar(g) && identical(paperReviewGroupKey(g), paperReviewGroupKey(group))) ||
+      ((!nzchar(g) || whole) && !own)
   }, pms)
 }
 
@@ -775,7 +781,7 @@ paperReviewConsistency <- function(extraction, drug, reference, ident = NULL)
     # not the reference's (it is then held at the reference's value); and
     # conditions the printed value holds under that the model does not carry
     # (the schema asks for them only then).
-    unapplied <- paperReviewUnappliedFor(extraction, paperReviewQuantityRoles(q), own, reference)
+    unapplied <- paperReviewUnappliedFor(extraction, paperReviewQuantityRoles(q, extraction), own, reference)
     conditions <- trimws(paste(dq$conditions %or% "", collapse = " "))
     cannotCompare <- c(
       if (length(unapplied)) paste0("The model cannot be evaluated for this patient: ",
@@ -1545,8 +1551,11 @@ paperReviewAssumptionChecks <- function(extraction, model = TRUE)
     covaried <- Filter(function(e) identical(e$parameter_role, role) &&
                          (is.null(e$group) || identical(e$group %or% "", g)),
                        extraction$covariate_effects %or% list())
+    # A covariate effect alone is not enough: two entries named alike are a
+    # conflict whatever covariates the parameter has (CodeRabbit on #776).
     names <- vapply(found, function(p) p$name_in_paper %or% "", "")
-    if (length(covaried) || paperReviewSexOf(names)$ok) {
+    distinctNames <- all(nzchar(trimws(names))) && !anyDuplicated(tolower(trimws(names)))
+    if ((length(covaried) && distinctNames) || paperReviewSexOf(names)$ok) {
       add("info", paste(role, "is printed for different patients"),
           paste0(paste(vapply(found, function(p) paste0(p$name_in_paper %or% "", " ", p$value_text %or% "",
                                                          " (", p$location %or% "", ")"), ""), collapse = "; "),
@@ -1763,6 +1772,18 @@ paperReviewFigureChecks <- function(extraction, drug, reference)
     if (!drug$ok) { add("info", paste(id, "not compared"), "There is no complete model.", f$location); next }
     if ((f$y_normalization %or% "none") %in% c("percent_of_peak", "fraction_of_peak")) {
       checked <- paperReviewNormalizedFigure(f, extraction, drug, reference)
+      # As for a concentration figure below, a miss is no finding while an
+      # effect that changes the curve's shape is held at its reference; F
+      # cancels in the division by the peak (CodeRabbit on #776).
+      held <- if (isTRUE(checked$finding$severity %in% c("concern", "error")))
+        paperReviewUnappliedFor(extraction, c(PAPER_REVIEW_DISPOSITION_ROLES, "ka", "tlag"),
+                                NULL, reference, anyPatient = TRUE) else character(0)
+      if (length(held)) {
+        checked$finding$severity <- "info"
+        checked$finding$detail <- paste0("The model's curve is the reference patient's, and ",
+          paste(held, collapse = "; "), ", so it is not the curve of this figure's patients. ",
+          checked$finding$detail)
+      }
       findings[[length(findings) + 1]] <- checked$finding
       if (!is.null(checked$figure)) figures[[length(figures) + 1]] <- checked$figure
       next
@@ -1937,12 +1958,17 @@ paperReviewRun <- function(extraction)
   # 3" three times over, "does not close the 1-compartment model").  Only
   # what is about the paper is reviewed: its dose basis, its claims and
   # Claude's notes.
+  # A model the print leaves open can still be closed from a digitised
+  # curve (paperReviewCloseFromCurve()); that paper has a model (CodeRabbit
+  # on #776).
   if (paperReviewNoModel(extraction)) {
     out <- paperReviewRunOne(extraction, paperLevel = FALSE)
-    out$noModel <- TRUE
-    out$findings <- c(paperReviewAssumptionChecks(extraction, model = FALSE),
-                      paperReviewClaudeNotes(extraction))
-    return(out)
+    if (!out$identifiability$verdict %in% c("printed", "derived", "ill_conditioned", "derived_from_curve")) {
+      out$noModel <- TRUE
+      out$findings <- c(paperReviewAssumptionChecks(extraction, model = FALSE),
+                        paperReviewClaudeNotes(extraction))
+      return(out)
+    }
   }
   groups <- paperReviewGroups(extraction)
   if (length(groups) <= 1) return(paperReviewRunOne(extraction))
@@ -2039,6 +2065,8 @@ paperReviewGroups <- function(extraction)
          vapply(extraction$regimens %or% list(), function(p) p$group %or% "", ""),
          unlist(lapply(extraction$figures %or% list(), function(f)
            vapply(f$series %or% list(), function(s) s$group %or% "", ""))))
+  g <- c(g, vapply(Filter(is.list, extraction$published_models %or% list()),
+                   function(p) p$group %or% "", ""))
   unique(g[nzchar(g)])
 }
 
@@ -2056,6 +2084,7 @@ paperReviewGroupExtraction <- function(extraction, group)
   x$covariate_effects <- mine(x$covariate_effects)
   x$regimens <- mine(x$regimens)
   x$published_models <- mine(x$published_models)
+  x$groupPart <- group
   # Every model's curves of a figure share its axes, so the precision of a
   # reading is the figure's, whichever model's curve was read.
   x$paperFigures <- extraction$figures
@@ -2325,8 +2354,15 @@ PAPER_REVIEW_DISPOSITION_ROLES <- c("CL", "V1", "V2", "V3", "Q2", "Q3", "k10", "
 
 #' The parameter roles a derived quantity depends on
 #' @keywords internal
-paperReviewQuantityRoles <- function(q)
+paperReviewQuantityRoles <- function(q, extraction = NULL)
 {
+  # A clearance or a central volume the paper prints as a parameter depends
+  # on that parameter alone; one the model derives (CL = k10 V1) on every
+  # disposition parameter, as does anything else (CodeRabbit on #776).
+  printed <- vapply(extraction$parameters %or% list(), function(p)
+    if (is.list(p) && is.character(p$role)) p$role[1] else "", "")
+  if (q %in% c("CL", "V1") && q %in% printed) return(q)
+  if (identical(q, "ke0") && "ke0" %in% printed) return("ke0")
   c(PAPER_REVIEW_DISPOSITION_ROLES,
     if (q %in% c("ke0", "tPeak")) c("ke0", "tPeak"),
     if (q %in% c("AUC_inf", "Cmax", "tmax", "MRT", "MAT", "F")) c("ka", "F", "tlag"))

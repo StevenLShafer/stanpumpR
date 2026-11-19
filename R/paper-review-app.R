@@ -549,6 +549,16 @@ paperReviewServer <- function(input, output, session)
     # read (paperReviewIsUploadPath()).
     datapath <- if (is.list(file)) file$datapath else NULL
     if (!is.character(datapath) || length(datapath) != 1) return()
+    # An upload chosen before Discard that finishes after it is dropped
+    # unread: the store had been emptied and the field reset, so it was
+    # held while the field showed nothing, and a later review sent it
+    # (CodeRabbit on #776).  A file chosen after Discard has cleared the
+    # mark (chosen(): a browser reports the choice before the upload ends).
+    if (isTRUE(discardedUpload[[slot]])) {
+      paperReviewReadUpload(datapath, maxBytes = -1)
+      status(paste0(label, " was still uploading when the paper was discarded, and was dropped unread."))
+      return()
+    }
     # A new upload replaces what its field held, whatever it turns out to
     # be: the field shows the new file, and a replacement that was not a PDF
     # left the earlier one held and sent by Review (Carbon's fourth UI
@@ -598,7 +608,10 @@ paperReviewServer <- function(input, output, session)
   # What it dropped is remembered, so that receive() can say so of a file
   # it then refuses.
   droppedOnChoice <- c(pdf = FALSE, supplement = FALSE)
+  # A field whose upload in progress, if any, was discarded (input$discard).
+  discardedUpload <- c(pdf = FALSE, supplement = FALSE)
   chosen <- function(slot, label) {
+    discardedUpload[[slot]] <<- FALSE
     if (!dropSlot(slot)) return()
     droppedOnChoice[[slot]] <<- TRUE
     status(paste0("Another ", label, " was chosen, so the one held before has been discarded."))
@@ -781,6 +794,7 @@ paperReviewServer <- function(input, output, session)
     # The fields showed the discarded files' names and "Upload complete"
     # (Shafer's test of 2026-11-17); they are emptied as the store is.
     for (field in c("manuscript", "supplement")) shinyjs::reset(field)
+    discardedUpload[] <<- TRUE
     status("Discarded. Nothing about the paper remains in this session.")
   })
 

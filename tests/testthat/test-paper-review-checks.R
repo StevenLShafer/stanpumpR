@@ -426,6 +426,11 @@ test_that("a model the print does not close is closed from a digitised intraveno
   expect_equal(review$identifiability$closed$v1, 8, tolerance = 0.01)
   expect_equal(review$identifiability$closed$cl1, 1.2, tolerance = 0.01)
   expect_true(review$drug$ok)
+  # It has a model, though it prints no volume or clearance (CodeRabbit on #776).
+  expect_false(isTRUE(review$noModel))
+  html <- as.character(paperReviewReportTags(review, plots = FALSE))
+  expect_false(grepl("found no pharmacokinetic model", html))
+  expect_match(html, "Internal consistency")
 })
 
 # A test paper dosed daily and modelled each day's dose as a constant 24-h
@@ -1035,4 +1040,61 @@ test_that("every model of one paper prints its parameters in one time unit", {
   units <- lapply(review$models, function(m) unique(m$pkTable$Units[grepl("^CL", m$pkTable$Parameter)]))
   expect_equal(units$fast, units$slow)
   expect_equal(unname(units$fast), "L/h")
+})
+
+
+test_that("CodeRabbit on #776: grouped published models alone, same-named entries, roles, normalized figures", {
+  # A paper whose only models are published ones, each grouped, with nothing
+  # else grouped: each is recognised as published, never closed as its own.
+  ex <- paperReviewExample()
+  ex$parameters <- list(); ex$derived_quantities <- list(); ex$covariate_effects <- list()
+  ex$published_models <- list(list(name = "Eleveld 2018", drug = "propofol", group = "Eleveld"))
+  r <- paperReviewRun(ex)
+  expect_equal(r$identifiability$verdict, "published")
+  expect_false(any(vapply(r$findings, function(f) f$severity == "error", logical(1))))
+  ex$published_models <- c(ex$published_models,
+                           list(list(name = "Schnider 1998", drug = "propofol", group = "Schnider")))
+  r <- paperReviewRun(ex)
+  expect_setequal(names(r$models), c("Eleveld", "Schnider"))
+  expect_true(all(vapply(r$models, function(m) m$identifiability$verdict == "published", logical(1))))
+
+  # Two entries named alike conflict, whatever covariates the parameter has.
+  cov <- paperReviewExample()
+  cl <- which(vapply(cov$parameters, function(p) p$role, "") == "CL")
+  dup <- cov$parameters[[cl]]; dup$value <- 1.26; dup$value_text <- "1.26"
+  cov$parameters <- c(cov$parameters, list(dup))
+  f <- Filter(function(f) grepl("^CL is printed", f$title), paperReviewAssumptionChecks(cov))
+  expect_equal(f[[1]]$title, "CL is printed with different values")
+
+  # A printed CL depends on CL alone; a derived one on every disposition role.
+  ex <- paperReviewExample()
+  expect_equal(paperReviewQuantityRoles("CL", ex), "CL")
+  expect_true(all(c("V1", "CL") %in% paperReviewQuantityRoles("Vss", ex)))
+  noCL <- ex; noCL$parameters <- Filter(function(p) p$role != "CL", ex$parameters)
+  expect_true("V1" %in% paperReviewQuantityRoles("CL", noCL))
+  # So an unapplied effect on V1 does not hide a misprinted CL for a stated patient.
+  v1 <- ex
+  v1$covariate_effects <- list(list(parameter_role = "V1", covariate = "age", form = "other",
+                                    equation_as_printed = "V1 x f(AGE)", location = "Eq 3"))
+  v1$derived_quantities <- list(list(quantity = "CL", value = 3, value_text = "3", units = "L/min",
+                                     statistic = "typical_value", at = list(age = 70), location = "Text"))
+  t <- paperReviewRun(v1)$consistency
+  expect_equal(t$status[t$quantity == "CL"], "disagrees")
+
+  # A peak-normalized figure is not scored while a shape-changing effect is held.
+  norm <- paperReviewExample()
+  norm$figures[[1]]$y_normalization <- "percent_of_peak"
+  norm$figures[[1]]$y_units <- "other"
+  mx <- max(vapply(norm$figures[[1]]$series[[1]]$points, function(p) p$value, 0))
+  norm$figures[[1]]$series[[1]]$points <- lapply(norm$figures[[1]]$series[[1]]$points, function(p) {
+    p$value <- 100 * (p$value / mx)^0.3; p })
+  score <- function(x) Filter(function(f) grepl("^Figure 2", f$title), paperReviewRun(x)$findings)[[1]]
+  base <- score(norm)
+  expect_true(base$severity %in% c("concern", "error"))
+  norm$covariate_effects <- c(norm$covariate_effects, list(list(
+    parameter_role = "CL", covariate = "other", form = "category_multiplier", coefficient = 0.5,
+    covariate_units = "", equation_as_printed = "CL x 0.5 in ICU", location = "Table 2")))
+  held <- score(norm)
+  expect_equal(held$severity, "info")
+  expect_match(held$detail, "ICU")
 })
