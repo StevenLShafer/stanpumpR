@@ -53,8 +53,9 @@ deltaToClockTime <- function(reference, x)
 # start); it wraps 24:xx to 0:xx and cannot read 25:00 or more, so an elapsed
 # H:MM is read with elapsedHourMinute() instead.  Vectorised.
 #
-# Read: "H:MM" or "HH:MM" (also "HHMM", "H.MM", "HHhMM"), optional seconds
-# (dropped), and an optional am/pm, which is applied.  Anything else is NA, so
+# Read: "H:MM" or "HH:MM" (also "HHMM", "H.MM", "HHhMM") and an optional
+# am/pm, which is applied.  Seconds are not read, as the dose grid refuses
+# them (validateTime()) and as before.  Anything else is NA, so
 # the Procedure start says it cannot be read.  lubridate's "HM" order, used
 # until 2026-11-19, ignored a trailing am/pm and any other trailing text:
 # "2:30 pm" was 02:30, twelve hours early, with no warning, and "12:30abc" was
@@ -66,7 +67,6 @@ hourMinute <- function(x)
   x <- tolower(trimws(as.character(x)))
   out <- rep(NA_real_, length(x))
   pattern <- paste0("^([0-9]{1,2})(?:[:.h]([0-9]{1,2})|([0-9]{2}))",
-                    "(?::[0-9]{1,2}(?:[.][0-9]*)?)?",
                     "[[:space:]]*(am|pm|a[.]m[.]|p[.]m[.])?$")
   ok <- !is.na(x) & grepl(pattern, x, perl = TRUE)
   if (!any(ok)) return(out)

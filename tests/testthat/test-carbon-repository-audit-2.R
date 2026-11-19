@@ -54,9 +54,10 @@ test_that("a Procedure start with am or pm is read as such, and trailing text is
   expect_true(all(is.na(hourMinute(c("12:30abc", "14:30 pm", "0:30 am", "8:75", "25:00", "")))))
   expect_false(isValidReferenceTime("12:30abc"))
   expect_true(isValidReferenceTime("2:30 pm"))
-  # the forms read before are read as before
-  expect_equal(hourMinute(c("08:30", "8:30", "0830", "8.30", "08h30", "8:30:15", "24:00", "23:59", "8:5")),
-               c(510, 510, 510, 510, 510, 510, 0, 1439, 485))
+  # the forms read before are read as before, and seconds are still refused
+  expect_equal(hourMinute(c("08:30", "8:30", "0830", "8.30", "08h30", "24:00", "23:59", "8:5")),
+               c(510, 510, 510, 510, 510, 0, 1439, 485))
+  expect_true(is.na(hourMinute("8:30:15")))
   # an afternoon start: a 15:00 dose is 30 minutes in, not 12 h 30 min
   expect_equal(clockTimeToDelta("2:30 pm", "15:00"), 30)
 })
