@@ -27,7 +27,7 @@ stanpumpR holds one value per opioid in the drug library, in the column named ME
 | oxymorphone | 0.8 | ng/mL | Provisional: a tenth of morphine's, from an intramuscular dose-potency ratio |
 | desmetramadol | 84 | ng/mL | Working value: Grond 1999's mean total M1 before PCA demands, during racemic tramadol |
 
-The drug pages give each value's source and caveats in full. The prodrugs codeine and tramadol have no MEAC of their own: their μ-opioid effect is counted on the morphine and desmetramadol rows, and tramadol's monoaminergic analgesia is not counted anywhere. Buprenorphine, a high-affinity partial agonist that does not add to full agonists, has none and is not on the panel. Nor are the opt-in illicit opioids (diamorphine and carfentanil), which are plotted as plasma concentrations only, or naloxone, an antagonist: giving it does not lower the total.
+The drug pages give each value's source and caveats in full. The prodrugs codeine and tramadol have no MEAC of their own: their μ-opioid effect is counted on the morphine and desmetramadol rows, and tramadol's monoaminergic analgesia is not counted anywhere. Buprenorphine, a high-affinity partial agonist that does not add to full agonists, has none and is not on the panel; its interaction with other opioids is modelled separately through receptor occupancy ([Buprenorphine opioid-receptor interaction](help:models/opioid-receptor-interaction)). Nor are the opt-in illicit opioids (diamorphine and carfentanil), which are plotted as plasma concentrations only, or naloxone, an antagonist: giving it does not lower the total.
 
 ## The panel
 
