@@ -27,12 +27,18 @@ jobs:
 
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})
 
+    # Linux only, the platform production runs on (shinyapps.io).  macOS and
+    # Windows are checked weekly by check-platforms.yaml instead (Steven L.
+    # Shafer, 2026-11-19): every pull request and every push to master waited
+    # on them, and the production deploy, which needs this whole workflow to
+    # succeed, waited too: on 2026-11-19 a macOS job on master queued 77
+    # minutes for a runner, and one on a pull request was cancelled after 78
+    # without one (on master, such a cancellation leaves the commit
+    # undeployed until someone deploys it by hand).
     strategy:
       fail-fast: false
       matrix:
         config:
-          - {os: macOS-latest,   r: 'release'}
-          - {os: windows-latest, r: 'release'}
           # The Ubuntu jobs keep the os label "ubuntu-latest", which names the
           # check that master's branch protection requires, but run on
           # ubuntu-24.04: ubuntu-26.04, which ubuntu-latest moved to on

@@ -36,8 +36,9 @@ house rules (renal covariates, age floors, pharmacogenetics, therapeutic ranges)
   help pages are pinned by tests; a change that has none should add one.
 - Edit the source, not generated output: a help page's generated tables come from the
   code, and `man/` comes from the roxygen comments (`devtools::document()`).
-- Each pull request is checked by R CMD check on Linux, macOS and Windows, deployed to a
-  test copy of the app, and reviewed automatically. Keep a pull request to one subject.
+- Each pull request is checked by R CMD check on Linux (macOS and Windows weekly, and on
+  demand from the Actions tab), deployed to a test copy of the app, and reviewed
+  automatically. Keep a pull request to one subject.
 
 ## Code of Conduct
 
