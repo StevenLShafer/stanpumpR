@@ -1130,3 +1130,24 @@ test_that("CodeRabbit's second look at #776: derived own models, intravenous fig
     ex$figures[[i]]$series <- lapply(ex$figures[[i]]$series, function(s) { s$group <- "schnider"; s })
   expect_setequal(names(paperReviewRun(ex)$models), c("Schnider", "Eleveld"))
 })
+
+
+test_that("CodeRabbit's third look at #776: names that differ only by source, effect-site figures", {
+  # A weight effect on CL does not make "CL" and "CL (abstract)" two patients'.
+  cov <- paperReviewExample()
+  cl <- which(vapply(cov$parameters, function(p) p$role, "") == "CL")
+  other <- cov$parameters[[cl]]; other$value <- 1.26; other$value_text <- "1.26"
+  other$name_in_paper <- "CL (abstract)"
+  cov$parameters <- c(cov$parameters, list(other))
+  title <- function(x) Filter(function(f) grepl("^CL is printed", f$title), paperReviewAssumptionChecks(x))[[1]]$title
+  expect_equal(title(cov), "CL is printed with different values")
+  # Named for a stated patient, they are that patient's.
+  cov$parameters[[length(cov$parameters)]]$name_in_paper <- "CL at 35 kg"
+  expect_equal(title(cov), "CL is printed for different patients")
+  # An effect-site figure depends on ke0 and tPeak.
+  ex <- paperReviewExample()
+  f <- ex$figures[[1]]
+  expect_false("ke0" %in% paperReviewFigureRoles(f, ex))
+  f$concentration_site <- "effect_site"
+  expect_true(all(c("ke0", "tPeak") %in% paperReviewFigureRoles(f, ex, normalized = TRUE)))
+})

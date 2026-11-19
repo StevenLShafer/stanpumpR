@@ -1561,7 +1561,15 @@ paperReviewAssumptionChecks <- function(extraction, model = TRUE)
     # conflict whatever covariates the parameter has (CodeRabbit on #776).
     names <- vapply(found, function(p) p$name_in_paper %or% "", "")
     distinctNames <- all(nzchar(trimws(names))) && !anyDuplicated(tolower(trimws(names)))
-    if ((length(covaried) && distinctNames) || paperReviewSexOf(names)$ok) {
+    # ...and names that differ must name the patients they differ in (a
+    # weight, an age, a population), not merely where the value was printed:
+    # "CL" and "CL (abstract)" are a conflict (CodeRabbit on #776).
+    patientNamed <- distinctNames && any(grepl(paste0(
+      "[0-9.]+\\s*(kg|g|years?|yrs?|y|months?|mo|weeks?|wk|days?|d|cm|m2|m\u00b2|ml/min|mL/min)\\b|",
+      "\\b(neonates?|infants?|child(ren)?|adolescents?|adults?|elderly|pregnan\\w*|obese|men|women|",
+      "males?|females?|boys?|girls?|healthy|patients?|renal|hepatic|smokers?)\\b"),
+      names, ignore.case = TRUE, perl = TRUE))
+    if ((length(covaried) && patientNamed) || paperReviewSexOf(names)$ok) {
       add("info", paste(role, "is printed for different patients"),
           paste0(paste(vapply(found, function(p) paste0(p$name_in_paper %or% "", " ", p$value_text %or% "",
                                                          " (", p$location %or% "", ")"), ""), collapse = "; "),
@@ -2376,8 +2384,11 @@ paperReviewFigureRoles <- function(f, extraction, normalized = FALSE)
     is.null(r) || any(vapply(r$doses %or% list(), function(d)
       (d$route %or% "other") %in% names(PAPER_REVIEW_ROUTE_SUFFIX), logical(1)))
   }, logical(1)))
+  # An effect-site curve also depends on ke0, or the time to peak it is
+  # solved from (CodeRabbit on #776).
   c(PAPER_REVIEW_DISPOSITION_ROLES,
-    if (extravascular) c("ka", "tlag", if (!normalized) "F"))
+    if (extravascular) c("ka", "tlag", if (!normalized) "F"),
+    if (identical(f$concentration_site, "effect_site")) c("ke0", "tPeak"))
 }
 
 #' The parameter roles a derived quantity depends on
