@@ -191,11 +191,15 @@ Gemini 70-digit).
 \section{P2 --- two or more slow ligands}
 \label{sec:p2}
 
-\begin{correction}{The multi-slow-ligand advance is linear, indeed compartmental --- not nonlinear}
+\begin{correction}{The multi-slow-ligand advance is linear and compartmental; the auxiliary state is the AVAILABLE pool, not $\rhoz$}
 $\kon[,i]\Cesub{i}(t)\rhoz$ is linear in the occupancies ($\Cesub{i}$ is a known
-input), and the only ``nonlinear-looking'' factor $\rhoz=1-\sum\rho$ is itself
-linear. \textbf{Carry $\rhoz$ explicitly} and the states $(\rho_1,\dots,\rho_N,\rhoz)$
-obey $\dot\rho=K(t)\rho$ with, for two slow ligands,
+input). The explicit auxiliary state is the \textbf{available (non-slow) pool}
+$x_{\mathrm{av}}=1-\sum_{\mathrm{slow}}\rho=(1+\Phi)\rhoz$ --- \emph{not} the free
+fraction $\rhoz$: since $a_i=\kon[,i]\Cesub{i}/(1+\Phi)$ already carries $1/(1+\Phi)$,
+the term $a_i x_{\mathrm{av}}=\kon[,i]\Cesub{i}\rhoz$ is correct, the state
+$(\rho_1,\dots,\rho_N,x_{\mathrm{av}})$ sums to 1, and no $\dot\Phi$ term appears
+(carrying $\rhoz$ itself would wrongly introduce one). It obeys $\dot X=K(t)X$ with,
+for two slow ligands,
 %
 \begin{equation}
 K=\begin{pmatrix}
@@ -208,9 +212,16 @@ K=\begin{pmatrix}
 %
 $K(t)$ is \textbf{Metzler} with \textbf{zero column sums} --- a continuous-time
 Markov generator --- so $\exp(K\Delta)$ is column-stochastic: a matrix-exponential
-step keeps every $\rho_i\ge0$ and $\sum\rho=1$ \textbf{exactly}, no clipping. (The
+step keeps the state $\ge0$ and $\sum=1$ \textbf{exactly}, no clipping. (The
 negative off-diagonals one would see in a 2-state reduction are an artifact of
-eliminating $\rhoz$; keep it and they vanish.)
+eliminating $x_{\mathrm{av}}$; keep it and they vanish.) After the step recover
+$\rhoz=x_{\mathrm{av}}/(1+\Phi)$ and $\rho_j=x_{\mathrm{av}}\phi_j/(1+\Phi)$.
+
+The CF4 Magnus step preserves positivity \emph{unconditionally} despite the negative
+weight $\alpha_2<0$: with $a_i=N/D$ affine on the step, the identity
+$\alpha_1 c_1^2+\alpha_2 c_2^2=0$ gives
+$[\alpha_2 a(c_1 h)+\alpha_1 a(c_2 h)]D(c_1 h)D(c_2 h)=(N_0D_0+N_1D_1+4N_1D_0)/12\ge0$
+(coefficient $4/12$), so each factor is Metzler for every $h>0$.
 \end{correction}
 
 Over $[0,h]$, $K(t)$ varies through the M\"obius $a_i(t)$. The engine advances
@@ -305,27 +316,34 @@ so the new model and that knob move together.
 % ===========================================================================
 \section{Design decisions and presentation}
 
-\begin{decision}{Dual $C_{50}$ scale (Shafer, 2026-11-19)}
-The respiratory panel and the occupancy competition run on the \textbf{binding}
-scale (Olofsen's ventilatory $C_{50}$ for the full agonists, buprenorphine's
-binding constants) --- the only physically consistent choice, as an analgesic MEAC
-cannot enter a binding denominator. \texttt{\% MEAC} and the opioid--MAC
-interaction keep the \textbf{analgesic MEAC}; buprenorphine enters them only through
-the available-drive line $\tilde U=(1-\rho_{\mathrm{bup}})U$, exact by~\eqref{eq:invariant}.
+\begin{decision}{One physical occupancy; $\mu=\mu=\mu$ (Shafer, 2026-11-19)}
+There is one physical $\mu$-receptor occupancy per ligand, from its \textbf{true}
+$K_D$ (buprenorphine $\approx0.4$~ng/mL, population-independent); ventilation and
+analgesia are two transductions of it, differing only in receptor reserve, so
+tolerance shifts the transduction, not the binding. \textbf{MEAC is a reference
+occupancy} $\rho^*$: ``$N$ MEAC-equivalents'' is $(\sum_i e_i\rho_i)/\rho^*$, which
+forces full-agonist $K_D\propto\mathrm{MEAC}$, reduces to $U=\sum\Cesub{j}/\mathrm{MEAC}_j$
+at low occupancy, and lets buprenorphine enter the MEAC scale through its own partial
+analgesia (no separate $\tilde U$; blockade falls out of competition). This supersedes
+the earlier dual-$C_{50}$ scheme.
 \end{decision}
 
-\begin{decision}{Analgesic ceiling $2$--$4\times$ MEAC (Shafer, 2026-11-19)}
-Buprenorphine's analgesic ceiling, a band (Typical $3\times$, Lower $2\times$, Upper
-$4\times$ in naive patients), fixes the analgesia reserve $\gamma_{\mathrm{analgesia}}$
---- the one parameter ventilation data cannot supply --- and sets the
-precipitated-withdrawal / breakthrough crossover $U^\ast$.
+\begin{decision}{Analgesic ceiling $2$--$5\times$ MEAC (Shafer, 2026-11-19)}
+A band (Typical $3.5\times$, Lower $2\times$, Upper $5\times$ in naive patients). It
+sets buprenorphine's analgesic efficacy $e_{\mathrm{bup}}$ (its ceiling in
+MEAC-equivalents) and the crossover $U^\ast$; reporting analgesia in MEAC-equivalents
+means $\gamma_{\mathrm{analgesia}}$ cancels and is not needed. With efficacy $\le1$ the
+upper edge forces $\rho^*=0.2$, hence full-agonist $K_D=4\,\mathrm{MEAC}$; at that edge
+the analgesic efficacy ratio equals the ventilatory one (endpoint-independent efficacy).
 \end{decision}
 
 Presentation (occupancy as the primary lens): a stacked \textbf{receptor-occupancy}
-panel (buprenorphine / full agonists / antagonist / free); the two \textbf{effect
-curves} (analgesia; respiratory depression with its ceiling); the available-drive
-line $\tilde U$ on the \texttt{\% MEAC} panel; and a \textbf{precipitated-withdrawal
-marker}. Offered only while a $\mu$ partial agonist or antagonist is drawn.
+panel (buprenorphine / full agonists / antagonist / free) --- physical occupancy, with
+ventilation and analgesia as separate transductions of it; the two \textbf{effect
+curves} (analgesia in MEAC-equivalents; respiratory depression with its ceiling); the
+\textbf{available-drive} odds $\sum_{\mathrm{fast\,ag}}\rho/\rhoz$ on the \texttt{\% MEAC}
+panel; and a \textbf{precipitated-withdrawal marker}. Offered only while a $\mu$ partial
+agonist or antagonist is drawn.
 
 % ===========================================================================
 \section{The implementation}
@@ -334,7 +352,7 @@ A pharmacodynamic post-process (\texttt{R/opioidReceptorInteraction.R}) run afte
 \texttt{simCpCe()} has produced every opioid's $\Cesub{i}(t)$, as
 \texttt{applyAntiseizureInteractions()} runs after each drug is simulated alone. It
 partitions the $\mu$ ligands by $\koff$, advances the slow occupancies interval by
-interval (\S4 single, \S\ref{sec:p2} several) on the shared non-uniform grid, forms
+interval (one slow ligand by the scalar advance, or \S\ref{sec:p2} for several) on the shared non-uniform grid, forms
 $\Phi(t)$ and the fast occupancies by~\eqref{eq:qss}, and maps occupancy to effect.
 It leaves the additive panels identical until buprenorphine or an antagonist is
 dosed, exactly by~\eqref{eq:invariant}.

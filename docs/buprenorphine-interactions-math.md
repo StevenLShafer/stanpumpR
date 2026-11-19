@@ -77,9 +77,13 @@ dx/dt = a(t)·(1 − x) − k_off,B·x,     i.e.    dx/dt + [a(t) + k_off,B]·x 
 
 ### Exact closed form
 With `κ = k_off,B`, the integrating-factor exponent `Ψ(t) = ∫₀ᵗ[a+κ] = (A+κ)t + m·ln((p+qt)/p)`,
-`m = w/q`, and `x(h) = e^{−Ψ(h)}[x(0) + ∫₀ʰ e^{Ψ}a dt]`. The source integral reduces to **lower
-incomplete-gamma** terms (an exponential integral when the order is a negative integer). So the advance
-is closed-form — a logarithm in `Ψ` plus an incomplete-gamma term in the source.
+`m = w/q` and **`w = r − sp/q`**, and `x(h) = e^{−Ψ(h)}[x(0) + ∫₀ʰ e^{Ψ}a dt]`. The source integral
+reduces to **lower incomplete-gamma** terms. *(Both audits sharpened the naming: the order
+`m = (rq − sp)/q²` is **generically non-integer**, so it is an exponential integral only for the special
+case `m ∈ −ℕ₀`; and the incomplete-gamma argument is **negative** whenever `(s/q + κ)/q > 0`, putting the
+standard function on a branch cut — a real-valued form needs Tricomi's `γ*` or Kummer's `M`.)* So the
+advance is closed-form — a logarithm in `Ψ` plus an incomplete-gamma term in the source — which is exactly
+why the production path quadratures the bounded kernel instead (below).
 
 ### Overflow-proof form (the production path)
 Never form `μ = e^{Ψ}` or the `((p+qt)/p)^m` factor alone — either can overflow while the product is
@@ -107,16 +111,29 @@ special-function evaluation need not ship.
   `x_ss = a/(a+κ)`. The `w = 0` branch (`rq = sp`, coincident Möbius roots) collapses here — test `|w|`.
 - `q → 0` (Φ constant, `a` linear in *t*): `m = w/q` diverges but `m·ln(1+qt/p) → wt/p` is finite —
   implement via the series `ln(1+qt/p)/q → t/p`, **not** the raw formula, or it cancels catastrophically.
-  Here `Ψ` is quadratic in *t* and the source integral is an **error-function** term, not incomplete-gamma.
+  Here `Ψ` is quadratic in *t* and the source integral is **an error function only for `s < 0` (falling
+  B); for `s > 0` (rising B — every buprenorphine onset) it is Dawson's integral `erfi`, and for `s = 0`
+  it is elementary** (both audits).
+- A **cancellation-free `∫_t^h a`** for all `q`, removing the `q → 0` branch entirely (both audits), with
+  `ε = q(h−t)/(p+qt)`: `∫_t^h a du = [(r+st)(h−t)/(p+qt)]·ln(1+ε)/ε + [s(h−t)²/(p+qt)]·(ε−ln(1+ε))/ε²`,
+  taking the `ε → 0` limits (1 and ½) by series.
 - Guard on small `|q|` and `|w|` before evaluating.
 
-### Conditioning, sub-stepping, and two edge cases to test
+### Conditioning, sub-stepping, and three edge cases to test
 - Large `(A+κ)h` (many time constants/step): `G(0,h)` underflows, `x →` quasi-steady — correct, but put
   the quadrature nodes near `t = h` where `G = O(1)`, and sub-step so `∫_t^h(a+κ) = O(1)` per sub-step.
-- **Small-ΔΦ confluence** (`|Φ_h − Φ_0| ~ 1e-6` with `B` changing): the `m·ln` and incomplete-gamma
-  difference blow up as `|m| ~ (ΔΦ)^{−2}` toward the Dawson/`erfcx` limit — use the `q → 0` series.
+- **[correction] Crowding surge — the sub-step trigger must watch the pole, not only time constants.**
+  `a(t) = (r+st)/(p+qt)` has a pole at `t = −p/q`; when `1+Φ` surges across one step (a fast bolus, Φ
+  0 → 100) the pole sits beside `[0,h]` and collapses Gauss–Legendre to **3.8% error**, even though the
+  step spans only `ΔΨ ≈ 0.02` time constants, so a "many time constants" trigger never fires (both audits,
+  identical counterexample). The engine now also sub-steps on the **linear crowding change**:
+  `nsub ≥ |Φ₁−Φ₀| / ((R−1)·min(1+Φ₀, 1+Φ₁))`, keeping the pole ≥ one sub-interval away; the counterexample
+  returns 2e-14, and 7e-14 at a 500× surge.
+- **Small-ΔΦ confluence** (`|Φ_h − Φ_0| ~ 1e-6` with `B` changing): the `m·ln` difference blows up as
+  `|m| ~ (ΔΦ)^{−2}` toward the Dawson/`erfcx` limit — use the cancellation-free `∫a` above.
 - **Dual-endpoint cancellation**: the kernel form (P1\*) `x₀·G(0,h) + ∫G·a` stays exact down to
-  `x = 1e-300`, where `1 − (1−x₀)G − κ∫…` loses digits near `x ≪ 1`. Pin this.
+  `x = 1e-300`, where the by-parts form `1 − (1−x₀)G − κ∫G` loses digits near `x ≪ 1` (but the latter
+  removes the pole — hence the crowding sub-step trigger is kept with the (P1\*) form).
 
 ### Validation
 `x(h)` against adaptive Dormand–Prince 5(4) / Gauss–Kronrod on (P1); expect ≈ 1e-12 relative, in the
@@ -130,31 +147,47 @@ style of `test-transit-chain.R`. *(Cross-checked: the original pass ≤ 1e-13; C
 **[correction] The multi-slow-ligand advance is linear — indeed compartmental — not nonlinear.** With
 buprenorphine plus a long-residence antagonist, both keep differential states (no scalar reduction), but
 `k_on,i·Ce_i(t)·ρ_0` is linear in the occupancies (`Ce_i` is a known input, not a state), and the only
-"nonlinear-looking" factor `ρ_0 = 1 − Σρ` is itself linear. **Carry `ρ_0` as an explicit state** and the
-system is a genuine Markov generator. For two slow ligands `B`, `A` with
-`a_i(t) = k_on,i·Ce_i(t)/(1+Φ(t))`:
+"nonlinear-looking" factor is itself linear. **[correction] The explicit auxiliary state is the AVAILABLE
+pool, not the free fraction** (both audits): `x_avail = 1 − Σ_slow ρ = (1+Φ)·ρ_0`. Because
+`a_i = k_on,i·Ce_i/(1+Φ)` already carries the `1/(1+Φ)`, the association term `a_i·x_avail = k_on,i·Ce_i·ρ_0`
+is correct, `(ρ_B, …, x_avail)` sums to 1, and there is no `dΦ/dt` term (which carrying the *free* fraction
+`ρ_0` would wrongly introduce). For two slow ligands `B`, `A`:
 
 ```
-d/dt (ρ_B, ρ_A, ρ_0)ᵀ = K(t)·(ρ_B, ρ_A, ρ_0)ᵀ,
+d/dt (ρ_B, ρ_A, x_avail)ᵀ = K(t)·(ρ_B, ρ_A, x_avail)ᵀ,
 K = [[−k_off,B, 0, a_B], [0, −k_off,A, a_A], [k_off,B, k_off,A, −(a_B+a_A)]].             (P2)
+a_i(t) = k_on,i·Ce_i(t)/(1+Φ(t)).
 ```
 
 `K(t)` is **Metzler** (off-diagonals ≥ 0) with **zero column sums** (conservative) — a continuous-time
 Markov generator. So `exp(KΔ)` is nonnegative and **column-stochastic**: a matrix-exponential step keeps
-every occupancy ≥ 0 and `Σρ = 1` **exactly**, the physical simplex preserved by construction, **no
-clamp**. (The negative off-diagonals that appear in a 2-state `(ρ_B, ρ_A)` reduction are an artifact of
-eliminating `ρ_0`; keep `ρ_0` and they vanish.) The fast ligands then redistribute `ρ_0`'s share by (2)
-at each output time.
+the state ≥ 0 and `Σ = 1` **exactly**, the physical simplex preserved by construction, **no clamp**. (The
+negative off-diagonals that appear in a 2-state `(ρ_B, ρ_A)` reduction are an artifact of eliminating
+`x_avail`; keep it and they vanish.) After the step, recover `ρ_0 = x_avail/(1+Φ)` and the fast occupancies
+`ρ_j = x_avail·φ_j/(1+Φ)` by (2).
 
-**The step.** Over `[0,h]`, `K(t)` varies through the Möbius `a_i(t)`, so the exact propagator is a
-**Magnus** exponential `exp(∫₀ʰ K)` whose entries are the same `∫a_i` logarithms as P1 — closed-form;
-use a midpoint/averaged `K̄` for 2nd order, or sub-step, with the **augmented unit-state** device already
-in `advanceTransitChain()`. Exact to rounding when `K` is constant on the step; the only approximation is
-the within-step variation of `K`, exactly as `advanceClosedFormGas()` holds its coupling at the
-start-of-step value. For `N` slow ligands it is an `(N+1)`-state generator.
+**The step.** Over `[0,h]`, `K(t)` varies through the Möbius `a_i(t)`. The engine advances with the
+**4th-order commutator-free Magnus** (Blanes & Moan), two Gauss nodes `c₁,₂ = ½ ∓ √3/6` and weights
+`α₁,₂ = ¼ ± √3/6`:
+```
+state ← exp(h(α₂K₁ + α₁K₂))·exp(h(α₁K₁ + α₂K₂))·state,     Kᵢ = K(cᵢh).
+```
+The **ordering** matters (both audits confirmed it empirically: single-step errors `1.5e-4 → 9.0e-6 →
+4.2e-7 → 1.6e-8` on halving, ratios climbing toward 32, a 5th-order *local* error; the reversed ordering
+is only 2nd order), and each factor's zero column sums preserve `Σ = 1` exactly. Sub-stepped on the same
+time-constant and crowding criteria as P1.
 
-**Validation:** dense RK of the `(N+1)`-state system; `Σρ = 1` and `ρ ≥ 0` to machine precision. *(Cross
--checked: original ≈ 1e-9; Gemini confirms the column-stochastic Magnus.)*
+**[correction] Positivity is unconditional, not a hedge.** Although `α₂ = ¼ − √3/6 < 0`, each factor's
+exponent is Metzler for every `h > 0` with piecewise-linear inputs. Writing `a_i = N/D` with `N, D`
+affine on the step (`N₀,N₁ ≥ 0`, `D₀,D₁ > 0`), the exact identity `α₁c₁² + α₂c₂² = 0` gives
+`[α₂a(c₁h) + α₁a(c₂h)]·D(c₁h)D(c₂h) = (N₀D₀ + N₁D₁ + 4N₁D₀)/12 ≥ 0` (and the mirror image with `4N₀D₁`
+for the other factor). *(This corrects the first audit's `(2+√3)/12`; the coefficient is `4/12`, per the
+second audit. A `[6/6]` Padé can still leave ~`−1e-17` on a zero entry, so flooring tiny negative roundoff
+is cheap insurance.)* It requires that no step straddle an input breakpoint — which 4th order needs anyway.
+
+**Validation:** dense RK of the `(N+1)`-state system; `Σ = 1` and `ρ ≥ 0` to machine precision; 4th-order
+convergence confirmed. *(Cross-checked: ≈ 9e-7 on a coarse step; both audits confirm the order, ordering
+and column-stochasticity.)*
 
 ---
 
@@ -227,28 +260,49 @@ panel as the fast-ligand **odds** and the correspondence is exact *and survives 
 ```
 
 So **report `U = Σ_fast ρ / ρ_0` and the legacy scale is reproduced identically, at all times** —
-buprenorphine enters only through its own occupancy term, never by corrupting `U`. (For a panel that
-insists on raw occupancy, the deviation is bounded: `|Σ_fast ρ − U/(1+U)| = Σ_slow ρ · U/(1+U) ≤
-Σ_slow ρ → 0`.) Either way the additive panels are untouched until a partial agonist or antagonist is
-dosed. **Acceptance test: compare `Φ` (exact) to `U`, not `Σρ` to `U`.**
+buprenorphine enters only through its own occupancy term, never by corrupting `U`.
+
+**[correction] Exact but near-tautological, and three caveats (both audits).** The odds equal `U` follows
+directly from the QSS relation (2) — `ρ_j/ρ_0 = φ_j` per fast species — not from the full kinetic system,
+so it is a property of the reduction. Three precise points: (i) the raw fast occupancy is
+`Σ_fast ρ = (1−σ)·U/(1+U)` with `σ = Σ_slow ρ`; the `U/(1+U)` form holds **only when `σ = 0`**. (ii) The
+slow modes scale fast occupancy **multiplicatively** by `(1−σ)`, not "additively" — and the *odds* are
+blind to `σ` by construction (they return the input), so reading `U` from the odds shows no slow-mode
+effect at all; the physical blockade lives in the `(1−σ)` scaling of the occupancies, which is what the
+occupancy panel draws. (iii) `Φ = U` requires **every** fast species to carry a weight in `U`; a fast
+antagonist (naloxone), which is in `Φ` but not in `U`, makes `Φ > U` — so the odds must be taken over the
+fast **agonists** (`Σ_fast-ag ρ / ρ_0`), which is exactly the available-drive odds the engine computes.
+**Acceptance test: compare `Φ` (exact) to `U`, not `Σρ` to `U`.**
+
+*Under the unified framing (spec §8) the engine runs on each ligand's true `K_D`, not `C50 = MEAC`, so
+`Φ ≠ U` by construction; backward compatibility is then by the hard switch (the `U`-panels are untouched
+until a partial agonist/antagonist is dosed), and the MEAC-equivalent readout `(Σ eᵢρᵢ)/ρ*` reduces to `U`
+at low occupancy. The identity above is the clean statement of the `C50 = MEAC` limit it reduces to.*
 
 ---
 
 ## P5 — tolerance as a one-parameter manifold
 
-Olofsen gives two states (naive, chronic) differing in `(k_on,B, α_B, C50,F)` with `k_off,B` fixed.
-With two anchors only a **one-parameter monotone path** is identifiable (no data support curvature), so
-interpolate linearly in the natural transform of each parameter across `θ ∈ [0,1]`:
+Olofsen gives two states (naive, chronic). With two anchors only a one-parameter monotone path can be
+supported, so interpolate linearly in the natural transform of each parameter across `θ ∈ [0,1]`. **Under
+the unified framing (spec §8) the binding `K_D` is fixed and tolerance moves the TRANSDUCTION and the
+full-agonist potency:**
 
-- `log k_on,B` linear in θ (0.26 → 0.085).
-- `log C50,F` linear in θ (0.68 → 2.23) — on the ventilation/binding scale (decision #1).
-- `α_B` on a bounded scale (logit `log(α/(1−α))` linear in θ) to keep `α ∈ (0,1)` (0.81 → 0.48).
-- `k_off,B` fixed (0.019) — residence time is intrinsic to the bond, not the patient.
+- `logit(α_B)` linear in θ (0.81 → 0.48), i.e. the ventilation **reserve** — and this has a mechanistic
+  reading (both audits): under Black–Leff with `n = 1`, `logit(α_B) = ln(γ_vent·τ_B)`, so logit-interpolating
+  `α_B` is exactly **log-linear decay of the ventilation reserve** `γ_vent`, matching the full-agonist potency.
+- `log(full-agonist potency)` linear in θ (the Grid-B factor `3^θ`), equivalently the apparent `C50`
+  shift Olofsen fitted (0.68 → 2.23 for fentanyl's ventilation).
+- buprenorphine analgesic efficacy `e_bup` interpolated with it.
+- buprenorphine true `K_D` (≈ 0.40) and `k_off` **fixed** — binding is intrinsic to the bond, not the patient.
 
-**Spacing — decision #2 (§9): Grid B.** The four tolerance levels sit at
-`θ_k = ln M_k / ln 3 = (0, 0.369, 0.631, 1)` for the existing multipliers `M_k = (1, 1.5, 2, 3)`
-(`OPIOID_TOLERANCE_FACTORS`), so the new model and the existing knob move together. Nothing richer than
-monotone-in-transform is justified by two points.
+**Spacing — decision (§9): Grid B.** The four levels sit at `θ_k = ln M_k / ln 3 = (0, 0.369, 0.631, 1)`
+for `M_k = (1, 1.5, 2, 3)` (`OPIOID_TOLERANCE_FACTORS`), so the model and the existing knob move together.
+
+**[correction] This is a parsimonious monotone path, not the maximal one** (both audits): the log and logit
+scales are themselves (untestable) curvature choices from two anchors, as is `θ = ln M/ln 3`. Stated as a
+defensible choice, not a theorem; "anything with curvature over-fits" is dropped. (Note `k` and `K = k_off/k_on`
+for one species are not independent, so the interpolation is specified per species on its free parameters.)
 
 ---
 
@@ -262,6 +316,14 @@ monotone-in-transform is justified by two points.
 | P3 reduction | linear form at n=1, small Θ | matches slope (exact to 1st order) |
 | P4 invariant (P4) | algebra; sim with/without slow ligand | `Φ = U` to the bit |
 | P5 interpolation | Olofsen anchors at θ=0,1 | reproduced exactly |
+| P1 crowding surge (Φ 0→100 in one step) | dense RK4 | 2e-14 (was 3.8e-2 before the fix) |
+
+**[correction] What the error figures mean (both audits).** The `~1e-11` (P1) and `O(h⁴)` (P2 CF4) are
+exactness **with respect to the piecewise-linear `Ce(t)` the simulator plots** — they give unconditional
+stability and exact simplex conservation on arbitrary grids. Convergence to the underlying *smooth*
+biophase ODE is `O(h²)`, from linearly interpolating `Ce` between grid points, whenever `h` is comparable
+to `1/k_e0` (e.g. a long washout step) — exactly the approximation the inhaled-gas engine makes. Initial
+condition: `ρ_slow = 0` at `t₀ = 0` before the earliest dose (not at a shifted plot-window start).
 
 ---
 
