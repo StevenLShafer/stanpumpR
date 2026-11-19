@@ -20,9 +20,13 @@ At steady state on 200 mg three times a day, the model's AUC is 25 mcg·h/mL per
 
 Healthy young men (Jorga 1998) have a clearance of 7.3 L/h, a total volume of 9 L and a half-life of about 2 hours, which is what the label quotes. The patients' total volume was about 28 L in both of the paper's independent analyses. That gives the longer half-life drawn here, although sparse sampling may have contributed. The patients' exposure is nonetheless close to that of healthy elderly volunteers (AUC 24 to 27 mcg·h/mL).
 
+### Serum albumin
+
+The **Serum albumin** field of the Patient Profile sets the peripheral volume: Vp = 12 L × (albumin/44 g/L)^2.82 (Table 3). Left blank, the study's median of 4.4 g/dL is used. The exponent is steep, so Vp falls to about half at 3.5 g/dL and to a quarter at 2.7 g/dL, and rises by 43% at 5 g/dL. Clearance does not depend on albumin, so the average exposure at steady state does not change; the half-life and the rise and fall between doses do.
+
 ### What is held at the reference
 
-- **Serum protein and albumin.** The Patient Profile does not carry them: protein had a small effect on clearance (at most ±10%) and albumin on the peripheral volume.
+- **Serum protein.** The Patient Profile does not carry it; its effect on clearance was small (at most ±10%).
 - **The volumes' dose dependence.** In the fluctuators the total volume rose with the regimen, from 15 L at 50 mg to 39 L at 400 mg three times a day. The nonfluctuators did not show this, so the volumes are held at their 200 mg values. Clearance did not change with dose, so the exposure is unaffected.
 - **Food.** The curve is drawn fasting. Taken with food, tolcapone's exposure is 10 to 20% lower, which the label considers clinically irrelevant.
 

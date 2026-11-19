@@ -4,7 +4,7 @@
 \alias{tolcapone}
 \title{Tolcapone pharmacokinetics (oral)}
 \usage{
-tolcapone(weight, height, age, sex, adjustToFFM = TRUE)
+tolcapone(weight, height, age, sex, adjustToFFM = TRUE, albumin = NULL)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -21,13 +21,17 @@ patient's fat-free mass as described in the
 \code{FALSE} reproduces the published size scaling exactly.  Each drug
 file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
+
+\item{albumin}{serum albumin, g/dL, or NULL for the study median
+(4.4 g/dL)}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
 Two compartments with first-order absorption, lean body weight on
-clearance and the central volume (Jorga 2000, fluctuator model), absolute
-parameters with the bioavailability fixed at 0.6.  See the header of
+clearance and the central volume and serum albumin on the peripheral
+volume (Jorga 2000, fluctuator model), absolute parameters with the
+bioavailability fixed at 0.6.  See the header of
 \code{R/drugs_tolcapone.R}.
 }
