@@ -135,7 +135,12 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
         out[[g]]$gasRun <- list(time = sim$timeLine, state = state, body = sim$body,
                                 circuit = sim$circuit, weight = sim$weight, age = sim$age,
                                 Qco = sim$Qco, deadSpace = sim$deadSpace,
-                                gasDose = gasDose)
+                                gasDose = gasDose,
+                                # Physiology events: the bodies, the body of
+                                # each row, and the events themselves
+                                bodySteps = sim$bodySteps, bodyRow = sim$bodyRow,
+                                cardiacOutput = sim$cardiacOutput,
+                                physiologyEvents = sim$physiologyEvents)
     }
   }
 
@@ -252,12 +257,17 @@ gasEntry <- function(drug, alveolar, brain, xout, drugDefaults,
     addNorm("CpNormCe", cp, maxCe), addNorm("CeNormCe", ce, maxCe)
   )
 
+  # A physiology event (R/physiologyEvents.R) repeats its time, before and
+  # after the step; the interpolation takes the value after it
+  lastOf <- function(t) !duplicated(t, fromLast = TRUE)
+  bk <- lastOf(brain$Time)
+  ak <- lastOf(alveolar$Time)
   equiSpace <- data.frame(
     Drug     = drug,
     Time     = xout,
-    Ce       = stats::approx(brain$Time, ce, xout, rule = 2)$y,
+    Ce       = stats::approx(brain$Time[bk], ce[bk], xout, rule = 2)$y,
     Recovery = if (is.null(recovery)) 0 else
-      stats::approx(alveolar$Time, recovery, xout, rule = 2)$y,
+      stats::approx(alveolar$Time[ak], recovery[ak], xout, rule = 2)$y,
     MEAC     = 0,
     stringsAsFactors = FALSE
   )

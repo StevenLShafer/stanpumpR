@@ -257,7 +257,7 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
     entry <- alternativeModelEntry(
       drug, weight, height, age, sex, drugDefaults[idx, ], adjustToFFM,
       pregnant = pregnant, cyp2c9 = cyp2c9, vkorc1 = vkorc1,
-      physiology = physiology
+      physiology = physiology, physiologyEvents = physiologyEvents
     )
     if (is.null(entry)) next
     outputComments("Getting PK for", entry$drug)

@@ -134,7 +134,10 @@ editEventsGridColumns <- function(events) {
   list(
     tableColumn("Delete", type = "checkbox", width = 55),
     tableColumn("Time", type = "time", width = 70),
-    tableColumn("Event", type = "select", options = events)
+    tableColumn("Event", type = "select", options = events),
+    # A Physiology row's recorded settings (R/physiologyEvents.R), shown and
+    # carried back; made only by the Physiology panel's Create event
+    tableColumn("Settings", type = "readonly", width = 160)
   )
 }
 

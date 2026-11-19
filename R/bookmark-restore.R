@@ -105,9 +105,21 @@ restoredEventTable <- function(x, eventDefaults, empty)
            else as.character(table$Event)
   time <- suppressWarnings(as.numeric(if (is.list(table$Time)) vapply(table$Time, function(e)
     if (length(e) == 1) as.character(e) else "", "") else as.character(table$Time)))
-  ok <- !is.na(event) & event %in% eventDefaults$Event & is.finite(time) & time >= 0
+  # A Physiology row keeps only settings physiologyEventDecode() reads, and
+  # is dropped without them; every other row carries none
+  settings <- if ("Settings" %in% names(table)) {
+    s <- table[["Settings"]]
+    if (is.list(s)) vapply(s, function(e) if (length(e) == 1) as.character(e) else "", "")
+    else as.character(s)
+  } else rep("", length(event))
+  settings[is.na(settings)] <- ""
+  physiology <- !is.na(event) & event == PHYSIOLOGY_EVENT_NAME
+  readable <- !physiology | vapply(settings, function(x) !is.null(physiologyEventDecode(x)), TRUE)
+  settings[!physiology] <- ""
+  ok <- !is.na(event) & event %in% eventDefaults$Event & is.finite(time) & time >= 0 & readable
   ok[seq_along(ok) > MAX_EVENT_ROWS] <- FALSE
+  ok[physiology & cumsum(physiology & ok) > PHYSIOLOGY_EVENT_MAX] <- FALSE
   if (!any(ok)) return(list(table = empty, changed = TRUE))
-  list(table = data.frame(Time = time[ok], Event = event[ok], stringsAsFactors = FALSE),
+  list(table = eventTableRows(time[ok], event[ok], settings[ok]),
        changed = !all(ok))
 }

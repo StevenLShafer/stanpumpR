@@ -115,6 +115,76 @@ test_that("propofol steps to an event's physiology with the amounts carried acro
   expect_equal(after / before, p0$v1 / p1$v1, tolerance = 1e-6)
 })
 
+test_that("a bolus at the event's own time enters after the step, once", {
+  dd <- getDrugDefaultsGlobal()
+  row <- dd[dd$Drug == "propofol", ]
+  s <- physiologyEventNormal()
+  s[["cardiac"]] <- 0.4
+  ET <- data.frame(Time = 30, Event = "Physiology", Settings = physiologyEventEncode(s))
+  build <- function(p) getDrugPK("propofol", 70, 170, 50, "male", row, physiology = p)
+  PK <- physiologyEventPK(build, physiologyEventsFrom(ET))
+  p0 <- PK$PK[["default"]]
+  p1 <- PK$PK[["default@physiology1"]]
+  DT <- data.frame(Drug = "propofol", Time = c(0, 30, 30), Dose = c(1, 1, 50),
+                   Units = c("mg/kg", "mg/kg", "mcg/kg/min"))
+  w <- simCpCe(DT, ET, PK, maximum = 120, plotRecovery = FALSE)$wide
+  pieces <- list(list(from = 0, to = 30, pk = p0, rate = 0),
+                 list(from = 30, to = 1e9, pk = p1, rate = 50 * 70 / 1000))
+  boluses <- data.frame(time = c(0, 30), amount = c(70, 70))
+  g <- w$Time[w$Time > 0 & w$Time != 30]
+  ref <- vapply(g, function(t) physiologyEventReference(pieces, boluses, t), numeric(2))
+  i <- match(g, w$Time)
+  expect_lt(max(abs(w$Plasma[i] / ref["Cp", ] - 1)), 1e-9)
+  expect_lt(max(abs(w$`Effect Site`[i] / ref["Ce", ] - 1)), 1e-7)
+})
+
+test_that("an oral dose absorbing across a step: the depot carries over, ka steps with the gut", {
+  dd <- getDrugDefaultsGlobal()
+  row <- dd[dd$Drug == "metoprolol", ]
+  s <- physiologyEventNormal()
+  s[["cardiac"]] <- 0.6
+  s[["gi"]] <- 3
+  ET <- data.frame(Time = 45, Event = "Physiology", Settings = physiologyEventEncode(s))
+  build <- function(p) getDrugPK("metoprolol", 70, 170, 50, "male", row, physiology = p)
+  PK <- physiologyEventPK(build, physiologyEventsFrom(ET))
+  p0 <- PK$PK[["default"]]
+  p1 <- PK$PK[["default@physiology1"]]
+  expect_equal(p1$ka_PO / p0$ka_PO, 3, tolerance = 1e-9)
+  DT <- data.frame(Drug = "metoprolol", Time = 0, Dose = 100, Units = "mg PO")
+  w <- simCpCe(DT, ET, PK, maximum = 240, plotRecovery = FALSE)$wide
+  # The reference: a depot emptying at ka into the central compartment
+  M <- function(p) {
+    A <- matrix(0, 6, 6)
+    A[1, 1:3] <- c(-(p$k10 + p$k12 + p$k13), p$k21, p$k31)
+    A[2, 1:2] <- c(p$k12, -p$k21)
+    A[3, c(1, 3)] <- c(p$k13, -p$k31)
+    A[4, 1] <- p$ke0 / p$v1
+    A[4, 4] <- -p$ke0
+    A[1, 5] <- p$ka_PO
+    A[5, 5] <- -p$ka_PO
+    A
+  }
+  lag <- if (is.null(p0$tlag_PO)) 0 else p0$tlag_PO
+  ref <- function(t) {
+    x <- numeric(6)
+    knots <- sort(unique(c(0, lag, 45, t)))
+    knots <- knots[knots <= t]
+    for (k in seq_along(knots)[-1]) {
+      a <- knots[k - 1]
+      # 100 mg in the engine's mcg (metoprolol is plotted in ng/mL)
+      if (a == lag) x[5] <- x[5] + 1e5 * p0$bioavailability_PO
+      p <- if (a < 45) p0 else p1
+      x <- as.vector(as.matrix(Matrix::expm(Matrix::Matrix(M(p) * (knots[k] - a)))) %*% x)
+    }
+    c(Cp = x[1] / (if (t <= 45) p0 else p1)$v1, Ce = x[4])
+  }
+  g <- w$Time[w$Time > lag + 1 & w$Time != 45]
+  r <- vapply(g, ref, numeric(2))
+  i <- match(g, w$Time)
+  expect_lt(max(abs(w$Plasma[i] / r["Cp", ] - 1)), 1e-8)
+  expect_lt(max(abs(w$`Effect Site`[i] / r["Ce", ] - 1)), 1e-6)
+})
+
 test_that("physiology events and clinical events switch together (dexmedetomidine on bypass)", {
   dd <- getDrugDefaultsGlobal()
   row <- dd[dd$Drug == "dexmedetomidine", ]
@@ -184,4 +254,170 @@ test_that("a drug the sliders cannot switch during a run says so and keeps norma
     data.frame(Time = 60, Event = "Physiology", Settings = physiologyEventEncode(s))))
   expect_type(PK$physiologyStepsSkipped, "character")
   expect_null(PK[["physiologyEvents"]])
+})
+
+# --- The inhaled agents --------------------------------------------------------
+
+gasEventTable <- function(...) {
+  s <- physiologyEventNormal()
+  over <- list(...)
+  for (n in names(over)) s[[n]] <- over[[n]]
+  ev <- data.frame(Time = 20)
+  for (f in PHYSIOLOGY_EVENT_FIELDS) ev[[f]] <- s[[f]]
+  ev
+}
+gasDT <- data.frame(Drug = c("sevoflurane", "oxygen", "air", "ventilation"), Time = 0,
+                    Dose = c(2, 1, 1, 5))
+
+test_that("an inhaled agent's physiology event at normal physiology changes nothing", {
+  plain <- simulateGases(gasDT, weight = 70, age = 40, maximum = 60)
+  same <- simulateGases(gasDT, weight = 70, age = 40, maximum = 60,
+                        physiologyEvents = gasEventTable())
+  tb <- same$timeLine
+  keep <- !duplicated(tb, fromLast = TRUE)
+  i <- match(tb[keep], plain$timeLine)
+  ok <- !is.na(i)
+  # The extra change point only moves the sub-steps of the uptake coupling
+  expect_lt(max(abs(same$state$sevoflurane[keep, ][ok, ] - plain$state$sevoflurane[i[ok], ])), 1e-8)
+})
+
+test_that("a temperature step carries the agent in each tissue across, and MAC steps with it", {
+  st <- simulateGases(gasDT, weight = 70, age = 40, maximum = 60,
+                      physiologyEvents = gasEventTable(temperature = 32, cardiac = 0.5))
+  i <- which(st$timeLine == 20)
+  expect_length(i, 2)
+  expect_equal(st$bodyRow[i], 1:2)
+  capacity <- function(body) {
+    p <- gasPropertiesAt(body$temperature)
+    l <- gasPartitionTissueGas(p[p$gas == "sevoflurane", ])
+    v <- gasTissueVolumes(body)
+    v * l[c("brain", "muscle", "fat", "brain")[seq_along(v)]]
+  }
+  b0 <- st$bodySteps$body[[1]]
+  b1 <- st$bodySteps$body[[2]]
+  # Both bodies split the vessel-rich group: one has cardiac output off normal
+  expect_equal(gasStateCount(b0), 6L)
+  before <- st$state$sevoflurane[i[1], ]
+  after <- st$state$sevoflurane[i[2], ]
+  expect_equal(sum(after[3:6] * capacity(b1)), sum(before[3:6] * capacity(b0)), tolerance = 1e-12)
+  # The gas phase keeps its partial pressure; a cooled tissue holds the same
+  # agent at a lower one
+  expect_equal(after[1:2], before[1:2])
+  expect_true(all(after[3:6] < before[3:6]))
+  # MAC is lower at 32 C, so the summed MAC steps up at the same alveolar
+  mac <- st$results[st$results$Drug == "MAC", ]
+  m <- mac$Y[mac$Time == 20]
+  expect_gt(m[2], m[1])
+  # The time until threshold is computed per segment, on each segment's body
+  w <- gasWashout(st, data.frame(Time = gasDT$Time, Drug = gasDT$Drug, Dose = gasDT$Dose), weight = 70)
+  expect_length(w$segments, 2)
+  r <- gasRecoveryTime(w, "sevoflurane", 1)
+  expect_length(r, length(st$timeLine))
+  expect_true(all(is.finite(r)))
+  entries <- gasDrugEntries(st, gasDT, maximum = 60, washout = w, age = 40)
+  expect_true(all(c("sevoflurane", "MAC") %in% names(entries)))
+})
+
+test_that("the Visualizer draws a cardiac-output step and refuses a temperature step", {
+  co <- simulateGases(gasDT, weight = 70, age = 40, maximum = 60,
+                      physiologyEvents = gasEventTable(cardiac = 0.5))
+  entries <- gasDrugEntries(co, gasDT, maximum = 60, age = 40)
+  run <- viewerGasRun(entries$sevoflurane, 0, 60)
+  expect_length(run$cardiacOutput, length(run$t))
+  expect_equal(range(run$cardiacOutput), co$bodySteps$body[[1]]$Q_cardiac * c(0.5, 1))
+  expect_length(run$physiologySteps, 2)
+  expect_equal(run$physiologySteps[[2]]$time, 20 * 60)
+  expect_equal(run$physiologySteps[[2]]$cardiac, 0.5)
+  cold <- simulateGases(gasDT, weight = 70, age = 40, maximum = 60,
+                        physiologyEvents = gasEventTable(temperature = 33))
+  coldEntries <- gasDrugEntries(cold, gasDT, maximum = 60, age = 40)
+  expect_error(viewerGasRun(coldEntries$sevoflurane, 0, 60), "temperature or intubation")
+})
+
+# --- The event table -----------------------------------------------------------
+
+test_that("a Physiology row needs readable settings wherever an event table is read", {
+  s <- physiologyEventNormal(); s[["cardiac"]] <- 0.5
+  good <- eventTableRows(c(10, 20), c("Intubation", "Physiology"), c("", physiologyEventEncode(s)))
+  expect_true(validateEventTableInput(good))
+  bad <- eventTableRows(20, "Physiology", "cardiac=99")
+  expect_error(validateEventTableInput(bad), "Create event")
+  expect_error(validateEventTableInput(eventTableRows(20, "Physiology", "")), "Create event")
+  # A table with no Settings column (a scenario, the API) is still read
+  expect_true(validateEventTableInput(data.frame(Time = 10, Event = "Intubation")))
+  # A link: an unreadable Physiology row is dropped, a readable one kept,
+  # and another event's settings are emptied
+  link <- list(Time = c(10, 20, 30), Event = c("Intubation", "Physiology", "Physiology"),
+               Settings = c("liver=0.5", physiologyEventEncode(s), "<script>"))
+  r <- restoredEventTable(link, getEventDefaults(), eventTableInit)
+  expect_true(r$changed)
+  expect_equal(r$table$Time, c(10, 20))
+  expect_equal(r$table$Settings, c("", physiologyEventEncode(s)))
+  # Settings show only what is off normal
+  expect_identical(physiologyEventEncode(s), "cardiac=0.5")
+  expect_identical(physiologyEventEncode(physiologyEventNormal()), "normal")
+  expect_equal(physiologyEventDecode("normal"), physiologyEventNormal())
+})
+
+test_that("the hover tip names the Physiology event under the pointer", {
+  s <- physiologyEventNormal(); s[["liver"]] <- 0.2
+  ET <- eventTableRows(c(10, 60), c("Intubation", "Physiology"), c("", physiologyEventEncode(s)))
+  tip <- physiologyEventHover(ET, 61, 180, gas = FALSE)
+  expect_equal(tip$time, 60)
+  expect_match(tip$text, "Liver x0.2")
+  expect_null(physiologyEventHover(ET, 100, 180))
+  expect_null(physiologyEventHover(ET[1, ], 10, 180))
+})
+
+test_that("the workbook records the physiology events in place of the panel", {
+  s <- physiologyEventNormal(); s[["renal"]] <- 0.3
+  events <- physiologyEventsFrom(eventTableRows(45, "Physiology", physiologyEventEncode(s)))
+  rows <- physiologyCovariateRows(c(liver = 2), 37, 0, FALSE, events)
+  expect_equal(nrow(rows), 2)
+  expect_match(rows$Value[1], "normal physiology from time 0")
+  expect_match(rows$Value[2], "Kidney x0.3")
+})
+
+test_that("the Visualizer of an intravenous drug follows the physiology events", {
+  dd <- getDrugDefaultsGlobal()
+  row <- dd[dd$Drug == "propofol", ]
+  s <- physiologyEventNormal(); s[["cardiac"]] <- 0.5
+  ET <- eventTableRows(40, "Physiology", physiologyEventEncode(s))
+  events <- physiologyEventsFrom(ET)
+  PK <- physiologyEventPK(function(p) getDrugPK("propofol", 70, 170, 50, "male", row, physiology = p),
+                          events)
+  entry <- PK
+  entry$ET <- ET
+  inForce <- viewerSetsInForce(entry, PK$PK, c(0, 39, 40, 100), 180)
+  expect_equal(inForce, c("default", "default", "default@physiology1", "default@physiology1"))
+  steps <- viewerPhysiologySteps(events, 10)
+  expect_equal(vapply(steps, `[[`, 0, "time"), c(600, 2400))
+  expect_equal(steps[[2]]$cardiac, 0.5)
+})
+
+test_that("Create event records the panel's settings in the event table", {
+  local_mocked_bindings(outputComments = function(...) {})
+  oldConfig <- .sprglobals$config
+  .sprglobals$config <- DEFAULT_CONFIG
+  on.exit(.sprglobals$config <- oldConfig)
+  shiny::testServer(app_server, {
+    session$setInputs(timeUnits = "minutes", timeMode = "relative", referenceTime = "08:00",
+                      maximum = "240", weight = 70, weightUnit = "1", height = 170,
+                      heightUnit = "1", age = 40, ageUnit = "1", sex = "male")
+    session$setInputs(physiology_cardiac = log10(0.5), physiology_temperature = 34)
+    session$setInputs(physiologyCreateEvent = 1)
+    session$setInputs(physiologyEventTime = "abc", physiologyCreateEventBtn = 1)
+    expect_equal(nrow(eventTable()), 0)
+    session$setInputs(physiologyEventTime = "30", physiologyCreateEventBtn = 2)
+    ET <- eventTable()
+    expect_equal(ET$Time, 30)
+    expect_equal(ET$Event, "Physiology")
+    x <- physiologyEventDecode(ET$Settings)
+    expect_equal(x[["cardiac"]], 0.5, tolerance = 1e-9)
+    expect_equal(x[["temperature"]], 34)
+    expect_equal(nrow(physiologyEvents()), 1)
+    # Add event never offers Physiology, which has no settings to record
+    session$setInputs(clickTimeEvent = "50", clickEvent = "Physiology", addEventBtn = 1)
+    expect_equal(nrow(eventTable()), 1)
+  })
 })

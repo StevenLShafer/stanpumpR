@@ -101,14 +101,77 @@ checkPhysiologyEvent <- function(x)
 }
 
 #' A physiology event's settings as the event table's Settings string
+#'
+#' Only the settings away from normal, so that the string, which the Edit
+#' events dialog shows, stays readable; "normal" when there are none.
+#'
 #' @param x settings, as checkPhysiologyEvent() takes them
-#' @returns one string, "liver=1;renal=1;..."
+#' @returns one string, "cardiac=0.5;temperature=34", or "normal"
 #' @keywords internal
 physiologyEventEncode <- function(x)
 {
   x <- checkPhysiologyEvent(x)
-  paste0(names(x), "=", format(unname(x), digits = 15, trim = TRUE), collapse = ";")
+  off <- x != physiologyEventNormal()
+  if (!any(off)) return(PHYSIOLOGY_EVENT_NORMAL_TEXT)
+  paste0(names(x)[off], "=", vapply(unname(x[off]), function(v) format(v, digits = 15), ""),
+         collapse = ";")
 }
+
+#' The Settings string of a physiology event at normal physiology
+#' @keywords internal
+PHYSIOLOGY_EVENT_NORMAL_TEXT <- "normal"
+
+#' An event table's Settings column, "" where it has none
+#' @param ET an event table
+#' @returns a character vector, one per row
+#' @keywords internal
+eventTableSettings <- function(ET)
+{
+  n <- if (is.data.frame(ET)) nrow(ET) else 0L
+  s <- if (is.data.frame(ET) && "Settings" %in% names(ET)) ET[["Settings"]] else NULL
+  if (is.null(s) || length(s) != n) return(rep("", n))
+  s <- vapply(s, function(v) if (length(v) == 1 && !is.na(v)) as.character(v) else "", "",
+              USE.NAMES = FALSE)
+  s
+}
+
+#' An event table from its columns, Settings "" where not given
+#' @param Time,Event,Settings the columns
+#' @keywords internal
+eventTableRows <- function(Time, Event, Settings = rep("", length(Time)))
+{
+  data.frame(Time = Time, Event = as.character(Event), Settings = as.character(Settings),
+             stringsAsFactors = FALSE)
+}
+
+#' The problem with a Physiology row's settings, or NULL
+#'
+#' Every Physiology row must carry settings physiologyEventDecode() reads; the
+#' other rows carry none.
+#'
+#' @param ET an event table
+#' @returns a sentence, or NULL
+#' @keywords internal
+physiologyEventsProblem <- function(ET)
+{
+  if (!is.data.frame(ET) || nrow(ET) == 0) return(NULL)
+  settings <- eventTableSettings(ET)
+  physiology <- as.character(ET$Event) == PHYSIOLOGY_EVENT_NAME
+  physiology[is.na(physiology)] <- FALSE
+  if (any(nchar(settings) > PHYSIOLOGY_EVENT_MAX_CHARS))
+    return("An event's settings are too long.")
+  if (sum(physiology) > PHYSIOLOGY_EVENT_MAX)
+    return(sprintf("The event table holds at most %d physiology events.", PHYSIOLOGY_EVENT_MAX))
+  unreadable <- physiology & vapply(settings, function(x) is.null(physiologyEventDecode(x)), TRUE)
+  if (any(unreadable))
+    return(paste("A Physiology event records the physiology panel's settings: create it with",
+                 "Create event in the Physiology panel."))
+  NULL
+}
+
+#' The longest Settings string read
+#' @keywords internal
+PHYSIOLOGY_EVENT_MAX_CHARS <- 400L
 
 #' A Settings string read back
 #'
@@ -120,7 +183,9 @@ physiologyEventEncode <- function(x)
 #' @keywords internal
 physiologyEventDecode <- function(s)
 {
-  if (!is.character(s) || length(s) != 1 || is.na(s) || nchar(s) > 400) return(NULL)
+  if (!is.character(s) || length(s) != 1 || is.na(s) || nchar(s) > PHYSIOLOGY_EVENT_MAX_CHARS)
+    return(NULL)
+  if (identical(trimws(s), PHYSIOLOGY_EVENT_NORMAL_TEXT)) return(physiologyEventNormal())
   parts <- strsplit(s, ";", fixed = TRUE)[[1]]
   kv <- strsplit(parts, "=", fixed = TRUE)
   if (length(kv) == 0 || any(lengths(kv) != 2)) return(NULL)
@@ -293,3 +358,27 @@ physiologyEventTimeline <- function(clinical, physiology)
                             character(1)),
              stringsAsFactors = FALSE)
 }
+
+#' The Physiology event under the pointer on the Events panel
+#'
+#' @param ET the event table (minutes)
+#' @param x the pointer's time, minutes
+#' @param span the plot's width, minutes; an event within
+#'   PHYSIOLOGY_EVENT_HOVER_SHARE of it is under the pointer
+#' @param gas whether to describe the altitude and the intubation
+#' @returns list(time, text) for the nearest such event, or NULL
+#' @keywords internal
+physiologyEventHover <- function(ET, x, span, gas = TRUE)
+{
+  events <- physiologyEventsFrom(ET)
+  if (nrow(events) == 0 || length(x) != 1 || !is.finite(x) || !isTRUE(span > 0)) return(NULL)
+  d <- abs(events$Time - x)
+  i <- which.min(d)
+  if (d[i] > PHYSIOLOGY_EVENT_HOVER_SHARE * span) return(NULL)
+  list(time = events$Time[i],
+       text = physiologyEventSummary(unlist(events[i, PHYSIOLOGY_EVENT_FIELDS]), gas = gas))
+}
+
+#' Share of the plot's width within which the pointer is on an event
+#' @keywords internal
+PHYSIOLOGY_EVENT_HOVER_SHARE <- 0.02

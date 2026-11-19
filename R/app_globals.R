@@ -25,7 +25,10 @@ blankDoseTableRow <- function(template) {
 
 eventTableInit <- data.frame(
   Time = numeric(0),
-  Event = character(0)
+  Event = character(0),
+  # A Physiology row's recorded settings (physiologyEventEncode(),
+  # R/physiologyEvents.R); "" for every other event
+  Settings = character(0)
 )
 
 bookmarksToExclude <- c(
