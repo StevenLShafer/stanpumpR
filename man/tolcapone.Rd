@@ -23,7 +23,7 @@ file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
 
 \item{albumin}{serum albumin, g/dL, or NULL for the study median
-(4.4 g/dL)}
+(4.4 g/dL); held within the studied 2.6-5.5 g/dL}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
