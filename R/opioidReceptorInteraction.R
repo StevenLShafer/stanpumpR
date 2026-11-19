@@ -349,3 +349,48 @@ orVentilation <- function(rho, tauV)
 # at its MEAC reads 1.0 and buprenorphine enters through its own partial analgesia.
 orMeacEquivalent <- function(rho, eAnalg, rhoStar = OR_RHO_STAR)
   as.numeric(rho %*% eAnalg) / rhoStar
+
+# -- The engine-to-plot bridge -------------------------------------------------
+# Turn the already-simulated effect-site curves of the mu ligands into the
+# occupancy and effect series the panels draw.  The app layer extracts ceList /
+# meacList from the drug list and attaches the result; this function is the pure
+# computation and is standalone-testable.
+#   times       numeric, the shared time grid
+#   ceList      named list of effect-site concentration series (one per opioid)
+#   meacList    named numeric of MEACs (full agonists; 0/NA for bup/antagonists)
+#   toleranceLevel  one of names(OR_TOLERANCE_FACTORS)
+# Returns a list with: ligands (names), slow (logical), rho (times x ligands),
+#   rho0, physical occupancy; ventilation (depression fraction), analgesia
+#   (MEAC-equivalents), availableDrive (fast-agonist occupancy odds), and the
+#   per-ligand eAnalg so a panel can split buprenorphine's own contribution.
+orInteractionSeries <- function(times, ceList, meacList = NULL, toleranceLevel = "none")
+{
+  theta <- orToleranceTheta(toleranceLevel)
+  drugs <- names(ceList)
+  meacOf <- function(d) { m <- if (!is.null(meacList)) meacList[[d]] else NULL
+                          if (is.null(m) || is.na(m)) 0 else m }
+  params <- lapply(drugs, function(d) orLigandParams(d, meac = meacOf(d), theta = theta))
+  keep <- !vapply(params, is.null, logical(1))           # only mu ligands
+  drugs <- drugs[keep]; params <- params[keep]
+  if (!length(drugs)) return(NULL)
+
+  ligands <- lapply(seq_along(drugs), function(i)
+    list(Ce = ceList[[drugs[i]]], kon = params[[i]]$kon, koff = params[[i]]$koff,
+         C50 = params[[i]]$C50, slow = params[[i]]$slow))
+  oc <- orOccupancy(times, ligands)
+
+  tauV   <- vapply(params, function(p) p$tauV,   numeric(1))
+  eAnalg <- vapply(params, function(p) p$eAnalg, numeric(1))
+  slow   <- vapply(params, function(p) p$slow,   logical(1))
+
+  Theta <- as.numeric(oc$rho %*% tauV)
+  ventilation <- Theta / (1 + Theta)
+  analgesia   <- as.numeric(oc$rho %*% eAnalg) / OR_RHO_STAR
+  agonist <- !slow & eAnalg > 0                          # fast full agonists
+  rhoAgonist <- if (any(agonist)) rowSums(oc$rho[, agonist, drop = FALSE]) else numeric(length(times))
+  availableDrive <- rhoAgonist / oc$rho0                 # exact unblocked-equiv drive (odds)
+
+  list(ligands = drugs, slow = slow, eAnalg = eAnalg,
+       rho = oc$rho, rho0 = oc$rho0,
+       ventilation = ventilation, analgesia = analgesia, availableDrive = availableDrive)
+}

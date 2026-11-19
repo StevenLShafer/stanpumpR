@@ -198,6 +198,29 @@ test_that("naloxone is a pure antagonist and non-opioids are not ligands", {
   expect_null(orLigandParams("propofol", meac = 0))
 })
 
+test_that("the engine-to-plot bridge shows blockade of a full agonist", {
+  # long window so buprenorphine occupancy equilibrates (slow k_off)
+  t <- seq(0, 1200, by = 2)
+  fent <- ifelse(t >= 600, 3.0, 0)                 # a fentanyl step at t=600
+  withBup    <- orInteractionSeries(t, list(buprenorphine = rep(2.0, length(t)),
+                                            fentanyl = fent),
+                                    meacList = list(fentanyl = 0.60))
+  withoutBup <- orInteractionSeries(t, list(fentanyl = fent),
+                                    meacList = list(fentanyl = 0.60))
+  iend <- length(t)
+  ipre <- max(which(t < 600))                      # just before the fentanyl step
+  # buprenorphine equilibrates (alone) toward Ce/(K_D+Ce) = 2/2.4 = 0.833
+  expect_equal(withBup$rho[ipre, 1], 2 / 2.4, tolerance = 0.02)
+  # fentanyl is blocked: far lower occupancy with buprenorphine on board
+  fentWith    <- withBup$rho[iend, 2]
+  fentWithout <- withoutBup$rho[iend, 1]
+  expect_lt(fentWith, 0.4 * fentWithout)
+  # available drive (MEAC-equivalents) is far below the nominal U = Ce/MEAC
+  expect_lt(withBup$availableDrive[iend], 0.5 * (3.0 / 0.60))
+  # ventilation never exceeds 1; buprenorphine-alone stays under its ceiling
+  expect_lte(max(withBup$ventilation), 1)
+})
+
 test_that("P1 stays exact when the crowding factor surges within one step", {
   # a fast bolus drives 1+Phi from 1 to 101 across one interval: a(t)'s pole sits
   # just off [0,h] and would collapse Gauss-Legendre without crowding sub-stepping
