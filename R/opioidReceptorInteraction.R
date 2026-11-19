@@ -255,3 +255,97 @@ orOperationalResponse <- function(rho, tau, gamma, n = 1)
 # antagonist.  rhoAgonist is on the occupancy (binding C50) scale; mapping U~ back
 # to analgesic-MEAC units under the dual-C50 scale is a design question for Shafer.
 orAvailableDrive <- function(rhoAgonist) rhoAgonist / (1 - rhoAgonist)
+
+# -----------------------------------------------------------------------------
+# The unified "one physical occupancy" layer (Shafer, 2026-11-19)
+# -----------------------------------------------------------------------------
+# One PHYSICAL mu-receptor occupancy per ligand (true K_D); ventilation and
+# analgesia are two transductions of it.  Calibration forced by the 2-5x MEAC
+# analgesic ceiling band with physical efficacy e <= 1:
+#   * analgesic threshold occupancy rho* = 0.2 (a full agonist reaches its
+#     analgesic threshold at ~20% occupancy -- high opioid analgesic reserve);
+#   * full-agonist true K_D = (1-rho*)/rho* * MEAC = 4*MEAC (larger than the
+#     in-vitro binding K_D; the gap is receptor reserve, which reconciles a
+#     full agonist's high ventilatory potency with a modest binding affinity);
+#   * full-agonist ventilation reserve tau_V = 4.53 (= 1/rho at the ventilatory
+#     C50 ~ 1.133*MEAC on the 4*MEAC binding scale; MEAC-independent), giving a
+#     ventilation ceiling ~0.82.
+# These are documented modelling constants; adjust with Shafer's calibration.
+OR_RHO_STAR <- 0.2
+OR_FULL_AGONIST_KD_FACTOR <- (1 - OR_RHO_STAR) / OR_RHO_STAR    # 4
+OR_FULL_AGONIST_TAU_V     <- 4.53
+
+# Grid B: the four Opioid-tolerance levels map to theta via the existing factors.
+OR_TOLERANCE_FACTORS <- c(none = 1, mild = 1.5, somewhat = 2, high = 3)
+orToleranceTheta <- function(level = "none")
+  log(OR_TOLERANCE_FACTORS[[match.arg(level, names(OR_TOLERANCE_FACTORS))]]) / log(3)
+
+# The explicit receptor constants (buprenorphine, naloxone); other opioids are
+# defaulted from their MEAC.  Read once, cached.
+orReceptorConstantsCache <- new.env(parent = emptyenv())
+orReceptorConstants <- function()
+{
+  if (is.null(orReceptorConstantsCache$tab)) {
+    path <- system.file("extdata", "opioidReceptorConstants.csv", package = "stanpumpR")
+    if (!nzchar(path) || !file.exists(path)) {
+      # dev / sourced-not-installed: try a few locations relative to cwd
+      cand <- c("inst/extdata/opioidReceptorConstants.csv",
+                "../../inst/extdata/opioidReceptorConstants.csv",
+                file.path("..", "..", "inst", "extdata", "opioidReceptorConstants.csv"))
+      hit <- cand[file.exists(cand)]
+      path <- if (length(hit)) hit[1] else cand[1]
+    }
+    orReceptorConstantsCache$tab <- utils::read.csv(path, stringsAsFactors = FALSE)
+  }
+  orReceptorConstantsCache$tab
+}
+
+# logit / inverse-logit for the bounded ventilation-efficacy interpolation
+orLogit    <- function(p) log(p / (1 - p))
+orInvLogit <- function(x) 1 / (1 + exp(-x))
+
+# Per-ligand receptor parameters at tolerance theta: a list with slow, kon, koff,
+# C50 (= true K_D), tauV (ventilation reserve), eAnalg (analgesic efficacy).
+# Tolerance interpolates the TRANSDUCTION (alpha_V -> tauV, eAnalg) and the full-
+# agonist potency; every true K_D is fixed (binding does not change with tolerance).
+orLigandParams <- function(drug, meac = 0, theta = 0)
+{
+  tab <- orReceptorConstants()
+  row <- tab[tab$drug == drug, , drop = FALSE]
+  if (nrow(row)) {
+    row <- row[1, ]
+    KD <- row$KD_true
+    if (isTRUE(as.logical(row$slow))) {
+      alphaV <- orInvLogit((1 - theta) * orLogit(row$alphaV_naive) +
+                           theta * orLogit(row$alphaV_chronic))
+      eAnalg <- exp((1 - theta) * log(row$eAnalg_naive) + theta * log(row$eAnalg_chronic))
+      list(slow = TRUE, kon = row$koff / KD, koff = row$koff, C50 = KD,
+           tauV = alphaV / (1 - alphaV), eAnalg = eAnalg)
+    } else {
+      # explicit fast ligand (naloxone): pure antagonist, no transduction
+      list(slow = FALSE, kon = NA_real_, koff = NA_real_, C50 = KD,
+           tauV = row$alphaV_naive, eAnalg = row$eAnalg_naive)
+    }
+  } else if (meac > 0) {
+    # a full agonist, defaulted from its MEAC; tolerance raises its C50 potency
+    KD <- OR_FULL_AGONIST_KD_FACTOR * meac * 3^theta       # Grid B potency shift
+    list(slow = FALSE, kon = NA_real_, koff = NA_real_, C50 = KD,
+         tauV = OR_FULL_AGONIST_TAU_V, eAnalg = 1)
+  } else {
+    NULL   # not a mu ligand
+  }
+}
+
+# Ventilation depression (fraction of baseline), operational: Theta = sum tauV*rho,
+# D = Theta/(1+Theta).  Bounded in [0,1); buprenorphine's ceiling is alpha_B, a
+# full agonist's ~0.82 at full occupancy.
+orVentilation <- function(rho, tauV)
+{
+  Theta <- as.numeric(rho %*% tauV)
+  Theta / (1 + Theta)
+}
+
+# Analgesia in MEAC-equivalents: U_A = (sum e_i rho_i) / rho*, so one full agonist
+# at its MEAC reads 1.0 and buprenorphine enters through its own partial analgesia.
+orMeacEquivalent <- function(rho, eAnalg, rhoStar = OR_RHO_STAR)
+  as.numeric(rho %*% eAnalg) / rhoStar

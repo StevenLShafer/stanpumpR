@@ -155,6 +155,49 @@ test_that("available drive is the fast-agonist occupancy odds", {
   expect_equal(orAvailableDrive(0.0), 0.0)
 })
 
+# -- the unified "one physical occupancy" transduction layer -------------------
+
+test_that("tolerance Grid B maps the four levels onto theta", {
+  expect_equal(orToleranceTheta("none"), 0)
+  expect_equal(orToleranceTheta("high"), 1)
+  expect_equal(orToleranceTheta("mild"), log(1.5) / log(3))
+  expect_equal(orToleranceTheta("somewhat"), log(2) / log(3))
+})
+
+test_that("buprenorphine true K_D is fixed across tolerance; transduction shifts", {
+  b0 <- orLigandParams("buprenorphine", theta = 0)
+  b1 <- orLigandParams("buprenorphine", theta = 1)
+  expect_true(b0$slow)
+  expect_equal(b0$C50, 0.40)            # true K_D, population-independent
+  expect_equal(b1$C50, 0.40)
+  expect_equal(b0$kon, 0.019 / 0.40)    # k_on = k_off / K_D
+  # ventilation ceiling = alpha_B at full occupancy (0.81 naive, 0.48 chronic)
+  expect_equal(orVentilation(matrix(1, 1, 1), b0$tauV), 0.81, tolerance = 1e-9)
+  expect_equal(orVentilation(matrix(1, 1, 1), b1$tauV), 0.48, tolerance = 1e-9)
+  # analgesic ceiling (MEAC-equivalents) inside the 2-5x band
+  expect_equal(orMeacEquivalent(matrix(1, 1, 1), b0$eAnalg), 3.5, tolerance = 1e-9)  # Typical
+  expect_gte(orMeacEquivalent(matrix(1, 1, 1), b1$eAnalg), 2)
+})
+
+test_that("full agonists get K_D = 4 x MEAC and read 1 MEAC-equivalent at MEAC", {
+  f <- orLigandParams("fentanyl", meac = 0.60, theta = 0)
+  expect_false(f$slow)
+  expect_equal(f$C50, 4 * 0.60)         # (1-rho*)/rho* = 4
+  expect_equal(f$eAnalg, 1)
+  # a full agonist at its MEAC occupies rho* = 0.2 and reads exactly 1 MEAC-equiv
+  rhoAtMeac <- 0.60 / (f$C50 + 0.60)
+  expect_equal(rhoAtMeac, OR_RHO_STAR, tolerance = 1e-9)
+  expect_equal(orMeacEquivalent(matrix(rhoAtMeac, 1, 1), 1), 1.0, tolerance = 1e-9)
+  # tolerance shifts the full-agonist potency by Grid B (x3 at theta = 1)
+  expect_equal(orLigandParams("fentanyl", meac = 0.60, theta = 1)$C50, 3 * 4 * 0.60)
+})
+
+test_that("naloxone is a pure antagonist and non-opioids are not ligands", {
+  n <- orLigandParams("naloxone")
+  expect_equal(n$tauV, 0); expect_equal(n$eAnalg, 0)
+  expect_null(orLigandParams("propofol", meac = 0))
+})
+
 test_that("P1 stays exact when the crowding factor surges within one step", {
   # a fast bolus drives 1+Phi from 1 to 101 across one interval: a(t)'s pole sits
   # just off [0,h] and would collapse Gauss-Legendre without crowding sub-stepping
