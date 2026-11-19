@@ -148,6 +148,8 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     "sildenafilFDA", "ambrisentanOkour",
                     # levothyroxine's 13.7 min lag (Hays 1991); plasma only
                     "levothyroxine",
+                    # liothyronine's 0.62 h lag (Van Tassell 2019); plasma only
+                    "liothyronine",
                     # oral thioguanine's derived 1.0 h lag (Lowe 2001's
                     # median time to peak, 2026-11-16); plasma only
                     "thioguanine"))

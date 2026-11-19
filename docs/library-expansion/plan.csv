@@ -76,7 +76,7 @@ Biologics (sepsis),angiotensin II,angiotensin,1,planned,"Giapreza, vasodilatory 
 Biologics (sepsis),tocilizumab,tocilizumab,1,planned,"COVID-19 and cytokine release."
 Biologics (sepsis),anakinra,anakinra,1,planned,
 Biologics (sepsis),vilobelimab,,1,planned,"Anti-C5a, COVID-19 EUA; not in nlmixr2lib: PubMed search."
-Outpatient (2024 top 200),liothyronine,liothyronine;triiodothyronine,1,planned,"FDA oral NTI (April 2026 product-specific guidance list, p. 11); with levothyroxine the only one of its 14 ingredients missing in the report (levothyroxine since added, #771). Endogenous T3 baseline; read with levothyroxine model."
+Outpatient (2024 top 200),liothyronine,liothyronine;triiodothyronine,1,done,"Implemented 2026-11-18 as liothyronine (Van Tassell 2019, Thyroid 29:1371, Table 3: two compartments at steady state in 14 thyroidectomised patients on liothyronine alone; oral only; total T3 above baseline). FDA oral NTI (April 2026 product-specific guidance list, p. 11)."
 Outpatient (2024 top 200),atorvastatin,atorvastatin,2,planned,Rank 1 (ClinCalc 2024). Include active hydroxy metabolites if the source requires them.
 Outpatient (2024 top 200),levothyroxine,levothyroxine,1,done,"Implemented in #771 (fcc3a2f, 2026-11-17). Rank 2 (ClinCalc 2024). FDA oral NTI. Evidence/engine gate: check whether the population fits represent endogenous T4, T4→T3 conversion, and TSH feedback sufficiently for the intended output. Do not transfer the infant fit to adults."
 Outpatient (2024 top 200),amlodipine,amlodipine,2,planned,Rank 4 (ClinCalc 2024). Also covers the amlodipine component of rank-190 amlodipine/benazepril. Antihypertensive registry: Donnelly 1993 ready_for_source_reproduction; label row descriptive_only.

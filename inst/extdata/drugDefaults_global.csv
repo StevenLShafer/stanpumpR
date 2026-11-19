@@ -341,3 +341,4 @@ bosentan,ng,,,mg PO,"mg PO,mg PO bid",#6B4E3D,0,0,0,0,0,IV,Pulmonary hypertensio
 macitentan,ng,,,mg PO,"mg PO,mg PO qd",#5E35B1,0,0,0,0,0,IV,Pulmonary hypertension
 aprocitentan,ng,,,,,#9575CD,0,0,0,0,0,IV,
 levothyroxine,ng,mcg,,mcg PO qd,"mcg PO qd,mcg PO,mcg,mcg qd",#0097A7,0,0,0,0,0,IV,Other
+liothyronine,ng,,,mcg PO tid,"mcg PO tid,mcg PO bid,mcg PO qd,mcg PO",#3E7C87,0,0,0,0,0,IV,Other
