@@ -21,14 +21,18 @@ os.makedirs(TMP, exist_ok=True)
 # past it, the body is read in bounded pieces that stop at it, and no further paper is
 # attempted.  Papers not reached stay `pending` and the next run picks them up.
 #
-# What it does NOT cover: the one PubMed metadata lookup below, which goes through
-# ncbi.esummary() -> ncbi._get(), six tries at a 60 s timeout plus 30 s of backoff, so about
-# 6.5 minutes of its own BEFORE the loop's first budget check.  Bounding that means changing
-# the retry policy of a module every script in this pipeline shares, which is a wider decision
-# than this script should take on its own; it is left for Shafer.  So the honest worst case is
-# about 6.5 min of metadata plus the budget plus one 120 s read, not the budget alone
-# (CodeRabbit, PR #797, which was right that the earlier wording overclaimed).
+# What it does NOT cover: the PubMed metadata lookup below, which goes through
+# ncbi.esummary() -> ncbi._get(), six tries at a 60 s timeout plus 30 s of backoff -- about
+# 6.5 minutes PER 150-PMID CHUNK, before the loop's first budget check.  esummary() does not
+# forward `tries`, and bounding it there would change the retry policy of a module every
+# script in this pipeline shares: a wider decision than this script should take alone, and
+# left for Shafer.  What is bounded here is the number of CHUNKS -- one per run -- so the
+# figure is a single 6.5 minutes rather than a multiple of it, and the honest worst case for
+# delaying the filing below is about 6.5 min + 600 s + one 120 s read.  Two earlier wordings
+# of this comment overclaimed; a bound stated in a comment is a claim the code must keep
+# (CodeRabbit, PR #797).
 FETCH_BUDGET_SECONDS = 600
+METADATA_PMIDS_PER_RUN = 150                     # one esummary chunk; the rest wait for the next run
 DEADLINE = time.time() + FETCH_BUDGET_SECONDS
 
 
@@ -75,6 +79,8 @@ def first_text(path, pages=2):
     the note at its line 632); this script did not (CodeRabbit, PR #797)."""
     try:
         r = subprocess.run(["pdftotext", "-l", str(pages), "-q", path, "-"], capture_output=True, timeout=60)
+        if r.returncode != 0:                    # 1 open error, 2 output, 3 permission, 99 other
+            return "", True                     # pdftotext warns at exit 0, so this is a real failure
         return r.stdout.decode("utf-8", "replace"), False
     except Exception:
         return "", True
@@ -118,6 +124,10 @@ try:
         print("the fetch budget was spent before the queue's metadata could be looked up;"
               " its %d wanted paper(s) wait for the next run" % len(qwant))
         qwant = []
+    if len(qwant) > METADATA_PMIDS_PER_RUN:      # keep the lookup to ONE esummary chunk
+        print("the download queue wants %d papers; looking up the first %d this run"
+              % (len(qwant), METADATA_PMIDS_PER_RUN))
+        qwant = qwant[:METADATA_PMIDS_PER_RUN]
     if qwant:
         from ncbi import esummary
         _meta = esummary(qwant)
@@ -165,14 +175,28 @@ def save_log(entries):
         try:
             with open(log_path, encoding="utf-8") as f:
                 merged = {e["pmid"]: e for e in json.load(f)}
-        except Exception as e:                   # noqa: BLE001 -- malformed, truncated, unreadable
+        except OSError as e:
+            # COULD NOT READ IT, which is not "its contents are bad".  This archive lives on
+            # a Google Drive-backed path where a file written moments earlier can briefly
+            # refuse to open, and the first version of this code answered that by moving the
+            # live log aside -- throwing away good provenance over a sync hiccup.  Observed
+            # while testing this very PR.  So: leave the file alone, skip this save, and let
+            # the next one pick the results up.  Same distinction as `first_text()`: a failure
+            # to read says nothing about what was being read (CodeRabbit, PR #797).
+            print("  the fetch log could not be opened (%s); leaving it alone and trying again"
+                  " on the next save" % e, flush=True)
+            return False
+        except (ValueError, KeyError, TypeError) as e:
+            # The CONTENTS are bad -- malformed or truncated JSON, or not the shape expected,
+            # which an interrupted in-place write before this PR could leave behind.  Set it
+            # aside with a timestamp (nothing in this archive is deleted) and start fresh.
             kept = log_path + ".unreadable-" + time.strftime("%Y%m%d-%H%M%S")
             try:
                 os.replace(log_path, kept)
                 where = os.path.basename(kept)
             except OSError:
                 where = "could not be set aside"
-            print("  the fetch log could not be read (%s); kept as %s, starting a fresh one"
+            print("  the fetch log is not readable JSON (%s); kept as %s, starting a fresh one"
                   % (e, where), flush=True)
     merged.update({e["pmid"]: e for e in entries})
     tmp_log = log_path + ".new"
@@ -180,9 +204,11 @@ def save_log(entries):
         with open(tmp_log, "w", encoding="utf-8") as f:
             json.dump(list(merged.values()), f, indent=1)
         os.replace(tmp_log, log_path)            # never a half-written log
+        return True
     except Exception as e:                       # noqa: BLE001 -- do not end the run over this
         print("  could not write the fetch log (%s); this run's results stay in memory" % e,
               flush=True)
+        return False
 
 
 log = []
@@ -232,9 +258,27 @@ for t in todo:
         au = norm(_first[0]) if _first else ""
         au_ok = au and au in norm(txt)
         entry.update(bytes=os.path.getsize(tmp), title_overlap=round(overlap, 2), author_on_page=bool(au_ok), version=v)
+        # A PDF moved into the archive before its result was recorded could end up archived
+        # with no provenance at all: build.py marks it archived, the next run sees the file and
+        # reports "already in archive", and the licence, overlap and any check-by-eye verdict
+        # are gone.  So the result is WRITTEN first and the file moved only if that succeeded
+        # (CodeRabbit, PR #797).  If the move then fails, the per-paper `except` overwrites the
+        # entry with FAILED and the `finally` saves it again, so the log self-corrects.
+        def file_it(result):
+            entry["result"] = result
+            if save_log(log + [entry]):
+                os.replace(tmp, dst)
+                return
+            entry["result"] = ("HELD: the fetch log could not be written, so the PDF was not"
+                               " filed; it stays pending for the next run")
+
         if overlap >= 0.6 and au_ok:
-            os.replace(tmp, dst)
-            entry["result"] = "downloaded"
+            file_it("downloaded")
+        elif unreadable:
+            # Nothing was learned about this PDF -- pdftotext was missing, timed out or failed.
+            # That is a fact about THIS MACHINE, not about the paper, so it is no basis for
+            # putting an unverified file in the archive.  Held; the next run tries again.
+            entry["result"] = "HELD: could not read the PDF's text, so neither title nor author could be confirmed"
         elif not au:
             # No author to check against, in EITHER case.  The no-text fallback below files a
             # PDF unverified, on the strength of the workbook's vetted metadata; a queue row is
@@ -243,13 +287,9 @@ for t in todo:
             # (CodeRabbit, PR #784) -- a comment asserting what the code does not do.
             entry["result"] = "HELD: PubMed lists no author, so neither title nor author could be confirmed"
         elif not txt.strip():
-            # Filed either way, as before -- but the log now says WHICH it was, because
-            # "no text layer" is a statement about the PDF and the other is a statement
-            # about this machine.  build.py keys on startswith("downloaded"), so both
-            # still read as fetched.
-            os.replace(tmp, dst)
-            entry["result"] = ("downloaded (could not read the text - check by eye)" if unreadable
-                               else "downloaded (no text layer - check by eye)")
+            # A genuine image-only scan: unverifiable by its nature, not by accident, and
+            # ocr_scans.py will give it a text layer later.  Still filed, and still flagged.
+            file_it("downloaded (no text layer - check by eye)")
         else:
             entry["result"] = "HELD: first page does not match title/author"
         print(pmc, pmid, t["First author"], t["Year"], "->", entry["result"], "overlap=%.2f author=%s %s" % (overlap, bool(au_ok), entry["license"]))
