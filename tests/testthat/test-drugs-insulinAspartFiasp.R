@@ -33,7 +33,7 @@ test_that("Table 5: the parameters, the chain and the subcutaneous route", {
   expect_equal(m$transitChain$n, 4L)
   expect_equal(m$transitChain$ktr, 55.8 / 60)
   expect_equal(m$transitChain$route, "SC")
-  expect_equal(m$tPeak, 0)
+  expect_null(m$tPeak); expect_equal(m$ke0, INSULIN_KE0 / 60)   # R/insulinEffectSite.R
   # Weight: CL/F and V/F proportional to it, about 75 kg (assumed reference)
   w <- insulinAspartFiasp(90, 175, 40, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(w$v1, 78.6 * 90 / 75)

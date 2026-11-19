@@ -130,6 +130,7 @@ semaglutide,ng,,,mg SC qwk,"mg SC,mg SC qwk",#2E7D5B,0,0,0,0,0,IV,Antidiabetic
 tirzepatide,ng,,,mg SC qwk,"mg SC,mg SC qwk",#5B2A86,0,0,0,0,0,IV,Antidiabetic
 liraglutide,ng,,,mg SC qd,"mg SC,mg SC qd",#0E8C8C,0,0,0,0,0,IV,Antidiabetic
 liraglutideWatson,ng,,,mg SC qd,"mg SC,mg SC qd",#2A9D8F,0,0,0,0,0,IV,Antidiabetic
+liraglutideOvergaard,ng,,,mg SC qd,"mg SC,mg SC qd",#3FB8A8,0,0,0,0,0,IV,Antidiabetic
 insulinRegular,mcU,,,U SC,"U SC,U/kg SC,U SC bid,U SC tid",#E0A800,0,0,0,0,0,IV,Antidiabetic
 insulinRegularU500,mcU,,,U SC bid,"U SC,U SC bid,U SC tid",#C25A00,0,0,0,0,0,IV,Antidiabetic
 insulinNPH,mcU,,,U SC bid,"U SC,U/kg SC,U SC qd,U SC bid",#7A5230,0,0,0,0,0,IV,Antidiabetic
@@ -142,6 +143,7 @@ insulinLisproMix50,mcU,,,U SC bid,"U SC,U SC bid",#8C1546,0,0,0,0,0,IV,Antidiabe
 insulinGlargine,mcU,,,U SC qd,"U SC,U/kg SC,U SC qd",#3A4BA8,0,0,0,0,0,IV,Antidiabetic
 insulinDegludec,mcU,,,U SC qd,"U SC,U/kg SC,U SC qd",#2E7D6B,0,0,0,0,0,IV,Antidiabetic
 metformin,mcg,,,mg PO bid,"mg PO,mg PO qd,mg PO bid,mg PO tid",#4F6372,0,0,0,0,0,IV,Antidiabetic
+metforminER,mcg,,,mg PO qd,"mg PO,mg PO qd",#6E8494,0,0,0,0,0,IV,Antidiabetic
 empagliflozin,ng,,,mg PO qd,"mg PO,mg PO qd",#1F78B4,0,0,0,0,0,IV,Antidiabetic
 ertugliflozin,ng,,,mg PO qd,"mg PO,mg PO qd",#11806A,0,0,0,0,0,IV,Antidiabetic
 glyburide,ng,,,mg PO qd,"mg PO,mg PO qd,mg PO bid",#8F8C1E,0,0,0,0,0,IV,Antidiabetic
@@ -153,6 +155,7 @@ pioglitazone,ng,,,mg PO qd,"mg PO,mg PO qd",#6FA83A,0,0,0,0,0,IV,Antidiabetic
 pramlintideIV,ng,mcg,mcg/min,mcg,"mcg,mcg/min",#9C4DB8,0,0,0,0,0,IV,Antidiabetic
 exenatide,pg,,,mcg SC bid,"mcg SC,mcg SC bid",#C46210,0,0,0,0,0,IV,Antidiabetic
 lixisenatide,pg,,,mcg SC qd,"mcg SC,mcg SC qd",#7A3E9D,0,0,0,0,0,IV,Antidiabetic
+alogliptin,ng,,,mg PO qd,"mg PO,mg PO qd",#5B8C5A,0,0,0,0,0,IV,Antidiabetic
 linagliptin,ng,,,mg PO qd,"mg PO,mg PO qd",#3E8E9E,0,0,0,0,0,IV,Antidiabetic
 vildagliptin,ng,,,mg PO bid,"mg PO,mg PO qd,mg PO bid",#7D6B2E,0,0,0,0,0,IV,Antidiabetic
 semaglutideOral,ng,,,mg PO qd,"mg PO,mg PO qd",#3F8F5F,0,0,0,0,0,IV,Antidiabetic

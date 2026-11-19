@@ -281,7 +281,7 @@ insulinAspartModel <- function(weight, height, age, sex, adjustToFFM, product,
   }
 
   list(
-    PK = PK, tPeak = 0, MEAC = 0,
+    PK = PK, ke0 = INSULIN_KE0 / 60, MEAC = 0,   # R/insulinEffectSite.R
     typical = 0, upperTypical = 0, lowerTypical = 0,
     # The depot and the three transits: n = 4, the first three at kt and the
     # last at ka_SC, the source's order reversed, which changes nothing (see

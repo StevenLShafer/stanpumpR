@@ -189,7 +189,7 @@ values**, and the reference man, and everyone else, are scaled from there.
   amantadineER, amiodarone and desethylamiodarone, aripiprazole and
   dehydroaripiprazole, atropine, bendamustine, bupivacaine, bupropion and
   hydroxybupropion, calcium, carvedilol, cefazolin, cenobamate (at the FDA
-  review's medians, 77 kg and BSA 1.9 m2, an even sex mix assumed), cetagliptin,
+  review's medians, 77 kg and BSA 1.9 m2, an even sex mix assumed),
   cisatracurium, cladribine, cyclophosphamideJoerger, dabigatranHip,
   dexamethasone, diazepam, diltiazem, droperidol, epirubicin,
   etoposideKroghMadsen, fluoxetine and norfluoxetine, glyburide,
@@ -207,7 +207,8 @@ values**, and the reference man, and everyone else, are scaled from there.
   daunorubicin, droperidolIM, risperidone and hydroxyrisperidone,
   nitroglycerin, phenylephrine, vasopressin, prednisolone and prednisone,
   diclofenacEC, alfentanil, oliceridine, mepivacaine, glycopyrrolate,
-  neostigmine, clonazepam, apomorphine, sildenafilFDA, benazepril (no height or age), irinotecan (weight only).
+  neostigmine, clonazepam, apomorphine, sildenafilFDA, benazepril (no height or age), irinotecan (weight only),
+  cetagliptin (Lu 2024, since 2026-11-19; one of its pooled studies, Wang 2021, is not yet in the archive).
   *Excluded by the rule on partial data*: sertraline and hydrochlorothiazide
   (meta-analyses of study means), propranolol (a weight implied by
   per-kilogram doses). *Waiting on a decision of Shafer's*, each written as a

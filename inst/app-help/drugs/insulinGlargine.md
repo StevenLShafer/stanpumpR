@@ -6,6 +6,10 @@ Tham and colleagues pooled 16 pharmacokinetic and clamp studies, mostly in healt
 
 Subcutaneous injection, `U SC` or `U/kg SC`, once daily. The fit is to Basaglar; Lantus was an external check only, and Semglee, Rezvoglar and glargine U-300 (Toujeo), whose depot behaves differently, are not this drug. Glargine is not a pump insulin.
 
+### Effect site
+
+Every insulin shares one effect site, with an equilibration rate constant (ke0) of 0.876 per hour, so that the effect lags the plasma insulin by the time insulin takes to act, and each product's own absorption sets when its effect peaks. The constant reproduces the 23-minute peak of the glucose infusion rate after an intravenous bolus of regular insulin (Howey 1994; Galloway 1992's study, 20 minutes) and puts the effect peaks of subcutaneous lispro, regular insulin and NPH within about half an hour of the clamp studies' (2.2, 2.5 and 5.0 hours against about 1.8, 3.0 and 5.4 to 5.9), and it agrees with the FDA's analysis of 72 clamps after subcutaneous insulin aspart, 0.996 per hour (95% CI 0.88 to 1.11). How it was derived is on the page [Antidiabetic models and their limits](help:models/antidiabetics).
+
 ### What is not plotted
 
-Concentration only. Glucose, a clamp's glucose infusion rate and HbA1c are separate endpoints and are not drawn; a unit of one insulin is not converted into another's. See [Antidiabetic models and their limits](help:models/antidiabetics) and [subcutaneous doses](help:models/absorption).
+The concentration and its effect site only. Glucose, a clamp's glucose infusion rate and HbA1c are separate endpoints and are not drawn; a unit of one insulin is not converted into another's. See [Antidiabetic models and their limits](help:models/antidiabetics) and [subcutaneous doses](help:models/absorption).
