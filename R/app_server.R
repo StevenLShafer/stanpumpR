@@ -1208,9 +1208,12 @@ app_server <- function(input, output, session) {
   # (relevantFields() in R/patient-fields.R).  A hidden control keeps its
   # value, which does nothing while no drug reads it.
   observe({
-    drugs <- c(doseTable()$Drug,
-               tryCatch(doseTableDraft()$Drug, error = function(e) NULL))
-    shown <- relevantFields(drugs, drugDefaults())
+    draft <- tryCatch(doseTableDraft(), error = function(e) NULL)
+    drugs <- c(doseTable()$Drug, draft$Drug)
+    # The drugs drawn, given a dose above 0, for the options that add a panel
+    # of something plotted (the Interaction plot, Tolerance and tachyphylaxis)
+    plotted <- c(positiveDoseDrugs(doseTable()), positiveDoseDrugs(draft))
+    shown <- relevantFields(drugs, drugDefaults(), plotted = plotted)
     for (field in setdiff(names(shown), c("plotMEAC", "plotInteraction")))
       shinyjs::toggle(id = paste0("field_", field), condition = shown[[field]])
     # The two optional Additional plots, inside their checkbox group
@@ -2038,6 +2041,10 @@ app_server <- function(input, output, session) {
         plotRecovery = plotRecovery(),
         plotMEACOverlay = plotMEACOverlay(),
         plotCompartments = isTRUE(input$showCompartments),
+        # Tolerance and tachyphylaxis panels (R/pdAdaptation.R), while the
+        # option is shown, that is while such a drug is drawn
+        plotAdaptation = isTRUE(input$showAdaptation) &&
+          length(pdAdaptationDrugs(names(drugs()), drugDefaults = drugDefaults())) > 0,
         typical = typical,
         logY = logY,
         yAxisHeight = input$yaxisHeight,
@@ -2404,6 +2411,24 @@ app_server <- function(input, output, session) {
                     signif(stats::approx(cm$Time, column, e$x, rule = 2)$y, 3), " ", units))
     }
 
+    # A tolerance or tachyphylaxis panel (R/pdAdaptation.R): the share of the
+    # naive effect left, and, as wind chill is reported, what the
+    # concentration works like.
+    adapted <- pdAdaptationSeriesDrug(drug, drugDefaults())
+    if (!is.na(adapted))
+    {
+      rows <- plotResults[as.character(plotResults$Wrap) == e$panelvar1, ]
+      if (nrow(rows) < 2) return(NULL)
+      left <- panelSeriesAt(rows, e$x)
+      entry <- drugs()[[adapted]]
+      ce <- if (is.null(entry)) NA else hoverConcentration(entry$results, e$x)
+      worksLike <- if (is.list(ce) && is.finite(ce$value))
+        paste0(", ", ce$label, " ", signif(ce$value, 3), " works like ",
+               signif(ce$value * left / 100, 3))
+      return(paste0("Time: ", hoverTime(e$x), ", ", drug, ": ",
+                    signif(left, 3), "% of naive effect", worksLike))
+    }
+
     # A TCI rate panel: report the pump rate in force at that moment, and the
     # companion pump's after it.
     if (grepl(" TCI$", drug))
@@ -2582,6 +2607,9 @@ app_server <- function(input, output, session) {
       # And a click on one of its compartment panels (R/compartments.R)
       compartment <- compartmentSeries(drug)
       if (!is.na(compartment$drug)) drug <- compartment$drug
+      # And on its tolerance or tachyphylaxis panel (R/pdAdaptation.R)
+      adapted <- pdAdaptationSeriesDrug(drug, drugDefaults())
+      if (!is.na(adapted)) drug <- adapted
       drug <- alternativeModelParent(drug)
       # And a click on a metabolite that is only ever formed (no dose units)
       # on the drug that forms it

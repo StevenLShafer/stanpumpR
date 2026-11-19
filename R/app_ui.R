@@ -497,7 +497,26 @@ app_ui <- function() {
                       "by tissue injection, the amount still in the depot."
                     ),
                     placement = "right"
-                  )
+                  ),
+                  # A panel under each drug that loses its effect over time,
+                  # from 100% down (R/pdAdaptation.R); shown only while such
+                  # a drug is drawn (relevantFields()).
+                  relevantField("showAdaptation", fieldHelp(
+                    checkboxInput(
+                      "showAdaptation",
+                      "Tolerance and tachyphylaxis",
+                      value = FALSE
+                    ),
+                    paste(
+                      "Under each drug whose effect fades with continued",
+                      "exposure, draw what is left of its effect, as a",
+                      "percentage of what the same concentration does in a",
+                      "drug-naive patient. The concentration is unchanged;",
+                      "like wind chill, the drug works as though it were",
+                      "lower. Only drugs with a published model are drawn."
+                    ),
+                    placement = "right"
+                  ))
                 ),
                 conditionalPanel(
                   condition = sprintf("!(input.showThreshold || input.showMEAC || input.addedPlots.includes('%s') || input.addedPlots.includes('%s'))", PLOT_ID_EVENTS, PLOT_ID_INTERACTION),
