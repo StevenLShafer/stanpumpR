@@ -1294,6 +1294,7 @@ helpGasPageHTML <- function(gas, row) {
           else if (gas == "ventilation") "Minute ventilation, L/min (30% is dead space)"
           else "Flowmeter setting, L/min of fresh gas"),
       esc(if (gas %in% c("air", "ventilation")) "Not plotted: an input, not a result"
+          else if (gas == "oxygen") "Alveolar (end-tidal) tension as the \u201cplasma\u201d line; arterial tension as the \u201ceffect site\u201d line, below end-tidal with an endobronchial tube"
           else "Alveolar (end-tidal) tension as the \u201cplasma\u201d line; vessel-rich group (brain) tension as the \u201ceffect site\u201d line"),
       esc(if (!is.na(row$endCe) && row$endCe > 0) {
         if (gas %in% ageAdjustedThresholdGases())

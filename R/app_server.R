@@ -1427,6 +1427,7 @@ app_server <- function(input, output, session) {
         temperature = bodyTemperature(),
         altitude = altitude(),
         endobronchial = endobronchial(),
+        haemoglobin = haemoglobin(),
         physiologyEvents = physiologyEvents(),
         age     = age(),
         maximum = plotMaximum()
@@ -1497,6 +1498,11 @@ app_server <- function(input, output, session) {
 
   # Endobronchial intubation (R/endobronchial.R): one lung ventilated
   endobronchial <- reactive(endobronchialFromInput(input$endobronchialIntubation))
+  # Haemoglobin, g/dL (R/arterialOxygen.R): the arterial oxygen through the
+  # shunt
+  haemoglobin <- debounce(reactive({
+    haemoglobinFromInput(input$physiology_haemoglobin)
+  }), PHYSIOLOGY_DEBOUNCE_MS)
 
   observeEvent(input$physiologyReset, {
     for (f in PHYSIOLOGY_FACTORS)
@@ -1505,6 +1511,7 @@ app_server <- function(input, output, session) {
                       value = PHYSIOLOGY_TEMPERATURE_DEFAULT)
     updateSliderInput(session, "physiology_altitude", value = ALTITUDE_DEFAULT)
     updateCheckboxInput(session, "endobronchialIntubation", value = FALSE)
+    updateSliderInput(session, "physiology_haemoglobin", value = ARTERIAL_OXYGEN_HAEMOGLOBIN)
   })
 
   # A link or a scenario that sets the physiology away from normal shows the
@@ -1564,7 +1571,8 @@ app_server <- function(input, output, session) {
     c(p[PHYSIOLOGY_FACTORS],
       temperature = bodyTemperatureFromInput(input$physiology_temperature),
       altitude = altitudeFromInput(input$physiology_altitude),
-      endobronchial = as.numeric(endobronchialFromInput(input$endobronchialIntubation)))
+      endobronchial = as.numeric(endobronchialFromInput(input$endobronchialIntubation)),
+      haemoglobin = haemoglobinFromInput(input$physiology_haemoglobin))
   }
 
   observeEvent(input$physiologyCreateEventBtn, {
@@ -2265,6 +2273,7 @@ app_server <- function(input, output, session) {
       temperature = bodyTemperature(),
       altitude = altitude(),
       endobronchial = endobronchial(),
+      haemoglobin = haemoglobin(),
       physiologyEvents = physiologyEvents(),
       # Whether each companion model was actually drawn, not just its box
       # ticked (companionGroupsShown()).
@@ -2604,6 +2613,12 @@ app_server <- function(input, output, session) {
     conc <- hoverConcentration(entry$results, e$x, normalization)
     returnText <- paste0("Time: ", hoverTime(e$x), ", ", x[1], " ", conc$label, ": ",
                          signif(conc$value, 2), " ", x[2])
+    # Oxygen: the arterial blood under the line (R/arterialOxygen.R)
+    ao <- entry$arterialOxygen
+    if (!is.null(ao) && identical(normalization, NORMALIZE_NONE))
+      returnText <- paste0(returnText, ", PaO2 ",
+                           round(seriesStepAt(ao$Time, ao$PaO2, e$x)), " mmHg, SaO2 ",
+                           round(seriesStepAt(ao$Time, ao$SaO2, e$x)), "%")
     # The same reading from each companion model drawn in this panel
     for (companion in companionsOf(drug))
     {

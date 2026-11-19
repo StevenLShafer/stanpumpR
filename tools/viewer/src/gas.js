@@ -116,6 +116,12 @@ function gasRunProblem(r, n) {
     // blood past the ventilated lung; otherwise it is the end-tidal.
     for (const [k, min] of [['venous', 0], ['alveolarVentilation', 0], ['arterial', 0]])
         if (r[k] != null) { const q = arr(r[k], k, min); if (q) return q; }
+    // The arterial oxygen with an endobronchial tube (2026-11-19): SaO2 in %,
+    // PaO2 in mmHg, both or neither
+    if ((r.saturation == null) !== (r.paO2 == null)) return 'saturation and paO2 come together.';
+    for (const k of ['saturation', 'paO2'])
+        if (r[k] != null) { const q = arr(r[k], k, 0); if (q) return q; }
+    if (r.saturation != null && r.saturation.some(x => x > 100)) return 'saturation must be at most 100.';
     // One number, or one per time (physiology events, 2026-11-19)
     if (r.cardiacOutput != null) {
         const co = Array.isArray(r.cardiacOutput) ? r.cardiacOutput : [r.cardiacOutput];
@@ -208,6 +214,8 @@ Object.assign(Player, {
         return {
             t: T, gas: true, p, A, held,
             arterial, venous,
+            saturation: r.saturation ? lerp(r.saturation) : null,
+            paO2: r.paO2 ? lerp(r.paO2) : null,
             // What the tissues hold is all the blood has taken from the lungs
             // since time 0: the engine's blood holds none and nothing is
             // metabolised.

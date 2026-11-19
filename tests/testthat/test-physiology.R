@@ -462,9 +462,9 @@ test_that("simulateGases() keeps its positional arguments: physiology comes last
   args <- names(formals(simulateGases))
   expect_identical(args[1:9], c("doseTable", "weight", "age", "maximum", "cardiacOutput",
                                 "uptakeEffect", "circuit", "deadSpace", "oxygenUptake"))
-  expect_identical(utils::tail(args, 5),
+  expect_identical(utils::tail(args, 6),
                    c("physiology", "temperature", "altitude", "endobronchial",
-                     "physiologyEvents"))
+                     "physiologyEvents", "haemoglobin"))
   # The old positional call that turns the uptake coupling off still does.
   expect_equal(simulateGases(SEVO_RUN, 70, 50, 30, NULL, FALSE)$results,
                simulateGases(SEVO_RUN, 70, 50, 30, uptakeEffect = FALSE)$results)
@@ -528,8 +528,10 @@ test_that("an oral tPeak counts every depot carrying drug, each with its lag", {
 test_that("the email workbook records the physiology sliders", {
   rows <- physiologyCovariateRows(c(cardiac = 0.5), 32)
   # The factors, the body temperature, the altitude (R/altitude.R) and
-  # endobronchial intubation (R/endobronchial.R)
-  expect_equal(nrow(rows), length(PHYSIOLOGY_FACTORS) + 3)
+  # endobronchial intubation (R/endobronchial.R) and the haemoglobin
+  # (R/arterialOxygen.R)
+  expect_equal(nrow(rows), length(PHYSIOLOGY_FACTORS) + 4)
+  expect_equal(rows$Value[grepl("Haemoglobin", rows$Covariate)], "15")
   expect_equal(rows$Value[grepl("Endobronchial", rows$Covariate)], "no")
   expect_equal(rows$Value[grepl("Altitude", rows$Covariate)], "0 (760 Torr)")
   expect_equal(rows$Value[rows$Covariate == "Body temperature (C)"], "32")
@@ -538,7 +540,7 @@ test_that("the email workbook records the physiology sliders", {
   expect_equal(rows$Value[rows$Covariate == "Liver function (multiple of normal)"], "normal")
   n <- length(PHYSIOLOGY_FACTORS)
   expect_true(all(physiologyCovariateRows(NULL)$Value[seq_len(n)] == "normal"))
-  expect_true(all(utils::head(physiologyCovariateRows("x", "y", "z")$Value, -1) == "unreadable"))
+  expect_true(all(utils::head(physiologyCovariateRows("x", "y", "z")$Value, -2) == "unreadable"))
 })
 
 # ---- Body temperature (Shafer, 2026-11-16) ----------------------------------
