@@ -24,7 +24,7 @@ No covariate was fitted: 14 patients were too few to show even a difference betw
 - **Healthy volunteers with a placebo arm** (Dumitrescu 2022, *Thyroid* 32:196), not used: after 50 mcg, T3 rose 202 ng/dL above placebo at 3 hours and was back to baseline by 36 hours. The model gives 366 ng/dL at 3 hours.
 - **Hypothyroid patients on once-daily liothyronine** (Jonklaas and Burman 2016, *Thyroid* 26:770), not used: on 38 mcg a day on average, T3 rose 197 ng/dL from trough to peak. The model gives 325 ng/dL.
 
-So outside its own source the model's swings are 1.6 to 2 times those measured. None of those groups matches the source's patients. The volunteers had working thyroids, which the dose suppresses, and most of the hypothyroid patients still had some thyroid function. The source itself found the volume 1.7 times larger in the same patients when they were hypothyroid. The model describes patients on liothyronine alone with no thyroid of their own, and it may overstate the peaks in anyone else.
+So outside its own source the model's swings are 1.6 to 2 times those measured. None of those groups matches the source's patients. The volunteers had working thyroids, which the dose suppresses, and most of the hypothyroid patients still had some thyroid function. The source itself found the volume 1.7 times larger in the same patients when they were hypothyroid. The model describes patients on liothyronine alone with no thyroid of their own, and it may overstate the peaks in anyone else. It is deliberately not adjusted to those groups (Steven L. Shafer, 2026-11-19).
 
 ### Dose
 
