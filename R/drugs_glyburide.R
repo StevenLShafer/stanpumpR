@@ -42,7 +42,8 @@
 #
 # ke0 is supplied directly, GLYBURIDE_KE0 = 1.59 /h, not as the 38-minute
 # tPeak (Claude Code, 2026-11-19, departing from the tPeak Shafer approved,
-# for the reason the insulins' effect site gives, R/insulinEffectSite.R):
+# for the reason the insulins' effect site gives, R/insulinEffectSite.R; the
+# departure accepted by Shafer the same day):
 # Rambiritch's model is an apparent fit to oral data whose plasma falls far
 # more slowly than Rydberg's measured intravenous disposition (k10 0.18
 # against 1.30 /h), so a 38-minute tPeak solved on it gives ke0 = 3.7 /h,
