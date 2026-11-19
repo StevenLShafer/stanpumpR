@@ -206,11 +206,19 @@ def save_log(entries):
             kept = log_path + ".unreadable-" + time.strftime("%Y%m%d-%H%M%S")
             try:
                 os.replace(log_path, kept)
-                where = os.path.basename(kept)
-            except OSError:
-                where = "could not be set aside"
+            except OSError as move_failed:
+                # If it cannot be moved out of the way, DO NOT WRITE: the write below would
+                # os.replace() straight over the damaged file and its contents would be gone,
+                # and nothing in this archive is ever permanently deleted (AGENTS.md).  A
+                # damaged log is still the only record of what earlier runs did, and it may be
+                # repairable by hand.  Skipping the save holds this paper, as the unopenable
+                # case does, so the next run tries again (CodeRabbit, PR #797).
+                print("  the fetch log is not readable JSON (%s) and could not be set aside"
+                      " (%s); leaving it untouched and saving nothing this time"
+                      % (e, move_failed), flush=True)
+                return False
             print("  the fetch log is not readable JSON (%s); kept as %s, starting a fresh one"
-                  % (e, where), flush=True)
+                  % (e, os.path.basename(kept)), flush=True)
     merged.update({e["pmid"]: e for e in entries})
     tmp_log = log_path + ".new"
     try:
