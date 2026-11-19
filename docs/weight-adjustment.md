@@ -193,7 +193,7 @@ values**, and the reference man, and everyone else, are scaled from there.
   cisatracurium, cladribine, cyclophosphamideJoerger, dabigatranHip,
   dexamethasone, diazepam, diltiazem, droperidol, epirubicin,
   etoposideKroghMadsen, fluoxetine and norfluoxetine, glyburide,
-  haloperidolIV, heparin, ifosfamide, lamotrigine, LSD, mannitol, metformin,
+  haloperidolIV, heparin, ifosfamide, lamotrigine, liothyronine, LSD, mannitol, metformin,
   methylprednisolone, metoprolol, midazolam, paroxetine (CL/F only),
   pioglitazone, pramlintideIV, psilocybin, ropivacaine, sufentanil (and so
   carfentanil), vecuronium, venlafaxine and desvenlafaxine, vildagliptin,

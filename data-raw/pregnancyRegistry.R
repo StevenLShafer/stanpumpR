@@ -3332,7 +3332,18 @@ registry <- rbind(
       source = "Alexander EK, Marqusee E, Lawrence J, Jarolim P, Fischer GA, Larsen PR. Timing and magnitude of increases in levothyroxine requirements during pregnancy in women with hypothyroidism. N Engl J Med 2004;351:241-249 PMID 15254282; Soldin OP, Soldin SJ, Vinks AA, Younis I, Landy HJ. Longitudinal comparison of thyroxine pharmacokinetics between pregnant and nonpregnant women: a stable isotope study. Ther Drug Monit 2010;32:767-773 PMID 20962709",
       source_url = "https://doi.org/10.1056/NEJMoa040079",
       to_obtain = "Alexander 2004 in full",
-      notes = "The plotted curve is T4 above the patient's own baseline; the rise in thyroxine-binding globulin in pregnancy raises total T4 for the same free T4, which a pharmacokinetic factor would not describe. Thyroxine is cleared by deiodination and conjugation, not by filtration, so the rise in filtration does not apply.")
+      notes = "The plotted curve is T4 above the patient's own baseline; the rise in thyroxine-binding globulin in pregnancy raises total T4 for the same free T4, which a pharmacokinetic factor would not describe. Thyroxine is cleared by deiodination and conjugation, not by filtration, so the rise in filtration does not apply."),
+  row("liothyronine", "Other", "unknown",
+      finding = "No pharmacokinetic study of liothyronine in pregnancy was found (PubMed, 2026-11-18: liothyronine or triiodothyronine with pregnancy and pharmacokinetics, clearance or dose requirement; the hits are reviews of thyroid physiology in pregnancy). Levothyroxine, not liothyronine, is the treatment of hypothyroidism in pregnancy (Klubo-Gwiezdzinska 2022, abstract read). The Cytomel label (revised 4/2025, read in full) says only that pregnancy may require higher doses of thyroid hormone. Thyroxine-binding globulin rises in pregnancy, which raises total T3 for the same free T3 (Moleti 2014, abstract read).",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = NA, comparator = NA,
+      design = "review", n = NA, confidence = "low",
+      evidence_read = "abstract",
+      source = "Klubo-Gwiezdzinska J, Wartofsky L. Hashimoto thyroiditis: an evidence-based guide to etiology, diagnosis and treatment. Pol Arch Intern Med 2022;132:16222 PMID 35243857; Moleti M, Trimarchi F, Vermiglio F. Thyroid physiology in pregnancy. Endocr Pract 2014;20:589-596 PMID 24449667",
+      source_url = "https://doi.org/10.20452/pamw.16222",
+      to_obtain = "",
+      notes = "The plotted curve is total T3 above the patient's own baseline; the rise in thyroxine-binding globulin in pregnancy raises total T3 for the same free T3, which a pharmacokinetic factor would not describe. T3 is cleared by deiodination and conjugation, not by filtration, so the rise in filtration does not apply.")
 )
 
 # The candidate models renamed when their drug's model became the program's
