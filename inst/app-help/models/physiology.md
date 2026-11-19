@@ -312,25 +312,32 @@ its source code mentions temperature only in the vaporiser's vapour pressure.
 **Altitude** (0 to 7,000 m) sets the barometric pressure from West's model
 atmosphere, P = exp(6.63268 − 0.1112 h − 0.00149 h²) Torr with h in km:
 760 Torr at sea level, 604 at 2,000 m, 475 at 4,000 m and 324 at 7,000 m.
-West built it for high mountain sites, which it predicts to within 1%, where
-the aviation standard atmosphere reads too low. Altitude acts on the inhaled
-anesthetics only.
+West built it for high mountain sites: it predicted the measured pressure at
+14 of them, from 3,094 m to the summit of Everest, to within 1%, where the
+aviation standard atmosphere (308 Torr at 7,000 m) reads too low. West warns
+that it reads a few Torr high at latitudes of 45° and above. Altitude acts on
+the inhaled anesthetics only.
 
 **Potency follows partial pressure.** The tensions stanpumpR plots, and MAC,
 are partial pressures in % of a sea-level atmosphere, so 1 MAC means the same
 at every altitude. James and White proposed calling MAC the minimum alveolar
-partial pressure for this reason. James and colleagues found that the
-analgesia of 50% nitrous oxide fell with its partial pressure at 1,460 and
-3,300 m.
+partial pressure for this reason. James and colleagues found that 50% nitrous
+oxide raised the pain threshold by 71.5% at a sea-level pressure, 40% at
+1,460 m and only 19% at a simulated 3,300 m, falling with its partial
+pressure.
 
 **What the machine delivers.** Room air, and every gas from a flowmeter, is a
 fraction of the ambient pressure. So 67% nitrous oxide at 7,000 m is 29% of a
 sea-level atmosphere. A variable-bypass vaporizer (sevoflurane, isoflurane)
 delivers about its dial's sea-level partial pressure at any altitude, because
 the agent's saturated vapour pressure does not depend on the barometric
-pressure. The desflurane vaporizer is a heated, pressurised blender that
-delivers its dial's volume percent, which is a lower partial pressure at
-altitude: to keep the same depth, turn the dial up by 760 over the pressure.
+pressure: James and White found that halothane vaporizers in a pressure
+chamber at 5,000 and 10,000 feet delivered the same partial pressure as at
+sea level, within 0.1 kPa. The desflurane vaporizer is a heated, pressurised
+blender that delivers its dial's volume percent, which is a lower partial
+pressure at altitude: to keep the same depth, turn the dial up by 760 over the
+pressure. Andrews and Johnston's example turns it from 10% to 12.8% at
+2,000 m.
 
 Simulated by stanpumpR (70 kg, age 40, ventilation 6 L/min, fresh gas
 6 L/min):
@@ -356,8 +363,10 @@ pressure from it.
 **Not modelled.** Water vapour, which takes 47 Torr of the inspired gas at any
 altitude, is not carried by the engine at sea level or above, so the alveolar
 oxygen is somewhat higher than in a real patient, most at height. Flows are
-taken as true flows; a flowmeter calibrated at sea level reads differently at
-altitude (James and White). Acclimatisation (a larger haemoglobin mass, a
+taken as true flows. A bobbin flowmeter calibrated at sea level delivers more
+than it reads at altitude: James and White measured about 7% more at 4,800 ft
+and 19 to 21% more at 10,000 ft above 4 L/min, close to the square root of 760
+over the pressure, and much less at low flows. Acclimatisation (a larger haemoglobin mass, a
 hypoxic drive to breathe) is not modelled, and cardiac output and ventilation
 keep their own controls. The intravenous drugs do not respond.
 

@@ -15,8 +15,10 @@
 # enters.  Anesthetic potency follows partial pressure too, so MAC, in % of a
 # sea-level atmosphere, is the same at every altitude (James and White 1984,
 # PMID 6239572, who proposed calling it the minimum alveolar PARTIAL PRESSURE;
-# James 1982, PMID 7091603, nitrous oxide's analgesia falling with its partial
-# pressure at altitude).  What altitude changes is where gas VOLUMES and
+# James 1982, PMID 7091603, read in full: 50% nitrous oxide raised the pain
+# threshold of 20 volunteers by 71.5% at a sea-level pressure (100 kPa), 40%
+# at 1460 m (85 kPa) and 19% at a simulated 3300 m (69 kPa), the last not
+# significant).  What altitude changes is where gas VOLUMES and
 # FRACTIONS meet partial pressures, with r = P_B / 760:
 #
 #   1. Room air, and every carrier gas from a flowmeter, is a FRACTION of the
@@ -27,10 +29,20 @@
 #      dial's sea-level PARTIAL PRESSURE at any altitude: the saturated vapour
 #      pressure does not depend on the barometric pressure, so the vapour's
 #      fraction of the output rises as the pressure falls and its partial
-#      pressure stays put (James and White 1984).  The desflurane vaporizer
-#      (Tec 6) is a heated, pressurised gas-vapour blender that delivers the
-#      dial's VOLUME percent (Andrews and Johnston 1993, PMID 8498675), so its
-#      partial pressure is r times the dial (ALTITUDE_VOLUME_PERCENT_VAPORIZERS).
+#      pressure stays put.  James and White 1984 (read in full, 2026-11-19)
+#      measured it: two Fluotec Mk II and a Drager Vapor halothane vaporizer
+#      at sea level, 5000 and 10,000 feet in a chamber, read on an analyser
+#      of partial pressure, changed by no more than 0.1 kPa from their sea
+#      level output.  The desflurane vaporizer (Tec 6) is a heated,
+#      pressurised gas-vapour blender that "works at absolute pressures ... It
+#      will deliver accurately the dialed volumes percent of desflurane"
+#      (Andrews and Johnston 1993, PMID 8498675, read in full, 2026-11-19), so
+#      its partial pressure is r times the dial
+#      (ALTITUDE_VOLUME_PERCENT_VAPORIZERS): their example raises the dial
+#      from 10% to 12.8% at 2000 m, which is 760/593 Torr, the ICAO pressure
+#      there (West gives 604 Torr, 12.6%).  Their note that the Tec 6 delivers
+#      up to 20% less than its dial with 70% nitrous oxide as carrier at low
+#      flows is a sea-level effect of the carrier gas and is not modelled.
 #   3. The vapour displaces carrier gas in proportion to its FRACTION of the
 #      fresh gas, its partial pressure over r.
 #   4. Gas taken up leaves an ambient VOLUME behind: uptake in L/min at the
@@ -42,22 +54,31 @@
 #      its volume at sea level, is VCO2 / (MV r) of it.
 #
 # NOT MODELLED.  Water vapour (47 Torr at 37 C) is not carried by the engine at
-# any altitude, and the flows are taken as true ambient flows: a flowmeter
-# calibrated at sea level reads low at altitude (James and White 1984), and
-# the dose table holds the true flow.  Both are [decision]s put to Shafer on
-# 2026-11-18.  The intravenous drugs do not respond to altitude, and neither
+# any altitude, and the flows are taken as true ambient flows.  Both are
+# [decision]s put to Shafer on 2026-11-18.  The evidence on the second:
+# James and White 1984 measured three oxygen and three nitrous oxide
+# bobbin flowmeters calibrated at sea level.  Above 4 L/min they delivered
+# more than they read, close to the density prediction sqrt(760 / P_B):
+# 7.2% more at 4800 ft (8.5% predicted) and 18.5% (oxygen) and 21% (nitrous
+# oxide) more at 10,000 ft (20.3% predicted).  At low flows, where viscosity
+# rather than density sets the bobbin, the error was much smaller, and they
+# did not test low-flow flowmeters; electronic flow sensors on modern
+# machines may not behave like either.  The intravenous drugs do not respond to altitude, and neither
 # does cardiac output or ventilation (each has its own control), nor
 # acclimatisation (haemoglobin, a hypoxic ventilatory response).
 #
 # THE PRESSURE.  West 1996 (PMID 8904608, J Appl Physiol 81:1850), the mean of
 # the model atmospheres for latitude 15 degrees in all seasons and 30 degrees
 # in summer, which predicts the pressure at high mountain sites to within 1%
-# where the ICAO standard atmosphere reads too low:
+# where the ICAO standard atmosphere reads too low (read in full, 2026-11-19):
 #     P_B (Torr) = exp(6.63268 - 0.1112 h - 0.00149 h^2),   h in km
-# 759.5 Torr at 0 km (exp(6.63268)), 324 Torr at 7 km, where the ICAO
-# standard atmosphere gives 308.  Read from the abstract; to be confirmed on
-# the PDF.  pressureRatio() divides by the equation's own sea level, so the
-# ratio is exactly 1 at 0 m.
+# 759.5 Torr at 0 km by the equation (its Table 2 prints 759.2), 324.1 at
+# 7 km (Table 2: 324.1 by the equation, 324.4 the mean of the two models),
+# where the ICAO standard atmosphere gives 308.  Its 14 measured sites, 3,094
+# to 8,848 m, were all within 1%.  West warns that other models should be
+# used at latitudes of 45 degrees and above: in the Alps (46 N) the equation
+# read 3 Torr high.  pressureRatio() divides by the equation's own sea
+# level, so the ratio is exactly 1 at 0 m.
 # -----------------------------------------------------------------------------
 
 #' Altitude range, step and default, metres
