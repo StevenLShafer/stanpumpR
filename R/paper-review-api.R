@@ -702,7 +702,9 @@ paperReviewStopper <- function(job, pidFile)
       # 2026-11-19, A2-F13).
       tryCatch(writeLines("stop", paste0(pidFile, ".stop")), error = function(e) NULL)
       pid <- readPid()
-      if (!usable(pid)) return(invisible(file.exists(paste0(pidFile, ".stop"))))
+      # Not ended, so not settled: the process, told not to send, answers
+      # "stopped", and that answer is read as any other
+      if (!usable(pid)) return(invisible(FALSE))
     }
     if (!isTRUE(tools::pskill(pid))) return(invisible(FALSE))
     # The process has ended; settle the job, which would otherwise wait for

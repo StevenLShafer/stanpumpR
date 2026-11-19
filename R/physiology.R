@@ -1225,8 +1225,8 @@ physiologyNote <- function(physiology, drugs,
     if (length(gasAgents) && !gasMoved)
       tags$p(class = "text-muted",
              tags$strong("Inhaled agents "), "(", paste(gasAgents, collapse = ", "),
-             ") respond to cardiac output, body temperature, altitude and ",
-             "endobronchial intubation only.")
+             paste(") respond to cardiac output, body temperature, altitude and",
+                   "endobronchial intubation only."))
   )
 }
 

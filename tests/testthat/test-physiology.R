@@ -452,7 +452,10 @@ test_that("the panel note counts the inhaled agents only when cardiac output mov
   expect_false(grepl("no physiology data", low))
   expect_false(grepl("oxygen|ventilation", low))
   liver <- txt(c(liver = 0.5))
-  expect_match(liver, "respond to cardiac output and body temperature only", fixed = TRUE)
+  # altitude and endobronchial intubation too (Carbon's second repository
+  # audit, A2-F24)
+  expect_match(liver, "respond to cardiac output, body temperature, altitude and endobronchial intubation only",
+               fixed = TRUE)
   expect_false(grepl("no physiology data yet): </strong>sevoflurane", liver, fixed = TRUE))
 })
 

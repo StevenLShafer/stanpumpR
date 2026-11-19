@@ -187,7 +187,8 @@ test_that("a review stopped before its process started is not sent, nor counted 
   on.exit(mirai::stop_mirai(job), add = TRUE)
   fresh <- tempfile("paper-review-")
   on.exit(unlink(c(fresh, paste0(fresh, ".stop"))), add = TRUE)
-  expect_true(paperReviewStopper(job, fresh)())
+  # not ended, so FALSE, as before; but told not to send
+  expect_false(paperReviewStopper(job, fresh)())
   expect_true(file.exists(paste0(fresh, ".stop")))
 })
 
