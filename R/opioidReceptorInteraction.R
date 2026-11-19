@@ -300,6 +300,10 @@ orReceptorConstants <- function()
   orReceptorConstantsCache$tab
 }
 
+# The explicit partial-agonist / antagonist ligands (buprenorphine, naloxone):
+# the opioid-receptor panels are offered only while one of these is drawn.
+opioidReceptorSpecialDrugs <- function() orReceptorConstants()$drug
+
 # logit / inverse-logit for the bounded ventilation-efficacy interpolation
 orLogit    <- function(p) log(p / (1 - p))
 orInvLogit <- function(x) 1 / (1 + exp(-x))
@@ -393,4 +397,40 @@ orInteractionSeries <- function(times, ceList, meacList = NULL, toleranceLevel =
   list(ligands = drugs, slow = slow, eAnalg = eAnalg,
        rho = oc$rho, rho0 = oc$rho0,
        ventilation = ventilation, analgesia = analgesia, availableDrive = availableDrive)
+}
+
+# -- App layer: build the interaction series from the simulated drug list ------
+# Reads each mu ligand's effect-site series (`$wide$"Effect Site"`) and MEAC
+# (`$MEAC`) off the drug entries, puts them on a shared time base, and calls
+# orInteractionSeries().  Companions (alternative-model entries) are excluded.
+# Returns NULL unless at least one partial agonist or antagonist is present (so
+# the panels appear only then).
+opioidReceptorSeries <- function(drugs, opioidTolerance = "none")
+{
+  tol <- if (opioidTolerance %in% names(OR_TOLERANCE_FACTORS)) opioidTolerance else "none"
+  theta <- orToleranceTheta(tol)
+  isCompanion <- function(d) isTRUE(tryCatch(isAlternativeModelEntry(d), error = function(e) FALSE))
+  meacOf <- function(d) if (is.null(d$MEAC) || is.na(d$MEAC)) 0 else d$MEAC
+  own <- Filter(function(d)
+    !is.null(d$wide) && ("Effect Site" %in% names(d$wide)) && !is.null(d$drug) &&
+    !isCompanion(d) && !is.null(orLigandParams(d$drug, meac = meacOf(d), theta = theta)),
+    drugs)
+  if (!length(own)) return(NULL)
+  # require a partial agonist or antagonist (a slow ligand or an e = 0 antagonist)
+  special <- any(vapply(own, function(d) {
+    p <- orLigandParams(d$drug, meac = meacOf(d), theta = theta)
+    isTRUE(p$slow) || isTRUE(p$eAnalg == 0)
+  }, logical(1)))
+  if (!special) return(NULL)
+
+  base <- sort(unique(unlist(lapply(own, function(d) d$wide$Time))))
+  ceList <- lapply(own, function(d)
+    stats::approx(d$wide$Time, d$wide[["Effect Site"]], base, rule = 2)$y)
+  names(ceList) <- vapply(own, function(d) d$drug, character(1))
+  meacList <- as.list(vapply(own, meacOf, numeric(1)))
+  names(meacList) <- names(ceList)
+
+  res <- orInteractionSeries(base, ceList, meacList, tol)
+  if (!is.null(res)) res$Time <- base
+  res
 }
