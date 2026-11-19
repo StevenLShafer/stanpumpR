@@ -158,6 +158,10 @@ def unwrap_envelope(path):
     body = (data[start:end] if end > start else data[start:]).rstrip(b"\r\n")
     if not body.startswith(b"%PDF") or b"%%EOF" not in body[-4096:]:
         return False
+    if dry:
+        print("  %s: wrapped in a %d-byte form envelope; --dry-run, so left as it is"
+              % (os.path.basename(path), len(data) - len(body)), flush=True)
+        return False
     import pypdf
     try:
         before = len(pypdf.PdfReader(path).pages)
@@ -180,9 +184,16 @@ def unwrap_envelope(path):
               % (os.path.basename(path), e), flush=True)
         return False
     try:
-        recycle(keep)
+        gone = recycle(keep)
     except Exception:
-        pass                                     # the repair stands; the spare copy is only untidy
+        gone = False
+    if gone:
+        unwrapped.append({"recycled": keep, "archive_copy": os.path.basename(path),
+                          "why": "the form envelope was stripped; this is the original, envelope and all",
+                          "at": datetime.datetime.now().isoformat(timespec="seconds")})
+    else:                                        # the repair stands, but say where the spare copy is
+        review.append((os.path.basename(path), "the form envelope was stripped, but the Recycle Bin refused the "
+                       "original: %s is still there, remove it by hand" % os.path.basename(keep)))
     print("  %s: stripped a %d-byte form envelope (%d pages)"
           % (os.path.basename(path), len(data) - len(body), after), flush=True)
     return True
@@ -544,6 +555,7 @@ if cache.get("__refs__") != refs_sig:
     cache = {"__refs__": refs_sig}
 log = json.load(open(LOG_PATH, encoding="utf-8")) if os.path.exists(LOG_PATH) else []
 filed, review, unplaced = [], [], []
+unwrapped = []                                   # envelope originals, logged beside the recycled downloads
 def candidates():
     """Downloads and its subfolders (people save into subfolders); the archive folder itself, top level only."""
     for d in scan_dirs:
@@ -729,9 +741,11 @@ for d, name in candidates():
             log.append({"from": path, "to": r["file"], "pmid": r["pmid"], "doi": r["doi"], "how": why})
         filed.append((name, r["file"], r["label"], why))
 
-if recycled:
+if recycled or unwrapped:
     old = json.load(open(RECYCLED_LOG, encoding="utf-8")) if os.path.exists(RECYCLED_LOG) else []
-    json.dump(old + recycled, open(RECYCLED_LOG, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
+    json.dump(old + recycled + unwrapped, open(RECYCLED_LOG, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
+if unwrapped:
+    print("Stripped a form envelope from %d PDF(s); the originals went to the Recycle Bin." % len(unwrapped))
     same = sum(1 for e in recycled if e.get("why"))
     print("Moved %d original(s) from Downloads to the Recycle Bin (%d identical to an archived copy, %d the same paper "
           "differently stamped)." % (len(recycled), len(recycled) - same, same))
