@@ -1589,3 +1589,30 @@ test('CodeRabbit #730: a starting view chosen again brings its own picture offse
   assert.equal(o.offsetY, o.want, `the old window's offset (${o.was} px) is applied, not the new one's`);
   assertClean(page);
 });
+
+test('Physiology events: the physiology line follows the clock, and bad steps are refused', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  const r = clone(RUN);
+  const end = r.t[r.t.length - 1], mid = r.t[Math.floor(r.t.length / 2)];
+  r.physiology = { liver: 1, renal: 1, cardiac: 1, gi: 1, temperature: 37 };
+  r.physiologySteps = [
+    { time: r.t[0], liver: 1, renal: 1, cardiac: 1, gi: 1, temperature: 37 },
+    { time: mid, liver: 1, renal: 1, cardiac: 0.5, gi: 1, temperature: 34 }];
+  assert.equal(await loadRun(page, r), true);
+  const at = T => page.evaluate(T => { Player.seek(T); return document.getElementById('physio').textContent; }, T);
+  const first = await at(r.t[0]);
+  assert.match(first, /Cardiac output ×1/);
+  assert.match(first, /normal/);
+  const later = await at((mid + end) / 2);
+  assert.match(later, /Cardiac output ×0\.5/);
+  assert.match(later, /Temperature 34 °C/);
+  assert.match(later, /physiology event at/);
+  assert.match(await at(r.t[0]), /Cardiac output ×1/);
+  // Out of order, a bad number, markup: refused
+  for (const steps of [[{ time: 10 }, { time: 5 }], [{ time: 0, cardiac: -1 }],
+                       [{ time: 0, endobronchial: '<b>x</b>' }], 'x']) {
+    const bad = clone(r); bad.physiologySteps = steps;
+    assert.equal(await loadRun(page, bad), false);
+  }
+});

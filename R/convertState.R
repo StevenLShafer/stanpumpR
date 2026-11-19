@@ -1,5 +1,14 @@
 # Convert state variables from one PK set to another, when a clinical event
-# switches PK set in advanceClosedForm1().
+# (or, since 2026-11-19, a physiology event, R/physiologyEvents.R) switches
+# PK set in advanceClosedForm1().
+#
+# Written by Steven L. Shafer, before the repository's first commit (his copy
+# of the file is dated 2023; it arrived in the initial commit), for the Zuppa
+# dexmedetomidine model, whose parameters change on and off cardiopulmonary
+# bypass.  Its mathematics were checked by Claude Code on 2026-11-19: the
+# amounts against the eigenvectors of the rate matrix (3e-14), mass across a
+# switch (3e-14), and a whole bypass run against a piecewise matrix
+# exponential (2e-15); tests/testthat/test-physiology-events.R keeps the last.
 #
 # The states are the plasma concentration's exponential terms,
 #     Cp(t) = s_1 exp(-lambda_1 t) + s_2 exp(-lambda_2 t) + s_3 exp(-lambda_3 t),

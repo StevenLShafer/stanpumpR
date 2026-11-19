@@ -442,18 +442,23 @@ PHYSIOLOGY_GAS_PROTECTED_SHARE <- 0.12 + 0.04
 #'
 #' @param body output of \code{getGasBody()}
 #' @param cardiac cardiac output as a multiple of normal, positive
+#' @param split split the vessel-rich group at normal output too
 #' @returns the body, with \code{Q_cardiac}, \code{V_brain}, \code{f_brain},
 #'   \code{f_muscle} and \code{f_fat} changed, the rest of the vessel-rich
 #'   group added as \code{V_vrgRest} and \code{f_vrgRest}, and \code{cardiac}
 #'   recorded
 #' @export
-gasBodyPhysiology <- function(body, cardiac = 1)
+gasBodyPhysiology <- function(body, cardiac = 1, split = FALSE)
 {
   if (is.null(cardiac)) cardiac <- 1
   if (!is.numeric(cardiac) || length(cardiac) != 1 || !is.finite(cardiac) ||
       cardiac <= 0)
     stop("Invalid cardiac output multiple: ", format(cardiac))
-  if (cardiac == 1) return(body)
+  # `split`: split the vessel-rich group even at normal output, so that a run
+  # whose physiology events change cardiac output has the same states in
+  # every body (gasBodySteps()); at normal output the two groups fill exactly
+  # as the one did
+  if (cardiac == 1 && !isTRUE(split)) return(body)
   share <- PHYSIOLOGY_GAS_PROTECTED_SHARE
   # Normal flows as fractions of normal output.
   rest0 <- c(vrg = body$f_brain - share, muscle = body$f_muscle,
@@ -929,6 +934,14 @@ physiologyInputId <- function(factor) paste0("physiology_", factor)
 PHYSIOLOGY_DEBOUNCE_MS <- 400
 
 #' Slider step, in log10 units (about 2.3% per step)
+#'
+#' NOT A DEFECT (Shafer's decision of 2026-11-19, after ChatGPT's review of
+#' PR #796, finding 8): a step on the log scale lands on 10^(k/100), so the
+#' slider shows a rounded multiple (x0.50) while the factor applied is the
+#' step's exact value (0.5012 = 10^-0.30), which a physiology event records
+#' too; plasma at the propofol benchmark reads 6.535 against exact 0.5's
+#' 6.550.  The difference is invisible in use and the slider is left alone:
+#' an audit should not report the label and the factor differing slightly.
 #' @noRd
 PHYSIOLOGY_SLIDER_STEP <- 0.01
 
@@ -1053,6 +1066,19 @@ physiologyPanel <- function()
     )
     ),
     actionLink("physiologyReset", "Reset to normal"),
+    # Physiology events (R/physiologyEvents.R): these settings recorded in
+    # the event table at a time, physiology normal before the first
+    tags$div(
+      class = "mt-2",
+      actionButton("physiologyCreateEvent", "Create event",
+                   class = "btn-sm btn-outline-primary"),
+      tags$p(class = "small text-muted mt-1",
+             "Records these settings as a Physiology event at a time you",
+             "enter. With any Physiology event, physiology is normal from",
+             "time 0 and steps to each event's settings at its time. Edit or",
+             "delete it with the other events (double-click the Events panel).")
+    ),
+    uiOutput("physiologyEventsNote"),
     uiOutput("physiologyNote")
     )
   )
@@ -1129,8 +1155,21 @@ physiologyFromInputs <- function(values)
 #' @returns a data frame of Covariate and Value
 #' @noRd
 physiologyCovariateRows <- function(physiology, temperature = NULL,
-                                    altitude = NULL, endobronchial = FALSE)
+                                    altitude = NULL, endobronchial = FALSE,
+                                    events = NULL)
 {
+  # With physiology events (R/physiologyEvents.R) the simulation ran at
+  # normal physiology from time 0 and each event's settings from its time;
+  # the panel's settings only set the next event
+  if (is.data.frame(events) && nrow(events) > 0)
+    return(data.frame(
+      Covariate = c("Physiology events",
+                    sprintf("Physiology from %s min", format(events$Time))),
+      Value = c(sprintf("%d; normal physiology from time 0, the panel's settings not applied",
+                        nrow(events)),
+                vapply(seq_len(nrow(events)), function(i)
+                  physiologyEventSummary(unlist(events[i, PHYSIOLOGY_EVENT_FIELDS])), "")),
+      stringsAsFactors = FALSE))
   p <- tryCatch(checkPhysiology(physiology), error = function(e) NULL)
   value <- if (is.null(p)) rep("unreadable", length(PHYSIOLOGY_FACTORS)) else
     ifelse(p[PHYSIOLOGY_FACTORS] == 1, "normal",
