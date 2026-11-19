@@ -1,0 +1,566 @@
+\documentclass[11pt]{article}
+
+% ---------------------------------------------------------------------------
+% Design note: the mathematics of a buprenorphine mu-receptor interaction
+% model for stanpumpR.  Source of truth for docs/buprenorphine-interaction.pdf.
+% Compile:  pdflatex buprenorphine-interaction.tex   (run twice for refs)
+% ---------------------------------------------------------------------------
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+
+\setlength{\parskip}{0.4em}
+\setlength{\parindent}{0pt}
+\setlength{\emergencystretch}{2.5em}
+
+% A lightweight "correction" callout: a coloured run-in label plus a thin rule,
+% using no framing package, so the document compiles against a minimal TeX Live.
+\definecolor{corrcol}{RGB}{140,20,20}
+\newenvironment{correction}[1]
+  {\par\vspace{0.3em}\noindent\textcolor{corrcol}{\rule{\linewidth}{0.4pt}}\par
+   \noindent\textbf{\textcolor{corrcol}{[Correction] #1}}\par\nopagebreak\vspace{0.2em}}
+  {\par\noindent\textcolor{corrcol}{\rule{\linewidth}{0.4pt}}\par\vspace{0.3em}}
+
+\newcommand{\dd}[2]{\frac{\mathrm{d}#1}{\mathrm{d}#2}}
+\newcommand{\Ce}{C_{\mathrm e}}
+\newcommand{\Cesub}[1]{C_{\mathrm{e},#1}}
+\newcommand{\kon}[1][]{k_{\mathrm{on}#1}}
+\newcommand{\koff}[1][]{k_{\mathrm{off}#1}}
+\newcommand{\rhoz}{\rho_0}
+
+\title{\textbf{The mathematics of a buprenorphine $\mu$-receptor interaction model}\\[0.3em]
+\large A design note for stanpumpR}
+\author{Prepared with Claude Code at the request of Steven~L.\ Shafer}
+\date{2026-11-19 \quad\textbf{Status: proposal, not implemented}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+This note records the mathematics a future buprenorphine interaction engine
+would rest on, so the derivations are settled before any code is written.
+Nothing here changes the app. It began as an assessment of an external problem
+brief (written for ChatGPT); the structure and most of the results in that brief
+are correct and are adopted. Four places where this note \emph{departs from or
+strengthens} the brief are flagged with \textcolor{corrcol}{\textbf{[Correction]}}
+callouts: P2 is linear (indeed compartmental), not nonlinear; P4 has an exact
+invariant, not merely a bounded deviation; P1's closed form is exact but not
+automatically best-conditioned; and P3's reduction to Olofsen's linear
+transduction requires a transduction Hill coefficient of one.
+\end{abstract}
+
+% ===========================================================================
+\section{Scope and the kinetic premise}
+
+\textbf{$\mu$ receptor only.} Ligands: buprenorphine; the full agonists
+fentanyl and sufentanil; the antagonists naloxone, naltrexone, nalmefene.
+$\kappa/\delta$, ORL-1/NOP and norbuprenorphine are out of scope.
+
+The model is a \textbf{pharmacodynamic post-process} on the effect-site
+concentration curves $\Cesub{i}(t)$ the simulator already produces. It must not
+touch the pharmacokinetics, and it must reduce to the existing additive opioid
+scale $U=\sum_j \Cesub{j}/\mathrm{MEAC}_j$ when no partial agonist or antagonist is
+present (\S\ref{sec:p4}).
+
+The premise that forces a \emph{kinetic} rather than an equilibrium model:
+buprenorphine's clinical signature --- durable blockade of other opioids,
+precipitated withdrawal, the ventilatory ceiling --- is set by its \textbf{slow
+dissociation} ($\koff[,B]\approx 0.019~\mathrm{min^{-1}}$,
+$t_{1/2}\approx 37$~min), not by its affinity. A full agonist such as
+sufentanil binds with comparable or higher affinity yet is readily displaced,
+because its dissociation is fast. Displaceability is governed by the
+dissociation rate constant / residence time, which \textbf{cancels out of an
+equilibrium description}: at equilibrium only $K_D=\koff/\kon$ survives, and
+$K_D$ does not distinguish a fast ligand from a slow one of the same affinity.
+Carrying $\koff$ explicitly is the whole point of the engine.
+
+% ===========================================================================
+\section{The model (fixed published structure)}
+\label{sec:model}
+
+Index the $\mu$ ligands by $i$. Each has an effect-site concentration
+$\Cesub{i}(t)$ and rate constants $\kon[,i],\koff[,i]$
+($K_{D,i}=\koff[,i]/\kon[,i]$). Normalise the receptor pool to~1; let $\rho_i$
+be the fraction bound by ligand $i$ and $\rhoz=1-\sum_j\rho_j$ the free
+fraction. Binding kinetics (Olofsen et al.\ 2022; Yassen et al.\ 2006/2007):
+%
+\begin{equation}
+\dd{\rho_i}{t}=\kon[,i]\,\Cesub{i}(t)\,\rhoz(t)-\koff[,i]\,\rho_i(t),
+\qquad \rhoz=1-\sum_j\rho_j .
+\label{eq:bind}
+\end{equation}
+%
+Units: $\kon$ in $\mathrm{mL\,ng^{-1}\,min^{-1}}$, $\Ce$ in $\mathrm{ng\,mL^{-1}}$,
+so $\kon\Ce$ is $\mathrm{min^{-1}}$, as is $\koff$; $C_{50}=\koff/\kon$ is in
+$\mathrm{ng\,mL^{-1}}$.
+
+Ligands split by residence time $\tau=1/\koff$:
+\begin{itemize}[nosep,leftmargin=1.4em]
+\item \textbf{Slow} --- buprenorphine ($\koff\approx0.019$) and the
+long-residence antagonists naltrexone, nalmefene --- keep a differential
+state~\eqref{eq:bind}.
+\item \textbf{Fast} --- fentanyl, sufentanil, naloxone --- reach their
+\emph{conditional equilibrium} within whatever pool the slow ligands leave free.
+Setting $\dd{\rho_j}{t}=0$ gives $\rho_j=\phi_j\rhoz$, $\phi_j=\Cesub{j}/C_{50,j}$;
+summing $\rhoz+\sum_{\mathrm{slow}}\rho+\rhoz\sum\phi=1$:
+\end{itemize}
+%
+\begin{equation}
+\rho_j=\bigl(1-\textstyle\sum_{\mathrm{slow}}\rho\bigr)\,
+\frac{\phi_j}{1+\sum_k\phi_k},\qquad
+\phi_j=\frac{\Cesub{j}}{C_{50,j}},\quad C_{50,j}=\frac{\koff[,j]}{\kon[,j]}.
+\label{eq:qss}
+\end{equation}
+%
+Define the \textbf{crowding factor}
+$\Phi(t)=\sum_{\mathrm{fast}}\phi_k(t)=\sum \Cesub{k}/C_{50,k}$. Then the total
+fast-bound fraction is $\bigl(1-\sum_{\mathrm{slow}}\rho\bigr)\Phi/(1+\Phi)$ and
+%
+\begin{equation}
+\rhoz=\frac{1-\sum_{\mathrm{slow}}\rho}{1+\Phi}.
+\label{eq:rho0}
+\end{equation}
+%
+\textbf{Effect (ventilation), linear transduction (Olofsen):}
+%
+\begin{equation}
+E=E_0\Bigl(1-\sum_i\alpha_i\rho_i\Bigr),
+\label{eq:effect}
+\end{equation}
+%
+$\alpha=1$ for a full agonist (no ceiling), $\alpha<1$ for buprenorphine (the
+ceiling), $\alpha=0$ for a pure antagonist. Between grid points each $\Cesub{i}(t)$
+is \textbf{piecewise-linear in $t$}; the engine advances occupancy exactly
+across one such interval given the endpoint concentrations.
+
+\begin{table}[h]
+\centering
+\caption{Fitted parameters (Olofsen et al.\ 2022, ventilation).}
+\begin{tabular}{lcc}
+\toprule
+Parameter & Opioid-naive & Chronic high-dose \\
+\midrule
+$\kon[,B]$ (mL\,ng$^{-1}$\,min$^{-1}$) & 0.26 & 0.085 \\
+$\koff[,B]$ (min$^{-1}$; $t_{1/2}\approx37$~min) & 0.019 & 0.019 \\
+$\alpha_B$ & 0.81 & 0.48 \\
+$C_{50,F}=\koff[,F]/\kon[,F]$ (ng\,mL$^{-1}$) & 0.68 & 2.23 \\
+$\alpha_F$ (fixed) & 1 & 1 \\
+$E_0=V_B$ (L\,min$^{-1}$) & 20.2 & 20.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ===========================================================================
+\section{One grid interval: notation}
+\label{sec:interval}
+
+On $[0,h]$ write every input as linear in $t$:
+%
+\begin{align}
+\kon[,B]\,B(t)&=r+s\,t, & r&=\kon[,B]B_0, & s&=\kon[,B](B_1-B_0)/h,\\
+1+\Phi(t)&=p+q\,t, & p&=1+\Phi_0, & q&=(\Phi_1-\Phi_0)/h,
+\end{align}
+%
+with $B_0,B_1$ the buprenorphine endpoint concentrations and $\Phi_0,\Phi_1$ the
+crowding factor at the two ends. $p\ge 1>0$ throughout (a crowding factor is
+non-negative), which keeps every denominator and logarithm below well defined.
+
+% ===========================================================================
+\section{P1 --- the single-slow-ligand scalar ODE}
+
+With buprenorphine the only slow ligand, $\sum_{\mathrm{slow}}\rho=x\equiv
+\rho_{\mathrm{bup}}$, so $\rhoz=(1-x)/(1+\Phi)$. Substituting into
+\eqref{eq:bind}:
+%
+\begin{equation}
+\dd{x}{t}=a(t)\,(1-x)-\koff[,B]\,x,\qquad
+a(t)=\frac{\kon[,B]B(t)}{1+\Phi(t)} .
+\label{eq:scalar}
+\end{equation}
+%
+This matches the brief. It is \textbf{linear in $x$} with a time-varying
+coefficient,
+%
+\begin{equation}
+\dd{x}{t}+\bigl[a(t)+\koff[,B]\bigr]x=a(t),
+\label{eq:scalarlin}
+\end{equation}
+%
+and with the \S\ref{sec:interval} parametrisation $a(t)=(r+st)/(p+qt)$ is a
+ratio of two linear functions (M\"obius). Polynomial division gives the form
+used throughout:
+%
+\begin{equation}
+a(t)=A+\frac{w}{p+q\,t},\qquad A=\frac{s}{q},\qquad
+w=r-\frac{sp}{q}=\frac{rq-sp}{q}.
+\label{eq:adecomp}
+\end{equation}
+%
+(When $q=0$, i.e.\ $\Phi$ constant on the step, use the limit in
+\S\ref{sec:p1deg}.)
+
+% ===========================================================================
+\section{P1 --- exact advance, and its numerically safe evaluation}
+
+\subsection{Closed form via the integrating factor}
+\label{sec:p1closed}
+
+Let $\kappa=\koff[,B]$. The integrating-factor exponent is
+%
+\begin{equation}
+\Psi(t)=\int_0^t\!\bigl[a(u)+\kappa\bigr]\,\mathrm{d}u
+=(A+\kappa)\,t+m\,\ln\!\frac{p+q\,t}{p},\qquad m=\frac{w}{q},
+\label{eq:psi}
+\end{equation}
+%
+so $\mu(t)=e^{\Psi(t)}=e^{(A+\kappa)t}\bigl((p+qt)/p\bigr)^{m}$ with
+\textbf{non-integer exponent $m$} --- the source of the special function below.
+The solution of \eqref{eq:scalarlin} is
+%
+\begin{equation}
+x(h)=e^{-\Psi(h)}\Bigl[\,x(0)+\int_0^h e^{\Psi(t)}a(t)\,\mathrm{d}t\,\Bigr].
+\label{eq:p1sol}
+\end{equation}
+%
+Using \eqref{eq:adecomp} and substituting $y=p+qt$, the source integral reduces
+to two integrals of the form $\int e^{\beta y}y^{c}\,\mathrm{d}y$, each a
+\textbf{lower incomplete gamma function} $\gamma(c+1,\cdot)$ (an exponential
+integral when $c$ is a negative integer):
+%
+\begin{equation}
+\int_0^h e^{\Psi}a\,\mathrm{d}t=A\,J(m)+w\,J(m-1),\qquad
+J(c)=\int_0^h e^{(A+\kappa)t}\Bigl(\tfrac{p+qt}{p}\Bigr)^{c}\mathrm{d}t .
+\end{equation}
+%
+So the advance is \textbf{closed-form, with a logarithm (in $\Psi$) and an
+incomplete-gamma term (in the source)} --- exactly the brief's
+characterisation.
+
+\subsection{Overflow-proof evaluation (do this, not \S\ref{sec:p1closed} directly)}
+\label{sec:p1overflow}
+
+$\mu(t)$ can overflow, and $\bigl((p+qt)/p\bigr)^{m}$ alone can overflow or
+underflow while the product in \eqref{eq:p1sol} is finite. \textbf{Never form
+$\mu$ or $e^{+\Psi}$ explicitly.} Write the advance as a weighted average with a
+\emph{bounded} kernel:
+%
+\begin{equation}
+x(h)=G(0,h)\,x(0)+\int_0^h G(t,h)\,a(t)\,\mathrm{d}t,
+\label{eq:p1stable}
+\end{equation}
+\begin{equation}
+G(t,h)=\exp\!\Bigl(-\!\int_t^h[a(u)+\kappa]\,\mathrm{d}u\Bigr)
+=\exp\!\Bigl(-(A+\kappa)(h-t)-m\ln\tfrac{p+qh}{p+qt}\Bigr).
+\label{eq:kernel}
+\end{equation}
+%
+Because $a\ge 0$ and $\kappa>0$, the inner integral $\int_t^h(a+\kappa)\ge 0$,
+so $G(t,h)\in(0,1]$ for every $t$. \textbf{Evaluate the combined exponent as one
+number} --- do not compute $e^{(\cdot)}\cdot\mathrm{pow}(\cdot)$ as separate
+factors, because the $\mathrm{pow}$ factor alone can overflow even though
+$G\le1$.
+
+\subsection{Degenerate limits}
+\label{sec:p1deg}
+
+\begin{itemize}[nosep,leftmargin=1.4em]
+\item \textbf{$a\equiv0$} ($B=0$): pure decay, $x(h)=x(0)\,e^{-\kappa h}$.
+\item \textbf{Constant $a$} ($s=0$ and $q=0$, or $w=0$): constant-coefficient
+case, $x(h)=x_{\mathrm{ss}}+\bigl(x(0)-x_{\mathrm{ss}}\bigr)e^{-(a+\kappa)h}$,
+$x_{\mathrm{ss}}=a/(a+\kappa)$. The $w=0$ branch ($rq=sp$: numerator and
+denominator of $a$ share a root --- the brief's ``coincident denominators'')
+collapses to this; test $|w|$ against a tolerance.
+\item \textbf{$q\to0$} ($\Phi$ constant, $a$ linear in $t$): $m=w/q$ diverges
+but $m\ln\bigl((p+qt)/p\bigr)\to w\,t/p$ is finite. Implement the limit via the
+series $\ln(1+qt/p)/q\to t/p$, \emph{not} the formula \eqref{eq:psi}, or the
+$m\ln$ term cancels catastrophically. Here $\Psi$ is quadratic in $t$ and the
+source integral is an \textbf{error-function} term rather than incomplete-gamma.
+\item \textbf{General guard}: branch on $|q|$ and $|w|$ small before evaluating
+\eqref{eq:adecomp}--\eqref{eq:psi}.
+\end{itemize}
+
+\subsection{Conditioning and sub-stepping}
+
+\begin{itemize}[nosep,leftmargin=1.4em]
+\item \textbf{Large $(A+\kappa)h$} (many time constants per step): $G(0,h)$
+underflows and $x\to$ quasi-steady; correct, but the source quadrature needs
+nodes concentrated near $t=h$ where $G=O(1)$. Sub-step so that $\int_t^h(a+\kappa)$
+per sub-step is $O(1)$ and $\Phi$ varies little across it.
+\item \textbf{Large $|m|$ with small $q$}: use the \S\ref{sec:p1deg} series.
+\end{itemize}
+
+\begin{correction}{Exact is not the same as best-conditioned}
+The incomplete-gamma form of \S\ref{sec:p1closed} is exact, but its evaluation
+at \emph{non-integer, possibly negative} order $m$ has its own cancellation
+regions. Because $a(t)$ is smooth and bounded on one grid step, a 3--4 node
+\textbf{Gauss--Legendre quadrature of the bounded kernel}
+in~\eqref{eq:p1stable} reaches machine precision with none of that fragility.
+The recommendation: keep the closed form of \S\ref{sec:p1closed} as the
+\emph{reference / validator}, and use the bounded-kernel quadrature
+of~\eqref{eq:p1stable} as the production path. ``Load-bearing'' describes the
+\emph{exactness requirement}, which \eqref{eq:p1stable} also meets; it need not
+mean the special-function evaluation ships.
+\end{correction}
+
+\subsection{Validation}
+Check $x(h)$ against an adaptive high-order integration of \eqref{eq:scalar} on
+the same interval (Dormand--Prince 5(4), or dense Gauss--Kronrod
+on~\eqref{eq:p1stable}); expect agreement to $\approx 10^{-12}$ relative, in the
+style of \texttt{test-transit-chain.R}'s RK cross-checks.
+
+% ===========================================================================
+\section{P2 --- two or more slow ligands}
+\label{sec:p2}
+
+\begin{correction}{The multi-slow-ligand advance is linear, indeed compartmental --- not nonlinear}
+With buprenorphine plus a long-residence antagonist, both keep differential
+states and there is \textbf{no scalar reduction} --- but the coupled system is
+\textbf{linear time-varying}, not nonlinear. The product
+$\kon[,i]\Cesub{i}(t)\rhoz$ is linear in the occupancies because $\Cesub{i}(t)$ is a
+known input, not a state; the only ``nonlinear-looking'' factor,
+$\rhoz=1-\sum\rho$, is itself linear in the states.
+
+Carry the free fraction explicitly and the structure is a genuine
+\textbf{compartmental (Markov) generator}. For slow ligands with coefficients
+$a_i(t)=\kon[,i]\Cesub{i}(t)/(1+\Phi(t))$, the states $(\rho_1,\dots,\rho_N,\rhoz)$
+obey $\dot\rho=K(t)\rho$ with, for two slow ligands $B$ and $A$,
+%
+\begin{equation}
+\dd{}{t}
+\begin{pmatrix}\rho_B\\[2pt]\rho_A\\[2pt]\rhoz\end{pmatrix}
+=
+\begin{pmatrix}
+-\koff[,B] & 0 & a_B\\[2pt]
+0 & -\koff[,A] & a_A\\[2pt]
+\koff[,B] & \koff[,A] & -(a_B+a_A)
+\end{pmatrix}
+\begin{pmatrix}\rho_B\\[2pt]\rho_A\\[2pt]\rhoz\end{pmatrix}.
+\label{eq:generator}
+\end{equation}
+%
+$K(t)$ is \textbf{Metzler} (off-diagonals $\ge0$) with \textbf{zero column
+sums} (conservative) --- a continuous-time Markov generator. Hence
+$\exp(K\Delta)$ is a nonnegative, column-stochastic matrix: a matrix-exponential
+step keeps every occupancy $\ge0$ and $\sum\rho=1$ \textbf{exactly}, so the
+physical simplex is preserved by construction, with no clipping. (The negative
+off-diagonals one would see in a 2-state $(\rho_B,\rho_A)$ reduction are an
+artifact of eliminating $\rhoz$; keep $\rhoz$ and they vanish.) The fast ligands
+then redistribute $\rhoz$'s share by~\eqref{eq:qss} at each output time.
+\end{correction}
+
+\paragraph{The step.} Over $[0,h]$, $K(t)$ varies through $a_i(t)$ (each a
+M\"obius function of $t$), so the exact propagator is a first-order
+\textbf{Magnus} exponential $\exp\!\bigl(\int_0^h K\,\mathrm{d}t\bigr)$. Its
+entries are the same elementary $\int a_i\,\mathrm{d}t$ logarithms as
+\S\ref{sec:p1closed}, so the integral is available in closed form; use a
+midpoint / averaged $\bar K$ for second-order accuracy, or sub-step. Advance
+with the \textbf{augmented unit-state} device already in
+\texttt{advanceTransitChain()}. The only approximation is the within-step
+time-variation of $K$ --- identical in spirit to \texttt{advanceClosedFormGas()}
+holding its coupling at the start-of-step value --- and it is exact to rounding
+when $K$ is constant on the step. So ``no closed form survives'' is true only of
+a \emph{scalar} closed form; there is an exact \textbf{matrix}-exponential
+advance per interval, well conditioned and simplex-preserving. For $N$ slow
+ligands it is an $(N{+}1)$-state generator.
+
+% ===========================================================================
+\section{P4 --- backward compatibility}
+\label{sec:p4}
+
+Calibrate each fast agonist so $C_{50,j}=\mathrm{MEAC}_j$. Then
+$\phi_j=\Cesub{j}/C_{50,j}=\Cesub{j}/\mathrm{MEAC}_j$, so the crowding factor is
+\textbf{exactly the legacy opioid scale}, $\Phi=\sum_{\mathrm{fast}}
+\Cesub{j}/\mathrm{MEAC}_j=U$. With \textbf{no slow ligand} present,
+%
+\begin{equation}
+\sum_{\mathrm{fast}}\rho_j=\frac{U}{1+U},\qquad \rhoz=\frac{1}{1+U}.
+\label{eq:p4base}
+\end{equation}
+
+\subsection{The identity, and what ``unchanged'' means}
+\eqref{eq:p4base} is exact, but $U/(1+U)\ne U$ --- it is a \textbf{saturating
+transform} of $U$. So ``leaves the additive panels unchanged'' holds in the
+\textbf{monotone / order-preserving} sense, not as numerical equality. One
+consequence is desirable: $U=1$ (one MEAC of a single agonist) gives
+$\sum\rho=\tfrac12$, i.e.\ \textbf{MEAC $=$ the 50\%-occupancy point} ---
+arguably more defensible than a bare linear sum, and consistent with reading
+MEAC as a half-effect concentration.
+
+\begin{correction}{P4 has an exact invariant, not merely a bounded deviation}
+If the legacy panel is read not as raw occupancy but as the fast-ligand
+\textbf{odds} (fast-bound over free), the correspondence is exact \emph{and}
+survives the presence of a slow ligand. With $\sum_{\mathrm{slow}}\rho$
+arbitrary,
+$\rhoz=(1-\sum_{\mathrm{slow}}\rho)/(1+\Phi)$ and
+$\sum_{\mathrm{fast}}\rho=(1-\sum_{\mathrm{slow}}\rho)\,\Phi/(1+\Phi)$, so
+%
+\begin{equation}
+\frac{\sum_{\mathrm{fast}}\rho}{\rhoz}=\Phi=U
+\qquad\text{exactly, independent of }\textstyle\sum_{\mathrm{slow}}\rho.
+\label{eq:invariant}
+\end{equation}
+%
+The fast-ligand occupancy odds equals $U$ whether or not buprenorphine is
+present. This is the real backward-compatibility theorem: \textbf{report
+$U=\sum_{\mathrm{fast}}\rho/\rhoz$ and the legacy scale is reproduced
+identically}, with buprenorphine's effect entering only through the separate
+occupancy term it adds, never by corrupting $U$.
+\end{correction}
+
+\subsection{The deviation bound (for a panel that insists on raw occupancy)}
+If instead the panel plots raw fast occupancy $\sum_{\mathrm{fast}}\rho$, the
+deviation from the no-slow value is bounded by buprenorphine's own occupancy:
+%
+\begin{equation}
+\Bigl|\,\textstyle\sum_{\mathrm{fast}}\rho-\frac{U}{1+U}\,\Bigr|
+=\sum_{\mathrm{slow}}\rho\cdot\frac{U}{1+U}\le\sum_{\mathrm{slow}}\rho,
+\end{equation}
+%
+$\to 0$ as $\sum_{\mathrm{slow}}\rho\to0$. Either way the additive panels are
+untouched until a partial agonist or antagonist appears.
+
+% ===========================================================================
+\section{P3 --- operational transduction and the analgesia/ventilation asymmetry}
+
+Replace the linear form \eqref{eq:effect} with an operational model (Black \&
+Leff 1983). Give each ligand an intrinsic efficacy $\tau_i$ and each
+\textbf{endpoint} a reserve / gain $\gamma$; with transduction Hill $n$,
+%
+\begin{equation}
+\frac{E}{E_{\max}}=\frac{\Theta^{\,n}}{1+\Theta^{\,n}},\qquad
+\Theta\equiv\gamma\sum_i\tau_i\rho_i.
+\label{eq:operational}
+\end{equation}
+
+\begin{correction}{The low-reserve limit recovers Olofsen's \eqref{eq:effect} only if $n=1$}
+For a low-reserve endpoint $\Theta\ll1$, so
+$\Theta^{n}/(1+\Theta^{n})\approx\Theta^{n}$. This is \textbf{linear in
+occupancy only when $n=1$}: then $E/E_{\max}\approx\gamma\sum\tau_i\rho_i$, and
+writing ventilation as depression $E=E_0(1-\sum\alpha_i\rho_i)$ identifies
+$\alpha_i=\gamma_{\mathrm{vent}}\tau_i$. For $n\ne1$ the low-reserve limit is a
+power law, not \eqref{eq:effect}. State the $n=1$ condition whenever the
+reduction is invoked.
+\end{correction}
+
+\paragraph{One receptor, different reserve per endpoint, reproduces the
+asymmetry.} A single $\mu$ model with a larger reserve for \textbf{analgesia}
+than for \textbf{ventilation} gives buprenorphine's clinical split:
+\begin{itemize}[nosep,leftmargin=1.4em]
+\item \textbf{Analgesia} (high $\gamma$): $\Theta$ saturates
+$\Theta^n/(1+\Theta^n)\to1$ even at the modest $\sum\tau_i\rho_i$ a low-efficacy
+agonist produces $\Rightarrow$ buprenorphine looks \textbf{near-full}.
+\item \textbf{Ventilation} (low $\gamma$): $E/E_{\max}\approx\gamma\sum\tau_i
+\rho_i$ stays sub-saturating, so a low-$\tau$ ligand gives a \textbf{ceiling}
+$\approx\gamma_{\mathrm{vent}}\tau_{\mathrm{bup}}<1$ $\Rightarrow$ the partial
+agonist.
+\end{itemize}
+This is the receptor-reserve account (standard for the $\mu$
+ventilation/analgesia asymmetry) and needs neither NOP nor biased signalling ---
+appropriate to the stated $\mu$-only scope.
+
+\paragraph{Mapping Olofsen's $\alpha$, and the identifiability caveat.} Preserve
+the ventilation fit by setting $\gamma_{\mathrm{vent}}\tau_i=\alpha_i$
+(Olofsen's values) in the $n=1$ low-reserve limit. The efficacy \emph{ratio}
+$\tau_{\mathrm{bup}}/\tau_F=\alpha_{\mathrm{bup}}/\alpha_F$ is then
+endpoint-independent; the absolute ceiling differs by endpoint only through
+$\gamma$. \textbf{Caveat:} in a single endpoint $\tau$ and $\gamma$ enter only
+as the product $\gamma\tau$, so ventilation data alone fix
+$\gamma_{\mathrm{vent}}\tau_i$ but not the split. The analgesia reserve
+$\gamma_{\mathrm{analgesia}}$ (equivalently
+$\gamma_{\mathrm{analgesia}}/\gamma_{\mathrm{vent}}$) is a \textbf{second
+parameter} that must come from analgesia data or be set to reproduce
+``near-full agonist for analgesia''; it cannot be read off the ventilation fit.
+
+% ===========================================================================
+\section{P5 --- tolerance as a one-parameter manifold}
+
+Olofsen gives two states (naive, chronic) differing in
+$(\kon[,B],\alpha_B,C_{50,F})$ with $\koff[,B]$ fixed. The app exposes four
+tolerance levels. With only two anchors, \textbf{only a one-parameter monotone
+path is identifiable} --- no data support curvature, so interpolate linearly in
+the natural transform of each parameter across $\theta\in[0,1]$, anchored at
+$\theta=0$ (naive) and $\theta=1$ (chronic):
+\begin{itemize}[nosep,leftmargin=1.4em]
+\item $\log\kon[,B]$ \textbf{linear in $\theta$} ($0.26\to0.085$, a $\sim3\times$
+range).
+\item $\log C_{50,F}$ \textbf{linear in $\theta$} ($0.68\to2.23$, a
+$\sim3.3\times$ range).
+\item $\alpha_B$ on a \textbf{bounded scale} --- linear, or logit
+$\log(\alpha/(1-\alpha))$ linear in $\theta$ to keep $\alpha\in(0,1)$
+($0.81\to0.48$).
+\item $\koff[,B]$ \textbf{fixed} ($0.019$), as given.
+\end{itemize}
+Four levels then sit at $\theta=0,\tfrac13,\tfrac23,1$. Anything richer than
+monotone-in-transform over-fits two points.
+
+% ===========================================================================
+\section{Validation statements}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}l p{0.42\linewidth} p{0.26\linewidth}@{}}
+\toprule
+Result & Checked against & Expected \\
+\midrule
+P1 advance \eqref{eq:p1stable} & adaptive DP5(4) / Gauss--Kronrod on \eqref{eq:scalar} & $\approx10^{-12}$ rel. \\
+P1 degenerate limits \S\ref{sec:p1deg} & decay / constant-coeff. / erf forms & exact \\
+P2 matrix step \S\ref{sec:p2} & dense RK of $(N{+}1)$-state system; $\sum\rho=1$, $\rho\ge0$ & $\approx10^{-10}$, simplex exact \\
+P3 reduction (Corr.\ in \S9) & linear form \eqref{eq:effect} at $n=1$, small $\Theta$ & matches slope \\
+P4 invariant \eqref{eq:invariant} & algebra; simulation with/without slow ligand & exact \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{The Nasser 2014 occupancy check is loose, not tight.} Nasser et al.\
+2014 give buprenorphine whole-brain $\mu$ occupancy $=91.4\,C/(0.67+C)$ percent
+vs plasma concentration, offered as a check on $K_{D,B}$. The ventilation-fit
+value is $K_{D,B}=\koff/\kon=0.019/0.26\approx0.073~\mathrm{ng\,mL^{-1}}$
+(naive), $0.019/0.085\approx0.22$ (chronic); the occupancy half-max is at
+$\mathbf{0.67~ng\,mL^{-1}}$, about $3$--$9\times$ higher. The gap is expectable
+--- plasma vs biophase, PET whole-brain vs ventilatory biophase, and $\kon$
+fitted in effect-site units --- but it makes Nasser an \textbf{order-of-magnitude
+sanity check, not a tight validation} of $K_{D,B}$. Do not present the two as
+agreeing closely.
+
+% ===========================================================================
+\section{Where an implementation would sit}
+
+The engine is a \textbf{pharmacodynamic post-process}, so it would run after
+\texttt{simCpCe()} has produced every opioid's $\Cesub{i}(t)$, not inside the PK
+engines --- analogous to \texttt{applyAntiseizure\-\allowbreak Interactions()}
+running after each drug is simulated alone. It would:
+\begin{enumerate}[nosep,leftmargin=1.6em]
+\item partition the $\mu$ ligands into slow (differential state) and fast
+(conditional equilibrium \eqref{eq:qss}) by $\koff$;
+\item advance the slow occupancies interval by interval on the shared,
+non-uniform time line --- \S6 (one slow ligand) or \S\ref{sec:p2} (several);
+\item form $\Phi(t)$ and the fast occupancies by \eqref{eq:qss} at each output
+time;
+\item map occupancy to effect by \eqref{eq:effect} now, or the operational form
+\eqref{eq:operational} if and when an analgesia endpoint is added.
+\end{enumerate}
+It must leave the additive opioid panels identical until buprenorphine or an
+antagonist is dosed --- guaranteed exactly by \eqref{eq:invariant}, and to
+within $\sum_{\mathrm{slow}}\rho$ by raw occupancy.
+
+\paragraph{Open for Shafer --- decisions this note does not make.}
+\begin{itemize}[nosep,leftmargin=1.4em]
+\item \textbf{[decision]} whether the production P1 step uses the
+incomplete-gamma closed form (\S\ref{sec:p1closed}) or the bounded-kernel
+quadrature (\S\ref{sec:p1overflow}). This note recommends the quadrature with
+the closed form as validator; it is a decision because it sets what the tests
+pin.
+\item \textbf{[decision]} the analgesia reserve $\gamma_{\mathrm{analgesia}}$ ---
+a second endpoint's worth of information that ventilation data cannot supply.
+Needed before P3 can draw an analgesia curve; until then the engine is
+ventilation-only and \eqref{eq:effect} stands.
+\item \textbf{[decision]} whether the four tolerance levels are
+$\theta=0,\tfrac13,\tfrac23,1$ or another spacing.
+\end{itemize}
+
+\end{document}
