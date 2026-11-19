@@ -1,0 +1,346 @@
+\documentclass[11pt]{article}
+
+% ---------------------------------------------------------------------------
+% The mathematics of a buprenorphine mu-receptor interaction model for
+% stanpumpR.  Typeset companion to docs/buprenorphine-interactions-math.md and
+% the implementation in R/opioidReceptorInteraction.R.  Possibly for future
+% publication.
+% Compile:  pdflatex buprenorphine-interaction.tex   (run twice for refs)
+% ---------------------------------------------------------------------------
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+
+\setlength{\parskip}{0.4em}
+\setlength{\parindent}{0pt}
+\setlength{\emergencystretch}{2.5em}
+
+\definecolor{corrcol}{RGB}{140,20,20}
+\newenvironment{correction}[1]
+  {\par\vspace{0.3em}\noindent\textcolor{corrcol}{\rule{\linewidth}{0.4pt}}\par
+   \noindent\textbf{\textcolor{corrcol}{[Correction] #1}}\par\nopagebreak\vspace{0.2em}}
+  {\par\noindent\textcolor{corrcol}{\rule{\linewidth}{0.4pt}}\par\vspace{0.3em}}
+
+\definecolor{deccol}{RGB}{20,80,140}
+\newenvironment{decision}[1]
+  {\par\vspace{0.3em}\noindent\textcolor{deccol}{\rule{\linewidth}{0.4pt}}\par
+   \noindent\textbf{\textcolor{deccol}{[Decision] #1}}\par\nopagebreak\vspace{0.2em}}
+  {\par\noindent\textcolor{deccol}{\rule{\linewidth}{0.4pt}}\par\vspace{0.3em}}
+
+\newcommand{\dd}[2]{\frac{\mathrm{d}#1}{\mathrm{d}#2}}
+\newcommand{\Ce}{C_{\mathrm e}}
+\newcommand{\Cesub}[1]{C_{\mathrm{e},#1}}
+\newcommand{\kon}[1][]{k_{\mathrm{on}#1}}
+\newcommand{\koff}[1][]{k_{\mathrm{off}#1}}
+\newcommand{\rhoz}{\rho_0}
+
+\title{\textbf{The mathematics of a buprenorphine $\mu$-receptor interaction model}\\[0.3em]
+\large A design note for stanpumpR}
+\author{Prepared with Claude Code at the request of Steven~L.\ Shafer}
+\date{2026-11-19 \quad\textbf{The mathematics behind \texttt{R/opioidReceptorInteraction.R}}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+This note records the mathematics the buprenorphine interaction engine rests on.
+It began as an assessment of an external problem brief and was cross-checked by
+four independent derivations (the original pass, ChatGPT, Gemini, and a second
+pass); they converge on P1, P2 and P4, and P3 is resolved here. Four places where
+this note \emph{strengthens} the brief are flagged \textcolor{corrcol}{\textbf{[Correction]}}:
+P2 is linear (indeed compartmental), not nonlinear; P4 has an exact invariant,
+not merely a bounded deviation; P1's closed form is exact but not automatically
+best-conditioned; and P3's reduction to Olofsen's linear transduction requires a
+transduction Hill coefficient of one. Steven~L.\ Shafer's three design decisions
+of 2026-11-19 are flagged \textcolor{deccol}{\textbf{[Decision]}}. The engine
+(\texttt{R/opioidReceptorInteraction.R}) implements the P1 bounded-kernel
+quadrature and the P2 fourth-order commutator-free Magnus step, verified against
+independent integration (P1 $\sim\!10^{-11}$, P2 $\sim\!10^{-6}$ with fourth-order
+convergence, the P4 identities exact).
+\end{abstract}
+
+% ===========================================================================
+\section{Scope and the kinetic premise}
+
+\textbf{$\mu$ receptor only.} Ligands: buprenorphine; the full agonists
+fentanyl and sufentanil; the antagonists naloxone, naltrexone, nalmefene.
+$\kappa/\delta$, ORL-1/NOP and norbuprenorphine are out of scope.
+
+The model is a \textbf{pharmacodynamic post-process} on the effect-site
+concentration curves $\Cesub{i}(t)$ the simulator already produces. It must not
+touch the pharmacokinetics, and it must reduce to the existing additive opioid
+scale $U=\sum_j \Cesub{j}/\mathrm{MEAC}_j$ when no partial agonist or antagonist is
+present (\S\ref{sec:p4}).
+
+The premise that forces a \emph{kinetic} rather than an equilibrium model:
+buprenorphine's clinical signature --- durable blockade of other opioids,
+precipitated withdrawal, the ventilatory ceiling --- is set by its \textbf{slow
+dissociation} ($\koff[,B]\approx 0.019~\mathrm{min^{-1}}$,
+$t_{1/2}\approx 37$~min), not by its affinity. A full agonist such as
+sufentanil binds with comparable or higher affinity yet is readily displaced,
+because its dissociation is fast. Displaceability is governed by the
+dissociation rate constant / residence time, which \textbf{cancels out of an
+equilibrium description}: at equilibrium only $K_D=\koff/\kon$ survives, and
+$K_D$ does not distinguish a fast ligand from a slow one of the same affinity.
+Carrying $\koff$ explicitly is the whole point of the engine.
+
+% ===========================================================================
+\section{The model (fixed published structure)}
+\label{sec:model}
+
+Index the $\mu$ ligands by $i$. Each has an effect-site concentration
+$\Cesub{i}(t)$ and rate constants $\kon[,i],\koff[,i]$
+($K_{D,i}=\koff[,i]/\kon[,i]$). Normalise the receptor pool to~1; let $\rho_i$
+be the fraction bound by ligand $i$ and $\rhoz=1-\sum_j\rho_j$ the free
+fraction. Binding kinetics (Olofsen et al.\ 2022; Yassen et al.\ 2006/2007):
+%
+\begin{equation}
+\dd{\rho_i}{t}=\kon[,i]\,\Cesub{i}(t)\,\rhoz(t)-\koff[,i]\,\rho_i(t),
+\qquad \rhoz=1-\sum_j\rho_j .
+\label{eq:bind}
+\end{equation}
+%
+Ligands split by residence time $\tau=1/\koff$:
+\begin{itemize}[nosep,leftmargin=1.4em]
+\item \textbf{Slow} --- buprenorphine and the long-residence antagonists
+naltrexone, nalmefene --- keep a differential state~\eqref{eq:bind}.
+\item \textbf{Fast} --- fentanyl, sufentanil, naloxone --- reach their
+\emph{conditional equilibrium} within whatever pool the slow ligands leave free;
+setting $\dd{\rho_j}{t}=0$ and summing:
+\end{itemize}
+%
+\begin{equation}
+\rho_j=\bigl(1-\textstyle\sum_{\mathrm{slow}}\rho\bigr)\,
+\frac{\phi_j}{1+\sum_k\phi_k},\qquad
+\phi_j=\frac{\Cesub{j}}{C_{50,j}},\quad C_{50,j}=\frac{\koff[,j]}{\kon[,j]}.
+\label{eq:qss}
+\end{equation}
+%
+Define the \textbf{crowding factor} $\Phi(t)=\sum_{\mathrm{fast}}\phi_k$; then
+$\rhoz=(1-\sum_{\mathrm{slow}}\rho)/(1+\Phi)$. Effect (ventilation), linear
+transduction (Olofsen): $E=E_0(1-\sum_i\alpha_i\rho_i)$, $\alpha=1$ for a full
+agonist, $\alpha<1$ for buprenorphine (the ceiling), $\alpha=0$ for a pure
+antagonist. Between grid points each $\Cesub{i}(t)$ is \textbf{piecewise-linear
+in $t$}; the engine advances occupancy exactly across one such interval.
+
+\begin{table}[h]
+\centering
+\caption{Fitted parameters (Olofsen et al.\ 2022, ventilation).}
+\begin{tabular}{lcc}
+\toprule
+Parameter & Opioid-naive & Chronic high-dose \\
+\midrule
+$\kon[,B]$ (mL\,ng$^{-1}$\,min$^{-1}$) & 0.26 & 0.085 \\
+$\koff[,B]$ (min$^{-1}$; $t_{1/2}\approx37$~min) & 0.019 & 0.019 \\
+$\alpha_B$ & 0.81 & 0.48 \\
+$C_{50,F}=\koff[,F]/\kon[,F]$ (ng\,mL$^{-1}$) & 0.68 & 2.23 \\
+$\alpha_F$ (fixed) & 1 & 1 \\
+$E_0=V_B$ (L\,min$^{-1}$) & 20.2 & 20.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ===========================================================================
+\section{P1 --- one slow ligand: the exact advance}
+
+With buprenorphine the only slow ligand, $\sum_{\mathrm{slow}}\rho=x$, so
+$\rhoz=(1-x)/(1+\Phi)$ and \eqref{eq:bind} becomes a \textbf{scalar linear ODE}
+with a time-varying coefficient,
+%
+\begin{equation}
+\dd{x}{t}+\bigl[a(t)+\koff[,B]\bigr]x=a(t),\qquad
+a(t)=\frac{\kon[,B]B(t)}{1+\Phi(t)} .
+\label{eq:scalar}
+\end{equation}
+%
+On $[0,h]$ write $\kon[,B]B(t)=r+st$ and $1+\Phi(t)=p+qt$ ($p\ge1$), so
+$a(t)=(r+st)/(p+qt)$ is M\"obius. The integrating-factor solution
+$x(h)=e^{-\Psi(h)}[x(0)+\int_0^h e^{\Psi}a\,\mathrm dt]$, $\Psi=\int_0^t(a+\koff)$,
+reduces the source to a \textbf{lower incomplete-gamma} term (an exponential
+integral at negative integer order); so the advance is closed-form --- a
+logarithm in $\Psi$ and an incomplete-gamma term in the source.
+
+\textbf{Overflow-proof form (what the engine evaluates).} Never form
+$e^{+\Psi}$; write $x(h)=G(0,h)x(0)+\int_0^h G(t,h)a(t)\,\mathrm dt$ with the
+\emph{bounded} kernel $G(t,h)=\exp(-\!\int_t^h(a+\koff))\in(0,1]$, and evaluate the
+exponent as one number.
+
+\begin{correction}{Exact is not the same as best-conditioned}
+The incomplete-gamma form is exact, but at non-integer / negative order it has
+cancellation and pole traps, and stanpumpR imports only base R/\texttt{stats} ---
+no special-function package. Because $a(t)$ is smooth and bounded on one step, a
+Gauss--Legendre quadrature of the bounded kernel reaches machine precision with
+none of that fragility. The engine therefore uses \textbf{Gauss--Legendre-8 on
+the bounded kernel} as the production path, with adaptive sub-stepping when a
+step spans many time constants, and the closed form as the reference. The
+degenerate limits are exact: $a\equiv0$ (decay); constant $a$; and $q\to0$
+($\Phi$ constant), where the source integral becomes an \textbf{error-function}
+term and the $m\ln$ form must be taken by series to avoid cancellation.
+\end{correction}
+
+Verified against adaptive RK4 / Gauss--Kronrod across seven regimes: maximum
+error $\sim\!10^{-11}$ relative (cross-checked: ChatGPT $2.3\times10^{-13}$,
+Gemini 70-digit).
+
+% ===========================================================================
+\section{P2 --- two or more slow ligands}
+\label{sec:p2}
+
+\begin{correction}{The multi-slow-ligand advance is linear, indeed compartmental --- not nonlinear}
+$\kon[,i]\Cesub{i}(t)\rhoz$ is linear in the occupancies ($\Cesub{i}$ is a known
+input), and the only ``nonlinear-looking'' factor $\rhoz=1-\sum\rho$ is itself
+linear. \textbf{Carry $\rhoz$ explicitly} and the states $(\rho_1,\dots,\rho_N,\rhoz)$
+obey $\dot\rho=K(t)\rho$ with, for two slow ligands,
+%
+\begin{equation}
+K=\begin{pmatrix}
+-\koff[,B] & 0 & a_B\\
+0 & -\koff[,A] & a_A\\
+\koff[,B] & \koff[,A] & -(a_B+a_A)
+\end{pmatrix},\qquad a_i(t)=\frac{\kon[,i]\Cesub{i}(t)}{1+\Phi(t)}.
+\label{eq:generator}
+\end{equation}
+%
+$K(t)$ is \textbf{Metzler} with \textbf{zero column sums} --- a continuous-time
+Markov generator --- so $\exp(K\Delta)$ is column-stochastic: a matrix-exponential
+step keeps every $\rho_i\ge0$ and $\sum\rho=1$ \textbf{exactly}, no clipping. (The
+negative off-diagonals one would see in a 2-state reduction are an artifact of
+eliminating $\rhoz$; keep it and they vanish.)
+\end{correction}
+
+Over $[0,h]$, $K(t)$ varies through the M\"obius $a_i(t)$. The engine advances
+with the \textbf{fourth-order commutator-free Magnus} step
+$\exp(h(\alpha_2 K_1{+}\alpha_1 K_2))\exp(h(\alpha_1 K_1{+}\alpha_2 K_2))$, where
+$K_{1,2}=K$ at the two Gauss nodes $c_{1,2}=\tfrac12\mp\tfrac{\sqrt3}6$ and
+$\alpha_{1,2}=\tfrac14\pm\tfrac{\sqrt3}6$, each factor evaluated by the package's
+Pad\'e matrix exponential; zero column sums are preserved in each factor, so
+$\sum\rho=1$ is exact. Sub-stepped when the generator changes fast across a step.
+Verified against dense RK4 ($\sim\!10^{-6}$ on a 30-min stress step; fourth-order
+convergence confirmed), the simplex preserved to machine precision. For $N$ slow
+ligands it is an $(N{+}1)$-state generator.
+
+% ===========================================================================
+\section{P4 --- backward compatibility}
+\label{sec:p4}
+
+Calibrate each fast agonist so $C_{50,j}=\mathrm{MEAC}_j$; then
+$\Phi=\sum_{\mathrm{fast}}\Cesub{j}/\mathrm{MEAC}_j=U$ \emph{exactly}. With no slow
+ligand, $\sum_{\mathrm{fast}}\rho=U/(1+U)$ --- a saturating transform of $U$
+(so $U=1$ gives half-occupancy, MEAC as the 50\% point).
+
+\begin{correction}{P4 has an exact invariant, not merely a bounded deviation}
+Read the legacy panel as the fast-ligand \textbf{odds} and the correspondence is
+exact \emph{and} survives a slow ligand: with $\sum_{\mathrm{slow}}\rho$ arbitrary,
+%
+\begin{equation}
+\frac{\sum_{\mathrm{fast}}\rho}{\rhoz}=\Phi=U
+\qquad\text{exactly, independent of }\textstyle\sum_{\mathrm{slow}}\rho.
+\label{eq:invariant}
+\end{equation}
+%
+Report $U=\sum_{\mathrm{fast}}\rho/\rhoz$ and the legacy scale is reproduced
+identically, at all times --- buprenorphine enters only through its own occupancy
+term, never by corrupting $U$. (For a panel plotting raw occupancy, the deviation
+is bounded by $\sum_{\mathrm{slow}}\rho$.) The acceptance test compares $\Phi$ to
+$U$, not $\sum\rho$ to $U$; verified exact.
+\end{correction}
+
+% ===========================================================================
+\section{P3 --- operational transduction and the analgesia/ventilation asymmetry}
+
+Replace the linear form with an operational model (Black \& Leff 1983): efficacy
+$\tau_i$ per ligand, reserve/gain $\gamma$ per \textbf{endpoint}, Hill $n$:
+$E/E_{\max}=\Theta^n/(1+\Theta^n)$, $\Theta=\gamma\sum_i\tau_i\rho_i$.
+
+\begin{correction}{The low-reserve limit recovers Olofsen's linear form only if $n=1$}
+For $\Theta\ll1$, $\Theta^n/(1+\Theta^n)\approx\Theta^n$, linear in occupancy only
+when $n=1$; then $\alpha_i=\gamma_{\mathrm{vent}}\tau_i$. For $n\ne1$ the low-reserve
+limit is a power law. State $n=1$ whenever the reduction is invoked.
+\end{correction}
+
+\textbf{Ventilation stays linear; the operational form carries analgesia.} With
+$n=1$, ventilation is Olofsen's linear transducer, whose ceiling is exactly
+$\alpha_B$ (0.81 naive, 0.48 chronic) at full occupancy --- the respiratory-sparing
+plateau. A single $\mu$ model with a \emph{larger reserve for analgesia than for
+ventilation} gives buprenorphine's split: high $\gamma$ saturates analgesia even at
+the modest $\sum\tau_i\rho_i$ a partial agonist makes (near-full for pain), while
+low $\gamma$ leaves ventilation sub-saturating (a ceiling $\approx\gamma_{\mathrm{vent}}\tau_{\mathrm{bup}}<1$).
+This is the receptor-reserve account, needing neither NOP nor biased signalling.
+
+\textbf{Identifiability.} In a single endpoint $\tau$ and $\gamma$ enter only as
+$\gamma\tau$, so ventilation data fix $\gamma_{\mathrm{vent}}\tau_i=\alpha_i$ but
+not the split; the analgesia reserve is a second parameter that cannot be read off
+the ventilation fit.
+
+\textbf{Deconvolution --- interpretive support.} $(1-\alpha_B)\,\kon[,B]$ is nearly
+population-independent (0.0494 naive vs 0.0442 chronic), giving a single
+$K_{D,B}\approx0.38$--$0.43~\mathrm{ng\,mL^{-1}}$, which reconciles the ventilation
+fit with Nasser 2014's PET occupancy (half-max $\approx0.67$) far better than the
+raw $K_D=\koff/\kon$ (0.073--0.22, $3$--$9\times$ off). This supports the operational
+structure and a population-independent true affinity; but the ventilation fit does
+not force the split, and Nasser is plasma whole-brain PET vs effect-site
+ventilation, an \emph{order-of-magnitude} check, not a tight one. The drawn curves
+use Olofsen's fitted parameters directly plus the clinical analgesia reserve; the
+deconvolution informs interpretation only.
+
+% ===========================================================================
+\section{P5 --- tolerance as a one-parameter manifold}
+
+Olofsen gives two states (naive, chronic) differing in
+$(\kon[,B],\alpha_B,C_{50,F})$ with $\koff[,B]$ fixed. With two anchors only a
+one-parameter monotone path is identifiable: interpolate $\log\kon[,B]$ and
+$\log C_{50,F}$ linearly in $\theta$, $\alpha_B$ by logit, $\koff[,B]$ fixed.
+
+\begin{decision}{Tolerance Grid B (Shafer, 2026-11-19)}
+The four tolerance levels sit at $\theta_k=\ln M_k/\ln 3=(0,\,0.369,\,0.631,\,1)$
+for the existing multipliers $M_k=(1,1.5,2,3)$ (\texttt{OPIOID\_TOLERANCE\_FACTORS}),
+so the new model and that knob move together.
+\end{decision}
+
+% ===========================================================================
+\section{Design decisions and presentation}
+
+\begin{decision}{Dual $C_{50}$ scale (Shafer, 2026-11-19)}
+The respiratory panel and the occupancy competition run on the \textbf{binding}
+scale (Olofsen's ventilatory $C_{50}$ for the full agonists, buprenorphine's
+binding constants) --- the only physically consistent choice, as an analgesic MEAC
+cannot enter a binding denominator. \texttt{\% MEAC} and the opioid--MAC
+interaction keep the \textbf{analgesic MEAC}; buprenorphine enters them only through
+the available-drive line $\tilde U=(1-\rho_{\mathrm{bup}})U$, exact by~\eqref{eq:invariant}.
+\end{decision}
+
+\begin{decision}{Analgesic ceiling $2$--$4\times$ MEAC (Shafer, 2026-11-19)}
+Buprenorphine's analgesic ceiling, a band (Typical $3\times$, Lower $2\times$, Upper
+$4\times$ in naive patients), fixes the analgesia reserve $\gamma_{\mathrm{analgesia}}$
+--- the one parameter ventilation data cannot supply --- and sets the
+precipitated-withdrawal / breakthrough crossover $U^\ast$.
+\end{decision}
+
+Presentation (occupancy as the primary lens): a stacked \textbf{receptor-occupancy}
+panel (buprenorphine / full agonists / antagonist / free); the two \textbf{effect
+curves} (analgesia; respiratory depression with its ceiling); the available-drive
+line $\tilde U$ on the \texttt{\% MEAC} panel; and a \textbf{precipitated-withdrawal
+marker}. Offered only while a $\mu$ partial agonist or antagonist is drawn.
+
+% ===========================================================================
+\section{The implementation}
+
+A pharmacodynamic post-process (\texttt{R/opioidReceptorInteraction.R}) run after
+\texttt{simCpCe()} has produced every opioid's $\Cesub{i}(t)$, as
+\texttt{applyAntiseizureInteractions()} runs after each drug is simulated alone. It
+partitions the $\mu$ ligands by $\koff$, advances the slow occupancies interval by
+interval (\S4 single, \S\ref{sec:p2} several) on the shared non-uniform grid, forms
+$\Phi(t)$ and the fast occupancies by~\eqref{eq:qss}, and maps occupancy to effect.
+It leaves the additive panels identical until buprenorphine or an antagonist is
+dosed, exactly by~\eqref{eq:invariant}.
+
+\paragraph{Open for Shafer.} The slow antagonists naltrexone and nalmefene join the
+slow set once $\kon/\koff$ are taken from binding-kinetics sources; norbuprenorphine
+is out of scope until it is a PK species.
+
+\end{document}
