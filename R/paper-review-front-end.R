@@ -220,7 +220,8 @@ paperReviewHasFrontEnd <- function(x)
   is.character(type) && length(type) == 1 && !is.na(type) && !type %in% c("", "none")
 }
 
-#' Is the front-end model the paper's only model (no mammillary parameters)?
+#' Does the paper print a front-end model and no mammillary parameters?
+#' (paperReviewRunOne() still tries to close one from derived quantities.)
 #' @keywords internal
 paperReviewFrontEndOnly <- function(x)
   paperReviewHasFrontEnd(x) && length(x$parameters %or% list()) == 0

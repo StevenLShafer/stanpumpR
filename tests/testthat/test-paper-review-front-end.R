@@ -162,3 +162,14 @@ test_that("a front-end model with no mammillary parameters is not described as o
   # With its own parameters the mammillary model is still checked.
   expect_false(identical(paperReviewRun(henthornExtraction())$identifiability$verdict, "front_end"))
 })
+
+test_that("a front-end paper whose derived quantities close a mammillary model is still checked", {
+  ex <- jsonlite::fromJSON(test_path("fixtures", "paper-review-well-conditioned.json"), simplifyVector = FALSE)
+  expect_length(ex$parameters %or% list(), 0)
+  ex$front_end <- list(model_type = "recirculatory")
+  review <- paperReviewRun(ex)
+  expect_equal(review$identifiability$verdict, "derived")
+  expect_equal(review$identifiability$route, "CL, Vss and both half-lives")
+  html <- as.character(paperReviewReportTags(review, plots = FALSE))
+  expect_match(html, "compartment(s)", fixed = TRUE)
+})

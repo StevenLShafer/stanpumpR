@@ -260,8 +260,8 @@ paperReviewModelTags <- function(rv, sections, findings, plots)
   # A front-end model the paper prints with no mammillary parameters: no
   # compartment count or identifiability verdict, which would misdescribe it.
   modelLine <- if (identical(ident$verdict, "front_end"))
-    paste0("a front-end (", gsub("_", " ", x$front_end$model_type), ") model, with no mammillary ",
-           "parameters printed; it is checked in the section ", PAPER_REVIEW_FRONT_END_SECTION, ".")
+    paste0("a front-end (", gsub("_", " ", x$front_end$model_type), ") model; the paper prints no mammillary ",
+           "model the checks can close. It is checked in the section ", PAPER_REVIEW_FRONT_END_SECTION, ".")
   if (is.null(modelLine)) {
     verdictText <- c(printed = "The printed parameters close the model.",
                      derived = paste("The model is closed through", ident$route, "and is stable."),

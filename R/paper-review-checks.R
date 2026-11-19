@@ -1864,11 +1864,13 @@ paperReviewGroupExtraction <- function(extraction, group)
 paperReviewRunOne <- function(extraction, paperLevel = TRUE)
 {
   reference <- paperReviewReferencePatient(extraction)
-  # A front-end model with no mammillary parameters is not a one-to-three
-  # compartment model to close; its own section checks it.
-  ident <- if (paperReviewFrontEndOnly(extraction))
-    list(verdict = "front_end", route = NA_character_, closed = NULL, findings = list())
-  else paperReviewIdentifiability(extraction)
+  # A front-end model whose paper prints no mammillary model the checks can
+  # close (no parameters, and derived quantities that do not close one) is
+  # not a one-to-three compartment model left open: its own section checks
+  # it. One closed from derived quantities is still reviewed as usual.
+  ident <- paperReviewIdentifiability(extraction)
+  if (paperReviewFrontEndOnly(extraction) && identical(ident$verdict, "underdetermined"))
+    ident <- list(verdict = "front_end", route = NA_character_, closed = NULL, findings = list())
   # Absorption is derived per extravascular regimen against the disposition,
   # then the drug carries the first regimen that has one (the simulator can
   # switch), and every check builds the drug for the regimen it checks.

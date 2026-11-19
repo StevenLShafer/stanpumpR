@@ -2,11 +2,13 @@
 % Please edit documentation in R/paper-review-front-end.R
 \name{paperReviewFrontEndOnly}
 \alias{paperReviewFrontEndOnly}
-\title{Is the front-end model the paper's only model (no mammillary parameters)?}
+\title{Does the paper print a front-end model and no mammillary parameters?
+(paperReviewRunOne() still tries to close one from derived quantities.)}
 \usage{
 paperReviewFrontEndOnly(x)
 }
 \description{
-Is the front-end model the paper's only model (no mammillary parameters)?
+Does the paper print a front-end model and no mammillary parameters?
+(paperReviewRunOne() still tries to close one from derived quantities.)
 }
 \keyword{internal}
