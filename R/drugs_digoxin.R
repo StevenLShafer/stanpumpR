@@ -6,7 +6,7 @@
 #
 # Drafted by Claude Code, 2026-10-19, at the request of Steven L. Shafer, who
 # supplied the article and asked for digoxin beside the vasoactive and
-# resuscitation drugs (inst/help/models/vasoactive.md,
+# resuscitation drugs (inst/app-help/models/vasoactive.md,
 # inst/extdata/vasoactiveRegistry.csv).  Every number below was read from the
 # published article: Tables I-IV and VI and Equation 10.
 #

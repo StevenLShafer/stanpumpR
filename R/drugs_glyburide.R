@@ -23,8 +23,11 @@
 # studies.  The PD companion paper's EC50 (printed 85.20 mg/L, likely
 # mcg/L) is an endpoint of its own and is not used.
 #
-# BODY SIZE: no covariates; the parameters are scaled by the library's
-# fat-free-mass factors, fixed with the switch off (legacyVolume = 1).
+# BODY SIZE: no covariates, so the parameters are the cohort's typical
+# patient's (71.1 kg, 156 cm, 20 of 22 women); with the switch on they are
+# anchored at that patient (GLYBURIDE_COHORT; Steven L. Shafer, 2026-11-18),
+# the reference man's volumes divided by 0.782 and clearances by 0.832, and
+# with it off fixed (legacyVolume = 1).
 #
 # PREGNANCY
 # =========
@@ -69,6 +72,13 @@
 GLYBURIDE_PREGNANCY_CL_FACTOR <- 1.9
 GLYBURIDE_PREGNANCY_V_FACTOR  <- 1.57
 
+# Rambiritch 2016, Table 1 (printed p. 85), read on the PDF 2026-11-18: means
+# 71.1 kg, 156 cm, 54 years, 2 men and 20 women (Table 1 accounts for 22 of
+# the 24 enrolled).  The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort). Factors 0.782 on
+# volume, 0.832 on clearance.
+GLYBURIDE_COHORT <- list(weight = 71.1, height = 156, age = 54, men = 2, women = 20)
+
 #' Glyburide (glibenclamide) pharmacokinetics (oral)
 #'
 #' Two compartments with first-order absorption (Rambiritch 2016); see the
@@ -82,7 +92,7 @@ GLYBURIDE_PREGNANCY_V_FACTOR  <- 1.57
 glyburide <- function(weight, height, age, sex, adjustToFFM = TRUE,
                       pregnant = FALSE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, GLYBURIDE_COHORT))
   # Pregnancy (see the header): CL/F and both volumes; Q/F unchanged.
   clPregnancy <- if (isTRUE(pregnant)) GLYBURIDE_PREGNANCY_CL_FACTOR else 1
   vPregnancy  <- if (isTRUE(pregnant)) GLYBURIDE_PREGNANCY_V_FACTOR else 1

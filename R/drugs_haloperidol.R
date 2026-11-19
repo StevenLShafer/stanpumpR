@@ -17,7 +17,10 @@
 # ==========
 # Pilla Reddy V et al., J Clin Psychopharmacol 2013;33:731-739: oral
 # haloperidol in patients with schizophrenia.  Two compartments, first-order
-# absorption, no covariates:
+# absorption, no estimated covariates (age, sex, weight, regimen and patient
+# status were tested and none was significant), but CL/F carried a FIXED
+# allometric weight term, CL/F = 88 x (WT/70)^0.75, in every fit (card
+# papers/digests/PMID_24113674.md):
 #
 #     CL/F 88 L/h, Q/F 233 L/h, Vc/F 669 L, Vp/F 2500 L, ka 0.236 /h
 #
@@ -25,8 +28,16 @@
 # bioavailability_PO = 1.  Intravenous haloperidol is the separate drug
 # haloperidolIV (Li 2022), whose ABSOLUTE clearance is not this one times F.
 #
-# Body size: no weight covariate, so the published values are the 70 kg
-# reference adult's and scale to fat-free mass (legacyVolume = 1).
+# Body size: CL/F is the source's own allometric term, evaluated at the
+# pharmacokinetic weight with the fat-free-mass switch on and at total weight
+# with it off, so the switch off reproduces the published (WT/70)^0.75 (until
+# 2026-11-18 the header said "no covariates" and the switch off left CL/F
+# unscaled).  At the pharmacokinetic weight the term equals the library's
+# clearance factor, so nothing changes with the switch on.  The volumes and
+# Q/F carry no size term in the source: they take the fat-free-mass factors
+# with the switch on, unscaled with it off (legacyVolume = 1).  The source
+# prints no central weight for its cohort, so they keep the reference anchor
+# (docs/weight-adjustment.md, Anchoring at the source's cohort).
 #
 # CYP2D6 (added 2026-10-11 from the full text of Park 2006)
 # ==========================================================
@@ -109,12 +120,13 @@ haloperidol <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   cyp <- unname(HALOPERIDOL_CYP2D6[[cyp2d6]])
 
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
 
   default <- list(
     v1 = HALOPERIDOL_VC * size$volume,
     v2 = HALOPERIDOL_VP * size$volume,
     v3 = 1,
-    cl1 = HALOPERIDOL_CL / 60 * size$clearance * cyp,   # L/min
+    cl1 = HALOPERIDOL_CL / 60 * (pkW / 70)^0.75 * cyp,  # L/min, the source's own term
     cl2 = HALOPERIDOL_Q  / 60 * size$clearance,
     cl3 = 0,
     ka_PO = HALOPERIDOL_KA / 60,                  # 1/min

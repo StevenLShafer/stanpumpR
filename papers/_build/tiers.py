@@ -47,8 +47,9 @@ def tier(w, pm, doi):
     locs = w.get("locations") or []
     if any(l.startswith("R/") for l in locs):
         return 2
-    if any(l.startswith("tests/") or l.startswith("inst/help/drugs/") or l.startswith("inst/help/models/")
-           or l.startswith("inst/help/scenarios/") for l in locs):
+    # inst/help was renamed inst/app-help (2026-11-18); older cards cite the old path
+    if any(l.startswith(("tests/", "inst/app-help/drugs/", "inst/app-help/models/", "inst/app-help/scenarios/",
+                         "inst/help/drugs/", "inst/help/models/", "inst/help/scenarios/")) for l in locs):
         return 3
     return 4
 

@@ -5,7 +5,7 @@
 # asked for the literature on the PHARMACOKINETIC interactions among the
 # epilepsy drugs, a model of them that can be switched on and off, and the
 # list of papers to obtain.  The model is R/antiseizureInteractions.R; the
-# help page inst/help/models/antiseizure-interactions.md.
+# help page inst/app-help/models/antiseizure-interactions.md.
 #
 # The search was run on 2026-10-24 against PubMed (abstracts) and PubMed
 # Central (full text).  Every PMID below was checked against PubMed in this

@@ -16,6 +16,13 @@
 # Units: time in minutes, volumes in litres, clearances in L/min,
 # concentrations in ng/mL (serum).  Body size: no weight covariate, scaled to
 # fat-free mass like the parent (legacyVolume = 1).
+#
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): fixed published values belong to the
+# source's cohort, not the reference man. The source prints no body size for
+# its subjects (read 2026-11-18); like the parent it is so the fixed values
+# stay anchored at the 70 kg reference man, as before the rule.
+#
 # -----------------------------------------------------------------------------
 
 HYDROXYRISPERIDONE_V  <- 96    # L,   Vm/(F fmet)

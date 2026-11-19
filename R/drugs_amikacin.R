@@ -42,7 +42,12 @@
 # switch on and total body weight with it off.  The volumes and CLD were
 # fixed values (weight was tested on V1 and Vt and was not significant), so
 # they are scaled by the library's factors with the switch on and fixed with
-# it off.  The intercept, 1.40 L/h, is the clearance with no renal function.
+# it off.  The intercept, 1.40 L/h, is the clearance with no renal function, a
+# fixed value with no size term, so it too takes the clearance factor with the
+# switch on (until 2026-11-18 it was unscaled); the renal term takes none, its
+# Cockcroft-Gault clearance carrying the weight already (Steven L. Shafer,
+# 2026-11-18).  Tod's cohort is not anchored: the paper is not in the archive
+# (papers/pending-work.csv).
 #
 # DOSE
 # ====
@@ -81,7 +86,10 @@ amikacin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   scr  <- adultEquivalentCreatinine(creatinine, age, sex)
   gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)
   crcl <- creatinineClearanceCG(pkW, age, sex, scr) * gfrPregnancy   # mL/min
-  cl <- AMIKACIN_CL_SLOPE * crcl * 60 / 1000 + AMIKACIN_CL_INTERCEPT  # L/h
+  # The renal term takes no size factor (its CLcr carries the weight); the
+  # non-renal intercept, a fixed value, takes the clearance factor
+  cl <- AMIKACIN_CL_SLOPE * crcl * 60 / 1000 +
+    AMIKACIN_CL_INTERCEPT * size$clearance                           # L/h
 
   default <- list(
     v1  = AMIKACIN_V1 * size$volume,

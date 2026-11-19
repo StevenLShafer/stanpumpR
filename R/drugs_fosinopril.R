@@ -471,6 +471,17 @@
 # switch off (legacyVolume = 1) and take the library's fat-free-mass factors
 # with it on.  The renal term sees the pharmacokinetic weight with the switch on
 # and total body weight with it off, as every Cockcroft-Gault model here does.
+#
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): fixed published values belong to the
+# source's cohort, not the reference man. [decision] for Steven L. Shafer: Hui
+# 1991's normal-renal-function group (79.1 kg, 61.4 years) prints no height
+# and no sex, and the model multiplies its whole clearance by the size factor
+# while its creatinine clearance is indexed to body-surface area. Under the
+# rule that a renal term is not anchored (it carries size already), should the
+# clearance keep its size factor at all, and should the volumes be anchored
+# with a typical height and an assumed sex mix? Until answered, the values
+# stay anchored at the 70 kg reference man.
 # -----------------------------------------------------------------------------
 
 # Hui 1991 Table IV, normal renal function (PDF p7, printed 463)

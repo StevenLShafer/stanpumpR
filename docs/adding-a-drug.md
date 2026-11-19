@@ -153,8 +153,8 @@ and in its `reference` string. See `R/drugs_vancomycin.R` and `R/renalFunction.R
 **Pregnancy (required for every model).** Every drug in the library has a row in
 `inst/extdata/pregnancyRegistry.csv`, built by `data-raw/pregnancyRegistry.R`, and
 `test-pregnancy.R` fails for a drug without one. So a new model comes with a search of the
-literature on its pharmacokinetics in pregnancy (PubMed and PubMed Central: "<drug> pregnancy
-pharmacokinetics", "<drug> postpartum", "<drug> third trimester", "<drug> parturients"),
+literature on its pharmacokinetics in pregnancy (PubMed and PubMed Central: "`<drug>` pregnancy
+pharmacokinetics", "`<drug>` postpartum", "`<drug>` third trimester", "`<drug>` parturients"),
 preferring, in order, a population model with a pregnancy or gestational-age covariate, a paired
 study of the same women during pregnancy and after it, a comparison with nonpregnant women, a
 therapeutic-drug-monitoring series, and only then a PBPK prediction or a review. Record what was
@@ -186,7 +186,7 @@ The flag describes late pregnancy (third trimester and term): apply the third-tr
 library plots total concentration; for a highly bound drug say what the fall in albumin does to
 the total and to the unbound concentration. Each drug's help page renders its row
 (`helpDrugPregnancyHTML()` in `R/help-drugs.R`), so a narrative `### Pregnancy` section in
-`inst/help/drugs/<name>.md` is optional, for what the row cannot say.
+`inst/app-help/drugs/<name>.md` is optional, for what the row cannot say.
 
 **What the engine cannot represent.** The closed-form engine is linear and mammillary, with
 first-order extravascular absorption. A source model with saturable protein binding
@@ -655,7 +655,7 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
   row says `offered` with an identified input model, and a route the engine cannot
   represent (anything pulmonary) must be recorded and refused rather than aliased to `IN`.
   These models are plasma only: `tPeak` 0, `MEAC` 0 and no band, as the sources support no
-  effect site. See `inst/help/models/illicit-drugs.md`.
+  effect site. See `inst/app-help/models/illicit-drugs.md`.
 
 ### The therapeutic range (required where one exists)
 
@@ -751,7 +751,7 @@ test_that("scales to fat-free mass for a 120 kg man", {
 `expect_equal_rounded` is defined in `tests/testthat/helpers.R`. Work the scaled pins out from
 the published numbers and the factors above, not by running the code under test.
 
-## 4. The help page — `inst/help/drugs/<name>.md`
+## 4. The help page — `inst/app-help/drugs/<name>.md`
 
 The in-app help (the **Help** tab) generates a page for every drug in the CSV: its parameters
 at six reference patients, its citation, its units and typical range, all computed from the
@@ -760,13 +760,13 @@ the model was fitted in, which covariates it uses and how, where it is extrapola
 the work, and **where the band comes from**: the range, its source with a DOI, the analyte and
 sampling time it applies to, and the range it replaced if it was revised — or, when no band is
 drawn, why not (no range established, a range for a parent plus metabolite, a range for a
-different use). That goes in `inst/help/drugs/<name>.md`, starting at `###` headings (it is appended
+different use). That goes in `inst/app-help/drugs/<name>.md`, starting at `###` headings (it is appended
 under an "About this model" heading). `tests/testthat/test-help-drugs.R` fails if the file is
-missing. See `inst/help/README.md` for the Markdown conventions and `inst/help/drugs/fentanyl.md`
+missing. See `inst/app-help/README.md` for the Markdown conventions and `inst/app-help/drugs/fentanyl.md`
 for a short example.
 
 Optionally, add a teaching scenario that uses the drug: a `helpScenario()` entry in
-`R/help-scenarios.R` and its narrative in `inst/help/scenarios/<id>.md`.
+`R/help-scenarios.R` and its narrative in `inst/app-help/scenarios/<id>.md`.
 
 ## Verify
 

@@ -382,7 +382,7 @@ New files: `R/paper-review-{schema,api,model,absorption,checks,report,app}.R`,
 `inst/paper-review/{example-extraction.json,help.md}`,
 `tests/testthat/test-paper-review-*.R`, `tests/testthat/fixtures/`,
 `docs/paper-review.md`, `docs/paper-review-privacy.md`. The help page is in
-`inst/paper-review/`, not `inst/help/`, because every page under `inst/help/`
+`inst/paper-review/`, not `inst/app-help/`, because every page under `inst/app-help/`
 must be registered in `helpStaticPages()` (`test-help-content.R`), which would
 be another seam.
 

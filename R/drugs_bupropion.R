@@ -116,13 +116,28 @@
 #
 # COVARIATES AND BODY SIZE (docs/weight-adjustment.md)
 # ====================================================
-# None.  The published values are taken as the 70 kg reference man's and
-# take the library's default scaling for fixed published values
-# (pkSizeFactors(legacyVolume = 1)): volumes x the fat-free-mass ratio,
-# clearances x that ratio ^ 0.75, and with the switch off the published
-# values unscaled.  Hydroxybupropion makes the identical call: the pair's
-# apparent scale is consistent only if both scale together.  The source
-# studied adults; children are extrapolation.
+# None retained (weight, BMI, age, sex, race, eGFR, CKD, vitamin D and
+# CYP2B6 were tested).  So the published values are the cohort's typical
+# patient's, and that patient was not the library's 70 kg reference man:
+# Table 2 (read on the PDF, 2026-11-18) gives median weights of 99.2 kg (CKD,
+# n 13) and 100.8 kg (controls, n 6), median BMIs of 34 and 34.85, median
+# ages of 61 and 52, and 10 women of 19.  The parameters are therefore
+# anchored at the cohort (Steven L. Shafer's decision, 2026-11-18, the
+# library's rule since: docs/weight-adjustment.md, *Anchoring at the
+# source's cohort*): with the
+# fat-free-mass switch on, each published value is divided by the size
+# factor of the cohort's typical patient (cohortSizeFactors()), so a
+# patient like the cohort's receives the published values and the 70 kg
+# reference man smaller ones (volumes / 1.092, clearances / 1.068).  The
+# typical patient is the count-weighted mean of the two groups' medians
+# (99.7 kg, BMI 34.27, 58.2 years; no height is printed, so it is the one the
+# weight and BMI imply, 170.6 cm), and the factor is the geometric mean of a
+# man's and a woman's, weighted 9 to 10, because a 100 kg man's fat-free
+# mass is about a fifth above a 100 kg woman's and the cohort was half each.
+# With the switch off the published values are used unscaled, as before.
+# Hydroxybupropion makes the identical calls: the pair's apparent scale is
+# consistent only if both scale together.  The source studied adults;
+# children are extrapolation.
 #
 # References
 # ----------
@@ -153,6 +168,29 @@ BUPROPION_CL2 <- 257      # L/h, Q/F
 BUPROPION_KA  <- 0.29     # 1/h, SR tablet
 BUPROPION_FM  <- 0.1      # fraction of CL/F forming hydroxybupropion, FIXED
 
+# Ghimire 2026, Table 2: the cohort's typical patient, the count-weighted
+# mean of the CKD (n 13) and control (n 6) medians; 9 men and 10 women.  No
+# height is printed, so the BMI gives it.
+BUPROPION_COHORT <- list(
+  weight = (13 * 99.2 + 6 * 100.8) / 19,   # kg
+  bmi    = (13 * 34 + 6 * 34.85) / 19,     # kg/m2
+  age    = (13 * 61 + 6 * 52) / 19,        # years
+  men    = 9,
+  women  = 10
+)
+
+#' The size factors a patient takes in Ghimire's pair: relative to the
+#' cohort's typical patient (cohortSizeFactors()), or the published values
+#' unscaled with the switch off.  Shared by bupropion and hydroxybupropion.
+#' @noRd
+bupropionSizeFactors <- function(weight, height, age, sex, adjustToFFM)
+{
+  cohort <- with(BUPROPION_COHORT,
+                 cohortSizeFactors(weight, age, men, women, bmi = bmi))
+  pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                cohort = cohort)
+}
+
 # The citation both members of the pair return: one string, so that the
 # bibliography lists one item for both drugs.
 BUPROPION_REFERENCE <- paste0(
@@ -171,17 +209,17 @@ BUPROPION_REFERENCE <- paste0(
 #' @param height height in cm
 #' @param age age in years
 #' @param sex sex as a string
-#' @param adjustToFFM scale volumes to the patient's fat-free mass and
-#'   clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
-#'   published fixed parameters unscaled.
+#' @param adjustToFFM scale volumes to the patient's fat-free mass relative to
+#'   that of Ghimire's typical patient, and clearances to that ratio to the
+#'   0.75 power; when \code{FALSE}, use the published fixed parameters unscaled.
 #' @returns a list in the shape \code{getDrugPK()} expects, naming
 #'   hydroxybupropion as the active metabolite
 #' @noRd
 bupropion <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  # Fixed published parameters: legacy factors 1.  Hydroxybupropion must make
-  # this call identically.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  # Anchored at Ghimire's cohort; with the switch off, the published values.
+  # Hydroxybupropion must make this call identically.
+  size <- bupropionSizeFactors(weight, height, age, sex, adjustToFFM)
 
   v1  <- BUPROPION_V1 * size$volume
   v2  <- BUPROPION_V2 * size$volume

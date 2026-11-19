@@ -9,6 +9,8 @@ source_read: "text layer, whole document (46 PDF pages; PDF page = printed page 
 digest_by: Claude Opus 5.5, 2026-10-27
 checked_against: stanpumpR master 8baa733
 verification: discrepancy
+open_questions:
+  - "[answered 2026-11-18, Steven L. Shafer: normalise the body-size terms to the medians, which are typically very close to the means, through the fat-free-mass scaling anchored at a patient of that size, so that a patient of the study's weight receives the published values. R/drugs_cenobamate.R anchors at 77 kg, 171.9 cm (Du Bois from BSA 1.9), equal men and women at 40 years, the sex mix and age assumed because neither the review nor Vashi 2023 prints them.] The superseded question read: Cenobamate's covariate centring (2026-11-18): the review's p. 41 says the reviewer simulated the typical profile at median BSA 1.9 m2, bilirubin 5.13 uM and weight 77 kg. R/drugs_cenobamate.R replaced the population model's linear BSA (on CL/F) and weight (on V1/F) terms with fat-free-mass scaling because it believed no median was printed. Apply the source's terms centred at these medians (bilirubin held at 5.13 uM), anchor the fat-free-mass scaling at a 77 kg, BSA 1.9 m2 cohort instead (docs/weight-adjustment.md, Anchoring at the source's cohort), or keep the reference anchor?"
 ---
 
 # FDA 2019: NDA 212839 (XCOPRI) clinical pharmacology review

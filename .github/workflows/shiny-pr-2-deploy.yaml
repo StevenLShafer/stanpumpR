@@ -111,6 +111,9 @@ jobs:
       - name: Authorize and deploy app
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
+          # read with Sys.getenv(), not pasted into the R source
+          SHINY_TOKEN: ${{ secrets.SHINY_TOKEN }}
+          SHINY_SECRET: ${{ secrets.SHINY_SECRET }}
         run: |
           shinyConfig <- list(
             default = list(
@@ -123,7 +126,7 @@ jobs:
             )
           )
           yaml::write_yaml(shinyConfig, "config.yml", fileEncoding = "UTF-8")
-          rsconnect::setAccountInfo("${{ vars.SHINY_ACCOUNT }}", "${{ secrets.SHINY_TOKEN }}", "${{ secrets.SHINY_SECRET }}")
+          rsconnect::setAccountInfo("${{ vars.SHINY_ACCOUNT }}", Sys.getenv("SHINY_TOKEN"), Sys.getenv("SHINY_SECRET"))
           rsconnect::deployApp(
             appName = "${{ env.SHINY_APP_NAME }}", account = "${{ vars.SHINY_ACCOUNT }}",
             appDir = ".", appFiles = c("app.R", "config.yml"), forceUpdate = TRUE

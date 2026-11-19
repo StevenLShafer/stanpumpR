@@ -61,11 +61,11 @@
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # No size covariate (weight and BSA were tested and not retained): the
-# parameters are taken as the reference adult's, scaled by the library's
-# factors with the switch on and fixed with it off, as for daunorubicin.
-# The cohort's median weight was 85 kg, so the reference 70-kg man is
-# predicted 15-20% below the study's typical exposure would suggest; that is
-# the library's convention for a size-free model, not a finding.
+# parameters are the cohort's typical patient's (median 85 kg, BSA 2.0 m2,
+# 50 men of 78), and with the switch on they are anchored at that patient
+# (BENDAMUSTINE_COHORT; Steven L. Shafer, 2026-11-18; until then they were
+# taken as the reference adult's): the reference man's volumes are divided by
+# 1.032 and clearances by 1.024.  With the switch off they are fixed.
 #
 # RENAL AND HEPATIC FUNCTION: no term (creatinine clearance 40-150 mL/min and
 # the hepatic markers were tested and not retained; the label: no meaningful
@@ -82,6 +82,14 @@ BENDAMUSTINE_OWEN <- list(cl = 31.7, v1 = 14.1, q1 = 0.989, v2 = 0.92,
 # Bendamustine base over the hydrochloride (358.26 / 394.72 g/mol)
 BENDAMUSTINE_BASE_FRACTION <- 358.26 / 394.72
 
+# Owen 2010, Table 1 (printed p. 1043), read on the PDF 2026-11-18: the 78
+# patients' medians, 85.0 kg, BSA 2.0 m2, 58.5 years, 50 men and 28 women.  No
+# height is printed; it is back-solved from the BSA by Mosteller's formula,
+# which the paper cites (height = 3600 BSA^2 / weight = 169.4 cm; Shafer,
+# 2026-11-18: from the BSA where one is printed).  The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort).
+BENDAMUSTINE_COHORT <- list(weight = 85, height = 169.4, age = 58.5, men = 50, women = 28)
+
 #' Bendamustine, intravenous (Owen 2010)
 #'
 #' Three compartments, no covariates; doses entered as the hydrochloride.  See
@@ -95,7 +103,7 @@ bendamustine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   p <- BENDAMUSTINE_OWEN
   f <- BENDAMUSTINE_BASE_FRACTION
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1, cohort = do.call(cohortSizeFactors, BENDAMUSTINE_COHORT))
 
   default <- list(
     v1  = p$v1 / f * size$volume,

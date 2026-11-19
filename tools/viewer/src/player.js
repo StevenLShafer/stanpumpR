@@ -152,7 +152,34 @@ function runTextProblem(r) {
     for (const k of ['weight', 'height', 'age'])
         if (pt[k] != null && !Number.isFinite(pt[k])) return `patient.${k} must be a number.`;
     if (pt.sex != null && (typeof pt.sex !== 'string' || !/^[^<>&"']{0,40}$/.test(pt.sex))) return 'patient.sex must be short plain text.';
+    // The physiology panel (2026-11-19): optional, so an older run still loads.
+    const ph = r.physiology;
+    if (ph != null) {
+        if (typeof ph !== 'object') return 'physiology must give the panel\'s settings.';
+        for (const k of ['liver', 'renal', 'cardiac', 'gi', 'temperature', 'altitude', 'pressure'])
+            if (ph[k] != null && !(Number.isFinite(ph[k]) && ph[k] >= 0)) return `physiology.${k} must be a number of 0 or more.`;
+        if (ph.endobronchial != null && typeof ph.endobronchial !== 'boolean') return 'physiology.endobronchial must be true or false.';
+    }
     return null;
+}
+
+// The physiology panel the run was drawn at, one line under the title in both
+// views (and so in a video, which paints the title): every control, those
+// away from normal marked.  Shafer, 2026-11-19: "the status of all
+// physiology sliders should appear on 2D and 3D graphs in the visualizer".
+function physiologyLine(ph) {
+    if (!ph) return '';
+    const items = [];
+    const mult = (label, x) => {
+        if (x == null) return;
+        const v = Math.abs(x - 1) < 1e-9 ? '×1' : '×' + (x >= 1 ? x.toFixed(2) : x.toPrecision(2)).replace(/\.?0+$/, '');
+        items.push([label, v, Math.abs(x - 1) >= 1e-9]);
+    };
+    mult('Liver', ph.liver); mult('Kidney', ph.renal); mult('Cardiac output', ph.cardiac); mult('GI', ph.gi);
+    if (ph.temperature != null) items.push(['Temperature', `${ph.temperature} °C`, ph.temperature !== 37]);
+    if (ph.altitude != null) items.push(['Altitude', ph.altitude > 0 ? `${ph.altitude} m (${ph.pressure} Torr)` : 'sea level', ph.altitude > 0]);
+    if (ph.endobronchial != null) items.push(['Intubation', ph.endobronchial ? 'endobronchial' : 'tracheal', ph.endobronchial]);
+    return items.map(([k, v, off]) => `<span class="${off ? 'off' : ''}">${escapeHtml(k)} ${escapeHtml(v)}</span>`).join(' · ');
 }
 
 // The drug's liquid colour, from the run.
@@ -275,8 +302,10 @@ const Player = {
         // A run from the page that opened this one.
         window.addEventListener('message', e => {
             // Only stanpumpR's own page, on this origin, may hand this page a
-            // run: a page elsewhere that opened it is an opener too.
-            if (e.origin !== location.origin) return;
+            // run: a page elsewhere that opened it is an opener too.  And only
+            // the page that opened this one, not another window of the origin
+            // (Carbon's repository audit, 2026-11-18).
+            if (e.origin !== location.origin || e.source !== window.opener) return;
             const d = e.data;
             if (d && d.type === 'stanpumpR-viewer-run') this.load(d.run);
             else if (d && d.type === 'stanpumpR-viewer-error')
@@ -340,6 +369,7 @@ const Player = {
         this.pause();
         this.run = r;
         this.gas = r.kind === 'gas';
+        this.$('physio').innerHTML = physiologyLine(r.physiology);
         this.units = microUnits(r.units);
         // Concentration x volume (L) x scale is the amount in units.amount.
         this.scale = r.amountScale != null ? r.amountScale : 1;

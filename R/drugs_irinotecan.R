@@ -71,6 +71,13 @@
 # -----------------------------------------------------------------------------
 
 # Klein 2002, Table I (structural model); rate constants in /h
+#
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
+# Anchoring at the source's cohort): fixed published values belong to the
+# source's cohort, not the reference man. Klein 2002 prints only the median
+# weight (80 kg) about which it centred its covariates, with no age, sex or
+# height (read 2026-11-18), so the fixed values stay anchored at the 70 kg
+# reference man, as before the rule.
 IRINOTECAN_KLEIN <- list(
   v1 = 5.52, k10 = 4.56, k12 = 57.8, k21 = 2.58, k13 = 1.96, k31 = 0.0812
 )

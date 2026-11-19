@@ -45,10 +45,14 @@ test_that("the band is the AGNP update 2026 range (Hart 2026, Table 5)", {
 test_that("switch on, at a 55 kg, 160 cm, 50-year-old woman: the library's size factors", {
   p <- amantadineER(55, 160, 50, "female", TRUE, creatinine = 0.8)$PK$default
   size <- pkSizeFactors(55, 160, 50, "female", TRUE)
+  # anchored at the review's PKP07 cohort (p. 28)
+  kc <- cohortFactorsIndependent(list(weight = 83.2, bmi = 29.9, age = 60, men = 18, women = 6))
+  size$volume <- size$volume / kc$volume
+  size$clearance <- size$clearance / kc$clearance
   b <- AMANTADINE_BASE_PER_HCL
   k <- AMANTADINE_ER_K * egfrMDRD(50, "female", 0.8) / AMANTADINE_ER_EGFR_REF
   expect_equal(p$v1, AMANTADINE_ER_VC * size$volume * b)
   expect_equal(p$cl1, k * AMANTADINE_ER_VC * size$clearance * b / 60)
-  expect_equal_rounded(237.7309, p$v1)
-  expect_equal_rounded(0.1580343, p$cl1)
+  expect_equal_rounded(237.7309 / kc$volume, p$v1)
+  expect_equal_rounded(0.1580343 / kc$clearance, p$cl1)
 })

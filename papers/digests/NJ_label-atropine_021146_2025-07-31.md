@@ -84,7 +84,7 @@ ages (12.3, PDF p7; restated in 8.2). No gender effect on PK or on heart-rate PD
   rev. 07/2025).
 
 ## Verification against stanpumpR
-Checked in `C:\dev\stanpumpRPapers\_build\master_snapshot` (master 50bb4219).
+Checked in the archive's master snapshot (master 50bb4219).
 
 - `inst/extdata/therapeuticRanges.csv:200` (atropine row): source text says no therapeutic concentration range;
   titrated to effect; label read: atropine, Hospira, rev. 07/2025. The label (rendered PDF p1) is Hospira's and

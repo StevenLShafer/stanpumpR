@@ -9,7 +9,8 @@
 # side effect at run time
 utils::globalVariables(c(
   "Drug", "Label", "Recovery", "Segment", "Site", "Time", "Y",
-  "endCe", "new", "outputString", "xmax", "xmin", "y", "ymax", "ymin"
+  "endCe", "new", "outputString", "xmax", "xmin", "y", "ymax", "ymin",
+  "Concentration", "Wrap", "label", "threshold", "vjust"
 ))
 
 ## usethis namespace: start

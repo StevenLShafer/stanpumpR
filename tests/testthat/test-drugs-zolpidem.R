@@ -6,15 +6,15 @@
 noEvents <- data.frame(Time = numeric(0), Event = character(0))
 
 oralZolpidem <- function(dose, maximum = 720, weight = 70, height = 170,
-                         age = 35, sex = "male", adjustToFFM = TRUE) {
+                         age = 35, sex = "male", adjustToFFM = FALSE) {
   dt <- data.frame(Drug = "zolpidem", Time = 0, Dose = dose, Units = "mg PO")
   simulateDrugsWithCovariates(dt, noEvents, weight, height, age, sex, maximum,
                               FALSE, adjustToFFM = adjustToFFM)$zolpidem$wide
 }
 
 
-test_that("the reference patient receives Kim's published values", {
-  for (adjust in c(TRUE, FALSE)) {
+test_that("the switch off gives Kim's published values", {
+  for (adjust in FALSE) {
     actual <- zolpidem(70, 170, 35, "male", adjustToFFM = adjust)
     expected <- list(
       PK = list(default = list(
@@ -38,10 +38,12 @@ test_that("the reference patient receives Kim's published values", {
 
 
 test_that("size scales to fat-free mass with the switch on, not at all with it off", {
+  # The pins from before the anchoring, divided by Kim's cohort factors
+  kc <- cohortFactorsIndependent(ZOLPIDEM_COHORT)
   # 120 kg, 170 cm, 50 y man: volumes x 1.3049066, clearances x 1.2209126
   on <- zolpidem(120, 170, 50, "male")$PK$default
   expect_equal_rounded(on[c("v1", "cl1")],
-                       list(v1 = 83.5140253523, cl1 = 0.3662737855))
+                       list(v1 = 83.5140253523 / kc$volume, cl1 = 0.3662737855 / kc$clearance))
   off <- zolpidem(120, 170, 50, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(off$v1, 64)
   expect_equal(off$cl1, 0.3)
@@ -78,7 +80,7 @@ test_that("the simulation is the one-compartment oral solution, plasma only", {
   dt <- data.frame(Drug = "zolpidem", Time = c(0, 1440), Dose = c(10, 10),
                    Units = "mg PO")
   w <- simulateDrugsWithCovariates(dt, noEvents, 70, 170, 35, "male", 2880,
-                                   FALSE)$zolpidem$wide
+                                   FALSE, adjustToFFM = FALSE)$zolpidem$wide
   k <- 0.3 / 64; ka <- 11.7 / 60
   one <- function(t) {
     s <- pmax(t - 15, 0)
@@ -90,7 +92,7 @@ test_that("the simulation is the one-compartment oral solution, plasma only", {
 })
 
 
-test_that("10 mg in the reference man matches the published peak and half-life", {
+test_that("10 mg with the published values matches the published peak and half-life", {
   # Analytic peak of the lag model: 142.54 ng/mL at 34.6 min.  Label 121
   # (58-272) ng/mL; Greenblatt 2006 about 140.  Half-life 2.46 h (label 2.5).
   k <- 0.3 / 64; ka <- 11.7 / 60
@@ -130,7 +132,8 @@ test_that("the CSV row agrees with the drug function, threshold at 50 ng/mL", {
 
 test_that("time until the 50 ng/mL driving threshold is blank during the lag", {
   dd <- getDrugDefaultsGlobal()
-  PK <- getDrugPK("zolpidem", 70, 170, 35, "male", dd[dd$Drug == "zolpidem", ])
+  PK <- getDrugPK("zolpidem", 70, 170, 35, "male", dd[dd$Drug == "zolpidem", ],
+                  adjustToFFM = FALSE)
   PK$endCe <- 50
   DT <- data.frame(Drug = "zolpidem", Time = 0, Dose = 10, Units = "mg PO")
   w <- simCpCe(DT, noEvents, PK, 720, TRUE)$wide

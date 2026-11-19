@@ -129,7 +129,7 @@ Nothing has been reported to them.
 
 - **Eleveld propofol is always the "with opioids" model.**
   - The code: `R/drugs_propofol.R:212-213` applies the opioid-present ageing of V3 and CL unconditionally.
-  - It is documented: `inst/help/drugs/propofol.md`, line 14.
+  - It is documented: `inst/app-help/drugs/propofol.md`, line 14.
   - SimTIVA, opentiva, PAS and `tci` all offer a switch.
   - A switch set automatically when an opioid is in the dose table is a decision for Shafer, not a defect.
 

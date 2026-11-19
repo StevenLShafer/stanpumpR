@@ -16,12 +16,16 @@ test_that("switch off, the supplement's values", {
 
 test_that("switch on: volumes by the volume factor, Vmax and Cl2 by the clearance factor", {
   size <- pkSizeFactors(95, 170, 46, "male", TRUE, legacyVolume = 1)
+  # anchored at Zhou's two cetagliptin arms (Table 1)
+  kc <- cohortFactorsIndependent(list(groups = list(list(weight = 69.55, height = 164.98, age = 47.80, men = 9, women = 1), list(weight = 72.56, height = 167.85, age = 45.20, men = 7, women = 3))))
+  size$volume <- size$volume / kc$volume
+  size$clearance <- size$clearance / kc$clearance
   X <- cetagliptin(95, 170, 46, "male")
   expect_equal(X$PK$default$v1, 8.668 * size$volume)
   expect_equal(X$PK$default$v2, 558 * size$volume)
   expect_equal(X$michaelisMenten$vmax, 9373 / 60 * size$clearance)
   expect_equal(X$michaelisMenten$km, 171.5)
-  expect_equal_rounded(X$PK$default$v1, 10.1686484)
+  expect_equal_rounded(X$PK$default$v1, 10.1686484 / kc$volume)
 })
 
 test_that("the engine matches an independent solution of the same equations", {

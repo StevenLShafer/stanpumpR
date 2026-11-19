@@ -42,7 +42,7 @@ as primidone's, so that is drawn.
 | carbamazepine | 4–12 mg/L | 20 | Hart 2026 | Marked + in Table 5 (revised or new since 2017; what changed is not stated); 4–10 for mania |
 | valproate | 50–100 mg/L total | 120 | Hart 2026 | Unchanged. Depakote label: 50–100 mcg/mL |
 | phenobarbital | **10–30 mg/L**, 12 h | 50 | Hart 2026 ("Primidone and phenobarbital" row, from the SPC) | Was 10–40 (ILAE 2008); changed 2026-10-27 by decision of Steven L. Shafer |
-| pentobarbital | **4–21 mg/L**, steady state, **treatment of status epilepticus** only | — | Helfer 2026 (full text), citing Lowenstein 1988 (not read) | Was none (20–40 mg/L candidate, unsourced); drawn 2026-10-28 by decision of Steven L. Shafer. Concentrations observed during burst-suppression coma; not for sedation (Helfer: 1–5 peak, 5–15 deep); above 45 mg/L potentially toxic |
+| pentobarbital | **4–21 mg/L**, steady state, **treatment of status epilepticus** only | — | Helfer 2026 (full text), citing Lowenstein 1988 (since read in full, card `papers/digests/PMID_3279338.md`) | Was none (20–40 mg/L candidate, unsourced); drawn 2026-10-28 by decision of Steven L. Shafer. Concentrations observed during burst-suppression coma; not for sedation (Helfer: 1–5 peak, 5–15 deep); above 45 mg/L potentially toxic |
 | ethosuximide | 40–100 mg/L | — | ILAE 2008 | Not in Table 5. Zarontin label: 40–100 mcg/mL |
 | topiramate | 5–20 mg/L | 30 | Hart 2026 | Marked + in Table 5 (revised or new since 2017; what changed is not stated) |
 | lacosamide | **1–12 mg/L** | 24 | Hart 2026 | Was 10–20 (Patsalos 2018), drawn from samples 0–3 h after a dose |
@@ -50,7 +50,7 @@ as primidone's, so that is drawn.
 | zonisamide | 10–40 mg/L | 80 | Hart 2026 | Unchanged |
 | tiagabine | 20–200 ng/mL | 400 | Hart 2026 | Unchanged |
 | levetiracetam | **6–46 mg/L** | 50 | Hart 2026 | Was 12–46 (ILAE) |
-| eslicarbazepine | **3–35 mg/L** | 40 | Hart 2026 | Was 3–26 (Svendsen 2017 / Reimers 2018, eslicarbazepine-specific) |
+| eslicarbazepine | **3–35 mg/L** | 40 | Hart 2026 | Was 3–26 (Reimers 2018, eslicarbazepine-specific, from Svendsen 2017's responders) |
 | cenobamate | **10–25 mg/L** | 50 | Hart 2026 (level 4) | Newly introduced; Steinhoff 2024 found no general range |
 | gabapentin | **2–20 mg/L**, 12 h | 25 | Hart 2026 | Was 4.1–9.4 (Healy 2023, postherpetic neuralgia), which lies inside it |
 | pregabalin | **1.5–8 mg/L**, 10 h after IR | 10 | Hart 2026 | Was 1.3–5.4 (Chan 2021, focal seizures) |
@@ -191,10 +191,8 @@ ordinary doses reach. The help page says so and names what the band is.
 | digoxin, digoxinIV, digoxinIVPediatric | 0.5–2 ng/mL serum, before the next dose or ≥ 6 h after | LANOXIN label (2019) §2.5: below 0.5 less effective, above 2 more toxic without benefit. Heart failure: 0.5–0.8 (Rathore 2003, abstract). AF guideline: below 1.2 (Joglar 2024, full text) |
 | milrinone, milrinonePediatric | 100–300 ng/mL, typical 167 | PRIMACOR label (2003); Hornik 2019 (full text) |
 | amiodarone | 1.0–2.5 mg/L, typical 1.5 | CORDARONE label (2018) §12.2: "much below 1 mg/L are often ineffective… above 2.5 mg/L are generally not needed". The Health Canada monograph the model cited was not reachable |
-
 | warfarin, fluindione, acenocoumarol | INR 2.0–3.0, typical 2.5 | Coumadin label §2.2 and Holbrook 2012 (abstract). Fluindione and acenocoumarol take the vitamin K antagonist class target; the Previscan and Sintrom product information is still to be read |
 | heparinCPB | ACT 480–600 s, typical 480 | EACTS/EACTAIC/EBCP 2024 §9.3.1 (full text): an ACT above 480 s on bypass. No source gives an upper limit; 600 s is Steven L. Shafer's choice. STS/SCA/AmSECT 2018 abstract only |
-
 | procainamide | 3–10 mg/L, typical 6.5 | Hospira injection label (read in full, 2026-10-28): therapeutic plasma levels "reported to be 3 to 10 mcg/mL"; 6.5 mcg/mL at 50 mcg/kg/min and a 3 h half-life, where the model gives 7.4 at its 3.8 h. Drawn 2026-10-28; the 4–10 mg/L the help page had quoted was never sourced |
 
 Digoxin, milrinone and amiodarone were already drawn; only their sources were checked. The
@@ -248,7 +246,10 @@ in this review and are recorded as "Not checked".
 
 ## Open items
 
-1. Read Lowenstein 1988 (Neurology 38:395-400), Helfer 2026's source for pentobarbital's 4–21 mg/L; not available through Lane Library.
+1. ~~Read Lowenstein 1988 (Neurology 38:395-400), Helfer 2026's source for pentobarbital's 4–21 mg/L.~~ Read in full
+   (card `papers/digests/PMID_3279338.md`): the 4.0–21.0 mg/L are serum levels observed during burst-suppression
+   coma in infusions of 11–17 h, against an 11–23 h half-life, so whether to keep calling them a steady-state range is
+   a `[decision]` recorded on the card.
 2. Read the labels marked "Not checked".
 3. A summed parent-plus-metabolite line would let the active-moiety ranges (risperidone,
    aripiprazole, venlafaxine, fluoxetine) be drawn.
@@ -261,15 +262,19 @@ in this review and are recorded as "Not checked".
 
 ## Papers that would complete the verification
 
-Each was identified in PubMed (2026-10-27); only abstracts have been read, except Matsuda 2022,
-Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nimmo 1991, Johannessen Landmark 2015, Chermá 2017, Patsalos 2008, Mion 2013, Drover 2004, Clements 1982, Ku 2018, Gourlay 1984, Dahlström 1982, Nasser 2014 and Mould 1995, read in full.
+Each was identified in PubMed (2026-10-27). Matsuda 2022, Barr 2001, McGough 2003, Boellner 2010, Laffont 2022,
+Lesser 1992, Hosie and Nimmo 1991, Johannessen Landmark 2015, Chermá 2017, Patsalos 2008, Mion 2013, Drover 2004,
+Clements 1982, Ku 2018, Gourlay 1984, Dahlström 1982, Nasser 2014 and Mould 1995 were read in full for this review.
+Since then most of the others have been archived and read in full too: a paper with a card in `papers/digests/`
+(named by its PMID) has been, and the card, not this table, says what it found (checked 2026-11-18). The rest have
+been read only as abstracts.
 
 | Drug | Paper | PMID | Why |
 |---|---|---|---|
 | midazolam | Coté, Lerman, Anderson, *A Practice of Anesthesia for Infants and Children*, 2013, p. 141 | (book) | Where the 50–150 ng/mL Table 5 takes from Matsuda 2022 (read in full) comes from |
 | midazolam, lorazepam | Barr 2001, *Anesthesiology* 95:286 | 11506097 | Read in full: the source of both bands |
 | midazolam | Crevoisier 1983, *Br J Clin Pharmacol* 16 Suppl 1:51S | 6138082 | Concentration and effect, oral and IV |
-| midazolam | Link 2008, *Br J Clin Pharmacol* 66:473 | 18537963 | Concentrations after 10 mg by mouth |
+| midazolam | Link 2008, *Br J Clin Pharmacol* 66:473 | 18537963 | Concentrations after 7.5 mg by mouth |
 | alprazolam | Ciraulo 1990, *J Clin Psychopharmacol* 10:27 | 2407754 | Dose to steady state; response above 20 ng/mL |
 | alprazolam | Lesser 1992, *Am J Psychiatry* 149:1556 | 1415824 | Read in full: 50% major panic response at 15 ng/mL, 75% at 48; sedation 40, ataxia 70, slurred speech 100 |
 | alprazolam | Wincor 1991, *J Clin Psychopharmacol* 11:48 | 2040715 | The same |
@@ -287,12 +292,12 @@ Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nim
 | mixedAmphetamineSalts | McGough 2003, *J Am Acad Child Adolesc Psychiatry* 42:684 | 12921476 | Source of 23–45 ng/mL, and the model's fit |
 | lisdexamfetamine | Boellner 2010, *Clin Ther* 32:252 | 20206783 | Source of 44–160 ng/mL |
 | methylphenidate | Chermá 2017, *Eur J Drug Metab Pharmacokinet* 42:295 | 27220743 | Read in full: medians and interquartile ranges, in whole blood, of the 36 of its 50 Concerta patients on the three doses taken by more than five (Table 4); Table 3's medians for all 50 are 5.8 and 10 ng/mL |
-| methylphenidate | Stevens 2010, *J Child Adolesc Psychopharmacol* 20:49 | 20166796 | The alert level |
+| methylphenidate | Stevens 2010, *J Child Adolesc Psychopharmacol* 20:49 | 20166796 | Read in full: sets no alert level (50 ng/mL is only a threshold no patient reached), so it is not where Hart 2026's 50 ng/mL comes from |
 | methadone | Gourlay 1984, *Anesthesiology* 61:19 | 6742480 | Read in full: MEC 57.9 ± 15.2 ng/mL in whole blood, 16 surgical patients; the MEAC of 60 |
 | methadone | Inturrisi 1987, *Clin Pharmacol Ther* 41:392 | 3829576 | Quotes Gourlay; 290 ng/mL in tolerant patients |
 | morphine | Dahlström 1982, *Clin Pharmacokinet* 7:266 | 7094501 | Read in full: MEC 16 ± 9 ng/mL (men 21, women 13) on PCA, specific assay; twice the library's MEAC of 8 |
 | morphine, oxycodone | Thaulow 2023, *Ther Drug Monit* 45:777 | 37296504 | Dose-specific chronic pain ranges behind Table 5 |
-| morphine | Mitchell 2003, *Drug Alcohol Depend* 72:85 | 14563546 | The opioid use disorder range |
+| morphine | Mitchell 2003, *Drug Alcohol Depend* 72:85 | 14563546 | Read in full: gives no range, only dose-normalised means, so it is not where Hart 2026's 50–520 ng/mL comes from |
 | oxycodone, many | Schulz 2020, *Crit Care* 24:195 | 32375836 | The compilation behind oxycodone's range (open access) |
 | ketamine | Mion 2013, *CNS Neurosci Ther* 19:370 | 23575437 | Read in full: the source of the band ("Moen" in the old code), citing Clements 1982 |
 | ketamine | Clements 1982, *J Pharm Sci* 71:539 | 7097501 | Read in full: analgesia consistently above 160 ng/mL, not below 80; means 186 (no or mild pain) and 101 (moderate or severe) |

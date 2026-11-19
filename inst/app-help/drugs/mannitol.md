@@ -1,0 +1,33 @@
+### The model
+
+Mannitol's kinetics are from Kaneda and colleagues (*J Clin Pharmacol* 2010;50:536-543). They gave 0.5 or 1.0 g/kg over 15 minutes to 22 adults having elective craniotomy, and fitted a **three-compartment** model, the only population model of therapeutic intravenous mannitol in adults. Clearance in that study depended on the dose: 0.04 L/min in the 0.5 g/kg group and 0.07 L/min in the 1.0 g/kg group. The library uses 0.07, because it reproduces the eight-hour concentration of an independent 1 g/kg study (Rudehill and colleagues, *J Neurosurg Anesthesiol* 1993;5:4-12). With 0.04 the predicted eight-hour level is twice the one observed.
+
+### What is plotted: serum osmolality
+
+Mannitol is not shown as a drug concentration. The plot shows the **serum osmolality** it is predicted to produce:
+
+osmolality = baseline + 0.555 × plasma mannitol (mOsm/L)
+
+The baseline is the **Baseline serum osmolality** field in the Patient Profile, 280 mOsm/kg by default. Enter the patient's measured value. One gram of mannitol is 5.49 mOsm.
+
+The factor 0.555 is less than 1 because mannitol stays in the extracellular fluid and draws water out of cells. That water dilutes sodium, so the measured osmolality rises by only about half the mannitol concentration. The osmolal gap still equals the mannitol concentration. Rudehill measured both in the same patients: plasma mannitol peaked at 32.4 mOsm/L while osmolality rose from 292 to 310 mOsm/kg. Treating mannitol as an ideal solute (factor 1) would overpredict the peak rise by about 80%.
+
+### Dosing
+
+Mannitol is given only by infusion, in **g/hr** or **g/kg/hr**, as it is in practice: a 20% solution is run in over 15 to 60 minutes, never pushed. The library offers no bolus unit, so a dose is entered as a rate and stopped with a rate of zero. For 1 g/kg over 30 minutes, enter 2 g/kg/hr at the start time and 0 g/kg/hr 30 minutes later. The studies behind the model, Kaneda's and Rudehill's, infused their doses the same way.
+
+### Covariates
+
+The published means describe Kaneda's patients (two dose groups of 79 and 93 kg, mostly women), so with *Adjust weight to fat-free mass* on a patient like them receives them and everyone else is scaled from there; the 70 kg reference man's volumes come out about 4% above the published ones. The second volume has its own anchor: Kaneda's 8.86 L belongs to his typical 87 kg patient, whose fat-free mass (52.7 kg) was a little below the reference man's (54.5 kg), so it is 9.16 L for the reference man before scaling. The volumes and distribution clearances are scaled to fat-free mass; elimination clearance follows creatinine clearance instead (see *Where to be careful*). With *Adjust weight to fat-free mass* off the volumes and distribution clearances are used unscaled, and creatinine clearance is computed from total body weight. Kaneda found that weight-based dosing gave higher than expected concentrations in obese patients, which is consistent with this scaling. The baseline osmolality affects nothing but the starting point of the curve; the lower baseline of late pregnancy (about 10 mOsm/kg) is set through this field, not by **Pregnant**.
+
+### Effect site
+
+There is none. The reduction in brain water follows the gradient between plasma and brain osmolality, not an effect-site concentration, and no ke0 has been published. Only the plasma line is drawn.
+
+### Typical concentrations
+
+The shaded band is 300 to 320 mOsm/kg, the usual target range during osmotherapy, with 320 the conventional ceiling. The y-axis of this panel starts just below the baseline instead of at zero.
+
+### Where to be careful
+
+Mannitol is cleared by glomerular filtration, so clearance is scaled by the patient's Cockcroft-Gault creatinine clearance relative to a 70 kg, 35-year-old man's (113 mL/min at the assumed creatinine of 0.9 mg/dL). Enter the **Serum creatinine** in the Patient Profile: left blank, it is assumed normal for the patient's age and sex (a child's is read on the adult scale; see [Renal function](help:models/covariates)), and in renal impairment the predicted osmolality would then fall far too fast. This renal scaling is stanpumpR's assumption; Kaneda's model has no renal covariate. Kaneda's terminal half-life (4.4 hours; 4.5 with the re-anchored second volume) is longer than the 1.2 to 2.4 hours other studies report. The 0.555 factor comes from one study and fits the first hour best: as cells equilibrate the rise shrinks, and the osmotic diuresis concentrates the plasma. Neither intracranial pressure nor serum sodium is predicted. Infants mature their GFR over the first years of life, which is not modelled. The full validation is in `docs/mannitol.md`.

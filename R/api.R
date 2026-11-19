@@ -203,7 +203,7 @@ apiParseRequest <- function(text) {
 # them and returned as `columns`.
 apiTable <- function(x, what, columns, required = columns) {
   if (is.null(x) || length(x) == 0) {
-    return(as.data.frame(setNames(rep(list(character(0)), length(columns)), columns)))
+    return(as.data.frame(stats::setNames(rep(list(character(0)), length(columns)), columns)))
   }
   if (!is.data.frame(x)) {
     if (is.list(x) && is.null(names(x))) {

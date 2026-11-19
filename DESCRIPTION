@@ -21,7 +21,7 @@ License: MIT + file LICENSE
 Imports:
     bslib,
     config,
-    dplyr,
+    curl,
     emayili,
     glue,
     ggplot2  (>= 3.4),
@@ -39,7 +39,7 @@ Imports:
     promises,
     purrr,
     rvg,
-    shiny,
+    shiny (>= 1.11.0),
     shinyalert,
     shinycssloaders,
     shinyjs,
@@ -52,6 +52,7 @@ Imports:
 Suggests:
     devtools,
     knitr,
+    later,
     plumber,
     ragg,
     remotes,

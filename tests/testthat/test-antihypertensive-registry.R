@@ -626,7 +626,7 @@ test_that("the antihypertensives help page names every drug in the category", {
   # new drug cannot leave the prose behind.
   dd <- getDrugDefaultsGlobal()
   drugs <- dd$Drug[!is.na(dd$Category) & dd$Category == "Antihypertensives"]
-  page <- paste(readLines(system.file("help", "models", "antihypertensives.md",
+  page <- paste(readLines(system.file("app-help", "models", "antihypertensives.md",
                                       package = "stanpumpR")), collapse = "\n")
   for (drug in drugs)
     expect_true(grepl(paste0("(help:drugs/", drug, ")"), page, fixed = TRUE),

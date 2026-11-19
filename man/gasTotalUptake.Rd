@@ -16,7 +16,8 @@ gasTotalUptake(state, props, body, Qco)
 \item{Qco}{cardiac output, L/min}
 }
 \value{
-total uptake in L/min
+total uptake in L/min, at the ambient pressure of the body's
+altitude
 }
 \description{
 GasMan's \code{fTotUptake}: positive while gas is being taken up, negative

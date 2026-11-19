@@ -14,7 +14,7 @@
 # tests/testthat/test-parkinsons-registry.R.  The implemented drugs are in the
 # startup menu's PARKINSONS_DRUG_CATEGORY.  Levodopa (tablets and intestinal
 # gel) is the one with an effect site, from Mao 2013's motor response; every
-# other model is plasma only.  Help page: inst/help/models/parkinsons.md.
+# other model is plasma only.  Help page: inst/app-help/models/parkinsons.md.
 # -----------------------------------------------------------------------------
 
 #' The Parkinson's disease product summary

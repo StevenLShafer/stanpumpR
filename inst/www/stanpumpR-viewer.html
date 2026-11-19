@@ -241,6 +241,11 @@ body.over #message .card { border-color: var(--accent); }
 #brand { position: fixed; left: 54px; top: 17px; z-index: 4; color: var(--ink); font: 600 16px/1.2 system-ui, "Segoe UI", sans-serif;
   letter-spacing: 0.2px; pointer-events: none; }
 #brand span { color: var(--ink-2); font-weight: 500; font-size: 13px; margin-left: 4px; }
+/* the physiology panel the run was drawn at, under the name (player.js) */
+#physio { font-weight: 400; font-size: 11.5px; color: var(--ink-2); margin-top: 3px; max-width: calc(100vw - 120px); }
+#physio:empty { display: none; }
+#brand #physio span { font-size: 11.5px; font-weight: 400; margin-left: 0; color: var(--ink-2); }
+#brand #physio span.off { color: var(--target); font-weight: 600; }
 
 /* ── saving a video (video.js) ────────────────────────────── */
 #videoCard { position: fixed; inset: 0; z-index: 5; display: none; place-items: center; background: rgba(0,0,0,0.35); }
@@ -286,7 +291,7 @@ body.over #message .card { border-color: var(--accent); }
 <div id="perf"></div>
 
 <button id="close" title="Close the visualizer" aria-label="Close the visualizer">&#x2715;</button>
-<div id="brand">Visualizer <span id="brandView">2D</span></div>
+<div id="brand">Visualizer <span id="brandView">2D</span><div id="physio"></div></div>
 
 <div id="controls">
   <button id="play" title="Play (space)">&#x25B6;<span class="btxt"> Play</span></button>
@@ -6851,7 +6856,34 @@ function runTextProblem(r) {
     for (const k of ['weight', 'height', 'age'])
         if (pt[k] != null && !Number.isFinite(pt[k])) return `patient.${k} must be a number.`;
     if (pt.sex != null && (typeof pt.sex !== 'string' || !/^[^<>&"']{0,40}$/.test(pt.sex))) return 'patient.sex must be short plain text.';
+    // The physiology panel (2026-11-19): optional, so an older run still loads.
+    const ph = r.physiology;
+    if (ph != null) {
+        if (typeof ph !== 'object') return 'physiology must give the panel\'s settings.';
+        for (const k of ['liver', 'renal', 'cardiac', 'gi', 'temperature', 'altitude', 'pressure'])
+            if (ph[k] != null && !(Number.isFinite(ph[k]) && ph[k] >= 0)) return `physiology.${k} must be a number of 0 or more.`;
+        if (ph.endobronchial != null && typeof ph.endobronchial !== 'boolean') return 'physiology.endobronchial must be true or false.';
+    }
     return null;
+}
+
+// The physiology panel the run was drawn at, one line under the title in both
+// views (and so in a video, which paints the title): every control, those
+// away from normal marked.  Shafer, 2026-11-19: "the status of all
+// physiology sliders should appear on 2D and 3D graphs in the visualizer".
+function physiologyLine(ph) {
+    if (!ph) return '';
+    const items = [];
+    const mult = (label, x) => {
+        if (x == null) return;
+        const v = Math.abs(x - 1) < 1e-9 ? '×1' : '×' + (x >= 1 ? x.toFixed(2) : x.toPrecision(2)).replace(/\.?0+$/, '');
+        items.push([label, v, Math.abs(x - 1) >= 1e-9]);
+    };
+    mult('Liver', ph.liver); mult('Kidney', ph.renal); mult('Cardiac output', ph.cardiac); mult('GI', ph.gi);
+    if (ph.temperature != null) items.push(['Temperature', `${ph.temperature} °C`, ph.temperature !== 37]);
+    if (ph.altitude != null) items.push(['Altitude', ph.altitude > 0 ? `${ph.altitude} m (${ph.pressure} Torr)` : 'sea level', ph.altitude > 0]);
+    if (ph.endobronchial != null) items.push(['Intubation', ph.endobronchial ? 'endobronchial' : 'tracheal', ph.endobronchial]);
+    return items.map(([k, v, off]) => `<span class="${off ? 'off' : ''}">${escapeHtml(k)} ${escapeHtml(v)}</span>`).join(' · ');
 }
 
 // The drug's liquid colour, from the run.
@@ -6974,8 +7006,10 @@ const Player = {
         // A run from the page that opened this one.
         window.addEventListener('message', e => {
             // Only stanpumpR's own page, on this origin, may hand this page a
-            // run: a page elsewhere that opened it is an opener too.
-            if (e.origin !== location.origin) return;
+            // run: a page elsewhere that opened it is an opener too.  And only
+            // the page that opened this one, not another window of the origin
+            // (Carbon's repository audit, 2026-11-18).
+            if (e.origin !== location.origin || e.source !== window.opener) return;
             const d = e.data;
             if (d && d.type === 'stanpumpR-viewer-run') this.load(d.run);
             else if (d && d.type === 'stanpumpR-viewer-error')
@@ -7039,6 +7073,7 @@ const Player = {
         this.pause();
         this.run = r;
         this.gas = r.kind === 'gas';
+        this.$('physio').innerHTML = physiologyLine(r.physiology);
         this.units = microUnits(r.units);
         // Concentration x volume (L) x scale is the amount in units.amount.
         this.scale = r.amountScale != null ? r.amountScale : 1;
@@ -7613,7 +7648,9 @@ function gasRunProblem(r, n) {
     if (r.circuit != null && !['ideal', 'semi-closed', 'open'].includes(r.circuit)) return 'circuit must be "ideal", "semi-closed" or "open".';
     // The blood, the cardiac output, the alveolar ventilation and the
     // greenhouse effect (2026-11-17): optional, so an older run still loads.
-    for (const [k, min] of [['venous', 0], ['alveolarVentilation', 0]])
+    // Arterial blood (2026-11-19): only where an endobronchial tube shunts
+    // blood past the ventilated lung; otherwise it is the end-tidal.
+    for (const [k, min] of [['venous', 0], ['alveolarVentilation', 0], ['arterial', 0]])
         if (r[k] != null) { const q = arr(r[k], k, min); if (q) return q; }
     if (r.cardiacOutput != null && !(Number.isFinite(r.cardiacOutput) && r.cardiacOutput > 0)) return 'cardiacOutput must be a number above 0.';
     if (r.greenhouse != null) {
@@ -7688,9 +7725,12 @@ Object.assign(Player, {
             into[k] = sc * r.capacity[k] * slope(r.p[k]);
         }
         const blood = into.vrg + into.mg + into.fg;
-        // The blood: arterial at end-tidal, mixed venous from the run.
+        // The blood: arterial at end-tidal (or the run's own, with a shunt),
+        // mixed venous from the run.
         let venous = null;
         if (r.venous) { const x = Math.max(0, lerp(r.venous)); venous = x < this.tiny ? 0 : x; }
+        let arterial = p.lungs;
+        if (r.arterial) { const x = Math.max(0, lerp(r.arterial)); arterial = x < this.tiny ? 0 : x; }
         const delivered = lerp(r.delivered);
         // The greenhouse effect: kg of CO2 equivalent in the agent delivered,
         // and at the rate the fresh gas brings it now (mL/min to kg/h).
@@ -7698,7 +7738,7 @@ Object.assign(Player, {
         const freshNow = sc * r.freshFlow[j] * r.fresh[j];
         return {
             t: T, gas: true, p, A, held,
-            arterial: p.lungs, venous,
+            arterial, venous,
             // What the tissues hold is all the blood has taken from the lungs
             // since time 0: the engine's blood holds none and nothing is
             // metabolised.
@@ -7738,7 +7778,8 @@ Object.assign(Player, {
         const co = st.cardiacOutput != null ? `<span class="k">Cardiac output</span> ${L(st.cardiacOutput)} L/min` : '';
         // Arterial blood is at end-tidal in the engine; mixed venous after it.
         // In the colour of its bar (2D) and its ring on the lungs' glass (3D).
-        const blood = st.venous != null ? ` · <span class="k">Mixed venous</span> <span class="ven">${c(st.venous)}</span>` : '';
+        const blood = (r.arterial ? ` · <span class="k">Arterial</span> ${c(st.arterial)}` : '') +
+            (st.venous != null ? ` · <span class="k">Mixed venous</span> <span class="ven">${c(st.venous)}</span>` : '');
         // As many lines as before the blood and the cardiac output were added
         // (2026-11-17): a taller card leaves the 3D view's starting view less
         // room, and the circuit goes in the foot.

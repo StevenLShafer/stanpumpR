@@ -168,7 +168,8 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
       "The patient's serum albumin, in g/dL. It sets the methotrexate",
       "clearance of the adult model (lower albumin, lower clearance) and,",
       "at 2.5 g/dL or less, the faster distribution of the children's model;",
-      "docetaxel's clearance; and nab-paclitaxel's maximal elimination rate."
+      "docetaxel's clearance; nab-paclitaxel's maximal elimination rate; and",
+      "tolcapone's peripheral volume (held within its studied 2.6-5.5 g/dL)."
     ),
     ast = paste(
       "The patient's serum aspartate aminotransferase (AST), in U/L. It sets",
@@ -196,7 +197,8 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
   ) else if (arg == "albumin") paste(
     "Leave blank to hold each model's reference albumin (4 g/dL in the",
     "adult methotrexate model, a normal albumin in the children's, 3.9 g/dL",
-    "for nab-paclitaxel); hypoalbuminaemia is then not represented."
+    "for nab-paclitaxel, 4.4 g/dL for tolcapone); hypoalbuminaemia is then",
+    "not represented."
   ) else if (arg == "ast") sprintf(
     "Leave blank to assume a normal AST (%s U/L): liver dysfunction is then not represented.",
     EPIRUBICIN_REFERENCE_AST
@@ -215,6 +217,7 @@ RELEVANT_FIELDS <- unname(c(
   "showMEAC", "opioidMacInteraction",
   vapply(COMPANION_MODEL_GROUPS, `[[`, character(1), "input"),
   ASM_INTERACTIONS_INPUT,
+  "inhaledAgents",
   "plotMEAC", "plotInteraction"
 ))
 
@@ -238,7 +241,8 @@ patientFieldReaderSets <- function(drugDefaults = getDrugDefaultsGlobal()) {
 #' model's signature (as getDrugPK() passes it), the baseline osmolality when
 #' an osmotic agent is, and the opioid controls (Opioid tolerance, % MEAC, the
 #' MEAC plot) when an opioid is: a drug of the Opioids category or with a
-#' MEAC.  The opioid-MAC interaction needs an inhaled agent as well, and the
+#' MEAC.  The altitude slider and the endobronchial intubation box act on the
+#' inhaled agents only, and show while a potent agent is in the table.  The opioid-MAC interaction needs an inhaled agent as well, and the
 #' Interaction plot propofol.  A companion model's box is relevant when a
 #' drug of its group is dosed, and the antiseizure interactions box when the
 #' table holds an interaction the model applies.
@@ -268,6 +272,9 @@ relevantFields <- function(drugs, drugDefaults = getDrugDefaultsGlobal()) {
       stats::setNames(vapply(COMPANION_MODEL_GROUPS, `[[`, character(1), "input")),
     stats::setNames(nrow(activeAntiseizureInteractions(drugs)) > 0,
                     ASM_INTERACTIONS_INPUT),
+    # The physiology controls that act on the inhaled agents only: altitude
+    # and endobronchial intubation (R/altitude.R, R/endobronchial.R)
+    inhaledAgents   = gas,
     plotMEAC        = opioid,
     plotInteraction = opioid && "propofol" %in% drugs
   )

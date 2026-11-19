@@ -110,6 +110,12 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
     output[[drug]]$Concentration.Units <- drugDefaults$Concentration.Units
     output[[drug]]$Color               <- drugDefaults$Color
     output[[drug]]$endCe               <- drugDefaults$endCe
+    # the band, which simulationPlot() reads for every entry (Carbon's
+    # repository audit, 2026-11-18: without it the plot stopped on this
+    # function's output)
+    output[[drug]]$typical             <- drugDefaults$Typical
+    output[[drug]]$lowerTypical        <- drugDefaults$Lower
+    output[[drug]]$upperTypical        <- drugDefaults$Upper
     # foldMetabolites() finishes the receiving drug's row, which needs the
     # drug's name and MEAC, so carry the resolved PK alongside the defaults.
     output[[drug]]$drug           <- PK$drug

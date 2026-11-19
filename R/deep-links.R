@@ -7,7 +7,7 @@
 # Steven L. Shafer, for a lecture that steps between slides and live
 # simulations.  Verified by tests/testthat/test-deep-links.R.
 #
-# The address bar is the simulation (inst/help/sharing.md): every change is
+# The address bar is the simulation (inst/app-help/sharing.md): every change is
 # bookmarked into a long URL that restores the whole state.  The scenarios and
 # the help pages had no address of their own, so a slide, a syllabus or an
 # email could not point at one.  Two query parameters give them one:

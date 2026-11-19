@@ -8,6 +8,10 @@ test_that("reference patient, switch off", {
 test_that("FFM scaling, switch on", {
   a <- zonisamide(120, 170, 50, "male", adjustToFFM = TRUE)
   s <- pkSizeFactors(120, 170, 50, "male", TRUE)
+  # anchored at Silva's cohort (Table 1)
+  kc <- cohortFactorsIndependent(list(weight = 71, height = 165, age = 31.5, men = 28, women = 36))
+  s$volume <- s$volume / kc$volume
+  s$clearance <- s$clearance / kc$clearance
   expect_equal(a$PK$default$cl1, 0.761 * s$clearance / 60)
 })
 
@@ -22,8 +26,9 @@ test_that("pregnancy: CL/F x 1.6, nothing else", {
   expect_equal(ZONISAMIDE_PREGNANCY_CL_FACTOR, 1.6)
   for (k in c("v1", "v2", "v3", "cl2", "cl3", "ka_PO", "bioavailability_PO", "tlag_PO"))
     expect_identical(on$PK$default[[k]], off$PK$default[[k]], info = k)
-  expect_equal_rounded(38.77317206, on$PK$default$v1)
-  expect_equal_rounded(0.01726406574, on$PK$default$cl1)
+  kc <- cohortFactorsIndependent(list(weight = 71, height = 165, age = 31.5, men = 28, women = 36))
+  expect_equal_rounded(38.77317206 / kc$volume, on$PK$default$v1)
+  expect_equal_rounded(0.01726406574 / kc$clearance, on$PK$default$cl1)
   expect_match(on$reference, "Reimers")
   expect_no_match(off$reference, "Reimers")
 })

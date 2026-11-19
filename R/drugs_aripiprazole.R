@@ -82,8 +82,12 @@
 # observed.  The scaled parameters live in "dehydroaripiprazole", which is
 # never dosed directly.  Amounts in aripiprazole mass (mwRatio = 1).
 #
-# Body size: no weight covariate, so the published values are the 70 kg
-# reference adult's and scale to fat-free mass (legacyVolume = 1).
+# Body size: no weight covariate, so the published values are the cohort's
+# typical patient's (median 61.9 kg, 34 years, 34 men and 46 women), and with
+# the switch on they are anchored at that patient (ARIPIPRAZOLE_COHORT;
+# Steven L. Shafer, 2026-11-18): the reference man's volumes are the
+# published values divided by 0.813 and his clearances by 0.856; with the
+# switch off, the published values for everyone (legacyVolume = 1).
 #
 # EFFECT SITE
 # ===========
@@ -157,6 +161,21 @@ ARIPIPRAZOLE_CL_CYP2D6 <- c(   # L/h, apparent; see the header
   ultrarapid   = 3.15
 )
 
+# Kim 2008 (PMID 19032724), Table 1 (p. 803), read on the PDF 2026-11-18:
+# medians 61.9 kg and 34 years, 34 men and 46 women, Korean.
+# No height is printed: each sex's is the country's mean adult height for the
+# birth year (NCD Risk Factor Collaboration, eLife 2016;5:e13410, height at 18
+# by birth year), less the 0.2 cm (men) and 0.3 cm (women) a cohort loses per
+# decade of age after 18 that the same paper reports. South Korea, born 2008 -
+# 34 = 1974: 172.7 cm for men and 159.8 for women.
+# The model is anchored at this cohort (Steven L. Shafer, 2026-11-18;
+# docs/weight-adjustment.md, Anchoring at the source's cohort);
+# dehydroaripiprazole, fitted jointly, with it.
+# Factors 0.813 on volume, 0.856 on clearance.
+ARIPIPRAZOLE_COHORT <- list(groups = list(
+  list(weight = 61.9, height = 172.7, age = 34, men = 34, women = 0),
+  list(weight = 61.9, height = 159.8, age = 34, men = 0, women = 46)))
+
 #' Aripiprazole pharmacokinetics (oral)
 #'
 #' Kim et al. (2008): one compartment, apparent oral parameters, CYP2D6 on
@@ -177,7 +196,7 @@ aripiprazole <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
          ". Must be one of: ", paste(CYP2D6_VALUES, collapse = ", "))
   }
 
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1, cohort = do.call(cohortSizeFactors, ARIPIPRAZOLE_COHORT))
 
   v1  <- ARIPIPRAZOLE_V * size$volume
   cl1 <- unname(ARIPIPRAZOLE_CL_CYP2D6[[cyp2d6]]) / 60 * size$clearance   # L/min

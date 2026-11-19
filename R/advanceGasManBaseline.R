@@ -326,7 +326,7 @@ advanceGasManBaseline <- function(gasDose, weight = 70, maximum = 60,
 
   sol <- lapply(agents, function(g) gasManSolubility(props[props$gas == g, ]))
   names(sol) <- agents
-  lambdaBlood <- setNames(props$lambda_blood[match(agents, props$gas)], agents)
+  lambdaBlood <- stats::setNames(props$lambda_blood[match(agents, props$gas)], agents)
 
   if (is.null(gasDose) || nrow(gasDose) == 0)
     gasDose <- data.frame(Time = numeric(0), Drug = character(0), Dose = numeric(0))
@@ -337,7 +337,7 @@ advanceGasManBaseline <- function(gasDose, weight = 70, maximum = 60,
   # agent; everything else starts at zero.
   cmps <- c("CKT", "ALV", "VRG", "MUS", "FAT", "VEN")
   state <- lapply(agents, function(g)
-    setNames(rep(if (g == "nitrogen") nitrogenAmbient else 0, length(cmps)), cmps))
+    stats::setNames(rep(if (g == "nitrogen") nitrogenAmbient else 0, length(cmps)), cmps))
   names(state) <- agents
 
   nTicks   <- max(1, ceiling(maximum / dt))

@@ -33,7 +33,10 @@ cube <- function(k10, k12, k13, k21, k31)
       a0 <- k10 * k21
       a1 <- -(k10 + k12 + k21)
       root1 <- (-a1 + sqrt(a1 * a1 - 4 * a0)) / 2
-      root2 <- (-a1 - sqrt(a1 * a1 - 4 * a0)) / 2
+      # the smaller root from the product of the roots, a0, rather than as a
+      # difference of two nearly equal numbers, which lost half its digits at
+      # k21/k10 = 1e-8 and was 0 by 1e-16 (as inst/www/pk-convert.js does)
+      root2 <- a0 / root1
       root3 <- 0
     } else {
       # one compartment model

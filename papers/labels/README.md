@@ -47,8 +47,10 @@ names (`NJ_dailymed-<setid prefix>.pdf`), as their cards cite them.
    `not_obtained` at first. It was added by hand from Drugs@FDA on 2026-11-13, its original 2018
    approval label (`source` `drugsatfda`).
 
-Drugs@FDA (`accessdata.fda.gov`) is the FDA's own archive of every approved label version, but it blocks
-scripted downloads. DailyMed carries the same labels, current version only, and permits them.
+Drugs@FDA (`accessdata.fda.gov`) is the FDA's own archive of every approved label version. It answers a
+request carrying curl's default User-Agent with a redirect instead of the file, but on 2026-11-18 it served
+a review PDF to a script that sent any other User-Agent (`curl -A "Mozilla/5.0" ...`, from a cloud
+session). DailyMed carries the same labels, current version only, and permits scripted downloads.
 
 ## Keeping it current
 

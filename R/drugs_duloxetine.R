@@ -67,8 +67,9 @@
 #
 # The band in inst/extdata/drugDefaults_global.csv is the therapeutic
 # reference range of the AGNP TDM task force's systematic review (Amann et
-# al., Neurosci Appl 2024;3:104077), 20 to 120 ng/mL, with 60 as the typical
-# value; it replaced the AGNP 2017 consensus range of 30 to 120 ng/mL (Hiemke
+# al., Neurosci Appl 2024;3:104077), 20 to 120 ng/mL; the typical value 60
+# is not Amann's, who give about 60 only as the level below which a
+# non-responder's dose may be raised (card PMID_40656060); it replaced the AGNP 2017 consensus range of 30 to 120 ng/mL (Hiemke
 # et al., Pharmacopsychiatry 2018;51:9-62).  typical, upperTypical and
 # lowerTypical below mirror it.  endCe is 0.
 #

@@ -8,7 +8,7 @@
 #
 # Drafted by Claude Code, 2026-10-19, at the request of Steven L. Shafer, who
 # asked for the drugs used to treat Parkinson's disease with their times of
-# peak effect and therapeutic ranges (inst/help/models/parkinsons.md,
+# peak effect and therapeutic ranges (inst/app-help/models/parkinsons.md,
 # inst/extdata/parkinsonsRegistry.csv).
 #
 # THE PLASMA MODEL
