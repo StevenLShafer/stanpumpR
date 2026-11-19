@@ -5,7 +5,7 @@ The **Antidiabetic** drugs in the startup menu are named, source-specific popula
 | Drug | Product and route | Source | Population | What the curve is |
 |---|---|---|---|---|
 | [semaglutide](help:drugs/semaglutide) | Ozempic, SC once weekly | Carlsson Petri and colleagues, 2018 | Phase 3 trials, type 2 diabetes | One compartment, apparent; weight, sex and age on clearance |
-| [oral semaglutide](help:drugs/semaglutideOral) | Rybelsus, oral once daily | Overgaard and colleagues, 2021 | 376 subjects, six clinical pharmacology trials, supervised dosing | Two compartments, true scale; bioavailability 0.8%; weight. About twice the outpatient (PIONEER) exposure |
+| [oral semaglutide](help:drugs/semaglutideOral) | Rybelsus, oral once daily | Overgaard and colleagues, 2021 (*Cell Rep Med*) | 2,345 adults with type 2 diabetes in the PIONEER trials, dosing themselves at home | Two compartments, true scale; bioavailability 0.47%; sex and weight. Chosen over the supervised trials' model, which gives twice the exposure, because patients at home do not take every dose as labelled |
 | [tirzepatide](help:drugs/tirzepatide) | Mounjaro, SC once weekly | Schneck and Urva, 2024 | 5802 participants, 19 studies | Two compartments, true scale; weight and fat mass |
 | [dulaglutide](help:drugs/dulaglutide) | Trulicity, SC once weekly | Geiser and colleagues, 2016 | 1067 adults with type 2 diabetes (phase 3) | Two compartments, true scale; weight on bioavailability |
 | [exenatide](help:drugs/exenatide) | Byetta, SC twice daily | Cirincione and Mager, 2017 | 8 studies, healthy and type 2 diabetes, normal renal function to end-stage | Two compartments, linear plus saturable elimination, saturable absorption; eGFR and weight. Run by numerical integration |

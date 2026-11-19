@@ -125,10 +125,12 @@ test_that("the audited numbers are the ones the models use", {
                as.numeric(parameters$value[parameters$drug == "tirzepatide" & parameters$parameter == "F"]),
                tolerance = 1e-3)
   val <- function(d, p) as.numeric(parameters$value[parameters$drug == d & parameters$parameter == p])
-  so <- semaglutideOral(85, 175, 50, "male", adjustToFFM = FALSE)$PK$default
+  so <- semaglutideOral(85, 165, 50, "female", adjustToFFM = FALSE)$PK$default
   expect_equal(100 * so$bioavailability_PO, val("semaglutideOral", "F"))
   expect_equal(so$v1, val("semaglutideOral", "Vc"))
-  expect_equal(SEMAGLUTIDE_ORAL_T2D_CL, val("semaglutideOral", "T2D factor on CL"))
+  expect_equal(so$cl1 * 60, val("semaglutideOral", "CL"))
+  expect_equal(SEMAGLUTIDE_ORAL_MALE_F, val("semaglutideOral", "sex factor on F"))
+  expect_equal(SEMAGLUTIDE_ORAL_WEIGHT_F, val("semaglutideOral", "weight exponent on F"))
   ce <- cetagliptin(70, 170, 46, "male", adjustToFFM = FALSE)
   expect_equal(ce$michaelisMenten$saturableEfflux$vmax * 60, val("cetagliptin", "efflux Vmax"))
   expect_equal(ce$michaelisMenten$saturableEfflux$km, val("cetagliptin", "efflux Kt"))

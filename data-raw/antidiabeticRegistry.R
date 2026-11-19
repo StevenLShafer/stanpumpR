@@ -63,13 +63,13 @@ registry <- rbind(
       "https://doi.org/10.1007/s13300-018-0458-5",
       "2.4 mg in obesity: outside the doses and population of the implemented fit; product-specific analysis required."),
   reg("semaglutide_po_rybelsus", "semaglutide", "Rybelsus tablets", PO, "core", "US",
-      AUD, FIT, "PD-AUDIT", DAUD, "HbA1c at week 26", NA, "semaglutideOral", TRUE,
+      AUD, FIT, "PD-AUDIT", DAUD, "HbA1c at week 26", NA, NA, TRUE,
       "https://doi.org/10.1007/s40262-021-01025-x",
-      "Overgaard 2021 (Clin Pharmacokinet 60:1335-1348) and its ESM Table 1 (supplied): Overgaard 2019 s.c./i.v. two-compartment disposition fixed (CL 0.0348 L/h x (WT/85)^1.01 x 1.09 in T2D, Q 0.304 L/h x (WT/85)^1.01, Vc 3.59 L and Vp 4.1 L x (WT/85)^0.923), oral first-order absorption ka = (2.09 - 1.35) exp(-0.112 (Tfast - 30)) + 1.35 /h and F = 0.795% x (WT/85)^0.741 x 0.637^(240 mL) x (1 - exp(-0.0266 Tfast))/(1 - exp(-0.0266 x 30)); IIV 53.5% and IOV 137% on F. Implemented at the recommended conditions (30 min fasting, up to 120 mL), T2D applied on CL; the separate T2D re-estimate's 0.841 on F (not significant) not applied. Reproduces Table 2 (healthy CL 0.033, Vc 3.4, Vp 3.9, F 0.76%, t1/2 158 h; T2D 145 h). External: Overgaard 2021 Cell Rep Med (PIONEER, unsupervised outpatient dosing) geometric mean Cavg 14.6 nmol/L at 14 mg; the model gives 29.4 nmol/L (88 kg, T2D), twice as much. The PIONEER refit of F is in its Methods S1, not supplied."),
+      "Overgaard 2021 (Clin Pharmacokinet 60:1335-1348) and its ESM Table 1 (supplied): Overgaard 2019 s.c./i.v. two-compartment disposition fixed (CL 0.0348 L/h x (WT/85)^1.01 x 1.09 in T2D, Q 0.304 L/h x (WT/85)^1.01, Vc 3.59 L and Vp 4.1 L x (WT/85)^0.923), oral first-order absorption ka = (2.09 - 1.35) exp(-0.112 (Tfast - 30)) + 1.35 /h and F = 0.795% x (WT/85)^0.741 x 0.637^(240 mL) x (1 - exp(-0.0266 Tfast))/(1 - exp(-0.0266 x 30)); IIV 53.5% and IOV 137% on F. Implemented at the recommended conditions (30 min fasting, up to 120 mL), T2D applied on CL; the separate T2D re-estimate's 0.841 on F (not significant) not applied. Reproduces Table 2 (healthy CL 0.033, Vc 3.4, Vp 3.9, F 0.76%, t1/2 158 h; T2D 145 h). External: Overgaard 2021 Cell Rep Med (PIONEER, unsupervised outpatient dosing) geometric mean Cavg 14.6 nmol/L at 14 mg; the model gives 29.4 nmol/L (88 kg, T2D), twice as much. Was semaglutideOral until 2026-11-19, when Shafer replaced it with the PIONEER outpatient model (row semaglutide_po_rybelsus_pioneer): supervised dosing describes a patient who takes every dose as labelled, and adherence, not pharmacology, is the usual gap between a trial and the clinic (Glasser 2018, PMID 30238616)."),
   reg("semaglutide_po_rybelsus_pioneer", "semaglutide", "Rybelsus tablets, outpatient (PIONEER)", PO, "core", "US",
-      FIT, FIT, "PD-AUDIT", DAUD, "HbA1c and body weight (exposure-response)", NA, NA, TRUE,
+      FIT, FIT, "PD-AUDIT", DAUD, "HbA1c and body weight (exposure-response)", NA, "semaglutideOral", TRUE,
       "https://doi.org/10.1016/j.xcrm.2021.100387",
-      "Overgaard 2021b (Cell Rep Med 2:100387; about 2,300 PIONEER outpatients) and Methods S1 (NONMEM code) with Supplementary Table 1: Overgaard 2019's disposition fixed (CL 0.039 L/h x (BW/85)^1.01, Vc 3.59 L, Q 0.304 L/h, Vp 4.1 L x (BW/85)^0.923, ka 2.09/h); F 0.471% x 0.814 (men) x 1.10 (Asian) x (BW/85)^0.374 x 1.13 (upper GI disease) x trial factors for PIONEER 3 and 5 (0.6 and 0.758; Table 1 labels them PIONEER 2 and 3, the text and code 3 and 5); reference a woman of 85 kg. Gives a steady-state average of 13.9-17.1 nmol/L at 14 mg against the paper's 14.6, about half the supervised semaglutideOral. [decision] Shafer: add as a second oral semaglutide drug, make it the default, or keep only the supervised model (asked 2026-11-19)."),
+      "Overgaard 2021b (Cell Rep Med 2:100387; about 2,300 PIONEER outpatients) and Methods S1 (NONMEM code) with Supplementary Table 1: Overgaard 2019's disposition fixed (CL 0.039 L/h x (BW/85)^1.01, Vc 3.59 L, Q 0.304 L/h, Vp 4.1 L x (BW/85)^0.923, ka 2.09/h); F 0.471% x 0.814 (men) x 1.10 (Asian) x (BW/85)^0.374 x 1.13 (upper GI disease) x trial factors for PIONEER 3 and 5 (0.6 and 0.758; Table 1 labels them PIONEER 2 and 3, the text and code 3 and 5); reference a woman of 85 kg. Gives a steady-state average of 13.9-17.1 nmol/L at 14 mg against the paper's 14.6, about half the supervised model's. Implemented as semaglutideOral on Shafer's decision of 2026-11-19, replacing the supervised model (row semaglutide_po_rybelsus): offering both would ask the clinician to choose between models of one product, and patients at home do not take a drug as a supervised study does (Glasser 2018, PMID 30238616; the paper itself leaves absorption versus compliance open). Asian race, upper GI disease and the trial factors not applied (no field)."),
   reg("semaglutide_po_ozempic_tablets", "semaglutide", "Ozempic tablets (2026)", PO, "core", "US",
       AUD, CON, "PD-AUDIT", DAUD, "HbA1c", NA, NA, FALSE,
       "https://dailymed.nlm.nih.gov/dailymed/fda/fdaDrugXsl.cfm?setid=27f15fac-7d98-4114-a2ec-92494a91da98",
@@ -391,7 +391,8 @@ cirin  <- "https://doi.org/10.1111/bcp.13135"
 melinUrl <- "https://doi.org/10.1111/bcp.15939"
 hoeben <- "https://doi.org/10.1007/s40262-015-0307-x"
 og2021 <- "https://doi.org/10.1007/s40262-021-01025-x"
-ogPop  <- "Overgaard 2021, 376 subjects, supervised oral dosing"
+og2021b <- "https://doi.org/10.1016/j.xcrm.2021.100387"
+ogbPop  <- "Overgaard 2021b, 2,345 PIONEER outpatients with type 2 diabetes"
 zhou   <- "https://doi.org/10.3389/fendo.2024.1359407"
 luUrl  <- "https://doi.org/10.1007/s40262-024-01427-7"
 luPop  <- "Lu 2024, 108 healthy volunteers and adults with T2D, four phase 1 studies"
@@ -648,20 +649,19 @@ parameters <- rbind(
   par("glyburide", "Vp/F", "68.1", "L", E, "Rambiritch 2016", ramb, "Results"),
   par("glyburide", "size scaling", "library FFM factors", "-", LB, "no covariate analysis in the source", ramb, "-"),
 
-  par("semaglutideOral", "CL", "0.0348", "L/h x (WT/85)^1.01", FX, ogPop, og2021, "ESM Table 1 (fixed from Overgaard 2019)"),
-  par("semaglutideOral", "weight exponent on CL and Q", "1.01", "unitless", FX, ogPop, og2021, "ESM Table 1"),
-  par("semaglutideOral", "T2D factor on CL", "1.09", "-", FX, ogPop, og2021, "ESM Table 1"),
-  par("semaglutideOral", "Q", "0.304", "L/h x (WT/85)^1.01", FX, ogPop, og2021, "ESM Table 1"),
-  par("semaglutideOral", "Vc", "3.59", "L x (WT/85)^0.923", FX, ogPop, og2021, "ESM Table 1"),
-  par("semaglutideOral", "Vp", "4.1", "L x (WT/85)^0.923", FX, ogPop, og2021, "ESM Table 1"),
-  par("semaglutideOral", "weight exponent on Vc and Vp", "0.923", "unitless", FX, ogPop, og2021, "ESM Table 1"),
-  par("semaglutideOral", "ka", "2.09", "1/h at 30 min post-dose fasting", E, ogPop, og2021, "ESM Table 1; Eq. 1"),
-  par("semaglutideOral", "ka at long-term fasting", "1.35", "1/h; not applied (recommended conditions)", E, ogPop, og2021, "ESM Table 1; Eq. 1"),
-  par("semaglutideOral", "fasting time exponent for ka", "0.112", "1/min; not applied", E, ogPop, og2021, "ESM Table 1; Eq. 1"),
-  par("semaglutideOral", "F", "0.795", "% at 85 kg, 30 min fasting, up to 120 mL water", E, ogPop, og2021, "ESM Table 1; Eq. 6"),
-  par("semaglutideOral", "weight exponent on F", "0.741", "unitless; weight held to 51.1-122 kg", E, ogPop, og2021, "ESM Table 1; Eq. 10"),
-  par("semaglutideOral", "water volume factor on F (240 mL)", "0.637", "-; not applied", E, ogPop, og2021, "ESM Table 1; Eq. 11"),
-  par("semaglutideOral", "fasting time exponent on F", "0.0266", "1/min; not applied", E, ogPop, og2021, "ESM Table 1; Eq. 12"),
+  par("semaglutideOral", "CL", "0.039", "L/h x (BW/85)^1.01 (Overgaard 2019's 0.0348 x 1.12 in T2D)", FX, ogbPop, og2021b, "Methods S1 THETA(2); Table S1"),
+  par("semaglutideOral", "weight exponent on CL and Q", "1.01", "unitless", FX, ogbPop, og2021b, "Methods S1 THETA(6)"),
+  par("semaglutideOral", "Q", "0.304", "L/h x (BW/85)^1.01", FX, ogbPop, og2021b, "Methods S1 THETA(4)"),
+  par("semaglutideOral", "Vc", "3.59", "L x (BW/85)^0.923", FX, ogbPop, og2021b, "Methods S1 THETA(3)"),
+  par("semaglutideOral", "Vp", "4.1", "L x (BW/85)^0.923", FX, ogbPop, og2021b, "Methods S1 THETA(5)"),
+  par("semaglutideOral", "weight exponent on Vc and Vp", "0.923", "unitless", FX, ogbPop, og2021b, "Methods S1 THETA(7)"),
+  par("semaglutideOral", "ka", "2.09", "1/h", FX, ogbPop, og2021b, "Methods S1 THETA(1)"),
+  par("semaglutideOral", "F", "0.471", "% for a woman of 85 kg", E, ogbPop, og2021b, "Table S1"),
+  par("semaglutideOral", "sex factor on F", "0.814", "- (men)", E, ogbPop, og2021b, "Table S1"),
+  par("semaglutideOral", "weight exponent on F", "0.374", "unitless; not held", E, ogbPop, og2021b, "Table S1"),
+  par("semaglutideOral", "Asian factor on F", "1.1", "-; not applied (no field)", E, ogbPop, og2021b, "Table S1"),
+  par("semaglutideOral", "upper GI disease factor on F", "1.13", "-; not applied (no field)", E, ogbPop, og2021b, "Table S1"),
+  par("semaglutideOral", "trial effects on F", "0.6 and 0.758", "- (PIONEER 3 and 5); not applied", E, ogbPop, og2021b, "Table S1; Methods S1"),
 
   par("cetagliptin", "CL/F", "30.55", "L/h, linear (x library FFM clearance factor)", E, luPop, luUrl, "Table 2"),
   par("cetagliptin", "V/F", "204", "L (x library FFM volume factor)", E, luPop, luUrl, "Table 2"),

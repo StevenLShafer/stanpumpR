@@ -10,6 +10,21 @@ Each model was fitted to a particular population: often healthy volunteers or el
 
 Some models have no covariates at all: the same dose in milligrams gives the same curve in a 20 kg child and a 120 kg adult. The drug page says so. Dose in per-kilogram units if you want size taken into account, and remember that per-kilogram dosing is itself an assumption the model did not test.
 
+## A curve assumes the drug was taken
+
+Every curve assumes that each dose in the dose table was given at the time written. In the operating room that is true. For a drug a patient takes at home it often is not. Glasser's editorial, "Drugs don't work in patients who don't take them" (*J Clin Hypertens* 2018), summarises the evidence:
+
+- About a third of patients after a myocardial infarction, and about half of those taking drugs for primary prevention, did not adhere to their cardiovascular medication.
+- A year after a myocardial infarction, fewer than half of patients were still filling their prescriptions for a statin, a beta blocker and an ACE inhibitor, even when those prescriptions were free.
+- Adherence is better in closely monitored clinical trials than in clinical practice.
+- In 2003 the World Health Organization judged that better adherence "may have a far greater impact on health ... than any improvement in specific medical treatments."
+
+Two things follow for stanpumpR.
+
+**Most oral models describe ideal dosing.** They come from studies in which every dose was given, timed and recorded, often observed, fasting, by the study staff. For a patient at home such a curve is an upper bound. Where a published model was fitted to patients dosing themselves and describes the same product and population as a supervised one, stanpumpR uses the outpatient model, so the default curve is what patients actually achieve. The first case is [oral semaglutide](help:drugs/semaglutideOral), whose outpatient exposure in the PIONEER trials was half that of supervised dosing.
+
+**When a drug seems not to work, ask whether it is being taken.** A level below the curve, or a response short of the expected one, is often missed doses rather than a drug that failed. stanpumpR can show what a missed dose does: [Skip next dose](help:dose-table) removes one dose of a schedule. [Bayesian updating](help:models/bayesian) assumes every dose in the table was taken, so it reads missed doses as a faster clearance or a larger volume. Enter the doses the patient actually took before fitting a level.
+
 ## Which drugs each field reaches
 
 The Patient Profile fields beyond age, weight, height and sex reach only the models that name them, and a field left blank or at its default silently applies that field's own assumption (a normal creatinine for the patient's age and sex, a term birth, each model's reference albumin, the normal-metaboliser phenotype for CYP 2D6, CYP 2C19 and CYP 2B6, the most common diplotype, \*1/\*1, for CYP 2C9, and for VKORC1 and CYP4F2 the most sensitive genotype), so it is worth knowing which drugs each one affects. The table is built from the models themselves, so it lists exactly the drugs that read each field; for every other drug the field has no effect.

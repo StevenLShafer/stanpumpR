@@ -18,6 +18,12 @@ Minto CF, Schnider TW, Shafer SL. Pharmacokinetics and pharmacodynamics of remif
 
 Minto CF, Schnider TW, Gregg KM, Henthorn TK, Shafer SL. Using the time of maximum effect site concentration to combine pharmacokinetics and pharmacodynamics. *Anesthesiology* 2003;99:324-333.
 
+## Adherence
+
+Why a curve for a drug taken at home is an upper bound, and why stanpumpR prefers a model fitted to outpatients ([Cautions](help:cautions)):
+
+Glasser SP. Drugs don't work in patients who don't take them. *J Clin Hypertens* 2018;20:1504-1506. [DOI 10.1111/jch.13380](https://doi.org/10.1111/jch.13380)
+
 ## Pregnancy
 
 The review the [Pregnant](help:models/pregnancy) field first followed (each drug's own pregnancy sources are on its page):
