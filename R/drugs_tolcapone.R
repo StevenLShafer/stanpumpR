@@ -76,7 +76,9 @@
 # very high V estimates" (Results, p. 45), the nonfluctuators showed no
 # albumin effect, and the Discussion goes as far as "no relationship was
 # detected" between protein or albumin and distribution (p. 46), which sits
-# oddly beside Table 3; the term is applied as the final model prints it.
+# oddly beside Table 3; the term is applied as the final model prints it,
+# within the studied range (Shafer's decision of 2026-11-19, with those
+# caveats in front of him).
 #
 # COVARIATES AND GENOTYPE: no effect of age, sex, dopamine agonists, treatment
 # duration or (in fluctuators) creatinine clearance.  Tolcapone is
