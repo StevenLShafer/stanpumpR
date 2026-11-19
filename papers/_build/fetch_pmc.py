@@ -34,9 +34,12 @@ os.makedirs(TMP, exist_ok=True)
 # forward `tries`, and bounding it there would change the retry policy of a module every
 # script in this pipeline shares: a wider decision than this script should take alone, and
 # left for Shafer.  What is bounded here is the number of CHUNKS -- one per run -- so the
-# figure is a single 6.5 minutes rather than a multiple of it, and the honest worst case for
-# delaying the filing below is about 6.5 min + 600 s + one 120 s read.  Two earlier wordings
-# of this comment overclaimed; a bound stated in a comment is a claim the code must keep
+# figure is a single 6.5 minutes rather than a multiple of it.  As an ILLUSTRATION, a bad run
+# might cost 6.5 min of metadata, the 600 s budget and a 120 s read -- but that is an example,
+# not a worst case, and there is no worst case to state: ncbi._get() has no read deadline, so
+# a response that keeps sending bytes before each socket timeout can run past any figure here.
+# Three earlier wordings of this comment overclaimed; a bound stated in a comment is a claim
+# the code must keep
 # (CodeRabbit, PR #797).
 FETCH_BUDGET_SECONDS = 600
 METADATA_PMIDS_PER_RUN = 150                     # one esummary chunk; the rest wait for the next run

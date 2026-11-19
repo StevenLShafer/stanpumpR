@@ -70,6 +70,27 @@ delivery is repaired on the next run wherever it sits.
 seconds what a year of readers that tolerate anything never mentioned. Nothing in this pipeline
 had ever asserted that a PDF was a PDF.
 
+## Two mistakes this pipeline invites
+
+Both surfaced repeatedly in the review of PR #797, and both are about language rather than
+logic. Every step here is an attempt to read something that may be unreadable, which is what
+makes them so easy to make.
+
+**A failure to read something is not a fact about the thing read.** An extraction that raised,
+a `pdftotext` that exited non-zero, a log that would not open, two pages that came back blank
+— none of these establishes that the PDF has no text, or that the log is corrupt. Four
+findings in that one review were this same conflation in different disguises, and each had
+written "it is not there" where the code only knew "we did not see it". The archive's whole
+value is that its records say what was established, so a provenance line asserting more than
+the run checked is worse than no line.
+
+**Say what the code does, not what you hope it bounds.** Three successive wordings of one
+comment in `fetch_pmc.py` claimed a delay bound the code did not deliver — because
+`urlopen()`'s timeout applies per socket operation, not per request, and `ncbi._get()` has no
+read deadline at all. A timeout that tightens as a budget runs out *shortens* an overrun; it
+does not bound it. In this pipeline the honest form is almost always "this shortens it", and a
+figure worth writing down is an illustration, not a worst case.
+
 ## What runs, in the order `update.bat` runs it
 
 `fetch_pmc.py` runs first but **outside** the `&&` chain, as `check_in_step.py` does at the end.
