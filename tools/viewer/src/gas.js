@@ -116,7 +116,12 @@ function gasRunProblem(r, n) {
     // blood past the ventilated lung; otherwise it is the end-tidal.
     for (const [k, min] of [['venous', 0], ['alveolarVentilation', 0], ['arterial', 0]])
         if (r[k] != null) { const q = arr(r[k], k, min); if (q) return q; }
-    if (r.cardiacOutput != null && !(Number.isFinite(r.cardiacOutput) && r.cardiacOutput > 0)) return 'cardiacOutput must be a number above 0.';
+    // One number, or one per time (physiology events, 2026-11-19)
+    if (r.cardiacOutput != null) {
+        const co = Array.isArray(r.cardiacOutput) ? r.cardiacOutput : [r.cardiacOutput];
+        if (Array.isArray(r.cardiacOutput) && co.length !== r.t.length) return 'cardiacOutput must have one value per time.';
+        if (!co.every(x => Number.isFinite(x) && x > 0)) return 'cardiacOutput must be a number above 0.';
+    }
     if (r.greenhouse != null) {
         const g = r.greenhouse;
         if (typeof g !== 'object') return 'greenhouse must give gwp100, kgPerLitre, lifetime and carKgPerYear.';
@@ -209,7 +214,7 @@ Object.assign(Player, {
             uptake: A.vrg + A.mg + A.fg,
             delivered, vented: lerp(this.vented),
             co2e: g ? kgCO2e(delivered) : null, co2eRate: g ? kgCO2e(freshNow) * 60 : null,
-            cardiacOutput: r.cardiacOutput != null ? r.cardiacOutput : null,
+            cardiacOutput: r.cardiacOutput == null ? null : Array.isArray(r.cardiacOutput) ? r.cardiacOutput[j] : r.cardiacOutput,
             alveolarVentilation: r.alveolarVentilation ? r.alveolarVentilation[j] : null,
             fresh: r.fresh[j], freshFlow: r.freshFlow[j], ventilation: r.ventilation[j],
             flow: {

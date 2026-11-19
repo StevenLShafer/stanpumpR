@@ -4,12 +4,14 @@
 \alias{gasBodyPhysiology}
 \title{The gas engine's body at a multiple of normal cardiac output}
 \usage{
-gasBodyPhysiology(body, cardiac = 1)
+gasBodyPhysiology(body, cardiac = 1, split = FALSE)
 }
 \arguments{
 \item{body}{output of \code{getGasBody()}}
 
 \item{cardiac}{cardiac output as a multiple of normal, positive}
+
+\item{split}{split the vessel-rich group at normal output too}
 }
 \value{
 the body, with \code{Q_cardiac}, \code{V_brain}, \code{f_brain},

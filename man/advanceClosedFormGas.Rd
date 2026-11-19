@@ -15,7 +15,8 @@ advanceClosedFormGas(
   uptakeEffect = TRUE,
   circuit = c("ideal", "semi-closed"),
   deadSpace = GAS_DEAD_SPACE_FRACTION,
-  oxygenUptake = TRUE
+  oxygenUptake = TRUE,
+  bodySteps = NULL
 )
 }
 \arguments{
@@ -71,6 +72,13 @@ no oxygen, so comparisons with it pass FALSE.  Has no effect when
 circuit, whose well-mixed-box model has no carbon dioxide absorber to put
 the volume balance in: that circuit exists only for comparison with
 GasMan, which has no oxygen.}
+
+\item{bodySteps}{NULL, or \code{gasBodySteps()}'s list of bodies and the
+times from which each is in force (physiology events): the body, its gas
+properties, pressure, humidity and cardiac output are switched at each,
+the agent carried across (\code{gasStateAcrossBodies()}); the result
+then carries \code{bodySteps} and \code{bodyRow}, the body of each row
+(a step's time appears twice, before and after it)}
 }
 \value{
 a list with \code{results}, a tidy data frame of

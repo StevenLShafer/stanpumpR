@@ -86,6 +86,8 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
 
   # At the body's temperature (gasPropertiesAt()), so the band follows MAC.
   props <- gasPropertiesAt(sim$body$temperature)
+  # (sim$body is the body in force at time 0, an event at 0 included,
+  # advanceClosedFormGas(); ChatGPT's review of PR #796, finding 9)
   xout  <- seq(from = 0, to = maximum, length.out = RESOLUTION)
   out   <- list()
 
@@ -135,7 +137,12 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
         out[[g]]$gasRun <- list(time = sim$timeLine, state = state, body = sim$body,
                                 circuit = sim$circuit, weight = sim$weight, age = sim$age,
                                 Qco = sim$Qco, deadSpace = sim$deadSpace,
-                                gasDose = gasDose)
+                                gasDose = gasDose,
+                                # Physiology events: the bodies, the body of
+                                # each row, and the events themselves
+                                bodySteps = sim$bodySteps, bodyRow = sim$bodyRow,
+                                cardiacOutput = sim$cardiacOutput,
+                                physiologyEvents = sim$physiologyEvents)
     }
   }
 
@@ -252,12 +259,15 @@ gasEntry <- function(drug, alveolar, brain, xout, drugDefaults,
     addNorm("CpNormCe", cp, maxCe), addNorm("CeNormCe", ce, maxCe)
   )
 
+  # A physiology event (R/physiologyEvents.R) repeats its time, before and
+  # after the step: a point at the step reads after it, one before it reads
+  # towards the value before it (seriesStepAt())
   equiSpace <- data.frame(
     Drug     = drug,
     Time     = xout,
-    Ce       = stats::approx(brain$Time, ce, xout, rule = 2)$y,
+    Ce       = seriesStepAt(brain$Time, ce, xout),
     Recovery = if (is.null(recovery)) 0 else
-      stats::approx(alveolar$Time, recovery, xout, rule = 2)$y,
+      seriesStepAt(alveolar$Time, recovery, xout),
     MEAC     = 0,
     stringsAsFactors = FALSE
   )
