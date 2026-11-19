@@ -1419,6 +1419,8 @@ app_server <- function(input, output, session) {
         weight  = weight(),
         physiology = physiology(),
         temperature = bodyTemperature(),
+        altitude = altitude(),
+        endobronchial = endobronchial(),
         age     = age(),
         maximum = plotMaximum()
       )
@@ -1480,18 +1482,30 @@ app_server <- function(input, output, session) {
     bodyTemperatureFromInput(input$physiology_temperature)
   }), PHYSIOLOGY_DEBOUNCE_MS)
 
+  # Altitude, metres (R/altitude.R): the barometric pressure the inhaled
+  # anesthetics are given at.  An unreadable value is sea level.
+  altitude <- debounce(reactive({
+    altitudeFromInput(input$physiology_altitude)
+  }), PHYSIOLOGY_DEBOUNCE_MS)
+
+  # Endobronchial intubation (R/endobronchial.R): one lung ventilated
+  endobronchial <- reactive(endobronchialFromInput(input$endobronchialIntubation))
+
   observeEvent(input$physiologyReset, {
     for (f in PHYSIOLOGY_FACTORS)
       updateSliderInput(session, physiologyInputId(f), value = 0)
     updateSliderInput(session, "physiology_temperature",
                       value = PHYSIOLOGY_TEMPERATURE_DEFAULT)
+    updateSliderInput(session, "physiology_altitude", value = ALTITUDE_DEFAULT)
+    updateCheckboxInput(session, "endobronchialIntubation", value = FALSE)
   })
 
   # A link or a scenario that sets the physiology away from normal shows the
   # sliders, which otherwise wait behind physiologyIntro() (Shafer,
   # 2026-11-17): a changed slider is never hidden.
-  observeEvent(physiology(), {
-    if (!physiologyIsNormal(physiology()))
+  observeEvent(list(physiology(), altitude(), endobronchial()), {
+    if (!physiologyIsNormal(physiology()) || altitude() != ALTITUDE_DEFAULT ||
+        endobronchial())
       session$sendCustomMessage("physiology_show", list())
   })
 
@@ -2119,6 +2133,8 @@ app_server <- function(input, output, session) {
       # The physiology sliders the simulation was run at (R/physiology.R)
       physiology = physiology(),
       temperature = bodyTemperature(),
+      altitude = altitude(),
+      endobronchial = endobronchial(),
       # Whether each companion model was actually drawn, not just its box
       # ticked (companionGroupsShown()).
       mintoSchnider = "mintoSchnider" %in% companionGroupsShown(),
@@ -2935,12 +2951,14 @@ app_server <- function(input, output, session) {
         category <- defaults$Category[match(drug, defaults$Drug)]
         if (isGasDrug(drug)) {
           # An inhaled anesthetic: the gas engine's own states for the plot.
-          viewerGasRun(plotted[[drug]], plotMinimum(), plotMaximum(), category = category)
+          viewerGasRun(plotted[[drug]], plotMinimum(), plotMaximum(), category = category,
+                       physiology = physiology())
         } else {
           plotted <- plotted[!isGasDrug(names(plotted))]
           entry <- viewerPlotEntry(drug, plotted[[drug]], doseTableIV(), eventTableClean(), plotted,
                                    plotMinimum(), plotMaximum(), antiseizureInteractions())
-          viewerRun(entry, plotMinimum(), plotMaximum(), category = category)
+          viewerRun(entry, plotMinimum(), plotMaximum(), category = category,
+                    physiology = physiology())
         }
       }, error = function(e) {
         fail(if (inherits(e, "shiny.silent.error")) "the plot is not ready yet; try again." else conditionMessage(e))

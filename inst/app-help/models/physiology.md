@@ -1,10 +1,15 @@
 The **Physiology** panel in the left-hand column asks *what if*: what if hepatic
 function were half of normal, the kidneys shut down, or cardiac output fell
-by two thirds? It has four sliders of organ function, and a fifth for body
-temperature (see *Body temperature* below). Each of the four is a multiple of
+by two thirds? It has four sliders of organ function, a fifth for body
+temperature (see *Body temperature* below), and, while an inhaled anesthetic
+is in the dose table, a slider for altitude and a box for endobronchial
+intubation, which act on the inhaled anesthetics only (see *Altitude* and
+*Endobronchial intubation* below). The Visualizer shows the settings under
+its title. Each of the four is a multiple of
 normal function, on a log scale from a tenth (0.1) to ten times (10). All four
 start at 1, which is normal and changes nothing. **Reset to normal** puts them
-back, and the temperature to 37 °C.
+back, the temperature to 37 °C, the altitude to sea level and the tube to the
+trachea.
 
 For the reasoning behind each rule and the evidence for it, see
 [Physiology and pharmacokinetics: the evidence](help:models/physiology-and-pharmacokinetics).
@@ -306,6 +311,112 @@ a tension you typed and does not move with MAC; the summed MAC series and its
 threshold do. GasMan models none of this:
 its source code mentions temperature only in the vaporiser's vapour pressure.
 
+## Altitude and the inhaled anesthetics
+
+**Altitude** (0 to 7,000 m) sets the barometric pressure from West's model
+atmosphere, P = exp(6.63268 − 0.1112 h − 0.00149 h²) Torr with h in km:
+760 Torr at sea level, 604 at 2,000 m, 475 at 4,000 m and 324 at 7,000 m.
+West built it for high mountain sites: it predicted the measured pressure at
+14 of them, from 3,094 m to the summit of Everest, to within 1%, where the
+aviation standard atmosphere (308 Torr at 7,000 m) reads too low. West warns
+that it reads a few Torr high at latitudes of 45° and above. Altitude acts on
+the inhaled anesthetics only.
+
+**Potency follows partial pressure.** The tensions stanpumpR plots, and MAC,
+are partial pressures in % of a sea-level atmosphere, so 1 MAC means the same
+at every altitude. James and White proposed calling MAC the minimum alveolar
+partial pressure for this reason. James and colleagues found that 50% nitrous
+oxide raised the pain threshold by 71.5% at a sea-level pressure, 40% at
+1,460 m and only 19% at a simulated 3,300 m, falling with its partial
+pressure.
+
+**What the machine delivers.** Room air, and every gas from a flowmeter, is a
+fraction of the ambient pressure. So 67% nitrous oxide at 7,000 m is 29% of a
+sea-level atmosphere. A variable-bypass vaporizer (sevoflurane, isoflurane)
+delivers about its dial's sea-level partial pressure at any altitude, because
+the agent's saturated vapour pressure does not depend on the barometric
+pressure: James and White found that halothane vaporizers in a pressure
+chamber at 5,000 and 10,000 feet delivered the same partial pressure as at
+sea level, within 0.1 kPa. The desflurane vaporizer is a heated, pressurised
+blender that delivers its dial's volume percent, which is a lower partial
+pressure at altitude: to keep the same depth, turn the dial up by 760 over the
+pressure. Andrews and Johnston's example turns it from 10% to 12.8% at
+2,000 m.
+
+Simulated by stanpumpR (70 kg, age 40, ventilation 6 L/min, fresh gas
+6 L/min):
+
+<!-- generated: physiology-altitude-table -->
+
+**Water vapour.** Inspired gas is humidified in the airway to 47 Torr at
+37 °C, whatever the pressure, so the other gases share what is left: 713 Torr
+at sea level, 277 Torr at 7,000 m. The sea-level humidification is already
+inside the tensions stanpumpR plots, and inside MAC, so only its change with
+altitude enters: what the fresh gas brings to the alveoli is multiplied by
+((P − 47)/P) / (713/760), exactly 1 at sea level, 0.97 at 3,000 m and 0.91 at
+7,000 m. A vaporizer's agent and the oxygen are diluted by it alike. Gas the
+patient rebreathes was humidified, dried in the circuit and humidified again,
+so the factor cancels for it. The water vapour pressure is kept at its 37 °C
+value at every body temperature.
+
+**The volumes.** Apart from the humidification, the kinetics do not depend on
+the pressure in partial pressures. What changes is where a partial pressure
+becomes a volume. The same partial pressure taken up is a larger ambient
+volume at altitude, so the concentration and second gas effects are larger,
+and so is the volume the oxygen consumed takes. The carbon dioxide is a
+larger share of the exhaled gas, so at low flows the absorber, by removing it,
+concentrates the rebreathed agent more. At 2 L/min of oxygen with 2%
+sevoflurane and a minute ventilation of 5 L/min, the end-tidal tension after
+an hour is 1.60% at sea level and 1.65% at 7,000 m, the absorber's
+concentration slightly outweighing the humidification.
+
+**Oxygen.** Breathing air at 5 L/min, the alveolar oxygen after 30 minutes falls
+from about 108 Torr at sea level to about 10 Torr at 7,000 m: the inspired
+partial pressure falls, the water vapour takes its 47 Torr, and the oxygen
+consumed takes the same partial pressure from what is left. Climbers at that
+height survive by breathing far more than 5 L/min, which the ventilation row
+can show.
+
+**Not modelled.** Flows are
+taken as true flows. A bobbin flowmeter calibrated at sea level delivers more
+than it reads at altitude: James and White measured about 7% more at 4,800 ft
+and 19 to 21% more at 10,000 ft above 4 L/min, close to the square root of 760
+over the pressure, and much less at low flows. Acclimatisation (a larger haemoglobin mass, a
+hypoxic drive to breathe) is not modelled, and cardiac output and ventilation
+keep their own controls. The intravenous drugs do not respond.
+
+## Endobronchial intubation
+
+The **Endobronchial intubation** box, shown with Altitude while an inhaled
+anesthetic is in the dose table, puts the tracheal tube in one main bronchus.
+Eger and Shafer's chapter on inhaled anesthetic kinetics describes what
+follows: the intubated lung receives all the ventilation, twice its normal
+share, and the other lung is not ventilated but is still perfused. Its blood
+takes up no agent and joins the arterial blood at the mixed venous partial
+pressure, a right-to-left shunt, so end-tidal and arterial partial pressures
+diverge. stanpumpR takes the chapter's idealisation: half the cardiac output
+passes the unventilated lung, and the ventilated lung holds half the alveolar
+gas. (The half is the chapter's, kept on Shafer's decision of
+2026-11-19.)
+
+How much the arterial rise is delayed depends on solubility. For a poorly
+soluble agent the end-tidal tension approaches the inspired whatever the blood
+takes, so doubling one lung's ventilation cannot make up for the other, and the
+arterial partial pressure starts at about half of normal. For a highly soluble
+agent doubling the ventilation doubles the delivery and makes up for it, and
+the arterial rise is barely delayed. Eger and Severinghaus predicted this with
+an analogue model, and Stoelting and Longnecker confirmed it in dogs and
+people. In stanpumpR (fresh gas and ventilation 6 L/min), arterial is 72% of
+normal for nitrous oxide at 2 minutes and 78% for isoflurane, 92% and 87% at
+an hour, while end-tidal reads a little above normal. The Visualizer draws the
+arterial bar below the end-tidal one.
+
+**Not modelled.** Hypoxic pulmonary vasoconstriction, which diverts part of the
+blood from the unventilated lung, so the real shunt is usually less than half;
+the lungs' unequal sizes; the slow absorption of the gas trapped in the
+unventilated lung; and arterial oxygen, which the engine does not carry in
+blood. So hypoxaemia, the main danger of an endobronchial tube, is not shown.
+
 ## Body temperature and the intravenous drugs
 
 Cooling slows the elimination of most intravenous drugs, because enzymes and
@@ -425,6 +536,9 @@ Allott PR, Steward A, Flook V, Mapleson WW. Variation with temperature of the
 solubilities of inhaled anaesthetics in water, oil and biological media.
 *Br J Anaesth* 1973;45:294-300. doi:10.1093/bja/45.3.294
 
+Andrews JJ, Johnston RV. The new Tec 6 desflurane vaporizer.
+*Anesth Analg* 1993;76:1338-41. doi:10.1213/00000539-199376060-00027
+
 Antognini JF, Lewis BK, Reitan JA. Hypothermia minimally decreases nitrous
 oxide anesthetic requirements. *Anesth Analg* 1994;79:980-2.
 doi:10.1213/00000539-199411000-00027
@@ -444,9 +558,19 @@ on cerebral blood flow during hypothermic cardiopulmonary bypass in adults.
 Eger EI II, Shafer SL. The evolution of pharmacokinetics. Chapter 8 of Eger's
 scientific autobiography, manuscript, 2017.
 
+Eger EI II, Severinghaus JW. Effect of uneven pulmonary distribution of blood
+and gas on induction with inhalation anesthetics. *Anesthesiology*
+1964;25:620-6.
+
 Hiraoka H, Yamamoto K, Miyoshi S, et al. Kidneys contribute to the
 extrahepatic clearance of propofol in humans, but not lungs and brain.
 *Br J Clin Pharmacol* 2005;60:176-82. doi:10.1111/j.1365-2125.2005.02393.x
+
+James MF, Manson ED, Dennett JE. Nitrous oxide analgesia and altitude.
+*Anaesthesia* 1982;37:285-8. doi:10.1111/j.1365-2044.1982.tb01100.x
+
+James MF, White JF. Anesthetic considerations at moderate altitude.
+*Anesth Analg* 1984;63:1097-105. PMID 6239572
 
 Levine BD, Giller CA, Lane LD, Buckey JC, Blomqvist CG. Cerebral versus
 systemic hemodynamics during graded orthostatic stress in humans.
@@ -474,6 +598,14 @@ valve implantation. *J Am Geriatr Soc* 2021;69:494-9. doi:10.1111/jgs.16882
 
 Wilkinson GR, Shand DG. Commentary: a physiological approach to hepatic drug
 clearance. *Clin Pharmacol Ther* 1975;18:377-90.
+
+Stoelting RK, Longnecker DE. Effect of right-to-left shunt on rate of
+increase in arterial anesthetic concentration. *Anesthesiology*
+1972;36:352-6.
+
+West JB. Prediction of barometric pressures at high altitude with the use of
+model atmospheres. *J Appl Physiol* 1996;81:1850-4.
+doi:10.1152/jappl.1996.81.4.1850
 
 Williams LR, Leggett RW. Reference values for resting blood flow to organs of
 man. *Clin Phys Physiol Meas* 1989;10:187-217.

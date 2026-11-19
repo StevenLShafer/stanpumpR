@@ -1012,6 +1012,46 @@ physiologyPanel <- function()
             "cardiac output or ventilation, which have their own controls."),
       placement = "right"
     ),
+    # Altitude and endobronchial intubation act on the inhaled agents only,
+    # so they show only while one is in the dose table (relevantFields())
+    relevantField(
+    "inhaledAgents",
+    fieldHelp(
+      sliderInput(
+        inputId = "physiology_altitude",
+        label = "Altitude (m)",
+        min = ALTITUDE_MIN,
+        max = ALTITUDE_MAX,
+        value = ALTITUDE_DEFAULT,
+        step = ALTITUDE_STEP,
+        ticks = FALSE
+      ),
+      paste("Height above sea level, which sets the barometric pressure",
+            "(West 1996: 760 Torr at sea level, 324 Torr at 7000 m). It acts",
+            "on the inhaled anesthetics only. Their potency follows partial",
+            "pressure, so MAC and the plotted tensions, in % of a sea-level",
+            "atmosphere, mean the same at every altitude. Room air and",
+            "nitrous oxide from a flowmeter fall with the pressure; a",
+            "sevoflurane or isoflurane vaporizer keeps its dial's partial",
+            "pressure, the desflurane vaporizer its volume percent, which is",
+            "a lower partial pressure. It does not change cardiac output or",
+            "ventilation, which have their own controls."),
+      placement = "right"
+    ),
+    fieldHelp(
+      checkboxInput("endobronchialIntubation", "Endobronchial intubation",
+                    value = FALSE),
+      paste("The tube in one main bronchus: that lung takes all the",
+            "ventilation, and the other, unventilated, is still perfused, so",
+            "half the cardiac output passes it and takes up no agent (Eger",
+            "and Shafer's chapter on inhaled anesthetic kinetics). End-tidal",
+            "reads higher than arterial, and the brain rises more slowly,",
+            "most for the poorly soluble agents (nitrous oxide, desflurane).",
+            "Hypoxic pulmonary vasoconstriction and arterial oxygen are not",
+            "modelled."),
+      placement = "right"
+    )
+    ),
     actionLink("physiologyReset", "Reset to normal"),
     uiOutput("physiologyNote")
     )
@@ -1084,9 +1124,12 @@ physiologyFromInputs <- function(values)
 #' them) is normal.
 #' @param physiology the factors, or NULL
 #' @param temperature the body temperature, C, or NULL (37)
+#' @param altitude metres above sea level, or NULL (sea level)
+#' @param endobronchial TRUE for an endobronchial tube
 #' @returns a data frame of Covariate and Value
 #' @noRd
-physiologyCovariateRows <- function(physiology, temperature = NULL)
+physiologyCovariateRows <- function(physiology, temperature = NULL,
+                                    altitude = NULL, endobronchial = FALSE)
 {
   p <- tryCatch(checkPhysiology(physiology), error = function(e) NULL)
   value <- if (is.null(p)) rep("unreadable", length(PHYSIOLOGY_FACTORS)) else
@@ -1094,10 +1137,16 @@ physiologyCovariateRows <- function(physiology, temperature = NULL)
            paste0("x", trimws(formatC(p[PHYSIOLOGY_FACTORS], digits = 3, format = "fg"))))
   if (is.null(temperature) && !is.null(p)) temperature <- p[["temperature"]]
   t <- tryCatch(checkBodyTemperature(temperature), error = function(e) NULL)
+  h <- tryCatch(checkAltitude(altitude), error = function(e) NULL)
   data.frame(Covariate = c(paste(PHYSIOLOGY_LABELS[PHYSIOLOGY_FACTORS],
                                  "(multiple of normal)"),
-                           "Body temperature (C)"),
-             Value = c(unname(value), if (is.null(t)) "unreadable" else format(t)),
+                           "Body temperature (C)",
+                           "Altitude (m), inhaled anesthetics",
+                           "Endobronchial intubation, inhaled anesthetics"),
+             Value = c(unname(value), if (is.null(t)) "unreadable" else format(t),
+                       if (is.null(h)) "unreadable" else
+                         sprintf("%s (%.0f Torr)", format(h), barometricPressure(h)),
+                       if (isTRUE(endobronchial)) "yes" else "no"),
              stringsAsFactors = FALSE)
 }
 

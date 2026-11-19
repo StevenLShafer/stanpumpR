@@ -217,6 +217,7 @@ RELEVANT_FIELDS <- unname(c(
   "showMEAC", "opioidMacInteraction",
   vapply(COMPANION_MODEL_GROUPS, `[[`, character(1), "input"),
   ASM_INTERACTIONS_INPUT,
+  "inhaledAgents",
   "plotMEAC", "plotInteraction"
 ))
 
@@ -240,7 +241,8 @@ patientFieldReaderSets <- function(drugDefaults = getDrugDefaultsGlobal()) {
 #' model's signature (as getDrugPK() passes it), the baseline osmolality when
 #' an osmotic agent is, and the opioid controls (Opioid tolerance, % MEAC, the
 #' MEAC plot) when an opioid is: a drug of the Opioids category or with a
-#' MEAC.  The opioid-MAC interaction needs an inhaled agent as well, and the
+#' MEAC.  The altitude slider and the endobronchial intubation box act on the
+#' inhaled agents only, and show while a potent agent is in the table.  The opioid-MAC interaction needs an inhaled agent as well, and the
 #' Interaction plot propofol.  A companion model's box is relevant when a
 #' drug of its group is dosed, and the antiseizure interactions box when the
 #' table holds an interaction the model applies.
@@ -270,6 +272,9 @@ relevantFields <- function(drugs, drugDefaults = getDrugDefaultsGlobal()) {
       stats::setNames(vapply(COMPANION_MODEL_GROUPS, `[[`, character(1), "input")),
     stats::setNames(nrow(activeAntiseizureInteractions(drugs)) > 0,
                     ASM_INTERACTIONS_INPUT),
+    # The physiology controls that act on the inhaled agents only: altitude
+    # and endobronchial intubation (R/altitude.R, R/endobronchial.R)
+    inhaledAgents   = gas,
     plotMEAC        = opioid,
     plotInteraction = opioid && "propofol" %in% drugs
   )
