@@ -56,9 +56,15 @@
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # BSA is computed at the pharmacokinetic weight with the switch on and total
-# weight with it off; the volumes and intercompartmental clearances, which
-# carry no covariate, scale by the library's factors with the switch on and
-# are fixed with it off.
+# weight with it off.  V1, V2, V3, Q2 and Q3, with no covariate, belong to the
+# cohort's typical patient, and with the switch on they are anchored at that
+# patient (VINCRISTINE_IGARASHI_COHORT, below; Steven L. Shafer, 2026-11-19,
+# after Carbon's second repository audit, A2-F4): scaled from the 70 kg
+# reference man, as they were, Igarashi's own typical patient (59 kg, 159
+# cm, 60 years, 13 men and 17 women) received volumes 24% and
+# intercompartmental clearances 18% below the published values.  A model with
+# a size covariate on one parameter is not thereby exempt on the others.
+# With the switch off they are fixed.
 #
 # PREGNANCY (R/pregnancy.R): no comparison found; nothing applied.
 # NO EFFECT SITE, NO BAND: the neuropathy and exposure-response relations are
@@ -77,6 +83,11 @@ VINCRISTINE_IGARASHI <- list(
   q3 = 81.1, v3 = 544   # L/h, L
 )
 
+# Igarashi 2021, Table 1 (p. 504), as read on the page image 2026-11-19 (the
+# text layer is row-shifted): medians 59 kg, 159 cm, 60 years; 13 men and 17
+# women.
+VINCRISTINE_IGARASHI_COHORT <- list(weight = 59, height = 159, age = 60, men = 13, women = 17)
+
 #' Vincristine, intravenous, in adults (Igarashi 2021)
 #'
 #' Three compartments; body surface area and age on clearance.  See the
@@ -88,8 +99,12 @@ VINCRISTINE_IGARASHI <- list(
 vincristineIgarashi <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   p <- VINCRISTINE_IGARASHI
+  # V1, V2, V3, Q2 and Q3, with no covariate, are anchored at Igarashi's 30
+  # patients (VINCRISTINE_IGARASHI_COHORT); the clearance carries its own BSA
+  # and age terms
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, VINCRISTINE_IGARASHI_COHORT))
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   bsa <- bsaMosteller(w, height)
   ageTerm <- max(age, ADULT_AGE_TERM_FLOOR)

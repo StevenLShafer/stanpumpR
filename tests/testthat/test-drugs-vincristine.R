@@ -48,3 +48,29 @@ test_that("vincristine is a chemotherapy drug, plasma only, with no band", {
   expect_match(PK$reference, "Igarashi")
   expect_identical(therapeuticRange("vincristine")$band_status, "not_applicable")
 })
+
+test_that("Igarashi's size-free parameters are anchored at her 30 patients (A2-F4)", {
+  # Table 1 (p. 504): 59 kg, 159 cm, 60 years, 13 men and 17 women.  With the
+  # switch on, V1, V2, V3, Q2 and Q3 are the published values divided by the
+  # cohort's pooled factors, so that its men and women, pooled geometrically,
+  # receive the published values; with the switch off they are fixed.
+  kc <- cohortFactorsIndependent(VINCRISTINE_IGARASHI_COHORT)
+  pk <- function(sex, ffm = TRUE) vincristineIgarashi(59, 159, 60, sex, adjustToFFM = ffm)$PK$default
+  published <- list(v1 = 13.2, v2 = 33.9, v3 = 544, cl2 = 60.2 / 60, cl3 = 81.1 / 60)
+  for (sex in c("male", "female")) {
+    own <- pkSizeFactors(59, 159, 60, sex)
+    on <- pk(sex)
+    off <- pk(sex, FALSE)
+    for (par in c("v1", "v2", "v3")) {
+      expect_equal(off[[par]], published[[par]], tolerance = 1e-12)
+      expect_equal(on[[par]], published[[par]] * own$volume / kc$volume, tolerance = 1e-6)
+    }
+    for (par in c("cl2", "cl3")) {
+      expect_equal(off[[par]], published[[par]], tolerance = 1e-12)
+      expect_equal(on[[par]], published[[par]] * own$clearance / kc$clearance, tolerance = 1e-6)
+    }
+  }
+  pooled <- function(par) exp((13 * log(pk("male")[[par]]) + 17 * log(pk("female")[[par]])) / 30)
+  for (par in names(published))
+    expect_equal(pooled(par), published[[par]], tolerance = 1e-6)
+})

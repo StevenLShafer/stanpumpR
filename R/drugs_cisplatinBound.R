@@ -21,6 +21,9 @@
 # models with a pregnancy registry row read the pregnancy flag, so this
 # metabolite does not: in pregnancy its creatinine clearance is not raised,
 # and fm/Vm is (1.5)^0.36, 16%, higher than a consistent treatment would give.
+# BODY SIZE: nothing to anchor at the cohort (A2-F4, 2026-11-19): the volume,
+# 1/(fm/Vm), carries the BSA and creatinine clearance terms, and CLm0/Vm is a
+# rate constant.
 # -----------------------------------------------------------------------------
 
 #' Protein-bound platinum after cisplatin (Urien 2004)

@@ -60,8 +60,15 @@
 # FFM is the model's own size covariate, computed with ffmAlSallami(), which
 # is Janmahasatian's equation in adults (the source's) with a maturation term
 # for children; the switch does not change it, as for the Eleveld models.  Q
-# and V2, with no covariate, scale by the library's factors with the switch
-# on and are fixed with it off.
+# and V2, with no covariate, belong to the cohort's typical patient, and with
+# the switch on they are anchored at that patient (MELPHALAN_NATH_COHORT,
+# below; Steven L. Shafer, 2026-11-19, after Carbon's second repository
+# audit, A2-F4): scaled from the 70 kg reference man, as they were, Nath's
+# own typical patient received a V2 3.1% and a Q 2.3% below the published
+# values.  A model with a size covariate on one parameter is not thereby
+# exempt on the others.  With the switch off they are fixed.  The renal term,
+# Cockcroft-Gault normalised to 70 kg, is not anchored here: whether it is a
+# renal term or a size-free one is a separate decision.
 #
 # PREGNANCY (R/pregnancy.R)
 # =========================
@@ -85,6 +92,10 @@ MELPHALAN_NATH <- list(
   v2 = 15                # L
 )
 
+# Nath 2010, Table 2, as confirmed on the PDF 2026-11-19: medians 78 kg,
+# 168 cm, 57 years; 59 men and 41 women.
+MELPHALAN_NATH_COHORT <- list(weight = 78, height = 168, age = 57, men = 59, women = 41)
+
 #' Melphalan, high-dose intravenous (Nath 2010)
 #'
 #' Two compartments; fat-free mass on the non-renal clearance and V1, a
@@ -103,8 +114,12 @@ melphalanNath <- function(weight, height, age, sex, adjustToFFM = TRUE,
                       creatinine = NULL, pregnant = FALSE)
 {
   p <- MELPHALAN_NATH
+  # Q and V2, with no covariate, are anchored at Nath's 100 patients
+  # (MELPHALAN_NATH_COHORT); the non-renal clearance and V1 carry their own
+  # fat-free mass
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, MELPHALAN_NATH_COHORT))
   ffm <- ffmAlSallami(weight, height, age, sex)
   scr <- adultEquivalentCreatinine(creatinine, age, sex)
   gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)

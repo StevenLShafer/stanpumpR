@@ -55,9 +55,15 @@
 # =====================================
 # Clearance and the central volume carry the model's own weight covariate,
 # evaluated at the pharmacokinetic weight with the switch on (size$pkWeight) and
-# at total body weight with it off, as for cefazolin.  Q and the peripheral
-# volume have no size term in the source and take the library's fat-free-mass
-# factors with the switch on; with it off they are as published
+# at total body weight with it off, as for cefazolin.  Q/F and the peripheral
+# V3/F have no size term in the source: they belong to the cohort's typical
+# patient, and with the switch on they are anchored at that patient
+# (FONDAPARINUX_COHORT, below; Steven L. Shafer, 2026-11-19, after Carbon's
+# second repository audit, A2-F4).  Scaled from the 70 kg reference man, as
+# they were, Delavenne's own typical patient (an old, mostly female cohort)
+# received a V3/F 18% and a Q/F 13.5% below the published values (cohort
+# factors 0.824 and 0.865).  A size covariate on CL/F and V2/F does not exempt
+# the other parameters.  With the switch off they are as published
 # (legacyVolume = 1).
 #
 # EFFECT SITE AND THRESHOLDS
@@ -103,6 +109,15 @@ FONDAPARINUX_WT_REF   <- 68   # kg, reference weight
 FONDAPARINUX_CLCR_REF <- 87   # mL/min, reference MDRD creatinine clearance
 FONDAPARINUX_AGE_REF  <- 74   # y, reference age
 
+# Delavenne 2010, Table 1 (p. 255), the learning set on which the model was
+# built (n = 566, p. 253): weight 69.6 kg, BMI 26.4, age 74.4 years, 75%
+# women (the central values are not labelled mean or median).  No height is
+# printed; it comes from the weight and BMI.  Only the percentage of women is
+# printed, so the counts are 25% and 75% of 566, fractional (141.5 men,
+# 424.5 women).  V3/F and Q/F are anchored at this cohort (see the header).
+FONDAPARINUX_COHORT <- list(weight = 69.6, bmi = 26.4, age = 74.4,
+                            men = 0.25 * 566, women = 0.75 * 566)
+
 #' Fondaparinux pharmacokinetics (subcutaneous, orthopaedic prophylaxis)
 #'
 #' Delavenne 2010; see the header of \code{R/drugs_fondaparinux.R}.
@@ -116,7 +131,11 @@ FONDAPARINUX_AGE_REF  <- 74   # y, reference age
 fondaparinux <- function(weight, height, age, sex, adjustToFFM = TRUE,
                          creatinine = NULL, pregnant = FALSE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  # V3/F and Q/F, with no size term, are anchored at Delavenne's cohort
+  # (FONDAPARINUX_COHORT); CL/F and V2/F carry their own weight term, at the
+  # pharmacokinetic weight, which does not depend on the cohort.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, FONDAPARINUX_COHORT))
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
 
   crcl <- egfrMDRD(age, sex, adultEquivalentCreatinine(creatinine, age, sex))

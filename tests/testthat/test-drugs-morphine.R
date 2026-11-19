@@ -51,13 +51,16 @@ test_that("scales to fat-free mass for a 120 kg man", {
   # keeps the paper's covariate at the body surface area bounded to 2.2 m2
   # (Du Bois BSA is 2.2756 m2): 0.325 x (2.2/1.83)^4 = 0.325 x 2.08875 =
   # 0.67884 L/min.
+  # The pins from before the anchoring at Lotsch's eight subjects
+  # (2026-11-19), divided by that cohort's factors; Q3 is not anchored.
+  kc <- cohortFactorsIndependent(MORPHINE_COHORT)
   actual <- morphine(120, 170, 50, "male")
   expected <- list(
-        v1 = 22.835866,
-        v2 = 111.99838,
-        v3 = 255.29977,
-        cl1 = 1.5057922,
-        cl2 = 2.7206003,
+        v1 = 22.835866 / kc$volume,
+        v2 = 111.99838 / kc$volume,
+        v3 = 255.29977 / kc$volume,
+        cl1 = 1.5057922 / kc$clearance,
+        cl2 = 2.7206003 / kc$clearance,
         cl3 = 0.67884360
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
@@ -70,8 +73,11 @@ test_that("scales to fat-free mass for a 120 kg man", {
 # other formulations, so the liquid takes the tablet's bioavailability; its
 # pilot AUC is not compared with the pivotal tablet's.  Simulated through the app's own path, getDrugPK() and
 # simCpCe(), at the 70 kg reference man.
+# The oral calibration is on the published disposition, which the switch
+# off gives every patient (with it on, Lotsch's anchored disposition and the
+# matching F of 0.3031 at Atrux-Tallau's subject; below)
 oralMorphine <- function(units, maximum = 24 * 60, time = 0, extra = NULL) {
-  PK <- getDrugPK("morphine", 70, 170, 40, "male")
+  PK <- getDrugPK("morphine", 70, 170, 40, "male", adjustToFFM = FALSE)
   dose <- rbind(data.frame(Drug = "morphine", Time = time, Dose = 30,
                            Units = units), extra)
   events <- data.frame(Time = numeric(0), Event = character(0))
@@ -87,8 +93,27 @@ test_that("an oral tablet reproduces the observed peak, its time and AUC", {
   expect_equal(max(cp$Y) * 1000, 28.5, tolerance = 0.01)
   expect_equal(cp$Time[which.max(cp$Y)], 45, tolerance = 0.05)
   # AUC to infinity is F x dose / CL: 0.290 x 30 mg / 74.03 L/h.
-  PK <- getDrugPK("morphine", 70, 170, 40, "male")$PK$default
-  expect_equal(0.290 * 30 / (PK$cl1 * 60) * 1000, 117.4, tolerance = 0.01)
+  PK <- getDrugPK("morphine", 70, 170, 40, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(PK$bioavailability_PO * 30 / (PK$cl1 * 60) * 1000, 117.4, tolerance = 0.01)
+  # With the switch on, Atrux-Tallau's typical subject has the anchored
+  # clearance, 74.0 x her cohort's factor over Lotsch's, and F 0.3031 gives
+  # the same AUC (Carbon's second repository audit, A2-F4)
+  on <- morphine(70, 170, 40, "male")$PK$default
+  cl <- 74.0 * cohortFactorsIndependent(MORPHINE_F_COHORT)$clearance /
+    cohortFactorsIndependent(MORPHINE_COHORT)$clearance
+  expect_equal(on$bioavailability_PO * 30 / cl * 1000, 117.4, tolerance = 0.01)
+})
+
+test_that("anchored at Lotsch's eight subjects (A2-F4)", {
+  kc <- cohortFactorsIndependent(MORPHINE_COHORT)
+  on <- morphine(70, 170, 35, "male")$PK$default
+  off <- morphine(70, 170, 35, "male", adjustToFFM = FALSE)$PK$default
+  # the reference man is the published values divided by the cohort's factors
+  expect_equal(on$v1, off$v1 / kc$volume, tolerance = 1e-6)
+  expect_equal(on$cl1, off$cl1 / kc$clearance, tolerance = 1e-6)
+  expect_equal(on$cl2, off$cl2 / kc$clearance, tolerance = 1e-6)
+  # Q3 keeps its own covariate, unanchored
+  expect_equal(on$cl3, off$cl3)
 })
 
 test_that("the liquid peaks earlier and a third higher, with the same lag and F", {
@@ -111,7 +136,7 @@ test_that("tablet and liquid doses add, exactly, on their own absorption", {
   later <- data.frame(Drug = "morphine", Time = 240, Dose = 10,
                       Units = "mg PO liquid")
   cp <- plasma(oralMorphine("mg PO tablet", extra = later))
-  PK <- getDrugPK("morphine", 70, 170, 40, "male")
+  PK <- getDrugPK("morphine", 70, 170, 40, "male", adjustToFFM = FALSE)
   oral <- function(set, dose, given, t) {
     s <- pmax(t - given - set$tlag_PO, 0)
     dose * (set$p_coef_PO_l1 * exp(-set$lambda_1 * s) +
@@ -173,12 +198,15 @@ test_that("the Pregnant field applies the review's factor (R/pregnancy.R)", {
   # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.  CL1 x 1.7.
   # The values are those the model gives with the flag on; test-pregnancy.R
   # checks the ratio against the flag off and that nothing else moves.
+  # Pinned before the anchoring at Lotsch's cohort (2026-11-19), divided by
+  # its factors.
+  kc <- cohortFactorsIndependent(MORPHINE_COHORT)
   actual <- morphine(70, 165, 30, "female", pregnant = TRUE)$PK$default
-  expect_equal_rounded(14.10666343, actual$v1)
-  expect_equal_rounded(69.18605273, actual$v2)
-  expect_equal_rounded(157.7093109, actual$v3)
-  expect_equal_rounded(1.783688789, actual$cl1)
-  expect_equal_rounded(1.895701042, actual$cl2)
+  expect_equal_rounded(14.10666343 / kc$volume, actual$v1)
+  expect_equal_rounded(69.18605273 / kc$volume, actual$v2)
+  expect_equal_rounded(157.7093109 / kc$volume, actual$v3)
+  expect_equal_rounded(1.783688789 / kc$clearance, actual$cl1)
+  expect_equal_rounded(1.895701042 / kc$clearance, actual$cl2)
   expect_equal_rounded(0.2850456403, actual$cl3)   # Q3 by BSA, 1.7710 m2
   expect_equal(morphine(70, 165, 30, "female")$PK$default,
                morphine(70, 165, 30, "female", pregnant = FALSE)$PK$default)

@@ -19,7 +19,11 @@
 #     ka = 0.63 /h
 #     CL (L/h) = 0.70 x (WT/65)^0.78 x (CLcr/69)^0.25
 #     V2 (central, L) = 6.43 x (WT/65)^1.25
-#     Q  = 0.34 L/h (fixed)       V3 (peripheral, L) = 8.18
+#     Q  = 0.34 L/h               V3 (peripheral, L) = 8.18
+#
+# Q was ESTIMATED (0.34 L/h, 95% CI 0.17-0.49, Table 3); only its
+# between-subject variability was fixed, not Q itself (corrected 2026-11-19:
+# this header used to call Q fixed).
 #
 # with the paper's V2 the central volume and V3 the peripheral, so here
 # v1 = V2 and v2 = V3.  CLcr is the simplified MDRD estimate (egfrMDRD(),
@@ -48,10 +52,15 @@
 # =====================================
 # Clearance and the central volume carry the model's own weight covariate,
 # evaluated at the pharmacokinetic weight with the switch on (size$pkWeight) and
-# at total body weight with it off, as for cefazolin.  Q and the peripheral
-# volume have no size term in the source and take the library's fat-free-mass
-# factors with the switch on; with it off they are as published
-# (legacyVolume = 1).
+# at total body weight with it off, as for cefazolin.  Q and the peripheral V3
+# have no size term in the source: they belong to the cohort's typical
+# patient, and with the switch on they are anchored at that patient
+# (ENOXAPARIN_COHORT, below; Steven L. Shafer, 2026-11-19, after Carbon's
+# second repository audit, A2-F4).  Scaled from the 70 kg reference man, as
+# they were, Berges' own typical patient (82 years, 66 kg, mostly women)
+# received a V3 18% and a Q 14% below the published values (cohort factors
+# 0.816 and 0.858).  A size covariate on CL and V2 does not exempt the other
+# parameters.  With the switch off they are as published (legacyVolume = 1).
 #
 # EFFECT SITE AND THRESHOLDS
 # ==========================
@@ -113,6 +122,18 @@
 ENOXAPARIN_WT_REF   <- 65     # kg, reference weight
 ENOXAPARIN_CLCR_REF <- 69     # mL/min, reference MDRD creatinine clearance
 
+# Berges 2007, Table 1 (p. 431): 189 patients, 72 men and 117 women, mean age
+# 82 years, mean weight 66 kg; France (Saint-Etienne), published 2007.  No
+# height or BMI is printed, so each sex's height is France's at 18 for the
+# birth year 2007 - 82 = 1925 (NCD Risk Factor Collaboration, eLife
+# 2016;5:e13410), less the 0.2 cm (men) and 0.3 cm (women) a cohort loses per
+# decade of age after 18 that the same paper reports: 168.7 cm for the men
+# and 156.8 cm for the women.  V3
+# and Q are anchored at this cohort (see the header).
+ENOXAPARIN_COHORT <- list(groups = list(
+  list(weight = 66, height = 168.7, age = 82, men = 72, women = 0),
+  list(weight = 66, height = 156.8, age = 82, men = 0, women = 117)))
+
 # Pregnancy (see the header), applied directly, not through the renal term.
 # Lebaudy 2008: apparent clearance 0.78 / 0.52 L/h = 1.50; the volume a
 # further 41% in the last two months, independent of weight, so 1.4 on the
@@ -133,7 +154,11 @@ ENOXAPARIN_PREGNANCY_V_FACTOR  <- 1.4
 enoxaparin <- function(weight, height, age, sex, adjustToFFM = TRUE,
                        creatinine = NULL, pregnant = FALSE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  # V3 and Q, with no size term, are anchored at Berges' cohort
+  # (ENOXAPARIN_COHORT); CL and V2 carry their own weight term, at the
+  # pharmacokinetic weight, which does not depend on the cohort.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, ENOXAPARIN_COHORT))
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
 
   crcl <- egfrMDRD(age, sex, adultEquivalentCreatinine(creatinine, age, sex))

@@ -40,9 +40,18 @@
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # With the switch on, the weight that enters Vc and the body surface area is
-# the pharmacokinetic weight (70 kg x FFM / FFM_ref), and the size-free Q and
-# Vp follow the library convention (Vp x FFM ratio, Q x ratio ^ 0.75).  With
-# it off, total body weight enters as published and Q and Vp are fixed.
+# the pharmacokinetic weight (70 kg x FFM / FFM_ref).  Q and Vp, with no size
+# covariate, belong to Smit's typical patient, and with the switch on they are
+# anchored at the cohort (GENTAMICIN_COHORT, below; Steven L. Shafer,
+# 2026-11-19, after Carbon's second repository audit, A2-F4): they follow the
+# library convention (Vp x FFM ratio, Q x ratio ^ 0.75) divided by the
+# cohort's factors, 1.0963 and 1.0714, so that Smit's own typical patient
+# receives the published values; scaled from the 70 kg reference man, as they
+# were, that patient received a Vp 9.6% and a Q 7.1% above them.  A size
+# covariate on Vc and (through the de-indexed eGFR) CL does not exempt Q and
+# Vp.  Vc and the renal term are not anchored: Vc carries its own weight term,
+# and a renal term with body size inside never is.  With it off, total body
+# weight enters as published and Q and Vp are fixed.
 #
 # TARGET
 # ======
@@ -101,6 +110,13 @@
 #   https://doi.org/10.1002/cpt1978233356
 # -----------------------------------------------------------------------------
 
+# Smit 2020, Table 1, the 542 individuals of the training set: 347 men and 195
+# women, median age 69.5 years, weight 90.0 kg, height 175 cm (BMI 29.3).  The
+# pooled height is used: the Methods' sex medians (180 and 167 cm) move the
+# factor by 0.2%.  Q and Vp are anchored at this cohort (Steven L. Shafer,
+# 2026-11-19, after Carbon's second repository audit, A2-F4; see the header).
+GENTAMICIN_COHORT <- list(weight = 90, height = 175, age = 69.5, men = 347, women = 195)
+
 #' Gentamicin pharmacokinetics
 #'
 #' @inheritParams cefazolin
@@ -119,10 +135,15 @@ gentamicin <- function(weight, height, age, sex, adjustToFFM = TRUE,
                        creatinine = NULL, pregnant = FALSE)
 {
   # Size scaling (see the header): size$volume is the weight ratio the
-  # published Vc and the body surface area see; size$clearance scales the
-  # size-free Q and is 1 with the switch off.
+  # published Vc and the body surface area see, and is not anchored;
+  # sizeFree$clearance and sizeFree$volume scale the size-free Q and Vp,
+  # anchored at Smit's cohort (GENTAMICIN_COHORT), and are 1 with the switch
+  # off.
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
                         legacyVolume = weight / 70, legacyClearance = 1)
+  sizeFree <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                            legacyVolume = 1, legacyClearance = 1,
+                            cohort = do.call(cohortSizeFactors, GENTAMICIN_COHORT))
   pkW  <- 70 * size$volume
 
   G <- egfrDeindexed(pkW, height, age, sex,         # mL/min
@@ -134,8 +155,8 @@ gentamicin <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   cl1 <- 3.53 * (G / 74) * 0.751^ICU / 60          # L/min
   v1  <- 16.6 * size$volume
-  cl2 <- 1.48 / 60 * size$clearance
-  v2  <- 13.4 * (if (isTRUE(adjustToFFM)) size$volume else 1)
+  cl2 <- 1.48 / 60 * sizeFree$clearance
+  v2  <- 13.4 * sizeFree$volume
   v3  <- 1                                         # no third compartment
   cl3 <- 0
 

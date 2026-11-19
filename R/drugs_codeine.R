@@ -54,14 +54,16 @@
 # ------------------------------------------------------------
 # Ashraf 2024 is the best phenotype evidence, but its formation estimates were
 # fitted alongside a morphine clearance of 357.5 L/h.  stanpumpR's morphine is
-# its own model, R/drugs_morphine.R (Lotsch Model A, 74.0 L/h at the reference
-# patient).  For a formed metabolite only the RATIO of formation to clearance
+# its own model, R/drugs_morphine.R (Lotsch Model A, 74.0 L/h for Lotsch's
+# typical subject, 78.5 L/h at the reference patient since morphine was
+# anchored at his cohort on 2026-11-19).  For a formed metabolite only the RATIO of formation to clearance
 # is identifiable, so pairing Ashraf's fraction with the library's clearance
 # unchanged would overpredict morphine by 357.5/74.0, a factor of 4.83.
 #
 # The fraction is therefore rescaled by that ratio:
 #
-#     f_normal = (0.16/1.16) * CL_morphine/357.5 = 0.02855 at 74.0 L/h
+#     f_normal = (0.16/1.16) * CL_morphine/357.5 = 0.03030 at 78.52 L/h
+#                (0.02855 at 74.0 L/h, before morphine's anchoring)
 #
 # CL_morphine is READ from the library's morphine model at the reference
 # patient (libraryReferenceClearance("morphine")), not retyped, so a revision
@@ -223,7 +225,7 @@ codeine <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   # codeine clearance between extensive and poor metabolisers.
   # Rescaled from Ashraf's morphine clearance to the library's (see the header).
   FORMATION_FRACTION_NORMAL <- (0.16 / 1.16) *
-    libraryReferenceClearance("morphine") / CODEINE_ASHRAF_MORPHINE_CL   # 0.02855
+    libraryReferenceClearance("morphine") / CODEINE_ASHRAF_MORPHINE_CL   # 0.03030
   clFormation <- clTotal * FORMATION_FRACTION_NORMAL * activity
   clOther     <- clTotal * (1 - FORMATION_FRACTION_NORMAL)
   cl1         <- clOther + clFormation

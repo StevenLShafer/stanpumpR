@@ -90,8 +90,19 @@
 # BODY SIZE (docs/weight-adjustment.md): the model's own lean body weight
 # terms on CL and Vc, with James's formula evaluated at the pharmacokinetic
 # weight with the fat-free-mass switch on and at total body weight with it off
-# (as for istradefylline); the size-free Q and Vp are scaled by the library's
-# factors, which are 1 with the switch off.
+# (as for istradefylline).  Q and Vp, with no size covariate, belong to
+# Jorga's typical patient, and with the switch on they are anchored at the
+# cohort (TOLCAPONE_COHORT, below; Steven L. Shafer, 2026-11-19, after
+# Carbon's second repository audit, A2-F4): Vp x the patient's fat-free-mass
+# ratio to the cohort's typical patient, Q x that ratio ^ 0.75, Vp's albumin
+# term applied as before.  Scaled from the 70 kg reference man, as they were,
+# the cohort's own typical patient received a Vp 6% and a Q 5% below the
+# published values (factors 0.937 and 0.952).  A model with a size covariate
+# on some parameters is not thereby exempt on the others.  With the switch off
+# Q and Vp are the published values (factors 1).  The cohort is Table 1's
+# (p. 41), which describes the 412 patients of the three trials, not the 275
+# analysed; sex is printed only for the trials as a whole (p. 40).  The PDF
+# Shafer supplied is not yet in the reference archive.
 #
 # NO BAND: the AGNP consensus guideline's update 2017 (Hiemke 2018, as Muller
 # 2024 quotes it) gave 3 to 6 mcg/mL two hours after a dose, but the update
@@ -126,6 +137,14 @@ TOLCAPONE_LBW_REF <- 55      # kg, the median
 TOLCAPONE_DOSE50_V  <- 0.55  # volumes at 50 mg tid (not applied)
 TOLCAPONE_DOSE400_V <- 1.40  # volumes at 400 mg tid (not applied)
 
+# Jorga 2000, Table 1 (p. 41), the trial population: 412 patients, 262 men and
+# 150 women (p. 40), medians 71 kg, 170 cm and 65 years (the fluctuator
+# column: 71 kg, 169 cm, 65 years, LBW 55 kg).  It describes the 412 patients
+# enrolled, not the 275 analysed.  Height printed, none derived.  Q and Vp are
+# anchored at this cohort (Steven L. Shafer, 2026-11-19, after Carbon's second
+# repository audit, A2-F4; see the header).
+TOLCAPONE_COHORT <- list(weight = 71, height = 170, age = 65, men = 262, women = 150)
+
 #' Tolcapone pharmacokinetics (oral)
 #'
 #' Two compartments with first-order absorption, lean body weight on
@@ -142,8 +161,12 @@ TOLCAPONE_DOSE400_V <- 1.40  # volumes at 400 mg tid (not applied)
 tolcapone <- function(weight, height, age, sex, adjustToFFM = TRUE,
                       albumin = NULL)
 {
+  # Q and Vp, with no size covariate, are anchored at Jorga's cohort
+  # (TOLCAPONE_COHORT); CL and Vc carry their own LBW terms, read at pkWeight,
+  # which does not depend on the anchor, and take no size factor.
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, TOLCAPONE_COHORT))
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   lbw <- lbmJamesCapped(w, height, sex)   # held at its peak past it, R/lbmJames.R
   # A blank albumin is the median, as getDrugPK() passes it; an NA from a

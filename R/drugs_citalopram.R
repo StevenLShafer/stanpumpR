@@ -102,12 +102,25 @@
 # S-citalopram's clearance carries its own weight covariate, (weight/70)^0.75.
 # As for any model with its own weight covariate, it is evaluated at the
 # pharmacokinetic weight with the switch on (size$pkWeight, 70 kg x
-# FFM / FFM_ref) and at total body weight with it off.  The size-free
-# parameters, both volumes and R-citalopram's clearance, take the library
-# factors with legacyVolume = 1, so with the switch off the published
-# equations are reproduced exactly.  (With the switch on, (pkWeight/70)^0.75
-# equals size$clearance, so every clearance scales alike.)  The reduction is
-# applied after scaling, to the patient's own enantiomer parameters.
+# FFM / FFM_ref) and at total body weight with it off, and it is not anchored.
+#
+# The size-free parameters, V_R, V_S and R-citalopram's clearance, belong to
+# the cohort's typical patient, and with the switch on they are anchored at
+# that patient (CITALOPRAM_COHORT, below; Steven L. Shafer, 2026-11-19, after
+# Carbon's second repository audit, A2-F4).  A size covariate on CL_S does
+# not exempt them.  V_R and V_S are anchored at the pooled cohort (41 men, 40
+# women).  CL_R carries the source's own sex term (13 L/h men, 9.05 women), so
+# it is anchored at the cohort's subject of the patient's own sex
+# (cohortSexSizeFactors()): the source's sex factor already holds the
+# difference in body composition, which the pooled anchor would apply a
+# second time.  Scaled from the 70 kg reference man, as they were, Akil's
+# typical patient received volumes 11% below the published values (pooled
+# factor 0.892), its typical woman a CL_R 15% below (0.851) and its typical
+# man a CL_R 1.2% below (0.988).  The anchoring is applied to the enantiomer
+# parameters, before the reduction; the reduced V1 depends on the volumes
+# alone, while the reduced V2, CL1 and CL2 mix them with CL_S.  With the
+# switch off (legacyVolume = 1) the published equations are reproduced
+# exactly.
 #
 # NO EFFECT SITE
 # ==============
@@ -188,6 +201,14 @@ CITALOPRAM_CL_S <- c(
 # 1.32 (see the header).
 CITALOPRAM_PREGNANCY_CL_FACTOR <- 1.32
 
+# Akil 2016, Table 1 (p. 102): 81 patients, 41 men and 40 women; age 77.8
+# +/- 8.2 years, weight 71.5 +/- 17.2 kg, BMI 26.3 +/- 5.2 (printed in
+# "lbs/in2", but the values are kg/m2).  No height is printed; it comes from
+# the weight and BMI (164.9 cm), the same for both sexes, the table giving no
+# values by sex.  V_R and V_S are anchored at this cohort, CL_R at its subject
+# of the patient's own sex (see the header).
+CITALOPRAM_COHORT <- list(weight = 71.5, bmi = 26.3, age = 77.8, men = 41, women = 40)
+
 # Relative separation of the two elimination rate constants below which the
 # reduced model is collapsed to one compartment.  See the header.
 CITALOPRAM_COINCIDENT <- 1e-4
@@ -248,17 +269,29 @@ citalopram <- function(weight, height, age, sex, cyp2c19 = CYP2C19_DEFAULT,
          ". Must be one of: ", paste(SEX_VALUES, collapse = ", "))
   }
 
-  # Size-free parameters: fixed published values, legacy factors 1.  The
-  # S-clearance weight term: pharmacokinetic weight on, total weight off.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  # Size-free parameters: with the switch on, anchored at Akil's cohort
+  # (CITALOPRAM_COHORT): V_R and V_S at its pooled patient, CL_R, which
+  # carries the source's sex term, at its patient of the patient's own sex
+  # (cohortSexSizeFactors()); with the switch off, the published values
+  # (legacy factors 1).  The S-clearance weight term: pharmacokinetic weight
+  # on, total weight off, not anchored (pkWeight does not depend on the
+  # cohort).
+  pooled <- do.call(cohortSizeFactors, CITALOPRAM_COHORT)
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = pooled)
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
+  ownSexClearance <- 1
+  if (isTRUE(adjustToFFM))
+    ownSexClearance <- pooled$clearance /
+      cohortSexSizeFactors(CITALOPRAM_COHORT, sex)$clearance
 
   # Enantiomer parameters, L and L/h
   vR  <- CITALOPRAM_V_R * size$volume
   vS  <- CITALOPRAM_V_S * size$volume
   # The age terms see 18 years at least (header, AGE AND SEX)
   ageTerm <- max(age, ADULT_AGE_TERM_FLOOR) / 60
-  clR <- CITALOPRAM_CL_R[[sex]] * ageTerm^CITALOPRAM_CL_R_AGE * size$clearance
+  clR <- CITALOPRAM_CL_R[[sex]] * ageTerm^CITALOPRAM_CL_R_AGE *
+    size$clearance * ownSexClearance
   clS <- CITALOPRAM_CL_S[[cyp2c19]] * ageTerm^CITALOPRAM_CL_S_AGE * (pkW / 70)^0.75
   # Pregnancy (see the header): both enantiomers' clearances, before the
   # reduction, so the reduced CL1 rises by exactly the factor.

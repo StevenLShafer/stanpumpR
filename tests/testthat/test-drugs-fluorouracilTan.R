@@ -60,3 +60,29 @@ test_that("fluorouracilTan is a chemotherapy drug, plasma only, with no band", {
   expect_match(PK$reference, "Tan Z")
   expect_identical(therapeuticRange("fluorouracilTan")$band_status, "not_applicable")
 })
+
+test_that("Tan's size-free parameters are anchored at her 140 patients (A2-F4)", {
+  # Table 1 (p. 1032): mean 78.64 kg, BSA 1.94 m2 (174.8 cm by Du Bois),
+  # median 63 years, 77 men and 63 women.  With the switch on, V1, V2 and Q
+  # are the published values divided by the cohort's pooled factors (1.000 to
+  # three places), so that its men and women, pooled geometrically, receive
+  # the published values; with the switch off they are fixed.
+  kc <- cohortFactorsIndependent(FLUOROURACIL_TAN_COHORT)
+  expect_equal(round(c(kc$volume, kc$clearance), 3), c(1, 1))
+  pk <- function(sex, ffm = TRUE) fluorouracilTan(78.64, 174.8, 63, sex, adjustToFFM = ffm)$PK$default
+  published <- list(v1 = 19.7, v2 = 15, cl2 = 52.4 / 60)
+  for (sex in c("male", "female")) {
+    own <- pkSizeFactors(78.64, 174.8, 63, sex)
+    on <- pk(sex)
+    off <- pk(sex, FALSE)
+    for (par in c("v1", "v2")) {
+      expect_equal(off[[par]], published[[par]], tolerance = 1e-12)
+      expect_equal(on[[par]], published[[par]] * own$volume / kc$volume, tolerance = 1e-6)
+    }
+    expect_equal(off$cl2, published$cl2, tolerance = 1e-12)
+    expect_equal(on$cl2, published$cl2 * own$clearance / kc$clearance, tolerance = 1e-6)
+  }
+  pooled <- function(par) exp((77 * log(pk("male")[[par]]) + 63 * log(pk("female")[[par]])) / 140)
+  for (par in names(published))
+    expect_equal(pooled(par), published[[par]], tolerance = 1e-6)
+})

@@ -84,39 +84,36 @@
 #
 # COVARIATES AND BODY SIZE (docs/weight-adjustment.md)
 # ====================================================
-# The model has no size covariate on volume or clearance, so the published
-# values are fixed parameters, read as the 70 kg reference man's, and take
-# the library's default scaling: with the switch on, volume x the
-# fat-free-mass ratio and clearance x that ratio ^ 0.75; with it off, the
-# published values unscaled (legacyVolume = 1).  The BMI flag is applied as
-# published in both positions, so with the switch off Yan's model is
-# reproduced exactly.  The cohort's body size was not available, so no
-# re-anchoring to its fat-free mass was possible.
+# The model has no continuous size covariate on volume or clearance: the BMI
+# step on clearance is a threshold, not a size term.  So the published values
+# belong to Yan's typical patient, and with the switch on both V/F and CL/F
+# are anchored at the cohort (MIRTAZAPINE_COHORT, below; Steven L. Shafer,
+# 2026-11-19, after Carbon's second repository audit, A2-F4): volume x the
+# patient's fat-free-mass ratio to the cohort's typical patient, clearance x
+# that ratio ^ 0.75.  Scaled from the 70 kg reference man, as they were, the
+# cohort's own typical patient received a V/F 20% and a CL/F 15% below the
+# published values (factors 0.802 and 0.847).  With the switch off the
+# published values are used unscaled (legacyVolume = 1).
+#
+# The BMI step and the anchor.  The cohort's typical patient (62.19 kg,
+# 163 cm, BMI 23.4) is below the threshold of 28, so the published CL/F of
+# 28.9 L/h is his, and the clearance is anchored at the same patient as the
+# volume.  The BMI flag is applied as published on top, in both switch
+# positions, so with the switch off Yan's model is reproduced exactly.
 #
 # The overlap, stated plainly: with the switch on, an obese patient's larger
-# fat-free mass RAISES clearance while the BMI flag LOWERS it.  For a 120 kg,
-# 170 cm, 50-year-old man (BMI 41.5) the two give 28.9 x 1.2209 x 0.706 =
-# 24.9 L/h.  The BMI effect is the source's finding, made without a size
-# covariate, and is kept; the fat-free-mass scaling is the library's rule for
-# every fixed-parameter model.  With the switch off he receives Yan's 20.4.
+# fat-free mass RAISES clearance while the BMI flag LOWERS it.  The BMI
+# effect is the source's finding, made without a size covariate, and is
+# kept; the fat-free-mass scaling is the library's rule for every
+# fixed-parameter model.  For a 120 kg, 170 cm, 50-year-old man (BMI 41.5)
+# the switch on gives 28.9 x 0.706 x 1.2209 / 0.847 = 29.4 L/h; with the
+# switch off he receives Yan's 20.4.
 #
 # NOT MIXED IN
 # ============
 # Grasmader et al. 2004 (CYP2D6 intermediate metabolisers about 26% lower
 # clearance) and Brockmoller et al. 2007 (enantiomer-specific kinetics) are
 # separate analyses; neither is combined with Yan's estimates.
-#
-# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18; docs/weight-adjustment.md,
-# Anchoring at the source's cohort): fixed published values belong to the
-# source's cohort, not the reference man. [decision] for Steven L. Shafer: Yan
-# 2026 (Table 1, p. 6, read on the PDF 2026-11-18) prints the cohort, mean
-# 62.19 kg, 163 cm, 48.5 years, 43 men and 62 women, but the model steps
-# clearance down at a BMI of 28 or more, so its typical clearance belongs to
-# the patients below 28 and the cohort's typical patient (BMI 23.4) is one of
-# them. Anchor every parameter at that cohort, anchor the volume at it and the
-# clearance at the sub-28 patients (whose central values are not printed), or
-# leave the reference anchor? Until answered, the values stay anchored at the
-# 70 kg reference man.
 #
 # References
 # ----------
@@ -136,6 +133,13 @@ MIRTAZAPINE_V             <- 310     # L, V/F (abstract: 348)
 MIRTAZAPINE_KA            <- 1.2     # 1/h, fixed (table prints "L/h")
 MIRTAZAPINE_BMI_THRESHOLD <- 28      # kg/m2, BMI >= this lowers CL/F
 MIRTAZAPINE_BMI_EFFECT    <- 0.294   # fractional reduction of CL/F
+
+# Yan 2026, Table 1 (p. 6, read on the PDF 2026-11-18): 105 patients, 43 men
+# and 62 women, mean 62.19 kg, 1.63 m and 48.52 years (13-79); 85 had a BMI
+# below 28 and 20 of 28 or more.  Height printed, none derived.  The model is
+# anchored at this cohort (Steven L. Shafer, 2026-11-19, after Carbon's second
+# repository audit, A2-F4; see the header).
+MIRTAZAPINE_COHORT <- list(weight = 62.19, height = 163, age = 48.52, men = 43, women = 62)
 
 MIRTAZAPINE_SOURCE_DISCREPANCY <- paste0(
   "Yan 2026: Table 2 gives CL/F 28.9 L/h and V/F 310 L (used); the abstract ",
@@ -160,8 +164,10 @@ MIRTAZAPINE_SOURCE_DISCREPANCY <- paste0(
 #' @export
 mirtazapine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  # Fixed published parameters, read as the reference man's: legacy factors 1.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  # Fixed published parameters, Yan's typical patient's: anchored at the
+  # cohort (MIRTAZAPINE_COHORT) with the switch on, unscaled with it off.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, MIRTAZAPINE_COHORT))
 
   # As published: BMI on actual weight, a step at 28 kg/m2.
   bmi <- weight / (height / 100)^2

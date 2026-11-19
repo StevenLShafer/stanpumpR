@@ -20,6 +20,12 @@ oralCodeine <- function(mg = 60, cyp2d6 = CYP2D6_DEFAULT, maximum = 1440) {
   )
 }
 
+# Codeine reads morphine's clearance at the reference man
+# (libraryReferenceClearance()); since morphine was anchored at Lotsch's
+# cohort (2026-11-19) that is 74.0 L/h over the cohort's clearance factor, and
+# every pin that carries it moves by this ratio.
+MORPHINE_REFERENCE_CL_RATIO <- 1 / cohortFactorsIndependent(MORPHINE_COHORT)$clearance
+
 trapz <- function(x, y) sum(diff(x) * (utils::head(y, -1) + utils::tail(y, -1)) / 2)
 
 
@@ -42,7 +48,9 @@ test_that("returns the correct calculations", {
     reference = actual$reference,
     metabolite = list(
       name = "morphine",
-      kFormation = 1.2201179e-04,
+      # 1.2201179e-04 at morphine's 74.0 L/h; x 78.521/74.0 since morphine
+      # was anchored at Lotsch's cohort (2026-11-19)
+      kFormation = 1.2201179e-04 * MORPHINE_REFERENCE_CL_RATIO,
       firstPassFraction = 0.0015,
       mwRatio = 285.34 / 299.36
     )
@@ -135,9 +143,11 @@ test_that("the formation fraction is Ashraf rescaled to the library's morphine c
   # their metabolites").
   morphineCL <- morphine(70, 170, 35, "male")$PK$default$cl1 * 60
   expect_equal(libraryReferenceClearance("morphine"), morphineCL)
-  expect_equal(morphineCL, 74.0, tolerance = 1e-9)
+  # Lotsch's 74.0 L/h belongs to his cohort's typical subject; the reference
+  # man's is that over the cohort's clearance factor (anchored 2026-11-19)
+  expect_equal(morphineCL, 74.0 * MORPHINE_REFERENCE_CL_RATIO, tolerance = 1e-9)
   expected <- (0.16 / 1.16) * morphineCL / 357.5
-  expect_equal(expected, 0.0285508, tolerance = 1e-5)
+  expect_equal(expected, 0.0285508 * MORPHINE_REFERENCE_CL_RATIO, tolerance = 1e-5)
 
   x <- codeine(70, 171, 50, "male", adjustToFFM = FALSE)
   p <- x$PK$default
@@ -163,6 +173,10 @@ test_that("formed morphine appears on the morphine row, peaking 1-2 h", {
   expect_true("morphine" %in% names(o))
   expect_equal(o$morphine$formedFrom, "codeine")
 
+  # Read on a half-minute grid: the plot's own grid has no point between
+  # about 100 and 120 min, where this peak is flat (Lafolie's window is
+  # 1-2 h; the peak is at 110.5 min)
+  o <- withOutputTimes(seq(60, 180, by = 0.5), oralCodeine(60))
   w <- o$morphine$wide
   # Lafolie 1996: every measured compound, morphine included, peaked 1-2 h.
   # The first-pass fraction is set at the top of the range that keeps this
@@ -387,5 +401,5 @@ test_that("scales to fat-free mass for a 120 kg man", {
   x <- codeine(120, 170, 50, "male")
   expect_equal_rounded(x$PK$default$v1,  230.84321)
   expect_equal_rounded(x$PK$default$cl1, 0.92300994)
-  expect_equal_rounded(x$metabolite$kFormation, 0.00011415816)
+  expect_equal_rounded(x$metabolite$kFormation, 0.00011415816 * MORPHINE_REFERENCE_CL_RATIO)
 })
