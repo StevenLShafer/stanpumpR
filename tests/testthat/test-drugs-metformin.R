@@ -22,8 +22,8 @@ test_that("a higher creatinine lowers clearance; switch on uses the pharmacokine
 
 test_that("pregnancy: CL/F x 1.27 and V/F x 1.33, renal term not raised", {
   # A woman of 30 years, 70 kg, 165 cm: CL/F x 1.27 and V/F x 1.33 (Liao
-  # 2020); the Cockcroft-Gault term is NOT also raised, so the factor is the
-  # same with a measured creatinine (R/drugs_metformin.R, PREGNANCY).
+  # 2020); the Cockcroft-Gault term is NOT also raised, and with a measured
+  # creatinine the CL/F factor is not applied (R/drugs_metformin.R, PREGNANCY).
   on  <- getDrugPK("metformin", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
   off <- getDrugPK("metformin", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
   expect_identical(off, getDrugPK("metformin", 70, 165, 30, SEX_FEMALE))
@@ -35,7 +35,12 @@ test_that("pregnancy: CL/F x 1.27 and V/F x 1.33, renal term not raised", {
   expect_identical(a[same], b[same])
   cr <- function(p) getDrugPK("metformin", 70, 165, 30, SEX_FEMALE, pregnant = p,
                               creatinine = 0.6)$PK[[1]]
-  expect_equal(cr(TRUE)$cl1 / cr(FALSE)$cl1, METFORMIN_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+  expect_equal(cr(TRUE)$cl1, cr(FALSE)$cl1)                   # measured: no CL/F factor
+  expect_equal(cr(TRUE)$v1 / cr(FALSE)$v1, METFORMIN_PREGNANCY_V_FACTOR, tolerance = 1e-6)
+  measured <- getDrugPK("metformin", 70, 165, 30, SEX_FEMALE, pregnant = TRUE,
+                        creatinine = 0.6)$reference
+  expect_match(measured, "factor not applied", fixed = TRUE)
+  expect_no_match(measured, "CL/F x 1.27", fixed = TRUE)
   expect_match(on$reference, "Liao", fixed = TRUE)
   expect_no_match(off$reference, "Liao", fixed = TRUE)
   # The values the model gives with the flag on

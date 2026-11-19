@@ -10,4 +10,4 @@ Immediate release by mouth (`mg PO`, once, twice or three times daily). The exte
 
 Concentration only, in mcg/mL. The same paper's model of the single-dose glucose response in healthy adults (a maximum of 19.8 with a potency of 3.68 mcg/mL, through a transit delay of half an hour) is an endpoint of its own, not a chronic effect, and is not drawn. See [Antidiabetic models and their limits](help:models/antidiabetics).
 
-The pregnancy factors are meant for a blank **Serum creatinine**: a pregnant woman's measured creatinine is low and raises the clearance by itself, so with one entered the two together overstate it.
+The pregnancy clearance factor is applied only when **Serum creatinine** is blank: a pregnant woman's measured creatinine is low and raises the clearance by itself, so with one entered the factor would count the rise twice. The volume factor applies either way.
