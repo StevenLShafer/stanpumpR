@@ -29,8 +29,11 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# V3/fm scales by the library's volume factor with the switch on and is fixed
-# with it off; the clearance carries its own renal covariate.
+# V3/fm, with no covariate, is anchored at the parent's cohort, Joerger's 59
+# women (DOXORUBICIN_JOERGER_COHORT; Steven L. Shafer, 2026-11-19, after
+# Carbon's second repository audit, A2-F4), with the switch on, and is fixed
+# with it off.  The clearance carries its own renal covariate, and as a
+# renal term it is not anchored (docs/weight-adjustment.md).
 # -----------------------------------------------------------------------------
 
 # Joerger 2007, Table IV and Eq. 11
@@ -55,8 +58,11 @@ doxorubicinolJoerger <- function(weight, height, age, sex, adjustToFFM = TRUE,
                           creatinine = NULL)
 {
   p <- DOXORUBICINOL_JOERGER
+  # V/fm is anchored at the parent's cohort; the renal clearance is not
+  # anchored (its Cockcroft-Gault weight carries the size)
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, DOXORUBICIN_JOERGER_COHORT))
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   scr <- adultEquivalentCreatinine(creatinine, age, sex)
   clcr <- creatinineClearanceCG(w, age, sex, scr)                     # mL/min
