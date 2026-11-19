@@ -37,7 +37,12 @@
 # (fasting, little water, 30 minutes before food) are not always kept.
 # Glasser SP, Drugs don't work in patients who don't take them, J Clin
 # Hypertens 2018;20:1504-1506 (PMID 30238616; supplied by Shafer), is the
-# general case, and inst/app-help/cautions.md carries it for the library.
+# general case, with Osterberg and Blaschke, N Engl J Med 2005;353:487-497
+# (PMID 16079372) and Blaschke, Osterberg, Vrijens and Urquhart, Annu Rev
+# Pharmacol Toxicol 2012;52:275-301 (PMID 21942628: variable adherence "vies
+# with pharmacokinetics as the leading source of variance in drug response
+# in ambulatory care"); inst/app-help/cautions.md carries them for the
+# library.
 # Overgaard 2021b itself leaves the cause open: "Whether these observations
 # reflect real problems with drug absorption and/or compliance remains
 # uncertain."  The PIONEER patients were still in trials, where adherence is

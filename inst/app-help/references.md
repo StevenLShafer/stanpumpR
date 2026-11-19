@@ -22,6 +22,10 @@ Minto CF, Schnider TW, Gregg KM, Henthorn TK, Shafer SL. Using the time of maxim
 
 Why a curve for a drug taken at home is an upper bound, and why stanpumpR prefers a model fitted to outpatients ([Cautions](help:cautions)):
 
+Osterberg L, Blaschke T. Adherence to medication. *N Engl J Med* 2005;353:487-497. [DOI 10.1056/NEJMra050100](https://doi.org/10.1056/NEJMra050100)
+
+Blaschke TF, Osterberg L, Vrijens B, Urquhart J. Adherence to medications: insights arising from studies on the unreliable link between prescribed and actual drug dosing histories. *Annu Rev Pharmacol Toxicol* 2012;52:275-301. [DOI 10.1146/annurev-pharmtox-011711-113247](https://doi.org/10.1146/annurev-pharmtox-011711-113247)
+
 Glasser SP. Drugs don't work in patients who don't take them. *J Clin Hypertens* 2018;20:1504-1506. [DOI 10.1111/jch.13380](https://doi.org/10.1111/jch.13380)
 
 ## Pregnancy
