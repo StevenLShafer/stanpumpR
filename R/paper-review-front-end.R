@@ -213,9 +213,12 @@ paperReviewFrontEndSpec <- function(extraction, patient)
 }
 
 #' A regimen's intravenous doses as front-end engine doses (mg, mg/min)
+#' @param regimen the extracted dose regimen
+#' @param patient the reference patient
+#' @param horizon the end of the simulated comparison span, in minutes
 #' @returns a list: doses (frontEndDoses()), problems
 #' @keywords internal
-paperReviewFrontEndDoses <- function(regimen, patient)
+paperReviewFrontEndDoses <- function(regimen, patient, horizon = NA_real_)
 {
   bolus <- data.frame(time = numeric(0), amount = numeric(0))
   inf <- data.frame(start = numeric(0), end = numeric(0), rate = numeric(0))
@@ -228,7 +231,7 @@ paperReviewFrontEndDoses <- function(regimen, patient)
       next
     }
     minutes <- paperReviewMinutes(d$time_units %or% "min")
-    mass <- mg[d$mass_unit %or% "other"]
+    mass <- unname(mg[d$mass_unit %or% "other"])
     t0 <- paperReviewNum(d$time) * minutes
     amount <- paperReviewNum(d$amount)
     if (is.na(mass) || !is.finite(t0) || !is.finite(amount)) {
@@ -239,16 +242,36 @@ paperReviewFrontEndDoses <- function(regimen, patient)
     if (!is.finite(analyte)) analyte <- 1
     scale <- mass * (if (identical(d$per_kg, "yes")) patient$weight else 1) * analyte
     duration <- paperReviewNum(d$duration) * minutes
+    emptyDuration <- is.null(d$duration) || !length(d$duration) ||
+      identical(d$duration, "") || (length(d$duration) == 1 && is.na(d$duration) && !is.nan(d$duration))
     if (paperReviewIsRateDose(d)) {
       perMin <- switch(d$per_time %or% "none", per_min = 1, per_h = 1 / 60, per_day = 1 / 1440, NA_real_)
       rate <- if (is.finite(perMin)) amount * perMin else if (is.finite(duration) && duration > 0) amount / duration else NA_real_
+      if (emptyDuration && is.finite(perMin)) duration <- horizon - t0
       if (!is.finite(rate) || !is.finite(duration) || duration <= 0) {
         problems <- c(problems, "An infusion has no readable rate or duration.")
         next
       }
       inf <- rbind(inf, data.frame(start = t0, end = t0 + duration, rate = rate * scale))
     } else {
-      bolus <- rbind(bolus, data.frame(time = t0, amount = amount * scale))
+      times <- t0
+      interval <- paperReviewNum(d$interval) * minutes
+      if (is.finite(interval) && interval > 0) {
+        end <- if (emptyDuration) horizon else t0 + duration
+        if (!is.finite(end) || end < t0) {
+          problems <- c(problems, "A repeated bolus has no readable duration or comparison horizon.")
+          next
+        }
+        # A stated regimen duration excludes the dose starting the next course.
+        n <- if (emptyDuration) floor((end - t0) / interval + 1e-9) + 1 else
+          max(1, ceiling(duration / interval - 1e-9))
+        if (n > PAPER_REVIEW_MAX_REPEATS) {
+          problems <- c(problems, "A repeated bolus exceeds the maximum number of doses.")
+          next
+        }
+        times <- t0 + interval * (seq_len(n) - 1)
+      }
+      bolus <- rbind(bolus, data.frame(time = times, amount = amount * scale))
     }
   }
   list(doses = if (nrow(bolus) + nrow(inf)) frontEndDoses(bolus, inf) else NULL, problems = unique(problems))
@@ -316,6 +339,7 @@ paperReviewFrontEndChecks <- function(extraction, reference)
   sys <- frontEndSystem(spec)
   for (f in extraction$figures %or% list()) {
     if (!identical(f$y_quantity, "concentration") || identical(f$one_regimen, "no")) next
+    if (identical(f$concentration_site, "effect_site")) next
     if ((f$y_normalization %or% "none") != "none") next
     factor <- paperReviewConcentrationFactor(f$y_units %or% "other", "mcg", extraction$drug$molecular_weight)
     minutes <- paperReviewMinutes(f$time_units %or% "min")
@@ -336,13 +360,17 @@ paperReviewFrontEndChecks <- function(extraction, reference)
       rid <- s$regimen_id %or% f$regimen_id
       regimen <- paperReviewRegimen(extraction, rid)
       if (is.null(regimen)) { setAside <- c(setAside, paste0(s$label %or% "a series", ": names no regimen")); next }
-      doses <- paperReviewFrontEndDoses(regimen, reference)
-      if (is.null(doses$doses)) { setAside <- c(setAside, paste0(s$label %or% "a series", ": no intravenous dose")); next }
       t <- vapply(s$points, function(p) paperReviewNum(p$time), 0) * minutes
       y <- vapply(s$points, function(p) paperReviewNum(p$value), 0) * factor
       keep <- is.finite(t) & t >= 0 & is.finite(y) & y > 0
       if (!any(keep)) next
       maximum <- max(t[keep]) * 1.05 + 1
+      doses <- paperReviewFrontEndDoses(regimen, reference, horizon = maximum)
+      if (length(doses$problems) || is.null(doses$doses)) {
+        setAside <- c(setAside, paste0(s$label %or% "a series", ": ",
+          paste(if (length(doses$problems)) doses$problems else "no intravenous dose", collapse = "; ")))
+        next
+      }
       grid <- sort(unique(c(seq(0, maximum, length.out = 400), t[keep])))
       sim <- tryCatch(frontEndSimulate(sys, doses$doses, grid), error = function(e) e)
       if (inherits(sim, "error")) { setAside <- c(setAside, paste0(s$label %or% "a series", ": ", conditionMessage(sim))); next }
@@ -354,6 +382,9 @@ paperReviewFrontEndChecks <- function(extraction, reference)
       curves[[length(curves) + 1]] <- data.frame(Time = sim$time, Cp = sim[[obs]], regimen = label,
                                                  stringsAsFactors = FALSE)
     }
+    if (length(setAside))
+      add("concern", paste0(id, ": some series could not be compared"),
+          paste(setAside, collapse = "; "), f$location)
     if (!length(rows)) next
     points <- do.call(rbind, rows)
     use <- points$predicted > 0

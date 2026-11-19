@@ -207,6 +207,8 @@ frontEndNewSystem <- function()
 frontEndAddState <- function(sys, name, amount = TRUE, volume = NA_real_)
 {
   n <- length(sys$names)
+  if (n >= FRONT_END_MAX_STATES)
+    stop("The model may have at most ", FRONT_END_MAX_STATES, " states.")
   A <- matrix(0, n + 1, n + 1)
   if (n) A[seq_len(n), seq_len(n)] <- sys$A
   sys$A <- A
@@ -219,7 +221,7 @@ frontEndAddState <- function(sys, name, amount = TRUE, volume = NA_real_)
 frontEndIndex <- function(sys, name) match(name, sys$names)
 
 #' A flow `flow` (L/min) carrying state `from` (an amount in volume
-#' sys$volume[from]) into state `to` (NULL: out of the system)
+#' `sys$volume[from]`) into state `to` (NULL: out of the system)
 #' @keywords internal
 frontEndFlow <- function(sys, from, to, flow)
 {
@@ -257,7 +259,28 @@ frontEndRecirculatory <- function(spec)
   ClE <- frontEndNonNegative(spec$elimination_clearance, "Elimination clearance")
   inFlow <- !identical(spec$elimination_in_flow, FALSE)
   pname <- vapply(seq_along(pathways), function(k) pathways[[k]]$name %or% paste0("pathway", k), "")
-  if (anyDuplicated(pname)) stop("Two pathways share a name.")
+  if (anyNA(pname) || any(!nzchar(pname)) || anyDuplicated(pname))
+    stop("Pathways need distinct, nonempty names.")
+  centralKeys <- paste0("central", seq_along(central))
+  if (any(pname %in% c(centralKeys, "eliminated")))
+    stop("A pathway name collides with a central chain or eliminated.")
+  centralVolumes <- lapply(central, frontEndChainVolumes, what = "A central delay element")
+  pathwayVolumes <- lapply(seq_along(pathways), function(k) {
+    p <- pathways[[k]]
+    what <- paste0("Pathway '", pname[k], "'")
+    if (identical(p$type, "delay")) frontEndChainVolumes(p, what)
+    else if (identical(p$type, "tissue")) frontEndPositive(p$volume, paste0(what, " volume"))
+    else stop(what, " has unknown type '", p$type, "'.")
+  })
+  keys <- c(centralKeys, pname)
+  stateNames <- unlist(Map(function(key, v)
+    if (length(v) == 1) key else paste0(key, "[", seq_along(v), "]"),
+    keys, c(centralVolumes, pathwayVolumes)), use.names = FALSE)
+  generated <- unlist(Map(function(key, v)
+    if (length(v) > 1) paste0(key, "[", seq_along(v), "]") else character(0),
+    keys, c(centralVolumes, pathwayVolumes)), use.names = FALSE)
+  if (anyDuplicated(stateNames) || any(keys %in% generated) || "eliminated" %in% stateNames)
+    stop("A pathway name collides with a generated state name.")
   flows <- vapply(seq_along(pathways), function(k)
     frontEndPositive(pathways[[k]]$flow, paste0("Pathway '", pname[k], "' flow")), 0)
   total <- sum(flows) + if (inFlow) ClE else 0
@@ -267,6 +290,12 @@ frontEndRecirculatory <- function(spec)
          " L/min: blood would be created or lost.")
   # Rounding in a paper's table leaves a residue within the tolerance; it
   # returns at once as a shunt of no volume, so that mass is conserved.
+  if (total > CO) {
+    scale <- CO / total
+    flows <- flows * scale
+    if (inFlow) ClE <- ClE * scale
+    total <- CO
+  }
   shunt <- CO - total
 
   # The states.
@@ -278,7 +307,7 @@ frontEndRecirculatory <- function(spec)
     chains[[prefix]] <<- list(states = nm, flow = flow)
   }
   for (i in seq_along(central))
-    addChain(paste0("central", i), frontEndChainVolumes(central[[i]], "A central delay element"), fractions[i] * CO)
+    addChain(paste0("central", i), centralVolumes[[i]], fractions[i] * CO)
   tissue <- character(0)
   clearance <- numeric(0); clearanceInFlow <- logical(0)
   for (k in seq_along(pathways)) {
@@ -286,9 +315,9 @@ frontEndRecirculatory <- function(spec)
     what <- paste0("Pathway '", pname[k], "'")
     type <- p$type %or% ""
     if (identical(type, "delay")) {
-      addChain(pname[k], frontEndChainVolumes(p, what), flows[k])
+      addChain(pname[k], pathwayVolumes[[k]], flows[k])
     } else if (identical(type, "tissue")) {
-      addChain(pname[k], frontEndPositive(p$volume, paste0(what, " volume")), flows[k])
+      addChain(pname[k], pathwayVolumes[[k]], flows[k])
       tissue <- c(tissue, pname[k])
     } else stop(what, " has unknown type '", type, "'.")
     clearance[pname[k]] <- frontEndNonNegative(p$clearance, paste0(what, " clearance"))
@@ -347,7 +376,7 @@ frontEndRecirculatory <- function(spec)
       A[e, last] <- A[e, last] + cl / sys$volume[last]
     }
   }
-  venous <- venous + shunt * aRow
+  venous <- venous + extracted * shunt * aRow
   for (i in seq_along(central)) {
     head <- idx(chains[[paste0("central", i)]]$states[1])
     A[head, ] <- A[head, ] + fractions[i] * venous
@@ -479,6 +508,8 @@ frontEndCompartmental <- function(spec)
     r <- numeric(nState); r[match(names(w), sys$names)] <- as.numeric(w); r
   }
   entry <- weights(spec$dose_into %or% nm[1], "The dose")
+  if (any(!is.finite(entry)) || any(entry < 0))
+    stop("The dose fractions must be finite and nonnegative.")
   if (abs(sum(entry) - 1) > 1e-9) stop("The dose fractions must sum to 1.")
   obs <- spec$observe %or% stats::setNames(list(nm[1]), nm[1])
   O <- do.call(rbind, lapply(names(obs), function(o) {
@@ -502,6 +533,8 @@ frontEndAddEffectSite <- function(sys, ke0, driver = "arterial", name = "effect"
   frontEndPositive(ke0, "ke0")
   if (!driver %in% rownames(sys$O)) stop("No observation '", driver, "' to drive the effect site.")
   n <- nrow(sys$A)
+  if (n >= FRONT_END_MAX_STATES)
+    stop("The model may have at most ", FRONT_END_MAX_STATES, " states.")
   A <- matrix(0, n + 1, n + 1); A[seq_len(n), seq_len(n)] <- sys$A
   A[n + 1, seq_len(n)] <- ke0 * sys$O[driver, ]
   A[n + 1, n + 1] <- -ke0
@@ -551,8 +584,9 @@ frontEndDoses <- function(bolus = NULL, infusion = NULL)
 #' @param doses a frontEndDoses() list
 #' @param times the output times, minutes (sorted or not; at least 0)
 #' @returns a data frame: time, then one column per observation, then
-#'   \code{body} (amount in the body) and \code{dosed} (amount given so far),
-#'   whose difference less \code{eliminated} is the mass balance error
+#'   \code{body_plus_eliminated} (amount in the body plus eliminated) and
+#'   \code{dosed} (amount given so far). The mass balance error is
+#'   \code{body_plus_eliminated} minus \code{dosed}.
 #' @keywords internal
 frontEndSimulate <- function(sys, doses, times)
 {

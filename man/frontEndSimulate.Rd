@@ -15,8 +15,9 @@ frontEndSimulate(sys, doses, times)
 }
 \value{
 a data frame: time, then one column per observation, then
-\code{body} (amount in the body) and \code{dosed} (amount given so far),
-whose difference less \code{eliminated} is the mass balance error
+\code{body_plus_eliminated} (amount in the body plus eliminated) and
+\code{dosed} (amount given so far). The mass balance error is
+\code{body_plus_eliminated} minus \code{dosed}.
 }
 \description{
 Exact: between events the augmented system is advanced by its matrix

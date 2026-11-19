@@ -102,3 +102,45 @@ test_that("the example's empty front-end block is no front-end model", {
   expect_false(grepl("front_end", ex$extraction_limitations %or% ""))
   expect_null(paperReviewFrontEndSpec(ex, paperReviewReferencePatient(ex)))
 })
+
+test_that("supplied unusable optional blocks are reported", {
+  for (bad in list("bad", 42, NULL, list())) {
+    ex <- paperReviewExample()
+    ex["front_end"] <- list(bad)
+    expect_match(paperReviewValidate(ex)$extraction_limitations, "front_end")
+  }
+})
+
+test_that("front-end dose conversion uses the comparison horizon and repeats boluses", {
+  patient <- list(weight = 70)
+  dose <- list(route = "iv_infusion", time = 2, amount = 60, mass_unit = "mg",
+               per_time = "per_h", time_units = "min", duration = "")
+  convert <- function(d) paperReviewFrontEndDoses(list(doses = list(d)), patient, horizon = 12)
+  result <- convert(dose)
+  expect_length(result$problems, 0)
+  expect_equal(result$doses$infusion$end, 12)
+  expect_equal(result$doses$infusion$rate, 1)
+  dose$duration <- 3
+  expect_equal(convert(dose)$doses$infusion$end, 5)
+  for (bad in list("unreadable", Inf, NaN)) {
+    dose$duration <- bad
+    expect_length(convert(dose)$problems, 1)
+  }
+  dose$route <- "iv_bolus"; dose$per_time <- "none"; dose$duration <- ""; dose$interval <- 5
+  expect_equal(convert(dose)$doses$bolus$time, c(2, 7, 12))
+  dose$duration <- 10
+  expect_equal(convert(dose)$doses$bolus$time, c(2, 7))
+  dose$interval <- NULL
+  expect_equal(convert(dose)$doses$bolus$time, 2)
+})
+
+test_that("effect-site figures and partially converted regimens are set aside", {
+  ex <- henthornExtraction()
+  ex$figures[[1]]$concentration_site <- "effect_site"
+  expect_length(paperReviewFrontEndChecks(ex, paperReviewReferencePatient(ex))$figures, 0)
+  ex$figures[[1]]$concentration_site <- "plasma"
+  ex$regimens[[1]]$doses[[2]] <- list(route = "oral")
+  result <- paperReviewFrontEndChecks(ex, paperReviewReferencePatient(ex))
+  expect_length(result$figures, 0)
+  expect_true(any(vapply(result$findings, function(f) grepl("not intravenous", f$detail %or% ""), logical(1))))
+})

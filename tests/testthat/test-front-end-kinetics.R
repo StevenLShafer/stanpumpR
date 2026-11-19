@@ -302,3 +302,50 @@ test_that("Olofsen 2010's venous chain has the paper's half-lives and crossing",
   expect_lt(s$arterial[3], s$venous[3])
   expect_equal(s$body_plus_eliminated, s$dosed, tolerance = 1e-9)
 })
+
+test_that("state limits apply before allocation, including effect sites", {
+  sys <- frontEndNewSystem()
+  sys$names <- rep("state", FRONT_END_MAX_STATES)
+  expect_error(frontEndAddState(sys, "extra"), "at most 400")
+  sys <- list(A = matrix(0, 400, 400), O = matrix(0, 1, 400,
+    dimnames = list("arterial", NULL)))
+  expect_error(frontEndAddEffectSite(sys, 1), "at most 400")
+})
+
+test_that("pathway names cannot overwrite chain keys or generated states", {
+  spec <- list(type = "recirculatory", cardiac_output = 2,
+    central = list(volume = 1, n = 2),
+    pathways = list(list(name = "body", type = "delay", volume = 2, n = 2, flow = 1),
+                    list(name = "other", type = "delay", volume = 2, n = 2, flow = 1)))
+  expect_silent(frontEndSystem(spec))
+  for (name in c("central1", "central1[1]", "eliminated", "body[1]")) {
+    spec$pathways[[2]]$name <- name
+    expect_error(frontEndSystem(spec), "collides")
+  }
+})
+
+test_that("rounding flows preserve positive concentrations and mass balance", {
+  for (inFlow in c(TRUE, FALSE)) for (offset in c(-0.005, 0, 0.005)) {
+    spec <- list(type = "recirculatory", cardiac_output = 2,
+      central = list(volume = 1), elimination_clearance = 0.2,
+      elimination_in_flow = inFlow,
+      pathways = list(list(name = "body", type = "tissue", volume = 3,
+        flow = 2 + offset - if (inFlow) 0.2 else 0)))
+    sys <- frontEndSystem(spec)
+    expect_lt(max(abs(colSums(sys$A))), 1e-12)
+    expect_true(all(sys$O >= 0))
+    sim <- frontEndSimulate(sys, frontEndDoses(bolus = data.frame(time = 0, amount = 10)), c(0, 1, 10))
+    expect_equal(sim$body_plus_eliminated, sim$dosed, tolerance = 1e-10)
+    expect_true(all(sim$mixed_venous >= 0))
+  }
+})
+
+test_that("dose fractions must be finite and nonnegative but observation weights may be signed", {
+  spec <- list(type = "compartmental", compartments = list(list(name = "a", volume = 1),
+    list(name = "b", volume = 1)), observe = list(difference = c(a = 1, b = -1)))
+  expect_silent(frontEndSystem(spec))
+  for (w in list(c(a = 2, b = -1), c(a = Inf), c(a = NA_real_), c(a = NaN))) {
+    spec$dose_into <- w
+    expect_error(frontEndSystem(spec), "finite and nonnegative")
+  }
+})

@@ -39,9 +39,13 @@ on the dog thiopental model after a 100 mg bolus:
 | 0.5 | 3.3 | 13.59 / 13.52 / 9.03 |
 | 1 | 3.3 | 19.56 / 19.85 / 12.65 |
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:46dda4dc05920d1ced530c4745b2ef51adb776b835bf865cafa67b791ebb5ffc -->
+
 Model 3 (a mammillary model whose VC is the recirculatory VC + VND) misses
 the arterial curve by three times its own peak, yet its effect-site peak by
-under 2% at every ke0 from 0.25 to 1/min; model 1 (VC from samples at 1 min
+2.3% or less at every ke0 from 0.25 to 1/min; model 1 (VC from samples at 1 min
 and later, 3.37 L) misses the effect-site peak by a third. The error that
 reaches the effect site is the central volume, not the oscillation. The
 qualification is timing: the effect sites differ in their first fraction of
@@ -52,6 +56,8 @@ central chain), the first pass did get through at ke0 1/min (a 17% higher
 peak): how much the brain sees of the first pass depends on how dispersed
 the pulmonary transit is, which is what the 2002 paper's delay elements
 will settle.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## The engine
 
@@ -77,20 +83,26 @@ observed through y = O x:
   (`frontEndCompartmental()`), for structures that are neither of the two
   families (Olofsen 2010's venous chain).
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:11a02faea4b95c5288f55fabd6350c08ded2035f7248bb738ebb874fc6995caa -->
+
 A delay element, central or peripheral, may be a series of segments, each a
 chain of n identical compartments with its own volume: Henthorn 1992's
 initial volume, time lag and sampling volume are three (n = 1, a long chain,
 n = 1). A pure delay is a long chain, Krejcie 1996b's own reading of it (n to
 infinity); SAAM's delays were not pure (Krejcie 1994's model curve for dog 2
 starts before its tabulated lag). A pathway may carry an elimination from
-its last compartment, either on top of its outflow (Upton's body
-compartment) or taken out of it (`clearance_in_flow`: Henthorn 1992's ICG
+its last compartment, either on top of its outflow
+or taken out of it (`clearance_in_flow`: Henthorn 1992's ICG
 from the slow circuit, eq. 11; Henthorn 1999's ketamine from the fast
 tissue). When ClE is not one of the flows summed to cardiac output
 (`elimination_in_flow = FALSE`), it is extracted from the arterial blood
 feeding the pathways (Upton 2004 eq. 2b). Until 2026-11-19 that branch added
 the elimination on top of the flows and so created drug; no test had
 exercised it, and Upton 2004 found it.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 An infusion is constant or decays exponentially, which is what a BET
 target-controlled regimen is (`frontEndBET()`), so the inputs are themselves

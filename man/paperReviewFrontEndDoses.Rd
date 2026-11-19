@@ -4,7 +4,14 @@
 \alias{paperReviewFrontEndDoses}
 \title{A regimen's intravenous doses as front-end engine doses (mg, mg/min)}
 \usage{
-paperReviewFrontEndDoses(regimen, patient)
+paperReviewFrontEndDoses(regimen, patient, horizon = NA_real_)
+}
+\arguments{
+\item{regimen}{the extracted dose regimen}
+
+\item{patient}{the reference patient}
+
+\item{horizon}{the end of the simulated comparison span, in minutes}
 }
 \value{
 a list: doses (frontEndDoses()), problems

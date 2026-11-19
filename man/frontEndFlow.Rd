@@ -3,12 +3,12 @@
 \name{frontEndFlow}
 \alias{frontEndFlow}
 \title{A flow \code{flow} (L/min) carrying state \code{from} (an amount in volume
-sys$volume\link[emayili:from]{from}) into state \code{to} (NULL: out of the system)}
+\code{sys$volume[from]}) into state \code{to} (NULL: out of the system)}
 \usage{
 frontEndFlow(sys, from, to, flow)
 }
 \description{
 A flow \code{flow} (L/min) carrying state \code{from} (an amount in volume
-sys$volume\link[emayili:from]{from}) into state \code{to} (NULL: out of the system)
+\code{sys$volume[from]}) into state \code{to} (NULL: out of the system)
 }
 \keyword{internal}
