@@ -51,7 +51,12 @@
 # antiseizure interactions replace with their own segments keeps the
 # interactions' and is held at normal physiology, said in the panel
 # (physiologyStepsSkipped()).  The TCI pump plans on the set in force at time
-# 0, as a real pump knows nothing of the patient's physiology.
+# 0 (an event at time 0 included, physiologyEventPump()) and does not re-plan
+# at a later event, so the concentration drifts from the target after it, as
+# it would in a patient.  The Bayesian update fits at normal physiology
+# throughout and applies the events to the patient it finds.  Both DECIDED by
+# Shafer on 2026-11-19 ("Keep both"): do not make the pump re-plan at events
+# or the fit read them without reopening that decision.
 # -----------------------------------------------------------------------------
 
 #' The event name of a recorded physiology
