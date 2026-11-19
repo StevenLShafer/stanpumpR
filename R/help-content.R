@@ -82,6 +82,7 @@ helpStaticPages <- function() {
     "models/three-compartment", "The three-compartment model",     "models",
     "models/why-simulate",      "Why tables of PK parameters must be simulated", "models",
     "models/compartments",      "Peripheral compartments and the depot", "models",
+    "models/tolerance",         "Tolerance and tachyphylaxis",     "models",
     "models/effect-site",       "The effect site and ke0",         "models",
     "models/pk-converter",      "Converting between parameter sets", "models",
     "models/covariates",        "Covariates and body size",        "models",
