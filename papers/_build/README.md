@@ -53,12 +53,58 @@ which is exactly when verdicts should be re-examined.
 It would silently disable the filing cache. If you need one, keep it outside the queue, or exclude
 that column from the hash deliberately and say so here.
 
+## Clio deliveries arrive wrapped
+
+Clio, Stanford's interlibrary loan, delivers a scan through a form POST, and a browser that saves
+the response body verbatim writes the whole `multipart/form-data` envelope: a boundary line, the
+part's headers, then the PDF, then the closing boundary. The file is therefore not a PDF by its
+magic bytes, though poppler, pypdf and pdfium all skip the preamble, so it reads, renders and
+extracts normally.
+
+Found 2026-11-18 on nineteen files, twelve of them already filed — whose text extractions and
+digest cards were all sound, which is why nothing had reported it. `file_downloads.py` now strips
+the envelope before it does anything else with a file, recycling the original, so a wrapped
+delivery is repaired on the next run wherever it sits.
+
+**The lesson is about the check, not the envelope**: a strict `%PDF` magic-byte test found in
+seconds what a year of readers that tolerate anything never mentioned. Nothing in this pipeline
+had ever asserted that a PDF was a PDF.
+
+## Two mistakes this pipeline invites
+
+Both surfaced repeatedly in the review of PR #797, and both are about language rather than
+logic. Every step here is an attempt to read something that may be unreadable, which is what
+makes them so easy to make.
+
+**A failure to read something is not a fact about the thing read.** An extraction that raised,
+a `pdftotext` that exited non-zero, a log that would not open, two pages that came back blank
+— none of these establishes that the PDF has no text, or that the log is corrupt. Four
+findings in that one review were this same conflation in different disguises, and each had
+written "it is not there" where the code only knew "we did not see it". The archive's whole
+value is that its records say what was established, so a provenance line asserting more than
+the run checked is worse than no line.
+
+**Say what the code does, not what you hope it bounds.** Three successive wordings of one
+comment in `fetch_pmc.py` claimed a delay bound the code did not deliver — because
+`urlopen()`'s timeout applies per socket operation, not per request, and `ncbi._get()` has no
+read deadline at all. A timeout that tightens as a budget runs out *shortens* an overrun; it
+does not bound it. In this pipeline the honest form is almost always "this shortens it", and a
+figure worth writing down is an illustration, not a worst case.
+
 ## What runs, in the order `update.bat` runs it
+
+`fetch_pmc.py` runs first but **outside** the `&&` chain, as `check_in_step.py` does at the end.
+Fetching first means a paper off PMC is filed, OCR-checked, counted and queued for a card in the
+same run; keeping it out of the chain means a PMC outage, or one locked temporary file, cannot stop
+the filing of papers already sitting in Downloads. Only the steps that must see each other's output
+belong in the chain.
+
 
 | Script | What it does |
 |---|---|
+| `fetch_pmc.py` | Downloads the free PMC copy of any paper the reference list **or the download queue** wants, verifies its **first two pages** against the title and first author, and files it. Two outcomes are neither a match nor a mismatch, and they are treated differently. **Extraction succeeded and returned no text from those two pages**, and PubMed lists a first author: filed unverified, with `check by eye` in its log line, for `ocr_scans.py` to look at later — what a blank two pages shows is that there was nothing to check against, not that the document has no text layer. **Extraction failed** (`pdftotext` missing, timing out, or exiting non-zero), or PubMed lists **no author** to check against: nothing was established about the PDF, so it is **held, not filed**, for the next run to retry. Run outside the `&&` chain, so a PMC outage cannot stop the filing below. |
 | `file_supplements.py` | Files publisher supplements beside their article, by sha. |
-| `file_downloads.py` | Identifies each new PDF in Downloads by printed DOI, or by title and first author, and files it as `PMID_<pmid>.pdf`. Accepts a file named by hand when the reference list **or the download queue** asks for that PMID. |
+| `file_downloads.py` | Identifies each new PDF in Downloads by printed DOI, or by title and first author, and files it as `PMID_<pmid>.pdf`. Accepts a file named by hand when the reference list **or the download queue** asks for that PMID. Strips a multipart form envelope left around a Clio delivery first. |
 | `ocr_scans.py` | Adds a text layer to a scan that has none. |
 | `merge.py` | Merges the per-document extractions. |
 | `build.py` | Rebuilds `stanpumpR-references.xlsx` and `stanpumpr-queue.csv` from the works the stanpumpR source cites, keeping rows `arrivals.py` added. |
