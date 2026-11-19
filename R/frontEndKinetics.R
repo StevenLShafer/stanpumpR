@@ -127,6 +127,11 @@ FRONT_END_MAX_STATES <- 400L
 #' @keywords internal
 FRONT_END_MAX_CHAIN <- 100L
 
+#' The most matrix exponentials frontEndSimulate() keeps at once (64 of a
+#' 400-state model is about 80 MB)
+#' @keywords internal
+FRONT_END_EXPM_CACHE <- 64L
+
 #' Relative tolerance on the flow balance of a recirculatory model
 #' @keywords internal
 FRONT_END_FLOW_TOLERANCE <- 0.01
@@ -248,7 +253,8 @@ frontEndRecirculatory <- function(spec)
   CO <- frontEndPositive(spec$cardiac_output, "Cardiac output (total pharmacokinetic flow)")
   central <- spec$central
   if (!is.list(central) || !length(central)) stop("A recirculatory model needs a central circulation.")
-  if (!is.null(central$volume)) central <- list(central)
+  # One element (a chain or a series of segments), or a list of them.
+  if (!is.null(central$volume) || !is.null(central$segments)) central <- list(central)
   fractions <- vapply(central, function(ch) frontEndPositive(ch$fraction %or% (1 / length(central)),
                                                                "A central delay element's fraction"), 0)
   if (abs(sum(fractions) - 1) > FRONT_END_FLOW_TOLERANCE)
@@ -614,12 +620,20 @@ frontEndSimulate <- function(sys, doses, times)
     data.frame(time = inf$start, order = rep(2, nrow(inf)), kind = rep("start", nrow(inf)), i = seq_len(nrow(inf))),
     data.frame(time = bol$time, order = rep(3, nrow(bol)), kind = rep("bolus", nrow(bol)), i = seq_len(nrow(bol))))
   ev <- ev[order(ev$time, ev$order), , drop = FALSE]
+  # One exponential per distinct step length, reused; the cache is emptied
+  # when full, since a digitised figure's times can make every step distinct
+  # and a 400-state exponential is over a megabyte.
   cache <- new.env(parent = emptyenv())
+  cached <- 0L
   step <- function(z, dt) {
     if (dt <= 0) return(z)
     key <- sprintf("%.12g", dt)
     E <- cache[[key]]
-    if (is.null(E)) { E <- expmPade(M * dt); cache[[key]] <- E }
+    if (is.null(E)) {
+      E <- expmPade(M * dt)
+      if (cached >= FRONT_END_EXPM_CACHE) { cache <<- new.env(parent = emptyenv()); cached <<- 0L }
+      cache[[key]] <- E; cached <<- cached + 1L
+    }
     drop(E %*% z)
   }
   inputSlot <- function(i) if (constant[i]) n + 1 else n + 1 + match(i, decaying)

@@ -144,3 +144,21 @@ test_that("effect-site figures and partially converted regimens are set aside", 
   expect_length(result$figures, 0)
   expect_true(any(vapply(result$findings, function(f) grepl("not intravenous", f$detail %or% ""), logical(1))))
 })
+
+test_that("a front-end model with no mammillary parameters is not described as one", {
+  ex <- henthornExtraction()
+  ex$parameters <- list()
+  for (compartments in c(0, 3)) {
+    ex$structure$compartments <- compartments
+    review <- paperReviewRun(ex)
+    expect_identical(review$identifiability$verdict, "front_end")
+    expect_false(any(vapply(review$findings, function(f) identical(f$section, "Identifiability"), logical(1))))
+    html <- as.character(paperReviewReportTags(review, plots = FALSE))
+    expect_match(html, "a front-end (mixing) model", fixed = TRUE)
+    expect_false(grepl("compartment(s)", html, fixed = TRUE))
+    expect_false(grepl("does not print enough to close the model", html, fixed = TRUE))
+    expect_match(html, PAPER_REVIEW_FRONT_END_SECTION, fixed = TRUE)
+  }
+  # With its own parameters the mammillary model is still checked.
+  expect_false(identical(paperReviewRun(henthornExtraction())$identifiability$verdict, "front_end"))
+})

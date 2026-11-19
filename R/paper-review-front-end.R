@@ -212,6 +212,19 @@ paperReviewFrontEndSpec <- function(extraction, patient)
   list(spec = spec, problems = unique(problems), assumptions = unique(assumptions))
 }
 
+#' Does the extraction name a front-end model (recirculatory, mixing or other)?
+#' @keywords internal
+paperReviewHasFrontEnd <- function(x)
+{
+  type <- x$front_end$model_type
+  is.character(type) && length(type) == 1 && !is.na(type) && !type %in% c("", "none")
+}
+
+#' Is the front-end model the paper's only model (no mammillary parameters)?
+#' @keywords internal
+paperReviewFrontEndOnly <- function(x)
+  paperReviewHasFrontEnd(x) && length(x$parameters %or% list()) == 0
+
 #' A regimen's intravenous doses as front-end engine doses (mg, mg/min)
 #' @param regimen the extracted dose regimen
 #' @param patient the reference patient

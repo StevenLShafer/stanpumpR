@@ -1864,7 +1864,11 @@ paperReviewGroupExtraction <- function(extraction, group)
 paperReviewRunOne <- function(extraction, paperLevel = TRUE)
 {
   reference <- paperReviewReferencePatient(extraction)
-  ident <- paperReviewIdentifiability(extraction)
+  # A front-end model with no mammillary parameters is not a one-to-three
+  # compartment model to close; its own section checks it.
+  ident <- if (paperReviewFrontEndOnly(extraction))
+    list(verdict = "front_end", route = NA_character_, closed = NULL, findings = list())
+  else paperReviewIdentifiability(extraction)
   # Absorption is derived per extravascular regimen against the disposition,
   # then the drug carries the first regimen that has one (the simulator can
   # switch), and every check builds the drug for the regimen it checks.

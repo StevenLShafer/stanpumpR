@@ -351,3 +351,24 @@ test_that("dose fractions must be finite and nonnegative but observation weights
     expect_error(frontEndSystem(spec), "finite and nonnegative")
   }
 })
+
+test_that("a single central element may be a series of segments", {
+  spec <- list(type = "recirculatory", cardiac_output = 2,
+    central = list(segments = list(list(volume = 1, n = 1), list(volume = 1, n = 3))),
+    pathways = list(list(name = "body", type = "tissue", volume = 3, flow = 1.8)),
+    elimination_clearance = 0.2)
+  sys <- frontEndSystem(spec)
+  expect_equal(sum(grepl("^central1", sys$states)), 4)
+  sim <- frontEndSimulate(sys, frontEndDoses(bolus = data.frame(time = 0, amount = 10)), c(0, 1, 10))
+  expect_equal(sim$body_plus_eliminated, sim$dosed, tolerance = 1e-10)
+})
+
+test_that("the exponential cache is bounded without changing the answer", {
+  sys <- frontEndSystem(frontEndUpton2004())
+  doses <- frontEndDoses(bolus = data.frame(time = 0, amount = 100))
+  times <- sort(c(0, cumsum(seq(0.01, 0.01 * 3 * FRONT_END_EXPM_CACHE, by = 0.01))))
+  all <- frontEndSimulate(sys, doses, times)
+  expect_equal(all$body_plus_eliminated, all$dosed, tolerance = 1e-9)
+  for (t in times[c(10, 2 * FRONT_END_EXPM_CACHE, length(times))])
+    expect_equal(all$arterial[match(t, all$time)], frontEndSimulate(sys, doses, t)$arterial, tolerance = 1e-10)
+})

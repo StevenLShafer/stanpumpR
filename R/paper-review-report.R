@@ -241,8 +241,7 @@ paperReviewNoModel <- function(x)
 {
   # A recirculatory or mixing model carries its numbers in front_end and
   # leaves parameters empty, as the prompt asks.
-  fe <- x$front_end$model_type
-  if (is.character(fe) && length(fe) == 1 && !is.na(fe) && !fe %in% c("", "none")) return(FALSE)
+  if (paperReviewHasFrontEnd(x)) return(FALSE)
   n <- paperReviewNum(x$structure$compartments)
   length(x$parameters %or% list()) == 0 && !isTRUE(n %in% 1:3)
 }
@@ -258,18 +257,25 @@ paperReviewModelTags <- function(rv, sections, findings, plots)
   x <- rv$extraction
   ref <- rv$reference
   ident <- rv$identifiability
-  verdictText <- c(printed = "The printed parameters close the model.",
-                   derived = paste("The model is closed through", ident$route, "and is stable."),
-                   ill_conditioned = paste("Formally closed through", ident$route, "but ill-conditioned."),
-                   derived_from_curve = paste("The printed numbers do not close the model; it is closed",
-                                              "from", ident$route, "."),
-                   underdetermined = "The paper does not print enough to close the model.")[[ident$verdict]]
-  htmltools::tagList(
-    htmltools::p(htmltools::strong("Model: "),
-                 paste0(x$structure$compartments, " compartment(s), ",
+  # A front-end model the paper prints with no mammillary parameters: no
+  # compartment count or identifiability verdict, which would misdescribe it.
+  modelLine <- if (identical(ident$verdict, "front_end"))
+    paste0("a front-end (", gsub("_", " ", x$front_end$model_type), ") model, with no mammillary ",
+           "parameters printed; it is checked in the section ", PAPER_REVIEW_FRONT_END_SECTION, ".")
+  if (is.null(modelLine)) {
+    verdictText <- c(printed = "The printed parameters close the model.",
+                     derived = paste("The model is closed through", ident$route, "and is stable."),
+                     ill_conditioned = paste("Formally closed through", ident$route, "but ill-conditioned."),
+                     derived_from_curve = paste("The printed numbers do not close the model; it is closed",
+                                                "from", ident$route, "."),
+                     underdetermined = "The paper does not print enough to close the model.")[[ident$verdict]]
+    modelLine <- paste0(x$structure$compartments, " compartment(s), ",
                         gsub("_", " ", x$structure$elimination), " elimination, absorption ",
                         gsub("_", " ", x$structure$absorption), ", effect site ",
-                        gsub("_", " ", x$structure$effect_site), ". ", verdictText)),
+                        gsub("_", " ", x$structure$effect_site), ". ", verdictText)
+  }
+  htmltools::tagList(
+    htmltools::p(htmltools::strong("Model: "), modelLine),
     htmltools::p(htmltools::strong("Reference patient: "),
                  paste0(prFmt(ref$weight), " kg (", ref$source[["weight"]], "), ",
                         prFmt(ref$height), " cm (", ref$source[["height"]], "), ",
