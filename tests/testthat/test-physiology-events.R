@@ -414,6 +414,12 @@ test_that("the Visualizer of an intravenous drug follows the physiology events",
 
 test_that("Create event records the panel's settings in the event table", {
   local_mocked_bindings(outputComments = function(...) {})
+  # The Events panel is switched on, so that the event is seen (Shafer,
+  # 2026-11-19: "I triggered events, but the event plot did not appear")
+  shown <- NULL
+  local_mocked_bindings(updateCheckboxGroupInput = function(session, inputId, ..., selected = NULL) {
+    if (identical(inputId, "addedPlots")) shown <<- selected
+  })
   oldConfig <- .sprglobals$config
   .sprglobals$config <- DEFAULT_CONFIG
   withr::defer(.sprglobals$config <- oldConfig)
@@ -433,6 +439,7 @@ test_that("Create event records the panel's settings in the event table", {
     expect_equal(x[["cardiac"]], 0.5, tolerance = 1e-9)
     expect_equal(x[["temperature"]], 34)
     expect_equal(nrow(physiologyEvents()), 1)
+    expect_true(PLOT_ID_EVENTS %in% shown)
     # Add event never offers Physiology, which has no settings to record
     session$setInputs(clickTimeEvent = "50", clickEvent = "Physiology", addEventBtn = 1)
     expect_equal(nrow(eventTable()), 1)

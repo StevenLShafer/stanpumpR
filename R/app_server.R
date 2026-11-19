@@ -1625,6 +1625,13 @@ app_server <- function(input, output, session) {
     ET <- ET[order(ET$Time, ET$Event), ]
     rownames(ET) <- NULL
     eventTable(ET)
+    # Show the Events panel, where the event is drawn and its hover reads its
+    # settings: it is drawn only while "Events" is ticked under Additional
+    # plots, and a created event that appeared nowhere looked like a failure
+    # (Shafer, 2026-11-19)
+    if (!PLOT_ID_EVENTS %in% input$addedPlots)
+      updateCheckboxGroupInput(session, "addedPlots",
+                               selected = union(input$addedPlots, PLOT_ID_EVENTS))
     removeModal()
   })
 
