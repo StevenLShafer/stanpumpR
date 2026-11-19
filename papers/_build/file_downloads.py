@@ -746,6 +746,11 @@ if recycled or unwrapped:
     json.dump(old + recycled + unwrapped, open(RECYCLED_LOG, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
 if unwrapped:
     print("Stripped a form envelope from %d PDF(s); the originals went to the Recycle Bin." % len(unwrapped))
+# Its OWN condition.  Adding the envelope summary above left these two lines indented under
+# IT, so the count of Downloads originals printed only when an envelope had been stripped --
+# and then said "Moved 0 original(s)" when none had been.  The test run that passed had both
+# lists non-empty, which is exactly the case that hides it (CodeRabbit, PR #797).
+if recycled:
     same = sum(1 for e in recycled if e.get("why"))
     print("Moved %d original(s) from Downloads to the Recycle Bin (%d identical to an archived copy, %d the same paper "
           "differently stamped)." % (len(recycled), len(recycled) - same, same))

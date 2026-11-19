@@ -72,9 +72,16 @@ had ever asserted that a PDF was a PDF.
 
 ## What runs, in the order `update.bat` runs it
 
+`fetch_pmc.py` runs first but **outside** the `&&` chain, as `check_in_step.py` does at the end.
+Fetching first means a paper off PMC is filed, OCR-checked, counted and queued for a card in the
+same run; keeping it out of the chain means a PMC outage, or one locked temporary file, cannot stop
+the filing of papers already sitting in Downloads. Only the steps that must see each other's output
+belong in the chain.
+
+
 | Script | What it does |
 |---|---|
-| `fetch_pmc.py` | Downloads the free PMC copy of any paper the reference list **or the download queue** wants, verifies its first page against the title and first author, and files it. |
+| `fetch_pmc.py` | Downloads the free PMC copy of any paper the reference list **or the download queue** wants, verifies its first page against the title and first author, and files it. One exception: a PDF with **no text layer at all** is filed unverified and its log line says `check by eye`, there being no first-page text to check against. Run outside the `&&` chain, so a PMC outage cannot stop the filing below. |
 | `file_supplements.py` | Files publisher supplements beside their article, by sha. |
 | `file_downloads.py` | Identifies each new PDF in Downloads by printed DOI, or by title and first author, and files it as `PMID_<pmid>.pdf`. Accepts a file named by hand when the reference list **or the download queue** asks for that PMID. Strips a multipart form envelope left around a Clio delivery first. |
 | `ocr_scans.py` | Adds a text layer to a scan that has none. |

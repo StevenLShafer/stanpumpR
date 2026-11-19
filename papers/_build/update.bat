@@ -14,7 +14,11 @@ if errorlevel 1 (
   popd
   exit /b 1
 )
-%PY% fetch_pmc.py && %PY% file_supplements.py && %PY% file_downloads.py && %PY% ocr_scans.py && %PY% merge.py && %PY% build.py && %PY% digest_prep.py && %PY% arrivals.py
+rem Fetching runs FIRST so a paper off PMC is filed, OCR'd, counted and queued for a card in
+rem this same run -- but deliberately NOT in the && chain: a PMC outage must not stop the
+rem filing of papers already in Downloads.  Same reason check_in_step.py sits outside it.
+%PY% fetch_pmc.py
+%PY% file_supplements.py && %PY% file_downloads.py && %PY% ocr_scans.py && %PY% merge.py && %PY% build.py && %PY% digest_prep.py && %PY% arrivals.py
 rem arrivals.py closes the loop: it reports which papers a model is WAITING for that have
 rem now arrived (every registry's `to_obtain`, and papers\pending-work.csv in the repo).
 rem Added 2026-11-17 -- until then the skill said update.bat ran it and nothing did.
