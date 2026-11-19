@@ -17,10 +17,17 @@ os.makedirs(TMP, exist_ok=True)
 
 # update.bat runs this before the filing chain, so a stalled PubMed or PMC request delays the
 # filing of papers ALREADY in Downloads.  Four tries at a 120 s timeout is about 8 minutes for
-# one URL, and a run fetches several.  So the whole run gets a wall-clock budget: no retry is
-# started past it and no further paper is attempted, which bounds the delay at the budget plus
-# one request timeout.  Papers not reached stay `pending` in the queue and the next run picks
-# them up (CodeRabbit, PR #797).
+# one URL, and a run fetches several.  So the run gets a wall-clock budget: no retry is started
+# past it, the body is read in bounded pieces that stop at it, and no further paper is
+# attempted.  Papers not reached stay `pending` and the next run picks them up.
+#
+# What it does NOT cover: the one PubMed metadata lookup below, which goes through
+# ncbi.esummary() -> ncbi._get(), six tries at a 60 s timeout plus 30 s of backoff, so about
+# 6.5 minutes of its own BEFORE the loop's first budget check.  Bounding that means changing
+# the retry policy of a module every script in this pipeline shares, which is a wider decision
+# than this script should take on its own; it is left for Shafer.  So the honest worst case is
+# about 6.5 min of metadata plus the budget plus one 120 s read, not the budget alone
+# (CodeRabbit, PR #797, which was right that the earlier wording overclaimed).
 FETCH_BUDGET_SECONDS = 600
 DEADLINE = time.time() + FETCH_BUDGET_SECONDS
 
@@ -36,7 +43,21 @@ def get(url, binary=False):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "stanpumpR-archive/1.0"})
             with urllib.request.urlopen(req, timeout=120) as r:
-                b = r.read()
+                # timeout= bounds each socket operation, not the whole transfer: a server
+                # trickling bytes kept r.read() running past the budget, so the delay to
+                # filing could exceed what the comment above promised (CodeRabbit, PR #797).
+                # read1() returns after ONE underlying recv, where read(n) may loop to fill n.
+                reader = getattr(r, "read1", None) or r.read
+                parts = []
+                while True:
+                    if budget_spent():
+                        raise TimeoutError("the run's %d s fetch budget was spent while reading %s"
+                                           % (FETCH_BUDGET_SECONDS, url))
+                    piece = reader(1 << 16)
+                    if not piece:
+                        break
+                    parts.append(piece)
+                b = b"".join(parts)
             return b if binary else b.decode("utf-8", "replace")
         except Exception:
             if i == 3:
@@ -93,6 +114,10 @@ try:
                     and not os.path.exists(os.path.join(ARCHIVE, "PMID_%s.pdf" % _p))):
                 qwant.append(_p)
                 known.add(_p)
+    if qwant and budget_spent():
+        print("the fetch budget was spent before the queue's metadata could be looked up;"
+              " its %d wanted paper(s) wait for the next run" % len(qwant))
+        qwant = []
     if qwant:
         from ncbi import esummary
         _meta = esummary(qwant)
@@ -126,13 +151,38 @@ log_path = os.path.join(HERE, "pmc_fetch_log.json")
 
 
 def save_log(entries):
-    merged = {e["pmid"]: e for e in (json.load(open(log_path, encoding="utf-8"))
-                                     if os.path.exists(log_path) else [])}
+    """Merge this run's results into the log on disk.
+
+    Called from the per-paper `finally`, which sits OUTSIDE the per-paper try, so anything
+    raised here ends the run -- and the paper just filed would lose its entry while the next
+    run failed on its first save, blocking the batch until somebody repaired the file by hand
+    (CodeRabbit, PR #797).  An unreadable log is therefore SET ASIDE rather than parsed or
+    deleted (nothing in this archive is deleted) and the run starts a fresh one; a write that
+    fails is reported and the batch carries on, this run's results still in memory for the
+    next save to pick up."""
+    merged = {}
+    if os.path.exists(log_path):
+        try:
+            with open(log_path, encoding="utf-8") as f:
+                merged = {e["pmid"]: e for e in json.load(f)}
+        except Exception as e:                   # noqa: BLE001 -- malformed, truncated, unreadable
+            kept = log_path + ".unreadable-" + time.strftime("%Y%m%d-%H%M%S")
+            try:
+                os.replace(log_path, kept)
+                where = os.path.basename(kept)
+            except OSError:
+                where = "could not be set aside"
+            print("  the fetch log could not be read (%s); kept as %s, starting a fresh one"
+                  % (e, where), flush=True)
     merged.update({e["pmid"]: e for e in entries})
     tmp_log = log_path + ".new"
-    with open(tmp_log, "w", encoding="utf-8") as f:
-        json.dump(list(merged.values()), f, indent=1)
-    os.replace(tmp_log, log_path)                # never a half-written log
+    try:
+        with open(tmp_log, "w", encoding="utf-8") as f:
+            json.dump(list(merged.values()), f, indent=1)
+        os.replace(tmp_log, log_path)            # never a half-written log
+    except Exception as e:                       # noqa: BLE001 -- do not end the run over this
+        print("  could not write the fetch log (%s); this run's results stay in memory" % e,
+              flush=True)
 
 
 log = []
