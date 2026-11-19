@@ -250,7 +250,12 @@ def save_log(entries):
                 return False
             print("  the fetch log is not readable JSON (%s); kept as %s, starting a fresh one"
                   % (e, os.path.basename(kept)), flush=True)
-    merged.update({e["pmid"]: e for e in entries})
+    for e in entries:
+        # `keep_existing` means this run learned nothing new about the paper, so a record
+        # already on disk is better than this one and is left exactly as it is.
+        if e.get("keep_existing") and e["pmid"] in merged:
+            continue
+        merged[e["pmid"]] = {k: v for k, v in e.items() if k != "keep_existing"}
     tmp_log = log_path + ".new"
     try:
         with open(tmp_log, "w", encoding="utf-8") as f:
@@ -274,7 +279,14 @@ for t in todo:
     entry = {"ref": t["Ref"], "pmid": pmid, "pmcid": pmc, "first_author": t["First author"], "year": t["Year"]}
     try:
         if os.path.exists(dst):
+            # This record carries nothing but the result, and save_log() keys by PMID, so
+            # writing it over a richer one would drop the licence, the title overlap, the
+            # author check and any `check by eye` verdict -- everything the fetch established.
+            # Rare while this script was run by hand; since it joined update.bat's chain it
+            # would happen on EVERY run, to every paper already fetched (CodeRabbit, PR #797).
+            # 26 entries in the archive's log had already been reduced this way before today.
             entry["result"] = "already in archive"
+            entry["keep_existing"] = True
             continue
         lst = get(BUCKET + "?list-type=2&prefix=%s.&max-keys=100" % pmc)
         keys = re.findall(r"<Key>([^<]+)</Key>", lst)
