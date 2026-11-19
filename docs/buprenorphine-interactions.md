@@ -201,23 +201,41 @@ does not — and it is the model's central safety message.
 
 ---
 
-## 4. Outputs the app should draw
+## 4. Outputs the app should draw — occupancy as the primary lens
 
-1. **Receptor occupancy panel** (stacked area): `ρ_bup`, each full agonist's `ρ`, antagonist
-   `ρ`, and free `ρ_0`. Shows blockade and displacement directly — buprenorphine holding 80%
-   of the receptor while an added agonist reaches only the free remainder, and the slow
-   crossover when one displaces the other.
-2. **Net μ activation `S` / effect** (ventilation via (5); analgesia via §5): the honest
-   replacement for the additive total-opioid line whenever a partial agonist or antagonist
-   is present.
-3. **Precipitated-withdrawal flag**: a marked downward excursion of `S` within ~an hour of
-   introducing buprenorphine onto a full-agonist background — the one dynamic signature
-   clinicians most need warned about, and one only the kinetic model produces.
-4. **Breakthrough headroom**: on a buprenorphine maintenance background, the full-agonist
-   `Ce` (hence dose) needed to lift effect to a target.
+Adjusting MEAC is the wrong primary lens: the Opioid-tolerance factor is a *static, per-drug, additive*
+scalar, while this is a *time-varying competition for one shared receptor pool*. So the presentation is
+built on **fractional occupancy**, with MEAC demoted to a derived readout. Two validated potency scales
+are kept separate (decision #1, §8), bridged only by `ρ_bup`:
 
-The existing % MEAC, propofol–opioid and opioid–MAC panels keep using `U` when no partial
-agonist/antagonist is present (unchanged), and switch to `S` when one is.
+- The **occupancy competition and the respiratory panel** run on the **binding scale** — Olofsen's
+  ventilatory `C50` for the full agonists and buprenorphine's binding constants. This is the only
+  physically consistent choice: an analgesic MEAC is a minimum-effective concentration, not a binding
+  constant, and cannot enter the competitive denominator `1 + Σφ`.
+- The **`% MEAC` and opioid–MAC panels** stay on the **analgesic MEAC** scale `U`, exactly as today.
+
+The panels, offered only while a μ partial agonist or antagonist is drawn (a Graph Options toggle, like
+the opioid–MAC and antiseizure toggles; shared panels below the drug panels, as the Interaction panel is):
+
+1. **Receptor-occupancy panel** (stacked area, summing to 100%): `ρ_bup`, each full agonist's `ρ`
+   (stacked), any antagonist's, and free `ρ_0` on top. The agonism/antagonism graph — it *shows*
+   blockade (buprenorphine holding 70–90% while an added agonist reaches only the free sliver),
+   displacement, and the slow (37-min `k_off`) washout of blockade after buprenorphine is stopped.
+2. **Two effect curves** (shared panel): the **analgesia** transducer and the **respiratory-depression**
+   transducer over time. The respiratory one shows the **ceiling** (buprenorphine alone plateaus; an
+   added agonist on a high-occupancy background barely moves it — safety made visible); the analgesia one
+   shows whether the patient is actually comfortable. Their gap is buprenorphine's clinical character.
+3. **Available-drive line** `Ũ = (1 − ρ_bup)·U`, drawn on the `% MEAC` panel beside the nominal `U` when
+   buprenorphine is present — the blockade, in the units clinicians already read ("how much of my
+   fentanyl is getting through"). `ρ_bup` is the single binding quantity shared across the two worlds.
+4. **Precipitated-withdrawal marker**: a shaded/annotated moment where net μ activation drops sharply
+   within ~an hour of buprenorphine being introduced on a full-agonist background — the one dynamic
+   danger, and one only the kinetic model produces.
+
+The existing `% MEAC`, propofol–opioid and opioid–MAC panels keep using `U` unchanged when no partial
+agonist/antagonist is present; buprenorphine enters them only through the `Ũ` line when it is. A later,
+bigger-build option: the **Visualizer** could render the receptor as a filling pool with competing
+ligands — the most visceral form of panel 1.
 
 ---
 
@@ -312,23 +330,33 @@ One receptor pool, μ only, is the stated boundary.
 
 ---
 
-## 8. Open questions for Steven
+## 8. Design decisions (Steven L. Shafer, 2026-11-19) and remaining open items
 
-1. **Lead endpoint.** Ventilation (the safety endpoint, and where the interaction data are — Olofsen 2022,
-   Yassen 2007) as the first transduction, analgesia (Yassen 2006) second? Or analgesia first for the pain
-   audience? The receptor core is shared either way.
-2. **Full-agonist C50 scale.** Calibrate to MEAC (keeps every existing panel still — my recommendation),
-   or to published ventilatory C50 where they exist (more mechanistic, but then `S ≠ U` and the full-agonist
-   panels move and must be re-defended)?
-3. **Tolerance.** Make the Patient Profile **Opioid tolerance** field select the Olofsen population set
-   (naive vs chronic), i.e. move `k_on,B`, `α_B`, `C50,F` together, replacing the flat MEAC multiplier — or
-   keep the multiplier and add this only for buprenorphine?
-4. **Does buprenorphine re-enter the `U`-based panels**, or only the new occupancy panels? Proposed: the new
-   panels own buprenorphine; the `U` panels switch to `S` only when a partial agonist/antagonist is present.
-5. **norbuprenorphine** — model its formation as a PK species (it has μ and ORL-1 activity and bears on the
-   respiratory story), or leave it out of scope for now?
-6. **Ligand scope.** μ only to start (opioids + naloxone). Naltrexone/nalmefene as slow antagonists are a
-   clean next addition on the same engine; κ/δ/ORL-1 are excluded.
+**Resolved:**
+
+1. **Dual C50 scale.** The respiratory panel uses Olofsen's ventilatory `C50`; `% MEAC` and the
+   opioid–MAC interaction keep the analgesic MEAC. (The occupancy competition therefore runs on the
+   binding scale — §4 — the only physically consistent choice.)
+2. **Tolerance Grid B.** The four levels sit at `θ = ln M / ln 3 = (0, 0.369, 0.631, 1)`, anchored to the
+   existing `OPIOID_TOLERANCE_FACTORS` `(1, 1.5, 2, 3)`, so the new model and that knob move together.
+   Interpolation is log-linear in `k_on,B` and `C50,F`, logit in `α_B`, with `k_off,B` fixed.
+3. **Analgesic ceiling 2–4× MEAC** (naive), rendered as a band (Typical 3×, Lower 2×, Upper 4×). It fixes
+   the analgesia reserve `γ_analgesia` — the one parameter ventilation data cannot supply — and sets the
+   precipitated-withdrawal / breakthrough crossover `U*`.
+4. **Buprenorphine owns the occupancy panels; the `U` panels stay `U`.** The `% MEAC` / propofol–opioid /
+   opioid–MAC panels keep displaying `U` unchanged; buprenorphine enters them only through the `Ũ`
+   available-drive line, never by corrupting `U` (exact by the P4 odds invariant).
+5. **Lead endpoint: ventilation first.** The validated interaction data are on ventilation (Olofsen 2022,
+   Yassen 2007); the engine is ventilation-only until the analgesia reserve from decision #3 is wired, then
+   the analgesia curve is added.
+
+**Remaining open:**
+
+- **norbuprenorphine** (μ/ORL-1 active) — out of scope until it is a PK species in the library; a future
+  addition, flagged in the respiratory narrative.
+- **Slow antagonists.** Naltrexone and nalmefene join the slow set on the same engine once `k_on`/`k_off`
+  are taken from binding-kinetics sources; buprenorphine, fentanyl and naloxone are the first citizens.
+  κ/δ and ORL-1/NOP (the bell-shaped high-dose effect) remain excluded (μ-only scope, §6.2).
 
 ---
 
