@@ -22,7 +22,9 @@ Healthy young men (Jorga 1998) have a clearance of 7.3 L/h, a total volume of 9 
 
 ### Serum albumin
 
-The **Serum albumin** field of the Patient Profile sets the peripheral volume: Vp = 12 L × (albumin/44 g/L)^2.82 (Table 3). Left blank, the study's median of 4.4 g/dL is used. The exponent is steep, so Vp falls to about half at 3.5 g/dL and to a quarter at 2.7 g/dL, and rises by 43% at 5 g/dL. Clearance does not depend on albumin, so the average exposure at steady state does not change; the half-life and the rise and fall between doses do.
+The **Serum albumin** field of the Patient Profile sets the peripheral volume: Vp = 12 L × (albumin/44 g/L)^2.82 (Table 3). Left blank, the study's median of 4.4 g/dL is used. The albumin is held within the 2.6 to 5.5 g/dL the patients had, because the exponent is steep and poorly determined (standard error 1.09, so anywhere from about 0.7 to 5). Within that range Vp falls to about half at 3.5 g/dL and to under a quarter at 2.6 g/dL, and nearly doubles at 5.5 g/dL. Clearance does not depend on albumin, so the average exposure at steady state does not change; the half-life and the rise and fall between doses do.
+
+The authors were cautious about this term. They wrote that the covariates on the volumes were estimated with poor precision and may have been driven by a few very high estimates, the patients without motor fluctuations showed no albumin effect, and their Discussion says no relationship between protein or albumin and distribution was detected. The term is applied as their final model prints it.
 
 ### What is held at the reference
 
