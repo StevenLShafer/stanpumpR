@@ -557,8 +557,8 @@ app_ui <- function() {
                     ),
                     paste(
                       "Under each drug whose effect fades with continued",
-                      "exposure, draw what is left of its effect, as a",
-                      "percentage of what the same concentration does in a",
+                      "exposure, draw what is left of its potency (or, for",
+                      "an attenuation, its effect) compared with a",
                       "drug-naive patient. The concentration is unchanged;",
                       "like wind chill, the drug works as though it were",
                       "lower. Only drugs with a published model are drawn."
@@ -567,7 +567,7 @@ app_ui <- function() {
                   ))
                 ),
                 conditionalPanel(
-                  condition = sprintf("!(input.showThreshold || input.showMEAC || input.addedPlots.includes('%s') || input.addedPlots.includes('%s'))", PLOT_ID_EVENTS, PLOT_ID_INTERACTION),
+                  condition = sprintf("!(input.showThreshold || input.showMEAC || input.showAdaptation || input.addedPlots.includes('%s') || input.addedPlots.includes('%s'))", PLOT_ID_EVENTS, PLOT_ID_INTERACTION),
                   checkboxInput(
                     inputId = "logY",
                     label = "Log Y axis",

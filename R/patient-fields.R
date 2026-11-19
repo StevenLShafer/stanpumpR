@@ -258,14 +258,15 @@ patientFieldReaderSets <- function(drugDefaults = getDrugDefaultsGlobal()) {
 #'
 #' @param drugs the drug names in the dose table (blanks are ignored).
 #' @param drugDefaults the session's drug table.
-#' @param plotted the drugs drawn, given a dose above 0 (positiveDoseDrugs());
-#'   by default every drug in `drugs`.
+#' @param plotted the drugs drawn, given a dose above 0 (positiveDoseDrugs()),
+#'   and the metabolites they form, which need no row of their own in the
+#'   dose table (codeine's morphine); by default every drug in `drugs`.
 #' @return a logical vector named by `RELEVANT_FIELDS`.
 #' @noRd
 relevantFields <- function(drugs, drugDefaults = getDrugDefaultsGlobal(),
                            plotted = drugs) {
   drugs <- unique(drugs[!is.na(drugs) & nzchar(drugs)])
-  plotted <- intersect(unique(plotted[!is.na(plotted) & nzchar(plotted)]), drugs)
+  plotted <- unique(plotted[!is.na(plotted) & nzchar(plotted)])
   isOpioid <- function(d) {
     r <- drugDefaults[drugDefaults$Drug %in% d, , drop = FALSE]
     any(r$Category %in% "Opioids" | (!is.na(r$MEAC) & r$MEAC > 0))

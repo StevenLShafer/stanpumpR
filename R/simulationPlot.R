@@ -228,7 +228,9 @@ simulationPlot <- function(
   # panels are placed on a linear one; the app hides Log Y while they are on
   # (app_ui()) and passes FALSE, and a caller of its own is held to the same
   # rule (Carbon's third UI audit, 2026-11-15, M6)
-  if (plotRecovery || plotMEACOverlay || plotEvents || plotInteraction) logY <- FALSE
+  # The tolerance and tachyphylaxis panels run from 0 to 100% on a linear
+  # axis (R/pdAdaptation.R), so they turn it off too
+  if (plotRecovery || plotMEACOverlay || plotEvents || plotInteraction || plotAdaptation) logY <- FALSE
 
   # Step D3: extend plotTable
 
@@ -702,7 +704,7 @@ simulationPlot <- function(
   # With "Tolerance and tachyphylaxis" ticked (R/pdAdaptation.R), each drug
   # with an applied adaptation row gets a panel directly under its own (and
   # its compartments), "<drug> tachyphylaxis" or "<drug> tolerance": the share
-  # of the naive effect left, from 100% down.  Read off the drug's own
+  # of the naive potency (or effect) left, from 100% down.  Read off the drug's own
   # simulated concentrations, so nothing is simulated again.  Not under
   # normalization (Step C2 turns it off).
   if (plotAdaptation && !is.null(panelUnits))
@@ -716,14 +718,15 @@ simulationPlot <- function(
       if (is.null(series)) next
       series <- series[series$Time <= maximum, ]
       name <- pdAdaptationName(drug, row)
-      wrap <- paste0(name, "\n(", PD_ADAPTATION_UNITS, ")")
+      units <- pdAdaptationUnits(row)
+      wrap <- paste0(name, "\n(", units, ")")
       plotResults <- rbind(plotResults, data.frame(
         Drug = name, Time = series$Time, Y = series$Y,
         Site = "Compartment", Wrap = wrap, Label = ""
       ))
       newplotTable <- plotTable[plotTable$Drug == drug, ][1, ]
       newplotTable$Drug <- name
-      newplotTable$Concentration.Units <- PD_ADAPTATION_UNITS
+      newplotTable$Concentration.Units <- units
       newplotTable$typical <- 0
       newplotTable$lowerTypical <- 0
       newplotTable$upperTypical <- 0
@@ -985,7 +988,7 @@ simulationPlot <- function(
     }
     # A tolerance or tachyphylaxis panel always runs from 0 to 100% (R/pdAdaptation.R),
     # so a small loss is not stretched to fill it
-    adaptationRows <- plotTable$Concentration.Units == PD_ADAPTATION_UNITS
+    adaptationRows <- plotTable$Concentration.Units %in% PD_ADAPTATION_UNITS
     if (any(adaptationRows))
       yFloor <- rbind(yFloor, data.frame(Wrap = plotTable$Wrap[adaptationRows], Y = 100))
     plotObject <- plotObject +

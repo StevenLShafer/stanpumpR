@@ -301,5 +301,33 @@ test_that("the plot draws the panel under the drug, from 0 to 100%", {
     # directly under fentanyl's own panel
     wraps <- levels(on$plotResults$Wrap)
     expect_equal(which(grepl("^fentanyl tolerance", wraps)), which(grepl("^fentanyl\n", wraps)) + 1)
+    # a loss of potency is labelled as one
+    expect_true(any(grepl("% of naive potency", wraps, fixed = TRUE)))
+    # and the panel, 0 to 100% on a linear axis, turns a log axis off
+    isLog <- function(p) {
+      s <- p$plotObject$scales$get_scales("y")
+      tr <- if (is.null(s)) NULL else if (!is.null(s$transformation)) s$transformation else s$trans
+      !is.null(tr) && grepl("log", tr$name)
+    }
+    logged <- function(on) suppressMessages(simulationPlot(
+      drugs = sim, events = ev, drugDefaults = dd,
+      eventDefaults = getEventDefaults(), xBreaks = seq(0, 240, 60),
+      xLabels = seq(0, 240, 60), xMaximum = 240, plotAdaptation = on, logY = TRUE))
+    expect_true(isLog(logged(FALSE)))
+    expect_false(isLog(logged(TRUE)))
   })
+})
+
+test_that("a tolerance panel is in potency, an attenuation in effect", {
+  expect_equal(pdAdaptationUnits(adaptationRow(structure = "competitive")), "% of naive potency")
+  expect_equal(pdAdaptationUnits(adaptationRow(structure = "compartment")), "% of naive potency")
+  expect_equal(pdAdaptationUnits(adaptationRow("cocaine", kind = "tachyphylaxis",
+                                               structure = "attenuation")),
+               "% of naive effect")
+})
+
+test_that("a metabolite formed by a drawn drug counts as drawn", {
+  # codeine has no MEAC, so no panel of its own; the morphine it forms has one
+  expect_false(relevantFields("codeine")[["showAdaptation"]])
+  expect_true(relevantFields("codeine", plotted = c("codeine", "morphine"))[["showAdaptation"]])
 })

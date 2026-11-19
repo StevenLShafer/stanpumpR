@@ -2,11 +2,11 @@ Many drugs lose their effect with continued exposure. **Tolerance** is the slowe
 
 ## How stanpumpR shows it
 
-Tick **Graph Options → Tolerance and tachyphylaxis**. The option is offered only while a drug with a published tolerance or tachyphylaxis model is drawn. Under that drug's panel (and under its peripheral compartments, if they are shown) a panel named, for example, *nitroglycerin tachyphylaxis* starts at **100%** and falls. It shows the share of the effect that the same concentration would have in a drug-naive patient.
+Tick **Graph Options → Tolerance and tachyphylaxis**. The option is offered only while a drug with a published tolerance or tachyphylaxis model is drawn. Under that drug's panel (and under its peripheral compartments, if they are shown) a panel named, for example, *nitroglycerin tachyphylaxis* starts at **100%** and falls. For a tolerance it shows the share of the drug's naive **potency** that is left (*% of naive potency*); for an attenuation, the share of its naive **effect** (*% of naive effect*).
 
 Read it as a weather report gives wind chill: *the temperature is 20 degrees, but with the wind chill it feels like 5*. Here, the concentration is what the drug panel shows, but the drug **works like** a lower one. Hovering over the panel gives both: the concentration, and the concentration it works like. At 50%, a concentration of 2 ng/mL works like 1 ng/mL did at the start.
 
-For a loss of potency (tolerance), 100% / P is exactly that ratio: the EC50, and so the MEAC, has risen by the factor P, and C / P is the concentration that would give today's effect in a drug-naive patient. For a loss of efficacy (an attenuation of the effect itself), the percentage multiplies the effect, and the "works like" concentration is exact when the effect is proportional to the concentration.
+For a loss of potency (tolerance), 100% / P is exactly that ratio: the EC50, and so the MEAC, has risen by the factor P, and C / P is the concentration that would give today's effect in a drug-naive patient. It is not the share of the effect that is left, which depends on where the concentration sits on the drug's curve: more of the effect is kept near the top of the curve, less near the bottom. At P = 1.5, with a Hill coefficient of 2.61, a concentration at the naive EC50 keeps about half its effect. For a loss of efficacy (an attenuation of the effect itself), the percentage multiplies the effect, and the "works like" concentration is exact when the effect is proportional to the concentration.
 
 ## The models
 

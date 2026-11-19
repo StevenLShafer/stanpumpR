@@ -1209,11 +1209,14 @@ app_server <- function(input, output, session) {
   # value, which does nothing while no drug reads it.
   observe({
     draft <- tryCatch(doseTableDraft(), error = function(e) NULL)
-    drugs <- c(doseTable()$Drug, draft$Drug)
+    inTable <- c(doseTable()$Drug, draft$Drug)
     # The drugs drawn, given a dose above 0, for the options that add a panel
-    # of something plotted (the Interaction plot, Tolerance and tachyphylaxis)
-    plotted <- c(positiveDoseDrugs(doseTable()), positiveDoseDrugs(draft))
-    shown <- relevantFields(drugs, drugDefaults(), plotted = plotted)
+    # of something plotted (the Interaction plot, Tolerance and tachyphylaxis),
+    # and the metabolites they form, which are drawn too (drugs() holds the
+    # drawn entries, drawnDrugEntries(): codeine's morphine)
+    formed <- tryCatch(names(drugs()), error = function(e) character(0))
+    plotted <- c(positiveDoseDrugs(doseTable()), positiveDoseDrugs(draft), formed)
+    shown <- relevantFields(inTable, drugDefaults(), plotted = plotted)
     for (field in setdiff(names(shown), c("plotMEAC", "plotInteraction")))
       shinyjs::toggle(id = paste0("field_", field), condition = shown[[field]])
     # The two optional Additional plots, inside their checkbox group
@@ -2122,8 +2125,13 @@ app_server <- function(input, output, session) {
       plotEvents             <- PLOT_ID_EVENTS      %in% input$addedPlots
       normalization          <- normalizationInput()
       typical                <- typicalInput()
+      # Tolerance and tachyphylaxis panels (R/pdAdaptation.R), while the
+      # option is shown, that is while such a drug is drawn
+      plotAdaptation         <- isTRUE(input$showAdaptation) &&
+        length(pdAdaptationDrugs(names(drugs()), drugDefaults = drugDefaults())) > 0
       logY                   <- isTRUE(input$logY)
-      if (plotRecovery() || plotMEACOverlay() || plotEvents || plotInteraction) logY <- FALSE
+      if (plotRecovery() || plotMEACOverlay() || plotEvents || plotInteraction ||
+          plotAdaptation) logY <- FALSE
 
       plasmaLinetype <- linetypes()$plasmaLinetype
       effectsiteLinetype <- linetypes()$effectsiteLinetype
@@ -2148,10 +2156,7 @@ app_server <- function(input, output, session) {
         plotRecovery = plotRecovery(),
         plotMEACOverlay = plotMEACOverlay(),
         plotCompartments = isTRUE(input$showCompartments),
-        # Tolerance and tachyphylaxis panels (R/pdAdaptation.R), while the
-        # option is shown, that is while such a drug is drawn
-        plotAdaptation = isTRUE(input$showAdaptation) &&
-          length(pdAdaptationDrugs(names(drugs()), drugDefaults = drugDefaults())) > 0,
+        plotAdaptation = plotAdaptation,
         typical = typical,
         logY = logY,
         yAxisHeight = input$yaxisHeight,
@@ -2526,7 +2531,7 @@ app_server <- function(input, output, session) {
     }
 
     # A tolerance or tachyphylaxis panel (R/pdAdaptation.R): the share of the
-    # naive effect left, and, as wind chill is reported, what the
+    # naive potency (or effect) left, and, as wind chill is reported, what the
     # concentration works like.
     adapted <- pdAdaptationSeriesDrug(drug, drugDefaults())
     if (!is.na(adapted))
@@ -2540,7 +2545,9 @@ app_server <- function(input, output, session) {
         paste0(", ", ce$label, " ", signif(ce$value, 3), " works like ",
                signif(ce$value * left / 100, 3))
       return(paste0("Time: ", hoverTime(e$x), ", ", drug, ": ",
-                    signif(left, 3), "% of naive effect", worksLike))
+                    signif(left, 3),
+                    pdAdaptationUnits(pdAdaptationRow(adapted, drugDefaults = drugDefaults())),
+                    worksLike))
     }
 
     # A TCI rate panel: report the pump rate in force at that moment, and the

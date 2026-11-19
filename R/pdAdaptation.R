@@ -13,8 +13,8 @@
 # inst/extdata/pdAdaptation.csv whose `verification` is one that is applied
 # (PD_ADAPTATION_APPLIED_VERIFICATION) has an adaptation state driven by its
 # own simulated concentration, read off the series the plot already has, and
-# the panel draws what is left of the drug's effect, as a percentage of what
-# the same concentration would do in a drug-naive patient:
+# the panel draws, as wind chill is reported, the concentration the drug
+# works like as a percentage of the concentration present:
 #
 #   remaining(t) = 100 / P(t)   for a loss of POTENCY (tolerance: the EC50,
 #                               and so the MEAC, rises by the factor P), or
@@ -88,9 +88,26 @@ PD_ADAPTATION_APPLIED_VERIFICATION <- c("read_full_text", "read_abstract")
 #' @noRd
 PD_ADAPTATION_STRUCTURES <- c("compartment", "competitive", "attenuation")
 
-#' The panel's unit, shown under its title
+#' The panel's units, shown under its title
+#'
+#' A loss of potency (the compartment structures) draws 100 / P, the
+#' concentration the drug works like as a share of the concentration
+#' present: the share of its naive potency left, not of its naive effect,
+#' which depends on where the concentration sits on the drug's curve.
+#' An attenuation multiplies the effect itself.
 #' @noRd
-PD_ADAPTATION_UNITS <- "% of naive effect"
+PD_ADAPTATION_UNITS <- c(potency = "% of naive potency", effect = "% of naive effect")
+
+#' The units of a row's panel (PD_ADAPTATION_UNITS)
+#' @param row an adaptation row (pdAdaptationRow())
+#' @noRd
+pdAdaptationUnits <- function(row)
+{
+  if (identical(as.character(row$structure), "attenuation"))
+    PD_ADAPTATION_UNITS[["effect"]]
+  else
+    PD_ADAPTATION_UNITS[["potency"]]
+}
 
 .pdAdaptationCache <- new.env(parent = emptyenv())
 
@@ -247,7 +264,7 @@ pdToleranceCompartment <- function(time, conc, k)
   pmax(ct, 0)
 }
 
-#' The share of the naive effect left, in percent
+#' The share of the naive potency (or, for an attenuation, effect) left, in percent
 #'
 #' @param time times, minutes, increasing
 #' @param conc the driving concentration in mcg/mL at those times
