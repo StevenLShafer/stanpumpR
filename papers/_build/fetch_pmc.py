@@ -45,10 +45,18 @@ def get(url, binary=False):
 
 
 def first_text(path, pages=2):
+    """The text of the first `pages` pages, and whether reading it FAILED.
+
+    Returning "" for both an image-only scan and a pdftotext that was missing, timed out or
+    crashed made the two indistinguishable, so a PDF filed after an extraction failure was
+    logged as having "no text layer" -- a provenance record saying something the run never
+    established.  file_downloads.py already draws this distinction (`pdf_text(strict=)`, and
+    the note at its line 632); this script did not (CodeRabbit, PR #797)."""
     try:
-        return subprocess.run(["pdftotext", "-l", str(pages), "-q", path, "-"], capture_output=True, timeout=60).stdout.decode("utf-8", "replace")
+        r = subprocess.run(["pdftotext", "-l", str(pages), "-q", path, "-"], capture_output=True, timeout=60)
+        return r.stdout.decode("utf-8", "replace"), False
     except Exception:
-        return ""
+        return "", True
 
 
 def words(s):
@@ -164,7 +172,7 @@ for t in todo:
         tmp = os.path.join(TMP, "%s.pdf" % pmc)
         with open(tmp, "wb") as f:
             f.write(get(BUCKET + base + ".pdf", binary=True))
-        txt = first_text(tmp)
+        txt, unreadable = first_text(tmp)
         tw, pw = words(t["Title"]), words(txt)
         overlap = len(tw & pw) / max(1, len(tw))
         # A PubMed record can have a PMCID and no authors at all; `.split()[0]` on "" raised
@@ -185,8 +193,13 @@ for t in todo:
             # (CodeRabbit, PR #784) -- a comment asserting what the code does not do.
             entry["result"] = "HELD: PubMed lists no author, so neither title nor author could be confirmed"
         elif not txt.strip():
+            # Filed either way, as before -- but the log now says WHICH it was, because
+            # "no text layer" is a statement about the PDF and the other is a statement
+            # about this machine.  build.py keys on startswith("downloaded"), so both
+            # still read as fetched.
             os.replace(tmp, dst)
-            entry["result"] = "downloaded (no text layer - check by eye)"
+            entry["result"] = ("downloaded (could not read the text - check by eye)" if unreadable
+                               else "downloaded (no text layer - check by eye)")
         else:
             entry["result"] = "HELD: first page does not match title/author"
         print(pmc, pmid, t["First author"], t["Year"], "->", entry["result"], "overlap=%.2f author=%s %s" % (overlap, bool(au_ok), entry["license"]))

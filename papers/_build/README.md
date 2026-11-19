@@ -81,7 +81,7 @@ belong in the chain.
 
 | Script | What it does |
 |---|---|
-| `fetch_pmc.py` | Downloads the free PMC copy of any paper the reference list **or the download queue** wants, verifies its first page against the title and first author, and files it. One exception: a PDF with **no text layer at all** is filed unverified and its log line says `check by eye`, there being no first-page text to check against. Run outside the `&&` chain, so a PMC outage cannot stop the filing below. |
+| `fetch_pmc.py` | Downloads the free PMC copy of any paper the reference list **or the download queue** wants, verifies its **first two pages** against the title and first author, and files it. One exception: when **no text can be extracted** there is nothing to check against, so the PDF is filed unverified and its log line says `check by eye` — distinguishing a scan with no text layer from an extraction that failed, which are different facts. Run outside the `&&` chain, so a PMC outage cannot stop the filing below. |
 | `file_supplements.py` | Files publisher supplements beside their article, by sha. |
 | `file_downloads.py` | Identifies each new PDF in Downloads by printed DOI, or by title and first author, and files it as `PMID_<pmid>.pdf`. Accepts a file named by hand when the reference list **or the download queue** asks for that PMID. Strips a multipart form envelope left around a Clio delivery first. |
 | `ocr_scans.py` | Adds a text layer to a scan that has none. |
