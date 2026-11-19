@@ -1062,18 +1062,13 @@ physiologyPanel <- function()
     # the event table at a time, physiology normal before the first
     tags$div(
       class = "mt-2",
-      fieldHelp(
-        actionButton("physiologyCreateEvent", "Create event",
-                     class = "btn-sm btn-outline-primary"),
-        paste("Records the settings above as a Physiology event at a time you",
-              "enter. With any Physiology event, physiology is normal from",
-              "time 0 and steps to each event's settings at its time; the",
-              "drug in each compartment carries across the step. For a",
-              "gradual change, create several events. Events are edited or",
-              "deleted with the other events (double-click the Events",
-              "panel)."),
-        placement = "right"
-      )
+      actionButton("physiologyCreateEvent", "Create event",
+                   class = "btn-sm btn-outline-primary"),
+      tags$p(class = "small text-muted mt-1",
+             "Records these settings as a Physiology event at a time you",
+             "enter. With any Physiology event, physiology is normal from",
+             "time 0 and steps to each event's settings at its time. Edit or",
+             "delete it with the other events (double-click the Events panel).")
     ),
     uiOutput("physiologyEventsNote"),
     uiOutput("physiologyNote")
