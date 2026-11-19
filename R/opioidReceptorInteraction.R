@@ -44,6 +44,13 @@ OR_GL8_WEIGHTS <- c(0.1012285362903763, 0.2223810344533745, 0.3137066458778873,
 # How many "time constants" of decay we allow across one quadrature sub-step
 # before splitting it, so Gauss-Legendre-8 stays at machine precision.
 OR_SUBSTEP_TARGET <- 1.0
+# Also cap the change in the crowding factor (1+Phi) across a quadrature sub-step.
+# a(t) = (r+s t)/(p+q t) has a pole at t = -p/q; when 1+Phi surges across a step
+# (e.g. a fast bolus drives Phi 0 -> 100 in one grid interval) that pole sits just
+# off the interval and collapses Gauss-Legendre accuracy even though the step
+# spans few time constants (Gemini's audit, 2026-11-19).  Keeping each sub-step's
+# crowding ratio below this bound keeps the pole far (Bernstein ellipse intact).
+OR_CROWD_RATIO <- 1.5
 # |q| below this (per-minute slope of 1+Phi) is treated as constant crowding, to
 # take the error-function limit via a series instead of the m*log form (P1, q->0).
 OR_Q_TOL <- 1e-9
@@ -94,7 +101,12 @@ orSlowAdvance <- function(x0, kon, koff, B0, B1, Phi0, Phi1, h)
   q <- (Phi1 - Phi0) / h
   # number of decay time constants across the whole step
   span <- koff * h + abs(orIntegralA(0, h, r, s, p, q))
-  nsub <- max(1L, as.integer(ceiling(span / OR_SUBSTEP_TARGET)))
+  # bound the LINEAR change in (1+Phi) per (equal-time) sub-step: the worst
+  # sub-step is the one at the smaller 1+Phi, nearest a(t)'s pole at t=-p/q.
+  crowdN <- abs(q) * h / ((OR_CROWD_RATIO - 1) * min(p, p + q * h))
+  nsub <- max(1L,
+              as.integer(ceiling(span / OR_SUBSTEP_TARGET)),
+              as.integer(ceiling(crowdN)))
   if (nsub == 1L) return(orSlowSubstep(x0, r, s, p, q, koff, h))
   x <- x0
   for (i in seq_len(nsub)) {
@@ -112,7 +124,13 @@ orSlowAdvance <- function(x0, kon, koff, B0, B1, Phi0, Phi1, h)
 
 # -- P2: the (N+1)-state Markov generator for association rates a, dissociation koff
 # Metzler (off-diagonals >= 0) with zero column sums, so exp(K dt) has column
-# sums exactly 1: the receptor pool is conserved (sum rho = 1) to rounding.
+# sums exactly 1: the state vector is conserved (sums to 1) to rounding.
+# NOTE the (N+1)-th state is the AVAILABLE (non-slow) pool x_avail = 1 - sum_slow
+# rho = (1+Phi) rho_0, NOT the free fraction rho_0 (reviewers' audit, 2026-11-19).
+# a_i = kon_i Ce_i/(1+Phi) already carries the 1/(1+Phi), so a_i * x_avail =
+# kon_i Ce_i rho_0 is the correct association term, and (x_1,...,x_N, x_avail) sums
+# to 1 with no dPhi/dt term.  Recover rho_0 = x_avail/(1+Phi) and the fast
+# occupancies rho_j = x_avail phi_j/(1+Phi) after the step (orOccupancy does this).
 orGenerator <- function(a, koff)
 {
   n <- length(a)
@@ -147,7 +165,10 @@ orSlowAdvanceMulti <- function(xslow, kon, koff, Ce0, Ce1, Phi0, Phi1, h)
   }
   a0 <- aAt(0); a1 <- aAt(1)
   span <- (max(koff) + max(a0, a1)) * h + max(abs(a1 - a0)) * h
-  nsub <- max(1L, as.integer(ceiling(span / OR_SUBSTEP_TARGET)))
+  crowdN <- abs(Phi1 - Phi0) / ((OR_CROWD_RATIO - 1) * min(1 + Phi0, 1 + Phi1))
+  nsub <- max(1L,
+              as.integer(ceiling(span / OR_SUBSTEP_TARGET)),
+              as.integer(ceiling(crowdN)))
   hs <- h / nsub
   state <- c(xslow, 1 - sum(xslow))
   n <- length(xslow)
@@ -224,7 +245,13 @@ orOperationalResponse <- function(rho, tau, gamma, n = 1)
   Theta^n / (1 + Theta^n)
 }
 
-# Available MEAC-equivalent drive for the fast agonists given buprenorphine on
-# board: U~ = (1 - rho_bup) * U.  Exact backward-compat invariant: sum_fast rho /
-# rho0 == Phi == U regardless of the slow occupancy.
-orAvailableDrive <- function(rhoBup, U) (1 - rhoBup) * U
+# Available (unblocked-equivalent) agonist drive: the drive U~ that, with no slow
+# ligand and no antagonist, would give the SAME fast-agonist occupancy rhoAgonist
+# now present.  Since fast occupancy saturates as U~/(1+U~), the exact equivalent
+# drive is the fast-agonist OCCUPANCY ODDS (reviewers' audit, 2026-11-19):
+#   U~ = rhoAgonist / (1 - rhoAgonist),   rhoAgonist = sum of fast-agonist rho.
+# This is exact and accounts for buprenorphine AND antagonist blockade (both
+# reduce rhoAgonist); the earlier (1 - rho_bup) * U held only for U << 1 and no
+# antagonist.  rhoAgonist is on the occupancy (binding C50) scale; mapping U~ back
+# to analgesic-MEAC units under the dual-C50 scale is a design question for Shafer.
+orAvailableDrive <- function(rhoAgonist) rhoAgonist / (1 - rhoAgonist)

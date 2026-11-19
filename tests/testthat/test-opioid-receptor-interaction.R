@@ -147,5 +147,22 @@ test_that("P4: fast-ligand odds equal U even with buprenorphine present", {
 test_that("ventilation ceiling is alpha_B at full buprenorphine occupancy", {
   # one ligand fully occupying: depression -> alpha_B
   expect_equal(orVentilationDepression(matrix(1, 1, 1), 0.81), 0.81)
-  expect_equal(orAvailableDrive(0.8, 2.0), 0.4)  # (1 - 0.8) * 2
+})
+
+test_that("available drive is the fast-agonist occupancy odds", {
+  expect_equal(orAvailableDrive(0.5), 1.0)   # 0.5 / 0.5
+  expect_equal(orAvailableDrive(0.8), 4.0)   # 0.8 / 0.2
+  expect_equal(orAvailableDrive(0.0), 0.0)
+})
+
+test_that("P1 stays exact when the crowding factor surges within one step", {
+  # a fast bolus drives 1+Phi from 1 to 101 across one interval: a(t)'s pole sits
+  # just off [0,h] and would collapse Gauss-Legendre without crowding sub-stepping
+  # (reviewers' audit, 2026-11-19; was 3.8% relative error).
+  kon <- 0.26; koff <- 0.019
+  B0 <- 0.05 / kon
+  got <- orSlowAdvance(0, kon, koff, B0, B0, 0, 100, 1)
+  r <- 0.05; s <- 0; p <- 1; q <- 100
+  ref <- p1_reference(0, r, s, p, q, koff, 1)
+  expect_equal(got, ref, tolerance = 1e-10)
 })
