@@ -382,10 +382,14 @@ paperReviewFrontEndChecks <- function(extraction, reference)
       curves[[length(curves) + 1]] <- data.frame(Time = sim$time, Cp = sim[[obs]], regimen = label,
                                                  stringsAsFactors = FALSE)
     }
-    if (length(setAside))
-      add("concern", paste0(id, ": some series could not be compared"),
-          paste(setAside, collapse = "; "), f$location)
-    if (!length(rows)) next
+    # Series set aside are named in the comparison's finding below; when no
+    # series could be compared there is no such finding, so they get their own.
+    if (!length(rows)) {
+      if (length(setAside))
+        add("concern", paste0(id, ": no series could be compared"),
+            paste(setAside, collapse = "; "), f$location)
+      next
+    }
     points <- do.call(rbind, rows)
     use <- points$predicted > 0
     pe <- (points$observed[use] - points$predicted[use]) / points$predicted[use]

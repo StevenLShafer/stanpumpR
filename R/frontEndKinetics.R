@@ -58,7 +58,7 @@
 #                            type "tissue" a well-stirred, flow-limited
 #                                          tissue volume (volume); optional
 #                                          `clearance`, an elimination inside
-#                                          the tissue (Upton's body compartment)
+#                                          the tissue (Henthorn 1999's ketamine)
 #     elimination_clearance  ClE, from arterial blood (Krejcie's convention)
 #     elimination_in_flow  TRUE (default): ClE is one of the clearances summed
 #                          to cardiac output, its blood returning drug-free;
@@ -288,12 +288,15 @@ frontEndRecirculatory <- function(spec)
     stop("The pathways' flows", if (inFlow) " and the elimination clearance" else "", " sum to ",
          signif(total, 4), " L/min, not the cardiac output of ", signif(CO, 4),
          " L/min: blood would be created or lost.")
-  # Rounding in a paper's table leaves a residue within the tolerance; it
-  # returns at once as a shunt of no volume, so that mass is conserved.
+  # Rounding in a paper's table leaves a residue within the tolerance. A
+  # shortfall returns at once as a shunt of no volume. An excess cannot (a
+  # negative shunt would subtract arterial drug from the venous return), so
+  # the pathways' flows are scaled down to fit; the elimination clearance is
+  # kept as published, since it alone sets the AUC.
   if (total > CO) {
-    scale <- CO / total
-    flows <- flows * scale
-    if (inFlow) ClE <- ClE * scale
+    room <- CO - if (inFlow) ClE else 0
+    if (room <= 0) stop("The elimination clearance must be below the cardiac output.")
+    flows <- flows * room / sum(flows)
     total <- CO
   }
   shunt <- CO - total
@@ -362,7 +365,7 @@ frontEndRecirculatory <- function(spec)
   # Venous return (each pathway's outflow, and the shunt) enters the central
   # delay elements' heads by fraction.
   # Elimination inside a pathway, from its last compartment: on top of the
-  # outflow (Upton's body compartment), or taken out of it (clearance_in_flow:
+  # outflow, or taken out of it (clearance_in_flow:
   # the eliminating organ's venous blood leaves cleared of drug, as Henthorn
   # 1992 modelled indocyanine green from the slow circuit, eq. 11).
   venous <- numeric(nState)

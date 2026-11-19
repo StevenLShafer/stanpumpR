@@ -334,6 +334,8 @@ test_that("rounding flows preserve positive concentrations and mass balance", {
     sys <- frontEndSystem(spec)
     expect_lt(max(abs(colSums(sys$A))), 1e-12)
     expect_true(all(sys$O >= 0))
+    # The published clearance is kept: only the pathways' flows absorb the excess.
+    expect_equal(sys$A[match("eliminated", sys$states), match("central1", sys$states)], 0.2, tolerance = 1e-12)
     sim <- frontEndSimulate(sys, frontEndDoses(bolus = data.frame(time = 0, amount = 10)), c(0, 1, 10))
     expect_equal(sim$body_plus_eliminated, sim$dosed, tolerance = 1e-10)
     expect_true(all(sim$mixed_venous >= 0))

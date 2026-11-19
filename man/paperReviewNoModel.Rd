@@ -2,13 +2,13 @@
 % Please edit documentation in R/paper-review-report.R
 \name{paperReviewNoModel}
 \alias{paperReviewNoModel}
-\title{Does the extraction hold no model: no parameter and no structure of one
-to three compartments?}
+\title{Does the extraction hold no model: no parameter, no structure of one
+to three compartments, and no front-end model?}
 \usage{
 paperReviewNoModel(x)
 }
 \description{
-Does the extraction hold no model: no parameter and no structure of one
-to three compartments?
+Does the extraction hold no model: no parameter, no structure of one
+to three compartments, and no front-end model?
 }
 \keyword{internal}

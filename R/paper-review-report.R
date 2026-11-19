@@ -234,11 +234,15 @@ paperReviewReportTags <- function(review, plots = TRUE)
       htmltools::p(htmltools::em("Limitations Claude noted: "), x$extraction_limitations))
 }
 
-#' Does the extraction hold no model: no parameter and no structure of one
-#' to three compartments?
+#' Does the extraction hold no model: no parameter, no structure of one
+#' to three compartments, and no front-end model?
 #' @keywords internal
 paperReviewNoModel <- function(x)
 {
+  # A recirculatory or mixing model carries its numbers in front_end and
+  # leaves parameters empty, as the prompt asks.
+  fe <- x$front_end$model_type
+  if (is.character(fe) && length(fe) == 1 && !is.na(fe) && !fe %in% c("", "none")) return(FALSE)
   n <- paperReviewNum(x$structure$compartments)
   length(x$parameters %or% list()) == 0 && !isTRUE(n %in% 1:3)
 }
