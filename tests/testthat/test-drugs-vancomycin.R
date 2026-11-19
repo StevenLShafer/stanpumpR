@@ -36,7 +36,7 @@ test_that("scales to fat-free mass for a 120 kg man", {
     v2 = 66.863417,
     v3 = 1,
     cl1 = 0.096543872,
-    cl2 = 0.04639468,
+    cl2 = 0.04639468 / cohortFactorsIndependent(VANCOMYCIN_COHORT)$clearance,  # Q anchored (A2-F4)
     cl3 = 0
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
@@ -71,7 +71,8 @@ test_that("the Pregnant field applies the review's factor (R/pregnancy.R)", {
   expect_equal_rounded(41.30431052, actual$v2)
   expect_equal_rounded(1, actual$v3)
   expect_equal_rounded(0.1046227197, actual$cl1)
-  expect_equal_rounded(0.03232758696, actual$cl2)
+  expect_equal_rounded(0.03232758696 / cohortFactorsIndependent(VANCOMYCIN_COHORT)$clearance,
+                       actual$cl2)   # Q anchored at Thomson's cohort (A2-F4)
   expect_equal_rounded(0, actual$cl3)
   expect_equal(vancomycin(70, 165, 30, "female")$PK$default,
                vancomycin(70, 165, 30, "female", pregnant = FALSE)$PK$default)
@@ -94,4 +95,25 @@ test_that("pregnancy: a measured creatinine gives no pregnancy change", {
   # with the creatinine blank the factor is applied
   expect_gt(vancomycin(70, 165, 30, "female", pregnant = TRUE)$PK$default$cl1,
             vancomycin(70, 165, 30, "female")$PK$default$cl1)
+})
+
+test_that("anchored at Thomson's cohort: its typical patient receives the published Q (A2-F4)", {
+  # Table 1: 251 men and 147 women, median 66 y, 72 kg; heights from NCD-RisC
+  # (UK, born 1932, less the loss to 66 y), 171.9 and 158.7 cm.  Q has no sex
+  # term and is anchored at the pooled patient, the cohort's man and woman on
+  # the geometric mean; V1, V2 and the renal CL keep their own weight terms.
+  kc <- cohortFactorsIndependent(VANCOMYCIN_COHORT)
+  expect_equal(kc$clearance, 0.9463, tolerance = 1e-3)
+  m <- vancomycin(72, 171.9, 66, "male")$PK$default
+  w <- vancomycin(72, 158.7, 66, "female")$PK$default
+  pooled <- exp((251 * log(m$cl2) + 147 * log(w$cl2)) / 398)
+  expect_equal(pooled * 60, 2.28, tolerance = 1e-9)
+  expect_equal(m$cl2 * 60, 2.28 * pkSizeFactors(72, 171.9, 66, "male")$clearance / kc$clearance,
+               tolerance = 1e-6)
+  # the volumes are not anchored: 0.675 and 0.732 L/kg of the pharmacokinetic weight
+  pkW <- pkSizeFactors(72, 171.9, 66, "male")$pkWeight
+  expect_equal(m$v1, 0.675 * pkW, tolerance = 1e-9)
+  expect_equal(m$v2, 0.732 * pkW, tolerance = 1e-9)
+  # The switch off is unchanged
+  expect_equal(vancomycin(72, 171.9, 66, "male", adjustToFFM = FALSE)$PK$default$cl2 * 60, 2.28)
 })

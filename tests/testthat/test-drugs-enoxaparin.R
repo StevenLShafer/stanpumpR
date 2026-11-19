@@ -70,11 +70,36 @@ test_that("scales to fat-free mass for a 120 kg man", {
   # the published equations, not from the code under test.
   # Simplified MDRD at the assumed 0.9 mg/dL and 50 y: 89.321 mL/min/1.73 m^2.
   # CL = 0.70 x (91.343469/65)^0.78 x (89.321/69)^0.25; V2 = 6.43 x
-  # (91.343469/65)^1.25; V3 = 8.18 x 1.3049067; Q = 0.34 x 1.2209126.
+  # (91.343469/65)^1.25; V3 = 8.18 x 1.3049067; Q = 0.34 x 1.2209126; V3 and
+  # Q then divided by Berges' cohort factors (ENOXAPARIN_COHORT; A2-F4).  CL
+  # and V2 carry their own weight term and are not anchored.
+  kc <- cohortFactorsIndependent(ENOXAPARIN_COHORT)
+  expect_equal(kc$volume, 0.8158564, tolerance = 1e-6)
+  expect_equal(kc$clearance, 0.8584407, tolerance = 1e-6)
   actual <- enoxaparin(120, 170, 50, "male")$PK$default
   expect_equal_rounded(actual[c("v1", "v2", "cl1", "cl2")],
-                       list(v1 = 9.8382115, v2 = 10.674137,
-                            cl1 = 0.016226631, cl2 = 0.0069185047))
+                       list(v1 = 9.8382115, v2 = 10.674137 / kc$volume,
+                            cl1 = 0.016226631, cl2 = 0.0069185047 / kc$clearance))
+})
+
+test_that("anchored at Berges' cohort: its typical patient receives the published V3 and Q (A2-F4)", {
+  # Table 1 (p. 431): 72 men and 117 women, 66 kg, 82 years; NCD-RisC heights
+  # for France, born 1925, 168.7 cm (men) and 156.8 cm (women).  V3 and Q
+  # carry no sex term, so they are anchored at the pooled patient: the
+  # cohort's man and woman, weighted 72:117 geometrically, receive the
+  # published values.
+  m <- enoxaparin(66, 168.7, 82, "male")$PK$default
+  w <- enoxaparin(66, 156.8, 82, "female")$PK$default
+  pooled <- function(x, y) exp((72 * log(x) + 117 * log(y)) / 189)
+  expect_equal(pooled(m$v2, w$v2), 8.18, tolerance = 1e-6)
+  expect_equal(pooled(m$cl2, w$cl2) * 60, 0.34, tolerance = 1e-6)
+  kc <- cohortFactorsIndependent(ENOXAPARIN_COHORT)
+  expect_equal(w$v2, 8.18 * pkSizeFactors(66, 156.8, 82, "female")$volume / kc$volume,
+               tolerance = 1e-6)
+  # The switch off is unchanged: the published values
+  off <- enoxaparin(66, 156.8, 82, "female", adjustToFFM = FALSE)$PK$default
+  expect_equal(off$v2, 8.18)
+  expect_equal(off$cl2, 0.34 / 60)
 })
 
 test_that("pregnancy: apparent clearance x 1.5 and central volume x 1.4, directly", {
@@ -95,12 +120,14 @@ test_that("pregnancy: apparent clearance x 1.5 and central volume x 1.4, directl
   expect_equal(cr(TRUE)$cl1 / cr(FALSE)$cl1, ENOXAPARIN_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
   expect_match(on$reference, "Lebaudy", fixed = TRUE)
   expect_no_match(off$reference, "Lebaudy", fixed = TRUE)
-  # The values the model gives with the flag on
+  # The values the model gives with the flag on (V3 and Q divided by Berges'
+  # cohort factors, A2-F4)
+  kc <- cohortFactorsIndependent(ENOXAPARIN_COHORT)
   actual <- enoxaparin(70, 165, 30, "female", pregnant = TRUE)$PK$default
   expect_equal_rounded(7.543148937, actual$v1)
-  expect_equal_rounded(6.593857535, actual$v2)
+  expect_equal_rounded(6.593857535 / kc$volume, actual$v2)
   expect_equal_rounded(1, actual$v3)
   expect_equal_rounded(0.01647275474, actual$cl1)
-  expect_equal_rounded(0.004820780511, actual$cl2)
+  expect_equal_rounded(0.004820780511 / kc$clearance, actual$cl2)
   expect_equal_rounded(0, actual$cl3)
 })

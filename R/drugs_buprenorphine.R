@@ -187,7 +187,10 @@
 #   170 cm, male: effect site 0.20 ng/mL at that time in both groups (0.201
 #   after an IV second dose, 0.198 after an IM one, through the IM route
 #   above; plasma 0.15), peak 1.0 ng/mL after the second dose (1.02 IV at
-#   41 min, 0.96 IM at 50 min).  So the pharmacokinetics are consistent
+#   41 min, 0.96 IM at 50 min).  (Since the volumes and intercompartmental
+#   clearances were anchored at Bjornsson's cohort, 2026-11-19, the same
+#   patient gives 0.200 and 0.196 at that time and peaks of 0.99 IV and 0.94
+#   IM; the band was not re-derived.)  So the pharmacokinetics are consistent
 #   with the routes' nonsignificant difference in duration; the IM input was
 #   fitted to Bullingham's ratios, not to McQuay, so this is a consistency
 #   check the band was not built to pass, not a validation of 0.2.  The IM dose is simulated as given, and the reference
@@ -234,10 +237,24 @@
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # Clearance carries its own weight and age covariates.  With the switch on it
-# sees the pharmacokinetic weight (size$pkWeight) and the size-free volumes
-# and intercompartmental clearances take the library's fat-free-mass factors;
-# with it off it sees total body weight and the other parameters are the
-# published fixed values, which is the published model exactly.
+# sees the pharmacokinetic weight (size$pkWeight); with it off it sees total
+# body weight and the other parameters are the published fixed values, which
+# is the published model exactly.  The volumes and intercompartmental
+# clearances, with no size covariate, belong to Bjornsson's typical
+# participant, and with the switch on they are anchored at the cohort
+# (BUPRENORPHINE_COHORT, below; Steven L. Shafer, 2026-11-19, after Carbon's
+# second repository audit, A2-F4): volumes x the patient's fat-free-mass ratio
+# to the cohort's typical participant, Q2 and Q3 x that ratio ^ 0.75.  Scaled
+# from the 70 kg reference man, as they were, the cohort's own typical
+# participant received volumes 5% and intercompartmental clearances 4% below
+# the published values (factors 0.954 and 0.965).  A model with a size
+# covariate on one parameter is not thereby exempt on the others.  The cohort
+# is Table 1's 236 participants (the final model had 252).  Strictly, Vc
+# belongs to the healthy volunteers of trials 1 and 2 (147: 70.1 kg, BMI
+# 24.2, 32 years, 31 men and 29 women; 71.4 kg, BMI 23.9, 34 years, 52 men and
+# 35 women), from whose intravenous arm it was identified; anchored at them
+# its factor would be 0.934 rather than 0.954, about 2% different, and every
+# parameter is anchored at the pooled 236.
 #
 # PREGNANCY
 # =========
@@ -320,6 +337,14 @@ BUPRENORPHINE_MIN_AGE   <- 18             # years; youngest age the CL term sees
 # pregnancy, 218 / 119 = 1.83 (see the header).
 BUPRENORPHINE_PREGNANCY_CL_FACTOR <- 1.83
 
+# Bjornsson 2023, Table 1 (p. 1430), "All, N = 236": medians 72.2 kg, BMI
+# 24.4 and 35.0 years; 144 men and 92 women.  No height is printed; it comes
+# from the weight and BMI (172.0 cm), the same for both sexes, the table
+# giving no medians by sex.  The volumes and intercompartmental clearances are
+# anchored at this cohort (Steven L. Shafer, 2026-11-19, after Carbon's second
+# repository audit, A2-F4; see the header).
+BUPRENORPHINE_COHORT <- list(weight = 72.2, bmi = 24.4, age = 35, men = 144, women = 92)
+
 #' Buprenorphine sublingual bioavailability at a given dose (Bjornsson 2023)
 #'
 #' The dose-dependent fraction of the source model, 0.14 x (dose/16)^-0.371,
@@ -346,7 +371,12 @@ buprenorphineSublingualF <- function(doseMg) 0.14 * (doseMg / 16)^-0.371
 buprenorphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
                           pregnant = FALSE)
 {
-  size  <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
+  # The volumes and intercompartmental clearances, with no size covariate, are
+  # anchored at Bjornsson's cohort (BUPRENORPHINE_COHORT); the clearance
+  # carries its own weight term, read at pkWeight, which does not depend on
+  # the anchor, and takes no size factor.
+  size  <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                         cohort = do.call(cohortSizeFactors, BUPRENORPHINE_COHORT))
   pkW   <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   fixV  <- if (isTRUE(adjustToFFM)) size$volume    else 1
   fixCL <- if (isTRUE(adjustToFFM)) size$clearance else 1

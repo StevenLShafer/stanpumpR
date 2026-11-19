@@ -195,7 +195,9 @@ values**, and the reference man, and everyone else, are scaled from there.
   doxorubicinJoerger's clearance carries BSA, and its V1, Q and V2, scaled
   from the reference man, gave Joerger's own typical woman a V1 18% low. The
   library's other models with a covariate on some parameters only have not
-  yet been reviewed against this.
+  been reviewed against this on 2026-11-19 (75 models; the review's
+  per-model findings are summarised below): those whose cohort is printed
+  were anchored, and the rest wait on a source or a decision.
 - **Applied** (2026-11-18, each source's demographics read on the PDF; the
   model's header gives the table, the values and the divisors, and its test
   recomputes them from Al-Sallami's equation written out again,
@@ -215,7 +217,33 @@ values**, and the reference man, and everyone else, are scaled from there.
   vinorelbine, zolpidem and zonisamide; and (2026-11-19) chlorthalidone (Tsai
   2016's Table S1, its sex-term CL/F and V1/F at each sex's subject),
   doxorubicinJoerger (V1, Q and V2) and doxorubicinolJoerger (V/fm), at
-  Joerger 2007's 59 women.
+  Joerger 2007's 59 women. Also on 2026-11-19, the covariate-free parameters
+  of models with a covariate on others (each header names its cohort, table
+  and factor): acenocoumarol and fluindione (Verstuyft 2012, one cohort),
+  argatroban, buprenorphine, cisplatin, citalopram (CL_R, which carries the
+  source's sex term, at each sex's subject), clindamycin, docetaxel,
+  enoxaparin, epinephrine, fluorouracilTan, fondaparinux, gentamicin,
+  heparinCPB, melphalanNath (V2 and Q; its renal term, normalised to 70 kg,
+  is a decision), meloxicam (the oral fit), mirtazapine (V and CL; the BMI
+  step is not a size covariate), morphine (all but Q3, which keeps BSA^4; the
+  oral F follows the switch, 0.290 off and 0.3031 on, calibrated at
+  Atrux-Tallau's subject; codeine's formation follows the reference man's
+  clearance, now 78.5 L/h), naloxone, pemetrexed (V2, Q and the non-renal
+  clearance intercept), semaglutide, tolcapone, vancomycin (Q) and
+  vincristineIgarashi. A cohort without a printed height took NCD-RisC's
+  (clindamycin, vancomycin, enoxaparin, epinephrine, argatroban).
+- **Partial-covariate models not yet anchored** (2026-11-19 review). *A
+  decision for Shafer*: apixaban and apixabanVTE (a sex term on CL_NR/F, a
+  multinational cohort without heights), dabigatran (Q/F and V3/F fixed from
+  Dansirikul's unarchived analysis), dapagliflozinKobuchi (its V/F is Melin's,
+  with Melin's own weight term), lisinopril (no sex mix or height printed),
+  azilsartan's fixed Q/F and V2/F, gabapentin (under 1%), melphalanNath's
+  renal term, and aspirin (k34 x V3 counts weight twice with the switch on).
+  *The source is not in the archive or prints no demographics*: aspirin and
+  salicylate, pimavanserin, levodopa and levodopaIntestinalGel, pramipexole
+  and pramipexoleER, fluorouracilBriki, tranexamicAcid, amikacin, ganciclovir,
+  vancomycinKidneyTransplant, quinidine, tobramycin, sotalol, hydrocodone and
+  haloperidol. *Exempt*: hydrochlorothiazide (a meta-analysis).
 - **Not anchored, and why** (2026-11-18). *The source's paper is not in the
   archive* (papers/pending-work.csv): duloxetine, nortriptyline, clozapine,
   scopolamine, everolimus, sirolimus, tacrolimus, amitriptyline,

@@ -149,6 +149,23 @@ test_that("measurements made by a known individual give that individual back", {
 # log(1 + 0.25^2) on CL and on V1, Q and V2 together) and a log-transformed
 # residual error (sigma^2 = log(1 + 0.05^2)): ETA 0.6111885 and 0.7970002
 # as factors.  The live comparison below reruns it where mapbayr is installed.
+# The mapbayr run used the library's vancomycin as it was on 2026-11-13.
+# Since 2026-11-19 its Q is anchored at Thomson 2009's cohort (A2-F4), which
+# moves Q for this patient by the cohort's clearance factor; the two
+# comparisons below hold the model mapbayr was given, so that they keep
+# checking the search and not the model's revision.
+vancomycinAsMapbayrRan <- local({
+  current <- vancomycin
+  factor <- cohortFactorsIndependent(VANCOMYCIN_COHORT)$clearance
+  f <- function() {
+    x <- do.call(current, as.list(environment()))
+    if (isTRUE(adjustToFFM)) x$PK$default$cl2 <- x$PK$default$cl2 * factor
+    x
+  }
+  formals(f) <- formals(current)
+  f
+})
+
 mapbayrCase <- list(
   times = c(11.5, 13, 35.5) * 60,
   concentrations = c(9, 32, 14),
@@ -159,6 +176,7 @@ mapbayrCase <- list(
 )
 
 test_that("the estimate agrees with mapbayr's", {
+  local_mocked_bindings(vancomycin = vancomycinAsMapbayrRan)
   DT <- vancomycinDT()
   obs <- data.frame(Drug = "vancomycin", Time = mapbayrCase$times,
                     Concentration = mapbayrCase$concentrations)
@@ -185,6 +203,7 @@ test_that("the estimate agrees with mapbayr's, run live", {
   skip_on_cran()
   skip_if_not_installed("mapbayr")
   skip_if_not_installed("mrgsolve")
+  local_mocked_bindings(vancomycin = vancomycinAsMapbayrRan)
   s <- getDrugPK("vancomycin", 70, 170, 50, "male")$PK$default
   omega2 <- log(1 + 0.25^2)
   code <- sprintf(paste(

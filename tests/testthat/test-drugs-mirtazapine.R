@@ -4,7 +4,9 @@
 # Pins are the published Table 2 values converted by hand (L/h / 60,
 # /h / 60); the fat-free-mass factors for the 120 kg man are those worked out
 # by hand for the other drug tests (volumes x 1.3049067, clearances x
-# 1.2209126).
+# 1.2209126).  With the switch on the model is anchored at Yan's cohort
+# (MIRTAZAPINE_COHORT, 2026-11-19), so those pins are divided by the cohort's
+# factors (cohortFactorsIndependent(), tests/testthat/helpers.R).
 #
 # SOURCE DISCREPANCY: Yan's abstract gives CL/F 29.3 L/h and V/F 348 L; Table
 # 2 gives 28.9 and 310, which are used and pinned here.
@@ -21,12 +23,20 @@ YAN_REFERENCE_PK <- list(default = list(
 ))
 
 
-test_that("the reference man receives Yan's Table 2 values, either switch position", {
-  # 70 kg, 170 cm: BMI 24.2, below the threshold
+test_that("the reference man receives Yan's Table 2 values with the switch off, and is scaled from the cohort with it on", {
+  # 70 kg, 170 cm: BMI 24.2, below the threshold.  With the switch on the
+  # model is anchored at Yan's cohort (MIRTAZAPINE_COHORT), so the reference
+  # man's values are the published ones divided by the cohort's factors.
+  kc <- cohortFactorsIndependent(MIRTAZAPINE_COHORT)
   for (adjust in c(TRUE, FALSE)) {
     actual <- mirtazapine(70, 170, 35, "male", adjustToFFM = adjust)
+    pk <- YAN_REFERENCE_PK
+    if (adjust) {
+      pk$default$v1 <- 310 / kc$volume
+      pk$default$cl1 <- 0.4816666667 / kc$clearance
+    }
     expected <- list(
-      PK = YAN_REFERENCE_PK,
+      PK = pk,
       tPeak = 0, MEAC = 0,
       typical = 50, upperTypical = 80, lowerTypical = 30,
       reference = actual$reference,
@@ -34,6 +44,26 @@ test_that("the reference man receives Yan's Table 2 values, either switch positi
     )
     expect_equal_rounded(actual, expected)
   }
+})
+
+
+test_that("anchored at Yan's cohort: its typical patient receives the published values (A2-F4)", {
+  # Table 1: 62.19 kg, 163 cm (BMI 23.4, below the step), 48.52 years, 43 men
+  # and 62 women.  Neither parameter carries a sex term, so the cohort's man
+  # and woman sit either side of the published values, and their weighted
+  # geometric mean is the published value itself.
+  m <- mirtazapine(62.19, 163, 48.52, "male")$PK$default
+  w <- mirtazapine(62.19, 163, 48.52, "female")$PK$default
+  pooled <- function(x, y) exp((43 * log(x) + 62 * log(y)) / 105)
+  expect_equal(pooled(m$v1, w$v1), 310, tolerance = 1e-6)
+  expect_equal(pooled(m$cl1, w$cl1) * 60, 28.9, tolerance = 1e-6)
+  kc <- cohortFactorsIndependent(MIRTAZAPINE_COHORT)
+  expect_equal(m$v1, 310 * ffmRatioMaleIndependent(62.19, 163, 48.52) / kc$volume,
+               tolerance = 1e-6)
+  # The switch off is unchanged: the published values unscaled
+  off <- mirtazapine(62.19, 163, 48.52, "female", adjustToFFM = FALSE)$PK$default
+  expect_equal(off$v1, 310)
+  expect_equal(off$cl1 * 60, 28.9, tolerance = 1e-12)
 })
 
 
@@ -65,10 +95,13 @@ test_that("BMI of 28 or more lowers clearance by 29.4%, a step at the threshold"
 
 test_that("size scales to fat-free mass with the switch on, and the BMI step still applies", {
   # 120 kg, 170 cm, 50 y man: BMI 41.5, so the flag applies.
-  # CL = 28.9 x 0.706 / 60 x 1.2209126; V = 310 x 1.3049067.
+  # CL = 28.9 x 0.706 / 60 x 1.2209126; V = 310 x 1.3049067, each divided
+  # by the factors of Yan's cohort, at which the model is anchored.
+  kc <- cohortFactorsIndependent(MIRTAZAPINE_COHORT)
   on <- mirtazapine(120, 170, 50, "male")$PK$default
   expect_equal_rounded(on[c("v1", "cl1", "ka_PO")],
-                       list(v1 = 404.521077, cl1 = 0.4151794690, ka_PO = 0.02))
+                       list(v1 = 404.521077 / kc$volume,
+                            cl1 = 0.4151794690 / kc$clearance, ka_PO = 0.02))
   expect_equal(on[c("v2", "v3", "cl2", "cl3")],
                list(v2 = 1, v3 = 1, cl2 = 0, cl3 = 0))
   # Switch off: Yan's model exactly (V 310, CL 20.4034 L/h)
@@ -93,12 +126,16 @@ test_that("mirtazapine is offered by mouth only, in Antidepressants", {
 
 test_that("30 mg daily: the one-compartment oral solution, and the steady-state average D/tau/CL", {
   # The steady-state average is what Yan's trough data identify:
-  # 30 mg / 1440 min / (28.9 / 60) L/min = 43.25 ng/mL.
+  # 30 mg / 1440 min / (28.9 / 60) L/min = 43.25 ng/mL.  The reference man is
+  # simulated with the switch on, so his V and CL are the published values
+  # divided by the factors of Yan's cohort, at which the model is anchored,
+  # and his average is 43.25 x the cohort's clearance factor.
+  kc <- cohortFactorsIndependent(MIRTAZAPINE_COHORT)
   maximum <- 7 * 1440
   dt <- data.frame(Drug = "mirtazapine", Time = 0, Dose = 30, Units = "mg PO qd")
   w <- simulateDrugsWithCovariates(dt, noEvents, 70, 170, 35, "male", maximum,
                                    FALSE)$mirtazapine$wide
-  V <- 310; CL <- 28.9 / 60; k <- CL / V; ka <- 1.2 / 60
+  V <- 310 / kc$volume; CL <- 28.9 / 60 / kc$clearance; k <- CL / V; ka <- 1.2 / 60
   one <- function(t) ifelse(t > 0, 30 / V * 1000 * ka / (ka - k) *
                               (exp(-k * t) - exp(-ka * t)), 0)
   starts <- seq(0, maximum - 1, by = 1440)
@@ -109,10 +146,11 @@ test_that("30 mg daily: the one-compartment oral solution, and the steady-state 
   F1 <- function(t) ifelse(t > 0, 30 / V * 1000 * ka / (ka - k) *
                              ((1 - exp(-k * t)) / k - (1 - exp(-ka * t)) / ka), 0)
   auc <- sum(F1(maximum - starts) - F1(maximum - 1440 - starts))
-  expect_equal(auc / 1440, 43.25260, tolerance = 1e-4)
-  expect_equal(30 * 1000 / 1440 / CL, 43.25260, tolerance = 1e-6)
+  expect_equal(auc / 1440, 43.25260 * kc$clearance, tolerance = 1e-4)
+  expect_equal(30 * 1000 / 1440 / CL, 43.25260 * kc$clearance, tolerance = 1e-6)
 
   # An obese patient (BMI >= 28, switch off): 30 / 1440 / (20.4034 / 60)
+  V <- 310
   w2 <- simulateDrugsWithCovariates(dt, noEvents, 120, 170, 50, "male", maximum,
                                     FALSE, adjustToFFM = FALSE)$mirtazapine$wide
   CL2 <- 28.9 * 0.706 / 60

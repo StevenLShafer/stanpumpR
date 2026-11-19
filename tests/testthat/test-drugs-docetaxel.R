@@ -51,3 +51,31 @@ test_that("pregnancy: Janssen 2021's factors on CL, V1 and the shallow V2", {
   expect_equal(c(on$cl1 / off$cl1, on$v1 / off$v1, on$v2 / off$v2), c(1.08, 1.19, 1.12))
   expect_equal(c(on$v3, on$cl2, on$cl3), c(off$v3, off$cl2, off$cl3))
 })
+
+test_that("Bruno's size-free parameters are anchored at his 547 patients (A2-F4)", {
+  # Table I (p. 155), means: 69.3 kg, 168 cm, 56 years, 253 men and 294 women.
+  # With the switch on, V1, V2, V3, Q2 and Q3 are the published values divided
+  # by the cohort's pooled factors, so that its men and women, pooled
+  # geometrically, receive the published values; with the switch off they are
+  # fixed.
+  kc <- cohortFactorsIndependent(DOCETAXEL_BRUNO_COHORT)
+  pk <- function(sex, ffm = TRUE) docetaxel(69.3, 168, 56, sex, adjustToFFM = ffm)$PK$default
+  published <- list(v1 = 8.31, v2 = 8.31 * 1.07 / 1.74, v3 = 8.31 * 1.28 / 0.0787,
+                    cl2 = 8.31 * 1.07 / 60, cl3 = 8.31 * 1.28 / 60)
+  for (sex in c("male", "female")) {
+    own <- pkSizeFactors(69.3, 168, 56, sex)
+    on <- pk(sex)
+    off <- pk(sex, FALSE)
+    for (par in c("v1", "v2", "v3")) {
+      expect_equal(off[[par]], published[[par]], tolerance = 1e-12)
+      expect_equal(on[[par]], published[[par]] * own$volume / kc$volume, tolerance = 1e-6)
+    }
+    for (par in c("cl2", "cl3")) {
+      expect_equal(off[[par]], published[[par]], tolerance = 1e-12)
+      expect_equal(on[[par]], published[[par]] * own$clearance / kc$clearance, tolerance = 1e-6)
+    }
+  }
+  pooled <- function(par) exp((253 * log(pk("male")[[par]]) + 294 * log(pk("female")[[par]])) / 547)
+  for (par in names(published))
+    expect_equal(pooled(par), published[[par]], tolerance = 1e-6)
+})

@@ -64,12 +64,15 @@ test_that("the switch on uses the fat-free-mass weight and library factors", {
   # 120 kg, 170 cm, 50 y man, switch on: fat-free-mass factors 1.3049067
   # (volumes) and 1.2209126 (clearances), pharmacokinetic weight 91.343469 kg
   # (the factors pinned in test-drugs-alfentanil.R).
+  # Q and V2 are anchored at Verstuyft's cohort (A2-F4, 2026-11-19), so their
+  # factors are divided by the cohort's.
   pkW <- 91.343469; vol <- 1.3049067; clr <- 1.2209126
+  kc <- cohortFactorsIndependent(VERSTUYFT_2012_COHORT)
   m <- fluindione(120, 170, 50, "male")
   expect_equal(m$PK$default$v1, 5.19 * (pkW / 69), tolerance = 1e-6)
   expect_equal(m$PK$default$cl1, 0.17 * (pkW / 69)^0.75 / 60, tolerance = 1e-6)
-  expect_equal(m$PK$default$cl2, 0.173 * clr / 60, tolerance = 1e-6)  # size-free Q
-  expect_equal(m$PK$default$v2, 2.77 * vol, tolerance = 1e-6)         # size-free V2
+  expect_equal(m$PK$default$cl2, 0.173 * clr / kc$clearance / 60, tolerance = 1e-6)  # size-free Q
+  expect_equal(m$PK$default$v2, 2.77 * vol / kc$volume, tolerance = 1e-6)           # size-free V2
 })
 
 test_that("invalid genotypes are rejected", {
@@ -108,4 +111,33 @@ test_that("the steady-state INR follows Table IV's covariate directions", {
   # Fluindione accumulates, so its wild-type steady-state INR is close to the
   # paper's Table IV value of 2.9.
   expect_equal(endOf("*1/*1", "AA"), 2.9, tolerance = 0.3)
+})
+
+test_that("anchored at Verstuyft's cohort: its typical subject receives the published Q and V2 (A2-F4)", {
+  # Table I p. 43, two CYP2C9 groups (10 men + 1 woman, 71.4 kg, BMI 23.6,
+  # 28.5 y; 9 men + 4 women, 67.8 kg, BMI 22.4, 26.8 y).  Q and V2 have no sex
+  # term and are anchored at the cohort's pooled subject: its 24 men and women,
+  # each at their own group's values, receive the published values on the
+  # geometric mean.
+  kc <- cohortFactorsIndependent(VERSTUYFT_2012_COHORT)
+  expect_equal(kc$volume, 0.9755, tolerance = 1e-3)
+  expect_equal(kc$clearance, 0.9816, tolerance = 1e-3)
+  subjects <- list(list(71.4, 23.6, 28.5, "male", 10), list(71.4, 23.6, 28.5, "female", 1),
+                   list(67.8, 22.4, 26.8, "male", 9), list(67.8, 22.4, 26.8, "female", 4))
+  lv <- 0; lq <- 0
+  for (s in subjects) {
+    x <- fluindione(s[[1]], 100 * sqrt(s[[1]] / s[[2]]), s[[3]], s[[4]])$PK$default
+    lv <- lv + s[[5]] * log(x$v2); lq <- lq + s[[5]] * log(x$cl2)
+  }
+  expect_equal(exp(lv / 24), 2.77, tolerance = 1e-9)
+  expect_equal(exp(lq / 24) * 60, 0.173, tolerance = 1e-9)
+  # CL and V1 keep their own weight terms at the pharmacokinetic weight
+  h <- 100 * sqrt(71.4 / 23.6)
+  m <- fluindione(71.4, h, 28.5, "male")$PK$default
+  pkW <- pkSizeFactors(71.4, h, 28.5, "male")$pkWeight
+  expect_equal(m$v1, 5.19 * pkW / 69, tolerance = 1e-9)
+  expect_equal(m$cl1 * 60, 0.17 * (pkW / 69)^0.75, tolerance = 1e-9)
+  # The switch off is unchanged
+  off <- fluindione(71.4, h, 28.5, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(off$v2, 2.77); expect_equal(off$cl2 * 60, 0.173)
 })

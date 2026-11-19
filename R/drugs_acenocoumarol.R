@@ -51,10 +51,18 @@
 # The source's weight covariate acts on V1 alone (as WT/69); it is the model's
 # OWN covariate and is evaluated at the pharmacokinetic weight with the
 # adjustToFFM switch on (size$pkWeight) and at total body weight with it off, as
-# edoxaban and dabigatran are.  CL, Q and V2 carry no weight term in the source
-# and take the library's fat-free-mass factors with the switch on
-# (size$clearance / size$volume); with it off they are as published
-# (legacyVolume = 1), so the switch-off position reproduces the source's values.
+# edoxaban and dabigatran are.  CL, Q and V2 carry no weight term in the source:
+# they belong to Verstuyft's typical subject, and with the switch on they take
+# the library's fat-free-mass factors anchored at the cohort
+# (VERSTUYFT_2012_COHORT, below, shared with fluindione; Steven L. Shafer,
+# 2026-11-19, after Carbon's second repository audit, A2-F4).  Scaled from the
+# 70 kg reference man, as they were, the cohort's own typical subject received
+# a V2 2.5% and a CL and Q 1.8% below the published values (cohort factors
+# 0.9755 on volumes, 0.9816 on clearances).  A size covariate on V1 does not
+# exempt the other parameters.  The CYP2C9 *3 factor on CL is a genotype term,
+# not a sex term, so the pooled subject is the anchor.  With the switch off
+# they are as published (legacyVolume = 1), so the switch-off position
+# reproduces the source's values.
 #
 # The VKORC1 1173C>T genotype maps onto the -1639G>A Patient Profile field through
 # their linkage disequilibrium (AA = the sensitive 1173 TT, base C50; GG or GA =
@@ -82,6 +90,17 @@
 #
 # (Claude Code, 2026-10-18, at the request of Steven L. Shafer.)
 # -----------------------------------------------------------------------------
+
+# Verstuyft 2012, Table I (p. 43), the 24 healthy subjects by CYP2C9 group
+# (means): *1/*1, 10 men and 1 woman, 71.4 kg, BMI 23.6, 28.5 years; *3
+# carriers, 9 men and 4 women, 67.8 kg, BMI 22.4, 26.8 years.  No height is
+# printed; it comes from each group's weight and BMI.  The same subjects took
+# both drugs, so this one cohort anchors acenocoumarol and fluindione
+# (R/drugs_fluindione.R reads it at call time).  Steven L. Shafer, 2026-11-19,
+# after Carbon's second repository audit, A2-F4; see the header.
+VERSTUYFT_2012_COHORT <- list(groups = list(
+  list(weight = 71.4, bmi = 23.6, age = 28.5, men = 10, women = 1),   # *1/*1
+  list(weight = 67.8, bmi = 22.4, age = 26.8, men = 9, women = 4)))   # *3 carriers
 
 #' Acenocoumarol pharmacokinetics and the INR (Verstuyft 2012)
 #'
@@ -123,10 +142,14 @@ acenocoumarol <- function(weight, height, age, sex, adjustToFFM = TRUE,
     stop("Invalid vkorc1: ", paste(vkorc1, collapse = ", "), ". Must be one of: ",
          paste(VKORC1_VALUES, collapse = ", "))
 
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  # CL, Q and V2, with no size covariate, are anchored at Verstuyft's subjects
+  # (VERSTUYFT_2012_COHORT); V1's own weight term reads size$pkWeight, which
+  # the anchor does not touch
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, VERSTUYFT_2012_COHORT))
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
 
-  cyp2c9Factor <- if (grepl("\\*3", cyp2c9)) 1 - 0.3 else 1     # beta_CL = -0.3
+  cyp2c9Factor <- if (grepl("\\*3", cyp2c9)) 1 - 0.3 else 1    # beta_CL = -0.3
   CL  <- 15.3 * cyp2c9Factor * size$clearance                 # L/h (size-free source)
   V1  <- 24.7 * (pkW / 69)                                     # L
   Q   <- 4.85 * size$clearance                                # L/h (size-free source)
