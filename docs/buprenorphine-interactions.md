@@ -334,21 +334,34 @@ One receptor pool, μ only, is the stated boundary.
 
 **Resolved:**
 
-1. **Dual C50 scale.** The respiratory panel uses Olofsen's ventilatory `C50`; `% MEAC` and the
-   opioid–MAC interaction keep the analgesic MEAC. (The occupancy competition therefore runs on the
-   binding scale — §4 — the only physically consistent choice.)
-2. **Tolerance Grid B.** The four levels sit at `θ = ln M / ln 3 = (0, 0.369, 0.631, 1)`, anchored to the
-   existing `OPIOID_TOLERANCE_FACTORS` `(1, 1.5, 2, 3)`, so the new model and that knob move together.
-   Interpolation is log-linear in `k_on,B` and `C50,F`, logit in `α_B`, with `k_off,B` fixed.
-3. **Analgesic ceiling 2–4× MEAC** (naive), rendered as a band (Typical 3×, Lower 2×, Upper 4×). It fixes
-   the analgesia reserve `γ_analgesia` — the one parameter ventilation data cannot supply — and sets the
-   precipitated-withdrawal / breakthrough crossover `U*`.
-4. **Buprenorphine owns the occupancy panels; the `U` panels stay `U`.** The `% MEAC` / propofol–opioid /
-   opioid–MAC panels keep displaying `U` unchanged; buprenorphine enters them only through the `Ũ`
-   available-drive line, never by corrupting `U` (exact by the P4 odds invariant).
-5. **Lead endpoint: ventilation first.** The validated interaction data are on ventilation (Olofsen 2022,
-   Yassen 2007); the engine is ventilation-only until the analgesia reserve from decision #3 is wired, then
-   the analgesia curve is added.
+1. **One physical occupancy; μ = μ = μ** (Shafer, 2026-11-19, superseding the earlier "dual C50 scale").
+   There is a single physical μ-receptor occupancy per ligand, computed from the ligand's **true** binding
+   constant `K_D` (not Olofsen's apparent `k_on`). Ventilation and analgesia are **two transductions of
+   that one occupancy**, differing only in receptor reserve. Buprenorphine's true `K_D ≈ 0.4 ng/mL` is
+   population-independent (the deconvolution `(1−α_B)·k_on,B` is constant across Olofsen's populations), so
+   **tolerance shifts the transduction, not the binding.** The occupancy panel shows **physical**
+   occupancy; its label says so ("ventilation and analgesia are separate transductions of this one
+   occupancy").
+2. **MEAC is a reference occupancy `ρ*`.** Because MEAC is equi-effective, every full agonist at its MEAC
+   reaches the same analgesic-threshold occupancy `ρ*`; "N MEAC-equivalents" is the efficacy-weighted
+   analgesia occupancy `(Σ eᵢρᵢ)/ρ*`. This forces full-agonist `K_D ∝ MEAC`, reduces to `U = Σ Ce/MEAC` at
+   low occupancy (backward-compatible), lets buprenorphine enter the MEAC scale through its own `e_bup·ρ_bup`
+   term (no separate `Ũ` hack; blockade falls out of competition), and needs no second potency scale.
+3. **Analgesic ceiling 2–5× MEAC** (naive), a band (Typical 3.5×, Lower 2×, Upper 5×). It sets buprenorphine's
+   analgesic efficacy `e_bup` (its ceiling in MEAC-equivalents) and the precipitated-withdrawal / breakthrough
+   crossover `U*`. Reporting analgesia in MEAC-equivalents means `γ_analgesia` cancels and is not needed (the
+   reviewers' concern dissolves). At the upper edge (~4.8–5×) the analgesic efficacy ratio `τ_B/τ_F ≈ 0.81`
+   equals the ventilatory one — buprenorphine's intrinsic efficacy relative to a full agonist is
+   **endpoint-independent**; only the reserve differs.
+4. **Tolerance Grid B.** The four levels sit at `θ = ln M / ln 3 = (0, 0.369, 0.631, 1)`, anchored to
+   `OPIOID_TOLERANCE_FACTORS` `(1, 1.5, 2, 3)`. Interpolation now acts on the **transduction** (reserve /
+   efficacy) and the full-agonist potency, with every ligand's true `K_D` fixed (per decision #1).
+5. **Lead endpoint: ventilation first**, then analgesia once the reserve calibration (decision #3) is wired.
+
+*The engine's occupancy mathematics (P1–P5) is unchanged by decisions #1–#2; what changes is that it is
+fed each ligand's TRUE `K_D`, and that a two-transduction layer (ventilation, analgesia) sits on top. The
+`% MEAC` / propofol–opioid / opioid–MAC panels become readouts of the analgesia transduction, which reduces
+to `U` at low occupancy.*
 
 **Remaining open:**
 
