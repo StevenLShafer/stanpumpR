@@ -1616,3 +1616,28 @@ test('Physiology events: the physiology line follows the clock, and bad steps ar
     assert.equal(await loadRun(page, bad), false);
   }
 });
+
+test('Endobronchial tube: the arterial saturation shows under the title, amber below 90%, and bad values are refused', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  const r = JSON.parse(readFileSync(path.resolve(HERE, '..', 'examples', 'sevoflurane-washin.json'), 'utf8'));
+  const n = r.t.length;
+  r.saturation = r.t.map((_, i) => i < n / 2 ? 97 : 80);
+  r.paO2 = r.t.map((_, i) => i < n / 2 ? 400 : 45);
+  assert.equal(await loadRun(page, r), true);
+  const at = T => page.evaluate(T => { Player.seek(T); const o = document.getElementById('oxygen'); return [o.textContent, o.innerHTML.includes('class="off"')]; }, T);
+  const [early, earlyAmber] = await at(r.t[0]);
+  assert.match(early, /SaO₂ 97% · PaO₂ 400 mmHg/);
+  assert.equal(earlyAmber, false);
+  const [late, lateAmber] = await at(r.t[n - 1]);
+  assert.match(late, /SaO₂ 80%/);
+  assert.equal(lateAmber, true);
+  // A run without it shows nothing there
+  const plain = clone(r); delete plain.saturation; delete plain.paO2;
+  assert.equal(await loadRun(page, plain), true);
+  assert.equal(await page.evaluate(() => { Player.seek(Player.run.t[0]); return document.getElementById('oxygen').textContent; }), '');
+  for (const bad of [{ saturation: r.saturation }, { saturation: r.t.map(() => 120), paO2: r.paO2 }, { saturation: 'x', paO2: r.paO2 }]) {
+    const b = clone(plain); Object.assign(b, bad);
+    assert.equal(await loadRun(page, b), false);
+  }
+});

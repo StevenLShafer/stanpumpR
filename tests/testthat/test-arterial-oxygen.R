@@ -64,3 +64,66 @@ test_that("an endobronchial physiology event steps the arterial oxygen", {
   expect_gt(a$PaO2[which.min(abs(a$Time - 19))], 600)
   expect_lt(a$PaO2[which.min(abs(a$Time - 30))], 60)
 })
+
+test_that("the haemoglobin moves the arterial saturation through a shunt, and not without one", {
+  lo <- arterialOxygen(700 / 7.6, shunt = 0.5, Qco = 5, VO2 = 0.245, hb = 7)
+  hi <- arterialOxygen(700 / 7.6, shunt = 0.5, Qco = 5, VO2 = 0.245, hb = 17)
+  expect_equal(lo$SaO2, 69.0, tolerance = 0.002)
+  expect_equal(hi$SaO2, 86.9, tolerance = 0.002)
+  none <- arterialOxygen(700 / 7.6, shunt = 0, Qco = 5, VO2 = 0.245, hb = 7)
+  expect_identical(none$PaO2, none$PAO2)
+  # The oxygen the ventilated lung loads is the body's use, whatever the haemoglobin
+  for (hb in c(7, 15)) {
+    a <- arterialOxygen(113 / 7.6, shunt = 0.5, Qco = 5, VO2 = 0.245, hb = hb)
+    cc <- oxygenContent(a$PAO2, hb)
+    cv <- oxygenContent(a$PaO2, hb) - 1000 * 0.245 / 50
+    expect_equal(0.5 * 50 * (cc - cv) / 1000, 0.245, tolerance = 1e-9)
+  }
+})
+
+test_that("the gas run carries the haemoglobin, and a physiology event records it", {
+  DT <- data.frame(Drug = c("sevoflurane", "oxygen", "air", "ventilation"), Time = 0,
+                   Dose = c(2, 6, 0, 6))
+  sim <- simulateGases(DT, 70, 40, maximum = 60, endobronchial = TRUE, haemoglobin = 7)
+  a <- gasArterialOxygen(sim)
+  expect_lt(a$SaO2[which.min(abs(a$Time - 30))], 71)
+  expect_error(simulateGases(DT, 70, 40, maximum = 60, haemoglobin = 2), "haemoglobin")
+  s <- physiologyEventNormal()
+  s[["endobronchial"]] <- 1
+  s[["haemoglobin"]] <- 8
+  expect_match(physiologyEventEncode(s), "haemoglobin=8")
+  expect_equal(physiologyEventDecode(physiologyEventEncode(s))[["haemoglobin"]], 8)
+  expect_null(physiologyEventDecode("haemoglobin=30"))
+  expect_match(physiologyEventSummary(s), "haemoglobin 8 g/dL")
+  ev <- data.frame(Time = 20)
+  for (f in PHYSIOLOGY_EVENT_FIELDS) ev[[f]] <- s[[f]]
+  stepped <- simulateGases(DT, 70, 40, maximum = 60, physiologyEvents = ev)
+  b <- gasArterialOxygen(stepped)
+  expect_lt(b$SaO2[which.min(abs(b$Time - 30))], 75)
+  expect_gt(b$SaO2[which.min(abs(b$Time - 10))], 99)
+})
+
+test_that("altitude deepens the hypoxaemia: the arterial oxygen reads the engine's partial pressure", {
+  DT <- data.frame(Drug = c("sevoflurane", "oxygen", "air", "ventilation"), Time = 0,
+                   Dose = c(2, 0, 6, 6))
+  sat <- function(alt) {
+    a <- gasArterialOxygen(simulateGases(DT, 70, 40, maximum = 60, endobronchial = TRUE,
+                                         altitude = alt))
+    a$SaO2[which.min(abs(a$Time - 30))]
+  }
+  s <- vapply(c(0, 3000, 5000), sat, 0)
+  expect_equal(s, c(75.2, 68.0, 47.0), tolerance = 0.002)
+})
+
+test_that("the Visualizer carries the arterial saturation only where a tube shunts", {
+  DT <- data.frame(Drug = c("sevoflurane", "oxygen", "air", "ventilation"), Time = 0,
+                   Dose = c(2, 6, 0, 6))
+  tube <- gasDrugEntries(simulateGases(DT, 70, 40, maximum = 60, endobronchial = TRUE),
+                         DT, maximum = 60, age = 40)
+  run <- viewerGasRun(tube$sevoflurane, 0, 60)
+  expect_length(run$saturation, length(run$t))
+  expect_equal(run$saturation[length(run$t)], 85.5, tolerance = 0.01)
+  expect_length(run$paO2, length(run$t))
+  plain <- gasDrugEntries(simulateGases(DT, 70, 40, maximum = 60), DT, maximum = 60, age = 40)
+  expect_null(viewerGasRun(plain$sevoflurane, 0, 60)$saturation)
+})

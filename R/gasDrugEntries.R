@@ -152,7 +152,11 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
                                 # each row, and the events themselves
                                 bodySteps = sim$bodySteps, bodyRow = sim$bodyRow,
                                 cardiacOutput = sim$cardiacOutput,
-                                physiologyEvents = sim$physiologyEvents)
+                                physiologyEvents = sim$physiologyEvents,
+                                # The arterial oxygen where a tube shunts
+                                # blood (R/arterialOxygen.R), for the
+                                # Visualizer's SaO2
+                                arterialOxygen = gasRunArterialOxygen(sim))
     }
   }
 

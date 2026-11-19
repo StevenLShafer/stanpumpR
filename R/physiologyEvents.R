@@ -73,12 +73,14 @@ PHYSIOLOGY_EVENT_MAX <- 50L
 
 #' The settings one physiology event records, in order
 #' @keywords internal
-PHYSIOLOGY_EVENT_FIELDS <- c(names(PHYSIOLOGY_DEFAULT), "altitude", "endobronchial")
+PHYSIOLOGY_EVENT_FIELDS <- c(names(PHYSIOLOGY_DEFAULT), "altitude", "endobronchial",
+                             "haemoglobin")
 
 #' Normal physiology as a physiology event's settings
 #' @keywords internal
 physiologyEventNormal <- function()
-  c(PHYSIOLOGY_DEFAULT, altitude = ALTITUDE_DEFAULT, endobronchial = 0)
+  c(PHYSIOLOGY_DEFAULT, altitude = ALTITUDE_DEFAULT, endobronchial = 0,
+    haemoglobin = ARTERIAL_OXYGEN_HAEMOGLOBIN)
 
 #' Check one physiology event's settings
 #'
@@ -102,6 +104,7 @@ checkPhysiologyEvent <- function(x)
   out[["altitude"]] <- checkAltitude(out[["altitude"]])
   if (!out[["endobronchial"]] %in% c(0, 1))
     stop("Invalid physiology event settings: endobronchial must be 0 or 1")
+  out[["haemoglobin"]] <- checkHaemoglobin(out[["haemoglobin"]])
   out
 }
 
@@ -224,7 +227,9 @@ physiologyEventSummary <- function(x, gas = TRUE)
                  sprintf("Altitude %s m (%.0f Torr)", format(x[["altitude"]]),
                          barometricPressure(x[["altitude"]]))
                else "Sea level",
-               if (x[["endobronchial"]] == 1) "Endobronchial intubation" else "Tracheal intubation")
+               if (x[["endobronchial"]] == 1)
+                 sprintf("Endobronchial intubation, haemoglobin %s g/dL", format(x[["haemoglobin"]]))
+               else "Tracheal intubation")
   paste(parts, collapse = ", ")
 }
 

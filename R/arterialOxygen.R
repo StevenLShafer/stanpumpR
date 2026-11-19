@@ -51,22 +51,68 @@
 # blood); its compensation is the reason the patient is hypoxaemic but not
 # hypercapnic.
 #
+# THE HAEMOGLOBIN is the Physiology panel's Haemoglobin slider, shown with
+# the endobronchial box when it is ticked (Shafer, 2026-11-19), kept in the
+# gas body as `haemoglobin` and recorded by a physiology event.
+#
+# MASS BALANCE.  The oxygen the ventilated lung loads into its blood,
+# (1 - s) Q (Cc'O2 - CvO2), equals VO2 exactly by the two equations above,
+# the same VO2 the gas engine draws from the alveoli, so the gas and the
+# blood agree; the alveolar oxygen itself is the engine's balance of the
+# inspired oxygen, the alveolar ventilation (after dead space) and VO2
+# (3.5 mL/kg/min, getGasBody()), with the cardiac output allometric in weight.
+#
 # NOT MODELLED.  Hypoxic pulmonary vasoconstriction, which over minutes
 # diverts blood from the unventilated lung, so the shunt falls from about
-# half (Shafer: "initially"); the haemoglobin, held at
-# ARTERIAL_OXYGEN_HAEMOGLOBIN for every patient, there being no Patient
-# Profile field; the dissociation curve's shift with temperature and pH
+# half (Shafer: "initially"); the dissociation curve's shift with temperature and pH
 # (Severinghaus's equations 3 and 4), so at 32 C the saturation read is the
 # 37 C curve's; and oxygen in blood feeding back into the gas engine, whose
 # oxygen uptake stays VO2.
 # -----------------------------------------------------------------------------
 
-#' Haemoglobin used for arterial oxygen content, g/dL
+#' Haemoglobin used for arterial oxygen content, g/dL: the default of the
+#' Haemoglobin slider, a normal adult man
 #'
-#' [decision] for Shafer (2026-11-19): one value for every patient, there
-#' being no haemoglobin in the Patient Profile; 15 g/dL, a normal adult man.
+#' The slider (Shafer, 2026-11-19), shown with the endobronchial box when it
+#' is ticked, because with a 50% shunt the haemoglobin moves the arterial
+#' saturation from 69% at 7 g/dL to 87% at 17 g/dL on pure oxygen, and from
+#' 49% to 78% on air: the shunt's oxygen debt, VO2/Q, is the same number of
+#' mL/dL whatever the haemoglobin, and a larger share of a smaller capacity.
+#' Without a shunt it changes nothing the panel shows.
 #' @keywords internal
 ARTERIAL_OXYGEN_HAEMOGLOBIN <- 15
+
+#' The Haemoglobin slider's range and step, g/dL
+#' @keywords internal
+HAEMOGLOBIN_MIN <- 4
+#' @rdname HAEMOGLOBIN_MIN
+#' @keywords internal
+HAEMOGLOBIN_MAX <- 20
+#' @rdname HAEMOGLOBIN_MIN
+#' @keywords internal
+HAEMOGLOBIN_STEP <- 0.5
+
+#' A haemoglobin, checked
+#' @param x g/dL, or NULL for the default
+#' @returns the value; an error outside HAEMOGLOBIN_MIN to HAEMOGLOBIN_MAX
+#' @keywords internal
+checkHaemoglobin <- function(x)
+{
+  if (is.null(x)) return(ARTERIAL_OXYGEN_HAEMOGLOBIN)
+  if (!is.numeric(x) || length(x) != 1 || !is.finite(x) || x < HAEMOGLOBIN_MIN ||
+      x > HAEMOGLOBIN_MAX)
+    stop("Invalid haemoglobin: ", format(x), " (", HAEMOGLOBIN_MIN, " to ", HAEMOGLOBIN_MAX, " g/dL)")
+  unname(x)
+}
+
+#' The Haemoglobin slider, read: the default unless a readable value in range
+#' @keywords internal
+haemoglobinFromInput <- function(value)
+{
+  if (!is.numeric(value) || length(value) != 1 || !is.finite(value))
+    return(ARTERIAL_OXYGEN_HAEMOGLOBIN)
+  max(HAEMOGLOBIN_MIN, min(HAEMOGLOBIN_MAX, value))
+}
 
 #' Oxygen carried per gram of haemoglobin, mL O2/g (Hufner's number as used
 #' clinically)
@@ -165,6 +211,25 @@ gasArterialOxygen <- function(sim)
     else b$Q_cardiac, numeric(1))
   # The engine stops consuming oxygen once the alveoli hold none
   VO2 <- vapply(bodies, function(b) b$VO2, numeric(1)) * (ox[, 2] > 0)
-  out <- arterialOxygen(ox[, 2], shunt, Qco, VO2)
+  hb <- vapply(bodies, function(b)
+    if (is.null(b$haemoglobin)) ARTERIAL_OXYGEN_HAEMOGLOBIN else b$haemoglobin, numeric(1))
+  out <- do.call(rbind, lapply(split(seq_len(n), hb), function(r)
+    cbind(row = r, arterialOxygen(ox[r, 2], shunt[r], Qco[r], VO2[r], hb = hb[r][1]))))
+  out <- out[order(out$row), setdiff(names(out), "row")]
+  rownames(out) <- NULL
   cbind(Time = sim$timeLine, out)
+}
+
+#' The arterial oxygen a gas run carries to the Visualizer
+#'
+#' Only where an endobronchial tube shunts blood at some time of the run:
+#' oxygen is not a concern with both lungs ventilated (Shafer, 2026-11-19).
+#' @param sim simulateGases()'s value
+#' @returns gasArterialOxygen()'s data frame, or NULL
+#' @keywords internal
+gasRunArterialOxygen <- function(sim)
+{
+  bodies <- if (!is.null(sim$bodySteps)) sim$bodySteps$body else list(sim$body)
+  if (!any(vapply(bodies, gasShunt, numeric(1)) > 0)) return(NULL)
+  gasArterialOxygen(sim)
 }
