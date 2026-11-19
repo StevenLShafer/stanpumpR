@@ -53,9 +53,21 @@
 #      sea-level volume.  The carbon dioxide in the exhaled gas, VCO2 / MV of
 #      its volume at sea level, is VCO2 / (MV r) of it.
 #
-# NOT MODELLED.  Water vapour (47 Torr at 37 C) is not carried by the engine at
-# any altitude, and the flows are taken as true ambient flows.  Both are
-# [decision]s put to Shafer on 2026-11-18.  The evidence on the second:
+#   5. WATER VAPOUR (Shafer, 2026-11-19: "add water vapour").  Inspired gas
+#      is humidified to 47 Torr at 37 C whatever the pressure, so the dry
+#      gases share P_B - 47.  The sea-level humidification is already inside
+#      the engine's units (MAC and the GasMan validation are of humidified
+#      alveolar gas), so what fresh gas brings to the alveoli, and the room
+#      air the patient starts in, take w = ((P_B - 47)/P_B) / (713/760),
+#      exactly 1 at sea level, 0.91 at 7000 m (gasHumidityRatio()).  Rebreathed
+#      gas was humidified, dried and humidified again, so the factor cancels
+#      for it.  The water vapour pressure is held at its 37 C value at every
+#      body temperature (28 Torr at 28 C), which leaves sea level untouched by
+#      the temperature slider; the semi-closed circuit, kept for comparison
+#      with GasMan at sea level, does not take it.
+#
+# NOT MODELLED.  The flows are taken as true ambient flows, a [decision] put
+# to Shafer on 2026-11-18.  The evidence:
 # James and White 1984 measured three oxygen and three nitrous oxide
 # bobbin flowmeters calibrated at sea level.  Above 4 L/min they delivered
 # more than they read, close to the density prediction sqrt(760 / P_B):
@@ -157,6 +169,35 @@ gasPressureRatio <- function(body)
   pressureRatio(body$altitude)
 }
 
+#' Water vapour pressure in the airway at 37 C, Torr
+#' @keywords internal
+WATER_VAPOUR_PRESSURE <- 47
+
+#' The dry share of the inspired gas, relative to sea level
+#'
+#' Inspired gas is humidified in the airway to the water vapour pressure,
+#' which does not change with altitude, so the other gases share P_B - 47
+#' Torr.  The engine's tensions are sea-level partial pressures, in which
+#' the sea-level humidification is already carried (MAC and every sea-level
+#' validation are of humidified alveolar gas), so only the CHANGE in the dry
+#' share matters: w = ((P_B - 47) / P_B) / ((760 - 47) / 760), exactly 1 at
+#' sea level and 0.91 at 7000 m.  Shafer, 2026-11-19: "add water vapour".
+#' It multiplies what the fresh gas brings to the alveoli (gasSystemSoluble(),
+#' gasSystemOxygen()), and the room air the patient starts in; gas rebreathed
+#' from the patient was humidified in the airway, dried in the circuit and
+#' humidified again, so for it the factor cancels.
+#'
+#' @param body a gas body
+#' @returns w, 1 at sea level
+#' @keywords internal
+gasHumidityRatio <- function(body)
+{
+  if (is.null(body) || is.null(body$altitude)) return(1)
+  P <- barometricPressure(body$altitude)
+  P0 <- barometricPressure(0)
+  ((P - WATER_VAPOUR_PRESSURE) / P) / ((P0 - WATER_VAPOUR_PRESSURE) / P0)
+}
+
 #' An altitude read from the slider; an unreadable value is sea level
 #' @param value \code{input$physiology_altitude}
 #' @returns metres
@@ -196,12 +237,13 @@ helpPhysiologyAltitudeTable <- function()
     rows <- c(rows, sprintf("| %s | %s | %.0f | %s | %s | %.0f |",
                             label[[g]], format(h, big.mark = ","),
                             barometricPressure(h),
-                            formatC(sim$state[[g]][n, 1], digits = 1, format = "f"),
+                            formatC(sim$state[[g]][n, 1] * gasHumidityRatio(sim$body),
+                                    digits = 1, format = "f"),
                             formatC(sim$state[[g]][n, 3] / mac, digits = 2, format = "f"),
                             sim$state$oxygen[n, 2] * SEA_LEVEL_PRESSURE / 100))
   }
   .physiologyCache$altitudeTable <- paste(c(
-    "| Fresh gas | Altitude (m) | Barometric pressure (Torr) | Inspired (% of a sea-level atmosphere) | Brain at 10 min (MAC) | Alveolar oxygen at 10 min (Torr) |",
+    "| Fresh gas | Altitude (m) | Barometric pressure (Torr) | Inspired, humidified (% of a sea-level atmosphere) | Brain at 10 min (MAC) | Alveolar oxygen at 10 min (Torr) |",
     "|---|---|---|---|---|---|",
     rows
   ), collapse = "\n")

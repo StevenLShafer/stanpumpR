@@ -654,7 +654,9 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
   A[2, 2] <- A[2, 2] + fromCircuit * bl$alveolar
   A[1, ] <- 0
   A[, 1] <- 0
-  b <- c(0, fromCircuit * bl$fresh * Ffgf, rep(0, n - 2))
+  # The fresh gas humidified in the airway at the body's altitude
+  # (gasHumidityRatio(), R/altitude.R; exactly 1 at sea level)
+  b <- c(0, fromCircuit * bl$fresh * Ffgf * gasHumidityRatio(body), rep(0, n - 2))
 
   list(A = A, b = b, fresh = bl$fresh, alveolar = bl$alveolar)
 }
@@ -704,7 +706,8 @@ gasSystemOxygen <- function(body, Q, VA, Ffgf,
     fromCircuit <- fromCircuit * bl$supply
     A <- matrix(0, 2, 2)
     A[2, 2] <- -VA / Va + fromCircuit * bl$alveolar + pushedOut
-    b <- c(0, fromCircuit * bl$fresh * Ffgf - 100 * body$VO2 / Va)
+    b <- c(0, fromCircuit * bl$fresh * Ffgf * gasHumidityRatio(body) -
+             100 * body$VO2 / Va)
     return(list(A = A, b = b, fresh = bl$fresh, alveolar = bl$alveolar))
   }
 
@@ -1017,16 +1020,18 @@ advanceClosedFormGas <- function(
   # Initial conditions: patient and circuit equilibrated with room air.  The
   # alveolar oxygen tension relaxes from the inspired value to its steady state
   # within the first minute or so, on the FRC/VA time constant.
-  # Room air is a fraction of the ambient pressure (R/altitude.R).
+  # Room air is a fraction of the ambient pressure, humidified in the airway
+  # (R/altitude.R).
   ratio <- gasPressureRatio(body)
+  humid <- gasHumidityRatio(body)
   solubleGases <- props$gas[props$soluble]
   state <- list()
   for (g in solubleGases)
   {
-    init <- if (g == "nitrogen") AIR_FRACTION_N2 * 100 * ratio else 0
+    init <- if (g == "nitrogen") AIR_FRACTION_N2 * 100 * ratio * humid else 0
     state[[g]] <- rep(init, gasStateCount(body))
   }
-  state[["oxygen"]] <- rep(AIR_FRACTION_O2 * 100 * ratio, 2)
+  state[["oxygen"]] <- rep(AIR_FRACTION_O2 * 100 * ratio * humid, 2)
 
   times  <- 0
   record <- list()

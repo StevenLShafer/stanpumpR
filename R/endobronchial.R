@@ -43,12 +43,15 @@
 # than the half the chapter assumes; the lungs' unequal sizes (the right lung
 # takes about 55% of the blood); the slow absorption of the gas trapped in the
 # unventilated lung; and arterial hypoxaemia, since the engine carries oxygen
-# as gas only, with no blood or shunt of its own.  The shunt fraction and the
-# volume share are [decision]s put to Shafer on 2026-11-19.
+# as gas only, with no blood or shunt of its own.  The shunt fraction was put
+# to Shafer on 2026-11-19 and DECIDED the same day: keep the chapter's 50%.
+# The volume share remains a [decision].
 # -----------------------------------------------------------------------------
 
 #' Share of cardiac output through the unventilated lung (Eger and Shafer's
-#' chapter: the non-ventilated lung is still perfused, half the blood)
+#' chapter: the non-ventilated lung is still perfused, half the blood; kept
+#' at 50% on Shafer's decision of 2026-11-19, without hypoxic pulmonary
+#' vasoconstriction)
 #' @keywords internal
 ENDOBRONCHIAL_SHUNT_FRACTION <- 0.5
 

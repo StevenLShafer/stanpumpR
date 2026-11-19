@@ -348,25 +348,36 @@ Simulated by stanpumpR (70 kg, age 40, ventilation 6 L/min, fresh gas
 
 <!-- generated: physiology-altitude-table -->
 
-**The volumes.** In partial pressures the kinetics do not depend on the
-pressure, and with fresh gas above the minute ventilation the sevoflurane
-curve is the same at every altitude. What changes is where a partial pressure
+**Water vapour.** Inspired gas is humidified in the airway to 47 Torr at
+37 °C, whatever the pressure, so the other gases share what is left: 713 Torr
+at sea level, 277 Torr at 7,000 m. The sea-level humidification is already
+inside the tensions stanpumpR plots, and inside MAC, so only its change with
+altitude enters: what the fresh gas brings to the alveoli is multiplied by
+((P − 47)/P) / (713/760), exactly 1 at sea level, 0.97 at 3,000 m and 0.91 at
+7,000 m. A vaporizer's agent and the oxygen are diluted by it alike. Gas the
+patient rebreathes was humidified, dried in the circuit and humidified again,
+so the factor cancels for it. The water vapour pressure is kept at its 37 °C
+value at every body temperature.
+
+**The volumes.** Apart from the humidification, the kinetics do not depend on
+the pressure in partial pressures. What changes is where a partial pressure
 becomes a volume. The same partial pressure taken up is a larger ambient
 volume at altitude, so the concentration and second gas effects are larger,
 and so is the volume the oxygen consumed takes. The carbon dioxide is a
 larger share of the exhaled gas, so at low flows the absorber, by removing it,
 concentrates the rebreathed agent more. At 2 L/min of oxygen with 2%
-sevoflurane and a minute ventilation of 5 L/min, the end-tidal tension after an hour is 1.60% at sea level and
-1.81% at 7,000 m.
+sevoflurane and a minute ventilation of 5 L/min, the end-tidal tension after
+an hour is 1.60% at sea level and 1.65% at 7,000 m, the absorber's
+concentration slightly outweighing the humidification.
 
 **Oxygen.** Breathing air at 5 L/min, the alveolar oxygen after 30 minutes falls
-from about 108 Torr at sea level to about 16 Torr at 7,000 m: the inspired
-partial pressure falls, and the oxygen consumed takes the same partial
-pressure from it.
+from about 108 Torr at sea level to about 10 Torr at 7,000 m: the inspired
+partial pressure falls, the water vapour takes its 47 Torr, and the oxygen
+consumed takes the same partial pressure from what is left. Climbers at that
+height survive by breathing far more than 5 L/min, which the ventilation row
+can show.
 
-**Not modelled.** Water vapour, which takes 47 Torr of the inspired gas at any
-altitude, is not carried by the engine at sea level or above, so the alveolar
-oxygen is somewhat higher than in a real patient, most at height. Flows are
+**Not modelled.** Flows are
 taken as true flows. A bobbin flowmeter calibrated at sea level delivers more
 than it reads at altitude: James and White measured about 7% more at 4,800 ft
 and 19 to 21% more at 10,000 ft above 4 L/min, close to the square root of 760
@@ -385,7 +396,8 @@ takes up no agent and joins the arterial blood at the mixed venous partial
 pressure, a right-to-left shunt, so end-tidal and arterial partial pressures
 diverge. stanpumpR takes the chapter's idealisation: half the cardiac output
 passes the unventilated lung, and the ventilated lung holds half the alveolar
-gas.
+gas. (The half is the chapter's, kept on Shafer's decision of
+2026-11-19.)
 
 How much the arterial rise is delayed depends on solubility. For a poorly
 soluble agent the end-tidal tension approaches the inspired whatever the blood

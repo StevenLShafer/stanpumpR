@@ -35,13 +35,35 @@ test_that("sea level is exactly what it was", {
 test_that("in partial pressures, the kinetics do not depend on the pressure", {
   # With the volume terms off (no uptake coupling, no oxygen volume), a
   # variable-bypass vaporizer's partial pressure gives the same curve at any
-  # altitude
+  # altitude, but for the humidification of the inspired gas: the whole
+  # patient side is w times the sea-level curve
   dt <- gasTable(c("oxygen", "sevoflurane", "ventilation"), c(2, 2, 5))
   sea <- simulateGases(dt, maximum = 60, uptakeEffect = FALSE, oxygenUptake = FALSE)
   high <- simulateGases(dt, maximum = 60, uptakeEffect = FALSE, oxygenUptake = FALSE,
                         altitude = 7000)
-  expect_equal(high$state$sevoflurane, sea$state$sevoflurane, tolerance = 1e-12)
+  w <- gasHumidityRatio(high$body)
+  expect_equal(high$state$sevoflurane[, -1], w * sea$state$sevoflurane[, -1],
+               tolerance = 1e-12)
   expect_equal(high$body$altitude, 7000)
+})
+
+test_that("water vapour takes its 47 Torr of the inspired gas at any altitude", {
+  expect_identical(gasHumidityRatio(getGasBody(70)), 1)
+  expect_identical(gasHumidityRatio(list(altitude = 0)), 1)
+  P <- barometricPressure(7000); P0 <- barometricPressure(0)
+  expect_equal(gasHumidityRatio(list(altitude = 7000)),
+               ((P - 47) / P) / ((P0 - 47) / P0))
+  expect_equal(round(gasHumidityRatio(list(altitude = 7000)), 3), 0.911)
+  # A dry inspired partial pressure of nitrous oxide reaches the alveoli
+  # humidified: without the uptake coupling the system is linear and starts
+  # empty, so every tension is r x w times its sea-level value
+  dt <- gasTable(c("oxygen", "nitrousOxide", "ventilation"), c(3, 7, 5))
+  run <- function(h) simulateGases(dt, maximum = 120, uptakeEffect = FALSE,
+                                   oxygenUptake = FALSE, altitude = h)
+  s <- run(5000)
+  expect_equal(s$state$nitrousOxide[, -1],
+               pressureRatio(5000) * gasHumidityRatio(s$body) * run(0)$state$nitrousOxide[, -1],
+               tolerance = 1e-10)
 })
 
 test_that("flowmeter gases and the desflurane vaporizer fall with the pressure", {
@@ -67,13 +89,14 @@ test_that("the patient starts in room air at the ambient pressure", {
   dt <- gasTable(c("air", "ventilation"), c(5, 5))
   r <- pressureRatio(7000)
   s <- simulateGases(dt, maximum = 30, altitude = 7000)
-  expect_equal(s$state$nitrogen[1, ], rep(AIR_FRACTION_N2 * 100 * r, gasStateCount(s$body)))
-  expect_equal(s$state$oxygen[1, ], rep(AIR_FRACTION_O2 * 100 * r, 2))
+  w <- gasHumidityRatio(s$body)
+  expect_equal(s$state$nitrogen[1, ], rep(AIR_FRACTION_N2 * 100 * r * w, gasStateCount(s$body)))
+  expect_equal(s$state$oxygen[1, ], rep(AIR_FRACTION_O2 * 100 * r * w, 2))
   # The alveolar oxygen at the same ventilation: the inspired partial
   # pressure falls, the oxygen consumed takes the same partial pressure
   sea <- simulateGases(dt, maximum = 30)
   dropSea <- AIR_FRACTION_O2 * 100 - lastState(sea, "oxygen")
-  dropHigh <- AIR_FRACTION_O2 * 100 * r - lastState(s, "oxygen")
+  dropHigh <- AIR_FRACTION_O2 * 100 * r * w - lastState(s, "oxygen")
   expect_lt(lastState(s, "oxygen"), lastState(sea, "oxygen") * 0.25)
   expect_equal(dropHigh, dropSea, tolerance = 0.25)
 })

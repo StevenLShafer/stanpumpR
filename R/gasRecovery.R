@@ -796,6 +796,8 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
       Fin[["nitrousOxide"]] <- 100 * ratio * carrier * flow[["nitrousOxide"]] / sum(flow)
     if ("nitrogen" %in% gases)
       Fin[["nitrogen"]] <- 100 * ratio * carrier * AIR_FRACTION_N2 * flow[["air"]] / sum(flow)
+    # Humidified in the airway at the body's altitude (gasHumidityRatio())
+    Fin <- Fin * gasHumidityRatio(body)
 
     # Block-diagonal system matrix, transposed for row-vector states, and the
     # constant inflow.
