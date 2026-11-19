@@ -148,6 +148,11 @@ for w in W:
         elif "no PDF" in pl["result"]:
             status = "To download (free at PMC, by hand)" if not in_archive else status
             notes.append("PMC Article Datasets hold only XML/text for this author manuscript; save the PDF from the PMC page or the publisher.")
+        elif pl["result"].startswith("FAILED"):
+            # A per-paper fetch failure is now recorded rather than lost (CodeRabbit, PR #797).
+            # Without this the preserved result lived only in pmc_fetch_log.json, which nobody
+            # reads.  The message is deliberately generic: the exception text belongs in the log.
+            notes.append("The scripted PMC fetch failed on this paper; see _build/pmc_fetch_log.json. Still to download.")
     if qrow:
         notes.append("In ShaferPapers\\shafer-queue.csv (status: %s)." % qrow["status"])
     rows.append({
