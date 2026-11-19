@@ -44,7 +44,7 @@ Three limits:
 
 - **The first day after an injection is not described.** Sampling began 16 to 20 hours after the injection, and in these patients the tracer took about 33 hours to equilibrate. Early concentrations are higher than this curve.
 - **The patients become euthyroid on treatment.** These parameters describe the start of treatment, and no study has followed T3 kinetics through the change. After some days the oral model's faster clearance is probably closer.
-- **The patients' sexes were not printed.** The model is scaled from their average patient, taken as half men and half women.
+- **The patients' sexes were not printed.** The model is scaled from their average patient, taken as half men and half women (Steven L. Shafer, 2026-11-19). The study predates trial registration, so no other record gives them.
 
 Van Tassell's own hypothyroid first-dose fit is not used. It was sampled for only 12 hours, and its half-life of 3.6 hours is, in the authors' words, the distribution phase.
 

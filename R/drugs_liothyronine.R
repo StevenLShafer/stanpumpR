@@ -124,9 +124,10 @@
 # Intravenous: Nicoloff's table prints each patient's age, height and weight
 # but not their sex, and fitted no covariate, so the intravenous parameters
 # are anchored at the six patients' means, 70.6 kg, 161 cm and 52.2 years,
-# with an even sex mix assumed, as the FDA review of cenobamate was
-# [decision for Shafer: the sexes are unprinted, and primary hypothyroidism
-# is commoner in women].  cohortSizeFactors() gives 0.867752 on volumes and
+# with an even sex mix assumed, as the FDA review of cenobamate was (Steven
+# L. Shafer, 2026-11-19: stay with the 50:50 split unless the trial was
+# registered at ClinicalTrials.gov; it was not, the registry opening in 2000,
+# 28 years after the paper).  cohortSizeFactors() gives 0.867752 on volumes and
 # 0.899077 on clearances (a man of their means 0.956288, a woman 0.787413), so
 # the reference man receives V 43.3 L and 20.6 L/day.
 #
@@ -232,7 +233,7 @@ LIOTHYRONINE_COHORT <- list(weight = 72.3, bmi = 25.7, age = 48.5,
 # an intravenous pulse of 125I-T3 (means; one compartment)
 LIOTHYRONINE_IV_V  <- 37.6       # L, T3 distribution space
 LIOTHYRONINE_IV_CL <- 18.5       # L/day, T3 clearance
-# their means; sex not printed, an even mix assumed [decision for Shafer]
+# their means; sex not printed, an even mix assumed (Shafer, 2026-11-19)
 LIOTHYRONINE_IV_COHORT <- list(weight = 70.6, height = 161, age = 52.2,
                                men = 3, women = 3)
 
