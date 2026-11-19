@@ -426,6 +426,11 @@ test_that("a model the print does not close is closed from a digitised intraveno
   expect_equal(review$identifiability$closed$v1, 8, tolerance = 0.01)
   expect_equal(review$identifiability$closed$cl1, 1.2, tolerance = 0.01)
   expect_true(review$drug$ok)
+  # It has a model, though it prints no volume or clearance (CodeRabbit on #776).
+  expect_false(isTRUE(review$noModel))
+  html <- as.character(paperReviewReportTags(review, plots = FALSE))
+  expect_false(grepl("found no pharmacokinetic model", html))
+  expect_match(html, "Internal consistency")
 })
 
 # A test paper dosed daily and modelled each day's dose as a constant 24-h
@@ -711,7 +716,7 @@ test_that("a derived quantity printed for a stated patient is compared at that p
   expect_equal(v$derived_quantities[[length(v$derived_quantities) - 1]]$at$weight, 10)
 })
 
-test_that("a value printed under conditions, as a mean, or for one individual is a concern, not an error", {
+test_that("a value printed under conditions is not compared; as a mean, or for one individual, a concern", {
   # The calibration of 2026-11-10 (docs/paper-review-calibration.md) found
   # each of these reported as an error on papers whose models are verified.
   ex <- paperReviewExample()
@@ -721,11 +726,16 @@ test_that("a value printed under conditions, as a mean, or for one individual is
   x <- ex; x$derived_quantities <- c(ex$derived_quantities, list(wrong))
   n <- length(x$derived_quantities)
   expect_equal(find(x)[[1]]$severity, "error")
-  # Printed under conditions the review cannot apply.
+  # Printed under conditions the model does not carry: not compared at all
+  # (Shafer's test of 2026-11-17, where a concern for each was still a false
+  # finding), the model's value shown in the table beside the paper's.
   x$derived_quantities[[n]]$conditions <- "during cardiopulmonary bypass"
-  f <- find(x)[[1]]
-  expect_equal(f$severity, "concern")
-  expect_match(f$detail, "cardiopulmonary bypass")
+  expect_length(find(x), 0)
+  t <- paperReviewRun(x)$consistency
+  r <- t[t$quantity == "Vss" & t$location == "Text, p. 9", ]
+  expect_equal(r$status, "not comparable")
+  expect_match(r$note, "cardiopulmonary bypass")
+  expect_true(nzchar(r$model))
   # A mean of individuals' values.
   x$derived_quantities[[n]]$conditions <- ""
   x$derived_quantities[[n]]$statistic <- "mean_of_individuals"
@@ -802,4 +812,418 @@ test_that("a group that is not a disposition model is not reported as failing to
   expect_equal(f[[2]]$severity, "info")
   f <- paperReviewGroupFindings(list(ke0Error), "Heart rate", ex)
   expect_equal(f[[1]]$severity, "error")
+})
+
+test_that("a value for a stated patient is not compared through a covariate the review could not apply", {
+  # Shafer's test of 2026-11-17 (BJA-D-26-02959): ke0 = 0.221 x (1 - 0.00979
+  # (AGE - 54)) x (1 + 0.231 SEX), SEX 1 for men.  Held at its reference, it
+  # made every ke0 printed at 20 and 75 years "disagree" with the paper's own
+  # parameters, which reproduce them exactly.  Here the reference is 40 years.
+  ex <- paperReviewExample()
+  ex$structure$effect_site <- "ke0"
+  ex$parameters <- c(Filter(function(p) p$role != "tPeak", ex$parameters),
+                     list(list(role = "ke0", value = 0.221, value_text = "0.221", units = "1/min",
+                               status = "estimated", location = "Table 3")))
+  ke0At <- function(age, sex, value)
+    list(quantity = "ke0", value = value, value_text = format(value), units = "1/min",
+         statistic = "typical_value", at = list(age = age, sex = sex),
+         location = paste("Text,", age, "y", sex))
+  printed <- list(ke0At(20, "female", 0.264), ke0At(75, "female", 0.145))
+  ex$derived_quantities <- printed
+  rows <- function(x) { t <- paperReviewRun(x)$consistency; t[t$quantity == "ke0", ] }
+  bad <- function(x) Filter(function(f) grepl("^ke0 as printed", f$title), paperReviewRun(x)$findings)
+
+  # The equation as Claude could not read it: one effect of form 'other'.
+  other <- ex
+  other$covariate_effects <- c(ex$covariate_effects, list(list(
+    parameter_role = "ke0", covariate = "age", form = "other", coefficient = NULL,
+    reference_value = 40, covariate_units = "years",
+    equation_as_printed = "ke0 = 0.221 x (1 - 0.00979 (AGE - 40)) x (1 + 0.231 SEX)",
+    location = "Table 3")))
+  r <- rows(other)
+  expect_equal(r$status, c("not comparable", "not comparable"))
+  expect_match(r$note[1], "held at its reference")
+  expect_length(bad(other), 0)
+
+  # As the prompt now asks: one effect per factor, sex as sex_male.  The
+  # model then gives the paper's values: 0.221 x 1.1958 = 0.264 at 20 years,
+  # 0.221 x 0.6574 = 0.145 at 75, and 0.272 for the reference man.
+  factors <- ex
+  factors$covariate_effects <- c(ex$covariate_effects, list(
+    list(parameter_role = "ke0", covariate = "age", form = "linear", coefficient = -0.00979,
+         reference_value = 40, covariate_units = "years", equation_as_printed = "", location = "Table 3"),
+    list(parameter_role = "ke0", covariate = "sex_male", form = "linear", coefficient = 0.231,
+         reference_value = 0, covariate_units = "", equation_as_printed = "", location = "Table 3")))
+  r <- rows(factors)
+  expect_equal(r$status, c("matches", "matches"))
+  expect_equal(as.numeric(r$model), c(0.221 * (1 + 0.00979 * 20), 0.221 * (1 - 0.00979 * 35)),
+               tolerance = 1e-3)
+  ref <- paperReviewReferencePatient(factors)
+  d <- paperReviewDrug(factors, ref)
+  expect_equal(d$model$ke0, 0.221 * 1.231, tolerance = 1e-9)
+
+  # A figure of patients the reference may not be is no finding while such an
+  # effect is held (the ICU factor of AA-D-26-00064, +73%).
+  fig <- paperReviewExample()
+  fig$covariate_effects <- c(fig$covariate_effects, list(list(
+    parameter_role = "CL", covariate = "other", form = "category_multiplier", coefficient = 0.458,
+    reference_value = NULL, covariate_units = "", equation_as_printed = "CL x 0.458 in ICU patients",
+    location = "Table 2")))
+  for (i in seq_along(fig$figures))
+    for (j in seq_along(fig$figures[[i]]$series))
+      fig$figures[[i]]$series[[j]]$points <- lapply(fig$figures[[i]]$series[[j]]$points,
+        function(p) { p$value <- p$value * 3; p })
+  ff <- Filter(function(f) f$section == "Figures" && grepl("digitised points", f$title),
+               paperReviewRun(fig)$findings)
+  expect_true(length(ff) > 0)
+  expect_true(all(vapply(ff, function(f) f$severity, "") == "info"))
+  expect_match(ff[[1]]$title, "cannot be compared")
+  expect_match(ff[[1]]$detail, "ICU")
+})
+
+test_that("a paper with no pharmacokinetic model gets no model's findings", {
+  # Shafer's test of 2026-11-17: a response surface of doses (ALN-D-25-00690)
+  # was reported three times over as "the number of compartments is not 1, 2
+  # or 3" and "elimination is not linear"; a regression on awakening time
+  # (BJA-D-26-00577) as failing to close a one-compartment model.
+  surface <- list(
+    paper = list(title = "A response surface"),
+    drug = list(name = "remimazolam and sufentanil", dose_basis = "unclear",
+                dose_basis_note = "Salt not stated.", concentration_units = "other", location = "p. 5"),
+    structure = list(compartments = 0, elimination = "other", absorption = "other",
+                     effect_site = "pd_without_effect_site", location = "Equations 1-6"),
+    parameters = lapply(c("B0", "B1", "B2", "B3"), function(b)
+      list(name_in_paper = b, group = "Sedation", role = "other", value = 1, value_text = "1",
+           units = "unitless", location = "Table 3")),
+    reviewer_notes = list(list(severity = "error", topic = "Thresholds inconsistent with Table 3",
+                               finding = "0.25, not 0.54", location = "Table 3")),
+    published_models = list(), extraction_limitations = "")
+  expect_true(paperReviewNoModel(surface))
+  review <- paperReviewRun(surface)
+  expect_true(review$noModel)
+  titles <- vapply(review$findings, function(f) f$title, "")
+  expect_setequal(titles, c("The dose basis is not stated", "Thresholds inconsistent with Table 3"))
+  html <- as.character(paperReviewReportTags(review, plots = FALSE))
+  expect_match(html, "found no pharmacokinetic model")
+  expect_match(html, "What Claude extracted")
+  expect_match(html, "1 error, 1 concern")
+  expect_false(grepl("not 1, 2 or 3|does not close|Elimination is not linear", html))
+  # A lone rate constant is not a model; a noncompartmental CL is.
+  rate <- surface
+  rate$parameters <- list(list(role = "k10", value = 0.045, value_text = "0.045", units = "1/min"))
+  expect_true(paperReviewNoModel(rate))
+  nca <- surface
+  nca$derived_quantities <- list(list(quantity = "CL", value = 22.8, units = "mL/min/kg"))
+  expect_false(paperReviewNoModel(nca))
+  # A paper that uses a published model has one.
+  pub <- surface
+  pub$published_models <- list(list(name = "Eleveld 2018", drug = "propofol"))
+  expect_false(paperReviewNoModel(pub))
+})
+
+test_that("only saturable elimination is reported as not linear", {
+  ex <- paperReviewExample()
+  title <- function(x) {
+    f <- Filter(function(f) grepl("^Elimination", f$title), paperReviewRun(x)$findings)
+    if (length(f)) paste(f[[1]]$severity, f[[1]]$title) else ""
+  }
+  expect_equal(title(ex), "")
+  ex$structure$elimination <- "michaelis_menten"
+  expect_equal(title(ex), "concern Elimination is not linear")
+  ex$structure$elimination <- "other"
+  expect_equal(title(ex), "info Elimination is not described as linear")
+})
+
+test_that("a note every model shares is printed once, and a covariate stanpumpR cannot compute is said once", {
+  # Shafer's test of 2026-11-17 (BJA-D-26-02959): eighteen "not finite and
+  # positive ... NA at age 0 y, 40 kg, 50 cm" concerns, one per LBM term per
+  # model, from James's lean body mass, which is negative there.
+  ex <- paperReviewExample()
+  lbm <- function(role) list(parameter_role = role, covariate = "lean_body_mass", form = "power",
+                             coefficient = 0.384, reference_value = 48, covariate_units = "kg",
+                             equation_as_printed = paste(role, "x (LBM/48)^0.384"), location = "Table 2")
+  ex$covariate_effects <- lapply(c("V1", "V2", "V3"), lbm)
+  one <- paperReviewCovariateChecks(ex)
+  titles <- vapply(one, function(f) f$title, "")
+  expect_false(any(grepl("not finite and positive", titles)))
+  expect_equal(sum(grepl("is not defined for every legal patient", titles)), 1)
+  # Three models sharing those effects: each note once in all.
+  groups <- c("TCI PD", "Final PD", "LOC")
+  three <- ex
+  three$parameters <- unlist(lapply(groups, function(g)
+    lapply(ex$parameters, function(p) { p$group <- g; p })), recursive = FALSE)
+  three$derived_quantities <- list()
+  review <- paperReviewRun(three)
+  cov <- Filter(function(f) f$section == "Covariates", review$findings)
+  keys <- vapply(cov, function(f) paste(f$title, sub(" The same holds for.*", "", f$detail)), "")
+  expect_false(any(duplicated(keys)))
+  undefinedNote <- Filter(function(f) grepl("not defined for every legal patient", f$title), cov)
+  expect_length(undefinedNote, 1)
+  expect_match(undefinedNote[[1]]$detail, "The same holds for Final PD, LOC")
+})
+
+test_that("a parameter printed for men and for women is a sex effect, not a conflict", {
+  # Shafer's test of 2026-11-17 (BJA-D-25-00628): the pooled model's Q, 0.66
+  # l/kg/min in males and 0.56 in females, was "printed with different
+  # values" and the sex difference was dropped from the simulator.
+  ex <- paperReviewExample()
+  q2 <- which(vapply(ex$parameters, function(p) p$role, "") == "Q2")
+  male <- ex$parameters[[q2]]; male$name_in_paper <- "Q (male)"; male$value <- 2; male$value_text <- "2"
+  female <- male; female$name_in_paper <- "Q (female)"; female$value <- 1.7; female$value_text <- "1.7"
+  ex$parameters <- c(ex$parameters[-q2], list(female, male))
+  review <- paperReviewRun(ex)
+  titles <- vapply(review$findings, function(f) f$title, "")
+  expect_false(any(grepl("printed with different values", titles)))
+  expect_match(review$extraction$extraction_limitations, "Q2 is printed for men \\(2\\) and women \\(1.7\\)")
+  # The man's value is the typical value, and a woman's is 0.85 of it.
+  man <- list(weight = 70, height = 174, age = 40, sex = "male")
+  woman <- modifyList(man, list(sex = "female"))
+  x <- review$extraction
+  expect_equal(paperReviewDisposition(x, man)$cl2, 2, tolerance = 1e-9)
+  expect_equal(paperReviewDisposition(x, woman)$cl2, 1.7, tolerance = 1e-9)
+  # Two values of a parameter that already has a covariate effect are its
+  # values at different covariates, said as a note.
+  cov <- paperReviewExample()
+  cl <- which(vapply(cov$parameters, function(p) p$role, "") == "CL")
+  other <- cov$parameters[[cl]]; other$value <- 0.6; other$value_text <- "0.6"; other$name_in_paper <- "CL at 35 kg"
+  cov$parameters <- c(cov$parameters, list(other))
+  f <- Filter(function(f) grepl("^CL is printed", f$title), paperReviewAssumptionChecks(cov))
+  expect_equal(f[[1]]$severity, "info")
+  expect_equal(f[[1]]$title, "CL is printed for different patients")
+})
+
+test_that("a published model used as published is pointed to the library, not rebuilt from a figure", {
+  # Shafer's test of 2026-11-17 (BJA-D-26-00728): Eleveld's and Schnider's
+  # propofol models, used to simulate effect-site concentrations, were
+  # "closed" by fitting exponentials to a figure (V1 45.6 L and 14.9 L) and
+  # then reported as not reproducing it.
+  ex <- paperReviewExample()
+  ex$parameters <- list()
+  ex$derived_quantities <- list()
+  ex$covariate_effects <- list()
+  ex$drug$name <- "propofol"
+  ex$published_models <- list(
+    list(name = "Eleveld 2018", drug = "propofol", group = "Eleveld", location = "Methods, p. 6"),
+    list(name = "Schnider 1998", drug = "Propofol", group = "Schnider", location = "Methods, p. 7"))
+  for (i in seq_along(ex$figures))
+    ex$figures[[i]]$series <- c(lapply(ex$figures[[i]]$series, function(s) { s$group <- "Eleveld"; s }),
+                                lapply(ex$figures[[i]]$series, function(s) { s$group <- "Schnider"; s }))
+  expect_false(paperReviewNoModel(ex))
+  review <- paperReviewRun(ex)
+  expect_setequal(names(review$models), c("Eleveld", "Schnider"))
+  for (g in names(review$models)) {
+    m <- review$models[[g]]
+    expect_equal(m$identifiability$verdict, "published")
+    titles <- vapply(m$findings, function(f) f$title, "")
+    expect_false(any(grepl("does not close|Closed instead|not 1, 2 or 3|prints no ke0|complete, positive", titles)))
+    expect_false(any(vapply(m$findings, function(f) f$severity == "error", logical(1))))
+  }
+  pub <- function(g) Filter(function(f) grepl("^A published model", f$title), review$models[[g]]$findings)[[1]]
+  expect_match(pub("Eleveld")$detail, "holds it as propofol \\(Eleveld")
+  expect_match(pub("Schnider")$detail, "holds it as propofol \\(Schnider\\)")
+  # A paper with its own model that only compares with a published one
+  # (no group named) keeps its own model's checks.
+  own <- paperReviewExample()
+  own$published_models <- list(list(name = "Eleveld 2018", drug = "propofol"))
+  expect_equal(paperReviewRun(own)$identifiability$verdict, "printed")
+})
+
+test_that("every model of one paper prints its parameters in one time unit", {
+  # Shafer's test of 2026-11-17 (ALN-D-25-01106): the on-ECMO model in L/h,
+  # the post-ECMO model in L/min.
+  ex <- paperReviewExample()
+  slow <- function(p) { if (p$role %in% c("CL", "Q2", "Q3")) { p$value <- p$value / 20 }; p }
+  ex$parameters <- c(lapply(ex$parameters, function(p) { p$group <- "fast"; p }),
+                     lapply(ex$parameters, function(p) { p <- slow(p); p$group <- "slow"; p }))
+  ex$derived_quantities <- list()
+  review <- paperReviewRun(ex)
+  units <- lapply(review$models, function(m) unique(m$pkTable$Units[grepl("^CL", m$pkTable$Parameter)]))
+  expect_equal(units$fast, units$slow)
+  expect_equal(unname(units$fast), "L/h")
+})
+
+
+test_that("CodeRabbit on #776: grouped published models alone, same-named entries, roles, normalized figures", {
+  # A paper whose only models are published ones, each grouped, with nothing
+  # else grouped: each is recognised as published, never closed as its own.
+  ex <- paperReviewExample()
+  ex$parameters <- list(); ex$derived_quantities <- list(); ex$covariate_effects <- list()
+  ex$published_models <- list(list(name = "Eleveld 2018", drug = "propofol", group = "Eleveld"))
+  r <- paperReviewRun(ex)
+  expect_equal(r$identifiability$verdict, "published")
+  expect_false(any(vapply(r$findings, function(f) f$severity == "error", logical(1))))
+  ex$published_models <- c(ex$published_models,
+                           list(list(name = "Schnider 1998", drug = "propofol", group = "Schnider")))
+  r <- paperReviewRun(ex)
+  expect_setequal(names(r$models), c("Eleveld", "Schnider"))
+  expect_true(all(vapply(r$models, function(m) m$identifiability$verdict == "published", logical(1))))
+
+  # Two entries named alike conflict, whatever covariates the parameter has.
+  cov <- paperReviewExample()
+  cl <- which(vapply(cov$parameters, function(p) p$role, "") == "CL")
+  dup <- cov$parameters[[cl]]; dup$value <- 1.26; dup$value_text <- "1.26"
+  cov$parameters <- c(cov$parameters, list(dup))
+  f <- Filter(function(f) grepl("^CL is printed", f$title), paperReviewAssumptionChecks(cov))
+  expect_equal(f[[1]]$title, "CL is printed with different values")
+
+  # A printed CL depends on CL alone; a derived one on every disposition role.
+  ex <- paperReviewExample()
+  expect_equal(paperReviewQuantityRoles("CL", ex), "CL")
+  expect_true(all(c("V1", "CL") %in% paperReviewQuantityRoles("Vss", ex)))
+  noCL <- ex; noCL$parameters <- Filter(function(p) p$role != "CL", ex$parameters)
+  expect_true("V1" %in% paperReviewQuantityRoles("CL", noCL))
+  # So an unapplied effect on V1 does not hide a misprinted CL for a stated patient.
+  v1 <- ex
+  v1$covariate_effects <- list(list(parameter_role = "V1", covariate = "age", form = "other",
+                                    equation_as_printed = "V1 x f(AGE)", location = "Eq 3"))
+  v1$derived_quantities <- list(list(quantity = "CL", value = 3, value_text = "3", units = "L/min",
+                                     statistic = "typical_value", at = list(age = 70), location = "Text"))
+  t <- paperReviewRun(v1)$consistency
+  expect_equal(t$status[t$quantity == "CL"], "disagrees")
+
+  # A peak-normalized figure is not scored while a shape-changing effect is held.
+  norm <- paperReviewExample()
+  norm$figures[[1]]$y_normalization <- "percent_of_peak"
+  norm$figures[[1]]$y_units <- "other"
+  mx <- max(vapply(norm$figures[[1]]$series[[1]]$points, function(p) p$value, 0))
+  norm$figures[[1]]$series[[1]]$points <- lapply(norm$figures[[1]]$series[[1]]$points, function(p) {
+    p$value <- 100 * (p$value / mx)^0.3; p })
+  score <- function(x) Filter(function(f) grepl("^Figure 2", f$title), paperReviewRun(x)$findings)[[1]]
+  base <- score(norm)
+  expect_true(base$severity %in% c("concern", "error"))
+  norm$covariate_effects <- c(norm$covariate_effects, list(list(
+    parameter_role = "CL", covariate = "other", form = "category_multiplier", coefficient = 0.5,
+    covariate_units = "", equation_as_printed = "CL x 0.5 in ICU", location = "Table 2")))
+  held <- score(norm)
+  expect_equal(held$severity, "info")
+  expect_match(held$detail, "ICU")
+})
+
+
+test_that("CodeRabbit's second look at #776: derived own models, intravenous figures, group spelling", {
+  # A paper whose own model is closed from derived quantities keeps its own
+  # model's checks beside an ungrouped published comparator.
+  ex <- paperReviewExample()
+  ex$published_models <- list(list(name = "Eleveld 2018", drug = "propofol"))
+  ex$parameters <- Filter(function(p) p$role == "tPeak", ex$parameters)
+  expect_true(any(vapply(ex$derived_quantities, function(d) d$quantity %in% c("CL", "Vss"), logical(1))))
+  expect_length(paperReviewPublishedModels(ex), 0)
+  expect_false(identical(paperReviewRun(ex)$identifiability$verdict, "published"))
+
+  # An intravenous figure does not depend on absorption; an oral one does.
+  ex <- paperReviewExample()
+  iv <- paperReviewFigureRoles(ex$figures[[1]], ex)
+  expect_false(any(c("ka", "F", "tlag") %in% iv))
+  oral <- ex
+  oral$regimens[[1]]$doses[[1]]$route <- "oral"
+  rid <- oral$regimens[[1]]$id
+  oral$figures[[1]]$regimen_id <- rid
+  expect_true(all(c("ka", "F", "tlag") %in% paperReviewFigureRoles(oral$figures[[1]], oral)))
+  expect_false("F" %in% paperReviewFigureRoles(oral$figures[[1]], oral, normalized = TRUE))
+
+  # One group spelled two ways on a figure and a published model is one model.
+  ex <- paperReviewExample()
+  ex$parameters <- list(); ex$derived_quantities <- list(); ex$covariate_effects <- list()
+  ex$published_models <- list(list(name = "Schnider 1998", drug = "propofol", group = "Schnider"),
+                              list(name = "Eleveld 2018", drug = "propofol", group = "Eleveld"))
+  for (i in seq_along(ex$figures))
+    ex$figures[[i]]$series <- lapply(ex$figures[[i]]$series, function(s) { s$group <- "schnider"; s })
+  expect_setequal(names(paperReviewRun(ex)$models), c("Schnider", "Eleveld"))
+})
+
+
+test_that("CodeRabbit's third look at #776: names that differ only by source, effect-site figures", {
+  # A weight effect on CL does not make "CL" and "CL (abstract)" two patients'.
+  cov <- paperReviewExample()
+  cl <- which(vapply(cov$parameters, function(p) p$role, "") == "CL")
+  other <- cov$parameters[[cl]]; other$value <- 1.26; other$value_text <- "1.26"
+  other$name_in_paper <- "CL (abstract)"
+  cov$parameters <- c(cov$parameters, list(other))
+  title <- function(x) Filter(function(f) grepl("^CL is printed", f$title), paperReviewAssumptionChecks(x))[[1]]$title
+  expect_equal(title(cov), "CL is printed with different values")
+  # Named for a stated patient, they are that patient's.
+  cov$parameters[[length(cov$parameters)]]$name_in_paper <- "CL at 35 kg"
+  expect_equal(title(cov), "CL is printed for different patients")
+  # An effect-site figure depends on ke0 and tPeak.
+  ex <- paperReviewExample()
+  f <- ex$figures[[1]]
+  expect_false("ke0" %in% paperReviewFigureRoles(f, ex))
+  f$concentration_site <- "effect_site"
+  expect_true(all(c("ke0", "tPeak") %in% paperReviewFigureRoles(f, ex, normalized = TRUE)))
+})
+
+test_that("CodeRabbit's later looks at #776: the follow-up items", {
+  ex <- paperReviewExample()
+  # A CL derived as k10 V1 depends on k10 and V1 alone, not on k12.
+  micro <- ex
+  micro$parameters <- list(
+    list(role = "V1", value = 8, value_text = "8", units = "L"),
+    list(role = "k10", value = 0.15, value_text = "0.15", units = "1/min"))
+  expect_setequal(paperReviewQuantityRoles("CL", micro), c("k10", "V1"))
+  expect_false("k12" %in% paperReviewQuantityRoles("CL", micro))
+
+  # A coefficient given as a fraction of the sum is no model of the paper's own.
+  frac <- list(derived_quantities = list(list(quantity = "coefficient_1", value = 80, units = "percent")))
+  expect_false(paperReviewOwnModelEvidence(frac))
+  abs <- list(derived_quantities = list(list(quantity = "coefficient_1", value = 0.1, units = "1/L")))
+  expect_true(paperReviewOwnModelEvidence(abs))
+  expect_true(paperReviewNoModel(frac))
+
+  # A metabolite series that is set aside brings no absorption into the figure.
+  met <- ex
+  met$regimens <- c(met$regimens, list(list(id = "RO", doses = list(list(route = "oral", time = 0,
+    amount = 10, mass_unit = "mg", per_kg = "no", per_time = "none", time_units = "min")))))
+  f <- met$figures[[1]]
+  f$series <- c(f$series, list(list(label = "metabolite", analyte = "metabolite", regimen_id = "RO",
+                                     points = list())))
+  expect_false(any(c("ka", "F") %in% paperReviewFigureRoles(f, met)))
+
+  # A normalized figure of a regimen mixing IV and oral doses keeps F.
+  mix <- ex
+  mix$regimens[[1]]$doses <- c(mix$regimens[[1]]$doses, list(list(route = "oral", time = 60,
+    amount = 10, mass_unit = "mg", per_kg = "no", per_time = "none", time_units = "min")))
+  expect_true("F" %in% paperReviewFigureRoles(mix$figures[[1]], mix, normalized = TRUE))
+  oral <- ex
+  oral$regimens[[1]]$doses[[1]]$route <- "oral"
+  expect_false("F" %in% paperReviewFigureRoles(oral$figures[[1]], oral, normalized = TRUE))
+
+  # Two names giving one patient are a conflict.
+  cov <- paperReviewExample()
+  cl <- which(vapply(cov$parameters, function(p) p$role, "") == "CL")
+  a <- cov$parameters[[cl]]; a$name_in_paper <- "CL at 35 kg"
+  b <- a; b$value <- 1.26; b$value_text <- "1.26"; b$name_in_paper <- "CL at 35 kg (abstract)"
+  cov$parameters <- c(cov$parameters[-cl], list(a, b))
+  t <- Filter(function(f) grepl("^CL is printed", f$title), paperReviewAssumptionChecks(cov))[[1]]$title
+  expect_equal(t, "CL is printed with different values")
+
+  # A decrement time after an infusion written in the conditions is compared.
+  dq <- list(quantity = "decrement_50", value = 10, value_text = "10", units = "min",
+             statistic = "typical_value", conditions = "after a 60-min infusion", location = "Text")
+  x <- ex; x$derived_quantities <- c(ex$derived_quantities, list(dq))
+  r <- paperReviewRun(x)$consistency
+  row <- r[r$quantity == "decrement_50", ]
+  expect_equal(nrow(row), 1)
+  expect_false(identical(row$status, "not comparable"))
+  expect_match(row$note, "After a 60 min infusion")
+  infused <- paperReviewRun(modifyList(x, list(derived_quantities = c(ex$derived_quantities,
+    list(modifyList(dq, list(conditions = "", infusion_minutes = 60)))))))$consistency
+  expect_equal(row$model, infused$model[infused$quantity == "decrement_50"])
+  # Another quantity's infusion condition is not carried, so it stays not comparable.
+  tp <- list(quantity = "tPeak", value = 3, value_text = "3", units = "min",
+             statistic = "typical_value", conditions = "after a 60-min infusion", location = "Text")
+  y <- ex; y$derived_quantities <- c(ex$derived_quantities, list(tp))
+  r <- paperReviewRun(y)$consistency
+  expect_equal(r$status[r$quantity == "tPeak" & r$location == "Text"], "not comparable")
+  dq$conditions <- "after a 60-min infusion during cardiopulmonary bypass"
+  x <- ex; x$derived_quantities <- c(ex$derived_quantities, list(dq))
+  r <- paperReviewRun(x)$consistency
+  expect_equal(r$status[r$quantity == "decrement_50"], "not comparable")
+
+  # A decrement-time figure's miss is a note while an effect is held.
+  held <- paperReviewHeldFigure(list(severity = "error", detail = "miss"),
+    list(covariate_effects = list(list(parameter_role = "CL", covariate = "other",
+      form = "category_multiplier", coefficient = 0.5, equation_as_printed = "CL x 0.5 in ICU"))),
+    paperReviewReferencePatient(ex), PAPER_REVIEW_DISPOSITION_ROLES)
+  expect_equal(held$severity, "info")
+  expect_match(held$detail, "ICU")
 })

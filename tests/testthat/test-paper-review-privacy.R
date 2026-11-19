@@ -61,6 +61,11 @@ test_that("the app's server deletes uploads at once and discards on request and 
   dir.create(dir)
   path <- file.path(dir, "0.pdf")
   writeBin(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), path)
+  # Discard empties the file fields as well, which kept the discarded files'
+  # names and "Upload complete" (Shafer's test of 2026-11-17).
+  reset <- character(0)
+  testthat::local_mocked_bindings(reset = function(id = "", ...) reset <<- c(reset, id),
+                                  .package = "shinyjs")
   shiny::testServer(paperReviewServer, {
     session$setInputs(manuscript = list(name = "secret.pdf", size = 59, type = "application/pdf",
                                         datapath = path))
@@ -71,6 +76,7 @@ test_that("the app's server deletes uploads at once and discards on request and 
     session$setInputs(discard = 1)
     expect_null(review())
     expect_match(output$status, "Discarded")
+    expect_setequal(reset, c("manuscript", "supplement"))
     # Reviewing with nothing uploaded sends nothing and says why.
     session$setInputs(review = 1)
     expect_match(output$status, "Upload a manuscript first")
@@ -154,6 +160,7 @@ test_that("a review that comes back is reported, and one discarded meanwhile is 
 
     session$setInputs(discard = 1)
     session$setInputs(ownKeyUse = FALSE, ownKey = "")
+    session$setInputs(manuscriptChosen = 1)              # a browser reports the choice first
     session$setInputs(manuscript = upload())
     session$setInputs(review = 2)
     session$setInputs(discard = 2)                      # before the answer is read
@@ -588,5 +595,30 @@ test_that("a quick review's place that comes back after its review has ended doe
     expect_true(reviewing())
     resolvers[[2]](list(extraction = paperReviewExample(), usage = list()))
     settle(session)
+  })
+})
+
+
+test_that("an upload chosen before Discard and finished after it is dropped unread", {
+  # CodeRabbit on #776: Discard emptied the store and the fields, and the
+  # upload still in flight was then stored while its field showed nothing.
+  dir <- file.path(tempdir(), shinyUploadDirName())
+  dir.create(dir)
+  late <- file.path(dir, "0.pdf"); after <- file.path(dir, "1.pdf")
+  for (p in c(late, after)) writeBin(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), p)
+  testthat::local_mocked_bindings(reset = function(...) NULL, .package = "shinyjs")
+  shiny::testServer(paperReviewServer, {
+    session$setInputs(manuscriptChosen = 1)
+    session$setInputs(discard = 1)
+    session$setInputs(manuscript = list(name = "a.pdf", size = 59, type = "application/pdf",
+                                        datapath = late))
+    expect_false(file.exists(late))
+    expect_false(exists("pdf", envir = store))
+    expect_match(output$status, "dropped unread")
+    # One chosen after Discard is taken.
+    session$setInputs(manuscriptChosen = 2)
+    session$setInputs(manuscript = list(name = "b.pdf", size = 59, type = "application/pdf",
+                                        datapath = after))
+    expect_true(exists("pdf", envir = store))
   })
 })
