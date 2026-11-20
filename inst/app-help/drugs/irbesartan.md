@@ -38,7 +38,9 @@ The label reports concentrations 11 to 44% higher in women, 20 to 50% higher in 
 
 ### Effect site and blood pressure
 
-This curve is the **plasma concentration** only. [This library does not plot a blood pressure](help:models/antihypertensives). Two blood-pressure models have been published for irbesartan, Hedaya 2015 and Huang 2006, each in normotensive men after a single 300 mg dose and each fitted on its own pharmacokinetics. Their concentrations for half the maximum effect differ sevenfold, so neither is used. No band is drawn: there is no established therapeutic plasma range for irbesartan, which is dosed to blood pressure.
+This curve is the **plasma concentration** only. [This library does not plot a blood pressure](help:models/antihypertensives). Two blood-pressure models have been published for irbesartan, Hedaya 2015 and Huang 2006, each in normotensive men after a single 300 mg dose and each fitted on its own pharmacokinetics. Their concentrations for half the maximum effect differ sevenfold, so neither gives a pressure.
+
+Tick **Graph Options → [% effect](help:models/percent-effect)** to draw the fall in systolic pressure as a percentage of its maximum, 0 to 100%, with no baseline. That panel uses Huang 2006 (EC50 0.29 mcg/mL, Hill 0.75, k<sub>e0</sub> 0.62 /h), **provisionally**: of the two, only Huang leaves an effect at the 24-hour trough, as a once-daily drug must. Huang's EC50 was fitted on concentrations about half of Karatza's, so the panel probably overstates the effect, and Huang's own abstract found blood pressure almost unchanged after 150 mg. Treat the panel as the time course of the effect, not its size. No band is drawn: there is no established therapeutic plasma range for irbesartan, which is dosed to blood pressure.
 
 ### Pregnancy
 

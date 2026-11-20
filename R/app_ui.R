@@ -564,10 +564,28 @@ app_ui <- function() {
                       "lower. Only drugs with a published model are drawn."
                     ),
                     placement = "right"
+                  )),
+                  # A panel under each drug with a published concentration-
+                  # effect model, 0 to 100% of its maximal effect
+                  # (R/pdEffect.R); shown only while such a drug is drawn.
+                  relevantField("showEffect", fieldHelp(
+                    checkboxInput(
+                      "showEffect",
+                      "% effect",
+                      value = FALSE
+                    ),
+                    paste(
+                      "Under each drug with a published concentration-effect",
+                      "model, draw its effect as a percentage of the maximal",
+                      "effect, 0 to 100%, so the plot does not depend on the",
+                      "patient's baseline. Only drugs with a published model",
+                      "are drawn."
+                    ),
+                    placement = "right"
                   ))
                 ),
                 conditionalPanel(
-                  condition = sprintf("!(input.showThreshold || input.showMEAC || output.adaptationDrawn || input.addedPlots.includes('%s') || input.addedPlots.includes('%s'))", PLOT_ID_EVENTS, PLOT_ID_INTERACTION),
+                  condition = sprintf("!(input.showThreshold || input.showMEAC || output.adaptationDrawn || output.effectDrawn || input.addedPlots.includes('%s') || input.addedPlots.includes('%s'))", PLOT_ID_EVENTS, PLOT_ID_INTERACTION),
                   checkboxInput(
                     inputId = "logY",
                     label = "Log Y axis",
