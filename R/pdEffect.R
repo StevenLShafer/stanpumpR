@@ -240,7 +240,7 @@ helpPdEffectTableMarkdown <- function()
   ke0 <- suppressWarnings(as.numeric(tab$ke0_per_min))
   site <- ifelse(tab$driver %in% "Effect Site", "the drug's own effect site",
           ifelse(is.na(ke0), "plasma, directly",
-                 paste0("its own effect site, ke0 ", num(ke0 * 60), " /h (t½ ",
+                 paste0("its own effect site, ke0 ", num(ke0 * 60), " /h (t\u00bd ",
                         num(log(2) / ke0), " min)")))
   emax <- ifelse(is.na(tab$emax), dash, paste(num(tab$emax), ifelse(is.na(tab$emax_units), "", tab$emax_units)))
   status <- ifelse(drawn, ifelse(tab$provisional %in% TRUE, "drawn, provisional", "drawn"),
