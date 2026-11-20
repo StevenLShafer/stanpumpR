@@ -657,24 +657,32 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_,
   state <- gr$state
   # Physiology events (R/physiologyEvents.R): a body in force from each step.
   # A step in cardiac output or altitude changes flows and pressures only,
-  # which the run carries per time; a step in temperature or in the
-  # intubation changes what a compartment holds at a partial pressure (its
-  # capacity, which the viewer draws as one width for the run), so such a run
-  # is not drawn.
+  # which the run carries per time.  A step in the intubation (a tube pulled
+  # back out of a bronchus, or slipping into one) changes one capacity, the
+  # lungs', the ventilated lung holding a share of the alveolar gas
+  # (R/endobronchial.R): the run carries it per time as `lungsCapacity`, and
+  # the tissues' are unchanged.  A step in temperature changes every tissue's
+  # capacity (its tissue:gas coefficient), which the viewer draws as one width
+  # for the run, so such a run is not drawn.
   steps <- gr$bodySteps
   rowBody <- function(i) body
   if (!is.null(steps)) {
-    same <- vapply(steps$body, function(b)
-      identical(b$temperature, body$temperature) &&
-        identical(isTRUE(b$endobronchial), isTRUE(body$endobronchial)), TRUE)
+    same <- vapply(steps$body, function(b) identical(b$temperature, body$temperature), TRUE)
     if (!all(same))
-      stop("The Visualizer cannot yet draw an inhaled agent whose body temperature or ",
-           "intubation changes during the run (physiology events); it can draw one ",
-           "whose cardiac output or altitude changes.")
+      stop("The Visualizer cannot yet draw an inhaled agent whose body temperature ",
+           "changes during the run (physiology events); it can draw one ",
+           "whose cardiac output, altitude or intubation changes.")
     rowBody <- function(i) steps$body[[gr$bodyRow[[i]]]]
   }
   bodyAt <- function(t) if (is.null(steps)) body else
     steps$body[[max(1L, findInterval(t, steps$time))]]
+  # The alveolar gas volume in force at each of the viewer's times: one lung's
+  # share while a tube is endobronchial.  The lungs are drawn at the largest
+  # (both lungs, where the tube is tracheal at any time in the window).
+  alveolar <- if (is.null(steps)) NULL else vapply(times, function(t) bodyAt(t)$V_alveolar, 0)
+  alveolarSteps <- !is.null(alveolar) && diff(range(alveolar)) > 0
+  shunted <- gasShunt(body) > 0 ||
+    (!is.null(steps) && any(vapply(steps$body, gasShunt, 0) > 0))
   # The cardiac-output slider splits the brain and heart (state 3) from the
   # rest of the vessel-rich group (state 6; gasTissueShares()).  The viewer
   # draws the whole group: its volume, and the partial pressure that holds the
@@ -691,7 +699,8 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_,
     state[, 3] <- (body$V_brain * state[, 3] + body$V_vrgRest * state[, 6]) / vrgVolume
   }
   vol <- c(circuit = if (identical(gr$circuit, "semi-closed")) body$V_circuit else 0,
-           lungs = body$V_alveolar, vrg = vrgVolume, mg = body$V_muscle, fg = body$V_fat)
+           lungs = if (is.null(alveolar)) body$V_alveolar else max(alveolar),
+           vrg = vrgVolume, mg = body$V_muscle, fg = body$V_fat)
   lambda <- c(circuit = 1, lungs = 1, vrg = ltg[["brain"]], mg = ltg[["muscle"]], fg = ltg[["fat"]])
   capacity <- vol * lambda
 
@@ -741,7 +750,11 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_,
     circuit = gr$circuit,
     volume = as.list(vol), partition = as.list(lambda), capacity = as.list(capacity),
     t = times * 60, p = p, venous = at(venous),
-    arterial = if (gasShunt(body) > 0) at(arterial) else NULL,
+    arterial = if (shunted) at(arterial) else NULL,
+    # The lungs' capacity in force at each time, where the intubation steps
+    # (their volume: the gas phase's coefficient is 1); else NULL, and
+    # `capacity$lungs` holds throughout
+    lungsCapacity = if (alveolarSteps) alveolar else NULL,
     # The arterial saturation and PaO2 where an endobronchial tube shunts
     # blood (R/arterialOxygen.R; Shafer, 2026-11-19), shown under the title
     saturation = if (!is.null(gr$arterialOxygen)) at(gr$arterialOxygen$SaO2) else NULL,
