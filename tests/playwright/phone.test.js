@@ -289,16 +289,12 @@ describe('the dose grid on a phone', () => {
   });
 
   test('Apply commits the dose and draws the plot', async () => {
-    // The startup table's drugs are all at 0, and only a drug with a dose
-    // above 0 is drawn (Shafer, 2026-11-16): until the dose is applied the
-    // plot area says so, and there is no plot
-    const plotBefore = await page.evaluate(() => {
-      const img = document.querySelector('#PlotSimulation img');
-      return img ? img.getAttribute('src') : null;
-    });
-    assert.equal(plotBefore, null, 'a plot was drawn of drugs at 0');
-    const said = await page.evaluate(() => document.getElementById('PlotSimulation').textContent);
-    assert.match(said, /above 0 in the dose table/);
+    // The startup table's drugs are all at 0, and each is drawn flat (Shafer,
+    // 2026-11-19: an empty page on a phone looked like a failure), so there
+    // is a plot before the dose is applied
+    await page.waitForFunction(() => document.querySelector('#PlotSimulation img'), null, { timeout: 60000 });
+    const plotBefore = await page.evaluate(() =>
+      document.querySelector('#PlotSimulation img').getAttribute('src'));
     await enter(FENTANYL, 2, '50');
     await holds(FENTANYL, ['fentanyl', '0', '50', 'mcg']);
     await page.waitForFunction(() => !document.getElementById('dosetable_apply').disabled, null, { timeout: 15000 });

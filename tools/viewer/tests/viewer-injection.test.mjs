@@ -526,21 +526,29 @@ test('sizes: proportional within 10:1, compressed to exactly 10:1 beyond it, in 
     assert.equal(await loadRun(page, r), true);
     const g = await page.evaluate(() => {
       Player.seek(1500);
-      // A box as the browser drew it (getBBox(), single precision) and its
-      // height as the drawing wrote it (the attribute, exact).
-      const boxes = sel => [...document.querySelectorAll(sel)]
-        .map(e => Object.assign(e.getBBox(), { written: Number(e.getAttribute('height')) })).sort((a, b) => a.x - b.x);
-      const outl = boxes('#flat svg rect[fill="none"]:not([stroke-dasharray])');      // V2, V1, V3
+      const outl = [...document.querySelectorAll('#flat svg rect[fill="none"]')].filter(e => !e.getAttribute('stroke-dasharray'))
+        .map(e => e.getBBox()).sort((a, b) => a.x - b.x);      // V2, V1, V3
       const caption = [...document.querySelectorAll('#flat svg text')].some(e => /not to scale/.test(e.textContent));
       const st = Player.stateAt(1500), top = Flat.scale.top;
       // Each fill's height is its concentration on the one scale, whatever the widths.
-      const fills = boxes('#flat svg rect[fill-opacity]');
-      return { w: [outl[1].width, outl[0].width, outl[2].width], ph: outl[0].written, caption, n: [outl.length, fills.length],
-               h: [fills[1], fills[0], fills[2]].map(b => b.written), drawn: [fills[1], fills[0], fills[2]].map(b => b.height),
-               c: [st.cp, st.c2, st.c3], top, r3d: View.geo.r.slice(1) };
+      // Read as the numbers the viewer wrote, not from getBBox(): that gives
+      // them in single precision, about 3e-6 px off at these heights, so
+      // whether a height passed depended on how tall the plot was, and that
+      // on whether the controls' ResizeObserver had run since the window was
+      // sized (293 px before it, 325 px after). Before it, "fill 1" failed,
+      // the drawing being right (2026-11-20).
+      const num = (e, a) => Number(e.getAttribute(a));
+      const read = sel => [...document.querySelectorAll(sel)].map(e => ({ x: num(e, 'x'), y: num(e, 'y'), w: num(e, 'width'), h: num(e, 'height') }))
+        .sort((a, b) => a.x - b.x);                             // V2, V1, V3
+      const fills = read('#flat svg rect[fill-opacity]');
+      const boxes = read('#flat svg rect[fill="none"]:not([stroke-dasharray])');
+      // Each fill is in its own box, standing on its floor.
+      const own = fills.length === 3 && boxes.length === 3 &&
+        fills.every((f, i) => f.x === boxes[i].x && f.w === boxes[i].w && Math.abs(f.y + f.h - boxes[i].y - boxes[i].h) < 1e-9);
+      return { w: [outl[1].width, outl[0].width, outl[2].width], ph: boxes[0].h, caption, fills: fills.length, own,
+               h: [fills[1].h, fills[0].h, fills[2].h], c: [st.cp, st.c2, st.c3], top,
+               r3d: View.geo.r.slice(1) };
     });
-    // The three boxes and their three fills, and nothing else, are what was read.
-    assert.deepEqual(g.n, [3, 3], 'the outlines and fills selected');
     const vols = [pk.v1, pk.v2, pk.v3], ratio = Math.max(...g.w) / Math.min(...g.w);
     assert.ok(ratio <= 10 * (1 + 1e-6), `${JSON.stringify(pk)}: 2D width ratio ${ratio}`);
     const area = g.r3d.map(x => x * x), aRatio = Math.max(...area) / Math.min(...area);
@@ -553,83 +561,11 @@ test('sizes: proportional within 10:1, compressed to exactly 10:1 beyond it, in 
     // The order of the sizes is the order of the volumes.
     for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) if (vols[i] < vols[j]) assert.ok(g.w[i] < g.w[j] && area[i] < area[j]);
     assert.equal(g.caption, compressed, 'the not-to-scale note');
-    // The height the drawing wrote is the concentration; the box the browser
-    // drew is that height to single precision, which is all getBBox() keeps
-    // (about 4e-6 px at 100 px). Until 2026-11-20 the box itself was held to
-    // 1e-6 px, finer than it is stored: V2's fill passed in a plot 325 px
-    // high (7e-7 off) and failed in one 293 px high (3e-6 off), which is the
-    // plot's height when the drawing is read before the controls' height is
-    // measured again after the viewport changes.
-    for (let i = 0; i < 3; i++) {
-      assert.ok(Math.abs(g.h[i] - g.c[i] / g.top * g.ph) < 1e-9, `fill ${i} is not its concentration`);
-      assert.ok(Math.abs(g.drawn[i] - g.h[i]) <= g.h[i] * 2 ** -22, `fill ${i} is drawn ${g.drawn[i]} px high, written ${g.h[i]}`);
-    }
+    assert.equal(g.fills, 3, 'the fills of V2, V1 and V3, and no other rect');
+    assert.ok(g.own, 'a fill is not in its own box, on its floor');
+    for (let i = 0; i < 3; i++) assert.ok(Math.abs(g.h[i] - g.c[i] / g.top * g.ph) < 1e-9, `fill ${i} is not its concentration`);
     assertClean(page);
   }
-});
-
-// ── The physiology line under the title (every run from stanpumpR has one)
-// and what the 2D view draws over V1: at 1280 x 720 "Pump 171 mg/min" was
-// written across it, and the pump's arrow ran through its end (2026-11-20).
-// The plot starts lower under the line (flatTop() in flat.js), by the line's
-// own height: it wraps in a narrow window, and is longer with physiology events.
-test('2D: the pump\'s label and arrow are clear of the physiology line, and the cards\' room is the drawing\'s', { skip }, async t => {
-  const normal = { liver: 1, renal: 1, cardiac: 1, gi: 1, temperature: 37 };
-  for (const [w, h, events] of [[1280, 720, false], [1200, 800, true], [800, 600, false], [480, 640, false], [480, 640, true]]) {
-    const page = await viewerPage(t);
-    await page.setViewport({ width: w, height: h });
-    await new Promise(r => setTimeout(r, 200));        // the controls' height, measured again
-    const r = clone(RUN);
-    r.physiology = normal;
-    if (events) r.physiologySteps = [{ time: r.t[0], ...normal },
-                                     { time: r.t[Math.floor(r.t.length / 2)], ...normal, cardiac: 0.5, temperature: 34 }];
-    assert.equal(await loadRun(page, r), true);
-    const g = await page.evaluate(() => {
-      const run = Player.run, physio = document.getElementById('physio');
-      const box = e => { const b = e.getBoundingClientRect(); return { left: b.left, top: b.top, right: b.right, bottom: b.bottom }; };
-      const meets = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
-      // The pump running at its slowest and its fastest, and at the first
-      // and the last time it runs (the last is after the physiology event,
-      // where the line has changed).
-      const pumping = run.t.filter(T => Player.stateAt(T).flow.in > 0);
-      const byRate = pumping.slice().sort((a, b) => Player.stateAt(a).flow.in - Player.stateAt(b).flow.in);
-      const times = [byRate[0], byRate[byRate.length - 1], pumping[0], pumping[pumping.length - 1]];
-      const out = { times: times.length, labels: 0, hits: [], lines: 0, top: [], fits: [] };
-      for (const T of times) {
-        Player.seek(T);
-        const p = box(physio);
-        out.lines = Math.max(out.lines, Math.round((p.bottom - p.top) / 13.8));
-        const label = [...document.querySelectorAll('#flat svg text')].find(e => /^Pump /.test(e.textContent));
-        if (label) out.labels++;
-        // Everything the 2D view drew: text, arrows, boxes, axis.
-        for (const e of document.querySelectorAll('#flat svg > *'))
-          if (meets(box(e), p)) out.hits.push(`${T} s: <${e.tagName}> ${e.textContent || e.getAttribute('fill')} ${JSON.stringify(box(e))} meets the line ${JSON.stringify(p)}`);
-        if (label && meets(box(label), p)) out.hits.push(`${T} s: the pump's label meets the line`);
-        // The plot's top as drawn, and Flat.fits() against it for every card height.
-        const yTop = Number(document.querySelector('#flat svg rect[fill="none"]').getAttribute('y'));
-        out.top.push(yTop);
-        const ctl = Flat.controlsTop(document.getElementById('flat').clientHeight);
-        for (let c = 1; c <= 500; c++)
-          if (Flat.fits(c) !== (ctl - c - 22 - FLAT_BOTTOM - yTop >= FLAT_MIN_PLOT)) out.fits.push(`${T} s: fits(${c}) is ${Flat.fits(c)} with the plot's top at ${yTop}`);
-      }
-      return out;
-    });
-    const where = `${w} x ${h}${events ? ' with physiology events' : ''}`;
-    assert.equal(g.labels, g.times, `${where}: the pump's label was not found at every time`);
-    assert.deepEqual(g.hits, [], `${where}: drawn across the physiology line`);
-    assert.deepEqual(g.fits, [], `${where}: Flat.fits() and the drawing disagree on the plot's top`);
-    assert.ok(g.top.every(y => y > 96), `${where}: the plot starts at ${g.top}, no lower than without the line`);
-    // The narrow window is the case of a line that wraps.
-    if (w === 480) assert.ok(g.lines >= 2, `${where}: the physiology line did not wrap (${g.lines} line)`);
-    assertClean(page);
-  }
-  // A run without the line (an older run, an example file) is drawn as before.
-  const page = await viewerPage(t);
-  await page.setViewport({ width: 1280, height: 720 });
-  assert.equal(await loadRun(page, RUN), true);
-  const yTop = await page.evaluate(() => { Player.seek(1500); return Number(document.querySelector('#flat svg rect[fill="none"]').getAttribute('y')); });
-  assert.equal(yTop, 96, 'the plot\'s top without a physiology line');
-  assertClean(page);
 });
 
 // ── Save a video (video.js, 2026-11-07): an H.264 MP4 made in the browser.
@@ -1763,6 +1699,129 @@ test('Physiology events: the physiology line follows the clock, and bad steps ar
     const bad = clone(r); bad.physiologySteps = steps;
     assert.equal(await loadRun(page, bad), false);
   }
+});
+
+// The physiology line and what is drawn over V1 (2026-11-20). Every run from
+// stanpumpR carries the line under the title, and in the 2D view of a drug the
+// pump's arrow started under it and its label ("Pump 171 mg/min") was drawn
+// across it. With a line shown the arrows start below it (flatTop() in
+// flat.js), however many rows it takes, and Flat.fits() allows for the same
+// room; without one the drawing is where it was.
+// The controls' height reaches the layout (--ctl-h) from a ResizeObserver, in
+// the frame after the window changes size: measured positions wait for it.
+const settled = page => page.waitForFunction(() =>
+  getComputedStyle(document.documentElement).getPropertyValue('--ctl-h').trim() === document.getElementById('controls').offsetHeight + 'px');
+// What the 2D view draws at T, against the physiology line (and a gas run's
+// arterial oxygen under it): the label starting with `label`, whatever of
+// the drawing touches either, the plot's top, and whether fits() uses the
+// room draw() used.
+const overPhysio = (page, T, label) => page.evaluate(([T, label]) => {
+  Player.seek(T);
+  const box = e => { const b = e.getBoundingClientRect(); return { left: b.left, top: b.top, right: b.right, bottom: b.bottom, width: b.width, height: b.height }; };
+  const line = box(document.getElementById('physio')), oxygen = box(document.getElementById('oxygen'));
+  const over = (b, l) => l.height > 0 && b.width > 0 && b.left < l.right && l.left < b.right && b.top < l.bottom && l.top < b.bottom;
+  const meets = b => over(b, line) || over(b, oxygen);
+  const name = e => e.tagName === 'text' ? e.textContent : `${e.tagName} ${e.getAttribute('fill') || e.getAttribute('stroke')}`;
+  const drawn = [...document.querySelectorAll('#flat svg text, #flat svg rect, #flat svg polygon, #flat svg line')];
+  const found = drawn.find(e => e.tagName === 'text' && e.textContent.startsWith(label));
+  const yTop = Number(document.querySelector('#flat svg rect[fill="none"]').getAttribute('y'));
+  // The tallest cards that leave the plot its minimum under the top drawn:
+  // fits() must say so, and no taller.
+  const most = Flat.controlsTop(Flat.el.clientHeight) - 22 - FLAT_BOTTOM - yTop - FLAT_MIN_PLOT;
+  return { line, oxygen, label: found ? box(found) : null, meets: found ? meets(box(found)) : null,
+           hits: drawn.filter(e => meets(box(e))).map(name), yTop, most, fits: [Flat.fits(most), Flat.fits(most + 1)] };
+}, [T, label]);
+
+test('2D: the pump\'s arrow and label are drawn clear of the physiology line, wrapped or not, and fits() allows the same room', { skip }, async t => {
+  const normal = { liver: 1, renal: 1, cardiac: 1, gi: 1, temperature: 37 };
+  const off = { liver: 0.5, renal: 0.25, cardiac: 0.63, gi: 0.5, temperature: 34 };
+  // As stanpumpR sends it: the example run, an effect-site TCI, with the panel's settings.
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1280, height: 720 });
+  const r = clone(RUN); r.physiology = normal;
+  assert.equal(await loadRun(page, r), true);
+  await settled(page);
+  assert.equal(await page.evaluate(() => Player.view), '2d');
+  for (const T of [2, 1500]) {                       // the loading rate, and the maintenance rate
+    const o = await overPhysio(page, T, 'Pump ');
+    assert.ok(o.line.height > 0, 'no physiology line: the test proves nothing');
+    assert.ok(o.label, `T = ${T}: the pump is not running, so there is no label to test`);
+    assert.equal(o.meets, false, `T = ${T}: the pump's label (${JSON.stringify(o.label)}) is drawn across the physiology line (${JSON.stringify(o.line)})`);
+    assert.deepEqual(o.hits, [], `T = ${T}: drawn across the physiology line`);
+    assert.deepEqual(o.fits, [true, false], `T = ${T}: fits() does not allow the room draw() took above V1 (${o.yTop} px)`);
+  }
+  // Absorption beside the pump, its label and the depot's to the right, and a
+  // line long enough to wrap in a narrow window: a physiology event's note.
+  const oral = clone(r);
+  oral.physiology = off;
+  oral.physiologySteps = [{ time: oral.t[0], ...normal }, { time: 1000, ...off }];
+  oral.depot = oral.t.map(s => 200 * Math.exp(-s / 900));
+  oral.absorbed = oral.t.map(s => 200 * (1 - Math.exp(-s / 900)));
+  for (const [width, height] of [[1280, 720], [480, 640], [360, 600]]) {
+    const narrow = await viewerPage(t);
+    await narrow.setViewport({ width, height });
+    assert.equal(await loadRun(narrow, oral), true);
+    await settled(narrow);
+    const at = `${width} x ${height}`;
+    for (const [T, label] of [[2, 'Pump '], [1500, 'Absorbed '], [1500, 'Depot ']]) {
+      const o = await overPhysio(narrow, T, label);
+      assert.ok(o.label, `${at}, T = ${T}: no label "${label}"`);
+      assert.equal(o.meets, false, `${at}, T = ${T}: "${label}" is drawn across the physiology line`);
+      assert.deepEqual(o.hits, [], `${at}, T = ${T}: drawn across the physiology line`);
+      assert.deepEqual(o.fits, [true, false], `${at}, T = ${T}: fits() does not allow the room draw() took above V1 (${o.yTop} px)`);
+      // One row is 13.8 px: the narrow windows test a wrapped line.
+      if (width < 500) assert.ok(o.line.height > 20, `${at}: the physiology line did not wrap, so the wrapped case is not tested`);
+    }
+    assertClean(narrow);
+  }
+  // A run without the line (one made before 2026-11-19, a file opened by hand)
+  // gives it no room: the drawing is where it was.
+  const plain = await viewerPage(t);
+  await plain.setViewport({ width: 1280, height: 720 });
+  assert.equal(await loadRun(plain, RUN), true);
+  await settled(plain);
+  const p = await overPhysio(plain, 2, 'Pump ');
+  assert.equal(p.line.height, 0);
+  assert.equal(p.yTop, await plain.evaluate(() => FLAT_TOP), 'room was taken for a physiology line that is not shown');
+  assert.deepEqual(p.fits, [true, false]);
+  assertClean(page); assertClean(plain);
+});
+
+// The same for an inhaled agent (2026-11-20). One row of the physiology line
+// was clear of the fresh gas arrows (GAS_TOP), and the arterial oxygen under
+// it was given room (gasTop()), but a line wrapped to a second row on a
+// window 640 px wide or less ran under "Fresh gas" and the arrows.
+test('gas 2D: the fresh gas arrows and labels are drawn clear of the physiology line and the arterial oxygen, wrapped or not', { skip }, async t => {
+  const settings = { liver: 1, renal: 1, cardiac: 1, gi: 1, temperature: 37, altitude: 0, pressure: 760, endobronchial: false };
+  const plain = clone(GAS); plain.physiology = settings;
+  // With the arterial oxygen under the line, and a physiology event's note on it
+  const tube = steppedIntubation();
+  const tops = {};
+  for (const [name, run] of [['a tracheal tube', plain], ['an endobronchial tube', tube]])
+    for (const [width, height] of [[1280, 720], [640, 700], [480, 640], [360, 600]]) {
+      const page = await viewerPage(t);
+      await page.setViewport({ width, height });
+      assert.equal(await loadRun(page, run), true);
+      await settled(page);
+      const at = `${name}, ${width} x ${height}`;
+      for (const T of [100, 400]) {
+        const o = await overPhysio(page, T, 'Fresh gas ');
+        assert.ok(o.line.height > 0, `${at}: no physiology line: the test proves nothing`);
+        assert.equal(o.oxygen.height > 0, run === tube, `${at}: the arterial oxygen line`);
+        assert.ok(o.label, `${at}, T = ${T}: no "Fresh gas" label`);
+        assert.equal(o.meets, false, `${at}, T = ${T}: "Fresh gas" is drawn across what is written under the title`);
+        assert.deepEqual(o.hits, [], `${at}, T = ${T}: drawn across what is written under the title`);
+        assert.deepEqual(o.fits, [true, false], `${at}, T = ${T}: fits() does not allow the room drawGas() took above the boxes (${o.yTop} px)`);
+        if (width <= 640) assert.ok(o.line.height > 20, `${at}: the physiology line did not wrap, so the wrapped case is not tested`);
+        if (T === 100) tops[`${name} ${width}`] = o.yTop;
+      }
+      assertClean(page);
+    }
+  // One row takes the room it took before: GAS_TOP, and the oxygen line's more.
+  const page = await viewerPage(t);
+  const [gasTop0, oxygenLine] = await page.evaluate(() => [GAS_TOP, GAS_OXYGEN_LINE]);
+  assert.equal(tops['a tracheal tube 1280'], gasTop0);
+  assert.equal(tops['an endobronchial tube 1280'], gasTop0 + oxygenLine);
 });
 
 test('Endobronchial tube: the arterial saturation shows under the title, amber below 90%, and bad values are refused', { skip }, async t => {

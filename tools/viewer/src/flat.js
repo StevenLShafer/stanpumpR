@@ -57,17 +57,33 @@ const SIZE_RATIO_MAX = 10;
 // names, volumes, amounts and the elimination arrow (BOTTOM); the plot at
 // least MIN_PLOT px between them.
 const FLAT_TOP = 96, FLAT_BOTTOM = 108, FLAT_MIN_PLOT = 90;
-// How far above the plot the pump and absorption arrows start, px: nothing
-// of a drug's drawing is higher.
-const FLAT_ARROW_ABOVE = 58;
-// The top of a drug's plot: FLAT_TOP, and lower where the physiology line
-// under the title (player.js; every run from stanpumpR has one) would reach
-// into the arrows and labels over V1, so that they start below it. The line
-// is measured, not counted: it wraps in a narrow window, and is longer with
-// physiology events. Before, "Pump 171 mg/min" was written across it.
+// The pump and absorption arrows start this far above V1, their labels
+// beside them.
+const FLAT_ARROW_ROOM = 58;
+// px between the physiology line and the arrows under it.
+const FLAT_PHYSIO_GAP = 5;
+// What is written under the title (player.js): the physiology line a run
+// from stanpumpR carries and, under it, a gas run's arterial oxygen. The
+// bottom of the lower one, px from the top of the window; 0 with neither
+// (an empty line is display: none).
+function underTitle() {
+    let bottom = 0;
+    for (const id of ['physio', 'oxygen']) {
+        const el = document.getElementById(id);
+        if (el) bottom = Math.max(bottom, el.getBoundingClientRect().bottom);
+    }
+    return bottom;
+}
+// The room above V1 for a drug's run. The physiology line reaches down to
+// where the pump's arrow starts: its label ("Pump 171 mg/min") was drawn
+// across the line, and the arrow's tail under it. With a line shown, the
+// arrows start below it. Its bottom is measured, so a line that wraps to two
+// rows on a narrow window, or grows with a physiology event's note, keeps
+// its room. One value for draw() and fits(), which must agree. (A gas run's
+// is gasTop(), gas.js.)
 function flatTop() {
-    const p = document.getElementById('physio'), b = p ? p.getBoundingClientRect() : null;
-    return b && b.height > 0 ? Math.max(FLAT_TOP, Math.ceil(b.bottom) + 3 + FLAT_ARROW_ABOVE) : FLAT_TOP;
+    const bottom = underTitle();
+    return Math.max(FLAT_TOP, bottom > 0 ? Math.ceil(bottom) + FLAT_PHYSIO_GAP + FLAT_ARROW_ROOM : 0);
 }
 
 const Flat = {
@@ -93,8 +109,7 @@ const Flat = {
     // Whether cards h px tall leave the drawing its room (Cards.fit()).
     fits(h) {
         const ctl = this.controlsTop(this.el.clientHeight);
-        // A gas run's arrows over the circuit need more room above (gas.js);
-        // a drug's, room for the physiology line (flatTop()).
+        // A gas run's arrows over the circuit need more room above (gas.js).
         const top = this.run && this.run.kind === 'gas' ? gasTop(this.run) : flatTop();
         return !(h > 0) || ctl - h - 22 - FLAT_BOTTOM - top >= FLAT_MIN_PLOT;
     },
@@ -143,7 +158,6 @@ const Flat = {
         // (ChatGPT, 38e0f3a: fixed offsets put elimination off a small
         // window). Above V1: the pump and absorption arrows (TOP); below:
         // the names, volumes, amounts and the elimination arrow (BOTTOM).
-        // TOP is lower under a physiology line (flatTop(), as fits() has it).
         const TOP = flatTop(), BOTTOM = FLAT_BOTTOM, MIN_PLOT = FLAT_MIN_PLOT;
         const ctl = this.controlsTop(H);
         // The cards that show, by the rule both views share (Cards.fit() in
@@ -248,11 +262,11 @@ const Flat = {
         const hi = headWidth(twi), ha = headWidth(twa);
         const xi = absorbing ? cx1 - hi / 2 - 2 : cx1, xa = pumping ? cx1 + ha / 2 + 2 : cx1;
         if (pumping) {
-            arrowV(out, xi, yTop - FLAT_ARROW_ABOVE, yTop - 2, twi, FLAT_COLOURS.in);
+            arrowV(out, xi, yTop - FLAT_ARROW_ROOM, yTop - 2, twi, FLAT_COLOURS.in);
             label(xi - hi / 2 - 6, yTop - 40, 'end', st.bolus > 0 ? `Bolus ${e(amt(st.bolus))} ${e(u.amount)}` : `Pump ${rateTxt(st.flow.in)}`, 'in');
         }
         if (absorbing) {
-            arrowV(out, xa, yTop - FLAT_ARROW_ABOVE, yTop - 2, twa, FLAT_COLOURS.in);
+            arrowV(out, xa, yTop - FLAT_ARROW_ROOM, yTop - 2, twa, FLAT_COLOURS.in);
             label(xa + ha / 2 + 6, yTop - 40, 'start', `Absorbed ${rateTxt(st.flow.abs)}`, 'in');
         }
         // The depot, under the absorption label, clear of its arrow.
