@@ -219,7 +219,7 @@ RELEVANT_FIELDS <- unname(c(
   vapply(COMPANION_MODEL_GROUPS, `[[`, character(1), "input"),
   ASM_INTERACTIONS_INPUT,
   "inhaledAgents",
-  "showAdaptation",
+  "showAdaptation", "showEffect",
   "plotMEAC", "plotInteraction"
 ))
 
@@ -249,13 +249,14 @@ patientFieldReaderSets <- function(drugDefaults = getDrugDefaultsGlobal()) {
 #' drug of its group is dosed, and the antiseizure interactions box when the
 #' table holds an interaction the model applies.
 #'
-#' Two options draw a panel of something that is plotted, and so follow the
+#' Three options draw a panel of something that is plotted, and so follow the
 #' drugs that are DRAWN, those given a dose above 0 (`plotted`), rather than
 #' every drug in the table: the Interaction plot needs propofol and an opioid
 #' both drawn (Steven L. Shafer, 2026-11-18: it is for anesthetic drug
-#' interactions, and appeared beside the startup table's drugs at 0), and
+#' interactions, and appeared beside the startup table's drugs at 0),
 #' Tolerance and tachyphylaxis a drawn drug with an applied adaptation model
-#' (R/pdAdaptation.R).
+#' (R/pdAdaptation.R), and % effect a drawn drug with a drawn % effect row
+#' (R/pdEffect.R).
 #'
 #' @param drugs the drug names in the dose table (blanks are ignored).
 #' @param drugDefaults the session's drug table.
@@ -303,6 +304,7 @@ relevantFields <- function(drugs, drugDefaults = getDrugDefaultsGlobal(),
     # and endobronchial intubation (R/altitude.R, R/endobronchial.R)
     inhaledAgents   = gas,
     showAdaptation  = length(pdAdaptationDrugs(plotted, drugDefaults = drugDefaults)) > 0,
+    showEffect      = length(pdEffectDrugs(plotted)) > 0,
     plotMEAC        = opioid,
     plotInteraction = "propofol" %in% plotted &&
                       isOpioid(setdiff(plotted, "propofol"))
