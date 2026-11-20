@@ -299,7 +299,7 @@ test_that("Suggest Dosing and Email Slide say why the simulation cannot run (fin
     session$flushReact()
     session$setInputs(sendSlide = 2)
     expect_false(session$isClosed())
-    expect_match(tail(alerts, 1), "enter a dose or target above 0 first")
+    expect_match(tail(alerts, 1), "add a drug to the dose table first")
   })
 })
 

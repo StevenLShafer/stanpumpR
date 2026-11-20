@@ -1,9 +1,9 @@
-# Only the drugs given a dose above 0 are drawn (Steven L. Shafer,
-# 2026-11-16).  A table of every drug of the startup menu, each at 0 until a
-# dose is typed, took 51 s to draw, 35 s of it ggplot drawing 231 empty
-# panels (ChatGPT's production audit, 2026-11-15).  A drug whose every row is
-# 0 is now not simulated or drawn, and a metabolite a drawn parent forms is
-# drawn whatever its own rows say.  Drafted by Claude Code, 2026-11-16.
+# Every drug in the dose table is drawn, at 0 too (Steven L. Shafer,
+# 2026-11-19, rescinding his rule of 2026-11-16 that drew only the drugs
+# given a dose above 0: a handful of drugs chosen at the startup menu opened
+# on an empty plot, which on a phone looked like a failure).  The plot area
+# says NOTHING_TO_DRAW_MESSAGE only for a table with no drug.  Drafted by
+# Claude Code, 2026-11-16; revised 2026-11-19.
 
 local_mocked_bindings(outputComments = function(...) {})
 
@@ -40,69 +40,51 @@ test_that("the drugs given a dose above 0", {
   expect_identical(positiveDoseDrugs(DT[0, ]), character(0))
 })
 
-test_that("a drug whose doses are all 0 is not drawn; a metabolite a drawn parent forms is", {
-  DT <- data.frame(Drug = c("codeine", "morphine", "fentanyl"), Time = 0,
-                   Dose = c(30, 0, 0), Units = c("mg PO", "mg", "mcg"), stringsAsFactors = FALSE)
+test_that("the drugs of a dose table, every one drawn", {
+  expect_identical(tableDrugs(NULL), character(0))
+  DT <- data.frame(Drug = c("propofol", "propofol", "fentanyl", "", NA),
+                   Time = 0, Dose = c("0", "2", "0", "1", "1"),
+                   Units = "mg", stringsAsFactors = FALSE)
+  expect_identical(tableDrugs(DT), c("propofol", "fentanyl"))
+  expect_identical(tableDrugs(DT[0, ]), character(0))
+})
+
+test_that("a drug whose doses are all 0 is drawn, with the metabolite it forms and its companions", {
+  DT <- data.frame(Drug = c("codeine", "fentanyl"), Time = 0,
+                   Dose = c(0, 0), Units = c("mg PO", "mcg"), stringsAsFactors = FALSE)
   drugs <- drawPK(DT)
-  expect_setequal(names(drawnDrugEntries(drugs, positiveDoseDrugs(DT))), c("codeine", "morphine"))
-  # The parent at 0 too: nothing is drawn
-  DT$Dose[1] <- 0
-  expect_length(drawnDrugEntries(drugs, positiveDoseDrugs(DT)), 0)
-  # A companion is drawn with its drug, and only with it
+  expect_setequal(names(drawnDrugEntries(drugs, tableDrugs(DT))), c("codeine", "morphine", "fentanyl"))
   DT2 <- data.frame(Drug = c("propofol", "remifentanil"), Time = 0, Dose = c(100, 0),
                     Units = c("mg", "mcg"), stringsAsFactors = FALSE)
   drugs2 <- drawPK(DT2, alternativeModels = TRUE)
-  expect_true(all(c("propofol (Schnider)", "remifentanil (Minto)") %in% names(drugs2)))
-  expect_setequal(names(drawnDrugEntries(drugs2, positiveDoseDrugs(DT2))),
-                  c("propofol", "propofol (Schnider)"))
+  expect_setequal(names(drawnDrugEntries(drugs2, tableDrugs(DT2))),
+                  c("propofol", "propofol (Schnider)", "remifentanil", "remifentanil (Minto)"))
   expect_length(drawnDrugEntries(NULL, "propofol"), 0)
 })
 
-test_that("the opening table's drugs at 0 draw nothing and say so; a dose draws its drug alone", {
+test_that("the opening table's drugs at 0 are each drawn, flat; an empty table says why it is empty", {
   shiny::testServer(app_server, {
     drawStart(session, doseTableInit)
-    expect_length(drugs(), 0)
-    expect_identical(plotMessage(), NOTHING_TO_DRAW_MESSAGE)
-    # No plot, and no error from building one ("replacement has 1 row, data
-    # has 0" stopped simulationPlot() on an empty list)
-    expect_null(simulationPlotRetval())
-    expect_null(plotResultsOrNull()$plot)
-
-    dt <- doseTableInit
-    dt$Dose[1] <- "100"
-    session$env$setDoseTable(dt, timeFormat("minutes", "relative"))
-    session$flushReact()
-    expect_identical(names(drugs()), "propofol")
+    opening <- unique(doseTableInit$Drug[nzchar(doseTableInit$Drug)])
+    expect_setequal(names(drugs()), opening)
     expect_null(plotMessage())
-    expect_identical(plottedDrugs(simulationPlotRetval()), "propofol")
+    expect_setequal(plottedDrugs(simulationPlotRetval()), opening)
+    for (d in opening) {
+      w <- drugs()[[d]]$results
+      expect_true(nrow(w) > 0)
+      expect_true(all(w$Y[w$Site %in% c("Plasma", "Effect Site")] == 0))
+    }
 
-    # An empty table says the same
+    # Deleting a drug's doses removes its panel (Edit doses, Delete All
+    # Doses, without asking while every dose is 0)
+    session$env$deleteDrugDoses(opening[1])
+    session$flushReact()
+    expect_false(opening[1] %in% names(drugs()))
+
+    # An empty table says the plot area is empty because the table is
     session$env$setDoseTable(doseTableBlank, timeFormat("minutes", "relative"))
     session$flushReact()
     expect_identical(plotMessage(), NOTHING_TO_DRAW_MESSAGE)
-  })
-})
-
-test_that("a table of every startup drug at 0 builds no PK and draws nothing (ChatGPT's audit)", {
-  every <- unlist(startupDrugChoices(G), use.names = FALSE)
-  shiny::testServer(app_server, {
-    drawStart(session, startupDoseTable(every, G))
-    expect_gt(length(unique(doseTableClean()$Drug)), 200)
-    elapsed <- system.time(d <- drugs())[["elapsed"]]
-    expect_length(d, 0)
-    expect_length(bayesUpdate()$drugs, 0)
-    expect_identical(plotMessage(), NOTHING_TO_DRAW_MESSAGE)
-    # recalculatePK() alone took 2 s on these drugs, processdoseTable() 2.7 s,
-    # and the plot 35 s
-    expect_lt(elapsed, 1)
-
-    # One dose among them draws that drug alone
-    dt <- startupDoseTable(every, G)
-    dt$Dose[dt$Drug == "fentanyl"] <- "100"
-    session$env$setDoseTable(dt, timeFormat("minutes", "relative"))
-    session$flushReact()
-    expect_identical(names(drugs()), "fentanyl")
-    expect_identical(plottedDrugs(simulationPlotRetval()), "fentanyl")
   })
 })
 
@@ -127,8 +109,8 @@ test_that("a measured metabolite with a 0 mg row beside its parent is still upda
     expect_setequal(plottedDrugs(simulationPlotRetval()),
                     c("codeine", "morphine", "morphine (population)"))
 
-    # A measured drug with no dose above 0 and no parent drawn is said, not
-    # drawn
+    # A measured drug with no dose above 0 and no parent is drawn flat, and
+    # its levels are said to have no dose to explain them
     dt[3, ] <- list("fentanyl", "0", "0", "mcg")
     session$env$setDoseTable(dt, timeFormat("minutes", "relative"))
     session$setInputs(bayesTable = list(
@@ -137,16 +119,15 @@ test_that("a measured metabolite with a 0 mg row beside its parent is still upda
     session$elapse(2000)
     expect_match(paste(bayesUpdate()$problems, collapse = " "),
                  "fentanyl has no dose above 0 yet", fixed = TRUE)
-    expect_false("fentanyl" %in% names(drugs()))
+    expect_true("fentanyl" %in% names(drugs()))
   })
 })
 
 test_that("Suggest Dosing works for a drug in the table whose doses are all 0", {
-  # The opening table's propofol is at 0, so not in drugs(); Suggest Dosing
-  # read it there for any drug in the table
+  # The opening table's propofol is at 0 (drawn flat since 2026-11-19; until
+  # then not in drugs(), where Suggest Dosing read it)
   shiny::testServer(app_server, {
     drawStart(session, doseTableInit)
-    expect_false("propofol" %in% names(drugs()))
     errors <- character(0)
     session$sendNotification <- function(type, message) {
       if (is.list(message) && identical(message$type, "error"))
