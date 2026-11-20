@@ -162,8 +162,12 @@ validateZeroOrderPO <- function(block, X, drug)
   }
   if (!is.null(X$zeroOrderSC) || !is.null(X$oralZeroOrder))
     bad("a drug cannot also declare zeroOrderSC or oralZeroOrder.")
-  if (!is.null(X$oralSaturation) || !is.null(X$oralFormulations))
-    bad("not with a dose-dependent oral bioavailability or other oral forms.")
+  # A dose-dependent oral bioavailability (oralSaturation) is allowed:
+  # simCpCe() scales each oral dose at its own size before the release moves
+  # the oral rows onto the tissue depot, so the two compose exactly
+  # (mirabegron, R/drugs_mirabegron.R, whose F1 carries a power of the dose).
+  if (!is.null(X$oralFormulations))
+    bad("not with other oral forms.")
   block$into <- into
   block$fraction <- fraction
   block

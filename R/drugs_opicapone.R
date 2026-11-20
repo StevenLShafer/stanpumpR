@@ -147,7 +147,8 @@ opicapone <- function(weight, height, age, sex, adjustToFFM = TRUE)
     transitChain = list(n = 2L, ktr = ka / 60, kMetabolic = 0),
     # F1 through the two marketed strengths: exactly Table 9's at 25 and 50 mg
     oralSaturation = list(form = ORAL_SATURATION_POWER, Dref = 50,
-                          exponent = log(opicaponeF1(25) / opicaponeF1(50)) / log(0.5)),
+                          exponent = log(opicaponeF1(25) / opicaponeF1(50)) / log(0.5),
+                          on = "bioavailability"),
     reference = paste0(
       "FDA Clinical Pharmacology Review of NDA 212489 (Ongentys), Table 9: one ",
       "compartment, CL/F 37.6 L/h (x 0.862 in women; bilirubin at 12 umol/L), ",

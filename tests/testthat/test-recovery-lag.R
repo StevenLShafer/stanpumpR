@@ -152,7 +152,9 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     "liothyronine",
                     # oral thioguanine's derived 1.0 h lag (Lowe 2001's
                     # median time to peak, 2026-11-16); plasma only
-                    "thioguanine"))
+                    "thioguanine",
+                    # tamsulosin's 0.957 h lag (Tsuda 2010); plasma only
+                    "tamsulosin"))
 })
 
 

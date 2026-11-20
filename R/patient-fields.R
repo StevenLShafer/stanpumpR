@@ -30,7 +30,7 @@ PATIENT_FIELD_LABELS <- c(
 # term is on its intravenous system (ANJESO) only; its oral fit has none
 # (R/drugs_meloxicam.R).
 PATIENT_FIELD_READER_NOTES <- list(
-  creatinine = c(meloxicam = "intravenous only")
+  creatinine = c(meloxicam = "intravenous only", mirabegron = "on bioavailability")
 )
 
 #' The drugs whose model reads a Patient Profile covariate
