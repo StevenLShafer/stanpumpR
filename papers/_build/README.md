@@ -25,6 +25,33 @@ succeeds, so it cannot break the chain.
 A mirror nobody checks is worse than no mirror — it looks like history while quietly describing
 something else. That is what the check exists to prevent.
 
+### What it compares the archive with: the committed record, not a working tree
+
+It fetches `master` and reads each file out of `origin/master` with `git cat-file`, resolving
+the ref to a commit **once** so a fetch by another session cannot move the subject of the
+comparison halfway through. That costs one fetch of one branch per filing run, and it updates
+nothing but `refs/remotes/origin/master` in the checkout it reads.
+
+Until 2026-11-19 it read the checkout's **working tree** instead, whatever branch that checkout
+was on — and on that day it reported `build.py`, `fetch_pmc.py`, `file_downloads.py` and
+`update.bat` as drifted when all four matched `origin/master` byte for byte: `C:\dev\stanpumpR`
+was simply on another session's branch, which predated the commit that changed them (PR #797).
+Several checkouts and worktrees live on that machine and any of them may be on a branch
+(AGENTS.md, *Several sessions run at once*), so the old check was bound to cry wolf — the very
+thing the paragraph above says it exists to prevent.
+
+Worse than the false alarm was its advice: *copy the archive's files into that checkout and
+commit them*, which would have committed onto another session's branch, the collision AGENTS.md
+rule 1 exists to prevent. The advice now names where such a commit belongs, and says that a
+change already committed on a branch keeps showing until it is merged.
+
+Every message names the ref or path it compared against — a check whose subject you cannot see
+is one you cannot trust. Two cases weaken the answer and so get a line of their own: a **fetch
+that failed** (the ref may be out of date, so a difference may be a change that has already
+landed) and the **working-tree fallback**, used only when git cannot supply the record at all
+(no git, not a repository, no `origin/master`, no `papers/_build` in it). A file the record
+holds but that cannot be read is reported as unread, never as differing.
+
 ```
 python check_in_step.py [--repo <path>] [--archive <path>]
 ```
