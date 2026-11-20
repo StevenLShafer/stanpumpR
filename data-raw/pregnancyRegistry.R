@@ -3376,7 +3376,18 @@ registry <- rbind(
       source = "Klubo-Gwiezdzinska J, Wartofsky L. Hashimoto thyroiditis: an evidence-based guide to etiology, diagnosis and treatment. Pol Arch Intern Med 2022;132:16222 PMID 35243857; Moleti M, Trimarchi F, Vermiglio F. Thyroid physiology in pregnancy. Endocr Pract 2014;20:589-596 PMID 24449667",
       source_url = "https://doi.org/10.20452/pamw.16222",
       to_obtain = "",
-      notes = "The plotted curve is total T3 above the patient's own baseline; the rise in thyroxine-binding globulin in pregnancy raises total T3 for the same free T3, which a pharmacokinetic factor would not describe. T3 is cleared by deiodination and conjugation, not by filtration, so the rise in filtration does not apply.")
+      notes = "The plotted curve is total T3 above the patient's own baseline; the rise in thyroxine-binding globulin in pregnancy raises total T3 for the same free T3, which a pharmacokinetic factor would not describe. T3 is cleared by deiodination and conjugation, not by filtration, so the rise in filtration does not apply."),
+  row("tafenoquine", "Other", "unknown",
+      finding = "No pharmacokinetic study of tafenoquine in pregnancy was found (PubMed, 2026-11-20: tafenoquine with pregnancy and pharmacokinetics; nine hits, all reviews, drug-letter entries or unrelated). Tafenoquine is not recommended in pregnancy because a G6PD-deficient fetus may be haemolysed whatever the mother's G6PD status (Krintafel label, 2026, sections 5.2 and 8.1, read), so no pregnant woman was studied. Chen 2019 (review, abstract read) says the same.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = NA, comparator = NA,
+      design = "label; review", n = NA, confidence = "low",
+      evidence_read = "abstract",
+      source = "Krintafel (tafenoquine) prescribing information, GlaxoSmithKline, NDA 210795, DailyMed 2026-07-03; Chen V, Daily JP. Tafenoquine: the new kid on the block. Curr Opin Infect Dis 2019;32:407-412 PMID 31305490",
+      source_url = "https://doi.org/10.1097/QCO.0000000000000574",
+      to_obtain = "",
+      notes = "Contraindicated in practice by the fetal G6PD risk, not by a pharmacokinetic finding. Renal elimination of unchanged tafenoquine is low (label), so the rise in filtration does not apply.")
 )
 
 # The candidate models renamed when their drug's model became the program's
