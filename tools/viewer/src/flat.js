@@ -95,7 +95,7 @@ const Flat = {
         const ctl = this.controlsTop(this.el.clientHeight);
         // A gas run's arrows over the circuit need more room above (gas.js);
         // a drug's, room for the physiology line (flatTop()).
-        const top = this.run && this.run.kind === 'gas' ? GAS_TOP : flatTop();
+        const top = this.run && this.run.kind === 'gas' ? gasTop(this.run) : flatTop();
         return !(h > 0) || ctl - h - 22 - FLAT_BOTTOM - top >= FLAT_MIN_PLOT;
     },
 

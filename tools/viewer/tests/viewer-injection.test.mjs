@@ -1286,6 +1286,75 @@ test('gas: a run made before the blood and the greenhouse effect still loads, an
   assertClean(page);
 });
 
+// An intubation that steps during the run (a physiology event; Shafer,
+// 2026-11-19: an endobronchial tube pulled back at five minutes): the lungs'
+// capacity is carried per time (lungsCapacity), one lung's while the tube is
+// in a bronchus. The amounts and flows use the capacity in force, so the lung
+// that joins brings no burst of ventilation and nothing is vented backwards.
+function steppedIntubation() {
+  const r = clone(GAS), n = r.t.length, full = r.capacity.lungs;
+  r.lungsCapacity = r.t.map(t => t < 300 ? full / 2 : full);
+  r.arterial = r.p.lungs.map((p, i) => r.t[i] < 300 ? (p + r.venous[i]) / 2 : p);
+  r.saturation = r.t.map(t => t < 300 ? 85 : 100);
+  r.paO2 = r.t.map(t => t < 300 ? 50 : 500);
+  const ph = { liver: 1, renal: 1, cardiac: 1, gi: 1, temperature: 37, altitude: 0, pressure: 760 };
+  r.physiology = { ...ph, endobronchial: true };
+  r.physiologySteps = [{ ...ph, time: 0, endobronchial: true }, { ...ph, time: 300, endobronchial: false }];
+  return r;
+}
+
+test('gas: an intubation that steps is drawn with the lungs\' capacity in force, and adds no flow at the step', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1280, height: 720 });
+  const r = steppedIntubation();
+  assert.equal(await loadRun(page, r), true);
+  const o = await page.evaluate(() => {
+    const at = T => { Player.seek(T); const st = Player.gasStateAt(T);
+      return { share: st.lungsShare, lungs: st.A.lungs, p: st.p.lungs, vent: st.flow.vent, vented: st.vented, ventedFlow: st.flow.vented,
+               texts: [...document.querySelectorAll('#flat svg text')].map(e => e.textContent),
+               physio: document.getElementById('physio').innerText, oxygen: document.getElementById('oxygen').innerText }; };
+    return { one: at(100), before: at(299.5), after: at(300.5), both: at(400) };
+  });
+  // One lung: half the capacity, and the picture says so
+  assert.equal(o.one.share, 0.5);
+  assert.ok(Math.abs(o.one.lungs - 10 * 1.25 * o.one.p) < 1e-9, 'the lungs hold their capacity in force x partial pressure');
+  assert.ok(o.one.texts.includes('not ventilated'), 'the unventilated lung is not marked');
+  assert.ok(o.one.texts.includes('1.25 L gas'), 'the lungs\' volume in force is not shown: ' + o.one.texts.join('|'));
+  assert.match(o.one.physio, /Intubation endobronchial/);
+  assert.match(o.one.physio, /physiology event at 0:00:00/, 'an event at the start read as normal: ' + o.one.physio);
+  assert.match(o.one.oxygen, /SaO₂ 85%/);
+  // Both lungs after the step
+  assert.equal(o.both.share, 1);
+  assert.ok(Math.abs(o.both.lungs - 10 * 2.5 * o.both.p) < 1e-9);
+  assert.ok(!o.both.texts.includes('not ventilated'));
+  assert.ok(o.both.texts.includes('2.50 L gas'));
+  assert.match(o.both.physio, /Intubation tracheal/);
+  // The lung that joins is not a flow: 1.25 L at 1.5% in one second would be
+  // about 1100 mL/min breathed in, and as much vented backwards
+  assert.ok(Math.abs(o.after.vent) < 3 * Math.abs(o.before.vent) + 5, `a burst of ventilation at the step: ${o.before.vent} then ${o.after.vent}`);
+  assert.ok(o.after.vented >= o.before.vented, 'the agent vented fell at the step');
+  assert.ok(o.after.vented - o.before.vented < 5, `the joined lung\'s agent was counted as vented: ${o.before.vented} then ${o.after.vented}`);
+  assert.ok(o.after.ventedFlow > 0, 'venting stopped at the step');
+  // The oxygen line is clear of the arrows over the circuit
+  const clear = await page.evaluate(() => {
+    Player.seek(100);
+    const ox = document.getElementById('oxygen').getBoundingClientRect();
+    const tops = [...document.querySelectorAll('#flat svg rect, #flat svg polygon')].map(e => e.getBoundingClientRect()).filter(b => b.width > 0 && b.left < ox.right && b.right > ox.left);
+    return { bottom: ox.bottom, top: Math.min(...tops.map(b => b.top)) };
+  });
+  assert.ok(clear.top >= clear.bottom, `the arterial oxygen line runs into the drawing: ${clear.bottom} over ${clear.top}`);
+  // The 3D view draws it too
+  const d3 = await page.evaluate(() => { Player.setView('3d'); Player.seek(100); return Object.keys(View.gasVessels).length; });
+  assert.equal(d3, 5);
+  // A capacity beyond both lungs, or of the wrong length, is refused
+  for (const mutate of [x => { x.lungsCapacity[5] = 9; }, x => { x.lungsCapacity = x.lungsCapacity.slice(1); }, x => { x.lungsCapacity[2] = 0; }]) {
+    const bad = steppedIntubation(); mutate(bad);
+    assert.equal(await loadRun(page, bad), false);
+    assert.ok((await probe(page)).message.includes('lungsCapacity'));
+  }
+  assertClean(page);
+});
+
 test('gas: markup and malformed fields are refused, the name is shown as text', { skip }, async t => {
   const page = await viewerPage(t);
   for (const [mutate, names] of [[r => { r.units.conc = '%' + P; }, 'units.conc'],

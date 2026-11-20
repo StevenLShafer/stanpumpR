@@ -104,15 +104,20 @@ The run is the gas engine's own five states for the plot (`gasDrugEntries()` kee
 | `kind` | `"gas"` |
 | `p` | `circuit`, `lungs`, `vrg`, `mg`, `fg`: partial pressures at each time, %. |
 | `capacity`, `volume`, `partition` | Each compartment's capacity (L of gas), volume (L) and tissue:gas partition coefficient; the ideal circuit's capacity and volume are 0. |
+| `lungsCapacity` | The lungs' capacity in force from each time, L of gas, where the intubation steps during the run (a physiology event): one lung's share of `capacity.lungs` while the tube is in a bronchus. Optional: without it `capacity.lungs` holds throughout. |
 | `amountScale` | 10: capacity (L) × partial pressure (%) × this is mL of vapour. |
 | `fresh`, `freshFlow`, `ventilation` | In force from each time: the agent's share of the fresh gas (%), the fresh gas flow and the minute ventilation (L/min). |
 | `alveolarVentilation` | In force from each time: the minute ventilation less the dead space the engine took (L/min). Optional. |
 | `venous` | The mixed venous partial pressure at each time, %. Optional: without it no blood is drawn. |
+| `arterial` | The arterial partial pressure at each time, %, where an endobronchial tube shunts blood past the ventilated lung at any time in the run; without it arterial blood is at the end-tidal. Optional. |
+| `saturation`, `paO2` | The arterial oxygen saturation (%) and tension (mmHg) at each time, with such a tube: shown under the title. Optional, and they come together. |
 | `cardiacOutput` | The cardiac output the engine ran on, L/min. Optional. |
 | `greenhouse` | `gwp100`, `lifetime` (years), `kgPerLitre` (kg of agent in a litre of its vapour at 20 °C), `carKgPerYear` and `source`: what the viewer needs for the CO₂ equivalent of the agent delivered. Optional. |
 | `delivered` | The agent the fresh gas has carried into the circuit since time 0, mL of vapour. |
 | `mac` | One MAC at the patient's age, %. |
 | `circuit` | `"ideal"` (stanpumpR's) or `"semi-closed"` (GasMan's). |
+
+**An intubation that changes during the run** (Shafer, 2026-11-19, for a teaching video: five minutes in one bronchus, the tube pulled back, an hour at 1 MAC, then wash-out). A physiology event that steps the cardiac output or the altitude changes flows and pressures only. One that steps the intubation changes one capacity, the lungs': the ventilated lung holds its share of the alveolar gas (`R/endobronchial.R`). The run carries the lungs' capacity per time (`lungsCapacity`), the amounts and every flow use the capacity in force over each interval (`gasCapacityAt()`), and the 2D view fills only the ventilated share of the lungs' box, greying the rest and labelling it *not ventilated*, with the lungs' volume in force under it; the 3D view keeps the lungs' glass at both lungs and says *one lung ventilated* in its card. The engine keeps a gas phase's partial pressure across a step, so the lung that joins does so at the lungs' partial pressure: the agent it brings was neither delivered nor vented, and it is set against the agent held when the vented agent is computed, so no burst of ventilation or of venting is drawn at the step. The arterial oxygen line under the title has its own room above the 2D drawing (`gasTop()`), where it ran into the arrows over the circuit, and a setting in force from the run's start that is away from normal reads *physiology event at 0:00:00*, where it read *physiology events: normal*. A step in body temperature changes every tissue's capacity and is still refused by `viewerGasRun()`.
 
 ## Rebuilding after changing `src/`
 

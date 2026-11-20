@@ -206,6 +206,15 @@ function physiologyLine(ph) {
     return items.map(([k, v, off]) => `<span class="${off ? 'off' : ''}">${escapeHtml(k)} ${escapeHtml(v)}</span>`).join(' · ');
 }
 
+// Whether a setting is away from normal: the first of a run's steps is one
+// when an event is at the run's start (an endobronchial tube from time 0),
+// which read "(physiology events: normal)".
+function physiologyOff(ph) {
+    if (!ph) return false;
+    return ['liver', 'renal', 'cardiac', 'gi'].some(k => ph[k] != null && Math.abs(ph[k] - 1) >= 1e-9) ||
+        (ph.temperature != null && ph.temperature !== 37) || ph.altitude > 0 || ph.endobronchial === true;
+}
+
 // The drug's liquid colour, from the run.
 function runColour(r) {
     if (typeof r.color === 'string' && /^#[0-9a-f]{6}$/i.test(r.color)) return r.color;
@@ -624,7 +633,7 @@ const Player = {
         if (phys.index !== this.physioIndex) {
             this.physioIndex = phys.index;
             this.$('physio').innerHTML = physiologyLine(phys.ph) +
-                (phys.index >= 0 ? ` <span class="step">(physiology event${phys.index > 0 ? ' at ' + hms(phys.ph.time) : 's: normal'})</span>` : '');
+                (phys.index >= 0 ? ` <span class="step">(physiology event${phys.index > 0 || physiologyOff(phys.ph) ? ' at ' + hms(phys.ph.time) : 's: normal'})</span>` : '');
         }
         // Arterial oxygen under the title with an endobronchial tube, amber
         // below 90% (Shafer, 2026-11-19); the cards do not grow

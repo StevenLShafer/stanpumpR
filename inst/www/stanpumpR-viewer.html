@@ -6410,7 +6410,7 @@ const Flat = {
         const ctl = this.controlsTop(this.el.clientHeight);
         // A gas run's arrows over the circuit need more room above (gas.js);
         // a drug's, room for the physiology line (flatTop()).
-        const top = this.run && this.run.kind === 'gas' ? GAS_TOP : flatTop();
+        const top = this.run && this.run.kind === 'gas' ? gasTop(this.run) : flatTop();
         return !(h > 0) || ctl - h - 22 - FLAT_BOTTOM - top >= FLAT_MIN_PLOT;
     },
 
@@ -6928,6 +6928,15 @@ function physiologyLine(ph) {
     return items.map(([k, v, off]) => `<span class="${off ? 'off' : ''}">${escapeHtml(k)} ${escapeHtml(v)}</span>`).join(' · ');
 }
 
+// Whether a setting is away from normal: the first of a run's steps is one
+// when an event is at the run's start (an endobronchial tube from time 0),
+// which read "(physiology events: normal)".
+function physiologyOff(ph) {
+    if (!ph) return false;
+    return ['liver', 'renal', 'cardiac', 'gi'].some(k => ph[k] != null && Math.abs(ph[k] - 1) >= 1e-9) ||
+        (ph.temperature != null && ph.temperature !== 37) || ph.altitude > 0 || ph.endobronchial === true;
+}
+
 // The drug's liquid colour, from the run.
 function runColour(r) {
     if (typeof r.color === 'string' && /^#[0-9a-f]{6}$/i.test(r.color)) return r.color;
@@ -7346,7 +7355,7 @@ const Player = {
         if (phys.index !== this.physioIndex) {
             this.physioIndex = phys.index;
             this.$('physio').innerHTML = physiologyLine(phys.ph) +
-                (phys.index >= 0 ? ` <span class="step">(physiology event${phys.index > 0 ? ' at ' + hms(phys.ph.time) : 's: normal'})</span>` : '');
+                (phys.index >= 0 ? ` <span class="step">(physiology event${phys.index > 0 || physiologyOff(phys.ph) ? ' at ' + hms(phys.ph.time) : 's: normal'})</span>` : '');
         }
         // Arterial oxygen under the title with an endobronchial tube, amber
         // below 90% (Shafer, 2026-11-19); the cards do not grow
@@ -7668,6 +7677,10 @@ const GAS_TINT = '#d8cdf4';      // the vapour's colour; the effect site is the 
 // labels, clear of the Visualizer's name in the corner (the circuit is the
 // leftmost box, under it).
 const GAS_TOP = 128;
+// and px more where the arterial oxygen is shown under the title (a run with
+// an endobronchial tube, player.js): its line reached into the arrows.
+const GAS_OXYGEN_LINE = 18;
+function gasTop(r) { return GAS_TOP + (r && r.saturation ? GAS_OXYGEN_LINE : 0); }
 
 // The agent's name as written: nitrousOxide is "Nitrous oxide".
 function gasName(drug) {
@@ -7697,6 +7710,14 @@ function gasRunProblem(r, n) {
             if (!(Number.isFinite(x) && (zeroOk ? x >= 0 : x > 0)))
                 return `${what}.${k} must be a number ${zeroOk ? 'of 0 or more' : 'above 0'}.`;
         }
+    }
+    // The lungs' capacity at each time, where the intubation steps during the
+    // run (a physiology event, 2026-11-19): one lung's share of capacity.lungs
+    // while the tube is endobronchial. Optional; capacity.lungs is the largest.
+    if (r.lungsCapacity != null) {
+        const q = arr(r.lungsCapacity, 'lungsCapacity'); if (q) return q;
+        if (r.lungsCapacity.some(x => !(x > 0) || x > r.capacity.lungs * (1 + 1e-9)))
+            return 'lungsCapacity must be above 0 and at most capacity.lungs.';
     }
     if (r.mac != null && !(Number.isFinite(r.mac) && r.mac > 0)) return 'mac must be a number above 0.';
     if (r.typical != null && !(Number.isFinite(r.typical) && r.typical >= 0)) return 'typical must be a number of 0 or more.';
@@ -7730,6 +7751,13 @@ function gasRunProblem(r, n) {
     return runTextProblem(r);
 }
 
+// A compartment's capacity in force from sample i: the run's one capacity, or
+// for the lungs of a run whose intubation steps, the ventilated gas volume at
+// that time (lungsCapacity).
+function gasCapacityAt(r, k, i) {
+    return k === 'lungs' && r.lungsCapacity ? r.lungsCapacity[i] : r.capacity[k];
+}
+
 // ── the player, for a gas run ──────────────────────────────────
 Object.assign(Player, {
     // A gas run's setup, from load(): the scales, the decimals, the agent vented.
@@ -7761,12 +7789,19 @@ Object.assign(Player, {
         // drawn as one, its size taken without its sign, it was a thick arrow
         // venting 4 mL/min that ran the other way (Carbon's third UI audit,
         // 2026-11-15, H2). The amounts card then does not add up, as it should not.
+        // Where the intubation steps (lungsCapacity), the lung that joins or
+        // leaves the ventilated gas does so at the lungs' partial pressure
+        // (the engine keeps a gas phase's partial pressure across a step), so
+        // the agent it brings or takes was neither delivered nor vented: it is
+        // set against the agent held.
         const n = r.t.length;
         this.vented = new Float64Array(n);
+        let joined = 0;
         for (let i = 0; i < n; i++) {
             let held = 0;
-            for (const k of GAS_KEYS) held += r.capacity[k] * r.p[k][i];
-            this.vented[i] = Math.max(i ? this.vented[i - 1] : 0, r.delivered[i] - this.scale * held);
+            for (const k of GAS_KEYS) held += gasCapacityAt(r, k, i) * r.p[k][i];
+            if (i && r.lungsCapacity) joined += (r.lungsCapacity[i] - r.lungsCapacity[i - 1]) * r.p.lungs[i];
+            this.vented[i] = Math.max(i ? this.vented[i - 1] : 0, r.delivered[i] - this.scale * (held - joined));
         }
         // The arrows' scale, for both views: the run's 95th-percentile flow.
         this.ui.gasFlowScale = gasFlowScale(r, T => this.gasStateAt(T));
@@ -7786,10 +7821,13 @@ Object.assign(Player, {
         for (const k of GAS_KEYS) {
             const x = Math.max(0, lerp(r.p[k]));
             p[k] = x < this.tiny ? 0 : x;
-            A[k] = sc * r.capacity[k] * p[k];
+            // The capacity in force over this interval (the lungs' steps with
+            // the intubation; gasCapacityAt()).
+            const cap = gasCapacityAt(r, k, i);
+            A[k] = sc * cap * p[k];
             held += A[k];
             // The agent entering the compartment, mL/min, over this interval.
-            into[k] = sc * r.capacity[k] * slope(r.p[k]);
+            into[k] = sc * cap * slope(r.p[k]);
         }
         const blood = into.vrg + into.mg + into.fg;
         // The blood: arterial at end-tidal (or the run's own, with a shunt),
@@ -7805,6 +7843,9 @@ Object.assign(Player, {
         const freshNow = sc * r.freshFlow[j] * r.fresh[j];
         return {
             t: T, gas: true, p, A, held,
+            // The share of the lungs' gas that is ventilated: 1, or one lung's
+            // while the tube is endobronchial.
+            lungsShare: gasCapacityAt(r, 'lungs', i) / r.capacity.lungs,
             arterial, venous,
             saturation: r.saturation ? lerp(r.saturation) : null,
             paO2: r.paO2 ? lerp(r.paO2) : null,
@@ -7943,7 +7984,7 @@ Object.assign(Flat, {
     drawGas(st) {
         const r = this.run, u = this.ui.units, dp = this.ui.concDecimals;
         const W = this.el.clientWidth, H = this.el.clientHeight;
-        const TOP = GAS_TOP, BOTTOM = FLAT_BOTTOM, MIN_PLOT = FLAT_MIN_PLOT;
+        const TOP = gasTop(r), BOTTOM = FLAT_BOTTOM, MIN_PLOT = FLAT_MIN_PLOT;
         const ctl = this.controlsTop(H);
         Cards.fit('2d');
         this.cardH = Cards.height;
@@ -8007,11 +8048,21 @@ Object.assign(Flat, {
         const tint = `rgb(${this.ui.drugRgb.map(c => Math.round(c * 255)).join(',')})`;
         const box = k => {
             const y = yOf(st.p[k]), ce = k === 'vrg', bar = k === 'circuit' && !(r.capacity.circuit > 0);
-            const vol = r.volume[k], lam = r.partition[k];
+            // With an endobronchial tube only one lung is ventilated: its
+            // share of the lungs' box is filled, and the rest is greyed.
+            const share = k === 'lungs' && st.lungsShare < 1 ? st.lungsShare : 1, wf = w[k] * share;
+            const vol = r.volume[k] * share, lam = r.partition[k];
             const size = bar ? 'inspired' : k === 'lungs' || k === 'circuit' ? `${fixedOrSig(vol, vol < 10 ? 2 : 1)} L gas`
                 : `${fixedOrSig(vol, vol < 10 ? 2 : 1)} L × ${e(sig3(lam))}`;
-            out.push(`<rect x="${x[k]}" y="${y}" width="${w[k]}" height="${yBase - y}" fill="${ce ? FLAT_COLOURS.ce : tint}" fill-opacity="0.85"/>`,
-                     `<rect x="${x[k]}" y="${yTop}" width="${w[k]}" height="${ph}" fill="none" stroke="${FLAT_COLOURS.box}"${bar ? ' stroke-dasharray="2 3"' : ''}/>`,
+            out.push(`<rect x="${x[k]}" y="${y}" width="${wf}" height="${yBase - y}" fill="${ce ? FLAT_COLOURS.ce : tint}" fill-opacity="0.85"/>`);
+            if (share < 1) {
+                const xu = x[k] + wf, wu = w[k] - wf;
+                out.push(`<rect x="${xu}" y="${yTop}" width="${wu}" height="${ph}" fill="${FLAT_COLOURS.axis}" fill-opacity="0.3"/>`,
+                         `<line x1="${xu}" y1="${yTop}" x2="${xu}" y2="${yBase}" stroke="${FLAT_COLOURS.box}" stroke-dasharray="2 3"/>`);
+                // Read upward from the floor, clear of the end-tidal value at the liquid's level.
+                if (wu >= 12) out.push(`<text transform="translate(${xu + wu / 2 + 4},${yBase - 6}) rotate(-90)" class="sub">not ventilated</text>`);
+            }
+            out.push(`<rect x="${x[k]}" y="${yTop}" width="${w[k]}" height="${ph}" fill="none" stroke="${FLAT_COLOURS.box}"${bar ? ' stroke-dasharray="2 3"' : ''}/>`,
                      `<text x="${cx(k)}" y="${yBase + 18}" text-anchor="middle" class="nm">${GAS_NAMES[k]}</text>`,
                      `<text x="${cx(k)}" y="${yBase + 34}" text-anchor="middle" class="sub">${size}</text>`,
                      // The bar's value beside it, clear of the arrows over it.
@@ -8543,9 +8594,11 @@ Object.assign(View, {
         const vapour = x => `<div class="a">${x.toFixed(1)} <i>${escapeHtml(u.amount)} vapour</i></div>`;
         let html;
         if (kind === 'gv') {
-            const vol = r.volume[k], cap = r.capacity[k];
+            // The lungs' ventilated gas: one lung's while a tube is endobronchial.
+            const one = k === 'lungs' && st.lungsShare < 1;
+            const vol = r.volume[k] * (one ? st.lungsShare : 1), cap = r.capacity[k];
             const size = k === 'circuit' && !(cap > 0) ? 'holds no agent'
-                : k === 'lungs' || k === 'circuit' ? `${vol.toFixed(2)} L of gas`
+                : k === 'lungs' || k === 'circuit' ? `${vol.toFixed(2)} L of gas${one ? ' (one lung ventilated)' : ''}`
                 : `${vol.toFixed(1)} L × ${sig3(r.partition[k])} = ${sig3(cap)} L of gas`;
             // The lungs: arterial blood leaves at their partial pressure, and
             // mixed venous blood arrives at the blue ring's.
