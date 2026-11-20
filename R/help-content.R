@@ -114,6 +114,7 @@ helpStaticPages <- function() {
     "models/gas-engine",        "The inhaled-gas engine",          "models",
     "models/gas-differences",   "Where the gas engine differs from GasMan", "models",
     "models/opioid-mac",        "Opioid reduction of MAC",         "models",
+    "models/opioid-receptor-interaction", "Buprenorphine opioid-receptor interaction", "models",
 
     "scenarios/index",          "All scenarios",                   "scenarios",
 

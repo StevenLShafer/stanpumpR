@@ -214,7 +214,7 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
 # hides inside their checkbox group.
 RELEVANT_FIELDS <- unname(c(
   "pregnant", "opioidTolerance", names(PATIENT_FIELD_LABELS), "osmolality",
-  "showMEAC", "opioidMacInteraction",
+  "showMEAC", "opioidMacInteraction", OPIOID_RECEPTOR_INPUT,
   vapply(COMPANION_MODEL_GROUPS, `[[`, character(1), "input"),
   ASM_INTERACTIONS_INPUT,
   "inhaledAgents",
@@ -285,6 +285,9 @@ relevantFields <- function(drugs, drugDefaults = getDrugDefaultsGlobal(),
     osmolality      = any(rows$Concentration.Units %in% "mOsm"),
     showMEAC        = opioid,
     opioidMacInteraction = opioid && gas,
+    # offered only while a mu partial agonist or antagonist (buprenorphine,
+    # naloxone) is in the table
+    stats::setNames(any(drugs %in% opioidReceptorSpecialDrugs()), OPIOID_RECEPTOR_INPUT),
     vapply(names(COMPANION_MODEL_GROUPS), function(group)
       any(drugs %in% companionGroupDrugs(group)), logical(1)) |>
       stats::setNames(vapply(COMPANION_MODEL_GROUPS, `[[`, character(1), "input")),

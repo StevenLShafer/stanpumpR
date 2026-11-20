@@ -47,6 +47,7 @@ simulationPlot <- function(
   normalization = c(NORMALIZE_NONE),
   plotMEAC = FALSE,
   plotInteraction = FALSE,
+  opioidReceptor = NULL,
   plotCost = FALSE,
   plotEvents = FALSE,
   plotRecovery = FALSE,
@@ -314,7 +315,8 @@ simulationPlot <- function(
   plotTable$xmin <- minimum
   plotTable$xmax <- maximum
 
-  addPlots <- plotMEAC + plotInteraction + plotCost + plotEvents
+  addPlots <- plotMEAC + plotInteraction + plotCost + plotEvents +
+    (if (!is.null(opioidReceptor)) 3L else 0L)   # occupancy, respiratory, analgesia
 
   # Step D4: finish plotTable apart from extensions below
 
@@ -510,6 +512,47 @@ simulationPlot <- function(
         newplotTable$Wrap <- PLOT_NAME_INTERACTION
         plotTable <- rbind(plotTable, newplotTable)
       }
+    }
+  }
+
+  # Buprenorphine / opioid-receptor interaction panels
+  # (R/opioidReceptorInteraction.R): one physical occupancy, drawn as occupancy,
+  # respiratory depression and analgesia (MEAC-equivalents).
+  if (!is.null(opioidReceptor))
+  {
+    orT <- opioidReceptor$Time
+    orSeries <- function(drug, y, wrap)
+      data.frame(Drug = drug, Time = orT, Y = y, Site = "Effect Site",
+                 Wrap = wrap, Label = "")
+    orPanelRow <- function(drug, color, units, wrap) {
+      np <- plotTable[1, ]
+      np$Drug <- drug; np$drugColor <- color; np$Concentration.Units <- units
+      np$y <- 0; np$ymin <- 0; np$ymax <- 0; np$Wrap <- wrap; np$endCe <- 0
+      np
+    }
+    # Occupancy panel: one line per ligand (physical occupancy, %) + free.  The
+    # ligand lines reuse the drug names so they inherit each drug's colour.
+    for (i in seq_along(opioidReceptor$ligands))
+      plotResults <- rbind(plotResults, orSeries(opioidReceptor$ligands[i],
+                           opioidReceptor$rho[, i] * 100, PLOT_NAME_OCCUPANCY))
+    plotResults <- rbind(plotResults, orSeries(OR_FREE_LABEL,
+                         opioidReceptor$rho0 * 100, PLOT_NAME_OCCUPANCY))
+    plotTable <- rbind(plotTable, orPanelRow(OR_FREE_LABEL, "grey70", "%", PLOT_NAME_OCCUPANCY))
+
+    # Respiratory depression panel (% of baseline ventilation lost)
+    plotResults <- rbind(plotResults, orSeries(PLOT_NAME_RESP,
+                         opioidReceptor$ventilation * 100, PLOT_NAME_RESP))
+    plotTable <- rbind(plotTable, orPanelRow(PLOT_NAME_RESP, "firebrick", "%", PLOT_NAME_RESP))
+
+    # Analgesia panel (MEAC-equivalents): total, plus the available-drive odds
+    # (the full-agonist-only drive that is getting through the blockade)
+    plotResults <- rbind(plotResults, orSeries(PLOT_NAME_ANALGESIA,
+                         opioidReceptor$analgesia, PLOT_NAME_ANALGESIA))
+    plotTable <- rbind(plotTable, orPanelRow(PLOT_NAME_ANALGESIA, "darkgreen", "MEAC", PLOT_NAME_ANALGESIA))
+    if (any(opioidReceptor$availableDrive > 1e-6)) {
+      plotResults <- rbind(plotResults, orSeries("available drive",
+                           opioidReceptor$availableDrive, PLOT_NAME_ANALGESIA))
+      plotTable <- rbind(plotTable, orPanelRow("available drive", "orange", "MEAC", PLOT_NAME_ANALGESIA))
     }
   }
 
