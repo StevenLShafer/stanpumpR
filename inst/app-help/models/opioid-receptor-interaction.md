@@ -10,7 +10,7 @@ A drug's *affinity* is where it sits at equilibrium. Its *displaceability* — h
 
 A µ receptor is a µ receptor. There is **one physical occupancy** for each opioid — the fraction of receptors it holds — and ventilation and analgesia are two different *transductions* of that single occupancy, differing only in how much spare receptor capacity (reserve) each has. So the model carries each opioid's true dissociation constant and computes a competitive occupancy of one shared receptor pool; buprenorphine binds slowly (and holds on), the full agonists and naloxone reach their balance quickly within whatever receptors buprenorphine leaves free.
 
-The mathematics is given in full, for a reader who wants it, in the typeset note [`docs/buprenorphine-interaction.tex`](https://github.com/StevenLShafer/stanpumpR/blob/master/docs/buprenorphine-interaction.tex) (and `docs/buprenorphine-interactions-math.md`); the engine is `R/opioidReceptorInteraction.R`.
+The mathematics is given in full, for a reader who wants it, in the typeset note [`docs/buprenorphine-interaction.pdf`](https://github.com/StevenLShafer/stanpumpR/blob/master/docs/buprenorphine-interaction.pdf) (and `docs/buprenorphine-interactions-math.md`); the engine is `R/opioidReceptorInteraction.R`.
 
 ## The panels
 
