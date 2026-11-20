@@ -26,7 +26,7 @@ VALIDATION <- c("none", "in_population", "external_population")
 IMPLEMENTED_ANTIHYPERTENSIVES <- c(
   "clevidipine", "fenoldopamPediatric", "carvedilol", "azilsartan",
   "chlorthalidone", "hydrochlorothiazide", "lisinopril", "olmesartan",
-  "valsartan", "benazepril", "enalapril", "fosinopril")
+  "valsartan", "benazepril", "enalapril", "fosinopril", "irbesartan")
 # "observed" is a measured summary statistic -- a Cmax, a median tmax, a
 # urinary recovery -- rather than an estimate of a model parameter.  Added
 # 2026-10-20 for Kaiser 1989, where such numbers CHECK a derived vector

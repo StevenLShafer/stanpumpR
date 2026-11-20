@@ -1007,6 +1007,15 @@ sources <- rbind(sources,
       execution_status = EXTR, source_type = "primary_fitted",
       source_url = "https://doi.org/10.1111/bcp.13082",
       limitations = "The blood-pressure half of the paper behind the valsartan concentration record, kept so that the concentration record\'s cross-reference to it can be checked. An effect compartment driving an Emax model on sitting systolic and diastolic pressure, with the valsartan Imax estimated at 0.164 (which the authors then FIXED as amlodipine\'s Imax, assuming the two monotherapies are equally efficacious -- an assumption, not a measurement), plus an empirical additive-and-proportional interaction term for the combination. IT IS NOT EVALUABLE and is deliberately NOT one of the four relations antihypertensiveEndpointsAvailable() returns: only the Imax was transcribed, and the equilibration rate constant, the baseline and the interaction coefficient alpha were not, so the relation cannot be evaluated against a concentration. Extracting them is what would change this status. Even then it would not plot a pressure: the monotherapy arm of the fit is a NAIVELY POOLED analysis of mean blood pressures read from two other papers, because this study gave both drugs together and has no valsartan-alone arm, so the valsartan response is identified from other people\'s published means rather than from these subjects. bp_simulation_enabled stays FALSE, as it is on every record."),
+  rec("irbesartan__tablet__oral__healthy_asian_men__concentration__karatza2020",
+      "irbesartan", "irbesartan", "oral", "tablet",
+      population = "32 healthy Asian men aged 18-45 with BMI 18.5-24.9 (central weight, height and age not printed) in a two-period crossover of two 300 mg tablets, Aprovel and a generic; 1664 concentrations from 64 profiles",
+      endpoint = "concentration", analyte = "irbesartan",
+      matrix = "plasma", pk_evidence = FULL, pd_evidence = PRO,
+      execution_status = READY, stanpumpr_drug = "irbesartan",
+      source_type = "primary_fitted",
+      source_url = "https://doi.org/10.1016/j.ejps.2020.105498",
+      limitations = "PROVISIONAL (Steven L. Shafer, 2026-11-20). Two compartments, apparent throughout (oral data only): CL/F 13.5 L/h, Vc/F 13.8 L, Q/F 17.7 L/h, Vp/F 85.8 L, fitted in Monolix. Weight, height, age and BMI were tested and none was retained, so there is NO SIZE COVARIATE and NO RENAL TERM; irbesartan is cleared by CYP2C9 oxidation and glucuronidation with renal clearance 3.0-3.5 mL/min on the label. The absorption is a DELAY DIFFERENTIAL EQUATION, dA0/dt = -ka A0(t - T) with ka 0.304 /h and T 1.68 h, which the authors chose to describe the double peaks of individual profiles; at the typical values the curve has one peak, at 1.9 h. The package cannot run a delay equation, so the input is DISCRETISED into 12 lagged fractions of the default oral form absorbed through a depot at 1.33987 /h, fitted minimax against the exact published curve: the worst point misses by 4.7% of the peak, the peak is 2.3% low and 0.1 h late. That is nine times the 0.53% the library otherwise meets, and no set of non-negative pulses can do better than about 3.5%, because the exact input goes negative once the gut overshoots. The terminal half-life is 8.2 h against the label\'s 11-15 h, though the label\'s own statement of under 20% accumulation fits the model better than its half-life does (6% here, peak day 7 over day 1). Single doses in young Asian men, so the label\'s higher concentrations in women, the elderly and Black subjects are not represented. Two blood-pressure models exist (Hedaya 2015, Huang 2006), each fitted on its own pharmacokinetics, with EC50s sevenfold apart; neither is used, and bp_simulation_enabled stays FALSE."),
   rec("valsartan__sacubitril_valsartan__oral__healthy_chinese__concentration__yang2022",
       "valsartan", "valsartan", "oral", "sacubitril/valsartan tablet",
       population = "healthy Chinese subjects given sacubitril/valsartan",
@@ -2096,6 +2105,47 @@ parameters <- rbind(parameters,
          "Apparent peripheral volume, scaled by weight^1."),
   valPar("D1", 4.39, "h", 5.83,
          "Duration of the ZERO-ORDER absorption, and the single most consequential number in the model: the peak falls at exactly the end of the release, so this is the predicted tmax. The supplement's column header prints the unit as /h/70kg, which is a typo on two counts -- D1 is a duration, and the paper's size equations scale clearance and volume only -- so it is used as 4.39 h, unscaled. Zero-order absorption beat first-order on an objective function 162 lower (7712.434 against 7874.858), which is why it is used rather than approximated by a ka. Its between-subject variability was FIXED at zero in the valsartan model (it was estimated for amlodipine), so the 4.39 h is the whole population's."))
+
+IRB_ID  <- "irbesartan__tablet__oral__healthy_asian_men__concentration__karatza2020"
+IRB_URL <- "https://doi.org/10.1016/j.ejps.2020.105498"
+IRB_POP <- "32 healthy Asian men, single 300 mg doses in a two-period crossover"
+
+irbPar <- function(name, value, units, rse, notes)
+  par(IRB_ID, name, value, units, "fitted",
+      uncertainty = rse, uncertainty_type = "relative standard error, %",
+      matrix = "plasma", population = IRB_POP, endpoint = "concentration",
+      source_url = IRB_URL, source_table_or_page = "Table 2",
+      verification = "primary_full_text", notes = notes)
+
+parameters <- rbind(parameters,
+  # -- irbesartan, Karatza 2020 Table 2: read in full 2026-11-19 -------------
+  irbPar("CL/F", 13.5, "L/h", 5.15,
+         "Apparent clearance, no covariate. Inside the label's apparent range of 11.8-17.6 L/h (CL 157-176 mL/min over F 60-80%)."),
+  irbPar("Vc/F", 13.8, "L", 13.2,
+         "Apparent central volume, no covariate."),
+  irbPar("Q/F", 17.7, "L/h", 8.7,
+         "Apparent intercompartmental clearance, no covariate."),
+  irbPar("Vp/F", 85.8, "L", 7.07,
+         "Apparent peripheral volume, no covariate."),
+  irbPar("ka", 0.304, "1/h", 4.73,
+         "The rate constant of the DELAYED absorption, dA0/dt = -ka A0(t - T): the depot empties at a rate set by its own content T hours earlier, not by its current content. Run here with the dose held in the depot before time zero (the Monolix history), which reproduces the paper's Table 3; the zero history the text describes does not."),
+  irbPar("T", 1.68, "h", 6.23,
+         "The constant delay of the delay differential equation. With a larger ka x T it draws the second peak seen in individual profiles (at the typical values the curve has one peak), and it is why the input is discretised rather than run."),
+  par(IRB_ID, "discretised depot ka", 1.33987, "1/h", "derived", "derived",
+      matrix = "plasma", population = IRB_POP, endpoint = "concentration",
+      source_url = IRB_URL, verification = "derived_here",
+      notes = "Fitted jointly with the pulse delays (Nelder-Mead then Powell) against the exact published curve at the published disposition. Not a property of the drug: it is the rate at which each pulse leaves the depot in the stand-in."),
+  par(IRB_ID, "discretised release fractions", NA, "fraction", "derived",
+      "derived", matrix = "plasma", population = IRB_POP,
+      endpoint = "concentration", source_url = IRB_URL,
+      verification = "derived_here",
+      notes = "Twelve fractions, 0.269396 0.090533 0.090634 0.091040 0.091115 0.088226 0.070338 0.061962 0.052867 0.042853 0.031311 0.019725, at 1.3796 19.8584 38.1029 56.4681 74.8723 93.2611 112.6310 133.2269 154.9986 178.1867 204.1957 235.2061 minutes, in R/drugs_irbesartan.R rather than here because they are a vector; IRBESARTAN_PULSE_FRACTION and IRBESARTAN_PULSE_DELAY are the authoritative copy and this note has to be changed with them. Fitted MINIMAX: for each trial set of delays and depot rate, the fractions are the exact solution of a linear program (sum 1, each non-negative) minimising the worst error on the curve."),
+  par(IRB_ID, "discretisation error, worst point on the curve", 4.67,
+      "percent of peak concentration", "derived", "derived",
+      matrix = "plasma", population = IRB_POP, endpoint = "concentration",
+      source_url = IRB_URL, verification = "derived_here",
+      notes = "After a single dose, at the published disposition; the minimax fit spreads the error evenly, so several points along the first five hours reach it. The peak is 2.3% low and 0.1 h late (2.01 against 1.91 h). With fat-free-mass scaling on, the disposition moves and so does the error: 5.2% for a 45 kg, 155 cm woman (volumes x0.58, clearances x0.67) and 4.6% for a 120 kg, 185 cm man (x1.43 and x1.31), both measured in tests/testthat/test-drugs-irbesartan.R. A linear-programming bound puts the best any non-negative pulses can do at about 3.5%; the 2026-11-19 draft reached 5.8%. Nine times the 0.53% MDMA met, and accepted only as PROVISIONAL.")
+)
 
 parameters <- rbind(parameters,
   # -- valsartan, Heo 2016's blood-pressure model: the one number transcribed -
