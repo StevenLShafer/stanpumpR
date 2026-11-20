@@ -4,15 +4,17 @@
 # links to.  This check compiles every docs/*.tex with pdflatex (twice, for
 # cross-references) and fails if:
 #   - the LaTeX does not compile, or leaves undefined references; or
-#   - the committed PDF is missing, or its text differs from the fresh build
-#     (the .tex was edited and the PDF was not rebuilt).
+#   - the committed PDF is missing, or a pull request changes the .tex without
+#     changing its PDF (the PDF was not rebuilt).
 # When it fails, the freshly built PDFs are attached to the run as the
 # artifact "docs-pdf": commit them, or run pdflatex twice locally.
 #
 # The check does not push to master itself: master is protected and requires
-# R-CMD-check, which a bot commit would never get.  It is separate from
-# R-CMD-check: docs/ is in .Rbuildignore, and this runs only when docs/*.tex
-# or docs/*.pdf change.
+# R-CMD-check, which a bot commit would never get.  It checks which files a
+# pull request changed rather than comparing PDFs, because two TeX
+# installations rarely give identical output.  It is separate from
+# R-CMD-check: docs/ is in .Rbuildignore, and this runs only when docs/*.tex,
+# docs/*.pdf or this workflow change.
 
 name: docs-pdf
 
@@ -37,19 +39,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
 
       - name: Install LaTeX
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq --no-install-recommends \
-            texlive-latex-base texlive-latex-recommended texlive-latex-extra \
-            poppler-utils
+          sudo apt-get install -y -qq \
+            texlive-latex-base texlive-latex-recommended texlive-latex-extra
 
-      - name: Compile docs/*.tex and compare with the committed PDFs
+      - name: Compile docs/*.tex
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/build" "$RUNNER_TEMP/pdf"
-          stale=0
           for tex in docs/*.tex; do
             name=$(basename "$tex" .tex)
             for pass in 1 2; do
@@ -61,12 +63,27 @@ jobs:
               echo "::error file=$tex::undefined references"; exit 1
             fi
             cp "$RUNNER_TEMP/build/$name.pdf" "$RUNNER_TEMP/pdf/"
-            if [ ! -f "docs/$name.pdf" ]; then
-              echo "::error file=$tex::docs/$name.pdf is missing; commit the compiled PDF"
+          done
+
+      - name: Check each .tex has a current PDF
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          stale=0
+          # On a pull request, a .tex the PR changed needs its PDF changed too.
+          changed=""
+          if [ -n "$BASE_REF" ]; then
+            git fetch -q --depth=50 origin "$BASE_REF"
+            changed=$(git diff --name-only "origin/$BASE_REF...HEAD")
+          fi
+          for tex in docs/*.tex; do
+            pdf="${tex%.tex}.pdf"
+            if [ ! -f "$pdf" ]; then
+              echo "::error file=$tex::$pdf is missing; commit the compiled PDF"
               stale=1
-            elif ! diff -q <(pdftotext -layout "docs/$name.pdf" -) \
-                           <(pdftotext -layout "$RUNNER_TEMP/pdf/$name.pdf" -) > /dev/null; then
-              echo "::error file=$tex::docs/$name.pdf is out of date with $tex; rebuild and commit it"
+            elif echo "$changed" | grep -qx "$tex" && ! echo "$changed" | grep -qx "$pdf"; then
+              echo "::error file=$tex::$tex changed but $pdf did not; rebuild and commit it"
               stale=1
             fi
           done
