@@ -7190,6 +7190,16 @@ const Player = {
             }
         }
         this.tiny = peak * TINY_FRACTION; this.depotTiny = depotPeak * TINY_FRACTION;
+        // And a pump rate below a billionth of the run's largest: with the
+        // effect site targeted the pump is off while the effect site rises to
+        // its target, and the controller's 0 there can come as round-off
+        // (5e-12 mg/min beside a loading rate of 306), which was drawn as the
+        // pump running, labelled "Pump 9.41e-13 mg/min" (2026-11-20).
+        // stanpumpR now sends 0 (tciDisplay() in R/tci.R); a run made before
+        // that, or by anything else, is read the same way here.
+        let ratePeak = 0;
+        for (const x of r.rate) if (x > ratePeak) ratePeak = x;
+        this.rateTiny = ratePeak * TINY_FRACTION;
         const level = r.typical > 0 ? r.typical : (maxCp > 0 ? maxCp / 2 : 1);
         // toFixed() takes 0 to 100 digits: a vanishing level would ask for more.
         const mag = Math.max(-6, Math.floor(Math.log10(level)));
@@ -7297,7 +7307,7 @@ const Player = {
         // The value in force: the later sample once T reaches it.
         const j = T >= t[i + 1] ? i + 1 : i;
         const clean = x => x < this.tiny ? 0 : x;
-        const rate = r.rate[j], pk = this.pkIn(j), sc = this.scale;
+        const rate = r.rate[j] < this.rateTiny ? 0 : r.rate[j], pk = this.pkIn(j), sc = this.scale;
         // A compartment's concentration. Across an interval in which its
         // volume changes (pkAt: the set switches at a clinical event, and the
         // later sample is the first in the new set), the drug it holds is

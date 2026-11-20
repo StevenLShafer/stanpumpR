@@ -588,6 +588,25 @@ DOSE_COLUMN_HEADER <- "Dose/Target"
 TCI_INTERVAL <- 10 / 60        # minutes between rate changes (10 s, as STANPUMP)
 TCI_PLASMA_SWITCH <- 0.05      # effect site this close to target: hold the plasma
 TCI_MAX_RATE <- Inf            # pump ceiling in base mass units per minute
+# A rate the schedule shows as 0: one below this fraction of the schedule's
+# largest.  With the effect site targeted the pump is off while the effect
+# site rises to the target, and tciRate() computes that 0 as (CT - B)/E at the
+# moment the curve just touches the target, where CT - B is a rounding error
+# of either sign.  A positive one is a rate of at most about 1e-14 of the
+# loading rate (propofol to 4 mcg/mL and then to 2 in the reference man:
+# 3.3e-14 and 5.7e-15 mg/kg/min among 32 intervals of exactly 0, beside a
+# loading rate of 6.08 and a lowest real rate of 0.041; 28 such rows in ten
+# schedules of five drugs, the largest 4.8e-15 of its schedule's largest
+# rate).  It delivers nothing, and it was shown:
+# the rate panel's hover read "rate: 3.26e-14 mg/kg/min", the exported dose
+# table had the row, and the Visualizer drew the pump running, labelled
+# "Pump 9.41e-13 mg/min".  The controller's own numbers are not touched
+# (tciRate()'s rounding is what the TCI API and FauxTCI's fixtures reproduce,
+# and the engine simulates the schedule as computed): tciDisplay() applies
+# this to what is shown.  A billionth, as the Visualizer's TINY_FRACTION is
+# for a concentration.  (Claude Code, 2026-11-20, at the request of Steven L.
+# Shafer.)
+TCI_RATE_ROUNDOFF <- 1e-9
 
 # Scheduled (repeating) doses (scheduled.R).  A bolus, PO, SL, IM or IN unit with
 # one of these suffixes, e.g. "mg PO bid", gives the dose at the entered time
