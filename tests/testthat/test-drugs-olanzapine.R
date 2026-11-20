@@ -46,6 +46,39 @@ test_that("with the switch on the model runs at the pharmacokinetic weight", {
   x <- olanzapine(120, 170, 50, "male")$PK$default
   expect_equal_rounded(x$v1, 656 * 1.3049067 * (50 / 36)^0.356)
   expect_equal_rounded(x$cl1, 15.5 / 60 * 1.2209126)
+  # Vp/F and Q/F take the fat-free-mass factors anchored at Sun's cohort
+  # (2026-11-19, the first-principles rule)
+  cf <- cohortFactorsIndependent(OLANZAPINE_COHORT)
+  expect_equal_rounded(x$v2, 225 * 1.3049067 / cf$volume)
+  expect_equal_rounded(x$cl2, 6.15 / 60 * 1.2209126 / cf$clearance)
+})
+
+test_that("Vp/F and Q/F: anchored at Sun's cohort, scaled by fat-free mass", {
+  # (a) the cohort's typical patients (Table 1: 76.9 kg, BMI 25.5, 36 years;
+  # 411 men, 190 women).  Vp/F and Q/F carry no sex term, so the pooled
+  # (geometric, by numbers) man and woman receive the published values
+  cf <- cohortFactorsIndependent(OLANZAPINE_COHORT)
+  expect_equal(round(c(cf$volume, cf$clearance), 4), c(1.0104, 1.0078))
+  h <- 100 * sqrt(76.9 / 25.5)
+  m <- olanzapine(76.9, h, 36, "male")$PK$default
+  f <- olanzapine(76.9, h, 36, "female")$PK$default
+  pooled <- function(x, y) exp((411 * log(x) + 190 * log(y)) / 601)
+  expect_equal(pooled(m$v2, f$v2), 225)
+  expect_equal(pooled(m$cl2, f$cl2), 6.15 / 60)
+  # (b) twice the reference fat-free mass: Vp/F x 2 and Q/F x 2^0.75 over the
+  # cohort's factors; CL/F and Vc/F keep the source's weight terms (140 kg)
+  w <- uniroot(function(w) ffmAlSallami(w, 200, 36, "male") - 2 * FFM_REFERENCE,
+               c(70, 400), tol = 1e-12)$root
+  big <- olanzapine(w, 200, 36, "male")$PK$default
+  expect_equal(big$v2, 225 * 2 / cf$volume)
+  expect_equal(big$cl2, 6.15 / 60 * 2^0.75 / cf$clearance)
+  expect_equal(big$v1, 656 * 140 / 70)
+  expect_equal(big$cl1, 15.5 / 60 * (140 / 70)^0.75)
+  # (c) the switch off: as published, at total weight
+  off <- olanzapine(w, 200, 36, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(off$v2, 225)
+  expect_equal(off$cl2, 6.15 / 60)
+  expect_equal(off$v1, 656 * w / 70)
 })
 
 test_that("nothing reaches plasma before the 0.782 h lag", {

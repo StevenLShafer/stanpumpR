@@ -5,6 +5,8 @@ Colistin is formed from [colistimethate](help:drugs/colistimethate) (CMS) and is
 - **Volume:** 45.1 L.
 - **Clearance:** 0.0147 × CrCL + 2.19 L/h, with the creatinine clearance in mL/min/1.73 m².
 
+The source found no trend in clearance against body size. With *Adjust weight to fat-free mass* ticked, the volume is scaled in proportion to fat-free mass and the nonrenal 2.19 L/h to its 0.75 power, anchored at Garonzik's typical patient (median 59.1 kg, 162.0 cm, 71 years), as colistimethate's are, so the colistin formed and colistin's own clearance move together. The renal term carries weight inside the creatinine clearance and is not scaled. Unticked, both are as published.
+
 All of CMS's nonrenal clearance forms colistin. The fraction that actually becomes colistin is not identifiable, so the volume and clearance are each divided by it. Both are divided again by 1.78, the factor that puts the model in milligrams of colistin base activity (see [colistimethate](help:drugs/colistimethate)).
 
 Colistin itself is hardly excreted by the kidney. Its clearance carries the creatinine clearance because, as renal function falls, more of each CMS dose is converted to colistin rather than excreted, and the fit carries that effect here.

@@ -11,8 +11,15 @@
 # the applicant's model 2822 (Table 149), and suzetrigine reads them from this
 # function (METABOLITE_FORMATION_BASIS "shared"):
 #
-#     central V2M 1.7 L, peripheral V3M 29.5 L (x weight/76.2), Q3M 8.75 L/h
+#     central V2M 1.7 L, peripheral V3M 29.5 L (both x weight/76.2), Q3M 8.75 L/h
 #     clearance CLM 0.273 x CLP (suzetrigineClearance())
+#
+# BODY SIZE: the volumes' weight term and CLM's tie to CLP (BMI and sex) are
+# kept as fitted.  Q3M carries no size term, so with the switch on it is
+# scaled by the fat-free-mass ratio^0.75 anchored at the data's typical
+# subject (suzetrigineQFactor(), SUZETRIGINE_COHORT; Steven L. Shafer's
+# first-principles rule of 2026-11-19; see the BODY SIZE section of
+# R/drugs_suzetrigine.R); with it off it is 8.75 L/h for everyone.
 #
 # The clearance here is the uninduced one.  In a suzetrigine simulation the
 # saturable engine multiplies it by the same enzyme state (AENZ) as the
@@ -46,7 +53,7 @@ M6SUZ <- function(weight, height, age, sex, adjustToFFM = TRUE)
     v2  = M6SUZ_V2 * f,
     v3  = 1,
     cl1 = M6SUZ_CL_RATIO * suzetrigineClearance(weight, height, sex) / 60,
-    cl2 = M6SUZ_Q / 60,
+    cl2 = M6SUZ_Q * suzetrigineQFactor(weight, height, age, sex, adjustToFFM) / 60,
     cl3 = 0
   )
   events <- c(PK_EVENT_DEFAULT)

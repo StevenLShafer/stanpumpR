@@ -30,7 +30,9 @@
 # The footnote writes the reference values as "BWmedian" and "ALTmedian"
 # without printing them; they are taken as the bosentan cohort's medians in
 # Table 1, 42.2 kg and 16.5 IU/L (an interpretation: the median of the
-# drug's own analysis set; CHECKS cannot tell it from the adults' 48.5 kg).  V/F has no covariate.  The sildenafil model of the same paper gives
+# drug's own analysis set; CHECKS cannot tell it from the adults' 48.5 kg).
+# V/F has no covariate in the source; see BODY SIZE for its scaling.  The
+# sildenafil model of the same paper gives
 # sildenafil's clearance with bosentan 1.63 times higher (bosentan induces
 # CYP3A); that interaction is not modelled.
 #
@@ -74,8 +76,28 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# The source's own weight term on CL/F, at the pharmacokinetic weight with
-# the switch on and total weight with it off.  The studied weights were
+# CL/F keeps the source's own weight term exactly as fitted (and its ALT
+# term, held at the median), at the pharmacokinetic weight with the switch on
+# and total weight with it off, and takes nothing more.
+#
+# V/F has no covariate in the source, not because size was found not to
+# matter but because it was never tested: V/F's shrinkage exceeded 30% for
+# every drug, so the authors explored covariates on CL/F only (Discussion).
+# Under Steven L. Shafer's first-principles rule of 2026-11-19 (a covariate
+# not detected is not evidence of no size effect), with the switch on V/F is
+# scaled by the fat-free-mass ratio (size$volume), anchored at the cohort's
+# typical patients (BOSENTAN_COHORT, below; Shafer's choice of 2026-11-20: two
+# anchors, the children's median subject and the adults', each of both
+# sexes), so that the cohort's typical patient receives the published 41.0 L.
+# The cohort factor is 0.3889 on volume (0.4925 on clearance): the geometric
+# mean of the children's and the adults' fat-free-mass factors, weighted by
+# their numbers, sits that far below the 70 kg reference man.  So V/F is
+# 105 L in a 70 kg, 170 cm, 35-year-old man, about 21 L at the
+# children's median subject and 65.0 and 84.6 L at the adults' median woman and
+# man.  Al-Sallami's fat-free mass is an extrapolation below 3 years.
+# With the switch off V/F is 41.0 L for everyone, as before.
+#
+# The studied weights were
 # 6.9-58.7 kg, so a 70-kg adult is an extrapolation by the power law, which
 # the help page says.  Fitted in children from 2.2 years and adults, offered
 # at every age.  The label says exposure in children "reaches a plateau at
@@ -105,6 +127,30 @@ BOSENTAN_V       <- 41.0    # L
 BOSENTAN_KA      <- 2.47    # /h
 BOSENTAN_TLAG    <- 0.379   # h
 
+# Miura 2026, Table 1 (the bosentan column), the cohort V/F is anchored at
+# (see the header's BODY SIZE): 16 patients, 7 children (median 4.8 years,
+# 12 kg) and 9 adults (median 47 years, 48.5 kg), 5 men and 11 women.
+# Table 1 does not split the sexes by age group, so each group is ASSUMED to
+# have the cohort's sex ratio (5:11).  No height, BMI or BSA is printed
+# (nor any supplement).  The children's heights are the median (50th
+# percentile) height for age of the Japanese 2000 reference (Japanese Society
+# for Pediatric Endocrinology, Appendix Table 2, Kato N et al. 2004;
+# http://jspe.umin.jp/medical/files/fuhyo2.pdf, read on the page image
+# 2026-11-20), interpolated linearly between its months at 4.8 years: boys
+# 105.6 cm, girls 105.4 cm.  The adults' heights are NCD-RisC's mean height at 18
+# for Japan, birth cohort 1969 (about 2016 less 47: the patients were
+# sampled in routine care in Hamamatsu from about 2009, the registered
+# studies' UMIN entries, to 2023, the last ethics approval; no dates are
+# printed, and 2009 or 2023 would move these heights by under 1 cm), less
+# 0.2 cm (men) or 0.3 cm (women) a decade after 18: men 170.5 cm, women 157.4
+# cm.  The sexes and groups enter at their counts (fractional where the
+# assumed ratio makes them so).
+BOSENTAN_COHORT <- list(groups = list(
+  list(weight = 12, height = 105.6, age = 4.8, men = 5 * 7 / 16, women = 0),
+  list(weight = 12, height = 105.4, age = 4.8, men = 0, women = 11 * 7 / 16),
+  list(weight = 48.5, height = 170.5, age = 47, men = 5 * 9 / 16, women = 0),
+  list(weight = 48.5, height = 157.4, age = 47, men = 0, women = 11 * 9 / 16)))
+
 #' Bosentan (Miura 2026)
 #'
 #' One compartment, oral, with weight on apparent clearance; steady-state
@@ -115,13 +161,18 @@ BOSENTAN_TLAG    <- 0.379   # h
 #' @export
 bosentan <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
+  # size$pkWeight (for the fitted weight term on CL/F) does not depend on the
+  # cohort; size$volume scales the size-free V/F, anchored at
+  # BOSENTAN_COHORT, and is 1 with the switch off
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, BOSENTAN_COHORT))
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   # ALT held at the median (no Patient Profile field), where its term is 1
   cl <- BOSENTAN_CL * (w / BOSENTAN_WT_REF)^BOSENTAN_WT_EXP
 
   default <- list(
-    v1  = BOSENTAN_V,
+    v1  = BOSENTAN_V * size$volume,
     v2  = 1,
     v3  = 1,
     cl1 = cl / 60,
@@ -145,7 +196,9 @@ bosentan <- function(weight, height, age, sex, adjustToFFM = TRUE)
       "Miura M, Tanaka S, Aihara R, et al., Br J Clin Pharmacol 2026;92:3611-3621, ",
       "Table 3: one compartment fitted at steady state in Japanese children and adults ",
       "with pulmonary arterial hypertension, CL/F 8.85 L/h x (WT/42.2)^0.472 (ALT held ",
-      "at its median), V/F 41.0 L, ka 2.47 /h, lag 0.379 h; autoinduction over the ",
+      "at its median), V/F 41.0 L (no covariate; with the fat-free-mass switch on, scaled ",
+      "by the fat-free-mass ratio anchored at the cohort's median child and adult), ",
+      "ka 2.47 /h, lag 0.379 h; autoinduction over the ",
       "first days not modelled. https://doi.org/10.1002/bcp.70676")
   )
 }

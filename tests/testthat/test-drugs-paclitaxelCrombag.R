@@ -46,13 +46,68 @@ test_that("80 mg/m2 over 1 h: ten years of age lengthen the time above 0.05 uM b
   expect_lt(m[2] / m[1], 1.10)
 })
 
-test_that("both switch positions: only VMEL moves with size", {
+# Crombag 2019, Table I (p5): 301 men, 383 women, 61 years, BSA 1.8 m2; the
+# weight (67.6 kg) and height (172.3 cm) derived in R/drugs_paclitaxelCrombag.R.
+# Its factors computed independently of pkSizeFactors() (helpers.R).
+crombagCohort <- cohortFactorsIndependent(
+  list(weight = 67.6, height = 172.3, age = 61, men = 301, women = 383))
+
+test_that("both switch positions: VMEL on its BSA term, the rest on FFM", {
+  # Until 2026-11-19 only VMEL moved with size (V1, V3, VMTR and Q were
+  # fixed); since then they take the FFM factors anchored at Crombag's cohort
+  # with the switch on (the header's BODY SIZE section).
   on <- paclitaxelCrombag(110, 175, 50, "male")
   off <- paclitaxelCrombag(110, 175, 50, "male", FALSE)
-  expect_equal(c(on$PK$default$v1, on$PK$default$v2), c(off$PK$default$v1, off$PK$default$v2))
+  expect_equal(c(off$PK$default$v1, off$PK$default$v2, off$PK$default$cl2 * 60),
+               c(12.0, 267, 16.6))
+  ratio <- ffmAlSallami(110, 175, 50, "male") / FFM_REFERENCE
+  expect_equal(c(on$PK$default$v1, on$PK$default$v2) / c(12.0, 267),
+               rep(ratio / crombagCohort$volume, 2), tolerance = 1e-9)
+  expect_equal(on$PK$default$cl2 * 60 / 16.6, ratio^0.75 / crombagCohort$clearance,
+               tolerance = 1e-9)
+  expect_equal(on$michaelisMenten$saturableDistribution$vmax /
+                 off$michaelisMenten$saturableDistribution$vmax,
+               ratio^0.75 / crombagCohort$clearance, tolerance = 1e-9)
   w <- pkSizeFactors(110, 175, 50, "male", TRUE)$pkWeight
   expect_equal(on$michaelisMenten$vmax / off$michaelisMenten$vmax,
                (bsaMosteller(w, 175) / bsaMosteller(110, 175))^1.41)
+  expect_equal(on$michaelisMenten$km, off$michaelisMenten$km)
+  expect_equal(on$michaelisMenten$saturableDistribution[c("km", "k21")],
+               off$michaelisMenten$saturableDistribution[c("km", "k21")])
+})
+
+test_that("size: Crombag's typical patient gets Table II, and FFM scales the rest", {
+  mg <- PACLITAXEL_MW / 1000
+  # (a) A woman at the cohort's height and age whose fat-free mass is the
+  # cohort's pooled typical one receives V1 12.0 L, V3 267 L, Q 16.6 L/h and
+  # VMTR 177 umol/h
+  wCohort <- uniroot(function(w) ffmAlSallami(w, 172.3, 61, "female") / FFM_REFERENCE -
+                       crombagCohort$volume, c(40, 150), tol = 1e-12)$root
+  typical <- paclitaxelCrombag(wCohort, 172.3, 61, "female")
+  d <- typical$PK$default
+  expect_equal(c(d$v1, d$v2, d$cl2 * 60), c(12.0, 267, 16.6), tolerance = 1e-9)
+  expect_equal(typical$michaelisMenten$saturableDistribution$vmax * 60 / mg, 177,
+               tolerance = 1e-9)
+  # (b) A man of twice the reference fat-free mass: volumes x 2, VMTR and Q
+  # x 2^0.75, over the cohort's factors; VMEL on its own BSA term at his
+  # pharmacokinetic weight (140 kg)
+  w2 <- uniroot(function(w) ffmAlSallami(w, 190, 35, "male") - 2 * FFM_REFERENCE,
+                c(80, 300), tol = 1e-12)$root
+  big <- paclitaxelCrombag(w2, 190, 35, "male")
+  expect_equal(big$PK$default$v1, 12.0 * 2 / crombagCohort$volume, tolerance = 1e-9)
+  expect_equal(big$PK$default$v2, 267 * 2 / crombagCohort$volume, tolerance = 1e-9)
+  expect_equal(big$PK$default$cl2 * 60, 16.6 * 2^0.75 / crombagCohort$clearance,
+               tolerance = 1e-9)
+  expect_equal(big$michaelisMenten$saturableDistribution$vmax * 60 / mg,
+               177 * 2^0.75 / crombagCohort$clearance, tolerance = 1e-9)
+  expect_equal(big$michaelisMenten$vmax * 60 / mg,
+               31.7 * 1.12 * (bsaMosteller(140, 190) / 1.8)^1.41 * (35 / 61)^-0.31,
+               tolerance = 1e-9)
+  # (c) The switch off: Table II at any size
+  off <- paclitaxelCrombag(w2, 190, 35, "male", FALSE)
+  expect_equal(c(off$PK$default$v1, off$PK$default$v2, off$PK$default$cl2 * 60),
+               c(12.0, 267, 16.6))
+  expect_equal(off$michaelisMenten$saturableDistribution$vmax * 60 / mg, 177)
 })
 
 test_that("pregnancy: Janssen 2021's factors on KMEL, V1 and V3", {
