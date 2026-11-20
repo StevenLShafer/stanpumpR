@@ -232,3 +232,38 @@ test_that("P1 stays exact when the crowding factor surges within one step", {
   ref <- p1_reference(0, r, s, p, q, koff, 1)
   expect_equal(got, ref, tolerance = 1e-10)
 })
+
+test_that("Opioid sensitivity and offset controls are sanitised and clamped", {
+  expect_equal(orSensitivityOffset(0.5), 0.5)
+  expect_equal(orSensitivityOffset(5), OPIOID_SENSITIVITY_MAX)
+  expect_equal(orSensitivityOffset(-9), OPIOID_SENSITIVITY_MIN)
+  expect_equal(orSensitivityOffset("x"), 0)
+  expect_equal(orSensitivityOffset(NA), 0)
+  expect_equal(orOffsetScale(2), 2)
+  expect_equal(orOffsetScale(10), BUPRENORPHINE_OFFSET_MAX)
+  expect_equal(orOffsetScale(-1), 1)
+  expect_equal(orOffsetScale(0.5), 0.5)
+  expect_equal(orOffsetScale(NA), 1)
+})
+
+test_that("Opioid sensitivity moves transduction, not physical occupancy", {
+  t <- seq(0, 240, by = 2)
+  ce <- list(buprenorphine = rep(1.0, length(t)))
+  run <- function(s) orInteractionSeries(t, ce, meacList = NULL,
+                                         toleranceLevel = "none", sensitivity = s)
+  rS <- run(-1); r0 <- run(0); rL <- run(1)
+  occ <- function(r) tail(r$rho[, 1], 1)
+  ana <- function(r) tail(r$analgesia, 1)
+  res <- function(r) tail(r$ventilation, 1)
+  # buprenorphine's physical occupancy is binding only (true K_D fixed): invariant
+  expect_equal(occ(rS), occ(r0), tolerance = 1e-9)
+  expect_equal(occ(rL), occ(r0), tolerance = 1e-9)
+  # more sensitive -> more analgesia and more respiratory depression
+  expect_gt(ana(rS), ana(r0)); expect_gt(ana(r0), ana(rL))
+  expect_gt(res(rS), res(r0)); expect_gt(res(r0), res(rL))
+  # a full agonist's occupancy rises with sensitivity (C50 = 4*MEAC*3^theta)
+  ce2 <- list(buprenorphine = rep(0, length(t)), fentanyl = rep(1.0, length(t)))
+  meac <- list(buprenorphine = 0, fentanyl = 1.0)
+  focc <- function(s) tail(orInteractionSeries(t, ce2, meac, "none", s)$rho[, 2], 1)
+  expect_gt(focc(-1), focc(0)); expect_gt(focc(0), focc(1))
+})
