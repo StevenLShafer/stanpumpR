@@ -254,8 +254,8 @@ describe('Carbon\'s third UI audit, 2026-11-15', () => {
   // Shiny unbinds the grid (a dialog closed), and the listener goes back on
   // at a bind
   test('unbinding a dialog\'s grid takes off its document listener and its list search', async () => {
-    // propofol given a dose above 0, without which it has no panel to
-    // double-click (only such drugs are drawn; Shafer, 2026-11-16)
+    // propofol given a dose above 0, so that its panel has a curve to
+    // double-click
     await adapter.typeInto(page, 0, 2, '100');
     await page.keyboard.press('Enter');
     await H.settle(page, 600);

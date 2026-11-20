@@ -531,9 +531,22 @@ test('sizes: proportional within 10:1, compressed to exactly 10:1 beyond it, in 
       const caption = [...document.querySelectorAll('#flat svg text')].some(e => /not to scale/.test(e.textContent));
       const st = Player.stateAt(1500), top = Flat.scale.top;
       // Each fill's height is its concentration on the one scale, whatever the widths.
-      const fills = [...document.querySelectorAll('#flat svg rect[fill-opacity]')].map(e => e.getBBox()).sort((a, b) => a.x - b.x);
-      return { w: [outl[1].width, outl[0].width, outl[2].width], ph: outl[0].height, caption,
-               h: [fills[1].height, fills[0].height, fills[2].height], c: [st.cp, st.c2, st.c3], top,
+      // Read as the numbers the viewer wrote, not from getBBox(): that gives
+      // them in single precision, about 3e-6 px off at these heights, so
+      // whether a height passed depended on how tall the plot was, and that
+      // on whether the controls' ResizeObserver had run since the window was
+      // sized (293 px before it, 325 px after). Before it, "fill 1" failed,
+      // the drawing being right (2026-11-20).
+      const num = (e, a) => Number(e.getAttribute(a));
+      const read = sel => [...document.querySelectorAll(sel)].map(e => ({ x: num(e, 'x'), y: num(e, 'y'), w: num(e, 'width'), h: num(e, 'height') }))
+        .sort((a, b) => a.x - b.x);                             // V2, V1, V3
+      const fills = read('#flat svg rect[fill-opacity]');
+      const boxes = read('#flat svg rect[fill="none"]:not([stroke-dasharray])');
+      // Each fill is in its own box, standing on its floor.
+      const own = fills.length === 3 && boxes.length === 3 &&
+        fills.every((f, i) => f.x === boxes[i].x && f.w === boxes[i].w && Math.abs(f.y + f.h - boxes[i].y - boxes[i].h) < 1e-9);
+      return { w: [outl[1].width, outl[0].width, outl[2].width], ph: boxes[0].h, caption, fills: fills.length, own,
+               h: [fills[1].h, fills[0].h, fills[2].h], c: [st.cp, st.c2, st.c3], top,
                r3d: View.geo.r.slice(1) };
     });
     const vols = [pk.v1, pk.v2, pk.v3], ratio = Math.max(...g.w) / Math.min(...g.w);
@@ -548,7 +561,9 @@ test('sizes: proportional within 10:1, compressed to exactly 10:1 beyond it, in 
     // The order of the sizes is the order of the volumes.
     for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) if (vols[i] < vols[j]) assert.ok(g.w[i] < g.w[j] && area[i] < area[j]);
     assert.equal(g.caption, compressed, 'the not-to-scale note');
-    for (let i = 0; i < 3; i++) assert.ok(Math.abs(g.h[i] - g.c[i] / g.top * g.ph) < 1e-6, `fill ${i} is not its concentration`);
+    assert.equal(g.fills, 3, 'the fills of V2, V1 and V3, and no other rect');
+    assert.ok(g.own, 'a fill is not in its own box, on its floor');
+    for (let i = 0; i < 3; i++) assert.ok(Math.abs(g.h[i] - g.c[i] / g.top * g.ph) < 1e-9, `fill ${i} is not its concentration`);
     assertClean(page);
   }
 });
@@ -1207,6 +1222,75 @@ test('gas: a run made before the blood and the greenhouse effect still loads, an
   assertClean(page);
 });
 
+// An intubation that steps during the run (a physiology event; Shafer,
+// 2026-11-19: an endobronchial tube pulled back at five minutes): the lungs'
+// capacity is carried per time (lungsCapacity), one lung's while the tube is
+// in a bronchus. The amounts and flows use the capacity in force, so the lung
+// that joins brings no burst of ventilation and nothing is vented backwards.
+function steppedIntubation() {
+  const r = clone(GAS), n = r.t.length, full = r.capacity.lungs;
+  r.lungsCapacity = r.t.map(t => t < 300 ? full / 2 : full);
+  r.arterial = r.p.lungs.map((p, i) => r.t[i] < 300 ? (p + r.venous[i]) / 2 : p);
+  r.saturation = r.t.map(t => t < 300 ? 85 : 100);
+  r.paO2 = r.t.map(t => t < 300 ? 50 : 500);
+  const ph = { liver: 1, renal: 1, cardiac: 1, gi: 1, temperature: 37, altitude: 0, pressure: 760 };
+  r.physiology = { ...ph, endobronchial: true };
+  r.physiologySteps = [{ ...ph, time: 0, endobronchial: true }, { ...ph, time: 300, endobronchial: false }];
+  return r;
+}
+
+test('gas: an intubation that steps is drawn with the lungs\' capacity in force, and adds no flow at the step', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1280, height: 720 });
+  const r = steppedIntubation();
+  assert.equal(await loadRun(page, r), true);
+  const o = await page.evaluate(() => {
+    const at = T => { Player.seek(T); const st = Player.gasStateAt(T);
+      return { share: st.lungsShare, lungs: st.A.lungs, p: st.p.lungs, vent: st.flow.vent, vented: st.vented, ventedFlow: st.flow.vented,
+               texts: [...document.querySelectorAll('#flat svg text')].map(e => e.textContent),
+               physio: document.getElementById('physio').innerText, oxygen: document.getElementById('oxygen').innerText }; };
+    return { one: at(100), before: at(299.5), after: at(300.5), both: at(400) };
+  });
+  // One lung: half the capacity, and the picture says so
+  assert.equal(o.one.share, 0.5);
+  assert.ok(Math.abs(o.one.lungs - 10 * 1.25 * o.one.p) < 1e-9, 'the lungs hold their capacity in force x partial pressure');
+  assert.ok(o.one.texts.includes('not ventilated'), 'the unventilated lung is not marked');
+  assert.ok(o.one.texts.includes('1.25 L gas'), 'the lungs\' volume in force is not shown: ' + o.one.texts.join('|'));
+  assert.match(o.one.physio, /Intubation endobronchial/);
+  assert.match(o.one.physio, /physiology event at 0:00:00/, 'an event at the start read as normal: ' + o.one.physio);
+  assert.match(o.one.oxygen, /SaO₂ 85%/);
+  // Both lungs after the step
+  assert.equal(o.both.share, 1);
+  assert.ok(Math.abs(o.both.lungs - 10 * 2.5 * o.both.p) < 1e-9);
+  assert.ok(!o.both.texts.includes('not ventilated'));
+  assert.ok(o.both.texts.includes('2.50 L gas'));
+  assert.match(o.both.physio, /Intubation tracheal/);
+  // The lung that joins is not a flow: 1.25 L at 1.5% in one second would be
+  // about 1100 mL/min breathed in, and as much vented backwards
+  assert.ok(Math.abs(o.after.vent) < 3 * Math.abs(o.before.vent) + 5, `a burst of ventilation at the step: ${o.before.vent} then ${o.after.vent}`);
+  assert.ok(o.after.vented >= o.before.vented, 'the agent vented fell at the step');
+  assert.ok(o.after.vented - o.before.vented < 5, `the joined lung\'s agent was counted as vented: ${o.before.vented} then ${o.after.vented}`);
+  assert.ok(o.after.ventedFlow > 0, 'venting stopped at the step');
+  // The oxygen line is clear of the arrows over the circuit
+  const clear = await page.evaluate(() => {
+    Player.seek(100);
+    const ox = document.getElementById('oxygen').getBoundingClientRect();
+    const tops = [...document.querySelectorAll('#flat svg rect, #flat svg polygon')].map(e => e.getBoundingClientRect()).filter(b => b.width > 0 && b.left < ox.right && b.right > ox.left);
+    return { bottom: ox.bottom, top: Math.min(...tops.map(b => b.top)) };
+  });
+  assert.ok(clear.top >= clear.bottom, `the arterial oxygen line runs into the drawing: ${clear.bottom} over ${clear.top}`);
+  // The 3D view draws it too
+  const d3 = await page.evaluate(() => { Player.setView('3d'); Player.seek(100); return Object.keys(View.gasVessels).length; });
+  assert.equal(d3, 5);
+  // A capacity beyond both lungs, or of the wrong length, is refused
+  for (const mutate of [x => { x.lungsCapacity[5] = 9; }, x => { x.lungsCapacity = x.lungsCapacity.slice(1); }, x => { x.lungsCapacity[2] = 0; }]) {
+    const bad = steppedIntubation(); mutate(bad);
+    assert.equal(await loadRun(page, bad), false);
+    assert.ok((await probe(page)).message.includes('lungsCapacity'));
+  }
+  assertClean(page);
+});
+
 test('gas: markup and malformed fields are refused, the name is shown as text', { skip }, async t => {
   const page = await viewerPage(t);
   for (const [mutate, names] of [[r => { r.units.conc = '%' + P; }, 'units.conc'],
@@ -1615,6 +1699,129 @@ test('Physiology events: the physiology line follows the clock, and bad steps ar
     const bad = clone(r); bad.physiologySteps = steps;
     assert.equal(await loadRun(page, bad), false);
   }
+});
+
+// The physiology line and what is drawn over V1 (2026-11-20). Every run from
+// stanpumpR carries the line under the title, and in the 2D view of a drug the
+// pump's arrow started under it and its label ("Pump 171 mg/min") was drawn
+// across it. With a line shown the arrows start below it (flatTop() in
+// flat.js), however many rows it takes, and Flat.fits() allows for the same
+// room; without one the drawing is where it was.
+// The controls' height reaches the layout (--ctl-h) from a ResizeObserver, in
+// the frame after the window changes size: measured positions wait for it.
+const settled = page => page.waitForFunction(() =>
+  getComputedStyle(document.documentElement).getPropertyValue('--ctl-h').trim() === document.getElementById('controls').offsetHeight + 'px');
+// What the 2D view draws at T, against the physiology line (and a gas run's
+// arterial oxygen under it): the label starting with `label`, whatever of
+// the drawing touches either, the plot's top, and whether fits() uses the
+// room draw() used.
+const overPhysio = (page, T, label) => page.evaluate(([T, label]) => {
+  Player.seek(T);
+  const box = e => { const b = e.getBoundingClientRect(); return { left: b.left, top: b.top, right: b.right, bottom: b.bottom, width: b.width, height: b.height }; };
+  const line = box(document.getElementById('physio')), oxygen = box(document.getElementById('oxygen'));
+  const over = (b, l) => l.height > 0 && b.width > 0 && b.left < l.right && l.left < b.right && b.top < l.bottom && l.top < b.bottom;
+  const meets = b => over(b, line) || over(b, oxygen);
+  const name = e => e.tagName === 'text' ? e.textContent : `${e.tagName} ${e.getAttribute('fill') || e.getAttribute('stroke')}`;
+  const drawn = [...document.querySelectorAll('#flat svg text, #flat svg rect, #flat svg polygon, #flat svg line')];
+  const found = drawn.find(e => e.tagName === 'text' && e.textContent.startsWith(label));
+  const yTop = Number(document.querySelector('#flat svg rect[fill="none"]').getAttribute('y'));
+  // The tallest cards that leave the plot its minimum under the top drawn:
+  // fits() must say so, and no taller.
+  const most = Flat.controlsTop(Flat.el.clientHeight) - 22 - FLAT_BOTTOM - yTop - FLAT_MIN_PLOT;
+  return { line, oxygen, label: found ? box(found) : null, meets: found ? meets(box(found)) : null,
+           hits: drawn.filter(e => meets(box(e))).map(name), yTop, most, fits: [Flat.fits(most), Flat.fits(most + 1)] };
+}, [T, label]);
+
+test('2D: the pump\'s arrow and label are drawn clear of the physiology line, wrapped or not, and fits() allows the same room', { skip }, async t => {
+  const normal = { liver: 1, renal: 1, cardiac: 1, gi: 1, temperature: 37 };
+  const off = { liver: 0.5, renal: 0.25, cardiac: 0.63, gi: 0.5, temperature: 34 };
+  // As stanpumpR sends it: the example run, an effect-site TCI, with the panel's settings.
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1280, height: 720 });
+  const r = clone(RUN); r.physiology = normal;
+  assert.equal(await loadRun(page, r), true);
+  await settled(page);
+  assert.equal(await page.evaluate(() => Player.view), '2d');
+  for (const T of [2, 1500]) {                       // the loading rate, and the maintenance rate
+    const o = await overPhysio(page, T, 'Pump ');
+    assert.ok(o.line.height > 0, 'no physiology line: the test proves nothing');
+    assert.ok(o.label, `T = ${T}: the pump is not running, so there is no label to test`);
+    assert.equal(o.meets, false, `T = ${T}: the pump's label (${JSON.stringify(o.label)}) is drawn across the physiology line (${JSON.stringify(o.line)})`);
+    assert.deepEqual(o.hits, [], `T = ${T}: drawn across the physiology line`);
+    assert.deepEqual(o.fits, [true, false], `T = ${T}: fits() does not allow the room draw() took above V1 (${o.yTop} px)`);
+  }
+  // Absorption beside the pump, its label and the depot's to the right, and a
+  // line long enough to wrap in a narrow window: a physiology event's note.
+  const oral = clone(r);
+  oral.physiology = off;
+  oral.physiologySteps = [{ time: oral.t[0], ...normal }, { time: 1000, ...off }];
+  oral.depot = oral.t.map(s => 200 * Math.exp(-s / 900));
+  oral.absorbed = oral.t.map(s => 200 * (1 - Math.exp(-s / 900)));
+  for (const [width, height] of [[1280, 720], [480, 640], [360, 600]]) {
+    const narrow = await viewerPage(t);
+    await narrow.setViewport({ width, height });
+    assert.equal(await loadRun(narrow, oral), true);
+    await settled(narrow);
+    const at = `${width} x ${height}`;
+    for (const [T, label] of [[2, 'Pump '], [1500, 'Absorbed '], [1500, 'Depot ']]) {
+      const o = await overPhysio(narrow, T, label);
+      assert.ok(o.label, `${at}, T = ${T}: no label "${label}"`);
+      assert.equal(o.meets, false, `${at}, T = ${T}: "${label}" is drawn across the physiology line`);
+      assert.deepEqual(o.hits, [], `${at}, T = ${T}: drawn across the physiology line`);
+      assert.deepEqual(o.fits, [true, false], `${at}, T = ${T}: fits() does not allow the room draw() took above V1 (${o.yTop} px)`);
+      // One row is 13.8 px: the narrow windows test a wrapped line.
+      if (width < 500) assert.ok(o.line.height > 20, `${at}: the physiology line did not wrap, so the wrapped case is not tested`);
+    }
+    assertClean(narrow);
+  }
+  // A run without the line (one made before 2026-11-19, a file opened by hand)
+  // gives it no room: the drawing is where it was.
+  const plain = await viewerPage(t);
+  await plain.setViewport({ width: 1280, height: 720 });
+  assert.equal(await loadRun(plain, RUN), true);
+  await settled(plain);
+  const p = await overPhysio(plain, 2, 'Pump ');
+  assert.equal(p.line.height, 0);
+  assert.equal(p.yTop, await plain.evaluate(() => FLAT_TOP), 'room was taken for a physiology line that is not shown');
+  assert.deepEqual(p.fits, [true, false]);
+  assertClean(page); assertClean(plain);
+});
+
+// The same for an inhaled agent (2026-11-20). One row of the physiology line
+// was clear of the fresh gas arrows (GAS_TOP), and the arterial oxygen under
+// it was given room (gasTop()), but a line wrapped to a second row on a
+// window 640 px wide or less ran under "Fresh gas" and the arrows.
+test('gas 2D: the fresh gas arrows and labels are drawn clear of the physiology line and the arterial oxygen, wrapped or not', { skip }, async t => {
+  const settings = { liver: 1, renal: 1, cardiac: 1, gi: 1, temperature: 37, altitude: 0, pressure: 760, endobronchial: false };
+  const plain = clone(GAS); plain.physiology = settings;
+  // With the arterial oxygen under the line, and a physiology event's note on it
+  const tube = steppedIntubation();
+  const tops = {};
+  for (const [name, run] of [['a tracheal tube', plain], ['an endobronchial tube', tube]])
+    for (const [width, height] of [[1280, 720], [640, 700], [480, 640], [360, 600]]) {
+      const page = await viewerPage(t);
+      await page.setViewport({ width, height });
+      assert.equal(await loadRun(page, run), true);
+      await settled(page);
+      const at = `${name}, ${width} x ${height}`;
+      for (const T of [100, 400]) {
+        const o = await overPhysio(page, T, 'Fresh gas ');
+        assert.ok(o.line.height > 0, `${at}: no physiology line: the test proves nothing`);
+        assert.equal(o.oxygen.height > 0, run === tube, `${at}: the arterial oxygen line`);
+        assert.ok(o.label, `${at}, T = ${T}: no "Fresh gas" label`);
+        assert.equal(o.meets, false, `${at}, T = ${T}: "Fresh gas" is drawn across what is written under the title`);
+        assert.deepEqual(o.hits, [], `${at}, T = ${T}: drawn across what is written under the title`);
+        assert.deepEqual(o.fits, [true, false], `${at}, T = ${T}: fits() does not allow the room drawGas() took above the boxes (${o.yTop} px)`);
+        if (width <= 640) assert.ok(o.line.height > 20, `${at}: the physiology line did not wrap, so the wrapped case is not tested`);
+        if (T === 100) tops[`${name} ${width}`] = o.yTop;
+      }
+      assertClean(page);
+    }
+  // One row takes the room it took before: GAS_TOP, and the oxygen line's more.
+  const page = await viewerPage(t);
+  const [gasTop0, oxygenLine] = await page.evaluate(() => [GAS_TOP, GAS_OXYGEN_LINE]);
+  assert.equal(tops['a tracheal tube 1280'], gasTop0);
+  assert.equal(tops['an endobronchial tube 1280'], gasTop0 + oxygenLine);
 });
 
 test('Endobronchial tube: the arterial saturation shows under the title, amber below 90%, and bad values are refused', { skip }, async t => {

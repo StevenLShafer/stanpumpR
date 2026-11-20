@@ -519,7 +519,10 @@ The block has two further forms, chosen with a `form` field (the one above is
   `CL/F × (D / Dref)^-exponent`, which a linear engine cannot hold: write the clearance at
   `Dref`, and the steady-state exposure `D / CL(D)` is reproduced by scaling the dose. The
   half-life stays that of the reference dose, and each administration is read as the day's dose.
-  Paroxetine (`R/drugs_paroxetine.R`).
+  Paroxetine (`R/drugs_paroxetine.R`). A source whose power of the dose is on the
+  bioavailability itself (F1 × (D / Dref)^exponent, with `bioavailability_PO` its value at
+  `Dref`) adds `on = "bioavailability"`, which only changes what the help page says
+  (opicapone, mirabegron); a negative exponent is less than proportional.
 
 Any form may carry `exampleDoses`, the oral doses in mg the help page tabulates.
 
@@ -795,7 +798,8 @@ the intended maintenance step, not a weakening of the test.
 | has no effect site (`tPeak` 0 / `ke0` 0) | **three** rosters: the `plasmaOnly` vector in `test-help-drugs.R`, and the pinned lists in `test-drugs-tramadol.R` and `test-recovery-engines.R` |
 | offers `Plasma target` / `Effect site target` | `TCI_DRUGS` in `test-tci-api.R`, and `docs/tci-api.md` — a published contract |
 | is in the `Illicit drugs` category | `inst/extdata/illicitRouteRegistry.csv`, one row per route, offered or not |
-| reads a CYP or creatinine covariate | it joins the Patient Profile hover tip by itself, but `PATIENT_FIELD_READER_NOTES` in `R/patient-fields.R` may need a note |
+| reads a CYP or creatinine covariate | it joins the Patient Profile hover tip by itself, but `PATIENT_FIELD_READER_NOTES` in `R/patient-fields.R` may need a note; a creatinine reader also goes in `renalDrugs` in `test-renal-creatinine.R`, and in `renalOnBioavailability` there if its renal term is on bioavailability rather than a clearance (mirabegron) |
+| has an oral absorption lag (`tlag_PO` and the like) | the pinned list in `test-recovery-lag.R` |
 | is an antibiotic with an `endCe` | `antibioticMicTable()` in `R/antibioticThresholds.R`, and its pathogens in `antibioticMbcTable()` in `R/antibioticMbc.R` |
 | needs a new `Category` | `DRUG_CATEGORIES` in `R/constants.R` **and** `bookmarksToExclude` in `R/app_globals.R` |
 | is a long-acting weekly product | `LONG_TERM_DRUGS` |

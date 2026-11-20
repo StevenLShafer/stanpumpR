@@ -328,3 +328,13 @@ test_that("the absolute gap to Bullingham 1980 is the disposition's, by both rou
   expect_equal(round(iv, 2), c(0.27, 0.74, 0.81, 0.77))
   expect_equal(round(im, 2), c(0.28, 0.66, 0.82, 0.80))
 })
+
+test_that("Buprenorphine onset/offset scales the biophase tPeak", {
+  base <- buprenorphine(70, 170, 35, "male")$tPeak
+  expect_equal(buprenorphine(70, 170, 35, "male", offsetScale = 2)$tPeak, base * 2)
+  expect_equal(buprenorphine(70, 170, 35, "male", offsetScale = 0.5)$tPeak, base * 0.5)
+  # clamped to the control's range and sanitised against a bad value
+  expect_equal(buprenorphine(70, 170, 35, "male", offsetScale = 10)$tPeak,
+               base * BUPRENORPHINE_OFFSET_MAX)
+  expect_equal(buprenorphine(70, 170, 35, "male", offsetScale = -1)$tPeak, base)
+})

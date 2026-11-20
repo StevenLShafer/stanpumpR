@@ -600,6 +600,45 @@ app_ui <- function() {
                   ),
                   placement = "right"
                 )),
+                # PROTOTYPE sliders (Shafer, 2026-11-20): the two inter-patient
+                # axes the source papers' random effects identify.  Sensitivity
+                # is a continuous theta offset on the receptor panels (one
+                # physical occupancy, so the same axis as tolerance); onset/
+                # offset multiplies buprenorphine's biophase tPeak (ke0).
+                relevantField(OPIOID_SENSITIVITY_INPUT, fieldHelp(
+                  sliderInput(
+                    inputId = OPIOID_SENSITIVITY_INPUT,
+                    label = "Opioid sensitivity (more <-> less)",
+                    min = OPIOID_SENSITIVITY_MIN, max = OPIOID_SENSITIVITY_MAX,
+                    value = OPIOID_SENSITIVITY_DEFAULT, step = 0.1
+                  ),
+                  paste(
+                    "Shifts where the patient sits on the occupancy-response",
+                    "axis: left = more sensitive (potency up), right = less",
+                    "sensitive / more tolerant. +/-1 is about x/divide 3 in",
+                    "potency, the span of the naive-to-chronic shift and the",
+                    "fitted between-patient variability. Moves the receptor",
+                    "panels on the same axis as Opioid tolerance."
+                  ),
+                  placement = "right"
+                )),
+                relevantField(BUPRENORPHINE_OFFSET_INPUT, fieldHelp(
+                  sliderInput(
+                    inputId = BUPRENORPHINE_OFFSET_INPUT,
+                    label = "Buprenorphine onset/offset (faster <-> slower)",
+                    min = BUPRENORPHINE_OFFSET_MIN, max = BUPRENORPHINE_OFFSET_MAX,
+                    value = BUPRENORPHINE_OFFSET_DEFAULT, step = 0.1
+                  ),
+                  paste(
+                    "Scales buprenorphine's biophase equilibration (tPeak/ke0),",
+                    "the rate-limiting step for its slow onset AND offset",
+                    "(Yassen 2006/2007: brain distribution, not receptor",
+                    "dissociation). >1 slower, <1 faster; the fitted ke0",
+                    "variability is about 50-85%. Changes every buprenorphine",
+                    "panel, not only the interaction panels."
+                  ),
+                  placement = "right"
+                )),
                 # The Schnider propofol and Minto remifentanil models, the
                 # models in most TCI pumps, run beside the library's Eleveld
                 # models and drawn as a second line in the same panels

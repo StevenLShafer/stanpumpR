@@ -1177,6 +1177,13 @@ test_that("CodeRabbit's later looks at #776: the follow-up items", {
   f$series <- c(f$series, list(list(label = "metabolite", analyte = "metabolite", regimen_id = "RO",
                                      points = list())))
   expect_false(any(c("ka", "F") %in% paperReviewFigureRoles(f, met)))
+  # Nor does a parent series with no points, which the check does not score.
+  f <- met$figures[[1]]
+  f$series <- c(f$series, list(list(label = "oral, not digitised", analyte = "parent", regimen_id = "RO",
+                                     points = list())))
+  expect_false(any(c("ka", "tlag", "F") %in% paperReviewFigureRoles(f, met)))
+  f$series[[length(f$series)]]$points <- list(list(time = 30, value = 1))
+  expect_true(all(c("ka", "tlag", "F") %in% paperReviewFigureRoles(f, met)))
 
   # A normalized figure of a regimen mixing IV and oral doses keeps F.
   mix <- ex
