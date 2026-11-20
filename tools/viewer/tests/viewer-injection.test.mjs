@@ -526,16 +526,21 @@ test('sizes: proportional within 10:1, compressed to exactly 10:1 beyond it, in 
     assert.equal(await loadRun(page, r), true);
     const g = await page.evaluate(() => {
       Player.seek(1500);
-      const outl = [...document.querySelectorAll('#flat svg rect[fill="none"]')].filter(e => !e.getAttribute('stroke-dasharray'))
-        .map(e => e.getBBox()).sort((a, b) => a.x - b.x);      // V2, V1, V3
+      // A box as the browser drew it (getBBox(), single precision) and its
+      // height as the drawing wrote it (the attribute, exact).
+      const boxes = sel => [...document.querySelectorAll(sel)]
+        .map(e => Object.assign(e.getBBox(), { written: Number(e.getAttribute('height')) })).sort((a, b) => a.x - b.x);
+      const outl = boxes('#flat svg rect[fill="none"]:not([stroke-dasharray])');      // V2, V1, V3
       const caption = [...document.querySelectorAll('#flat svg text')].some(e => /not to scale/.test(e.textContent));
       const st = Player.stateAt(1500), top = Flat.scale.top;
       // Each fill's height is its concentration on the one scale, whatever the widths.
-      const fills = [...document.querySelectorAll('#flat svg rect[fill-opacity]')].map(e => e.getBBox()).sort((a, b) => a.x - b.x);
-      return { w: [outl[1].width, outl[0].width, outl[2].width], ph: outl[0].height, caption,
-               h: [fills[1].height, fills[0].height, fills[2].height], c: [st.cp, st.c2, st.c3], top,
-               r3d: View.geo.r.slice(1) };
+      const fills = boxes('#flat svg rect[fill-opacity]');
+      return { w: [outl[1].width, outl[0].width, outl[2].width], ph: outl[0].written, caption, n: [outl.length, fills.length],
+               h: [fills[1], fills[0], fills[2]].map(b => b.written), drawn: [fills[1], fills[0], fills[2]].map(b => b.height),
+               c: [st.cp, st.c2, st.c3], top, r3d: View.geo.r.slice(1) };
     });
+    // The three boxes and their three fills, and nothing else, are what was read.
+    assert.deepEqual(g.n, [3, 3], 'the outlines and fills selected');
     const vols = [pk.v1, pk.v2, pk.v3], ratio = Math.max(...g.w) / Math.min(...g.w);
     assert.ok(ratio <= 10 * (1 + 1e-6), `${JSON.stringify(pk)}: 2D width ratio ${ratio}`);
     const area = g.r3d.map(x => x * x), aRatio = Math.max(...area) / Math.min(...area);
@@ -548,9 +553,83 @@ test('sizes: proportional within 10:1, compressed to exactly 10:1 beyond it, in 
     // The order of the sizes is the order of the volumes.
     for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) if (vols[i] < vols[j]) assert.ok(g.w[i] < g.w[j] && area[i] < area[j]);
     assert.equal(g.caption, compressed, 'the not-to-scale note');
-    for (let i = 0; i < 3; i++) assert.ok(Math.abs(g.h[i] - g.c[i] / g.top * g.ph) < 1e-6, `fill ${i} is not its concentration`);
+    // The height the drawing wrote is the concentration; the box the browser
+    // drew is that height to single precision, which is all getBBox() keeps
+    // (about 4e-6 px at 100 px). Until 2026-11-20 the box itself was held to
+    // 1e-6 px, finer than it is stored: V2's fill passed in a plot 325 px
+    // high (7e-7 off) and failed in one 293 px high (3e-6 off), which is the
+    // plot's height when the drawing is read before the controls' height is
+    // measured again after the viewport changes.
+    for (let i = 0; i < 3; i++) {
+      assert.ok(Math.abs(g.h[i] - g.c[i] / g.top * g.ph) < 1e-9, `fill ${i} is not its concentration`);
+      assert.ok(Math.abs(g.drawn[i] - g.h[i]) <= g.h[i] * 2 ** -22, `fill ${i} is drawn ${g.drawn[i]} px high, written ${g.h[i]}`);
+    }
     assertClean(page);
   }
+});
+
+// ── The physiology line under the title (every run from stanpumpR has one)
+// and what the 2D view draws over V1: at 1280 x 720 "Pump 171 mg/min" was
+// written across it, and the pump's arrow ran through its end (2026-11-20).
+// The plot starts lower under the line (flatTop() in flat.js), by the line's
+// own height: it wraps in a narrow window, and is longer with physiology events.
+test('2D: the pump\'s label and arrow are clear of the physiology line, and the cards\' room is the drawing\'s', { skip }, async t => {
+  const normal = { liver: 1, renal: 1, cardiac: 1, gi: 1, temperature: 37 };
+  for (const [w, h, events] of [[1280, 720, false], [1200, 800, true], [800, 600, false], [480, 640, false], [480, 640, true]]) {
+    const page = await viewerPage(t);
+    await page.setViewport({ width: w, height: h });
+    await new Promise(r => setTimeout(r, 200));        // the controls' height, measured again
+    const r = clone(RUN);
+    r.physiology = normal;
+    if (events) r.physiologySteps = [{ time: r.t[0], ...normal },
+                                     { time: r.t[Math.floor(r.t.length / 2)], ...normal, cardiac: 0.5, temperature: 34 }];
+    assert.equal(await loadRun(page, r), true);
+    const g = await page.evaluate(() => {
+      const run = Player.run, physio = document.getElementById('physio');
+      const box = e => { const b = e.getBoundingClientRect(); return { left: b.left, top: b.top, right: b.right, bottom: b.bottom }; };
+      const meets = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+      // The pump running at its slowest and its fastest, and at the first
+      // and the last time it runs (the last is after the physiology event,
+      // where the line has changed).
+      const pumping = run.t.filter(T => Player.stateAt(T).flow.in > 0);
+      const byRate = pumping.slice().sort((a, b) => Player.stateAt(a).flow.in - Player.stateAt(b).flow.in);
+      const times = [byRate[0], byRate[byRate.length - 1], pumping[0], pumping[pumping.length - 1]];
+      const out = { times: times.length, labels: 0, hits: [], lines: 0, top: [], fits: [] };
+      for (const T of times) {
+        Player.seek(T);
+        const p = box(physio);
+        out.lines = Math.max(out.lines, Math.round((p.bottom - p.top) / 13.8));
+        const label = [...document.querySelectorAll('#flat svg text')].find(e => /^Pump /.test(e.textContent));
+        if (label) out.labels++;
+        // Everything the 2D view drew: text, arrows, boxes, axis.
+        for (const e of document.querySelectorAll('#flat svg > *'))
+          if (meets(box(e), p)) out.hits.push(`${T} s: <${e.tagName}> ${e.textContent || e.getAttribute('fill')} ${JSON.stringify(box(e))} meets the line ${JSON.stringify(p)}`);
+        if (label && meets(box(label), p)) out.hits.push(`${T} s: the pump's label meets the line`);
+        // The plot's top as drawn, and Flat.fits() against it for every card height.
+        const yTop = Number(document.querySelector('#flat svg rect[fill="none"]').getAttribute('y'));
+        out.top.push(yTop);
+        const ctl = Flat.controlsTop(document.getElementById('flat').clientHeight);
+        for (let c = 1; c <= 500; c++)
+          if (Flat.fits(c) !== (ctl - c - 22 - FLAT_BOTTOM - yTop >= FLAT_MIN_PLOT)) out.fits.push(`${T} s: fits(${c}) is ${Flat.fits(c)} with the plot's top at ${yTop}`);
+      }
+      return out;
+    });
+    const where = `${w} x ${h}${events ? ' with physiology events' : ''}`;
+    assert.equal(g.labels, g.times, `${where}: the pump's label was not found at every time`);
+    assert.deepEqual(g.hits, [], `${where}: drawn across the physiology line`);
+    assert.deepEqual(g.fits, [], `${where}: Flat.fits() and the drawing disagree on the plot's top`);
+    assert.ok(g.top.every(y => y > 96), `${where}: the plot starts at ${g.top}, no lower than without the line`);
+    // The narrow window is the case of a line that wraps.
+    if (w === 480) assert.ok(g.lines >= 2, `${where}: the physiology line did not wrap (${g.lines} line)`);
+    assertClean(page);
+  }
+  // A run without the line (an older run, an example file) is drawn as before.
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1280, height: 720 });
+  assert.equal(await loadRun(page, RUN), true);
+  const yTop = await page.evaluate(() => { Player.seek(1500); return Number(document.querySelector('#flat svg rect[fill="none"]').getAttribute('y')); });
+  assert.equal(yTop, 96, 'the plot\'s top without a physiology line');
+  assertClean(page);
 });
 
 // ── Save a video (video.js, 2026-11-07): an H.264 MP4 made in the browser.
