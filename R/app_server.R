@@ -2170,13 +2170,16 @@ app_server <- function(input, output, session) {
       plotInteraction        <- PLOT_ID_INTERACTION %in% input$addedPlots
       plotCost               <- "Cost"                %in% input$addedPlots
       plotEvents             <- PLOT_ID_EVENTS      %in% input$addedPlots
+      # Buprenorphine / opioid-receptor interaction panels (R/opioidReceptorInteraction.R)
+      opioidReceptor <- if (isTRUE(input[[OPIOID_RECEPTOR_INPUT]]))
+        opioidReceptorSeries(drugs(), input$opioidTolerance) else NULL
       normalization          <- normalizationInput()
       typical                <- typicalInput()
       # Tolerance and tachyphylaxis panels (R/pdAdaptation.R)
       plotAdaptation         <- adaptationDrawn()
       logY                   <- isTRUE(input$logY)
       if (plotRecovery() || plotMEACOverlay() || plotEvents || plotInteraction ||
-          plotAdaptation) logY <- FALSE
+          plotAdaptation || !is.null(opioidReceptor)) logY <- FALSE
 
       plasmaLinetype <- linetypes()$plasmaLinetype
       effectsiteLinetype <- linetypes()$effectsiteLinetype
@@ -2196,6 +2199,7 @@ app_server <- function(input, output, session) {
         normalization = normalization,
         plotMEAC = plotMEAC,
         plotInteraction = plotInteraction,
+        opioidReceptor = opioidReceptor,
         plotCost = plotCost,
         plotEvents = plotEvents,
         plotRecovery = plotRecovery(),

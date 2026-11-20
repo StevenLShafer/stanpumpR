@@ -62,16 +62,27 @@ const FLAT_TOP = 96, FLAT_BOTTOM = 108, FLAT_MIN_PLOT = 90;
 const FLAT_ARROW_ROOM = 58;
 // px between the physiology line and the arrows under it.
 const FLAT_PHYSIO_GAP = 5;
-// The room above V1 for a drug's run. Under the title a run from stanpumpR
-// carries the physiology line (player.js), which reaches down to where the
-// pump's arrow starts: its label ("Pump 171 mg/min") was drawn across the
-// line, and the arrow's tail under it. With a line shown, the arrows start
-// below it. Its bottom is measured, so a line that wraps to two rows on a
-// narrow window, or grows with a physiology event's note, keeps its room.
-// One value for draw() and fits(), which must agree.
+// What is written under the title (player.js): the physiology line a run
+// from stanpumpR carries and, under it, a gas run's arterial oxygen. The
+// bottom of the lower one, px from the top of the window; 0 with neither
+// (an empty line is display: none).
+function underTitle() {
+    let bottom = 0;
+    for (const id of ['physio', 'oxygen']) {
+        const el = document.getElementById(id);
+        if (el) bottom = Math.max(bottom, el.getBoundingClientRect().bottom);
+    }
+    return bottom;
+}
+// The room above V1 for a drug's run. The physiology line reaches down to
+// where the pump's arrow starts: its label ("Pump 171 mg/min") was drawn
+// across the line, and the arrow's tail under it. With a line shown, the
+// arrows start below it. Its bottom is measured, so a line that wraps to two
+// rows on a narrow window, or grows with a physiology event's note, keeps
+// its room. One value for draw() and fits(), which must agree. (A gas run's
+// is gasTop(), gas.js.)
 function flatTop() {
-    const line = document.getElementById('physio');
-    const bottom = line ? line.getBoundingClientRect().bottom : 0;      // 0 while it is empty (display: none)
+    const bottom = underTitle();
     return Math.max(FLAT_TOP, bottom > 0 ? Math.ceil(bottom) + FLAT_PHYSIO_GAP + FLAT_ARROW_ROOM : 0);
 }
 
@@ -99,7 +110,7 @@ const Flat = {
     fits(h) {
         const ctl = this.controlsTop(this.el.clientHeight);
         // A gas run's arrows over the circuit need more room above (gas.js).
-        const top = this.run && this.run.kind === 'gas' ? GAS_TOP : flatTop();
+        const top = this.run && this.run.kind === 'gas' ? gasTop(this.run) : flatTop();
         return !(h > 0) || ctl - h - 22 - FLAT_BOTTOM - top >= FLAT_MIN_PLOT;
     },
 

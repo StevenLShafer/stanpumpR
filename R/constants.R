@@ -838,6 +838,13 @@ PLOT_NAME_EVENTS      <- "Events"
 PLOT_NAME_MEAC        <- "% MEAC"
 PLOT_NAME_INTERACTION <- "p response"
 
+# Buprenorphine / opioid-receptor interaction panels (R/opioidReceptorInteraction.R)
+OPIOID_RECEPTOR_INPUT  <- "opioidReceptorInteraction"
+PLOT_NAME_OCCUPANCY    <- "receptor occupancy"
+PLOT_NAME_RESP         <- "resp. depression"
+PLOT_NAME_ANALGESIA    <- "analgesia (MEAC eq)"
+OR_FREE_LABEL          <- "free receptor"
+
 # The time line the closed-form engines simulate on (R/simulationTimeGrid.R).
 # PRE_DOSE_OFFSET puts a point just before each dose, where the time until
 # threshold jumps.  Up to GRID_LEGACY_MAXIMUM (a day) each gap between knots

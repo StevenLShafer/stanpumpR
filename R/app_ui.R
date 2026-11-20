@@ -581,6 +581,25 @@ app_ui <- function() {
                   label = "Include opioid - MAC interaction",
                   value = FALSE
                 )),
+                # Buprenorphine / opioid-receptor interaction: one physical
+                # occupancy drives ventilation and analgesia; see
+                # R/opioidReceptorInteraction.R.  Shown only while a mu partial
+                # agonist or antagonist (buprenorphine, naloxone) is drawn.
+                relevantField(OPIOID_RECEPTOR_INPUT, fieldHelp(
+                  checkboxInput(
+                    inputId = OPIOID_RECEPTOR_INPUT,
+                    label = "Buprenorphine / opioid-receptor interaction",
+                    value = FALSE
+                  ),
+                  paste(
+                    "With buprenorphine or an opioid antagonist in the table,",
+                    "add panels for physical mu-receptor occupancy (competition",
+                    "and blockade), respiratory depression (with buprenorphine's",
+                    "ceiling) and analgesia in MEAC-equivalents, and an",
+                    "available-drive line on the % MEAC panel."
+                  ),
+                  placement = "right"
+                )),
                 # The Schnider propofol and Minto remifentanil models, the
                 # models in most TCI pumps, run beside the library's Eleveld
                 # models and drawn as a second line in the same panels
