@@ -47,15 +47,6 @@ names (`NJ_dailymed-<setid prefix>.pdf`), as their cards cite them.
    `not_obtained` at first. It was added by hand from Drugs@FDA on 2026-11-13, its original 2018
    approval label (`source` `drugsatfda`).
 
-**A discontinued reference product is found only on Drugs@FDA** (2026-11-19, tamsulosin). Flomax
-capsules (NDA 020579, Boehringer Ingelheim) are listed as Discontinued on Drugs@FDA. Their label has left
-DailyMed, where only repackagers' copies remain, and openFDA has no record of the application. So the lookup
-described in step 3 above, the reference product's label through openFDA and then DailyMed, finds nothing for
-it, and an attempt to fetch the tamsulosin label that way failed. The newest approved label, supplement 33 of
-2019-01-23, is on Drugs@FDA and was saved from there (`source` `drugsatfda`). Before treating a label as
-missing, look the application number up on Drugs@FDA: its overview page says whether the product is
-discontinued and lists every label posted for it. A repackager's copy on DailyMed is a fallback only.
-
 Drugs@FDA (`accessdata.fda.gov`) is the FDA's own archive of every approved label version. It answers a
 request carrying curl's default User-Agent with a redirect instead of the file, but on 2026-11-18 it served
 a review PDF to a script that sent any other User-Agent (`curl -A "Mozilla/5.0" ...`, from a cloud

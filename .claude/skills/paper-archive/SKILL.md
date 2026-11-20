@@ -187,12 +187,7 @@ reference, each with the reason and the opening words of page 1. Most genuinely 
 references. The job is to spot the ones that are:
 
 - a paper a model, help page or registry row cites but that no card exists for;
-- an FDA label or SmPC for a drug in `inst/extdata/drugDefaults_global.csv`, **or for a drug being
-  added** (its name in an open pull request's diff, or in `docs/library-expansion/plan.csv`). The filer
-  identifies papers by DOI or title in the reference list, so it has no route for a label at all: every
-  label lands here (`NNNNNNsNNNlbl.pdf` from Drugs@FDA, a DailyMed download), and one for a drug not yet
-  in the library looks like noise. Labels go into `papers/labels/` by the procedure in
-  `papers/labels/README.md`, not into the archive by renaming;
+- an FDA label or SmPC for a drug in `inst/extdata/drugDefaults_global.csv`;
 - a supplement to an archived paper.
 
 Grep the repository for the drug or author the opening words suggest before concluding either way.
