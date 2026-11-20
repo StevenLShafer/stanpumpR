@@ -1,10 +1,10 @@
 # Buprenorphine μ-receptor interaction — the mathematics (typeset)
 
 The full, typeset mathematics of the buprenorphine opioid-receptor interaction
-model — for a reader who wants the details — is the LaTeX source
-[`buprenorphine-interaction.tex`](buprenorphine-interaction.tex) (compile with
-`pdflatex buprenorphine-interaction.tex`, run twice for references), possibly for
-future publication.
+model — for a reader who wants the details — is
+[`buprenorphine-interaction.pdf`](buprenorphine-interaction.pdf), possibly for
+future publication. The PDF is rebuilt from its LaTeX source automatically
+whenever the source changes on master.
 
 This is a single, authoritative copy of the heavy math, so it cannot drift. The
 same content, in Markdown and kept in step with the engine, is
