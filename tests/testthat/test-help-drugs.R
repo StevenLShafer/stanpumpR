@@ -132,6 +132,8 @@ plasmaOnly <- c(
     "evolocumab",
     # mirabegron (FDA review of NDA 202611, 2026-11-19): plasma only
     "mirabegron",
+    # irbesartan (Karatza 2020, 2026-11-20): plasma only, provisional
+    "irbesartan",
     # modafinil (FDA review of NDA 20-717, 2026-11-19): plasma only, R + S parallel systems
     "modafinil",
     # colistimethate and the colistin it forms (2026-11-16): plasma only, no
