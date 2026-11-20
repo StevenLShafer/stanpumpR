@@ -1023,6 +1023,66 @@ test('round-off is shown as 0, not as 4.02e-16', { skip }, async t => {
   assertClean(page);
 });
 
+// ── A pump rate of round-off is the pump off (2026-11-20). With the effect
+// site targeted the pump is off while the effect site rises to its target,
+// and stanpumpR's controller can give that 0 as round-off: the example run
+// has 5e-12 mg/min beside a loading rate of 306, and the 2D view drew a
+// hairline arrow labelled "Pump 9.41e-13 mg/min". stanpumpR sends 0 now
+// (tciDisplay(), R/tci.R); the viewer reads any run that way.
+test('a pump rate of round-off is the pump off: no arrow, no label, 0 in the readout, in 2D and 3D', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  const peak = Math.max(...RUN.rate);
+  // The run as stanpumpR made it, and one with every stopped sample at the
+  // round-off (so the test keeps its subject if the example is made again).
+  const made = clone(RUN), forced = clone(RUN);
+  forced.rate = forced.rate.map(x => x < 1e-9 * peak ? 5.1e-12 : x);
+  const off = forced.rate.map((x, i) => x === 5.1e-12 ? i : -1).filter(i => i >= 0);
+  assert.ok(off.length >= 10, `the example's pump is stopped at ${off.length} samples`);
+  const pumpDrawn = () => {
+    const st = Player.stateAt(Player.T);
+    const plotTop = Number(document.querySelector('#flat svg rect[fill="none"]').getAttribute('y'));
+    // The pump's arrow: the only red shape drawn above the plot in this run (nothing is absorbed).
+    const arrow = [...document.querySelectorAll('#flat svg rect, #flat svg polygon')]
+      .some(e => e.getAttribute('fill') === '#ff6b5e' && e.getBBox().y + e.getBBox().height <= plotTop);
+    const texts = [...document.querySelectorAll('#flat svg text')].map(e => e.textContent);
+    return { rate: st.rate, flowIn: st.flow.in, arrow, label: texts.find(x => /^Pump /.test(x)) || null,
+             roundOff: texts.filter(x => /e-1[0-9]/.test(x)), readout: document.getElementById('readout').textContent };
+  };
+  for (const [name, r] of [['as made', made], ['forced', forced]]) {
+    assert.equal(await loadRun(page, r), true);
+    const times = [...new Set([off[0], off[Math.floor(off.length / 2)], off[off.length - 1]])].map(i => r.t[i])
+      .concat(name === 'as made' ? [60, 1220] : []);        // where "Pump 1.03e-12" and "Pump 9.41e-13" were read
+    for (const T of times) {
+      const g = await page.evaluate(`(() => { Player.seek(${T}); return (${pumpDrawn})(); })()`);
+      const where = `${name}, ${T} s`;
+      assert.equal(g.rate, 0, `${where}: the rate`);
+      assert.equal(g.flowIn, 0, `${where}: the flow into V1`);
+      assert.equal(g.arrow, false, `${where}: a pump arrow is drawn`);
+      assert.equal(g.label, null, `${where}: the pump is labelled`);
+      assert.deepEqual(g.roundOff, [], `${where}: a label shows round-off`);
+      assert.match(g.readout, /Rate 0\.00 /, `${where}: the readout`);
+    }
+    // 3D: V1's ripples follow the pump, and its arrow's radius is the rate's.
+    const v = await page.evaluate(T => { Player.setView('3d'); Player.seek(T); const m = View.v1Mlh; Player.setView('2d'); return m; }, r.t[off[0]]);
+    assert.equal(v, 0, `${name}: the 3D view's pump`);
+  }
+  // A small rate that is a rate is still the pump running: 1e-4 of the largest.
+  const small = clone(RUN), i = off[Math.floor(off.length / 2)];
+  small.rate[i] = 1e-4 * peak;
+  assert.equal(await loadRun(page, small), true);
+  const g = await page.evaluate(`(() => { Player.seek(${small.t[i]}); return (${pumpDrawn})(); })()`);
+  assert.equal(g.rate, 1e-4 * peak);
+  assert.equal(g.flowIn, 1e-4 * peak);
+  assert.ok(g.arrow, 'a small real rate has no arrow');
+  assert.match(g.label || '', /^Pump 0\.0306 /, 'a small real rate is not labelled');
+  // And a run whose pump never runs is not divided by its largest rate.
+  const none = clone(RUN); none.rate = none.rate.map(() => 0);
+  assert.equal(await loadRun(page, none), true);
+  assert.equal(await page.evaluate(() => { Player.seek(1500); return Player.stateAt(1500).rate; }), 0);
+  assertClean(page);
+});
+
 // ── The inhaled anesthetics (Shafer, 2026-11-09): a gas run ("kind": "gas",
 // tools/viewer/src/gas.js) in the 2D view only.
 const GAS = JSON.parse(readFileSync(path.resolve(HERE, '..', 'examples', 'sevoflurane-washin.json'), 'utf8'));
