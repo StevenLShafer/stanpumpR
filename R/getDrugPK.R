@@ -126,7 +126,8 @@ getDrugPK <- function(
   libraryDefaults = NULL,
   metaboliteIndividual = NULL,
   physiology = NULL,
-  pulmonaryHypertension = FALSE
+  pulmonaryHypertension = FALSE,
+  offsetScale = 1
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
@@ -302,6 +303,12 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "pulmonaryHypertension" %in% names(formals(get(drug, mode = "function"))))
     covariates$pulmonaryHypertension <- pulmonaryHypertension
+  # And the buprenorphine onset/offset speed (a biophase tPeak multiplier),
+  # which only a model with an offsetScale term reads (PROTOTYPE, Shafer
+  # 2026-11-20; R/opioidReceptorInteraction.R).
+  if (exists(drug, mode = "function") &&
+      "offsetScale" %in% names(formals(get(drug, mode = "function"))))
+    covariates$offsetScale <- offsetScale
   # Dispatch on the name, not the resolved function, so that a drug with no
   # covariate function at all -- an inhaled gas, which belongs on the gas path
   # and never reaches here -- still fails with R's own "could not find
@@ -1272,6 +1279,7 @@ getDrugPK <- function(
       ast = ast,
       physiology = physiology,
       pulmonaryHypertension = pulmonaryHypertension,
+      offsetScale = offsetScale,
       # The individual's metabolite, where the Bayesian update estimated it
       # from the metabolite's own levels: the parent forms the metabolite the
       # patient has.  Built from the model's, a morphine level after codeine
