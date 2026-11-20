@@ -1,8 +1,8 @@
-doi,pmid,pmcid,inArchive,archiveFile,checked
+"doi","pmid","pmcid","inArchive","archiveFile","checked"
 10.1002/bcp.70195,40796001,PMC12648368,TRUE,PMID_40796001.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1002/bcp.70301,41052792,PMC12850606,TRUE,PMID_41052792.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1002/bcp.70420,41457055,PMC13206320,TRUE,PMID_41457055.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1002/cpdd.163,27140801,,FALSE,,2026-11-18 (PubMed search by DOI; not in PMC so the ID converter had no PMID; Drive search by PMID file name)
+10.1002/cpdd.163,27140801,,TRUE,PMID_27140801.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1002/cpt.1893,32415986,PMC7276750,TRUE,PMID_32415986.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1002/cpt.2460,34687548,PMC9298731,TRUE,PMID_34687548.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1002/cpt.70204,41566882,PMC12997496,TRUE,PMID_41566882.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
@@ -20,7 +20,7 @@ doi,pmid,pmcid,inArchive,archiveFile,checked
 10.1007/s13318-024-00876-6,38367175,PMC10904421,TRUE,PMID_38367175.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1007/s40121-024-01008-y,38961048,PMC11266315,TRUE,PMID_38961048.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1007/s40262-020-00904-z,32504271,PMC7717049,TRUE,PMID_32504271.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1007/s40262-020-00953-4,33128208,,FALSE,,2026-11-18 (PubMed search by DOI; not in PMC so the ID converter had no PMID; Drive search by PMID file name)
+10.1007/s40262-020-00953-4,33128208,,TRUE,PMID_33128208.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1007/s40262-021-01074-2,34633645,PMC8502793,TRUE,PMID_34633645.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1007/s40262-022-01127-0,35579825,PMC9349081,TRUE,PMID_35579825.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1007/s40262-022-01136-z,35781631,PMC9439991,TRUE,PMID_35781631.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
@@ -28,58 +28,58 @@ doi,pmid,pmcid,inArchive,archiveFile,checked
 10.1007/s40262-025-01591-4,41288922,PMC12881041,TRUE,PMID_41288922.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1038/s41397-018-0028-2,29855606,PMC6151142,TRUE,PMID_29855606.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1038/s41397-022-00293-5,36266537,PMC9584256,TRUE,PMID_36266537.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1046/j.1365-2125.1999.00050.x,10583031,PMC2014379,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
+10.1046/j.1365-2125.1999.00050.x,10583031,PMC2014379,TRUE,PMID_10583031.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1093/jac/dkad103,37042359,PMC10232258,TRUE,PMID_37042359.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1093/jac/dkae319,39302766,PMC11531812,TRUE,PMID_39302766.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1093/jac/dkaf297,40798866,PMC12494133,TRUE,PMID_40798866.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1093/jac/dku228,24970740,PMC4195470,TRUE,PMID_24970740.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1093/jac/dkw388,27707991,PMC5161049,TRUE,PMID_27707991.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1093/ofid/ofaf614,41141445,PMC12547498,TRUE,PMID_41141445.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1097/00007691-200312000-00005,,,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
-10.1111/bcp.12457,24995851,PMC4256626,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
+10.1097/00007691-200312000-00005,14639053,,TRUE,PMID_14639053.pdf,"2026-11-19 weekly run (PMID from the candidate list, not in PMC; Drive search by PMID file name; found, arrived 2026-11-18)"
+10.1111/bcp.12457,24995851,PMC4256626,TRUE,PMID_24995851.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1111/bcp.12529,25297720,PMC4386948,TRUE,PMID_25297720.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1111/bcp.12639,25819132,PMC4574835,TRUE,PMID_25819132.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1111/bcp.13138,27662429,PMC5306483,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
-10.1111/bcp.13359,28664670,PMC5651305,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
+10.1111/bcp.13138,27662429,PMC5306483,FALSE,,"2026-11-20 weekly run (Drive search by PMID and DOI file name; not found)"
+10.1111/bcp.13359,28664670,PMC5651305,TRUE,PMID_28664670.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1111/bcp.14147,31658379,PMC7015754,TRUE,PMID_31658379.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1111/bcp.14984,34260082,PMC9292832,TRUE,PMID_34260082.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1111/bcp.15439,35695476,PMC9543358,TRUE,PMID_35695476.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1111/bcp.15881,37567779,,FALSE,,2026-11-18 (PubMed search by DOI; not in PMC so the ID converter had no PMID; Drive search by PMID file name)
+10.1111/bcp.15881,37567779,,TRUE,PMID_37567779.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1111/bcp.16374,39710604,PMC12035594,TRUE,PMID_39710604.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1111/cts.12697,31664778,PMC6951463,TRUE,PMID_31664778.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1111/cts.13158,34704389,PMC8841461,TRUE,PMID_34704389.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1111/cts.70103,39668580,PMC11638344,TRUE,PMID_39668580.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1111/j.1365-2125.2008.03139.x,18333869,PMC2311413,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
-10.1111/j.1365-2125.2009.03455.x,19740392,PMC2766474,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
+10.1111/j.1365-2125.2008.03139.x,18333869,PMC2311413,TRUE,PMID_18333869.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+10.1111/j.1365-2125.2009.03455.x,19740392,PMC2766474,TRUE,PMID_19740392.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1128/aac.00119-20,32312784,PMC7318003,TRUE,PMID_32312784.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1128/aac.00335-09,19620325,PMC2764169,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
-10.1128/aac.00554-11,21930880,PMC3232801,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
+10.1128/aac.00335-09,19620325,PMC2764169,TRUE,PMID_19620325.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+10.1128/aac.00554-11,21930880,PMC3232801,TRUE,PMID_21930880.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1128/aac.00590-20,32868326,PMC7577165,TRUE,PMID_32868326.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1128/aac.00697-25,40844477,PMC12486851,TRUE,PMID_40844477.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1128/aac.00711-18,30201820,PMC6201082,TRUE,PMID_30201820.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1128/aac.00771-25,41004270,PMC12587601,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
-10.1128/aac.00899-16,27799217,PMC5192124,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
-10.1128/aac.00911-13,23877688,PMC3811467,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
-10.1128/aac.00959-12,23254433,PMC3591874,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
-10.1128/aac.00963-16,27401564,PMC4997840,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
-10.1128/aac.01113-18,30455233,PMC6355560,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
+10.1128/aac.00771-25,41004270,PMC12587601,FALSE,,"2026-11-20 weekly run (Drive search by PMID and DOI file name; not found)"
+10.1128/aac.00899-16,27799217,PMC5192124,TRUE,PMID_27799217.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+10.1128/aac.00911-13,23877688,PMC3811467,TRUE,PMID_23877688.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+10.1128/aac.00959-12,23254433,PMC3591874,TRUE,PMID_23254433.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+10.1128/aac.00963-16,27401564,PMC4997840,TRUE,PMID_27401564.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+10.1128/aac.01113-18,30455233,PMC6355560,TRUE,PMID_30455233.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1128/aac.01197-23,38376229,PMC10994819,TRUE,PMID_38376229.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1128/aac.01277-25,41468548,PMC12888871,TRUE,PMID_41468548.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1128/aac.01504-23,38587380,PMC11064544,TRUE,PMID_38587380.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1128/aac.01517-15,26282407,PMC4604421,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
-10.1128/aac.01622-10,21576443,PMC3122471,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
+10.1128/aac.01517-15,26282407,PMC4604421,TRUE,PMID_26282407.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+10.1128/aac.01622-10,21576443,PMC3122471,TRUE,PMID_21576443.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1128/aac.01810-25,42003576,PMC13231900,TRUE,PMID_42003576.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1128/aac.01848-19,32312783,PMC7318010,TRUE,PMID_32312783.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1128/aac.02004-15,26666916,PMC4775925,TRUE,PMID_26666916.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1128/aac.02438-12,23669384,PMC3719735,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
-10.1128/aac.02465-17,29712663,PMC6021660,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
+10.1128/aac.02438-12,23669384,PMC3719735,TRUE,PMID_23669384.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+10.1128/aac.02465-17,29712663,PMC6021660,TRUE,PMID_29712663.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1128/aac.02819-15,27381396,PMC4997882,TRUE,PMID_27381396.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1128/aac.49.9.3658-3662.2005,16127036,PMC1195403,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
-10.1159/000548942,41086127,PMC12707957,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
-10.1177/0091270009350623,20097931,,FALSE,,2026-11-18 (PubMed search by DOI; not in PMC so the ID converter had no PMID; Drive search by PMID file name)
+10.1128/aac.49.9.3658-3662.2005,16127036,PMC1195403,TRUE,PMID_16127036.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+10.1159/000548942,41086127,PMC12707957,TRUE,PMID_41086127.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+10.1177/0091270009350623,20097931,,TRUE,PMID_20097931.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1186/2050-6511-14-40,23915458,PMC3750485,TRUE,PMID_23915458.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1186/s12871-026-03647-9,41612213,PMC12930602,TRUE,PMID_41612213.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1186/s12936-016-1181-1,26928448,PMC4772585,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
+10.1186/s12936-016-1181-1,26928448,PMC4772585,TRUE,PMID_26928448.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1186/s12936-019-2754-6,30999915,PMC6471806,TRUE,PMID_30999915.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1186/s12936-024-04979-y,38773528,PMC11106956,TRUE,PMID_38773528.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1186/s13054-018-2019-8,29655372,PMC5899833,TRUE,PMID_29655372.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
@@ -90,7 +90,7 @@ doi,pmid,pmcid,inArchive,archiveFile,checked
 10.2147/idr.s495279,39990787,PMC11846486,TRUE,PMID_39990787.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.2147/jbm.s395845,37332615,PMC10276593,TRUE,PMID_37332615.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.2147/tcrm.s74867,25653534,PMC4303402,TRUE,PMID_25653534.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.2165/00003088-200544100-00006,16176120,,FALSE,,2026-11-18 (PubMed search by DOI; not in PMC so the ID converter had no PMID; Drive search by PMID file name)
+10.2165/00003088-200544100-00006,16176120,,TRUE,PMID_16176120.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.3389/fcimb.2026.1798911,42180250,PMC13194417,TRUE,PMID_42180250.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.3389/fphar.2022.865871,35496277,PMC9050193,TRUE,PMID_35496277.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.3389/fphar.2022.993330,36408257,PMC9669616,TRUE,PMID_36408257.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
@@ -98,30 +98,30 @@ doi,pmid,pmcid,inArchive,archiveFile,checked
 10.3389/fphar.2025.1488961,40213698,PMC11982744,TRUE,PMID_40213698.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.3389/fphar.2025.1564070,40223936,PMC11985842,TRUE,PMID_40223936.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.3390/antibiotics10111363,34827301,PMC8615109,TRUE,PMID_34827301.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.3390/antibiotics13080706,39200006,PMC11350865,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
+10.3390/antibiotics13080706,39200006,PMC11350865,TRUE,PMID_39200006.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.3390/ph15020256,35215368,PMC8877570,TRUE,PMID_35215368.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.3390/pharmaceutics12040380,32326156,PMC7238177,TRUE,PMID_32326156.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.3390/pharmaceutics15010304,36678932,PMC9867137,TRUE,PMID_36678932.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.3390/pharmaceutics16020234,38399287,PMC10893190,TRUE,PMID_38399287.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.3851/imp2095,22477766,PMC3443796,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
+10.3851/imp2095,22477766,PMC3443796,TRUE,PMID_22477766.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.4103/ijp.ijp_230_16,31031463,PMC6444836,TRUE,PMID_31031463.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.7759/cureus.88533,40851704,PMC12370162,TRUE,PMID_40851704.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1002/psp4.13039,37803876,PMC10725264,TRUE,PMID_37803876.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.2147/dddt.s479561,39650854,PMC11622681,TRUE,PMID_39650854.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1111/bcp.12405,24734885,PMC4239976,FALSE,,2026-11-18 (PubMed ID converter; PubMed search by DOI where not in PMC; Drive search of the archive by PMID file name)
+10.1111/bcp.12405,24734885,PMC4239976,TRUE,PMID_24734885.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1111/cts.13185,34761521,PMC8932751,TRUE,PMID_34761521.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1002/cpdd.17,27121665,,FALSE,,2026-11-18 (PubMed ID converter; PubMed search by DOI where not in PMC; Drive search of the archive by PMID file name)
+10.1002/cpdd.17,27121665,,TRUE,PMID_27121665.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1007/s00228-020-03060-2,33452585,PMC8184532,TRUE,PMID_33452585.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1007/s00228-015-1946-4,26387811,,FALSE,,2026-11-18 (PubMed ID converter; PubMed search by DOI where not in PMC; Drive search of the archive by PMID file name)
+10.1007/s00228-015-1946-4,26387811,,TRUE,PMID_26387811.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.2147/dddt.s522863,40491527,PMC12146887,TRUE,PMID_40491527.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1111/bcp.13526,29377228,PMC5903239,FALSE,,2026-11-18 (PubMed ID converter; PubMed search by DOI where not in PMC; Drive search of the archive by PMID file name)
+10.1111/bcp.13526,29377228,PMC5903239,TRUE,PMID_29377228.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.3390/pharmaceutics17030373,40143036,PMC11944414,TRUE,PMID_40143036.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1177/0091270010366146,20484619,,FALSE,,2026-11-18 (PubMed ID converter; PubMed search by DOI where not in PMC; Drive search of the archive by PMID file name)
+10.1177/0091270010366146,20484619,,TRUE,PMID_20484619.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1111/cts.13472,36785922,PMC10087074,TRUE,PMID_36785922.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.3390/pharmaceutics15010251,36678879,PMC9865866,TRUE,PMID_36678879.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1002/bcp.70434,41582095,PMC13206287,TRUE,PMID_41582095.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1111/j.1365-2125.2010.03662.x,20642551,PMC2909811,FALSE,,2026-11-18 (PubMed ID converter; PubMed search by DOI where not in PMC; Drive search of the archive by PMID file name)
-10.1007/s11095-013-1284-0,24549818,,FALSE,,2026-11-18 (PubMed ID converter; PubMed search by DOI where not in PMC; Drive search of the archive by PMID file name)
+10.1111/j.1365-2125.2010.03662.x,20642551,PMC2909811,TRUE,PMID_20642551.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+10.1007/s11095-013-1284-0,24549818,,TRUE,PMID_24549818.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1007/s00228-019-02697-y,31172248,PMC6697721,TRUE,PMID_31172248.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.3390/pharmaceutics17111394,41304732,PMC12655055,TRUE,PMID_41304732.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1111/cts.13460,36398357,PMC10014700,TRUE,PMID_36398357.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
@@ -130,15 +130,15 @@ doi,pmid,pmcid,inArchive,archiveFile,checked
 10.3390/pharmaceutics16050685,38794348,PMC11124785,TRUE,PMID_38794348.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.3389/fphar.2024.1322788,38549675,PMC10972884,TRUE,PMID_38549675.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1111/bcpt.14100,39497323,PMC11655701,TRUE,PMID_39497323.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1111/j.1365-2125.2012.04257.x,22376078,PMC3495151,FALSE,,2026-11-18 (PubMed ID converter; PubMed search by DOI where not in PMC; Drive search of the archive by PMID file name)
+10.1111/j.1365-2125.2012.04257.x,22376078,PMC3495151,TRUE,PMID_22376078.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.3390/ph17081041,39204148,PMC11357243,TRUE,PMID_39204148.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1186/s12918-017-0520-3,29246152,PMC5732473,TRUE,PMID_29246152.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1128/aac.00686-18,29941652,PMC6125566,FALSE,,2026-11-18 (PubMed ID converter; PubMed search by DOI where not in PMC; Drive search of the archive by PMID file name)
-10.1177/0091270009341960,19776292,,FALSE,,2026-11-18 (PubMed ID converter; PubMed search by DOI where not in PMC; Drive search of the archive by PMID file name)
+10.1128/aac.00686-18,29941652,PMC6125566,TRUE,PMID_29941652.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+10.1177/0091270009341960,19776292,,TRUE,PMID_19776292.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1002/psp4.12457,31420941,PMC6875706,TRUE,PMID_31420941.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1136/jfprhc-2012-100397,23493606,PMC3632974,TRUE,PMID_23493606.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1371/journal.pone.0279640,36574387,PMC9794042,TRUE,PMID_36574387.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1128/aac.02401-16,28052851,PMC5328550,FALSE,,2026-11-18 (PubMed ID converter; PubMed search by DOI where not in PMC; Drive search of the archive by PMID file name)
+10.1128/aac.02401-16,28052851,PMC5328550,TRUE,PMID_28052851.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1111/bcp.14273,32150285,PMC7373711,TRUE,PMID_32150285.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1186/s40360-018-0194-5,29370865,PMC5785874,TRUE,PMID_29370865.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1002/bdd.2307,34923646,PMC9306698,TRUE,PMID_34923646.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
@@ -147,59 +147,59 @@ doi,pmid,pmcid,inArchive,archiveFile,checked
 10.1111/cts.70563,42057584,PMC13129494,TRUE,PMID_42057584.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1002/cpt.3421,39148353,PMC11652823,TRUE,PMID_39148353.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.3390/pharmaceutics15092199,37765169,PMC10535763,TRUE,PMID_37765169.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-10.1111/j.1365-2125.2005.02242.x,15606437,PMC1884967,FALSE,,2026-11-18 (PubMed ID converter; PubMed search by DOI where not in PMC; Drive search of the archive by PMID file name)
+10.1111/j.1365-2125.2005.02242.x,15606437,PMC1884967,TRUE,PMID_15606437.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.3390/pharmaceutics16010146,38276516,PMC10818372,TRUE,PMID_38276516.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.1002/jcph.70168,41906544,PMC13033967,TRUE,PMID_41906544.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 10.3390/pharmaceutics17121517,41471033,PMC12736231,TRUE,PMID_41471033.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-,8529329,,TRUE,PMID_8529329.pdf,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,11402629,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,2888738,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,8932543,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,7911763,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,6141198,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,2562944,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
+,8529329,,TRUE,PMID_8529329.pdf,"2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)"
+,11402629,,TRUE,PMID_11402629.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,2888738,,FALSE,,"2026-11-20 weekly run (Drive search by PMID and DOI file name; not found)"
+,8932543,,TRUE,PMID_8932543.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,7911763,,TRUE,PMID_7911763.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,6141198,,TRUE,PMID_6141198.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,2562944,,TRUE,PMID_2562944.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 ,24151591,,TRUE,PMID_24151591.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 ,41749492,,TRUE,PMID_41749492.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
 ,41948806,,TRUE,PMID_41948806.pdf,"2026-11-18 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
-,6341263,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,8888072,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,29629619,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,428185,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,2598566,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,20460827,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,23886303,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,3447935,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,9506009,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,16422889,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,20206796,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,11850699,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,2253675,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,24607242,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,30826461,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,25028414,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,27875488,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,26970404,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,6641224,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,8513955,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,3612635,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,21476064,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,22046814,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,33368382,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,12934778,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,3767339,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,32736091,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,31129533,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,9689420,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,1976063,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,6831748,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-,29228473,,FALSE,,2026-11-18 (a lead of outpatient-leads.csv; Drive search of the archive by PMID file name)
-10.1128/aac.01766-25,41460101,PMC12888870,FALSE,,2026-11-18 weekly run (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
-10.1002/psp4.13042,37814498,PMC10725258,FALSE,,2026-11-18 weekly run (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
-10.1093/jac/dkaf445,41382355,PMC12802907,FALSE,,2026-11-18 weekly run (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
-10.1007/s40262-025-01545-w,40652445,PMC12414069,FALSE,,2026-11-18 weekly run (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
-10.1002/psp4.13121,38440939,PMC11098162,FALSE,,2026-11-18 weekly run (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
-10.1002/cpt.3751,40576759,PMC12439009,FALSE,,2026-11-18 weekly run (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
-10.1002/cpt.3546,39789999,PMC11993298,FALSE,,2026-11-18 weekly run (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
-10.3390/pharmaceutics18020262,41755002,PMC12944407,FALSE,,2026-11-18 weekly run (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
-10.3389/fphar.2025.1686415,41132528,PMC12540372,FALSE,,2026-11-18 weekly run (PubMed ID converter; Drive search of the archive by PMID and DOI file name)
-10.1128/aac.01215-25,41159735,PMC12691610,FALSE,,2026-11-18 (PubMed ID converter; Drive search of the archive by PMID file name: not found)
+,6341263,,FALSE,,"2026-11-20 weekly run (Drive search by PMID and DOI file name; not found)"
+,8888072,,FALSE,,"2026-11-20 weekly run (Drive search by PMID and DOI file name; not found)"
+,29629619,,TRUE,PMID_29629619.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,428185,,TRUE,PMID_428185.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,2598566,,TRUE,PMID_2598566.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,20460827,,TRUE,PMID_20460827.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,23886303,,FALSE,,"2026-11-20 weekly run (Drive search by PMID and DOI file name; not found)"
+,3447935,,TRUE,PMID_3447935.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,9506009,,TRUE,PMID_9506009.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,16422889,,TRUE,PMID_16422889.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,20206796,,TRUE,PMID_20206796.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,11850699,,FALSE,,"2026-11-20 weekly run (Drive search by PMID and DOI file name; not found)"
+,2253675,,TRUE,PMID_2253675.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,24607242,,TRUE,PMID_24607242.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,30826461,,TRUE,PMID_30826461.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,25028414,,TRUE,PMID_25028414.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,27875488,,TRUE,PMID_27875488.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,26970404,,TRUE,PMID_26970404.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,6641224,,TRUE,PMID_6641224.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,8513955,,FALSE,,"2026-11-20 weekly run (Drive search by PMID and DOI file name; not found)"
+,3612635,,FALSE,,"2026-11-20 weekly run (Drive search by PMID and DOI file name; not found)"
+,21476064,,TRUE,PMID_21476064.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,22046814,,FALSE,,"2026-11-20 weekly run (Drive search by PMID and DOI file name; not found)"
+,33368382,,TRUE,PMID_33368382.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,12934778,,TRUE,PMID_12934778.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,3767339,,TRUE,PMID_3767339.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,32736091,,TRUE,PMID_32736091.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,31129533,,TRUE,PMID_31129533.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,9689420,,FALSE,,"2026-11-20 weekly run (Drive search by PMID and DOI file name; not found)"
+,1976063,,FALSE,,"2026-11-20 weekly run (Drive search by PMID and DOI file name; not found)"
+,6831748,,TRUE,PMID_6831748.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+,29228473,,TRUE,PMID_29228473.pdf,"2026-11-19 weekly run (Drive search by PMID and DOI file name; found, arrived 2026-11-18)"
+10.1128/aac.01766-25,41460101,PMC12888870,FALSE,,"2026-11-20 weekly run (Drive search by PMID and DOI file name; not found)"
+10.1002/psp4.13042,37814498,PMC10725258,FALSE,,"2026-11-20 weekly run (Drive search by PMID and DOI file name; not found)"
+10.1093/jac/dkaf445,41382355,PMC12802907,FALSE,,"2026-11-20 weekly run (Drive search by PMID and DOI file name; not found)"
+10.1007/s40262-025-01545-w,40652445,PMC12414069,FALSE,,"2026-11-20 weekly run (Drive search by PMID and DOI file name; not found)"
+10.1002/psp4.13121,38440939,PMC11098162,FALSE,,"2026-11-20 weekly run (Drive search by PMID and DOI file name; not found)"
+10.1002/cpt.3751,40576759,PMC12439009,FALSE,,"2026-11-20 weekly run (Drive search by PMID and DOI file name; not found)"
+10.1002/cpt.3546,39789999,PMC11993298,FALSE,,"2026-11-20 weekly run (Drive search by PMID and DOI file name; not found)"
+10.3390/pharmaceutics18020262,41755002,PMC12944407,FALSE,,"2026-11-20 weekly run (Drive search by PMID and DOI file name; not found)"
+10.3389/fphar.2025.1686415,41132528,PMC12540372,FALSE,,"2026-11-20 weekly run (Drive search by PMID and DOI file name; not found)"
+10.1128/aac.01215-25,41159735,PMC12691610,FALSE,,"2026-11-20 weekly run (Drive search by PMID and DOI file name; not found)"
