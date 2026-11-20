@@ -29,7 +29,8 @@ mmDerivative(
   sd = NULL,
   ai = NULL,
   met = NULL,
-  nState = mmStateCount(iDRP, iSD, iE, sd, ai, met$iP, met)
+  nState = mmStateCount(iDRP, iSD, iE, sd, ai, met$iP, met),
+  ef = NULL
 )
 }
 \arguments{
@@ -55,6 +56,8 @@ targetBinding, saturableDistribution and autoinduction, or NULL}
 central and peripheral states added as iC and iP}
 
 \item{nState}{the number of states (mmStateCount())}
+
+\item{ef}{the block's saturableEfflux, or NULL}
 }
 \value{
 function(x, rIV, rPE, vmax, km, rD = 0), the derivative of the

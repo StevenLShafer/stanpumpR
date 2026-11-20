@@ -48,11 +48,28 @@
 # Clearance carries the model's own weight covariate, evaluated at the
 # pharmacokinetic weight with the switch on (size$pkWeight) and at total body
 # weight with it off, as for cefazolin.  V1, V2 and Q have no size term in the
-# source and take the library's fat-free-mass factors with the switch on; with
-# it off they are as published (legacyVolume = 1).
+# source: they belong to the cohort's typical patient, and with the switch on
+# they are anchored at that patient (ARGATROBAN_COHORT, below; Steven L.
+# Shafer, 2026-11-19, after Carbon's second repository audit, A2-F4).  Scaled
+# from the 70 kg reference man, as they were, Cox's own typical patient (87 kg,
+# 70% men) received volumes 7% and a Q 5% above the published values (cohort
+# factors 1.068 and 1.050).  A size covariate on clearance does not exempt the
+# other parameters.  With the switch off they are as published
+# (legacyVolume = 1).
 #
 # (Claude Code, 2026-10-17, at the request of Steven L. Shafer.)
 # -----------------------------------------------------------------------------
+
+# Cox 2004, pp. 983-984: 152 patients, 106 men and 46 women, mean age 63
+# years, median weight 87 kg (the footnote of Table II; the mean was 89 kg);
+# US sites, published 2004.  No height, BMI or BSA is printed, so each sex's
+# height is the USA's at 18 for the birth year 2004 - 63 = 1941 (NCD Risk
+# Factor Collaboration, eLife 2016;5:e13410), less the 0.2 cm (men) and 0.3 cm
+# (women) a cohort loses per decade of age after 18 that the same paper
+# reports: 175.6 cm for the men and 161.6 cm for the women.  V1, V2 and Q are anchored at this cohort (see the header).
+ARGATROBAN_COHORT <- list(groups = list(
+  list(weight = 87, height = 175.6, age = 63, men = 106, women = 0),
+  list(weight = 87, height = 161.6, age = 63, men = 0, women = 46)))
 
 #' Argatroban pharmacokinetics (intravenous, PCI patients)
 #'
@@ -69,7 +86,11 @@
 #' @export
 argatroban <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  # V1, V2 and Q, with no size term, are anchored at Cox's cohort
+  # (ARGATROBAN_COHORT); clearance carries its own weight term, at the
+  # pharmacokinetic weight, which does not depend on the cohort.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1,
+                        cohort = do.call(cohortSizeFactors, ARGATROBAN_COHORT))
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
 
   cl <- 22.0 + 0.018 * (pkW - 87)                  # L/h, own weight covariate

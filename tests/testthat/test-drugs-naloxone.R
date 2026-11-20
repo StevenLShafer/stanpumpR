@@ -42,15 +42,17 @@ test_that("scales to fat-free mass for a 120 kg man", {
   # 120 kg, 170 cm, 50 y male: FFM 71.09 kg.  Clearance follows its own lean
   # body weight covariate, 91 x (71.09/70)^0.75 L/h; Vc sees the
   # pharmacokinetic weight 91.34 kg; the size-free peripheral parameters take
-  # the library factors 1.3049067 and 1.2209126.
+  # the library factors 1.3049067 and 1.2209126, divided by those of
+  # Dowling's men (NALOXONE_COHORT), at whom they are anchored.
+  kc <- cohortFactorsIndependent(NALOXONE_COHORT)
   actual <- naloxone(120, 170, 50, "male")
   expected <- list(
     v1 = 3.7450821,
-    v2 = 1.9443109,
-    v3 = 43.844863,
+    v2 = 1.9443109 / kc$volume,
+    v3 = 43.844863 / kc$volume,
     cl1 = 1.5342649,
-    cl2 = 0.11517276,
-    cl3 = 0.6063866
+    cl2 = 0.11517276 / kc$clearance,
+    cl3 = 0.6063866 / kc$clearance
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
 })
@@ -66,6 +68,23 @@ test_that("Dowling's vector is recovered at a lean body weight of 70 kg", {
   # With the switch off, Vc scales with total weight and the rest is fixed
   y <- naloxone(140, 171, 50, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(y$v1, 5.74); expect_equal(y$v3, 33.6); expect_equal(y$cl3, x$cl3)
+})
+
+test_that("anchored at Dowling's men: their typical man receives the published peripheral values (A2-F4)", {
+  # Methods: six men, median 80 kg, 178 cm, 25 years.  V2, V3, Q2 and Q3 are
+  # anchored; Vc and CL keep their own weight and lean-body-weight terms.
+  x <- naloxone(80, 178, 25, "male")$PK$default
+  expect_equal(x$v2, 1.49, tolerance = 1e-12)
+  expect_equal(x$v3, 33.6, tolerance = 1e-12)
+  expect_equal(x$cl2 * 60, 5.66, tolerance = 1e-12)
+  expect_equal(x$cl3 * 60, 29.8, tolerance = 1e-12)
+  r <- ffmRatioMaleIndependent(80, 178, 25)
+  expect_equal(x$v1, 2.87 * r, tolerance = 1e-6)
+  expect_equal(x$cl1 * 60, 91 * (r * FFM_REFERENCE / 70)^0.75, tolerance = 1e-6)
+  # The switch off is unchanged: the published peripheral values
+  off <- naloxone(80, 178, 25, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(c(off$v2, off$v3, off$cl2 * 60, off$cl3 * 60), c(1.49, 33.6, 5.66, 29.8))
+  expect_equal(off$v1, 2.87 * 80 / 70)
 })
 
 test_that("the nasal route reproduces Laffont's fitted exposure for the reference man", {
@@ -87,12 +106,15 @@ test_that("the nasal route reproduces Laffont's fitted exposure for the referenc
 test_that("Yassen's ke0 is carried as a tPeak, and the effect site peaks a few minutes after a bolus", {
   # Yassen 2007: ke0 0.106 /min with their own disposition (V1 12.1, V2 102 L,
   # CL 3.45, Q 4.74 L/min) peaks a bolus at 3.5768 min.  Carried as tPeak
-  # 3.58 (Minto 2003), it solves to ke0 0.094885 /min on Dowling's
+  # 3.58 (Minto 2003), it solved to ke0 0.094885 /min on Dowling's
   # disposition for the reference man (worked out by hand from the sums of
   # exponentials).  The naive pairing put 0.1066 /min here, peaking at 3.43.
+  # Since 2026-11-19 the peripheral parameters are anchored at Dowling's men
+  # (NALOXONE_COHORT), so the reference man's are smaller and the solved ke0
+  # is 0.099221 /min; the time to peak, checked below, is unchanged.
   PK <- getDrugPK("naloxone", 70, 170, 35, "male", getDrugDefaults("naloxone"))
   pk <- PK$PK$default
-  expect_equal(pk$ke0, 0.094885, tolerance = 1e-3)  # within the solver's tolerance
+  expect_equal(pk$ke0, 0.099221, tolerance = 1e-3)  # within the solver's tolerance
   tPeak <- effectSitePeakTime(
     c(pk$p_coef_bolus_l1, pk$p_coef_bolus_l2, pk$p_coef_bolus_l3),
     c(pk$lambda_1, pk$lambda_2, pk$lambda_3), pk$ke0)

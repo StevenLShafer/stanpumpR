@@ -86,3 +86,17 @@ test_that("pregnancy: Janssen 2021's factors on the adult doxorubicin models, CL
   expect_match(getDrugPK("doxorubicin", 70, 165, 30, "female", pregnant = TRUE)$reference,
                "Janssen 2021")
 })
+
+test_that("Joerger's size-free parameters are anchored at her 59 women (A2-F4)", {
+  # Table I: 70 kg, BSA 1.81 m2 (170.0 cm by Du Bois), 56 years.  The cohort's
+  # typical woman receives the published V1, Q and V2 with the switch on, as
+  # with it off; doxorubicinol's V/fm likewise.
+  on <- doxorubicinJoerger(70, 170, 56, "female")$PK$default
+  off <- doxorubicinJoerger(70, 170, 56, "female", adjustToFFM = FALSE)$PK$default
+  expect_equal(on[c("v1", "v2", "cl2")], off[c("v1", "v2", "cl2")], tolerance = 1e-12)
+  expect_equal(doxorubicinolJoerger(70, 170, 56, "female")$PK$default$v1, 1580, tolerance = 1e-12)
+  # and scale from her for anyone else
+  kc <- cohortFactorsIndependent(DOXORUBICIN_JOERGER_COHORT)
+  big <- doxorubicinJoerger(100, 180, 50, "male")$PK$default
+  expect_equal(big$v1, off$v1 * pkSizeFactors(100, 180, 50, "male")$volume / kc$volume, tolerance = 1e-6)
+})

@@ -9,7 +9,7 @@ test_that("returns the published parameters with the switch off", {
         cl1 = 0.52,
         cl2 = 0.3208219829,   # reconstructed Q, from the research handoff
         cl3 = 0,
-        ka_RA = 0.011958,
+        ka_RA = 0.0187,          # fitted on the published disposition (A2-F2)
         bioavailability_RA = 1,
         tlag_RA = 0
       )
@@ -47,9 +47,15 @@ test_that("ka_RA reproduces Robison's 1.66 mcg/mL peak in that study's typical p
   set <- p
   for (n in c("v1", "v2")) set[[n]] <- p[[n]] * kr$volume / kb$volume
   for (n in c("cl1", "cl2")) set[[n]] <- p[[n]] * kr$clearance / kb$clearance
-  peak <- depotPeakReference(set, 168.75, p$ka_RA)
+  ka <- bupivacaine(70, 170, 35, "male")$PK$default$ka_RA   # the switch on
+  peak <- depotPeakReference(set, 168.75, ka)
   expect_equal(peak[["peak"]], 1.66, tolerance = 1e-4)
   expect_equal(peak[["time"]], 61, tolerance = 5e-3)
+  # With the switch off everyone has the published disposition, on which the
+  # switch-off rate was fitted to the same peak (Carbon's second repository
+  # audit, A2-F2)
+  peak <- depotPeakReference(p, 168.75, p$ka_RA)
+  expect_equal(peak[["peak"]], 1.66, tolerance = 1e-3)
 })
 
 test_that("keeps the intravenous terminal half-life and Vss", {

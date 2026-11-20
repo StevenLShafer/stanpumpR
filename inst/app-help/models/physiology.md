@@ -411,11 +411,51 @@ normal for nitrous oxide at 2 minutes and 78% for isoflurane, 92% and 87% at
 an hour, while end-tidal reads a little above normal. The Visualizer draws the
 arterial bar below the end-tidal one.
 
+**Hypoxaemia.** Doubling the ventilation of one lung nearly makes up for the
+other lung's loss of carbon dioxide excretion, because carbon dioxide is freely
+soluble in blood. It cannot make up for oxygen. Haemoglobin leaving the
+ventilated lung is already nearly saturated, so the extra ventilation adds only
+the little oxygen that dissolves, while the shunted half of the blood arrives
+at mixed venous content. Hypoxaemia necessarily follows. stanpumpR computes the
+arterial oxygen from the alveolar oxygen the engine carries: the oxygen content
+of blood leaving the ventilated lung (Severinghaus's 1979 dissociation curve),
+less the shunt's share of the body's oxygen use. The oxygen the ventilated lung
+loads into its blood then equals the body's use exactly, the same oxygen the
+gas engine draws from the alveoli. The result is the oxygen panel's second
+line; the hover gives the PaO2 and the SaO2, and the Visualizer shows them
+under its title while the tube is in. For a 70 kg patient at a cardiac output
+of 5 L/min and oxygen use of 0.25 L/min, half the cardiac output shunted gives,
+at 30 minutes and haemoglobin 15 g/dL:
+
+| Fresh gas (6 L/min) | End-tidal PO2 | PaO2 | SaO2 |
+|---|---|---|---|
+| Oxygen | 710 mmHg | 51 mmHg | 85% |
+| Oxygen 2 L/min, air 4 L/min | 312 mmHg | 44 mmHg | 80% |
+| Air | 114 mmHg | 40 mmHg | 75% |
+
+Even with pure oxygen, the PaO2 is about 50 mmHg. That is the shunt's
+signature: more oxygen hardly helps, and neither does more ventilation (air at
+3 L/min gives 70%, at 12 L/min 76%).
+
+**Haemoglobin.** Ticking the box shows a **Haemoglobin** slider (4 to 20 g/dL,
+15 by default). The oxygen the shunted half fails to carry is the same number
+of millilitres per decilitre whatever the haemoglobin, so it is a larger share
+of a smaller capacity, and an anaemic patient desaturates more: on pure oxygen
+the SaO2 is 69% at 7 g/dL and 87% at 17 g/dL, on air 49% and 78%. A physiology
+event records it, so a transfusion or a bleed can be followed. Without a shunt
+it changes nothing the plot shows.
+
+**Altitude.** The arterial oxygen starts from the alveolar oxygen, which falls
+with the barometric pressure, so the hypoxaemia deepens with altitude. On air
+the SaO2 is 75% at sea level, 68% at 3000 m and 47% at 5000 m; on oxygen 85%,
+82% and 80%.
+
 **Not modelled.** Hypoxic pulmonary vasoconstriction, which diverts part of the
-blood from the unventilated lung, so the real shunt is usually less than half;
-the lungs' unequal sizes; the slow absorption of the gas trapped in the
-unventilated lung; and arterial oxygen, which the engine does not carry in
-blood. So hypoxaemia, the main danger of an endobronchial tube, is not shown.
+blood from the unventilated lung, so the shunt is about half only at first and
+the hypoxaemia then eases; the lungs' unequal sizes; the slow absorption of the
+gas trapped in the unventilated lung; the blood's own oxygen store, so the
+arterial oxygen changes at once with the tube or the fresh gas rather than over
+a circulation time; and the dissociation curve's shift with temperature and pH.
 
 ## Body temperature and the intravenous drugs
 
@@ -439,6 +479,59 @@ falls too. Lower the Cardiac output slider as well to reproduce that: at 0.4
 of normal, propofol falls to 44%. Only drugs with a physiology row respond;
 volumes, intercompartmental clearances and ke0 do not change.
 
+The sliders move in small steps on a log scale, so the multiple a slider
+shows is rounded: x0.50 applies 0.501, x2.00 applies 1.995. The difference is
+far below anything the curves can show, and it is not an error.
+
+## Physiology events: physiology that changes during a case
+
+The sliders describe one physiology for the whole plot. To let it change
+during a case, set the sliders and click **Create event**, below them, and
+enter a time in the plot's time units. The settings are recorded as an event
+labelled **Physiology** in the Events panel; resting the pointer on it shows
+what it recorded. Once the event table holds any Physiology event:
+
+* physiology is **normal from time 0** (every slider at 1, 37 °C, sea level,
+  a tracheal tube), and steps to each event's settings at its time, as a
+  step, not a ramp. For a gradual change, create several events, a few
+  minutes apart;
+* the sliders no longer set the plot; they set the next event to be created,
+  and the panel says so;
+* at each step **the drug in each compartment stays where it is**. Volumes,
+  clearances and flows change; amounts do not move from one compartment to
+  another. A central volume that halves therefore doubles the plasma
+  concentration at that instant. This is the conversion Steven Shafer wrote
+  for the Zuppa dexmedetomidine model, whose parameters change on and off
+  bypass, and it is checked against an exact matrix-exponential solution;
+* for the inhaled anesthetics, the partial pressures in the breathing
+  circuit and the lungs carry across, and a cooled tissue keeps the agent it
+  held at a lower partial pressure, because it now dissolves more of it.
+  MAC steps with the temperature;
+* the time until threshold, at each moment, assumes the physiology in force
+  at that moment continues.
+
+Events are edited, moved and deleted with the other events (double-click the
+Events panel); the dialog shows each Physiology event's settings, only those
+away from normal. They travel in a bookmark and are listed in the exported
+workbook. A clinical event that changes a drug's model (bypass, for
+dexmedetomidine) and a physiology event act together.
+
+What does not follow the events: a drug whose model the sliders do not change
+(*Which drugs respond*, below); a drug on the saturable (Michaelis-Menten),
+transit-chain or other special engines, or one that forms a metabolite, whose
+PK the event engine cannot switch during a run; a drug changed by the
+antiseizure interactions, whose own segments take precedence; and a dose
+table with a rate into the tissue depot (a regional-anaesthesia infusion, or
+an extended-release oral form the program releases that way), which keeps
+normal physiology throughout and is named in the panel. A TCI pump plans on
+the physiology in force at time 0 (an event at time 0 included, as the
+sliders are without events); a later event is one the pump does not know of,
+so the concentration drifts from the target, as it would in a patient. The Visualizer shows the physiology in force as the run plays, an
+endobronchial tube pulled back (or slipping in) during the run included: the
+unventilated lung is greyed in the 2D view until the tube is tracheal. It
+does not yet draw an inhaled agent whose body temperature changes during the
+run.
+
 ## The sliders and the Bayesian update
 
 When measured concentrations update a drug ([Bayesian updating](help:models/bayesian)),
@@ -446,11 +539,13 @@ the fit is made at normal physiology, and the sliders are applied to the
 patient it finds. The measurements describe the patient as they found them, so
 moving a slider afterwards asks what would happen to that patient, and does not
 refit. The model's own line, "(population)", is drawn at the sliders too.
+With physiology events the same holds: the fit is made at normal physiology
+throughout, and the events are applied to the patient it finds.
 
 ## Which drugs respond
 
-The inhaled anesthetics respond to **Cardiac output** and **Body temperature**,
-as described above.
+The inhaled anesthetics respond to **Cardiac output**, **Body temperature**,
+**Altitude** and **Endobronchial intubation**, as described above.
 
 Only drugs whose renal share and hepatic share were read in a published
 source respond. Any other drug ignores the sliders, and the panel lists it
@@ -492,7 +587,7 @@ physiology.
 
 **The remaining anaesthetic drugs** (2026-11-18): fentanyl, hydromorphone,
 ketamine, rocuronium and vecuronium now have computed extraction ratios
-(0.39, 0.48, 0.54, 0.50 and 0.44), and sufentanil has Lange's measured 0.92
+(0.39, 0.48, 0.54, 0.50 and 0.46), and sufentanil has Lange's measured 0.92
 with 62% of its clearance hepatic. Hydromorphone's blood-to-plasma ratio is
 1.35. Rocuronium and vecuronium were measured in plasma and are quaternary
 amines, which stay out of red cells, so their ratio is taken as
@@ -522,7 +617,7 @@ Most of these models already read the patient's serum creatinine; the
 **Renal function** slider acts on top of it, as a what-if beyond the
 measured value.
 
-**Local anaesthetics** (2026-11-18): bupivacaine (E 0.29) and mepivacaine
+**Local anaesthetics** (2026-11-18): bupivacaine (E 0.28) and mepivacaine
 (E 0.27) have computed extraction ratios; the sliders change their systemic
 disposition, not their absorption from the injection site. Lidocaine and
 ropivacaine form their toxic metabolites (MEGX, PPX) at their own rate, so,

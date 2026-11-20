@@ -62,16 +62,43 @@ test_that("the age term is evaluated at no younger than 18 years", {
 test_that("scales to fat-free mass for a 120 kg man", {
   # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126,
   # pharmacokinetic weight 70 x 1.3049067 = 91.34 kg for the CL covariate.
+  # The volumes and Q2, Q3 are anchored at Bjornsson's cohort
+  # (BUPRENORPHINE_COHORT), so they are also divided by its factors; CL is not.
+  kc <- cohortFactorsIndependent(BUPRENORPHINE_COHORT)
   actual <- buprenorphine(120, 170, 50, "male")
   expected <- list(
-    v1 = 83.9055008,
-    v2 = 169.637871,
-    v3 = 2061.752586,
+    v1 = 83.9055008 / kc$volume,
+    v2 = 169.637871 / kc$volume,
+    v3 = 2061.752586 / kc$volume,
     cl1 = 0.87959367,
-    cl2 = 3.7848291,
-    cl3 = 1.2270172
+    cl2 = 3.7848291 / kc$clearance,
+    cl3 = 1.2270172 / kc$clearance
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
+})
+
+test_that("anchored at Bjornsson's cohort: its typical participant receives the published values (A2-F4)", {
+  # Table 1, all 236: 72.2 kg, BMI 24.4 (172.0 cm), 35 years, 144 men and 92
+  # women.  The volumes and Q2, Q3 carry no sex term, so the cohort's man and
+  # woman sit either side of the published values and their weighted
+  # geometric mean is the published value; CL keeps its own weight term.
+  h <- 100 * sqrt(72.2 / 24.4)
+  m <- buprenorphine(72.2, h, 35, "male")$PK$default
+  w <- buprenorphine(72.2, h, 35, "female")$PK$default
+  pooled <- function(p) exp((144 * log(m[[p]]) + 92 * log(w[[p]])) / 236)
+  expect_equal(pooled("v1"), 64.3, tolerance = 1e-6)
+  expect_equal(pooled("v2"), 130, tolerance = 1e-6)
+  expect_equal(pooled("v3"), 1580, tolerance = 1e-6)
+  expect_equal(pooled("cl2") * 60, 186, tolerance = 1e-6)
+  expect_equal(pooled("cl3") * 60, 60.3, tolerance = 1e-6)
+  r <- ffmRatioMaleIndependent(72.2, h, 35)
+  kc <- cohortFactorsIndependent(BUPRENORPHINE_COHORT)
+  expect_equal(m$v1, 64.3 * r / kc$volume, tolerance = 1e-6)
+  expect_equal(m$cl1 * 60, 52.1 * (70 * r / 72.4)^0.413, tolerance = 1e-6)
+  # The switch off is unchanged: the published values
+  off <- buprenorphine(72.2, h, 35, "female", adjustToFFM = FALSE)$PK$default
+  expect_equal(unlist(off[c("v1", "v2", "v3")]), c(v1 = 64.3, v2 = 130, v3 = 1580))
+  expect_equal(c(off$cl2, off$cl3) * 60, c(186, 60.3))
 })
 
 test_that("the sublingual fraction absorbed follows the paper's power law", {
@@ -225,10 +252,16 @@ test_that("pregnancy: elimination clearance x 1.83, absorption unchanged (Zhu 20
   }
   expect_identical(on$sublingualSaturation, off$sublingualSaturation)
   expect_equal_rounded(1.486028542, a$cl1)
-  expect_equal_rounded(51.83191192, a$v1)
-  # the 61.2 min time to peak effect is held; ke0 is solved again
+  # V1 is anchored at Bjornsson's cohort (BUPRENORPHINE_COHORT)
+  expect_equal_rounded(51.83191192 / cohortFactorsIndependent(BUPRENORPHINE_COHORT)$volume,
+                       a$v1)
+  # the 61.2 min time to peak effect is held; ke0 is solved again (on the
+  # anchored disposition since 2026-11-19; 0.007938672353 before)
   expect_equal(on$tPeak, off$tPeak)
-  expect_equal_rounded(0.007938672353, a$ke0)
+  expect_equal_rounded(0.008091061014, a$ke0)
+  coef <- c(a$p_coef_bolus_l1, a$p_coef_bolus_l2, a$p_coef_bolus_l3)
+  lambda <- c(a$lambda_1, a$lambda_2, a$lambda_3)
+  expect_equal(effectSitePeakTime(coef, lambda, a$ke0), 61.2, tolerance = 1e-4)
   expect_match(on$reference, "Zhu Y", fixed = TRUE)
   expect_match(on$reference, "pregnancy:", fixed = TRUE)
   expect_no_match(off$reference, "Zhu Y")
@@ -248,8 +281,12 @@ test_that("the band reproduces its derivation from McQuay 1980's demand analgesi
     # The lower edge and threshold: the effect site when demands resumed
     expect_equal(round(approx(w$Time, ce, 180 + 480)$y, 2),
                  BUPRENORPHINE_ANALGESIA_END, info = second)
-    # The upper edge: the peak after the second dose
-    expect_equal(round(max(ce[w$Time > 180]), 1), 1, info = second)
+    # The upper edge: the peak after the second dose.  Since the volumes and
+    # intercompartmental clearances were anchored at Bjornsson's cohort
+    # (2026-11-19), the intramuscular peak is 0.94 ng/mL (0.96 before), and
+    # the intravenous 0.99 (1.02 before).
+    expect_equal(round(max(ce[w$Time > 180]), 1),
+                 c(mg = 1, "mg IM" = 0.9)[[second]], info = second)
   }
 })
 
@@ -285,6 +322,9 @@ test_that("the absolute gap to Bullingham 1980 is the disposition's, by both rou
   }
   iv <- plasma("mg") / c(14.62, 3.15, 0.77, 0.38)
   im <- plasma("mg IM") / c(3.56, 3.31, 0.79, 0.36)
-  expect_equal(round(iv, 2), c(0.28, 0.76, 0.84, 0.78))
-  expect_equal(round(im, 2), c(0.29, 0.68, 0.84, 0.81))
+  # Re-pinned 2026-11-19, when the volumes and intercompartmental clearances
+  # were anchored at Bjornsson's cohort (before: 0.28, 0.76, 0.84, 0.78 and
+  # 0.29, 0.68, 0.84, 0.81)
+  expect_equal(round(iv, 2), c(0.27, 0.74, 0.81, 0.77))
+  expect_equal(round(im, 2), c(0.28, 0.66, 0.82, 0.80))
 })

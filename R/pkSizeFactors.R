@@ -156,3 +156,39 @@ cohortSizeFactors <- function(weight = NULL, age = NULL, men = NULL, women = NUL
   mix <- exp(sums / total)
   list(volume = unname(mix[1]), clearance = unname(mix[2]))
 }
+
+#' The size factors of one sex of a source cohort
+#'
+#' A parameter that carries the source's own sex term (an intercept fitted for
+#' one sex, with a factor for the other) is anchored at that sex's typical
+#' patient, not at the cohort's pooled one (`docs/weight-adjustment.md`,
+#' *Anchoring at the source's cohort*).  Anchored at the pooled patient, the
+#' fat-free-mass difference between the sexes is applied on top of the
+#' source's own sex factor, which already contains it, and neither of the
+#' cohort's typical patients receives the published value (Carbon's second
+#' repository audit, 2026-11-19, A2-F1: fluoxetine's cohort woman 2.78 L/h
+#' for the published 2.91, its man 3.86 for 3.39).
+#'
+#' @param cohort the arguments of [cohortSizeFactors()] as a list (with or
+#'   without `groups`), as the drug files keep them
+#' @param sex `SEX_MALE` or `SEX_FEMALE`: the patient's sex
+#' @return a list: `volume` and `clearance`, the factors of the cohort's
+#'   typical patient of that sex.  A cohort with none of that sex gives the
+#'   factors of one patient of that sex at each group's demographics.
+#' @keywords internal
+cohortSexSizeFactors <- function(cohort, sex)
+{
+  groups <- cohort$groups
+  if (is.null(groups)) groups <- list(cohort)
+  male <- identical(sex, SEX_MALE)
+  own <- function(g) if (male) g$men else g$women
+  none <- sum(vapply(groups, own, numeric(1))) == 0
+  groups <- lapply(groups, function(g) {
+    n <- if (none) 1 else own(g)
+    g$men <- if (male) n else 0
+    g$women <- if (male) 0 else n
+    g
+  })
+  groups <- Filter(function(g) g$men + g$women > 0, groups)
+  cohortSizeFactors(groups = groups)
+}

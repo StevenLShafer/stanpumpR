@@ -77,7 +77,9 @@ test_that("a link's event table keeps only known events at readable times", {
   r <- restoredEventTable(list(Time = c(5, 10, -1, NA), Event = c(known, "<img>", known, known)),
                           ev, eventTableInit)
   expect_true(r$changed)
-  expect_identical(r$table, data.frame(Time = 5, Event = known, stringsAsFactors = FALSE))
+  # (Settings: a Physiology row's, "" for every other event; R/physiologyEvents.R)
+  expect_identical(r$table, data.frame(Time = 5, Event = known, Settings = "",
+                                       stringsAsFactors = FALSE))
   expect_true(validateEventTableInput(r$table, ev))
   # no Event column stopped the restore part way
   expect_identical(restoredEventTable(list(Foo = 1), ev, eventTableInit)$table, eventTableInit)

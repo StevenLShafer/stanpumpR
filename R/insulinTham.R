@@ -305,7 +305,7 @@ thamInsulin <- function(weight, height, age, sex, adjustToFFM, insulin,
   }
 
   list(
-    PK = PK, tPeak = 0, MEAC = 0,
+    PK = PK, ke0 = INSULIN_KE0 / 60, MEAC = 0,   # R/insulinEffectSite.R
     typical = 0, upperTypical = 0, lowerTypical = 0,
     zeroOrderSC = zeroOrderSC,
     # Glargine: each injection's bioavailability by its own size

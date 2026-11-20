@@ -1207,6 +1207,75 @@ test('gas: a run made before the blood and the greenhouse effect still loads, an
   assertClean(page);
 });
 
+// An intubation that steps during the run (a physiology event; Shafer,
+// 2026-11-19: an endobronchial tube pulled back at five minutes): the lungs'
+// capacity is carried per time (lungsCapacity), one lung's while the tube is
+// in a bronchus. The amounts and flows use the capacity in force, so the lung
+// that joins brings no burst of ventilation and nothing is vented backwards.
+function steppedIntubation() {
+  const r = clone(GAS), n = r.t.length, full = r.capacity.lungs;
+  r.lungsCapacity = r.t.map(t => t < 300 ? full / 2 : full);
+  r.arterial = r.p.lungs.map((p, i) => r.t[i] < 300 ? (p + r.venous[i]) / 2 : p);
+  r.saturation = r.t.map(t => t < 300 ? 85 : 100);
+  r.paO2 = r.t.map(t => t < 300 ? 50 : 500);
+  const ph = { liver: 1, renal: 1, cardiac: 1, gi: 1, temperature: 37, altitude: 0, pressure: 760 };
+  r.physiology = { ...ph, endobronchial: true };
+  r.physiologySteps = [{ ...ph, time: 0, endobronchial: true }, { ...ph, time: 300, endobronchial: false }];
+  return r;
+}
+
+test('gas: an intubation that steps is drawn with the lungs\' capacity in force, and adds no flow at the step', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1280, height: 720 });
+  const r = steppedIntubation();
+  assert.equal(await loadRun(page, r), true);
+  const o = await page.evaluate(() => {
+    const at = T => { Player.seek(T); const st = Player.gasStateAt(T);
+      return { share: st.lungsShare, lungs: st.A.lungs, p: st.p.lungs, vent: st.flow.vent, vented: st.vented, ventedFlow: st.flow.vented,
+               texts: [...document.querySelectorAll('#flat svg text')].map(e => e.textContent),
+               physio: document.getElementById('physio').innerText, oxygen: document.getElementById('oxygen').innerText }; };
+    return { one: at(100), before: at(299.5), after: at(300.5), both: at(400) };
+  });
+  // One lung: half the capacity, and the picture says so
+  assert.equal(o.one.share, 0.5);
+  assert.ok(Math.abs(o.one.lungs - 10 * 1.25 * o.one.p) < 1e-9, 'the lungs hold their capacity in force x partial pressure');
+  assert.ok(o.one.texts.includes('not ventilated'), 'the unventilated lung is not marked');
+  assert.ok(o.one.texts.includes('1.25 L gas'), 'the lungs\' volume in force is not shown: ' + o.one.texts.join('|'));
+  assert.match(o.one.physio, /Intubation endobronchial/);
+  assert.match(o.one.physio, /physiology event at 0:00:00/, 'an event at the start read as normal: ' + o.one.physio);
+  assert.match(o.one.oxygen, /SaO₂ 85%/);
+  // Both lungs after the step
+  assert.equal(o.both.share, 1);
+  assert.ok(Math.abs(o.both.lungs - 10 * 2.5 * o.both.p) < 1e-9);
+  assert.ok(!o.both.texts.includes('not ventilated'));
+  assert.ok(o.both.texts.includes('2.50 L gas'));
+  assert.match(o.both.physio, /Intubation tracheal/);
+  // The lung that joins is not a flow: 1.25 L at 1.5% in one second would be
+  // about 1100 mL/min breathed in, and as much vented backwards
+  assert.ok(Math.abs(o.after.vent) < 3 * Math.abs(o.before.vent) + 5, `a burst of ventilation at the step: ${o.before.vent} then ${o.after.vent}`);
+  assert.ok(o.after.vented >= o.before.vented, 'the agent vented fell at the step');
+  assert.ok(o.after.vented - o.before.vented < 5, `the joined lung\'s agent was counted as vented: ${o.before.vented} then ${o.after.vented}`);
+  assert.ok(o.after.ventedFlow > 0, 'venting stopped at the step');
+  // The oxygen line is clear of the arrows over the circuit
+  const clear = await page.evaluate(() => {
+    Player.seek(100);
+    const ox = document.getElementById('oxygen').getBoundingClientRect();
+    const tops = [...document.querySelectorAll('#flat svg rect, #flat svg polygon')].map(e => e.getBoundingClientRect()).filter(b => b.width > 0 && b.left < ox.right && b.right > ox.left);
+    return { bottom: ox.bottom, top: Math.min(...tops.map(b => b.top)) };
+  });
+  assert.ok(clear.top >= clear.bottom, `the arterial oxygen line runs into the drawing: ${clear.bottom} over ${clear.top}`);
+  // The 3D view draws it too
+  const d3 = await page.evaluate(() => { Player.setView('3d'); Player.seek(100); return Object.keys(View.gasVessels).length; });
+  assert.equal(d3, 5);
+  // A capacity beyond both lungs, or of the wrong length, is refused
+  for (const mutate of [x => { x.lungsCapacity[5] = 9; }, x => { x.lungsCapacity = x.lungsCapacity.slice(1); }, x => { x.lungsCapacity[2] = 0; }]) {
+    const bad = steppedIntubation(); mutate(bad);
+    assert.equal(await loadRun(page, bad), false);
+    assert.ok((await probe(page)).message.includes('lungsCapacity'));
+  }
+  assertClean(page);
+});
+
 test('gas: markup and malformed fields are refused, the name is shown as text', { skip }, async t => {
   const page = await viewerPage(t);
   for (const [mutate, names] of [[r => { r.units.conc = '%' + P; }, 'units.conc'],
@@ -1588,4 +1657,56 @@ test('CodeRabbit #730: a starting view chosen again brings its own picture offse
   assert.ok(o.off <= 1e-6, `the camera is ${o.off} of its distance from the new starting view`);
   assert.equal(o.offsetY, o.want, `the old window's offset (${o.was} px) is applied, not the new one's`);
   assertClean(page);
+});
+
+test('Physiology events: the physiology line follows the clock, and bad steps are refused', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  const r = clone(RUN);
+  const end = r.t[r.t.length - 1], mid = r.t[Math.floor(r.t.length / 2)];
+  r.physiology = { liver: 1, renal: 1, cardiac: 1, gi: 1, temperature: 37 };
+  r.physiologySteps = [
+    { time: r.t[0], liver: 1, renal: 1, cardiac: 1, gi: 1, temperature: 37 },
+    { time: mid, liver: 1, renal: 1, cardiac: 0.5, gi: 1, temperature: 34 }];
+  assert.equal(await loadRun(page, r), true);
+  const at = T => page.evaluate(T => { Player.seek(T); return document.getElementById('physio').textContent; }, T);
+  const first = await at(r.t[0]);
+  assert.match(first, /Cardiac output ×1/);
+  assert.match(first, /normal/);
+  const later = await at((mid + end) / 2);
+  assert.match(later, /Cardiac output ×0\.5/);
+  assert.match(later, /Temperature 34 °C/);
+  assert.match(later, /physiology event at/);
+  assert.match(await at(r.t[0]), /Cardiac output ×1/);
+  // Out of order, a bad number, markup: refused
+  for (const steps of [[{ time: 10 }, { time: 5 }], [{ time: 0, cardiac: -1 }],
+                       [{ time: 0, endobronchial: '<b>x</b>' }], 'x']) {
+    const bad = clone(r); bad.physiologySteps = steps;
+    assert.equal(await loadRun(page, bad), false);
+  }
+});
+
+test('Endobronchial tube: the arterial saturation shows under the title, amber below 90%, and bad values are refused', { skip }, async t => {
+  const page = await viewerPage(t);
+  await page.setViewport({ width: 1200, height: 800 });
+  const r = JSON.parse(readFileSync(path.resolve(HERE, '..', 'examples', 'sevoflurane-washin.json'), 'utf8'));
+  const n = r.t.length;
+  r.saturation = r.t.map((_, i) => i < n / 2 ? 97 : 80);
+  r.paO2 = r.t.map((_, i) => i < n / 2 ? 400 : 45);
+  assert.equal(await loadRun(page, r), true);
+  const at = T => page.evaluate(T => { Player.seek(T); const o = document.getElementById('oxygen'); return [o.textContent, o.innerHTML.includes('class="off"')]; }, T);
+  const [early, earlyAmber] = await at(r.t[0]);
+  assert.match(early, /SaO₂ 97% · PaO₂ 400 mmHg/);
+  assert.equal(earlyAmber, false);
+  const [late, lateAmber] = await at(r.t[n - 1]);
+  assert.match(late, /SaO₂ 80%/);
+  assert.equal(lateAmber, true);
+  // A run without it shows nothing there
+  const plain = clone(r); delete plain.saturation; delete plain.paO2;
+  assert.equal(await loadRun(page, plain), true);
+  assert.equal(await page.evaluate(() => { Player.seek(Player.run.t[0]); return document.getElementById('oxygen').textContent; }), '');
+  for (const bad of [{ saturation: r.saturation }, { saturation: r.t.map(() => 120), paO2: r.paO2 }, { saturation: 'x', paO2: r.paO2 }]) {
+    const b = clone(plain); Object.assign(b, bad);
+    assert.equal(await loadRun(page, b), false);
+  }
 });

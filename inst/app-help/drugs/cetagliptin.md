@@ -1,25 +1,35 @@
 ### The model
 
-Zhou and colleagues' study of cetagliptin, an investigational DPP-4 inhibitor (*Front Endocrinol* 2024). The data were 20 Chinese adults with type 2 diabetes, about 71 kg, given 50 or 100 mg once daily, fasting, for 14 days. The parameter values are in the paper's Supplementary Table 1.
+Lu and colleagues' population analysis of cetagliptin, an investigational DPP-4 inhibitor (*Clin Pharmacokinet* 2024). The data were 108 subjects given cetagliptin in four phase 1 studies in China: single doses of 12.5 to 400 mg and a food-effect study in healthy volunteers, 50, 100 and 200 mg daily for 7 to 10 days in healthy volunteers, and 50 and 100 mg daily for 14 days in patients with type 2 diabetes.
 
-- **Disposition:** two compartments, a central volume of 8.67 L, a peripheral volume of 558 L, and an intercompartmental clearance of 9.67 L/h.
-- **Elimination:** saturable, Vmax 9373 µg/h with Km 171.5 ng/mL. Below Km the clearance is 54.7 L/h, and it falls as the concentration rises.
-- **Absorption:** first order, 0.0652/h, with no bioavailability term: the parameters are apparent ones, from oral data only.
+- **Disposition:** two compartments, an apparent clearance of 30.55 L/h, a central volume of 204 L, an intercompartmental clearance of 133 L/h and a peripheral volume of 160 L.
+- **Absorption:** first order, 1.56/h, with no bioavailability term: the parameters are apparent ones, from oral data only.
+- **Efflux:** a saturable transport from the central compartment back into the gut, with Vmax 41,731 µg/h and Kt 11.63 ng/mL. The drug sent back is absorbed again.
 
-The paper's text calls this "the two-compartment model" without naming the elimination. Its supplement gives a Km and a Vmax and no clearance, so the elimination is Michaelis-Menten. The data agree: the first day's exposure is 2.55 times higher at 100 mg than at 50 mg. The curve comes from numerical integration over the whole dose table, the engine that runs [phenytoin](help:drugs/phenytoin).
+Exposure rises faster than the dose because the efflux saturates, not because elimination does: the clearance is linear. The curve comes from numerical integration over the whole dose table, the engine that runs [phenytoin](help:drugs/phenytoin).
 
-Elimination below Km is fast compared with absorption, so the concentration follows the absorption and peaks within about two hours. The long terminal phase, about 40 hours, is the drug returning from the large peripheral volume. Steady state takes about a week.
+### Why this model and not Zhou 2024
 
-Against the paper's observed means, the model's first-day AUC is 751 ng·h/mL at 50 mg (observed 717) and 1819 at 100 mg (observed 1830). At steady state the peak at 100 mg is 299 ng/mL (observed 300).
+Until November 2026 the library used Zhou and colleagues' model of 20 patients given 50 or 100 mg (*Front Endocrinol* 2024), which fitted the same over-proportional exposure with saturable *elimination*. Tested on a study Zhou never saw (Lu 2022, healthy volunteers on 50, 100 and 200 mg daily for a week), it doubles the steady-state exposure at 200 mg: an AUC over a day of 14,900 against the measured 7,790 ng·h/mL. Lu 2024 was fitted to that study, so the study cannot test Lu's model; Zhou's patients can, and Lu's model predicts their AUC within 5 to 22% and their peak concentrations within about 10%, better than Zhou's own model predicts its peak concentrations.
+
+| | Measured | Lu 2024 model |
+|---|---|---|
+| Healthy, 50 mg, day 1 / day 7 | 857 / 1440 | 875 / 1637 |
+| Healthy, 100 mg, day 1 / day 7 | 2280 / 3120 | 2170 / 3273 |
+| Healthy, 200 mg, day 1 / day 7 | 5500 / 7790 | 4904 / 6547 |
+| Type 2 diabetes, 50 mg, day 1 / day 14 | 717 / 1530 | 875 / 1637 |
+| Type 2 diabetes, 100 mg, day 1 / day 14 | 1830 / 3120 | 2170 / 3273 |
+
+AUC over a day, ng·h/mL, for a 70 kg man with **Adjust weight to fat-free mass** unticked.
 
 ### Covariates
 
-None applied. Total bilirubin is in the final model as a covariate on the peripheral volume ("V2 increases with the increase of TBIL"). The paper prints neither the form of the term nor its reference bilirubin, and the Patient Profile has no bilirubin field, so the curve uses the typical peripheral volume. Sex, weight, liver enzymes, lipids, glucose, urea and creatinine were tested and not retained. The volumes, Vmax and the intercompartmental clearance are scaled by the library's fat-free-mass factors; with **Adjust weight to fat-free mass** unticked they are the published values.
+None: the model has none. The volumes, the clearances and the efflux Vmax are scaled by the library's fat-free-mass factors about the reference patient; with **Adjust weight to fat-free mass** unticked they are the published values. Lu prints no demographics; the three studies it pooled do, and one of them is not yet in the archive, so the model is not yet anchored at the cohort's typical subject.
 
 ### Doses
 
-`mg PO` and `mg PO qd`, as the paper gives them; it does not name a salt. Only 50 and 100 mg once daily were studied. With saturable elimination, a curve at any other dose is an extrapolation of the model, not a measurement.
+`mg PO` and `mg PO qd`, as the studies give them; no salt is named. 12.5 to 400 mg were studied.
 
 ### What is not plotted
 
-Concentration only, in ng/mL. The DPP-4 inhibition the paper fitted to the same data is not drawn: a sigmoid Emax model with maximum inhibition 91.8% and a half-maximal concentration of 5.12, whose unit the supplement does not state. See [Antidiabetic models and their limits](help:models/antidiabetics).
+Concentration only, in ng/mL. The DPP-4 inhibition the paper fitted alongside (a sigmoid Emax model, maximum 91.3% and half-maximal concentration 5.69 ng/mL) is not drawn. See [Antidiabetic models and their limits](help:models/antidiabetics).

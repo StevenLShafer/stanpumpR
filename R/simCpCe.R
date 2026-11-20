@@ -604,6 +604,16 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       if (isTRUE(PK$doseDependent) || !is.null(PK$dosePhase) || !is.null(PK$courseSteps))
         stop("Target-controlled infusion is not available for a drug whose ",
              "parameters change with the dose size or during the course.")
+      # Nor while a clinical event or an antiseizure interaction switches the
+      # drug to another PK set: the controller plans on the first, and a
+      # dexmedetomidine target of 0.6 on bypass reached 1.2, a lamotrigine
+      # target of 5 beside valproate 8.8 (Carbon's second repository audit,
+      # 2026-11-19, A2-F9; again only a Drug Library edit offers it).
+      eventSets <- setdiff(PK$pkEvents, PK_EVENT_DEFAULT)
+      if (!is.null(PK$interactionEvents) ||
+          any(gsub(" ", "", as.character(events$Event)) %in% eventSets))
+        stop("Target-controlled infusion is not available while a clinical ",
+             "event or an antiseizure interaction changes the drug's parameters.")
       if (!isTRUE(PK$Concentration.Units %in% c("mcg", "ng")))
         stop("Target-controlled infusion is available only for a drug plotted ",
              "in mcg/mL or ng/mL.")
@@ -614,6 +624,10 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       # individual's curve shows where the patient really was (Shafer,
       # 2026-11-14).
       pump <- if (is.null(PK$tciModel)) PK else PK$tciModel
+      # With a physiology event at time 0 the pump plans on that physiology,
+      # as it plans on the sliders' without events (ChatGPT's review of PR
+      # #796, finding 1: it planned on normal and overshot 5.96 against 3)
+      pump <- physiologyEventPump(pump)
       schedule <- tciSchedule(dose, pump, maximum)
       dose <- schedule$dose
       tci <- tciDisplay(schedule, PK)
@@ -648,6 +662,30 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # one (Add event appends) overrode it (Carbon's fourth UI audit,
     # 2026-11-15, M7).  A table already in order is unchanged.
     events <- events[order(as.numeric(events$Time)), , drop = FALSE]
+
+    # Physiology events (R/physiologyEvents.R): the drug's PK sets were built
+    # once per physiology state and merged, keyed by clinical event and state;
+    # the clinical events and the physiology events are interleaved on one
+    # time line, and the event engine switches between the merged sets,
+    # carrying the amounts across each switch (convertState()).  The
+    # antiseizure interactions, which replace the event table with their own
+    # segments, take precedence (the drug was held at normal physiology).
+    # A rate into the tissue depot (mg/hr RA, or an oral release carried on
+    # it) is one the event engine does not carry (advanceClosedForm1()), so
+    # such a dose table keeps normal physiology throughout and says so,
+    # rather than stopping (ChatGPT's review of PR #796, finding 4).
+    physiologyEventsIgnored <- NULL
+    if (!is.null(PK[["physiologyEvents"]]) && nrow(PK[["physiologyEvents"]]) > 0 &&
+        isTRUE(any(dose$RArate)))
+      physiologyEventsIgnored <- paste("a rate into the tissue depot (an RA infusion or",
+                                       "an extended-release oral form) cannot switch",
+                                       "physiology during a run")
+    if (!is.null(PK[["physiologyEvents"]]) && is.null(PK$interactionEvents) &&
+        nrow(PK[["physiologyEvents"]]) > 0 && is.null(physiologyEventsIgnored))
+    {
+      events <- physiologyEventTimeline(events, PK[["physiologyEvents"]])
+      pkEvents <- names(PK$PK)
+    }
 
     # A drug that forms an active metabolite takes its own route, because the
     # metabolite is advanced alongside the parent over the union of the two
@@ -915,6 +953,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
   out$metaboliteRecoveryStates <- metaboliteRecoveryStates
 
   out$tci              <- tci
+  out$physiologyEventsIgnored <- physiologyEventsIgnored
   out$scheduled        <- expanded$scheduled
 
   return(out)

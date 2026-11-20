@@ -63,10 +63,31 @@ test_that("weight enters clearance as (BW/70)^0.60 and SAPS II stays at 50", {
 })
 
 test_that("with the switch on, clearance uses the pharmacokinetic weight and V the volume factor", {
+  # V is anchored at Abboud's cohort (EPINEPHRINE_COHORT), so the volume
+  # factor is divided by the cohort's; the clearance is not anchored.
+  kc <- cohortFactorsIndependent(EPINEPHRINE_COHORT)
   size <- pkSizeFactors(120, 170, 50, "male", TRUE)
   set <- epinephrine(120, 170, 50, "male", adjustToFFM = TRUE)$PK$default
   expect_equal_rounded(CLH / 60 * (size$pkWeight / 70)^0.60, set$cl1)
-  expect_equal_rounded(V * size$volume, set$v1)
+  expect_equal_rounded(V * size$volume / kc$volume, set$v1)
+})
+
+test_that("anchored at Abboud's cohort: its typical patient receives the published volume (A2-F4)", {
+  # Table 1: 68 kg, 64 years, 25 men and 13 women; NCD-RisC heights for
+  # France, 1942, less the loss with age: 171.7 cm and 159.5 cm.  V carries no
+  # sex term, so the cohort's man and woman sit either side of 7.9 L and
+  # their weighted geometric mean is 7.9 L.
+  m <- epinephrine(68, 171.7, 64, "male")$PK$default
+  w <- epinephrine(68, 159.5, 64, "female")$PK$default
+  expect_equal(exp((25 * log(m$v1) + 13 * log(w$v1)) / 38), V, tolerance = 1e-6)
+  kc <- cohortFactorsIndependent(EPINEPHRINE_COHORT)
+  expect_equal(m$v1, V * ffmRatioMaleIndependent(68, 171.7, 64) / kc$volume,
+               tolerance = 1e-6)
+  # The clearance keeps its own weight term, unanchored
+  expect_equal(m$cl1,
+               CLH / 60 * ffmRatioMaleIndependent(68, 171.7, 64)^0.60, tolerance = 1e-6)
+  # The switch off is unchanged: 7.9 L
+  expect_equal(epinephrine(68, 159.5, 64, "female", adjustToFFM = FALSE)$PK$default$v1, V)
 })
 
 test_that("a steady infusion plateaus at rate / clearance", {

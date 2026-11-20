@@ -82,7 +82,7 @@ const Flat = {
     fits(h) {
         const ctl = this.controlsTop(this.el.clientHeight);
         // A gas run's arrows over the circuit need more room above (gas.js).
-        const top = this.run && this.run.kind === 'gas' ? GAS_TOP : FLAT_TOP;
+        const top = this.run && this.run.kind === 'gas' ? gasTop(this.run) : FLAT_TOP;
         return !(h > 0) || ctl - h - 22 - FLAT_BOTTOM - top >= FLAT_MIN_PLOT;
     },
 

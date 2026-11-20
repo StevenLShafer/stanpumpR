@@ -214,10 +214,11 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
 # hides inside their checkbox group.
 RELEVANT_FIELDS <- unname(c(
   "pregnant", "opioidTolerance", names(PATIENT_FIELD_LABELS), "osmolality",
-  "showMEAC", "opioidMacInteraction",
+  "showMEAC", "opioidMacInteraction", OPIOID_RECEPTOR_INPUT,
   vapply(COMPANION_MODEL_GROUPS, `[[`, character(1), "input"),
   ASM_INTERACTIONS_INPUT,
   "inhaledAgents",
+  "showAdaptation",
   "plotMEAC", "plotInteraction"
 ))
 
@@ -247,12 +248,29 @@ patientFieldReaderSets <- function(drugDefaults = getDrugDefaultsGlobal()) {
 #' drug of its group is dosed, and the antiseizure interactions box when the
 #' table holds an interaction the model applies.
 #'
+#' Two options draw a panel of something that is plotted, and so follow the
+#' drugs that are DRAWN, those given a dose above 0 (`plotted`), rather than
+#' every drug in the table: the Interaction plot needs propofol and an opioid
+#' both drawn (Steven L. Shafer, 2026-11-18: it is for anesthetic drug
+#' interactions, and appeared beside the startup table's drugs at 0), and
+#' Tolerance and tachyphylaxis a drawn drug with an applied adaptation model
+#' (R/pdAdaptation.R).
+#'
 #' @param drugs the drug names in the dose table (blanks are ignored).
 #' @param drugDefaults the session's drug table.
+#' @param plotted the drugs drawn, given a dose above 0 (positiveDoseDrugs()),
+#'   and the metabolites they form, which need no row of their own in the
+#'   dose table (codeine's morphine); by default every drug in `drugs`.
 #' @return a logical vector named by `RELEVANT_FIELDS`.
 #' @noRd
-relevantFields <- function(drugs, drugDefaults = getDrugDefaultsGlobal()) {
+relevantFields <- function(drugs, drugDefaults = getDrugDefaultsGlobal(),
+                           plotted = drugs) {
   drugs <- unique(drugs[!is.na(drugs) & nzchar(drugs)])
+  plotted <- unique(plotted[!is.na(plotted) & nzchar(plotted)])
+  isOpioid <- function(d) {
+    r <- drugDefaults[drugDefaults$Drug %in% d, , drop = FALSE]
+    any(r$Category %in% "Opioids" | (!is.na(r$MEAC) & r$MEAC > 0))
+  }
   rows <- drugDefaults[drugDefaults$Drug %in% drugs, , drop = FALSE]
   readers <- patientFieldReaderSets(drugDefaults)
   reads <- function(arg) any(drugs %in% readers[[arg]])
@@ -267,6 +285,9 @@ relevantFields <- function(drugs, drugDefaults = getDrugDefaultsGlobal()) {
     osmolality      = any(rows$Concentration.Units %in% "mOsm"),
     showMEAC        = opioid,
     opioidMacInteraction = opioid && gas,
+    # offered only while a mu partial agonist or antagonist (buprenorphine,
+    # naloxone) is in the table
+    stats::setNames(any(drugs %in% opioidReceptorSpecialDrugs()), OPIOID_RECEPTOR_INPUT),
     vapply(names(COMPANION_MODEL_GROUPS), function(group)
       any(drugs %in% companionGroupDrugs(group)), logical(1)) |>
       stats::setNames(vapply(COMPANION_MODEL_GROUPS, `[[`, character(1), "input")),
@@ -275,8 +296,10 @@ relevantFields <- function(drugs, drugDefaults = getDrugDefaultsGlobal()) {
     # The physiology controls that act on the inhaled agents only: altitude
     # and endobronchial intubation (R/altitude.R, R/endobronchial.R)
     inhaledAgents   = gas,
+    showAdaptation  = length(pdAdaptationDrugs(plotted, drugDefaults = drugDefaults)) > 0,
     plotMEAC        = opioid,
-    plotInteraction = opioid && "propofol" %in% drugs
+    plotInteraction = "propofol" %in% plotted &&
+                      isOpioid(setdiff(plotted, "propofol"))
   )
   out[RELEVANT_FIELDS]
 }

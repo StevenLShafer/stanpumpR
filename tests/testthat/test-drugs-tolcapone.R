@@ -16,11 +16,35 @@ test_that("Table 3 at the median lean body weight, switch off", {
 test_that("lean body weight 15 kg either side of 55 gives 80% and 119% of CL (the paper)", {
   expect_equal_rounded(0.792, (40 / 55)^TOLCAPONE_CL_LBW, tolerance = 0.001)
   expect_equal_rounded(1.193, (70 / 55)^TOLCAPONE_CL_LBW, tolerance = 0.001)
-  # switch on: James at the pharmacokinetic weight, the library factors on Q and Vp
+  # switch on: James at the pharmacokinetic weight, the library factors on Q and
+  # Vp, relative to Jorga's cohort (TOLCAPONE_COHORT), at which they are anchored
+  kc <- cohortFactorsIndependent(TOLCAPONE_COHORT)
   size <- pkSizeFactors(120, 170, 65, "female", TRUE)
   on <- tolcapone(120, 170, 65, "female", TRUE)$PK$default
   expect_equal(on$cl1 * 60, 4.8 * (lbmJames(size$pkWeight, 170, "female") / 55)^0.73)
-  expect_equal(on$v2, 12 * size$volume)
+  expect_equal(on$v2, 12 * size$volume / kc$volume)
+})
+
+test_that("anchored at Jorga's cohort: its typical patient receives the published Q and Vp (A2-F4)", {
+  # Table 1 (the trial population): 71 kg, 170 cm, 65 years; 262 men and 150
+  # women.  Q and Vp carry no sex term, so the cohort's man and woman sit
+  # either side of the published values and their weighted geometric mean is
+  # the published value; Vc and CL keep their own LBW terms.
+  m <- tolcapone(71, 170, 65, "male")$PK$default
+  w <- tolcapone(71, 170, 65, "female")$PK$default
+  pooled <- function(x, y) exp((262 * log(x) + 150 * log(y)) / 412)
+  expect_equal(pooled(m$v2, w$v2), 12, tolerance = 1e-6)
+  expect_equal(pooled(m$cl2, w$cl2) * 60, 5.2, tolerance = 1e-6)
+  kc <- cohortFactorsIndependent(TOLCAPONE_COHORT)
+  expect_equal(m$v2, 12 * ffmRatioMaleIndependent(71, 170, 65) / kc$volume,
+               tolerance = 1e-6)
+  expect_equal(m$cl1 * 60,
+               4.8 * (lbmJames(70 * ffmRatioMaleIndependent(71, 170, 65), 170, "male") / 55)^0.73,
+               tolerance = 1e-6)
+  # The switch off is unchanged: the published Q and Vp
+  off <- tolcapone(71, 170, 65, "female", FALSE)$PK$default
+  expect_equal(off$v2, 12)
+  expect_equal(off$cl2 * 60, 5.2)
 })
 
 test_that("serum albumin on Vp: (albumin/44 g/L)^2.82, the median when blank", {

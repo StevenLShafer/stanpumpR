@@ -86,6 +86,8 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
 
   # At the body's temperature (gasPropertiesAt()), so the band follows MAC.
   props <- gasPropertiesAt(sim$body$temperature)
+  # (sim$body is the body in force at time 0, an event at 0 included,
+  # advanceClosedFormGas(); ChatGPT's review of PR #796, finding 9)
   xout  <- seq(from = 0, to = maximum, length.out = RESOLUTION)
   out   <- list()
 
@@ -95,8 +97,16 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
     brn <- sim$results[sim$results$Drug == g & sim$results$Site == "Brain", ]
     if (nrow(alv) == 0) next
 
-    # Oxygen has no tissue compartment, so its effect-site series is its
-    # alveolar series: the end-tidal value is the whole of what we model.
+    # Oxygen has no tissue compartment.  Its second line is the ARTERIAL
+    # oxygen tension (R/arterialOxygen.R; Shafer, 2026-11-19): the end-tidal
+    # value itself without a shunt, below it with an endobronchial tube.
+    arterialO2 <- NULL
+    if (g == "oxygen") {
+      arterialO2 <- gasArterialOxygen(sim)
+      if (!is.null(arterialO2))
+        brn <- data.frame(Drug = g, Time = arterialO2$Time, Site = "Brain",
+                          Y = arterialO2$arterial, stringsAsFactors = FALSE)
+    }
     if (nrow(brn) == 0) brn <- alv
 
     # Time until threshold.  Only the soluble agents wash out by the model in
@@ -120,6 +130,8 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
       recovery     = recovery,
       endCe        = if (is.null(recovery)) 0 else endCe
     )
+    # PaO2 and SaO2 for the oxygen panel's hover
+    if (!is.null(arterialO2)) out[[g]]$arterialOxygen <- arterialO2
     # The muscle group (state 4) and the fat group (state 5), the gas's
     # counterparts of V2 and V3, as tensions in % of an atmosphere, for the
     # compartment panels (R/compartments.R).  Oxygen has no tissue states.
@@ -135,7 +147,16 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
         out[[g]]$gasRun <- list(time = sim$timeLine, state = state, body = sim$body,
                                 circuit = sim$circuit, weight = sim$weight, age = sim$age,
                                 Qco = sim$Qco, deadSpace = sim$deadSpace,
-                                gasDose = gasDose)
+                                gasDose = gasDose,
+                                # Physiology events: the bodies, the body of
+                                # each row, and the events themselves
+                                bodySteps = sim$bodySteps, bodyRow = sim$bodyRow,
+                                cardiacOutput = sim$cardiacOutput,
+                                physiologyEvents = sim$physiologyEvents,
+                                # The arterial oxygen where a tube shunts
+                                # blood (R/arterialOxygen.R), for the
+                                # Visualizer's SaO2
+                                arterialOxygen = gasRunArterialOxygen(sim))
     }
   }
 
@@ -252,12 +273,15 @@ gasEntry <- function(drug, alveolar, brain, xout, drugDefaults,
     addNorm("CpNormCe", cp, maxCe), addNorm("CeNormCe", ce, maxCe)
   )
 
+  # A physiology event (R/physiologyEvents.R) repeats its time, before and
+  # after the step: a point at the step reads after it, one before it reads
+  # towards the value before it (seriesStepAt())
   equiSpace <- data.frame(
     Drug     = drug,
     Time     = xout,
-    Ce       = stats::approx(brain$Time, ce, xout, rule = 2)$y,
+    Ce       = seriesStepAt(brain$Time, ce, xout),
     Recovery = if (is.null(recovery)) 0 else
-      stats::approx(alveolar$Time, recovery, xout, rule = 2)$y,
+      seriesStepAt(alveolar$Time, recovery, xout),
     MEAC     = 0,
     stringsAsFactors = FALSE
   )

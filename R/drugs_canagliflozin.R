@@ -65,9 +65,9 @@
 # kept in the final model; no field exists.  The dose term, above.
 #
 # RENAL FUNCTION: the MDRD eGFR, as in the paper (egfrMDRD(), without the race
-# term), at the patient's creatinine (a child's on the adult scale) or an
-# assumed normal creatinine for the patient's age and sex when the field is
-# blank.  The data included severe impairment (eGFR 15-29); median
+# term), at the patient's creatinine or an assumed normal creatinine for the
+# patient's age and sex when the field is blank; from 18 only (below it the
+# paediatric model has no renal term, below).  The data included severe impairment (eGFR 15-29); median
 # dose-normalised AUC was 11, 40 and 29% higher in mild, moderate and severe
 # impairment (Table 6).
 #
@@ -76,7 +76,33 @@
 # at total weight with it off.  BMI acts on the absorption, not on the size,
 # and is the patient's own (total weight / height^2) in both positions, held
 # within the phase I range (18.0 to 44.5) where its steep exponent was
-# fitted.  Age is held at 18 or over: every study enrolled adults.
+# fitted.  The adult covariates apply from 18: every study enrolled adults.
+#
+# UNDER 18: THE PAEDIATRIC COVARIATES (Steven L. Shafer's decision,
+# 2026-11-19).  Goeyvaerts N, Olsson Gisleskog P, Neyens M, et al.
+# Population pharmacokinetics and pharmacodynamics of canagliflozin in
+# paediatric patients with type 2 diabetes mellitus.  Br J Clin Pharmacol
+# 2026;92:3622 (PMID 42388018, read in full with its supplement).  90
+# patients aged 10 to 17 (330 samples) in a phase 1 and a phase 3 study.
+# Hoeben's adult model, every parameter fixed, did not describe them, so the
+# authors removed its covariates one at a time until none could go (p >
+# 0.001).  The final paediatric model (Table 2) keeps Hoeben's parameters
+# and only two covariates: weight on Vc/F, (WT/75.8)^0.583, and total daily
+# dose on ke.  The age term on Vc/F, the eGFR term on ke (the children's
+# median Schwartz eGFR was 160) and the BMI terms on ka and the lag were
+# dropped.  So below the 18th birthday this model applies weight and sex
+# only: Vc/F 99.3 or 82.6 L x (weight/75.8)^0.583, ke 0.145 /h, ka 3.68 /h,
+# lag 0.147 h (the marketed tablet; the paediatric studies gave
+# overencapsulated tablets, whose 0.262 h Goeyvaerts kept).  At 18 the adult
+# covariates take over, so the parameters step there (Vc/F by the age term,
+# (18/45)^-0.167 = 1.165, ke by the eGFR term), which is where the two
+# sources' populations meet.  Below 10 the model is extrapolated.  The dose
+# term Goeyvaerts writes as ke x (TDD/100)^0.0631 is Hoeben's, whose Table 5
+# prints the exponent as -0.0631 and whose Table 6 (7% more exposure at 300
+# than at 100 mg) needs the minus: the sign in Goeyvaerts' table is taken
+# for a dropped minus, and the term stays unapplied (a total daily dose is
+# a property of the regimen, not of a dose), now with its reference dose,
+# 100 mg, printed.
 #
 # CHECKS
 # ======
@@ -102,6 +128,7 @@ CANAGLIFLOZIN_AGE_REF    <- 45    # years, phase I median (stated)
 CANAGLIFLOZIN_BMI_REF    <- 26.1  # kg/m^2, phase I median (ESM 2)
 CANAGLIFLOZIN_WEIGHT_REF <- 75.8  # kg, phase I median (ESM 2)
 CANAGLIFLOZIN_BMI_RANGE  <- c(18.0, 44.5)   # kg/m^2, phase I
+CANAGLIFLOZIN_ADULT_AGE  <- 18    # years: below it, Goeyvaerts 2026's covariates
 
 #' Canagliflozin pharmacokinetics (oral)
 #'
@@ -122,11 +149,14 @@ canagliflozin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   bmi  <- min(max(bmi, CANAGLIFLOZIN_BMI_RANGE[1]), CANAGLIFLOZIN_BMI_RANGE[2])
   egfr <- egfrMDRD(age, sex, adultEquivalentCreatinine(creatinine, age, sex))
 
+  # Under 18, Goeyvaerts 2026's paediatric model: weight and sex only (see
+  # the header), every other covariate at its reference value.
+  child <- age < CANAGLIFLOZIN_ADULT_AGE
   vc <- (if (sex == SEX_FEMALE) 82.6 else 99.3) *
     (pkW / CANAGLIFLOZIN_WEIGHT_REF)^0.583 *
-    (max(age, 18) / CANAGLIFLOZIN_AGE_REF)^-0.167
-  ke <- 0.145 * (egfr / CANAGLIFLOZIN_EGFR_REF)^0.261
-  b  <- bmi / CANAGLIFLOZIN_BMI_REF
+    (if (child) 1 else (age / CANAGLIFLOZIN_AGE_REF)^-0.167)
+  ke <- 0.145 * (if (child) 1 else (egfr / CANAGLIFLOZIN_EGFR_REF)^0.261)
+  b  <- if (child) 1 else bmi / CANAGLIFLOZIN_BMI_REF
   k23 <- 0.101
   k32 <- 0.0856
 
@@ -151,7 +181,8 @@ canagliflozin <- function(weight, height, age, sex, adjustToFFM = TRUE,
       "(age/45)^-0.167, ke 0.145/h x (MDRD eGFR/87)^0.261 from the entered or an ",
       "assumed normal creatinine, k23 0.101/h, k32 0.0856/h; lag 0.147 h, release ",
       "into the gut over 0.604 h, ka 3.68/h x (BMI/26.1)^-1.41 and lag x (BMI/26.1)^1.41; ",
-      "dose term not applied (its reference dose is not printed); concentration only. ",
+      "under 18, Goeyvaerts 2026's paediatric model (weight and sex only); ",
+      "dose term not applied; concentration only. ",
       "https://doi.org/10.1007/s40262-015-0307-x"
     )
   )

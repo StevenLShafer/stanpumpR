@@ -2,7 +2,7 @@ A simulator that is wrong is worse than no simulator. This page says what has be
 
 ## The unit tests
 
-The repository has a test file for every drug (a metabolite or prodrug is tested in its parent's file) and test files for the engines, the input handling, the server and the help, run with `devtools::test()` and, on every pull request, by the R-CMD-check workflow on Linux, macOS and Windows.
+The repository has a test file for every drug (a metabolite or prodrug is tested in its parent's file) and test files for the engines, the input handling, the server and the help, run with `devtools::test()` and, on every pull request, by the R-CMD-check workflow on Linux, and once a week on macOS and Windows.
 
 - **Drug tests** pin each model's parameters at reference patients to the values first computed from the paper, so that a later edit cannot silently change a model. A drug that switches models on a covariate is pinned on both sides of the switch.
 - **Engine tests** check the closed-form advance against known results: a single compartment against its analytic solution, a bolus followed by an infusion against the sum of the two, state carried across an event boundary against a simulation that never had the boundary, oral absorption against the limit of fast absorption.

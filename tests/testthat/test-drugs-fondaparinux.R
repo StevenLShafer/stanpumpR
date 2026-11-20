@@ -62,11 +62,36 @@ test_that("scales to fat-free mass for a 120 kg man", {
   # Simplified MDRD at the assumed 0.9 mg/dL and 50 y: 89.321 mL/min/1.73 m^2.
   # Cl/F = 0.278 x (91.343469/68)^0.534 x (89.321/87)^0.532 x (50/74)^-0.461;
   # V2/F = 8.14 x (91.343469/68)^0.522; V3/F = 15.6 x 1.3049067; Q/F = 0.082 x
-  # 1.2209126.
+  # 1.2209126; V3/F and Q/F then divided by Delavenne's cohort factors
+  # (FONDAPARINUX_COHORT; A2-F4).  CL/F and V2/F carry their own weight term
+  # and are not anchored.
+  kc <- cohortFactorsIndependent(FONDAPARINUX_COHORT)
+  expect_equal(kc$volume, 0.8240388, tolerance = 1e-6)
+  expect_equal(kc$clearance, 0.8648897, tolerance = 1e-6)
   actual <- fondaparinux(120, 170, 50, "male")$PK$default
   expect_equal_rounded(actual[c("v1", "v2", "cl1", "cl2")],
-                       list(v1 = 9.4957311, v2 = 20.356545,
-                            cl1 = 0.0065903437, cl2 = 0.0016685806))
+                       list(v1 = 9.4957311, v2 = 20.356545 / kc$volume,
+                            cl1 = 0.0065903437, cl2 = 0.0016685806 / kc$clearance))
+})
+
+test_that("anchored at Delavenne's cohort: its typical patient receives the published V3/F and Q/F (A2-F4)", {
+  # Table 1 (p. 255), the learning set: 69.6 kg, BMI 26.4 (162.4 cm), 74.4
+  # years, 75% women.  V3/F and Q/F carry no sex term, so they are anchored at
+  # the pooled patient: the cohort's man and woman, weighted 25:75
+  # geometrically, receive the published values.
+  h <- 100 * sqrt(69.6 / 26.4)
+  m <- fondaparinux(69.6, h, 74.4, "male")$PK$default
+  w <- fondaparinux(69.6, h, 74.4, "female")$PK$default
+  pooled <- function(x, y) exp(0.25 * log(x) + 0.75 * log(y))
+  expect_equal(pooled(m$v2, w$v2), 15.6, tolerance = 1e-6)
+  expect_equal(pooled(m$cl2, w$cl2) * 60, 0.082, tolerance = 1e-6)
+  kc <- cohortFactorsIndependent(FONDAPARINUX_COHORT)
+  expect_equal(w$v2, 15.6 * pkSizeFactors(69.6, h, 74.4, "female")$volume / kc$volume,
+               tolerance = 1e-6)
+  # The switch off is unchanged: the published values
+  off <- fondaparinux(69.6, h, 74.4, "female", adjustToFFM = FALSE)$PK$default
+  expect_equal(off$v2, 15.6)
+  expect_equal(off$cl2, 0.082 / 60)
 })
 
 test_that("pregnancy: creatinine clearance x 1.5 when the creatinine is blank", {
@@ -90,12 +115,14 @@ test_that("pregnancy: creatinine clearance x 1.5 when the creatinine is blank", 
   expect_no_match(cr(TRUE)$reference, "Wu Y", fixed = TRUE)
   expect_match(on$reference, "Wu Y", fixed = TRUE)
   expect_no_match(off$reference, "Wu Y", fixed = TRUE)
-  # The values the model gives with the flag on
+  # The values the model gives with the flag on (V3/F and Q/F divided by
+  # Delavenne's cohort factors, A2-F4)
+  kc <- cohortFactorsIndependent(FONDAPARINUX_COHORT)
   actual <- fondaparinux(70, 165, 30, "female", pregnant = TRUE)$PK$default
   expect_equal_rounded(7.384643853, actual$v1)
-  expect_equal_rounded(12.57508283, actual$v2)
+  expect_equal_rounded(12.57508283 / kc$volume, actual$v2)
   expect_equal_rounded(1, actual$v3)
   expect_equal_rounded(0.007754777382, actual$cl1)
-  expect_equal_rounded(0.001162658829, actual$cl2)
+  expect_equal_rounded(0.001162658829 / kc$clearance, actual$cl2)
   expect_equal_rounded(0, actual$cl3)
 })

@@ -9,7 +9,8 @@
 PAPER_REVIEW_SEVERITY_ORDER <- c("error", "concern", "info", "ok")
 PAPER_REVIEW_SEVERITY_LABEL <- c(error = "Error", concern = "Concern", info = "Note", ok = "Checks out")
 PAPER_REVIEW_SECTIONS <- c("Identifiability", "Model", "Internal consistency", "Covariates",
-                           "Assumptions and the library's rules", "Figures", "Claude's reading")
+                           "Assumptions and the library's rules", "Figures", "Front-end kinetics",
+                           "Claude's reading")
 
 paperReviewCss <- function()
   htmltools::tags$style(htmltools::HTML("
@@ -183,19 +184,28 @@ paperReviewReportTags <- function(review, plots = TRUE)
   # No model at all (a document that is not a pharmacokinetic paper): one
   # line, and Claude's own notes, not a review built around nothing ("0
   # compartments", "Drug: (, , other)"; Devin's stress test, 2026-11-08).
-  if (paperReviewNoModel(x))
+  findings <- review$findings
+  counts <- table(factor(vapply(findings, function(f) f$severity, character(1)),
+                         levels = PAPER_REVIEW_SEVERITY_ORDER))
+  countText <- paste(paste(counts, tolower(PAPER_REVIEW_SEVERITY_LABEL[names(counts)])), collapse = ", ")
+  # No pharmacokinetic model: what is about the paper and Claude's notes,
+  # and what Claude read (a response surface's coefficients are still worth
+  # checking against the paper), never the checks of a model.
+  if (isTRUE(review$noModel))
     return(htmltools::div(class = "pr-report", paperReviewCss(),
       quickBanner,
       htmltools::h2("Single Paper Review"),
       if (nzchar(cite)) htmltools::p(htmltools::strong("Document: "), cite),
       htmltools::p(htmltools::strong(
-        "Claude found no pharmacokinetic model in this document, so there is nothing to check.")),
-      lapply(paperReviewClaudeNotes(x), paperReviewFindingTag),
+        "Claude found no pharmacokinetic model in this document, so stanpumpR has no model to check.")),
+      if (length(findings)) htmltools::p(htmltools::strong("Findings: "), countText),
+      lapply(findings, paperReviewFindingTag),
+      if (length(x$parameters %or% list())) htmltools::tagList(
+        htmltools::h3("What Claude extracted"),
+        htmltools::p("Check these against the paper."),
+        paperReviewExtractionTables(x)),
       if (nzchar(x$extraction_limitations %or% ""))
         htmltools::p(htmltools::em("Limitations Claude noted: "), x$extraction_limitations)))
-  findings <- review$findings
-  counts <- table(factor(vapply(findings, function(f) f$severity, character(1)),
-                         levels = PAPER_REVIEW_SEVERITY_ORDER))
   models <- review$models
   body <- if (is.null(models)) {
     paperReviewModelTags(review, PAPER_REVIEW_SECTIONS, findings, plots)
@@ -222,9 +232,7 @@ paperReviewReportTags <- function(review, plots = TRUE)
     htmltools::p(htmltools::strong("Drug: "),
                  paste0(x$drug$name, " (", x$drug$analyte, ", ", x$drug$matrix, ", ",
                         x$drug$concentration_units, ")")),
-    htmltools::p(htmltools::strong("Findings: "),
-                 paste(paste(counts, tolower(PAPER_REVIEW_SEVERITY_LABEL[names(counts)])),
-                       collapse = ", ")),
+    htmltools::p(htmltools::strong("Findings: "), countText),
     body,
     htmltools::h3("What Claude extracted"),
     htmltools::p("Check these against the paper before trusting anything above."),
@@ -233,17 +241,26 @@ paperReviewReportTags <- function(review, plots = TRUE)
       htmltools::p(htmltools::em("Limitations Claude noted: "), x$extraction_limitations))
 }
 
-#' Does the extraction hold no model: no parameter and no structure of one
-#' to three compartments?
+#' Does the extraction hold no pharmacokinetic model?
+#'
+#' A model needs a volume or a clearance, printed as a parameter or derived
+#' (a noncompartmental CL and Vss are enough to review), a published model
+#' it uses, or a front-end model.  A response surface's coefficients, a
+#' regression's slope or a lone "elimination rate" are not one: with them
+#' the paper was reviewed as failing to close a model it never claimed
+#' (Shafer's test of 2026-11-17, BJA-D-26-00577 and ALN-D-25-00690).
 #' @keywords internal
 paperReviewNoModel <- function(x)
 {
-  n <- paperReviewNum(x$structure$compartments)
-  length(x$parameters %or% list()) == 0 && !isTRUE(n %in% 1:3)
+  # A recirculatory or mixing model carries its numbers in front_end and
+  # leaves parameters empty, as the prompt asks.
+  if (paperReviewHasFrontEnd(x)) return(FALSE)
+  !paperReviewOwnModelEvidence(x) && length(x$published_models %or% list()) == 0
 }
 
 # The sections that belong to one model; the rest are about the paper.
-PAPER_REVIEW_MODEL_SECTIONS <- c("Identifiability", "Model", "Internal consistency", "Covariates", "Figures")
+PAPER_REVIEW_MODEL_SECTIONS <- c("Identifiability", "Model", "Internal consistency", "Covariates", "Figures",
+                                 "Front-end kinetics")
 
 #' One model's summary lines and sections
 #' @keywords internal
@@ -252,18 +269,26 @@ paperReviewModelTags <- function(rv, sections, findings, plots)
   x <- rv$extraction
   ref <- rv$reference
   ident <- rv$identifiability
-  verdictText <- c(printed = "The printed parameters close the model.",
-                   derived = paste("The model is closed through", ident$route, "and is stable."),
-                   ill_conditioned = paste("Formally closed through", ident$route, "but ill-conditioned."),
-                   derived_from_curve = paste("The printed numbers do not close the model; it is closed",
-                                              "from", ident$route, "."),
-                   underdetermined = "The paper does not print enough to close the model.")[[ident$verdict]]
-  htmltools::tagList(
-    htmltools::p(htmltools::strong("Model: "),
-                 paste0(x$structure$compartments, " compartment(s), ",
+  # A front-end model the paper prints with no mammillary parameters: no
+  # compartment count or identifiability verdict, which would misdescribe it.
+  modelLine <- if (identical(ident$verdict, "front_end"))
+    paste0("a front-end (", gsub("_", " ", x$front_end$model_type), ") model; the paper prints no mammillary ",
+           "model the checks can close. It is checked in the section ", PAPER_REVIEW_FRONT_END_SECTION, ".")
+  if (is.null(modelLine)) {
+    verdictText <- c(printed = "The printed parameters close the model.",
+                     derived = paste("The model is closed through", ident$route, "and is stable."),
+                     ill_conditioned = paste("Formally closed through", ident$route, "but ill-conditioned."),
+                     derived_from_curve = paste("The printed numbers do not close the model; it is closed",
+                                                "from", ident$route, "."),
+                     underdetermined = "The paper does not print enough to close the model.",
+                     published = "A published model the paper uses as published.")[[ident$verdict]]
+    modelLine <- paste0(x$structure$compartments, " compartment(s), ",
                         gsub("_", " ", x$structure$elimination), " elimination, absorption ",
                         gsub("_", " ", x$structure$absorption), ", effect site ",
-                        gsub("_", " ", x$structure$effect_site), ". ", verdictText)),
+                        gsub("_", " ", x$structure$effect_site), ". ", verdictText)
+  }
+  htmltools::tagList(
+    htmltools::p(htmltools::strong("Model: "), modelLine),
     htmltools::p(htmltools::strong("Reference patient: "),
                  paste0(prFmt(ref$weight), " kg (", ref$source[["weight"]], "), ",
                         prFmt(ref$height), " cm (", ref$source[["height"]], "), ",

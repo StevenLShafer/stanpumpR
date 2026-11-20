@@ -17,7 +17,9 @@ simulateGases(
   physiology = NULL,
   temperature = NULL,
   altitude = NULL,
-  endobronchial = FALSE
+  endobronchial = FALSE,
+  physiologyEvents = NULL,
+  haemoglobin = NULL
 )
 }
 \arguments{
@@ -52,6 +54,18 @@ air and the volume taken up, not the potency}
 \item{endobronchial}{TRUE for an endobronchial tube: one lung ventilated,
 the other perfused and shunting (\code{gasBodyEndobronchial()},
 R/endobronchial.R)}
+
+\item{physiologyEvents}{NULL, or physiologyEventsFrom()'s data frame
+(R/physiologyEvents.R): with any row, physiology is normal from time 0
+and each event's from its time (cardiac output, temperature, altitude
+and intubation, \code{gasBodySteps()}), the agent in each compartment
+carried across each step, and \code{physiology}, \code{temperature},
+\code{altitude}, \code{endobronchial} and \code{haemoglobin} are not used}
+
+\item{haemoglobin}{NULL (15 g/dL), or the haemoglobin, g/dL, of the
+arterial oxygen read off the run (\code{gasArterialOxygen()},
+R/arterialOxygen.R), kept in the body as \code{haemoglobin}; the engine
+does not read it}
 }
 \value{
 \code{NULL} if the dose table contains no gases, otherwise the list

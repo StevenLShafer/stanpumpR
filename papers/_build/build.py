@@ -58,7 +58,28 @@ NONJ = {
     "g:fda-gabapentinoids-2019": ("FDA", "2019", "Drug Safety Communication, December 2019 (gabapentinoids and respiratory depression)", "U.S. Food and Drug Administration (web page)", "https://www.fda.gov/drugs/drug-safety-and-availability"),
 }
 
-PMC_LOG = {e["pmid"]: e for e in json.load(open(os.path.join(SP, "pmc_fetch_log.json"), encoding="utf-8"))} if os.path.exists(os.path.join(SP, "pmc_fetch_log.json")) else {}
+def _pmc_log():
+    """The fetch log, or nothing if it cannot be read.
+
+    An interrupted write could leave this file malformed, and parsing it unguarded would stop
+    the whole workbook rebuild over a provenance file that only adds notes (CodeRabbit, PR
+    #797).  Said out loud rather than swallowed: the rows then silently lose their PMC notes."""
+    p = os.path.join(SP, "pmc_fetch_log.json")
+    if not os.path.exists(p):
+        return {}
+    try:
+        with open(p, encoding="utf-8") as f:
+            # Only records that carry a string `result`: the branches below read it unguarded,
+            # so a half-written record (an interrupted fetch) would stop the whole rebuild --
+            # the opposite of what this function promises (CodeRabbit, PR #797).  fetch_pmc.py
+            # no longer writes one, but a log already on disk may hold it.
+            return {e["pmid"]: e for e in json.load(f) if isinstance(e.get("result"), str)}
+    except Exception as e:                       # noqa: BLE001
+        print("could not read pmc_fetch_log.json (%s); rebuilding without its notes" % e)
+        return {}
+
+
+PMC_LOG = _pmc_log()
 FILED = {e["to"]: e["from"] for e in json.load(open(os.path.join(SP, "filing_log.json"), encoding="utf-8"))} if os.path.exists(os.path.join(SP, "filing_log.json")) else {}
 NJ_MAN = json.load(open(os.path.join(SP, "nonjournal_manifest.json"), encoding="utf-8")) if os.path.exists(os.path.join(SP, "nonjournal_manifest.json")) else {}
 DOI_FILL = json.load(open(os.path.join(SP, "doi_fill.json"), encoding="utf-8"))
@@ -148,6 +169,11 @@ for w in W:
         elif "no PDF" in pl["result"]:
             status = "To download (free at PMC, by hand)" if not in_archive else status
             notes.append("PMC Article Datasets hold only XML/text for this author manuscript; save the PDF from the PMC page or the publisher.")
+        elif pl["result"].startswith("FAILED") and not in_archive:
+            # A per-paper fetch failure is now recorded rather than lost (CodeRabbit, PR #797).
+            # Without this the preserved result lived only in pmc_fetch_log.json, which nobody
+            # reads.  The message is deliberately generic: the exception text belongs in the log.
+            notes.append("The scripted PMC fetch failed on this paper; see _build/pmc_fetch_log.json. Still to download.")
     if qrow:
         notes.append("In ShaferPapers\\shafer-queue.csv (status: %s)." % qrow["status"])
     rows.append({

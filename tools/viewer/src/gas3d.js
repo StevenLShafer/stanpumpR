@@ -404,9 +404,11 @@ Object.assign(View, {
         const vapour = x => `<div class="a">${x.toFixed(1)} <i>${escapeHtml(u.amount)} vapour</i></div>`;
         let html;
         if (kind === 'gv') {
-            const vol = r.volume[k], cap = r.capacity[k];
+            // The lungs' ventilated gas: one lung's while a tube is endobronchial.
+            const one = k === 'lungs' && st.lungsShare < 1;
+            const vol = r.volume[k] * (one ? st.lungsShare : 1), cap = r.capacity[k];
             const size = k === 'circuit' && !(cap > 0) ? 'holds no agent'
-                : k === 'lungs' || k === 'circuit' ? `${vol.toFixed(2)} L of gas`
+                : k === 'lungs' || k === 'circuit' ? `${vol.toFixed(2)} L of gas${one ? ' (one lung ventilated)' : ''}`
                 : `${vol.toFixed(1)} L × ${sig3(r.partition[k])} = ${sig3(cap)} L of gas`;
             // The lungs: arterial blood leaves at their partial pressure, and
             // mixed venous blood arrives at the blue ring's.

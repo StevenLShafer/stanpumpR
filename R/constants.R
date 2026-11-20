@@ -287,6 +287,11 @@ MAX_DOSE_ROWS <- 500L
 MAX_EVENT_ROWS <- 100L
 MAX_TARGET_ROWS <- 20L
 MAX_DOSE_VALUE <- 1e9
+# What a dialog says when it would write the dose table over edits not yet
+# applied (commitDoseTable(); Carbon's second repository audit, A2-F18)
+DOSE_TABLE_UNAPPLIED_MESSAGE <- paste(
+  "The dose table has changes that have not been applied.",
+  "Click Apply Changes, or undo them, and then try again.")
 # The most units one Drug Library edit may add, each of which is simulated
 # once (drugLibraryUnitProblems(); typically 0.01 s each, at most 1.5 s)
 DRUG_LIBRARY_MAX_NEW_UNITS <- 40L
@@ -356,10 +361,10 @@ MAX_BOOKMARK_URL_CHARS <- 8000L
 # How the plot area introduces the error that stopped the simulation
 PLOT_FAILURE_PREFIX <- "The simulation could not be drawn. "
 
-# What the plot area says while no drug has a dose above 0, the drugs it
-# draws (positiveDoseDrugs(), R/drug-pipeline.R; Shafer, 2026-11-16)
+# What the plot area says while the dose table holds no drug (every drug in
+# it is drawn, tableDrugs(), R/drug-pipeline.R; Shafer, 2026-11-19)
 NOTHING_TO_DRAW_MESSAGE <-
-  "Enter a dose or target above 0 in the dose table to see the simulation."
+  "Add a drug to the dose table to see the simulation."
 
 # Be sure there are more items below then potential facets on the simulation plot
 #                     1     2     3     4     5     6     7     8     9    10    11    12    13    14   15
@@ -817,6 +822,13 @@ NORMALIZE_NONE <- "none"
 PLOT_NORMALIZATIONS <- c(NORMALIZE_NONE, "Peak plasma", "Peak effect site")
 PLOT_TYPICAL_CHOICES <- c("none", "Mid", "Range")
 PLOT_LINE_TYPES <- c("blank", "solid", "dashed", "dotted", "dotdash")
+# Shown under Graph Options while the plasma and effect-site lines share a
+# line type, which draws two curves that cannot be told apart (Dennis Fisher,
+# 2026-10-08, who suggested the wording)
+LINETYPE_SAME_MESSAGE <- paste(
+  "Plasma and effect site lines should be displayed with different line",
+  "types; with the same one the two curves cannot be told apart."
+)
 PK_EVENT_DEFAULT <- "default"
 
 PLOT_ID_EVENTS      <- "Events"
@@ -825,6 +837,13 @@ PLOT_ID_INTERACTION <- "Interaction"
 PLOT_NAME_EVENTS      <- "Events"
 PLOT_NAME_MEAC        <- "% MEAC"
 PLOT_NAME_INTERACTION <- "p response"
+
+# Buprenorphine / opioid-receptor interaction panels (R/opioidReceptorInteraction.R)
+OPIOID_RECEPTOR_INPUT  <- "opioidReceptorInteraction"
+PLOT_NAME_OCCUPANCY    <- "receptor occupancy"
+PLOT_NAME_RESP         <- "resp. depression"
+PLOT_NAME_ANALGESIA    <- "analgesia (MEAC eq)"
+OR_FREE_LABEL          <- "free receptor"
 
 # The time line the closed-form engines simulate on (R/simulationTimeGrid.R).
 # PRE_DOSE_OFFSET puts a point just before each dose, where the time until

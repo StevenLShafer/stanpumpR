@@ -1,28 +1,36 @@
 ### The model
 
-Overgaard and colleagues' population analysis of oral semaglutide (*Clin Pharmacokinet* 2021). It used six clinical pharmacology trials, 376 subjects, almost all healthy, given 10 mg tablets co-formulated with 300 mg of SNAC, the absorption enhancer in Rybelsus. Every dose was taken on site, under supervision. The disposition is the two-compartment model fitted to intravenous and subcutaneous data (Overgaard 2019), fixed. The oral data estimated the absorption. The parameter values are in the paper's supplement (ESM Table 1).
+Overgaard and colleagues' population analysis of oral semaglutide in the PIONEER phase 3 trials (*Cell Rep Med* 2021): 10,527 concentrations from 2,345 adults with type 2 diabetes who took Rybelsus at home, as patients do. The disposition and the absorption rate are fixed from the clinical pharmacology model (Overgaard 2019 and 2021). The PIONEER data estimated the bioavailability and what changes it. The parameter values are in the paper's supplement (Supplementary Table 1 and the NONMEM code, Methods S1).
 
-- **Disposition**, at 85 kg: clearance 0.0348 L/h × (weight/85)<sup>1.01</sup>, 9% higher in type 2 diabetes; intercompartmental clearance 0.304 L/h × (weight/85)<sup>1.01</sup>; central volume 3.59 L and peripheral volume 4.1 L, each × (weight/85)<sup>0.923</sup>. The half-life is about a week: 158 h in healthy subjects, 145 h in type 2 diabetes. Steady state takes four to five weeks of daily doses.
-- **Absorption:** first order, 2.09/h. The bioavailability is 0.795% at 85 kg × (weight/85)<sup>0.741</sup>. Under 1% of each tablet reaches the circulation.
+- **Disposition**, at 85 kg: clearance 0.039 L/h × (weight/85)<sup>1.01</sup>; intercompartmental clearance 0.304 L/h × (weight/85)<sup>1.01</sup>; central volume 3.59 L and peripheral volume 4.1 L, each × (weight/85)<sup>0.923</sup>. The half-life is about a week, so steady state takes four to five weeks of daily doses.
+- **Absorption:** first order, 2.09/h. The bioavailability is 0.471% for a woman of 85 kg, × 0.814 in men, × (weight/85)<sup>0.374</sup>. Under half of one percent of each tablet reaches the circulation.
 
-The curve is for the label's dosing conditions: taken fasting, with up to 120 mL of water, at least 30 minutes before food. The paper models both conditions:
+### Why this model: drugs don't work in patients who don't take them
 
-- **Fasting time after the dose:** bioavailability rises with it, to about 1.4% at 120 minutes. It is 40% lower when food comes after 15 minutes.
-- **Water:** taken with 240 mL, bioavailability is 36% lower. It is the same from 50 to 120 mL.
+A second model of the same tablets exists, from the same group: Overgaard and colleagues' analysis of six clinical pharmacology trials (*Clin Pharmacokinet* 2021). Every dose in those trials was taken on site, under supervision. Some trials varied the dosing conditions (15 minutes of fasting, 240 mL of water), and the model estimates the bioavailability at the label's minimum conditions (fasting, with no more than 120 mL of water, and food 30 minutes after the dose): 0.795% at 85 kg. Waiting longer than 30 minutes before eating raises it, to about 1.4% at 120 minutes. For the same patient it gives about twice the exposure of this model. At 14 mg daily, an 88 kg man reaches an average of 29.4 nmol/L on the supervised model and 13.6 nmol/L on this one. The PIONEER patients averaged 14.6 nmol/L (geometric mean).
 
-The Patient Profile has no field for either condition, so neither is applied. Type 2 diabetes is assumed, since the product is indicated for it. A separate re-estimation in 55 patients found bioavailability 16% lower in diabetes, but not significantly, and the paper concludes it does not differ; that factor is not applied.
+Both models describe adults with type 2 diabetes taking the same product. Nothing about the patient tells a clinician which applies, so stanpumpR does not ask. It uses the outpatient model because what separates the two is how the tablet is taken, and patients at home do not take a drug the way a supervised study does. Doses are missed, and conditions as strict as Rybelsus's are not always kept. In ambulatory care, variable adherence rivals pharmacokinetics as the largest source of variation in drug response (Blaschke and colleagues, *Annu Rev Pharmacol Toxicol* 2012). [Cautions](help:cautions) gives the evidence. Overgaard and colleagues leave the cause open: "Whether these observations reflect real problems with drug absorption and/or compliance remains uncertain."
 
-### Supervised trials, not the clinic
+Two consequences:
 
-This model describes doses taken exactly as instructed. In the PIONEER phase 3 trials, where patients dosed themselves, the geometric mean steady-state concentration at 14 mg daily was 14.6 nmol/L (Overgaard, *Cell Rep Med* 2021). This model gives 29.4 nmol/L for an 88 kg patient: twice as much. The PIONEER re-estimate of bioavailability is in that paper's supplement and is not used here. Read the curve as what the tablet delivers under ideal conditions, not as a typical outpatient's exposure.
+- **This curve is still a trial's.** The PIONEER patients were enrolled in clinical trials, where adherence is better than in ordinary practice. A typical clinic patient may absorb less than this curve shows.
+- **For a patient who takes every dose as labelled**, the supervised model predicts about twice this curve's typical exposure. How much of the difference between the two models is missed doses and how much is absorption is not known, and any one patient may be above or below either curve.
 
 ### Covariates
 
-Body weight only. Hepatic and renal impairment, age 65 and over, and sex were tested and removed. Weight acts on clearance, intercompartmental clearance, both volumes and bioavailability, not on the absorption rate. A heavier patient absorbs a larger fraction of the dose, but clearance rises faster, so exposure still falls with weight. The weight term on bioavailability is held to the oral trials' range, 51.1 to 122 kg.
+- **Sex:** men absorb 19% less (× 0.814).
+- **Weight** acts on clearance, intercompartmental clearance, both volumes and bioavailability. A heavier patient absorbs a slightly larger fraction of the dose, but clearance rises faster, so exposure falls with weight.
+
+Age, Black race, Hispanic ethnicity, renal function and dose were tested and not kept. Two covariates the paper kept are not applied, because the Patient Profile has no field for them:
+
+- **Asian race:** bioavailability × 1.10.
+- **Upper GI disease** (mostly gastro-oesophageal reflux): bioavailability × 1.13.
+
+The curve is therefore for a patient with neither. The paper's corrections for two individual trials, PIONEER 3 and 5, are not applied either.
 
 ### Variability
 
-Bioavailability varies 53.5% between people and 137% from one dose to the next, the largest variability of any drug in the library. With a half-life of a week, daily dosing averages much of it out: within one person, steady-state exposure varies about 33%. The curve is the typical patient and does not show this spread.
+Bioavailability varies 84% between patients, the largest variability of any drug in the library. With a half-life of a week, daily dosing averages out much of the day-to-day variation. The curve is the typical patient and does not show this spread.
 
 ### Product
 

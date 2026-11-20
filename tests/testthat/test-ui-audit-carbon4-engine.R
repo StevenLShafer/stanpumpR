@@ -164,8 +164,12 @@ test_that("dexmedetomidine across bypass is unchanged by the event lookups (C3)"
   # Pinned on 2026-11-17
   expect_equal(nrow(x), 214)
   expect_equal(sum(x$Plasma), 85.41218070878989, tolerance = 1e-9)
-  expect_equal(sum(x$`Effect Site`), 84.786730968178745, tolerance = 1e-9)
-  expect_equal(sum(x$Recovery, na.rm = TRUE), 5129.2688691126586, tolerance = 1e-9)
+  # The effect site and the time until threshold repinned on 2026-11-19, when
+  # the event engine's effect site became exact (effectSiteExact(); before,
+  # calculateCe() interpolated the plasma between points): 84.786730968178745
+  # and 5129.2688691126586, a change of 1.1e-5 and 2.3e-7
+  expect_equal(sum(x$`Effect Site`), 84.785788736808087, tolerance = 1e-9)
+  expect_equal(sum(x$Recovery, na.rm = TRUE), 5129.2700617314485, tolerance = 1e-9)
 })
 
 # --- C3: the time until threshold of the interactions ------------------------
@@ -282,8 +286,11 @@ test_that("the saturable engine's derivative reads a small frame and keeps its b
                    stringsAsFactors = FALSE)
   for (run in 1:2) simulatedFor(DT, 2880)
   deriv <- seen[[2]]
-  # Its frame holds the run's constants, not the engine's 110 variables
-  expect_lt(length(ls(environment(deriv), all.names = TRUE)), 45)
+  # Its frame holds the run's constants, not the engine's 110 variables.  The
+  # bound is a fence between those two sizes, not a count: it was set with no
+  # room at 44 names, and raised to 50 when the saturable efflux (cetagliptin,
+  # 2026-11-19) added one more constant
+  expect_lt(length(ls(environment(deriv), all.names = TRUE)), 50)
   expect_true(all(c("V", "ka", "rmaxP", "koffT") %in% ls(environment(deriv))))
   # Compiled in the second simulation as in the first: moved into a frame of
   # its own with environment<-, it lost its byte code and the JIT did not

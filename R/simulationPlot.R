@@ -47,11 +47,13 @@ simulationPlot <- function(
   normalization = c(NORMALIZE_NONE),
   plotMEAC = FALSE,
   plotInteraction = FALSE,
+  opioidReceptor = NULL,
   plotCost = FALSE,
   plotEvents = FALSE,
   plotRecovery = FALSE,
   plotMEACOverlay = FALSE,
   plotCompartments = FALSE,
+  plotAdaptation = FALSE,
   typical = c("Mid"),
   logY = FALSE,
   yAxisHeight = 150,
@@ -78,8 +80,8 @@ simulationPlot <- function(
 
   outputComments("Entering simulationPlot", level = DEBUG_LEVEL_VERBOSE)
 
-  # Nothing to draw: no drug was given a dose above 0 (drawnDrugEntries(),
-  # R/drug-pipeline.R), the state of the opening table until a dose is typed
+  # Nothing to draw: the dose table holds no drug (tableDrugs(),
+  # R/drug-pipeline.R), an empty opening table
   if (length(drugs) == 0) return(NULL)
 
   # Step D1: create plotTable from `drugs`
@@ -183,6 +185,7 @@ simulationPlot <- function(
       plotMEACOverlay <- FALSE
       plotInteraction <- FALSE
       plotCompartments <- FALSE
+      plotAdaptation <- FALSE
     },
     "Peak effect site" = {
       allResults <- allResults[allResults$Site == "CpNormCe" | allResults$Site == "CeNormCe",]
@@ -193,6 +196,7 @@ simulationPlot <- function(
       plotMEACOverlay <- FALSE
       plotInteraction <- FALSE
       plotCompartments <- FALSE
+      plotAdaptation <- FALSE
     }
   )
 
@@ -225,7 +229,9 @@ simulationPlot <- function(
   # panels are placed on a linear one; the app hides Log Y while they are on
   # (app_ui()) and passes FALSE, and a caller of its own is held to the same
   # rule (Carbon's third UI audit, 2026-11-15, M6)
-  if (plotRecovery || plotMEACOverlay || plotEvents || plotInteraction) logY <- FALSE
+  # The tolerance and tachyphylaxis panels run from 0 to 100% on a linear
+  # axis (R/pdAdaptation.R), so they turn it off too
+  if (plotRecovery || plotMEACOverlay || plotEvents || plotInteraction || plotAdaptation) logY <- FALSE
 
   # Step D3: extend plotTable
 
@@ -309,7 +315,8 @@ simulationPlot <- function(
   plotTable$xmin <- minimum
   plotTable$xmax <- maximum
 
-  addPlots <- plotMEAC + plotInteraction + plotCost + plotEvents
+  addPlots <- plotMEAC + plotInteraction + plotCost + plotEvents +
+    (if (!is.null(opioidReceptor)) 3L else 0L)   # occupancy, respiratory, analgesia
 
   # Step D4: finish plotTable apart from extensions below
 
@@ -508,6 +515,47 @@ simulationPlot <- function(
     }
   }
 
+  # Buprenorphine / opioid-receptor interaction panels
+  # (R/opioidReceptorInteraction.R): one physical occupancy, drawn as occupancy,
+  # respiratory depression and analgesia (MEAC-equivalents).
+  if (!is.null(opioidReceptor))
+  {
+    orT <- opioidReceptor$Time
+    orSeries <- function(drug, y, wrap)
+      data.frame(Drug = drug, Time = orT, Y = y, Site = "Effect Site",
+                 Wrap = wrap, Label = "")
+    orPanelRow <- function(drug, color, units, wrap) {
+      np <- plotTable[1, ]
+      np$Drug <- drug; np$drugColor <- color; np$Concentration.Units <- units
+      np$y <- 0; np$ymin <- 0; np$ymax <- 0; np$Wrap <- wrap; np$endCe <- 0
+      np
+    }
+    # Occupancy panel: one line per ligand (physical occupancy, %) + free.  The
+    # ligand lines reuse the drug names so they inherit each drug's colour.
+    for (i in seq_along(opioidReceptor$ligands))
+      plotResults <- rbind(plotResults, orSeries(opioidReceptor$ligands[i],
+                           opioidReceptor$rho[, i] * 100, PLOT_NAME_OCCUPANCY))
+    plotResults <- rbind(plotResults, orSeries(OR_FREE_LABEL,
+                         opioidReceptor$rho0 * 100, PLOT_NAME_OCCUPANCY))
+    plotTable <- rbind(plotTable, orPanelRow(OR_FREE_LABEL, "grey70", "%", PLOT_NAME_OCCUPANCY))
+
+    # Respiratory depression panel (% of baseline ventilation lost)
+    plotResults <- rbind(plotResults, orSeries(PLOT_NAME_RESP,
+                         opioidReceptor$ventilation * 100, PLOT_NAME_RESP))
+    plotTable <- rbind(plotTable, orPanelRow(PLOT_NAME_RESP, "firebrick", "%", PLOT_NAME_RESP))
+
+    # Analgesia panel (MEAC-equivalents): total, plus the available-drive odds
+    # (the full-agonist-only drive that is getting through the blockade)
+    plotResults <- rbind(plotResults, orSeries(PLOT_NAME_ANALGESIA,
+                         opioidReceptor$analgesia, PLOT_NAME_ANALGESIA))
+    plotTable <- rbind(plotTable, orPanelRow(PLOT_NAME_ANALGESIA, "darkgreen", "MEAC", PLOT_NAME_ANALGESIA))
+    if (any(opioidReceptor$availableDrive > 1e-6)) {
+      plotResults <- rbind(plotResults, orSeries("available drive",
+                           opioidReceptor$availableDrive, PLOT_NAME_ANALGESIA))
+      plotTable <- rbind(plotTable, orPanelRow("available drive", "orange", "MEAC", PLOT_NAME_ANALGESIA))
+    }
+  }
+
   # Step B4 and D7: add Events
 
   if (plotEvents)
@@ -694,6 +742,50 @@ simulationPlot <- function(
     }
   }
 
+  # Step B4d and D7d: add the tolerance and tachyphylaxis panels
+
+  # With "Tolerance and tachyphylaxis" ticked (R/pdAdaptation.R), each drug
+  # with an applied adaptation row gets a panel directly under its own (and
+  # its compartments), "<drug> tachyphylaxis" or "<drug> tolerance": the share
+  # of the naive potency (or effect) left, from 100% down.  Read off the drug's own
+  # simulated concentrations, so nothing is simulated again.  Not under
+  # normalization (Step C2 turns it off).
+  if (plotAdaptation && !is.null(panelUnits))
+  {
+    for (drug in as.character(plotTable$Drug[plotTable$Drug %in% names(panelUnits)]))
+    {
+      row <- pdAdaptationRow(drug, drugDefaults = drugDefaults)
+      if (is.null(row)) next
+      entry <- purrr::detect(drugs, \(x) identical(x$drug, drug))
+      series <- pdAdaptationSeries(entry, row)
+      if (is.null(series)) next
+      series <- series[series$Time <= maximum, ]
+      name <- pdAdaptationName(drug, row)
+      units <- pdAdaptationUnits(row)
+      wrap <- paste0(name, "\n(", units, ")")
+      plotResults <- rbind(plotResults, data.frame(
+        Drug = name, Time = series$Time, Y = series$Y,
+        Site = "Compartment", Wrap = wrap, Label = ""
+      ))
+      newplotTable <- plotTable[plotTable$Drug == drug, ][1, ]
+      newplotTable$Drug <- name
+      newplotTable$Concentration.Units <- units
+      newplotTable$typical <- 0
+      newplotTable$lowerTypical <- 0
+      newplotTable$upperTypical <- 0
+      newplotTable$y <- 0
+      newplotTable$ymin <- 0
+      newplotTable$ymax <- 0
+      newplotTable$MEAC <- 0
+      newplotTable$Wrap <- wrap
+      newplotTable$endCe <- 0
+      newplotTable$MaxRecovery <- 0
+      newplotTable$MaxCp <- 100
+      newplotTable$MaxCe <- 100
+      plotTable <- rbind(plotTable, newplotTable)
+    }
+  }
+
   # The companions' rate series take their colours and legend order from the
   # companion table too, under the parent's rate series
   if (nrow(companions) > 0)
@@ -721,6 +813,8 @@ simulationPlot <- function(
   # (propofol, propofol V2, propofol V3, propofol TCI).
   drugFactors <- c(do.call(rbind, c(list(drugDefaults$Drug),
                                     lapply(COMPARTMENT_PANELS, \(comp) paste(drugDefaults$Drug, comp)),
+                                    list(paste(drugDefaults$Drug, "tolerance"),
+                                         paste(drugDefaults$Drug, "tachyphylaxis")),
                                     list(paste(drugDefaults$Drug, "TCI")))),
                    "total opioid", PLOT_NAME_INTERACTION, "Recovery", PLOT_NAME_EVENTS)
   plotTable$Factor <- factor(plotTable$Drug, levels = drugFactors, ordered = TRUE)
@@ -893,7 +987,8 @@ simulationPlot <- function(
     ggplot2::scale_color_manual(
       values = drugColors,
       breaks = drugFactors[!grepl(" TCI$", drugFactors) &
-                           is.na(compartmentSeries(drugFactors)$drug)]
+                           is.na(compartmentSeries(drugFactors)$drug) &
+                           is.na(pdAdaptationSeriesDrug(drugFactors, drugDefaults))]
     ) +
     ggplot2::scale_fill_manual(values=drugColors)  +
     ggplot2::scale_alpha_manual(values = c(plotTable$alpha, 0.5)) +
@@ -934,6 +1029,11 @@ simulationPlot <- function(
       lowest <- min(c(panelY, plotTable$ymin[i], plotTable$ymax[i]), na.rm = TRUE)
       yFloor$Y[i] <- 10 * floor((lowest - 5) / 10)
     }
+    # A tolerance or tachyphylaxis panel always runs from 0 to 100% (R/pdAdaptation.R),
+    # so a small loss is not stretched to fill it
+    adaptationRows <- plotTable$Concentration.Units %in% PD_ADAPTATION_UNITS
+    if (any(adaptationRows))
+      yFloor <- rbind(yFloor, data.frame(Wrap = plotTable$Wrap[adaptationRows], Y = 100))
     plotObject <- plotObject +
       ggplot2::geom_blank(data = yFloor, ggplot2::aes(y = Y), inherit.aes = FALSE) +
       ggplot2::scale_y_continuous()

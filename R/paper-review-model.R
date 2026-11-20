@@ -218,6 +218,78 @@ paperReviewParameterValue <- function(extraction, role, weight, route = NULL)
 
 # --- Covariates -------------------------------------------------------------
 
+#' Which of two parameter names is a man's and which a woman's
+#'
+#' @param names the names as printed
+#' @returns a list: \code{ok} (exactly two names, one for each sex),
+#'   \code{male}, \code{female} (their indices)
+#' @keywords internal
+paperReviewSexOf <- function(names)
+{
+  male <- grepl("\\b(male|males|men|man|boys?)\\b|[(\\[,;]\\s*M\\s*[)\\],;]|\\sM$", names,
+                ignore.case = FALSE, perl = TRUE) |
+    grepl("\\b(male|males|men|man|boys?)\\b", names, ignore.case = TRUE, perl = TRUE)
+  female <- grepl("\\b(female|females|women|woman|girls?)\\b", names, ignore.case = TRUE, perl = TRUE) |
+    grepl("[(\\[,;]\\s*F\\s*[)\\],;]|\\sF$", names, perl = TRUE)
+  ok <- length(names) == 2 && sum(male & !female) == 1 && sum(female & !male) == 1
+  list(ok = ok, male = which(male & !female), female = which(female & !male))
+}
+
+#' Read a parameter printed once for men and once for women as a sex effect
+#'
+#' A paper may print a parameter twice, for each sex (Q 0.66 l/kg/min in
+#' males, 0.56 in females), rather than as a covariate equation.  Read as
+#' two values of one parameter, the second was reported as a conflict and
+#' the sex difference dropped (Shafer's test of 2026-11-17, his own oxytocin
+#' paper).  The man's value becomes the typical value and the woman's a
+#' category multiplier on sex_female, said in the extraction's limitations;
+#' the woman's entry stays in the extraction tables, as role "other".  Only
+#' when the two are in the same units and no sex effect on the role is
+#' recorded already.
+#'
+#' @param extraction the extraction
+#' @returns the extraction
+#' @keywords internal
+paperReviewSexValues <- function(extraction)
+{
+  params <- extraction$parameters %or% list()
+  if (!length(params)) return(extraction)
+  said <- character(0)
+  roleOf <- function(p) if (is.list(p) && is.character(p$role)) p$role[1] else ""
+  groupOf <- function(p) if (is.list(p) && is.character(p$group)) p$group[1] else ""
+  for (role in setdiff(PAPER_REVIEW_ROLES, "other"))
+  for (g in unique(vapply(params, groupOf, ""))) {
+    idx <- which(vapply(params, function(p) identical(roleOf(p), role) && identical(groupOf(p), g) &&
+                          is.null(p$regimen_id), logical(1)))
+    if (length(idx) != 2) next
+    sex <- paperReviewSexOf(vapply(params[idx], function(p) p$name_in_paper %or% "", ""))
+    if (!sex$ok) next
+    m <- params[[idx[sex$male]]]; f <- params[[idx[sex$female]]]
+    vm <- paperReviewNum(m$value); vf <- paperReviewNum(f$value)
+    if (!identical(m$units, f$units) || !is.finite(vm) || !is.finite(vf) || vm <= 0 || vf <= 0) next
+    already <- Filter(function(e) identical(e$parameter_role, role) &&
+                        (e$covariate %or% "") %in% c("sex_female", "sex_male") &&
+                        (is.null(e$group) || identical(e$group %or% "", g)),
+                      extraction$covariate_effects %or% list())
+    if (length(already)) next
+    params[[idx[sex$female]]]$role <- "other"
+    # The man's value first, so that it is the one the review reads.
+    params[idx] <- list(m, params[[idx[sex$female]]])
+    extraction$covariate_effects <- c(extraction$covariate_effects %or% list(), list(list(
+      parameter_role = role, group = if (nzchar(g)) g else NULL, covariate = "sex_female",
+      form = "category_multiplier", coefficient = vf / vm, reference_value = NULL,
+      covariate_units = "",
+      equation_as_printed = paste0(m$name_in_paper %or% role, " ", m$value_text %or% vm, "; ",
+                                   f$name_in_paper %or% role, " ", f$value_text %or% vf),
+      location = paste(unique(c(m$location, f$location)), collapse = "; "))))
+    said <- c(said, paste0(role, if (nzchar(g)) paste0(" (", g, ")"), " is printed for men (",
+                           m$value_text %or% vm, ") and women (", f$value_text %or% vf,
+                           "); the review reads it as a sex effect, women x ", prFmt(vf / vm), "."))
+  }
+  extraction$parameters <- params
+  paperReviewAddLimitation(extraction, said)
+}
+
 #' The patient the paper's typical values describe
 #'
 #' Each covariate's printed reference value where there is one, else the
@@ -272,6 +344,7 @@ paperReviewCovariateValue <- function(covariate, patient)
     height = patient$height,
     age = patient$age,
     sex_female = as.numeric(identical(patient$sex, "female")),
+    sex_male = as.numeric(identical(patient$sex, "male")),
     bmi = patient$weight / (patient$height / 100)^2,
     lean_body_mass = lbmJames(patient$weight, patient$height, patient$sex),
     fat_free_mass = ffmAlSallami(patient$weight, patient$height, patient$age, patient$sex),
@@ -476,8 +549,21 @@ paperReviewDrug <- function(extraction, patient, closed = NULL, absorption = NUL
 
   model <- list(PK = list(default = set), reference = "Single Paper Review (in memory)")
   effect <- extraction$structure$effect_site %or% "none"
+  # The effect site takes its covariates as the disposition does: they were
+  # read and never applied, so a ke0 printed for a 20-year-old was compared
+  # with the reference's (Shafer's test of 2026-11-17, ke0 = 0.221 x
+  # (1 - 0.00979 (AGE - 54)) x (1 + 0.231 SEX)).
+  effectMultiplier <- function(role) {
+    m <- suppressWarnings(paperReviewRoleMultiplier(extraction, role, patient, reference))
+    if (is.finite(m) && m > 0) return(m)
+    problems <<- c(problems, paste0("The covariate equation for ", role, " gives ", prFmt(m),
+                                    " for this patient; it is not applied."))
+    1
+  }
   ke0 <- paperReviewParameterValue(extraction, "ke0", patient$weight)$value
   tPeak <- paperReviewParameterValue(extraction, "tPeak", patient$weight)$value
+  if (identical(effect, "ke0") && is.finite(ke0) && ke0 > 0) ke0 <- ke0 * effectMultiplier("ke0")
+  if (identical(effect, "tpeak") && is.finite(tPeak) && tPeak > 0) tPeak <- tPeak * effectMultiplier("tPeak")
   if (identical(effect, "ke0") && is.finite(ke0) && ke0 > 0) {
     model$ke0 <- ke0
   } else if (identical(effect, "tpeak") && is.finite(tPeak) && tPeak > 0) {

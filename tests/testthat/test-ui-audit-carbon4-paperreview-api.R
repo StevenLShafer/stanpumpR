@@ -154,6 +154,9 @@ test_that("H5: choosing a new file drops what its field held before the file arr
     # After Discard nothing is said to have been held.
     session$setInputs(manuscriptChosen = 2)
     session$setInputs(discard = 1)
+    # (a file chosen after Discard: one still arriving from before it is
+    # dropped unread, test-paper-review-privacy.R)
+    session$setInputs(manuscriptChosen = 3)
     session$setInputs(manuscript = upload4(charToRaw("not a pdf")))
     expect_match(output$status, "^The manuscript is not a PDF and was discarded\\.$")
   })

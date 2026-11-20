@@ -188,8 +188,9 @@ seriesAt <- function(results, site, x)
 {
   r <- results[results$Site == site, c("Time", "Y")]
   if (sum(!is.na(r$Y)) < 2) return(NA_real_)
-  stats::approx(r$Time, r$Y, xout = x, rule = 2, ties = mean,
-                na.rm = FALSE)$y
+  # A repeated time (a step) reads its value after the step
+  # (seriesStepAt(), R/physiologyEvents.R)
+  seriesStepAt(r$Time, r$Y, x)
 }
 
 # A derived panel's series (rows of plotResults: Time, Y), interpolated at

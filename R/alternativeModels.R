@@ -476,22 +476,26 @@ alternativeModelProblems <- function(drugs, weight, height, age, sex, pregnant =
 alternativeModelEntry <- function(drug, weight, height, age, sex, drugDefaults,
                                   adjustToFFM = TRUE, pregnant = FALSE,
                                   cyp2c9 = CYP2C9_DEFAULT, vkorc1 = VKORC1_DEFAULT,
-                                  physiology = NULL) {
+                                  physiology = NULL, physiologyEvents = NULL) {
   if (!is.null(alternativeModelProblem(drug, weight, height, age, sex, pregnant,
                                        cyp2c9 = cyp2c9, vkorc1 = vkorc1))) return(NULL)
   spec <- ALTERNATIVE_MODELS[[drug]]
   model <- alternativeModelOutput(drug, weight, height, age, sex, pregnant,
                                   cyp2c9 = cyp2c9, vkorc1 = vkorc1,
                                   adjustToFFM = adjustToFFM)
-  entry <- getDrugPK(
+  build <- function(phys) getDrugPK(
     drug = drug,
     weight = weight, height = height, age = age, sex = sex,
     drugDefaults = drugDefaults,
     adjustToFFM = adjustToFFM,
     pregnant = pregnant,
     model = model,
-    physiology = physiology
+    physiology = phys
   )
+  # With physiology events, the companion steps with its parent
+  # (R/physiologyEvents.R)
+  entry <- if (!is.null(physiologyEvents) && nrow(physiologyEvents) > 0)
+    physiologyEventPK(build, physiologyEvents) else build(physiology)
   entry$drug        <- alternativeModelName(drug)
   entry$companionOf <- drug
   entry$modelLabel  <- spec$label

@@ -38,7 +38,7 @@ test_that("the drug pickers are alphabetical, and a click still finds its drug's
       sex = "male", showThreshold = FALSE, normalization = "none", typical = "Range", logY = FALSE
     )
     startFormatFromInputs(session)
-    # Each drug with a dose above 0, which only are drawn
+    # Each drug with a dose above 0
     dt <- doseTableInit
     dt$Dose[dt$Drug != ""] <- "1"
     doseTable(dt)

@@ -40,7 +40,7 @@ PAPER_REVIEW_TIME_UNITS <- c("s", "min", "h", "day", "week")
 PAPER_REVIEW_ROUTES <- c("iv_bolus", "iv_infusion", "oral", "im", "sc",
                          "intranasal", "sublingual", "other")
 
-PAPER_REVIEW_COVARIATES <- c("weight", "height", "age", "sex_female", "bmi",
+PAPER_REVIEW_COVARIATES <- c("weight", "height", "age", "sex_female", "sex_male", "bmi",
                              "lean_body_mass", "fat_free_mass",
                              "creatinine_clearance", "egfr",
                              "serum_creatinine", "postmenstrual_age", "other")
@@ -102,10 +102,14 @@ PAPER_REVIEW_NUMERIC_FIELDS <- c(
   "error_lower", "error_upper", "group1_value", "group1_se", "group2_value",
   "group2_se", "difference", "difference_se", "p_value", "analyte_fraction",
   "interval", "decrement_percent", "reading_precision", "y_axis_max", "x_axis_max",
-  "weight", "height", "age", "infusion_minutes")
+  "weight", "height", "age", "infusion_minutes",
+  # the front-end block (R/paper-review-front-end.R)
+  "flow_fraction", "compartments", "exchanging_fraction", "partition")
 # Optional strings: NULL when empty.
 PAPER_REVIEW_OPTIONAL_STRINGS <- c("title", "first_author", "journal", "doi",
                                    "pd_model", "regimen_id", "group")
+# Top-level blocks a reply may lack without that being reported.
+PAPER_REVIEW_OPTIONAL_TOP_LEVEL <- c("front_end", "published_models")
 # Optional enums: NULL when "none".
 PAPER_REVIEW_OPTIONAL_ENUMS <- c("route", "decrement_site", "concentration_site", "sex")
 
@@ -273,7 +277,9 @@ paperReviewSchema <- function()
     covariate_effects = schemaArray(schemaObject(list(
       parameter_role      = schemaChoice(PAPER_REVIEW_ROLES),
       group               = schemaGroup(),
-      covariate           = schemaChoice(PAPER_REVIEW_COVARIATES),
+      covariate           = schemaChoice(PAPER_REVIEW_COVARIATES, paste(
+        "sex_female is 1 for a woman and 0 for a man; sex_male is 1 for a man and 0 for a woman.",
+        "Use whichever the paper's indicator is.")),
       form                = schemaEnum(PAPER_REVIEW_COVARIATE_FORMS,
                                        "power: (cov/ref)^coef; linear: 1 + coef (cov - ref); exponential: exp(coef (cov - ref)); category_multiplier: coef multiplies the parameter in the category named by covariate."),
       coefficient         = schemaNullable(schemaNumber()),
@@ -390,6 +396,8 @@ paperReviewSchema <- function()
                              "Which analyte the series plots: the modelled drug, a metabolite, or anything else."),
         regimen_id = schemaNullable(schemaString(
           "The regimen this series shows, when a figure shows several; empty to use the figure's.")),
+        sampling_site = schemaEnum(PAPER_REVIEW_SAMPLING_SITES,
+                                   "Where the blood was drawn: arterial, venous or mixed venous, as the paper says."),
         points = schemaArray(schemaObject(list(
           time        = schemaNumber(),
           value       = schemaNumber(),
@@ -436,9 +444,20 @@ paperReviewSchema <- function()
       finding  = schemaString(),
       location = schemaLocation()
     ))),
+    published_models = schemaArray(schemaObject(list(
+      name     = schemaString("The published model as the paper names it, e.g. 'Eleveld 2018' or 'Schnider 1998'."),
+      drug     = schemaString("The drug it describes."),
+      group    = schemaGroup(),
+      location = schemaLocation()
+    )), paste(
+      "Each published model the paper USES as published (to simulate, to set a target, to",
+      "compare with) rather than estimates from its own data. Empty when every model is the",
+      "paper's own.")),
+    front_end = paperReviewFrontEndSchema(),
     extraction_limitations = schemaString("What could not be read, or was read with low confidence.")
   ))
 }
+
 
 #' The instructions sent with the manuscript
 #'
@@ -463,6 +482,14 @@ paperReviewSystemPrompt <- function()
     "- Parameters are the typical values at the reference covariates. Record",
     "  each covariate effect in the closed forms the schema allows; if an",
     "  equation fits none of them, use form 'other' and copy it as printed.",
+    "  An equation that multiplies several factors is one covariate effect per",
+    "  factor, all on the same parameter: ke0 = 0.221 x (1 - 0.00979 (AGE - 54)) x",
+    "  (1 + 0.231 SEX) with SEX 1 for men is ke0 0.221 with a linear effect of age",
+    "  (coefficient -0.00979, reference 54) and a linear effect of sex_male",
+    "  (coefficient 0.231, reference 0).",
+    "- A published model the paper uses as published (Eleveld, Schnider, Minto,",
+    "  Marsh, ...) rather than estimates goes in published_models. Do not copy its",
+    "  parameters from a figure or rebuild it from the paper's simulations.",
     "- Derived quantities are everything the paper reports that follows from",
     "  the parameters: half-lives, exponents, coefficients, micro constants,",
     "  V1, Vss, CL, AUC, Cmax, tmax, tPeak, ke0. Say whether each is a typical",
@@ -500,5 +527,6 @@ paperReviewSystemPrompt <- function()
     "- reviewer_notes: anything a careful pharmacokinetic reviewer would raise",
     "  (misprints, inconsistencies, unclear dose basis, unjustified claims),",
     "  each with its location. Be specific and do not pad.",
+    PAPER_REVIEW_FRONT_END_RULE,
     sep = "\n")
 }

@@ -464,7 +464,14 @@ paperReviewServer <- function(input, output, session)
   # Stops the background process of the review now running, if any.  Its
   # promise then fails, and the status observer below tidies up as for any
   # failed review; an answer was not awaited, so nothing is shown.
+  # The review it stops is marked as unwanted first (running$cancelled, its
+  # generation), so that one still waiting on the shared key's count, or
+  # whose background process has not yet started, is not sent when it gets
+  # there: a Discard, or the page closed, in those seconds stopped nothing,
+  # and the manuscript was sent and the review counted after "Nothing about
+  # the paper remains" (Carbon's second repository audit, 2026-11-19, A2-F13).
   stopRunningReview <- function() {
+    running$cancelled <- running$generation
     stopFn <- running$stop
     running$stop <- NULL
     if (is.function(stopFn)) tryCatch(stopFn(), error = function(e) FALSE)
@@ -472,10 +479,22 @@ paperReviewServer <- function(input, output, session)
   }
   reviewTask <- shiny::ExtendedTask$new(function(pdf, supplement, key, inferenceGeo, shared, effort, admitted) {
     running$stop <- NULL
-    send <- function(...) paperReviewTrackUse(
-      paperReviewExtractAsync(pdf, supplement, key = key, inferenceGeo = inferenceGeo, effort = effort,
-                              onJob = function(stop) running$stop <- stop),
-      shared = shared)
+    generation <- running$generation
+    unwanted <- function() identical(running$cancelled, generation)
+    send <- function(...) {
+      if (unwanted()) {
+        # Its place in the shared key's count was taken for a review that is
+        # not sent
+        if (isTRUE(shared)) paperReviewSharedKeyRelease()
+        stop(paperReviewError("discarded", "The review was discarded before it was sent."))
+      }
+      paperReviewTrackUse(
+        paperReviewExtractAsync(pdf, supplement, key = key, inferenceGeo = inferenceGeo, effort = effort,
+                                onJob = function(stopFn) {
+                                  if (unwanted()) stopFn() else running$stop <- stopFn
+                                }),
+        shared = shared)
+    }
     if (!isTRUE(shared) || isTRUE(admitted)) return(send())
     promises::then(paperReviewSharedKeyAdmit(), send)
   })
@@ -530,6 +549,16 @@ paperReviewServer <- function(input, output, session)
     # read (paperReviewIsUploadPath()).
     datapath <- if (is.list(file)) file$datapath else NULL
     if (!is.character(datapath) || length(datapath) != 1) return()
+    # An upload chosen before Discard that finishes after it is dropped
+    # unread: the store had been emptied and the field reset, so it was
+    # held while the field showed nothing, and a later review sent it
+    # (CodeRabbit on #776).  A file chosen after Discard has cleared the
+    # mark (chosen(): a browser reports the choice before the upload ends).
+    if (isTRUE(discardedUpload[[slot]])) {
+      paperReviewReadUpload(datapath, maxBytes = -1)
+      status(paste0(label, " was still uploading when the paper was discarded, and was dropped unread."))
+      return()
+    }
     # A new upload replaces what its field held, whatever it turns out to
     # be: the field shows the new file, and a replacement that was not a PDF
     # left the earlier one held and sent by Review (Carbon's fourth UI
@@ -579,7 +608,10 @@ paperReviewServer <- function(input, output, session)
   # What it dropped is remembered, so that receive() can say so of a file
   # it then refuses.
   droppedOnChoice <- c(pdf = FALSE, supplement = FALSE)
+  # A field whose upload in progress, if any, was discarded (input$discard).
+  discardedUpload <- c(pdf = FALSE, supplement = FALSE)
   chosen <- function(slot, label) {
+    discardedUpload[[slot]] <<- FALSE
     if (!dropSlot(slot)) return()
     droppedOnChoice[[slot]] <<- TRUE
     status(paste0("Another ", label, " was chosen, so the one held before has been discarded."))
@@ -759,6 +791,10 @@ paperReviewServer <- function(input, output, session)
     shinyjs::hide("reviewLate")
     hasPdf(FALSE)
     bump()
+    # The fields showed the discarded files' names and "Upload complete"
+    # (Shafer's test of 2026-11-17); they are emptied as the store is.
+    for (field in c("manuscript", "supplement")) shinyjs::reset(field)
+    discardedUpload[] <<- TRUE
     status("Discarded. Nothing about the paper remains in this session.")
   })
 

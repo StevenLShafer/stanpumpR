@@ -62,7 +62,7 @@
 # cohort's typical patient's and are anchored at that patient with the switch
 # on (ETOPOSIDE_KM_COHORT; Steven L. Shafer, 2026-11-18; factors 0.993 and
 # 0.995), except Vc, which carries the source's sex term (women x 0.7207) and
-# so is a man's: it is anchored at the cohort's man (factor 1.072).  With the
+# so is anchored at the cohort's patient of the patient's own sex (A2-F1).  With the
 # switch off they are fixed.
 #
 # PREGNANCY (R/pregnancy.R)
@@ -114,12 +114,16 @@ etoposideKroghMadsen <- function(weight, height, age, sex, adjustToFFM = TRUE,
   p <- ETOPOSIDE_KROGHMADSEN
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
                         legacyVolume = 1, legacyClearance = 1, cohort = do.call(cohortSizeFactors, ETOPOSIDE_KM_COHORT))
-  # Vc's published value is a man's (the sex term below), so it is anchored at
-  # the cohort's man rather than at its sex-weighted patient
-  vcMan <- 1
+  # Vc carries the source's sex term (a man's value, x 0.7207 in women), so it
+  # is anchored at the cohort's patient of the patient's own sex rather than
+  # at its sex-weighted patient: anchored at the cohort's man for both sexes,
+  # the cohort's woman received 5.42 L for the published 6.58 (Carbon's second
+  # repository audit, A2-F1; the first version also called modifyList()
+  # unqualified, A2-F22).
+  vcSex <- 1
   if (isTRUE(adjustToFFM))
-    vcMan <- do.call(cohortSizeFactors, ETOPOSIDE_KM_COHORT)$volume /
-      do.call(cohortSizeFactors, modifyList(ETOPOSIDE_KM_COHORT, list(men = 1, women = 0)))$volume
+    vcSex <- do.call(cohortSizeFactors, ETOPOSIDE_KM_COHORT)$volume /
+      cohortSexSizeFactors(ETOPOSIDE_KM_COHORT, sex)$volume
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   scr <- adultEquivalentCreatinine(creatinine, age, sex)
   gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)
@@ -129,7 +133,7 @@ etoposideKroghMadsen <- function(weight, height, age, sex, adjustToFFM = TRUE,
   v1 <- p$v1 * (if (sex == SEX_FEMALE) 1 + p$v1Female else 1)
 
   default <- list(
-    v1  = v1 * size$volume * vcMan,
+    v1  = v1 * size$volume * vcSex,
     v2  = p$v2 * size$volume,
     v3  = 1,                                 # placeholder: two compartments
     cl1 = cl / 60,

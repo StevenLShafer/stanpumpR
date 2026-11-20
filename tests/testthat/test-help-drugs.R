@@ -84,12 +84,12 @@ plasmaOnly <- c(
   # The antidiabetic drugs (2026-10-17): concentration only; glucose,
   # HbA1c, UGE and DPP-4 inhibition are endpoints of their own, with no ke0
   # (inst/app-help/models/antidiabetics.md)
-  "semaglutide", "tirzepatide", "liraglutide", "insulinRegular",
-  "insulinRegularU500", "insulinNPH", "insulinHumanMix70", "insulinLispro",
-  "insulinLisproMix75", "insulinLisproMix50", "insulinGlargine", "insulinDegludec", "metformin",
-  "empagliflozin", "ertugliflozin", "glyburide", "dulaglutide", "dapagliflozin",
+  "semaglutide", "tirzepatide", "liraglutide", "liraglutideOvergaard", "metformin", "metforminER",
+  "empagliflozin", "ertugliflozin", "dulaglutide", "dapagliflozin",
   "pioglitazone", "pramlintideIV", "exenatide", "linagliptin", "vildagliptin", "liraglutideWatson", "dapagliflozinKobuchi", "canagliflozin", "lixisenatide",
-  "semaglutideOral", "cetagliptin", "insulinAspart", "insulinAspartFiasp",
+  "semaglutideOral", "cetagliptin", "alogliptin",
+  # (the insulins and glyburide have effect sites since 2026-11-19:
+  # R/insulinEffectSite.R, R/drugs_glyburide.R)
   # Anticoagulants (2026-10-17): plasma activity or concentration, or the INR;
   # no effect site, MEAC or recovery (R/drugs_heparin.R and the others).
   "heparin", "heparinCPB", "bivalirudin", "apixaban", "apixabanVTE", "rivaroxaban", "warfarin",

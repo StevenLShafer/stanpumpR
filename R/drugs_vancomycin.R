@@ -36,12 +36,11 @@
 # extrapolated the line towards zero (0.33 L/h for a 3.5 kg newborn, now
 # 0.50; 0.09 L/h at 3 mL/min).  Below 12 mL/min the curve is a floor, not a
 # prediction: clearance in anuria and on dialysis is outside the model, and
-# the help page says so.
-# [decision] Open for Steven L. Shafer (put 2026-11-15, Carbon's third UI
-# audit): the floor also moves the patients between 1.06 and 12 mL/min, whose
-# curves the straight line drew before; the alternative is to hold the term
-# only where the line would refuse (just above 1.06 mL/min), which keeps the
-# line's own extrapolation for them.
+# the help page says so.  The floor also moves the patients between 1.06 and
+# 12 mL/min, whose curves the straight line drew before; holding the term only
+# where the line would refuse (just above 1.06 mL/min) was the alternative.
+# Steven L. Shafer decided to keep the 12 mL/min floor (put to him 2026-11-15,
+# Carbon's third UI audit), so this is settled.
 #
 # EXTERNAL CHECK (Yu 2026)
 # ========================
@@ -69,9 +68,18 @@
 # The source scaled both volumes linearly with total weight, carried weight
 # into clearance through Cockcroft-Gault, and left Q fixed.  With the switch
 # on, the weight those terms see is the pharmacokinetic weight
-# (70 kg x FFM / FFM_ref), and Q follows the library convention for a
-# size-free clearance (x FFM ratio ^ 0.75).  With it off, total body weight
-# enters as published and Q is 2.28 L/h for everyone.
+# (70 kg x FFM / FFM_ref).  Q, with no size covariate, belongs to Thomson's
+# typical patient, and with the switch on it is anchored at the cohort
+# (VANCOMYCIN_COHORT, below; Steven L. Shafer, 2026-11-19, after Carbon's
+# second repository audit, A2-F4): it takes the library factor for a size-free
+# clearance (x FFM ratio ^ 0.75) divided by the cohort's, 0.9463, so that
+# Thomson's own typical patient receives the published 2.28 L/h; scaled from
+# the 70 kg reference man, as it was, that patient received a Q 5.4% low.  A
+# size covariate on V1, V2 and (through Cockcroft-Gault) CL does not exempt Q.
+# The volumes and the renal term are not anchored: they carry their own weight
+# terms, and a creatinine clearance with weight inside never is.  With the
+# switch off, total body weight enters as published and Q is 2.28 L/h for
+# everyone.
 #
 # TARGET
 # ======
@@ -142,6 +150,17 @@
 # header's DISPOSITION section).
 THOMSON_MIN_CRCL <- 12
 
+# Thomson 2009, Table 1, the 398 patients of the building set: 251 men and 147
+# women (63% male), median age 66 years, median weight 72 kg; Glasgow and
+# Bristol, 1991-2004.  No height is printed: NCD-RisC's mean height at 18 for
+# the United Kingdom, birth cohort 1932 (about 1998 less 66, the collection
+# running 1991-2004), less the loss with age to 66 years, is 171.9 cm for the men and 158.7
+# cm for the women.  Q is anchored at this cohort (Steven L. Shafer,
+# 2026-11-19, after Carbon's second repository audit, A2-F4; see the header).
+VANCOMYCIN_COHORT <- list(groups = list(
+  list(weight = 72, height = 171.9, age = 66, men = 251, women = 0),
+  list(weight = 72, height = 158.7, age = 66, men = 0, women = 147)))
+
 #' Vancomycin pharmacokinetics
 #'
 #' @inheritParams cefazolin
@@ -155,10 +174,14 @@ vancomycin <- function(weight, height, age, sex, adjustToFFM = TRUE,
 {
   # Size scaling (see the header).  size$volume is the weight ratio the
   # published volume and renal terms see (fat-free-mass ratio with the switch
-  # on, weight/70 with it off); size$clearance scales the size-free Q, and is
-  # 1 with the switch off because the source left Q fixed.
+  # on, weight/70 with it off), and is not anchored.  sizeFree$clearance
+  # scales the size-free Q, anchored at Thomson's cohort (VANCOMYCIN_COHORT),
+  # and is 1 with the switch off because the source left Q fixed.
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
                         legacyVolume = weight / 70, legacyClearance = 1)
+  sizeFree <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                            legacyVolume = 1, legacyClearance = 1,
+                            cohort = do.call(cohortSizeFactors, VANCOMYCIN_COHORT))
   pkW  <- 70 * size$volume
 
   # Thomson floored serum creatinine at 60 umol/L before Cockcroft-Gault.
@@ -175,7 +198,7 @@ vancomycin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   cl1 <- 2.99 * (1 + 0.0154 * (crcl - 66)) / 60      # L/min
   v1  <- 0.675 * pkW
   v2  <- 0.732 * pkW
-  cl2 <- 2.28 / 60 * size$clearance
+  cl2 <- 2.28 / 60 * sizeFree$clearance
   v3  <- 1                                            # no third compartment
   cl3 <- 0
 

@@ -24,13 +24,29 @@ No covariate was fitted: 14 patients were too few to show even a difference betw
 - **Healthy volunteers with a placebo arm** (Dumitrescu 2022, *Thyroid* 32:196), not used: after 50 mcg, T3 rose 202 ng/dL above placebo at 3 hours and was back to baseline by 36 hours. The model gives 366 ng/dL at 3 hours.
 - **Hypothyroid patients on once-daily liothyronine** (Jonklaas and Burman 2016, *Thyroid* 26:770), not used: on 38 mcg a day on average, T3 rose 197 ng/dL from trough to peak. The model gives 325 ng/dL.
 
-So outside its own source the model's swings are 1.6 to 2 times those measured. None of those groups matches the source's patients. The volunteers had working thyroids, which the dose suppresses, and most of the hypothyroid patients still had some thyroid function. The source itself found the volume 1.7 times larger in the same patients when they were hypothyroid. The model describes patients on liothyronine alone with no thyroid of their own, and it may overstate the peaks in anyone else.
+So outside its own source the model's swings are 1.6 to 2 times those measured. None of those groups matches the source's patients. The volunteers had working thyroids, which the dose suppresses, and most of the hypothyroid patients still had some thyroid function. The source itself found the volume 1.7 times larger in the same patients when they were hypothyroid. The model describes patients on liothyronine alone with no thyroid of their own, and it may overstate the peaks in anyone else. It is deliberately not adjusted to those groups (Steven L. Shafer, 2026-11-19).
 
 ### Dose
 
 Doses are entered as labelled, in micrograms. Cytomel tablets "contain liothyronine sodium equivalent to liothyronine", so a 25 mcg tablet is 25 mcg of T3. The units offered are a single oral dose and doses once, twice or three times a day.
 
-Intravenous liothyronine (for myxedema coma) is not offered yet. It will be, with its disposition taken from patients who are hypothyroid, the only patients who receive it (Steven L. Shafer, 2026-11-19). Its label says no pharmacokinetic study of it has been done in myxedema, and this model was fitted in the opposite state, patients replete with T3. The source will be Nicoloff 1972, which gave labelled T3 intravenously to patients with primary hypothyroidism; its tables have not yet been read.
+Intravenous liothyronine (the injection, for myxedema coma) is entered in micrograms as a bolus (`mcg`). The injection is labelled as "liothyronine sodium equivalent to 10 mcg of liothyronine" per mL, so, again, no salt conversion. See *Intravenous doses* below for the model.
+
+### Intravenous doses
+
+The injection's label says no pharmacokinetic study of it has been done in myxedema coma. Intravenous doses therefore use a different model from oral doses, taken from patients who are hypothyroid, the only patients who receive the injection (Steven L. Shafer, 2026-11-19).
+
+The source is Nicoloff and colleagues (*J Clin Invest* 1972;51:473-483, doi 10.1172/JCI106835). They gave radiolabelled T3 intravenously to six patients with primary hypothyroidism, who averaged 52 years, 161 cm and 71 kg. They measured one exponential after the tracer had equilibrated. The means of their Table I are a distribution space of 37.6 L and a clearance of 18.5 L/day, so the model is one compartment with a half-life of 1.41 days. Their euthyroid subjects cleared T3 a third faster, 26.1 L/day, close to the oral model's 25.0.
+
+Each dose goes to the model fitted to its route, and the plotted T3 is the sum of the two, so a patient switched from injections to tablets is drawn correctly.
+
+Three limits:
+
+- **The first day after an injection is not described.** Sampling began 16 to 20 hours after the injection, and in these patients the tracer took about 33 hours to equilibrate. Early concentrations are higher than this curve.
+- **The patients become euthyroid on treatment.** These parameters describe the start of treatment, and no study has followed T3 kinetics through the change. After some days the oral model's faster clearance is probably closer.
+- **The patients' sexes were not printed.** The model is scaled from their average patient, taken as half men and half women (Steven L. Shafer, 2026-11-19). The study predates trial registration, so no other record gives them.
+
+Van Tassell's own hypothyroid first-dose fit is not used. It was sampled for only 12 hours, and its half-life of 3.6 hours is, in the authors' words, the distribution phase.
 
 ### Pregnancy
 

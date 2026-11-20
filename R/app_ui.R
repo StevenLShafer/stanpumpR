@@ -136,13 +136,22 @@ app_ui <- function() {
                     label = "Adjust weight to fat-free mass",
                     value = TRUE
                   ),
+                  # Says WHY first: Dennis Fisher (2026-10-08) found that the
+                  # box did not explain why one would tick it.
                   paste(
-                    "The pharmacokinetic weight is scaled to the patient's fat-free",
-                    "mass, calculated from weight, height, age and sex",
-                    "(Al-Sallami et al., Clin Pharmacokinet 2015), relative to a",
-                    "70 kg, 170 cm man. Doses entered per kg still use total body",
-                    "weight. Propofol and remifentanil already include fat-free",
-                    "mass in their models and are not affected."
+                    "Why: drug clearance follows lean tissue, not fat. A 120 kg",
+                    "patient does not clear drug 1.7 times as fast as a 70 kg",
+                    "patient, because most of the extra weight is fat, so scaling",
+                    "a model by total body weight overpredicts clearance in an",
+                    "obese patient and suggests too much drug. Ticked (the",
+                    "default), the models without a body-size covariate of their",
+                    "own are scaled to the patient's fat-free mass, calculated",
+                    "from weight, height, age and sex (Al-Sallami et al., Clin",
+                    "Pharmacokinet 2015). Unticked,",
+                    "each model scales as it was published. Doses entered per kg",
+                    "always use total body weight. Models with their own size",
+                    "covariate, such as propofol and remifentanil, are not",
+                    "affected. See Help: Scaling to fat-free mass."
                   ),
                   placement = "right"
                 ),
@@ -451,13 +460,52 @@ app_ui <- function() {
                   label = "Effect site line",
                   selected = "solid"
                 ),
+                # The same line type for both draws two curves that cannot be
+                # told apart (Dennis Fisher, 2026-10-08).  Said, not refused:
+                # under normalization one of them is blanked anyway, and both
+                # blank is a deliberate request for an empty plot
+                # (simulationPlot()).
+                conditionalPanel(
+                  condition = paste(
+                    "input.normalization === 'none' &&",
+                    "input.plasmaLinetype === input.effectsiteLinetype &&",
+                    "input.plasmaLinetype !== 'blank'"
+                  ),
+                  div(
+                    id = "linetype-same-note",
+                    class = "info-note",
+                    icon("circle-info"),
+                    LINETYPE_SAME_MESSAGE
+                  )
+                ),
                 sliderInput("yaxisHeight", "Y axis height", MIN_YAXIS_HEIGHT, MAX_YAXIS_HEIGHT, 200, ticks = FALSE),
                 conditionalPanel(
                   condition = "input.normalization === 'none'",
-                  checkboxInput(
-                    "showThreshold",
-                    "Time until threshold",
-                    value = FALSE
+                  # The threshold is defined where the box is (Dennis Fisher,
+                  # 2026-10-08: "Threshold is not defined"); the full account
+                  # is inst/app-help/models/recovery.md.
+                  fieldHelp(
+                    checkboxInput(
+                      "showThreshold",
+                      "Time until threshold",
+                      value = FALSE
+                    ),
+                    paste(
+                      "For each drug, how long its concentration would take to",
+                      "fall to the drug's threshold if all delivery stopped at",
+                      "that moment, drawn as a thin black line read against the",
+                      "labels at the panel's right-hand edge. The threshold is a",
+                      "concentration set for each drug: the MEAC for an opioid,",
+                      "1 mcg/mL for propofol and rocuronium, a tenth of the",
+                      "age-adjusted MAC for a volatile agent, for an antibiotic the",
+                      "level at which free drug equals the MIC of its main organism,",
+                      "and for many other drugs the lower end of the typical range.",
+                      "It is timed on the effect site where the model has one, on",
+                      "plasma otherwise. A drug with no threshold has no line.",
+                      "See or change the thresholds under Settings > Drug",
+                      "Thresholds; Help: Time until threshold explains them."
+                    ),
+                    placement = "right"
                   ),
                   # Each opioid's % MEAC on its own panel, on one scale shared
                   # by all of them, read at the right-hand edge where the time
@@ -497,10 +545,29 @@ app_ui <- function() {
                       "by tissue injection, the amount still in the depot."
                     ),
                     placement = "right"
-                  )
+                  ),
+                  # A panel under each drug that loses its effect over time,
+                  # from 100% down (R/pdAdaptation.R); shown only while such
+                  # a drug is drawn (relevantFields()).
+                  relevantField("showAdaptation", fieldHelp(
+                    checkboxInput(
+                      "showAdaptation",
+                      "Tolerance and tachyphylaxis",
+                      value = FALSE
+                    ),
+                    paste(
+                      "Under each drug whose effect fades with continued",
+                      "exposure, draw what is left of its potency (or, for",
+                      "an attenuation, its effect) compared with a",
+                      "drug-naive patient. The concentration is unchanged;",
+                      "like wind chill, the drug works as though it were",
+                      "lower. Only drugs with a published model are drawn."
+                    ),
+                    placement = "right"
+                  ))
                 ),
                 conditionalPanel(
-                  condition = sprintf("!(input.showThreshold || input.showMEAC || input.addedPlots.includes('%s') || input.addedPlots.includes('%s'))", PLOT_ID_EVENTS, PLOT_ID_INTERACTION),
+                  condition = sprintf("!(input.showThreshold || input.showMEAC || output.adaptationDrawn || input.addedPlots.includes('%s') || input.addedPlots.includes('%s'))", PLOT_ID_EVENTS, PLOT_ID_INTERACTION),
                   checkboxInput(
                     inputId = "logY",
                     label = "Log Y axis",
@@ -513,6 +580,25 @@ app_ui <- function() {
                   inputId = "opioidMacInteraction",
                   label = "Include opioid - MAC interaction",
                   value = FALSE
+                )),
+                # Buprenorphine / opioid-receptor interaction: one physical
+                # occupancy drives ventilation and analgesia; see
+                # R/opioidReceptorInteraction.R.  Shown only while a mu partial
+                # agonist or antagonist (buprenorphine, naloxone) is drawn.
+                relevantField(OPIOID_RECEPTOR_INPUT, fieldHelp(
+                  checkboxInput(
+                    inputId = OPIOID_RECEPTOR_INPUT,
+                    label = "Buprenorphine / opioid-receptor interaction",
+                    value = FALSE
+                  ),
+                  paste(
+                    "With buprenorphine or an opioid antagonist in the table,",
+                    "add panels for physical mu-receptor occupancy (competition",
+                    "and blockade), respiratory depression (with buprenorphine's",
+                    "ceiling) and analgesia in MEAC-equivalents, and an",
+                    "available-drive line on the % MEAC panel."
+                  ),
+                  placement = "right"
                 )),
                 # The Schnider propofol and Minto remifentanil models, the
                 # models in most TCI pumps, run beside the library's Eleveld
