@@ -2402,9 +2402,11 @@ PAPER_REVIEW_DISPOSITION_ROLES <- c("CL", "V1", "V2", "V3", "Q2", "Q3", "k10", "
 paperReviewFigureRoles <- function(f, extraction, normalized = FALSE)
 {
   # A series without a regimen of its own shows the figure's; only the
-  # series the check scores count (a metabolite's is set aside).
+  # series the check scores count (a metabolite's is set aside, and so is
+  # one with no points: CodeRabbit on #776).
   own <- f$regimen_id %or% NA_character_
-  scored <- Filter(function(s) (s$analyte %or% "parent") %in% "parent", f$series %or% list())
+  scored <- Filter(function(s) (s$analyte %or% "parent") %in% "parent" && length(s$points %or% list()) > 0,
+                   f$series %or% list())
   ids <- unique(vapply(scored, function(s) s$regimen_id %or% own, ""))
   if (!length(ids)) ids <- own
   routes <- lapply(ids, function(id) {
