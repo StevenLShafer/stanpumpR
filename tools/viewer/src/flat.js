@@ -57,6 +57,22 @@ const SIZE_RATIO_MAX = 10;
 // names, volumes, amounts and the elimination arrow (BOTTOM); the plot at
 // least MIN_PLOT px between them.
 const FLAT_TOP = 96, FLAT_BOTTOM = 108, FLAT_MIN_PLOT = 90;
+// The pump and absorption arrows start this many px above V1's top, and stay
+// this many px clear of the physiology line under the Visualizer's name.
+const FLAT_ARROW_RISE = 58, FLAT_TITLE_GAP = 6;
+// The px above the boxes for a drug run: FLAT_TOP, or more where the
+// physiology line under the name (player.js, which every run from stanpumpR
+// carries) reaches further down than the arrows over V1 start: the pump's
+// arrow and its label were drawn across the line. Measured, not a constant,
+// because the line wraps on a narrow window and grows at a physiology event;
+// with no line (an older run) it is FLAT_TOP, as before. draw() and fits()
+// both take it from here, so the cards are fitted to the room the drawing has.
+function flatTop() {
+    const line = document.getElementById('physio');
+    // An empty line is not displayed, and its box is all zeros.
+    const bottom = line ? line.getBoundingClientRect().bottom : 0;
+    return Math.max(FLAT_TOP, Math.ceil(bottom) + FLAT_TITLE_GAP + FLAT_ARROW_RISE);
+}
 
 const Flat = {
     el: null, run: null, ui: null, scale: null, last: null, cardH: 0,
@@ -81,8 +97,9 @@ const Flat = {
     // Whether cards h px tall leave the drawing its room (Cards.fit()).
     fits(h) {
         const ctl = this.controlsTop(this.el.clientHeight);
-        // A gas run's arrows over the circuit need more room above (gas.js).
-        const top = this.run && this.run.kind === 'gas' ? gasTop(this.run) : FLAT_TOP;
+        // A gas run's arrows over the circuit need more room above (gas.js);
+        // a drug run's, where the physiology line is shown (flatTop()).
+        const top = this.run && this.run.kind === 'gas' ? gasTop(this.run) : flatTop();
         return !(h > 0) || ctl - h - 22 - FLAT_BOTTOM - top >= FLAT_MIN_PLOT;
     },
 
@@ -130,7 +147,7 @@ const Flat = {
         // (ChatGPT, 38e0f3a: fixed offsets put elimination off a small
         // window). Above V1: the pump and absorption arrows (TOP); below:
         // the names, volumes, amounts and the elimination arrow (BOTTOM).
-        const TOP = FLAT_TOP, BOTTOM = FLAT_BOTTOM, MIN_PLOT = FLAT_MIN_PLOT;
+        const TOP = flatTop(), BOTTOM = FLAT_BOTTOM, MIN_PLOT = FLAT_MIN_PLOT;
         const ctl = this.controlsTop(H);
         // The cards that show, by the rule both views share (Cards.fit() in
         // player.js): both, one, or none, so the drawing keeps its room.
@@ -234,11 +251,11 @@ const Flat = {
         const hi = headWidth(twi), ha = headWidth(twa);
         const xi = absorbing ? cx1 - hi / 2 - 2 : cx1, xa = pumping ? cx1 + ha / 2 + 2 : cx1;
         if (pumping) {
-            arrowV(out, xi, yTop - 58, yTop - 2, twi, FLAT_COLOURS.in);
+            arrowV(out, xi, yTop - FLAT_ARROW_RISE, yTop - 2, twi, FLAT_COLOURS.in);
             label(xi - hi / 2 - 6, yTop - 40, 'end', st.bolus > 0 ? `Bolus ${e(amt(st.bolus))} ${e(u.amount)}` : `Pump ${rateTxt(st.flow.in)}`, 'in');
         }
         if (absorbing) {
-            arrowV(out, xa, yTop - 58, yTop - 2, twa, FLAT_COLOURS.in);
+            arrowV(out, xa, yTop - FLAT_ARROW_RISE, yTop - 2, twa, FLAT_COLOURS.in);
             label(xa + ha / 2 + 6, yTop - 40, 'start', `Absorbed ${rateTxt(st.flow.abs)}`, 'in');
         }
         // The depot, under the absorption label, clear of its arrow.

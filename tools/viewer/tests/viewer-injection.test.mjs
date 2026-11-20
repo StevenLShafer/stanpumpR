@@ -517,6 +517,13 @@ test('2D: no two labels overlap, the pump and absorption arrows stand apart, and
 
 // ── Sizes: the largest compartment at most SIZE_RATIO_MAX times the smallest
 // (Shafer, 2026-11-06), in both views; heights stay concentration.
+// The boxes are read from the rects' own attributes, which the drawing writes
+// in double precision. getBBox() returns single-precision floats (3e-5 px
+// apart at y near 300), coarser than the tolerances below, so read through it
+// "fill 1 is not its concentration" depended on the plot's height, and so on
+// the machine's fonts (the cards' height) and on whether the window had just
+// been resized: it failed by 3e-6 px here against every build since the one
+// the test was written for, with nothing wrong in the drawing (2026-11-20).
 test('sizes: proportional within 10:1, compressed to exactly 10:1 beyond it, in 2D and 3D', { skip }, async t => {
   for (const [pk, compressed] of [[{ v1: 5, v2: 10, v3: 20 }, false], [{ v1: 6.28, v2: 23.6, v3: 157 }, true],
                                   [{ v1: 0.00001, v2: 1, v3: 100000 }, true], [{ v1: 100000, v2: 1, v3: 0.00001 }, true]]) {
@@ -526,16 +533,30 @@ test('sizes: proportional within 10:1, compressed to exactly 10:1 beyond it, in 
     assert.equal(await loadRun(page, r), true);
     const g = await page.evaluate(() => {
       Player.seek(1500);
+      const num = (e, k) => Number(e.getAttribute(k));
+      const geom = e => ({ x: num(e, 'x'), y: num(e, 'y'), width: num(e, 'width'), height: num(e, 'height'), drawn: e.getBBox().height });
       const outl = [...document.querySelectorAll('#flat svg rect[fill="none"]')].filter(e => !e.getAttribute('stroke-dasharray'))
-        .map(e => e.getBBox()).sort((a, b) => a.x - b.x);      // V2, V1, V3
+        .map(geom).sort((a, b) => a.x - b.x);      // V2, V1, V3
       const caption = [...document.querySelectorAll('#flat svg text')].some(e => /not to scale/.test(e.textContent));
       const st = Player.stateAt(1500), top = Flat.scale.top;
       // Each fill's height is its concentration on the one scale, whatever the widths.
-      const fills = [...document.querySelectorAll('#flat svg rect[fill-opacity]')].map(e => e.getBBox()).sort((a, b) => a.x - b.x);
-      return { w: [outl[1].width, outl[0].width, outl[2].width], ph: outl[0].height, caption,
+      const fills = [...document.querySelectorAll('#flat svg rect[fill-opacity]')].map(geom).sort((a, b) => a.x - b.x);
+      return { outl, fills, w: [outl[1].width, outl[0].width, outl[2].width], ph: outl[0].height, caption,
                h: [fills[1].height, fills[0].height, fills[2].height], c: [st.cp, st.c2, st.c3], top,
                r3d: View.geo.r.slice(1) };
     });
+    // The fills read are the three compartments' and nothing else: one in each
+    // outline, standing on its floor (a rect of another kind given a
+    // fill-opacity would otherwise be taken for a compartment).
+    assert.equal(g.outl.length, 3, 'three outlines: V2, V1, V3');
+    assert.equal(g.fills.length, 3, 'three fills: V2, V1, V3');
+    for (let i = 0; i < 3; i++) {
+      const f = g.fills[i], o = g.outl[i];
+      assert.ok(f.x === o.x && f.width === o.width, `fill ${i} (left to right) is not in its outline`);
+      assert.ok(Math.abs(f.y + f.height - (o.y + o.height)) < 1e-9, `fill ${i} (left to right) does not stand on its box's floor`);
+      // What is painted is what the attributes say, to getBBox()'s precision.
+      assert.ok(Math.abs(f.drawn - f.height) < 1e-3, `fill ${i} (left to right) is painted ${f.drawn} px tall, written ${f.height}`);
+    }
     const vols = [pk.v1, pk.v2, pk.v3], ratio = Math.max(...g.w) / Math.min(...g.w);
     assert.ok(ratio <= 10 * (1 + 1e-6), `${JSON.stringify(pk)}: 2D width ratio ${ratio}`);
     const area = g.r3d.map(x => x * x), aRatio = Math.max(...area) / Math.min(...area);
@@ -548,7 +569,7 @@ test('sizes: proportional within 10:1, compressed to exactly 10:1 beyond it, in 
     // The order of the sizes is the order of the volumes.
     for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) if (vols[i] < vols[j]) assert.ok(g.w[i] < g.w[j] && area[i] < area[j]);
     assert.equal(g.caption, compressed, 'the not-to-scale note');
-    for (let i = 0; i < 3; i++) assert.ok(Math.abs(g.h[i] - g.c[i] / g.top * g.ph) < 1e-6, `fill ${i} is not its concentration`);
+    for (let i = 0; i < 3; i++) assert.ok(Math.abs(g.h[i] - g.c[i] / g.top * g.ph) < 1e-9, `fill ${i} is not its concentration`);
     assertClean(page);
   }
 });
@@ -1684,6 +1705,92 @@ test('Physiology events: the physiology line follows the clock, and bad steps ar
     const bad = clone(r); bad.physiologySteps = steps;
     assert.equal(await loadRun(page, bad), false);
   }
+});
+
+// The pump's arrow and its label over V1 were drawn across the physiology line
+// under the name, which every run from stanpumpR carries ("Pump 171 mg/min"
+// through "Cardiac output ×1 · GI ×1", 1280 x 720; 2026-11-19). The room
+// above the boxes is now measured from the line (flatTop() in flat.js), which
+// Flat.fits() shares, so the cards are fitted to the room the drawing has.
+test('2D view of a drug: nothing over V1 is drawn across the physiology line, and the cards keep clear of the drawing', { skip }, async t => {
+  const normal = { liver: 1, renal: 1, cardiac: 1, gi: 1, temperature: 37 };
+  const off = { liver: 0.5, renal: 0.25, cardiac: 0.5, gi: 1, temperature: 34 };
+  const measure = (page, T) => page.evaluate(T => {
+    Player.seek(T);
+    const box = e => { const b = e.getBoundingClientRect(); return { left: b.left, top: b.top, right: b.right, bottom: b.bottom }; };
+    const meet = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+    const line = document.getElementById('physio'), physio = box(line);
+    const texts = [...document.querySelectorAll('#flat svg text')].map(e => ({ s: e.textContent, b: box(e) }));
+    // The arrows into V1's top: the pump's, and absorption's.
+    const arrows = [...document.querySelectorAll('#flat svg rect, #flat svg polygon')]
+      .filter(e => e.getAttribute('fill') === '#ff6b5e').map(box);
+    const cards = ['readout', 'amounts'].map(id => document.getElementById(id))
+      .filter(e => getComputedStyle(e).display !== 'none' && e.offsetHeight > 0).map(box);
+    const outline = document.querySelector('#flat svg rect[fill="none"]');
+    return { line: line.innerText, lines: Math.round((physio.bottom - physio.top) / 13.8), physio,
+             pump: texts.filter(x => /^Pump /.test(x.s)).map(x => x.s),
+             acrossLine: texts.filter(x => meet(x.b, physio)).map(x => x.s),
+             arrowsAcrossLine: arrows.filter(b => meet(b, physio)).length, arrows: arrows.length,
+             underCards: texts.filter(x => cards.some(c => meet(x.b, c))).map(x => x.s), cards: cards.length,
+             top: Number(outline.getAttribute('y')), plot: Number(outline.getAttribute('height')),
+             // From the boxes' floor down to the top of the cards shown.
+             floorToCards: cards.length ? Math.min(...cards.map(c => c.top)) - outline.getBoundingClientRect().bottom : null };
+  }, T);
+  const tops = {};
+  // The window of the report, the pop-up's own size, the smallest that is
+  // ordinary, and one narrow enough to wrap the line onto a second row.
+  for (const [width, height] of [[1280, 720], [1200, 800], [800, 600], [420, 400]]) {
+    for (const [what, edit] of [
+      ['line', r => { r.physiology = normal; }],
+      ['events', r => { r.physiology = normal; r.physiologySteps = [{ time: r.t[0], ...normal }, { time: 2, ...off }]; }],
+      ['none', () => {}]]) {
+      const page = await viewerPage(t);
+      await page.setViewport({ width, height });
+      // The controls' height reaches the layout a frame after a resize (the
+      // ResizeObserver of Flat.init()): measure the settled window.
+      await new Promise(r => setTimeout(r, 200));
+      const r = clone(RUN); edit(r);
+      assert.equal(await loadRun(page, r), true);
+      // While the pump loads, and at its maintenance rates.
+      for (const T of [5, 300, 1500, 3000]) {
+        const o = await measure(page, T), where = `${width} x ${height}, ${what}, T = ${T}`;
+        assert.equal(o.pump.length, 1, `${where}: the pump is not running, so the test proves nothing`);
+        assert.ok(o.arrows >= 2, `${where}: the pump's arrow was not found`);
+        if (what === 'none') {
+          // A run without the line is laid out as it always was.
+          assert.equal(o.line, '', `${where}: a physiology line with no physiology`);
+          assert.equal(o.top, 96, `${where}: the boxes' top moved in a run with no physiology line`);
+        } else {
+          assert.match(o.line, /Liver ×/, `${where}: no physiology line, so the test proves nothing`);
+          if (what === 'events' && T > 2) assert.match(o.line, /physiology event at/, where);
+          assert.deepEqual(o.acrossLine, [], `${where}: drawn across the physiology line "${o.line}"`);
+          assert.equal(o.arrowsAcrossLine, 0, `${where}: an arrow into V1 crosses the physiology line`);
+          assert.ok(o.top > 96, `${where}: the line was given no room`);
+        }
+        // Flat.fits() and the drawing agree on the room above the boxes.
+        // Cards are shown only where the plot keeps its least height (90 px)
+        // above them, so with cards the boxes' floor is where the room puts
+        // it: 108 px for the names, volumes, amounts and the elimination
+        // arrow, and 12 px clear of the cards. Were fits() to count less
+        // room above than the drawing takes, cards would be shown that do
+        // not fit, and the plot, held at its least height, would push the
+        // floor down toward them (800 x 600: 107 px, not 120).
+        if (o.cards > 0) {
+          assert.ok(o.plot >= 90 - 1e-9, `${where}: the plot is ${o.plot} px tall beside its cards`);
+          assert.ok(o.floorToCards >= 120 - 1, `${where}: the boxes' floor is ${o.floorToCards} px above the cards, which do not fit`);
+          assert.deepEqual(o.underCards, [], `${where}: labels under a card`);
+        }
+        tops[`${width}/${what}/${T}`] = o;
+      }
+      assertClean(page);
+    }
+  }
+  // The cases are the ones meant: a line that wraps is given more room than
+  // one that does not, and the report's window showed both cards.
+  assert.ok(tops['420/line/5'].lines >= 2, 'the line did not wrap at 420 px: the wrapped case is not tested');
+  assert.ok(tops['420/line/5'].top > tops['1280/line/5'].top, 'a wrapped line was given no more room than one row');
+  assert.equal(tops['1280/line/5'].cards, 2, 'both cards at 1280 x 720');
+  assert.equal(tops['1200/line/5'].cards, 2, 'both cards at the pop-up\'s own size');
 });
 
 test('Endobronchial tube: the arterial saturation shows under the title, amber below 90%, and bad values are refused', { skip }, async t => {
