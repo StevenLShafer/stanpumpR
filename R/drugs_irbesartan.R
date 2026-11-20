@@ -119,8 +119,8 @@
 # with the fat-free-mass switch off.  The pulses were fitted at the published
 # disposition; with the switch on, a patient far from the reference man has a
 # different disposition and the error moves: 5.2% of the peak for a 45 kg,
-# 155 cm woman and 4.6% for a 120 kg, 185 cm man, both in the tests.  The delay T and the depot are not size quantities and are not
-# scaled.
+# 155 cm woman and 4.6% for a 120 kg, 185 cm man, both in the tests.  The
+# delay T and the depot are not size quantities and are not scaled.
 #
 # NO RENAL TERM
 # =============
@@ -186,9 +186,10 @@ IRBESARTAN_PULSE_ERROR_PERCENT <- 4.7  # worst point on the curve, % of peak
 #' Irbesartan pharmacokinetics (apparent oral, plasma)
 #'
 #' Karatza and Karalis (2020), two compartments in 32 healthy men, with a
-#' delay-differential absorption that this package discretises into pulses of
-#' its default oral form; see the header of \code{R/drugs_irbesartan.R} for
-#' the shape it stands for and what the stand-in costs.  Provisional.
+#' delay-differential absorption that this package discretises into twelve
+#' pulses of its default oral form.  The pulses miss the exact published curve
+#' by up to 4.7\% of the peak, and the peak is about 2\% low.  Provisional.
+#' The help page for irbesartan in the app gives the details.
 #'
 #' @inheritParams cefazolin
 #' @returns a list in the shape \code{getDrugPK()} expects

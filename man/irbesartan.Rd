@@ -27,7 +27,8 @@ a list in the shape \code{getDrugPK()} expects
 }
 \description{
 Karatza and Karalis (2020), two compartments in 32 healthy men, with a
-delay-differential absorption that this package discretises into pulses of
-its default oral form; see the header of \code{R/drugs_irbesartan.R} for
-the shape it stands for and what the stand-in costs.  Provisional.
+delay-differential absorption that this package discretises into twelve
+pulses of its default oral form.  The pulses miss the exact published curve
+by up to 4.7\% of the peak, and the peak is about 2\% low.  Provisional.
+The help page for irbesartan in the app gives the details.
 }

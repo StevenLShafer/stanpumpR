@@ -30,7 +30,7 @@ On the other hand, the label says irbesartan accumulates by less than 20% on onc
 
 ### Body size, kidneys, sex and age
 
-The authors tested weight, height, age and body-mass index on every parameter, and kept none. The study's average patient is not printed, so the published values are used as the 70 kg reference patient's. With *Adjust weight to fat-free mass* off, the published model is reproduced exactly; with it on, the library's fat-free-mass scaling applies.
+The authors tested weight, height, age and body-mass index on every parameter, and kept none. The study's average patient is not printed, so the published values are used as the 70 kg reference patient's. With *Adjust weight to fat-free mass* off, the published disposition values are used unchanged; with it on, the library's fat-free-mass scaling applies. Either way, the absorption is the twelve-pulse stand-in described above, with its error of up to 4.7% of the peak.
 
 **There is no renal term.** Irbesartan is cleared mainly by liver oxidation (CYP2C9) and glucuronidation, its renal clearance is only 3 to 3.5 mL/min, and the label reports no change in renal impairment or on haemodialysis. A creatinine entered in the [Patient Profile](help:patient-profile) does not reach this drug.
 
