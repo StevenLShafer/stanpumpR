@@ -840,6 +840,24 @@ PLOT_NAME_INTERACTION <- "p response"
 
 # Buprenorphine / opioid-receptor interaction panels (R/opioidReceptorInteraction.R)
 OPIOID_RECEPTOR_INPUT  <- "opioidReceptorInteraction"
+# PROTOTYPE sliders (Shafer, 2026-11-20) exploring the two inter-patient axes
+# the source papers' random effects identify (Olofsen 2022; Yassen 2006/2007):
+#  * Opioid sensitivity: a continuous theta OFFSET added to the tolerance theta
+#    (one physical occupancy, so it moves the transduction and full-agonist
+#    potency on the same axis as tolerance).  Negative = more sensitive
+#    (potency up); positive = less sensitive / more tolerant.  +/-1 ~ x/divide
+#    3 in potency, the span of the naive<->chronic shift and the koff IIV.
+#  * Buprenorphine onset/offset: a multiplier on buprenorphine's biophase tPeak
+#    (ke0), the rate-limiting step for its slow onset AND offset (biophase, not
+#    receptor dissociation).  >1 slower, <1 faster; the ke0 IIV is ~50-85% CV.
+OPIOID_SENSITIVITY_INPUT    <- "opioidSensitivity"
+OPIOID_SENSITIVITY_MIN      <- -1
+OPIOID_SENSITIVITY_MAX      <-  1
+OPIOID_SENSITIVITY_DEFAULT  <-  0
+BUPRENORPHINE_OFFSET_INPUT   <- "buprenorphineOffset"
+BUPRENORPHINE_OFFSET_MIN     <- 0.5
+BUPRENORPHINE_OFFSET_MAX     <- 2
+BUPRENORPHINE_OFFSET_DEFAULT <- 1
 PLOT_NAME_OCCUPANCY    <- "receptor occupancy"
 PLOT_NAME_RESP         <- "resp. depression"
 PLOT_NAME_ANALGESIA    <- "analgesia (MEAC eq)"

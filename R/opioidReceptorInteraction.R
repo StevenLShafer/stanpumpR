@@ -280,6 +280,27 @@ OR_TOLERANCE_FACTORS <- c(none = 1, mild = 1.5, somewhat = 2, high = 3)
 orToleranceTheta <- function(level = "none")
   log(OR_TOLERANCE_FACTORS[[match.arg(level, names(OR_TOLERANCE_FACTORS))]]) / log(3)
 
+# PROTOTYPE (Shafer, 2026-11-20).  The continuous Opioid-sensitivity control
+# adds a theta OFFSET to the tolerance theta (R/constants.R): one physical
+# occupancy, so a more-sensitive patient is handled on the same theta axis as
+# a less-tolerant one (the source papers cannot separate the two).  Clamped
+# and sanitised against a forged or blank input.
+orSensitivityOffset <- function(sensitivity = 0) {
+  s <- suppressWarnings(as.numeric(sensitivity))
+  if (length(s) != 1 || is.na(s)) return(0)
+  max(OPIOID_SENSITIVITY_MIN, min(OPIOID_SENSITIVITY_MAX, s))
+}
+
+# The Buprenorphine onset/offset control multiplies buprenorphine's biophase
+# tPeak (ke0), the rate-limiting step for its slow onset and offset (biophase,
+# not receptor dissociation: Yassen 2006 t1/2ke0 155 min vs t1/2koff 8.8 min).
+# Clamped and sanitised; the buprenorphine model reads it through getDrugPK.
+orOffsetScale <- function(offsetScale = 1) {
+  s <- suppressWarnings(as.numeric(offsetScale))
+  if (length(s) != 1 || is.na(s) || s <= 0) return(1)
+  max(BUPRENORPHINE_OFFSET_MIN, min(BUPRENORPHINE_OFFSET_MAX, s))
+}
+
 # The explicit receptor constants (buprenorphine, naloxone); other opioids are
 # defaulted from their MEAC.  Read once, cached.
 orReceptorConstantsCache <- new.env(parent = emptyenv())
@@ -367,9 +388,10 @@ orMeacEquivalent <- function(rho, eAnalg, rhoStar = OR_RHO_STAR)
 #   rho0, physical occupancy; ventilation (depression fraction), analgesia
 #   (MEAC-equivalents), availableDrive (fast-agonist occupancy odds), and the
 #   per-ligand eAnalg so a panel can split buprenorphine's own contribution.
-orInteractionSeries <- function(times, ceList, meacList = NULL, toleranceLevel = "none")
+orInteractionSeries <- function(times, ceList, meacList = NULL, toleranceLevel = "none",
+                                sensitivity = 0)
 {
-  theta <- orToleranceTheta(toleranceLevel)
+  theta <- orToleranceTheta(toleranceLevel) + orSensitivityOffset(sensitivity)
   drugs <- names(ceList)
   meacOf <- function(d) { m <- if (!is.null(meacList)) meacList[[d]] else NULL
                           if (is.null(m) || is.na(m)) 0 else m }
@@ -405,9 +427,11 @@ orInteractionSeries <- function(times, ceList, meacList = NULL, toleranceLevel =
 # orInteractionSeries().  Companions (alternative-model entries) are excluded.
 # Returns NULL unless at least one partial agonist or antagonist is present (so
 # the panels appear only then).
-opioidReceptorSeries <- function(drugs, opioidTolerance = "none")
+opioidReceptorSeries <- function(drugs, opioidTolerance = "none", sensitivity = 0)
 {
   tol <- if (opioidTolerance %in% names(OR_TOLERANCE_FACTORS)) opioidTolerance else "none"
+  # theta here only gates which drugs are "special" (slow / antagonist), which
+  # the sensitivity offset does not change; orInteractionSeries applies it.
   theta <- orToleranceTheta(tol)
   isCompanion <- function(d) isTRUE(tryCatch(isAlternativeModelEntry(d), error = function(e) FALSE))
   meacOf <- function(d) if (is.null(d$MEAC) || is.na(d$MEAC)) 0 else d$MEAC
@@ -430,7 +454,7 @@ opioidReceptorSeries <- function(drugs, opioidTolerance = "none")
   meacList <- as.list(vapply(own, meacOf, numeric(1)))
   names(meacList) <- names(ceList)
 
-  res <- orInteractionSeries(base, ceList, meacList, tol)
+  res <- orInteractionSeries(base, ceList, meacList, tol, sensitivity)
   if (!is.null(res)) res$Time <- base
   res
 }

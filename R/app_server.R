@@ -1153,6 +1153,21 @@ app_server <- function(input, output, session) {
     if (is.null(x) || !x %in% OPIOID_TOLERANCE_VALUES) OPIOID_TOLERANCE_DEFAULT else x
   })
 
+  # PROTOTYPE sliders (Shafer, 2026-11-20): the continuous Opioid sensitivity
+  # (a theta offset on the receptor panels) and the Buprenorphine onset/offset
+  # (a biophase tPeak multiplier).  Sanitised to their ranges, defaulting when
+  # the control has not reported or a link forged a value.
+  opioidSensitivity <- reactive({
+    x <- suppressWarnings(as.numeric(input[[OPIOID_SENSITIVITY_INPUT]]))
+    if (length(x) != 1 || is.na(x)) OPIOID_SENSITIVITY_DEFAULT
+    else max(OPIOID_SENSITIVITY_MIN, min(OPIOID_SENSITIVITY_MAX, x))
+  })
+  buprenorphineOffset <- reactive({
+    x <- suppressWarnings(as.numeric(input[[BUPRENORPHINE_OFFSET_INPUT]]))
+    if (length(x) != 1 || is.na(x) || x <= 0) BUPRENORPHINE_OFFSET_DEFAULT
+    else max(BUPRENORPHINE_OFFSET_MIN, min(BUPRENORPHINE_OFFSET_MAX, x))
+  })
+
   adjustToFFM <- reactive({
     # TRUE until the checkbox reports, so the first simulation uses the default.
     if (is.null(input$adjustToFFM)) TRUE else isTRUE(input$adjustToFFM)
@@ -1692,6 +1707,7 @@ app_server <- function(input, output, session) {
         pulmonaryHypertension = pulmonaryHypertension(),
         adjustToFFM = adjustToFFM(),
         opioidTolerance = opioidTolerance(),
+        buprenorphineOffset = buprenorphineOffset(),
         alternativeModels = companionGroupsOn(),
         antiseizureInteractions = antiseizureInteractions(),
         individual = individual,
@@ -2166,7 +2182,8 @@ app_server <- function(input, output, session) {
       plotEvents             <- PLOT_ID_EVENTS      %in% input$addedPlots
       # Buprenorphine / opioid-receptor interaction panels (R/opioidReceptorInteraction.R)
       opioidReceptor <- if (isTRUE(input[[OPIOID_RECEPTOR_INPUT]]))
-        opioidReceptorSeries(drugs(), input$opioidTolerance) else NULL
+        opioidReceptorSeries(drugs(), input$opioidTolerance,
+                             sensitivity = opioidSensitivity()) else NULL
       normalization          <- normalizationInput()
       typical                <- typicalInput()
       # Tolerance and tachyphylaxis panels (R/pdAdaptation.R)
