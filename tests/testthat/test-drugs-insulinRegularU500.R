@@ -30,7 +30,33 @@ test_that("pregnancy: CL/F x 1.25, absorption and V/F unchanged", {
   expect_equal_rounded(101.1157443, actual$v1)
   expect_equal_rounded(1, actual$v2)
   expect_equal_rounded(1, actual$v3)
-  expect_equal_rounded(2.645833, actual$cl1)
+  # 2.645833 x 0.8507260, the fat-free-mass clearance factor of this woman
+  # against the reference man (CL/F scaled, 2026-11-19; R/insulinTham.R)
+  expect_equal_rounded(2.250879, actual$cl1)
   expect_equal_rounded(0, actual$cl2)
   expect_equal_rounded(0, actual$cl3)
+})
+
+test_that("body size: CL/F scaled to fat-free mass from the reference man, V/F by the source's own weight term", {
+  # Steven L. Shafer's first-principles rule, 2026-11-19 (R/insulinTham.R,
+  # BODY SIZE): CL/F has no size term in Tham 2017 and is multiplied by the
+  # fat-free-mass clearance factor, anchored at the 70 kg, 170 cm reference
+  # man (Table 1 prints no sex split, so no cohort anchor).
+  # (a) the reference man, the anchor, receives the published CL/F
+  ref <- insulinRegularU500(70, 170, 35, "male")$PK$default
+  expect_equal(ref$cl1, 127 / 60)
+  pk <- 70
+  expect_equal(ref$v1, 178 * (pk / 80)^1.62)
+  # (b) a man of twice the reference fat-free mass: CL/F x 2^0.75; V/F keeps
+  # its own weight term at the pharmacokinetic weight, 140 kg, held at the
+  # studied 124 kg
+  w <- uniroot(function(w) ffmAlSallami(w, 200, 35, "male") - 2 * FFM_REFERENCE,
+               c(70, 400), tol = 1e-12)$root
+  big <- insulinRegularU500(w, 200, 35, "male")$PK$default
+  expect_equal(big$cl1, 127 / 60 * 2^0.75)
+  pk <- 124
+  expect_equal(big$v1, 178 * (pk / 80)^1.62)
+  # (c) the switch off: CL/F as published, whatever the size
+  off <- insulinRegularU500(w, 200, 35, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(off$cl1, 127 / 60)
 })

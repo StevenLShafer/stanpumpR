@@ -43,3 +43,32 @@ test_that("units: oral, daily", {
   expect_equal(getDrugDefaults("dapagliflozin")$Units[[1]], c("mg PO", "mg PO qd"))
   expect_true("creatinine" %in% names(formals(dapagliflozin)))
 })
+
+test_that("body size: Vp/F and Q/F scaled to fat-free mass from the reference man; CL/F waits on a decision", {
+  # Steven L. Shafer's first-principles rule, 2026-11-19, and his decision of
+  # 2026-11-20 (R/drugs_dapagliflozin.R, BODY SIZE): Vp/F and Q/F take the
+  # fat-free-mass factors at the reference anchor (no height printed, a
+  # multinational cohort); CL/F, with the source's sex term, is not yet scaled.
+  scr <- uniroot(function(s) egfrCKDEPI2009(35, "male", s) - 83, c(0.3, 3), tol = 1e-12)$root
+  # (a) the reference man, the anchor, receives the published values
+  ref <- dapagliflozin(70, 170, 35, "male", creatinine = scr)$PK$default
+  expect_equal(ref$v2, 143)
+  expect_equal(ref$cl2 * 60, 8.92)
+  expect_equal(ref$cl1 * 60, 23.0, tolerance = 1e-8)
+  expect_equal(ref$v1, 73.9 * (70 / 89)^0.570)
+  # (b) a man of twice the reference fat-free mass: Vp/F x 2, Q/F x 2^0.75;
+  # Vc/F by its own term at 140 kg; CL/F unchanged; ka and the lag unchanged
+  w <- uniroot(function(w) ffmAlSallami(w, 200, 35, "male") - 2 * FFM_REFERENCE,
+               c(70, 400), tol = 1e-12)$root
+  big <- dapagliflozin(w, 200, 35, "male", creatinine = scr)$PK$default
+  expect_equal(big$v2, 143 * 2)
+  expect_equal(big$cl2 * 60, 8.92 * 2^0.75)
+  expect_equal(big$v1, 73.9 * (140 / 89)^0.570)
+  expect_equal(big$cl1, ref$cl1)
+  expect_equal(c(big$ka_PO, big$tlag_PO), c(ref$ka_PO, ref$tlag_PO))
+  # (c) the switch off: as published, whatever the size
+  off <- dapagliflozin(w, 200, 35, "male", adjustToFFM = FALSE, creatinine = scr)$PK$default
+  expect_equal(off$v2, 143)
+  expect_equal(off$cl2 * 60, 8.92)
+  expect_equal(off$cl1, ref$cl1)
+})

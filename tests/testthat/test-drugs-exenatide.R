@@ -87,3 +87,45 @@ test_that("units: SC only, pg/mL", {
   expect_equal(defaults$Concentration.Units, "pg")
   expect_equal(defaults$Category, "Antidiabetic")
 })
+
+test_that("body size: Vp, Cld, Vmax and the linear clearance scaled to fat-free mass from the reference man", {
+  # Steven L. Shafer's first-principles rule, 2026-11-19 (R/drugs_exenatide.R,
+  # BODY SIZE): no size term in Cirincione 2017 but Vc's, so Vp takes the
+  # fat-free-mass ratio and Cld, Vmax and the eGFR-indexed linear clearance its
+  # 0.75 power, anchored at the reference man (no height or country printed);
+  # Km and the absorption are not scaled.
+  egfr <- egfrMDRD(35, "male", 1)
+  # (a) the reference man, the anchor, receives the published values
+  ref <- exenatide(70, 170, 35, "male", creatinine = 1)
+  expect_equal(ref$PK$default$v2, 7.04)
+  expect_equal(ref$PK$default$cl2, 3.72 / 60)
+  expect_equal(ref$michaelisMenten$vmax, 1.55 * 1000 / 60)
+  expect_equal(ref$michaelisMenten$clLinear, 4.58 * (egfr / 80)^0.838 / 60)
+  expect_equal(ref$PK$default$v1, 7.03 * (70 / 84.8)^2.67)
+  # (b) a man of twice the reference fat-free mass: Vp x 2, Cld, Vmax and the
+  # linear clearance x 2^0.75; Vc by its own term at 140 kg; Km and the
+  # absorption unchanged
+  w <- uniroot(function(w) ffmAlSallami(w, 200, 35, "male") - 2 * FFM_REFERENCE,
+               c(70, 400), tol = 1e-12)$root
+  big <- exenatide(w, 200, 35, "male", creatinine = 1)
+  expect_equal(big$PK$default$v2, 7.04 * 2)
+  expect_equal(big$PK$default$cl2, 3.72 / 60 * 2^0.75)
+  expect_equal(big$michaelisMenten$vmax, 1.55 * 1000 / 60 * 2^0.75)
+  expect_equal(big$michaelisMenten$clLinear, 4.58 * (egfr / 80)^0.838 / 60 * 2^0.75)
+  expect_equal(big$PK$default$cl1, big$michaelisMenten$clLinear +
+                 big$michaelisMenten$vmax / 567)
+  expect_equal(big$PK$default$v1, 7.03 * (140 / 84.8)^2.67)
+  expect_equal(big$michaelisMenten$km, 567)
+  expect_identical(big$michaelisMenten$saturableSC, ref$michaelisMenten$saturableSC)
+  # (c) the switch off: as published, whatever the size
+  off <- exenatide(w, 200, 35, "male", adjustToFFM = FALSE, creatinine = 1)
+  expect_equal(off$PK$default$v2, 7.04)
+  expect_equal(off$PK$default$cl2, 3.72 / 60)
+  expect_equal(off$michaelisMenten$vmax, 1.55 * 1000 / 60)
+  expect_equal(off$michaelisMenten$clLinear, 4.58 * (egfr / 80)^0.838 / 60)
+  # the Michaelis-Menten engine and the saturable SC input still run
+  PK <- getDrugPK("exenatide", w, 200, 35, "male", creatinine = 1)
+  d <- data.frame(Drug = "exenatide", Time = 0, Dose = 10, Units = "mcg SC")
+  cp <- simCpCe(d, noEvents, PK, 1440, FALSE)$wide$Plasma
+  expect_true(all(is.finite(cp)) && max(cp) > 0)
+})

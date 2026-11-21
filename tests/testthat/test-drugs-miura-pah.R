@@ -105,3 +105,81 @@ test_that("a child's oral and intravenous sildenafil are simulated and added", {
   fda <- sildenafilFDA(18, 110, 5, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(max(iv$Plasma), 10 * 1000 / fda$v1, tolerance = 0.02)
 })
+
+# ---------------------------------------------------------------------------
+# V/F scaled by fat-free mass, anchored at each drug's cohort (Shafer's
+# first-principles rule of 2026-11-19; the anchor, two groups, his choice of
+# 2026-11-20).  The cohorts are Table 1's medians, written out here: the
+# children's heights the JSPE 2000 reference's 50th percentile (Appendix
+# Table 2), the adults' NCD-RisC Japan less the loss with age, and each
+# group at the cohort's sex ratio (Table 1 does not split it).
+miuraCohort <- function(wc, ac, hb, hg, wa, aa, hm, hw, M, F, nc, na) {
+  N <- nc + na
+  list(groups = list(
+    list(weight = wc, height = hb, age = ac, men = M * nc / N, women = 0),
+    list(weight = wc, height = hg, age = ac, men = 0, women = F * nc / N),
+    list(weight = wa, height = hm, age = aa, men = M * na / N, women = 0),
+    list(weight = wa, height = hw, age = aa, men = 0, women = F * na / N)))
+}
+ffmMiura <- function(w, h, a, male) {
+  bmi <- w / (h / 100)^2
+  if (male) (0.88 + 0.12 / (1 + (a / 13.4)^(-12.7))) * 9270 * w / (6680 + 216 * bmi)
+  else (1.11 - 0.11 / (1 + (a / 7.1)^(-1.1))) * 9270 * w / (8780 + 244 * bmi)
+}
+FFM_REF_MIURA <- ffmMiura(70, 170, 35, TRUE)
+# a man of twice the reference fat-free mass: 200 cm, 35 years (the
+# maturation term at 35, 1 - 6e-7, is the reference man's too)
+W2_MIURA <- local({
+  mat35 <- 0.88 + 0.12 / (1 + (35 / 13.4)^(-12.7))
+  2 * FFM_REF_MIURA * 6680 / (mat35 * 9270 - 2 * FFM_REF_MIURA * 216 / 4)
+})
+
+# (a) each of the cohort's four typical subjects gets V x its own FFM factor
+# over the pooled divisor (V/F has no sex term), and their geometric mean,
+# weighted by the counts, is the published V; (b) twice the reference FFM
+# doubles V/F against the reference man, and CL/F keeps the fitted weight
+# term at the pharmacokinetic weight, 140 kg; (c) the switch off is V for
+# everyone
+checkMiuraVolume <- function(f, V, cohort, clFitted) {
+  pooled <- cohortFactorsIndependent(cohort)$volume
+  logSum <- 0; n <- 0
+  for (g in cohort$groups) {
+    male <- g$men > 0
+    v <- f(g$weight, g$height, g$age, if (male) "male" else "female")$PK$default$v1
+    expect_equal(v, V * ffmMiura(g$weight, g$height, g$age, male) / FFM_REF_MIURA / pooled)
+    k <- g$men + g$women
+    logSum <- logSum + k * log(v); n <- n + k
+  }
+  expect_equal(exp(logSum / n), V)
+  ref <- f(70, 170, 35, "male")$PK$default
+  expect_equal(ref$v1, V / pooled)
+  big <- f(W2_MIURA, 200, 35, "male")$PK$default
+  expect_equal(big$v1 / ref$v1, 2)
+  expect_equal(big$cl1 * 60, clFitted(140))
+  expect_equal(f(W2_MIURA, 200, 35, "male", adjustToFFM = FALSE)$PK$default$v1, V)
+  expect_equal(f(10, 80, 1.5, "female", adjustToFFM = FALSE)$PK$default$v1, V)
+  pooled
+}
+
+test_that("switch on: V/F by fat-free mass, anchored at each drug's cohort", {
+  # sildenafil: 15 children (5.0 y, 16.5 kg), 9 adults (47 y, 48.5 kg), 8 M / 16 F
+  p <- checkMiuraVolume(sildenafilMiura, 322,
+                        miuraCohort(16.5, 5.0, 106.8, 106.7, 48.5, 47, 170.5, 157.4, 8, 16, 15, 9),
+                        function(w) clMiura(60.6, w, 32.3, 0.537))
+  expect_equal(p, 0.3587, tolerance = 1e-3)
+  # the intravenous system is the FDA model's, untouched by the anchor
+  X <- sildenafilMiura(16.5, 106.8, 5, "male")
+  fda <- sildenafilFDA(16.5, 106.8, 5, "male")$PK$default
+  expect_equal(X$parallelSystems[[1]]$PK$default[c("v1", "v2", "cl1", "cl2")],
+               fda[c("v1", "v2", "cl1", "cl2")])
+  # tadalafil: 20 children (1.9 y, 10.7 kg), 11 adults (37.8 y, 52.3 kg), 12 M / 19 F
+  p <- checkMiuraVolume(tadalafilMiura, 80.6,
+                        miuraCohort(10.7, 1.9, 84.8, 83.6, 52.3, 37.8, 171.1, 157.9, 12, 19, 20, 11),
+                        function(w) clMiura(1.76, w, 14.2, 0.602))
+  expect_equal(p, 0.2725, tolerance = 1e-3)
+  # ambrisentan: 18 children (1.8 y, 10.1 kg), 11 adults (44.6 y, 51.4 kg), 11 M / 18 F
+  p <- checkMiuraVolume(ambrisentanMiura, 12.4,
+                        miuraCohort(10.1, 1.8, 83.9, 82.7, 51.4, 44.6, 170.7, 157.6, 11, 18, 18, 11),
+                        function(w) clMiura(0.594, w, 13.4, 0.561))
+  expect_equal(p, 0.2731, tolerance = 1e-3)
+})

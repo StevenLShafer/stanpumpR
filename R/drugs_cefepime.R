@@ -24,10 +24,15 @@
 # first-order elimination (Table 3 and the supplement's Table S2):
 #
 #     CL = 7.84 L/h x eGFR / 7.2        (eGFR in L/h, so 7.2 L/h = 120 mL/min)
-#     V1 = 15.56 L x WT / 70           Q 7.09 L/h (fixed)   V2 10.63 L (fixed)
+#     V1 = 15.56 L x WT / 70           Q 7.09 L/h           V2 10.63 L
 #
 # CL and V1 are the abstract's 7.84 L/h and 15.6 L; Table 3 prints V1 and V2
-# to two decimals.  Clearance has no non-renal part.
+# to two decimals.  Clearance has no non-renal part.  Q and V2 are printed
+# without a standard error and "were fixed at 7.09 L/h and 10.6 L,
+# respectively, due to low observed interindividual variation in these
+# parameters" (Results, p5); the source names no other study for them, so
+# they are read as values of this cohort whose variability was removed, not
+# as values taken from the literature.
 #
 # THE eGFR: CREATININE ONLY (Shafer's decision, 2026-11-17)
 # =========================================================
@@ -72,8 +77,9 @@
 # 163.9 mg/L after 1 and 2 g, AUC 148.5 h.mg/L after 1 g, total clearance
 # 120 (+/- 8) mL/min, half-life 2 h, Vss 18 L.  This model at the library's
 # reference man (70 kg, 170 cm, 35 years, creatinine 0.9 mg/dL; eGFR 115
-# mL/min, clearance 7.54 L/h = 126 mL/min): peaks 51.9 and 103.7 mg/L, AUC
-# 132.7 h.mg/L after 1 g, half-lives 0.5 and 2.9 h, Vss 26.2 L.  Clearance
+# mL/min, clearance 7.54 L/h = 126 mL/min; Q and V2 scaled from Barreto's
+# cohort, see BODY SIZE): peaks 52.0 and 104.1 mg/L, AUC 132.7 h.mg/L after
+# 1 g, half-lives 0.5 and 2.9 h, Vss 25.8 L.  Clearance
 # agrees within 5%; the volumes are larger, as expected of critically ill
 # patients against healthy volunteers, so the peaks are lower (the label
 # measured them at the end of the infusion, where a small central volume
@@ -83,11 +89,22 @@
 # =====================================
 # The source's weight term on V1, and the body surface area that de-indexes
 # the eGFR, at the pharmacokinetic weight with the fat-free-mass switch on
-# and at total body weight with it off.  The source standardised weight to
-# 70 kg and explored allometric scaling of clearance, which did not improve
-# the fit.  Fitted in adults only, and offered at every age: the age the
-# eGFR equation sees is the patient's, and a child's creatinine is put on
-# the adult scale (adultEquivalentCreatinine()).
+# and at total body weight with it off; neither takes any further scaling,
+# and the renal clearance, with weight inside its de-indexed eGFR, is never
+# scaled or anchored.  The source standardised weight to 70 kg and explored
+# allometric scaling of clearance, which did not improve the fit.  Q and V2
+# have no size term in the source.  With the switch on they are scaled, Q
+# by the library's factor for a clearance, (FFM / FFM_ref)^0.75, and V2 by
+# its factor for a volume, FFM / FFM_ref, under Steven L. Shafer's
+# first-principles rule of 2026-11-19: a covariate not detected in a dataset
+# is not evidence that the pharmacokinetics are insensitive to it.  They are
+# anchored at Barreto's cohort (CEFEPIME_COHORT, below), whose typical
+# patient sits at factors of 1.0417 (volume) and 1.0311 (clearance) from the
+# reference man, so that patient receives the published 7.09 L/h and 10.63
+# L.  With the switch off they are as published, unscaled.  Fitted in adults
+# only, and offered at every age: the age the eGFR equation sees is the
+# patient's, and a child's creatinine is put on the adult scale
+# (adultEquivalentCreatinine()).
 #
 # PREGNANCY
 # =========
@@ -113,10 +130,18 @@ CEFEPIME_CL       <- 7.84    # L/h at an eGFR of 7.2 L/h (120 mL/min)
 CEFEPIME_EGFR_REF <- 120     # mL/min
 CEFEPIME_V1       <- 15.56   # L at 70 kg
 CEFEPIME_WT_REF   <- 70      # kg
-CEFEPIME_Q        <- 7.09    # L/h, fixed
-CEFEPIME_V2       <- 10.63   # L, fixed
+CEFEPIME_Q        <- 7.09    # L/h, no interindividual variability
+CEFEPIME_V2       <- 10.63   # L, no interindividual variability
 # The label's clearance on hemodialysis: Vss 18 L x ln 2 / 13.5 h
 CEFEPIME_CL_MIN   <- 18 * log(2) / 13.5   # L/h
+
+# Barreto 2023, Table 1 (p6), all 120 patients: means 61 years, 87 kg, BMI
+# 30 kg/m2; 72 men (60%) and so 48 women; Mayo Clinic, US.  No height is
+# printed: it comes from the weight and BMI (170.3 cm), the same for both
+# sexes, the table giving no values by sex.  Q and V2 are anchored at this
+# cohort (Steven L. Shafer's first-principles rule, 2026-11-19; see the
+# header's BODY SIZE).
+CEFEPIME_COHORT <- list(weight = 87, bmi = 30, age = 61, men = 72, women = 48)
 
 #' Cefepime clearance (Barreto 2023)
 #'
@@ -144,7 +169,13 @@ cefepimeClearance <- function(egfr)
 cefepime <- function(weight, height, age, sex, adjustToFFM = TRUE,
                      creatinine = NULL, pregnant = FALSE)
 {
+  # Size (see the header's BODY SIZE): V1 and the de-indexing body surface
+  # area read the pharmacokinetic weight; sizeFree scales the size-free Q and
+  # V2, anchored at Barreto's cohort, and is 1 with the switch off.
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
+  sizeFree <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                            legacyVolume = 1, legacyClearance = 1,
+                            cohort = do.call(cohortSizeFactors, CEFEPIME_COHORT))
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   scr  <- adultEquivalentCreatinine(creatinine, age, sex)
   gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)
@@ -153,10 +184,10 @@ cefepime <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   default <- list(
     v1  = CEFEPIME_V1 * pkW / CEFEPIME_WT_REF,
-    v2  = CEFEPIME_V2,
+    v2  = CEFEPIME_V2 * sizeFree$volume,
     v3  = 1,
     cl1 = cl / 60,
-    cl2 = CEFEPIME_Q / 60,
+    cl2 = CEFEPIME_Q / 60 * sizeFree$clearance,
     cl3 = 0
   )
   events <- c(PK_EVENT_DEFAULT)

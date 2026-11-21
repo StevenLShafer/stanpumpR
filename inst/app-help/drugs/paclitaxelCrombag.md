@@ -6,9 +6,13 @@ Crombag and colleagues (*Pharm Res* 2019;36:33) refitted Joerger's paclitaxel mo
 - Transport into the first tissue compartment at up to 177 µmol/h, half-saturated at 1.63 µmol/L, returning at 1.20 per hour.
 - A second tissue compartment of 267 L, reached at 16.6 L/h; a central volume of 12.0 L.
 
+These are the values for the study's typical patient. With *Adjust weight to fat-free mass* ticked, all but the maximal elimination rate are scaled to the patient's fat-free mass (see below).
+
 ### Sex, size and age
 
 Only the maximal elimination rate carries covariates: 12% higher in a man, rising with body-surface area (to the power 1.41, about 1.8 m²), and falling 5% for each decade of age (to the power −0.31, about 61 years). Bilirubin lowers it too; the Patient Profile has no bilirubin, so the study's median, 7 µmol/L, is assumed.
+
+Crombag took this covariate model from Joerger's 2012 analysis and tested only age in her own data, so size was never tested on the central volume, the second tissue volume, the maximal transport rate or the intercompartmental clearance. With *Adjust weight to fat-free mass* ticked, stanpumpR scales the two volumes in proportion to fat-free mass and the transport rate and intercompartmental clearance to its 0.75 power, anchored at Crombag's typical patient (301 men and 383 women, median 61 years, body surface area 1.8 m²; the paper prints no weight or height, so 67.6 kg and 172.3 cm are derived from the body surface area and Dutch heights), who receives the published values. The maximal elimination rate keeps its own body-surface-area term and takes nothing more. Unticked, the four are as published.
 
 ### What is plotted
 

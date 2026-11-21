@@ -37,14 +37,35 @@
 # (Table 2), for both enantiomers.  The paper writes the term as WT^1.23
 # without stating the weight it was centred on; 208.1 L is taken as the value
 # at 70 kg, the library's reference weight (the study mean was 74 kg), at
-# Steven L. Shafer's instruction.  Sex, race and CYP2C19 had no effect.  Weight was
-# tested on every parameter and kept only on V3, and the authors conclude
+# Steven L. Shafer's instruction.  Sex, race and CYP2C19 had no effect.  In
+# the stepwise search weight was retained on V3 only, and the authors conclude
 # that their data "do not support dose adjustments based on weight for
-# chronic methadone administration", so the other parameters are NOT size
-# scaled with either position of the fat-free-mass switch.  This model
-# therefore carries its own size covariate (docs/weight-adjustment.md,
-# option 1): V3 is evaluated at the pharmacokinetic weight with the switch on
-# and at total body weight with it off, as alprazolam does.  The study's
+# chronic methadone administration".  That is a fact about the source, a
+# cohort of 64 healthy volunteers of 74 +/- 13 kg; it is not evidence that
+# size leaves the other parameters unchanged (see BODY SIZE below).
+#
+# BODY SIZE (docs/weight-adjustment.md)
+# =====================================
+# V3 carries Henthorn's own fitted term, WT^1.23 at 70 kg, for both
+# enantiomers: it is evaluated at the pharmacokinetic weight with the switch
+# on and at total body weight with it off, as alprazolam does, and takes no
+# other scaling.  Every other disposition parameter, which carries no size
+# term, is scaled allometrically with the switch on, by Shafer's
+# first-principles rule of 2026-11-19 (a covariate not detected in one
+# dataset is not shown to have no effect): Vc and V2 of both enantiomers by
+# the fat-free-mass volume factor; Q2, Q3 and all three elimination
+# clearances (to EDDP, renal, other) of both enantiomers by the clearance
+# factor.  The renal clearance is a fitted constant with no weight inside
+# (no creatinine clearance enters it), so it is a clearance like the others.
+# The CYP2B6 multipliers (on the non-renal clearance) and the S(+)/R(-)
+# ratios are untouched, so the enantiomers keep their published ratios to
+# each other at every size.  The factors are anchored at Henthorn's cohort
+# (METHADONE_COHORT: Table 1, p740, 34 men and 30 women, 29 years, 74 kg;
+# heights from NCD-RisC), whose typical patient sits at a volume factor of
+# 0.948 and a clearance factor of 0.961 from the 70 kg reference man; so a
+# patient like Henthorn's receives Table 2's values, and the reference man
+# receives Vc, V2 and the clearances 5.5% and 4.1% above them.  With the
+# switch off nothing but V3's weight term applies, as before.  The study's
 # weight range was roughly 50 to 100 kg; children are extrapolation.
 #
 # CYP2B6
@@ -319,13 +340,31 @@ methadoneUdf <- function(vc, v2, v3, cl, q2, q3)
   list(coef = coef, lambda = lambda)
 }
 
+# Henthorn 2025, Table 1 (p740) and the Methods: 64 healthy volunteers, 34
+# men and 30 women, 29 +/- 8 years, 74 +/- 13 kg (42 White, 10 Black, 10
+# Asian, 2 other); St Louis, registered 2012 (NCT01648283).  No height is
+# printed: NCD-RisC's mean height at 18 for the United States, birth cohort
+# 1984 (about 2013 less 29), less the loss with age to 29 years, is 177.3 cm
+# for the men and 163.4 cm for the women, each at the cohort's 74 kg.  Every
+# parameter but V3 (which carries Henthorn's own weight term) is anchored at
+# this cohort (Steven L. Shafer, 2026-11-19, first-principles rule; see the
+# header's BODY SIZE section).
+METHADONE_COHORT <- list(groups = list(
+  list(weight = 74, height = 177.3, age = 29, men = 34, women = 0),
+  list(weight = 74, height = 163.4, age = 29, men = 0, women = 30)))
+
 # R(-) and S(+) unit disposition functions with V3 at `v3Weight` kg, at the
 # CYP2B6 phenotype's hepatic clearance (the header's CYP2B6 section: that
 # multiplier scales the non-renal clearance only), with every elimination
 # clearance then multiplied by `clFactor` (pregnancy, which the review
-# assigns to no one component; see the PREGNANCY section).
+# assigns to no one component; see the PREGNANCY section).  `volume` and
+# `clearance` are the patient's size factors (the header's BODY SIZE
+# section): `volume` multiplies Vc and V2, `clearance` Q2, Q3 and every
+# elimination clearance, of both enantiomers; V3 carries its own weight term
+# and takes neither.
 methadoneEnantiomers <- function(v3Weight, clFactor = 1,
-                                 cyp2b6 = CYP2B6_DEFAULT)
+                                 cyp2b6 = CYP2B6_DEFAULT,
+                                 volume = 1, clearance = 1)
 {
   r <- METHADONE_R
   s <- METHADONE_S_OVER_R
@@ -335,10 +374,14 @@ methadoneEnantiomers <- function(v3Weight, clFactor = 1,
   clR <- g[["R"]] * (r$clEddp + r$clOther) + r$clRenal
   clS <- g[["S"]] * (r$clEddp * s$clEddp + METHADONE_S_CL_OTHER) +
     r$clRenal * s$clRenal
+  vc <- r$vc * volume
+  v2 <- r$v2 * volume
+  q2 <- r$q2 * clearance
+  q3 <- r$q3 * clearance
   list(
-    R = methadoneUdf(r$vc, r$v2, v3, clR * clFactor, r$q2, r$q3),
-    S = methadoneUdf(r$vc * s$v, r$v2 * s$v, v3 * s$v, clS * clFactor,
-                     r$q2 * s$q, r$q3 * s$q)
+    R = methadoneUdf(vc, v2, v3, clR * clFactor * clearance, q2, q3),
+    S = methadoneUdf(vc * s$v, v2 * s$v, v3 * s$v,
+                     clS * clFactor * clearance, q2 * s$q, q3 * s$q)
   )
 }
 
@@ -351,14 +394,16 @@ methadoneFitCache <- new.env(parent = emptyenv())
 # bolus response best matches the mean of the R(-) and S(+) responses, with
 # equal area.  Returns v1, v2, v3, cl1, cl2, cl3 per unit of base.
 methadoneRacemicPK <- function(v3Weight, clFactor = 1,
-                               cyp2b6 = CYP2B6_DEFAULT)
+                               cyp2b6 = CYP2B6_DEFAULT,
+                               volume = 1, clearance = 1)
 {
   key <- paste(format(v3Weight, digits = 15), format(clFactor, digits = 15),
-               cyp2b6)
+               cyp2b6, format(volume, digits = 15),
+               format(clearance, digits = 15))
   cached <- methadoneFitCache[[key]]
   if (!is.null(cached)) return(cached)
 
-  e <- methadoneEnantiomers(v3Weight, clFactor, cyp2b6)
+  e <- methadoneEnantiomers(v3Weight, clFactor, cyp2b6, volume, clearance)
   udf <- function(coef, lambda, t) colSums(coef * exp(-outer(lambda, t)))
   t <- exp(seq(log(0.5), log(7 * 1440), length.out = 300))
   y <- 0.5 * (udf(e$R$coef, e$R$lambda, t) + udf(e$S$coef, e$S$lambda, t))
@@ -466,8 +511,10 @@ methadoneRacemicPK <- function(v3Weight, clFactor = 1,
 #' @param age age in years (used only for the fat-free-mass weight)
 #' @param sex sex as a string (used only for the fat-free-mass weight)
 #' @param adjustToFFM \code{TRUE} (the default) evaluates Henthorn's weight
-#'   term on V3 at the pharmacokinetic weight; \code{FALSE} at total body
-#'   weight.  No other parameter is size scaled.
+#'   term on V3 at the pharmacokinetic weight and scales every other volume
+#'   and clearance to fat-free mass, anchored at Henthorn's cohort;
+#'   \code{FALSE} evaluates the V3 term at total body weight and scales
+#'   nothing else.
 #' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the
 #'   clearance of both enantiomers by 24/14 before the racemic reduction
 #'   (Ansari 2016; see the file's header).
@@ -483,15 +530,21 @@ methadone <- function(weight, height, age, sex, adjustToFFM = TRUE,
   if (length(cyp2b6) != 1 || !isTRUE(cyp2b6 %in% CYP2B6_VALUES))
     stop("Invalid cyp2b6: ", paste(cyp2b6, collapse = ", "),
          ". Must be one of: ", paste(CYP2B6_VALUES, collapse = ", "))
-  # Size scaling (see the header): Henthorn's own weight term on V3 only, at
-  # the pharmacokinetic weight with the switch on, total weight with it off.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
+  # Size scaling (see the header's BODY SIZE section): Henthorn's own weight
+  # term on V3, at the pharmacokinetic weight with the switch on (pkWeight
+  # does not depend on the cohort) and total weight with it off; every other
+  # volume and clearance of both enantiomers by the FFM factors anchored at
+  # Henthorn's cohort with the switch on, and unscaled with it off.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, METHADONE_COHORT))
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
 
   # Pregnancy and CYP2B6 (see the header): both act on the enantiomers'
   # clearances, then the racemic model is fitted at the result.
   clPregnancy <- if (isTRUE(pregnant)) METHADONE_PREGNANCY_CL_FACTOR else 1
-  base <- methadoneRacemicPK(pkW, clPregnancy, cyp2b6)
+  base <- methadoneRacemicPK(pkW, clPregnancy, cyp2b6,
+                             volume = size$volume, clearance = size$clearance)
   # Hydrochloride doses, base concentrations (see the header).
   f <- METHADONE_BASE_FRACTION
 

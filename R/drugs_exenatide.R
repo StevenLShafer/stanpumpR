@@ -48,14 +48,35 @@
 # assumed normal creatinine for the patient's age and sex when the field is
 # blank.  Not capped: the paper applies the power across its whole range.
 #
-# BODY SIZE: the model's own weight covariate on Vc, evaluated at the
-# pharmacokinetic weight with the switch on and at total weight with it off.
-# Its exponent, 2.67, is steep, so the weight is held within the studied 52.6
-# to 162 kg for it: a 40 kg patient would otherwise have a Vc of 0.9 L.  The
-# other parameters carry no size term in the source and none is added.
+# BODY SIZE (docs/weight-adjustment.md): the model's own weight covariate on
+# Vc is kept exactly as fitted, evaluated at the pharmacokinetic weight with
+# the switch on and at total weight with it off, and takes no further
+# scaling.  Its exponent, 2.67, is steep, so the weight is held within the
+# studied 52.6 to 162 kg for it: a 40 kg patient would otherwise have a Vc of
+# 0.9 L.  The other parameters have no size term in the source (body weight
+# entered on Vc only; p519-520).  Under Steven L. Shafer's first-principles
+# rule of 2026-11-19 (a covariate not detected is not evidence that size does
+# not matter), with the switch on they are now scaled to fat-free mass: Vp by
+# size$volume, and Cld and Vmax by size$clearance (the fat-free-mass ratio to
+# the 0.75 power).  The linear clearance keeps its MDRD eGFR term, which is
+# indexed to 1.73 m2 and so has no weight inside, AND takes size$clearance.
+# Km and the absorption (ka_max, Km_ka, tau, fr, F) are not scaled.  With the
+# switch off every parameter is as published, as before.
+#
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18 and 2026-11-19;
+# docs/weight-adjustment.md, Anchoring at the source's cohort): the paper
+# prints its cohort on p520 (195 subjects, 22% women, mean age 48 years,
+# mean weight 86 kg) but no height, BMI or BSA, and names no country: Table 1
+# (p519) lists eight studies, three cited and the rest unreferenced, with no
+# site or country anywhere in the text.  A height from NCD-RisC needs the
+# country, and none can be read, so the cohort is not given a guessed height
+# (as for a multinational cohort, the opicapone case) and the scaled
+# parameters stay anchored at the 70 kg, 170 cm reference man (factor 1, no
+# cohort constant).
 #
 # CHECKS
 # ======
+# With the switch off (the published parameters, as the tests run them).
 # Linear clearance at eGFR 90: 5.06 L/h (paper: 5.06).  Total clearance at
 # 210 pg/mL, Cl + Vmax / (Km + C): 5.1, 6.3 and 7.5 L/h at eGFR 50, 75 and
 # 100 (paper: 5.1, 6.3 and 7.5).  A single 10 mcg dose, 75 kg, eGFR 90:
@@ -110,21 +131,25 @@ EXENATIDE_WEIGHT_RANGE <- c(52.6, 162)   # kg, the studied range
 exenatide <- function(weight, height, age, sex, adjustToFFM = TRUE,
                       creatinine = NULL)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
+  # Vp, Cld, Vmax and the linear clearance take the fat-free-mass factors,
+  # anchored at the reference man (BODY SIZE ANCHOR in the header); Vc has
+  # its own weight term.  The switch off leaves them as published.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                        legacyVolume = 1, legacyClearance = 1)
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   wVc  <- min(max(pkW, EXENATIDE_WEIGHT_RANGE[1]), EXENATIDE_WEIGHT_RANGE[2])
   egfr <- egfrMDRD(age, sex, adultEquivalentCreatinine(creatinine, age, sex))
 
   vc       <- 7.03 * (wVc / 84.8)^2.67           # L
-  clLinear <- 4.58 * (egfr / 80)^0.838 / 60      # L/min
-  vmax     <- 1.55 * 1000 / 60                   # ng/min
+  clLinear <- 4.58 * (egfr / 80)^0.838 / 60 * size$clearance   # L/min
+  vmax     <- 1.55 * 1000 / 60 * size$clearance                 # ng/min
   km       <- 567                                # pg/mL = ng/L
 
   default <- list(
-    v1 = vc, v2 = 7.04, v3 = 1,
+    v1 = vc, v2 = 7.04 * size$volume, v3 = 1,
     # The low-concentration limit, linear plus Vmax / Km, for the help tables
     # only: the simulation uses the michaelisMenten block.
-    cl1 = clLinear + vmax / km, cl2 = 3.72 / 60, cl3 = 0
+    cl1 = clLinear + vmax / km, cl2 = 3.72 / 60 * size$clearance, cl3 = 0
   )
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
