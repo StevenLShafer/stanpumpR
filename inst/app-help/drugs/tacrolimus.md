@@ -2,6 +2,10 @@
 
 Tacrolimus's parameters come from Woillard and colleagues (*Br J Clin Pharmacol* 2011;71:391-402), a population analysis of rich whole-blood profiles from 32 adult kidney transplant recipients taking twice-daily **Prograf** at weeks 1 and 2 and months 1, 3 and 6 after transplantation (with 41 more on once-daily Advagraf). Two compartments, absorbed through an **Erlang** chain of three transit compartments, which gives the delayed, gradually rising absorption of tacrolimus: transit rate constant 5.11 /h, apparent clearance 21.2 L/h, central volume 141 L, intercompartmental clearance 79 L/h and peripheral volume 271 L. The parameters are **apparent** (divided by the oral bioavailability, about 17% in kidney transplant patients by the label), so only the oral route is offered. The curve is **whole blood** tacrolimus, the matrix monitored clinically.
 
+### Body size
+
+Weight was tested and not retained, but 73 patients of similar size cannot show that size does not matter. With [the scaling switch](help:models/fat-free-mass) on, every volume and clearance follows fat-free mass (clearances to the 0.75 power), relative to the typical patient of the two studies (38 men and 35 women, about 67 kg and 54 years), who receives the published values; the library's 70 kg reference man receives volumes 14% and clearances 10% above them. With the switch off the values are as published for everyone.
+
 ### What is held at a reference
 
 - **CYP3A5**: the model is a CYP3A5 **non-expresser** (*3/*3), as 67 of the 73 patients were and about 85% of white Europeans are. An expresser (any *1 allele; the majority of people of African descent) clears tacrolimus **twice** as fast in this model. The Patient Profile has no CYP3A5 field.
