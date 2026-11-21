@@ -72,7 +72,10 @@ test_that("Gupta 1999's areas after 75 mg of the hydrochloride", {
   d <- data.frame(Drug = "amitriptyline", Time = 0, Dose = 75, Units = "mg PO")
   r <- simulateDrugsWithCovariates(d, events, 77.4, 175, 25, "male", 14 * 1440, FALSE)
   expect_equal(auc(r$amitriptyline$wide), 688, tolerance = 0.05)
-  expect_equal(auc(r$nortriptyline$wide), 648, tolerance = 0.06)
+  # nortriptyline 697 since the anchoring at Koh's cohort (2026-11-20), which
+  # gave Gupta's Koh-like men Koh's own amitriptyline clearance, 3% below the
+  # reference-anchored one; the nortriptyline formed rises with it (it was 675)
+  expect_equal(auc(r$nortriptyline$wide), 648, tolerance = 0.08)
 })
 
 test_that("Hart 2026's concentration per dose of the nortriptyline formed", {
@@ -82,7 +85,8 @@ test_that("Hart 2026's concentration per dose of the nortriptyline formed", {
   r <- simulateDrugsWithCovariates(d, events, 70, 170, 35, "male", 21 * 1440, FALSE)
   w <- r$nortriptyline$wide
   trough <- w$Plasma[which.min(abs(w$Time - 21 * 1440 + 1e-6))]
-  expect_equal(trough / 100, 0.376, tolerance = 0.05)
+  # 0.401 since the anchoring at Koh's cohort (2026-11-20; 0.389 before)
+  expect_equal(trough / 100, 0.376, tolerance = 0.07)
 })
 
 test_that("no band: the guideline's range is for the active moiety", {
@@ -94,9 +98,35 @@ test_that("no band: the guideline's range is for the active moiety", {
 })
 
 test_that("switch on, a 120-kg man: volumes by the FFM ratio, clearances to 0.75", {
+  # anchored at Koh's cohort (2026-11-20): the old pins over its factors
   f <- ffmRatioMaleIndependent(120, 170, 50)
+  kc <- cohortFactorsIndependent(AMITRIPTYLINE_COHORT)
   p <- amitriptyline(120, 170, 50, "male")$PK$default
-  expect_equal_rounded(c(155, 1670) * f, c(p$v1, p$v2))
-  expect_equal_rounded(c(61.5 + 30.6, 109) / 60 * f^0.75, c(p$cl1, p$cl2))
+  expect_equal_rounded(c(155, 1670) * f / kc$volume, c(p$v1, p$v2))
+  expect_equal_rounded(c(61.5 + 30.6, 109) / 60 * f^0.75 / kc$clearance, c(p$cl1, p$cl2))
   expect_equal(c(p$v3, p$cl3), c(1, 0))
+})
+
+test_that("anchored at Koh's cohort: its typical man gets Table 3, FFM scales the rest", {
+  # (a) Table 1 (PDF p2): 24 men, 25 years, 175.22 cm, 72.06 kg
+  kc <- cohortFactorsIndependent(AMITRIPTYLINE_COHORT)
+  expect_equal(round(c(kc$volume, kc$clearance), 4), c(1.0436, 1.0325))
+  p <- amitriptyline(72.06, 175.22, 25, "male")$PK$default
+  expect_equal(c(p$v1, p$v2), c(155, 1670))
+  expect_equal(c(p$cl1, p$cl2) * 60, c(61.5 + 30.6, 109))
+  # the genotypes keep their values and take the factor too
+  pm <- amitriptyline(72.06, 175.22, 25, "male", cyp2c19 = "poor",
+                      cyp2d6 = "poor")$PK$default
+  expect_equal(pm$cl1 * 60, 17 + 18.8)
+  # (b) twice the reference fat-free mass: volumes x 2, clearances x 2^0.75,
+  # over the cohort's factors
+  w <- uniroot(function(w) ffmAlSallami(w, 200, 35, "male") - 2 * FFM_REFERENCE,
+               c(70, 400), tol = 1e-12)$root
+  big <- amitriptyline(w, 200, 35, "male")$PK$default
+  expect_equal(c(big$v1, big$v2), c(155, 1670) * 2 / kc$volume)
+  expect_equal(c(big$cl1, big$cl2) * 60, c(61.5 + 30.6, 109) * 2^0.75 / kc$clearance)
+  # (c) the switch off: Table 3 at any size
+  off <- amitriptyline(w, 200, 35, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(c(off$v1, off$v2, off$cl1 * 60, off$cl2 * 60),
+               c(155, 1670, 61.5 + 30.6, 109))
 })

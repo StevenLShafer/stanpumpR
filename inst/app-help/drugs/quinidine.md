@@ -2,6 +2,10 @@
 
 Quinidine's parameters come from Fattinger and colleagues (*Br J Clin Pharmacol* 1991;31:279-286), a population analysis of 260 serum concentrations, mostly from routine monitoring, in 60 patients with arrhythmias (median 65 years, 70 kg), measured by an assay specific for quinidine and validated in 30 further patients. Two compartments with zero-order absorption: apparent clearance 12.6 + 0.0566 × creatinine clearance L/h, central volume 161 L, intercompartmental clearance 12.6 L/h, peripheral volume 66.7 L. Each dose of quinidine sulfate is absorbed at a constant rate over 1.37 hours, its time to peak. At a creatinine clearance of 100 mL/min the half-lives are 2.2 and 10 hours and the clearance 18 L/h, as the paper says. The parameters are apparent, relative to quinidine sulfate; its absolute bioavailability is about 70%.
 
+### Body size
+
+The source found no effect of weight, which in 60 patients does not show that size does not matter. With [the scaling switch](help:models/fat-free-mass) on, the volumes, the intercompartmental clearance and the nonrenal clearance follow fat-free mass (clearances to the 0.75 power), relative to the cohort's typical patient (46 men and 14 women, 65.5 years, 70.5 kg), who receives the published values; the library's 70 kg reference man receives volumes 5% and those clearances 4% above them. The renal clearance follows the creatinine clearance, at the pharmacokinetic weight, and takes no further size factor. With the switch off the values are as published for everyone.
+
 ### Dosing
 
 Quinidine sulfate tablets are dosed as the salt (**mg PO sulfate**, also every 8, 6 or 4 hours); the curve is quinidine base, converted at 0.829, as the source converted its doses. The extended-release quinidine gluconate tablet and intravenous quinidine are not offered: the source's absorption was fitted to the sulfate only, and intravenous quinidine gluconate is no longer marketed in the US.

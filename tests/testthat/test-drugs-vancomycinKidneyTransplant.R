@@ -55,14 +55,43 @@ test_that("the paper's typical clearances are reproduced", {
 })
 
 test_that("fat-free-mass scaling: library volume factor, pharmacokinetic weight in CG", {
+  # V anchored at Yu's cohort (2026-11-20): the old pin over its factor; the
+  # renal term reads the unanchored pharmacokinetic weight
   size <- pkSizeFactors(120, 170, 50, "male", TRUE)
+  kc <- cohortFactorsIndependent(VANCOMYCIN_KT_COHORT)
   x <- vancomycinKidneyTransplant(120, 170, 50, "male", creatinine = 1.8)$PK$default
-  expect_equal(x$v1, 80.8 * size$volume)
+  expect_equal(x$v1, 80.8 * size$volume / kc$volume)
   crcl <- creatinineClearanceCG(70 * size$volume, 50, "male", 1.8)
   expect_equal(x$cl1, 4.32 * crcl / 100 * exp(-0.28) / 60)
-  # the reference man receives the published volume
-  expect_equal(vancomycinKidneyTransplant(70, 170, 35, "male")$PK$default$v1, 80.8,
-               tolerance = 1e-6)
+  # the reference man receives 80.8 L over the cohort's factor, 77.7 L
+  expect_equal(vancomycinKidneyTransplant(70, 170, 35, "male")$PK$default$v1,
+               80.8 / kc$volume, tolerance = 1e-6)
+})
+
+test_that("anchored at Yu's cohort: its typical patients get 80.8 L, FFM scales V", {
+  # (a) Table I (p5): recipients 304 men and 165 women, 60.7 y, 172.7 cm,
+  # 84.5 kg; non-transplant 676 men and 394 women, 59.2 y, 171.3 cm, 84.3 kg.
+  # V has no sex term: the cohort's four typical patients, pooled
+  # geometrically by their numbers, receive the published 80.8 L
+  kc <- cohortFactorsIndependent(VANCOMYCIN_KT_COHORT)
+  expect_equal(round(kc$volume, 4), 1.0405)
+  v <- function(w, h, a, s) vancomycinKidneyTransplant(w, h, a, s)$PK$default$v1
+  pooled <- exp((304 * log(v(84.5, 172.7, 60.7, "male")) +
+                   165 * log(v(84.5, 172.7, 60.7, "female")) +
+                   676 * log(v(84.3, 171.3, 59.2, "male")) +
+                   394 * log(v(84.3, 171.3, 59.2, "female"))) / 1539)
+  expect_equal(pooled, 80.8)
+  # (b) twice the reference fat-free mass: V x 2 over the cohort's factor;
+  # CL is the renal term at the pharmacokinetic weight (140 kg), unanchored
+  w <- uniroot(function(w) ffmAlSallami(w, 200, 50, "male") - 2 * FFM_REFERENCE,
+               c(70, 400), tol = 1e-12)$root
+  big <- vancomycinKidneyTransplant(w, 200, 50, "male", creatinine = 1.8)$PK$default
+  expect_equal(big$v1, 80.8 * 2 / kc$volume)
+  crcl <- min(creatinineClearanceCG(140, 50, "male", 1.8), 150)
+  expect_equal(big$cl1, 4.32 * crcl / 100 * exp(-0.28) / 60)
+  # (c) the switch off: 80.8 L at any size
+  expect_equal(vancomycinKidneyTransplant(w, 200, 50, "male", adjustToFFM = FALSE)$PK$default$v1,
+               80.8)
 })
 
 test_that("the transplant factor is the only difference from the source's non-transplant clearance", {
