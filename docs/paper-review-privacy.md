@@ -105,6 +105,14 @@ These are statements about this code. Each names the function that does it.
    what that field held at once, before the new file arrives, whether or not
    it is kept, so Review never sends a file the field no longer shows (the
    browser tells the server only that a file was chosen, never its name).
+   Each choice is numbered, and just before an upload reaches the server the
+   browser says which choice it belongs to; an upload is kept only if it is
+   the field's latest choice and was chosen after the last **Discard**, so a
+   file chosen before a Discard, or replaced by a later choice before it
+   arrived, is deleted unread (`paperReviewChosenScript()`; CodeRabbit on
+   PR #776). Should the browser not say, an upload that may have been chosen
+   before a Discard is deleted unread and the user is asked to choose the
+   file again.
 2. **Held in memory.** The bytes live in an R environment private to that
    browser session (`paperReviewStore()`). They are not written to disk, not
    cached, not put in the URL, and not bookmarked (the app is started with

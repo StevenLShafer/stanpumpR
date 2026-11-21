@@ -156,7 +156,9 @@ test_that("H5: choosing a new file drops what its field held before the file arr
     session$setInputs(discard = 1)
     # (a file chosen after Discard: one still arriving from before it is
     # dropped unread, test-paper-review-privacy.R)
+    # The browser says which choice an upload belongs to (CodeRabbit on #776).
     session$setInputs(manuscriptChosen = 3)
+    session$setInputs(manuscriptArrived = 3)
     session$setInputs(manuscript = upload4(charToRaw("not a pdf")))
     expect_match(output$status, "^The manuscript is not a PDF and was discarded\\.$")
   })
@@ -168,7 +170,8 @@ test_that("H5: both upload fields report a chosen file, by its field and never i
     script <- scriptOf(html)
     expect_length(script, 1)
     expect_true(grepl(paste0("#", ns("manuscript"), ", #", ns("supplement")), script, fixed = TRUE))
-    expect_true(grepl("this.id + 'Chosen'", script, fixed = TRUE))
+    expect_true(grepl("id + 'Chosen'", script, fixed = TRUE))
+    expect_true(grepl("id + 'Arrived'", script, fixed = TRUE))
     expect_false(grepl("name", script, fixed = TRUE))
   }
   # The review app on its own
