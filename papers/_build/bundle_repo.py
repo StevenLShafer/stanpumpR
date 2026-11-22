@@ -93,6 +93,12 @@ def existing():
                 d = datetime.datetime.fromisoformat(stem)
         except ValueError:
             continue           # not one of ours; never deleted
+        if os.path.getsize(p) == 0:
+            # A zero-byte file is a name CLAIMED by a run that has not finished writing yet.
+            # It is not a generation: listing it let --keep prune another run's reservation,
+            # after which a third run could publish into that name and the first would
+            # overwrite it (CodeRabbit, PR #847). A finished bundle is never zero bytes.
+            continue
         found.append((d, p))
     return sorted(found, reverse=True)
 
@@ -131,28 +137,39 @@ if "--verify" in args:
     rows = existing()
     if not rows:
         sys.exit("No bundles in %s to check." % OUT)
+    # 0 every generation verified intact; 1 at least one could not be checked, so nothing is
+    # proven wrong and nothing is confirmed either; 2 at least one is PROVEN not in live history.
     worst = 0
     for d, bp in rows:
         side = bp[: -len(".bundle")] + ".json"
         if not os.path.exists(side):
             print("  %-16s no sidecar, so its commit is unknown" % stamp_of(d))
-            worst = 1
+            worst = max(worst, 1)
             continue
         try:
             saved = json.load(io.open(side, encoding="utf-8")).get("master", "")
         except ValueError:
             print("  %-16s its sidecar cannot be read" % stamp_of(d))
-            worst = 1
+            worst = max(worst, 1)
             continue
         r = subprocess.run(("git", "--git-dir", MIRROR, "merge-base", "--is-ancestor",
                             saved, live), capture_output=True, text=True)
+        # 0 is an ancestor, 1 is NOT an ancestor, and anything else is git failing to answer --
+        # 128 when it does not have the commit object at all.  "I could not tell" is not
+        # "rewritten", and reporting it as tampering would cry wolf; reporting it as intact
+        # would be the vacuous check this script already had once (CodeRabbit, PR #847).
         if r.returncode == 0:
             print("  %-16s intact (%s is an ancestor of live master)" % (stamp_of(d),
                                                                          saved[:12]))
-        else:
+        elif r.returncode == 1:
             print("  %-16s *** %s IS NOT IN LIVE HISTORY: it was rewritten, or GitHub was "
                   "rolled back ***" % (stamp_of(d), saved[:12]))
-            worst = 2
+            worst = max(worst, 2)
+        else:
+            print("  %-16s could not be checked: git could not place %s (%s)"
+                  % (stamp_of(d), saved[:12],
+                     (r.stderr or r.stdout or "exit %d" % r.returncode).strip()[:80]))
+            worst = max(worst, 1)
     sys.exit(worst)
 
 today = datetime.date.today()
@@ -214,21 +231,35 @@ tmp = "%s.%d.part" % (path, os.getpid())       # this process's own; never a sha
 print("Writing %s ..." % name)
 try:
     git("--git-dir", MIRROR, "bundle", "create", tmp, "--all")
+    # Verify BEFORE it takes the name, and before anything old is pruned: an unverified backup
+    # is not a backup, and a corrupt one that displaced a good generation is worse than none.
+    git("--git-dir", MIRROR, "bundle", "verify", tmp)
+    # The commit the BUNDLE contains, read from the bundle itself.  The `master` read from the
+    # mirror earlier is not it: the mirror is shared, so another run updating it between that
+    # read and `bundle create` would leave the sidecar naming a commit this bundle does not
+    # hold -- and --verify would then check the wrong commit and could call a generation intact
+    # when its real tip is no longer live (CodeRabbit, PR #847).
+    heads = git("--git-dir", MIRROR, "bundle", "list-heads", tmp)
+    bundled = next((l.split()[0] for l in heads.splitlines()
+                    if l.split()[1:2] == ["refs/heads/master"]), None)
+    if not bundled:
+        raise RuntimeError("the bundle holds no refs/heads/master; refusing to record one")
+    master = bundled
+    os.replace(tmp, path)                      # over our own empty placeholder, nothing else
 except BaseException:
-    # The claim reserved an EMPTY file.  Left behind it would list as a 0-byte generation and,
-    # worse, would stop today's name being retried.  Remove it and re-raise.
+    # Everything above is protected, not just the create: a failure in verify or in the rename
+    # left the zero-byte reservation as the newest "generation", after which the age guard said
+    # "nothing to do" until that date was a week old, and left the .part file behind as well.
+    # The reservation is removed only while it is still EMPTY, so a finished bundle is never
+    # touched by this.
     for leftover in (tmp, path):
-        if os.path.exists(leftover) and os.path.getsize(leftover) == 0 or leftover == tmp:
-            try:
+        try:
+            if os.path.exists(leftover) and (leftover == tmp or os.path.getsize(leftover) == 0):
                 os.remove(leftover)
-            except OSError:
-                pass
+        except OSError:
+            pass
     raise
 
-# 3. verify BEFORE it takes the name, and before anything old is pruned.  An unverified backup
-#    is not a backup, and a corrupt one that displaced a good generation is worse than none.
-git("--git-dir", MIRROR, "bundle", "verify", tmp)
-os.replace(tmp, path)                          # over our own empty placeholder, nothing else
 size = os.path.getsize(path)
 
 io.open(path[: -len(".bundle")] + ".json", "w", encoding="utf-8", newline="\n").write(
