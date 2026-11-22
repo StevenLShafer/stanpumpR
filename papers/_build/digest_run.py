@@ -60,7 +60,12 @@ def save_log(entries):
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(entries, f, indent=1)
     os.replace(tmp, LOG)
-PY = r"C:\Python314\python.exe"
+# THIS interpreter, not a hard-coded path. digests.bat launches this script with
+# C:\Python314\python.exe (the install that has openpyxl), so in production sys.executable
+# IS that -- and off Windows the hard-coded path made subprocess.run() raise
+# FileNotFoundError before the queue was even built, which is where CI runs the queue test
+# (CodeRabbit, PR #846).
+PY = sys.executable
 CLAUDE = shutil.which("claude") or os.path.expanduser(r"~\.local\bin\claude.exe")
 # The CLI authenticates the headless runs with Shafer's long-lived token, a Windows USER variable (2026-10-29).
 # A process started before he set it does not inherit it, and one started earlier still holds whatever value was
@@ -93,9 +98,37 @@ def say(msg):
         f.write(msg + "\n")
 
 
+def run_digest_prep():
+    """Rebuild STATUS.md and the manifest. Never fatal: its output is not read, and a run that
+    cannot start it must still finish its own work and report."""
+    try:
+        subprocess.run([PY, "-E", os.path.join(HERE, "digest_prep.py")], cwd=HERE,
+                       capture_output=True)
+    except OSError as exc:
+        say("could not rerun digest_prep.py (%s); STATUS.md may be out of date"
+            % exc.__class__.__name__)
+
+
 def pid_alive(pid):
-    out = subprocess.run(["tasklist", "/FI", "PID eq %d" % pid, "/NH"], capture_output=True, text=True).stdout
-    return str(pid) in out
+    """Is that process still running? Reached when a lock file names one.
+
+    tasklist exists only on Windows, and this is on the path a --dry run takes whenever a lock
+    file is present -- so off Windows it raised FileNotFoundError and the run died before the
+    queue (CodeRabbit, PR #846, after the same shape of failure with winreg). signal 0 asks the
+    kernel without sending anything, and PermissionError means someone else's process, which is
+    still a process.
+    """
+    if os.name == "nt":
+        out = subprocess.run(["tasklist", "/FI", "PID eq %d" % pid, "/NH"],
+                             capture_output=True, text=True).stdout
+        return str(pid) in out
+    try:
+        os.kill(pid, 0)
+    except PermissionError:
+        return True
+    except OSError:
+        return False
+    return True
 
 
 class Job:
@@ -285,7 +318,7 @@ try:
     say("master %s, cap %d, batches of %d\ncards -> %s\n" % (sha, cap, BATCH, CARDS))
 
     # 3. the queue, in priority order
-    subprocess.run([PY, "-E", os.path.join(HERE, "digest_prep.py")], cwd=HERE, capture_output=True)
+    run_digest_prep()
     manifest = json.load(open(os.path.join(HERE, "digest_manifest.json"), encoding="utf-8"))
 
     def tier(m):
@@ -568,7 +601,7 @@ try:
             break
 
     # 5. refresh STATUS.md and REVIEW.md
-    subprocess.run([PY, "-E", os.path.join(HERE, "digest_prep.py")], cwd=HERE, capture_output=True)
+    run_digest_prep()
     say("done; digests\\STATUS.md and digests\\REVIEW.md refreshed")
 
     # 6. the cards go to the repository as a branch, not left loose in a checkout (2026-10-29)
