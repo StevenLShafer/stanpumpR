@@ -6,13 +6,20 @@ digest_prep.py leaves in digests\\STATUS.md.  Added 2026-10-28 at Shafer's reque
      that the next run clears.
   2. Exports current origin/master of C:\\dev\\stanpumpR with `git archive` into %LOCALAPPDATA%\\stanpumpRPapers\\master_snapshot\\ (read-only use: the
      digest is checked against it; the shared checkout is only fetched, never switched).
-  3. Orders the queue: papers a drug model cites (R/drugs_*.R) first, then other R values, help and tests, the
-     registries and docs, and the non-journal documents (labels) last; stale digests before missing ones.  An
-     accepted manuscript (PMID_n_aam) is taken only when a model depends on its work (the digest session's rule).
+  3. Orders the queue, in two lanes (2026-11-19).  The MERIT lane: a paper a model is blocked on first (a
+     registry's `to_obtain`, or a row of papers/pending-work.csv, names it: arrivals.py), then papers a drug
+     model cites (R/drugs_*.R), then other R values, help and tests, the registries and docs, and the
+     non-journal documents (labels) last; stale digests before missing ones; within all that, OLDEST ARRIVED
+     FIRST.  The AGE lane: oldest arrived first whatever the tier, taking every AGE_SLOT-th place of a run, so
+     that no tier can be starved by a flood of arrivals in a higher one.  An accepted manuscript (PMID_n_aam)
+     is taken only when a model depends on its work (the digest session's rule).
   4. Runs `claude -p` on two papers at a time with _build\\digest_agent_prompt.md plus the unattended-run rules
-     below, skipping any card that appeared meanwhile (the digest session may be writing too).
-  5. Logs every batch (digest_runs\\<time>.md, digest_run_log.json), then reruns digest_prep.py so STATUS.md and
-     REVIEW.md show the new cards and their open questions.
+     below, skipping any card that appeared meanwhile (the digest session may be writing too).  Its output goes
+     to files rather than pipes and it is held in a job object, so BATCH_TIMEOUT really does end a batch, tree
+     and all, and the run goes on to the next one: see run_claude().
+  5. Logs every batch (digest_runs\\<time>.md, digest_run_log.json) -- each card as soon as it appears, so a run
+     that dies later keeps the record -- then reruns digest_prep.py so STATUS.md and REVIEW.md show the new
+     cards and their open questions.
   6. Commits the run's cards and pushes them on their own branch (`claude/digests-<time>`), printing the
      compare link, so they arrive as a pull request rather than as loose files in a checkout (2026-10-29).
 The cards live in the stanpumpR repository now, not in this archive: _build\\cards.py is the one place that says
@@ -30,6 +37,7 @@ REPO = cards.REPO
 from machine import LOCAL          # caches and scratch kept out of the Drive-synced archive (2026-10-30)
 SNAP = os.path.join(LOCAL, "master_snapshot")
 LOCK = os.path.join(HERE, "digest_run.lock")
+cleared = ""                       # what was said about a stale lock, for the report
 HOST = socket.gethostname()        # the lock names its computer: Drive syncs it to the others (2026-10-30)
 LOCK_FOREIGN_HOURS = 12            # another computer's lock older than this is taken to be a dead run's
 RUNS = os.path.join(HERE, "digest_runs")
@@ -67,6 +75,138 @@ def pid_alive(pid):
     return str(pid) in out
 
 
+class Job:
+    """A Windows job object holding one claude run and everything it starts, so a deadline can end the whole
+    tree.  `claude -p` starts helpers of its own (MCP servers), and killing only the process we launched leaves
+    them running and billing; an orphan's parent pid is a dead pid, so taskkill /T cannot find it either.
+    KILL_ON_JOB_CLOSE also means a hard kill of this run takes the tree with it.  Where the job cannot be made
+    (`h` is None) the fallback is taskkill /T /F, which covers every case but the orphan."""
+
+    def __init__(self):
+        self.h = None
+        try:
+            import ctypes
+            import ctypes.wintypes as w
+        except Exception:
+            return
+
+        class BASIC(ctypes.Structure):
+            _fields_ = [("PerProcessUserTimeLimit", ctypes.c_longlong), ("PerJobUserTimeLimit", ctypes.c_longlong),
+                        ("LimitFlags", w.DWORD), ("MinimumWorkingSetSize", ctypes.c_size_t),
+                        ("MaximumWorkingSetSize", ctypes.c_size_t), ("ActiveProcessLimit", w.DWORD),
+                        ("Affinity", ctypes.c_size_t), ("PriorityClass", w.DWORD), ("SchedulingClass", w.DWORD)]
+
+        class IOC(ctypes.Structure):
+            _fields_ = [(n, ctypes.c_ulonglong) for n in
+                        ("ReadOperationCount", "WriteOperationCount", "OtherOperationCount",
+                         "ReadTransferCount", "WriteTransferCount", "OtherTransferCount")]
+
+        class EXT(ctypes.Structure):
+            _fields_ = [("BasicLimitInformation", BASIC), ("IoInfo", IOC), ("ProcessMemoryLimit", ctypes.c_size_t),
+                        ("JobMemoryLimit", ctypes.c_size_t), ("PeakProcessMemoryUsed", ctypes.c_size_t),
+                        ("PeakJobMemoryUsed", ctypes.c_size_t)]
+
+        try:
+            k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+            # argtypes in full: a handle truncated to c_int would fail silently on 64-bit Windows
+            k32.CreateJobObjectW.argtypes = [ctypes.c_void_p, w.LPCWSTR]
+            k32.CreateJobObjectW.restype = w.HANDLE
+            k32.SetInformationJobObject.argtypes = [w.HANDLE, ctypes.c_int, ctypes.c_void_p, w.DWORD]
+            k32.AssignProcessToJobObject.argtypes = [w.HANDLE, w.HANDLE]
+            k32.TerminateJobObject.argtypes = [w.HANDLE, w.UINT]
+            k32.CloseHandle.argtypes = [w.HANDLE]
+            h = k32.CreateJobObjectW(None, None)
+            if not h:
+                return
+            info = EXT()
+            info.BasicLimitInformation.LimitFlags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+            if not k32.SetInformationJobObject(h, 9, ctypes.byref(info), ctypes.sizeof(info)):
+                k32.CloseHandle(h)
+                return
+            self.k32, self.h = k32, h
+        except Exception:
+            self.h = None
+
+    def assign(self, proc):
+        # Nested jobs (Windows 8 and later) let this work even where the run is itself in a job.  The child
+        # could in principle start a helper in the microseconds before it is assigned; claude takes far longer.
+        if self.h:
+            try:
+                if not self.k32.AssignProcessToJobObject(self.h, int(proc._handle)):
+                    self.close()
+            except Exception:
+                self.close()
+        return bool(self.h)
+
+    def terminate(self):
+        if self.h:
+            try:
+                self.k32.TerminateJobObject(self.h, 1)
+            except Exception:
+                pass
+
+    def close(self):
+        if self.h:
+            try:
+                self.k32.CloseHandle(self.h)
+            except Exception:
+                pass
+            self.h = None
+
+
+def read_text(path):
+    try:
+        with open(path, encoding="utf-8", errors="replace") as f:
+            return f.read()
+    except OSError:
+        return ""
+
+
+def run_claude(cmd, prompt, scratch, timeout, tick=None, poll=5.0):
+    """Run one headless claude batch with its prompt, stdout and stderr in FILES rather than pipes, and
+    return (output text, exit code or "timeout").
+
+    subprocess.run(capture_output=True) cannot be used here.  It blocks in communicate() until EVERY holder of
+    the inherited stdout/stderr write handles has closed it -- not just the direct child -- and `claude -p`
+    leaves helpers that outlive it, so the read never reaches EOF.  Nor does the timeout rescue it: CPython's
+    own timeout path kills only the direct child and then, on Windows, calls communicate() AGAIN with no
+    timeout, which blocks on the same handles.  Measured on this machine: a 5-second timeout raised only after
+    40.1 s, when a grandchild exited.  That is what froze run 20261119-1542 for 78 minutes (past its own
+    75-minute BATCH_TIMEOUT) with both of its cards written, no CPU and no child process left, which cost 8 of
+    that run's 10 batches.  A file has no EOF dependency, so the deadline is a plain wait() on the process.
+    The files are left in the scratch directory, and are what the report's output is read from."""
+    op, ep, pp = (os.path.join(scratch, "claude-%s.txt" % n) for n in ("stdout", "stderr", "prompt"))
+    with open(pp, "w", encoding="utf-8", newline="\n") as f:
+        f.write(prompt)
+    job, code = Job(), None
+    with open(pp, "rb") as fin, open(op, "wb") as fo, open(ep, "wb") as fe:
+        proc = subprocess.Popen(cmd, stdin=fin, stdout=fo, stderr=fe, cwd=scratch)
+        job.assign(proc)
+        deadline = time.time() + timeout
+        while True:
+            try:
+                code = proc.wait(timeout=max(0.1, min(poll, deadline - time.time())))
+                break
+            except subprocess.TimeoutExpired:
+                if tick:
+                    tick()          # a card that has appeared is logged now, not after the batch returns
+                if time.time() >= deadline:
+                    break
+    if code is None:                # the deadline passed: end the tree, not just the process we started
+        job.terminate()
+        subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True)
+        try:
+            proc.wait(timeout=60)
+        except subprocess.TimeoutExpired:
+            pass                    # abandoned; the job is closed below and the run goes on to the next batch
+    job.close()
+    out, err = read_text(op).strip(), read_text(ep).strip()
+    if code is None:
+        return ("timed out after %d min; its process tree was ended and the run went on.\n%s%s"
+                % (timeout // 60, out, ("\n[stderr] " + err[-1500:]) if err else "")), "timeout"
+    return out + (("\n[stderr] " + err[-1500:]) if code and err else ""), code
+
+
 # 0. hold: a file that pauses unattended runs without editing update.bat (2026-10-29, while the digests move to
 # the stanpumpR repo, papers/digests/, PR #622); its text says why
 HOLD = os.path.join(HERE, "digest_run.hold")
@@ -92,6 +232,9 @@ if os.path.exists(LOCK):
     if not other and held.get("pid") and pid_alive(held["pid"]):
         print("digest_run: another run (pid %s, started %s) is still going; nothing to do" % (held["pid"], held.get("started")))
         sys.exit(0)
+    cleared = ("cleared a stale lock: the run it names (%s, pid %s, started %s) is no longer alive"
+               % (held.get("host", HOST), held.get("pid"), held.get("started")))
+    print("digest_run: " + cleared)
     os.remove(LOCK)
 if not dry:
     json.dump({"pid": os.getpid(), "host": HOST, "started": stamp}, open(LOCK, "w", encoding="utf-8"))
@@ -100,6 +243,8 @@ try:
     #    (the worktree is where cards are WRITTEN; the snapshot is what the agent READS, so a run cannot
     #    edit repository code even by accident)
     say("# Unattended digest run %s\n" % stamp)
+    if cleared:
+        say("NOTE: %s.\n" % cleared)
     sha = cards.sync(say=say)
     held = cards.unmerged_cards()          # {stem: branch}: cards waiting in a PR, never to be digested again
     stale = cards.unmerged_branches()
@@ -133,10 +278,53 @@ try:
             return 3
         return 4
 
+    # What a model is BLOCKED on: the PMIDs a registry's `to_obtain` and the pending rows of
+    # papers/pending-work.csv name.  arrivals.py already computes exactly this set, and reads it from
+    # origin/master rather than from a working tree -- several checkouts of the repository live on this
+    # machine and any of them may be on a branch, and a row that is only on a branch is invisible to
+    # the other machines.  cards.sync() has just fetched origin/master, so nothing is fetched again.
+    # A failure here costs the queue its best key, not the run: it is ordered without it, and says so.
+    blocked = {}
+    try:
+        import arrivals
+        arrivals.REPO = REPO          # one source of truth for where the repository is (cards.REPO)
+        blocked = arrivals.wanted_pmids()
+        say("a model is waiting for %d paper(s) by PMID (every registry's `to_obtain` and the pending "
+            "rows of papers/pending-work.csv on %s, arrived or not)" % (len(blocked), arrivals.REF))
+    except Exception as e:
+        say("NOTE: could not read what the models are waiting for (%s: %s); the queue is ordered "
+            "without it." % (type(e).__name__, e))
+
+    PMID_STEM = re.compile(r"PMID_(\d+)(?:_[A-Za-z0-9]+)?$")
+    HASHES = os.path.join(HERE, "pdf_hashes.json")
+    hashes = json.load(open(HASHES, encoding="utf-8")) if os.path.exists(HASHES) else {}
+
+    def arrived(stem):
+        """When the bytes to be digested arrived, in epoch seconds; 0 when unknown, which sorts first.
+
+        digest_prep.py records it in pdf_hashes.json -- `changed` when a PDF is first seen, and
+        `content_changed` for the last change that was not an OCR rewrite -- and digest_run runs
+        digest_prep just above, so every PDF in the manifest has a record.  It is the FIFO key: a paper
+        filed today goes BEHIND the backlog, which is what bounds every stem's wait."""
+        h = hashes.get(stem) or {}
+        return h.get("content_changed") or h.get("changed") or 0
+
+    def ident(stem):
+        """A stem's last-resort key: a PMID as an INTEGER, never as a string (as a string PMID_10606836
+        sorts ahead of PMID_2054269 and that ahead of PMID_9559795, which is the defect this ordering
+        fixes).  A stem that is not a PMID (an NJ_ document, a DOI_ file) sorts after them, by name."""
+        m = PMID_STEM.match(stem)
+        return (0, int(m.group(1)), "") if m else (1, 0, stem)
+
+    def wanted_by(stem):
+        """What is waiting for this paper; [] when nothing is."""
+        m = PMID_STEM.match(stem)
+        return blocked.get(m.group(1), []) if m else []
+
     ocr_log = os.path.join(HERE, "ocr_log.json")
     ocrd = {e["stem"] for e in (json.load(open(ocr_log, encoding="utf-8")) if os.path.exists(ocr_log) else [])
             if not e.get("error")}  # a scan that ocr_scans.py gave a text layer is still a scan
-    queue, kept = [], []
+    cand, kept = [], []
     # The model's safeguards can refuse a batch (2026-11-09: a carfentanil paper, Bergh 2019, took its batch-mate
     # with it).  A stem flagged in a pair is retried alone; one flagged alone is left for an interactive session.
     past = json.load(open(LOG, encoding="utf-8")) if os.path.exists(LOG) else []
@@ -170,13 +358,59 @@ try:
             continue
         if m.get("scan"):  # no usable text layer: OCR transcription errors are likeliest and least visible there,
             continue       # so scans are left to an interactive session (digest session's rule, 2026-10-28)
-        queue.append((t, m["digest"] != "stale", m["stem"]))
-    queue.sort()
-    queue = [q[2] for q in queue][:cap]
+        cand.append({"stem": m["stem"], "tier": t, "stale": m["digest"] == "stale",
+                     "blocked": bool(wanted_by(m["stem"])), "arrived": arrived(m["stem"])})
+
+    # The order.  Until 2026-11-19 the keys were (tier, missing-after-stale, STEM), and a stem is a
+    # string like PMID_9559795, so within a tier the queue ran LEXICOGRAPHICALLY by PMID:
+    # PMID_10606836 < PMID_2054269 < PMID_9559795.  Of the papers then waiting for a card, 12 began
+    # with 1, 68 with 2 and 269 with 3-9, so at a cap of 20 a stem beginning with 9 sat about seventeen
+    # runs from the front and newly filed papers kept arriving ahead of it -- a permanent starvation,
+    # not a queue.  PMID_9559795 (Tod 1998, the source of R/drugs_amikacin.R) was ordered with eight
+    # other papers that a pending-work row named, missed the next run's queue of 20 for that reason
+    # alone, and had to be digested by hand (PR #820).
+    #
+    # Two lanes now, both deterministic, so --dry shows the order a real run will take:
+    #   MERIT  a paper a model is blocked on first.  Those come BEFORE the tier deliberately: a paper
+    #          nothing in the repository cites yet is tier 4 by construction (the code cannot cite what
+    #          nobody has read), so ordering by tier first leaves every request exactly where it was --
+    #          which is how the amikacin paper was lost.  Then the tier, stale before missing, then
+    #          oldest arrived first, then the PMID as an integer.
+    #   AGE    oldest arrived first, whatever the tier.
+    # Every AGE_SLOT-th place of a run is filled from the age lane.  That is what makes starvation
+    # impossible rather than merely unlikely: a tier cannot be starved by a flood of arrivals in a
+    # higher one, and a paper k-th in arrival order waits at most ceil(k / (cap // AGE_SLOT)) runs
+    # however many papers arrive after it.  Within a lane the wait is bounded anyway, a new arrival
+    # joining the BACK.
+    AGE_SLOT = 5
+    merit = sorted(cand, key=lambda c: (not c["blocked"], c["tier"], not c["stale"],
+                                        c["arrived"], ident(c["stem"])))
+    aged = sorted(cand, key=lambda c: (c["arrived"], ident(c["stem"])))
+    queue, lane_of, taken, at = [], {}, set(), {"merit": 0, "age": 0}
+    while len(queue) < cap and len(taken) < len(cand):
+        name = "age" if len(queue) % AGE_SLOT == AGE_SLOT - 1 else "merit"
+        lane = aged if name == "age" else merit
+        i = at[name]
+        while lane[i]["stem"] in taken:       # both lanes hold every candidate, so while one is still
+            i += 1                            # untaken this cannot run off the end
+        at[name] = i + 1
+        taken.add(lane[i]["stem"])
+        lane_of[lane[i]["stem"]] = name
+        queue.append(lane[i]["stem"])
     queued_at = time.time()
     if kept:
         say("not queued (%d): %s" % (len(kept), "; ".join(kept)))
-    say("queue (%d): %s\n" % (len(queue), ", ".join(queue)))
+    say("queue (%d of %d waiting for a card, %d of which a model is waiting for): %s"
+        % (len(queue), len(cand), sum(c["blocked"] for c in cand), ", ".join(queue)))
+    waiting = {c["stem"]: c for c in cand}
+    for n, stem in enumerate(queue, 1):
+        c = waiting[stem]
+        say("  %2d. %-34s tier %d  %-7s  arrived %s%s%s"
+            % (n, stem, c["tier"], "stale" if c["stale"] else "missing",
+               time.strftime("%Y-%m-%d", time.localtime(c["arrived"])) if c["arrived"] else "unknown   ",
+               "  [oldest waiting]" if lane_of[stem] == "age" else "",
+               ("  wanted by %s" % "; ".join(wanted_by(stem))) if c["blocked"] else ""))
+    say("")
     if dry:
         raise SystemExit(0)
 
@@ -240,19 +474,35 @@ try:
                "--allowedTools", "Read", "Write", "Edit", "Glob", "Grep",
                "Bash(C:\\Python314\\python.exe:*)", "Bash(C:/Python314/python.exe:*)", "Bash(/c/Python314/python.exe:*)",
                "Bash(\"C:/Program Files/Git/mingw64/bin/pdftotext.exe\":*)", "Bash(pdftotext:*)", "Bash(ls:*)", "Bash(mkdir:*)"]
-        try:
-            r = subprocess.run(cmd, input=prompt, capture_output=True, text=True, encoding="utf-8", cwd=scratch,
-                               timeout=BATCH_TIMEOUT)
-            out, code = (r.stdout or "") + (("\n[stderr] " + r.stderr[-1500:]) if r.returncode else ""), r.returncode
-        except subprocess.TimeoutExpired:
-            out, code = "timed out after %d min" % (BATCH_TIMEOUT // 60), "timeout"
+        # Each card is logged and reported the moment it appears, rather than once the batch returns, so a run
+        # that dies or is killed later keeps the record of the work it did: 20261119-1542 wrote both of its
+        # cards and then hung, and neither its report nor its log said anything of either (2026-11-19).
+        entries = {}
+
+        def note_cards(_batch=batch, _t0=t0, _entries=entries):
+            for s in _batch:
+                card = os.path.join(CARDS, s + ".md")
+                if s in _entries or not (os.path.exists(card) and os.path.getmtime(card) >= _t0):
+                    continue
+                _entries[s] = {"stem": s, "run": stamp, "master": sha, "exit": "running",
+                               "minutes": round((time.time() - _t0) / 60, 1), "card_written": True,
+                               "flagged": False, "batch_size": len(_batch)}
+                log.append(_entries[s])
+                say("- %s: card written" % s)
+                json.dump(log, open(LOG, "w", encoding="utf-8"), indent=1)
+
+        out, code = run_claude(cmd, prompt, scratch, BATCH_TIMEOUT, tick=note_cards)
         mins = (time.time() - t0) / 60
+        note_cards()
+        flagged = bool(re.search(r"safeguards flagged", out, re.I))
         for s in batch:
-            card = os.path.join(CARDS, s + ".md")
-            written = os.path.exists(card) and os.path.getmtime(card) >= t0
-            log.append({"stem": s, "run": stamp, "master": sha, "exit": code, "minutes": round(mins, 1), "card_written": written,
-                        "flagged": bool(re.search(r"safeguards flagged", out, re.I)) and not written, "batch_size": len(batch)})
-            say("- %s: %s" % (s, "card written" if written else "NO CARD (see output)"))
+            e = entries.get(s)
+            if e is None:          # no card: the batch's exit and output are the record of why
+                e = {"stem": s, "run": stamp, "master": sha, "exit": code, "minutes": round(mins, 1),
+                     "card_written": False, "flagged": flagged, "batch_size": len(batch)}
+                log.append(e)
+                say("- %s: NO CARD (see output)" % s)
+            e.update(exit=code, minutes=round(mins, 1))
         say("\n```\n%s\n```\n(%.1f min, exit %s)\n" % (out.strip()[-6000:], mins, code))
         json.dump(log, open(LOG, "w", encoding="utf-8"), indent=1)
         # A logged-out CLI fails every batch the same way: stop, and say what to do (2026-10-29)
