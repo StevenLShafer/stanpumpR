@@ -70,7 +70,12 @@ try:
     import winreg
     with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment") as k:
         os.environ["CLAUDE_CODE_OAUTH_TOKEN"] = winreg.QueryValueEx(k, "CLAUDE_CODE_OAUTH_TOKEN")[0]
-except OSError:
+except (ImportError, OSError):
+    # ImportError as well as OSError: winreg exists only on Windows, and the bare `except
+    # OSError` let ModuleNotFoundError escape, so importing this module at all failed off
+    # Windows -- which is where CI runs test_digest_queue.py (CodeRabbit / fda-labels, PR #846).
+    # The intent was always "if the registry cannot be read, carry on", and absence of the
+    # module is one more way it cannot be read.
     pass  # not in the registry: an inherited value, if any, is used; a login failure stops the run and says so
 BATCH = 2
 BATCH_TIMEOUT = 75 * 60  # seconds for one claude run

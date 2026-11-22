@@ -78,6 +78,15 @@ def commit_and_push(*a, **k):
     raise AssertionError("a --dry run must never push")
 '''
 
+# NOT STUBBED, and worth recording why: digest_run.py reads an OAuth token from the Windows
+# registry inside a try/except OSError, and ModuleNotFoundError is not an OSError -- so off
+# Windows the module could not be imported at all, and this test passed here and failed in CI
+# (fda-labels, PR #846). A winreg.py placed in the sandbox does NOT reproduce that, because
+# winreg is a BUILT-IN module on Windows and built-ins are resolved before sys.path, so the
+# shadow is never used. The fix (catching ImportError) was verified locally with a sys.meta_path
+# blocker, and this test's own evidence for it is the CI run on Linux. Leaving a stub here that
+# does nothing on the machine the pipeline runs on would be worse than leaving it out.
+
 MACHINE_STUB = '''import os
 LOCAL = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "local")
 os.makedirs(LOCAL, exist_ok=True)
