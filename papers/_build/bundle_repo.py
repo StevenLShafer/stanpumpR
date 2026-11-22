@@ -53,6 +53,7 @@ REMOTE = "https://github.com/StevenLShafer/stanpumpR.git"
 LOCK = os.path.join(OUT, "bundle_repo.lock")
 HOST = socket.gethostname()      # the lock names its computer: Drive syncs _backup to the others
 LOCK_FOREIGN_HOURS = 6           # another computer's lock older than this is a dead run's
+LOCK_WRITE_GRACE_SEC = 60        # a lock with no owner data yet: see take_lock()
 
 BUNDLE_EVERY_DAYS = 7
 BUNDLE_KEEP = 8                                # about two months of weekly generations
@@ -122,13 +123,22 @@ def take_lock():
         except (ValueError, OSError):
             held, readable = {}, False
         if not readable or not isinstance(held, dict):
-            # An empty or unparseable lock names nobody, so it protects nobody: take it over at
-            # once, whatever its age -- digest_run.py reads such a file as {} and goes on. The
-            # first version fell through to the foreign-age test below, where a missing host
-            # read as "another computer's, recently", and a corrupt lock would have stopped
-            # every backup for six hours. Found by this script's own lock cases.
+            # FAIL CLOSED while it could still be a lock being written.  The file is created
+            # empty by O_CREAT|O_EXCL and filled immediately afterwards, so for a moment a
+            # valid, live lock has no owner data -- and a reader that removed it "because it
+            # names nobody" could delete a live lock and both runs would proceed (CodeRabbit,
+            # PR #847).  An unreadable lock younger than LOCK_WRITE_GRACE_SEC is therefore
+            # treated as held; older than that, no run could still be mid-write, so it is a
+            # crashed run's debris and is cleared.
             try:
-                os.remove(LOCK)
+                age_s = time.time() - os.path.getmtime(LOCK)
+            except OSError:
+                continue                         # it went away; try to take it again
+            if age_s < LOCK_WRITE_GRACE_SEC:
+                return ("a backup is starting on this archive (its lock has no owner data yet); "
+                        "nothing to do here")
+            try:
+                os.remove(LOCK)                  # debris from a crashed run
             except OSError:
                 pass
             continue
@@ -162,6 +172,35 @@ def drop_lock():
             os.remove(LOCK)
         except OSError:
             pass
+
+
+def prune(rows, keep):
+    """Remove all but the newest `keep` generations. Returns the names removed.
+
+    THE BUNDLE GOES FIRST, and the reasoning flipped once: before the lock existed, freeing the
+    bundle name let another run claim it and have its fresh sidecar deleted by this loop, so the
+    sidecar went first.  Under the lock no other run can be here at all, and the remaining risk
+    is an INTERRUPTION between the two removals -- where an orphaned .json is ignored by
+    existing(), while an orphaned BUNDLE would be counted as a generation that --verify cannot
+    check, because its commit is only recorded in the sidecar (CodeRabbit, PR #847).
+
+    So: bundle first while serialised, sidecar first while not. The lock is what makes the
+    first order the safe one, and this docstring is the record of why.
+    """
+    removed = []
+    for _d, bundle in rows[keep:]:
+        side = bundle[: -len(".bundle")] + ".json"
+        try:
+            os.remove(bundle)
+        except OSError:
+            continue                             # leave its sidecar: the generation is still there
+        removed.append(os.path.basename(bundle))
+        try:
+            if os.path.exists(side):
+                os.remove(side)
+        except OSError:
+            pass                                 # an orphaned sidecar is ignored by existing()
+    return removed
 
 
 def release(tmp, side_tmp, path, side):
@@ -415,17 +454,8 @@ except BaseException:
 print("  %.1f MB, %s commits, %d branches, master %s" % (size / 1e6, commits, branches, master[:12]))
 
 # 4. prune, oldest first, only after the new one is verified and in place
-rows = existing()
-for d, p in rows[keep:]:
-    # The sidecar first, as release() does: if anything interrupted this between the two
-    # removals, an orphaned .json is ignored by existing() while an orphaned bundle would be
-    # taken for a generation.  The lock makes the interleaving impossible rather than merely
-    # harmless, but the order costs nothing and does not depend on the lock being held.
-    stale_side = p[: -len(".bundle")] + ".json"
-    if os.path.exists(stale_side):
-        os.remove(stale_side)
-    os.remove(p)
-    print("  pruned %s" % os.path.basename(p))
+for pruned in prune(existing(), keep):
+    print("  pruned %s" % pruned)
 
 print()
 print('Restore with:  git clone "%s" stanpumpR' % path)

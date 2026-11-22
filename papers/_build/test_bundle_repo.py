@@ -29,6 +29,7 @@ try:
 except SystemExit:
     pass
 release = _ns["release"]
+prune = _ns["prune"]
 take_lock = _ns["take_lock"]
 drop_lock = _ns["drop_lock"]
 pid_alive = _ns["pid_alive"]
@@ -110,6 +111,93 @@ case("a finished generation is never touched",
 
 case("nothing to release", lambda q: None, [], [])
 
+# ---------------------------------------------------------------------- pruning
+# prune() removes the BUNDLE first. Before the lock existed the sidecar went first, because
+# freeing the bundle name let another run claim it; under the lock no other run can be here, and
+# the remaining risk is an INTERRUPTION between the two removals. An orphaned .json is ignored
+# by existing(); an orphaned BUNDLE would be counted as a generation that --verify cannot check,
+# since its commit lives only in the sidecar (CodeRabbit, PR #847).
+def prune_cases():
+    import datetime
+    problems = []
+
+    def generations(d, n):
+        rows = []
+        for i in range(n):
+            stamp = "2026-01-%02d" % (i + 1)
+            bundle = os.path.join(d, "stanpumpR-%s.bundle" % stamp)
+            io.open(bundle, "wb").write(b"a bundle")
+            io.open(os.path.join(d, "stanpumpR-%s.json" % stamp), "w",
+                    encoding="utf-8").write("{}")
+            rows.append((datetime.datetime.fromisoformat(stamp), bundle))
+        return sorted(rows, reverse=True)       # newest first, as existing() returns
+
+    with tempfile.TemporaryDirectory() as d:
+        rows = generations(d, 4)
+        removed = prune(rows, 2)
+        left = sorted(f for f in os.listdir(d))
+        ok = len(removed) == 2 and len(left) == 4
+        if not ok:
+            problems.append("keeping 2 of 4 left %s" % left)
+        print("  %s prune: %-45s %s" % ("ok  " if ok else "FAIL",
+                                        "keeps the newest 2 of 4, with their sidecars",
+                                        ", ".join(removed)))
+
+    # interrupted between the two removals: the bundle is gone, its sidecar is not
+    with tempfile.TemporaryDirectory() as d:
+        rows = generations(d, 2)
+        real, calls = os.remove, []
+
+        def once(p):
+            calls.append(p)
+            real(p)
+            if p.endswith(".bundle"):
+                raise KeyboardInterrupt("interrupted after the bundle was removed")
+
+        os.remove = once
+        try:
+            prune(rows, 1)
+        except KeyboardInterrupt:
+            pass
+        finally:
+            os.remove = real
+        left = sorted(os.listdir(d))
+        orphan_bundle = [f for f in left if f.endswith(".bundle")
+                         and f[: -len(".bundle")] + ".json" not in left]
+        ok = not orphan_bundle
+        if not ok:
+            problems.append("an orphaned bundle survived: %s" % orphan_bundle)
+        print("  %s prune: %-45s %s" % ("ok  " if ok else "FAIL",
+                                        "an interruption leaves no bundle without a sidecar",
+                                        ", ".join(left)))
+
+    # a bundle that cannot be removed keeps its sidecar: the generation is still there
+    with tempfile.TemporaryDirectory() as d:
+        rows = generations(d, 2)
+        real = os.remove
+
+        def refuse(p):
+            if p.endswith(".bundle"):
+                raise PermissionError(13, "in use", p)
+            real(p)
+
+        os.remove = refuse
+        try:
+            removed = prune(rows, 1)
+        finally:
+            os.remove = real
+        left = sorted(os.listdir(d))
+        ok = not removed and len(left) == 4
+        if not ok:
+            problems.append("a bundle that could not be removed lost its sidecar: %s" % left)
+        print("  %s prune: %-45s %s" % ("ok  " if ok else "FAIL",
+                                        "a bundle it cannot remove keeps its sidecar",
+                                        ", ".join(left)))
+    return problems
+
+
+bad += [("prune", p) for p in [prune_cases()] if p]
+
 # ---------------------------------------------------------------------- the lock
 # One lock around claim, publish and prune is what replaced four rounds of closing individual
 # interleavings (PR #847). It decides whether a run may touch _backup at all, so its own
@@ -151,8 +239,22 @@ def lock_cases():
           lambda: write_lock(host=host, pid=2 ** 31 - 1, started="then"))
     check("held by another computer, recently", True,
           lambda: write_lock(host=host + "-other", pid=1, started="now"))
-    check("unreadable lock is read as no lock", False,
+    # FAIL CLOSED while it could still be a lock being written. This is the acquisition race:
+    # take_lock() creates the file with O_CREAT|O_EXCL and writes its owner data immediately
+    # afterwards, so a reader that removed an "unreadable" lock could delete a LIVE one and
+    # both runs would proceed. An empty file is exactly what the winner has just created.
+    check("an EMPTY lock, as a run that has just created one leaves it", True,
+          lambda: io.open(lock, "wb").write(b""))
+    check("a fresh unparseable lock", True,
           lambda: io.open(lock, "w", encoding="utf-8").write("not json"))
+
+    # Older than any run could still be mid-write: debris from a crash, so it is cleared.
+    def stale_unreadable():
+        io.open(lock, "w", encoding="utf-8").write("not json")
+        old_t = __import__("time").time() - (_ns["LOCK_WRITE_GRACE_SEC"] + 5)
+        os.utime(lock, (old_t, old_t))
+
+    check("an unparseable lock older than the write grace", False, stale_unreadable)
 
     # a stale foreign lock is taken over: the file's mtime is what decides
     clear()
