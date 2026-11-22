@@ -28,6 +28,14 @@ rem These scripts are version-controlled in the repository at papers\_build; the
 rem here are the ones that run.  check_in_step.py says when the two have drifted apart, so
 rem the record cannot quietly stop describing what actually runs.  It only reports and
 rem always succeeds, so it is deliberately NOT part of the && chain above (2026-11-18).
+%PY% screen_inreview.py
+rem screen_inreview.py is the STANDING screen for manuscripts under peer review, not a
+rem one-off: file_downloads.py refuses to file one, and this says whether one ever got in.
+rem Steven L. Shafer, 2026-11-21: a paper in peer review must not appear in the repository,
+rem because a digest written from it could become public. It flags, it never deletes: a hit
+rem needs a person to look at the paper. 2,257 archived PDFs screened clean on the day the
+rem rules were written, with all five of the manuscripts then sitting in Downloads caught.
+
 %PY% check_index.py
 rem check_index.py is the LAST word on the state the steps above leave behind: every PDF
 rem in the archive must be in digest_manifest.json, have an extracted text file, and have

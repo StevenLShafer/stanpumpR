@@ -29,6 +29,37 @@ file name there, so its card's `file:` names it in both places.
 Papers that work is waiting on but that could not be downloaded are listed in
 [`to-obtain.md`](to-obtain.md).
 
+## A paper under peer review never gets here
+
+A manuscript in peer review is held only by its reviewers and editors, and a card written from
+one could be published — these cards are public, which is the whole point of the paragraph above.
+So such a paper is kept out of the archive rather than digested carefully, and four separate
+places refuse it (`_build/inreview.py` decides; Steven L. Shafer, 2026-11-21):
+
+| Where | What it refuses |
+|---|---|
+| `_build/file_downloads.py`, before the file is touched | filing it, unwrapping it, hashing it |
+| the same, before the "needs a look" note | inviting a session to hand-rename it to `PMID_<n>.pdf` |
+| the same, at the moment of filing | a manuscript hand-named `PMID_<n>.pdf` |
+| `_build/digest_run.py`, before the queue | writing the card, which is the public artefact |
+
+`_build/screen_inreview.py` is the standing audit, run by `update.bat`: it reports anything in the
+archive that looks like a manuscript under review and **never deletes** — a hit needs a person to
+look at the paper. On the day the rules were written it screened 2,257 archived PDFs clean, while
+catching all five of the manuscripts then sitting in Downloads.
+
+The evidence it reads is a journal manuscript number (shaped like a made-up `XXX-D-26-01234`), a folder named for work
+under review, or page-1 wording an editorial system stamped on the file — including Editorial
+Manager's `Click here to access/download;Figure;…`, which no published paper carries. A **preprint**
+is not under review for this purpose: the author chose to make it public. Two rules were tried and
+measured out, both being evidence of *publication*: "submitted for publication" (the journal's own
+accepted-on footnote, 17 false positives in 400 papers) and MDPI's unreplaced `x FOR PEER REVIEW`
+running header, which it leaves in published PDFs.
+
+A false positive costs one paper left in Downloads with a line saying why. A false negative puts a
+colleague's unpublished work in a repository and its digest on the internet. The rules are tuned
+accordingly, and anything flagged is reported rather than quietly acted on.
+
 ## Reading a card
 
 `digests/README.md` is the authoring guide: the frontmatter contract, the verification

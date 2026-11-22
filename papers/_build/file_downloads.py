@@ -11,6 +11,7 @@ Usage: python file_downloads.py [--dir <folder>] [--archive <folder>] [--dry-run
 """
 import json, logging, os, re, shutil, subprocess, sys, time
 from ncbi import norm
+from inreview import in_review_reason
 
 sys.stdout.reconfigure(encoding="utf-8")  # Downloads file names carry Unicode (U+2010 hyphens); update.bat's PYTHONIOENCODING does not reach `python -E`
 
@@ -555,6 +556,7 @@ if cache.get("__refs__") != refs_sig:
     cache = {"__refs__": refs_sig}
 log = json.load(open(LOG_PATH, encoding="utf-8")) if os.path.exists(LOG_PATH) else []
 filed, review, unplaced = [], [], []
+quarantined = []                                 # manuscripts under peer review: never filed, never digested
 unwrapped = []                                   # envelope originals, logged beside the recycled downloads
 def candidates():
     """Downloads and its subfolders (people save into subfolders); the archive folder itself, top level only."""
@@ -670,6 +672,16 @@ for d, name in candidates():
         path = os.path.join(d, name)
         if not name.lower().endswith(".pdf") or not os.path.isfile(path):
             continue
+        # Before unwrap_envelope, the sha and the cache: a manuscript under peer review is not
+        # filed, not unwrapped, not touched.  Its name and its folder are free to judge, and on
+        # 2026-11-21 five such manuscripts were sitting in Downloads, one of them a tracked-changes
+        # manuscript; they were spared only because none matched a stanpumpR reference.  A card can
+        # become public, so the filing is what has to refuse (Shafer).  Their submission numbers are
+        # deliberately not recorded anywhere in this public repository.
+        q = in_review_reason(path, name=name)
+        if q:
+            quarantined.append((path, q))
+            continue
         unwrap_envelope(path)                    # before the sha, the cache key and the archive skip
         in_archive_dir = os.path.abspath(d) == os.path.abspath(ARCHIVE)
         if in_archive_dir and re.fullmatch(r"(PMID_\d+(_[A-Za-z0-9]+)?|DOI_.+|NJ_.+)\.pdf", name):  # PMID_n_ESM1 = a supplement
@@ -716,6 +728,16 @@ for d, name in candidates():
             # again (a cached verdict with no review is skipped above); one with no likely reference is cached as
             # "unplaced" and counted from the cache on later runs, until it is filed, moved, or REPORT_DAYS old.
             if recent:
+                # The realistic way one gets in: renamed to something innocuous, so the name
+                # rule above says nothing, and not a stanpumpR reference, so it never reaches
+                # the filing check either -- it lands on the "needs a look" pile, which is the
+                # pile a session hand-renames to PMID_<n>.pdf (the paper-archive skill, step 4).
+                # unidentified_note() reads the PDF anyway, so page 1 is free here.
+                q = in_review_reason(path, name=name, text=pdf_text(path, last=1))
+                if q:
+                    quarantined.append((path, q))
+                    cache.pop(key, None)
+                    continue
                 note = unidentified_note(path)
                 if note.startswith(NOT_A_REFERENCE):
                     cache[key]["unplaced"] = note
@@ -723,6 +745,15 @@ for d, name in candidates():
                 else:
                     cache[key]["review"] = note
                     review.append((name, note))
+            continue
+        # Identified as a reference, so about to be filed: now the page is worth reading, which
+        # it was not for every PDF in Downloads on every run.  This is the belt to the name's
+        # braces -- a manuscript hand-named PMID_<n>.pdf, or one whose title matches a published
+        # paper, gets this far and is caught here by what the editorial system stamped on it.
+        q = in_review_reason(path, name=name, text=pdf_text(path, last=1))
+        if q:
+            quarantined.append((path, q))
+            cache.pop(key, None)                 # judge it again next run; never cache a refusal
             continue
         dst = os.path.join(ARCHIVE, r["file"])
         if os.path.exists(dst):
@@ -740,6 +771,17 @@ for d, name in candidates():
                 recycle_original(path, r["file"])
             log.append({"from": path, "to": r["file"], "pmid": r["pmid"], "doi": r["doi"], "how": why})
         filed.append((name, r["file"], r["label"], why))
+
+if quarantined:
+    print()
+    print("QUARANTINED %d PDF(s) that look like manuscripts under peer review. NOT filed, NOT digested:" % len(quarantined))
+    for path, why in sorted(quarantined):
+        print("  %s" % os.path.basename(path))
+        print("      %s" % why)
+        print("      %s" % path)
+    print("  They stay where they are. A paper in review must not reach the repository, because its")
+    print("  card could become public. If one of these is in fact published, rename it and run again.")
+    print()
 
 if recycled or unwrapped:
     old = json.load(open(RECYCLED_LOG, encoding="utf-8")) if os.path.exists(RECYCLED_LOG) else []

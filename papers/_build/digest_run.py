@@ -32,6 +32,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 HERE = os.path.dirname(os.path.abspath(__file__))
 ARCH = os.path.dirname(HERE)
 import cards                      # where the cards live, and how a run's cards reach the repository
+from inreview import in_review_reason   # a paper under peer review is never carded (2026-11-21)
 CARDS = cards.CARDS               # the only directory this run writes cards into
 REPO = cards.REPO
 from machine import LOCAL          # caches and scratch kept out of the Drive-synced archive (2026-10-30)
@@ -383,6 +384,18 @@ try:
             continue
         if m.get("scan"):  # no usable text layer: OCR transcription errors are likeliest and least visible there,
             continue       # so scans are left to an interactive session (digest session's rule, 2026-10-28)
+        # The LAST line of defence, and the one that matters most: a card is the thing that can
+        # become public, so even a paper that reached the archive is not carded if it looks like
+        # a manuscript under peer review.  file_downloads.py refuses to file one and
+        # screen_inreview.py says whether one got in; this refuses to write the public artefact.
+        # Steven L. Shafer, 2026-11-21: "there is a risk that a digest prepared from a paper in
+        # peer review might be public. That is a risk that must be guarded against."
+        review_why = in_review_reason(os.path.join(ARCH, m["stem"] + ".pdf"),
+                                      text=read_text(os.path.join(HERE, "text", m["stem"] + ".txt"))[:8000])
+        if review_why:
+            kept.append("%s (looks like a manuscript under peer review: %s; NOT carded)"
+                        % (m["stem"], review_why))
+            continue
         cand.append({"stem": m["stem"], "tier": t, "stale": m["digest"] == "stale",
                      "blocked": bool(wanted_by(m["stem"])), "arrived": arrived(m["stem"])})
 
