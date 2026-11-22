@@ -22,8 +22,8 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from inreview import (in_review_reason, card_refusal, extracted_text, flatten,  # noqa: E402
-                      SUBMISSION_NUMBER)
+from inreview import (in_review_reason, card_refusal, extracted_text,  # noqa: E402
+                      paper_card_refusal, flatten, SUBMISSION_NUMBER)
 
 PLAIN = os.path.join("C:" + os.sep, "Users", "x", "Downloads", "paper.pdf")
 IN_REVIEW_FOLDER = os.path.join("C:" + os.sep, "Users", "x", "Downloads",
@@ -188,96 +188,111 @@ CARD_CASES = [
 
 
 def composition_cases(tmp):
-    """card_refusal(pdf, extracted_text(txt)) over real files: what the digest queue does.
+    """paper_card_refusal() over a real archive layout: what the digest queue decides.
 
-    A manifest entry's `scan` flag is deliberately not part of this. digest_prep.py's return
-    code is unchecked, so a failed preparation can leave an older non-scan entry in use, and the
-    refusal has to rest on the text itself. The `stale_non_scan` column below records that the
-    manifest would have called each of these a normal, non-scan paper.
+    This is the queue's whole text-based decision, executed -- not its call site inspected.
+    Each paper below is one the MANIFEST would call a normal, non-scan paper: digest_prep.py's
+    return code is unchecked, so a failed preparation can leave a stale non-scan entry on a
+    paper whose text is missing, unreadable or blank, and the refusal must not depend on that
+    flag (CodeRabbit, PR #846).
     """
+    arch = os.path.join(tmp, "archive")
+    text = os.path.join(arch, "_build", "text")
+    os.makedirs(text)
+
     rows = []
 
-    missing = os.path.join(tmp, "PMID_1.txt")                      # never created
-    rows.append(("a text file that does not exist", missing, True))
+    io.open(os.path.join(arch, "PMID_1.pdf"), "wb").write(b"%PDF-")
+    rows.append(("text file absent entirely", "PMID_1", True))
 
-    unreadable = os.path.join(tmp, "PMID_2.txt")                   # a directory in its place
-    os.makedirs(unreadable, exist_ok=True)
-    rows.append(("a text file that cannot be read", unreadable, True))
+    os.makedirs(os.path.join(text, "PMID_2.txt"))          # a directory: cannot be read
+    rows.append(("text file cannot be read", "PMID_2", True))
 
-    for name, body, refuse in (("PMID_3.txt", " \n \t ", True),
-                               ("PMID_4.txt", "\f\f", True),
-                               ("PMID_5.txt", "", True),
-                               ("PMID_6.txt", "Propofol pharmacokinetics in 24 volunteers.", False),
-                               ("PMID_7.txt", "Tracked Changes Manuscript", True)):
-        q = os.path.join(tmp, name)
-        io.open(q, "w", encoding="utf-8").write(body)
-        rows.append(("a text file holding %r" % (body[:28] or ""), q, refuse))
+    for stem, body, refuse in (("PMID_3", " \n \t ", True),
+                               ("PMID_4", "\f\f", True),
+                               ("PMID_5", "", True),
+                               ("PMID_6", "Propofol pharmacokinetics in 24 volunteers.", False),
+                               ("PMID_7", "Tracked Changes Manuscript", True),
+                               ("PMID_8", "Reviewer Copy", True),
+                               ("PMID_9", "medRxiv preprint doi: https://doi.org/10.1101/"
+                                          "2024.05.05; this version posted May 2024.", False)):
+        io.open(os.path.join(text, stem + ".txt"), "w", encoding="utf-8").write(body)
+        rows.append(("text %r" % (body[:26] or ""), stem, refuse))
 
     bad = []
-    for label, txt, refuse in rows:
-        pdf = txt[: -len(".txt")] + ".pdf"
-        got = card_refusal(pdf, extracted_text(txt))
+    for label, stem, refuse in rows:
+        got = paper_card_refusal(stem, arch, text)
         if bool(got) != refuse:
-            bad.append(("composition: " + label, refuse, got))
-        print("  %s queue: %-45s %s" % ("ok  " if bool(got) == refuse else "FAIL",
-                                        label[:45], (got or "carded")[:36]))
+            bad.append(("queue: " + label, refuse, got))
+        print("  %s queue: %-44s %s" % ("ok  " if bool(got) == refuse else "FAIL",
+                                        label[:44], (got or "carded")[:36]))
     return bad
 
 
 def queue_wiring():
-    """digest_run.py must ask card_refusal() before queueing, whatever the manifest says.
+    """digest_run.py must ask paper_card_refusal() and skip the candidate when it answers.
 
-    The candidate loop cannot be executed in a test: importing digest_run.py starts an
-    unattended digest run. What CAN be checked, and what CodeRabbit asked for, is that the
-    queue is WIRED to refuse -- that the call is there, that it is fed by extracted_text(),
-    that a truthy result skips the candidate, and that none of it hangs off the manifest's
-    `scan` flag, which a failed digest_prep.py can leave stale on a paper with no text.
+    The loop itself cannot be executed: importing digest_run.py starts an unattended digest
+    run. So this checks the CALL SITE, and only the things a call site can show -- that the
+    decision is asked at the top level of the loop that appends to `cand`, that a truthy answer
+    skips the candidate WITHOUT negation, and that the append comes after.
 
-    This is a check of the call site, not of the loop's behaviour; the behaviour of what the
-    call site calls is covered by CARD_CASES and composition_cases() above. Said plainly
-    because the distinction is the whole reason this function is small.
+    What this cannot show, and what composition_cases() above covers by executing the decision
+    instead: that the extracted text reaches the refusal, and what the refusal then decides.
+    The earlier version of this function checked only that the pieces were called and in what
+    order, which would have passed an inverted condition and a text argument that never
+    arrived (CodeRabbit, PR #846) -- the reason the decision now lives in one callable.
     """
-    src = io.open(os.path.join(HERE, "digest_run.py"), encoding="utf-8").read()
-    tree = ast.parse(src)
+    src_dr = io.open(os.path.join(HERE, "digest_run.py"), encoding="utf-8").read()
+    tree = ast.parse(src_dr)
 
     loops = [n for n in ast.walk(tree) if isinstance(n, (ast.For, ast.While))
              and any(isinstance(c, ast.Attribute) and c.attr == "append"
                      and isinstance(c.value, ast.Name) and c.value.id == "cand"
                      for c in ast.walk(n))]
-    problems = []
     if len(loops) != 1:
         return ["expected exactly one loop that appends to `cand`, found %d" % len(loops)]
-    loop = loops[0]
+    body = loops[0].body
 
-    body = loop.body
-    calls = {}
+    asked = appended = None
+    name = None
     for i, stmt in enumerate(body):
         for c in ast.walk(stmt):
-            if isinstance(c, ast.Call) and isinstance(c.func, ast.Name):
-                calls.setdefault(c.func.id, i)
+            if isinstance(c, ast.Call) and getattr(c.func, "id", "") == "paper_card_refusal":
+                if asked is None:
+                    asked = i
+                    if isinstance(stmt, ast.Assign) and isinstance(stmt.targets[0], ast.Name):
+                        name = stmt.targets[0].id
             if isinstance(c, ast.Attribute) and c.attr == "append" and \
-                    isinstance(c.value, ast.Name) and c.value.id == "cand":
-                calls.setdefault("cand.append", i)
+                    isinstance(c.value, ast.Name) and c.value.id == "cand" and appended is None:
+                appended = i
 
-    for name in ("card_refusal", "extracted_text", "cand.append"):
-        if name not in calls:
-            problems.append("%s is not called at the top level of the candidate loop" % name)
-    if problems:
+    problems = []
+    if asked is None:
+        return ["paper_card_refusal() is not called at the top level of the candidate loop"]
+    if appended is None:
+        return ["the candidate loop does not append to `cand`"]
+    if asked >= appended:
+        problems.append("paper_card_refusal() is asked after the candidate is queued")
+    if name is None:
+        problems.append("the refusal is not bound to a name, so it cannot be tested")
         return problems
 
-    if not calls["card_refusal"] < calls["cand.append"]:
-        problems.append("card_refusal() is asked AFTER the candidate is queued")
-    if not calls["extracted_text"] <= calls["card_refusal"]:
-        problems.append("extracted_text() does not feed card_refusal()")
-
-    # the guard must be unconditional: a truthy refusal skips the candidate, and the statement
-    # is not nested inside a test of the manifest's scan flag
-    guard = body[calls["card_refusal"]:calls["cand.append"]]
-    if not any(isinstance(s, ast.If) and any(isinstance(c, ast.Continue) for c in ast.walk(s))
-               for s in guard):
-        problems.append("a truthy refusal does not skip the candidate")
-    for s in guard:
-        for c in ast.walk(s):
+    # the guard: `if <name>:` followed by a continue. A negated test would skip exactly the
+    # papers that must be refused, which the previous check could not tell apart.
+    guard = None
+    for stmt in body[asked:appended]:
+        if isinstance(stmt, ast.If) and isinstance(stmt.test, ast.Name) and stmt.test.id == name:
+            if any(isinstance(c, ast.Continue) for c in ast.walk(stmt)):
+                guard = stmt
+    if guard is None:
+        negated = any(isinstance(s, ast.If) and isinstance(s.test, ast.UnaryOp)
+                      and isinstance(s.test.op, ast.Not)
+                      for s in body[asked:appended])
+        problems.append("a truthy refusal does not skip the candidate"
+                        + (": the condition is negated" if negated else ""))
+    for stmt in body[asked:appended]:
+        for c in ast.walk(stmt):
             if isinstance(c, ast.Constant) and c.value == "scan":
                 problems.append("the refusal is entangled with the manifest's `scan` flag")
     return problems
@@ -286,7 +301,7 @@ def queue_wiring():
 def main():
     import tempfile
     wiring = queue_wiring()
-    print("  %s queue wiring: card_refusal() is asked before a candidate is queued"
+    print("  %s queue wiring: paper_card_refusal() is asked, and a refusal skips the candidate"
           % ("ok  " if not wiring else "FAIL"))
     for w in wiring:
         print("       %s" % w)

@@ -173,6 +173,24 @@ def extracted_text(path, limit=8000):
         return ""
 
 
+def paper_card_refusal(stem, archive_dir, text_dir):
+    """Why this paper may not be given a card, or None. Reads its extracted text itself.
+
+    The digest queue's entire text-based decision, in one call, so that it can be EXECUTED in a
+    test rather than inspected. An AST check of the call site could show that the pieces were
+    called and in what order, but not that the text actually reached the refusal, and it would
+    pass an inverted `if not refusal: continue` (CodeRabbit, PR #846). Those are the limits of
+    checking wiring instead of behaviour, and the answer is to make the behaviour reachable.
+
+    The manifest is deliberately not a parameter. Its `scan` flag cannot be trusted to have
+    noticed missing or unreadable text, because digest_prep.py's return code is unchecked and a
+    failed preparation can leave an older non-scan entry in use; the decision rests on the text
+    on disk and nothing else.
+    """
+    return card_refusal(os.path.join(archive_dir, stem + ".pdf"),
+                        extracted_text(os.path.join(text_dir, stem + ".txt")))
+
+
 def card_refusal(pdf_path, text):
     """Why this paper must not be given a digest card, or None.
 
