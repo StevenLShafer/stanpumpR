@@ -72,6 +72,41 @@ def git(*a, **kw):
     return r.stdout.strip()
 
 
+def release(tmp, side_tmp, path, side):
+    """Undo a failed backup: remove this run's temporaries, and its reservation if it still owns it.
+
+    ORDER MATTERS, and getting it wrong was a real race (CodeRabbit, PR #847). Releasing the
+    bundle name first let another run claim it, write ITS sidecar and publish -- and this
+    cleanup, still walking its list, would then see a zero-byte reservation at `path` (the other
+    run's) and delete the other run's sidecar, leaving it to publish a bundle with no metadata.
+
+    So ownership is decided ONCE, while this run still holds the reservation -- no other run can
+    claim the name while the file exists -- and the sidecar goes BEFORE the reservation. After
+    the reservation is released nothing here touches anything.
+
+    A reservation is a ZERO-BYTE file. If `path` holds a real bundle the generation is finished,
+    and neither published name may be touched.
+    """
+    for scratch in (tmp, side_tmp):              # always this run's own
+        try:
+            if os.path.exists(scratch):
+                os.remove(scratch)
+        except OSError:
+            pass
+    try:
+        ours = os.path.exists(path) and os.path.getsize(path) == 0
+    except OSError:
+        ours = False
+    if not ours:
+        return
+    for name in (side, path):                    # the sidecar first, the reservation last
+        try:
+            if os.path.exists(name):
+                os.remove(name)
+        except OSError:
+            pass
+
+
 def stamp_of(d):
     """How a generation is shown: the date, plus the minute when there was more than one."""
     return d.date().isoformat() if (d.hour, d.minute) == (0, 0) else d.strftime("%Y-%m-%d %H:%M")
@@ -275,17 +310,7 @@ except BaseException:
     # "nothing to do" until that date was a week old, and left the .part file behind as well.
     # The reservation is removed only while it is still EMPTY, so a finished bundle is never
     # touched by this.
-    for leftover in (tmp, side_tmp, path, side):
-        try:
-            if not os.path.exists(leftover):
-                continue
-            # The temporaries always go.  The published names go only while the BUNDLE is still
-            # the empty reservation -- once a real bundle is in place the generation is finished
-            # and nothing here may touch it.
-            if leftover in (tmp, side_tmp) or os.path.getsize(path) == 0:
-                os.remove(leftover)
-        except OSError:
-            pass
+    release(tmp, side_tmp, path, side)
     raise
 
 print("  %.1f MB, %s commits, %d branches, master %s" % (size / 1e6, commits, branches, master[:12]))
