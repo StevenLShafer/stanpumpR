@@ -36,9 +36,36 @@
 # creatinine: patientCreatinine()); the data held no child under 10.
 # The data covered eGFR 27 to 154; below 27 the power term extrapolates.
 #
-# BODY SIZE: the model's own weight term on Vc/F, at the pharmacokinetic
-# weight with the switch on and at total weight with it off; the data
-# covered 31 to 198 kg.  No other size scaling.
+# BODY SIZE (docs/weight-adjustment.md): Vc/F keeps the model's own weight
+# term, (weight/89)^0.570, exactly as fitted, at the pharmacokinetic weight
+# with the switch on and at total weight with it off (the data covered 31 to
+# 198 kg); it takes no further scaling.  Vp/F (143 L) and Q/F (8.92 L/h) have
+# no covariate in the source.  Under Steven L. Shafer's first-principles rule
+# of 2026-11-19 (a covariate not detected is not evidence that size does not
+# matter), with the switch on Vp/F is now multiplied by size$volume and Q/F
+# by size$clearance (the fat-free-mass ratio to the 0.75 power).  ka and the
+# lag are not scaled.  With the switch off every parameter is as published.
+#
+# [decision] for Steven L. Shafer (2026-11-20; the same case as apixaban):
+# CL/F is NOT yet scaled to fat-free mass.  Its covariates are the CKD-EPI
+# eGFR, indexed to 1.73 m2 (no weight inside), and the source's female term,
+# exp(-0.174) = 0.840, so under the rule it would take the clearance factor
+# anchored at the cohort's subject of the patient's own sex
+# (cohortSexSizeFactors()).  But the cohort prints no height (below), and
+# anchored instead at the reference man a woman would count sex twice: the
+# source's 0.840 times the fat-free-mass difference of a woman from a man at
+# the same size (about 0.865), about 0.73 of a man's CL/F against the
+# published 0.84.  Until he decides, CL/F carries its eGFR and sex terms only,
+# with the switch on as with it off.
+#
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18 and 2026-11-19;
+# docs/weight-adjustment.md, Anchoring at the source's cohort): Table 1 (p3)
+# prints the 2744 analysed as 1776 men and 968 women, median weight 83 kg and
+# age 61 years, but no height, BMI or BSA, and the largest study, DAPA-HF,
+# enrolled at 410 centres in 20 countries in North America, South America,
+# Europe and Asia Pacific (p2).  A multinational cohort with no printed height
+# is not given a guessed one (the opicapone case), so Vp/F and Q/F are
+# anchored at the 70 kg, 170 cm reference man (factor 1, no cohort constant).
 #
 # KOBUCHI 2025, the earlier model of this drug in the library, fixed its V/F
 # and ka to this paper's values and fitted CL/F to Japanese troughs; it is
@@ -70,7 +97,10 @@ DAPAGLIFLOZIN_FEMALE_CL <- exp(-0.174)
 dapagliflozin <- function(weight, height, age, sex, adjustToFFM = TRUE,
                           creatinine = NULL)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
+  # Vp/F and Q/F take the fat-free-mass factors, anchored at the reference
+  # man; Vc/F has its own weight term; CL/F waits on a decision (header).
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                        legacyVolume = 1, legacyClearance = 1)
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   egfr <- if (age < 18)
     egfrBedsideSchwartz(height, patientCreatinine(creatinine, age, sex)) else
@@ -80,8 +110,8 @@ dapagliflozin <- function(weight, height, age, sex, adjustToFFM = TRUE,
     (if (sex == SEX_FEMALE) DAPAGLIFLOZIN_FEMALE_CL else 1)
 
   default <- list(
-    v1  = 73.9 * (pkW / 89)^0.570, v2 = 143, v3 = 1,
-    cl1 = cl / 60, cl2 = 8.92 / 60, cl3 = 0,
+    v1  = 73.9 * (pkW / 89)^0.570, v2 = 143 * size$volume, v3 = 1,
+    cl1 = cl / 60, cl2 = 8.92 / 60 * size$clearance, cl3 = 0,
     ka_PO = 2.39 / 60,
     bioavailability_PO = 1,   # apparent parameters
     tlag_PO = 0.248 * 60

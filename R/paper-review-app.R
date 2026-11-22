@@ -217,13 +217,38 @@ paperReviewHeader <- function(ns = shiny::NS(NULL))
 # Shiny refuses the new file before the app hears of it (over
 # PAPER_REVIEW_MAX_UPLOAD_BYTES), which left the earlier manuscript held and
 # Review sending it (Carbon's fourth UI audit, 2026-11-15, H5).  Only that a
-# file was chosen is sent, never its name.  A delegated jQuery handler, so it
-# also sees the change Shiny triggers for a file dropped on the field.
+# file was chosen is sent, as the choice's number in its field, never its
+# name.  A delegated jQuery handler, so it also sees the change Shiny
+# triggers for a file dropped on the field.
+#
+# An upload is tied to the choice that started it (CodeRabbit on #776,
+# review comment 4635345129: a file chosen before Discard and still
+# uploading when another was chosen was stored when it finished, and a
+# Review sent the manuscript the user had discarded).  Shiny's upload value
+# carries no choice, so the browser says which choice an upload belongs to
+# just before its end reaches the server (`<id>Arrived`): this handler runs
+# after Shiny's own (bound on the field itself, so first), which has made
+# the choice's uploader, and wraps that uploader's onComplete(), which sends
+# Shiny's `uploadEnd`.  A `priority: 'event'` input is sent at once, so the
+# number reaches the server ahead of the upload.  Shiny itself abandons an
+# upload when another file is chosen in its field (abortCurrentUpload(),
+# 1.8 to 1.14), so the case cannot arise with Shiny's own script today; the
+# number makes the server's rule not depend on that.  The uploader and its
+# onComplete() are Shiny's internals: if they change, no number comes, and
+# paperReviewServer() falls back to a rule that needs none.
 paperReviewChosenScript <- function(ns = shiny::NS(NULL))
   htmltools::tags$script(htmltools::HTML(sprintf(paste0(
-    "jQuery(document).on('change', '#%s, #%s', function() {",
-    " if (this.files && this.files.length > 0 && window.Shiny && Shiny.setInputValue)",
-    " Shiny.setInputValue(this.id + 'Chosen', Date.now(), {priority: 'event'}); });"),
+    "(function() { var choices = {};",
+    " jQuery(document).on('change', '#%s, #%s', function() {",
+    " if (!(this.files && this.files.length > 0 && window.Shiny && Shiny.setInputValue)) return;",
+    " var id = this.id, n = choices[id] = (choices[id] || 0) + 1;",
+    " Shiny.setInputValue(id + 'Chosen', n, {priority: 'event'});",
+    " var uploader = jQuery(this).data('currentUploader');",
+    " if (!uploader || typeof uploader.onComplete !== 'function') return;",
+    " var complete = uploader.onComplete;",
+    " uploader.onComplete = function() {",
+    " Shiny.setInputValue(id + 'Arrived', n, {priority: 'event'});",
+    " return complete.apply(this, arguments); }; }); })();"),
     ns("manuscript"), ns("supplement"))))
 
 # The review's three tabs: Review, Simulator, Privacy and help.
@@ -549,14 +574,13 @@ paperReviewServer <- function(input, output, session)
     # read (paperReviewIsUploadPath()).
     datapath <- if (is.list(file)) file$datapath else NULL
     if (!is.character(datapath) || length(datapath) != 1) return()
-    # An upload chosen before Discard that finishes after it is dropped
-    # unread: the store had been emptied and the field reset, so it was
-    # held while the field showed nothing, and a later review sent it
-    # (CodeRabbit on #776).  A file chosen after Discard has cleared the
-    # mark (chosen(): a browser reports the choice before the upload ends).
-    if (isTRUE(discardedUpload[[slot]])) {
+    # An upload is stored only if it belongs to the field's latest choice
+    # and that choice was made after the last Discard; any other is dropped
+    # unread (uploadStale()).
+    stale <- uploadStale(slot)
+    if (!is.null(stale)) {
       paperReviewReadUpload(datapath, maxBytes = -1)
-      status(paste0(label, " was still uploading when the paper was discarded, and was dropped unread."))
+      status(paste0(label, " ", stale))
       return()
     }
     # A new upload replaces what its field held, whatever it turns out to
@@ -608,16 +632,75 @@ paperReviewServer <- function(input, output, session)
   # What it dropped is remembered, so that receive() can say so of a file
   # it then refuses.
   droppedOnChoice <- c(pdf = FALSE, supplement = FALSE)
-  # A field whose upload in progress, if any, was discarded (input$discard).
-  discardedUpload <- c(pdf = FALSE, supplement = FALSE)
-  chosen <- function(slot, label) {
-    discardedUpload[[slot]] <<- FALSE
+  # Each field's choices, numbered by the browser: the latest reported;
+  # the latest at the last Discard (NA before any), every choice up to it
+  # being discarded; the choice the next upload belongs to, as the browser
+  # says just before it (NA when it has not); the latest choice when the
+  # field's last upload arrived; and whether a Discard was made while a
+  # choice's upload was still on its way, which an upload the browser has
+  # said nothing of cannot be told apart from.
+  latestChoice <- c(pdf = 0, supplement = 0)
+  discardedThrough <- c(pdf = NA_real_, supplement = NA_real_)
+  arrivingChoice <- c(pdf = NA_real_, supplement = NA_real_)
+  choiceAtArrival <- c(pdf = 0, supplement = 0)
+  uncertain <- c(pdf = FALSE, supplement = FALSE)
+  # A choice's number from the browser, a value no control sends checked
+  # (NA when it is not one finite number).
+  choiceNumber <- function(value) {
+    n <- suppressWarnings(as.numeric(unlist(value)))
+    if (length(n) == 1 && is.finite(n)) n else NA_real_
+  }
+  # Why an upload arriving now must not be stored, or NULL when it may.
+  # Marked by the browser, it must be the latest choice and come after the
+  # last Discard: one chosen before a Discard, or superseded by a later
+  # choice, is not what the field shows.  Unmarked (Shiny's upload script
+  # changed, or no browser), it is taken as the latest choice unless no
+  # choice has been made since the last Discard, or a Discard was made
+  # while an upload was on its way and another file has been chosen since:
+  # that upload may be the discarded one, so it is dropped and the user
+  # asked to choose again (CodeRabbit on #776).
+  uploadStale <- function(slot) {
+    marked <- arrivingChoice[[slot]]
+    arrivingChoice[[slot]] <<- NA_real_
+    latest <- latestChoice[[slot]]
+    discarded <- discardedThrough[[slot]]
+    wasUncertain <- uncertain[[slot]]
+    choiceAtArrival[[slot]] <<- latest
+    uncertain[[slot]] <<- FALSE
+    afterDiscard <- function(n) is.na(discarded) || n > discarded
+    if (!is.na(marked)) {
+      if (!afterDiscard(marked))
+        return("was still uploading when the paper was discarded, and was dropped unread.")
+      if (marked != latest)
+        return("was replaced by a later choice before it arrived, and was dropped unread.")
+      return(NULL)
+    }
+    if (!afterDiscard(latest))
+      return("was still uploading when the paper was discarded, and was dropped unread.")
+    if (wasUncertain)
+      return(paste("arrived after a Discard, and stanpumpR could not tell whether it was the file",
+                   "chosen before the Discard, so it was dropped unread: please choose it again."))
+    NULL
+  }
+  chosen <- function(slot, label, value) {
+    # A number that does not follow the last is taken as the next; the
+    # browser's number for its upload then differs, and that upload is
+    # dropped (the safe way).
+    n <- choiceNumber(value)
+    if (is.na(n) || n <= latestChoice[[slot]]) n <- latestChoice[[slot]] + 1
+    latestChoice[[slot]] <<- n
     if (!dropSlot(slot)) return()
     droppedOnChoice[[slot]] <<- TRUE
     status(paste0("Another ", label, " was chosen, so the one held before has been discarded."))
   }
-  shiny::observeEvent(input$manuscriptChosen, chosen("pdf", "manuscript"))
-  shiny::observeEvent(input$supplementChosen, chosen("supplement", "supplement"))
+  shiny::observeEvent(input$manuscriptChosen,
+                      chosen("pdf", "manuscript", input$manuscriptChosen))
+  shiny::observeEvent(input$supplementChosen,
+                      chosen("supplement", "supplement", input$supplementChosen))
+  shiny::observeEvent(input$manuscriptArrived,
+                      arrivingChoice[["pdf"]] <<- choiceNumber(input$manuscriptArrived))
+  shiny::observeEvent(input$supplementArrived,
+                      arrivingChoice[["supplement"]] <<- choiceNumber(input$supplementArrived))
 
   runReview <- function(extraction, example = FALSE, quick = FALSE) {
     review <- tryCatch(paperReviewQuietly(function() paperReviewRun(extraction)),
@@ -794,7 +877,10 @@ paperReviewServer <- function(input, output, session)
     # The fields showed the discarded files' names and "Upload complete"
     # (Shafer's test of 2026-11-17); they are emptied as the store is.
     for (field in c("manuscript", "supplement")) shinyjs::reset(field)
-    discardedUpload[] <<- TRUE
+    # Every choice so far is discarded, and an upload still on its way is
+    # dropped when it arrives (uploadStale()).
+    uncertain[] <<- latestChoice > choiceAtArrival
+    discardedThrough[] <<- latestChoice
     status("Discarded. Nothing about the paper remains in this session.")
   })
 

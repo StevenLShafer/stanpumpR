@@ -23,12 +23,18 @@ clp <- function(wt, ht, sex) P$CL * (if (sex == "male") P$male else 1) *
 # An independent integration of Figure 24, written from the review rather than
 # from the engine: classical RK4 at a fixed step of h hours, each dose its own
 # depot (its own ka), the zero-order release a box of rate, no step
-# straddling a box edge.
+# straddling a box edge.  The library's fat-free-mass switch enters only
+# through two arguments, computed by the caller (2026-11-19, the one change to
+# this integration, for Shafer's first-principles size rule): wtV, the weight
+# the volumes see (total weight with the switch off, the pharmacokinetic
+# weight with it on), and qf, the factor of the size-free Q3P and Q3M (1 off;
+# the anchored FFM ratio^0.75 on).
 referenceSuzetrigine <- function(wt, ht, sex, doses, times, h = 0.002,
-                                 kenz = P$KENZ) {
-  f <- wt / P$wtRef
+                                 kenz = P$KENZ, wtV = wt, qf = 1) {
+  f <- wtV / P$wtRef
   V2 <- P$V2P * f; V3 <- P$V3P * f; V4 <- P$V2M * f; V5 <- P$V3M * f
   CL <- clp(wt, ht, sex); CLM <- P$CLMrel * CL
+  P$Q3P <- P$Q3P * qf; P$Q3M <- P$Q3M * qf
   Fd <- function(d) P$F1 * (1 - P$fMax * d^P$fHill / (P$fD50^P$fHill + d^P$fHill))
   Kd <- function(d) P$KA * (1 - P$kMax * d / (P$kD50 + d))
   nd <- nrow(doses)
@@ -194,6 +200,74 @@ test_that("switch on: the volumes at the pharmacokinetic weight, BMI at total we
   off <- suzetrigine(120, 170, 50, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(off$v1, 103 * 120 / 76.2)
   expect_equal(off$cl1, set$cl1)
+})
+
+# The data's typical subject (Table 148 as transcribed in the drug's header,
+# unconfirmed): 76.2 kg, BMI 27.8, 42 years, 76.7% men; the height the median
+# weight over the median BMI
+SUZ_COHORT <- list(weight = 76.2, bmi = 27.8, age = 42, men = 76.7, women = 23.3)
+SUZ_COHORT_HT <- 100 * sqrt(76.2 / 27.8)
+ffmTest <- function(w, h, a, male) {
+  bmi <- w / (h / 100)^2
+  if (male) (0.88 + 0.12 / (1 + (a / 13.4)^(-12.7))) * 9270 * w / (6680 + 216 * bmi)
+  else (1.11 - 0.11 / (1 + (a / 7.1)^(-1.1))) * 9270 * w / (8780 + 244 * bmi)
+}
+FFM_REF_TEST <- ffmTest(70, 170, 35, TRUE)
+
+test_that("switch on: Q3P and Q3M scaled by FFM^0.75, anchored at the data's typical subject", {
+  pooled <- cohortFactorsIndependent(SUZ_COHORT)$clearance
+  q <- function(w, h, a, sex, ffm = TRUE) {
+    X <- suzetrigine(w, h, a, sex, adjustToFFM = ffm)
+    m6 <- M6SUZ(w, h, a, sex, adjustToFFM = ffm)$PK$default
+    expect_equal(m6$cl2, X$michaelisMenten$metabolite$q)   # one Q3M, two readers
+    c(X$PK$default$cl2, m6$cl2) * 60
+  }
+  # (a) the cohort's typical subject: Q has no sex term, so the anchor is the
+  # pooled one; the man and the woman at the cohort's demographics sit either
+  # side of it, and their geometric mean, weighted 76.7 : 23.3, is the
+  # published 19 and 8.75 L/h
+  man <- q(76.2, SUZ_COHORT_HT, 42, "male")
+  woman <- q(76.2, SUZ_COHORT_HT, 42, "female")
+  fm <- (ffmTest(76.2, SUZ_COHORT_HT, 42, TRUE) / FFM_REF_TEST)^0.75
+  fw <- (ffmTest(76.2, SUZ_COHORT_HT, 42, FALSE) / FFM_REF_TEST)^0.75
+  expect_equal(man, c(19, 8.75) * fm / pooled)
+  expect_equal(woman, c(19, 8.75) * fw / pooled)
+  expect_equal(exp(0.767 * log(man) + 0.233 * log(woman)), c(19, 8.75))
+  expect_equal(pooled, 0.98326737, tolerance = 1e-7)
+  # (b) a man of twice the reference fat-free mass (200 cm, 35 years): Q by
+  # 2^0.75 against the reference man, the volumes (the source's weight term,
+  # at the pharmacokinetic weight, 140 kg) by 2
+  # (the maturation term at 35 years, 1 - 6e-7, is the reference man's too)
+  mat35 <- 0.88 + 0.12 / (1 + (35 / 13.4)^(-12.7))
+  w2 <- 2 * FFM_REF_TEST * 6680 / (mat35 * 9270 - 2 * FFM_REF_TEST * 216 / 4)
+  expect_equal(ffmTest(w2, 200, 35, TRUE) / FFM_REF_TEST, 2)
+  ref <- q(70, 170, 35, "male")
+  expect_equal(ref, c(19, 8.75) / pooled)
+  expect_equal(q(w2, 200, 35, "male") / ref, rep(2^0.75, 2))
+  big <- suzetrigine(w2, 200, 35, "male")$PK$default
+  expect_equal(big$v1, 103 * 140 / 76.2)
+  expect_equal(M6SUZ(w2, 200, 35, "male")$PK$default$v2, 29.5 * 140 / 76.2)
+  # (c) the switch off: 19 and 8.75 L/h for everyone, as before
+  expect_equal(q(w2, 200, 35, "male", FALSE), c(19, 8.75))
+  expect_equal(q(45, 150, 70, "female", FALSE), c(19, 8.75))
+})
+
+test_that("switch on: both curves agree with the integration at the scaled Q", {
+  # 100 kg, 180 cm, 42 y man (BMI 30.9, within the range studied, so the
+  # integration's unheld BMI applies); its wtV and qf from the formulas above,
+  # not from the drug file
+  wt <- 100; ht <- 180
+  ffmR <- ffmTest(wt, ht, 42, TRUE) / FFM_REF_TEST
+  qf <- ffmR^0.75 / cohortFactorsIndependent(SUZ_COHORT)$clearance
+  doses <- data.frame(h = c(0, 12, 24), mg = c(100, 50, 50))
+  s <- simulate(wt, ht, "male", doses, 48, ffm = TRUE)
+  p <- s$suzetrigine$wide; m <- s$M6SUZ$wide
+  at <- c(1, 3, 6, 12.5, 24, 30, 48)
+  i <- vapply(at, function(h) which.min(abs(p$Time - h * 60)), 1L)
+  ref <- referenceSuzetrigine(wt, ht, "male", doses, p$Time[i] / 60,
+                              wtV = 70 * ffmR, qf = qf)
+  expect_equal(p$Plasma[i], ref[, 1], tolerance = 1e-4)
+  expect_equal(m$Plasma[i], ref[, 2], tolerance = 1e-4)
 })
 
 test_that("M6SUZ cannot be dosed; suzetrigine is oral only", {

@@ -28,7 +28,7 @@
 # in Table 1, 14.2 kg, as for bosentan (R/drugs_bosentan.R).  Spironolactone
 # is held at none (13 of the 31 took it; the source reads it as a marker of
 # right heart failure, not an interaction); with it, clearance is 40% lower.
-# V/F has no covariate.
+# V/F has no covariate in the source; see BODY SIZE for its scaling.
 #
 # WHO GETS IT (R/modelSelection.R)
 # ================================
@@ -56,8 +56,26 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# The source's own weight term on CL/F, at the pharmacokinetic weight with
-# the switch on and total weight with it off.
+# CL/F keeps the source's own weight term exactly as fitted, at the
+# pharmacokinetic weight with the switch on and total weight with it off, and
+# takes nothing more.
+#
+# V/F has no covariate in the source, not because size was found not to
+# matter but because it was never tested: V/F's shrinkage exceeded 30% for
+# every drug, so the authors explored covariates on CL/F only (Discussion).
+# Under Steven L. Shafer's first-principles rule of 2026-11-19 (a covariate
+# not detected is not evidence of no size effect), with the switch on V/F is
+# scaled by the fat-free-mass ratio (size$volume), anchored at the cohort's
+# typical patients (TADALAFIL_MIURA_COHORT, below; Shafer's choice of 2026-11-20: two
+# anchors, the children's median subject and the adults', each of both
+# sexes), so that the cohort's typical patient receives the published 80.6 L.
+# The cohort factor is 0.2725 on volume (0.3772 on clearance): the geometric
+# mean of the children's and the adults' fat-free-mass factors, weighted by
+# their numbers, sits that far below the 70 kg reference man.  So V/F is
+# 296 L in a 70 kg, 170 cm, 35-year-old man, about 47 L at the
+# children's median subject and 192 and 250 L at the adults' median woman and
+# man.  Al-Sallami's fat-free mass is an extrapolation below 3 years, where this model is chosen (under 2.5 years).
+# With the switch off V/F is 80.6 L for everyone, as before.
 #
 # DOSE, PREGNANCY AND THE BAND
 # ============================
@@ -72,6 +90,30 @@ TADALAFIL_MIURA_WT_REF <- 14.2    # kg
 TADALAFIL_MIURA_V      <- 80.6    # L
 TADALAFIL_MIURA_KA     <- 0.84    # /h, fixed
 
+# Miura 2026, Table 1 (the tadalafil column), the cohort V/F is anchored at
+# (see the header's BODY SIZE): 31 patients, 20 children (median 1.9 years,
+# 10.7 kg) and 11 adults (median 37.8 years, 52.3 kg), 12 men and 19 women.
+# Table 1 does not split the sexes by age group, so each group is ASSUMED to
+# have the cohort's sex ratio (12:19).  No height, BMI or BSA is printed
+# (nor any supplement).  The children's heights are the median (50th
+# percentile) height for age of the Japanese 2000 reference (Japanese Society
+# for Pediatric Endocrinology, Appendix Table 2, Kato N et al. 2004;
+# http://jspe.umin.jp/medical/files/fuhyo2.pdf, read on the page image
+# 2026-11-20), interpolated linearly between its months at 1.9 years: boys
+# 84.8 cm, girls 83.6 cm.  The adults' heights are NCD-RisC's mean height at 18
+# for Japan, birth cohort 1978 (about 2016 less 37.8: the patients were
+# sampled in routine care in Hamamatsu from about 2009, the registered
+# studies' UMIN entries, to 2023, the last ethics approval; no dates are
+# printed, and 2009 or 2023 would move these heights by under 1 cm), less
+# 0.2 cm (men) or 0.3 cm (women) a decade after 18: men 171.1 cm, women 157.9
+# cm.  The sexes and groups enter at their counts (fractional where the
+# assumed ratio makes them so).
+TADALAFIL_MIURA_COHORT <- list(groups = list(
+  list(weight = 10.7, height = 84.8, age = 1.9, men = 12 * 20 / 31, women = 0),
+  list(weight = 10.7, height = 83.6, age = 1.9, men = 0, women = 19 * 20 / 31),
+  list(weight = 52.3, height = 171.1, age = 37.8, men = 12 * 11 / 31, women = 0),
+  list(weight = 52.3, height = 157.9, age = 37.8, men = 0, women = 19 * 11 / 31)))
+
 #' Tadalafil in young children with pulmonary arterial hypertension (Miura 2026)
 #'
 #' One compartment, oral, weight on apparent clearance.  A candidate of the
@@ -82,12 +124,17 @@ TADALAFIL_MIURA_KA     <- 0.84    # /h, fixed
 #' @export
 tadalafilMiura <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
+  # size$pkWeight (for the fitted weight term on CL/F) does not depend on the
+  # cohort; size$volume scales the size-free V/F, anchored at
+  # TADALAFIL_MIURA_COHORT, and is 1 with the switch off
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, TADALAFIL_MIURA_COHORT))
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   cl <- TADALAFIL_MIURA_CL * (w / TADALAFIL_MIURA_WT_REF)^TADALAFIL_MIURA_WT_EXP
 
   default <- list(
-    v1  = TADALAFIL_MIURA_V,
+    v1  = TADALAFIL_MIURA_V * size$volume,
     v2  = 1,
     v3  = 1,
     cl1 = cl / 60,
@@ -110,6 +157,8 @@ tadalafilMiura <- function(weight, height, age, sex, adjustToFFM = TRUE)
       "Miura M, Tanaka S, Aihara R, et al., Br J Clin Pharmacol 2026;92:3611-3621, ",
       "Table 2: one compartment fitted at steady state in Japanese children and adults ",
       "with pulmonary arterial hypertension, CL/F 1.76 L/h x (WT/14.2)^0.602 (no ",
-      "spironolactone), V/F 80.6 L, ka 0.84 /h. https://doi.org/10.1002/bcp.70676")
+      "spironolactone), V/F 80.6 L (no covariate; with the fat-free-mass switch on, scaled ",
+      "by the fat-free-mass ratio anchored at the cohort's median child and adult), ",
+      "ka 0.84 /h. https://doi.org/10.1002/bcp.70676")
   )
 }

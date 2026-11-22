@@ -321,6 +321,81 @@ test_that("the TCI rows merge into the dose table for export", {
   expect_equal(merged$Units[1], TCI_UNIT_EFFECT)
 })
 
+# With the effect site targeted the pump is off while the effect site rises to
+# the target, and tciRate() gives that 0 as (CT - B)/E where the curve just
+# touches the target, CT - B a rounding error of either sign: propofol to 4
+# mcg/mL in the reference man had 3.3e-14 and 5.7e-15 mg/kg/min among 32
+# intervals of exactly 0.  The rate panel's hover read "rate: 3.26e-14
+# mg/kg/min", the export carried the row, and the Visualizer drew the pump
+# running ("Pump 9.41e-13 mg/min").  What is shown is 0 there
+# (tciShownRates(), TCI_RATE_ROUNDOFF); what the engine simulates is the
+# controller's own schedule.  (Claude Code, 2026-11-20, at the request of
+# Steven L. Shafer.)
+test_that("a rate of round-off is shown as the pump off, and a small real rate is not", {
+  top <- 425
+  raw <- c(top, 2.28e-12, 0, 4.0e-13, 2.9, 1e-4 * top, 2 * TCI_RATE_ROUNDOFF * top, 0.5 * TCI_RATE_ROUNDOFF * top)
+  shown <- tciShownRates(raw)
+  expect_identical(shown, c(top, 0, 0, 0, 2.9, 1e-4 * top, 2 * TCI_RATE_ROUNDOFF * top, 0))
+  # Nothing to divide by: a pump that never runs, and no rows at all.
+  expect_identical(tciShownRates(c(0, 0)), c(0, 0))
+  expect_identical(tciShownRates(numeric(0)), numeric(0))
+
+  # tciDisplay() is what the panel, its hover, the export and the Visualizer read.
+  schedule <- list(
+    rates = data.frame(Time = seq_along(raw) - 1, Rate = raw, Dt = TCI_INTERVAL, Bolus = c(TRUE, rep(FALSE, length(raw) - 1))),
+    boluses = data.frame(Time = 0, Amount = top * TCI_INTERVAL)
+  )
+  kept <- schedule$rates$Rate
+  d <- tciDisplay(schedule, propofolPK)
+  expect_equal(d$rates$Rate, shown / propofolPK$weight)
+  expect_true(all(d$rates$Rate == 0 | d$rates$Rate >= TCI_RATE_ROUNDOFF * max(d$rates$Rate)))
+  expect_identical(schedule$rates$Rate, kept)
+})
+
+test_that("no TCI schedule shows a rate of round-off, and the engine still runs the controller's own", {
+  # The reference man at 35 is the patient whose propofol schedule had them.
+  defaults <- getDrugDefaultsGlobal(FALSE)
+  shownRoundOff <- function(rate) any(rate > 0 & rate < TCI_RATE_ROUNDOFF * max(rate))
+  roundOff <- 0
+  for (drug in c("propofol", "remifentanil", "fentanyl", "sufentanil", "alfentanil")) {
+    PK <- getDrugPK(drug, 70, 170, 35, "male", defaults[defaults$Drug == drug, ])
+    for (target in c(PK$typical, 2 * PK$typical)) {
+      doses <- rbind(tciDose(0, target, TCI_UNIT_EFFECT, drug), tciDose(20, target / 2, TCI_UNIT_EFFECT, drug),
+                     tciDose(40, target, TCI_UNIT_EFFECT, drug))
+      X <- simCpCe(doses, noEvents, PK, 60, FALSE)
+      expect_false(shownRoundOff(X$tci$rates$Rate), info = paste(drug, target))
+      # The engine was given the controller's own schedule: with the rule
+      # taken away the curves are the same to the last bit, and the shown
+      # rates differ from the controller's only below the line.
+      raw <- with_mocked_bindings(simCpCe(doses, noEvents, PK, 60, FALSE), tciShownRates = function(rate) rate)
+      expect_identical(X$results, raw$results, info = paste(drug, target))
+      line <- TCI_RATE_ROUNDOFF * max(raw$tci$rates$Rate)
+      real <- raw$tci$rates$Rate >= line
+      expect_identical(X$tci$rates$Rate[real], raw$tci$rates$Rate[real], info = paste(drug, target))
+      expect_true(all(X$tci$rates$Rate[!real] == 0), info = paste(drug, target))
+      roundOff <- roundOff + sum(raw$tci$rates$Rate > 0 & !real)
+      # The pump is off, exactly, from the end of the loading interval to the peak.
+      off <- X$tci$rates$Time >= TCI_INTERVAL & X$tci$rates$Time < PK$tPeak - TCI_INTERVAL
+      expect_true(all(X$tci$rates$Rate[off] == 0), info = paste(drug, target))
+    }
+  }
+  # The export's dose table carries what is shown.
+  doseTable <- tciDose(0, 4, TCI_UNIT_EFFECT)
+  drugs <- processdoseTable(
+    doseTable, noEvents,
+    recalculatePK(NULL, defaults, doseTable, 35, 70, 170, "male"),
+    60, FALSE
+  )
+  merged <- tciMergeDoseTable(doseTable, drugs)
+  rate <- merged$Dose[merged$Units == "mg/kg/min"]
+  expect_false(shownRoundOff(rate))
+  # Whether the controller leaves round-off, and where, is the platform's
+  # arithmetic, so the count (roundOff) is not pinned: 28 rows in these ten schedules on
+  # R 4.3.3 for Linux, the largest 4.8e-15 of its schedule's largest rate
+  # (none for fentanyl or alfentanil).  Where there is none, the first test's
+  # hand-made schedule is what holds the rule.
+})
+
 test_that("the plot gets a rate panel per TCI drug, coloured like the drug", {
   doseTable <- rbind(
     tciDose(0, 3, TCI_UNIT_EFFECT),

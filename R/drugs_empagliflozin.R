@@ -52,9 +52,27 @@
 # R/renalFunction.R) at the patient's creatinine (a child's on the adult
 # scale) or an assumed normal creatinine for age and sex.
 #
-# BODY SIZE: the model's own BMI terms, with BMI from the pharmacokinetic
-# weight with the switch on and from total weight with it off; no other size
-# scaling.
+# BODY SIZE (docs/weight-adjustment.md): CL/F, Vc/F and Vp/F carry the
+# source's own BMI terms (with its age, sex and eGFR terms), kept exactly as
+# fitted, with BMI from the pharmacokinetic weight with the switch on and
+# from total weight with it off; they take no further scaling.  Q/F (6.34
+# L/h) has no covariate in the source.  Under Steven L. Shafer's
+# first-principles rule of 2026-11-19 (a covariate not detected is not
+# evidence that size does not matter), with the switch on Q/F is now
+# multiplied by the fat-free-mass clearance factor, size$clearance (the
+# fat-free-mass ratio to the 0.75 power).  ka and the lag are not scaled.
+# With the switch off Q/F is the published value, as before.
+#
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18 and 2026-11-19;
+# docs/weight-adjustment.md, Anchoring at the source's cohort): the paper
+# prints no weight or height for its patients.  Table 2 (p464) gives only
+# medians of age (58.0 years) and BMI (29.1 kg/m2), and the supplement's
+# Table S2 the sexes (2217 men, 1848 women), and both are of the PK/PD
+# dataset of 4065 patients, not the 2761 of the PK model; the cohort is also
+# multinational (42% Asian, Table S2; Japanese study 5, Table 1).  A BMI
+# without a weight does not give a fat-free mass, so Q/F stays anchored at
+# the 70 kg, 170 cm reference man (factor 1, no cohort constant), close to
+# the source's own reference patient (a 50-year-old man of BMI 25).
 #
 # References
 # ----------
@@ -77,8 +95,12 @@ EMPAGLIFLOZIN_BMI_RANGE <- c(20.8, 42.4)   # kg/m^2; see the header
 empagliflozin <- function(weight, height, age, sex, adjustToFFM = TRUE,
                           creatinine = NULL)
 {
-  pkW  <- if (isTRUE(adjustToFFM))
-    pkSizeFactors(weight, height, age, sex, TRUE)$pkWeight else weight
+  # Q/F, with no covariate in the source, takes the fat-free-mass clearance
+  # factor, anchored at the reference man (BODY SIZE ANCHOR in the header);
+  # the BMI terms are the source's own size model.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                        legacyVolume = 1, legacyClearance = 1)
+  pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   bmi  <- pkW / (height / 100)^2
   bmi  <- min(max(bmi, EMPAGLIFLOZIN_BMI_RANGE[1]), EMPAGLIFLOZIN_BMI_RANGE[2])
   a    <- max(age, 18) / 50
@@ -92,7 +114,7 @@ empagliflozin <- function(weight, height, age, sex, adjustToFFM = TRUE,
     v2  = 70.6 * a^0.135 * b^0.672 * (if (fem) 0.831 else 1),
     v3  = 1,
     cl1 = 10.6 * a^-0.241 * b^0.320 * renal * (if (fem) 0.886 else 1) / 60,
-    cl2 = 6.34 / 60, cl3 = 0,
+    cl2 = 6.34 / 60 * size$clearance, cl3 = 0,
     ka_PO = 0.196 * a^0.108 * (if (fem) 1.17 else 1) / 60,
     bioavailability_PO = 1,   # apparent parameters
     tlag_PO = 0.5 * 60

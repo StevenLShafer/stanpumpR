@@ -8,6 +8,8 @@ CMS has two compartments:
 - **Peripheral volume:** 18.7 L, with an intercompartmental clearance of 7.98 L/h.
 - **Clearance:** 0.0613 × CrCL + 1.90 L/h. The renal part rises with creatinine clearance; the nonrenal 1.90 L/h is what forms colistin.
 
+The authors tested body size on the volumes and kept weight on the central volume only, and found no trend in clearance against body size in their 105 patients. With *Adjust weight to fat-free mass* ticked, the central volume's weight term uses the pharmacokinetic weight, and the parameters with no size term are scaled to fat-free mass: the peripheral volume in proportion, the intercompartmental clearance and the nonrenal 1.90 L/h to the 0.75 power. The scaling is anchored at Garonzik's typical patient (median 59.1 kg, 162.0 cm, 71 years; 68 men and 37 women), who receives the published values, and colistin's own volume and nonrenal clearance are scaled the same way. The renal terms carry weight inside the creatinine clearance and are not scaled. Unticked, total body weight enters the central volume and nothing else is scaled.
+
 As renal function falls, more of each dose is converted to colistin rather than excreted unchanged, which is why the colistin curve depends so strongly on creatinine clearance. Garonzik's model is the interim analysis of the study that Nation and colleagues completed in 2017 (*Clin Infect Dis* 64:565, 214 patients). The final model's parameters are in that paper's supplement, which has not been read.
 
 ### Creatinine clearance
@@ -26,7 +28,7 @@ Intravenous only. The label also gives it intramuscularly, which the source did 
 
 ### Checks
 
-Garonzik reports the median terminal half-lives of the individual fits, so these are not independent of the model:
+Garonzik reports the median terminal half-lives of the individual fits, so these are not independent of the model. The model's half-lives use the published parameters, with *Adjust weight to fat-free mass* unticked:
 
 | Creatinine clearance (mL/min/1.73 m²) | CMS, Garonzik | CMS, this model | Colistin, Garonzik | Colistin, this model |
 |---|---|---|---|---|

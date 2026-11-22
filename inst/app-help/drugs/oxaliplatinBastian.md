@@ -32,6 +32,7 @@ Samples were taken to 28 hours. Delord and colleagues (*Cancer Chemother Pharmac
 ### Covariates
 
 - **Weight**, on the clearance, the central volume and the intercompartmental clearance, relative to 71 kg. With the fat-free-mass switch on, the weight used is the patient's pharmacokinetic weight.
+- **Fat-free mass**, on the peripheral volume, which has no covariate in the paper: with the switch on it scales with fat-free mass, anchored at the paper's typical patient (71 kg, 59 years, 29 men and 27 women, a height of 162 cm solved from the median body surface area), who receives the published 136 L; the 70 kg reference man receives about 155 L (stanpumpR's rule that a parameter without a size term in its source still scales with size, Steven L. Shafer, 2026-11-19).
 - **Serum creatinine**, as (creatinine / 87 µmol/L)^−0.57 on clearance. A blank field is the library's assumed normal creatinine (0.9 mg/dL in men, 0.8 in women), which gives a man a clearance 5% above the paper's typical value. A creatinine below 53 µmol/L (0.6 mg/dL), the lowest studied, is taken as 53. The highest studied was 567 µmol/L.
 - **Sex**: women's clearance is 0.60 times men's, a large effect with wide uncertainty (standard error 0.25).
 - Age, body surface area, creatinine clearance, serum proteins and infusion length were tested and not kept.

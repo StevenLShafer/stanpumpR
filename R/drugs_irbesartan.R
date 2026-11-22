@@ -139,8 +139,11 @@
 # their own pharmacokinetics, not Karatza's: Hedaya 2015 (SBP Emax 8.3 mmHg,
 # EC50 2.1 ug/mL, Hill 1.95, ke0 0.44 /h) and Huang 2006 (SBP Emax 14.8 mmHg,
 # EC50 0.29 ug/mL, Hill 0.75, ke0 0.62 /h).  Their EC50s differ sevenfold.
-# Steven Shafer has proposed plotting the effect as a percentage of the
-# maximum, which removes the baseline; that is a separate piece of work.
+# Graph Options -> % effect (R/pdEffect.R, inst/extdata/pdEffect.csv) draws
+# the systolic fall as a percentage of its maximum from Huang 2006, with
+# Huang's own ke0 filling an effect site from this plasma curve; PROVISIONAL
+# (Shafer, 2026-11-20, "make it generally available"; source choice stated on
+# the help pages).  The drug itself stays plasma only.
 # tPeak, MEAC and the band are zero: no therapeutic plasma range is
 # established for an angiotensin receptor blocker, which is dosed to pressure.
 #

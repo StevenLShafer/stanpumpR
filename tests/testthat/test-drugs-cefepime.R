@@ -59,10 +59,45 @@ test_that("the reference man, against the label's healthy men (not fitted)", {
     x <- if (t <= tinf) during(t) else V %*% diag(exp(l * (t - tinf))) %*% Vi %*% during(tinf)
     x[1] / p$v1
   }
-  expect_equal(round(conc(p, 1000, 30), 1), 51.9)
-  expect_equal(round(conc(p, 2000, 30), 1), 103.7)
+  # Q and V2 are scaled from Barreto's cohort since 2026-11-19 (the
+  # first-principles rule): the reference man's V2 is 10.63 / 1.0417 and his
+  # Q 7.09 / 1.0311, so the peaks moved from 51.9 and 103.7
+  expect_equal(round(conc(p, 1000, 30), 1), 52.0)
+  expect_equal(round(conc(p, 2000, 30), 1), 104.1)
   expect_equal(round(1000 / (p$cl1 * 60), 1), 132.7)
-  expect_equal(p$v1 + p$v2, 26.19)
+  expect_equal(p$v1 + p$v2, 15.56 + 10.63 / cohortFactorsIndependent(CEFEPIME_COHORT)$volume)
+  expect_equal(round(p$v1 + p$v2, 2), 25.76)
+})
+
+test_that("Q and V2: anchored at Barreto's cohort, scaled by fat-free mass", {
+  # (a) the cohort's typical patient (Table 1: 87 kg, BMI 30, 61 years; 72
+  # men, 48 women): Q and V2 carry no sex term, so the pooled divisor gives
+  # 1.0417 (volume) and 1.0311 (clearance) from the reference man, and the
+  # cohort's own patients receive the published values on the pooled scale
+  cf <- cohortFactorsIndependent(CEFEPIME_COHORT)
+  expect_equal(round(c(cf$volume, cf$clearance), 4), c(1.0417, 1.0311))
+  h <- 100 * sqrt(87 / 30)
+  m <- cefepime(87, h, 61, "male")$PK$default
+  f <- cefepime(87, h, 61, "female")$PK$default
+  ffm <- function(sex) ffmAlSallami(87, h, 61, sex) / FFM_REFERENCE
+  pooledV <- exp((72 * log(m$v2) + 48 * log(f$v2)) / 120)
+  pooledQ <- exp((72 * log(m$cl2) + 48 * log(f$cl2)) / 120)
+  expect_equal(pooledV, 10.63)
+  expect_equal(pooledQ, 7.09 / 60)
+  expect_equal(m$v2, 10.63 * ffm("male") / cf$volume)
+  # (b) twice the reference fat-free mass: V2 x 2, Q x 2^0.75, over the
+  # cohort's factors; V1 keeps the source's own weight term (140 kg)
+  w <- uniroot(function(w) ffmAlSallami(w, 200, 35, "male") - 2 * FFM_REFERENCE,
+               c(70, 400), tol = 1e-12)$root
+  big <- cefepime(w, 200, 35, "male")$PK$default
+  expect_equal(big$v2, 10.63 * 2 / cf$volume)
+  expect_equal(big$cl2, 7.09 / 60 * 2^0.75 / cf$clearance)
+  expect_equal(big$v1, 15.56 * 140 / 70)
+  # (c) the switch off: as published
+  off <- cefepime(w, 200, 35, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(off$v2, 10.63)
+  expect_equal(off$cl2, 7.09 / 60)
+  expect_equal(off$v1, 15.56 * w / 70)
 })
 
 test_that("pregnancy raises the eGFR only with a blank creatinine", {

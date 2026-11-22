@@ -15,7 +15,7 @@ The model was fitted to 1,435 subjects in 12 studies: healthy volunteers, people
 - is cleared at 0.273 times suzetrigine's clearance;
 - is 3.7 times less potent at NaV1.8 than suzetrigine and reaches about three times its exposure.
 
-Every volume scales with weight.
+Every volume scales with weight. The two intercompartmental clearances, which carry no size term in the review, scale with fat-free mass to the 0.75 power when [the scaling switch](help:models/fat-free-mass) is on, anchored at the data's median subject (76.2 kg, BMI 27.8, 42 years, 77% men), so that subject receives 19 and 8.75 L/h; with the switch off they are fixed.
 
 ### Autoinduction
 
@@ -53,6 +53,7 @@ The review prints no reference weight or BMI, so the data's medians are assumed:
 
 - **Weight** acts on the volumes. With [the scaling switch](help:models/fat-free-mass) on it is the pharmacokinetic weight; with it off, total weight.
 - **BMI** acts on clearance. It is computed from total weight in both positions of the switch, because it stands for body composition: a heavier patient of the same height clears suzetrigine more slowly. It is held within the range studied, 18.1 to 39.7.
+- **Fat-free mass** acts on the two intercompartmental clearances when the switch is on (stanpumpR's rule that a parameter without a size term in its source still scales with size, Steven L. Shafer, 2026-11-19).
 
 Not modelled:
 - food, which delays the peak to 5 hours;
