@@ -55,6 +55,12 @@ sys.stdout.reconfigure(encoding="utf-8")
 args = sys.argv[1:]
 force = "--force" in args
 keep = int(args[args.index("--keep") + 1]) if "--keep" in args else BUNDLE_KEEP
+if keep < 1:
+    # --keep 0 made rows[keep:] select EVERY bundle, so the prune deleted the generation just
+    # written along with all the older ones. One flag away from destroying the whole backup
+    # (CodeRabbit, PR #847).
+    sys.exit("--keep must be at least 1; refusing to run, because --keep 0 would delete every "
+             "bundle including the one this run would write.")
 
 
 def git(*a, **kw):
@@ -71,8 +77,15 @@ def existing():
     found = []
     for p in glob.glob(os.path.join(OUT, "stanpumpR-*.bundle")):
         stem = os.path.basename(p)[len("stanpumpR-"):-len(".bundle")]
+        # Either YYYY-MM-DD or YYYY-MM-DD-HHMM (a second run on one day).  Both are parsed, so
+        # both are pruned in their turn; anything else is not ours and is never deleted.
+        head, _, tail = stem.rpartition("-")
         try:
-            d = datetime.date.fromisoformat(stem)
+            if head and len(tail) == 4 and tail.isdigit():
+                d = datetime.datetime.fromisoformat(head).replace(
+                    hour=int(tail[:2]), minute=int(tail[2:]))
+            else:
+                d = datetime.datetime.fromisoformat(stem)
         except ValueError:
             continue           # not one of ours; never deleted
         found.append((d, p))
@@ -91,13 +104,14 @@ if "--list" in args:
                 sha = json.load(io.open(side, encoding="utf-8")).get("master", "")[:12]
             except ValueError:
                 sha = "(unreadable sidecar)"
-        print("  %s  %7.1f MB  master %s" % (d, os.path.getsize(p) / 1e6, sha))
+        when = d.date().isoformat() if (d.hour, d.minute) == (0, 0) else d.strftime("%Y-%m-%d %H:%M")
+        print("  %-16s %7.1f MB  master %s" % (when, os.path.getsize(p) / 1e6, sha))
     sys.exit(0)
 
 today = datetime.date.today()
 have = existing()
 if have and not force:
-    age = (today - have[0][0]).days
+    age = (datetime.datetime.combine(today, datetime.time()) - have[0][0]).days
     if age < BUNDLE_EVERY_DAYS:
         print("The newest bundle is %d day(s) old (%s); nothing to do. --force overrides."
               % (age, have[0][0]))
@@ -118,8 +132,17 @@ branches = len(git("--git-dir", MIRROR, "for-each-ref", "--format=%(refname)",
 
 # 2. the bundle
 os.makedirs(OUT, exist_ok=True)
+# A generation is IMMUTABLE: never write over one.  The name was date-only and os.replace()
+# overwrote it, so a same-day --force after origin had moved replaced a saved generation with a
+# different commit -- against this script's own stated requirement (CodeRabbit, PR #847).  A
+# second run on the same day takes a -HHMM suffix, which existing() also parses, so it is
+# pruned in its turn rather than living for ever.
 name = "stanpumpR-%s.bundle" % today.isoformat()
+if os.path.exists(os.path.join(OUT, name)):
+    name = "stanpumpR-%s-%s.bundle" % (today.isoformat(),
+                                       datetime.datetime.now().strftime("%H%M"))
 path = os.path.join(OUT, name)
+assert not os.path.exists(path), "refusing to overwrite the saved generation %s" % name
 tmp = path + ".part"                           # never leave a half-written bundle named as one
 print("Writing %s ..." % name)
 git("--git-dir", MIRROR, "bundle", "create", tmp, "--all")
@@ -149,6 +172,12 @@ for d, p in rows[keep:]:
     print("  pruned %s" % os.path.basename(p))
 
 print()
-print("Restore with:  git clone %s stanpumpR" % os.path.join(OUT, name))
-print("A rewritten history shows up as a master SHA that is not an ancestor of the live one:")
-print("  git -C <clone> merge-base --is-ancestor %s origin/master" % master[:12])
+print("Restore with:  git clone %s stanpumpR" % path)
+print()
+print("To tell whether history has been rewritten since, compare this bundle's commit with what")
+print("GitHub serves NOW.  It must be fetched live: in a clone made from a bundle `origin` is the")
+print("bundle file itself, so comparing against origin/master compares the saved commit with")
+print("itself and can never fail.")
+print("  git fetch %s master" % REMOTE)
+print("  git merge-base --is-ancestor %s FETCH_HEAD   && echo intact || echo HISTORY REWRITTEN"
+      % master)
