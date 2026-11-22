@@ -78,8 +78,9 @@ CASES = [
     ("a genuine Research Square banner", PLAIN,
      "Research Square\nThis is a preprint, a preliminary version of a manuscript that has "
      "not completed peer review at a journal.\nmanuscript draft", False),
-    ("a banner broken across lines still clears", PLAIN,
-     "medRxiv\npreprint  doi: https://doi.org/10.1101/2024.05.05\nmanuscript draft", False),
+    ("a banner broken across lines and padded still clears", PLAIN,
+     "medRxiv preprint doi: https://doi.org/10.1101/2024.05.05;\nthis  version\n"
+     "posted  May 2024.\nmanuscript draft", False),
     # A banner never clears STRONG evidence: a reviewer's copy of a preprinted paper is still
     # a reviewer's copy.
     ("a banner does not clear an editorial stamp", PLAIN,
@@ -107,9 +108,21 @@ CASES = [
      "arXiv:2401.12345v1  [q-bio.QM]  23 Jan 2024\nmanuscript draft", False),
     ("SSRN's own footer", PLAIN,
      "Electronic copy available at: https://ssrn.com/abstract=123456\nmanuscript draft", False),
-    ("medRxiv's header line", PLAIN,
-     "medRxiv preprint doi: https://doi.org/10.1101/2024.05.05\nmanuscript draft", False),
+    ("medRxiv's own stamp, which always carries both halves", PLAIN,
+     "medRxiv preprint doi: https://doi.org/10.1101/2024.05.05; this version posted May 2024.\n"
+     "manuscript draft", False),
     ("the sentence medRxiv and Research Square both print", PLAIN,
+     "This article is a preprint and has not been certified by peer review.\n"
+     "manuscript draft", False),
+
+    # A preprint statement must describe THIS document. Without that, a manuscript under
+    # review discussing somebody else's preprint cleared its own stamp.
+    ("stamped, saying ANOTHER study is a preprint awaiting review", PLAIN,
+     "For Peer Review\nThe study by Smith (2024) is a preprint and has not completed "
+     "peer review.", True),
+    ("stamped, citing a medRxiv doi in reference-list form", PLAIN,
+     "For Peer Review\nSmith J. medRxiv preprint doi: 10.1101/2024.01.01", True),
+    ("the self-referential form medRxiv prints", PLAIN,
      "This article is a preprint and has not been certified by peer review.\n"
      "manuscript draft", False),
 

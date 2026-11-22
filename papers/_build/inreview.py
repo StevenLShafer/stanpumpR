@@ -110,15 +110,25 @@ PUBLISHED_FORMS = {
 # introduction (CodeRabbit, PR #846).  A citation reads "Smith J. medRxiv 2024"; a banner reads
 # "medRxiv preprint doi: https://doi.org/10.1101/...; this version posted May 2024."
 PREPRINT = (
-    # medRxiv and bioRxiv stamp both of these across the top of every page.
-    re.compile(r"(?:med|bio)rxiv\s+preprint\s+doi", re.I),
+    # medRxiv and bioRxiv stamp "medRxiv preprint doi: https://doi.org/10.1101/...; this
+    # version posted <date>" across the top of every page. Only the second half is kept: a
+    # reference list can carry "Smith J. medRxiv preprint doi: 10.1101/..." and the real stamp
+    # always has "this version posted" as well, so the first half earns nothing and could
+    # clear a document that merely cites a preprint (CodeRabbit, PR #846).
     re.compile(r"this version posted", re.I),
     # The sentence medRxiv, bioRxiv and Research Square print on page 1. Their wordings
-    # differ -- "is a preprint and has not been certified by peer review" against "is a
-    # preprint, a preliminary version of a manuscript that has not completed peer review
-    # at a journal" -- so the rule is "is a preprint" and then "peer review" within the
-    # same sentence. A citation carries neither half.
-    re.compile(r"is a preprint[^.]{0,200}peer\s+review", re.I | re.S),
+    # differ -- "This article is a preprint and has not been certified by peer review"
+    # against "This is a preprint, a preliminary version of a manuscript that has not
+    # completed peer review at a journal" -- so the rule is "is a preprint" and then "peer
+    # review" within the sentence.
+    #
+    # It must be SELF-REFERENTIAL. Without the leading "this", the sentence "The study by
+    # Smith (2024) is a preprint and has not completed peer review" -- a manuscript under
+    # review describing somebody else's work -- cleared its own "For Peer Review" stamp
+    # (CodeRabbit, PR #846). Both servers say "This article is" or "This is"; a sentence
+    # about another paper names that paper instead.
+    re.compile(r"\bthis(?:\s+(?:article|manuscript|paper|work|version|study|preprint))?\s+is\s+a\s+preprint[^.]{0,200}peer\s+review",
+               re.I | re.S),
     # SSRN's footer, on every page of a paper downloaded from SSRN. A CITATION says
     # "Available at SSRN: https://ssrn.com/abstract=..." and does not say this.
     re.compile(r"electronic copy available at", re.I),
