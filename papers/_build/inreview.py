@@ -43,6 +43,7 @@ and possibly its digest on the internet.  The weighting is set accordingly.
 a caller that cannot read the text must FAIL CLOSED rather than treat that as a clean bill:
 see file_downloads.py and digest_run.py, which both refuse instead.
 """
+import io
 import os
 import re
 
@@ -109,14 +110,22 @@ PUBLISHED_FORMS = {
 # introduction (CodeRabbit, PR #846).  A citation reads "Smith J. medRxiv 2024"; a banner reads
 # "medRxiv preprint doi: https://doi.org/10.1101/...; this version posted May 2024."
 PREPRINT = (
-    re.compile(r"(?:med|bio)rxiv\s+preprint", re.I),
-    re.compile(r"preprint\s+doi\s*:", re.I),
+    # medRxiv and bioRxiv stamp both of these across the top of every page.
+    re.compile(r"(?:med|bio)rxiv\s+preprint\s+doi", re.I),
     re.compile(r"this version posted", re.I),
-    re.compile(r"is a preprint and has not been", re.I),
-    re.compile(r"\barxiv\s*:\s*\d{4}\.\d{4,5}", re.I),
-    re.compile(r"ssrn\.com/abstract=", re.I),
-    re.compile(r"research square.{0,60}preprint", re.I | re.S),
-    re.compile(r"preprints\.org", re.I),
+    # The sentence medRxiv, bioRxiv and Research Square print on page 1. Their wordings
+    # differ -- "is a preprint and has not been certified by peer review" against "is a
+    # preprint, a preliminary version of a manuscript that has not completed peer review
+    # at a journal" -- so the rule is "is a preprint" and then "peer review" within the
+    # same sentence. A citation carries neither half.
+    re.compile(r"is a preprint[^.]{0,200}peer\s+review", re.I | re.S),
+    # SSRN's footer, on every page of a paper downloaded from SSRN. A CITATION says
+    # "Available at SSRN: https://ssrn.com/abstract=..." and does not say this.
+    re.compile(r"electronic copy available at", re.I),
+    # arXiv's own sideways stamp, which carries a version and a bracketed primary
+    # class: "arXiv:2401.12345v1  [q-bio.QM]  23 Jan 2024". A citation is the bare
+    # identifier, with neither.
+    re.compile(r"arxiv\s*:\s*\d{4}\.\d{4,5}v\d+\s*\[", re.I),
 )
 PREPRINT_WINDOW = 2500        # characters; a server's banner is on the title page or its head
 
@@ -134,6 +143,22 @@ def flatten(text):
 def preprint_banner(flat):
     """Does this document announce ITSELF as a preprint, near the top? `flat` is flatten()'s."""
     return any(p.search(flat[:PREPRINT_WINDOW]) for p in PREPRINT)
+
+
+def extracted_text(path, limit=8000):
+    """The pipeline's extracted text for a paper, or "" if there is none to be had.
+
+    "" covers a file that is ABSENT and one that cannot be READ -- indistinguishable here, and
+    both mean the document was never inspected.  It lives beside card_refusal() so that the
+    composition the digest queue actually performs can be tested on real files, which was
+    CodeRabbit's point on PR #846: testing the pure function alone does not show that what feeds
+    it behaves.
+    """
+    try:
+        with io.open(path, encoding="utf-8", errors="replace") as f:
+            return f.read(limit)
+    except OSError:
+        return ""
 
 
 def card_refusal(pdf_path, text):

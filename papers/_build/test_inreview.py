@@ -14,13 +14,15 @@ a colleague's unpublished manuscript in the archive and possibly its digest on t
 the cases below are weighted the same way: the ones that must be CAUGHT are the ones to care
 about, and the ones that must be CLEARED exist to stop the rules being tightened into noise.
 """
+import io
 import os
 import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from inreview import in_review_reason, card_refusal, flatten, SUBMISSION_NUMBER  # noqa: E402
+from inreview import (in_review_reason, card_refusal, extracted_text, flatten,  # noqa: E402
+                      SUBMISSION_NUMBER)
 
 PLAIN = os.path.join("C:" + os.sep, "Users", "x", "Downloads", "paper.pdf")
 IN_REVIEW_FOLDER = os.path.join("C:" + os.sep, "Users", "x", "Downloads",
@@ -74,8 +76,8 @@ CASES = [
      "medRxiv preprint doi: https://doi.org/10.1101/2024.05.05; this version posted May 2024.\n"
      "manuscript draft", False),
     ("a genuine Research Square banner", PLAIN,
-     "Research Square\nThis is a preprint, a preliminary version of the manuscript.\n"
-     "manuscript draft", False),
+     "Research Square\nThis is a preprint, a preliminary version of a manuscript that has "
+     "not completed peer review at a journal.\nmanuscript draft", False),
     ("a banner broken across lines still clears", PLAIN,
      "medRxiv\npreprint  doi: https://doi.org/10.1101/2024.05.05\nmanuscript draft", False),
     # A banner never clears STRONG evidence: a reviewer's copy of a preprinted paper is still
@@ -83,6 +85,33 @@ CASES = [
     ("a banner does not clear an editorial stamp", PLAIN,
      "medRxiv preprint doi: https://doi.org/10.1101/2024.01.01\n"
      "Click here to access/download;Figure;Figure S1.pdf", True),
+
+    # ---- a CITATION to a preprint is not a banner -----------------------------------------
+    # Each of these is how a preprint is cited. Every one cleared a stamped manuscript before
+    # the allowlist was narrowed to template wording only.
+    ("stamped, citing a bare arXiv identifier", PLAIN,
+     "For Peer Review\nIntroduction: Smith et al., arXiv:2401.12345, showed ...", True),
+    ("stamped, citing an SSRN abstract URL", PLAIN,
+     "For Peer Review\nAvailable at SSRN: https://ssrn.com/abstract=123456", True),
+    ("stamped, citing a Research Square preprint", PLAIN,
+     "For Peer Review\nJones et al. (Research Square preprint, 2024).", True),
+    ("stamped, citing preprints.org", PLAIN,
+     "For Peer Review\nSee www.preprints.org/manuscript/202401.0001", True),
+    ("stamped, citing a 10.1101 DOI", PLAIN,
+     "Manuscript draft\nAs shown in doi.org/10.1101/2024.01.01.573 ...", True),
+    ("stamped, with prose about preprint servers", PLAIN,
+     "For Peer Review\nWe searched every preprint server for comparable data.", True),
+
+    # ---- the servers' OWN banners, which must still clear ---------------------------------
+    ("arXiv's own stamp: version and bracketed class", PLAIN,
+     "arXiv:2401.12345v1  [q-bio.QM]  23 Jan 2024\nmanuscript draft", False),
+    ("SSRN's own footer", PLAIN,
+     "Electronic copy available at: https://ssrn.com/abstract=123456\nmanuscript draft", False),
+    ("medRxiv's header line", PLAIN,
+     "medRxiv preprint doi: https://doi.org/10.1101/2024.05.05\nmanuscript draft", False),
+    ("the sentence medRxiv and Research Square both print", PLAIN,
+     "This article is a preprint and has not been certified by peer review.\n"
+     "manuscript draft", False),
 
     # ---- a published paper's own wording must not be read as review evidence -------------
     # MDPI leaves its template's running header in the PUBLISHED PDF, placeholder and all:
@@ -140,8 +169,49 @@ CARD_CASES = [
 ]
 
 
-def main():
+def composition_cases(tmp):
+    """card_refusal(pdf, extracted_text(txt)) over real files: what the digest queue does.
+
+    A manifest entry's `scan` flag is deliberately not part of this. digest_prep.py's return
+    code is unchecked, so a failed preparation can leave an older non-scan entry in use, and the
+    refusal has to rest on the text itself. The `stale_non_scan` column below records that the
+    manifest would have called each of these a normal, non-scan paper.
+    """
+    rows = []
+
+    missing = os.path.join(tmp, "PMID_1.txt")                      # never created
+    rows.append(("a text file that does not exist", missing, True))
+
+    unreadable = os.path.join(tmp, "PMID_2.txt")                   # a directory in its place
+    os.makedirs(unreadable, exist_ok=True)
+    rows.append(("a text file that cannot be read", unreadable, True))
+
+    for name, body, refuse in (("PMID_3.txt", " \n \t ", True),
+                               ("PMID_4.txt", "\f\f", True),
+                               ("PMID_5.txt", "", True),
+                               ("PMID_6.txt", "Propofol pharmacokinetics in 24 volunteers.", False),
+                               ("PMID_7.txt", "Tracked Changes Manuscript", True)):
+        q = os.path.join(tmp, name)
+        io.open(q, "w", encoding="utf-8").write(body)
+        rows.append(("a text file holding %r" % (body[:28] or ""), q, refuse))
+
     bad = []
+    for label, txt, refuse in rows:
+        pdf = txt[: -len(".txt")] + ".pdf"
+        got = card_refusal(pdf, extracted_text(txt))
+        if bool(got) != refuse:
+            bad.append(("composition: " + label, refuse, got))
+        print("  %s queue: %-45s %s" % ("ok  " if bool(got) == refuse else "FAIL",
+                                        label[:45], (got or "carded")[:36]))
+    return bad
+
+
+def main():
+    import tempfile
+    bad = []
+    with tempfile.TemporaryDirectory() as tmp:
+        bad += composition_cases(tmp)
+    print()
     for label, text, want_refused in CARD_CASES:
         got = card_refusal(os.path.join("D:", os.sep, "x", "PMID_1.pdf"), text)
         if bool(got) != want_refused:
@@ -172,7 +242,8 @@ def main():
         for label, want, got in bad:
             print("  %-54s wanted %s, got %r" % (label, "a reason" if want else "None", got))
         return 1
-    print("All %d classifier cases and %d card cases pass." % (len(CASES), len(CARD_CASES)))
+    print("All cases pass: %d classifier, %d card, and the queue composition on real files."
+          % (len(CASES), len(CARD_CASES)))
 
     if "--archive" in sys.argv:
         import subprocess

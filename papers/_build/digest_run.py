@@ -32,7 +32,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 HERE = os.path.dirname(os.path.abspath(__file__))
 ARCH = os.path.dirname(HERE)
 import cards                      # where the cards live, and how a run's cards reach the repository
-from inreview import card_refusal       # a paper under peer review is never carded (2026-11-21)
+from inreview import card_refusal, extracted_text   # never card one under review (2026-11-21)
 CARDS = cards.CARDS               # the only directory this run writes cards into
 REPO = cards.REPO
 from machine import LOCAL          # caches and scratch kept out of the Drive-synced archive (2026-10-30)
@@ -393,7 +393,12 @@ try:
         # The card is the public artefact, so the decision is card_refusal()'s -- which lives in
         # inreview.py, with its own regression cases, because this loop cannot be imported
         # without starting a digest run and so could not be tested where it stood.
-        body = read_text(os.path.join(HERE, "text", m["stem"] + ".txt"))[:8000]
+        # extracted_text() rather than read_text(): the same semantics, but it lives beside
+        # card_refusal() so the pair can be tested together on real files.  Note that the
+        # manifest's `scan` flag is NOT consulted here -- digest_prep.py's return code is
+        # unchecked, so a failed preparation can leave an older non-scan entry in use, and
+        # the refusal has to rest on the text itself (CodeRabbit, PR #846).
+        body = extracted_text(os.path.join(HERE, "text", m["stem"] + ".txt"))
         refusal = card_refusal(os.path.join(ARCH, m["stem"] + ".pdf"), body)
         if refusal:
             kept.append("%s (%s)" % (m["stem"], refusal))
