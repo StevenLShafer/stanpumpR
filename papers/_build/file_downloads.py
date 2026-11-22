@@ -518,6 +518,7 @@ def unidentified_note(path):
 # one per line it buried the few that matter (105 of 156 lines on 2026-11-10), so those get one line in the report
 # and are written out in full to UNPLACED_PATH.
 NOT_A_REFERENCE = "not a stanpumpR reference, as far as the filer can tell"
+PAGE1_MIN_LETTERS = 20          # below this, page 1 carries no text that can be screened
 UNPLACED_PATH = os.path.join(HERE, "unplaced_downloads.txt")
 
 
@@ -557,6 +558,7 @@ if cache.get("__refs__") != refs_sig:
 log = json.load(open(LOG_PATH, encoding="utf-8")) if os.path.exists(LOG_PATH) else []
 filed, review, unplaced = [], [], []
 quarantined = []                                 # manuscripts under peer review: never filed, never digested
+unscreened = []                                  # filed on their name, contents never read (no text layer)
 unwrapped = []                                   # envelope originals, logged beside the recycled downloads
 def candidates():
     """Downloads and its subfolders (people save into subfolders); the archive folder itself, top level only."""
@@ -703,9 +705,15 @@ for d, name in candidates():
             page1, unreadable = pdf_text(path, last=1, strict=True), False
         except Exception:
             page1, unreadable = "", True     # pdftotext failed: not "no text", but "not read"
-        q = in_review_reason(path, name=name, text=page1 or None)
+        # LETTERS, not emptiness.  pdftotext returns "" for a page with no text layer, which is
+        # a non-empty string, so a truthiness test calls a blank page "text I have read" and the
+        # fail-closed branches below never fire.  Measured on an image-only PDF: 0 letters, and
+        # the first version of this check passed it straight through (my own fix for CodeRabbit's
+        # finding, caught by testing it end to end rather than reasoning about it).
+        screenable = len(re.findall(r"[A-Za-z]", page1)) >= PAGE1_MIN_LETTERS
+        q = in_review_reason(path, name=name, text=page1 if screenable else None)
         if q:
-            quarantined.append((path, q if page1 else q + " (name and folder alone)"))
+            quarantined.append((path, q if screenable else q + " (name and folder alone)"))
             cache.pop(key, None)             # never cache a refusal: judge it again next run
             continue
         if unreadable:
@@ -775,6 +783,14 @@ for d, name in candidates():
                 recycle_original(path, r["file"])
             log.append({"from": path, "to": r["file"], "pmid": r["pmid"], "doi": r["doi"], "how": why})
         filed.append((name, r["file"], r["label"], why))
+        if not screenable:
+            # Filed with its contents never read: identify_any() took it on its name (a scan
+            # renamed by hand), so the peer-review screen above judged only the name and folder.
+            # ocr_scans.py gives it a text layer and screen_inreview.py judges it, both later in
+            # update.bat; digest_run.py refuses to card a paper with no readable text, so no card
+            # can come of it meanwhile.  Say so, because running this script alone skips both
+            # (CodeRabbit, PR #846).
+            unscreened.append((r["file"], why))
 
 if quarantined:
     print()
@@ -785,6 +801,18 @@ if quarantined:
         print("      %s" % path)
     print("  They stay where they are. A paper in review must not reach the repository, because its")
     print("  card could become public. If one of these is in fact published, rename it and run again.")
+    print()
+
+if unscreened:
+    print()
+    print("FILED WITHOUT READING THE DOCUMENT: %d PDF(s) had no text layer, so only the name and"
+          % len(unscreened))
+    print("folder were screened for a manuscript under peer review:")
+    for f, why in sorted(unscreened):
+        print("  %-34s (%s)" % (f, why))
+    print("  ocr_scans.py then screen_inreview.py judge them later in update.bat, and digest_run.py")
+    print("  will not card a paper whose text is unreadable. Running THIS script alone skips both:")
+    print("  run update.bat, or run screen_inreview.py yourself.")
     print()
 
 if recycled or unwrapped:
