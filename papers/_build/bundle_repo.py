@@ -39,14 +39,20 @@ import glob
 import io
 import json
 import os
+import socket
 import subprocess
 import sys
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ARCH = os.path.dirname(HERE)
 OUT = os.path.join(ARCH, "_backup")            # inside the archive, so ONE Drive folder
 MIRROR = os.path.join("C:" + os.sep, "dev", "stanpumpR-mirror.git")   # a cache, not a backup
 REMOTE = "https://github.com/StevenLShafer/stanpumpR.git"
+
+LOCK = os.path.join(OUT, "bundle_repo.lock")
+HOST = socket.gethostname()      # the lock names its computer: Drive syncs _backup to the others
+LOCK_FOREIGN_HOURS = 6           # another computer's lock older than this is a dead run's
 
 BUNDLE_EVERY_DAYS = 7
 BUNDLE_KEEP = 8                                # about two months of weekly generations
@@ -70,6 +76,92 @@ def git(*a, **kw):
         raise RuntimeError("git %s failed (%d): %s" % (" ".join(a[:2]), r.returncode,
                                                        (r.stderr or r.stdout or "").strip()[:400]))
     return r.stdout.strip()
+
+
+def pid_alive(pid):
+    if not isinstance(pid, int) or pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)                          # signal 0: ask, do not send
+    except PermissionError:
+        return True                              # someone else's process, so it exists
+    except OSError:
+        return False
+    return True
+
+
+def take_lock():
+    """Serialise the WHOLE backup -- claim, publish and prune -- or return why we must not run.
+
+    Four rounds of PR #847 were spent closing one interleaving at a time: a reservation pruned
+    by another run's stale snapshot, a sidecar deleted by a cleanup that had freed the bundle
+    name first, a generation overwritten between a check and a write.  Each fix was correct and
+    the next interleaving was still there, because ordering alone cannot make a multi-file
+    publication atomic.  CodeRabbit's own suggestion is the right one: serialise it.  One lock
+    removes every such race, including the ones nobody has found, and is simpler than the
+    ordering it replaces.
+
+    Same convention as digest_run.lock, for the same reason -- _backup is synced between the
+    user's computers by Google Drive, so a lock may be another machine's.  Taken with
+    O_CREAT|O_EXCL, so two runs cannot both believe they hold it.
+    """
+    os.makedirs(OUT, exist_ok=True)
+    while True:
+        try:
+            fd = os.open(LOCK, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            pass
+        else:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump({"host": HOST, "pid": os.getpid(),
+                           "started": time.strftime("%Y-%m-%d %H:%M:%S")}, f)
+            return None
+
+        try:
+            held, readable = json.load(io.open(LOCK, encoding="utf-8")), True
+        except (ValueError, OSError):
+            held, readable = {}, False
+        if not readable or not isinstance(held, dict):
+            # An empty or unparseable lock names nobody, so it protects nobody: take it over at
+            # once, whatever its age -- digest_run.py reads such a file as {} and goes on. The
+            # first version fell through to the foreign-age test below, where a missing host
+            # read as "another computer's, recently", and a corrupt lock would have stopped
+            # every backup for six hours. Found by this script's own lock cases.
+            try:
+                os.remove(LOCK)
+            except OSError:
+                pass
+            continue
+        same_host = held.get("host") == HOST
+        if same_host and pid_alive(held.get("pid")):
+            return ("a backup on this computer (pid %s, started %s) holds the lock; nothing to "
+                    "do here" % (held.get("pid"), held.get("started")))
+        try:
+            age_h = (time.time() - os.path.getmtime(LOCK)) / 3600
+        except OSError:
+            continue                             # it went away; try to take it again
+        if not same_host and age_h < LOCK_FOREIGN_HOURS:
+            return ("a backup on %s (started %s) holds the lock; nothing to do here. Wait for "
+                    "it, or remove %s if that run is gone"
+                    % (held.get("host"), held.get("started"), LOCK))
+        # ours with a dead pid, another computer's and stale, or unreadable: take it over
+        try:
+            os.remove(LOCK)
+        except OSError:
+            pass
+
+
+def drop_lock():
+    """Release the lock, but only if it is still OURS: a takeover may have replaced it."""
+    try:
+        held = json.load(io.open(LOCK, encoding="utf-8"))
+    except (ValueError, OSError):
+        return
+    if held.get("host") == HOST and held.get("pid") == os.getpid():
+        try:
+            os.remove(LOCK)
+        except OSError:
+            pass
 
 
 def release(tmp, side_tmp, path, side):
@@ -224,6 +316,13 @@ if have and not force:
               % (age, have[0][0]))
         sys.exit(0)
 
+# 0. the lock: everything below mutates _backup, so no second run may be doing the same
+busy = take_lock()
+if busy:
+    sys.exit("bundle_repo: %s." % busy)
+import atexit
+atexit.register(drop_lock)       # covers sys.exit, an exception, and the ordinary end
+
 # 1. the mirror: a faithful copy of what GitHub holds, updated incrementally
 if not os.path.isdir(os.path.join(MIRROR, "objects")):
     print("Cloning a mirror of origin into %s (first run only, about 270 MB) ..." % MIRROR)
@@ -318,10 +417,14 @@ print("  %.1f MB, %s commits, %d branches, master %s" % (size / 1e6, commits, br
 # 4. prune, oldest first, only after the new one is verified and in place
 rows = existing()
 for d, p in rows[keep:]:
-    side = p[: -len(".bundle")] + ".json"
+    # The sidecar first, as release() does: if anything interrupted this between the two
+    # removals, an orphaned .json is ignored by existing() while an orphaned bundle would be
+    # taken for a generation.  The lock makes the interleaving impossible rather than merely
+    # harmless, but the order costs nothing and does not depend on the lock being held.
+    stale_side = p[: -len(".bundle")] + ".json"
+    if os.path.exists(stale_side):
+        os.remove(stale_side)
     os.remove(p)
-    if os.path.exists(side):
-        os.remove(side)
     print("  pruned %s" % os.path.basename(p))
 
 print()

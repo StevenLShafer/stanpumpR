@@ -29,6 +29,9 @@ try:
 except SystemExit:
     pass
 release = _ns["release"]
+take_lock = _ns["take_lock"]
+drop_lock = _ns["drop_lock"]
+pid_alive = _ns["pid_alive"]
 
 bad = []
 
@@ -106,6 +109,79 @@ case("a finished generation is never touched",
      ["tmp"], ["path", "side"])
 
 case("nothing to release", lambda q: None, [], [])
+
+# ---------------------------------------------------------------------- the lock
+# One lock around claim, publish and prune is what replaced four rounds of closing individual
+# interleavings (PR #847). It decides whether a run may touch _backup at all, so its own
+# behaviour has to be checked -- above all the case where it should REFUSE, since a lock that
+# never refuses is the same kind of vacuous check this script has already shipped twice.
+import json
+import socket
+
+
+def lock_cases():
+    problems = []
+    lock = _ns["LOCK"]
+    host = socket.gethostname()
+
+    def write_lock(**kw):
+        os.makedirs(os.path.dirname(lock), exist_ok=True)
+        io.open(lock, "w", encoding="utf-8").write(json.dumps(kw))
+
+    def clear():
+        if os.path.exists(lock):
+            os.remove(lock)
+
+    def check(label, want_busy, setup):
+        clear()
+        setup()
+        busy = take_lock()
+        got = bool(busy)
+        if got != want_busy:
+            problems.append("%s: wanted %s, got %r" % (label, "refusal" if want_busy else "the lock", busy))
+        print("  %s lock: %-44s %s" % ("ok  " if got == want_busy else "FAIL", label[:44],
+                                       (busy or "took it")[:40]))
+        drop_lock()
+        clear()
+
+    check("no lock present", False, lambda: None)
+    check("held by a live process on this computer", True,
+          lambda: write_lock(host=host, pid=os.getpid(), started="now"))
+    check("held by a dead process on this computer", False,
+          lambda: write_lock(host=host, pid=2 ** 31 - 1, started="then"))
+    check("held by another computer, recently", True,
+          lambda: write_lock(host=host + "-other", pid=1, started="now"))
+    check("unreadable lock is read as no lock", False,
+          lambda: io.open(lock, "w", encoding="utf-8").write("not json"))
+
+    # a stale foreign lock is taken over: the file's mtime is what decides
+    clear()
+    write_lock(host=host + "-other", pid=1, started="long ago")
+    old_time = __import__("time").time() - (_ns["LOCK_FOREIGN_HOURS"] + 1) * 3600
+    os.utime(lock, (old_time, old_time))
+    busy = take_lock()
+    ok = not busy
+    if not ok:
+        problems.append("a stale lock from another computer was not taken over: %r" % busy)
+    print("  %s lock: %-44s %s" % ("ok  " if ok else "FAIL",
+                                   "another computer's, older than the limit", busy or "took it"))
+    drop_lock()
+    if os.path.exists(lock):
+        problems.append("drop_lock() left the lock behind")
+        os.remove(lock)
+
+    # drop_lock() must not remove a lock that is no longer ours
+    write_lock(host=host + "-other", pid=1, started="now")
+    drop_lock()
+    if not os.path.exists(lock):
+        problems.append("drop_lock() removed another run's lock")
+    print("  %s lock: %-44s %s" % ("ok  " if os.path.exists(lock) else "FAIL",
+                                   "drop_lock() leaves a foreign lock alone", ""))
+    clear()
+    return problems
+
+
+bad += [("lock", p) for p in [lock_cases()] if p]
 
 print()
 if bad:
