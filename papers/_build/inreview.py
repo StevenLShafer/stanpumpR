@@ -121,10 +121,19 @@ PREPRINT = (
 PREPRINT_WINDOW = 2500        # characters; a server's banner is on the title page or its head
 
 
-def preprint_banner(text):
-    """Does this document announce ITSELF as a preprint, near the top?"""
-    head = (text or "")[:PREPRINT_WINDOW]
-    return any(p.search(head) for p in PREPRINT)
+def flatten(text):
+    """Runs of whitespace to single spaces, so a phrase broken across lines still matches.
+
+    pdftotext -layout pads columns with runs of spaces and wraps a header, so a stamp arrives as
+    "Reviewer\nCopy" or "For  Peer Review".  Every text test below works on this form; nothing
+    compares against the raw extraction (CodeRabbit, PR #846).
+    """
+    return re.sub(r"\s+", " ", text or "").strip()
+
+
+def preprint_banner(flat):
+    """Does this document announce ITSELF as a preprint, near the top? `flat` is flatten()'s."""
+    return any(p.search(flat[:PREPRINT_WINDOW]) for p in PREPRINT)
 
 
 def in_review_reason(path, name=None, text=None):
@@ -136,7 +145,8 @@ def in_review_reason(path, name=None, text=None):
     """
     name = name or os.path.basename(path)
     folder = os.path.dirname(os.path.abspath(path)).lower()
-    low = (text or "").lower()
+    flat = flatten(text)                 # the ONE form every text test below uses
+    low = flat.lower()
 
     strong, soft = [], []
 
@@ -160,17 +170,17 @@ def in_review_reason(path, name=None, text=None):
                     # Strike out the occurrences the published form explains, then look again:
                     # suppressing the phrase wherever it appears cleared a document carrying
                     # BOTH MDPI's running header and a separate stamp of its own.
-                    if phrase not in explain.sub(" ", text).lower():
+                    if phrase not in explain.sub(" ", flat).lower():
                         continue
                 soft.append('page 1 says "%s"' % phrase)
-        m2 = SUBMISSION_NUMBER.search(text)
+        m2 = SUBMISSION_NUMBER.search(flat)
         if m2:
             strong.append("page 1 carries a journal manuscript number, %s" % m2.group(0))
 
     if strong:
         return "; and ".join(strong)          # nothing clears strong evidence
 
-    if soft and not preprint_banner(text):
+    if soft and not preprint_banner(flat):
         return "; and ".join(soft)
 
     return None
