@@ -716,10 +716,15 @@ for d, name in candidates():
         # copy" stamp carries 12 letters, and that stamp is the strongest evidence there is
         # (CodeRabbit, PR #846).  `screenable` says only whether a person should be told that
         # nothing meaningful was read, which is a different question from what the screen sees.
-        screenable = len(re.findall(r"[A-Za-z]", page1)) >= PAGE1_MIN_LETTERS
+        letters = len(re.findall(r"[A-Za-z]", page1))
+        screenable = letters >= PAGE1_MIN_LETTERS
         q = in_review_reason(path, name=name, text=page1 or None)
         if q:
-            quarantined.append((path, q if screenable else q + " (name and folder alone)"))
+            # The suffix is about what was READ, not about the threshold.  A page carrying a
+            # 12-letter "Reviewer Copy" stamp is below PAGE1_MIN_LETTERS and yet supplied the
+            # reason, so saying "name and folder alone" there would be false (CodeRabbit, PR
+            # #846).  Any letters at all means the classifier read the page.
+            quarantined.append((path, q if letters else q + " (name and folder alone)"))
             cache.pop(key, None)             # never cache a refusal: judge it again next run
             continue
         if unreadable:
