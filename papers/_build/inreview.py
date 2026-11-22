@@ -136,6 +136,29 @@ def preprint_banner(flat):
     return any(p.search(flat[:PREPRINT_WINDOW]) for p in PREPRINT)
 
 
+def card_refusal(pdf_path, text):
+    """Why this paper must not be given a digest card, or None.
+
+    The card is the PUBLIC artefact, so this is stricter than in_review_reason(): text that is
+    missing, unreadable or whitespace-only is a refusal in itself, not an invitation to judge
+    the file name instead.  read_text() returns "" both for a file that is absent and for one it
+    cannot read, and a manifest's `scan` flag cannot be relied on to have noticed -- digest_prep.py's
+    return code is not checked, so a failed preparation can leave an older non-scan entry in use
+    (CodeRabbit, PR #846).  The absence of evidence is not evidence of absence.
+
+    It lives HERE, beside the classifier, rather than inline in digest_run.py's queue loop,
+    because that loop cannot be imported without running a whole unattended digest run -- so the
+    branch could not be tested where it was, and "verified by reading" is not verification.
+    """
+    if not (text or "").strip():
+        return ("no readable extracted text, so it could not be screened for a manuscript under "
+                "peer review; digest it by hand")
+    why = in_review_reason(pdf_path, text=text)
+    if why:
+        return "looks like a manuscript under peer review: %s; NOT carded" % why
+    return None
+
+
 def in_review_reason(path, name=None, text=None):
     """Why this looks like a manuscript under peer review, or None.
 

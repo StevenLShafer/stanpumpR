@@ -20,7 +20,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from inreview import in_review_reason, flatten, SUBMISSION_NUMBER   # noqa: E402
+from inreview import in_review_reason, card_refusal, flatten, SUBMISSION_NUMBER  # noqa: E402
 
 PLAIN = os.path.join("C:" + os.sep, "Users", "x", "Downloads", "paper.pdf")
 IN_REVIEW_FOLDER = os.path.join("C:" + os.sep, "Users", "x", "Downloads",
@@ -116,8 +116,39 @@ CASES = [
 ]
 
 
+# What digest_run.py asks before it writes a card. Stricter than in_review_reason(), because a
+# card is public: text that is missing, unreadable or whitespace-only is a refusal in itself.
+# read_text() returns "" for a file that is absent AND for one it cannot read, and a manifest's
+# `scan` flag cannot be relied on to have noticed, since digest_prep.py's return code is not
+# checked and a failed preparation can leave an older non-scan entry in use.
+#
+# These exist because CodeRabbit declined, correctly, to accept "verified by reading" for this
+# branch -- and it could not be tested where it was, inline in a queue loop that cannot be
+# imported without starting a digest run.
+CARD_CASES = [
+    ("a clean paper is carded", "Propofol pharmacokinetics in 24 volunteers.", False),
+    ("missing text file (read_text returns the empty string)", "", True),
+    ("a text file it could not read (same empty string)", "", True),
+    ("whitespace only", " \n \t ", True),
+    ("form feeds only, as pdftotext gives for a page with no text layer", "\f\f", True),
+    ("None, defensively", None, True),
+    ("a manuscript under review is never carded", "Tracked Changes Manuscript\nMethods", True),
+    ("a 12-letter reviewer stamp is never carded", "Reviewer Copy", True),
+    ("a genuine preprint IS carded",
+     "medRxiv preprint doi: https://doi.org/10.1101/2024.05.05; this version posted "
+     "May 2024. Propofol in volunteers.", False),
+]
+
+
 def main():
     bad = []
+    for label, text, want_refused in CARD_CASES:
+        got = card_refusal(os.path.join("D:", os.sep, "x", "PMID_1.pdf"), text)
+        if bool(got) != want_refused:
+            bad.append(("card: " + label, want_refused, got))
+        print("  %s card: %-46s %s" % ("ok  " if bool(got) == want_refused else "FAIL",
+                                       label[:46], (got or "carded")[:40]))
+    print()
     for label, path, text, want in CASES:
         got = in_review_reason(path, text=text)
         if bool(got) != want:
@@ -141,7 +172,7 @@ def main():
         for label, want, got in bad:
             print("  %-54s wanted %s, got %r" % (label, "a reason" if want else "None", got))
         return 1
-    print("All %d cases pass." % len(CASES))
+    print("All %d classifier cases and %d card cases pass." % (len(CASES), len(CARD_CASES)))
 
     if "--archive" in sys.argv:
         import subprocess

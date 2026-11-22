@@ -69,3 +69,7 @@ node_modules/
 # Independent readings quote the papers: keep them out of the repository
 # (docs/independent-extraction/README.md)
 docs/independent-extraction/replies/
+
+# Python bytecode from running the archive pipeline scripts out of papers/_build
+__pycache__/
+*.pyc
