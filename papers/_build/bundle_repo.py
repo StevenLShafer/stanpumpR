@@ -158,7 +158,9 @@ if "--verify" in args:
 today = datetime.date.today()
 have = existing()
 if have and not force:
-    age = (datetime.datetime.combine(today, datetime.time()) - have[0][0]).days
+    # From NOW, not from today's midnight: a generation written at noon seven days ago
+    # measured as six days old, so the weekly guard skipped it and waited another week.
+    age = (datetime.datetime.now() - have[0][0]).days
     if age < BUNDLE_EVERY_DAYS:
         print("The newest bundle is %d day(s) old (%s); nothing to do. --force overrides."
               % (age, have[0][0]))
@@ -232,7 +234,7 @@ size = os.path.getsize(path)
 io.open(path[: -len(".bundle")] + ".json", "w", encoding="utf-8", newline="\n").write(
     json.dumps({"date": today.isoformat(), "master": master, "commits": int(commits),
                 "branches": branches, "bytes": size, "remote": REMOTE,
-                "restore": "git clone %s stanpumpR" % name,
+                "restore": 'git clone "%s" stanpumpR' % name,
                 "note": "Complete history of every branch and tag. Pull-request discussions, "
                         "issues and Actions logs are NOT here: they live only in GitHub."},
                indent=1))
@@ -248,5 +250,5 @@ for d, p in rows[keep:]:
     print("  pruned %s" % os.path.basename(p))
 
 print()
-print("Restore with:  git clone %s stanpumpR" % path)
+print('Restore with:  git clone "%s" stanpumpR' % path)
 print("Check against live GitHub with:  python bundle_repo.py --verify")
