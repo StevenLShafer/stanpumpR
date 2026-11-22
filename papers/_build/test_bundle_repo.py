@@ -271,8 +271,11 @@ def lock_cases():
 
 def _lock_cases(build, lock):
     problems = []
-    child_py = os.path.join(_ns["LOCAL"] if "LOCAL" in _ns else os.path.dirname(build),
-                            "lock_child.py")
+    # IN THE SANDBOX, beside the temporary lock. A fixed path was opened "w" and then
+    # removed, so it could overwrite and delete a file of that name that was already there,
+    # and two test runs would collide (CodeRabbit, PR #847). The sandbox's own finally
+    # removes the whole directory, so this needs no cleanup of its own.
+    child_py = os.path.join(os.path.dirname(lock), "lock_child.py")
     try:
         io.open(child_py, "w", encoding="utf-8").write(CHILD)
     except OSError:
@@ -336,10 +339,6 @@ def _lock_cases(build, lock):
     report("another computer's OLD note is ignored", not busy, busy or "took it")
     drop_lock()
 
-    try:
-        os.remove(child_py)
-    except OSError:
-        pass
     return problems
 
 
