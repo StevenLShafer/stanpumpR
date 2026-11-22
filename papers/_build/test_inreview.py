@@ -14,6 +14,7 @@ a colleague's unpublished manuscript in the archive and possibly its digest on t
 the cases below are weighted the same way: the ones that must be CAUGHT are the ones to care
 about, and the ones that must be CLEARED exist to stop the rules being tightened into noise.
 """
+import ast
 import io
 import os
 import re
@@ -126,6 +127,10 @@ CASES = [
      "This article is a preprint and has not been certified by peer review.\n"
      "manuscript draft", False),
 
+    ("stamped, with \"this study\" pointing at the previous sentence", PLAIN,
+     "For Peer Review\nSmith et al. (2024) report an intervention. This study is a "
+     "preprint and has not completed peer review.", True),
+
     # ---- a published paper's own wording must not be read as review evidence -------------
     # MDPI leaves its template's running header in the PUBLISHED PDF, placeholder and all:
     # 2 of 2,257 archived papers hit this, and both are published.
@@ -219,9 +224,73 @@ def composition_cases(tmp):
     return bad
 
 
+def queue_wiring():
+    """digest_run.py must ask card_refusal() before queueing, whatever the manifest says.
+
+    The candidate loop cannot be executed in a test: importing digest_run.py starts an
+    unattended digest run. What CAN be checked, and what CodeRabbit asked for, is that the
+    queue is WIRED to refuse -- that the call is there, that it is fed by extracted_text(),
+    that a truthy result skips the candidate, and that none of it hangs off the manifest's
+    `scan` flag, which a failed digest_prep.py can leave stale on a paper with no text.
+
+    This is a check of the call site, not of the loop's behaviour; the behaviour of what the
+    call site calls is covered by CARD_CASES and composition_cases() above. Said plainly
+    because the distinction is the whole reason this function is small.
+    """
+    src = io.open(os.path.join(HERE, "digest_run.py"), encoding="utf-8").read()
+    tree = ast.parse(src)
+
+    loops = [n for n in ast.walk(tree) if isinstance(n, (ast.For, ast.While))
+             and any(isinstance(c, ast.Attribute) and c.attr == "append"
+                     and isinstance(c.value, ast.Name) and c.value.id == "cand"
+                     for c in ast.walk(n))]
+    problems = []
+    if len(loops) != 1:
+        return ["expected exactly one loop that appends to `cand`, found %d" % len(loops)]
+    loop = loops[0]
+
+    body = loop.body
+    calls = {}
+    for i, stmt in enumerate(body):
+        for c in ast.walk(stmt):
+            if isinstance(c, ast.Call) and isinstance(c.func, ast.Name):
+                calls.setdefault(c.func.id, i)
+            if isinstance(c, ast.Attribute) and c.attr == "append" and \
+                    isinstance(c.value, ast.Name) and c.value.id == "cand":
+                calls.setdefault("cand.append", i)
+
+    for name in ("card_refusal", "extracted_text", "cand.append"):
+        if name not in calls:
+            problems.append("%s is not called at the top level of the candidate loop" % name)
+    if problems:
+        return problems
+
+    if not calls["card_refusal"] < calls["cand.append"]:
+        problems.append("card_refusal() is asked AFTER the candidate is queued")
+    if not calls["extracted_text"] <= calls["card_refusal"]:
+        problems.append("extracted_text() does not feed card_refusal()")
+
+    # the guard must be unconditional: a truthy refusal skips the candidate, and the statement
+    # is not nested inside a test of the manifest's scan flag
+    guard = body[calls["card_refusal"]:calls["cand.append"]]
+    if not any(isinstance(s, ast.If) and any(isinstance(c, ast.Continue) for c in ast.walk(s))
+               for s in guard):
+        problems.append("a truthy refusal does not skip the candidate")
+    for s in guard:
+        for c in ast.walk(s):
+            if isinstance(c, ast.Constant) and c.value == "scan":
+                problems.append("the refusal is entangled with the manifest's `scan` flag")
+    return problems
+
+
 def main():
     import tempfile
-    bad = []
+    wiring = queue_wiring()
+    print("  %s queue wiring: card_refusal() is asked before a candidate is queued"
+          % ("ok  " if not wiring else "FAIL"))
+    for w in wiring:
+        print("       %s" % w)
+    bad = [("queue wiring", wiring)] if wiring else []
     with tempfile.TemporaryDirectory() as tmp:
         bad += composition_cases(tmp)
     print()

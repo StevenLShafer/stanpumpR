@@ -116,19 +116,21 @@ PREPRINT = (
     # always has "this version posted" as well, so the first half earns nothing and could
     # clear a document that merely cites a preprint (CodeRabbit, PR #846).
     re.compile(r"this version posted", re.I),
-    # The sentence medRxiv, bioRxiv and Research Square print on page 1. Their wordings
-    # differ -- "This article is a preprint and has not been certified by peer review"
-    # against "This is a preprint, a preliminary version of a manuscript that has not
-    # completed peer review at a journal" -- so the rule is "is a preprint" and then "peer
-    # review" within the sentence.
+    # The sentences medRxiv, bioRxiv and Research Square print on page 1, matched LITERALLY.
     #
-    # It must be SELF-REFERENTIAL. Without the leading "this", the sentence "The study by
-    # Smith (2024) is a preprint and has not completed peer review" -- a manuscript under
-    # review describing somebody else's work -- cleared its own "For Peer Review" stamp
-    # (CodeRabbit, PR #846). Both servers say "This article is" or "This is"; a sentence
-    # about another paper names that paper instead.
-    re.compile(r"\bthis(?:\s+(?:article|manuscript|paper|work|version|study|preprint))?\s+is\s+a\s+preprint[^.]{0,200}peer\s+review",
-               re.I | re.S),
+    # Generalising failed twice, and the second failure is not fixable by a pattern. First the
+    # rule was "is a preprint ... peer review", which a manuscript under review cleared by
+    # saying it of somebody else: "The study by Smith (2024) is a preprint and has not completed
+    # peer review." Requiring a leading "this" did not help either, because a demonstrative can
+    # refer to the PREVIOUS sentence: "Smith et al. (2024) report an intervention. This study is
+    # a preprint and has not completed peer review." (CodeRabbit, PR #846). Resolving what "this
+    # study" points at is anaphora, not something a regular expression can decide.
+    #
+    # So these are the servers' own fixed strings, whitespace-normalised by flatten(). If a
+    # server changes its wording the cost is a false positive -- one paper left in Downloads
+    # with a line saying why -- which is the direction to err in.
+    re.compile(r"this article is a preprint and has not been certified by peer review", re.I),
+    re.compile(r"this is a preprint, a preliminary version", re.I),
     # SSRN's footer, on every page of a paper downloaded from SSRN. A CITATION says
     # "Available at SSRN: https://ssrn.com/abstract=..." and does not say this.
     re.compile(r"electronic copy available at", re.I),
