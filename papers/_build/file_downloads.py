@@ -705,13 +705,19 @@ for d, name in candidates():
             page1, unreadable = pdf_text(path, last=1, strict=True), False
         except Exception:
             page1, unreadable = "", True     # pdftotext failed: not "no text", but "not read"
-        # LETTERS, not emptiness.  pdftotext returns "" for a page with no text layer, which is
-        # a non-empty string, so a truthiness test calls a blank page "text I have read" and the
-        # fail-closed branches below never fire.  Measured on an image-only PDF: 0 letters, and
-        # the first version of this check passed it straight through (my own fix for CodeRabbit's
-        # finding, caught by testing it end to end rather than reasoning about it).
+        # LETTERS, not emptiness.  pdftotext returns a lone form feed for a page with no text
+        # layer, and that is a NON-EMPTY string, so a truthiness test calls a blank page "text I
+        # have read" and the fail-closed branches below never fire.  Measured on an image-only
+        # PDF: 0 letters, and the first version of this check passed it straight through -- my own
+        # fix for a CodeRabbit finding, caught by testing end to end rather than reasoning.
+        #
+        # The threshold governs the NOTICE, never the screening.  in_review_reason() is given the
+        # text whatever its length: a scanned manuscript whose only selectable text is a "reviewer
+        # copy" stamp carries 12 letters, and that stamp is the strongest evidence there is
+        # (CodeRabbit, PR #846).  `screenable` says only whether a person should be told that
+        # nothing meaningful was read, which is a different question from what the screen sees.
         screenable = len(re.findall(r"[A-Za-z]", page1)) >= PAGE1_MIN_LETTERS
-        q = in_review_reason(path, name=name, text=page1 if screenable else None)
+        q = in_review_reason(path, name=name, text=page1 or None)
         if q:
             quarantined.append((path, q if screenable else q + " (name and folder alone)"))
             cache.pop(key, None)             # never cache a refusal: judge it again next run

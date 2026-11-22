@@ -396,7 +396,7 @@ try:
             kept.append("%s (looks like a manuscript under peer review: %s; NOT carded)"
                         % (m["stem"], review_why))
             continue
-        if not body:
+        if not body.strip():
             # FAIL CLOSED.  read_text() returns "" both for a missing file and for one it cannot
             # read, and with no text the screen above judges the NAME alone -- so an unreadable
             # text file would mean a paper carded without its document ever being inspected.  A

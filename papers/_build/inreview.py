@@ -103,15 +103,28 @@ PUBLISHED_FORMS = {
 # A preprint server's own banner, which means the author chose to make the paper public.  It
 # must appear near the TOP of the document to count: a citation to someone else's medRxiv
 # preprint, in a reference list, says nothing about this document (CodeRabbit, PR #846).
-PREPRINT = ("medrxiv", "biorxiv", "arxiv", "research square", "ssrn", "preprints.org",
-            "is a preprint", "preprint server", "doi.org/10.1101/")
+# A preprint server's OWN BANNER, which means the author chose to make the paper public.  It
+# must be the server's wording, not any mention of a server: a bare "medrxiv" substring cleared
+# a document stamped "For Peer Review" that merely cited someone else's medRxiv preprint in its
+# introduction (CodeRabbit, PR #846).  A citation reads "Smith J. medRxiv 2024"; a banner reads
+# "medRxiv preprint doi: https://doi.org/10.1101/...; this version posted May 2024."
+PREPRINT = (
+    re.compile(r"(?:med|bio)rxiv\s+preprint", re.I),
+    re.compile(r"preprint\s+doi\s*:", re.I),
+    re.compile(r"this version posted", re.I),
+    re.compile(r"is a preprint and has not been", re.I),
+    re.compile(r"\barxiv\s*:\s*\d{4}\.\d{4,5}", re.I),
+    re.compile(r"ssrn\.com/abstract=", re.I),
+    re.compile(r"research square.{0,60}preprint", re.I | re.S),
+    re.compile(r"preprints\.org", re.I),
+)
 PREPRINT_WINDOW = 2500        # characters; a server's banner is on the title page or its head
 
 
 def preprint_banner(text):
     """Does this document announce ITSELF as a preprint, near the top?"""
-    head = (text or "")[:PREPRINT_WINDOW].lower()
-    return any(p in head for p in PREPRINT)
+    head = (text or "")[:PREPRINT_WINDOW]
+    return any(p.search(head) for p in PREPRINT)
 
 
 def in_review_reason(path, name=None, text=None):
@@ -143,8 +156,12 @@ def in_review_reason(path, name=None, text=None):
         for phrase in SOFT_TEXT:
             if phrase in low:
                 explain = PUBLISHED_FORMS.get(phrase)
-                if explain and explain.search(text):
-                    continue          # a published paper's own header, not a review stamp
+                if explain:
+                    # Strike out the occurrences the published form explains, then look again:
+                    # suppressing the phrase wherever it appears cleared a document carrying
+                    # BOTH MDPI's running header and a separate stamp of its own.
+                    if phrase not in explain.sub(" ", text).lower():
+                        continue
                 soft.append('page 1 says "%s"' % phrase)
         m2 = SUBMISSION_NUMBER.search(text)
         if m2:
