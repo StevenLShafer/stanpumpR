@@ -532,12 +532,7 @@ try:
                      "card_written": False, "flagged": flagged, "batch_size": len(batch)}
                 log.append(e)
                 say("- %s: NO CARD (see output)" % s)
-            # `flagged` belongs to the batch, so it has to reach an entry note_cards() wrote
-            # while the batch was still running -- that one was recorded flagged=False before
-            # the output existed.  A card that WAS written is never flagged: the original rule
-            # was `flagged and not written` (CodeRabbit, PR #844).
-            e.update(exit=code, minutes=round(mins, 1),
-                     flagged=flagged and not e.get("card_written"))
+            e.update(exit=code, minutes=round(mins, 1))
         say("\n```\n%s\n```\n(%.1f min, exit %s)\n" % (out.strip()[-6000:], mins, code))
         save_log(log)
         # A logged-out CLI fails every batch the same way: stop, and say what to do (2026-10-29)
