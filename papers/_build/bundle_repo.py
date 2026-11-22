@@ -72,6 +72,11 @@ def git(*a, **kw):
     return r.stdout.strip()
 
 
+def stamp_of(d):
+    """How a generation is shown: the date, plus the minute when there was more than one."""
+    return d.date().isoformat() if (d.hour, d.minute) == (0, 0) else d.strftime("%Y-%m-%d %H:%M")
+
+
 def existing():
     """The bundles on Drive, newest first, by the date in the name rather than by mtime."""
     found = []
@@ -104,9 +109,51 @@ if "--list" in args:
                 sha = json.load(io.open(side, encoding="utf-8")).get("master", "")[:12]
             except ValueError:
                 sha = "(unreadable sidecar)"
-        when = d.date().isoformat() if (d.hour, d.minute) == (0, 0) else d.strftime("%Y-%m-%d %H:%M")
+        when = stamp_of(d)
         print("  %-16s %7.1f MB  master %s" % (when, os.path.getsize(p) / 1e6, sha))
     sys.exit(0)
+
+if "--verify" in args:
+    # Is every saved generation still an ancestor of what GitHub serves NOW?  Fetched live and
+    # checked, because the alternative -- telling a person to run `git fetch` and then
+    # `merge-base ... FETCH_HEAD` as two commands -- silently compares against a previous
+    # fetch's FETCH_HEAD when the fetch fails (CodeRabbit, PR #847).  And it must not be
+    # compared against a clone's origin/master: in a clone made from a bundle `origin` IS the
+    # bundle, so that test compares the saved commit with itself and can never fail.
+    if not os.path.isdir(os.path.join(MIRROR, "objects")):
+        sys.exit("No local mirror yet; run this script once without --verify first.")
+    try:
+        git("--git-dir", MIRROR, "fetch", REMOTE, "+refs/heads/master:refs/verify/master")
+    except RuntimeError as exc:
+        sys.exit("Could not reach GitHub, so NOTHING was checked: %s" % exc)
+    live = git("--git-dir", MIRROR, "rev-parse", "refs/verify/master")
+    print("GitHub's master is now %s" % live)
+    rows = existing()
+    if not rows:
+        sys.exit("No bundles in %s to check." % OUT)
+    worst = 0
+    for d, bp in rows:
+        side = bp[: -len(".bundle")] + ".json"
+        if not os.path.exists(side):
+            print("  %-16s no sidecar, so its commit is unknown" % stamp_of(d))
+            worst = 1
+            continue
+        try:
+            saved = json.load(io.open(side, encoding="utf-8")).get("master", "")
+        except ValueError:
+            print("  %-16s its sidecar cannot be read" % stamp_of(d))
+            worst = 1
+            continue
+        r = subprocess.run(("git", "--git-dir", MIRROR, "merge-base", "--is-ancestor",
+                            saved, live), capture_output=True, text=True)
+        if r.returncode == 0:
+            print("  %-16s intact (%s is an ancestor of live master)" % (stamp_of(d),
+                                                                         saved[:12]))
+        else:
+            print("  %-16s *** %s IS NOT IN LIVE HISTORY: it was rewritten, or GitHub was "
+                  "rolled back ***" % (stamp_of(d), saved[:12]))
+            worst = 2
+    sys.exit(worst)
 
 today = datetime.date.today()
 have = existing()
@@ -134,23 +181,52 @@ branches = len(git("--git-dir", MIRROR, "for-each-ref", "--format=%(refname)",
 os.makedirs(OUT, exist_ok=True)
 # A generation is IMMUTABLE: never write over one.  The name was date-only and os.replace()
 # overwrote it, so a same-day --force after origin had moved replaced a saved generation with a
-# different commit -- against this script's own stated requirement (CodeRabbit, PR #847).  A
-# second run on the same day takes a -HHMM suffix, which existing() also parses, so it is
-# pruned in its turn rather than living for ever.
-name = "stanpumpR-%s.bundle" % today.isoformat()
-if os.path.exists(os.path.join(OUT, name)):
-    name = "stanpumpR-%s-%s.bundle" % (today.isoformat(),
-                                       datetime.datetime.now().strftime("%H%M"))
-path = os.path.join(OUT, name)
-assert not os.path.exists(path), "refusing to overwrite the saved generation %s" % name
-tmp = path + ".part"                           # never leave a half-written bundle named as one
+# different commit -- against this script's own stated requirement.  A second run on one day
+# takes a -HHMM suffix, which existing() also parses, so it is pruned in its turn.
+#
+# The name is CLAIMED atomically, not checked and then written.  os.path.exists() followed by a
+# write leaves a window in which two overlapping runs both pass and the later one overwrites the
+# earlier bundle; and `assert` is stripped by python -O, so a guard written that way may not be
+# there at all (CodeRabbit, PR #847).  O_CREAT|O_EXCL is a single operation that fails when the
+# name is taken, so the reservation cannot race.
+def claim(stamp):
+    """Reserve a bundle name atomically, or None if something already holds it."""
+    candidate = os.path.join(OUT, "stanpumpR-%s.bundle" % stamp)
+    try:
+        fd = os.open(candidate, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    except FileExistsError:
+        return None
+    os.close(fd)                     # an empty placeholder; only this run may replace it
+    return candidate
+
+
+path = claim(today.isoformat())
+if path is None:
+    path = claim("%s-%s" % (today.isoformat(), datetime.datetime.now().strftime("%H%M")))
+if path is None:
+    sys.exit("A bundle for this date and minute already exists; nothing was written. Wait a "
+             "minute and run again, or remove the generation deliberately if that is what you "
+             "mean to do -- this script will not write over a saved one.")
+name = os.path.basename(path)
+tmp = "%s.%d.part" % (path, os.getpid())       # this process's own; never a shared name
 print("Writing %s ..." % name)
-git("--git-dir", MIRROR, "bundle", "create", tmp, "--all")
+try:
+    git("--git-dir", MIRROR, "bundle", "create", tmp, "--all")
+except BaseException:
+    # The claim reserved an EMPTY file.  Left behind it would list as a 0-byte generation and,
+    # worse, would stop today's name being retried.  Remove it and re-raise.
+    for leftover in (tmp, path):
+        if os.path.exists(leftover) and os.path.getsize(leftover) == 0 or leftover == tmp:
+            try:
+                os.remove(leftover)
+            except OSError:
+                pass
+    raise
 
 # 3. verify BEFORE it takes the name, and before anything old is pruned.  An unverified backup
 #    is not a backup, and a corrupt one that displaced a good generation is worse than none.
 git("--git-dir", MIRROR, "bundle", "verify", tmp)
-os.replace(tmp, path)
+os.replace(tmp, path)                          # over our own empty placeholder, nothing else
 size = os.path.getsize(path)
 
 io.open(path[: -len(".bundle")] + ".json", "w", encoding="utf-8", newline="\n").write(
@@ -173,11 +249,4 @@ for d, p in rows[keep:]:
 
 print()
 print("Restore with:  git clone %s stanpumpR" % path)
-print()
-print("To tell whether history has been rewritten since, compare this bundle's commit with what")
-print("GitHub serves NOW.  It must be fetched live: in a clone made from a bundle `origin` is the")
-print("bundle file itself, so comparing against origin/master compares the saved commit with")
-print("itself and can never fail.")
-print("  git fetch %s master" % REMOTE)
-print("  git merge-base --is-ancestor %s FETCH_HEAD   && echo intact || echo HISTORY REWRITTEN"
-      % master)
+print("Check against live GitHub with:  python bundle_repo.py --verify")
