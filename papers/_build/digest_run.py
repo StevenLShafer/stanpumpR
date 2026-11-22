@@ -42,6 +42,23 @@ HOST = socket.gethostname()        # the lock names its computer: Drive syncs it
 LOCK_FOREIGN_HOURS = 12            # another computer's lock older than this is taken to be a dead run's
 RUNS = os.path.join(HERE, "digest_runs")
 LOG = os.path.join(HERE, "digest_run_log.json")
+
+
+def save_log(entries):
+    """Replace the run log atomically.
+
+    Opening LOG with "w" truncates it before json.dump writes a word, so a run that stops
+    during the write leaves a half-written file -- and the NEXT run reads it with a bare
+    json.load, before any batch starts and with nothing to catch the error, so it digests
+    nothing until somebody repairs the file by hand.  note_cards() writes on every card, so
+    that window is open throughout a batch rather than twice a run (CodeRabbit, PR #844).
+    Writing beside it and replacing leaves either the old complete log or the new one.
+    fetch_pmc.py's save_log() takes the same precaution for the same reason.
+    """
+    tmp = LOG + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(entries, f, indent=1)
+    os.replace(tmp, LOG)
 PY = r"C:\Python314\python.exe"
 CLAUDE = shutil.which("claude") or os.path.expanduser(r"~\.local\bin\claude.exe")
 # The CLI authenticates the headless runs with Shafer's long-lived token, a Windows USER variable (2026-10-29).
@@ -327,7 +344,15 @@ try:
     cand, kept = [], []
     # The model's safeguards can refuse a batch (2026-11-09: a carfentanil paper, Bergh 2019, took its batch-mate
     # with it).  A stem flagged in a pair is retried alone; one flagged alone is left for an interactive session.
-    past = json.load(open(LOG, encoding="utf-8")) if os.path.exists(LOG) else []
+    # save_log() keeps this file whole, but a log damaged before that existed must not stop
+    # every future run: this read happens before the first batch and nothing above catches it,
+    # so an unreadable log would digest nothing until somebody deleted it (CodeRabbit, PR #844).
+    try:
+        past = json.load(open(LOG, encoding="utf-8")) if os.path.exists(LOG) else []
+    except (ValueError, OSError) as exc:
+        say("the run log could not be read (%s); this run keeps no memory of which stems the "
+            "model's safeguards refused before, so a refused one may be tried again" % exc.__class__.__name__)
+        past = []
     flagged_alone = {e["stem"] for e in past if e.get("flagged") and e.get("batch_size") == 1}
     flagged_pair = {e["stem"] for e in past if e.get("flagged") and e.get("batch_size", 2) > 1} - flagged_alone
     for m in manifest:
@@ -387,8 +412,13 @@ try:
                                         c["arrived"], ident(c["stem"])))
     aged = sorted(cand, key=lambda c: (c["arrived"], ident(c["stem"])))
     queue, lane_of, taken, at = [], {}, set(), {"merit": 0, "age": 0}
+    # The age position is every AGE_SLOT-th place -- but a cap SMALLER than AGE_SLOT never
+    # reaches one, so a small run would be pure merit and the starvation guarantee above would
+    # be false for exactly the runs most likely to be used for a quick top-up.  Below the slot
+    # size the LAST place goes to the age lane instead (CodeRabbit, PR #844).
+    age_place = (lambda n: n == cap - 1) if cap < AGE_SLOT else (lambda n: n % AGE_SLOT == AGE_SLOT - 1)
     while len(queue) < cap and len(taken) < len(cand):
-        name = "age" if len(queue) % AGE_SLOT == AGE_SLOT - 1 else "merit"
+        name = "age" if age_place(len(queue)) else "merit"
         lane = aged if name == "age" else merit
         i = at[name]
         while lane[i]["stem"] in taken:       # both lanes hold every candidate, so while one is still
@@ -489,7 +519,7 @@ try:
                                "flagged": False, "batch_size": len(_batch)}
                 log.append(_entries[s])
                 say("- %s: card written" % s)
-                json.dump(log, open(LOG, "w", encoding="utf-8"), indent=1)
+                save_log(log)
 
         out, code = run_claude(cmd, prompt, scratch, BATCH_TIMEOUT, tick=note_cards)
         mins = (time.time() - t0) / 60
@@ -502,9 +532,14 @@ try:
                      "card_written": False, "flagged": flagged, "batch_size": len(batch)}
                 log.append(e)
                 say("- %s: NO CARD (see output)" % s)
-            e.update(exit=code, minutes=round(mins, 1))
+            # `flagged` belongs to the batch, so it has to reach an entry note_cards() wrote
+            # while the batch was still running -- that one was recorded flagged=False before
+            # the output existed.  A card that WAS written is never flagged: the original rule
+            # was `flagged and not written` (CodeRabbit, PR #844).
+            e.update(exit=code, minutes=round(mins, 1),
+                     flagged=flagged and not e.get("card_written"))
         say("\n```\n%s\n```\n(%.1f min, exit %s)\n" % (out.strip()[-6000:], mins, code))
-        json.dump(log, open(LOG, "w", encoding="utf-8"), indent=1)
+        save_log(log)
         # A logged-out CLI fails every batch the same way: stop, and say what to do (2026-10-29)
         if re.search(r"Failed to authenticate|not logged in|Please run /login|OAuth session expired", out, re.I):
             say("STOPPED: the Claude CLI could not authenticate, so no batch can run. If the message above says the "

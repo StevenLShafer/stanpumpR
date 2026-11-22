@@ -12,9 +12,15 @@ report the pipeline wrote:
 Both are the same shape: a set that should equal another set, with nobody subtracting them. This
 script does the subtraction. It is read-only.
 
-  python check_index.py            report, exit 1 if anything diverges
+  python check_index.py            report, exit 1 if a PDF is unaccounted for
   python check_index.py --quiet    print only when something diverges (for the chain)
   python check_index.py --manifest <path>   judge against another manifest, to test the check
+
+Exit 1 means a PDF IN THE ARCHIVE is missing from the accounting, or its text could not be
+read: something that can be digested is invisible, or something was never inspected. The
+reverse -- a manifest, text or context entry naming a PDF that is GONE -- is a leftover, not
+a gap: nothing is hidden by it and no paper is lost. Those are reported as notes and exit 0,
+because a check that cries wolf over harmless debris stops being read (CodeRabbit, PR #844).
 
 Run it LAST in update.bat, after file_downloads, ocr_scans and digest_prep, so it judges the
 state those leave behind. A non-zero exit means the accounting is wrong, not that a step failed.
@@ -99,7 +105,12 @@ for s in sorted(disk & txt):
     p = os.path.join(TEXT, s + ".txt")
     try:
         body = io.open(p, encoding="utf-8", errors="replace").read()
-    except OSError:
+    except OSError as exc:
+        # NOT `continue`: a text file this cannot read is a file whose contents were never
+        # inspected, and skipping it silently would let the run end "every PDF is readable"
+        # and exit 0 on evidence it does not have.  A check that passes when it could not
+        # run is worse than no check (CodeRabbit, PR #844).
+        problems.append("could not read the extracted text of %s (%s)" % (s, exc.__class__.__name__))
         continue
     pages = body.count("\f") + (1 if body and not body.endswith("\f") else 0)
     letters = len(re.findall(r"[A-Za-z]", body))
