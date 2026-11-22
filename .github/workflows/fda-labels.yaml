@@ -30,6 +30,12 @@ jobs:
       - name: Peer-review screen regression cases
         run: python papers/_build/test_inreview.py
 
+      # The digest queue itself, run over a fake archive whose manifest says every paper is a
+      # normal non-scan paper: it must refuse the ones whose text is missing, unreadable or
+      # blank, because a card can become public (PR #846).
+      - name: Digest queue refuses unreadable papers
+        run: python papers/_build/test_digest_queue.py
+
       - uses: r-lib/actions/setup-r@5cc1f0d89c5281319eaa97952fe65a6d55e6f816 #v2
         with:
           r-version: 'release'
