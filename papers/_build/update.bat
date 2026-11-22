@@ -28,6 +28,15 @@ rem These scripts are version-controlled in the repository at papers\_build; the
 rem here are the ones that run.  check_in_step.py says when the two have drifted apart, so
 rem the record cannot quietly stop describing what actually runs.  It only reports and
 rem always succeeds, so it is deliberately NOT part of the && chain above (2026-11-18).
+%PY% check_index.py
+rem check_index.py is the LAST word on the state the steps above leave behind: every PDF
+rem in the archive must be in digest_manifest.json, have an extracted text file, and have
+rem readable text.  On 2026-11-21 none of those held and nothing said so: 85 PDFs had been
+rem absent from the manifest since October, so they appeared in no report at all, and 36 had
+rem no text layer because ocr_scans.py had never been run over them.  Both were found by
+rem looking, not by being told.  It only reports, so it is outside the && chain -- and it
+rem sits after check_in_step.py deliberately: when an upstream step DID fail, the accounting
+rem is exactly when you most want to hear about it.
 popd
 rem Then write up to 20 missing digests unattended, in a separate minimized window so update.bat returns at once
 rem (digests.bat -> _build\digest_run.py; it exits immediately if a run is already going). Added 2026-10-28.
