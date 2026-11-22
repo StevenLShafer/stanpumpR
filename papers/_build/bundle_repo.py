@@ -52,8 +52,8 @@ REMOTE = "https://github.com/StevenLShafer/stanpumpR.git"
 
 LOCK = os.path.join(OUT, "bundle_repo.lock")
 HOST = socket.gethostname()      # the lock names its computer: Drive syncs _backup to the others
-LOCK_FOREIGN_HOURS = 6           # another computer's lock older than this is a dead run's
-LOCK_WRITE_GRACE_SEC = 60        # a lock with no owner data yet: see take_lock()
+LOCK_FOREIGN_HOURS = 6           # another computer's note older than this is ignored
+_LOCK_FD = None                  # the open descriptor IS the lock; see take_lock()
 
 BUNDLE_EVERY_DAYS = 7
 BUNDLE_KEEP = 8                                # about two months of weekly generations
@@ -79,99 +79,134 @@ def git(*a, **kw):
     return r.stdout.strip()
 
 
-def pid_alive(pid):
-    if not isinstance(pid, int) or pid <= 0:
-        return False
+def _lock_exclusive(fd):
+    """Take an exclusive, non-blocking lock on fd. Raises OSError if someone else holds it."""
     try:
-        os.kill(pid, 0)                          # signal 0: ask, do not send
-    except PermissionError:
-        return True                              # someone else's process, so it exists
-    except OSError:
-        return False
-    return True
+        import fcntl
+    except ImportError:
+        import msvcrt
+        msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+    else:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+
+def _unlock(fd):
+    try:
+        import fcntl
+    except ImportError:
+        import msvcrt
+        try:
+            msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+        except OSError:
+            pass
+    else:
+        fcntl.flock(fd, fcntl.LOCK_UN)
 
 
 def take_lock():
-    """Serialise the WHOLE backup -- claim, publish and prune -- or return why we must not run.
+    """Hold an OS-level exclusive lock for the life of this process, or say who has it.
 
-    Four rounds of PR #847 were spent closing one interleaving at a time: a reservation pruned
-    by another run's stale snapshot, a sidecar deleted by a cleanup that had freed the bundle
-    name first, a generation overwritten between a check and a write.  Each fix was correct and
-    the next interleaving was still there, because ordering alone cannot make a multi-file
-    publication atomic.  CodeRabbit's own suggestion is the right one: serialise it.  One lock
-    removes every such race, including the ones nobody has found, and is simpler than the
-    ordering it replaces.
+    THERE IS NO STALE LOCK, which is the point.  The kernel owns the lock and drops it when the
+    process dies, so a crashed run leaves nothing to recover from -- and the recovery logic that
+    went with the old scheme is gone, along with both of the races in it (CodeRabbit, PR #847):
 
-    Same convention as digest_run.lock, for the same reason -- _backup is synced between the
-    user's computers by Google Drive, so a lock may be another machine's.  Taken with
-    O_CREAT|O_EXCL, so two runs cannot both believe they hold it.
+      * a run paused for longer than a grace period could have its live lock deleted;
+      * two runs could both judge a lock stale, and the second's os.remove() would delete the
+        first's NEW lock.
+
+    Neither is expressible now: nothing removes a lock, ever.  A grace period cannot tell a
+    crashed process from a paused one, and trying was the wrong shape of answer.
+
+    Verified on this archive before the rewrite, because Drive is a virtual filesystem and byte
+    locks are not guaranteed there: on the local disk and on the Drive archive alike, a second
+    refused while the first holds the lock, granted after it releases, and granted immediately
+    after the holder is KILLED.
+
+    WITHIN one computer this is exact.  ACROSS computers it cannot be: byte locks do not travel
+    through Google Drive's sync, so the owner note below is ADVISORY -- it lets a person see
+    that another machine was running, and refuses while such a note is recent, but two machines
+    could still overlap.  That is the limitation Drive imposes, and it is why the project's rule
+    is that only one computer runs the pipeline at a time (AGENTS.md). The note is never
+    enforcement; the kernel's lock is.
+
+    The lock FILE is never deleted. Its existence means nothing -- the byte lock means
+    everything -- and deleting it would reintroduce a race: between the close and the unlink,
+    another run could acquire the file, and a third could create a new one, leaving two runs
+    each holding a lock on a different file.
     """
+    global _LOCK_FD
     os.makedirs(OUT, exist_ok=True)
-    while True:
+    fd = os.open(LOCK, os.O_CREAT | os.O_RDWR)
+    try:
+        _lock_exclusive(fd)
+    except OSError:
+        # Someone else holds it. We hold no lock, so an ordinary read is right here -- though it
+        # may still fail against the holder's mandatory lock, in which case the message simply
+        # names nobody.
+        held = {}
         try:
-            fd = os.open(LOCK, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-        except FileExistsError:
-            pass
-        else:
-            with os.fdopen(fd, "w", encoding="utf-8") as f:
-                json.dump({"host": HOST, "pid": os.getpid(),
-                           "started": time.strftime("%Y-%m-%d %H:%M:%S")}, f)
-            return None
-
-        try:
-            held, readable = json.load(io.open(LOCK, encoding="utf-8")), True
+            held = json.loads(io.open(LOCK, encoding="utf-8").read() or "{}")
         except (ValueError, OSError):
-            held, readable = {}, False
-        if not readable or not isinstance(held, dict):
-            # FAIL CLOSED while it could still be a lock being written.  The file is created
-            # empty by O_CREAT|O_EXCL and filled immediately afterwards, so for a moment a
-            # valid, live lock has no owner data -- and a reader that removed it "because it
-            # names nobody" could delete a live lock and both runs would proceed (CodeRabbit,
-            # PR #847).  An unreadable lock younger than LOCK_WRITE_GRACE_SEC is therefore
-            # treated as held; older than that, no run could still be mid-write, so it is a
-            # crashed run's debris and is cleared.
-            try:
-                age_s = time.time() - os.path.getmtime(LOCK)
-            except OSError:
-                continue                         # it went away; try to take it again
-            if age_s < LOCK_WRITE_GRACE_SEC:
-                return ("a backup is starting on this archive (its lock has no owner data yet); "
-                        "nothing to do here")
-            try:
-                os.remove(LOCK)                  # debris from a crashed run
-            except OSError:
-                pass
-            continue
-        same_host = held.get("host") == HOST
-        if same_host and pid_alive(held.get("pid")):
-            return ("a backup on this computer (pid %s, started %s) holds the lock; nothing to "
-                    "do here" % (held.get("pid"), held.get("started")))
+            pass
+        os.close(fd)
+        if not held.get("host"):
+            # Expected, not an error: the holder's lock on byte 0 is MANDATORY on Windows, so
+            # its note cannot be read from here. The refusal is still exact -- the kernel
+            # answered it -- we just cannot say whose it is.
+            who = "its note cannot be read while it holds the lock"
+        elif held.get("host") == HOST:
+            who = "pid %s on this computer, started %s" % (held.get("pid"), held.get("started"))
+        else:
+            who = "on %s, started %s" % (held.get("host"), held.get("started"))
+        return "another backup holds the lock (%s); nothing to do here" % who
+
+    # We hold it. The note that follows is for a person reading _backup, and for the
+    # cross-machine advisory check below.
+    note = {"host": HOST, "pid": os.getpid(), "started": time.strftime("%Y-%m-%d %H:%M:%S")}
+    # Read the previous note through the SAME descriptor. msvcrt.locking() takes a MANDATORY
+    # lock on byte 0, so a second handle on the file -- io.open(LOCK) -- cannot read it, not
+    # even in the process that holds the lock: the read raised, the exception was swallowed,
+    # `previous` became {} and the advisory check below silently never fired. Caught by this
+    # script's own foreign-note case, which is what those cases are for.
+    try:
+        os.lseek(fd, 0, os.SEEK_SET)
+        previous = json.loads(os.read(fd, 65536).decode("utf-8", "replace") or "{}")
+    except (ValueError, OSError):
+        previous = {}
+    if isinstance(previous, dict) and previous.get("host") not in (None, HOST):
         try:
             age_h = (time.time() - os.path.getmtime(LOCK)) / 3600
         except OSError:
-            continue                             # it went away; try to take it again
-        if not same_host and age_h < LOCK_FOREIGN_HOURS:
-            return ("a backup on %s (started %s) holds the lock; nothing to do here. Wait for "
-                    "it, or remove %s if that run is gone"
-                    % (held.get("host"), held.get("started"), LOCK))
-        # ours with a dead pid, another computer's and stale, or unreadable: take it over
-        try:
-            os.remove(LOCK)
-        except OSError:
-            pass
+            age_h = LOCK_FOREIGN_HOURS + 1
+        if age_h < LOCK_FOREIGN_HOURS:
+            # ADVISORY only: we DO hold the kernel's lock, and another computer's lock is
+            # invisible to it. Standing down is the project's one-computer-at-a-time rule,
+            # not a guarantee.
+            _unlock(fd)
+            os.close(fd)
+            return ("a backup on %s (started %s) may still be running; nothing to do here. Its "
+                    "note in %s is %.1f h old -- wait for it, or run again once you know that "
+                    "run has finished" % (previous.get("host"), previous.get("started"),
+                                          os.path.basename(LOCK), age_h))
+
+    os.lseek(fd, 0, os.SEEK_SET)
+    os.truncate(fd, 0)
+    os.write(fd, json.dumps(note).encode("utf-8"))
+    _LOCK_FD = fd                      # held open: closing it would release the lock
+    return None
 
 
 def drop_lock():
-    """Release the lock, but only if it is still OURS: a takeover may have replaced it."""
-    try:
-        held = json.load(io.open(LOCK, encoding="utf-8"))
-    except (ValueError, OSError):
+    """Release the lock. The file stays: its contents are a note, not the lock itself."""
+    global _LOCK_FD
+    if _LOCK_FD is None:
         return
-    if held.get("host") == HOST and held.get("pid") == os.getpid():
-        try:
-            os.remove(LOCK)
-        except OSError:
-            pass
+    _unlock(_LOCK_FD)
+    try:
+        os.close(_LOCK_FD)
+    except OSError:
+        pass
+    _LOCK_FD = None
 
 
 def prune(rows, keep):

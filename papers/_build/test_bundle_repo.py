@@ -32,7 +32,6 @@ release = _ns["release"]
 prune = _ns["prune"]
 take_lock = _ns["take_lock"]
 drop_lock = _ns["drop_lock"]
-pid_alive = _ns["pid_alive"]
 
 bad = []
 
@@ -199,87 +198,122 @@ def prune_cases():
 bad += [("prune", p) for p in [prune_cases()] if p]
 
 # ---------------------------------------------------------------------- the lock
-# One lock around claim, publish and prune is what replaced four rounds of closing individual
-# interleavings (PR #847). It decides whether a run may touch _backup at all, so its own
-# behaviour has to be checked -- above all the case where it should REFUSE, since a lock that
-# never refuses is the same kind of vacuous check this script has already shipped twice.
+# The lock is the KERNEL'S now, not a file whose contents are inspected: take_lock() holds an
+# exclusive byte lock for the life of the process. So there is no stale lock and no recovery
+# path, and the two races CodeRabbit found in the old scheme -- a live lock deleted after a
+# pause, and two runs both judging a lock stale -- are not expressible (PR #847).
+#
+# That has to be tested with REAL PROCESSES. Sequential calls in one process prove nothing: the
+# same process can re-lock its own file on every platform.
 import json
 import socket
+import subprocess
+import sys
+import time
+
+CHILD = """
+import os, sys, time
+build, seconds = sys.argv[1], float(sys.argv[2])   # read BEFORE sys.argv is replaced
+sys.path.insert(0, build)
+src = os.path.join(build, "bundle_repo.py")
+sys.argv = ["bundle_repo.py", "--list"]
+_ns = {"__name__": "child", "__file__": src}
+# Hide the module's own --list output at the FILE DESCRIPTOR level: it calls
+# sys.stdout.reconfigure(), which a StringIO does not have.
+_null = os.open(os.devnull, os.O_WRONLY)
+_saved = os.dup(1)
+sys.stdout.flush()               # buffered text would otherwise reach the real stdout later
+os.dup2(_null, 1)
+try:
+    exec(compile(open(src, encoding="utf-8").read(), src, "exec"), _ns)
+except SystemExit:
+    pass
+finally:
+    sys.stdout.flush()           # flush INTO devnull, then restore
+    os.dup2(_saved, 1)
+    os.close(_saved)
+    os.close(_null)
+busy = _ns["take_lock"]()
+print("REFUSED" if busy else "ACQUIRED", flush=True)
+if busy:
+    sys.exit(2)
+time.sleep(seconds)
+sys.exit(0)
+"""
 
 
 def lock_cases():
     problems = []
-    lock = _ns["LOCK"]
-    host = socket.gethostname()
+    build = os.path.dirname(_ns["__file__"])
+    child_py = os.path.join(_ns["LOCAL"] if "LOCAL" in _ns else os.path.dirname(build),
+                            "lock_child.py")
+    try:
+        io.open(child_py, "w", encoding="utf-8").write(CHILD)
+    except OSError:
+        print("  skip lock: cannot write a child script beside the archive")
+        return []
 
-    def write_lock(**kw):
-        os.makedirs(os.path.dirname(lock), exist_ok=True)
-        io.open(lock, "w", encoding="utf-8").write(json.dumps(kw))
+    def child(seconds, wait_for_line=True):
+        p = subprocess.Popen([sys.executable, "-E", child_py, build, str(seconds)],
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        first = p.stdout.readline().strip() if wait_for_line else ""
+        return p, first
 
-    def clear():
-        if os.path.exists(lock):
-            os.remove(lock)
+    def report(label, ok, detail=""):
+        if not ok:
+            problems.append("%s: %s" % (label, detail or "failed"))
+        print("  %s lock: %-46s %s" % ("ok  " if ok else "FAIL", label[:46], detail[:36]))
 
-    def check(label, want_busy, setup):
-        clear()
-        setup()
-        busy = take_lock()
-        got = bool(busy)
-        if got != want_busy:
-            problems.append("%s: wanted %s, got %r" % (label, "refusal" if want_busy else "the lock", busy))
-        print("  %s lock: %-44s %s" % ("ok  " if got == want_busy else "FAIL", label[:44],
-                                       (busy or "took it")[:40]))
-        drop_lock()
-        clear()
+    # 1. a second process is refused while the first holds it
+    holder, line = child(20)
+    try:
+        report("a child acquires it when free", line == "ACQUIRED", line)
+        other, line2 = child(1)
+        other.wait(timeout=30)
+        report("a second process is REFUSED while held", line2 == "REFUSED", line2)
+    finally:
+        holder.kill()
+        holder.wait()
 
-    check("no lock present", False, lambda: None)
-    check("held by a live process on this computer", True,
-          lambda: write_lock(host=host, pid=os.getpid(), started="now"))
-    check("held by a dead process on this computer", False,
-          lambda: write_lock(host=host, pid=2 ** 31 - 1, started="then"))
-    check("held by another computer, recently", True,
-          lambda: write_lock(host=host + "-other", pid=1, started="now"))
-    # FAIL CLOSED while it could still be a lock being written. This is the acquisition race:
-    # take_lock() creates the file with O_CREAT|O_EXCL and writes its owner data immediately
-    # afterwards, so a reader that removed an "unreadable" lock could delete a LIVE one and
-    # both runs would proceed. An empty file is exactly what the winner has just created.
-    check("an EMPTY lock, as a run that has just created one leaves it", True,
-          lambda: io.open(lock, "wb").write(b""))
-    check("a fresh unparseable lock", True,
-          lambda: io.open(lock, "w", encoding="utf-8").write("not json"))
+    # 2. the kernel releases it when the holder DIES -- the case no grace period can get right
+    time.sleep(0.3)
+    after, line3 = child(1)
+    after.wait(timeout=30)
+    report("granted immediately after the holder is killed", line3 == "ACQUIRED", line3)
 
-    # Older than any run could still be mid-write: debris from a crash, so it is cleared.
-    def stale_unreadable():
-        io.open(lock, "w", encoding="utf-8").write("not json")
-        old_t = __import__("time").time() - (_ns["LOCK_WRITE_GRACE_SEC"] + 5)
-        os.utime(lock, (old_t, old_t))
-
-    check("an unparseable lock older than the write grace", False, stale_unreadable)
-
-    # a stale foreign lock is taken over: the file's mtime is what decides
-    clear()
-    write_lock(host=host + "-other", pid=1, started="long ago")
-    old_time = __import__("time").time() - (_ns["LOCK_FOREIGN_HOURS"] + 1) * 3600
-    os.utime(lock, (old_time, old_time))
+    # 3. this process can take and release it, and the FILE is never removed
     busy = take_lock()
-    ok = not busy
-    if not ok:
-        problems.append("a stale lock from another computer was not taken over: %r" % busy)
-    print("  %s lock: %-44s %s" % ("ok  " if ok else "FAIL",
-                                   "another computer's, older than the limit", busy or "took it"))
+    took = not busy
+    report("this process takes it", took, busy or "took it")
+    lock_path = _ns["LOCK"]
     drop_lock()
-    if os.path.exists(lock):
-        problems.append("drop_lock() left the lock behind")
-        os.remove(lock)
+    report("the lock file is left in place after release", os.path.exists(lock_path),
+           "present" if os.path.exists(lock_path) else "GONE")
 
-    # drop_lock() must not remove a lock that is no longer ours
-    write_lock(host=host + "-other", pid=1, started="now")
+    # 4. an unreadable note does not stop acquisition: the note is advisory, the lock is not
+    io.open(lock_path, "w", encoding="utf-8").write("not json")
+    busy = take_lock()
+    report("an unreadable note does not block the lock", not busy, busy or "took it")
     drop_lock()
-    if not os.path.exists(lock):
-        problems.append("drop_lock() removed another run's lock")
-    print("  %s lock: %-44s %s" % ("ok  " if os.path.exists(lock) else "FAIL",
-                                   "drop_lock() leaves a foreign lock alone", ""))
-    clear()
+
+    # 5. another computer's recent note makes this run stand down (advisory, and labelled so)
+    io.open(lock_path, "w", encoding="utf-8").write(
+        json.dumps({"host": socket.gethostname() + "-other", "pid": 1, "started": "now"}))
+    busy = take_lock()
+    report("another computer's recent note stands us down", bool(busy), busy or "took it")
+    drop_lock()
+
+    # 6. ... and an old one does not
+    old_t = time.time() - (_ns["LOCK_FOREIGN_HOURS"] + 1) * 3600
+    os.utime(lock_path, (old_t, old_t))
+    busy = take_lock()
+    report("another computer's OLD note is ignored", not busy, busy or "took it")
+    drop_lock()
+
+    try:
+        os.remove(child_py)
+    except OSError:
+        pass
     return problems
 
 
