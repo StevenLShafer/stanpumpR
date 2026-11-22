@@ -93,7 +93,13 @@ def existing():
                 d = datetime.datetime.fromisoformat(stem)
         except ValueError:
             continue           # not one of ours; never deleted
-        if os.path.getsize(p) == 0:
+        try:
+            empty = os.path.getsize(p) == 0
+        except FileNotFoundError:
+            # Another run removed its own failed reservation after glob() listed it. Nothing is
+            # wrong; this name simply is not there. Any OTHER filesystem error propagates.
+            continue
+        if empty:
             # A zero-byte file is a name CLAIMED by a run that has not finished writing yet.
             # It is not a generation: listing it let --keep prune another run's reservation,
             # after which a third run could publish into that name and the first would
@@ -228,6 +234,8 @@ if path is None:
              "mean to do -- this script will not write over a saved one.")
 name = os.path.basename(path)
 tmp = "%s.%d.part" % (path, os.getpid())       # this process's own; never a shared name
+side = path[: -len(".bundle")] + ".json"
+side_tmp = "%s.%d.part" % (side, os.getpid())
 print("Writing %s ..." % name)
 try:
     git("--git-dir", MIRROR, "bundle", "create", tmp, "--all")
@@ -245,6 +253,21 @@ try:
     if not bundled:
         raise RuntimeError("the bundle holds no refs/heads/master; refusing to record one")
     master = bundled
+    size = os.path.getsize(tmp)
+
+    # Prepare the sidecar before publishing anything: a bundle published without one is
+    # treated as this week's backup by the age guard and cannot be checked by --verify.
+    io.open(side_tmp, "w", encoding="utf-8", newline="\n").write(
+        json.dumps({"date": today.isoformat(), "master": master, "commits": int(commits),
+                    "branches": branches, "bytes": size, "remote": REMOTE,
+                    "restore": 'git clone "%s" stanpumpR' % name,
+                    "note": "Complete history of every branch and tag, and every refs/pull/* "
+                            "ref GitHub held. Pull-request discussions, issues and Actions "
+                            "logs are NOT here: they live only in GitHub."},
+                   indent=1))
+    # Now publish, sidecar first: an orphaned .json is ignored by existing(), which globs
+    # .bundle files, whereas an orphaned bundle is the failure described above.
+    os.replace(side_tmp, side)
     os.replace(tmp, path)                      # over our own empty placeholder, nothing else
 except BaseException:
     # Everything above is protected, not just the create: a failure in verify or in the rename
@@ -252,23 +275,19 @@ except BaseException:
     # "nothing to do" until that date was a week old, and left the .part file behind as well.
     # The reservation is removed only while it is still EMPTY, so a finished bundle is never
     # touched by this.
-    for leftover in (tmp, path):
+    for leftover in (tmp, side_tmp, path, side):
         try:
-            if os.path.exists(leftover) and (leftover == tmp or os.path.getsize(leftover) == 0):
+            if not os.path.exists(leftover):
+                continue
+            # The temporaries always go.  The published names go only while the BUNDLE is still
+            # the empty reservation -- once a real bundle is in place the generation is finished
+            # and nothing here may touch it.
+            if leftover in (tmp, side_tmp) or os.path.getsize(path) == 0:
                 os.remove(leftover)
         except OSError:
             pass
     raise
 
-size = os.path.getsize(path)
-
-io.open(path[: -len(".bundle")] + ".json", "w", encoding="utf-8", newline="\n").write(
-    json.dumps({"date": today.isoformat(), "master": master, "commits": int(commits),
-                "branches": branches, "bytes": size, "remote": REMOTE,
-                "restore": 'git clone "%s" stanpumpR' % name,
-                "note": "Complete history of every branch and tag. Pull-request discussions, "
-                        "issues and Actions logs are NOT here: they live only in GitHub."},
-               indent=1))
 print("  %.1f MB, %s commits, %d branches, master %s" % (size / 1e6, commits, branches, master[:12]))
 
 # 4. prune, oldest first, only after the new one is verified and in place
