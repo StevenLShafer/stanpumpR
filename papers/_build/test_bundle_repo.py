@@ -12,6 +12,7 @@ commit messages while living only in a session's scratchpad, where they guarante
 """
 import io
 import os
+import shutil
 import sys
 import tempfile
 
@@ -213,7 +214,8 @@ import time
 
 CHILD = """
 import os, sys, time
-build, seconds = sys.argv[1], float(sys.argv[2])   # read BEFORE sys.argv is replaced
+# read BEFORE sys.argv is replaced for the exec
+build, seconds, lock = sys.argv[1], float(sys.argv[2]), sys.argv[3]
 sys.path.insert(0, build)
 src = os.path.join(build, "bundle_repo.py")
 sys.argv = ["bundle_repo.py", "--list"]
@@ -233,6 +235,11 @@ finally:
     os.dup2(_saved, 1)
     os.close(_saved)
     os.close(_null)
+# The TEMPORARY lock, never the archive's own: these tests overwrite the note, and the real
+# one may carry a recent foreign-host note that the advisory check depends on (CodeRabbit,
+# PR #847). Overriding the module's globals is enough -- take_lock() reads them from here.
+_ns["LOCK"] = lock
+_ns["OUT"] = os.path.dirname(lock)
 busy = _ns["take_lock"]()
 print("REFUSED" if busy else "ACQUIRED", flush=True)
 if busy:
@@ -245,6 +252,25 @@ sys.exit(0)
 def lock_cases():
     problems = []
     build = os.path.dirname(_ns["__file__"])
+
+    # Never touch the archive's own lock note. These cases write foreign-host notes and
+    # unparseable ones, and the real file may hold a recent note from another computer that the
+    # advisory check depends on -- erasing it would defeat exactly the protection under test
+    # (CodeRabbit, PR #847). The module's LOCK and OUT are globals, so overriding them here
+    # redirects take_lock() and drop_lock() for the duration.
+    sandbox = tempfile.mkdtemp()
+    real_lock, real_out = _ns["LOCK"], _ns["OUT"]
+    _ns["LOCK"] = os.path.join(sandbox, "bundle_repo.lock")
+    _ns["OUT"] = sandbox
+    try:
+        return _lock_cases(build, _ns["LOCK"])
+    finally:
+        _ns["LOCK"], _ns["OUT"] = real_lock, real_out
+        shutil.rmtree(sandbox, ignore_errors=True)
+
+
+def _lock_cases(build, lock):
+    problems = []
     child_py = os.path.join(_ns["LOCAL"] if "LOCAL" in _ns else os.path.dirname(build),
                             "lock_child.py")
     try:
@@ -254,7 +280,7 @@ def lock_cases():
         return []
 
     def child(seconds, wait_for_line=True):
-        p = subprocess.Popen([sys.executable, "-E", child_py, build, str(seconds)],
+        p = subprocess.Popen([sys.executable, "-E", child_py, build, str(seconds), lock],
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         first = p.stdout.readline().strip() if wait_for_line else ""
         return p, first
@@ -285,7 +311,7 @@ def lock_cases():
     busy = take_lock()
     took = not busy
     report("this process takes it", took, busy or "took it")
-    lock_path = _ns["LOCK"]
+    lock_path = lock
     drop_lock()
     report("the lock file is left in place after release", os.path.exists(lock_path),
            "present" if os.path.exists(lock_path) else "GONE")
