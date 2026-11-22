@@ -390,11 +390,20 @@ try:
         # screen_inreview.py says whether one got in; this refuses to write the public artefact.
         # Steven L. Shafer, 2026-11-21: "there is a risk that a digest prepared from a paper in
         # peer review might be public. That is a risk that must be guarded against."
-        review_why = in_review_reason(os.path.join(ARCH, m["stem"] + ".pdf"),
-                                      text=read_text(os.path.join(HERE, "text", m["stem"] + ".txt"))[:8000])
+        body = read_text(os.path.join(HERE, "text", m["stem"] + ".txt"))[:8000]
+        review_why = in_review_reason(os.path.join(ARCH, m["stem"] + ".pdf"), text=body or None)
         if review_why:
             kept.append("%s (looks like a manuscript under peer review: %s; NOT carded)"
                         % (m["stem"], review_why))
+            continue
+        if not body:
+            # FAIL CLOSED.  read_text() returns "" both for a missing file and for one it cannot
+            # read, and with no text the screen above judges the NAME alone -- so an unreadable
+            # text file would mean a paper carded without its document ever being inspected.  A
+            # card is the public artefact, so the absence of evidence is not evidence of absence
+            # (CodeRabbit, PR #846).  check_index.py reports why the text is missing.
+            kept.append("%s (no readable extracted text, so it could not be screened for a "
+                        "manuscript under peer review; digest it by hand)" % m["stem"])
             continue
         cand.append({"stem": m["stem"], "tier": t, "stale": m["digest"] == "stale",
                      "blocked": bool(wanted_by(m["stem"])), "arrived": arrived(m["stem"])})

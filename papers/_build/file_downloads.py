@@ -673,14 +673,12 @@ for d, name in candidates():
         if not name.lower().endswith(".pdf") or not os.path.isfile(path):
             continue
         # Before unwrap_envelope, the sha and the cache: a manuscript under peer review is not
-        # filed, not unwrapped, not touched.  Its name and its folder are free to judge, and on
-        # 2026-11-21 five such manuscripts were sitting in Downloads, one of them a tracked-changes
-        # manuscript; they were spared only because none matched a stanpumpR reference.  A card can
-        # become public, so the filing is what has to refuse (Shafer).  Their submission numbers are
-        # deliberately not recorded anywhere in this public repository.
+        # filed, not unwrapped, not touched.  Name and folder are free to judge, so they are
+        # judged here, before anything reads or alters the file.  Page 1 is read further down,
+        # once, for every path that could reach the archive.
         q = in_review_reason(path, name=name)
         if q:
-            quarantined.append((path, q))
+            quarantined.append((path, q + " (name and folder alone)"))
             continue
         unwrap_envelope(path)                    # before the sha, the cache key and the archive skip
         in_archive_dir = os.path.abspath(d) == os.path.abspath(ARCHIVE)
@@ -695,6 +693,31 @@ for d, name in candidates():
             if h in arch_sha:  # already archived, byte for byte
                 recycle_original(path, arch_sha[h])
                 continue
+        # THE screen, and the only one that reads the document.  It sits above every path that
+        # follows -- the cached verdicts, identify()'s "check and rename by hand" problem, the
+        # unplaced note, and the filing itself -- because adding it per-branch left two of them
+        # uncovered, and both were the hand-rename route (CodeRabbit, PR #846).  On 2026-11-21
+        # five manuscripts under review were in Downloads and one WAS reported as "rename it
+        # PMID_<pmid>.pdf by hand".  A card can become public, so this has to refuse (Shafer).
+        try:
+            page1, unreadable = pdf_text(path, last=1, strict=True), False
+        except Exception:
+            page1, unreadable = "", True     # pdftotext failed: not "no text", but "not read"
+        q = in_review_reason(path, name=name, text=page1 or None)
+        if q:
+            quarantined.append((path, q if page1 else q + " (name and folder alone)"))
+            cache.pop(key, None)             # never cache a refusal: judge it again next run
+            continue
+        if unreadable:
+            # FAIL CLOSED.  An empty extraction is a scan, which identify() already refuses and
+            # reports; a FAILED extraction is a document nothing has inspected, and filing one on
+            # the strength of its name is how a confidential copy named for a known PMID would
+            # get in (CodeRabbit, PR #846).
+            review.append((name, "its first page could not be read, so it could not be screened for "
+                                 "a manuscript under peer review: left where it is"))
+            cache.pop(key, None)
+            continue
+
         if key in cache and (cache[key].get("review") or "").startswith("no text layer"):
             continue  # scans are reported once, on first sight
         recent = not in_archive_dir and time.time() - st.st_mtime < REPORT_DAYS * 86400
@@ -728,16 +751,6 @@ for d, name in candidates():
             # again (a cached verdict with no review is skipped above); one with no likely reference is cached as
             # "unplaced" and counted from the cache on later runs, until it is filed, moved, or REPORT_DAYS old.
             if recent:
-                # The realistic way one gets in: renamed to something innocuous, so the name
-                # rule above says nothing, and not a stanpumpR reference, so it never reaches
-                # the filing check either -- it lands on the "needs a look" pile, which is the
-                # pile a session hand-renames to PMID_<n>.pdf (the paper-archive skill, step 4).
-                # unidentified_note() reads the PDF anyway, so page 1 is free here.
-                q = in_review_reason(path, name=name, text=pdf_text(path, last=1))
-                if q:
-                    quarantined.append((path, q))
-                    cache.pop(key, None)
-                    continue
                 note = unidentified_note(path)
                 if note.startswith(NOT_A_REFERENCE):
                     cache[key]["unplaced"] = note
@@ -745,15 +758,6 @@ for d, name in candidates():
                 else:
                     cache[key]["review"] = note
                     review.append((name, note))
-            continue
-        # Identified as a reference, so about to be filed: now the page is worth reading, which
-        # it was not for every PDF in Downloads on every run.  This is the belt to the name's
-        # braces -- a manuscript hand-named PMID_<n>.pdf, or one whose title matches a published
-        # paper, gets this far and is caught here by what the editorial system stamped on it.
-        q = in_review_reason(path, name=name, text=pdf_text(path, last=1))
-        if q:
-            quarantined.append((path, q))
-            cache.pop(key, None)                 # judge it again next run; never cache a refusal
             continue
         dst = os.path.join(ARCHIVE, r["file"])
         if os.path.exists(dst):

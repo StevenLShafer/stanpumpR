@@ -45,10 +45,12 @@ for n in names:
         try:
             body = io.open(tp, encoding="utf-8", errors="replace").read()[:PAGES]
         except OSError:
-            # A text file that cannot be read is a paper whose contents were never inspected,
-            # which is exactly the state this screen exists to refuse to pass over in silence.
-            no_text.append((n, "its extracted text could not be read"))
-            continue
+            # NOT `continue`: that skipped the name check as well, so a manuscript-number
+            # filename whose text file cannot be read produced no warning at all, and under
+            # --quiet the audit exited 0 having inspected nothing (CodeRabbit, PR #846).  The
+            # read failure is reported AND the name is still judged, on body = None.
+            no_text.append((n, "its extracted text could not be read, so only its name was judged"))
+            body = None
     else:
         no_text.append((n, "it has no extracted text, so only its name was judged"))
     r = in_review_reason(os.path.join(ARCH, n), text=body)
