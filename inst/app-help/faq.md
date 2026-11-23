@@ -64,7 +64,7 @@ Sending mail needs credentials in the server's `config.yml`. The public app has 
 
 ## The route or dose unit I need is not offered
 
-Each drug offers the routes its model was fitted to and the dose units of its FDA label. A route the label allows but no model describes is named on the drug's page. If you need a route stanpumpR does not offer, please contact Steven Shafer (steven.shafer@stanford.edu). For a one-time simulation in the meantime, a published pharmacokinetic study of that route can often be uploaded to the **Single Paper Review** tab, which reads its model and simulates it.
+Each drug offers the routes its model was fitted to, and the dose units of its FDA label and of clinical practice (a drug dosed per m2 in studies offers mg/m2 even where its label doses per kg). A route the label allows but no model describes is named on the drug's page. If you need a route stanpumpR does not offer, please contact Steven Shafer (steven.shafer@stanford.edu). For a one-time simulation in the meantime, a published pharmacokinetic study of that route can often be uploaded to the **Single Paper Review** tab, which reads its model and simulates it.
 
 ## I found an error in a model
 

@@ -77,6 +77,14 @@ test_that("every chemotherapy drug labelled per m2 offers a per-m2 unit", {
     u <- chemo$Units[[match(drug, chemo$Drug)]]
     expect_true(any(isBsaUnit(u)), info = drug)
   }
+  # Inclusive of practice (Shafer, 2026-11-23): every intravenous one offers
+  # per-kg and per-m2 doses and rates, whatever its label says.
+  for (i in seq_len(nrow(chemo))) {
+    u <- chemo$Units[[i]]
+    if (any(u %in% c("mg", "mg/hr")))
+      expect_true(all(c("mg/kg", "mg/kg/hr", "mg/m2", "mg/m2/hr") %in% u),
+                  info = chemo$Drug[i])
+  }
   # Every unit a chemotherapy drug offers is one the dose table accepts.
   expect_true(all(unlist(chemo$Units) %in% c(allUnits, scheduledUnits)))
 })
