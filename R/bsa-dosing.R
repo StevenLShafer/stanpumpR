@@ -10,10 +10,13 @@
 # Body surface area is Mosteller's, sqrt(weight x height / 3600) (Mosteller
 # RD, N Engl J Med 1987;317:1098), from the patient's own weight and height,
 # as an oncology pharmacy computes it.  The FDA labels of the library's
-# chemotherapy drugs dose per m2 without naming a formula; Mosteller is the
-# one most order sets use, and agrees with Du Bois's to within a few percent
-# in adults.  The choice is recorded as a [decision] for Shafer.  (Claude
-# Code, 2026-11-23, at the request of Steven L. Shafer.)
+# chemotherapy drugs dose per m2 without naming a formula.  Mosteller is
+# Shafer's decision (2026-11-23): it is the best validated, where Du Bois and
+# Du Bois (1916), the formula many older trials used, was derived in nine
+# subjects and does not hold in obese patients.  Do not change it without
+# reopening that decision.  The models whose fitted covariate is Du Bois BSA
+# (bsaDuBois(): morphine, pregabalin, fosinopril) keep it, being as fitted.
+# (Claude Code, 2026-11-23, at the request of Steven L. Shafer.)
 
 #' Is a dose unit per square metre of body surface area?
 #'
