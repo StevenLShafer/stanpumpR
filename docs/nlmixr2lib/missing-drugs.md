@@ -9,7 +9,7 @@ Components that are given only in a combination product are listed apart, from
 `docs/library-expansion/combination-only.csv`: they are not drugs of their own in stanpumpR.
 Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 
-## Candidates (1047)
+## Candidates (1048)
 
 | drug | models | largestStudyN | largestStudy | mentionedIn |
 |---|---|---|---|---|
@@ -78,6 +78,7 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | fremanezumab |  3 |   2546 | FiedlerKelly_2019_fremanezumab |  |
 | pegasparaginase |  7 |   2545 | Wurthwein_2021_pegasparaginase |  |
 | sodiumzirconiumcyclosilicate |  2 |   2369 | Penland_2024_sodiumZirconiumCyclosilicate |  |
+| ritonavir |  7 |   2348 | Mensing_2017_ritonavir |  |
 | abrocitinib |  4 |   2333 | Wojciechowski_2022_abrocitinib_platelets |  |
 | avelumab |  2 |   2315 | Masters_2022_avelumab |  |
 | etrolizumab |  8 |   2312 | Moein_2025_etrolizumab |  |
@@ -1061,7 +1062,7 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | xzp5610 |  1 |      0 | Zhang_2024_XZP5610 |  |
 | zika |  1 |      0 | PiresdeMello_2018_zika_FAV_HFIM |  |
 
-## Combination-only components (22)
+## Combination-only components (21)
 
 `not_included`: no single-ingredient US product, so not a drug of its own. `decision`: labelled alone but useful only with another drug; Shafer decides.
 
@@ -1073,7 +1074,6 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | dasabuvir | not_included |  1 |  2348 | Mensing_2017_dasabuvir |
 | ombitasvir | not_included |  1 |  2348 | Mensing_2017_ombitasvir |
 | paritaprevir | not_included |  1 |  2348 | Mensing_2017_paritaprevir |
-| ritonavir | decision |  7 |  2348 | Mensing_2017_ritonavir |
 | lumefantrine | not_included | 15 |  1347 | Kloprogge_2018_lumefantrine |
 | nirmatrelvir | not_included |  3 |  1237 | Chan_2023_nirmatrelvir |
 | relebactam | not_included |  2 |  1197 | Patel_2022_relebactam |
@@ -1086,6 +1086,6 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | lopinavir | not_included | 11 |   375 | Schipani_2012_lopinavir |
 | durlobactam | not_included |  1 |   162 | Abouelhassan_2025_durlobactam |
 | artemether | not_included |  7 |    89 | Hoglund_2015_artemether |
-| cobicistat | decision |  1 |    66 | Overbeek_2025_cobicistat |
+| cobicistat | not_included |  1 |    66 | Overbeek_2025_cobicistat |
 | dihydroartemisinin | not_included |  2 |    48 | Tarning_2012_dihydroartemisinin |
 | grazoprevir | not_included |  1 |     0 | Yoshikado_2025_grazoprevir_pbpk |

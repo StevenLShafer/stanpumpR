@@ -442,7 +442,10 @@ comboNames <- data.frame(
   status = rep(combo$status, lengths(strsplit(combo$nlmixr2libNames, ";"))),
   stringsAsFactors = FALSE)
 candidateDrugs$combinationOnly <- comboNames$status[match(candidateDrugs$drug, comboNames$name)]
-candidateDrugs$combinationOnly[is.na(candidateDrugs$combinationOnly)] <- ""
+# A component the register keeps as a drug of its own (ritonavir, 2026-11-23)
+# is a candidate like any other.
+candidateDrugs$combinationOnly[is.na(candidateDrugs$combinationOnly) |
+                                 candidateDrugs$combinationOnly == "included"] <- ""
 
 # ---- write ---------------------------------------------------------------------
 

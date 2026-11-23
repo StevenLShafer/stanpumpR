@@ -42,6 +42,7 @@ Antivirals,Kaletra,lopinavir,2,planned,"Lopinavir/ritonavir, named Kaletra on 20
 Antivirals,maraviroc,maraviroc,2,planned,
 Antivirals,remdesivir,remdesivir,2,planned,"COVID-19; its nucleoside metabolite GS-441524."
 Antivirals,Paxlovid,nirmatrelvir,2,planned,"Nirmatrelvir/ritonavir, named Paxlovid on 2026-11-23 by the combination-only rule: nirmatrelvir is given only with ritonavir, so its curve is labelled nirmatrelvir. The nlmixr2lib ritonavir models are of ritonavir boosting other drugs (HCV, HIV) and are not searched for Paxlovid."
+Antivirals,ritonavir,ritonavir,2,planned,"Norvir. Kept as a drug of its own by Steven L. Shafer, 2026-11-23: ""I would leave ritonavir in as a model, because the pharmacokinetics of CYP3A4 inhibition are interesting."" Though given today almost only as a booster (Kaletra, Paxlovid, boosted darunavir and atazanavir), it is labelled alone. Its own disposition is nonlinear (it inhibits and induces its own CYP3A4 metabolism), which a source must describe. nlmixr2lib holds seven ritonavir models, all fitted in patients taking it as a booster (the largest Mensing 2017, 2,348 adults with hepatitis C on paritaprevir/ritonavir); whether a pick describes ritonavir's own time-dependent disposition is to be read."
 Antivirals,molnupiravir,molnupiravir,2,planned,
 Antivirals,oseltamivir,oseltamivir,2,planned,"Prodrug; oseltamivir carboxylate is the active moiety."
 Antivirals,baloxavir,baloxavir,2,planned,
