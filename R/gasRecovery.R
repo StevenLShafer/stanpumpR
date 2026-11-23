@@ -86,6 +86,18 @@
 #   * Nitrous oxide: 10%, not age-adjusted.  It comes off fast enough that the
 #     number is not clinically important.
 # All are editable in the Drug Thresholds dialog.
+#
+# [decision] for Shafer, asked 2026-11-23 (ChatGPT's gas-engine audit, C-01):
+# the default for a volatile agent is a tenth of its MAC and follows age, but
+# body temperature lowers MAC and the threshold is held as a tension, by the
+# decision of 2026-11-16 that typed thresholds do not move (R/physiology.R).
+# So at 32 C the default 0.21% sevoflurane is 0.13 of the patient's MAC, not
+# 0.1: in a 70 kg 40-year-old after 30 minutes at 2%, the vessel-rich group
+# falls to it in 10.33 minutes, against 11.82 to a tenth of the cooled MAC
+# (0.162%), and 9.94 at 37 C.  The question is whether the DEFAULT should be
+# stored as a fraction of MAC, resolved at the temperature in force, while a
+# tension the user types stays a tension; that would need the dialog to know
+# which it holds.  Unchanged until he decides.
 # -----------------------------------------------------------------------------
 
 # Default threshold for the MAC series, in multiples of MAC.

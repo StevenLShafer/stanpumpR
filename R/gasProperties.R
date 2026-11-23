@@ -6,8 +6,14 @@
 #
 # Structure and parameter values follow the GasMan(R) model of James H. Philip
 # as described in the peer-reviewed literature (Philip is a co-author of the
-# first reference below).  GasMan itself is closed source; nothing here is
-# derived from its code.
+# first reference below).  GasMan's source is published under the GPL-3.0 at
+# github.com/rasman/gasmanonline (its API, and its desktop and web
+# application; commit d3a2dd3 was the one compared).  The values here are the
+# literature's; they agree with that source's gasman.ini
+# (inst/validation/VALIDATION.md), and the cardiac output and ventilation
+# scaling are read from its GasDoc.cpp, as noted in getGasBody().  Until
+# 2026-11-23 this said GasMan was closed source (ChatGPT's gas-engine audit of
+# 2026-11-23).
 #
 #   Weber J, Schmidt J, Wirth S, Schumann S, Philip JH, Eberhart LHJ.
 #   Context-sensitive decrement times for inhaled anesthetics in obese patients
@@ -84,6 +90,23 @@ getGasProperties <- function()
     # figure, recorded as it stands and flagged below rather than corrected or
     # omitted: the table should say what GasMan says.  It is inert here because
     # nitrogen is not summed into MAC.
+    #
+    # [decision] for Shafer, asked 2026-11-23 (ChatGPT's gas-engine audit,
+    # B-02): these are GasMan's values, and they are the US labels' too
+    # (Ultane: sevoflurane 2.1% at 40; Forane: isoflurane 1.15% at 31-55;
+    # Suprane: desflurane 6.0% at 45), but the age slope applied to them is
+    # Mapleson 1996's (macForAge()), whose own global values at 40 are
+    # sevoflurane 1.80, isoflurane 1.17, desflurane 6.6 and nitrous oxide 104
+    # (Br J Anaesth 76:179-185, abstract and Table 2;
+    # papers/digests/PMID_8777094.md).  Adopting Mapleson's four would make
+    # the slope and the intercepts one fit and raise the MAC-equivalents of a
+    # given sevoflurane tension by 16.7% (isoflurane -6.0%, desflurane -9.1%,
+    # nitrous oxide +5.8%), moving the band, the default thresholds
+    # (drugDefaults_global.csv endCe) and the summed MAC with them; the
+    # uptake does not depend on MAC.  The labels predate Mapleson (Forane
+    # 1979, Suprane 1992, Ultane 1995), which the AGENTS.md rule on labels
+    # bears on.  The GasMan baseline would keep GasMan's values either way.
+    # Unchanged until he decides.
     MAC40 = c(110, 2.1, 1.1, 6.0, 200, NA),
 
     # Whether the agent contributes to the summed MAC.  gasman.ini gives
