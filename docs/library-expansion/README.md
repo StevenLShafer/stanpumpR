@@ -16,7 +16,8 @@ The list will be revisited every week or so. Each drug is still added the ordina
 
 | File | What it is | Edited by |
 |---|---|---|
-| `plan.csv` | One row per planned drug. Gives its category, the names nlmixr2lib files it under, priority, `status` and notes (product, dose basis, US approval). `status` is `planned`, `in_progress`, `blocked`, `done`, or `library_change` for a change to a drug the library already has, which needs no paper and which the candidates script and the weekly routine leave alone. | Hand. The weekly routine updates `status`. |
+| `combination-only.csv` | One row per component given only in a combination product (Steven L. Shafer, 2026-11-18 and 2026-11-23: "Clavulanate isn't given as a drug by itself, so it should not be included in stanpumpR"). Gives its role, the US products that carry it, whether DailyMed has a single-ingredient label, and `status`: `not_included`, or `decision` for a booster labelled alone (cobicistat, ritonavir). | Hand, checked against DailyMed. The cross-check reads it to set apart these components in `docs/nlmixr2lib/missing-drugs.md`. |
+| `plan.csv` | One row per planned drug. Gives its category, the names nlmixr2lib files it under, priority, `status` and notes (product, dose basis, US approval). `status` is `planned`, `in_progress`, `blocked`, `done`, `library_change` for a change to a drug the library already has, which needs no paper, or `not_included` for a drug decided against (a component given only in a combination with no US product, as piperaquine; `combination-only.csv`). The candidates script and the weekly routine leave the last two alone. | Hand. The weekly routine updates `status`. |
 | `candidates.csv` | Every nlmixr2lib model of every planned drug, ranked by study size. `pick` marks the papers to get first: the largest study, and the most recent if that is another paper. | `data-raw/libraryExpansionCandidates.R` |
 | `outpatient-leads.csv` | The papers and FDA documents ChatGPT's report gave for each outpatient drug, one row per lead, with the report's evidence letter (P population fit, C compartmental, D descriptive, R FDA review or label) and what was checked. For a drug nlmixr2lib does not model, these are the papers to get. | Hand, from the report. |
 | `archive-status.csv` | For each pick, and each lead of a drug nlmixr2lib does not model: its PMID and PMC ID (from PubMed's ID converter, or a PubMed search by DOI for a paper not in PMC), and whether it is in the stanpumpR paper archive (a Drive search by file name). | The weekly routine, or by hand. |
@@ -65,7 +66,7 @@ The report is a lead, not a source, like any other model's reading (AGENTS.md): 
 - **114 papers arrived** in the archive on 2026-11-18, all under `PMID_` names: 111 picks and 3 leads. **106 of the 153 picks are now in the archive**, covering 85 drugs. None arrived under a `DOI_` name.
 - **Tazobactam and imipenem**, the first two drugs in plan order, were taken up. Both are `blocked`. `plan.csv` gives the numbers read and the reasons:
   - **Tazobactam:** its pick, Zhang 2021, is a *ceftolozane*-tazobactam fit. Whether it could stand for Zosyn's tazobactam, and the dose units, were put to Steven; he answered the same day (*Combination products* below).
-  - **Imipenem:** its pick, Patel 2022, is read. Its Supplementary Methods (the Cockcroft-Gault weight) and the sources the antibiotic band needs (an imipenem MBC/MIC ratio and a plain-imipenem *P. aeruginosa* MIC) are still to get. One decision is Steven's: the model's volumes and clearance change with pneumonia and with ventilation, and stanpumpR has no infection field, so which state is plotted, or whether the Patient Profile gains one. Ceftolozane/tazobactam has the same question.
+  - **Imipenem:** its pick, Patel 2022, is read. Its Supplementary Methods (the Cockcroft-Gault weight) and the sources the antibiotic band needs (an imipenem MBC/MIC ratio and a plain-imipenem *P. aeruginosa* MIC) are still to get. The model's volumes and clearance change with pneumonia and with ventilation, and stanpumpR has no infection field. Steven decided on 2026-11-23: "Add an infection field. However, that should be a separate project." Imipenem and Zerbaxa wait for it.
 
 ### Weekly run, 2026-11-19
 
@@ -90,7 +91,14 @@ The report is a lead, not a source, like any other model's reading (AGENTS.md): 
 - **Zerbaxa** (ceftolozane/tazobactam): g of the combined product for adults (1.5 g = 1 g ceftolozane + 0.5 g tazobactam; 3 g for HABP/VABP), mg/kg of the combined product for children (30, 60 and 75 mg/kg). A new drug, from Zhang 2021's ceftolozane model; the curve is labelled ceftolozane, as Zosyn's is piperacillin.
 - **Avycaz** (ceftazidime/avibactam), by the same rule, replaces the planned avibactam; its curve is labelled ceftazidime.
 
-A brand name is a valid R name (MEGX and MDMA are drugs already), so Zosyn needs no display name. "The PK should be labelled piperacillin": the drug is Zosyn and its curve is labelled piperacillin. Renaming the drug piperacillin leaves links that name it to be mapped. Steven named the other two the same way the same day: "Use Zerbaxa and Avycaz too." Still open for Steven: the infection state above.
+A brand name is a valid R name (MEGX and MDMA are drugs already), so Zosyn needs no display name. "The PK should be labelled piperacillin": the drug is Zosyn and its curve is labelled piperacillin. Renaming the drug piperacillin leaves links that name it to be mapped. Steven named the other two the same way the same day: "Use Zerbaxa and Avycaz too." Both wait for the infection field (decided 2026-11-23, a separate project).
+
+On 2026-11-23 Steven applied the rule to the rest of the plan ("Augmentin is a good example. Clavulanate isn't given as a drug by itself, so it should not be included in stanpumpR") and asked for such components to be recorded explicitly: `combination-only.csv` lists them, checked against DailyMed. The plan's rows follow it:
+- **Augmentin** (amoxicillin/clavulanate) replaces the amoxicillin/clavulanate row; its curve is amoxicillin, clavulanate not plotted.
+- **Coartem** (artemether/lumefantrine) replaces the artemether and lumefantrine rows; which analyte its curve shows is a `[decision]` on the row.
+- **Kaletra** (lopinavir/ritonavir) and **Paxlovid** (nirmatrelvir/ritonavir) replace the lopinavir and nirmatrelvir rows; their curves are lopinavir and nirmatrelvir.
+- **Piperaquine** is `not_included`: its only product, Eurartesim (with dihydroartemisinin), is not US-approved.
+- Cobicistat and ritonavir are labelled alone (Tybost, Norvir) though given almost only as boosters: `decision` in `combination-only.csv`, for Steven.
 
 ## Downloading
 
