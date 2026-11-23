@@ -490,8 +490,8 @@ alveolar and brain tensions for each agent, plus a **MAC equivalents** panel.
 Nitrogen is carried implicitly and washes out; you do not enter it.
 
 Two meanings of "MAC" are kept apart. *MAC* is a property of an agent: the
-alveolar concentration at which half of patients do not move to incision, 2.1%
-for sevoflurane at age 40, lower in the old and higher in the young. It does
+alveolar concentration at which half of patients do not move to incision, 1.8%
+for sevoflurane at age 40 (Mapleson 1996; GasMan and the US label give 2.1%), lower in the old and higher in the young. It does
 not change during an anaesthetic. What changes is the patient's alveolar
 concentration *as a multiple of that MAC* — the MAC equivalents panel, summed
 over the potent agents present. "1 MAC of sevoflurane" means an alveolar
@@ -604,6 +604,7 @@ GasMan option, off by default, with no counterpart here:
 | Breathing circuit | Defaults to "Semi-closed": the whole circuit is one well-mixed 8 L volume, so some exhaled gas is rebreathed at any fresh gas flow, however high | The "Ideal" circuit, which GasMan also offers: no rebreathing once fresh gas flow reaches the minute ventilation plus the gas being taken up (see the carbon dioxide paragraph below); below that, the shortfall is made up with exhaled gas. No circuit volume, so no lag | It is how a circle system behaves. The mixing box has no threshold near fresh gas flow = ventilation and understates the inspired concentration at moderate and high flows |
 | Ventilation and dead space | The ventilation setting is alveolar ventilation; there is no dead space | The ventilation setting is minute ventilation, 30% of it dead space. The rebreathing threshold is therefore set by the minute ventilation (plus uptake), not the alveolar ventilation | Minute ventilation is what is set on a ventilator and read from a monitor |
 | Oxygen consumption and gas volume | No oxygen, so no volume is lost to it | Oxygen consumed (3.5 mL/kg/min) shrinks the gas volume, as uptake of an anaesthetic does. Carbon dioxide replaces most of it in the alveoli and is then removed by the absorber from whatever exhaled gas is rebreathed | Without it the gas fractions do not add up at low flows. With 0.3 L/min of oxygen and 1 L/min of nitrous oxide, what leaves the circuit is the 1.3 L/min delivered less the 0.21 L/min consumed: 92% nitrous oxide and 8% oxygen, not the 77% and 23% delivered |
+| MAC at age 40 | Its own values: sevoflurane 2.1, isoflurane 1.1, desflurane 6.0, nitrous oxide 110% (also the US labels') | Mapleson's 1996 meta-analysis: 1.80, 1.17, 6.6 and 104% (since 2026-11-23) | The age relation is Mapleson's, and his values at 40 come from the same fit; validated against GasMan first, the program now follows more recent research. MAC enters no uptake |
 | MAC and age | One MAC per agent, no age term | MAC adjusted for the patient's age: MAC(age) = MAC40 x 10^(-0.00269 x (age - 40)) (Mapleson) | MAC falls about 6% per decade, and the patient's age is already an input |
 | MAC across agents | Each agent reported separately | A single MAC-equivalents series, the sum of each potent agent's alveolar concentration as a fraction of its own MAC | Agents given together are additive, and one number is what is titrated to |
 | Oxygen | Not modelled | Modelled in the circuit and alveoli, with metabolic consumption of 3.5 mL/kg/min; cannot go below zero | The inspired and alveolar oxygen matter whatever else is given, and a hypoxic mixture should be visible |

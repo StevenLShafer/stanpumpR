@@ -19,13 +19,13 @@ The capacity of a tissue for a gas is its volume times its tissue:gas partition 
 
 | Gas | Blood:gas | Brain:gas | Muscle:gas | Fat:gas | MAC at 40 (%) |
 |---|---|---|---|---|---|
-| nitrous oxide | 0.47 | 0.42 | 0.54 | 1.08 | 110 |
-| sevoflurane | 0.65 | 1.1 | 2.4 | 34 | 2.1 |
-| isoflurane | 1.3 | 2.1 | 4.5 | 70 | 1.1 |
-| desflurane | 0.42 | 0.54 | 0.97 | 13 | 6.0 |
+| nitrous oxide | 0.47 | 0.42 | 0.54 | 1.08 | 104 |
+| sevoflurane | 0.65 | 1.1 | 2.4 | 34 | 1.80 |
+| isoflurane | 1.3 | 2.1 | 4.5 | 70 | 1.17 |
+| desflurane | 0.42 | 0.54 | 0.97 | 13 | 6.6 |
 | nitrogen | 0.014 | 0.010 | 0.014 | 0.070 | (200, flagged) |
 
-Nitrogen's MAC of 200 per cent is GasMan's own figure, carried as it stands and flagged: the estimate of Koblin, Eger and colleagues, 110 atmospheres in rats (*Anesth Analg* 1998;87:419-424), is about 55 times higher, and nitrogen is not summed into MAC, so the value is inert. Each gas's page under [Drug library](help:drugs/index) shows these values.
+The partition coefficients are GasMan's. The MACs at 40 are Mapleson's (*Br J Anaesth* 1996;76:179-185), the meta-analysis whose age relation the engine applies, adopted on 23 November 2026: the program was validated against GasMan first and has since moved to more recent research. GasMan's own, which the US labels share, were 110, 2.1, 1.1 and 6.0 per cent; MAC enters no uptake, so that validation is unchanged. Nitrogen's MAC of 200 per cent is GasMan's own figure, carried as it stands and flagged: the estimate of Koblin, Eger and colleagues, 110 atmospheres in rats (*Anesth Analg* 1998;87:419-424), is about 55 times higher, and nitrogen is not summed into MAC, so the value is inert. Each gas's page under [Drug library](help:drugs/index) shows these values.
 
 ## Equations
 
@@ -72,7 +72,7 @@ Until 23 November 2026 every step was the plot length divided by 600, so a day's
 
 ## MAC
 
-MAC is age-adjusted by the Mapleson relation, MAC(age) = MAC40 × 10^(−0.00269 (age − 40)), about 6 per cent per decade. The MAC-equivalents series is the sum over potent agents of alveolar tension divided by the agent's age-adjusted MAC. Nitrous oxide is included.
+MAC is age-adjusted by the Mapleson relation, MAC(age) = MAC40 × 10^(−0.00269 (age − 40)), about 6 per cent per decade, with MAC40 Mapleson's own values from the same meta-analysis (the table above). The MAC-equivalents series is the sum over potent agents of alveolar tension divided by the agent's age-adjusted MAC. Nitrous oxide is included.
 
 ## Validation
 

@@ -81,8 +81,10 @@
 #   * MAC: 0.1.
 #   * Each volatile agent: 0.1 x its age-adjusted MAC.  Stored in
 #     drugDefaults_global.csv as endCe at the reference age of 40 -- sevoflurane
-#     0.21, isoflurane 0.11, desflurane 0.6 -- and adjusted for the patient's
-#     age when used, by gasThresholdForAge().
+#     0.18, isoflurane 0.117, desflurane 0.66, a tenth of Mapleson's MAC at 40
+#     (R/gasProperties.R; until 2026-11-23 a tenth of GasMan's: 0.21, 0.11,
+#     0.6) -- and adjusted for the patient's age when used, by
+#     gasThresholdForAge().
 #   * Nitrous oxide: 10%, not age-adjusted.  It comes off fast enough that the
 #     number is not clinically important.
 # All are editable in the Drug Thresholds dialog.
@@ -91,10 +93,10 @@
 # the default for a volatile agent is a tenth of its MAC and follows age, but
 # body temperature lowers MAC and the threshold is held as a tension, by the
 # decision of 2026-11-16 that typed thresholds do not move (R/physiology.R).
-# So at 32 C the default 0.21% sevoflurane is 0.13 of the patient's MAC, not
+# So at 32 C the default 0.18% sevoflurane is 0.13 of the patient's MAC, not
 # 0.1: in a 70 kg 40-year-old after 30 minutes at 2%, the vessel-rich group
-# falls to it in 10.33 minutes, against 11.82 to a tenth of the cooled MAC
-# (0.162%), and 9.94 at 37 C.  The question is whether the DEFAULT should be
+# falls to it in 11.19 minutes, against 12.76 to a tenth of the cooled MAC
+# (0.138%), and 10.74 at 37 C.  The question is whether the DEFAULT should be
 # stored as a fraction of MAC, resolved at the temperature in force, while a
 # tension the user types stays a tension; that would need the dialog to know
 # which it holds.  Unchanged until he decides.

@@ -86,28 +86,22 @@ getGasProperties <- function()
     tg_muscle = c(0.54, 2.4, 4.5, 0.97, 0.014, NA),
     tg_fat    = c(1.08, 34,  70,  13,   0.070, NA),
 
-    # MAC, % of 1 atm, at the reference age.  Nitrogen's 200 is GasMan's own
-    # figure, recorded as it stands and flagged below rather than corrected or
-    # omitted: the table should say what GasMan says.  It is inert here because
+    # MAC, % of 1 atm, at the reference age of 40: Mapleson 1996's global
+    # values (Br J Anaesth 76:179-185, abstract and Table 2;
+    # papers/digests/PMID_8777094.md), the same meta-analysis whose age slope
+    # macForAge() applies, so slope and intercepts are one fit.  Shafer's
+    # decision of 2026-11-23, from ChatGPT's gas-engine audit (B-02): "We
+    # validated against GasMan initially, but are now moving to more recent
+    # research."  Until then these were GasMan's (GASMAN_MAC40 below), which
+    # are also the US labels' (Ultane 2.1% at 40, Forane 1.15% at 31-55,
+    # Suprane 6.0% at 45); at a given tension Mapleson's raise sevoflurane's
+    # MAC-equivalents by 16.7% and nitrous oxide's by 5.8%, and lower
+    # isoflurane's by 6.0% and desflurane's by 9.1%.  MAC enters no uptake,
+    # so the GasMan validation, which compares tensions, is untouched.
+    # Nitrogen's 200 is GasMan's own figure, recorded as it stands and
+    # flagged below rather than corrected or omitted; it is inert because
     # nitrogen is not summed into MAC.
-    #
-    # [decision] for Shafer, asked 2026-11-23 (ChatGPT's gas-engine audit,
-    # B-02): these are GasMan's values, and they are the US labels' too
-    # (Ultane: sevoflurane 2.1% at 40; Forane: isoflurane 1.15% at 31-55;
-    # Suprane: desflurane 6.0% at 45), but the age slope applied to them is
-    # Mapleson 1996's (macForAge()), whose own global values at 40 are
-    # sevoflurane 1.80, isoflurane 1.17, desflurane 6.6 and nitrous oxide 104
-    # (Br J Anaesth 76:179-185, abstract and Table 2;
-    # papers/digests/PMID_8777094.md).  Adopting Mapleson's four would make
-    # the slope and the intercepts one fit and raise the MAC-equivalents of a
-    # given sevoflurane tension by 16.7% (isoflurane -6.0%, desflurane -9.1%,
-    # nitrous oxide +5.8%), moving the band, the default thresholds
-    # (drugDefaults_global.csv endCe) and the summed MAC with them; the
-    # uptake does not depend on MAC.  The labels predate Mapleson (Forane
-    # 1979, Suprane 1992, Ultane 1995), which the AGENTS.md rule on labels
-    # bears on.  The GasMan baseline would keep GasMan's values either way.
-    # Unchanged until he decides.
-    MAC40 = c(110, 2.1, 1.1, 6.0, 200, NA),
+    MAC40 = c(104, 1.80, 1.17, 6.6, 200, NA),
 
     # Whether the agent contributes to the summed MAC.  gasman.ini gives
     # nitrogen a MAC of 200, presumably for hyperbaric completeness, but
@@ -130,6 +124,17 @@ getGasProperties <- function()
     stringsAsFactors = FALSE
   )
 }
+
+
+#' GasMan's MAC at 40, superseded
+#'
+#' The MAC of each potent agent in GasMan's gasman.ini, which stanpumpR used
+#' until 2026-11-23, when Shafer moved to Mapleson 1996's (getGasProperties()
+#' MAC40).  Kept as the record of what the engine was validated with, and for
+#' a comparison with GasMan's own MAC output.
+#' @noRd
+GASMAN_MAC40 <- c(nitrousOxide = 110, sevoflurane = 2.1, isoflurane = 1.1,
+                  desflurane = 6.0)
 
 
 #' Parameters whose provenance is known to be wrong

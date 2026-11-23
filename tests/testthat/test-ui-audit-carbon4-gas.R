@@ -231,7 +231,9 @@ test_that("H9.2: the time until threshold is not interpolated across a change of
                                target = carbon4MacTarget(w, 40), threshold = GAS_MAC_THRESHOLD,
                                maxPoints = length(w$Time))
   expect_equal(raw[at], c(9.2487904421, 10.1615432004, 11.9260224320), tolerance = 1e-10)
-  expect_equal(rawMac[at], c(4.9887751535, 5.9116560370, 7.7032597883), tolerance = 1e-10)
+  # (MAC's: 4.9887751535, 5.9116560370 and 7.7032597883 on the graded grid
+  # with GasMan's MAC at 40, before Mapleson's was adopted the same day)
+  expect_equal(rawMac[at], c(5.7624362094, 6.8594149330, 9.1592082535), tolerance = 1e-10)
   expect_equal(gasRecoveryTime(w, "sevoflurane", thr)[at[3]], raw[at[3]])
   expect_equal(macRecoveryTime(w, 40, GAS_MAC_THRESHOLD)[at[3]], rawMac[at[3]])
 })

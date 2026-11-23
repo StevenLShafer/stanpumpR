@@ -106,9 +106,9 @@ droperidolIM,ng,,,mg IM,"mg IM",#FFB74D,0,0,0,0,0,IV,Antipsychotics
 air,%,L/min,L/min,L/min,"L/min",#9E9E9E,0,0,0,0,0,gas,
 oxygen,%,L/min,L/min,L/min,"L/min",#2E7D32,0,0,0,0,0,gas,
 nitrousOxide,%,L/min,L/min,L/min,"L/min",#1E88E5,0,0,0,0,10,gas,Inhaled anesthetics
-sevoflurane,%,%,%,%,"%",#F9A825,0,0,0,0,0.21,gas,Inhaled anesthetics
-isoflurane,%,%,%,%,"%",#8E24AA,0,0,0,0,0.11,gas,Inhaled anesthetics
-desflurane,%,%,%,%,"%",#00897B,0,0,0,0,0.6,gas,Inhaled anesthetics
+sevoflurane,%,%,%,%,"%",#F9A825,0,0,0,0,0.18,gas,Inhaled anesthetics
+isoflurane,%,%,%,%,"%",#8E24AA,0,0,0,0,0.117,gas,Inhaled anesthetics
+desflurane,%,%,%,%,"%",#00897B,0,0,0,0,0.66,gas,Inhaled anesthetics
 ventilation,L/min,L/min,L/min,L/min,"L/min",#546E7A,0,0,0,0,0,gas,
 phenytoin,mcg,mg,mg/min,mg PO ER,"mg,mg/kg,mg/min,mg PO ER,mg PO liquid,mg PO tablet,mg PO ER qd,mg PO ER bid,mg PO ER tid,mg PO ER qam,mg PO ER qpm,mg PO liquid bid,mg PO liquid tid,mg PO tablet bid,mg PO tablet tid,mg PE,mg/kg PE,mg PE/min,mg PE IM,mg/kg PE IM",#2E7D32,10,20,15,0,0,IV,Antiseizure
 carbamazepine,mcg,,,mg PO bid,"mg PO,mg PO ER,mg PO bid,mg PO tid,mg PO qam,mg PO qpm,mg PO ER qd,mg PO ER bid",#00695C,4,12,8,0,0,IV,Antiseizure

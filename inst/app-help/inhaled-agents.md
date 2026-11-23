@@ -23,7 +23,7 @@ Both are in per cent of one atmosphere. An **oxygen** panel shows the alveolar o
 
 Two meanings of "MAC" are kept apart.
 
-**MAC** is a property of an agent: the alveolar concentration at which half of patients do not move to a surgical incision. For sevoflurane it is 2.1 per cent at age 40. It falls with age, by about 6 per cent per decade (the Mapleson relation), so it is 2.5 per cent at age 10 and 1.6 per cent at age 80. It does not change during an anesthetic.
+**MAC** is a property of an agent: the alveolar concentration at which half of patients do not move to a surgical incision. For sevoflurane it is 1.8 per cent at age 40, the value of Mapleson's 1996 meta-analysis of MAC and age (GasMan and the US label give 2.1 per cent; see [How stanpumpR differs from GasMan](help:models/gas-differences)). It falls with age, by about 6 per cent per decade (the same relation), so it is 2.2 per cent at age 10 and 1.4 per cent at age 80. It does not change during an anesthetic.
 
 The **MAC equivalents** panel shows the patient's alveolar concentration *as a multiple of that MAC*, summed over the potent agents present, including nitrous oxide. "1 MAC of sevoflurane" means an alveolar concentration of one MAC equivalent. Agents given together are treated as additive, and one number is what is titrated to.
 

@@ -32,7 +32,7 @@ registry value that the registry's own vocabulary defines a mistake (B-03's
 | A-03 | enhancement | Confirmed to the digit | Fixed: graded sub-steps |
 | A-04 | evidence gap | Confirmed | Fixed: GasMan's C++ output frozen as a fixture and asserted |
 | B-01 | evidence gap | Agreed | Nothing changed; a proposal |
-| B-02 | reopens decision | Values confirmed | `[decision]` for Dr Shafer, at `MAC40` |
+| B-02 | reopens decision | Values confirmed | Decided by Dr Shafer, 2026-11-23: Mapleson's values adopted |
 | B-03 | evidence gap | Registry text: confirmed in part, plus one new error | Registry corrected; the MAC proposals are for Dr Shafer |
 | C-01 | reopens decision | Numbers confirmed | `[decision]` for Dr Shafer, in `R/gasRecovery.R` |
 | C-02 | defect | Confirmed, both parts | Fixed: the end-of-plot event; the band at the patient's age |
@@ -160,10 +160,17 @@ gases would be its own decision for Dr Shafer.
 The current values (sevoflurane 2.1, isoflurane 1.1, desflurane 6.0, nitrous
 oxide 110) are GasMan's and the US labels' (Ultane, Forane, Suprane, read
 2026-11-23). The age slope is Mapleson 1996's, whose own values at 40 are 1.80,
-1.17, 6.6 and 104 (confirmed by `papers/digests/PMID_8777094.md`). Recorded as a
-`[decision]` at `MAC40` in `R/gasProperties.R`, with the effect: +16.7% on the
-MAC-equivalents of a sevoflurane tension, and the band, the thresholds and the
-summed MAC with it.
+1.17, 6.6 and 104 (confirmed by `papers/digests/PMID_8777094.md`). Asked as a
+`[decision]` at `MAC40`, and decided by Dr Shafer the same day: "Use Mapleson
+1996 values. ... We validated against GasMan initially, but are now moving to
+more recent research." Done: `MAC40` is 104, 1.80, 1.17 and 6.6; the default
+thresholds a tenth of them (0.18, 0.117, 0.66); GasMan's values kept as
+`GASMAN_MAC40`; the change is recorded on the help pages (*How stanpumpR
+differs from GasMan*, the engine page, each agent's page) and in
+VALIDATION.md, and every scenario page's MAC figure recomputed. At a given
+tension sevoflurane reads 16.7% more MAC equivalents, isoflurane 6.0% fewer,
+desflurane 9.1% fewer and nitrous oxide 5.8% more; the tensions themselves do
+not change.
 
 ### B-03: pregnancy and infant MAC
 
@@ -189,7 +196,7 @@ summed MAC with it.
 
 Reproduced: at 32 C, 0.21% sevoflurane is 0.130 of the cooled MAC (1.615%), and
 the vessel-rich group falls to it in 10.33 minutes after 30 minutes at 2%,
-against 11.82 to a tenth of the cooled MAC and 9.94 at 37 C. The thresholds were
+against 11.82 to a tenth of the cooled MAC and 9.94 at 37 C (with GasMan's MAC; with Mapleson's, adopted the same day, 11.19 to the 0.18% default, 12.76 to 0.138%, and 10.74 at 37 C). The thresholds were
 decided on 2026-11-16 to be typed tensions that do not move; the question is
 whether the default should instead be a fraction of MAC resolved at the
 temperature in force. Recorded as a `[decision]` in the thresholds section of
@@ -247,7 +254,7 @@ concentration is still rising). *Fixed*: the comment.
 
 ## For Dr Shafer
 
-1. **B-02**: Mapleson's four MAC values at 40, or GasMan's and the labels'?
+1. **B-02**: decided 2026-11-23, Mapleson's values (above).
 2. **C-01**: the default threshold of a volatile agent as a fraction of the MAC
    in force at the patient's temperature, or a tension, as decided on
    2026-11-16?

@@ -686,3 +686,16 @@ the other way round: the finer run sits on the limit, and the difference is
 the scenarios' whole minutes, which are no longer all points of the graded
 grid and are read off it by linear interpolation. All are under the test's
 0.1%.
+
+### MAC at 40 is now Mapleson's, not GasMan's
+
+On Shafer's decision of the same day ("Use Mapleson 1996 values ... We
+validated against GasMan initially, but are now moving to more recent
+research"), `getGasProperties()$MAC40` is Mapleson's 1996 meta-analysis
+(nitrous oxide 104, sevoflurane 1.80, isoflurane 1.17, desflurane 6.6 per
+cent), whose age relation `macForAge()` already applied. GasMan's own (110,
+2.1, 1.1, 6.0) are kept as `GASMAN_MAC40`, and the standalone restatement
+keeps them in its own table. Nothing above changes: every comparison with
+GasMan is of tensions, and MAC enters no uptake. A comparison of the summed
+MAC series with GasMan's MAC output (point 2 of *Deliberate differences*,
+2026-10-05) must now divide by `GASMAN_MAC40`, not by the engine's MAC.

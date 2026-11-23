@@ -98,19 +98,19 @@ test_that("a physiology event at the end of the plot is taken there", {
 test_that("a volatile agent's band is the patient's MAC, at the patient's age", {
   props <- getGasProperties()
   expect_equal(gasTypicalBand("sevoflurane", props),
-               c(lower = 0.7 * 2.1, typical = 2.1, upper = 1.3 * 2.1))
+               c(lower = 0.7 * 1.8, typical = 1.8, upper = 1.3 * 1.8))
   b80 <- gasTypicalBand("sevoflurane", props, age = 80)
-  expect_equal(b80[["typical"]], macForAge(2.1, 80))
-  expect_equal(b80[["typical"]], 1.639152, tolerance = 1e-6)
+  expect_equal(b80[["typical"]], macForAge(1.8, 80))
+  expect_equal(b80[["typical"]], 1.404988, tolerance = 1e-6)
   # Oxygen and nitrous oxide keep their delivery ranges at any age
   expect_equal(gasTypicalBand("nitrousOxide", props, age = 80),
                c(lower = 50, typical = 60, upper = 70))
   d <- data.frame(Time = 0, Drug = c("oxygen", "sevoflurane", "ventilation"), Dose = c(6, 2, 6))
   e <- gasDrugEntries(simulateGases(d, age = 80, maximum = 30), d, maximum = 30, age = 80)
-  expect_equal(e$sevoflurane$typical, macForAge(2.1, 80))
+  expect_equal(e$sevoflurane$typical, macForAge(1.8, 80))
   # The band and the default threshold now follow age alike: the threshold
   # stays a tenth of the band's MAC
-  expect_equal(gasThresholdForAge("sevoflurane", 0.21, 80), 0.1 * b80[["typical"]],
+  expect_equal(gasThresholdForAge("sevoflurane", 0.18, 80), 0.1 * b80[["typical"]],
                tolerance = 1e-9)
 })
 

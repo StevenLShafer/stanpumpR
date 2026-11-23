@@ -1330,10 +1330,17 @@ helpGasPageHTML <- function(gas, row) {
                 helpFormatNumber(p$MAC40), if (isTRUE(p$potent)) "Yes" else "No"),
       stringsAsFactors = FALSE
     )
+    # MAC at 40 is Mapleson's since 2026-11-23 (R/gasProperties.R); GasMan's
+    # own is said beside it
+    gasmanMAC <- unname(GASMAN_MAC40[gas])
+    macNote <- if (isTRUE(p$potent) && length(gasmanMAC) == 1 && !is.na(gasmanMAC))
+      paste0(" MAC at 40 is the exception: it is Mapleson's (1996), the meta-analysis whose age relation is used below, ",
+             "adopted on 23 November 2026 as the program moved from GasMan to more recent research; GasMan's was ",
+             helpFormatNumber(gasmanMAC), "%. MAC enters no uptake, so the comparison with GasMan is unchanged.") else ""
     propsHTML <- paste0(
       helpH2("Physical properties"),
       "<p>These are GasMan\u00ae's values, carried unchanged so that the engine can be checked against GasMan; see ",
-      helpPageLink("models/gas-engine"), ".</p>",
+      helpPageLink("models/gas-engine"), ".", htmltools::htmlEscape(macNote), "</p>",
       helpTableHTML(tab)
     )
     if (isTRUE(p$flagged)) {
@@ -1350,7 +1357,8 @@ helpGasPageHTML <- function(gas, row) {
       )
       propsHTML <- paste0(propsHTML,
         helpH2("MAC and age"),
-        "<p>MAC falls about 6% per decade (Mapleson): MAC(age) = MAC\u2084\u2080 \u00d7 10<sup>\u22120.00269 (age \u2212 40)</sup>. ",
+        "<p>MAC falls about 6% per decade (Mapleson): MAC(age) = MAC\u2084\u2080 \u00d7 10<sup>\u22120.00269 (age \u2212 40)</sup>, at 37 \u00b0C (",
+        helpPageLink("models/physiology"), " gives its fall with body temperature). ",
         "The MAC-equivalents panel divides the alveolar concentration by the MAC at the patient's age.</p>",
         helpTableHTML(mac))
     }
