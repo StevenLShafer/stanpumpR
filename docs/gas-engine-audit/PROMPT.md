@@ -273,10 +273,10 @@ At present only opioids modify MAC, through a sigmoid in summed opioid effect-si
 **D2. The evidence, drug class by drug class.** Start from Hendrickx, Eger, Sonner and Shafer 2008 ("Is synergy the rule?") and Shafer, Hendrickx, Flood, Sonner and Eger 2008 ("Additivity versus synergy"), then the primary studies. Cover:
 
 - opioids, including the response-surface studies (Manyam 2006; Heyse 2012; Vereecke 2013; Hannivoort 2016)
-- propofol (Harris 2006; Schumacher 2009)
+- propofol (Harris 2006; Schumacher 2009; Luo 2010; Satsumae 2002)
 - etomidate
-- ketamine and S-ketamine (Hamp 2018)
-- benzodiazepines: midazolam (Melvin 1982; Inagaki 1993), diazepam (Perisho 1971), remimazolam if any data exist
+- ketamine and S-ketamine (Hamp 2018; Chen 2021, MAC-BAR; Xu 2025)
+- benzodiazepines: midazolam (Melvin 1982; Inagaki 1993), diazepam (Perisho 1971), remimazolam (Huang 2024)
 - dexmedetomidine and clonidine (Aantaa 1997; Fragen and Fitzgerald 1999)
 - intravenous lidocaine (Himes 1977)
 - nitrous oxide with the volatile agents
@@ -442,4 +442,152 @@ In your report, the section **Papers to add** lists every paper you needed that 
 
 On 2026-11-23, before this prompt was sent, the papers named above were looked for in stanpumpRPapers by PMID.
 
-<!-- ARCHIVE-CHECK -->
+### In stanpumpRPapers
+
+| ID | PMID | Paper | File |
+|---|---|---|---|
+| G01 | 3540162 | Philip JH. Gas Man: an example of goal oriented computer-assisted teaching which results in learning. Int J Clin Monit Comput 1986;3:165-73 | `PMID_3540162.pdf` |
+| G02 | 32067148 | Weber J, Schmidt J, Wirth S, Schumann S, Philip JH, Eberhart LHJ. Context-sensitive decrement times for inhaled anesthetics in obese patients explored with Gas Man. J Clin Monit Comput 2021;35:343-354 | `PMID_32067148.pdf` |
+| G03 | 16772041 | Hendrickx JFA, Lemmens HJM, Shafer SL. Do distribution volumes and clearances relate to tissue volumes and blood flows? A computer simulation. BMC Anesthesiol 2006;6:7 | `PMID_16772041.pdf` |
+| G55 | 8777094 | Mapleson WW. Effect of age on MAC in humans: a meta-analysis. Br J Anaesth 1996;76:179-185 | `PMID_8777094.pdf` |
+| G62 | 7943833 | Gin T, Chan MT. Decreased minimum alveolar concentration of isoflurane in pregnant humans. Anesthesiology 1994;81:829-832 | `PMID_7943833.pdf` |
+| G64 | 9706943 | Koblin DD, et al. Minimum alveolar concentrations of noble gases, nitrogen, and sulfur hexafluoride in rats. Anesth Analg 1998;87:419-424 | `PMID_9706943.pdf` |
+| G70 | 18633028 | Hendrickx JFA, Eger EI 2nd, Sonner JM, Shafer SL. Is synergy the rule? A review of anesthetic interactions producing hypnosis and immobility. Anesth Analg 2008;107:494-506 | `PMID_18633028.pdf` |
+| G71 | 18633029 | Shafer SL, Hendrickx JFA, Flood P, Sonner J, Eger EI 2nd. Additivity versus synergy: a theoretical analysis of implications for anesthetic mechanisms. Anesth Analg 2008;107:507-524 | `PMID_18633029.pdf` |
+| G72 | 16871060 | Manyam SC, Gupta DK, Johnson KB, et al. Opioid-volatile anesthetic synergy: a response surface model with remifentanil and sevoflurane as prototypes. Anesthesiology 2006;105:267-278 | `PMID_16871060.pdf` |
+| G73 | 22222473 | Heyse B, et al. Sevoflurane remifentanil interaction: comparison of different response surface models. Anesthesiology 2012;116:311-323 | `PMID_22222473.pdf` |
+| G74 | 27106965 | Hannivoort LN, et al. Probability to tolerate laryngoscopy and noxious stimulation response index as general indicators of the anaesthetic potency of sevoflurane, propofol, and remifentanil. Br J Anaesth 2016;116:624-631 | `PMID_27106965.pdf` |
+| G75 | 23360899 | Vereecke HEM, et al. Interaction between nitrous oxide, sevoflurane, and opioids: a response surface approach. Anesthesiology 2013;118:894-902 | `PMID_23360899.pdf` |
+| G76 | 8489058 | McEwan AI, et al. Isoflurane minimum alveolar concentration reduction by fentanyl. Anesthesiology 1993;78:864-869 | `PMID_8489058.pdf` |
+| G77 | 9447851 | Katoh T, Ikeda K. The effects of fentanyl on sevoflurane requirements for loss of consciousness and skin incision. Anesthesiology 1998;88:18-24 | `PMID_9447851.pdf` |
+| G78 | 9952144 | Katoh T, et al. The effect of fentanyl on sevoflurane requirements for somatic and sympathetic responses to surgical incision. Anesthesiology 1999;90:398-405 | `PMID_9952144.pdf` |
+| G79 | 8873541 | Lang E, et al. Reduction of isoflurane minimal alveolar concentration by remifentanil. Anesthesiology 1996;85:721-728 | `PMID_8873541.pdf` |
+| G80 | 8110548 | Brunner MD, et al. MAC reduction of isoflurane by sufentanil. Br J Anaesth 1994;72:42-46 | `PMID_8110548.pdf` |
+| G81 | 8267175 | Westmoreland CL, Sebel PS, Gropper A. Fentanyl or alfentanil decreases the minimum alveolar anesthetic concentration of isoflurane in surgical patients. Anesth Analg 1994;78:23-28 | `PMID_8267175.pdf` |
+| G82 | 1729936 | Sebel PS, et al. Reduction of the MAC of desflurane with fentanyl. Anesthesiology 1992;76:52-59 | `PMID_1729936.pdf` |
+| G83 | 19741484 | Schumacher PM, et al. Response surface modeling of the interaction between propofol and sevoflurane. Anesthesiology 2009;111:790-804 | `PMID_19741484.pdf` |
+| G84 | 16732087 | Harris RS, Lazar O, Johansen JW, Sebel PS. Interaction of propofol and sevoflurane on loss of consciousness and movement to skin incision during general anesthesia. Anesthesiology 2006;104:1170-1175 | `PMID_16732087.pdf` |
+| G85 | 30442251 | Hamp T, et al. Effect of intravenous S-ketamine on the MAC of sevoflurane: a randomised, placebo-controlled, double-blind clinical trial. Br J Anaesth 2018;121:1242-1248 | `PMID_30442251.pdf` |
+| G87 | 8452276 | Inagaki Y, Sumikawa K, Yoshiya I. Anesthetic interaction between midazolam and halothane in humans. Anesth Analg 1993;76:613-617 | `PMID_8452276.pdf` |
+| G91 | 10526824 | Fragen RJ, Fitzgerald PC. Effect of dexmedetomidine on the minimum alveolar concentration (MAC) of sevoflurane in adults age 55 to 70 years. J Clin Anesth 1999;11:466-470 | `PMID_10526824.pdf` |
+| G95a | 21056809 | Luo LL, Zhou LX, Wang J, et al. Effects of propofol on the minimum alveolar concentration of sevoflurane for immobility at skin incision in adult patients. J Clin Anesth 2010;22:527-532 | `PMID_21056809.pdf` |
+
+### Not in stanpumpRPapers on 2026-11-23
+
+Dr Shafer has been given this list and will add these papers. Search for each by its PMID anyway, since some may have been added by the time you run. If one is still missing, list it under **Papers to add**. Papers marked † are cited in stanpumpR's code as read, but their PDFs are not in the archive. Note that `title contains 'PMID_35496'` also matches `PMID_35496277.pdf`; search for `title = 'PMID_35496.pdf'`.
+
+**Model structure and kinetics**
+
+- G04: Mapleson WW. Circulation-time models of the uptake of inhaled anaesthetics and data for quantifying them. Br J Anaesth 1973;45:319-334 (PMID 4705482).
+- G05: Mapleson WW. Inert gas-exchange theory using an electric analogue. J Appl Physiol 1964;19:1193-1199 (PMID 14232321).
+- G06: Lerou JG, Dirksen R, Beneken Kolmer HH, Booij LH. A system model for closed-circuit inhalation anesthesia. I. Computer study. Anesthesiology 1991;75:345-355 (PMID 1859022).
+- G07: Lerou JG, Booij LH. Model-based administration of inhalation anaesthesia. 1. Developing a system model. Br J Anaesth 2001;86:12-28 (PMID 11575385).
+- G08: Lerou JG, Booij LH. Model-based administration of inhalation anaesthesia. 2. Exploring the system model. Br J Anaesth 2001;86:29-37 (PMID 11575406).
+- G09: Lerou JG, Booij LH. Model-based administration of inhalation anaesthesia. 3. Validating the system model. Br J Anaesth 2002;88:24-37 (PMID 11883376).
+- G10: Lerou JG, Booij LH. Model-based administration of inhalation anaesthesia. 4. Applying the system model. Br J Anaesth 2002;88:175-183 (PMID 11883384). *Correction:* Part 4 has three authors: Lerou JG, Verheijen R, Booij LH.
+- G11: Levitt DG. PKQuest: volatile solutes - application to enflurane, nitrous oxide, halothane, methoxyflurane and toluene pharmacokinetics. BMC Anesthesiol 2002;2:5 (PMID 12182764).
+- G12: Carpenter RL, Eger EI 2nd, Johnson BH, Unadkat JD, Sheiner LB. Pharmacokinetics of inhaled anesthetics in humans: measurements during and after the simultaneous administration of enflurane, halothane, isoflurane, methoxyflurane, and nitrous oxide. Anesth Analg 1986;65:575-582 (PMID 3706798).
+- G13: Carpenter RL, Eger EI 2nd, et al. Does the duration of anesthetic administration affect the pharmacokinetics or metabolism of inhaled anesthetics in humans? Anesth Analg 1987;66:1-8 (PMID 3800013).
+- G14: Yasuda N, Lockhart SH, Eger EI 2nd, et al. Kinetics of desflurane, isoflurane, and halothane in humans. Anesthesiology 1991;74:489-498 (PMID 2001028).
+- G15: Yasuda N, Lockhart SH, Eger EI 2nd, et al. Comparison of kinetics of sevoflurane and isoflurane in humans. Anesth Analg 1991;72:316-324 (PMID 1994760).
+- G16: Yasuda N, Targ AG, Eger EI 2nd, Johnson BH, Weiskopf RB. Pharmacokinetics of desflurane, sevoflurane, isoflurane, and halothane in pigs. Anesth Analg 1990;71:340-348 (PMID 2400116).
+- G17: Strum DP, Eger EI 2nd, Unadkat JD, Johnson BH, Carpenter RL. Age affects the pharmacokinetics of inhaled anesthetics in humans. Anesth Analg 1991;73:310-318 (PMID 1867426).
+- G18: Eger EI 2nd, Shafer SL. Tutorial: context-sensitive decrement times for inhaled anesthetics. Anesth Analg 2005;101:688-696 (PMID 16115976).
+- G19: Bailey JM. Context-sensitive half-times and other decrement times of inhaled anesthetics. Anesth Analg 1997;85:681-686 (PMID 9296431).
+- G20: Lockwood G. Theoretical context-sensitive elimination times for inhalation anaesthetics. Br J Anaesth 2010;104:648-655 (PMID 20233751).
+- G21: Allott PR, Steward A, Mapleson WW. Pharmacokinetics of halothane in the dog. Comparison of theory and measurement in individuals. Br J Anaesth 1976;48:279-295 (PMID 1275995).
+- G22: Perl W, Rackow H, Salanitre E, Wolf GL, Epstein RM. Intertissue diffusion effect for inert fat-soluble gases. J Appl Physiol 1965;20:621-627 (PMID 5838712).
+- G23: Rackow H, Salanitre E, Epstein RM, Wolf GL, Perl W. Simultaneous uptake of nitrous oxide and cyclopropane in man as a test of compartment model. J Appl Physiol 1965;20:611-620 (PMID 5838711).
+- G24: Lockhart SH, Eger EI 2nd. Absence of abundant saturable binding sites for halothane or isoflurane in rabbit brain: inhaled anesthetics obey Henry's law. Anesth Analg 1990;71:70-72 (PMID 2363532).
+
+**Concentration and second gas effects**
+
+- G25: Eger EI 2nd. Effect of inspired anesthetic concentration on the rate of rise of alveolar concentration. Anesthesiology 1963;24:153-157 (not indexed in PubMed).
+- G26: Epstein RM, Rackow H, Salanitre E, Wolf GL. Influence of the concentration effect on the uptake of anesthetic mixtures: the second gas effect. Anesthesiology 1964;25:364-371 (PMID 14156577).
+- G27: Stoelting RK, Eger EI 2nd. An additional explanation for the second gas effect: a concentrating effect. Anesthesiology 1969;30:273-277 (PMID 5778096).
+- G28: Taheri S, Eger EI 2nd. A demonstration of the concentration and second gas effects in humans anesthetized with nitrous oxide and desflurane. Anesth Analg 1999;89:774-780 (PMID 10475324).
+- G29: Eger EI 2nd, Smith RA, Koblin DD. The concentration effect can be mimicked by a decrease in blood solubility. Anesthesiology 1978;49:282-284 (PMID 697085).
+- G31: Hendrickx JFA, Peyton PJ, Carette R, De Wolf AM. Inhaled anaesthetics and nitrous oxide: complexities overlooked: things may not be what they seem. Eur J Anaesthesiol 2016;33:611-619 (PMID 27164016).
+
+**Physiology, size and age**
+
+- G32: Eger EI 2nd, Bahlman SH, Munson ES. The effect of age on the rate of increase of alveolar anesthetic concentration. Anesthesiology 1971;35:365-372 (PMID 5114399).
+- G33: Munson ES, Eger EI 2nd, Bowers DL. Effects of anesthetic-depressed ventilation and cardiac output on anesthetic uptake: a computer nonlinear simulation. Anesthesiology 1973;38:251-259 (PMID 4698145).
+- G34: Eger EI 2nd, Bahlman SH, Halsey MJ, Sawyer DC. The effect of distribution of increased cardiac output on the pulmonary exchange of halothane, nitrous oxide, and methoxyflurane. Anesth Analg 1973;52:625-631 (PMID 4736861).
+- G35: Wahrenbrock EA, Eger EI 2nd, Laravuso RB, Maruschak G. Anesthetic uptake--of mice and men (and whales). Anesthesiology 1974;40:19-23 (PMID 4149271).
+- G36: Munson ES, Eger EI 2nd, Tham MK, Embro WJ. Increase in anesthetic uptake, excretion, and blood solubility in man after eating. Anesth Analg 1978;57:224-231 (PMID 565161).
+- G37 †: Williams LR, Leggett RW. Reference values for resting blood flow to organs of man. Clin Phys Physiol Meas 1989;10:187-217 (PMID 2697487).
+- G38: ICRP Publication 89: Basic anatomical and physiological data for use in radiological protection: reference values. Ann ICRP 2002;32(3-4) (PMID 14506981).
+
+**Temperature**
+
+- G39: Munson ES, Eger EI 2nd. The effects of hyperthermia and hypothermia on the rate of induction of anesthesia: calculations using a mathematical model. Anesthesiology 1970;33:515-519 (PMID 5478864).
+- G40: Eger EI 2nd, Saidman LJ, Brandstater B. Temperature dependence of halothane and cyclopropane anesthesia in dogs: correlation with some theories of anesthetic action. Anesthesiology 1965;26:764-770 (PMID 5844268).
+- G41: Regan MJ, Eger EI 2nd. Effect of hypothermia in dogs on anesthetizing and apneic doses of inhalation agents. Anesthesiology 1967;28:689-700 (PMID 4381898).
+- G42: Vitez TS, White PF, Eger EI 2nd. Effects of hypothermia on halothane MAC and isoflurane MAC in the rat. Anesthesiology 1974;41:80-81 (PMID 4151813).
+- G43 †: Liu M, Hu X, Liu J. The effect of hypothermia on isoflurane MAC in children. Anesthesiology 2001;94:429-432 (PMID 11374601). A copy is elsewhere on Dr Shafer's Drive, outside the archive.
+- G44: Antognini JF. Hypothermia eliminates isoflurane requirements at 20 degrees C. Anesthesiology 1993;78:1152-1156 (PMID 8512109).
+- G45 †: Antognini JF, Lewis BK, Reitan JA. Hypothermia minimally decreases nitrous oxide anesthetic requirements. Anesth Analg 1994;79:980-982 (PMID 7978419).
+- G46: Zhou JX, Liu J. The effect of temperature on solubility of volatile anesthetics in human tissues. Anesth Analg 2001;93:234-238 (PMID 11429373).
+- G47 †: Zhou J, Liu Y, Liu J. Combined effect of hypothermia and crystalloid hemodilution on the solubility of volatile anesthetics in human blood. Chin Med J (Engl) 2002;115:1014-9 (PMID 12150733). This is the "Zhou 2002" that `R/physiology.R` cites for its blood:gas temperature slopes.
+- G48 †: Allott PR, Steward A, Flook V, Mapleson WW. Variation with temperature of the solubilities of inhaled anaesthetics in water, oil and biological media. Br J Anaesth 1973;45:294-300 (PMID 4573001).
+- G49: Eger RR, Eger EI 2nd. Effect of temperature and age on the solubility of enflurane, halothane, isoflurane, and methoxyflurane in human blood. Anesth Analg 1985;64:640-642 (PMID 4003781).
+
+**Solubility**
+
+- G50: Esper T, Wehner M, Meinecke CD, Rueffert H. Blood/gas partition coefficients for isoflurane, sevoflurane, and desflurane in a clinically relevant patient population. Anesth Analg 2015;120:45-50 (PMID 25393590).
+- G51: Malviya S, Lerman J. The blood/gas solubilities of sevoflurane, isoflurane, halothane, and serum constituent concentrations in neonates and adults. Anesthesiology 1990;72:793-796 (PMID 2339795).
+- G52: Lerman J, Gregory GA, Willis MM, Eger EI 2nd. Age and solubility of volatile anesthetics in blood. Anesthesiology 1984;61:139-143 (PMID 6465597).
+- G53: Yasuda N, Targ AG, Eger EI 2nd. Solubility of I-653, sevoflurane, isoflurane, and halothane in human tissues. Anesth Analg 1989;69:370-373 (PMID 2774233).
+- G54: Larson CP Jr, Eger EI 2nd, Severinghaus JW. Ostwald solubility coefficients for anesthetic gases in various fluids and tissues. Anesthesiology 1962;23:686-689 (PMID 14462521).
+
+**MAC and its covariates**
+
+- G56: Nickalls RWD, Mapleson WW. Age-related iso-MAC charts for isoflurane, sevoflurane and desflurane in man. Br J Anaesth 2003;91:170-174 (PMID 12878613).
+- G57: Eger EI 2nd. Age, minimum alveolar anesthetic concentration, and minimum alveolar anesthetic concentration-awake. Anesth Analg 2001;93:947-953 (PMID 11574362).
+- G58: Aranake A, Mashour GA, Avidan MS. Minimum alveolar concentration: ongoing relevance and clinical utility. Anaesthesia 2013;68:512-522 (PMID 23414556).
+- G59: Lerman J, Sikich N, Kleinman S, Yentis S. The pharmacology of sevoflurane in infants and children. Anesthesiology 1994;80:814-824 (PMID 8024136).
+- G60: LeDez KM, Lerman J. The minimum alveolar concentration (MAC) of isoflurane in preterm neonates. Anesthesiology 1987;67:301-307 (PMID 3631603).
+- G61: Taylor RH, Lerman J. Minimum alveolar concentration of desflurane and hemodynamic responses in neonates, infants, and children. Anesthesiology 1991;75:975-979 (PMID 1741518).
+- G63: Liem EB, Lin CM, Suleman MI, et al. Anesthetic requirement is increased in redheads. Anesthesiology 2004;101:279-283 (PMID 15277908).
+
+**Shunt, V/Q and oxygen**
+
+- G65: Eger EI 2nd, Severinghaus JW. Effect of uneven pulmonary distribution of blood and gas on induction with inhalation anesthetics. Anesthesiology 1964;25:620-626 (PMID 14211488).
+- G66: Stoelting RK, Longnecker DE. Effect of right-to-left shunt on rate of increase in arterial anesthetic concentration. Anesthesiology 1972;36:352-356 (PMID 5020644).
+- G67: Eger EI 2nd, Babad AA, Regan MJ, Larson CP Jr, Shargel R, Severinghaus JW. Delayed approach of arterial to alveolar nitrous oxide partial pressures in dog and in man. Anesthesiology 1966;27:288-297 (PMID 5937165).
+- G68 †: Severinghaus JW. Simple, accurate equations for human blood O2 dissociation computations. J Appl Physiol 1979;46:599-602 (PMID 35496).
+
+**Altitude**
+
+- G69 †: West JB. Prediction of barometric pressures at high altitudes with the use of model atmospheres. J Appl Physiol 1996;81:1850-1854 (PMID 8904608).
+
+**Drug interactions with MAC**
+
+- G86: White PF, Johnston RR, Pudwill CR. Interaction of ketamine and halothane in rats. Anesthesiology 1975;42:179-186 (PMID 1115367).
+- G88: Melvin MA, Johnson BH, Quasha AL, Eger EI 2nd. Induction of anesthesia with midazolam decreases halothane MAC in humans. Anesthesiology 1982;57:238-241 (PMID 7114548).
+- G89: Perisho JA, Buechel DR, Miller RD. The effect of diazepam (Valium) on minimum alveolar anaesthetic requirement (MAC) in man. Can Anaesth Soc J 1971;18:536-540 (PMID 5094103).
+- G90: Aantaa R, et al. Reduction of the minimum alveolar concentration of isoflurane by dexmedetomidine. Anesthesiology 1997;86:1055-1060 (PMID 9158354).
+- G92: Himes RS Jr, DiFazio CA, Burney RG. Effects of lidocaine on the anesthetic requirements for nitrous oxide and halothane. Anesthesiology 1977;47:437-440 (PMID 911052).
+- G93: Eger EI 2nd, et al. Inhaled anesthetics do not combine to produce synergistic effects regarding minimum alveolar anesthetic concentration in rats. Anesth Analg 2008;107:479-485 (PMID 18633026).
+
+### Found by searching, also not in stanpumpRPapers
+
+- G30a: Peyton PJ, Horriat M, Robinson GJB, Pierce R, Thompson BR. Magnitude of the second gas effect on arterial sevoflurane partial pressure. Anesthesiology 2008;108:381-387 (PMID 18292675). A copy is elsewhere on Dr Shafer's Drive, outside the archive.
+- G30b: Peyton PJ, Chao I, Weinberg L, Robinson GJB, Thompson BR. Nitrous oxide diffusion and the second gas effect on emergence from anesthesia. Anesthesiology 2011;114:596-602 (PMID 21270630). A copy is elsewhere on Dr Shafer's Drive, outside the archive.
+- G30c: Korman B, Dash RK, Peyton PJ. Can mathematical modeling explain the measured magnitude of the second gas effect? Anesthesiology 2018;128:1075-1083 (PMID 29481374). Log-normal V/Q modelling of the second gas effect in blood vs gas phase.
+- G30d: Korman B, Dash RK, Peyton PJ. Effect of net gas volume changes on alveolar and arterial gas partial pressures in the presence of ventilation-perfusion mismatch. J Appl Physiol 2019;126:558-568 (PMID 30521424). J Appl Physiol (not Anesthesiology/BJA) but squarely on SGE and V/Q.
+- G30e: Korman B, Dash RK, Peyton PJ. Elucidating the roles of solubility and ventilation-perfusion mismatch in the second gas effect using a two-step model of gas exchange. J Appl Physiol 2020;128:1587-1593 (PMID 32191596). J Appl Physiol.
+- G30f: Peyton PJ, Hendrickx J, Grouls RJE, Van Zundert A, De Wolf A. End-tidal to arterial gradients and alveolar deadspace for anesthetic agents. Anesthesiology 2020;133:534-547 (PMID 32784343). V/Q and agent A-a gradients (not SGE itself).
+- G30g: Peyton PJ, Fortuin M, Robinson GJ, Stuart-Andrews C, Pierce R, Thompson BR. The rate of alveolar-capillary uptake of sevoflurane and nitrous oxide following anaesthetic induction. Anaesthesia 2008;63:358-363 (PMID 18336485). Anaesthesia, not Anesthesiology/BJA.
+- G30h: Peyton PJ, Stuart-Andrews C, Deo K, et al. Persisting concentrating and second gas effects on oxygenation during N2O anaesthesia. Anaesthesia 2006;61:322-329 (PMID 16548949). Outside the 2008-2020 window; listed for completeness.
+- G30i: Peyton PJ, Robinson GJ, Thompson B. Effect of ventilation-perfusion inhomogeneity and N2O on oxygenation: physiological modeling of gas exchange. J Appl Physiol 2001;91:17-25 (PMID 11408408). Outside the 2008-2020 window; the original V/Q model behind the later papers.
+- G94a: Eger EI 2nd, Liao M, Laster MJ, et al. Contrasting roles of the N-methyl-D-aspartate receptor in the production of immobilization by conventional and aromatic anesthetics. Anesth Analg 2006;102:1397-1406 (PMID 16632817). ADJACENT, not a MAC-reduction study: rats; etomidate EC50 for immobility used as a GABA-only comparator.
+- G94b: Zhang Y, Laster MJ, Eger EI 2nd, Sharma M, Sonner JM. Blockade of acetylcholine receptors does not change the dose of etomidate required to produce immobility in rats. Anesth Analg 2007;104:850-852 (PMID 17377093). ADJACENT, not a MAC-reduction study: rats; etomidate immobilizing dose.
+- G95b: Satsumae T, Watanabe S, Yamaguchi H. The effect of propofol infusion on minimum alveolar concentration of sevoflurane for smooth tracheal intubation. J Anesth 2002;16:28-33 (PMID 14566493). Humans; endpoint MAC for tracheal intubation (MAC-EI), not skin incision.
+- G96a: Chen C, Pang Q, Tu A, et al. Effect of low-dose ketamine on MAC-BAR of sevoflurane in laparoscopic cholecystectomy: a randomized controlled trial. J Clin Pharm Ther 2021;46:121-127 (PMID 32981056). Humans; ketamine (racemic presumed; abstract does not say S-) reduces sevoflurane MAC-BAR, not MAC for immobility. No human racemic-ketamine immobility-MAC study found.
+- G96b: Xu C, Zheng G, Zhuo Y, et al. Intranasal esketamine premedication reduces sevoflurane requirements during laryngeal mask airway insertion in pediatric patients: a randomized controlled trial. Drug Des Devel Ther 2025;19:6943-6953 (PMID 40822382). Humans (children 2-5 y); ESKETAMINE (S-), not racemic; endpoint MAC for LMA insertion.
+- G97a: Huang Y, Liao H, Li L, et al. Minimal alveolar concentration of sevoflurane in combination with remimazolam in adults during laryngeal mask insertion: an up-down sequential allocation study. BMC Anesthesiol 2024;24:94 (PMID 38454342). Humans n=240; remimazolam 1-2 mg/kg/h reduced sevoflurane MAC for LMA insertion, more in women. The only human benzodiazepine study with a modern volatile found.
+- G97b: Hong JY, Lee IH, Shin SK, et al. Caudal midazolam does not affect sevoflurane requirements and recovery in pediatric day-case hernioplasty. Acta Anaesthesiol Scand 2008;52:1411-1414 (PMID 19025535). Humans (children); caudal (not IV) midazolam; null result. No human study of IV midazolam reducing sevoflurane/isoflurane/desflurane MAC found (G87, G88 are halothane).
+
+No study of etomidate reducing the MAC of a volatile agent was found (G94). No human study of racemic ketamine reducing MAC for immobility was found (G96). No human study of intravenous midazolam with sevoflurane, isoflurane or desflurane was found (G97); the halothane studies G87 to G89 are the benzodiazepine evidence. If you find studies that this search missed, add them.
