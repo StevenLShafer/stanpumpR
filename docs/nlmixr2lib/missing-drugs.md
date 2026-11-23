@@ -9,13 +9,13 @@ Components that are given only in a combination product are listed apart, from
 `docs/library-expansion/combination-only.csv`: they are not drugs of their own in stanpumpR.
 Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 
-## Candidates (1048)
+## Candidates (1047)
 
 | drug | models | largestStudyN | largestStudy | mentionedIn |
 |---|---|---|---|---|
 | etranacogene |  1 | 160000 | Li_2026_etranacogene |  |
 | genericmab |  3 | 143094 | vandenBerg_2025_genericMab_allometricAll_mbma |  |
-| rsvvaccine |  2 | 132677 | Kashihara_2026_rsvVaccine_snaCmi_mbma |  |
+| rsvvaccine |  2 | 132677 | Kashihara_2026_rsvVaccine_sna_mbma |  |
 | fxa |  1 |  57655 | Yoshioka_2018_FXa_inhibitors_mbma |  |
 | antisecretory |  1 |  43417 | Howden_2025_antisecretory_mbma |  |
 | sglt2 |  2 |  24817 | Yao_2023_sglt2_endpoints_mbma | pregnancyRegistry |
@@ -52,7 +52,7 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | chemotherapy |  1 |   5952 | Hughes_2023_chemotherapy_gcsf_anc | pregnancyRegistry |
 | secukinumab | 35 |   5270 | Dumortier_2025_secukinumab |  |
 | cilgavimab |  1 |   4940 | Clegg_2024_cilgavimab |  |
-| tixagevimab |  2 |   4940 | Clegg_2024_tixagevimab |  |
+| tixagevimab |  2 |   4940 | Clegg_2024_tixagevimab_cilgavimab |  |
 | bempedoicacid |  2 |   4459 | Jadhav_2023_bempedoicAcid_ldlc |  |
 | upadacitinib | 19 |   4170 | Klunder_2019_upadacitinib |  |
 | lecanemab | 10 |   4056 | Cao_2026_lecanemab |  |
@@ -144,7 +144,7 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | vilanterol |  3 |   1167 | Siederer_2016_vilanterol |  |
 | vonoprazan |  4 |   1156 | Scarpignato_2022_vonoprazan |  |
 | tafolecimab |  1 |   1153 | Yan_2023_tafolecimab |  |
-| sipoglitazar |  3 |   1151 | Stringer_2013_sipoglitazar |  |
+| sipoglitazar |  3 |   1151 | Stringer_2013_sipoglitazar_mixture |  |
 | mirikizumab |  4 |   1129 | Chua_2023_mirikizumab_phase3 |  |
 | ethinylestradiol |  3 |   1109 | Reif_2013_ethinylestradiol |  |
 | drospirenone |  1 |   1096 | Reif_2013_drospirenone |  |
@@ -220,12 +220,11 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | infliximab | 19 |    692 | Frymoyer_2017_infliximab |  |
 | obinutuzumab |  1 |    678 | Gibiansky_2014_obinutuzumab |  |
 | cotadutide |  2 |    675 | Yu_2024_cotadutide |  |
-| tafenoquine |  3 |    675 | Thakkar_2018_tafenoquine |  |
 | blinatumomab |  1 |    674 | Clements_2020_blinatumomab | chemotherapySources |
 | peginesatide |  1 |    672 | Naik_2013_peginesatide |  |
 | trastuzumabemtansine |  2 |    671 | Lu_2014_trastuzumabemtansine |  |
 | anifrolumab |  1 |    670 | Almquist_2022_anifrolumab |  |
-| brentuximab | 10 |    661 | Suri_2019_brentuximab |  |
+| brentuximab | 10 |    661 | Suri_2019_brentuximab_fn_adc |  |
 | momelotinib |  1 |    661 | Rich_2026_momelotinib |  |
 | zanamivir |  1 |    658 | Zuo_2020_zanamivir |  |
 | trastuzumabrezetecan |  1 |    645 | Gao_2026_trastuzumabRezetecan |  |
@@ -243,10 +242,10 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | epcoritamab |  2 |    600 | Li_2026_epcoritamab |  |
 | pirtobrutinib |  2 |    595 | Bell_2026_pirtobrutinib |  |
 | alisertib |  7 |    594 | Zhou_2018_alisertib_diarrhea |  |
-| panobinostat |  2 |    581 | Savelieva_2015_panobinostat |  |
+| panobinostat |  2 |    581 | Savelieva_2015_panobinostat_allometric |  |
 | garenoxacin |  1 |    580 | VanWart_2004_garenoxacin |  |
 | lamivudine |  7 |    580 | Bouazza_2011_lamivudine | pregnancyRegistry |
-| nemtabrutinib |  4 |    578 | Kemal_2026_nemtabrutinib |  |
+| nemtabrutinib |  4 |    578 | Kemal_2026_nemtabrutinib_ae |  |
 | tedatioxetine |  1 |    578 | Frederiksen_2021_tedatioxetine |  |
 | anacetrapib |  3 |    576 | Krishna_2011_anacetrapib |  |
 | darbepoetinalfa |  3 |    573 | Agoram_2006_darbepoetin_alfa_cia_hemoglobin |  |
@@ -262,7 +261,7 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | cefiderocol |  9 |    516 | Kawaguchi_2021_cefiderocol |  |
 | nicotine | 12 |    512 | OlssonGisleskog_2021_nicotine_gum |  |
 | monalizumab |  1 |    507 | Hwang_2023_monalizumab |  |
-| nilotinib |  2 |    502 | Mauro_2025_nilotinib |  |
+| nilotinib |  2 |    502 | Mauro_2025_nilotinib_lowfat |  |
 | bedaquiline | 13 |    500 | Mehta_2023_bedaquiline_mpbpk |  |
 | efalizumab |  4 |    500 | Chetty_2014_efalizumab_cd11a_qsp |  |
 | glucarpidase |  2 |    500 | Kimura_2023_glucarpidase | chemotherapySources |
@@ -293,7 +292,7 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | trofinetide |  2 |    455 | Darwish_2025b_trofinetide |  |
 | vericiguat |  2 |    454 | Ruehs_2021_vericiguat |  |
 | fedratinib |  2 |    452 | Ogasawara_2019_fedratinib |  |
-| mercaptopurine |  3 |    452 | Gebhard_2023_mercaptopurine | chemotherapyRegistry;chemotherapySources;pregnancyRegistry |
+| mercaptopurine |  3 |    452 | Gebhard_2023_mercaptopurine_anc | chemotherapyRegistry;chemotherapySources;pregnancyRegistry |
 | efaproxiral |  1 |    451 | Gastonguay_2005_efaproxiral |  |
 | motesanib |  1 |    451 | Gosselin_2015_motesanib |  |
 | vupanorsen |  1 |    451 | Ahn_2023_vupanorsen |  |
@@ -369,7 +368,7 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | cholecalciferol |  5 |    307 | Huang_2021_cholecalciferol_pbpk |  |
 | soticlestat |  2 |    306 | Yin_2024_soticlestat |  |
 | apricoxib |  2 |    304 | Rohatagi_2008_apricoxib |  |
-| telisotuzumab |  6 |    304 | Babel_2026_telisotuzumab |  |
+| telisotuzumab |  6 |    304 | Babel_2026_telisotuzumab_mmae |  |
 | oxypurinol |  2 |    300 | Hishe_2023_oxypurinol |  |
 | pemigatinibphosphate |  1 |    300 | Gong_2023_pemigatinib_phosphate |  |
 | caspofungin | 10 |    299 | Yang_2022_caspofungin |  |
@@ -379,7 +378,7 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | darunavir |  8 |    291 | Stillemans_2021b_darunavir |  |
 | lanreotide |  1 |    290 | BuilBruna_2015_lanreotide |  |
 | eculizumab |  1 |    289 | Lee_2024_eculizumab |  |
-| luspatercept |  6 |    285 | Chen_2021_luspatercept |  |
+| luspatercept |  6 |    285 | Chen_2021_luspatercept_bone_pain |  |
 | armodafinil |  1 |    284 | Darwish_2012_armodafinil | pregnancyRegistry |
 | tucatinib |  1 |    283 | Zhang_2024_tucatinib |  |
 | candesartan |  1 |    281 | Kassem_2021_candesartan | antihypertensiveRegistry |
@@ -406,7 +405,7 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | ivosidenib |  2 |    253 | Jiang_2021_ivosidenib |  |
 | gepotidacin |  1 |    249 | Nguyen_2022_gepotidacin |  |
 | rilpivirine |  3 |    249 | Aouri_2017_rilpivirine |  |
-| panitumumab |  3 |    248 | Baaz_2023_panitumumab_folfox |  |
+| panitumumab |  3 |    248 | Baaz_2023_panitumumab_folfox_dropout |  |
 | cycloserine |  3 |    247 | Alghamdi_2019_cycloserine |  |
 | zidovudine |  1 |    247 | Fauchet_2013_zidovudine | pregnancyRegistry |
 | biapenem |  1 |    245 | Chen_2024_biapenem |  |
@@ -414,7 +413,7 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | neonatal |  1 |    243 | Dings_2026_neonatal_acidosis | pregnancyRegistry;vasoactiveRegistry |
 | garadacimab |  2 |    242 | Garcia_2025_garadacimab |  |
 | naproxcinod |  1 |    242 | Bjornsson_2011_naproxcinod |  |
-| lonoctocogalfa |  2 |    241 | Bukkems_2023_lonoctocogAlfa |  |
+| lonoctocogalfa |  2 |    241 | Bukkems_2023_lonoctocogAlfa_bleed |  |
 | berzosertib |  1 |    240 | Terranova_2021_berzosertib |  |
 | ormutivimab |  1 |    240 | Zhang_2022_ormutivimab |  |
 | pomalidomide |  5 |    240 | Li_2015_pomalidomide |  |
@@ -516,13 +515,13 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | tapentadol |  3 |    148 | Khalil_2020_tapentadol_allometryEstimated |  |
 | mrna3927 |  1 |    146 | Attarwala_2023_mRNA3927 |  |
 | cc292 |  1 |    145 | Li_2017_CC292 |  |
-| latamoxef |  3 |    145 | Wang_2022_latamoxef |  |
+| latamoxef |  3 |    145 | Wang_2022_latamoxef_r |  |
 | lserine |  1 |    145 | Lee_2024_lserine |  |
 | snake |  2 |    145 | Sanhajariya_2018_snake_venom |  |
 | bintrafuspalfa |  6 |    143 | MilenkovicGrisic_2024_bintrafuspAlfa_btc |  |
 | cetuximab |  1 |    143 | Dirks_2008_cetuximab |  |
 | palbociclib |  7 |    143 | Marouille_2021_palbociclib |  |
-| emodepside |  5 |    142 | Assmus_2022_emodepside |  |
+| emodepside |  5 |    142 | Assmus_2022_emodepside_eye_disorder |  |
 | fluconazole | 12 |    141 | Momper_2016_fluconazole |  |
 | managlinatdialanetil |  2 |    141 | Kastrissios_2012_managlinatDialanetil_activeMoiety |  |
 | ciprofloxacin |  8 |    140 | Guo_2022_ciprofloxacin | parkinsonsProducts |
@@ -661,7 +660,7 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | pf04455242 |  1 |     69 | Chang_2011_PF04455242_human |  |
 | posdinemab |  1 |     69 | PerezRuixo_2025_posdinemab |  |
 | apx3330 |  1 |     68 | Silva_2024_apx3330 |  |
-| btz043 |  2 |     68 | Koele_2025_btz043 |  |
+| btz043 |  2 |     68 | Koele_2025_btz043_bacterialload |  |
 | utreloxastat |  1 |     68 | Hu_2026_utreloxastat |  |
 | alvespimycin |  5 |     67 | Aregbe_2012_alvespimycin |  |
 | tripegfilgrastim |  1 |     67 | Lee_2023_tripegfilgrastim |  |
@@ -703,7 +702,7 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | eplontersen |  1 |     55 | Diep_2022_eplontersen |  |
 | hexasodiumfytate |  2 |     55 | Perello_2024_hexasodiumFytate_cac |  |
 | rec2282 |  1 |     55 | Liva_2021_rec2282 |  |
-| tuvusertib |  4 |     55 | Mukker_2026_tuvusertib |  |
+| tuvusertib |  4 |     55 | Mukker_2026_tuvusertib_hematology |  |
 | cefathiamidine |  2 |     54 | Zhi_2018_cefathiamidine |  |
 | furmonertinib |  1 |     54 | Zou_2022_furmonertinib |  |
 | tideglusib |  2 |     54 | DiDeo_2025_tideglusib_healthy |  |
@@ -728,7 +727,7 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | didanosine |  1 |     49 | Hirt_2009_didanosine |  |
 | efzofitimod |  6 |     49 | Walker_2023_efzofitimod |  |
 | guanfacine |  1 |     49 | Li_2018_guanfacine | antihypertensiveRegistry |
-| mescaline |  4 |     49 | Mueller_2025_mescaline |  |
+| mescaline |  4 |     49 | Mueller_2025_mescaline_anydrugeffect |  |
 | udca |  1 |     49 | Zuo_2016_UDCA |  |
 | yh12852 |  1 |     49 | Kim_2021_YH12852 |  |
 | betamethasone |  2 |     48 | Krzyzanski_2021_betamethasone |  |
@@ -736,7 +735,7 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | dndi6148 |  2 |     48 | Assmus_2026_dndi6148 |  |
 | epoetinbeta |  1 |     48 | Hayashi_1998_epoetinBeta |  |
 | leuprolide |  1 |     48 | Lim_2026_leuprolide |  |
-| mitotane |  3 |     48 | Yin_2021_mitotane |  |
+| mitotane |  3 |     48 | Yin_2021_mitotane_nogenotype |  |
 | nefopam |  1 |     48 | Djerada_2014_nefopam |  |
 | noscapine |  1 |     48 | Chen_2024_noscapine |  |
 | olpasiran |  2 |     48 | Sten_2023_olpasiran_1cmt |  |
@@ -769,7 +768,7 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | somatrogon |  1 |     42 | Wang_2025_somatrogon |  |
 | tbaj587 |  1 |     42 | Leding_2026_tbaj587 |  |
 | glp1ra |  2 |     41 | Bosch_2025_glp1ra_hba1c |  |
-| pamiparib |  2 |     41 | Wickramasinghe_2025_pamiparib |  |
+| pamiparib |  2 |     41 | Wickramasinghe_2025_pamiparib_unbound |  |
 | tesaglitazar |  1 |     41 | Hamren_2008_tesaglitazar |  |
 | fosmidomycin |  1 |     40 | Pfaffendorf_2026_fosmidomycin |  |
 | hemoporfin |  6 |     40 | Chen_2025_hemoporfin |  |
@@ -826,7 +825,7 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | isb2001 |  1 |     30 | ChandralayamAyyappaMenon_2026_isb2001_qsp |  |
 | pipamperone |  1 |     30 | Kloosterboer_2020_pipamperone |  |
 | quinine |  2 |     30 | LeJouan_2005_quinine | parkinsonsProducts |
-| ropinirole |  2 |     30 | Kaikousidis_2024_ropinirole | parkinsonsProducts;parkinsonsRegistry |
+| ropinirole |  2 |     30 | Kaikousidis_2024_ropinirole_misspecified | parkinsonsProducts;parkinsonsRegistry |
 | tld |  1 |     30 | McLaughlin_2024_tld_1 |  |
 | triptorelin |  1 |     30 | Tornoe_2006_triptorelin |  |
 | cyanide |  1 |     29 | Harada_2025_cyanide_pbpk | antihypertensiveRegistry;vasoactiveRegistry |
@@ -854,7 +853,7 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | cipargamin |  1 |     25 | Hien_2017_cipargamin |  |
 | orin1001 |  1 |     25 | Li_2024_orin1001 |  |
 | penicilling |  2 |     25 | Komatsu_2016_penicillinG |  |
-| thc |  3 |     25 | Wolowich_2025_thc |  |
+| thc |  3 |     25 | Wolowich_2025_thc_11oh |  |
 | adefovir |  1 |     24 | Dong_2024_adefovir |  |
 | arylsulfatasea |  1 |     24 | Troy_2020_arylsulfataseA |  |
 | belatacept |  1 |     24 | Shen_2013_belatacept |  |
@@ -1069,7 +1068,7 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | drug | combinationOnly | models | largestStudyN | largestStudy |
 |---|---|---|---|---|
 | clavulanicacid | not_included |  2 | 10000 | Zhang_2023_clavulanicAcid |
-| sulbactam | not_included |  7 |  8000 | Larson_2026_sulbactam_durlobactam_pediatric_allometry |
+| sulbactam | not_included |  7 |  8000 | Larson_2026_sulbactam_durlobactam_pediatric_allometry_crcl |
 | avibactam | not_included |  5 |  2403 | Franzese_2022_avibactam |
 | dasabuvir | not_included |  1 |  2348 | Mensing_2017_dasabuvir |
 | ombitasvir | not_included |  1 |  2348 | Mensing_2017_ombitasvir |
@@ -1078,7 +1077,7 @@ Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.
 | lumefantrine | not_included | 15 |  1347 | Kloprogge_2018_lumefantrine |
 | nirmatrelvir | not_included |  3 |  1237 | Chan_2023_nirmatrelvir |
 | relebactam | not_included |  2 |  1197 | Patel_2022_relebactam |
-| piperaquine | not_included | 15 |  1000 | Wattanakul_2020_piperaquine |
+| piperaquine | not_included | 15 |  1000 | Wattanakul_2020_piperaquine_dqtc |
 | tazobactam | not_included | 16 |   835 | Zhang_2021_tazobactam |
 | taniborbactam | not_included |  1 |   607 | Fouad_2025_taniborbactam |
 | bictegravir | not_included |  3 |   572 | Ekobena_2025_bictegravir |

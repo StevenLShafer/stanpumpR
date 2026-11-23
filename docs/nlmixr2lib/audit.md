@@ -57,10 +57,10 @@ These are the largest population-PK models nlmixr2lib holds for drugs stanpumpR 
 | vancomycin | Tong_2026_vancomycin_goti | 87,586 | hospitalised adults, BMI < 40 | 10.1093/jacamr/dlag016 | 41710913 |
 | bupropion | Sharma_2018_naltrexone_bupropion | 4,591 | obese or overweight adults (Contrave) | 10.1002/jcph.994 | 28858397 |
 | tirzepatide | Chigutsa_2025_tirzepatide | 2,539 | obesity without diabetes | 10.1002/cpt.3750 | 40556483 |
-| olmesartan | Song_2013_olmesartan | 1,927 | volunteers and hypertensive adults | 10.1002/cpdd.17 | none (DOI) |
+| olmesartan | Song_2013_olmesartan | 1,927 | volunteers and hypertensive adults | 10.1002/cpdd.17 | 27121665 (in the archive) |
 | dapagliflozin | Sokolov_2023_dapagliflozin | 1,661 | type 1 diabetes | 10.3389/fphar.2023.1229255 | 37954838 |
 | gentamicin | Fuchs_2014_gentamicin | 1,449 | preterm and term neonates | 10.1111/bcp.12444 | 24938850 |
-| hydrochlorothiazide | Song_2013_hydrochlorothiazide | 1,278 | volunteers and hypertensive adults | 10.1002/cpdd.17 | none (DOI) |
+| hydrochlorothiazide | Song_2013_hydrochlorothiazide | 1,278 | volunteers and hypertensive adults | 10.1002/cpdd.17 | 27121665 (in the archive) |
 | empagliflozin | Johnston_2021_empagliflozin_popPK | 1,241 | type 1 diabetes | 10.3390/pharmaceutics13040485 | 33918261 |
 | tacrolimus | Francke_2025_tacrolimus | 1,180 | adult kidney transplant | 10.1007/s40262-025-01533-0 | 40588615 |
 | propofol | Wahlquist_2024_propofol | 1,031 | surgical and volunteer cohorts | 10.1007/s10928-023-09887-3 | 37864654 |
@@ -85,10 +85,10 @@ Several rows are a different product rather than a better model of the same one:
 ## Download list
 
 Steven L. Shafer, 2026-11-23: "Add all of the papers to the download list."
-- **Already in the archive:** Barr 2001 (PMID 11506097), Kleijn 2011 (21535448) and Chigutsa 2025 (40556483).
+- **Already in the archive:** Barr 2001 (PMID 11506097), Kleijn 2011 (21535448), Chigutsa 2025 (40556483) and Song 2013 (27121665, `PMID_27121665.pdf`; nlmixr2lib cites it by DOI only).
 - **To download:** every other paper in the currency table, plus the sotalol source.
-- **The one-per-line list** for the paper-download session is `audit-download-ids.txt`.
-- **Two have no PMID**, so save them by DOI name: Song 2013 as `DOI_10.1002_cpdd.17.pdf`, and Vollmer 2023, a conference abstract, as `DOI_10.1093_ofid_ofad500.2147.pdf`.
+- **The one-per-line list** is `audit-download-ids.txt`; `data-raw/libraryExpansionCandidates.R` adds every one not in the archive to `docs/library-expansion/downloads.md` and `download-ids.txt`, so the paper-download session gets them with the library-expansion picks.
+- **One has no PMID**, so save it by DOI name: Vollmer 2023, a conference abstract, as `DOI_10.1093_ofid_ofad500.2147.pdf`.
 - **The sotalol paper** is saved as `PMID_39749676.pdf`, and its Data S1 (the NONMEM control stream, from the paper's Supporting Information on Wiley or PMC) as `PMID_39749676_sup1` with its own extension.
 
 ## What happens next

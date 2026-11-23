@@ -17,7 +17,7 @@ The list will be revisited every week or so. Each drug is still added the ordina
 | File | What it is | Edited by |
 |---|---|---|
 | `combination-only.csv` | One row per component given only in a combination product (Steven L. Shafer, 2026-11-18 and 2026-11-23: "Clavulanate isn't given as a drug by itself, so it should not be included in stanpumpR"). Gives its role, the US products that carry it, whether DailyMed has a single-ingredient label, and `status`: `not_included`, or `decision` for a booster labelled alone (cobicistat, ritonavir). | Hand, checked against DailyMed. The cross-check reads it to set apart these components in `docs/nlmixr2lib/missing-drugs.md`. |
-| `plan.csv` | One row per planned drug. Gives its category, the names nlmixr2lib files it under, priority, `status` and notes (product, dose basis, US approval). `status` is `planned`, `in_progress`, `blocked`, `done`, or `library_change` for a change to a drug the library already has, which needs no paper and which the candidates script and the weekly routine leave alone. | Hand. The weekly routine updates `status`. |
+| `plan.csv` | One row per planned drug. Gives its category, the names nlmixr2lib files it under, priority, `status` and notes (product, dose basis, US approval). `status` is `planned`, `in_progress`, `blocked`, `done`, `library_change` for a change to a drug the library already has, which needs no paper, or `not_included` for a drug decided against (a component given only in a combination with no US product, as piperaquine; `combination-only.csv`). The candidates script and the weekly routine leave the last two alone. | Hand. The weekly routine updates `status`. |
 | `candidates.csv` | Every nlmixr2lib model of every planned drug, ranked by study size. `pick` marks the papers to get first: the largest study, and the most recent if that is another paper. | `data-raw/libraryExpansionCandidates.R` |
 | `outpatient-leads.csv` | The papers and FDA documents ChatGPT's report gave for each outpatient drug, one row per lead, with the report's evidence letter (P population fit, C compartmental, D descriptive, R FDA review or label) and what was checked. For a drug nlmixr2lib does not model, these are the papers to get. | Hand, from the report. |
 | `archive-status.csv` | For each pick, and each lead of a drug nlmixr2lib does not model: its PMID and PMC ID (from PubMed's ID converter, or a PubMed search by DOI for a paper not in PMC), and whether it is in the stanpumpR paper archive (a Drive search by file name). | The weekly routine, or by hand. |
@@ -68,6 +68,22 @@ The report is a lead, not a source, like any other model's reading (AGENTS.md): 
   - **Tazobactam:** its pick, Zhang 2021, is a *ceftolozane*-tazobactam fit. Whether it could stand for Zosyn's tazobactam, and the dose units, were put to Steven; he answered the same day (*Combination products* below).
   - **Imipenem:** its pick, Patel 2022, is read. Its Supplementary Methods (the Cockcroft-Gault weight) and the sources the antibiotic band needs (an imipenem MBC/MIC ratio and a plain-imipenem *P. aeruginosa* MIC) are still to get. The model's volumes and clearance change with pneumonia and with ventilation, and stanpumpR has no infection field. Steven decided on 2026-11-23: "Add an infection field. However, that should be a separate project." Imipenem and Zerbaxa wait for it.
 
+### Weekly run, 2026-11-19
+
+- **nlmixr2lib has not moved** (still d8a308a); the cross-check was rerun against stanpumpR 7e9b4f4, which adds liothyronine and two more shared papers.
+- **67 more papers had arrived** in the archive on 2026-11-18 after that day's check (filed 15:34-18:00 UTC), all under `PMID_` names: 38 picks (among them hydroxychloroquine's Carmichael 2003, whose PMID 14639053 the status file lacked) and 29 report leads. **144 of the 153 picks are now in the archive.** None arrived under a `DOI_` name, and no supplement arrived for any pick read this run.
+- **No drug could be implemented.** The first eight planned drugs in plan order were taken up and every one is now `blocked`, each with what was read and what would unblock it in `plan.csv`:
+  - **Waiting on a supplement:** ceftazidime and Avycaz (Franzese 2022 prints its parameters only in Tables S2 and S3), posaconazole (van Iersel 2018's covariate equations are only in its Fig. S5).
+  - **Waiting on a decision of Steven's:** Zerbaxa (Zhang 2021 is fully read, all in its Table 2; the infection state the curve represents is the only obstacle, and it is shared with imipenem and Avycaz), isavuconazole (Weibull oral absorption: discretise, or offer IV only), caspofungin (Yang 2022's steps at 70 kg and albumin 35 g/L), teicoplanin (Chae 2026's distribution comes from profiles simulated from two other models).
+  - **The pick is the wrong population:** fluconazole (infants under 750 g; adults on CRRT). An adult source is needed.
+
+### Weekly run, 2026-11-20
+
+- **Nothing arrived.** No pick, report lead or requested supplement reached the archive since the 2026-11-19 run (the supplements `PMID_34687548_sup1`, `PMID_29712663_sup1` and `PMID_34704389_sup1` included). nlmixr2lib has not moved (still d8a308a); the cross-check was rerun against master 8739b9d. This run was built on the 2026-11-19 run's pull request (#799), which was still open.
+- **Tafenoquine was implemented** (Thakkar 2018, 675 healthy volunteers and patients with *P. vivax* malaria) in its own draft pull request. Its curve is the patients'; whether a prophylaxis curve should use the healthy volunteers' volumes is a decision for Steven.
+- **Micafungin is blocked on a better paper.** Its pick, Maseda 2018, is a nonparametric fit whose means and medians are far apart, the reason piperacillin's Felton 2014 was rejected. Wasmann 2019 (PMID 30649375) and Jullien 2017 (PMID 27609051) are the adult sources to get.
+- **Four antimalarials are blocked without being read**, because the papers cannot settle what blocks them: artemether and lumefantrine are given only as Coartem, and piperaquine only with dihydroartemisinin, which the combination-product rule below makes a decision of Steven's; artesunate's US product is intravenous and its picks are rectal and oral.
+
 ### Combination products (Steven L. Shafer, 2026-11-18)
 
 "Tazobactam should not be a drug at all. It is only used in combination with other antibiotics." So a component given only in combination is not a drug of its own. The product is the drug, dosed in the units of its FDA label:
@@ -76,6 +92,13 @@ The report is a lead, not a source, like any other model's reading (AGENTS.md): 
 - **Avycaz** (ceftazidime/avibactam), by the same rule, replaces the planned avibactam; its curve is labelled ceftazidime.
 
 A brand name is a valid R name (MEGX and MDMA are drugs already), so Zosyn needs no display name. "The PK should be labelled piperacillin": the drug is Zosyn and its curve is labelled piperacillin. Renaming the drug piperacillin leaves links that name it to be mapped. Steven named the other two the same way the same day: "Use Zerbaxa and Avycaz too." Both wait for the infection field (decided 2026-11-23, a separate project).
+
+On 2026-11-23 Steven applied the rule to the rest of the plan ("Augmentin is a good example. Clavulanate isn't given as a drug by itself, so it should not be included in stanpumpR") and asked for such components to be recorded explicitly: `combination-only.csv` lists them, checked against DailyMed. The plan's rows follow it:
+- **Augmentin** (amoxicillin/clavulanate) replaces the amoxicillin/clavulanate row; its curve is amoxicillin, clavulanate not plotted.
+- **Coartem** (artemether/lumefantrine) replaces the artemether and lumefantrine rows; which analyte its curve shows is a `[decision]` on the row.
+- **Kaletra** (lopinavir/ritonavir) and **Paxlovid** (nirmatrelvir/ritonavir) replace the lopinavir and nirmatrelvir rows; their curves are lopinavir and nirmatrelvir.
+- **Piperaquine** is `not_included`: its only product, Eurartesim (with dihydroartemisinin), is not US-approved.
+- Cobicistat and ritonavir are labelled alone (Tybost, Norvir) though given almost only as boosters: `decision` in `combination-only.csv`, for Steven.
 
 ## Downloading
 
