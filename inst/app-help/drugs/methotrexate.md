@@ -12,3 +12,5 @@ stanpumpR holds 2 published models of methotrexate. You do not choose between th
 **What that means for methotrexate.** Taylor 2023 (MTXPK.org) is chosen up to 32.3 years, including young adults, because it is the larger study; Ibarra 2023 above that.
 
 The tables on this page are computed at six reference patients, so each uses the model chosen for that patient. Each model's own page gives its parameters, its checks against its paper, and its limits.
+
+**Routes not modelled.** The FDA label gives methotrexate intravenously, intramuscularly, subcutaneously and intrathecally. Only the intravenous route is modelled here, because the models were fitted to intravenous doses. If you need a route stanpumpR does not offer, please contact Steven Shafer (steven.shafer@stanford.edu). For a one-time simulation in the meantime, a published pharmacokinetic study of that route can often be uploaded to the **Single Paper Review** tab, which reads its model and simulates it.

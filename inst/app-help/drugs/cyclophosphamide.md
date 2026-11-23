@@ -12,3 +12,5 @@ stanpumpR holds 2 published models of cyclophosphamide. You do not choose betwee
 **What that means for cyclophosphamide.** Children up to about 13½ years get McCune 2009, in which the drug induces its own clearance over a course of daily doses; adults, and adolescents nearer 18 than 9.4, get Joerger 2007, one compartment with no induction (fitted to one dose per patient).
 
 The tables on this page are computed at six reference patients, so each uses the model chosen for that patient. Each model's own page gives its parameters, its checks against its paper, and its limits.
+
+**Routes not modelled.** Cyclophosphamide is given intravenously and as oral tablets (the tablet label is the one listed on this page). Only the intravenous route is modelled here, because the models were fitted to intravenous doses. If you need a route stanpumpR does not offer, please contact Steven Shafer (steven.shafer@stanford.edu). For a one-time simulation in the meantime, a published pharmacokinetic study of that route can often be uploaded to the **Single Paper Review** tab, which reads its model and simulates it.
