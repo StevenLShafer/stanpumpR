@@ -86,3 +86,17 @@ test_that("the Visualizer reads a per-m2 dose as simCpCe() does", {
   expect_equal(viewerBaseDose(c(100, 100, 60), c("mg/m2", "mg/kg", "mg/m2/hr"), 80, u, 180),
                c(100 * sqrt(80 * 180 / 3600), 8000, sqrt(80 * 180 / 3600)))
 })
+
+test_that("the Patient Profile shows BSA and BMI, derived and not entered", {
+  s <- bodySizeSummary(70, 170)
+  expect_match(s, "BSA 1.82 m&sup2;", fixed = TRUE)
+  expect_match(s, "BMI 24.2 kg/m&sup2;", fixed = TRUE)
+  expect_equal(bodySizeSummary(NA, 170), "")
+  expect_equal(bodySizeSummary(70, c(170, 180)), "")
+  expect_equal(bodySizeSummary(MAX_WEIGHT + 1, 170), "")
+  oldConfig <- .sprglobals$config
+  .sprglobals$config <- DEFAULT_CONFIG
+  on.exit(.sprglobals$config <- oldConfig, add = TRUE)
+  ui <- as.character(htmltools::renderTags(app_ui()(list()))$html)
+  expect_match(ui, 'id="bodySize"', fixed = TRUE)
+})

@@ -71,3 +71,27 @@ bodySizeDoseFactor <- function(units, weight, height = NULL)
   }
   f
 }
+
+#' The Patient Profile's derived body size line
+#'
+#' Body surface area (Mosteller, the one a per-m2 dose uses) and body mass
+#' index, both from the weight and height entered, shown under Sex and not
+#' entered (Shafer, 2026-11-23).  Neither formula reads sex.
+#'
+#' @param weight Patient weight, kg.
+#' @param height Patient height, cm.
+#' @returns One line of HTML (entities only, so it reads the same in any
+#'   locale), or "" when weight or height is not a valid entry.
+#' @noRd
+bodySizeSummary <- function(weight, height)
+{
+  weight <- suppressWarnings(as.numeric(weight))
+  height <- suppressWarnings(as.numeric(height))
+  if (length(weight) != 1 || length(height) != 1 ||
+      !is_valid_number(weight, MIN_WEIGHT, MAX_WEIGHT) ||
+      !is_valid_number(height, MIN_HEIGHT, MAX_HEIGHT))
+    return("")
+  bsa <- doseBsa(weight, height)
+  bmi <- weight / (height / 100)^2
+  sprintf("BSA %.2f m&sup2; (Mosteller) &middot; BMI %.1f kg/m&sup2;", bsa, bmi)
+}
