@@ -25,11 +25,13 @@ test_that("bodySizeDoseFactor() is the weight per kg and the Mosteller BSA per m
   expect_equal(bodySizeDoseFactor("mg/kg", 80), 80)
 })
 
+noEvents <- data.frame(Time = numeric(0), Event = character(0))
+
 simBsa <- function(drug, dose, units, weight = 70, height = 170) {
   r <- simulateDrugsWithCovariates(
-    doseTable = data.frame(Drug = drug, Time = 0, Dose = dose, Units = units),
-    weight = weight, height = height, age = 50, sex = "male", maximum = 600)
-  r[[drug]]$results$Cp
+    data.frame(Drug = drug, Time = 0, Dose = dose, Units = units),
+    noEvents, weight, height, 50, "male", 600, FALSE)
+  r[[drug]]$wide$Plasma
 }
 
 test_that("a per-m2 dose is the absolute dose times the body surface area", {
