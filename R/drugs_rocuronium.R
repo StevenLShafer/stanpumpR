@@ -99,8 +99,9 @@
 # Cortinez's.  Kleijn's own ke0 (Table 4, T4/T1 ratio, no sevoflurane) is
 # 0.134 /min x (BW/70)^-0.25, which on this plasma model puts the
 # effect-site peak at 8.6 min, beyond the range of Cortinez's patients
-# (2.0-7.7 min).  With sevoflurane Kleijn's ke0 is 0.058 /min.  Which to use
-# is a [decision] for Shafer (card PMID_21535448, open_questions).
+# (2.0-7.7 min).  With sevoflurane Kleijn's ke0 is 0.058 /min.  Decided by
+# Steven L. Shafer, 2026-11-23: "keep the peak effect at 4.5 minutes and
+# adjust the ke0 as needed", so ke0 is re-solved from Cortinez's 4.5 min.
 #
 # THE TERMINAL PHASE
 # ==================
