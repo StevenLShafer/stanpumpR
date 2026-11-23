@@ -15,7 +15,7 @@ The numbers themselves belong to the **authors of each paper**, who are named in
 
 There are three questions:
 
-1. **Did both libraries read the same numbers?** For each paper that both libraries transcribed (143 papers, matched by DOI or PMID to a stanpumpR digest card), the script asks whether each estimate nlmixr2lib took from the paper is also among the numbers in stanpumpR's card or model code.
+1. **Did both libraries read the same numbers?** For each paper that both libraries transcribed (matched by DOI or PMID to a stanpumpR digest card, or, since 2026-11-23, cited by DOI in stanpumpR's R code with no card, when the numbers are compared with the citing files alone), the script asks whether each estimate nlmixr2lib took from the paper is also among the numbers in stanpumpR's card or model code.
    - **A number found in neither is a lead to check in the PDF.** One transcription may be wrong, or the two may parameterise the model differently.
    - **Agreement is weaker evidence than it looks.** Both libraries are AI-assisted (stanpumpR's by Claude, much of nlmixr2lib's by an extraction tool), so they can share a misreading. A disagreement is the strong signal.
 2. **Which papers did stanpumpR not consider?** For each drug stanpumpR already has, the script lists the nlmixr2lib papers with no digest card. Each one is a candidate source, comparison model or alternative model for the drug's model selector.
@@ -26,9 +26,10 @@ There are three questions:
 | File | One row per | Columns worth knowing |
 |---|---|---|
 | `summary.md` | n/a | The counts and the lead tables. Read this first. |
-| `shared-papers.csv` | nlmixr2lib model of a shared paper | `estimates`, `foundInCard`, `foundInCode` and `foundInNeither` count non-residual estimates. `notFound` names the leads. `closestModelOfPaper` marks the model of each paper whose numbers stanpumpR prints most of; a paper often holds several models (a reference fit, a pooled fit, one per formulation), and stanpumpR implements at most one. `implementedDrug` is true when the card names a `R/drugs_` file. |
-| `shared-parameters.csv` | estimate | `printed` is the number as nlmixr2lib wrote it (inside `log()` where it was written that way). `source` is nlmixr2lib's own note of where in the paper it came from. `inCard` and `inCode` say how the number was found: `exact`; a unit factor such as `/60`, `x1000` or `/100`; or `exp ...` for a bare log-scale value. Blank means not found. `residual` marks residual-error terms, which are never leads. |
-| `candidate-papers.csv` | nlmixr2lib model, of a library drug, whose paper has no card | Sorted by drug, then by study size. Gives the population (n, age and weight ranges, disease) the model selector needs. |
+| `audit.md` | n/a | Written by hand: the audit of stanpumpR's models that these tables support (2026-11-23), what each kind of unmatched number turned out to be, the findings that need action, and the larger models stanpumpR has not considered. |
+| `shared-papers.csv` | nlmixr2lib model of a shared paper | `estimates`, `foundInCard`, `foundInCode` and `foundInNeither` count non-residual estimates. `notFound` names the leads. `closestModelOfPaper` marks the model of each paper whose numbers stanpumpR prints most of; a paper often holds several models (a reference fit, a pooled fit, one per formulation), and stanpumpR implements at most one. `implementedDrug` is true when the card, or the citing code, names a `R/drugs_` file. A paper with no card has an empty `card` and its DOI in `citation`. |
+| `shared-parameters.csv` | estimate | `printed` is the number as nlmixr2lib wrote it (inside `log()` where it was written that way). `source` is nlmixr2lib's own note of where in the paper it came from. `inCard` and `inCode` say how the number was found: `exact`; a unit factor such as `/60`, `x1000` or `/100`; `exp ...` for a bare log-scale value; or `fraction ...` for a logit read as the fraction it stands for. Blank means not found. `residual` marks residual-error terms, which are never leads. |
+| `candidate-papers.csv` | nlmixr2lib model, of a library drug, whose paper has no card (including papers the code cites, which are also compared in `shared-papers.csv`) | Sorted by drug, then by study size. Gives the population (n, age and weight ranges, disease) the model selector needs. |
 | `candidate-drugs.csv` | drug not in the Drug Library | `models`, `largestStudyN`, `largestStudy`, `mentionedIn`, and every model (`allModels`). |
 
 ## How a number is matched, and what that cannot tell you
@@ -37,6 +38,7 @@ The script collects every number written in stanpumpR's digest card for the pape
 - **Exactly:** equal to the printed digits.
 - **Under a unit factor:** minutes against hours, mass prefixes, or percent against a fraction, to within 0.5%.
 - **As exp() of the value:** for a bare log-scale number.
+- **As the fraction a logit stands for:** for a parameter named `logit...`, which nlmixr2lib writes as `log(p/(1-p))` (the script reads the odds) or as a bare log-odds, and stanpumpR prints as the fraction `p` (added 2026-11-23).
 
 A match means the number was transcribed, not that it sits in the right place: a small integer or 0.75 can match by coincidence. A miss can come from:
 - a different parameterisation: a rate constant where stanpumpR has a clearance, or a different reference patient;

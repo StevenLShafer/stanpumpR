@@ -258,6 +258,21 @@ for (i in seq_len(nrow(models))) {
   if (length(hit)) models$card[i] <- hit[1]
 }
 
+# A paper the model code cites by DOI but which has no digest card is still the
+# source (or a stated cross-check) of a model stanpumpR runs, and its numbers
+# can be compared with that code even with no card to compare them with.
+# Found 2026-11-23: 24 such papers, piperacillin's own source (Kong 2025) among
+# them, had never been compared, because only carded papers were.
+codeFilesAll <- list.files(file.path(repo, "R"), pattern = "\\.R$", full.names = TRUE)
+codeTextLower <- vapply(codeFilesAll, function(f)
+  tolower(paste(readLines(f, warn = FALSE, encoding = "UTF-8"), collapse = "\n")), character(1))
+models$citedIn <- NA_character_
+for (i in which(is.na(models$card) & !is.na(models$doi))) {
+  where <- vapply(codeTextLower, grepl, logical(1), pattern = tolower(models$doi[i]), fixed = TRUE)
+  if (any(where))
+    models$citedIn[i] <- paste(sub(paste0("^", repo, "/"), "", codeFilesAll[where]), collapse = ";")
+}
+
 # ---- 1. shared papers: do the numbers agree? -----------------------------------
 
 readText <- function(paths) {
@@ -267,13 +282,20 @@ readText <- function(paths) {
                                         collapse = "\n"), character(1)), collapse = "\n")
 }
 
-shared <- models[!is.na(models$card), ]
+shared <- models[!is.na(models$card) | !is.na(models$citedIn), ]
 sharedParams <- list()
 sharedSummary <- list()
 for (i in seq_len(nrow(shared))) {
-  card <- cards[cards$stem == shared$card[i], ]
-  cardNumbers <- numbersIn(readText(file.path(repo, "papers", "digests", paste0(card$stem, ".md"))))
-  codeFiles <- if (nzchar(card$codeFiles)) strsplit(card$codeFiles, ";")[[1]] else character()
+  if (!is.na(shared$card[i])) {
+    card <- cards[cards$stem == shared$card[i], ]
+    cardNumbers <- numbersIn(readText(file.path(repo, "papers", "digests", paste0(card$stem, ".md"))))
+    codeFiles <- if (nzchar(card$codeFiles)) strsplit(card$codeFiles, ";")[[1]] else character()
+  } else {
+    # Cited in the code, no card: compared with the files that cite it.
+    card <- data.frame(stem = "", citation = paste0("doi:", shared$doi[i]), stringsAsFactors = FALSE)
+    cardNumbers <- numeric()
+    codeFiles <- strsplit(shared$citedIn[i], ";")[[1]]
+  }
   # Every R file the card names, not only R/drugs_*: a card names a file
   # because the model's numbers live there, and several models keep them
   # outside a drugs_ file (R/insulinTham.R builds the Tham insulins,
@@ -292,6 +314,18 @@ for (i in seq_len(nrow(shared))) {
                       p$parameter)
   findIn <- function(numbers) vapply(seq_len(nrow(p)), function(k) {
     hit <- matchValue(p$printed[k], numbers)
+    # A logit-named parameter (logitfdepot) is printed by stanpumpR as the
+    # fraction itself.  nlmixr2lib writes it as log(p/(1-p)), whose printed
+    # argument is the odds, or as a bare log-odds; logit(p) is read as p
+    # already.
+    if (!nzchar(hit) && grepl("^logit", p$parameter[k]) && is.finite(p$printed[k])) {
+      fraction <- switch(p$transform[k],
+                         log = p$printed[k] / (1 + p$printed[k]),
+                         none = 1 / (1 + exp(-p$printed[k])),
+                         NA_real_)
+      hit <- matchValue(fraction, numbers)
+      if (nzchar(hit)) hit <- paste0("fraction ", hit)
+    }
     # A bare number on a log-named parameter (lcl <- 4.84) may be the log of
     # what stanpumpR printed.
     if (!nzchar(hit) && p$transform[k] == "none" && grepl("^l", p$parameter[k]) &&
@@ -336,7 +370,8 @@ if (!is.null(sharedSummary)) {
   share <- (sharedSummary$estimates - sharedSummary$foundInNeither) /
     pmax(sharedSummary$estimates, 1)
   sharedSummary$matchedShare <- round(share, 3)
-  best <- ave(share, sharedSummary$card, FUN = function(x) seq_along(x) == which.max(x))
+  paperKey <- ifelse(nzchar(sharedSummary$card), sharedSummary$card, sharedSummary$citation)
+  best <- ave(share, paperKey, FUN = function(x) seq_along(x) == which.max(x))
   sharedSummary$closestModelOfPaper <- as.logical(best)
   sharedSummary$implementedDrug <- !is.na(sharedSummary$libraryDrug) &
     grepl("R/drugs_", sharedSummary$codeFiles)
@@ -427,8 +462,8 @@ summaryLines <- c(
           nrow(models), sum(!is.na(models$doi)), human),
   sprintf("- Models of a drug stanpumpR's Drug Library holds: %d, of %d library drugs.",
           sum(!is.na(models$libraryDrug)), length(unique(unlist(strsplit(na.omit(models$libraryDrug), ";"))))),
-  sprintf("- Shared papers (a nlmixr2lib model whose paper has a stanpumpR digest card): %d.",
-          NROW(sharedSummary)),
+  sprintf("- Shared papers (a nlmixr2lib model whose paper has a stanpumpR digest card, or which stanpumpR's code cites by DOI): %d, %d of them cited with no card.",
+          NROW(sharedSummary), sum(!nzchar(sharedSummary$card))),
   sprintf("- Of their %d estimates (residual error left out), found in stanpumpR's card or code: %d; in neither: %d.",
           sum(sharedSummary$estimates), sum(sharedSummary$estimates - sharedSummary$foundInNeither),
           sum(sharedSummary$foundInNeither)),
