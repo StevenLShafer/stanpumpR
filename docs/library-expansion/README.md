@@ -118,3 +118,9 @@ A scheduled task, **"stanpumpR weekly library expansion"**, runs a fresh cloud s
 It never merges, and it records every question for Steven where AGENTS.md says questions go.
 
 Its prompt is `weekly-routine-prompt.md`, below the `---` line. A change to what the routine does is made in both places: that file, and the task's own prompt on the routines page. The page is where it runs from: a scheduled task made from a cloud session carries no connectors, so the task must be created or edited there.
+
+### Weekly run, 2026-11-21
+
+- **nlmixr2lib had not moved** (d8a308a); the lists were regenerated anyway.
+- **63 picks and leads marked missing were in the archive** (filed 2026-11-18, `PMID_` names); `archive-status.csv` was stale. 10 picks and 10 leads are still to download (`downloads.md`); Pai 2025 (PMID 41159735, Zerbaxa's newest pick) and Ciprofol's PMID 38440939 are among them.
+- **No drug was implemented this run.** Zerbaxa stays blocked on the infection-state decision; ceftazidime (Avycaz's partner) is next in plan order and needs the full seven items plus the antibiotic band sources, which this run did not complete.
