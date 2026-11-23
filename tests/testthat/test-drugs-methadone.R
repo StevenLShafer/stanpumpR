@@ -4,18 +4,31 @@
 # they are pinned to 1e-5 rather than the usual 1.5e-6, which leaves room for
 # floating-point differences between platforms without hiding a real change.
 
+# Henthorn's cohort (Table 1, p740) as the model anchors it, and its factors
+# computed independently of pkSizeFactors() (helpers.R)
+methadoneCohort <- cohortFactorsIndependent(list(groups = list(
+  list(weight = 74, height = 177.3, age = 29, men = 34, women = 0),
+  list(weight = 74, height = 163.4, age = 29, men = 0, women = 30))))
+methadoneRacemicCL <- 1 / (0.5 / 0.103 + 0.5 / 0.09102) / (309.45 / 345.91)
+
 test_that("reference man: reduced parameters, oral route and pharmacodynamics", {
   actual <- methadone(70, 170, 50, "male")
 
+  # Since 2026-11-19 every parameter but V3 is scaled to fat-free mass and
+  # anchored at Henthorn's cohort (the header's BODY SIZE section): the
+  # reference man's Vc, V2 and clearances are Table 2's divided by the
+  # cohort's factors (0.948 and 0.961), V3 is his own weight term's, and the
+  # reduction is refitted.  Before, v1 34.6029236, v2 130.4042348, v3
+  # 178.5251339, cl1 0.1080264692, cl2 12.9415885, cl3 0.4803807328.
   expect_equal(
     actual$PK$default,
     list(
-      v1 = 34.6029236,
-      v2 = 130.4042348,
-      v3 = 178.5251339,
-      cl1 = 0.1080264692,
-      cl2 = 12.9415885,
-      cl3 = 0.4803807328,
+      v1 = 36.50621513,
+      v2 = 137.6094391,
+      v3 = 178.7502506,
+      cl1 = 0.1124566553,
+      cl2 = 13.47302684,
+      cl3 = 0.4992306531,
       ka_PO = 0.0100236846,
       bioavailability_PO = 0.70,
       tlag_PO = 0
@@ -37,15 +50,80 @@ test_that("racemic clearance is the enantiomer clearances combined exactly", {
   # Worked from Henthorn Table 2 by hand: R(-) 0.024 + 0.026 + 0.053 = 0.103
   # L/min; S(+) 0.024 x 1.30 + 0.026 x 0.57 + 0.045 = 0.09102 L/min.  Half the
   # dose to each, so racemic clearance is the harmonic mean, and the
-  # hydrochloride-to-base factor divides it.
+  # hydrochloride-to-base factor divides it.  With the switch on every
+  # clearance of both enantiomers takes the anchored clearance factor, so the
+  # racemic clearance takes it exactly; with it off, none.
   clR <- 0.103
   clS <- 0.09102
   racemic <- 1 / (0.5 / clR + 0.5 / clS)
   expected <- racemic / (309.45 / 345.91)
   for (w in c(50, 70, 120)) {
-    expect_equal(methadone(w, 170, 50, "male")$PK$default$cl1, expected,
-                 tolerance = 1e-9)
+    factor <- pkSizeFactors(w, 170, 50, "male", TRUE)$clearance /
+      methadoneCohort$clearance
+    expect_equal(methadone(w, 170, 50, "male")$PK$default$cl1,
+                 expected * factor, tolerance = 1e-9)
+    expect_equal(methadone(w, 170, 50, "male", adjustToFFM = FALSE)$PK$default$cl1,
+                 expected, tolerance = 1e-9)
   }
+})
+
+test_that("size: the cohort's typical patient gets Table 2, and FFM scales the rest", {
+  # (a) A man at the cohort's height and age whose fat-free mass is the
+  # cohort's pooled typical one (34 men and 30 women of 74 kg) receives
+  # Henthorn's Table 2 values for every parameter but V3: Vc 41.0 L (S(+)
+  # x 0.60), Q2 13.3 L/min (S(+) x 0.77), and the racemic clearance.
+  wCohort <- uniroot(function(w) ffmAlSallami(w, 177.3, 29, "male") / FFM_REFERENCE -
+                       methadoneCohort$volume, c(40, 120), tol = 1e-12)$root
+  size <- pkSizeFactors(wCohort, 177.3, 29, "male", TRUE,
+                        cohort = do.call(cohortSizeFactors, METHADONE_COHORT))
+  expect_equal(c(size$volume, size$clearance), c(1, 1), tolerance = 1e-9)
+  expect_equal(methadone(wCohort, 177.3, 29, "male")$PK$default$cl1,
+               methadoneRacemicCL, tolerance = 1e-9)
+  e <- methadoneEnantiomers(size$pkWeight, volume = size$volume,
+                            clearance = size$clearance)
+  expect_equal(1 / sum(e$R$coef), 41.0, tolerance = 1e-9)        # Vc, R(-)
+  expect_equal(1 / sum(e$S$coef), 41.0 * 0.60, tolerance = 1e-9) # Vc, S(+)
+  # The cohort's own man and woman sit either side of the pooled patient:
+  # each one's factor is his or her FFM ratio over the pooled divisor
+  for (sex in c("male", "female")) {
+    h <- if (sex == "male") 177.3 else 163.4
+    s <- pkSizeFactors(74, h, 29, sex, TRUE,
+                       cohort = do.call(cohortSizeFactors, METHADONE_COHORT))
+    expect_equal(s$volume, ffmAlSallami(74, h, 29, sex) / FFM_REFERENCE /
+                   methadoneCohort$volume, tolerance = 1e-9, info = sex)
+  }
+
+  # (b) A man of twice the reference fat-free mass: Vc, V2, Q2, Q3 and the
+  # clearances scale by the ratio (volumes) and its 0.75 power (clearances),
+  # over the cohort's factors; V3 follows Henthorn's own weight term at his
+  # pharmacokinetic weight (140 kg) and nothing else.
+  w2 <- uniroot(function(w) ffmAlSallami(w, 190, 35, "male") - 2 * FFM_REFERENCE,
+                c(80, 300), tol = 1e-12)$root
+  big <- pkSizeFactors(w2, 190, 35, "male", TRUE,
+                       cohort = do.call(cohortSizeFactors, METHADONE_COHORT))
+  expect_equal(big$volume, 2 / methadoneCohort$volume, tolerance = 1e-9)
+  expect_equal(big$clearance, 2^0.75 / methadoneCohort$clearance, tolerance = 1e-9)
+  expect_equal(big$pkWeight, 140, tolerance = 1e-9)
+  expect_equal(methadone(w2, 190, 35, "male")$PK$default$cl1,
+               methadoneRacemicCL * 2^0.75 / methadoneCohort$clearance,
+               tolerance = 1e-9)
+  e2 <- methadoneEnantiomers(140, volume = big$volume, clearance = big$clearance)
+  expect_equal(1 / sum(e2$R$coef), 41.0 * 2 / methadoneCohort$volume, tolerance = 1e-9)
+  # The sum of the exponents is k10 + k12 + k13 + k21 + k31: written out from
+  # Table 2 with Vc and V2 scaled, the clearances scaled, and V3 at Henthorn's
+  # own term alone (208.1 L x (140/70)^1.23)
+  sv <- big$volume; sc <- big$clearance
+  v3 <- 208.1 * 2^1.23
+  expect_equal(sum(e2$R$lambda),
+               (0.103 + 13.3 + 0.50) * sc / (41.0 * sv) + 13.3 * sc / (155.3 * sv) +
+                 0.50 * sc / v3, tolerance = 1e-9)
+
+  # (c) The switch off ignores the cohort: Table 2 at any size, V3 at total
+  # weight
+  off <- methadone(w2, 190, 35, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(off$cl1, methadoneRacemicCL, tolerance = 1e-9)
+  expect_identical(methadoneRacemicPK(w2, 1, volume = 1, clearance = 1),
+                   methadoneRacemicPK(w2))
 })
 
 test_that("the reduction tracks the two-enantiomer model for a week", {
@@ -75,15 +153,18 @@ test_that("the enantiomer models reproduce Henthorn's clearance shares", {
   expect_equal(e$R$lambda[3] / e$S$lambda[3], 0.69, tolerance = 0.01)
 })
 
-test_that("weight enters V3 only, on pharmacokinetic weight or total weight", {
+test_that("V3 on pharmacokinetic or total weight; the rest on FFM with the switch on", {
   # 120 kg, 170 cm, 50 y man: pharmacokinetic weight 91.34 kg.  Henthorn's
-  # V3 term at 120 kg exceeds that at 91.34 kg; V1 and clearance barely move.
+  # V3 term at 120 kg exceeds that at 91.34 kg.  With the switch on the other
+  # volumes and clearances take his FFM factors over the cohort's (since
+  # 2026-11-19; before, v1 34.5982634, v2 130.2796169, v3 245.7331206, cl1
+  # 0.1080264692, cl2 12.9400613, cl3 0.4841747711); with it off, nothing.
   on  <- methadone(120, 170, 50, "male")$PK$default
   off <- methadone(120, 170, 50, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(
     on[1:6],
-    list(v1 = 34.5982634, v2 = 130.2796169, v3 = 245.7331206,
-         cl1 = 0.1080264692, cl2 = 12.9400613, cl3 = 0.4841747711),
+    list(v1 = 47.61599952, v2 = 179.4435044, v3 = 246.8841445,
+         cl1 = 0.1372996876, cl2 = 16.45149843, cl3 = 0.612249411),
     tolerance = 1e-5
   )
   expect_equal(
@@ -95,7 +176,9 @@ test_that("weight enters V3 only, on pharmacokinetic weight or total weight", {
   ref <- methadone(70, 170, 50, "male")$PK$default
   expect_gt(off$v3, on$v3)
   expect_gt(on$v3, ref$v3)
-  expect_equal(on$cl1, ref$cl1)
+  expect_equal(on$cl1 / ref$cl1,
+               pkSizeFactors(120, 170, 50, "male", TRUE)$clearance /
+                 pkSizeFactors(70, 170, 50, "male", TRUE)$clearance, tolerance = 1e-9)
 })
 
 test_that("an oral dose peaks at about 3 hours with 70% of the exposure", {
@@ -226,14 +309,21 @@ test_that("a poor metaboliser accumulates higher on repeated oral dosing", {
 test_that("the Pregnant field applies the review's factor (R/pregnancy.R)", {
   # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.  Both enantiomers' CL x 24/14, then the racemic fit.
   # The values are those the model gives with the flag on; test-pregnancy.R
-  # checks the ratio against the flag off and that nothing else moves.
+  # checks the ratio against the flag off and that nothing else moves.  Since
+  # 2026-11-19 she is scaled to FFM and anchored at Henthorn's cohort; cl1 is
+  # the old pin 0.1851882329 times her anchored clearance factor (checked
+  # below), and the reduction is refitted (old pins: v1 34.698757, v2
+  # 132.1350653, v3 144.2931424, cl2 12.92238908, cl3 0.4444147292).
   actual <- methadone(70, 165, 30, "female", pregnant = TRUE)$PK$default
-  expect_equal_rounded(34.698757, actual$v1)
-  expect_equal_rounded(132.1350653, actual$v2)
-  expect_equal_rounded(144.2931424, actual$v3)
-  expect_equal_rounded(0.1851882329, actual$cl1)
-  expect_equal_rounded(12.92238908, actual$cl2)
-  expect_equal_rounded(0.4444147292, actual$cl3)
+  expect_equal_rounded(29.50680535, actual$v1)
+  expect_equal_rounded(112.0460219, actual$v2)
+  expect_equal_rounded(143.230113, actual$v3)
+  expect_equal_rounded(0.1640052931, actual$cl1)
+  expect_equal_rounded(11.44143663, actual$cl2)
+  expect_equal_rounded(0.4035549047, actual$cl3)
+  expect_equal(actual$cl1, 0.1851882329 *
+                 pkSizeFactors(70, 165, 30, "female", TRUE)$clearance /
+                 methadoneCohort$clearance, tolerance = 1e-8)
   expect_equal(methadone(70, 165, 30, "female")$PK$default,
                methadone(70, 165, 30, "female", pregnant = FALSE)$PK$default)
   expect_match(methadone(70, 165, 30, "female", pregnant = TRUE)$reference, "Ansari", fixed = TRUE)

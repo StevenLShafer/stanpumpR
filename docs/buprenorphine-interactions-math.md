@@ -12,8 +12,8 @@ P1, P2 and P4; P3 is resolved below. Where a later pass corrected or sharpened t
 > antagonists naloxone, naltrexone, nalmefene. κ/δ, ORL-1/NOP (the bell-shaped high-dose effect) and
 > norbuprenorphine are out of scope.
 
-A LaTeX/PDF version of this note, for any mathematician who wants the typeset details, is
-`docs/buprenorphine-interaction.tex` (compiled `…-interaction.pdf`).
+A typeset PDF version of this note, for any mathematician who wants the details, is
+[`docs/buprenorphine-interaction.pdf`](buprenorphine-interaction.pdf).
 
 ---
 

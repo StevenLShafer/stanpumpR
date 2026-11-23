@@ -78,6 +78,10 @@ test_that("propofol TCI-E: every series is there and the drug adds up", {
     expect_length(r[[k]], length(r$t))
   expect_equal(r$mode[1], "effect")
   expect_gt(r$rate[1], 0)
+  # The pump is running or it is off: no rate of round-off, which the viewer
+  # drew as an arrow labelled "Pump 9.41e-13 mg/min" (TCI_RATE_ROUNDOFF,
+  # tciDisplay(); 2026-11-20).
+  expect_true(all(r$rate == 0 | r$rate >= TCI_RATE_ROUNDOFF * max(r$rate)))
   # Given is the TCI pump's own schedule, integrated.
   n <- length(r$t)
   expect_equal(r$given[n], sum(r$rate[-n] * diff(r$t) / 60), tolerance = 1e-9)

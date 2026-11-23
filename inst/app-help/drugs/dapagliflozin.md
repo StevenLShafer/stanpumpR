@@ -12,6 +12,7 @@ Heart failure did not change clearance (a 4% difference was tested and dropped).
 - **Renal function:** clearance × (eGFR/83)<sup>0.584</sup>. The eGFR is CKD-EPI 2009 in adults, from the entered serum creatinine or an [assumed normal](help:models/covariates) one. Under 18 it is the bedside Schwartz equation, 0.413 × height / creatinine, as in the paper. The data covered eGFRs of 27 to 154.
 - **Sex:** clearance × 0.840 in women.
 - **Weight:** central volume × (weight/89)<sup>0.570</sup>. With **Adjust weight to fat-free mass** ticked, the pharmacokinetic weight is used; the data covered 31 to 198 kg.
+- **Fat-free mass:** with the switch ticked, the peripheral volume scales with fat-free mass and the intercompartmental clearance with it to the 0.75 power, from the 70 kg reference man, since the paper prints no height for its multinational cohort (stanpumpR's rule that a parameter without a size term in its source still scales with size, Steven L. Shafer, 2026-11-19). Clearance is not scaled yet: it carries the paper's term for women, and scaling it from the reference man would count sex twice, so it waits on a decision.
 
 At 10 mg once daily, the reference man (89 kg, eGFR 83) has a steady-state exposure of 435 ng·h/mL over a day and a peak near 96 ng/mL about an hour after a dose.
 

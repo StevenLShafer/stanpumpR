@@ -144,6 +144,7 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
                           albumin = NULL,
                           ast = NULL,
                           opioidTolerance = OPIOID_TOLERANCE_DEFAULT,
+                          buprenorphineOffset = BUPRENORPHINE_OFFSET_DEFAULT,
                           individual = NULL,
                           physiology = NULL,
                           pulmonaryHypertension = FALSE,
@@ -194,6 +195,8 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
         individual = individual[[drug]],
         physiology = phys,
         pulmonaryHypertension = pulmonaryHypertension,
+        # PROTOTYPE: buprenorphine onset/offset biophase scale (Shafer 2026-11-20)
+        offsetScale = buprenorphineOffset,
         # The session's library, from which a metabolite's row (its units)
         # is read
         libraryDefaults = drugDefaults,

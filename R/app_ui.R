@@ -564,10 +564,28 @@ app_ui <- function() {
                       "lower. Only drugs with a published model are drawn."
                     ),
                     placement = "right"
+                  )),
+                  # A panel under each drug with a published concentration-
+                  # effect model, 0 to 100% of its maximal effect
+                  # (R/pdEffect.R); shown only while such a drug is drawn.
+                  relevantField("showEffect", fieldHelp(
+                    checkboxInput(
+                      "showEffect",
+                      "% effect",
+                      value = FALSE
+                    ),
+                    paste(
+                      "Under each drug with a published concentration-effect",
+                      "model, draw its effect as a percentage of the maximal",
+                      "effect, 0 to 100%, so the plot does not depend on the",
+                      "patient's baseline. Only drugs with a published model",
+                      "are drawn."
+                    ),
+                    placement = "right"
                   ))
                 ),
                 conditionalPanel(
-                  condition = sprintf("!(input.showThreshold || input.showMEAC || output.adaptationDrawn || input.addedPlots.includes('%s') || input.addedPlots.includes('%s'))", PLOT_ID_EVENTS, PLOT_ID_INTERACTION),
+                  condition = sprintf("!(input.showThreshold || input.showMEAC || output.adaptationDrawn || output.effectDrawn || input.addedPlots.includes('%s') || input.addedPlots.includes('%s'))", PLOT_ID_EVENTS, PLOT_ID_INTERACTION),
                   checkboxInput(
                     inputId = "logY",
                     label = "Log Y axis",
@@ -597,6 +615,45 @@ app_ui <- function() {
                     "and blockade), respiratory depression (with buprenorphine's",
                     "ceiling) and analgesia in MEAC-equivalents, and an",
                     "available-drive line on the % MEAC panel."
+                  ),
+                  placement = "right"
+                )),
+                # PROTOTYPE sliders (Shafer, 2026-11-20): the two inter-patient
+                # axes the source papers' random effects identify.  Sensitivity
+                # is a continuous theta offset on the receptor panels (one
+                # physical occupancy, so the same axis as tolerance); onset/
+                # offset multiplies buprenorphine's biophase tPeak (ke0).
+                relevantField(OPIOID_SENSITIVITY_INPUT, fieldHelp(
+                  sliderInput(
+                    inputId = OPIOID_SENSITIVITY_INPUT,
+                    label = "Opioid sensitivity (more <-> less)",
+                    min = OPIOID_SENSITIVITY_MIN, max = OPIOID_SENSITIVITY_MAX,
+                    value = OPIOID_SENSITIVITY_DEFAULT, step = 0.1
+                  ),
+                  paste(
+                    "Shifts where the patient sits on the occupancy-response",
+                    "axis: left = more sensitive (potency up), right = less",
+                    "sensitive / more tolerant. +/-1 is about x/divide 3 in",
+                    "potency, the span of the naive-to-chronic shift and the",
+                    "fitted between-patient variability. Moves the receptor",
+                    "panels on the same axis as Opioid tolerance."
+                  ),
+                  placement = "right"
+                )),
+                relevantField(BUPRENORPHINE_OFFSET_INPUT, fieldHelp(
+                  sliderInput(
+                    inputId = BUPRENORPHINE_OFFSET_INPUT,
+                    label = "Buprenorphine onset/offset (faster <-> slower)",
+                    min = BUPRENORPHINE_OFFSET_MIN, max = BUPRENORPHINE_OFFSET_MAX,
+                    value = BUPRENORPHINE_OFFSET_DEFAULT, step = 0.1
+                  ),
+                  paste(
+                    "Scales buprenorphine's biophase equilibration (tPeak/ke0),",
+                    "the rate-limiting step for its slow onset AND offset",
+                    "(Yassen 2006/2007: brain distribution, not receptor",
+                    "dissociation). >1 slower, <1 faster; the fitted ke0",
+                    "variability is about 50-85%. Changes every buprenorphine",
+                    "panel, not only the interaction panels."
                   ),
                   placement = "right"
                 )),

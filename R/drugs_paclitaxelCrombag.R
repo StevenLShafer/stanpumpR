@@ -65,10 +65,25 @@
 # =====================================
 # The model's own covariate, BSA (Mosteller, the source naming none), on
 # VMEL alone, at the pharmacokinetic weight with the switch on and total
-# weight with it off.  V1, V3, VMTR, KMTR, K21 and Q carry no covariate and
-# are FIXED in both switch positions, following Shafer's decision for
-# Joerger 2006's V1 (2026-11-06): the source tested size and kept it on VMEL
-# only.  KMEL, a concentration, does not scale.
+# weight with it off; VMEL takes no other scaling.  V1, V3, VMTR and Q carry
+# no covariate.  This file said until 2026-11-19 that "the source tested size
+# and kept it on VMEL only", and held them FIXED on that ground: that was
+# wrong.  Crombag took the covariate model (sex, BSA and bilirubin on VMEL)
+# from Joerger 2012 (her ref 13) and evaluated only age (Methods, p3; the
+# Discussion, p7: "thorough evaluation of other covariates ... [was] not
+# within the scope of this study"); size was never tested on V1, V3, VMTR or
+# Q in these data.  By Shafer's first-principles rule of 2026-11-19
+# (docs/weight-adjustment.md, *Every parameter is scaled*) they are scaled
+# with the switch on: V1 and V3 by the fat-free-mass volume factor, VMTR (a
+# maximal rate) and Q by the clearance factor, anchored at Crombag's cohort
+# (PACLITAXEL_CROMBAG_COHORT, below; its typical patient sits at a volume
+# factor of 0.885 and a clearance factor of 0.913 from the 70 kg reference
+# man), so a patient like Crombag's receives the published values.  None of
+# the four has a sex term, so they are anchored at the cohort's pooled
+# patient.  The cohort's weight and height are DERIVED, Table I printing
+# neither (see the constant).  With the switch off they are unscaled, as
+# before.  KMEL and KMTR (concentrations) and K21 (a rate constant) do not
+# scale.
 #
 # PREGNANCY (R/pregnancy.R)
 # =========================
@@ -93,6 +108,24 @@ PACLITAXEL_CROMBAG <- list(
   bilirubin = 7                                 # held: no Patient Profile field
 )
 
+# Crombag 2019, Table I (p5), read on the PDF 2026-11-19: 684 patients, 383
+# women (56%) and 301 men; median age 61 years; BSA median 1.8 m2 (IQR
+# 1.7-2.0).  No weight or height is printed, and the paper names no BSA
+# formula.  The patients are Dutch (NKI Amsterdam, Erasmus MC Rotterdam,
+# Radboud UMC Nijmegen).  Derived: NCD-RisC's mean height at 18 for the
+# Netherlands, birth cohort 1958 (2019 less 61), less the loss with age to 61
+# years, is 179.9 cm for the men and 166.3 cm for the women; their mean
+# weighted by the 301 men and 383 women is 172.3 cm, and the weight that gives
+# BSA 1.8 m2 at that height by Du Bois's formula is 67.6 kg (BMI 22.8).  As a
+# check, Joerger 2006's 168 Dutch patients, among Crombag's, measured 68.5 kg
+# at BSA 1.80 m2 (PACLITAXEL_JOERGER_COHORT).  Birth cohort 1945 (the data's
+# collection, 1990s-2017, rather than the publication) gives 170.2 cm and
+# 69.0 kg and moves the volume factor by 0.2%.  V1, V3, VMTR and Q are
+# anchored at this cohort (Steven L. Shafer, 2026-11-19; see the header's
+# BODY SIZE section).
+PACLITAXEL_CROMBAG_COHORT <- list(weight = 67.6, height = 172.3, age = 61,
+                                  men = 301, women = 383)
+
 #' Paclitaxel, intravenous, solvent-based (Crombag 2019)
 #'
 #' Joerger's three-compartment structure with saturable elimination and
@@ -109,8 +142,13 @@ paclitaxelCrombag <- function(weight, height, age, sex, adjustToFFM = TRUE, preg
 {
   p <- PACLITAXEL_CROMBAG
   preg <- if (isTRUE(pregnant)) PACLITAXEL_PREGNANCY else list(km = 1, v1 = 1, vLinear = 1)
+  # V1, V3, VMTR and Q, with no covariate, are scaled and anchored at
+  # Crombag's cohort with the switch on; VMEL carries the source's BSA term at
+  # the pharmacokinetic weight (which does not depend on the cohort) and takes
+  # no size factor (see the header's BODY SIZE section).
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, PACLITAXEL_CROMBAG_COHORT))
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   bsa <- bsaMosteller(w, height) / p$bsaReference
   male <- if (identical(sex, "male")) 1 else 0
@@ -123,13 +161,13 @@ paclitaxelCrombag <- function(weight, height, age, sex, adjustToFFM = TRUE, preg
   km <- p$kmel * mg * preg$km                      # mg/L
 
   default <- list(
-    v1 = p$v1 * preg$v1,                     # fixed: no covariate
-    v2 = p$v3 * preg$vLinear,                # the source's V3, linear
+    v1 = p$v1 * size$volume * preg$v1,       # no covariate: anchored
+    v2 = p$v3 * size$volume * preg$vLinear,  # the source's V3, linear
     v3 = 1,                                  # placeholder: see the header
     # The low-concentration limit of the saturable elimination, Vmax / Km,
     # for the help tables only: the simulation uses the michaelisMenten block.
     cl1 = vmax / km,
-    cl2 = p$q / 60,
+    cl2 = p$q / 60 * size$clearance,
     cl3 = 0
   )
   events <- c(PK_EVENT_DEFAULT)
@@ -142,7 +180,8 @@ paclitaxelCrombag <- function(weight, height, age, sex, adjustToFFM = TRUE, preg
     "x 1.12^male x (BSA/1.8)^1.41 x (bilirubin/7)^-0.17 x (age/61)^-0.31, KMEL 0.46 ",
     "umol/L), saturable distribution to a first peripheral compartment (VMTR 177 umol/h, ",
     "KMTR 1.63 umol/L, K21 1.20 /h) and linear distribution to a second (Q 16.6 L/h, V3 ",
-    "267 L), V1 12.0 L (Mosteller BSA; bilirubin held at 7 umol/L). Solvent-based ",
+    "267 L), V1 12.0 L; V1, V3, VMTR and Q at the cohort's typical patient, scaled to ",
+    "fat-free mass with the switch on (Mosteller BSA; bilirubin held at 7 umol/L). Solvent-based ",
     "paclitaxel only. Total plasma paclitaxel. https://doi.org/10.1007/s11095-018-2563-6"
   )
   if (isTRUE(pregnant))
@@ -160,7 +199,7 @@ paclitaxelCrombag <- function(weight, height, age, sex, adjustToFFM = TRUE, preg
     michaelisMenten = list(
       vmax = vmax, km = km,
       saturableDistribution = list(
-        vmax = p$vmtr * mg / 60,                 # mg/min
+        vmax = p$vmtr * mg / 60 * size$clearance,   # mg/min
         km = p$kmtr * mg,                        # mg/L
         k21 = p$k21 / 60                         # /min
       )

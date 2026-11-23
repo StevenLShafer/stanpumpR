@@ -2402,3 +2402,40 @@ The third is not a modelling choice so much as a consequence worth stating: a
 blank Serum creatinine means the assumed normal creatinine **for the patient's
 age**, not an assumed normal clearance, and on this drug's plateau-and-ramp that
 difference is visible. The help page says so in those words.
+
+## 19. Irbesartan: a provisional model with its cost stated (2026-11-20)
+
+Irbesartan was withheld from PR #818 because its only model read in full,
+Karatza and Karalis 2020 (*Eur J Pharm Sci* 153:105498), absorbs each dose
+through a delay differential equation the engine cannot run.  Steven L.
+Shafer chose it on 2026-11-20 ("Use Karatza"), provisionally, with the cost
+stated on the help page.  The two alternatives were read in full and set
+aside: Hedaya and Helmy 2015 prints no volumes or intercompartmental
+clearance, so its model cannot be rebuilt, and Huang 2006 prints an apparent
+clearance twice the label's.
+
+The input is discretised as hydrochlorothiazide's Weibull was (section 12):
+twelve pulses of the default oral form through a depot at 1.34 /h, fitted
+minimax against an exact solution of the delay system, with the fractions
+solved as a linear program inside the search over delays and rate.
+
+| Measure | Value |
+|---|---|
+| Worst point on the curve, published disposition | 4.7% of the peak |
+| Peak | 2.3% low, 0.1 h late |
+| 45 kg woman / 120 kg man, fat-free-mass scaling on | 5.2% / 4.6% |
+| Best possible with non-negative pulses (linear-programming bound) | about 3.5% |
+| The 2026-11-19 draft, withheld | 5.8% |
+
+That is nine times the 0.53% standard of docs/adding-a-drug.md, and it is why
+the record is marked PROVISIONAL in the drug, the registry and the help page.
+The tests check the plotted curve against an independent integration of the
+exact system, so the stated cost cannot drift.
+
+Against the Avapro label, which it was not fitted to, the model's CL/F and
+time to peak fall inside the label's ranges and its terminal half-life does
+not (8.2 h against 11-15 h); its peak accumulation on daily dosing (6% over a
+week) agrees with the label's "less than 20%" better than the label's own
+half-life would.  Plasma only, no renal term, no blood pressure.  Shafer's
+proposal to plot the effect as a percentage of the maximum, which removes the
+baseline from the two published blood-pressure models, is separate work.

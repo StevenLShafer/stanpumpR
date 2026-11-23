@@ -46,7 +46,9 @@
 # WHY THE REVIEW'S MODEL AND NOT THE PUBLISHED FINAL ONE
 # ======================================================
 # Trang 2021's final model (Table 2: CLNR 3.85, CLR,max 6.58, eGFR50 40.0,
-# Hill 1.95, age exponent -0.526, allometric weight on every parameter) is a
+# Hill 1.95, age exponent -0.526, and weight imposed on every parameter with
+# fixed allometric exponents, which the initial model, the review's, had
+# found significant only on Vc and Vp) is a
 # refit with 27 more patients, and its clearance at normal renal function
 # differs from the review's by under 5%.  It does not print the weight or
 # age its allometric and age terms are normalised to, so it cannot be
@@ -59,19 +61,23 @@
 # (3.78 + 5.66).  At an eGFR of 40 it gives 7.0 L/h, against the text's
 # "approximately 7 liters/h", and the renal fraction at an eGFR of 100 is
 # 60% (the text: "approximately 59%").  The reference man of the library
-# (35 years, serum creatinine 0.9 mg/dL, eGFR 96) clears 11.6 L/h, with
-# half-lives of 0.7 and 1.5 h, against the Merrem label's "approximately 1
-# hour" in subjects with normal renal function.  Not used in the fit: the
-# Merrem label (Reference ID 4035314, 2016, sec. 12.3) gives healthy
-# volunteers' peaks after a 30-min infusion of "approximately 23 mcg/mL (range
-# 14-26)" after 500 mg and "49 mcg/mL (range 39-58)" after 1 g, and "about 1
-# mcg/mL at 6 hours" after 500 mg; this model at the reference man gives 25.3,
-# 50.6 and 0.80.  Christensson 1992 (Antimicrob Agents Chemother 36:1532,
-# 500 mg over 30 min, six men of 79 kg with an iohexol GFR of 100, HPLC; read
-# on the page images by a delegated reader) measured a peak of 30.3 mg/L and
-# an AUC of 36.0 mg.h/L; this model for a 30-year-old 79-kg man with a normal
-# creatinine gives 24.0 and 40.6, its clearance 11% below theirs (12.3
-# against about 13.9 L/h, dose/AUC), the peak lower by a larger central volume.
+# (35 years, serum creatinine 0.9 mg/dL, eGFR 96) clears 12.3 L/h with the
+# fat-free-mass switch on (11.6 L/h as published, before the clearance is
+# anchored at Trang's cohort; see BODY SIZE), with half-lives of 0.7 and
+# 1.4 h, against the Merrem label's "approximately 1 hour" in subjects with
+# normal renal function.  Not used in the fit: the Merrem label (Reference ID
+# 4035314, 2016, sec. 12.3) gives healthy volunteers' peaks after a 30-min
+# infusion of "approximately 23 mcg/mL (range 14-26)" after 500 mg and "49
+# mcg/mL (range 39-58)" after 1 g, and "about 1 mcg/mL at 6 hours" after 500
+# mg; this model at the reference man gives 25.0, 50.0 and 0.67 with the
+# switch on (25.3, 50.6 and 0.80 as published), the last a third below the
+# label's.  Christensson 1992 (Antimicrob Agents Chemother 36:1532, 500 mg
+# over 30 min, six men of 79 kg with an iohexol GFR of 100, HPLC; read on the
+# page images by a delegated reader) measured a peak of 30.3 mg/L and an AUC
+# of 36.0 mg.h/L; this model for a 30-year-old, 79-kg, 180-cm man with a
+# normal creatinine gives, with the switch on, 23.2 and 34.6, its clearance
+# 4% above theirs (14.5 against about 13.9 L/h, dose/AUC), the peak lower by
+# a larger central volume (as published, 23.8 and 40.2, clearance 12.5 L/h).
 #
 # THE STEP AT AN eGFR OF 30
 # =========================
@@ -95,10 +101,33 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# The source carries its own weight covariates, on both volumes, evaluated
-# at the pharmacokinetic weight with the fat-free-mass switch on and at total
-# body weight with it off.  Clearance has no weight term: the source found
-# none, and its eGFR is indexed to body surface area.
+# The review's model carries its own weight terms on both volumes, Vc x
+# (WT/80)^0.487 and Vp x (WT/80)^0.324, evaluated at the pharmacokinetic
+# weight with the fat-free-mass switch on and at total body weight with it
+# off, and not otherwise scaled.  Its clearances have no size term.  Weight
+# was tested on CL in the model the review describes and "was only
+# significant for" Vc and Vp (Trang 2021, Results, Covariate analyses); the
+# eGFR in CL is the MDRD estimate indexed to 1.73 m2, which has no weight
+# inside; CLd has no covariate.  (Trang's later refit forced weight onto
+# every parameter; see WHY THE REVIEW'S MODEL.)  With the switch on, CL, its
+# eGFR and age terms kept, and CLd are both multiplied by the library's size
+# factor for a clearance, (FFM / FFM_ref)^0.75, under Steven L. Shafer's
+# first-principles rule of 2026-11-19: a covariate not detected in a dataset
+# is not evidence that the pharmacokinetics are insensitive to it.  With the
+# switch off they are as published, unscaled.
+#
+# BODY SIZE ANCHOR: Trang 2021's Table 1 (MEROPENEM_COHORT, below), whose
+# typical patient sits at factors of 0.9221 (volume) and 0.9410 (clearance)
+# from the reference man, so that patient receives the published CL and CLd.
+# The review's model was fitted to the initial data set, 386 subjects with
+# meropenem data (91 noninfected subjects and 295 infected patients, only the
+# first 23 of study 506's; Trang 2021, Results), about nine tenths of Trang's
+# final analysis population of 431, whose demographics are not printed
+# apart (the review, read for its equations, is not archived).  Table 1's
+# 431 is the nearest printed description of that cohort, much nearer than
+# the reference man, so CL and CLd are anchored there.  Neither the age nor
+# the weight term's reference (58 years, 80 kg) is Table 1's median (53
+# years, 75 kg); the anchor uses Table 1's own medians.
 #
 # PREGNANCY
 # =========
@@ -133,6 +162,13 @@ MEROPENEM_CLD         <- 1.52    # L/h
 MEROPENEM_WT_REF      <- 80      # kg
 MEROPENEM_SCR_MIN     <- 0.5     # mg/dL, the source's lower bound
 
+# Trang 2021, Table 1 (PMC8370236), the 431 subjects of the analysis
+# population: medians 75.0 kg, 168 cm, 53.0 years; 192 men (45%) and 239
+# women (55%).  Height is printed.  The review's model was fitted to 386 of
+# them (see BODY SIZE ANCHOR in the header); CL and CLd are anchored at this
+# cohort (Steven L. Shafer's first-principles rule, 2026-11-19).
+MEROPENEM_COHORT <- list(weight = 75, height = 168, age = 53, men = 192, women = 239)
+
 #' Meropenem clearance (FDA review of NDA 209776)
 #'
 #' @param egfr MDRD eGFR, mL/min/1.73 m2
@@ -163,7 +199,13 @@ meropenemClearance <- function(egfr, age)
 meropenem <- function(weight, height, age, sex, adjustToFFM = TRUE,
                       creatinine = NULL, pregnant = FALSE)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
+  # Size (see the header's BODY SIZE): the volumes' own weight terms read the
+  # pharmacokinetic weight; size$clearance scales the size-free CL and CLd,
+  # anchored at Trang's Table 1 cohort (BODY SIZE ANCHOR), and is 1 with the
+  # switch off.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, MEROPENEM_COHORT))
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   scr  <- max(adultEquivalentCreatinine(creatinine, age, sex), MEROPENEM_SCR_MIN)
   gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)
@@ -174,8 +216,8 @@ meropenem <- function(weight, height, age, sex, adjustToFFM = TRUE,
     v1  = MEROPENEM_VC * (pkW / MEROPENEM_WT_REF)^MEROPENEM_VC_EXP,
     v2  = MEROPENEM_VP * (pkW / MEROPENEM_WT_REF)^MEROPENEM_VP_EXP,
     v3  = 1,
-    cl1 = cl / 60,
-    cl2 = MEROPENEM_CLD / 60,
+    cl1 = cl / 60 * size$clearance,
+    cl2 = MEROPENEM_CLD / 60 * size$clearance,
     cl3 = 0
   )
   events <- c(PK_EVENT_DEFAULT)

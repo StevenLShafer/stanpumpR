@@ -143,17 +143,60 @@ test_that("saturable distribution: mass is conserved and the dose is not superpo
   expect_gt(auc(630), 2.1 * auc(315))
 })
 
+# Joerger 2006, Table 1 (p2151): 86 men, 82 women, 68.5 kg, BSA 1.80 m2, 56
+# years; height by Du Bois from the BSA, 170.9 cm.  Its factors computed
+# independently of pkSizeFactors() (helpers.R).
+joergerCohort <- cohortFactorsIndependent(
+  list(weight = 68.5, height = 170.9, age = 56, men = 86, women = 82))
+
 test_that("both switch positions are pinned", {
   on <- paclitaxelJoerger(70, 170, 35, "male")
   off <- paclitaxelJoerger(70, 170, 35, "male", adjustToFFM = FALSE)
-  # the reference man: the pharmacokinetic weight is his weight
-  expect_equal_rounded(on$PK$default$v1, off$PK$default$v1)
+  # the reference man: the pharmacokinetic weight is his weight, so the BSA
+  # terms agree; V1, scaled since 2026-11-19 and anchored at Joerger's
+  # cohort, is 12.8 L over the cohort's volume factor (it was 12.8 L, fixed
+  # on Shafer's decision of 2026-11-06, which his rule of 2026-11-19
+  # superseded)
+  expect_equal_rounded(on$michaelisMenten$vmax, off$michaelisMenten$vmax)
+  expect_equal_rounded(off$PK$default$v1, 12.8)
+  expect_equal_rounded(on$PK$default$v1, 12.8 / joergerCohort$volume)
+  expect_equal_rounded(14.22483479, on$PK$default$v1)
   expect_equal_rounded(off$michaelisMenten$vmax, 0.7600135)
   w <- paclitaxelJoerger(70, 170, 35, "female")
-  # V1 is fixed at the source's 12.8 L whatever the patient (Shafer, 2026-11-06)
-  expect_equal_rounded(w$PK$default$v1, 12.8)
-  expect_equal_rounded(paclitaxelJoerger(120, 160, 70, "female")$PK$default$v1, 12.8)
+  ffmFactor <- function(...) ffmAlSallami(...) / FFM_REFERENCE
+  expect_equal_rounded(w$PK$default$v1,
+                       12.8 * ffmFactor(70, 170, 35, "female") / joergerCohort$volume)
+  expect_equal_rounded(paclitaxelJoerger(120, 160, 70, "female")$PK$default$v1,
+                       12.8 * ffmFactor(120, 160, 70, "female") / joergerCohort$volume)
+  expect_equal_rounded(paclitaxelJoerger(120, 160, 70, "female", FALSE)$PK$default$v1, 12.8)
   expect_equal_rounded(w$michaelisMenten$vmax, 0.5837841)
+})
+
+test_that("size: Joerger's typical patient gets 12.8 L, and V1 scales with FFM", {
+  # (a) A patient whose fat-free mass is the cohort's pooled typical one
+  # (86 men and 82 women at 68.5 kg, 170.9 cm, 56 years) receives the
+  # published V1; the BSA terms are untouched by the anchor.
+  wCohort <- uniroot(function(w) ffmAlSallami(w, 170.9, 56, "male") / FFM_REFERENCE -
+                       joergerCohort$volume, c(40, 120), tol = 1e-12)$root
+  typical <- paclitaxelJoerger(wCohort, 170.9, 56, "male")
+  expect_equal(typical$PK$default$v1, 12.8, tolerance = 1e-9)
+  # (b) A man of twice the reference fat-free mass: V1 doubles over the
+  # cohort's factor; V3, Q, VMEL and VMTR follow their own BSA terms at his
+  # pharmacokinetic weight (140 kg) and nothing else.
+  w2 <- uniroot(function(w) ffmAlSallami(w, 190, 35, "male") - 2 * FFM_REFERENCE,
+                c(80, 300), tol = 1e-12)$root
+  big <- paclitaxelJoerger(w2, 190, 35, "male")
+  expect_equal(big$PK$default$v1, 12.8 * 2 / joergerCohort$volume, tolerance = 1e-9)
+  b <- bsaMosteller(140, 190) / 1.8
+  expect_equal(big$PK$default$v2, 252 * b^1.17, tolerance = 1e-9)
+  expect_equal(big$PK$default$cl2 * 60, 20.1 * b^0.724, tolerance = 1e-9)
+  expect_equal(big$michaelisMenten$saturableDistribution$vmax * 60 / MW,
+               169 * 1.2 * b^0.911, tolerance = 1e-9)
+  # (c) The switch off: V1 12.8 L at any size, the BSA terms at total weight
+  off <- paclitaxelJoerger(w2, 190, 35, "male", adjustToFFM = FALSE)
+  expect_equal(off$PK$default$v1, 12.8)
+  expect_equal(off$PK$default$v2, 252 * (bsaMosteller(w2, 190) / 1.8)^1.17,
+               tolerance = 1e-9)
 })
 
 test_that("paclitaxel is a chemotherapy drug, plasma only, with no band", {

@@ -338,7 +338,10 @@ paywalled. The first list matters most, since each would check a factor the libr
 - **Catalano PM, Drago NM, Amini SB.** *Diabetes Care* 1998;21:403-408 (PMID 9540023): the insulin
   clearance factor is corrected from 1.19 to 1.25 (the metabolic clearance rate was 422 mL/m2/min
   pregravid and 526 at term; the earlier value used a wrong pregravid figure). It is per m2, and
-  Tham's CL/F is not size-scaled, so the absolute ratio is nearer 1.35; 1.25 is a measured lower bound.
+  Tham's CL/F has no size term in its source, so the absolute ratio is nearer 1.35; 1.25 is a measured lower bound.
+  Since 2026-11-19 CL/F is scaled to fat-free mass with the switch on (anchored at the reference man), so a
+  term-pregnant weight entered raises it a little further, through a fat-free mass that is not the tissue
+  gained in pregnancy; the pre-pregnancy weight avoids that.
 - **Papini O et al.** *J Pharm Biomed Anal* 2005;40:397-403 (PMID 16143486): lorazepam CL/F 2.6
   mL/min/kg, V/F 178.8 L at term, no control group: stays `unquantified`, now from the full text.
 - **Charles B et al.** *Ther Drug Monit* 2006;28:67-72 (PMID 16418696): metformin systemic CL 28

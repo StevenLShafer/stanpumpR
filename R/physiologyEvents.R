@@ -57,6 +57,41 @@
 # throughout and applies the events to the patient it finds.  Both DECIDED by
 # Shafer on 2026-11-19 ("Keep both"): do not make the pump re-plan at events
 # or the fit read them without reopening that decision.
+#
+# OPEN QUESTIONS, put to Shafer on 2026-11-19 and not yet answered (recorded
+# here so a later session meets the question rather than its consequences):
+#
+#   [decision] The sliders once an event exists.  As built, the first event
+#   makes physiology normal from time 0, and the sliders only set the NEXT
+#   event to be recorded, so moving a slider no longer changes the plot.  In
+#   his own testing (2026-11-19) this read as "the sliders do nothing".  The
+#   alternative: the sliders set physiology from time 0 until the first
+#   event, so they keep acting on the plot.  That departs from his rule above
+#   ("At time 0 the sliders are all set to 1"), so it is his to decide.
+#
+#   [decision] The inhaled agents' MAC band at a temperature event.  The band
+#   is one pair of numbers per panel, set from the body at time 0
+#   (gasDrugEntries(): gasPropertiesAt(sim$body$temperature)), so after an
+#   event that cools the patient the band stays at its 37 C values while the
+#   MAC panel steps (each row takes its own temperature).  Without an event
+#   the band does move with the slider: 2% sevoflurane, 70 kg, 40 years,
+#   37 C to 30 C, band 1.47-2.73% to 0.99-1.85%, MAC multiple at 30 min
+#   0.83 to 1.19.  Making it step needs a band that varies in time
+#   (simulationPlot() draws a constant rectangle per facet).  Whether to
+#   build that is his call.
+#
+#   Not a decision, a lead: Single Paper Review "crashed" (Shiny's Reload
+#   overlay, 2026-11-19) when Shafer opened it after using the sliders, the
+#   physiology events and the Visualizer in the same session on
+#   shinyapps.io.  It did not reproduce: the review module's server code runs
+#   cleanly after those actions under testServer(), and nothing they leave in
+#   the session is read by it.  A disconnect with no R error in testServer()
+#   points at the worker itself, most likely memory: the tab's first render
+#   starts a background R process (mirai) to count the month's reviews over
+#   IMAP, on a worker already holding the Visualizer's run and several PK
+#   sets per drug.  Next step: the shinyapps.io log for that time (rsconnect::
+#   showLogs(), or the dashboard), looking for an R error or an out-of-memory
+#   kill; then the instance's memory size.
 # -----------------------------------------------------------------------------
 
 #' The event name of a recorded physiology
