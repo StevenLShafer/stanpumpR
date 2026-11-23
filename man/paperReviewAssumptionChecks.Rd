@@ -4,7 +4,7 @@
 \alias{paperReviewAssumptionChecks}
 \title{Check the assumptions the paper makes and apply the library's rules}
 \usage{
-paperReviewAssumptionChecks(extraction)
+paperReviewAssumptionChecks(extraction, model = TRUE)
 }
 \value{
 a list of findings
