@@ -124,6 +124,8 @@ plasmaOnly <- c(
     "levothyroxine",
     # liothyronine (Van Tassell 2019, 2026-11-18): plasma only
     "liothyronine",
+    # tafenoquine (Thakkar 2018, 2026-11-20): plasma only
+    "tafenoquine",
     # tamsulosin (Tsuda 2010, 2026-11-19): plasma only
     "tamsulosin",
     # rosuvastatin (Courlet 2021, 2026-11-19): plasma only

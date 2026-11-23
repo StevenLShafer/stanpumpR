@@ -150,6 +150,8 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     "levothyroxine",
                     # liothyronine's 0.62 h lag (Van Tassell 2019); plasma only
                     "liothyronine",
+                    # tafenoquine's 0.908 h lag (Thakkar 2018); plasma only
+                    "tafenoquine",
                     # oral thioguanine's derived 1.0 h lag (Lowe 2001's
                     # median time to peak, 2026-11-16); plasma only
                     "thioguanine",
