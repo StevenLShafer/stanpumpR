@@ -3035,7 +3035,7 @@ registry <- rbind(
       source = "Ansari J, Carvalho B, Shafer SL, Flood P. Anesth Analg 2016;122:786-804 (the rise in glomerular filtration of pregnancy); O'Hare MF, Leahey W, Murnaghan GA, McDevitt DG. Pharmacokinetics of sotalol during pregnancy. Eur J Clin Pharmacol 1983;24:521-524 PMID 6861867",
       source_url = "https://doi.org/10.1213/ANE.0000000000001143",
       to_obtain = "O'Hare 1983 (Eur J Clin Pharmacol 24:521): the measured clearance ratio, about 1.6 per kilogram, could replace the physiological factor once read in full",
-      notes = "The physiological factor raises clearance by 1.5^0.7 = 1.33 at the reference woman, less than O'Hare's measured 1.6 per kilogram; the direction agrees."),
+      notes = "The physiological factor raises clearance by 1.5^0.65 = 1.30 at the reference woman, less than O'Hare's measured 1.6 per kilogram; the direction agrees."),
   row("voriconazole", "Other", "unknown",
       finding = "VFEND label (NDA 021266, 2026, read): 'There are no available data on the use of VFEND in pregnant women'; voriconazole can cause fetal harm (rat malformations at 0.3 times the human dose). A PubMed search found one case report (Shoai Tehrani 2013, Antimicrob Agents Chemother 57:1094: trough 1.38 mg/L on 200 mg twice daily from 16 weeks), no comparison with nonpregnancy.",
       applied = "",
