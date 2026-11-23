@@ -26,7 +26,9 @@
 # Rocuronium binding, and the train-of-four recovery it produces, are NOT
 # modelled.  This row is the sugammadex concentration alone; the rocuronium
 # row is unaffected by giving sugammadex, which is the main limitation of
-# simulating the two side by side.
+# simulating the two side by side.  Since 2026-11-23 the rocuronium row is
+# the same paper's rocuronium arm (R/drugs_rocuronium.R), and both read the
+# patient's weight and creatinine clearance from kleijn2011Patient() below.
 #
 # RENAL FUNCTION
 # ==============
@@ -98,6 +100,27 @@
 
 SUGAMMADEX_WEIGHT_CAP <- 200   # kg; see GUARD in the header
 
+#' The covariate patient of Kleijn 2011, shared by sugammadex and rocuronium
+#'
+#' Kleijn's rocuronium and sugammadex were fitted jointly (R/drugs_rocuronium.R
+#' is the same paper's rocuronium arm), so the two models read one definition
+#' of the patient: \code{W}, the weight their allometric and linear weight
+#' terms see (the pharmacokinetic weight, 70 kg x FFM / FFM_ref, with the
+#' fat-free-mass switch on, total body weight with it off), and \code{CR},
+#' the Cockcroft-Gault creatinine clearance in mL/min at that weight and at
+#' the entered creatinine or the assumed normal one, read on the adult scale.
+#' @inheritParams cefazolin
+#' @returns a list with \code{W} (kg) and \code{CR} (mL/min)
+#' @noRd
+kleijn2011Patient <- function(weight, height, age, sex, adjustToFFM, creatinine)
+{
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
+  W <- 70 * size$volume
+  list(W = W,
+       CR = creatinineClearanceCG(W, age, sex,
+                                  adultEquivalentCreatinine(creatinine, age, sex)))
+}
+
 #' Sugammadex pharmacokinetics (total)
 #'
 #' @inheritParams cefazolin
@@ -112,12 +135,11 @@ sugammadex <- function(weight, height, age, sex, adjustToFFM = TRUE,
 {
   # Size scaling (see the header): the model's own weight terms are
   # evaluated at the pharmacokinetic weight with the switch on, total body
-  # weight with it off.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
-  W  <- 70 * size$volume
+  # weight with it off.  kleijn2011Patient() is shared with rocuronium.
+  patient <- kleijn2011Patient(weight, height, age, sex, adjustToFFM, creatinine)
+  W  <- patient$W
   Wl <- min(W, SUGAMMADEX_WEIGHT_CAP)          # the linear terms; GUARD above
-  CR <- creatinineClearanceCG(W, age, sex,     # mL/min
-                              adultEquivalentCreatinine(creatinine, age, sex))
+  CR <- patient$CR                             # mL/min
   rS <- 1
   # Pregnancy (see the header): the clearance term alone reads the raised
   # creatinine clearance; the peripheral-volume term keeps CR.
