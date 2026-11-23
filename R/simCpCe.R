@@ -427,9 +427,10 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     use <- grep("ng",dose$Units)
     dose$Dose[use] <- dose$Dose[use] / ng_Conv[use]
 
-    # Convert dose per kg  to absolute dose
-    use <- grep("kg",dose$Units)
-    dose$Dose[use] <- dose$Dose[use] * PK$weight
+    # Convert a dose per kg or per m2 to an absolute dose: per kg by the
+    # weight, per m2 by the body surface area (bodySizeDoseFactor(),
+    # R/bsa-dosing.R).
+    dose$Dose <- dose$Dose * bodySizeDoseFactor(dose$Units, PK$weight, PK$height)
 
     # Convert dose per hour or per day to dose per minute
     use <- grep("hr",dose$Units)
