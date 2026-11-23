@@ -39,52 +39,61 @@ Scope: for each paper behind a drug stanpumpR implements, the nlmixr2lib model c
    - `R/drugs_rocuronium.R` is Plaud 1995 (card `PMID_7648768`): fixed per-kilogram rate constants, no covariates.
    - `R/drugs_sugammadex.R` is Kleijn 2011, whose model fits rocuronium, sugammadex and their complex jointly. As nlmixr2lib reads it, that model has a rocuronium clearance that falls with age (-0.00678 per year from 43), a term not found in stanpumpR's Kleijn card.
 
-   stanpumpR therefore draws rocuronium from one study and the drug that binds it from another. Whether rocuronium should move to Kleijn 2011's own model is a `[decision]` for Shafer. The library's rule that a parent and its metabolite must agree is the nearest precedent, though this pair is a drug and its reversal agent rather than a parent and its metabolite.
+   stanpumpR therefore draws rocuronium from one study and the drug that binds it from another. **Decided by Shafer on 2026-11-23: rocuronium moves to Kleijn 2011's model** (its own pull request).
 3. **Lorazepam's disposition comes from six volunteers.**
    - `R/drugs_lorazepam.R` uses Nielsen-Kudsk's six healthy volunteers.
    - Its header already calls Barr 2001 (24 surgical ICU patients, Shafer a co-author) "the natural replacement".
    - The cross-check confirms Swart 2004 (critically ill adults) was transcribed the same by both libraries.
 
-   No change without Shafer's decision. This audit only records that the question is open.
+   **Decided by Shafer on 2026-11-23: lorazepam moves to Barr 2001** (its own pull request).
 4. **Buprenorphine:** nothing to change. Once the script read the logits correctly, Bjornsson 2023's sublingual F (0.14 at 16 mg) and pathway split (75.9%) agree with the card. The one remaining unmatched term is the opioid-use-disorder shift on the weekly depot, which stanpumpR does not offer.
 
 ## Part 2: currency
 
 These are the largest population-PK models nlmixr2lib holds for drugs stanpumpR already has, where stanpumpR has no digest card for the paper and its drug file does not name the first author. Studies of fewer than 300 people, model-based meta-analyses, PBPK and QSP simulations and exposure-response models are left out. Each is a candidate for its drug's model selector (AGENTS.md, *The program chooses the model*), as a new candidate whose population is recorded, or as a cross-check. Being larger does not make a model the better choice: the population studied has to match the patient.
 
-| Drug | nlmixr2lib model | n | Population | DOI |
-|---|---|---|---|---|
-| vancomycin | Tong_2026_vancomycin_goti | 87,586 | hospitalised adults, BMI < 40 | 10.1093/jacamr/dlag016 |
-| bupropion | Sharma_2018_naltrexone_bupropion | 4,591 | obese or overweight adults (Contrave) | 10.1002/jcph.994 |
-| tirzepatide | Chigutsa_2025_tirzepatide | 2,539 | obesity without diabetes | 10.1002/cpt.3750 |
-| olmesartan | Song_2013_olmesartan | 1,927 | volunteers and hypertensive adults | 10.1002/cpdd.17 |
-| dapagliflozin | Sokolov_2023_dapagliflozin | 1,661 | type 1 diabetes | 10.3389/fphar.2023.1229255 |
-| gentamicin | Fuchs_2014_gentamicin | 1,449 | preterm and term neonates | 10.1111/bcp.12444 |
-| hydrochlorothiazide | Song_2013_hydrochlorothiazide | 1,278 | volunteers and hypertensive adults | 10.1002/cpdd.17 |
-| empagliflozin | Johnston_2021_empagliflozin_popPK | 1,241 | type 1 diabetes | 10.3390/pharmaceutics13040485 |
-| tacrolimus | Francke_2025_tacrolimus | 1,180 | adult kidney transplant | 10.1007/s40262-025-01533-0 |
-| propofol | Wahlquist_2024_propofol | 1,031 | surgical and volunteer cohorts | 10.1007/s10928-023-09887-3 |
-| amikacin | vanderVeer_2025_amikacin | 710 | neonates | 10.1128/aac.01118-24 |
-| aripiprazole | Hard_2017_aripiprazole_lauroxil | 700 | the long-acting injectable | 10.1007/s40263-017-0447-7 |
-| risperidone | Perlstein_2025_risperidone_tv46000 | 692 | a subcutaneous long-acting product | 10.1007/s40120-025-00723-z |
-| cefepime | Vollmer_2023_cefepime_enmetazobactam | 663 | complicated UTI (with enmetazobactam) | 10.1093/ofid/ofad500.2147 |
-| warfarin | Xia_2024_warfarin | 646 | adults on warfarin | 10.1038/s41598-024-65048-7 |
-| pregabalin | Shoji_2011_pregabalin | 616 | volunteers and neuropathic pain | 10.1111/j.1365-2125.2011.03932.x |
-| apixaban | AjavonHartmann_2025_apixaban | 602 | adults and children | 10.1002/cpt.3689 |
-| enoxaparin | SanchezPena_2005_enoxaparin | 546 | elective PCI | 10.1111/j.1365-2125.2005.02452.x |
-| valproate | Wang_2024_valproic_acid | 498 | epilepsy | 10.1002/psp4.13191 |
-| irinotecan | Brendel_2021_irinotecan_liposomal | 440 | liposomal irinotecan (Onivyde) | 10.1002/psp4.12725 |
-| voriconazole | Wang_2024_voriconazole | 408 | critically ill adults | 10.3390/ph17060665 |
-| paclitaxel | Salem_2023_paclitaxel | 405 | routine care | 10.1002/psp4.12963 |
-| remimazolam | Zhou_2021_remimazolam | 359 | volunteers and procedural sedation | 10.1111/cts.12875 |
-| busulfan | Balis_2025_busulfan | 328 | children, malignant and non-malignant | 10.1007/s00280-025-04757-w |
-| levetiracetam | Wang_2012_levetiracetam | 311 | children with epilepsy | 10.1038/aps.2012.57 |
+| Drug | nlmixr2lib model | n | Population | DOI | PMID |
+|---|---|---|---|---|---|
+| vancomycin | Tong_2026_vancomycin_goti | 87,586 | hospitalised adults, BMI < 40 | 10.1093/jacamr/dlag016 | 41710913 |
+| bupropion | Sharma_2018_naltrexone_bupropion | 4,591 | obese or overweight adults (Contrave) | 10.1002/jcph.994 | 28858397 |
+| tirzepatide | Chigutsa_2025_tirzepatide | 2,539 | obesity without diabetes | 10.1002/cpt.3750 | 40556483 |
+| olmesartan | Song_2013_olmesartan | 1,927 | volunteers and hypertensive adults | 10.1002/cpdd.17 | none (DOI) |
+| dapagliflozin | Sokolov_2023_dapagliflozin | 1,661 | type 1 diabetes | 10.3389/fphar.2023.1229255 | 37954838 |
+| gentamicin | Fuchs_2014_gentamicin | 1,449 | preterm and term neonates | 10.1111/bcp.12444 | 24938850 |
+| hydrochlorothiazide | Song_2013_hydrochlorothiazide | 1,278 | volunteers and hypertensive adults | 10.1002/cpdd.17 | none (DOI) |
+| empagliflozin | Johnston_2021_empagliflozin_popPK | 1,241 | type 1 diabetes | 10.3390/pharmaceutics13040485 | 33918261 |
+| tacrolimus | Francke_2025_tacrolimus | 1,180 | adult kidney transplant | 10.1007/s40262-025-01533-0 | 40588615 |
+| propofol | Wahlquist_2024_propofol | 1,031 | surgical and volunteer cohorts | 10.1007/s10928-023-09887-3 | 37864654 |
+| amikacin | vanderVeer_2025_amikacin | 710 | neonates | 10.1128/aac.01118-24 | 40067044 |
+| aripiprazole | Hard_2017_aripiprazole_lauroxil | 700 | the long-acting injectable | 10.1007/s40263-017-0447-7 | 28597226 |
+| risperidone | Perlstein_2025_risperidone_tv46000 | 692 | a subcutaneous long-acting product | 10.1007/s40120-025-00723-z | 40122975 |
+| cefepime | Vollmer_2023_cefepime_enmetazobactam | 663 | complicated UTI (with enmetazobactam) | 10.1093/ofid/ofad500.2147 | none (DOI) |
+| warfarin | Xia_2024_warfarin | 646 | adults on warfarin | 10.1038/s41598-024-65048-7 | 38937509 |
+| pregabalin | Shoji_2011_pregabalin | 616 | volunteers and neuropathic pain | 10.1111/j.1365-2125.2011.03932.x | 21306415 |
+| apixaban | AjavonHartmann_2025_apixaban | 602 | adults and children | 10.1002/cpt.3689 | 40551722 |
+| enoxaparin | SanchezPena_2005_enoxaparin | 546 | elective PCI | 10.1111/j.1365-2125.2005.02452.x | 16187968 |
+| valproate | Wang_2024_valproic_acid | 498 | epilepsy | 10.1002/psp4.13191 | 38923247 |
+| irinotecan | Brendel_2021_irinotecan_liposomal | 440 | liposomal irinotecan (Onivyde) | 10.1002/psp4.12725 | 34750990 |
+| voriconazole | Wang_2024_voriconazole | 408 | critically ill adults | 10.3390/ph17060665 | 38931333 |
+| paclitaxel | Salem_2023_paclitaxel | 405 | routine care | 10.1002/psp4.12963 | 37101403 |
+| remimazolam | Zhou_2021_remimazolam | 359 | volunteers and procedural sedation | 10.1111/cts.12875 | 33045130 |
+| busulfan | Balis_2025_busulfan | 328 | children, malignant and non-malignant | 10.1007/s00280-025-04757-w | 39932505 |
+| levetiracetam | Wang_2012_levetiracetam | 311 | children with epilepsy | 10.1038/aps.2012.57 | 22669118 |
 
 Several rows are a different product rather than a better model of the same one: aripiprazole lauroxil, the TV-46000 risperidone injection and liposomal irinotecan. Under the combination-product and dose-basis rules, each of those would be a drug of its own if it were wanted at all. Propofol (Wahlquist 2024, 1,031 people) and remimazolam (Zhou 2021) are the two of most interest to anaesthesia.
+
+## Download list
+
+Steven L. Shafer, 2026-11-23: "Add all of the papers to the download list."
+- **Already in the archive:** Barr 2001 (PMID 11506097), Kleijn 2011 (21535448) and Chigutsa 2025 (40556483).
+- **To download:** every other paper in the currency table, plus the sotalol source.
+- **The one-per-line list** for the paper-download session is `audit-download-ids.txt`.
+- **Two have no PMID**, so save them by DOI name: Song 2013 as `DOI_10.1002_cpdd.17.pdf`, and Vollmer 2023, a conference abstract, as `DOI_10.1093_ofid_ofad500.2147.pdf`.
+- **The sotalol paper** is saved as `PMID_39749676.pdf`, and its Data S1 (the NONMEM control stream, from the paper's Supporting Information on Wiley or PMC) as `PMID_39749676_sup1` with its own extension.
 
 ## What happens next
 
 - **Sotalol:** the paper and its supplement are listed in `papers/pending-work.csv`. When they arrive, the control stream settles which estimates are final.
-- **Rocuronium and lorazepam:** decisions for Shafer, recorded above.
+- **Rocuronium and lorazepam:** replaced, each in its own pull request.
 - **Currency:** for each candidate Shafer wants pursued, the paper is downloaded (its PMID goes to the paper-download session, as the library-expansion picks do) and the model is added as a selector candidate by the full procedure.
 - **The weekly routine:** it reruns the script, so this audit's tables stay current. This page is updated by hand when a finding is settled.
