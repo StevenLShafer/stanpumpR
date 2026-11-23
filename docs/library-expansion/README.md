@@ -76,6 +76,13 @@ The report is a lead, not a source, like any other model's reading (AGENTS.md): 
   - **Waiting on a decision of Steven's:** Zerbaxa (Zhang 2021 is fully read, all in its Table 2; the infection state the curve represents is the only obstacle, and it is shared with imipenem and Avycaz), isavuconazole (Weibull oral absorption: discretise, or offer IV only), caspofungin (Yang 2022's steps at 70 kg and albumin 35 g/L), teicoplanin (Chae 2026's distribution comes from profiles simulated from two other models).
   - **The pick is the wrong population:** fluconazole (infants under 750 g; adults on CRRT). An adult source is needed.
 
+### Weekly run, 2026-11-20
+
+- **Nothing arrived.** No pick, report lead or requested supplement reached the archive since the 2026-11-19 run (the supplements `PMID_34687548_sup1`, `PMID_29712663_sup1` and `PMID_34704389_sup1` included). nlmixr2lib has not moved (still d8a308a); the cross-check was rerun against master 8739b9d. This run was built on the 2026-11-19 run's pull request (#799), which was still open.
+- **Tafenoquine was implemented** (Thakkar 2018, 675 healthy volunteers and patients with *P. vivax* malaria) in its own draft pull request. Its curve is the patients'; whether a prophylaxis curve should use the healthy volunteers' volumes is a decision for Steven.
+- **Micafungin is blocked on a better paper.** Its pick, Maseda 2018, is a nonparametric fit whose means and medians are far apart, the reason piperacillin's Felton 2014 was rejected. Wasmann 2019 (PMID 30649375) and Jullien 2017 (PMID 27609051) are the adult sources to get.
+- **Four antimalarials are blocked without being read**, because the papers cannot settle what blocks them: artemether and lumefantrine are given only as Coartem, and piperaquine only with dihydroartemisinin, which the combination-product rule below makes a decision of Steven's; artesunate's US product is intravenous and its picks are rectal and oral.
+
 ### Combination products (Steven L. Shafer, 2026-11-18)
 
 "Tazobactam should not be a drug at all. It is only used in combination with other antibiotics." So a component given only in combination is not a drug of its own. The product is the drug, dosed in the units of its FDA label:
