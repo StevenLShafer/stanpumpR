@@ -82,6 +82,12 @@
 #     Note the DEFAULT VA and CO scale allometrically instead, by
 #     (weight/70)^0.75, but only as defaults -- an explicit scenario overrides
 #     them, so that does not enter a comparison that sets va and co.
+#   * Not restated (ChatGPT's gas-engine audit of 2026-11-23, A-01): liquid
+#     injection, the flush, the "closed" label, and GasMan's vaporiser
+#     expansion at a setting of 99% or more.  With `vaporizer_effect = TRUE`
+#     this file expands the flow for every agent, where GasMan does it only
+#     for a liquid (m_bIsLiquid), so not for nitrous oxide or xenon.
+#     Settings are constant over a run.
 # =============================================================================
 
 
@@ -174,6 +180,10 @@ gasman_calc <- function(state, sol, lambda, del, fgf, va, co,
                         circuit, uptake_effect, recirculation,
                         wt_factor = 1, check_fast_decay = TRUE) {
 
+  # GasMan delivers nothing with no fresh gas flow: its effective delivered
+  # tension is 100 * vapour / (FGF * dt), and 0 when FGF is 0 (GasDoc.cpp,
+  # Calc; ChatGPT's gas-engine audit of 2026-11-23, A-01).
+  if (fgf <= 0) del <- 0
   eff_ckt    <- fgf * sol[["CKT"]]
   eff_alv    <- va  * sol[["ALV"]]
   blood_flow <- lambda * co
@@ -259,7 +269,10 @@ gasman_calc <- function(state, sol, lambda, del, fgf, va, co,
   # criterion even if the step is coarse.  Applying it unconditionally would
   # make this code MORE accurate than GasMan, which is the wrong direction for
   # a baseline.
-  if (check_fast_decay && (f_ckt < 0.1 || f_alv < 0.1)) ok <- FALSE
+  # A fixed circuit (open, ideal) is set, not advanced, and GasMan leaves its
+  # fExpCKT at 99, so only the alveolar decay can trip the test there (until
+  # 2026-11-23 this tested the circuit's too; ChatGPT's gas-engine audit, A-01).
+  if (check_fast_decay && ((!fixed_ckt && f_ckt < 0.1) || f_alv < 0.1)) ok <- FALSE
 
   # Venous is algebraic, not differential: the blood-flow-weighted mean of the
   # NEW tissue tensions.  The alveolar target above therefore used the PREVIOUS
@@ -344,7 +357,10 @@ gasman_simulate <- function(agents,
   for (tick in seq_len(n_ticks)) {
     cum_before <- sum(cum_uptake)      # for this tick's VA
     # Settings are constant here, so the only change is at time zero.
-    check_fast_decay <- (tick - 1) < GASMAN_VERNIER_TICKS
+    # GasMan's i = VERNIER_TICKS - int((dwt - base) / dx) counts from the END
+    # of the tick, so the test applies in ticks 1 and 2, not 1 to 3 as here
+    # until 2026-11-23 (ChatGPT's gas-engine audit, A-01).
+    check_fast_decay <- GASMAN_VERNIER_TICKS - tick > 0
     nv_level <- 0
     repeat {
       saved_state <- state

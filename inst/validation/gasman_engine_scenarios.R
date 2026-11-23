@@ -385,13 +385,51 @@ gasScenarioGasManCpp <- function(s, exe, ini,
 }
 
 
+#' GasMan's own output for the five scenarios, frozen
+#'
+#' \code{gasman_run}, built from gasmanonline's \code{gasman_api} at commit
+#' d3a2dd3, on the five scenarios in both circuits, read at its 6-second
+#' ticks and printed to six significant figures (VALIDATION.md, 2026-10-05).
+#' Neither GasMan's source nor its binary is in this repository, so these
+#' numbers are the only record of it here, and the tests hold both R
+#' restatements to them (test-gas-scenarios.R; ChatGPT's gas-engine audit of
+#' 2026-11-23, A-04).  Never regenerate this file except from a run of
+#' \code{gasman_run} itself.
+#'
+#' @param file the fixture; found in the installed package or the source tree
+#' @returns data frame: Circuit, Scenario, Agent, Minute, Compartment,
+#'   gasman_cpp
+gasCppFixture <- function(file = NULL)
+{
+  if (is.null(file)) {
+    file <- system.file("validation", "gasman_cpp_fixture.csv", package = "stanpumpR")
+    if (!nzchar(file)) file <- "inst/validation/gasman_cpp_fixture.csv"
+  }
+  utils::read.csv(file, stringsAsFactors = FALSE)
+}
+
+#' The fixture's value for each row of a scenario's results
+#' @param fixture gasCppFixture()
+#' @param d data frame with Circuit, Scenario, Agent, Minute, Compartment
+#' @returns numeric vector, NA where the fixture has no row
+gasCppFixtureAt <- function(fixture, d)
+{
+  key <- function(x) paste(x$Circuit, x$Scenario, x$Agent, round(x$Minute, 6),
+                           x$Compartment, sep = "|")
+  fixture$gasman_cpp[match(key(d), key(fixture))]
+}
+
+
 #' Run all five scenarios and write the results
 #'
 #' @param outdir where to write the CSV files; NULL to write nothing
 #' @param refine passed to \code{gasScenarioLimit()}
 #' @param gasmanExe,gasmanIni optional paths to GasMan's gasman_run and its
 #'   gasman.ini.  When given, GasMan itself is run and reported as
-#'   \code{gasman_cpp}.
+#'   \code{gasman_cpp}.  When not, \code{gasman_cpp} is read from
+#'   \code{gasman_cpp_fixture.csv}, the output of the run of 2026-10-05
+#'   (VALIDATION.md), so that a run without GasMan no longer writes NA over
+#'   the only record of it.
 #' @param circuits which circuit models to run: both by default
 #' @returns long data frame: one row per circuit, scenario, agent, time and
 #'   compartment
@@ -401,6 +439,7 @@ runGasEngineScenarios <- function(outdir = "inst/validation", refine = 16,
 {
   scenarios <- gasEngineScenarios()
   useCpp <- !is.null(gasmanExe) && !is.null(gasmanIni)
+  fixture <- if (!useCpp) gasCppFixture()
   long <- do.call(rbind, lapply(circuits, function(circuit)
     do.call(rbind, lapply(scenarios, function(s) {
     message("Scenario ", s$id, " [", circuit, "]: ", s$name)
@@ -415,6 +454,7 @@ runGasEngineScenarios <- function(outdir = "inst/validation", refine = 16,
         engine = eng[[cmp]], gasman = gm[[cmp]], limit = lim[[cmp]],
         gasman_cpp = if (useCpp) cpp[[cmp]] else NA_real_,
         stringsAsFactors = FALSE)
+      if (!useCpp) d$gasman_cpp <- gasCppFixtureAt(fixture, d)
       # Differences as a percentage of that compartment's peak in the run, so
       # that a near-zero value early in a wash-in does not manufacture a large
       # relative error out of nothing.
