@@ -112,11 +112,15 @@
 # with the infusion running.  An oral psychomotor tracking test gave a slower
 # equilibration, half-time 0.43 h (Gupta 1990): the delay depends on the end
 # point.
-# [decision] for Steven L. Shafer (2026-11-23): the ke0 (8.8 min) is kept and
-# the time to peak effect follows the new disposition (26.3 -> 18.1 min).
-# The alternative is to keep 26.3 min, which on Barr's curve corresponds to
-# an equilibration half-life of 15.1 min (ke0 0.0459 /min), a value no study
-# measured.
+# Decided by Steven L. Shafer, 2026-11-23: "Keep the time of peak effect at
+# 18 minutes unless data show otherwise."  The ke0 (8.8 min) is kept and the
+# time to peak effect follows the new disposition (26.3 -> 18.1 min).  No
+# data show otherwise: Barr 2001 has no effect site, Greenblatt 2000's EEG
+# maximum at 0.5 h followed a bolus WITH an infusion running (which peaks
+# later than a bolus alone), and Gupta 1990's 0.43 h is another end point
+# after an oral dose.  The alternative, keeping 26.3 min, would on Barr's
+# curve need an equilibration half-life of 15.1 min (ke0 0.0459 /min), a
+# value no study measured.
 #
 # ORAL AND INTRAMUSCULAR
 # ======================
@@ -153,13 +157,13 @@
 # into a larger peripheral volume (102 L) and clear it faster.  In the first
 # hour after an oral or intramuscular dose that distribution is what sets
 # the peak.
-# [decision] for Steven L. Shafer (2026-11-23): Barr's ICU disposition now
-# serves every route, including oral and intramuscular lorazepam given to
-# patients who are not in an ICU, for whom Nielsen-Kudsk's volunteers (or a
-# volunteer study such as Greenblatt 2000's) may be the closer population.
-# Keeping one disposition for all routes is what this change does; a route-
-# limited system (as sildenafilMiura runs its intravenous doses on the FDA
-# model) would be the alternative.
+# Decided by Steven L. Shafer, 2026-11-23: "use Barr's 2001 model for the
+# disposition for all routes."  Barr's ICU disposition serves every route,
+# including oral and intramuscular lorazepam given to patients who are not
+# in an ICU, for whom Nielsen-Kudsk's volunteers (or a volunteer study such
+# as Greenblatt 2000's) may be the closer population; a route-limited
+# system (as sildenafilMiura runs its intravenous doses on the FDA model)
+# was the alternative, not taken.
 #
 # BAND AND THRESHOLD
 # ==================
