@@ -202,7 +202,11 @@ test_that("H9.2: the time until threshold is not interpolated across a change of
   flush <- w$interval == w$interval[change - 1]
   after <- w$interval == w$interval[change]
   expect_lte(max(app[flush]), max(raw[flush]) + 1e-9)
-  expect_gte(min(app[after & w$Time < 250]), min(raw[after & w$Time < 250]) - 1e-9)
+  # (to 1e-4 minute: between its sampled points the line is interpolated, and
+  # on the grid graded from each change of setting, since 2026-11-23, that
+  # reads up to 8e-8 minute under the curve; the error guarded against, a
+  # reading from across the change, was 56 minutes)
+  expect_gte(min(app[after & w$Time < 250]), min(raw[after & w$Time < 250]) - 1e-4)
 
   # The emergence scenario: the time at the moment the vaporiser is turned
   # off is the peak of the line, 11.93 minutes; on 59094cf the line was drawn
