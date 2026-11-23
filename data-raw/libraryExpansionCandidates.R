@@ -24,8 +24,10 @@ plan <- utils::read.csv(file.path(dir, "plan.csv"), stringsAsFactors = FALSE)
 # A drug already in stanpumpR needs no papers: once it is implemented its
 # models leave models-outside-library.csv, and it would come back as a drug
 # to search PubMed for.  So does a library_change row, a change to a drug the
-# library already has (piperacillin renamed Zosyn and dosed as the product).
-plan <- plan[!plan$status %in% c("done", "library_change"), , drop = FALSE]
+# library already has (piperacillin renamed Zosyn and dosed as the product),
+# and a not_included row, a drug decided against (piperaquine, given only in
+# a combination with no US product; docs/library-expansion/combination-only.csv).
+plan <- plan[!plan$status %in% c("done", "library_change", "not_included"), , drop = FALSE]
 models <- utils::read.csv(file.path(repo, "docs", "nlmixr2lib", "models-outside-library.csv"),
                           stringsAsFactors = FALSE, colClasses = c(pmid = "character"))
 statusFile <- file.path(dir, "archive-status.csv")
@@ -200,11 +202,31 @@ if (nrow(searches)) {
   }
   lines <- c(lines, "")
 }
+# The audit of the existing library (docs/nlmixr2lib/audit.md) lists the
+# sources stanpumpR's code cites with no card and the larger models of its
+# own drugs it has not read: they join the list too, unless the archive
+# already holds them.
+auditFile <- file.path(repo, "docs", "nlmixr2lib", "audit-download-ids.txt")
+auditToGet <- character()
+if (file.exists(auditFile)) {
+  auditIds <- trimws(readLines(auditFile, warn = FALSE))
+  auditIds <- auditIds[nzchar(auditIds)]
+  inArchive <- if (is.null(status)) character() else
+    c(status$pmid[status$inArchive == "TRUE"], status$doi[status$inArchive == "TRUE"])
+  auditToGet <- setdiff(auditIds, c(inArchive, ""))
+  if (length(auditToGet)) {
+    link <- ifelse(grepl("^10\\.", auditToGet),
+                   paste0("[doi:", auditToGet, "](https://doi.org/", auditToGet, ")"),
+                   paste0("[PMID ", auditToGet, "](https://pubmed.ncbi.nlm.nih.gov/", auditToGet, "/)"))
+    lines <- c(lines, "## The audit of the existing library (docs/nlmixr2lib/audit.md)", "",
+               paste0("- ", link), "")
+  }
+}
 writeLines(lines, file.path(dir, "downloads.md"), useBytes = TRUE)
 # The same papers as a bare list, one per line, to paste into a session that
 # downloads papers: each paper's PMID, or its DOI where it has none.
 ids <- as.character(ifelse(nzchar(missing$pmid), missing$pmid, missing$doi))
-writeLines(unique(c(ids, leadsToGet$pmid)), file.path(dir, "download-ids.txt"), useBytes = TRUE)
+writeLines(unique(c(ids, leadsToGet$pmid, auditToGet)), file.path(dir, "download-ids.txt"), useBytes = TRUE)
 message("wrote docs/library-expansion/candidates.csv (", nrow(cand), " rows), downloads.md and download-ids.txt (",
         nrow(missing), " picks and ", length(setdiff(unique(leadsToGet$pmid), missing$pmid)),
-        " report leads to download; ", nrow(searches), " drugs without an nlmixr2lib model)")
+        " report leads and ", length(auditToGet), " audit papers to download; ", nrow(searches), " drugs without an nlmixr2lib model)")
