@@ -52,7 +52,10 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 ARCHIVE = os.path.dirname(HERE)
 
-args = sys.argv[1:]
+# Parsed only when this is the script being run, so that another script can IMPORT this one
+# (digest_run.py orders its queue by what the models are blocked on, 2026-11-19) without its own
+# flags being read as ours.  An importer gets the defaults below, origin/master among them.
+args = sys.argv[1:] if __name__ == "__main__" else []
 REPO = args[args.index("--repo") + 1] if "--repo" in args else r"C:\dev\stanpumpR"
 FETCH = "--no-fetch" not in args
 SHOW_MISSING = "--all" in args
@@ -148,6 +151,30 @@ def wanted():
             if pmids:
                 out.append((os.path.basename(name), drug, pmids, t,
                             (r.get("model_id") or "").strip()))
+    return out
+
+
+def wanted_pmids():
+    """{pmid: [what wants it]} for every paper a model is BLOCKED on, arrived or not.
+
+    The same two registers main() reports from -- a registry row's `to_obtain` and the pending rows
+    of papers/pending-work.csv -- but keyed by PMID and without asking whether the paper is here.
+    main() wants the ones that have NOT arrived (to enqueue them); digest_run.py wants the opposite,
+    the ones that are here and have no card, so that its queue digests what somebody is waiting on
+    first.  Read from origin/master like everything else in this module.
+    """
+    out = {}
+
+    def add(pmid, label):
+        if label not in out.setdefault(pmid, []):
+            out[pmid].append(label)
+
+    for reg, drug, pmids, reason, model_id in wanted():
+        label = re.sub(r"Registry\.csv$", "", reg) or reg
+        for p in pmids:
+            add(p, "%s: %s" % (label, drug or "-"))
+    for pmid, drug, what, where, raised in pending_work():
+        add(pmid, "pending-work: %s" % (drug or "-"))
     return out
 
 
