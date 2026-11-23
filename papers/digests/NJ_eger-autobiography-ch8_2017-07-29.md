@@ -13,6 +13,7 @@ open_questions:
   - "[decision] The chapter's own final model has FIVE body compartments - lungs, VRG, MG, FG and an intertissue diffusion group of about 500 min time constant carrying roughly 30% of the uptake (PDF pp. 15-16) - where stanpumpR's gas engine has the 1962 four (lungs, VRG, MG, FG, plus the circuit). Whether to add the ITDG is Shafer's call. It would matter where the chapter says it matters: the washout of a long, soluble anaesthetic."
   - "[decision] This is an unpublished manuscript. This card records only its science, but whether a card about it belongs in the public repository at all is Shafer's to decide, as is whether the chapter should be cited as a published source once it is published."
   - "[check] The draft's cyclopropane blood/gas coefficients disagree with each other (PDF pp. 14-15): the text gives 0.6 at 1% inspired and about 0.47 at 100% (p. 14), then reports Perl as assuming 0.42 for cyclopropane against 0.47 for nitrous oxide (p. 15), while Rackow's quoted sentence on the same page has cyclopropane moving from 0.47 upward. The 0.42/0.47 pair reads as transposed against Rackow's own baseline. Settled by the Perl and Rackow papers (chapter refs 39, 40). It changes nothing in stanpumpR, which has no cyclopropane."
+  - "[check] What is the denominator of Halsey's 50/35/10% metabolism figures (PDF p. 21, ref 57 = Halsey, Sawyer, Eger, Bahlman and Impelman, Anesthesiology 1971;35:43-7, PMID 5088786)? The chapter states the percentages bare, with no denominator and no exposure condition. The paper's title is 'Hepatic metabolism of ...', and the companion ref 58 is titled 'Concentration dependence of hepatic halothane metabolism' (Anesthesiology 1971;34:230-4, PMID 5544623), so the figures are very unlikely to be fractions of an administered anaesthetic dose - CodeRabbit on PR #857 suggested they are hepatic extraction at low subanaesthetic concentrations, which is consistent with both titles and with the chapter's own argument, but neither paper has been read. Both are now queued; either would settle it. Until then the card states the figures as the chapter does and says the denominator is unstated."
   - "[check] The chapter attributes the experimental demonstration of intertissue diffusion, kidney to perirenal fat, to its ref 49 (PDF p. 16), which the reference list gives as Allott, Steward and Mapleson, Pharmacokinetics of halothane in the dog: comparison of theory and measurement in individuals, Br J Anaesth 1976;48:279-95. That title is a theory-against-measurement comparison, and I could not confirm from the reference alone that it reports the kidney-to-fat transfer. Either the citation number is wrong or the paper contains more than its title suggests; the paper would settle it."
 ---
 
@@ -46,9 +47,15 @@ The empirical work it recounts, in the order the chapter takes it:
   were best fit with five compartments** (p. 15). Repeated at 30 min rather than two hours with the
   same result (p. 16, ref 44), in pigs in 1990 (desflurane, sevoflurane, isoflurane, halothane;
   ref 45), in humans in 1991 (refs 46, 47), and in patients aged 73 +/- 3 (p. 16, ref 48).
-- **Metabolism**: Halsey's miniature swine (p. 21, ref 57) - methoxyflurane about 50% metabolised,
-  halothane about 35%, enflurane 10%, isoflurane and cyclopropane none. Then the saturation studies
-  below (pp. 21-23).
+- **Metabolism**: Halsey's miniature swine (p. 21, ref 57) - methoxyflurane about 50%, halothane
+  about 35%, enflurane 10%, isoflurane and cyclopropane none. **The chapter gives no denominator and
+  no exposure condition for these four figures**, so they must not be read as fractions of an
+  administered anaesthetic dose: the paper is titled *Hepatic metabolism of halothane,
+  methoxyflurane, cyclopropane, Ethrane and Forane in miniature swine*, and the chapter's own next
+  paragraphs (p. 21) say halothane's metabolised fraction is strongly concentration-dependent -
+  nearly all of it at trace concentrations, about half of elimination at 0.01% MAC, and virtually
+  none at anaesthetic concentrations. See *open_questions*. Then the saturation studies (pp. 21-23),
+  whose own figures do carry their conditions.
 - **Percutaneous and transmembrane loss** (p. 26, refs 80-82): the subject's arm in an airtight
   chamber, with the chamber volume, skin area and gas tension measured against simultaneous arterial
   sampling.
@@ -250,9 +257,15 @@ to the next round. Found by searching the repository directly:
   why that is safe - metabolism is a negligible route at anaesthetic concentrations. **Consistent.**
 - Nothing in the chapter contradicts a number stanpumpR holds.
 
-Three of the chapter's references were absent from the archive and are now queued
-(`stanpumpr-queue.csv`, noted as wanted by this card): **PMID 14211488** (ref 37, Eger and
-Severinghaus 1964) and **PMID 5020644** (ref 38, Stoelting and Longnecker 1972), which are the
-prediction and the experimental confirmation behind `R/endobronchial.R` and were cited there without
-being held, and **PMID 4149271** (ref 27, Wahrenbrock 1974), the across-species test. None is free at
-PMC.
+Five of the chapter's references were absent from the archive and are now queued
+(`stanpumpr-queue.csv`, noted as wanted by this card):
+
+| PMID | Chapter ref | Why |
+|---|---|---|
+| 14211488 | 37 | Eger and Severinghaus 1964, the analogue-model prediction behind `R/endobronchial.R`, cited there without being held |
+| 5020644 | 38 | Stoelting and Longnecker 1972, its confirmation in dogs and people, likewise |
+| 4149271 | 27 | Wahrenbrock 1974, the across-species test of proportional ventilation and cardiac output |
+| 5088786 | 57 | Halsey 1971, which would settle the denominator of the 50/35/10% metabolism figures |
+| 5544623 | 58 | Sawyer 1971, the concentration dependence of hepatic halothane metabolism behind them |
+
+None is free at PMC.
