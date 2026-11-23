@@ -17,22 +17,22 @@ The published analysis of the same trials (Trang and colleagues, *Antimicrob Age
 | Clearance at an eGFR of 40 | "approximately 7 liters/h" | 7.0 L/h |
 | Renal fraction of clearance at an eGFR of 100 | "approximately 59%" | 60% |
 
-A 35-year-old man with a normal creatinine clears 11.6 L/h, with half-lives of 0.7 and 1.5 hours. The Merrem label gives "approximately 1 hour".
+A 35-year-old man with a normal creatinine clears 12.3 L/h with [the scaling switch](help:models/fat-free-mass) on (11.6 L/h as published), with half-lives of 0.7 and 1.4 hours. The Merrem label gives "approximately 1 hour".
 
 Two sources the model was not fitted to: the label agrees within its ranges, and Christensson and colleagues (*Antimicrob Agents Chemother* 1992;36:1532-1537) measured a higher peak and a smaller area.
 
-| Source | Dose | Measured | This model |
+| Source | Dose | Measured | This model (switch on; as published) |
 |---|---|---|---|
-| Merrem label, healthy volunteers | 500 mg over 30 min | peak about 23 mg/L (14–26) | 25.3 mg/L |
-| Merrem label, healthy volunteers | 1 g over 30 min | peak 49 mg/L (39–58) | 50.6 mg/L |
-| Merrem label, healthy volunteers | 500 mg, at 6 h | about 1 mg/L | 0.8 mg/L |
-| Christensson 1992, six men of 79 kg, GFR 100 | 500 mg over 30 min | peak 30.3 mg/L; AUC 36.0 mg·h/L | 24.0 mg/L; 40.6 mg·h/L |
+| Merrem label, healthy volunteers | 500 mg over 30 min | peak about 23 mg/L (14–26) | 25.0 mg/L; 25.3 mg/L |
+| Merrem label, healthy volunteers | 1 g over 30 min | peak 49 mg/L (39–58) | 50.0 mg/L; 50.6 mg/L |
+| Merrem label, healthy volunteers | 500 mg, at 6 h | about 1 mg/L | 0.67 mg/L; 0.80 mg/L |
+| Christensson 1992, six men of 79 kg, GFR 100 (taken as 30 years, 180 cm) | 500 mg over 30 min | peak 30.3 mg/L; AUC 36.0 mg·h/L | 23.2 mg/L, 34.6 mg·h/L; 23.8 mg/L, 40.2 mg·h/L |
 
 ### Covariates
 
 The eGFR is the MDRD equation, as the source used it (per 1.73 m², without a race term). It is computed from the Patient Profile's **Serum creatinine**; a blank field means an assumed normal creatinine for age and sex. The creatinine is held at 0.5 mg/dL or more, as the source held it, and the age term at 18 years or more. The model was fitted in adults only.
 
-Weight acts on the two volumes. With [the scaling switch](help:models/fat-free-mass) on, it is the pharmacokinetic weight; with it off, total body weight. Clearance has no weight term, because the source found none.
+Weight acts on the two volumes. With [the scaling switch](help:models/fat-free-mass) on, it is the pharmacokinetic weight; with it off, total body weight. The source found no weight effect on clearance, but with the switch on clearance and the intercompartmental clearance still scale with fat-free mass to the 0.75 power (stanpumpR's rule that a parameter without a size term in its source still scales with size, Steven L. Shafer, 2026-11-19), anchored at Trang and colleagues' 431 patients (75 kg, 168 cm, 53 years, 192 men and 239 women), so a patient like theirs receives the published values. The reference man is that patient scaled up, which is why his 6-hour level sits a third below the label's.
 
 ### The MIC line and the band
 

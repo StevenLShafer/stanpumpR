@@ -4,7 +4,7 @@ Cefepime's parameters come from the population model of Barreto and colleagues (
 
 - **Clearance:** 7.84 L/h × eGFR / 120, with the eGFR in mL/min. Clearance is in proportion to renal function, with no non-renal part.
 - **Central volume:** 15.56 L × weight / 70.
-- **Intercompartmental clearance and peripheral volume:** fixed at 7.09 L/h and 10.63 L.
+- **Intercompartmental clearance and peripheral volume:** 7.09 L/h and 10.63 L. These are this cohort's own estimates; the authors removed their interindividual variability, which was low, and gave them no covariate.
 
 ### The eGFR: creatinine only
 
@@ -25,17 +25,17 @@ The label's healthy men were not used in the fit. This model at a 35-year-old, 7
 | Quantity | Label, healthy men | This model |
 |---|---|---|
 | Clearance | 120 (± 8) mL/min | 126 mL/min |
-| Peak after 1 g over 30 min | 81.7 mg/L | 51.9 mg/L |
-| Peak after 2 g over 30 min | 163.9 mg/L | 103.7 mg/L |
+| Peak after 1 g over 30 min | 81.7 mg/L | 52.0 mg/L |
+| Peak after 2 g over 30 min | 163.9 mg/L | 104.1 mg/L |
 | AUC after 1 g | 148.5 h·mg/L | 132.7 h·mg/L |
-| Steady-state volume | 18 L | 26.2 L |
+| Steady-state volume | 18 L | 25.8 L |
 | Half-life | 2 h | 0.5 and 2.9 h |
 
 Clearance agrees within 5%. The volumes are larger, as expected of critically ill patients against healthy volunteers, so the peaks are lower and the terminal half-life is longer.
 
 ### Covariates and body size
 
-Weight acts on the central volume and, through the body surface area, on the eGFR in mL/min. With [the scaling switch](help:models/fat-free-mass) on, both use the pharmacokinetic weight; with it off, total body weight. The model was fitted in adults only.
+Weight acts on the central volume and, through the body surface area, on the eGFR in mL/min. With [the scaling switch](help:models/fat-free-mass) on, both use the pharmacokinetic weight; with it off, total body weight. The renal clearance, with weight inside its eGFR, takes no further scaling. The intercompartmental clearance and peripheral volume have no size term in the source. With the switch on they are scaled, the peripheral volume in proportion to fat-free mass and the intercompartmental clearance to its 0.75 power, anchored at Barreto's typical patient (mean 87 kg, BMI 30, 61 years; 72 men and 48 women), who receives the published values. With it off they are as published. The model was fitted in adults only.
 
 ### The MIC line
 

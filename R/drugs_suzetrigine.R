@@ -97,12 +97,29 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# The source's own covariates: weight on every volume (exponent 1), at the
-# pharmacokinetic weight with the switch on and total weight with it off; BMI
-# on clearance, from total weight and height in both positions, because it
-# stands for body composition, not size (a heavier patient of the same height
-# clears suzetrigine MORE slowly).  BMI is held within the range studied,
-# 18.1-39.7 kg/m2.
+# The source's own covariates are kept exactly as fitted: weight on every
+# volume (V2P, V3P, V2M, V3M; exponent 1), at the pharmacokinetic weight with
+# the switch on and total weight with it off; BMI (and sex) on clearance, from
+# total weight and height in both positions, because it stands for body
+# composition, not size (a heavier patient of the same height clears
+# suzetrigine MORE slowly).  BMI is held within the range studied,
+# 18.1-39.7 kg/m2.  CLM is 0.273 x CLP and takes nothing more.  None of these
+# is anchored.
+#
+# The two intercompartmental clearances, Q3P 19 L/h and Q3M 8.75 L/h, carry no
+# size term in the model as transcribed here (Table 149 could not be read
+# again on 2026-11-19: the review is not archived).  The data's weights ran
+# from 44 to 128 kg, so the absence of a weight term says only that none was
+# fitted, not that these clearances are insensitive to size: under Steven L.
+# Shafer's first-principles rule of 2026-11-19 (a covariate not detected is
+# not evidence of no size effect), with the switch on they are scaled
+# allometrically, x (FFM ratio)^0.75, anchored at the data's typical subject
+# (SUZETRIGINE_COHORT, below): the library's clearance factor divided by that
+# subject's, 0.9833 (volume factor 0.9778), so that the data's typical subject
+# receives the published 19 and 8.75 L/h.  Neither has a sex term, so the
+# anchor is the cohort's pooled subject (the man's and the woman's factors at
+# the medians, weighted 76.7 : 23.3, averaged geometrically).  With the switch off
+# they are 19 and 8.75 L/h for everyone, as before.
 #
 # DOSE
 # ====
@@ -138,6 +155,16 @@ SUZETRIGINE_AHILL   <- 10
 SUZETRIGINE_F_DOSE  <- list(Imax = 0.419, ID50 = 162, hill = 5)   # mg
 SUZETRIGINE_KA_DOSE <- list(emax = 0.895, d50 = 36, hill = 1)     # mg
 
+# The data's typical subject, the anchor of the size-free Q3P and Q3M (see the
+# header's BODY SIZE): Table 148 (p.168) of the review as transcribed in this
+# header on 2026-11-16 -- 1,435 subjects, median age 42 years, weight 76.2 kg,
+# BMI 27.8 kg/m2, 76.7% men -- unconfirmed, because the review is not archived
+# and could not be read again on 2026-11-19.  No height is printed: it is the
+# median weight over the median BMI, 100 x sqrt(76.2 / 27.8) = 165.6 cm (two
+# medians, not one subject's).  The sexes are weighted 76.7 : 23.3.
+SUZETRIGINE_COHORT <- list(weight = 76.2, bmi = 27.8, age = 42,
+                           men = 76.7, women = 23.3)
+
 #' Suzetrigine's apparent clearance before induction (Table 149)
 #'
 #' CLP x 1.21 in men x (BMI / 27.8)^-0.605, the BMI from total weight and
@@ -164,6 +191,22 @@ suzetrigineVolumeFactor <- function(weight, height, age, sex, adjustToFFM)
   (if (isTRUE(adjustToFFM)) size$pkWeight else weight) / SUZETRIGINE_WT_REF
 }
 
+#' The factor of the size-free intercompartmental clearances, Q3P and Q3M
+#'
+#' With the switch on, the fat-free-mass ratio to the 0.75 power anchored at
+#' the data's typical subject (\code{SUZETRIGINE_COHORT}); 1 with it off.
+#' Shared with \code{M6SUZ()}.
+#'
+#' @inheritParams cefazolin
+#' @returns a multiplier
+#' @keywords internal
+suzetrigineQFactor <- function(weight, height, age, sex, adjustToFFM)
+{
+  pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                legacyVolume = 1, legacyClearance = 1,
+                cohort = do.call(cohortSizeFactors, SUZETRIGINE_COHORT))$clearance
+}
+
 #' Suzetrigine (FDA Integrated Review of NDA 219209, model 2822)
 #'
 #' Two compartments, oral, with enzyme autoinduction, forming M6-SUZ; see the
@@ -183,7 +226,7 @@ suzetrigine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     v2  = SUZETRIGINE_V2 * f,
     v3  = 1,
     cl1 = cl,                     # before induction, for the help tables
-    cl2 = SUZETRIGINE_Q / 60,
+    cl2 = SUZETRIGINE_Q * suzetrigineQFactor(weight, height, age, sex, adjustToFFM) / 60,
     cl3 = 0,
     ka_PO = SUZETRIGINE_KA / 60,  # the small-dose limit; see kaDoseDependence
     bioavailability_PO = SUZETRIGINE_F,
@@ -231,11 +274,13 @@ suzetrigine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
 SUZETRIGINE_REFERENCE <- paste0(
   "FDA Integrated Review of NDA 219209 (Journavx, 2025), Table 149 and Figure 24, ",
-  "the applicant's model 2822: suzetrigine two compartments (V2P 103 L, V3P 204 L, ",
-  "Q3P 19 L/h x weight/76.2; CLP 5.56 L/h in women, x 1.21 in men, x (BMI/27.8)^-0.605), ",
+  "the applicant's model 2822: suzetrigine two compartments (V2P 103 L and V3P 204 L, ",
+  "each x weight/76.2; Q3P 19 L/h; CLP 5.56 L/h in women, x 1.21 in men, x (BMI/27.8)^-0.605), ",
   "lag 0.182 h, zero-order release 1.1 h, ka 4.52 /h x (1 - 0.895 D/(36 + D)), ",
   "F 0.88 x (1 - 0.419 D^5/(162^5 + D^5)); 80% of its clearance forms M6-SUZ ",
-  "(V2M 1.7 L, V3M 29.5 L x weight/76.2, Q3M 8.75 L/h, CLM 0.273 x CLP); every ",
+  "(V2M 1.7 L and V3M 29.5 L, each x weight/76.2; Q3M 8.75 L/h; CLM 0.273 x CLP); every ",
   "clearance x AENZ, an enzyme turning over at 0.00939 /h and induced up to 1.811-fold ",
-  "(AC50 432 ng/mL, Hill 10). ",
+  "(AC50 432 ng/mL, Hill 10).  With the fat-free-mass switch on, Q3P and Q3M, which carry ",
+  "no size term, are scaled by the fat-free-mass ratio^0.75, anchored at the data's ",
+  "median subject (76.2 kg, BMI 27.8, 42 years, 76.7% men). ",
   "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2025/219209Orig1s000IntegratedR.pdf")

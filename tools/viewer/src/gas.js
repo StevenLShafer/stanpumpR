@@ -79,7 +79,18 @@ const GAS_TOP = 128;
 // and px more where the arterial oxygen is shown under the title (a run with
 // an endobronchial tube, player.js): its line reached into the arrows.
 const GAS_OXYGEN_LINE = 18;
-function gasTop(r) { return GAS_TOP + (r && r.saturation ? GAS_OXYGEN_LINE : 0); }
+// The fresh gas and pop-off arrows start this far above the boxes.
+const GAS_ARROW_ROOM = 70;
+// The room above the boxes: the two above, and more where the physiology
+// line wraps to a second or third row on a narrow window, when "Fresh gas"
+// and the arrows were drawn across its lower rows (2026-11-20): the arrows
+// start below whatever is written under the title, its bottom measured as
+// for a drug (underTitle(), flat.js). With one row it is what it was.
+function gasTop(r) {
+    const bottom = underTitle();
+    return Math.max(GAS_TOP + (r && r.saturation ? GAS_OXYGEN_LINE : 0),
+                    bottom > 0 ? Math.ceil(bottom) + FLAT_PHYSIO_GAP + GAS_ARROW_ROOM : 0);
+}
 
 // The agent's name as written: nitrousOxide is "Nitrous oxide".
 function gasName(drug) {
@@ -500,8 +511,8 @@ Object.assign(Flat, {
         const twi = thick(st.flow.fresh), two = thick(st.flow.vented);
         const hi = headWidth(twi), ho = headWidth(two), cc = cx('circuit');
         const xi = fOut ? cc - hi / 2 - 2 : cc, xo = fIn ? cc + ho / 2 + 2 : cc;
-        if (fIn) arrowVert(out, xi, yTop - 70, yTop - 2, twi, FLAT_COLOURS.in);
-        if (fOut) arrowVert(out, xo, yTop - 2, yTop - 70, two, FLAT_COLOURS.out);
+        if (fIn) arrowVert(out, xi, yTop - GAS_ARROW_ROOM, yTop - 2, twi, FLAT_COLOURS.in);
+        if (fOut) arrowVert(out, xo, yTop - 2, yTop - GAS_ARROW_ROOM, two, FLAT_COLOURS.out);
         const lx = Math.max(xi + hi / 2, xo + ho / 2) + 8;
         label(lx, yTop - 56, 'start', `Fresh gas ${fIn ? rateTxt(st.flow.fresh) : `0 ${e(u.rate)}`}`, 'in');
         label(lx, yTop - 40, 'start', `Vented ${fOut ? rateTxt(st.flow.vented) : `0 ${e(u.rate)}`}`, 'out');

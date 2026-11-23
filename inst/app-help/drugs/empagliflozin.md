@@ -1,6 +1,6 @@
 ### The model
 
-Baron and colleagues' analysis of 2761 adults with type 2 diabetes (*Diabetes Ther* 2016): two compartments with first-order absorption after a lag fixed at 0.5 h; apparent clearance 10.6 L/h, central volume 3.14 L, intercompartmental clearance 6.34 L/h, peripheral volume 70.6 L, absorption 0.196/h (the paper prints its unit as L/h, a typographical error). The central volume is poorly identified and data from the first hour were excluded, so the early curve is uncertain; the terminal half-life is about 12 hours.
+Baron and colleagues' analysis of 2761 adults with type 2 diabetes (*Diabetes Ther* 2016): two compartments with first-order absorption after a lag fixed at 0.5 h; apparent clearance 10.6 L/h, central volume 3.14 L, intercompartmental clearance 6.34 L/h (the reference man's value; see Covariates), peripheral volume 70.6 L, absorption 0.196/h (the paper prints its unit as L/h, a typographical error). The central volume is poorly identified and data from the first hour were excluded, so the early curve is uncertain; the terminal half-life is about 12 hours.
 
 ### Covariates
 
@@ -10,6 +10,8 @@ The supplement's Table S1 gives the full model. Each continuous covariate enters
 - **Age:** clearance × (age/50)<sup>−0.241</sup>, with smaller terms on the volumes and absorption. Age is held at 18 and above.
 - **BMI:** clearance × (BMI/25)<sup>0.320</sup>, central volume × (BMI/25)<sup>1.04</sup>, peripheral volume × (BMI/25)<sup>0.672</sup>. BMI is held within 20.8 to 42.4 kg/m². With **Adjust weight to fat-free mass** ticked it is calculated from the pharmacokinetic weight.
 - **Sex:** in women, clearance × 0.886, central volume × 1.25, peripheral volume × 0.831 and absorption × 1.17.
+
+The intercompartmental clearance has no covariate in the source. With *Adjust weight to fat-free mass* ticked, stanpumpR scales it to the 0.75 power of fat-free mass. The paper prints no weight or height for its patients, only a median BMI, so the scaling is anchored at the 70 kg, 170 cm reference man, who receives the published 6.34 L/h. Unticked, it is 6.34 L/h for everyone. The terms above are the source's own and take no further scaling.
 
 The table writes the central volume's BMI term over 20, the equation below it over 25; the equation is followed. Smoking, race, total protein and the liver enzymes have no field and stay at the reference values; the paper finds each changes exposure by less than 25%.
 

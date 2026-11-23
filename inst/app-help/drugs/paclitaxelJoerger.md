@@ -5,11 +5,11 @@ Paclitaxel comes from Joerger and colleagues (*Clin Cancer Res* 2006;12:2150-215
 - elimination from the central compartment at a maximal rate VMEL of 37.4 µmol/h (31.9 mg/h) in the typical woman, half-saturated at 0.53 µmol/L (0.45 mg/L);
 - transport into a first peripheral compartment at a maximal rate VMTR of 169 µmol/h (144 mg/h), half-saturated at 0.826 µmol/L (0.71 mg/L), with return at 1.15 per hour; this compartment is an amount, with no volume of its own;
 - linear distribution to a second peripheral compartment of 252 L, at an intercompartmental clearance of 20.1 L/h;
-- a central volume of 12.8 L.
+- a central volume of 12.8 L in the study's typical patient (median 68.5 kg, body surface area 1.80 m²).
 
 The engine integrates these equations numerically over the whole dose table, because doses do not add independently.
 
-The model reproduces the paper's own simulations. For 175 mg/m² over 3 hours at a body surface area of 1.8 m², the typical woman reaches 3.83 µmol/L (3.27 mcg/mL) and stays above 0.1 µmol/L for 17.7 hours; the typical man reaches 3.29 µmol/L and stays above it for 13.0 hours. These are the values the paper's Figures 3 and 4 show.
+The model reproduces the paper's own simulations. For 175 mg/m² over 3 hours at a body surface area of 1.8 m², the typical woman reaches 3.83 µmol/L (3.27 mcg/mL) and stays above 0.1 µmol/L for 17.7 hours; the typical man reaches 3.29 µmol/L and stays above it for 13.0 hours. These are the values the paper's Figures 3 and 4 show, computed with the published parameters (*Adjust weight to fat-free mass* unticked).
 
 ### What is plotted
 
@@ -19,6 +19,7 @@ Total plasma paclitaxel in mcg/mL (mg/L); 0.1 µmol/L is 0.085 mcg/mL and 0.05 �
 
 - **Sex.** Men have a 20% higher maximal elimination and transport rate, a transport Km 2.11 times higher and a slower return from the first peripheral compartment, so a man's time above 0.1 µmol/L is almost 5 hours shorter than a woman's at the same dose.
 - **Body surface area** (Mosteller's formula; the paper does not name its own), on both maximal rates, the second peripheral volume and its clearance. With the dose given per m², the time above 0.1 µmol/L barely changes with body size.
+- **Fat-free mass**, on the central volume. Joerger tested weight, body surface area and sex on it and kept none. That is a finding in one cohort, not evidence that the central volume does not change with size, so with *Adjust weight to fat-free mass* ticked stanpumpR scales it in proportion to fat-free mass, anchored at Joerger's typical patient (86 men and 82 women, median 68.5 kg, 56 years), who receives the published 12.8 L. The 70 kg reference man receives 14.2 L and a 70 kg, 170 cm, 35-year-old woman 11.7 L. Unticked, it is 12.8 L for everyone. The parameters on body surface area take no further scaling.
 - **Age**, on the maximal elimination rate: 14% lower at 86 years than at 56. The term is held at 18 years for younger patients; the youngest studied was 33.
 - **Total bilirubin** lowers the elimination rate (by 19% at 24 µmol/L), but the Patient Profile has no bilirubin field, so it is **held at 7 µmol/L** (0.41 mg/dL), the study's median. A patient with a raised bilirubin will stay above the thresholds longer than this curve shows.
 

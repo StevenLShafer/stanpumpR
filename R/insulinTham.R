@@ -68,9 +68,8 @@
 #   Weight and dose are held within the ranges Table 1 studied for each
 #   insulin (THAM_WEIGHT_RANGE, THAM_DOSE_RANGE): lispro's steep power, for
 #   one, was fitted to 52.6 to 86 kg.  Weight is the pharmacokinetic weight
-#   with the fat-free-mass switch on and the total weight with it off; no
-#   other size scaling is applied, since the source's own terms are the
-#   size model.
+#   with the fat-free-mass switch on and the total weight with it off.  For
+#   the scaling of CL/F, see BODY SIZE below.
 #
 #   A dose covariate is a property of each injection: Tham fitted single
 #   doses.  Glargine's F scales each dose by its own size
@@ -88,6 +87,35 @@
 #   and not a fit to Lantus, Semglee or Rezvoglar, which Tham used only as an
 #   external check.  Lispro is Humalog U100; Humalog U200 was a validation set
 #   only and is not offered.
+#
+# BODY SIZE (docs/weight-adjustment.md)
+# =====================================
+# V/F carries the source's own weight term ((BW/80)^1.62 for the human
+# insulins, (BW/80)^2.48 for lispro, linear in BW - 71.4 for glargine), and
+# that term is kept exactly as fitted, at the pharmacokinetic weight with the
+# switch on, with no further scaling.  CL/F has no size term in the source:
+# Tham tested age, weight, sex, BMI and dose on every parameter and retained
+# weight on the volumes only (p1129), although the same paragraph notes that
+# "both CL/F and Vd/F increased along with increasing body weight".  Under
+# Steven L. Shafer's first-principles rule of 2026-11-19 (a covariate that
+# fails the test was not detected; that is not evidence that clearance is
+# insensitive to size), CL/F of every insulin is now multiplied by the
+# fat-free-mass clearance factor, size$clearance (the fat-free-mass ratio to
+# the 0.75 power), on top of the human insulins' dose term, which is kept
+# (doseDependent and doseSizePK() rebuild each dose size with it).  The
+# absorption (ka, lag, the zero-order duration and fraction) and glargine's
+# dose-dependent F are rate constants and fractions and are not scaled.
+# With the switch off, CL/F is the published value, as before.
+#
+# BODY SIZE ANCHOR (Steven L. Shafer, 2026-11-18 and 2026-11-19;
+# docs/weight-adjustment.md, Anchoring at the source's cohort): Table 1
+# (p1128) prints each insulin's studies' mean age, weight and BMI, but no
+# numbers of men and women, and neither the paper nor its supplement
+# (sup0001, the model equations) gives a sex split anywhere (sex appears only
+# as a covariate tested, p1129).  Without it the cohort's typical fat-free
+# mass cannot be computed (a man's is about a fifth above a woman's of the
+# same weight), so CL/F stays anchored at the 70 kg, 170 cm reference man
+# (factor 1, no cohort constant): a 70 kg man receives the published CL/F.
 #
 # PREGNANCY
 # =========
@@ -119,15 +147,17 @@
 # one.
 #
 # PER m2 AGAINST ABSOLUTE.  Catalano's clearance is per m2 of body surface
-# area, and Tham's CL/F carries NO size covariate (only V/F scales with
-# weight), so the absolute systemic clearance is what CL/F represents.  Body
-# surface area rises by about 8% by term (roughly sqrt(82/70) for a 12 kg
-# gain), so the absolute clearance ratio is nearer 1.25 x 1.08 = 1.35.  The
-# per-m2 ratio 1.25 is applied as a measured, conservative lower bound; the
-# factor would be about 1.35 if the body-surface-area rise were added, which
-# the model cannot know from a single entered weight.  Applied on the
-# assumption that subcutaneous bioavailability is unchanged, for which there
-# are no data.
+# area, and Tham's CL/F carries NO size covariate in the source (only V/F
+# scales with weight), so the absolute systemic clearance is what CL/F
+# represents.  Body surface area rises by about 8% by term (roughly
+# sqrt(82/70) for a 12 kg gain), so the absolute clearance ratio is nearer
+# 1.25 x 1.08 = 1.35.  The per-m2 ratio 1.25 is applied as a measured,
+# conservative lower bound.  With the switch on, CL/F is now also scaled by
+# fat-free mass (BODY SIZE, above), so a term-pregnant weight entered raises
+# it a little further through that scaling, whose fat-free mass is not the
+# tissue gained in pregnancy; the pre-pregnancy weight avoids it.  Applied
+# on the assumption that subcutaneous bioavailability is unchanged, for which
+# there are no data.
 #
 # NOTE ON WEIGHT.  Tham's V/F scales steeply with weight: (BW/80)^1.62 for
 # the human insulins, (BW/80)^2.48 for lispro, linearly for glargine, held to
@@ -219,9 +249,13 @@ thamInsulin <- function(weight, height, age, sex, adjustToFFM, insulin,
   absorption <- THAM_ABSORPTION[names(components)]
   clamp <- function(x, range) min(max(x, range[1]), range[2])
 
-  # Body weight on V/F, held within the studied range
-  pkW <- if (isTRUE(adjustToFFM))
-    pkSizeFactors(weight, height, age, sex, TRUE)$pkWeight else weight
+  # Body weight on V/F, held within the studied range.  CL/F, with no size
+  # term in the source, takes the fat-free-mass clearance factor with the
+  # switch on, anchored at the reference man (see BODY SIZE in the header);
+  # with it off, 1.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                        legacyVolume = 1, legacyClearance = 1)
+  pkW <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   w <- clamp(pkW, THAM_WEIGHT_RANGE[[insulin]])
   vw <- disposition$weight
   v <- disposition$v * if (is.null(vw$slope)) (w / vw$reference)^vw$power else
@@ -233,7 +267,7 @@ thamInsulin <- function(weight, height, age, sex, adjustToFFM, insulin,
     if (is.null(effect) || is.null(dose)) return(1)
     (clamp(units, THAM_DOSE_RANGE[[insulin]]) / effect$reference)^effect$power
   }
-  cl <- disposition$cl * doseFactor(disposition$clDose, dose)
+  cl <- disposition$cl * doseFactor(disposition$clDose, dose) * size$clearance
   # Pregnancy (see the header): CL/F alone
   if (isTRUE(pregnant)) cl <- cl * INSULIN_PREGNANCY_CL_FACTOR
   regular <- names(components) == "regularU100"

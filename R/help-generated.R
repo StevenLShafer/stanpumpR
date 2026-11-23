@@ -932,6 +932,7 @@ HELP_GENERATED_BLOCKS <- list(
   "field-readers-table" = helpFieldReadersTableMarkdown,
   "pk-converter" = helpPKConverterHTML,
   "pd-adaptation-table" = function(...) helpPdAdaptationTableMarkdown(),
+  "pd-effect-table" = function(...) helpPdEffectTableMarkdown(),
   "physiology-table" = function(...) helpPhysiologyTableMarkdown(),
   "physiology-ke0-figure" = function(...) helpPhysiologyKe0Figure(),
   "physiology-ke0-table" = function(...) helpPhysiologyKe0Table(),

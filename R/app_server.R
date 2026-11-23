@@ -1153,6 +1153,21 @@ app_server <- function(input, output, session) {
     if (is.null(x) || !x %in% OPIOID_TOLERANCE_VALUES) OPIOID_TOLERANCE_DEFAULT else x
   })
 
+  # PROTOTYPE sliders (Shafer, 2026-11-20): the continuous Opioid sensitivity
+  # (a theta offset on the receptor panels) and the Buprenorphine onset/offset
+  # (a biophase tPeak multiplier).  Sanitised to their ranges, defaulting when
+  # the control has not reported or a link forged a value.
+  opioidSensitivity <- reactive({
+    x <- suppressWarnings(as.numeric(input[[OPIOID_SENSITIVITY_INPUT]]))
+    if (length(x) != 1 || is.na(x)) OPIOID_SENSITIVITY_DEFAULT
+    else max(OPIOID_SENSITIVITY_MIN, min(OPIOID_SENSITIVITY_MAX, x))
+  })
+  buprenorphineOffset <- reactive({
+    x <- suppressWarnings(as.numeric(input[[BUPRENORPHINE_OFFSET_INPUT]]))
+    if (length(x) != 1 || is.na(x) || x <= 0) BUPRENORPHINE_OFFSET_DEFAULT
+    else max(BUPRENORPHINE_OFFSET_MIN, min(BUPRENORPHINE_OFFSET_MAX, x))
+  })
+
   adjustToFFM <- reactive({
     # TRUE until the checkbox reports, so the first simulation uses the default.
     if (is.null(input$adjustToFFM)) TRUE else isTRUE(input$adjustToFFM)
@@ -1692,6 +1707,7 @@ app_server <- function(input, output, session) {
         pulmonaryHypertension = pulmonaryHypertension(),
         adjustToFFM = adjustToFFM(),
         opioidTolerance = opioidTolerance(),
+        buprenorphineOffset = buprenorphineOffset(),
         alternativeModels = companionGroupsOn(),
         antiseizureInteractions = antiseizureInteractions(),
         individual = individual,
@@ -2122,6 +2138,14 @@ app_server <- function(input, output, session) {
   })
   output$adaptationDrawn <- reactive(adaptationDrawn())
   outputOptions(output, "adaptationDrawn", suspendWhenHidden = FALSE)
+  # Whether a % effect panel is drawn (R/pdEffect.R), on the same terms
+  effectDrawn <- reactive({
+    isTRUE(input$showEffect) &&
+      identical(normalizationInput(), NORMALIZE_NONE) &&
+      length(pdEffectDrugs(names(drugs()))) > 0
+  })
+  output$effectDrawn <- reactive(effectDrawn())
+  outputOptions(output, "effectDrawn", suspendWhenHidden = FALSE)
   typicalInput <- reactive(choiceOf(input$typical, PLOT_TYPICAL_CHOICES, "Range"))
   linetypes <- reactive({
     setLinetypes(normalizationInput(),
@@ -2166,14 +2190,17 @@ app_server <- function(input, output, session) {
       plotEvents             <- PLOT_ID_EVENTS      %in% input$addedPlots
       # Buprenorphine / opioid-receptor interaction panels (R/opioidReceptorInteraction.R)
       opioidReceptor <- if (isTRUE(input[[OPIOID_RECEPTOR_INPUT]]))
-        opioidReceptorSeries(drugs(), input$opioidTolerance) else NULL
+        opioidReceptorSeries(drugs(), input$opioidTolerance,
+                             sensitivity = opioidSensitivity()) else NULL
       normalization          <- normalizationInput()
       typical                <- typicalInput()
       # Tolerance and tachyphylaxis panels (R/pdAdaptation.R)
       plotAdaptation         <- adaptationDrawn()
+      # % effect panels (R/pdEffect.R)
+      plotEffect             <- effectDrawn()
       logY                   <- isTRUE(input$logY)
       if (plotRecovery() || plotMEACOverlay() || plotEvents || plotInteraction ||
-          plotAdaptation || !is.null(opioidReceptor)) logY <- FALSE
+          plotAdaptation || plotEffect || !is.null(opioidReceptor)) logY <- FALSE
 
       plasmaLinetype <- linetypes()$plasmaLinetype
       effectsiteLinetype <- linetypes()$effectsiteLinetype
@@ -2200,6 +2227,7 @@ app_server <- function(input, output, session) {
         plotMEACOverlay = plotMEACOverlay(),
         plotCompartments = isTRUE(input$showCompartments),
         plotAdaptation = plotAdaptation,
+        plotEffect = plotEffect,
         typical = typical,
         logY = logY,
         yAxisHeight = input$yaxisHeight,
@@ -2609,6 +2637,25 @@ app_server <- function(input, output, session) {
                     worksLike))
     }
 
+    # A % effect panel (R/pdEffect.R): the effect, and the concentration
+    # driving it (for an endpoint with an effect site of its own, that one).
+    effectRow <- pdEffectSeriesRow(drug)
+    if (!is.null(effectRow))
+    {
+      rows <- plotResults[as.character(plotResults$Wrap) == e$panelvar1, ]
+      if (nrow(rows) < 2) return(NULL)
+      effect <- panelSeriesAt(rows, e$x)
+      entry <- drugs()[[effectRow$Drug]]
+      driving <- if (is.null(entry)) NULL else pdEffectSeries(entry, effectRow)
+      conc <- if (!is.null(driving) && nrow(driving) >= 2)
+        paste0(", driven by ", signif(stats::approx(driving$Time, driving$C, e$x,
+                                                    rule = 2, ties = mean)$y /
+                                        mcgPerMlScale(entry$Concentration.Units), 3),
+               " ", entry$Concentration.Units, "/mL")
+      return(paste0("Time: ", hoverTime(e$x), ", ", drug, ": ", signif(effect, 3), " ",
+                    PD_EFFECT_UNITS, conc))
+    }
+
     # A TCI rate panel: report the pump rate in force at that moment, and the
     # companion pump's after it.
     if (grepl(" TCI$", drug))
@@ -2796,6 +2843,9 @@ app_server <- function(input, output, session) {
       # And on its tolerance or tachyphylaxis panel (R/pdAdaptation.R)
       adapted <- pdAdaptationSeriesDrug(drug, drugDefaults())
       if (!is.na(adapted)) drug <- adapted
+      # And on its % effect panel (R/pdEffect.R)
+      effected <- pdEffectSeriesDrug(drug)
+      if (!is.na(effected)) drug <- effected
       drug <- alternativeModelParent(drug)
       # And a click on a metabolite that is only ever formed (no dose units)
       # on the drug that forms it

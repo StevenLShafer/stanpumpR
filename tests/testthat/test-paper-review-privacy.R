@@ -622,3 +622,156 @@ test_that("an upload chosen before Discard and finished after it is dropped unre
     expect_true(exists("pdf", envir = store))
   })
 })
+
+
+# CodeRabbit on #776 (review comment 4635345129): the Discard mark was
+# cleared by the next choice, so an upload chosen before Discard that
+# finished after a new choice was stored, and held until the new file
+# replaced it: a Review in that window sent the manuscript the user had
+# discarded.  An upload is now tied to its choice: the browser numbers each
+# choice of a field (`<id>Chosen`) and, just before an upload's end reaches
+# the server, says which choice it belongs to (`<id>Arrived`,
+# paperReviewChosenScript()); only the latest choice made after the last
+# Discard is stored.
+raceUpload <- function(name) {
+  dir <- file.path(tempdir(), shinyUploadDirName())
+  dir.create(dir)
+  path <- file.path(dir, "0.pdf")
+  writeBin(c(charToRaw("%PDF-1.7\n"), as.raw(1:50)), path)
+  list(name = name, size = 59, type = "application/pdf", datapath = path)
+}
+
+test_that("an upload chosen before Discard is dropped although another was chosen before it arrived", {
+  testthat::local_mocked_bindings(reset = function(...) NULL, .package = "shinyjs")
+  shiny::testServer(paperReviewServer, {
+    a <- raceUpload("a.pdf"); b <- raceUpload("b.pdf")
+    session$setInputs(consent = TRUE)
+    session$setInputs(manuscriptChosen = 1)              # A chosen; it starts uploading
+    session$setInputs(discard = 1)                       # Discard
+    session$setInputs(manuscriptChosen = 2)              # B chosen before A has arrived
+    session$setInputs(manuscriptArrived = 1)             # the browser: this upload is choice 1
+    session$setInputs(manuscript = a)                    # A arrives
+    expect_false(file.exists(a$datapath))                # read and deleted
+    expect_false(exists("pdf", envir = store))           # and never held
+    expect_false(hasPdf())
+    expect_match(output$status, "dropped unread")
+    session$setInputs(manuscriptArrived = 2)
+    session$setInputs(manuscript = b)                    # B arrives and is held
+    expect_true(exists("pdf", envir = store))
+    expect_true(hasPdf())
+  })
+})
+
+test_that("without the browser's word on an upload, one that may predate Discard is dropped", {
+  # The marker depends on Shiny's upload script; should it ever not come,
+  # an upload that may have been chosen before a Discard is not stored,
+  # and the user is asked to choose the file again.  This is the sequence
+  # CodeRabbit gave, as the server saw it before the marker existed.
+  testthat::local_mocked_bindings(reset = function(...) NULL, .package = "shinyjs")
+  shiny::testServer(paperReviewServer, {
+    a <- raceUpload("a.pdf"); b <- raceUpload("b.pdf"); c <- raceUpload("c.pdf")
+    session$setInputs(consent = TRUE)
+    session$setInputs(manuscriptChosen = 1)
+    session$setInputs(discard = 1)
+    session$setInputs(manuscriptChosen = 2)
+    session$setInputs(manuscript = a)                    # A arrives, unmarked
+    expect_false(file.exists(a$datapath))
+    expect_false(exists("pdf", envir = store))
+    expect_false(hasPdf())
+    expect_match(output$status, "choose")
+    # The next upload is taken: either B, after A, or a new choice.
+    session$setInputs(manuscript = b)
+    expect_true(exists("pdf", envir = store))
+    # A Discard with nothing in flight leaves the next choice's upload alone.
+    session$setInputs(discard = 2)
+    session$setInputs(manuscriptChosen = 3)
+    session$setInputs(manuscript = c)
+    expect_true(exists("pdf", envir = store))
+  })
+})
+
+test_that("an upload superseded by a later choice is dropped, Discard or not", {
+  testthat::local_mocked_bindings(reset = function(...) NULL, .package = "shinyjs")
+  shiny::testServer(paperReviewServer, {
+    a <- raceUpload("a.pdf"); b <- raceUpload("b.pdf")
+    session$setInputs(manuscriptChosen = 1)
+    session$setInputs(manuscriptChosen = 2)
+    session$setInputs(manuscriptArrived = 1)
+    session$setInputs(manuscript = a)
+    expect_false(file.exists(a$datapath))
+    expect_false(exists("pdf", envir = store))
+    session$setInputs(manuscriptArrived = 2)
+    session$setInputs(manuscript = b)
+    expect_true(exists("pdf", envir = store))
+  })
+})
+
+test_that("the supplement field is tied to its choices too", {
+  testthat::local_mocked_bindings(reset = function(...) NULL, .package = "shinyjs")
+  shiny::testServer(paperReviewServer, {
+    a <- raceUpload("a.pdf"); b <- raceUpload("b.pdf")
+    session$setInputs(supplementChosen = 1)
+    session$setInputs(discard = 1)
+    session$setInputs(supplementChosen = 2)
+    session$setInputs(supplementArrived = 1)
+    session$setInputs(supplement = a)
+    expect_false(exists("supplement", envir = store))
+    session$setInputs(supplementArrived = 2)
+    session$setInputs(supplement = b)
+    expect_true(exists("supplement", envir = store))
+  })
+})
+
+test_that("the browser says which choice each upload belongs to, ahead of the upload", {
+  # paperReviewChosenScript() run in Node against a stand-in for Shiny's
+  # upload script that, unlike Shiny's, does not abandon an upload when
+  # another file is chosen: the earlier upload still says it is choice 1.
+  skip_if(!nzchar(Sys.which("node")), "node is not installed")
+  html <- as.character(paperReviewChosenScript(shiny::NS("paperReview")))
+  js <- sub("(?s)^<script>(.*)</script>$", "\\1", html, perl = TRUE)
+  harness <- paste0('
+    var handlers = [], sent = [];
+    function jQuery(x) {
+      return { on: function(ev, sel, fn) { handlers.push({ev: ev, sel: sel, fn: fn}); },
+               data: function(k) { return (x.__data || {})[k]; } };
+    }
+    var document = {}, window = {};
+    var Shiny = window.Shiny = { setInputValue: function(name, value, opts) {
+      sent.push({name: name, value: value, priority: opts && opts.priority}); } };
+    function Uploader(label) { this.label = label; }
+    Uploader.prototype.onComplete = function() { sent.push({name: "uploadEnd", value: this.label}); };
+    ', js, '
+    // Shiny binds its own change handler on the field, so it runs first and
+    // makes the uploader; then the delegated handlers run.
+    function choose(el, label, withUploader) {
+      el.files = [{}];
+      el.__data = withUploader ? {currentUploader: new Uploader(label)} : {};
+      handlers.forEach(function(h) { h.fn.call(el, {}); });
+      return el.__data.currentUploader;
+    }
+    var ms = {id: "paperReview-manuscript"}, sp = {id: "paperReview-supplement"};
+    var a = choose(ms, "A", true);
+    var b = choose(ms, "B", true);
+    a.onComplete();                     // A finishes after B was chosen
+    b.onComplete();
+    var s = choose(sp, "S", true);
+    s.onComplete();
+    choose(ms, "C", false);             // Shiny made no uploader we know: no marker
+    process.stdout.write(JSON.stringify({sel: handlers[0].sel, sent: sent}));')
+  file <- tempfile(fileext = ".js")
+  on.exit(unlink(file))
+  writeLines(harness, file)
+  out <- jsonlite::fromJSON(paste(system2(Sys.which("node"), shQuote(file), stdout = TRUE),
+                                  collapse = ""))
+  expect_equal(out$sel, "#paperReview-manuscript, #paperReview-supplement")
+  sent <- out$sent
+  expect_equal(paste(sent$name, sent$value),
+               c("paperReview-manuscriptChosen 1", "paperReview-manuscriptChosen 2",
+                 "paperReview-manuscriptArrived 1", "uploadEnd A",
+                 "paperReview-manuscriptArrived 2", "uploadEnd B",
+                 "paperReview-supplementChosen 1",
+                 "paperReview-supplementArrived 1", "uploadEnd S",
+                 "paperReview-manuscriptChosen 3"))
+  # Sent at once, so ahead of the upload's end, and never a name.
+  expect_true(all(sent$priority[sent$name != "uploadEnd"] == "event"))
+})

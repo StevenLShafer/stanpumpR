@@ -330,9 +330,21 @@ tciSchedule <- function(dose, PK, maximum,
   list(dose = keep, rates = rates, boluses = boluses)
 }
 
+# A schedule's rates as they are shown: one that is round-off beside the
+# schedule's largest (TCI_RATE_ROUNDOFF, R/constants.R) is the pump off, 0.
+tciShownRates <- function(rate)
+{
+  top <- suppressWarnings(max(rate, 0, na.rm = TRUE))
+  rate[!is.na(rate) & rate < TCI_RATE_ROUNDOFF * top] <- 0
+  rate
+}
+
 # The TCI schedule in the units shown to the user: rates per kilogram per
 # minute, and the loading doses as a mass.  Drugs measured in mcg/ml dose in
 # mg, so their rates are mg/kg/min; drugs measured in ng/ml dose in mcg.
+# What it returns is what the rate panel, its hover, the exported dose table
+# and the Visualizer read, so a rate of round-off is 0 here (tciShownRates());
+# the schedule the engine simulates keeps the controller's own numbers.
 tciDisplay <- function(schedule, PK)
 {
   if (is.null(schedule) || nrow(schedule$rates) == 0) return(NULL)
@@ -341,7 +353,7 @@ tciDisplay <- function(schedule, PK)
   rates <- data.frame(
     Drug  = rep_len(PK$drug, nrow(schedule$rates)),
     Time  = schedule$rates$Time,
-    Rate  = schedule$rates$Rate / weight,
+    Rate  = tciShownRates(schedule$rates$Rate) / weight,
     Units = rep_len(paste0(mass, "/kg/min"), nrow(schedule$rates)),
     Bolus = schedule$rates$Bolus
   )

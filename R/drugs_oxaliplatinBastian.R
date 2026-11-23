@@ -100,11 +100,27 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# The model carries its own weight covariate, centred on 71 kg, evaluated at
-# the pharmacokinetic weight (pkSizeFactors()$pkWeight) with the switch on
-# and at total weight with it off.  V2 has no covariate.  Age, BSA,
-# creatinine clearance, serum proteins and infusion length were tested and
-# not retained.
+# The model carries its own weight covariate on CL (BW^1.10), V1 (BW^1.29)
+# and Q (BW^1.01), centred on 71 kg, evaluated at the pharmacokinetic weight
+# (pkSizeFactors()$pkWeight) with the switch on and at total weight with it
+# off; those three take no other scaling, and CL's creatinine and sex terms
+# are kept as fitted.  In the source age, BSA, creatinine clearance, serum
+# proteins and infusion length were tested and not retained, and V2 was
+# given no covariate.  Since 2026-11-19, by Shafer's first-principles rule
+# (docs/weight-adjustment.md, *Every parameter is scaled*: a covariate not
+# detected in 56 patients is not shown to have no effect), V2 is scaled by
+# the fat-free-mass volume factor with the switch on, anchored at Bastian's
+# cohort (OXALIPLATIN_BASTIAN_COHORT, below: 29 men and 27 women, median
+# 71.0 kg, BSA 1.76 m2, 59 years), whose typical patient sits at a volume
+# factor of 0.879 from the 70 kg reference man: a patient like Bastian's
+# receives the published 136 L, the reference man 155 L.  V2 has no sex
+# term, so it is anchored at the cohort's pooled patient.  With the switch
+# off V2 is 136 L, as before.  This closes the oxaliplatin part of Carbon's
+# second repository audit, A2-F5.
+#
+# The paper is NOT in the archive (stanpumpRPapers): the cohort was read on
+# a copy in Shafer's Downloads folder on 2026-11-20, which the paper-archive
+# skill is to take in.
 #
 # PREGNANCY (R/pregnancy.R)
 # =========================
@@ -127,6 +143,17 @@ OXALIPLATIN_BASTIAN <- list(
   bwRef = 71,      # kg, the cohort's median
   scrRef = 87      # umol/L, the cohort's median
 )
+
+# Bastian 2003, Table 1 (p819), read on the PDF 2026-11-20 (a copy in
+# Downloads, not yet archived): 56 patients, 29 men and 27 women; age median
+# 59 (mean 59, 41-79) years; BW median 71.0 (mean 71.4, 41-107) kg; BSA
+# median 1.76 (mean 1.74, 1.00-2.24) m2.  No height is printed, and the BSA
+# formula is not named (the Methods' "usual formulae [6]" cites Minto 1997, a
+# remifentanil paper): the median BSA solved back at the median weight by Du
+# Bois's formula gives 162.2 cm.  V2 is anchored at this cohort (Steven L.
+# Shafer, 2026-11-19; see the header's BODY SIZE section).
+OXALIPLATIN_BASTIAN_COHORT <- list(weight = 71.0, height = 162.2, age = 59,
+                                   men = 29, women = 27)
 
 #' The lowest serum creatinine Bastian 2003 studied, umol/L
 #'
@@ -151,8 +178,13 @@ oxaliplatinBastian <- function(weight, height, age, sex, adjustToFFM = TRUE,
                         creatinine = NULL)
 {
   p <- OXALIPLATIN_BASTIAN
+  # V2, with no covariate, is scaled and anchored at Bastian's cohort with the
+  # switch on; CL, V1 and Q carry the source's own weight terms at the
+  # pharmacokinetic weight (which does not depend on the cohort) and take no
+  # size factor (see the header's BODY SIZE section).
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, OXALIPLATIN_BASTIAN_COHORT))
   w <- (if (isTRUE(adjustToFFM)) size$pkWeight else weight) / p$bwRef
   scr <- max(adultEquivalentCreatinine(creatinine, age, sex) * SCR_UMOL_PER_MG_DL,
              OXALIPLATIN_MIN_SCR)
@@ -160,7 +192,7 @@ oxaliplatinBastian <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   default <- list(
     v1  = p$v1 * w^p$thetaBwV1,
-    v2  = p$v2,
+    v2  = p$v2 * size$volume,                # anchored at the cohort
     v3  = 1,                                 # placeholder: two compartments
     cl1 = p$cl * w^p$thetaBwCl * (scr / p$scrRef)^p$thetaScrCl * female / 60,
     cl2 = p$q * w^p$thetaBwQ / 60,
@@ -175,7 +207,8 @@ oxaliplatinBastian <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "plasma ultrafilterable platinum as oxaliplatin: two compartments, CL 14.1 L/h x ",
     "(BW/71)^1.10 x (SCr/87 umol/L)^-0.57 x 0.60 if female (creatinine entered or ",
     "assumed normal, held at 53 umol/L or above), V1 24.9 L x (BW/71)^1.29, Q 34.8 L/h ",
-    "x (BW/71)^1.01, V2 136 L; a gallbladder store filled at k1B 1.78 /h until TLAG ",
+    "x (BW/71)^1.01, V2 136 L at the cohort's typical patient (scaled to fat-free ",
+    "mass with the switch on); a gallbladder store filled at k1B 1.78 /h until TLAG ",
     "2 h after each course starts, then returned through the gut at Ka 0.23 /h, as ",
     "published (Plusquellec & Houin 1992's equations would keep filling it). ",
     "https://doi.org/10.1097/00001813-200311000-00007"

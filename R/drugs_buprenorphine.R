@@ -369,7 +369,7 @@ buprenorphineSublingualF <- function(doseMg) 0.14 * (doseMg / 16)^-0.371
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 buprenorphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                          pregnant = FALSE)
+                          pregnant = FALSE, offsetScale = 1)
 {
   # The volumes and intercompartmental clearances, with no size covariate, are
   # anchored at Bjornsson's cohort (BUPRENORPHINE_COHORT); the clearance
@@ -435,7 +435,10 @@ buprenorphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
     list(
       PK = PK,
       # Yassen's ke0 as a time to peak; getDrugPK() solves ke0.  See the header.
-      tPeak = BUPRENORPHINE_TPEAK,
+      # PROTOTYPE: the Buprenorphine onset/offset control scales the biophase
+      # tPeak (ke0), the rate-limiting step for the slow onset and offset
+      # (Yassen 2006/2007: biophase, not receptor dissociation).
+      tPeak = BUPRENORPHINE_TPEAK * orOffsetScale(offsetScale),
       MEAC = 0,
       # Band: simulated analgesic exposure (McQuay 1980); see the header.
       typical = 0.4,

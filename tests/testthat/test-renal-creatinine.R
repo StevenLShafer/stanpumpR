@@ -85,6 +85,9 @@ renalDrugs <- c("mannitol", "vancomycin", "vancomycinKidneyTransplant", "gentami
                 # Cockcroft-Gault in a hockey stick on clearance, both tablets
                 # (R/drugs_pramipexole.R, FDA review of NDA 22-421)
                 "pramipexole", "pramipexoleER",
+                # Cockcroft-Gault, as a power, on oral bioavailability (F1)
+                # (R/drugs_mirabegron.R, FDA review of NDA 202611)
+                "mirabegron",
                 # MDRD eGFR, proportional, on the elimination rate constant
                 # (R/drugs_amantadineER.R, FDA review of NDA 209410)
                 "amantadineER",
@@ -203,8 +206,23 @@ test_that("a child's creatinine is read against the normal for age", {
                creatinineClearanceCG(20, 5, "male", SCR_ASSUMED_MALE) / reference)
 })
 
+# Models whose renal term acts on oral bioavailability, not on a clearance:
+# mirabegron's F1 x (CrCL / 92)^-0.258 (FDA review of NDA 202611), an
+# empirical covariate fitted in renal impairment.  A raised creatinine
+# raises their bioavailability instead.
+renalOnBioavailability <- c("mirabegron")
+
+test_that("a raised creatinine raises the bioavailability where the renal term is on F", {
+  for (drug in renalOnBioavailability) {
+    normal <- getDrugPK(drug, 70, 170, 50, "male")
+    raised <- getDrugPK(drug, 70, 170, 50, "male", creatinine = 3)
+    expect_gt(raised$PK[[1]]$bioavailability_PO, normal$PK[[1]]$bioavailability_PO, label = drug)
+    expect_identical(systemClearances(raised), systemClearances(normal), label = drug)
+  }
+})
+
 test_that("a raised creatinine lowers every renal clearance", {
-  for (drug in renalDrugs) {
+  for (drug in setdiff(renalDrugs, renalOnBioavailability)) {
     normal <- systemClearances(getDrugPK(drug, 70, 170, 50, "male"))
     raised <- systemClearances(getDrugPK(drug, 70, 170, 50, "male", creatinine = 3))
     expect_lt(min(raised - normal), 0, label = drug)

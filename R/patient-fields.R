@@ -30,7 +30,7 @@ PATIENT_FIELD_LABELS <- c(
 # term is on its intravenous system (ANJESO) only; its oral fit has none
 # (R/drugs_meloxicam.R).
 PATIENT_FIELD_READER_NOTES <- list(
-  creatinine = c(meloxicam = "intravenous only")
+  creatinine = c(meloxicam = "intravenous only", mirabegron = "on bioavailability")
 )
 
 #' The drugs whose model reads a Patient Profile covariate
@@ -215,10 +215,11 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
 RELEVANT_FIELDS <- unname(c(
   "pregnant", "opioidTolerance", names(PATIENT_FIELD_LABELS), "osmolality",
   "showMEAC", "opioidMacInteraction", OPIOID_RECEPTOR_INPUT,
+  OPIOID_SENSITIVITY_INPUT, BUPRENORPHINE_OFFSET_INPUT,
   vapply(COMPANION_MODEL_GROUPS, `[[`, character(1), "input"),
   ASM_INTERACTIONS_INPUT,
   "inhaledAgents",
-  "showAdaptation",
+  "showAdaptation", "showEffect",
   "plotMEAC", "plotInteraction"
 ))
 
@@ -248,13 +249,14 @@ patientFieldReaderSets <- function(drugDefaults = getDrugDefaultsGlobal()) {
 #' drug of its group is dosed, and the antiseizure interactions box when the
 #' table holds an interaction the model applies.
 #'
-#' Two options draw a panel of something that is plotted, and so follow the
+#' Three options draw a panel of something that is plotted, and so follow the
 #' drugs that are DRAWN, those given a dose above 0 (`plotted`), rather than
 #' every drug in the table: the Interaction plot needs propofol and an opioid
 #' both drawn (Steven L. Shafer, 2026-11-18: it is for anesthetic drug
-#' interactions, and appeared beside the startup table's drugs at 0), and
+#' interactions, and appeared beside the startup table's drugs at 0),
 #' Tolerance and tachyphylaxis a drawn drug with an applied adaptation model
-#' (R/pdAdaptation.R).
+#' (R/pdAdaptation.R), and % effect a drawn drug with a drawn % effect row
+#' (R/pdEffect.R).
 #'
 #' @param drugs the drug names in the dose table (blanks are ignored).
 #' @param drugDefaults the session's drug table.
@@ -288,6 +290,11 @@ relevantFields <- function(drugs, drugDefaults = getDrugDefaultsGlobal(),
     # offered only while a mu partial agonist or antagonist (buprenorphine,
     # naloxone) is in the table
     stats::setNames(any(drugs %in% opioidReceptorSpecialDrugs()), OPIOID_RECEPTOR_INPUT),
+    # PROTOTYPE sliders: sensitivity shows with any special drug (it moves the
+    # receptor panels); onset/offset shows only with buprenorphine (it scales
+    # buprenorphine's biophase).
+    stats::setNames(any(drugs %in% opioidReceptorSpecialDrugs()), OPIOID_SENSITIVITY_INPUT),
+    stats::setNames("buprenorphine" %in% drugs, BUPRENORPHINE_OFFSET_INPUT),
     vapply(names(COMPANION_MODEL_GROUPS), function(group)
       any(drugs %in% companionGroupDrugs(group)), logical(1)) |>
       stats::setNames(vapply(COMPANION_MODEL_GROUPS, `[[`, character(1), "input")),
@@ -297,6 +304,7 @@ relevantFields <- function(drugs, drugDefaults = getDrugDefaultsGlobal(),
     # and endobronchial intubation (R/altitude.R, R/endobronchial.R)
     inhaledAgents   = gas,
     showAdaptation  = length(pdAdaptationDrugs(plotted, drugDefaults = drugDefaults)) > 0,
+    showEffect      = length(pdEffectDrugs(plotted)) > 0,
     plotMEAC        = opioid,
     plotInteraction = "propofol" %in% plotted &&
                       isOpioid(setdiff(plotted, "propofol"))

@@ -37,10 +37,21 @@
 # bioavailability_PO = 1.  Zang 2021's one-compartment Chinese psychiatric
 # model is a separate alternative and is not merged in.
 #
-# Body size: the model carries its own weight covariate, so it is evaluated at
-# the pharmacokinetic weight with the fat-free-mass switch on (size$pkWeight)
-# and at total weight with it off, as cefazolin does.  Vp and Q are not scaled,
-# because the source does not scale them.
+# Body size (docs/weight-adjustment.md): CL/F and Vc/F carry the source's own
+# weight terms, (weight/70)^0.75 (exponent fixed) and (weight/70), which are
+# kept as fitted and evaluated at the pharmacokinetic weight with the
+# fat-free-mass switch on (size$pkWeight) and at total weight with it off;
+# they take no further scaling.  Vp/F and Q/F have no covariate in the
+# source, whose final model put weight, at fixed allometric exponents, on
+# CL/F and Vc/F only (p1434).  With the switch on they are scaled, Vp/F by the
+# library's factor for a volume, FFM / FFM_ref, and Q/F by its factor for a
+# clearance, (FFM / FFM_ref)^0.75, under Steven L. Shafer's first-principles
+# rule of 2026-11-19: a covariate not detected in a dataset is not evidence
+# that the pharmacokinetics are insensitive to it.  They are anchored at
+# Sun's cohort (OLANZAPINE_COHORT, below), whose typical patient sits at
+# factors of 1.0104 (volume) and 1.0078 (clearance) from the reference man,
+# so that patient receives the published 225 L and 6.15 L/h.  With the switch
+# off they are as published, unscaled.
 #
 # EFFECT
 # ======
@@ -69,6 +80,14 @@ OLANZAPINE_AGE_VC <- 0.356   # power of age/36 on Vc/F
 # scales the child's volume and clearance.
 OLANZAPINE_MIN_AGE <- 18     # years
 
+# Sun 2021, Table 1 (p1433, PDF page 4), the 601 subjects of the olanzapine
+# model: median age 36 years, 76.9 kg, BMI 25.5 kg/m2 (also the text, p1433);
+# 411 men (68%) and 190 women (32%).  No height is printed: it comes from the
+# weight and BMI (173.7 cm), the same for both sexes, the table giving no
+# values by sex.  Vp/F and Q/F are anchored at this cohort (Steven L.
+# Shafer's first-principles rule, 2026-11-19; see the header's Body size).
+OLANZAPINE_COHORT <- list(weight = 76.9, bmi = 25.5, age = 36, men = 411, women = 190)
+
 #' Olanzapine pharmacokinetics (oral)
 #'
 #' Sun et al. (2021): two compartments with an absorption lag, apparent oral
@@ -81,16 +100,21 @@ olanzapine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
   wt <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
+  # Vp/F and Q/F, with no size term in the source: anchored at Sun's cohort,
+  # and 1 with the switch off (see the header's Body size)
+  sizeFree <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                            legacyVolume = 1, legacyClearance = 1,
+                            cohort = do.call(cohortSizeFactors, OLANZAPINE_COHORT))
 
   female <- if (sex == SEX_FEMALE) OLANZAPINE_FEMALE else 1
   ageVc  <- max(age, OLANZAPINE_MIN_AGE)   # see OLANZAPINE_MIN_AGE
 
   default <- list(
     v1 = OLANZAPINE_VC * (wt / 70) * (ageVc / 36)^OLANZAPINE_AGE_VC,
-    v2 = OLANZAPINE_VP,
+    v2 = OLANZAPINE_VP * sizeFree$volume,
     v3 = 1,
     cl1 = OLANZAPINE_CL / 60 * (wt / 70)^0.75 * female,   # L/min
-    cl2 = OLANZAPINE_Q / 60,
+    cl2 = OLANZAPINE_Q / 60 * sizeFree$clearance,
     cl3 = 0,
     ka_PO = OLANZAPINE_KA / 60,                           # 1/min
     bioavailability_PO = 1,                               # apparent (/F)

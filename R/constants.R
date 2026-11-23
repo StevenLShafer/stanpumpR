@@ -588,6 +588,25 @@ DOSE_COLUMN_HEADER <- "Dose/Target"
 TCI_INTERVAL <- 10 / 60        # minutes between rate changes (10 s, as STANPUMP)
 TCI_PLASMA_SWITCH <- 0.05      # effect site this close to target: hold the plasma
 TCI_MAX_RATE <- Inf            # pump ceiling in base mass units per minute
+# A rate the schedule shows as 0: one below this fraction of the schedule's
+# largest.  With the effect site targeted the pump is off while the effect
+# site rises to the target, and tciRate() computes that 0 as (CT - B)/E at the
+# moment the curve just touches the target, where CT - B is a rounding error
+# of either sign.  A positive one is a rate of at most about 1e-14 of the
+# loading rate (propofol to 4 mcg/mL and then to 2 in the reference man:
+# 3.3e-14 and 5.7e-15 mg/kg/min among 32 intervals of exactly 0, beside a
+# loading rate of 6.08 and a lowest real rate of 0.041; 28 such rows in ten
+# schedules of five drugs, the largest 4.8e-15 of its schedule's largest
+# rate).  It delivers nothing, and it was shown:
+# the rate panel's hover read "rate: 3.26e-14 mg/kg/min", the exported dose
+# table had the row, and the Visualizer drew the pump running, labelled
+# "Pump 9.41e-13 mg/min".  The controller's own numbers are not touched
+# (tciRate()'s rounding is what the TCI API and FauxTCI's fixtures reproduce,
+# and the engine simulates the schedule as computed): tciDisplay() applies
+# this to what is shown.  A billionth, as the Visualizer's TINY_FRACTION is
+# for a concentration.  (Claude Code, 2026-11-20, at the request of Steven L.
+# Shafer.)
+TCI_RATE_ROUNDOFF <- 1e-9
 
 # Scheduled (repeating) doses (scheduled.R).  A bolus, PO, SL, IM or IN unit with
 # one of these suffixes, e.g. "mg PO bid", gives the dose at the entered time
@@ -764,7 +783,7 @@ ACUTE_MAX_PLOT_MINUTES <- MINS_PER_WEEK
 # Drugs that are only meaningful over weeks to months.  Adding one to a plot
 # shorter than a week offers to switch the Time units to days, 365 days.
 LONG_TERM_DRUGS <- c("amiodarone", "semaglutide", "semaglutideOral", "dulaglutide",
-                     "tirzepatide")
+                     "tirzepatide", "evolocumab")
 LONG_TERM_PLOT_MINUTES <- 365 * MINS_PER_DAY
 
 # The Max time choices for each time unit: the durations (minutes) and the
@@ -840,6 +859,24 @@ PLOT_NAME_INTERACTION <- "p response"
 
 # Buprenorphine / opioid-receptor interaction panels (R/opioidReceptorInteraction.R)
 OPIOID_RECEPTOR_INPUT  <- "opioidReceptorInteraction"
+# PROTOTYPE sliders (Shafer, 2026-11-20) exploring the two inter-patient axes
+# the source papers' random effects identify (Olofsen 2022; Yassen 2006/2007):
+#  * Opioid sensitivity: a continuous theta OFFSET added to the tolerance theta
+#    (one physical occupancy, so it moves the transduction and full-agonist
+#    potency on the same axis as tolerance).  Negative = more sensitive
+#    (potency up); positive = less sensitive / more tolerant.  +/-1 ~ x/divide
+#    3 in potency, the span of the naive<->chronic shift and the koff IIV.
+#  * Buprenorphine onset/offset: a multiplier on buprenorphine's biophase tPeak
+#    (ke0), the rate-limiting step for its slow onset AND offset (biophase, not
+#    receptor dissociation).  >1 slower, <1 faster; the ke0 IIV is ~50-85% CV.
+OPIOID_SENSITIVITY_INPUT    <- "opioidSensitivity"
+OPIOID_SENSITIVITY_MIN      <- -1
+OPIOID_SENSITIVITY_MAX      <-  1
+OPIOID_SENSITIVITY_DEFAULT  <-  0
+BUPRENORPHINE_OFFSET_INPUT   <- "buprenorphineOffset"
+BUPRENORPHINE_OFFSET_MIN     <- 0.5
+BUPRENORPHINE_OFFSET_MAX     <- 2
+BUPRENORPHINE_OFFSET_DEFAULT <- 1
 PLOT_NAME_OCCUPANCY    <- "receptor occupancy"
 PLOT_NAME_RESP         <- "resp. depression"
 PLOT_NAME_ANALGESIA    <- "analgesia (MEAC eq)"

@@ -21,6 +21,17 @@
 # progressively larger fraction of a dose of CMS will be converted to
 # colistin" (the source's discussion), and the fit carries it here.
 #
+# BODY SIZE: the renal term carries Cockcroft-Gault (weight inside) and is
+# never scaled.  V3/fm and the non-renal 2.19 L/h have no size term in the
+# source (it found no trend in clearance against body size); with the
+# fat-free-mass switch on they are scaled, V3/fm by FFM / FFM_ref and the
+# 2.19 L/h by its 0.75 power, anchored at Garonzik's cohort
+# (COLISTIMETHATE_COHORT, colistimethateSizeFree()), as CMS's are, so that
+# the formation of colistin (CMS's scaled non-renal clearance) and colistin's
+# own parameters move together (Steven L. Shafer's first-principles rule,
+# 2026-11-19; R/drugs_colistimethate.R, BODY SIZE).  With the switch off they
+# are as published.
+#
 # THE MIC LINE (Shafer's decision, 2026-11-16) AND THE BAND
 # ==========================================================
 # The line is the library's rule for every antibiotic (R/antibioticThresholds.R):
@@ -67,13 +78,14 @@ colistin <- function(weight, height, age, sex, adjustToFFM = TRUE,
 {
   w <- colistimethateWeight(weight, height, age, sex, adjustToFFM)
   crcl <- colistimethateCrCL(w, height, age, sex, creatinine)
+  size <- colistimethateSizeFree(weight, height, age, sex, adjustToFFM)
   f <- COLISTIMETHATE_BASIS
 
   default <- list(
-    v1  = COLISTIN_V / f,
+    v1  = COLISTIN_V * size$volume / f,
     v2  = 1,
     v3  = 1,
-    cl1 = (COLISTIN_CL_RENAL * crcl + COLISTIN_CL_NR) / 60 / f,
+    cl1 = (COLISTIN_CL_RENAL * crcl + COLISTIN_CL_NR * size$clearance) / 60 / f,
     cl2 = 0,
     cl3 = 0
   )

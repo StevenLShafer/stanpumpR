@@ -6372,6 +6372,34 @@ const SIZE_RATIO_MAX = 10;
 // names, volumes, amounts and the elimination arrow (BOTTOM); the plot at
 // least MIN_PLOT px between them.
 const FLAT_TOP = 96, FLAT_BOTTOM = 108, FLAT_MIN_PLOT = 90;
+// The pump and absorption arrows start this far above V1, their labels
+// beside them.
+const FLAT_ARROW_ROOM = 58;
+// px between the physiology line and the arrows under it.
+const FLAT_PHYSIO_GAP = 5;
+// What is written under the title (player.js): the physiology line a run
+// from stanpumpR carries and, under it, a gas run's arterial oxygen. The
+// bottom of the lower one, px from the top of the window; 0 with neither
+// (an empty line is display: none).
+function underTitle() {
+    let bottom = 0;
+    for (const id of ['physio', 'oxygen']) {
+        const el = document.getElementById(id);
+        if (el) bottom = Math.max(bottom, el.getBoundingClientRect().bottom);
+    }
+    return bottom;
+}
+// The room above V1 for a drug's run. The physiology line reaches down to
+// where the pump's arrow starts: its label ("Pump 171 mg/min") was drawn
+// across the line, and the arrow's tail under it. With a line shown, the
+// arrows start below it. Its bottom is measured, so a line that wraps to two
+// rows on a narrow window, or grows with a physiology event's note, keeps
+// its room. One value for draw() and fits(), which must agree. (A gas run's
+// is gasTop(), gas.js.)
+function flatTop() {
+    const bottom = underTitle();
+    return Math.max(FLAT_TOP, bottom > 0 ? Math.ceil(bottom) + FLAT_PHYSIO_GAP + FLAT_ARROW_ROOM : 0);
+}
 
 const Flat = {
     el: null, run: null, ui: null, scale: null, last: null, cardH: 0,
@@ -6397,7 +6425,7 @@ const Flat = {
     fits(h) {
         const ctl = this.controlsTop(this.el.clientHeight);
         // A gas run's arrows over the circuit need more room above (gas.js).
-        const top = this.run && this.run.kind === 'gas' ? gasTop(this.run) : FLAT_TOP;
+        const top = this.run && this.run.kind === 'gas' ? gasTop(this.run) : flatTop();
         return !(h > 0) || ctl - h - 22 - FLAT_BOTTOM - top >= FLAT_MIN_PLOT;
     },
 
@@ -6445,7 +6473,7 @@ const Flat = {
         // (ChatGPT, 38e0f3a: fixed offsets put elimination off a small
         // window). Above V1: the pump and absorption arrows (TOP); below:
         // the names, volumes, amounts and the elimination arrow (BOTTOM).
-        const TOP = FLAT_TOP, BOTTOM = FLAT_BOTTOM, MIN_PLOT = FLAT_MIN_PLOT;
+        const TOP = flatTop(), BOTTOM = FLAT_BOTTOM, MIN_PLOT = FLAT_MIN_PLOT;
         const ctl = this.controlsTop(H);
         // The cards that show, by the rule both views share (Cards.fit() in
         // player.js): both, one, or none, so the drawing keeps its room.
@@ -6549,11 +6577,11 @@ const Flat = {
         const hi = headWidth(twi), ha = headWidth(twa);
         const xi = absorbing ? cx1 - hi / 2 - 2 : cx1, xa = pumping ? cx1 + ha / 2 + 2 : cx1;
         if (pumping) {
-            arrowV(out, xi, yTop - 58, yTop - 2, twi, FLAT_COLOURS.in);
+            arrowV(out, xi, yTop - FLAT_ARROW_ROOM, yTop - 2, twi, FLAT_COLOURS.in);
             label(xi - hi / 2 - 6, yTop - 40, 'end', st.bolus > 0 ? `Bolus ${e(amt(st.bolus))} ${e(u.amount)}` : `Pump ${rateTxt(st.flow.in)}`, 'in');
         }
         if (absorbing) {
-            arrowV(out, xa, yTop - 58, yTop - 2, twa, FLAT_COLOURS.in);
+            arrowV(out, xa, yTop - FLAT_ARROW_ROOM, yTop - 2, twa, FLAT_COLOURS.in);
             label(xa + ha / 2 + 6, yTop - 40, 'start', `Absorbed ${rateTxt(st.flow.abs)}`, 'in');
         }
         // The depot, under the absorption label, clear of its arrow.
@@ -7162,6 +7190,16 @@ const Player = {
             }
         }
         this.tiny = peak * TINY_FRACTION; this.depotTiny = depotPeak * TINY_FRACTION;
+        // And a pump rate below a billionth of the run's largest: with the
+        // effect site targeted the pump is off while the effect site rises to
+        // its target, and the controller's 0 there can come as round-off
+        // (5e-12 mg/min beside a loading rate of 306), which was drawn as the
+        // pump running, labelled "Pump 9.41e-13 mg/min" (2026-11-20).
+        // stanpumpR now sends 0 (tciDisplay() in R/tci.R); a run made before
+        // that, or by anything else, is read the same way here.
+        let ratePeak = 0;
+        for (const x of r.rate) if (x > ratePeak) ratePeak = x;
+        this.rateTiny = ratePeak * TINY_FRACTION;
         const level = r.typical > 0 ? r.typical : (maxCp > 0 ? maxCp / 2 : 1);
         // toFixed() takes 0 to 100 digits: a vanishing level would ask for more.
         const mag = Math.max(-6, Math.floor(Math.log10(level)));
@@ -7269,7 +7307,7 @@ const Player = {
         // The value in force: the later sample once T reaches it.
         const j = T >= t[i + 1] ? i + 1 : i;
         const clean = x => x < this.tiny ? 0 : x;
-        const rate = r.rate[j], pk = this.pkIn(j), sc = this.scale;
+        const rate = r.rate[j] < this.rateTiny ? 0 : r.rate[j], pk = this.pkIn(j), sc = this.scale;
         // A compartment's concentration. Across an interval in which its
         // volume changes (pkAt: the set switches at a clinical event, and the
         // later sample is the first in the new set), the drug it holds is
@@ -7666,7 +7704,18 @@ const GAS_TOP = 128;
 // and px more where the arterial oxygen is shown under the title (a run with
 // an endobronchial tube, player.js): its line reached into the arrows.
 const GAS_OXYGEN_LINE = 18;
-function gasTop(r) { return GAS_TOP + (r && r.saturation ? GAS_OXYGEN_LINE : 0); }
+// The fresh gas and pop-off arrows start this far above the boxes.
+const GAS_ARROW_ROOM = 70;
+// The room above the boxes: the two above, and more where the physiology
+// line wraps to a second or third row on a narrow window, when "Fresh gas"
+// and the arrows were drawn across its lower rows (2026-11-20): the arrows
+// start below whatever is written under the title, its bottom measured as
+// for a drug (underTitle(), flat.js). With one row it is what it was.
+function gasTop(r) {
+    const bottom = underTitle();
+    return Math.max(GAS_TOP + (r && r.saturation ? GAS_OXYGEN_LINE : 0),
+                    bottom > 0 ? Math.ceil(bottom) + FLAT_PHYSIO_GAP + GAS_ARROW_ROOM : 0);
+}
 
 // The agent's name as written: nitrousOxide is "Nitrous oxide".
 function gasName(drug) {
@@ -8087,8 +8136,8 @@ Object.assign(Flat, {
         const twi = thick(st.flow.fresh), two = thick(st.flow.vented);
         const hi = headWidth(twi), ho = headWidth(two), cc = cx('circuit');
         const xi = fOut ? cc - hi / 2 - 2 : cc, xo = fIn ? cc + ho / 2 + 2 : cc;
-        if (fIn) arrowVert(out, xi, yTop - 70, yTop - 2, twi, FLAT_COLOURS.in);
-        if (fOut) arrowVert(out, xo, yTop - 2, yTop - 70, two, FLAT_COLOURS.out);
+        if (fIn) arrowVert(out, xi, yTop - GAS_ARROW_ROOM, yTop - 2, twi, FLAT_COLOURS.in);
+        if (fOut) arrowVert(out, xo, yTop - 2, yTop - GAS_ARROW_ROOM, two, FLAT_COLOURS.out);
         const lx = Math.max(xi + hi / 2, xo + ho / 2) + 8;
         label(lx, yTop - 56, 'start', `Fresh gas ${fIn ? rateTxt(st.flow.fresh) : `0 ${e(u.rate)}`}`, 'in');
         label(lx, yTop - 40, 'start', `Vented ${fOut ? rateTxt(st.flow.vented) : `0 ${e(u.rate)}`}`, 'out');

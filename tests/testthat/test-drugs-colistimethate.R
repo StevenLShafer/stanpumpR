@@ -47,8 +47,67 @@ test_that("Table 2: CMS and colistin parameters, in the model's units", {
   pkw <- pkSizeFactors(90, 170, 35, "male", TRUE)$pkWeight
   expect_equal(on$v1 * COLISTIMETHATE_BASIS, 11.9 * pkw / 60)
   expect_equal(off$v1 * COLISTIMETHATE_BASIS, 11.9 * 90 / 60)
+  # with the switch on, the nonrenal 1.90 L/h takes the clearance factor
+  # anchored at Garonzik's cohort (2026-11-19): 5.0335 before, plus 1.90 x
+  # (factor - 1) / basis
+  sf <- (pkw / 70)^0.75 / cohortFactorsIndependent(COLISTIMETHATE_COHORT)$clearance
+  expect_equal(on$cl1 * 60, 5.033545 + 1.90 * (sf - 1) / COLISTIMETHATE_BASIS,
+               tolerance = 1e-6)
   expect_equal(round(c(on$v1, off$v1, on$cl1 * 60, off$cl1 * 60), 4),
-               c(round(11.9 * pkw / 60 / COLISTIMETHATE_BASIS, 4), 10.0152, 5.0335, 5.2751))
+               c(round(11.9 * pkw / 60 / COLISTIMETHATE_BASIS, 4), 10.0152, 5.3463, 5.2751))
+})
+
+test_that("size-free CMS and colistin parameters: anchored at Garonzik's cohort", {
+  f <- COLISTIMETHATE_BASIS
+  cf <- cohortFactorsIndependent(COLISTIMETHATE_COHORT)
+  expect_equal(round(c(cf$volume, cf$clearance), 4), c(0.8107, 0.8543))
+  # (a) the cohort's typical patients (Table 1: 59.1 kg, 162.0 cm, 71 years;
+  # 68 men, 37 women).  No parameter carries a sex term, so the pooled
+  # (geometric, by numbers) man and woman receive the published V2, CLD1,
+  # V3/fm and nonrenal clearances; the renal terms are as published for each
+  pk <- function(drug, sex) getDrugPK(drug, 59.1, 162.0, 71, sex, creatinine = 1)$PK$default
+  pooled <- function(x, y) exp((68 * log(x) + 37 * log(y)) / 105)
+  cm <- pk("colistimethate", "male"); cw <- pk("colistimethate", "female")
+  mm <- pk("colistin", "male"); mw <- pk("colistin", "female")
+  expect_equal(pooled(cm$v2, cw$v2) * f, 18.7)
+  expect_equal(pooled(cm$cl2, cw$cl2) * 60 * f, 7.98)
+  expect_equal(pooled(mm$v1, mw$v1) * f, 45.1)
+  nonrenal <- function(x, drug, sex) {
+    w <- colistimethateWeight(59.1, 162.0, 71, sex, TRUE)
+    crcl <- colistimethateCrCL(w, 162.0, 71, sex, 1)
+    x$cl1 * 60 * f - (if (drug == "cms") 0.0613 else 0.0147) * crcl
+  }
+  expect_equal(pooled(nonrenal(cm, "cms", "male"), nonrenal(cw, "cms", "female")), 1.90)
+  expect_equal(pooled(nonrenal(mm, "col", "male"), nonrenal(mw, "col", "female")), 2.19)
+  # all of CMS's (scaled) nonrenal clearance forms colistin
+  expect_equal(colistimethate(59.1, 162.0, 71, "male", creatinine = 1)$metabolite$kFormation *
+                 cm$v1 * 60 * f, nonrenal(cm, "cms", "male"))
+  # (b) twice the reference fat-free mass: volumes x 2, clearances x 2^0.75,
+  # over the cohort's factors; V1 keeps the source's weight term (140 kg)
+  w <- uniroot(function(w) ffmAlSallami(w, 200, 35, "male") - 2 * FFM_REFERENCE,
+               c(70, 400), tol = 1e-12)$root
+  big <- getDrugPK("colistimethate", w, 200, 35, "male", creatinine = 1)$PK$default
+  bigC <- getDrugPK("colistin", w, 200, 35, "male", creatinine = 1)$PK$default
+  crcl <- colistimethateCrCL(140, 200, 35, "male", 1)
+  expect_equal(big$v1 * f, 11.9 * 140 / 60)
+  expect_equal(big$v2 * f, 18.7 * 2 / cf$volume)
+  expect_equal(big$cl2 * 60 * f, 7.98 * 2^0.75 / cf$clearance)
+  expect_equal(big$cl1 * 60 * f, 0.0613 * crcl + 1.90 * 2^0.75 / cf$clearance)
+  expect_equal(bigC$v1 * f, 45.1 * 2 / cf$volume)
+  expect_equal(bigC$cl1 * 60 * f, 0.0147 * crcl + 2.19 * 2^0.75 / cf$clearance)
+  expect_equal(colistimethate(w, 200, 35, "male", creatinine = 1)$metabolite$kFormation,
+               1.90 * 2^0.75 / cf$clearance / 60 / f / big$v1)
+  # (c) the switch off: as published, at total weight
+  off <- getDrugPK("colistimethate", w, 200, 35, "male", adjustToFFM = FALSE, creatinine = 1)$PK$default
+  offC <- getDrugPK("colistin", w, 200, 35, "male", adjustToFFM = FALSE, creatinine = 1)$PK$default
+  crclOff <- colistimethateCrCL(w, 200, 35, "male", 1)
+  expect_equal(off$v2 * f, 18.7)
+  expect_equal(off$cl2 * 60 * f, 7.98)
+  expect_equal(off$cl1 * 60 * f, 0.0613 * crclOff + 1.90)
+  expect_equal(offC$v1 * f, 45.1)
+  expect_equal(offC$cl1 * 60 * f, 0.0147 * crclOff + 2.19)
+  expect_equal(colistimethate(w, 200, 35, "male", adjustToFFM = FALSE,
+                              creatinine = 1)$metabolite$kFormation, 1.90 / 60 / f / off$v1)
 })
 
 test_that("creatinine clearance is Cockcroft-Gault per 1.73 m2, held within 0-169", {

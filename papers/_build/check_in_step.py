@@ -1,4 +1,4 @@
-"""Say whether the archive's running scripts and the repository's copy of them still agree.
+"""Say whether the archive's running scripts and the repository's RECORD of them still agree.
 
 The scripts in this folder are the VERSION-CONTROLLED RECORD of the archive's pipeline; the
 copies that actually run live beside the papers, in the archive's own `_build` folder, because
@@ -7,15 +7,35 @@ and a mirror nobody checks is worse than no mirror: it looks like history while 
 describing something else.
 
 This is the check.  `update.bat` runs it last, so every filing run says whether the two have
-drifted apart, naming the files.  It only ever reports -- it changes nothing and always exits
-0, so it can never break the chain it is appended to.
+drifted apart, naming the files.  It only ever reports -- it changes nothing in either copy and
+always exits 0, so it can never break the chain it is appended to.
+
+WHAT IT COMPARES THE ARCHIVE WITH, and why that matters.  Until 2026-11-19 it read the WORKING
+TREE of the checkout at `--repo`, whatever branch that checkout happened to be on.  Several
+checkouts and worktrees live on this machine and any of them may be on a branch (AGENTS.md,
+*Several sessions run at once*), so on 2026-11-19 it reported build.py, fetch_pmc.py,
+file_downloads.py and update.bat as drifted when all four matched `origin/master` byte for
+byte: `C:\\dev\\stanpumpR` was simply on a branch that predated the commit which changed them.
+Worse than the false alarm was its advice -- copy the archive's files into that checkout and
+commit them -- which would have committed onto another session's branch, the very collision
+AGENTS.md rule 1 exists to prevent.
+
+So the record it compares with is the COMMITTED one: it fetches `master` and reads the files
+out of `origin/master` with `git cat-file`, resolving the ref to a commit ONCE so that a fetch
+by another session cannot move the subject of the comparison halfway through.  The working tree
+is read only when git cannot supply the record at all.  EVERY message names the ref or path it
+compared against, because a check whose subject you cannot see is one you cannot trust -- and
+when the fetch failed, or the working tree stood in, the message says so on a line of its own,
+since either can turn real agreement into an apparent difference.
 
 The repository is found at `--repo` or C:\\dev\\stanpumpR; a machine without that checkout
 simply says so and stops.  Run it by hand from either copy:
 
     python check_in_step.py [--repo <path>] [--archive <path>]
 """
+import collections
 import os
+import subprocess
 import sys
 
 args = sys.argv[1:]
@@ -28,64 +48,195 @@ ARCHIVE = (args[args.index("--archive") + 1] if "--archive" in args
            else r"D:\My Drive\stanpumpRPapers")
 
 MIRROR = os.path.join(REPO, "papers", "_build")
+IN_GIT = "papers/_build"                        # git spells its own paths with forward slashes
+BRANCH = "master"                               # the only integration branch (AGENTS.md)
 ROOT_FILES = ("update.bat", "digests.bat")      # these two live in the archive's root
+SUFFIXES = (".py", ".sh", ".bat")
+FETCH_SECONDS = 60                              # a stalled fetch must not hold up a filing run
+
+# What the archive was compared with.  `label` names it in every message; `notes` are facts
+# about it that every message carries (a fetch that failed, a working tree standing in), and
+# `caveats` the consequence, said only where something was actually found to differ.
+Record = collections.namedtuple("Record", "label notes caveats names read")
 
 
 def archive_path(name):
     return os.path.join(ARCHIVE, name) if name in ROOT_FILES else os.path.join(ARCHIVE, "_build", name)
 
 
-def content(path):
-    """The file's bytes with line endings normalised.
+def normalised(data):
+    """The bytes with line endings normalised.
 
     .gitattributes marks this folder `-text` so a checkout matches the archive byte for byte,
     but a machine whose Git is configured otherwise would otherwise see all thirty files as
     drifted -- a check that cries wolf is one nobody reads.  What matters is whether the CODE
     differs, so compare the content and let the endings be."""
-    with open(path, "rb") as f:
-        return f.read().replace(b"\r\n", b"\n")
+    return data.replace(b"\r\n", b"\n")
+
+
+def file_bytes(path):
+    with open(path, "rb") as handle:
+        return handle.read()
+
+
+def git(*argv, **kw):
+    """Run git in REPO and return (ok, output).  Never raises: a git that cannot be run, a
+    directory that is not a repository and a ref that does not exist are all answers this
+    check reports."""
+    timeout = kw.get("timeout")
+    try:
+        done = subprocess.run(("git", "-C", REPO) + argv, capture_output=True, timeout=timeout)
+    except OSError as exc:                      # git itself could not be run on this machine
+        return False, "git could not be run: %s" % exc
+    except subprocess.TimeoutExpired:
+        # run() kills the child before re-raising; a transport helper that child spawned can
+        # linger a moment, so this SHORTENS a stalled fetch rather than bounding it exactly.
+        return False, "git %s took longer than %d seconds and was killed" % (argv[0], timeout)
+    if done.returncode != 0:
+        return False, (done.stderr.decode("utf-8", "replace").strip()
+                       or "git %s exited %d" % (argv[0], done.returncode))
+    return True, done.stdout
+
+
+def text(out):
+    """git's output as text.  Kept whole, newlines and all: `ls-tree`'s is a list of names."""
+    return out.decode("utf-8", "replace").strip() if isinstance(out, bytes) else str(out).strip()
+
+
+def oneline(out):
+    """A reason, on ONE line.  git's errors run to several ("fatal: ...", then "Please make
+    sure you have the correct access rights"), and a reason printed inside an indented report
+    has to stay on the line it was indented onto.  Never use this where the output is a list."""
+    return " ".join(text(out).split()).rstrip(".")
+
+
+def committed_record():
+    """The record as master has it, or (None, why it could not be had)."""
+    ok, why = git("--version")
+    if not ok:
+        # Said as what it is.  A git that cannot be run establishes nothing about the checkout,
+        # and calling that "not a repository" would be this pipeline's own favourite mistake:
+        # reporting a failure to look as a fact about the thing left unlooked at.
+        return None, oneline(why)
+    ok, why = git("rev-parse", "--git-dir")
+    if not ok:
+        return None, "%s is not a git repository (%s)" % (REPO, oneline(why))
+
+    fetched, fetch_why = git("fetch", "origin", BRANCH, timeout=FETCH_SECONDS)
+    # Resolving the ref to a commit NOW, and reading every file out of that one commit, is what
+    # stops a fetch by another session from changing what is being compared mid-run.
+    ok, out = git("rev-parse", "origin/" + BRANCH)
+    if not ok and fetched:
+        ok, out = git("rev-parse", "FETCH_HEAD")   # a clone whose refspec has no origin/master
+    if not ok:
+        return None, ("cannot resolve origin/%s in %s (%s)%s"
+                      % (BRANCH, REPO, oneline(out),
+                         "" if fetched else "; the fetch failed too: " + oneline(fetch_why)))
+    sha = text(out)
+
+    label = "origin/%s (%s)" % (BRANCH, sha[:8])
+    notes, caveats = [], []
+    if not fetched:
+        # Said on every run that cannot fetch, so a stale ref never passes for a current one.
+        notes.append("origin/%s COULD NOT BE FETCHED, so it may be out of date -- %s."
+                     % (BRANCH, oneline(fetch_why)))
+        caveats.append("Because the fetch failed, a difference above may be a change that has"
+                       " already been committed and merged.")
+    # True of the committed record and only of it: in the fallback below a change committed on
+    # a branch is exactly what the working tree WOULD show, so the sentence belongs here.
+    caveats.append("A change already committed on a branch shows here until it is merged"
+                   " into %s." % BRANCH)
+
+    ok, out = git("ls-tree", "--name-only", "%s:%s" % (sha, IN_GIT))
+    if not ok:
+        return None, "%s has no %s (%s)" % (label, IN_GIT, oneline(out))
+    names = sorted(n for n in text(out).splitlines() if n.endswith(SUFFIXES))
+
+    def read(name):
+        got, blob = git("cat-file", "blob", "%s:%s/%s" % (sha, IN_GIT, name))
+        return blob if got else None
+
+    return Record(label, notes, caveats, names, read), None
+
+
+def working_tree_record(reason):
+    """The fallback, used only when git cannot supply the committed record."""
+    if not os.path.isdir(MIRROR):
+        return None, "%s, and there is no working copy at %s either" % (reason, MIRROR)
+    label = "the working tree at " + MIRROR
+    ok, out = git("rev-parse", "--abbrev-ref", "HEAD")
+    if ok:
+        on = text(out)
+        label += " (on %s)" % ("a detached HEAD" if on == "HEAD" else "branch " + on)
+    notes = ["Read from the working tree, not from %s, because %s." % (BRANCH, reason)]
+    caveats = ["A working tree can sit on a branch that predates %s, so a difference above may"
+               " be that branch rather than real drift." % BRANCH]
+    names = sorted(f for f in os.listdir(MIRROR) if f.endswith(SUFFIXES))
+    return Record(label, notes, caveats, names,
+                  lambda n: file_bytes(os.path.join(MIRROR, n))), None
 
 
 def main():
-    if not os.path.isdir(MIRROR):
-        print("in-step check: no repository copy at %s -- skipped" % MIRROR)
+    if not os.path.isdir(REPO):
+        print("in-step check: no repository at %s -- skipped" % REPO)
         return 0
-    # This script is compared like any other: it lives in both copies, so excluding it from
-    # one list and not the other made it report ITSELF as uncommitted on the first run.
-    names = sorted(f for f in os.listdir(MIRROR) if f.endswith((".py", ".sh", ".bat")))
-    if not names:
-        # The folder is there but empty: the checkout is on a branch that predates it, or one
-        # where papers/_build does not exist.  Listing every archive script as "not in git"
-        # there is true but useless, and it reads like a disaster rather than a wrong branch.
-        print("in-step check: %s is empty -- is that checkout on a branch without"
-              " papers/_build? Nothing compared." % MIRROR)
+
+    rec, why = committed_record()
+    if rec is None:
+        rec, why = working_tree_record(why)
+    if rec is None:
+        print("in-step check: nothing to compare -- %s." % why)
         return 0
-    missing, differs = [], []
-    for n in names:
-        src = archive_path(n)
-        if not os.path.exists(src):
-            missing.append(n)                   # in the repository, gone from the archive
-        elif content(os.path.join(MIRROR, n)) != content(src):
-            differs.append(n)
+    if not rec.names:
+        # The record is there but holds no scripts: a commit that predates the mirror, or a
+        # checkout of one.  Listing every archive script as "not in git" there is true but
+        # useless, and it reads like a disaster rather than a wrong starting point.
+        print("in-step check: %s carries no pipeline scripts. Nothing compared." % rec.label)
+        for note in rec.notes:
+            print("  %s" % note)
+        return 0
+
+    missing, differs, unreadable = [], [], []
+    for name in rec.names:
+        src = archive_path(name)
+        recorded = rec.read(name)
+        if recorded is None:
+            unreadable.append(name)             # say we could not look, never that it differs
+        elif not os.path.exists(src):
+            missing.append(name)                # in the record, gone from the archive
+        elif normalised(recorded) != normalised(file_bytes(src)):
+            differs.append(name)
     # The other direction: a script the archive has gained that was never committed, which is
     # how a mirror silently stops being a record of what runs.
     adir = os.path.join(ARCHIVE, "_build")
     uncommitted = sorted(f for f in (os.listdir(adir) if os.path.isdir(adir) else [])
-                         if f.endswith((".py", ".sh")) and f not in names)
+                         if f.endswith((".py", ".sh")) and f not in rec.names)
 
-    if not (missing or differs or uncommitted):
-        print("in-step check: the archive's %d scripts match the repository's copy." % len(names))
+    if not (missing or differs or uncommitted or unreadable):
+        print("in-step check: the archive's %d scripts match the record in %s."
+              % (len(rec.names), rec.label))
+        for note in rec.notes:
+            print("  %s" % note)
         return 0
-    print("\nin-step check: the archive and the repository have DRIFTED APART.")
+    print("\nin-step check: the archive and the record in %s have DRIFTED APART." % rec.label)
     print("  The archive's copy is the one that runs; the repository's is the record.")
-    for n in differs:
-        print("  differs:      %s" % n)
-    for n in uncommitted:
-        print("  not in git:   %s   (the archive has it; the repository does not)" % n)
-    for n in missing:
-        print("  not in the archive: %s   (committed, but not where it runs)" % n)
-    print("  To bring the record up to date, copy the archive's files into %s" % MIRROR)
-    print("  and commit them, saying in the message what changed and why.")
+    for note in rec.notes:
+        print("  %s" % note)
+    for name in differs:
+        print("  differs:      %s" % name)
+    for name in uncommitted:
+        print("  not in git:   %s   (the archive has it; the record does not)" % name)
+    for name in missing:
+        print("  not in the archive: %s   (recorded, but not where it runs)" % name)
+    for name in unreadable:
+        print("  could not read:     %s   (out of the record; nothing established about it)"
+              % name)
+    for caveat in rec.caveats:
+        print("  %s" % caveat)
+    print("  To bring the record up to date, copy the archive's files into papers/_build in a")
+    print("  checkout that is on %s or on a branch of your own -- never into one sitting on"
+          % BRANCH)
+    print("  another session's branch -- and commit them, saying what changed and why.")
     return 0                                     # never break update.bat's chain
 
 

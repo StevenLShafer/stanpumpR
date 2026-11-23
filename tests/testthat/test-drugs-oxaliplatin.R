@@ -3,6 +3,11 @@
 # as published (R/advanceBiliaryStore.R).  Drafted by Claude Code, 2026-11-06.
 
 p <- OXALIPLATIN_BASTIAN
+# Bastian 2003, Table 1 (p819): 29 men, 27 women, median 71.0 kg, BSA 1.76
+# m2, 59 years; height by Du Bois from the BSA, 162.2 cm.  Its factors
+# computed independently of pkSizeFactors() (helpers.R).
+bastianCohort <- cohortFactorsIndependent(
+  list(weight = 71.0, height = 162.2, age = 59, men = 29, women = 27))
 noEvents <- data.frame(Time = double(), Event = character())
 SCR_REF <- 87 / SCR_UMOL_PER_MG_DL          # the cohort's median, in mg/dL
 auc <- function(w) sum(diff(w$Time) * (head(w$Plasma, -1) + tail(w$Plasma, -1)) / 2) / 60
@@ -84,6 +89,40 @@ test_that("the switch evaluates the weight terms at the pharmacokinetic weight",
   off <- getDrugPK("oxaliplatinBastian", 110, 170, 59, "male", adjustToFFM = FALSE,
                    creatinine = SCR_REF)$PK$default
   expect_equal_rounded(off$v1, 24.9 * (110 / 71)^1.29)
+  # V2, with no covariate, takes the FFM factor anchored at Bastian's cohort
+  # (since 2026-11-19; it was 136 L in both positions)
+  expect_equal_rounded(on$v2, 136 * ffmAlSallami(110, 170, 59, "male") / FFM_REFERENCE /
+                         bastianCohort$volume)
+  expect_equal_rounded(off$v2, 136)
+})
+
+test_that("size: Bastian's typical patient gets V2 136 L, and V2 scales with FFM", {
+  # (a) A patient whose fat-free mass is the cohort's pooled typical one (29
+  # men and 27 women at 71.0 kg, 162.2 cm, 59 years) receives the published
+  # V2; the weight terms on CL, V1 and Q are untouched by the anchor.
+  wCohort <- uniroot(function(w) ffmAlSallami(w, 162.2, 59, "male") / FFM_REFERENCE -
+                       bastianCohort$volume, c(40, 120), tol = 1e-12)$root
+  s <- getDrugPK("oxaliplatinBastian", wCohort, 162.2, 59, "male",
+                 creatinine = SCR_REF)$PK$default
+  expect_equal(s$v2, 136, tolerance = 1e-9)
+  pkw <- pkSizeFactors(wCohort, 162.2, 59, "male", TRUE)$pkWeight
+  expect_equal(s$v1, 24.9 * (pkw / 71)^1.29, tolerance = 1e-9)
+  # (b) A man of twice the reference fat-free mass: V2 doubles over the
+  # cohort's factor; CL, V1 and Q follow their own weight terms at his
+  # pharmacokinetic weight (140 kg) and nothing else
+  w2 <- uniroot(function(w) ffmAlSallami(w, 190, 35, "male") - 2 * FFM_REFERENCE,
+                c(80, 300), tol = 1e-12)$root
+  big <- getDrugPK("oxaliplatinBastian", w2, 190, 35, "male",
+                   creatinine = SCR_REF)$PK$default
+  expect_equal(big$v2, 136 * 2 / bastianCohort$volume, tolerance = 1e-9)
+  expect_equal(big$v1, 24.9 * (140 / 71)^1.29, tolerance = 1e-9)
+  expect_equal(big$cl1, 14.1 * (140 / 71)^1.10 / 60, tolerance = 1e-9)
+  expect_equal(big$cl2, 34.8 * (140 / 71)^1.01 / 60, tolerance = 1e-9)
+  # (c) The switch off: V2 136 L at any size, the weight terms at total weight
+  off <- getDrugPK("oxaliplatinBastian", w2, 190, 35, "male", adjustToFFM = FALSE,
+                   creatinine = SCR_REF)$PK$default
+  expect_equal(off$v2, 136)
+  expect_equal(off$v1, 24.9 * (w2 / 71)^1.29, tolerance = 1e-9)
 })
 
 test_that("creatinine: blank is the assumed normal, and the floor is 53 umol/L", {

@@ -108,12 +108,23 @@
 # The model carries its own size covariate, BSA, on V3, VMEL, VMTR and Q.
 # The source does not name its BSA formula; Mosteller's is used, as for the
 # library's other chemotherapy models, at the pharmacokinetic weight with the
-# switch on and at total body weight with it off.  V1, which carries no
-# covariate, is FIXED at 12.8 L in both switch positions, on Shafer's
-# decision (2026-11-06): the source found that neither sex nor size changes
-# it, and scaling it by the library's volume factor gave the reference woman
-# 10.5 L, against the source's own finding.  KMEL, a concentration, does not
-# scale.
+# switch on and at total body weight with it off; those four parameters take
+# no other scaling.  V1 carries no covariate: the source tested weight, BSA
+# and sex on it and retained none (forward inclusion at P < 0.01).  From
+# 2026-11-06 V1 was FIXED at 12.8 L in both switch positions on Shafer's
+# decision of that day, for that reason.  That decision was superseded on
+# 2026-11-19 by his first-principles rule (docs/weight-adjustment.md, *Every
+# parameter is scaled*): a covariate that fails the test was not detected in
+# that dataset, which is not evidence that size leaves the volume unchanged.
+# So with the switch on V1 is scaled by the fat-free-mass volume factor,
+# anchored at Joerger's cohort (PACLITAXEL_JOERGER_COHORT, below: 86 men and
+# 82 women, median 68.5 kg, BSA 1.80 m2, 56 years), whose typical patient
+# sits at a volume factor of 0.900 from the 70 kg reference man: a patient
+# like Joerger's receives the published 12.8 L, the reference man 14.2 L and
+# the reference woman (70 kg, 170 cm, 35 years) 11.7 L.  V1 has no sex term,
+# so it is anchored at the cohort's pooled patient.  With the switch off V1
+# is 12.8 L, as before.  K21 (a rate constant) and KMEL and KMTR
+# (concentrations) do not scale.
 #
 # PREGNANCY (R/pregnancy.R)
 # =========================
@@ -128,8 +139,8 @@
 # as the first peripheral (VMTR, KMTR, K21, no volume) and the LINEAR one as V3
 # (267 L, Q2 16.9 L/h), which is this model's linear compartment (V3 252 L, Q
 # 20.1), carried here as v2: so KMEL goes on km, V1 on v1 and V3 on v2.
-# Applied under `pregnant` on Shafer's decision (2026-11-10).  V1 is fixed in
-# both switch positions; the factor multiplies it.
+# Applied under `pregnant` on Shafer's decision (2026-11-10).  The factor
+# multiplies V1 as sized for the patient (see BODY SIZE).
 # NO EFFECT SITE, NO BAND: the time above 0.05 or 0.1 umol/L, the exposure
 # measure of neutropenia, is not a therapeutic range and is not drawn.
 # -----------------------------------------------------------------------------
@@ -156,6 +167,15 @@ PACLITAXEL_JOERGER <- list(
 PACLITAXEL_PREGNANCY <- list(km = 1.32, v1 = 2.27, vLinear = 2.28)
 PACLITAXEL_MW <- 853.9   # g/mol: 1 umol = 0.8539 mg
 
+# Joerger 2006, Table 1 (p2151), read on the PDF 2026-11-19: 168 patients,
+# 86 men and 82 women; medians 56 years, BSA 1.80 m2, weight 68.5 kg (the
+# Methods centre weight on 68 kg).  No height is printed: the BSA solved back
+# at 68.5 kg by Du Bois's formula (the paper names none) is 170.9 cm.  V1 is
+# anchored at this cohort (Steven L. Shafer, 2026-11-19; see the header's
+# BODY SIZE section).
+PACLITAXEL_JOERGER_COHORT <- list(weight = 68.5, height = 170.9, age = 56,
+                                  men = 86, women = 82)
+
 #' Paclitaxel, intravenous, solvent-based (Joerger 2006)
 #'
 #' Three compartments with saturable elimination, saturable distribution to
@@ -173,8 +193,13 @@ paclitaxelJoerger <- function(weight, height, age, sex, adjustToFFM = TRUE, preg
 {
   p <- PACLITAXEL_JOERGER
   preg <- if (isTRUE(pregnant)) PACLITAXEL_PREGNANCY else list(km = 1, v1 = 1, vLinear = 1)
+  # V1, with no covariate, is scaled and anchored at Joerger's cohort with
+  # the switch on; V3, VMEL, VMTR and Q carry the source's BSA terms, at the
+  # pharmacokinetic weight (which does not depend on the cohort), and take
+  # no size factor (see the header's BODY SIZE section).
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, PACLITAXEL_JOERGER_COHORT))
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   bsa <- bsaMosteller(w, height) / p$bsaReference
   male <- if (identical(sex, "male")) 1 else 0
@@ -193,7 +218,7 @@ paclitaxelJoerger <- function(weight, height, age, sex, adjustToFFM = TRUE, preg
   km <- p$kmel * mg * preg$km                      # mg/L
 
   default <- list(
-    v1 = p$v1 * preg$v1,                        # fixed (Shafer, 2026-11-06)
+    v1 = p$v1 * size$volume * preg$v1,          # anchored at the cohort (2026-11-19)
     v2 = v3 * preg$vLinear,                  # the source's V3, linear
     v3 = 1,                                  # placeholder: see the header
     # The low-concentration limit of the saturable elimination, Vmax / Km,
@@ -215,7 +240,9 @@ paclitaxelJoerger <- function(weight, height, age, sex, adjustToFFM = TRUE, preg
     "peripheral compartment (VMTR 169 umol/h x 1.2^male x (BSA/1.8)^0.911, KMTR ",
     "0.826 umol/L x 2.11^male, K21 1.15 /h x 0.893^male) and linear distribution ",
     "to a second (Q 20.1 L/h x (BSA/1.8)^0.724, V3 252 L x (BSA/1.8)^1.17), V1 12.8 L ",
-    "(Mosteller BSA; bilirubin held at 7 umol/L; age floored at 18). Solvent-based ",
+    "at the cohort's typical patient, scaled to fat-free mass with the switch on ",
+    "(Mosteller BSA; ",
+    "bilirubin held at 7 umol/L; age floored at 18). Solvent-based ",
     "paclitaxel only. Total plasma paclitaxel. ",
     "https://doi.org/10.1158/1078-0432.CCR-05-2069"
   )
