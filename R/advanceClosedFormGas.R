@@ -3,11 +3,13 @@
 # ----------
 # Drafted by Claude Code (Claude Opus 5), 2026-09-02, at the request of
 # Steven L. Shafer.  Implements the GasMan(R)-style inhaled-gas model described
-# in R/gasProperties.R.  GasMan the shipped PRODUCT is closed source, and
-# nothing here comes from its binary or UI; some specific defaults (cardiac
-# output and ventilation scaling, R/gasProperties.R) are instead read from the
-# GasDoc.cpp/gasman_api SOURCE FILES GasMan's authors released under GPL-3.0
-# at github.com/rasman/gasmanonline, as noted where each is used. The rest of
+# in R/gasProperties.R.  Nothing here comes from GasMan's binary or UI; some
+# specific defaults (cardiac output and ventilation scaling,
+# R/gasProperties.R) are read from the GasDoc.cpp/gasman_api SOURCE FILES
+# GasMan's authors released under GPL-3.0 at github.com/rasman/gasmanonline,
+# as noted where each is used.  That repository also holds the desktop and web
+# application's source (src/gasman_main), so GasMan is not closed source, as
+# this header said until 2026-11-23. The rest of
 # the structure here follows the peer-reviewed literature, not any GasMan
 # source.
 #
@@ -279,13 +281,22 @@
 # the sub-step, advances the sub-step exactly by matrix exponential, and
 # recomputes the uptake for the next one.  Propagation within a sub-step is
 # exact; the coupling between sub-steps is first order in dt.  The result is
-# therefore NOT independent of the step size, which is set by `resolution`
-# (about maximum / 600 by default).  Measured against the same engine at a
-# 40-fold finer step: under 0.003 percentage points in the scenarios without
-# nitrous oxide; with 4 L/min nitrous oxide in 6 L/min, the first plotted
-# alveolar values run low by about 1.5% of their value on a 60-minute plot,
-# 6% on 240 minutes and 13% on 1440, fading below 1% within 1, 2 and 12
-# minutes.  In the audit's matched ideal-circuit sevoflurane case the
+# therefore NOT independent of the step size.  Until 2026-11-23 the step was
+# set by `resolution` alone (about maximum / 600 by default), and measured
+# against the same engine at a 40-fold finer step it gave under 0.003
+# percentage points in the scenarios without nitrous oxide but, with 4 L/min
+# nitrous oxide in 6 L/min, first plotted alveolar values low by about 1.5% of
+# their value on a 60-minute plot, 6% on 240 minutes and 13% on 1440, fading
+# below 1% within 1, 2 and 12 minutes.  Since 2026-11-23 (ChatGPT's gas-engine
+# audit, A-03) the sub-steps start at GAS_STEP_FIRST (0.01 minute) at each
+# change of setting and grow by GAS_STEP_GROWTH (1.1) until they reach
+# maximum / resolution (gasSubSteps()), so each is about a tenth of the time
+# since the change.  Measured against a reference starting at 0.0005 minute
+# and growing by 1.02 to a twentieth of the plot's step, in that induction,
+# its emergence, and the same in a 4 kg infant, on plots of an hour, a day
+# and a week: the largest error at any plotted point was 0.36% of the reading
+# (0.59% in the infant), against 1.6%, 13.4% and 6.3% before, for 15 to 130
+# more steps than the 601.  In the audit's matched ideal-circuit sevoflurane case the
 # 30-minute alveolar value moves from 1.71176014% with 31 steps to
 # 1.71178091% with 2401, against 1.71178112% from an independent ODE solver.
 # See the Integration section of inst/app-help/models/gas-engine.md.
@@ -923,6 +934,58 @@ gasVaporiserProblems <- function(doseTable, altitude = ALTITUDE_DEFAULT)
 }
 
 
+#' The first sub-step after a change of setting, minutes, and the factor by
+#' which each sub-step after it is longer, until the plot's own step is
+#' reached (gasSubSteps())
+#' @noRd
+GAS_STEP_FIRST <- 0.01
+GAS_STEP_GROWTH <- 1.1
+
+
+#' Sub-steps of one interval of constant settings
+#'
+#' The coupled advance holds the summed uptake at its value at the start of
+#' each sub-step, which is first order in the sub-step's length, and the
+#' uptake changes fastest just after a change of setting: a nitrous oxide
+#' wash-in starts with none in the lungs, so a first step held at that uptake
+#' takes up none at all.  So the sub-steps start at \code{first} and grow by
+#' \code{growth} until they reach \code{dtNominal}, the plot's own step, which
+#' takes the rest of the interval.  Each sub-step is then a fixed share of the
+#' time since the change (a tenth, at the default growth), and the error a
+#' fixed share of the reading, whatever the plot's length.  Until 2026-11-23
+#' every sub-step was \code{dtNominal}, the plot's length over 600, so a 24-hour
+#' plot stepped 2.4 minutes from the start of a nitrous oxide induction and
+#' read 13 per cent low at its first point (ChatGPT's gas-engine audit of
+#' 2026-11-23, A-03).
+#'
+#' @param len the interval's length, minutes
+#' @param dtNominal the plot's step, \code{maximum / resolution}
+#' @param graded FALSE for uniform steps, as the uncoupled advance needs (one
+#'   propagator serves them all, and it is exact at any step)
+#' @param first,growth the first sub-step and the factor between sub-steps
+#' @returns the sub-steps' lengths, summing to \code{len}
+#' @keywords internal
+gasSubSteps <- function(len, dtNominal, graded = TRUE,
+                        first = GAS_STEP_FIRST, growth = GAS_STEP_GROWTH)
+{
+  if (!graded || dtNominal <= first) {
+    n <- max(1, round(len / dtNominal))
+    return(rep(len / n, n))
+  }
+  h <- numeric(0)
+  elapsed <- 0
+  step <- first
+  while (step < dtNominal && elapsed + step < len) {
+    h <- c(h, step)
+    elapsed <- elapsed + step
+    step <- step * growth
+  }
+  rest <- len - elapsed
+  n <- max(1, round(rest / dtNominal))
+  c(h, rep(rest / n, n))
+}
+
+
 #' Simulate the inhaled gases in a circle breathing system
 #'
 #' Closed-form solution of the GasMan(R)-style model documented at the top of
@@ -946,10 +1009,12 @@ gasVaporiserProblems <- function(doseTable, altitude = ALTITUDE_DEFAULT)
 #'   time-varying cardiac output can be added later without changing the
 #'   engine; note that letting it vary would logically require the intravenous
 #'   pharmacokinetics to respond to it as well, which stanpumpR does not model.
-#' @param resolution number of output time points.  It also sets the sub-step
-#'   over which the uptake coupling is held fixed, and so, when
-#'   \code{uptakeEffect} is TRUE, the accuracy: the error is first order in the
-#'   sub-step, about \code{maximum / resolution} (see the file header).
+#' @param resolution about the number of output time points: the plot's
+#'   sub-step is \code{maximum / resolution}.  With \code{uptakeEffect} TRUE
+#'   the sub-steps start shorter at each change of setting and grow to it
+#'   (\code{gasSubSteps()}), which adds a few dozen points per change; the
+#'   error, first order in the sub-step, is then about the same on any plot
+#'   length (see the file header).
 #' @param uptakeEffect if TRUE (the default, as in GasMan, whose m_bUptEnb
 #'   defaults true), couple the gases through their summed uptake, giving the
 #'   concentration and second gas effect.  Set FALSE to isolate that term: with
@@ -1063,21 +1128,16 @@ advanceClosedFormGas <- function(
   record <- list()
   for (g in props$gas) record[[g]] <- matrix(state[[g]], nrow = 1)
 
-  for (iv in seq_len(length(changes) - 1))
+  # The last change point is the end of the plot: no interval starts there,
+  # but a physiology step at it is still taken, below, so the plot's last
+  # point reads after it, as an intravenous drug's does.  Until 2026-11-23 the
+  # loop stopped one point short and such a step was never taken (ChatGPT's
+  # gas-engine audit of 2026-11-23, C-02).
+  lastSettings <- NULL
+  lastBody <- bodyIndex
+  for (iv in seq_along(changes))
   {
     t0  <- changes[iv]
-    t1  <- changes[iv + 1]
-    len <- t1 - t0
-    if (len <= 0) next
-
-    # Enough sub-steps to draw a smooth curve, proportional to the share of the
-    # simulation this interval occupies.  With uptakeEffect = FALSE accuracy
-    # does not depend on this: the advance is exact at every step size.  With
-    # the uptake coupling on (the default) it does: the coupling is frozen per
-    # sub-step (below), so the sub-step also sets the accuracy, first order in
-    # dt.  See the UPDATE in the file header for measured sizes.
-    nSub <- max(1, round(resolution * len / maximum))
-    dt   <- len / nSub
 
     # A physiology step at t0: the new body, the agent in each compartment
     # carried across
@@ -1099,11 +1159,33 @@ advanceClosedFormGas <- function(
         for (g in props$gas) record[[g]] <- rbind(record[[g]], state[[g]])
       }
     }
+    if (iv == length(changes)) break
 
+    t1  <- changes[iv + 1]
+    len <- t1 - t0
+    if (len <= 0) next
+
+    # Enough sub-steps to draw a smooth curve, proportional to the share of the
+    # simulation this interval occupies.  With uptakeEffect = FALSE accuracy
+    # does not depend on this: the advance is exact at every step size.  With
+    # the uptake coupling on (the default) it does: the coupling is frozen per
+    # sub-step (below), so the sub-step also sets the accuracy, first order in
+    # dt, and the sub-steps start short at each change of setting and grow
+    # (gasSubSteps()), so the accuracy no longer depends on the plot's length.
+    # See the UPDATE in the file header for measured sizes.
     # Settings are read at the START of the interval and held across it, which
     # is what makes the interval linear -- apart from the uptake coupling,
     # which is linearised per sub-step below.
     s <- gasSettingsAt(bySetting, t0, deadSpace, ratio)
+
+    # The sub-steps restart short only where something changed: a row that
+    # repeats the settings in force carries on at the plot's step
+    changed <- is.null(lastSettings) || !identical(s, lastSettings) ||
+      bodyIndex != lastBody
+    lastSettings <- s
+    lastBody <- bodyIndex
+    steps <- gasSubSteps(len, maximum / resolution, graded = uptakeEffect && changed)
+    nSub <- length(steps)
 
     # Build one propagator per gas for this interval: y <- P y + q.
     #
@@ -1122,7 +1204,7 @@ advanceClosedFormGas <- function(
     # step-independent; neither was shown, and the second is false -- audit
     # finding F07.)  The two engines converge as dt shrinks rather than
     # agreeing digit-for-digit at any fixed dt.
-    buildProp <- function(totUptake, oxygenTotUptake = 0, cE = 0)
+    buildProp <- function(totUptake, oxygenTotUptake = 0, cE = 0, dt)
     {
       pr <- list()
       for (g in props$gas)
@@ -1147,14 +1229,23 @@ advanceClosedFormGas <- function(
     }
 
     # The propagators for one sub-step, from the state at its start.
-    coupledProp <- function(state)
+    coupledProp <- function(state, dt)
     {
       u <- gasTotalUptake(state, props, body, Qco)
-      if (!oxygenUptake) return(buildProp(u))
+      if (!oxygenUptake) return(buildProp(u, dt = dt))
 
       # Oxygen consumed is volume lost: VO2 from the system, of which carbon
       # dioxide gives VCO2 back to the alveoli and the absorber then takes it
       # from the rebreathed gas.  All of it stops if the oxygen has run out.
+      # KNOWN APPROXIMATION (ChatGPT's gas-engine audit of 2026-11-23, A-02):
+      # this is decided at the start of the step, while the oxygen equation
+      # keeps its sink and is floored at zero after it.  So once a supply
+      # below VO2 has emptied the lungs, the oxygen that arrives is consumed
+      # (the floor) but the volume it frees and the carbon dioxide it makes
+      # are left out here: with 0.1 L/min of oxygen, 0.02 L/min of net
+      # volume and 0.08 L/min of carbon dioxide, against an alveolar
+      # ventilation of 4.2.  It arises only in a patient with no oxygen,
+      # and is left as it is.
       consuming <- state[["oxygen"]][2] > 0
       # VO2 is a sea-level volume; at altitude the same oxygen is 1/r the
       # ambient volume, and the carbon dioxide 1/r the share of the exhaled
@@ -1162,17 +1253,20 @@ advanceClosedFormGas <- function(
       VO2  <- if (consuming) body$VO2 / ratio else 0
       VCO2 <- GAS_RESPIRATORY_QUOTIENT * VO2
       u <- u + VO2 - VCO2
-      buildProp(u, u, if (s$MV > 0) min(VCO2 / s$MV, GAS_MAX_EXHALED_CO2) else 0)
+      buildProp(u, u, if (s$MV > 0) min(VCO2 / s$MV, GAS_MAX_EXHALED_CO2) else 0,
+                dt = dt)
     }
 
-    prop <- if (uptakeEffect) NULL else buildProp(0)
+    # Uncoupled, the steps are uniform (gasSubSteps()) and one propagator
+    # serves them all
+    prop <- if (uptakeEffect) NULL else buildProp(0, dt = steps[[1]])
 
     stepStates <- list()
     for (g in props$gas) stepStates[[g]] <- matrix(NA_real_, nSub, length(state[[g]]))
 
     for (k in seq_len(nSub))
     {
-      if (uptakeEffect) prop <- coupledProp(state)
+      if (uptakeEffect) prop <- coupledProp(state, steps[[k]])
 
       # Every gas advances from the state at the start of the sub-step, so the
       # update is simultaneous rather than sequential and no gas sees another's
@@ -1203,7 +1297,8 @@ advanceClosedFormGas <- function(
       state <- newState
     }
 
-    times <- c(times, t0 + dt * seq_len(nSub))
+    # The last sub-step's end is t1 itself, not a sum that rounding moves
+    times <- c(times, t0 + cumsum(steps)[-nSub], t1)
     bodyRow <- c(bodyRow, rep(bodyIndex, nSub))
     for (g in props$gas) record[[g]] <- rbind(record[[g]], stepStates[[g]])
   }

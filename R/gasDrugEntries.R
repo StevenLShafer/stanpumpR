@@ -84,7 +84,10 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
   report <- reportableGases(gasDose)
   if (length(report) == 0) return(list())
 
-  # At the body's temperature (gasPropertiesAt()), so the band follows MAC.
+  # At the body's temperature (gasPropertiesAt()) and the patient's age
+  # (gasTypicalBand()), so the band follows MAC.  A band is one range for the
+  # whole plot, so with a temperature event it is drawn at the temperature in
+  # force at time 0.
   props <- gasPropertiesAt(sim$body$temperature)
   # (sim$body is the body in force at time 0, an event at 0 included,
   # advanceClosedFormGas(); ChatGPT's review of PR #796, finding 9)
@@ -126,7 +129,7 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
       xout         = xout,
       drugDefaults = drugDefaults,
       unitLabel    = "%",
-      typical      = gasTypicalBand(g, props),
+      typical      = gasTypicalBand(g, props, age),
       recovery     = recovery,
       endCe        = if (is.null(recovery)) 0 else endCe
     )
@@ -194,14 +197,19 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
 #' Typical-range band for a gas facet
 #'
 #' The shaded band on each facet marks the usual clinical range.  For the potent
-#' agents that is roughly 0.7 to 1.3 MAC; for oxygen it is a sensible inspired
-#' range rather than a therapeutic window.
+#' agents that is roughly 0.7 to 1.3 MAC, the patient's: MAC at the patient's
+#' age, as the MAC series and the time until threshold use it.  Until
+#' 2026-11-23 the band was drawn at the MAC of a 40-year-old whatever the age,
+#' 2.1% sevoflurane where an 80-year-old's MAC is 1.64% (ChatGPT's gas-engine
+#' audit of 2026-11-23, C-02).  For oxygen it is a sensible inspired range
+#' rather than a therapeutic window.
 #'
 #' @param drug gas name
 #' @param props output of \code{getGasProperties()}
+#' @param age patient age in years; 40, the reference age, gives MAC40
 #' @returns named numeric vector: lower, typical, upper
 #' @keywords internal
-gasTypicalBand <- function(drug, props)
+gasTypicalBand <- function(drug, props, age = 40)
 {
   # Oxygen's band is an acceptable inspired range, not a therapeutic window.
   if (drug == "oxygen") return(c(lower = 25, typical = 40, upper = 90))
@@ -214,7 +222,8 @@ gasTypicalBand <- function(drug, props)
 
   MAC40 <- props$MAC40[props$gas == drug]
   if (length(MAC40) == 0 || is.na(MAC40)) return(c(lower = 0, typical = 0, upper = 0))
-  c(lower = 0.7 * MAC40, typical = 1.0 * MAC40, upper = 1.3 * MAC40)
+  MAC <- macForAge(MAC40, age)
+  c(lower = 0.7 * MAC, typical = 1.0 * MAC, upper = 1.3 * MAC)
 }
 
 
