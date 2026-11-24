@@ -219,10 +219,11 @@ test_that("H9.2: the time until threshold is not interpolated across a change of
   thr <- gasThresholdForAge("sevoflurane", 0.21, 40)
   # The grid's points nearest 30 and 60 minutes, and 120 itself.  Since
   # 2026-11-23 the sub-steps are graded from each change of setting
-  # (gasSubSteps()), so 30 and 60 are no longer points of the grid (30.011
-  # and 60.007 are); the pins were 9.2484063244, 10.1613239319 and
-  # 11.9260230849, and 4.9883913082, 5.9114313778 and 7.7032604568, at 30, 60
-  # and 120 on the uniform grid.
+  # (gasSubSteps()), so 30 and 60 are no longer points of the grid (29.922
+  # and 59.815 are, since the steps after the ramp were held to the plot's
+  # step on 2026-11-24; 30.011 and 60.007 before); the pins were
+  # 9.2484063244, 10.1613239319 and 11.9260230849, and 4.9883913082,
+  # 5.9114313778 and 7.7032604568, at 30, 60 and 120 on the uniform grid.
   at <- vapply(c(30, 60, 120), function(t) which.min(abs(w$Time - t)), 1L)
   expect_equal(w$Time[at[3]], 120)
   raw <- gasCoupledRecovery(w, off = "sevoflurane", target = carbon4BrainTarget(w, "sevoflurane"),
@@ -230,10 +231,12 @@ test_that("H9.2: the time until threshold is not interpolated across a change of
   rawMac <- gasCoupledRecovery(w, off = intersect(potentAgents(), names(w$state)),
                                target = carbon4MacTarget(w, 40), threshold = GAS_MAC_THRESHOLD,
                                maxPoints = length(w$Time))
-  expect_equal(raw[at], c(9.2487904421, 10.1615432004, 11.9260224320), tolerance = 1e-10)
+  expect_equal(raw[at], c(9.2457258296, 10.1558887982, 11.9260224807), tolerance = 1e-10)
   # (MAC's: 4.9887751535, 5.9116560370 and 7.7032597883 on the graded grid
   # with GasMan's MAC at 40, before Mapleson's was adopted the same day)
-  expect_equal(rawMac[at], c(5.7624362094, 6.8594149330, 9.1592082535), tolerance = 1e-10)
+  # (5.7624362094, 6.8594149330 and 9.1592082535 at 30.011 and 60.007, before
+  # the steps after the ramp were held to the plot's step)
+  expect_equal(rawMac[at], c(5.7588960545, 6.8524335446, 9.1592083224), tolerance = 1e-10)
   expect_equal(gasRecoveryTime(w, "sevoflurane", thr)[at[3]], raw[at[3]])
   expect_equal(macRecoveryTime(w, 40, GAS_MAC_THRESHOLD)[at[3]], rawMac[at[3]])
 })

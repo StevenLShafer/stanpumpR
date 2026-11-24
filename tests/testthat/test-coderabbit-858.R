@@ -81,3 +81,20 @@ test_that("the standalone GasMan restatement completes its capped ticks too", {
   ref <- fine$ALV[match(at, round(fine$Time, 9))]
   expect_true(all(alv > 0.5 * ref))
 })
+
+
+# CodeRabbit's second round on PR #858: after the ramp, the rest of an
+# interval was split into round(rest / dtNominal) steps, so one step could be
+# up to 1.5 times the plot's step (0.1465 at an interval of 1.13 minutes on a
+# 60-minute plot, 0.1495 at 1.133).  It is now ceiling().
+
+test_that("no sub-step after the ramp is longer than the plot's step", {
+  h <- gasSubSteps(1.13, 0.1)
+  expect_equal(sum(h), 1.13)
+  expect_lte(max(h), 0.1 * (1 + 1e-9))
+  worst <- max(vapply(seq(0.95, 3, by = 0.001),
+                      function(len) max(gasSubSteps(len, 0.1)), numeric(1)))
+  expect_lte(worst, 0.1 * (1 + 1e-9))
+  # The cost stays a few dozen steps over the plot's own 600
+  expect_lt(length(gasSubSteps(60, 0.1)), 600 + 40)
+})

@@ -986,7 +986,10 @@ gasSubSteps <- function(len, dtNominal, graded = TRUE,
     step <- step * growth
   }
   rest <- len - elapsed
-  n <- max(1, round(rest / dtNominal))
+  # ceiling(), not round(): no step after the ramp is longer than the plot's
+  # (round() let one reach 1.5 times it, 0.1495 at an interval of 1.133
+  # minutes on a 60-minute plot; CodeRabbit on PR #858)
+  n <- max(1, ceiling(rest / dtNominal - 1e-9))
   out <- c(h, rep(rest / n, n))
   if (step < dtNominal) attr(out, "nextStep") <- step
   out
