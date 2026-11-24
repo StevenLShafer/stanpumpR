@@ -4,7 +4,15 @@
 \alias{buprenorphine}
 \title{Buprenorphine pharmacokinetics}
 \usage{
-buprenorphine(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
+buprenorphine(
+  weight,
+  height,
+  age,
+  sex,
+  adjustToFFM = TRUE,
+  pregnant = FALSE,
+  offsetScale = 1
+)
 }
 \arguments{
 \item{weight}{weight in kg}

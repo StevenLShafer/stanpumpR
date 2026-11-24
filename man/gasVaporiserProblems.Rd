@@ -4,7 +4,7 @@
 \alias{gasVaporiserProblems}
 \title{Vaporiser settings that together exceed 100\%}
 \usage{
-gasVaporiserProblems(doseTable)
+gasVaporiserProblems(doseTable, altitude = ALTITUDE_DEFAULT)
 }
 \arguments{
 \item{doseTable}{a dose table with \code{Drug}, \code{Time} (minutes, or

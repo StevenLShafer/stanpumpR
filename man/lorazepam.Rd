@@ -16,15 +16,15 @@ lorazepam(weight, height, age, sex, adjustToFFM = TRUE)
 \item{sex}{sex as a string}
 
 \item{adjustToFFM}{\code{TRUE} (the default) scales volumes to fat-free mass
-and clearances to its 0.75 power; \code{FALSE} scales both with weight,
-as the per-kilogram source did.}
+and clearances to its 0.75 power, anchored at the source's cohort;
+\code{FALSE} gives every patient the published values.}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-Two-compartment intravenous kinetics derived from the means of
-Nielsen-Kudsk et al. (1983), oral and intramuscular absorption from
-Greenblatt et al. (1982), and the EEG effect site of Greenblatt et al.
-(2000).  See the file's header.
+Two-compartment intravenous kinetics of Barr et al. (2001) in surgical ICU
+patients, oral and intramuscular absorption from Greenblatt et al. (1982),
+and the EEG effect site of Greenblatt et al. (2000).  See the file's
+header.
 }

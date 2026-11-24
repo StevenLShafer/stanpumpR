@@ -9,13 +9,13 @@ drawnDrugEntries(drugs, given)
 \arguments{
 \item{drugs}{the drug list from recalculatePK()}
 
-\item{given}{the drugs given a dose above 0 (positiveDoseDrugs())}
+\item{given}{the drugs drawn (tableDrugs())}
 }
 \value{
 the drug list without the entries that are not drawn
 }
 \description{
-Those of the drugs given a dose above 0 and of the metabolites they form,
+Those of the drugs given (tableDrugs()) and of the metabolites they form,
 each with its companions (another model drawn beside it, \verb{$companionOf}).
 A metabolite formed by a drug that is drawn is drawn whether or not its
 own rows are 0: its curve is what the parent forms, and its own rows
