@@ -397,7 +397,7 @@ an hour is 1.60% at sea level and 1.65% at 7,000 m, the absorber's
 concentration slightly outweighing the humidification.
 
 **Oxygen.** Breathing air at 5 L/min, the alveolar oxygen after 30 minutes falls
-from about 108 Torr at sea level to about 10 Torr at 7,000 m: the inspired
+from about 101 Torr at sea level to about 9 Torr at 7,000 m: the inspired
 partial pressure falls, the water vapour takes its 47 Torr, and the oxygen
 consumed takes the same partial pressure from what is left. Climbers at that
 height survive by breathing far more than 5 L/min, which the ventilation row
@@ -455,25 +455,25 @@ at 30 minutes and haemoglobin 15 g/dL:
 
 | Fresh gas (6 L/min) | End-tidal PO2 | PaO2 | SaO2 |
 |---|---|---|---|
-| Oxygen | 710 mmHg | 51 mmHg | 85% |
-| Oxygen 2 L/min, air 4 L/min | 312 mmHg | 44 mmHg | 80% |
-| Air | 114 mmHg | 40 mmHg | 75% |
+| Oxygen | 666 mmHg | 50 mmHg | 85% |
+| Oxygen 2 L/min, air 4 L/min | 293 mmHg | 44 mmHg | 79% |
+| Air | 107 mmHg | 40 mmHg | 75% |
 
 Even with pure oxygen, the PaO2 is about 50 mmHg. That is the shunt's
 signature: more oxygen hardly helps, and neither does more ventilation (air at
-3 L/min gives 70%, at 12 L/min 76%).
+3 L/min gives 69%, at 12 L/min 75%).
 
 **Haemoglobin.** Ticking the box shows a **Haemoglobin** slider (4 to 20 g/dL,
 15 by default). The oxygen the shunted half fails to carry is the same number
 of millilitres per decilitre whatever the haemoglobin, so it is a larger share
 of a smaller capacity, and an anaemic patient desaturates more: on pure oxygen
-the SaO2 is 69% at 7 g/dL and 87% at 17 g/dL, on air 49% and 78%. A physiology
+the SaO2 is 68% at 7 g/dL and 87% at 17 g/dL, on air 48% and 77%. A physiology
 event records it, so a transfusion or a bleed can be followed. Without a shunt
 it changes nothing the plot shows.
 
 **Altitude.** The arterial oxygen starts from the alveolar oxygen, which falls
 with the barometric pressure, so the hypoxaemia deepens with altitude. On air
-the SaO2 is 75% at sea level, 68% at 3000 m and 47% at 5000 m; on oxygen 85%,
+the SaO2 is 75% at sea level, 66% at 3000 m and 43% at 5000 m; on oxygen 85%,
 82% and 80%.
 
 **Not modelled.** Hypoxic pulmonary vasoconstriction, which diverts part of the

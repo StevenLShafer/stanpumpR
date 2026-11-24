@@ -197,3 +197,24 @@ test_that("C-07: a rise in pressure draws the circuit's gas into the lungs", {
   alveolar <- sum(vapply(s$state, function(m) m[step[2], 2], 0))
   expect_lte(alveolar, 100 + 1e-9)
 })
+
+
+# C-06.  The alveolar tension was converted to mmHg at 760 Torr per 100%,
+# but the engine's alveolar tensions are fractions of the dry gas, whose
+# share of a sea-level atmosphere is 760 - 47 = 713 Torr: on pure oxygen the
+# alveolar oxygen read 722.7 mmHg, more than the dry gas can hold.
+
+test_that("C-06: the alveolar oxygen never exceeds the dry share of the pressure", {
+  DT <- data.frame(Drug = c("oxygen", "ventilation"), Time = 0, Dose = c(6, 6))
+  a <- gasArterialOxygen(simulateGases(DT, 70, 40, maximum = 30))
+  expect_lt(max(a$PAO2), 760 - 47)
+  # Humidified room air in the lungs at 7000 m reads 0.2093 x (P_B - 47), as
+  # Dalton's law says (at 760 Torr per 100% it read 6.6% high)
+  air <- simulateGases(data.frame(Drug = c("air", "ventilation"), Time = 0, Dose = c(6, 6)),
+                       70, 40, maximum = 10, altitude = 7000)
+  # (to West's model atmosphere, whose sea level is 759.5 Torr, not 760:
+  # 0.07%)
+  expect_equal(gasArterialOxygen(air)$PAO2[1],
+               AIR_FRACTION_O2 * (barometricPressure(7000) - WATER_VAPOUR_PRESSURE),
+               tolerance = 1e-3)
+})

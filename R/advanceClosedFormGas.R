@@ -1453,7 +1453,8 @@ gasStateAcrossBodies <- function(state, from, to)
 #' unchanged).  Until 2026-11-24 the gas phases kept their tensions, so just
 #' after a step from sea level to 5000 m the alveolar gases summed to 94% of
 #' a sea-level atmosphere where at most 52% fits, and the alveolar oxygen read
-#' 114 mmHg where it is 60 (Gemini's gas-engine audit of 2026-11-23, C-07).
+#' twice what the new pressure allows (Gemini's gas-engine audit of
+#' 2026-11-23, C-07).
 #'
 #' @param state named list of state vectors, one per gas (circuit first,
 #'   alveoli second)
