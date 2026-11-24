@@ -97,3 +97,103 @@ test_that("D-01: the opioid-adjusted time until threshold is computed where the 
   thr <- c(rep(0.1, 5), 0.05, rep(0.1, 4))
   expect_true(6L %in% gasRecoveryRefine(c(1L, 5L, 10L), thr, 1:10, rep(1L, 10)))
 })
+
+
+# C-07.  A physiology event at time 0 left the run starting in the normal
+# body for no time: at 5000 m the lungs started at sea-level room air (752
+# Torr where the ambient pressure is 420), the first time was recorded
+# twice, and the Visualizer refused a run whose temperature was 30 C
+# throughout as one whose temperature changed.
+
+geminiEventAt0 <- function(...) {
+  x <- c(liver = 1, renal = 1, cardiac = 1, gi = 1, temperature = 37, altitude = 0,
+         endobronchial = 0, haemoglobin = 15)
+  set <- list(...)
+  x[names(set)] <- unlist(set)
+  physiologyEventsFrom(data.frame(Time = 0, Event = "Physiology",
+                                  Settings = physiologyEventEncode(x),
+                                  stringsAsFactors = FALSE))
+}
+
+test_that("C-07: an event at time 0 gives the run the slider gives", {
+  d <- data.frame(Time = 0, Drug = c("air", "sevoflurane", "ventilation"), Dose = c(6, 2, 6))
+  slider <- simulateGases(d, weight = 70, age = 40, maximum = 60, altitude = 5000)
+  event <- simulateGases(d, weight = 70, age = 40, maximum = 60,
+                         physiologyEvents = geminiEventAt0(altitude = 5000))
+  expect_identical(event$timeLine, slider$timeLine)
+  for (g in names(slider$state))
+    expect_equal(event$state[[g]], slider$state[[g]], tolerance = 1e-12, label = g)
+  # (the lungs started at 78.07% nitrogen and 20.93% oxygen, sea level's)
+  expect_lt(event$state$nitrogen[1, 2], 45)
+  expect_identical(event$bodySteps$time, 0)
+})
+
+test_that("C-07: the Visualizer draws a run whose temperature is set at time 0", {
+  d <- data.frame(Time = 0, Drug = c("air", "sevoflurane", "ventilation"), Dose = c(6, 2, 6))
+  s <- simulateGases(d, weight = 70, age = 40, maximum = 30,
+                     physiologyEvents = geminiEventAt0(temperature = 30))
+  e <- gasDrugEntries(s, d, maximum = 30, age = 40)
+  expect_no_error(viewerGasRun(e$sevoflurane, 0, 30))
+  # An event later in the run is still taken there, the body before it the
+  # normal one
+  later <- physiologyEventsFrom(data.frame(
+    Time = c(0, 20), Event = "Physiology",
+    Settings = c(physiologyEventEncode(c(liver = 1, renal = 1, cardiac = 1, gi = 1,
+                                         temperature = 37, altitude = 1000,
+                                         endobronchial = 0, haemoglobin = 15)),
+                 physiologyEventEncode(c(liver = 1, renal = 1, cardiac = 1, gi = 1,
+                                         temperature = 37, altitude = 3000,
+                                         endobronchial = 0, haemoglobin = 15))),
+    stringsAsFactors = FALSE))
+  steps <- gasBodySteps(70, later)
+  expect_equal(steps$time, c(0, 20))
+  expect_equal(vapply(steps$body, function(b) b$altitude, 0), c(1000, 3000))
+})
+
+
+# C-07, the third part.  A step in altitude kept every gas-phase tension, so
+# just after a step from sea level to 5000 m the alveolar gases summed to 94%
+# of a sea-level atmosphere where at most 52% fits.
+
+geminiAltitudeStep <- function(from, to, at = 10) {
+  enc <- function(a) physiologyEventEncode(c(liver = 1, renal = 1, cardiac = 1, gi = 1,
+                                              temperature = 37, altitude = a,
+                                              endobronchial = 0, haemoglobin = 15))
+  physiologyEventsFrom(data.frame(Time = c(0, at), Event = "Physiology",
+                                  Settings = c(enc(from), enc(to)),
+                                  stringsAsFactors = FALSE))
+}
+
+test_that("C-07: a fall in pressure lets gas out of the lungs at their composition", {
+  d <- data.frame(Time = 0, Drug = c("air", "sevoflurane", "ventilation"), Dose = c(6, 2, 6))
+  s <- simulateGases(d, weight = 70, age = 40, maximum = 30,
+                     physiologyEvents = geminiAltitudeStep(0, 5000))
+  step <- which(s$timeLine == 10)
+  expect_length(step, 2)
+  dry <- function(a) (barometricPressure(a) - WATER_VAPOUR_PRESSURE) /
+    (barometricPressure(0) - WATER_VAPOUR_PRESSURE)
+  alveolar <- function(i) sum(vapply(s$state, function(m) m[i, 2], 0))
+  # Dalton: the gases fill the dry share of the new pressure, no more
+  expect_lte(alveolar(step[2]), 100 * dry(5000) + 1e-9)
+  # and each falls in proportion
+  for (g in names(s$state))
+    expect_equal(s$state[[g]][step[2], 2], s$state[[g]][step[1], 2] * dry(5000) / dry(0),
+                 tolerance = 1e-12, label = g)
+  # Dissolved agent does not move at the step
+  expect_equal(s$state$sevoflurane[step[2], 3:5], s$state$sevoflurane[step[1], 3:5])
+})
+
+test_that("C-07: a rise in pressure draws the circuit's gas into the lungs", {
+  d <- data.frame(Time = 0, Drug = c("air", "sevoflurane", "ventilation"), Dose = c(6, 2, 6))
+  s <- simulateGases(d, weight = 70, age = 40, maximum = 30,
+                     physiologyEvents = geminiAltitudeStep(5000, 0))
+  step <- which(s$timeLine == 10)
+  r <- pressureRatio(5000)
+  a1 <- r * gasHumidityRatio(list(altitude = 5000))
+  for (g in names(s$state))
+    expect_equal(s$state[[g]][step[2], 2],
+                 s$state[[g]][step[1], 2] + s$state[[g]][step[1], 1] / r * (1 - a1),
+                 tolerance = 1e-12, label = g)
+  alveolar <- sum(vapply(s$state, function(m) m[step[2], 2], 0))
+  expect_lte(alveolar, 100 + 1e-9)
+})

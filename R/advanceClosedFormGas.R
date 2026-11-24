@@ -1159,6 +1159,7 @@ advanceClosedFormGas <- function(
         newBody <- bodySteps$body[[k]]
         newProps <- gasPropertiesAt(newBody$temperature)
         state <- gasStateAcrossBodies(state, props, newProps)
+        state <- gasStateAcrossPressure(state, body, newBody)
         body <- newBody
         props <- newProps
         ratio <- gasPressureRatio(body)
@@ -1398,9 +1399,9 @@ advanceClosedFormGas <- function(
 #' is conserved is the amount of agent in each compartment.  In a gas phase
 #' (the circuit and the alveoli) the amount is the partial pressure times
 #' the volume, and neither the volume nor the partial pressure changes with
-#' a step in cardiac output, temperature or altitude (the tensions are
-#' partial pressures, in % of a sea-level atmosphere, whatever the barometric
-#' pressure).  In a tissue the amount is the partial pressure times the
+#' a step in cardiac output or temperature (a step in altitude moves gas in
+#' or out of them, \code{gasStateAcrossPressure()}, which the engine applies
+#' after this).  In a tissue the amount is the partial pressure times the
 #' volume times the tissue:gas partition coefficient, which temperature
 #' changes (gasPropertiesAt()), so the tension steps by the ratio of the old
 #' coefficient to the new: a cooled tissue holds the same agent at a lower
@@ -1436,6 +1437,46 @@ gasStateAcrossBodies <- function(state, from, to)
   state
 }
 
+#' The gas phases carried across a change of barometric pressure
+#'
+#' The circuit's and the alveoli's tensions are partial pressures relative to
+#' sea level (R/altitude.R): the circuit's dry gas totals \code{100 r}, r the
+#' barometric pressure over a sea-level atmosphere (\code{gasPressureRatio()}),
+#' and the alveoli's, humidified, \code{100 r h} (\code{gasHumidityRatio()}),
+#' that is \code{100 (P - 47) / (760 - 47)}.  At a step in altitude the
+#' lungs and the circuit keep their volume.  Where the pressure falls, gas
+#' leaves each of them at its own composition, so every tension is scaled by
+#' the new total over the old.  Where it rises, gas enters: the alveoli keep
+#' what they hold and draw in the circuit's gas to make up the difference,
+#' and the circuit, refilled from the fresh gas, which it nearly matches, is
+#' scaled.  Dissolved agent does not move at the step (tissue tensions are
+#' unchanged).  Until 2026-11-24 the gas phases kept their tensions, so just
+#' after a step from sea level to 5000 m the alveolar gases summed to 94% of
+#' a sea-level atmosphere where at most 52% fits, and the alveolar oxygen read
+#' 114 mmHg where it is 60 (Gemini's gas-engine audit of 2026-11-23, C-07).
+#'
+#' @param state named list of state vectors, one per gas (circuit first,
+#'   alveoli second)
+#' @param from,to the bodies before and after the step
+#' @returns the state after the step
+#' @keywords internal
+gasStateAcrossPressure <- function(state, from, to)
+{
+  r1 <- gasPressureRatio(from)
+  r2 <- gasPressureRatio(to)
+  if (isTRUE(all.equal(r1, r2, tolerance = 1e-12))) return(state)
+  a1 <- r1 * gasHumidityRatio(from)
+  a2 <- r2 * gasHumidityRatio(to)
+  for (g in names(state)) {
+    y <- state[[g]]
+    circuit <- y[1]
+    y[1] <- circuit * r2 / r1
+    y[2] <- if (a2 < a1) y[2] * a2 / a1 else y[2] + circuit / r1 * (a2 - a1)
+    state[[g]] <- y
+  }
+  state
+}
+
 #' The bodies of a gas run with physiology events
 #'
 #' @param weight patient weight, kg
@@ -1443,7 +1484,14 @@ gasStateAcrossBodies <- function(state, from, to)
 #' @returns list(time, body): normal physiology from 0 and each event's from
 #'   its time.  If any body has cardiac output off normal, every body splits
 #'   the vessel-rich group (gasBodyPhysiology(split = TRUE)), so the states
-#'   are the same in all of them.
+#'   are the same in all of them.  A body in force for no time (normal
+#'   physiology when an event is at 0, or an event at the same time as the
+#'   next) is left out: until 2026-11-24 the run started in the normal body
+#'   whatever an event at 0 said, so its lungs started at sea-level room air
+#'   at 5000 m (752 Torr where the ambient pressure is 420), its first time
+#'   was recorded twice, and the Visualizer refused a run whose temperature
+#'   was 30 C throughout as one whose temperature changed (Gemini's
+#'   gas-engine audit of 2026-11-23, C-07).
 #' @keywords internal
 gasBodySteps <- function(weight, events)
 {
@@ -1458,7 +1506,9 @@ gasBodySteps <- function(weight, events)
       body$haemoglobin <- unname(x[["haemoglobin"]])
     body
   })
-  list(time = c(0, events$Time), body = bodies)
+  time <- c(0, events$Time)
+  keep <- c(time[-1] > time[-length(time)], TRUE)
+  list(time = time[keep], body = bodies[keep])
 }
 
 

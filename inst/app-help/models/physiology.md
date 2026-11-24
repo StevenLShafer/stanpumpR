@@ -530,9 +530,13 @@ what it recorded. Once the event table holds any Physiology event:
   for the Zuppa dexmedetomidine model, whose parameters change on and off
   bypass, and it is checked against an exact matrix-exponential solution;
 * for the inhaled anesthetics, the partial pressures in the breathing
-  circuit and the lungs carry across, and a cooled tissue keeps the agent it
-  held at a lower partial pressure, because it now dissolves more of it.
-  MAC steps with the temperature;
+  circuit and the lungs carry across a step in cardiac output, temperature
+  or intubation, and a cooled tissue keeps the agent it held at a lower
+  partial pressure, because it now dissolves more of it. A step in altitude
+  moves gas in or out of the lungs and the circuit, which keep their volume:
+  going up, gas leaves at the composition it has, so every partial pressure
+  falls with the pressure; going down, the lungs draw in the circuit's gas.
+  Dissolved agent does not move at the step. MAC steps with the temperature;
 * the time until threshold, at each moment, assumes the physiology in force
   at that moment continues.
 
