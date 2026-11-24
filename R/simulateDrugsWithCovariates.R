@@ -104,6 +104,9 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
     stop("Invalid sex: ", paste(sex, collapse = ", "),
          ". Must be one of: ", paste(SEX_VALUES, collapse = ", "))
   }
+  # A combination product (Coartem) is simulated as its components, each its
+  # own drug (R/combination-products.R).
+  dose <- expandCombinationProducts(dose)
   drugList <- unique(dose$Drug)
   # The inhaled gases are simulated by simulateGases() / advanceClosedFormGas(),
   # not here: they have no drugs_*.R covariate function and no mass dose, so

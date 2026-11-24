@@ -547,6 +547,9 @@ apiSimulate <- function(request) {
   DT <- apiDoses(apiField(request, "doses"), unit, maximum,
                  allowIllicit = apiFlag(apiField(opts, "allowIllicitDrugs", FALSE),
                                         "options.allowIllicitDrugs"))
+  # A combination product (Coartem) is simulated, counted and returned as its
+  # components, each its own drug (R/combination-products.R).
+  DT <- expandCombinationProducts(DT)
   ET <- apiEvents(apiField(request, "events"), unit)
   # On by default, as the app's Graph Options box is (Steven L. Shafer,
   # 2026-10-28), so the API returns what the app plots; it changes only a

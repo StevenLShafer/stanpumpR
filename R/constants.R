@@ -582,13 +582,18 @@ piperacillinTazobactamUnits <- paste(c("mg", "mg/kg", "mg/hr", "mg/kg/hr"),
 # applied and set to 0 when it is removed.
 tdRateUnits <- c("mg/day TD")
 quinidineSulfateUnits <- paste("mg PO", QUINIDINE_SALT)
+# A Coartem tablet (artemether 20 mg + lumefantrine 120 mg), the dose unit of a
+# combination product whose components are drawn separately
+# (R/combination-products.R): no simulation ever sees it, the rows being
+# rewritten into mg of each component first.
+coartemUnits <- "tablet PO"
 
 allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, enteralRateUnits, poFormulationUnits,
               slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits,
               iuUnits, scUnits, iuScUnits, ghbUnits, insulinUnits, insulinRateUnits,
               ivPotencyUnits, ivPotencyBodySizeUnits, milliunitRateUnits, aminophyllineUnits, caffeineCitrateUnits,
               valganciclovirUnits, quinidineSulfateUnits, tdRateUnits,
-              piperacillinTazobactamUnits)
+              piperacillinTazobactamUnits, coartemUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.
@@ -667,7 +672,10 @@ scheduledUnits <- c(
   # Quinidine sulfate's regimens (R/drugs_quinidine.R)
   paste(quinidineSulfateUnits, c("tid", "qid", "q4h")),
   # Piperacillin-tazobactam every 8 or 6 hours (R/drugs_piperacillin.R)
-  as.vector(t(outer(piperacillinTazobactamUnits[1:2], c("tid", "qid", "q4h"), paste)))
+  as.vector(t(outer(piperacillinTazobactamUnits[1:2], c("tid", "qid", "q4h"), paste))),
+  # Coartem twice a day, the label's regimen after the first day
+  # (R/combination-products.R)
+  paste(coartemUnits, "bid")
 )
 
 # Units for the inhaled gases (Class "gas" in drugDefaults_global.csv): carrier

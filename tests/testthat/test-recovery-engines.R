@@ -376,6 +376,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
   # (R/drugs_naproxen.R), no metabolite.
   expect_setequal(noCe, c(
     "MEGX", "norpethidine", "PPX",  # toxic metabolites, no ke0 (2026-11-13)
+    "artemether", "dihydroartemisinin", "lumefantrine",  # Coartem's components (2026-11-24)
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
     "vancomycinKidneyTransplant",

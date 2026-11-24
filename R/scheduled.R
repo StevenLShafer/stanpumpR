@@ -224,6 +224,10 @@ scheduledDoseCount <- function(DT, maximum) {
 # plot's display unit) a "Time (<unit>)" column follows it with the same
 # times in that unit (addDisplayTimeColumn()); the default changes nothing.
 exportDoseTable <- function(DT, drugs, timeUnit = "minutes") {
+  # The doses as simulated: a combination product's rows as its components'
+  # (R/combination-products.R), which is what each component's scheduled
+  # repeats below are written in.
+  DT <- expandCombinationProducts(DT)
   out <- tciMergeDoseTable(DT, drugs)
   if (is.null(out)) return(out)
   # A companion entry (R/alternativeModels.R) repeats its parent's scheduled

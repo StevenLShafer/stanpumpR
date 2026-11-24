@@ -236,7 +236,12 @@ oralSaturationFraction <- function(doseMg, saturation)
       (pmin(pmax(doseMg - saturation$D0, 0), saturation$D50 - saturation$D0) /
          (saturation$D50 - saturation$D0))^saturation$exponent,
     exponential = saturation$Fmin + (saturation$Fmax - saturation$Fmin) *
-      exp(-log(2) * doseMg / saturation$D50)
+      exp(-log(2) * doseMg / saturation$D50),
+    # A straight line through 1 at Dref, held at its ends to the doses the
+    # source studied (lumefantrine, Ding 2026: "not suitable for
+    # extrapolation beyond the dose range studied here").
+    linear    = 1 + saturation$slope *
+      (pmin(pmax(doseMg, saturation$Dmin), saturation$Dmax) - saturation$Dref)
   )
 }
 
@@ -252,9 +257,10 @@ ORAL_SATURATION_RISING    <- "rising"
 ORAL_SATURATION_POWER     <- "power"
 ORAL_SATURATION_REDUCTION <- "reduction"
 ORAL_SATURATION_EXPONENTIAL <- "exponential"
+ORAL_SATURATION_LINEAR <- "linear"
 ORAL_SATURATION_FORMS <- c(ORAL_SATURATION_SATURABLE, ORAL_SATURATION_RISING,
                            ORAL_SATURATION_POWER, ORAL_SATURATION_REDUCTION,
-                           ORAL_SATURATION_EXPONENTIAL)
+                           ORAL_SATURATION_EXPONENTIAL, ORAL_SATURATION_LINEAR)
 
 #' Check a drug model's dose-dependent absorption block
 #'
@@ -303,6 +309,19 @@ validateOralSaturation <- function(saturation, drug, block = "oralSaturation")
     if (!ok)
       stop("Invalid ", block, " for ", drug, ": the reduction form needs I50 ",
            "between 0 and 1, a positive exponent, and doses D0 >= 0 and D50 > D0 in mg.")
+  } else if (form == ORAL_SATURATION_LINEAR) {
+    ok <- is_valid_number(saturation$slope) &&
+      is_valid_number(saturation$Dref) && saturation$Dref > 0 &&
+      is_valid_number(saturation$Dmin, 0, Inf) &&
+      is_valid_number(saturation$Dmax) && saturation$Dmax > saturation$Dmin
+    # The fraction must stay positive over the whole held range.
+    if (ok)
+      ok <- all(1 + saturation$slope *
+                  (c(saturation$Dmin, saturation$Dmax) - saturation$Dref) > 0)
+    if (!ok)
+      stop("Invalid ", block, " for ", drug, ": the linear form needs a ",
+           "slope per mg, a positive reference dose Dref and doses ",
+           "0 <= Dmin < Dmax in mg over which the fraction stays positive.")
   } else {
     ok <- is_valid_number(saturation$Fmin, 0, Inf) &&
       is_valid_number(saturation$Fmax, 0, Inf) &&

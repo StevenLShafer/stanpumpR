@@ -95,10 +95,19 @@ A brand name is a valid R name (MEGX and MDMA are drugs already), so Zosyn needs
 
 On 2026-11-23 Steven applied the rule to the rest of the plan ("Augmentin is a good example. Clavulanate isn't given as a drug by itself, so it should not be included in stanpumpR") and asked for such components to be recorded explicitly: `combination-only.csv` lists them, checked against DailyMed. The plan's rows follow it:
 - **Augmentin** (amoxicillin/clavulanate) replaces the amoxicillin/clavulanate row; its curve is amoxicillin, clavulanate not plotted.
-- **Coartem** (artemether/lumefantrine) replaces the artemether and lumefantrine rows; which analyte its curve shows is a `[decision]` on the row.
+- **Coartem** (artemether/lumefantrine) replaces the artemether and lumefantrine rows. Both components are drawn (Steven, 2026-11-24, below).
 - **Kaletra** (lopinavir/ritonavir) and **Paxlovid** (nirmatrelvir/ritonavir) replace the lopinavir and nirmatrelvir rows; their curves are lopinavir and nirmatrelvir.
 - **Piperaquine** is `not_included`: its only product, Eurartesim (with dihydroartemisinin), is not US-approved.
 - Cobicistat and ritonavir are labelled alone (Tybost, Norvir) though given almost only as boosters. Steven decided on 2026-11-23: cobicistat is `not_included` ("Leave out Cobicistat"), and ritonavir is `included`, a drug of its own with a row in `plan.csv` ("I would leave ritonavir in as a model, because the pharmacokinetics of CYP3A4 inhibition are interesting").
+
+### Which moieties a combination product draws (Steven L. Shafer, 2026-11-24)
+
+"For Coartem, both components are active. Both should appear. However, for combination products where one of the moieties exists solely to change the clinical efficacy of the other moiety, only show the clinically active moiety. For example, paxlovid should only show nirmatrelvir, not ritonivir. Zosyn should only show piperacillin."
+
+So:
+- **Every component with an effect of its own is drawn.** Coartem draws artemether (with its active metabolite dihydroartemisinin) and lumefantrine, each from its own model. Artemether's disposition is Ding 2026's (the Coartem row). This needs the product-expansion mechanism, in which one dose-table row becomes a row for each component, each simulated on its own model.
+- **A component that is there only to change the other's efficacy or exposure is not drawn.** That covers a beta-lactamase inhibitor (tazobactam, clavulanate, avibactam, relebactam) and a pharmacokinetic booster (ritonavir in Paxlovid and Kaletra, cobicistat). So Zosyn draws piperacillin, Zerbaxa ceftolozane, Avycaz ceftazidime, Augmentin amoxicillin, Paxlovid nirmatrelvir and Kaletra lopinavir. These are single drugs plotting the active moiety, as Zosyn already is, and need no expansion.
+- **The booster's effect is still in the curve.** A source for a boosted product is fitted in patients taking the booster, so the drawn moiety's disposition is its boosted disposition. Ritonavir on its own (Norvir) remains a drug of its own (2026-11-23); drawing its effect on another drug given separately would need an interaction model, a separate question.
 
 ## Downloading
 

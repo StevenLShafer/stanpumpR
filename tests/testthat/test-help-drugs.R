@@ -1,7 +1,10 @@
 # Help pages generated from the drug library.  See R/help-drugs.R.
 
 drugDefaults <- getDrugDefaultsGlobal()
-ivDrugs <- drugDefaults$Drug[!isGasDrug(drugDefaults$Drug)]
+# A combination product (Coartem) has no model of its own; its page lists
+# its components, which are checked here as drugs (R/combination-products.R)
+ivDrugs <- drugDefaults$Drug[!isGasDrug(drugDefaults$Drug) &
+                               !isCombinationProduct(drugDefaults$Drug)]
 gasDrugs <- drugDefaults$Drug[isGasDrug(drugDefaults$Drug)]
 
 # The investigators named in a citation are links (R/help-investigators.R);
@@ -126,6 +129,8 @@ plasmaOnly <- c(
     "liothyronine",
     # tafenoquine (Thakkar 2018, 2026-11-20): plasma only
     "tafenoquine",
+    # Coartem's components (Ding 2026, 2026-11-24): plasma only
+    "artemether", "dihydroartemisinin", "lumefantrine",
     # tamsulosin (Tsuda 2010, 2026-11-19): plasma only
     "tamsulosin",
     # rosuvastatin (Courlet 2021, 2026-11-19): plasma only
@@ -520,4 +525,20 @@ test_that("Km is shown with the drug's own concentration units, not a fixed one"
   md <- helpIllicitPKTableMarkdown(getDrugDefaultsGlobal(FALSE))
   ghb <- grep("GHB", strsplit(md, "\n", fixed = TRUE)[[1]], value = TRUE)
   expect_true(grepl("Km 18.2 mcg/mL", ghb, fixed = TRUE))
+})
+
+test_that("a combination product's page lists its components and its label", {
+  html <- helpDrugPageHTML("Coartem", drugDefaults)
+  expect_match(html, "Components", fixed = TRUE)
+  expect_match(html, 'data-help-page="drugs/artemether"', fixed = TRUE)
+  expect_match(html, 'data-help-page="drugs/lumefantrine"', fixed = TRUE)
+  expect_match(html, "20 mg a tablet", fixed = TRUE)
+  expect_match(html, "120 mg a tablet", fixed = TRUE)
+  expect_match(html, "tablet PO", fixed = TRUE)
+  expect_match(html, "NDA 022268", fixed = TRUE)
+  # and a component's page says where it is given
+  expect_match(helpDrugPageHTML("artemether", drugDefaults),
+               "a component of Coartem", fixed = TRUE)
+  expect_match(helpDrugPageHTML("dihydroartemisinin", drugDefaults),
+               "active metabolite of Artemether", fixed = TRUE)
 })
