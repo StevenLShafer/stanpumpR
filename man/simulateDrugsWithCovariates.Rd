@@ -29,7 +29,8 @@ simulateDrugsWithCovariates(
   albumin = NULL,
   ast = NULL,
   physiology = NULL,
-  pulmonaryHypertension = FALSE
+  pulmonaryHypertension = FALSE,
+  infection = INFECTION_DEFAULT
 )
 }
 \arguments{
@@ -121,6 +122,10 @@ normal from time 0 and each event's from its time, and this is not used.}
 \item{pulmonaryHypertension}{does the patient have pulmonary arterial
 hypertension?  TRUE or FALSE (the default); read only by sildenafil and
 tadalafil (see \code{getDrugPK()}).}
+
+\item{infection}{the patient's infection, one of \code{INFECTION_VALUES}
+(\code{"none"} by default); read only by the models with an infection
+term (see \code{getDrugPK()} and \code{R/infection.R}).}
 }
 \value{
 a list of data frames with the output of the a single drug
