@@ -31,7 +31,8 @@ getDrugPK(
   libraryDefaults = NULL,
   metaboliteIndividual = NULL,
   physiology = NULL,
-  pulmonaryHypertension = FALSE
+  pulmonaryHypertension = FALSE,
+  offsetScale = 1
 )
 }
 \arguments{

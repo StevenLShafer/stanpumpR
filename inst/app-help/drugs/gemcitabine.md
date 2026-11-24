@@ -8,7 +8,7 @@ Gemcitabine comes from Tham and colleagues (*Cancer Chemother Pharmacol* 2008;63
 
 ### What is plotted
 
-Plasma gemcitabine in mcg/mL (mg/L). Doses are entered in mg as labelled; a dose prescribed per m² must be multiplied by the body surface area first. There is no effect site and no band.
+Plasma gemcitabine in mcg/mL (mg/L). Doses are entered in mg as labelled; a dose prescribed per m² or per kg can be entered as such (mg/m², mg/kg; body surface area by Mosteller, from the Patient Profile's weight and height). There is no effect site and no band.
 
 ### Covariates
 

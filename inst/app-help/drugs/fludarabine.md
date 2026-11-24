@@ -12,7 +12,7 @@ The paper's text says the eGFR enters its equation "as L/h/kg", which would make
 
 ### Kidney function
 
-The eGFR is the paper's own: Cockcroft-Gault from 17 years in girls and 14 in boys, the Schwartz equation below that, each with the patient's own serum creatinine (a blank field is the library's assumed normal creatinine for age and sex). It is capped at 140 mL/min/1.73 m², a cap that rises from 35 at birth to 140 at 18 months and falls by 8 per decade after 30.
+The eGFR is the paper's own: Cockcroft-Gault, standardised to 70 kg (the papers give the eGFR "in L/hour/70 kg", the size entering once through the weight term on the whole clearance), from 17 years in girls and 14 in boys, the Schwartz equation below that, each with the patient's own serum creatinine (a blank field is the library's assumed normal creatinine for age and sex). It is capped at 140 mL/min/1.73 m², a cap that rises from 35 at birth to 140 at 18 months and falls by 8 per decade after 30.
 
 ### Dose: fludarabine phosphate
 

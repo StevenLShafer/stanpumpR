@@ -1145,6 +1145,14 @@ app_server <- function(input, output, session) {
     input$sex
   })
 
+  # The derived body size line under Sex (BSA and BMI), blank while weight
+  # or height is not a valid entry.
+  output$bodySize <- renderUI({
+    w <- asScalarNumeric(input$weight) * asScalarNumeric(input$weightUnit)
+    h <- asScalarNumeric(input$height) * asScalarNumeric(input$heightUnit)
+    HTML(bodySizeSummary(w, h))
+  })
+
   # The Opioid tolerance field: each opioid's MEAC times its factor
   # (OPIOID_TOLERANCE_FACTORS).  "none" until the field reports, and for
   # bookmarks made before it existed.
@@ -4075,7 +4083,7 @@ app_server <- function(input, output, session) {
         title = "Drug Thresholds",
         p("Set the threshold concentration for each drug."),
         p(class = "small text-muted",
-          "Inhaled agents are in %, shown for this patient's age; the MAC row is in MAC equivalents (multiples of the age-adjusted MAC)."),
+          "Inhaled agents are in %, shown for this patient's age at 37 \u00b0C; the plot moves them with body temperature as MAC moves. The MAC row is in MAC equivalents (multiples of the age-adjusted MAC)."),
         # identical() and isTRUE(): either value, not as a browser sends it,
         # stopped this observer and ended the session (Carbon's UI audit,
         # 2026-11-14, F6E)

@@ -88,3 +88,15 @@ test_that("Urien's size-free parameters are anchored at her 43 patients (A2-F4)"
   expect_equal(b(TRUE), cisplatinBound(w, 168, 58, "female", adjustToFFM = FALSE,
                                        creatinine = 1)$PK$default$v1)
 })
+
+test_that("in pregnancy fm/Vm follows Urien's CLCr^-0.36 (Gemini audit F16)", {
+  a <- cisplatin(65, 165, 30, "female")
+  b <- cisplatin(65, 165, 30, "female", pregnant = TRUE)
+  ka <- a$metabolite$kFormation / a$PK$default$cl1
+  kb <- b$metabolite$kFormation / b$PK$default$cl1
+  expect_equal(kb / ka, 1.5^-0.36)
+  # a measured creatinine already carries pregnancy: nothing more is applied
+  c1 <- cisplatin(65, 165, 30, "female", creatinine = 0.6)
+  c2 <- cisplatin(65, 165, 30, "female", creatinine = 0.6, pregnant = TRUE)
+  expect_equal(c2$metabolite$kFormation, c1$metabolite$kFormation)
+})

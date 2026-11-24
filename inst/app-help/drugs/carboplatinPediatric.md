@@ -9,7 +9,7 @@ The paper names its reference weight only as the population's median weight. 15.
 
 ### What is plotted
 
-Unbound plasma carboplatin in mcg/mL (mg/L). Doses are entered in mg or as an infusion rate; a dose prescribed per kg or per m² must be converted first. Dosing aims at an exposure (an AUC), which is not drawn; there is no band.
+Unbound plasma carboplatin in mcg/mL (mg/L). Doses are entered in mg or as an infusion rate; a dose prescribed per kg or per m² can be entered as such (mg/m², mg/kg; body surface area by Mosteller, from the Patient Profile's weight and height). Dosing aims at an exposure (an AUC), which is not drawn; there is no band.
 
 ### Where to be careful
 

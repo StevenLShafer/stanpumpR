@@ -24,8 +24,10 @@ methadone(
 \item{sex}{sex as a string (used only for the fat-free-mass weight)}
 
 \item{adjustToFFM}{\code{TRUE} (the default) evaluates Henthorn's weight
-term on V3 at the pharmacokinetic weight; \code{FALSE} at total body
-weight.  No other parameter is size scaled.}
+term on V3 at the pharmacokinetic weight and scales every other volume
+and clearance to fat-free mass, anchored at Henthorn's cohort;
+\code{FALSE} evaluates the V3 term at total body weight and scales
+nothing else.}
 
 \item{pregnant}{is the patient pregnant?  \code{TRUE} multiplies the
 clearance of both enantiomers by 24/14 before the racemic reduction

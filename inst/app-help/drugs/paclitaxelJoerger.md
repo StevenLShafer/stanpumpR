@@ -13,7 +13,7 @@ The model reproduces the paper's own simulations. For 175 mg/m² over 3 hours at
 
 ### What is plotted
 
-Total plasma paclitaxel in mcg/mL (mg/L); 0.1 µmol/L is 0.085 mcg/mL and 0.05 µmol/L is 0.043 mcg/mL. Doses are entered in mg or as an infusion rate; a dose prescribed per m² must be multiplied by the body surface area first. The time above 0.05 or 0.1 µmol/L relates to neutropenia, but it is a duration, not a concentration band, and is not drawn. There is no effect site.
+Total plasma paclitaxel in mcg/mL (mg/L); 0.1 µmol/L is 0.085 mcg/mL and 0.05 µmol/L is 0.043 mcg/mL. Doses are entered in mg or as an infusion rate; a dose prescribed per m² or per kg can be entered as such (mg/m², mg/kg; body surface area by Mosteller, from the Patient Profile's weight and height). The time above 0.05 or 0.1 µmol/L relates to neutropenia, but it is a duration, not a concentration band, and is not drawn. There is no effect site.
 
 ### Covariates
 
@@ -25,6 +25,7 @@ Total plasma paclitaxel in mcg/mL (mg/L); 0.1 µmol/L is 0.085 mcg/mL and 0.05 �
 
 ### Where to be careful
 
+- **Interactions are not modelled.** Paclitaxel is metabolised by CYP2C8 and CYP3A4; the label advises caution with their inhibitors (gemfibrozil, among others) and inducers. The enzyme-inducing antiseizure drugs lower paclitaxel exposure, and the library's antiseizure interactions do not reach paclitaxel.
 - **Solvent-based paclitaxel only.** Albumin-bound (nab-) paclitaxel has a different disposition, and Cremophor's own nonlinearity is part of what this model describes.
 - **The paper's Results swap two labels**, calling the sex-dependent transport Km (0.83 and 1.74 µmol/L) the elimination Km. Its Table 2 and covariate equations are right and are used; only they reproduce its figures.
 - **Concurrent drugs** (carboplatin in some patients, CYP2C8 and CYP3A4 inhibitors) were not covariates.

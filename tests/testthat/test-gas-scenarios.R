@@ -57,15 +57,42 @@ test_that("there are five scenarios, each well formed", {
 })
 
 
+# GasMan's own output (gasman_run, built from gasmanonline commit d3a2dd3, run
+# on 2026-10-05), frozen in inst/validation/gasman_cpp_fixture.csv.  Until
+# 2026-11-23 the tests held the engine to the R baseline only, so a number
+# mistranscribed into both R restatements would have passed (ChatGPT's
+# gas-engine audit of 2026-11-23, A-04).  The baseline restates GasMan to
+# 0.062% of a compartment's peak (fat, GasMan's float32 accumulation; the
+# rest under 0.004%).
+GAS_SCENARIO_BASELINE_CPP_TOLERANCE <- 0.1
+
+gasCppFixtureFile <- function() {
+  f <- system.file("validation", "gasman_cpp_fixture.csv", package = "stanpumpR")
+  if (!nzchar(f)) f <- "../../inst/validation/gasman_cpp_fixture.csv"
+  if (!file.exists(f)) skip("GasMan C++ fixture not available")
+  f
+}
+
 test_that("the engine tracks GasMan at its native tick in all five scenarios, in both circuits", {
   env <- gasScenarioEnv()
+  fx <- env$gasCppFixture(gasCppFixtureFile())
+  expect_equal(nrow(fx), 520)
   for (circuit in c("ideal", "semi-closed")) for (s in env$gasEngineScenarios()) {
     eng <- env$gasScenarioEngine(s, circuit = circuit)
     gm  <- env$gasScenarioBaseline(s, dt = 0.1, circuit = circuit)
     for (g in s$agents) for (cmp in env$GAS_SCENARIO_COMPARTMENTS) {
       e <- eng[eng$Agent == g, cmp]; m <- gm[gm$Agent == g, cmp]
-      expect_lt(pctOfPeak(e, m, m), GAS_SCENARIO_NATIVE_TOLERANCE,
-                label = paste(circuit, "scenario", s$id, g, cmp, "percent of peak"))
+      what <- paste(circuit, "scenario", s$id, g, cmp, "percent of peak")
+      expect_lt(pctOfPeak(e, m, m), GAS_SCENARIO_NATIVE_TOLERANCE, label = what)
+      # Against GasMan itself, at the same minutes
+      cpp <- env$gasCppFixtureAt(fx, data.frame(
+        Circuit = circuit, Scenario = s$id, Agent = g,
+        Minute = eng$Time[eng$Agent == g], Compartment = cmp))
+      expect_false(anyNA(cpp), label = paste(what, "has every fixture row"))
+      expect_lt(pctOfPeak(m, cpp, cpp), GAS_SCENARIO_BASELINE_CPP_TOLERANCE,
+                label = paste("baseline", what, "against GasMan C++"))
+      expect_lt(pctOfPeak(e, cpp, cpp), GAS_SCENARIO_NATIVE_TOLERANCE,
+                label = paste("engine", what, "against GasMan C++"))
     }
   }
 })

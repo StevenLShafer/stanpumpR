@@ -32,7 +32,8 @@ once.
 Do not enter one change twice. If a drug's model reads the serum
 creatinine, entering a raised creatinine already lowers its renal
 clearance; lowering the **Renal function** slider as well counts the
-impairment twice.
+impairment twice. The same holds for the **Serum AST** and the **Liver
+function** slider for a drug whose model reads the AST (epirubicin).
 
 The sliders change each drug's pharmacokinetic **parameters**, once, before
 the simulation runs. As with any covariate, the parameters then stay fixed
@@ -69,6 +70,20 @@ renal blood flow, below). For a
 drug given by mouth whose bioavailability includes a hepatic first pass
 (morphine), the new extraction ratio E′ = *l* E / (*q* (1 − E) + *l* E) also
 changes the oral bioavailability, F′ = F (1 − E′)/(1 − E), never above 1.
+
+Two limits of the liver slider matter for the chemotherapy drugs.
+
+- **Prodrugs.** Cyclophosphamide and dacarbazine are activated in the
+  liver. Lowering the slider raises the plotted parent drug, but the active
+  metabolite, which is not plotted, falls.
+- **What the studies found.** For some drugs, studies of patients with
+  liver disease found no change in pharmacokinetics where the slider
+  predicts one. Topotecan's clearance was unchanged in hepatic impairment
+  (the Hycamtin label; O'Reilly 1996). Vinorelbine's was unchanged in liver
+  dysfunction (Kitzen 2010; Gong 2019). Etoposide's total clearance was
+  unchanged in obstructive jaundice, because more drug left in the urine
+  (Hande 1990). For these drugs the slider shows what the well-stirred
+  model predicts, not what was measured.
 
 ## The kidneys
 
@@ -299,6 +314,19 @@ faster than solubility rises. So a given inspired concentration is a deeper
 anesthetic in a hypothermic patient. Dialled to the same multiple of MAC, as
 the chapter says, induction is slower, most for the soluble agents.
 
+**The thresholds move with MAC.** An inhaled agent's threshold for the time
+until threshold, the default or one you type, is its value at 37 °C, which is
+the value clinicians know: nobody knows what a tenth of sevoflurane's MAC is at
+32 °C. It moves with temperature exactly as MAC does, as it already moves with
+age, so a tenth of MAC stays a tenth of MAC. Sevoflurane's default at age 40,
+0.18 per cent at 37 °C, is 0.138 per cent at 32 °C; after half an hour at
+2 per cent in 6 L/min of oxygen (70 kg) the brain takes 12.8 minutes to fall to it, against 11.2 to 0.18 per
+cent and 10.7 at 37 °C. With a temperature event, each moment's threshold is
+the one at the temperature in force then. The summed MAC series and its
+threshold, 0.1 MAC, follow temperature through the MAC they divide by. (Until
+24 November 2026 a threshold was held at its typed tension whatever the
+temperature, so at 32 °C the default was 0.13 of MAC.)
+
 **Not modelled.** Cardiac output and
 ventilation also fall with metabolism in hypothermia, but they have their own
 controls (the Cardiac output slider and the ventilation row), so they are not
@@ -306,9 +334,7 @@ counted twice. Lower them yourself to match the patient. The coupling is left
 to you on purpose: fever raises cardiac output and cooling would by the same
 logic lower it, but the two have different causes (inflammation, and heat lost
 to the room), so stanpumpR does not tie one slider to the other. The fall in brain
-blood flow is not modelled either. A threshold for the time until threshold is
-a tension you typed and does not move with MAC; the summed MAC series and its
-threshold do. GasMan models none of this:
+blood flow is not modelled either. GasMan models none of this:
 its source code mentions temperature only in the vaporiser's vapour pressure.
 
 ## Altitude and the inhaled anesthetics
@@ -587,7 +613,8 @@ physiology.
 
 **The remaining anaesthetic drugs** (2026-11-18): fentanyl, hydromorphone,
 ketamine, rocuronium and vecuronium now have computed extraction ratios
-(0.39, 0.48, 0.54, 0.50 and 0.46), and sufentanil has Lange's measured 0.92
+(0.39, 0.48, 0.54, 0.50 and 0.46; rocuronium's 0.21 since its model became
+Kleijn 2011 on 2026-11-23), and sufentanil has Lange's measured 0.92
 with 62% of its clearance hepatic. Hydromorphone's blood-to-plasma ratio is
 1.35. Rocuronium and vecuronium were measured in plasma and are quaternary
 amines, which stay out of red cells, so their ratio is taken as
@@ -650,12 +677,21 @@ Cook DJ, Proper JA, Orszulak TA, Daly RC, Oliver WC. Effect of pump flow rate
 on cerebral blood flow during hypothermic cardiopulmonary bypass in adults.
 *J Cardiothorac Vasc Anesth* 1997;11:415-9. doi:10.1016/s1053-0770(97)90047-1
 
-Eger EI II, Shafer SL. The evolution of pharmacokinetics. Chapter 8 of Eger's
-scientific autobiography, manuscript, 2017.
-
 Eger EI II, Severinghaus JW. Effect of uneven pulmonary distribution of blood
 and gas on induction with inhalation anesthetics. *Anesthesiology*
 1964;25:620-6.
+
+Eger EI II, Shafer SL. The evolution of pharmacokinetics. Chapter 8 of Eger's
+scientific autobiography, manuscript, 2017.
+
+Gong J, Cho M, Gupta R, Synold TW, Frankel P, Ruel C, Fakih M, Chung V, Lim D,
+Chao J. A pilot study of vinorelbine safety and pharmacokinetics in patients
+with varying degrees of liver dysfunction. *Oncologist* 2019;24:1137-1145.
+doi:10.1634/theoncologist.2018-0336
+
+Hande KR, Wolff SN, Greco FA, Hainsworth JD, Reed G, Johnson DH. Etoposide
+kinetics in patients with obstructive jaundice. *J Clin Oncol*
+1990;8:1101-7. doi:10.1200/JCO.1990.8.6.1101
 
 Hiraoka H, Yamamoto K, Miyoshi S, et al. Kidneys contribute to the
 extrahepatic clearance of propofol in humans, but not lungs and brain.
@@ -666,6 +702,11 @@ James MF, Manson ED, Dennett JE. Nitrous oxide analgesia and altitude.
 
 James MF, White JF. Anesthetic considerations at moderate altitude.
 *Anesth Analg* 1984;63:1097-105. PMID 6239572
+
+Kitzen JJ, Puozzo C, de Jonge MJ, Brandely M, Verweij J. Mild to moderate
+liver dysfunction does not require dose reduction of oral or intravenous
+vinorelbine: results of a pharmacokinetic study. *Eur J Cancer*
+2010;46:266-9. doi:10.1016/j.ejca.2009.10.031
 
 Levine BD, Giller CA, Lane LD, Buckey JC, Blomqvist CG. Cerebral versus
 systemic hemodynamics during graded orthostatic stress in humans.
@@ -683,6 +724,14 @@ Ogoh S, Brothers RM, Barnes Q, et al. The effect of changes in cardiac output
 on middle cerebral artery mean blood velocity at rest and during exercise.
 *J Physiol* 2005;569:697-704. doi:10.1113/jphysiol.2005.095836
 
+O'Reilly S, Rowinsky E, Slichenmyer W, et al. Phase I and pharmacologic
+studies of topotecan in patients with impaired hepatic function. *J Natl
+Cancer Inst* 1996;88:817-24. doi:10.1093/jnci/88.12.817
+
+Stoelting RK, Longnecker DE. Effect of right-to-left shunt on rate of
+increase in arterial anesthetic concentration. *Anesthesiology*
+1972;36:352-6.
+
 Takizawa D, Hiraoka H, Goto F, Yamamoto K, Horiuchi R. Human kidneys play an
 important role in the elimination of propofol. *Anesthesiology*
 2005;102:327-30. doi:10.1097/00000542-200502000-00014
@@ -691,25 +740,21 @@ Vlastra W, van Nieuwkerk AC, Bronzwaer AGT, et al. Cerebral blood flow in
 patients with severe aortic valve stenosis undergoing transcatheter aortic
 valve implantation. *J Am Geriatr Soc* 2021;69:494-9. doi:10.1111/jgs.16882
 
-Wilkinson GR, Shand DG. Commentary: a physiological approach to hepatic drug
-clearance. *Clin Pharmacol Ther* 1975;18:377-90.
-
-Stoelting RK, Longnecker DE. Effect of right-to-left shunt on rate of
-increase in arterial anesthetic concentration. *Anesthesiology*
-1972;36:352-6.
-
 West JB. Prediction of barometric pressures at high altitude with the use of
 model atmospheres. *J Appl Physiol* 1996;81:1850-4.
 doi:10.1152/jappl.1996.81.4.1850
+
+Wilkinson GR, Shand DG. Commentary: a physiological approach to hepatic drug
+clearance. *Clin Pharmacol Ther* 1975;18:377-90.
 
 Williams LR, Leggett RW. Reference values for resting blood flow to organs of
 man. *Clin Phys Physiol Meas* 1989;10:187-217.
 doi:10.1088/0143-0815/10/3/001
 
-Zhou JX, Liu J. The effect of temperature on solubility of volatile
-anesthetics in human tissues. *Anesth Analg* 2001;93:234-8.
-doi:10.1097/00000539-200107000-00047
-
 Zhou J, Liu Y, Liu J. Combined effect of hypothermia and crystalloid
 hemodilution on the solubility of volatile anesthetics in human blood.
 *Chin Med J (Engl)* 2002;115:1014-9.
+
+Zhou JX, Liu J. The effect of temperature on solubility of volatile
+anesthetics in human tissues. *Anesth Analg* 2001;93:234-8.
+doi:10.1097/00000539-200107000-00047

@@ -8,7 +8,7 @@ Nitrous oxide 4 L/min with oxygen 2 L/min, a fresh gas of two-thirds nitrous oxi
 
 **The amounts are litres.** Nitrous oxide is inspired at two-thirds of an atmosphere, not 2 per cent, so the flows are hundreds of mL a minute: 549 mL/min into the vessel-rich group at one minute. In the first ten minutes the patient takes up 6.3 L of the gas, and 16.4 L by the hour. That bulk uptake is what concentrates the gases left behind in the lungs, the concentration and second gas effects.
 
-**Nitrous oxide alone is not an anesthetic.** At 66 per cent end-tidal, the readout gives 0.60 MAC: its MAC, 110 per cent at this age, is above one atmosphere.
+**Nitrous oxide alone is not an anesthetic.** At 66 per cent end-tidal, the readout gives 0.64 MAC: its MAC, 104 per cent at this age, is above one atmosphere.
 
 ## Try next
 

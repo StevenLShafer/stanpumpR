@@ -2,7 +2,7 @@
 % Please edit documentation in R/drugs_liothyronine.R
 \name{liothyronine}
 \alias{liothyronine}
-\title{Liothyronine (Van Tassell 2019)}
+\title{Liothyronine (Van Tassell 2019 oral, Nicoloff 1972 intravenous)}
 \usage{
 liothyronine(weight, height, age, sex, adjustToFFM = TRUE)
 }
@@ -26,8 +26,9 @@ it also sets the weight the creatinine-clearance estimate uses.}
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-Two compartments with a lagged first-order absorption, fitted at steady
-state in thyroidectomised patients on liothyronine alone; total serum T3
-above the patient's baseline.  See the header of
-\code{R/drugs_liothyronine.R}.
+Oral doses: two compartments with a lagged first-order absorption, fitted
+at steady state in thyroidectomised patients on liothyronine alone.
+Intravenous doses: one compartment from patients with primary
+hypothyroidism.  Total serum T3 above the patient's baseline.  See the
+header of \code{R/drugs_liothyronine.R}.
 }

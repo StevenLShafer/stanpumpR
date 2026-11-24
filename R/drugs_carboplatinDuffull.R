@@ -49,9 +49,11 @@
 # coefficient, which reads as a copying error.  So the equation's form is
 # kept and Table 2 sets its level: 4.4 (LBW/56)^0.75, a coefficient of 0.215.
 # Clic shapes only the distribution phase; the AUC, and so Calvert dosing,
-# depends on Cl alone.  (A published erratum was reported for this paper by
-# the handoff behind docs/chemotherapy.md; none could be found, in PubMed or
-# in the paper.)
+# depends on Cl alone.  A published erratum exists, Cancer Chemother
+# Pharmacol 1997;41(1):91: MEDLINE lists it under "Erratum in", and it has
+# no PMID of its own, which is why the PubMed search of 2026-11-06 missed it
+# (Gemini's chemotherapy audit of 2026-11-23, F21).  It has not been read; it
+# may settle Clic, and is in the registry row's to_obtain.
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================

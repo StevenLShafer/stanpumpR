@@ -16,7 +16,7 @@ The list will be revisited every week or so. Each drug is still added the ordina
 
 | File | What it is | Edited by |
 |---|---|---|
-| `combination-only.csv` | One row per component given only in a combination product (Steven L. Shafer, 2026-11-18 and 2026-11-23: "Clavulanate isn't given as a drug by itself, so it should not be included in stanpumpR"). Gives its role, the US products that carry it, whether DailyMed has a single-ingredient label, and `status`: `not_included`, or `decision` for a booster labelled alone (cobicistat, ritonavir). | Hand, checked against DailyMed. The cross-check reads it to set apart these components in `docs/nlmixr2lib/missing-drugs.md`. |
+| `combination-only.csv` | One row per component given only in a combination product (Steven L. Shafer, 2026-11-18 and 2026-11-23: "Clavulanate isn't given as a drug by itself, so it should not be included in stanpumpR"). Gives its role, the US products that carry it, whether DailyMed has a single-ingredient label, and `status`: `not_included`, or `included` for a component kept as a drug of its own (ritonavir, a booster labelled alone). | Hand, checked against DailyMed. The cross-check reads it to set apart these components in `docs/nlmixr2lib/missing-drugs.md`. |
 | `plan.csv` | One row per planned drug. Gives its category, the names nlmixr2lib files it under, priority, `status` and notes (product, dose basis, US approval). `status` is `planned`, `in_progress`, `blocked`, `done`, `library_change` for a change to a drug the library already has, which needs no paper, or `not_included` for a drug decided against (a component given only in a combination with no US product, as piperaquine; `combination-only.csv`). The candidates script and the weekly routine leave the last two alone. | Hand. The weekly routine updates `status`. |
 | `candidates.csv` | Every nlmixr2lib model of every planned drug, ranked by study size. `pick` marks the papers to get first: the largest study, and the most recent if that is another paper. | `data-raw/libraryExpansionCandidates.R` |
 | `outpatient-leads.csv` | The papers and FDA documents ChatGPT's report gave for each outpatient drug, one row per lead, with the report's evidence letter (P population fit, C compartmental, D descriptive, R FDA review or label) and what was checked. For a drug nlmixr2lib does not model, these are the papers to get. | Hand, from the report. |
@@ -98,7 +98,7 @@ On 2026-11-23 Steven applied the rule to the rest of the plan ("Augmentin is a g
 - **Coartem** (artemether/lumefantrine) replaces the artemether and lumefantrine rows; which analyte its curve shows is a `[decision]` on the row.
 - **Kaletra** (lopinavir/ritonavir) and **Paxlovid** (nirmatrelvir/ritonavir) replace the lopinavir and nirmatrelvir rows; their curves are lopinavir and nirmatrelvir.
 - **Piperaquine** is `not_included`: its only product, Eurartesim (with dihydroartemisinin), is not US-approved.
-- Cobicistat and ritonavir are labelled alone (Tybost, Norvir) though given almost only as boosters: `decision` in `combination-only.csv`, for Steven.
+- Cobicistat and ritonavir are labelled alone (Tybost, Norvir) though given almost only as boosters. Steven decided on 2026-11-23: cobicistat is `not_included` ("Leave out Cobicistat"), and ritonavir is `included`, a drug of its own with a row in `plan.csv` ("I would leave ritonavir in as a model, because the pharmacokinetics of CYP3A4 inhibition are interesting").
 
 ## Downloading
 

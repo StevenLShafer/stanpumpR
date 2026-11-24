@@ -7,17 +7,18 @@ noEvents <- data.frame(Time = double(), Event = character())
 simulate <- function(mg = 90, hours = 14 * 24) {
   dose <- data.frame(Drug = "doxorubicinLiposomal", Time = c(0, 60), Dose = c(mg, 0),
                      Units = "mg/hr")
-  simulateDrugsWithCovariates(dose, noEvents, 60, 165, 55, "female", hours * 60, FALSE)
+  simulateDrugsWithCovariates(dose, noEvents, 60, 165, 55, "female", hours * 60, FALSE,
+                              adjustToFFM = FALSE)
 }
 
 test_that("Table I, with the encapsulated 98% written exactly", {
-  X <- doxorubicinLiposomal(60, 165, 55, "female")
+  X <- doxorubicinLiposomal(60, 165, 55, "female", adjustToFFM = FALSE)
   d <- X$PK$default; p <- DOXORUBICIN_LIPOSOMAL_HSU
   expect_equal(d$cl1 / d$v1 * 60, 0.0212 / 2.52)               # k10 = Rel / V1
   expect_equal(log(2) / (d$cl1 / d$v1) / 60, 82.4, tolerance = 0.01)  # release half-life, h
   expect_equal(X$metabolite$kFormation * 60, 0.98 * 0.0212 / 2.52)
   expect_equal(X$metabolite$directFraction, 0.02)
-  f <- doxorubicinLiposomalFree(60, 165, 55, "female")$PK$default
+  f <- doxorubicinLiposomalFree(60, 165, 55, "female", adjustToFFM = FALSE)$PK$default
   expect_equal(c(f$v1, f$v2, f$cl1 * 60, f$cl2 * 60), c(9.52, 35.1, 2.68, 2.87))
 })
 
@@ -79,4 +80,20 @@ test_that("a chemotherapy drug of its own; its free doxorubicin is not offered",
   expect_identical(free$Concentration.Units, "ng")
   expect_match(getDrugPK("doxorubicinLiposomal", 60, 165, 55, "female")$reference, "Hsu")
   expect_true("doxorubicinLiposomal" %in% METABOLITE_FORMATION_BASIS$parent)
+})
+
+test_that("scaled to fat-free mass at the reference anchor, jointly (Gemini audit F5)", {
+  sz <- pkSizeFactors(60, 165, 55, "female", TRUE, legacyVolume = 1, legacyClearance = 1)
+  on <- doxorubicinLiposomal(60, 165, 55, "female")
+  off <- doxorubicinLiposomal(60, 165, 55, "female", adjustToFFM = FALSE)
+  expect_equal(on$PK$default$v1, off$PK$default$v1 * sz$volume)
+  expect_equal(on$PK$default$cl1, off$PK$default$cl1 * sz$clearance)
+  expect_equal(on$metabolite$kFormation,
+               off$metabolite$kFormation * sz$clearance / sz$volume)
+  fon <- doxorubicinLiposomalFree(60, 165, 55, "female")$PK$default
+  foff <- doxorubicinLiposomalFree(60, 165, 55, "female", adjustToFFM = FALSE)$PK$default
+  expect_equal(fon$v1, foff$v1 * sz$volume)
+  expect_equal(fon$cl1, foff$cl1 * sz$clearance)
+  # the reference man receives the published values
+  expect_equal(doxorubicinLiposomal(70, 170, 35, "male")$PK$default$v1, 2.52 / 0.98)
 })

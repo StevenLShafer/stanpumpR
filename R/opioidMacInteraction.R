@@ -169,12 +169,15 @@ applyOpioidMacInteraction <- function(gasEntries, drugs)
   # unadjusted MAC divided by (1 - R), so it falls to the threshold when the
   # unadjusted MAC falls to threshold * (1 - R).
   #
-  # APPROXIMATION: R is held at its value at the moment delivery stops.  In
-  # truth the opioid would stop too and its effect would wane, so MAC would
-  # recover and the adjusted value fall FASTER than this says.  Doing that
-  # properly needs the opioids' own washout curves, which the intravenous
-  # engines do not expose; until they do, this errs on the side of a longer
-  # time.
+  # APPROXIMATION: R is held at its value at the moment delivery stops, though
+  # the opioid's effect-site concentration goes on changing.  The error has no
+  # fixed direction: where the opioid is waning the adjusted MAC falls FASTER
+  # than this says and the time reads long, and where its effect-site
+  # concentration is still rising (a bolus just given) it falls slower and the
+  # time reads short, as inst/app-help/models/opioid-mac.md says.  Until
+  # 2026-11-23 this comment said it always erred long (ChatGPT's gas-engine
+  # audit of 2026-11-23, D-01).  Doing it properly needs the opioids' own
+  # washout curves, which the intravenous engines do not expose.
   recovery <- NULL
   if (!is.null(mac$washout))
     recovery <- macRecoveryTime(mac$washout, mac$age, mac$endCe * (1 - R))

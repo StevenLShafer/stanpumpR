@@ -9,7 +9,7 @@ At the study's mean covariates clearance is 36.7 L/h, and the half-lives are 6 m
 
 ### What is plotted
 
-Plasma docetaxel in mcg/mL (mg/L). Doses are entered in mg or as an infusion rate; a dose prescribed per m² must be multiplied by the body surface area first. There is no effect site and no band.
+Plasma docetaxel in mcg/mL (mg/L). Doses are entered in mg or as an infusion rate; a dose prescribed per m² or per kg can be entered as such (mg/m², mg/kg; body surface area by Mosteller, from the Patient Profile's weight and height). There is no effect site and no band.
 
 ### Covariates
 

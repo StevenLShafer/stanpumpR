@@ -21,11 +21,25 @@
 # creatinine 1.0, 0.7-1.26 mg/dL; Cockcroft-Gault creatinine clearance 92.4,
 # 64.3-306 mL/min) given 60-120 mg intravenously over 1 h by the package
 # insert, then two oral doses 12 h apart; 99 plasma samples by UPLC-MS/MS
-# (LLOQ 5 ng/mL).  NONMEM, two compartments.  Table 2:
+# (LLOQ 5 ng/mL).  NONMEM, two compartments.  Table 2, with the two
+# exponents from the authors' final control stream (Data S1):
 #
-#     CL = 9.5 L/h x (CrCl / 92.4)^0.7     (CrCl by Cockcroft-Gault, mL/min)
-#     Vc = 38.2 L x (WT / 104)^1.1
+#     CL = 9.5 L/h x (CrCl / 92.4)^0.65    (CrCl by Cockcroft-Gault, mL/min)
+#     Vc = 38.2 L x (WT / 104)^1.2
 #     Q  = 71.3 L/h        Vp = 89.1 L
+#
+# THE EXPONENTS (2026-11-23).  The paper prints them twice and disagrees with
+# itself: Table 2 gives 0.7 on CL and 1.1 on Vc; the "final parameter
+# estimate" column of Table 3 gives 0.7 and 1.2.  Data S1, the final NONMEM
+# model, carries them to two digits as its $THETA values: 0.65 and 1.2
+# (its other values, 9.5, 38, 71 and 89, are Table 2's to two figures, so
+# the file is the final fit's, not a starting guess).  0.65 rounds to Table
+# 2's 0.7; the weight exponent sits near 1.15, which Table 2 rounds down and
+# Table 3 and Data S1 round up.  The control stream is used: it is the
+# authors' own model file and carries the most digits.  Its F1 (1.6) is
+# Table 2's, and Table 3 prints 1.5; neither is used (below).  nlmixr2lib
+# reads the same values from Data S1.  Raised by the nlmixr2lib audit
+# (docs/nlmixr2lib/audit.md); supplements read 2026-11-23.
 #
 # Sotalol is not metabolised and is excreted unchanged in the urine, so the
 # renal term is its whole clearance.  The paper's oral absorption cannot be
@@ -82,13 +96,13 @@
 # mL/min/kg, the same direction and larger.
 # -----------------------------------------------------------------------------
 
-# Yellepeddi 2025, Table 2
+# Yellepeddi 2025, Table 2 and Data S1
 SOTALOL_CL       <- 9.5     # L/h at a creatinine clearance of 92.4 mL/min
 SOTALOL_CRCL_REF <- 92.4    # mL/min
-SOTALOL_CRCL_EXP <- 0.7
+SOTALOL_CRCL_EXP <- 0.65   # Data S1 (Table 2 rounds it to 0.7)
 SOTALOL_VC       <- 38.2    # L at 104 kg
 SOTALOL_WT_REF   <- 104     # kg
-SOTALOL_VC_EXP   <- 1.1
+SOTALOL_VC_EXP   <- 1.2    # Data S1 and Table 3 (Table 2 prints 1.1)
 SOTALOL_Q        <- 71.3    # L/h
 SOTALOL_VP       <- 89.1    # L
 # FDA Clinical Pharmacology Review, NDA 22-306, Table 9
@@ -141,8 +155,8 @@ sotalol <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   reference <- paste0(
     "Yellepeddi VK et al. (PEAKS), CPT Pharmacometrics Syst Pharmacol ",
-    "2025;14:658-667: two compartments, CL 9.5 L/h x (Cockcroft-Gault CrCl/92.4)^0.7, ",
-    "Vc 38.2 L x (WT/104)^1.1, Q 71.3 L/h, Vp 89.1 L; oral F 1 (Betapace ",
+    "2025;14:658-667: two compartments, CL 9.5 L/h x (Cockcroft-Gault CrCl/92.4)^0.65, ",
+    "Vc 38.2 L x (WT/104)^1.2 (exponents from its Data S1), Q 71.3 L/h, Vp 89.1 L; oral F 1 (Betapace ",
     "label), ka 0.605 /h and lag 0.231 h (FDA review of NDA 22-306); doses ",
     "are sotalol hydrochloride; ", creatinineNote, ". ",
     "https://doi.org/10.1002/psp4.13302"
