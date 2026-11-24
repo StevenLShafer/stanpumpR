@@ -572,8 +572,11 @@ What "turned off" means for a gas (S. Shafer, 2026-10-05):
 | oxygen | Not timed | none |
 
 All of these can be changed in the Drug Thresholds dialog. The volatile agents
-are shown there at the patient's age, so the number in the dialog is the number
-on the plot; they follow MAC if the age is changed. Nitrous oxide comes off fast
+are shown there at the patient's age and at 37 °C, the values clinicians know;
+they follow MAC if the age is changed, and on the plot every potent gas's
+threshold moves with body temperature as its MAC does, so the number in the
+dialog is the number on the plot only at 37 °C (sevoflurane's 0.18% at age 40
+is drawn at 0.138% at 32 °C). Nitrous oxide comes off fast
 enough that its threshold matters little.
 
 Every line is calculated by simulating it: the agent is turned off at each
@@ -648,8 +651,12 @@ Consequences worth knowing when comparing the two side by side:
   concentration of 0.47% at one minute and 1.59% at thirty; with the ideal
   circuit, here and in GasMan, it is 1.09% and 1.71%.
 
-- To reproduce a GasMan MAC value, set the age to 40, where the age adjustment
-  is exactly 1, and compare one agent at a time.
+- To compare MAC equivalents with GasMan, set the age to 40, where the age
+  adjustment is exactly 1, and the temperature to 37 °C, and compare one agent
+  at a time. Even then the MAC values differ (the table above): multiply
+  GasMan's MAC equivalents by its MAC over the one here (sevoflurane 2.1/1.8,
+  isoflurane 1.1/1.17, desflurane 6.0/6.6, nitrous oxide 110/104), or compare
+  the tensions, which do not depend on MAC.
 - Leave GasMan's vapour-volume option **off**, its default. In the low-flow
   desflurane validation scenario (8% at 0.5 L/min after ten minutes at 6% and
   4 L/min) turning it on raises GasMan's alveolar desflurane at 60 minutes

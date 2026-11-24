@@ -20,10 +20,15 @@ gasSubSteps(
 \item{graded}{FALSE for uniform steps, as the uncoupled advance needs (one
 propagator serves them all, and it is exact at any step)}
 
-\item{first, growth}{the first sub-step and the factor between sub-steps}
+\item{first, growth}{the first sub-step and the factor between sub-steps;
+an interval that continues a ramp the one before it did not finish (a row
+that repeats the settings in force) starts at the step that ramp would
+have taken next}
 }
 \value{
-the sub-steps' lengths, summing to \code{len}
+the sub-steps' lengths, summing to \code{len}; where the interval
+ends before the ramp reaches \code{dtNominal}, the attribute
+\code{nextStep} is the step the ramp would take next
 }
 \description{
 The coupled advance holds the summed uptake at its value at the start of

@@ -209,7 +209,10 @@ not defects to be reconciled, and a comparison against GasMan must allow for
 them:
 
 1. **Age-adjusted MAC.** `macForAge()` applies Mapleson's relation; GasMan uses
-   `m_fMAC` raw. Compare at age 40, where the adjustment is exactly 1.
+   `m_fMAC` raw. Compare at age 40, where the adjustment is exactly 1. Since
+   2026-11-23 the MAC at 40 is Mapleson 1996's too, not GasMan's
+   (`GASMAN_MAC40`), so even there MAC equivalents differ by GasMan's MAC over
+   ours; compare tensions, or rescale.
 2. **Summed MAC.** One MAC series, additive across potent agents; GasMan emits
    one row per agent and never sums them. Nitrogen is excluded from the sum.
 3. **Oxygen is modelled**, with metabolic consumption (3.5 mL/kg/min) and a

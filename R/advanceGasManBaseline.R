@@ -407,6 +407,12 @@ advanceGasManBaseline <- function(gasDose, weight = 70, maximum = 60,
       })
       names(fExpTissue) <- agents
 
+      # At the last level GasMan's Calc() skips both of its checks, so the
+      # tick always completes there (GasDoc.cpp: "No more vernier room").
+      # Until 2026-11-24 a check that failed at the last level broke off the
+      # tick after its first sub-step, and that partial tick was recorded as
+      # a whole one (CodeRabbit on PR #858).
+      lastLevel <- nVernier + 1 >= GASMAN_MAX_VERNIER
       ok <- TRUE
       for (nv in seq_len(nSub))
       {
@@ -424,12 +430,12 @@ advanceGasManBaseline <- function(gasDose, weight = 70, maximum = 60,
                           wtFactor = wtFactor,
                           checkFastDecay = checkFastDecay)
           state[[g]] <- r$state
-          if (!r$ok) ok <- FALSE
+          if (!r$ok && !lastLevel) ok <- FALSE
         }
         if (!ok) break
       }
 
-      if (ok || nVernier + 1 >= GASMAN_MAX_VERNIER) break
+      if (ok) break
       state <- saved                      # reject the tick and retry finer
       nVernier <- nVernier + 1
     }

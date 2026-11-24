@@ -66,6 +66,13 @@ caller):
 - **No fresh gas.** GasMan's effective delivered tension is `100 * vapour /
   (FGF * dt)`, and 0 with no flow; both R routines set an open circuit at no flow
   to the dial. *Fixed* in both.
+- **The vernier cap** (found by CodeRabbit on PR #858, a fourth divergence
+  beside these). At the last vernier level GasMan's `Calc` skips both of its
+  checks, so the tick always completes; both R routines kept the checks, and
+  when one failed there they broke off after the first of the 16 sub-steps and
+  recorded that as the whole tick (at 1000 L/min of ventilation the alveolar
+  sevoflurane read 0 after the first tick). *Fixed* in both; no physiological
+  setting reaches it.
 - **Not restated**, and now said in both headers: liquid injection, the flush,
   the vaporiser's expansion of the flow (the standalone's applies it to every
   agent where GasMan applies it only to a liquid, and has no branch at 99% or
@@ -73,7 +80,7 @@ caller):
   equations), GasMan's InitDocument and SetWeight defaults (the routines take
   resolved flows), and GasMan's whole-millisecond tick.
 
-The five validation scenarios do not reach any of the three fixes at 70 kg, and
+The five validation scenarios do not reach any of the four fixes at 70 kg, and
 the restatement still matches the frozen C++ output to the same figures (A-04).
 The report's further proposal, native API fixtures for injection, flush, open
 circuit at no flow and an early and a late change that cross the 0.1 criterion,
@@ -109,7 +116,10 @@ with none in the lungs, so a first step held at that uptake takes none up. The
 sub-steps now start at 0.01 minute at each change of setting and grow by 1.1
 until they reach the plot's own step (`gasSubSteps()`), so each is about a tenth
 of the time since the change; a row that repeats the settings does not restart
-them, and the uncoupled advance keeps its uniform steps. The report's proposal,
+them, and inside the ramp it carries the ramp on (CodeRabbit on PR #858: until
+then such a row dropped to the plot's step, and a row repeating nitrous oxide
+at 2 minutes of a day's plot took the first half hour's error from 0.43 to 4.5
+per cent); the uncoupled advance keeps its uniform steps. The report's proposal,
 an adaptive exponential midpoint, was not needed for this.
 
 Measured against a reference starting at 0.0005 minute and growing by 1.02 to a

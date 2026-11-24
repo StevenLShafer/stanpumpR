@@ -377,6 +377,9 @@ gasman_simulate <- function(agents,
                               sol[[i]][c("VRG", "MUS", "FAT")] * wt_factor))
       })
 
+      # At the last level GasMan skips both checks and the tick completes
+      # (GasDoc.cpp, Calc); a partial tick was recorded until 2026-11-24.
+      last_level <- nv_level + 1 >= GASMAN_MAX_VERNIER
       ok <- TRUE
       for (sub in seq_len(n_sub)) {
 
@@ -397,7 +400,7 @@ gasman_simulate <- function(agents,
                            tot_uptake, circuit, uptake_effect, recirculation,
                            wt_factor, check_fast_decay)
           state[[i]] <- r$state
-          if (!r$ok) ok <- FALSE
+          if (!r$ok && !last_level) ok <- FALSE
 
           cum_uptake[i]    <- cum_uptake[i] + upt[i] * subdt
           cum_delivered[i] <- cum_delivered[i] + del[i] * eff_fgf * subdt / 100
@@ -405,7 +408,7 @@ gasman_simulate <- function(agents,
         if (!ok) break
       }
 
-      if (ok || nv_level + 1 >= GASMAN_MAX_VERNIER) break
+      if (ok) break
       state         <- saved_state       # reject the tick, retry finer
       cum_uptake    <- saved_upt
       cum_delivered <- saved_del

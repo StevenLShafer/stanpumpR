@@ -962,8 +962,13 @@ GAS_STEP_GROWTH <- 1.1
 #' @param dtNominal the plot's step, \code{maximum / resolution}
 #' @param graded FALSE for uniform steps, as the uncoupled advance needs (one
 #'   propagator serves them all, and it is exact at any step)
-#' @param first,growth the first sub-step and the factor between sub-steps
-#' @returns the sub-steps' lengths, summing to \code{len}
+#' @param first,growth the first sub-step and the factor between sub-steps;
+#'   an interval that continues a ramp the one before it did not finish (a row
+#'   that repeats the settings in force) starts at the step that ramp would
+#'   have taken next
+#' @returns the sub-steps' lengths, summing to \code{len}; where the interval
+#'   ends before the ramp reaches \code{dtNominal}, the attribute
+#'   \code{nextStep} is the step the ramp would take next
 #' @keywords internal
 gasSubSteps <- function(len, dtNominal, graded = TRUE,
                         first = GAS_STEP_FIRST, growth = GAS_STEP_GROWTH)
@@ -982,7 +987,9 @@ gasSubSteps <- function(len, dtNominal, graded = TRUE,
   }
   rest <- len - elapsed
   n <- max(1, round(rest / dtNominal))
-  c(h, rep(rest / n, n))
+  out <- c(h, rep(rest / n, n))
+  if (step < dtNominal) attr(out, "nextStep") <- step
+  out
 }
 
 
@@ -1135,6 +1142,8 @@ advanceClosedFormGas <- function(
   # gas-engine audit of 2026-11-23, C-02).
   lastSettings <- NULL
   lastBody <- bodyIndex
+  # The next step of a ramp an interval did not finish, NULL once finished
+  rampStep <- NULL
   for (iv in seq_along(changes))
   {
     t0  <- changes[iv]
@@ -1179,12 +1188,21 @@ advanceClosedFormGas <- function(
     s <- gasSettingsAt(bySetting, t0, deadSpace, ratio)
 
     # The sub-steps restart short only where something changed: a row that
-    # repeats the settings in force carries on at the plot's step
+    # repeats the settings in force carries on where the steps were, inside
+    # the ramp or at the plot's step.  Until 2026-11-24 such a row inside the
+    # ramp jumped to the plot's step (CodeRabbit on PR #858: a row repeating
+    # nitrous oxide at 2 minutes of a day's plot took the first half hour's
+    # error from 0.43 to 4.5 per cent).
     changed <- is.null(lastSettings) || !identical(s, lastSettings) ||
       bodyIndex != lastBody
     lastSettings <- s
     lastBody <- bodyIndex
-    steps <- gasSubSteps(len, maximum / resolution, graded = uptakeEffect && changed)
+    if (changed) rampStep <- GAS_STEP_FIRST
+    steps <- gasSubSteps(len, maximum / resolution,
+                         graded = uptakeEffect && !is.null(rampStep),
+                         first = if (is.null(rampStep)) GAS_STEP_FIRST else rampStep)
+    rampStep <- attr(steps, "nextStep")
+    steps <- as.vector(steps)
     nSub <- length(steps)
 
     # Build one propagator per gas for this interval: y <- P y + q.
