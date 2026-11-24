@@ -56,7 +56,11 @@ the effect measurable as a difference rather than asserted.}
 
 \item{circuit}{"ideal", the default: no rebreathing once fresh gas flow
 reaches minute ventilation, and no circuit volume.  "semi-closed":
-GasMan's default, the circuit as one well-mixed volume.  See the file header.}
+GasMan's default, the circuit as one well-mixed volume, kept for the
+GasMan validation and not offered by the app; it takes no humidity
+correction at altitude (R/altitude.R), so at 7000 m its end-tidal tension
+settles about 10\% above the ideal circuit's (Gemini's gas-engine audit of
+2026-11-23, A-04).  See the file header.}
 
 \item{deadSpace}{dead space as a fraction of minute ventilation, 0.3 by
 default.  The "ventilation" rows are minute ventilation; alveolar
@@ -78,7 +82,8 @@ GasMan, which has no oxygen.}
 \item{bodySteps}{NULL, or \code{gasBodySteps()}'s list of bodies and the
 times from which each is in force (physiology events): the body, its gas
 properties, pressure, humidity and cardiac output are switched at each,
-the agent carried across (\code{gasStateAcrossBodies()}); the result
+the agent carried across (\code{gasStateAcrossBodies()},
+\code{gasStateAcrossPressure()}); the result
 then carries \code{bodySteps} and \code{bodyRow}, the body of each row
 (a step's time appears twice, before and after it)}
 }

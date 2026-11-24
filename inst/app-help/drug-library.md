@@ -29,7 +29,7 @@ The shipped values are in `inst/extdata/drugDefaults_global.csv` in the reposito
 
 Edits the **recovery thresholds** alone: the concentration that *Time until threshold* counts down to for each drug, called `endCe` in the library. The dialog can also switch *Time until threshold* on.
 
-For the inhaled agents the threshold is in per cent and is shown for the patient's age at 37 °C; the volatile agents' thresholds follow MAC as the age changes, and every potent gas's threshold moves with body temperature as its MAC does, so the number in the dialog is the number on the plot only at 37 °C (see [Inhaled anesthetics](help:inhaled-agents)). A **MAC** row sets the threshold for the MAC-equivalents panel, in multiples of the age-adjusted MAC.
+For the inhaled agents the threshold is in per cent and is shown for the patient's age at 37 °C; the volatile agents' thresholds follow MAC as the age changes, and every potent gas's threshold moves with body temperature as its MAC does, so the number in the dialog is the number on the plot only at 37 °C (see [Inhaled anesthetics](help:inhaled-agents)). The line on the plot is drawn at the temperature at the start of the plot; after a physiology event that changes the temperature, the time until threshold uses the temperature in force, so the line and the time then differ. A **MAC** row sets the threshold for the MAC-equivalents panel, in multiples of the age-adjusted MAC.
 
 Enter `0` for no threshold. A blank, negative or non-numeric entry is refused: *Apply* says which drug to correct, the dialog stays open, and no threshold is changed until it is.
 

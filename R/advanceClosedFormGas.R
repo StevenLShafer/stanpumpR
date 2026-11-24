@@ -234,10 +234,15 @@
 #     GasMan does none of this: it has no oxygen.  Pass oxygenUptake = FALSE to
 #     compare with it.
 #
-# (5) MAC, summed over the potent agents, using the BRAIN (vessel-rich group)
-#     tension and age-adjusted MAC:
+# (5) MAC, summed over the potent agents, using the ALVEOLAR tension and the
+#     age-adjusted MAC (at the body temperature in force):
 #
-#         MAC_total = sum_i F_brain,i / MAC_i(age)
+#         MAC_total = sum_i F_alveolar,i / MAC_i(age)
+#
+#     MAC is defined at the end-tidal concentration, so this is the summed
+#     end-tidal MAC (see "(5) MAC" in the loop below, which says why).  Until
+#     2026-11-24 this header said the brain (vessel-rich) tension, which an
+#     earlier version used (Gemini's gas-engine audit of 2026-11-23, C-04).
 #
 # LINEARITY AND THE METHOD OF SOLUTION
 # ====================================
@@ -1032,11 +1037,16 @@ gasSubSteps <- function(len, dtNominal, graded = TRUE,
 #'   the effect measurable as a difference rather than asserted.
 #' @param circuit "ideal", the default: no rebreathing once fresh gas flow
 #'   reaches minute ventilation, and no circuit volume.  "semi-closed":
-#'   GasMan's default, the circuit as one well-mixed volume.  See the file header.
+#'   GasMan's default, the circuit as one well-mixed volume, kept for the
+#'   GasMan validation and not offered by the app; it takes no humidity
+#'   correction at altitude (R/altitude.R), so at 7000 m its end-tidal tension
+#'   settles about 10% above the ideal circuit's (Gemini's gas-engine audit of
+#'   2026-11-23, A-04).  See the file header.
 #' @param bodySteps NULL, or \code{gasBodySteps()}'s list of bodies and the
 #'   times from which each is in force (physiology events): the body, its gas
 #'   properties, pressure, humidity and cardiac output are switched at each,
-#'   the agent carried across (\code{gasStateAcrossBodies()}); the result
+#'   the agent carried across (\code{gasStateAcrossBodies()},
+#'   \code{gasStateAcrossPressure()}); the result
 #'   then carries \code{bodySteps} and \code{bodyRow}, the body of each row
 #'   (a step's time appears twice, before and after it)
 #' @param oxygenUptake if TRUE (the default), oxygen consumed shrinks the gas

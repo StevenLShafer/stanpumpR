@@ -57,9 +57,9 @@
 #     multiply ventilation -- VA is separate, in L/min.
 #   * ART.  We report ART = ALV.  Unverified.  If ART disagrees while ALV
 #     agrees, that assumption is the reason and nothing is actually wrong.
-#   * Weight is held at 70 in every case on purpose.  The API README says
-#     weight scales compartment volumes; the source appears not to.  Settle the
-#     stepping first, then make weight its own experiment.
+#   * Weight is held at 70 in every case.  (GasMan does scale the compartment
+#     volumes linearly with weight, through fWtFactor; the 2026-10-05 runs at
+#     100 kg confirm it, inst/validation/VALIDATION.md.)
 # =============================================================================
 
 if (!exists("gasman_simulate")) {

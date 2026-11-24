@@ -37,7 +37,8 @@ function** slider for a drug whose model reads the AST (epirubicin).
 
 The sliders change each drug's pharmacokinetic **parameters**, once, before
 the simulation runs. As with any covariate, the parameters then stay fixed
-for the whole simulation. They do not change over time.
+for the whole simulation, unless a **physiology event** changes them at a
+time during the case (*Physiology events*, below).
 
 ## The liver: flow-limited and capacity-limited drugs
 
@@ -263,9 +264,10 @@ more slowly, and the brain ends lower.
 
 Other effects the same chapter
 describes are not modelled yet. These are flow shifted to muscle (exercise,
-excitement) or to fat,
-ventilation-perfusion mismatch and one-lung ventilation, and children's larger
-vessel-rich group. Ventilation itself is a dose-table row.
+excitement) or to fat, the ventilation-perfusion mismatch of the normal
+anaesthetised lung, and children's larger vessel-rich group. One-lung
+ventilation is: see *Endobronchial intubation*, below. Ventilation itself is a
+dose-table row.
 
 ## Body temperature and the inhaled anesthetics
 

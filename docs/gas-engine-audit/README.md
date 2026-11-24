@@ -19,6 +19,8 @@ The reports come back as Markdown files and are uploaded to Claude. Claude valid
 |---|---|
 | `PROMPT.md` | The prompt. Paste it unchanged into each auditor. |
 | `make-bundle.sh` | Builds the attachment from pinned commits: stanpumpR `c90c33e` and GasMan `d3a2dd3`. |
+| `chatgpt-2026-11-23-assessment.md` | The validation of ChatGPT's report of 2026-11-23, and what PR #858 changed. |
+| `gemini-2026-11-23-assessment.md` | The validation of Gemini's report of 2026-11-23, and what the PR after it changed. |
 
 ## Running it
 

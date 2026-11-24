@@ -218,3 +218,30 @@ test_that("C-06: the alveolar oxygen never exceeds the dry share of the pressure
                AIR_FRACTION_O2 * (barometricPressure(7000) - WATER_VAPOUR_PRESSURE),
                tolerance = 1e-3)
 })
+
+
+# A-01.  GasMan starts a new history sample every ten ticks (SAMP_EVERY) and
+# re-arms its fast-decay test at each one, settings changed or not; the R
+# restatement re-armed it only at a settings row, so a 5 kg patient read
+# 1.2% low against GasMan.  GasMan's own output for this case, frozen here:
+# gasman_run built from rasman/gasmanonline at d3a2dd3 (GPL-3.0), input
+#   [patient] weight_kg 5, dt_ms 6000; [agent] Sevoflurane;
+#   [settings] va,fgf,circuit,time,co,del: 1,1,Semi,00:00:00,1,0 and
+#   4,20,Semi,00:01:00,1,2; --end 600 s (no nitrogen agent),
+# alveolar sevoflurane at 1:06, 1:12, 2:06, 2:12, 3:00 and 5:06.
+
+test_that("A-01: the GasMan restatement re-arms its fast-decay test every ten ticks", {
+  DT <- data.frame(Time = c(0, 0, 0, 1, 1, 1),
+                   Drug = rep(c("oxygen", "sevoflurane", "ventilation"), 2),
+                   Dose = c(1, 0, 1, 20, 2, 4))
+  gm <- advanceGasManBaseline(DT, maximum = 6, weight = 5, cardiacOutput = 1, dt = 0.1,
+                              circuit = "semi-closed", resolution = 61, nitrogenAmbient = 0)
+  cpp <- c(`1.1` = 0.145385, `1.2` = 0.465449, `2.1` = 1.61298, `2.2` = 1.65586,
+           `3` = 1.81463, `5.1` = 1.90338)
+  at <- vapply(as.numeric(names(cpp)), function(t) which.min(abs(gm$timeLine - t)), 1L)
+  r <- gm$state$sevoflurane[at, "ALV"]
+  # Within 0.25% (it was 1.19% low at 2.1 minutes); the first two exact
+  expect_equal(unname(r[1:2]), unname(cpp[1:2]), tolerance = 1e-5)
+  expect_lt(max(abs(r / cpp - 1)), 0.0025)
+  expect_equal(gm$maxVernier, 1)
+})

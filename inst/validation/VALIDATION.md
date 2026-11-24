@@ -195,7 +195,14 @@ this machine, from `github.com/rasman/gasmanonline`, `gasman_api/gasmanAPI`
 | Default alveolar ventilation | none (0, i.e. apnea, unless a row was entered) | 4 L/min at 70 kg x (weight/70)^0.75 | `[Defaults] VA=4`; `m_fVA = m_fDfltVA * factor` |
 | Cardiac output | 75 mL/kg, linear (5.25 L/min at 70 kg) | 5 L/min at 70 kg x (weight/70)^0.75 | `[Defaults] CO=5`; `m_fCO = m_fDfltCO * factor` |
 
-where `factor = sqrt(sqrt(f * f * f))` with `f = weight / 70`. Compartment
+where `factor = sqrt(sqrt(f * f * f))` with `f = weight / 70`. (Corrected
+2026-11-24, Gemini's gas-engine audit A-02: in GasMan's API this scaling has
+no effect, because `InitDocument` computes the factor while the weight is
+still 70 and `SetWeight` changes only the tick; a `gasman_run` built from
+d3a2dd3 at 10 kg with no `va` or `co` reports 4 and 5 L/min. The
+(weight/70)^0.75 scaling is the desktop GasMan's, applied when the user
+changes the weight, `src/gasman_main/gasdoc.cpp`. The values adopted are
+that program's, so nothing here changes.) Compartment
 volumes were already scaled linearly with weight on both sides
 (`fWtFactor = fWeight / STD_WEIGHT`), and the circuit volume is unscaled on both.
 
@@ -702,3 +709,69 @@ keeps them in its own table. Nothing above changes: every comparison with
 GasMan is of tensions, and MAC enters no uptake. A comparison of the summed
 MAC series with GasMan's MAC output (point 2 of *Deliberate differences*,
 2026-10-05) must now divide by `GASMAN_MAC40`, not by the engine's MAC.
+
+## 2026-11-24 — Gemini's audit: the ten-tick re-arm, a 5 kg case, GasMan's own inconsistencies
+
+From Gemini's gas-engine audit of 2026-11-23 (of c90c33e, the commit ChatGPT
+audited), checked with a `gasman_run` built from d3a2dd3 (g++ 13.3 on Linux),
+which reproduces all 520 values of `gasman_cpp_fixture.csv` when its nitrogen
+`Ambient` is 78.07, as in the original runs. The assessment is
+`docs/gas-engine-audit/gemini-2026-11-23-assessment.md`.
+
+### The fast-decay test re-arms every ten ticks
+
+GasMan starts a new history sample every `SAMP_EVERY` (10) ticks, and its
+fast-decay test counts from the sample's base, so it re-arms at the start of
+every ten-tick block as well as at a settings row. Both R restatements now do
+the same (`GASMAN_SAMP_EVERY`); until this date they re-armed only at a
+settings row, which none of the five scenarios reaches (the sub-stepping
+never starts in them), so the gap survived. A 5 kg patient does reach it, and
+its GasMan output is frozen in `test-gas-audit-gemini.R`:
+
+| Alveolar sevoflurane, % | 1:06 | 1:12 | 2:06 | 2:12 | 3:00 | 5:06 |
+|---|---|---|---|---|---|---|
+| `gasman_run` | 0.145385 | 0.465449 | 1.61298 | 1.65586 | 1.81463 | 1.90338 |
+| R, before | 0.145385 | 0.465449 | 1.593783 (−1.19%) | 1.637363 | 1.812398 | 1.902470 |
+| R, now | 0.145385 | 0.465449 | 1.610449 (−0.16%) | 1.653693 | 1.813363 | 1.903168 |
+
+(5 kg, cardiac output 1 L/min, semi-closed, oxygen and ventilation 1 L/min
+until 1 minute, then fresh gas 20 L/min, VA 4, 2% sevoflurane; no nitrogen
+agent; `dt_ms` 6000; `--end` 600 s.)
+
+**What remains is GasMan's, not the restatement's.** GasMan has two paths
+through `Calc`: the forward calculation, which holds the last ten ticks of a
+run and applies the test for three ticks, and the history replay, which
+applies it for two. Its CSV writer reports history values except for the last
+ten ticks, which come from the forward buffer (`ResultsAt`), although a
+comment in `GasDoc.cpp` says the history path is always used. So a printed
+value depends on the end time asked for: in the 5 kg case the alveolar
+tension at 1:18 is 0.731791 with `--end` 84, 90 or 120 s and 0.644180 with
+`--end` 180 s, 13.6% apart. The restatements follow the history replay,
+which agrees with GasMan's output to 0.2% wherever the end time is at least
+five minutes later; an emulation of both paths reproduces `gasman_run` to
+0.0004%, and was not adopted.
+
+### GasMan's circuit names
+
+`loadJsonCircuit` parses a circuit name by skipping a fixed number of
+characters, and two of the names fail: "Semi-closed" leaves venous return and
+the uptake coupling switched off (alveolar sevoflurane at 2 minutes 0.728340
+against 0.789155 for "Semi"), and so does "Closed" (skipped by five
+characters, leaving "D", which matches no flag). Every scenario file here
+says "Semi" or "Ideal" (`gasman_engine_scenarios.R`, the standalone's
+scenario writer), so no comparison was affected; only the human-readable
+settings table says "Semi-closed". Whether this explains the early
+discrepancy Epstein reported is not established (his scenario is not in the
+repository).
+
+### Corrections
+
+- GasMan's API does not scale the default VA and CO with weight; the desktop
+  program does, when the user changes the weight. The attribution is
+  corrected above and in `R/gasProperties.R`; the values do not change.
+- The standalone script's enflurane and halothane constants are now
+  `gasman.ini`'s; no validation case uses either. GasMan treats xenon as a
+  liquid (it has a `DefUnitDose`); the script's comment said otherwise.
+- At the last vernier level GasMan skips both of its checks, so a tick there
+  always completes; both restatements now do too (CodeRabbit on PR #858, in
+  that PR). No scenario reaches it.
