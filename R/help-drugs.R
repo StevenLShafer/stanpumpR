@@ -1310,7 +1310,10 @@ helpGasPageHTML <- function(gas, row) {
           else "Alveolar (end-tidal) tension as the \u201cplasma\u201d line; vessel-rich group (brain) tension as the \u201ceffect site\u201d line"),
       esc(if (!is.na(row$endCe) && row$endCe > 0) {
         if (gas %in% ageAdjustedThresholdGases())
-          sprintf("%s%% at age 40 (0.1 MAC); follows MAC with age", helpFormatNumber(row$endCe))
+          sprintf("%s%% at age 40 and 37 \u00b0C (0.1 MAC); follows MAC with age and body temperature",
+                  helpFormatNumber(row$endCe))
+        else if (gas %in% potentAgents())
+          sprintf("%s%% at 37 \u00b0C; follows MAC with body temperature", helpFormatNumber(row$endCe))
         else sprintf("%s%%", helpFormatNumber(row$endCe))
       } else "Not timed"),
       paste0(as.character(helpColorSwatch(row$Color)), " ", esc(as.character(row$Color)))

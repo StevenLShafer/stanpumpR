@@ -117,10 +117,16 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
     endCe <- drugDefaults$endCe[match(g, drugDefaults$Drug)]
     if (length(endCe) != 1 || is.na(endCe)) endCe <- 0
     # A volatile agent's threshold is stored at age 40 and follows MAC with age.
+    # Every potent gas's is defined at 37 C and follows MAC with temperature
+    # too (gasThresholdForTemperature(); Shafer, 2026-11-24): the time until
+    # threshold moves it to the temperature in force when the agent is turned
+    # off, and the panel draws it at the temperature in force at time 0, as
+    # the band is drawn.
     endCe <- gasThresholdForAge(g, endCe, age)
     recovery <- NULL
     if (!is.null(washout) && g %in% names(washout$rate) && endCe > 0)
       recovery <- gasRecoveryTime(washout, g, endCe)
+    endCe <- gasThresholdForTemperature(g, endCe, sim$body$temperature)
 
     out[[g]] <- gasEntry(
       drug         = g,

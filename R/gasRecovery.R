@@ -89,17 +89,18 @@
 #     number is not clinically important.
 # All are editable in the Drug Thresholds dialog.
 #
-# [decision] for Shafer, asked 2026-11-23 (ChatGPT's gas-engine audit, C-01):
-# the default for a volatile agent is a tenth of its MAC and follows age, but
-# body temperature lowers MAC and the threshold is held as a tension, by the
-# decision of 2026-11-16 that typed thresholds do not move (R/physiology.R).
-# So at 32 C the default 0.18% sevoflurane is 0.13 of the patient's MAC, not
-# 0.1: in a 70 kg 40-year-old after 30 minutes at 2%, the vessel-rich group
-# falls to it in 11.19 minutes, against 12.76 to a tenth of the cooled MAC
-# (0.138%), and 10.74 at 37 C.  The question is whether the DEFAULT should be
-# stored as a fraction of MAC, resolved at the temperature in force, while a
-# tension the user types stays a tension; that would need the dialog to know
-# which it holds.  Unchanged until he decides.
+# Every potent gas's threshold, default or typed, is defined at 37 C and moves
+# with body temperature as its MAC does (gasThresholdForTemperature()), as a
+# volatile agent's moves with age: Shafer's decision of 2026-11-24 on ChatGPT's
+# gas-engine audit (C-01), "For gases, it should be the threshold at 37
+# degrees, and should move with temperature. That is the right approach.
+# Clinicians will have no clue what the threshold is at 32 degrees."  It
+# reversed his decision of 2026-11-16 that typed thresholds were tensions that
+# did not move, under which the 0.18% sevoflurane default was 0.13 of MAC at
+# 32 C (after 30 minutes at 2% in a 70 kg 40-year-old, the vessel-rich group
+# reached it in 11.19 minutes, where it reaches a tenth of the cooled MAC,
+# 0.138%, in 12.76; 10.74 at 37 C).  The dialog shows and takes the 37 C
+# value; with physiology events, each segment uses its own temperature.
 # -----------------------------------------------------------------------------
 
 # Default threshold for the MAC series, in multiples of MAC.
@@ -142,6 +143,36 @@ gasThresholdForAge <- function(drug, endCe, age, inverse = FALSE)
   f <- macForAge(1, age)
   adjust <- drug %in% ageAdjustedThresholdGases()
   endCe[adjust] <- if (inverse) endCe[adjust] / f else endCe[adjust] * f
+  endCe
+}
+
+
+#' A gas's threshold at a body temperature
+#'
+#' A potent gas's threshold is defined at 37 C, the temperature at which a
+#' clinician knows it and types it, and moves with body temperature exactly as
+#' the agent's MAC does (\code{gasMacTemperatureFactor()}), as it moves with
+#' age (\code{gasThresholdForAge()}): a tenth of MAC stays a tenth of MAC in a
+#' cold patient.  Shafer's decision of 2026-11-24, reversing his of
+#' 2026-11-16 that typed thresholds were tensions that did not move: "For
+#' gases, it should be the threshold at 37 degrees, and should move with
+#' temperature ... Clinicians will have no clue what the threshold is at 32
+#' degrees" (ChatGPT's gas-engine audit, C-01).  Nitrous oxide's moves by its
+#' own MAC factor; everything else is returned unchanged.
+#'
+#' @param drug one or more drug names
+#' @param endCe the thresholds at 37 C, same length as \code{drug}
+#' @param temperature body temperature, C; NULL or 37 for normal
+#' @returns numeric vector of thresholds at that temperature
+#' @export
+gasThresholdForTemperature <- function(drug, endCe, temperature = NULL)
+{
+  if (is.null(temperature) || length(temperature) != 1 || is.na(temperature) ||
+      temperature == 37) return(endCe)
+  adjust <- drug %in% potentAgents()
+  endCe[adjust] <- endCe[adjust] * vapply(drug[adjust], function(g)
+    gasMacTemperatureFactor(temperature, if (g == "nitrousOxide") g else "volatile"),
+    numeric(1))
   endCe
 }
 
@@ -469,24 +500,36 @@ gasSettingChanges <- function(bySetting, times)
 #'
 #' @param washout output of \code{gasWashout()}
 #' @param gas gas name
-#' @param threshold target tension, percent of one atmosphere
+#' @param threshold target tension, percent of one atmosphere, AT 37 C: it is
+#'   moved to the body temperature of each segment of the washout as MAC is
+#'   (\code{gasThresholdForTemperature()}), unless \code{atBodyTemperature} is
+#'   FALSE
 #' @param compartment 3 for the vessel-rich group (the default, the gas
 #'   counterpart of the effect site), 2 for alveolar
 #' @param exact TRUE, the default: the coupled forward simulation of
 #'   \code{gasCoupledRecovery()}.  FALSE: the sum-of-exponentials shortcut,
 #'   which leaves the coupling between gases out.  The shortcut is always used
 #'   for a washout made with \code{rebreathing = TRUE}.
+#' @param atBodyTemperature TRUE (the default): \code{threshold} is the value
+#'   at 37 C, moved with the body's temperature.  FALSE: it is a tension, used
+#'   as it is at any temperature.
 #' @returns numeric vector of minutes, one per time point; zero wherever the
 #'   tension is at or below the threshold and not on its way above it, or if
 #'   there is no threshold
 #' @export
-gasRecoveryTime <- function(washout, gas, threshold, compartment = 3, exact = TRUE)
+gasRecoveryTime <- function(washout, gas, threshold, compartment = 3, exact = TRUE,
+                            atBodyTemperature = TRUE)
 {
+  # Each segment of a run with physiology events has its own body, and so its
+  # own temperature: the threshold is the one in force when the agent is
+  # turned off
   if (!is.null(washout$segments))
     return(gasRecoveryBySegment(washout, function(w, i)
-      gasRecoveryTime(w, gas, threshold, compartment, exact)))
+      gasRecoveryTime(w, gas, threshold, compartment, exact, atBodyTemperature)))
   nT <- length(washout$Time)
   if (is.null(threshold) || is.na(threshold) || threshold <= 0) return(rep(0, nT))
+  if (atBodyTemperature)
+    threshold <- gasThresholdForTemperature(gas, threshold, washout$body$temperature)
 
   if (exact && !isTRUE(washout$rebreathing) && !is.null(washout$state))
   {

@@ -34,7 +34,7 @@ registry value that the registry's own vocabulary defines a mistake (B-03's
 | B-01 | evidence gap | Agreed | Nothing changed; a proposal |
 | B-02 | reopens decision | Values confirmed | Decided by Dr Shafer, 2026-11-23: Mapleson's values adopted |
 | B-03 | evidence gap | Registry text: confirmed in part, plus one new error | Registry corrected; the MAC proposals are for Dr Shafer |
-| C-01 | reopens decision | Numbers confirmed | `[decision]` for Dr Shafer, in `R/gasRecovery.R` |
+| C-01 | reopens decision | Numbers confirmed | Decided by Dr Shafer, 2026-11-24: every gas threshold is at 37 C and moves with temperature |
 | C-02 | defect | Confirmed, both parts | Fixed: the end-of-plot event; the band at the patient's age |
 | C-03 | evidence gap | Not re-run | Nothing changed |
 | C-04 | defect | Confirmed in mechanism; display only | Recorded, not changed |
@@ -199,8 +199,14 @@ the vessel-rich group falls to it in 10.33 minutes after 30 minutes at 2%,
 against 11.82 to a tenth of the cooled MAC and 9.94 at 37 C (with GasMan's MAC; with Mapleson's, adopted the same day, 11.19 to the 0.18% default, 12.76 to 0.138%, and 10.74 at 37 C). The thresholds were
 decided on 2026-11-16 to be typed tensions that do not move; the question is
 whether the default should instead be a fraction of MAC resolved at the
-temperature in force. Recorded as a `[decision]` in the thresholds section of
-`R/gasRecovery.R`.
+temperature in force. Decided by Dr Shafer on 2026-11-24, more widely than the
+report asked: "For gases, it should be the threshold at 37 degrees, and should
+move with temperature. That is the right approach. Clinicians will have no
+clue what the threshold is at 32 degrees." Every potent gas's threshold,
+default or typed, nitrous oxide's included, is now its value at 37 C, moved
+with temperature by its MAC factor (`gasThresholdForTemperature()`), at the
+temperature in force when the agent is turned off; the Drug Thresholds dialog
+shows and takes the 37 C value and says so; the help pages explain it.
 
 ### C-02: the band and an event at the end of the plot
 
@@ -255,9 +261,8 @@ concentration is still rising). *Fixed*: the comment.
 ## For Dr Shafer
 
 1. **B-02**: decided 2026-11-23, Mapleson's values (above).
-2. **C-01**: the default threshold of a volatile agent as a fraction of the MAC
-   in force at the patient's temperature, or a tension, as decided on
-   2026-11-16?
+2. **C-01**: decided 2026-11-24, thresholds at 37 C that move with temperature
+   (above).
 3. Whether any of the proposals (B-01, B-03, D-02, E-01, F-01) is wanted, and in
    what order. The report ranks them: the fixtures and integration accuracy
    first (done here), then oxygen balance, the threshold units, the MAC

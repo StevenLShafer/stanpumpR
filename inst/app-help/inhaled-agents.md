@@ -56,12 +56,14 @@ Opioids lower MAC. Under **Graph Options**, ticking *Include opioid - MAC intera
 
 | Panel | What is timed | Default threshold |
 |---|---|---|
-| sevoflurane, isoflurane, desflurane | Brain (vessel-rich group) tension | 0.1 × the age-adjusted MAC of that agent |
-| nitrous oxide | Brain tension | 10% |
+| sevoflurane, isoflurane, desflurane | Brain (vessel-rich group) tension | 0.1 × the MAC of that agent at the patient's age and temperature |
+| nitrous oxide | Brain tension | 10% at 37 °C |
 | MAC equivalents | The summed alveolar series, with every agent turned off | 0.1 MAC equivalents |
 | oxygen | Not timed | |
 
-The thresholds can be changed in the Drug Thresholds dialog, where the volatile agents are shown at the patient's age. See [Time until threshold](help:models/recovery) and the [emergence scenarios](help:scenarios/emergence-sevoflurane).
+The thresholds can be changed in the Drug Thresholds dialog, where the volatile agents are shown at the patient's age.
+
+**A gas's threshold is its value at 37 °C**, the one clinicians know, whether it is the default or one you type. Body temperature lowers MAC (by 4.6 per cent per degree for the volatile agents, 2.1 per cent for nitrous oxide; see [Physiology](help:models/physiology)), and the threshold moves with it exactly as it moves with age, so a threshold of a tenth of MAC stays a tenth of MAC in a cold patient. Type the number you would use at 37 °C; stanpumpR works out what it is at 32 °C. Sevoflurane's default, 0.18 per cent at age 40 and 37 °C, is used as 0.138 per cent at 32 °C, and the time until threshold is longer for it: 12.8 minutes rather than 11.2 after half an hour at 2 per cent in 6 L/min of oxygen (70 kg, age 40). With a temperature event, the threshold is the one at the temperature in force when the agent is turned off. This replaced, on 24 November 2026, a rule that held a typed threshold fixed whatever the temperature. See [Time until threshold](help:models/recovery) and the [emergence scenarios](help:scenarios/emergence-sevoflurane).
 
 ## The greenhouse effect
 

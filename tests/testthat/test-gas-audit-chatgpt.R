@@ -126,3 +126,58 @@ test_that("the opioid-MAC code and its help agree that the error has no fixed di
   expect_false(grepl("errs on the side of a longer", code))
   expect_true(grepl("no\\s+#?\\s*fixed direction", code))
 })
+
+
+# C-01, decided by Shafer on 2026-11-24: every potent gas's threshold, the
+# default or one typed, is its value at 37 C and moves with temperature as its
+# MAC does, as a volatile agent's moves with age.  Until then a threshold was
+# held at its typed tension whatever the temperature.
+
+test_that("a gas's threshold is its 37 C value, moved with MAC", {
+  f32 <- gasMacTemperatureFactor(32)
+  expect_equal(gasThresholdForTemperature("sevoflurane", 0.18, 32), 0.18 * f32)
+  expect_equal(gasThresholdForTemperature("nitrousOxide", 10, 32),
+               10 * gasMacTemperatureFactor(32, "nitrousOxide"))
+  # Unchanged at 37 C, with no temperature, and for anything not potent
+  expect_equal(gasThresholdForTemperature("sevoflurane", 0.18, 37), 0.18)
+  expect_equal(gasThresholdForTemperature("sevoflurane", 0.18, NULL), 0.18)
+  expect_equal(gasThresholdForTemperature(c("propofol", "oxygen"), c(1, 5), 32), c(1, 5))
+})
+
+test_that("at 32 C the time until threshold is to a tenth of the cooled MAC", {
+  d <- data.frame(Time = 0, Drug = c("oxygen", "sevoflurane", "ventilation"), Dose = c(6, 2, 6))
+  s <- simulateGases(d, age = 40, maximum = 30, temperature = 32)
+  w <- gasWashout(s, d)
+  f32 <- gasMacTemperatureFactor(32)
+  moved <- gasRecoveryTime(w, "sevoflurane", 0.18)
+  expect_equal(moved, gasRecoveryTime(w, "sevoflurane", 0.18 * f32, atBodyTemperature = FALSE))
+  # 12.76 minutes; held at 0.18% it was 11.19
+  expect_equal(utils::tail(moved, 1), 12.76, tolerance = 2e-3)
+  held <- gasRecoveryTime(w, "sevoflurane", 0.18, atBodyTemperature = FALSE)
+  expect_equal(utils::tail(held, 1), 11.19, tolerance = 2e-3)
+  # The entry draws the threshold at the temperature in force at time 0
+  e <- gasDrugEntries(s, d, maximum = 30, washout = w, age = 40)
+  expect_equal(e$sevoflurane$endCe, 0.18 * f32)
+  expect_equal(utils::tail(e$sevoflurane$equiSpace$Recovery, 1), utils::tail(moved, 1),
+               tolerance = 1e-6)
+  # At 37 C nothing moves
+  s37 <- simulateGases(d, age = 40, maximum = 30)
+  w37 <- gasWashout(s37, d)
+  expect_equal(gasRecoveryTime(w37, "sevoflurane", 0.18),
+               gasRecoveryTime(w37, "sevoflurane", 0.18, atBodyTemperature = FALSE))
+})
+
+test_that("with a temperature event each moment's threshold is the one in force then", {
+  d <- data.frame(Time = 0, Drug = c("oxygen", "sevoflurane", "ventilation"), Dose = c(6, 2, 6))
+  s <- simulateGases(d, age = 40, maximum = 30, physiologyEvents = coldAt(15))
+  w <- gasWashout(s, d)
+  expect_length(w$segments, 2)
+  f32 <- gasMacTemperatureFactor(32)
+  r <- gasRecoveryTime(w, "sevoflurane", 0.18)
+  before <- w$rows[[1]]
+  after <- w$rows[[2]]
+  expect_equal(r[before], gasRecoveryTime(w, "sevoflurane", 0.18, atBodyTemperature = FALSE)[before])
+  expect_equal(r[after], gasRecoveryTime(w, "sevoflurane", 0.18 * f32, atBodyTemperature = FALSE)[after])
+  # Colder from minute 15: the threshold is lower, so the time is longer
+  expect_gt(r[after][1], r[before][length(before)])
+})

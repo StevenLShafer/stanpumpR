@@ -299,6 +299,19 @@ faster than solubility rises. So a given inspired concentration is a deeper
 anesthetic in a hypothermic patient. Dialled to the same multiple of MAC, as
 the chapter says, induction is slower, most for the soluble agents.
 
+**The thresholds move with MAC.** An inhaled agent's threshold for the time
+until threshold, the default or one you type, is its value at 37 °C, which is
+the value clinicians know: nobody knows what a tenth of sevoflurane's MAC is at
+32 °C. It moves with temperature exactly as MAC does, as it already moves with
+age, so a tenth of MAC stays a tenth of MAC. Sevoflurane's default at age 40,
+0.18 per cent at 37 °C, is 0.138 per cent at 32 °C; after half an hour at
+2 per cent in 6 L/min of oxygen (70 kg) the brain takes 12.8 minutes to fall to it, against 11.2 to 0.18 per
+cent and 10.7 at 37 °C. With a temperature event, each moment's threshold is
+the one at the temperature in force then. The summed MAC series and its
+threshold, 0.1 MAC, follow temperature through the MAC they divide by. (Until
+24 November 2026 a threshold was held at its typed tension whatever the
+temperature, so at 32 °C the default was 0.13 of MAC.)
+
 **Not modelled.** Cardiac output and
 ventilation also fall with metabolism in hypothermia, but they have their own
 controls (the Cardiac output slider and the ventilation row), so they are not
@@ -306,9 +319,7 @@ counted twice. Lower them yourself to match the patient. The coupling is left
 to you on purpose: fever raises cardiac output and cooling would by the same
 logic lower it, but the two have different causes (inflammation, and heat lost
 to the room), so stanpumpR does not tie one slider to the other. The fall in brain
-blood flow is not modelled either. A threshold for the time until threshold is
-a tension you typed and does not move with MAC; the summed MAC series and its
-threshold do. GasMan models none of this:
+blood flow is not modelled either. GasMan models none of this:
 its source code mentions temperature only in the vaporiser's vapour pressure.
 
 ## Altitude and the inhaled anesthetics
