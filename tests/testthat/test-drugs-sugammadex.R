@@ -90,3 +90,21 @@ test_that("pregnancy: creatinine clearance x 1.5 in the clearance term only, wit
   expect_match(on$reference, "Hodge", fixed = TRUE)
   expect_no_match(off$reference, "Hodge")
 })
+
+test_that("the peripheral volume sees creatinine clearance held within Kleijn's 4.3-239 mL/min", {
+  # Shafer, 2026-11-24.  A 25-year-old 150 kg man at 0.5 mg/dL: Cockcroft-Gault
+  # 115 x 150 / (72 x 0.5) = 479 mL/min, beyond the studied 239.
+  hi <- sugammadex(150, 180, 25, "male", adjustToFFM = FALSE, creatinine = 0.5)$PK$default
+  expect_equal(hi$v2, 6.35 * exp(-0.00305 * (239 - 119)) * (150 / 70), tolerance = 1e-12)
+  # the clearance term is not held: it reads the full 479 mL/min
+  cr <- 115 * 150 / (72 * 0.5)
+  expect_equal(hi$cl1, 5.58 * (1 + 0.00378 * (150 - 74.5)) * (2 * cr / (cr + 119))^1.29 / 60,
+               tolerance = 1e-12)
+  # an 85-year-old 40 kg man at 15 mg/dL: 55 x 40 / (72 x 15) = 2.04, below 4.3
+  lo <- sugammadex(40, 160, 85, "male", adjustToFFM = FALSE, creatinine = 15)$PK$default
+  expect_equal(lo$v2, 6.35 * exp(-0.00305 * (4.30 - 119)) * (40 / 70), tolerance = 1e-12)
+  # inside the range nothing changes
+  mid <- sugammadex(70, 171, 50, "male", adjustToFFM = FALSE, creatinine = 1.2)$PK$default
+  cr <- 90 * 70 / (72 * 1.2)
+  expect_equal(mid$v2, 6.35 * exp(-0.00305 * (cr - 119)) * (70 / 70), tolerance = 1e-12)
+})

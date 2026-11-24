@@ -177,6 +177,15 @@ app_ui <- function() {
                   selected = defaultSex
                 ),
 
+                # Derived, not entered: the body surface area a per-m2 dose
+                # uses and the BMI, from the weight and height above
+                # (bodySizeSummary(), R/bsa-dosing.R; Shafer, 2026-11-23).
+                div(
+                  class = "info-note derived-body-size",
+                  icon("calculator"),
+                  uiOutput("bodySize", inline = TRUE)
+                ),
+
                 # Read only by the models with a measured change in pregnancy
                 # (R/pregnancy.R; the help's Pregnancy page lists them).
                 # Offered for a woman of PREGNANCY_MIN_AGE to PREGNANCY_MAX_AGE

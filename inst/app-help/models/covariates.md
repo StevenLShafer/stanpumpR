@@ -4,7 +4,7 @@ The four body covariates in the Patient Profile reach the models in fixed units:
 
 **No covariates.** Alfentanil, sufentanil, midazolam and oliceridine are fixed sets of parameters for a typical adult. A dose in milligrams produces the same curve in every patient. Dosing per kilogram makes the amount scale with weight, but that is an assumption of the user, not of the model.
 
-**Linear weight scaling.** Etomidate, ketamine, lidocaine, morphine, pethidine, hydromorphone, rocuronium and naloxone take V1 (or every parameter) proportional to weight, with the rate constants fixed. Volumes and clearances then both scale linearly with weight. This is how the original papers reported them.
+**Linear weight scaling.** Etomidate, ketamine, lidocaine, morphine, pethidine, hydromorphone and naloxone take V1 (or every parameter) proportional to weight, with the rate constants fixed. Volumes and clearances then both scale linearly with weight. This is how the original papers reported them.
 
 **Allometric and covariate models.** Methadone (Henthorn and Kharasch) scales only its deep peripheral volume, to weight to the power 1.23. Fentanyl (Bae 2020) scales its volumes to weight to the power 1.23 and its clearances to the power 0.313, both estimated. Dexmedetomidine (Morse 2020, above one year) scales its volumes on normal fat mass and its clearances on fat-free mass to the 0.75 power, with a maturation of clearance in postmenstrual age. Propofol (Eleveld) and remifentanil (Eleveld, and Kim for obesity) use allometric scaling together with age, sex and maturation terms; remimazolam (Eleveld) uses allometric scaling with age and sex terms but no maturation.
 

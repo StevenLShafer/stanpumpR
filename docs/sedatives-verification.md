@@ -84,16 +84,24 @@ Kruizinga 2022.
   says most studies find no sex effect. The age term (over 60, −23%) is
   applied.
 
-**Lorazepam** — two compartments derived from the Nielsen-Kudsk 1983 means.
-- Disposition: the specification's two models were rejected (above). V1 0.59
-  L/kg, CL 62.2 mL/kg/h, t½α 0.31 h, t½β 14.1 h give V2 and Q exactly.
+**Lorazepam** — two compartments from Barr 2001, Table 4 (since 2026-11-23,
+Shafer's decision; until then derived from the Nielsen-Kudsk 1983 means).
+- Disposition: the specification's two models were rejected (above). Barr's
+  revised model, no covariates: V1 40.8 L, V2 102 L, Cl1 0.107 L/min, Cl2
+  1.86 L/min (read on the PDF), anchored at the lorazepam group of Table 2
+  (14 patients: 74 y, 85 kg, 176 cm, 13 men). The previous disposition, V1
+  0.59 L/kg, CL 62.2 mL/kg/h, t½α 0.31 h, t½β 14.1 h, is kept in the header
+  as a recorded alternative.
 - Routes: oral and IM absorption from Greenblatt 1982, a five-route crossover.
-- Effect site: ke0 from Greenblatt 2000 (EEG, t½ke0 8.8 min), carried as a
-  26.3 min time to peak effect.
+- Effect site: ke0 from Greenblatt 2000 (EEG, t½ke0 8.8 min), carried as an
+  18.1 min time to peak effect on Barr's disposition (26.3 min on
+  Nielsen-Kudsk's).
 - Band and threshold: Barr 2001's C50s, 34-104 ng/mL (since 2026-10-27, 51-152 ng/mL, typical 104,
   moderate sedation; docs/therapeutic-ranges.md); threshold 51 (Ramsay 3).
-- Validation against the label: 4 mg IV gives 74 ng/mL at 15 min (label about
-  70); 2 mg PO peaks at 19.7 (about 20); 4 mg IM peaks at 53 (about 48).
+- Against the label: 4 mg IV gives 58.9 ng/mL at 15 min (label about 70); 2
+  mg PO peaks at 13.8 (about 20); 4 mg IM peaks at 42.3 (about 48). Barr's
+  ICU patients sit below the label's volunteers (with Nielsen-Kudsk's
+  disposition: 74, 19.7, 53).
 
 **Temazepam** — two compartments fitted jointly to the published IV means of
 van Steveninck 1994 (part II, Table I) and Halliday 1987 (Figure 1, read by
@@ -142,8 +150,8 @@ McCann 2025.
 
 ## Not yet implemented, and what would unblock them
 
-- **Barr 2001** (lorazepam ICU PK, Table 4, and a sedation model driven by the
-  plasma concentration; it has no ke0) would replace the
-  derived lorazepam disposition. **Venkatakrishnan 2005** would allow IV
+- **Barr 2001** (lorazepam ICU PK, Table 4) replaced the derived lorazepam
+  disposition on 2026-11-23; its sedation model is driven by the plasma
+  concentration and has no ke0. **Venkatakrishnan 2005** would allow IV
   alprazolam (no product exists). IV clonazepam would need a study sampled in
   the first minutes after injection; Berlin and Dahlström 1975 is not one.

@@ -28,9 +28,10 @@ Internally, doses of a drug plotted in mcg/mL are converted to milligrams, doses
 
 | Family | Units | Meaning |
 |---|---|---|
-| Bolus | g, mg, mcg, ng; and each per kg | An amount at that time |
-| Infusion | g/min, g/hr, mg/min, mg/hr, mcg/min, mcg/hr; and per kg | A rate from that time |
-| Oral | g PO, mg PO, mcg PO; and each per kg | An oral dose at that time |
+| Bolus | g, mg, mcg, ng; and each per kg; g/m2, mg/m2, mcg/m2 | An amount at that time |
+| Infusion | g/min, g/hr, mg/min, mg/hr, mcg/min, mcg/hr; and per kg; mg/kg/day; g/m2/hr, mg/m2/hr, mg/m2/day, mcg/m2/hr | A rate from that time |
+| Per body surface area | mg/m2, mg/m2/hr, mg/m2/day, mg/m2 PO, U/m2 and the like | A dose per square metre of body surface area, as most chemotherapy is labelled; multiplied by the patient's Mosteller body surface area |
+| Oral | g PO, mg PO, mcg PO; and each per kg; mg/m2 PO | An oral dose at that time |
 | Oral form | mg PO tablet, liquid, ER, DR or XR; and per kg | An oral dose of that product, with its own absorption where the drug's forms differ; see [absorption](help:models/absorption) |
 | Oral rate | mg/day PO | A daily oral dose spread evenly over each day, from that time until the drug's next rate row (amiodarone; see [its page](help:drugs/amiodarone)) |
 | Enteral infusion | mg/hr PO | A rate into the gut, absorbed by the drug's oral absorption model, from that time until the drug's next mg/hr PO row (the levodopa intestinal gels) |
@@ -48,7 +49,7 @@ Internally, doses of a drug plotted in mcg/mL are converted to milligrams, doses
 | Gas flow | L/min | A flowmeter or ventilation setting |
 | Vaporizer | % | A vaporizer setting |
 
-Which of these a given drug offers is set in the drug library and shown on its page. Per-kilogram units use the weight in the Patient Profile.
+Which of these a given drug offers is set in the drug library and shown on its page. Per-kilogram units use the weight in the Patient Profile. Per-m2 units use the body surface area computed from the Patient Profile's weight and height by Mosteller's formula, sqrt(weight in kg x height in cm / 3600), so a 70 kg, 170 cm patient has 1.82 m2 and 400 mg/m2 is 727 mg. Like per-kilogram doses, they use total body weight whether or not **Adjust weight to fat-free mass** is ticked.
 
 Some conversions that come up:
 
@@ -56,6 +57,7 @@ Some conversions that come up:
 - 100 mcg/kg/min of propofol in a 70 kg patient = 7 mg/min = 420 mg/hr
 - 0.1 mcg/kg/min of remifentanil in a 70 kg patient = 7 mcg/min = 420 mcg/hr
 - 400 mg/day PO of amiodarone = 16.7 mg/hr = 0.278 mg/min, given continuously
+- 2400 mg/m2 of fluorouracil over 46 hours = 52.2 mg/m2/hr = 1252 mg/m2/day, which in a patient of 1.82 m2 is 95 mg/hr
 
 ## Time
 

@@ -1,9 +1,9 @@
-# lorazepam: see the header of R/drugs_lorazepam.R for the model
-# (Nielsen-Kudsk 1983 disposition, Greenblatt 1982 absorption, Greenblatt 2000
-# effect site) and why Gonzalez 2017 and Swart 2004 are not used.  Pins were
-# worked out from the published numbers by hand (Python, with the micro-
-# constants and the fat-free-mass formula written out again), not from the
-# code under test.
+# lorazepam: see the header of R/drugs_lorazepam.R for the model (Barr 2001
+# disposition, anchored at its cohort; Greenblatt 1982 absorption; Greenblatt
+# 2000 effect site) and why Nielsen-Kudsk 1983, Gonzalez 2017 and Swart 2004
+# are not used.  Pins were worked out from the published numbers by hand (the
+# fat-free-mass formula and the cohort's factors written out again), not from
+# the code under test.
 
 noEvents <- data.frame(Time = numeric(0), Event = character(0))
 
@@ -29,18 +29,29 @@ twoComp <- function(t, D, p, route = c("IV", "PO", "IM")) {
 }
 
 
-test_that("the reference patient: micro-constants from Nielsen-Kudsk's means", {
-  # V1 0.59 L/kg; CL 62.17 mL/kg/h; t1/2 alpha 0.31 h; t1/2 beta 14.10 h.
+# Barr 2001, Table 4 (absolute) and Table 2 (the lorazepam group, n = 14).
+barr <- list(v1 = 40.8, v2 = 102, cl1 = 0.107, cl2 = 1.86)
+barrCohort <- list(weight = 85, height = 176, age = 74, men = 13, women = 1)
+
+test_that("the reference patient: Barr's Table 4 over his cohort's size factors", {
+  # Switch on: Table 4 divided by the cohort's factors (13 men and 1 woman at
+  # 85 kg, 176 cm, 74 y: volume 1.131261187, clearance 1.096912954, worked
+  # out by hand from Al-Sallami's equation).  Switch off: Table 4 as printed.
+  pk <- list(
+    on = list(v1 = 36.0659416916, v2 = 90.1648542291,
+              cl1 = 0.0975464823, cl2 = 1.6956678230),
+    off = barr)
   for (adjust in c(TRUE, FALSE)) {
     actual <- lorazepam(70, 170, 35, "male", adjustToFFM = adjust)
+    d <- pk[[if (adjust) "on" else "off"]]
     expected <- list(
       PK = list(default = list(
-        v1 = 41.3, v2 = 45.0007380466, v3 = 1,
-        cl1 = 0.0725316667, cl2 = 0.7823654189, cl3 = 0,
+        v1 = d$v1, v2 = d$v2, v3 = 1,
+        cl1 = d$cl1, cl2 = d$cl2, cl3 = 0,
         ka_PO = 0.0213276056, bioavailability_PO = 0.9, tlag_PO = 0,
         ka_IM = 0.0488131817, bioavailability_IM = 0.96, tlag_IM = 0
       )),
-      tPeak = 26.3,
+      tPeak = 18.1,
       MEAC = 0,
       typical = 104,
       upperTypical = 152,
@@ -49,27 +60,42 @@ test_that("the reference patient: micro-constants from Nielsen-Kudsk's means", {
     )
     expect_equal_rounded(actual, expected)
   }
+  k <- cohortFactorsIndependent(barrCohort)
+  expect_equal_rounded(c(k$volume, k$clearance), c(1.131261187, 1.096912954))
 })
 
 
-test_that("the derived model returns the published half-lives", {
-  p <- lorazepam(70, 170, 35, "male")$PK$default
+test_that("the cohort's typical patient receives Barr's published values", {
+  # The geometric mean of the cohort's man and woman, weighted 13 to 1.
+  man   <- lorazepam(85, 176, 74, "male")$PK$default
+  woman <- lorazepam(85, 176, 74, "female")$PK$default
+  for (p in names(barr)) {
+    expect_equal(exp((13 * log(man[[p]]) + log(woman[[p]])) / 14), barr[[p]],
+                 tolerance = 1e-10, info = p)
+  }
+})
+
+
+test_that("Barr's model gives his 952-minute elimination half-life", {
+  # Discussion: "a much longer elimination half-life for lorazepam (952 min)".
+  p <- lorazepam(70, 170, 35, "male", adjustToFFM = FALSE)$PK$default
   k10 <- p$cl1 / p$v1; k12 <- p$cl2 / p$v1; k21 <- p$cl2 / p$v2
   a <- k10 + k12 + k21
   r <- c(a + sqrt(a^2 - 4 * k10 * k21), a - sqrt(a^2 - 4 * k10 * k21)) / 2
-  expect_equal(log(2) / r / 60, c(0.31, 14.10), tolerance = 1e-10)
+  expect_equal(log(2) / r[2], 952, tolerance = 1e-3)
+  expect_equal(p$v1 + p$v2, 142.8)                       # Vss, as derived
 })
 
 
-test_that("per-kilogram scaling with the switch off, fat-free mass with it on", {
+test_that("published values with the switch off, fat-free mass with it on", {
   off <- lorazepam(120, 170, 50, "male", adjustToFFM = FALSE)$PK$default
-  expect_equal_rounded(off[c("v1", "v2", "cl1", "cl2")],
-                       list(v1 = 70.8, v2 = 77.1441223657,
-                            cl1 = 0.12434, cl2 = 1.3411978610))
+  expect_equal_rounded(off[c("v1", "v2", "cl1", "cl2")], barr)
+  # 120 kg, 170 cm, 50 y man: fat-free-mass ratio 1.30490670 (volumes) and
+  # its 0.75 power (clearances), over the cohort's factors.
   on <- lorazepam(120, 170, 50, "male")$PK$default
   expect_equal_rounded(on[c("v1", "v2", "cl1", "cl2")],
-                       list(v1 = 53.8926444852, v2 = 58.7217621578,
-                            cl1 = 0.0885548271, cl2 = 0.9551998122))
+                       list(v1 = 47.0626870123, v2 = 117.6567175309,
+                            cl1 = 0.1190957311, cl2 = 2.0702622418))
 })
 
 
@@ -89,19 +115,21 @@ test_that("each route is the two-compartment solution", {
 })
 
 
-test_that("the reference patient matches the label at each route", {
+test_that("the reference patient against the label at each route", {
   p <- lorazepam(70, 170, 35, "male")$PK$default
-  # 4 mg IV: about 70 ng/mL initially (label); 73.7 at 15 min
-  expect_equal(twoComp(15, 4, p, "IV"), 73.69, tolerance = 1e-3)
+  # Barr's ICU patients sit below the label's volunteer figures (the header's
+  # finding, not a fit).  4 mg IV: about 70 ng/mL initially (label); 58.9 at
+  # 15 min
+  expect_equal(twoComp(15, 4, p, "IV"), 58.86, tolerance = 1e-3)
   t <- seq(0, 300, by = 0.1)
-  # 2 mg by mouth: about 20 ng/mL at about 2 h (label); 19.7 at 1.35 h
+  # 2 mg by mouth: about 20 ng/mL at about 2 h (label); 13.8 at 54 min
   po <- twoComp(t, 2, p, "PO")
-  expect_equal(max(po), 19.72, tolerance = 1e-3)
-  expect_equal(t[which.max(po)], 80.7, tolerance = 2e-3)
-  # 4 mg IM: about 48 ng/mL (label); 53.4 at 38 min
+  expect_equal(max(po), 13.84, tolerance = 1e-3)
+  expect_equal(t[which.max(po)], 54.1, tolerance = 2e-3)
+  # 4 mg IM: about 48 ng/mL (label); 42.3 at 25 min
   im <- twoComp(t, 4, p, "IM")
-  expect_equal(max(im), 53.42, tolerance = 1e-3)
-  expect_equal(t[which.max(im)], 37.7, tolerance = 2e-3)
+  expect_equal(max(im), 42.30, tolerance = 1e-3)
+  expect_equal(t[which.max(im)], 25.1, tolerance = 2e-3)
 })
 
 
