@@ -35,8 +35,11 @@ test_that("the categories are the union the two sources need, the default among 
   expect_identical(INFECTION_DEFAULT, INFECTION_NONE)
   expect_identical(infectionLabel(INFECTION_PNEUMONIA_VENTILATED),
                    "Pneumonia, mechanically ventilated")
-  # the header records the decision
-  header <- readLines(test_path("..", "..", "R", "infection.R"))
+  # the header records the decision (the source is not in the built package
+  # R CMD check tests, so this is checked from the checkout only)
+  source <- test_path("..", "..", "R", "infection.R")
+  skip_if_not(file.exists(source), "R/infection.R is not in the built package")
+  header <- readLines(source)
   expect_true(any(grepl("THE DEFAULT (decided by Steven L. Shafer, 2026-11-24)", header,
                         fixed = TRUE)))
 })
