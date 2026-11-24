@@ -184,7 +184,9 @@ test_that("C-07: a fall in pressure lets gas out of the lungs at their compositi
 })
 
 test_that("C-07: a rise in pressure draws fresh gas into the alveoli", {
-  d <- data.frame(Time = 0, Drug = c("air", "sevoflurane", "ventilation"), Dose = c(6, 2, 6))
+  # A flow that covers what the lungs draw: at less, only the fresh gas's
+  # share of the inspired gas is drawn (test-coderabbit-858.R)
+  d <- data.frame(Time = 0, Drug = c("air", "sevoflurane", "ventilation"), Dose = c(10, 2, 6))
   s <- simulateGases(d, weight = 70, age = 40, maximum = 30,
                      physiologyEvents = geminiAltitudeStep(5000, 0))
   step <- which(s$timeLine == 10)

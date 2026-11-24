@@ -208,3 +208,26 @@ test_that("an altitude step's row reads the inspired gas in force after it", {
   expect_equal(end$timeLine[last], 10)
   expect_equal(end$state$oxygen[last, 1], inspired)
 })
+
+# At a rise in pressure the ideal circuit's lungs drew fresh gas whatever the
+# flow.  With no flow gasSettingsAt() gives every flowmeter gas 0 and a
+# vaporiser its setting, so at a descent from 5000 m a 2% vaporiser put 0.95%
+# sevoflurane in the alveoli while no oxygen was drawn.  Only the fresh gas's
+# share of the inspired gas is drawn now: none at no flow.
+test_that("with no fresh gas a descent draws nothing into the lungs", {
+  enc <- function(a) physiologyEventEncode(c(liver = 1, renal = 1, cardiac = 1, gi = 1,
+                                              temperature = 37, altitude = a,
+                                              endobronchial = 0, haemoglobin = 15))
+  ev <- physiologyEventsFrom(data.frame(Time = c(0, 10), Event = "Physiology",
+                                        Settings = c(enc(5000), enc(0)),
+                                        stringsAsFactors = FALSE))
+  d <- data.frame(Time = c(0, 0, 0, 9), Drug = c("oxygen", "sevoflurane", "ventilation", "oxygen"),
+                  Dose = c(2, 2, 6, 0))
+  for (uptake in c(TRUE, FALSE)) {
+    s <- simulateGases(d, weight = 70, age = 40, maximum = 20, physiologyEvents = ev,
+                       uptakeEffect = uptake)
+    step <- which(s$timeLine == 10)
+    for (g in c("sevoflurane", "oxygen", "nitrogen"))
+      expect_equal(s$state[[g]][step[2], 2], s$state[[g]][step[1], 2])
+  }
+})

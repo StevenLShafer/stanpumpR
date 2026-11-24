@@ -106,13 +106,19 @@ equals the slider's exactly. A step in altitude later in the run kept every
 gas-phase tension, so just after a step from sea level to 5000 m the alveolar
 gases summed to 94% of a sea-level atmosphere where 52% fits.
 `gasStateAcrossPressure()` keeps the circuit's and lungs' volume: a fall lets gas
-out at its composition, a rise draws gas in, fresh gas at the new pressure for
-the ideal circuit and its own stored gas for the semi-closed one (Gemini proposed
-scaling both ways, which is right only for a fall; CodeRabbit, on this PR, caught
-the first version scaling the ideal circuit's entry and filling the lungs with
-the old pressure's mixture, and then that the step's row still read the inspired
-gas from before the step, which is now set from the settings in force after it,
-at the end of the plot too).
+out at its composition, a rise draws gas in: for the ideal circuit fresh gas at
+the new pressure, in the share of the inspired gas it makes up
+(`gasCircuitBlend()`), and for the semi-closed one its own stored gas (Gemini
+proposed scaling both ways, which is right only for a fall). CodeRabbit, on this
+PR, caught the first version scaling the ideal circuit's entry and filling the
+lungs with the old pressure's mixture; then that the step's row still read the
+inspired gas from before the step, which is now set from the settings in force
+after it, at the end of the plot too; and then that the lungs drew fresh gas
+whatever the flow. With no flow, `gasSettingsAt()` gives every flowmeter gas 0
+and a vaporiser its setting, so at a descent from 5000 m a 2% vaporiser put
+0.95% sevoflurane in the alveoli while no oxygen was drawn. Gas the circuit
+cannot supply does not exist in the engine (THE CLOSED CIRCUIT), so at no flow
+nothing is now drawn.
 
 **C-06, oxygen in mmHg.** The engine's alveolar tensions are fractions of the dry
 gas, so 100% is 760 - 47 = 713 Torr; `arterialOxygen()` and the altitude help

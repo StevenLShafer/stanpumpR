@@ -1229,23 +1229,41 @@ advanceClosedFormGas <- function(
         newBody <- bodySteps$body[[k]]
         newProps <- gasPropertiesAt(newBody$temperature)
         state <- gasStateAcrossBodies(state, props, newProps)
-        state <- gasStateAcrossPressure(
-          state, body, newBody, circuit,
-          fresh = gasSettingsAt(bySetting, t0, deadSpace, gasPressureRatio(newBody))$Ffgf)
+        from <- body
         body <- newBody
         props <- newProps
         ratio <- gasPressureRatio(body)
         humid <- gasHumidityRatio(body)
         Qco <- if (is.null(cardiacOutput)) body$Q_cardiac else cardiacOutput
         bodyIndex <- k
-        # The ideal and open circuits hold no gas: their entry, the inspired
-        # gas, is set from the settings and the body in force after the step,
-        # as each sub-step sets it, so the step's row and a step at the end of
-        # the plot read it too (CodeRabbit on PR #864: on an ascent to 5000 m
-        # the row kept the sea-level oxygen, 100%).
+        # The ideal and open circuits hold no gas, so at a rise in pressure
+        # the only gas there is to draw is fresh gas, in the share of the
+        # inspired gas it makes up after the step (gasCircuitBlend()): all of
+        # the rise where the flow covers what the lungs draw, none of it at no
+        # flow, as gas the circuit cannot supply does not exist in the engine
+        # (THE CLOSED CIRCUIT in the header).  Until this was found, a
+        # vaporiser's setting was drawn at no flow, where gasSettingsAt()
+        # gives every flowmeter gas 0 and the vaporiser its setting, so the
+        # lungs drew 2% sevoflurane and nothing else (CodeRabbit on PR #864).
+        drawn <- NULL
+        stepProp <- function(st)
+          if (uptakeEffect) coupledProp(st, 1) else buildProp(0, dt = 1)
         if (circuit != "semi-closed") {
           s <- gasSettingsAt(bySetting, t0, deadSpace, ratio)
-          p0 <- if (uptakeEffect) coupledProp(state, 1) else buildProp(0, dt = 1)
+          p0 <- stepProp(state)
+          drawn <- vapply(props$gas, function(g) {
+            p <- p0[[g]]
+            if (is.null(p$fresh)) NA_real_ else p$fresh * p$Ffgf / ratio
+          }, numeric(1))
+        }
+        state <- gasStateAcrossPressure(state, from, body, circuit, inspired = drawn)
+        # Their entry, the inspired gas, is set from the settings and the
+        # body in force after the step, as each sub-step sets it, so the
+        # step's row and a step at the end of the plot read it too
+        # (CodeRabbit on PR #864: on an ascent to 5000 m the row kept the
+        # sea-level oxygen, 98% where the fresh gas is 53%).
+        if (circuit != "semi-closed") {
+          p0 <- stepProp(state)
           for (g in props$gas)
             if (!is.null(p0[[g]]$fresh))
               state[[g]][1] <- p0[[g]]$fresh * p0[[g]]$Ffgf +
@@ -1485,11 +1503,14 @@ gasStateAcrossBodies <- function(state, from, to)
 #' what they hold and draw in gas to make up the difference.  In the
 #' semi-closed circuit that gas is the circuit's own, compressed, and the
 #' circuit, refilled from the fresh gas, which it nearly matches, is scaled.
-#' The ideal and open circuits hold no gas, so the lungs draw in fresh gas at
-#' the new pressure, and their entry, the inspired gas, which the engine sets
-#' from the settings in force after the step, is not scaled (scaled, a 2% sevoflurane vaporiser
-#' read 3.77% for one row at a descent from 5000 m, and the lungs were filled
-#' with the vapour's share of the thinner gas; CodeRabbit on PR #864).
+#' The ideal and open circuits hold no gas, so the only gas the lungs can
+#' draw is fresh gas at the new pressure, in the share of the inspired gas it
+#' makes up (\code{gasCircuitBlend()}; the engine computes it,
+#' \code{inspired}): all of the rise where the flow covers what they draw,
+#' none at no flow, where the vaporiser therefore adds nothing.  Their entry,
+#' the inspired gas, which the engine sets from the settings in force after
+#' the step, is not scaled (scaled, a 2% sevoflurane vaporiser read 3.77% for
+#' one row at a descent from 5000 m; CodeRabbit on PR #864).
 #' Dissolved agent does not move at the step (tissue tensions are
 #' unchanged).  Until 2026-11-24 the gas phases kept their tensions, so just
 #' after a step from sea level to 5000 m the alveolar gases summed to 94% of
@@ -1501,12 +1522,14 @@ gasStateAcrossBodies <- function(state, from, to)
 #'   alveoli second)
 #' @param from,to the bodies before and after the step
 #' @param circuit the breathing circuit ("ideal", "semi-closed" or "open")
-#' @param fresh the fresh gas's tensions at the new pressure, by gas
-#'   (\code{gasSettingsAt()}'s \code{Ffgf}): what the ideal and open circuits
-#'   bring to lungs that are compressed
+#' @param inspired for the ideal and open circuits, by gas, what the lungs
+#'   draw in where the pressure rises, as percent of the gas drawn: the fresh
+#'   gas's composition times its share of the inspired gas after the step,
+#'   so less than 100 in all where the flow does not cover the draw.  NULL,
+#'   or the semi-closed circuit, draws the circuit's own gas.
 #' @returns the state after the step
 #' @keywords internal
-gasStateAcrossPressure <- function(state, from, to, circuit = "ideal", fresh = NULL)
+gasStateAcrossPressure <- function(state, from, to, circuit = "ideal", inspired = NULL)
 {
   r1 <- gasPressureRatio(from)
   r2 <- gasPressureRatio(to)
@@ -1516,8 +1539,8 @@ gasStateAcrossPressure <- function(state, from, to, circuit = "ideal", fresh = N
   for (g in names(state)) {
     y <- state[[g]]
     # The composition of the gas drawn in, as a fraction of its dry gas (x 100)
-    drawn <- if (circuit == "semi-closed" || is.null(fresh) || is.na(fresh[g]))
-      y[1] / r1 else unname(fresh[g]) / r2
+    drawn <- if (circuit == "semi-closed" || is.null(inspired) || is.na(inspired[g]))
+      y[1] / r1 else unname(inspired[g])
     if (circuit == "semi-closed") y[1] <- y[1] * r2 / r1
     y[2] <- if (a2 < a1) y[2] * a2 / a1 else y[2] + drawn * (a2 - a1)
     state[[g]] <- y

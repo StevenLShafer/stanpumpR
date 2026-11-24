@@ -537,7 +537,9 @@ what it recorded. Once the event table holds any Physiology event:
   partial pressure, because it now dissolves more of it. A step in altitude
   moves gas in or out of the lungs and the circuit, which keep their volume:
   going up, gas leaves at the composition it has, so every partial pressure
-  falls with the pressure; going down, the lungs draw in fresh gas.
+  falls with the pressure; going down, the lungs draw in fresh gas, as
+  much as the fresh gas flow supplies of what they inspire (with no fresh
+  gas flowing, nothing is drawn, and the vaporiser adds nothing).
   Dissolved agent does not move at the step. MAC steps with the temperature;
 * the time until threshold, at each moment, assumes the physiology in force
   at that moment continues.

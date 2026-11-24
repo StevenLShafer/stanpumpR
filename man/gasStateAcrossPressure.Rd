@@ -4,7 +4,7 @@
 \alias{gasStateAcrossPressure}
 \title{The gas phases carried across a change of barometric pressure}
 \usage{
-gasStateAcrossPressure(state, from, to, circuit = "ideal", fresh = NULL)
+gasStateAcrossPressure(state, from, to, circuit = "ideal", inspired = NULL)
 }
 \arguments{
 \item{state}{named list of state vectors, one per gas (circuit first,
@@ -14,9 +14,11 @@ alveoli second)}
 
 \item{circuit}{the breathing circuit ("ideal", "semi-closed" or "open")}
 
-\item{fresh}{the fresh gas's tensions at the new pressure, by gas
-(\code{gasSettingsAt()}'s \code{Ffgf}): what the ideal and open circuits
-bring to lungs that are compressed}
+\item{inspired}{for the ideal and open circuits, by gas, what the lungs
+draw in where the pressure rises, as percent of the gas drawn: the fresh
+gas's composition times its share of the inspired gas after the step,
+so less than 100 in all where the flow does not cover the draw.  NULL,
+or the semi-closed circuit, draws the circuit's own gas.}
 }
 \value{
 the state after the step
@@ -33,11 +35,14 @@ the new total over the old.  Where it rises, gas enters: the alveoli keep
 what they hold and draw in gas to make up the difference.  In the
 semi-closed circuit that gas is the circuit's own, compressed, and the
 circuit, refilled from the fresh gas, which it nearly matches, is scaled.
-The ideal and open circuits hold no gas, so the lungs draw in fresh gas at
-the new pressure, and their entry, the inspired gas, which the engine sets
-from the settings in force after the step, is not scaled (scaled, a 2\% sevoflurane vaporiser
-read 3.77\% for one row at a descent from 5000 m, and the lungs were filled
-with the vapour's share of the thinner gas; CodeRabbit on PR #864).
+The ideal and open circuits hold no gas, so the only gas the lungs can
+draw is fresh gas at the new pressure, in the share of the inspired gas it
+makes up (\code{gasCircuitBlend()}; the engine computes it,
+\code{inspired}): all of the rise where the flow covers what they draw,
+none at no flow, where the vaporiser therefore adds nothing.  Their entry,
+the inspired gas, which the engine sets from the settings in force after
+the step, is not scaled (scaled, a 2\% sevoflurane vaporiser read 3.77\% for
+one row at a descent from 5000 m; CodeRabbit on PR #864).
 Dissolved agent does not move at the step (tissue tensions are
 unchanged).  Until 2026-11-24 the gas phases kept their tensions, so just
 after a step from sea level to 5000 m the alveolar gases summed to 94\% of
