@@ -144,6 +144,30 @@
 # a slow second tissue depot or a zero-order subcutaneous share, which this
 # engine would not carry (validateTransitChain(), getDrugPK()).
 #
+# CLEARANCE BY DOSE OCCASION
+# ===========================
+# Added 2026-11-24 for artemether (R/drugs_artemether.R; Ding 2026, Br J
+# Clin Pharmacol 92:589-605, Table 2), on Steven L. Shafer's decision to draw
+# both components of Coartem.  Ding's artemether clearance rises with each
+# dose of the three-day course, an empirical stand-in for the autoinduction
+# the Coartem label describes, written as CL x (1 + theta (OCC - 1)) with OCC
+# the dose occasion, 1 to 6.  A block with
+#
+#     doseOccasionClearance = list(slope = theta, occasions = 6)
+#
+# multiplies the parent's whole elimination, kOut and kMetabolic alike, by
+# 1 + slope (k - 1) from the k-th dose that feeds the chain (above 0, at its
+# dose time, as NONMEM's occasion switches at the dose record) until the
+# next, held at the last occasion from then on: Ding says the time
+# dependence "is not suitable for extrapolation" past the standard three
+# days, so a seventh dose, or a second course weeks later, is given the sixth
+# occasion's clearance rather than a growing one.  Before the first dose the
+# first occasion holds.  The system is still linear and constant between dose
+# times, so the advance stays exact: one matrix per occasion, and the
+# propagator memoised on the occasion and the step.  The metabolite formed
+# rises with the parent's clearance, as it does in Ding's model, where the
+# whole of artemether's elimination forms dihydroartemisinin.
+#
 # TIME UNTIL THRESHOLD, BY A ROOT-FIND ON THE PROPAGATOR
 # ======================================================
 # Built 2026-10-30 on Steven L. Shafer's decision (asked when R/transit.R was
@@ -333,6 +357,19 @@ validateTransitChain <- function(tc, pkSet, drug)
     stop("Invalid transitChain for ", drug, ": kMetabolic (", signif(kMet, 6),
          "/min) exceeds the parent's total elimination rate constant k10 (",
          signif(pkSet$k10, 6), "/min), so the clearance does not cover it.")
+
+  occ <- tc$doseOccasionClearance
+  if (!is.null(occ))
+  {
+    if (!is.list(occ) || !is_valid_number(occ$slope) ||
+        !(is_valid_number(occ$occasions) && occ$occasions >= 1 &&
+            occ$occasions == round(occ$occasions)))
+      stop("Invalid transitChain for ", drug, ": doseOccasionClearance needs ",
+           "a slope and a whole number of occasions, one or more.")
+    if (1 + occ$slope * (occ$occasions - 1) <= 0)
+      stop("Invalid transitChain for ", drug, ": doseOccasionClearance would ",
+           "make the clearance zero or negative by its last occasion.")
+  }
 
   met <- tc$metabolite
   if (!is.null(met))
@@ -535,13 +572,36 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
   # ---- The advance ----
   # One propagator per distinct step length, memoised: E is the leading block
   # of exp(Ahat dt) and g its last column, the response to a unit rate.
+  # The dose occasion in force at each point (see the header): the number of
+  # doses above 0 that feed the chain, given at or before it, held between 1
+  # and the block's last occasion.  Every point is occasion 1 without a block.
+  occBlock <- tc$doseOccasionClearance
+  occasionLine <- rep(1L, L)
+  if (!is.null(occBlock))
+  {
+    occTimes <- sort(t0[isOral & D > 0])
+    occasionLine <- as.integer(pmin(pmax(findInterval(timeLine, occTimes), 1L),
+                                    as.integer(occBlock$occasions)))
+  }
+  # The system matrix of an occasion: the parent's elimination, and the
+  # metabolite it forms, multiplied by 1 + slope (k - 1).
+  occasionMatrix <- function(k) {
+    if (is.null(occBlock) || k == 1L) return(A)
+    mult <- 1 + occBlock$slope * (k - 1L)
+    Ak <- A
+    Ak[iC, iC] <- -(mult * (kOut + kMet) + k12 + k13)
+    if (!is.null(met)) Ak[if (m > 0) iM1 else iMC, iC] <- mult * kMet
+    Ak
+  }
+  occasionMatrices <- lapply(seq_len(max(occasionLine)), occasionMatrix)
+
   cache <- list()
-  propagator <- function(dt) {
-    key <- sprintf("%.14e", dt)
+  propagator <- function(dt, k = 1L) {
+    key <- sprintf("%d:%.14e", k, dt)
     got <- cache[[key]]
     if (is.null(got))
     {
-      E <- expmScaleSquare(A * dt)
+      E <- expmScaleSquare(occasionMatrices[[k]] * dt)
       E[E < 0] <- 0     # exact for a generator; rounding can dip below zero
       got <- list(E = E[seq_len(nS), seq_len(nS), drop = FALSE],
                   g = E[seq_len(nS), iOne], gOral = E[seq_len(nS), iOneOral])
@@ -562,7 +622,7 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
   {
     if (i > 1)
     {
-      p <- propagator(timeLine[i] - timeLine[i - 1])
+      p <- propagator(timeLine[i] - timeLine[i - 1], occasionLine[i - 1])
       x <- as.vector(p$E %*% x) + p$g * rateLine[i - 1] +
         p$gOral * oralRateLine[i - 1]
     }
@@ -591,8 +651,16 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
     if (ke0 > 0) cvec[iE] <- 1 else cvec[iC] <- 1 / V
     horizon <- if (ke0 > 0) RECOVERY_HORIZON_EFFECT else
       recoveryHorizonPlasma(maximum)
-    recovery <- transitChainRecovery(X, A[seq_len(nS), seq_len(nS), drop = FALSE],
-                                     cvec, emerge, horizon)
+    # Once delivery stops no dose follows, so each point's future runs on the
+    # occasion in force there.
+    for (k in unique(occasionLine))
+    {
+      rows <- which(occasionLine == k)
+      recovery[rows] <- transitChainRecovery(
+        X[rows, , drop = FALSE],
+        occasionMatrices[[k]][seq_len(nS), seq_len(nS), drop = FALSE],
+        cvec, emerge, horizon)
+    }
     oralIn <- isOral | oralRate
     pending <- pendingDoseTimes(t0[oralIn], t0[oralIn] + headLag,
                                 D[oralIn], timeLine)
