@@ -58,8 +58,19 @@
 # says "an age-dependent linear decrease in clearance in elderly, but not in
 # younger patients ... Bodyweight is the driving component in paediatrics",
 # which could be read as a term held at 43 below 43; Table 4 prints no such
-# break, and nlmixr2lib reads it linear too.  Implemented as printed; a
-# [decision] for Shafer in the card's open_questions.
+# break, and nlmixr2lib reads it linear too.  Decided by Steven L. Shafer,
+# 2026-11-24: keep it as printed.  The term was found by PsN's stepwise
+# search, which tests a linear form first, so its shape below 43 was never
+# tested separately; in children it is entangled with the fixed 0.75 size
+# exponent (the authors report overparameterisation when they estimated
+# it), so the pair is used as fitted.  Only 52 of the 446 subjects were
+# under 18 (4 aged 1, 21 aged 2-11, 27 aged 12-17).  Against Wierda 1997
+# (Br J Anaesth 78:690, PMID 9215021, abstract; arterial, 5 + 5), children
+# 2.3-8 years cleared 6.7 mL/kg/min, which the term as printed gives
+# (6.2-7.3 at typical weights; 5.0-5.8 held at 43).  Infants 0.1-0.8 years
+# cleared 4.2 mL/kg/min, about half of what either form gives (8.6 as
+# printed at 0.5 years and 7.5 kg): below 1 year there are no data and the
+# model, which has no maturation term, very likely overpredicts clearance.
 #
 # RENAL FUNCTION
 # ==============
