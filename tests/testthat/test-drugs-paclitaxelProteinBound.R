@@ -5,7 +5,8 @@
 noEvents <- data.frame(Time = double(), Event = character())
 
 test_that("Table 2 in micrograms, and the three volumes are the label's 1741 L", {
-  X <- paclitaxelProteinBound(70, 170, 50, "female")
+  # the switch off gives the published values (on, they are anchored at the cohort)
+  X <- paclitaxelProteinBound(70, 170, 50, "female", adjustToFFM = FALSE)
   d <- X$PK$default; mm <- X$michaelisMenten
   expect_equal(c(d$v1, d$v2, mm$saturableDistribution[["volume"]]), c(15.8, 75.4, 1650))
   expect_equal(d$cl2 * 60, 41.6)
@@ -25,11 +26,23 @@ test_that("albumin on VMEL: (2/3.9)^0.554, about 30% lower at 2 g/dL; blank is 3
   expect_true(is.finite(paclitaxelProteinBound(70, 170, 50, "female", albumin = 0)$michaelisMenten$vmax))
 })
 
-test_that("no size covariate: fixed in both switch positions", {
-  a <- paclitaxelProteinBound(50, 160, 50, "female")
+test_that("switch off fixed; switch on scaled to fat-free mass at Chen's cohort (Gemini audit F4)", {
+  a <- paclitaxelProteinBound(50, 160, 50, "female", FALSE)
   b <- paclitaxelProteinBound(120, 180, 50, "male", FALSE)
   expect_equal(a$PK$default, b$PK$default)
   expect_equal(a$michaelisMenten, b$michaelisMenten)
+  on <- function(w, h, s) paclitaxelProteinBound(w, h, 50, s)
+  sz <- function(w, h, s) pkSizeFactors(w, h, 50, s, TRUE, legacyVolume = 1, legacyClearance = 1,
+                                        cohort = do.call(cohortSizeFactors, PACLITAXEL_CHEN_COHORT))
+  for (pt in list(list(50, 160, "female"), list(120, 180, "male"))) {
+    X <- do.call(on, pt); f <- do.call(sz, pt)
+    expect_equal(X$PK$default$v1, 15.8 * f$volume)
+    expect_equal(X$michaelisMenten$saturableDistribution[["volume"]], 1650 * f$volume)
+    expect_equal(X$michaelisMenten$vmax * 60 * 1000, 8070 * f$clearance)
+    expect_equal(X$michaelisMenten$saturableDistribution$vmax * 60 * 1000, 325000 * f$clearance)
+    expect_equal(X$michaelisMenten$km * 1000, 40.2)          # concentrations unscaled
+  }
+  expect_gt(on(120, 180, "male")$PK$default$v1, on(50, 160, "female")$PK$default$v1)
 })
 
 simulate <- function(mgPerM2, bsa = 1.8, hours = 21 * 24) {
@@ -37,7 +50,7 @@ simulate <- function(mgPerM2, bsa = 1.8, hours = 21 * 24) {
   dose <- data.frame(Drug = "paclitaxelProteinBound", Time = c(0, 30),
                      Dose = c(mgPerM2 * bsa * 2, 0), Units = "mg/hr")
   simulateDrugsWithCovariates(dose, noEvents, 70, h, 50, "female", hours * 60,
-                              FALSE)$paclitaxelProteinBound$wide
+                              FALSE, adjustToFFM = FALSE)$paclitaxelProteinBound$wide
 }
 
 test_that("the label: clearance 13-30 L/h/m2 over 80-300 mg/m2, half-life 13-27 h", {

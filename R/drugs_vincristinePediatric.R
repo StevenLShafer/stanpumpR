@@ -121,8 +121,8 @@ VINCRISTINE_NIJSTAD_MIN_AGE <- 0.04
 #' Vincristine, intravenous, in children (Nijstad 2022)
 #'
 #' Two compartments allometric in weight with saturable binding to a tissue
-#' pool whose capacity scales with weight and age; plotted as the unbound
-#' plasma concentration, run by \code{advanceMichaelisMenten()}.  See the
+#' pool whose capacity scales with weight and age; plotted as the plasma
+#' concentration of drug not bound to that pool (total plasma vincristine), run by \code{advanceMichaelisMenten()}.  See the
 #' header of \code{R/drugs_vincristinePediatric.R}.
 #'
 #' @inheritParams cefazolin
@@ -163,8 +163,8 @@ vincristinePediatric <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "L/h x (WT/70)^0.75, Q 63.2 L/h x (WT/70)^0.75, Vc 5.39 L x WT/70, Vp 400 L x WT/70, ",
     "saturable binding to beta-tubulin from the central amount (Bmax 0.525 mg x WT/70 x ",
     "(age/18)^-0.199, kon 1300 /h, koff 11.5 /h), carried at quasi-equilibrium (age ",
-    "floored at 0.04 years). Doses as labelled (vincristine sulfate). Unbound plasma ",
-    "vincristine in ng/mL. https://doi.org/10.1007/s11095-022-03364-1"
+    "floored at 0.04 years). Doses as labelled (vincristine sulfate). Plasma vincristine ",
+    "not bound to the tubulin pool (total plasma, as assayed), ng/mL. https://doi.org/10.1007/s11095-022-03364-1"
   )
 
   list(

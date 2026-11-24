@@ -24,7 +24,8 @@ test_that("the model is Table 2 per 70 kg, run in F-ara-A for a phosphate dose",
 })
 
 test_that("the adult median cumulative AUC: 160 mg/m2 of phosphate at 1.9 m2, 78 kg, eGFR 110", {
-  scr <- (140 - 54) * 78 / (72 * 110)
+  # the paper's eGFR 110 is per 70 kg (Langenhorst 2020, Eq. 1; Gemini audit F1)
+  scr <- (140 - 54) * 70 / (72 * 110)
   X <- fludarabine(78, 175, 54, "male", adjustToFFM = FALSE, creatinine = scr)$PK$default
   expect_equal(round(160 * 1.9 / (X$cl1 * 60), 1), 26.1)    # paper's median 26 mg.h/L
 })
@@ -34,8 +35,11 @@ test_that("eGFR: Schwartz in children, Cockcroft-Gault in adults, capped by age"
   expect_equal(fludarabineEGFR(10, 75, 0.75, "male", 0.3), 87.5)   # cap half-way to 1.5 y
   expect_equal(fludarabineEGFR(30, 140, 8, "female", 0.7), 0.55 * 140 / 0.7)
   expect_equal(fludarabineEGFR(50, 160, 13, "male", 1.0), 0.70 * 160 / 1.0)
+  # Cockcroft-Gault per 70 kg: the weight passed does not enter it
   expect_equal(fludarabineEGFR(50, 160, 15, "male", 1.0),
-               creatinineClearanceCG(50, 15, "male", 1.0))
+               creatinineClearanceCG(70, 15, "male", 1.0))
+  expect_equal(fludarabineEGFR(50, 160, 40, "female", 1.2),
+               fludarabineEGFR(110, 160, 40, "female", 1.2))
   expect_equal(fludarabineEGFR(50, 160, 15, "female", 1.0), 0.55 * 160 / 1.0)
   expect_equal(fludarabineEGFR(70, 170, 80, "male", 0.5), 100)     # 140 - 8 per decade after 30
 })

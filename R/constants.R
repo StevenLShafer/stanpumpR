@@ -431,7 +431,7 @@ enteralRateUnits <- c("mg/hr PO")
 # the fixed-ratio pens) simply has no such unit, and the dose table refuses
 # a unit the drug does not list.  (Claude Code, 2026-10-17, at the request
 # of Steven L. Shafer.)
-scUnits <- c("mg SC", "mg/kg SC", "mcg SC", "mcg/kg SC")
+scUnits <- c("mg SC", "mg/kg SC", "mcg SC", "mcg/kg SC", "mg/m2 SC")
 insulinUnits <- c("U SC", "U/kg SC")
 insulinRateUnits <- c("U/hr SC")
 
@@ -505,7 +505,7 @@ iuUnits <- c("IU", "IU/kg", "IU/hr", "IU/kg/hr")
 # mU, and refuses a mass unit for it and a U unit for any other drug.  No
 # route word: they are intravenous.  (Claude Code, 2026-10-22, at the request
 # of Steven L. Shafer.)
-ivPotencyUnits <- c("U", "U/min", "U/hr", "U/kg/min", "U/kg/hr")
+ivPotencyUnits <- c("U", "U/min", "U/hr", "U/kg/min", "U/kg/hr", "U/m2/hr")
 # Unit doses per kilogram or per square metre (bleomycin, 0.25 to 0.5
 # units/kg or 10 to 20 units/m2).  Amounts, not rates, so kept apart from
 # ivPotencyUnits, whose entries after "U" are all rates.

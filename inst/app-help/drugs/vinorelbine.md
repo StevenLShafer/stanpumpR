@@ -8,7 +8,7 @@ Vinorelbine comes from Variol and colleagues (*Eur J Clin Pharmacol* 2002;58:467
 
 ### What is plotted
 
-Vinorelbine in **whole blood**, in ng/mL, which is how the study measured it. Doses are entered in mg as labelled (vinorelbine base), intravenously as a dose or an infusion, or by mouth (`mg PO`); a dose prescribed per m² must be multiplied by the body surface area first. There is no effect site and no band.
+Vinorelbine in **whole blood**, in ng/mL, which is how the study measured it. Doses are entered in mg as labelled (vinorelbine base), intravenously as a dose or an infusion, or by mouth (`mg PO`); a dose prescribed per m² or per kg can be entered as such (mg/m², mg/kg; body surface area by Mosteller, from the Patient Profile's weight and height). There is no effect site and no band.
 
 ### The parameters chosen
 

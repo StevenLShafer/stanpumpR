@@ -67,7 +67,9 @@ MODEL_GROUPS <- list(
   oxaliplatin = data.frame(
     model = c("oxaliplatinBastian", "oxaliplatinNikanjam"),
     source = c("Bastian 2003", "Nikanjam 2015"),
-    ageMin = c(18, 0.6), ageMax = c(Inf, 86),
+    # Bastian's Table 1 prints 41-79 years (Gemini's chemotherapy audit of
+    # 2026-11-23, F3); it was coded 18 and over.
+    ageMin = c(41, 0.6), ageMax = c(79, 86),
     weightMin = c(41, 7), weightMax = c(107, 165),
     n = c(56, 186), year = c(2003, 2015)),
   fluorouracil = data.frame(
@@ -79,13 +81,16 @@ MODEL_GROUPS <- list(
   doxorubicin = data.frame(
     model = c("doxorubicinJoerger", "doxorubicinPediatric", "doxorubicinPerezBlanco"),
     source = c("Joerger 2007", "Voller 2015", "Perez-Blanco 2016"),
-    ageMin = c(18, 0.2, 26), ageMax = c(Inf, 17.7, 84),
+    # Joerger 2007 studied 29-81 years (its Discussion; card PMID_18027989),
+    # coded 18 and over until Gemini's chemotherapy audit of 2026-11-23, F7.
+    ageMin = c(29, 0.2, 26), ageMax = c(81, 17.7, 84),
     weightMin = c(NA, NA, 43), weightMax = c(NA, NA, 110),
     n = c(59, 94, 44), year = c(2007, 2015, 2016)),
   cyclophosphamide = data.frame(
     model = c("cyclophosphamideJoerger", "cyclophosphamideMcCune"),
     source = c("Joerger 2007", "McCune 2009"),
-    ageMin = c(18, 1.30), ageMax = c(Inf, 9.37),
+    # Joerger 2007's cohort, 29-81 years, as for doxorubicin above.
+    ageMin = c(29, 1.30), ageMax = c(81, 9.37),
     weightMin = c(NA, 8.7), weightMax = c(NA, 52.8),
     n = c(59, 22), year = c(2007, 2009)),
   paclitaxel = data.frame(
@@ -126,7 +131,9 @@ MODEL_GROUPS <- list(
   doxorubicinol = data.frame(
     model = c("doxorubicinolJoerger", "doxorubicinolPediatric", "doxorubicinolPerezBlanco"),
     source = c("Joerger 2007", "Voller 2015", "Perez-Blanco 2016"),
-    ageMin = c(18, 0.2, 26), ageMax = c(Inf, 17.7, 84),
+    # Joerger 2007 studied 29-81 years (its Discussion; card PMID_18027989),
+    # coded 18 and over until Gemini's chemotherapy audit of 2026-11-23, F7.
+    ageMin = c(29, 0.2, 26), ageMax = c(81, 17.7, 84),
     weightMin = c(NA, NA, 43), weightMax = c(NA, NA, 110),
     n = c(59, 94, 44), year = c(2007, 2015, 2016))
 )

@@ -184,7 +184,13 @@ cisplatin <- function(weight, height, age, sex, adjustToFFM = TRUE,
     reference = reference,
     metabolite = list(
       name              = "cisplatinBound",
-      kFormation        = cl / 60 / v1,     # the unbound k10, scaled by fm/Vm
+      # the unbound k10, scaled by fm/Vm.  cisplatinBound() cannot read the
+      # pregnancy flag (a metabolite has no registry row), so its fm/Vm keeps
+      # the unraised creatinine clearance; pregnancy's (1.5)^-0.36 on fm/Vm
+      # is carried here instead, so the bound platinum stays consistent with
+      # Urien's equations (Gemini's chemotherapy audit of 2026-11-23, F16).
+      kFormation        = cl / 60 / v1 *
+        pregnancyGfrFactor(pregnant, creatinine)^(-p$clCrExponent),
       firstPassFraction = 0,
       mwRatio           = 1                 # platinum throughout
     )

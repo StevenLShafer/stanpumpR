@@ -1,4 +1,4 @@
-stanpumpR is a collaborative research project. Individuals interested in adding drugs, pharmacokinetic data sets, or new algorithms are encouraged to contact Steven Shafer (steven.shafer@stanford.edu). It is hoped that eventually each drug in the library will be maintained by an investigator who keeps its pharmacokinetics as up to date as possible.
+stanpumpR is a collaborative research project. Individuals interested in adding drugs, pharmacokinetic data sets, or new algorithms are encouraged to contact Steven Shafer (steven.shafer@stanford.edu). So is anyone who needs a drug, a route or a dose unit that stanpumpR does not offer; for a one-time simulation, a published study can often be uploaded to the **Single Paper Review** tab. It is hoped that eventually each drug in the library will be maintained by an investigator who keeps its pharmacokinetics as up to date as possible.
 
 ## What a drug needs
 

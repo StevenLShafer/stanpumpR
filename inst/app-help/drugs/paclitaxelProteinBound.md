@@ -10,11 +10,11 @@ Because elimination saturates, clearance falls as the dose rises: about 28 L/h p
 
 ### Albumin
 
-The maximal elimination rate rises with serum albumin (to the power 0.554, about 3.9 g/dL): a patient with albumin of 2 g/dL clears paclitaxel about 30% more slowly at high concentrations. stanpumpR uses the Patient Profile's **Serum albumin**, or 3.9 g/dL when it is blank. Weight, body-surface area, age, sex and kidney function had no effect.
+The maximal elimination rate rises with serum albumin (to the power 0.554, about 3.9 g/dL): a patient with albumin of 2 g/dL clears paclitaxel about 30% more slowly at high concentrations. stanpumpR uses the Patient Profile's **Serum albumin**, or 3.9 g/dL when it is blank. Weight, body-surface area, age, sex and kidney function had no effect in the study. Following the library's rule that every parameter is scaled to body size, since a cohort of similar sizes cannot show that size does not matter, the volumes and maximal rates are scaled to fat-free mass, anchored at the study's cohort (median 74 kg, 57 years, 60% women), so a patient like the cohort's receives the published values. With **Adjust weight to fat-free mass** unticked they are the published values for everyone.
 
 ### What is plotted
 
-Total plasma paclitaxel, in mcg/mL. The time spent above 0.05 µmol/L (0.043 mcg/mL) is linked to neutropenia for solvent-based paclitaxel; it is not a therapeutic range, so no band is drawn.
+Total plasma paclitaxel, in mcg/mL. For nab-paclitaxel, Chen 2014 found that the time above 720 ng/mL (0.72 mcg/mL, 0.84 µmol/L) best predicted a fall of 50% or more in the neutrophil count; the time above 0.05 µmol/L (0.043 mcg/mL), the threshold used for solvent-based paclitaxel, was not significant. Neither is a therapeutic range, so no band is drawn.
 
 ### Where to be careful
 
