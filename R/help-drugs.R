@@ -94,7 +94,10 @@ helpParentDrugs <- function(drug, drugDefaults = getDrugDefaultsGlobal()) {
   adult <- helpReferencePatients()[1, ]
   Filter(function(d) {
     X <- helpDrugModelOutput(d, adult)
-    !is.null(X$metabolite) && identical(X$metabolite$name, drug)
+    # The closed-form metabolite route, or a transit chain's (enalaprilat,
+    # dihydroartemisinin)
+    identical(X$metabolite$name, drug) ||
+      identical(X$transitChain$metabolite$name, drug)
   }, iv)
 }
 
@@ -394,7 +397,55 @@ helpDrugPageHTML <- function(drug, drugDefaults = getDrugDefaultsGlobal()) {
                    htmltools::htmlEscape(drug)))
   }
   row <- row[1, ]
-  if (isGasDrug(drug)) helpGasPageHTML(drug, row) else helpIvDrugPageHTML(drug, row, drugDefaults)
+  if (isGasDrug(drug)) return(helpGasPageHTML(drug, row))
+  if (isCombinationProduct(drug)) return(helpProductPageHTML(drug, row, drugDefaults))
+  helpIvDrugPageHTML(drug, row, drugDefaults)
+}
+
+#' The help page of a combination product drawn as its components
+#'
+#' A product has no model of its own (R/combination-products.R), so its page
+#' lists its components, each linked to its own page, which carries the
+#' model, the parameters and the pregnancy and therapeutic-range rows.
+#' @noRd
+helpProductPageHTML <- function(drug, row, drugDefaults) {
+  esc <- htmltools::htmlEscape
+  spec <- COMBINATION_PRODUCTS[[drug]]
+  units <- helpDrugUnits(row)
+  componentItems <- vapply(names(spec$components), function(d) {
+    conc <- drugDefaults$Concentration.Units[drugDefaults$Drug == d]
+    paste0("<li>", helpPageLink(paste0("drugs/", d)), ": ",
+           esc(helpFormatNumber(spec$components[[d]])), " mg a ", esc(spec$unit),
+           ", drawn in ", esc(helpConcentrationUnits(conc)), "</li>")
+  }, character(1))
+  glance <- data.frame(
+    Property = c("Given as", "Units offered in the dose table", "Default unit", "Category"),
+    Value = c(
+      sprintf("A combination product, drawn as its %d components", length(componentItems)),
+      paste(units, collapse = ", "),
+      as.character(row$Default.Units),
+      as.character(row$Category)
+    ),
+    stringsAsFactors = FALSE
+  )
+  narrative <- helpMarkdownToHTML(helpReadMarkdown(paste0("drugs/", drug)))
+  paste0(
+    helpH2("At a glance"), helpTableHTML(glance),
+    helpH2("Components"),
+    "<p>A dose of ", esc(drug), " is entered in ", esc(spec$unit), "s and simulated as its ",
+    "components, each from its own model and drawn in its own panel. The models, their ",
+    "parameters, their pregnancy findings and their therapeutic ranges are on the ",
+    "components' pages.</p>",
+    "<ul>", paste(componentItems, collapse = ""), "</ul>",
+    if (nzchar(narrative)) paste0(helpH2("About this product"), narrative) else "",
+    helpDrugFdaLabelHTML(drug),
+    helpScenariosUsingDrugHTML(drug),
+    helpH2("See also"),
+    "<ul>",
+    "<li>", helpPageLink("drugs/index", "All drugs"), "</li>",
+    "<li>", helpPageLink("models/covariates"), "</li>",
+    "</ul>"
+  )
 }
 
 #' The searchable text of a drug's page, without running the model
@@ -450,7 +501,11 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   intravenous <- any(units %in% c(bolusUnits, infusionUnits, calciumUnits, iuUnits, ivPotencyUnits, milliunitRateUnits,
                       aminophyllineUnits, caffeineCitrateUnits, piperacillinTazobactamUnits))
   tci <- any(units %in% tciUnits)
-  given <- if (length(units) == 0) {
+  product <- combinationProductFor(drug)
+  given <- if (length(units) == 0 && !is.na(product)) {
+    paste0("Not dosed directly: a component of ", product,
+           ", given in the dose table as ", product)
+  } else if (length(units) == 0) {
     paste0("Not dosed directly: appears only as the active metabolite of ",
            paste(helpDrugTitle(parents), collapse = " and "))
   } else if (intravenous && length(routes)) {
@@ -857,9 +912,14 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     # transit chain of two, R/advanceTransitChain.R: levodopa, its gel,
     # opicapone): one oral row, named for the structure.
     tc <- pkRef$transitChain
-    transit <- !is.null(tc) && isTRUE(tc$n == 2) && isTRUE(d$ka_PO > 0) &&
+    # Longer chains of equal steps too (artemether, two transit compartments;
+    # lumefantrine, five: Ding 2026).
+    transit <- !is.null(tc) && isTRUE(tc$n >= 2) && isTRUE(d$ka_PO > 0) &&
       isTRUE(abs(tc$ktr / d$ka_PO - 1) < 1e-6)
-    if (transit) routes$PO <- "Oral (PO), through one transit compartment"
+    nTransit <- if (transit) as.integer(tc$n) - 1L else 0L
+    transitWords <- if (nTransit == 1L) "one transit compartment" else
+      paste(nTransit, "transit compartments")
+    if (transit) routes$PO <- paste("Oral (PO), through", transitWords)
     rows <- lapply(names(routes), function(r) {
       ka <- d[[paste0("ka_", r)]]
       if (is.null(ka) || is.na(ka) || ka <= 0) return(NULL)
@@ -943,8 +1003,9 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
                                      "absorption; plain mg PO, and any other form offered, use the default. ") else "",
         pulseNote,
         if (transit) paste0(
-          "Each dose passes from its depot through one transit compartment into the central compartment, ",
-          "both emptied at the rate constant shown (two equal first-order steps), so the absorption ",
+          "Each dose passes from its depot through ", transitWords, " into the central compartment, ",
+          if (nTransit == 1L) "both" else "all", " emptied at the rate constant shown (",
+          if (nTransit == 1L) "two" else nTransit + 1L, " equal first-order steps), so the absorption ",
           "half-time shown is that of each step. ") else "",
         if (isTRUE(pkRef$enteralInfusion)) paste0(
           "The doses (mg PO) and the continuous rate (mg/hr PO) are pumped into the jejunum through ",
@@ -1016,7 +1077,16 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
             helpFormatNumber(sat$Fmin), " + ", helpFormatNumber(sat$Fmax - sat$Fmin),
             " &times; exp(&minus;ln 2 &times; D / ", helpFormatNumber(sat$D50),
             ") with D the dose in mg. It is relative bioavailability on the apparent scale, ",
-            "and can exceed 1 for a small dose. ")
+            "and can exceed 1 for a small dose. "),
+          # Written per mg for the patient the page shows (lumefantrine's dose
+          # per kilogram, Ding 2026), held within the studied doses.
+          linear = paste0(
+            "<p>", s$route, " bioavailability <strong>falls with the dose</strong>, as 1 ",
+            if (sat$slope < 0) "&minus; " else "+ ", helpFormatNumber(abs(sat$slope)),
+            " &times; (D &minus; ", helpFormatNumber(sat$Dref), ") with D the dose in mg, ",
+            "held at its value for ", helpFormatNumber(sat$Dmin), " and ",
+            helpFormatNumber(sat$Dmax), " mg outside that range, which is the range the source ",
+            "studied. It is relative to the source's reference dose and can exceed 1 below it. ")
         )
         absorptionHTML <- paste0(
           absorptionHTML,

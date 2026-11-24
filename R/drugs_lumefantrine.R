@@ -175,7 +175,9 @@ lumefantrine <- function(weight, height, age, sex, adjustToFFM = TRUE,
       slope = LUMEFANTRINE_DOSE_F / weight,
       Dref  = LUMEFANTRINE_DOSE_REF * weight,
       Dmin  = LUMEFANTRINE_DOSE_RANGE[1] * weight,
-      Dmax  = LUMEFANTRINE_DOSE_RANGE[2] * weight
+      Dmax  = LUMEFANTRINE_DOSE_RANGE[2] * weight,
+      # the help page's examples: one to four tablets of Coartem
+      exampleDoses = c(120, 240, 360, 480)
     ),
     reference = paste0(
       "Ding J, Hoglund RM, van der Pluijm RW, et al. Population pharmacokinetics ",
