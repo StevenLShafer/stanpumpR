@@ -232,66 +232,66 @@ levodopaEntacaponeIntestinalGel,mcg,,,mg/hr PO,"mg PO,mg/hr PO",#7E57C2,1,3.5,2.
 opicapone,ng,,,mg PO qd,"mg PO,mg PO qd",#283593,0,0,0,0,0,IV,Parkinson disease
 tolcapone,mcg,,,mg PO,"mg PO,mg PO tid",#00897B,0,0,0,0,0,IV,Parkinson disease
 amantadineER,ng,,,mg PO qd,"mg PO,mg PO qd",#3949AB,600,1700,1150,0,0,IV,Parkinson disease
-cladribine,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg SC",#880E4F,0,0,0,0,0,IV,Chemotherapy
-fluorouracil,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#D81B60,0,0,0,0,0,IV,Chemotherapy
+cladribine,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg SC,mg/kg/day",#880E4F,0,0,0,0,0,IV,Chemotherapy
+fluorouracil,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr,mg/m2,mg/m2/hr,mg/m2/day",#D81B60,0,0,0,0,0,IV,Chemotherapy
 fluorouracilBriki,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#D81B60,0,0,0,0,0,IV,
-carboplatin,mcg,mg,mg/hr,mg/hr,"mg,mg/hr,mg/min",#37474F,0,0,0,0,0,IV,Chemotherapy
+carboplatin,mcg,mg,mg/hr,mg/hr,"mg,mg/hr,mg/min,mg/m2,mg/m2/hr",#37474F,0,0,0,0,0,IV,Chemotherapy
 carboplatinDuffull,mcg,mg,mg/hr,mg/hr,"mg,mg/hr,mg/min",#37474F,0,0,0,0,0,IV,
 busulfan,ng,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#4E342E,0,0,0,0,0,IV,Chemotherapy
 methotrexatePediatric,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#1B5E20,0,0,0,0,0,IV,
-methotrexate,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#2E7D32,0,0,0,0,0,IV,Chemotherapy
+methotrexate,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr,mg/m2,mg/m2/hr,g/m2,g/m2/hr",#2E7D32,0,0,0,0,0,IV,Chemotherapy
 methotrexateIbarra,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#2E7D32,0,0,0,0,0,IV,
 fluorouracilTan,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#AD1457,0,0,0,0,0,IV,
 etoposidePediatric,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#6A1B9A,0,0,0,0,0,IV,
-pemetrexed,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#00695C,0,0,0,0,0,IV,Chemotherapy
-melphalan,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#BF360C,0,0,0,0,0,IV,Chemotherapy
+pemetrexed,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr,mg/m2,mg/m2/hr",#00695C,0,0,0,0,0,IV,Chemotherapy
+melphalan,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr,mg/m2,mg/m2/hr",#BF360C,0,0,0,0,0,IV,Chemotherapy
 melphalanNath,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#BF360C,0,0,0,0,0,IV,
-vincristine,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#1565C0,0,0,0,0,0,IV,Chemotherapy
+vincristine,ng,mg,mg/hr,mg/hr,"mg,mg/hr,mg/kg,mg/m2",#1565C0,0,0,0,0,0,IV,Chemotherapy
 vincristineIgarashi,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#1565C0,0,0,0,0,0,IV,
-docetaxel,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#4527A0,0,0,0,0,0,IV,Chemotherapy
-cyclophosphamide,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#AD1457,0,0,0,0,0,IV,Chemotherapy
+docetaxel,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr,mg/m2,mg/m2/hr",#4527A0,0,0,0,0,0,IV,Chemotherapy
+cyclophosphamide,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr,mg/m2,mg/m2/hr",#AD1457,0,0,0,0,0,IV,Chemotherapy
 cyclophosphamideJoerger,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#AD1457,0,0,0,0,0,IV,
 cyclophosphamideMcCune,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#AD1457,0,0,0,0,0,IV,
-doxorubicin,ng,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#C62828,0,0,0,0,0,IV,Chemotherapy
+doxorubicin,ng,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr,mg/m2,mg/m2/hr",#C62828,0,0,0,0,0,IV,Chemotherapy
 doxorubicinJoerger,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#C62828,0,0,0,0,0,IV,
 doxorubicinol,ng,,,,,#EF9A9A,0,0,0,0,0,IV,
 doxorubicinolJoerger,mcg,,,,,#EF9A9A,0,0,0,0,0,IV,
-doxorubicinLiposomal,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#AD1457,0,0,0,0,0,IV,Chemotherapy
+doxorubicinLiposomal,mcg,mg,mg/hr,mg/hr,"mg,mg/hr,mg/m2,mg/m2/hr,mg/min",#AD1457,0,0,0,0,0,IV,Chemotherapy
 doxorubicinLiposomalFree,ng,,,,,#F48FB1,0,0,0,0,0,IV,
-irinotecan,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#EF6C00,0,0,0,0,0,IV,Chemotherapy
+irinotecan,ng,mg,mg/hr,mg/hr,"mg,mg/hr,mg/m2,mg/m2/hr",#EF6C00,0,0,0,0,0,IV,Chemotherapy
 irinotecanSN38,ng,,,,,#FFB74D,0,0,0,0,0,IV,
-topotecan,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#00838F,0,0,0,0,0,IV,Chemotherapy
-vinorelbine,ng,mg,mg/hr,mg/hr,"mg,mg/hr,mg PO",#6D4C41,0,0,0,0,0,IV,Chemotherapy
-cisplatin,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#455A64,0,0,0,0,0,IV,Chemotherapy
-etoposide,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#7B1FA2,0,0,0,0,0,IV,Chemotherapy
+topotecan,ng,mg,mg/hr,mg/hr,"mg,mg/hr,mg/m2,mg/m2/hr",#00838F,0,0,0,0,0,IV,Chemotherapy
+vinorelbine,ng,mg,mg/hr,mg/hr,"mg,mg/hr,mg PO,mg/m2,mg/m2/hr",#6D4C41,0,0,0,0,0,IV,Chemotherapy
+cisplatin,ng,mg,mg/hr,mg/hr,"mg,mg/hr,mg/m2,mg/m2/hr",#455A64,0,0,0,0,0,IV,Chemotherapy
+etoposide,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr,mg/m2,mg/m2/hr",#7B1FA2,0,0,0,0,0,IV,Chemotherapy
 etoposideKroghMadsen,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#7B1FA2,0,0,0,0,0,IV,
 cisplatinBound,ng,,,,,#90A4AE,0,0,0,0,0,IV,
 doxorubicinPediatric,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#B71C1C,0,0,0,0,0,IV,
 doxorubicinolPediatric,ng,,,,,#E57373,0,0,0,0,0,IV,
-daunorubicin,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#880E4F,0,0,0,0,0,IV,Chemotherapy
+daunorubicin,ng,mg,mg/hr,mg/hr,"mg,mg/hr,mg/m2,mg/m2/hr",#880E4F,0,0,0,0,0,IV,Chemotherapy
 carboplatinPediatric,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#00796B,0,0,0,0,0,IV,
 carboplatinPeng,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#26A69A,0,0,0,0,0,IV,
 melphalanPediatric,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#D84315,0,0,0,0,0,IV,
 etoposideDuong,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#8E24AA,0,0,0,0,0,IV,
-gemcitabine,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#2E7D32,0,0,0,0,0,IV,Chemotherapy
-capecitabine,mcg,,,mg PO,"mg PO,mg PO bid",#F9A825,0,0,0,0,0,IV,Chemotherapy
+gemcitabine,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr,mg/m2,mg/m2/hr",#2E7D32,0,0,0,0,0,IV,Chemotherapy
+capecitabine,mcg,,,mg PO,"mg PO,mg PO bid,mg/m2 PO,mg/m2 PO bid",#F9A825,0,0,0,0,0,IV,Chemotherapy
 gemcitabineDFDU,mcg,,,,,#81C784,0,0,0,0,0,IV,
 capecitabine5FU,mcg,,,,,#FFD54F,0,0,0,0,0,IV,
-paclitaxel,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#558B2F,0,0,0,0,0,IV,Chemotherapy
+paclitaxel,mcg,mg,mg/hr,mg/hr,"mg,mg/hr,mg/m2,mg/m2/hr",#558B2F,0,0,0,0,0,IV,Chemotherapy
 paclitaxelJoerger,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#558B2F,0,0,0,0,0,IV,
 paclitaxelCrombag,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#558B2F,0,0,0,0,0,IV,
-paclitaxelProteinBound,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#7CB342,0,0,0,0,0,IV,Chemotherapy
+paclitaxelProteinBound,mcg,mg,mg/hr,mg/hr,"mg,mg/hr,mg/m2,mg/m2/hr",#7CB342,0,0,0,0,0,IV,Chemotherapy
 vincristinePediatric,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#0D47A1,0,0,0,0,0,IV,
-oxaliplatin,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#9E9D24,0,0,0,0,0,IV,Chemotherapy
+oxaliplatin,ng,mg,mg/hr,mg/hr,"mg,mg/hr,mg/m2,mg/m2/hr",#9E9D24,0,0,0,0,0,IV,Chemotherapy
 oxaliplatinBastian,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#9E9D24,0,0,0,0,0,IV,
 oxaliplatinNikanjam,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#AFB42B,0,0,0,0,0,IV,
-bendamustine,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#6D4C41,0,0,0,0,0,IV,Chemotherapy
-fludarabine,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#00838F,0,0,0,0,0,IV,Chemotherapy
+bendamustine,ng,mg,mg/hr,mg/hr,"mg,mg/hr,mg/m2,mg/m2/hr",#6D4C41,0,0,0,0,0,IV,Chemotherapy
+fludarabine,mcg,mg,mg/hr,mg/hr,"mg,mg/hr,mg/m2,mg/m2/hr",#00838F,0,0,0,0,0,IV,Chemotherapy
 doxorubicinPerezBlanco,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#AD1457,0,0,0,0,0,IV,
 doxorubicinolPerezBlanco,ng,,,,,#F48FB1,0,0,0,0,0,IV,
-cytarabine,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#00695C,0,0,0,0,0,IV,Chemotherapy
-ifosfamide,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#6A1B9A,0,0,0,0,0,IV,Chemotherapy
-epirubicin,ng,mg,mg/hr,mg/hr,"mg,mg/hr",#B0275C,0,0,0,0,0,IV,Chemotherapy
+cytarabine,mcg,mg,mg/hr,mg/hr,"mg,mg/hr,mg/m2,mg/m2/hr,mg/m2/day",#00695C,0,0,0,0,0,IV,Chemotherapy
+ifosfamide,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr,g/m2,mg/m2,g/m2/hr,mg/m2/hr",#6A1B9A,0,0,0,0,0,IV,Chemotherapy
+epirubicin,ng,mg,mg/hr,mg/hr,"mg,mg/hr,mg/m2,mg/m2/hr",#B0275C,0,0,0,0,0,IV,Chemotherapy
 theophylline,mcg,mg/kg aminophylline,mg/kg/hr aminophylline,mg/kg aminophylline,"mg aminophylline,mg/kg aminophylline,mg/hr aminophylline,mg/kg/hr aminophylline,mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg PO bid,mg PO tid,mg PO qid,mg PO q4h",#5D4037,10,15,12.5,0,20,IV,Other
 lithiumCarbonate,mmol,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#00897B,0.4,0.8,0.6,0,1.2,IV,Other
 tranexamicAcid,mcg,g,mg/kg/hr,g,"g,mg,mg/kg,g/hr,mg/hr,mg/kg/hr",#AD1457,0,0,0,0,10,IV,Other
@@ -310,12 +310,12 @@ everolimus,ng,,,mg PO bid,"mg PO,mg PO qd,mg PO bid",#6D4C41,3,8,5.5,0,0,IV,Othe
 dofetilide,ng,,,mcg PO bid,"mcg PO,mcg PO bid",#37474F,0,0,0,0,0,IV,Other
 quinidine,mcg,,,mg PO sulfate,"mg PO sulfate,mg PO sulfate tid,mg PO sulfate qid,mg PO sulfate q4h",#1565C0,2,6,4,0,0,IV,Other
 nortriptyline,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#6A1B9A,70,170,120,0,0,IV,Antidepressants
-temozolomide,mcg,,,mg PO,"mg PO,mg PO qd",#F4511E,0,0,0,0,0,IV,Chemotherapy
+temozolomide,mcg,,,mg PO,"mg PO,mg PO qd,mg/m2 PO,mg/m2 PO qd",#F4511E,0,0,0,0,0,IV,Chemotherapy
 temozolomideOstermann,mcg,,,mg PO,"mg PO,mg PO qd",#F4511E,0,0,0,0,0,IV,
 temozolomidePanetta,mcg,,,mg PO,"mg PO,mg PO qd",#F4511E,0,0,0,0,0,IV,
-dacarbazine,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr",#C0CA33,0,0,0,0,0,IV,Chemotherapy
-bleomycin,mcU,U,U/hr,U,"U,U/hr",#00897B,0,0,0,0,0,IV,Chemotherapy
-thioguanine,mcg,,,mg PO,"mg PO,mg PO qd",#3949AB,0,0,0,0,0,IV,Chemotherapy
+dacarbazine,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg/m2,mg/m2/hr",#C0CA33,0,0,0,0,0,IV,Chemotherapy
+bleomycin,mcU,U,U/hr,U,"U,U/hr,U/kg,U/m2",#00897B,0,0,0,0,0,IV,Chemotherapy
+thioguanine,mcg,,,mg PO,"mg PO,mg PO qd,mg/kg PO,mg/kg PO qd",#3949AB,0,0,0,0,0,IV,Chemotherapy
 thioguanineIV,mcg,mg,mg/hr,mg/hr,"mg,mg/hr",#5C6BC0,0,0,0,0,0,IV,Chemotherapy
 linezolid,mcg,mg,mg/hr,mg,"mg,mg/hr,mg bid,mg PO,mg PO bid",#00838F,2,7,4.5,0,2.9,IV,Antibiotics
 cyclosporine,ng,mg,mg/hr,mg PO bid,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg PO bid",#AD1457,100,200,150,0,0,IV,Other
@@ -346,6 +346,7 @@ macitentan,ng,,,mg PO,"mg PO,mg PO qd",#5E35B1,0,0,0,0,0,IV,Pulmonary hypertensi
 aprocitentan,ng,,,,,#9575CD,0,0,0,0,0,IV,
 levothyroxine,ng,mcg,,mcg PO qd,"mcg PO qd,mcg PO,mcg,mcg qd",#0097A7,0,0,0,0,0,IV,Other
 liothyronine,ng,mcg,,mcg PO tid,"mcg PO tid,mcg PO bid,mcg PO qd,mcg PO,mcg",#3E7C87,0,0,0,0,0,IV,Other
+tafenoquine,ng,,,mg PO,"mg PO,mg PO qd",#7B5EA7,0,0,0,0,0,IV,Other
 tamsulosin,ng,,,mg PO,"mg PO,mg PO qd",#4E7A99,0,0,0,0,0,IV,Other
 rosuvastatin,ng,,,mg PO qd,"mg PO,mg PO qd",#B23A48,0,0,0,0,0,IV,Other
 evolocumab,mcg,,,mg SC,"mg SC",#5E8C31,0,0,0,0,0,IV,Other

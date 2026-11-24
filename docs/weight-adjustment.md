@@ -279,7 +279,10 @@ values**, and the reference man, and everyone else, are scaled from there.
   clearance, now 78.5 L/h), naloxone, pemetrexed (V2, Q and the non-renal
   clearance intercept), semaglutide, tolcapone, vancomycin (Q) and
   vincristineIgarashi. A cohort without a printed height took NCD-RisC's
-  (clindamycin, vancomycin, enoxaparin, epinephrine, argatroban).
+  (clindamycin, vancomycin, enoxaparin, epinephrine, argatroban). And
+  (2026-11-23) lorazepam, whose disposition became Barr 2001's absolute
+  Table 4 (no covariates), at Barr's Table 2 lorazepam group (85 kg, 176 cm,
+  74 y; 13 men and 1 woman); it had been a per-kilogram model.
 - **Partial-covariate models not yet anchored** (2026-11-19 review). *A
   decision for Shafer*: apixaban and apixabanVTE (a sex term on CL_NR/F, a
   multinational cohort without heights), dabigatran (Q/F and V3/F fixed from

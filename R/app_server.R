@@ -1145,6 +1145,14 @@ app_server <- function(input, output, session) {
     input$sex
   })
 
+  # The derived body size line under Sex (BSA and BMI), blank while weight
+  # or height is not a valid entry.
+  output$bodySize <- renderUI({
+    w <- asScalarNumeric(input$weight) * asScalarNumeric(input$weightUnit)
+    h <- asScalarNumeric(input$height) * asScalarNumeric(input$heightUnit)
+    HTML(bodySizeSummary(w, h))
+  })
+
   # The Opioid tolerance field: each opioid's MEAC times its factor
   # (OPIOID_TOLERANCE_FACTORS).  "none" until the field reports, and for
   # bookmarks made before it existed.

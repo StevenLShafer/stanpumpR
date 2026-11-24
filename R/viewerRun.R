@@ -166,7 +166,7 @@ viewerTimes <- function(minimum, maximum)
 # given unknown.
 VIEWER_MASS <- c(g = 1e3, mg = 1, mcg = 1e-3, ng = 1e-6)
 
-viewerBaseDose <- function(dose, units, weight, u)
+viewerBaseDose <- function(dose, units, weight, u, height = NULL)
 {
   units <- as.character(units)
   f <- rep(NA_real_, length(units))
@@ -180,7 +180,7 @@ viewerBaseDose <- function(dose, units, weight, u)
   if (u$amount == "IU") f[grepl("^IU( |/|$)", units)] <- 1
   if (u$amount == "U")  f[grepl("^U( |/|$)", units)] <- 1
   out <- dose * f
-  out[grepl("kg", units)]   <- out[grepl("kg", units)] * weight
+  out <- out * bodySizeDoseFactor(units, weight, height)
   out[grepl("hr", units)]   <- out[grepl("hr", units)] / 60
   out[grepl("/day", units)] <- out[grepl("/day", units)] / MINS_PER_DAY
   out
@@ -406,6 +406,7 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_,
   anySet <- function(name) if (is.null(inForce)) isTRUE(k[[name]] > 0) else
     any(vapply(unique(inForce), function(s) isTRUE(sys[[s]][[name]] > 0), logical(1)))
   weight <- entry$weight
+  height <- entry$height
 
   # Linear between the simulation's own points; at a time given twice (a
   # bolus), the later value.
@@ -460,12 +461,12 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_,
   ivSalt <- entry$michaelisMenten$saltFactor$IV
   if (is.null(ivSalt)) ivSalt <- 1
   steps <- data.frame(Time = manual$Time,
-                      Rate = ivSalt * viewerBaseDose(manual$Dose, manual$Units, weight, u) *
+                      Rate = ivSalt * viewerBaseDose(manual$Dose, manual$Units, weight, u, height) *
                         doseProductFactor(manual$Units, entry$doseProducts),
                       rank = rep(1, nrow(manual)))
   tciRates <- entry$tci$rates
   if (!is.null(tciRates) && nrow(tciRates) > 0) {
-    tr <- viewerBaseDose(tciRates$Rate, tciRates$Units, weight, u)
+    tr <- viewerBaseDose(tciRates$Rate, tciRates$Units, weight, u, height)
     # A TCI row ranks above a manual row at one time when it runs the pump,
     # or when a non-zero target is entered at that time (the target wins,
     # R/tci.R, even if the controller gives no drug then); a zero row there
@@ -482,14 +483,14 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_,
   # Apparent-oral rates ("mg/day PO"): simCpCe() runs them straight into V1
   # on the apparent parameters, so they enter the body as they are given.
   oral <- d[rate & !tci & route != ROUTE_IV & !(route %in% TISSUE_ROUTES) & !enteral, , drop = FALSE]
-  oralSteps <- data.frame(Time = oral$Time, Rate = viewerBaseDose(oral$Dose, oral$Units, weight, u))
+  oralSteps <- data.frame(Time = oral$Time, Rate = viewerBaseDose(oral$Dose, oral$Units, weight, u, height))
   oralSteps <- oralSteps[order(oralSteps$Time), , drop = FALSE]
 
   # IV boluses, in base amount.
   b <- d[route == ROUTE_IV & !rate & !tci & !pe, , drop = FALSE]
   # A dose named as a product (aminophylline for theophylline) counts as the
   # plotted drug it carries, as simCpCe() enters it (doseProductFactor()).
-  bAmount <- ivSalt * viewerBaseDose(b$Dose, b$Units, weight, u) *
+  bAmount <- ivSalt * viewerBaseDose(b$Dose, b$Units, weight, u, height) *
     doseProductFactor(b$Units, entry$doseProducts)
   # A dose in a unit the viewer cannot read (a salt, mmol) leaves the drug
   # given unknown; it is drawn as nothing rather than refused.
