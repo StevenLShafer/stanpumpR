@@ -804,7 +804,14 @@ gasEtdCoefficients <- function(blocks, h)
 #' includes the first and last time point of every interval of constant
 #' settings, and the interpolation stays within each interval, because the time
 #' until threshold jumps where a setting changes; until 2026-11-15 it was
-#' interpolated across the change (H9).
+#' interpolated across the change (H9).  A threshold that changes within an
+#' interval (an opioid's effect on MAC, \code{applyOpioidMacInteraction()})
+#' adds to the sample every row where the threshold interpolated between the
+#' sampled rows misses it by more than \code{GAS_RECOVERY_THRESHOLD_TOL}
+#' (\code{gasRecoveryRefine()}), so a bolus's rows are computed and a slow
+#' tail is still sampled.  With the plain sample, a remifentanil bolus on a
+#' 24-hour plot read 4.3 minutes where every row gives 8.7 (Gemini's
+#' gas-engine audit of 2026-11-23, D-01).
 #'
 #' Provenance: Claude Code (Claude Fable 5.1), 2026-10-05, at the request of
 #' Steven L. Shafer.  Verified on R 4.6.1 against the same manoeuvre in the full
@@ -853,6 +860,7 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
   # The time points to start from, and their states side by side: alveolar and
   # the three tissues of each gas.
   idx <- gasRecoverySample(washout$interval, maxPoints)
+  idx <- gasRecoveryRefine(idx, threshold, washout$Time, washout$interval)
   Y0 <- do.call(cbind, lapply(gases, function(g) washout$state[[g]][idx, 2:nS, drop = FALSE]))
   thr0 <- threshold[idx]
   out <- rep(NA_real_, length(idx))
@@ -1052,6 +1060,38 @@ gasRecoverySample <- function(interval, maxPoints)
   first <- which(c(TRUE, interval[-1] != interval[-nT]))
   last  <- c(first[-1] - 1L, nT)
   sort(unique(c(round(seq(1, nT, length.out = maxPoints)), first, last)))
+}
+
+
+# The most a threshold interpolated between the sampled rows may miss the
+# threshold of a row before that row joins the sample (gasRecoveryRefine())
+GAS_RECOVERY_THRESHOLD_TOL <- 0.01
+
+# Adds to the sample `idx` every row whose threshold the sampled rows'
+# thresholds, interpolated within each interval as the results are, miss by
+# more than `tol` of it, until none does.  A threshold constant within each
+# interval adds nothing.
+gasRecoveryRefine <- function(idx, threshold, time, interval,
+                              tol = GAS_RECOVERY_THRESHOLD_TOL)
+{
+  nT <- length(threshold)
+  if (length(idx) == nT) return(idx)
+  repeat {
+    est <- threshold
+    for (iv in unique(interval)) {
+      at <- which(interval == iv)
+      from <- idx[interval[idx] == iv]
+      from <- from[!is.na(threshold[from])]
+      if (length(from) == 0) next
+      est[at] <- if (length(from) == 1) threshold[from] else
+        stats::approx(time[from], threshold[from], time[at], rule = 2)$y
+    }
+    miss <- which(!is.na(threshold) & !is.na(est) &
+                    abs(est - threshold) > tol * abs(threshold))
+    miss <- setdiff(miss, idx)
+    if (length(miss) == 0) return(idx)
+    idx <- sort(c(idx, miss))
+  }
 }
 
 

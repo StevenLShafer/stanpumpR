@@ -113,31 +113,64 @@ opioidMacReduction <- function(U, Emax = OPIOID_MAC_EMAX, U50 = OPIOID_MAC_U50,
 #' Total opioid effect over time, in multiples of MEAC
 #'
 #' The sum over every simulated drug of its effect-site concentration divided by
-#' its MEAC.  Only the opioids have an MEAC, so only they contribute.
+#' its MEAC.  Only the opioids have an MEAC, so only they contribute.  Each
+#' drug is read from its own simulated series (\code{derivedEffectSite()}),
+#' which is dense where its curve bends, as the MEAC and Interaction panels
+#' read it (R/derivedSeries.R).  Until 2026-11-24 it was read from the drug's
+#' 100 equispaced points, which on a 24-hour plot are 14.5 minutes apart: a
+#' remifentanil bolus at 5 minutes read 0.64 x MEAC at 6.2 minutes where its
+#' effect site was at 7.8 ng/mL, and its effect began before it was given, on
+#' a plot of any length (Gemini's gas-engine audit of 2026-11-23, D-01).
 #'
-#' @param drugs the intravenous entries of the \code{drugs} list, each with an
-#'   \code{equiSpace} data frame carrying \code{Time} and \code{MEAC} (the
-#'   latter as a percentage of MEAC, as \code{simCpCe()} writes it)
+#' @param drugs the intravenous entries of the \code{drugs} list, each with its
+#'   \code{results} (long form, with an "Effect Site" series) and \code{MEAC}.
+#'   An entry with no \code{results} is read from its \code{equiSpace}
+#'   \code{MEAC} column, a percentage of MEAC, as \code{simCpCe()} writes it.
+#' @param times the times to evaluate at; by default the drugs' own simulated
+#'   times together with the equispaced grid (\code{derivedSeriesTimes()})
 #' @returns a data frame of \code{Time} and \code{U}, or NULL if no drug with an
 #'   MEAC has been simulated
 #' @export
-totalOpioidMEAC <- function(drugs)
+totalOpioidMEAC <- function(drugs, times = NULL)
 {
+  meac <- function(d) {
+    m <- suppressWarnings(as.numeric(d$MEAC))
+    if (length(m) == 1 && !is.na(m) && m > 0) m else 0
+  }
+  fromSeries <- function(d) !is.null(d$results) && meac(d) > 0
+  fromGrid <- function(d) is.null(d$results) && !is.null(d$equiSpace$MEAC) &&
+    any(d$equiSpace$MEAC > 0, na.rm = TRUE)
   # A companion entry (the Minto model drawn beside the library's
   # remifentanil; R/alternativeModels.R) is a second line of the same drug,
   # not a second opioid, so it is left out of the sum.
-  es <- lapply(drugs, function(d) if (isAlternativeModelEntry(d)) NULL else d$equiSpace)
-  es <- es[!vapply(es, is.null, logical(1))]
-  es <- es[vapply(es, function(e) any(e$MEAC > 0, na.rm = TRUE), logical(1))]
-  if (length(es) == 0) return(NULL)
+  opioids <- Filter(function(d) is.list(d) && !isAlternativeModelEntry(d) &&
+                      (fromSeries(d) || fromGrid(d)), drugs)
+  if (length(opioids) == 0) return(NULL)
 
-  # Every drug is simulated onto the same equispaced grid, so the series add
-  # directly.  Interpolate onto the first one's grid anyway, so that a future
-  # change to that does not silently misalign them.
-  Time <- es[[1]]$Time
-  U <- Reduce(`+`, lapply(es, function(e)
-    stats::approx(e$Time, e$MEAC, Time, rule = 2)$y / 100))
-  data.frame(Time = Time, U = U)
+  if (is.null(times)) {
+    full <- Filter(fromSeries, opioids)
+    times <- if (length(full) == 0) opioids[[1]]$equiSpace$Time else
+      derivedSeriesTimes(full, max(unlist(lapply(full, function(d) d$results$Time))))
+  }
+  U <- Reduce(`+`, lapply(opioids, function(d)
+    if (fromSeries(d)) derivedEffectSite(d, times) / meac(d) else
+      stats::approx(d$equiSpace$Time, d$equiSpace$MEAC, times, rule = 2)$y / 100))
+  data.frame(Time = times, U = U)
+}
+
+
+# The simulated times of the opioids in `drugs` (those read from their own
+# series) within `limits`, for applyOpioidMacInteraction()
+opioidTimes <- function(drugs, limits)
+{
+  t <- unlist(lapply(drugs, function(d) {
+    if (!is.list(d) || isAlternativeModelEntry(d) || is.null(d$results)) return(NULL)
+    m <- suppressWarnings(as.numeric(d$MEAC))
+    if (length(m) != 1 || is.na(m) || m <= 0) return(NULL)
+    d$results$Time[d$results$Site == "Effect Site"]
+  }))
+  t <- unique(t)
+  t[t > limits[1] & t < limits[2]]
 }
 
 
@@ -157,13 +190,10 @@ applyOpioidMacInteraction <- function(gasEntries, drugs)
 {
   mac <- gasEntries[["MAC"]]
   if (is.null(mac)) return(gasEntries)
-  opioid <- totalOpioidMEAC(drugs)
-  if (is.null(opioid)) return(gasEntries)
-
   series <- mac$results[mac$results$Site == "Plasma", c("Time", "Y")]
-  U <- stats::approx(opioid$Time, opioid$U, series$Time, rule = 2)$y
-  R <- opioidMacReduction(U)
-  series$Y <- series$Y / (1 - R)
+  opioid <- totalOpioidMEAC(drugs, series$Time)
+  if (is.null(opioid)) return(gasEntries)
+  R <- opioidMacReduction(opioid$U)
 
   # Time until threshold, if it is being shown.  The opioid-adjusted MAC is the
   # unadjusted MAC divided by (1 - R), so it falls to the threshold when the
@@ -176,11 +206,40 @@ applyOpioidMacInteraction <- function(gasEntries, drugs)
   # concentration is still rising (a bolus just given) it falls slower and the
   # time reads short, as inst/app-help/models/opioid-mac.md says.  Until
   # 2026-11-23 this comment said it always erred long (ChatGPT's gas-engine
-  # audit of 2026-11-23, D-01).  Doing it properly needs the opioids' own
-  # washout curves, which the intravenous engines do not expose.
+  # audit of 2026-11-23, D-01).  Doing it properly would follow each opioid's
+  # own washout after delivery stops, which the intravenous engines keep as
+  # recoveryStatesOwn (effect-site amplitudes and rates, advanceStatesOnto())
+  # when the time until threshold is drawn, but not for every engine (not the
+  # Michaelis-Menten or transit-chain engines, nor through a pending lag),
+  # and the coupled gas washout would need a threshold that changes with the
+  # time since the stop: a proposal recorded in
+  # docs/gas-engine-audit/gemini-2026-11-23-assessment.md (D-03).  Until
+  # 2026-11-24 this comment said the engines did not expose them.
+  #
+  # The threshold changes from row to row wherever the opioid does, so
+  # gasCoupledRecovery() computes every row rather than a sample of them.
   recovery <- NULL
   if (!is.null(mac$washout))
     recovery <- macRecoveryTime(mac$washout, mac$age, mac$endCe * (1 - R))
+
+  # The opioid's own times inside the plot join the MAC series, so a bolus's
+  # peak effect is drawn where it is, not only at the gas engine's points
+  # (2.4 minutes apart late in a 24-hour plot); the unadjusted MAC, a smooth
+  # curve, is interpolated there, and so is the time until threshold.
+  series$Y <- series$Y / (1 - R)
+  extra <- setdiff(opioidTimes(drugs, range(series$Time)), series$Time)
+  if (length(extra) > 0) {
+    unadjusted <- seriesStepAt(series$Time, series$Y * (1 - R), extra)
+    added <- data.frame(Time = extra, Y = unadjusted /
+                          (1 - opioidMacReduction(totalOpioidMEAC(drugs, extra)$U)))
+    if (!is.null(recovery))
+      recovery <- c(recovery, seriesStepAt(series$Time, recovery, extra))
+    series <- rbind(series, added)
+    o <- order(series$Time)
+    series <- series[o, , drop = FALSE]
+    if (!is.null(recovery)) recovery <- recovery[o]
+    rownames(series) <- NULL
+  }
 
   # Rebuilt through gasEntry() so that the normalisation series, the equispaced
   # values behind the hover readout, and the maxima all follow.
