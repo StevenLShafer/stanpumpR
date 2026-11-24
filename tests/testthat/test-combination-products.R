@@ -131,3 +131,24 @@ test_that("the transit chain refuses a dose-occasion block that makes clearance 
   bad$doseOccasionClearance <- list(slope = 0.5, occasions = 2.5)
   expect_error(validateTransitChain(bad, set, "x"), "whole number of occasions")
 })
+
+test_that("a product is dosed only in its own unit word", {
+  expect_true(combinationUnitOk("Coartem", "tablet PO"))
+  expect_true(combinationUnitOk("Coartem", "tablet PO bid"))
+  expect_false(combinationUnitOk("Coartem", "mg PO"))
+  # a mass unit would give each component the whole product dose
+  expect_error(expandCombinationProducts(data.frame(Drug = "Coartem", Time = 0, Dose = 80,
+                                                    Units = "mg PO")),
+               "dosed in tablets")
+  # the Drug Library refuses one, and accepts the product's own units
+  G <- getDrugDefaultsGlobal()
+  edited <- drugLibraryGridData(G)
+  i <- which(edited$Drug == "Coartem")
+  edited$Units[i] <- paste0(edited$Units[i], ",mg PO")
+  expect_match(drugLibraryUnitProblems(edited, G, maxNew = Inf),
+               "a combination product is dosed in tablets", fixed = TRUE)
+  current <- G
+  current$Units[[which(G$Drug == "Coartem")]] <- character(0)
+  expect_identical(drugLibraryUnitProblems(drugLibraryGridData(G), current, maxNew = Inf),
+                   character(0))
+})
