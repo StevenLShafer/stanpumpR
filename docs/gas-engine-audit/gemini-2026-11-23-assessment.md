@@ -86,7 +86,10 @@ one-hour plot at 4.98 minutes). The MEAC and Interaction panels had the same
 defect and were moved off `equiSpace` on 2026-10-09 (`R/derivedSeries.R`); this
 reader was missed. Now each opioid is read from its own series
 (`derivedEffectSite()`) at the MAC series' times, the opioids' own times join the
-MAC series (a late bolus peaks at 3.883, the gas points alone giving 3.742), and
+MAC series (a late bolus peaks at 3.883, the gas points alone giving 3.742), the
+time until threshold is computed at those times too, from the state between the
+gas points (`gasWashoutWithTimes()`; interpolated, it read 157 minutes 1.6
+minutes after a bolus where it is 208, which CodeRabbit caught on this PR), and
 the coupled washout adds to its sample every row whose threshold the sampled rows
 interpolate to more than 1% off (`gasRecoveryRefine()`): sampled, the time until
 threshold read 4.3 minutes where every row gives 8.7. Cost on a 24-hour plot 0.34
@@ -101,8 +104,11 @@ equals the slider's exactly. A step in altitude later in the run kept every
 gas-phase tension, so just after a step from sea level to 5000 m the alveolar
 gases summed to 94% of a sea-level atmosphere where 52% fits.
 `gasStateAcrossPressure()` keeps the circuit's and lungs' volume: a fall lets gas
-out at its composition, a rise draws the circuit's gas into the alveoli (Gemini
-proposed scaling both ways, which is right only for a fall).
+out at its composition, a rise draws gas in, fresh gas at the new pressure for
+the ideal circuit and its own stored gas for the semi-closed one (Gemini proposed
+scaling both ways, which is right only for a fall; CodeRabbit, on this PR, caught
+the first version scaling the ideal circuit's entry and filling the lungs with
+the old pressure's mixture).
 
 **C-06, oxygen in mmHg.** The engine's alveolar tensions are fractions of the dry
 gas, so 100% is 760 - 47 = 713 Torr; `arterialOxygen()` and the altitude help

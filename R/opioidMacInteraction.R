@@ -191,9 +191,7 @@ applyOpioidMacInteraction <- function(gasEntries, drugs)
   mac <- gasEntries[["MAC"]]
   if (is.null(mac)) return(gasEntries)
   series <- mac$results[mac$results$Site == "Plasma", c("Time", "Y")]
-  opioid <- totalOpioidMEAC(drugs, series$Time)
-  if (is.null(opioid)) return(gasEntries)
-  R <- opioidMacReduction(opioid$U)
+  if (is.null(totalOpioidMEAC(drugs, series$Time))) return(gasEntries)
 
   # Time until threshold, if it is being shown.  The opioid-adjusted MAC is the
   # unadjusted MAC divided by (1 - R), so it falls to the threshold when the
@@ -216,30 +214,35 @@ applyOpioidMacInteraction <- function(gasEntries, drugs)
   # docs/gas-engine-audit/gemini-2026-11-23-assessment.md (D-03).  Until
   # 2026-11-24 this comment said the engines did not expose them.
   #
-  # The threshold changes from row to row wherever the opioid does, so
-  # gasCoupledRecovery() computes every row rather than a sample of them.
-  recovery <- NULL
-  if (!is.null(mac$washout))
-    recovery <- macRecoveryTime(mac$washout, mac$age, mac$endCe * (1 - R))
-
   # The opioid's own times inside the plot join the MAC series, so a bolus's
   # peak effect is drawn where it is, not only at the gas engine's points
   # (2.4 minutes apart late in a 24-hour plot); the unadjusted MAC, a smooth
-  # curve, is interpolated there, and so is the time until threshold.
-  series$Y <- series$Y / (1 - R)
+  # curve, is interpolated there.  The time until threshold is COMPUTED there,
+  # not interpolated: it jumps at a bolus (from 13 to 200 minutes for 140 mcg
+  # of remifentanil under 2% sevoflurane), so read between the gas points it
+  # was 150 minutes at the bolus's peak where it is 206 (CodeRabbit on PR
+  # #864).  Each added time washes out from the state interpolated between
+  # the gas points either side (gasWashoutWithTimes()), with the threshold the
+  # opioid sets at that time, and gasCoupledRecovery() computes the rows where
+  # that threshold moves rather than a sample of them.
   extra <- setdiff(opioidTimes(drugs, range(series$Time)), series$Time)
+  aug <- if (!is.null(mac$washout) && identical(mac$washout$Time, series$Time))
+    gasWashoutWithTimes(mac$washout, extra)
+  if (!is.null(mac$washout) && is.null(aug)) extra <- numeric(0)
+  if (!is.null(aug)) extra <- aug$extra
   if (length(extra) > 0) {
-    unadjusted <- seriesStepAt(series$Time, series$Y * (1 - R), extra)
-    added <- data.frame(Time = extra, Y = unadjusted /
-                          (1 - opioidMacReduction(totalOpioidMEAC(drugs, extra)$U)))
-    if (!is.null(recovery))
-      recovery <- c(recovery, seriesStepAt(series$Time, recovery, extra))
-    series <- rbind(series, added)
-    o <- order(series$Time)
-    series <- series[o, , drop = FALSE]
-    if (!is.null(recovery)) recovery <- recovery[o]
+    o <- order(c(series$Time, extra))
+    series <- data.frame(Time = c(series$Time, extra),
+                         Y = c(series$Y, seriesStepAt(series$Time, series$Y, extra)))[o, , drop = FALSE]
     rownames(series) <- NULL
   }
+  R <- opioidMacReduction(totalOpioidMEAC(drugs, series$Time)$U)
+  recovery <- NULL
+  if (!is.null(mac$washout)) {
+    w <- if (!is.null(aug)) aug$washout else mac$washout
+    recovery <- macRecoveryTime(w, mac$age, mac$endCe * (1 - R))
+  }
+  series$Y <- series$Y / (1 - R)
 
   # Rebuilt through gasEntry() so that the normalisation series, the equispaced
   # values behind the hover readout, and the maxima all follow.

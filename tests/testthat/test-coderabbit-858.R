@@ -98,3 +98,85 @@ test_that("no sub-step after the ramp is longer than the plot's step", {
   # The cost stays a few dozen steps over the plot's own 600
   expect_lt(length(gasSubSteps(60, 0.1)), 600 + 40)
 })
+
+
+# CodeRabbit's review of PR #864 (2026-11-24, at bfb0a6b5), the fixes for
+# Gemini's audit.
+
+geminiRemiRun <- function(maximum, bolusAt, events = NULL) {
+  defaults <- getDrugDefaultsGlobal(FALSE)
+  DT <- data.frame(Drug = "remifentanil", Time = bolusAt, Dose = 140, Units = "mcg")
+  drugs <- suppressMessages(processdoseTable(
+    DT, data.frame(Time = numeric(0), Event = character(0)),
+    recalculatePK(NULL, defaults, DT, 40, 70, 170, "male"), maximum, FALSE))
+  gasDose <- data.frame(Time = 0, Drug = c("oxygen", "ventilation", "sevoflurane"),
+                        Dose = c(2, 6, 2))
+  sim <- simulateGases(gasDose, weight = 70, age = 40, maximum = maximum,
+                       physiologyEvents = events)
+  washout <- gasWashout(sim, gasDose, weight = 70)
+  entries <- gasDrugEntries(sim, gasDose, defaults, maximum, washout = washout, age = 40)
+  list(drugs = drugs, entries = entries, out = applyOpioidMacInteraction(entries, drugs))
+}
+
+geminiRecoveryAt <- function(r, t) {
+  mac <- r$entries$MAC
+  aug <- gasWashoutWithTimes(mac$washout, t)
+  R <- opioidMacReduction(totalOpioidMEAC(r$drugs, aug$washout$Time)$U)
+  rec <- macRecoveryTime(aug$washout, 40, mac$endCe * (1 - R))
+  rec[which(abs(aug$washout$Time - t) < 1e-9)]
+}
+
+# The opioid's own times join the MAC series, and the time until threshold
+# was interpolated there between the gas engine's points, 2.4 minutes apart
+# late in a 24-hour plot; it jumps at a bolus (13 to 200 minutes), so 1.6
+# minutes after a remifentanil bolus the plotted time read 157 minutes where
+# it is 208.
+test_that("the opioid-adjusted time until threshold is computed at the opioid's own times", {
+  local_mocked_bindings(outputComments = function(...) invisible(NULL))
+  tq <- equispaceTimes(1440)[15]
+  day <- geminiRemiRun(1440, tq - 1.6)
+  # The reference: the same moment from a short plot, whose gas points are
+  # 0.35 minute apart
+  fine <- geminiRemiRun(tq + 10, tq - 1.6)
+  reference <- geminiRecoveryAt(fine, tq)
+  expect_gt(reference, 150)
+  expect_equal(day$out$MAC$equiSpace$Recovery[15], reference, tolerance = 0.005)
+})
+
+test_that("rows are added to a washout split by physiology events too", {
+  local_mocked_bindings(outputComments = function(...) invisible(NULL))
+  cold <- physiologyEventsFrom(data.frame(
+    Time = 20, Event = "Physiology",
+    Settings = physiologyEventEncode(c(liver = 1, renal = 1, cardiac = 1, gi = 1,
+                                       temperature = 33, altitude = 0,
+                                       endobronchial = 0, haemoglobin = 15)),
+    stringsAsFactors = FALSE))
+  r <- geminiRemiRun(60, 35, events = cold)
+  w <- r$entries$MAC$washout
+  expect_false(is.null(w$segments))
+  aug <- gasWashoutWithTimes(w, c(10.05, 35.7))
+  expect_equal(length(aug$washout$Time), length(w$Time) + 2)
+  expect_equal(sort(unlist(aug$washout$rows)), seq_along(aug$washout$Time))
+  # The entry is built, and its time until threshold is finite throughout
+  rec <- r$out$MAC$equiSpace$Recovery
+  expect_true(all(is.finite(rec)))
+})
+
+# gasStateAcrossPressure() scaled the circuit's entry for every circuit, but
+# only the semi-closed circuit holds gas: in the ideal circuit at a descent
+# from 5000 m a 2% sevoflurane vaporiser read 3.77% for one row.
+test_that("an altitude step leaves the ideal circuit's inspired tension alone", {
+  enc <- function(a) physiologyEventEncode(c(liver = 1, renal = 1, cardiac = 1, gi = 1,
+                                              temperature = 37, altitude = a,
+                                              endobronchial = 0, haemoglobin = 15))
+  ev <- physiologyEventsFrom(data.frame(Time = c(0, 10), Event = "Physiology",
+                                        Settings = c(enc(5000), enc(0)),
+                                        stringsAsFactors = FALSE))
+  d <- data.frame(Time = 0, Drug = c("oxygen", "sevoflurane", "ventilation"), Dose = c(6, 2, 6))
+  for (uptake in c(FALSE, TRUE)) {
+    s <- simulateGases(d, weight = 70, age = 40, maximum = 20, physiologyEvents = ev,
+                       uptakeEffect = uptake)
+    step <- which(s$timeLine == 10)
+    expect_equal(s$state$sevoflurane[step[2], 1], s$state$sevoflurane[step[1], 1])
+  }
+})

@@ -183,19 +183,31 @@ test_that("C-07: a fall in pressure lets gas out of the lungs at their compositi
   expect_equal(s$state$sevoflurane[step[2], 3:5], s$state$sevoflurane[step[1], 3:5])
 })
 
-test_that("C-07: a rise in pressure draws the circuit's gas into the lungs", {
+test_that("C-07: a rise in pressure draws fresh gas into the alveoli", {
   d <- data.frame(Time = 0, Drug = c("air", "sevoflurane", "ventilation"), Dose = c(6, 2, 6))
   s <- simulateGases(d, weight = 70, age = 40, maximum = 30,
                      physiologyEvents = geminiAltitudeStep(5000, 0))
   step <- which(s$timeLine == 10)
   r <- pressureRatio(5000)
   a1 <- r * gasHumidityRatio(list(altitude = 5000))
+  # The ideal circuit holds no gas: the compressed lungs fill with fresh gas at
+  # the new pressure (sea level, r = 1)
+  fresh <- gasSettingsAt(split(d, d$Drug), 10, GAS_DEAD_SPACE_FRACTION, 1)$Ffgf
   for (g in names(s$state))
     expect_equal(s$state[[g]][step[2], 2],
-                 s$state[[g]][step[1], 2] + s$state[[g]][step[1], 1] / r * (1 - a1),
+                 s$state[[g]][step[1], 2] + unname(fresh[g]) * (1 - a1),
                  tolerance = 1e-12, label = g)
   alveolar <- sum(vapply(s$state, function(m) m[step[2], 2], 0))
   expect_lte(alveolar, 100 + 1e-9)
+  # A semi-closed circuit's own stored gas is what fills them
+  sc <- simulateGases(d, weight = 70, age = 40, maximum = 30, circuit = "semi-closed",
+                      physiologyEvents = geminiAltitudeStep(5000, 0))
+  k <- which(sc$timeLine == 10)
+  expect_equal(sc$state$sevoflurane[k[2], 2],
+               sc$state$sevoflurane[k[1], 2] + sc$state$sevoflurane[k[1], 1] / r * (1 - a1),
+               tolerance = 1e-12)
+  expect_equal(sc$state$sevoflurane[k[2], 1], sc$state$sevoflurane[k[1], 1] / r,
+               tolerance = 1e-12)
 })
 
 

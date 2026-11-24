@@ -1169,7 +1169,9 @@ advanceClosedFormGas <- function(
         newBody <- bodySteps$body[[k]]
         newProps <- gasPropertiesAt(newBody$temperature)
         state <- gasStateAcrossBodies(state, props, newProps)
-        state <- gasStateAcrossPressure(state, body, newBody)
+        state <- gasStateAcrossPressure(
+          state, body, newBody, circuit,
+          fresh = gasSettingsAt(bySetting, t0, deadSpace, gasPressureRatio(newBody))$Ffgf)
         body <- newBody
         props <- newProps
         ratio <- gasPressureRatio(body)
@@ -1457,9 +1459,15 @@ gasStateAcrossBodies <- function(state, from, to)
 #' lungs and the circuit keep their volume.  Where the pressure falls, gas
 #' leaves each of them at its own composition, so every tension is scaled by
 #' the new total over the old.  Where it rises, gas enters: the alveoli keep
-#' what they hold and draw in the circuit's gas to make up the difference,
-#' and the circuit, refilled from the fresh gas, which it nearly matches, is
-#' scaled.  Dissolved agent does not move at the step (tissue tensions are
+#' what they hold and draw in gas to make up the difference.  In the
+#' semi-closed circuit that gas is the circuit's own, compressed, and the
+#' circuit, refilled from the fresh gas, which it nearly matches, is scaled.
+#' The ideal and open circuits hold no gas, so the lungs draw in fresh gas at
+#' the new pressure, and their entry, the inspired gas, set from the settings
+#' at the next sub-step, is not scaled (scaled, a 2% sevoflurane vaporiser
+#' read 3.77% for one row at a descent from 5000 m, and the lungs were filled
+#' with the vapour's share of the thinner gas; CodeRabbit on PR #864).
+#' Dissolved agent does not move at the step (tissue tensions are
 #' unchanged).  Until 2026-11-24 the gas phases kept their tensions, so just
 #' after a step from sea level to 5000 m the alveolar gases summed to 94% of
 #' a sea-level atmosphere where at most 52% fits, and the alveolar oxygen read
@@ -1469,9 +1477,13 @@ gasStateAcrossBodies <- function(state, from, to)
 #' @param state named list of state vectors, one per gas (circuit first,
 #'   alveoli second)
 #' @param from,to the bodies before and after the step
+#' @param circuit the breathing circuit ("ideal", "semi-closed" or "open")
+#' @param fresh the fresh gas's tensions at the new pressure, by gas
+#'   (\code{gasSettingsAt()}'s \code{Ffgf}): what the ideal and open circuits
+#'   bring to lungs that are compressed
 #' @returns the state after the step
 #' @keywords internal
-gasStateAcrossPressure <- function(state, from, to)
+gasStateAcrossPressure <- function(state, from, to, circuit = "ideal", fresh = NULL)
 {
   r1 <- gasPressureRatio(from)
   r2 <- gasPressureRatio(to)
@@ -1480,9 +1492,11 @@ gasStateAcrossPressure <- function(state, from, to)
   a2 <- r2 * gasHumidityRatio(to)
   for (g in names(state)) {
     y <- state[[g]]
-    circuit <- y[1]
-    y[1] <- circuit * r2 / r1
-    y[2] <- if (a2 < a1) y[2] * a2 / a1 else y[2] + circuit / r1 * (a2 - a1)
+    # The composition of the gas drawn in, as a fraction of its dry gas (x 100)
+    drawn <- if (circuit == "semi-closed" || is.null(fresh) || is.na(fresh[g]))
+      y[1] / r1 else unname(fresh[g]) / r2
+    if (circuit == "semi-closed") y[1] <- y[1] * r2 / r1
+    y[2] <- if (a2 < a1) y[2] * a2 / a1 else y[2] + drawn * (a2 - a1)
     state[[g]] <- y
   }
   state

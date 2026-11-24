@@ -4,13 +4,19 @@
 \alias{gasStateAcrossPressure}
 \title{The gas phases carried across a change of barometric pressure}
 \usage{
-gasStateAcrossPressure(state, from, to)
+gasStateAcrossPressure(state, from, to, circuit = "ideal", fresh = NULL)
 }
 \arguments{
 \item{state}{named list of state vectors, one per gas (circuit first,
 alveoli second)}
 
 \item{from, to}{the bodies before and after the step}
+
+\item{circuit}{the breathing circuit ("ideal", "semi-closed" or "open")}
+
+\item{fresh}{the fresh gas's tensions at the new pressure, by gas
+(\code{gasSettingsAt()}'s \code{Ffgf}): what the ideal and open circuits
+bring to lungs that are compressed}
 }
 \value{
 the state after the step
@@ -24,9 +30,15 @@ that is \code{100 (P - 47) / (760 - 47)}.  At a step in altitude the
 lungs and the circuit keep their volume.  Where the pressure falls, gas
 leaves each of them at its own composition, so every tension is scaled by
 the new total over the old.  Where it rises, gas enters: the alveoli keep
-what they hold and draw in the circuit's gas to make up the difference,
-and the circuit, refilled from the fresh gas, which it nearly matches, is
-scaled.  Dissolved agent does not move at the step (tissue tensions are
+what they hold and draw in gas to make up the difference.  In the
+semi-closed circuit that gas is the circuit's own, compressed, and the
+circuit, refilled from the fresh gas, which it nearly matches, is scaled.
+The ideal and open circuits hold no gas, so the lungs draw in fresh gas at
+the new pressure, and their entry, the inspired gas, set from the settings
+at the next sub-step, is not scaled (scaled, a 2\% sevoflurane vaporiser
+read 3.77\% for one row at a descent from 5000 m, and the lungs were filled
+with the vapour's share of the thinner gas; CodeRabbit on PR #864).
+Dissolved agent does not move at the step (tissue tensions are
 unchanged).  Until 2026-11-24 the gas phases kept their tensions, so just
 after a step from sea level to 5000 m the alveolar gases summed to 94\% of
 a sea-level atmosphere where at most 52\% fits, and the alveolar oxygen read
