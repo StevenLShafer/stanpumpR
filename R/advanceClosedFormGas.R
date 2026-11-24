@@ -1253,7 +1253,11 @@ advanceClosedFormGas <- function(
           p0 <- stepProp(state)
           drawn <- vapply(props$gas, function(g) {
             p <- p0[[g]]
-            if (is.null(p$fresh)) NA_real_ else p$fresh * p$Ffgf / ratio
+            # No flow, nothing drawn: in apnoea gasCircuitBlend() calls the
+            # inspired gas all fresh whatever the flow (CodeRabbit on PR #864)
+            if (is.null(p$fresh)) NA_real_
+            else if (s$Q <= 0) 0
+            else p$fresh * p$Ffgf / ratio
           }, numeric(1))
         }
         state <- gasStateAcrossPressure(state, from, body, circuit, inspired = drawn)

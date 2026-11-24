@@ -223,8 +223,11 @@ test_that("with no fresh gas a descent draws nothing into the lungs", {
                                         stringsAsFactors = FALSE))
   d <- data.frame(Time = c(0, 0, 0, 9), Drug = c("oxygen", "sevoflurane", "ventilation", "oxygen"),
                   Dose = c(2, 2, 6, 0))
-  for (uptake in c(TRUE, FALSE)) {
-    s <- simulateGases(d, weight = 70, age = 40, maximum = 20, physiologyEvents = ev,
+  # And in apnoea, where gasCircuitBlend() calls the inspired gas all fresh
+  # whatever the flow (CodeRabbit on PR #864: sevoflurane 0.99% to 1.95%)
+  apnoea <- rbind(d, data.frame(Time = 9, Drug = "ventilation", Dose = 0))
+  for (table in list(d, apnoea)) for (uptake in c(TRUE, FALSE)) {
+    s <- simulateGases(table, weight = 70, age = 40, maximum = 20, physiologyEvents = ev,
                        uptakeEffect = uptake)
     step <- which(s$timeLine == 10)
     for (g in c("sevoflurane", "oxygen", "nitrogen"))
