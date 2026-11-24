@@ -71,8 +71,10 @@ D-01's aliasing, C-07, C-06, the ten-tick re-arm and the stale help statements.
 | Part E #18 | question | The algebra confirmed; one column misexplained | Recorded |
 
 And two from CodeRabbit's review of #858, carried here: no sub-step after the
-graded ramp is longer than the plot's step (`ceiling()`), and the threshold
-line's temperature is documented (C-01).
+graded ramp is longer than the plot's step (`ceiling()`, and since CodeRabbit's
+review of #864 in the uniform steps too, which the coupled engine takes after
+its ramp: two repeated rows 0.149 minutes apart had one step of 0.149), and the
+threshold line's temperature is documented (C-01).
 
 ## The defects fixed
 

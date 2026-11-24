@@ -979,7 +979,10 @@ gasSubSteps <- function(len, dtNominal, graded = TRUE,
                         first = GAS_STEP_FIRST, growth = GAS_STEP_GROWTH)
 {
   if (!graded || dtNominal <= first) {
-    n <- max(1, round(len / dtNominal))
+    # ceiling() here too: the coupled engine takes uniform steps after its
+    # ramp, and round() gave a 0.149-minute interval one step of 0.149 at a
+    # plot step of 0.1 (CodeRabbit on PR #864)
+    n <- max(1, ceiling(len / dtNominal - 1e-9))
     return(rep(len / n, n))
   }
   h <- numeric(0)

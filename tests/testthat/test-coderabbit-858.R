@@ -97,6 +97,15 @@ test_that("no sub-step after the ramp is longer than the plot's step", {
   expect_lte(worst, 0.1 * (1 + 1e-9))
   # The cost stays a few dozen steps over the plot's own 600
   expect_lt(length(gasSubSteps(60, 0.1)), 600 + 40)
+  # The uniform steps too, which the coupled engine takes after its ramp
+  # (CodeRabbit on PR #864: one step of 0.149)
+  expect_equal(as.vector(gasSubSteps(0.149, 0.1, graded = FALSE)), c(0.0745, 0.0745))
+  expect_length(gasSubSteps(60, 0.1, graded = FALSE), 600)
+  d <- data.frame(Time = 0, Drug = c("oxygen", "nitrousOxide", "sevoflurane", "ventilation"),
+                  Dose = c(2, 4, 2, 6))
+  again <- rbind(d, data.frame(Time = c(30, 30.149), Drug = "nitrousOxide", Dose = 4))
+  b <- advanceClosedFormGas(again, weight = 70, age = 40, maximum = 60)
+  expect_lte(max(diff(b$timeLine)), 0.1 * (1 + 1e-9))
 })
 
 
