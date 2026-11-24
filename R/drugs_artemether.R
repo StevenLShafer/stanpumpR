@@ -84,7 +84,9 @@
 #
 # ARTEMETHER'S TERMINAL HALF-LIFE  [decided by Steven L. Shafer, 2026-11-23]
 # ==============================
-# Ding's two compartments give a terminal half-life of 12.1 h (Table 2).
+# Ding's two compartments give a terminal half-life of 12.1 h (Table 2's
+# median of the post hoc estimates; 11.8 h for the typical patient at the
+# first dose).
 # Hoglund 2015 (PMID 25297720), from the same group, rejected its own
 # two-compartment fit with a 12.2 h half-life as unstable and kept one
 # compartment; the label says about 2 h.  Shafer chose Ding: "Typically later
@@ -106,9 +108,9 @@
 # ===============================================
 # * Table 2's typical values, both switch positions.
 # * The typical 45 kg patient on the label's six doses of 80 mg: artemether
-#   AUC 2,990 and dihydroartemisinin AUC 1,878 h.ng/mL, against Table 2's
-#   medians of 2,850 and 1,870 (post hoc, with variability), and the peaks
-#   above.
+#   AUC about 3,000 and dihydroartemisinin AUC about 1,890 h.ng/mL, against
+#   Table 2's medians of 2,850 and 1,870 (post hoc, with variability), and
+#   the peaks above.
 # * The engine against an independent Runge-Kutta solution of the same
 #   equations, dose occasions included.
 # -----------------------------------------------------------------------------
