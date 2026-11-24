@@ -37,6 +37,15 @@
 # (R/renalFunction.R; a child's creatinine, entered or assumed, is read on
 # the adult scale).  Sugammadex is renally cleared and the label does not
 # recommend it below 30 mL/min.
+# The peripheral-volume term, exp[-0.00305 (CR - 119)], sees CR held within
+# the 4.30-239 mL/min the source studied (KLEIJN_2011_CR_RANGE, Table 2;
+# Steven L. Shafer's decision of 2026-11-24, as for rocuronium's central
+# volume), because the exponential has no floor: Cockcroft-Gault reaches
+# 479 mL/min in a 25-year-old 150 kg man at 0.5 mg/dL, which would take Vp
+# to 0.33 of its reference, and about 3,500 at the field's extremes, which
+# would take it to nothing.  Held, Vp is at most 1.42 and at least 0.69 times
+# its reference.  The clearance term needs no hold: it levels off by itself,
+# at 2^1.29 = 2.45.
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
@@ -121,6 +130,11 @@ kleijn2011Patient <- function(weight, height, age, sex, adjustToFFM, creatinine)
                                   adultEquivalentCreatinine(creatinine, age, sex)))
 }
 
+# The creatinine clearance Kleijn 2011 studied (Table 2), within which its
+# exponential renal terms on volumes are evaluated: rocuronium's V1 and
+# sugammadex's Vp (see each file's RENAL FUNCTION).
+KLEIJN_2011_CR_RANGE <- c(4.30, 239)           # mL/min
+
 #' Sugammadex pharmacokinetics (total)
 #'
 #' @inheritParams cefazolin
@@ -149,7 +163,8 @@ sugammadex <- function(weight, height, age, sex, adjustToFFM = TRUE,
   cl1 <- 5.58 * (1 + 0.00378 * (Wl - 74.5)) * (2 * crCL / (crCL + 119))^1.29 / 60
   v1  <- 4.42 * (1 - 0.00354 * (Wl - 74.5)) * rS * (W / 70)
   cl2 <- 12.36 * (W / 70)^0.75 / 60
-  v2  <- 6.35 * exp(-0.00305 * (CR - 119)) * (W / 70)
+  crV <- min(max(CR, KLEIJN_2011_CR_RANGE[1]), KLEIJN_2011_CR_RANGE[2])
+  v2  <- 6.35 * exp(-0.00305 * (crV - 119)) * (W / 70)
   v3  <- 1                                     # no third compartment
   cl3 <- 0
 

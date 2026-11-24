@@ -81,7 +81,8 @@
 # the adult scale, adultEquivalentCreatinine()), exactly as for sugammadex.
 # The source used Cockcroft-Gault from 18 years and a BSA-denormalised
 # Schwartz below.  CR is held within the range the source studied,
-# 4.30-239 mL/min (ROCURONIUM_KLEIJN_CR_RANGE), because the exponential term
+# 4.30-239 mL/min (KLEIJN_2011_CR_RANGE, R/drugs_sugammadex.R, shared with sugammadex's
+# peripheral volume), because the exponential term
 # is unbounded outside it: a small entered creatinine in a large patient
 # gives a Cockcroft-Gault in the thousands and a central volume of a few
 # millilitres.  Inside the range nothing is changed.  Renal function does
@@ -145,7 +146,6 @@
 # -----------------------------------------------------------------------------
 
 ROCURONIUM_KLEIJN_MIN_AGE <- 1                 # years; see AGE in the header
-ROCURONIUM_KLEIJN_CR_RANGE <- c(4.30, 239)     # mL/min; see RENAL FUNCTION
 
 rocuronium <- function(weight, height, age, sex, adjustToFFM = TRUE,
                        creatinine = NULL)
@@ -155,8 +155,8 @@ rocuronium <- function(weight, height, age, sex, adjustToFFM = TRUE,
   patient <- kleijn2011Patient(weight, height, age, sex, adjustToFFM, creatinine)
   W  <- patient$W
   A  <- max(age, ROCURONIUM_KLEIJN_MIN_AGE)
-  CR <- min(max(patient$CR, ROCURONIUM_KLEIJN_CR_RANGE[1]),
-            ROCURONIUM_KLEIJN_CR_RANGE[2])
+  CR <- min(max(patient$CR, KLEIJN_2011_CR_RANGE[1]),
+            KLEIJN_2011_CR_RANGE[2])
   q2Race <- 1                                  # non-Asian, the reference
 
   cl1 <- 0.269 * (1 - 0.00678 * (A - 43)) * (W / 70)^0.75
