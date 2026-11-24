@@ -35,7 +35,11 @@ test_that("each control follows the drugs it applies to", {
 
 test_that("a covariate field is shown exactly for the drugs whose model reads it", {
   dd <- getDrugDefaultsGlobal()
-  for (field in names(PATIENT_FIELD_LABELS)) {
+  # Infection was built ahead of its first reader (R/infection.R), so no drug
+  # shows it yet; test-infection.R checks it with a model of its own.  Once a
+  # drug reads it, this test takes it like any other field.
+  waiting <- if (length(patientFieldReaders("infection", dd)) == 0) "infection"
+  for (field in setdiff(names(PATIENT_FIELD_LABELS), waiting)) {
     readers <- patientFieldReaders(field, dd)
     expect_true(length(readers) > 0, info = field)
     expect_true(relevantFields(readers[1], dd)[[field]], info = field)

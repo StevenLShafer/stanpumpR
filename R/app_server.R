@@ -1356,6 +1356,12 @@ app_server <- function(input, output, session) {
     isTRUE(as.logical(asScalarString(input$pulmonaryHypertension)))
   })
 
+  # The Infection control: one of its own choices, its default before it
+  # reports and in a bookmark made before it existed, and its default for
+  # anything else a link or a forged input sends (a bookmark is untrusted
+  # input).  Only the models with an infection term read it (R/infection.R).
+  infection <- reactive(choiceOf(input$infection, INFECTION_VALUES, INFECTION_DEFAULT))
+
   # NULL when the field is blank: the renal models then assume a normal value.
   creatinine <- reactive({
     x <- input$creatinine
@@ -1705,6 +1711,7 @@ app_server <- function(input, output, session) {
         ast = ast(),
         pregnant = pregnant(),
         pulmonaryHypertension = pulmonaryHypertension(),
+        infection = infection(),
         adjustToFFM = adjustToFFM(),
         opioidTolerance = opioidTolerance(),
         buprenorphineOffset = buprenorphineOffset(),
@@ -2307,6 +2314,7 @@ app_server <- function(input, output, session) {
       sex = sex(),
       pregnant = pregnant(),
       pulmonaryHypertension = pulmonaryHypertension(),
+      infection = infection(),
       adjustToFFM = adjustToFFM(),
       osmolality = osmolality(),
       creatinine = creatinine(),

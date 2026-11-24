@@ -100,6 +100,8 @@ helpScenarioDefaultOptions <- function() {
 #' @param pulmonaryHypertension does the patient have pulmonary arterial
 #'   hypertension?  Read only by sildenafil and tadalafil
 #'   (R/pulmonaryHypertension.R)
+#' @param infection the patient's infection, one of INFECTION_VALUES; read
+#'   only by the models with an infection term (R/infection.R)
 #' @param doses data frame with Drug, Time (minutes), Dose, Units
 #' @param events data frame with Time (minutes) and Event, or NULL
 #' @param measurements measured concentrations for the Bayesian update: a
@@ -116,7 +118,8 @@ helpScenario <- function(id, title, group, summary,
                          creatinine = NULL,
                          osmolality = OSMOLALITY_DEFAULT, pregnant = FALSE,
                          gestationalAge = NULL, albumin = NULL, ast = NULL,
-                         measurements = NULL, pulmonaryHypertension = FALSE, ...) {
+                         measurements = NULL, pulmonaryHypertension = FALSE,
+                         infection = INFECTION_DEFAULT, ...) {
   options <- utils::modifyList(helpScenarioDefaultOptions(), list(...))
   doses <- data.frame(
     Drug = as.character(doses$Drug),
@@ -149,7 +152,8 @@ helpScenario <- function(id, title, group, summary,
                    adjustToFFM = adjustToFFM, creatinine = creatinine, osmolality = osmolality,
                    pregnant = pregnant, gestationalAge = gestationalAge,
                    albumin = albumin, ast = ast,
-                   pulmonaryHypertension = pulmonaryHypertension),
+                   pulmonaryHypertension = pulmonaryHypertension,
+                   infection = infection),
     doses = doses, events = events, measurements = measurements, options = options
   )
 }
@@ -1235,6 +1239,9 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (!is.logical(p$pulmonaryHypertension) || length(p$pulmonaryHypertension) != 1 ||
       is.na(p$pulmonaryHypertension))
     say("pulmonaryHypertension is not a single logical")
+  if (!is.character(p$infection) || length(p$infection) != 1 ||
+      !p$infection %in% INFECTION_VALUES)
+    say("invalid infection: ", paste(p$infection, collapse = ", "))
   if (!is.null(p$creatinine) && !is_valid_number(p$creatinine, MIN_CREATININE, MAX_CREATININE)) {
     say("creatinine out of range: ", p$creatinine)
   }
@@ -1494,6 +1501,8 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL,
   shinyWidgets::updateRadioGroupButtons(
     session, "pulmonaryHypertension",
     selected = if (isTRUE(p$pulmonaryHypertension)) "TRUE" else "FALSE")
+  # And the infection, sent even when hidden
+  updateSelectInput(session, "infection", selected = p$infection)
   updateSelectInput(session, "cyp2d6", selected = p$cyp2d6)
   updateSelectInput(session, "cyp2c19", selected = p$cyp2c19)
   updateSelectInput(session, "cyp2c9", selected = p$cyp2c9)
@@ -1627,6 +1636,7 @@ helpScenarioPageHTML <- function(id) {
   # Shown only when set: "Pregnant: no" beside a man's age would be noise.
   if (isTRUE(p$pregnant)) patient$Pregnant <- "yes"
   if (isTRUE(p$pulmonaryHypertension)) patient$`Pulmonary hypertension` <- "yes"
+  if (!identical(p$infection, INFECTION_DEFAULT)) patient$Infection <- infectionLabel(p$infection)
   # Likewise a gestational age, only when the scenario names one
   if (!is.null(p$gestationalAge))
     patient$`Gestational age at birth` <- sprintf("%s weeks", helpFormatNumber(p$gestationalAge))

@@ -233,6 +233,20 @@ app_ui <- function() {
                   placement = "right"
                 )),
 
+                # Read only by the models with an infection term (R/infection.R;
+                # Steven L. Shafer, 2026-11-18), so shown only while one is in
+                # the dose table.
+                relevantField("infection", fieldHelp(
+                  selectInput(
+                    inputId = "infection",
+                    label = "Infection",
+                    choices = INFECTION_LABELS,
+                    selected = INFECTION_DEFAULT
+                  ),
+                  patientFieldTooltip("infection"),
+                  placement = "right"
+                )),
+
                 # Each opioid's MEAC times 1, 1.5, 2 or 3
                 # (OPIOID_TOLERANCE_FACTORS; recalculatePK()).
                 relevantField("opioidTolerance", fieldHelp(

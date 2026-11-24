@@ -31,7 +31,9 @@ getDrugPK(
   libraryDefaults = NULL,
   metaboliteIndividual = NULL,
   physiology = NULL,
-  pulmonaryHypertension = FALSE
+  pulmonaryHypertension = FALSE,
+  offsetScale = 1,
+  infection = INFECTION_DEFAULT
 )
 }
 \arguments{
@@ -137,6 +139,10 @@ drug with a row in \code{inst/extdata/physiologyParameters.csv}.  See
 hypertension?  TRUE or FALSE (the default).  Passed only to the models
 of a drug with a separate PAH population (sildenafil, tadalafil); see
 \code{R/pulmonaryHypertension.R}.}
+
+\item{infection}{the patient's infection, one of \code{INFECTION_VALUES}
+(\code{INFECTION_DEFAULT}, \code{"none"}, by default).  Passed only to the
+models with an infection term; see \code{R/infection.R}.}
 }
 \value{
 a list: the drug's PK sets (\code{PK}, one per PK event), its

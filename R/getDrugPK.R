@@ -62,6 +62,9 @@
 #'   hypertension?  TRUE or FALSE (the default).  Passed only to the models
 #'   of a drug with a separate PAH population (sildenafil, tadalafil); see
 #'   \code{R/pulmonaryHypertension.R}.
+#' @param infection the patient's infection, one of \code{INFECTION_VALUES}
+#'   (\code{INFECTION_DEFAULT}, \code{"none"}, by default).  Passed only to the
+#'   models with an infection term; see \code{R/infection.R}.
 #' @param model internal: a model's output to use in place of calling the
 #'   drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
 #'   drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.
@@ -127,7 +130,8 @@ getDrugPK <- function(
   metaboliteIndividual = NULL,
   physiology = NULL,
   pulmonaryHypertension = FALSE,
-  offsetScale = 1
+  offsetScale = 1,
+  infection = INFECTION_DEFAULT
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
@@ -179,6 +183,9 @@ getDrugPK <- function(
   # drug given both for pulmonary arterial hypertension and for something else
   # (sildenafil, tadalafil), whose patients' pharmacokinetics differ
   pulmonaryHypertension <- checkPulmonaryHypertension(pulmonaryHypertension)
+  # The Patient Profile's Infection, read only by the models with an infection
+  # term (R/infection.R)
+  infection <- checkInfection(infection)
   if (!is_valid_number(osmolality, MIN_OSMOLALITY, MAX_OSMOLALITY)) {
     stop("Invalid osmolality: ", paste(osmolality, collapse = ", "),
          ". Must be a number between ", MIN_OSMOLALITY, " and ",
@@ -303,6 +310,11 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "pulmonaryHypertension" %in% names(formals(get(drug, mode = "function"))))
     covariates$pulmonaryHypertension <- pulmonaryHypertension
+  # And the infection, which only the models with an infection term read
+  # (Steven L. Shafer, 2026-11-18; R/infection.R).
+  if (exists(drug, mode = "function") &&
+      "infection" %in% names(formals(get(drug, mode = "function"))))
+    covariates$infection <- infection
   # And the buprenorphine onset/offset speed (a biophase tPeak multiplier),
   # which only a model with an offsetScale term reads (PROTOTYPE, Shafer
   # 2026-11-20; R/opioidReceptorInteraction.R).
@@ -359,7 +371,7 @@ getDrugPK <- function(
         adjustToFFM = adjustToFFM, osmolality = osmolality,
         creatinine = creatinine, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
         cyp2b6 = cyp2b6, pregnant = pregnant, vkorc1 = vkorc1, model = X,
-        cyp4f2 = cyp4f2, gestationalAge = gestationalAge
+        cyp4f2 = cyp4f2, gestationalAge = gestationalAge, infection = infection
       )
       nominalKe0 <- lapply(nominal$PK, function(set) set$ke0)
     }
@@ -1280,6 +1292,7 @@ getDrugPK <- function(
       physiology = physiology,
       pulmonaryHypertension = pulmonaryHypertension,
       offsetScale = offsetScale,
+      infection = infection,
       # The individual's metabolite, where the Bayesian update estimated it
       # from the metabolite's own levels: the parent forms the metabolite the
       # patient has.  Built from the model's, a morphine level after codeine
