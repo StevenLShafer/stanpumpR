@@ -19,8 +19,12 @@
 # references, and clearance (CLm0/Vm)/(fm/Vm).  The dose per m2 is held at
 # 25 mg/m2 and the serum protein at 70 g/L (see R/drugs_cisplatin.R).  Only
 # models with a pregnancy registry row read the pregnancy flag, so this
-# metabolite does not: in pregnancy its creatinine clearance is not raised,
-# and fm/Vm is (1.5)^0.36, 16%, higher than a consistent treatment would give.
+# metabolite does not: its creatinine clearance is not raised in pregnancy.
+# The parent carries the difference instead: cisplatin()'s kFormation is
+# multiplied by the pregnancy filtration factor to the -0.36, which is fm/Vm's
+# own dependence on CLCr, so the bound platinum is what Urien's equations give
+# (until 2026-11-24 it was 16% too high in pregnancy; Gemini's chemotherapy
+# audit of 2026-11-23, F16).
 # BODY SIZE: nothing to anchor at the cohort (A2-F4, 2026-11-19): the volume,
 # 1/(fm/Vm), carries the BSA and creatinine clearance terms, and CLm0/Vm is a
 # rate constant.

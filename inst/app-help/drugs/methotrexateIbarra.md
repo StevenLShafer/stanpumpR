@@ -9,7 +9,7 @@ The half-lives are 1.5, 4.9 and 40 hours and the steady-state volume 20 L, as th
 
 ### What is plotted
 
-Plasma methotrexate in mcg/mL (mg/L). The clinical thresholds are in µmol/L: **1 µmol/L = 0.454 mg/L**, so 0.1 µmol/L is 0.045 mg/L. Doses are entered in mg or as an infusion rate; a dose prescribed per m² must be multiplied by the body surface area first. There is no effect site, and the rescue and discharge thresholds are not drawn as a band.
+Plasma methotrexate in mcg/mL (mg/L). The clinical thresholds are in µmol/L: **1 µmol/L = 0.454 mg/L**, so 0.1 µmol/L is 0.045 mg/L. Doses are entered in mg or as an infusion rate; a dose prescribed per m² or per kg can be entered as such (mg/m², mg/kg; body surface area by Mosteller, from the Patient Profile's weight and height). There is no effect site, and the rescue and discharge thresholds are not drawn as a band.
 
 ### Covariates
 
@@ -19,6 +19,7 @@ Plasma methotrexate in mcg/mL (mg/L). The clinical thresholds are in µmol/L: **
 
 ### Where to be careful
 
+- **Interactions are not modelled.** The methotrexate label (7.1) asks for close monitoring with penicillins and sulfonamides, proton pump inhibitors, aspirin and other NSAIDs, probenecid, and highly protein-bound drugs such as oral anticoagulants and phenytoin: several slow methotrexate's renal elimination, so the measured level may stay high longer than this curve shows.
 - **Not a monitoring tool.** The curve is a population prediction for the covariates entered, not an estimate from measured levels, and never replaces them or the rescue and glucarpidase criteria.
 - **Kidney injury during the course.** The source's creatinine changed with time; the curve holds the entered value. It cannot show the delayed elimination of a kidney injury that develops during the course.
 - **Left out by the authors:** shorter infusions (12% lower clearance), a kidney injury in the previous course (8%), and age.

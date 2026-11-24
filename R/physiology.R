@@ -1138,7 +1138,8 @@ physiologyIntro <- function()
     tags$p(
       "Do not enter one change twice: lowering renal function after entering",
       "a raised creatinine for a drug whose model reads it counts the",
-      "impairment twice."),
+      "impairment twice, and so does lowering liver function after entering",
+      "a raised Serum AST for a drug whose model reads it (epirubicin)."),
     tags$p(tags$a(href = "#", `data-help-page` = "models/physiology",
                   "More about the sliders")),
     tags$button(type = "button",

@@ -100,3 +100,12 @@ test_that("Joerger's size-free parameters are anchored at her 59 women (A2-F4)",
   big <- doxorubicinJoerger(100, 180, 50, "male")$PK$default
   expect_equal(big$v1, off$v1 * pkSizeFactors(100, 180, 50, "male")$volume / kc$volume, tolerance = 1e-6)
 })
+
+test_that("Joerger's clearance reads the Serum AST field (Gemini audit F6)", {
+  cl <- function(ast) doxorubicinJoerger(70, 170, 56, "female", ast = ast)$PK$default$cl1
+  expect_equal(cl(NULL), cl(21))
+  expect_equal(cl(41) / cl(21), (41 / 21)^-0.24)
+  expect_equal(round(1 - cl(41) / cl(21), 2), 0.15)
+  expect_equal(cl(1e6), cl(MAX_AST))
+  expect_true("ast" %in% names(formals(doxorubicin)))
+})

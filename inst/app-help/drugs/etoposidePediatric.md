@@ -9,7 +9,7 @@ Weight was the only covariate retained. A maturation term was tested and not kep
 
 ### What is plotted
 
-Plasma etoposide in mcg/mL (mg/L). Doses are entered in mg or as an infusion rate; a dose prescribed per m² or per kg must be converted first. Exposure is judged by the area under the curve (the paper's targeted dosing aims at a course AUC of 371 or 474 mg·h/L), which is not drawn. There is no effect site and no band.
+Plasma etoposide in mcg/mL (mg/L). Doses are entered in mg or as an infusion rate; a dose prescribed per m² or per kg can be entered as such (mg/m², mg/kg; body surface area by Mosteller, from the Patient Profile's weight and height). Exposure is judged by the area under the curve (the paper's targeted dosing aims at a course AUC of 371 or 474 mg·h/L), which is not drawn. There is no effect site and no band.
 
 ### Where to be careful
 

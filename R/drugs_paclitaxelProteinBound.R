@@ -71,9 +71,17 @@
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # No size covariate: weight and BSA were tested and not retained (as the
-# label says, none across 40 to 143 kg and 1.3 to 2.4 m2).  Every parameter
-# is fixed in both switch positions, as for Crombag's paclitaxel (Shafer's
-# decision for Joerger's V1, 2026-11-06).
+# label says, none across 40 to 143 kg and 1.3 to 2.4 m2).  Until 2026-11-24
+# every parameter was fixed, after the precedent of Crombag's paclitaxel,
+# which Shafer's first-principles rule of 2026-11-19 overturned ("tested and
+# rejected" no longer exempts a parameter; docs/weight-adjustment.md, *Every
+# parameter is scaled*; Gemini's chemotherapy audit of 2026-11-23, F4).  So,
+# with the switch on, V1, V2 (the saturable store) and V3 take the
+# fat-free-mass volume factor and VMEL, VMTR and Q the clearance factor,
+# anchored at Chen's cohort (PACLITAXEL_CHEN_COHORT, below), so that a patient
+# like Chen's receives the published values; KMEL and KMTR (concentrations)
+# are not scaled.  None carries a sex term, so they are anchored at the
+# cohort's pooled patient.  With the switch off they are unscaled, as before.
 #
 # PREGNANCY: see its registry row.  NO EFFECT SITE, NO BAND.
 # -----------------------------------------------------------------------------
@@ -86,6 +94,11 @@ PACLITAXEL_CHEN <- list(
   vmel = 8070, kmel = 40.2,             # ug/h, ug/L
   albuminExp = 0.554, albuminRef = 3.9  # g/dL
 )
+
+# Chen 2014, Table 1 (card PMID_24719309.md): medians 74 kg, BSA 1.9 m2, 57
+# years; 60 men and 90 women.  No height is printed: 175.6 cm solves
+# Mosteller's BSA back from 1.9 m2 at 74 kg (1.9^2 x 3600 / 74).
+PACLITAXEL_CHEN_COHORT <- list(weight = 74, height = 175.6, age = 57, men = 60, women = 90)
 
 #' Paclitaxel protein-bound (nab-paclitaxel), intravenous (Chen 2014)
 #'
@@ -102,18 +115,22 @@ paclitaxelProteinBound <- function(weight, height, age, sex, adjustToFFM = TRUE,
                                    albumin = NULL)
 {
   p <- PACLITAXEL_CHEN
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, PACLITAXEL_CHEN_COHORT))
   alb <- if (is.null(albumin)) p$albuminRef else max(albumin, MIN_ALBUMIN)
-  vmax <- p$vmel * (alb / p$albuminRef)^p$albuminExp / 1000 / 60   # mg/min
+  vmax <- p$vmel * (alb / p$albuminRef)^p$albuminExp / 1000 / 60 *
+    size$clearance                                                 # mg/min
   km <- p$kmel / 1000                                             # mg/L
 
   default <- list(
-    v1 = p$v1,
-    v2 = p$v3,                               # the source's V3, linear
+    v1 = p$v1 * size$volume,
+    v2 = p$v3 * size$volume,                 # the source's V3, linear
     v3 = 1,                                  # placeholder: the store is in the block
     # The low-concentration limit of the saturable elimination, Vmax / Km,
     # for the help tables only: the simulation uses the michaelisMenten block.
     cl1 = vmax / km,
-    cl2 = p$q2 / 60,
+    cl2 = p$q2 / 60 * size$clearance,
     cl3 = 0
   )
   events <- c(PK_EVENT_DEFAULT)
@@ -125,7 +142,8 @@ paclitaxelProteinBound <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "distinct from solvent-based paclitaxel. J Clin Pharmacol 2014;54:1097-1107. 150 adults: ",
     "three compartments, saturable elimination (VMEL 8070 ug/h x (albumin/3.9)^0.554, KMEL ",
     "40.2 ug/L), saturable distribution both ways to V2 1650 L (VMTR 325000 ug/h, KMTR 4260 ",
-    "ug/L), linear to V3 75.4 L (Q2 41.6 L/h), V1 15.8 L (Table 2's mg read as ug). ",
+    "ug/L), linear to V3 75.4 L (Q2 41.6 L/h), V1 15.8 L (Table 2's mg read as ug); ",
+    "volumes and maximal rates scaled to fat-free mass, anchored at the cohort (74 kg, 57 y, 60 men, 90 women). ",
     "Nab-paclitaxel (Abraxane) only. Total plasma paclitaxel. https://doi.org/10.1002/jcph.304"
   )
 
@@ -140,9 +158,9 @@ paclitaxelProteinBound <- function(weight, height, age, sex, adjustToFFM = TRUE,
     michaelisMenten = list(
       vmax = vmax, km = km,
       saturableDistribution = list(
-        vmax = p$vmtr / 1000 / 60,               # mg/min
+        vmax = p$vmtr / 1000 / 60 * size$clearance,  # mg/min
         km = p$kmtr / 1000,                      # mg/L
-        volume = p$v2                            # L: the return saturates too
+        volume = p$v2 * size$volume              # L: the return saturates too
       )
     )
   )

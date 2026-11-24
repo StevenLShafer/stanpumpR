@@ -293,8 +293,9 @@ test_that("oxaliplatin is one name for Bastian 2003 and Nikanjam 2015, chosen by
   expect_true(is.na(bastian$Category) || bastian$Category == "")
   # the larger study (Nikanjam, 186 patients, 0.6-86 years) covers adults
   expect_match(getDrugPK("oxaliplatin", 70, 170, 60, "male")$reference, "Nikanjam")
-  # Bastian only beyond Nikanjam's 86 years
-  expect_match(getDrugPK("oxaliplatin", 70, 170, 88, "male")$reference, "Bastian G")
+  # Bastian's printed 41-79 years lie inside Nikanjam's range, so Nikanjam is
+  # chosen beyond 86 years too (Gemini's chemotherapy audit, F3, 2026-11-24)
+  expect_match(getDrugPK("oxaliplatin", 70, 170, 88, "male")$reference, "Nikanjam")
   expect_equal(getDrugPK("oxaliplatinBastian", 70, 170, 60, "male")$tPeak, 0)
   expect_identical(therapeuticRange("oxaliplatin")$band_status, "not_applicable")
 })

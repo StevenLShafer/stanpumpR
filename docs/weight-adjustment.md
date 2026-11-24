@@ -300,7 +300,8 @@ values**, and the reference man, and everyone else, are scaled from there.
   scopolamine, everolimus, sirolimus, tacrolimus, amitriptyline,
   capecitabine, amikacin, ganciclovir, quinidine, vancomycinKidneyTransplant.
   *The source prints no usable demographics*, so the reference anchor stays:
-  daunorubicin, droperidolIM, risperidone and hydroxyrisperidone,
+  daunorubicin, doxorubicinLiposomal and doxorubicinLiposomalFree (scaled
+  only since 2026-11-24), droperidolIM, risperidone and hydroxyrisperidone,
   nitroglycerin, phenylephrine, vasopressin, prednisolone and prednisone,
   diclofenacEC, alfentanil, oliceridine, mepivacaine, glycopyrrolate,
   neostigmine, clonazepam, apomorphine, sildenafilFDA, benazepril (no height or age), irinotecan (weight only),

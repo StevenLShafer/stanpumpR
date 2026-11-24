@@ -10,7 +10,7 @@ The adults' model is [doxorubicin](help:drugs/doxorubicin) (Joerger 2007).
 
 ### What is plotted
 
-Plasma doxorubicin in ng/mL. Doses are entered in mg as labelled; the paper does not say whether it recorded the hydrochloride or the base, so no conversion is made. A dose prescribed per m² must be multiplied by the body surface area first. There is no effect site and no band.
+Plasma doxorubicin in ng/mL. Doses are entered in mg as labelled; the paper does not say whether it recorded the hydrochloride or the base, so no conversion is made. A dose prescribed per m² or per kg can be entered as such (mg/m², mg/kg; body surface area by Mosteller, from the Patient Profile's weight and height). There is no effect site and no band.
 
 ### Covariates
 

@@ -22,4 +22,6 @@ Clearance scales with fat-free mass (as FFM^0.75) and volume with fat-free mass 
 
 ### Where to be careful
 
+Capecitabine and fluorouracil raise warfarin's effect (the Xeloda label's boxed warning: S-warfarin clearance 37% lower; the fluorouracil label, 5.9), which this model does not show: check the INR more often when either is given.
+
 This is a cardiac-surgery population with an INR target of 1.5–2.5, and the R-warfarin competition term is specific to this study (the authors call the R effect minor). The model is not a dosing algorithm, and it does not represent vitamin K, bridging heparin, or the between-patient variability that makes warfarin dosing individual.

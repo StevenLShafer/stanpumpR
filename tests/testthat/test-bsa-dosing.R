@@ -77,6 +77,14 @@ test_that("every chemotherapy drug labelled per m2 offers a per-m2 unit", {
     u <- chemo$Units[[match(drug, chemo$Drug)]]
     expect_true(any(isBsaUnit(u)), info = drug)
   }
+  # Inclusive of practice (Shafer, 2026-11-23): every intravenous one offers
+  # per-kg and per-m2 doses and rates, whatever its label says.
+  for (i in seq_len(nrow(chemo))) {
+    u <- chemo$Units[[i]]
+    if (any(u %in% c("mg", "mg/hr")))
+      expect_true(all(c("mg/kg", "mg/kg/hr", "mg/m2", "mg/m2/hr") %in% u),
+                  info = chemo$Drug[i])
+  }
   # Every unit a chemotherapy drug offers is one the dose table accepts.
   expect_true(all(unlist(chemo$Units) %in% c(allUnits, scheduledUnits)))
 })
@@ -99,4 +107,19 @@ test_that("the Patient Profile shows BSA and BMI, derived and not entered", {
   on.exit(.sprglobals$config <- oldConfig, add = TRUE)
   ui <- as.character(htmltools::renderTags(app_ui()(list()))$html)
   expect_match(ui, 'id="bodySize"', fixed = TRUE)
+})
+
+test_that("mg/m2 SC and U/m2/hr are units, read per m2 (Gemini audit F20)", {
+  expect_true(all(c("mg/m2 SC", "U/m2/hr") %in% allUnits))
+  expect_equal(doseRoute("mg/m2 SC"), ROUTE_SC)
+  expect_true(isRateUnit("U/m2/hr"))
+  bsa <- sqrt(80 * 180 / 3600)
+  expect_equal(bodySizeDoseFactor(c("mg/m2 SC", "U/m2/hr"), 80, 180), c(bsa, bsa))
+  d <- getDrugDefaultsGlobal()
+  expect_true(all(c("mg/m2 PO", "mg/m2 SC") %in% d$Units[[match("cladribine", d$Drug)]]))
+  expect_true(all(c("U/kg/hr", "U/m2/hr") %in% d$Units[[match("bleomycin", d$Drug)]]))
+  # no chemotherapy help page tells the user to convert a per-m2 dose by hand
+  pages <- list.files(system.file("app-help", "drugs", package = "stanpumpR"), full.names = TRUE)
+  txt <- vapply(pages, function(f) paste(readLines(f, warn = FALSE), collapse = " "), "")
+  expect_false(any(grepl("multiplied by the body surface area first|must be converted first", txt)))
 })

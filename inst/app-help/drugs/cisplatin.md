@@ -9,7 +9,7 @@ Total plasma platinum, which most older studies report, is the sum of the two pa
 
 ### What is plotted
 
-**Unbound platinum** in ng/mL (µg/L of platinum, as measured). Doses are entered in mg of cisplatin as labelled; a dose prescribed per m² must be multiplied by the body surface area first. There is no effect site and no band.
+**Unbound platinum** in ng/mL (µg/L of platinum, as measured). Doses are entered in mg of cisplatin as labelled; a dose prescribed per m² or per kg can be entered as such (mg/m², mg/kg; body surface area by Mosteller, from the Patient Profile's weight and height). There is no effect site and no band.
 
 ### Covariates
 
