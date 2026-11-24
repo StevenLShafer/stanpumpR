@@ -4,8 +4,8 @@ Sotalol's disposition comes from the PEAKS registry (Yellepeddi and colleagues, 
 
 ### Covariates
 
-- **Renal function**: clearance is 9.5 × (creatinine clearance / 92.4)^0.7 L/h, the creatinine clearance by Cockcroft-Gault from the Patient Profile's **Serum creatinine** (blank means an assumed normal creatinine for age and sex). Sotalol is not metabolised and leaves unchanged in the urine, which is why its doses are set by creatinine clearance. PEAKS required a creatinine clearance above 60 mL/min, so below that the curve is an extrapolation, in the direction the label describes.
-- **Weight** on the central volume, to the power 1.1. With [the scaling switch](help:models/fat-free-mass) on, both use the fat-free-mass weight.
+- **Renal function**: clearance is 9.5 × (creatinine clearance / 92.4)^0.65 L/h, the creatinine clearance by Cockcroft-Gault from the Patient Profile's **Serum creatinine** (blank means an assumed normal creatinine for age and sex). Sotalol is not metabolised and leaves unchanged in the urine, which is why its doses are set by creatinine clearance. PEAKS required a creatinine clearance above 60 mL/min, so below that the curve is an extrapolation, in the direction the label describes.
+- **Weight** on the central volume, to the power 1.2. Both exponents are those of the authors' final model file (their Data S1); the paper's Table 2 rounds them to 0.7 and 1.1. With [the scaling switch](help:models/fat-free-mass) on, both use the fat-free-mass weight.
 
 ### Oral
 
