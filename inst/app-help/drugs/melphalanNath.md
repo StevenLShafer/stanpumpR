@@ -10,7 +10,7 @@ At the reference values clearance is 28.1 L/h, 40% of it renal, and the half-liv
 
 ### What is plotted
 
-Total plasma melphalan in mcg/mL (mg/L). Doses are entered in mg or as an infusion rate; a dose prescribed per m² must be multiplied by the body surface area first. There is no effect site and no band: the exposures the paper related to toxicity are not a therapeutic range.
+Total plasma melphalan in mcg/mL (mg/L). Doses are entered in mg or as an infusion rate; a dose prescribed per m² or per kg can be entered as such (mg/m², mg/kg; body surface area by Mosteller, from the Patient Profile's weight and height). There is no effect site and no band: the exposures the paper related to toxicity are not a therapeutic range.
 
 ### Covariates
 

@@ -4,7 +4,7 @@ Ostermann and colleagues (*Clin Cancer Res* 2004;10:3728-3736) measured temozolo
 
 ### Body size and sex
 
-Clearance is 10.0 L/h in a woman of average body-surface area (1.81 m², Du Bois), 19% higher in a man, and rises by 4.2 L/h for each doubling of body-surface area; the volume is 30.3 L, rising by 19.9 L for each doubling. Age, kidney function and the other drugs the patients took had no effect.
+Clearance is 10.0 L/h in a woman of average body-surface area (1.81 m², Du Bois), 19% higher in a man, and rises linearly with body-surface area, by 4.2 L/h for each 1.81 m² added (2.3 L/h per m²); the volume is 30.3 L, rising by 19.9 L for each 1.81 m² (11.0 L per m²). Age, kidney function and the other drugs the patients took had no effect.
 
 ### The cerebrospinal fluid
 

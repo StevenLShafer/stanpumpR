@@ -10,7 +10,7 @@ For the typical patient the half-lives are 3 minutes, 36 minutes and 17.6 hours,
 
 ### What is plotted
 
-Plasma vincristine in ng/mL. Doses are entered in mg as labelled (vincristine sulfate); a dose prescribed per m² must be multiplied by the body surface area first, and is usually capped at 2 mg. There is no effect site and no band.
+Plasma vincristine in ng/mL. Doses are entered in mg as labelled (vincristine sulfate); a dose prescribed per m² or per kg can be entered as such (mg/m², mg/kg; body surface area by Mosteller, from the Patient Profile's weight and height), and is usually capped at 2 mg. There is no effect site and no band.
 
 ### Covariates
 

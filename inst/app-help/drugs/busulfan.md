@@ -10,7 +10,7 @@ Busulfan comes from McCune and colleagues (*Clin Cancer Res* 2014;20:754-763), a
 
 ### What is plotted
 
-Plasma busulfan in ng/mL. Doses are entered in mg or mg/kg, or as an infusion rate. A dose prescribed per m² must be converted first. The targets are exposures chosen by the treating team: an average steady-state concentration (the paper's example is 770 ng/mL with a window of 592 to 963), or a daily or cumulative AUC. They are not drawn as a band. There is no effect site.
+Plasma busulfan in ng/mL. Doses are entered in mg or mg/kg, or as an infusion rate. A dose prescribed per m² can be entered as such (mg/m², mg/kg; body surface area by Mosteller, from the Patient Profile's weight and height). The targets are exposures chosen by the treating team: an average steady-state concentration (the paper's example is 770 ng/mL with a window of 592 to 963), or a daily or cumulative AUC. They are not drawn as a band. There is no effect site.
 
 ### Covariates
 
@@ -18,6 +18,7 @@ Weight, height, sex and age all enter, through normal fat mass, maturation and t
 
 ### Where to be careful
 
+- **Interactions are not modelled.** The busulfan label (7.1, 7.2) says itraconazole lowers busulfan clearance by up to 25%, metronidazole lowers it more and has been associated with toxicity, deferasirox and acetaminophen (within 72 hours) may lower it too, and phenytoin raises it by 15% or more. The library's antiseizure interactions do not reach busulfan.
 - **The paper's worked example disagrees with its own equation.** Its supplement computes a fat-free mass of 49.7 kg for a 70-kg, 176-cm man where the equation the Methods state gives 56.1. The model uses the stated equation. With it, the example's 204 mg daily dose gives an average concentration of 752 ng/mL, within 3% of the example's 770.
 - **The fall in clearance is counted from the drug's first dose in the plot.** A second course plotted later is not reset. Langenhorst 2020 links the fall to glutathione depletion and makes it larger after 40 years of age; that model needs an engine feature the library does not have yet.
 - **Not a monitoring tool.** The curve is a population prediction for the covariates entered. Busulfan dosing is normally adjusted to measured concentrations, which this curve does not use.

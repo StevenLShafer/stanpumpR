@@ -9,7 +9,7 @@ For a 70-kg patient with a creatinine clearance of 70 mL/min, clearance is 18.6 
 
 ### What is plotted
 
-Total plasma topotecan in ng/mL. Doses are entered in mg as labelled (topotecan base); a dose prescribed per m² must be multiplied by the body surface area first. There is no effect site and no band.
+Total plasma topotecan in ng/mL. Doses are entered in mg as labelled (topotecan base); a dose prescribed per m² or per kg can be entered as such (mg/m², mg/kg; body surface area by Mosteller, from the Patient Profile's weight and height). There is no effect site and no band.
 
 ### Covariates
 

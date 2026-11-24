@@ -16,7 +16,7 @@
 #
 # THE SOURCE
 # ==========
-# Taylor ZL, Mizuno T, Punt NC, et al.  Clinical covariates that improve the
+# Taylor ZL, Miller TP, Poweleit EA, et al.  Clinical covariates that improve the
 # description of high dose methotrexate pharmacokinetics in a diverse
 # population to inform MTXPK.org.  Clin Transl Sci 2023;16:2130-2143
 # (doi 10.1111/cts.13600).  1,668 patients aged 0.1-32.3 years (median
@@ -150,7 +150,7 @@ methotrexatePediatric <- function(weight, height, age, sex, adjustToFFM = TRUE,
   PK <- sapply(events, function(x) list(get0(x)))
 
   reference <- paste0(
-    "Taylor ZL, Mizuno T, Punt NC, et al. Clinical covariates that improve the ",
+    "Taylor ZL, Miller TP, Poweleit EA, et al. Clinical covariates that improve the ",
     "description of high dose methotrexate pharmacokinetics in a diverse population ",
     "to inform MTXPK.org. Clin Transl Sci 2023;16:2130-2143. 1,668 patients 0.1-32 ",
     "years: three compartments per 1.73 m2 (Mosteller), CL 8.24 L/h x (creatinine/40 ",

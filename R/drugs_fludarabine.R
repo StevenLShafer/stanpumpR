@@ -42,7 +42,17 @@
 #
 # eGFR (the Methods)
 # ==================
-# Cockcroft-Gault (with actual weight) from 17 years in girls and 14 in boys;
+# Cockcroft-Gault from 17 years in girls and 14 in boys, STANDARDISED TO 70
+# KG (computed at 70 kg, which is CG x 70/weight): Langenhorst 2020 (PMID
+# 31957334, Methods under Eq. 1) defines the eGFR as "L/hour/70 kg", and the
+# 2019 Discussion says it "was included using a body size-adjusted method",
+# the BW-adjusted rather than BSA-adjusted eGFR that separates the renal and
+# non-renal fractions.  The (WT/70)^0.75 on the whole clearance then carries
+# the size once.  Until 2026-11-24 the patient's own (pharmacokinetic)
+# weight entered Cockcroft-Gault as well, scaling the renal term about as
+# weight^1.75 (16% low in a 60 kg woman, 14% high at 120 kg; Gemini's
+# chemotherapy audit of 2026-11-23, F1).  Shafer's 2026-11-07 decision on the
+# units (L/h per 70 kg) is unchanged;
 # below that Schwartz 1976 (k x height / creatinine: 0.45 under a year, 0.55,
 # and 0.70 for a boy of 13), each with the patient's own creatinine
 # (patientCreatinine(); blank means the assumed normal for age and sex).
@@ -67,8 +77,8 @@
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # The model's own weight covariate, at the pharmacokinetic weight with the
-# switch on and total weight with it off; Cockcroft-Gault takes the same
-# weight.  Schwartz uses height.
+# switch on and total weight with it off; Cockcroft-Gault is computed at 70
+# kg (per 70 kg, above), so it carries no weight.  Schwartz uses height.
 #
 # PREGNANCY (R/pregnancy.R)
 # =========================
@@ -93,7 +103,7 @@ FLUDARABINE_FARAA_FRACTION <- 285.24 / 365.21
 
 #' The eGFR of Langenhorst 2019, mL/min/1.73 m2
 #'
-#' Cockcroft-Gault from 17 years (girls) or 14 (boys), Schwartz 1976 below,
+#' Cockcroft-Gault per 70 kg from 17 years (girls) or 14 (boys), Schwartz 1976 below,
 #' with the paper's age-dependent cap.
 #' @keywords internal
 fludarabineEGFR <- function(weight, height, age, sex, scr)
@@ -103,7 +113,7 @@ fludarabineEGFR <- function(weight, height, age, sex, scr)
   egfr <- if (child) {
     k <- if (age < 1) 0.45 else if (sex == SEX_MALE && age >= 13) 0.70 else 0.55
     k * height / scr
-  } else creatinineClearanceCG(weight, age, sex, scr)
+  } else creatinineClearanceCG(70, age, sex, scr)   # per 70 kg (see the header)
   cap <- if (age < p$egfrMaturedAge)
     p$egfrBirth + (p$egfrMax - p$egfrBirth) * age / p$egfrMaturedAge
   else if (age > p$egfrDeclineAge)

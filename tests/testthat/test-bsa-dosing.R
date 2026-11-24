@@ -108,3 +108,18 @@ test_that("the Patient Profile shows BSA and BMI, derived and not entered", {
   ui <- as.character(htmltools::renderTags(app_ui()(list()))$html)
   expect_match(ui, 'id="bodySize"', fixed = TRUE)
 })
+
+test_that("mg/m2 SC and U/m2/hr are units, read per m2 (Gemini audit F20)", {
+  expect_true(all(c("mg/m2 SC", "U/m2/hr") %in% allUnits))
+  expect_equal(doseRoute("mg/m2 SC"), ROUTE_SC)
+  expect_true(isRateUnit("U/m2/hr"))
+  bsa <- sqrt(80 * 180 / 3600)
+  expect_equal(bodySizeDoseFactor(c("mg/m2 SC", "U/m2/hr"), 80, 180), c(bsa, bsa))
+  d <- getDrugDefaultsGlobal()
+  expect_true(all(c("mg/m2 PO", "mg/m2 SC") %in% d$Units[[match("cladribine", d$Drug)]]))
+  expect_true(all(c("U/kg/hr", "U/m2/hr") %in% d$Units[[match("bleomycin", d$Drug)]]))
+  # no chemotherapy help page tells the user to convert a per-m2 dose by hand
+  pages <- list.files(system.file("app-help", "drugs", package = "stanpumpR"), full.names = TRUE)
+  txt <- vapply(pages, function(f) paste(readLines(f, warn = FALSE), collapse = " "), "")
+  expect_false(any(grepl("multiplied by the body surface area first|must be converted first", txt)))
+})
