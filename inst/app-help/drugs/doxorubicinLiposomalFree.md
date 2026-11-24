@@ -8,4 +8,4 @@ Hsu 2018 (*Pharm Res* 35:106) fitted it jointly with the liposome's release: two
 
 ### Where to be careful
 
-Because release and elimination were fitted together, only their ratio is identified, and the clearance is not conventional doxorubicin's (about a twentieth of it). The panel shows the free doxorubicin the study's assay measured after liposomal dosing; it is not a model of doxorubicin given on its own.
+The free doxorubicin's clearance, 2.68 L/h, is not conventional doxorubicin's (about an eighteenth of Joerger 2007's 47.6 L/h): the free curve here is limited by release from the liposome, and Hsu notes that such profiles give estimates unlike those of conventional drug. The panel shows the free doxorubicin the study's assay measured after liposomal dosing; it is not a model of doxorubicin given on its own.
