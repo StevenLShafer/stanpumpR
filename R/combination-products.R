@@ -123,6 +123,41 @@ combinationProductOf <- function(drug, doseTable)
   drug
 }
 
+#' Is this a unit a combination product can be dosed in?
+#'
+#' Only the product's own unit word leads it ("tablet PO", "tablet PO bid"):
+#' a mass unit would hand each component the product's dose.
+#' @param product a product's name
+#' @param units dose units
+#' @returns a logical vector
+#' @keywords internal
+combinationUnitOk <- function(product, units)
+{
+  startsWith(as.character(units), paste0(COMBINATION_PRODUCTS[[product]]$unit, " "))
+}
+
+#' Why a unit added to a combination product cannot be simulated, or ""
+#'
+#' The Drug Library's check of a new unit (drugLibraryUnitProblems()): the
+#' product's dose row is expanded and each component must show a
+#' concentration.
+#' @param product the product's name
+#' @param DT a one-row dose table of the product
+#' @param library the drug library the simulation reads
+#' @param events an empty event table
+#' @returns "" when every component moves, else the reason
+#' @keywords internal
+combinationUnitProblem <- function(product, DT, library, events)
+{
+  DT <- expandCombinationProducts(DT)
+  drugs <- recalculatePK(NULL, library, DT, age = 35, weight = 70, height = 170, sex = "male")
+  sims <- processdoseTable(DT, events, drugs, MINS_PER_DAY, FALSE)
+  still <- Filter(function(d) !any(is.finite(sims[[d]]$wide$Plasma) & sims[[d]]$wide$Plasma > 0),
+                  combinationComponents(product))
+  if (length(still)) paste("no concentration of", paste(still, collapse = " or "),
+                           "follows a dose") else ""
+}
+
 #' A combination product's unit rewritten as its component's
 #'
 #' "tablet PO" becomes "mg PO" and "tablet PO bid" "mg PO bid": the product's
@@ -161,6 +196,11 @@ expandCombinationProducts <- function(DT)
   {
     spec <- COMBINATION_PRODUCTS[[product]]
     rows <- DT[!is.na(DT$Drug) & DT$Drug == product, , drop = FALSE]
+    # Only the product's own unit word can be split into mg of each component
+    wrong <- !(combinationUnitOk(product, rows$Units) %in% TRUE)
+    if (any(wrong))
+      stop(product, " is dosed in ", spec$unit, "s, not in ",
+           paste(unique(as.character(rows$Units[wrong])), collapse = ", "), ".", call. = FALSE)
     for (component in names(spec$components))
     {
       part <- rows

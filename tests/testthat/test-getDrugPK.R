@@ -185,7 +185,9 @@ test_that("every drug in the library supplies a reference", {
   # parameter provenance is recorded in R/gasProperties.R rather than in a
   # reference field, so they are excluded here rather than made to fake one.
   ivDrugs <- getDrugDefaultsGlobal()$Drug
-  ivDrugs <- ivDrugs[!isGasDrug(ivDrugs)]
+  # (a combination product has no model of its own; its components do:
+  # R/combination-products.R)
+  ivDrugs <- ivDrugs[!isGasDrug(ivDrugs) & !isCombinationProduct(ivDrugs)]
 
   references <- vapply(
     ivDrugs,
@@ -203,7 +205,9 @@ test_that("no drug function returns its typical band upside down", {
   # own lowerTypical / upperTypical are read only by a direct call; 14 of them
   # once had the two swapped (issue #312).
   ivDrugs <- getDrugDefaultsGlobal()$Drug
-  ivDrugs <- ivDrugs[!isGasDrug(ivDrugs)]
+  # (a combination product has no model of its own; its components do:
+  # R/combination-products.R)
+  ivDrugs <- ivDrugs[!isGasDrug(ivDrugs) & !isCombinationProduct(ivDrugs)]
   swapped <- Filter(function(drug) {
     X <- get(drug, envir = asNamespace("stanpumpR"))(70, 170, 50, "male")
     lower <- suppressWarnings(as.numeric(X$lowerTypical))
