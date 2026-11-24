@@ -22,15 +22,17 @@ test_that("the AST is held within 7-815 IU/L, and a blank field is a normal 20 I
   expect_true(all(is.finite(sapply(c(MIN_AST, MAX_AST), cl))) && cl(MAX_AST) > 0)
 })
 
-test_that("getDrugPK passes the AST to epirubicin only, and refuses one out of range", {
+test_that("getDrugPK passes the AST to the models that read it, and refuses one out of range", {
   pk <- function(a) getDrugPK("epirubicin", 70, 170, 35, "male", adjustToFFM = FALSE,
                               ast = a)$PK$default$cl1
   expect_lt(pk(200), pk(20))
   expect_equal(pk(NA), pk(NULL))
   expect_error(pk(0), "Invalid ast")
-  expect_equal(getDrugPK("doxorubicin", 70, 170, 35, "male", ast = 500)$PK$default$cl1,
-               getDrugPK("doxorubicin", 70, 170, 35, "male")$PK$default$cl1)
-  expect_identical(patientFieldReaders("ast"), "epirubicin")
+  # an adult chosen for Joerger 2007: (500/21)^-0.24 on clearance
+  expect_equal(getDrugPK("doxorubicin", 70, 170, 35, "male", ast = 500)$PK$default$cl1 /
+               getDrugPK("doxorubicin", 70, 170, 35, "male")$PK$default$cl1, (500 / 21)^-0.24)
+  # doxorubicin (Joerger 2007) reads it too since 2026-11-24 (Gemini audit F6)
+  expect_identical(sort(patientFieldReaders("ast")), c("doxorubicin", "epirubicin"))
 })
 
 test_that("a 100 mg dose: a higher AST raises the exposure as clearance falls", {
