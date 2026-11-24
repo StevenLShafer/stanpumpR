@@ -26,7 +26,9 @@
 # Rocuronium binding, and the train-of-four recovery it produces, are NOT
 # modelled.  This row is the sugammadex concentration alone; the rocuronium
 # row is unaffected by giving sugammadex, which is the main limitation of
-# simulating the two side by side.
+# simulating the two side by side.  Since 2026-11-23 the rocuronium row is
+# the same paper's rocuronium arm (R/drugs_rocuronium.R), and both read the
+# patient's weight and creatinine clearance from kleijn2011Patient() below.
 #
 # RENAL FUNCTION
 # ==============
@@ -35,6 +37,15 @@
 # (R/renalFunction.R; a child's creatinine, entered or assumed, is read on
 # the adult scale).  Sugammadex is renally cleared and the label does not
 # recommend it below 30 mL/min.
+# The peripheral-volume term, exp[-0.00305 (CR - 119)], sees CR held within
+# the 4.30-239 mL/min the source studied (KLEIJN_2011_CR_RANGE, Table 2;
+# Steven L. Shafer's decision of 2026-11-24, as for rocuronium's central
+# volume), because the exponential has no floor: Cockcroft-Gault reaches
+# 479 mL/min in a 25-year-old 150 kg man at 0.5 mg/dL, which would take Vp
+# to 0.33 of its reference, and about 3,500 at the field's extremes, which
+# would take it to nothing.  Held, Vp is at most 1.42 and at least 0.69 times
+# its reference.  The clearance term needs no hold: it levels off by itself,
+# at 2^1.29 = 2.45.
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
@@ -98,6 +109,32 @@
 
 SUGAMMADEX_WEIGHT_CAP <- 200   # kg; see GUARD in the header
 
+#' The covariate patient of Kleijn 2011, shared by sugammadex and rocuronium
+#'
+#' Kleijn's rocuronium and sugammadex were fitted jointly (R/drugs_rocuronium.R
+#' is the same paper's rocuronium arm), so the two models read one definition
+#' of the patient: \code{W}, the weight their allometric and linear weight
+#' terms see (the pharmacokinetic weight, 70 kg x FFM / FFM_ref, with the
+#' fat-free-mass switch on, total body weight with it off), and \code{CR},
+#' the Cockcroft-Gault creatinine clearance in mL/min at that weight and at
+#' the entered creatinine or the assumed normal one, read on the adult scale.
+#' @inheritParams cefazolin
+#' @returns a list with \code{W} (kg) and \code{CR} (mL/min)
+#' @noRd
+kleijn2011Patient <- function(weight, height, age, sex, adjustToFFM, creatinine)
+{
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
+  W <- 70 * size$volume
+  list(W = W,
+       CR = creatinineClearanceCG(W, age, sex,
+                                  adultEquivalentCreatinine(creatinine, age, sex)))
+}
+
+# The creatinine clearance Kleijn 2011 studied (Table 2), within which its
+# exponential renal terms on volumes are evaluated: rocuronium's V1 and
+# sugammadex's Vp (see each file's RENAL FUNCTION).
+KLEIJN_2011_CR_RANGE <- c(4.30, 239)           # mL/min
+
 #' Sugammadex pharmacokinetics (total)
 #'
 #' @inheritParams cefazolin
@@ -112,12 +149,11 @@ sugammadex <- function(weight, height, age, sex, adjustToFFM = TRUE,
 {
   # Size scaling (see the header): the model's own weight terms are
   # evaluated at the pharmacokinetic weight with the switch on, total body
-  # weight with it off.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
-  W  <- 70 * size$volume
+  # weight with it off.  kleijn2011Patient() is shared with rocuronium.
+  patient <- kleijn2011Patient(weight, height, age, sex, adjustToFFM, creatinine)
+  W  <- patient$W
   Wl <- min(W, SUGAMMADEX_WEIGHT_CAP)          # the linear terms; GUARD above
-  CR <- creatinineClearanceCG(W, age, sex,     # mL/min
-                              adultEquivalentCreatinine(creatinine, age, sex))
+  CR <- patient$CR                             # mL/min
   rS <- 1
   # Pregnancy (see the header): the clearance term alone reads the raised
   # creatinine clearance; the peripheral-volume term keeps CR.
@@ -127,7 +163,8 @@ sugammadex <- function(weight, height, age, sex, adjustToFFM = TRUE,
   cl1 <- 5.58 * (1 + 0.00378 * (Wl - 74.5)) * (2 * crCL / (crCL + 119))^1.29 / 60
   v1  <- 4.42 * (1 - 0.00354 * (Wl - 74.5)) * rS * (W / 70)
   cl2 <- 12.36 * (W / 70)^0.75 / 60
-  v2  <- 6.35 * exp(-0.00305 * (CR - 119)) * (W / 70)
+  crV <- min(max(CR, KLEIJN_2011_CR_RANGE[1]), KLEIJN_2011_CR_RANGE[2])
+  v2  <- 6.35 * exp(-0.00305 * (crV - 119)) * (W / 70)
   v3  <- 1                                     # no third compartment
   cl3 <- 0
 
