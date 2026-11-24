@@ -52,7 +52,7 @@ Antivirals,letermovir,letermovir,2,planned,
 Antivirals,maribavir,maribavir,2,planned,
 Antivirals,tecovirimat,tecovirimat,2,planned,
 Transplant,mycophenolic acid,mycophenolicacid;mycophenolatemofetil;mycophenolatesodium,1,planned,"Goes with tacrolimus; enterohepatic recirculation; mofetil and sodium are different products."
-Anesthesia,esketamine,esketamine,1,planned,"stanpumpR's ketamine is racemic."
+Anesthesia,esketamine,esketamine,1,blocked,"stanpumpR's ketamine is racemic. Weekly run 2026-11-24: the pick Perez-Ruixo 2021 (PMID 33128208, in the archive, read on the PDF) has a well-stirred hepato-portal compartment (Vh 101 L, Qh 151 L/h, Fgut 0.64 for oral and swallowed-nasal doses) that no engine carries. [decision] for Shafer: (a) an exact reduction or a new engine for that first pass; (b) nasal FRn falls from 0.54 for the first 28 mg to x0.62 per later 28-mg device, so per-dose-count bioavailability (doseDependent or oralSaturation as a stand-in?); (c) race terms (Asian on kel x0.36 and noresketamine CL/F x0.81, Japanese on FRn x1.34) with no Patient Profile race field: add one or apply none. No size term in the source: FFM scaling anchored at the cohort (74 kg, 41.6% male) would apply. Noresketamine would be metabolite-only."
 Anesthesia,ciprofol,ciprofol,1,planned,"Not US-approved."
 Anesthesia,landiolol,landiolol,1,planned,"FDA-approved 2024 (Rapiblyk)."
 Anesthesia,levosimendan,levosimendan,1,planned,"Not US-approved; active metabolites OR-1855 and OR-1896."
