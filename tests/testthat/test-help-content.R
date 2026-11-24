@@ -358,7 +358,10 @@ test_that("the cautions page names every model that reads a patient field", {
   text <- tolower(helpPlainText(helpMarkdownToHTML(helpExpandGenerated(
     paste(readLines(system.file("app-help", "cautions.md", package = "stanpumpR"), warn = FALSE),
           collapse = "\n")))))
-  for (arg in names(HELP_FIELD_READER_ROWS)) {
+  # Infection was built ahead of its first reader (R/infection.R), so it has
+  # none yet; once a drug reads it, this test takes it like any other field
+  waiting <- if (length(patientFieldReaders("infection")) == 0) "infection"
+  for (arg in setdiff(names(HELP_FIELD_READER_ROWS), waiting)) {
     # a candidate model is read through its drug's name (R/modelSelection.R)
     drugs <- setdiff(getDrugDefaultsGlobal()$Drug, modelCandidates())
     readers <- Filter(function(drug) helpDrugDeclares(drug, arg), drugs)
