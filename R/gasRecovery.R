@@ -804,7 +804,14 @@ gasEtdCoefficients <- function(blocks, h)
 #' includes the first and last time point of every interval of constant
 #' settings, and the interpolation stays within each interval, because the time
 #' until threshold jumps where a setting changes; until 2026-11-15 it was
-#' interpolated across the change (H9).
+#' interpolated across the change (H9).  A threshold that changes within an
+#' interval (an opioid's effect on MAC, \code{applyOpioidMacInteraction()})
+#' adds to the sample every row where the threshold interpolated between the
+#' sampled rows misses it by more than \code{GAS_RECOVERY_THRESHOLD_TOL}
+#' (\code{gasRecoveryRefine()}), so a bolus's rows are computed and a slow
+#' tail is still sampled.  With the plain sample, a remifentanil bolus on a
+#' 24-hour plot read 4.3 minutes where every row gives 8.7 (Gemini's
+#' gas-engine audit of 2026-11-23, D-01).
 #'
 #' Provenance: Claude Code (Claude Fable 5.1), 2026-10-05, at the request of
 #' Steven L. Shafer.  Verified on R 4.6.1 against the same manoeuvre in the full
@@ -853,6 +860,7 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
   # The time points to start from, and their states side by side: alveolar and
   # the three tissues of each gas.
   idx <- gasRecoverySample(washout$interval, maxPoints)
+  idx <- gasRecoveryRefine(idx, threshold, washout$Time, washout$interval)
   Y0 <- do.call(cbind, lapply(gases, function(g) washout$state[[g]][idx, 2:nS, drop = FALSE]))
   thr0 <- threshold[idx]
   out <- rep(NA_real_, length(idx))
@@ -1055,6 +1063,38 @@ gasRecoverySample <- function(interval, maxPoints)
 }
 
 
+# The most a threshold interpolated between the sampled rows may miss the
+# threshold of a row before that row joins the sample (gasRecoveryRefine())
+GAS_RECOVERY_THRESHOLD_TOL <- 0.01
+
+# Adds to the sample `idx` every row whose threshold the sampled rows'
+# thresholds, interpolated within each interval as the results are, miss by
+# more than `tol` of it, until none does.  A threshold constant within each
+# interval adds nothing.
+gasRecoveryRefine <- function(idx, threshold, time, interval,
+                              tol = GAS_RECOVERY_THRESHOLD_TOL)
+{
+  nT <- length(threshold)
+  if (length(idx) == nT) return(idx)
+  repeat {
+    est <- threshold
+    for (iv in unique(interval)) {
+      at <- which(interval == iv)
+      from <- idx[interval[idx] == iv]
+      from <- from[!is.na(threshold[from])]
+      if (length(from) == 0) next
+      est[at] <- if (length(from) == 1) threshold[from] else
+        stats::approx(time[from], threshold[from], time[at], rule = 2)$y
+    }
+    miss <- which(!is.na(threshold) & !is.na(est) &
+                    abs(est - threshold) > tol * abs(threshold))
+    miss <- setdiff(miss, idx)
+    if (length(miss) == 0) return(idx)
+    idx <- sort(c(idx, miss))
+  }
+}
+
+
 # -----------------------------------------------------------------------------
 # When a row of the washout is finished (Carbon's fourth UI audit, 2026-11-15,
 # H9)
@@ -1167,6 +1207,63 @@ gasWashoutBelow <- function(bound, Y, thr)
     sweep(pmax(Y[, m$cols, drop = FALSE], 0) %*% m$toModes, 2, m$weight, `*`)))
   U <- pmax(alpha, 0) %*% bound$left + pmin(alpha, 0) %*% bound$right
   rowSums(U > thr | is.na(U)) == 0
+}
+
+
+# A washout with rows added at `extra` times, for a threshold that changes
+# between the engine's rows (an opioid bolus, applyOpioidMacInteraction()).
+# Each added row starts from the state interpolated between the rows either
+# side of it (the state moves little over a step; the threshold is what
+# changes), in the interval of constant settings it falls in; a time outside
+# the rows' range, or on one of them, is not added.  With physiology events
+# each segment takes the times inside it.  Returns the washout and `order`,
+# the permutation that puts c(washout$Time, added times) in time order (the
+# added times are kept only where they fall inside the range); NULL where the
+# washout cannot take rows (rebreathing, read by the sum-of-exponentials
+# shortcut, which an interpolated row does not have).
+gasWashoutWithTimes <- function(washout, extra)
+{
+  if (is.null(washout) || isTRUE(washout$rebreathing)) return(NULL)
+  T0 <- washout$Time
+  extra <- sort(unique(extra[extra > min(T0) & extra < max(T0) & !(extra %in% T0)]))
+  augmentOne <- function(w, add) {
+    if (length(add) == 0) return(w)
+    t0 <- w$Time
+    i <- findInterval(add, t0)
+    f <- (add - t0[i]) / (t0[i + 1] - t0[i])
+    o <- order(c(t0, add))
+    w$state <- lapply(w$state, function(m)
+      rbind(m, m[i, , drop = FALSE] * (1 - f) + m[i + 1, , drop = FALSE] * f)[o, , drop = FALSE])
+    w$Time <- c(t0, add)[o]
+    w$interval <- c(w$interval, findInterval(add + 1e-9, w$changes))[o]
+    w$rate <- NULL
+    w$amplitude <- NULL
+    w
+  }
+  o <- order(c(T0, extra))
+  if (length(extra) == 0) return(list(washout = washout, extra = extra, order = o))
+  if (is.null(washout$segments)) {
+    if (is.null(washout$state)) return(NULL)
+    return(list(washout = augmentOne(washout, extra), extra = extra, order = o))
+  }
+  # Physiology events: each added time goes to the segment whose rows span it
+  position <- match(seq_along(c(T0, extra)), o)   # each entry's place in time order
+  w <- washout
+  for (k in seq_along(washout$segments)) {
+    seg <- washout$segments[[k]]
+    if (is.null(seg$state)) return(NULL)
+    inside <- which(extra > min(seg$Time) & extra < max(seg$Time))
+    w$segments[[k]] <- augmentOne(seg, extra[inside])
+    w$rows[[k]] <- sort(position[c(washout$rows[[k]], length(T0) + inside)])
+  }
+  # A time between two segments (at no segment's rows) joins the earlier one
+  # as its last row would not cover it; such a time is left out
+  covered <- sort(unlist(w$rows))
+  keep <- position[length(T0) + seq_along(extra)] %in% covered
+  if (!all(keep)) return(gasWashoutWithTimes(washout, extra[keep]))
+  w$Time <- c(T0, extra)[o]
+  w$rate <- NULL
+  list(washout = w, extra = extra, order = o)
 }
 
 

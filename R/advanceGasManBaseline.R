@@ -119,6 +119,7 @@
 
 GASMAN_MAX_VERNIER   <- 5     # MAX_VERNIER in GasGlobal.h
 GASMAN_VERNIER_TICKS <- 3     # VERNIER_TICKS
+GASMAN_SAMP_EVERY    <- 10    # SAMP_EVERY in GasGlobal.h: ticks per history sample
 GASMAN_STD_WEIGHT    <- 70    # STD_WEIGHT
 
 # Blood flow fractions, [Ratio] in gasman.ini: VRG 76, MUS 18, FAT 6 percent.
@@ -390,7 +391,21 @@ advanceGasManBaseline <- function(gasDose, weight = 70, maximum = 60,
     # every settings row.  Until 2026-11-23 this applied it in the first
     # three ticks of the run and never after a change (ChatGPT's gas-engine
     # audit of 2026-11-23, A-01).
-    base <- max(c(0, changeTimes[changeTimes <= t0 + 1e-9]))
+    #
+    # GasMan also starts a new history sample every SAMP_EVERY ticks, and the
+    # base is the sample's (GasDoc.cpp, the history replay), so the test
+    # applies again at the start of every ten-tick block, settings changed
+    # or not; until 2026-11-24 it did not here, and a 5 kg patient read 1.2%
+    # low against GasMan (Gemini's gas-engine audit of 2026-11-23, A-01).
+    # This is an approximation of GasMan's output in one respect: its forward
+    # calculation (the last ten ticks of a run) applies the test for three
+    # ticks and its history replay for two, so GasMan's printed value for a
+    # time depends on the end time it was asked for, by up to 13.6% at one
+    # time in that patient.  Following the history replay, as here, agrees
+    # with its output to 0.2% where the end time is at least five minutes
+    # later (inst/validation/VALIDATION.md).
+    block <- floor((t0 + 1e-9) / (GASMAN_SAMP_EVERY * dt)) * GASMAN_SAMP_EVERY * dt
+    base <- max(c(0, changeTimes[changeTimes <= t0 + 1e-9], block))
     checkFastDecay <- GASMAN_VERNIER_TICKS - floor((tick * dt - base) / dt + 1e-9) > 0
     nVernier <- 0
     repeat {

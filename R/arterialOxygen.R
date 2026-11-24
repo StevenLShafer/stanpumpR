@@ -75,8 +75,8 @@
 #'
 #' The slider (Shafer, 2026-11-19), shown with the endobronchial box when it
 #' is ticked, because with a 50% shunt the haemoglobin moves the arterial
-#' saturation from 69% at 7 g/dL to 87% at 17 g/dL on pure oxygen, and from
-#' 49% to 78% on air: the shunt's oxygen debt, VO2/Q, is the same number of
+#' saturation from 68% at 7 g/dL to 87% at 17 g/dL on pure oxygen, and from
+#' 48% to 77% on air: the shunt's oxygen debt, VO2/Q, is the same number of
 #' mL/dL whatever the haemoglobin, and a larger share of a smaller capacity.
 #' Without a shunt it changes nothing the panel shows.
 #' @keywords internal
@@ -172,7 +172,7 @@ oxygenTensionOfContent <- function(content, hb = ARTERIAL_OXYGEN_HAEMOGLOBIN, up
 #'   where the engine has stopped consuming)
 #' @param hb haemoglobin, g/dL
 #' @returns a data frame: PAO2 and PaO2 (mmHg), SaO2 (%), and arterial, the
-#'   PaO2 as % of a sea-level atmosphere, the unit of the oxygen panel
+#'   PaO2 in the unit of the oxygen panel (\code{GAS_ALVEOLAR_TORR})
 #' @keywords internal
 arterialOxygen <- function(alveolar, shunt, Qco, VO2, hb = ARTERIAL_OXYGEN_HAEMOGLOBIN)
 {
@@ -180,7 +180,7 @@ arterialOxygen <- function(alveolar, shunt, Qco, VO2, hb = ARTERIAL_OXYGEN_HAEMO
   shunt <- rep_len(shunt, n)
   Qco <- rep_len(Qco, n)
   VO2 <- rep_len(VO2, n)
-  PAO2 <- pmax(alveolar, 0) / 100 * 760
+  PAO2 <- pmax(alveolar, 0) / 100 * GAS_ALVEOLAR_TORR
   PaO2 <- PAO2
   s <- which(shunt > 0)
   if (length(s) > 0) {
@@ -190,7 +190,7 @@ arterialOxygen <- function(alveolar, shunt, Qco, VO2, hb = ARTERIAL_OXYGEN_HAEMO
     PaO2[s] <- oxygenTensionOfContent(ca, hb, upper = PAO2[s])
   }
   data.frame(PAO2 = PAO2, PaO2 = PaO2, SaO2 = 100 * oxygenSaturation(PaO2),
-             arterial = PaO2 / 760 * 100)
+             arterial = PaO2 / GAS_ALVEOLAR_TORR * 100)
 }
 
 #' Arterial oxygen of a simulateGases() run, at its own times

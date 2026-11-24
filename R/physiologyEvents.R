@@ -78,7 +78,16 @@
 #   37 C to 30 C, band 1.47-2.73% to 0.99-1.85%, MAC multiple at 30 min
 #   0.83 to 1.19.  Making it step needs a band that varies in time
 #   (simulationPlot() draws a constant rectangle per facet).  Whether to
-#   build that is his call.
+#   build that is his call.  Since 2026-11-24 the same holds for the time
+#   until threshold's line: every potent gas's threshold moves with
+#   temperature (gasThresholdForTemperature(), his decision of that day), and
+#   the time is counted to the threshold in force at each moment, but the
+#   line is drawn at the body at time 0 (gasDrugEntries()'s endCe).  After a
+#   cooling event to 28 C at 30 minutes the line stays at 0.18% sevoflurane
+#   while the time is counted to 0.105%: at 60 minutes 16.3 minutes, where
+#   timing to the drawn line would read 11.7 (CodeRabbit on PR #858; Gemini's
+#   gas-engine audit of 2026-11-23, C-01).  A stepped band and a stepped
+#   line are one piece of work.
 #
 #   Not a decision, a lead: Single Paper Review "crashed" (Shiny's Reload
 #   overlay, 2026-11-19) when Shafer opened it after using the sliders, the
