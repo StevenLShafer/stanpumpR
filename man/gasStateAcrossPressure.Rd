@@ -34,8 +34,8 @@ what they hold and draw in gas to make up the difference.  In the
 semi-closed circuit that gas is the circuit's own, compressed, and the
 circuit, refilled from the fresh gas, which it nearly matches, is scaled.
 The ideal and open circuits hold no gas, so the lungs draw in fresh gas at
-the new pressure, and their entry, the inspired gas, set from the settings
-at the next sub-step, is not scaled (scaled, a 2\% sevoflurane vaporiser
+the new pressure, and their entry, the inspired gas, which the engine sets
+from the settings in force after the step, is not scaled (scaled, a 2\% sevoflurane vaporiser
 read 3.77\% for one row at a descent from 5000 m, and the lungs were filled
 with the vapour's share of the thinner gas; CodeRabbit on PR #864).
 Dissolved agent does not move at the step (tissue tensions are

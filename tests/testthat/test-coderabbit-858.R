@@ -173,19 +173,38 @@ test_that("rows are added to a washout split by physiology events too", {
 
 # gasStateAcrossPressure() scaled the circuit's entry for every circuit, but
 # only the semi-closed circuit holds gas: in the ideal circuit at a descent
-# from 5000 m a 2% sevoflurane vaporiser read 3.77% for one row.
-test_that("an altitude step leaves the ideal circuit's inspired tension alone", {
+# from 5000 m a 2% sevoflurane vaporiser read 3.77% for one row.  Unscaled,
+# the step's row still read the inspired gas from before the step (an ascent
+# kept the sea-level oxygen, and a step at the end of the plot had no later
+# sub-step to correct it): it is now set from the settings in force after it.
+test_that("an altitude step's row reads the inspired gas in force after it", {
   enc <- function(a) physiologyEventEncode(c(liver = 1, renal = 1, cardiac = 1, gi = 1,
                                               temperature = 37, altitude = a,
                                               endobronchial = 0, haemoglobin = 15))
-  ev <- physiologyEventsFrom(data.frame(Time = c(0, 10), Event = "Physiology",
-                                        Settings = c(enc(5000), enc(0)),
-                                        stringsAsFactors = FALSE))
+  events <- function(a) physiologyEventsFrom(data.frame(
+    Time = c(0, 10), Event = "Physiology", Settings = c(enc(a[1]), enc(a[2])),
+    stringsAsFactors = FALSE))
   d <- data.frame(Time = 0, Drug = c("oxygen", "sevoflurane", "ventilation"), Dose = c(6, 2, 6))
+  # The descent: the vaporiser's 2% throughout, and no spike with the uptake on
   for (uptake in c(FALSE, TRUE)) {
-    s <- simulateGases(d, weight = 70, age = 40, maximum = 20, physiologyEvents = ev,
-                       uptakeEffect = uptake)
+    s <- simulateGases(d, weight = 70, age = 40, maximum = 20,
+                       physiologyEvents = events(c(5000, 0)), uptakeEffect = uptake)
     step <- which(s$timeLine == 10)
-    expect_equal(s$state$sevoflurane[step[2], 1], s$state$sevoflurane[step[1], 1])
+    after <- s$state$sevoflurane[step[2], 1]
+    if (!uptake) expect_equal(after, 2)
+    else expect_lt(abs(after / s$state$sevoflurane[step[2] + 1, 1] - 1), 0.01)
   }
+  # The ascent: the oxygen's entry falls with the pressure at the step's row,
+  # and so it does at the last row when the step ends the plot
+  s <- simulateGases(d, weight = 70, age = 40, maximum = 20,
+                     physiologyEvents = events(c(0, 5000)), uptakeEffect = FALSE)
+  step <- which(s$timeLine == 10)
+  inspired <- s$state$oxygen[step[2] + 1, 1]
+  expect_lt(inspired, 0.6 * s$state$oxygen[step[1], 1])
+  expect_equal(s$state$oxygen[step[2], 1], inspired)
+  end <- simulateGases(d, weight = 70, age = 40, maximum = 10,
+                       physiologyEvents = events(c(0, 5000)), uptakeEffect = FALSE)
+  last <- length(end$timeLine)
+  expect_equal(end$timeLine[last], 10)
+  expect_equal(end$state$oxygen[last, 1], inspired)
 })

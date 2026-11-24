@@ -224,7 +224,12 @@ applyOpioidMacInteraction <- function(gasEntries, drugs)
   # #864).  Each added time washes out from the state interpolated between
   # the gas points either side (gasWashoutWithTimes()), with the threshold the
   # opioid sets at that time, and gasCoupledRecovery() computes the rows where
-  # that threshold moves rather than a sample of them.
+  # that threshold moves rather than a sample of them.  A washout made with
+  # rebreathing (gasWashout(rebreathing = TRUE), which nothing in the app or
+  # the APIs passes here) is read row by row off its own sums of exponentials,
+  # which an added row does not have, so there the opioid's times are left out
+  # of the series as well, and the curve and its time until threshold stay at
+  # the gas engine's points.
   extra <- setdiff(opioidTimes(drugs, range(series$Time)), series$Time)
   aug <- if (!is.null(mac$washout) && identical(mac$washout$Time, series$Time))
     gasWashoutWithTimes(mac$washout, extra)

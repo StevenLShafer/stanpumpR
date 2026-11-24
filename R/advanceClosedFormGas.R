@@ -1160,6 +1160,63 @@ advanceClosedFormGas <- function(
   lastBody <- bodyIndex
   # The next step of a ramp an interval did not finish, NULL once finished
   rampStep <- NULL
+  # The propagators for one sub-step: buildProp() from a given uptake,
+  # coupledProp() from the state at the sub-step's start.  Each reads the
+  # settings `s` and the body, properties and flows in force when it is
+  # called (the loop below sets them).
+  buildProp <- function(totUptake, oxygenTotUptake = 0, cE = 0, dt)
+  {
+    pr <- list()
+    for (g in props$gas)
+    {
+      if (g == "oxygen")
+      {
+        sys <- gasSystemOxygen(body, s$Q, s$VA, s$Ffgf[["oxygen"]], circuit, s$MV,
+                               oxygenTotUptake, cE)
+      } else {
+        sys <- gasSystemSoluble(props[props$gas == g, ], body,
+                                s$Q, s$VA, Qco, s$Ffgf[[g]], totUptake, circuit,
+                                s$MV, cE)
+      }
+      pr[[g]] <- gasPropagator(sys$A, sys$b, dt)
+      # Ideal circuit: remember how to fill in the circuit tension, which is
+      # a function of the alveolar tension rather than a state.
+      pr[[g]]$fresh    <- sys$fresh
+      pr[[g]]$alveolar <- sys$alveolar
+      pr[[g]]$Ffgf     <- s$Ffgf[[g]]
+    }
+    pr
+  }
+
+  # The propagators for one sub-step, from the state at its start.
+  coupledProp <- function(state, dt)
+  {
+    u <- gasTotalUptake(state, props, body, Qco)
+    if (!oxygenUptake) return(buildProp(u, dt = dt))
+
+    # Oxygen consumed is volume lost: VO2 from the system, of which carbon
+    # dioxide gives VCO2 back to the alveoli and the absorber then takes it
+    # from the rebreathed gas.  All of it stops if the oxygen has run out.
+    # KNOWN APPROXIMATION (ChatGPT's gas-engine audit of 2026-11-23, A-02):
+    # this is decided at the start of the step, while the oxygen equation
+    # keeps its sink and is floored at zero after it.  So once a supply
+    # below VO2 has emptied the lungs, the oxygen that arrives is consumed
+    # (the floor) but the volume it frees and the carbon dioxide it makes
+    # are left out here: with 0.1 L/min of oxygen, 0.02 L/min of net
+    # volume and 0.08 L/min of carbon dioxide, against an alveolar
+    # ventilation of 4.2.  It arises only in a patient with no oxygen,
+    # and is left as it is.
+    consuming <- state[["oxygen"]][2] > 0
+    # VO2 is a sea-level volume; at altitude the same oxygen is 1/r the
+    # ambient volume, and the carbon dioxide 1/r the share of the exhaled
+    # gas (R/altitude.R).
+    VO2  <- if (consuming) body$VO2 / ratio else 0
+    VCO2 <- GAS_RESPIRATORY_QUOTIENT * VO2
+    u <- u + VO2 - VCO2
+    buildProp(u, u, if (s$MV > 0) min(VCO2 / s$MV, GAS_MAX_EXHALED_CO2) else 0,
+              dt = dt)
+  }
+
   for (iv in seq_along(changes))
   {
     t0  <- changes[iv]
@@ -1181,6 +1238,19 @@ advanceClosedFormGas <- function(
         humid <- gasHumidityRatio(body)
         Qco <- if (is.null(cardiacOutput)) body$Q_cardiac else cardiacOutput
         bodyIndex <- k
+        # The ideal and open circuits hold no gas: their entry, the inspired
+        # gas, is set from the settings and the body in force after the step,
+        # as each sub-step sets it, so the step's row and a step at the end of
+        # the plot read it too (CodeRabbit on PR #864: on an ascent to 5000 m
+        # the row kept the sea-level oxygen, 100%).
+        if (circuit != "semi-closed") {
+          s <- gasSettingsAt(bySetting, t0, deadSpace, ratio)
+          p0 <- if (uptakeEffect) coupledProp(state, 1) else buildProp(0, dt = 1)
+          for (g in props$gas)
+            if (!is.null(p0[[g]]$fresh))
+              state[[g]][1] <- p0[[g]]$fresh * p0[[g]]$Ffgf +
+                p0[[g]]$alveolar * state[[g]][2]
+        }
         # The record shows the step: the same time, the carried state
         times <- c(times, t0)
         bodyRow <- c(bodyRow, k)
@@ -1241,58 +1311,8 @@ advanceClosedFormGas <- function(
     # step-independent; neither was shown, and the second is false -- audit
     # finding F07.)  The two engines converge as dt shrinks rather than
     # agreeing digit-for-digit at any fixed dt.
-    buildProp <- function(totUptake, oxygenTotUptake = 0, cE = 0, dt)
-    {
-      pr <- list()
-      for (g in props$gas)
-      {
-        if (g == "oxygen")
-        {
-          sys <- gasSystemOxygen(body, s$Q, s$VA, s$Ffgf[["oxygen"]], circuit, s$MV,
-                                 oxygenTotUptake, cE)
-        } else {
-          sys <- gasSystemSoluble(props[props$gas == g, ], body,
-                                  s$Q, s$VA, Qco, s$Ffgf[[g]], totUptake, circuit,
-                                  s$MV, cE)
-        }
-        pr[[g]] <- gasPropagator(sys$A, sys$b, dt)
-        # Ideal circuit: remember how to fill in the circuit tension, which is
-        # a function of the alveolar tension rather than a state.
-        pr[[g]]$fresh    <- sys$fresh
-        pr[[g]]$alveolar <- sys$alveolar
-        pr[[g]]$Ffgf     <- s$Ffgf[[g]]
-      }
-      pr
-    }
-
-    # The propagators for one sub-step, from the state at its start.
-    coupledProp <- function(state, dt)
-    {
-      u <- gasTotalUptake(state, props, body, Qco)
-      if (!oxygenUptake) return(buildProp(u, dt = dt))
-
-      # Oxygen consumed is volume lost: VO2 from the system, of which carbon
-      # dioxide gives VCO2 back to the alveoli and the absorber then takes it
-      # from the rebreathed gas.  All of it stops if the oxygen has run out.
-      # KNOWN APPROXIMATION (ChatGPT's gas-engine audit of 2026-11-23, A-02):
-      # this is decided at the start of the step, while the oxygen equation
-      # keeps its sink and is floored at zero after it.  So once a supply
-      # below VO2 has emptied the lungs, the oxygen that arrives is consumed
-      # (the floor) but the volume it frees and the carbon dioxide it makes
-      # are left out here: with 0.1 L/min of oxygen, 0.02 L/min of net
-      # volume and 0.08 L/min of carbon dioxide, against an alveolar
-      # ventilation of 4.2.  It arises only in a patient with no oxygen,
-      # and is left as it is.
-      consuming <- state[["oxygen"]][2] > 0
-      # VO2 is a sea-level volume; at altitude the same oxygen is 1/r the
-      # ambient volume, and the carbon dioxide 1/r the share of the exhaled
-      # gas (R/altitude.R).
-      VO2  <- if (consuming) body$VO2 / ratio else 0
-      VCO2 <- GAS_RESPIRATORY_QUOTIENT * VO2
-      u <- u + VO2 - VCO2
-      buildProp(u, u, if (s$MV > 0) min(VCO2 / s$MV, GAS_MAX_EXHALED_CO2) else 0,
-                dt = dt)
-    }
+    # (buildProp() and coupledProp(), defined before the loop, read the
+    # settings `s` and the body in force when they are called.)
 
     # Uncoupled, the steps are uniform (gasSubSteps()) and one propagator
     # serves them all
@@ -1466,8 +1486,8 @@ gasStateAcrossBodies <- function(state, from, to)
 #' semi-closed circuit that gas is the circuit's own, compressed, and the
 #' circuit, refilled from the fresh gas, which it nearly matches, is scaled.
 #' The ideal and open circuits hold no gas, so the lungs draw in fresh gas at
-#' the new pressure, and their entry, the inspired gas, set from the settings
-#' at the next sub-step, is not scaled (scaled, a 2% sevoflurane vaporiser
+#' the new pressure, and their entry, the inspired gas, which the engine sets
+#' from the settings in force after the step, is not scaled (scaled, a 2% sevoflurane vaporiser
 #' read 3.77% for one row at a descent from 5000 m, and the lungs were filled
 #' with the vapour's share of the thinner gas; CodeRabbit on PR #864).
 #' Dissolved agent does not move at the step (tissue tensions are

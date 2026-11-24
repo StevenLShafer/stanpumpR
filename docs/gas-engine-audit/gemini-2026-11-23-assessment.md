@@ -110,7 +110,9 @@ out at its composition, a rise draws gas in, fresh gas at the new pressure for
 the ideal circuit and its own stored gas for the semi-closed one (Gemini proposed
 scaling both ways, which is right only for a fall; CodeRabbit, on this PR, caught
 the first version scaling the ideal circuit's entry and filling the lungs with
-the old pressure's mixture).
+the old pressure's mixture, and then that the step's row still read the inspired
+gas from before the step, which is now set from the settings in force after it,
+at the end of the plot too).
 
 **C-06, oxygen in mmHg.** The engine's alveolar tensions are fractions of the dry
 gas, so 100% is 760 - 47 = 713 Torr; `arterialOxygen()` and the altitude help
