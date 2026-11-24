@@ -598,7 +598,8 @@ physiology.
 
 **The remaining anaesthetic drugs** (2026-11-18): fentanyl, hydromorphone,
 ketamine, rocuronium and vecuronium now have computed extraction ratios
-(0.39, 0.48, 0.54, 0.50 and 0.46), and sufentanil has Lange's measured 0.92
+(0.39, 0.48, 0.54, 0.50 and 0.46; rocuronium's 0.21 since its model became
+Kleijn 2011 on 2026-11-23), and sufentanil has Lange's measured 0.92
 with 62% of its clearance hepatic. Hydromorphone's blood-to-plasma ratio is
 1.35. Rocuronium and vecuronium were measured in plasma and are quaternary
 amines, which stay out of red cells, so their ratio is taken as
