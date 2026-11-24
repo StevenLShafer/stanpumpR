@@ -4,14 +4,24 @@
 \alias{gasRecoveryTime}
 \title{Time until one gas falls to its threshold}
 \usage{
-gasRecoveryTime(washout, gas, threshold, compartment = 3, exact = TRUE)
+gasRecoveryTime(
+  washout,
+  gas,
+  threshold,
+  compartment = 3,
+  exact = TRUE,
+  atBodyTemperature = TRUE
+)
 }
 \arguments{
 \item{washout}{output of \code{gasWashout()}}
 
 \item{gas}{gas name}
 
-\item{threshold}{target tension, percent of one atmosphere}
+\item{threshold}{target tension, percent of one atmosphere, AT 37 C: it is
+moved to the body temperature of each segment of the washout as MAC is
+(\code{gasThresholdForTemperature()}), unless \code{atBodyTemperature} is
+FALSE}
 
 \item{compartment}{3 for the vessel-rich group (the default, the gas
 counterpart of the effect site), 2 for alveolar}
@@ -20,6 +30,10 @@ counterpart of the effect site), 2 for alveolar}
 \code{gasCoupledRecovery()}.  FALSE: the sum-of-exponentials shortcut,
 which leaves the coupling between gases out.  The shortcut is always used
 for a washout made with \code{rebreathing = TRUE}.}
+
+\item{atBodyTemperature}{TRUE (the default): \code{threshold} is the value
+at 37 C, moved with the body's temperature.  FALSE: it is a tension, used
+as it is at any temperature.}
 }
 \value{
 numeric vector of minutes, one per time point; zero wherever the

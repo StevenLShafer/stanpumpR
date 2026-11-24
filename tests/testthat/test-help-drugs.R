@@ -361,11 +361,11 @@ test_that("gas pages carry GasMan's parameters and the MAC table", {
   sevo <- helpDrugPageHTML("sevoflurane")
   expect_match(sevo, "Physical properties", fixed = TRUE)
   expect_match(sevo, "MAC and age", fixed = TRUE)
-  expect_match(sevo, helpFormatNumber(macForAge(2.1, 80)), fixed = TRUE)
+  expect_match(sevo, helpFormatNumber(macForAge(1.8, 80)), fixed = TRUE)
   air <- helpDrugPageHTML("air")
   expect_false(grepl("MAC and age", air, fixed = TRUE))
   n2o <- helpDrugPageHTML("nitrousOxide")
-  expect_match(n2o, ">110<", fixed = TRUE)
+  expect_match(n2o, ">104<", fixed = TRUE)
 })
 
 test_that("the drug index links every drug", {

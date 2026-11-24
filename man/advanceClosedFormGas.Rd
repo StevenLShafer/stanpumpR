@@ -41,10 +41,12 @@ time-varying cardiac output can be added later without changing the
 engine; note that letting it vary would logically require the intravenous
 pharmacokinetics to respond to it as well, which stanpumpR does not model.}
 
-\item{resolution}{number of output time points.  It also sets the sub-step
-over which the uptake coupling is held fixed, and so, when
-\code{uptakeEffect} is TRUE, the accuracy: the error is first order in the
-sub-step, about \code{maximum / resolution} (see the file header).}
+\item{resolution}{about the number of output time points: the plot's
+sub-step is \code{maximum / resolution}.  With \code{uptakeEffect} TRUE
+the sub-steps start shorter at each change of setting and grow to it
+(\code{gasSubSteps()}), which adds a few dozen points per change; the
+error, first order in the sub-step, is then about the same on any plot
+length (see the file header).}
 
 \item{uptakeEffect}{if TRUE (the default, as in GasMan, whose m_bUptEnb
 defaults true), couple the gases through their summed uptake, giving the

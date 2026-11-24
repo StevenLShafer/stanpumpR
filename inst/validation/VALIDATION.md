@@ -209,7 +209,10 @@ not defects to be reconciled, and a comparison against GasMan must allow for
 them:
 
 1. **Age-adjusted MAC.** `macForAge()` applies Mapleson's relation; GasMan uses
-   `m_fMAC` raw. Compare at age 40, where the adjustment is exactly 1.
+   `m_fMAC` raw. Compare at age 40, where the adjustment is exactly 1. Since
+   2026-11-23 the MAC at 40 is Mapleson 1996's too, not GasMan's
+   (`GASMAN_MAC40`), so even there MAC equivalents differ by GasMan's MAC over
+   ours; compare tensions, or rescale.
 2. **Summed MAC.** One MAC series, additive across potent agents; GasMan emits
    one row per agent and never sums them. Nitrogen is excluded from the sum.
 3. **Oxygen is modelled**, with metabolic consumption (3.5 mL/kg/min) and a
@@ -608,3 +611,94 @@ both respects, and at low flows by a good deal.
 * Where the pop-off sits relative to the absorber. Vented gas is taken to leave
   before the absorber, carrying its carbon dioxide with it.
 
+
+---
+
+## 2026-11-23 — GasMan's output frozen as a fixture; three restatement fixes; graded steps
+
+Recorded by Claude Code at the direction of S. Shafer, from ChatGPT's audit of
+the gas engine (findings A-01, A-03 and A-04;
+`docs/gas-engine-audit/chatgpt-2026-11-23-assessment.md`).
+
+### GasMan's own output is now a fixture
+
+The 520 values `gasman_run` printed on 2026-10-05 (five scenarios, two
+circuits, five compartments) had lived only in the `gasman_cpp` column of
+`gasman_engine_scenarios_results.csv`, and `runGasEngineScenarios()`, run
+without the binary, wrote NA over them. They are now
+`gasman_cpp_fixture.csv`, which the script reads when no binary is given, and
+`test-gas-scenarios.R` holds the R restatement to it within 0.1% of each
+compartment's peak and the app engine within the native 4%. Until today the
+tests held the engine to the restatement only, so a number mistranscribed
+into both would have passed: with sevoflurane's blood:gas coefficient raised
+10% in both, the engine stays within 1.2% of the restatement while the
+restatement moves 1.3% to 8.4% from GasMan.
+
+### Three divergences from GasDoc.cpp, fixed in both restatements
+
+Read on `GasDoc.cpp` at `d3a2dd3` (`Calc` and its caller):
+
+* the fast-decay test of a fixed (open or ideal) circuit: GasMan leaves its
+  `fExpCKT` at 99, so only the alveolar decay can trip it;
+* the vernier clock: GasMan's `i = VERNIER_TICKS - int((dwt - base) / dx)`
+  applies the test in the first two ticks after every settings row, where the
+  package routine applied it in the first three ticks of the run and never
+  after a change (the standalone, whose settings never change, in three);
+* no fresh gas: GasMan's effective delivered tension is 0 when FGF is 0, where
+  an open circuit at no flow was set to the dial.
+
+None of the five scenarios reaches any of them: the restatement's column of
+the regenerated results is unchanged to the last digit. The features neither
+routine restates (liquid injection, the flush, the vaporiser's expansion of
+the flow, the "closed" label, GasMan's default flows and its millisecond tick)
+are now listed in both headers. Native fixtures that exercise them need
+`gasman_run` built again, and were not made.
+
+### The app engine's graded steps
+
+The engine's sub-steps now start at 0.01 minute at each change of setting and
+grow by 1.1 to the plot's step (`gasSubSteps()`), so its accuracy no longer
+depends on the plot's length (the engine's header has the measurements).
+`gasman_engine_scenarios_results.csv` was regenerated. Worst engine-vs-limit
+difference, percent of peak, over all compartments and times:
+
+| # | Agent | ideal, before | ideal, after | semi-closed, before | semi-closed, after |
+|---|---|---|---|---|---|
+| 1 | sevoflurane | 0.002 | 0.002 | 0.001 | 0.003 |
+| 2 | nitrous oxide | 0.28 | 0.21 | 0.08 | 0.08 |
+| 2 | sevoflurane | 0.25 | 0.19 | 0.08 | 0.08 |
+| 3 | sevoflurane | 0.13 | 0.013 | 0.17 | 0.013 |
+| 4 | desflurane | 0.02 | 0.30 | 0.004 | 0.011 |
+| 5 | isoflurane | 0.0004 | 0.011 | 0.0005 | 0.001 |
+
+The engine against GasMan C++ is unchanged to two figures (1.1% to 2.9%), as
+it must be, the gap being GasMan's tick.
+
+Scenario 4's ideal circuit is not the steps. The file had not been
+regenerated since 2026-10-05, and since then the ideal circuit has rebreathed
+to make up the uptake when fresh gas flow equals ventilation (the threshold
+is minute ventilation plus the uptake; `gasCircuitBlend()`, the help page
+*How stanpumpR differs from GasMan*), which GasMan's ideal circuit and so the
+limit do not. Scenario 4 runs at exactly that flow, 4 L/min in 4, and the
+engine at HEAD before today already gave the circuit 5.982 at one minute,
+against the file's 6.000; a run at a fortieth of the step gives 5.9818.
+Scenario 5's ideal circuit is the same: the engine at a fortieth of its step
+is as far from the limit (0.011%), and 0.0003% from the engine at the app's
+step. The semi-closed rises (scenarios 1 and 4, to 0.003% and 0.011%) are
+the other way round: the finer run sits on the limit, and the difference is
+the scenarios' whole minutes, which are no longer all points of the graded
+grid and are read off it by linear interpolation. All are under the test's
+0.1%.
+
+### MAC at 40 is now Mapleson's, not GasMan's
+
+On Shafer's decision of the same day ("Use Mapleson 1996 values ... We
+validated against GasMan initially, but are now moving to more recent
+research"), `getGasProperties()$MAC40` is Mapleson's 1996 meta-analysis
+(nitrous oxide 104, sevoflurane 1.80, isoflurane 1.17, desflurane 6.6 per
+cent), whose age relation `macForAge()` already applied. GasMan's own (110,
+2.1, 1.1, 6.0) are kept as `GASMAN_MAC40`, and the standalone restatement
+keeps them in its own table. Nothing above changes: every comparison with
+GasMan is of tensions, and MAC enters no uptake. A comparison of the summed
+MAC series with GasMan's MAC output (point 2 of *Deliberate differences*,
+2026-10-05) must now divide by `GASMAN_MAC40`, not by the engine's MAC.

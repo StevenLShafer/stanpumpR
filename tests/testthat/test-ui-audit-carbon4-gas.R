@@ -202,7 +202,11 @@ test_that("H9.2: the time until threshold is not interpolated across a change of
   flush <- w$interval == w$interval[change - 1]
   after <- w$interval == w$interval[change]
   expect_lte(max(app[flush]), max(raw[flush]) + 1e-9)
-  expect_gte(min(app[after & w$Time < 250]), min(raw[after & w$Time < 250]) - 1e-9)
+  # (to 1e-4 minute: between its sampled points the line is interpolated, and
+  # on the grid graded from each change of setting, since 2026-11-23, that
+  # reads up to 8e-8 minute under the curve; the error guarded against, a
+  # reading from across the change, was 56 minutes)
+  expect_gte(min(app[after & w$Time < 250]), min(raw[after & w$Time < 250]) - 1e-4)
 
   # The emergence scenario: the time at the moment the vaporiser is turned
   # off is the peak of the line, 11.93 minutes; on 59094cf the line was drawn
@@ -213,14 +217,23 @@ test_that("H9.2: the time until threshold is not interpolated across a change of
   sim <- simulateGases(d, weight = 70, age = 40, maximum = 240)
   w <- gasWashout(sim, d, weight = 70)
   thr <- gasThresholdForAge("sevoflurane", 0.21, 40)
-  at <- match(c(30, 60, 120), w$Time)
+  # The grid's points nearest 30 and 60 minutes, and 120 itself.  Since
+  # 2026-11-23 the sub-steps are graded from each change of setting
+  # (gasSubSteps()), so 30 and 60 are no longer points of the grid (30.011
+  # and 60.007 are); the pins were 9.2484063244, 10.1613239319 and
+  # 11.9260230849, and 4.9883913082, 5.9114313778 and 7.7032604568, at 30, 60
+  # and 120 on the uniform grid.
+  at <- vapply(c(30, 60, 120), function(t) which.min(abs(w$Time - t)), 1L)
+  expect_equal(w$Time[at[3]], 120)
   raw <- gasCoupledRecovery(w, off = "sevoflurane", target = carbon4BrainTarget(w, "sevoflurane"),
                             threshold = thr, maxPoints = length(w$Time))
   rawMac <- gasCoupledRecovery(w, off = intersect(potentAgents(), names(w$state)),
                                target = carbon4MacTarget(w, 40), threshold = GAS_MAC_THRESHOLD,
                                maxPoints = length(w$Time))
-  expect_equal(raw[at], c(9.2484063244, 10.1613239319, 11.9260230849), tolerance = 1e-10)
-  expect_equal(rawMac[at], c(4.9883913082, 5.9114313778, 7.7032604568), tolerance = 1e-10)
+  expect_equal(raw[at], c(9.2487904421, 10.1615432004, 11.9260224320), tolerance = 1e-10)
+  # (MAC's: 4.9887751535, 5.9116560370 and 7.7032597883 on the graded grid
+  # with GasMan's MAC at 40, before Mapleson's was adopted the same day)
+  expect_equal(rawMac[at], c(5.7624362094, 6.8594149330, 9.1592082535), tolerance = 1e-10)
   expect_equal(gasRecoveryTime(w, "sevoflurane", thr)[at[3]], raw[at[3]])
   expect_equal(macRecoveryTime(w, 40, GAS_MAC_THRESHOLD)[at[3]], rawMac[at[3]])
 })

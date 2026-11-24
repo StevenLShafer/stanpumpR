@@ -153,7 +153,9 @@ test_that("each agent is its own decision, and each line is exact for it", {
 test_that("the sum-of-exponentials shortcut reads long when nitrous oxide is washing out", {
   # What the coupled simulation is for.  With 70% nitrous oxide after two hours
   # the shortcut, which leaves the coupling out, was 18% long for the nitrous
-  # oxide line and 10% for MAC when this was written.
+  # oxide line and 10% for MAC when this was written.  With Mapleson's MAC at
+  # 40 (2026-11-23), whose 0.1 MAC of the pair is reached at different
+  # tensions, the MAC line's shortcut is 4.2% long.
   gasDose <- gasRows(list(0, "oxygen", 2.3), list(0, "nitrousOxide", 5.7),
                      list(0, "ventilation", 4), list(0, "sevoflurane", 2))
   sim <- simulateGases(gasDose, weight = 70, age = 40, maximum = 120)
@@ -165,7 +167,7 @@ test_that("the sum-of-exponentials shortcut reads long when nitrous oxide is was
 
   macShort <- macRecoveryTime(w, 40, 0.1, exact = FALSE)
   want <- bruteGas(gasDose, 70, 40, 119, "MAC", 0.1, off = "MAC")
-  expect_gt((at(w, macShort, 119) - want) / want, 0.05)
+  expect_gt((at(w, macShort, 119) - want) / want, 0.03)
 
   # For a volatile agent turned off alone the shortcut is as good as exact.
   sevoShort <- gasRecoveryTime(w, "sevoflurane", 0.21, exact = FALSE)
@@ -285,7 +287,7 @@ test_that("the Drug Thresholds table shows every editable threshold and round-tr
   expect_equal(shown$Threshold[shown$Drug == "nitrousOxide"], 10)
   # Shown at the patient's age: what is on screen is what the plot uses.
   expect_equal(shown$Threshold[shown$Drug == "sevoflurane"],
-               signif(0.21 * macForAge(1, 70), 3))
+               signif(0.18 * macForAge(1, 70), 3))
   expect_equal(shown$Threshold[shown$Drug == "propofol"], dd$endCe[dd$Drug == "propofol"])
 
   # Unedited, it goes back to (very nearly) where it came from...
@@ -397,7 +399,7 @@ test_that("the entries carry the time until threshold only when asked", {
   out <- gasDrugEntries(sim, gasDose, maximum = 60, washout = w, age = 70)
   expect_gt(out$sevoflurane$max$Recovery, 5)
   # The threshold drawn is the age-adjusted one, a tenth of this patient's MAC.
-  expect_equal(out$sevoflurane$endCe, 0.21 * macForAge(1, 70))
+  expect_equal(out$sevoflurane$endCe, 0.18 * macForAge(1, 70))
   expect_equal(length(out$sevoflurane$equiSpace$Recovery), RESOLUTION)
   expect_gt(out$nitrousOxide$max$Recovery, 0)
   expect_equal(out$nitrousOxide$endCe, 10)

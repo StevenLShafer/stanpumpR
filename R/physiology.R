@@ -532,9 +532,11 @@ gasBodyPhysiology <- function(body, cardiac = 1, split = FALSE)
 # lines separate for an agent so little more soluble in oil than in water.  Cardiac output and
 # ventilation fall with metabolism in hypothermia, but they are set by their
 # own controls (the Cardiac output slider, the ventilation row), so as not to
-# be counted twice.  The thresholds of the time until threshold are typed
-# tensions and do not move; the summed MAC series, and its threshold in MAC,
-# do.  The intravenous drugs are not changed.
+# be counted twice.  The thresholds of the time until threshold are defined at
+# 37 C and move with MAC (gasThresholdForTemperature(); Shafer, 2026-11-24,
+# reversing his decision of 2026-11-16 that typed thresholds were tensions that
+# did not move), as the summed MAC series and its threshold in MAC do.  The
+# intravenous drugs are not changed.
 
 #' Body temperature range and default, degrees C
 #' @noRd
