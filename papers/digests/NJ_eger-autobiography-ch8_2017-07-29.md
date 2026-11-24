@@ -1,8 +1,8 @@
 ---
 file: NJ_eger-autobiography-ch8_2017-07-29.pdf
-pmid: none (unpublished manuscript)
+pmid: none (a book chapter)
 doi: none
-citation: "Eger EI II, Shafer SL. The Evolution of Pharmacokinetics. Chapter 8 of Eger's scientific autobiography. Unpublished manuscript, working draft of 29 July 2017; 37 pp., 89 references. Supplied by Shafer from his own copy, 2026-11-23."
+citation: "Eger EI II. Autobiography of a Persistent Anesthesiologist. Edited by Shafer SL and Spitler LE. Lippincott Williams & Wilkins (Wolters Kluwer), 1 October 2021; 224 pp., ISBN 9781975169190. The archived file is the PRE-PUBLICATION DRAFT of its pharmacokinetics chapter, headed 'Chapter 8. The Evolution of Pharmacokinetics' and dated 29 July 2017 (37 pp., 89 references), supplied by Shafer from his own copy 2026-11-23. Cite the published book, not this draft."
 kind: review
 drugs: [nitrousOxide, isoflurane, sevoflurane, desflurane]
 source_read: "partial - text layer, born-digital (no OCR needed: 37 pp., median 2331 letters a page). Every scientific section read in full (PDF pp. 3-28), and the 89-item reference list (pp. 31-36). The closing personal material - the sections titled 'A Reflection' and 'A Diagnosis of Cancer of the Gall Bladder' (p. 29 onward), and four family photograph captions naming living relatives - is deliberately NOT digested: it carries nothing pharmacokinetic. Figures are images in the PDF export and were not read. Page numbers throughout this card are one-based pages of the archived PDF; the chapter's own printed numbers run two lower."
@@ -11,19 +11,25 @@ checked_against: stanpumpR master 23b87a27
 verification: partly-verified
 open_questions:
   - "[decision] The chapter's own final model has FIVE body compartments - lungs, VRG, MG, FG and an intertissue diffusion group of about 500 min time constant carrying roughly 30% of the uptake (PDF pp. 15-16) - where stanpumpR's gas engine has the 1962 four (lungs, VRG, MG, FG, plus the circuit). Whether to add the ITDG is Shafer's call. It would matter where the chapter says it matters: the washout of a long, soluble anaesthetic."
-  - "[decision] This is an unpublished manuscript. This card records only its science, but whether a card about it belongs in the public repository at all is Shafer's to decide, as is whether the chapter should be cited as a published source once it is published."
+  - "[check] The published book's chapter number and title for this material are not confirmed. The draft heads itself 'Chapter 8. The Evolution of Pharmacokinetics'; no table of contents for the published book was reachable (the publisher's page lists none, and the Ovid page refuses automated requests), so the card follows the draft's own designation. Worth settling from a copy of the book, which would also show which of the draft's editorial queries were resolved and how."
   - "[check] The draft's cyclopropane blood/gas coefficients disagree with each other (PDF pp. 14-15): the text gives 0.6 at 1% inspired and about 0.47 at 100% (p. 14), then reports Perl as assuming 0.42 for cyclopropane against 0.47 for nitrous oxide (p. 15), while Rackow's quoted sentence on the same page has cyclopropane moving from 0.47 upward. The 0.42/0.47 pair reads as transposed against Rackow's own baseline. Settled by the Perl and Rackow papers (chapter refs 39, 40). It changes nothing in stanpumpR, which has no cyclopropane."
   - "[check] What is the denominator of Halsey's 50/35/10% metabolism figures (PDF p. 21, ref 57 = Halsey, Sawyer, Eger, Bahlman and Impelman, Anesthesiology 1971;35:43-7, PMID 5088786)? The chapter states the percentages bare, with no denominator and no exposure condition. The paper's title is 'Hepatic metabolism of ...', and the companion ref 58 is titled 'Concentration dependence of hepatic halothane metabolism' (Anesthesiology 1971;34:230-4, PMID 5544623), so the figures are very unlikely to be fractions of an administered anaesthetic dose - CodeRabbit on PR #857 suggested they are hepatic extraction at low subanaesthetic concentrations, which is consistent with both titles and with the chapter's own argument, but neither paper has been read. Both are now queued; either would settle it. Until then the card states the figures as the chapter does and says the denominator is unstated."
   - "[check] The chapter attributes the experimental demonstration of intertissue diffusion, kidney to perirenal fat, to its ref 49 (PDF p. 16), which the reference list gives as Allott, Steward and Mapleson, Pharmacokinetics of halothane in the dog: comparison of theory and measurement in individuals, Br J Anaesth 1976;48:279-95. That title is a theory-against-measurement comparison, and I could not confirm from the reference alone that it reports the kidney-to-fat transfer. Either the citation number is wrong or the paper contains more than its title suggests; the paper would settle it."
 ---
 
-# Eger 2017 (autobiography ch. 8): The evolution of inhaled-anaesthetic pharmacokinetics
+# Eger: The evolution of inhaled-anaesthetic pharmacokinetics (autobiography ch. 8)
 
-A first-person account, written with Shafer as editor, of how the mathematical model of inhaled
-anaesthetic uptake and distribution was built and successively corrected from the late 1950s to the
-2010s. Shafer's editorial queries to Eger are still in the draft, in angle brackets; several are
-substantive disagreements about the science, and they are recorded under *Caveats* because nothing
-carrying one should be read as settled.
+A first-person account of how the mathematical model of inhaled anaesthetic uptake and distribution
+was built and successively corrected from the late 1950s to the 2010s. The chapter is **published**,
+in *Autobiography of a Persistent Anesthesiologist* (Eger EI II, ed. Shafer SL and Spitler LE; LWW,
+2021), Eger having chosen Shafer to edit it.
+
+**What is archived is the working draft, not the published text.** It is dated 29 July 2017, weeks
+before Eger's death, and Shafer's editorial queries to Eger are still in it, in angle brackets.
+Several are substantive disagreements about the science; they are recorded under *Caveats*, because
+nothing carrying one should be read as settled, and because the published book may have resolved any
+of them in either direction. **Anything taken from here and used should be checked against, and cited
+as, the published book.**
 
 ## Study
 Not a study: a narrative review of the author's own programme, with 89 references (PDF pp. 31-36).
@@ -172,9 +178,12 @@ across species**, and **V/Q mismatch** from disease, paralysis, controlled venti
 endobronchial intubation.
 
 ## Caveats
-- **An unpublished working draft**, dated 29 July 2017, weeks before Eger's death; never finished and
-  never peer reviewed. `screen_inreview.py` clears it, correctly - it is not a manuscript under peer
-  review - but it is unpublished all the same, and the card is scoped accordingly.
+- **A pre-publication draft of a published chapter.** The book appeared in 2021 (LWW); this file is
+  the draft of 29 July 2017, weeks before Eger's death. So its wording is not the published wording,
+  its editorial queries are not in the published book, and any passage here may have been cut,
+  rewritten or corrected before print. A book chapter is also not peer-reviewed in the sense a
+  journal paper is. `screen_inreview.py` clears it, correctly: it is not a manuscript under peer
+  review.
 - **Shafer's editorial queries are unanswered, and several are substantive.** He disputes that
   doubling the blood concentration doubles FA/FI, the ratio approaching 1 asymptotically rather than
   2; disputes that emergence is truly linear in MAC-hours, arguing it cannot be and that the cited
