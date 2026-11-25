@@ -36,6 +36,13 @@ FACTOR_BASELINE_FIELDS <- list(
     min = 0,
     max = 300,
     step = 0.5
+  ),
+  factorIXBaseline = list(
+    label = "Factor IX baseline",
+    units = "IU/dL",
+    min = 0,
+    max = 300,
+    step = 0.5
   )
 )
 

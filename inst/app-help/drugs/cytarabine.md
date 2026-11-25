@@ -11,6 +11,8 @@ The References panel under the plot names the model in use.
 
 Two compartments: clearance 272 L/h, central volume 62.8 L, intercompartmental clearance 13.7 L/h, peripheral volume 75.4 L. The half-lives are about 9 minutes and 4 hours. The paper found clearance falls a little with a high white count at diagnosis; the Patient Profile has no white count, so it is held at the study's median. Samples were below the assay's limit about 2 hours after a dose, so the late part of the curve rests on few measurements.
 
+These values belong to the study's typical patient (79.4 kg, 52 years; 14 men and 9 women), the same 23 patients in whom the paper fitted etoposide. With [the scaling switch](help:models/fat-free-mass) on, every parameter is scaled by fat-free mass from that patient rather than from stanpumpR's 70-kg reference man, which changes a 70-kg, 170-cm man's values by under 1%; with it off, the published values are used.
+
 ### Children (Periclou 1996)
 
 Two compartments, every parameter proportional to the child's age times body surface area: clearance 2.59, intercompartmental clearance 2.01 L/h, central volume 0.48 L and peripheral volume 38.1 L, each times age (years) × BSA (m²). For a 10-year-old of 1.1 m² that is a clearance of about 29 L/h.
@@ -18,7 +20,7 @@ Two compartments, every parameter proportional to the child's age times body sur
 This model has real limits, and you should know them:
 
 - **No plateau with age.** Clearance is zero at birth and keeps rising with age. The model holds the age at 2 months (0.17 years), the youngest studied.
-- **A jump at 19.** At 18.9 years a 70-kg, 170-cm man has a clearance of about 89 L/h by the children's model; at 19 the adult model gives 272 L/h. Steven Shafer decided (10 November 2026) to accept this jump rather than leave either age group without a model.
+- **A jump at 19.** At 18.9 years a 70-kg, 170-cm man has a clearance of about 89 L/h by the children's model; at 19 the adult model gives about 273 L/h (272 L/h with the scaling switch off). Steven Shafer decided (10 November 2026) to accept this jump rather than leave either age group without a model.
 - **The same half-lives at every age**, about 4 minutes and 23 hours, because all four parameters scale together. The paper itself quotes 17 minutes and 4 hours from its earlier analyses.
 
 ### What is plotted

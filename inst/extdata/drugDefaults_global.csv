@@ -203,6 +203,9 @@ norepinephrine,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#AD1
 procainamide,mcg,mg,mg/min,mg/min,"mg,mg/kg,mg/min,mg/kg/hr",#4E342E,3,10,6.5,0,0,IV,Vasoactive and resuscitation
 esmolol,mcg,mg,mcg/kg/min,mcg/kg/min,"mg,mcg/kg,mcg/kg/min",#283593,0,0,0,0,0,IV,Vasoactive and resuscitation
 landiolol,mcg,mg,mcg/kg/min,mcg/kg/min,"mg,mcg/kg,mg/kg,mcg/kg/min",#2F5D8A,0,0,0,0,0,IV,Vasoactive and resuscitation
+landiololHonda,mcg,mg,mcg/kg/min,mcg/kg/min,"mg,mcg/kg,mg/kg,mcg/kg/min",#2F5D8A,0,0,0,0,0,IV,
+landiololKunisawa2014,mcg,mg,mcg/kg/min,mcg/kg/min,"mg,mcg/kg,mg/kg,mcg/kg/min",#2F5D8A,0,0,0,0,0,IV,
+landiololKunisawa2015,mcg,mg,mcg/kg/min,mcg/kg/min,"mg,mcg/kg,mg/kg,mcg/kg/min",#2F5D8A,0,0,0,0,0,IV,
 dopamine,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg/kg/min,mcg/min",#EF6C00,0,0,0,0,0,IV,Vasoactive and resuscitation
 atropine,ng,mg,mg/hr,mg,"mg,mcg/kg",#558B2F,0,0,0,0,0,IV,Vasoactive and resuscitation
 propranolol,ng,mg,mg/hr,mg,"mg,mcg/kg",#37474F,0,0,0,0,0,IV,Vasoactive and resuscitation
@@ -367,3 +370,4 @@ Zerbaxa,mcg,g,g/hr,g,"g,g tid,mg,mg tid,mg/kg,mg/kg tid,g/hr,mg/hr,mg/kg/hr",#0E
 ceftolozane,mcg,,,,,#0E6655,0,0,0,0,5,IV,
 factorVIII,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#1565C0,80,120,100,0,0,IV,Hemostasis and reversal
 nalbuphine,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#2E8BC0,0,0,0,0,0,IV,Opioids
+eftrenonacogAlfa,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#6A1B9A,60,100,80,0,0,IV,Hemostasis and reversal

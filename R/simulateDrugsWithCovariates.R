@@ -46,7 +46,7 @@
 #'   model's reference value.  Only the models that declare it (epirubicin)
 #'   are affected.
 #' @param factorBaselines the patient's own clotting-factor activities, a
-#'   named list (\code{factorVIIIBaseline} in IU/dL), or NULL for each factor
+#'   named list (\code{factorVIIIBaseline}, \code{factorIXBaseline}, in IU/dL), or NULL for each factor
 #'   concentrate's source population's; see \code{R/factorBaselines.R}.
 #' @param antiseizureInteractions apply the pharmacokinetic interactions among
 #'   the antiseizure drugs (\code{R/antiseizureInteractions.R},

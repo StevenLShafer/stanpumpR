@@ -129,7 +129,7 @@ tadalafil (see \code{getDrugPK()}).}
 term (see \code{getDrugPK()} and \code{R/infection.R}).}
 
 \item{factorBaselines}{the patient's own clotting-factor activities, a
-named list (\code{factorVIIIBaseline} in IU/dL), or NULL for each factor
+named list (\code{factorVIIIBaseline}, \code{factorIXBaseline}, in IU/dL), or NULL for each factor
 concentrate's source population's; see \code{R/factorBaselines.R}.}
 }
 \value{

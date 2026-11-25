@@ -441,9 +441,9 @@ registry <- rbind(
     readiness = "implemented", stanpumpr_drug = "fluorouracilTan"),
   m("fluorouracil__adult__briki2026", "fluorouracil", "fluorouracil", "IV",
     "726 patients from three studies (individual-patient meta-analysis)", "5-FU",
-    "two compartments with parallel Michaelis-Menten and linear elimination; BSA on CL, V lower in women and with age",
+    "two compartments with parallel Michaelis-Menten and linear elimination; the authors' alternative model (supplement Table S3): lean body mass and age on Vmax, BSA on CL, weight on V2",
     "first", "michaelis_menten", "P10",
-    "Run by advanceMichaelisMenten() with clLinear and one peripheral compartment. First read in the PubMed Central text, whose Table 3 had lost its subscripts; the PDF's Table 3 and printed equations confirm every identification. DPD deficiency is not represented.",
+    "Run by advanceMichaelisMenten() with clLinear and one peripheral compartment. First read in the PubMed Central text, whose Table 3 had lost its subscripts; the PDF's Table 3 and printed equations confirm every identification. Since 2026-11-25 the supplement's Table S3 model, lean body mass on Vmax in place of sex (Shafer's decision), read from the supplement's Word file. DPD deficiency is not represented.",
     readiness = "implemented", stanpumpr_drug = "fluorouracil"),
 
   m("busulfan__infant_adult__mccune2014", "busulfan", "busulfan", "IV",
