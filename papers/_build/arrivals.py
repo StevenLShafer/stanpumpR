@@ -370,8 +370,16 @@ def main():
         return 0
 
     have, cards, rows = archived_pmids(), cards_on_master(), wanted()
-    if not rows:
-        diag("arrivals: no registry lists a `to_obtain` PMID -- nothing to check")
+    waiting = pending_work()
+    # Read the pending rows BEFORE the early return.  papers/pending-work.csv is a second,
+    # independent source of wanted papers, and until 2026-11-25 an empty `rows` returned here
+    # without ever looking at it, so an arrived pending-work paper was dropped from both the
+    # report and --tasks.  The failure gets MORE likely as the registries are cleaned up,
+    # which is backwards: clearing the last `to_obtain` would have silenced the other half of
+    # the check (CodeRabbit, PR #926).
+    if not rows and not waiting:
+        diag("arrivals: no registry lists a `to_obtain` PMID and papers/pending-work.csv has no"
+             " pending row -- nothing to check")
         no_archive_caveat()
         return 0
 
@@ -408,7 +416,6 @@ def main():
             if ed and ed != "published":
                 superseded.append((pmid, cards[pmid], ed, sorted(s for s in suffixes if s)))
 
-    waiting = pending_work()
     pending = [p for p in waiting if p[0] in have]
     for pmid, drug, what, where, raised in waiting:
         if pmid not in have:                    # pending work whose paper has still not come
