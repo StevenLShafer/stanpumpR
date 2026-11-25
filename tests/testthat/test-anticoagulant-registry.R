@@ -17,7 +17,7 @@ PROVENANCE <- c("estimated", "fixed", "label-derived", "derived", "calibration")
 IMPLEMENTED <- c("heparin", "bivalirudin", "apixaban", "rivaroxaban", "warfarin",
                  "edoxaban", "dabigatran", "argatroban", "enoxaparin", "fondaparinux",
                  "fluindione", "acenocoumarol", "dabigatranHip", "apixabanVTE",
-                 "heparinCPB")
+                 "heparinCPB", "tenecteplase")
 
 test_that("every registry row is fully classified with a clickable source", {
   for (col in c("model_id", "drug_class", "context", "analyte", "assay",
