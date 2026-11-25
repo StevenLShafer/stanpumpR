@@ -25,6 +25,8 @@ The **ciclosporin dose** is held at the equations' reference, 450 mg a day, beca
 - **Enterohepatic recirculation.** MPAG excreted in the bile is converted back to MPA in the gut and reabsorbed, giving a second peak 6 to 12 hours after a dose (CellCept label). The source did not model it, and its curve has no second peak. Bile-acid sequestrants (cholestyramine) cut MPA exposure by interrupting the recirculation, which the curve cannot show.
 - **Tacrolimus.** With tacrolimus instead of ciclosporin, today's usual partner, the recirculation is intact and MPA exposure at the same dose is higher than this model draws.
 - **Time after transplantation.** Clearance falls over the first months as renal function and albumin recover. The model follows that through the creatinine and the albumin entered, but not otherwise.
+- **Missed doses.** The curve assumes every dose was taken at the time entered. A patient taking mycophenolate at home for months does not always do so, and adherence in practice is lower than in a monitored trial such as the source's (see *A curve assumes the drug was taken* on [Cautions](help:cautions)). A missed or late dose means less exposure than the curve draws.
+- **Food.** Taken with food, mycophenolate mofetil gives the same MPA exposure (AUC) but a peak 40% lower (CellCept label, section 12.3). The model does not tell the two apart.
 
 ### Against the label
 
