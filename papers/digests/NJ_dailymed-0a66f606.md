@@ -33,8 +33,8 @@ parameters:
   - {name: absolute absorption of fosinopril, value: 0.36, unit: fraction, source: "p2", note: "averaged 36% of an oral dose"}
   - {name: Tmax (fosinoprilat), value: 3, unit: h, source: "p2", note: "approximately 3 h, independent of dose"}
   - {name: protein binding (fosinoprilat), value: 99.4, unit: "%", source: "p2"}
-  - {name: "CL (IV fosinoprilat, healthy)", value: "26-39", unit: mL/min, source: "p3", note: "mean range across two studies"}
-  - {name: "terminal t1/2 (IV fosinoprilat, healthy)", value: 12, unit: h, source: "p3", note: approximately}
+  - {name: CL (IV fosinoprilat, healthy), value: "26-39", unit: mL/min, source: "p3", note: "mean range across two studies"}
+  - {name: terminal t1/2 (IV fosinoprilat, healthy), value: 12, unit: h, source: "p3", note: approximately}
   - {name: effective t1/2 for accumulation (hypertensives), value: 11.5, unit: h, source: "p3", note: "repeated dosing"}
   - {name: effective t1/2 (heart failure), value: 14, unit: h, source: "p3"}
   - {name: terminal t1/2 (children 6-16 y), value: "11-13", unit: h, source: "p3", note: "N=20, 0.3 mg/kg solution"}
