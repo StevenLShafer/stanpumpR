@@ -3475,7 +3475,18 @@ registry <- rbind(
       source = "Provigil (modafinil) prescribing information, Cephalon, rev. 12/2022, 8.1 (DailyMed setid e16c26ad-7bc2-d155-3a5d-da83ad6492c8); Ornoy A. Pharm Res 2018;35:46 (PMID 29411149); Aurora S et al. J Clin Sleep Med 2018;14:2087-2089 (PMID 30518447)",
       source_url = "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=e16c26ad-7bc2-d155-3a5d-da83ad6492c8",
       to_obtain = "",
-      notes = "Read: the label and Ornoy 2018 in full; Aurora 2018 as its abstract. Modafinil induces CYP3A4 and lowers steroidal-contraceptive concentrations (label 7; another method of contraception during treatment and for one month after), so unplanned pregnancy is a labelled risk. Neither Ornoy nor Aurora has Gideon Koren as an author (checked the PubMed author lists).")
+      notes = "Read: the label and Ornoy 2018 in full; Aurora 2018 as its abstract. Modafinil induces CYP3A4 and lowers steroidal-contraceptive concentrations (label 7; another method of contraception during treatment and for one month after), so unplanned pregnancy is a labelled risk. Neither Ornoy nor Aurora has Gideon Koren as an author (checked the PubMed author lists)."),
+  row("ceftolozane", "Antibiotics", "applied",
+      finding = "No measured pharmacokinetics of ceftolozane in pregnancy. A PubMed search on 2026-11-25 (ceftolozane AND (pregnancy OR pregnant OR postpartum OR cesarean); 5 records) found a case report of puerperal sepsis treated with ceftolozane/tazobactam after caesarean delivery (Pezzi 2019, PMID 31275681, no concentrations), a docking study and reviews. The Zerbaxa label (2026, sec. 8.1, read in full): 'There are no data available on ZERBAXA, ceftolozane or tazobactam use in pregnant women.' Ceftolozane is cleared by the kidney as unchanged drug (> 95% of a dose in urine; renal clearance 'similar to the glomerular filtration rate for the unbound fraction', label sec. 12.3), and filtration rises about 50% by the third trimester.",
+      applied = "Cockcroft-Gault creatinine clearance x 1.5 when the serum creatinine is left blank (physiological: the rise in glomerular filtration of late pregnancy). Clearance follows (CrCL/100)^0.701, so it rises 1.5^0.701 = 1.33-fold. Volumes unchanged.",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = 1.5,
+      trimester = "third", comparator = NA,
+      design = "physiological", n = NA, confidence = "low",
+      evidence_read = "full_text",
+      source = "Ansari J, Carvalho B, Shafer SL, Flood P. Anesth Analg 2016;122:786-804 (the rise in glomerular filtration of pregnancy); Zerbaxa (ceftolozane and tazobactam) label, NDA 206829, Merck, DailyMed 2026-05-28, sec. 8.1 and 12.3",
+      source_url = "https://doi.org/10.1213/ANE.0000000000001143",
+      to_obtain = "",
+      notes = "Drawn for Zerbaxa (R/combination-products.R), which carries the FDA label row. Pregnancy was not studied in the source (Zhang 2021). Pezzi 2019 has no Gideon Koren among its authors (PubMed author list).")
 )
 
 # The candidate models renamed when their drug's model became the program's
