@@ -22,9 +22,9 @@ patient's fat-free mass as described in the
 file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
 
-\item{pregnant}{is the patient pregnant?  \code{TRUE} multiplies the
-creatinine clearance the renal term reads by 1.5, the rise in glomerular
-filtration of pregnancy (Ansari 2016; see the file's header).}
+\item{pregnant}{is the patient pregnant?  \code{TRUE} multiplies CL/F by
+1.232 and VC/F by 1.281 (Juma 2026, Table 2; see the file's header).  The
+model has no renal term.}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
