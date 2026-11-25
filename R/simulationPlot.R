@@ -33,6 +33,8 @@ plottedUnitText <- function(units, drugs) {
   unitText[units == "IUdL"] <- "IU/dL"
   # Fibrinogen is plotted in mg/dL, the patient's own included
   unitText[units == "mgdL"] <- "mg/dL"
+  # Serum IgG is plotted in g/L, the patient's own included
+  unitText[units == "gL"] <- "g/L"
   unitText
 }
 
