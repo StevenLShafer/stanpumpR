@@ -10,7 +10,7 @@ The fit also had a lag of 0.63 minutes, which stanpumpR does not draw. The autho
 
 ### When stanpumpR uses it
 
-This is one of [three landiolol models](help:drugs/landiolol). stanpumpR uses it from 72 years, an age only this study included, and for older patients as the nearest model. It is also chosen for a 64- to 71-year-old lighter than 47.1 kg, a weight the gynaecologic study did not include. Until 25 November 2026 it was stanpumpR's only landiolol model.
+This is one of [three landiolol models](help:drugs/landiolol). stanpumpR uses it above 71 years, ages only this study included, and for older patients as the nearest model. It is also chosen for a 64- to 71-year-old lighter than 47.1 kg, a weight the gynaecologic study did not include. Until 25 November 2026 it was stanpumpR's only landiolol model.
 
 ### What is plotted
 

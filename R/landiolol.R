@@ -20,8 +20,10 @@
 # Each file's header gives its source; this one gives what they share.
 #
 # THE LAG.  Each source fitted a lag on an intravenous infusion (0.63-0.82
-# min), the dead space of the line rather than a property of the drug, which
-# no intravenous engine of the library represents.  It is left out, as the
+# min).  Honda attributes it to transit from the forearm infusion vein to the
+# contralateral forearm vein sampled, through the capillary bed of that arm;
+# Kunisawa's lines were connected at the nearest port to minimise dead space.
+# No intravenous engine of the library represents it.  It is left out, as the
 # authors left it out of the STANPUMP target-controlled infusions they gave;
 # every curve is drawn 38-49 s early, and the concentrations reached are
 # unchanged.
