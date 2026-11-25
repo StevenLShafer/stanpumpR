@@ -103,6 +103,9 @@ viewerProblem <- function(entry)
     return("This drug is plotted as an INR, and stanpumpR keeps no drug concentration for it to show.")
   if (!is.null(entry$osmotic))
     return("This drug is plotted as a serum osmolality, not a drug concentration.")
+  if (!is.null(entry$endogenousActivity))
+    return(paste("This drug is plotted as the patient's own clotting-factor activity plus",
+                 "the activity infused, not as a drug concentration."))
   units <- if (!is.null(entry$act)) "IU" else entry$Concentration.Units
   if (is.null(VIEWER_UNITS[[units]]))
     return("The viewer draws drug concentrations (mcg/mL, ng/mL, pg/mL, IU/mL, mcU/mL, mmol/L).")

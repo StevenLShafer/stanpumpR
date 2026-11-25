@@ -28,6 +28,9 @@ plottedUnitText <- function(units, drugs) {
   # Heparin on bypass is plotted as the activated clotting time it produces,
   # in seconds (R/act.R).
   unitText[units == "ACT"] <- "ACT (s)"
+  # A factor concentrate is plotted in IU/dL, % of normal, the patient's own
+  # activity included (R/factorBaselines.R).
+  unitText[units == "IUdL"] <- "IU/dL"
   unitText
 }
 

@@ -465,7 +465,13 @@ app_ui <- function() {
                   ),
                   patientFieldTooltip("ast"),
                   placement = "right"
-                ))
+                )),
+
+                # The patient's own clotting-factor activity, one field per
+                # factor, each read only by the concentrates that name it
+                # (R/factorBaselines.R).  Blank means the model's source
+                # population's baseline.
+                factorBaselineInputs()
               ),
 
               bslib::accordion_panel(

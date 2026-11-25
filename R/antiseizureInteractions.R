@@ -400,7 +400,7 @@ asmSegmentPK <- function(PK, segments)
   }), keys)
   # A drug individualized by the Bayesian update (R/bayesian.R) is rebuilt
   # as the individual's drug.
-  rebuilt <- do.call(getDrugPK, c(list(drug = drug), PK$covariates,
+  rebuilt <- do.call(getDrugPK, c(list(drug = drug), covariatesForGetDrugPK(PK$covariates),
                                   list(model = X), pkRebuildArgs(PK)))
   PK$PK <- rebuilt$PK
   PK$oralFormulations <- rebuilt$oralFormulations
