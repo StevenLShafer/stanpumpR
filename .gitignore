@@ -69,7 +69,11 @@ node_modules/
 # Independent readings quote the papers: keep them out of the repository
 # (docs/independent-extraction/README.md)
 docs/independent-extraction/replies/
-
-# bundle_repo.py writes its backups and lock beside the archive; running it or its
-# tests from the CHECKOUT makes papers/_backup here instead, which must never be committed.
-papers/_backup/
+
+# Python bytecode from running the archive pipeline scripts out of papers/_build
+__pycache__/
+*.pyc
+
+# bundle_repo.py writes its backups and lock beside the archive; running it or its
+# tests from the CHECKOUT makes papers/_backup here instead, which must never be committed.
+papers/_backup/
