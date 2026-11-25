@@ -35,7 +35,8 @@ test_that("the known readers are in their lists", {
                     "fluindione", "acenocoumarol"))
   expect_identical(patientFieldReaders("cyp2b6"), "methadone")
   expect_setequal(patientFieldReaders("albumin"), c("methotrexate", "docetaxel",
-                                                   "paclitaxelProteinBound", "tolcapone"))
+                                                   "paclitaxelProteinBound", "tolcapone",
+                                                   "emicizumab"))
   expect_true(all(c("cefazolin", "gentamicin", "mannitol", "vancomycin",
                     "sugammadex", "gabapentin", "pregabalin", "oxycodone",
                     "meloxicam", "lacosamide", "levetiracetam",
@@ -95,10 +96,11 @@ test_that("the gestational-age tooltip says a blank field is a term birth", {
 
 test_that("the albumin tooltip says a blank field is each model's reference", {
   tip <- patientFieldTooltip("albumin")
-  expect_match(tip, "docetaxel, methotrexate, paclitaxelProteinBound and tolcapone", fixed = TRUE)
+  expect_match(tip, "docetaxel, emicizumab, methotrexate, paclitaxelProteinBound and tolcapone", fixed = TRUE)
   expect_match(tip, "Leave blank to hold each model's reference albumin", fixed = TRUE)
   expect_match(tip, "4 g/dL", fixed = TRUE)
   expect_match(tip, "4.4 g/dL for tolcapone", fixed = TRUE)
+  expect_match(tip, "4.5 g/dL for emicizumab", fixed = TRUE)
 })
 
 test_that("an unknown field is refused", {
