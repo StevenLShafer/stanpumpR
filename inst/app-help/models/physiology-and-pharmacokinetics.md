@@ -205,11 +205,13 @@ The form and the slope are those of Michelsen and colleagues (2001), who
 fitted remifentanil clearance in 68 patients undergoing coronary artery
 surgery on cardiopulmonary bypass as CL × exp(θ (T − 37)). Their
 temperatures ran from 20 to 35 °C, with 16 patients below 28 °C, so theirs
-is the one human study that spans the whole range stanpumpR offers (28 to
-37 °C). Remifentanil is cleared by nonspecific esterases in blood and
-tissue, with almost no hepatic or renal component, so the fit describes
-an enzymatic capacity largely free of the confounding effect of organ
-blood flow.
+is the one human study that spans the whole hypothermic part of the range
+stanpumpR offers. That range is 28 to 38 °C: between 35 and 37 °C the
+factor rests on the form of their fit, which is 1 at 37 °C, and the degree
+above 37 °C is an extrapolation (sections 4.4 and 6). Remifentanil is
+cleared by nonspecific esterases in blood and tissue, with almost no
+hepatic or renal component, so the fit describes an enzymatic capacity
+largely free of the confounding effect of organ blood flow.
 
 ### 4.2 The evidence, route by route
 
