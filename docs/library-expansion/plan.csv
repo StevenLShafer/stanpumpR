@@ -57,7 +57,7 @@ Anesthesia,esketamine,esketamine,1,planned,"stanpumpR's ketamine is racemic."
 Anesthesia,ciprofol,ciprofol,1,planned,"Not US-approved."
 Anesthesia,landiolol,landiolol,1,planned,"FDA-approved 2024 (Rapiblyk)."
 Anesthesia,levosimendan,levosimendan,1,planned,"Not US-approved; active metabolites OR-1855 and OR-1896."
-Anesthesia,nalbuphine,nalbuphine,1,planned,
+Anesthesia,nalbuphine,nalbuphine,1,in_progress,"Nie 2023 (PMID 37025491, 27 adults under general anesthesia) on branch claude/nalbuphine: two compartments, cohort-anchored size scaling, HNF held at the study mean."
 Biologics (surgery),factor VIII,factorviii;lonoctocogalfa;turoctocogalfa;turoctocogalfapegol,1,planned,"Several products with different half-lives; perioperative haemophilia A."
 Biologics (surgery),factor IX,factorix,1,planned,
 Biologics (surgery),fibrinogen concentrate,fibrinogen,1,planned,

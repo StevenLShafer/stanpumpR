@@ -441,6 +441,8 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "irbesartan",
     # modafinil (FDA review of NDA 20-717, 2026-11-19): plasma only, R + S parallel systems
     "modafinil",
+    # nalbuphine (Nie 2023, 2026-11-25): plasma only
+    "nalbuphine",
     # colistimethate and the colistin it forms (2026-11-16): plasma only, no
     # line until the MIC decision (R/drugs_colistin.R)
     "colistimethate", "colistin",
