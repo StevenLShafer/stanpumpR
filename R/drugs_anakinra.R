@@ -53,7 +53,8 @@
 # fit (Shafer, 2026-11-25, accepting the card's recommendation): Yang 2003 is
 # to be read first, and an adult model carrying its renal relation would be a
 # second candidate for the selector.  Likewise no intravenous route is derived
-# from these apparent SC parameters; that waits for Yang 2003's IV data.
+# from these apparent SC parameters: an IV route waits for a good
+# intravenous model (Shafer, 2026-11-25), Yang 2003's IV arm the candidate.
 #
 # PREGNANCY: no pharmacokinetic study (inst/extdata/pregnancyRegistry.csv).
 # Clearance is largely renal, but the model has no renal term to carry the rise
