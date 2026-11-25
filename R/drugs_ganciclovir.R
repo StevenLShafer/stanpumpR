@@ -74,9 +74,21 @@
 # Clearance is the source's, through the Cockcroft-Gault creatinine
 # clearance, evaluated at the pharmacokinetic weight with the fat-free-mass
 # switch on and at total body weight with it off (the source used total
-# weight).  The volumes and intercompartmental clearance, which the source
-# did not scale, are written for the library's reference man and scaled by
-# fat-free mass with the switch on, fixed with it off.
+# weight).  It is not anchored and takes no size factor: the creatinine
+# clearance has weight inside ("you would wind up double correcting
+# clearance", Steven L. Shafer, 2026-11-18).  The volumes and the
+# intercompartmental clearance, which the source did not scale (no parameter
+# was related to weight in 20 patients, which is not evidence that size does
+# not matter: Shafer's first-principles rule of 2026-11-19), are scaled by
+# fat-free mass with the switch on, V1 and V2 by the volume factor and Q by
+# the clearance factor, and fixed with it off.  They are anchored at
+# Caldés's cohort (GANCICLOVIR_COHORT, below: Table 2, 10 men and 10 women,
+# 66.2 kg, 55.7 years, Spanish), whose typical patient sits at a volume
+# factor of 0.8468 and a clearance factor of 0.8827 from the 70 kg reference
+# man, so a patient like Caldés's receives Table 3's values and the
+# reference man receives volumes 18.1% and Q 13.3% above them (until
+# 2026-11-20 the reference man received them, the paper not being in the
+# archive).
 #
 # RENAL FUNCTION
 # ==============
@@ -107,6 +119,18 @@ GANCICLOVIR_Q        <- 10.20    # L/h
 GANCICLOVIR_V2       <- 32.0     # L
 GANCICLOVIR_KA       <- 0.895    # 1/h
 GANCICLOVIR_LAG      <- 0.382    # h
+
+# Caldés 2009, Table 2 (PDF p2, printed 4817), means of the 20 patients: 10
+# men and 10 women, 66.2 kg, 55.7 years; Hospital Universitari de Bellvitge,
+# Barcelona, March 2004 to February 2006 (Methods).  No height is printed:
+# NCD-RisC's mean height at 18 for Spain, birth cohort 1949 (2005 less 55.7),
+# less the loss with age to 55.7 years, is 169.2 cm for the men and 157.2 cm
+# for the women.  V1, V2 and Q are anchored at this cohort (Steven L. Shafer,
+# 2026-11-18 and 2026-11-19; see the header's BODY SIZE); the renal clearance
+# is not.
+GANCICLOVIR_COHORT <- list(groups = list(
+  list(weight = 66.2, height = 169.2, age = 55.7, men = 10, women = 0),
+  list(weight = 66.2, height = 157.2, age = 55.7, men = 0, women = 10)))
 # Valcyte label (2021), Table 10: tablets with food
 GANCICLOVIR_F_VALGANCICLOVIR <- 0.594
 # Caldés 2009, Methods: ganciclovir per valganciclovir, by molecular weight
@@ -127,7 +151,10 @@ ganciclovir <- function(weight, height, age, sex, adjustToFFM = TRUE,
                         creatinine = NULL, pregnant = FALSE)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, GANCICLOVIR_COHORT))
+  # The pharmacokinetic weight is the patient's (70 kg x FFM / FFM_ref),
+  # which the cohort does not change: Cockcroft-Gault is not anchored
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   scr  <- adultEquivalentCreatinine(creatinine, age, sex)
   gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)

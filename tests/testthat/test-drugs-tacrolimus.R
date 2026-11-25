@@ -42,10 +42,45 @@ test_that("pregnancy multiplies whole blood CL/F by Zheng 2012's 47.4 / 34.2", {
 })
 
 test_that("with the switch on, the library's size factors scale it", {
+  # anchored at Woillard's cohort (2026-11-20): the old pins over its factors
   size <- pkSizeFactors(100, 175, 50, "male", TRUE, legacyVolume = 1, legacyClearance = 1)
+  kc <- cohortFactorsIndependent(TACROLIMUS_COHORT)
   set <- tacrolimus(100, 175, 50, "male")$PK$default
-  expect_equal(set$cl1, 21.2 / 60 * size$clearance)
-  expect_equal(set$v2, 271 * size$volume)
+  expect_equal(set$cl1, 21.2 / 60 * size$clearance / kc$clearance)
+  expect_equal(set$v2, 271 * size$volume / kc$volume)
+})
+
+test_that("anchored at Woillard's cohort: its typical patients get Table 4, FFM scales the rest", {
+  # (a) Table 1 (PDF p3): Prograf 19 men and 13 women, 55 y, 65 kg; Advagraf
+  # 19 men and 22 women, 53 y, 69 kg; heights from NCD-RisC (France, born
+  # 1956 and 1958).  No parameter has a sex term, so the four typical
+  # patients pooled geometrically by their numbers receive Table 4
+  kc <- cohortFactorsIndependent(TACROLIMUS_COHORT)
+  expect_equal(round(c(kc$volume, kc$clearance), 4), c(0.8799, 0.9085))
+  g <- list(c(65, 174.2, 55, 19, 1), c(65, 161.2, 55, 13, 0),
+            c(69, 174.6, 53, 19, 1), c(69, 161.6, 53, 22, 0))
+  pooled <- function(field) {
+    s <- 0
+    for (x in g) s <- s + x[4] * log(tacrolimus(x[1], x[2], x[3],
+                                                if (x[5] == 1) "male" else "female")$PK$default[[field]])
+    exp(s / 73)
+  }
+  expect_equal(pooled("v1"), 486 * 0.29)
+  expect_equal(pooled("v2"), 271)
+  expect_equal(pooled("cl1") * 60, 21.2)
+  expect_equal(pooled("cl2") * 60, 79)
+  # (b) twice the reference fat-free mass: volumes x 2 and clearances x 2^0.75
+  # over the cohort's factors; the absorption is not scaled
+  w <- uniroot(function(w) ffmAlSallami(w, 200, 50, "male") - 2 * FFM_REFERENCE,
+               c(70, 400), tol = 1e-12)$root
+  big <- tacrolimus(w, 200, 50, "male")$PK$default
+  expect_equal(c(big$v1, big$v2), c(486 * 0.29, 271) * 2 / kc$volume)
+  expect_equal(c(big$cl1, big$cl2) * 60, c(21.2, 79) * 2^0.75 / kc$clearance)
+  expect_equal(big$ka_PO * 60, 3.34 * 1.53)
+  # (c) the switch off: Table 4 at any size
+  off <- tacrolimus(w, 200, 50, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(c(off$v1, off$v2, off$cl1 * 60, off$cl2 * 60),
+               c(486 * 0.29, 271, 21.2, 79))
 })
 
 test_that("the band is the label's 4-11 ng/mL whole blood trough", {

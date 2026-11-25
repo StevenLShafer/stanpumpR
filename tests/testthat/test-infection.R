@@ -73,22 +73,27 @@ test_that("getDrugPK() refuses an unknown infection and passes a known one only 
 })
 
 test_that("the field is shown and its tip names its readers only while a reader is in the table", {
-  # no drug reads it yet: never shown, and the tip says so
-  expect_length(patientFieldReaders("infection"), 0)
-  expect_false(relevantFields(getDrugDefaultsGlobal()$Drug)[["infection"]])
-  expect_match(patientFieldTooltip("infection"), "No drug in the library reads it.", fixed = TRUE)
+  # The first reader is ceftolozane, drawn for Zerbaxa (2026-11-25): shown
+  # while Zerbaxa is in the table, whose components the app passes
+  # (combinationExpandDrugNames()), and the tip names the product
+  expect_identical(patientFieldReaders("infection"), "ceftolozane")
+  expect_true(relevantFields(combinationExpandDrugNames("Zerbaxa"))[["infection"]])
+  expect_false(relevantFields(c("propofol", "fentanyl"))[["infection"]])
+  expect_match(patientFieldTooltip("infection"),
+               "Read by ceftolozane (given as Zerbaxa); no other drug is affected.", fixed = TRUE)
   expect_true("infection" %in% RELEVANT_FIELDS)
 
   withInfectionReader()
-  expect_identical(patientFieldReaders("infection"), "cefepime")
+  expect_identical(patientFieldReaders("infection"), c("cefepime", "ceftolozane"))
   expect_true(relevantFields("cefepime")[["infection"]])
   expect_true(relevantFields(c("propofol", "cefepime"))[["infection"]])
-  expect_false(relevantFields(c("propofol", "fentanyl"))[["infection"]])
   tip <- patientFieldTooltip("infection")
-  expect_match(tip, "Read by cefepime; no other drug is affected.", fixed = TRUE)
+  expect_match(tip, "Read by cefepime and ceftolozane (given as Zerbaxa); no other drug is affected.",
+               fixed = TRUE)
   # and the Cautions page's generated table
   table <- helpFieldReadersTableMarkdown()
-  expect_match(table, "| Infection | 1 | [cefepime](help:drugs/cefepime) |", fixed = TRUE)
+  expect_match(table, "| Infection | 2 | [cefepime](help:drugs/cefepime), [ceftolozane](help:drugs/ceftolozane) |",
+               fixed = TRUE)
 })
 
 test_that("the Patient Profile offers every category, the default selected, in a hideable wrapper", {
