@@ -47,11 +47,10 @@ test_that("the pharmacokinetic weight with the switch on", {
   expect_equal(pk$v1, tang(size$pkWeight, 50, "male", 1)$vc)
 })
 
-test_that("renal function: assumed normal when blank, and pregnancy", {
+test_that("renal function: assumed normal when blank; no pregnancy factor", {
   blank <- tenecteplase(70, 165, 30, "female", FALSE)$PK$default
   expect_equal(blank$cl1, tang(70, 30, "female", 0.8)$cl)
-  preg <- tenecteplase(70, 165, 30, "female", FALSE, pregnant = TRUE)$PK$default
-  expect_equal(preg$cl1, (91.3 + 0.322 * (1.5 * crclNM(30, "female", 0.8) - 82.6)) / 1000)
+  expect_false("pregnant" %in% names(formals(tenecteplase)))
   # a creatinine of 0 clearance cannot make CL negative: the intercept is 64.7
   expect_gt(tenecteplase(70, 175, 90, "male", FALSE, creatinine = 15)$PK$default$cl1, 0.06)
 })

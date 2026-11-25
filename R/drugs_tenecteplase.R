@@ -33,19 +33,25 @@
 # RENAL FUNCTION: Cockcroft-Gault at the entered serum creatinine (a child's
 # on the adult scale, adultEquivalentCreatinine()) or, if blank, an assumed
 # normal creatinine for age and sex (assumedCreatinine(): 0.9 mg/dL in men and
-# 0.8 in women from 18).  The renal term is linear and cannot reach zero: at
-# a creatinine clearance of 0, CL is 64.7 mL/min x (WT/70)^0.75.  The label's
-# "Liver metabolism is the major clearance mechanism" predates this analysis,
-# which puts the renal share at 29.2% for the median patient; the later
-# finding is applied (AGENTS.md, a label is frozen at approval).
+# 0.8 in women from 18).  The term is linear and cannot reach zero: at a
+# creatinine clearance of 0, CL is 64.7 mL/min x (WT/70)^0.75.  The
+# CRCL-NM term is a FITTED ASSOCIATION, not a measured renal pathway: the
+# paper's own Discussion (p. 206) calls a renal contribution biologically
+# unlikely (liver metabolism is the major pathway and the molecule is about
+# 65 kDa), says the term's significance must be interpreted with caution, and
+# warns that the stepwise covariate search can over-estimate an effect or pick
+# a collinear covariate; its alternative model (age and race on CL instead)
+# gave almost the same typical values.  The term is applied as Equation 9
+# prints it, the published model, with the label's statement that liver
+# metabolism is the major mechanism standing beside it.
 #
 # BODY SIZE: the source's own weight terms, kept as fitted, evaluated at the
 # pharmacokinetic weight with the switch on and at total weight with it off.
 #
 # PREGNANCY: no pharmacokinetic study (inst/extdata/pregnancyRegistry.csv).
-# With the creatinine left blank, the renal term's creatinine clearance is
-# multiplied by PREGNANCY_GFR_FACTOR (1.5, pregnancyGfrFactor()), the rise in
-# filtration of pregnancy, physiological and unmeasured for this drug.
+# The rise in filtration of pregnancy is NOT applied to the CRCL-NM term: the
+# term is not a renal pathway (above), so nothing supports carrying a change
+# in filtration into clearance.
 #
 # CHECKS (Results, p. 203)
 # ======
@@ -84,22 +90,18 @@ TENECTEPLASE_WT_REF   <- 70
 #'
 #' @inheritParams cefazolin
 #' @param creatinine serum creatinine in mg/dL, or NULL for the assumed normal
-#' @param pregnant is the patient pregnant?  \code{TRUE}, with the creatinine
-#'   left blank, multiplies the creatinine clearance by the rise in glomerular
-#'   filtration of pregnancy.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 tenecteplase <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                         creatinine = NULL, pregnant = FALSE)
+                         creatinine = NULL)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   w    <- pkW / TENECTEPLASE_WT_REF
 
   scr  <- adultEquivalentCreatinine(creatinine, age, sex)
-  gfr  <- pregnancyGfrFactor(pregnant, creatinine)
   # Cockcroft-Gault normalised to 70 kg: the weight cancels
-  crclNM <- creatinineClearanceCG(TENECTEPLASE_WT_REF, age, sex, scr) * gfr
+  crclNM <- creatinineClearanceCG(TENECTEPLASE_WT_REF, age, sex, scr)
 
   cl <- (TENECTEPLASE_CL + TENECTEPLASE_CL_RENAL * (crclNM - TENECTEPLASE_CRCL_REF)) * w^0.75
 
@@ -117,8 +119,6 @@ tenecteplase <- function(weight, height, age, sex, adjustToFFM = TRUE,
     if (is.null(creatinine)) "assumed normal creatinine" else "entered creatinine",
     "), Vc 3.61 L and Vp 0.914 L x weight/70, Q 10.0 mL/min x (weight/70)^0.75. ",
     "Concentration only. https://doi.org/10.1002/jcph.2164")
-  if (gfr != 1) reference <- paste0(reference, "; ", pregnancyReference(
-    "creatinine clearance x 1.5, the rise in filtration of pregnancy (physiological)"))
 
   list(
     PK = PK, tPeak = 0, MEAC = 0,

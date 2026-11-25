@@ -6,15 +6,15 @@ Tang and colleagues' population analysis (*J Clin Pharmacol* 2023) of 103 patien
 - central volume 3.61 L and peripheral volume 0.914 L × weight/70;
 - intercompartmental clearance 10.0 mL/min × (weight/70)^0.75.
 
-For the paper's median patient (81.8 kg, CrCl 82.6 mL/min/70 kg) clearance is 103 mL/min, 29% of it through the renal term, the central volume 4.2 L and the terminal half-life 77 minutes. The dose divided by that clearance reproduces the paper's simulated exposures: 79.7, 398 and 487 mcg·min/mL after 0.1 mg/kg, 0.5 mg/kg and 50 mg. The label gives clearance of 99 to 119 mL/min, which the model matches, a central volume of 4.22 to 5.43 L, and a steady-state volume of 6.12 to 8.01 L and terminal half-life of 90 to 130 minutes, both larger than the model's (5.3 L and 77 minutes at 81.8 kg). Clearance is the parameter to compare across studies; a terminal phase depends on how long and how sensitively a study sampled, and this one sampled for 6 hours.
+For the paper's median patient (81.8 kg, CrCl 82.6 mL/min/70 kg) clearance is 103 mL/min, the central volume 4.2 L and the terminal half-life 77 minutes. The dose divided by that clearance reproduces the paper's simulated exposures: 79.7, 398 and 487 mcg·min/mL after 0.1 mg/kg, 0.5 mg/kg and 50 mg. The label gives clearance of 99 to 119 mL/min, which the model matches, a central volume of 4.22 to 5.43 L, and a steady-state volume of 6.12 to 8.01 L and terminal half-life of 90 to 130 minutes, both larger than the model's (5.3 L and 77 minutes at 81.8 kg). Clearance is the parameter to compare across studies; a terminal phase depends on how long and how sensitively a study sampled, and this one sampled for 6 hours.
 
 The assay (ELISA) also reads the patient's own tissue plasminogen activator, which the paper carried as a baseline signal of 18.6 ng/mL. The curve is the tenecteplase given, without that baseline.
 
 ### Covariates
 
 - **Weight**, on every parameter, as fitted. With the fat-free-mass switch on, the weight in these terms is the pharmacokinetic weight.
-- **Serum creatinine**, from the Patient Profile, through the renal term. Blank means an assumed normal creatinine for age and sex (0.9 mg/dL in men and 0.8 in women from 18 years); a child's creatinine is put on the adult scale. Even with no renal function, clearance is 64.7 mL/min at 70 kg. The label says liver metabolism is the major route; this later analysis found the renal share, and the model applies it.
-- **Pregnancy**: with the creatinine blank, the creatinine clearance of the renal term is raised 1.5-fold, the rise in filtration of pregnancy. No tenecteplase concentrations have been measured in pregnancy.
+- **Serum creatinine**, from the Patient Profile, through the creatinine-clearance term. Blank means an assumed normal creatinine for age and sex (0.9 mg/dL in men and 0.8 in women from 18 years); a child's creatinine is put on the adult scale. Even with no renal function, clearance is 64.7 mL/min at 70 kg. The term is a fitted association, not evidence that the kidneys clear tenecteplase: the authors themselves call a renal contribution biologically unlikely, since liver metabolism is the major pathway (as the label says), and caution that the stepwise covariate search can pick a collinear covariate. It is applied because it is in the published model; its effect on exposure is small.
+- **Pregnancy**: no tenecteplase concentrations have been measured in pregnancy, and nothing is applied; the creatinine-clearance term is not a renal pathway, so the rise in filtration of pregnancy is not carried into it.
 
 ### Product and doses
 

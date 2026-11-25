@@ -10,8 +10,7 @@ tenecteplase(
   age,
   sex,
   adjustToFFM = TRUE,
-  creatinine = NULL,
-  pregnant = FALSE
+  creatinine = NULL
 )
 }
 \arguments{
@@ -31,10 +30,6 @@ file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
 
 \item{creatinine}{serum creatinine in mg/dL, or NULL for the assumed normal}
-
-\item{pregnant}{is the patient pregnant?  \code{TRUE}, with the creatinine
-left blank, multiplies the creatinine clearance by the rise in glomerular
-filtration of pregnancy.}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
