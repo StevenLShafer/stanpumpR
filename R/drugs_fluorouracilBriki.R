@@ -86,15 +86,41 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# The model carries its own size covariates (BSA on CL, weight on V2), so, as
-# for cefazolin, they are evaluated at the pharmacokinetic weight
-# (size$pkWeight) with the switch on and at total body weight with it off,
-# BSA from that weight and the height.  V1 and Q, which have no covariate,
-# scale by the library's factors with the switch on and are fixed with it
-# off.  Vmax is NOT scaled by fat-free mass: its sex term is, by the
-# authors' account, the lean-mass effect, and scaling it again would count
-# sex twice.  Age is held within the source's 24-90 years (its linear term
-# would otherwise extrapolate without limit).
+# The model's own size covariates (BSA on CL, weight on V2) are kept as
+# fitted and take nothing more: as for cefazolin, they are evaluated at the
+# pharmacokinetic weight (size$pkWeight) with the switch on and at total body
+# weight with it off, BSA from that weight and the height.
+#
+# V1, Q and Vmax have no size term, so with the switch on they belong to
+# Briki's typical patient, not to the 70 kg reference man, and are anchored
+# at that patient (FLUOROURACIL_BRIKI_COHORT, below; Steven L. Shafer's
+# rules of 2026-11-18 and 2026-11-19, docs/weight-adjustment.md, Anchoring
+# at the source's cohort; Gemini's chemotherapy audit of 2026-11-23, F22).
+# V1 and Q take the pooled cohort's factors.  Vmax carries the source's own
+# sex term (x 1.183 in men), so it takes the clearance factor of the cohort's
+# patient of the patient's OWN sex (cohortSexSizeFactors()): the difference
+# in fat-free mass between the sexes is then left to the source's sex term,
+# which the authors read as the lean-mass effect, and only the difference
+# from the cohort's man or woman of the same sex is added, so sex is not
+# counted twice.  (Until 2026-11-25 Vmax was not scaled at all, for that
+# reason; the rule of 2026-11-19, that a clearance whose covariates are not
+# size keeps them and takes the anchored clearance factor as well, at the
+# patient's own sex where it carries a sex term, supersedes it.)  Age is
+# held within the source's 24-90 years (its linear term would otherwise
+# extrapolate without limit).  With the switch off V1, Q and Vmax are the
+# published values.
+#
+# The cohort (Table 2, page 6, read on the PDF and its page image,
+# 2026-11-25): three studies, medians printed per study, entered as three
+# groups --
+#     SID1 Terret 2002   21 patients, 14 men  7 women, 65 y, 68 kg, 168 cm
+#     SID2 Mueller 2013  30 patients, 20 men 10 women, 63 y, 76 kg, 171 cm
+#     SID3 Dijon TDM    675 patients, 388 men 287 women, 69 y, 67 kg, 170 cm
+# (726 patients, 422 men and 304 women, as the text says).  Heights are
+# printed, so none is derived.  The factors (cohortSizeFactors()): pooled
+# volume 0.8989 and clearance 0.9231, so V1 and Q rise by 11.3% and 8.3% at
+# the reference man; Vmax's clearance factor at the cohort's man 0.9842 and
+# at its woman 0.8447, so the reference man's Vmax rises by 1.6%.
 #
 # PREGNANCY (R/pregnancy.R)
 # =========================
@@ -122,6 +148,16 @@ FLUOROURACIL_BRIKI <- list(
 )
 FLUOROURACIL_AGE_RANGE <- c(24, 90)   # years, the source's range
 
+# Briki 2026, Table 2 (page 6), read on the PDF 2026-11-25: medians per
+# study.  V1, Q and Vmax, with no size term, are anchored at this cohort;
+# Vmax, which carries the source's sex term, at its patient of the patient's
+# own sex (see BODY SIZE above).
+FLUOROURACIL_BRIKI_COHORT <- list(groups = list(
+  list(weight = 68, height = 168, age = 65, men = 14,  women = 7),    # SID1
+  list(weight = 76, height = 171, age = 63, men = 20,  women = 10),   # SID2
+  list(weight = 67, height = 170, age = 69, men = 388, women = 287)   # SID3
+))
+
 #' Body surface area by Mosteller's formula, m2
 #' @param weight kg
 #' @param height cm
@@ -141,14 +177,23 @@ bsaMosteller <- function(weight, height) sqrt(weight * height / 3600)
 fluorouracilBriki <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   p <- FLUOROURACIL_BRIKI
+  # V1 and Q, with no covariate, are anchored at Briki's pooled cohort; Vmax,
+  # which carries the source's sex term, at the cohort's patient of the
+  # patient's own sex; CL (BSA) and V2 (weight) keep their own terms
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, FLUOROURACIL_BRIKI_COHORT))
+  sexAnchor <- cohortSexSizeFactors(FLUOROURACIL_BRIKI_COHORT, sex)
+  vmaxSize <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                            legacyVolume = 1, legacyClearance = 1,
+                            cohort = sexAnchor)$clearance
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   bsa <- bsaMosteller(w, height)
   a <- min(max(age, FLUOROURACIL_AGE_RANGE[1]), FLUOROURACIL_AGE_RANGE[2])
   male <- as.numeric(identical(sex, "male"))
 
-  vmax <- p$vmax * (1 + p$thetaAge * (a - 60) / 60) * (1 + p$thetaMale * male) / 60  # mg/min
+  vmax <- p$vmax * (1 + p$thetaAge * (a - 60) / 60) * (1 + p$thetaMale * male) / 60 *
+    vmaxSize                                                                          # mg/min
   km <- p$km                                                                          # mg/L
   clLinear <- p$cl * (bsa / 1.7)^p$thetaBSA / 60                                      # L/min
 

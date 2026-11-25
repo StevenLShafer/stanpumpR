@@ -13,11 +13,13 @@ Because elimination saturates, doubling a dose more than doubles the concentrati
 
 With [the scaling switch](help:models/fat-free-mass) on, the weight and BSA terms use the pharmacokinetic weight (the weight that gives the patient's fat-free mass); with it off they use total body weight, as published. Renal function and the DPD phenotype were tested and not retained.
 
+The central volume, the intercompartmental clearance and Vmax have no size term of their own, so with the switch on they belong to the study's typical patient, not to stanpumpR's 70-kg reference man, and are scaled from that patient by fat-free mass: the medians of the three pooled studies (63 to 69 years, 67 to 76 kg, 168 to 171 cm; 422 men and 304 women). Vmax is scaled from the study's typical patient of the patient's own sex, so that the 18% difference between the sexes comes from the paper's sex term alone and is not counted twice. A 70-kg, 170-cm man therefore receives a central volume of 10.2 L and an intercompartmental clearance of 135 L/h, rather than the 9.21 L and 125 L/h printed for the study's patients. With the switch off, the published values are used.
+
 ### What is plotted
 
 Plasma 5-FU in mcg/mL (mg/L). Doses are entered in mg, or mg/hr for the infusion, and a dose prescribed per m² as such, in mg/m² or mg/m²/hr (body surface area by Mosteller, from the Patient Profile's weight and height). There is no effect site.
 
-The target for colorectal cancer is an **AUC of 20 to 30 mg·h/L over the 46-hour infusion**, the range recommended by the International Association of Therapeutic Drug Monitoring and Clinical Toxicology (Beumer 2019, doi:10.1002/cpt.1124), which is the plateau concentration times 46 hours; Briki's own dose-adjustment grid uses 20 to 29. That is an exposure, not a concentration band, and it is not drawn. A plateau of 0.43 to 0.65 mg/L meets it for that regimen only. For a 70-kg, 175-cm man of 60, 2400 mg/m² over 46 hours gives a plateau of about 0.38 mg/L, an AUC of about 18 mg·h/L, below the target, as the paper found for most patients dosed by surface area.
+The target for colorectal cancer is an **AUC of 20 to 30 mg·h/L over the 46-hour infusion**, the range recommended by the International Association of Therapeutic Drug Monitoring and Clinical Toxicology (Beumer 2019, doi:10.1002/cpt.1124), which is the plateau concentration times 46 hours; Briki's own dose-adjustment grid uses 20 to 29. That is an exposure, not a concentration band, and it is not drawn. A plateau of 0.43 to 0.65 mg/L meets it for that regimen only. For a 70-kg, 175-cm man of 60, 2400 mg/m² over 46 hours gives a plateau of about 0.37 mg/L, an AUC of about 17 mg·h/L, below the target, as the paper found for most patients dosed by surface area.
 
 ### Where to be careful
 

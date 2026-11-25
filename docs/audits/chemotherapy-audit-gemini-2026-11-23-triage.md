@@ -91,11 +91,16 @@ fall (F16), and an external validation of Taylor 2020 read as one of the Taylor
 
 ## Not done, recorded
 
-- **F22.** fluorouracilBriki, capecitabine and adult cytarabine are not
-  anchored at their cohorts. Briki's and capecitabine's demographics need the
-  PDFs' tables (capecitabine has a pending row); cytarabine's cohort is
-  Krogh-Madsen's, already a constant, once the PDF confirms it is the same 23
-  patients.
+- **F22. Done (2026-11-25).** fluorouracilBriki, capecitabine and adult
+  cytarabine were not anchored at their cohorts. fluorouracilBriki: V1 and Q
+  anchored at Briki 2026's Table 2 (three studies entered as groups, heights
+  printed), and Vmax, which carries the source's sex term and had not been
+  scaled at all, at the cohort's patient of the patient's own sex
+  (`cohortSexSizeFactors()`); CL keeps its BSA term and V2 its weight term.
+  Adult cytarabine: anchored at `ETOPOSIDE_KM_COHORT`, the PDF (pages
+  1156-1157) confirming that Krogh-Madsen fitted all three drugs in one set
+  of 23 patients. Capecitabine had already been anchored in PR #841 (its
+  pending row, PMID 12630975, is marked done), which this entry predated.
 - **F35 (lookup).** `physiologyRow()` finds only the group's name, so a
   candidate called directly in R gets no sliders. The app never does that;
   mapping candidates to their group's row could give a target-binding child

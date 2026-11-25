@@ -40,16 +40,76 @@ test_that("with the switch on, size covariates take the pharmacokinetic weight",
   bsa <- sqrt(size$pkWeight * h / 3600)
   expect_equal_rounded(m$michaelisMenten$clLinear, 52.6 * (bsa / 1.7)^2.61 / 60)
   expect_equal_rounded(m$PK$default$v2, 14.6 * size$pkWeight / 70)
-  expect_equal_rounded(m$PK$default$v1, 9.21 * size$volume)
-  # Vmax carries sex and age, not fat-free mass
-  expect_equal_rounded(m$michaelisMenten$vmax, 429 * (1 - 0.289 * (50 - 60) / 60) / 60)
+})
+
+# Briki 2026, Table 2 (page 6): medians per study (Gemini's chemotherapy
+# audit of 2026-11-23, F22; docs/weight-adjustment.md, Anchoring at the
+# source's cohort).  Claude Code, 2026-11-25.
+test_that("the cohort is Briki's Table 2: three studies, 726 patients", {
+  g <- FLUOROURACIL_BRIKI_COHORT$groups
+  expect_equal(sum(vapply(g, function(x) x$men, 1)), 422)
+  expect_equal(sum(vapply(g, function(x) x$women, 1)), 304)
+  expect_equal(vapply(g, function(x) x$weight, 1), c(68, 76, 67))
+  expect_equal(vapply(g, function(x) x$height, 1), c(168, 171, 170))
+  expect_equal(vapply(g, function(x) x$age, 1), c(65, 63, 69))
+})
+
+test_that("V1 and Q are anchored at Briki's cohort with the switch on", {
+  kc <- cohortFactorsIndependent(FLUOROURACIL_BRIKI_COHORT)
+  expect_equal(round(c(kc$volume, kc$clearance), 4), c(0.8989, 0.9231))
+  for (pt in list(list(70, 170, 35, "male"), list(90, 165, 50, "female"))) {
+    size <- do.call(pkSizeFactors, c(pt, list(TRUE)))
+    m <- do.call(fluorouracilBriki, pt)$PK$default
+    # the old pins (published value x the reference man's factor) divided by
+    # the cohort's
+    expect_equal_rounded(m$v1, 9.21 * size$volume / kc$volume)
+    expect_equal_rounded(m$cl2, 125 / 60 * size$clearance / kc$clearance)
+  }
+  # the reference man's V1 and Q rise by 11.3% and 8.3%
+  m <- fluorouracilBriki(70, 170, 35, "male")$PK$default
+  expect_equal(round(m$v1 / 9.21, 3), 1.113)
+  expect_equal(round(m$cl2 * 60 / 125, 3), 1.083)
+})
+
+test_that("Vmax is anchored at the cohort's patient of the patient's own sex", {
+  only <- function(sex) list(groups = lapply(FLUOROURACIL_BRIKI_COHORT$groups, function(g) {
+    if (sex == "male") g$women <- 0 else g$men <- 0
+    g
+  }))
+  km <- cohortFactorsIndependent(only("male"))$clearance
+  kw <- cohortFactorsIndependent(only("female"))$clearance
+  expect_equal(round(c(km, kw), 4), c(0.9842, 0.8447))
+  for (pt in list(list(70, 170, 50, "male"), list(90, 165, 50, "female"),
+                  list(55, 160, 70, "female"))) {
+    on <- do.call(fluorouracilBriki, pt)$michaelisMenten$vmax
+    off <- do.call(fluorouracilBriki, c(pt, list(adjustToFFM = FALSE)))$michaelisMenten$vmax
+    k <- if (pt[[4]] == "male") km else kw
+    expect_equal_rounded(on / off, do.call(pkSizeFactors, c(pt, list(TRUE)))$clearance / k)
+  }
+  # sex is not counted twice: at the cohort's typical man and woman (the
+  # geometric mean of its groups' fat-free masses) Vmax is the published
+  # value, so their ratio is the source's 1.183 alone
+  expect_equal(fluorouracilBriki(70, 170, 50, "male", adjustToFFM = FALSE)$michaelisMenten$vmax /
+                 fluorouracilBriki(70, 170, 50, "female", adjustToFFM = FALSE)$michaelisMenten$vmax,
+               1.183)
+})
+
+test_that("with the switch off the cohort is ignored", {
+  off <- fluorouracilBriki(55, 160, 70, "female", adjustToFFM = FALSE)
+  expect_equal_rounded(off$PK$default$v1, 9.21)
+  expect_equal_rounded(off$PK$default$cl2, 125 / 60)
+  expect_equal_rounded(off$michaelisMenten$vmax, 429 * (1 - 0.289 * (70 - 60) / 60) / 60)
 })
 
 test_that("age is held within the source's 24-90 years", {
-  vmaxAt <- function(age) fluorouracilBriki(70, 170, age, "male")$michaelisMenten$vmax
+  # switch off: with it on, Vmax also follows fat-free mass, which changes
+  # with age in a child (Al-Sallami's maturation), apart from the age term
+  vmaxAt <- function(age)
+    fluorouracilBriki(70, 170, age, "male", adjustToFFM = FALSE)$michaelisMenten$vmax
   expect_equal(vmaxAt(5), vmaxAt(24))
   expect_equal(vmaxAt(99), vmaxAt(90))
   expect_true(is.finite(vmaxAt(0)))
+  expect_true(is.finite(fluorouracilBriki(3.5, 50, 0, "male")$michaelisMenten$vmax))
 })
 
 test_that("a 46-h infusion reaches the steady state the two eliminations predict", {
