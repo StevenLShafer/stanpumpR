@@ -59,11 +59,21 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# The source found no weight effect, so the nonrenal clearance and the
-# volumes are written for the library's reference man and scaled by fat-free
-# mass with the switch on, fixed with it off; the renal clearance carries
-# weight through the creatinine clearance, evaluated at the pharmacokinetic
-# weight with the switch on and at total weight with it off.
+# The source found no weight effect, which is not evidence that size does
+# not matter (Steven L. Shafer's first-principles rule of 2026-11-19), so the
+# nonrenal clearance, the volumes and Q are scaled by fat-free mass with the
+# switch on, the clearances to the 0.75 power, and fixed with it off.  The
+# renal clearance carries weight through the creatinine clearance, evaluated
+# at the pharmacokinetic weight with the switch on and at total weight with
+# it off, and takes no size factor of its own ("you would wind up double
+# correcting clearance", Shafer, 2026-11-18).  The others are anchored at
+# Fattinger's cohort (QUINIDINE_COHORT, below: 46 men and 14 women, 65.5
+# years, 70.5 kg, Swiss), whose typical patient sits at a volume factor of
+# 0.9481 and a clearance factor of 0.9608 from the 70 kg reference man, so a
+# patient like Fattinger's receives Table 1's values and the reference man
+# receives volumes 5.5% and the nonrenal clearance and Q 4.1% above them
+# (until 2026-11-20 the reference man received them, the paper not being in
+# the archive).
 #
 # RENAL FUNCTION AND PREGNANCY
 # ============================
@@ -89,6 +99,18 @@ QUINIDINE_V1          <- 161      # L
 QUINIDINE_Q           <- 12.6     # L/h
 QUINIDINE_V2          <- 66.7     # L
 QUINIDINE_TMAX        <- 1.37     # h, the zero-order duration (sulphate)
+
+# Fattinger 1991, Results (PDF p2, printed 280): 46 men and 14 women, median
+# age 65.5 years, median weight 70.5 kg; University Hospital, Basel.  No
+# height is printed, nor the years of collection: NCD-RisC's mean height at
+# 18 for Switzerland, birth cohort 1926 (the publication, 1991, less 65.5),
+# less the loss with age to 65.5 years, is 170.6 cm for the men and 159.2 cm
+# for the women.  The nonrenal clearance, V1, Q and V2 are anchored at this
+# cohort (Steven L. Shafer, 2026-11-18 and 2026-11-19; see the header's BODY
+# SIZE); the renal clearance is not.
+QUINIDINE_COHORT <- list(groups = list(
+  list(weight = 70.5, height = 170.6, age = 65.5, men = 46, women = 0),
+  list(weight = 70.5, height = 159.2, age = 65.5, men = 0, women = 14)))
 QUINIDINE_BASE_PER_SULFATE <- 0.829
 CREATININE_UMOL_PER_MGDL   <- 88.4
 
@@ -108,7 +130,10 @@ quinidine <- function(weight, height, age, sex, adjustToFFM = TRUE,
                       creatinine = NULL, pregnant = FALSE)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, QUINIDINE_COHORT))
+  # The pharmacokinetic weight is the patient's (70 kg x FFM / FFM_ref),
+  # which the cohort does not change: the creatinine clearance is not anchored
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   scr  <- adultEquivalentCreatinine(creatinine, age, sex)
   gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)

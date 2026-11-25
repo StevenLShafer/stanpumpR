@@ -41,10 +41,23 @@
 
 #' The combination products whose components are drawn separately
 #'
-#' Each entry: `unit`, the word that stands for one unit of the product in
+#' Each entry is one of two kinds.  A product dosed in units of its own
+#' (Coartem) has `unit`, the word that stands for one unit of the product in
 #' its dose units ("tablet" in "tablet PO"), and `components`, mg of each
-#' component drug in one unit of the product, named by the component's
-#' library name.
+#' component drug in one unit of the product.  A product labelled and dosed
+#' by the combined weight of its ingredients (Zerbaxa: "1.5 g" is 1 g
+#' ceftolozane and 0.5 g tazobactam) has `shares`, the fraction of the
+#' product's weight that is each drawn component; it is dosed in the
+#' ordinary mass units (g, mg/kg, g/hr, and their schedules), each of which
+#' its component receives unchanged with the dose times its share.  Either
+#' is named by the component's library name.
+#'
+#' A product with one drawn component (Zerbaxa) is still a product here: its
+#' beta-lactamase inhibitor is not drawn (docs/library-expansion/README.md,
+#' "Which moieties a combination product draws"), and the expansion is what
+#' lets the drug be the product, as Steven L. Shafer named it, while its
+#' panel is labelled with the moiety drawn (2026-11-18, "Use Zerbaxa and
+#' Avycaz too"; "The PK should be labelled piperacillin", for Zosyn).
 #' @keywords internal
 COMBINATION_PRODUCTS <- list(
   Coartem = list(
@@ -52,8 +65,44 @@ COMBINATION_PRODUCTS <- list(
     # Coartem label, section 11: "Each Coartem Tablet contains 20 mg of
     # artemether and 120 mg of lumefantrine."
     components = c(artemether = 20, lumefantrine = 120)
+  ),
+  Zerbaxa = list(
+    # Zerbaxa label (NDA 206829, DailyMed 2026-05-28), section 2: "ZERBAXA
+    # 1.5 gram (g) (ceftolozane 1 g and tazobactam 0.5 g)"; the pediatric
+    # "30 mg/kg ... Provides 20 mg/kg ceftolozane and 10 mg/kg tazobactam".
+    # Tazobactam is not drawn.
+    shares = c(ceftolozane = 2 / 3)
   )
 )
+
+#' Is a combination product dosed by the combined weight of its ingredients?
+#' @param product a product's name
+#' @returns TRUE for a product with `shares` (Zerbaxa), FALSE otherwise
+#' @keywords internal
+combinationByMass <- function(product)
+{
+  isTRUE(isCombinationProduct(product)) && !is.null(COMBINATION_PRODUCTS[[product]]$shares)
+}
+
+#' How much of each component one unit of the product carries
+#'
+#' @param product a product's name
+#' @returns a named vector: mg per unit of the product (`components`), or
+#'   the fraction of the product's weight (`shares`)
+#' @keywords internal
+combinationAmounts <- function(product)
+{
+  spec <- COMBINATION_PRODUCTS[[product]]
+  if (!is.null(spec$shares)) spec$shares else spec$components
+}
+
+#' The mass units a product dosed by weight is offered in, with schedules
+#' @keywords internal
+combinationMassUnits <- function()
+{
+  c(bolusUnits, infusionUnits,
+    as.vector(outer(bolusUnits, names(SCHEDULE_INTERVALS), paste)))
+}
 
 #' Is this a combination product drawn as its components?
 #' @param drug drug names
@@ -72,7 +121,7 @@ combinationComponents <- function(product)
 {
   if (length(product) != 1 || !isTRUE(isCombinationProduct(product)))
     return(character(0))
-  names(COMBINATION_PRODUCTS[[product]]$components)
+  names(combinationAmounts(product))
 }
 
 #' Drug names with each combination product replaced by its components
@@ -125,15 +174,30 @@ combinationProductOf <- function(drug, doseTable)
 
 #' Is this a unit a combination product can be dosed in?
 #'
-#' Only the product's own unit word leads it ("tablet PO", "tablet PO bid"):
-#' a mass unit would hand each component the product's dose.
+#' For a product with a unit word, only that word leads it ("tablet PO",
+#' "tablet PO bid"): a mass unit would hand each component the product's
+#' dose.  For a product dosed by weight (Zerbaxa), the ordinary mass units
+#' and their schedules; a TCI target, which names a concentration of no one
+#' component, is not one of them.
 #' @param product a product's name
 #' @param units dose units
 #' @returns a logical vector
 #' @keywords internal
 combinationUnitOk <- function(product, units)
 {
+  if (combinationByMass(product))
+    return(as.character(units) %in% combinationMassUnits())
   startsWith(as.character(units), paste0(COMBINATION_PRODUCTS[[product]]$unit, " "))
+}
+
+#' What a combination product is dosed in, for a message
+#' @param product a product's name
+#' @returns e.g. "tablets", or "units of mass (g, mg/kg, g/hr)"
+#' @keywords internal
+combinationDosedIn <- function(product)
+{
+  if (combinationByMass(product)) "units of mass (g, mg/kg, g/hr)" else
+    paste0(COMBINATION_PRODUCTS[[product]]$unit, "s")
 }
 
 #' Why a unit added to a combination product cannot be simulated, or ""
@@ -199,14 +263,17 @@ expandCombinationProducts <- function(DT)
     # Only the product's own unit word can be split into mg of each component
     wrong <- !(combinationUnitOk(product, rows$Units) %in% TRUE)
     if (any(wrong))
-      stop(product, " is dosed in ", spec$unit, "s, not in ",
+      stop(product, " is dosed in ", combinationDosedIn(product), ", not in ",
            paste(unique(as.character(rows$Units[wrong])), collapse = ", "), ".", call. = FALSE)
-    for (component in names(spec$components))
+    amounts <- combinationAmounts(product)
+    for (component in names(amounts))
     {
       part <- rows
       part$Drug <- component
-      part$Dose <- as.numeric(rows$Dose) * spec$components[[component]]
-      units <- combinationComponentUnits(rows$Units, spec$unit)
+      part$Dose <- as.numeric(rows$Dose) * amounts[[component]]
+      # A product dosed by weight hands each component the same unit
+      units <- if (combinationByMass(product)) as.character(rows$Units) else
+        combinationComponentUnits(rows$Units, spec$unit)
       part$Units <- if (is.factor(rows$Units)) factor(units) else units
       pieces[[length(pieces) + 1L]] <- part
     }
