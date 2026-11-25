@@ -169,7 +169,13 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
     }
   }
 
-  # MAC gets its own series when any potent agent is running.
+  # MAC gets its own series when any potent agent is running.  Its "effect
+  # site" series is the same end-tidal MAC, so the dashed line lies on the
+  # solid one.  DECIDED (Shafer, 2026-11-25; Gemini's gas-engine audit of
+  # 2026-11-23, C-04 and D-05): it is to be the summed brain (vessel-rich
+  # group) MAC instead, the end-tidal line and its time until threshold
+  # unchanged ("I think Ted Eger would have approved"); to be built in its
+  # own pull request.
   potent <- intersect(potentAgents(), report)
   if (length(potent) > 0)
   {

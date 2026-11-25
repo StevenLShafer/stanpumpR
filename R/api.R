@@ -68,7 +68,8 @@ API_PATIENT_FIELDS <- c("weight", "height", "age", "sex", "weightUnit", "heightU
                         # The clotting-factor baselines (R/factorBaselines.R, which
                         # loads after this file; test-drugs-factorVIII.R holds the two
                         # lists together)
-                        "factorVIIIBaseline")
+                        "factorVIIIBaseline", "factorIXBaseline",
+                        "fibrinogenBaseline")
 API_OUTPUT_FIELDS  <- c("times", "interval", "recovery", "format", "layout")
 API_OPTIONS_FIELDS <- c("allowIllicitDrugs", "antiseizureInteractions", "unknownDoseFields")
 # What a dose-row field the service does not read does to the request: refuse
@@ -502,7 +503,7 @@ apiConcentrationUnits <- function(units) {
   switch(as.character(units),
          "mcg" = "mcg/mL", "ng" = "ng/mL", "mg" = "mg/mL", "pg" = "pg/mL",
          "mOsm" = "mOsm/kg",
-         "mmol" = "mmol/L", "mcU" = "mcU/mL", "IU" = "IU/mL", "IUdL" = "IU/dL", "INR" = "INR",
+         "mmol" = "mmol/L", "mcU" = "mcU/mL", "IU" = "IU/mL", "IUdL" = "IU/dL", "mgdL" = "mg/dL", "INR" = "INR",
          as.character(units))
 }
 

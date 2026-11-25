@@ -136,6 +136,19 @@
 #
 #         V_alv dF_alv/dt = VA (F_circ - F_alv) - lambda_b Qco (F_alv - F_v)
 #
+#     One well-mixed lung, ventilation and perfusion matched throughout.  A
+#     real lung's ventilation-perfusion scatter lowers arterial tension below
+#     alveolar for the more soluble agents (Peyton; Gemini's gas-engine audit
+#     of 2026-11-23, E-02 and F-04; ChatGPT's, F-01).  DECIDED (Shafer,
+#     2026-11-25): the single mixed lung stays.  He accepts Peyton's
+#     measurements ("data are data") but has concerns about his mathematics of
+#     uptake and distribution, so Peyton's papers (PMIDs 11408406, 11408407,
+#     11408408, 18292675, 21270630; papers/pending-work.csv) are to be read and
+#     his model checked FIRST, and a two-region lung is built only if that
+#     mathematics checks out.  One point for the check: 11408408's abstract says
+#     models built on the expired and on the inspired distribution of alveolar
+#     ventilation give quantitatively different arterial oxygen tensions.
+#
 # (3) TISSUES, t in {brain, muscle, fat}, flow-limited (perfusion-limited).
 #     Tissue capacity is V_t * lambda_t/gas; delivery is Q_t * lambda_b/gas
 #     times the arterial-to-tissue gradient, with Q_t = f_t * Qco:
@@ -243,6 +256,11 @@
 #     end-tidal MAC (see "(5) MAC" in the loop below, which says why).  Until
 #     2026-11-24 this header said the brain (vessel-rich) tension, which an
 #     earlier version used (Gemini's gas-engine audit of 2026-11-23, C-04).
+#     DECIDED (Shafer, 2026-11-25; C-04, D-05): the MAC panel's dashed
+#     "effect site" line is to show the summed brain (vessel-rich group) MAC,
+#     sum_i F_brain,i / MAC_i(age), in place of what it draws now; the solid
+#     end-tidal line and its time until threshold are unchanged.  Shafer: "I
+#     think Ted Eger would have approved."  To be built in its own pull request.
 #
 # LINEARITY AND THE METHOD OF SOLUTION
 # ====================================

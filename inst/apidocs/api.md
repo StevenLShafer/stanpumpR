@@ -108,7 +108,7 @@ The response (JSON):
     "age": 50, "ageUnit": "years", "sex": "male", "pregnant": false, "pulmonaryHypertension": false, "infection": "none", "adjustToFFM": true,
     "osmolality": 280, "creatinine": null, "gestationalAge": null, "albumin": null, "ast": null,
     "cyp2d6": "normal", "cyp2c19": "normal", "cyp2c9": "*1/*1", "cyp2b6": "normal",
-    "vkorc1": "AA", "cyp4f2": "CC", "opioidTolerance": "none", "factorVIIIBaseline": null
+    "vkorc1": "AA", "cyp4f2": "CC", "opioidTolerance": "none", "factorVIIIBaseline": null, "factorIXBaseline": null, "fibrinogenBaseline": null
   },
   "drugs": [
     {
@@ -218,7 +218,9 @@ an empty array or an object); anything else is refused (400).
     "vkorc1": "AA",          // GG | GA | AA
     "cyp4f2": "CC",          // CC | CT | TT
     "opioidTolerance": "none", // none | mild | somewhat | high: raises each opioid's MEAC and recovery threshold
-    "factorVIIIBaseline": 0.5 // IU/dL, the patient's own factor VIII; omit or null for the model's source population (factorVIII)
+    "factorVIIIBaseline": 0.5, // IU/dL, the patient's own factor VIII; omit or null for the model's source population (factorVIII)
+    "factorIXBaseline": 0.5,  // IU/dL, the patient's own factor IX; omit or null for the model's source population (eftrenonacogAlfa)
+    "fibrinogenBaseline": 250 // mg/dL, the patient's own plasma fibrinogen; omit or null for the model's source population (fibrinogen)
   },
 
   "duration": 6,             // required: length of the simulation, in timeUnit
@@ -271,7 +273,9 @@ an empty array or an object); anything else is refused (400).
 | `cyp2d6`, `cyp2c19`, `cyp2c9`, `cyp2b6` | no | The values listed above. The default is the normal phenotype (`*1/*1` for CYP2C9). Only the models that use a phenotype read it. |
 | `vkorc1` | no | The VKORC1 -1639G>A genotype, read by the three vitamin-K antagonists: `warfarin`, `fluindione` and `acenocoumarol`. Unlike the phenotypes above, the default is chosen for sensitivity rather than for frequency: `AA` is the genotype that gives the **largest** INR rise, so that an unentered genotype errs toward underdosing. Pass the patient's own genotype when it is known. |
 | `cyp4f2` | no | The CYP4F2 rs2108622 genotype, read by `warfarin` alone. Its default, `CC`, is that model's most sensitive genotype, by the same rule as `vkorc1`. |
-| `factorVIIIBaseline` | no | 0–300 IU/dL, the patient's own factor VIII activity (% of normal). A factor concentrate is reported as the patient's own activity plus the infused, so the `Plasma` of `factorVIII` includes it. If it is omitted, the model's source population's baseline is used (severe haemophilia A, 0.5 IU/dL). Only `factorVIII` reads it. |
+| `factorVIIIBaseline` | no | 0–300 IU/dL, the patient's own factor VIII activity (% of normal). A factor concentrate is reported as the patient's own activity plus the infused, so the `Plasma` of `factorVIII` and `efmoroctocogAlfa` includes it. If it is omitted, 0.5 IU/dL is used, a chosen default within the model's source population (severe haemophilia A, below 1 IU/dL). `factorVIII` and `efmoroctocogAlfa` (Eloctate) read it. |
+| `factorIXBaseline` | no | 0–300 IU/dL, the patient's own factor IX activity (% of normal), added to the infused activity of `eftrenonacogAlfa` (Alprolix). If it is omitted, 0.5 IU/dL is used, a chosen default within the model's source population (severe haemophilia B, below 1 IU/dL). Only `eftrenonacogAlfa` reads it. |
+| `fibrinogenBaseline` | no | 0–1500 mg/dL, the patient's own plasma fibrinogen (Clauss), added to the fibrinogen infused by `fibrinogen` (the fibrinogen concentrates). If it is omitted, the model's source population's is used: afibrinogenaemia, 0 mg/dL. A bleeding surgical or obstetric patient's measured level should be entered. Only `fibrinogen` reads it. |
 | `opioidTolerance` | no | `none` (default), `mild`, `somewhat` or `high`: multiplies each opioid's MEAC, and the recovery threshold of an opioid with a MEAC, by 1, 1.5, 2 or 3, as the app's Patient Profile does. It does not change any concentration. |
 | `adjustToFFM` | no | `true` (default) or `false` |
 

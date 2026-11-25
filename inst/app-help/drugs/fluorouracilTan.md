@@ -11,7 +11,7 @@ The model reproduces the paper's own simulated median AUCs (its Table 3) for a b
 
 ### How it differs from Briki 2026
 
-Briki's model, from 726 patients, clears 5-FU by a linear pathway beside a smaller saturable one; Tan's has saturable elimination alone, with a larger capacity and a higher Km. For the same patient, Briki's gives an AUC about 14% lower: 17.9 against 20.8 mg·h/L for 2,400 mg/m² over 46 hours, 24.7 against 28.7 with a 400 mg/m² bolus. The difference lies between the two cohorts and neither paper settles it. Both are offered so the difference can be seen.
+Briki's model, from 726 patients, clears 5-FU by a linear pathway beside a smaller saturable one; Tan's has saturable elimination alone, with a larger capacity and a higher Km. For the same patient, Briki's gives an AUC 12 to 14% lower: 18.0 against 20.8 mg·h/L for 2,400 mg/m² over 46 hours, 25.3 against 28.7 with a 400 mg/m² bolus. The difference lies between the two cohorts and neither paper settles it. Both are offered so the difference can be seen.
 
 ### What is plotted
 

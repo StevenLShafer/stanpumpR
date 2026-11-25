@@ -69,25 +69,25 @@
 #   event, so they keep acting on the plot.  That departs from his rule above
 #   ("At time 0 the sliders are all set to 1"), so it is his to decide.
 #
-#   [decision] The inhaled agents' MAC band at a temperature event.  The band
-#   is one pair of numbers per panel, set from the body at time 0
-#   (gasDrugEntries(): gasPropertiesAt(sim$body$temperature)), so after an
-#   event that cools the patient the band stays at its 37 C values while the
-#   MAC panel steps (each row takes its own temperature).  Without an event
-#   the band does move with the slider: 2% sevoflurane, 70 kg, 40 years,
-#   37 C to 30 C, band 1.47-2.73% to 0.99-1.85%, MAC multiple at 30 min
-#   0.83 to 1.19.  Making it step needs a band that varies in time
-#   (simulationPlot() draws a constant rectangle per facet).  Whether to
-#   build that is his call.  Since 2026-11-24 the same holds for the time
-#   until threshold's line: every potent gas's threshold moves with
-#   temperature (gasThresholdForTemperature(), his decision of that day), and
-#   the time is counted to the threshold in force at each moment, but the
-#   line is drawn at the body at time 0 (gasDrugEntries()'s endCe).  After a
-#   cooling event to 28 C at 30 minutes the line stays at 0.18% sevoflurane
-#   while the time is counted to 0.105%: at 60 minutes 16.3 minutes, where
-#   timing to the drawn line would read 11.7 (CodeRabbit on PR #858; Gemini's
-#   gas-engine audit of 2026-11-23, C-01).  A stepped band and a stepped
-#   line are one piece of work.
+#   DECIDED (Shafer, 2026-11-25; the question put as above, Gemini's
+#   gas-engine audit C-01): the MAC band at a temperature event, and every
+#   drug's band under changed physiology.  The band stays constant on a
+#   panel whose drug the physiology does not change.  On a panel whose drug
+#   it changes, at any time in the plot (the sliders or an event), the band
+#   is REMOVED, and a grey, semi-transparent RIBBON is drawn from the drug's
+#   curve under nominal (normal) physiology to its curve under the
+#   physiology given, on the effect-site line (plasma where the drug has
+#   none; for an inhaled agent the alveolar line, and on the MAC panel the
+#   MAC line).  There is no extra line: the drug keeps its own colours, and
+#   the nominal curve is only the ribbon's edge.  Shafer: a band that stays
+#   the same "will appear to be a bug because it isn't what the physiology
+#   teaches", and a Y axis that rescales can hide a change that the ribbon
+#   shows within one panel.  The threshold line stays and, on the gas panels,
+#   steps with the temperature in force.  To be built in its own pull
+#   request (a nominal-physiology simulation at the drug's own times, the
+#   ribbon from the lower curve to the higher at each moment, kept in order
+#   across an event's repeated time, from the panel's lowest positive value
+#   on a log axis, never clicked or hovered, off under normalization).
 #
 #   Not a decision, a lead: Single Paper Review "crashed" (Shiny's Reload
 #   overlay, 2026-11-19) when Shafer opened it after using the sliders, the
