@@ -203,6 +203,9 @@ norepinephrine,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#AD1
 procainamide,mcg,mg,mg/min,mg/min,"mg,mg/kg,mg/min,mg/kg/hr",#4E342E,3,10,6.5,0,0,IV,Vasoactive and resuscitation
 esmolol,mcg,mg,mcg/kg/min,mcg/kg/min,"mg,mcg/kg,mcg/kg/min",#283593,0,0,0,0,0,IV,Vasoactive and resuscitation
 landiolol,mcg,mg,mcg/kg/min,mcg/kg/min,"mg,mcg/kg,mg/kg,mcg/kg/min",#2F5D8A,0,0,0,0,0,IV,Vasoactive and resuscitation
+landiololHonda,mcg,mg,mcg/kg/min,mcg/kg/min,"mg,mcg/kg,mg/kg,mcg/kg/min",#2F5D8A,0,0,0,0,0,IV,
+landiololKunisawa2014,mcg,mg,mcg/kg/min,mcg/kg/min,"mg,mcg/kg,mg/kg,mcg/kg/min",#2F5D8A,0,0,0,0,0,IV,
+landiololKunisawa2015,mcg,mg,mcg/kg/min,mcg/kg/min,"mg,mcg/kg,mg/kg,mcg/kg/min",#2F5D8A,0,0,0,0,0,IV,
 dopamine,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg/kg/min,mcg/min",#EF6C00,0,0,0,0,0,IV,Vasoactive and resuscitation
 atropine,ng,mg,mg/hr,mg,"mg,mcg/kg",#558B2F,0,0,0,0,0,IV,Vasoactive and resuscitation
 propranolol,ng,mg,mg/hr,mg,"mg,mcg/kg",#37474F,0,0,0,0,0,IV,Vasoactive and resuscitation
@@ -309,6 +312,7 @@ doxapram,mcg,mg,mg/min,mg,"mg,mg/kg,mg/min,mg/kg/hr",#6D4C9F,1.5,3,2,0,0,IV,Othe
 ganciclovir,mcg,mg/kg,mg/hr,mg PO valganciclovir,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO valganciclovir,mg PO valganciclovir qd,mg PO valganciclovir bid",#0277BD,0,0,0,0,0,IV,Other
 sirolimus,ng,,,mg PO,"mg PO,mg PO qd",#4E342E,12,20,16,0,0,IV,Other
 everolimus,ng,,,mg PO bid,"mg PO,mg PO qd,mg PO bid",#6D4C41,3,8,5.5,0,0,IV,Other
+mycophenolate,mcg,,,mg PO mofetil bid,"mg PO mofetil,mg PO mofetil bid,mg PO mofetil tid",#3B7A57,0,0,0,0,0,IV,Other
 dofetilide,ng,,,mcg PO bid,"mcg PO,mcg PO bid",#37474F,0,0,0,0,0,IV,Other
 quinidine,mcg,,,mg PO sulfate,"mg PO sulfate,mg PO sulfate tid,mg PO sulfate qid,mg PO sulfate q4h",#1565C0,2,6,4,0,0,IV,Other
 nortriptyline,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#6A1B9A,70,170,120,0,0,IV,Antidepressants
@@ -364,3 +368,5 @@ emicizumab,mcg,,,mg/kg SC qwk,"mg/kg SC,mg/kg SC qwk,mg/kg SC q2wk,mg/kg SC q4wk
 tenecteplase,mcg,mg,,mg,"mg,mg/kg",#C62828,0,0,0,0,0,IV,Anticoagulants
 Zerbaxa,mcg,g,g/hr,g,"g,g tid,mg,mg tid,mg/kg,mg/kg tid,g/hr,mg/hr,mg/kg/hr",#0E6655,0,0,0,0,0,IV,Antibiotics
 ceftolozane,mcg,,,,,#0E6655,0,0,0,0,5,IV,
+factorVIII,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#1565C0,80,120,100,0,0,IV,Hemostasis and reversal
+nalbuphine,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#2E8BC0,0,0,0,0,0,IV,Opioids

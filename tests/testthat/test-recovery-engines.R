@@ -377,6 +377,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
   expect_setequal(noCe, c(
     "MEGX", "norpethidine", "PPX",  # toxic metabolites, no ke0 (2026-11-13)
     "artemether", "dihydroartemisinin", "lumefantrine",  # Coartem's components (2026-11-24)
+    "mycophenolate",  # concentration only, no ke0 (2026-11-25)
     "ceftolozane",  # Zerbaxa's drawn component (2026-11-25)
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
@@ -473,6 +474,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "mirabegron",
     # anakinra (Urien 2013, 2026-11-25): plasma only
     "anakinra",
+    "factorVIII",
     "thrombomodulinAlfa",
     "emicizumab",
     "tenecteplase",
@@ -480,6 +482,8 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "irbesartan",
     # modafinil (FDA review of NDA 20-717, 2026-11-19): plasma only, R + S parallel systems
     "modafinil",
+    # nalbuphine (Nie 2023, 2026-11-25): plasma only
+    "nalbuphine",
     # colistimethate and the colistin it forms (2026-11-16): plasma only, no
     # line until the MIC decision (R/drugs_colistin.R)
     "colistimethate", "colistin",
