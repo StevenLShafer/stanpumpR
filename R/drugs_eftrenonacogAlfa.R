@@ -95,7 +95,8 @@ EFTRENONACOG_BASELINE  <- 0.5     # IU/dL
 #'
 #' @inheritParams cefazolin
 #' @param factorIXBaseline the patient's own factor IX activity in IU/dL, or
-#'   NULL for the source population's (severe haemophilia B, 0.5 IU/dL)
+#'   NULL for 0.5 IU/dL, a chosen default within the source population's
+#'   severe haemophilia B (below 1 IU/dL)
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 eftrenonacogAlfa <- function(weight, height, age, sex, adjustToFFM = TRUE,
