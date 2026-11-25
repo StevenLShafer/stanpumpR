@@ -582,6 +582,13 @@ piperacillinTazobactamUnits <- paste(c("mg", "mg/kg", "mg/hr", "mg/kg/hr"),
 # applied and set to 0 when it is removed.
 tdRateUnits <- c("mg/day TD")
 quinidineSulfateUnits <- paste("mg PO", QUINIDINE_SALT)
+# Mycophenolate mofetil (R/drugs_mycophenolate.R): CellCept and its generics
+# are labelled and dosed as the mofetil ester, 73.9% mycophenolic acid by
+# mass, the factor the model's source converted its doses with.  The curve is
+# mycophenolic acid, so the unit names the product and the drug's
+# `doseProducts` block converts it.  Oral; twice daily, or three times.
+MYCOPHENOLATE_MOFETIL_PRODUCT <- "mofetil"
+mycophenolateMofetilUnits <- paste("mg PO", MYCOPHENOLATE_MOFETIL_PRODUCT)
 # A Coartem tablet (artemether 20 mg + lumefantrine 120 mg), the dose unit of a
 # combination product whose components are drawn separately
 # (R/combination-products.R): no simulation ever sees it, the rows being
@@ -592,7 +599,7 @@ allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, enteralRateUnits,
               slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits,
               iuUnits, scUnits, iuScUnits, ghbUnits, insulinUnits, insulinRateUnits,
               ivPotencyUnits, ivPotencyBodySizeUnits, milliunitRateUnits, aminophyllineUnits, caffeineCitrateUnits,
-              valganciclovirUnits, quinidineSulfateUnits, tdRateUnits,
+              valganciclovirUnits, quinidineSulfateUnits, mycophenolateMofetilUnits, tdRateUnits,
               piperacillinTazobactamUnits, coartemUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
@@ -671,6 +678,8 @@ scheduledUnits <- c(
   paste(valganciclovirUnits, c("qd", "bid")),
   # Quinidine sulfate's regimens (R/drugs_quinidine.R)
   paste(quinidineSulfateUnits, c("tid", "qid", "q4h")),
+  # Mycophenolate mofetil twice or three times a day (R/drugs_mycophenolate.R)
+  paste(mycophenolateMofetilUnits, c("bid", "tid")),
   # Piperacillin-tazobactam every 8 or 6 hours (R/drugs_piperacillin.R)
   as.vector(t(outer(piperacillinTazobactamUnits[1:2], c("tid", "qid", "q4h"), paste))),
   # Coartem twice a day, the label's regimen after the first day
