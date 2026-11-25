@@ -159,7 +159,7 @@
 #   Supplementary Materials.  https://doi.org/10.1002/cpt.2460
 # Correction, Clin Pharmacol Ther 2024;115:373.
 #   https://doi.org/10.1002/cpt.3143
-# Franzese RC et al., Clin Pharmacol Ther 2023;113:182-195 (renal dose
+# Franzese RC et al., Clin Pharmacol Ther 2023;113:182-195 (PMID 36239478; renal dose
 #   adjustments).  https://doi.org/10.1002/cpt.2764
 # Avycaz (ceftazidime and avibactam) label, NDA 206494, Allergan, DailyMed
 #   2026-08-11 (papers/labels/NJ_label-avycaz_206494_2026-08-11.pdf).
