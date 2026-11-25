@@ -440,6 +440,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "mirabegron",
     # anakinra (Urien 2013, 2026-11-25): plasma only
     "anakinra",
+    "tenecteplase",
     # irbesartan (Karatza 2020, 2026-11-20): plasma only, provisional
     "irbesartan",
     # modafinil (FDA review of NDA 20-717, 2026-11-19): plasma only, R + S parallel systems
