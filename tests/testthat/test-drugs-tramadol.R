@@ -439,6 +439,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     # mirabegron (FDA review of NDA 202611, 2026-11-19): plasma only
     "mirabegron",
     "thrombomodulinAlfa",
+    "emicizumab",
     "tenecteplase",
     # irbesartan (Karatza 2020, 2026-11-20): plasma only, provisional
     "irbesartan",
