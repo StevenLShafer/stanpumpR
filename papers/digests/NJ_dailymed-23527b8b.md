@@ -41,14 +41,14 @@ parameters:
   - {name: Cmax after SC 5000 units, value: 0.41, unit: units/mL, source: "12.3, p23", note: "mean ± 0.07"}
   - {name: Cmax after SC 10000 units, value: 0.82, unit: units/mL, source: "12.3, p23", note: "mean ± 0.10"}
   - {name: Tmax SC, value: 4, unit: h, source: "12.3, p23", note: "about 4 h in most subjects"}
-  - {name: F (SC, absolute), value: 0.87, unit: fraction, source: "12.3, p23", note: "87 ± 6%, healthy volunteers, anti-Xa"}
+  - {name: "F (SC, absolute)", value: 0.87, unit: fraction, source: "12.3, p23", note: "87 ± 6%, healthy volunteers, anti-Xa"}
   - {name: V, value: "40-60", unit: mL/kg, source: "12.3, p23", note: "range as printed"}
   - {name: CL (IV 30 units/kg), value: 24.6, unit: mL/h/kg, source: "12.3, p23", note: "mean ± 5.4; disposition t1/2 1.47 ± 0.3 h"}
   - {name: CL (IV 120 units/kg), value: 15.6, unit: mL/h/kg, source: "12.3, p23", note: "mean ± 2.4; disposition t1/2 2.5 ± 0.3 h"}
   - {name: terminal t1/2 (IV 40 units/kg), value: 2.1, unit: h, source: "12.3, p24", note: "± 0.3"}
   - {name: terminal t1/2 (IV 60 units/kg), value: 2.3, unit: h, source: "12.3, p24", note: "± 0.4"}
   - {name: apparent terminal t1/2 (SC), value: "3-5", unit: h, source: "12.3, p24", note: "attributed to delayed absorption"}
-  - {name: terminal t1/2 (IV 5000 units, haemodialysis CRF), value: 5.7, unit: h, source: "12.3, p24", note: "± 2.0"}
+  - {name: "terminal t1/2 (IV 5000 units, haemodialysis CRF)", value: 5.7, unit: h, source: "12.3, p24", note: "± 2.0"}
   - {name: "CL/F, 3 wk to <8 wk", value: 55.8, unit: mL/h/kg, source: "Table 12, p24", note: "derived mean (SD 3.91); Vd/F 181 (15.3) mL/kg; t1/2 2.25 (0.173) h"}
   - {name: "CL/F, 8 wk to <2 y", value: 40.4, unit: mL/h/kg, source: "Table 12, p24", note: "SD 8.49; Vd/F 175 (55.3); t1/2 3.02 (0.688)"}
   - {name: "CL/F, 2 to <8 y", value: 26.7, unit: mL/h/kg, source: "Table 12, p24", note: "SD 4.75; Vd/F 160 (25.6); t1/2 4.27 (1.05)"}

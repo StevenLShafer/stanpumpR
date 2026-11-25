@@ -40,8 +40,8 @@ parameters:
   - {name: F (absolute), value: "0.68-0.74", unit: fraction, source: "12.3 Absorption, p20", note: approximately}
   - {name: Tmax (steady state), value: "3-5", unit: h, source: "12.3 Absorption, p20", note: "no food effect on fenfluramine or norfenfluramine"}
   - {name: protein binding, value: 0.50, unit: fraction, source: "12.3 Distribution, p20", note: "in vitro, concentration-independent"}
-  - {name: Cmax,ss (DS children), value: 68.0, unit: ng/mL, source: "12.3, p19", note: "geometric mean (CV 41%), 0.7 mg/kg/day up to 26 mg/day"}
-  - {name: AUC0-24,ss (DS children), value: 1390, unit: ng*h/mL, source: "12.3, p19", note: "geometric mean (CV 44%)"}
+  - {name: "Cmax,ss (DS children)", value: 68.0, unit: ng/mL, source: "12.3, p19", note: "geometric mean (CV 41%), 0.7 mg/kg/day up to 26 mg/day"}
+  - {name: "AUC0-24,ss (DS children)", value: 1390, unit: ng*h/mL, source: "12.3, p19", note: "geometric mean (CV 44%)"}
 ```
 **Other PK statements in 12.3:**
 - Steady-state Cmax and AUC are slightly more than dose-proportional from 13 to 51.8 mg BID.
