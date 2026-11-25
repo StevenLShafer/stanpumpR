@@ -56,7 +56,7 @@ parameters:
   - {name: F_3600mg_day, value: 0.33, unit: fraction, source: "12.3"}
   - {name: F_4800mg_day, value: 0.27, unit: fraction, source: "12.3"}
   - {name: t_half, value: "5-7", unit: h, source: "12.3", note: normal renal function}
-  - {name: t_half_CrCL_lt30, value: 52, unit: h, source: "12.3", note: "mean, single 400 mg"}
+  - {name: t_half_CrCL_lt30, value: 52, unit: h, source: "12.3", note: mean, single 400 mg}
   - {name: CL_F_young, value: 225, unit: mL/min, source: "12.3 Age", note: "<30 y, approximate"}
   - {name: responder_rate_1200mg_day_study1, value: 23, unit: "%", source: "14.2, PDF p.29", note: "14/61; placebo 9% (6/66); significant"}
   - {name: responder_rate_600mg_day_study2, value: 17, unit: "%", source: "14.2, PDF p.29", note: "N=53; placebo 8%; not significant"}

@@ -35,8 +35,8 @@ parameters:
   - {name: dose proportionality (AUC), value: "15-30", unit: mg, source: "p.3"}
   - {name: Cmax 30 mg capsule, value: 865, unit: ng/mL, source: "Bioavailability, Induction, and Plasma Levels, p.3", note: "mean; range 666-982"}
   - {name: Tmax 30 mg, value: 1.5, unit: h, source: "p.3", note: "mean; about 1.2-1.6 h; measurable at 10-20 min"}
-  - {name: "C 9 h, 30 mg nightly days 2-7", value: "260 +/- 210", unit: ng/mL, source: "p.3", note: "mean +/- SD; 7-day study, dose 1 h before retiring"}
-  - {name: "C 24 h, 30 mg nightly days 2-7", value: "75 +/- 80", unit: ng/mL, source: "p.3", note: "steady state (max trough) by the third dose; slight decline after day 4"}
+  - {name: C 9 h, 30 mg nightly days 2-7, value: "260 +/- 210", unit: ng/mL, source: "p.3", note: "mean +/- SD; 7-day study, dose 1 h before retiring"}
+  - {name: C 24 h, 30 mg nightly days 2-7, value: "75 +/- 80", unit: ng/mL, source: "p.3", note: "steady state (max trough) by the third dose; slight decline after day 4"}
 ```
 - No active metabolites; no enzyme induction at 30 mg/day for 8 weeks; cimetidine does not alter PK.
 - Absolute bioavailability is not stated as such. (derived: F = 0.92 if absorption is complete and 8% is lost
