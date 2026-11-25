@@ -25,3 +25,13 @@ The minute ventilation whose alveolar part is GasMan's default alveolar
 ventilation: 4 L/min at 70 kg, scaled by \code{(weight / 70)^0.75}.  With a
 dead space of 30\% that is 5.7 L/min at 70 kg.
 }
+\details{
+DECIDED (Shafer, 2026-11-25): this default stays scaled with total
+weight, "That is how clinicians think about it", although the gas
+compartments now follow fat-free and fat mass (getGasBody()).  The
+question as put: a 150 kg man of 170 cm gets 10.1 L/min against 5.7 at
+70 kg, and his 90\% fall of brain sevoflurane after five hours at 2.5\%
+inspired is 17 minutes against 27.5 at 70 kg (56 at a fixed 5.7 L/min; 114
+with the old linear compartments at 5.7); following fat-free mass would
+have given him about 7.5 L/min.
+}

@@ -4,12 +4,15 @@
 \alias{gasBodySteps}
 \title{The bodies of a gas run with physiology events}
 \usage{
-gasBodySteps(weight, events)
+gasBodySteps(weight, events, base = getGasBody(weight))
 }
 \arguments{
 \item{weight}{patient weight, kg}
 
 \item{events}{physiologyEventsFrom()'s data frame, at least one row}
+
+\item{base}{the patient's body before physiology (getGasBody()), by
+default GasMan's linear scaling of \code{weight}}
 }
 \value{
 list(time, body): normal physiology from 0 and each event's from

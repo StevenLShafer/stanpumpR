@@ -20,7 +20,10 @@ simulateGases(
   endobronchial = FALSE,
   physiologyEvents = NULL,
   haemoglobin = NULL,
-  shunt = NULL
+  shunt = NULL,
+  height = NULL,
+  sex = NULL,
+  adjustToFFM = TRUE
 )
 }
 \arguments{
@@ -72,6 +75,13 @@ does not read it}
 \item{shunt}{NULL (0.5), or the share of cardiac output through the
 unventilated lung with an endobronchial tube, 0 to 0.5
 (R/endobronchial.R); ignored without the tube}
+
+\item{height, sex}{the patient's height (cm) and sex, which with \code{age}
+scale the compartments by body composition (getGasBody()); NULL for
+GasMan's linear scaling in weight}
+
+\item{adjustToFFM}{FALSE for GasMan's linear scaling whatever is given
+(the Patient Profile's fat-free-mass switch)}
 }
 \value{
 \code{NULL} if the dose table contains no gases, otherwise the list

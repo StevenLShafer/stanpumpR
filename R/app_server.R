@@ -1490,7 +1490,11 @@ app_server <- function(input, output, session) {
         shunt = shunt(),
         physiologyEvents = physiologyEvents(),
         age     = age(),
-        maximum = plotMaximum()
+        maximum = plotMaximum(),
+        # The compartments scaled by body composition (getGasBody())
+        height  = height(),
+        sex     = sex(),
+        adjustToFFM = adjustToFFM()
       )
       gasRows <- DT[isGasDrug(DT$Drug), , drop = FALSE]
 
@@ -1899,7 +1903,8 @@ app_server <- function(input, output, session) {
         }
         DTg <- doseTableClean()
         if (!is.null(DTg) && any(isGasDrug(DTg$Drug)) && is.null(gasRowsProblem())) {
-          sim <- simulateGases(DTg, weight = weight(), age = age(), maximum = plotMaximum())
+          sim <- simulateGases(DTg, weight = weight(), age = age(), maximum = plotMaximum(),
+                               height = height(), sex = sex(), adjustToFFM = adjustToFFM())
           gasEntries <- gasDrugEntries(sim, DTg[isGasDrug(DTg$Drug), , drop = FALSE],
                                        drugDefaults(), plotMaximum(), age = age(),
                                        macThreshold = macThreshold())
