@@ -143,6 +143,7 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
                           gestationalAge = NULL,
                           albumin = NULL,
                           ast = NULL,
+                          factorBaselines = NULL,
                           opioidTolerance = OPIOID_TOLERANCE_DEFAULT,
                           buprenorphineOffset = BUPRENORPHINE_OFFSET_DEFAULT,
                           individual = NULL,
@@ -191,6 +192,8 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
         gestationalAge = gestationalAge,
         albumin = albumin,
         ast = ast,
+        # The clotting-factor baselines (R/factorBaselines.R)
+        factorBaselines = factorBaselines,
         # The Bayesian update's estimate for this drug, or NULL
         # (R/bayesian.R): a list of clearance and volume factors, by drug.
         individual = individual[[drug]],
