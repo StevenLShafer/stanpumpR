@@ -79,8 +79,11 @@
 #
 # RENAL FUNCTION: none; factor VIII is not cleared by the kidney.
 #
-# PREGNANCY: no pharmacokinetic study of factor VIII concentrate in
-# pregnancy (inst/extdata/pregnancyRegistry.csv).  Endogenous factor VIII
+# PREGNANCY: no pharmacokinetic study of these concentrates in pregnancy.
+# Al Arashi 2025 found factor VIII clearance lower at delivery after a
+# plasma-derived VWF/FVIII concentrate in von Willebrand disease, the VWF given
+# with it part of the cause; recorded in direction, not applied
+# (inst/extdata/pregnancyRegistry.csv).  Endogenous factor VIII
 # rises two- to threefold in late pregnancy; that is the baseline field's to
 # carry, not this model's.
 #

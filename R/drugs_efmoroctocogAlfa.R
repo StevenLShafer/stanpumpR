@@ -30,8 +30,10 @@
 # BAND: ELOCTATE's perioperative target for major surgery, 80 to 120 IU/dL
 # before and after the operation (label Table 2); minor surgery 50 to 80.
 #
-# PREGNANCY: no pharmacokinetic study in pregnancy (ELOCTATE label 8.1;
-# inst/extdata/pregnancyRegistry.csv).
+# PREGNANCY: no pharmacokinetic study of ELOCTATE in pregnancy (label 8.1).
+# Al Arashi 2025 found factor VIII clearance lower at delivery after a
+# plasma-derived VWF/FVIII concentrate in von Willebrand disease; recorded in
+# direction, not applied (inst/extdata/pregnancyRegistry.csv).
 #
 # References
 # ----------

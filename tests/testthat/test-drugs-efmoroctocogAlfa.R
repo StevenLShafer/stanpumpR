@@ -14,9 +14,17 @@ test_that("the standard model's clearance times exp(-0.394), nothing else change
 test_that("pinned values: the reference man with the switch off, a heavy woman with it on", {
   # switch off, 70 kg, 35 years: CL = 204 x (35/30)^-0.214 x (70/64)^0.75 x exp(-0.394) mL/h,
   # V1 = 2640 x (70/64)^0.827 mL, Q 135 mL/h, V2 339 mL
-  pk <- efmoroctocogAlfa(70, 170, 35, "male", FALSE)$PK$default
-  expect_equal_rounded(c(pk$v1, pk$v2, pk$cl1, pk$cl2),
-                       c(2.843081, 0.339, 0.002372624, 0.00225))
+  X <- efmoroctocogAlfa(70, 170, 35, "male", FALSE)
+  expect_setequal(names(X), c("PK", "tPeak", "MEAC", "typical", "upperTypical",
+                              "lowerTypical", "reference", "endogenousActivity"))
+  expect_identical(names(X$PK), "default")
+  pk <- X$PK$default
+  expect_equal_rounded(c(pk$v1, pk$v2, pk$v3, pk$cl1, pk$cl2, pk$cl3),
+                       c(2.843081, 0.339, 1, 0.002372624, 0.00225, 0))
+  expect_equal(c(X$tPeak, X$MEAC, X$typical, X$upperTypical, X$lowerTypical,
+                 X$endogenousActivity), c(0, 0, 100, 120, 80, 0.5))
+  expect_match(X$reference, "Allard 2020", fixed = TRUE)
+  expect_match(X$reference, "ELOCTATE|Elocta")
   pk <- efmoroctocogAlfa(110, 165, 50, "female", TRUE)$PK$default
   expect_equal_rounded(c(pk$v1, pk$v2, pk$cl1, pk$cl2),
                        c(2.880294, 0.3443727, 0.002224342, 0.002276692))
