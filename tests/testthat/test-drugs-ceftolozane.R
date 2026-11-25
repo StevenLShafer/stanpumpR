@@ -106,7 +106,7 @@ test_that("Zerbaxa is simulated as 2/3 of its weight of ceftolozane", {
 
 test_that("Zerbaxa offers the label's units and refuses a TCI target", {
   dd <- getDrugDefaultsGlobal()
-  units <- strsplit(as.character(dd$Units[dd$Drug == "Zerbaxa"]), ",")[[1]]
+  units <- unlist(dd$Units[dd$Drug == "Zerbaxa"])
   expect_true(all(c("g", "g tid", "mg/kg", "mg/kg tid", "g/hr", "mg/kg/hr") %in% units))
   expect_true(all(combinationUnitOk("Zerbaxa", units)))
   expect_false(combinationUnitOk("Zerbaxa", "Plasma target"))
