@@ -16,7 +16,7 @@ IMPLEMENTED <- c("epinephrine", "magnesiumSulfate", "labetalol", "diltiazem",
                  "verapamil", "phenylephrine", "milrinone", "milrinonePediatric",
                  "metoprolol", "nicardipine", "digoxinIV", "digoxinIVPediatric",
                  "vasopressin", "hydralazine", "dobutamineNeonatal",
-                 "methyleneBlue", "landiolol")
+                 "methyleneBlue", "landiolol", "levosimendan")
 
 # Every drug that was asked for, by its name in the registry
 REQUESTED <- c("clevidipine", "sodium nitroprusside", "nitroglycerin",
@@ -30,7 +30,7 @@ REQUESTED <- c("clevidipine", "sodium nitroprusside", "nitroglycerin",
                # asked for on 2026-10-27
                "dobutamine",
                # asked for on 2026-11-25 (docs/library-expansion/plan.csv)
-               "landiolol")
+               "landiolol", "levosimendan")
 
 test_that("every row is fully classified with a clickable source", {
   for (col in c("model_id", "drug", "route", "population", "analyte", "matrix",
@@ -238,6 +238,12 @@ test_that("the audit's numbers are the ones the models use", {
   expect_equal(value("procainamide", "Vd"), PROCAINAMIDE_VD)
   expect_equal(value("esmolol", "CL") / 1000, ESMOLOL_CL)
   expect_equal(value("esmolol", "Vc"), ESMOLOL_V1)
+  expect_equal(value("levosimendan", "CL (76 kg)") / 60, LEVOSIMENDAN_CL)
+  expect_equal(value("levosimendan", "V1 (76 kg)"), LEVOSIMENDAN_V1)
+  expect_equal(value("levosimendan", "Q") / 60, LEVOSIMENDAN_Q)
+  expect_equal(value("levosimendan", "V2"), LEVOSIMENDAN_V2)
+  expect_equal(value("levosimendan", "weight on CL") / 100, LEVOSIMENDAN_CL_SLOPE)
+  expect_equal(value("levosimendan", "weight on V1") / 100, LEVOSIMENDAN_V1_SLOPE)
   expect_equal(value("landiolol", "CL") / 1000, LANDIOLOL_CL)
   expect_equal(value("landiolol", "V1") / 1000, LANDIOLOL_V1)
   expect_equal(value("landiolol", "Q") / 1000, LANDIOLOL_Q)

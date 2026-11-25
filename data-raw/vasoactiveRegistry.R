@@ -208,6 +208,20 @@ registry <- rbind(
       NA,
       "Kunisawa T, Yamagishi A, Suno M, et al. Target-controlled infusion and population pharmacokinetics of landiolol hydrochloride in patients with peripheral arterial disease. Ther Clin Risk Manag 2015;11:107-114. PMID 25653534.",
       doi("10.2147/TCRM.S74867")),
+  reg("levosimendan__heart_failure__jonsson2003", "levosimendan",
+      "190 patients with NYHA III-IV heart failure, 30-84 years, 46-130 kg; 10-min load then 0.05-0.6 mcg/kg/min for 6-48 h", "levosimendan (parent)", "plasma",
+      "implemented", "levosimendan", "full_text",
+      "Read on the PDF (2026-11-25): two compartments, weight linear on CL and V1 about 76 kg (held within the studied 46-130 kg, allometric beyond).  The parent only: the long-acting metabolite OR-1896 needs Kivikko 2002 (papers/pending-work.csv) and an engine for a metabolite of a metabolite.  Shafer's choice of source, 2026-11-25 (card PMID_41288922).",
+      NA,
+      "Jonsson EN, Antila S, McFadyen L, Lehtonen L, Karlsson MO. Population pharmacokinetics of levosimendan in patients with congestive heart failure. Br J Clin Pharmacol 2003;55(6):544-551. PMID 12814448.",
+      doi("10.1046/j.1365-2125.2003.01778.x")),
+  reg("levosimendan__va_ecmo__bertin2026", "levosimendan",
+      "21 critically ill patients on VA-ECMO: 15 adults and 6 neonates and infants", "levosimendan, OR-1855 and OR-1896", "plasma (arterial)",
+      "complete_not_implemented", NA, "full_text",
+      "Read on the PDF with its supplement (2026-11-25): two compartments for the parent, a transit compartment to OR-1855, OR-1896 formed from it with back-conversion; estimates rounded in Table 2, full precision in the supplement.  Kept as the record for ECMO and infants; Jonsson 2003's 190 adults are the parent's source.",
+      NA,
+      "Bertin S, Guidi M, Haefliger D, et al. Population pharmacokinetics of levosimendan and its metabolites OR-1855 and OR-1896 in critically ill adults, neonates and infants on veno-arterial ECMO. Clin Pharmacokinet 2026;65:241-255. PMID 41288922.",
+      doi("10.1007/s40262-025-01591-4")),
   # --- A candidate model exists; the paper is needed ---------------------------
   reg("landiolol__healthy__honda2008", "landiolol",
       "47 healthy Japanese men", "landiolol hydrochloride", "plasma",
@@ -792,6 +806,7 @@ AB  <- doi("10.1186/cc7972")
 DU  <- doi("10.1002/jcph.1328")
 KA  <- pubmed(7203731)
 KU15 <- doi("10.2147/TCRM.S74867")
+JON03 <- doi("10.1046/j.1365-2125.2003.01778.x")
 HO  <- doi("10.1097/00007691-198804000-00006")
 AR  <- doi("10.1111/j.1365-2125.1983.tb02182.x")
 LI  <- doi("10.1007/s40262-024-01430-y")
@@ -954,6 +969,12 @@ parameters <- rbind(
   par("landiolol", "V2", 54.4, "mL/kg", "estimated", "full_text", KU15),
   par("landiolol", "lag time (not represented)", 0.633, "min", "estimated", "full_text", KU15),
   par("landiolol", "tPeak", 2, "min (Krumpl 2017: lowest heart rate 2 min after 0.2 and 0.3 mg/kg given at 0.1 mg/kg per 15 s, Table 4)", "estimated", "full_text", doi("10.1007/s00228-016-2176-0")),
+  par("levosimendan", "CL (76 kg)", 13.3, "L/h", "estimated", "full_text", JON03),
+  par("levosimendan", "weight on CL", 1.5, "% per kg about 76 kg", "estimated", "full_text", JON03),
+  par("levosimendan", "V1 (76 kg)", 16.8, "L", "estimated", "full_text", JON03),
+  par("levosimendan", "weight on V1", 0.9, "% per kg about 76 kg", "estimated", "full_text", JON03),
+  par("levosimendan", "Q", 2.33, "L/h", "estimated", "full_text", JON03),
+  par("levosimendan", "V2", 30.0, "L", "estimated", "full_text", JON03),
   par("esmolol", "tPeak", 2, "min (Krumpl 2017: lowest heart rate 2 min after 1 mg/kg over 30 s)", "estimated", "full_text", doi("10.1007/s00228-016-2176-0")),
   par("metoprolol", "tPeak", 5, "min (Ritchie 1998: peak effects observed 5-10 min after a bolus; fixed at 5 on the user's decision)", "fixed", "full_text", doi("10.1021/js9702776")),
   par("phenylephrine", "tPeak", 0.7, "min (Schwinn 1989: MAP, CO and SVR changes maximal about 42 s after a bolus)", "estimated", "abstract", pubmed(2541637)),
