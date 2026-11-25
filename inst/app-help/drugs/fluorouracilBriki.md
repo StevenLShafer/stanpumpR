@@ -1,17 +1,21 @@
 ### The model
 
-Fluorouracil (5-FU) comes from Briki and colleagues (*Cancer Chemother Pharmacol* 2026;96:63), a meta-analysis of individual patient data: 2332 plasma concentrations from 726 adults with cancer, 24 to 90 years old, pooled from two published studies with rich sampling (Terret 2000, Mueller 2013) and routine drug monitoring at the Dijon cancer centre. The patients received LV5FU2, FOLFOX, FOLFIRI or FOLFIRINOX: a bolus, a 46-hour infusion, or both. Two compartments describe the disposition, and 5-FU leaves the central compartment by two routes at once: a **saturable** pathway (its maximal rate Vmax 429 mg/h, half-saturated at Km 2.34 mg/L) and a **linear** clearance of 52.6 L/h. The central volume is 9.21 L, the peripheral volume 14.6 L and the intercompartmental clearance 125 L/h.
+Fluorouracil (5-FU) comes from Briki and colleagues (*Cancer Chemother Pharmacol* 2026;96:63), a meta-analysis of individual patient data: 2332 plasma concentrations from 726 adults with cancer, 24 to 90 years old, pooled from two published studies with rich sampling (Terret 2000, Mueller 2013) and routine drug monitoring at the Dijon cancer centre. The patients received LV5FU2, FOLFOX, FOLFIRI or FOLFIRINOX: a bolus, a 46-hour infusion, or both. Two compartments describe the disposition, and 5-FU leaves the central compartment by two routes at once: a **saturable** pathway (its maximal rate Vmax 411 mg/h, half-saturated at Km 1.89 mg/L) and a **linear** clearance of 59.2 L/h. The central volume is 9.58 L, the peripheral volume 13.6 L and the intercompartmental clearance 112 L/h.
+
+These are the values of the authors' **alternative model**, in the paper's supplement (Table S3), which puts lean body mass on Vmax where their main model (Table 3) put sex. Steven Shafer chose it (25 November 2026): a sex term on a clearance with no weight term stands in for body size, and gives no rational way to scale a patient unlike the study's. Lean mass explains the sex difference completely. The study's men carried about 56 kg of lean mass and its women about 39.5 kg, and the model's lean-mass exponent turns that into the 18% sex difference of the main model. Once lean mass was in the model, sex added nothing.
 
 Because elimination saturates, doubling a dose more than doubles the concentration. The engine integrates the whole dose table numerically, because saturable elimination is not superposable, so a bolus given during an infusion is cleared more slowly than the same bolus given alone.
 
 ### Covariates
 
-- **Body surface area** on the linear clearance: (BSA/1.7)^2.61, with BSA by Mosteller's formula. A BSA of 1.5 m² gives a linear clearance 53% lower than 2.0 m².
-- **Sex** on Vmax: 18% higher in men. The authors read this as the effect of lean body mass, which their alternative model put in its place.
-- **Age** on Vmax: about 18% lower at 80 years than at 40. It is held within the 24 to 90 years studied.
+- **Lean body mass** on Vmax: (LBM/55 kg)^0.484. Men's Vmax is higher than women's because they carry more lean mass, not because of a separate term for sex. With [the scaling switch](help:models/fat-free-mass) on, the lean mass is the patient's fat-free mass; with it off, Janmahasatian's lean body weight, as published.
+- **Age** on Vmax: 1 − 0.292 × (age − 60)/60, about 18% lower at 80 years than at 40 for the same lean mass. It is held within the 24 to 90 years studied.
+- **Body surface area** on the linear clearance: (BSA/1.7)^1.62, with BSA by Mosteller's formula.
 - **Weight** on the peripheral volume, in proportion.
 
-With [the scaling switch](help:models/fat-free-mass) on, the weight and BSA terms use the pharmacokinetic weight (the weight that gives the patient's fat-free mass); with it off they use total body weight, as published. Renal function and the DPD phenotype were tested and not retained.
+With the switch on, the BSA and weight terms use the pharmacokinetic weight (the weight that gives the patient's fat-free mass); with it off they use total body weight, as published. Renal function and the DPD phenotype were tested and not retained.
+
+The central volume and the intercompartmental clearance have no size term of their own, so with the switch on they belong to the study's typical patient, not to stanpumpR's 70-kg reference man, and are scaled from that patient by fat-free mass: the medians of the three pooled studies (63 to 69 years, 67 to 76 kg, 168 to 171 cm; 422 men and 304 women). A 70-kg, 170-cm man therefore receives a central volume of 10.7 L and an intercompartmental clearance of 121 L/h, rather than the 9.58 L and 112 L/h of the study's patients. With the switch off, the published values are used.
 
 ### What is plotted
 
@@ -27,4 +31,4 @@ The target for colorectal cancer is an **AUC of 20 to 30 mg·h/L over the 46-hou
 - **Adults only.**
 - **Not a monitoring tool.** The curve is a population prediction for the covariates entered. It is not an estimate from a measured level, and it does not replace monitoring or the published dose-adjustment tables.
 
-Every parameter and equation was confirmed against the paper's PDF (its Table 3 and printed equations). See [chemotherapy](help:models/chemotherapy) for the other models considered.
+Every parameter and equation was confirmed against the paper's PDF and its supplement (Table S3 and its equations). See [chemotherapy](help:models/chemotherapy) for the other models considered.

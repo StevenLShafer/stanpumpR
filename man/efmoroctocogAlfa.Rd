@@ -30,7 +30,8 @@ file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
 
 \item{factorVIIIBaseline}{the patient's own factor VIII activity in IU/dL,
-or NULL for the source population's (severe haemophilia A, 0.5 IU/dL)}
+or NULL for 0.5 IU/dL, a chosen default within the source population's
+severe haemophilia A (below 1 IU/dL)}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

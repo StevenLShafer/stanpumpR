@@ -154,10 +154,15 @@ check is not forgotten.
   its subscripts in that text; each value was identified from its units and the text, and the
   identification is held by the test to the four percentages the paper states (men's Vmax +18%,
   80 against 40 years -17%, an 80-year-old woman against a 40-year-old man -30%, BSA 1.5 against
-  2.0 -53%). The size covariates (BSA on the linear clearance, weight on V2) are evaluated at the
-  pharmacokinetic weight with the switch on, as for cefazolin; Vmax is not scaled by fat-free
-  mass, because its sex term already carries lean mass and scaling it again would count sex
-  twice; age is held to the 24-90 years studied. The test checks the engine's plateau during a
+  2.0 -53%). **Since 2026-11-25 the model is the authors' alternative, supplement Table S3**
+  (Shafer's decision, PR #897): lean body mass on Vmax, (LBM/55)^0.484, in place of sex, with
+  its own Km, CL, BSA exponent, V1, Q and V2. A sex term on a clearance with no weight term is a
+  surrogate for size; the lean-mass exponent reproduces the main model's sex factor (Fig S3's
+  lean mass by sex, 1.42^0.484 = 1.185 against 1.183), where the library's FFM^0.75 would give
+  1.30, and with lean mass in, sex added nothing (Fig S2B). The size covariates are kept as
+  fitted: with the switch on Vmax reads the patient's fat-free mass and BSA and V2 the
+  pharmacokinetic weight, as for cefazolin; V1 and Q are anchored at the cohort (Table 2, F22);
+  age is held to the 24-90 years studied. The test checks the engine's plateau during a
   46-h infusion against an independent solution of R = CL C + Vmax C/(Km + C). Not represented:
   DPD deficiency, the slow rise of the plateau during an infusion, circadian variation. The AUC
   target (20-30 mg h/L over 46 h, Beumer 2019; Briki's grid uses 20-29) is recorded, `not_applicable`, and not drawn.
@@ -218,7 +223,7 @@ albumin field (section 16).
 Tan 2026 (`R/drugs_fluorouracilTan.R`), from the PDF Shafer supplied, offered beside Briki 2026
 as levodopaSimon is beside levodopa: two compartments with saturable elimination alone, BSA on
 Vmax. It reproduces the paper's Table 3 median AUCs to within 2%. For the same patient Briki's
-model gives about 14% less exposure; the help pages of both say so, and neither is preferred.
+model gives 12-14% less exposure (since 2026-11-25, on its Table S3 model); the help pages of both say so, and neither is preferred.
 
 ## 12. Etoposide in children
 
