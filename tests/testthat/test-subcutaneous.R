@@ -113,6 +113,26 @@ test_that("a weekly SC dose repeats every 7 days to the end of the plot", {
   expect_true(all(x$dose$Units == "mg SC"))
 })
 
+test_that("q2wk and q4wk repeat every 14 and 28 days, SC units only (Shafer, 2026-11-25)", {
+  expect_true(all(c("mg/kg SC q2wk", "mg/kg SC q4wk", "mg SC q2wk") %in% scheduledUnits))
+  expect_false(any(grepl(" q[24]wk$", setdiff(scheduledUnits,
+    as.vector(outer(c(scUnits, insulinUnits), names(ALL_SCHEDULE_INTERVALS), paste))))))
+  expect_equal(doseRoute(c("mg/kg SC q2wk", "mg SC q4wk")), rep(ROUTE_SC, 2))
+  x <- expandScheduledDoses(doseRows("semaglutide", 0, 1, "mg SC q2wk"), 9 * MINS_PER_WEEK)
+  expect_equal(x$scheduled$Time, c(2, 4, 6, 8) * MINS_PER_WEEK)
+  x <- expandScheduledDoses(doseRows("semaglutide", 0, 1, "mg SC q4wk"), 13 * MINS_PER_WEEK)
+  expect_equal(x$scheduled$Time, c(4, 8, 12) * MINS_PER_WEEK)
+  expect_true(all(x$dose$Units == "mg SC"))
+  # Emicizumab's label regimen: 3 mg/kg weekly for 4 weeks, then 6 mg/kg every
+  # 4 weeks; the later schedule on the route replaces the weekly one
+  dt <- data.frame(Drug = "semaglutide", Time = c(0, 4 * MINS_PER_WEEK),
+                   Dose = c(3, 6), Units = c("mg/kg SC qwk", "mg/kg SC q4wk"))
+  x <- expandScheduledDoses(dt, 13 * MINS_PER_WEEK)
+  all <- x$dose[order(x$dose$Time), ]   # the expanded table, repeats included
+  expect_equal(all$Time, c(0, 1, 2, 3, 4, 8, 12) * MINS_PER_WEEK)
+  expect_equal(all$Dose, c(3, 3, 3, 3, 6, 6, 6))
+})
+
 test_that("a parallel zero-order share enters the circulation as a box", {
   v <- 10; cl <- 1; ka <- 0.05; lag <- 5; T0 <- 60; phi <- 0.3; D <- 4
   model <- scModel(v, cl, ka, 1, lag, block = list(
