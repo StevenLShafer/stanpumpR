@@ -352,7 +352,7 @@ frontEndRecirculatory <- function(spec)
   # Arterial concentration, Ca = aRow . x
   aRow <- numeric(nState)
   for (i in seq_along(central)) {
-    last <- idx(tail(chains[[paste0("central", i)]]$states, 1))
+    last <- idx(utils::tail(chains[[paste0("central", i)]]$states, 1))
     aRow[last] <- fractions[i] / sys$volume[last]
   }
   # Arterial blood feeds every pathway at its flow, and elimination at ClE.
@@ -376,7 +376,7 @@ frontEndRecirculatory <- function(spec)
   # 1992 modelled indocyanine green from the slow circuit, eq. 11).
   venous <- numeric(nState)
   for (k in seq_along(pathways)) {
-    last <- idx(tail(chains[[pname[k]]]$states, 1))
+    last <- idx(utils::tail(chains[[pname[k]]]$states, 1))
     cl <- clearance[[pname[k]]]
     out <- if (clearanceInFlow[[pname[k]]]) flows[k] - cl else flows[k]
     venous[last] <- out / sys$volume[last]
@@ -743,7 +743,7 @@ frontEndBET <- function(target, pk, duration, start = 0)
 frontEndAreaFromTarget <- function(time, conc, target)
 {
   d <- conc - target
-  sum(diff(time) * (head(d, -1) + tail(d, -1)) / 2)
+  sum(diff(time) * (utils::head(d, -1) + utils::tail(d, -1)) / 2)
 }
 
 #' Fit a mammillary model to concentrations, as a conventional analysis would
