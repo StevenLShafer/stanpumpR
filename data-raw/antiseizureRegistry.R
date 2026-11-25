@@ -231,7 +231,7 @@ registry <- rbind(
       "vigabatrin (S(+) enantiomer active)", "vigabatrin S(+) (apparent, oral)",
       "racemate 2C + 5 transit; S(+) 1C zero-order", "pk_only", NA,
       "https://doi.org/10.1002/jcph.1309",
-      "Ounissi 2019 S(+) CL/F 2.36 L/h AT A REFERENCE BODY WEIGHT OF 12.1 kg, with CL/F = 2.36 x (BW/12.1)^1.04 (Table 2); the value is per S-enantiomer and apparent (F unknown), on half the racemic dose as input. Quoted without that reference weight until 2026-11-25, which made it unusable as a per-patient number. Zero-order absorption and irreversible GABA-transaminase inhibition limit plasma modelling."),
+      "Ounissi 2019 PEDIATRIC model: S(+) CL/F 2.36 L/h AT A REFERENCE BODY WEIGHT OF 12.1 kg, with CL/F = 2.36 x (BW/12.1)^1.04 (Table 2), fitted in 28 children aged 0.4-5.7 years weighing 6.5-22.8 kg, whose authors warn it should not be used outside those ages or weights. The value is per S-enantiomer and apparent (F unknown), on half the racemic dose as input. Quoted without the reference weight or the population until 2026-11-25, which made it unusable as a per-patient number and readable as an adult clearance. The paper also carries a SEPARATE adult model (S(+), two compartments, CL/F 11.5 L/h and V1/F 54.6 L at 70 kg, built from Haegele 1986 and scaled to children by allometry and Rhodin maturation), so the pediatric number must not be quoted for adults. Zero-order absorption and irreversible GABA-transaminase inhibition limit plasma modelling."),
   reg("Zonisamide", "oral capsule/suspension", L, FIT,
       "zonisamide base", "zonisamide (apparent, oral)",
       "1C first-order", "pk_only", "zonisamide",
