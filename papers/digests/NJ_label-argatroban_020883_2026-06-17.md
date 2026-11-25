@@ -39,7 +39,7 @@ parameters:
   - {name: protein binding, value: 54, unit: "%", source: "12.3, p14", note: "albumin 20%, alpha1-acid glycoprotein 34%"}
   - {name: CL, value: 5.1, unit: mL/kg/min, source: "12.3, p14", note: "0.31 L/kg/h, for infusions up to 40 mcg/kg/min"}
   - {name: terminal t1/2, value: "39-51", unit: min, source: "12.3, p14"}
-  - {name: CL (hepatic impairment, Child-Pugh > 6), value: 1.9, unit: mL/kg/min, source: "12.3, p14", note: "at 2.5 mcg/kg/min; t1/2 181 min"}
+  - {name: "CL (hepatic impairment, Child-Pugh > 6)", value: 1.9, unit: mL/kg/min, source: "12.3, p14", note: "at 2.5 mcg/kg/min; t1/2 181 min"}
   - {name: unchanged drug in urine, value: 16, unit: "% of dose", source: "12.3, p14", note: "faeces at least 14%; radioactivity 65% faeces, 22% urine"}
   - {name: dialysis removal, value: 20, unit: "% over 4 h", source: "12.3, p15; 10, p12", note: "2 mcg/kg/min during haemodialysis"}
   - {name: CL (seriously ill children), value: 0.16, unit: L/h/kg, source: "8.4, p11", note: "population PK in 15 patients; 0.03 with elevated bilirubin (n=4)"}

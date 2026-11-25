@@ -35,7 +35,7 @@ No compartmental model. Section 12.3 (label p. 18):
 ```yaml
 parameters:
   - {name: F_parenteral, value: 1, unit: fraction, source: "12.3 Absorption", note: "'completely absorbed' (qualitative, no number given)"}
-  - {name: t_half_elim, value: "1.5-2", unit: h, source: "12.3 Elimination", note: after IV bolus, typical}
+  - {name: t_half_elim, value: "1.5-2", unit: h, source: "12.3 Elimination", note: "after IV bolus, typical"}
   - {name: protein_binding, value: "60-80", unit: "%", source: "12.3 Distribution", note: "at 1-4 mcg free base/mL"}
   - {name: fraction_excreted_unchanged, value: "<10", unit: "%", source: "12.3 Excretion"}
   - {name: max_dose_with_epi, value: 7, unit: mg/kg, source: "2.6", note: "not to exceed 500 mg total"}
