@@ -7,7 +7,7 @@
 fludarabineEGFR(weight, height, age, sex, scr)
 }
 \description{
-Cockcroft-Gault from 17 years (girls) or 14 (boys), Schwartz 1976 below,
+Cockcroft-Gault per 70 kg from 17 years (girls) or 14 (boys), Schwartz 1976 below,
 with the paper's age-dependent cap.
 }
 \keyword{internal}

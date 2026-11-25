@@ -51,13 +51,19 @@ test_that("returns the correct calculations", {
 })
 
 test_that("scales to fat-free mass for a 120 kg man, linearly with the switch off", {
-  size <- pkSizeFactors(120, 170, 50, "male", TRUE)
-  on <- diphenhydramine(120, 170, 50, "male")$PK$default
-  expect_equal(on$v1, 231 * size$volume, tolerance = 1e-6)
-  expect_equal(on$cl1, 0.6846 * size$clearance, tolerance = 1e-6)
-  off <- diphenhydramine(120, 170, 50, "male", adjustToFFM = FALSE)$PK$default
-  expect_equal(off$v1, 231 * 120 / 70, tolerance = 1e-6)
-  expect_equal(off$cl2, 1.1797062 * 120 / 70, tolerance = 1e-6)
+  # pinned as numbers, not through pkSizeFactors(), which the model calls:
+  # every volume x 1.3049066, every clearance x 1.2209126 at this patient
+  on <- diphenhydramine(120, 170, 50, "male")
+  expect_equal_rounded(on$PK$default, list(
+    v1 = 301.43344, v2 = 285.10640, v3 = 1,
+    cl1 = 0.83583678, cl2 = 1.4403182, cl3 = 0
+  ))
+  # with the switch off, linearly in weight (x 120/70)
+  off <- diphenhydramine(120, 170, 50, "male", adjustToFFM = FALSE)
+  expect_equal_rounded(off$PK$default, list(
+    v1 = 396, v2 = 374.55080, v3 = 1,
+    cl1 = 1.1736, cl2 = 2.0223535, cl3 = 0
+  ))
 })
 
 test_that("the effect site peaks 2 min after a bolus", {
@@ -77,6 +83,30 @@ test_that("Carruthers' measured levels are matched at 1 h, overpredicted at 8 h"
   # the model is 19% high at 8 h (Carruthers' subjects cleared faster);
   # pinned so a change is seen
   expect_equal(round(cp, 0), c(141, 44))
+})
+
+test_that("Albert 1975's two men: clearance agrees, the end of infusion is underpredicted", {
+  # not fitted: 50 mg hydrochloride (assayed 43.7 mg base) over 1 h, Table II
+  measured <- list(c(120, 222, 258, 150, 132, 83.8, 61.6, 19.4, 6.49),
+                   c(31.0, 89.1, 179, 170, 147, 80.3, 41.5, 18.2, 8.19))
+  times <- c(0.25, 0.5, 1, 1.5, 2, 4, 6, 12, 24) * 60
+  weights <- c(76, 95)
+  rate <- 43.7 * 291.82 / 255.36 / 60          # mg/min of the hydrochloride
+  dose <- data.frame(Drug = "diphenhydramine", Time = c(0, 60),
+                     Dose = c(rate, 0), Units = "mg/min")
+  ratios <- lapply(1:2, function(s)
+    diphenhydraminePlasma(dose, weights[s], 1500, times, height = 178, age = 27) /
+      measured[[s]])
+  # at the end of the infusion the model is a third low (V1 back-extrapolated
+  # from Meredith's 15-min first sample); pinned so a change is seen
+  expect_equal(round(c(ratios[[1]][3], ratios[[2]][3]), 2), c(0.62, 0.72))
+  # from 2 to 6 h, within 0.55-1.0 of what was measured
+  expect_true(all(unlist(lapply(ratios, `[`, 5:7)) > 0.55 &
+                  unlist(lapply(ratios, `[`, 5:7)) < 1.0))
+  # Albert's clearances (footnote 5, on the base) on the hydrochloride
+  clAlbert <- c(37.0, 41.1) * 291.82 / 255.36 / 60 / weights * 1000
+  expect_equal(round(clAlbert, 1), c(9.3, 8.2))
+  expect_lt(max(abs(clAlbert / DIPHENHYDRAMINE_CL - 1)), 0.2)
 })
 
 test_that("Meredith's normal-subject clearance is above Blyden's, as recorded", {

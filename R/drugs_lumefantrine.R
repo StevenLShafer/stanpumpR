@@ -132,6 +132,9 @@ LUMEFANTRINE_PREGNANCY_VC <- 1.281  # Juma 2026, Table 2: Vc/F x (1 + 0.281)
 #' A component of Coartem: see R/combination-products.R.
 #'
 #' @inheritParams cefazolin
+#' @param pregnant is the patient pregnant?  \code{TRUE} multiplies CL/F by
+#'   1.232 and VC/F by 1.281 (Juma 2026, Table 2; see the file's header).  The
+#'   model has no renal term.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 lumefantrine <- function(weight, height, age, sex, adjustToFFM = TRUE,

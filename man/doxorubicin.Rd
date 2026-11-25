@@ -4,7 +4,15 @@
 \alias{doxorubicin}
 \title{Doxorubicin, intravenous: the model chosen for the patient}
 \usage{
-doxorubicin(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
+doxorubicin(
+  weight,
+  height,
+  age,
+  sex,
+  adjustToFFM = TRUE,
+  ast = NULL,
+  pregnant = FALSE
+)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -21,6 +29,8 @@ patient's fat-free mass as described in the
 \code{FALSE} reproduces the published size scaling exactly.  Each drug
 file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
+
+\item{ast}{serum AST in U/L, or NULL for the equation's reference, 21 U/L}
 
 \item{pregnant}{TRUE in late pregnancy: Janssen 2021's factors}
 }
