@@ -58,9 +58,9 @@
 # estimate ke0 (Discussion, PDF p8): the effects "seemed to follow its plasma
 # concentrations instantaneously (or sometimes even preceded the change in
 # concentration), suggesting a small value for t1/2 ke0", which they say
-# agrees with Herd's 11 s (95% CI 7-20 s; racemic ketamine, children,
-# sedation scores; Herd 2008, PMID 18095964) and Schuttler's S(+)-ketamine
-# EEG data.  So ke0 = ln 2 / (11/60 min).
+# agrees with Herd's 11 s (racemic ketamine, children, sedation scores; Herd
+# 2008, PMID 18095964) and Schuttler's S(+)-ketamine EEG data.  Sigtermans
+# quote Herd's 95% CI as 7-20 s; Herd's own abstract prints 0.07-20 s.  So ke0 = ln 2 / (11/60 min).
 # This is the paper's own reading of the literature, not a fitted value; the
 # racemic library ketamine assumes a tPeak of 3 min instead.  Recorded as a
 # [decision] for Shafer in docs/library-expansion/plan.csv.
