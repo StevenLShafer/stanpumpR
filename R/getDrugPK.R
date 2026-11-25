@@ -62,6 +62,15 @@
 #'   hypertension?  TRUE or FALSE (the default).  Passed only to the models
 #'   of a drug with a separate PAH population (sildenafil, tadalafil); see
 #'   \code{R/pulmonaryHypertension.R}.
+#' @param offsetScale PROTOTYPE (Shafer, 2026-11-20): the Buprenorphine
+#'   onset/offset control, a multiple of the model's time to peak effect
+#'   (\code{tPeak}, from which ke0 is solved); 1 (the default) is the model's
+#'   own.  Above 1 the effect site equilibrates more slowly, so both onset and
+#'   offset are slower; below 1 both are faster.  Passed only to the models
+#'   that declare it (buprenorphine), which hold it to
+#'   \code{BUPRENORPHINE_OFFSET_MIN} to \code{BUPRENORPHINE_OFFSET_MAX} (0.5 to
+#'   2) through \code{orOffsetScale()}; see
+#'   \code{R/opioidReceptorInteraction.R}.
 #' @param infection the patient's infection, one of \code{INFECTION_VALUES}
 #'   (\code{INFECTION_DEFAULT}, \code{"none"}, by default).  Passed only to the
 #'   models with an infection term; see \code{R/infection.R}.
