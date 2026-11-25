@@ -10,7 +10,7 @@ This is the combined S(+)-ketamine and S(+)-norketamine model of the paper's Tab
 
 ### Why esketamine is not drawn with the ketamine model
 
-Esketamine given alone is cleared faster than the S(+)-enantiomer in racemic ketamine, because R(-)-ketamine slows the elimination of S(+)-ketamine when the two are given together. The library's racemic model (Domino 1984) has a clearance of 55 L/h at 70 kg. Sigtermans' clearance is 36% higher in men and 76% higher in women. The racemic model would therefore overpredict an esketamine dose by roughly 1.4- to 1.8-fold.
+Esketamine given alone is cleared faster than the S(+)-enantiomer in racemic ketamine, because R(-)-ketamine slows the elimination of S(+)-ketamine when the two are given together. The library's racemic model (Domino 1984) has a clearance of 55 L/h at 70 kg. Sigtermans' clearance is 36% higher in men and 76% higher in women. At steady state, the racemic model would therefore predict esketamine concentrations roughly 1.4 to 1.8 times too high for a given infusion rate, and an infusion rate that much too low for a given target concentration.
 
 ### Covariates
 
@@ -21,7 +21,7 @@ Doses are entered as esketamine base, as the products are labelled. The paper gi
 
 ### Effect site
 
-The effect site equilibrates with a half-time of about 11 seconds (ke0 3.78 per minute). Sigtermans and colleagues did not estimate this. They observed that the effects followed the plasma concentration almost instantly, and agreed with Herd's estimate of 11 seconds (electroencephalogram, racemic ketamine, in children). That literature value is used here. The library's racemic ketamine assumes a time to peak effect of 3 minutes instead.
+The effect site equilibrates with a half-time of about 11 seconds (ke0 3.78 per minute). Sigtermans and colleagues did not estimate this. They observed that the effects followed the plasma concentration almost instantly, consistent with Herd's estimate of 11 seconds (sedation scores after racemic ketamine in children) and with Schüttler's S(+)-ketamine electroencephalogram data. That literature value is used here. The library's racemic ketamine assumes a time-to-peak effect of 3 minutes instead.
 
 ### Typical concentrations
 

@@ -17,8 +17,8 @@
 # 70 kg; S(+)-ketamine given alone is cleared at 75 (men) to 97 (women) L/h
 # per 70 kg here, because R(-)-ketamine inhibits the elimination of
 # S(+)-ketamine when the two are given together (Ihmsen 2001, PMID 11719729,
-# still to obtain).  The racemic model would overpredict esketamine by about
-# 1.4- to 1.8-fold.
+# still to obtain).  At steady state the racemic model would predict
+# esketamine concentrations about 1.4 to 1.8 times too high for a given rate.
 #
 # STUDY.  20 healthy volunteers, 10 men and 10 women, 18-30 years, BMI below
 # 28 (Table 1: 69.4 kg, men 75.2, women 63.6; 177 cm; 21.7 years).  A 2-h
@@ -59,7 +59,8 @@
 # concentrations instantaneously (or sometimes even preceded the change in
 # concentration), suggesting a small value for t1/2 ke0", which they say
 # agrees with Herd's 11 s (95% CI 7-20 s; racemic ketamine, children,
-# EEG) and Schuttler's S(+)-ketamine EEG data.  So ke0 = ln 2 / (11/60 min).
+# sedation scores; Herd 2008, PMID 18095964) and Schuttler's S(+)-ketamine
+# EEG data.  So ke0 = ln 2 / (11/60 min).
 # This is the paper's own reading of the literature, not a fitted value; the
 # racemic library ketamine assumes a tPeak of 3 min instead.  Recorded as a
 # [decision] for Shafer in docs/library-expansion/plan.csv.
