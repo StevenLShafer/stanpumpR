@@ -130,7 +130,13 @@ antibioticMicTable <- function()
       "Zerbaxa label defers to FDA's STIC page, which recognises the CLSI standard for this organism.",
       "Against 1,209 P. aeruginosa from 35 US hospitals the MIC50 was 0.5 and the MIC90 2 mg/L",
       "(Almarzoky Abuhussain SS et al., J Thorac Dis 2019;11:1896-1902, full text read), so the line,",
-      "the top of the susceptible range, sits above most isolates as cefepime's does.")
+      "the top of the susceptible range, sits above most isolates as cefepime's does."),
+    ceftazidime   = paste(
+      "MIC: the susceptible breakpoint of ceftazidime-avibactam (avibactam fixed at 4 mg/L) for",
+      "Enterobacterales and Pseudomonas aeruginosa, S <= 8 and R > 8 mg/L, 'established by the FDA,",
+      "CLSI, and EUCAST' for 2,000/500 mg every 8 h by 2-h infusion (Nichols WW et al., Antimicrob",
+      "Agents Chemother 2018;62:e02590-17, abstract); the source's own target, 50% fT > 8 mg/L",
+      "(Franzese 2022), which it says 'encompasses the majority of target pathogens'.")
   )
   bindingSource <- c(
     cefazolin     = "Free fraction: not needed, the model plots unbound cefazolin (Komatsu T et al., Antimicrob Agents Chemother 2024;68:e00267-24).",
@@ -184,13 +190,17 @@ antibioticMicTable <- function()
     ceftolozane   = paste(
       "Free fraction: 0.80 (Zerbaxa label, NDA 206829, 2026, sec. 12.3: 'The binding of ceftolozane",
       "and tazobactam to human plasma proteins is approximately 16% to 21% and 30%, respectively';",
-      "the upper end, 21%, taken as 20%, as the cefepime row's ~20%).")
+      "the upper end, 21%, taken as 20%, as the cefepime row's ~20%)."),
+    ceftazidime   = paste(
+      "Free fraction: 0.90 (Avycaz label, NDA 206494, 2026, sec. 12.3: 'Less than 10% of ceftazidime",
+      "was protein bound. The degree of protein binding was independent of concentration'); the",
+      "source's target-attainment simulations assumed 0.85 (Franzese 2022, Methods).")
   )
 
   x <- data.frame(
     Drug = c("cefazolin", "cefalexin", "ceftriaxone", "clindamycin",
              "gentamicin", "metronidazole", "tobramycin", "amikacin", "linezolid", "meropenem",
-             "piperacillin", "vancomycin", "colistin", "cefepime", "ceftolozane"),
+             "piperacillin", "vancomycin", "colistin", "cefepime", "ceftolozane", "ceftazidime"),
     Organism = c(
       "Staphylococcus aureus, methicillin-susceptible (MSSA)",
       "Staphylococcus aureus, methicillin-susceptible (MSSA)",
@@ -206,19 +216,20 @@ antibioticMicTable <- function()
       "Staphylococcus aureus, including MRSA",
       "Enterobacterales and Acinetobacter baumannii",
       "Pseudomonas aeruginosa",
-      "Pseudomonas aeruginosa"
+      "Pseudomonas aeruginosa",
+      "Enterobacterales and Pseudomonas aeruginosa"
     ),
-    MIC = c(2, 4, 1, 0.5, 2, 4, 2, 4, 2, 2, 8, 1, 2, 8, 4),
+    MIC = c(2, 4, 1, 0.5, 2, 4, 2, 4, 2, 2, 8, 1, 2, 8, 4, 8),
     Plotted = c("unbound", "total", "total", "total", "total", "total", "total", "total", "total", "total", "total", "total",
-                "total", "total", "total"),
-    FreeFraction = c(1, 0.85, 0.065, 0.096, 1, 0.96, 1, 0.82, 0.69, 0.98, 0.70, 0.70, 0.49, 0.80, 0.80),
-    Saturable = c(FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
+                "total", "total", "total", "total"),
+    FreeFraction = c(1, 0.85, 0.065, 0.096, 1, 0.96, 1, 0.82, 0.69, 0.98, 0.70, 0.70, 0.49, 0.80, 0.80, 0.90),
+    Saturable = c(FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
     # The one-site binding fits named in the binding sources, total = free +
     # capacity x free / (Kd + free); FreeFraction is that map's free / total
     # at the MIC, which is what puts the threshold on the curve.
-    BindingKd       = c(NA, NA, 23.7, 0.85, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
-    BindingCapacity = c(NA, NA, 354, 12.7, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
-    Threshold = c(2, 4.7, 15, 5.2, 2, 4.2, 2, 4.9, 2.9, 2, 11.4, 1.4, 4.1, 10, 5),
+    BindingKd       = c(NA, NA, 23.7, 0.85, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
+    BindingCapacity = c(NA, NA, 354, 12.7, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
+    Threshold = c(2, 4.7, 15, 5.2, 2, 4.2, 2, 4.9, 2.9, 2, 11.4, 1.4, 4.1, 10, 5, 8.9),
     MicSource = unname(micSource),
     BindingSource = unname(bindingSource),
     stringsAsFactors = FALSE

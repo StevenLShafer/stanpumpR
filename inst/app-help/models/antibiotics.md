@@ -11,6 +11,8 @@ Each of the twelve antibiotics, [cefazolin](help:drugs/cefazolin), [cefalexin](h
 
 [Ceftolozane](help:drugs/ceftolozane), drawn for [Zerbaxa](help:drugs/Zerbaxa), also has the MIC line and no band. Its line is free ceftolozane at 4 mg/L, the CLSI and EUCAST susceptible breakpoint for *Pseudomonas*, which is 5 mg/L of total ceftolozane. No MBC distribution for ceftolozane has been found.
 
+[Ceftazidime](help:drugs/ceftazidime), drawn for [Avycaz](help:drugs/Avycaz), also has the MIC line and no band. Its line is free ceftazidime at 8 mg/L, the FDA, CLSI and EUCAST susceptible breakpoint of ceftazidime-avibactam for Enterobacterales and *Pseudomonas*, which is 8.9 mg/L of total ceftazidime. No MBC source for ceftazidime with avibactam has been read.
+
 ### The rule for the band
 
 Every antibiotic's band follows one rule:
