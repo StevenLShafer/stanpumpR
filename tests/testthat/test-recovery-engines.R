@@ -473,6 +473,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "mirabegron",
     # anakinra (Urien 2013, 2026-11-25): plasma only
     "anakinra",
+    "emicizumab",
     "tenecteplase",
     # irbesartan (Karatza 2020, 2026-11-20): plasma only, provisional
     "irbesartan",
