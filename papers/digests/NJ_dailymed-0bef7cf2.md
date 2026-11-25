@@ -33,7 +33,7 @@ parameters:
   - {name: "IV disposition t1/2 (phase 2)", value: 1.5, unit: h, source: "p2", note: "40% of AUC"}
   - {name: "IV disposition t1/2 (phase 3)", value: 9.1, unit: h, source: "p2", note: "45% of AUC"}
   - {name: terminal t1/2 (oral IR), value: "11-16", unit: h, source: "p2", note: "mean"}
-  - {name: CL (systemic, young healthy), value: 0.8, unit: L/min, source: "p2", note: "about"}
+  - {name: "CL (systemic, young healthy)", value: 0.8, unit: L/min, source: "p2", note: "about"}
   - {name: V (apparent), value: 10, unit: L/kg, source: "p2", note: "about"}
   - {name: EC50 (BP), value: "4-6", unit: nmol/L, source: "p2", note: "concentration for half-maximal BP decline; derived 1.5-2.3 ng/mL at MW 384.26"}
   - {name: "Css peak/trough, ER 10 mg, young healthy", value: "7 / 2", unit: nmol/L, source: "p2", note: "IR 10 mg once daily: 20 / 0.5 nmol/L"}
