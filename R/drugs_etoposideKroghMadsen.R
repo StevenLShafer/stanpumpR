@@ -93,6 +93,8 @@ ETOPOSIDE_KROGHMADSEN <- list(
 # docs/weight-adjustment.md, Anchoring at the source's cohort); Vc, whose
 # published value is a man's (women x 0.7207), at the cohort's man; the renal
 # clearance not at all, its Cockcroft-Gault weight carrying the size.
+# The same 23 patients gave the cytarabine model, which shares this cohort
+# (R/drugs_cytarabine.R).
 ETOPOSIDE_KM_COHORT <- list(weight = 79.4, height = 170.1, age = 52.3, men = 14, women = 9)
 
 #' Etoposide, intravenous, in adults (Krogh-Madsen 2012)

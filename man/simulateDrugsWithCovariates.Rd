@@ -30,7 +30,8 @@ simulateDrugsWithCovariates(
   ast = NULL,
   physiology = NULL,
   pulmonaryHypertension = FALSE,
-  infection = INFECTION_DEFAULT
+  infection = INFECTION_DEFAULT,
+  factorBaselines = NULL
 )
 }
 \arguments{
@@ -126,6 +127,10 @@ tadalafil (see \code{getDrugPK()}).}
 \item{infection}{the patient's infection, one of \code{INFECTION_VALUES}
 (\code{"none"} by default); read only by the models with an infection
 term (see \code{getDrugPK()} and \code{R/infection.R}).}
+
+\item{factorBaselines}{the patient's own clotting-factor activities, a
+named list (\code{factorVIIIBaseline}, \code{factorIXBaseline}, in IU/dL), or NULL for each factor
+concentrate's source population's; see \code{R/factorBaselines.R}.}
 }
 \value{
 a list of data frames with the output of the a single drug

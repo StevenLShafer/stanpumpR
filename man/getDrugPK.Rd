@@ -33,7 +33,8 @@ getDrugPK(
   physiology = NULL,
   pulmonaryHypertension = FALSE,
   offsetScale = 1,
-  infection = INFECTION_DEFAULT
+  infection = INFECTION_DEFAULT,
+  factorBaselines = NULL
 )
 }
 \arguments{
@@ -153,6 +154,12 @@ that declare it (buprenorphine), which hold it to
 \item{infection}{the patient's infection, one of \code{INFECTION_VALUES}
 (\code{INFECTION_DEFAULT}, \code{"none"}, by default).  Passed only to the
 models with an infection term; see \code{R/infection.R}.}
+
+\item{factorBaselines}{the patient's own clotting-factor activities, a
+named list (names from \code{names(FACTOR_BASELINE_FIELDS)}, each in its
+field's units), or NULL; a blank entry takes the model's source
+population's.  Passed only to the factor concentrates that name a field;
+see \code{R/factorBaselines.R}.}
 }
 \value{
 a list: the drug's PK sets (\code{PK}, one per PK event), its

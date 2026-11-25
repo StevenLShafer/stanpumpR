@@ -269,7 +269,8 @@ test_that("a scenario names every patient field, with creatinine blank by defaul
                          c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9",
                            "vkorc1", "cyp4f2", "cyp2b6", "adjustToFFM", "creatinine", "osmolality",
                            "pregnant", "gestationalAge", "albumin", "ast",
-                           "pulmonaryHypertension", "infection")), info = s$id)
+                           "pulmonaryHypertension", "infection", "factorBaselines")), info = s$id)
+    expect_identical(s$patient$factorBaselines, list(), info = s$id)
     expect_identical(s$patient$infection, INFECTION_DEFAULT, info = s$id)
     expect_null(s$patient$creatinine, info = s$id)
     expect_null(s$patient$gestationalAge, info = s$id)

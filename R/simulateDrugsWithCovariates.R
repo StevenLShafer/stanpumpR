@@ -45,6 +45,9 @@
 #' @param ast serum aspartate aminotransferase in U/L, or NULL for each
 #'   model's reference value.  Only the models that declare it (epirubicin)
 #'   are affected.
+#' @param factorBaselines the patient's own clotting-factor activities, a
+#'   named list (\code{factorVIIIBaseline}, \code{factorIXBaseline}, in IU/dL), or NULL for each factor
+#'   concentrate's source population's; see \code{R/factorBaselines.R}.
 #' @param antiseizureInteractions apply the pharmacokinetic interactions among
 #'   the antiseizure drugs (\code{R/antiseizureInteractions.R},
 #'   \code{antiseizureInteractionRegistry()})?  FALSE (the default) simulates
@@ -98,7 +101,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                                          ast = NULL,
                                          physiology = NULL,
                                          pulmonaryHypertension = FALSE,
-                                         infection = INFECTION_DEFAULT)
+                                         infection = INFECTION_DEFAULT,
+                                         factorBaselines = NULL)
 {
   if (length(sex) != 1 || !sex %in% SEX_VALUES) {
     stop("Invalid sex: ", paste(sex, collapse = ", "),
@@ -151,7 +155,7 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                 gestationalAge = gestationalAge, albumin = albumin,
                 ast = ast, physiology = phys,
                 pulmonaryHypertension = pulmonaryHypertension,
-                infection = infection)
+                infection = infection, factorBaselines = factorBaselines)
     PK <- if (nrow(physiologyEvents) > 0) physiologyEventPK(build, physiologyEvents)
           else build(physiology)
     pks[[drug]] <- PK
@@ -215,7 +219,7 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                           gestationalAge = gestationalAge, albumin = albumin,
                           ast = ast, physiology = physiology,
                           pulmonaryHypertension = pulmonaryHypertension,
-                          infection = infection)
+                          infection = infection, factorBaselines = factorBaselines)
     output <- attach(output, target, targetPK, targetDefaults)
   }
 

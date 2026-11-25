@@ -70,9 +70,21 @@
 # =====================================
 # Children: the model's own body-surface-area covariate, the BSA from the
 # pharmacokinetic weight with the switch on and total weight with it off.
-# Adults: no size covariate, so the parameters are taken as the reference
-# adult's and scaled by the library's factors with the switch on and fixed
-# with it off (the cohort's mean weight was 79 kg).
+# Adults: no size covariate, so with the switch on the four parameters belong
+# to Krogh-Madsen's typical patient, not to the 70 kg reference man, and are
+# anchored at that patient (Steven L. Shafer, 2026-11-18,
+# docs/weight-adjustment.md, Anchoring at the source's cohort; Gemini's
+# chemotherapy audit of 2026-11-23, F22); with the switch off they are the
+# published values.  The cohort is etoposideKroghMadsen's, ETOPOSIDE_KM_COHORT
+# (79.4 kg, 52.3 years, 14 men and 9 women, 170.1 cm back-solved from the
+# 1.91 m2 BSA by Du Bois): the paper fitted cytarabine, etoposide and
+# daunorubicin in ONE set of patients, which its PDF confirms (pages
+# 1156-1157, read 2026-11-25): 24 enrolled, one woman excluded from the
+# whole PK analysis, and "the twenty-three patients included in the data
+# analysis received 10 days of cytarabine", Table 1 being those 23.  The
+# women's 9% higher clearance was not retained, so no parameter carries a
+# sex term and every one takes the pooled cohort's factors: volume 0.9933,
+# clearance 0.9950, so the reference man's parameters rise by 0.7% and 0.5%.
 #
 # PREGNANCY (R/pregnancy.R): no human pharmacokinetics found; nothing applied.
 # NO EFFECT SITE, NO BAND
@@ -134,6 +146,11 @@ cytarabine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   } else
   {
     p <- CYTARABINE_KROGH_MADSEN
+    # Krogh-Madsen fitted cytarabine in the same 23 patients as etoposide, so
+    # the size-free parameters are anchored at etoposide's cohort constant
+    size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                          legacyVolume = 1, legacyClearance = 1,
+                          cohort = do.call(cohortSizeFactors, ETOPOSIDE_KM_COHORT))
     default <- list(
       v1  = p$v1 * size$volume,
       v2  = p$v2 * size$volume,

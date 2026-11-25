@@ -412,6 +412,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "milrinonePediatric",
     "digoxinIVPediatric",
     "methyleneBlue",
+    "levosimendan",  # no measured time to peak haemodynamic effect (2026-11-25)
     # narrow-therapeutic-window drugs (2026-11-12): plasma only
     "theophylline", "lithiumCarbonate", "tranexamicAcid", "caffeineNeonatal", "tacrolimus", "sotalol", "voriconazole", "clozapine", "norclozapine", "tobramycin", "amikacin", "linezolid", "ganciclovir", "sirolimus", "everolimus", "cyclosporine", "scopolamine", "flecainide", "mexiletine", "amitriptyline", "dofetilide", "quinidine", "nortriptyline", "meropenem", "piperacillin",
     # pulmonary hypertension (2026-11-15): plasma only
@@ -441,6 +442,9 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "mirabegron",
     # anakinra (Urien 2013, 2026-11-25): plasma only
     "anakinra",
+    "factorVIII",
+    "efmoroctocogAlfa",
+    "eftrenonacogAlfa",
     "thrombomodulinAlfa",
     "emicizumab",
     "tenecteplase",
@@ -448,6 +452,8 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "irbesartan",
     # modafinil (FDA review of NDA 20-717, 2026-11-19): plasma only, R + S parallel systems
     "modafinil",
+    # nalbuphine (Nie 2023, 2026-11-25): plasma only
+    "nalbuphine",
     # colistimethate and the colistin it forms (2026-11-16): plasma only, no
     # line until the MIC decision (R/drugs_colistin.R)
     "colistimethate", "colistin",

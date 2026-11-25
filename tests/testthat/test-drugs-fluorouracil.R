@@ -1,55 +1,110 @@
-# Fluorouracil (R/drugs_fluorouracil.R): Briki 2026, two compartments with
+# Fluorouracil (R/drugs_fluorouracilBriki.R): Briki 2026, two compartments with
 # parallel saturable and linear elimination.  Drafted by Claude Code,
 # 2026-11-05.
 
 noEvents <- data.frame(Time = double(), Event = character())
-p <- FLUOROURACIL_BRIKI
+# Since 2026-11-25 the model is the authors' alternative, Table S3 of the
+# supplement, with lean body mass on Vmax in place of sex (Shafer's decision,
+# PR #897).  Claude Code, 2026-11-25.
+lbmJ <- function(w, h, sex) {           # Janmahasatian 2005, written out again
+  bmi <- w / (h / 100)^2
+  if (sex == "male") 9270 * w / (6680 + 216 * bmi) else 9270 * w / (8780 + 244 * bmi)
+}
 
-test_that("the covariate terms reproduce the percentages the paper states", {
-  vmaxAt <- function(age, sex)
-    fluorouracilBriki(70, 170, age, sex, adjustToFFM = FALSE)$michaelisMenten$vmax
-  # men's Vmax 18% higher than women's of the same age
-  expect_equal(vmaxAt(50, "male") / vmaxAt(50, "female"), 1.183)
-  # lower at 80 than at 40 years, same sex: 0.176, which the paper gives as 17%
-  expect_equal(round(1 - vmaxAt(80, "male") / vmaxAt(40, "male"), 2), 0.18)
-  # an 80-year-old woman's 30% lower than a 40-year-old man's
-  expect_equal(round(1 - vmaxAt(80, "female") / vmaxAt(40, "male"), 2), 0.30)
-  # BSA 1.5 against 2.0: linear clearance 53% lower
-  expect_equal(round(1 - (1.5 / 2.0)^p$thetaBSA, 2), 0.53)
+test_that("with the switch off the Table S3 equations hold at total weight", {
+  for (pt in list(list(80, 180, 60, "male"), list(58, 160, 72, "female"))) {
+    w <- pt[[1]]; h <- pt[[2]]; age <- pt[[3]]; sex <- pt[[4]]
+    PK <- getDrugPK("fluorouracil", w, h, age, sex, adjustToFFM = FALSE)
+    mm <- PK$michaelisMenten
+    set <- PK$PK$default
+    bsa <- sqrt(w * h / 3600)                       # Mosteller
+    expect_equal_rounded(mm$vmax,
+      411 * (1 - 0.292 * (age - 60) / 60) * (lbmJ(w, h, sex) / 55)^0.484 / 60)
+    expect_equal_rounded(mm$km, 1.89)
+    expect_equal_rounded(mm$clLinear, 59.2 * (bsa / 1.7)^1.62 / 60)
+    expect_equal_rounded(set$v1, 9.58)
+    expect_equal_rounded(set$v2, 13.6 * w / 70)
+    expect_equal_rounded(set$cl2, 112 / 60)
+    expect_identical(PK$Concentration.Units, "mcg")
+  }
 })
 
-test_that("with the switch off the published equations hold at total weight", {
-  w <- 80; h <- 180
-  PK <- getDrugPK("fluorouracil", w, h, 60, "male", adjustToFFM = FALSE)
-  mm <- PK$michaelisMenten
-  set <- PK$PK$default
-  bsa <- sqrt(w * h / 3600)                       # Mosteller
-  expect_equal_rounded(mm$vmax, 429 * 1.183 / 60)  # age 60: no age term
-  expect_equal_rounded(mm$km, 2.34)
-  expect_equal_rounded(mm$clLinear, 52.6 * (bsa / 1.7)^2.61 / 60)
-  expect_equal_rounded(set$v1, 9.21)
-  expect_equal_rounded(set$v2, 14.6 * w / 70)
-  expect_equal_rounded(set$cl2, 125 / 60)
-  expect_identical(PK$Concentration.Units, "mcg")
+test_that("sex acts only through lean mass, and reproduces the main model's sex factor", {
+  # the same lean mass gives the same Vmax whatever the sex
+  target <- lbmJ(70, 170, "male")
+  wf <- uniroot(function(w) lbmJ(w, 170, "female") - target, c(40, 200), tol = 1e-12)$root
+  vm <- function(w, sex) fluorouracilBriki(w, 170, 60, sex, adjustToFFM = FALSE)$michaelisMenten$vmax
+  expect_equal(vm(70, "male"), vm(wf, "female"), tolerance = 1e-9)
+  # Fig S3: the cohort's men about 56 kg of lean mass, its women about 39.5;
+  # the LBM exponent turns that into the main model's 18% (Table 3: 1.183)
+  expect_equal(round((56 / 39.5)^0.484, 2), 1.18)
+  # an 80-year-old's Vmax against a 40-year-old's of the same lean mass
+  va <- function(age) fluorouracilBriki(70, 170, age, "male", adjustToFFM = FALSE)$michaelisMenten$vmax
+  expect_equal(va(80) / va(40), (1 - 0.292 / 3) / (1 + 0.292 / 3))
 })
 
-test_that("with the switch on, size covariates take the pharmacokinetic weight", {
-  w <- 90; h <- 165
-  size <- pkSizeFactors(w, h, 50, "female", TRUE)
-  m <- fluorouracilBriki(w, h, 50, "female")
-  bsa <- sqrt(size$pkWeight * h / 3600)
-  expect_equal_rounded(m$michaelisMenten$clLinear, 52.6 * (bsa / 1.7)^2.61 / 60)
-  expect_equal_rounded(m$PK$default$v2, 14.6 * size$pkWeight / 70)
-  expect_equal_rounded(m$PK$default$v1, 9.21 * size$volume)
-  # Vmax carries sex and age, not fat-free mass
-  expect_equal_rounded(m$michaelisMenten$vmax, 429 * (1 - 0.289 * (50 - 60) / 60) / 60)
+test_that("with the switch on, the size terms read fat-free mass and the pharmacokinetic weight", {
+  for (pt in list(list(90, 165, 50, "female"), list(70, 170, 35, "male"))) {
+    w <- pt[[1]]; h <- pt[[2]]; age <- pt[[3]]; sex <- pt[[4]]
+    size <- pkSizeFactors(w, h, age, sex, TRUE)
+    m <- fluorouracilBriki(w, h, age, sex)
+    bsa <- sqrt(size$pkWeight * h / 3600)
+    expect_equal_rounded(m$michaelisMenten$clLinear, 59.2 * (bsa / 1.7)^1.62 / 60)
+    expect_equal_rounded(m$PK$default$v2, 13.6 * size$pkWeight / 70)
+    expect_equal_rounded(m$michaelisMenten$vmax,
+      411 * (1 - 0.292 * (age - 60) / 60) * (size$ffm / 55)^0.484 / 60)
+  }
+})
+
+# Briki 2026, Table 2 (page 6): medians per study (Gemini's chemotherapy
+# audit of 2026-11-23, F22; docs/weight-adjustment.md, Anchoring at the
+# source's cohort).  Claude Code, 2026-11-25.
+test_that("the cohort is Briki's Table 2: three studies, 726 patients", {
+  g <- FLUOROURACIL_BRIKI_COHORT$groups
+  expect_equal(sum(vapply(g, function(x) x$men, 1)), 422)
+  expect_equal(sum(vapply(g, function(x) x$women, 1)), 304)
+  expect_equal(vapply(g, function(x) x$weight, 1), c(68, 76, 67))
+  expect_equal(vapply(g, function(x) x$height, 1), c(168, 171, 170))
+  expect_equal(vapply(g, function(x) x$age, 1), c(65, 63, 69))
+})
+
+test_that("V1 and Q are anchored at Briki's cohort with the switch on", {
+  kc <- cohortFactorsIndependent(FLUOROURACIL_BRIKI_COHORT)
+  expect_equal(round(c(kc$volume, kc$clearance), 4), c(0.8989, 0.9231))
+  for (pt in list(list(70, 170, 35, "male"), list(90, 165, 50, "female"))) {
+    size <- do.call(pkSizeFactors, c(pt, list(TRUE)))
+    m <- do.call(fluorouracilBriki, pt)$PK$default
+    # the reference man's scaling divided by the cohort's factors
+    expect_equal_rounded(m$v1, 9.58 * size$volume / kc$volume)
+    expect_equal_rounded(m$cl2, 112 / 60 * size$clearance / kc$clearance)
+  }
+  # each study's typical man and woman, weighted by their numbers, receive
+  # the published V1 and Q
+  lv <- 0; lq <- 0; n <- 0
+  for (x in FLUOROURACIL_BRIKI_COHORT$groups) for (sex in c("male", "female")) {
+    k <- if (sex == "male") x$men else x$women
+    m <- fluorouracilBriki(x$weight, x$height, x$age, sex)$PK$default
+    lv <- lv + k * log(m$v1); lq <- lq + k * log(m$cl2); n <- n + k
+  }
+  expect_equal_rounded(exp(lv / n), 9.58)
+  expect_equal_rounded(exp(lq / n) * 60, 112)
+})
+
+test_that("with the switch off the cohort is ignored", {
+  off <- fluorouracilBriki(55, 160, 70, "female", adjustToFFM = FALSE)
+  expect_equal_rounded(off$PK$default$v1, 9.58)
+  expect_equal_rounded(off$PK$default$cl2, 112 / 60)
 })
 
 test_that("age is held within the source's 24-90 years", {
-  vmaxAt <- function(age) fluorouracilBriki(70, 170, age, "male")$michaelisMenten$vmax
+  # switch off: with it on, Vmax also follows fat-free mass, which changes
+  # with age in a child (Al-Sallami's maturation), apart from the age term
+  vmaxAt <- function(age)
+    fluorouracilBriki(70, 170, age, "male", adjustToFFM = FALSE)$michaelisMenten$vmax
   expect_equal(vmaxAt(5), vmaxAt(24))
   expect_equal(vmaxAt(99), vmaxAt(90))
   expect_true(is.finite(vmaxAt(0)))
+  expect_true(is.finite(fluorouracilBriki(3.5, 50, 0, "male")$michaelisMenten$vmax))
 })
 
 test_that("a 46-h infusion reaches the steady state the two eliminations predict", {
