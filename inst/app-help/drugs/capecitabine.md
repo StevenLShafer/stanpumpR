@@ -16,6 +16,10 @@ Plasma 5′-DFUR in mcg/mL (mg/L). Doses are entered in mg of capecitabine by mo
 
 None act on 5′-DFUR or 5-FU apart from alkaline phosphatase, held at 140 U/L (5-FU's clearance is 11% lower at twice that). Creatinine clearance and body surface area act only on FBAL.
 
+### Body size
+
+With [the scaling switch](help:models/fat-free-mass) on, the volumes and clearances of 5′-DFUR and 5-FU follow fat-free mass (clearances to the 0.75 power), relative to the typical patient of Gieschke's cohort (about 73 kg and 62 years, 60% men), who receives the published values; the library's 70 kg reference man receives volumes 6% and clearances 4% above them. With the switch off the values are as published for everyone.
+
 ### Where to be careful
 
 - **Interactions are not modelled.** The Xeloda label carries a boxed warning: bleeding, including death, with vitamin K antagonists; capecitabine raised S-warfarin's exposure by 57% and lowered its clearance by 37% (12.3), so the INR should be checked more often. It may also raise phenytoin levels (7.2). Neither the library's warfarin nor its phenytoin curve shows these effects.

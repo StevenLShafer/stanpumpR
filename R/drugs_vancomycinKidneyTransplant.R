@@ -66,16 +66,23 @@
 # =====================================
 # The source carried no size term on V (body weight was tested and not
 # retained) and carried weight into CL only through Cockcroft-Gault.  With
-# the switch on, V takes the library's volume factor (fat-free-mass ratio to
-# the 70 kg reference man) and Cockcroft-Gault reads the pharmacokinetic
-# weight (70 kg x FFM / FFM_ref), which already discounts excess fat, so the
-# adjusted-body-weight rule is not applied a second time.  With it off, V is
-# 80.8 L for everyone and Cockcroft-Gault reads the published dosing weight
-# (actual, or adjusted above 120% of the Devine IBW).  Note the cohort's
-# median weight was 84.5 kg, not 70: with the switch on the reference man
-# receives 80.8 L, as the library's convention for a size-free parameter has
-# it.  Where the Devine IBW is not positive (heights under about 100 cm, far
-# outside the adult source) the actual weight is used.
+# the switch on, V takes the library's volume factor, and Cockcroft-Gault
+# reads the pharmacokinetic weight (70 kg x FFM / FFM_ref), which already
+# discounts excess fat, so the adjusted-body-weight rule is not applied a
+# second time.  V is anchored at Yu's cohort (VANCOMYCIN_KT_COHORT, below:
+# Table I's 469 recipients and 1070 non-transplant patients, both fitted, V
+# having no transplant term; medians of about 84 kg, 172 cm and 60 years,
+# about 64% men), whose typical patient sits at a volume factor of 1.0405
+# from the 70 kg reference man, so a patient like Yu's receives the published
+# 80.8 L and the reference man 77.7 L (Steven L. Shafer, 2026-11-18 and
+# 2026-11-19; until 2026-11-20 the reference man received 80.8 L, the paper
+# not being in the archive).  The renal term is not anchored and takes no
+# size factor: its creatinine clearance has weight inside ("you would wind up
+# double correcting clearance", Shafer, 2026-11-18).  With the switch off, V
+# is 80.8 L for everyone and Cockcroft-Gault reads the published dosing
+# weight (actual, or adjusted above 120% of the Devine IBW).  Where the
+# Devine IBW is not positive (heights under about 100 cm, far outside the
+# adult source) the actual weight is used.
 #
 # PREGNANCY
 # =========
@@ -104,6 +111,17 @@ VANCOMYCIN_KT_THETA  <- -0.28   # transplant status on CL, exp(theta x KT)
 VANCOMYCIN_KT_V      <- 80.8    # L
 VANCOMYCIN_KT_CLCR_MAX <- 150   # mL/min, truncation in the source
 
+# Yu 2026, Table I (p5): the two groups the model was fitted to, medians.
+# Kidney transplant recipients: 469, 304 men (64.8%), 60.7 years, 172.7 cm,
+# 84.5 kg; non-transplant patients: 1070, 676 men (63.2%), 59.2 years,
+# 171.3 cm, 84.3 kg.  The heights are printed for each group, not by sex, so
+# each group's height serves its men and women.  V, with no size term and no
+# transplant term, is anchored at this cohort (Steven L. Shafer, 2026-11-18
+# and 2026-11-19; see the header's BODY SIZE).
+VANCOMYCIN_KT_COHORT <- list(groups = list(
+  list(weight = 84.5, height = 172.7, age = 60.7, men = 304, women = 165),
+  list(weight = 84.3, height = 171.3, age = 59.2, men = 676, women = 394)))
+
 #' Vancomycin pharmacokinetics in kidney transplant recipients (Yu 2026)
 #'
 #' @inheritParams cefazolin
@@ -116,9 +134,11 @@ vancomycinKidneyTransplant <- function(weight, height, age, sex,
                                        creatinine = NULL, pregnant = FALSE)
 {
   # No published size term on V, so it takes the library volume factor with
-  # the switch on and is fixed with it off (see the header).
+  # the switch on, anchored at Yu's cohort, and is fixed with it off (see the
+  # header).
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, VANCOMYCIN_KT_COHORT))
 
   # The weight Cockcroft-Gault reads
   if (isTRUE(adjustToFFM)) {

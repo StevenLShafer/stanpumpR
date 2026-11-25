@@ -84,7 +84,7 @@ renalDrugs <- c("mannitol", "vancomycin", "vancomycinKidneyTransplant", "gentami
                 "digoxinIVPediatric",
                 # Cockcroft-Gault in a hockey stick on clearance, both tablets
                 # (R/drugs_pramipexole.R, FDA review of NDA 22-421)
-                "pramipexole", "pramipexoleER",
+                "pramipexole", "pramipexoleER", "tenecteplase", "thrombomodulinAlfa",
                 # Cockcroft-Gault, as a power, on oral bioavailability (F1)
                 # (R/drugs_mirabegron.R, FDA review of NDA 202611)
                 "mirabegron",
@@ -124,6 +124,8 @@ renalDrugs <- c("mannitol", "vancomycin", "vancomycinKidneyTransplant", "gentami
                 # the 2012 CKD-EPI creatinine eGFR, de-indexed to mL/min, in
                 # proportion on clearance (Barreto 2023, R/drugs_cefepime.R)
                 "cefepime",
+                # Cockcroft-Gault on clearance (Zhang 2021, R/drugs_ceftolozane.R)
+                "ceftolozane",
                 # Cockcroft-Gault on the Janmahasatian lean body weight, in
                 # proportion on CL/F (Duong 2013, R/drugs_metforminER.R)
                 "metforminER",

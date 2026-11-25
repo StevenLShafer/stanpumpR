@@ -377,6 +377,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
   expect_setequal(noCe, c(
     "MEGX", "norpethidine", "PPX",  # toxic metabolites, no ke0 (2026-11-13)
     "artemether", "dihydroartemisinin", "lumefantrine",  # Coartem's components (2026-11-24)
+    "ceftolozane",  # Zerbaxa's drawn component (2026-11-25)
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
     "vancomycinKidneyTransplant",
@@ -470,6 +471,11 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "evolocumab",
     # mirabegron (FDA review of NDA 202611, 2026-11-19): plasma only
     "mirabegron",
+    # anakinra (Urien 2013, 2026-11-25): plasma only
+    "anakinra",
+    "thrombomodulinAlfa",
+    "emicizumab",
+    "tenecteplase",
     # irbesartan (Karatza 2020, 2026-11-20): plasma only, provisional
     "irbesartan",
     # modafinil (FDA review of NDA 20-717, 2026-11-19): plasma only, R + S parallel systems

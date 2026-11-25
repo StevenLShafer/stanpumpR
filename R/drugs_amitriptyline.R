@@ -72,20 +72,24 @@
 # therefore R times the library's nortriptyline clearance for this patient,
 # applied to the plasma amitriptyline the model draws, with the molecular-
 # weight ratio 263.38 / 277.40.  This keeps the steady state (the formed
-# nortriptyline's trough per daily dose, 0.389 ng/mL per mg against Hart
-# 2026's 0.376, +3%), but the library's nortriptyline is slower and larger
-# than Koh's, so after a single dose its peak is about half Koh's.
+# nortriptyline's trough per daily dose, 0.401 ng/mL per mg against Hart
+# 2026's 0.376, +7%; +3% before the anchoring of 2026-11-20, which lowered
+# the reference man's amitriptyline clearance by 3.1%), but the library's
+# nortriptyline is slower and larger than Koh's, so after a single dose its
+# peak is about half Koh's.
 #
 # AGAINST UNFITTED DATA (Gupta 1999, 14 healthy men, 75 mg of the
 # hydrochloride; Hart 2026 Table 6)
 # ==================================================================
-# Gupta: amitriptyline AUC 688 ng.h/mL, peak 26.8 ng/mL; this model at 77 kg,
-# 677 and 30.9.  Nortriptyline AUC 648 and peak 12.0; this model 675 and 5.9
+# Gupta: amitriptyline AUC 688 ng.h/mL, peak 26.8 ng/mL; this model at 77 kg
+# (a man much like Koh's, so near the published values since the anchoring),
+# 699 and 31.9.  Nortriptyline AUC 648 and peak 12.0; this model 697 and 6.1
 # (the half-height peak above).  Hart's 24-h trough per daily dose:
-# amitriptyline 0.399 ng/mL per mg, this model 0.232 (its average over the
-# day, 0.40, matches: Koh's small central volume and fast distribution leave
+# amitriptyline 0.399 ng/mL per mg, this model 0.239 (its average over the
+# day, 0.39, matches: Koh's small central volume and fast distribution leave
 # a deep trough after a once-daily dose); nortriptyline formed 0.376, this
-# model 0.389.
+# model 0.401.  (Before the anchoring of 2026-11-20: 677, 675, 0.232 and
+# 0.389.)
 #
 # THE DOSE BASIS [Shafer 2026-11-13]
 # ==================================
@@ -99,9 +103,24 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# No covariate besides genotype; the values are written for the library's
-# reference man and scaled by fat-free mass with the switch on, fixed with it
-# off.
+# No covariate besides genotype: the source found no weight, age or sex
+# effect, but its 24 men were alike in all three, so it could not have seen
+# one.  Every volume and clearance is therefore scaled with the switch on, by
+# Steven L. Shafer's first-principles rule of 2026-11-19 (a covariate not
+# detected in a dataset is not evidence that size does not matter): Vc and Vp
+# by the fat-free-mass volume factor, the formation and other-pathway
+# clearances and Q by the clearance factor, the CYP2C19 and CYP2D6 values
+# kept as they are (genotype is not size).  The factors are anchored at
+# Koh's cohort (AMITRIPTYLINE_COHORT, below: 24 men, 25 years, 72.06 kg,
+# 175.22 cm), whose typical patient sits at a volume factor of 1.0436 and a
+# clearance factor of 1.0325 from the 70 kg reference man, so a patient like
+# Koh's receives Table 3's values and the reference man receives volumes 4.2%
+# and clearances 3.1% below them.  The formation of nortriptyline is not
+# anchored here: it is Koh's ratio to the library's nortriptyline clearance
+# for this patient, so it follows nortriptyline's own size scaling.  With the
+# switch off the values are fixed, as published.  (Until 2026-11-20 the
+# values were read as the reference man's, Koh 2019 not being in the
+# archive.)
 #
 # THE BAND [Shafer 2026-11-13]
 # ============================
@@ -134,6 +153,12 @@ AMITRIPTYLINE_MW         <- 277.40  # base, C20H23N
 AMITRIPTYLINE_HCL_MW     <- 313.86  # hydrochloride
 NORTRIPTYLINE_MW         <- 263.38  # base, C19H21N
 
+# Koh 2019, Table 1 (PDF p2, printed 533), the total column: 24 healthy
+# Korean men, age 25.00 +/- 3.84 years, height 175.22 +/- 5.60 cm, weight
+# 72.06 +/- 7.24 kg.  Every volume and clearance is anchored at this cohort
+# (Steven L. Shafer, 2026-11-18 and 2026-11-19; see the header's BODY SIZE).
+AMITRIPTYLINE_COHORT <- list(weight = 72.06, height = 175.22, age = 25, men = 24, women = 0)
+
 #' Amitriptyline (Koh 2018), forming nortriptyline
 #'
 #' Two compartments, apparent oral, CYP2C19 on the formation of
@@ -153,8 +178,9 @@ amitriptyline <- function(weight, height, age, sex, adjustToFFM = TRUE,
   if (!(length(cyp2d6) == 1 && cyp2d6 %in% CYP2D6_VALUES))
     stop("Invalid cyp2d6 for amitriptyline: ", paste(cyp2d6, collapse = ", "))
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
-  clm <- if (cyp2c19 == "poor") AMITRIPTYLINE_CLM_PM else AMITRIPTYLINE_CLM
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, AMITRIPTYLINE_COHORT))
+  clm <-if (cyp2c19 == "poor") AMITRIPTYLINE_CLM_PM else AMITRIPTYLINE_CLM
   clo <- if (cyp2d6 %in% c(CYP2D6_INTERMEDIATE, CYP2D6_POOR))
     AMITRIPTYLINE_CLO_LOW else AMITRIPTYLINE_CLO
   cl <- (clm + clo) / 60 * size$clearance
