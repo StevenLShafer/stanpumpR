@@ -475,6 +475,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     # anakinra (Urien 2013, 2026-11-25): plasma only
     "anakinra",
     "factorVIII",
+    "eftrenonacogAlfa",
     "thrombomodulinAlfa",
     "emicizumab",
     "tenecteplase",
