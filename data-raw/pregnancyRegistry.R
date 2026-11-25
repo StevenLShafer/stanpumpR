@@ -3475,7 +3475,18 @@ registry <- rbind(
       source = "Provigil (modafinil) prescribing information, Cephalon, rev. 12/2022, 8.1 (DailyMed setid e16c26ad-7bc2-d155-3a5d-da83ad6492c8); Ornoy A. Pharm Res 2018;35:46 (PMID 29411149); Aurora S et al. J Clin Sleep Med 2018;14:2087-2089 (PMID 30518447)",
       source_url = "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=e16c26ad-7bc2-d155-3a5d-da83ad6492c8",
       to_obtain = "",
-      notes = "Read: the label and Ornoy 2018 in full; Aurora 2018 as its abstract. Modafinil induces CYP3A4 and lowers steroidal-contraceptive concentrations (label 7; another method of contraception during treatment and for one month after), so unplanned pregnancy is a labelled risk. Neither Ornoy nor Aurora has Gideon Koren as an author (checked the PubMed author lists).")
+      notes = "Read: the label and Ornoy 2018 in full; Aurora 2018 as its abstract. Modafinil induces CYP3A4 and lowers steroidal-contraceptive concentrations (label 7; another method of contraception during treatment and for one month after), so unplanned pregnancy is a labelled risk. Neither Ornoy nor Aurora has Gideon Koren as an author (checked the PubMed author lists)."),
+  row("doxapram", "Other", "unknown",
+      finding = "No study of doxapram pharmacokinetics in human pregnancy was found (PubMed, 2026-11-20: doxapram AND pregnancy, pregnant, parturient, cesarean, labor or obstetric, 33 records). The human records are of postoperative use after obstetric and gynaecological surgery (Downing 1977, outcomes and blood gases only), of the newborn (Gupta 1973), and reviews; the rest are fetal sheep studies of fetal breathing (Hogg 1977, Bamford 1986), which show that doxapram crosses to the fetus but measure no maternal kinetics. The DOPRAM label (Hikma, 2024, read in full) is pregnancy category B and gives no pregnancy pharmacokinetics. Doxapram is metabolized by CYP3A4 (Ogawa 2015, in vitro), whose activity rises in pregnancy, so a higher clearance is plausible, but no magnitude has been measured.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = NA, comparator = "none",
+      design = "review", n = 0L, confidence = "low",
+      evidence_read = "abstract",
+      source = "PubMed search 2026-11-20; DOPRAM (doxapram hydrochloride) injection label, Hikma, NDA 014879, 2024-04-09, Pregnancy (DailyMed setid b8eb330a-a75b-46cb-b694-5be9327ed2eb); Downing JW et al. Br J Anaesth 1977;49:473-477 (PMID 861115); Hogg MI et al. Br J Obstet Gynaecol 1977;84:48-50 (PMID 843472)",
+      source_url = "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=b8eb330a-a75b-46cb-b694-5be9327ed2eb",
+      to_obtain = "",
+      notes = "Read: the label in full; the PubMed records as abstracts. The model (Clements 1979) is one healthy man's venous plasma curve. Doxapram crosses the placenta (fetal breathing in sheep after maternal doses), which matters for the fetus, not for the maternal curve plotted here.")
 )
 
 # The candidate models renamed when their drug's model became the program's
