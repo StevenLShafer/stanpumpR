@@ -473,7 +473,10 @@ try:
     # reaches one, so a small run would be pure merit and the starvation guarantee above would
     # be false for exactly the runs most likely to be used for a quick top-up.  Below the slot
     # size the LAST place goes to the age lane instead (CodeRabbit, PR #844).
-    age_place = (lambda n: n == cap - 1) if cap < AGE_SLOT else (lambda n: n % AGE_SLOT == AGE_SLOT - 1)
+    # ...except at cap 1, where there is only one place: a single-paper run cannot honour both
+    # lanes, and giving its one place to the age lane made --cap 1 ignore merit entirely and
+    # return the oldest waiting paper, which is not what a one-off top-up is for (2026-11-25).
+    age_place = (lambda n: cap > 1 and n == cap - 1) if cap < AGE_SLOT else (lambda n: n % AGE_SLOT == AGE_SLOT - 1)
     while len(queue) < cap and len(taken) < len(cand):
         name = "age" if age_place(len(queue)) else "merit"
         lane = aged if name == "age" else merit

@@ -42,7 +42,43 @@ The registries are read from `origin/master`, not from a working tree: several c
 this repository exist on this machine and any of them may be on a branch.  `--repo` overrides
 the path, `--no-fetch` skips the fetch (for a machine that is offline).
 
+RUNNING WHERE THE ARCHIVE IS NOT (`--no-archive`), and why that is sound
+-----------------------------------------------------------------------
+Everything above needs the archive, which is on the Drive on one computer, so this check runs
+only where the papers are -- and so the two categories that are READY WORK (a row whose papers
+have all arrived AND been carded; a pending-work row whose paper is here) are seen only by
+whoever happens to run update.bat.  On 2026-11-25 that was 27 stale registry rows and 20 ready
+pending-work rows, every one of them with the paper already in hand: by then the rate-limiting
+step was no longer GETTING the papers but noticing they had come.
+
+`--no-archive` makes the arrival set the CARDS ON MASTER instead of the PDFs on disk.  That is
+not an approximation of convenience: a card cannot be written for a paper nobody has, so
+`cards` is a subset of `have`.  For a STALE REGISTRY ROW the two tests agree exactly, because
+that category already requires every one of the row's PMIDs to be carded -- measured on
+2026-11-25, both ways gave the same 27 rows, line for line.
+
+What the mode gives up is only what the cards cannot know, and in one direction only: a paper
+that has ARRIVED BUT IS NOT CARDED YET reads as still missing.  So a pending-work row is
+reported only once its paper is carded (on 2026-11-25, 20 of 22 -- the two left out were
+esketamine papers filed and not yet digested), the ARRIVED-NOT-DIGESTED category is empty by
+construction, a row whose papers are all here but only some carded shows as partly satisfied
+instead, and a published edition superseding an accepted manuscript is not reported at all,
+since the suffixes live in the file names.  The mode therefore UNDER-reports and never
+over-reports, which is the safe direction for a watch; it says so in its own output, so that a
+short list is not read as good news.
+
+It needs nothing but a clone, so it can run in a scheduled cloud session, which is the point:
+the detection was never the gap, the gap was that its output went to a terminal.  It writes
+nothing, so `--no-enqueue` is forced on (the queue lives in the archive).
+
+`--tasks` prints one TAB-separated line per item instead of the report -- kind, where, drug,
+PMIDs, cards, and what the row asks for -- so that something else can turn each into a message,
+an issue or a session.  It WRITES NOTHING, as `--no-archive` does not: a caller polling for
+what is ready should not be mutating the download queue as a side effect.  Nothing in this
+script decides to start work either: it reports, as it always has.
+
 Usage: python arrivals.py [--repo <path>] [--ref <ref>] [--no-fetch] [--all] [--no-enqueue]
+                          [--no-archive] [--tasks]
 """
 import os
 import re
@@ -64,7 +100,26 @@ REF = args[args.index("--ref") + 1] if "--ref" in args else "origin/master"
 # The DEFAULT must stay origin/master: a row that is only on a branch is invisible to every
 # other machine, which is the one way the pending-work register can fail.
 
-ENQUEUE = "--no-enqueue" not in args
+NO_ARCHIVE = "--no-archive" in args
+# Take the cards on `REF` as the arrival set, so the check runs in a clone with no papers
+# beside it (the docstring says why that is exact for the categories it reports).
+TASKS = "--tasks" in args
+# One TAB-separated line per item instead of the report, for a caller that acts on them.
+
+ENQUEUE = "--no-enqueue" not in args and not NO_ARCHIVE and not TASKS
+# --tasks does not write either (2026-11-25).  enqueue() runs BEFORE the task branch returns,
+# and that branch prints none of what the prose report says about it, so `arrivals.py --tasks`
+# on its own was quietly adding rows to stanpumpr-queue.csv and telling nobody -- a reporting
+# mode mutating the archive, which is the last thing a caller polling it would expect
+# (CodeRabbit, PR #926).  Nothing operational depends on it: update.bat runs the plain form,
+# which still enqueues, and the watch this mode was built for runs `--no-archive --tasks`,
+# where ENQUEUE was already off.
+#
+# IF YOU EVER LET --tasks ENQUEUE AGAIN, read this first.  The task branch returns before the
+# report prints `enqueue_problem` -- the queue missing, PubMed failing, the file locked -- so
+# with writes enabled in that mode a failure to queue a wanted paper would be swallowed and
+# the command would still exit 0.  Today that cannot happen, because enqueue() is not called
+# at all when TASKS is set; the safety is this line, not anything in the branch itself.
 # A wanted paper that is in NEITHER the archive nor the download queue is invisible to the
 # person doing the downloading: on 2026-11-18 nine of the ten PMIDs that registry rows were
 # blocked on had never reached stanpumpr-queue.csv, so nobody was looking for them and the
@@ -95,6 +150,11 @@ def archived_pmids():
     The suffix matters: PMID_32238008_aam.pdf is the accepted manuscript and
     PMID_32238008.pdf the published version, and a card written from the first is
     superseded by the second."""
+    if NO_ARCHIVE:
+        # No papers beside us: a card is proof its paper arrived, so the cards ARE the
+        # arrival set.  Every suffix reads as "" (published), which is why the superseded
+        # check is skipped in this mode rather than answered wrongly.
+        return {p: {""} for p in cards_on_master()}
     out = {}
     for f in os.listdir(ARCHIVE):
         m = re.fullmatch(r"PMID_(\d+)(?:_([A-Za-z0-9]+))?\.pdf", f, re.I)
@@ -279,17 +339,62 @@ def enqueue(wanted_by):
     return added, already, ""
 
 
+
+def diag(msg):
+    """A human-readable line.  In --tasks mode it goes to STDERR, so that stdout carries
+    nothing but task records: a consumer reading six tab-separated fields was handed the
+    early-exit messages ("cannot read origin/master", "no registry lists a `to_obtain` PMID")
+    and could not parse them (CodeRabbit, PR #926)."""
+    print(msg, file=sys.stderr if TASKS else sys.stdout)
+
+
+def no_archive_caveat():
+    """Printed on EVERY exit in --no-archive mode, the early ones included.
+
+    Without it a short list reads as good news: the arrival set is the cards, so a paper that
+    is filed and not yet digested counts as still to obtain.  On 2026-11-25 that was 11 'still
+    to obtain' in this mode against 5 beside the archive.  It was missing from the two early
+    returns until CodeRabbit pointed it out on PR #926, which made the docstring's "every
+    exit" an overclaim.
+
+    In --tasks mode it is one `#`-prefixed line on STDOUT, not stderr: a consumer that pipes
+    stdout must still see it, and skipping `#` lines is the ordinary contract for a
+    tab-separated stream.  That is the one line of stdout that is not a record."""
+    if not NO_ARCHIVE:
+        return
+    if TASKS:
+        print("#\tno-archive mode: arrival = a card on %s, so a paper that arrived with no"
+              " card reads as still missing, and no superseded edition is reported" % REF)
+    else:
+        diag("\nNOTE: --no-archive. Arrival means A CARD ON %s, not a PDF on disk, so"
+             " a paper that is\n      filed but not yet digested counts as STILL TO OBTAIN,"
+             " nothing is reported as\n      arrived-not-digested, and no superseded edition"
+             " is reported. The ready rows above\n      are complete for the registries and may"
+             " be short for pending-work. Run it beside\n      the archive for the full picture."
+             % REF)
+
+
 def main():
     if FETCH:
         subprocess.run(["git", "-C", REPO, "fetch", "origin", "master", "-q"],
                        capture_output=True, text=True)
     if not git("rev-parse", REF).strip():
-        print("arrivals: cannot read %s in %s -- skipped" % (REF, REPO))
+        diag("arrivals: cannot read %s in %s -- skipped" % (REF, REPO))
+        no_archive_caveat()
         return 0
 
     have, cards, rows = archived_pmids(), cards_on_master(), wanted()
-    if not rows:
-        print("arrivals: no registry lists a `to_obtain` PMID -- nothing to check")
+    waiting = pending_work()
+    # Read the pending rows BEFORE the early return.  papers/pending-work.csv is a second,
+    # independent source of wanted papers, and until 2026-11-25 an empty `rows` returned here
+    # without ever looking at it, so an arrived pending-work paper was dropped from both the
+    # report and --tasks.  The failure gets MORE likely as the registries are cleaned up,
+    # which is backwards: clearing the last `to_obtain` would have silenced the other half of
+    # the check (CodeRabbit, PR #926).
+    if not rows and not waiting:
+        diag("arrivals: no registry lists a `to_obtain` PMID and papers/pending-work.csv has no"
+             " pending row -- nothing to check")
+        no_archive_caveat()
         return 0
 
     undigested, stale, partly, missing = [], [], [], []
@@ -319,13 +424,12 @@ def main():
 
     # A card written from an accepted manuscript whose published PDF has since been filed.
     superseded = []
-    for pmid, suffixes in sorted(have.items()):
+    for pmid, suffixes in (() if NO_ARCHIVE else sorted(have.items())):
         if "" in suffixes and len(suffixes) > 1 and pmid in cards:
             ed = card_edition(cards[pmid])
             if ed and ed != "published":
                 superseded.append((pmid, cards[pmid], ed, sorted(s for s in suffixes if s)))
 
-    waiting = pending_work()
     pending = [p for p in waiting if p[0] in have]
     for pmid, drug, what, where, raised in waiting:
         if pmid not in have:                    # pending work whose paper has still not come
@@ -333,9 +437,43 @@ def main():
 
     added, already_queued, enqueue_problem = ([], [], "") if not ENQUEUE else enqueue(wanted_by)
 
+    if TASKS:
+        # kind <TAB> where <TAB> drug <TAB> pmids <TAB> cards <TAB> what-the-row-asks-for
+        # Stable field order; a field's text is flattened, never truncated, so a consumer
+        # has the whole request.  `ready` is the only kind that is work somebody can start
+        # now; the rest are named so that a filter cannot silently drop a category it has
+        # not heard of.
+        def flat(x):
+            """One field, with tabs and line breaks squeezed out.
+
+            EVERY field is flattened, not just `what`: `where` and `drug` come from CSV
+            columns, which may hold either character, and a newline in one of them would
+            write a single task across several lines while a tab would add a column
+            (CodeRabbit, PR #926)."""
+            return re.sub(r"\s+", " ", str(x or "")).strip()
+
+        def emit(kind, where, drug, pmids, what):
+            print("\t".join(flat(f) for f in (
+                kind, where, drug or "-", ",".join(pmids),
+                ",".join(cards.get(x, "") for x in pmids), what)))
+        for reg, drug, pmids, reason in stale:
+            emit("ready-registry-row", reg, drug, pmids, reason)
+        for pmid, drug, what, where, raised in pending:
+            emit("ready-pending-work", where or "papers/pending-work.csv", drug, [pmid], what)
+        for pmid, path, ed, sfx in superseded:
+            emit("superseded-edition", path, "-", [pmid],
+                 "card written from %s; published PDF now filed" % ed)
+        for reg, drug, pmids, reason in undigested:
+            emit("arrived-not-digested", reg, drug, pmids, reason)
+        for reg, drug, here, gone, reason in partly:
+            emit("partly-satisfied", reg, drug, here + gone, reason)
+        no_archive_caveat()
+        return 0
+
     if not (undigested or stale or partly or superseded or pending or added or enqueue_problem):
         print("arrivals: nothing waiting has arrived (%d `to_obtain` PMIDs, %d still to obtain)"
               % (len(allpmids), len(set(p for _, _, p in missing))))
+        no_archive_caveat()
         return 0
 
     def plist(ps):
@@ -395,6 +533,7 @@ def main():
         print("Still to obtain:")
         for reg, drug, pmid in sorted(set(missing)):
             print("  %-26s %-24s PMID_%s" % (reg, drug[:23], pmid))
+    no_archive_caveat()
     return 0
 
 
