@@ -412,16 +412,26 @@ helpProductPageHTML <- function(drug, row, drugDefaults) {
   esc <- htmltools::htmlEscape
   spec <- COMBINATION_PRODUCTS[[drug]]
   units <- helpDrugUnits(row)
-  componentItems <- vapply(names(spec$components), function(d) {
+  byMass <- combinationByMass(drug)
+  amounts <- combinationAmounts(drug)
+  componentItems <- vapply(names(amounts), function(d) {
     conc <- drugDefaults$Concentration.Units[drugDefaults$Drug == d]
-    paste0("<li>", helpPageLink(paste0("drugs/", d)), ": ",
-           esc(helpFormatNumber(spec$components[[d]])), " mg a ", esc(spec$unit),
+    carried <- if (byMass)
+      paste0(esc(helpFormatNumber(signif(100 * amounts[[d]], 3))), "% of each dose by weight")
+    else
+      paste0(esc(helpFormatNumber(amounts[[d]])), " mg a ", esc(spec$unit))
+    paste0("<li>", helpPageLink(paste0("drugs/", d)), ": ", carried,
            ", drawn in ", esc(helpConcentrationUnits(conc)), "</li>")
   }, character(1))
+  drawnAs <- if (length(componentItems) == 1)
+    "A combination product, drawn as its one active component" else
+    sprintf("A combination product, drawn as its %d components", length(componentItems))
+  enteredIn <- if (byMass) "the combined weight of its ingredients, as its label doses it," else
+    paste0(spec$unit, "s")
   glance <- data.frame(
     Property = c("Given as", "Units offered in the dose table", "Default unit", "Category"),
     Value = c(
-      sprintf("A combination product, drawn as its %d components", length(componentItems)),
+      drawnAs,
       paste(units, collapse = ", "),
       as.character(row$Default.Units),
       as.character(row$Category)
@@ -432,8 +442,10 @@ helpProductPageHTML <- function(drug, row, drugDefaults) {
   paste0(
     helpH2("At a glance"), helpTableHTML(glance),
     helpH2("Components"),
-    "<p>A dose of ", esc(drug), " is entered in ", esc(spec$unit), "s and simulated as its ",
-    "components, each from its own model and drawn in its own panel. The models, their ",
+    "<p>A dose of ", esc(drug), " is entered in ", esc(enteredIn), " and simulated as its ",
+    "drawn components, each from its own model and drawn in its own panel. A component that ",
+    "is there only to change the other's efficacy or exposure, such as a beta-lactamase ",
+    "inhibitor, is not drawn. The models, their ",
     "parameters, their pregnancy findings and their therapeutic ranges are on the ",
     "components' pages.</p>",
     "<ul>", paste(componentItems, collapse = ""), "</ul>",
