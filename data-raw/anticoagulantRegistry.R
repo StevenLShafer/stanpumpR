@@ -104,12 +104,12 @@ registry <- rbind(
   reg("flu_verstuyft_2012", "vitamin K antagonist",
       "oral, induction (healthy volunteers)", "fluindione (mg/L) -> INR", "INR (indirect response on 1/INR)",
       "PO", "research_ready", "fluindione",
-      "Full Tables II and IV and Eq.1 read from the typeset original (apparent two-compartment PK; indirect-response INR, E = C^2.32/(C^2.32 + C50^2.32), kin 0.0385/h, kout 0.0391/h); CYP2C9 *3 on CL (x0.637), VKORC1 on C50 (x1.30 for the less-sensitive genotype); CYP1A2/smoking covariate fixed at the median (no field); single-dose healthy-volunteer fit, not a maintenance model.",
+      "Full Tables II and IV and Eq.1 read from the typeset original (apparent two-compartment PK; indirect-response INR, E = C^2.32/(C^2.32 + C50^2.32), kin 0.0385/h, kout 0.0391/h); CYP2C9 *3 on CL (x0.637), VKORC1 on C50 (x1.30 for the less-sensitive genotype); CYP1A2/smoking covariate fixed at the median (no field); two-dose (24 h apart) healthy-volunteer fit, not a maintenance model.",
       "https://doi.org/10.2165/11595560-000000000-00000"),
   reg("aceno_verstuyft_2012", "vitamin K antagonist",
       "oral, induction (healthy volunteers)", "S-acenocoumarol (mg/L) -> INR", "INR (indirect response on 1/INR)",
       "PO", "research_ready", "acenocoumarol",
-      "Full Tables III and IV and Eq.1 read from the typeset original (S-enantiomer only, half the racemic dose; apparent two-compartment PK; indirect-response INR, E = C^1.2/(C^1.2 + C50^1.2), kin 0.0269/h, kout 0.0268/h); CYP2C9 *3 on CL (x0.7), VKORC1 on C50 (x2.29 for the less-sensitive genotype); fast clearance makes the simulated steady-state INR about 20-30% from the paper's Table IV (no stated maintenance dose/definition); single-dose healthy-volunteer fit.",
+      "Full Tables III and IV and Eq.1 read from the typeset original (S-enantiomer only, half the racemic dose; apparent two-compartment PK; indirect-response INR, E = C^1.2/(C^1.2 + C50^1.2), kin 0.0269/h, kout 0.0268/h); CYP2C9 *3 on CL (x0.7), VKORC1 on C50 (x2.29 for the less-sensitive genotype); fast clearance makes the simulated steady-state INR about 20-30% from the paper's Table IV (no stated maintenance dose/definition); two-dose (24 h apart) healthy-volunteer fit.",
       "https://doi.org/10.2165/11595560-000000000-00000"),
 
   # --- Provisional (published, but a material gap) ---------------------------

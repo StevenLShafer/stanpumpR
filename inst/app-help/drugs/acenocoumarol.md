@@ -35,7 +35,7 @@ The model was fitted to two doses 24 hours apart in healthy volunteers; the stea
 
 ### Further reading
 
-Not implemented here, but relevant to populations the single-dose adult source does not cover:
+Not implemented here, but relevant to populations the two-dose (24 h apart) adult source does not cover:
 
 - Maagdenberg HM et al., *J Thromb Haemost* 2018;16(9):1732-1742 ([doi:10.1111/jth.14211](https://doi.org/10.1111/jth.14211)): the pediatric dosing algorithm from the Children Anticoagulation and Pharmacogenetics Study (175 Dutch children), where body surface area plus VKORC1, CYP2C9 and CYP2C18 explain about 62% of the dose requirement — the only substantial pediatric acenocoumarol evidence, and a pointer to body-size scaling.
 - Delavenne X et al., *Fundam Clin Pharmacol* 2009;23(1):127-135 ([doi:10.1111/j.1472-8206.2008.00642.x](https://doi.org/10.1111/j.1472-8206.2008.00642.x)): an independent two-compartment, indirect-response model (with a body-weight covariate) that corroborates the structure used here.
