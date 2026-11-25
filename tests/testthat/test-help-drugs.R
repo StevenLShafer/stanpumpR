@@ -145,6 +145,7 @@ plasmaOnly <- c(
     "anakinra",
     "factorVIII",
     "eftrenonacogAlfa",
+    "fibrinogen",
     "thrombomodulinAlfa",
     # emicizumab (Retout 2020, 2026-11-25): plasma only, subcutaneous
     "emicizumab",

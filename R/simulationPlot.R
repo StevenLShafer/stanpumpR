@@ -31,6 +31,8 @@ plottedUnitText <- function(units, drugs) {
   # A factor concentrate is plotted in IU/dL, % of normal, the patient's own
   # activity included (R/factorBaselines.R).
   unitText[units == "IUdL"] <- "IU/dL"
+  # Fibrinogen is plotted in mg/dL, the patient's own included
+  unitText[units == "mgdL"] <- "mg/dL"
   unitText
 }
 

@@ -476,6 +476,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "anakinra",
     "factorVIII",
     "eftrenonacogAlfa",
+    "fibrinogen",
     "thrombomodulinAlfa",
     "emicizumab",
     "tenecteplase",
