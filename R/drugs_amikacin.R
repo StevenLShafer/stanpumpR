@@ -40,14 +40,24 @@
 # adultEquivalentCreatinine(); blank means the assumed normal for age and sex.
 # The weight in it is the pharmacokinetic weight with the fat-free-mass
 # switch on and total body weight with it off.  The volumes and CLD were
-# fixed values (weight was tested on V1 and Vt and was not significant), so
-# they are scaled by the library's factors with the switch on and fixed with
-# it off.  The intercept, 1.40 L/h, is the clearance with no renal function, a
-# fixed value with no size term, so it too takes the clearance factor with the
-# switch on (until 2026-11-18 it was unscaled); the renal term takes none, its
-# Cockcroft-Gault clearance carrying the weight already (Steven L. Shafer,
-# 2026-11-18).  Tod's cohort is not anchored: the paper is not in the archive
-# (papers/pending-work.csv).
+# fixed values (weight was tested on V1 and Vt and was not significant, which
+# is not evidence that size does not matter: Steven L. Shafer's
+# first-principles rule of 2026-11-19), so they are scaled by the library's
+# factors with the switch on and fixed with it off.  The intercept, 1.40 L/h,
+# is the clearance with no renal function, a fixed value with no size term,
+# so it too takes the clearance factor with the switch on (until 2026-11-18 it
+# was unscaled); the renal term takes none, its Cockcroft-Gault clearance
+# carrying the weight already (Shafer, 2026-11-18: "you would wind up double
+# correcting clearance").  V1, Vt, CLD and the intercept are anchored at
+# Tod's cohort (AMIKACIN_COHORT, below: Table 1's two groups, 35 men and 22
+# women, about 67 kg and 51 years, French), whose typical patient sits at a
+# volume factor of 0.8921 and a clearance factor of 0.9179 from the 70 kg
+# reference man, so a patient like Tod's receives Table 4's values and the
+# reference man receives volumes 12.1% and the non-renal clearances 8.9%
+# above them (until 2026-11-20 the reference man received them, the paper
+# not being in the archive).  The card's [decision] on the clearance
+# equation (papers/digests/PMID_9559795.md: the final form is now readable on
+# the PDF) is not about size and is left open.
 #
 # DOSE
 # ====
@@ -63,6 +73,23 @@ AMIKACIN_CL_INTERCEPT <- 1.40    # L/h
 AMIKACIN_V1           <- 8.92    # L
 AMIKACIN_CLD          <- 4.43    # L/h
 AMIKACIN_VT           <- 11.4    # L
+
+# Tod 1998, Table 1 (PDF p2, printed 850), means: the o.d. group, 28 patients,
+# 16 men and 12 women, 65.8 kg, 50.2 years, treated January to December
+# 1995; the b.i.d. group, 29 patients, 19 men and 10 women, 68.1 kg, 51.3
+# years, treated January 1993 to December 1994 (Methods).  The weight
+# column's parenthesised values are SDs under a header misprinted "range"
+# (the text, p853: 67 +/- 13 kg).  No height is printed: NCD-RisC's mean
+# height at 18 for France, birth cohorts 1945 (1995 less 50.2) and 1943 (1994
+# less 51.3), less the loss with age, is 172.5 and 172.1 cm for the men and
+# 160.2 and 160.0 cm for the women.  V1, Vt, CLD and the non-renal intercept
+# are anchored at this cohort (Steven L. Shafer, 2026-11-18 and 2026-11-19;
+# see the header).  The renal term is not.
+AMIKACIN_COHORT <- list(groups = list(
+  list(weight = 65.8, height = 172.5, age = 50.2, men = 16, women = 0),
+  list(weight = 65.8, height = 160.2, age = 50.2, men = 0, women = 12),
+  list(weight = 68.1, height = 172.1, age = 51.3, men = 19, women = 0),
+  list(weight = 68.1, height = 160.0, age = 51.3, men = 0, women = 10)))
 
 #' Amikacin (Tod 1998)
 #'
@@ -81,7 +108,10 @@ amikacin <- function(weight, height, age, sex, adjustToFFM = TRUE,
                      creatinine = NULL, pregnant = FALSE)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, AMIKACIN_COHORT))
+  # The pharmacokinetic weight is the patient's (70 kg x FFM / FFM_ref),
+  # which the cohort does not change: Cockcroft-Gault is not anchored
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   scr  <- adultEquivalentCreatinine(creatinine, age, sex)
   gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)

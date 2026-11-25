@@ -239,7 +239,24 @@ values**, and the reference man, and everyone else, are scaled from there.
   on top of its indexed eGFR, and CLd, at Trang 2021's Table 1, of which the
   FDA review's fitting population is about nine tenths), suzetrigine and
   M6SUZ (Q3P and Q3M, at the review's median subject as transcribed),
-  and the four Miura 2026 models, sildenafilMiura, tadalafilMiura, ambrisentanMiura and bosentan (V/F, which the paper did not explore for covariates, at each cohort's children and adults as four groups, with Japanese heights: the JSPE 2000 growth reference for the children, NCD-RisC for the adults; Shafer, 2026-11-20. Miura's V/F is large: a 70 kg man receives about 900 L of sildenafil, against about 256 L in the FDA's adult model, which the sildenafil group gives adults). At the reference anchor, the cohort printing no sex split,
+  and the four Miura 2026 models, sildenafilMiura, tadalafilMiura, ambrisentanMiura and bosentan (V/F, which the paper did not explore for covariates, at each cohort's children and adults as four groups, with Japanese heights: the JSPE 2000 growth reference for the children, NCD-RisC for the adults; Shafer, 2026-11-20. Miura's V/F is large: a 70 kg man receives about 900 L of sildenafil, against about 256 L in the FDA's adult model, which the sildenafil group gives adults). On 2026-11-20, their sources now archived and digested (papers/pending-work.csv), every
+  parameter without a size term of amitriptyline (Koh 2019's 24 Korean men,
+  height printed; the genotype clearances kept, the nortriptyline formed
+  following nortriptyline's own scaling), capecitabine and capecitabine5FU
+  (Gieschke 2003's three studies, heights solved from each study's BSA),
+  sirolimus (Dansirikul 2006, height from BMI; the age term kept), tacrolimus
+  (Woillard 2011's two studies, French heights; the card's `[decision]`,
+  reference man or cohort, answered by the standing rule), amikacin (Tod
+  1998's two groups, French heights; the non-renal intercept, V1, CLD and Vt),
+  ganciclovir (Caldés 2009, Spanish heights; V1, Q and V2), quinidine
+  (Fattinger 1991, Swiss heights; the non-renal clearance, V1, Q and V2) and
+  vancomycinKidneyTransplant (Yu 2026's transplant and non-transplant groups,
+  heights printed; V); the renal terms of the last four, with weight inside,
+  take none. Amitriptyline's anchoring moved its checks of the nortriptyline
+  formed against unfitted data (Gupta 1999's area +7.6%, Hart 2026's trough
+  per dose +6.6%, from +4.2% and +3.5%), the formation following
+  nortriptyline's clearance while amitriptyline's fell 3.1% at the reference
+  man. At the reference anchor, the cohort printing no sex split,
   no weight, no country or a multinational population without heights: the
   eight Tham insulins (CL/F, the human insulins' dose term kept), exenatide
   (Cl on top of its indexed eGFR, Cld, Vp and Vmax), empagliflozin (Q/F) and
@@ -292,13 +309,19 @@ values**, and the reference man, and everyone else, are scaled from there.
   renal term, and aspirin (k34 x V3 counts weight twice with the switch on).
   *The source is not in the archive or prints no demographics*: aspirin and
   salicylate, pimavanserin, levodopa and levodopaIntestinalGel, pramipexole
-  and pramipexoleER, fluorouracilBriki, tranexamicAcid, amikacin, ganciclovir,
-  vancomycinKidneyTransplant, quinidine, tobramycin, sotalol, hydrocodone and
-  haloperidol. *Exempt*: hydrochlorothiazide (a meta-analysis).
+  and pramipexoleER, fluorouracilBriki, tranexamicAcid, tobramycin, sotalol,
+  hydrocodone and haloperidol (amikacin, ganciclovir,
+  vancomycinKidneyTransplant and quinidine were anchored on 2026-11-20). *Exempt*: hydrochlorothiazide (a meta-analysis).
 - **Not anchored, and why** (2026-11-18). *The source's paper is not in the
-  archive* (papers/pending-work.csv): duloxetine, nortriptyline, clozapine,
-  scopolamine, everolimus, sirolimus, tacrolimus, amitriptyline,
-  capecitabine, amikacin, ganciclovir, quinidine, vancomycinKidneyTransplant.
+  archive* (papers/pending-work.csv): duloxetine and everolimus (sirolimus,
+  tacrolimus, amitriptyline, capecitabine, amikacin, ganciclovir, quinidine
+  and vancomycinKidneyTransplant were anchored on 2026-11-20, their papers
+  archived). *The source, archived on 2026-11-20, prints no weight*, so the
+  reference anchor stays until Shafer decides (their pending-work rows stay
+  open): nortriptyline (Vos 2025 prints sex and age only, for 48 of the 85
+  patients modelled), clozapine (Li 2012: weight and BSA recorded, not
+  summarised) and scopolamine (Liem-Moolenaar 2011: 90 men of 18-55 years and
+  BMI 18-28.5, ranges only).
   *The source prints no usable demographics*, so the reference anchor stays:
   daunorubicin, doxorubicinLiposomal and doxorubicinLiposomalFree (scaled
   only since 2026-11-24), droperidolIM, risperidone and hydroxyrisperidone,
