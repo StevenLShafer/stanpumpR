@@ -74,7 +74,7 @@ Biologics (sepsis),antithrombin,antithrombin,1,planned,
 Biologics (sepsis),thrombomodulin alfa,thrombomodulinalfa,1,planned,"Not US-approved (Japan)."
 Biologics (sepsis),angiotensin II,angiotensin,1,planned,"Giapreza, vasodilatory shock: a peptide; fits beside the vasoactive drugs."
 Biologics (sepsis),tocilizumab,tocilizumab,1,planned,"COVID-19 and cytokine release."
-Biologics (sepsis),anakinra,anakinra,1,planned,
+Biologics (sepsis),anakinra,anakinra,1,in_progress,"Urien 2013 (children, SC), used at every age; adults, renal function and the IV route are [decision]s on papers/digests/PMID_23915458.md, waiting on Yang 2003 (PMID 12844139)."
 Biologics (sepsis),vilobelimab,,1,planned,"Anti-C5a, COVID-19 EUA; not in nlmixr2lib: PubMed search."
 Outpatient (2024 top 200),liothyronine,liothyronine;triiodothyronine,1,done,"Implemented 2026-11-18 as liothyronine (Van Tassell 2019, Thyroid 29:1371, Table 3: two compartments at steady state in 14 thyroidectomised patients on liothyronine alone; oral only; total T3 above baseline). FDA oral NTI (April 2026 product-specific guidance list, p. 11)."
 Outpatient (2024 top 200),atorvastatin,atorvastatin,2,planned,Rank 1 (ClinCalc 2024). Include active hydroxy metabolites if the source requires them.

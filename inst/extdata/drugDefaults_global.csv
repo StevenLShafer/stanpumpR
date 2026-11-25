@@ -357,3 +357,4 @@ rosuvastatin,ng,,,mg PO qd,"mg PO,mg PO qd",#B23A48,0,0,0,0,0,IV,Other
 evolocumab,mcg,,,mg SC,"mg SC",#5E8C31,0,0,0,0,0,IV,Other
 mirabegron,ng,,,mg PO,"mg PO,mg PO qd",#8E44AD,0,0,0,0,0,IV,Other
 modafinil,mcg,,,mg PO,"mg PO,mg PO qd",#00838F,1,1.7,1.35,0,0,IV,Stimulants
+anakinra,ng,,,mg SC qd,"mg SC,mg/kg SC,mg SC qd,mg/kg SC qd,mg SC bid,mg/kg SC bid",#00838F,0,0,0,0,0,IV,Other
