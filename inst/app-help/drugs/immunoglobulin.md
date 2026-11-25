@@ -19,7 +19,7 @@ No band is drawn. No therapeutic range of serum IgG is established for intraveno
 - **Weight**, on every parameter, as fitted; with the fat-free-mass switch on, the pharmacokinetic weight.
 - **Disease severity and steroids are held at the reference.** In the source, a severely affected patient cleared IVIG faster (×1.22 for a disability score of 3 or 4, ×1.83 for a ventilated patient), and so did a patient also given methylprednisolone (×1.31). The Patient Profile cannot carry either, so the curve is that of a mildly affected patient given no steroid; a sicker patient's IgG falls faster than drawn.
 - **Who it describes.** The source is GBS. IVIG is also given in sepsis and in other inflammatory disease, where fever and inflammation would be expected to shorten the half-life further; no model of those uses is in the library.
-- **Pregnancy**: no third-trimester pharmacokinetics have been reported. With the dose adjusted to weight, the IVIG exposure was unchanged from before pregnancy into the second trimester (Ensom and Stephenson 2011). Nothing is applied.
+- **Pregnancy**: serum IgG has been measured through the third trimester during weekly high-dose IVIG (Okada 2020, six women, simulated with a two-compartment model), but no pregnancy-related change in clearance has been quantified. With the dose adjusted to weight, the IVIG exposure was unchanged from before pregnancy into the second trimester (Ensom and Stephenson 2011). Nothing is applied.
 
 ### Doses
 

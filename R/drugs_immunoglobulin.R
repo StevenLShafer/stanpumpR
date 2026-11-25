@@ -62,7 +62,10 @@
 # fitted, evaluated at the pharmacokinetic weight with the switch on and at
 # total weight with it off.
 #
-# PREGNANCY: no pharmacokinetic study of IVIG in pregnancy in the archive
+# PREGNANCY: no pregnancy-related change in clearance has been quantified;
+# Okada 2020 (PMID 29890876) measured serum IgG to term during weekly
+# high-dose IVIG in six women, and Ensom 2011 found the weight-adjusted
+# exposure unchanged into the second trimester; nothing is applied
 # (inst/extdata/pregnancyRegistry.csv).
 #
 # References
