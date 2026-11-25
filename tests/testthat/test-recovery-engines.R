@@ -378,6 +378,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "MEGX", "norpethidine", "PPX",  # toxic metabolites, no ke0 (2026-11-13)
     "artemether", "dihydroartemisinin", "lumefantrine",  # Coartem's components (2026-11-24)
     "mycophenolate",  # concentration only, no ke0 (2026-11-25)
+    "ceftolozane",  # Zerbaxa's drawn component (2026-11-25)
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
     "vancomycinKidneyTransplant",

@@ -61,10 +61,23 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# No size covariate was retained (body weight was tested and dropped), so the
-# published fixed values are scaled by the library's fat-free-mass factors
-# with the switch on, and fixed with it off (legacyVolume = legacyClearance
-# = 1).
+# No size covariate was retained (body weight was tested and dropped, which
+# is not evidence that size does not matter: Steven L. Shafer's
+# first-principles rule of 2026-11-19), so the published fixed values are
+# scaled by the library's fat-free-mass factors with the switch on, Vc/F and
+# Vp/F by the volume factor, CL/F and Q/F by the clearance factor (CL/F
+# keeping its haematocrit and CYP3A5 terms and the pregnancy factor, none of
+# them size), and fixed with it off (legacyVolume = legacyClearance = 1).
+# They are anchored at Woillard's cohort (TACROLIMUS_COHORT, below: Table
+# 1's two studies, both fitted, 38 men and 35 women, 65 and 69 kg, 55 and 53
+# years, French), whose typical patient sits at a volume factor of 0.8799 and
+# a clearance factor of 0.9085 from the 70 kg reference man, so a patient
+# like Woillard's receives Table 4's values and the reference man receives
+# volumes 13.6% and clearances 10.1% above them.  The card's [decision]
+# (papers/digests/PMID_21284698.md: the reference man or this cohort) is
+# answered by the standing rule of 2026-11-18, which anchors fixed published
+# values at the source's cohort; until 2026-11-20 they were the reference
+# man's, the paper not being in the archive.
 #
 # THE BAND
 # ========
@@ -99,6 +112,22 @@ TACROLIMUS_CYP3A5_EXPRESSER_FACTOR <- 2.00   # not applied: no CYP3A5 field
 # Zheng 2012: whole blood CL/F in mid/late pregnancy over postpartum
 TACROLIMUS_PREGNANCY_CL_FACTOR <- 47.4 / 34.2
 
+# Woillard 2011, Table 1 (PDF p3, printed 393), medians: the Prograf study,
+# 32 patients, 19 men and 13 women, 55 years, 65 kg; the Advagraf study, 41
+# patients, 19 men and 22 women, 53 years, 69 kg.  Table 4's model was
+# fitted to both (the whole data set), so both are the cohort.  Limoges and
+# Toulouse.  No height is printed, nor the years of collection: NCD-RisC's
+# mean height at 18 for France, birth cohorts 1956 and 1958 (the
+# publication, 2011, less 55 and 53), less the loss with age, is 174.2 and
+# 174.6 cm for the men and 161.2 and 161.6 cm for the women.  Every volume
+# and clearance is anchored at this cohort (Steven L. Shafer, 2026-11-18 and
+# 2026-11-19; see the header's BODY SIZE).
+TACROLIMUS_COHORT <- list(groups = list(
+  list(weight = 65, height = 174.2, age = 55, men = 19, women = 0),
+  list(weight = 65, height = 161.2, age = 55, men = 0, women = 13),
+  list(weight = 69, height = 174.6, age = 53, men = 19, women = 0),
+  list(weight = 69, height = 161.6, age = 53, men = 0, women = 22)))
+
 #' Tacrolimus, Prograf (Woillard 2011)
 #'
 #' Two compartments with a three-compartment Erlang absorption, apparent oral
@@ -113,7 +142,8 @@ tacrolimus <- function(weight, height, age, sex, adjustToFFM = TRUE,
                        pregnant = FALSE)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, TACROLIMUS_COHORT))
   ktr <- TACROLIMUS_KTR / 60
 
   default <- list(

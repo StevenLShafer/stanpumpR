@@ -47,3 +47,30 @@ test_that("the band is the label's maintenance range", {
   row <- dd[dd$Drug == "sirolimus", ]
   expect_equal(c(row$Lower, row$Upper, row$Typical), c(12, 20, 16))
 })
+
+test_that("anchored at Dansirikul's cohort: its typical patients get Table 4, FFM scales the rest", {
+  # (a) Table 1 (PDF p5): 14 men and 11 women, 44 years, 73 kg, BMI 27, so
+  # 164.4 cm.  No parameter has a sex term, so the pooled (geometric, by
+  # numbers) man and woman receive the published values, CL/F with its age term
+  kc <- cohortFactorsIndependent(SIROLIMUS_COHORT)
+  expect_equal(round(c(kc$volume, kc$clearance), 4), c(0.9121, 0.9334))
+  h <- 100 * sqrt(73 / 27)
+  m <- sirolimus(73, h, 44, "male")$PK$default
+  f <- sirolimus(73, h, 44, "female")$PK$default
+  pooled <- function(x, y) exp((14 * log(x) + 11 * log(y)) / 25)
+  expect_equal(pooled(m$v1, f$v1), 117)
+  expect_equal(pooled(m$v2, f$v2), 583)
+  expect_equal(pooled(m$cl1, f$cl1) * 60, 16.9 * 0.742)
+  expect_equal(pooled(m$cl2, f$cl2) * 60, 20.4)
+  # (b) twice the reference fat-free mass, at 44 years: volumes x 2 and
+  # clearances x 2^0.75 over the cohort's factors
+  w <- uniroot(function(w) ffmAlSallami(w, 200, 44, "male") - 2 * FFM_REFERENCE,
+               c(70, 400), tol = 1e-12)$root
+  big <- sirolimus(w, 200, 44, "male")$PK$default
+  expect_equal(c(big$v1, big$v2), c(117, 583) * 2 / kc$volume)
+  expect_equal(c(big$cl1, big$cl2) * 60, c(16.9 * 0.742, 20.4) * 2^0.75 / kc$clearance)
+  # (c) the switch off: Table 4 at any size
+  off <- sirolimus(w, 200, 44, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(c(off$v1, off$v2, off$cl1 * 60, off$cl2 * 60),
+               c(117, 583, 16.9 * 0.742, 20.4))
+})

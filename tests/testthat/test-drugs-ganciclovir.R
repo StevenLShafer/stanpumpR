@@ -25,6 +25,31 @@ test_that("Table 3's parameters, the clearance at the population's mean CLCR", {
   expect_equal(p2$cl1 / p$cl1, 0.5)
 })
 
+test_that("anchored at Caldes's cohort: its typical patients get Table 3, FFM scales the rest", {
+  # (a) Table 2 (PDF p2): 10 men and 10 women, 66.2 kg, 55.7 years; heights
+  # from NCD-RisC (Spain, born 1949).  V1, V2 and Q have no sex term, so the
+  # cohort's man and woman pooled geometrically receive Table 3's values
+  kc <- cohortFactorsIndependent(GANCICLOVIR_COHORT)
+  expect_equal(round(c(kc$volume, kc$clearance), 4), c(0.8468, 0.8827))
+  m <- ganciclovir(66.2, 169.2, 55.7, "male", creatinine = 1)$PK$default
+  f <- ganciclovir(66.2, 157.2, 55.7, "female", creatinine = 1)$PK$default
+  pooled <- function(x, y) exp((log(x) + log(y)) / 2)
+  expect_equal(pooled(m$v1, f$v1), 31.90)
+  expect_equal(pooled(m$v2, f$v2), 32.0)
+  expect_equal(pooled(m$cl2, f$cl2) * 60, 10.20)
+  # (b) twice the reference fat-free mass: V1, V2 x 2 and Q x 2^0.75 over the
+  # cohort's factors; CL follows Cockcroft-Gault at 140 kg, unanchored
+  w <- uniroot(function(w) ffmAlSallami(w, 200, 55, "male") - 2 * FFM_REFERENCE,
+               c(70, 400), tol = 1e-12)$root
+  big <- ganciclovir(w, 200, 55, "male", creatinine = 1)$PK$default
+  expect_equal(c(big$v1, big$v2), c(31.90, 32.0) * 2 / kc$volume)
+  expect_equal(big$cl2 * 60, 10.20 * 2^0.75 / kc$clearance)
+  expect_equal(big$cl1 * 60, 7.49 * ((140 - 55) * 140 / 72) / 57)
+  # (c) the switch off: Table 3 at any size
+  off <- ganciclovir(w, 200, 55, "male", adjustToFFM = FALSE, creatinine = 1)$PK$default
+  expect_equal(c(off$v1, off$v2, off$cl2 * 60), c(31.90, 32.0, 10.20))
+})
+
 test_that("valganciclovir doses are converted to ganciclovir at 0.720", {
   expect_true(all(valganciclovirUnits %in% allUnits))
   expect_true(all(paste(valganciclovirUnits, c("qd", "bid")) %in% scheduledUnits))
