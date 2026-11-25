@@ -40,4 +40,5 @@ The authors quote at least 800 ng/mL for anesthesia (Schüttler, electroencephal
 - The volunteers were young and healthy and received a single slow infusion with no bolus.
 - Norketamine, which accumulates during long infusions, is not modelled.
 - Intravenous esketamine has no US prescribing information. Spravato, the US product, is a nasal spray, and this model does not describe nasal absorption.
+- Target-controlled infusion is not offered: with no target range drawn, the TCI controller has no typical target to limit against. Boluses and infusions are.
 - No study has measured esketamine pharmacokinetics in pregnancy.
