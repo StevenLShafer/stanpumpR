@@ -10,7 +10,7 @@ Every volume and clearance is apparent. The model works in moles: a mg of capeci
 
 ### What is plotted
 
-Plasma 5′-DFUR in mcg/mL (mg/L). Doses are entered in mg of capecitabine by mouth (`mg PO`, or `mg PO bid`); a dose prescribed per m² must be multiplied by the body surface area first. This 5-FU is not the library's intravenous [fluorouracil](help:drugs/fluorouracil). There is no effect site and no band.
+Plasma 5′-DFUR in mcg/mL (mg/L). Doses are entered in mg of capecitabine by mouth (`mg PO`, or `mg PO bid`), or per m² as prescribed (`mg/m2 PO`, `mg/m2 PO bid`; body surface area by Mosteller, from the Patient Profile's weight and height). This 5-FU is not the library's intravenous [fluorouracil](help:drugs/fluorouracil). There is no effect site and no band.
 
 ### Covariates
 
@@ -18,6 +18,7 @@ None act on 5′-DFUR or 5-FU apart from alkaline phosphatase, held at 140 U/L (
 
 ### Where to be careful
 
+- **Interactions are not modelled.** The Xeloda label carries a boxed warning: bleeding, including death, with vitamin K antagonists; capecitabine raised S-warfarin's exposure by 57% and lowered its clearance by 37% (12.3), so the INR should be checked more often. It may also raise phenytoin levels (7.2). Neither the library's warfarin nor its phenytoin curve shows these effects.
 - **Plasma 5-FU after capecitabine** predicts tissue exposure, safety and efficacy poorly, as the authors say; capecitabine is converted to 5-FU preferentially in tumour.
 - **Renal impairment** raises FBAL (and toxicity), which is not plotted.
 - **DPD deficiency** is not represented. Not a monitoring tool.

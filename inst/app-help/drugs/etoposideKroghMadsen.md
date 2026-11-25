@@ -9,7 +9,7 @@ For a man with a creatinine clearance of 116 mL/min, clearance is 2.1 L/h and th
 
 ### What is plotted
 
-Plasma etoposide in mcg/mL (mg/L). Doses are entered in mg or as an infusion rate; a dose prescribed per m² must be multiplied by the body surface area first. There is no effect site and no band.
+Plasma etoposide in mcg/mL (mg/L). Doses are entered in mg or as an infusion rate; a dose prescribed per m² or per kg can be entered as such (mg/m², mg/kg; body surface area by Mosteller, from the Patient Profile's weight and height). There is no effect site and no band.
 
 ### Covariates
 

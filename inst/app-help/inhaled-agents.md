@@ -23,7 +23,7 @@ Both are in per cent of one atmosphere. An **oxygen** panel shows the alveolar o
 
 Two meanings of "MAC" are kept apart.
 
-**MAC** is a property of an agent: the alveolar concentration at which half of patients do not move to a surgical incision. For sevoflurane it is 2.1 per cent at age 40. It falls with age, by about 6 per cent per decade (the Mapleson relation), so it is 2.5 per cent at age 10 and 1.6 per cent at age 80. It does not change during an anesthetic.
+**MAC** is a property of an agent: the alveolar concentration at which half of patients do not move to a surgical incision. For sevoflurane it is 1.8 per cent at age 40, the value of Mapleson's 1996 meta-analysis of MAC and age (GasMan and the US label give 2.1 per cent; see [How stanpumpR differs from GasMan](help:models/gas-differences)). It falls with age, by about 6 per cent per decade (the same relation), so it is 2.2 per cent at age 10 and 1.4 per cent at age 80, at 37 °C. Its only change during an anesthetic is with body temperature, which lowers it (below and in [Physiology](help:models/physiology)).
 
 The **MAC equivalents** panel shows the patient's alveolar concentration *as a multiple of that MAC*, summed over the potent agents present, including nitrous oxide. "1 MAC of sevoflurane" means an alveolar concentration of one MAC equivalent. Agents given together are treated as additive, and one number is what is titrated to.
 
@@ -56,12 +56,14 @@ Opioids lower MAC. Under **Graph Options**, ticking *Include opioid - MAC intera
 
 | Panel | What is timed | Default threshold |
 |---|---|---|
-| sevoflurane, isoflurane, desflurane | Brain (vessel-rich group) tension | 0.1 × the age-adjusted MAC of that agent |
-| nitrous oxide | Brain tension | 10% |
+| sevoflurane, isoflurane, desflurane | Brain (vessel-rich group) tension | 0.1 × the MAC of that agent at the patient's age and temperature |
+| nitrous oxide | Brain tension | 10% at 37 °C |
 | MAC equivalents | The summed alveolar series, with every agent turned off | 0.1 MAC equivalents |
 | oxygen | Not timed | |
 
-The thresholds can be changed in the Drug Thresholds dialog, where the volatile agents are shown at the patient's age. See [Time until threshold](help:models/recovery) and the [emergence scenarios](help:scenarios/emergence-sevoflurane).
+The thresholds can be changed in the Drug Thresholds dialog, where the volatile agents are shown at the patient's age.
+
+**A gas's threshold is its value at 37 °C**, the one clinicians know, whether it is the default or one you type. Body temperature lowers MAC (by 4.6 per cent per degree for the volatile agents, 2.1 per cent for nitrous oxide; see [Physiology](help:models/physiology)), and the threshold moves with it exactly as it moves with age, so a threshold of a tenth of MAC stays a tenth of MAC in a cold patient. Type the number you would use at 37 °C; stanpumpR works out what it is at 32 °C. Sevoflurane's default, 0.18 per cent at age 40 and 37 °C, is used as 0.138 per cent at 32 °C, and the time until threshold is longer for it: 12.8 minutes rather than 11.2 after half an hour at 2 per cent in 6 L/min of oxygen (70 kg, age 40). With a temperature event, the threshold is the one at the temperature in force when the agent is turned off. The threshold line, like the shaded band, is drawn once for the panel, at the temperature at the start of the plot, so after an event that cools the patient the line is above the threshold the time is counted to (0.18 per cent drawn, 0.105 per cent at 28 °C); whether to draw them stepping with the event is a decision still to be made. This replaced, on 24 November 2026, a rule that held a typed threshold fixed whatever the temperature. See [Time until threshold](help:models/recovery) and the [emergence scenarios](help:scenarios/emergence-sevoflurane).
 
 ## The greenhouse effect
 

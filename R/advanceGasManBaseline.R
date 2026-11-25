@@ -32,6 +32,21 @@
 # Still untested: the open and closed circuits, liquid injection, flush,
 # agents other than sevoflurane/isoflurane/desflurane/nitrous oxide, and the
 # web/desktop editions (only the API build was run).
+#
+# NOT RESTATED (ChatGPT's gas-engine audit of 2026-11-23, A-01, each checked
+# on GasDoc.cpp at d3a2dd3): liquid injection, the flush, the vaporiser's
+# expansion of the fresh gas (m_bVapEnb, off by default in GasMan), and the
+# label "closed", which GasMan runs through the semi-closed equations.  The
+# inputs are resolved ones: this routine takes the flows it is given and does
+# not apply GasMan's InitDocument or SetWeight defaults.  Its tick is the
+# caller's `dt` in minutes, not GasMan's whole milliseconds (100 to 60000,
+# allometric when not set).  An output time between ticks reads the tick
+# that ends after it.  Fixed the same day: the fast-decay test now restarts
+# at every settings row and covers two ticks, as GasMan's clock does, and
+# ignores a fixed circuit's decay; an open circuit with no fresh gas delivers
+# nothing.  Immutable GasMan output for the five scenarios is
+# inst/validation/gasman_cpp_fixture.csv, which test-gas-scenarios.R holds
+# this routine to.
 # -----------------------------------------------------------------------------
 #
 # THE ALGORITHM, as GasMan states it
@@ -104,6 +119,7 @@
 
 GASMAN_MAX_VERNIER   <- 5     # MAX_VERNIER in GasGlobal.h
 GASMAN_VERNIER_TICKS <- 3     # VERNIER_TICKS
+GASMAN_SAMP_EVERY    <- 10    # SAMP_EVERY in GasGlobal.h: ticks per history sample
 GASMAN_STD_WEIGHT    <- 70    # STD_WEIGHT
 
 # Blood flow fractions, [Ratio] in gasman.ini: VRG 76, MUS 18, FAT 6 percent.
@@ -190,6 +206,11 @@ gasManCalc <- function(state, sol, lambdaBlood, DEL, FGF, VA, CO,
                        fExpTissue, subdt, totUptake, opts, wtFactor = 1,
                        checkFastDecay = TRUE)
 {
+  # GasMan delivers nothing with no fresh gas flow: its effective delivered
+  # tension is 100 * vapour / (FGF * dt), and 0 when FGF is 0 (GasDoc.cpp,
+  # Calc).  Until 2026-11-23 an open circuit at no flow was set to the dial
+  # (ChatGPT's gas-engine audit of 2026-11-23, A-01).
+  if (FGF <= 0) DEL <- 0
   effCKT    <- FGF * sol[["CKT"]]
   effALV    <- VA  * sol[["ALV"]]
   bloodFlow <- lambdaBlood * CO
@@ -267,7 +288,11 @@ gasManCalc <- function(state, sol, lambdaBlood, DEL, FGF, VA, CO,
   # VERNIER_TICKS ticks of a settings change, so once a setting has been in
   # force a while it stops sub-stepping on this criterion.  Applying it always
   # would make this MORE accurate than GasMan, the wrong direction here.
-  if (checkFastDecay && (fCKT < 0.1 || fALV < 0.1)) ok <- FALSE
+  # A fixed circuit (open, ideal) is set, not advanced, and GasMan leaves its
+  # fExpCKT at 99, so only the alveolar decay can trip the test there; until
+  # 2026-11-23 this tested the circuit's too (ChatGPT's gas-engine audit of
+  # 2026-11-23, A-01, checked on GasDoc.cpp at d3a2dd3, Calc).
+  if (checkFastDecay && ((!fixedCKT && fCKT < 0.1) || fALV < 0.1)) ok <- FALSE
 
   state[["VEN"]] <- if (opts$recirculation) {
     sum(state[c("VRG", "MUS", "FAT")] * GASMAN_RATIO)
@@ -332,6 +357,8 @@ advanceGasManBaseline <- function(gasDose, weight = 70, maximum = 60,
     gasDose <- data.frame(Time = numeric(0), Drug = character(0), Dose = numeric(0))
   gasDose <- gasDose[order(gasDose$Time), , drop = FALSE]
   bySetting <- split(gasDose, gasDose$Drug)
+  # The times of the settings rows, each a new GasMan sample
+  changeTimes <- sort(unique(gasDose$Time))
 
   # Initial tensions.  Nitrogen starts at gasman.ini's Ambient of 80 for that
   # agent; everything else starts at zero.
@@ -358,7 +385,28 @@ advanceGasManBaseline <- function(gasDose, weight = 70, maximum = 60,
     s  <- gasSettingsAt(bySetting, t0, deadSpace = 0)
 
     # Settings hold across a tick, so the change is at the tick boundary.
-    checkFastDecay <- (tick - 1) < GASMAN_VERNIER_TICKS
+    # GasMan's clock: i = VERNIER_TICKS - int((dwt - base) / dx), with dwt
+    # the END of the tick and base the time of the settings row in force
+    # (GasDoc.cpp, Calc), so the test applies in the first two ticks after
+    # every settings row.  Until 2026-11-23 this applied it in the first
+    # three ticks of the run and never after a change (ChatGPT's gas-engine
+    # audit of 2026-11-23, A-01).
+    #
+    # GasMan also starts a new history sample every SAMP_EVERY ticks, and the
+    # base is the sample's (GasDoc.cpp, the history replay), so the test
+    # applies again at the start of every ten-tick block, settings changed
+    # or not; until 2026-11-24 it did not here, and a 5 kg patient read 1.2%
+    # low against GasMan (Gemini's gas-engine audit of 2026-11-23, A-01).
+    # This is an approximation of GasMan's output in one respect: its forward
+    # calculation (the last ten ticks of a run) applies the test for three
+    # ticks and its history replay for two, so GasMan's printed value for a
+    # time depends on the end time it was asked for, by up to 13.6% at one
+    # time in that patient.  Following the history replay, as here, agrees
+    # with its output to 0.2% where the end time is at least five minutes
+    # later (inst/validation/VALIDATION.md).
+    block <- floor((t0 + 1e-9) / (GASMAN_SAMP_EVERY * dt)) * GASMAN_SAMP_EVERY * dt
+    base <- max(c(0, changeTimes[changeTimes <= t0 + 1e-9], block))
+    checkFastDecay <- GASMAN_VERNIER_TICKS - floor((tick * dt - base) / dt + 1e-9) > 0
     nVernier <- 0
     repeat {
       saved <- state
@@ -374,6 +422,12 @@ advanceGasManBaseline <- function(gasDose, weight = 70, maximum = 60,
       })
       names(fExpTissue) <- agents
 
+      # At the last level GasMan's Calc() skips both of its checks, so the
+      # tick always completes there (GasDoc.cpp: "No more vernier room").
+      # Until 2026-11-24 a check that failed at the last level broke off the
+      # tick after its first sub-step, and that partial tick was recorded as
+      # a whole one (CodeRabbit on PR #858).
+      lastLevel <- nVernier + 1 >= GASMAN_MAX_VERNIER
       ok <- TRUE
       for (nv in seq_len(nSub))
       {
@@ -391,12 +445,12 @@ advanceGasManBaseline <- function(gasDose, weight = 70, maximum = 60,
                           wtFactor = wtFactor,
                           checkFastDecay = checkFastDecay)
           state[[g]] <- r$state
-          if (!r$ok) ok <- FALSE
+          if (!r$ok && !lastLevel) ok <- FALSE
         }
         if (!ok) break
       }
 
-      if (ok || nVernier + 1 >= GASMAN_MAX_VERNIER) break
+      if (ok) break
       state <- saved                      # reject the tick and retry finer
       nVernier <- nVernier + 1
     }

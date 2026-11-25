@@ -15,12 +15,13 @@ With [the scaling switch](help:models/fat-free-mass) on, the weight and BSA term
 
 ### What is plotted
 
-Plasma 5-FU in mcg/mL (mg/L). Doses are entered in mg, or mg/hr for the infusion: a dose prescribed in mg/m² must first be multiplied by the patient's body surface area. There is no effect site.
+Plasma 5-FU in mcg/mL (mg/L). Doses are entered in mg, or mg/hr for the infusion, and a dose prescribed per m² as such, in mg/m² or mg/m²/hr (body surface area by Mosteller, from the Patient Profile's weight and height). There is no effect site.
 
-The target for colorectal cancer is an **AUC of 20 to 29 mg·h/L over the 46-hour infusion**, which is the plateau concentration times 46 hours. That is an exposure, not a concentration band, and it is not drawn. A plateau of 0.43 to 0.63 mg/L meets it for that regimen only. For a 70-kg, 175-cm man of 60, 2400 mg/m² over 46 hours gives a plateau of about 0.38 mg/L, an AUC of about 18 mg·h/L, below the target, as the paper found for most patients dosed by surface area.
+The target for colorectal cancer is an **AUC of 20 to 30 mg·h/L over the 46-hour infusion**, the range recommended by the International Association of Therapeutic Drug Monitoring and Clinical Toxicology (Beumer 2019, doi:10.1002/cpt.1124), which is the plateau concentration times 46 hours; Briki's own dose-adjustment grid uses 20 to 29. That is an exposure, not a concentration band, and it is not drawn. A plateau of 0.43 to 0.65 mg/L meets it for that regimen only. For a 70-kg, 175-cm man of 60, 2400 mg/m² over 46 hours gives a plateau of about 0.38 mg/L, an AUC of about 18 mg·h/L, below the target, as the paper found for most patients dosed by surface area.
 
 ### Where to be careful
 
+- **Interactions are not modelled.** The fluorouracil label warns that the INR may rise in patients taking warfarin (5.9, 7), so it should be checked more often; capecitabine, an oral 5-FU prodrug, also raises phenytoin levels (Xeloda label, 7.2). Neither the library's warfarin nor its phenytoin curve shows these effects.
 - **DPD deficiency is not represented.** A patient with a DPYD variant or low DPD activity clears 5-FU far more slowly than this curve shows, and can be fatally overexposed. The CPIC and DPWG guidelines recommend dose reductions for them; those are not clearance estimates, and none is applied here.
 - **The slow rise during the infusion.** 5-FU inhibits its own metabolism, and in patients the plateau takes 18 to 26 hours to settle. The model has no time-dependent term, so its plateau comes within hours. Circadian variation is not modelled either.
 - **Adults only.**

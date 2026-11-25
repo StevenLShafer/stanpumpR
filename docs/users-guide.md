@@ -399,7 +399,7 @@ what the literature offers.
 | Midazolam | Zomorodi K et al., *Anesthesiology* 1998;89(6):1418–1429, Table 3. [PMID 9856717](https://pubmed.ncbi.nlm.nih.gov/9856717/) Kinetics fitted to the data of Bührer M et al., *Clin Pharmacol Ther* 1990;48(5):544–554. [PMID 2225713](https://pubmed.ncbi.nlm.nih.gov/2225713/) Time to peak effect from Bührer M et al., *Clin Pharmacol Ther* 1990;48(5):555–567. [PMID 2225714](https://pubmed.ncbi.nlm.nih.gov/2225714/) |
 | Etomidate | Arden JR et al., *Anesthesiology* 1986;65(1):19–27. [PMID 3729056](https://pubmed.ncbi.nlm.nih.gov/3729056/) |
 | Lidocaine | Schnider TW et al., *Anesthesiology* 1996;84(5):1043–1050. [PMID 8623997](https://pubmed.ncbi.nlm.nih.gov/8623997/) |
-| Rocuronium | Plaud B et al., *Clin Pharmacol Ther* 1995;58(2):185–191. [PMID 7648768](https://pubmed.ncbi.nlm.nih.gov/7648768/) |
+| Rocuronium | Kleijn HJ et al., *Br J Clin Pharmacol* 2011;72:415–433. [DOI 10.1111/j.1365-2125.2011.04000.x](https://doi.org/10.1111/j.1365-2125.2011.04000.x) (the rocuronium arm of the sugammadex fit, without sugammadex); time to peak effect from Cortínez LI et al., *Br J Anaesth* 2007;99:679–685 |
 | Vecuronium | Vega-Villa KR et al., *Br J Anaesth* 2014;112(2):304–310. [PMID 24067332](https://pubmed.ncbi.nlm.nih.gov/24067332/) (non-burn reference); effect site and potency from Rupp SM, Fisher DM et al., *Anesthesiology* 1987;67(1):45–49. [PMID 2886080](https://pubmed.ncbi.nlm.nih.gov/2886080/) |
 | Cisatracurium | Sorooshian SS et al., *Anesthesiology* 1996;84(5):1083–1091. [PMID 8624002](https://pubmed.ncbi.nlm.nih.gov/8624002/) |
 | Acetaminophen | Morse JD et al., *Eur J Drug Metab Pharmacokinet* 2022;47:497–507. [DOI 10.1007/s13318-022-00766-9](https://doi.org/10.1007/s13318-022-00766-9) (intravenous and fasted tablet; clearance on normal fat mass). ke0 from Anderson BJ et al., *Eur J Clin Pharmacol* 2001;57:559–569. [DOI 10.1007/s002280100367](https://doi.org/10.1007/s002280100367) |
@@ -490,8 +490,8 @@ alveolar and brain tensions for each agent, plus a **MAC equivalents** panel.
 Nitrogen is carried implicitly and washes out; you do not enter it.
 
 Two meanings of "MAC" are kept apart. *MAC* is a property of an agent: the
-alveolar concentration at which half of patients do not move to incision, 2.1%
-for sevoflurane at age 40, lower in the old and higher in the young. It does
+alveolar concentration at which half of patients do not move to incision, 1.8%
+for sevoflurane at age 40 (Mapleson 1996; GasMan and the US label give 2.1%), lower in the old and higher in the young. It does
 not change during an anaesthetic. What changes is the patient's alveolar
 concentration *as a multiple of that MAC* — the MAC equivalents panel, summed
 over the potent agents present. "1 MAC of sevoflurane" means an alveolar
@@ -572,8 +572,11 @@ What "turned off" means for a gas (S. Shafer, 2026-10-05):
 | oxygen | Not timed | none |
 
 All of these can be changed in the Drug Thresholds dialog. The volatile agents
-are shown there at the patient's age, so the number in the dialog is the number
-on the plot; they follow MAC if the age is changed. Nitrous oxide comes off fast
+are shown there at the patient's age and at 37 °C, the values clinicians know;
+they follow MAC if the age is changed, and on the plot every potent gas's
+threshold moves with body temperature as its MAC does, so the number in the
+dialog is the number on the plot only at 37 °C (sevoflurane's 0.18% at age 40
+is drawn at 0.138% at 32 °C). Nitrous oxide comes off fast
 enough that its threshold matters little.
 
 Every line is calculated by simulating it: the agent is turned off at each
@@ -604,6 +607,7 @@ GasMan option, off by default, with no counterpart here:
 | Breathing circuit | Defaults to "Semi-closed": the whole circuit is one well-mixed 8 L volume, so some exhaled gas is rebreathed at any fresh gas flow, however high | The "Ideal" circuit, which GasMan also offers: no rebreathing once fresh gas flow reaches the minute ventilation plus the gas being taken up (see the carbon dioxide paragraph below); below that, the shortfall is made up with exhaled gas. No circuit volume, so no lag | It is how a circle system behaves. The mixing box has no threshold near fresh gas flow = ventilation and understates the inspired concentration at moderate and high flows |
 | Ventilation and dead space | The ventilation setting is alveolar ventilation; there is no dead space | The ventilation setting is minute ventilation, 30% of it dead space. The rebreathing threshold is therefore set by the minute ventilation (plus uptake), not the alveolar ventilation | Minute ventilation is what is set on a ventilator and read from a monitor |
 | Oxygen consumption and gas volume | No oxygen, so no volume is lost to it | Oxygen consumed (3.5 mL/kg/min) shrinks the gas volume, as uptake of an anaesthetic does. Carbon dioxide replaces most of it in the alveoli and is then removed by the absorber from whatever exhaled gas is rebreathed | Without it the gas fractions do not add up at low flows. With 0.3 L/min of oxygen and 1 L/min of nitrous oxide, what leaves the circuit is the 1.3 L/min delivered less the 0.21 L/min consumed: 92% nitrous oxide and 8% oxygen, not the 77% and 23% delivered |
+| MAC at age 40 | Its own values: sevoflurane 2.1, isoflurane 1.1, desflurane 6.0, nitrous oxide 110% (also the US labels') | Mapleson's 1996 meta-analysis: 1.80, 1.17, 6.6 and 104% (since 2026-11-23) | The age relation is Mapleson's, and his values at 40 come from the same fit; validated against GasMan first, the program now follows more recent research. MAC enters no uptake |
 | MAC and age | One MAC per agent, no age term | MAC adjusted for the patient's age: MAC(age) = MAC40 x 10^(-0.00269 x (age - 40)) (Mapleson) | MAC falls about 6% per decade, and the patient's age is already an input |
 | MAC across agents | Each agent reported separately | A single MAC-equivalents series, the sum of each potent agent's alveolar concentration as a fraction of its own MAC | Agents given together are additive, and one number is what is titrated to |
 | Oxygen | Not modelled | Modelled in the circuit and alveoli, with metabolic consumption of 3.5 mL/kg/min; cannot go below zero | The inspired and alveolar oxygen matter whatever else is given, and a hypoxic mixture should be visible |
@@ -647,8 +651,12 @@ Consequences worth knowing when comparing the two side by side:
   concentration of 0.47% at one minute and 1.59% at thirty; with the ideal
   circuit, here and in GasMan, it is 1.09% and 1.71%.
 
-- To reproduce a GasMan MAC value, set the age to 40, where the age adjustment
-  is exactly 1, and compare one agent at a time.
+- To compare MAC equivalents with GasMan, set the age to 40, where the age
+  adjustment is exactly 1, and the temperature to 37 °C, and compare one agent
+  at a time. Even then the MAC values differ (the table above): multiply
+  GasMan's MAC equivalents by its MAC over the one here (sevoflurane 2.1/1.8,
+  isoflurane 1.1/1.17, desflurane 6.0/6.6, nitrous oxide 110/104), or compare
+  the tensions, which do not depend on MAC.
 - Leave GasMan's vapour-volume option **off**, its default. In the low-flow
   desflurane validation scenario (8% at 0.5 L/min after ten minutes at 6% and
   4 L/min) turning it on raises GasMan's alveolar desflurane at 60 minutes

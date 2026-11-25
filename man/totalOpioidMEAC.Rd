@@ -4,12 +4,16 @@
 \alias{totalOpioidMEAC}
 \title{Total opioid effect over time, in multiples of MEAC}
 \usage{
-totalOpioidMEAC(drugs)
+totalOpioidMEAC(drugs, times = NULL)
 }
 \arguments{
-\item{drugs}{the intravenous entries of the \code{drugs} list, each with an
-\code{equiSpace} data frame carrying \code{Time} and \code{MEAC} (the
-latter as a percentage of MEAC, as \code{simCpCe()} writes it)}
+\item{drugs}{the intravenous entries of the \code{drugs} list, each with its
+\code{results} (long form, with an "Effect Site" series) and \code{MEAC}.
+An entry with no \code{results} is read from its \code{equiSpace}
+\code{MEAC} column, a percentage of MEAC, as \code{simCpCe()} writes it.}
+
+\item{times}{the times to evaluate at; by default the drugs' own simulated
+times together with the equispaced grid (\code{derivedSeriesTimes()})}
 }
 \value{
 a data frame of \code{Time} and \code{U}, or NULL if no drug with an
@@ -17,5 +21,12 @@ MEAC has been simulated
 }
 \description{
 The sum over every simulated drug of its effect-site concentration divided by
-its MEAC.  Only the opioids have an MEAC, so only they contribute.
+its MEAC.  Only the opioids have an MEAC, so only they contribute.  Each
+drug is read from its own simulated series (\code{derivedEffectSite()}),
+which is dense where its curve bends, as the MEAC and Interaction panels
+read it (R/derivedSeries.R).  Until 2026-11-24 it was read from the drug's
+100 equispaced points, which on a 24-hour plot are 14.5 minutes apart: a
+remifentanil bolus at 5 minutes read 0.64 x MEAC at 6.2 minutes where its
+effect site was at 7.8 ng/mL, and its effect began before it was given, on
+a plot of any length (Gemini's gas-engine audit of 2026-11-23, D-01).
 }

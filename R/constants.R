@@ -368,11 +368,22 @@ NOTHING_TO_DRAW_MESSAGE <-
 
 # Be sure there are more items below then potential facets on the simulation plot
 #                     1     2     3     4     5     6     7     8     9    10    11    12    13    14   15
-bolusUnits <- c("g","mg","mcg", "ng","g/kg","mg/kg","mcg/kg","ng/kg")
+# Per square metre of body surface area ("mg/m2", "mg/m2/hr", "mg/m2 PO"):
+# most chemotherapy is labelled per m2, so its doses must be enterable as
+# the FDA label writes them.  simCpCe() multiplies them by the patient's
+# body surface area, bodySizeDoseFactor() in R/bsa-dosing.R (Mosteller), as
+# it multiplies a "/kg" dose by the weight.  "mg/kg/day" and "mg/m2/day" are
+# continuous infusions written per day (cladribine 0.09 mg/kg/day, cytarabine
+# 100 mg/m2/day).  (Claude Code, 2026-11-23, at the request of Steven L.
+# Shafer.)
+bsaBolusUnits <- c("g/m2", "mg/m2", "mcg/m2")
+bsaInfusionUnits <- c("g/m2/hr", "mg/m2/hr", "mg/m2/day", "mcg/m2/hr")
+bolusUnits <- c("g","mg","mcg", "ng","g/kg","mg/kg","mcg/kg","ng/kg", bsaBolusUnits)
 infusionUnits <- c("g/min","g/hr","g/kg/hr","mg/min","mg/hr","mg/kg/min","mg/kg/hr","mcg/min","mcg/hr","mcg/kg/min","mcg/kg/hr",
                    # nanogram rates: the prostacyclins (treprostinil, epoprostenol) are dosed in ng/kg/min
-                   "ng/min","ng/kg/min")
-poUnits <- c("g PO", "g/kg PO", "mg PO", "mg/kg PO", "mcg PO", "mcg/kg PO")
+                   "ng/min","ng/kg/min",
+                   "mg/kg/day", bsaInfusionUnits)
+poUnits <- c("g PO", "g/kg PO", "mg PO", "mg/kg PO", "mcg PO", "mcg/kg PO", "mg/m2 PO")
 inUnits <- c("g IN", "g/kg IN", "mg IN", "mg/kg IN", "mcg IN", "mcg/kg IN")
 imUnits <- c("g IM", "g/kg IM", "mg IM", "mg/kg IM", "mcg IM", "mcg/kg IM")
 # Sublingual: first-order absorption with its own ka, bioavailability and lag,
@@ -420,7 +431,7 @@ enteralRateUnits <- c("mg/hr PO")
 # the fixed-ratio pens) simply has no such unit, and the dose table refuses
 # a unit the drug does not list.  (Claude Code, 2026-10-17, at the request
 # of Steven L. Shafer.)
-scUnits <- c("mg SC", "mg/kg SC", "mcg SC", "mcg/kg SC")
+scUnits <- c("mg SC", "mg/kg SC", "mcg SC", "mcg/kg SC", "mg/m2 SC")
 insulinUnits <- c("U SC", "U/kg SC")
 insulinRateUnits <- c("U/hr SC")
 
@@ -494,7 +505,11 @@ iuUnits <- c("IU", "IU/kg", "IU/hr", "IU/kg/hr")
 # mU, and refuses a mass unit for it and a U unit for any other drug.  No
 # route word: they are intravenous.  (Claude Code, 2026-10-22, at the request
 # of Steven L. Shafer.)
-ivPotencyUnits <- c("U", "U/min", "U/hr", "U/kg/min", "U/kg/hr")
+ivPotencyUnits <- c("U", "U/min", "U/hr", "U/kg/min", "U/kg/hr", "U/m2/hr")
+# Unit doses per kilogram or per square metre (bleomycin, 0.25 to 0.5
+# units/kg or 10 to 20 units/m2).  Amounts, not rates, so kept apart from
+# ivPotencyUnits, whose entries after "U" are all rates.
+ivPotencyBodySizeUnits <- c("U/kg", "U/m2")
 
 # Milliunits per minute of a potency-defined peptide, the rate in which
 # oxytocin infusions for labour are written.  For a drug plotted by mass
@@ -567,13 +582,18 @@ piperacillinTazobactamUnits <- paste(c("mg", "mg/kg", "mg/hr", "mg/kg/hr"),
 # applied and set to 0 when it is removed.
 tdRateUnits <- c("mg/day TD")
 quinidineSulfateUnits <- paste("mg PO", QUINIDINE_SALT)
+# A Coartem tablet (artemether 20 mg + lumefantrine 120 mg), the dose unit of a
+# combination product whose components are drawn separately
+# (R/combination-products.R): no simulation ever sees it, the rows being
+# rewritten into mg of each component first.
+coartemUnits <- "tablet PO"
 
 allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, enteralRateUnits, poFormulationUnits,
               slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits,
               iuUnits, scUnits, iuScUnits, ghbUnits, insulinUnits, insulinRateUnits,
-              ivPotencyUnits, milliunitRateUnits, aminophyllineUnits, caffeineCitrateUnits,
+              ivPotencyUnits, ivPotencyBodySizeUnits, milliunitRateUnits, aminophyllineUnits, caffeineCitrateUnits,
               valganciclovirUnits, quinidineSulfateUnits, tdRateUnits,
-              piperacillinTazobactamUnits)
+              piperacillinTazobactamUnits, coartemUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.
@@ -652,7 +672,10 @@ scheduledUnits <- c(
   # Quinidine sulfate's regimens (R/drugs_quinidine.R)
   paste(quinidineSulfateUnits, c("tid", "qid", "q4h")),
   # Piperacillin-tazobactam every 8 or 6 hours (R/drugs_piperacillin.R)
-  as.vector(t(outer(piperacillinTazobactamUnits[1:2], c("tid", "qid", "q4h"), paste)))
+  as.vector(t(outer(piperacillinTazobactamUnits[1:2], c("tid", "qid", "q4h"), paste))),
+  # Coartem twice a day, the label's regimen after the first day
+  # (R/combination-products.R)
+  paste(coartemUnits, "bid")
 )
 
 # Units for the inhaled gases (Class "gas" in drugDefaults_global.csv): carrier

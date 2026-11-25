@@ -61,7 +61,7 @@ API_MAX_ROWS <- 500000L
 # in silence (apiUnknownFields()).
 API_REQUEST_FIELDS <- c("patient", "doses", "events", "duration", "timeUnit", "options", "output")
 API_PATIENT_FIELDS <- c("weight", "height", "age", "sex", "weightUnit", "heightUnit", "ageUnit",
-                        "creatinine", "gestationalAge", "albumin", "ast", "pregnant", "pulmonaryHypertension", "adjustToFFM",
+                        "creatinine", "gestationalAge", "albumin", "ast", "pregnant", "pulmonaryHypertension", "infection", "adjustToFFM",
                         "osmolality",
                         "cyp2d6", "cyp2c19", "cyp2c9", "cyp2b6", "vkorc1", "cyp4f2",
                         "opioidTolerance")
@@ -326,6 +326,9 @@ apiPatient <- function(patient) {
     # (sildenafil, tadalafil; R/pulmonaryHypertension.R)
     pulmonaryHypertension = apiFlag(get("pulmonaryHypertension", FALSE),
                                     "patient.pulmonaryHypertension"),
+    # Read only by the models with an infection term (R/infection.R)
+    infection   = apiChoice(get("infection", INFECTION_DEFAULT), "patient.infection",
+                            INFECTION_VALUES),
     adjustToFFM = apiFlag(get("adjustToFFM", TRUE), "patient.adjustToFFM"),
     osmolality  = apiNumber(get("osmolality", OSMOLALITY_DEFAULT), "patient.osmolality",
                             MIN_OSMOLALITY, MAX_OSMOLALITY),
@@ -544,6 +547,9 @@ apiSimulate <- function(request) {
   DT <- apiDoses(apiField(request, "doses"), unit, maximum,
                  allowIllicit = apiFlag(apiField(opts, "allowIllicitDrugs", FALSE),
                                         "options.allowIllicitDrugs"))
+  # A combination product (Coartem) is simulated, counted and returned as its
+  # components, each its own drug (R/combination-products.R).
+  DT <- expandCombinationProducts(DT)
   ET <- apiEvents(apiField(request, "events"), unit)
   # On by default, as the app's Graph Options box is (Steven L. Shafer,
   # 2026-10-28), so the API returns what the app plots; it changes only a
@@ -597,6 +603,7 @@ apiSimulate <- function(request) {
         adjustToFFM = patient$adjustToFFM, osmolality = patient$osmolality,
         creatinine = patient$creatinine, pregnant = patient$pregnant,
         pulmonaryHypertension = patient$pulmonaryHypertension,
+        infection = patient$infection,
         gestationalAge = patient$gestationalAge,
         albumin = patient$albumin,
         ast = patient$ast,
@@ -693,6 +700,7 @@ apiSimulate <- function(request) {
       sex    = patient$sex,
       pregnant = patient$pregnant,
       pulmonaryHypertension = patient$pulmonaryHypertension,
+      infection = patient$infection,
       adjustToFFM = patient$adjustToFFM,
       osmolality  = patient$osmolality,
       creatinine  = if (is.null(patient$creatinine)) NA_real_ else patient$creatinine,

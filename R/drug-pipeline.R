@@ -148,7 +148,8 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
                           individual = NULL,
                           physiology = NULL,
                           pulmonaryHypertension = FALSE,
-                          physiologyEvents = NULL) {
+                          physiologyEvents = NULL,
+                          infection = INFECTION_DEFAULT) {
   # The Patient Profile's Opioid tolerance raises every opioid's MEAC by its
   # factor (OPIOID_TOLERANCE_FACTORS), here, where each drug's MEAC enters
   # its entry, so everything that reads it downstream sees the tolerant MEAC.
@@ -195,6 +196,8 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
         individual = individual[[drug]],
         physiology = phys,
         pulmonaryHypertension = pulmonaryHypertension,
+        # Read only by the models with an infection term (R/infection.R)
+        infection = infection,
         # PROTOTYPE: buprenorphine onset/offset biophase scale (Shafer 2026-11-20)
         offsetScale = buprenorphineOffset,
         # The session's library, from which a metabolite's row (its units)

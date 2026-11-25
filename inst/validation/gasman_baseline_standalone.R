@@ -80,8 +80,18 @@
 #     separately multiplied by fWtFactor, consistently.
 #
 #     Note the DEFAULT VA and CO scale allometrically instead, by
-#     (weight/70)^0.75, but only as defaults -- an explicit scenario overrides
-#     them, so that does not enter a comparison that sets va and co.
+#     (weight/70)^0.75, but only in the desktop GasMan when the user changes
+#     the weight; the API's defaults do not scale (InitDocument computes the
+#     factor at weight 70).  An explicit scenario overrides them, so that does
+#     not enter a comparison that sets va and co.
+#   * Not restated (ChatGPT's gas-engine audit of 2026-11-23, A-01): liquid
+#     injection, the flush, the "closed" label, and GasMan's vaporiser
+#     expansion at a setting of 99% or more.  With `vaporizer_effect = TRUE`
+#     this file expands the flow for every agent, where GasMan does it only
+#     for a liquid (m_bIsLiquid, set when gasman.ini gives the agent a
+#     DefUnitDose, GasAnes.cpp), so not for nitrous oxide; GasMan's ini gives
+#     xenon one, so GasMan treats xenon as a liquid too.
+#     Settings are constant over a run.
 # =============================================================================
 
 
@@ -100,14 +110,18 @@
 # in any calculation below.
 # -----------------------------------------------------------------------------
 
+# Enflurane's VRG, MUS and FAT and halothane's Lambda, MUS, FAT and MAC were
+# not gasman.ini's (2.6, 3.4, 69; 2.4, 8.4, 130, 0.75) until 2026-11-24, when
+# they were copied from gasman.ini at d3a2dd3 (Gemini's gas-engine audit of
+# 2026-11-23, A-03); no validation case uses either agent.
 GASMAN_AGENTS <- data.frame(
   name    = c("Desflurane", "Enflurane", "Halothane", "Isoflurane",
               "Nitrogen", "Nitrous Oxide", "Sevoflurane"),
-  lambda  = c(0.42,  1.9,   2.4,   1.3,   0.014, 0.47,  0.65),
-  vrg     = c(0.54,  2.6,   4.8,   2.1,   0.010, 0.42,  1.1),
-  mus     = c(0.97,  3.4,   8.4,   4.5,   0.014, 0.54,  2.4),
-  fat     = c(13,    69,    130,   70,    0.070, 1.08,  34),
-  mac     = c(6.0,   1.7,   0.75,  1.1,   200,   110,   2.1),
+  lambda  = c(0.42,  1.9,   2.47,  1.3,   0.014, 0.47,  0.65),
+  vrg     = c(0.54,  2.8,   4.8,   2.1,   0.010, 0.42,  1.1),
+  mus     = c(0.97,  4.6,   9.9,   4.5,   0.014, 0.54,  2.4),
+  fat     = c(13,    63,    150,   70,    0.070, 1.08,  34),
+  mac     = c(6.0,   1.7,   0.8,   1.1,   200,   110,   2.1),
   ambient = c(0,     0,     0,     0,     80,    0,     0),
   stringsAsFactors = FALSE
 )
@@ -120,6 +134,7 @@ GASMAN_RATIO <- c(VRG = 0.76, MUS = 0.18, FAT = 0.06)
 
 GASMAN_MAX_VERNIER   <- 5     # MAX_VERNIER
 GASMAN_VERNIER_TICKS <- 3     # VERNIER_TICKS
+GASMAN_SAMP_EVERY    <- 10    # SAMP_EVERY: ticks per history sample
 GASMAN_STD_WEIGHT    <- 70    # STD_WEIGHT
 
 GASMAN_COMPARTMENTS <- c("CKT", "ALV", "VRG", "MUS", "FAT", "VEN")
@@ -174,6 +189,10 @@ gasman_calc <- function(state, sol, lambda, del, fgf, va, co,
                         circuit, uptake_effect, recirculation,
                         wt_factor = 1, check_fast_decay = TRUE) {
 
+  # GasMan delivers nothing with no fresh gas flow: its effective delivered
+  # tension is 100 * vapour / (FGF * dt), and 0 when FGF is 0 (GasDoc.cpp,
+  # Calc; ChatGPT's gas-engine audit of 2026-11-23, A-01).
+  if (fgf <= 0) del <- 0
   eff_ckt    <- fgf * sol[["CKT"]]
   eff_alv    <- va  * sol[["ALV"]]
   blood_flow <- lambda * co
@@ -259,7 +278,10 @@ gasman_calc <- function(state, sol, lambda, del, fgf, va, co,
   # criterion even if the step is coarse.  Applying it unconditionally would
   # make this code MORE accurate than GasMan, which is the wrong direction for
   # a baseline.
-  if (check_fast_decay && (f_ckt < 0.1 || f_alv < 0.1)) ok <- FALSE
+  # A fixed circuit (open, ideal) is set, not advanced, and GasMan leaves its
+  # fExpCKT at 99, so only the alveolar decay can trip the test there (until
+  # 2026-11-23 this tested the circuit's too; ChatGPT's gas-engine audit, A-01).
+  if (check_fast_decay && ((!fixed_ckt && f_ckt < 0.1) || f_alv < 0.1)) ok <- FALSE
 
   # Venous is algebraic, not differential: the blood-flow-weighted mean of the
   # NEW tissue tensions.  The alveolar target above therefore used the PREVIOUS
@@ -344,7 +366,13 @@ gasman_simulate <- function(agents,
   for (tick in seq_len(n_ticks)) {
     cum_before <- sum(cum_uptake)      # for this tick's VA
     # Settings are constant here, so the only change is at time zero.
-    check_fast_decay <- (tick - 1) < GASMAN_VERNIER_TICKS
+    # GasMan's i = VERNIER_TICKS - int((dwt - base) / dx) counts from the END
+    # of the tick, so the test applies in ticks 1 and 2, not 1 to 3 as here
+    # until 2026-11-23 (ChatGPT's gas-engine audit, A-01).
+    # GasMan re-arms the test at the start of every SAMP_EVERY-tick history
+    # sample as well as at a settings row (here, only time 0): until
+    # 2026-11-24 only the run's first ticks were tested (Gemini's audit, A-01)
+    check_fast_decay <- GASMAN_VERNIER_TICKS - ((tick - 1) %% GASMAN_SAMP_EVERY + 1) > 0
     nv_level <- 0
     repeat {
       saved_state <- state
@@ -361,6 +389,9 @@ gasman_simulate <- function(agents,
                               sol[[i]][c("VRG", "MUS", "FAT")] * wt_factor))
       })
 
+      # At the last level GasMan skips both checks and the tick completes
+      # (GasDoc.cpp, Calc); a partial tick was recorded until 2026-11-24.
+      last_level <- nv_level + 1 >= GASMAN_MAX_VERNIER
       ok <- TRUE
       for (sub in seq_len(n_sub)) {
 
@@ -381,7 +412,7 @@ gasman_simulate <- function(agents,
                            tot_uptake, circuit, uptake_effect, recirculation,
                            wt_factor, check_fast_decay)
           state[[i]] <- r$state
-          if (!r$ok) ok <- FALSE
+          if (!r$ok && !last_level) ok <- FALSE
 
           cum_uptake[i]    <- cum_uptake[i] + upt[i] * subdt
           cum_delivered[i] <- cum_delivered[i] + del[i] * eff_fgf * subdt / 100
@@ -389,7 +420,7 @@ gasman_simulate <- function(agents,
         if (!ok) break
       }
 
-      if (ok || nv_level + 1 >= GASMAN_MAX_VERNIER) break
+      if (ok) break
       state         <- saved_state       # reject the tick, retry finer
       cum_uptake    <- saved_upt
       cum_delivered <- saved_del
@@ -535,12 +566,11 @@ if (identical(environment(), globalenv()) && !exists("GASMAN_QUIET")) {
 #    engine applies, and a factor of lambdaBlood is exactly the size of error
 #    that would produce.  Letting the ini supply them removes the question.
 #
-# 2. HOLD WEIGHT AT 70 to begin with.  Reading GasDoc.cpp suggests compartment
-#    volumes are NOT weight-scaled, weight entering only as a multiplier on
-#    uptake; the API README says weight "scales its default compartment sizes".
-#    Those cannot both be right.  At 70 kg the question does not arise, so
-#    settle the integration scheme first and come back to weight as its own
-#    experiment.
+# 2. HOLD WEIGHT AT 70 to begin with.  (Settled since: GasMan divides every
+#    patient compartment's exponent by fWtFactor = weight / 70 and multiplies
+#    uptake by it, which scales the volumes linearly, as the header above
+#    says; the 2026-10-05 runs at 100 kg confirm it, inst/validation/
+#    VALIDATION.md.)
 # =============================================================================
 
 

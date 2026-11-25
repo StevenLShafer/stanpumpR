@@ -41,10 +41,12 @@ time-varying cardiac output can be added later without changing the
 engine; note that letting it vary would logically require the intravenous
 pharmacokinetics to respond to it as well, which stanpumpR does not model.}
 
-\item{resolution}{number of output time points.  It also sets the sub-step
-over which the uptake coupling is held fixed, and so, when
-\code{uptakeEffect} is TRUE, the accuracy: the error is first order in the
-sub-step, about \code{maximum / resolution} (see the file header).}
+\item{resolution}{about the number of output time points: the plot's
+sub-step is \code{maximum / resolution}.  With \code{uptakeEffect} TRUE
+the sub-steps start shorter at each change of setting and grow to it
+(\code{gasSubSteps()}), which adds a few dozen points per change; the
+error, first order in the sub-step, is then about the same on any plot
+length (see the file header).}
 
 \item{uptakeEffect}{if TRUE (the default, as in GasMan, whose m_bUptEnb
 defaults true), couple the gases through their summed uptake, giving the
@@ -54,7 +56,11 @@ the effect measurable as a difference rather than asserted.}
 
 \item{circuit}{"ideal", the default: no rebreathing once fresh gas flow
 reaches minute ventilation, and no circuit volume.  "semi-closed":
-GasMan's default, the circuit as one well-mixed volume.  See the file header.}
+GasMan's default, the circuit as one well-mixed volume, kept for the
+GasMan validation and not offered by the app; it takes no humidity
+correction at altitude (R/altitude.R), so at 7000 m its end-tidal tension
+settles about 10\% above the ideal circuit's (Gemini's gas-engine audit of
+2026-11-23, A-04).  See the file header.}
 
 \item{deadSpace}{dead space as a fraction of minute ventilation, 0.3 by
 default.  The "ventilation" rows are minute ventilation; alveolar
@@ -76,7 +82,8 @@ GasMan, which has no oxygen.}
 \item{bodySteps}{NULL, or \code{gasBodySteps()}'s list of bodies and the
 times from which each is in force (physiology events): the body, its gas
 properties, pressure, humidity and cardiac output are switched at each,
-the agent carried across (\code{gasStateAcrossBodies()}); the result
+the agent carried across (\code{gasStateAcrossBodies()},
+\code{gasStateAcrossPressure()}); the result
 then carries \code{bodySteps} and \code{bodyRow}, the body of each row
 (a step's time appears twice, before and after it)}
 }

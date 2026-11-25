@@ -57,7 +57,9 @@ test_that("the antibiotics, amiodarone, zolpidem, temazepam, ketorolac and napro
   # (R/drugs_naproxen.R).
   dd <- getDrugDefaultsGlobal()
   timedOnPlasma <- character(0)
-  for (drug in dd$Drug[!isGasDrug(dd$Drug)]) {
+  # (a combination product has no model of its own; its components do:
+  # R/combination-products.R)
+  for (drug in dd$Drug[!isGasDrug(dd$Drug) & !isCombinationProduct(dd$Drug)]) {
     PK <- getDrugPK(drug, 70, 170, 50, "male", dd[dd$Drug == drug, ])
     if (PK$PK[[PK_EVENT_DEFAULT]]$ke0 == 0 && dd$endCe[dd$Drug == drug] > 0)
       timedOnPlasma <- c(timedOnPlasma, drug)

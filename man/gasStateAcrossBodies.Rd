@@ -19,9 +19,9 @@ A physiology event steps the body at a time (R/physiologyEvents.R).  What
 is conserved is the amount of agent in each compartment.  In a gas phase
 (the circuit and the alveoli) the amount is the partial pressure times
 the volume, and neither the volume nor the partial pressure changes with
-a step in cardiac output, temperature or altitude (the tensions are
-partial pressures, in \% of a sea-level atmosphere, whatever the barometric
-pressure).  In a tissue the amount is the partial pressure times the
+a step in cardiac output or temperature (a step in altitude moves gas in
+or out of them, \code{gasStateAcrossPressure()}, which the engine applies
+after this).  In a tissue the amount is the partial pressure times the
 volume times the tissue:gas partition coefficient, which temperature
 changes (gasPropertiesAt()), so the tension steps by the ratio of the old
 coefficient to the new: a cooled tissue holds the same agent at a lower

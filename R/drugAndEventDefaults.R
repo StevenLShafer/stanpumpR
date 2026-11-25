@@ -270,8 +270,20 @@ drugLibraryUnitProblems <- function(edited, current, maxNew = DRUG_LIBRARY_MAX_N
         next
       }
       if (gas) next
+      # A combination product (Coartem) is dosed only in its own unit word
+      # ("tablet"), which expandCombinationProducts() turns into mg of each
+      # component; a mass unit would hand each component the product's dose
+      # (R/combination-products.R)
+      product <- isCombinationProduct(drug)
+      if (product && !combinationUnitOk(drug, unit)) {
+        bad <- c(bad, sprintf("%s \"%s\" (a combination product is dosed in %ss)", drug, unit,
+                              COMBINATION_PRODUCTS[[drug]]$unit))
+        next
+      }
       DT <- data.frame(Drug = drug, Time = 0, Dose = 1, Units = unit, stringsAsFactors = FALSE)
       why <- tryCatch({
+        # and is simulated as its components, each of which must move
+        if (product) combinationUnitProblem(drug, DT, library, noEvents) else {
         drugs <- recalculatePK(NULL, library, DT, age = 35, weight = 70, height = 170, sex = "male")
         # An effect-site target needs an effect site: without one the
         # controller targets the plasma, under the effect site's name
@@ -295,6 +307,7 @@ drugLibraryUnitProblems <- function(edited, current, maxNew = DRUG_LIBRARY_MAX_N
         moved <- if (baseline) any(is.finite(plasma) & plasma != plasma[1]) else
           any(is.finite(plasma) & plasma > 0)
         if (!moved) "no concentration follows a dose" else ""
+        }
       }, error = function(e) conditionMessage(e))
       if (nzchar(why)) bad <- c(bad, sprintf("%s \"%s\" (%s)", drug, unit, why))
     }

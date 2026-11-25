@@ -1,0 +1,125 @@
+# Doses per square metre of body surface area (R/bsa-dosing.R): the
+# chemotherapy drugs are labelled per m2, so a dose in "mg/m2" must give the
+# same curve as the same dose in mg times the patient's body surface area.
+
+test_that("the per-m2 and per-kg units are recognised", {
+  expect_true(all(isBsaUnit(c("mg/m2", "g/m2/hr", "mg/m2/day", "mg/m2 PO",
+                              "mg/m2 PO bid", "U/m2"))))
+  expect_false(any(isBsaUnit(c("mg", "mg/kg", "mg/min", "mg/hr", "mg PO"))))
+  expect_true(all(isPerKgUnit(c("mg/kg", "mcg/kg/min", "mg/kg/day", "U/kg",
+                                "mg/kg PO qd", "mg/kg citrate"))))
+  expect_false(any(isPerKgUnit(c("mg/m2", "mg", "mOsm"))))
+  expect_true(all(c(bsaBolusUnits, bsaInfusionUnits, "mg/m2 PO",
+                    ivPotencyBodySizeUnits) %in% allUnits))
+  expect_true(all(c("mg/m2 PO bid", "mg/m2 PO qd", "mg/m2 qd") %in% scheduledUnits))
+  expect_true(all(isRateUnit(c(bsaInfusionUnits, "mg/kg/day"))))
+  expect_false(any(isRateUnit(c(bsaBolusUnits, "mg/m2 PO", ivPotencyBodySizeUnits))))
+  expect_true(all(doseRoute(c(bsaBolusUnits, bsaInfusionUnits, "U/m2")) == ROUTE_IV))
+  expect_equal(doseRoute("mg/m2 PO bid"), ROUTE_PO)
+})
+
+test_that("bodySizeDoseFactor() is the weight per kg and the Mosteller BSA per m2", {
+  f <- bodySizeDoseFactor(c("mg", "mg/kg", "mg/m2", "mg/m2/hr", "U/kg"), 80, 180)
+  expect_equal(f, c(1, 80, rep(sqrt(80 * 180 / 3600), 2), 80))
+  expect_error(bodySizeDoseFactor("mg/m2", 80, NA), "height")
+  expect_equal(bodySizeDoseFactor("mg/kg", 80), 80)
+})
+
+noEvents <- data.frame(Time = numeric(0), Event = character(0))
+
+simBsa <- function(drug, dose, units, weight = 70, height = 170) {
+  r <- simulateDrugsWithCovariates(
+    data.frame(Drug = drug, Time = 0, Dose = dose, Units = units),
+    noEvents, weight, height, 50, "male", 600, FALSE)
+  r[[drug]]$wide$Plasma
+}
+
+test_that("a per-m2 dose is the absolute dose times the body surface area", {
+  bsa <- sqrt(90 * 185 / 3600)
+  cases <- list(
+    list("fluorouracil", 400, "mg/m2", 400 * bsa, "mg"),
+    list("fluorouracil", 1200, "mg/m2/day", 1200 * bsa / 24, "mg/hr"),
+    list("ifosfamide", 1.2, "g/m2/hr", 1200 * bsa, "mg/hr"),
+    list("capecitabine", 1250, "mg/m2 PO bid", 1250 * bsa, "mg PO bid"),
+    list("temozolomide", 150, "mg/m2 PO qd", 150 * bsa, "mg PO qd"),
+    list("bleomycin", 15, "U/m2", 15 * bsa, "U"))
+  for (k in cases) {
+    a <- simBsa(k[[1]], k[[2]], k[[3]], 90, 185)
+    b <- simBsa(k[[1]], k[[4]], k[[5]], 90, 185)
+    expect_gt(max(b), 0)
+    expect_equal(a, b, tolerance = 1e-10, info = paste(k[[1]], k[[3]]))
+  }
+})
+
+test_that("the label's per-kg units reach the engine", {
+  expect_equal(simBsa("cladribine", 0.09, "mg/kg/day"),
+               simBsa("cladribine", 0.09 * 70 / 24, "mg/hr"), tolerance = 1e-10)
+  expect_equal(simBsa("bleomycin", 0.3, "U/kg"),
+               simBsa("bleomycin", 0.3 * 70, "U"), tolerance = 1e-10)
+  expect_equal(simBsa("thioguanine", 2, "mg/kg PO qd"),
+               simBsa("thioguanine", 140, "mg PO qd"), tolerance = 1e-10)
+})
+
+test_that("every chemotherapy drug labelled per m2 offers a per-m2 unit", {
+  d <- getDrugDefaultsGlobal()
+  chemo <- d[d$Category %in% CHEMOTHERAPY_DRUG_CATEGORY, ]
+  # The drugs whose FDA label (inst/extdata/fdaLabels.csv) doses per m2.
+  perM2 <- c("fluorouracil", "carboplatin", "methotrexate", "pemetrexed",
+             "melphalan", "vincristine", "docetaxel", "cyclophosphamide",
+             "doxorubicin", "doxorubicinLiposomal", "irinotecan", "topotecan",
+             "vinorelbine", "cisplatin", "etoposide", "daunorubicin",
+             "gemcitabine", "capecitabine", "paclitaxel",
+             "paclitaxelProteinBound", "oxaliplatin", "bendamustine",
+             "fludarabine", "cytarabine", "ifosfamide", "epirubicin",
+             "temozolomide", "dacarbazine", "bleomycin")
+  expect_true(all(perM2 %in% chemo$Drug))
+  for (drug in perM2) {
+    u <- chemo$Units[[match(drug, chemo$Drug)]]
+    expect_true(any(isBsaUnit(u)), info = drug)
+  }
+  # Inclusive of practice (Shafer, 2026-11-23): every intravenous one offers
+  # per-kg and per-m2 doses and rates, whatever its label says.
+  for (i in seq_len(nrow(chemo))) {
+    u <- chemo$Units[[i]]
+    if (any(u %in% c("mg", "mg/hr")))
+      expect_true(all(c("mg/kg", "mg/kg/hr", "mg/m2", "mg/m2/hr") %in% u),
+                  info = chemo$Drug[i])
+  }
+  # Every unit a chemotherapy drug offers is one the dose table accepts.
+  expect_true(all(unlist(chemo$Units) %in% c(allUnits, scheduledUnits)))
+})
+
+test_that("the Visualizer reads a per-m2 dose as simCpCe() does", {
+  u <- list(amount = "mg")
+  expect_equal(viewerBaseDose(c(100, 100, 60), c("mg/m2", "mg/kg", "mg/m2/hr"), 80, u, 180),
+               c(100 * sqrt(80 * 180 / 3600), 8000, sqrt(80 * 180 / 3600)))
+})
+
+test_that("the Patient Profile shows BSA and BMI, derived and not entered", {
+  s <- bodySizeSummary(70, 170)
+  expect_match(s, "BSA 1.82 m&sup2;", fixed = TRUE)
+  expect_match(s, "BMI 24.2 kg/m&sup2;", fixed = TRUE)
+  expect_equal(bodySizeSummary(NA, 170), "")
+  expect_equal(bodySizeSummary(70, c(170, 180)), "")
+  expect_equal(bodySizeSummary(MAX_WEIGHT + 1, 170), "")
+  oldConfig <- .sprglobals$config
+  .sprglobals$config <- DEFAULT_CONFIG
+  on.exit(.sprglobals$config <- oldConfig, add = TRUE)
+  ui <- as.character(htmltools::renderTags(app_ui()(list()))$html)
+  expect_match(ui, 'id="bodySize"', fixed = TRUE)
+})
+
+test_that("mg/m2 SC and U/m2/hr are units, read per m2 (Gemini audit F20)", {
+  expect_true(all(c("mg/m2 SC", "U/m2/hr") %in% allUnits))
+  expect_equal(doseRoute("mg/m2 SC"), ROUTE_SC)
+  expect_true(isRateUnit("U/m2/hr"))
+  bsa <- sqrt(80 * 180 / 3600)
+  expect_equal(bodySizeDoseFactor(c("mg/m2 SC", "U/m2/hr"), 80, 180), c(bsa, bsa))
+  d <- getDrugDefaultsGlobal()
+  expect_true(all(c("mg/m2 PO", "mg/m2 SC") %in% d$Units[[match("cladribine", d$Drug)]]))
+  expect_true(all(c("U/kg/hr", "U/m2/hr") %in% d$Units[[match("bleomycin", d$Drug)]]))
+  # no chemotherapy help page tells the user to convert a per-m2 dose by hand
+  pages <- list.files(system.file("app-help", "drugs", package = "stanpumpR"), full.names = TRUE)
+  txt <- vapply(pages, function(f) paste(readLines(f, warn = FALSE), collapse = " "), "")
+  expect_false(any(grepl("multiplied by the body surface area first|must be converted first", txt)))
+})

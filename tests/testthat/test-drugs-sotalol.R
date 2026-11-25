@@ -19,10 +19,12 @@ test_that("Table 2's parameters at the reference creatinine clearance and weight
 })
 
 test_that("creatinine clearance and weight enter as published", {
+  # the exponents of the final control stream, Data S1 (Table 2 prints them
+  # as 0.7 and 1.1, Table 3 as 0.7 and 1.2)
   set <- sotalol(70, 170, 75, "female", adjustToFFM = FALSE, creatinine = 1.8)$PK$default
   crcl <- (140 - 75) * 70 / (72 * 1.8) * 0.85
-  expect_equal(set$cl1, 9.5 / 60 * (crcl / 92.4)^0.7)
-  expect_equal(set$v1, 38.2 * (70 / 104)^1.1)
+  expect_equal(set$cl1, 9.5 / 60 * (crcl / 92.4)^0.65)
+  expect_equal(set$v1, 38.2 * (70 / 104)^1.2)
   expect_equal(set$v2, 89.1)
 })
 
@@ -44,7 +46,7 @@ test_that("an 80 mg oral dose reproduces the FDA review's healthy-subject AUC", 
 test_that("pregnancy raises creatinine clearance by 1.5 only when it is blank", {
   off <- sotalol(70, 165, 30, "female")$PK$default
   on  <- sotalol(70, 165, 30, "female", pregnant = TRUE)$PK$default
-  expect_equal(on$cl1 / off$cl1, 1.5^0.7)
+  expect_equal(on$cl1 / off$cl1, 1.5^0.65)
   expect_equal(sotalol(70, 165, 30, "female", creatinine = 0.6, pregnant = TRUE)$PK$default,
                sotalol(70, 165, 30, "female", creatinine = 0.6)$PK$default)
 })

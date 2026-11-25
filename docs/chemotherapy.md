@@ -160,7 +160,7 @@ check is not forgotten.
   twice; age is held to the 24-90 years studied. The test checks the engine's plateau during a
   46-h infusion against an independent solution of R = CL C + Vmax C/(Km + C). Not represented:
   DPD deficiency, the slow rise of the plateau during an infusion, circadian variation. The AUC
-  target (20-29 mg h/L over 46 h) is recorded, `not_applicable`, and not drawn.
+  target (20-30 mg h/L over 46 h, Beumer 2019; Briki's grid uses 20-29) is recorded, `not_applicable`, and not drawn.
 - **`cladribine`** (`R/drugs_cladribine.R`; Lindemalm 2005, N04). Three compartments, IV,
   subcutaneous (F 1, ka 2.48/h) and oral solution (F 0.353, ka 1.31/h), no covariates; its
   half-lives reproduce the text's 0.2, 1.3 and 16 h. No renal term, although about half its
@@ -996,8 +996,8 @@ model of its own; oral thioguanine derived from Kitchen 1997 and Lowe 2001.
   `doxorubicinLiposomal` with the metabolite-only `doxorubicinLiposomalFree`:
   encapsulated doxorubicin (V1 2.52 L) released at 0.0212 L/h into free
   doxorubicin (V 9.52 and 35.1 L, Q 2.87, CL 2.68 L/h), a model of its own
-  (only the release/elimination ratio is identified; its clearance is about
-  a twentieth of conventional doxorubicin's).  The unencapsulated 2% enters
+  (its curve is release-limited; its clearance is about an eighteenth of
+  conventional doxorubicin's 47.6 L/h, Joerger 2007).  The unencapsulated 2% enters
   free doxorubicin through `metaboliteCoefficients(directFraction =)`, added
   for it; the encapsulated 98% by an exact reparameterisation (v1 and cl1
   over 0.98, formation 0.98 x Rel / V1).  Both curves match an independent

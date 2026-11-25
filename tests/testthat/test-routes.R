@@ -61,7 +61,9 @@ test_that("every unit offered before the oral rate keeps its exact classificatio
   # The rate units that arrived later (the oral daily rate, the continuous
   # RA infusion, the insulin pump, the enteral infusion of levodopa gel) are
   # rates by design and are left out.
-  later <- c(poRateUnits, raRateUnits, insulinRateUnits, enteralRateUnits, tdRateUnits)
+  # So are the infusions written per day (mg/kg/day, mg/m2/day; 2026-11-23).
+  later <- c(poRateUnits, raRateUnits, insulinRateUnits, enteralRateUnits, tdRateUnits,
+             "mg/kg/day", "mg/m2/day")
   units <- unique(c(setdiff(allUnits, later), gasUnits, tciUnits, scheduledUnits,
                     unlist(getDrugDefaultsGlobal()$Units)))
   units <- setdiff(units, later)

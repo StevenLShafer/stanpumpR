@@ -15,10 +15,11 @@ Briki's model, from 726 patients, clears 5-FU by a linear pathway beside a small
 
 ### What is plotted
 
-Plasma 5-FU in mcg/mL (mg/L). Doses are entered in mg or as an infusion rate; a dose prescribed per m² must be multiplied by the body surface area first. The target for colorectal cancer, an AUC of 20 to 30 mg·h/L over the 46-hour infusion, is an exposure and is not drawn. There is no effect site.
+Plasma 5-FU in mcg/mL (mg/L). Doses are entered in mg or as an infusion rate; a dose prescribed per m² or per kg can be entered as such (mg/m², mg/kg; body surface area by Mosteller, from the Patient Profile's weight and height). The target for colorectal cancer, an AUC of 20 to 30 mg·h/L over the 46-hour infusion, is an exposure and is not drawn. There is no effect site.
 
 ### Where to be careful
 
+- **Interactions are not modelled.** The fluorouracil label warns that the INR may rise in patients taking warfarin (5.9, 7), so it should be checked more often; capecitabine, an oral 5-FU prodrug, also raises phenytoin levels (Xeloda label, 7.2). Neither the library's warfarin nor its phenytoin curve shows these effects.
 - **DPD deficiency is not represented.** 29% of the patients carried a DPYD variant, and the genotype was not retained as a covariate, but a patient with low DPD activity clears 5-FU far more slowly than this curve shows. The CPIC and DPWG dose reductions are not clearances, and none is applied.
 - **The slow rise during the infusion** and circadian variation are not modelled.
 - **Adults only. Not a monitoring tool:** the curve is a population prediction, not an estimate from measured levels.

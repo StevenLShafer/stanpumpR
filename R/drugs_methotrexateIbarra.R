@@ -20,7 +20,7 @@
 # application in precision dosing.  Br J Clin Pharmacol 2023;89:660-671
 # (doi 10.1111/bcp.15506).  693 courses in 243 adults, 18-88 years (median
 # 60), 44-162 kg, 0.5-13.4 g/m2 over 3 to 24 h, from 101 US oncology
-# practices; immunoassay; NONMEM, SAEM.
+# practices; immunoassay; MonolixSuite 2020R1, SAEM.
 #
 # THE MODEL (Table 2 and the covariate equation)
 # ==============================================

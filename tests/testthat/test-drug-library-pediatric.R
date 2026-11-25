@@ -17,7 +17,9 @@ pediatricProfiles <- data.frame(
 
 test_that("every drug model gives positive, finite volumes and clearances in children", {
   drugDefaults <- getDrugDefaultsGlobal()
-  drugs <- drugDefaults$Drug[!isGasDrug(drugDefaults$Drug)]
+  # (a combination product has no model of its own; its components do:
+  # R/combination-products.R)
+  drugs <- drugDefaults$Drug[!isGasDrug(drugDefaults$Drug) & !isCombinationProduct(drugDefaults$Drug)]
   expect_gt(length(drugs), 40)
   for (drug in drugs) {
     fn <- get(drug, mode = "function")

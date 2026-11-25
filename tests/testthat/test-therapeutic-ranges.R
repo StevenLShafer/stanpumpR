@@ -12,6 +12,9 @@ rangeUnits <- c(mcg = "mg/L", ng = "ng/mL", pg = "pg/mL", IU = "IU/mL", mcU = "m
 
 test_that("every drug in the covered categories, and its metabolites, has a row", {
   covered <- dd$Drug[!is.na(dd$Category) & dd$Category %in% THERAPEUTIC_RANGE_CATEGORIES]
+  # A combination product's range is its components' (R/combination-products.R)
+  covered <- c(covered[!isCombinationProduct(covered)],
+               unlist(lapply(covered[isCombinationProduct(covered)], combinationComponents)))
   expect_setequal(unique(dd$Category[!is.na(dd$Category) & nzchar(dd$Category)]),
                   THERAPEUTIC_RANGE_CATEGORIES)
   # An inhaled agent has no model function: the gas engine runs it

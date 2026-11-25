@@ -177,6 +177,15 @@ app_ui <- function() {
                   selected = defaultSex
                 ),
 
+                # Derived, not entered: the body surface area a per-m2 dose
+                # uses and the BMI, from the weight and height above
+                # (bodySizeSummary(), R/bsa-dosing.R; Shafer, 2026-11-23).
+                div(
+                  class = "info-note derived-body-size",
+                  icon("calculator"),
+                  uiOutput("bodySize", inline = TRUE)
+                ),
+
                 # Read only by the models with a measured change in pregnancy
                 # (R/pregnancy.R; the help's Pregnancy page lists them).
                 # Offered for a woman of PREGNANCY_MIN_AGE to PREGNANCY_MAX_AGE
@@ -230,6 +239,20 @@ app_ui <- function() {
                     selected = FALSE
                   ),
                   patientFieldTooltip("pulmonaryHypertension"),
+                  placement = "right"
+                )),
+
+                # Read only by the models with an infection term (R/infection.R;
+                # Steven L. Shafer, 2026-11-18), so shown only while one is in
+                # the dose table.
+                relevantField("infection", fieldHelp(
+                  selectInput(
+                    inputId = "infection",
+                    label = "Infection",
+                    choices = INFECTION_LABELS,
+                    selected = INFECTION_DEFAULT
+                  ),
+                  patientFieldTooltip("infection"),
                   placement = "right"
                 )),
 

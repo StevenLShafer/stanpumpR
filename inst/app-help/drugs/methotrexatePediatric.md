@@ -9,7 +9,7 @@ The slow third compartment is what gives high-dose methotrexate its long low tai
 
 ### What is plotted
 
-Plasma methotrexate in mcg/mL (mg/L). The clinical thresholds are given in µmol/L: **1 µmol/L = 0.454 mg/L**, so 0.1 µmol/L is 0.045 mg/L and 1 µmol/L is 0.45 mg/L. Doses are entered in mg or as an infusion rate. A dose prescribed per m² must be multiplied by the body surface area first. There is no effect site and no band: the thresholds that matter (glucarpidase, leucovorin rescue, discharge) are management criteria at stated times, not a therapeutic range.
+Plasma methotrexate in mcg/mL (mg/L). The clinical thresholds are given in µmol/L: **1 µmol/L = 0.454 mg/L**, so 0.1 µmol/L is 0.045 mg/L and 1 µmol/L is 0.45 mg/L. Doses are entered in mg or as an infusion rate. A dose prescribed per m² or per kg can be entered as such (mg/m², mg/kg; body surface area by Mosteller, from the Patient Profile's weight and height). There is no effect site and no band: the thresholds that matter (glucarpidase, leucovorin rescue, discharge) are management criteria at stated times, not a therapeutic range.
 
 For a typical child (body surface area 1.0 m², creatinine 0.3 mg/dL) given 5 g/m² over 24 hours, the model gives 86 µmol/L at the end of the infusion, against the paper's simulated mean of 85. After that the curve falls below the paper's means (0.33 µmol/L at 48 hours against 0.48), as a typical patient's should: a mean is pulled up by the slow eliminators.
 
@@ -22,6 +22,7 @@ For a typical child (body surface area 1.0 m², creatinine 0.3 mg/dL) given 5 g/
 
 ### Where to be careful
 
+- **Interactions are not modelled.** The methotrexate label (7.1) asks for close monitoring with penicillins and sulfonamides, proton pump inhibitors, aspirin and other NSAIDs, probenecid, and highly protein-bound drugs such as oral anticoagulants and phenytoin: several slow methotrexate's renal elimination, so the measured level may stay high longer than this curve shows.
 - **Not a monitoring tool.** Methotrexate is dosed and rescued by measured levels at set times. This curve is a population prediction for the covariates entered, not an estimate from those levels, and it never replaces them, the rescue nomograms, or the glucarpidase criteria.
 - **Kidney injury during the course.** The source's creatinine changed with time; the curve holds the entered value for the whole course. It cannot show the delayed elimination of an acute kidney injury that develops during the infusion, which is when methotrexate is most dangerous.
 - **Children and young adults.** The cohort's oldest patient was 32. The adult high-dose models (Ibarra 2023, Blackman 2026) are on the [chemotherapy](help:models/chemotherapy) page.

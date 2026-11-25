@@ -52,8 +52,10 @@ finishDrugSeries <- function(wide, PK, maximum, plotRecovery)
   xout <- equispaceTimes(maximum)
   equiSpaceCe <- if (ceAllNA) {
     # Zero, not NA.  A prodrug has no effect of its own and its MEAC is zero,
-    # and both the hover readout and the total-opioid MEAC sum read equiSpace.
-    # The metabolite's row is where the effect actually appears.
+    # and the hover readout reads equiSpace.  (The total-opioid MEAC sum did
+    # too until 2026-11-24; it reads each drug's own series now,
+    # totalOpioidMEAC().)  The metabolite's row is where the effect actually
+    # appears.
     rep(0, length(xout))
   } else if (sum(!is.na(results$"Effect Site")) < 2) {
     # a plot of length 0 has one time point, which approx() refuses (the
@@ -427,9 +429,10 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     use <- grep("ng",dose$Units)
     dose$Dose[use] <- dose$Dose[use] / ng_Conv[use]
 
-    # Convert dose per kg  to absolute dose
-    use <- grep("kg",dose$Units)
-    dose$Dose[use] <- dose$Dose[use] * PK$weight
+    # Convert a dose per kg or per m2 to an absolute dose: per kg by the
+    # weight, per m2 by the body surface area (bodySizeDoseFactor(),
+    # R/bsa-dosing.R).
+    dose$Dose <- dose$Dose * bodySizeDoseFactor(dose$Units, PK$weight, PK$height)
 
     # Convert dose per hour or per day to dose per minute
     use <- grep("hr",dose$Units)

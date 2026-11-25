@@ -18,3 +18,5 @@ Plasma bleomycin in microunits per mL. Bleomycin is dosed in USP units; one unit
 - **Children under 3.** Their clearance was higher (70.5 mL/min/m² in three courses); the curve uses the whole group's value.
 - **Long infusions.** After 4- to 5-day infusions, Kramer (1978) saw a slow tail below 10 mcU/mL that a two-compartment model does not predict.
 - **Pregnancy:** no pharmacokinetic data were found; nothing is changed.
+
+**Routes not modelled.** The FDA label gives bleomycin intravenously, intramuscularly, subcutaneously and intrapleurally. Only the intravenous route is modelled here, because the model was fitted to intravenous doses. If you need a route stanpumpR does not offer, please contact Steven Shafer (steven.shafer@stanford.edu). For a one-time simulation in the meantime, a published pharmacokinetic study of that route can often be uploaded to the **Single Paper Review** tab, which reads its model and simulates it.

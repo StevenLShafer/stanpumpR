@@ -10,6 +10,6 @@ stanpumpR holds 3 published models of etoposide. You do not choose between them:
 
 **The rule.** Among the models whose studied age range (and weight range, where the paper printed one) includes the patient, the one fitted to more patients is chosen, then the newer. If none includes the patient, the one whose ranges are nearest is chosen.
 
-**What that means for etoposide.** In practice Urien 2011 is chosen for children (it is the larger of the two children's studies and covers Duong's ages), the nearer children's model up to about 19 years, and Krogh-Madsen 2012 for adults. Duong 2019 is never chosen while Urien covers the child.
+**What that means for etoposide.** In practice Urien 2011 is chosen for children (it is the larger of the two children's studies and covers Duong's ages), the nearer children's model up to about 19 years, and Krogh-Madsen 2012 for adults. Duong 2019 is never chosen: every child it studied (1.7-8.3 years, 8.6-31 kg) falls inside Urien's larger study.
 
 The tables on this page are computed at six reference patients, so each uses the model chosen for that patient. Each model's own page gives its parameters, its checks against its paper, and its limits.

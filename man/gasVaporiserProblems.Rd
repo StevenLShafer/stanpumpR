@@ -4,12 +4,20 @@
 \alias{gasVaporiserProblems}
 \title{Vaporiser settings that together exceed 100\%}
 \usage{
-gasVaporiserProblems(doseTable)
+gasVaporiserProblems(doseTable, altitude = ALTITUDE_DEFAULT)
 }
 \arguments{
 \item{doseTable}{a dose table with \code{Drug}, \code{Time} (minutes, or
 anything \code{as.numeric()} reads) and \code{Dose}; non-gas rows and
 blank rows are ignored}
+
+\item{altitude}{metres above sea level, 0 to 7000 (\code{ALTITUDE_DEFAULT},
+0, by default; outside that range is an error).  The settings are checked
+as the engine applies them at that altitude (\code{gasSettingsAt()}): a
+variable-bypass vaporiser's dial is its partial pressure in \% of a
+sea-level atmosphere, the desflurane vaporiser's dial is a volume percent
+and is scaled by the pressure ratio (\code{pressureRatio()}), and the sum
+may not exceed the ambient pressure, 100\% times that ratio.}
 }
 \value{
 a character vector of messages, one per offending time, empty when

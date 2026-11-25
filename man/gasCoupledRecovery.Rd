@@ -94,7 +94,14 @@ The plot shows a hundred points, so a simulation with more time points than
 includes the first and last time point of every interval of constant
 settings, and the interpolation stays within each interval, because the time
 until threshold jumps where a setting changes; until 2026-11-15 it was
-interpolated across the change (H9).
+interpolated across the change (H9).  A threshold that changes within an
+interval (an opioid's effect on MAC, \code{applyOpioidMacInteraction()})
+adds to the sample every row where the threshold interpolated between the
+sampled rows misses it by more than \code{GAS_RECOVERY_THRESHOLD_TOL}
+(\code{gasRecoveryRefine()}), so a bolus's rows are computed and a slow
+tail is still sampled.  With the plain sample, a remifentanil bolus on a
+24-hour plot read 4.3 minutes where every row gives 8.7 (Gemini's
+gas-engine audit of 2026-11-23, D-01).
 
 Provenance: Claude Code (Claude Fable 5.1), 2026-10-05, at the request of
 Steven L. Shafer.  Verified on R 4.6.1 against the same manoeuvre in the full

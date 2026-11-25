@@ -45,6 +45,13 @@ rem no text layer because ocr_scans.py had never been run over them.  Both were 
 rem looking, not by being told.  It only reports, so it is outside the && chain -- and it
 rem sits after check_in_step.py deliberately: when an upstream step DID fail, the accounting
 rem is exactly when you most want to hear about it.
+%PY% bundle_repo.py
+rem bundle_repo.py backs the GitHub repository up to Drive as a dated git bundle, at most
+rem once a week (it exits at once if the newest is younger than that). Shafer, 2026-11-21:
+rem GitHub is definitive, but a copy on Drive survives GitHub being hacked or rewritten.
+rem A bundle, not a mirror, and deliberately STALE: the credible threat is tampering, and a
+rem synced mirror would mirror it. Several generations are kept. Outside the && chain.
+
 popd
 rem Then write up to 20 missing digests unattended, in a separate minimized window so update.bat returns at once
 rem (digests.bat -> _build\digest_run.py; it exits immediately if a run is already going). Added 2026-10-28.

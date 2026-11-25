@@ -1,4 +1,4 @@
-The inhaled anesthetics are simulated by a separate engine whose structure and parameters follow **GasMan®**, the model of inhaled anesthetic uptake and distribution developed by James H. Philip at Brigham and Women's Hospital and Harvard Medical School. GasMan is closed source; the engine was written from the published description of its model and then validated against GasMan's own output. This page gives the model; the deliberate departures from GasMan are on [their own page](help:models/gas-differences).
+The inhaled anesthetics are simulated by a separate engine whose structure and parameters follow **GasMan®**, the model of inhaled anesthetic uptake and distribution developed by James H. Philip at Brigham and Women's Hospital and Harvard Medical School. GasMan's source code is published under the GPL-3.0 licence ([gasmanonline](https://github.com/rasman/gasmanonline)); the engine was written from the published description of its model, with a few defaults read from that source, and then validated against GasMan's own output. This page gives the model; the deliberate departures from GasMan are on [their own page](help:models/gas-differences).
 
 ## Compartments
 
@@ -19,13 +19,13 @@ The capacity of a tissue for a gas is its volume times its tissue:gas partition 
 
 | Gas | Blood:gas | Brain:gas | Muscle:gas | Fat:gas | MAC at 40 (%) |
 |---|---|---|---|---|---|
-| nitrous oxide | 0.47 | 0.42 | 0.54 | 1.08 | 110 |
-| sevoflurane | 0.65 | 1.1 | 2.4 | 34 | 2.1 |
-| isoflurane | 1.3 | 2.1 | 4.5 | 70 | 1.1 |
-| desflurane | 0.42 | 0.54 | 0.97 | 13 | 6.0 |
+| nitrous oxide | 0.47 | 0.42 | 0.54 | 1.08 | 104 |
+| sevoflurane | 0.65 | 1.1 | 2.4 | 34 | 1.80 |
+| isoflurane | 1.3 | 2.1 | 4.5 | 70 | 1.17 |
+| desflurane | 0.42 | 0.54 | 0.97 | 13 | 6.6 |
 | nitrogen | 0.014 | 0.010 | 0.014 | 0.070 | (200, flagged) |
 
-Nitrogen's MAC of 200 per cent is GasMan's own figure, carried as it stands and flagged: the estimate of Koblin, Eger and colleagues, 110 atmospheres in rats (*Anesth Analg* 1998;87:419-424), is about 55 times higher, and nitrogen is not summed into MAC, so the value is inert. Each gas's page under [Drug library](help:drugs/index) shows these values.
+The partition coefficients are GasMan's. The MACs at 40 are Mapleson's (*Br J Anaesth* 1996;76:179-185), the meta-analysis whose age relation the engine applies, adopted on 23 November 2026: the program was validated against GasMan first and has since moved to more recent research. GasMan's own, which the US labels share, were 110, 2.1, 1.1 and 6.0 per cent; MAC enters no uptake, so that validation is unchanged. Nitrogen's MAC of 200 per cent is GasMan's own figure, carried as it stands and flagged: the estimate of Koblin, Eger and colleagues, 110 atmospheres in rats (*Anesth Analg* 1998;87:419-424), is about 55 times higher, and nitrogen is not summed into MAC, so the value is inert. Each gas's page under [Drug library](help:drugs/index) shows these values.
 
 ## Equations
 
@@ -66,20 +66,17 @@ with s = 1 except in the closed circuit above. U F_circuit and P F_alv are the *
 
 Between dose-table changes the settings are constant, and every equation above would be linear with constant coefficients but for one term: the total uptake that couples the gases depends on the state. The engine therefore advances in short steps. Within each step the total uptake (and with it the circuit blend) is held at its value at the start of the step, which makes the step linear, and the step is then solved exactly by matrix exponential (a Padé approximation with scaling and squaring). The uptake is recomputed at the start of the next step. So the propagation within a step is exact, but the coupling between steps is an approximation of first order in the step size: the answer depends slightly on the step and converges as it shrinks. GasMan holds its total uptake per step in the same way and in addition splits each step into sequential sub-updates; the two converge to the same answer as the step shrinks, and the repository's convergence test checks that they do.
 
-The step is about the plot length divided by 600: 0.1 minute on a one-hour plot, 0.4 minute on a four-hour plot, 2.4 minutes on a day. Measured against the same engine at a 40-times finer step:
+The steps are short just after each change of setting, when the uptake changes fastest, and grow from there: the first is a hundredth of a minute, and each is a tenth longer than the one before, until they reach the plot length divided by 600 (0.1 minute on a one-hour plot, 2.4 minutes on a day). So each step is about a tenth of the time since the last change, and the error is about the same on any plot length. Measured against the same engine with much shorter steps, in a nitrous oxide induction (4 L/min nitrous oxide in 6 L/min, with 2 per cent sevoflurane, as in [the second gas effect scenario](scenario:second-gas-effect)), in its emergence, and in the same induction in a 4 kg infant, on plots of an hour, a day and a week, the alveolar tensions were never more than 0.6 per cent of their value from the reference. Without nitrous oxide the coupling is weak and the error smaller still: under 0.1 per cent of the agent's peak in the teaching and validation scenarios even with the earlier, longer steps.
 
-- **Without nitrous oxide** the coupling is weak. In the teaching scenarios and the GasMan validation scenarios that use no nitrous oxide, on their own plot lengths of half an hour to four hours, the alveolar tensions agree to within 0.003 percentage points, under 0.1 per cent of the agent's peak.
-- **During a nitrous oxide wash-in** the coupling is strong. In [the second gas effect scenario](scenario:second-gas-effect) (4 L/min nitrous oxide in 6 L/min, with 2 per cent sevoflurane) the alveolar nitrous oxide and sevoflurane run low at the first plotted points, by about 1.5 per cent of their value on a one-hour plot, 6 per cent on a four-hour plot and 13 per cent on a 24-hour plot. The error fades as uptake slows, to under 1 per cent after about 1, 2 and 12 minutes respectively, and roughly halves when the step is halved.
-
-To read the first minutes of a nitrous oxide induction closely, use a short plot.
+Until 23 November 2026 every step was the plot length divided by 600, so a day's plot stepped 2.4 minutes from the start of a nitrous oxide induction, and its first points read 13 per cent low (ChatGPT's audit of the gas engine found it; the page then advised a short plot).
 
 ## MAC
 
-MAC is age-adjusted by the Mapleson relation, MAC(age) = MAC40 × 10^(−0.00269 (age − 40)), about 6 per cent per decade. The MAC-equivalents series is the sum over potent agents of alveolar tension divided by the agent's age-adjusted MAC. Nitrous oxide is included.
+MAC is age-adjusted by the Mapleson relation, MAC(age) = MAC40 × 10^(−0.00269 (age − 40)), about 6 per cent per decade, with MAC40 Mapleson's own values from the same meta-analysis (the table above). The MAC-equivalents series is the sum over potent agents of alveolar tension divided by the agent's age-adjusted MAC. Nitrous oxide is included.
 
 ## Validation
 
-Richard H. Epstein ran GasMan through its API for the same scenarios and the outputs were compared column by column. In the first concordance run the two agreed to one part in a million on the alveolar tension, with the residual traced to GasMan's single-precision arithmetic. Five further scenarios covering low flows, other agents, other weights and changing settings followed. The record is `inst/validation/VALIDATION.md`; see [Testing and validation](help:validation).
+Richard H. Epstein ran GasMan through its API for the same scenarios and the outputs were compared column by column. In the first concordance run the two agreed to one part in a million on the alveolar tension, with the residual traced to GasMan's single-precision arithmetic. Five further scenarios covering low flows, other agents, a 100 kg patient and changing settings followed, run with GasMan's own program built from its source; their 520 values are frozen in the repository and checked on every build, and on 24 November 2026 a sixth, a 5 kg patient, was added. The record is `inst/validation/VALIDATION.md`; see [Testing and validation](help:validation).
 
 ## References
 
