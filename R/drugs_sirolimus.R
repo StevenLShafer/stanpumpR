@@ -45,18 +45,31 @@
 # Terminal half-life: this model 56 h, the label's 62 +/- 16 h in renal
 # transplant patients.  Apparent clearance: the label's Table 4 gives 139 +/-
 # 63 mL/h/kg (tablets) and 173 +/- 50 (solution) at 2 mg daily WITH
-# cyclosporine, which inhibits sirolimus's clearance; this model, 190 mL/h/kg
-# at the 70 kg, 35-year-old reference man, in a cohort mostly without
-# cyclosporine.  At 2 mg daily its steady-state AUC is 150 ng.h/mL and trough
-# 3.6 ng/mL, against the label's 230 and 7.6 (tablets, with cyclosporine): so
-# with cyclosporine, which is not modelled, this model underpredicts the
-# concentration by about a third.
+# cyclosporine, which inhibits sirolimus's clearance; this model, 204 mL/h/kg
+# at the 70 kg, 35-year-old reference man (190 before the anchoring of
+# 2026-11-20), in a cohort mostly without cyclosporine.  At 2 mg daily its
+# steady-state AUC is 140 ng.h/mL and trough 3.3 ng/mL (150 and 3.6 before),
+# against the label's 230 and 7.6 (tablets, with cyclosporine): so with
+# cyclosporine, which is not modelled, this model underpredicts the
+# concentration by a third or more.
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# The source found no weight effect, so its values are written for the
-# library's reference man (the cohort averaged 73 kg) and scaled by fat-free
-# mass with the switch on; with it off they are fixed, as published.
+# The source tested weight and did not retain it, which in 25 patients is not
+# evidence that size does not matter, so every volume and clearance is scaled
+# with the switch on, by Steven L. Shafer's first-principles rule of
+# 2026-11-19: Vc/F and Vp/F by the fat-free-mass volume factor, CL/F and Q/F
+# by the clearance factor, CL/F keeping its age term (age is not size).  The
+# factors are anchored at Dansirikul's cohort (SIROLIMUS_COHORT, below: Table
+# 1, 14 men and 11 women, 44 years, 73 kg, BMI 27), whose typical patient
+# sits at a volume factor of 0.9121 and a clearance factor of 0.9334 from the
+# 70 kg reference man, so a patient like Dansirikul's receives Table 4's
+# values and the reference man receives volumes 9.6% and clearances 7.1%
+# above them.  With the switch off they are fixed, as published.  (Until
+# 2026-11-20 the values were read as the reference man's, the paper not
+# being in the archive.)  The card's [decision]s on the priors and the age
+# term (papers/digests/PMID_16995863.md) are not about size and are left
+# open.
 #
 # DOSE BASIS
 # ==========
@@ -89,6 +102,14 @@ SIROLIMUS_VC           <- 117     # L
 SIROLIMUS_VP           <- 583     # L
 SIROLIMUS_KA           <- 2.305   # 1/h, ka* + CL/Vc
 
+# Dansirikul 2006, Table 1 and the Results (PDF p5, printed 424): 25 kidney
+# transplant recipients, 14 men and 11 women, age 44 +/- 13 years, weight
+# 73 +/- 15 kg, BMI 27 +/- 5.5 kg/m2.  No height is printed: it comes from the
+# weight and BMI (164.4 cm), the same for both sexes, the table giving no
+# values by sex.  Every volume and clearance is anchored at this cohort
+# (Steven L. Shafer, 2026-11-18 and 2026-11-19; see the header's BODY SIZE).
+SIROLIMUS_COHORT <- list(weight = 73, bmi = 27, age = 44, men = 14, women = 11)
+
 #' Sirolimus (Dansirikul 2006)
 #'
 #' Two compartments, apparent oral, whole blood; see the header of
@@ -100,7 +121,8 @@ SIROLIMUS_KA           <- 2.305   # 1/h, ka* + CL/Vc
 sirolimus <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, SIROLIMUS_COHORT))
   ageTerm <- max(age, ADULT_AGE_TERM_FLOOR)
   cl <- SIROLIMUS_CL_INTERCEPT * SIROLIMUS_CL_AGE^(ageTerm / SIROLIMUS_AGE_MEDIAN)
 

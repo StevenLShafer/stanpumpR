@@ -55,10 +55,28 @@
 # WHAT IS HELD AT THE REFERENCE
 # =============================
 # Alkaline phosphatase at 140 U/L (no field; it acts on 5-FU's clearance,
-# 11% lower at twice the value).  5'-DFUR and 5-FU carry no other
-# covariate; their volumes and clearances scale by the library's factors
-# with the switch on and are fixed with it off.  Food: the phase III doses
-# were taken after meals, as labelled.
+# 11% lower at twice the value).  Food: the phase III doses were taken after
+# meals, as labelled.
+#
+# BODY SIZE (docs/weight-adjustment.md)
+# =====================================
+# 5'-DFUR and 5-FU carry no size covariate (body-surface area entered the
+# final model only on FBAL's volume, which is not carried), so every volume
+# and clearance of both is scaled with the switch on, by Steven L. Shafer's
+# first-principles rule of 2026-11-19: V1 and V2 by the fat-free-mass volume
+# factor, CL1 and CL2 by the clearance factor, CL2 keeping its alkaline-
+# phosphatase term (not a size covariate).  The factors are anchored at
+# Gieschke's cohort (CAPECITABINE_COHORT, below: Table 1's three studies, 288
+# men and 193 women in the phase III trials and 15 and 9 in the
+# bioequivalence study, 61-63 years, 70-77 kg, BSA 1.8-1.9 m2), whose typical
+# patient sits at a volume factor of 0.9472 and a clearance factor of 0.9602
+# from the 70 kg reference man, so a patient like Gieschke's receives Table
+# 4's values and the reference man receives volumes 5.6% and clearances 4.1%
+# above them.  The formation of 5-FU is all of 5'-DFUR's clearance and the
+# two moieties take the same factors, so the 5-FU formed is consistent at
+# every size.  With the switch off the values are fixed, as published.
+# (Until 2026-11-20 the values were read as the reference man's, the paper
+# not being in the archive.)
 #
 # PREGNANCY (R/pregnancy.R): no comparison found; nothing applied.
 # NO EFFECT SITE, NO BAND: the authors report that plasma 5-FU predicts
@@ -74,6 +92,22 @@ CAPECITABINE_GIESCHKE <- list(
   fuPerDfur = 130.08 / 246.21
 )
 
+# Gieschke 2003, Table 1 (PDF p3, printed 254), mean of each study: phase III
+# study 14, 148 men and 100 women, 61 years, 70 kg, BSA 1.8 m2; phase III
+# study 15, 140 men and 93 women, 62 years, 77 kg, BSA 1.9 m2; the
+# bioequivalence study, 15 men and 9 women, 63 years, 73 kg, BSA 1.8 m2.  No
+# height is printed: it is solved from each study's BSA and weight by the
+# Du Bois formula the table's footnote names (168.7, 171.9 and 164.6 cm),
+# the same for both sexes, the table giving no values by sex.  Every volume
+# and clearance of 5'-DFUR and 5-FU is anchored at this cohort (Steven L.
+# Shafer, 2026-11-18 and 2026-11-19; see the header's BODY SIZE).  (The
+# abstract's "248 males, 193 females" is a misprint; Table 1's counts are
+# used.)
+CAPECITABINE_COHORT <- list(groups = list(
+  list(weight = 70, height = 168.7, age = 61, men = 148, women = 100),
+  list(weight = 77, height = 171.9, age = 62, men = 140, women = 93),
+  list(weight = 73, height = 164.6, age = 63, men = 15, women = 9)))
+
 #' Capecitabine, oral (Gieschke 2003)
 #'
 #' Plasma 5'-DFUR in one compartment after first-order absorption, forming
@@ -87,7 +121,8 @@ capecitabine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   p <- CAPECITABINE_GIESCHKE
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, CAPECITABINE_COHORT))
   v1 <- p$v1 * size$volume
   cl1 <- p$cl1 / 60 * size$clearance
 
@@ -144,7 +179,8 @@ capecitabine5FU <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   p <- CAPECITABINE_GIESCHKE
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
+                        legacyVolume = 1, legacyClearance = 1,
+                        cohort = do.call(cohortSizeFactors, CAPECITABINE_COHORT))
   default <- list(
     v1  = p$v2 * size$volume,
     v2  = 1,                                 # one compartment

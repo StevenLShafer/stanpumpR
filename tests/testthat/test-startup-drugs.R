@@ -16,7 +16,7 @@ test_that("every drug that can be dosed has a category the menu knows", {
                   "aprocitentan", "colistin", "MEGX", "norpethidine", "PPX",
                   # the components of a combination product, given only in it
                   # (R/combination-products.R)
-                  "artemether", "dihydroartemisinin", "lumefantrine",
+                  "artemether", "dihydroartemisinin", "lumefantrine", "ceftolozane",
                   "air", "oxygen", "ventilation")
   # and the candidate models of a drug whose model the program chooses
   # (R/modelSelection.R), offered only through their drug's name
