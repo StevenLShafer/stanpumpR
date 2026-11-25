@@ -47,8 +47,9 @@
 # BASELINE: the Patient Profile's Fibrinogen baseline (mg/dL), added to the
 # infused fibrinogen.  Blank, the source population's: afibrinogenaemia, 0
 # mg/dL (Shafer's decision of 2026-11-25).  A bleeding surgical patient's
-# fibrinogen should be entered: a normal adult's is 200 to 450 mg/dL
-# (RiaSTAP 12.2).
+# fibrinogen, measured before the doses in the dose table (a later level
+# already contains them), should be entered: a normal adult's is 200 to 450
+# mg/dL (RiaSTAP 12.2).
 #
 # BAND: from 100 mg/dL, RiaSTAP's target level, maintained until haemostasis
 # (2.1), to 450 mg/dL, the top of normal (12.2), the typical 200, the bottom

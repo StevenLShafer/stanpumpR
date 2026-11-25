@@ -13,14 +13,14 @@ Clottafact is not sold in the US; RiaSTAP, Fibryga and Fesilty are. Infused fibr
 
 ### What is plotted
 
-Plasma fibrinogen in **mg/dL**: the patient's own plus the fibrinogen infused. The patient's own is the Patient Profile's **Fibrinogen baseline**, shown while fibrinogen is in the dose table. Left blank, it is the source population's, afibrinogenaemia, 0 mg/dL. For a bleeding surgical or obstetric patient the measured fibrinogen should be entered: a normal adult's is 200 to 450 mg/dL, and a pregnant woman's at term 400 to 600.
+Plasma fibrinogen in **mg/dL**: the patient's own plus the fibrinogen infused. The patient's own is the Patient Profile's **Fibrinogen baseline**, shown while fibrinogen is in the dose table. Left blank, it is the source population's, afibrinogenaemia, 0 mg/dL. For a bleeding surgical or obstetric patient the fibrinogen measured before the doses in the dose table should be entered (a level measured after a dose already contains it, which would then be counted twice): a normal adult's is 200 to 450 mg/dL, and a pregnant woman's at term 400 to 600.
 
 The shaded band runs from 100 mg/dL, RiaSTAP's target level maintained until haemostasis in congenital deficiency, to 450 mg/dL, the top of normal; its typical line is 200 mg/dL, the bottom of normal. Guidelines for massive haemorrhage target higher levels (150 to 200 mg/dL), which are not drawn.
 
 ### Covariates and doses
 
 - **Weight**, on clearance and volume, as fitted; with the fat-free-mass switch on, the pharmacokinetic weight.
-- **Pregnancy and bleeding**: nothing is applied in pregnancy. In haemorrhage at caesarean delivery, a population model of 142 women (Hureau 2026, *Anaesth Crit Care Pain Med*, PMID 42994620; abstract read) found the rate of bleeding to govern the loss of fibrinogen, and in those with hyperfibrinolysis infused fibrinogen rose and then fell early despite larger doses (Hureau 2026, *Int J Obstet Anesth*). This model was fitted in patients who were not bleeding and shows neither loss: in a bleeding patient the curve is too high, and the measured level should be entered as the baseline.
+- **Pregnancy and bleeding**: nothing is applied in pregnancy. In haemorrhage at caesarean delivery, a population model of 142 women (Hureau 2026, *Anaesth Crit Care Pain Med*, PMID 42994620; abstract read) found the rate of bleeding to govern the loss of fibrinogen, and in those with hyperfibrinolysis infused fibrinogen rose and then fell early despite larger doses (Hureau 2026, *Int J Obstet Anesth*). This model was fitted in patients who were not bleeding and shows neither loss: in a bleeding patient the curve may be too high, individual levels vary around it, and the level measured before the doses in the dose table should be entered as the baseline.
 
 `mg/kg`, `g` or `mg`, as a bolus.
 
