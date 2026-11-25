@@ -146,6 +146,7 @@ plasmaOnly <- c(
     # anakinra (Urien 2013, 2026-11-25): plasma only
     "anakinra",
     "factorVIII",
+    "efmoroctocogAlfa",
     "eftrenonacogAlfa",
     "thrombomodulinAlfa",
     # emicizumab (Retout 2020, 2026-11-25): plasma only, subcutaneous

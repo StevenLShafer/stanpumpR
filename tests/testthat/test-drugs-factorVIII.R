@@ -67,7 +67,7 @@ test_that("the Patient Profile's baseline is added, and only to factor VIII", {
   # a drug that does not name the field ignores it
   expect_null(getDrugPK("propofol", 70, 175, 35, "male",
                         factorBaselines = list(factorVIIIBaseline = 12))$endogenousActivity)
-  expect_identical(patientFieldReaders("factorVIIIBaseline"), "factorVIII")
+  expect_true("factorVIII" %in% patientFieldReaders("factorVIIIBaseline"))
 })
 
 test_that("activity is dosed in IU only, and plotted in IU/dL", {
