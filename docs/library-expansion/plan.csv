@@ -73,7 +73,7 @@ Biologics (surgery),prothrombin complex concentrate,,1,planned,"Not in nlmixr2li
 Biologics (surgery),alteplase,,1,planned,"Not in nlmixr2lib: PubMed search."
 Biologics (sepsis),immunoglobulin,immunoglobulin,1,planned,
 Biologics (sepsis),antithrombin,antithrombin,1,planned,
-Biologics (sepsis),thrombomodulin alfa,thrombomodulinalfa,1,planned,"Not US-approved (Japan)."
+Biologics (sepsis),thrombomodulin alfa,thrombomodulinalfa,1,in_progress,"Not US-approved (Japan). Mouksassi 2015 (PMID 27140801, 392: sepsis with DIC and healthy volunteers) on branch claude/thrombomodulin-alfa: one compartment, weight and Cockcroft-Gault on CL; category Anticoagulants."
 Biologics (sepsis),angiotensin II,angiotensin,1,blocked,"Giapreza, vasodilatory shock: a peptide; fits beside the vasoactive drugs. 2026-11-25: blocked on a paper. The candidate source, Buchwalder-Csajka 1999 (PMID 10583031, card in papers/digests), measures no angiotensin concentration: it is a pressor dose-response in healthy men, so it gives no PK. The Giapreza label (12.3, read) says only that the plasma half-life is under one minute and that clearance does not depend on renal or hepatic function. Magness 1994 (PMID 8092213, abstract read) measured the metabolic clearance by steady-state infusion, 85 +/- 10 mL/min/kg in 11 non-pregnant and 68 +/- 3 in 37 pregnant women, half-life 48 and 49 s, which would close a one-compartment model as Fabian 1969 closes vasopressin's; not in the archive (papers/pending-work.csv)."
 Biologics (sepsis),tocilizumab,tocilizumab,1,planned,"COVID-19 and cytokine release."
 Biologics (sepsis),anakinra,anakinra,1,planned,

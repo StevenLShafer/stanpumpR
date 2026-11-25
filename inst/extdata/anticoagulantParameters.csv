@@ -1,4 +1,6 @@
 "drug","parameter","value","units","provenance","population","source_url"
+"thrombomodulinAlfa","CL","0.14","L/h (x (WT/68)^0.56 x (CrCl/72.6)^0.27)","estimated","24 healthy volunteers and 368 adults with sepsis and suspected DIC, Mouksassi 2015","https://doi.org/10.1002/cpdd.163"
+"thrombomodulinAlfa","V","5.47","L (x (WT/68)^0.50)","estimated","24 healthy volunteers and 368 adults with sepsis and suspected DIC, Mouksassi 2015","https://doi.org/10.1002/cpdd.163"
 "tenecteplase","CL","91.3","mL/min at 70 kg (+ 0.322 x (CrCl-NM - 82.6)) x (WT/70)^0.75","estimated","103 patients with acute myocardial infarction (TIMI 10B), Tang 2023","https://doi.org/10.1002/jcph.2164"
 "tenecteplase","CRCL-NM effect on CL","0.322","mL/min per mL/min/70 kg (Cockcroft-Gault normalised to 70 kg)","estimated","103 patients with acute myocardial infarction (TIMI 10B), Tang 2023","https://doi.org/10.1002/jcph.2164"
 "tenecteplase","Vc","3610","mL (x WT/70)","estimated","103 patients with acute myocardial infarction (TIMI 10B), Tang 2023","https://doi.org/10.1002/jcph.2164"
