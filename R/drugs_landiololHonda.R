@@ -43,7 +43,8 @@
 # What the three landiolol models share (the lag, the dose basis, body size,
 # the 2-minute tPeak, pregnancy) is in R/landiolol.R.  The group `landiolol`
 # chooses this one for the young adults it studied, and, as the nearest
-# source, for patients under 20 and up to 35 years (R/modelSelection.R).
+# source, for patients under 20 and up to 35 years (a 35-year-old below its
+# 50.7 kg gets Kunisawa 2014; R/modelSelection.R).
 # -----------------------------------------------------------------------------
 
 #' Landiolol (Honda 2008, healthy men)

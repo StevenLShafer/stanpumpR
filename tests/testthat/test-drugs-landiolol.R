@@ -97,3 +97,10 @@ test_that("landiolol is a vasoactive drug with no band; its candidates are not o
                  SRC[[m]][["CL"]], info = m)
   }
 })
+
+test_that("weight changes the choice at the edges the help pages name", {
+  pick <- function(age, wt) selectModel("landiolol", age, wt)$model
+  expect_identical(pick(35, 48), "landiololKunisawa2014")   # below Honda's 50.7 kg
+  expect_identical(pick(68, 45), "landiololKunisawa2015")   # below Kunisawa 2014's 47.1 kg
+  expect_identical(pick(68, 47.1), "landiololKunisawa2014")
+})

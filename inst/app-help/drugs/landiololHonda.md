@@ -12,12 +12,13 @@ The fit also had a lag of 0.82 minutes, which stanpumpR does not draw.
 
 ### When stanpumpR uses it
 
-This is one of [three landiolol models](help:drugs/landiolol). stanpumpR uses it for the young adults it studied. It is also the nearest model for children and for adults up to 35.
+This is one of [three landiolol models](help:drugs/landiolol). stanpumpR uses it for the young adults it studied. It is also the nearest model for children and for adults up to 35, except a 35-year-old lighter than 50.7 kg, who gets the [gynaecologic patients' model](help:drugs/landiololKunisawa2014).
 
 ### Where to be careful
 
 - These were healthy, awake young men, and covariates were not explored.
 - Concentrations are in venous whole blood. The two Kunisawa studies measured arterial plasma during anaesthesia, and their central volumes are smaller.
 - Four outlying late samples, from three subjects, were removed before the final fit.
+- There is no therapeutic concentration range; landiolol is titrated to heart rate.
 
 See [the vasoactive and resuscitation drugs](help:models/vasoactive).

@@ -12,12 +12,13 @@ The fit also had a lag of 0.63 minutes, which stanpumpR does not draw.
 
 ### When stanpumpR uses it
 
-This is one of [three landiolol models](help:drugs/landiolol). stanpumpR uses it from 36 to 71 years. Between 64 and 71 it is chosen over the peripheral arterial disease study because it has one more patient.
+This is one of [three landiolol models](help:drugs/landiolol). stanpumpR uses it from 36 to 71 years. Between 64 and 71 both studies may include the patient, and it is then chosen because it has one more patient. That needs the patient's weight inside both studies' ranges: below 47.1 kg, its lightest patient, a 64- to 71-year-old gets the [peripheral arterial disease model](help:drugs/landiololKunisawa2015) instead. It is also chosen for a 35-year-old lighter than 50.7 kg, outside Honda's weights.
 
 ### Where to be careful
 
 - Nine patients is a small study, and all were women.
 - The intercompartmental clearance is barely estimated: its standard error, 68.9, is as large as the value itself. The clearance is well estimated.
 - Weight, lean body mass and age were tested and none was retained.
+- There is no therapeutic concentration range; landiolol is titrated to heart rate.
 
 See [the vasoactive and resuscitation drugs](help:models/vasoactive).

@@ -38,8 +38,9 @@
 # What the three landiolol models share (the lag, the dose basis, body size,
 # the 2-minute tPeak, pregnancy) is in R/landiolol.R.  The group `landiolol`
 # chooses this one for the 37-71 years it studied (nine patients, against
-# Kunisawa 2015's eight, where the two overlap), and as the nearest source
-# from 36 years (R/modelSelection.R).  It studied women only; the group's
+# Kunisawa 2015's eight, where the two overlap, except below 47.1 kg, its
+# lightest), and as the nearest source from 36 years and for a 35-year-old
+# below Honda's 50.7 kg (R/modelSelection.R).  It studied women only; the group's
 # rule chooses by age and weight, not sex.
 # -----------------------------------------------------------------------------
 
