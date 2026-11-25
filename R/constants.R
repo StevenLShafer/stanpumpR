@@ -709,6 +709,7 @@ DRUG_CATEGORIES <- c(
   "Parkinson disease",
   "Pulmonary hypertension",
   "Chemotherapy",
+  "Hemostasis and reversal",
   "Other",
   "Illicit drugs"
 )
@@ -724,6 +725,11 @@ PARKINSONS_DRUG_CATEGORY <- "Parkinson disease"
 # chemotherapy.md, docs/chemotherapy.md): every candidate model catalogued in
 # inst/extdata/chemotherapyRegistry.csv, implemented or not.
 CHEMOTHERAPY_DRUG_CATEGORY <- "Chemotherapy"
+# The coagulation biologics of the library expansion (docs/library-expansion/
+# plan.csv, Biologics (surgery)): emicizumab, the factor concentrates, rFVIIa,
+# fibrinogen, prothrombin complex concentrate, idarucizumab and andexanet;
+# the thrombolytics go under Anticoagulants (Steven L. Shafer, 2026-11-25).
+HEMOSTASIS_DRUG_CATEGORY <- "Hemostasis and reversal"
 # The categories whose every drug, and every metabolite of one, must have a
 # row in inst/extdata/therapeuticRanges.csv (R/therapeuticRanges.R): the
 # range the band draws, or why there is none.  Every category since
