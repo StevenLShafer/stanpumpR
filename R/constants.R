@@ -714,6 +714,7 @@ DRUG_CATEGORIES <- c(
   "Parkinson disease",
   "Pulmonary hypertension",
   "Chemotherapy",
+  "Hemostasis and reversal",
   "Other",
   "Illicit drugs"
 )
@@ -729,6 +730,11 @@ PARKINSONS_DRUG_CATEGORY <- "Parkinson disease"
 # chemotherapy.md, docs/chemotherapy.md): every candidate model catalogued in
 # inst/extdata/chemotherapyRegistry.csv, implemented or not.
 CHEMOTHERAPY_DRUG_CATEGORY <- "Chemotherapy"
+# The coagulation biologics of the library expansion (docs/library-expansion/
+# plan.csv, Biologics (surgery)): emicizumab, the factor concentrates, rFVIIa,
+# fibrinogen, prothrombin complex concentrate, idarucizumab and andexanet;
+# the thrombolytics go under Anticoagulants (Steven L. Shafer, 2026-11-25).
+HEMOSTASIS_DRUG_CATEGORY <- "Hemostasis and reversal"
 # The categories whose every drug, and every metabolite of one, must have a
 # row in inst/extdata/therapeuticRanges.csv (R/therapeuticRanges.R): the
 # range the band draws, or why there is none.  Every category since
@@ -811,7 +817,7 @@ ACUTE_MAX_PLOT_MINUTES <- MINS_PER_WEEK
 # Drugs that are only meaningful over weeks to months.  Adding one to a plot
 # shorter than a week offers to switch the Time units to days, 365 days.
 LONG_TERM_DRUGS <- c("amiodarone", "semaglutide", "semaglutideOral", "dulaglutide",
-                     "tirzepatide", "evolocumab")
+                     "tirzepatide", "evolocumab", "emicizumab")
 LONG_TERM_PLOT_MINUTES <- 365 * MINS_PER_DAY
 
 # The Max time choices for each time unit: the durations (minutes) and the

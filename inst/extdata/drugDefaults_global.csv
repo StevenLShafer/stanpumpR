@@ -358,6 +358,7 @@ rosuvastatin,ng,,,mg PO qd,"mg PO,mg PO qd",#B23A48,0,0,0,0,0,IV,Other
 evolocumab,mcg,,,mg SC,"mg SC",#5E8C31,0,0,0,0,0,IV,Other
 mirabegron,ng,,,mg PO,"mg PO,mg PO qd",#8E44AD,0,0,0,0,0,IV,Other
 modafinil,mcg,,,mg PO,"mg PO,mg PO qd",#00838F,1,1.7,1.35,0,0,IV,Stimulants
+emicizumab,mcg,,,mg/kg SC qwk,"mg/kg SC,mg/kg SC qwk,mg SC,mg SC qwk",#7B1FA2,0,0,0,0,0,IV,Hemostasis and reversal
 tenecteplase,mcg,mg,,mg,"mg,mg/kg",#C62828,0,0,0,0,0,IV,Anticoagulants
 Zerbaxa,mcg,g,g/hr,g,"g,g tid,mg,mg tid,mg/kg,mg/kg tid,g/hr,mg/hr,mg/kg/hr",#0E6655,0,0,0,0,0,IV,Antibiotics
 ceftolozane,mcg,,,,,#0E6655,0,0,0,0,5,IV,

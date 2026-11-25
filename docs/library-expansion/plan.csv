@@ -58,10 +58,12 @@ Anesthesia,ciprofol,ciprofol,1,blocked,"Not US-approved. The adult source, Liu 2
 Anesthesia,landiolol,landiolol,1,done,"FDA-approved 2024 (Rapiblyk). Implemented 2026-11-25 from Kunisawa 2015 (PMID 25653534, read on the PDF; card papers/digests/PMID_25653534.md): two compartments per kg in 8 anaesthetised elderly patients with peripheral arterial disease, its 0.63-min IV lag not drawn; tPeak 2 min for heart rate (Krumpl 2017, Table 4); category Vasoactive and resuscitation. The only landiolol model in the archive: Honda 2008 (47 healthy men, PMID 19122339) and Kunisawa 2014 (9 gynaecologic patients, PMID 25186494) wait in the vasoactive registry's to_obtain, Honda to become the candidate for younger adults. [decision] on the card: keep this model as the default until then."
 Anesthesia,levosimendan,levosimendan,1,planned,"Not US-approved; active metabolites OR-1855 and OR-1896."
 Anesthesia,nalbuphine,nalbuphine,1,planned,
-Biologics (surgery),factor VIII,factorviii;lonoctocogalfa;turoctocogalfa;turoctocogalfapegol,1,planned,"Several products with different half-lives; perioperative haemophilia A."
+Biologics (surgery),factor VIII,factorviii;lonoctocogalfa;turoctocogalfa;turoctocogalfapegol,1,planned,"Several products with different half-lives; perioperative haemophilia A. Design decided by Shafer 2026-11-25 for every factor concentrate (FVIII, FIX, VWF, fibrinogen, antithrombin): plot total activity = the patient's baseline (a Patient Profile field per factor, shown only when that drug is dosed, defaulting to the source population's baseline) + the infused activity, so a target band can be drawn on total activity. Category Hemostasis and reversal."
 Biologics (surgery),factor IX,factorix,1,planned,
 Biologics (surgery),fibrinogen concentrate,fibrinogen,1,planned,
 Biologics (surgery),von Willebrand factor,vonicogalfa,1,planned,
+Biologics (surgery),emicizumab,emicizumab,1,in_progress,"Retout 2020 (PMID 32504271, 389 persons 1.2-77 years) on branch claude/emicizumab: one compartment, apparent, SC; albumin and age covariates. Infant maturation model pending (papers/pending-work.csv)."
+Biologics (surgery),tenecteplase,tenecteplase,1,planned,
 Biologics (surgery),emicizumab,emicizumab,1,planned,
 Biologics (surgery),tenecteplase,tenecteplase,1,in_progress,"Tang 2023 (PMID 36278839, 103 patients with acute MI, TIMI 10B) on branch claude/tenecteplase: two compartments, allometric, Cockcroft-Gault term on CL."
 Biologics (surgery),recombinant factor VIIa,marzeptacogalfa,1,planned,"nlmixr2lib holds a variant (marzeptacog alfa) only: eptacog alfa needs a PubMed search."
