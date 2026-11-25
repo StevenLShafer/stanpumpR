@@ -37,6 +37,18 @@ test_that("with the switch on, a patient like the cohort's gets the published Q 
   expect_equal(coh$cl1, LEVOSIMENDAN_CL * levosimendanWeightFactors(man$pkWeight)$cl)
 })
 
+test_that("with the switch on, a 120 kg man's four parameters are pinned", {
+  # 120 kg, 175 cm, 50 years: pharmacokinetic weight 94.39 kg.  CL and V1 are
+  # Table 5's linear terms at that weight, 13.3/60 x (1 + 0.015 x 18.39) and
+  # 16.8 x (1 + 0.009 x 18.39); Q and V2, size-free in the source, take the
+  # clearance and volume factors relative to the cohort's 76 kg patient.
+  s <- levosimendan(120, 175, 50, "male", adjustToFFM = TRUE)$PK$default
+  expect_equal_rounded(0.28281552, s$cl1)
+  expect_equal_rounded(19.580664, s$v1)
+  expect_equal_rounded(0.047572966, s$cl2)
+  expect_equal_rounded(39.324391, s$v2)
+})
+
 test_that("the typical parameters give a 0.74-h phase carrying 99% of a bolus and a small 10.6-h tail", {
   p <- getDrugPK("levosimendan", 76, 173, 61, "male", adjustToFFM = FALSE)$PK$default
   hl <- log(2) / c(p$lambda_1, p$lambda_2) / 60
