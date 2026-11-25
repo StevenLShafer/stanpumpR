@@ -61,3 +61,20 @@ test_that("the simulated steady state matches Cav,ss and the label's troughs", {
   expect_equal(min(cp), 51.2, tolerance = 0.15)            # label Table 4 mean trough
   expect_true("emicizumab" %in% LONG_TERM_DRUGS)
 })
+
+test_that("every two and every four weeks: the label's maintenance regimens", {
+  units <- strsplit({dd <- getDrugDefaultsGlobal(FALSE); dd$Units[dd$Drug == "emicizumab"]}, ",")[[1]]
+  expect_true(all(c("mg/kg SC q2wk", "mg/kg SC q4wk", "mg SC q2wk", "mg SC q4wk") %in% units))
+  PK <- getDrugPK("emicizumab", 70, 175, 30, "male", adjustToFFM = FALSE)
+  trough <- function(dose, unit, period) {
+    w <- simCpCe(data.frame(Drug = "emicizumab", Time = c(0, 4 * MINS_PER_WEEK),
+                            Dose = c(3, dose), Units = c("mg/kg SC qwk", unit)),
+                 data.frame(Time = numeric(0), Event = character(0)), PK,
+                 40 * MINS_PER_WEEK, FALSE)$wide
+    last <- w$Time >= (40 - period) * MINS_PER_WEEK
+    min(w$Plasma[last])
+  }
+  # label Table 4 mean steady-state troughs: 46.9 (3 mg/kg q2wk), 38.5 (6 mg/kg q4wk)
+  expect_equal(trough(3, "mg/kg SC q2wk", 2), 46.9, tolerance = 0.15)
+  expect_equal(trough(6, "mg/kg SC q4wk", 4), 38.5, tolerance = 0.15)
+})
