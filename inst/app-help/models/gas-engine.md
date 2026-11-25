@@ -72,7 +72,7 @@ Until 23 November 2026 every step was the plot length divided by 600, so a day's
 
 ## MAC
 
-MAC is age-adjusted by the Mapleson relation, MAC(age) = MAC40 × 10^(−0.00269 (age − 40)), about 6 per cent per decade, with MAC40 Mapleson's own values from the same meta-analysis (the table above). The MAC-equivalents series is the sum over potent agents of alveolar tension divided by the agent's age-adjusted MAC. Nitrous oxide is included.
+MAC is age-adjusted by the Mapleson relation, MAC(age) = MAC40 × 10^(−0.00269 (age − 40)), about 6 per cent per decade, with MAC40 Mapleson's own values from the same meta-analysis (the table above). The MAC-equivalents series is the sum over potent agents of alveolar tension divided by the agent's age-adjusted MAC. Nitrous oxide is included. The panel's effect-site line is the same sum over the brain (vessel-rich group) tensions.
 
 Mapleson fitted ages from 1 year; below that the relation is extrapolated, and moves MAC by under 1 per cent from its value at 1 year. MAC measured in term neonates and infants is higher than that, and for isoflurane and desflurane it peaks within the first year (Cameron 1984; Taylor and Lerman 1991; Lerman 1994); in preterm neonates isoflurane MAC is lower (1.28 per cent under 32 weeks' gestation, 1.41 per cent at 32 to 37 weeks, against about 1.50 here at birth; LeDez and Lerman 1987). Whether those measurements should replace the relation in infants will be decided once the papers have been read.
 
