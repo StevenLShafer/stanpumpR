@@ -45,6 +45,12 @@ registry <- rbind(
       "ELISA (LLOQ 1 ng/mL)", "IV", "research_ready", "thrombomodulinAlfa",
       "Not approved in the US. Concentration only: no protein C, coagulation or DIC endpoint. Sparse sampling in patients; patients on renal replacement therapy excluded.",
       "https://doi.org/10.1002/cpdd.163"),
+  reg("tnk_tang_2023_ami", "thrombolytic (tissue plasminogen activator)",
+      "IV bolus, acute myocardial infarction (TIMI 10B)", "tenecteplase plasma",
+      "sandwich ELISA (also reads endogenous t-PA; baseline not plotted)",
+      "IV", "research_ready", "tenecteplase",
+      "Fitted in myocardial infarction; over-predicted the 1-h concentrations of patients with acute ischaemic stroke 1.39-fold (N1811s), unexplained by renal function or weight. No fibrinogen, plasminogen or lysis endpoint. Filed here as a thrombolytic (Shafer, 2026-11-25).",
+      "https://doi.org/10.1002/jcph.2164"),
   reg("ufh_jia_2015_cpb", "unfractionated heparin",
       "IV, cardiopulmonary bypass", "anti-IIa activity", "chromogenic anti-IIa (IU/mL)",
       "IV", "research_ready", "heparin",
@@ -197,10 +203,18 @@ DEL  <- "orthopaedic-surgery patients (GETHCAM/POP-A-RIX), Delavenne 2010"
 HAM  <- "150 patients (Study I+II), Hamberg 2007"
 VER  <- "24 healthy White subjects (single dose), Verstuyft 2012"
 MOUK <- "24 healthy volunteers and 368 adults with sepsis and suspected DIC, Mouksassi 2015"
+TANG <- "103 patients with acute myocardial infarction (TIMI 10B), Tang 2023"
 
 parameters <- rbind(
   par("thrombomodulinAlfa", "CL", 0.14, "L/h (x (WT/68)^0.56 x (CrCl/72.6)^0.27)", "estimated", MOUK, "https://doi.org/10.1002/cpdd.163"),
   par("thrombomodulinAlfa", "V", 5.47, "L (x (WT/68)^0.50)", "estimated", MOUK, "https://doi.org/10.1002/cpdd.163"),
+  par("tenecteplase", "CL", 91.3, "mL/min at 70 kg (+ 0.322 x (CrCl-NM - 82.6)) x (WT/70)^0.75", "estimated", TANG, "https://doi.org/10.1002/jcph.2164"),
+  par("tenecteplase", "CRCL-NM effect on CL", 0.322, "mL/min per mL/min/70 kg (Cockcroft-Gault normalised to 70 kg)", "estimated", TANG, "https://doi.org/10.1002/jcph.2164"),
+  par("tenecteplase", "Vc", 3610, "mL (x WT/70)", "estimated", TANG, "https://doi.org/10.1002/jcph.2164"),
+  par("tenecteplase", "Q", 10.0, "mL/min (x (WT/70)^0.75)", "estimated", TANG, "https://doi.org/10.1002/jcph.2164"),
+  par("tenecteplase", "Vp", 914, "mL (x WT/70)", "estimated", TANG, "https://doi.org/10.1002/jcph.2164"),
+  par("tenecteplase", "WT exponent on CL and Q", 0.75, "dimensionless", "fixed", TANG, "https://doi.org/10.1002/jcph.2164"),
+  par("tenecteplase", "WT exponent on volumes", 1.00, "dimensionless", "fixed", TANG, "https://doi.org/10.1002/jcph.2164"),
 
   par("heparin", "CL", 1.18, "L/h", "estimated", JIA, "https://doi.org/10.1186/s12967-015-0404-5"),
   par("heparin", "Vc", 3.04, "L", "estimated", JIA, "https://doi.org/10.1186/s12967-015-0404-5"),

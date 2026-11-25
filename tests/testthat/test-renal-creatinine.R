@@ -84,7 +84,7 @@ renalDrugs <- c("mannitol", "vancomycin", "vancomycinKidneyTransplant", "gentami
                 "digoxinIVPediatric",
                 # Cockcroft-Gault in a hockey stick on clearance, both tablets
                 # (R/drugs_pramipexole.R, FDA review of NDA 22-421)
-                "pramipexole", "pramipexoleER", "thrombomodulinAlfa",
+                "pramipexole", "pramipexoleER", "tenecteplase", "thrombomodulinAlfa",
                 # Cockcroft-Gault, as a power, on oral bioavailability (F1)
                 # (R/drugs_mirabegron.R, FDA review of NDA 202611)
                 "mirabegron",

@@ -642,10 +642,14 @@ SCHEDULE_INTERVALS <- c(qd = 24 * 60, bid = 12 * 60, tid = 8 * 60, qid = 6 * 60,
 # often smaller than the evening one).  See scheduled.R for the rules.
 SLOT_SCHEDULE_INTERVALS <- c(qam = 24 * 60, qpm = 24 * 60)
 # Once weekly ("qwk"), offered only on the subcutaneous units: semaglutide,
-# dulaglutide and tirzepatide are injected once a week.  Kept out of
-# SCHEDULE_INTERVALS, the daily frequencies every other scheduled drug offers;
-# scheduled.R reads ALL_SCHEDULE_INTERVALS.
-WEEKLY_SCHEDULE_INTERVAL <- c(qwk = 7 * 24 * 60)
+# dulaglutide and tirzepatide are injected once a week.  Every two and every
+# four weeks ("q2wk", "q4wk"; Steven L. Shafer, 2026-11-25) for emicizumab's
+# maintenance regimens (Hemlibra label 2.1) and the other subcutaneous
+# biologics.  Kept out of SCHEDULE_INTERVALS, the daily frequencies every other
+# scheduled drug offers; scheduled.R reads ALL_SCHEDULE_INTERVALS.  Like qd,
+# each is a whole-route schedule: a later one on the same route replaces it.
+WEEKLY_SCHEDULE_INTERVAL <- c(qwk = 7 * 24 * 60, q2wk = 14 * 24 * 60,
+                              q4wk = 28 * 24 * 60)
 ALL_SCHEDULE_INTERVALS <- c(SCHEDULE_INTERVALS, SLOT_SCHEDULE_INTERVALS,
                             WEEKLY_SCHEDULE_INTERVAL)
 # A scheduled repeat this close (minutes) to the row that ends its schedule
@@ -662,7 +666,8 @@ scheduledUnits <- c(
     c(poUnits, poFormulationUnits, slUnits),
     names(SLOT_SCHEDULE_INTERVALS), paste
   ))),
-  # The subcutaneous units take the daily frequencies and qwk, not qam/qpm.
+  # The subcutaneous units take the daily frequencies and qwk, q2wk and q4wk,
+  # not qam/qpm.
   as.vector(t(outer(c(scUnits, insulinUnits),
                     names(c(SCHEDULE_INTERVALS, WEEKLY_SCHEDULE_INTERVAL)), paste))),
   # Caffeine citrate's daily maintenance dose (R/drugs_caffeineNeonatal.R)
