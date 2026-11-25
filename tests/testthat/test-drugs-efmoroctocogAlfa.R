@@ -1,0 +1,35 @@
+# efmoroctocogAlfa: Allard 2020's factor VIII model with EHL = 1; see
+# R/drugs_efmoroctocogAlfa.R and R/drugs_factorVIII.R.
+noEvents <- data.frame(Time = numeric(0), Event = character(0))
+
+test_that("the standard model's clearance times exp(-0.394), nothing else changed", {
+  for (p in list(c(15.1, 3), c(64, 30), c(130, 77))) for (ffm in c(FALSE, TRUE)) {
+    e <- efmoroctocogAlfa(p[1], 170, p[2], "male", ffm)$PK$default
+    s <- factorVIII(p[1], 170, p[2], "male", ffm)$PK$default
+    expect_equal(e$cl1, s$cl1 * exp(-0.394))
+    expect_equal(c(e$v1, e$cl2, e$v2), c(s$v1, s$cl2, s$v2))
+  }
+})
+
+test_that("the checks in the header, at the source's medians", {
+  pk <- efmoroctocogAlfa(64, 175, 30, "male", FALSE)$PK$default
+  k10 <- pk$cl1 / pk$v1; k12 <- pk$cl2 / pk$v1; k21 <- pk$cl2 / pk$v2
+  b <- k10 + k12 + k21
+  lambda <- (b - sqrt(b^2 - 4 * k10 * k21)) / 2
+  expect_equal(log(2) / lambda / 60, 15.23, tolerance = 0.002)   # h
+  expect_equal(pk$cl1 * 60 * 1000 / 64, 2.15, tolerance = 0.002)  # mL/kg/h
+  # 1.47 times the standard product's half-life (the source's switch: 1.48)
+  s <- factorVIII(64, 175, 30, "male", FALSE)$PK$default
+  k10 <- s$cl1 / s$v1; b <- k10 + k12 + k21
+  expect_equal(lambda / ((b - sqrt(b^2 - 4 * k10 * k21)) / 2), 1 / 1.471, tolerance = 0.002)
+})
+
+test_that("it reads the Factor VIII baseline and plots above it", {
+  expect_true(all(c("factorVIII", "efmoroctocogAlfa") %in% patientFieldReaders("factorVIIIBaseline")))
+  PK <- getDrugPK("efmoroctocogAlfa", 70, 175, 35, "male",
+                  factorBaselines = list(factorVIIIBaseline = 15))
+  expect_equal(PK$endogenousActivity, 15)
+  w <- simCpCe(data.frame(Drug = "efmoroctocogAlfa", Time = 60, Dose = 50, Units = "IU/kg"),
+               noEvents, PK, 120, FALSE)$wide
+  expect_equal(w$Plasma[w$Time < 60], rep(15, sum(w$Time < 60)))
+})

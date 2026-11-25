@@ -104,6 +104,10 @@ FACTOR_VIII_MIN_AGE    <- 3        # years, the youngest the source studied
 # The source population's baseline, severe haemophilia A (below 1 IU/dL)
 FACTOR_VIII_BASELINE   <- 0.5      # IU/dL
 
+# The source population's extended-half-life effect: Elocta (Eloctate) clears
+# exp(-0.394) as fast as the standard-half-life products (Table 2, EHL = 1).
+FACTOR_VIII_EHL        <- -0.394
+
 #' Factor VIII concentrate (Allard 2020)
 #'
 #' Two compartments, the seven standard-half-life concentrates of Allard
@@ -118,12 +122,28 @@ FACTOR_VIII_BASELINE   <- 0.5      # IU/dL
 factorVIII <- function(weight, height, age, sex, adjustToFFM = TRUE,
                        factorVIIIBaseline = NULL)
 {
+  allardFactorVIII(weight, height, age, sex, adjustToFFM, factorVIIIBaseline,
+                   ehl = FALSE)
+}
+
+#' Allard 2020's factor VIII model, for a standard- or extended-half-life
+#' product
+#'
+#' @inheritParams factorVIII
+#' @param ehl TRUE for Elocta (Eloctate, efmoroctocog alfa), FALSE for the
+#'   seven standard-half-life products
+#' @returns a list in the shape \code{getDrugPK()} expects
+#' @keywords internal
+allardFactorVIII <- function(weight, height, age, sex, adjustToFFM,
+                             factorVIIIBaseline, ehl)
+{
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
                         legacyVolume = 1, legacyClearance = 1)
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   ageTerm <- (max(age, FACTOR_VIII_MIN_AGE) / FACTOR_VIII_REF_AGE)^FACTOR_VIII_CL_AGE
 
-  cl <- FACTOR_VIII_CL * ageTerm * (pkW / FACTOR_VIII_REF_WEIGHT)^FACTOR_VIII_CL_WEIGHT
+  cl <- FACTOR_VIII_CL * ageTerm * (pkW / FACTOR_VIII_REF_WEIGHT)^FACTOR_VIII_CL_WEIGHT *
+    (if (ehl) exp(FACTOR_VIII_EHL) else 1)
   v1 <- FACTOR_VIII_V1 * (pkW / FACTOR_VIII_REF_WEIGHT)^FACTOR_VIII_V1_WEIGHT
   q  <- FACTOR_VIII_Q  * size$clearance
   v2 <- FACTOR_VIII_V2 * size$volume
@@ -139,9 +159,12 @@ factorVIII <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   reference <- paste0(
     "Allard 2020 (258 patients with haemophilia A, 3-77 years, eight concentrates): ",
-    "two compartments, CL 204 mL/h x (age/30)^-0.214 x (weight/64)^0.75, ",
-    "V1 2640 mL x (weight/64)^0.827, Q 135 mL/h, V2 339 mL; the standard-half-life ",
-    "concentrates (Elocta excluded). Plotted as the patient's own factor VIII ",
+    "two compartments, CL 204 mL/h x (age/30)^-0.214 x (weight/64)^0.75",
+    if (ehl) " x exp(-0.394) (Elocta, extended half-life)" else "",
+    ", V1 2640 mL x (weight/64)^0.827, Q 135 mL/h, V2 339 mL; ",
+    if (ehl) "ELOCTATE (efmoroctocog alfa). " else
+      "the standard-half-life concentrates (Elocta excluded). ",
+    "Plotted as the patient's own factor VIII ",
     "activity plus the infused: baseline ", signif(baseline, 3), " IU/dL",
     if (is.null(factorVIIIBaseline)) " (blank: severe haemophilia A, the source population)" else "",
     ". Band: the label's perioperative target for major surgery, 80-120 IU/dL. ",
