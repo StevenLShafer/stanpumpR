@@ -141,6 +141,8 @@ plasmaOnly <- c(
     "evolocumab",
     # mirabegron (FDA review of NDA 202611, 2026-11-19): plasma only
     "mirabegron",
+    # anakinra (Urien 2013, 2026-11-25): plasma only
+    "anakinra",
     "thrombomodulinAlfa",
     # emicizumab (Retout 2020, 2026-11-25): plasma only, subcutaneous
     "emicizumab",
@@ -158,6 +160,8 @@ plasmaOnly <- c(
     # models) and apomorphine have an effect site (inst/app-help/models/parkinsons.md)
     "pramipexole", "pramipexoleER", "safinamide", "opicapone",
     "istradefylline", "amantadineER", "pimavanserin", "tolcapone",
+    # Transplant (2026-11-25): plasma only (inst/app-help/drugs/mycophenolate.md)
+    "mycophenolate",
     # Chemotherapy (2026-11-05): plasma only (inst/app-help/models/chemotherapy.md)
     "cladribine", "fluorouracil", "fluorouracilBriki", "carboplatin", "carboplatinDuffull", "busulfan",
     "methotrexatePediatric", "methotrexate", "carboplatinPeng", "methotrexateIbarra", "fluorouracilTan", "cytarabine", "doxorubicinPerezBlanco", "doxorubicinolPerezBlanco", "fludarabine", "bendamustine", "oxaliplatinNikanjam", "capecitabine", "capecitabine5FU", "gemcitabine", "gemcitabineDFDU", "etoposideDuong", "melphalanPediatric", "carboplatinPediatric", "daunorubicin", "doxorubicinPediatric", "doxorubicinolPediatric", "etoposide", "etoposideKroghMadsen", "cisplatin", "cisplatinBound", "vinorelbine", "topotecan", "irinotecan", "irinotecanSN38", "doxorubicin", "doxorubicinJoerger", "doxorubicinol", "doxorubicinolJoerger", "cyclophosphamide", "cyclophosphamideJoerger", "cyclophosphamideMcCune", "ifosfamide", "epirubicin", "temozolomide", "temozolomideOstermann", "temozolomidePanetta", "dacarbazine", "bleomycin", "paclitaxelProteinBound", "thioguanine", "doxorubicinLiposomal", "doxorubicinLiposomalFree", "thioguanineIV", "docetaxel", "vincristine", "vincristineIgarashi", "melphalan", "melphalanNath", "etoposidePediatric", "pemetrexed", "paclitaxel", "paclitaxelJoerger", "paclitaxelCrombag", "vincristinePediatric", "oxaliplatin", "oxaliplatinBastian"

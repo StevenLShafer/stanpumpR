@@ -1,7 +1,8 @@
 # The serum creatinine covariate, shared by every model with a renal term.
 # See R/renalFunction.R.
 
-renalDrugs <- c("mannitol", "vancomycin", "vancomycinKidneyTransplant", "gentamicin", "cefazolin", "sugammadex",
+renalDrugs <- c("mycophenolate",  # Cockcroft-Gault on CL and V1 (van Hest 2005)
+                "mannitol", "vancomycin", "vancomycinKidneyTransplant", "gentamicin", "cefazolin", "sugammadex",
                 "gabapentin", "pregabalin", "oxycodone", "hydrocodone", "meloxicam",
                 "lacosamide", "levetiracetam", "metformin", "ertugliflozin", "empagliflozin",
                 "exenatide", "dapagliflozin", "canagliflozin", "lixisenatide",
@@ -244,8 +245,24 @@ test_that("a raised creatinine raises V1 where the renal term is on the volume",
   }
 })
 
+# Models whose creatinine clearance is a covariate that RAISES total clearance
+# as renal function falls: mycophenolic acid, CL x (CLCR/48)^-0.12 and V1 x
+# (CLCR/48)^-0.62 (van Hest 2005, equations 6 and 7), less albumin binding as
+# MPAG accumulates.  A raised creatinine raises both.
+renalRaisesClearance <- c("mycophenolate")
+
+test_that("a raised creatinine raises clearance and V1 where the source says so", {
+  for (drug in renalRaisesClearance) {
+    normal <- getDrugPK(drug, 70, 170, 50, "male")
+    raised <- getDrugPK(drug, 70, 170, 50, "male", creatinine = 3)
+    expect_gt(raised$PK$default$cl1, normal$PK$default$cl1, label = drug)
+    expect_gt(raised$PK$default$v1, normal$PK$default$v1, label = drug)
+  }
+})
+
 test_that("a raised creatinine lowers every renal clearance", {
-  for (drug in setdiff(renalDrugs, c(renalOnBioavailability, renalOnVolume))) {
+  for (drug in setdiff(renalDrugs, c(renalOnBioavailability, renalOnVolume,
+                                     renalRaisesClearance))) {
     normal <- systemClearances(getDrugPK(drug, 70, 170, 50, "male"))
     raised <- systemClearances(getDrugPK(drug, 70, 170, 50, "male", creatinine = 3))
     expect_lt(min(raised - normal), 0, label = drug)
