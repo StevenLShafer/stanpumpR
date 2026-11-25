@@ -36,8 +36,10 @@
 #     V1 0.178 L/kg   V2 0.454 L/kg   CL 15.4 mL/min/kg   Q 21.9 mL/min/kg
 #
 # CHECKS (test-drugs-dacarbazine.R), each against a number the derivation
-# did not use: every patient's derived V1 lies near Table 2's "Ve" (mean
-# 0.178 against 0.202 L/kg), and the share of the area in the fast phase
+# did not use: five of the six patients' derived V1 lie within 4% of Table
+# 2's "Ve"; patient 7's is 43% below it (0.160 against 0.281 L/kg; ChatGPT
+# chemotherapy audit F20, 2026-11-24, which the mean, 0.178 against 0.202
+# L/kg, had hidden), so the early phase is least certain there.  The share of the area in the fast phase
 # (mean 30%) matches the text's "about 28 +/- 7%" and Discussion's 21-35%.
 # The mean CL 15.4 mL/min/kg and Vss 0.632 L/kg are the paper's own means.
 #

@@ -43,10 +43,15 @@
 # therefore show a central volume of 2.57 L: the paper's V1 is 2.52 L.
 #
 # FREE DOXORUBICIN IS NOT THE LIBRARY'S DOXORUBICIN.  CLfree 2.68 L/h is
-# about a twentieth of conventional doxorubicin's clearance (Joerger 2007, 108
-# L/h for the hydrochloride): in a joint fit of release and elimination only
-# their ratio is identifiable, and the "free" analyte here is the released
-# pool as the assay measures it.  So the metabolite is a model of its own,
+# about an eighteenth of conventional doxorubicin's clearance (Joerger 2007,
+# Table IV: 47.6 L/h at BSA 1.8 m2, AST 21 U/L and age 56; 108 L/h, cited
+# here until 2026-11-24, is doxorubicinol's CL/fm, not the parent's: ChatGPT
+# chemotherapy audit F17).  With release complete, the free pool's area is
+# dose / CLfree, so CLfree is identified in Hsu's fit (Table I, RSE 9.9%);
+# what differs from conventional doxorubicin is that the free curve is
+# release-limited, and Hsu's Discussion notes that such profiles give
+# estimates unlike those of conventional drug.  The "free" analyte is the
+# released pool as the assay measures it.  So the metabolite is a model of its own,
 # METABOLITE_FORMATION_BASIS "joint", and conventional doxorubicin's
 # parameters are not borrowed (the registry's rule for this product).
 #

@@ -28,5 +28,12 @@ jobs:
           r-version: 'release'
           use-public-rspm: true
 
+      # release() undoes a failed repository backup. The ORDER it works in was a real
+      # concurrency race: freeing the bundle reservation before the sidecar let another run
+      # claim the name, and this cleanup then deleted that run's fresh sidecar, leaving it to
+      # publish a bundle with no metadata (PR #847). Needs nothing but Python.
+      - name: Repository backup cleanup cases
+        run: python papers/_build/test_bundle_repo.py
+
       - name: Check the label files against the index
         run: Rscript --vanilla -e 'source("data-raw/fdaLabels.R"); if (!checkFdaLabels()) quit(status = 1)'

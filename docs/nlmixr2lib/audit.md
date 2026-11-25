@@ -29,12 +29,14 @@ Scope: for each paper behind a drug stanpumpR implements, the nlmixr2lib model c
 
 ### Findings that need action
 
-1. **Sotalol: the source disagrees with itself.** Yellepeddi 2025 (PMID 39749676, PMC12001255, not yet in the archive and with no digest card) gives two sets of final estimates:
+1. **Sotalol: the source disagrees with itself.** Yellepeddi 2025 (PMID 39749676, PMC12001255) gives two sets of final estimates:
    - Table 2: creatinine-clearance exponent on CL 0.7, weight exponent on Vc 1.1, ka 0.2 /h, F_oral 1.6. These are the values `R/drugs_sotalol.R` uses (it takes absorption from the FDA review instead).
    - Table 3, the bootstrap table's "final parameter estimate" column: weight exponent 1.2 and F_oral 1.5.
    - nlmixr2lib: CrCl exponent 0.65, ka 0.16 /h, weight exponent 1.2.
 
-   These look like unrounded values from the NONMEM control stream (the paper's Data S1), which would settle it. The paper and its Data S1 are in `papers/pending-work.csv`. The effect is small: 0.65 against 0.7 changes clearance by 2% at 60 mL/min and 6% at 30. But the weight exponent is printed twice with different values.
+   These look like unrounded values from the NONMEM control stream (the paper's Data S1), which would settle it. The effect is small: 0.65 against 0.7 changes clearance by 2% at 60 mL/min and 6% at 30. But the weight exponent is printed twice with different values.
+
+   **Settled 2026-11-23.** Steven supplied Data S1 and Table S2. Data S1's `$THETA` values are the final fit's: its 9.5, 38, 71 and 89 are Table 2's values to two figures. They give the CrCl exponent as 0.65 and the weight exponent as 1.2. `R/drugs_sotalol.R` now uses 0.65 and 1.2, and the header records the disagreement between the tables. The card is `papers/digests/PMID_39749676.md`.
 2. **Rocuronium and sugammadex come from different sources.**
    - `R/drugs_rocuronium.R` is Plaud 1995 (card `PMID_7648768`): fixed per-kilogram rate constants, no covariates.
    - `R/drugs_sugammadex.R` is Kleijn 2011, whose model fits rocuronium, sugammadex and their complex jointly. As nlmixr2lib reads it, that model has a rocuronium clearance that falls with age (-0.00678 per year from 43), a term not found in stanpumpR's Kleijn card.

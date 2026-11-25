@@ -191,7 +191,12 @@ pregnancyCoveredDrugs <- function(drugDefaults = getDrugDefaultsGlobal()) {
   offered <- !is.na(category) & nzchar(category)
   candidates <- modelCandidates()
   candidates <- candidates[modelCandidateGroup(candidates) %in% drugDefaults$Drug[offered]]
-  drugDefaults$Drug[offered | drugDefaults$Drug %in% candidates]
+  # A combination product (Coartem) has no model of its own: its components'
+  # models are what a pregnancy finding applies to (R/combination-products.R).
+  products <- drugDefaults$Drug[offered & isCombinationProduct(drugDefaults$Drug)]
+  components <- unlist(lapply(products, combinationComponents), use.names = FALSE)
+  drugDefaults$Drug[(offered & !isCombinationProduct(drugDefaults$Drug)) |
+                      drugDefaults$Drug %in% c(candidates, components)]
 }
 
 #' The rise in filtration a renal term applies in pregnancy

@@ -234,10 +234,15 @@
 #     GasMan does none of this: it has no oxygen.  Pass oxygenUptake = FALSE to
 #     compare with it.
 #
-# (5) MAC, summed over the potent agents, using the BRAIN (vessel-rich group)
-#     tension and age-adjusted MAC:
+# (5) MAC, summed over the potent agents, using the ALVEOLAR tension and the
+#     age-adjusted MAC (at the body temperature in force):
 #
-#         MAC_total = sum_i F_brain,i / MAC_i(age)
+#         MAC_total = sum_i F_alveolar,i / MAC_i(age)
+#
+#     MAC is defined at the end-tidal concentration, so this is the summed
+#     end-tidal MAC (see "(5) MAC" in the loop below, which says why).  Until
+#     2026-11-24 this header said the brain (vessel-rich) tension, which an
+#     earlier version used (Gemini's gas-engine audit of 2026-11-23, C-04).
 #
 # LINEARITY AND THE METHOD OF SOLUTION
 # ====================================
@@ -891,6 +896,13 @@ gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION,
 #' @param doseTable a dose table with \code{Drug}, \code{Time} (minutes, or
 #'   anything \code{as.numeric()} reads) and \code{Dose}; non-gas rows and
 #'   blank rows are ignored
+#' @param altitude metres above sea level, 0 to 7000 (\code{ALTITUDE_DEFAULT},
+#'   0, by default; outside that range is an error).  The settings are checked
+#'   as the engine applies them at that altitude (\code{gasSettingsAt()}): a
+#'   variable-bypass vaporiser's dial is its partial pressure in % of a
+#'   sea-level atmosphere, the desflurane vaporiser's dial is a volume percent
+#'   and is scaled by the pressure ratio (\code{pressureRatio()}), and the sum
+#'   may not exceed the ambient pressure, 100% times that ratio.
 #' @returns a character vector of messages, one per offending time, empty when
 #'   the settings are possible
 #' @export
@@ -974,7 +986,10 @@ gasSubSteps <- function(len, dtNominal, graded = TRUE,
                         first = GAS_STEP_FIRST, growth = GAS_STEP_GROWTH)
 {
   if (!graded || dtNominal <= first) {
-    n <- max(1, round(len / dtNominal))
+    # ceiling() here too: the coupled engine takes uniform steps after its
+    # ramp, and round() gave a 0.149-minute interval one step of 0.149 at a
+    # plot step of 0.1 (CodeRabbit on PR #864)
+    n <- max(1, ceiling(len / dtNominal - 1e-9))
     return(rep(len / n, n))
   }
   h <- numeric(0)
@@ -986,7 +1001,10 @@ gasSubSteps <- function(len, dtNominal, graded = TRUE,
     step <- step * growth
   }
   rest <- len - elapsed
-  n <- max(1, round(rest / dtNominal))
+  # ceiling(), not round(): no step after the ramp is longer than the plot's
+  # (round() let one reach 1.5 times it, 0.1495 at an interval of 1.133
+  # minutes on a 60-minute plot; CodeRabbit on PR #858)
+  n <- max(1, ceiling(rest / dtNominal - 1e-9))
   out <- c(h, rep(rest / n, n))
   if (step < dtNominal) attr(out, "nextStep") <- step
   out
@@ -1029,11 +1047,16 @@ gasSubSteps <- function(len, dtNominal, graded = TRUE,
 #'   the effect measurable as a difference rather than asserted.
 #' @param circuit "ideal", the default: no rebreathing once fresh gas flow
 #'   reaches minute ventilation, and no circuit volume.  "semi-closed":
-#'   GasMan's default, the circuit as one well-mixed volume.  See the file header.
+#'   GasMan's default, the circuit as one well-mixed volume, kept for the
+#'   GasMan validation and not offered by the app; it takes no humidity
+#'   correction at altitude (R/altitude.R), so at 7000 m its end-tidal tension
+#'   settles about 10% above the ideal circuit's (Gemini's gas-engine audit of
+#'   2026-11-23, A-04).  See the file header.
 #' @param bodySteps NULL, or \code{gasBodySteps()}'s list of bodies and the
 #'   times from which each is in force (physiology events): the body, its gas
 #'   properties, pressure, humidity and cardiac output are switched at each,
-#'   the agent carried across (\code{gasStateAcrossBodies()}); the result
+#'   the agent carried across (\code{gasStateAcrossBodies()},
+#'   \code{gasStateAcrossPressure()}); the result
 #'   then carries \code{bodySteps} and \code{bodyRow}, the body of each row
 #'   (a step's time appears twice, before and after it)
 #' @param oxygenUptake if TRUE (the default), oxygen consumed shrinks the gas
@@ -1144,6 +1167,63 @@ advanceClosedFormGas <- function(
   lastBody <- bodyIndex
   # The next step of a ramp an interval did not finish, NULL once finished
   rampStep <- NULL
+  # The propagators for one sub-step: buildProp() from a given uptake,
+  # coupledProp() from the state at the sub-step's start.  Each reads the
+  # settings `s` and the body, properties and flows in force when it is
+  # called (the loop below sets them).
+  buildProp <- function(totUptake, oxygenTotUptake = 0, cE = 0, dt)
+  {
+    pr <- list()
+    for (g in props$gas)
+    {
+      if (g == "oxygen")
+      {
+        sys <- gasSystemOxygen(body, s$Q, s$VA, s$Ffgf[["oxygen"]], circuit, s$MV,
+                               oxygenTotUptake, cE)
+      } else {
+        sys <- gasSystemSoluble(props[props$gas == g, ], body,
+                                s$Q, s$VA, Qco, s$Ffgf[[g]], totUptake, circuit,
+                                s$MV, cE)
+      }
+      pr[[g]] <- gasPropagator(sys$A, sys$b, dt)
+      # Ideal circuit: remember how to fill in the circuit tension, which is
+      # a function of the alveolar tension rather than a state.
+      pr[[g]]$fresh    <- sys$fresh
+      pr[[g]]$alveolar <- sys$alveolar
+      pr[[g]]$Ffgf     <- s$Ffgf[[g]]
+    }
+    pr
+  }
+
+  # The propagators for one sub-step, from the state at its start.
+  coupledProp <- function(state, dt)
+  {
+    u <- gasTotalUptake(state, props, body, Qco)
+    if (!oxygenUptake) return(buildProp(u, dt = dt))
+
+    # Oxygen consumed is volume lost: VO2 from the system, of which carbon
+    # dioxide gives VCO2 back to the alveoli and the absorber then takes it
+    # from the rebreathed gas.  All of it stops if the oxygen has run out.
+    # KNOWN APPROXIMATION (ChatGPT's gas-engine audit of 2026-11-23, A-02):
+    # this is decided at the start of the step, while the oxygen equation
+    # keeps its sink and is floored at zero after it.  So once a supply
+    # below VO2 has emptied the lungs, the oxygen that arrives is consumed
+    # (the floor) but the volume it frees and the carbon dioxide it makes
+    # are left out here: with 0.1 L/min of oxygen, 0.02 L/min of net
+    # volume and 0.08 L/min of carbon dioxide, against an alveolar
+    # ventilation of 4.2.  It arises only in a patient with no oxygen,
+    # and is left as it is.
+    consuming <- state[["oxygen"]][2] > 0
+    # VO2 is a sea-level volume; at altitude the same oxygen is 1/r the
+    # ambient volume, and the carbon dioxide 1/r the share of the exhaled
+    # gas (R/altitude.R).
+    VO2  <- if (consuming) body$VO2 / ratio else 0
+    VCO2 <- GAS_RESPIRATORY_QUOTIENT * VO2
+    u <- u + VO2 - VCO2
+    buildProp(u, u, if (s$MV > 0) min(VCO2 / s$MV, GAS_MAX_EXHALED_CO2) else 0,
+              dt = dt)
+  }
+
   for (iv in seq_along(changes))
   {
     t0  <- changes[iv]
@@ -1156,12 +1236,50 @@ advanceClosedFormGas <- function(
         newBody <- bodySteps$body[[k]]
         newProps <- gasPropertiesAt(newBody$temperature)
         state <- gasStateAcrossBodies(state, props, newProps)
+        from <- body
         body <- newBody
         props <- newProps
         ratio <- gasPressureRatio(body)
         humid <- gasHumidityRatio(body)
         Qco <- if (is.null(cardiacOutput)) body$Q_cardiac else cardiacOutput
         bodyIndex <- k
+        # The ideal and open circuits hold no gas, so at a rise in pressure
+        # the only gas there is to draw is fresh gas, in the share of the
+        # inspired gas it makes up after the step (gasCircuitBlend()): all of
+        # the rise where the flow covers what the lungs draw, none of it at no
+        # flow, as gas the circuit cannot supply does not exist in the engine
+        # (THE CLOSED CIRCUIT in the header).  Until this was found, a
+        # vaporiser's setting was drawn at no flow, where gasSettingsAt()
+        # gives every flowmeter gas 0 and the vaporiser its setting, so the
+        # lungs drew 2% sevoflurane and nothing else (CodeRabbit on PR #864).
+        drawn <- NULL
+        stepProp <- function(st)
+          if (uptakeEffect) coupledProp(st, 1) else buildProp(0, dt = 1)
+        if (circuit != "semi-closed") {
+          s <- gasSettingsAt(bySetting, t0, deadSpace, ratio)
+          p0 <- stepProp(state)
+          drawn <- vapply(props$gas, function(g) {
+            p <- p0[[g]]
+            # No flow, nothing drawn: in apnoea gasCircuitBlend() calls the
+            # inspired gas all fresh whatever the flow (CodeRabbit on PR #864)
+            if (is.null(p$fresh)) NA_real_
+            else if (s$Q <= 0) 0
+            else p$fresh * p$Ffgf / ratio
+          }, numeric(1))
+        }
+        state <- gasStateAcrossPressure(state, from, body, circuit, inspired = drawn)
+        # Their entry, the inspired gas, is set from the settings and the
+        # body in force after the step, as each sub-step sets it, so the
+        # step's row and a step at the end of the plot read it too
+        # (CodeRabbit on PR #864: on an ascent to 5000 m the row kept the
+        # sea-level oxygen, 98% where the fresh gas is 53%).
+        if (circuit != "semi-closed") {
+          p0 <- stepProp(state)
+          for (g in props$gas)
+            if (!is.null(p0[[g]]$fresh))
+              state[[g]][1] <- p0[[g]]$fresh * p0[[g]]$Ffgf +
+                p0[[g]]$alveolar * state[[g]][2]
+        }
         # The record shows the step: the same time, the carried state
         times <- c(times, t0)
         bodyRow <- c(bodyRow, k)
@@ -1222,58 +1340,8 @@ advanceClosedFormGas <- function(
     # step-independent; neither was shown, and the second is false -- audit
     # finding F07.)  The two engines converge as dt shrinks rather than
     # agreeing digit-for-digit at any fixed dt.
-    buildProp <- function(totUptake, oxygenTotUptake = 0, cE = 0, dt)
-    {
-      pr <- list()
-      for (g in props$gas)
-      {
-        if (g == "oxygen")
-        {
-          sys <- gasSystemOxygen(body, s$Q, s$VA, s$Ffgf[["oxygen"]], circuit, s$MV,
-                                 oxygenTotUptake, cE)
-        } else {
-          sys <- gasSystemSoluble(props[props$gas == g, ], body,
-                                  s$Q, s$VA, Qco, s$Ffgf[[g]], totUptake, circuit,
-                                  s$MV, cE)
-        }
-        pr[[g]] <- gasPropagator(sys$A, sys$b, dt)
-        # Ideal circuit: remember how to fill in the circuit tension, which is
-        # a function of the alveolar tension rather than a state.
-        pr[[g]]$fresh    <- sys$fresh
-        pr[[g]]$alveolar <- sys$alveolar
-        pr[[g]]$Ffgf     <- s$Ffgf[[g]]
-      }
-      pr
-    }
-
-    # The propagators for one sub-step, from the state at its start.
-    coupledProp <- function(state, dt)
-    {
-      u <- gasTotalUptake(state, props, body, Qco)
-      if (!oxygenUptake) return(buildProp(u, dt = dt))
-
-      # Oxygen consumed is volume lost: VO2 from the system, of which carbon
-      # dioxide gives VCO2 back to the alveoli and the absorber then takes it
-      # from the rebreathed gas.  All of it stops if the oxygen has run out.
-      # KNOWN APPROXIMATION (ChatGPT's gas-engine audit of 2026-11-23, A-02):
-      # this is decided at the start of the step, while the oxygen equation
-      # keeps its sink and is floored at zero after it.  So once a supply
-      # below VO2 has emptied the lungs, the oxygen that arrives is consumed
-      # (the floor) but the volume it frees and the carbon dioxide it makes
-      # are left out here: with 0.1 L/min of oxygen, 0.02 L/min of net
-      # volume and 0.08 L/min of carbon dioxide, against an alveolar
-      # ventilation of 4.2.  It arises only in a patient with no oxygen,
-      # and is left as it is.
-      consuming <- state[["oxygen"]][2] > 0
-      # VO2 is a sea-level volume; at altitude the same oxygen is 1/r the
-      # ambient volume, and the carbon dioxide 1/r the share of the exhaled
-      # gas (R/altitude.R).
-      VO2  <- if (consuming) body$VO2 / ratio else 0
-      VCO2 <- GAS_RESPIRATORY_QUOTIENT * VO2
-      u <- u + VO2 - VCO2
-      buildProp(u, u, if (s$MV > 0) min(VCO2 / s$MV, GAS_MAX_EXHALED_CO2) else 0,
-                dt = dt)
-    }
+    # (buildProp() and coupledProp(), defined before the loop, read the
+    # settings `s` and the body in force when they are called.)
 
     # Uncoupled, the steps are uniform (gasSubSteps()) and one propagator
     # serves them all
@@ -1395,9 +1463,9 @@ advanceClosedFormGas <- function(
 #' is conserved is the amount of agent in each compartment.  In a gas phase
 #' (the circuit and the alveoli) the amount is the partial pressure times
 #' the volume, and neither the volume nor the partial pressure changes with
-#' a step in cardiac output, temperature or altitude (the tensions are
-#' partial pressures, in % of a sea-level atmosphere, whatever the barometric
-#' pressure).  In a tissue the amount is the partial pressure times the
+#' a step in cardiac output or temperature (a step in altitude moves gas in
+#' or out of them, \code{gasStateAcrossPressure()}, which the engine applies
+#' after this).  In a tissue the amount is the partial pressure times the
 #' volume times the tissue:gas partition coefficient, which temperature
 #' changes (gasPropertiesAt()), so the tension steps by the ratio of the old
 #' coefficient to the new: a cooled tissue holds the same agent at a lower
@@ -1433,6 +1501,64 @@ gasStateAcrossBodies <- function(state, from, to)
   state
 }
 
+#' The gas phases carried across a change of barometric pressure
+#'
+#' The circuit's and the alveoli's tensions are partial pressures relative to
+#' sea level (R/altitude.R): the circuit's dry gas totals \code{100 r}, r the
+#' barometric pressure over a sea-level atmosphere (\code{gasPressureRatio()}),
+#' and the alveoli's, humidified, \code{100 r h} (\code{gasHumidityRatio()}),
+#' that is \code{100 (P - 47) / (760 - 47)}.  At a step in altitude the
+#' lungs and the circuit keep their volume.  Where the pressure falls, gas
+#' leaves each of them at its own composition, so every tension is scaled by
+#' the new total over the old.  Where it rises, gas enters: the alveoli keep
+#' what they hold and draw in gas to make up the difference.  In the
+#' semi-closed circuit that gas is the circuit's own, compressed, and the
+#' circuit, refilled from the fresh gas, which it nearly matches, is scaled.
+#' The ideal and open circuits hold no gas, so the only gas the lungs can
+#' draw is fresh gas at the new pressure, in the share of the inspired gas it
+#' makes up (\code{gasCircuitBlend()}; the engine computes it,
+#' \code{inspired}): all of the rise where the flow covers what they draw,
+#' none at no flow, where the vaporiser therefore adds nothing.  Their entry,
+#' the inspired gas, which the engine sets from the settings in force after
+#' the step, is not scaled (scaled, a 2% sevoflurane vaporiser read 3.77% for
+#' one row at a descent from 5000 m; CodeRabbit on PR #864).
+#' Dissolved agent does not move at the step (tissue tensions are
+#' unchanged).  Until 2026-11-24 the gas phases kept their tensions, so just
+#' after a step from sea level to 5000 m the alveolar gases summed to 94% of
+#' a sea-level atmosphere where at most 52% fits, and the alveolar oxygen read
+#' twice what the new pressure allows (Gemini's gas-engine audit of
+#' 2026-11-23, C-07).
+#'
+#' @param state named list of state vectors, one per gas (circuit first,
+#'   alveoli second)
+#' @param from,to the bodies before and after the step
+#' @param circuit the breathing circuit ("ideal", "semi-closed" or "open")
+#' @param inspired for the ideal and open circuits, by gas, what the lungs
+#'   draw in where the pressure rises, as percent of the gas drawn: the fresh
+#'   gas's composition times its share of the inspired gas after the step,
+#'   so less than 100 in all where the flow does not cover the draw.  NULL,
+#'   or the semi-closed circuit, draws the circuit's own gas.
+#' @returns the state after the step
+#' @keywords internal
+gasStateAcrossPressure <- function(state, from, to, circuit = "ideal", inspired = NULL)
+{
+  r1 <- gasPressureRatio(from)
+  r2 <- gasPressureRatio(to)
+  if (isTRUE(all.equal(r1, r2, tolerance = 1e-12))) return(state)
+  a1 <- r1 * gasHumidityRatio(from)
+  a2 <- r2 * gasHumidityRatio(to)
+  for (g in names(state)) {
+    y <- state[[g]]
+    # The composition of the gas drawn in, as a fraction of its dry gas (x 100)
+    drawn <- if (circuit == "semi-closed" || is.null(inspired) || is.na(inspired[g]))
+      y[1] / r1 else unname(inspired[g])
+    if (circuit == "semi-closed") y[1] <- y[1] * r2 / r1
+    y[2] <- if (a2 < a1) y[2] * a2 / a1 else y[2] + drawn * (a2 - a1)
+    state[[g]] <- y
+  }
+  state
+}
+
 #' The bodies of a gas run with physiology events
 #'
 #' @param weight patient weight, kg
@@ -1440,7 +1566,14 @@ gasStateAcrossBodies <- function(state, from, to)
 #' @returns list(time, body): normal physiology from 0 and each event's from
 #'   its time.  If any body has cardiac output off normal, every body splits
 #'   the vessel-rich group (gasBodyPhysiology(split = TRUE)), so the states
-#'   are the same in all of them.
+#'   are the same in all of them.  A body in force for no time (normal
+#'   physiology when an event is at 0, or an event at the same time as the
+#'   next) is left out: until 2026-11-24 the run started in the normal body
+#'   whatever an event at 0 said, so its lungs started at sea-level room air
+#'   at 5000 m (752 Torr where the ambient pressure is 420), its first time
+#'   was recorded twice, and the Visualizer refused a run whose temperature
+#'   was 30 C throughout as one whose temperature changed (Gemini's
+#'   gas-engine audit of 2026-11-23, C-07).
 #' @keywords internal
 gasBodySteps <- function(weight, events)
 {
@@ -1455,7 +1588,9 @@ gasBodySteps <- function(weight, events)
       body$haemoglobin <- unname(x[["haemoglobin"]])
     body
   })
-  list(time = c(0, events$Time), body = bodies)
+  time <- c(0, events$Time)
+  keep <- c(time[-1] > time[-length(time)], TRUE)
+  list(time = time[keep], body = bodies[keep])
 }
 
 

@@ -7,8 +7,10 @@
 #
 # WHAT ALTITUDE DOES.  The barometric pressure falls; nothing about the drug or
 # the patient changes.  The gas engine (R/advanceClosedFormGas.R) carries every
-# tension as a PARTIAL PRESSURE in % of one sea-level atmosphere (760 Torr),
-# and in those units its mass balance does not depend on the barometric
+# tension as a PARTIAL PRESSURE relative to sea level (in the alveoli, % of
+# the dry share of a sea-level atmosphere, 713 Torr, GAS_ALVEOLAR_TORR; in the
+# dry circuit, % of 760 Torr), and in those units its mass balance does not
+# depend on the barometric
 # pressure at all: ventilation, cardiac output and the tissue capacities move
 # amounts in proportion to partial pressure (C = P / RT in gas, lambda P / RT in
 # blood and tissue), so the RT cancels and the barometric pressure never
@@ -173,6 +175,23 @@ gasPressureRatio <- function(body)
 #' @keywords internal
 WATER_VAPOUR_PRESSURE <- 47
 
+#' Torr per 100% of an alveolar tension
+#'
+#' The engine's alveolar tensions are fractions of the dry alveolar gas at
+#' sea level: room air enters the lungs at 20.93% oxygen, and on pure oxygen
+#' the alveolar gases sum to about 100 less the carbon dioxide, because the
+#' sea-level humidification is already carried in the unit (MAC and every
+#' sea-level validation are of humidified alveolar gas;
+#' \code{gasHumidityRatio()}).  So 100% is the dry share of a sea-level
+#' atmosphere, 760 - 47 = 713 Torr, and this is what an alveolar or arterial
+#' tension is multiplied by to read in mmHg.  Until 2026-11-24 it was 760, so
+#' the alveolar oxygen on pure oxygen read 722.7 mmHg, more than the 713 the
+#' dry gas can hold, and 6.6% high at every altitude (Gemini's gas-engine
+#' audit of 2026-11-23, C-06).  (The circuit's gas is dry: there 100% is 760
+#' Torr.)
+#' @keywords internal
+GAS_ALVEOLAR_TORR <- SEA_LEVEL_PRESSURE - WATER_VAPOUR_PRESSURE
+
 #' The dry share of the inspired gas, relative to sea level
 #'
 #' Inspired gas is humidified in the airway to the water vapour pressure,
@@ -240,7 +259,7 @@ helpPhysiologyAltitudeTable <- function()
                             formatC(sim$state[[g]][n, 1] * gasHumidityRatio(sim$body),
                                     digits = 1, format = "f"),
                             formatC(sim$state[[g]][n, 3] / mac, digits = 2, format = "f"),
-                            sim$state$oxygen[n, 2] * SEA_LEVEL_PRESSURE / 100))
+                            sim$state$oxygen[n, 2] * GAS_ALVEOLAR_TORR / 100))
   }
   .physiologyCache$altitudeTable <- paste(c(
     "| Fresh gas | Altitude (m) | Barometric pressure (Torr) | Inspired, humidified (% of a sea-level atmosphere) | Brain at 10 min (MAC) | Alveolar oxygen at 10 min (Torr) |",

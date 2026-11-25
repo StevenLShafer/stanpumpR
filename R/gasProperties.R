@@ -318,6 +318,14 @@ GAS_MAX_EXHALED_CO2 <- 0.5
 #     factor = sqrt(sqrt(factor * factor * factor))
 # and sets m_fVA = m_fDfltVA * factor.  Source read from
 # github.com/rasman/gasmanonline, gasman_api/gasmanAPI (GPL-3.0), 2026-10-05.
+# (Corrected 2026-11-24: in the API that scaling has no effect, InitDocument
+# computing the factor while the weight is still the default 70, and
+# SetWeight changing only the tick; the (weight / 70)^0.75 scaling is the
+# desktop GasMan's, applied when the user changes the weight,
+# src/gasman_main/gasdoc.cpp.  A gasman_run built from d3a2dd3 at 10 kg
+# with no VA or CO reports 4 and 5 L/min.  The values here are the desktop
+# program's, so nothing changes (Gemini's gas-engine audit of 2026-11-23,
+# A-02).)
 #
 # (Claude Code, Claude Fable 5.1, 2026-10-05.  An earlier draft the same day
 # used 8 mL/kg x an assumed 10 breaths/min; this replaces it.)

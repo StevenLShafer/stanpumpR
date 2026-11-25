@@ -266,11 +266,24 @@ for (i in seq_len(nrow(models))) {
 codeFilesAll <- list.files(file.path(repo, "R"), pattern = "\\.R$", full.names = TRUE)
 codeTextLower <- vapply(codeFilesAll, function(f)
   tolower(paste(readLines(f, warn = FALSE, encoding = "UTF-8"), collapse = "\n")), character(1))
+# Each path relative to the repository, cut literally: the checkout's own
+# name may hold characters a regular expression reads (CodeRabbit on #851).
+codeFilesRelative <- substring(codeFilesAll, nchar(file.path(repo, "")) + 1L)
+# A DOI is matched whole: what follows it may not continue a DOI (a letter
+# or digit, or one of . - _ / before one), so 10.1234/model.1 does not match
+# a file citing only 10.1234/model.10 or 10.1234/model.1.2, while a full stop
+# ending a sentence still ends it (CodeRabbit on #851).
+citesDoi <- function(text, doi) {
+  at <- gregexpr(doi, text, fixed = TRUE)[[1]]
+  if (at[1] < 0) return(FALSE)
+  after <- substring(text, at + nchar(doi), at + nchar(doi) + 1L)
+  any(!grepl("^([0-9a-z]|[-._/][0-9a-z])", after))
+}
 models$citedIn <- NA_character_
 for (i in which(is.na(models$card) & !is.na(models$doi))) {
-  where <- vapply(codeTextLower, grepl, logical(1), pattern = tolower(models$doi[i]), fixed = TRUE)
+  where <- vapply(codeTextLower, citesDoi, logical(1), doi = tolower(models$doi[i]))
   if (any(where))
-    models$citedIn[i] <- paste(sub(paste0("^", repo, "/"), "", codeFilesAll[where]), collapse = ";")
+    models$citedIn[i] <- paste(codeFilesRelative[where], collapse = ";")
 }
 
 # ---- 1. shared papers: do the numbers agree? -----------------------------------
@@ -429,7 +442,10 @@ comboNames <- data.frame(
   status = rep(combo$status, lengths(strsplit(combo$nlmixr2libNames, ";"))),
   stringsAsFactors = FALSE)
 candidateDrugs$combinationOnly <- comboNames$status[match(candidateDrugs$drug, comboNames$name)]
-candidateDrugs$combinationOnly[is.na(candidateDrugs$combinationOnly)] <- ""
+# A component the register keeps as a drug of its own (ritonavir, 2026-11-23)
+# is a candidate like any other.
+candidateDrugs$combinationOnly[is.na(candidateDrugs$combinationOnly) |
+                                 candidateDrugs$combinationOnly == "included"] <- ""
 
 # ---- write ---------------------------------------------------------------------
 

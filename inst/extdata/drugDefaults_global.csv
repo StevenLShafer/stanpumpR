@@ -304,6 +304,7 @@ norclozapine,ng,,,,,#B39DDB,0,0,0,0,0,IV,
 tobramycin,mcg,mg,mg/hr,mg/kg,"mg,mg/kg,mg/hr,mg qd,mg bid,mg tid,mg/kg qd,mg/kg bid,mg/kg tid",#558B2F,0.5,8,4,0,2,IV,Antibiotics
 amikacin,mcg,mg,mg/hr,mg/kg,"mg,mg/kg,mg/hr,mg qd,mg bid,mg/kg qd,mg/kg bid",#827717,2.4,20,4.9,0,4.9,IV,Antibiotics
 flumazenil,ng,mg,mg/hr,mg,"mg,mcg/kg,mg/hr",#2E7D32,12,28,20,0,0,IV,Other
+doxapram,mcg,mg,mg/min,mg,"mg,mg/kg,mg/min,mg/kg/hr",#6D4C9F,1.5,3,2,0,0,IV,Other
 ganciclovir,mcg,mg/kg,mg/hr,mg PO valganciclovir,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO valganciclovir,mg PO valganciclovir qd,mg PO valganciclovir bid",#0277BD,0,0,0,0,0,IV,Other
 sirolimus,ng,,,mg PO,"mg PO,mg PO qd",#4E342E,12,20,16,0,0,IV,Other
 everolimus,ng,,,mg PO bid,"mg PO,mg PO qd,mg PO bid",#6D4C41,3,8,5.5,0,0,IV,Other
@@ -347,6 +348,10 @@ aprocitentan,ng,,,,,#9575CD,0,0,0,0,0,IV,
 levothyroxine,ng,mcg,,mcg PO qd,"mcg PO qd,mcg PO,mcg,mcg qd",#0097A7,0,0,0,0,0,IV,Other
 liothyronine,ng,mcg,,mcg PO tid,"mcg PO tid,mcg PO bid,mcg PO qd,mcg PO,mcg",#3E7C87,0,0,0,0,0,IV,Other
 tafenoquine,ng,,,mg PO,"mg PO,mg PO qd",#7B5EA7,0,0,0,0,0,IV,Other
+Coartem,ng,,,tablet PO,"tablet PO,tablet PO bid",#2E7D32,0,0,0,0,0,IV,Other
+artemether,ng,,,,,#43A047,0,0,0,0,0,IV,
+dihydroartemisinin,ng,,,,,#81C784,0,0,0,0,0,IV,
+lumefantrine,mcg,,,,,#AD1457,0,0,0,0,0,IV,
 tamsulosin,ng,,,mg PO,"mg PO,mg PO qd",#4E7A99,0,0,0,0,0,IV,Other
 rosuvastatin,ng,,,mg PO qd,"mg PO,mg PO qd",#B23A48,0,0,0,0,0,IV,Other
 evolocumab,mcg,,,mg SC,"mg SC",#5E8C31,0,0,0,0,0,IV,Other

@@ -38,7 +38,11 @@
 #    of maintenance, the infusions in consolidation), and the clearance is
 #    the infusion's, at 2.7 uM; at an oral dose's lower concentrations
 #    Kitchen's elimination is faster, so 0.234 is if anything an
-#    underestimate.
+#    underestimate.  It is not a measured bioavailability: Lowe printed no
+#    paired or model-based F, so 0.234 is the oral input fraction that, with
+#    Kitchen's nonlinear disposition, approximates Lowe's oral exposure,
+#    derived with the infusion's clearance (ChatGPT chemotherapy audit F19,
+#    2026-11-24).
 # 2. Absorption rate: Kitchen's disposition is fast (an initial half-life of
 #    about 20 min below Km), so a first-order input alone cannot both peak at
 #    Lowe's 2.0 h and reach his median Cmax: a ka slow enough to peak at 2 h

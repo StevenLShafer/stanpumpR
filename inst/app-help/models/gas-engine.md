@@ -76,7 +76,7 @@ MAC is age-adjusted by the Mapleson relation, MAC(age) = MAC40 × 10^(−0.00269
 
 ## Validation
 
-Richard H. Epstein ran GasMan through its API for the same scenarios and the outputs were compared column by column. In the first concordance run the two agreed to one part in a million on the alveolar tension, with the residual traced to GasMan's single-precision arithmetic. Five further scenarios covering low flows, other agents, other weights and changing settings followed. The record is `inst/validation/VALIDATION.md`; see [Testing and validation](help:validation).
+Richard H. Epstein ran GasMan through its API for the same scenarios and the outputs were compared column by column. In the first concordance run the two agreed to one part in a million on the alveolar tension, with the residual traced to GasMan's single-precision arithmetic. Five further scenarios covering low flows, other agents, a 100 kg patient and changing settings followed, run with GasMan's own program built from its source; their 520 values are frozen in the repository and checked on every build, and on 24 November 2026 a sixth, a 5 kg patient, was added. The record is `inst/validation/VALIDATION.md`; see [Testing and validation](help:validation).
 
 ## References
 

@@ -77,10 +77,12 @@
 #
 # DOSING AND THE TARGET
 # =====================
-# Doses in mg (or mg/hr for the infusion); a dose in mg/m2 has to be
-# multiplied by the patient's BSA first.  The target for colorectal cancer is
-# an AUC of 20-29 mg h/L over the 46-h infusion; that is an exposure, not a
-# concentration band, and is not drawn (inst/extdata/therapeuticRanges.csv).
+# Doses in mg (or mg/hr for the infusion), or per m2 (mg/m2, mg/m2/hr; Mosteller
+# BSA, R/bsa-dosing.R).  The target for colorectal cancer is an AUC of 20-30
+# mg h/L over the 46-h infusion (the IATDMCT recommendation, Beumer 2019,
+# PMID 29923599, read in full on PubMed Central; Briki's own dose-adjustment
+# grid uses 20-29); that is an exposure, not a concentration band, and is not
+# drawn (inst/extdata/therapeuticRanges.csv).
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================

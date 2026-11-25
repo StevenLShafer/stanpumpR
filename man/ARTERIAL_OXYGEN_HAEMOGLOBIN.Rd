@@ -10,8 +10,8 @@ ARTERIAL_OXYGEN_HAEMOGLOBIN
 \description{
 The slider (Shafer, 2026-11-19), shown with the endobronchial box when it
 is ticked, because with a 50\% shunt the haemoglobin moves the arterial
-saturation from 69\% at 7 g/dL to 87\% at 17 g/dL on pure oxygen, and from
-49\% to 78\% on air: the shunt's oxygen debt, VO2/Q, is the same number of
+saturation from 68\% at 7 g/dL to 87\% at 17 g/dL on pure oxygen, and from
+48\% to 77\% on air: the shunt's oxygen debt, VO2/Q, is the same number of
 mL/dL whatever the haemoglobin, and a larger share of a smaller capacity.
 Without a shunt it changes nothing the panel shows.
 }

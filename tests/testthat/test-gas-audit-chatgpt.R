@@ -17,7 +17,7 @@ test_that("gasSubSteps() grades from each change and sums to the interval", {
   expect_equal(h[[1]], GAS_STEP_FIRST)
   expect_equal(h[[2]] / h[[1]], GAS_STEP_GROWTH)
   # The rest of the interval at the plot's step, to the rounding of its count
-  expect_lte(max(h), 0.1 * 1.001)
+  expect_lte(max(h), 0.1 * (1 + 1e-9))
   # Uniform where asked, and where the plot's own step is already short
   expect_equal(gasSubSteps(60, 0.1, graded = FALSE), rep(0.1, 600))
   expect_equal(gasSubSteps(1, 0.005), rep(0.005, 200))

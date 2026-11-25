@@ -156,7 +156,10 @@ test_that("a blank creatinine is the assumed normal value for age and sex", {
 })
 
 test_that("every renal model takes the creatinine, and the rest ignore it", {
-  for (drug in getDrugDefaultsGlobal()$Drug[!isGasDrug(getDrugDefaultsGlobal()$Drug)]) {
+  # (a combination product has no model of its own; its components do:
+  # R/combination-products.R)
+  dd <- getDrugDefaultsGlobal()
+  for (drug in dd$Drug[!isGasDrug(dd$Drug) & !isCombinationProduct(dd$Drug)]) {
     takes <- "creatinine" %in% names(formals(get(drug, mode = "function")))
     expect_identical(takes, drug %in% renalDrugs, info = drug)
   }

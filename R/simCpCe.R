@@ -52,8 +52,10 @@ finishDrugSeries <- function(wide, PK, maximum, plotRecovery)
   xout <- equispaceTimes(maximum)
   equiSpaceCe <- if (ceAllNA) {
     # Zero, not NA.  A prodrug has no effect of its own and its MEAC is zero,
-    # and both the hover readout and the total-opioid MEAC sum read equiSpace.
-    # The metabolite's row is where the effect actually appears.
+    # and the hover readout reads equiSpace.  (The total-opioid MEAC sum did
+    # too until 2026-11-24; it reads each drug's own series now,
+    # totalOpioidMEAC().)  The metabolite's row is where the effect actually
+    # appears.
     rep(0, length(xout))
   } else if (sum(!is.na(results$"Effect Site")) < 2) {
     # a plot of length 0 has one time point, which approx() refuses (the

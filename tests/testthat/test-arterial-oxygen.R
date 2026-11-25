@@ -23,12 +23,12 @@ test_that("a 50% shunt makes the patient hypoxaemic whatever the inspired oxygen
   # By hand: content leaving the ventilated lung at PAO2 700 mmHg is
   # 1.34 x 15 x S + 0.003 x 700; the shunt takes (0.5/0.5) x 250 / 50 = 5 mL/dL
   cc <- 1.34 * 15 * oxygenSaturation(700) + 0.003 * 700
-  a <- arterialOxygen(700 / 7.6, shunt = 0.5, Qco = 5, VO2 = 0.25)
+  a <- arterialOxygen(700 / (GAS_ALVEOLAR_TORR / 100), shunt = 0.5, Qco = 5, VO2 = 0.25)
   expect_equal(oxygenContent(a$PaO2), cc - 5, tolerance = 1e-8)
   expect_lt(a$PaO2, 60)
   expect_lt(a$SaO2, 90)
   # More oxygen hardly helps: from 300 to 700 mmHg alveolar, PaO2 rises little
-  b <- arterialOxygen(300 / 7.6, shunt = 0.5, Qco = 5, VO2 = 0.25)
+  b <- arterialOxygen(300 / (GAS_ALVEOLAR_TORR / 100), shunt = 0.5, Qco = 5, VO2 = 0.25)
   expect_lt(a$PaO2 - b$PaO2, 15)
 })
 
@@ -39,8 +39,13 @@ test_that("the gas run carries it: the oxygen panel's second line and the hover"
   plain <- simulateGases(DT, 70, 40, maximum = 60)
   a <- gasArterialOxygen(tube)
   i <- which.min(abs(a$Time - 30))
-  expect_equal(a$PaO2[i], 50.6, tolerance = 0.01)
-  expect_equal(a$SaO2[i], 85.5, tolerance = 0.01)
+  # (50.6 and 85.5 until 2026-11-24, when the alveolar tension was read at
+  # 760 Torr per 100% rather than 713, Gemini's C-06)
+  expect_equal(a$PaO2[i], 49.8, tolerance = 0.01)
+  expect_equal(a$SaO2[i], 84.8, tolerance = 0.01)
+  # The alveolar oxygen on oxygen stays within the dry share of the pressure
+  # (it read 722.7 mmHg with no tube, above the 713 Torr there are)
+  expect_lt(max(gasArterialOxygen(plain)$PAO2), GAS_ALVEOLAR_TORR)
   p <- gasArterialOxygen(plain)
   expect_identical(p$PaO2, p$PAO2)
   entries <- gasDrugEntries(tube, DT, maximum = 60, age = 40)
@@ -66,15 +71,15 @@ test_that("an endobronchial physiology event steps the arterial oxygen", {
 })
 
 test_that("the haemoglobin moves the arterial saturation through a shunt, and not without one", {
-  lo <- arterialOxygen(700 / 7.6, shunt = 0.5, Qco = 5, VO2 = 0.245, hb = 7)
-  hi <- arterialOxygen(700 / 7.6, shunt = 0.5, Qco = 5, VO2 = 0.245, hb = 17)
+  lo <- arterialOxygen(700 / (GAS_ALVEOLAR_TORR / 100), shunt = 0.5, Qco = 5, VO2 = 0.245, hb = 7)
+  hi <- arterialOxygen(700 / (GAS_ALVEOLAR_TORR / 100), shunt = 0.5, Qco = 5, VO2 = 0.245, hb = 17)
   expect_equal(lo$SaO2, 69.0, tolerance = 0.002)
   expect_equal(hi$SaO2, 86.9, tolerance = 0.002)
-  none <- arterialOxygen(700 / 7.6, shunt = 0, Qco = 5, VO2 = 0.245, hb = 7)
+  none <- arterialOxygen(700 / (GAS_ALVEOLAR_TORR / 100), shunt = 0, Qco = 5, VO2 = 0.245, hb = 7)
   expect_identical(none$PaO2, none$PAO2)
   # The oxygen the ventilated lung loads is the body's use, whatever the haemoglobin
   for (hb in c(7, 15)) {
-    a <- arterialOxygen(113 / 7.6, shunt = 0.5, Qco = 5, VO2 = 0.245, hb = hb)
+    a <- arterialOxygen(113 / (GAS_ALVEOLAR_TORR / 100), shunt = 0.5, Qco = 5, VO2 = 0.245, hb = hb)
     cc <- oxygenContent(a$PAO2, hb)
     cv <- oxygenContent(a$PaO2, hb) - 1000 * 0.245 / 50
     expect_equal(0.5 * 50 * (cc - cv) / 1000, 0.245, tolerance = 1e-9)
@@ -112,7 +117,8 @@ test_that("altitude deepens the hypoxaemia: the arterial oxygen reads the engine
     a$SaO2[which.min(abs(a$Time - 30))]
   }
   s <- vapply(c(0, 3000, 5000), sat, 0)
-  expect_equal(s, c(75.2, 68.0, 47.0), tolerance = 0.002)
+  # (75.2, 68.0 and 47.0 at 760 Torr per 100%, until 2026-11-24)
+  expect_equal(s, c(74.7, 66.5, 43.2), tolerance = 0.002)
 })
 
 test_that("the Visualizer carries the arterial saturation only where a tube shunts", {

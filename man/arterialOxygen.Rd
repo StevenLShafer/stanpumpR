@@ -21,7 +21,7 @@ where the engine has stopped consuming)}
 }
 \value{
 a data frame: PAO2 and PaO2 (mmHg), SaO2 (\%), and arterial, the
-PaO2 as \% of a sea-level atmosphere, the unit of the oxygen panel
+PaO2 in the unit of the oxygen panel (\code{GAS_ALVEOLAR_TORR})
 }
 \description{
 Arterial oxygen at each time of a gas run
