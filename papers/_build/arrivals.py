@@ -73,8 +73,9 @@ nothing, so `--no-enqueue` is forced on (the queue lives in the archive).
 
 `--tasks` prints one TAB-separated line per item instead of the report -- kind, where, drug,
 PMIDs, cards, and what the row asks for -- so that something else can turn each into a message,
-an issue or a session.  Nothing in this script decides to start work: it reports, as it always
-has.
+an issue or a session.  It WRITES NOTHING, as `--no-archive` does not: a caller polling for
+what is ready should not be mutating the download queue as a side effect.  Nothing in this
+script decides to start work either: it reports, as it always has.
 
 Usage: python arrivals.py [--repo <path>] [--ref <ref>] [--no-fetch] [--all] [--no-enqueue]
                           [--no-archive] [--tasks]
@@ -105,7 +106,14 @@ NO_ARCHIVE = "--no-archive" in args
 TASKS = "--tasks" in args
 # One TAB-separated line per item instead of the report, for a caller that acts on them.
 
-ENQUEUE = "--no-enqueue" not in args and not NO_ARCHIVE
+ENQUEUE = "--no-enqueue" not in args and not NO_ARCHIVE and not TASKS
+# --tasks does not write either (2026-11-25).  enqueue() runs BEFORE the task branch returns,
+# and that branch prints none of what the prose report says about it, so `arrivals.py --tasks`
+# on its own was quietly adding rows to stanpumpr-queue.csv and telling nobody -- a reporting
+# mode mutating the archive, which is the last thing a caller polling it would expect
+# (CodeRabbit, PR #926).  Nothing operational depends on it: update.bat runs the plain form,
+# which still enqueues, and the watch this mode was built for runs `--no-archive --tasks`,
+# where ENQUEUE was already off.
 # A wanted paper that is in NEITHER the archive nor the download queue is invisible to the
 # person doing the downloading: on 2026-11-18 nine of the ten PMIDs that registry rows were
 # blocked on had never reached stanpumpr-queue.csv, so nobody was looking for them and the
