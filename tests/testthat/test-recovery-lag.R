@@ -73,7 +73,8 @@ test_that("only the expected oral drugs carry an absorption lag", {
     }
   }
   expect_setequal(unique(lagged),
-                  c("gabapentin", "pregabalin", "acetaminophen", "ibuprofen",
+                  c("mycophenolate",  # van Hest 2005's 0.21 h lag (2026-11-25)
+                    "gabapentin", "pregabalin", "acetaminophen", "ibuprofen",
                     "zolpidem", "clonazepam", "methylphenidate",
                     "lisdexamfetamine", "morphine", "sertraline",
                     # both lagged oral depots (2026-10-10); meloxicam's
