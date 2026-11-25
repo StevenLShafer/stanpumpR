@@ -1,6 +1,6 @@
 ## What it is
 
-The [target-controlled infusion](help:tci) rows in the dose table simulate a TCI pump on the screen. The TCI API offers the same controller to a real pump. It is a small web service, `/tci/v1`, that a pump's host computer calls once per update interval, typically every ten seconds, and that answers with the rate for the next interval: one drug, one patient, aimed at the plasma or effect-site concentration the clinician set. The eleven drugs whose units include *Plasma target* and *Effect site target* are offered: propofol, remifentanil, fentanyl, alfentanil, sufentanil, hydromorphone, oxycodone, ketamine, etomidate, lidocaine and remimazolam.
+The [target-controlled infusion](help:tci) rows in the dose table simulate a TCI pump on the screen. The TCI API offers the same controller to a real pump. It is a small web service, `/tci/v1`, that a pump's host computer calls once per update interval, typically every ten seconds, and that answers with the rate for the next interval: one drug, one patient, aimed at the plasma or effect-site concentration the clinician set. The twelve drugs whose units include *Plasma target* and *Effect site target* are offered: propofol, remifentanil, fentanyl, alfentanil, sufentanil, hydromorphone, oxycodone, ketamine, esketamine, etomidate, lidocaine and remimazolam.
 
 ## Why it keeps no state
 

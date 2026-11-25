@@ -214,7 +214,7 @@
       },
       "ConcentrationUnits": {
         "type": "string",
-        "description": "The drug's concentration units exactly: `mcg/mL` for propofol, ketamine, etomidate, lidocaine and remimazolam, `ng/mL` for the opioids. The right token for the wrong drug is UNIT_MISMATCH; any other token, including `mg/L`, is UNIT_UNKNOWN. Never converted.",
+        "description": "The drug's concentration units exactly: `mcg/mL` for propofol, ketamine, esketamine, etomidate, lidocaine and remimazolam, `ng/mL` for the opioids. The right token for the wrong drug is UNIT_MISMATCH; any other token, including `mg/L`, is UNIT_UNKNOWN. Never converted.",
         "enum": ["mcg/mL", "ng/mL"]
       },
       "MassUnits": {

@@ -15,8 +15,8 @@ local_mocked_bindings(outputComments = function(...) {})
 START <- as.numeric(lubridate::ymd_hms("2026-10-11T14:00:00Z", tz = "UTC"))
 noEvents <- data.frame(Time = double(), Event = character())
 TCI_DRUGS <- c("propofol", "remifentanil", "fentanyl", "alfentanil", "sufentanil",
-               "hydromorphone", "oxycodone", "ketamine", "etomidate", "lidocaine",
-               "remimazolam")
+               "hydromorphone", "oxycodone", "ketamine", "esketamine", "etomidate",
+               "lidocaine", "remimazolam")
 
 atMin <- function(min) tciApiFormatTime(START + min * 60)
 minutesOf <- function(stamp) (as.numeric(lubridate::ymd_hms(stamp, tz = "UTC")) - START) / 60
