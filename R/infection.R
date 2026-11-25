@@ -11,7 +11,9 @@
 # getDrugPK() passes the field only to the models that name it, so the
 # Patient Profile's field is read, shown (relevantFields(), R/patient-fields.R)
 # and listed on its hover tip only for those drugs, as Pulmonary hypertension
-# is (R/pulmonaryHypertension.R).  When this file was written NO model read it:
+# is (R/pulmonaryHypertension.R).  The first model to read it is ceftolozane
+# (R/drugs_ceftolozane.R, Zhang 2021, drawn for Zerbaxa; 2026-11-25).  When
+# this file was written NO model read it:
 # the field was built ahead of the two drugs of the library expansion that
 # need it (docs/library-expansion/plan.csv), and is hidden until one of them
 # joins the library.
