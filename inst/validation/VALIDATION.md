@@ -776,7 +776,7 @@ repository).
   always completes; both restatements now do too (CodeRabbit on PR #858, in
   that PR). No scenario reaches it.
 
-### Reported to GasMan's authors
+### A report for GasMan's authors, drafted
 
 The two inconsistencies above, the printed value that depends on the end
 time and the circuit names misread in a scenario file, are GasMan's to fix,
