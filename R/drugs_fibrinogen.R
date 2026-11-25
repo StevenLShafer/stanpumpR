@@ -57,9 +57,11 @@
 # BODY SIZE: the source's weight terms, kept as fitted, evaluated at the
 # pharmacokinetic weight with the switch on and at total weight with it off.
 #
-# PREGNANCY: no pharmacokinetic study of a fibrinogen concentrate in
-# pregnancy (inst/extdata/pregnancyRegistry.csv).  Endogenous fibrinogen
-# rises to 400-600 mg/dL at term, which the baseline field carries.
+# PREGNANCY: Hureau 2026 (PMID 42994620, abstract read) modelled plasma
+# fibrinogen in 142 women bleeding at caesarean section, with the bleeding
+# rate on the rate of loss; this model has no bleeding term, and nothing of
+# that model is applied (inst/extdata/pregnancyRegistry.csv).  Endogenous
+# fibrinogen rises to 400-600 mg/dL at term, which the baseline field carries.
 #
 # References
 # ----------

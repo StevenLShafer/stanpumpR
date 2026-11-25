@@ -20,7 +20,7 @@ The shaded band runs from 100 mg/dL, RiaSTAP's target level maintained until hae
 ### Covariates and doses
 
 - **Weight**, on clearance and volume, as fitted; with the fat-free-mass switch on, the pharmacokinetic weight.
-- **Pregnancy**: no pharmacokinetic model in pregnancy has been published, and nothing is applied. In haemorrhage at caesarean delivery with hyperfibrinolysis, infused fibrinogen rose and then fell early despite larger doses (Hureau 2026), a loss this model does not show.
+- **Pregnancy and bleeding**: nothing is applied in pregnancy. In haemorrhage at caesarean delivery, a population model of 142 women (Hureau 2026, *Anaesth Crit Care Pain Med*, PMID 42994620; abstract read) found the rate of bleeding to govern the loss of fibrinogen, and in those with hyperfibrinolysis infused fibrinogen rose and then fell early despite larger doses (Hureau 2026, *Int J Obstet Anesth*). This model was fitted in patients who were not bleeding and shows neither loss: in a bleeding patient the curve is too high, and the measured level should be entered as the baseline.
 
 `mg/kg`, `g` or `mg`, as a bolus.
 
