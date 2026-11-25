@@ -70,9 +70,15 @@ patientFieldReadersSentence <- function(arg, drugDefaults = getDrugDefaultsGloba
   readers <- patientFieldReaders(arg, drugDefaults)
   if (length(readers) == 0) return("No drug in the library reads it.")
   notes <- PATIENT_FIELD_READER_NOTES[[arg]]
-  named <- vapply(readers, function(drug) {
-    if (drug %in% names(notes)) sprintf("%s (%s)", drug, notes[[drug]]) else drug
-  }, character(1), USE.NAMES = FALSE)
+  # A component of a combination product is entered as the product
+  # (R/combination-products.R): "ceftolozane (given as Zerbaxa)"
+  products <- combinationProductFor(readers)
+  named <- vapply(seq_along(readers), function(i) {
+    drug <- readers[i]
+    if (drug %in% names(notes)) sprintf("%s (%s)", drug, notes[[drug]])
+    else if (!is.na(products[i])) sprintf("%s (given as %s)", drug, products[i])
+    else drug
+  }, character(1))
   sprintf("Read by %s; no other drug is affected.", patientFieldList(named))
 }
 

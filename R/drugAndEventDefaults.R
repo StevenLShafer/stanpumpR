@@ -276,8 +276,8 @@ drugLibraryUnitProblems <- function(edited, current, maxNew = DRUG_LIBRARY_MAX_N
       # (R/combination-products.R)
       product <- isCombinationProduct(drug)
       if (product && !combinationUnitOk(drug, unit)) {
-        bad <- c(bad, sprintf("%s \"%s\" (a combination product is dosed in %ss)", drug, unit,
-                              COMBINATION_PRODUCTS[[drug]]$unit))
+        bad <- c(bad, sprintf("%s \"%s\" (a combination product is dosed in %s)", drug, unit,
+                              combinationDosedIn(drug)))
         next
       }
       DT <- data.frame(Drug = drug, Time = 0, Dose = 1, Units = unit, stringsAsFactors = FALSE)
