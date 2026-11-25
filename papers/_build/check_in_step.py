@@ -52,6 +52,26 @@ IN_GIT = "papers/_build"                        # git spells its own paths with 
 BRANCH = "master"                               # the only integration branch (AGENTS.md)
 ROOT_FILES = ("update.bat", "digests.bat")      # these two live in the archive's root
 SUFFIXES = (".py", ".sh", ".bat")
+SUB_SUFFIXES = SUFFIXES + (".txt", ".md")
+SUB_FOLDERS = ("test_digest_run",)
+# A SUBFOLDER of `_build` is part of the record only if it is NAMED here (2026-11-25).
+# `test_digest_run`, the tests for digest_run.py's deadline, logging and queue order, had never
+# been committed or compared, because this check and the mirror both used a flat os.listdir --
+# the gap papers/_build/README.md says the mirror exists to close, reopened one directory down.
+#
+# The first attempt at this took ANY subfolder whose files had a recorded suffix, and that is
+# why the list is explicit instead.  `_build/text` holds `pdftotext` output for every paper in
+# the archive and `_build/context` a JSON file each: the run of this check that found them
+# listed 2,000-odd extractions as "not in git" and advised committing them, which would have
+# put copyrighted paper text into a public repository -- the one thing papers/README.md says
+# must never happen, and the reason the digests can be published at all.  A named folder cannot
+# do that; a suffix rule was one new directory away from doing it again.
+#
+# A named subfolder takes `.txt` and `.md` too, since a test folder's README records what its
+# tests slice out of the shipped code and is useless apart from them.  The TOP level does not:
+# there `.txt` is generated output (unplaced_downloads.txt, branches-awaiting-pr.txt) and no
+# part of any record.  Deeper than one level is not walked, and a stated limit beats a
+# recursion whose reach nobody knows.
 FETCH_SECONDS = 60                              # a stalled fetch must not hold up a filing run
 
 # What the archive was compared with.  `label` names it in every message; `notes` are facts
@@ -60,8 +80,41 @@ FETCH_SECONDS = 60                              # a stalled fetch must not hold 
 Record = collections.namedtuple("Record", "label notes caveats names read")
 
 
+def in_record(name):
+    """Whether a path (relative to `_build`, git-style slashes) belongs to the record."""
+    if "/" in name:
+        head, tail = name.split("/", 1)
+        return head in SUB_FOLDERS and "/" not in tail and tail.endswith(SUB_SUFFIXES)
+    return name.endswith(SUFFIXES)
+
+
 def archive_path(name):
-    return os.path.join(ARCHIVE, name) if name in ROOT_FILES else os.path.join(ARCHIVE, "_build", name)
+    """Where `name` lives in the archive.  Git spells its paths with '/', Windows with '\'."""
+    parts = name.split("/")
+    if name in ROOT_FILES:
+        return os.path.join(ARCHIVE, *parts)
+    return os.path.join(ARCHIVE, "_build", *parts)
+
+
+def one_level(root):
+    """Paths under `root`, git-style, the folder itself and one level of subfolder.
+
+    The same enumeration the committed record gets from `ls-tree -r`, so the two directions of
+    the comparison cannot disagree about what counts.  `desktop.ini` and the rest fall out
+    through in_record(), which is also what keeps a Drive artifact from reading as a script."""
+    if not os.path.isdir(root):
+        return []
+    out = []
+    for entry in sorted(os.listdir(root)):
+        full = os.path.join(root, entry)
+        if os.path.isdir(full):
+            if entry not in SUB_FOLDERS:        # never even listed: _build/text has thousands
+                continue
+            out += ["%s/%s" % (entry, f) for f in sorted(os.listdir(full))
+                    if os.path.isfile(os.path.join(full, f))]
+        else:
+            out.append(entry)
+    return [n for n in out if in_record(n)]
 
 
 def normalised(data):
@@ -147,10 +200,10 @@ def committed_record():
     caveats.append("A change already committed on a branch shows here until it is merged"
                    " into %s." % BRANCH)
 
-    ok, out = git("ls-tree", "--name-only", "%s:%s" % (sha, IN_GIT))
+    ok, out = git("ls-tree", "-r", "--name-only", "%s:%s" % (sha, IN_GIT))
     if not ok:
         return None, "%s has no %s (%s)" % (label, IN_GIT, oneline(out))
-    names = sorted(n for n in text(out).splitlines() if n.endswith(SUFFIXES))
+    names = sorted(n for n in (x.strip() for x in text(out).splitlines()) if in_record(n))
 
     def read(name):
         got, blob = git("cat-file", "blob", "%s:%s/%s" % (sha, IN_GIT, name))
@@ -171,9 +224,9 @@ def working_tree_record(reason):
     notes = ["Read from the working tree, not from %s, because %s." % (BRANCH, reason)]
     caveats = ["A working tree can sit on a branch that predates %s, so a difference above may"
                " be that branch rather than real drift." % BRANCH]
-    names = sorted(f for f in os.listdir(MIRROR) if f.endswith(SUFFIXES))
+    names = one_level(MIRROR)
     return Record(label, notes, caveats, names,
-                  lambda n: file_bytes(os.path.join(MIRROR, n))), None
+                  lambda n: file_bytes(os.path.join(MIRROR, *n.split("/")))), None
 
 
 def main():
@@ -209,8 +262,11 @@ def main():
     # The other direction: a script the archive has gained that was never committed, which is
     # how a mirror silently stops being a record of what runs.
     adir = os.path.join(ARCHIVE, "_build")
-    uncommitted = sorted(f for f in (os.listdir(adir) if os.path.isdir(adir) else [])
-                         if f.endswith((".py", ".sh")) and f not in rec.names)
+    uncommitted = sorted(f for f in one_level(adir)
+                         if not f.endswith(".bat") and f not in rec.names)
+    # `.bat` is left out of THIS direction only: update.bat and digests.bat live in the
+    # archive's root, not in `_build`, so looking for them here would report them missing for
+    # ever.  It was the same before one_level(); only the walk is new.
 
     if not (missing or differs or uncommitted or unreadable):
         print("in-step check: the archive's %d scripts match the record in %s."
