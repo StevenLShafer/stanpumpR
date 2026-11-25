@@ -73,26 +73,27 @@ test_that("getDrugPK() refuses an unknown infection and passes a known one only 
 })
 
 test_that("the field is shown and its tip names its readers only while a reader is in the table", {
-  # The first reader is ceftolozane, drawn for Zerbaxa (2026-11-25): shown
-  # while Zerbaxa is in the table, whose components the app passes
-  # (combinationExpandDrugNames()), and the tip names the product
-  expect_identical(patientFieldReaders("infection"), "ceftolozane")
+  # The readers are ceftolozane, drawn for Zerbaxa, and imipenem (both
+  # 2026-11-25): shown while either is in the table, whose components the app
+  # passes (combinationExpandDrugNames()), and the tip names the product
+  expect_identical(patientFieldReaders("infection"), c("ceftolozane", "imipenem"))
   expect_true(relevantFields(combinationExpandDrugNames("Zerbaxa"))[["infection"]])
+  expect_true(relevantFields("imipenem")[["infection"]])
   expect_false(relevantFields(c("propofol", "fentanyl"))[["infection"]])
   expect_match(patientFieldTooltip("infection"),
-               "Read by ceftolozane (given as Zerbaxa); no other drug is affected.", fixed = TRUE)
+               "Read by ceftolozane (given as Zerbaxa) and imipenem; no other drug is affected.", fixed = TRUE)
   expect_true("infection" %in% RELEVANT_FIELDS)
 
   withInfectionReader()
-  expect_identical(patientFieldReaders("infection"), c("cefepime", "ceftolozane"))
+  expect_identical(patientFieldReaders("infection"), c("cefepime", "ceftolozane", "imipenem"))
   expect_true(relevantFields("cefepime")[["infection"]])
   expect_true(relevantFields(c("propofol", "cefepime"))[["infection"]])
   tip <- patientFieldTooltip("infection")
-  expect_match(tip, "Read by cefepime and ceftolozane (given as Zerbaxa); no other drug is affected.",
+  expect_match(tip, "Read by cefepime, ceftolozane (given as Zerbaxa) and imipenem; no other drug is affected.",
                fixed = TRUE)
   # and the Cautions page's generated table
   table <- helpFieldReadersTableMarkdown()
-  expect_match(table, "| Infection | 2 | [cefepime](help:drugs/cefepime), [ceftolozane](help:drugs/ceftolozane) |",
+  expect_match(table, "| Infection | 3 | [cefepime](help:drugs/cefepime), [ceftolozane](help:drugs/ceftolozane), [imipenem](help:drugs/imipenem) |",
                fixed = TRUE)
 })
 

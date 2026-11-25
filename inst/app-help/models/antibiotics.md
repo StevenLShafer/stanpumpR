@@ -11,6 +11,8 @@ Each of the twelve antibiotics, [cefazolin](help:drugs/cefazolin), [cefalexin](h
 
 [Ceftolozane](help:drugs/ceftolozane), drawn for [Zerbaxa](help:drugs/Zerbaxa), also has the MIC line and no band. Its line is free ceftolozane at 4 mg/L, the CLSI and EUCAST susceptible breakpoint for *Pseudomonas*, which is 5 mg/L of total ceftolozane. No MBC distribution for ceftolozane has been found.
 
+[Imipenem](help:drugs/imipenem) also has the MIC line and no band. Its line is free imipenem at 2 mg/L, the imipenem/relebactam breakpoint its source assessed, which is 2.5 mg/L of total imipenem. No imipenem MBC source has been read.
+
 ### The rule for the band
 
 Every antibiotic's band follows one rule:

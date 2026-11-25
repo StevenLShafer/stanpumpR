@@ -127,6 +127,8 @@ renalDrugs <- c("mycophenolate",  # Cockcroft-Gault on CL and V1 (van Hest 2005)
                 "cefepime",
                 # Cockcroft-Gault on clearance (Zhang 2021, R/drugs_ceftolozane.R)
                 "ceftolozane",
+                # Cockcroft-Gault on clearance (Patel 2022, R/drugs_imipenem.R)
+                "imipenem",
                 # Cockcroft-Gault on the Janmahasatian lean body weight, in
                 # proportion on CL/F (Duong 2013, R/drugs_metforminER.R)
                 "metforminER",
