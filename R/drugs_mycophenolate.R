@@ -89,9 +89,11 @@
 # source's own sex term, by the clearance factor of the patient's own sex
 # within the cohort (cohortSexSizeFactors(), as for fluoxetine).  The CLCR
 # terms are kept as fitted, with the Cockcroft-Gault weight inside them
-# ([decision] in the card: a renal clearance term with weight inside takes no
-# size factor, but here CLCR is a covariate on a hepatic clearance and on V1,
-# with small negative exponents, not a renal clearance).  With the switch off
+# (Steven L. Shafer, 2026-11-25: "Use fat-free mass for mycophenolate's size
+# scaling"; a renal clearance term with weight inside takes no size factor,
+# but here CLCR is a covariate on a hepatic clearance and on V1, with small
+# negative exponents, not a renal clearance, so the fat-free-mass factors
+# apply on top, and the Cockcroft-Gault weight is the pharmacokinetic weight).  With the switch off
 # every factor is 1 and the published values are used.
 # The cohort: Table I (p. 1086), day 3, 140 patients, 88 men and 52 women,
 # medians 69 kg and 50 years.  No height, BMI or BSA is printed, so each sex
