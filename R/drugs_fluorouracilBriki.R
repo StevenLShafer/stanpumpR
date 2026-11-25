@@ -33,33 +33,45 @@
 # continuous infusion.  HPLC-UV, LC-MS/MS and LC-UV (LLOQ 0.013-0.05 mg/L).
 # NONMEM 7.6, ODEs (ADVAN13), FOCE-I.
 #
-# THE MODEL (Table 3)
-# ===================
-# Two compartments; elimination from the central compartment by a saturable
-# pathway and a parallel linear clearance:
+# THE MODEL: THE AUTHORS' ALTERNATIVE, WITH LEAN BODY MASS (Table S3)
+# ===================================================================
+# Steven L. Shafer chose (2026-11-25, PR #897) the authors' alternative final
+# model, Table S3 of the supplement (MOESM1, a Word file, supplied by Shafer
+# 2026-11-25; its equations read from the file's own equation markup), over
+# the main model of Table 3.  Two compartments; elimination from the central
+# compartment by a saturable pathway and a parallel linear clearance:
 #
-#     Vmax 429 mg/h       Km 2.34 mg/L       CL 52.6 L/h
-#     V1 9.21 L           Q 125 L/h          V2 14.6 L
+#     Vmax 411 mg/h       Km 1.89 mg/L       CL 59.2 L/h
+#     V1 9.58 L           Q 112 L/h          V2 13.6 L
 #
-#     TVVmax = Vmax (1 + thetaAGE (AGE - 60)/60) (1 + thetaMale SEX),
-#              thetaAGE -0.289, thetaMale 0.183, SEX 1 for men
-#     TVCL   = CL (BSA/1.7)^thetaBSA,  thetaBSA 2.61, BSA by Mosteller
+#     TVVmax = Vmax (1 + thetaAGE (AGE - 60)/60) (LBM/55)^thetaLBM,
+#              thetaAGE -0.292, thetaLBM 0.484 (bootstrap 95% 0.311-0.690),
+#              LBM by Janmahasatian (kg)
+#     TVCL   = CL (BSA/1.7)^thetaBSA,  thetaBSA 1.62, BSA by Mosteller
 #     TVV2   = V2 (BW/70)^1 (fixed)
 #
-# Identification of the stripped rows: Vmax and Km are the only rows in mg/h
-# and mg/L; of the two volumes, the one carrying the fixed weight exponent is
-# V2 (the text: "the IIV of V2 was entirely explained by an allometric BW
-# effect"), so the other, with 82% IIV, is V1.  The covariate thetas follow
-# the order of the equations, and reproduce the text: men's Vmax 18% higher
-# (1.183); an 80-year-old's 17% lower than a 40-year-old's (0.904/1.096 =
-# 0.824); an 80-year-old woman's 30% lower than a 40-year-old man's (0.697);
-# and a BSA of 1.5 giving a linear clearance 53% lower than 2.0 (0.75^2.61 =
-# 0.472).
+# WHY THIS MODEL (Shafer's reasoning, 2026-11-25): a sex term on a clearance
+# without a weight term is a surrogate for body size, and gives no rational
+# basis for scaling a patient unlike the cohort.  The test is whether
+# lean-mass scaling reproduces the sex effect.  It does, at the exponent the
+# data estimate: in Fig S3 the cohort's men carry about 56 kg of lean mass
+# and its women about 39.5 kg (read from the density peaks), and 1.42^0.484 =
+# 1.185, against the main model's sex factor 1.183; at the library's default
+# FFM^0.75 it would be 1.30, which the bootstrap interval excludes.  Fig S2B:
+# with LBM on Vmax, sex adds nothing (removing it, dOFV 0.718); LBM was the
+# strongest univariate covariate on Vmax (Table S2, dOFV -166 against -95.3
+# for sex).  The authors kept sex in their main model as "a simpler metric,
+# immune to misestimation", a practical choice, not a better fit.
 #
-# The authors also fitted an alternative model with lean body mass on Vmax
-# in place of sex (in the supplement, not read).  Sex here carries that
-# effect, they say, since the Janmahasatian lean mass is built from sex,
-# weight and height.
+# THE MAIN MODEL (Table 3), recorded, not used: Vmax 429 mg/h x (1 - 0.289
+# (AGE - 60)/60) x 1.183 in men, Km 2.34 mg/L, CL 52.6 L/h x (BSA/1.7)^2.61,
+# V1 9.21 L, Q 125 L/h, V2 14.6 L x BW/70.  Its rows were identified, the PMC
+# text having lost the subscripts, from their units and the percentages the
+# text states (men's Vmax 18% higher; an 80-year-old's 17% lower than a
+# 40-year-old's; BSA 1.5 against 2.0 giving a linear clearance 53% lower).
+# The two models' parameter sets differ throughout (Km, CL and the BSA
+# exponent all moved when LBM replaced sex), so none of Table 3's values is
+# mixed with Table S3's.
 #
 # WHAT IT DOES NOT COVER
 # ======================
@@ -86,41 +98,33 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# The model's own size covariates (BSA on CL, weight on V2) are kept as
-# fitted and take nothing more: as for cefazolin, they are evaluated at the
-# pharmacokinetic weight (size$pkWeight) with the switch on and at total body
-# weight with it off, BSA from that weight and the height.
+# The model's own size terms are kept as fitted and take nothing more
+# (rule 2 of "Every parameter is scaled"): lean body mass on Vmax, BSA on
+# CL, weight on V2.  With the switch off they are evaluated as published:
+# Janmahasatian's lean body mass, BSA and weight from total body weight.
+# With it on, Vmax reads the patient's fat-free mass (Al-Sallami's, the
+# library's, which is Janmahasatian's times a maturation term that is 1 in
+# adult men and 1.01-1.03 in adult women), and BSA and V2 read the
+# pharmacokinetic weight (size$pkWeight), as for cefazolin.
 #
-# V1, Q and Vmax have no size term, so with the switch on they belong to
-# Briki's typical patient, not to the 70 kg reference man, and are anchored
-# at that patient (FLUOROURACIL_BRIKI_COHORT, below; Steven L. Shafer's
-# rules of 2026-11-18 and 2026-11-19, docs/weight-adjustment.md, Anchoring
-# at the source's cohort; Gemini's chemotherapy audit of 2026-11-23, F22).
-# V1 and Q take the pooled cohort's factors.  Vmax carries the source's own
-# sex term (x 1.183 in men), so it takes the clearance factor of the cohort's
-# patient of the patient's OWN sex (cohortSexSizeFactors()): the difference
-# in fat-free mass between the sexes is then left to the source's sex term,
-# which the authors read as the lean-mass effect, and only the difference
-# from the cohort's man or woman of the same sex is added, so sex is not
-# counted twice.  (Until 2026-11-25 Vmax was not scaled at all, for that
-# reason; the rule of 2026-11-19, that a clearance whose covariates are not
-# size keeps them and takes the anchored clearance factor as well, at the
-# patient's own sex where it carries a sex term, supersedes it.)  Age is
-# held within the source's 24-90 years (its linear term would otherwise
-# extrapolate without limit).  With the switch off V1, Q and Vmax are the
-# published values.
+# V1 and Q have no size term, so with the switch on they belong to Briki's
+# typical patient, not to the 70 kg reference man, and are anchored at that
+# patient (FLUOROURACIL_BRIKI_COHORT, below; docs/weight-adjustment.md,
+# Anchoring at the source's cohort; Gemini's chemotherapy audit of
+# 2026-11-23, F22).  No parameter now carries a sex term, so the pooled
+# cohort's factors apply.  With the switch off they are the published values.
+# Age is held within the source's 24-90 years (its linear term would
+# otherwise extrapolate without limit).
 #
 # The cohort (Table 2, page 6, read on the PDF and its page image,
 # 2026-11-25): three studies, medians printed per study, entered as three
 # groups --
-#     SID1 Terret 2002   21 patients, 14 men  7 women, 65 y, 68 kg, 168 cm
+#     SID1 Terret 2000   21 patients, 14 men  7 women, 65 y, 68 kg, 168 cm
 #     SID2 Mueller 2013  30 patients, 20 men 10 women, 63 y, 76 kg, 171 cm
 #     SID3 Dijon TDM    675 patients, 388 men 287 women, 69 y, 67 kg, 170 cm
 # (726 patients, 422 men and 304 women, as the text says).  Heights are
-# printed, so none is derived.  The factors (cohortSizeFactors()): pooled
-# volume 0.8989 and clearance 0.9231, so V1 and Q rise by 11.3% and 8.3% at
-# the reference man; Vmax's clearance factor at the cohort's man 0.9842 and
-# at its woman 0.8447, so the reference man's Vmax rises by 1.6%.
+# printed, so none is derived.  The factors (cohortSizeFactors()): volume
+# 0.8989, clearance 0.9231.
 #
 # PREGNANCY (R/pregnancy.R)
 # =========================
@@ -133,25 +137,25 @@
 # Plasma only: tPeak and MEAC are zero.
 # -----------------------------------------------------------------------------
 
-# Briki 2026, Table 3 and its equations
+# Briki 2026, Table S3 (the alternative final model) and its equations
 FLUOROURACIL_BRIKI <- list(
-  vmax = 429,          # mg/h
-  km = 2.34,           # mg/L
-  cl = 52.6,           # L/h, linear
-  v1 = 9.21,           # L
-  q = 125,             # L/h
-  v2 = 14.6,           # L at 70 kg
-  thetaAge = -0.289,   # on Vmax, per (age - 60)/60
-  thetaMale = 0.183,   # on Vmax, men
-  thetaBSA = 2.61,     # on CL, (BSA/1.7)
+  vmax = 411,          # mg/h at LBM 55 kg and age 60
+  km = 1.89,           # mg/L
+  cl = 59.2,           # L/h, linear, at BSA 1.7 m2
+  v1 = 9.58,           # L
+  q = 112,             # L/h
+  v2 = 13.6,           # L at 70 kg
+  thetaAge = -0.292,   # on Vmax, per (age - 60)/60
+  thetaLBM = 0.484,    # on Vmax, (LBM/55)
+  lbmReference = 55,   # kg
+  thetaBSA = 1.62,     # on CL, (BSA/1.7)
   thetaBW = 1          # on V2, (BW/70), fixed
 )
 FLUOROURACIL_AGE_RANGE <- c(24, 90)   # years, the source's range
 
 # Briki 2026, Table 2 (page 6), read on the PDF 2026-11-25: medians per
-# study.  V1, Q and Vmax, with no size term, are anchored at this cohort;
-# Vmax, which carries the source's sex term, at its patient of the patient's
-# own sex (see BODY SIZE above).
+# study.  V1 and Q, with no size term, are anchored at this cohort (see BODY
+# SIZE above).
 FLUOROURACIL_BRIKI_COHORT <- list(groups = list(
   list(weight = 68, height = 168, age = 65, men = 14,  women = 7),    # SID1
   list(weight = 76, height = 171, age = 63, men = 20,  women = 10),   # SID2
@@ -177,25 +181,20 @@ bsaMosteller <- function(weight, height) sqrt(weight * height / 3600)
 fluorouracilBriki <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   p <- FLUOROURACIL_BRIKI
-  # V1 and Q, with no covariate, are anchored at Briki's pooled cohort; Vmax,
-  # which carries the source's sex term, at the cohort's patient of the
-  # patient's own sex; CL (BSA) and V2 (weight) keep their own terms
+  # V1 and Q, with no covariate, are anchored at Briki's cohort; Vmax (lean
+  # mass), CL (BSA) and V2 (weight) keep their own terms
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
                         legacyVolume = 1, legacyClearance = 1,
                         cohort = do.call(cohortSizeFactors, FLUOROURACIL_BRIKI_COHORT))
-  sexAnchor <- cohortSexSizeFactors(FLUOROURACIL_BRIKI_COHORT, sex)
-  vmaxSize <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                            legacyVolume = 1, legacyClearance = 1,
-                            cohort = sexAnchor)$clearance
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   bsa <- bsaMosteller(w, height)
+  lbm <- if (isTRUE(adjustToFFM)) size$ffm else lbwJanmahasatian(weight, height, sex)
   a <- min(max(age, FLUOROURACIL_AGE_RANGE[1]), FLUOROURACIL_AGE_RANGE[2])
-  male <- as.numeric(identical(sex, "male"))
 
-  vmax <- p$vmax * (1 + p$thetaAge * (a - 60) / 60) * (1 + p$thetaMale * male) / 60 *
-    vmaxSize                                                                          # mg/min
-  km <- p$km                                                                          # mg/L
-  clLinear <- p$cl * (bsa / 1.7)^p$thetaBSA / 60                                      # L/min
+  vmax <- p$vmax * (1 + p$thetaAge * (a - 60) / 60) *
+    (lbm / p$lbmReference)^p$thetaLBM / 60                     # mg/min
+  km <- p$km                                                   # mg/L
+  clLinear <- p$cl * (bsa / 1.7)^p$thetaBSA / 60               # L/min
 
   default <- list(
     v1 = p$v1 * size$volume,
@@ -214,9 +213,11 @@ fluorouracilBriki <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "Briki M, Thoueille P, Joerger M, Chatelut E, et al. Model-based meta-analysis ",
     "of individual patient data for the characterization of intravenous ",
     "5-fluorouracil population pharmacokinetics. Cancer Chemother Pharmacol ",
-    "2026;96:63. 726 adults, bolus and 46-h infusions: two compartments, Vmax 429 ",
-    "mg/h x (1 - 0.289 (age-60)/60) x 1.183 in men, Km 2.34 mg/L, linear CL 52.6 ",
-    "L/h x (BSA/1.7)^2.61 (Mosteller), V1 9.21 L, Q 125 L/h, V2 14.6 L x weight/70. ",
+    "2026;96:63. 726 adults, bolus and 46-h infusions. The authors' alternative ",
+    "model (supplement Table S3): two compartments, Vmax 411 mg/h x (1 - 0.292 ",
+    "(age-60)/60) x (lean body mass/55 kg)^0.484, Km 1.89 mg/L, linear CL 59.2 L/h ",
+    "x (BSA/1.7)^1.62 (Mosteller), V1 9.58 L, Q 112 L/h, V2 13.6 L x weight/70; ",
+    "V1 and Q anchored at the study's typical patient. ",
     "DPD deficiency not represented. Plasma 5-FU only. ",
     "https://doi.org/10.1007/s00280-026-04885-x"
   )

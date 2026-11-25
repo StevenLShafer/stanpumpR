@@ -302,9 +302,12 @@ values**, and the reference man, and everyone else, are scaled from there.
   74 y; 13 men and 1 woman); it had been a per-kilogram model. And
   (2026-11-25, Gemini's chemotherapy audit of 2026-11-23, F22)
   fluorouracilBriki (V1 and Q at Briki 2026's Table 2, three studies as
-  three groups, heights printed; Vmax, which carries the source's sex term,
-  at the cohort's patient of the patient's own sex, where until then it had
-  not been scaled at all; CL keeps its BSA term and V2 its weight term) and
+  three groups, heights printed; at the same time the model became the
+  authors' alternative of supplement Table S3, on Shafer's decision, whose
+  Vmax carries its own lean-body-mass term, (LBM/55)^0.484, in place of
+  sex: a sex term on a clearance with no weight term stands in for size,
+  and the lean-mass exponent reproduces it, where FFM^0.75 would overstate
+  it by about a tenth; CL keeps its BSA term and V2 its weight term) and
   cytarabine's adult branch (Krogh-Madsen 2012's four parameters at
   etoposideKroghMadsen's cohort, the PDF confirming one set of 23 patients
   for both drugs; the children's branch keeps Periclou's BSA term).

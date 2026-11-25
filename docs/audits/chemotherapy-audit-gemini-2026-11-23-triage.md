@@ -94,9 +94,11 @@ fall (F16), and an external validation of Taylor 2020 read as one of the Taylor
 - **F22. Done (2026-11-25).** fluorouracilBriki, capecitabine and adult
   cytarabine were not anchored at their cohorts. fluorouracilBriki: V1 and Q
   anchored at Briki 2026's Table 2 (three studies entered as groups, heights
-  printed), and Vmax, which carries the source's sex term and had not been
-  scaled at all, at the cohort's patient of the patient's own sex
-  (`cohortSexSizeFactors()`); CL keeps its BSA term and V2 its weight term.
+  printed). Its Vmax, which carried a sex term and no size term, raised the
+  question of how to scale it; Shafer chose (2026-11-25) the authors'
+  alternative model of supplement Table S3, whose Vmax carries lean body
+  mass, (LBM/55)^0.484, in place of sex. CL keeps its BSA term and V2 its
+  weight term.
   Adult cytarabine: anchored at `ETOPOSIDE_KM_COHORT`, the PDF (pages
   1156-1157) confirming that Krogh-Madsen fitted all three drugs in one set
   of 23 patients. Capecitabine had already been anchored in PR #841 (its
