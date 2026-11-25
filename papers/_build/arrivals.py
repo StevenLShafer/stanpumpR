@@ -114,6 +114,12 @@ ENQUEUE = "--no-enqueue" not in args and not NO_ARCHIVE and not TASKS
 # (CodeRabbit, PR #926).  Nothing operational depends on it: update.bat runs the plain form,
 # which still enqueues, and the watch this mode was built for runs `--no-archive --tasks`,
 # where ENQUEUE was already off.
+#
+# IF YOU EVER LET --tasks ENQUEUE AGAIN, read this first.  The task branch returns before the
+# report prints `enqueue_problem` -- the queue missing, PubMed failing, the file locked -- so
+# with writes enabled in that mode a failure to queue a wanted paper would be swallowed and
+# the command would still exit 0.  Today that cannot happen, because enqueue() is not called
+# at all when TASKS is set; the safety is this line, not anything in the branch itself.
 # A wanted paper that is in NEITHER the archive nor the download queue is invisible to the
 # person doing the downloading: on 2026-11-18 nine of the ten PMIDs that registry rows were
 # blocked on had never reached stanpumpr-queue.csv, so nobody was looking for them and the
