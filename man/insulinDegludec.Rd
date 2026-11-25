@@ -4,14 +4,7 @@
 \alias{insulinDegludec}
 \title{Insulin degludec (Tresiba U-100 and U-200): pharmacokinetics}
 \usage{
-insulinDegludec(
-  weight,
-  height,
-  age,
-  sex,
-  adjustToFFM = TRUE,
-  pregnant = FALSE
-)
+insulinDegludec(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
 }
 \arguments{
 \item{weight}{weight in kg}

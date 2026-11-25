@@ -4,19 +4,25 @@
 \alias{gasTypicalBand}
 \title{Typical-range band for a gas facet}
 \usage{
-gasTypicalBand(drug, props)
+gasTypicalBand(drug, props, age = 40)
 }
 \arguments{
 \item{drug}{gas name}
 
 \item{props}{output of \code{getGasProperties()}}
+
+\item{age}{patient age in years; 40, the reference age, gives MAC40}
 }
 \value{
 named numeric vector: lower, typical, upper
 }
 \description{
 The shaded band on each facet marks the usual clinical range.  For the potent
-agents that is roughly 0.7 to 1.3 MAC; for oxygen it is a sensible inspired
-range rather than a therapeutic window.
+agents that is roughly 0.7 to 1.3 MAC, the patient's: MAC at the patient's
+age, as the MAC series and the time until threshold use it.  Until
+2026-11-23 the band was drawn at the MAC of a 40-year-old whatever the age,
+2.1\% sevoflurane where an 80-year-old's MAC is 1.64\% (ChatGPT's gas-engine
+audit of 2026-11-23, C-02).  For oxygen it is a sensible inspired range
+rather than a therapeutic window.
 }
 \keyword{internal}

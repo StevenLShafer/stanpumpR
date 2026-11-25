@@ -43,10 +43,15 @@
 # therefore show a central volume of 2.57 L: the paper's V1 is 2.52 L.
 #
 # FREE DOXORUBICIN IS NOT THE LIBRARY'S DOXORUBICIN.  CLfree 2.68 L/h is
-# about a twentieth of conventional doxorubicin's clearance (Joerger 2007, 108
-# L/h for the hydrochloride): in a joint fit of release and elimination only
-# their ratio is identifiable, and the "free" analyte here is the released
-# pool as the assay measures it.  So the metabolite is a model of its own,
+# about an eighteenth of conventional doxorubicin's clearance (Joerger 2007,
+# Table IV: 47.6 L/h at BSA 1.8 m2, AST 21 U/L and age 56; 108 L/h, cited
+# here until 2026-11-24, is doxorubicinol's CL/fm, not the parent's: ChatGPT
+# chemotherapy audit F17).  With release complete, the free pool's area is
+# dose / CLfree, so CLfree is identified in Hsu's fit (Table I, RSE 9.9%);
+# what differs from conventional doxorubicin is that the free curve is
+# release-limited, and Hsu's Discussion notes that such profiles give
+# estimates unlike those of conventional drug.  The "free" analyte is the
+# released pool as the assay measures it.  So the metabolite is a model of its own,
 # METABOLITE_FORMATION_BASIS "joint", and conventional doxorubicin's
 # parameters are not borrowed (the registry's rule for this product).
 #
@@ -63,8 +68,22 @@
 # DOSE BASIS: mg of doxorubicin hydrochloride, as labelled and as the paper
 # doses it; no conversion.
 #
-# BODY SIZE: no covariate was reported; every parameter is fixed in both
-# switch positions (as for Crombag's paclitaxel), the dose being per m2.
+# BODY SIZE (docs/weight-adjustment.md): no covariate was reported.  Until
+# 2026-11-24 every parameter was fixed, after the precedent of Crombag's
+# paclitaxel, which Shafer's first-principles rule of 2026-11-19 overturned
+# (*Every parameter is scaled*; Gemini's chemotherapy audit of 2026-11-23,
+# F5).  With the switch on, the volumes (encapsulated V1, free V2 and V3) take
+# the fat-free-mass volume factor and the release and the free drug's Q and
+# clearance the clearance factor, here and in doxorubicinLiposomalFree, the
+# fit being joint; with it off they are the published values.
+#
+# BODY SIZE ANCHOR: at the reference (the 70 kg man), not at the cohort:
+# Hsu 2018 prints neither the number nor the size of its women
+# (chemotherapyRegistry.csv), so there is no cohort to anchor at.  A typical
+# woman therefore receives smaller volumes and clearances than published.
+# [decision] for Shafer: whether to anchor at a sex-typical woman in the
+# absence of printed demographics, or to keep the reference anchor until the
+# paper's (or the NDA's) demographics are read.
 #
 # PREGNANCY: see its registry row.  NO EFFECT SITE, NO BAND.
 # -----------------------------------------------------------------------------
@@ -90,12 +109,16 @@ doxorubicinLiposomal <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   p <- DOXORUBICIN_LIPOSOMAL_HSU
   e <- p$encapsulated
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                        legacyVolume = 1, legacyClearance = 1)
+  v1 <- p$v1 * size$volume
+  rel <- p$rel * size$clearance
 
   default <- list(
-    v1  = p$v1 / e,                          # 98% of the dose: see the header
+    v1  = v1 / e,                            # 98% of the dose: see the header
     v2  = 1,                                 # one compartment
     v3  = 1,
-    cl1 = p$rel / e / 60,                    # k10 = Rel / V1
+    cl1 = rel / e / 60,                      # k10 = Rel / V1
     cl2 = 0,
     cl3 = 0
   )
@@ -107,7 +130,8 @@ doxorubicinLiposomal <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "bioequivalence assessment of PEGylated liposomal doxorubicin. Pharm Res 2018;35:106. ",
     "Women with ovarian cancer, Doxil/Caelyx 50 mg/m2: encapsulated doxorubicin in one ",
     "compartment (V1 2.52 L) releasing free doxorubicin at 0.0212 L/h, 98% encapsulated; ",
-    "free doxorubicin two compartments (V 9.52 and 35.1 L, Q 2.87, CL 2.68 L/h). Liposomal ",
+    "free doxorubicin two compartments (V 9.52 and 35.1 L, Q 2.87, CL 2.68 L/h); volumes ",
+    "and clearances scaled to fat-free mass at the reference anchor (no cohort printed). Liposomal ",
     "product only. https://doi.org/10.1007/s11095-018-2387-4"
   )
 
@@ -121,7 +145,7 @@ doxorubicinLiposomal <- function(weight, height, age, sex, adjustToFFM = TRUE)
     reference = reference,
     metabolite = list(
       name              = "doxorubicinLiposomalFree",
-      kFormation        = e * p$rel / p$v1 / 60,   # /min: Rel x encapsulated conc.
+      kFormation        = e * rel / v1 / 60,       # /min: Rel x encapsulated conc.
       firstPassFraction = 0,
       directFraction    = 1 - e,                    # the unencapsulated 2%
       mwRatio           = 1                         # the paper's amounts, as dosed

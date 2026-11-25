@@ -559,7 +559,11 @@ METABOLITE_FORMATION_BASIS <- data.frame(
              # norpethidine's apparent volume was calibrated with the
              # library's own pethidine forming it (R/drugs_norpethidine.R);
              # PPX's is Sunder 2026's joint fit (R/drugs_PPX.R).
-             "lidocaine", "pethidine", "ropivacaine"),
+             "lidocaine", "pethidine", "ropivacaine",
+             # Coartem's artemether (2026-11-24, Ding 2026): its transit chain
+             # forms dihydroartemisinin from dihydroartemisininSet(), the one
+             # definition the metabolite's own model reads.
+             "artemether"),
   metabolite = c("morphine", "hydromorphone", "oxymorphone",
                  "enalaprilat", "prednisolone",
                  "desethylamiodarone", "dehydroaripiprazole", "salicylate",
@@ -570,17 +574,18 @@ METABOLITE_FORMATION_BASIS <- data.frame(
                  "doxorubicinolPerezBlanco", "doxorubicinol", "norclozapine",
                  "nortriptyline", "doxorubicinLiposomalFree", "ACT333679", "M6SUZ",
                  "aprocitentan", "colistin",
-                 "MEGX", "norpethidine", "PPX"),
+                 "MEGX", "norpethidine", "PPX", "dihydroartemisinin"),
   basis = c("reads", "reads", "reads",
             "shared", "shared",
             rep("joint", 17), "reads", "joint", "joint", "shared", "shared",
             "joint",
-            rep("joint", 3)),  # MEGX, norpethidine, PPX
+            rep("joint", 3),  # MEGX, norpethidine, PPX
+            "shared"),        # artemether
   uses = c("libraryReferenceClearance", "hydromorphone",
            "libraryReferenceClearance",
            "enalaprilatSet", "prednisolonePairSystem",
            rep(NA_character_, 17), "nortriptyline", NA_character_, NA_character_,
            "M6SUZ", "aprocitentan", NA_character_,
-           rep(NA_character_, 3)),
+           rep(NA_character_, 3), "dihydroartemisininSet"),
   stringsAsFactors = FALSE
 )

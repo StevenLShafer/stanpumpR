@@ -22,7 +22,8 @@ pkOf <- function(drug, pregnant = FALSE, ...) {
 setOf <- function(pk) pk$PK[[PK_EVENT_DEFAULT]]
 libraryDrugs <- function() {
   drugs <- getDrugDefaultsGlobal()$Drug
-  drugs[!isGasDrug(drugs)]
+  # A combination product has no model of its own; its components are here
+  drugs[!isGasDrug(drugs) & !isCombinationProduct(drugs)]
 }
 readsFlag <- function(drug) {
   exists(drug, mode = "function") &&
@@ -49,6 +50,9 @@ test_that("every drug of the library has exactly one row in the pregnancy regist
   # (a candidate model of a chosen-model group takes its group's)
   owner <- ifelse(is.na(modelCandidateGroup(registry$drug)), registry$drug,
                   modelCandidateGroup(registry$drug))
+  # (and a component of a combination product its product's)
+  owner <- ifelse(is.na(combinationProductFor(owner)), owner,
+                  combinationProductFor(owner))
   expect_equal(registry$category, dd$Category[match(owner, dd$Drug)])
 })
 

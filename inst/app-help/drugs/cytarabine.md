@@ -31,3 +31,5 @@ Plasma cytarabine (ara-C), in mcg/mL. The active drug is ara-CTP inside the leuk
 - **Not a monitoring tool:** the curve is a population prediction.
 
 Both papers were read on their PDFs. See [chemotherapy](help:models/chemotherapy).
+
+**Routes not modelled.** The FDA label gives cytarabine intravenously, subcutaneously and intrathecally. Only the intravenous route is modelled here, because the models were fitted to intravenous doses. If you need a route stanpumpR does not offer, please contact Steven Shafer (steven.shafer@stanford.edu). For a one-time simulation in the meantime, a published pharmacokinetic study of that route can often be uploaded to the **Single Paper Review** tab, which reads its model and simulates it.

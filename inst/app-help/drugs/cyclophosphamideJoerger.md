@@ -8,7 +8,7 @@ No body-size covariate was found. The same paper is the library's [doxorubicin](
 
 ### What is plotted
 
-Plasma cyclophosphamide in mcg/mL (mg/L). Cyclophosphamide is a **prodrug**: its active metabolite, 4-hydroxycyclophosphamide, was not measured and is not plotted. Doses are entered in mg or as an infusion rate; a dose prescribed per m² must be multiplied by the body surface area first. There is no effect site and no band.
+Plasma cyclophosphamide in mcg/mL (mg/L). Cyclophosphamide is a **prodrug**: its active metabolite, 4-hydroxycyclophosphamide, was not measured and is not plotted. Doses are entered in mg or as an infusion rate; a dose prescribed per m² or per kg can be entered as such (mg/m², mg/kg; body surface area by Mosteller, from the Patient Profile's weight and height). There is no effect site and no band.
 
 ### Where to be careful
 

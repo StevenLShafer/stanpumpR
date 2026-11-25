@@ -16,6 +16,8 @@ The maximal elimination rate is 33 per cent lower in CYP2C9 intermediate metabol
 
 ### What is not modelled
 
+Capecitabine may raise phenytoin levels (Xeloda label, 7.2), which this model does not show: check phenytoin levels when it is given.
+
 Albumin binding and the unbound fraction (the curve is total phenytoin, so in hypoalbuminaemia or renal failure a total of 10 mg/L may carry a therapeutic unbound level), induction or inhibition by co-medication other than the two interactions below, and the early albumin displacement by fosphenytoin. There is no effect site and no time until threshold.
 
 Valproate (which displaces phenytoin from albumin and lowers the plotted total) and zonisamide (which raises Km) change phenytoin when the **Include antiseizure drug interactions** box is ticked. See [Antiseizure drug interactions](help:models/antiseizure-interactions).

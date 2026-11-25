@@ -60,9 +60,14 @@
 #
 # WHAT IS HELD AT THE REFERENCE
 # =============================
-# AST at 21 U/L, the equation's reference (the Patient Profile has no field).
-# AST 41 U/L lowers clearance by 15%; a raised bilirubin, the usual basis for
-# reducing the dose, was not a covariate.  Age is a negative power, floored at
+# Serum AST is read from the Patient Profile's Serum AST field (ast, U/L;
+# blank means the equation's reference, 21 U/L, EPIRUBICIN-style: the field
+# has existed since 2026-11-10 and was not wired to this model until Gemini's
+# chemotherapy audit of 2026-11-23, F6).  AST 41 U/L lowers clearance by 15%.
+# The paper prints the cohort's AST as median 24, IQR 15-38, and no range, so
+# the term is held only within the field's own limits (MIN_AST-MAX_AST); far
+# outside the IQR it is an extrapolation.  A raised bilirubin, the usual basis
+# for reducing the dose, was not a covariate.  Age is a negative power, floored at
 # 18 (ADULT_AGE_TERM_FLOOR; the youngest studied was 29).  The BSA formula is
 # not named (Mosteller's is used).  The creatinine clearance of the
 # metabolite's equation is doxorubicinol's (R/drugs_doxorubicinolJoerger.R).
@@ -102,7 +107,7 @@ DOXORUBICIN_PREGNANCY <- list(cl = 1.14, v1 = 1.08)
 DOXORUBICIN_JOERGER <- list(
   cl = 47.6,            # L/h at BSA 1.8 m2, AST 21 U/L, age 56
   bsaReference = 1.8, bsaExponent = 1.4,
-  astExponent = -0.24,  # AST held at its reference, 21 U/L
+  astReference = 21, astExponent = -0.24,  # U/L; the Patient Profile's Serum AST
   ageReference = 56, ageExponent = -0.54,
   v1 = 12.3,            # L
   q = 60.3,             # L/h
@@ -122,15 +127,16 @@ DOXORUBICIN_JOERGER_COHORT <- list(weight = 70, height = 170.0, age = 56, men = 
 #' Doxorubicin, intravenous (Joerger 2007)
 #'
 #' Two compartments, forming doxorubicinol; body surface area and age on
-#' clearance, AST held at the reference.  See the header of
+#' clearance, and the Patient Profile's Serum AST.  See the header of
 #' \code{R/drugs_doxorubicinJoerger.R}.
 #'
 #' @inheritParams cefazolin
+#' @param ast serum AST in U/L, or NULL for the equation's reference, 21 U/L
 #' @param pregnant TRUE in late pregnancy: Janssen 2021's factors
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 doxorubicinJoerger <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                               pregnant = FALSE)
+                               ast = NULL, pregnant = FALSE)
 {
   preg <- if (isTRUE(pregnant)) DOXORUBICIN_PREGNANCY else list(cl = 1, v1 = 1)
   p <- DOXORUBICIN_JOERGER
@@ -143,7 +149,9 @@ doxorubicinJoerger <- function(weight, height, age, sex, adjustToFFM = TRUE,
   w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   bsa <- bsaMosteller(w, height)
   ageTerm <- max(age, ADULT_AGE_TERM_FLOOR)
+  astValue <- if (is.null(ast)) p$astReference else min(max(ast, MIN_AST), MAX_AST)
   cl <- p$cl * (bsa / p$bsaReference)^p$bsaExponent *
+    (astValue / p$astReference)^p$astExponent *
     (ageTerm / p$ageReference)^p$ageExponent                         # L/h
 
   v1 <- p$v1 * size$volume / f * preg$v1
@@ -163,8 +171,8 @@ doxorubicinJoerger <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "Joerger M, Huitema ADR, Richel DJ, et al. Population pharmacokinetics and ",
     "pharmacodynamics of doxorubicin and cyclophosphamide in breast cancer patients: ",
     "a study by the EORTC-PAMM-NDDG. Clin Pharmacokinet 2007;46:1051-1068. 59 women: ",
-    "two compartments, CL 47.6 L/h x (BSA/1.8)^1.4 x (age/56)^-0.54 (Mosteller; AST ",
-    "held at 21 U/L), V1 12.3 L, Q 60.3 L/h, V2 421 L, all clearance forming ",
+    "two compartments, CL 47.6 L/h x (BSA/1.8)^1.4 x (age/56)^-0.54 (Mosteller) x (AST/21 U/L)^-0.24 (",
+    "the Serum AST field; 21 U/L when blank), V1 12.3 L, Q 60.3 L/h, V2 421 L, all clearance forming ",
     "doxorubicinol. Doses as the hydrochloride; plasma doxorubicin base. ",
     "https://doi.org/10.2165/00003088-200746120-00005"
   )

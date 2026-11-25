@@ -141,7 +141,9 @@ bayesianServer <- function(input, output, session, doseTableClean, doseTableForm
   choices <- reactive({
     DT <- tryCatch(doseTableClean(), error = function(e) NULL)
     if (is.null(DT)) return(character(0))
-    sortDrugNames(unique(DT$Drug[!isGasDrug(DT$Drug)]))
+    # A combination product's levels are measured of its components
+    # (R/combination-products.R): artemether and lumefantrine for Coartem.
+    sortDrugNames(combinationExpandDrugNames(unique(DT$Drug[!isGasDrug(DT$Drug)])))
   })
 
   output$bayesTableUI <- renderUI({

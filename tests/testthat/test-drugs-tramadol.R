@@ -344,6 +344,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
   }, dd$Drug[dd$Class == "IV"])
   expect_setequal(blank, c(
     "MEGX", "norpethidine", "PPX",  # toxic metabolites, no ke0 (2026-11-13)
+    "artemether", "dihydroartemisinin", "lumefantrine",  # Coartem's components (2026-11-24)
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
     "vancomycinKidneyTransplant",
@@ -426,6 +427,8 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "levothyroxine",
     # liothyronine (Van Tassell 2019, 2026-11-18): plasma only
     "liothyronine",
+    # tafenoquine (Thakkar 2018, 2026-11-20): plasma only
+    "tafenoquine",
     # tamsulosin (Tsuda 2010, 2026-11-19): plasma only
     "tamsulosin",
     # rosuvastatin (Courlet 2021, 2026-11-19): plasma only

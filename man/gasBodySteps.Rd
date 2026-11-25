@@ -15,7 +15,14 @@ gasBodySteps(weight, events)
 list(time, body): normal physiology from 0 and each event's from
 its time.  If any body has cardiac output off normal, every body splits
 the vessel-rich group (gasBodyPhysiology(split = TRUE)), so the states
-are the same in all of them.
+are the same in all of them.  A body in force for no time (normal
+physiology when an event is at 0, or an event at the same time as the
+next) is left out: until 2026-11-24 the run started in the normal body
+whatever an event at 0 said, so its lungs started at sea-level room air
+at 5000 m (752 Torr where the ambient pressure is 420), its first time
+was recorded twice, and the Visualizer refused a run whose temperature
+was 30 C throughout as one whose temperature changed (Gemini's
+gas-engine audit of 2026-11-23, C-07).
 }
 \description{
 The bodies of a gas run with physiology events

@@ -6,8 +6,14 @@
 #
 # Structure and parameter values follow the GasMan(R) model of James H. Philip
 # as described in the peer-reviewed literature (Philip is a co-author of the
-# first reference below).  GasMan itself is closed source; nothing here is
-# derived from its code.
+# first reference below).  GasMan's source is published under the GPL-3.0 at
+# github.com/rasman/gasmanonline (its API, and its desktop and web
+# application; commit d3a2dd3 was the one compared).  The values here are the
+# literature's; they agree with that source's gasman.ini
+# (inst/validation/VALIDATION.md), and the cardiac output and ventilation
+# scaling are read from its GasDoc.cpp, as noted in getGasBody().  Until
+# 2026-11-23 this said GasMan was closed source (ChatGPT's gas-engine audit of
+# 2026-11-23).
 #
 #   Weber J, Schmidt J, Wirth S, Schumann S, Philip JH, Eberhart LHJ.
 #   Context-sensitive decrement times for inhaled anesthetics in obese patients
@@ -80,11 +86,22 @@ getGasProperties <- function()
     tg_muscle = c(0.54, 2.4, 4.5, 0.97, 0.014, NA),
     tg_fat    = c(1.08, 34,  70,  13,   0.070, NA),
 
-    # MAC, % of 1 atm, at the reference age.  Nitrogen's 200 is GasMan's own
-    # figure, recorded as it stands and flagged below rather than corrected or
-    # omitted: the table should say what GasMan says.  It is inert here because
+    # MAC, % of 1 atm, at the reference age of 40: Mapleson 1996's global
+    # values (Br J Anaesth 76:179-185, abstract and Table 2;
+    # papers/digests/PMID_8777094.md), the same meta-analysis whose age slope
+    # macForAge() applies, so slope and intercepts are one fit.  Shafer's
+    # decision of 2026-11-23, from ChatGPT's gas-engine audit (B-02): "We
+    # validated against GasMan initially, but are now moving to more recent
+    # research."  Until then these were GasMan's (GASMAN_MAC40 below), which
+    # are also the US labels' (Ultane 2.1% at 40, Forane 1.15% at 31-55,
+    # Suprane 6.0% at 45); at a given tension Mapleson's raise sevoflurane's
+    # MAC-equivalents by 16.7% and nitrous oxide's by 5.8%, and lower
+    # isoflurane's by 6.0% and desflurane's by 9.1%.  MAC enters no uptake,
+    # so the GasMan validation, which compares tensions, is untouched.
+    # Nitrogen's 200 is GasMan's own figure, recorded as it stands and
+    # flagged below rather than corrected or omitted; it is inert because
     # nitrogen is not summed into MAC.
-    MAC40 = c(110, 2.1, 1.1, 6.0, 200, NA),
+    MAC40 = c(104, 1.80, 1.17, 6.6, 200, NA),
 
     # Whether the agent contributes to the summed MAC.  gasman.ini gives
     # nitrogen a MAC of 200, presumably for hyperbaric completeness, but
@@ -107,6 +124,17 @@ getGasProperties <- function()
     stringsAsFactors = FALSE
   )
 }
+
+
+#' GasMan's MAC at 40, superseded
+#'
+#' The MAC of each potent agent in GasMan's gasman.ini, which stanpumpR used
+#' until 2026-11-23, when Shafer moved to Mapleson 1996's (getGasProperties()
+#' MAC40).  Kept as the record of what the engine was validated with, and for
+#' a comparison with GasMan's own MAC output.
+#' @noRd
+GASMAN_MAC40 <- c(nitrousOxide = 110, sevoflurane = 2.1, isoflurane = 1.1,
+                  desflurane = 6.0)
 
 
 #' Parameters whose provenance is known to be wrong
@@ -290,6 +318,14 @@ GAS_MAX_EXHALED_CO2 <- 0.5
 #     factor = sqrt(sqrt(factor * factor * factor))
 # and sets m_fVA = m_fDfltVA * factor.  Source read from
 # github.com/rasman/gasmanonline, gasman_api/gasmanAPI (GPL-3.0), 2026-10-05.
+# (Corrected 2026-11-24: in the API that scaling has no effect, InitDocument
+# computing the factor while the weight is still the default 70, and
+# SetWeight changing only the tick; the (weight / 70)^0.75 scaling is the
+# desktop GasMan's, applied when the user changes the weight,
+# src/gasman_main/gasdoc.cpp.  A gasman_run built from d3a2dd3 at 10 kg
+# with no VA or CO reports 4 and 5 L/min.  The values here are the desktop
+# program's, so nothing changes (Gemini's gas-engine audit of 2026-11-23,
+# A-02).)
 #
 # (Claude Code, Claude Fable 5.1, 2026-10-05.  An earlier draft the same day
 # used 8 mL/kg x an assumed 10 breaths/min; this replaces it.)

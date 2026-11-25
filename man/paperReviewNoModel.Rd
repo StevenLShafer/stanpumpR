@@ -2,13 +2,16 @@
 % Please edit documentation in R/paper-review-report.R
 \name{paperReviewNoModel}
 \alias{paperReviewNoModel}
-\title{Does the extraction hold no model: no parameter, no structure of one
-to three compartments, and no front-end model?}
+\title{Does the extraction hold no pharmacokinetic model?}
 \usage{
 paperReviewNoModel(x)
 }
 \description{
-Does the extraction hold no model: no parameter, no structure of one
-to three compartments, and no front-end model?
+A model needs a volume or a clearance, printed as a parameter or derived
+(a noncompartmental CL and Vss are enough to review), a published model
+it uses, or a front-end model.  A response surface's coefficients, a
+regression's slope or a lone "elimination rate" are not one: with them
+the paper was reviewed as failing to close a model it never claimed
+(Shafer's test of 2026-11-17, BJA-D-26-00577 and ALN-D-25-00690).
 }
 \keyword{internal}

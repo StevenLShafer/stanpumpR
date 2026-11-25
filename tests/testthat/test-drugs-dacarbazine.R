@@ -24,7 +24,10 @@ test_that("the mean model, and the checks the derivation did not use", {
   expect_equal(round(c(m$cl, m$q) * 1000, 1), c(15.4, 21.9))
   expect_equal(round(m$v1 + m$v2, 3), 0.632)                       # the paper's mean Vss
   # V1 against Table 2's Ve (Dose / C0), patient by patient
-  expect_equal(m$each$v1, DACARBAZINE_BREITHAUPT$ve, tolerance = 0.45)
+  ratio <- m$each$v1 / DACARBAZINE_BREITHAUPT$ve
+  seven <- DACARBAZINE_BREITHAUPT$patient == 7
+  expect_true(all(abs(ratio[!seven] - 1) < 0.04))
+  expect_equal(round(ratio[seven] - 1, 2), -0.43)   # patient 7, the outlier
   expect_equal(round(mean(m$each$v1), 3), 0.178)
   expect_equal(round(mean(DACARBAZINE_BREITHAUPT$ve), 3), 0.202)
   # the fast phase's share of the area: the text's 28 +/- 7%, range 21-35%

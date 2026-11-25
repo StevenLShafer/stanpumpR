@@ -4,7 +4,7 @@ Cladribine's parameters come from Lindemalm and colleagues (*BMC Pharmacol* 2005
 
 ### What is plotted
 
-Plasma cladribine in ng/mL. Cladribine acts as its triphosphate inside lymphocytes, which is not plotted, and neither is its metabolite 2-chloroadenine. There is no effect site and no band: no therapeutic concentration range is established. Doses are entered in mg; a dose prescribed per kilogram or per m² has to be converted first.
+Plasma cladribine in ng/mL. Cladribine acts as its triphosphate inside lymphocytes, which is not plotted, and neither is its metabolite 2-chloroadenine. There is no effect site and no band: no therapeutic concentration range is established. Doses are entered in mg; a dose prescribed per kilogram or per m² can be entered as such (mg/m², mg/kg; body surface area by Mosteller, from the Patient Profile's weight and height).
 
 ### Covariates
 

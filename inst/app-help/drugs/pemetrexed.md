@@ -10,7 +10,7 @@ For the cohort's median patient (creatinine clearance 92.6 mL/min, body surface 
 
 ### What is plotted
 
-Plasma pemetrexed in mcg/mL (mg/L). Doses are entered in mg or as an infusion rate, as pemetrexed (Alimta is labelled as the acid); a dose prescribed per m² must be multiplied by the body surface area first. There is no effect site and no band.
+Plasma pemetrexed in mcg/mL (mg/L). Doses are entered in mg or as an infusion rate, as pemetrexed (Alimta is labelled as the acid); a dose prescribed per m² or per kg can be entered as such (mg/m², mg/kg; body surface area by Mosteller, from the Patient Profile's weight and height). There is no effect site and no band.
 
 ### Covariates
 

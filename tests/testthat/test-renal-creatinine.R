@@ -129,7 +129,11 @@ renalDrugs <- c("mannitol", "vancomycin", "vancomycinKidneyTransplant", "gentami
                 "metforminER",
                 # Cockcroft-Gault, a power on CL/F with its own coefficient
                 # below 30 mL/min (Naik 2016, R/drugs_alogliptin.R)
-                "alogliptin")
+                "alogliptin",
+                # rocuronium (Kleijn 2011): Cockcroft-Gault in an exponential
+                # on V1, exp[-0.00143 (CR - 119)], not on its clearance
+                # (R/drugs_rocuronium.R)
+                "rocuronium")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system),
@@ -152,7 +156,10 @@ test_that("a blank creatinine is the assumed normal value for age and sex", {
 })
 
 test_that("every renal model takes the creatinine, and the rest ignore it", {
-  for (drug in getDrugDefaultsGlobal()$Drug[!isGasDrug(getDrugDefaultsGlobal()$Drug)]) {
+  # (a combination product has no model of its own; its components do:
+  # R/combination-products.R)
+  dd <- getDrugDefaultsGlobal()
+  for (drug in dd$Drug[!isGasDrug(dd$Drug) & !isCombinationProduct(dd$Drug)]) {
     takes <- "creatinine" %in% names(formals(get(drug, mode = "function")))
     expect_identical(takes, drug %in% renalDrugs, info = drug)
   }
@@ -221,8 +228,22 @@ test_that("a raised creatinine raises the bioavailability where the renal term i
   }
 })
 
+# Models whose renal term acts on a volume, not on a clearance: rocuronium's
+# V1 x exp[-0.00143 (CR - 119)] (Kleijn 2011).  A raised creatinine lowers
+# the creatinine clearance and so raises V1.
+renalOnVolume <- c("rocuronium")
+
+test_that("a raised creatinine raises V1 where the renal term is on the volume", {
+  for (drug in renalOnVolume) {
+    normal <- getDrugPK(drug, 70, 170, 50, "male")
+    raised <- getDrugPK(drug, 70, 170, 50, "male", creatinine = 3)
+    expect_gt(raised$PK$default$v1, normal$PK$default$v1, label = drug)
+    expect_identical(systemClearances(raised), systemClearances(normal), label = drug)
+  }
+})
+
 test_that("a raised creatinine lowers every renal clearance", {
-  for (drug in setdiff(renalDrugs, renalOnBioavailability)) {
+  for (drug in setdiff(renalDrugs, c(renalOnBioavailability, renalOnVolume))) {
     normal <- systemClearances(getDrugPK(drug, 70, 170, 50, "male"))
     raised <- systemClearances(getDrugPK(drug, 70, 170, 50, "male", creatinine = 3))
     expect_lt(min(raised - normal), 0, label = drug)

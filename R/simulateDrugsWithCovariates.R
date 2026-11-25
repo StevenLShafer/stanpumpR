@@ -66,6 +66,9 @@
 #' @param pulmonaryHypertension does the patient have pulmonary arterial
 #'   hypertension?  TRUE or FALSE (the default); read only by sildenafil and
 #'   tadalafil (see \code{getDrugPK()}).
+#' @param infection the patient's infection, one of \code{INFECTION_VALUES}
+#'   (\code{"none"} by default); read only by the models with an infection
+#'   term (see \code{getDrugPK()} and \code{R/infection.R}).
 #'
 #' @returns a list of data frames with the output of the a single drug
 #'   simulation.  A drug that forms an active metabolite adds its contribution
@@ -94,12 +97,16 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                                          albumin = NULL,
                                          ast = NULL,
                                          physiology = NULL,
-                                         pulmonaryHypertension = FALSE)
+                                         pulmonaryHypertension = FALSE,
+                                         infection = INFECTION_DEFAULT)
 {
   if (length(sex) != 1 || !sex %in% SEX_VALUES) {
     stop("Invalid sex: ", paste(sex, collapse = ", "),
          ". Must be one of: ", paste(SEX_VALUES, collapse = ", "))
   }
+  # A combination product (Coartem) is simulated as its components, each its
+  # own drug (R/combination-products.R).
+  dose <- expandCombinationProducts(dose)
   drugList <- unique(dose$Drug)
   # The inhaled gases are simulated by simulateGases() / advanceClosedFormGas(),
   # not here: they have no drugs_*.R covariate function and no mass dose, so
@@ -143,7 +150,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                 pregnant = pregnant, adjustToFFM = adjustToFFM,
                 gestationalAge = gestationalAge, albumin = albumin,
                 ast = ast, physiology = phys,
-                pulmonaryHypertension = pulmonaryHypertension)
+                pulmonaryHypertension = pulmonaryHypertension,
+                infection = infection)
     PK <- if (nrow(physiologyEvents) > 0) physiologyEventPK(build, physiologyEvents)
           else build(physiology)
     pks[[drug]] <- PK
@@ -206,7 +214,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                           adjustToFFM = adjustToFFM,
                           gestationalAge = gestationalAge, albumin = albumin,
                           ast = ast, physiology = physiology,
-                    pulmonaryHypertension = pulmonaryHypertension)
+                          pulmonaryHypertension = pulmonaryHypertension,
+                          infection = infection)
     output <- attach(output, target, targetPK, targetDefaults)
   }
 

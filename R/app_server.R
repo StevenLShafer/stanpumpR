@@ -1145,6 +1145,14 @@ app_server <- function(input, output, session) {
     input$sex
   })
 
+  # The derived body size line under Sex (BSA and BMI), blank while weight
+  # or height is not a valid entry.
+  output$bodySize <- renderUI({
+    w <- asScalarNumeric(input$weight) * asScalarNumeric(input$weightUnit)
+    h <- asScalarNumeric(input$height) * asScalarNumeric(input$heightUnit)
+    HTML(bodySizeSummary(w, h))
+  })
+
   # The Opioid tolerance field: each opioid's MEAC times its factor
   # (OPIOID_TOLERANCE_FACTORS).  "none" until the field reports, and for
   # bookmarks made before it existed.
@@ -1242,13 +1250,17 @@ app_server <- function(input, output, session) {
   # value, which does nothing while no drug reads it.
   observe({
     draft <- tryCatch(doseTableDraft(), error = function(e) NULL)
-    inTable <- c(doseTable()$Drug, draft$Drug)
+    # A combination product's components read the fields
+    # (R/combination-products.R).
+    inTable <- combinationExpandDrugNames(c(doseTable()$Drug, draft$Drug))
     # The drugs drawn, given a dose above 0, for the options that add a panel
     # of something plotted (the Interaction plot, Tolerance and tachyphylaxis),
     # and the metabolites they form, which are drawn too (drugs() holds the
     # drawn entries, drawnDrugEntries(): codeine's morphine)
     formed <- tryCatch(names(drugs()), error = function(e) character(0))
-    plotted <- c(positiveDoseDrugs(doseTable()), positiveDoseDrugs(draft), formed)
+    plotted <- c(combinationExpandDrugNames(c(positiveDoseDrugs(doseTable()),
+                                              positiveDoseDrugs(draft))),
+                 formed)
     shown <- relevantFields(inTable, drugDefaults(), plotted = plotted)
     for (field in setdiff(names(shown), c("plotMEAC", "plotInteraction")))
       shinyjs::toggle(id = paste0("field_", field), condition = shown[[field]])
@@ -1356,6 +1368,12 @@ app_server <- function(input, output, session) {
     isTRUE(as.logical(asScalarString(input$pulmonaryHypertension)))
   })
 
+  # The Infection control: one of its own choices, its default before it
+  # reports and in a bookmark made before it existed, and its default for
+  # anything else a link or a forged input sends (a bookmark is untrusted
+  # input).  Only the models with an infection term read it (R/infection.R).
+  infection <- reactive(choiceOf(input$infection, INFECTION_VALUES, INFECTION_DEFAULT))
+
   # NULL when the field is blank: the renal models then assume a normal value.
   creatinine <- reactive({
     x <- input$creatinine
@@ -1440,6 +1458,9 @@ app_server <- function(input, output, session) {
     DT <- doseTableClean()
     if (is.null(DT)) return(NULL)
     DT <- DT[!isGasDrug(DT$Drug), , drop = FALSE]
+    # A combination product (Coartem) is simulated as its components, each
+    # its own drug (R/combination-products.R); the committed table keeps it.
+    DT <- expandCombinationProducts(DT)
     if (nrow(DT) == 0) NULL else DT
   })
 
@@ -1560,7 +1581,7 @@ app_server <- function(input, output, session) {
     # The drugs whose model chosen for this patient the sliders cannot scale
     entries <- tryCatch(bayesUpdate()$drugs, error = function(e) NULL)
     skipped <- names(Filter(function(e) isTRUE(e$slidersSkipped), entries))
-    physiologyNote(physiology(), doseTableClean()$Drug,
+    physiologyNote(physiology(), combinationExpandDrugNames(doseTableClean()$Drug),
                    temperature = bodyTemperature(), skipped = skipped,
                    altitude = altitude(), endobronchial = endobronchial())
   })
@@ -1705,6 +1726,7 @@ app_server <- function(input, output, session) {
         ast = ast(),
         pregnant = pregnant(),
         pulmonaryHypertension = pulmonaryHypertension(),
+        infection = infection(),
         adjustToFFM = adjustToFFM(),
         opioidTolerance = opioidTolerance(),
         buprenorphineOffset = buprenorphineOffset(),
@@ -2000,7 +2022,9 @@ app_server <- function(input, output, session) {
     if (is.null(DT)) return(NULL)
     maximum <- tryCatch(plotMaximum(), error = function(e) NULL)
     if (is.null(maximum)) return(NULL)
-    n <- scheduledDoseCount(DT, maximum)
+    # Counted as simulated: a combination product's schedule repeats once
+    # for each of its components (R/combination-products.R).
+    n <- scheduledDoseCount(expandCombinationProducts(DT), maximum)
     if (n <= MAX_SCHEDULED_DOSES) return(NULL)
     paste0(
       "The scheduled doses repeat ", format(n, big.mark = ","), " times over this plot, more than the ",
@@ -2307,6 +2331,7 @@ app_server <- function(input, output, session) {
       sex = sex(),
       pregnant = pregnant(),
       pulmonaryHypertension = pulmonaryHypertension(),
+      infection = infection(),
       adjustToFFM = adjustToFFM(),
       osmolality = osmolality(),
       creatinine = creatinine(),
@@ -2850,6 +2875,10 @@ app_server <- function(input, output, session) {
       # And a click on a metabolite that is only ever formed (no dose units)
       # on the drug that forms it
       drug <- formedMetaboliteParent(drug, drugs(), drugDefaults())
+      # And a click on a component of a combination product (artemether,
+      # lumefantrine, or dihydroartemisinin through artemether) on the
+      # product the dose table holds (R/combination-products.R)
+      drug <- combinationProductOf(drug, doseTable())
     }
     outputComments("drug from panelvar1", drug)
 
@@ -4075,7 +4104,7 @@ app_server <- function(input, output, session) {
         title = "Drug Thresholds",
         p("Set the threshold concentration for each drug."),
         p(class = "small text-muted",
-          "Inhaled agents are in %, shown for this patient's age; the MAC row is in MAC equivalents (multiples of the age-adjusted MAC)."),
+          "Inhaled agents are in %, shown for this patient's age at 37 \u00b0C; the plot moves them with body temperature as MAC moves. The MAC row is in MAC equivalents (multiples of the age-adjusted MAC)."),
         # identical() and isTRUE(): either value, not as a browser sends it,
         # stopped this observer and ended the session (Carbon's UI audit,
         # 2026-11-14, F6E)

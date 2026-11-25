@@ -532,9 +532,11 @@ gasBodyPhysiology <- function(body, cardiac = 1, split = FALSE)
 # lines separate for an agent so little more soluble in oil than in water.  Cardiac output and
 # ventilation fall with metabolism in hypothermia, but they are set by their
 # own controls (the Cardiac output slider, the ventilation row), so as not to
-# be counted twice.  The thresholds of the time until threshold are typed
-# tensions and do not move; the summed MAC series, and its threshold in MAC,
-# do.  The intravenous drugs are not changed.
+# be counted twice.  The thresholds of the time until threshold are defined at
+# 37 C and move with MAC (gasThresholdForTemperature(); Shafer, 2026-11-24,
+# reversing his decision of 2026-11-16 that typed thresholds were tensions that
+# did not move), as the summed MAC series and its threshold in MAC do.  The
+# intravenous drugs are not changed.
 
 #' Body temperature range and default, degrees C
 #' @noRd
@@ -1138,7 +1140,8 @@ physiologyIntro <- function()
     tags$p(
       "Do not enter one change twice: lowering renal function after entering",
       "a raised creatinine for a drug whose model reads it counts the",
-      "impairment twice."),
+      "impairment twice, and so does lowering liver function after entering",
+      "a raised Serum AST for a drug whose model reads it (epirubicin)."),
     tags$p(tags$a(href = "#", `data-help-page` = "models/physiology",
                   "More about the sliders")),
     tags$button(type = "button",

@@ -20,6 +20,7 @@ Total plasma paclitaxel, in mcg/mL. The measure used clinically is the time spen
 
 ### Where to be careful
 
+- **Interactions are not modelled.** Paclitaxel is metabolised by CYP2C8 and CYP3A4; the label advises caution with their inhibitors (gemfibrozil, among others) and inducers. The enzyme-inducing antiseizure drugs lower paclitaxel exposure, and the library's antiseizure interactions do not reach paclitaxel.
 - **Solvent-based paclitaxel only.** Nab-paclitaxel (Abraxane) is a different product with different kinetics.
 - **Bilirubin is held at the median.** A patient with high bilirubin clears paclitaxel more slowly than the curve shows.
 - **Pregnancy:** with Pregnant ticked, Janssen 2021's factors are applied, from a refit of this model's own data with 20 pregnant women: the half-saturation of elimination ×1.32, the central volume ×2.27 and the second tissue volume ×2.28.

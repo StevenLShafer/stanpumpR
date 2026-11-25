@@ -14,9 +14,9 @@ The binding is so fast that it is held at its equilibrium with the unbound drug 
 
 ### What is plotted
 
-The **unbound** plasma vincristine in ng/mL, the concentration the paper fitted; the bound drug is in the tissues, not in the sample. Doses are entered in mg as labelled (vincristine sulfate); a dose prescribed per m² must be multiplied by the body surface area first, and is usually capped at 2 mg, with infant reductions. There is no effect site and no band.
+The plasma vincristine in ng/mL, the concentration the paper measured and fitted (total vincristine in plasma, by LC-MS/MS); the drug bound to β-tubulin is in the tissues, not in the sample. "Unbound" in the model means not bound to that tubulin pool, not free of the plasma proteins. Doses are entered in mg as labelled (vincristine sulfate); a dose prescribed per m² or per kg can be entered as such (mg/m², mg/kg; body surface area by Mosteller, from the Patient Profile's weight and height), and is usually capped at 2 mg, with infant reductions. There is no effect site and no band.
 
-Because the binding saturates, doses do not add independently: four times the dose gives about sixteen times the unbound concentration at 5 minutes and about twice at 1 hour. The binding also lengthens the terminal phase (an apparent half-life of about 19 hours in an adult, against 13.5 hours from the two compartments alone). Every microgram given is still cleared at the same clearance, so the area under the curve is the dose over the clearance.
+Because the binding saturates, doses do not add independently: four times the dose gives about sixteen times the plasma concentration at 5 minutes and about twice at 1 hour. The binding also lengthens the terminal phase (an apparent half-life of about 19 hours in an adult, against 13.5 hours from the two compartments alone). Every microgram given is still cleared at the same clearance, so the area under the curve is the dose over the clearance.
 
 ### Covariates
 

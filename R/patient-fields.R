@@ -3,9 +3,9 @@
 #
 # getDrugPK() passes a covariate only to the models that name it in their
 # signature (`cyp2d6`, `cyp2c19`, `cyp2c9`, `cyp2b6`, `creatinine`,
-# `gestationalAge`, `albumin`, `ast`, `pulmonaryHypertension`), so the
-# signatures are the one authoritative list of what a field affects.  The
-# tooltips read them, as the Cautions page's test does, so a new model that
+# `gestationalAge`, `albumin`, `ast`, `pulmonaryHypertension`, `infection`),
+# so the signatures are the one authoritative list of what a field affects.
+# The tooltips read them, as the Cautions page's test does, so a new model that
 # names a covariate joins its tooltip by itself, and a tooltip can never
 # promise an effect the code does not have.
 
@@ -22,7 +22,8 @@ PATIENT_FIELD_LABELS <- c(
   gestationalAge = "Gestational age at birth",
   albumin    = "Serum albumin",
   ast        = "Serum AST",
-  pulmonaryHypertension = "Pulmonary hypertension"
+  pulmonaryHypertension = "Pulmonary hypertension",
+  infection  = "Infection"
 )
 
 # A qualification printed after a drug's name in its tooltip, where a model
@@ -182,6 +183,14 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
       "patients with PAH, often with severe heart disease, clear it more slowly.",
       "Yes gives the PAH population's pharmacokinetics; No the population of",
       "its other use (erectile dysfunction, healthy volunteers)."
+    ),
+    infection = paste(
+      "The patient's infection. Some antibiotic models were fitted in healthy",
+      "volunteers and in patients with each kind of infection, whose clearance",
+      "and volumes differ: pneumonia, for example, enlarges the central",
+      "volume. None gives the healthy volunteers' pharmacokinetics; a",
+      "ventilated pneumonia is a category of its own, as the sources fitted",
+      "it."
     )
   )
   trail <- if (arg == "creatinine") sprintf(

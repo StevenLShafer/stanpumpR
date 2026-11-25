@@ -5,11 +5,11 @@ Daunorubicin comes from Bogason and colleagues (*Br J Clin Pharmacol* 2011;71:51
 - clearance 115 L/h; central volume 373 L; a peripheral compartment of 1120 L exchanging at 252 L/h;
 - half-lives of 36 minutes and 11.5 hours.
 
-The paper found plasma concentrations lower in patients with a larger leukaemic cell burden (a higher white count, through a larger central volume). Its basic model, without that term, is used: the Patient Profile has no white count. Krogh-Madsen 2012, a second Danish study, used this model as its starting point.
+The paper found plasma concentrations lower in patients with a larger leukaemic cell burden (a higher white count, through a larger central volume). Its basic model, without that term, is used: the Patient Profile has no white count. Krogh-Madsen 2012, a Danish study, used this Swedish model as its starting point.
 
 ### What is plotted
 
-Plasma daunorubicin in ng/mL. Doses are entered in mg as labelled; the paper does not say whether it used the hydrochloride or the base (they differ by 7%). A dose prescribed per m² must be multiplied by the body surface area first. There is no effect site and no band.
+Plasma daunorubicin in ng/mL. Doses are entered in mg as labelled; the paper does not say whether it used the hydrochloride or the base (they differ by 7%). A dose prescribed per m² or per kg can be entered as such (mg/m², mg/kg; body surface area by Mosteller, from the Patient Profile's weight and height). There is no effect site and no band.
 
 ### Where to be careful
 

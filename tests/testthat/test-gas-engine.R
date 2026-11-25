@@ -333,10 +333,12 @@ test_that("cardiac output defaults to GasMan's 5 L/min, scaled allometrically, a
 })
 
 
-test_that("agent parameters are GasMan's own, not literature substitutes", {
+test_that("agent parameters are GasMan's own, but MAC is Mapleson's", {
   # Read from gasman.ini in the GasMan source (GPL-3.0,
   # github.com/rasman/gasmanonline).  Pinned because several differ from the
-  # conventional published values this file previously carried.
+  # conventional published values this file previously carried.  MAC at 40
+  # moved from GasMan's to Mapleson 1996's on 2026-11-23 (Shafer, from
+  # ChatGPT's gas-engine audit, B-02).
   p <- getGasProperties()
   get <- function(gas, col) p[[col]][p$gas == gas]
 
@@ -347,11 +349,18 @@ test_that("agent parameters are GasMan's own, not literature substitutes", {
   expect_equal(get("desflurane",   "lambda_blood"), 0.42)
   expect_equal(get("nitrogen",     "lambda_blood"), 0.014)
 
-  # MAC
-  expect_equal(get("nitrousOxide", "MAC40"), 110)          # not 104
-  expect_equal(get("sevoflurane",  "MAC40"), 2.1)          # not 2.05
-  expect_equal(get("isoflurane",   "MAC40"), 1.1)
-  expect_equal(get("desflurane",   "MAC40"), 6.0)
+  # MAC: Mapleson 1996, Table 2 (papers/digests/PMID_8777094.md), with
+  # GasMan's own kept as the record of what was validated
+  expect_equal(get("nitrousOxide", "MAC40"), 104)
+  expect_equal(get("sevoflurane",  "MAC40"), 1.80)
+  expect_equal(get("isoflurane",   "MAC40"), 1.17)
+  expect_equal(get("desflurane",   "MAC40"), 6.6)
+  expect_equal(GASMAN_MAC40, c(nitrousOxide = 110, sevoflurane = 2.1,
+                               isoflurane = 1.1, desflurane = 6.0))
+  # The default thresholds are a tenth of the new MAC at 40
+  dd <- getDrugDefaultsGlobal()
+  for (g in c("sevoflurane", "isoflurane", "desflurane"))
+    expect_equal(dd$endCe[dd$Drug == g], 0.1 * get(g, "MAC40"), info = g)
 
   # tissue:GAS, stored directly rather than converted from tissue:blood
   expect_equal(get("desflurane", "tg_brain"),  0.54)
@@ -389,13 +398,13 @@ test_that("desflurane simulates and washes in fastest of the volatiles", {
   brn <- s$results[s$results$Drug == "desflurane" & s$results$Site == "Brain", "Y"]
   mac <- s$results[s$results$Drug == "MAC", "Y"]
   expect_gt(max(brn), 0)
-  expect_equal(mac, alv / macForAge(6.0, 40), tolerance = 1e-9)
+  expect_equal(mac, alv / macForAge(6.6, 40), tolerance = 1e-9)
 
   # ...and it is NOT the brain series.  The two converge at equilibrium, so the
   # distinction only shows during wash-in, which is where it is checked.
   early <- which(s$timeLine > 1 & s$timeLine < 10)
   expect_gt(max(abs(alv[early] - brn[early])), 0.1)
-  expect_false(isTRUE(all.equal(mac[early], brn[early] / macForAge(6.0, 40))))
+  expect_false(isTRUE(all.equal(mac[early], brn[early] / macForAge(6.6, 40))))
 })
 
 

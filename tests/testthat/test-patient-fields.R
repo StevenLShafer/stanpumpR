@@ -13,7 +13,10 @@ test_that("the readers of each field are exactly the models that name it", {
     expect_gt(length(readers), 0, label = arg)
     expect_identical(readers, sort(readers))
     # a candidate model is read through its drug's name (R/modelSelection.R)
-    for (drug in setdiff(dd$Drug[!isGasDrug(dd$Drug)], modelCandidates())) {
+    # (and a combination product has no model of its own: its components
+    # are read, R/combination-products.R)
+    for (drug in setdiff(dd$Drug[!isGasDrug(dd$Drug) & !isCombinationProduct(dd$Drug)],
+                         modelCandidates())) {
       declares <- arg %in% names(formals(get(drug, mode = "function")))
       expect_identical(drug %in% readers, declares, info = paste(drug, arg))
     }

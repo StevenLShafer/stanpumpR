@@ -258,6 +258,34 @@ for (i in seq_len(nrow(models))) {
   if (length(hit)) models$card[i] <- hit[1]
 }
 
+# A paper the model code cites by DOI but which has no digest card is still the
+# source (or a stated cross-check) of a model stanpumpR runs, and its numbers
+# can be compared with that code even with no card to compare them with.
+# Found 2026-11-23: 24 such papers, piperacillin's own source (Kong 2025) among
+# them, had never been compared, because only carded papers were.
+codeFilesAll <- list.files(file.path(repo, "R"), pattern = "\\.R$", full.names = TRUE)
+codeTextLower <- vapply(codeFilesAll, function(f)
+  tolower(paste(readLines(f, warn = FALSE, encoding = "UTF-8"), collapse = "\n")), character(1))
+# Each path relative to the repository, cut literally: the checkout's own
+# name may hold characters a regular expression reads (CodeRabbit on #851).
+codeFilesRelative <- substring(codeFilesAll, nchar(file.path(repo, "")) + 1L)
+# A DOI is matched whole: what follows it may not continue a DOI (a letter
+# or digit, or one of . - _ / before one), so 10.1234/model.1 does not match
+# a file citing only 10.1234/model.10 or 10.1234/model.1.2, while a full stop
+# ending a sentence still ends it (CodeRabbit on #851).
+citesDoi <- function(text, doi) {
+  at <- gregexpr(doi, text, fixed = TRUE)[[1]]
+  if (at[1] < 0) return(FALSE)
+  after <- substring(text, at + nchar(doi), at + nchar(doi) + 1L)
+  any(!grepl("^([0-9a-z]|[-._/][0-9a-z])", after))
+}
+models$citedIn <- NA_character_
+for (i in which(is.na(models$card) & !is.na(models$doi))) {
+  where <- vapply(codeTextLower, citesDoi, logical(1), doi = tolower(models$doi[i]))
+  if (any(where))
+    models$citedIn[i] <- paste(codeFilesRelative[where], collapse = ";")
+}
+
 # ---- 1. shared papers: do the numbers agree? -----------------------------------
 
 readText <- function(paths) {
@@ -267,13 +295,20 @@ readText <- function(paths) {
                                         collapse = "\n"), character(1)), collapse = "\n")
 }
 
-shared <- models[!is.na(models$card), ]
+shared <- models[!is.na(models$card) | !is.na(models$citedIn), ]
 sharedParams <- list()
 sharedSummary <- list()
 for (i in seq_len(nrow(shared))) {
-  card <- cards[cards$stem == shared$card[i], ]
-  cardNumbers <- numbersIn(readText(file.path(repo, "papers", "digests", paste0(card$stem, ".md"))))
-  codeFiles <- if (nzchar(card$codeFiles)) strsplit(card$codeFiles, ";")[[1]] else character()
+  if (!is.na(shared$card[i])) {
+    card <- cards[cards$stem == shared$card[i], ]
+    cardNumbers <- numbersIn(readText(file.path(repo, "papers", "digests", paste0(card$stem, ".md"))))
+    codeFiles <- if (nzchar(card$codeFiles)) strsplit(card$codeFiles, ";")[[1]] else character()
+  } else {
+    # Cited in the code, no card: compared with the files that cite it.
+    card <- data.frame(stem = "", citation = paste0("doi:", shared$doi[i]), stringsAsFactors = FALSE)
+    cardNumbers <- numeric()
+    codeFiles <- strsplit(shared$citedIn[i], ";")[[1]]
+  }
   # Every R file the card names, not only R/drugs_*: a card names a file
   # because the model's numbers live there, and several models keep them
   # outside a drugs_ file (R/insulinTham.R builds the Tham insulins,
@@ -292,6 +327,18 @@ for (i in seq_len(nrow(shared))) {
                       p$parameter)
   findIn <- function(numbers) vapply(seq_len(nrow(p)), function(k) {
     hit <- matchValue(p$printed[k], numbers)
+    # A logit-named parameter (logitfdepot) is printed by stanpumpR as the
+    # fraction itself.  nlmixr2lib writes it as log(p/(1-p)), whose printed
+    # argument is the odds, or as a bare log-odds; logit(p) is read as p
+    # already.
+    if (!nzchar(hit) && grepl("^logit", p$parameter[k]) && is.finite(p$printed[k])) {
+      fraction <- switch(p$transform[k],
+                         log = p$printed[k] / (1 + p$printed[k]),
+                         none = 1 / (1 + exp(-p$printed[k])),
+                         NA_real_)
+      hit <- matchValue(fraction, numbers)
+      if (nzchar(hit)) hit <- paste0("fraction ", hit)
+    }
     # A bare number on a log-named parameter (lcl <- 4.84) may be the log of
     # what stanpumpR printed.
     if (!nzchar(hit) && p$transform[k] == "none" && grepl("^l", p$parameter[k]) &&
@@ -336,7 +383,8 @@ if (!is.null(sharedSummary)) {
   share <- (sharedSummary$estimates - sharedSummary$foundInNeither) /
     pmax(sharedSummary$estimates, 1)
   sharedSummary$matchedShare <- round(share, 3)
-  best <- ave(share, sharedSummary$card, FUN = function(x) seq_along(x) == which.max(x))
+  paperKey <- ifelse(nzchar(sharedSummary$card), sharedSummary$card, sharedSummary$citation)
+  best <- ave(share, paperKey, FUN = function(x) seq_along(x) == which.max(x))
   sharedSummary$closestModelOfPaper <- as.logical(best)
   sharedSummary$implementedDrug <- !is.na(sharedSummary$libraryDrug) &
     grepl("R/drugs_", sharedSummary$codeFiles)
@@ -381,6 +429,23 @@ candidateDrugs <- do.call(rbind, lapply(split(outside, outside$drug), function(d
     stringsAsFactors = FALSE)
 }))
 candidateDrugs <- candidateDrugs[order(-candidateDrugs$models, candidateDrugs$drug), ]
+# A component given only in a combination product is not a drug of its own
+# (Steven L. Shafer, 2026-11-18 and 2026-11-23: tazobactam, clavulanate).  The
+# register is docs/library-expansion/combination-only.csv, written by hand from
+# DailyMed; a component listed there is flagged, not dropped.
+comboFile <- file.path(repo, "docs", "library-expansion", "combination-only.csv")
+combo <- if (file.exists(comboFile))
+  utils::read.csv(comboFile, stringsAsFactors = FALSE) else
+    data.frame(component = character(), nlmixr2libNames = character(), status = character())
+comboNames <- data.frame(
+  name = unlist(strsplit(combo$nlmixr2libNames, ";")),
+  status = rep(combo$status, lengths(strsplit(combo$nlmixr2libNames, ";"))),
+  stringsAsFactors = FALSE)
+candidateDrugs$combinationOnly <- comboNames$status[match(candidateDrugs$drug, comboNames$name)]
+# A component the register keeps as a drug of its own (ritonavir, 2026-11-23)
+# is a candidate like any other.
+candidateDrugs$combinationOnly[is.na(candidateDrugs$combinationOnly) |
+                                 candidateDrugs$combinationOnly == "included"] <- ""
 
 # ---- write ---------------------------------------------------------------------
 
@@ -427,8 +492,8 @@ summaryLines <- c(
           nrow(models), sum(!is.na(models$doi)), human),
   sprintf("- Models of a drug stanpumpR's Drug Library holds: %d, of %d library drugs.",
           sum(!is.na(models$libraryDrug)), length(unique(unlist(strsplit(na.omit(models$libraryDrug), ";"))))),
-  sprintf("- Shared papers (a nlmixr2lib model whose paper has a stanpumpR digest card): %d.",
-          NROW(sharedSummary)),
+  sprintf("- Shared papers (a nlmixr2lib model whose paper has a stanpumpR digest card, or which stanpumpR's code cites by DOI): %d, %d of them cited with no card.",
+          NROW(sharedSummary), sum(!nzchar(sharedSummary$card))),
   sprintf("- Of their %d estimates (residual error left out), found in stanpumpR's card or code: %d; in neither: %d.",
           sum(sharedSummary$estimates), sum(sharedSummary$estimates - sharedSummary$foundInNeither),
           sum(sharedSummary$foundInNeither)),
@@ -467,3 +532,35 @@ summaryLines <- c(
 )
 writeLines(summaryLines, file.path(outDir, "summary.md"), useBytes = TRUE)
 message("wrote docs/nlmixr2lib/summary.md")
+
+# Every drug nlmixr2lib models in humans that the Drug Library lacks, largest
+# study first, for reading by eye; the combination-only components apart.
+missing <- candidateDrugs[order(-ifelse(is.na(candidateDrugs$largestStudyN), 0,
+                                        candidateDrugs$largestStudyN), candidateDrugs$drug), ]
+missingLines <- c(
+  "# Drugs nlmixr2lib models that stanpumpR does not have",
+  "",
+  sprintf("Generated by `data-raw/nlmixr2libCrossCheck.R` against nlmixr2lib %s (commit %s).  Do not edit by hand.",
+          libVersion, libCommit),
+  "",
+  "One row per drug nlmixr2lib models in humans that stanpumpR's Drug Library does not hold, largest study first.",
+  "A drug's name is nlmixr2lib's file-name token, so a combination can appear under each component.",
+  "`n` is the largest study's number of subjects as nlmixr2lib records it (a simulation's virtual subjects included).",
+  "Components that are given only in a combination product are listed apart, from",
+  "`docs/library-expansion/combination-only.csv`: they are not drugs of their own in stanpumpR.",
+  "Whether a drug is wanted is decided in `docs/library-expansion/plan.csv`.",
+  "",
+  sprintf("## Candidates (%d)", sum(!nzchar(missing$combinationOnly))),
+  "",
+  mdTable(missing[!nzchar(missing$combinationOnly), ],
+          c("drug", "models", "largestStudyN", "largestStudy", "mentionedIn")),
+  "",
+  sprintf("## Combination-only components (%d)", sum(nzchar(missing$combinationOnly))),
+  "",
+  "`not_included`: no single-ingredient US product, so not a drug of its own. `decision`: labelled alone but useful only with another drug; Shafer decides.",
+  "",
+  mdTable(missing[nzchar(missing$combinationOnly), ],
+          c("drug", "combinationOnly", "models", "largestStudyN", "largestStudy"))
+)
+writeLines(missingLines, file.path(outDir, "missing-drugs.md"), useBytes = TRUE)
+message("wrote docs/nlmixr2lib/missing-drugs.md")
