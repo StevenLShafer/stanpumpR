@@ -1,6 +1,6 @@
 # Scheduled (repeating) doses: qd, bid, tid, qid and q4h; qam and qpm (separate
-# morning/evening slots, oral and sublingual, the antiseizure drugs); and qwk
-# (once weekly) on the subcutaneous units
+# morning/evening slots, oral and sublingual, the antiseizure drugs); and qwk,
+# q2wk and q4wk (once every one, two or four weeks) on the subcutaneous units
 #
 # Drafted by Claude Code, 2026-10-07, at the request of Steven L. Shafer;
 # tests/testthat/test-scheduled.R.

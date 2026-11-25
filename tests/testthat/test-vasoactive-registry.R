@@ -16,7 +16,7 @@ IMPLEMENTED <- c("epinephrine", "magnesiumSulfate", "labetalol", "diltiazem",
                  "verapamil", "phenylephrine", "milrinone", "milrinonePediatric",
                  "metoprolol", "nicardipine", "digoxinIV", "digoxinIVPediatric",
                  "vasopressin", "hydralazine", "dobutamineNeonatal",
-                 "methyleneBlue")
+                 "methyleneBlue", "landiolol")
 
 # Every drug that was asked for, by its name in the registry
 REQUESTED <- c("clevidipine", "sodium nitroprusside", "nitroglycerin",
@@ -28,7 +28,9 @@ REQUESTED <- c("clevidipine", "sodium nitroprusside", "nitroglycerin",
                # asked for on 2026-10-19
                "digoxin", "milrinone",
                # asked for on 2026-10-27
-               "dobutamine")
+               "dobutamine",
+               # asked for on 2026-11-25 (docs/library-expansion/plan.csv)
+               "landiolol")
 
 test_that("every row is fully classified with a clickable source", {
   for (col in c("model_id", "drug", "route", "population", "analyte", "matrix",
@@ -77,7 +79,8 @@ test_that("the category holds exactly the implemented drugs, concentration only"
                        norepinephrine = NOREPINEPHRINE_TPEAK,
                        diltiazem = DILTIAZEM_TPEAK,
                        nicardipine = NICARDIPINE_TPEAK,
-                       esmolol = ESMOLOL_TPEAK, metoprolol = METOPROLOL_TPEAK,
+                       esmolol = ESMOLOL_TPEAK, landiolol = LANDIOLOL_TPEAK,
+                       metoprolol = METOPROLOL_TPEAK,
                        verapamil = VERAPAMIL_TPEAK,
                        propranolol = PROPRANOLOL_TPEAK,
                        phenylephrine = PHENYLEPHRINE_TPEAK,
@@ -235,6 +238,11 @@ test_that("the audit's numbers are the ones the models use", {
   expect_equal(value("procainamide", "Vd"), PROCAINAMIDE_VD)
   expect_equal(value("esmolol", "CL") / 1000, ESMOLOL_CL)
   expect_equal(value("esmolol", "Vc"), ESMOLOL_V1)
+  expect_equal(value("landiolol", "CL") / 1000, LANDIOLOL_CL)
+  expect_equal(value("landiolol", "V1") / 1000, LANDIOLOL_V1)
+  expect_equal(value("landiolol", "Q") / 1000, LANDIOLOL_Q)
+  expect_equal(value("landiolol", "V2") / 1000, LANDIOLOL_V2)
+  expect_equal(value("landiolol", "lag time (not represented)"), LANDIOLOL_ALAG)
   expect_equal(value("dopamine", "k10"), DOPAMINE_K10)
   expect_equal(value("dopamine", "V1"), DOPAMINE_V1)
   expect_equal(value("dopamine", "k12"), DOPAMINE_K12)
