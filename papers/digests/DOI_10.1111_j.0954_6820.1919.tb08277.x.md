@@ -40,7 +40,7 @@ blood data.
 
 ```yaml
 parameters:
-  - {name: alpha_human_EW, value: 0.000648, unit: 1/min, source: "Exp 10, Table 17 / p116", note: acetone, rectal, 73 kg}
+  - {name: alpha_human_EW, value: 0.000648, unit: 1/min, source: "Exp 10, Table 17 / p116", note: "acetone, rectal, 73 kg"}
   - {name: m_human, value: [57, 64], unit: L, source: "Table 22", note: "m/weight 0.74-0.80, mean 0.77"}
   - {name: alpha_rabbit, value: [0.00080, 0.00216], unit: 1/min, source: "Tables 23-24", note: "0.00080 in a starving rabbit"}
   - {name: m_over_weight_rabbit, value: 0.90, unit: L/kg, source: "Table 21", note: "range 0.82-0.99"}
