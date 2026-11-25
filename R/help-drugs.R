@@ -211,6 +211,9 @@ helpConcentrationUnits <- function(units) {
          "mcU" = "mcU/mL (microunits per mL, = mU/L)",
          # Heparin is measured by its activity, warfarin by the INR.
          "IU" = "IU/mL (activity)",
+         # A factor concentrate: the patient's own activity plus the infused
+         # (R/factorBaselines.R), in IU/dL, which is % of normal.
+         "IUdL" = "IU/dL (activity, % of normal, baseline included)",
          "INR" = "INR (international normalized ratio)",
          # Heparin on bypass is plotted as the activated clotting time (R/act.R).
          "ACT" = "ACT (s, activated clotting time)",

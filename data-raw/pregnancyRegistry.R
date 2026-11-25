@@ -275,6 +275,17 @@ registry <- rbind(
       source_url = "https://doi.org/10.1016/s0952-8180(01)00226-4",
       to_obtain = "",
       notes = "Faster onset/shorter duration is consistent with a higher cardiac output and, if anything, a larger volume, but no PK was measured."),
+  row("nalbuphine", "Opioids", "unquantified",
+      finding = "No study compared nalbuphine pharmacokinetics in pregnant and non-pregnant women. Wilson 1986 gave six women in labor at term an intravenous dose and fitted a two-compartment model (distribution phase 4-20 min, terminal half-life 2.4 +/- 0.4 h; abstract only, no comparison group); Nicolle 1996 (28 parturients, 30-150 min after intramuscular or intravenous doses) reported maternal plasma 5.0-79.2 ng/mL, a fetomaternal ratio of 0.74 and a neonatal half-life of about 4.1 h from two samples. Their half-lives (2.4 h in labor) are shorter than the label's 5 h, which does not identify pregnancy as the cause: assay, sampling length and population differ. The ex vivo placental perfusion of Schoppmann 2022 gives transfer, not maternal kinetics. PubMed 2026-11-25, 'nalbuphine' with pregnancy, parturient, labor, cesarean, obstetric and pharmacokinetic, concentration or clearance: 11 records, every one checked by abstract.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = "third", comparator = "none",
+      design = "labor, no comparison group", n = 6L, confidence = "low",
+      evidence_read = "abstract",
+      source = "Wilson SJ, Errick JK, Balkon J. Am J Obstet Gynecol 1986;155:340-344 PMID 3740151; Nicolle E et al. Eur J Clin Pharmacol 1996;49:485-489 PMID 8706774",
+      source_url = "https://doi.org/10.1016/0002-9378(86)90822-7",
+      to_obtain = "Wilson 1986 (PMID 3740151), full text, for the individual parameters",
+      notes = "Not applied: the direction and size of the pregnancy effect cannot be separated from the study differences. The library's model (Nie 2023) was fitted in adults under general anesthesia, not in labor. None of the papers has Gideon Koren as an author."),
   row("naloxone", "Other", "unknown",
       finding = "No human pregnancy pharmacokinetic study giving a maternal clearance or volume ratio was found. Naloxone is cleared mainly by UGT2B7 glucuronidation (plus some reduction); UGT2B7 is reported unaltered in pregnancy (see hydromorphone). The only obstetric data are placental-transfer measurements (Hibbard 1986: rapid transfer after IV, variable after IM) with no pregnant-vs-nonpregnant disposition comparison.",
       applied = "",
@@ -3498,6 +3509,17 @@ registry <- rbind(
       source_url = "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=d9d74915-6606-4570-9c52-c4001d3177de",
       to_obtain = "",
       notes = "Endogenous interleukin-1 receptor antagonist is present in maternal and fetal plasma (Romero 1994, abstract), which the ELISA would also read. Not by Gideon Koren."),
+  row("factorVIII", "Hemostasis and reversal", "unknown",
+      finding = "No pharmacokinetics of a factor VIII concentrate in pregnancy were found (PubMed 2026-11-25: 'factor VIII concentrate pharmacokinetics pregnancy', five records: a review of recombinant von Willebrand factor, a case report of type 3 von Willebrand disease with an inhibitor at caesarean delivery, a study of a VWF/FVIII concentrate in von Willebrand disease that included a postpartum haemorrhage, a rabbit study of an aptamer and a rat heparin study; none a pharmacokinetic study of factor VIII concentrate in pregnant women). The ADVATE label (8.1, read) has no data in pregnant women. Endogenous factor VIII activity rises in late pregnancy, which the Patient Profile's Factor VIII baseline carries; that is not a change in the concentrate's clearance or volume, so nothing is applied.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = NA, comparator = NA,
+      design = "none", n = NA, confidence = "low",
+      evidence_read = "abstract",
+      source = "ADVATE prescribing information, BLA 125063, revised 4/2025, 8.1 (DailyMed setid 80fa03d2-cd4c-4155-9b57-1396c4fa42da)",
+      source_url = "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=80fa03d2-cd4c-4155-9b57-1396c4fa42da",
+      to_obtain = "",
+      notes = "A pregnant patient with low factor VIII may be a carrier (often near normal, though some are as low as affected men), a woman with haemophilia A, or have acquired haemophilia A, which can arise in pregnancy or after delivery; enter her measured activity in the Factor VIII baseline field, which also carries the rise of late pregnancy. Not by Gideon Koren."),
   row("thrombomodulinAlfa", "Anticoagulants", "applied",
       finding = "No pharmacokinetics of thrombomodulin alfa in pregnancy were found (PubMed 2026-11-25: 'thrombomodulin alfa pregnancy', two records, neither a pregnancy study: a letter on idiopathic pulmonary fibrosis and a review of DIC; 'recombinant human soluble thrombomodulin obstetric DIC pharmacokinetics', none). The drug is not approved in the US and has no US label. Mouksassi 2015, the library's model, puts its clearance on a Cockcroft-Gault term, and 54-74% of a dose is recovered in urine, so the model's renal term takes the rise in filtration of pregnancy (applied), an assumption.",
       applied = "Creatinine clearance x 1.5 when the serum creatinine is left blank (physiological: no thrombomodulin alfa data), before the model's 150 mL/min hold; the volume is unchanged.",
@@ -3578,7 +3600,10 @@ renamed <- c(carboplatinDuffull = "carboplatin", doxorubicinJoerger = "doxorubic
              # the pulmonary hypertension groups' candidates (2026-11-18)
              sildenafilFDA = "sildenafil", sildenafilMiura = "sildenafil",
              tadalafilFergusonSells = "tadalafil", tadalafilMiura = "tadalafil",
-             ambrisentanOkour = "ambrisentan", ambrisentanMiura = "ambrisentan")
+             ambrisentanOkour = "ambrisentan", ambrisentanMiura = "ambrisentan",
+             # the landiolol group's candidates (2026-11-25)
+             landiololHonda = "landiolol", landiololKunisawa2014 = "landiolol",
+             landiololKunisawa2015 = "landiolol")
 copies <- registry[match(renamed, registry$drug), ]
 copies$drug <- names(renamed)
 registry <- rbind(registry, copies)

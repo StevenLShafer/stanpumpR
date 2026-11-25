@@ -64,7 +64,11 @@ API_PATIENT_FIELDS <- c("weight", "height", "age", "sex", "weightUnit", "heightU
                         "creatinine", "gestationalAge", "albumin", "ast", "pregnant", "pulmonaryHypertension", "infection", "adjustToFFM",
                         "osmolality",
                         "cyp2d6", "cyp2c19", "cyp2c9", "cyp2b6", "vkorc1", "cyp4f2",
-                        "opioidTolerance")
+                        "opioidTolerance",
+                        # The clotting-factor baselines (R/factorBaselines.R, which
+                        # loads after this file; test-drugs-factorVIII.R holds the two
+                        # lists together)
+                        "factorVIIIBaseline")
 API_OUTPUT_FIELDS  <- c("times", "interval", "recovery", "format", "layout")
 API_OPTIONS_FIELDS <- c("allowIllicitDrugs", "antiseizureInteractions", "unknownDoseFields")
 # What a dose-row field the service does not read does to the request: refuse
@@ -309,6 +313,17 @@ apiPatient <- function(patient) {
   if (!is.null(ast)) {
     ast <- apiNumber(ast, "patient.ast", MIN_AST, MAX_AST)
   }
+  # The clotting-factor baselines, each read only by its factor's
+  # concentrates (R/factorBaselines.R); omitted is the model's source
+  # population's.
+  factorBaselines <- list()
+  for (name in names(FACTOR_BASELINE_FIELDS)) {
+    value <- get(name)
+    if (!is.null(value)) {
+      field <- FACTOR_BASELINE_FIELDS[[name]]
+      factorBaselines[[name]] <- apiNumber(value, paste0("patient.", name), field$min, field$max)
+    }
+  }
   sex <- apiChoice(tolower(apiScalar(get("sex"), "patient.sex")), "patient.sex", SEX_VALUES)
   # Read only by the models with a measured change in pregnancy (R/pregnancy.R);
   # getDrugPK() would refuse it for a man, but the request is told why first.
@@ -336,6 +351,7 @@ apiPatient <- function(patient) {
     gestationalAge = gestationalAge,
     albumin     = albumin,
     ast         = ast,
+    factorBaselines = factorBaselines,
     cyp2d6      = apiChoice(get("cyp2d6", CYP2D6_DEFAULT), "patient.cyp2d6", CYP2D6_VALUES),
     cyp2c19     = apiChoice(get("cyp2c19", CYP2C19_DEFAULT), "patient.cyp2c19", CYP2C19_VALUES),
     cyp2c9      = apiChoice(get("cyp2c9", CYP2C9_DEFAULT), "patient.cyp2c9", CYP2C9_VALUES),
@@ -486,7 +502,7 @@ apiConcentrationUnits <- function(units) {
   switch(as.character(units),
          "mcg" = "mcg/mL", "ng" = "ng/mL", "mg" = "mg/mL", "pg" = "pg/mL",
          "mOsm" = "mOsm/kg",
-         "mmol" = "mmol/L", "mcU" = "mcU/mL", "IU" = "IU/mL", "INR" = "INR",
+         "mmol" = "mmol/L", "mcU" = "mcU/mL", "IU" = "IU/mL", "IUdL" = "IU/dL", "INR" = "INR",
          as.character(units))
 }
 
@@ -607,6 +623,7 @@ apiSimulate <- function(request) {
         gestationalAge = patient$gestationalAge,
         albumin = patient$albumin,
         ast = patient$ast,
+        factorBaselines = patient$factorBaselines,
         antiseizureInteractions = asmInteractions,
         opioidTolerance = patient$opioidTolerance),
         # The peaks below are read off each drug's time line, so it must
@@ -710,7 +727,10 @@ apiSimulate <- function(request) {
       cyp2d6 = patient$cyp2d6, cyp2c19 = patient$cyp2c19, cyp2c9 = patient$cyp2c9,
       cyp2b6 = patient$cyp2b6, vkorc1 = patient$vkorc1, cyp4f2 = patient$cyp4f2,
       opioidTolerance = patient$opioidTolerance
-    ),
+    ) |> c(lapply(stats::setNames(nm = names(FACTOR_BASELINE_FIELDS)), function(name) {
+      value <- patient$factorBaselines[[name]]
+      if (is.null(value)) NA_real_ else value
+    })),
     drugs      = drugs,
     doses      = doses,
     events     = ET,

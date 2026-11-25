@@ -1400,6 +1400,10 @@ app_server <- function(input, output, session) {
     if (is.null(x) || length(x) != 1 || (is.na(x) && !is.nan(x))) NULL else x
   })
 
+  # And the clotting-factor baselines, one field per factor: blank, and the
+  # concentrate's model takes its source population's (R/factorBaselines.R).
+  factorBaselines <- reactive(factorBaselinesFromInput(input))
+
   # The message for the plot area when Age, Weight or Height is not a number.
   # A blank field, or an unfinished entry such as a lone ".", reaches the
   # server as NULL or NA, and req() in age() etc. then stops everything
@@ -1446,7 +1450,8 @@ app_server <- function(input, output, session) {
                              creatinine = creatinine(),
                              gestationalAge = gestationalAge(),
                              albumin = albumin(),
-                             ast = ast())
+                             ast = ast(),
+                             factorBaselines = factorBaselines())
     }, name = "testCovariates() reactive")
   })
 
@@ -1724,6 +1729,7 @@ app_server <- function(input, output, session) {
         gestationalAge = gestationalAge(),
         albumin = albumin(),
         ast = ast(),
+        factorBaselines = factorBaselines(),
         pregnant = pregnant(),
         pulmonaryHypertension = pulmonaryHypertension(),
         infection = infection(),
@@ -2338,6 +2344,7 @@ app_server <- function(input, output, session) {
       gestationalAge = gestationalAge(),
       albumin = albumin(),
       ast = ast(),
+      factorBaselines = factorBaselines(),
       cyp2d6 = genotypes()$cyp2d6,
       cyp2c19 = genotypes()$cyp2c19,
       cyp2c9 = genotypes()$cyp2c9,
@@ -3831,7 +3838,8 @@ app_server <- function(input, output, session) {
                                        creatinine = creatinine(),
                                        gestationalAge = gestationalAge(),
                                        albumin = albumin(),
-                                       ast = ast())
+                                       ast = ast(),
+                                       factorBaselines = factorBaselines())
           if (!isTRUE(ok)) blocked <- if (is.null(covariateProblem)) "the Patient Profile is out of range." else covariateProblem
         }
         if (!is.null(blocked)) {

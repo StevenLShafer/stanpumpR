@@ -128,6 +128,16 @@ MODEL_GROUPS <- list(
     ageMin = c(8, 0.4), ageMax = c(16, 8.8),
     weightMin = c(NA, 7.1), weightMax = c(NA, 21.6),
     n = c(39, 29), year = c(2023, 2026)),
+  # Landiolol (R/landiolol.R): Honda 2008's healthy men, Kunisawa's
+  # gynaecologic women (J Anesth 2015, received 2014) and Kunisawa's patients
+  # with peripheral arterial disease (Ther Clin Risk Manag 2015), each range
+  # read on its PDF (2026-11-25).
+  landiolol = data.frame(
+    model = c("landiololHonda", "landiololKunisawa2014", "landiololKunisawa2015"),
+    source = c("Honda 2008", "Kunisawa 2015 (gynaecologic)", "Kunisawa 2015 (PAD)"),
+    ageMin = c(20, 37, 64), ageMax = c(33, 71, 84),
+    weightMin = c(50.7, 47.1, 40.4), weightMax = c(77.2, 73.0, 71.8),
+    n = c(47, 9, 8), year = c(2008, 2015, 2015)),
   doxorubicinol = data.frame(
     model = c("doxorubicinolJoerger", "doxorubicinolPediatric", "doxorubicinolPerezBlanco"),
     source = c("Joerger 2007", "Voller 2015", "Perez-Blanco 2016"),
@@ -397,3 +407,14 @@ tadalafil <- modelGroup("tadalafil")
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 ambrisentan <- modelGroup("ambrisentan")
+
+#' Landiolol: the model chosen for the patient
+#'
+#' Honda 2008 (47 healthy men, 20-33 years), Kunisawa 2015 (9 women having
+#' gynaecologic surgery, 37-71 years) or Kunisawa 2015 (8 patients with
+#' peripheral arterial disease, 64-84 years), chosen by \code{selectModel()};
+#' see \code{R/modelSelection.R} and \code{R/landiolol.R}.
+#' @inheritParams landiololHonda
+#' @returns a list in the shape \code{getDrugPK()} expects
+#' @export
+landiolol <- modelGroup("landiolol")

@@ -108,7 +108,7 @@ The response (JSON):
     "age": 50, "ageUnit": "years", "sex": "male", "pregnant": false, "pulmonaryHypertension": false, "infection": "none", "adjustToFFM": true,
     "osmolality": 280, "creatinine": null, "gestationalAge": null, "albumin": null, "ast": null,
     "cyp2d6": "normal", "cyp2c19": "normal", "cyp2c9": "*1/*1", "cyp2b6": "normal",
-    "vkorc1": "AA", "cyp4f2": "CC", "opioidTolerance": "none"
+    "vkorc1": "AA", "cyp4f2": "CC", "opioidTolerance": "none", "factorVIIIBaseline": null
   },
   "drugs": [
     {
@@ -217,7 +217,8 @@ an empty array or an object); anything else is refused (400).
     "cyp2b6": "normal",      // poor | intermediate | normal | rapid | ultrarapid
     "vkorc1": "AA",          // GG | GA | AA
     "cyp4f2": "CC",          // CC | CT | TT
-    "opioidTolerance": "none" // none | mild | somewhat | high: raises each opioid's MEAC and recovery threshold
+    "opioidTolerance": "none", // none | mild | somewhat | high: raises each opioid's MEAC and recovery threshold
+    "factorVIIIBaseline": 0.5 // IU/dL, the patient's own factor VIII; omit or null for the model's source population (factorVIII)
   },
 
   "duration": 6,             // required: length of the simulation, in timeUnit
@@ -270,6 +271,7 @@ an empty array or an object); anything else is refused (400).
 | `cyp2d6`, `cyp2c19`, `cyp2c9`, `cyp2b6` | no | The values listed above. The default is the normal phenotype (`*1/*1` for CYP2C9). Only the models that use a phenotype read it. |
 | `vkorc1` | no | The VKORC1 -1639G>A genotype, read by the three vitamin-K antagonists: `warfarin`, `fluindione` and `acenocoumarol`. Unlike the phenotypes above, the default is chosen for sensitivity rather than for frequency: `AA` is the genotype that gives the **largest** INR rise, so that an unentered genotype errs toward underdosing. Pass the patient's own genotype when it is known. |
 | `cyp4f2` | no | The CYP4F2 rs2108622 genotype, read by `warfarin` alone. Its default, `CC`, is that model's most sensitive genotype, by the same rule as `vkorc1`. |
+| `factorVIIIBaseline` | no | 0–300 IU/dL, the patient's own factor VIII activity (% of normal). A factor concentrate is reported as the patient's own activity plus the infused, so the `Plasma` of `factorVIII` includes it. If it is omitted, the model's source population's baseline is used (severe haemophilia A, 0.5 IU/dL). Only `factorVIII` reads it. |
 | `opioidTolerance` | no | `none` (default), `mild`, `somewhat` or `high`: multiplies each opioid's MEAC, and the recovery threshold of an opioid with a MEAC, by 1, 1.5, 2 or 3, as the app's Patient Profile does. It does not change any concentration. |
 | `adjustToFFM` | no | `true` (default) or `false` |
 
@@ -354,7 +356,7 @@ the request used.
 | Part | Contents |
 |---|---|
 | `meta` | `apiVersion`, `stanpumpRVersion`, `build` (the commit the service was built from, or `null`), `generated` (UTC time stamp), `timeUnit` (`"minutes"`), `duration` (minutes), `grid` (`"requested"` or `"native"`), `antiseizureInteractions` (whether the interactions were applied) |
-| `patient` | The covariates as simulated, after unit conversion and defaults. `creatinine`, `gestationalAge`, `albumin` and `ast` are `null` when the request left them out: each renal model then assumes the normal serum creatinine for the patient's age and sex (0.9 mg/dL for an adult man, 0.8 for a woman), the neonatal models a term birth (40 weeks), the albumin models their own reference albumin, and the AST models a normal AST |
+| `patient` | The covariates as simulated, after unit conversion and defaults. `creatinine`, `gestationalAge`, `albumin` and `ast` are `null` when the request left them out: each renal model then assumes the normal serum creatinine for the patient's age and sex (0.9 mg/dL for an adult man, 0.8 for a woman), the neonatal models a term birth (40 weeks), the albumin models their own reference albumin, and the AST models a normal AST; `factorVIIIBaseline` is `null` when left out, and factor VIII then takes its source population's baseline |
 | `drugs` | One row per drug, described below |
 | `doses` | The full dose sequence simulated, described below |
 | `events` | The events, with times in minutes |

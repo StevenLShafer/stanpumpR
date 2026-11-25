@@ -615,6 +615,7 @@ HELP_FIELD_READER_ROWS <- c(
   ast            = "Serum AST",
   pulmonaryHypertension = "Pulmonary hypertension",
   infection      = "Infection",
+  factorVIIIBaseline = "Factor VIII baseline",
   osmolality     = "Baseline serum osmolality",
   cyp2d6         = "CYP 2D6",
   cyp2c19        = "CYP 2C19",
