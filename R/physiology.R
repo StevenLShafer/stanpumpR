@@ -263,7 +263,8 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # scatter, and over a factor on total clearance because the steepest human
 # values (midazolam in volunteers, propofol and cisatracurium on bypass)
 # carry falls in blood flow that the Cardiac output slider already models.
-# Michelsen's exponential is the one fit that spans the slider's 28-37 C.
+# Michelsen's exponential is the one fit that spans 28-37 C (the slider
+# reaches 38 C since 2026-11-25, one degree extrapolated).
 # Read after the decision: remifentanil within patients, 32, 25 and 35
 # mL/min/kg before, during (28-30 C) and after hypothermic bypass, about
 # 4%/C (Russell 1997, Br J Anaesth 79:456); chlorzoxazone (CYP2E1) in rats
@@ -540,17 +541,19 @@ gasBodyPhysiology <- function(body, cardiac = 1, split = FALSE)
 #
 # FEVER (Gemini's gas-engine audit of 2026-11-23, C-03).  DECIDED (Shafer,
 # 2026-11-25): the slider's top becomes 38 C, the relations above extended
-# one degree past the 37 C where every source stops (Michelsen 2001 20-35 C,
-# Zhou 2002 17-37 C, Liu 2001 31-37 C).  Shafer: "Thermal stress starts around
+# past the human fits, which stop at or below 37 C (Michelsen 2001 20-35 C,
+# Zhou 2002 17-37 C, Liu 2001 31-37 C; of the sources applied only
+# Antognini 1994's rats reached 38 C).  Shafer: "Thermal stress starts around
 # 38 degrees. Let's make 38 the top, which extrapolation probably supports."
-# A question-mark help icon beside the slider says that above 38 C enzymatic
-# action starts to fail, which cannot be extrapolated.  To be built in its own
-# pull request; until then the top is 37 C.
+# The slider's help tip says that above 38 C enzymatic action starts to fail,
+# which cannot be extrapolated.  Built 2026-11-25: PHYSIOLOGY_TEMPERATURE_MAX
+# below, which every check of a temperature reads (the slider, a physiology
+# event, a link, simulateGases(), getDrugPK(physiology =)).
 
 #' Body temperature range and default, degrees C
 #' @noRd
 PHYSIOLOGY_TEMPERATURE_MIN <- 28
-PHYSIOLOGY_TEMPERATURE_MAX <- 37
+PHYSIOLOGY_TEMPERATURE_MAX <- 38
 PHYSIOLOGY_TEMPERATURE_DEFAULT <- 37
 PHYSIOLOGY_TEMPERATURE_STEP <- 0.5
 
@@ -1033,7 +1036,11 @@ physiologyPanel <- function()
             "raises their solubility in blood and tissue, which slows the rise",
             "of the end-tidal and brain concentrations, and lowers their MAC,",
             "about 4.6% a degree. It does not change",
-            "cardiac output or ventilation, which have their own controls."),
+            "cardiac output or ventilation, which have their own controls.",
+            "Fever up to 38 \u00b0C extrapolates these relations, whose human",
+            "measurements stop at or below 37 \u00b0C. The slider stops at 38",
+            "\u00b0C because thermal stress starts around there: above it",
+            "enzymatic action starts to fail, which cannot be extrapolated."),
       placement = "right"
     ),
     # Altitude and endobronchial intubation act on the inhaled agents only,
@@ -1565,7 +1572,7 @@ helpPhysiologyTemperatureTable <- function()
   label <- c(isoflurane = "Isoflurane 1.2%", sevoflurane = "Sevoflurane 2%",
              desflurane = "Desflurane 6%", nitrousOxide = "Nitrous oxide 67%")
   rows <- character(0)
-  for (g in names(agents)) for (T in c(37, 34, 31, 28)) {
+  for (g in names(agents)) for (T in c(38, 37, 34, 31, 28)) {
     dt <- if (g == "nitrousOxide")
       data.frame(Drug = c(g, "oxygen", "ventilation"), Time = 0, Dose = c(4, 2, 6))
     else

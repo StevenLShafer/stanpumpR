@@ -310,7 +310,9 @@ breakdown in blood falls 7.0% per degree from 37 to 25 °C but averages
 similarly more steeply below 28 °C (Gruber 2002). Several microsomal
 Arrhenius plots break near 20 °C (Puntarulo 1989; Masson and Balny 1986).
 Within 28 to 37 °C an exponential is adequate; below 28 °C, which
-stanpumpR does not offer, it would overstate the remaining capacity.
+stanpumpR does not offer, it would overstate the remaining capacity. The
+slider reaches 38 °C, one degree extrapolated; above that, thermal stress
+begins and enzymatic action starts to fail, which no exponential describes.
 
 ### 4.5 Why enzymes slow in the cold
 
@@ -421,8 +423,9 @@ Each step above is a simplification, and several rest on weak evidence.
   rests on three small studies and is contradicted on bypass.
 - **One temperature factor for every route.** The routes agree within
   their scatter, but the scatter is wide, and individual drugs may differ.
-- **The range.** The factor is applied only between 28 and 37 °C; below
-  that the measured curves steepen.
+- **The range.** The factor is applied only between 28 and 38 °C; below
+  that the measured curves steepen, and above it thermal stress begins. The
+  degree above 37 °C is an extrapolation.
 - **What is not modelled.** Protein binding, which changes with
   hemodilution on bypass (remimazolam's unbound fraction rose threefold
   when bypass began; Inoue and colleagues 2026); the suppression of drug

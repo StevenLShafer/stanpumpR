@@ -271,7 +271,7 @@ dose-table row.
 
 ## Body temperature and the inhaled anesthetics
 
-**Body temperature** (28 to 37 °C) acts on the volatile agents through the two
+**Body temperature** (28 to 38 °C) acts on the volatile agents through the two
 effects of hypothermia that Eger and Shafer's chapter names, and so does
 nitrous oxide, less.
 
@@ -490,9 +490,9 @@ a circulation time; and the dissociation curve's shift with temperature and pH.
 Cooling slows the elimination of most intravenous drugs, because enzymes and
 filtration work more slowly in the cold. stanpumpR multiplies each drug's
 capacity to eliminate it by exp(−0.0658 (37 − T)), 6.4% less for each degree
-below 37 °C, so 55% of normal at 28 °C. The figure is Michelsen and
-colleagues' fit to remifentanil in patients on bypass between 20 and 35 °C,
-the one human study that spans the whole slider. The rest of the evidence
+below 37 °C, so 55% of normal at 28 °C, and 6.8% more at 38 °C. The figure is
+Michelsen and colleagues' fit to remifentanil in patients on bypass between 20
+and 35 °C, the one human study across most of the slider. The rest of the evidence
 agrees within its scatter, about 6 to 8% per degree: CYP enzymes in liver
 tissue, glucuronidation, filtration by the kidney (amoxicillin, ceftazidime
 and doxacurium), esterases (remifentanil) and the chemical breakdown of
@@ -506,6 +506,16 @@ colleagues found propofol clearance at 42% of normal at 28 °C, because flow
 falls too. Lower the Cardiac output slider as well to reproduce that: at 0.4
 of normal, propofol falls to 44%. Only drugs with a physiology row respond;
 volumes, intercompartmental clearances and ke0 do not change.
+
+## Fever
+
+The slider reaches 38 °C, where thermal stress starts. Every relation above
+was measured in people at or below 37 °C (only Antognini's rats reached 38
+°C), so the degree above 37 is an extrapolation of each of them: elimination
+capacity 6.8% higher, the volatile agents 3 to 4% less soluble, and MAC 4.6%
+higher (nitrous oxide's 2.1%). The slider stops at 38 °C because above it
+enzymatic action starts to fail, which cannot be extrapolated (Steven Shafer,
+25 November 2026).
 
 The sliders move in small steps on a log scale, so the multiple a slider
 shows is rounded: x0.50 applies 0.501, x2.00 applies 1.995. The difference is
