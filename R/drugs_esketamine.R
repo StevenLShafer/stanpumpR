@@ -54,16 +54,17 @@
 # esketamine; Spravato, the US product, is too), and doses are entered as
 # labelled with no conversion.
 #
-# EFFECT SITE: ke0 SUPPLIED, 3.78 /min (t1/2 ke0 11 s).  Sigtermans did not
-# estimate ke0 (Discussion, PDF p8): the effects "seemed to follow its plasma
-# concentrations instantaneously (or sometimes even preceded the change in
-# concentration), suggesting a small value for t1/2 ke0", which they say
-# agrees with Herd's 11 s (racemic ketamine, children, sedation scores; Herd
-# 2008, PMID 18095964) and Schuttler's S(+)-ketamine EEG data.  Sigtermans
-# quote Herd's 95% CI as 7-20 s; Herd's own abstract prints 0.07-20 s.  So ke0 = ln 2 / (11/60 min).
-# This is the paper's own reading of the literature, not a fitted value; the
-# racemic library ketamine assumes a tPeak of 3 min instead.  Recorded as a
-# [decision] for Shafer in docs/library-expansion/plan.csv.
+# EFFECT SITE: tPeak 3 MINUTES, THE SAME AS THE LIBRARY'S RACEMIC KETAMINE
+# (Steven L. Shafer, 2026-11-25: "The peak effect of esketamine will be the
+# same as for ketamine if it is given IV").  Sigtermans did not estimate ke0
+# (Discussion, PDF p8); they saw the effects follow the plasma closely and
+# cite Herd's t1/2 ke0 of 11 s (racemic ketamine, children, sedation scores;
+# Herd 2008, PMID 18095964; Sigtermans quote its 95% CI as 7-20 s, Herd's
+# abstract prints 0.07-20 s) and Schuttler's S(+)-ketamine EEG data.  On this
+# model 11 s would put the peak at 0.7 min.  The library's ketamine assumes
+# 3 min (R/drugs_ketamine.R), and ke0 is solved from it here
+# (ESKETAMINE_TPEAK = KETAMINE's 3 min), so the two drugs peak together after
+# a bolus.
 #
 # NO BAND.  The paper's C50s are for experimental pain (heat pain intensity
 # 373 ng/mL, electrical pain tolerance 2.2 mcg/mL) and a 20% rise in cardiac
@@ -82,9 +83,10 @@ ESKETAMINE_SIGTERMANS <- c(v1 = 15.4, v2 = 26.6, v3 = 121,
                            cl1Male = 75.1, cl1Female = 97.3,
                            cl2 = 80.6, cl3 = 146.0)
 
-#' Esketamine blood-effect-site equilibration rate, /min (t1/2 ke0 11 s)
+#' Time to peak effect of esketamine after a bolus, minutes: the library's
+#' racemic ketamine's (Shafer, 2026-11-25)
 #' @keywords internal
-ESKETAMINE_KE0 <- log(2) / (11 / 60)
+ESKETAMINE_TPEAK <- 3
 
 #' Esketamine (S(+)-ketamine), intravenous, Sigtermans 2009
 #'
@@ -113,9 +115,7 @@ esketamine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   list(
     PK = PK,
-    # No tPeak: ke0 is supplied directly.  See the header.
-    tPeak = 0,
-    ke0 = ESKETAMINE_KE0,
+    tPeak = ESKETAMINE_TPEAK,  # the same as racemic ketamine; see the header
     MEAC = 0,
     typical = 0,
     upperTypical = 0,
@@ -123,7 +123,7 @@ esketamine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     reference = paste0(
       "Sigtermans M et al., Anesthesiology 2009;111:892-903 (S(+)-ketamine, ",
       "20 healthy volunteers, arterial plasma; doses as esketamine base). ",
-      "ke0 from the paper's t1/2 ke0 of about 11 s. ",
+      "Time to peak effect 3 min, as for racemic ketamine. ",
       "https://doi.org/10.1097/ALN.0b013e3181b437b1")
   )
 }

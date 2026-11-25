@@ -33,14 +33,17 @@ test_that("with the switch on, a 120 kg man's six parameters are pinned", {
   expect_equal_rounded(3.2811982, s$cl3)
 })
 
-test_that("the effect site is supplied as t1/2 ke0 11 s, and there is no band", {
+test_that("the effect site peaks at ketamine's 3 minutes, and there is no band", {
   out <- esketamine(70, 170, 35, "male")
-  expect_equal(out$ke0, log(2) / (11 / 60))
-  expect_equal(out$tPeak, 0)
+  expect_null(out$ke0)
+  expect_equal(out$tPeak, ketamine(70, 170, 35, "male")$tPeak)
+  expect_equal(out$tPeak, 3)
   expect_equal(c(out$MEAC, out$typical, out$lowerTypical, out$upperTypical),
                rep(0, 4))
   p <- getDrugPK("esketamine", 70, 170, 35, "male")$PK$default
-  expect_equal(p$ke0, log(2) / (11 / 60), tolerance = 1e-6)
+  peak <- effectSitePeakTime(c(p$p_coef_bolus_l1, p$p_coef_bolus_l2, p$p_coef_bolus_l3),
+                             c(p$lambda_1, p$lambda_2, p$lambda_3), p$ke0)
+  expect_equal(peak, 3, tolerance = 1e-3)
 })
 
 test_that("esketamine is cleared faster than the racemic library ketamine", {

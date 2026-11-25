@@ -21,7 +21,7 @@ Doses are entered as esketamine base, as the products are labelled. The paper gi
 
 ### Effect site
 
-The effect site equilibrates with a half-time of about 11 seconds (ke0 3.78 per minute). Sigtermans and colleagues did not estimate this. They observed that the effects followed the plasma concentration almost instantly, consistent with Herd's estimate of 11 seconds (sedation scores after racemic ketamine in children) and with Schüttler's S(+)-ketamine electroencephalogram data. That literature value is used here. The library's racemic ketamine assumes a time-to-peak effect of 3 minutes instead.
+The effect site peaks **3 minutes** after a bolus, the same as the library's racemic ketamine: given intravenously, the two should reach their peak effect at the same time. Sigtermans and colleagues did not estimate the equilibration rate. They saw the effects follow the plasma concentration closely, consistent with Herd's half-time of 11 seconds (sedation scores after racemic ketamine in children) and with Schüttler's S(+)-ketamine electroencephalogram data. On this model, 11 seconds would put the peak at about 0.7 minutes. The 3 minutes is an assumption, as it is for ketamine.
 
 ### Typical concentrations
 
