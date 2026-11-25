@@ -1797,10 +1797,14 @@ app_server <- function(input, output, session) {
       # The failures too, so that a fit that ran out of time is not tried
       # again until its inputs change (bayesianUpdateDrugs())
       bayesFitCache <<- result$cache
-      if (!normal)
+      if (!normal) {
+        # The individuals at normal physiology, for the physiology ribbon's
+        # nominal curves (nominalDrugs())
+        result$normalDrugs <- result$drugs
         result$drugs <- bayesianAtPhysiology(result$drugs, priors, function(drug, individual) {
           drugPK(DT[DT$Drug == drug, , drop = FALSE], individual = individual)[[drug]]
         })
+      }
       result
     }, name = "bayesUpdate() reactive")
   })
@@ -1860,6 +1864,56 @@ app_server <- function(input, output, session) {
 
       c(newDrugs, gasEntries)
     }, name = "drugs() reactive")
+  })
+
+  # The drugs at nominal (normal) physiology, for the physiology ribbon
+  # (R/physiologyRibbon.R; Shafer, 2026-11-25): simulated only while the
+  # physiology is off normal, by the sliders or by events, and NULL
+  # otherwise.  The intravenous drugs are rebuilt at normal physiology (a
+  # measured drug's individual as fitted, which is at normal physiology,
+  # bayesUpdate()), the gases simulated with every panel setting normal.
+  # The companion models are not: the ribbon is the drug's own.  A failure
+  # here costs the ribbon, never the plot.
+  nominalSimulationCache <- NULL
+  nominalDrugs <- reactive({
+    profileCode({
+      ivChanged <- !physiologyIsNormal(physiology()) || nrow(physiologyEvents()) > 0
+      gasChanged <- ivChanged || altitude() != ALTITUDE_DEFAULT || isTRUE(endobronchial())
+      if (!gasChanged) return(NULL)
+      tryCatch({
+        DT <- doseTableIV()
+        out <- list()
+        if (ivChanged && !is.null(DT) && nrow(DT) > 0) {
+          bu <- bayesUpdate()
+          entries <- if (!is.null(bu$normalDrugs)) bu$normalDrugs else
+            drugPK(DT, normalPhysiology = TRUE)
+          entries <- Filter(function(e) !isAlternativeModelEntry(e), entries)
+          entries <- drawnDrugEntries(entries, tableDrugs(DT))
+          DTn <- DT[DT$Drug %in% names(entries), , drop = FALSE]
+          out <- processdoseTable(DTn, eventTableClean(), entries, plotMaximum(), FALSE,
+                                  cache = nominalSimulationCache,
+                                  plotMinimum = plotMinimum(),
+                                  antiseizureInteractions = antiseizureInteractions())
+          nominalSimulationCache <<- out
+          out <- Filter(function(e) !isAlternativeModelEntry(e), out)
+        }
+        DTg <- doseTableClean()
+        if (!is.null(DTg) && any(isGasDrug(DTg$Drug)) && is.null(gasRowsProblem())) {
+          sim <- simulateGases(DTg, weight = weight(), age = age(), maximum = plotMaximum())
+          gasEntries <- gasDrugEntries(sim, DTg[isGasDrug(DTg$Drug), , drop = FALSE],
+                                       drugDefaults(), plotMaximum(), age = age(),
+                                       macThreshold = macThreshold())
+          if (isTRUE(input$opioidMacInteraction))
+            gasEntries <- applyOpioidMacInteraction(gasEntries, if (length(out)) out else drugs())
+          out <- c(out, gasEntries)
+        }
+        out
+      }, error = function(e) {
+        if (inherits(e, "shiny.silent.error")) stop(e)
+        outputComments("Nominal-physiology simulation failed:", conditionMessage(e))
+        NULL
+      })
+    }, name = "nominalDrugs() reactive")
   })
 
   ###########################
@@ -2277,7 +2331,9 @@ app_server <- function(input, output, session) {
         # graphics device's limit is measured against (maxPlotDevicePixels())
         pixelRatio = if (is.null(session$clientData$pixelratio)) 1 else session$clientData$pixelratio,
         # The Bayesian update's measured concentrations, as points
-        observations = bayesPoints()
+        observations = bayesPoints(),
+        # The drugs at normal physiology, for the physiology ribbon
+        nominal = nominalDrugs()
       )
     }, name = "simulationPlotRetval() reactive")
   })

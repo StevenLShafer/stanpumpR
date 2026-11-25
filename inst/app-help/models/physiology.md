@@ -14,6 +14,24 @@ trachea.
 For the reasoning behind each rule and the evidence for it, see
 [Physiology and pharmacokinetics: the evidence](help:models/physiology-and-pharmacokinetics).
 
+## What the plot shows
+
+When the physiology is away from normal, by the sliders or by physiology
+events, each drug it changes loses its shaded band, and a **grey ribbon**
+fills the space between the drug's curve at normal physiology and its curve
+at the physiology entered. The drug's own line is the changed curve; the other
+edge of the ribbon is where the curve would be with normal physiology. A drug
+the physiology does not change keeps its band. The ribbon follows the line the
+panel draws: the effect-site line where it is shown, the plasma line
+otherwise. It is not drawn under normalization. (Steven Shafer, 25 November
+2026: a band that stayed the same "will appear to be a bug because it isn't
+what the physiology teaches", and a Y axis that rescales can hide a change
+that the ribbon shows.)
+
+For an inhaled agent with *time until threshold* shown, the threshold line
+steps with the temperature in force after a physiology event, as the time
+until threshold does.
+
 ## Sliders and covariates
 
 Where a published model includes a feature of the patient (weight, age,
