@@ -35,8 +35,8 @@ parameters:
   - {name: CSF/plasma ratio, value: 0.78, unit: ratio, source: "12.3, p11", note: "CSF 78% of simultaneous plasma"}
   - {name: plasma t1/2, value: "3-7", unit: h, source: "12.3, p11", note: "approximately; elimination mainly hepatic"}
   - {name: urinary unchanged after IV, value: 10, unit: "% of dose", source: "12.3, p11", note: "approximately; <5% after an oral dose"}
-  - {name: "total systemic CL (IV, chronic renal failure)", value: 1, unit: L/min, source: "12.3, p11", note: "mean"}
-  - {name: "dialytic CL (high-flux haemodialysis, oral dosing)", value: 87, unit: mL/min, source: "12.3, p11", note: "mean"}
+  - {name: total systemic CL (IV, chronic renal failure), value: 1, unit: L/min, source: "12.3, p11", note: "mean"}
+  - {name: dialytic CL (high-flux haemodialysis, oral dosing), value: 87, unit: mL/min, source: "12.3, p11", note: "mean"}
   - {name: time to maximum beta blockade (10-min IV infusion), value: 20, unit: min, source: "12.2, p10", note: "normal volunteers, approximately"}
   - {name: oral:IV equieffective dose ratio, value: 2.5, unit: ratio, source: "12.2, p10", note: "for equivalent maximal beta blockade, approximately"}
 ```

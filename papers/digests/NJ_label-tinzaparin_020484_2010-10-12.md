@@ -45,7 +45,7 @@ parameters:
   - {name: "Tmax SC 175 IU/kg, day 1", value: 4.4, unit: h, source: "Table 2, p4", note: "SD 0.7; day 5 4.6 (1.0)"}
   - {name: "AUC0-inf SC 175 IU/kg, day 1", value: 9.0, unit: IU*h/mL, source: "Table 2, p4", note: "SD 1.1; day 5 9.7 (1.4)"}
   - {name: "t1/2 SC 175 IU/kg, day 1", value: 3.3, unit: h, source: "Table 2, p4", note: "SD 0.8; day 5 3.5 (0.6)"}
-  - {name: "F (SC, absolute)", value: 0.867, unit: fraction, source: "Absorption, p5", note: "4500 IU SC vs IV, anti-Xa"}
+  - {name: F (SC, absolute), value: 0.867, unit: fraction, source: "Absorption, p5", note: "4500 IU SC vs IV, anti-Xa"}
   - {name: V, value: "3.1-5.0", unit: L, source: "Distribution, p5", note: "range; similar to blood volume"}
   - {name: CL (IV 4500 IU), value: 1.7, unit: L/h, source: "Elimination, p5", note: "approximately"}
   - {name: "t1/2 IV 75 IU/kg, healthy", value: 1.6, unit: h, source: "Hemodialysis studies, p6", note: "vs 5.2 h in 6 haemodialysis patients off-dialysis"}

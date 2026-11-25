@@ -32,7 +32,7 @@ names no studies, gives no n for most of them and has no population model.
 ```yaml
 parameters:
   - {name: F (immediate-release oral), value: 0.40, unit: fraction, source: "p4", note: "approximately 40%, absolute vs IV"}
-  - {name: "F (this ER capsule, single dose)", value: 0.41, unit: fraction, source: "p4", note: "41% (± 14), absolute vs IV"}
+  - {name: F (this ER capsule, single dose), value: 0.41, unit: fraction, source: "p4", note: "41% (± 14), absolute vs IV"}
   - {name: plasma elimination t1/2, value: "3.0-4.5", unit: h, source: "p4", note: "same page also says 2 to 5 h, beside total radioactivity t1/2 about 20 h"}
   - {name: apparent steady-state t1/2 (ER once daily), value: "5-10", unit: h, source: "p4", note: "attributed to continued absorption, not elimination"}
   - {name: Tmax (ER), value: "4-6", unit: h, source: "p4", note: "absorption begins within 1 h"}

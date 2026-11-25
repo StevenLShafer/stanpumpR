@@ -36,7 +36,7 @@ usual 500 mg-2 g/day in two to four doses, maximum 3 g/day; children 10 mg/kg/da
 
 ```yaml
 parameters:
-  - {name: t_half_methyldopa, value: 105, unit: min, source: "Pharmacokinetics p.2", note: "plasma, parent"}
+  - {name: t_half_methyldopa, value: 105, unit: min, source: "Pharmacokinetics p.2", note: plasma, parent}
   - {name: CL_renal, value: 130, unit: mL/min, source: "Pharmacokinetics p.2", note: "about, normal subjects"}
   - {name: fe_urine_absorbed, value: 0.70, unit: fraction of absorbed dose, source: "Pharmacokinetics p.2", note: "as methyldopa plus mono-O-sulfate"}
   - {name: t_max_BP_effect, value: "4-6", unit: h, source: "Pharmacokinetics p.2", note: maximum BP decrease after oral dose}
