@@ -21,7 +21,7 @@ For the paper's reference person (70 kg, albumin 45 g/L, 30 years) on 1.5 mg/kg 
 
 ### Product and doses
 
-Hemlibra (emicizumab-kxwh), `mg/kg SC` and `mg/kg SC qwk`, and `mg SC` for a dose written as a vial amount. The label's loading dose is 3 mg/kg weekly for four weeks, then 1.5 mg/kg weekly, 3 mg/kg every two weeks or 6 mg/kg every four weeks. The library has no every-two-weeks or every-four-weeks schedule, so enter those doses one by one.
+Hemlibra (emicizumab-kxwh), `mg/kg SC` with the schedules `qwk`, `q2wk` and `q4wk`, and the same in `mg SC` for a dose written as a vial amount. The label's loading dose is 3 mg/kg weekly for four weeks (`3 mg/kg SC qwk` at 0), then 1.5 mg/kg weekly, 3 mg/kg every two weeks or 6 mg/kg every four weeks, entered at week 4 (for example `6 mg/kg SC q4wk` at 4 weeks), which replaces the loading schedule from its own time.
 
 ### What is not plotted
 
