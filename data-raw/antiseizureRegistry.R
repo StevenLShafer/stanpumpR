@@ -231,7 +231,7 @@ registry <- rbind(
       "vigabatrin (S(+) enantiomer active)", "vigabatrin S(+) (apparent, oral)",
       "racemate 2C + 5 transit; S(+) 1C zero-order", "pk_only", NA,
       "https://doi.org/10.1002/jcph.1309",
-      "Ounissi 2019 S(+) CL/F 2.36 L/h; zero-order absorption and irreversible GABA-transaminase inhibition limit plasma modelling."),
+      "Ounissi 2019 S(+) CL/F 2.36 L/h AT A REFERENCE BODY WEIGHT OF 12.1 kg, with CL/F = 2.36 x (BW/12.1)^1.04 (Table 2); the value is per S-enantiomer and apparent (F unknown), on half the racemic dose as input. Quoted without that reference weight until 2026-11-25, which made it unusable as a per-patient number. Zero-order absorption and irreversible GABA-transaminase inhibition limit plasma modelling."),
   reg("Zonisamide", "oral capsule/suspension", L, FIT,
       "zonisamide base", "zonisamide (apparent, oral)",
       "1C first-order", "pk_only", "zonisamide",
