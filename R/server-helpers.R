@@ -33,7 +33,8 @@ checkNumericCovariates <- function(age, weight, height, errorFx = NULL,
                                    creatinine = NULL,
                                    gestationalAge = NULL,
                                    albumin = NULL,
-                                   ast = NULL) {
+                                   ast = NULL,
+                                   factorBaselines = NULL) {
   msg <- ""
   success <- TRUE
   if (!is_valid_number(age, MIN_AGE, MAX_AGE)) {
@@ -83,6 +84,19 @@ checkNumericCovariates <- function(age, weight, height, errorFx = NULL,
       !is_valid_number(ast, MIN_AST, MAX_AST)) {
     msg <- glue::glue("Serum AST must be between {MIN_AST} and {MAX_AST} U/L, or left blank")
     success <- FALSE
+  }
+
+  # And the clotting-factor baselines: blank means the model's source
+  # population's (R/factorBaselines.R).
+  for (name in intersect(names(factorBaselines), names(FACTOR_BASELINE_FIELDS))) {
+    field <- FACTOR_BASELINE_FIELDS[[name]]
+    value <- factorBaselines[[name]]
+    if (!is.null(value) && !(length(value) == 1 && is.na(value) && !is.nan(value)) &&
+        !is_valid_number(value, field$min, field$max)) {
+      msg <- sprintf("%s must be between %s and %s %s, or left blank",
+                     field$label, field$min, field$max, field$units)
+      success <- FALSE
+    }
   }
 
   if (nzchar(msg) && is.function(errorFx)) {

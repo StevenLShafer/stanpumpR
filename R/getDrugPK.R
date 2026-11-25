@@ -74,6 +74,11 @@
 #' @param infection the patient's infection, one of \code{INFECTION_VALUES}
 #'   (\code{INFECTION_DEFAULT}, \code{"none"}, by default).  Passed only to the
 #'   models with an infection term; see \code{R/infection.R}.
+#' @param factorBaselines the patient's own clotting-factor activities, a
+#'   named list (names from \code{names(FACTOR_BASELINE_FIELDS)}, each in its
+#'   field's units), or NULL; a blank entry takes the model's source
+#'   population's.  Passed only to the factor concentrates that name a field;
+#'   see \code{R/factorBaselines.R}.
 #' @param model internal: a model's output to use in place of calling the
 #'   drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
 #'   drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.
@@ -140,7 +145,8 @@ getDrugPK <- function(
   physiology = NULL,
   pulmonaryHypertension = FALSE,
   offsetScale = 1,
-  infection = INFECTION_DEFAULT
+  infection = INFECTION_DEFAULT,
+  factorBaselines = NULL
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
@@ -245,6 +251,10 @@ getDrugPK <- function(
          " U/L, or NULL for the model's reference value")
   }
 
+  # And the clotting-factor baselines (R/factorBaselines.R): a named list,
+  # each entry blank or within its field's bounds.
+  factorBaselines <- checkFactorBaselines(factorBaselines)
+
   # Every model takes the four patient covariates.  A pharmacogenetic
   # phenotype goes only to models that name it, so that a drug whose kinetics
   # depend on one can add it to its signature without every other drug model
@@ -324,6 +334,9 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "infection" %in% names(formals(get(drug, mode = "function"))))
     covariates$infection <- infection
+  # And the patient's own clotting-factor activity, which only the factor
+  # concentrates read, each its own factor's (R/factorBaselines.R)
+  covariates <- c(covariates, factorBaselineArgs(drug, factorBaselines))
   # And the buprenorphine onset/offset speed (a biophase tPeak multiplier),
   # which only a model with an offsetScale term reads (PROTOTYPE, Shafer
   # 2026-11-20; R/opioidReceptorInteraction.R).
@@ -1302,6 +1315,7 @@ getDrugPK <- function(
       pulmonaryHypertension = pulmonaryHypertension,
       offsetScale = offsetScale,
       infection = infection,
+      factorBaselines = factorBaselines,
       # The individual's metabolite, where the Bayesian update estimated it
       # from the metabolite's own levels: the parent forms the metabolite the
       # patient has.  Built from the model's, a morphine level after codeine
@@ -1411,6 +1425,10 @@ getDrugPK <- function(
   # concentration: simCpCe() reads the baseline, the fraction and the molecular
   # weight from here.  See R/drugs_mannitol.R.
   out$osmotic <- X$osmotic
+  # A factor concentrate is plotted as the patient's own activity plus the
+  # infused activity: simCpCe() adds this baseline to the plasma column after
+  # the engines have run.  See R/factorBaselines.R.
+  out$endogenousActivity <- validateEndogenousActivity(X[["endogenousActivity", exact = TRUE]], drug)
   # A drug reported in millimoles per litre (Concentration.Units "mmol":
   # intravenous calcium, plotted as the change in ionized calcium) carries
   # the grams of the product as dosed per mole of what is plotted, which
@@ -1732,8 +1750,26 @@ doseSizePK <- function(PK, dose)
 {
   drug <- pkModelDrug(PK)
   X <- do.call(drug, c(PK$covariates, list(dose = dose)))
-  do.call(getDrugPK, c(list(drug = drug), PK$covariates,
+  do.call(getDrugPK, c(list(drug = drug), covariatesForGetDrugPK(PK$covariates),
                        list(model = X), pkRebuildArgs(PK)))
+}
+
+#' A model's covariates as getDrugPK() takes them
+#'
+#' The covariates a model was called with (`PK$covariates`) name a clotting-
+#' factor baseline by its field (`factorVIIIBaseline`), which getDrugPK()
+#' takes inside its `factorBaselines` list (R/factorBaselines.R).
+#'
+#' @param covariates the list the model was called with
+#' @returns the same list, any baseline fields moved into `factorBaselines`
+#' @keywords internal
+covariatesForGetDrugPK <- function(covariates)
+{
+  fields <- intersect(names(covariates), names(FACTOR_BASELINE_FIELDS))
+  if (length(fields) == 0) return(covariates)
+  baselines <- covariates[fields]
+  covariates[fields] <- NULL
+  c(covariates, list(factorBaselines = Filter(Negate(is.null), baselines)))
 }
 
 #' The drug whose model function a PK is rebuilt from

@@ -119,7 +119,7 @@ helpScenario <- function(id, title, group, summary,
                          osmolality = OSMOLALITY_DEFAULT, pregnant = FALSE,
                          gestationalAge = NULL, albumin = NULL, ast = NULL,
                          measurements = NULL, pulmonaryHypertension = FALSE,
-                         infection = INFECTION_DEFAULT, ...) {
+                         infection = INFECTION_DEFAULT, factorBaselines = list(), ...) {
   options <- utils::modifyList(helpScenarioDefaultOptions(), list(...))
   doses <- data.frame(
     Drug = as.character(doses$Drug),
@@ -153,7 +153,10 @@ helpScenario <- function(id, title, group, summary,
                    pregnant = pregnant, gestationalAge = gestationalAge,
                    albumin = albumin, ast = ast,
                    pulmonaryHypertension = pulmonaryHypertension,
-                   infection = infection),
+                   infection = infection,
+                   # The clotting-factor baselines (R/factorBaselines.R): an
+                   # empty list leaves every factor's field blank
+                   factorBaselines = checkFactorBaselines(factorBaselines)),
     doses = doses, events = events, measurements = measurements, options = options
   )
 }
@@ -1548,6 +1551,15 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL,
     session$sendInputMessage("ast", list(value = ""))
   } else {
     updateNumericInput(session, "ast", value = p$ast)
+  }
+  # Blank, each factor concentrate's source population's baseline, unless the
+  # scenario names one (R/factorBaselines.R)
+  for (name in names(FACTOR_BASELINE_FIELDS)) {
+    if (is.null(p$factorBaselines[[name]])) {
+      session$sendInputMessage(name, list(value = ""))
+    } else {
+      updateNumericInput(session, name, value = p$factorBaselines[[name]])
+    }
   }
 
   if (is.null(timeApi)) {

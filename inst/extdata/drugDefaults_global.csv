@@ -365,4 +365,5 @@ emicizumab,mcg,,,mg/kg SC qwk,"mg/kg SC,mg/kg SC qwk,mg/kg SC q2wk,mg/kg SC q4wk
 tenecteplase,mcg,mg,,mg,"mg,mg/kg",#C62828,0,0,0,0,0,IV,Anticoagulants
 Zerbaxa,mcg,g,g/hr,g,"g,g tid,mg,mg tid,mg/kg,mg/kg tid,g/hr,mg/hr,mg/kg/hr",#0E6655,0,0,0,0,0,IV,Antibiotics
 ceftolozane,mcg,,,,,#0E6655,0,0,0,0,5,IV,
+factorVIII,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#1565C0,80,120,100,0,0,IV,Hemostasis and reversal
 nalbuphine,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#2E8BC0,0,0,0,0,0,IV,Opioids

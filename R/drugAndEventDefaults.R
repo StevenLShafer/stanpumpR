@@ -303,7 +303,7 @@ drugLibraryUnitProblems <- function(edited, current, maxNew = DRUG_LIBRARY_MAX_N
         # A drug plotted above a baseline (an INR, an ACT, an osmolality)
         # starts above zero whatever the unit does, so it must move from
         # there: mannitol's "mg PO" drew its baseline alone (the same audit)
-        baseline <- row$Concentration.Units %in% c("INR", "ACT", "mOsm")
+        baseline <- row$Concentration.Units %in% c("INR", "ACT", "mOsm", "IUdL")
         moved <- if (baseline) any(is.finite(plasma) & plasma != plasma[1]) else
           any(is.finite(plasma) & plasma > 0)
         if (!moved) "no concentration follows a dose" else ""
