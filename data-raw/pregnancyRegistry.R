@@ -3486,7 +3486,18 @@ registry <- rbind(
       source = "Ansari J, Carvalho B, Shafer SL, Flood P. Anesth Analg 2016;122:786-804 (the rise in glomerular filtration of pregnancy); Zerbaxa (ceftolozane and tazobactam) label, NDA 206829, Merck, DailyMed 2026-05-28, sec. 8.1 and 12.3",
       source_url = "https://doi.org/10.1213/ANE.0000000000001143",
       to_obtain = "",
-      notes = "Drawn for Zerbaxa (R/combination-products.R), which carries the FDA label row. Pregnancy was not studied in the source (Zhang 2021). Pezzi 2019 has no Gideon Koren among its authors (PubMed author list).")
+      notes = "Drawn for Zerbaxa (R/combination-products.R), which carries the FDA label row. Pregnancy was not studied in the source (Zhang 2021). Pezzi 2019 has no Gideon Koren among its authors (PubMed author list)."),
+  row("doxapram", "Other", "unknown",
+      finding = "No study of doxapram pharmacokinetics in human pregnancy was found (PubMed, 2026-11-20: doxapram AND pregnancy, pregnant, parturient, cesarean, labor or obstetric, 33 records). The human records are of postoperative use after obstetric and gynaecological surgery (Downing 1977, outcomes and blood gases only), of the newborn (Gupta 1973), and reviews; the rest are fetal sheep studies of fetal breathing (Hogg 1977, Bamford 1986), which show that doxapram crosses to the fetus but measure no maternal kinetics. The DOPRAM label (Hikma, 2024, read in full) is pregnancy category B and gives no pregnancy pharmacokinetics. Doxapram is metabolized by CYP3A4 (Ogawa 2015, in vitro), whose activity rises in pregnancy, so a higher clearance is plausible, but no magnitude has been measured.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = NA, comparator = "none",
+      design = "review", n = 0L, confidence = "low",
+      evidence_read = "abstract",
+      source = "PubMed search 2026-11-20; DOPRAM (doxapram hydrochloride) injection label, Hikma, NDA 014879, 2024-04-09, Pregnancy (DailyMed setid b8eb330a-a75b-46cb-b694-5be9327ed2eb); Downing JW et al. Br J Anaesth 1977;49:473-477 (PMID 861115); Hogg MI et al. Br J Obstet Gynaecol 1977;84:48-50 (PMID 843472)",
+      source_url = "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=b8eb330a-a75b-46cb-b694-5be9327ed2eb",
+      to_obtain = "",
+      notes = "Read: the label in full; the PubMed records as abstracts. The model (Clements 1979) is one healthy man's venous plasma curve. Doxapram crosses the placenta (fetal breathing in sheep after maternal doses), which matters for the fetus, not for the maternal curve plotted here.")
 )
 
 # The candidate models renamed when their drug's model became the program's

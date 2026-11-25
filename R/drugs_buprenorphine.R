@@ -366,6 +366,13 @@ buprenorphineSublingualF <- function(doseMg) 0.14 * (doseMg / 16)^-0.371
 #'   covariate.
 #' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the
 #'   elimination clearance by 1.83 (Zhu 2025; see the file's header).
+#' @param offsetScale PROTOTYPE (Shafer, 2026-11-20): the Buprenorphine
+#'   onset/offset control, a multiple of the time to peak effect after an
+#'   intravenous bolus (61.2 min, Yassen 2006's ke0; see the file's header).
+#'   Biophase equilibration, not receptor dissociation, limits buprenorphine's
+#'   slow onset and offset, so above 1 both are slower and below 1 both are
+#'   faster.  Held to 0.5 to 2 (\code{orOffsetScale()}); anything other than a
+#'   single positive number is read as 1, the default, the model's own.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 buprenorphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
